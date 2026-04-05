@@ -1,5 +1,40 @@
 # Onboarding — Dùng Claude Code với dự án HRM
 
+## Setup lần đầu
+
+```bash
+# 1. Clone repo config (chứa CLAUDE.md, skills, plans, docs)
+git clone https://github.com/dnsnamdang/hrm-claude-config.git hrm
+
+# 2. Clone repo BE + FE vào trong folder hrm
+cd hrm
+git clone <url-repo-hrm-api> hrm-api
+git clone <url-repo-hrm-client> hrm-client
+
+# 3. Mở Claude Code từ folder hrm
+claude
+```
+
+Cấu trúc sau khi setup:
+```
+hrm/                          ← repo config (hrm-claude-config)
+├── CLAUDE.md
+├── .skills/
+├── .plans/
+├── docs/
+├── hrm-api/                  ← repo BE (riêng)
+└── hrm-client/               ← repo FE (riêng)
+```
+
+## Đầu mỗi phiên làm việc
+
+Yêu cầu Claude pull cả 3 repo:
+```
+pull code cả 3 repo
+```
+
+---
+
 ## Bước 1: Mở Claude Code từ đúng folder
 
 - Luôn mở từ `hrm/` (root) — KHÔNG mở từ `hrm-api/` hay `hrm-client/` riêng
