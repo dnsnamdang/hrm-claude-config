@@ -53,9 +53,9 @@
 |--------|-------------|
 | Base classes, V2Base components, API store calls | `docs/shared.md` |
 | Pattern CRUD đầy đủ (code mẫu) | `docs/conventions.md` |
-| Import Excel | `.skills/import-excel/SKILL.md` |
-| Màn danh sách | `.skills/list-page/SKILL.md` |
 | Onboarding dev mới | `docs/onboarding.md` |
+
+**Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.skills/bug-fixer/SKILL.md`.
 
 ---
 
@@ -68,6 +68,13 @@
 4. Báo lại: "Đang làm [feature], checkpoint cuối: [X], task tiếp theo: [Y]"
 5. Chờ xác nhận trước khi bắt đầu
 
+
+**Khi nhận yêu cầu "tạo tính năng mới" / "tạo feature" — làm NGAY:**
+1. Tạo folder `.plans/[feature-name]/`
+2. Tạo file `design.md` (placeholder, sẽ fill sau brainstorming)
+3. Tạo file `plan.md` (placeholder, sẽ fill sau khi lên plan)
+4. Cập nhật `STATUS.md` → thêm vào "Đang làm"
+5. Sau đó mới bắt đầu brainstorming / hỏi yêu cầu
 
 **Khi nhận yêu cầu mới (feature/fix/task) — BẮT BUỘC trước khi code:**
 1. Cập nhật `.plans/[feature]/plan.md` với danh sách task cụ thể
