@@ -12,6 +12,8 @@
 
 ## Hoàn thành
 
+- report-testcases → @manhcuong → .plans/report-testcases/plan.md
+  Hoàn thành: 2026-04-09. 149 test cases cho 8 báo cáo module Assign
 - solution-module-version-tracking → @manhcuong → .plans/solution-module-version-tracking/plan.md
   Hoàn thành: 2026-04-08. 6/6 task. Theo dõi chỉ số hoàn thành giải pháp theo version
 - task-manager-by-employees → @junfoke → .plans/task-manager-by-employees/plan.md
