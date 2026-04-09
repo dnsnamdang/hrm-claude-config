@@ -14,6 +14,8 @@
 
 - solution-module-version-tracking → @manhcuong → .plans/solution-module-version-tracking/plan.md
   Hoàn thành: 2026-04-08. 6/6 task. Theo dõi chỉ số hoàn thành giải pháp theo version
+- task-manager-by-employees → @junfoke → .plans/task-manager-by-employees/plan.md
+  Hoàn thành: 2026-04-08. 9/9 task. Báo cáo phân bổ nguồn lực dạng Gantt theo NV (QLDA_BC_V2_11)
 - solution-add-module-deploying → @manhcuong → .plans/solution-add-module-deploying/plan.md
   Hoàn thành: 2026-04-07. 3/3 task. PM thêm hạng mục khi đang triển khai + auto-approve
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
