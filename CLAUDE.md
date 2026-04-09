@@ -69,6 +69,14 @@
 5. Chờ xác nhận trước khi bắt đầu
 
 
+**Khi nhận yêu cầu làm tiếp / cập nhật feature đã có — theo thứ tự:**
+1. Cập nhật `STATUS.md` → chuyển feature về "Đang làm"
+2. Đọc lại toàn bộ `.plans/[feature-name]/` (design.md + plan.md)
+3. Kiểm tra branch:
+   - Feature đã merge vào nhánh hiện tại → hỏi có tạo branch mới để update không? (cả API và Client)
+   - Feature vẫn ở branch riêng → hỏi có chuyển về branch đó để làm tiếp không? (cả API và Client)
+4. Yêu cầu nhập spec để brainstorming yêu cầu mới
+
 **Khi nhận yêu cầu "tạo tính năng mới" / "tạo feature" — làm NGAY:**
 1. Tạo folder `.plans/[feature-name]/`
 2. Tạo file `design.md` (placeholder, sẽ fill sau brainstorming)
