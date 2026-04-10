@@ -14,6 +14,8 @@
 
 - assignee-reject-start → @manhcuong → .plans/assignee-reject-start/plan.md
   Hoàn thành: 2026-04-10. 9/9 task + 13 manual test case. Assignee từ chối triển khai khi task chưa có kết quả (BE only, FE không đổi)
+- category-multi-select → @manhcuong → .plans/category-multi-select/plan.md
+  Hoàn thành: 2026-04-10. 56/56 task. Đổi 4 FK đơn trong Nhóm giải pháp & Ứng dụng sang multi-select qua 4 pivot. Bao gồm Phase 10 hot-fix downstream (7 file: Scope/CustomerScope relations, ProspectiveProject auto-fill, SurveyQuestions Resource, SolutionsWorkSummary report, optionsSelect store, FormMeta cascade)
 - report-testcases → @manhcuong → .plans/report-testcases/plan.md
   Hoàn thành: 2026-04-09. 149 test cases cho 8 báo cáo module Assign
 - solution-module-version-tracking → @manhcuong → .plans/solution-module-version-tracking/plan.md

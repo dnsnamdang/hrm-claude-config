@@ -54,6 +54,7 @@
 | Base classes, V2Base components, API store calls | `docs/shared.md` |
 | Pattern CRUD đầy đủ (code mẫu) | `docs/conventions.md` |
 | Onboarding dev mới | `docs/onboarding.md` |
+| Spec chi tiết của từng feature | `docs/superpowers/specs/YYYY-MM-DD-<feature>-design.md` |
 
 **Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.skills/bug-fixer/SKILL.md`.
 
@@ -71,10 +72,18 @@
 
 **Khi nhận yêu cầu "tạo tính năng mới" / "tạo feature" — làm NGAY:**
 1. Tạo folder `.plans/[feature-name]/`
-2. Tạo file `design.md` (placeholder, sẽ fill sau brainstorming)
-3. Tạo file `plan.md` (placeholder, sẽ fill sau khi lên plan)
-4. Cập nhật `STATUS.md` → thêm vào "Đang làm"
-5. Sau đó mới bắt đầu brainstorming / hỏi yêu cầu
+2. Tạo file `.plans/[feature-name]/design.md` (placeholder, sẽ fill sau brainstorming)
+3. Tạo file `.plans/[feature-name]/plan.md` (placeholder, sẽ fill sau khi lên plan)
+4. Tạo file `docs/superpowers/specs/YYYY-MM-DD-<feature-name>-design.md` (placeholder, sẽ fill sau brainstorming)
+5. Cập nhật `STATUS.md` → thêm vào "Đang làm" (kèm link tới spec chi tiết)
+6. Sau đó mới bắt đầu brainstorming / hỏi yêu cầu
+
+**Phân biệt 3 tài liệu của 1 feature:**
+- `.plans/[feature]/design.md` — **TÓM TẮT** (1-2 trang): mục tiêu, scope, các quyết định lớn, link sang spec chi tiết
+- `.plans/[feature]/plan.md` — task **TỔNG QUÁT** theo Phase → BE/FE (định dạng progress-manager)
+- `docs/superpowers/specs/YYYY-MM-DD-<feature>-design.md` — **SPEC ĐẦY ĐỦ**: schema DB, migration script, API contract, validation rule, business rule chi tiết, edge case, downstream impact, UX chi tiết
+- Khi brainstorming: fill `docs/superpowers/specs/...` trước (chi tiết) → tóm tắt vào `.plans/[feature]/design.md`
+- Khi `wrap up` lần đầu: cả 2 file design phải đầy đủ
 
 **Khi nhận yêu cầu mới (feature/fix/task) — BẮT BUỘC trước khi code:**
 1. Cập nhật `.plans/[feature]/plan.md` với danh sách task cụ thể
@@ -84,7 +93,7 @@
 **Khi nghe "wrap up" — làm ngay 4 việc theo thứ tự:**
 1. Cập nhật `plan.md` — đánh `[x]` task xong, ghi checkpoint
 2. Cập nhật `STATUS.md` — trạng thái feature hiện tại
-3. Nếu là lần wrap up đầu tiên của feature (design.md còn trống hoặc chỉ có placeholder) → cập nhật `design.md` đầy đủ dựa trên hiểu biết đã tích luỹ trong session (scope, data structure, UI, business rules, API endpoints)
+3. Nếu là lần wrap up đầu tiên của feature (design.md còn trống hoặc chỉ có placeholder) → cập nhật `.plans/[feature]/design.md` (tóm tắt) VÀ `docs/superpowers/specs/YYYY-MM-DD-<feature>-design.md` (chi tiết đầy đủ) dựa trên hiểu biết đã tích luỹ trong session (scope, data structure, UI, business rules, API endpoints, edge case, downstream impact)
 4. Báo ra chat: "Đã cập nhật xong. Bước tiếp theo: [X]"
 
 Không làm gì khác cho đến khi 3 việc này xong.
