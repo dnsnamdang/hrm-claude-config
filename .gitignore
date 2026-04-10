@@ -18,3 +18,4 @@ docs/references/
 docs/test-cases/*.xlsx
 docs/test-cases/~$*
 docs/superpowers/
+.vscode
