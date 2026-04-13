@@ -55,7 +55,7 @@
 | Pattern CRUD đầy đủ (code mẫu) | `docs/conventions.md` |
 | Onboarding dev mới | `docs/onboarding.md` |
 
-**Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.skills/bug-fixer/SKILL.md`.
+**Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.claude/skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.claude/skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.claude/skills/bug-fixer/SKILL.md`.
 
 ---
 
@@ -116,8 +116,8 @@ Blocked: [để trống nếu không có]
 
 ## Quy tắc team
 
-- `CLAUDE.md`, `.skills/`, `docs/` là tài sản chung — sửa qua PR, không tự ý sửa
-- Mỗi dev KHÔNG tạo CLAUDE.md, .skills/, docs/ riêng
+- `CLAUDE.md`, `.claude/skills/`, `docs/` là tài sản chung — sửa qua PR, không tự ý sửa
+- Mỗi dev KHÔNG tạo CLAUDE.md, .claude/skills/, docs/ riêng
 - Mỗi feature trong `.plans/` ghi rõ người phụ trách (`@username`)
 - Muốn thêm skill mới → tạo PR với SKILL.md đầy đủ
 - Dev mới vào → đọc `docs/onboarding.md` trước
@@ -126,9 +126,9 @@ Blocked: [để trống nếu không có]
 
 ## Custom skills
 
-Các skill tùy chỉnh nằm trong `.skills/`.
+Các skill tùy chỉnh nằm trong `.claude/skills/`.
 Trước khi implement bất kỳ pattern lặp lại nào,
-kiểm tra `.skills/` xem đã có SKILL.md chưa.
+kiểm tra `.claude/skills/` xem đã có SKILL.md chưa.
 Nếu có → đọc trước khi viết code.
 
 ---

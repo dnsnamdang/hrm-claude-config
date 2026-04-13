@@ -2,7 +2,7 @@
 
 ## Trạng thái
 - Bắt đầu: 2026-03-31
-- Tiến độ: 24/24 task done
+- Tiến độ: 26/26 task done
 
 ## Danh sách task
 
@@ -50,6 +50,10 @@
 [x] Task 23: Sắp xếp daily-report: ưu tiên task chưa nhập + theo send_time, thêm is_reported_today
 [x] Task 24: Mặc định collapse tất cả task khi mở daily-report
 
+### Phase 11: Bugfix (2026-04-09)
+[x] Task 25: Fix lỗi không lưu được task_report_notify_time — thiếu trong $fillable của GeneralRegulation model
+[x] Task 26: Fix UI daily-report — giảm khoảng trắng thừa khi expanded, giảm khoảng cách giữa các task
+
 ## Checkpoint
 - 2026-03-31: All 17 tasks done. Chờ test + cấu hình Firebase credentials
 - 2026-04-01: Phase 9 done (4 task fix FCM). Push background + click navigate hoạt động đúng
@@ -65,3 +69,9 @@ Vừa hoàn thành: Phase 10 — cập nhật logic fallback, sắp xếp, colla
 Đang làm dở: không có
 Bước tiếp theo: Test trên local/production. Gửi tài liệu mobile cho dev mobile
 Blocked: không có
+
+### Checkpoint — 2026-04-09
+Vừa hoàn thành: Phase 11 — 2 bugfix: (1) task_report_notify_time thiếu $fillable trong GeneralRegulation model, (2) UI daily-report giảm khoảng trắng thừa + giảm khoảng cách giữa task + bỏ min-height table-responsive
+Đang làm dở: không có
+Bước tiếp theo: Dev server cần HTTPS để FCM hoạt động (Notification + ServiceWorker API yêu cầu HTTPS, trừ localhost)
+Blocked: FCM push notification không hoạt động trên dev server HTTP — cần cấu hình SSL
