@@ -11,5 +11,9 @@
 - [x] TC báo cáo Tổng hợp GP theo phòng làm GP (solutions-work-summary-by-department)
 - [x] TC báo cáo Yêu cầu GP theo phòng kinh doanh (solution-requests-by-department)
 
+## Phase 2: Testcase màn tiến độ task
+
+- [x] TC màn tiến độ task (assign/tasks/daily-report) — sheet `DailyReport`, prefix `DLR`, ~56 TC, 10 nhóm
+
 ## Output
-- `.plans/report-testcases/Testcase_Report_Assign.xlsx` — 8 sheet, mỗi sheet 1 báo cáo
+- `.plans/report-testcases/Testcase_Report_Assign.xlsx` — 9 sheet, mỗi sheet 1 màn
