@@ -8,11 +8,10 @@ Màn báo cáo hiển thị phân bổ nguồn lực (task) của nhân viên th
 ### Có
 - Hiển thị bảng + Gantt đầy đủ
 - Filter, pagination, modal chi tiết
-- Tính % công suất mặc định 8h/ngày
+- Tính % công suất dựa trên giờ công ca làm việc thực tế (SUM labour_hour từ phân ca)
 
 ### Không (giai đoạn sau)
 - Export Excel (ExcelJS client-side)
-- Tích hợp chấm công thực tế
 - Filter vai trò trong dự án
 
 ## Bộ lọc
@@ -117,7 +116,7 @@ Modules/Assign/
 1. Query employees theo filter (company, department, part, employee)
 2. Query tasks overlap khoảng thời gian: `start_date <= to_date` AND `due_date >= from_date`
 3. Filter project_id nếu có
-4. Tính `capacity_hours` = số ngày × 8h
+4. Tính `capacity_hours` = SUM(labour_hour) từ phân ca của nhân viên trong khoảng thời gian (bảng shift_detail_employee_dates + working_shifts)
 5. Tính `task_hours` = SUM(estimated_hours)
 6. Tính `utilization_pct` = task_hours / capacity_hours × 100
 7. Status: < 60% → amber "Cần phân thêm task" | 60-100% → green "Phân bổ hợp lý" | > 100% → red "Vượt tải"
@@ -193,5 +192,4 @@ Cột Lịch Gantt: không sticky, scroll tự do.
 
 ## Giai đoạn sau (không thuộc scope hiện tại)
 1. Export Excel (ExcelJS client-side)
-2. Tích hợp chấm công thực tế (thay 8h/ngày bằng giờ thực tế)
-3. Filter vai trò trong dự án
+2. Filter vai trò trong dự án
