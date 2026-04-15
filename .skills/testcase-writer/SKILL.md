@@ -1,13 +1,66 @@
 # Testcase Writer — ERP TPE
 
 ## Mục đích
+
 Generate file testcase (.xlsx) cho chức năng đã triển khai hoặc đang triển khai, dựa trên code thực tế + design document + business rules.
 
 ## Khi nào dùng
+
 - Feature đã code xong hoặc đang code, cần file testcase để QA kiểm thử
 - User yêu cầu "viết testcase", "tạo testcase", "tạo file test"
 
+## NGUYÊN TẮC TỐI QUAN TRỌNG — Góc nhìn người dùng cuối
+
+**MẶC ĐỊNH: CHỈ viết testcase theo góc nhìn người dùng cuối (QA thủ công dùng trình duyệt).
+KHÔNG viết testcase cho backend / API / database.**
+
+Chỉ viết thêm testcase BE khi user yêu cầu rõ ràng (ví dụ: "viết cả testcase API", "cả FE và BE"). Nếu mơ hồ → hỏi lại, mặc định chỉ UI.
+
+### Quy tắc viết:
+
+1. **Mọi thuật ngữ kỹ thuật đều bị cấm.** Nếu một tester không biết code đọc qua mà không hiểu, tức là viết sai. Cụ thể, không dùng:
+   - Thuật ngữ hạ tầng: API, endpoint, HTTP method, status code, payload, request, response, JSON, JWT, header, token
+   - Thuật ngữ DB: database, table, column, query, join, index, transaction, tên cột/bảng cụ thể
+   - Thuật ngữ code: tên class, method, file, biến, hàm, thuộc tính, CSS class, framework directive (v-model, v-if...)
+   - Thuật ngữ ORM/framework: Eloquent relation, whereHas, orderBy, middleware, service, controller, resource
+
+2. **Bước thực hiện mô tả thao tác vật lý của người dùng:** click, nhập, chọn, kéo, mở, đóng, scroll, hover. Không mô tả request/response.
+
+3. **Expected Result mô tả thứ người dùng nhìn/nghe thấy trên UI:** text hiển thị, màu sắc, icon, toast, modal, chuyển trang, trạng thái nút (enable/disable), cập nhật bảng. Không mô tả trạng thái DB hay cấu trúc JSON.
+
+4. **Tên trường dùng chính label trên giao diện**, không dùng tên biến/cột. Ví dụ dùng "Tiến độ (%)" thay vì `progress_pct`, dùng "Trạng thái" thay vì `status`.
+
+5. **Trạng thái / enum dùng tên hiển thị**, không dùng giá trị số/const. Ví dụ dùng "Đã duyệt" thay vì `status=5`, "theo tuần" thay vì `cycle_type=2`.
+
+### Bỏ qua các loại test sau (thuộc phạm vi BE/unit test):
+
+- Authentication, quyền gọi API, token hết hạn (giả định: user đã đăng nhập đúng quyền)
+- Validation cấu trúc payload (thiếu field, sai kiểu dữ liệu trong request body)
+- Trạng thái DB sau hành động (INSERT/UPDATE record, foreign key)
+- Logic query filter BE (whereHas, join, orderBy)
+- Format/schema response (đủ field, đúng kiểu)
+
+Thay vào đó, test HÀNH VI user nhìn thấy khi các tình huống trên xảy ra:
+
+| Thay vì test trực tiếp BE                | Test hành vi UI tương ứng                                                  |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| "Server trả 500"                         | "Hiển thị toast đỏ thông báo lỗi"                                          |
+| "Validate payload thiếu field → 422"     | (Không xảy ra với user vì UI chặn trước — bỏ qua, hoặc test validation FE) |
+| "Insert record vào DB"                   | "Sau khi lưu, bản ghi xuất hiện trên danh sách"                            |
+| "BE filter theo quyền phòng ban"         | "User phòng A chỉ nhìn thấy bản ghi của phòng A trên bảng"                 |
+| "API trả đúng 3 item"                    | "Bảng hiển thị 3 dòng"                                                     |
+| "Status chuyển từ DRAFT sang SUBMITTED"  | "Nhãn trạng thái đổi từ 'Nháp' sang 'Chờ duyệt' màu cam"                   |
+
+### Checklist tự kiểm tra trước khi xuất file:
+
+- [ ] Bước thực hiện có dùng động từ thao tác UI (click, nhập, chọn...) không?
+- [ ] Expected Result có kiểm chứng được chỉ bằng mắt nhìn vào trình duyệt không?
+- [ ] Không có đoạn nào nhắc đến API, DB, code, framework không?
+- [ ] Tên trường/trạng thái dùng label hiển thị, không dùng tên biến/số không?
+- [ ] Một QA không biết code đọc qua có hiểu và thực hiện được ngay không?
+
 ## Input cần thiết
+
 1. Tên chức năng + module (VD: BOM List, module Assign)
 2. `.plans/[feature]/design.md` (nếu có)
 3. `.plans/[feature]/plan.md` (nếu có)
@@ -19,6 +72,7 @@ Generate file testcase (.xlsx) cho chức năng đã triển khai hoặc đang t
 ### Bước 1: Thu thập thông tin từ code
 
 **BE — đọc theo thứ tự:**
+
 ```
 1. Routes/api.php → danh sách endpoint (CRUD + action đặc biệt)
 2. Controller → method nào, request validation nào
@@ -29,6 +83,7 @@ Generate file testcase (.xlsx) cho chức năng đã triển khai hoặc đang t
 ```
 
 **FE — đọc theo thứ tự:**
+
 ```
 1. Trang danh sách → columns, filters, actions, phân trang, sort
 2. Trang tạo/sửa → form fields, validation FE, cascading logic, submit flow
@@ -41,16 +96,16 @@ Generate file testcase (.xlsx) cho chức năng đã triển khai hoặc đang t
 
 Chia thành các nhóm (section) theo luồng chức năng. Mỗi chức năng CRUD thường có:
 
-| # | Section | Ví dụ |
-|---|---------|-------|
-| I | Trang danh sách | Hiển thị, tìm kiếm, lọc, phân trang, sort, row actions |
-| II | Tạo mới | Form validation, cascading, save draft, save, auto-gen code |
-| III | Sửa | Load data, edit theo status, save |
-| IV | Xoá | Điều kiện xoá, confirm, cascade delete |
-| V | Xuất Excel | (nếu có) Popup chọn cột, format file |
-| VI | Import Excel | (nếu có) Template, preview, validate, import |
-| VII | Trang chi tiết | Readonly, actions, layout |
-| VIII+ | Chức năng đặc biệt | Duyệt, tổng hợp, version, v.v. |
+| #     | Section            | Ví dụ                                                       |
+| ----- | ------------------ | ----------------------------------------------------------- |
+| I     | Trang danh sách    | Hiển thị, tìm kiếm, lọc, phân trang, sort, row actions      |
+| II    | Tạo mới            | Form validation, cascading, save draft, save, auto-gen code |
+| III   | Sửa                | Load data, edit theo status, save                           |
+| IV    | Xoá                | Điều kiện xoá, confirm, cascade delete                      |
+| V     | Xuất Excel         | (nếu có) Popup chọn cột, format file                        |
+| VI    | Import Excel       | (nếu có) Template, preview, validate, import                |
+| VII   | Trang chi tiết     | Readonly, actions, layout                                   |
+| VIII+ | Chức năng đặc biệt | Duyệt, tổng hợp, version, v.v.                              |
 
 Tuỳ chức năng mà thêm/bớt section. Đặt tên section dạng: `I. TRANG DANH SÁCH [TÊN] ([route])`.
 
@@ -58,23 +113,24 @@ Tuỳ chức năng mà thêm/bớt section. Đặt tên section dạng: `I. TRAN
 
 Mỗi testcase là 1 dòng trong bảng Excel, gồm các cột:
 
-| Cột | Field | Mô tả | Bắt buộc |
-|-----|-------|-------|----------|
-| A | Module | Tên module (VD: BOM List) | Có |
-| B | Nhóm chức năng | Tên nhóm (VD: BOM List) | Có |
-| C | TC ID | Mã testcase, format: `PREFIX_NNN.NNN` | Có |
-| D | Chức năng | Mô tả ngắn testcase | Có |
-| E | Priority | P0 (critical), P1 (important), P2 (nice-to-have) | Có |
-| F | Tiền điều kiện | Trạng thái cần có trước khi test | Không |
-| G | Bước thực hiện | Các bước số, xuống dòng bằng `\n` | Có |
-| H | Test Data | Dữ liệu test cụ thể | Không |
-| I | Test Data | (cột phụ, merge header với H) | Không |
-| J | Expected Result | Kết quả mong đợi chi tiết | Có |
-| K | KQ thực tế | QA điền khi test | Không |
-| L | Status | Dropdown: Passed / Failed / Pending / Not Executed | Có (mặc định: Not Executed) |
-| M | Ghi chú | Ghi chú thêm | Không |
+| Cột | Field           | Mô tả                                              | Bắt buộc                    |
+| --- | --------------- | -------------------------------------------------- | --------------------------- |
+| A   | Module          | Tên module (VD: BOM List)                          | Có                          |
+| B   | Nhóm chức năng  | Tên nhóm (VD: BOM List)                            | Có                          |
+| C   | TC ID           | Mã testcase, format: `PREFIX_NNN.NNN`              | Có                          |
+| D   | Chức năng       | Mô tả ngắn testcase                                | Có                          |
+| E   | Priority        | P0 (critical), P1 (important), P2 (nice-to-have)   | Có                          |
+| F   | Tiền điều kiện  | Trạng thái cần có trước khi test                   | Không                       |
+| G   | Bước thực hiện  | Các bước số, xuống dòng bằng `\n`                  | Có                          |
+| H   | Test Data       | Dữ liệu test cụ thể                                | Không                       |
+| I   | Test Data       | (cột phụ, merge header với H)                      | Không                       |
+| J   | Expected Result | Kết quả mong đợi chi tiết                          | Có                          |
+| K   | KQ thực tế      | QA điền khi test                                   | Không                       |
+| L   | Status          | Dropdown: Passed / Failed / Pending / Not Executed | Có (mặc định: Not Executed) |
+| M   | Ghi chú         | Ghi chú thêm                                       | Không                       |
 
 ### Quy tắc đặt TC ID:
+
 - Format: `PREFIX_NNN.NNN`
 - PREFIX: viết tắt của chức năng (VD: BOM, TASK, ISSUE)
 - NNN đầu: số thứ tự section (001 = Danh sách, 002 = Tạo mới, ...)
@@ -82,11 +138,13 @@ Mỗi testcase là 1 dòng trong bảng Excel, gồm các cột:
 - Ví dụ: `BOM_001.001`, `BOM_002.003`, `TASK_003.005`
 
 ### Quy tắc Priority:
+
 - **P0**: Luồng chính, CRUD cơ bản, validation bắt buộc, phân quyền, hiển thị đúng data
 - **P1**: Filter nâng cao, format hiển thị, edge case quan trọng
 - **P2**: UI polish, tuỳ chỉnh cột, kéo thả, trải nghiệm phụ
 
 ### Quy tắc viết nội dung:
+
 - **Bước thực hiện**: Đánh số `1. ... \n2. ...`, ngắn gọn, cụ thể
 - **Expected Result**: Chi tiết, có thể kiểm chứng được. Nếu liên quan DB thì ghi rõ table + field
 - **Tiền điều kiện**: Ghi rõ trạng thái, role, data cần có
@@ -217,6 +275,7 @@ print(f'Saved: {output_path}')
 ### Bước 5: Review & bổ sung
 
 Sau khi generate, kiểm tra:
+
 1. Đủ section cho tất cả luồng chức năng không?
 2. Có cover edge case quan trọng không? (empty state, quyền, concurrent, data lớn)
 3. TC ID có liên tục, không trùng?
@@ -225,6 +284,7 @@ Sau khi generate, kiểm tra:
 ## Checklist testcase cần cover cho mỗi loại màn hình
 
 ### Trang danh sách:
+
 - [ ] Hiển thị layout đúng (tiêu đề, cột)
 - [ ] Tìm kiếm nhanh
 - [ ] Từng filter nâng cao (1 TC / filter)
@@ -235,6 +295,7 @@ Sau khi generate, kiểm tra:
 - [ ] Data chỉ hiện cho owner (nếu có trạng thái nháp)
 
 ### Trang tạo mới:
+
 - [ ] Cascading field (chọn A → tự fill B)
 - [ ] Validation từng field bắt buộc
 - [ ] Lưu nháp (nếu có)
@@ -244,23 +305,27 @@ Sau khi generate, kiểm tra:
 - [ ] company/department/part tự fill từ user
 
 ### Trang sửa:
+
 - [ ] Load data đúng
 - [ ] Button hiện/ẩn theo status
 - [ ] Form disabled theo status
 - [ ] Save + reload đúng
 
 ### Xoá:
+
 - [ ] Điều kiện xoá (status, owner, quyền)
 - [ ] Confirm modal
 - [ ] Cascade delete (xoá con trước)
 
 ### Xuất Excel (nếu có):
+
 - [ ] Popup chọn cột
 - [ ] Select all / deselect all
 - [ ] Format file đúng (font, số tiền, header)
 - [ ] Xuất từ danh sách vs chi tiết
 
 ### Import Excel (nếu có):
+
 - [ ] Download template
 - [ ] Preview
 - [ ] Validate từng rule
@@ -268,16 +333,19 @@ Sau khi generate, kiểm tra:
 - [ ] Mapping data đúng (cha/con, lookup)
 
 ### Trang chi tiết:
+
 - [ ] Readonly — không có input
 - [ ] Ẩn action buttons
 - [ ] Layout không lệch
 - [ ] Footer actions (sửa, xuất)
 
 ### Duyệt/Phê duyệt (nếu có):
+
 - [ ] Ai được duyệt (quyền)
 - [ ] Duyệt thành công → chuyển status
 - [ ] Từ chối + lý do
 - [ ] Không duyệt lại hồ sơ đã duyệt
 
 ## Output
+
 File `.xlsx` lưu tại: `.plans/[feature]/Testcase_[Tên chức năng].xlsx`

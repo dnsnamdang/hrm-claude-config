@@ -12,6 +12,8 @@
 
 ## Hoàn thành
 
+- daily-report-testcase → @manhcuong → .plans/daily-report-testcase/plan.md
+  Hoàn thành: 2026-04-15. 40 test case UI theo góc nhìn người dùng cho màn Nhập kết quả báo cáo tiến độ hàng ngày
 - assignee-reject-start → @manhcuong → .plans/assignee-reject-start/plan.md
   Hoàn thành: 2026-04-10. 9/9 task + 13 manual test case. Assignee từ chối triển khai khi task chưa có kết quả (BE only, FE không đổi)
 - category-multi-select → @manhcuong → .plans/category-multi-select/plan.md
