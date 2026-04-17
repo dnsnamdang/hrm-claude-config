@@ -695,3 +695,18 @@ Vừa hoàn thành: Tài liệu + Skills migration
 Đang làm dở: Không
 Bước tiếp theo: Test Phase 9 theo file test cases
 Blocked: Không
+
+### Checkpoint — 2026-04-13 (session 3)
+Vừa hoàn thành: Phase 10 code done — Duyệt giá 2 bước + Version báo giá + Rà soát logic BOM
+  - Duyệt cấp 3 (2 bước): submitPricing cấp 3 → status=9 (TP trước). TP "Duyệt & Chuyển BGĐ" → status=10. BGĐ duyệt → 11 notify NLG+TP. BGĐ từ chối → 8 notify NLG+TP
+  - Migration: tp_approved_by/at + pricing_version trên bom_lists, table bom_pricing_snapshots
+  - Version báo giá: snapshot giá khi duyệt xong, adjustPricing (11→8 version++), API pricing-versions + pricing-snapshot/{v}
+  - FE: popup cấp 3 "2 bước duyệt", button "Duyệt & Chuyển BGĐ" (TP), button "Điều chỉnh giá" (NLG status=11)
+  - History: 2 actions mới tp_approve_forward + adjust_pricing
+  - Rà soát logic chọn BOM con: filter theo solution_version_id / solution_module_version_id. 3 trường hợp đúng logic
+  - BE getAll: thêm filter solution_id/module_id/version_id
+  - BomListTable.vue rewrite: popup dạng bảng, checkbox, filter context (solution/module/version)
+  - ModuleApprovalModal + SolutionApprovalModal: truyền context version vào BomListTable
+Đang làm dở: Không
+Bước tiếp theo: Test Phase 10 end-to-end
+Blocked: Không
