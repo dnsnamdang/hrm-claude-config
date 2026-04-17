@@ -12,6 +12,8 @@
 
 ## Hoàn thành
 
+- application-export-split-columns → @manhcuong → .plans/application-export-split-columns/plan.md
+  Hoàn thành: 2026-04-17. Tách Excel xuất Ứng dụng từ 7 cột (gộp) → 12 cột riêng biệt. Chỉ sửa 1 file blade
 - daily-report-testcase → @manhcuong → .plans/daily-report-testcase/plan.md
   Hoàn thành: 2026-04-15. 40 test case UI theo góc nhìn người dùng cho màn Nhập kết quả báo cáo tiến độ hàng ngày
 - assignee-reject-start → @manhcuong → .plans/assignee-reject-start/plan.md
