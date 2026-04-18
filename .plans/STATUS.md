@@ -12,6 +12,8 @@
 
 ## Hoàn thành
 
+- question-form-industry-level → @manhcuong → .plans/question-form-industry-level/plan.md
+  Hoàn thành: 2026-04-18. 8/8 Phase. Đổi cấp gán Câu hỏi & Mẫu phiếu thu thập từ Ứng dụng → Nhóm giải pháp, ràng buộc 1 nhóm giải pháp - 1 phiếu Published. 2 migration chạy sạch, BE 12 file + FE 16 file, 14 service test pass
 - application-export-split-columns → @manhcuong → .plans/application-export-split-columns/plan.md
   Hoàn thành: 2026-04-17. Tách Excel xuất Ứng dụng từ 7 cột (gộp) → 12 cột riêng biệt. Chỉ sửa 1 file blade
 - daily-report-testcase → @manhcuong → .plans/daily-report-testcase/plan.md
