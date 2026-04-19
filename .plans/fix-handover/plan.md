@@ -3,11 +3,15 @@
 ## Trạng thái
 - Bắt đầu: 2026-03-31
 - Tiến độ: 7/7 task done (Task 4 FE đã thử nhưng revert intentional). Test OK 2026-04-18.
+=======
+- Tiến độ: 3/3 task done
+
 
 ## Danh sách task
 
 [x] Task 1: Fix mất ngày bàn giao khi edit — convert DD/MM/YYYY → YYYY-MM-DD trước khi truyền vào HandoverForm
 [x] Task 2: Fix checkbox _selected mặc định checked — đổi thành false khi load edit
+[x] Task 3: Sinh bộ testcase Excel — 108 TC, 10 section (DS/Tạo-Sửa/Chi tiết/Tiếp nhận/Chờ duyệt/Chờ tiếp nhận/Phân quyền/BR E2E/Notification/Edge), script `generate_testcase.py`, output `Testcase_Ban_Giao_Cong_Viec.xlsx`
 
 ### Bug fix V2 (2026-04-18) — Branch: tpe-develop-assign (merge thẳng)
 [x] Task 3: BE HandoverService.syncItems — đổi exception code 422→423 (lỗi nghiệp vụ); đổi text "Các mục sau đã nằm trong phiếu bàn giao khác chưa hoàn tất" → "Có task đã được bàn giao trong 1 phiếu khác chưa hoàn tất"; lấy `task.code` / `issue.issue_code` thay vì `Task #id`/`Issue #id`
@@ -47,3 +51,9 @@ Bước tiếp theo:
   3. **Test V3 edge case**: Giả lập `approved_by` null → toast 423 "Phiếu bàn giao thiếu thông tin người duyệt"
   4. **Test regression**: Validate form (thiếu ngày bàn giao) → vẫn hiện "Bạn chưa nhập đầy đủ thông tin"
 Blocked: không có
+=======
+### Checkpoint — 2026-04-14
+Vừa hoàn thành: Sinh `Testcase_Ban_Giao_Cong_Viec.xlsx` (108 TC, prefix HDV) + `generate_testcase.py` + spec `docs/superpowers/specs/2026-04-14-handover-testcase-design.md`
+Đang làm dở: —
+Bước tiếp theo: QA review & chạy test thủ công theo Excel, đánh cột Status (Passed/Failed/Pending/Not Executed)
+Blocked: —
