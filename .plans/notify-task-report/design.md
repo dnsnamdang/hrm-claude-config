@@ -9,12 +9,13 @@ Nhắc user lịch báo cáo tiến độ cho các task được giao + có yêu
 - Sửa trạng thái nhập kết quả: chỉ IN_PROGRESS (4)
 - Web Push Notification (FCM): nhắc user kể cả khi không mở tab
 - Trang nhập tiến độ hàng loạt: /assign/tasks/daily-report
-- Cài đặt giờ gửi: Settings → Quản lý dự án → Cài đặt khác
+- Cron mặc định 08:30→18:30, chạy mỗi 30p (không cấu hình giờ per company — Phase 12)
 
 ### Không làm:
 - Push notification mobile (đã có FCM topic riêng)
 - Email notification
 - Thay đổi cấu trúc task_progress_report_rules
+- Cấu hình giờ gửi per company (đã bỏ Phase 12)
 
 ## Phương án kỹ thuật: FCM Web Push
 
@@ -26,14 +27,13 @@ Nhắc user lịch báo cáo tiến độ cho các task được giao + có yêu
 - `static/firebase-messaging-sw.js` — Service Worker nhận push background
 - `plugins/fcm-push.js` — đăng ký FCM token + xin permission
 - `fcm_tokens` table — lưu token theo employee
-- `assign:notify-task-report` command — cron mỗi 30p
-- `task_report_notify_time` trên `general_regulations` — giờ cài đặt per company
+- `assign:notify-task-report` command — cron mỗi 30p, chỉ chạy 08:30→18:30
 - `FRONTEND_URL` trong `.env` BE — full URL frontend cho FCM click navigation
 
 ### Luồng
 ```
 1. User mở app → FE xin permission → getToken() → POST /assign/fcm-tokens
-2. Cron chạy mỗi 30p → check giờ cài đặt per company
+2. Cron chạy mỗi 30p → check giờ hiện tại ∈ [08:30, 18:30] mới gửi (đồng nhất toàn hệ thống)
 3. Tìm user có task IN_PROGRESS + progressReportRule active + ngày báo cáo = today + chưa nhập
 4. Gửi FCM: notification + data + webpush config (fcm_options.link = FRONTEND_URL)
 5. Foreground: onMessage → toast trong app
@@ -56,10 +56,8 @@ Nhắc user lịch báo cáo tiến độ cho các task được giao + có yêu
 | token | string(500) unique | FCM registration token |
 | device_info | string nullable | Browser info |
 
-### general_regulations (thêm cột)
-| Cột | Type | Default | Mô tả |
-|-----|------|---------|-------|
-| task_report_notify_time | time nullable | 08:00:00 | Giờ gửi (chẵn/lẻ 30p) |
+### general_regulations
+- (Phase 12) Đã drop column `task_report_notify_time` — không cấu hình giờ per company nữa.
 
 ### Bảng có sẵn
 - `task_progress_report_rules`: cycle_type (1=daily, 2=weekly, 3=monthly), send_time, week_days, month_day
@@ -74,8 +72,8 @@ Nhắc user lịch báo cáo tiến độ cho các task được giao + có yêu
 | GET | /assign/tasks/daily-report/count | Count chưa nhập (cho badge) |
 | POST | /assign/fcm-tokens | Lưu/update FCM token |
 | DELETE | /assign/fcm-tokens | Xoá token (logout) |
-| GET | /assign/my-job/deadline-config | Đọc cài đặt (+ task_report_notify_time) |
-| POST | /assign/my-job/deadline-config | Lưu cài đặt |
+| GET | /assign/my-job/deadline-config | Đọc cấu hình deadline |
+| POST | /assign/my-job/deadline-config | Lưu cấu hình deadline |
 
 ## UI
 
@@ -87,16 +85,22 @@ Nhắc user lịch báo cáo tiến độ cho các task được giao + có yêu
 - Footer sticky: tổng giờ/8h | tiến độ TB | pending count | Đóng | Lưu tất cả
 
 ### Settings sub-tab "Cài đặt khác"
-- Dropdown giờ: 06:00 → 22:00 (chẵn + lẻ 30p)
+- (Phase 12) Đã bỏ — không còn cấu hình giờ gửi per company.
 
 ## Validate
 - Tổng progress_pct per task ≤ 100%
 - Chỉ editable dòng today
 - canImportResult: chỉ IN_PROGRESS (4)
-- Giờ cài đặt: chẵn hoặc lẻ 30p
 
 ## Cron
 - Command: `assign:notify-task-report`
-- Schedule: everyThirtyMinutes
-- Logic: check giờ cài đặt per company → tìm user + task chưa nhập → gửi FCM push qua token
+- Schedule: `everyThirtyMinutes()->withoutOverlapping()`
+- Gate trong command: chỉ thực sự gửi khi `now` đúng 1 trong **4 mốc cố định**: 08:30 / 11:30 / 14:30 / 17:30
+- Logic: tìm user + task chưa nhập → gửi FCM push qua token (logic chọn task không đổi)
 - Auto-delete token expired (NotFound exception)
+- Eager load `progressLogs` filtered theo today + `progress_pct > 0` để tránh N+1
+
+## Deploy order (quan trọng)
+1. Deploy code BE + FE mới (không còn reference `task_report_notify_time`)
+2. Sau đó mới chạy `php artisan migrate` để drop column
+3. Nếu làm ngược (migrate trước, code sau) → code cũ query `whereNotNull('task_report_notify_time')` sẽ fatal vì column không tồn tại

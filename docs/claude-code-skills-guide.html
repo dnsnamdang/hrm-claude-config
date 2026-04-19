@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Hướng dẫn Skills &amp; Subagents - ERP TPE</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Hướng dẫn Skills &amp; Subagents - ERP TPE</h1>
+</header>
+<h1 id="hướng-dẫn-sử-dụng-skills-subagents-trong-claude-code">Hướng dẫn
+sử dụng Skills &amp; Subagents trong Claude Code</h1>
+<p><strong>Dành cho: Team Dev ERP TPE</strong> <strong>Phiên bản: 1.0 —
+Tháng 04/2026</strong></p>
+<hr />
+<h2 id="mục-lục">Mục lục</h2>
+<ol type="1">
+<li>Tổng quan kiến trúc</li>
+<li>Khái niệm cơ bản</li>
+<li>Custom Skills (<code>.skills/</code>)</li>
+<li>Superpowers Skills (plugin)</li>
+<li>Subagents</li>
+<li>So sánh &amp; Kết hợp</li>
+<li>Workflow thực tế</li>
+<li>Danh sách Skills hiện có</li>
+<li>Hướng dẫn tạo Skill mới</li>
+</ol>
+<hr />
+<h2 id="tổng-quan-kiến-trúc">1. Tổng quan kiến trúc</h2>
+<pre><code>┌─────────────────────────────────────────────────┐
+│                  Claude Code                     │
+│                                                  │
+│  ┌──────────────┐    ┌────────────────────────┐  │
+│  │  CLAUDE.md   │    │  Superpowers Plugin    │  │
+│  │  (project)   │    │  (~/.claude/plugins/)  │  │
+│  └──────┬───────┘    └───────────┬────────────┘  │
+│         │                        │               │
+│         ▼                        ▼               │
+│  ┌──────────────┐    ┌────────────────────────┐  │
+│  │  .skills/    │    │  Superpowers Skills    │  │
+│  │  (custom)    │    │  (built-in workflows)  │  │
+│  └──────┬───────┘    └───────────┬────────────┘  │
+│         │                        │               │
+│         └────────┬───────────────┘               │
+│                  ▼                                │
+│         ┌────────────────┐                       │
+│         │   Subagents    │                       │
+│         │  (parallel     │                       │
+│         │   execution)   │                       │
+│         └────────────────┘                       │
+└─────────────────────────────────────────────────┘</code></pre>
+<p><strong>3 lớp chính:</strong></p>
+<ul>
+<li><strong>CLAUDE.md</strong> — Quy tắc project, mapping skills,
+session management</li>
+<li><strong>Custom Skills</strong> (<code>.skills/</code>) — Checklist
+&amp; hướng dẫn riêng cho project ERP TPE</li>
+<li><strong>Superpowers Skills</strong> (plugin) — Workflow chuẩn: TDD,
+debugging, planning, code review…</li>
+<li><strong>Subagents</strong> — Thực thi song song, không chiếm context
+của session chính</li>
+</ul>
+<hr />
+<h2 id="khái-niệm-cơ-bản">2. Khái niệm cơ bản</h2>
+<h3 id="skill-là-gì">Skill là gì?</h3>
+<p>Skill là file <code>SKILL.md</code> chứa hướng dẫn chi tiết cho
+Claude Code biết <strong>cách thực hiện</strong> một loại task cụ thể.
+Khi Claude nhận yêu cầu, nó đọc skill tương ứng rồi follow hướng dẫn bên
+trong.</p>
+<p><strong>Ví dụ:</strong> Khi bạn nói “tạo SRS cho feature X”, Claude:
+1. Quét <code>.skills/</code> → tìm thấy
+<code>srs-documenter/SKILL.md</code> 2. Đọc SKILL.md → biết template,
+quy trình, quy tắc 3. Thực hiện theo đúng hướng dẫn</p>
+<h3 id="subagent-là-gì">Subagent là gì?</h3>
+<p>Subagent là một <strong>phiên Claude riêng biệt</strong> được
+dispatch từ session chính để thực hiện task độc lập. Subagent có context
+riêng, không chiếm context của bạn.</p>
+<p><strong>Ví dụ:</strong> Bạn đang code feature A, muốn review code →
+dispatch subagent code-reviewer → subagent review song song → trả kết
+quả → bạn tiếp tục code.</p>
+<h3 id="so-sánh-nhanh">So sánh nhanh</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Skill</th>
+<th>Subagent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Là gì</td>
+<td>File hướng dẫn (.md)</td>
+<td>Phiên Claude riêng</td>
+</tr>
+<tr>
+<td>Chạy ở đâu</td>
+<td>Trong session hiện tại</td>
+<td>Song song, tách biệt</td>
+</tr>
+<tr>
+<td>Tốn context</td>
+<td>Có (đọc vào context chính)</td>
+<td>Không (context riêng)</td>
+</tr>
+<tr>
+<td>Kết quả</td>
+<td>Claude follow hướng dẫn trực tiếp</td>
+<td>Trả message kết quả về</td>
+</tr>
+<tr>
+<td>Tạo bởi</td>
+<td>Team dev (<code>.skills/</code>)</td>
+<td>Claude Code tự dispatch</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="custom-skills-.skills">3. Custom Skills
+(<code>.skills/</code>)</h2>
+<h3 id="vị-trí">Vị trí</h3>
+<pre><code>hrm/
+├── .skills/
+│   ├── api-documenter/SKILL.md
+│   ├── bug-fixer/SKILL.md
+│   ├── code-reviewer/SKILL.md
+│   ├── export-excel/SKILL.md
+│   ├── feature-scaffolder/SKILL.md
+│   ├── import-excel/SKILL.md
+│   ├── list-page/SKILL.md
+│   ├── print-invoice/SKILL.md
+│   └── srs-documenter/SKILL.md</code></pre>
+<h3 id="cách-hoạt-động">Cách hoạt động</h3>
+<ol type="1">
+<li><strong>CLAUDE.md</strong> chứa quy tắc: “Trước khi thực hiện task,
+quét <code>.skills/</code> → nếu match → đọc SKILL.md”</li>
+<li>Claude nhận yêu cầu → match tên skill → đọc SKILL.md → follow hướng
+dẫn</li>
+<li>SKILL.md chứa: mục đích, khi nào dùng, quy trình, template, quy tắc,
+checklist</li>
+</ol>
+<h3 id="cách-gọi">Cách gọi</h3>
+<pre><code># Tự động (Claude tự nhận diện)
+&quot;Tạo SRS cho feature notify-task-report&quot;
+→ Claude tự match → đọc .skills/srs-documenter/SKILL.md
+
+# Chỉ định rõ
+&quot;Dùng skill bug-fixer để trace lỗi API 500 ở màn giao việc&quot;
+→ Claude đọc .skills/bug-fixer/SKILL.md</code></pre>
+<h3 id="ưu-điểm">Ưu điểm</h3>
+<ul>
+<li>Tùy chỉnh 100% cho project</li>
+<li>Chứa conventions, checklist, template riêng</li>
+<li>Mọi dev trong team đều dùng chung chuẩn</li>
+<li>Dễ mở rộng: thêm thư mục + SKILL.md là xong</li>
+</ul>
+<h3 id="hạn-chế">Hạn chế</h3>
+<ul>
+<li>Đọc vào context chính → tốn token</li>
+<li>Chỉ là hướng dẫn, không phải workflow tự động</li>
+<li>Phải maintain khi project thay đổi</li>
+</ul>
+<hr />
+<h2 id="superpowers-skills-plugin">4. Superpowers Skills (Plugin)</h2>
+<h3 id="vị-trí-1">Vị trí</h3>
+<pre><code>~/.claude/plugins/cache/claude-plugins-official/superpowers/
+└── skills/
+    ├── brainstorming/
+    ├── writing-plans/
+    ├── executing-plans/
+    ├── test-driven-development/
+    ├── systematic-debugging/
+    ├── requesting-code-review/
+    ├── receiving-code-review/
+    ├── subagent-driven-development/
+    ├── dispatching-parallel-agents/
+    ├── verification-before-completion/
+    ├── finishing-a-development-branch/
+    └── ...</code></pre>
+<h3 id="cách-hoạt-động-1">Cách hoạt động</h3>
+<ul>
+<li>Là plugin cài sẵn trong Claude Code, không nằm trong repo
+project</li>
+<li>Cung cấp <strong>workflow chuẩn</strong> cho các hoạt động phát
+triển phần mềm</li>
+<li>Tự động trigger dựa trên context (VD: bắt đầu code → trigger
+brainstorming)</li>
+<li>Có thể gọi bằng tên:
+<code>superpowers:requesting-code-review</code></li>
+</ul>
+<h3 id="danh-sách-superpowers-skills-chính">Danh sách Superpowers Skills
+chính</h3>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 29%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Mục đích</th>
+<th>Khi nào trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>brainstorming</code></td>
+<td>Khám phá yêu cầu, phân tích trước khi code</td>
+<td>Nhận yêu cầu feature mới</td>
+</tr>
+<tr>
+<td><code>writing-plans</code></td>
+<td>Lên kế hoạch implementation</td>
+<td>Có spec/requirements</td>
+</tr>
+<tr>
+<td><code>executing-plans</code></td>
+<td>Thực thi plan từng bước</td>
+<td>Có plan sẵn</td>
+</tr>
+<tr>
+<td><code>test-driven-development</code></td>
+<td>Viết test trước, code sau</td>
+<td>Implement feature/bugfix</td>
+</tr>
+<tr>
+<td><code>systematic-debugging</code></td>
+<td>Debug có hệ thống</td>
+<td>Gặp bug, test fail</td>
+</tr>
+<tr>
+<td><code>requesting-code-review</code></td>
+<td>Gọi reviewer kiểm tra code</td>
+<td>Xong feature, trước merge</td>
+</tr>
+<tr>
+<td><code>receiving-code-review</code></td>
+<td>Xử lý feedback review</td>
+<td>Nhận review feedback</td>
+</tr>
+<tr>
+<td><code>subagent-driven-development</code></td>
+<td>Chia task cho subagents song song</td>
+<td>Nhiều task độc lập</td>
+</tr>
+<tr>
+<td><code>dispatching-parallel-agents</code></td>
+<td>Dispatch nhiều agent cùng lúc</td>
+<td>2+ task không phụ thuộc</td>
+</tr>
+<tr>
+<td><code>verification-before-completion</code></td>
+<td>Verify trước khi claim done</td>
+<td>Sắp commit/merge</td>
+</tr>
+<tr>
+<td><code>finishing-a-development-branch</code></td>
+<td>Hoàn tất branch dev</td>
+<td>Tests pass, sẵn sàng merge</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ưu-điểm-1">Ưu điểm</h3>
+<ul>
+<li>Workflow đã được thiết kế tối ưu</li>
+<li>Tự động trigger, không cần nhớ</li>
+<li>Dispatch subagents song song</li>
+<li>Cập nhật qua plugin, không cần maintain</li>
+</ul>
+<h3 id="hạn-chế-1">Hạn chế</h3>
+<ul>
+<li>Generic, không biết conventions riêng của project</li>
+<li>Không tùy chỉnh được nội dung</li>
+<li>Phụ thuộc vào plugin version</li>
+</ul>
+<hr />
+<h2 id="subagents">5. Subagents</h2>
+<h3 id="các-loại-subagent">Các loại Subagent</h3>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 34%" />
+<col style="width: 44%" />
+</colgroup>
+<thead>
+<tr>
+<th>Type</th>
+<th>Mục đích</th>
+<th>Tools có sẵn</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Explore</code></td>
+<td>Tìm kiếm, đọc code, khám phá codebase</td>
+<td>Read, Grep, Glob (read-only)</td>
+</tr>
+<tr>
+<td><code>Plan</code></td>
+<td>Thiết kế implementation plan</td>
+<td>Read, Grep, Glob (read-only)</td>
+</tr>
+<tr>
+<td><code>general-purpose</code></td>
+<td>Task phức tạp, multi-step</td>
+<td>Tất cả tools</td>
+</tr>
+<tr>
+<td><code>code-reviewer</code></td>
+<td>Review code theo plan &amp; standards</td>
+<td>Tất cả tools</td>
+</tr>
+</tbody>
+</table>
+<h3 id="khi-nào-dùng-subagent">Khi nào dùng Subagent</h3>
+<p><strong>Nên dùng:</strong> - 2+ task độc lập có thể chạy song song -
+Task cần đọc nhiều file (tốn context) → delegate cho subagent - Code
+review → subagent review, bạn tiếp tục code - Explore codebase lớn →
+dispatch 2-3 Explore agents cùng lúc</p>
+<p><strong>Không nên dùng:</strong> - Task đơn giản chỉ cần Grep/Read
+1-2 file - Task phụ thuộc kết quả của task trước - Khi cần user input
+giữa chừng</p>
+<h3 id="ví-dụ-dispatch">Ví dụ dispatch</h3>
+<pre><code># Dispatch 1 agent
+&quot;Dispatch Explore agent tìm tất cả API endpoints trong module Assign&quot;
+
+# Dispatch nhiều agent song song
+&quot;Dispatch 3 agent song song:
+ 1. Explore: tìm code BE liên quan đến feature X
+ 2. Explore: tìm code FE liên quan đến feature X  
+ 3. Plan: thiết kế implementation plan cho feature X&quot;
+
+# Dispatch code reviewer
+&quot;Dispatch code-reviewer: review commits từ abc123 đến def456 
+ theo .skills/code-reviewer/SKILL.md&quot;</code></pre>
+<hr />
+<h2 id="so-sánh-kết-hợp">6. So sánh &amp; Kết hợp</h2>
+<h3 id="bảng-so-sánh-tổng-hợp">Bảng so sánh tổng hợp</h3>
+<table>
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 25%" />
+<col style="width: 36%" />
+<col style="width: 19%" />
+</colgroup>
+<thead>
+<tr>
+<th>Tiêu chí</th>
+<th>Custom Skill</th>
+<th>Superpowers Skill</th>
+<th>Subagent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nằm ở đâu</td>
+<td><code>.skills/</code> trong repo</td>
+<td><code>~/.claude/plugins/</code></td>
+<td>Runtime (tạm thời)</td>
+</tr>
+<tr>
+<td>Tạo bởi</td>
+<td>Team dev</td>
+<td>Plugin superpowers</td>
+<td>Claude tự dispatch</td>
+</tr>
+<tr>
+<td>Tùy chỉnh</td>
+<td>100%</td>
+<td>Không</td>
+<td>Qua prompt</td>
+</tr>
+<tr>
+<td>Scope</td>
+<td>Project-specific</td>
+<td>Generic</td>
+<td>Per-task</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>Đọc vào session chính</td>
+<td>Đọc vào session chính</td>
+<td>Context riêng biệt</td>
+</tr>
+<tr>
+<td>Song song</td>
+<td>Không</td>
+<td>Có (dispatch subagent)</td>
+<td>Có</td>
+</tr>
+<tr>
+<td>Maintain</td>
+<td>Team dev</td>
+<td>Tự động (plugin update)</td>
+<td>Không cần</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cách-kết-hợp-hiệu-quả">Cách kết hợp hiệu quả</h3>
+<pre><code>Superpowers Skill (QUY TRÌNH)
+    │
+    │  dispatch
+    ▼
+Subagent (THỰC THI song song)
+    │
+    │  đọc &amp; follow
+    ▼
+Custom Skill (CHECKLIST project-specific)</code></pre>
+<p><strong>Ví dụ thực tế:</strong></p>
+<pre><code>1. Bạn: &quot;Review code feature notify-task-report&quot;
+
+2. superpowers:requesting-code-review    ← QUY TRÌNH
+   → Hướng dẫn lấy SHA, chuẩn bị context
+
+3. Dispatch subagent code-reviewer       ← THỰC THI
+   → Chạy song song, không chiếm context bạn
+
+4. Subagent đọc .skills/code-reviewer    ← CHECKLIST
+   → Biết check PHP 7.4, Vue 2, V2Base, N+1...
+
+5. Subagent trả kết quả                 ← KẾT QUẢ
+   → Critical: 0, Important: 2, Minor: 3</code></pre>
+<hr />
+<h2 id="workflow-thực-tế-cho-team">7. Workflow thực tế cho Team</h2>
+<h3 id="flow-phát-triển-feature-mới">Flow phát triển feature mới</h3>
+<pre><code>┌──────────────────────────────────────────────────┐
+│  NHẬN YÊU CẦU                                    │
+│  &quot;Thêm tính năng X vào module Assign&quot;            │
+└──────────────────┬───────────────────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────────────────┐
+│  BRAINSTORMING                                    │
+│  superpowers:brainstorming                        │
+│  → Khám phá yêu cầu, hỏi user, phân tích        │
+└──────────────────┬───────────────────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────────────────┐
+│  PLANNING                                         │
+│  superpowers:writing-plans                        │
+│  + .skills/feature-scaffolder (biết file cần tạo)│
+│  → Tạo .plans/[feature]/plan.md + design.md      │
+└──────────────────┬───────────────────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────────────────┐
+│  IMPLEMENT                                        │
+│  superpowers:executing-plans                      │
+│  + .skills/list-page, import-excel... (nếu match)│
+│  → Code từng task, đánh [x] trong plan.md        │
+│                                                   │
+│  Gặp bug? → .skills/bug-fixer                    │
+└──────────────────┬───────────────────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────────────────┐
+│  CODE REVIEW                                      │
+│  superpowers:requesting-code-review (quy trình)   │
+│  → dispatch subagent code-reviewer                │
+│  → subagent đọc .skills/code-reviewer (checklist) │
+│  → fix issues nếu có                              │
+└──────────────────┬───────────────────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────────────────┐
+│  TÀI LIỆU (nếu cần)                             │
+│  .skills/srs-documenter → SRS                     │
+│  .skills/api-documenter → Tài liệu API mobile    │
+└──────────────────┬───────────────────────────────┘
+                   │
+                   ▼
+┌──────────────────────────────────────────────────┐
+│  MERGE                                            │
+│  superpowers:verification-before-completion       │
+│  superpowers:finishing-a-development-branch       │
+│  → Push + Merge                                   │
+└──────────────────────────────────────────────────┘</code></pre>
+<h3 id="các-lệnh-thường-dùng">Các lệnh thường dùng</h3>
+<table>
+<thead>
+<tr>
+<th>Muốn làm gì</th>
+<th>Nói gì</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bắt đầu feature mới</td>
+<td>“Tạo feature [tên] trong module [X]”</td>
+</tr>
+<tr>
+<td>Fix bug</td>
+<td>“Fix lỗi [mô tả], màn [tên]”</td>
+</tr>
+<tr>
+<td>Tạo SRS</td>
+<td>“Tạo SRS cho feature [tên]”</td>
+</tr>
+<tr>
+<td>Tạo tài liệu API</td>
+<td>“Tạo tài liệu API [feature] cho mobile”</td>
+</tr>
+<tr>
+<td>Review code</td>
+<td>“Review code feature [tên]”</td>
+</tr>
+<tr>
+<td>Tạo màn danh sách</td>
+<td>“Tạo màn danh sách [tên] trong module [X]”</td>
+</tr>
+<tr>
+<td>Import Excel</td>
+<td>“Thêm import Excel cho [entity]”</td>
+</tr>
+<tr>
+<td>Scaffold feature</td>
+<td>“Scaffold feature [tên] trong module [X]”</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="danh-sách-skills-hiện-có-trong-project">8. Danh sách Skills hiện
+có trong project</h2>
+<h3 id="custom-skills-.skills-1">Custom Skills
+(<code>.skills/</code>)</h3>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 26%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>Skill</th>
+<th>File</th>
+<th>Mục đích</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API Documenter</td>
+<td><code>.skills/api-documenter/SKILL.md</code></td>
+<td>Tạo tài liệu API cho mobile/team khác</td>
+</tr>
+<tr>
+<td>Bug Fixer</td>
+<td><code>.skills/bug-fixer/SKILL.md</code></td>
+<td>Quy trình debug: trace log → fix đúng layer</td>
+</tr>
+<tr>
+<td>Code Reviewer</td>
+<td><code>.skills/code-reviewer/SKILL.md</code></td>
+<td>Checklist review theo conventions ERP TPE</td>
+</tr>
+<tr>
+<td>Export Excel</td>
+<td><code>.skills/export-excel/SKILL.md</code></td>
+<td>Pattern export Excel</td>
+</tr>
+<tr>
+<td>Feature Scaffolder</td>
+<td><code>.skills/feature-scaffolder/SKILL.md</code></td>
+<td>Tạo bộ khung file cho feature mới</td>
+</tr>
+<tr>
+<td>Import Excel</td>
+<td><code>.skills/import-excel/SKILL.md</code></td>
+<td>Pattern import Excel</td>
+</tr>
+<tr>
+<td>List Page</td>
+<td><code>.skills/list-page/SKILL.md</code></td>
+<td>Quy tắc tạo màn danh sách + phân quyền</td>
+</tr>
+<tr>
+<td>Print Invoice</td>
+<td><code>.skills/print-invoice/SKILL.md</code></td>
+<td>Pattern in phiếu/hóa đơn</td>
+</tr>
+<tr>
+<td>SRS Documenter</td>
+<td><code>.skills/srs-documenter/SKILL.md</code></td>
+<td>Generate tài liệu SRS từ code/requirements</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hướng-dẫn-tạo-skill-mới">9. Hướng dẫn tạo Skill mới</h2>
+<h3 id="bước-1-tạo-thư-mục">Bước 1: Tạo thư mục</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> .skills/<span class="pp">[</span><span class="ss">ten</span><span class="pp">-</span><span class="ss">skill</span><span class="pp">]</span></span></code></pre></div>
+<h3 id="bước-2-viết-skill.md">Bước 2: Viết SKILL.md</h3>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode markdown"><code class="sourceCode markdown"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># [Tên Skill] — ERP TPE</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">## Mục đích</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Skill này giải quyết vấn đề gì?</span><span class="co">]</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="fu">## Khi nào dùng</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Điều kiện 1</span><span class="co">]</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Điều kiện 2</span><span class="co">]</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quy trình</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="fu">### Bước 1: [...]</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="fu">### Bước 2: [...]</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="fu">## Template (nếu có)</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Template output</span><span class="co">]</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="fu">## Quy tắc</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Rule 1</span><span class="co">]</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span><span class="co">[</span><span class="ot">Rule 2</span><span class="co">]</span></span></code></pre></div>
+<h3 id="bước-3-tự-động-nhận-diện">Bước 3: Tự động nhận diện</h3>
+<p>Skill sẽ được Claude tự nhận diện nhờ quy tắc trong CLAUDE.md:</p>
+<blockquote>
+<p>Trước khi thực hiện task, quét <code>.skills/</code> → nếu task khớp
+tên skill → đọc SKILL.md</p>
+</blockquote>
+<h3 id="bước-4-tạo-pr">Bước 4: Tạo PR</h3>
+<p>Theo quy tắc team: &gt; <code>.skills/</code> là tài sản chung — sửa
+qua PR, không tự ý sửa. &gt; Muốn thêm skill mới → tạo PR với SKILL.md
+đầy đủ.</p>
+<h3 id="tips-viết-skill-hiệu-quả">Tips viết Skill hiệu quả</h3>
+<ol type="1">
+<li><strong>Cụ thể cho project</strong> — đừng viết generic, hãy ghi rõ
+file paths, patterns, conventions của ERP TPE</li>
+<li><strong>Có template</strong> — output mẫu giúp Claude generate đúng
+format</li>
+<li><strong>Có checklist</strong> — dễ verify kết quả</li>
+<li><strong>Có quy tắc “Không được”</strong> — tránh sai lầm phổ
+biến</li>
+<li><strong>Tham chiếu docs khác</strong> — link tới
+<code>docs/conventions.md</code>, <code>docs/shared.md</code> khi
+cần</li>
+</ol>
+<hr />
+<p><em>Tài liệu này được tạo bởi Claude Code cho team ERP TPE — Tháng
+04/2026</em></p>
+</body>
+</html>
