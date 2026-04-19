@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>SRS: BOM List — Quản lý danh mục hàng hoá giải pháp</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  @page { size: A4; margin: 15mm 20mm; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; max-width: 900px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 22px; color: #0f172a; border-bottom: 3px solid #16a34a; padding-bottom: 8px; page-break-before: avoid; }
+  h2 { font-size: 17px; color: #0f172a; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-top: 28px; page-break-after: avoid; }
+  h3 { font-size: 14px; color: #334155; margin-top: 18px; page-break-after: avoid; }
+  h4 { font-size: 13px; color: #475569; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 12px; page-break-inside: avoid; }
+  th, td { border: 1px solid #d1d5db; padding: 5px 8px; text-align: left; }
+  th { background: #f8fafc; font-weight: 700; color: #0f172a; }
+  tr:nth-child(even) { background: #fafafa; }
+  code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+  pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 11px; overflow-x: auto; page-break-inside: avoid; }
+  .mermaid { text-align: center; margin: 16px 0; page-break-inside: avoid; }
+  .diagram-title { text-align: center; font-weight: 700; font-size: 13px; color: #374151; margin-bottom: 4px; }
+  .toc { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 24px; margin: 16px 0; }
+  .toc a { color: #2563eb; text-decoration: none; }
+  .toc li { margin: 3px 0; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-orange { background: #ffedd5; color: #9a3412; }
+  .badge-purple { background: #f3e8ff; color: #6b21a8; }
+  .badge-gray { background: #f3f4f6; color: #374151; }
+  .page-break { page-break-before: always; }
+  @media print { body { font-size: 11px; } h1 { font-size: 18px; } h2 { font-size: 14px; } .no-print { display: none; } }
+</style>
+</head>
+<body>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
+
+<h1>SRS: BOM List — Quản lý danh mục hàng hoá giải pháp</h1>
+
+<table>
+<tr><th style="width:120px">Thông tin</th><th>Chi tiết</th></tr>
+<tr><td>Module</td><td>Assign (Quản lý dự án)</td></tr>
+<tr><td>Phiên bản</td><td>1.0</td></tr>
+<tr><td>Ngày tạo</td><td>2026-04-13</td></tr>
+<tr><td>Trạng thái</td><td><span class="badge badge-green">Approved</span></td></tr>
+</table>
+
+<div class="toc">
+<strong>Mục lục</strong>
+<ol>
+<li><a href="#s1">Giới thiệu</a></li>
+<li><a href="#s2">Actors & Permissions</a></li>
+<li><a href="#s3">Sơ đồ Use Case</a></li>
+<li><a href="#s4">Swimlane — Luồng xử lý chính</a></li>
+<li><a href="#s5">Use Cases chi tiết</a></li>
+<li><a href="#s6">Business Rules</a></li>
+<li><a href="#s7">Data Model</a></li>
+<li><a href="#s8">Status Flow</a></li>
+<li><a href="#s9">Approval Level Matrix</a></li>
+<li><a href="#s10">API Specification</a></li>
+<li><a href="#s11">UI Specification</a></li>
+<li><a href="#s12">Non-functional Requirements</a></li>
+<li><a href="#s13">File References</a></li>
+</ol>
+</div>
+
+<!-- ============================================ -->
+<h2 id="s1">1. Giới thiệu</h2>
+
+<h3>1.1. Mục đích</h3>
+<p>BOM List (Bill of Materials) quản lý danh mục hàng hoá/dịch vụ cần thiết cho mỗi giải pháp hoặc hạng mục trong dự án. Hỗ trợ tạo, phân nhóm, tổng hợp BOM từ nhiều hạng mục, xây dựng giá và phê duyệt giá theo quy chế nội bộ.</p>
+
+<h3>1.2. Phạm vi</h3>
+<p><strong>Trong scope:</strong> CRUD BOM List, phân loại Thành phần/Tổng hợp, phân nhóm hàng, Import/Export Excel, gộp BOM con, workflow duyệt BOM, workflow xây dựng + phê duyệt giá 3 cấp, cấu hình ngưỡng, lịch sử phê duyệt, phân quyền theo cấp.</p>
+<p><strong>Ngoài scope:</strong> Quản lý kho, đặt hàng nhà cung cấp, báo giá gửi khách hàng.</p>
+
+<h3>1.3. Thuật ngữ</h3>
+<table>
+<tr><th>Thuật ngữ</th><th>Giải thích</th></tr>
+<tr><td>BOM</td><td>Bill of Materials — Danh mục vật tư / hàng hoá</td></tr>
+<tr><td>BOM Thành phần</td><td>BOM chứa danh sách sản phẩm trực tiếp (type=1)</td></tr>
+<tr><td>BOM Tổng hợp</td><td>BOM gộp từ nhiều BOM con (type=2)</td></tr>
+<tr><td>BOM cấp GP</td><td>BOM tổng hợp gắn trực tiếp giải pháp (không có hạng mục)</td></tr>
+<tr><td>V</td><td>Giá trị đơn hàng = Tổng thành tiền bán (quy đổi VNĐ)</td></tr>
+<tr><td>M</td><td>Tỷ suất lợi nhuận = ((Tổng bán − Tổng nhập) / Tổng nhập) × 100%</td></tr>
+<tr><td>PM</td><td>Project Manager</td></tr>
+<tr><td>TP</td><td>Trưởng phòng</td></tr>
+<tr><td>BGĐ</td><td>Ban giám đốc</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="s2">2. Actors & Permissions</h2>
+
+<table>
+<tr><th>Actor</th><th>Permission</th><th>Mô tả</th></tr>
+<tr><td rowspan="5">Nhân viên</td><td>Xem tất cả danh sách BOM List</td><td>Xem toàn bộ (trừ Đang tạo của người khác)</td></tr>
+<tr><td>Xem DS BOM List theo công ty</td><td>Xem BOM cùng công ty + do mình tạo</td></tr>
+<tr><td>Xem DS BOM List theo phòng ban</td><td>Xem BOM phòng ban quản lý + do mình tạo</td></tr>
+<tr><td>Xem DS BOM List theo bộ phận</td><td>Xem BOM bộ phận quản lý + do mình tạo</td></tr>
+<tr><td>Tạo BOM List</td><td>Tạo mới + sửa BOM (status 1, 2)</td></tr>
+<tr><td>Người làm giá</td><td>Xây dựng giá Bom giải pháp</td><td>Nhập giá nhập/bán, lưu nháp, gửi duyệt</td></tr>
+<tr><td>Trưởng phòng</td><td>TP duyệt giá Bom giải pháp</td><td>Duyệt/từ chối giá cấp 2 (status 9)</td></tr>
+<tr><td>Ban giám đốc</td><td>BGĐ duyệt giá Bom giải pháp</td><td>Duyệt/từ chối giá cấp 3 (status 9, 10)</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s3">3. Sơ đồ Use Case</h2>
+
+<p class="diagram-title">Use Case Diagram — BOM List</p>
+<div class="mermaid">
+graph LR
+    subgraph Actors
+        NV["Nhân viên<br/>(Tạo BOM List)"]
+        PM["PM<br/>(Quản lý dự án)"]
+        NLG["Người làm giá<br/>(Xây dựng giá)"]
+        TP["Trưởng phòng<br/>(Duyệt giá cấp 2)"]
+        BGD["Ban giám đốc<br/>(Duyệt giá cấp 3)"]
+        ADMIN["Admin<br/>(Cấu hình)"]
+    end
+
+    subgraph "BOM List Management"
+        UC01["UC-01: Tạo BOM"]
+        UC02["UC-02: Sửa BOM"]
+        UC03["UC-03: Xoá BOM"]
+        UC04["UC-04: Tạo BOM Tổng hợp"]
+        UC05["UC-05: Xem chi tiết"]
+        UC06["UC-06: Export Excel SP"]
+        UC07["UC-07: Import Excel SP"]
+        UC08["UC-08: Xuất Excel DS"]
+    end
+
+    subgraph "Pricing Workflow"
+        UC09["UC-09: YC xây dựng giá"]
+        UC10["UC-10: Xây dựng giá"]
+        UC11["UC-11: Duyệt giá"]
+        UC12["UC-12: Cấu hình ngưỡng"]
+        UC13["UC-13: Xem lịch sử"]
+    end
+
+    NV --> UC01
+    NV --> UC02
+    NV --> UC03
+    NV --> UC04
+    NV --> UC05
+    NV --> UC06
+    NV --> UC07
+    NV --> UC08
+    PM --> UC09
+    NLG --> UC10
+    TP --> UC11
+    BGD --> UC11
+    ADMIN --> UC12
+    NV --> UC13
+</div>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s4">4. Swimlane — Luồng xử lý chính</h2>
+
+<h3>4.1. Luồng tạo & duyệt BOM</h3>
+<p class="diagram-title">Swimlane — Tạo BOM → Duyệt BOM</p>
+<div class="mermaid">
+sequenceDiagram
+    participant NV as Nhân viên
+    participant HT as Hệ thống
+    participant GP as Hồ sơ GP
+
+    NV->>HT: Tạo BOM (Lưu nháp / Lưu)
+    HT-->>NV: BOM status = Đang tạo (1) / Hoàn thành (2)
+    NV->>HT: Sửa BOM (chỉ status 1, 2)
+    Note over NV,HT: Thêm/sửa/xoá sản phẩm, nhóm hàng
+
+    NV->>HT: Gộp BOM con (nếu Tổng hợp)
+    HT-->>NV: Validate cấu trúc + tiền tệ
+
+    GP->>HT: Hồ sơ GP được duyệt
+    HT-->>HT: BOM chuyển status → Đã duyệt (4)
+</div>
+
+<h3>4.2. Luồng xây dựng giá & phê duyệt</h3>
+<p class="diagram-title">Swimlane — Xây dựng giá → Phê duyệt giá</p>
+<div class="mermaid">
+sequenceDiagram
+    participant PM as PM Giải pháp
+    participant NLG as Người làm giá
+    participant HT as Hệ thống
+    participant TP as Trưởng phòng
+    participant BGD as Ban giám đốc
+
+    PM->>HT: Yêu cầu xây dựng giá
+    HT-->>HT: Status: Đã duyệt (4) → Chờ XD giá (7)
+    HT-->>NLG: Notification: BOM cần xây dựng giá
+
+    NLG->>HT: Mở màn làm giá
+    NLG->>HT: Nhập Giá nhập + Giá bán
+    NLG->>HT: Lưu nháp
+    HT-->>HT: Status → Đang XD giá (8)
+
+    NLG->>HT: Gửi duyệt
+    HT->>HT: Validate giá > 0
+    HT->>HT: Tính V (quy đổi VNĐ) + M (%)
+    HT->>HT: Lookup config → Level = MAX(Lv, Lm)
+
+    alt Cấp 1 (Tự duyệt)
+        HT-->>NLG: Popup: Bạn có thể tự duyệt
+        NLG->>HT: Xác nhận
+        HT-->>HT: Status → Đã duyệt giá (11)
+    else Cấp 2 (Trưởng phòng)
+        HT-->>HT: Status → Chờ TP duyệt (9)
+        HT-->>TP: Notification
+        alt Duyệt
+            TP->>HT: Duyệt giá
+            HT-->>HT: Status → Đã duyệt giá (11)
+            HT-->>NLG: Notification: Đã duyệt
+        else Từ chối
+            TP->>HT: Từ chối + lý do
+            HT-->>HT: Status → Đang XD giá (8)
+            HT-->>NLG: Notification: Bị từ chối
+        end
+    else Cấp 3 (Ban giám đốc)
+        HT-->>HT: Status → Chờ BGĐ duyệt (10)
+        HT-->>BGD: Notification
+        alt Duyệt
+            BGD->>HT: Duyệt giá
+            HT-->>HT: Status → Đã duyệt giá (11)
+            HT-->>NLG: Notification: Đã duyệt
+        else Từ chối
+            BGD->>HT: Từ chối + lý do
+            HT-->>HT: Status → Đang XD giá (8)
+            HT-->>NLG: Notification: Bị từ chối
+        end
+    end
+</div>
+
+<h3>4.3. Luồng tính cấp duyệt</h3>
+<p class="diagram-title">Flowchart — Tính cấp duyệt giá</p>
+<div class="mermaid">
+flowchart TD
+    A["Gửi duyệt giá"] --> B["Tính V = Tổng bán × exchange_rate"]
+    B --> C["Tính M = (Tổng bán - Tổng nhập) / Tổng nhập × 100"]
+    C --> D["Lookup config: Level_V theo V"]
+    D --> E["Lookup config: Level_M theo M"]
+    E --> F["Final Level = MAX(Level_V, Level_M)"]
+    F --> G{Final Level?}
+    G -->|"Cấp 1"| H["Popup tự duyệt → Status 11"]
+    G -->|"Cấp 2"| I["Status → 9 (Chờ TP)<br/>Notify TP"]
+    G -->|"Cấp 3"| J["Status → 10 (Chờ BGĐ)<br/>Notify BGĐ"]
+
+    style H fill:#dcfce7,stroke:#16a34a
+    style I fill:#fef3c7,stroke:#d97706
+    style J fill:#fee2e2,stroke:#dc2626
+</div>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s5">5. Use Cases chi tiết</h2>
+
+<h3>UC-01: Tạo BOM List</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Nhân viên có quyền "Tạo BOM List"</td></tr>
+<tr><td><strong>Precondition</strong></td><td>Dự án TKT + Giải pháp đã tồn tại</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. Vào BOM Giải pháp → Tạo mới<br>2. Nhập: Tên, Dự án, GP, HM (tuỳ chọn), KH, Loại BOM, Tiền tệ<br>3. Thêm sản phẩm (thủ công / ERP / Import Excel)<br>4. Phân nhóm hàng (tuỳ chọn)<br>5. Lưu nháp (status=1) hoặc Lưu (status=2)</td></tr>
+<tr><td><strong>Postcondition</strong></td><td>BOM được tạo với mã BOM-YYYY-NNNNN</td></tr>
+<tr><td><strong>Validation</strong></td><td>Tên unique. Lưu (không nháp): Tên, Dự án, GP, KH bắt buộc</td></tr>
+</table>
+
+<h3>UC-04: Tạo BOM Tổng hợp</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Nhân viên có quyền "Tạo BOM List"</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. Chọn loại BOM = Tổng hợp<br>2. Click "Chọn BL con" → chọn BOM cùng dự án+GP<br>3. Hệ thống gộp sản phẩm vào BOM tổng hợp</td></tr>
+<tr><td><strong>Rules</strong></td><td>Cùng cấu trúc nhóm, cùng tiền tệ, không gộp qty, 1 GP/HM 1 BOM tổng hợp/version. BOM cấp GP chỉ gộp BOM HM status=4</td></tr>
+</table>
+
+<h3>UC-09: Yêu cầu xây dựng giá</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>PM</td></tr>
+<tr><td><strong>Precondition</strong></td><td>BOM tổng hợp cấp GP + status=4 (Đã duyệt)</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>Click "YC xây dựng giá" → confirm → status→7 → notify người làm giá</td></tr>
+</table>
+
+<h3>UC-10: Xây dựng giá</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Người làm giá (quyền Xây dựng giá Bom GP)</td></tr>
+<tr><td><strong>Precondition</strong></td><td>BOM status 7 hoặc 8</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. Mở màn pricing → chỉ sửa Giá nhập + Giá bán<br>2. Footer realtime: Tổng nhập/bán, tỷ suất LN, cấp duyệt dự kiến<br>3a. Lưu nháp → status=8 → redirect DS<br>3b. Gửi duyệt → validate giá>0 → tính level → popup confirm</td></tr>
+<tr><td><strong>Postcondition</strong></td><td>Cấp 1→status=11, Cấp 2→status=9, Cấp 3→status=10</td></tr>
+</table>
+
+<h3>UC-11: Duyệt giá (TP/BGĐ)</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>TP (status 9) / BGĐ (status 9, 10)</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>Duyệt → confirm → status=11 + notify.<br>Từ chối → nhập lý do (bắt buộc) → status=8 + notify</td></tr>
+</table>
+
+<h3>UC-12: Cấu hình ngưỡng duyệt giá</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Admin (quyền cấu hình phân hệ)</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>Sửa ngưỡng V (VNĐ): chỉ sửa "Đến", "Từ" cấp sau auto<br>Sửa ngưỡng M (%): sửa "Từ" cấp 1,2 → "Đến" cấp dưới auto<br>Lưu → ghi audit log</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s6">6. Business Rules</h2>
+
+<table>
+<tr><th style="width:50px">ID</th><th style="width:180px">Rule</th><th>Mô tả</th></tr>
+<tr><td>BR-01</td><td>Mã BOM tự sinh</td><td>Format: BOM-YYYY-NNNNN (auto-increment)</td></tr>
+<tr><td>BR-02</td><td>Tên BOM unique</td><td>Không trùng tên trong toàn hệ thống</td></tr>
+<tr><td>BR-03</td><td>Draft mode</td><td>Lưu nháp (status=1): bỏ required Tên/Dự án/GP/KH</td></tr>
+<tr><td>BR-04</td><td>Chỉ sửa status 1, 2</td><td>BOM ở status khác → không cho sửa</td></tr>
+<tr><td>BR-05</td><td>Chỉ xoá status 1 + người tạo</td><td>Chỉ người tạo + status Đang tạo mới xoá được</td></tr>
+<tr><td>BR-06</td><td>BOM cấp GP = Tổng hợp</td><td>GP có hạng mục con → BOM cấp GP chỉ được loại Tổng hợp</td></tr>
+<tr><td>BR-07</td><td>Unique aggregate/version</td><td>1 GP/HM chỉ có 1 BOM tổng hợp trên cùng 1 version</td></tr>
+<tr><td>BR-08</td><td>Gộp: cùng cấu trúc</td><td>BOM con phải cùng cấu trúc nhóm hàng</td></tr>
+<tr><td>BR-09</td><td>Gộp: không gộp qty</td><td>Sản phẩm trùng giữ nguyên, không cộng số lượng</td></tr>
+<tr><td>BR-10</td><td>Gộp: cùng tiền tệ</td><td>BOM con phải cùng loại tiền tệ với BOM tổng hợp</td></tr>
+<tr><td>BR-11</td><td>BOM GP chọn BOM HM Đã duyệt</td><td>Chỉ gộp BOM tổng hợp hạng mục status=4</td></tr>
+<tr><td>BR-12</td><td>Ẩn BOM Đang tạo</td><td>Status=1 chỉ hiện cho người tạo trên danh sách</td></tr>
+<tr><td>BR-13</td><td>Cấp duyệt = MAX(Lv, Lm)</td><td>Final level = max giữa level giá trị ĐH và level tỷ suất LN</td></tr>
+<tr><td>BR-14</td><td>Quy đổi VNĐ</td><td>V = Tổng bán × exchange_rate khi BOM dùng tiền tệ khác VND</td></tr>
+<tr><td>BR-15</td><td>M% không quy đổi</td><td>Tỷ suất LN là tỷ lệ, không phụ thuộc tiền tệ</td></tr>
+<tr><td>BR-16</td><td>Validate giá > 0</td><td>Tất cả SP phải có giá nhập + giá bán > 0 trước khi gửi duyệt</td></tr>
+<tr><td>BR-17</td><td>Từ chối bắt buộc lý do</td><td>Khi từ chối giá phải nhập lý do</td></tr>
+<tr><td>BR-18</td><td>Từ chối → Đang XD giá</td><td>BOM bị từ chối quay về status=8 để sửa lại</td></tr>
+<tr><td>BR-19</td><td>Dịch vụ không có con</td><td>Sản phẩm loại Dịch vụ không được thêm hàng con</td></tr>
+<tr><td>BR-20</td><td>Dịch vụ không có Model/Brand/Origin</td><td>Sản phẩm loại Dịch vụ clear 3 trường này</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s7">7. Data Model</h2>
+
+<h3>7.1. Entity Relationship</h3>
+<div class="mermaid">
+erDiagram
+    ProspectiveProject ||--o{ BomList : has
+    Solution ||--o{ BomList : has
+    SolutionModule ||--o{ BomList : has
+    Customer ||--o{ BomList : has
+    TpCurrency ||--o{ BomList : has
+
+    BomList ||--o{ BomListProduct : contains
+    BomList ||--o{ BomListGroup : groups
+    BomList ||--o{ BomListRelation : "parent of"
+    BomList ||--o{ BomPricingHistory : logs
+
+    BomListGroup ||--o{ BomListProduct : categorizes
+    BomPriceApprovalConfig ||--o{ BomPriceApprovalConfigLog : audits
+
+    BomList {
+        bigint id PK
+        string name UK
+        string code UK
+        int prospective_project_id FK
+        int solution_id FK
+        int solution_module_id FK
+        int customer_id FK
+        tinyint status
+        int bom_list_type
+        bigint currency_id FK
+        bigint price_requested_by FK
+        bigint price_approved_by FK
+        tinyint price_approval_level
+    }
+
+    BomListProduct {
+        bigint id PK
+        int bom_list_id FK
+        int bom_list_group_id FK
+        int parent_id FK
+        tinyint product_type
+        float estimated_price
+        float quoted_price
+        float qty_needed
+    }
+
+    BomListGroup {
+        bigint id PK
+        int bom_list_id FK
+        string name
+        int sort_order
+    }
+
+    BomPriceApprovalConfig {
+        bigint id PK
+        enum type
+        tinyint level
+        decimal min_value
+        decimal max_value
+    }
+
+    BomPricingHistory {
+        bigint id PK
+        bigint bom_list_id FK
+        string action
+        tinyint from_status
+        tinyint to_status
+        tinyint approval_level
+        text note
+    }
+</div>
+
+<h3>7.2. Enum Values</h3>
+
+<h4>BOM Status (11 trạng thái)</h4>
+<table>
+<tr><th>Value</th><th>Constant</th><th>Tên</th><th>Màu</th></tr>
+<tr><td>1</td><td>STATUS_DANG_TAO</td><td>Đang tạo</td><td style="background:#FF9800;color:#fff">#FF9800</td></tr>
+<tr><td>2</td><td>STATUS_HOAN_THANH</td><td>Hoàn thành</td><td style="background:#4CAF50;color:#fff">#4CAF50</td></tr>
+<tr><td>3</td><td>STATUS_CHO_DUYET</td><td>Chờ duyệt</td><td style="background:#2196F3;color:#fff">#2196F3</td></tr>
+<tr><td>4</td><td>STATUS_DA_DUYET</td><td>Đã duyệt</td><td style="background:#9C27B0;color:#fff">#9C27B0</td></tr>
+<tr><td>5</td><td>STATUS_DA_DUOC_TONG_HOP</td><td>Đã được tổng hợp</td><td style="background:#9E9E9E;color:#fff">#9E9E9E</td></tr>
+<tr><td>6</td><td>STATUS_KHONG_DUYET</td><td>Không duyệt</td><td style="background:#F44336;color:#fff">#F44336</td></tr>
+<tr><td>7</td><td>STATUS_CHO_XAY_DUNG_GIA</td><td>Chờ xây dựng giá</td><td style="background:#FF9800;color:#fff">#FF9800</td></tr>
+<tr><td>8</td><td>STATUS_DANG_XAY_DUNG_GIA</td><td>Đang xây dựng giá</td><td style="background:#03A9F4;color:#fff">#03A9F4</td></tr>
+<tr><td>9</td><td>STATUS_CHO_TP_DUYET_GIA</td><td>Chờ TP duyệt giá</td><td style="background:#673AB7;color:#fff">#673AB7</td></tr>
+<tr><td>10</td><td>STATUS_CHO_BGD_DUYET_GIA</td><td>Chờ BGĐ duyệt giá</td><td style="background:#E91E63;color:#fff">#E91E63</td></tr>
+<tr><td>11</td><td>STATUS_DA_DUYET_GIA</td><td>Đã duyệt giá</td><td style="background:#009688;color:#fff">#009688</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s8">8. Status Flow</h2>
+
+<p class="diagram-title">State Machine — BOM List Status</p>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> DangTao : Tạo mới
+    DangTao --> HoanThanh : Lưu BOM
+    HoanThanh --> DangTao : Sửa + Lưu nháp
+
+    HoanThanh --> ChoDuyet : Trình duyệt GP
+    ChoDuyet --> DaDuyet : Duyệt
+    ChoDuyet --> KhongDuyet : Không duyệt
+
+    DaDuyet --> DaDuocTongHop : Gộp vào BOM GP
+    DaDuyet --> ChoXDGia : YC xây dựng giá
+
+    ChoXDGia --> DangXDGia : Lưu nháp giá
+    DangXDGia --> DangXDGia : Lưu nháp
+    DangXDGia --> ChoTPDuyet : Gửi duyệt (cấp 2)
+    DangXDGia --> ChoBGDDuyet : Gửi duyệt (cấp 3)
+    DangXDGia --> DaDuyetGia : Tự duyệt (cấp 1)
+    ChoXDGia --> DaDuyetGia : Tự duyệt (cấp 1)
+
+    ChoTPDuyet --> DaDuyetGia : TP duyệt
+    ChoTPDuyet --> DangXDGia : TP từ chối
+    ChoBGDDuyet --> DaDuyetGia : BGĐ duyệt
+    ChoBGDDuyet --> DangXDGia : BGĐ từ chối
+
+    state "1 - Đang tạo" as DangTao
+    state "2 - Hoàn thành" as HoanThanh
+    state "3 - Chờ duyệt" as ChoDuyet
+    state "4 - Đã duyệt" as DaDuyet
+    state "5 - Đã tổng hợp" as DaDuocTongHop
+    state "6 - Không duyệt" as KhongDuyet
+    state "7 - Chờ XD giá" as ChoXDGia
+    state "8 - Đang XD giá" as DangXDGia
+    state "9 - Chờ TP duyệt" as ChoTPDuyet
+    state "10 - Chờ BGĐ duyệt" as ChoBGDDuyet
+    state "11 - Đã duyệt giá" as DaDuyetGia
+</div>
+
+<!-- ============================================ -->
+<h2 id="s9">9. Approval Level Matrix</h2>
+
+<h3>Công thức</h3>
+<pre>V = SUM(quoted_price × qty_needed) × exchange_rate    (quy đổi VNĐ)
+M = ((Tổng bán − Tổng nhập) / Tổng nhập) × 100%
+Final_Level = MAX(Level_V, Level_M)</pre>
+
+<h3>Ma trận quyết định (mặc định)</h3>
+<table>
+<tr><th></th><th>M ≥ 20% (L1)</th><th>10% ≤ M &lt; 20% (L2)</th><th>M &lt; 10% (L3)</th></tr>
+<tr><th>V ≤ 1 tỷ (L1)</th><td style="background:#dcfce7"><strong>Cấp 1</strong> — Tự duyệt</td><td style="background:#fef3c7"><strong>Cấp 2</strong> — TP</td><td style="background:#fee2e2"><strong>Cấp 3</strong> — BGĐ</td></tr>
+<tr><th>1 tỷ &lt; V ≤ 20 tỷ (L2)</th><td style="background:#fef3c7"><strong>Cấp 2</strong> — TP</td><td style="background:#fef3c7"><strong>Cấp 2</strong> — TP</td><td style="background:#fee2e2"><strong>Cấp 3</strong> — BGĐ</td></tr>
+<tr><th>V &gt; 20 tỷ (L3)</th><td style="background:#fee2e2"><strong>Cấp 3</strong> — BGĐ</td><td style="background:#fee2e2"><strong>Cấp 3</strong> — BGĐ</td><td style="background:#fee2e2"><strong>Cấp 3</strong> — BGĐ</td></tr>
+</table>
+<p><em>Các ngưỡng có thể cấu hình tại Danh mục & Cấu hình → Cấu hình duyệt giá BOM.</em></p>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s10">10. API Specification</h2>
+
+<p>Base URL: <code>/api/v1/assign</code> | Auth: Bearer Token (JWT)</p>
+
+<h3>10.1. BOM List CRUD</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Mô tả</th></tr>
+<tr><td>GET</td><td>/bom-lists</td><td>Danh sách BOM (paginated + filter)</td></tr>
+<tr><td>GET</td><td>/bom-lists/getAll</td><td>Tất cả BOM (dropdown)</td></tr>
+<tr><td>POST</td><td>/bom-lists</td><td>Tạo BOM</td></tr>
+<tr><td>GET</td><td>/bom-lists/{id}</td><td>Chi tiết BOM</td></tr>
+<tr><td>PUT</td><td>/bom-lists/{id}</td><td>Cập nhật BOM (status 1, 2)</td></tr>
+<tr><td>DELETE</td><td>/bom-lists/{id}</td><td>Xoá BOM</td></tr>
+</table>
+
+<h3>10.2. Import / Export</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Mô tả</th></tr>
+<tr><td>GET</td><td>/bom-lists/export-list</td><td>Xuất Excel danh sách</td></tr>
+<tr><td>GET</td><td>/bom-lists/{id}/export</td><td>Xuất Excel sản phẩm BOM</td></tr>
+<tr><td>GET</td><td>/bom-lists/import-template</td><td>Tải template import</td></tr>
+<tr><td>POST</td><td>/bom-lists/{id}/import</td><td>Import sản phẩm từ Excel</td></tr>
+</table>
+
+<h3>10.3. Pricing Workflow</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Mô tả</th></tr>
+<tr><td>POST</td><td>/bom-lists/{id}/request-pricing</td><td>YC xây dựng giá (4→7)</td></tr>
+<tr><td>PUT</td><td>/bom-lists/{id}/save-pricing-draft</td><td>Lưu nháp giá (→8)</td></tr>
+<tr><td>GET</td><td>/bom-lists/{id}/calculate-pricing-level</td><td>Tính cấp duyệt (không đổi status)</td></tr>
+<tr><td>POST</td><td>/bom-lists/{id}/submit-pricing</td><td>Gửi duyệt (→9/10)</td></tr>
+<tr><td>POST</td><td>/bom-lists/{id}/self-approve-pricing</td><td>Tự duyệt cấp 1 (→11)</td></tr>
+<tr><td>POST</td><td>/bom-lists/{id}/approve-pricing</td><td>TP/BGĐ duyệt (→11)</td></tr>
+<tr><td>POST</td><td>/bom-lists/{id}/reject-pricing</td><td>Từ chối (→8) + reason</td></tr>
+<tr><td>GET</td><td>/bom-lists/{id}/pricing-history</td><td>Lịch sử phê duyệt</td></tr>
+<tr><td>GET</td><td>/bom-lists/pending-pricing</td><td>DS BOM chờ XD giá (7,8)</td></tr>
+<tr><td>GET</td><td>/bom-lists/pending-price-approval</td><td>DS BOM chờ duyệt giá (9,10)</td></tr>
+</table>
+
+<h3>10.4. Config</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Mô tả</th></tr>
+<tr><td>GET</td><td>/bom-price-approval-configs</td><td>Danh sách 6 rows config</td></tr>
+<tr><td>PUT</td><td>/bom-price-approval-configs/{id}</td><td>Cập nhật ngưỡng + audit log</td></tr>
+<tr><td>GET</td><td>/bom-price-approval-configs/logs</td><td>Lịch sử thay đổi config</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s11">11. UI Specification</h2>
+
+<h3>11.1. Danh sách BOM (<code>/assign/bom-list</code>)</h3>
+<p>Filter: Quick search + Advanced (Công ty→PB→BP, Dự án→GP→HM, KH, Người tạo, Trạng thái, Loại BOM, Ngày tạo)</p>
+<p>Cột: STT | Mã•Tên BOM | Dự án TKT | Giải pháp | Hạng mục | Version GP | Version HM | Khách hàng | Loại BOM | Trạng thái | Người tạo | Ngày tạo | Cập nhật</p>
+<p>Row actions (hover): Xem | Sửa | Export | YC xây dựng giá | Lịch sử | Xoá</p>
+
+<h3>11.2. Tạo/Sửa BOM (<code>/assign/bom-list/add</code>, <code>/:id/edit</code>)</h3>
+<p>BomBuilderEditor: InfoCard (thông tin) + TableCard (bảng SP hàng cha/con + nhóm) + FooterBar</p>
+
+<h3>11.3. Chi tiết BOM (<code>/assign/bom-list/:id</code>)</h3>
+<p>BomBuilderEditor viewOnly. Footer: Quay lại | Sửa (status 1,2) | Xuất Excel | YC XD giá (status 4, tổng hợp GP) | Duyệt/Từ chối giá (status 9,10 + quyền) | Lịch sử</p>
+
+<h3>11.4. Xây dựng giá (<code>/assign/bom-list/:id/pricing</code>)</h3>
+<p>BomBuilderEditor pricingMode: chỉ sửa Giá nhập + Giá bán. Thu gọn card thông tin. Footer realtime: Tổng nhập | Tổng bán | Quy đổi VNĐ | Tỷ suất LN% | Cấp duyệt dự kiến | Quay lại | Lưu nháp | Gửi duyệt</p>
+
+<h3>11.5. BOM chờ XD giá (<code>/assign/bom-list/pending-pricing</code>)</h3>
+<p>Menu: Phê duyệt → BOM chờ xây dựng giá. Quyền: Xây dựng giá Bom GP</p>
+<p>Cột: STT | Mã•Tên | Dự án | GP | Version GP | Phòng GP | PM | Phòng KD | NV KD | KH | Người YC | Ngày YC | Trạng thái</p>
+
+<h3>11.6. BOM chờ duyệt giá (<code>/assign/bom-list/pending-price-approval</code>)</h3>
+<p>Menu: Phê duyệt → BOM chờ duyệt giá. Quyền: TP/BGĐ duyệt giá</p>
+<p>Row actions: Xem | Duyệt (xanh) | Từ chối (đỏ) | Lịch sử</p>
+
+<h3>11.7. Cấu hình duyệt giá (<code>/assign/settings/price-approval</code>)</h3>
+<p>2 section: Giá trị ĐH (VNĐ, V2BaseCurrencyInput) + Tỷ suất LN (%). Audit log timeline.</p>
+
+<!-- ============================================ -->
+<h2 id="s12">12. Non-functional Requirements</h2>
+<table>
+<tr><th>Hạng mục</th><th>Chi tiết</th></tr>
+<tr><td>Tech Stack</td><td>PHP 7.4, Laravel 8, Nuxt 2 (Vue 2), MySQL, Redis</td></tr>
+<tr><td>Auth</td><td>JWT (tymon/jwt-auth)</td></tr>
+<tr><td>Permission</td><td>spatie/laravel-permission</td></tr>
+<tr><td>Excel</td><td>maatwebsite/excel (FromView + WithEvents)</td></tr>
+<tr><td>Notification</td><td>Database + Broadcast (Redis publish + bell icon)</td></tr>
+<tr><td>Browser</td><td>Chrome, Firefox, Safari, Edge</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="s13">13. File References</h2>
+<table>
+<tr><th>Layer</th><th>File path</th></tr>
+<tr><td>Migration</td><td><code>database/migrations/2026_03_18_*</code> ~ <code>2026_04_13_*</code> (12 files)</td></tr>
+<tr><td>Entity</td><td><code>Modules/Assign/Entities/BomList.php</code>, <code>BomListProduct.php</code>, <code>BomListGroup.php</code>, <code>BomListRelation.php</code>, <code>BomPriceApprovalConfig.php</code>, <code>BomPriceApprovalConfigLog.php</code>, <code>BomPricingHistory.php</code></td></tr>
+<tr><td>Controller</td><td><code>Modules/Assign/Http/Controllers/Api/V1/BomListController.php</code>, <code>BomPriceApprovalConfigController.php</code></td></tr>
+<tr><td>Service</td><td><code>Modules/Assign/Services/BomListService.php</code>, <code>BomPriceApprovalConfigService.php</code></td></tr>
+<tr><td>Routes</td><td><code>Modules/Assign/Routes/api.php</code></td></tr>
+<tr><td>FE Pages</td><td><code>pages/assign/bom-list/index.vue</code>, <code>add.vue</code>, <code>_id/edit.vue</code>, <code>_id/index.vue</code>, <code>_id/pricing.vue</code>, <code>pending-pricing/</code>, <code>pending-price-approval/</code></td></tr>
+<tr><td>FE Config</td><td><code>pages/assign/settings/price-approval/index.vue</code></td></tr>
+<tr><td>Components</td><td><code>BomBuilderEditor.vue</code>, <code>BomBuilderTableCard.vue</code>, <code>BomBuilderInfoCard.vue</code>, <code>BomPricingHistoryModal.vue</code></td></tr>
+</table>
+
+</body>
+</html>

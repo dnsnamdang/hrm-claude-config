@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Luồng báo giá — Từ Yêu cầu xây dựng giá đến Duyệt báo giá</title>
+<style>
+    @page { size: A4; margin: 12mm 10mm; }
+    * { box-sizing: border-box; }
+    body {
+        font-family: -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+        font-size: 11px;
+        color: #333;
+        margin: 0;
+        padding: 0;
+    }
+    h1 {
+        font-size: 18px;
+        border-bottom: 2px solid #2c5aa0;
+        padding-bottom: 6px;
+        margin: 0 0 14px 0;
+        color: #2c5aa0;
+    }
+    h2 {
+        font-size: 14px;
+        background: #f0f4fa;
+        border-left: 4px solid #2c5aa0;
+        padding: 6px 10px;
+        margin: 18px 0 10px 0;
+        color: #2c5aa0;
+    }
+    h3 {
+        font-size: 12px;
+        margin: 12px 0 6px 0;
+        color: #555;
+    }
+    p { margin: 6px 0; line-height: 1.5; }
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        background: #f8f9fa;
+        padding: 8px 10px;
+        border-radius: 4px;
+        margin-bottom: 14px;
+        font-size: 10.5px;
+    }
+    .legend .role {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .dot-kd { background: #10b981; }
+    .dot-nlg { background: #3b82f6; }
+    .dot-tp { background: #a855f7; }
+    .dot-bgd { background: #ef4444; }
+
+    /* Flow container */
+    .flow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        margin: 10px 0;
+    }
+    .node {
+        background: #fff;
+        border: 1.5px solid #cbd5e0;
+        border-radius: 6px;
+        padding: 8px 14px;
+        min-width: 280px;
+        max-width: 520px;
+        text-align: center;
+    }
+    .node .title {
+        font-weight: bold;
+        font-size: 11.5px;
+    }
+    .node .status {
+        font-size: 9.5px;
+        color: #666;
+        margin-top: 2px;
+    }
+    .node .actor {
+        font-size: 9.5px;
+        margin-top: 4px;
+        font-style: italic;
+    }
+    .node.n-kd { border-color: #10b981; background: #ecfdf5; }
+    .node.n-nlg { border-color: #3b82f6; background: #eff6ff; }
+    .node.n-tp { border-color: #a855f7; background: #faf5ff; }
+    .node.n-bgd { border-color: #ef4444; background: #fef2f2; }
+    .node.n-system { border-color: #6b7280; background: #f9fafb; border-style: dashed; }
+    .node.n-done { border-color: #059669; background: #d1fae5; font-weight: bold; }
+    .node.n-reject { border-color: #dc2626; background: #fee2e2; }
+
+    .arrow {
+        color: #6b7280;
+        font-size: 18px;
+        line-height: 1;
+        margin: 2px 0;
+    }
+    .arrow-label {
+        font-size: 10px;
+        color: #4b5563;
+        margin: -2px 0 2px 0;
+        font-style: italic;
+    }
+
+    /* Branching */
+    .branch {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        width: 100%;
+        margin: 6px 0;
+    }
+    .branch > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .notify {
+        font-size: 10px;
+        color: #d97706;
+        margin-top: -4px;
+        padding: 2px 8px;
+        background: #fef3c7;
+        border-radius: 10px;
+        display: inline-block;
+    }
+
+    table.spec {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 10.5px;
+        margin: 8px 0 14px 0;
+    }
+    table.spec th, table.spec td {
+        border: 1px solid #e5e7eb;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+    }
+    table.spec th {
+        background: #f3f4f6;
+        font-weight: 600;
+    }
+
+    .page-break { page-break-before: always; }
+    .note {
+        background: #fffbeb;
+        border-left: 3px solid #f59e0b;
+        padding: 8px 10px;
+        margin: 10px 0;
+        font-size: 10.5px;
+    }
+    footer {
+        margin-top: 20px;
+        padding-top: 8px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 9.5px;
+        color: #6b7280;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<h1>Luồng báo giá — Từ yêu cầu xây dựng giá đến duyệt báo giá</h1>
+
+<div class="legend">
+    <div class="role"><span class="dot dot-kd"></span> NV KD — Nhân viên Kinh doanh (phụ trách dự án)</div>
+    <div class="role"><span class="dot dot-nlg"></span> NLG — Người làm giá (quyền "Xây dựng giá Bom giải pháp")</div>
+    <div class="role"><span class="dot dot-tp"></span> TP — Trưởng phòng (quyền duyệt giá TP)</div>
+    <div class="role"><span class="dot dot-bgd"></span> BGĐ — Ban giám đốc (quyền duyệt giá BGĐ)</div>
+</div>
+
+<h2>Phase 1 — Yêu cầu xây dựng giá (Pricing Request)</h2>
+
+<div class="flow">
+    <div class="node n-kd">
+        <div class="title">[1] Đang tạo YCBG</div>
+        <div class="status">pricing_requests.status = 1</div>
+        <div class="actor">NV KD điền form: BOM, deadline, điều kiện giao hàng / bảo hành / thanh toán, ghi chú, file đính kèm</div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="arrow-label">NV KD bấm "Lưu và gửi"</div>
+
+    <div class="node n-nlg">
+        <div class="title">[2] Chờ XD giá</div>
+        <div class="status">status = 2 · sent_at = now()</div>
+        <div class="actor">Chờ NLG tiếp nhận</div>
+    </div>
+    <span class="notify">🔔 Notify tất cả user có quyền "Xây dựng giá Bom giải pháp"</span>
+
+    <div class="arrow">↓</div>
+    <div class="arrow-label">NLG bấm "Tạo báo giá" (DB transaction race-safe: ai click trước thành NLG)</div>
+
+    <div class="node n-nlg">
+        <div class="title">[3] Đang XD giá</div>
+        <div class="status">status = 3</div>
+        <div class="actor">Quotation (status=1) được sinh, snapshot đầy đủ KH + 4 field thương mại từ YCBG + project</div>
+    </div>
+
+    <div class="arrow">↓</div>
+    <div class="arrow-label">Khi Quotation chuyển sang status=4</div>
+
+    <div class="node n-done">
+        <div class="title">[4] Đã có báo giá</div>
+        <div class="status">status = 4 (final)</div>
+        <div class="actor">NV KD thấy báo giá trong tab Báo giá ở dự án</div>
+    </div>
+    <span class="notify">🔔 Notify NV KD</span>
+</div>
+
+<div class="note">
+    <b>Snapshot khách hàng:</b> tại bước [3], BE chụp <code>customer_name, customer_tax_code, customer_address, customer_contact_name, customer_contact_phone</code> từ <code>prospective_projects</code>. Giá trị này cố định trong <code>quotations</code> không thay đổi khi project update sau này.
+</div>
+
+<div class="note">
+    <b>Race condition:</b> Nếu 2 NLG cùng bấm "Tạo báo giá" trên cùng YCBG status=2, DB dùng <code>SELECT ... FOR UPDATE</code> → user thứ 2 nhận 409 "Yêu cầu này đã được X tiếp nhận".
+</div>
+
+<div class="page-break"></div>
+
+<h2>Phase 2 — Làm giá & duyệt báo giá (Quotation)</h2>
+
+<div class="flow">
+    <div class="node n-nlg">
+        <div class="title">[1] Đang tạo — NLG làm giá</div>
+        <div class="status">quotations.status = 1</div>
+        <div class="actor">NLG nhập giá nhập / giá bán / VAT% cho từng sản phẩm. Có toolbar "Áp VAT đồng loạt" + soft-prompt lần đầu. Row TỔNG cảnh báo LN đỏ/xanh theo mức sàn config.</div>
+    </div>
+
+    <div class="arrow">↓</div>
+    <div class="arrow-label">NLG bấm "Gửi duyệt" → BE <code>calculateLevel(V, M)</code></div>
+
+    <div class="node n-system">
+        <div class="title">calculateLevel(V, M)</div>
+        <div class="status">V = Tổng bán × tỷ giá (VND) · M = margin % (trước VAT)</div>
+        <div class="actor">Lookup <code>bom_price_approval_configs</code> → levelV + levelM → cấp duyệt = MAX</div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <div class="branch">
+        <div>
+            <div class="node n-nlg">
+                <div class="title">Cấp 1</div>
+                <div class="status">V &amp; M thấp</div>
+                <div class="actor">NLG tự duyệt</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="arrow-label">Popup "Xác nhận duyệt"</div>
+            <div class="arrow">↓</div>
+        </div>
+        <div>
+            <div class="node n-tp">
+                <div class="title">Cấp 2</div>
+                <div class="status">V hoặc M trung bình</div>
+                <div class="actor">TP duyệt 1 bước</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-system">
+                <div class="title">[2] Chờ TP</div>
+                <div class="status">status = 2 · submitted_at = now()</div>
+            </div>
+            <span class="notify" style="margin-top:2px">🔔 Notify TP</span>
+            <div class="arrow">↓</div>
+            <div class="arrow-label">TP bấm "Duyệt"</div>
+        </div>
+        <div>
+            <div class="node n-bgd">
+                <div class="title">Cấp 3</div>
+                <div class="status">V &amp; M cao</div>
+                <div class="actor">TP duyệt bước 1, BGĐ duyệt bước 2</div>
+            </div>
+            <div class="arrow">↓</div>
+            <div class="node n-system">
+                <div class="title">[2] Chờ TP</div>
+                <div class="status">status = 2</div>
+            </div>
+            <span class="notify" style="margin-top:2px">🔔 Notify TP</span>
+            <div class="arrow">↓</div>
+            <div class="arrow-label">TP bấm "Duyệt &amp; chuyển BGĐ"</div>
+            <div class="arrow">↓</div>
+            <div class="node n-system">
+                <div class="title">[3] Chờ BGĐ</div>
+                <div class="status">status = 3 · tp_approved_at = now()</div>
+            </div>
+            <span class="notify" style="margin-top:2px">🔔 Notify BGĐ</span>
+            <div class="arrow">↓</div>
+            <div class="arrow-label">BGĐ bấm "Duyệt"</div>
+        </div>
+    </div>
+
+    <div class="arrow">↓</div>
+
+    <div class="node n-done">
+        <div class="title">[4] Đã duyệt</div>
+        <div class="status">status = 4 · approved_at = now()</div>
+        <div class="actor">Quotation bất biến (readonly). Tự động cập nhật PricingRequest → status=4.</div>
+    </div>
+    <span class="notify">🔔 Notify người tạo BG + NV KD dự án + users quyền TP</span>
+</div>
+
+<h3>Nhánh từ chối (Reject)</h3>
+<div class="flow">
+    <div class="node n-system" style="min-width:340px">
+        <div class="title">[2] Chờ TP — hoặc — [3] Chờ BGĐ</div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="arrow-label">Từ chối + nhập lý do (required, max 500 chars)</div>
+    <div class="node n-reject">
+        <div class="title">[1] Đang tạo (quay lại)</div>
+        <div class="status">status = 1 · rejected_reason saved · clear submitted_at + tp_approved_* + approved_*</div>
+        <div class="actor">NLG điều chỉnh giá, gửi duyệt lại</div>
+    </div>
+    <span class="notify">🔔 Notify NLG (nếu BGĐ reject: notify NLG + TP)</span>
+</div>
+
+<h3>Ghi chú kinh doanh (Sales note) — sau khi báo giá duyệt</h3>
+<div class="flow">
+    <div class="node n-kd" style="min-width:380px">
+        <div class="title">NV KD điền <code>sales_note</code></div>
+        <div class="status">Chỉ enable khi status = 4 và project.sale_id = auth user</div>
+        <div class="actor">Ghi chú đàm phán với khách, không ảnh hưởng số liệu báo giá</div>
+    </div>
+</div>
+
+<div class="page-break"></div>
+
+<h2>Bảng tham chiếu — Trạng thái + Tác nhân + Quyền</h2>
+
+<table class="spec">
+<thead>
+<tr>
+    <th style="width:5%">#</th>
+    <th style="width:22%">Trạng thái (PricingRequest)</th>
+    <th style="width:22%">Trạng thái (Quotation)</th>
+    <th style="width:20%">Tác nhân chính</th>
+    <th>Hành động / Notify</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td>1</td>
+    <td>1 — Đang tạo</td>
+    <td>—</td>
+    <td>NV KD</td>
+    <td>Điền form YCBG, lưu nháp hoặc gửi. Huỷ được khi status=1.</td>
+</tr>
+<tr>
+    <td>2</td>
+    <td>2 — Chờ XD giá</td>
+    <td>—</td>
+    <td>NLG (chờ tiếp nhận)</td>
+    <td>🔔 Notify tất cả NLG. NLG mở YCBG → bấm "Tạo báo giá".</td>
+</tr>
+<tr>
+    <td>3</td>
+    <td>3 — Đang XD giá</td>
+    <td>1 — Đang tạo</td>
+    <td>NLG</td>
+    <td>Làm giá: giá nhập, giá bán, VAT%. Toolbar "Áp VAT đồng loạt". Soft-prompt nhập VAT lần đầu.</td>
+</tr>
+<tr>
+    <td>4</td>
+    <td>3 — Đang XD giá</td>
+    <td>2 — Chờ TP</td>
+    <td>TP</td>
+    <td>🔔 Notify TP. TP xem báo giá → "Duyệt" (cấp 2) hoặc "Duyệt &amp; chuyển BGĐ" (cấp 3) hoặc "Từ chối".</td>
+</tr>
+<tr>
+    <td>5</td>
+    <td>3 — Đang XD giá</td>
+    <td>3 — Chờ BGĐ</td>
+    <td>BGĐ</td>
+    <td>🔔 Notify BGĐ. BGĐ duyệt cuối cùng hoặc từ chối (quay về status=1 cho NLG).</td>
+</tr>
+<tr>
+    <td>6</td>
+    <td>4 — Đã có báo giá</td>
+    <td>4 — Đã duyệt</td>
+    <td>NV KD</td>
+    <td>🔔 Notify NV KD + người tạo + TP. NV KD thấy báo giá trong tab dự án, có thể sửa <code>sales_note</code>. Xuất Excel báo giá.</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Quyết định cấp duyệt — Logic <code>calculateLevel</code></h2>
+
+<table class="spec">
+<thead>
+<tr>
+    <th style="width:10%">Cấp</th>
+    <th>Điều kiện (ngưỡng config <code>bom_price_approval_configs</code>)</th>
+    <th>Quy trình duyệt</th>
+    <th>Số bước</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+    <td><b>1</b></td>
+    <td>V &amp; M trong ngưỡng thấp (NLG tự duyệt)</td>
+    <td>Popup "Xác nhận duyệt" → status=4</td>
+    <td>1</td>
+</tr>
+<tr>
+    <td><b>2</b></td>
+    <td>V hoặc M vượt ngưỡng cấp 1, dưới ngưỡng cấp 2</td>
+    <td>NLG gửi → TP duyệt → status=4</td>
+    <td>2</td>
+</tr>
+<tr>
+    <td><b>3</b></td>
+    <td>V hoặc M vượt ngưỡng cấp 2</td>
+    <td>NLG gửi → TP duyệt chuyển BGĐ → BGĐ duyệt → status=4</td>
+    <td>3</td>
+</tr>
+</tbody>
+</table>
+
+<div class="note">
+    <b>Công thức:</b> <code>V = totalSale × exchange_rate</code> (quy VND). <code>M = (totalSale − totalImport) / totalSale × 100</code>. <code>levelV</code> lookup theo <code>order_value</code> config; <code>levelM</code> lookup theo <code>profit_margin</code> config. Cấp duyệt = <code>MAX(levelV, levelM)</code>.<br>
+    <b>Lưu ý VAT:</b> Margin + V tính <u>trước VAT</u> (chuẩn kế toán VN — VAT là thuế thu hộ, không phải doanh thu/lợi nhuận).
+</div>
+
+<h2>Cảnh báo Tỷ suất lợi nhuận (Phase 12 mới)</h2>
+<p>
+    Cấu hình tại <b>Cấu hình → Cấu hình chung → Tab Quản lý dự án → Cấu hình mức độ ưu tiên → panel bên phải</b>:
+    <code>profit_margin_threshold</code> (%). Giá trị lưu ở <code>general_regulations</code> per-company.
+</p>
+<p>
+    Áp dụng trên màn <b>Tạo/Sửa/Duyệt/Show báo giá</b>:
+    <span style="color:#dc2626; font-weight:bold">Đỏ</span> nếu margin per-row hoặc margin tổng &lt; ngưỡng;
+    <span style="color:#059669; font-weight:bold">Xanh</span> nếu ≥ ngưỡng. Không có tier vàng trung gian.
+</p>
+
+<footer>
+    ERP TPE — Phase 11 + Phase 12 (VAT + Customer Info + Profit Threshold) · Cập nhật 2026-04-19 · Module: Assign (Giao việc)
+</footer>
+
+</body>
+</html>

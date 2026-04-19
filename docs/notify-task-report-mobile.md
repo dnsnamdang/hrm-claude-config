@@ -318,10 +318,9 @@ GET /api/v1/assign/tasks/daily-report/count
 
 ### 3.2. Lịch gửi notification
 
-- Cron BE chạy **mỗi 30 phút**
-- Nếu company **có cấu hình** `task_report_notify_time` → gửi đúng giờ đó (match trong khoảng 15 phút)
-- Nếu company **không có cấu hình** → gửi **2 lần** lúc **08:30** và **17:30**
-- Chỉ gửi cho user có task chưa nhập tiến độ → nếu đã nhập rồi thì không nhận notification nữa
+- Cron BE chạy **mỗi 30 phút**, chỉ thực sự gửi tại **4 mốc cố định**: **08:30**, **11:30**, **14:30**, **17:30**
+- Không có cấu hình giờ per company — áp dụng đồng nhất cho toàn hệ thống
+- Chỉ gửi cho user có task chưa nhập tiến độ → khi user đã nhập thì không nhận notification nữa (sẽ nhận lại ở mốc kế nếu vẫn chưa nhập)
 
 ### 3.3. Xử lý trên Mobile
 

@@ -40,7 +40,7 @@
 | 1 | Hành chính nhân sự | `Modules/Human` | `pages/human` |
 | 2 | Chấm công | `Modules/Timesheet` | `pages/timesheet` |
 | 3 | Tính lương | `Modules/Payroll` | `pages/payroll` |
-| 4 | Đào tạo | `Modules/Tranning` | `pages/tranning` |
+| 4 | Đào tạo | `Modules/Training` | `pages/training` |
 | 5 | Giao việc ← đang phát triển | `Modules/Assign` | `pages/assign` |
 | 6 | Quyết định | `Modules/Decision` | `pages/decision` |
 | 7 | CRM | `Modules/CRM` | `pages/client` |
@@ -56,7 +56,23 @@
 | Onboarding dev mới | `docs/onboarding.md` |
 | Spec chi tiết của từng feature | `docs/superpowers/specs/YYYY-MM-DD-<feature>-design.md` |
 
-**Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.skills/bug-fixer/SKILL.md`.
+---
+
+## Convention Database (toàn project)
+
+- **Cấp tổ chức**: luôn dùng `company_id`, `department_id`, `part_id` — tất cả `unsignedBigInteger nullable`. KHÔNG dùng `branch_id`.
+- **Audit**: dùng `$table->timestamps()` (tạo `created_at`, `updated_at`) + thêm thủ công `created_by`, `updated_by` (`unsignedBigInteger nullable`). KHÔNG dùng SoftDeletes cho entity chính (chỉ dùng cho bảng phụ như comment/log nếu thực sự cần).
+- **Version solution**: các entity gắn với solution phải có `solution_version_id` NOT NULL. Nếu áp dụng cả cấp module thì thêm `solution_module_id` + `solution_module_version_id` (nullable).
+- **File đính kèm**: KHÔNG tạo bảng pivot riêng. Dùng bảng `files` chung với `table='<table_name>'` + `table_id=<entity_id>`. Model khai báo:
+  ```php
+  public function files() {
+      return $this->hasMany(File::class, 'table_id', 'id')
+          ->where('table', '<table_name>');
+  }
+  ```
+- **Mã code tự sinh**: pattern `PREFIX-YYYY-NNNNN`, implement `getNextCode()` trên Entity (copy pattern `BomList::getNextCode()`).
+
+**Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.claude/skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.claude/skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.claude/skills/bug-fixer/SKILL.md`.
 
 ---
 
@@ -69,6 +85,14 @@
 4. Báo lại: "Đang làm [feature], checkpoint cuối: [X], task tiếp theo: [Y]"
 5. Chờ xác nhận trước khi bắt đầu
 
+
+**Khi nhận yêu cầu làm tiếp / cập nhật feature đã có — theo thứ tự:**
+1. Cập nhật `STATUS.md` → chuyển feature về "Đang làm"
+2. Đọc lại toàn bộ `.plans/[feature-name]/` (design.md + plan.md)
+3. Kiểm tra branch:
+   - Feature đã merge vào nhánh hiện tại → hỏi có tạo branch mới để update không? (cả API và Client)
+   - Feature vẫn ở branch riêng → hỏi có chuyển về branch đó để làm tiếp không? (cả API và Client)
+4. Yêu cầu nhập spec để brainstorming yêu cầu mới
 
 **Khi nhận yêu cầu "tạo tính năng mới" / "tạo feature" — làm NGAY:**
 1. Tạo folder `.plans/[feature-name]/`
@@ -117,8 +141,8 @@ Blocked: [để trống nếu không có]
 
 ## Quy tắc team
 
-- `CLAUDE.md`, `.skills/`, `docs/` là tài sản chung — sửa qua PR, không tự ý sửa
-- Mỗi dev KHÔNG tạo CLAUDE.md, .skills/, docs/ riêng
+- `CLAUDE.md`, `.claude/skills/`, `docs/` là tài sản chung — sửa qua PR, không tự ý sửa
+- Mỗi dev KHÔNG tạo CLAUDE.md, .claude/skills/, docs/ riêng
 - Mỗi feature trong `.plans/` ghi rõ người phụ trách (`@username`)
 - Muốn thêm skill mới → tạo PR với SKILL.md đầy đủ
 - Dev mới vào → đọc `docs/onboarding.md` trước
@@ -127,9 +151,9 @@ Blocked: [để trống nếu không có]
 
 ## Custom skills
 
-Các skill tùy chỉnh nằm trong `.skills/`.
+Các skill tùy chỉnh nằm trong `.claude/skills/`.
 Trước khi implement bất kỳ pattern lặp lại nào,
-kiểm tra `.skills/` xem đã có SKILL.md chưa.
+kiểm tra `.claude/skills/` xem đã có SKILL.md chưa.
 Nếu có → đọc trước khi viết code.
 
 ---
