@@ -1,30 +1,29 @@
 # STATUS.md
 
 ## Đang làm
-- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase11.md
-  Trạng thái: Phase 11 đang test UI — đã sửa 9 bug + 1 cleanup từ test session 6. Bao gồm: bỏ giá bán khỏi BOM (cả UI table + popup + import/export + DB drop cột quoted_price), loose version match khi chọn BOM con, validate tên BOM khi nháp, preview BOM thực tế trong modal hồ sơ trình duyệt (alert có link mã+tên), fix prop tab Hồ sơ + button Yêu cầu XD giá, BOM resolve dùng status=Đã duyệt + log debug.
-  Checkpoint: 2026-04-17 (session 8-12) — Nhiều vòng test + fix UI/UX + phân quyền:
-  - Form tạo/show YCBG: compact table key-value, file upload fix (S3 string URL), link BOM, popup detail
-  - Màn show/edit báo giá: info table compact, topbar title+status, bg trắng, collapsible info, sticky header products, font-weight 300, tỷ suất LN từng dòng+tổng, footer pricing compact responsive, V2BaseButton chuẩn, popup YCBG + lịch sử
-  - Bỏ deadline khỏi báo giá, thêm Giải pháp+Hạng mục, bỏ text "Giá tính theo", lưu nháp skip validate, đổi currency cảnh báo + reactive code/exchangeRate, cấp duyệt client-side realtime
-  - Validate required 4 field (hiệu lực/giao hàng/bảo hành/tiền tệ), validate giá >0 khi submit, highlight cell đỏ
-  - Cấp 3 rõ 2 bước: footer "C3 — TP & BGĐ", popup submit flow 2 step visual
-  - Danh sách báo giá: 12 cột (tiền tệ/tổng/người tạo/ngày tạo/cấp duyệt/người duyệt/ngày duyệt), column customization, bộ filter đầy đủ (cấp tổ chức cascading + GP→Version + trạng thái + người duyệt), button lịch sử
-  - Phân quyền: 7 permissions group "Báo giá" (4 cấp xem + XD giá + TP duyệt + BGĐ duyệt), can_view_import_price (KD không xem giá nhập/tỷ suất chi tiết, xem tỷ suất tổng)
-  - Notification mobile: APP_NAME_MOBILE="Thông báo từ ERP TPE", strip_tags HTML body
-  - Layout: padding giảm (custom-assign.scss), pt-2→pt-1, PageTitleMixin cho 15 trang Assign thiếu, bỏ PageHeader cũ trong BomBuilderEditor, bỏ select tiền tệ khỏi BOM list
-  Bước tiếp: User test tiếp flow end-to-end.
+- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
+  Trạng thái: Code DONE 16/18 (2026-04-19). BE hoàn chỉnh (migration close_* fields + 5 status constants + `closeProject` service + notify helpers + FormRequest + Controller + Route + Transformer + entity relationships). FE hoàn chỉnh (CloseProjectModal component + manager.vue integrate button + banner đỏ post-close + ẩn action buttons khi đóng). Endpoint: `POST /api/v1/assign/prospective-projects/{id}/close`.
+  Cascade: Project.status=11 + Solution.status=2 + SolutionModule.status=10 + PricingRequest.status=5 + Quotation.status=5. `quotation_histories` log `closed_by_project` với meta. Notify: creator solution + PM + NLG + TP/BGĐ pending.
+  Checkpoint: 2026-04-19 — Code DONE. Task 17 (readonly polish trên quotation/solution edit) skip optional (BE đã validate save). Task 18 manual test user thực hiện: button "Đóng dự án" hiện cho creator + modal load reason + submit → toast + banner + cascade DB + notify table.
 
 ## Tạm dừng
 
+- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase12.md
+  Trạng thái: Phase 12 code DONE 58/64. Toàn bộ BE + FE xong: VAT management (migrations + service computeTotals/recomputeTotals/applyBulkVat + 6 transition hook + controller + FormRequest + route + transformers + Excel gate + store/quotation.js + 2 component VatBulkApplyToolbar/VatFirstEntryPromptModal + edit.vue 3 cột VAT + toolbar + soft-prompt + row TỔNG + roll-up CHA + show/list/tab + ColumnCustomization); customer info (edit.vue thêm MST/Người liên hệ/SĐT liên hệ + show rename label + CustomerInfoSection required + project add/edit validate customer_contact_id); profit margin threshold (migration general_regulations.profit_margin_threshold + entity/controller/service + settings col-3 panel + nuxtClientInit commit vuex + marginColorClass 2 tier đỏ/xanh bỏ tier vàng).
+  Checkpoint: 2026-04-19 — Wrap up. Còn lại 6 task manual test (Task 48-53) + test Batch 10-11 do user thực hiện. Docs PDF tại `docs/srs/bao-gia-flow.pdf`.
+
+- training-elearning → @dnsnamdang → .plans/training-elearning/plan.md
+  Trạng thái: Phase 0 done (3/3 task khảo sát BE + FE + deep dive). docs/training.md ~580 dòng / 13 sections. design.md đã enhance với gap analysis P1/P2/P3 + convention bắt buộc + risk note.
+  Checkpoint: 2026-04-18 — Wrap up Phase 0. Chờ user gửi spec chung + spec từng màn + file demo HTML/Vue → tạo .plans/training-elearning-<feature>/ riêng cho mỗi màn → brainstorm + lên task BE+FE → code.
+
 - notify-task-report → @dnsnamdang → .plans/notify-task-report/plan.md
-  Trạng thái: 26/26 task done. Fix $fillable + UI daily-report. FCM blocked bởi HTTP trên dev server
-  Checkpoint: 2026-04-09 — Phase 11 done. Cần HTTPS trên dev server để FCM hoạt động
+  Trạng thái: 37/37 task done. Phase 12 + 13 vừa hoàn thành (bỏ cấu hình giờ + giảm spam + an toàn cron).
+  Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
 
-- solution-add-module-deploying → @manhcuong → .plans/solution-add-module-deploying/plan.md
-  Hoàn thành: 2026-04-07. 3/3 task. PM thêm hạng mục khi đang triển khai + auto-approve
+- fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
+  Hoàn thành: 2026-04-18. 7/7 task. V2: fix sai message khi 2 tab cùng chọn 1 task (BE 422→423 + lookup task.code). V3: reject sau TP duyệt → chuyển task về TP + notify TP + log tên TP. Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
   Hoàn thành: 2026-04-07. 2/2 task. Button "Lưu và duyệt" khi has_modules=false
 - solution-version-report → @manhcuong → .plans/solution-version-report/plan.md

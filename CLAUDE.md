@@ -40,7 +40,7 @@
 | 1 | Hành chính nhân sự | `Modules/Human` | `pages/human` |
 | 2 | Chấm công | `Modules/Timesheet` | `pages/timesheet` |
 | 3 | Tính lương | `Modules/Payroll` | `pages/payroll` |
-| 4 | Đào tạo | `Modules/Tranning` | `pages/tranning` |
+| 4 | Đào tạo | `Modules/Training` | `pages/training` |
 | 5 | Giao việc ← đang phát triển | `Modules/Assign` | `pages/assign` |
 | 6 | Quyết định | `Modules/Decision` | `pages/decision` |
 | 7 | CRM | `Modules/CRM` | `pages/client` |
