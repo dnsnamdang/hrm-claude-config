@@ -6,9 +6,6 @@ hrm-client/
 .DS_Store
 ~$*
 
-# Claude Code local config
-.claude/
-
 # Plans - file PDF/HTML không cần track
 .plans/**/*.pdf
 .plans/**/*.html
