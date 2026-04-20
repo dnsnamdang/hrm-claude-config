@@ -10,6 +10,12 @@
 - my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
   Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
   Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+- firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
+  Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
+- delivery-trip-actual-cost-validate → @nguyentrancu97 → .plans/delivery-trip-actual-cost-validate/plan.md
+  Trạng thái: Implementing. Validate total_cost_transition theo CP xăng + cầu đường + công tác phí + CP khác (TanPhatDev)
+- delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
+  Trạng thái: Implementing. Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp (TanPhatDev)
 
 ## Tạm dừng
 
@@ -27,6 +33,7 @@
 
 ## Hoàn thành
 
+<<<<<<< HEAD
 - fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
   Hoàn thành: 2026-04-18. 7/7 task. V2: fix sai message khi 2 tab cùng chọn 1 task (BE 422→423 + lookup task.code). V3: reject sau TP duyệt → chuyển task về TP + notify TP + log tên TP. Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
@@ -51,3 +58,11 @@
   Hoàn thành: 2026-04-08. 9/9 task. Báo cáo phân bổ nguồn lực dạng Gantt theo NV (QLDA_BC_V2_11)
 - solution-add-module-deploying → @manhcuong → .plans/solution-add-module-deploying/plan.md
   Hoàn thành: 2026-04-07. 3/3 task. PM thêm hạng mục khi đang triển khai + auto-approve
+=======
+- pi-approved-price → @nguyentrancu97 → .plans/pi-approved-price/plan.md
+  Hoàn thành: 2026-04-13. Cột giá đề xuất + đơn giá duyệt + chênh lệch + notification cho PI nhập khẩu / trong nước (TanPhatDev, 11 files + 1 migration)
+- price-request-filter-columns → @nguyentrancu97 → .plans/price-request-filter-columns/plan.md
+  Hoàn thành: 2026-04-13. 11/11 task. Thêm filter + cột thương hiệu, hãng SX vào 3 danh sách YCHG/YCTG/Phiếu TG (TanPhatDev, 9 files)
+- bill-settlement-remove-checkbox → @nguyentrancu97 → .plans/bill-settlement-remove-checkbox/plan.md
+  Hoàn thành: 2026-04-13. 4/4 task. Xoá UI checkbox chọn nhân viên form Quyết toán thưởng NS quý (TanPhatDev)
+>>>>>>> 7af4e79 (update)
