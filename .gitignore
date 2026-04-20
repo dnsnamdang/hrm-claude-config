@@ -7,7 +7,7 @@ hrm-client/
 ~$*
 
 # Claude Code local config
-# .claude/
+.claude/settings.local.json
 
 # Plans - file PDF/HTML không cần track
 .plans/**/*.pdf
