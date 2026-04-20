@@ -33,7 +33,6 @@
 
 ## Hoàn thành
 
-<<<<<<< HEAD
 - fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
   Hoàn thành: 2026-04-18. 7/7 task. V2: fix sai message khi 2 tab cùng chọn 1 task (BE 422→423 + lookup task.code). V3: reject sau TP duyệt → chuyển task về TP + notify TP + log tên TP. Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
@@ -58,11 +57,9 @@
   Hoàn thành: 2026-04-08. 9/9 task. Báo cáo phân bổ nguồn lực dạng Gantt theo NV (QLDA_BC_V2_11)
 - solution-add-module-deploying → @manhcuong → .plans/solution-add-module-deploying/plan.md
   Hoàn thành: 2026-04-07. 3/3 task. PM thêm hạng mục khi đang triển khai + auto-approve
-=======
 - pi-approved-price → @nguyentrancu97 → .plans/pi-approved-price/plan.md
   Hoàn thành: 2026-04-13. Cột giá đề xuất + đơn giá duyệt + chênh lệch + notification cho PI nhập khẩu / trong nước (TanPhatDev, 11 files + 1 migration)
 - price-request-filter-columns → @nguyentrancu97 → .plans/price-request-filter-columns/plan.md
   Hoàn thành: 2026-04-13. 11/11 task. Thêm filter + cột thương hiệu, hãng SX vào 3 danh sách YCHG/YCTG/Phiếu TG (TanPhatDev, 9 files)
 - bill-settlement-remove-checkbox → @nguyentrancu97 → .plans/bill-settlement-remove-checkbox/plan.md
   Hoàn thành: 2026-04-13. 4/4 task. Xoá UI checkbox chọn nhân viên form Quyết toán thưởng NS quý (TanPhatDev)
->>>>>>> 7af4e79 (update)
