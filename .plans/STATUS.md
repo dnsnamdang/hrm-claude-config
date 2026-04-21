@@ -7,9 +7,8 @@
   Cascade: Project.status=11 + Solution.status=2 + SolutionModule.status=10 + PricingRequest.status=5 + Quotation.status=5. `quotation_histories` log `closed_by_project` với meta. Notify: creator solution + PM + NLG + TP/BGĐ pending.
   Checkpoint: 2026-04-19 — Code DONE. Task 17 (readonly polish trên quotation/solution edit) skip optional (BE đã validate save). Task 18 manual test user thực hiện: button "Đóng dự án" hiện cho creator + modal load reason + submit → toast + banner + cascade DB + notify table.
 
-- my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
-  Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
   Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
   Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
 - delivery-trip-actual-cost-validate → @nguyentrancu97 → .plans/delivery-trip-actual-cost-validate/plan.md
@@ -33,6 +32,10 @@
 
 ## Hoàn thành
 
+- overdue-task-unified-predicate → @manhcuong → .plans/overdue-task-unified-predicate/plan.md
+  Hoàn thành: 2026-04-21. Thêm `Task::scopeOverdue` + áp ở `TaskController::index` + `SolutionService::getCategoriesWithLateTasks`/`getPeopleWithLateTasks` + `SolutionModuleService::getPeopleWithLateTasks`. Đồng bộ `late_tasks_count` + card Overview với logic `overdue_total` tab Task (status NOT IN [1,8,9], CONCAT due_date+due_time). Review pass 0 Critical/Important. Test OK.
+- my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
+  Hoàn thành: 2026-04-21. Phase 1–2 (BE) + Phase 4–8 (FE). BE: routes + service + Resource + Export + Helper. FE: index.vue wiring + AssignBusinessTab.vue đầy đủ (filter 8 ô, bảng 8 cột, 13 row actions dropdown, column customization, ExportModal, ConfirmDelete, ConfirmCancelApprove). Test OK.
 - fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
   Hoàn thành: 2026-04-18. 7/7 task. V2: fix sai message khi 2 tab cùng chọn 1 task (BE 422→423 + lookup task.code). V3: reject sau TP duyệt → chuyển task về TP + notify TP + log tên TP. Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
