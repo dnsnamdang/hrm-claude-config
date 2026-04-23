@@ -1,17 +1,19 @@
 # STATUS.md
 
 ## Đang làm
-- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
-  Trạng thái: Code DONE 16/18 (2026-04-19). BE hoàn chỉnh (migration close_* fields + 5 status constants + `closeProject` service + notify helpers + FormRequest + Controller + Route + Transformer + entity relationships). FE hoàn chỉnh (CloseProjectModal component + manager.vue integrate button + banner đỏ post-close + ẩn action buttons khi đóng). Endpoint: `POST /api/v1/assign/prospective-projects/{id}/close`.
-  Cascade: Project.status=11 + Solution.status=2 + SolutionModule.status=10 + PricingRequest.status=5 + Quotation.status=5. `quotation_histories` log `closed_by_project` với meta. Notify: creator solution + PM + NLG + TP/BGĐ pending.
-  Checkpoint: 2026-04-19 — Code DONE. Task 17 (readonly polish trên quotation/solution edit) skip optional (BE đã validate save). Task 18 manual test user thực hiện: button "Đóng dự án" hiện cho creator + modal load reason + submit → toast + banner + cascade DB + notify table.
+- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase13.md
+  Trạng thái: Phase 13 (Email khách hàng) code DONE 14/16. Phase 12 vẫn DONE 58/64. Branch `tpe-develop-assign`.
+  Phase 13 làm: migration `quotations.customer_email` + snapshot trong QuotationService + expose trong DetailQuotationResource + rule required|email|max:255 trong ProspectiveProjectRequest + CustomerInfoSection input Email + validate FE trong add/edit project + display trong quotation edit/show (Email cùng row Địa chỉ theo yêu cầu user). Manager.vue + _id/index.vue inherit qua CustomerInfoSection (không sửa trực tiếp).
+  Session artifacts: (1) `docs/srs/bomlist-to-quotation-srs.html + .pdf` — SRS E2E với sơ đồ UC + Swimlane SVG; (2) `docs/srs/bomlist-to-quotation-testcases.xlsx` — 140 UI test cases / 12 sheets.
+  Checkpoint: 2026-04-20 — Wrap up. Còn 8 task manual test user thực hiện (Phase 12 Task 48-53 + Phase 13 Task 15-16). Pending test theo testcases.xlsx filter Priority=High.
 
 
 ## Tạm dừng
 
-- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase12.md
-  Trạng thái: Phase 12 code DONE 58/64. Toàn bộ BE + FE xong: VAT management (migrations + service computeTotals/recomputeTotals/applyBulkVat + 6 transition hook + controller + FormRequest + route + transformers + Excel gate + store/quotation.js + 2 component VatBulkApplyToolbar/VatFirstEntryPromptModal + edit.vue 3 cột VAT + toolbar + soft-prompt + row TỔNG + roll-up CHA + show/list/tab + ColumnCustomization); customer info (edit.vue thêm MST/Người liên hệ/SĐT liên hệ + show rename label + CustomerInfoSection required + project add/edit validate customer_contact_id); profit margin threshold (migration general_regulations.profit_margin_threshold + entity/controller/service + settings col-3 panel + nuxtClientInit commit vuex + marginColorClass 2 tier đỏ/xanh bỏ tier vàng).
-  Checkpoint: 2026-04-19 — Wrap up. Còn lại 6 task manual test (Task 48-53) + test Batch 10-11 do user thực hiện. Docs PDF tại `docs/srs/bao-gia-flow.pdf`.
+- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
+  Trạng thái: Code DONE 16/18 (2026-04-19). BE hoàn chỉnh (migration close_* fields + 5 status constants + `closeProject` service + notify helpers + FormRequest + Controller + Route + Transformer + entity relationships). FE hoàn chỉnh (CloseProjectModal component + manager.vue integrate button + banner đỏ post-close + ẩn action buttons khi đóng). Endpoint: `POST /api/v1/assign/prospective-projects/{id}/close`.
+  Cascade: Project.status=11 + Solution.status=2 + SolutionModule.status=10 + PricingRequest.status=5 + Quotation.status=5. `quotation_histories` log `closed_by_project` với meta. Notify: creator solution + PM + NLG + TP/BGĐ pending.
+  Checkpoint: 2026-04-19 — Code DONE. Task 17 (readonly polish trên quotation/solution edit) skip optional (BE đã validate save). Task 18 manual test user thực hiện: button "Đóng dự án" hiện cho creator + modal load reason + submit → toast + banner + cascade DB + notify table.
 
 - training-elearning → @dnsnamdang → .plans/training-elearning/plan.md
   Trạng thái: Phase 0 done (3/3 task khảo sát BE + FE + deep dive). docs/training.md ~580 dòng / 13 sections. design.md đã enhance với gap analysis P1/P2/P3 + convention bắt buộc + risk note.
