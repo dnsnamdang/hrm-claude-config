@@ -7,6 +7,10 @@
   Component mới: `components/V2BaseSelectRemote.vue` (jQuery Select2 ajax, dùng prop `fetchFn(keyword)`).
   Checkpoint: 2026-04-23 — Wrap up Phase 16. Pending user test task 8-13 phase 16 + các task test tồn từ phase 12/13/14/15.
 
+- course-rebuild-subject → @manhcuong → .plans/course-rebuild-subject/plan.md
+  Trạng thái: Code DONE P1-P9 (2026-04-22). BE: 7 migration (12 cột mới vào `subjects` + 4 bảng mới `subject_exams`/`subject_exam_graders`/`subject_assignees` polymorphic/`subject_certificate_fields` + backfill + rename permission), 4 entity mới, 3 resource, SubjectService sync exams/assignees/cert-fields, SubjectBuilderRequest DRAFT-aware, rename permission "Quản lý môn học" → "Quản lý khoá học" cả BE + 15+ file FE. FE: Shell `SubjectBuilderForm.vue` 573 dòng với 4 b-tabs + saveDraft/save, 4 tab đầy đủ (TabInfo builder chapter/lesson, TabEvaluation multi-exam + graders, TabLearners onboarding + assignees, TabCertificate upload + canvas 1600×900 + jsPDF). Xoá `SubjectForm.vue` deprecated.
+  Checkpoint: 2026-04-22 — Code DONE 9/9 phase. User tự thực hiện Phase 10 manual test. Trước khi test: `cd hrm-client && npm i jspdf` + `php artisan migrate`. Concerns: jspdf chưa có trong package.json, dayjs customParseFormat chưa verify, withValidator grader-theo-essay đang comment chờ clarify exam_questions.type, ExamKit.mcq_count/essay_count accessor chưa có (FE tạm hiển thị 0).
+
 - close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
   Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.
 
