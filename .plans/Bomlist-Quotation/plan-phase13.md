@@ -459,6 +459,53 @@ Blocked: Không.
 
 ---
 
+### Checkpoint — 2026-04-23 (Bug fix BOM thêm hàng con)
+
+Bug user báo (4 lỗi khi tạo/sửa hàng con trong Tạo BOM):
+
+- [x] **Bug 1** — Tab "Tạo mới" hàng con: Model / Xuất xứ / Thương hiệu / Giá nhập không hiển thị ra bảng chi tiết BOM sau khi lưu.
+  - Root cause 1: `BomBuilderEditor.vue` `handleAddProductApply()` hardcode `estimatedPrice: 0` bỏ qua `item.estimated_price`.
+  - Root cause 2: `BomBuilderAddProductModal.vue` `findOpt` dùng strict `===` so sánh id → fail khi type khác nhau (number vs string) → model_name/brand_name/origin_name bị rỗng.
+  - Fix: dùng `Number(item.estimated_price) || 0`; `findOpt` dùng `String(o.id) === String(id)`; thêm fallback `resolveOptionTextById(quickCreateModelOptions/...)` trong `handleAddProductApply` và `openEditRow`.
+- [x] **Bug 2** — Sửa hàng con: Select Model chỉ hiển thị "Model #1"; label "Đơn giá dự toán".
+  - Root cause: Khi Bug 1 chưa fix, `row.model` rỗng → `editForm.model_id = ''` → watch fallback `Model #${id}`.
+  - Fix: `openEditRow` fallback resolve từ `quickCreateModelOptions` theo `modelId` (+ tương tự brand/origin/unit). Label đổi từ "Đơn giá dự toán" → "Giá nhập" ở `BomBuilderEditModal.vue` dòng 110.
+- [x] **Bug 3** — Chỉ sau khi "Sửa" + lưu mới hiển thị đúng ra danh sách.
+  - Root cause: hệ quả của Bug 1. Tự khỏi khi Bug 1 fix.
+- [x] **Bug 4** — Mã hàng hoá auto-gen sai format.
+  - Cũ: `HH-0001` (4 chữ số, có gạch nối, max init 1000 → code đầu = `HH-1001`).
+  - Mới: `HH000001` (6 chữ số, không gạch, max init 0 → code đầu = `HH000001`).
+  - Fix: `getNextGoodsCode()` regex `/HH-?(\d+)/i` (tương thích code cũ), padStart 6, bỏ gạch, max init 0.
+  - Fix: `handleAddProductApply` tự gọi `getNextGoodsCode()` khi `item.code` rỗng (trước đây không gọi → mã rỗng được lưu).
+
+File đã sửa:
+- `hrm-client/pages/assign/bom-list/components/BomBuilderEditor.vue` (`getNextGoodsCode` + `handleAddProductApply` + `openEditRow`)
+- `hrm-client/pages/assign/bom-list/components/BomBuilderEditModal.vue` (label)
+- `hrm-client/pages/assign/bom-list/components/BomBuilderAddProductModal.vue` (`findOpt` String compare)
+
+Bước tiếp theo: User test lại flow Tạo BOM → thêm hàng con (cả 2 tab: "Tìm hàng có sẵn" + "Tạo mới") → kiểm tra 4 cột hiển thị + code auto-gen + edit không còn "Model #ID".
+
+Blocked: Không.
+
+- [x] **Bug 5** (2026-04-23) — Xoá hàng con không xoá được (cả "có sẵn" lẫn "tạo mới"). Confirm OK nhưng row vẫn ở lại.
+  - Root cause: `handleAddProductApply` push `newRow` vào `children` nhưng **không set `parentRowId`**. Trong `handleConfirmDeleteAction`, `this.groups.find(g => g.parent.rowId === child.parentRowId)` → `undefined` → không filter được → row còn nguyên.
+  - Fix: Set `newRow.parentRowId = parentRowId` trước khi push vào children (`BomBuilderEditor.vue` `handleAddProductApply`). Thêm fallback trong `handleConfirmDeleteAction` scan theo `child.rowId` để an toàn cho mọi entry point khác.
+
+- [x] **Bug 6** (2026-04-23) — Parent.qty không click chuột trái được (chuột phải OK).
+  - Root cause: SortableJS `filter: 'tr.parent-row'` dùng default `preventOnFilter: true` → block mousedown trên parent row → input qty không focus được.
+  - Fix: Thêm `preventOnFilter: false` vào child Sortable init (`BomBuilderTableCard.vue` line 665).
+
+- [x] **Bug 7** (2026-04-23) — Parent disable cả qty và price khi có con; bớt 1 con vẫn disable price.
+  - Root cause cũ: `:disabled="group.children && group.children.length > 0"` áp cả qty.
+  - Fix: Chỉ disable `estimatedPrice` khi `children.length > 0` ở cả 2 render path (grouped line 210-216 + ungrouped line 379-386). Qty luôn editable.
+
+- [x] **Bug 8** (2026-04-23) — Công thức tỷ suất lợi nhuận sai.
+  - Cũ: `(sale - imp) / sale × 100`.
+  - Mới (user confirm): `(sale - imp) / imp × 100`.
+  - Fix: `quotations/_id/edit.vue` + `quotations/_id/index.vue` → `marginPercent` + `lineMarginPercent`. BOM `BomBuilderTableCard.vue` (`formatProfitMargin` + `totalProfitMargin`) đã dùng đúng công thức mới từ trước — không cần sửa.
+
+---
+
 ## Checkpoint template (tham khảo)
 
 ```markdown

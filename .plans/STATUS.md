@@ -1,14 +1,14 @@
 # STATUS.md
 
 ## Đang làm
-<<<<<<< HEAD
-- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase13.md
-  Trạng thái: Phase 13 (Email khách hàng) code DONE 14/16. Phase 12 vẫn DONE 58/64. Branch `tpe-develop-assign`.
-  Phase 13 làm: migration `quotations.customer_email` + snapshot trong QuotationService + expose trong DetailQuotationResource + rule required|email|max:255 trong ProspectiveProjectRequest + CustomerInfoSection input Email + validate FE trong add/edit project + display trong quotation edit/show (Email cùng row Địa chỉ theo yêu cầu user). Manager.vue + _id/index.vue inherit qua CustomerInfoSection (không sửa trực tiếp).
-  Session artifacts: (1) `docs/srs/bomlist-to-quotation-srs.html + .pdf` — SRS E2E với sơ đồ UC + Swimlane SVG; (2) `docs/srs/bomlist-to-quotation-testcases.xlsx` — 140 UI test cases / 12 sheets.
-  Checkpoint: 2026-04-20 — Wrap up. Còn 8 task manual test user thực hiện (Phase 12 Task 48-53 + Phase 13 Task 15-16). Pending test theo testcases.xlsx filter Priority=High.
-  
-  Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
+  Trạng thái: Phase 16 code DONE (UI polish). Tổng Phase 11-16 đều ở trạng thái code DONE chờ user test. Branch `tpe-develop-assign`.
+  Phase 14B (parent roll-up) + Phase 15 (xoá báo giá) + Phase 16 (per-row VAT cho dòng con + Sửa/Xoá YCBG trong tab Hồ sơ + `V2BaseSelectRemote` cho Model/Brand/Xuất xứ trong popup thêm hàng hoá + nút Làm mới filter).
+  Component mới: `components/V2BaseSelectRemote.vue` (jQuery Select2 ajax, dùng prop `fetchFn(keyword)`).
+  Checkpoint: 2026-04-23 — Wrap up Phase 16. Pending user test task 8-13 phase 16 + các task test tồn từ phase 12/13/14/15.
+
+- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
+  Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.
 
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
   Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
@@ -18,11 +18,6 @@
   Trạng thái: Implementing. Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp (TanPhatDev)
 
 ## Tạm dừng
-
-- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
-  Trạng thái: Code DONE 16/18 (2026-04-19). BE hoàn chỉnh (migration close_* fields + 5 status constants + `closeProject` service + notify helpers + FormRequest + Controller + Route + Transformer + entity relationships). FE hoàn chỉnh (CloseProjectModal component + manager.vue integrate button + banner đỏ post-close + ẩn action buttons khi đóng). Endpoint: `POST /api/v1/assign/prospective-projects/{id}/close`.
-  Cascade: Project.status=11 + Solution.status=2 + SolutionModule.status=10 + PricingRequest.status=5 + Quotation.status=5. `quotation_histories` log `closed_by_project` với meta. Notify: creator solution + PM + NLG + TP/BGĐ pending.
-  Checkpoint: 2026-04-19 — Code DONE. Task 17 (readonly polish trên quotation/solution edit) skip optional (BE đã validate save). Task 18 manual test user thực hiện: button "Đóng dự án" hiện cho creator + modal load reason + submit → toast + banner + cascade DB + notify table.
 
 - training-elearning → @dnsnamdang → .plans/training-elearning/plan.md
   Trạng thái: Phase 0 done (3/3 task khảo sát BE + FE + deep dive). docs/training.md ~580 dòng / 13 sections. design.md đã enhance với gap analysis P1/P2/P3 + convention bắt buộc + risk note.
