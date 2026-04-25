@@ -38,6 +38,10 @@
 - [ ] 12. Tab 2 "Thêm mới": chọn Model/Brand/Xuất xứ → submit → sản phẩm mới có đủ `model_name/brand_name/origin_name`.
 - [ ] 13. Click **Làm mới** → 4 filter clear → reload danh sách hàng hoá có sẵn.
 
+## Bug fix (Phase 16 test)
+- [x] 14. Fix `applyBulkVat` chỉ áp VAT cho parent (`whereNull('parent_id')`) → sửa áp cho tất cả cấp (cha + con + orphan).
+- [x] 15. Fix tab Hồ sơ: lấy thêm hồ sơ `status=expired` + thêm cột Trạng thái (V2BaseBadge).
+
 ## Checkpoint — 2026-04-23 (Phase 16 code DONE)
 Vừa hoàn thành:
 - BE: limit 200 + orderBy name cho 3 endpoint Model/Brand/Origin; expose `created_by` trong YCBG payload của review-profiles.
