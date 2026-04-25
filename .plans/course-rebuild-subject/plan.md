@@ -109,6 +109,59 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 
 ---
 
+## Phase 12 — Bug fix error handling + evaluation_config mismatch (2026-04-25, @junfoke)
+
+- [x] Thêm method `applyBackendErrors()` trong `SubjectBuilderForm.vue`: map toàn bộ key lỗi 422 từ backend vào `this.error` (lấy phần tử đầu nếu là array), tự động chuyển đúng tab (0=Thông tin, 1=Đánh giá, 2=Người học, 3=Chứng chỉ) dựa trên key lỗi
+- [x] Fix `save()`: thay logic cứng 3 key (`code`, `subject_lessons`, `chapters`) bằng `applyBackendErrors()`. Không còn set `formError` generic khi validate client-side thất bại
+- [x] Fix `saveDraft()`: trước đây bỏ qua toàn bộ lỗi field khi có lỗi server 422; nay gọi `applyBackendErrors()`. Fix lỗi tên trống hiển thị banner đỏ thay vì inline dưới field — đổi thành `this.error = { name: 'Vui lòng nhập tên khoá học' }` + switch tab 0
+- [x] Fix mismatch tên field `evaluation_config`: frontend dùng `completion_rule`/`required_percent`/`percent_count_mode` nhưng backend validate `rule`/`percent`/`percent_mode`. Fix trong `buildEvaluationConfigPayload()` (remap khi gửi lên) và `loadBuilder()` (map ngược khi đọc về, có fallback cả 2 tên)
+
+**File thay đổi:** `hrm-client/pages/training/subjects/components/SubjectBuilderForm.vue`
+
+---
+
+## Phase 10b — Bug fix round 1 (2026-04-25, @junfoke)
+
+- [x] Fix `TabCertificate.vue` — `downloadPdf()` dùng `localPreviewDataUrl` thay vì canvas → không có text overlay. Fix: luôn dùng `canvas.toDataURL()`, thêm `crossOrigin='anonymous'` trong `loadTemplateImage()` (có fallback khi S3 chưa cấu hình CORS), thêm `renderOffscreen()` dùng canvas mới khi main canvas bị taint (SecurityError)
+- [x] Fix `index.vue` — `getStatusText()`/`getStatusClass()` chỉ check status 1, mọi status khác đều trả về "Khoá". Thêm case status 3 → "Nháp" + badge xám (`badge-secondary`)
+- [x] Fix `index.vue` — `.row-actions` không sát viền phải. Fix: `position: absolute; right: 8px; top: 50%; transform: translateY(-50%)` + wrapper cell thêm `position-relative`
+- [x] Fix `Subject.php` — `canEdit()` chỉ cho phép `HOAT_DONG`. Fix: thêm `STATUS_DRAFT` vào mảng `in_array()` để nút sửa hiện với khoá học Nháp
+- [x] Fix `add.vue`, `_id/index.vue`, `_id/show.vue` — sidebar menu đè lên nội dung form (do `custom.scss` set `.content-page { margin-left: 0 }`, sidebar fixed-position không nhường chỗ). Fix: thêm `mounted() { document.body.setAttribute('data-sidebar-size', 'condensed') }` vào cả 3 page
+
+**File thay đổi:** `TabCertificate.vue`, `index.vue`, `Subject.php`, `add.vue`, `_id/index.vue`, `_id/show.vue`
+
+---
+
+## Phase 10c — Bug fix modal Ngân hàng bài học + UI prototype (2026-04-25, @junfoke)
+
+- [x] Điều tra modal "Ngân hàng bài học" hiển thị trống: nguyên nhân là bảng `lessons` không có dữ liệu (0 rows). Fix tạm: seed 8 lesson test qua `php artisan tinker` với `company_id=1` + `tracking_completion` JSON. Code fetch (`training/lessons/getAll`) là đúng
+- [x] Fix UI modal lần 1 (sai): thêm `picker-filter-bar` phức tạp (dropdown loại bài học + nút reset) — user từ chối vì không đúng prototype
+- [x] Fix UI modal lần 2 (đúng): đọc prototype `Course_create.html` (line ~1515-1583) và implement đúng theo mẫu:
+  - Info row "Thêm bài học vào: [chương]" + mini-badge số lượng
+  - `searchbox` đơn giản (icon + input + nút ×), không có type filter
+  - Table 5 cột: Mã / Tên bài học / Loại / Tiêu chí hoàn thành (mặc định) / Thêm
+  - Cột "Tiêu chí hoàn thành" dùng `formatDefaultCompletion(les)`
+  - `hint-box` ở dưới với chuẩn nghiệp vụ
+- [x] Thêm computed `pickerTargetLabel` trong `TabInfo.vue`
+- [x] Dọn sạch CSS `picker-filter-bar` từ lần thử đầu trong `subject-builder.scss`
+
+**Bài học quan trọng:** Luôn đọc `Course_create.html` trước khi thay đổi UI bất kỳ màn nào trong subject builder.
+
+**File thay đổi:** `TabInfo.vue`, `subject-builder.scss`
+
+---
+
+## Phase 11 — Bug fix UI / Modal (2026-04-25, @junfoke)
+
+- [x] Fix UI filter trong modal "Ngân hàng bài học" (`subject-lesson-picker-modal` trong `TabInfo.vue`): thay `.searchbox` tự viết bằng `form-row` chuẩn V2Base — `V2BaseInput` (tìm kiếm) + `b-form-select` (Loại bài học) + `V2BaseButton` (Reset)
+- [x] Fix lỗi `Cannot read properties of undefined (reading 'addListener')`: do V2BaseSelect/V2BaseSelectInModal dùng jQuery Select2 khởi tạo trong b-modal → đổi sang `b-form-select` (Bootstrap-Vue native, không phụ thuộc jQuery)
+- [x] Thêm computed `lessonTypeOptionsFilter` với format `{value, text}` phù hợp `b-form-select`
+- [x] Dọn file sai: đã tạo nhầm `.plans/course-rebuild-subject/` ở root → cần xoá thủ công nếu cần
+
+**File thay đổi:** `hrm-client/pages/training/subjects/components/tabs/TabInfo.vue`
+
+---
+
 ## Checkpoint — 2026-04-22
 
 **Đã hoàn thành:** P1-P9 (toàn bộ code BE + FE). 9/9 dispatch subagent DONE.
@@ -122,3 +175,12 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 - `dayjs customParseFormat` plugin chưa verify — có thể ảnh hưởng parse ngược issued_date (không ảnh hưởng dữ liệu đã lưu).
 - `SubjectBuilderRequest::withValidator()` đang comment logic grader-theo-essay (chờ clarify shape `exam_questions.type`).
 - `ExamKit.mcq_count/essay_count` accessor chưa có — FE tạm hiển thị 0 (BE resource `SubjectExamResource` đã trả field nhưng giá trị còn mock).
+
+---
+
+## Checkpoint — 2026-04-25 (latest)
+
+**Vừa hoàn thành:** Phase 12 — Fix error handling inline + fix mismatch `evaluation_config` field names.
+**Đang làm dở:** Không.
+**Bước tiếp theo:** Tiếp tục Phase 10 manual test (còn 10 test case chưa tick). Ưu tiên test lưu khoá học `evaluation_mode=completion` để verify fix mismatch `rule`/`percent`/`percent_mode`.
+**Blocked:** Không.
