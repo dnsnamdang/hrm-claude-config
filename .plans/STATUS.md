@@ -7,9 +7,9 @@
   Component mới: `components/V2BaseSelectRemote.vue` (jQuery Select2 ajax, dùng prop `fetchFn(keyword)`).
   Checkpoint: 2026-04-23 — Wrap up Phase 16. Pending user test task 8-13 phase 16 + các task test tồn từ phase 12/13/14/15.
 
-- course-rebuild-subject → @manhcuong → .plans/course-rebuild-subject/plan.md
-  Trạng thái: Code DONE P1-P9 (2026-04-22). BE: 7 migration (12 cột mới vào `subjects` + 4 bảng mới `subject_exams`/`subject_exam_graders`/`subject_assignees` polymorphic/`subject_certificate_fields` + backfill + rename permission), 4 entity mới, 3 resource, SubjectService sync exams/assignees/cert-fields, SubjectBuilderRequest DRAFT-aware, rename permission "Quản lý môn học" → "Quản lý khoá học" cả BE + 15+ file FE. FE: Shell `SubjectBuilderForm.vue` 573 dòng với 4 b-tabs + saveDraft/save, 4 tab đầy đủ (TabInfo builder chapter/lesson, TabEvaluation multi-exam + graders, TabLearners onboarding + assignees, TabCertificate upload + canvas 1600×900 + jsPDF). Xoá `SubjectForm.vue` deprecated.
-  Checkpoint: 2026-04-22 — Code DONE 9/9 phase. User tự thực hiện Phase 10 manual test. Trước khi test: `cd hrm-client && npm i jspdf` + `php artisan migrate`. Concerns: jspdf chưa có trong package.json, dayjs customParseFormat chưa verify, withValidator grader-theo-essay đang comment chờ clarify exam_questions.type, ExamKit.mcq_count/essay_count accessor chưa có (FE tạm hiển thị 0).
+- course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
+  Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 11+12 bug fix 2026-04-25. BE: 7 migration + 4 entity + 3 resource + SubjectService + SubjectBuilderRequest DRAFT-aware + rename permission. FE: SubjectBuilderForm.vue 4 tab đầy đủ + canvas cert + jsPDF.
+  Checkpoint: 2026-04-25 — P10b: fix certificate canvas taint/download, status badge Nháp, row-actions alignment, canEdit cho DRAFT, sidebar condensed. P10c: fix modal Ngân hàng bài học trống (seed data) + UI modal redesign theo prototype Course_create.html (searchbox + 5-col table + hint-box). P11: fix modal addListener (b-form-select). P12: fix error inline (applyBackendErrors + tab switching), fix evaluation_config field mismatch (completion_rule→rule). Phase 10 manual test còn 10 test case chưa hoàn thành.
 
 - close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
   Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.
@@ -32,6 +32,9 @@
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- subjects-list-ui → @junfoke → .plans/subjects-list-ui/plan.md
+  Hoàn thành: 2026-04-25. Fix 3 bug logic (`exportExcel` formFilter→filters, `lockItem`/`unlockItem` getData→loadData, `getTrainingTypes` method xung đột computed) + 1 bug CSS (`::v-deep` row-actions hover) + thêm nút lock/unlock toggle trong cột Trạng thái + status pill dùng global `tpl-status-*` class từ `v2-styles.scss`. Xóa dead code `onEditClick`/`eventHandler`. Chỉ 1 file: `hrm-client/pages/training/subjects/index.vue`.
 
 - scorm-upload → @khoipv → .plans/scorm-upload/plan.md
   Hoàn thành: 2026-04-22. 14/14 task. Spec: docs/superpowers/specs/2026-04-22-scorm-upload-design.md. BE: `CmcS3Helper::putLocalFile` + `UploadScormRequest` + `LessonService::handleScormUpload` (ZipArchive extract → parseScormManifest → upload S3 recursive với MIME chuẩn → cleanup tmp) + Controller `uploadScorm` + route `POST /training/lessons/upload-scorm`. FE: `LessonForm.vue` block SCORM thêm `V2BaseFile(.zip)` + spinner + info card + `onUploadScormZip` / `clearScormPackage`; submit type=4 gửi thêm `package_path / package_title / file_size / file_name`. Giới hạn 1GB, 2000 files. Known issue pending: cross-origin SCORM API (S3 ≠ LMS domain) — để lại cho feature sau `scorm-lms-runtime`.
