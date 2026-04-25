@@ -1,6 +1,7 @@
 # STATUS.md
 
 ## Đang làm
+
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
   Trạng thái: Phase 16 code DONE (UI polish). Tổng Phase 11-16 đều ở trạng thái code DONE chờ user test. Branch `tpe-develop-assign`.
   Phase 14B (parent roll-up) + Phase 15 (xoá báo giá) + Phase 16 (per-row VAT cho dòng con + Sửa/Xoá YCBG trong tab Hồ sơ + `V2BaseSelectRemote` cho Model/Brand/Xuất xứ trong popup thêm hàng hoá + nút Làm mới filter).
@@ -36,6 +37,8 @@
 - subjects-list-ui → @junfoke → .plans/subjects-list-ui/plan.md
   Hoàn thành: 2026-04-25. Fix 3 bug logic (`exportExcel` formFilter→filters, `lockItem`/`unlockItem` getData→loadData, `getTrainingTypes` method xung đột computed) + 1 bug CSS (`::v-deep` row-actions hover) + thêm nút lock/unlock toggle trong cột Trạng thái + status pill dùng global `tpl-status-*` class từ `v2-styles.scss`. Xóa dead code `onEditClick`/`eventHandler`. Chỉ 1 file: `hrm-client/pages/training/subjects/index.vue`.
 
+- merge-module-review-profiles → @manhcuong → .plans/merge-module-review-profiles/plan.md
+  Hoàn thành: 2026-04-25. 7/7 task. Gộp hồ sơ trình duyệt hạng mục vào tab Hồ sơ giải pháp. BE: mở rộng `getSolutionReviewProfiles()` merge 2 query (solution + module) + manual paginate + transform + auto-force type theo filter. FE: 3 filter mới (Loại/Hạng mục/Version HM) + 2 cột mới + deep watcher auto-search + row actions phân loại + tích hợp `ModuleApprovalModal` để PM duyệt hồ sơ hạng mục. Lọc bỏ draft. Spec: docs/superpowers/specs/2026-04-25-merge-module-review-profiles-design.md
 - scorm-upload → @khoipv → .plans/scorm-upload/plan.md
   Hoàn thành: 2026-04-22. 14/14 task. Spec: docs/superpowers/specs/2026-04-22-scorm-upload-design.md. BE: `CmcS3Helper::putLocalFile` + `UploadScormRequest` + `LessonService::handleScormUpload` (ZipArchive extract → parseScormManifest → upload S3 recursive với MIME chuẩn → cleanup tmp) + Controller `uploadScorm` + route `POST /training/lessons/upload-scorm`. FE: `LessonForm.vue` block SCORM thêm `V2BaseFile(.zip)` + spinner + info card + `onUploadScormZip` / `clearScormPackage`; submit type=4 gửi thêm `package_path / package_title / file_size / file_name`. Giới hạn 1GB, 2000 files. Known issue pending: cross-origin SCORM API (S3 ≠ LMS domain) — để lại cho feature sau `scorm-lms-runtime`.
 - ke-toan-module-scaffold → @manhcuong → .plans/ke-toan-module-scaffold/plan.md
