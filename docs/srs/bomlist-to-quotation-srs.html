@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>SRS — Luồng Tạo BOM List → Duyệt Báo giá</title>
+<style>
+  @page { size: A4; margin: 12mm 12mm 14mm 12mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Inter", "Helvetica Neue", Arial, "Segoe UI", sans-serif;
+    color: #1f2937; font-size: 12px; line-height: 1.55; margin: 0; padding: 0; background: #fff;
+  }
+  .page { padding: 18px 24px; max-width: 980px; margin: 0 auto; }
+  header.cover { text-align: center; padding: 32px 24px 16px; border-bottom: 3px solid #0ea5e9; margin-bottom: 24px; }
+  header.cover h1 { font-size: 24px; margin: 6px 0 4px; color: #0c4a6e; letter-spacing: -0.3px; }
+  header.cover .subtitle { color: #475569; font-size: 13px; }
+  .meta-table { margin: 16px auto 0; border-collapse: collapse; min-width: 420px; font-size: 11px; }
+  .meta-table th, .meta-table td { border: 1px solid #cbd5e1; padding: 5px 10px; text-align: left; }
+  .meta-table th { background: #f1f5f9; color: #0c4a6e; width: 38%; }
+
+  h2 { color: #0c4a6e; border-bottom: 2px solid #0ea5e9; padding-bottom: 4px; margin-top: 28px; font-size: 16px; }
+  h3 { color: #0369a1; margin-top: 16px; font-size: 14px; }
+  h4 { color: #075985; margin: 10px 0 6px; font-size: 13px; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0 6px 22px; padding: 0; }
+  li { margin: 2px 0; }
+
+  table.grid { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 11.5px; }
+  table.grid th, table.grid td { border: 1px solid #cbd5e1; padding: 5px 8px; vertical-align: top; }
+  table.grid th { background: #e0f2fe; color: #0c4a6e; text-align: left; font-weight: 600; }
+  table.grid tr:nth-child(even) td { background: #f8fafc; }
+  code, .code { font-family: "JetBrains Mono", Menlo, Consolas, monospace; background: #f1f5f9; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #0369a1; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; letter-spacing: 0.2px; }
+  .b-create { background: #ecfeff; color: #0e7490; }
+  .b-submit { background: #fef3c7; color: #92400e; }
+  .b-tp { background: #ede9fe; color: #5b21b6; }
+  .b-bgd { background: #fce7f3; color: #9d174d; }
+  .b-done { background: #dcfce7; color: #166534; }
+  .b-reject { background: #fee2e2; color: #991b1b; }
+  .b-close { background: #e5e7eb; color: #374151; }
+
+  .section-intro { background: #f0f9ff; border-left: 3px solid #0ea5e9; padding: 8px 12px; margin: 8px 0 14px; font-size: 11.5px; color: #0c4a6e; }
+  .note { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 8px 12px; margin: 8px 0; font-size: 11.5px; color: #713f12; }
+
+  .diagram-wrapper { width: 100%; overflow-x: auto; margin: 10px 0 14px; padding: 6px; background: #fafafa; border: 1px solid #e5e7eb; border-radius: 6px; }
+  svg { display: block; max-width: 100%; height: auto; }
+
+  .uc-header { background: #f1f5f9; padding: 6px 10px; border-left: 4px solid #0284c7; margin-top: 10px; font-weight: 600; color: #0c4a6e; }
+  .uc-body { background: #fff; border: 1px solid #e2e8f0; border-top: none; padding: 8px 12px; font-size: 11.5px; }
+  .uc-body .row { display: flex; gap: 12px; margin-bottom: 4px; }
+  .uc-body .row .label { width: 120px; color: #475569; font-weight: 600; }
+  .uc-body .row .value { flex: 1; }
+
+  .toc { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 16px; margin: 12px 0; }
+  .toc ol { margin: 0 0 0 18px; columns: 2; column-gap: 24px; font-size: 11.5px; }
+
+  @media print {
+    header.cover { page-break-after: always; }
+    h2 { page-break-after: avoid; }
+    table.grid { page-break-inside: avoid; }
+    .uc-header, .uc-body { page-break-inside: avoid; }
+    .diagram-wrapper { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div style="color: #64748b; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">Software Requirements Specification</div>
+  <h1>Luồng Tạo BOM List → Duyệt Báo giá</h1>
+  <div class="subtitle">Module Giao việc (Assign) — ERP TPE</div>
+  <table class="meta-table">
+    <tr><th>Phiên bản</th><td>1.0</td></tr>
+    <tr><th>Ngày tạo</th><td>2026-04-20</td></tr>
+    <tr><th>Người tạo</th><td>@dnsnamdang</td></tr>
+    <tr><th>Trạng thái</th><td>Draft</td></tr>
+    <tr><th>Phạm vi</th><td>End-to-end flow từ BOM List → YCBG → Báo giá → Duyệt</td></tr>
+    <tr><th>Tech stack</th><td>Laravel 8 + MySQL (BE), Nuxt 2 / Vue 2 (FE)</td></tr>
+  </table>
+</header>
+
+<div class="page">
+
+<!-- ===== MỤC LỤC ===== -->
+<div class="toc">
+  <strong>Mục lục</strong>
+  <ol>
+    <li>Giới thiệu &amp; phạm vi</li>
+    <li>Thuật ngữ</li>
+    <li>Actors &amp; permissions</li>
+    <li>Sơ đồ Use Case</li>
+    <li>Danh sách Use Case chi tiết</li>
+    <li>Sơ đồ Swimlane luồng E2E</li>
+    <li>Business rules</li>
+    <li>Data model</li>
+    <li>API specification</li>
+    <li>Màn hình (UI)</li>
+    <li>Non-functional requirements</li>
+    <li>Phụ lục — file references</li>
+  </ol>
+</div>
+
+<!-- ===== 1. GIỚI THIỆU ===== -->
+<h2>1. Giới thiệu &amp; phạm vi</h2>
+
+<h3>1.1. Mục đích</h3>
+<p>Tài liệu đặc tả luồng end-to-end từ lúc Nhân viên làm giá (NLG) tạo BOM List (Bill of Materials — danh mục hàng hoá/vật tư phục vụ định giá), qua bước Nhân viên Kinh doanh (NV KD) gửi Yêu cầu báo giá (YCBG), đến lúc Báo giá được duyệt bởi Trưởng phòng (TP) và/hoặc Ban Giám đốc (BGĐ) — sẵn sàng để NV KD bổ sung ghi chú và gửi khách hàng.</p>
+
+<h3>1.2. Trong phạm vi</h3>
+<ul>
+  <li>Quản lý BOM List: tạo / sửa / xoá / import Excel / export Excel / phân quyền theo cấp tổ chức.</li>
+  <li>Yêu cầu báo giá (YCBG): tạo từ dự án tiền khả thi (TKT), auto-pick BOM tổng hợp đã duyệt, gửi NLG.</li>
+  <li>Báo giá: tạo từ YCBG (snapshot khách hàng + thương mại), nhập giá, quản lý VAT per-row + bulk apply, tính cấp duyệt tự động, workflow duyệt 3 cấp.</li>
+  <li>Thông báo in-app cho các bước chuyển trạng thái quan trọng.</li>
+</ul>
+
+<h3>1.3. Ngoài phạm vi</h3>
+<ul>
+  <li>Gửi báo giá ra khách hàng qua email/PDF ngoài hệ thống.</li>
+  <li>Tích hợp thanh toán, hợp đồng điện tử.</li>
+  <li>Chỉnh sửa giá sau khi báo giá đã <em>Đã duyệt</em> (chỉ sửa sales_note).</li>
+</ul>
+
+<!-- ===== 2. THUẬT NGỮ ===== -->
+<h2>2. Thuật ngữ</h2>
+<table class="grid">
+  <thead><tr><th style="width:22%">Thuật ngữ</th><th style="width:22%">Mã trong code</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td>Dự án TKT</td><td><code>prospective_project</code></td><td>Dự án tiền khả thi — cửa ngõ đầu vào, 1 dự án → N giải pháp.</td></tr>
+    <tr><td>Giải pháp</td><td><code>solution</code> / <code>solution_version</code></td><td>Bộ giải pháp kỹ thuật cho dự án. 1 GP → N hạng mục.</td></tr>
+    <tr><td>Hạng mục</td><td><code>solution_module</code> / <code>solution_module_version</code></td><td>Thành phần kỹ thuật trong 1 giải pháp.</td></tr>
+    <tr><td>BOM List</td><td><code>bom_list</code></td><td>Danh mục hàng hoá/vật tư gắn vào hạng mục hoặc giải pháp, phục vụ định giá. Có 2 loại: Thành phần &amp; Tổng hợp.</td></tr>
+    <tr><td>YCBG</td><td><code>pricing_request</code></td><td>Yêu cầu báo giá — do NV KD gửi để NLG tạo báo giá.</td></tr>
+    <tr><td>Báo giá</td><td><code>quotation</code></td><td>Tài liệu báo giá chính thức gắn với 1 YCBG + 1 BOM Tổng hợp.</td></tr>
+    <tr><td>Dòng giá</td><td><code>quotation_product_price</code></td><td>Giá nhập / bán / VAT% của 1 sản phẩm trong BOM.</td></tr>
+    <tr><td>NLG</td><td>—</td><td>Nhân viên làm giá — có permission <em>Xây dựng giá Bom giải pháp</em>.</td></tr>
+    <tr><td>TP</td><td>—</td><td>Trưởng phòng — có permission <em>Trưởng phòng duyệt giá Bom giải pháp</em>.</td></tr>
+    <tr><td>BGĐ</td><td>—</td><td>Ban Giám đốc — có permission <em>Ban giám đốc duyệt giá Bom giải pháp</em>.</td></tr>
+    <tr><td>Cấp duyệt</td><td>LEVEL_1 / 2 / 3</td><td>Xác định từ ngưỡng giá trị báo giá (VND) + tỷ suất lợi nhuận qua <code>BomPriceApprovalConfigService</code>.</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 3. ACTORS ===== -->
+<h2>3. Actors &amp; permissions</h2>
+<table class="grid">
+  <thead><tr><th>Actor</th><th>Vai trò</th><th>Permissions chính</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>NV KD</td>
+      <td>Đầu mối khách hàng, tạo dự án TKT, gửi YCBG, bổ sung sales_note sau khi Báo giá duyệt.</td>
+      <td>Quản lý dự án TKT, gửi YCBG, cập nhật ghi chú kinh doanh.</td>
+    </tr>
+    <tr>
+      <td>NLG</td>
+      <td>Làm giá — tạo BOM List, tạo Báo giá từ YCBG, nhập giá/VAT, submit duyệt.</td>
+      <td><code>Xây dựng giá Bom giải pháp</code> + view theo cấp tổ chức (Công ty/Phòng ban/Bộ phận).</td>
+    </tr>
+    <tr>
+      <td>TP</td>
+      <td>Trưởng phòng duyệt Báo giá cấp 2 hoặc forward cấp 3.</td>
+      <td><code>Trưởng phòng duyệt giá Bom giải pháp</code>.</td>
+    </tr>
+    <tr>
+      <td>BGĐ</td>
+      <td>Ban Giám đốc duyệt Báo giá cấp 3 sau khi TP forward.</td>
+      <td><code>Ban giám đốc duyệt giá Bom giải pháp</code>.</td>
+    </tr>
+    <tr>
+      <td>System</td>
+      <td>Auto-pick BOM tổng hợp, calculate level, log history, push notification.</td>
+      <td>—</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ===== 4. USE CASE DIAGRAM ===== -->
+<h2>4. Sơ đồ Use Case</h2>
+<p class="section-intro">Sơ đồ mô tả 5 actor tương tác với 12 use case chính của luồng BOM List → Duyệt Báo giá. Hình stick = actor; oval = use case; đường nối = mối liên quan.</p>
+
+<div class="diagram-wrapper">
+<svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1000px;">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#0284c7" />
+    </marker>
+  </defs>
+  <!-- Rectangle System Boundary -->
+  <rect x="220" y="25" width="560" height="590" rx="10" ry="10" fill="#f0f9ff" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="4 3" />
+  <text x="500" y="48" text-anchor="middle" font-size="13" font-weight="bold" fill="#0c4a6e">Hệ thống Giao việc — BOM &amp; Báo giá</text>
+
+  <!-- Actor: NLG (left top) -->
+  <g>
+    <circle cx="80" cy="110" r="16" fill="#fff" stroke="#334155" stroke-width="1.5" />
+    <line x1="80" y1="126" x2="80" y2="170" stroke="#334155" stroke-width="1.5" />
+    <line x1="60" y1="145" x2="100" y2="145" stroke="#334155" stroke-width="1.5" />
+    <line x1="80" y1="170" x2="60" y2="200" stroke="#334155" stroke-width="1.5" />
+    <line x1="80" y1="170" x2="100" y2="200" stroke="#334155" stroke-width="1.5" />
+    <text x="80" y="222" text-anchor="middle" font-size="11" font-weight="bold" fill="#0c4a6e">NLG</text>
+  </g>
+
+  <!-- Actor: NV KD (left middle) -->
+  <g>
+    <circle cx="80" cy="320" r="16" fill="#fff" stroke="#334155" stroke-width="1.5" />
+    <line x1="80" y1="336" x2="80" y2="380" stroke="#334155" stroke-width="1.5" />
+    <line x1="60" y1="355" x2="100" y2="355" stroke="#334155" stroke-width="1.5" />
+    <line x1="80" y1="380" x2="60" y2="410" stroke="#334155" stroke-width="1.5" />
+    <line x1="80" y1="380" x2="100" y2="410" stroke="#334155" stroke-width="1.5" />
+    <text x="80" y="432" text-anchor="middle" font-size="11" font-weight="bold" fill="#0c4a6e">NV KD</text>
+  </g>
+
+  <!-- Actor: TP (right top) -->
+  <g>
+    <circle cx="920" cy="170" r="16" fill="#fff" stroke="#334155" stroke-width="1.5" />
+    <line x1="920" y1="186" x2="920" y2="230" stroke="#334155" stroke-width="1.5" />
+    <line x1="900" y1="205" x2="940" y2="205" stroke="#334155" stroke-width="1.5" />
+    <line x1="920" y1="230" x2="900" y2="260" stroke="#334155" stroke-width="1.5" />
+    <line x1="920" y1="230" x2="940" y2="260" stroke="#334155" stroke-width="1.5" />
+    <text x="920" y="282" text-anchor="middle" font-size="11" font-weight="bold" fill="#0c4a6e">TP</text>
+  </g>
+
+  <!-- Actor: BGĐ (right middle) -->
+  <g>
+    <circle cx="920" cy="370" r="16" fill="#fff" stroke="#334155" stroke-width="1.5" />
+    <line x1="920" y1="386" x2="920" y2="430" stroke="#334155" stroke-width="1.5" />
+    <line x1="900" y1="405" x2="940" y2="405" stroke="#334155" stroke-width="1.5" />
+    <line x1="920" y1="430" x2="900" y2="460" stroke="#334155" stroke-width="1.5" />
+    <line x1="920" y1="430" x2="940" y2="460" stroke="#334155" stroke-width="1.5" />
+    <text x="920" y="482" text-anchor="middle" font-size="11" font-weight="bold" fill="#0c4a6e">BGĐ</text>
+  </g>
+
+  <!-- Actor: System (bottom center) -->
+  <g>
+    <circle cx="500" cy="590" r="14" fill="#fff" stroke="#64748b" stroke-width="1.5" />
+    <text x="500" y="594" text-anchor="middle" font-size="9" font-weight="bold" fill="#64748b">SYS</text>
+    <text x="500" y="620" text-anchor="middle" font-size="11" font-weight="bold" fill="#64748b">System</text>
+  </g>
+
+  <!-- Use Cases (ovals) -->
+  <g font-size="11" fill="#0c4a6e">
+    <!-- NLG side -->
+    <ellipse cx="340" cy="90" rx="85" ry="20" fill="#ecfeff" stroke="#0e7490" stroke-width="1.2" />
+    <text x="340" y="94" text-anchor="middle">UC-01 Tạo BOM List</text>
+
+    <ellipse cx="340" cy="140" rx="85" ry="20" fill="#ecfeff" stroke="#0e7490" stroke-width="1.2" />
+    <text x="340" y="144" text-anchor="middle">UC-02 Import/Export BOM</text>
+
+    <ellipse cx="340" cy="190" rx="85" ry="20" fill="#ecfeff" stroke="#0e7490" stroke-width="1.2" />
+    <text x="340" y="194" text-anchor="middle">UC-03 Xoá BOM</text>
+
+    <!-- Middle -->
+    <ellipse cx="500" cy="260" rx="95" ry="20" fill="#fef3c7" stroke="#92400e" stroke-width="1.2" />
+    <text x="500" y="264" text-anchor="middle">UC-04 Gửi YCBG</text>
+
+    <ellipse cx="340" cy="310" rx="95" ry="20" fill="#fef3c7" stroke="#92400e" stroke-width="1.2" />
+    <text x="340" y="314" text-anchor="middle">UC-05 Tạo Báo giá</text>
+
+    <ellipse cx="340" cy="360" rx="95" ry="20" fill="#fef3c7" stroke="#92400e" stroke-width="1.2" />
+    <text x="340" y="364" text-anchor="middle">UC-06 Nhập giá + VAT</text>
+
+    <ellipse cx="340" cy="410" rx="95" ry="20" fill="#fef3c7" stroke="#92400e" stroke-width="1.2" />
+    <text x="340" y="414" text-anchor="middle">UC-07 Submit duyệt</text>
+
+    <!-- Approval -->
+    <ellipse cx="660" cy="170" rx="95" ry="20" fill="#ede9fe" stroke="#5b21b6" stroke-width="1.2" />
+    <text x="660" y="174" text-anchor="middle">UC-08 TP duyệt</text>
+
+    <ellipse cx="660" cy="220" rx="95" ry="20" fill="#fee2e2" stroke="#991b1b" stroke-width="1.2" />
+    <text x="660" y="224" text-anchor="middle">UC-09 TP từ chối</text>
+
+    <ellipse cx="660" cy="370" rx="95" ry="20" fill="#fce7f3" stroke="#9d174d" stroke-width="1.2" />
+    <text x="660" y="374" text-anchor="middle">UC-10 BGĐ duyệt</text>
+
+    <ellipse cx="660" cy="420" rx="95" ry="20" fill="#fee2e2" stroke="#991b1b" stroke-width="1.2" />
+    <text x="660" y="424" text-anchor="middle">UC-11 BGĐ từ chối</text>
+
+    <!-- NV KD final -->
+    <ellipse cx="340" cy="470" rx="95" ry="20" fill="#dcfce7" stroke="#166534" stroke-width="1.2" />
+    <text x="340" y="474" text-anchor="middle">UC-12 Cập nhật sales_note</text>
+
+    <!-- System UCs -->
+    <ellipse cx="500" cy="550" rx="110" ry="18" fill="#f1f5f9" stroke="#64748b" stroke-width="1.2" />
+    <text x="500" y="554" text-anchor="middle">Auto-pick BOM + Tính cấp duyệt + Log + Notify</text>
+  </g>
+
+  <!-- Lines: Actor → UC -->
+  <g stroke="#0284c7" stroke-width="1" fill="none">
+    <!-- NLG → UC-01..03, 05..07 -->
+    <line x1="110" y1="155" x2="255" y2="90" />
+    <line x1="110" y1="155" x2="255" y2="140" />
+    <line x1="110" y1="155" x2="255" y2="190" />
+    <line x1="110" y1="170" x2="245" y2="310" />
+    <line x1="110" y1="170" x2="245" y2="360" />
+    <line x1="110" y1="170" x2="245" y2="410" />
+
+    <!-- NV KD → UC-04, 12 -->
+    <line x1="110" y1="365" x2="405" y2="260" />
+    <line x1="110" y1="365" x2="245" y2="470" />
+
+    <!-- TP → UC-08, 09 -->
+    <line x1="890" y1="215" x2="755" y2="170" />
+    <line x1="890" y1="215" x2="755" y2="220" />
+
+    <!-- BGĐ → UC-10, 11 -->
+    <line x1="890" y1="415" x2="755" y2="370" />
+    <line x1="890" y1="415" x2="755" y2="420" />
+
+    <!-- System → bottom UC -->
+    <line x1="500" y1="576" x2="500" y2="568" />
+  </g>
+
+  <!-- Include dependencies (dashed) -->
+  <g stroke="#94a3b8" stroke-width="0.8" stroke-dasharray="4 3" fill="none">
+    <line x1="430" y1="260" x2="405" y2="310" />
+    <line x1="405" y1="410" x2="500" y2="540" />
+    <line x1="565" y1="170" x2="595" y2="170" />
+    <line x1="565" y1="370" x2="595" y2="370" />
+  </g>
+</svg>
+</div>
+
+<!-- ===== 5. USE CASES ===== -->
+<h2>5. Danh sách Use Case chi tiết</h2>
+
+<div class="uc-header">UC-01 — Tạo BOM List</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NLG (hoặc user có quyền "Xây dựng giá Bom giải pháp")</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">User đã login, có hạng mục/giải pháp cần BOM.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    1. Mở <code>/assign/bom-list/add</code> → nhập: tên, loại (Thành phần / Tổng hợp), gắn hạng mục hoặc giải pháp, customer.<br />
+    2. Thêm sản phẩm vào BOM (hỗ trợ cấu trúc cha–con).<br />
+    3. Lưu → hệ thống sinh mã <code>BOM-YYYY-NNNNN</code>, status = 1 (Đang tạo).<br />
+    4. NLG tiếp tục sửa, khi xong → submit duyệt → status chuyển tuần tự 2 (Hoàn thành) → 3 (Chờ duyệt) → 4 (Đã duyệt).
+  </div></div>
+  <div class="row"><div class="label">Postcondition</div><div class="value">BOM có status 4 (Đã duyệt) mới được dùng cho YCBG.</div></div>
+  <div class="row"><div class="label">Alt / Exception</div><div class="value">BOM Tổng hợp được tạo bằng cách tham chiếu BOM Thành phần qua quan hệ <code>BomListRelation</code>.</div></div>
+</div>
+
+<div class="uc-header">UC-02 — Import / Export Excel BOM</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NLG</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    • Export: <code>GET /assign/bom-lists/export</code> — xuất danh sách hiện hành theo filter.<br />
+    • Import: <code>POST /assign/bom-lists/import</code> — parse Excel, validate, tạo <code>BomListProduct</code> hàng loạt.
+  </div></div>
+  <div class="row"><div class="label">Exception</div><div class="value">Import sai format → trả 422 kèm mô tả lỗi.</div></div>
+</div>
+
+<div class="uc-header">UC-03 — Xoá BOM List</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NLG (creator)</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">BOM không đang được tham chiếu bởi YCBG / Báo giá đang hoạt động.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value"><code>DELETE /assign/bom-lists/{id}</code> → soft delete.</div></div>
+</div>
+
+<div class="uc-header">UC-04 — Gửi Yêu cầu báo giá (YCBG)</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NV KD</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">Dự án TKT tồn tại, đã chọn phiên bản giải pháp + hạng mục; tồn tại BOM Tổng hợp đã duyệt phù hợp.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    1. Mở form YCBG trong dự án TKT. Gọi <code>GET /assign/prospective-projects/{id}/pricing-requests/form-info</code> → BE auto-pick BOM Tổng hợp status=4.<br />
+    2. NV KD nhập nội dung → <code>POST /assign/pricing-requests</code> (status=1 Đang tạo).<br />
+    3. Nhấn "Gửi" → <code>POST /assign/pricing-requests/{id}/send</code> → status 1 → 2 (Chờ XD giá).<br />
+    4. Hệ thống thông báo tới mọi user có quyền "Xây dựng giá Bom giải pháp" trong phạm vi tổ chức.
+  </div></div>
+  <div class="row"><div class="label">Postcondition</div><div class="value">PricingRequest status=2, danh sách YCBG của NLG cập nhật.</div></div>
+</div>
+
+<div class="uc-header">UC-05 — Tạo Báo giá từ YCBG</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NLG</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">PricingRequest status=2 (Chờ XD giá).</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    1. NLG mở màn "Chờ xây dựng giá" → chọn YCBG → <code>POST /assign/quotations</code> body <code>{pricing_request_id}</code>.<br />
+    2. BE <code>QuotationService::createFromRequest</code>:<br />
+    &nbsp;&nbsp;— <code>lockForUpdate</code> PricingRequest (chống race).<br />
+    &nbsp;&nbsp;— Snapshot dữ liệu khách hàng (KH, MST, địa chỉ, email, người liên hệ, SĐT liên hệ) + thương mại (validity_days, warranty_time, payment_terms, currency).<br />
+    &nbsp;&nbsp;— Pre-populate <code>QuotationProductPrice</code> (giá=0, VAT%=0) cho từng <code>BomListProduct</code>.<br />
+    &nbsp;&nbsp;— Update PricingRequest status 2 → 3 (Đang XD giá).<br />
+    &nbsp;&nbsp;— Sinh mã <code>BG-YYYY-NNNNN</code>.<br />
+    &nbsp;&nbsp;— Log <code>QuotationHistory::ACTION_CREATE</code>.
+  </div></div>
+  <div class="row"><div class="label">Postcondition</div><div class="value">Quotation status=1 (Đang tạo), đầy đủ dòng sản phẩm giá 0, khách hàng snapshot.</div></div>
+</div>
+
+<div class="uc-header">UC-06 — Nhập giá + VAT (save draft)</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NLG (creator)</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">Quotation status=1.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    • <code>PUT /assign/quotations/{id}</code> → upsert <code>estimated_price</code>, <code>quoted_price</code>, <code>vat_percent</code> per dòng.<br />
+    • Dòng CHA-có-CON: BE force <code>quoted_price=0</code> (roll-up từ CON).<br />
+    • Dòng CON: BE force <code>vat_percent=0</code> (VAT chỉ áp CHA).<br />
+    • <code>POST /assign/quotations/{id}/apply-vat-bulk</code> với body <code>{vat_percent, mode ∈ {all, zero_only}}</code>.<br />
+    • Sau mỗi save, BE <code>recomputeTotals</code> cache <code>total_vat_amount + total_after_vat</code>.<br />
+    • Log <code>ACTION_SAVE_DRAFT</code> hoặc <code>ACTION_UPDATE_VAT_BULK</code>.
+  </div></div>
+  <div class="row"><div class="label">Alt Flow</div><div class="value">NLG có thể gọi <code>POST /assign/quotations/{id}/calculate-level</code> để xem trước cấp duyệt dự kiến dựa trên giá hiện tại.</div></div>
+</div>
+
+<div class="uc-header">UC-07 — Submit duyệt Báo giá</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NLG (creator)</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">Quotation status=1, tất cả dòng có <code>quoted_price &gt; 0</code>.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    1. <code>POST /assign/quotations/{id}/submit</code>.<br />
+    2. BE <code>recomputeTotals</code> → gọi <code>BomPriceApprovalConfigService::calculateApprovalLevel(totalSale_VND, profitMargin%)</code> ra Level.<br />
+    3. Level 1 → response <code>{can_self_approve: true}</code> — NLG tiếp tục gọi <code>self-approve</code> (UC-07.1).<br />
+    4. Level 2/3 → status 1 → 2 (Chờ TP duyệt). Thông báo tới TP. Log <code>ACTION_SUBMIT</code> meta <code>{level}</code>.
+  </div></div>
+  <div class="row"><div class="label">Exception</div><div class="value">Có dòng giá=0 → 422 "Còn dòng chưa có giá bán".</div></div>
+</div>
+
+<div class="uc-header">UC-07.1 — Self-approve (Level 1)</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NLG</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">UC-07 trả <code>can_self_approve=true</code> (Level 1), status=1.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    <code>POST /assign/quotations/{id}/self-approve</code> → status 1 → 4 (Đã duyệt), set <code>approved_by/approved_at</code>; PricingRequest status 3 → 4 (Đã có báo giá). Thông báo NV KD + TP. Log <code>ACTION_SELF_APPROVE</code>.
+  </div></div>
+</div>
+
+<div class="uc-header">UC-08 — TP duyệt</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">TP</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">Quotation status=2.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    <code>POST /assign/quotations/{id}/tp-approve</code>:<br />
+    • Level 2 → status 2 → 4 (Đã duyệt), set <code>approved_by/at</code>, PricingRequest → 4. Log <code>ACTION_TP_APPROVE</code>. Thông báo NLG + NV KD.<br />
+    • Level 3 → status 2 → 3 (Chờ BGĐ), set <code>tp_approved_by/at</code>. Log <code>ACTION_TP_APPROVE_FORWARD</code>. Thông báo BGĐ.
+  </div></div>
+</div>
+
+<div class="uc-header">UC-09 — TP từ chối</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">TP</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    <code>POST /assign/quotations/{id}/reject</code> với body <code>{reason}</code> → status 2 → 1, clear <code>approved_by/at</code>, set <code>rejected_reason</code>. Log <code>ACTION_REJECT</code> meta <code>{reason}</code>. Thông báo NLG.
+  </div></div>
+</div>
+
+<div class="uc-header">UC-10 — BGĐ duyệt</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">BGĐ</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">Quotation status=3.</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    <code>POST /assign/quotations/{id}/bgd-approve</code> → status 3 → 4 (Đã duyệt), set <code>approved_by/at</code>; PricingRequest → 4. Log <code>ACTION_BGD_APPROVE</code>. Thông báo NLG + NV KD + TP.
+  </div></div>
+</div>
+
+<div class="uc-header">UC-11 — BGĐ từ chối</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">BGĐ</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    <code>POST /assign/quotations/{id}/reject</code> từ status 3 → 1. Clear <code>tp_approved_*</code> + <code>approved_*</code>, set <code>rejected_reason</code>. Log <code>ACTION_REJECT</code>. Thông báo NLG + TP.
+  </div></div>
+</div>
+
+<div class="uc-header">UC-12 — Cập nhật ghi chú kinh doanh</div>
+<div class="uc-body">
+  <div class="row"><div class="label">Actor</div><div class="value">NV KD</div></div>
+  <div class="row"><div class="label">Precondition</div><div class="value">Quotation status=4 (Đã duyệt).</div></div>
+  <div class="row"><div class="label">Main Flow</div><div class="value">
+    <code>PUT /assign/quotations/{id}/sales-note</code> → cập nhật <code>sales_note</code> mà không đổi status / giá.
+  </div></div>
+</div>
+
+<!-- ===== 6. SWIMLANE ===== -->
+<h2>6. Sơ đồ Swimlane — luồng end-to-end</h2>
+<p class="section-intro">Mỗi lane tương ứng 1 actor. Dòng chảy đi từ trên xuống dưới. Màu trạng thái: <span class="badge b-create">Đang tạo</span> <span class="badge b-submit">Chờ TP</span> <span class="badge b-tp">Chờ BGĐ</span> <span class="badge b-done">Đã duyệt</span> <span class="badge b-reject">Từ chối</span></p>
+
+<div class="diagram-wrapper">
+<svg viewBox="0 0 1100 1160" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:1100px;">
+  <defs>
+    <marker id="arrSL" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+    </marker>
+    <marker id="arrReject" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#991b1b" />
+    </marker>
+  </defs>
+  <!-- Lane headers -->
+  <g font-size="12" font-weight="bold" fill="#0c4a6e">
+    <rect x="10" y="10" width="200" height="34" fill="#e0f2fe" stroke="#0284c7" />
+    <text x="110" y="32" text-anchor="middle">NLG</text>
+    <rect x="210" y="10" width="200" height="34" fill="#fef3c7" stroke="#f59e0b" />
+    <text x="310" y="32" text-anchor="middle">NV KD</text>
+    <rect x="410" y="10" width="200" height="34" fill="#ede9fe" stroke="#7c3aed" />
+    <text x="510" y="32" text-anchor="middle">TP</text>
+    <rect x="610" y="10" width="200" height="34" fill="#fce7f3" stroke="#db2777" />
+    <text x="710" y="32" text-anchor="middle">BGĐ</text>
+    <rect x="810" y="10" width="280" height="34" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="32" text-anchor="middle">System</text>
+  </g>
+  <!-- Lane separators -->
+  <g stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 4">
+    <line x1="210" y1="44" x2="210" y2="1150" />
+    <line x1="410" y1="44" x2="410" y2="1150" />
+    <line x1="610" y1="44" x2="610" y2="1150" />
+    <line x1="810" y1="44" x2="810" y2="1150" />
+  </g>
+
+  <g font-size="11" fill="#0f172a">
+    <!-- Step 1: NLG tạo BOM -->
+    <rect x="30" y="60" width="160" height="48" rx="6" fill="#ecfeff" stroke="#0e7490" />
+    <text x="110" y="82" text-anchor="middle">1. Tạo BOM Thành phần</text>
+    <text x="110" y="98" text-anchor="middle" font-size="10" fill="#0e7490">BOM status=1 Đang tạo</text>
+
+    <!-- Step 2: Submit BOM -->
+    <rect x="30" y="120" width="160" height="48" rx="6" fill="#ecfeff" stroke="#0e7490" />
+    <text x="110" y="142" text-anchor="middle">2. Hoàn thành + Duyệt BOM</text>
+    <text x="110" y="158" text-anchor="middle" font-size="10" fill="#0e7490">→ 2 → 3 → 4 (Đã duyệt)</text>
+
+    <!-- Step 3: Tạo BOM Tổng hợp -->
+    <rect x="30" y="180" width="160" height="48" rx="6" fill="#ecfeff" stroke="#0e7490" />
+    <text x="110" y="202" text-anchor="middle">3. Tạo BOM Tổng hợp</text>
+    <text x="110" y="218" text-anchor="middle" font-size="10" fill="#0e7490">gắn vào hạng mục/GP</text>
+
+    <!-- Step 4: NV KD — Chọn GP/HM -->
+    <rect x="230" y="240" width="160" height="48" rx="6" fill="#fef3c7" stroke="#92400e" />
+    <text x="310" y="262" text-anchor="middle">4. Chọn Dự án TKT + GP + HM</text>
+    <text x="310" y="278" text-anchor="middle" font-size="10" fill="#92400e">phiên bản nhất định</text>
+
+    <!-- Step 5: System auto-pick BOM -->
+    <rect x="830" y="240" width="240" height="48" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="262" text-anchor="middle">Auto-pick BOM Tổng hợp status=4</text>
+    <text x="950" y="278" text-anchor="middle" font-size="10" fill="#64748b">match GP/HM version</text>
+
+    <!-- Step 6: NV KD Gửi YCBG -->
+    <rect x="230" y="300" width="160" height="48" rx="6" fill="#fef3c7" stroke="#92400e" />
+    <text x="310" y="322" text-anchor="middle">5. Gửi YCBG</text>
+    <text x="310" y="338" text-anchor="middle" font-size="10" fill="#92400e">PR status=2 Chờ XD giá</text>
+
+    <!-- Step 7: System notify NLG -->
+    <rect x="830" y="300" width="240" height="48" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="322" text-anchor="middle">Notify tất cả NLG có quyền</text>
+    <text x="950" y="338" text-anchor="middle" font-size="10" fill="#64748b">theo phạm vi tổ chức</text>
+
+    <!-- Step 8: NLG tạo BG -->
+    <rect x="30" y="360" width="160" height="48" rx="6" fill="#fef3c7" stroke="#92400e" />
+    <text x="110" y="382" text-anchor="middle">6. Nhận YCBG, Tạo Báo giá</text>
+    <text x="110" y="398" text-anchor="middle" font-size="10" fill="#92400e">BG status=1, PR status=3</text>
+
+    <!-- Step 9: NLG Nhập giá + VAT -->
+    <rect x="30" y="420" width="160" height="48" rx="6" fill="#fef3c7" stroke="#92400e" />
+    <text x="110" y="442" text-anchor="middle">7. Nhập giá + VAT</text>
+    <text x="110" y="458" text-anchor="middle" font-size="10" fill="#92400e">save draft, recompute totals</text>
+
+    <!-- Step 10: NLG Submit -->
+    <rect x="30" y="480" width="160" height="48" rx="6" fill="#fef3c7" stroke="#92400e" />
+    <text x="110" y="502" text-anchor="middle">8. Submit duyệt</text>
+    <text x="110" y="518" text-anchor="middle" font-size="10" fill="#92400e">BE calculate Level 1/2/3</text>
+
+    <!-- Decision Level -->
+    <polygon points="110,550 180,595 110,640 40,595" fill="#fff7ed" stroke="#ea580c" />
+    <text x="110" y="592" text-anchor="middle" font-weight="bold">Cấp duyệt?</text>
+    <text x="110" y="608" text-anchor="middle" font-size="10" fill="#ea580c">Level 1 / 2 / 3</text>
+
+    <!-- Level 1 self-approve -->
+    <rect x="30" y="660" width="160" height="44" rx="6" fill="#dcfce7" stroke="#166534" />
+    <text x="110" y="682" text-anchor="middle">Level 1: Self-approve</text>
+    <text x="110" y="696" text-anchor="middle" font-size="10" fill="#166534">BG status=4 Đã duyệt</text>
+
+    <!-- Level 2/3 forward TP -->
+    <rect x="430" y="660" width="160" height="44" rx="6" fill="#ede9fe" stroke="#5b21b6" />
+    <text x="510" y="682" text-anchor="middle">9. TP nhận Báo giá</text>
+    <text x="510" y="696" text-anchor="middle" font-size="10" fill="#5b21b6">BG status=2 Chờ TP</text>
+
+    <!-- TP decision -->
+    <polygon points="510,720 580,765 510,810 440,765" fill="#fff7ed" stroke="#ea580c" />
+    <text x="510" y="763" text-anchor="middle" font-weight="bold">TP duyệt?</text>
+
+    <!-- TP approve Level 2 -->
+    <rect x="30" y="830" width="160" height="44" rx="6" fill="#dcfce7" stroke="#166534" />
+    <text x="110" y="852" text-anchor="middle">Level 2 approve</text>
+    <text x="110" y="866" text-anchor="middle" font-size="10" fill="#166534">BG → 4 Đã duyệt</text>
+
+    <!-- TP forward Level 3 -->
+    <rect x="630" y="830" width="160" height="44" rx="6" fill="#fce7f3" stroke="#9d174d" />
+    <text x="710" y="852" text-anchor="middle">10. Level 3 forward</text>
+    <text x="710" y="866" text-anchor="middle" font-size="10" fill="#9d174d">BG status=3 Chờ BGĐ</text>
+
+    <!-- TP reject -->
+    <rect x="430" y="890" width="160" height="44" rx="6" fill="#fee2e2" stroke="#991b1b" />
+    <text x="510" y="912" text-anchor="middle">TP từ chối</text>
+    <text x="510" y="926" text-anchor="middle" font-size="10" fill="#991b1b">BG status=2 → 1</text>
+
+    <!-- BGĐ decide -->
+    <polygon points="710,890 780,935 710,980 640,935" fill="#fff7ed" stroke="#ea580c" />
+    <text x="710" y="933" text-anchor="middle" font-weight="bold">BGĐ duyệt?</text>
+
+    <!-- BGĐ approve -->
+    <rect x="30" y="1000" width="160" height="44" rx="6" fill="#dcfce7" stroke="#166534" />
+    <text x="110" y="1022" text-anchor="middle">11. BGĐ approve</text>
+    <text x="110" y="1036" text-anchor="middle" font-size="10" fill="#166534">BG → 4 Đã duyệt</text>
+
+    <!-- BGĐ reject -->
+    <rect x="630" y="1000" width="160" height="44" rx="6" fill="#fee2e2" stroke="#991b1b" />
+    <text x="710" y="1022" text-anchor="middle">BGĐ từ chối</text>
+    <text x="710" y="1036" text-anchor="middle" font-size="10" fill="#991b1b">BG status=3 → 1</text>
+
+    <!-- NV KD update sales_note -->
+    <rect x="230" y="1080" width="160" height="48" rx="6" fill="#dcfce7" stroke="#166534" />
+    <text x="310" y="1102" text-anchor="middle">12. Cập nhật sales_note</text>
+    <text x="310" y="1118" text-anchor="middle" font-size="10" fill="#166534">sẵn sàng gửi KH</text>
+
+    <!-- System events -->
+    <rect x="830" y="480" width="240" height="32" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="500" text-anchor="middle" font-size="10">Log CREATE + pre-populate dòng giá 0</text>
+
+    <rect x="830" y="540" width="240" height="32" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="560" text-anchor="middle" font-size="10">Log SAVE_DRAFT + recomputeTotals</text>
+
+    <rect x="830" y="600" width="240" height="32" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="620" text-anchor="middle" font-size="10">Calculate Level + log SUBMIT</text>
+
+    <rect x="830" y="700" width="240" height="32" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="720" text-anchor="middle" font-size="10">Log SELF_APPROVE + notify</text>
+
+    <rect x="830" y="870" width="240" height="32" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="890" text-anchor="middle" font-size="10">Log TP_APPROVE / TP_FORWARD + notify</text>
+
+    <rect x="830" y="1040" width="240" height="32" rx="6" fill="#f1f5f9" stroke="#64748b" />
+    <text x="950" y="1060" text-anchor="middle" font-size="10">Log BGD_APPROVE / REJECT + notify</text>
+  </g>
+
+  <!-- Arrows -->
+  <g stroke="#334155" stroke-width="1.2" fill="none">
+    <!-- 1→2 -->
+    <line x1="110" y1="108" x2="110" y2="120" marker-end="url(#arrSL)" />
+    <!-- 2→3 -->
+    <line x1="110" y1="168" x2="110" y2="180" marker-end="url(#arrSL)" />
+    <!-- 3→4 (cross lane to NV KD) -->
+    <path d="M 190 204 L 310 204 L 310 240" marker-end="url(#arrSL)" />
+    <!-- 4→5 (same lane) -->
+    <line x1="310" y1="288" x2="310" y2="300" marker-end="url(#arrSL)" />
+    <!-- 4→auto-pick -->
+    <path d="M 390 264 L 830 264" marker-end="url(#arrSL)" />
+    <!-- 5→notify -->
+    <path d="M 390 324 L 830 324" marker-end="url(#arrSL)" />
+    <!-- notify → NLG (down arrow to step 6) -->
+    <path d="M 950 348 L 950 400 L 190 400 L 190 384" marker-end="url(#arrSL)" />
+    <!-- 6→7 -->
+    <line x1="110" y1="408" x2="110" y2="420" marker-end="url(#arrSL)" />
+    <!-- 7→8 -->
+    <line x1="110" y1="468" x2="110" y2="480" marker-end="url(#arrSL)" />
+    <!-- 8→decision -->
+    <line x1="110" y1="528" x2="110" y2="550" marker-end="url(#arrSL)" />
+    <!-- decision→self -->
+    <line x1="110" y1="640" x2="110" y2="660" marker-end="url(#arrSL)" />
+    <!-- decision→TP lane -->
+    <path d="M 180 595 L 510 595 L 510 660" marker-end="url(#arrSL)" />
+    <!-- TP step→decision -->
+    <line x1="510" y1="704" x2="510" y2="720" marker-end="url(#arrSL)" />
+    <!-- TP yes level 2 -->
+    <path d="M 440 765 L 110 765 L 110 830" marker-end="url(#arrSL)" />
+    <!-- TP yes level 3 -->
+    <path d="M 580 765 L 710 765 L 710 830" marker-end="url(#arrSL)" />
+    <!-- TP→forward→BGĐ decide -->
+    <line x1="710" y1="874" x2="710" y2="890" marker-end="url(#arrSL)" />
+    <!-- BGĐ yes → approve -->
+    <path d="M 640 935 L 110 935 L 110 1000" marker-end="url(#arrSL)" />
+    <!-- BGĐ no → reject -->
+    <line x1="710" y1="980" x2="710" y2="1000" marker-end="url(#arrSL)" />
+    <!-- approved → NV KD update sales_note -->
+    <path d="M 190 1022 L 310 1022 L 310 1080" marker-end="url(#arrSL)" />
+    <!-- Level 1 approve → NV KD -->
+    <path d="M 190 682 L 220 682 L 220 1050 L 270 1050 L 270 1080" marker-end="url(#arrSL)" stroke-dasharray="5 3" />
+  </g>
+  <!-- Reject arrows (red) -->
+  <g stroke="#991b1b" stroke-width="1.2" fill="none">
+    <!-- TP reject → NLG lane (back to step 8 / status=1) -->
+    <path d="M 580 765 L 620 765 L 620 912 L 590 912" marker-end="url(#arrReject)" />
+    <path d="M 430 912 L 200 912 L 200 502" marker-end="url(#arrReject)" stroke-dasharray="4 3" />
+    <!-- BGĐ reject → NLG -->
+    <path d="M 710 1044 L 710 1130 L 210 1130 L 210 502" marker-end="url(#arrReject)" stroke-dasharray="4 3" />
+  </g>
+</svg>
+</div>
+
+<div class="note">
+  <strong>Ghi chú sơ đồ:</strong> mũi tên đứt nét đỏ = luồng từ chối / hoàn tác (quay lại status=1 cho NLG sửa). Mũi tên đứt nét đen = nhánh tự duyệt Level 1 bỏ qua 2 bước TP/BGĐ. Mỗi bước quan trọng đều sinh <code>QuotationHistory</code> + push notification.
+</div>
+
+<!-- ===== 7. BUSINESS RULES ===== -->
+<h2>7. Business rules</h2>
+<table class="grid">
+  <thead><tr><th style="width:8%">ID</th><th style="width:30%">Rule</th><th>Mô tả</th><th style="width:22%">Áp dụng tại</th></tr></thead>
+  <tbody>
+    <tr><td>BR-01</td><td>BOM Tổng hợp phải đã duyệt</td><td>Chỉ BOM type=2 (Tổng hợp) status=4 (Đã duyệt) mới được auto-pick cho YCBG.</td><td><code>PricingRequestService</code></td></tr>
+    <tr><td>BR-02</td><td>Race-safe khi tạo Báo giá</td><td><code>createFromRequest</code> dùng <code>lockForUpdate</code> để chống 2 NLG tạo đồng thời cùng 1 YCBG.</td><td><code>QuotationService::createFromRequest</code></td></tr>
+    <tr><td>BR-03</td><td>Snapshot khách hàng</td><td>Khi tạo Báo giá, copy MST, địa chỉ, email, người liên hệ, SĐT liên hệ từ Dự án TKT — immutable sau đó.</td><td><code>QuotationService</code></td></tr>
+    <tr><td>BR-04</td><td>Customer email required</td><td>Phase 13: Dự án TKT bắt buộc nhập email KH (format email, max 255). Validate cả Lưu nháp + Gửi duyệt.</td><td><code>ProspectiveProjectRequest</code></td></tr>
+    <tr><td>BR-05</td><td>CHA-có-CON roll-up</td><td>Dòng CHA-có-CON: giá bán auto-tính từ sum(CON.quoted_price × qty). BE force <code>quoted_price=0</code> tại DB.</td><td><code>QuotationService::upsertPrices</code></td></tr>
+    <tr><td>BR-06</td><td>VAT chỉ áp dòng cha</td><td>Dòng CON luôn <code>vat_percent=0</code> (BE force). VAT chỉ áp CHA hoặc dòng độc lập.</td><td><code>QuotationService</code></td></tr>
+    <tr><td>BR-07</td><td>Required price trước submit</td><td>Mọi dòng phải có <code>quoted_price &gt; 0</code>. Submit báo 422 nếu còn dòng 0.</td><td><code>QuotationService::submit</code></td></tr>
+    <tr><td>BR-08</td><td>Approval level 3 bậc</td><td>Level 1 tự duyệt; Level 2 TP duyệt xong → duyệt; Level 3 TP forward → BGĐ duyệt.</td><td><code>BomPriceApprovalConfigService</code></td></tr>
+    <tr><td>BR-09</td><td>Profit margin threshold</td><td>Phase 12 Batch 11: cấu hình ngưỡng sàn lợi nhuận, dưới ngưỡng → cảnh báo màu đỏ trên UI; ≥ ngưỡng → xanh. Không chặn submit.</td><td><code>general_regulations.profit_margin_threshold</code></td></tr>
+    <tr><td>BR-10</td><td>Cascade khi đóng dự án</td><td>Đóng Dự án TKT → PricingRequest + Quotation đang active (status 1/2/3) chuyển sang status=5 (Đóng).</td><td><code>ProspectiveProjectService::closeProject</code></td></tr>
+    <tr><td>BR-11</td><td>Sales note sau khi duyệt</td><td>Chỉ NV KD mới update <code>sales_note</code> trên Báo giá status=4 — không đổi giá / status.</td><td><code>QuotationController::updateSalesNote</code></td></tr>
+    <tr><td>BR-12</td><td>VAT chỉ info tham khảo</td><td>VAT không tính vào <code>total_sale</code> dùng tính cấp duyệt; chỉ cache <code>total_vat_amount</code> + <code>total_after_vat</code> cho list/display.</td><td><code>QuotationService::recomputeTotals</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 8. DATA MODEL ===== -->
+<h2>8. Data model</h2>
+
+<h3>8.1. Entity Relationship</h3>
+<pre style="background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:4px;font-size:11px;line-height:1.5;">
+ProspectiveProject 1─N PricingRequest 1─N Quotation 1─N QuotationProductPrice
+       │                                          │
+       └── (GP/HM version, snapshot customer)    └── QuotationHistory
+                                                       │
+BomList 1─N BomListProduct (parent─child)              │
+BomList 1─N BomListRelation (cha-con giữa các BOM)     │
+BomList N─1 Quotation ──────────────────────────────────┘
+</pre>
+
+<h3>8.2. Bảng chính</h3>
+
+<h4>bom_lists</h4>
+<table class="grid">
+  <thead><tr><th>Cột</th><th>Type</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td>id</td><td>bigint PK</td><td>—</td></tr>
+    <tr><td>code</td><td>varchar</td><td>BOM-YYYY-NNNNN</td></tr>
+    <tr><td>name</td><td>varchar</td><td>—</td></tr>
+    <tr><td>type</td><td>tinyint</td><td>1=Thành phần, 2=Tổng hợp</td></tr>
+    <tr><td>status</td><td>tinyint</td><td>1..6 (xem phần enum)</td></tr>
+    <tr><td>prospective_project_id / solution_id / solution_module_id / customer_id</td><td>bigint nullable</td><td>Ngữ cảnh BOM</td></tr>
+    <tr><td>company_id / department_id / part_id</td><td>bigint nullable</td><td>Cấp tổ chức</td></tr>
+    <tr><td>created_by / updated_by</td><td>bigint</td><td>Audit</td></tr>
+  </tbody>
+</table>
+
+<h4>pricing_requests</h4>
+<table class="grid">
+  <thead><tr><th>Cột</th><th>Type</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td>id</td><td>bigint PK</td><td>—</td></tr>
+    <tr><td>prospective_project_id</td><td>bigint</td><td>FK dự án TKT</td></tr>
+    <tr><td>solution_version_id / solution_module_version_id</td><td>bigint nullable</td><td>Phiên bản GP/HM</td></tr>
+    <tr><td>bom_list_id</td><td>bigint</td><td>BOM Tổng hợp đã duyệt</td></tr>
+    <tr><td>status</td><td>tinyint</td><td>1..5 (xem phần enum)</td></tr>
+    <tr><td>sent_at / sent_by</td><td>datetime / bigint</td><td>Khi status 1→2</td></tr>
+  </tbody>
+</table>
+
+<h4>quotations</h4>
+<table class="grid">
+  <thead><tr><th>Cột</th><th>Type</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td>id</td><td>bigint PK</td><td>—</td></tr>
+    <tr><td>code</td><td>varchar</td><td>BG-YYYY-NNNNN</td></tr>
+    <tr><td>pricing_request_id / bom_list_id / project_id</td><td>bigint</td><td>FK</td></tr>
+    <tr><td>customer_id / customer_name / customer_tax_code / customer_address / customer_email / customer_contact_name / customer_contact_phone</td><td>snapshot từ dự án TKT</td><td>Phase 13 thêm <code>customer_email</code></td></tr>
+    <tr><td>currency_id / exchange_rate</td><td>bigint / decimal</td><td>—</td></tr>
+    <tr><td>validity_days / warranty_time / payment_terms / delivery_time</td><td>—</td><td>Điều khoản thương mại snapshot</td></tr>
+    <tr><td>total_import / total_sale / total_vat_amount / total_after_vat / profit_margin / approval_level</td><td>decimal cache</td><td>Cache sau <code>recomputeTotals</code></td></tr>
+    <tr><td>status</td><td>tinyint</td><td>1..5</td></tr>
+    <tr><td>submitted_at / tp_approved_at / approved_at / rejected_reason</td><td>—</td><td>Workflow timestamps</td></tr>
+    <tr><td>sales_note</td><td>text</td><td>NV KD nhập sau duyệt</td></tr>
+  </tbody>
+</table>
+
+<h4>quotation_product_prices</h4>
+<table class="grid">
+  <thead><tr><th>Cột</th><th>Type</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td>id</td><td>bigint PK</td><td>—</td></tr>
+    <tr><td>quotation_id / bom_list_product_id</td><td>bigint</td><td>Unique composite</td></tr>
+    <tr><td>estimated_price / quoted_price</td><td>decimal(18,2)</td><td>Giá nhập / Giá bán</td></tr>
+    <tr><td>vat_percent</td><td>decimal(5,2)</td><td>0..100; CON luôn 0; CHA roll-up</td></tr>
+  </tbody>
+</table>
+
+<h4>quotation_histories</h4>
+<table class="grid">
+  <thead><tr><th>Cột</th><th>Type</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td>id / quotation_id / actor_id / created_at</td><td>—</td><td>—</td></tr>
+    <tr><td>action</td><td>varchar</td><td>create, save_draft, submit, self_approve, tp_approve, tp_approve_forward, bgd_approve, reject, update_vat_bulk, closed_by_project</td></tr>
+    <tr><td>from_status / to_status</td><td>tinyint</td><td>Ghi lại transition</td></tr>
+    <tr><td>meta</td><td>json</td><td>Context bổ sung (level, reason, affected_count...)</td></tr>
+  </tbody>
+</table>
+
+<h3>8.3. Enum values</h3>
+<table class="grid">
+  <thead><tr><th>Entity</th><th>Constant</th><th>Value</th><th>Ý nghĩa</th></tr></thead>
+  <tbody>
+    <tr><td>BomList</td><td>STATUS_DANG_TAO … KHONG_DUYET</td><td>1..6</td><td>1 Đang tạo / 2 Hoàn thành / 3 Chờ duyệt / 4 Đã duyệt / 5 Đã tổng hợp / 6 Không duyệt</td></tr>
+    <tr><td>BomList</td><td>TYPE_COMPONENT / AGGREGATE</td><td>1 / 2</td><td>Thành phần / Tổng hợp</td></tr>
+    <tr><td>PricingRequest</td><td>STATUS_*</td><td>1..5</td><td>1 Đang tạo / 2 Chờ XD giá / 3 Đang XD giá / 4 Đã có báo giá / 5 Đóng</td></tr>
+    <tr><td>Quotation</td><td>STATUS_*</td><td>1..5</td><td>1 Đang tạo / 2 Chờ TP / 3 Chờ BGĐ / 4 Đã duyệt / 5 Đóng</td></tr>
+    <tr><td>Quotation</td><td>LEVEL_1 / 2 / 3</td><td>1 / 2 / 3</td><td>Cấp duyệt</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 9. API SPEC ===== -->
+<h2>9. API specification (trọng yếu)</h2>
+
+<table class="grid">
+  <thead><tr><th style="width:44%">Endpoint</th><th style="width:10%">Method</th><th>Mô tả</th></tr></thead>
+  <tbody>
+    <tr><td><code>/assign/bom-lists</code></td><td>GET/POST</td><td>List / Tạo BOM</td></tr>
+    <tr><td><code>/assign/bom-lists/{id}</code></td><td>GET/PUT/DELETE</td><td>Show / Sửa / Xoá (soft)</td></tr>
+    <tr><td><code>/assign/bom-lists/export</code></td><td>GET</td><td>Export Excel</td></tr>
+    <tr><td><code>/assign/bom-lists/import</code></td><td>POST</td><td>Import Excel</td></tr>
+    <tr><td><code>/assign/prospective-projects/{id}/pricing-requests/form-info</code></td><td>GET</td><td>Auto-pick BOM + chuẩn bị form YCBG</td></tr>
+    <tr><td><code>/assign/pricing-requests</code></td><td>GET/POST</td><td>List / Tạo nháp YCBG</td></tr>
+    <tr><td><code>/assign/pricing-requests/{id}</code></td><td>PUT/DELETE</td><td>Sửa / Xoá nháp</td></tr>
+    <tr><td><code>/assign/pricing-requests/{id}/send</code></td><td>POST</td><td>Gửi YCBG, status 1→2</td></tr>
+    <tr><td><code>/assign/quotations</code></td><td>GET/POST</td><td>List / Tạo từ YCBG</td></tr>
+    <tr><td><code>/assign/quotations/pending-approval</code></td><td>GET</td><td>Danh sách chờ duyệt (TP/BGĐ)</td></tr>
+    <tr><td><code>/assign/quotations/{id}</code></td><td>GET/PUT</td><td>Show / Sửa draft (nhập giá)</td></tr>
+    <tr><td><code>/assign/quotations/{id}/calculate-level</code></td><td>POST</td><td>Tính level hiện tại (preview)</td></tr>
+    <tr><td><code>/assign/quotations/{id}/submit</code></td><td>POST</td><td>Submit duyệt</td></tr>
+    <tr><td><code>/assign/quotations/{id}/self-approve</code></td><td>POST</td><td>Level 1 tự duyệt</td></tr>
+    <tr><td><code>/assign/quotations/{id}/tp-approve</code></td><td>POST</td><td>TP duyệt (Level 2) hoặc forward (Level 3)</td></tr>
+    <tr><td><code>/assign/quotations/{id}/bgd-approve</code></td><td>POST</td><td>BGĐ duyệt (Level 3)</td></tr>
+    <tr><td><code>/assign/quotations/{id}/reject</code></td><td>POST</td><td>Từ chối (TP hoặc BGĐ)</td></tr>
+    <tr><td><code>/assign/quotations/{id}/apply-vat-bulk</code></td><td>POST</td><td>Bulk apply VAT; body: <code>{vat_percent, mode: all|zero_only}</code></td></tr>
+    <tr><td><code>/assign/quotations/{id}/sales-note</code></td><td>PUT</td><td>Update sales_note (NV KD, chỉ status=4)</td></tr>
+    <tr><td><code>/assign/quotations/{id}/export-excel</code></td><td>GET</td><td>Xuất Báo giá Excel (bao gồm cột VAT + Tổng sau VAT)</td></tr>
+  </tbody>
+</table>
+
+<h3>9.1. Quy ước response</h3>
+<pre style="background:#f8fafc;border:1px solid #e2e8f0;padding:10px;border-radius:4px;font-size:11px;">{
+  "message": "success",
+  "status": 200,
+  "data": { ... }
+}</pre>
+<p>Error chuẩn: <code>400</code> validation, <code>403</code> permission, <code>404</code> not found, <code>422</code> business rule, <code>500</code> server.</p>
+
+<!-- ===== 10. UI ===== -->
+<h2>10. Màn hình (UI)</h2>
+<table class="grid">
+  <thead><tr><th>Màn</th><th>Route</th><th>Vai trò chính</th></tr></thead>
+  <tbody>
+    <tr><td>BOM List — danh sách</td><td><code>/assign/bom-list</code></td><td>Filter + phân quyền theo cấp tổ chức</td></tr>
+    <tr><td>BOM List — tạo / sửa</td><td><code>/assign/bom-list/add</code> · <code>/assign/bom-list/{id}/edit</code></td><td>BomBuilderEditor + ImportModal</td></tr>
+    <tr><td>BOM List — chi tiết</td><td><code>/assign/bom-list/{id}</code></td><td>View-only, reuse BomBuilderEditor</td></tr>
+    <tr><td>Dự án TKT — manager</td><td><code>/assign/prospective-projects/{id}/manager</code></td><td>Tab YCBG + tab Báo giá</td></tr>
+    <tr><td>Báo giá — danh sách</td><td><code>/assign/quotations</code></td><td>Cột "Tổng giá trị", "Tổng sau VAT" — toggle được</td></tr>
+    <tr><td>Báo giá — pending approval</td><td><code>/assign/quotations/pending-approval</code></td><td>Cho TP / BGĐ</td></tr>
+    <tr><td>Báo giá — edit</td><td><code>/assign/quotations/{id}/edit</code></td><td>Nhập giá + VAT; 3 cột VAT mới; toolbar bulk apply; soft-prompt lần đầu</td></tr>
+    <tr><td>Báo giá — show</td><td><code>/assign/quotations/{id}</code></td><td>Readonly; info KH có Email mới (Phase 13)</td></tr>
+  </tbody>
+</table>
+
+<!-- ===== 11. NFR ===== -->
+<h2>11. Non-functional requirements</h2>
+<ul>
+  <li><strong>Performance:</strong> Cache <code>total_sale / total_vat_amount / total_after_vat / profit_margin / approval_level</code> trên <code>quotations</code> để list / filter / tab nhanh; tránh recompute khi query. Recompute đồng bộ khi save / submit / approve / VAT bulk.</li>
+  <li><strong>Concurrency:</strong> <code>createFromRequest</code> và <code>submit</code> dùng transaction + <code>lockForUpdate</code>.</li>
+  <li><strong>Auditability:</strong> Mỗi transition trạng thái sinh <code>QuotationHistory</code> với meta JSON đầy đủ.</li>
+  <li><strong>Security:</strong> JWT (tymon/jwt-auth) + Laravel Sanctum; permission spatie; scope theo <code>company_id/department_id/part_id</code>.</li>
+  <li><strong>Compatibility:</strong> PHP 7.4 + Laravel 8.65 + MySQL; Node 14.21.3 + Nuxt 2.14 + Vue 2 + Bootstrap-Vue 2.15.</li>
+  <li><strong>Browsers:</strong> Chrome / Firefox / Safari / Edge phiên bản 2 năm gần đây.</li>
+</ul>
+
+<!-- ===== 12. APPENDIX ===== -->
+<h2>12. Phụ lục — file references</h2>
+<table class="grid">
+  <thead><tr><th>Layer</th><th>File path</th></tr></thead>
+  <tbody>
+    <tr><td>Migration — quotations</td><td><code>database/migrations/2026_04_14_100005_create_quotations_table.php</code></td></tr>
+    <tr><td>Migration — quotation_product_prices</td><td><code>2026_04_14_100006_create_quotation_product_prices_table.php</code></td></tr>
+    <tr><td>Migration — quotation_histories</td><td><code>2026_04_14_100007_create_quotation_histories_table.php</code></td></tr>
+    <tr><td>Migration — VAT Phase 12</td><td><code>2026_04_19_100001_add_vat_to_quotation_product_prices.php</code> / <code>2026_04_19_100002_add_vat_totals_to_quotations.php</code></td></tr>
+    <tr><td>Migration — customer_email Phase 13</td><td><code>2026_04_20_100001_add_customer_email_to_quotations.php</code></td></tr>
+    <tr><td>Entities</td><td><code>Modules/Assign/Entities/BomList.php</code> · <code>BomListProduct.php</code> · <code>PricingRequest.php</code> · <code>Quotation.php</code> · <code>QuotationProductPrice.php</code> · <code>QuotationHistory.php</code></td></tr>
+    <tr><td>Services</td><td><code>Modules/Assign/Services/BomListService.php</code> · <code>PricingRequestService.php</code> · <code>QuotationService.php</code> · <code>BomPriceApprovalConfigService.php</code></td></tr>
+    <tr><td>Controllers</td><td><code>Modules/Assign/Http/Controllers/BomListController.php</code> · <code>PricingRequestController.php</code> · <code>QuotationController.php</code></td></tr>
+    <tr><td>Routes</td><td><code>Modules/Assign/Routes/api.php</code></td></tr>
+    <tr><td>FE BOM List</td><td><code>pages/assign/bom-list/*</code> — components <code>BomBuilderEditor</code> / <code>BomBuilderImportModal</code></td></tr>
+    <tr><td>FE Báo giá</td><td><code>pages/assign/quotations/index.vue</code> · <code>_id/index.vue</code> · <code>_id/edit.vue</code> · <code>pending-approval/index.vue</code></td></tr>
+    <tr><td>FE Components VAT</td><td><code>components/assign/quotation/VatBulkApplyToolbar.vue</code> · <code>VatFirstEntryPromptModal.vue</code></td></tr>
+    <tr><td>FE Config threshold</td><td><code>pages/assign/settings/index.vue</code> — tab Quản lý dự án, panel Mức sàn LN</td></tr>
+    <tr><td>Plan docs</td><td><code>.plans/Bomlist-Quotation/plan.md</code> · <code>plan-phase7.md</code> · <code>plan-phase8a.md</code> · <code>plan-phase9.md</code> · <code>plan-phase11.md</code> · <code>plan-phase12.md</code> · <code>plan-phase13.md</code></td></tr>
+    <tr><td>Design specs</td><td><code>.plans/Bomlist-Quotation/design.md</code> · <code>design-phase7.md</code> · <code>design-phase8a.md</code> · <code>design-phase9.md</code> · <code>design-phase11.md</code> · <code>design-phase12-vat.md</code> · <code>design-phase13-customer-email.md</code></td></tr>
+  </tbody>
+</table>
+
+<p style="margin-top:24px;font-size:10px;color:#94a3b8;text-align:center;">— Hết tài liệu — Bản 1.0 · 2026-04-20</p>
+</div>
+</body>
+</html>

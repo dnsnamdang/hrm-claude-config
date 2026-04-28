@@ -2,12 +2,18 @@
 
 ## Đang làm
 
-- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
-  Trạng thái: Code DONE 16/18 (2026-04-19). BE hoàn chỉnh (migration close\_\* fields + 5 status constants + `closeProject` service + notify helpers + FormRequest + Controller + Route + Transformer + entity relationships). FE hoàn chỉnh (CloseProjectModal component + manager.vue integrate button + banner đỏ post-close + ẩn action buttons khi đóng). Endpoint: `POST /api/v1/assign/prospective-projects/{id}/close`.
-  Cascade: Project.status=11 + Solution.status=2 + SolutionModule.status=10 + PricingRequest.status=5 + Quotation.status=5. `quotation_histories` log `closed_by_project` với meta. Notify: creator solution + PM + NLG + TP/BGĐ pending.
-  Checkpoint: 2026-04-19 — Code DONE. Task 17 (readonly polish trên quotation/solution edit) skip optional (BE đã validate save). Task 18 manual test user thực hiện: button "Đóng dự án" hiện cho creator + modal load reason + submit → toast + banner + cascade DB + notify table.
+- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
+  Trạng thái: Phase 16 code DONE (UI polish). Tổng Phase 11-16 đều ở trạng thái code DONE chờ user test. Branch `tpe-develop-assign`.
+  Phase 14B (parent roll-up) + Phase 15 (xoá báo giá) + Phase 16 (per-row VAT cho dòng con + Sửa/Xoá YCBG trong tab Hồ sơ + `V2BaseSelectRemote` cho Model/Brand/Xuất xứ trong popup thêm hàng hoá + nút Làm mới filter).
+  Component mới: `components/V2BaseSelectRemote.vue` (jQuery Select2 ajax, dùng prop `fetchFn(keyword)`).
+  Checkpoint: 2026-04-23 — Wrap up Phase 16. Pending user test task 8-13 phase 16 + các task test tồn từ phase 12/13/14/15.
 
-  Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+- course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
+  Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 11+12 bug fix 2026-04-25. BE: 7 migration + 4 entity + 3 resource + SubjectService + SubjectBuilderRequest DRAFT-aware + rename permission. FE: SubjectBuilderForm.vue 4 tab đầy đủ + canvas cert + jsPDF.
+  Checkpoint: 2026-04-25 — P10b: fix certificate canvas taint/download, status badge Nháp, row-actions alignment, canEdit cho DRAFT, sidebar condensed. P10c: fix modal Ngân hàng bài học trống (seed data) + UI modal redesign theo prototype Course_create.html (searchbox + 5-col table + hint-box). P11: fix modal addListener (b-form-select). P12: fix error inline (applyBackendErrors + tab switching), fix evaluation_config field mismatch (completion_rule→rule). Phase 10 manual test còn 10 test case chưa hoàn thành.
+
+- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
+  Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.
 
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
   Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
@@ -17,10 +23,6 @@
   Trạng thái: Implementing. Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp (TanPhatDev)
 
 ## Tạm dừng
-
-- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase12.md
-  Trạng thái: Phase 12 code DONE 58/64. Toàn bộ BE + FE xong: VAT management (migrations + service computeTotals/recomputeTotals/applyBulkVat + 6 transition hook + controller + FormRequest + route + transformers + Excel gate + store/quotation.js + 2 component VatBulkApplyToolbar/VatFirstEntryPromptModal + edit.vue 3 cột VAT + toolbar + soft-prompt + row TỔNG + roll-up CHA + show/list/tab + ColumnCustomization); customer info (edit.vue thêm MST/Người liên hệ/SĐT liên hệ + show rename label + CustomerInfoSection required + project add/edit validate customer_contact_id); profit margin threshold (migration general_regulations.profit_margin_threshold + entity/controller/service + settings col-3 panel + nuxtClientInit commit vuex + marginColorClass 2 tier đỏ/xanh bỏ tier vàng).
-  Checkpoint: 2026-04-19 — Wrap up. Còn lại 6 task manual test (Task 48-53) + test Batch 10-11 do user thực hiện. Docs PDF tại `docs/srs/bao-gia-flow.pdf`.
 
 - training-elearning → @dnsnamdang → .plans/training-elearning/plan.md
   Trạng thái: Phase 0 done (3/3 task khảo sát BE + FE + deep dive). docs/training.md ~580 dòng / 13 sections. design.md đã enhance với gap analysis P1/P2/P3 + convention bắt buộc + risk note.
@@ -32,8 +34,16 @@
 
 ## Hoàn thành
 
+<<<<<<< HEAD
 - add-description-column-list → @khoipv → .plans/add-description-column-list/plan.md
   Hoàn thành: 2026-04-28. 8/8 task. Thêm cột "Mô tả" vào 7 màn danh sách module Giao việc (industry-groups, customer-scopes, solution-groups, application, project_items, project_role, meeting_type). Chỉ FE, không sửa BE/API.
+=======
+- subjects-list-ui → @junfoke → .plans/subjects-list-ui/plan.md
+  Hoàn thành: 2026-04-25. Fix 3 bug logic (`exportExcel` formFilter→filters, `lockItem`/`unlockItem` getData→loadData, `getTrainingTypes` method xung đột computed) + 1 bug CSS (`::v-deep` row-actions hover) + thêm nút lock/unlock toggle trong cột Trạng thái + status pill dùng global `tpl-status-*` class từ `v2-styles.scss`. Xóa dead code `onEditClick`/`eventHandler`. Chỉ 1 file: `hrm-client/pages/training/subjects/index.vue`.
+
+- merge-module-review-profiles → @manhcuong → .plans/merge-module-review-profiles/plan.md
+  Hoàn thành: 2026-04-25. 7/7 task. Gộp hồ sơ trình duyệt hạng mục vào tab Hồ sơ giải pháp. BE: mở rộng `getSolutionReviewProfiles()` merge 2 query (solution + module) + manual paginate + transform + auto-force type theo filter. FE: 3 filter mới (Loại/Hạng mục/Version HM) + 2 cột mới + deep watcher auto-search + row actions phân loại + tích hợp `ModuleApprovalModal` để PM duyệt hồ sơ hạng mục. Lọc bỏ draft. Spec: docs/superpowers/specs/2026-04-25-merge-module-review-profiles-design.md
+>>>>>>> 40519403e3d8acc1b417280283a0fecac2ae143b
 - scorm-upload → @khoipv → .plans/scorm-upload/plan.md
   Hoàn thành: 2026-04-22. 14/14 task. Spec: docs/superpowers/specs/2026-04-22-scorm-upload-design.md. BE: `CmcS3Helper::putLocalFile` + `UploadScormRequest` + `LessonService::handleScormUpload` (ZipArchive extract → parseScormManifest → upload S3 recursive với MIME chuẩn → cleanup tmp) + Controller `uploadScorm` + route `POST /training/lessons/upload-scorm`. FE: `LessonForm.vue` block SCORM thêm `V2BaseFile(.zip)` + spinner + info card + `onUploadScormZip` / `clearScormPackage`; submit type=4 gửi thêm `package_path / package_title / file_size / file_name`. Giới hạn 1GB, 2000 files. Known issue pending: cross-origin SCORM API (S3 ≠ LMS domain) — để lại cho feature sau `scorm-lms-runtime`.
 - ke-toan-module-scaffold → @manhcuong → .plans/ke-toan-module-scaffold/plan.md

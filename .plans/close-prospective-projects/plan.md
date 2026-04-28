@@ -603,3 +603,47 @@ Bước tiếp theo:
 2. Task 17 (optional polish — readonly banner trên quotation/solution edit khi project đóng): skip, BE validation đã chặn save. User thêm sau nếu thấy cần UX warning sớm hơn.
 
 Blocked: Không.
+
+---
+
+## Phase 17 — Bug fix sau test (2026-04-23)
+
+**Scope:** 3 màn list khi dự án đóng: /assign/request-solution, /assign/solution-modules, /assign/pricing-requests. Objects cascade Đóng → vẫn hiện trong list (không ẩn), chặn sửa/xoá, filter có option "Đóng".
+
+### BE
+
+- [x] **Task 19:** `PricingRequestController::index` — thêm `PricingRequest::STATUS_DONG` vào whereIn cho NLG (trước chỉ [2,3,4] nên NLG không thấy YCBG đã Đóng).
+- [x] **Task 20:** `PricingRequestService::ensureDraftAndOwner` — throw riêng message "Yêu cầu XD giá đã đóng theo dự án, không thể sửa/xoá" khi status=STATUS_DONG.
+- [x] **Task 21:** `RequestSolution` entity — thêm `const STATUS_DONG = 10` + entry 'Đóng' (#6B7280) trong `STATUSES`.
+- [x] **Task 22:** `ProspectiveProjectService::closeProject` — cascade RequestSolution (status NOT IN [4 Từ chối, 8 Đã hoàn thành, 10 Đóng] → 10). Thêm `request_solutions` vào mảng cascade counts.
+- [x] **Task 23:** `RequestSolutionService::update/destroy` — guard 422 khi status=STATUS_DONG ("Yêu cầu làm giải pháp đã đóng theo dự án, không thể sửa/xoá").
+
+### FE
+
+- [x] **Task 24:** `pricing-requests/index.vue` statusOptions — thêm `{value:5, label:'Đóng'}`.
+- [x] **Task 25:** `request-solution/index.vue` statusOptions — thêm `{value:10, label:'Đóng'}`.
+- [x] **Task 26:** `solution-modules/constants.js` — thêm `STATUS_DONG=10` + option 'Đóng' vào `STATUS_OPTIONS`.
+- [x] **Task 27:** `solution-modules/_id/manager.vue` — banner đỏ "Hạng mục đã đóng" + computed `isModuleClosed` (status===10), truyền `:is-closed` xuống 5 tab (Tasks/Issues/Meetings/Files/HumanResource).
+- [x] **Task 28:** `TasksTab.vue` — prop `isClosed`, gate `canCreateTask`/`canEdit`/`canDelete`.
+- [x] **Task 29:** `IssueTab.vue` — prop `isClosed`, gate `canCreateIssue` + action edit/delete/handle trong `getRowActions`.
+- [x] **Task 30:** `MeetingsTab.vue` — prop `isClosed`, ẩn nút "Tạo mới", gate edit/create_task/delete.
+- [x] **Task 31:** `HumanResourceTab.vue` — prop `isClosed`, ẩn nút "Thêm nhân sự".
+
+### Không cần sửa (tự nhiên ẩn)
+- `pricing-requests/index.vue` `canEdit`: đã check `status === 1` → Đóng tự false.
+- `request-solution/index.vue` `getRowActions`: đã check `status == 1 || 9` → Đóng tự ẩn.
+- `solution-modules/index.vue`: list chỉ có nút "Quản lý" (navigate), không có edit/delete trực tiếp.
+
+### Pending manual test
+- [ ] **Task 32:** Đóng dự án test → vào /assign/request-solution → YCP của dự án hiển thị với status "Đóng" xám, không có Sửa/Xoá.
+- [ ] **Task 33:** /assign/pricing-requests với quyền NLG → thấy được YCBG trạng thái "Đóng" (trước đây ẩn). Filter "Đóng" dropdown hoạt động.
+- [ ] **Task 34:** /assign/solution-modules → mở hạng mục đã Đóng → banner đỏ "Hạng mục đã đóng" + 4 tab Tasks/Issues/Meetings/HumanResource ẩn hết nút tạo mới/sửa/xoá.
+- [ ] **Task 35:** Gọi API update/destroy trực tiếp trên request-solution/pricing-request đã Đóng → 422 đúng message.
+
+### Checkpoint — 2026-04-23 Phase 17 code DONE
+Vừa hoàn thành:
+- BE: 5 file (PricingRequestController + PricingRequestService + RequestSolution entity + ProspectiveProjectService + RequestSolutionService) — cascade RequestSolution, whereIn STATUS_DONG cho NLG, 3 guard 422 thân thiện.
+- FE: 7 file (3 list statusOptions + solution-modules constants + manager.vue banner + 4 tab props+gate).
+
+Bước tiếp theo: User test Task 32-35.
+Blocked: Không.
