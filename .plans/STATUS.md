@@ -34,6 +34,8 @@
 
 ## Hoàn thành
 
+- issue-completion-flow → @khoipv → .plans/issue-completion-flow/plan.md
+  Hoàn thành: 2026-04-28. 22/22 task. Thêm 2 trạng thái completed/rejected vào flow Issue + branching logic approver (duyệt/từ chối) + notification cho approver khi resolved và assignee khi rejected. BE: 1 migration + entity + service + resource + controller. FE: index + modal. Spec: docs/superpowers/specs/2026-04-28-issue-completion-flow-design.md
 - add-description-column-list → @khoipv → .plans/add-description-column-list/plan.md
   Hoàn thành: 2026-04-28. 8/8 task. Thêm cột "Mô tả" vào 7 màn danh sách module Giao việc (industry-groups, customer-scopes, solution-groups, application, project_items, project_role, meeting_type). Chỉ FE, không sửa BE/API.
 - subjects-list-ui → @junfoke → .plans/subjects-list-ui/plan.md
