@@ -178,9 +178,38 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 
 ---
 
-## Checkpoint — 2026-04-25 (latest)
+## Phase 13 — Bug fix Tab Đánh giá + prerequisite + người chấm (2026-04-28, @junfoke)
 
-**Vừa hoàn thành:** Phase 12 — Fix error handling inline + fix mismatch `evaluation_config` field names.
+- [x] Fix mất hiển thị prerequisite khi reopen modal — `TabInfo.vue`: đồng bộ option id theo `lesson_id` thay vì `subject_lesson.id/_localId`; so sánh exclude bài đang chỉnh cũng theo `lesson_id` → tránh mismatch khi map lại sau khi đóng/mở modal
+- [x] Fix nguồn dữ liệu `examKitOptions` sai/thiếu — `SubjectBuilderForm.vue`: ưu tiên gọi `training/exams?getForCourse=1&limit=1000` (dữ liệu đầy đủ hơn); fallback sang `training/exams/get-all-select` nếu cần; chuẩn hoá field `count` qua helper `toNumberOrNull()` để chịu nhiều key backend (`number_questions`, `question_count`, …)
+- [x] Fix so sánh `exam_id` lệch kiểu string/number — `TabEvaluation.vue`: wrap `Number(...)` trong `getMeta`, `findExamKit`, `isExamSelected`, `toggleExam`
+- [x] Bổ sung `number_questions`, `essay_count`, `mcq_count` trong `ExamKitListResource.php` — tính `essay_count` = số câu có `type in [6,7]`; `mcq_count = number_questions - essay_count`; UI dùng để bật/ẩn khối "Người chấm thi" đúng
+- [x] Fix danh sách người chấm rỗng — `TabEvaluation.vue`: đổi nguồn chính sang `training/employees/all`; giữ fallback cũ `apiGetMasterSelectAll('employees')`; thêm lazy fetch khi mở dropdown nếu `employeeOptions` đang rỗng
+
+**File thay đổi:** `TabInfo.vue`, `SubjectBuilderForm.vue`, `TabEvaluation.vue`, `ExamKitListResource.php`
+
+**Giải quyết tồn đọng:** `ExamKit.mcq_count/essay_count` đã implement → FE không còn hiển thị 0. Còn tồn đọng: `withValidator` grader-theo-essay vẫn comment out.
+
+---
+
+## Phase 14 — Bug fix UX + multi-select + validation (2026-04-28, @junfoke)
+
+- [x] Fix multi-select prerequisite (Ctrl/Command chọn nhiều) — `V2BaseSelectInModal.vue`: thêm prop `multiple`, directive check `$select.prop('multiple')` trước khi close on unselect, method `_initMultipleSelect2()` bypass library + reinit DOM, `updateHeight()` skip khi multiple, CSS cho `select2-selection--multiple`
+- [x] Thêm inline validation error `TabEvaluation.vue` — `V2BaseError` dưới: `exam_attempt_limit`, `exam_score_rule`, `subject_exams`, `exam_participation_required`, `exam_min_required_percent`, `subject_exams.{idx}.grader_ids`; bỏ generic `formError` trong tab
+- [x] Validate + error bắt buộc người chấm khi đề có tự luận — `SubjectBuilderForm.vue` `validate()`: kiểm tra `essay_count > 0 && !grader_ids.length`; `getTabForKey()` tự chuyển đúng tab có lỗi FE; `applyBackendErrors()` thêm `exam_attempt_limit`, `exam_score_rule`, `exam_participation_required`, `exam_min_required_percent` vào TAB_EVAL_KEYS; `save()` bỏ hardcode `currentMainTab = 0`
+- [x] Thêm search trong popup chọn người chấm — `TabEvaluation.vue`: `ui.graderSearch`, computed `filteredEmployeeOptions`, search input dùng `ms-search` class, reset khi mở dropdown mới
+- [x] Redesign tooltip Onboarding — `TabLearners.vue`: layout có cấu trúc (badge Auto-assign + divider + 2 rule số); `scss/_index.scss`: thêm classes `.tt-row`, `.tt-divider`, `.tt-rule`, `.tt-rule-num`, `.tt-rule-label`, `.tt-rule-formula`; đổi nền tối → nền trắng (`#fff` + shadow nhẹ)
+- [x] Fix duplicate error message `TabLearners.vue` — xóa `V2BaseError` generic (parent đã hiển thị)
+- [x] Fix "Không yêu cầu" không chọn được — `TabEvaluation.vue`: `participationRequiredOptions` đổi `{ id: 0 }` → `{ id: 2 }`; value binding `=== 1 ? 1 : 2`; handler convert ngược `Number(v) === 1 ? 1 : 0` trước khi emit
+- [x] Chuyển SCSS về đúng chuẩn project — `components/subject-builder.scss` → `pages/training/subjects/scss/_index.scss`; cập nhật import trong `SubjectBuilderForm.vue` → `../scss/_index.scss`; thêm `.tab-content { padding-top: 10px }`
+
+**File thay đổi:** `V2BaseSelectInModal.vue`, `TabEvaluation.vue`, `SubjectBuilderForm.vue`, `TabLearners.vue`, `pages/training/subjects/scss/_index.scss`
+
+---
+
+## Checkpoint — 2026-04-28 (latest)
+
+**Vừa hoàn thành:** Phase 14 — Multi-select prerequisite, inline error validation, validate người chấm tự luận, search grader, tooltip Onboarding redesign, fix duplicate error TabLearners, fix "Không yêu cầu" falsy id, chuẩn hóa SCSS về đúng vị trí.
 **Đang làm dở:** Không.
-**Bước tiếp theo:** Tiếp tục Phase 10 manual test (còn 10 test case chưa tick). Ưu tiên test lưu khoá học `evaluation_mode=completion` để verify fix mismatch `rule`/`percent`/`percent_mode`.
-**Blocked:** Không.
+**Bước tiếp theo:** Tiếp tục Phase 10 manual test (còn 10 test case chưa tick). Ưu tiên: test chọn đề thi có tự luận → xem khối "Người chấm thi" + grader validation hiển thị đúng.
+**Blocked:** `withValidator` grader-theo-essay vẫn comment out — cần clarify shape `exam_questions.type` trước khi unlock.

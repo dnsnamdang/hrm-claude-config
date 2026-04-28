@@ -9,8 +9,8 @@
   Checkpoint: 2026-04-23 — Wrap up Phase 16. Pending user test task 8-13 phase 16 + các task test tồn từ phase 12/13/14/15.
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
-  Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 11+12 bug fix 2026-04-25. BE: 7 migration + 4 entity + 3 resource + SubjectService + SubjectBuilderRequest DRAFT-aware + rename permission. FE: SubjectBuilderForm.vue 4 tab đầy đủ + canvas cert + jsPDF.
-  Checkpoint: 2026-04-25 — P10b: fix certificate canvas taint/download, status badge Nháp, row-actions alignment, canEdit cho DRAFT, sidebar condensed. P10c: fix modal Ngân hàng bài học trống (seed data) + UI modal redesign theo prototype Course_create.html (searchbox + 5-col table + hint-box). P11: fix modal addListener (b-form-select). P12: fix error inline (applyBackendErrors + tab switching), fix evaluation_config field mismatch (completion_rule→rule). Phase 10 manual test còn 10 test case chưa hoàn thành.
+  Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
+  Checkpoint: 2026-04-28 — P14: multi-select prerequisite (V2BaseSelectInModal), inline error TabEvaluation, validate người chấm tự luận + auto-tab routing, search grader popup, tooltip Onboarding redesign nền trắng, fix duplicate error TabLearners, fix "Không yêu cầu" id:0 falsy, chuẩn hóa SCSS. Phase 10 manual test còn 10 test case chưa hoàn thành.
 
 - close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
   Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.
