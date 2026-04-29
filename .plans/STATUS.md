@@ -10,7 +10,7 @@
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
   Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
-  Checkpoint: 2026-04-28 — P14: multi-select prerequisite (V2BaseSelectInModal), inline error TabEvaluation, validate người chấm tự luận + auto-tab routing, search grader popup, tooltip Onboarding redesign nền trắng, fix duplicate error TabLearners, fix "Không yêu cầu" id:0 falsy, chuẩn hóa SCSS. Phase 10 manual test còn 10 test case chưa hoàn thành.
+  Checkpoint: 2026-04-28 — P14 (đang tiếp): fix mã auto-gen BE, override_completion reset, modal info bài học + trạng thái ghi đè, format tiêu chí hoàn thành (giây+%), labels tiếng Việt mapping/prerequisite, DRAFT canDelete, assignee pill auto-open, confirm lock modal. Phase 10 manual test còn 10 test case.
 
 - close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
   Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.

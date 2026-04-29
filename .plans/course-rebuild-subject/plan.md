@@ -203,7 +203,22 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 - [x] Fix "Không yêu cầu" không chọn được — `TabEvaluation.vue`: `participationRequiredOptions` đổi `{ id: 0 }` → `{ id: 2 }`; value binding `=== 1 ? 1 : 2`; handler convert ngược `Number(v) === 1 ? 1 : 0` trước khi emit
 - [x] Chuyển SCSS về đúng chuẩn project — `components/subject-builder.scss` → `pages/training/subjects/scss/_index.scss`; cập nhật import trong `SubjectBuilderForm.vue` → `../scss/_index.scss`; thêm `.tab-content { padding-top: 10px }`
 
-**File thay đổi:** `V2BaseSelectInModal.vue`, `TabEvaluation.vue`, `SubjectBuilderForm.vue`, `TabLearners.vue`, `pages/training/subjects/scss/_index.scss`
+- [x] Fix tab Cấu hình người học không tự mở pill đã chọn khi edit — `TabLearners.vue`: thay init trong `mounted()` bằng `watch: { 'value.subject_assignees': { immediate: true } }` + flag `_typesInitialized` để chỉ init 1 lần từ server data, tránh reset khi user tương tác
+- [x] Fix khoá học Nháp không xóa được — `Subject.php` `canDelete()`: DRAFT luôn trả `true` nếu có quyền, bỏ qua check reference (`capabilities`, `questions`, `exams`, `courseRequests`, `trainingRequests`)
+- [x] Redesign dialog xác nhận khoá/mở khoá — `subjects/index.vue`: thay `confirm-lock-timesheet` + `confirm-un-lock-selected` (generic xấu) bằng `BaseConfirmModal` duy nhất (pattern lessons); title/message/button text động theo `item.status`; gộp lock + unlock vào `handleConfirmToggleLock()`
+
+- [x] Fix mã khoá học không tự sinh khi không nhấn nút tạo ngẫu nhiên — `SubjectService.php` `storeWithStructure()`: sau `save()` lần đầu, nếu `code` rỗng thì auto-gen `SUB-` + `Helper::generateCode(4, $id)` và save lại; thêm `use Modules\Human\Helper\Helper`
+- [x] Fix `override_completion` luôn reset về "Dùng mặc định" sau khi lưu — `SubjectBuilderForm.vue` `buildSubjectLessonPayload()`: thay `toOneTwo(sl.override_completion)` bằng check đúng chiều (`true`/`2` → gửi `2`, còn lại → `1`); nguyên nhân: `toOneTwo` map `true→1` nhưng BE convention `2=ghi đè, 1=mặc định`
+- [x] Modal xác nhận khoá/mở khoá dùng component sai (generic timesheet) → `subjects/index.vue`: thay bằng `BaseConfirmModal` + `itemToLock`, computed `lockConfirmTitle/Message/Action`, gộp `handleConfirmToggleLock()`
+- [x] Tab Cấu hình người học không tự mở pill đã chọn khi edit — `TabLearners.vue`: `watch 'value.subject_assignees' immediate:true` + flag `_typesInitialized`
+- [x] Khoá học Nháp không xóa được — `Subject.php` `canDelete()`: DRAFT luôn `true` nếu có quyền, bỏ qua check reference
+- [x] Modal info bài học thiếu thông tin — `TabInfo.vue`: size `md→lg`, thêm hint-box (type pill + tiêu chí mặc định + ghi chú Ghi đè), divider, phần Mô tả (`summary`); phân biệt state "đang ghi đè" vs "chưa ghi đè"
+- [x] `openLessonInfoModal` chỉ nhận `lesson`, không biết trạng thái override — đổi sang nhận `sl` (subject_lesson), lưu thêm `infoSubjectLesson`; modal hiện màu xanh + text "Đang ghi đè" khi `override_completion=true`
+- [x] Format tiêu chí hoàn thành thiếu giây — refactor thành `_formatCompletionFromCriteria(c, t)`: Video `XEM ≥ X% hoặc ≥ Ys`; Bài viết `ĐỌC ≥ Ys & TIẾN ĐỘ ≥ X%`; Tài liệu `ĐỌC ≥ Ys & TIẾN ĐỘ ≥ X%` (không phải XEM); SCORM `SCORM = status, điểm ≥ X`
+- [x] Labels mapping modal chưa tiếng Việt — đổi "Override completion"→"Ghi đè tiêu chí hoàn thành", "Tracking & Validate"→"Theo dõi & kiểm tra", "Default/Effective"→"Mặc định/Áp dụng thực tế", options "Dùng mặc định/Ghi đè"→"Không (dùng mặc định)/Có (ghi đè)"
+- [x] Labels prerequisite section chưa tiếng Việt — "Bật prerequisite"→"Bật điều kiện mở khoá", options "Có/Không"→"Bật/Tắt", gợi ý "Ctrl/Command…"→"Chọn nhiều bài ở dưới"; thêm hint-box "Chuẩn nghiệp vụ: điều kiện mở khoá dựa trên trạng thái Đã hoàn thành"
+
+**File thay đổi:** `V2BaseSelectInModal.vue`, `TabEvaluation.vue`, `SubjectBuilderForm.vue`, `TabLearners.vue`, `TabInfo.vue`, `SubjectLessonCompletionOverride.vue`, `pages/training/subjects/scss/_index.scss`, `Subject.php`, `SubjectService.php`, `pages/training/subjects/index.vue`
 
 ---
 
