@@ -2,6 +2,9 @@
 
 ## Đang làm
 
+- learning-path → @khoipv → .plans/learning-path/plan.md
+  Trạng thái: Brainstorming DONE, spec written.
+
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
   Trạng thái: Phase 16 code DONE (UI polish). Tổng Phase 11-16 đều ở trạng thái code DONE chờ user test. Branch `tpe-develop-assign`.
   Phase 14B (parent roll-up) + Phase 15 (xoá báo giá) + Phase 16 (per-row VAT cho dòng con + Sửa/Xoá YCBG trong tab Hồ sơ + `V2BaseSelectRemote` cho Model/Brand/Xuất xứ trong popup thêm hàng hoá + nút Làm mới filter).
