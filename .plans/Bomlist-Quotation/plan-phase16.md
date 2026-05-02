@@ -41,10 +41,24 @@
 ## Bug fix (Phase 16 test)
 - [x] 14. Fix `applyBulkVat` chỉ áp VAT cho parent (`whereNull('parent_id')`) → sửa áp cho tất cả cấp (cha + con + orphan).
 - [x] 15. Fix tab Hồ sơ: lấy thêm hồ sơ `status=expired` + thêm cột Trạng thái (V2BaseBadge).
+- [x] 16. Bỏ log history `update_vat_bulk` khỏi `applyBulkVat` (không ghi lịch sử phê duyệt).
+- [x] 17. Thêm validate `vat_percent: nullable|numeric|min:0|max:100` vào `QuotationUpdateRequest` + FE validate VAT < 0 (toast "Giá trị VAT không hợp lệ" + border đỏ).
+- [x] 18. Fix `PricingRequestService::ensureDraftAndOwner` strict comparison `!==` → `(int)` cast (status string "1" !== int 1 → luôn block sửa).
+- [x] 19. `PricingRequestFormModal` hỗ trợ edit mode (prop `requestId`): load data GET show → fill form → PUT update. Tab Hồ sơ nút Sửa mở modal thay vì navigate sang link.
+- [x] 20. Fix toast trùng khi sửa YCBG (bỏ toast parent `onPricingRequestSaved`, giữ toast modal).
+- [x] 21. Fix emit `saved` dùng `created` undefined trong edit mode → dùng `{ id: savedId }`.
+- [x] 22. Tab Báo giá trong manager: thêm cột "Loại tiền tệ", đổi "Tổng bán" → "Tổng giá trị báo giá" dùng `total_after_vat`, fix "Ngày duyệt" invalid Date (hiển thị string đã format từ API).
+- [x] 23. Thêm option "Đóng" (value:5) vào filter trạng thái `/assign/quotations`.
+- [x] 24. Fix `CompactReviewEditor` textarea gốc bị hiện double với CKEditor → ẩn khi `isEditorReady`.
 
 ## Checkpoint — 2026-04-23 (Phase 16 code DONE)
 Vừa hoàn thành:
 - BE: limit 200 + orderBy name cho 3 endpoint Model/Brand/Origin; expose `created_by` trong YCBG payload của review-profiles.
 - FE: hiển thị VAT per row cho dòng con (edit + show); thêm Sửa/Xoá YCBG trong tab Hồ sơ; tạo mới `V2BaseSelectRemote` dùng jQuery Select2 ajax; migrate 6 V2BaseSelect trong AddProductModal sang remote; thêm nút Làm mới + layout 3+2+2+2+3.
 Bước tiếp theo: User test task 8-13.
+Blocked: Không.
+
+## Checkpoint — 2026-04-29 (Bug fix batch)
+Vừa hoàn thành: 11 bug fix (task 14-24) từ user test — VAT bulk apply tất cả cấp, validate VAT≥0, fix strict comparison block sửa YCBG, modal edit YCBG thay navigate, fix double textarea CKEditor, cột tiền tệ + tổng giá trị + ngày duyệt tab Báo giá, filter Đóng cho quotations.
+Bước tiếp theo: User test lại toàn bộ task 8-13 + các bug fix mới.
 Blocked: Không.

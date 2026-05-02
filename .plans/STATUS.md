@@ -1,18 +1,31 @@
 # STATUS.md
 
 ## Đang làm
+- my-todo → @dnsnamdang → .plans/my-todo/plan.md
+  Trạng thái: Phase 1-5 + Phase 7 (UI Polish) + Phase 8 (Tài liệu) DONE. Branch `my-todo` (cả hrm-api và hrm-client). Còn Phase 6 (Test).
+  Tài liệu: SRS HTML (Use Case + Swimlane + ERD), testcase HTML (95 TC) + Excel (94 TC). Skill `testcase-documenter` đã tạo.
+  BE: 2 migration + 2 entity + 4 FormRequest + 3 Resource + MyTodoService (CRUD + Aggregator + reorderLists) + MyTodoController (13 methods) + 13 routes.
+  FE: index.vue + 9 components. TodoItem: role badge + status badge (border+bg) + dot separator. TodoCalendarSidebar: drag-drop (vuedraggable).
+  Checkpoint: 2026-05-02 — Phase 8 done. Bước tiếp: test toàn bộ flow theo 94 test cases.
+
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
-  Trạng thái: Phase 16 code DONE (UI polish). Tổng Phase 11-16 đều ở trạng thái code DONE chờ user test. Branch `tpe-develop-assign`.
-  Phase 14B (parent roll-up) + Phase 15 (xoá báo giá) + Phase 16 (per-row VAT cho dòng con + Sửa/Xoá YCBG trong tab Hồ sơ + `V2BaseSelectRemote` cho Model/Brand/Xuất xứ trong popup thêm hàng hoá + nút Làm mới filter).
-  Component mới: `components/V2BaseSelectRemote.vue` (jQuery Select2 ajax, dùng prop `fetchFn(keyword)`).
-  Checkpoint: 2026-04-23 — Wrap up Phase 16. Pending user test task 8-13 phase 16 + các task test tồn từ phase 12/13/14/15.
+  Trạng thái: Phase 16 + bug fix batch (task 14-24). Branch `tpe-develop-assign`.
+  Bug fix: VAT bulk apply tất cả cấp, validate VAT≥0, bỏ log history VAT bulk, fix strict comparison block sửa YCBG, modal edit YCBG (thay navigate), fix double toast, fix emit undefined, tab Báo giá (cột tiền tệ + tổng giá trị + fix ngày duyệt), filter Đóng quotations, fix double textarea CKEditor.
+  Checkpoint: 2026-04-29 — 11 bug fix done. Chờ user test lại.
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
   Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 11+12 bug fix 2026-04-25. BE: 7 migration + 4 entity + 3 resource + SubjectService + SubjectBuilderRequest DRAFT-aware + rename permission. FE: SubjectBuilderForm.vue 4 tab đầy đủ + canvas cert + jsPDF.
   Checkpoint: 2026-04-25 — P10b: fix certificate canvas taint/download, status badge Nháp, row-actions alignment, canEdit cho DRAFT, sidebar condensed. P10c: fix modal Ngân hàng bài học trống (seed data) + UI modal redesign theo prototype Course_create.html (searchbox + 5-col table + hint-box). P11: fix modal addListener (b-form-select). P12: fix error inline (applyBackendErrors + tab switching), fix evaluation_config field mismatch (completion_rule→rule). Phase 10 manual test còn 10 test case chưa hoàn thành.
 
+- fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
+  Trạng thái: V5 bug fix done (Task 13-18). Branch `tpe-develop-assign`.
+  V5 (2026-04-29): fix receiver hiện nhân sự hạng mục khác (FE module-level options + BE ép object key) + fix tiến độ không lưu khi tạo/sửa (FE payload + BE syncItems).
+  Checkpoint: 2026-04-29 — Chờ user test Task 19.
+
 - close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
-  Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.
+  Trạng thái: Phase 17 + 17B code DONE. Branch `tpe-develop-assign`.
+  Phase 17B (2026-04-29): thêm "Đóng" vào progressOptions request-solution + cascade đóng TẤT CẢ báo giá (bao gồm "Đã duyệt").
+  Checkpoint: 2026-04-29 — Chờ user test Task 32-37.
 
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
   Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
@@ -44,8 +57,6 @@
   Hoàn thành: 2026-04-21. Thêm `Task::scopeOverdue` + áp ở `TaskController::index` + `SolutionService::getCategoriesWithLateTasks`/`getPeopleWithLateTasks` + `SolutionModuleService::getPeopleWithLateTasks`. Đồng bộ `late_tasks_count` + card Overview với logic `overdue_total` tab Task (status NOT IN [1,8,9], CONCAT due_date+due_time). Review pass 0 Critical/Important. Test OK.
 - my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
   Hoàn thành: 2026-04-21. Phase 1–2 (BE) + Phase 4–8 (FE). BE: routes + service + Resource + Export + Helper. FE: index.vue wiring + AssignBusinessTab.vue đầy đủ (filter 8 ô, bảng 8 cột, 13 row actions dropdown, column customization, ExportModal, ConfirmDelete, ConfirmCancelApprove). Test OK.
-- fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
-  Hoàn thành: 2026-04-18. 7/7 task. V2: fix sai message khi 2 tab cùng chọn 1 task (BE 422→423 + lookup task.code). V3: reject sau TP duyệt → chuyển task về TP + notify TP + log tên TP. Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
   Hoàn thành: 2026-04-07. 2/2 task. Button "Lưu và duyệt" khi has_modules=false
 - solution-version-report → @manhcuong → .plans/solution-version-report/plan.md

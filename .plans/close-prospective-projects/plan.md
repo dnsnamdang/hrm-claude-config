@@ -647,3 +647,13 @@ Vừa hoàn thành:
 
 Bước tiếp theo: User test Task 32-35.
 Blocked: Không.
+
+## Phase 17B — Bug fix sau test (2026-04-29)
+
+- [x] **Task 36:** Thêm "Đóng" vào `progressOptions` trong `request-solution/index.vue` (filter "Tiến trình YC" trước đó thiếu, chỉ có ở `statusOptions`).
+- [x] **Task 37:** Đóng dự án cascade tất cả Báo giá (bao gồm status=4 "Đã duyệt") — bỏ `whereIn([1,2,3])` → `where('status', '!=', STATUS_DONG)`.
+
+### Checkpoint — 2026-04-29 Phase 17B
+Vừa hoàn thành: 2 fix — progressOptions filter "Đóng" cho request-solution + cascade đóng tất cả báo giá.
+Bước tiếp theo: User test Task 32-35 + 2 fix mới.
+Blocked: Không.

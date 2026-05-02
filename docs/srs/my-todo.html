@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRS: My To Do — ERP TPE</title>
+    <style>
+        :root {
+            --primary: #4a7cfb;
+            --success: #22c55e;
+            --warning: #d4a03c;
+            --danger: #e25c5c;
+            --info: #0ea5e9;
+            --secondary: #8e99a4;
+            --teal: #14b8a6;
+            --purple: #8b5cf6;
+            --bg: #f8f9fa;
+            --border: #dee2e6;
+            --text: #333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); line-height: 1.6; background: var(--bg); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 40px; background: #fff; min-height: 100vh; }
+        h1 { font-size: 28px; color: var(--primary); border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { font-size: 22px; color: #2c3e50; margin-top: 40px; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+        h3 { font-size: 17px; color: #34495e; margin-top: 25px; margin-bottom: 10px; }
+        h4 { font-size: 15px; margin-top: 18px; margin-bottom: 8px; }
+        p, li { font-size: 14px; }
+        ul, ol { padding-left: 22px; margin-bottom: 12px; }
+        li { margin-bottom: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+        th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+        th { background: #f1f3f5; font-weight: 600; }
+        tr:nth-child(even) { background: #fafbfc; }
+        code { background: #e9ecef; padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Consolas', monospace; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px; margin: 10px 0 18px; }
+        .meta-table { max-width: 400px; }
+        .meta-table td:first-child { font-weight: 600; width: 120px; }
+        .toc { background: #f1f3f5; padding: 20px 25px; border-radius: 8px; margin: 20px 0 30px; }
+        .toc h3 { margin-top: 0; }
+        .toc a { color: var(--primary); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc ol { padding-left: 20px; }
+        .toc li { margin-bottom: 5px; }
+
+        /* Diagram styles */
+        .diagram-container { margin: 20px 0; overflow-x: auto; }
+        .diagram-title { font-size: 14px; font-weight: 600; text-align: center; margin-bottom: 10px; color: #2c3e50; }
+        svg { display: block; margin: 0 auto; }
+        svg text { font-family: 'Segoe UI', Tahoma, sans-serif; }
+
+        /* Swimlane styles */
+        .swimlane { border: 2px solid #adb5bd; border-radius: 8px; margin: 20px 0; overflow: hidden; }
+        .swimlane-title { background: #343a40; color: #fff; padding: 10px 16px; font-weight: 600; font-size: 15px; }
+        .swimlane-body { display: flex; min-height: 180px; }
+        .lane { flex: 1; border-right: 1px solid #dee2e6; padding: 12px; position: relative; }
+        .lane:last-child { border-right: none; }
+        .lane-header { text-align: center; font-weight: 600; font-size: 13px; color: #495057; background: #e9ecef; padding: 6px; margin: -12px -12px 12px; }
+        .lane-step { background: #fff; border: 1px solid #ced4da; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; font-size: 12px; text-align: center; position: relative; }
+        .lane-step.start { background: #d4edda; border-color: var(--success); }
+        .lane-step.end { background: #f8d7da; border-color: var(--danger); }
+        .lane-step.decision { background: #fff3cd; border-color: var(--warning); transform: rotate(0deg); border-radius: 2px; }
+        .lane-step.api { background: #d1ecf1; border-color: var(--info); }
+        .lane-arrow { text-align: center; color: #6c757d; font-size: 16px; margin: 2px 0; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+        .badge-primary { color: var(--primary); background: #EFF6FF; border: 1px solid var(--primary); }
+        .badge-success { color: var(--success); background: #F0FDF4; border: 1px solid var(--success); }
+        .badge-warning { color: var(--warning); background: #FFFBEB; border: 1px solid var(--warning); }
+        .badge-danger { color: var(--danger); background: #FEF2F2; border: 1px solid var(--danger); }
+        .badge-info { color: var(--info); background: #F0F9FF; border: 1px solid var(--info); }
+        .badge-secondary { color: var(--secondary); background: #F3F4F6; border: 1px solid #e8eaed; }
+
+        .note { background: #fff3cd; border-left: 4px solid var(--warning); padding: 10px 15px; margin: 12px 0; font-size: 13px; border-radius: 0 4px 4px 0; }
+        @media print { .container { padding: 15px; } .toc { break-after: page; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>SRS: My To Do</h1>
+
+<table class="meta-table">
+    <tr><td>Module</td><td>Assign (Giao việc)</td></tr>
+    <tr><td>Phiên bản</td><td>1.0</td></tr>
+    <tr><td>Ngày tạo</td><td>2026-05-02</td></tr>
+    <tr><td>Người tạo</td><td>@dnsnamdang</td></tr>
+    <tr><td>Trạng thái</td><td>Draft</td></tr>
+</table>
+
+<div class="toc">
+    <h3>Mục lục</h3>
+    <ol>
+        <li><a href="#s1">Giới thiệu</a></li>
+        <li><a href="#s2">Actors &amp; Permissions</a></li>
+        <li><a href="#s3">Use Cases</a></li>
+        <li><a href="#s3d">Sơ đồ Use Case</a></li>
+        <li><a href="#s4">Business Rules</a></li>
+        <li><a href="#s5">Data Model</a></li>
+        <li><a href="#s6">API Specification</a></li>
+        <li><a href="#s7">UI Specification</a></li>
+        <li><a href="#s8">Swimlane Diagrams</a></li>
+        <li><a href="#s9">Scope Query</a></li>
+        <li><a href="#s10">Non-functional Requirements</a></li>
+        <li><a href="#s11">Phụ lục</a></li>
+    </ol>
+</div>
+
+<!-- ========== 1. GIỚI THIỆU ========== -->
+<h2 id="s1">1. Giới thiệu</h2>
+
+<h3>1.1. Mục đích</h3>
+<p>Tạo trang "My To Do" giúp user quản lý tổng hợp công việc cá nhân theo thời gian. Trang tích hợp dữ liệu từ nhiều đối tượng trong HRM (Task, Issue, Phiếu giao việc, Phiếu giao công tác, Meeting) cùng CRUD Todo cá nhân với danh sách và sub-task.</p>
+<p>Cơ chế dữ liệu: <strong>Query trực tiếp (real-time)</strong> — không lưu bản sao, không sync. Khi user mở trang, BE query song song vào các bảng gốc rồi normalize kết quả trả về.</p>
+
+<h3>1.2. Phạm vi</h3>
+<p><strong>Trong scope:</strong></p>
+<ul>
+    <li>Hiển thị tổng hợp (unified view) công việc từ Task, Issue, Meeting, AssignJob, AssignRequest</li>
+    <li>CRUD danh sách cá nhân (PersonalTodoList) + kéo thả sắp xếp</li>
+    <li>CRUD todo cá nhân (PersonalTodo) + sub-task 1 cấp + toggle hoàn thành</li>
+    <li>Mini calendar hiển thị tổng quan theo tháng</li>
+    <li>Lọc theo loại, trạng thái, ngày</li>
+    <li>Nhóm items theo thời hạn (Quá hạn, Hôm nay, Ngày mai, Tuần này, Tuần sau...)</li>
+    <li>Action buttons cho Task/Issue (Xem, Sửa, Nhập kết quả, Duyệt, Xử lý, Lịch sử)</li>
+</ul>
+<p><strong>Ngoài scope:</strong></p>
+<ul>
+    <li>Phân quyền theo role (mọi user đều truy cập được, chỉ thấy dữ liệu của chính mình)</li>
+    <li>Notification / nhắc nhở deadline</li>
+    <li>Drag-drop sắp xếp todo items trong danh sách chính</li>
+    <li>Export / Import dữ liệu</li>
+</ul>
+
+<h3>1.3. Thuật ngữ</h3>
+<table>
+    <tr><th>Thuật ngữ</th><th>Giải thích</th></tr>
+    <tr><td>Unified view</td><td>Tổng hợp nhiều loại entity (Task, Issue, Meeting...) vào 1 danh sách chung</td></tr>
+    <tr><td>Personal Todo</td><td>Việc cần làm do user tự tạo, không liên kết entity hệ thống</td></tr>
+    <tr><td>Sub-task</td><td>Bước con của 1 Personal Todo (tối đa 1 cấp)</td></tr>
+    <tr><td>Source / Vai trò</td><td>Mối quan hệ giữa user và item: Được giao, Tham gia, Cần duyệt, Theo dõi, Cá nhân</td></tr>
+    <tr><td>Normalize</td><td>Chuyển đổi các entity khác loại về 1 format chung để hiển thị thống nhất</td></tr>
+</table>
+
+<!-- ========== 2. ACTORS ========== -->
+<h2 id="s2">2. Actors &amp; Permissions</h2>
+<table>
+    <tr><th>Actor</th><th>Mô tả</th><th>Permissions</th></tr>
+    <tr><td>User (bất kỳ)</td><td>Nhân viên đã đăng nhập hệ thống</td><td>Xem/tạo/sửa/xóa todo cá nhân của chính mình. Xem thông tin tổng hợp từ các entity hệ thống mà mình có liên quan</td></tr>
+</table>
+<p>Không yêu cầu phân quyền đặc biệt. Dữ liệu được cô lập theo <code>user_id</code> — user chỉ thấy dữ liệu của chính mình.</p>
+
+<!-- ========== 3. USE CASES ========== -->
+<h2 id="s3">3. Use Cases</h2>
+
+<h3>UC-01: Xem tổng hợp công việc</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>User đã đăng nhập, truy cập <code>/assign/my-todo</code></td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>Hệ thống query song song: Tasks, Issues, AssignJobs, AssignRequests, Meetings, Personal Todos</li>
+            <li>Normalize tất cả về format chung, deduplicate (ưu tiên source cao nhất)</li>
+            <li>Nhóm items theo thời hạn: Hôm nay → Ngày mai → Tuần này → Tuần sau → Sắp tới → Không hạn → Quá hạn</li>
+            <li>Hiển thị stats, calendar sidebar, danh sách cá nhân</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>User thấy danh sách tổng hợp tất cả công việc liên quan</td></tr>
+    <tr><td><strong>Alternative</strong></td><td>Nếu user chưa có danh sách cá nhân → tự tạo list "Mac dinh"</td></tr>
+</table>
+
+<h3>UC-02: Lọc danh sách</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Đang ở trang My To Do</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>User chọn bộ lọc: Loại (Task/Issue/Meeting/...), Trạng thái (Chưa xong/Đã xong/Tất cả)</li>
+            <li>Hệ thống gọi lại API với filter params</li>
+            <li>Danh sách cập nhật theo bộ lọc</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Danh sách chỉ hiển thị items khớp với bộ lọc</td></tr>
+    <tr><td><strong>Alternative</strong></td><td>Tìm kiếm text → filter client-side trên title</td></tr>
+</table>
+
+<h3>UC-03: Xem theo ngày trên calendar</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Đang ở trang My To Do</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>User click 1 ngày trên mini calendar</li>
+            <li>Danh sách chuyển sang flat mode (không nhóm), chỉ hiển thị items có due_date = ngày đó</li>
+            <li>Click lại cùng ngày → bỏ chọn, quay về grouped mode</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Danh sách hiển thị items của ngày đã chọn</td></tr>
+</table>
+
+<h3>UC-04: Tạo todo cá nhân</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Đang ở trang My To Do</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>User click nút "Tạo todo" trên filter bar</li>
+            <li>Modal TodoFormModal hiển thị: title (bắt buộc), description, danh sách, ngày hạn, giờ hạn</li>
+            <li>User điền thông tin, nhấn Lưu</li>
+            <li>API <code>POST /assign/my-todo/todos</code></li>
+            <li>Todo mới xuất hiện trong danh sách</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Todo cá nhân được tạo thành công</td></tr>
+    <tr><td><strong>Exception</strong></td><td>Title rỗng → hiện thông báo lỗi validation</td></tr>
+</table>
+
+<h3>UC-05: Toggle hoàn thành todo / sub-task</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Có todo cá nhân trong danh sách</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>User click checkbox của todo cá nhân</li>
+            <li>API <code>PATCH /assign/my-todo/todos/{id}/toggle</code></li>
+            <li>Toggle <code>is_completed</code> (0↔1), ghi <code>completed_at</code> khi hoàn thành</li>
+            <li>UI cập nhật (gạch ngang title nếu hoàn thành)</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Trạng thái hoàn thành được toggle</td></tr>
+</table>
+
+<h3>UC-06: CRUD danh sách cá nhân</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Đang ở trang My To Do</td></tr>
+    <tr><td><strong>Main Flow (Tạo)</strong></td><td>
+        <ol>
+            <li>Click "Tạo danh sách mới" trên sidebar</li>
+            <li>Modal TodoListFormModal: name (bắt buộc), description</li>
+            <li>API <code>POST /assign/my-todo/lists</code></li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Main Flow (Xóa)</strong></td><td>
+        <ol>
+            <li>Click nút xóa → confirm dialog</li>
+            <li>API <code>DELETE /assign/my-todo/lists/{id}</code></li>
+            <li>Cascade xóa tất cả todos bên trong</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Danh sách được tạo/sửa/xóa</td></tr>
+</table>
+
+<h3>UC-07: Kéo thả sắp xếp danh sách cá nhân</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Có ít nhất 2 danh sách cá nhân</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>User hover vào dòng list → icon drag handle xuất hiện</li>
+            <li>Kéo thả list đến vị trí mới</li>
+            <li>UI cập nhật ngay (optimistic update)</li>
+            <li>API <code>POST /assign/my-todo/lists/reorder</code></li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Thứ tự danh sách được lưu lại</td></tr>
+    <tr><td><strong>Exception</strong></td><td>API lỗi → reload lại danh sách từ server</td></tr>
+</table>
+
+<h3>UC-08: Xem chi tiết danh sách cá nhân</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Có ít nhất 1 danh sách</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>Click vào tên danh sách trên sidebar</li>
+            <li>Vùng chính chuyển sang TodoListDetail</li>
+            <li>Hiển thị header (tên + mô tả + sửa/xóa), danh sách todos, input thêm mới</li>
+            <li>User thêm todo inline (Enter), thêm sub-task, toggle, xóa</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>User thấy chi tiết 1 danh sách cá nhân</td></tr>
+    <tr><td><strong>Alternative</strong></td><td>Click lại cùng list → quay về trang chính (toggle)</td></tr>
+</table>
+
+<h3>UC-09: Tương tác với item hệ thống (Task/Issue)</h3>
+<table>
+    <tr><td style="width:140px"><strong>Actor</strong></td><td>User</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Có item hệ thống trong danh sách</td></tr>
+    <tr><td><strong>Main Flow (Task)</strong></td><td>
+        <ol>
+            <li>Hover vào item → action buttons: Xem, Sửa, Nhập KQ, Duyệt, Lịch sử</li>
+            <li>Click → mở modal tương ứng (CreateTaskModal / ImportResultModal / TaskHistoryModal)</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Main Flow (Issue)</strong></td><td>
+        <ol>
+            <li>Actions: Xem, Sửa, Xử lý, Lịch sử</li>
+            <li>Click → mở CreateIssueModal / IssueHistoryModal</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Main Flow (Job/Business/Meeting)</strong></td><td>Click → <code>window.open(item.url, '_blank')</code></td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>User thao tác nhanh trên item mà không rời trang</td></tr>
+</table>
+
+<!-- ========== USE CASE DIAGRAM ========== -->
+<h2 id="s3d">3.1. Sơ đồ Use Case</h2>
+
+<div class="diagram-container">
+    <div class="diagram-title">Use Case Diagram — My To Do</div>
+    <svg width="820" height="580" viewBox="0 0 820 580">
+        <!-- System boundary -->
+        <rect x="180" y="20" width="620" height="540" rx="12" fill="none" stroke="#495057" stroke-width="2" stroke-dasharray="8,4"/>
+        <text x="490" y="48" text-anchor="middle" font-size="16" font-weight="bold" fill="#2c3e50">My To Do System</text>
+
+        <!-- Actor: User -->
+        <circle cx="70" cy="250" r="20" fill="none" stroke="#333" stroke-width="2"/>
+        <line x1="70" y1="270" x2="70" y2="330" stroke="#333" stroke-width="2"/>
+        <line x1="40" y1="295" x2="100" y2="295" stroke="#333" stroke-width="2"/>
+        <line x1="70" y1="330" x2="45" y2="370" stroke="#333" stroke-width="2"/>
+        <line x1="70" y1="330" x2="95" y2="370" stroke="#333" stroke-width="2"/>
+        <text x="70" y="392" text-anchor="middle" font-size="13" font-weight="600">User</text>
+
+        <!-- Actor: System (Timer/Auto) -->
+        <rect x="55" y="470" width="30" height="30" rx="3" fill="none" stroke="#333" stroke-width="2"/>
+        <text x="70" y="490" text-anchor="middle" font-size="10">⚙</text>
+        <text x="70" y="520" text-anchor="middle" font-size="12" font-weight="600">System</text>
+
+        <!-- Use Case ellipses -->
+        <!-- UC-01 -->
+        <ellipse cx="350" cy="100" rx="130" ry="28" fill="#EFF6FF" stroke="var(--primary)" stroke-width="1.5"/>
+        <text x="350" y="105" text-anchor="middle" font-size="12">UC-01: Xem tổng hợp</text>
+        <line x1="100" y1="250" x2="225" y2="108" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-02 -->
+        <ellipse cx="350" cy="170" rx="130" ry="28" fill="#EFF6FF" stroke="var(--primary)" stroke-width="1.5"/>
+        <text x="350" y="175" text-anchor="middle" font-size="12">UC-02: Lọc danh sách</text>
+        <line x1="100" y1="255" x2="225" y2="175" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-03 -->
+        <ellipse cx="350" cy="240" rx="130" ry="28" fill="#EFF6FF" stroke="var(--primary)" stroke-width="1.5"/>
+        <text x="350" y="245" text-anchor="middle" font-size="12">UC-03: Xem theo calendar</text>
+        <line x1="100" y1="260" x2="225" y2="245" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-04 -->
+        <ellipse cx="350" cy="310" rx="130" ry="28" fill="#F0FDF4" stroke="var(--success)" stroke-width="1.5"/>
+        <text x="350" y="315" text-anchor="middle" font-size="12">UC-04: Tạo todo cá nhân</text>
+        <line x1="100" y1="270" x2="225" y2="310" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-05 -->
+        <ellipse cx="350" cy="380" rx="130" ry="28" fill="#F0FDF4" stroke="var(--success)" stroke-width="1.5"/>
+        <text x="350" y="385" text-anchor="middle" font-size="12">UC-05: Toggle hoàn thành</text>
+        <line x1="100" y1="280" x2="225" y2="378" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-06 -->
+        <ellipse cx="630" cy="100" rx="130" ry="28" fill="#FFFBEB" stroke="var(--warning)" stroke-width="1.5"/>
+        <text x="630" y="105" text-anchor="middle" font-size="12">UC-06: CRUD danh sách</text>
+        <line x1="100" y1="245" x2="505" y2="100" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-07 -->
+        <ellipse cx="630" cy="170" rx="130" ry="28" fill="#FFFBEB" stroke="var(--warning)" stroke-width="1.5"/>
+        <text x="630" y="175" text-anchor="middle" font-size="12">UC-07: Kéo thả sắp xếp</text>
+        <line x1="100" y1="248" x2="505" y2="170" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-08 -->
+        <ellipse cx="630" cy="240" rx="130" ry="28" fill="#FFFBEB" stroke="var(--warning)" stroke-width="1.5"/>
+        <text x="630" y="245" text-anchor="middle" font-size="12">UC-08: Chi tiết danh sách</text>
+        <line x1="100" y1="255" x2="505" y2="242" stroke="#666" stroke-width="1"/>
+
+        <!-- UC-09 -->
+        <ellipse cx="630" cy="310" rx="130" ry="28" fill="#FEF2F2" stroke="var(--danger)" stroke-width="1.5"/>
+        <text x="630" y="315" text-anchor="middle" font-size="12">UC-09: Action Task/Issue</text>
+        <line x1="100" y1="265" x2="505" y2="310" stroke="#666" stroke-width="1"/>
+
+        <!-- Auto: Tạo list mặc định -->
+        <ellipse cx="350" cy="490" rx="130" ry="28" fill="#F3F4F6" stroke="var(--secondary)" stroke-width="1.5"/>
+        <text x="350" y="495" text-anchor="middle" font-size="12">Auto: Tạo list mặc định</text>
+        <line x1="100" y1="490" x2="225" y2="490" stroke="#666" stroke-width="1"/>
+
+        <!-- <<include>> from UC-01 to Auto -->
+        <line x1="350" y1="128" x2="350" y2="462" stroke="#666" stroke-width="1" stroke-dasharray="5,3"/>
+        <text x="360" y="430" font-size="10" fill="#888">&laquo;include&raquo;</text>
+
+        <!-- Deduplicate -->
+        <ellipse cx="630" cy="420" rx="130" ry="28" fill="#F5F3FF" stroke="var(--purple)" stroke-width="1.5"/>
+        <text x="630" y="425" text-anchor="middle" font-size="12">Deduplicate items</text>
+        <!-- <<include>> from UC-01 -->
+        <line x1="470" y1="115" x2="530" y2="400" stroke="#666" stroke-width="1" stroke-dasharray="5,3"/>
+        <text x="520" y="370" font-size="10" fill="#888">&laquo;include&raquo;</text>
+
+        <!-- Legend -->
+        <rect x="200" y="535" width="12" height="12" fill="#EFF6FF" stroke="var(--primary)" stroke-width="1"/>
+        <text x="218" y="546" font-size="10" fill="#666">Xem/Lọc</text>
+        <rect x="290" y="535" width="12" height="12" fill="#F0FDF4" stroke="var(--success)" stroke-width="1"/>
+        <text x="308" y="546" font-size="10" fill="#666">CRUD Todo</text>
+        <rect x="390" y="535" width="12" height="12" fill="#FFFBEB" stroke="var(--warning)" stroke-width="1"/>
+        <text x="408" y="546" font-size="10" fill="#666">CRUD List</text>
+        <rect x="490" y="535" width="12" height="12" fill="#FEF2F2" stroke="var(--danger)" stroke-width="1"/>
+        <text x="508" y="546" font-size="10" fill="#666">Actions</text>
+        <rect x="580" y="535" width="12" height="12" fill="#F5F3FF" stroke="var(--purple)" stroke-width="1"/>
+        <text x="598" y="546" font-size="10" fill="#666">Internal</text>
+    </svg>
+</div>
+
+<!-- ========== 4. BUSINESS RULES ========== -->
+<h2 id="s4">4. Business Rules</h2>
+<table>
+    <tr><th>ID</th><th>Rule</th><th>Mô tả</th><th>Áp dụng tại</th></tr>
+    <tr><td>BR-01</td><td>Sub-task 1 cấp</td><td>Sub-task chỉ được gắn vào todo cha (parent.parent_id phải NULL). Không cho tạo sub-task của sub-task</td><td><code>MyTodoService::storeTodo()</code></td></tr>
+    <tr><td>BR-02</td><td>List mặc định tự tạo</td><td>Khi user truy cập My Todo lần đầu, hệ thống tự tạo 1 list "Mac dinh" nếu chưa có list nào</td><td><code>MyTodoService::getOrCreateDefaultList()</code></td></tr>
+    <tr><td>BR-03</td><td>Xóa list cascade</td><td>Xóa danh sách → xóa tất cả todos bên trong (cả sub-tasks)</td><td><code>MyTodoService::destroyList()</code></td></tr>
+    <tr><td>BR-04</td><td>Xóa todo cascade</td><td>Xóa todo cha → xóa tất cả sub-tasks</td><td><code>MyTodoService::destroyTodo()</code></td></tr>
+    <tr><td>BR-05</td><td>Cô lập dữ liệu</td><td>Mọi query đều filter <code>user_id = auth_user_id</code>. User chỉ thao tác dữ liệu của chính mình</td><td>Tất cả methods trong Service</td></tr>
+    <tr><td>BR-06</td><td>Deduplicate</td><td>Nếu user vừa là assignee vừa là watcher cùng 1 entity → chỉ hiện 1 lần, ưu tiên: assigned(1) > approver(2) > watching(3) > participant(4) > personal(5)</td><td><code>MyTodoService::deduplicateItems()</code></td></tr>
+    <tr><td>BR-07</td><td>Toggle completed</td><td>Đánh dấu hoàn thành → ghi <code>completed_at = now()</code>. Bỏ đánh dấu → set <code>completed_at = null</code></td><td><code>MyTodoService::toggleTodo()</code></td></tr>
+    <tr><td>BR-08</td><td>Sort order tự tăng</td><td>Khi tạo mới list hoặc todo, <code>sort_order = max(sort_order) + 1</code> trong cùng scope</td><td><code>storeList()</code>, <code>storeTodo()</code></td></tr>
+    <tr><td>BR-09</td><td>Stats chỉ đếm cấp 1</td><td><code>todo_count</code> và <code>completed_count</code> của list chỉ đếm todos cấp 1 (không tính sub-tasks)</td><td><code>PersonalTodoListResource</code></td></tr>
+    <tr><td>BR-10</td><td>Filter status done</td><td>Khi filter <code>status=done</code> → bỏ qua entity hệ thống, chỉ lấy personal todos đã hoàn thành</td><td><code>MyTodoService::getAll()</code></td></tr>
+</table>
+
+<!-- ========== 5. DATA MODEL ========== -->
+<h2 id="s5">5. Data Model</h2>
+
+<h3>5.1. Entity Relationship Diagram</h3>
+<div class="diagram-container">
+    <div class="diagram-title">ERD — My To Do</div>
+    <svg width="750" height="340" viewBox="0 0 750 340">
+        <!-- User -->
+        <rect x="20" y="130" width="140" height="50" rx="6" fill="#EFF6FF" stroke="var(--primary)" stroke-width="2"/>
+        <text x="90" y="150" text-anchor="middle" font-size="11" font-weight="600" fill="var(--primary)">User</text>
+        <text x="90" y="168" text-anchor="middle" font-size="10" fill="#666">id, name, email...</text>
+
+        <!-- PersonalTodoList -->
+        <rect x="260" y="60" width="190" height="70" rx="6" fill="#FFFBEB" stroke="var(--warning)" stroke-width="2"/>
+        <text x="355" y="82" text-anchor="middle" font-size="11" font-weight="600" fill="var(--warning)">PersonalTodoList</text>
+        <text x="355" y="98" text-anchor="middle" font-size="10" fill="#666">id, user_id, name,</text>
+        <text x="355" y="113" text-anchor="middle" font-size="10" fill="#666">description, sort_order</text>
+
+        <!-- PersonalTodo -->
+        <rect x="540" y="60" width="190" height="85" rx="6" fill="#F0FDF4" stroke="var(--success)" stroke-width="2"/>
+        <text x="635" y="82" text-anchor="middle" font-size="11" font-weight="600" fill="var(--success)">PersonalTodo</text>
+        <text x="635" y="98" text-anchor="middle" font-size="10" fill="#666">id, list_id, parent_id,</text>
+        <text x="635" y="113" text-anchor="middle" font-size="10" fill="#666">user_id, title, due_date,</text>
+        <text x="635" y="128" text-anchor="middle" font-size="10" fill="#666">is_completed, sort_order</text>
+
+        <!-- Self-referencing arrow for PersonalTodo -->
+        <path d="M730,90 Q760,90 760,120 Q760,150 730,145" fill="none" stroke="#333" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="770" y="115" font-size="9" fill="#888">parent_id</text>
+        <text x="770" y="128" font-size="9" fill="#888">(max 1 cấp)</text>
+
+        <!-- System entities -->
+        <rect x="200" y="230" width="100" height="36" rx="5" fill="#F3F4F6" stroke="#adb5bd" stroke-width="1.5"/>
+        <text x="250" y="253" text-anchor="middle" font-size="11" fill="#666">Task</text>
+
+        <rect x="320" y="230" width="100" height="36" rx="5" fill="#F3F4F6" stroke="#adb5bd" stroke-width="1.5"/>
+        <text x="370" y="253" text-anchor="middle" font-size="11" fill="#666">Issue</text>
+
+        <rect x="440" y="230" width="100" height="36" rx="5" fill="#F3F4F6" stroke="#adb5bd" stroke-width="1.5"/>
+        <text x="490" y="253" text-anchor="middle" font-size="11" fill="#666">AssignJob</text>
+
+        <rect x="560" y="230" width="110" height="36" rx="5" fill="#F3F4F6" stroke="#adb5bd" stroke-width="1.5"/>
+        <text x="615" y="253" text-anchor="middle" font-size="11" fill="#666">AssignRequest</text>
+
+        <rect x="690" y="230" width="100" height="36" rx="5" fill="#F3F4F6" stroke="#adb5bd" stroke-width="1.5"/>
+        <text x="740" y="253" text-anchor="middle" font-size="11" fill="#666">Meeting</text>
+
+        <!-- Relationships: User → List -->
+        <line x1="160" y1="150" x2="260" y2="95" stroke="#333" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="195" y="112" font-size="10" fill="#555">1 ── N</text>
+
+        <!-- List → Todo -->
+        <line x1="450" y1="95" x2="540" y2="95" stroke="#333" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <text x="490" y="88" font-size="10" fill="#555">1 ── N</text>
+        <text x="490" y="110" font-size="9" fill="#888">CASCADE</text>
+
+        <!-- User → System entities (dashed) -->
+        <line x1="90" y1="180" x2="230" y2="230" stroke="#adb5bd" stroke-width="1" stroke-dasharray="5,3"/>
+        <line x1="90" y1="180" x2="350" y2="230" stroke="#adb5bd" stroke-width="1" stroke-dasharray="5,3"/>
+        <line x1="90" y1="180" x2="470" y2="230" stroke="#adb5bd" stroke-width="1" stroke-dasharray="5,3"/>
+        <line x1="90" y1="180" x2="590" y2="230" stroke="#adb5bd" stroke-width="1" stroke-dasharray="5,3"/>
+        <line x1="90" y1="180" x2="720" y2="230" stroke="#adb5bd" stroke-width="1" stroke-dasharray="5,3"/>
+        <text x="90" y="205" font-size="9" fill="#adb5bd">query only (real-time)</text>
+
+        <!-- Legend -->
+        <text x="200" y="300" font-size="10" fill="#666">── Solid: FK relationship (CRUD)</text>
+        <text x="200" y="316" font-size="10" fill="#666">--- Dashed: Query-only (read, no write)</text>
+
+        <!-- Arrow marker -->
+        <defs>
+            <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                <polygon points="0 0, 8 3, 0 6" fill="#333"/>
+            </marker>
+        </defs>
+    </svg>
+</div>
+
+<h3>5.2. Bảng dữ liệu</h3>
+
+<h4>Bảng: <code>personal_todo_lists</code></h4>
+<table>
+    <tr><th>Cột</th><th>Type</th><th>Nullable</th><th>Default</th><th>Mô tả</th></tr>
+    <tr><td>id</td><td>bigint unsigned PK</td><td>No</td><td>auto</td><td></td></tr>
+    <tr><td>user_id</td><td>bigint unsigned</td><td>No</td><td>—</td><td>Chủ sở hữu</td></tr>
+    <tr><td>name</td><td>varchar(255)</td><td>No</td><td>—</td><td>Tên danh sách</td></tr>
+    <tr><td>description</td><td>text</td><td>Yes</td><td>null</td><td>Mô tả</td></tr>
+    <tr><td>sort_order</td><td>integer</td><td>No</td><td>0</td><td>Thứ tự hiển thị</td></tr>
+    <tr><td>company_id</td><td>bigint unsigned</td><td>Yes</td><td>null</td><td>Cấp tổ chức</td></tr>
+    <tr><td>created_at</td><td>timestamp</td><td>Yes</td><td>auto</td><td></td></tr>
+    <tr><td>updated_at</td><td>timestamp</td><td>Yes</td><td>auto</td><td></td></tr>
+    <tr><td>created_by</td><td>bigint unsigned</td><td>Yes</td><td>null</td><td>Audit</td></tr>
+    <tr><td>updated_by</td><td>bigint unsigned</td><td>Yes</td><td>null</td><td>Audit</td></tr>
+</table>
+
+<h4>Bảng: <code>personal_todos</code></h4>
+<table>
+    <tr><th>Cột</th><th>Type</th><th>Nullable</th><th>Default</th><th>Mô tả</th></tr>
+    <tr><td>id</td><td>bigint unsigned PK</td><td>No</td><td>auto</td><td></td></tr>
+    <tr><td>list_id</td><td>bigint unsigned FK</td><td>No</td><td>—</td><td>→ personal_todo_lists.id CASCADE</td></tr>
+    <tr><td>parent_id</td><td>bigint unsigned</td><td>Yes</td><td>null</td><td>NULL = todo gốc, có giá trị = sub-task</td></tr>
+    <tr><td>user_id</td><td>bigint unsigned</td><td>No</td><td>—</td><td>Chủ sở hữu</td></tr>
+    <tr><td>title</td><td>varchar(500)</td><td>No</td><td>—</td><td>Tiêu đề</td></tr>
+    <tr><td>description</td><td>text</td><td>Yes</td><td>null</td><td>Mô tả</td></tr>
+    <tr><td>due_date</td><td>date</td><td>Yes</td><td>null</td><td>Ngày hạn</td></tr>
+    <tr><td>due_time</td><td>time</td><td>Yes</td><td>null</td><td>Giờ hạn</td></tr>
+    <tr><td>is_completed</td><td>tinyint</td><td>No</td><td>0</td><td>0 = chưa xong, 1 = hoàn thành</td></tr>
+    <tr><td>completed_at</td><td>datetime</td><td>Yes</td><td>null</td><td>Thời điểm đánh hoàn thành</td></tr>
+    <tr><td>sort_order</td><td>integer</td><td>No</td><td>0</td><td>Thứ tự trong list</td></tr>
+    <tr><td>company_id</td><td>bigint unsigned</td><td>Yes</td><td>null</td><td>Cấp tổ chức</td></tr>
+    <tr><td>created_at</td><td>timestamp</td><td>Yes</td><td>auto</td><td></td></tr>
+    <tr><td>updated_at</td><td>timestamp</td><td>Yes</td><td>auto</td><td></td></tr>
+    <tr><td>created_by</td><td>bigint unsigned</td><td>Yes</td><td>null</td><td>Audit</td></tr>
+    <tr><td>updated_by</td><td>bigint unsigned</td><td>Yes</td><td>null</td><td>Audit</td></tr>
+</table>
+
+<!-- ========== 6. API SPECIFICATION ========== -->
+<h2 id="s6">6. API Specification</h2>
+
+<h3>6.1. Lấy danh sách tổng hợp</h3>
+<pre>GET /api/v1/assign/my-todo
+Auth: Bearer Token (JWT)</pre>
+<p><strong>Query params:</strong></p>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Mô tả</th></tr>
+    <tr><td>type</td><td>string</td><td>No</td><td><code>task</code>, <code>issue</code>, <code>assign_job</code>, <code>assign_business</code>, <code>meeting</code>, <code>personal</code></td></tr>
+    <tr><td>status</td><td>string</td><td>No</td><td><code>pending</code> (mặc định), <code>done</code>, rỗng = tất cả</td></tr>
+    <tr><td>date</td><td>date</td><td>No</td><td>Lọc chính xác theo ngày (YYYY-MM-DD)</td></tr>
+    <tr><td>date_from</td><td>date</td><td>No</td><td>Từ ngày</td></tr>
+    <tr><td>date_to</td><td>date</td><td>No</td><td>Đến ngày</td></tr>
+    <tr><td>is_overdue</td><td>boolean</td><td>No</td><td>Chỉ lấy quá hạn</td></tr>
+    <tr><td>list_id</td><td>integer</td><td>No</td><td>Lọc theo danh sách cá nhân</td></tr>
+    <tr><td>month</td><td>string</td><td>No</td><td><code>YYYY-MM</code> cho calendar summary</td></tr>
+</table>
+
+<h3>6.2. CRUD Danh sách</h3>
+<table>
+    <tr><th>Endpoint</th><th>Method</th><th>Mô tả</th></tr>
+    <tr><td><code>/assign/my-todo/lists</code></td><td>GET</td><td>Lấy tất cả danh sách</td></tr>
+    <tr><td><code>/assign/my-todo/lists</code></td><td>POST</td><td>Tạo danh sách (name required, description optional)</td></tr>
+    <tr><td><code>/assign/my-todo/lists/{id}</code></td><td>PUT</td><td>Cập nhật danh sách</td></tr>
+    <tr><td><code>/assign/my-todo/lists/{id}</code></td><td>DELETE</td><td>Xóa danh sách (cascade todos)</td></tr>
+    <tr><td><code>/assign/my-todo/lists/reorder</code></td><td>POST</td><td>Sắp xếp danh sách: <code>{items: [{id, sort_order}]}</code></td></tr>
+    <tr><td><code>/assign/my-todo/lists/{id}/todos</code></td><td>GET</td><td>Lấy todos theo list</td></tr>
+</table>
+
+<h3>6.3. CRUD Todo</h3>
+<table>
+    <tr><th>Endpoint</th><th>Method</th><th>Mô tả</th></tr>
+    <tr><td><code>/assign/my-todo/todos</code></td><td>POST</td><td>Tạo todo (list_id, title required)</td></tr>
+    <tr><td><code>/assign/my-todo/todos/{id}</code></td><td>PUT</td><td>Cập nhật todo</td></tr>
+    <tr><td><code>/assign/my-todo/todos/{id}</code></td><td>DELETE</td><td>Xóa todo (cascade sub-tasks)</td></tr>
+    <tr><td><code>/assign/my-todo/todos/{id}/toggle</code></td><td>PATCH</td><td>Toggle hoàn thành</td></tr>
+    <tr><td><code>/assign/my-todo/todos/reorder</code></td><td>PATCH</td><td>Sắp xếp todos</td></tr>
+</table>
+
+<h3>6.4. Validation Rules</h3>
+<table>
+    <tr><th>Request</th><th>Field</th><th>Rules</th></tr>
+    <tr><td rowspan="2">StorePersonalTodoListRequest</td><td>name</td><td>required | max:255</td></tr>
+    <tr><td>description</td><td>nullable</td></tr>
+    <tr><td rowspan="6">StorePersonalTodoRequest</td><td>list_id</td><td>required | exists:personal_todo_lists,id</td></tr>
+    <tr><td>parent_id</td><td>nullable | exists:personal_todos,id</td></tr>
+    <tr><td>title</td><td>required | max:500</td></tr>
+    <tr><td>description</td><td>nullable</td></tr>
+    <tr><td>due_date</td><td>nullable | date_format:Y-m-d</td></tr>
+    <tr><td>due_time</td><td>nullable | date_format:H:i</td></tr>
+</table>
+
+<!-- ========== 7. UI SPECIFICATION ========== -->
+<h2 id="s7">7. UI Specification</h2>
+
+<h3>7.1. Màn hình chính — Tổng hợp công việc</h3>
+<p><strong>Route:</strong> <code>/assign/my-todo</code> &nbsp;|&nbsp; <strong>Layout:</strong> 2 cột — trái (flex:1) + phải (300px fixed)</p>
+<pre>┌───────────────────────────────────────────────────────────────┐
+│  Stats: [Quá hạn: N] [Hôm nay: N] [Tuần này: N] [Tổng: N]  │
+│  Filter: [Loại ▼] [Trạng thái ▼] [Tìm kiếm...] [Tạo todo]  │
+├────────────────────────────────────┬──────────────────────────┤
+│                                    │  ◀ Tháng 5 2026 ▶       │
+│  ■ HÔM NAY — 02/05 (5)           │  T2 T3 T4 T5 T6 T7 CN   │
+│  │ Task: Review PR         17:00  │  [lịch tháng + dot]      │
+│  │ Meeting: Họp đồng bộ   14:00  │                          │
+│  │ Todo: Gọi điện NCC     02/05  │  DANH SÁCH CÁ NHÂN      │
+│  │   ☑ Hỏi báo giá               │  ≡ ● Việc cần làm  2/5  │
+│  │   ☐ Gửi email xác nhận        │  ≡ ● Follow up     0/2  │
+│                                    │  [+ Tạo danh sách mới]  │
+│  ▶ NGÀY MAI — 03/05 (2)          │                          │
+│  ▶ TUẦN NÀY (3)                   │                          │
+│  ▶ QUÁ HẠN (1)                    │                          │
+└────────────────────────────────────┴──────────────────────────┘</pre>
+
+<h3>7.2. Hiển thị item</h3>
+<table>
+    <tr><th>Vùng</th><th>Nội dung</th></tr>
+    <tr><td>Viền trái (3px)</td><td>Màu theo type: Task=<span style="color:var(--primary)">■</span> Issue=<span style="color:var(--danger)">■</span> AssignJob=<span style="color:var(--success)">■</span> AssignBusiness=<span style="color:var(--warning)">■</span> Meeting=<span style="color:var(--info)">■</span> Personal=<span style="color:var(--secondary)">■</span></td></tr>
+    <tr><td>Dòng 1</td><td>Title + <span class="badge badge-primary">Được giao</span> <span class="badge badge-success">Tham gia</span> <span class="badge badge-warning">Cần duyệt</span></td></tr>
+    <tr><td>Dòng 2</td><td><span class="badge badge-primary">Đang làm</span> · Tên dự án · Người phụ trách</td></tr>
+    <tr><td>Góc phải</td><td>DD/MM (hoặc HH:mm nếu hôm nay). <span style="color:var(--danger)">Đỏ</span> nếu quá hạn</td></tr>
+</table>
+
+<h3>7.3. Nhóm thời gian</h3>
+<table>
+    <tr><th>#</th><th>Nhóm</th><th>Điều kiện</th><th>Màu</th><th>Mặc định</th></tr>
+    <tr><td>1</td><td>Hôm nay</td><td><code>due_date == today</code></td><td style="color:var(--primary)">■ Xanh #4a7cfb</td><td>Mở</td></tr>
+    <tr><td>2</td><td>Ngày mai</td><td><code>due_date == tomorrow</code></td><td style="color:var(--warning)">■ Vàng #d4a03c</td><td>Thu gọn</td></tr>
+    <tr><td>3</td><td>Tuần này</td><td>Còn lại trong tuần</td><td style="color:var(--teal)">■ Teal #14b8a6</td><td>Thu gọn</td></tr>
+    <tr><td>4</td><td>Tuần sau</td><td>Tuần kế tiếp</td><td style="color:var(--secondary)">■ Xám</td><td>Thu gọn</td></tr>
+    <tr><td>5</td><td>Sắp tới</td><td>Xa hơn</td><td style="color:var(--secondary)">■ Xám</td><td>Thu gọn</td></tr>
+    <tr><td>6</td><td>Không hạn</td><td><code>due_date == null</code></td><td style="color:var(--secondary)">■ Xám</td><td>Thu gọn</td></tr>
+    <tr><td>7</td><td>Quá hạn</td><td><code>due_date &lt; today</code></td><td style="color:var(--danger)">■ Đỏ #e25c5c</td><td>Thu gọn</td></tr>
+</table>
+
+<!-- ========== 8. SWIMLANE DIAGRAMS ========== -->
+<h2 id="s8">8. Swimlane Diagrams</h2>
+
+<h3>8.1. Xem tổng hợp công việc (UC-01)</h3>
+<div class="swimlane">
+    <div class="swimlane-title">Swimlane: Xem tổng hợp công việc</div>
+    <div class="swimlane-body">
+        <div class="lane">
+            <div class="lane-header">User (FE)</div>
+            <div class="lane-step start">Mở /assign/my-todo</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Gọi API GET /assign/my-todo</div>
+            <div class="lane-arrow">→ BE</div>
+            <div class="lane-step" style="margin-top:140px">Nhận response</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Nhóm items theo due_date</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step end">Render danh sách + calendar + stats</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Backend (API)</div>
+            <div class="lane-step" style="margin-top:74px">Nhận request + auth user_id</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">Query song song: Tasks, Issues, Jobs, Requests, Meetings</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">Query PersonalTodos (user_id)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">normalizeItem() cho mỗi entity</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">deduplicateItems()</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">getCalendarSummary(month)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Return JSON {items, calendar_summary, lists}</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Database</div>
+            <div class="lane-step" style="margin-top:114px">SELECT tasks WHERE assignee_id = ?</div>
+            <div class="lane-step">SELECT issues WHERE assignee_id = ?</div>
+            <div class="lane-step">SELECT assign_jobs ...</div>
+            <div class="lane-step">SELECT meetings ...</div>
+            <div class="lane-step">SELECT personal_todos WHERE user_id = ?</div>
+            <div class="lane-step">SELECT personal_todo_lists WHERE user_id = ?</div>
+        </div>
+    </div>
+</div>
+
+<h3>8.2. Tạo todo cá nhân (UC-04)</h3>
+<div class="swimlane">
+    <div class="swimlane-title">Swimlane: Tạo todo cá nhân</div>
+    <div class="swimlane-body">
+        <div class="lane">
+            <div class="lane-header">User (FE)</div>
+            <div class="lane-step start">Click "Tạo todo"</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Mở TodoFormModal</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Điền: title, list, due_date...</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Click "Lưu"</div>
+            <div class="lane-arrow">→ BE</div>
+            <div class="lane-step decision" style="margin-top:60px">Validation error?</div>
+            <div class="lane-arrow">↓ No</div>
+            <div class="lane-step end">Đóng modal, reload danh sách</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Backend (API)</div>
+            <div class="lane-step" style="margin-top: 182px">Nhận POST /assign/my-todo/todos</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">StorePersonalTodoRequest validate</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">parent_id có giá trị?</div>
+            <div class="lane-arrow">↓ Yes</div>
+            <div class="lane-step">Check parent.parent_id == null (BR-01)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">sort_order = max + 1 (BR-08)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Return PersonalTodoResource</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Database</div>
+            <div class="lane-step" style="margin-top: 282px">SELECT MAX(sort_order)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">INSERT personal_todos</div>
+        </div>
+    </div>
+</div>
+
+<h3>8.3. Kéo thả sắp xếp danh sách (UC-07)</h3>
+<div class="swimlane">
+    <div class="swimlane-title">Swimlane: Kéo thả sắp xếp danh sách</div>
+    <div class="swimlane-body">
+        <div class="lane">
+            <div class="lane-header">User (FE)</div>
+            <div class="lane-step start">Kéo list item (drag handle)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Thả vào vị trí mới</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">Optimistic update: cập nhật UI ngay</div>
+            <div class="lane-arrow">→ BE</div>
+            <div class="lane-step decision" style="margin-top:30px">API thành công?</div>
+            <div class="lane-arrow">↓ No</div>
+            <div class="lane-step" style="background:#fef2f2">Rollback: loadLists() từ server</div>
+            <div class="lane-step end" style="margin-top:8px">Hiện toast "Không thể sắp xếp"</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Backend (API)</div>
+            <div class="lane-step" style="margin-top:120px">Nhận POST /lists/reorder</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Validate: items array</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">Loop: UPDATE sort_order WHERE id AND user_id</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Return success</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Database</div>
+            <div class="lane-step" style="margin-top:190px">UPDATE personal_todo_lists SET sort_order=0 WHERE id=X AND user_id=Y</div>
+            <div class="lane-step">UPDATE personal_todo_lists SET sort_order=1 WHERE id=Z AND user_id=Y</div>
+            <div class="lane-step">... (mỗi item 1 query)</div>
+        </div>
+    </div>
+</div>
+
+<h3>8.4. Toggle hoàn thành (UC-05)</h3>
+<div class="swimlane">
+    <div class="swimlane-title">Swimlane: Toggle hoàn thành todo</div>
+    <div class="swimlane-body">
+        <div class="lane">
+            <div class="lane-header">User (FE)</div>
+            <div class="lane-step start">Click checkbox todo</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Gọi PATCH /todos/{id}/toggle</div>
+            <div class="lane-arrow">→ BE</div>
+            <div class="lane-step" style="margin-top:90px">Nhận response</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step end">UI: gạch ngang title (nếu done) hoặc bỏ gạch</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Backend (API)</div>
+            <div class="lane-step" style="margin-top:60px">Nhận PATCH + auth user_id</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Find todo WHERE id AND user_id (BR-05)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">is_completed == 0?</div>
+            <div class="lane-arrow">↓ Yes</div>
+            <div class="lane-step api">Set is_completed=1, completed_at=now()</div>
+            <div class="lane-arrow">↓ No</div>
+            <div class="lane-step api">Set is_completed=0, completed_at=null</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Return PersonalTodoResource</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Database</div>
+            <div class="lane-step" style="margin-top:120px">SELECT * FROM personal_todos WHERE id=? AND user_id=?</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">UPDATE is_completed, completed_at</div>
+        </div>
+    </div>
+</div>
+
+<h3>8.5. Tương tác item hệ thống (UC-09)</h3>
+<div class="swimlane">
+    <div class="swimlane-title">Swimlane: Tương tác item hệ thống (Task/Issue)</div>
+    <div class="swimlane-body">
+        <div class="lane" style="flex:1.3">
+            <div class="lane-header">User (FE)</div>
+            <div class="lane-step start">Hover vào item Task/Issue</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Hiện action buttons (dựa trên can_edit, can_approve...)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">Chọn action?</div>
+            <div style="display:flex;gap:6px;margin:6px 0">
+                <div class="lane-step" style="flex:1;font-size:11px">Xem → Modal view</div>
+                <div class="lane-step" style="flex:1;font-size:11px">Sửa → Modal edit</div>
+                <div class="lane-step" style="flex:1;font-size:11px">Nhập KQ → Import</div>
+            </div>
+            <div style="display:flex;gap:6px;margin:6px 0">
+                <div class="lane-step" style="flex:1;font-size:11px">Duyệt → Modal approve</div>
+                <div class="lane-step" style="flex:1;font-size:11px">Lịch sử → History</div>
+                <div class="lane-step" style="flex:1;font-size:11px">Job/Meeting → window.open</div>
+            </div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step end">Sau khi đóng modal → reload data</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Modals (existing components)</div>
+            <div class="lane-step" style="margin-top:145px">CreateTaskModal</div>
+            <div class="lane-step">ImportResultModal</div>
+            <div class="lane-step">TaskHistoryModal</div>
+            <div class="lane-step">CreateIssueModal</div>
+            <div class="lane-step">IssueHistoryModal</div>
+            <div class="note" style="font-size:11px">Tất cả modal đều là component có sẵn trong codebase, MyTodo chỉ gọi lại</div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 9. SCOPE QUERY ========== -->
+<h2 id="s9">9. Scope Query Entity Hệ Thống</h2>
+
+<table>
+    <tr><th>Entity</th><th>Điều kiện lọc</th><th>Source</th><th>Loại trừ status</th></tr>
+    <tr><td>Task</td><td><code>assignee_id = user_id</code></td><td>assigned</td><td>DRAFT(1), DONE(8), CANCELLED(9)</td></tr>
+    <tr><td>Issue</td><td><code>assignee_id = user_id</code></td><td>assigned</td><td>closed, completed, rejected</td></tr>
+    <tr><td>AssignJob</td><td>status = DA_DUYET, user là thành viên qua <code>employee_info_id</code></td><td>assigned</td><td>—</td></tr>
+    <tr><td>AssignRequest</td><td>type = PHIEU_CONG_TAC, status = DA_LAP_PHIEU_CONG_TAC, user là thành viên</td><td>assigned</td><td>—</td></tr>
+    <tr><td>Meeting</td><td>status IN [LEN_LICH, CHOT_LICH], user là <code>company_members</code></td><td>participant</td><td>DANG_TAO, HOAN_THANH, HUY</td></tr>
+    <tr><td>Personal Todo</td><td><code>user_id = auth_user_id</code>, <code>parent_id IS NULL</code></td><td>personal</td><td>—</td></tr>
+</table>
+
+<h3>9.1. Status Mapping</h3>
+
+<h4>Task</h4>
+<table>
+    <tr><th>Status</th><th>Text</th><th>Color</th></tr>
+    <tr><td>1</td><td>Nháp</td><td><span class="badge badge-secondary">secondary</span></td></tr>
+    <tr><td>2</td><td>Chờ duyệt</td><td><span class="badge badge-warning">warning</span></td></tr>
+    <tr><td>3</td><td>Cần làm</td><td><span class="badge badge-info">info</span></td></tr>
+    <tr><td>4</td><td>Đang làm</td><td><span class="badge badge-primary">primary</span></td></tr>
+    <tr><td>5</td><td>Tạm dừng</td><td><span class="badge badge-secondary">secondary</span></td></tr>
+    <tr><td>6</td><td>Review</td><td><span class="badge badge-info">info</span></td></tr>
+    <tr><td>7</td><td>Từ chối</td><td><span class="badge badge-danger">danger</span></td></tr>
+    <tr><td>8</td><td>Hoàn thành</td><td><span class="badge badge-success">success</span></td></tr>
+    <tr><td>9</td><td>Huỷ</td><td><span class="badge badge-secondary">secondary</span></td></tr>
+    <tr><td>10</td><td>Từ chối bắt đầu</td><td><span class="badge badge-danger">danger</span></td></tr>
+</table>
+
+<h4>Issue</h4>
+<table>
+    <tr><th>Status</th><th>Text</th><th>Color</th></tr>
+    <tr><td>new</td><td>Mới</td><td><span class="badge badge-info">info</span></td></tr>
+    <tr><td>assigned</td><td>Đã giao</td><td><span class="badge badge-primary">primary</span></td></tr>
+    <tr><td>in_progress</td><td>Đang xử lý</td><td><span class="badge badge-warning">warning</span></td></tr>
+    <tr><td>resolved</td><td>Đã xử lý</td><td><span class="badge badge-success">success</span></td></tr>
+    <tr><td>closed</td><td>Đã đóng</td><td><span class="badge badge-secondary">secondary</span></td></tr>
+    <tr><td>reopened</td><td>Mở lại</td><td><span class="badge badge-warning">warning</span></td></tr>
+    <tr><td>completed</td><td>Hoàn thành</td><td><span class="badge badge-success">success</span></td></tr>
+    <tr><td>rejected</td><td>Từ chối</td><td><span class="badge badge-danger">danger</span></td></tr>
+</table>
+
+<h4>Meeting</h4>
+<table>
+    <tr><th>Status</th><th>Text</th><th>Color</th></tr>
+    <tr><td>DANG_TAO</td><td>Đang tạo</td><td><span class="badge badge-secondary">secondary</span></td></tr>
+    <tr><td>LEN_LICH</td><td>Lên lịch</td><td><span class="badge badge-success">success</span></td></tr>
+    <tr><td>CHOT_LICH</td><td>Chốt lịch</td><td><span class="badge badge-success">success</span></td></tr>
+    <tr><td>HOAN_THANH</td><td>Hoàn thành</td><td><span class="badge badge-success">success</span></td></tr>
+    <tr><td>HUY</td><td>Hủy</td><td><span class="badge badge-secondary">secondary</span></td></tr>
+</table>
+
+<h4>Personal Todo</h4>
+<table>
+    <tr><th>Trạng thái</th><th>Text</th><th>Color</th></tr>
+    <tr><td>is_completed = 0</td><td>Việc cần làm</td><td><span class="badge badge-secondary">secondary</span></td></tr>
+    <tr><td>is_completed = 1</td><td>Hoàn thành</td><td><span class="badge badge-success">success</span></td></tr>
+</table>
+
+<h3>9.2. Role Mapping</h3>
+<table>
+    <tr><th>Source</th><th>Text</th><th>Hiển thị</th></tr>
+    <tr><td>assigned</td><td>Được giao</td><td><span class="badge" style="color:#4a7cfb;background:#EFF6FF;border:1px solid #4a7cfb">Được giao</span></td></tr>
+    <tr><td>participant</td><td>Tham gia</td><td><span class="badge" style="color:#22c55e;background:#F0FDF4;border:1px solid #22c55e">Tham gia</span></td></tr>
+    <tr><td>approver</td><td>Cần duyệt</td><td><span class="badge" style="color:#d4a03c;background:#FFFBEB;border:1px solid #d4a03c">Cần duyệt</span></td></tr>
+    <tr><td>watching</td><td>Theo dõi</td><td><span class="badge" style="color:#8b5cf6;background:#F5F3FF;border:1px solid #8b5cf6">Theo dõi</span></td></tr>
+    <tr><td>personal</td><td>Cá nhân</td><td><span class="badge" style="color:#6b7280;background:#F3F4F6;border:1px solid #6b7280">Cá nhân</span></td></tr>
+</table>
+
+<!-- ========== 10. NON-FUNCTIONAL ========== -->
+<h2 id="s10">10. Non-functional Requirements</h2>
+<ul>
+    <li><strong>Performance:</strong> Eager loading cho relationships, chỉ SELECT các trường cần thiết</li>
+    <li><strong>Security:</strong> JWT auth, dữ liệu cô lập theo <code>user_id</code>, không cần phân quyền đặc biệt</li>
+    <li><strong>Compatibility:</strong> PHP 7.4, Laravel 8, Nuxt 2, Vue 2, Bootstrap-Vue 2.15</li>
+    <li><strong>Browser:</strong> Chrome, Firefox, Safari, Edge</li>
+    <li><strong>UX:</strong> Optimistic update cho drag-drop (cập nhật UI ngay, rollback nếu API lỗi)</li>
+</ul>
+
+<!-- ========== 11. PHỤ LỤC ========== -->
+<h2 id="s11">11. Phụ lục</h2>
+
+<h3>11.1. File References</h3>
+<table>
+    <tr><th>Layer</th><th>File path</th></tr>
+    <tr><td>Migration</td><td><code>Modules/Assign/Database/Migrations/2026_04_30_000001_create_personal_todo_lists_table.php</code></td></tr>
+    <tr><td>Migration</td><td><code>Modules/Assign/Database/Migrations/2026_04_30_000002_create_personal_todos_table.php</code></td></tr>
+    <tr><td>Entity</td><td><code>Modules/Assign/Entities/MyTodo/PersonalTodoList.php</code></td></tr>
+    <tr><td>Entity</td><td><code>Modules/Assign/Entities/MyTodo/PersonalTodo.php</code></td></tr>
+    <tr><td>Controller</td><td><code>Modules/Assign/Http/Controllers/Api/V1/MyTodoController.php</code></td></tr>
+    <tr><td>Service</td><td><code>Modules/Assign/Services/MyTodo/MyTodoService.php</code></td></tr>
+    <tr><td>Request (4)</td><td><code>Modules/Assign/Http/Requests/MyTodo/</code></td></tr>
+    <tr><td>Resource (3)</td><td><code>Modules/Assign/Transformers/MyTodoResource/</code></td></tr>
+    <tr><td>Routes</td><td><code>Modules/Assign/Routes/api.php</code> (group <code>/assign/my-todo</code>)</td></tr>
+    <tr><td>FE Page</td><td><code>pages/assign/my-todo/index.vue</code></td></tr>
+    <tr><td>FE Components (9)</td><td><code>pages/assign/my-todo/components/</code></td></tr>
+    <tr><td>Sidebar</td><td><code>components/assign-components/assign-slidebar.vue</code></td></tr>
+    <tr><td>Design</td><td><code>pages/assign/my-todo/pencil-new.pen</code></td></tr>
+</table>
+
+<hr style="margin-top:40px">
+<p style="font-size:12px;color:#999;text-align:center">SRS My To Do v1.0 — Generated 2026-05-02 — ERP TPE / Module Assign</p>
+
+</div>
+</body>
+</html>

@@ -2,9 +2,7 @@
 
 ## Trạng thái
 - Bắt đầu: 2026-03-31
-- Tiến độ: 7/7 task done (Task 4 FE đã thử nhưng revert intentional). Test OK 2026-04-18.
-=======
-- Tiến độ: 3/3 task done
+- Tiến độ: V5 bug fix done (Task 13-18). Chờ user test Task 19.
 
 
 ## Danh sách task
@@ -26,34 +24,34 @@
       - Notify thêm cho TP qua helper `sendTaskTransferredToApproverNotification`: "Bạn vừa được giao <code> do <receiver> từ chối tiếp nhận từ phiếu bàn giao <handover_code>"
 [x] Task 7: Cập nhật design.md — sửa Business Rule #6
 
+### Bug fix V4 (2026-04-25) — Màn chi tiết phiếu bàn giao
+[x] Task 8: FE HandoverInfoCard.vue — redesign sang dạng bảng (table) + thêm dòng "Người nhận bàn giao" gộp unique từ items
+[x] Task 9: BE HandoverItemResource — thêm `solution_module_id` từ itemable
+[x] Task 10: BE DetailHandoverResource + getAvailableItems — trả `receiver_options_by_module` (bổ sung, không dùng FE hiện tại)
+[ ] Task 12: Test thủ công — kiểm tra `/assign/handover/:id` hiển thị đúng + người duyệt thay đổi receiver
+
+### Bug fix V5 (2026-04-29) — Receiver hiện nhân sự hạng mục khác
+[x] Task 13: FE add.vue — lưu thêm `receiverOptionsByModule` từ response BE (cả loadHandover + loadMyItems) + truyền prop xuống HandoverItemsTable + fix cả _id/index.vue (màn chi tiết/duyệt)
+[x] Task 14: FE HandoverItemsTable.vue — thêm prop `receiverOptionsByModule`, helper `getItemRawOptions`, ưu tiên module-level khi item có `solution_module_id`, fallback solution-level. Cả `getItemSelectOptions` + `bulkReceiverSelectOptions` đều dùng logic mới
+[x] Task 15: Xoá console.log debug còn sót trong getItemSelectOptions
+[x] Task 16: BE DetailHandoverResource — ép `(object)` cho `receiver_options` và `receiver_options_by_module` để giữ key khi Laravel serialize (root cause: Resource serialize mất numeric key → FE lookup bằng solution_id/module_id bị undefined)
+[x] Task 17: Test thủ công — tạo + sửa phiếu bàn giao, task thuộc hạng mục A chỉ hiện nhân sự hạng mục A (user confirmed tạo OK)
+[x] Task 18: Bug tiến độ không lưu — FE `buildPayload` thiếu `item_progress_pct` + BE `syncItems` không cập nhật progress vào Task. Fix: FE gửi thêm field, BE cập nhật Task.progress_pct trong syncItems (cùng logic approve)
+[ ] Task 19: Test thủ công — tạo + sửa phiếu, nhập tiến độ → lưu → reload kiểm tra giá trị
+
 ## Checkpoint
 - 2026-03-31: 2 bug fix done, merge fix_handover → tpe-develop-assign, pushed GitHub
 
 ### Checkpoint — 2026-04-18
-Vừa hoàn thành: Bug fix V2 — đổi exception code BE; FE giữ nguyên (Task 4 fallback đã revert intentional)
-- BE `HandoverService.syncItems`: 422 → 423; text mới + lookup task.code/issue.issue_code
-- FE add.vue: defense-in-depth bị revert, không sao vì 423 handler đã đọc data.message đúng
+Vừa hoàn thành: Bug fix V2 + V3 done. Test OK cả 2 luồng.
 
-### Checkpoint — 2026-04-18 (Update logic V3)
-Vừa hoàn thành: Reject sau khi TP duyệt → chuyển task về TP (Task 6 + 7)
-- BE `HandoverService.rejectItem` (line 519-568):
-  + Guard: throw 423 nếu `handover->approved_by` null (data integrity)
-  + Set `itemable->assignee_id = handover->approved_by`
-  + Log thêm "Task được chuyển sang <TP_name>"
-  + Notify thêm cho TP qua helper mới `sendTaskTransferredToApproverNotification` (line 765-800)
-- Helper `sendTaskTransferredToApproverNotification`: lookup `Employee->employee_info_id`, content "Bạn vừa được giao <code> do <receiver> từ chối tiếp nhận từ phiếu bàn giao <handover_code>", try-catch tránh bể flow
-- design.md: Business Rule #6 update từ "assignee giữ nguyên" → "chuyển về TP đã duyệt phiếu"
+### Checkpoint — 2026-04-29
+Vừa hoàn thành: V5 — 2 bug fix:
+1. Receiver hiện nhân sự hạng mục khác → FE dùng `receiver_options_by_module` ưu tiên module-level + BE ép `(object)` giữ key trong DetailHandoverResource
+2. Tiến độ không lưu khi tạo/sửa → FE thêm `item_progress_pct` vào payload + BE `syncItems` cập nhật Task.progress_pct
+Đang làm dở: không
+Bước tiếp theo: User test Task 19 (tạo + sửa phiếu, kiểm tra tiến độ lưu đúng)
+Blocked: không
 
-Đang làm dở: Task 5 — chờ user test thực tế cả 2 luồng (V2 + V3)
-Bước tiếp theo:
-  1. **Test V2**: 2 tab cùng chọn 1 task → tab 1 "Lưu nháp" → tab 2 "Lưu và gửi" → toast "Có task đã được bàn giao trong 1 phiếu khác chưa hoàn tất: <code>"
-  2. **Test V3 happy path**: TP đã duyệt phiếu → receiver từ chối item → task chuyển sang TP + log hiện tên TP + TP nhận noti + creator nhận noti
-  3. **Test V3 edge case**: Giả lập `approved_by` null → toast 423 "Phiếu bàn giao thiếu thông tin người duyệt"
-  4. **Test regression**: Validate form (thiếu ngày bàn giao) → vẫn hiện "Bạn chưa nhập đầy đủ thông tin"
-Blocked: không có
-=======
 ### Checkpoint — 2026-04-14
-Vừa hoàn thành: Sinh `Testcase_Ban_Giao_Cong_Viec.xlsx` (108 TC, prefix HDV) + `generate_testcase.py` + spec `docs/superpowers/specs/2026-04-14-handover-testcase-design.md`
-Đang làm dở: —
-Bước tiếp theo: QA review & chạy test thủ công theo Excel, đánh cột Status (Passed/Failed/Pending/Not Executed)
-Blocked: —
+Vừa hoàn thành: Sinh `Testcase_Ban_Giao_Cong_Viec.xlsx` (108 TC, prefix HDV)
