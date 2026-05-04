@@ -19,7 +19,7 @@
 **Files:**
 - Create: `hrm-api/Modules/Training/Database/Migrations/2026_04_29_100000_create_learning_path_tables.php`
 
-- [ ] **Step 1: Tạo file migration**
+- [x] **Step 1: Tạo file migration**
 
 ```php
 <?php
@@ -83,7 +83,7 @@ class CreateLearningPathTables extends Migration
 }
 ```
 
-- [ ] **Step 2: Chạy migration**
+- [x] **Step 2: Chạy migration**
 
 ```bash
 cd hrm-api && php artisan migrate
@@ -98,7 +98,7 @@ Expected: 3 bảng được tạo thành công.
 **Files:**
 - Create: `hrm-api/Modules/Training/Entities/LearningPath.php`
 
-- [ ] **Step 1: Tạo model**
+- [x] **Step 1: Tạo model**
 
 ```php
 <?php
@@ -187,7 +187,7 @@ class LearningPath extends BaseModel
 **Files:**
 - Create: `hrm-api/Modules/Training/Entities/LearningPathSubject.php`
 
-- [ ] **Step 1: Tạo model**
+- [x] **Step 1: Tạo model**
 
 ```php
 <?php
@@ -231,7 +231,7 @@ class LearningPathSubject extends BaseModel
 **Files:**
 - Create: `hrm-api/Modules/Training/Entities/LearningPathAssignee.php`
 
-- [ ] **Step 1: Tạo model**
+- [x] **Step 1: Tạo model**
 
 ```php
 <?php
@@ -267,7 +267,7 @@ class LearningPathAssignee extends BaseModel
 **Files:**
 - Create: `hrm-api/Modules/Training/Http/Requests/LearningPath/LearningPathRequest.php`
 
-- [ ] **Step 1: Tạo request class**
+- [x] **Step 1: Tạo request class**
 
 ```php
 <?php
@@ -322,7 +322,7 @@ class LearningPathRequest extends FormRequest
 **Files:**
 - Create: `hrm-api/Modules/Training/Services/LearningPath/LearningPathService.php`
 
-- [ ] **Step 1: Tạo service class**
+- [x] **Step 1: Tạo service class**
 
 ```php
 <?php
@@ -477,7 +477,7 @@ class LearningPathService
 **Files:**
 - Create: `hrm-api/Modules/Training/Transformers/LearningPathResource/LearningPathListResource.php`
 
-- [ ] **Step 1: Tạo resource**
+- [x] **Step 1: Tạo resource**
 
 ```php
 <?php
@@ -527,7 +527,7 @@ class LearningPathListResource extends ResourceCollection
 **Files:**
 - Create: `hrm-api/Modules/Training/Transformers/LearningPathResource/LearningPathDetailResource.php`
 
-- [ ] **Step 1: Tạo resource**
+- [x] **Step 1: Tạo resource**
 
 ```php
 <?php
@@ -630,7 +630,7 @@ class LearningPathDetailResource extends JsonResource
 **Files:**
 - Create: `hrm-api/Modules/Training/Http/Controllers/V1/LearningPathController.php`
 
-- [ ] **Step 1: Tạo controller**
+- [x] **Step 1: Tạo controller**
 
 ```php
 <?php
@@ -792,13 +792,13 @@ class LearningPathController extends BaseApiController
 **Files:**
 - Modify: `hrm-api/Modules/Training/Routes/api.php`
 
-- [ ] **Step 1: Thêm import controller ở đầu file** (cùng nhóm use statements)
+- [x] **Step 1: Thêm import controller ở đầu file** (cùng nhóm use statements)
 
 ```php
 use Modules\Training\Http\Controllers\V1\LearningPathController;
 ```
 
-- [ ] **Step 2: Thêm route group** vào trong `Route::group(['prefix' => 'training', 'middleware' => 'auth:api'], function () {`
+- [x] **Step 2: Thêm route group** vào trong `Route::group(['prefix' => 'training', 'middleware' => 'auth:api'], function () {`
 
 Thêm block sau (vị trí sau nhóm `/lessons`):
 
@@ -814,7 +814,7 @@ Thêm block sau (vị trí sau nhóm `/lessons`):
         });
 ```
 
-- [ ] **Step 3: Verify API hoạt động**
+- [x] **Step 3: Verify API hoạt động**
 
 ```bash
 cd hrm-api && php artisan route:list --path=learning-paths
@@ -831,7 +831,7 @@ Expected: 7 routes hiển thị.
 **Files:**
 - Không cần tạo file store riêng — dùng `this.$store.dispatch('apiGetMethod', url)` pattern đã có.
 
-- [ ] **Step 1: Skip** — FE gọi API trực tiếp qua store dispatch, không cần thêm file store. Các component sẽ gọi:
+- [x] **Step 1: Skip** — FE gọi API trực tiếp qua store dispatch, không cần thêm file store. Các component sẽ gọi:
 
 ```js
 // GET
@@ -856,7 +856,7 @@ await this.$store.dispatch('apiDeleteMethod', `training/learning-paths/${id}`)
 **Files:**
 - Modify: `hrm-client/pages/training/learning-path/add.vue`
 
-- [ ] **Step 1: Viết page orchestrator**
+- [x] **Step 1: Viết page orchestrator**
 
 ```vue
 <template>
@@ -1188,7 +1188,7 @@ export default {
 **Files:**
 - Create: `hrm-client/pages/training/learning-path/components/TabInfo.vue`
 
-- [ ] **Step 1: Tạo component TabInfo.vue**
+- [x] **Step 1: Tạo component TabInfo.vue**
 
 Đây là component lớn nhất — gồm form thông tin (trái) + builder khoá học drag-drop (phải) + modal chọn khoá.
 
@@ -1208,7 +1208,7 @@ Script cần:
 
 Xem chi tiết code trong file tạo ra — file này sẽ ~400 dòng template + ~200 dòng script.
 
-- [ ] **Step 2: Viết code đầy đủ TabInfo.vue** (xem file thực tế khi implement)
+- [x] **Step 2: Viết code đầy đủ TabInfo.vue** (xem file thực tế khi implement)
 
 ---
 
@@ -1217,7 +1217,7 @@ Xem chi tiết code trong file tạo ra — file này sẽ ~400 dòng template +
 **Files:**
 - Create: `hrm-client/pages/training/learning-path/components/TabResult.vue`
 
-- [ ] **Step 1: Tạo component**
+- [x] **Step 1: Tạo component**
 
 ```vue
 <template>
@@ -1340,7 +1340,7 @@ export default {
 **Files:**
 - Create: `hrm-client/pages/training/learning-path/components/TabLearners.vue`
 
-- [ ] **Step 1: Tạo component**
+- [x] **Step 1: Tạo component**
 
 Component gồm 2 cột (Bắt buộc / Khuyến khích), mỗi cột có 3 pill toggle (Phòng ban, Chức vụ, Năng lực), khi active hiện multi-select.
 
@@ -1354,7 +1354,7 @@ Script cần:
 
 Multi-select: dùng `V2BaseSelect` với `multiple` nếu có, hoặc tự build dropdown giống file mẫu HTML.
 
-- [ ] **Step 2: Viết code đầy đủ TabLearners.vue** (xem file thực tế khi implement)
+- [x] **Step 2: Viết code đầy đủ TabLearners.vue** (xem file thực tế khi implement)
 
 ---
 
@@ -1363,13 +1363,13 @@ Multi-select: dùng `V2BaseSelect` với `multiple` nếu có, hoặc tự build
 **Files:**
 - Create: `hrm-client/pages/training/learning-path/components/TabCertificate.vue`
 
-- [ ] **Step 1: Cài jsPDF**
+- [x] **Step 1: Cài jsPDF**
 
 ```bash
 cd hrm-client && npm install jspdf@2.5.1 --save
 ```
 
-- [ ] **Step 2: Tạo component**
+- [x] **Step 2: Tạo component**
 
 Component gồm:
 - Switch bật/tắt certificate
@@ -1397,7 +1397,7 @@ Download PDF:
 2. Add canvas as image
 3. Save file
 
-- [ ] **Step 3: Viết code đầy đủ TabCertificate.vue** (xem file thực tế khi implement)
+- [x] **Step 3: Viết code đầy đủ TabCertificate.vue** (xem file thực tế khi implement)
 
 ---
 
@@ -1408,7 +1408,7 @@ Download PDF:
 **Files:**
 - Create: `hrm-client/pages/training/learning-path/_id/edit.vue`
 
-- [ ] **Step 1: Tạo page**
+- [x] **Step 1: Tạo page**
 
 Tái sử dụng `add.vue` pattern nhưng set `isEdit = true` và load data từ API.
 
@@ -1464,11 +1464,11 @@ export default {
 
 Thực tế: **refactor add.vue thành component `LearningPathForm.vue`** tương tự `SubjectBuilderForm.vue`, rồi cả `add.vue` và `edit.vue` đều import nó.
 
-- [ ] **Step 2: Refactor add.vue → LearningPathForm.vue component**
+- [x] **Step 2: Refactor add.vue → LearningPathForm.vue component**
 
 Move toàn bộ logic hiện tại của `add.vue` vào `components/LearningPathForm.vue`, thêm prop `learningPathId` (nullable). Khi có `learningPathId` → gọi API show để load data.
 
-- [ ] **Step 3: Cập nhật add.vue thành wrapper đơn giản**
+- [x] **Step 3: Cập nhật add.vue thành wrapper đơn giản**
 
 ```vue
 <template>
@@ -1507,7 +1507,7 @@ export default {
 </script>
 ```
 
-- [ ] **Step 4: Tạo edit.vue**
+- [x] **Step 4: Tạo edit.vue**
 
 ```vue
 <template>
@@ -1553,7 +1553,7 @@ export default {
 **Files:**
 - Create: `hrm-client/pages/training/learning-path/_id/index.vue`
 
-- [ ] **Step 1: Tạo page xem chi tiết**
+- [x] **Step 1: Tạo page xem chi tiết**
 
 ```vue
 <template>
@@ -1593,7 +1593,7 @@ export default {
 </script>
 ```
 
-- [ ] **Step 2: Cập nhật LearningPathForm.vue** — thêm prop `isShowMode` (default false), khi true thì set `isShow = true` và ẩn nút Lưu.
+- [x] **Step 2: Cập nhật LearningPathForm.vue** — thêm prop `isShowMode` (default false), khi true thì set `isShow = true` và ẩn nút Lưu.
 
 ---
 
@@ -1601,7 +1601,7 @@ export default {
 
 ### Task 19: Kiểm tra toàn bộ flow
 
-- [ ] **Step 1: Chạy migration verify**
+- [x] **Step 1: Chạy migration verify**
 
 ```bash
 cd hrm-api && php artisan migrate:status | grep learning
@@ -1609,7 +1609,7 @@ cd hrm-api && php artisan migrate:status | grep learning
 
 Expected: 3 bảng status "Ran".
 
-- [ ] **Step 2: Verify routes**
+- [x] **Step 2: Verify routes**
 
 ```bash
 cd hrm-api && php artisan route:list --path=learning-paths
@@ -1617,7 +1617,7 @@ cd hrm-api && php artisan route:list --path=learning-paths
 
 Expected: 7 routes hiển thị.
 
-- [ ] **Step 3: Test API tạo mới** (dùng Postman hoặc curl)
+- [x] **Step 3: Test API tạo mới** (dùng Postman hoặc curl)
 
 ```
 POST /v1/training/learning-paths
@@ -1633,7 +1633,7 @@ Content-Type: application/json
 
 Expected: 200, trả về `{ id: 1 }`.
 
-- [ ] **Step 4: Mở browser test FE**
+- [x] **Step 4: Mở browser test FE**
 
 Truy cập: `http://localhost:3000/training/learning-path/add`
 
@@ -1651,16 +1651,60 @@ Verify:
 
 ## Bug fix: Lưu lộ trình học bị 500
 
-- [ ] Thu thập log lỗi từ `hrm-api/storage/logs/laravel-YYYY-MM-DD.log`
-- [ ] Trace endpoint save `LearningPathController` + request payload
-- [ ] Fix nguyên nhân và verify flow lưu (create/update)
+- [x] Thu thập log lỗi từ `hrm-api/storage/logs/laravel-YYYY-MM-DD.log`
+- [x] Trace endpoint save `LearningPathController` + request payload
+- [x] Fix nguyên nhân và verify flow lưu (create/update)
 
 ---
 
 ## UI polish: Thông báo lỗi dùng toast
 
-- [ ] Bỏ alert inline `formError` ở `LearningPathForm.vue`
-- [ ] Hiển thị toast lỗi khi validate/save thất bại
+- [x] Bỏ alert inline `formError` ở `LearningPathForm.vue`
+- [x] Hiển thị toast lỗi khi validate/save thất bại
+
+---
+
+## Phase 7: UI polish — Màn danh sách + chi tiết
+
+### Task 20: TabInfo — Bổ sung popup bài thi + điều kiện học
+
+- [x] Thêm method `getSubjectEvalMode(item)` vào TabInfo.vue
+- [x] Thêm button + modal "Bài thi" cho mỗi subject card (showExamModal, examSubject, getSubjectExams, openExamModal)
+- [x] Thêm button + modal "Điều kiện học" cho mỗi lesson row (showConditionModal, tracking_completion by type)
+- [x] Convert config modal từ b-modal sang modal-backdrop-lite pattern
+
+### Task 21: Bỏ button Lưu nháp
+
+- [x] Bỏ `submit_and_draft` + `@submitAndDraft` ở `add.vue`
+- [x] Bỏ `submit_and_draft` + `@submitAndDraft` ở `_id/edit.vue`
+
+### Task 22: Rewrite màn danh sách (index.vue)
+
+- [x] Rewrite dùng V2BaseFilterPanel + V2BaseDataTable theo file mẫu `learning_path_list.html`
+- [x] Tham khảo `assign/prospective-projects` cho V2Base pattern
+- [x] Cột "Loại đào tạo" thay cho "Danh mục"
+- [x] Fix `column.title` cho V2BaseDataTable (thay vì `column.label`)
+- [x] Fix employee name hiển thị (dùng `employee.info.fullname`)
+- [x] Cập nhật LearningPathListResource: `result_min_pass_percent`, `total_lessons_count`, date format `d-m-Y H:i`
+- [x] Cập nhật LearningPathDetailResource: thêm `subject_exams`, `tracking_completion`
+
+### Task 23: Khóa / Mở khóa lộ trình
+
+- [x] BE: Thêm `toggleLock()` vào LearningPathController (block STATUS_ACTIVE, toggle LOCKED↔DRAFT)
+- [x] BE: Thêm route `POST /{learningPath}/toggle-lock`
+- [x] FE: Thêm button lock/unlock vào cột trạng thái (tham khảo `assign/customer-scopes`)
+- [x] FE: Dùng BaseConfirmModal cho xác nhận khóa/mở khóa
+- [x] FE: Disable button khi status = 2 (Đang dùng)
+
+### Task 24: Sort mặc định + Bộ lọc nâng cao
+
+- [x] Default sort `id desc`
+- [x] Bộ lọc: Trạng thái, Loại đào tạo, Điều kiện đạt
+- [x] Bộ lọc: Người tạo (V2BaseSelect, `allEmployeesOptions` từ store)
+- [x] Bộ lọc: Người cập nhật gần nhất (V2BaseSelect, `allEmployeesOptions` từ store)
+- [x] Bộ lọc: Ngày cập nhật từ / đến (V2BaseDatePicker)
+- [x] BE: Thêm filter `created_by`, `updated_by`, `updated_from`, `updated_to` vào LearningPathController::index()
+- [x] FE: Đăng ký V2BaseDatePicker vào components + computed `employeeOptions`
 
 ---
 

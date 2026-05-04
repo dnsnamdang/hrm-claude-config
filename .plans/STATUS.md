@@ -8,8 +8,6 @@
   FE: index.vue + 9 components. TodoItem: role badge + status badge (border+bg) + dot separator. TodoCalendarSidebar: drag-drop (vuedraggable).
   Checkpoint: 2026-05-02 — Phase 8 done. Bước tiếp: test toàn bộ flow theo 94 test cases.
 
-- learning-path → @khoipv → .plans/learning-path/plan.md
-  Trạng thái: Brainstorming DONE, spec written.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
   Trạng thái: Phase 16 + bug fix batch (task 14-24). Branch `tpe-develop-assign`.
@@ -55,6 +53,8 @@
 
 ## Hoàn thành
 
+- learning-path → @khoipv → .plans/learning-path/plan.md
+  Hoàn thành: 2026-05-04. Phase 1-7 (24 task). CRUD lộ trình học (3 bảng DB, 4 tab FE: thông tin+builder khoá học, kết quả, người học, chứng chỉ). Danh sách V2Base với lock/unlock, bộ lọc nâng cao 7 ô, popup bài thi + điều kiện học. Spec: docs/superpowers/specs/2026-04-29-learning-path-design.md
 - issue-completion-flow → @khoipv → .plans/issue-completion-flow/plan.md
   Hoàn thành: 2026-04-28. 22/22 task. Thêm 2 trạng thái completed/rejected vào flow Issue + branching logic approver (duyệt/từ chối) + notification cho approver khi resolved và assignee khi rejected. BE: 1 migration + entity + service + resource + controller. FE: index + modal. Spec: docs/superpowers/specs/2026-04-28-issue-completion-flow-design.md
 - add-description-column-list → @khoipv → .plans/add-description-column-list/plan.md
