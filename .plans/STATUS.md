@@ -2,11 +2,9 @@
 
 ## Đang làm
 - my-todo → @dnsnamdang → .plans/my-todo/plan.md
-  Trạng thái: Phase 1-5 + Phase 7 (UI Polish) + Phase 8 (Tài liệu) DONE. Branch `my-todo` (cả hrm-api và hrm-client). Còn Phase 6 (Test).
-  Tài liệu: SRS HTML (Use Case + Swimlane + ERD), testcase HTML (95 TC) + Excel (94 TC). Skill `testcase-documenter` đã tạo.
-  BE: 2 migration + 2 entity + 4 FormRequest + 3 Resource + MyTodoService (CRUD + Aggregator + reorderLists) + MyTodoController (13 methods) + 13 routes.
-  FE: index.vue + 9 components. TodoItem: role badge + status badge (border+bg) + dot separator. TodoCalendarSidebar: drag-drop (vuedraggable).
-  Checkpoint: 2026-05-02 — Phase 8 done. Bước tiếp: test toàn bộ flow theo 94 test cases.
+  Trạng thái: Phase 1-5 + Phase 7-9 DONE. Branch `tpe-develop-assign`. Còn Phase 6 (Test).
+  Phase 9 (2026-05-04): đổi tên UI ("Lịch làm việc của tôi", "Tạo nhắc việc cá nhân"), sửa nhắc việc (cả màn chính + danh sách), confirm BaseConfirmModal, fix reload, fix 422 due_time, sort theo thời gian, sub-items đồng nhất, cascade toggle (parent↔sub kiểu Google Tasks).
+  Checkpoint: 2026-05-04 — Phase 9 done. Bước tiếp: test toàn bộ flow.
 
 - learning-path → @khoipv → .plans/learning-path/plan.md
   Trạng thái: Brainstorming DONE, spec written.
