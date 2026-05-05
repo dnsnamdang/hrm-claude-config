@@ -1,13 +1,13 @@
 # STATUS.md
 
 ## Đang làm
+
 - my-todo → @dnsnamdang → .plans/my-todo/plan.md
   Trạng thái: Phase 1-5 + Phase 7 (UI Polish) + Phase 8 (Tài liệu) DONE. Branch `my-todo` (cả hrm-api và hrm-client). Còn Phase 6 (Test).
   Tài liệu: SRS HTML (Use Case + Swimlane + ERD), testcase HTML (95 TC) + Excel (94 TC). Skill `testcase-documenter` đã tạo.
   BE: 2 migration + 2 entity + 4 FormRequest + 3 Resource + MyTodoService (CRUD + Aggregator + reorderLists) + MyTodoController (13 methods) + 13 routes.
   FE: index.vue + 9 components. TodoItem: role badge + status badge (border+bg) + dot separator. TodoCalendarSidebar: drag-drop (vuedraggable).
   Checkpoint: 2026-05-02 — Phase 8 done. Bước tiếp: test toàn bộ flow theo 94 test cases.
-
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
   Trạng thái: Phase 16 + bug fix batch (task 14-24). Branch `tpe-develop-assign`.
@@ -55,6 +55,9 @@
 
 - learning-path → @khoipv → .plans/learning-path/plan.md
   Hoàn thành: 2026-05-04. Phase 1-7 (24 task). CRUD lộ trình học (3 bảng DB, 4 tab FE: thông tin+builder khoá học, kết quả, người học, chứng chỉ). Danh sách V2Base với lock/unlock, bộ lọc nâng cao 7 ô, popup bài thi + điều kiện học. Spec: docs/superpowers/specs/2026-04-29-learning-path-design.md
+- progress-percent-auto-from-log → @manhcuong → .plans/progress-percent-auto-from-log/plan.md
+  Hoàn thành: 2026-05-05. Mode B ImportResultModal: Tiến độ hoàn thành tự động từ log gần nhất có giá trị (computed latestLogProgressPct). BE validate tiến độ tăng dần + bắt buộc 100% khi chuyển sang REVIEW/DONE. Spec: docs/superpowers/specs/2026-05-04-progress-percent-auto-from-log-design.md
+
 - issue-completion-flow → @khoipv → .plans/issue-completion-flow/plan.md
   Hoàn thành: 2026-04-28. 22/22 task. Thêm 2 trạng thái completed/rejected vào flow Issue + branching logic approver (duyệt/từ chối) + notification cho approver khi resolved và assignee khi rejected. BE: 1 migration + entity + service + resource + controller. FE: index + modal. Spec: docs/superpowers/specs/2026-04-28-issue-completion-flow-design.md
 - add-description-column-list → @khoipv → .plans/add-description-column-list/plan.md
