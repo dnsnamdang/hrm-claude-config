@@ -11,9 +11,6 @@
   Phase 9 (2026-05-04): đổi tên UI ("Lịch làm việc của tôi", "Tạo nhắc việc cá nhân"), sửa nhắc việc (cả màn chính + danh sách), confirm BaseConfirmModal, fix reload, fix 422 due_time, sort theo thời gian, sub-items đồng nhất, cascade toggle (parent↔sub kiểu Google Tasks).
   Checkpoint: 2026-05-04 — Phase 9 done. Bước tiếp: test toàn bộ flow.
 
-- learning-path → @khoipv → .plans/learning-path/plan.md
-  Trạng thái: Brainstorming DONE, spec written.
-
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
   Trạng thái: Phase 17 code DONE (task 25-27). Branch `tpe-develop-assign`.
   Phase 17 (2026-05-05): Cascade status Dự án TKT + Giải pháp khi gửi YCBG (→ Dự toán / Chờ làm giá) và khi báo giá duyệt cuối (→ Thương thảo giá / Đã duyệt giá). Thêm Solution::STATUS_DA_DUYET_GIA=13.
@@ -57,6 +54,11 @@
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- learning-path → @khoipv → .plans/learning-path/plan.md
+  Hoàn thành: 2026-05-04. Phase 1-7 (24 task). CRUD lộ trình học (3 bảng DB, 4 tab FE: thông tin+builder khoá học, kết quả, người học, chứng chỉ). Danh sách V2Base với lock/unlock, bộ lọc nâng cao 7 ô, popup bài thi + điều kiện học. Spec: docs/superpowers/specs/2026-04-29-learning-path-design.md
+- progress-percent-auto-from-log → @manhcuong → .plans/progress-percent-auto-from-log/plan.md
+  Hoàn thành: 2026-05-05. Mode B ImportResultModal: Tiến độ hoàn thành tự động từ log gần nhất có giá trị (computed latestLogProgressPct). BE validate tiến độ tăng dần + bắt buộc 100% khi chuyển sang REVIEW/DONE. Spec: docs/superpowers/specs/2026-05-04-progress-percent-auto-from-log-design.md
 
 - issue-completion-flow → @khoipv → .plans/issue-completion-flow/plan.md
   Hoàn thành: 2026-04-28. 22/22 task. Thêm 2 trạng thái completed/rejected vào flow Issue + branching logic approver (duyệt/từ chối) + notification cho approver khi resolved và assignee khi rejected. BE: 1 migration + entity + service + resource + controller. FE: index + modal. Spec: docs/superpowers/specs/2026-04-28-issue-completion-flow-design.md
