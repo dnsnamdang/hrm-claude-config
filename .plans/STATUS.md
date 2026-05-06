@@ -1,6 +1,11 @@
 # STATUS.md
 
 ## Đang làm
+- request-solution-adjustment → @dnsnamdang → .plans/request-solution-adjustment/plan.md
+  Trạng thái: Phase 1-5 + 5B + 5C code DONE. Chờ migration + test thủ công.
+  Spec: docs/superpowers/specs/2026-05-06-request-solution-adjustment-design.md
+  Checkpoint: 2026-05-06 — BE 8 files + FE 3 files (SolutionAdjustmentTab + 2 manager.vue). Tab YCĐC ở cả Dự án TKT và Solution manager. Bước tiếp: chạy migration + test Phase 6.
+
 - my-todo → @dnsnamdang → .plans/my-todo/plan.md
   Trạng thái: Phase 1-5 + Phase 7-9 DONE. Branch `tpe-develop-assign`. Còn Phase 6 (Test).
   Phase 9 (2026-05-04): đổi tên UI ("Lịch làm việc của tôi", "Tạo nhắc việc cá nhân"), sửa nhắc việc (cả màn chính + danh sách), confirm BaseConfirmModal, fix reload, fix 422 due_time, sort theo thời gian, sub-items đồng nhất, cascade toggle (parent↔sub kiểu Google Tasks).
@@ -10,9 +15,9 @@
   Trạng thái: Brainstorming DONE, spec written.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
-  Trạng thái: Phase 16 + bug fix batch (task 14-24). Branch `tpe-develop-assign`.
-  Bug fix: VAT bulk apply tất cả cấp, validate VAT≥0, bỏ log history VAT bulk, fix strict comparison block sửa YCBG, modal edit YCBG (thay navigate), fix double toast, fix emit undefined, tab Báo giá (cột tiền tệ + tổng giá trị + fix ngày duyệt), filter Đóng quotations, fix double textarea CKEditor.
-  Checkpoint: 2026-04-29 — 11 bug fix done. Chờ user test lại.
+  Trạng thái: Phase 17 code DONE (task 25-27). Branch `tpe-develop-assign`.
+  Phase 17 (2026-05-05): Cascade status Dự án TKT + Giải pháp khi gửi YCBG (→ Dự toán / Chờ làm giá) và khi báo giá duyệt cuối (→ Thương thảo giá / Đã duyệt giá). Thêm Solution::STATUS_DA_DUYET_GIA=13.
+  Checkpoint: 2026-05-06 — Phase 18 brainstorming: Chốt giải pháp (popup chọn hồ sơ + cascade status).
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
   Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
