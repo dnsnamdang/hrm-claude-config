@@ -1318,6 +1318,49 @@ Khi click "My To Do" tren breadcrumb -> reset selectedListId -> ve man chinh
 
 ---
 
+## Phase 9: Bug Fix + UX Enhancement (session 5)
+
+### Task 29: Đổi tên UI
+- [x] Menu sidebar: "My To Do" → "Lịch làm việc của tôi"
+- [x] Page title + breadcrumb
+- [x] Button "Tạo todo" → "Tạo nhắc việc cá nhân"
+- [x] Modal title: "Tạo nhắc việc cá nhân" / "Chỉnh sửa nhắc việc cá nhân"
+- [x] Toast messages
+
+### Task 30: Cho phép sửa nhắc việc cá nhân
+- [x] Màn chính: click vào personal todo → mở form sửa
+- [x] Màn chính: thêm nút edit action cho personal todo
+- [x] Màn danh sách cá nhân: thêm nút sửa (icon bút) cho pending + completed todos
+- [x] Forward event edit-todo → index.vue mở TodoFormModal
+
+### Task 31: Confirm hoàn thành bằng BaseConfirmModal
+- [x] Thay confirm() native bằng BaseConfirmModal (đúng mẫu project)
+- [x] Áp dụng cho cả màn chính và màn danh sách cá nhân
+- [x] Checkbox dùng @click.prevent thay @change (ngăn toggle visual trước confirm)
+
+### Task 32: Fix reload sau khi lưu
+- [x] Tạo nhắc việc mới: await loadData() + loadLists()
+- [x] Sửa nhắc việc: reload TodoListDetail khi đang ở màn danh sách
+- [x] Sửa tên danh sách: reload TodoListDetail
+- [x] Fix lỗi 422 due_time (cắt HH:mm:ss → HH:mm khi load vào form)
+
+### Task 33: Sắp xếp theo thời gian
+- [x] Trong mỗi group box, sort items theo due_date + due_time tăng dần
+
+### Task 34: Hiển thị sub-items đồng nhất
+- [x] BE aggregator: eager load subItems, trả sub_items trong normalizeItem
+- [x] FE màn danh sách cá nhân: completed todos hiển thị sub-items
+- [x] Forward event toggle-sub từ TodoItem → TodoMainList → index.vue
+
+### Task 35: Cascade toggle logic (kiểu Google Tasks)
+- [x] BE: Check parent → tất cả sub-items hoàn thành theo
+- [x] BE: Bỏ check parent → tất cả sub-items bỏ hoàn thành
+- [x] BE: Check sub-item cuối → parent tự hoàn thành
+- [x] BE: Bỏ check 1 sub-item → parent bỏ hoàn thành
+- [x] FE: toggle sub-item hiện confirm popup
+
+---
+
 ## Phase 8: Tài liệu SRS + Test Cases
 
 ### Task 26: SRS Document
@@ -1336,6 +1379,12 @@ Khi click "My To Do" tren breadcrumb -> reset selectedListId -> ve man chinh
 ---
 
 ## Checkpoint
+
+### Checkpoint — 2026-05-04 (session 5)
+Vừa hoàn thành: Phase 9 — Bug fix + UX Enhancement (Task 29-35): đổi tên UI, sửa nhắc việc, confirm popup BaseConfirmModal, fix reload, sort theo thời gian, sub-items đồng nhất, cascade toggle logic
+Đang làm dở: không
+Bước tiếp theo: Test toàn bộ flow trên trình duyệt (Phase 6)
+Blocked: không
 
 ### Checkpoint — 2026-05-02 (session 4)
 Vừa hoàn thành: Phase 8 — Tài liệu SRS (HTML + sơ đồ) + Test Cases (HTML + Excel) + Skill testcase-documenter
