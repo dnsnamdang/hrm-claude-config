@@ -56,6 +56,8 @@
 
 ## Hoàn thành
 
+- task-status-notification → @khoipv → .plans/task-status-notification/plan.md
+  Hoàn thành: 2026-05-07. 8 case thông báo push (Redis+FCM) khi task đổi trạng thái. Code đã có sẵn trong TaskService::handleStatusNotification(). Spec: docs/superpowers/specs/2026-05-07-task-status-notification-design.md
 - learning-path → @khoipv → .plans/learning-path/plan.md
   Hoàn thành: 2026-05-04. Phase 1-7 (24 task). CRUD lộ trình học (3 bảng DB, 4 tab FE: thông tin+builder khoá học, kết quả, người học, chứng chỉ). Danh sách V2Base với lock/unlock, bộ lọc nâng cao 7 ô, popup bài thi + điều kiện học. Spec: docs/superpowers/specs/2026-04-29-learning-path-design.md
 - progress-percent-auto-from-log → @manhcuong → .plans/progress-percent-auto-from-log/plan.md
