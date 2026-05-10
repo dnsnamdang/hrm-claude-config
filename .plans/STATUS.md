@@ -2,33 +2,34 @@
 
 ## Đang làm
 - request-solution-adjustment → @dnsnamdang → .plans/request-solution-adjustment/plan.md
-  Trạng thái: Phase 1-5 + 5B + 5C code DONE. Chờ migration + test thủ công.
+  Trạng thái: Code DONE. Chờ migration + test thủ công (47 test cases).
   Spec: docs/superpowers/specs/2026-05-06-request-solution-adjustment-design.md
-  Checkpoint: 2026-05-06 — BE 8 files + FE 3 files (SolutionAdjustmentTab + 2 manager.vue). Tab YCĐC ở cả Dự án TKT và Solution manager. Bước tiếp: chạy migration + test Phase 6.
+  SRS: docs/srs/solution-adjustment-request-SRS.html | Testcases: docs/srs/solution-adjustment-request-testcases.xlsx
+  Checkpoint: 2026-05-06 — BE 8 files + FE 3 files. Fix: BaseConfirmModal @event, cột Hành động luôn hiện, cột Version, popup chi tiết dạng bảng, notification URL /manager, FileAttachmentTable readonly (disabled prop), sort id desc. Bước tiếp: chạy migration + test.
 
 - my-todo → @dnsnamdang → .plans/my-todo/plan.md
   Trạng thái: Phase 1-5 + Phase 7-9 DONE. Branch `tpe-develop-assign`. Còn Phase 6 (Test).
   Phase 9 (2026-05-04): đổi tên UI ("Lịch làm việc của tôi", "Tạo nhắc việc cá nhân"), sửa nhắc việc (cả màn chính + danh sách), confirm BaseConfirmModal, fix reload, fix 422 due_time, sort theo thời gian, sub-items đồng nhất, cascade toggle (parent↔sub kiểu Google Tasks).
   Checkpoint: 2026-05-04 — Phase 9 done. Bước tiếp: test toàn bộ flow.
 
-- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
-  Trạng thái: Phase 17 code DONE (task 25-27). Branch `tpe-develop-assign`.
-  Phase 17 (2026-05-05): Cascade status Dự án TKT + Giải pháp khi gửi YCBG (→ Dự toán / Chờ làm giá) và khi báo giá duyệt cuối (→ Thương thảo giá / Đã duyệt giá). Thêm Solution::STATUS_DA_DUYET_GIA=13.
-  Checkpoint: 2026-05-06 — Phase 18 brainstorming: Chốt giải pháp (popup chọn hồ sơ + cascade status).
+- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
+  Trạng thái: Phase 22 code DONE (Task 1-8 + 13-17). Branch `tpe-develop-assign`.
+  Phase 22 (2026-05-10): In báo giá — button In → chọn cột → preview → window.open() print. Cả trang show + danh sách.
+  Spec: .plans/Bomlist-Quotation/design-phase22.md
+  Checkpoint: 2026-05-10 — Code done, fix null crash + apiGetMethod syntax + print CSS. Bước tiếp: test thủ công (Task 9-12).
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
   Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
   Checkpoint: 2026-04-28 — P14 (đang tiếp): fix mã auto-gen BE, override_completion reset, modal info bài học + trạng thái ghi đè, format tiêu chí hoàn thành (giây+%), labels tiếng Việt mapping/prerequisite, DRAFT canDelete, assignee pill auto-open, confirm lock modal. Phase 10 manual test còn 10 test case.
 
 - fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
-  Trạng thái: V5 bug fix done (Task 13-18). Branch `tpe-develop-assign`.
-  V5 (2026-04-29): fix receiver hiện nhân sự hạng mục khác (FE module-level options + BE ép object key) + fix tiến độ không lưu khi tạo/sửa (FE payload + BE syncItems).
-  Checkpoint: 2026-04-29 — Chờ user test Task 19.
+  Trạng thái: V6 DONE. Branch `tpe-develop-assign`. Test passed 2026-05-07.
+  V6: Tiếp nhận tất cả + filter cascade + submitted_at + đổi cột "Tiến độ %".
 
 - close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
-  Trạng thái: Phase 17 + 17B code DONE. Branch `tpe-develop-assign`.
-  Phase 17B (2026-04-29): thêm "Đóng" vào progressOptions request-solution + cascade đóng TẤT CẢ báo giá (bao gồm "Đã duyệt").
-  Checkpoint: 2026-04-29 — Chờ user test Task 32-37.
+  Trạng thái: Phase 17C code DONE. Branch `tpe-develop-assign`.
+  Phase 17C (2026-05-08): Fix hồ sơ trình duyệt không hiện "Đã chốt" + chốt GP đổi YC làm GP sang "Đã hoàn thành" thay vì "Đã chốt giải pháp".
+  Checkpoint: 2026-05-08 — Chờ user test.
 
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
   Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)

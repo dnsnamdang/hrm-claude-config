@@ -657,3 +657,17 @@ Blocked: Không.
 Vừa hoàn thành: 2 fix — progressOptions filter "Đóng" cho request-solution + cascade đóng tất cả báo giá.
 Bước tiếp theo: User test Task 32-35 + 2 fix mới.
 Blocked: Không.
+
+## Phase 17C — Fix chốt giải pháp (2026-05-08)
+
+- [x] **Task 38:** Bug fix: Hồ sơ trình duyệt không hiện trạng thái "Đã chốt" — `getReviewProfiles()` thiếu `STATUS_FINALIZED` trong `whereIn`.
+  - File: `Modules/Assign/Services/ProspectiveProjectService.php:785`
+  - Thêm `SolutionReviewProfile::STATUS_FINALIZED` vào query.
+
+- [x] **Task 39:** Đổi logic chốt GP: Yêu cầu làm GP chuyển sang "Đã hoàn thành" (`STATUS_DA_LAM_GP=8`) thay vì "Đã chốt giải pháp" (`STATUS_DA_CHOT_GP=11`).
+  - File: `Modules/Assign/Services/ProspectiveProjectService.php:1228`
+
+### Checkpoint — 2026-05-08 Phase 17C
+Vừa hoàn thành: 2 fix — hồ sơ trình duyệt hiện status "Đã chốt" + chốt GP đổi YC làm GP sang "Đã hoàn thành".
+Bước tiếp theo: User test.
+Blocked: Không.

@@ -54,7 +54,7 @@
 | Base classes, V2Base components, API store calls | `docs/shared.md` |
 | Pattern CRUD đầy đủ (code mẫu) | `docs/conventions.md` |
 | Onboarding dev mới | `docs/onboarding.md` |
-| Spec chi tiết của từng feature | `docs/superpowers/specs/YYYY-MM-DD-<feature>-design.md` |
+| Design + Plan của từng feature | `.plans/[feature]/` (xem quy luật bên dưới) |
 
 ---
 
@@ -73,6 +73,34 @@
 - **Mã code tự sinh**: pattern `PREFIX-YYYY-NNNNN`, implement `getNextCode()` trên Entity (copy pattern `BomList::getNextCode()`).
 
 **Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.claude/skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.claude/skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.claude/skills/bug-fixer/SKILL.md`.
+
+---
+
+## Quy luật tổ chức tài liệu feature
+
+Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG tạo file trong `docs/superpowers/specs/`.
+
+**Feature nhỏ (1-2 phase):**
+```
+.plans/[feature]/
+├── design.md          ← design duy nhất
+└── plan.md            ← plan duy nhất
+```
+
+**Feature lớn (3+ phase):**
+```
+.plans/[feature]/
+├── design.md          ← tóm tắt tổng thể feature (scope, hiện trạng, quyết định chung)
+├── design-phase{N}.md ← design chi tiết cho từng phase lớn
+├── plan.md            ← TẤT CẢ tasks (append phase mới vào cuối, trước checkpoint)
+└── (các file phụ: testcase, script...)
+```
+
+**Quy tắc:**
+- `design.md`: tóm tắt chung, KHÔNG chứa spec chi tiết từng phase
+- `design-phase{N}.md`: spec đầy đủ (DB, BE, FE, edge cases) — tạo khi phase có nhiều thay đổi
+- `plan.md`: 1 file duy nhất chứa tất cả phase, append liên tục
+- KHÔNG tạo `plan-phase{N}.md` riêng (đã có convention cũ nhưng không tiếp tục)
 
 ---
 

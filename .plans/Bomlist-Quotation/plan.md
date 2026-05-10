@@ -710,3 +710,1303 @@ Vừa hoàn thành: Phase 10 code done — Duyệt giá 2 bước + Version báo
 Đang làm dở: Không
 Bước tiếp theo: Test Phase 10 end-to-end
 Blocked: Không
+
+### Phase 18: Cập nhật UI + Fix bugs + Lịch sử BOM (2026-05-07)
+
+#### 18.1 Cập nhật UI danh sách BOM
+[x] Task 1: Bỏ font-weight bold 3 cột (Hạng mục, Loại BOM, Người tạo)
+[x] Task 2: Loại BOM đổi từ V2BaseBadge sang text thuần
+
+#### 18.2 Xuất Excel bổ sung
+[x] Task 3: Button "Xuất Excel" trong footer trang chi tiết BOM
+[x] Task 4: Button "Xuất Excel" ở header bảng chi tiết (bên trái "Ẩn/hiện cấp con")
+
+#### 18.3 Popup thêm sản phẩm
+[x] Task 5: Button "Lưu và tiếp tục" — không tắt popup, reset form, giữ tab Tạo mới
+
+#### 18.4 Cấu hình duyệt giá
+[x] Task 6: Đưa "Tỷ suất lợi nhuận mức sàn" về /assign/settings/price-approval (Section 0)
+[x] Task 7: Bỏ title "Cấu hình duyệt giá bán" trùng topbar
+[x] Task 8: Fix bug input "Đến" bị ẩn vĩnh viễn khi xoá giá trị (v-if logic)
+[x] Task 9: Validate giá trị nối tiếp giữa các cấp (order_value tăng dần, profit_margin giảm dần)
+[x] Task 10: Đổi "Lưu" → "Lưu cấu hình" cho đồng bộ
+
+#### 18.5 Fix logic báo giá
+[x] Task 11: Fix tổng giá nhập popup gửi duyệt (double-count parent+children) — BE calculateTotals roll-up
+[x] Task 12: Fix profit_margin formula — thống nhất (sale-import)/sale ở 5 vị trí (BE controller, FE edit, FE show)
+[x] Task 13: Fix áp VAT đồng loạt mất data chưa lưu — chuyển sang FE-only manipulation
+[x] Task 14: Fix 404 khi áp VAT (gọi sai method recalcParentFromChildren → refreshParentRollups)
+[x] Task 15: Fix input VAT không cập nhật visually — thêm vatBulkKey vào :key của <tr> (Vue 2 reactivity)
+
+#### 18.6 Lịch sử BOM List
+[x] Task 16: Migration tạo bảng bom_list_logs
+[x] Task 17: Entity BomListLog (8 actions, labels, colors, relations)
+[x] Task 18: BomListService — createLog() private method
+[x] Task 19: Log tại store(), update(), destroy()
+[x] Task 20: Log tại syncStatusFromSubmission() (submitted/approved/rejected)
+[x] Task 21: Log tại importProducts()
+[x] Task 22: API GET /assign/bom-lists/{id}/logs + controller method + route
+[x] Task 23: FE BomListLogModal.vue — timeline popup
+[x] Task 24: Button "Xem lịch sử" trên danh sách BOM (row action)
+[x] Task 25: Button "Lịch sử" trên trang chi tiết BOM (footer)
+
+#### 18.7 Chi tiết thay đổi trong log
+[x] Task 26: buildChanges() resolve tên cho FK (Dự án, Giải pháp, Hạng mục, Khách hàng, Tiền tệ)
+[x] Task 27: snapshotProducts() + buildProductChanges() — tracking thêm/xoá/sửa sản phẩm
+[x] Task 28: FE hiển thị changes (field cũ→mới) + product diff (added/removed/modified)
+
+### Phase 19: Xuất/Import Excel trên màn sửa Báo giá (2026-05-07)
+
+> **Spec:** docs/superpowers/specs/2026-05-07-quotation-import-export-design.md
+
+#### 19.1 BE — Route + Controller method importPrices
+
+[x] Task 1: Thêm route POST import-prices (validate + import)
+  - File: `Modules/Assign/Routes/api.php`
+  - Trong group `/assign/quotations`, thêm trước route `/{id}/export-excel`:
+    ```php
+    Route::post('/{id}/import-prices', [QuotationController::class, 'importPrices']);
+    ```
+
+[x] Task 2: Controller importPrices() — parse Excel + match code + update prices
+  - File: `Modules/Assign/Http/Controllers/Api/V1/QuotationController.php`
+  - Thêm use: `use Maatwebsite\Excel\Facades\Excel;`
+  - Method `importPrices(Request $request, $id)`:
+    ```php
+    public function importPrices(Request $request, $id)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls|max:5120',
+            ]);
+
+            $quotation = Quotation::with(['bomList.products', 'productPrices'])->findOrFail($id);
+
+            if ((int)$quotation->status !== Quotation::STATUS_DANG_TAO) {
+                return $this->responseJson('Chỉ được import khi báo giá ở trạng thái Đang tạo', Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $rows = Excel::toArray(new \App\Imports\EmptyImport(), $request->file('file'));
+            $sheet = $rows[0] ?? [];
+
+            if (empty($sheet)) {
+                return $this->responseJson('File Excel rỗng', Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            // Detect header row
+            $headerRowIndex = null;
+            $columnMap = [];
+            $codeAliases = ['mã', 'mã hàng hoá', 'ma hang hoa', 'code'];
+            $estAliases = ['giá nhập', 'đơn giá nhập', 'gia nhap', 'estimated price'];
+            $quotedAliases = ['giá bán', 'đơn giá bán', 'gia ban', 'quoted price', 'sale price'];
+            $vatAliases = ['vat(%)', 'vat', 'thuế vat(%)', 'thuế gtgt(%)'];
+
+            foreach ($sheet as $ri => $row) {
+                $mapped = [];
+                foreach ($row as $ci => $cell) {
+                    $val = mb_strtolower(trim((string)($cell ?? '')));
+                    if (in_array($val, $codeAliases)) $mapped['code'] = $ci;
+                    if (in_array($val, $estAliases)) $mapped['estimated_price'] = $ci;
+                    if (in_array($val, $quotedAliases)) $mapped['quoted_price'] = $ci;
+                    if (in_array($val, $vatAliases)) $mapped['vat_percent'] = $ci;
+                }
+                if (isset($mapped['code'])) {
+                    $headerRowIndex = $ri;
+                    $columnMap = $mapped;
+                    break;
+                }
+            }
+
+            if ($headerRowIndex === null) {
+                return $this->responseJson('Không tìm thấy header hợp lệ (cần cột "Mã" hoặc "Mã hàng hoá")', Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            // Build code→product map from BOM
+            $bomProducts = $quotation->bomList->products->keyBy('code');
+
+            // Build code→price map from existing quotation prices
+            $existingPrices = $quotation->productPrices->keyBy('bom_list_product_id');
+
+            // Detect parents that have children (để skip import giá cha)
+            $parentIds = $quotation->bomList->products
+                ->whereNotNull('parent_id')
+                ->pluck('parent_id')
+                ->unique()
+                ->toArray();
+
+            $matched = 0;
+            $updated = 0;
+            $unmatchedCodes = [];
+            $total = 0;
+
+            // Collect last-write-wins per code
+            $importData = [];
+            for ($ri = $headerRowIndex + 1; $ri < count($sheet); $ri++) {
+                $row = $sheet[$ri];
+                $code = trim((string)($row[$columnMap['code']] ?? ''));
+                if (empty($code)) continue;
+                // Skip group rows (Roman numerals: I, II, III, IV, etc.)
+                if (preg_match('/^[IVXLCDM]+\.?$/i', $code)) continue;
+
+                $total++;
+                $importData[$code] = $row;
+            }
+
+            foreach ($importData as $code => $row) {
+                $product = $bomProducts->get($code);
+                if (!$product) {
+                    $unmatchedCodes[] = $code;
+                    continue;
+                }
+
+                $matched++;
+
+                // Skip parent-with-children (giá roll-up từ con)
+                if (in_array((int)$product->id, $parentIds)) continue;
+
+                $updateFields = [];
+                if (isset($columnMap['estimated_price'])) {
+                    $val = $row[$columnMap['estimated_price']] ?? null;
+                    if ($val !== null && $val !== '' && is_numeric($val) && (float)$val >= 0) {
+                        $updateFields['estimated_price'] = (float)$val;
+                    }
+                }
+                if (isset($columnMap['quoted_price'])) {
+                    $val = $row[$columnMap['quoted_price']] ?? null;
+                    if ($val !== null && $val !== '' && is_numeric($val) && (float)$val >= 0) {
+                        $updateFields['quoted_price'] = (float)$val;
+                    }
+                }
+                if (isset($columnMap['vat_percent'])) {
+                    $val = $row[$columnMap['vat_percent']] ?? null;
+                    if ($val !== null && $val !== '' && is_numeric($val) && (float)$val >= 0 && (float)$val <= 100) {
+                        $updateFields['vat_percent'] = (float)$val;
+                    }
+                }
+
+                if (!empty($updateFields)) {
+                    \Modules\Assign\Entities\QuotationProductPrice::updateOrCreate(
+                        [
+                            'quotation_id' => $quotation->id,
+                            'bom_list_product_id' => $product->id,
+                        ],
+                        $updateFields
+                    );
+                    $updated++;
+                }
+            }
+
+            if ($matched === 0) {
+                return $this->responseJson('Không có mã hàng hoá nào khớp với báo giá', Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            // Recompute totals
+            $this->service->publicRecomputeTotals($quotation);
+
+            return response()->json([
+                'message' => 'Import thành công',
+                'total' => $total,
+                'matched' => $matched,
+                'updated' => $updated,
+                'unmatched' => count($unmatchedCodes),
+                'unmatched_codes' => $unmatchedCodes,
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return $this->responseJson($e->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (Exception $e) {
+            Log::error($e);
+            return $this->responseJson($e->getMessage(), Response::HTTP_BAD_REQUEST);
+        }
+    }
+    ```
+
+[x] Task 3: QuotationService — expose recomputeTotals dạng public
+  - File: `Modules/Assign/Services/QuotationService.php`
+  - Thêm method public wrapper (giữ private `recomputeTotals` nguyên):
+    ```php
+    public function publicRecomputeTotals(Quotation $quotation): void
+    {
+        $this->recomputeTotals($quotation);
+    }
+    ```
+
+[x] Task 4: Tạo EmptyImport class
+  - File: `app/Imports/EmptyImport.php`
+  - Kiểm tra nếu đã tồn tại (BomList import có thể đã tạo). Nếu chưa:
+    ```php
+    <?php
+    namespace App\Imports;
+    use Maatwebsite\Excel\Concerns\WithoutHeadingRow;
+    class EmptyImport implements WithoutHeadingRow {}
+    ```
+
+#### 19.2 FE — Button Xuất Excel + Import Excel + Modal
+
+[x] Task 5: Thêm 2 button vào header bảng sản phẩm
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - Sửa div.products-title (line ~141) từ:
+    ```html
+    <div class="products-title">
+        <i class="ri-list-check-2 mr-1"></i>Chi tiết sản phẩm — sửa giá
+    </div>
+    ```
+    thành:
+    ```html
+    <div class="products-title d-flex align-items-center">
+        <span><i class="ri-list-check-2 mr-1"></i>Chi tiết sản phẩm — sửa giá</span>
+        <span class="ml-auto d-flex" style="gap:6px">
+            <V2BaseButton light size="sm" @click="exportExcel">
+                <template #prefix><i class="ri-file-excel-2-line mr-1"></i></template>
+                Xuất Excel
+            </V2BaseButton>
+            <V2BaseButton v-if="canEdit" light size="sm" @click="importModalShow = true">
+                <template #prefix><i class="ri-upload-2-line mr-1"></i></template>
+                Import Excel
+            </V2BaseButton>
+        </span>
+    </div>
+    ```
+
+[x] Task 6: Thêm modal import V2BaseImportModal + extra-config (chọn dòng tiêu đề)
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - Thêm sau `</VatFirstEntryPromptModal>` (line ~375):
+    ```html
+    <!-- Phase 19: Modal import giá từ Excel -->
+    <b-modal
+        v-model="importModalShow"
+        title="Import giá từ Excel"
+        centered
+        size="lg"
+        ok-title="Import"
+        cancel-title="Huỷ"
+        :ok-disabled="!importFile || importing"
+        @ok.prevent="handleImportPrices"
+        @hidden="resetImportModal"
+    >
+        <div class="alert alert-warning py-2 mb-3">
+            <i class="ri-error-warning-line mr-1"></i>
+            <strong>Lưu ý:</strong> Thao tác này sẽ thay thế toàn bộ giá nhập, giá bán và thuế VAT hiện tại.
+            Giá trị rỗng trong file sẽ được bỏ qua (giữ nguyên giá cũ).
+        </div>
+        <div class="form-group">
+            <label class="font-weight-bold">Chọn file Excel (.xlsx, .xls)</label>
+            <input
+                ref="importFileInput"
+                type="file"
+                class="form-control-file"
+                accept=".xlsx,.xls"
+                @change="onImportFileChange"
+            />
+        </div>
+        <div v-if="importResult" class="mt-3">
+            <div class="alert py-2" :class="importResult.unmatched > 0 ? 'alert-info' : 'alert-success'">
+                <div>Tổng dòng: {{ importResult.total }} | Khớp: {{ importResult.matched }} | Đã cập nhật: {{ importResult.updated }}</div>
+                <div v-if="importResult.unmatched > 0" class="mt-1">
+                    <strong>Không tìm thấy ({{ importResult.unmatched }}):</strong>
+                    {{ importResult.unmatched_codes.join(', ') }}
+                </div>
+            </div>
+        </div>
+        <div v-if="importing" class="text-center py-2">
+            <b-spinner small class="mr-1"></b-spinner> Đang import...
+        </div>
+    </b-modal>
+    ```
+
+[x] Task 7: Thêm data + methods cho export/import (validate + import API JSON-based)
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - Trong `data()`, thêm:
+    ```js
+    importModalShow: false,
+    importFile: null,
+    importing: false,
+    importResult: null,
+    ```
+  - Trong `methods`, thêm:
+    ```js
+    async exportExcel() {
+        try {
+            const res = await this.$store.dispatch('apiGetMethod', {
+                url: `assign/quotations/${this.quotationId}/export-excel`,
+                responseType: 'blob',
+            })
+            const url = window.URL.createObjectURL(new Blob([res]))
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `BaoGia_${this.item.code || 'export'}.xlsx`
+            a.click()
+            window.URL.revokeObjectURL(url)
+        } catch (e) {
+            // Fallback: mở URL trực tiếp (API trả file download)
+            const baseUrl = this.$axios?.defaults?.baseURL || ''
+            const token = this.$store?.state?.token || ''
+            window.open(`${baseUrl}/assign/quotations/${this.quotationId}/export-excel?token=${token}`, '_blank')
+        }
+    },
+    onImportFileChange(e) {
+        this.importFile = e.target.files[0] || null
+        this.importResult = null
+    },
+    resetImportModal() {
+        this.importFile = null
+        this.importResult = null
+        this.importing = false
+    },
+    async handleImportPrices() {
+        if (!this.importFile) return
+        this.importing = true
+        this.importResult = null
+        try {
+            const formData = new FormData()
+            formData.append('file', this.importFile)
+            const res = await this.$store.dispatch('apiPostMethod', {
+                url: `assign/quotations/${this.quotationId}/import-prices`,
+                payload: formData,
+            })
+            this.importResult = res?.data || res
+            this.$toasted?.global?.success?.({
+                message: `Import thành công: ${this.importResult.updated || 0} dòng đã cập nhật`,
+            })
+            // Reload data để FE đồng bộ
+            await this.fetchData()
+        } catch (e) {
+            const msg = e?.response?.data?.message || 'Lỗi import'
+            this.$toasted?.global?.error?.({ message: msg })
+        } finally {
+            this.importing = false
+        }
+    },
+    ```
+
+#### 19.3 Test thủ công
+
+[ ] Task 8: Test xuất Excel
+  - Mở /assign/quotations/{id}/edit (status = Đang tạo)
+  - Click "Xuất Excel" → file .xlsx download được
+  - Mở file → có đủ cột: STT, Mã, Tên hàng, SL, ĐVT, Giá nhập, Thành tiền nhập, Giá bán, Thành tiền bán, Tỷ suất LN, VAT%, Tiền VAT, Thành tiền sau VAT
+  - Data khớp với giá trên màn hình
+
+[ ] Task 9: Test import Excel — happy path
+  - Xuất Excel → mở file → sửa giá nhập + giá bán + VAT% ở vài dòng → lưu
+  - Click "Import Excel" → chọn file vừa sửa → click Import
+  - Toast success hiện ra
+  - Giá trên màn hình đã cập nhật đúng theo file
+
+[ ] Task 10: Test import — edge cases
+  - Import file có mã không tồn tại → hiện unmatched_codes
+  - Import file có giá trị rỗng → giữ nguyên giá cũ
+  - Import file không có header → hiện lỗi 422
+  - Import khi báo giá status != 1 → button Import không hiện (FE) / API trả lỗi 422 (BE)
+  - Import file có row cha (có con) → giá cha bị bỏ qua, sau reload FE tự roll-up từ con
+
+### Phase 20: Fix & cải thiện Báo giá — Excel + Hyperlink + Import nhóm (2026-05-09)
+
+#### 20.1 Hyperlink thông tin chung
+[x] Task 1: Thêm hyperlink Dự án → /assign/prospective-projects/{id} (target="_blank")
+  - File: `_id/edit.vue` + `_id/index.vue` (cả màn sửa + xem)
+[x] Task 2: Thêm hyperlink Giải pháp → /assign/solutions/{id} (target="_blank")
+  - File: `_id/edit.vue` + `_id/index.vue`
+
+#### 20.2 Fix xuất Excel báo giá (export thường + template)
+[x] Task 3: Bổ sung cột Tỷ suất lợi nhuận vào default fields
+  - File: `QuotationController::exportExcel` — thêm `profit_margin` vào $fields
+[x] Task 4: Đổi thứ tự cột Mã hàng hoá lên trước Tên hàng hoá
+  - File: `bom_list.blade.php` — sửa tất cả 6 block (header, grouped parent/child, ungrouped parent/child, footer)
+  - File: `QuotationController::exportExcel` — đổi thứ tự $fields
+[x] Task 5: Fix data Mã/Tên bị đảo ở block ungrouped
+  - Root cause: `replace_all` chỉ match block grouped (indentation khác) → 2 block ungrouped vẫn name trước code
+[x] Task 6: Fix thiếu VAT hàng hoá con trong export
+  - File: `bom_list.blade.php` — child rows render giá trị `vat_percent` thay vì blank
+  - File: `QuotationController::exportExcel` — bỏ force `vat_percent = 0` cho child products
+
+#### 20.3 File mẫu import riêng
+[x] Task 7: Tạo endpoint GET /export-import-template riêng cho file mẫu
+  - File: `QuotationController::exportImportTemplate` — fields không có profit_margin/vat_amount/after_vat
+  - File: `api.php` — thêm route
+[x] Task 8: Bỏ dòng tổng cộng trong file mẫu
+  - File: `bom_list.blade.php` — bọc `<tfoot>` trong `@if(!($templateMode ?? false))`
+[x] Task 9: Khoá cột không cho sửa, trừ Giá nhập / Giá bán / VAT
+  - File: `BomListExport.php` — thêm `withTemplateMode()`: sheet protection + unlock 3 cột editable
+[x] Task 10: Cột Thành tiền nhập/bán dùng công thức Excel (=Đơn giá × Số lượng)
+  - File: `BomListExport.php` — AfterSheet set formula cho cột import_amount + amount, skip dòng nhóm (STT trống)
+[x] Task 11: FE gọi endpoint template riêng thay vì reuse exportExcel
+  - File: `edit.vue` — `handleDownloadImportTemplate()` gọi `/export-import-template`
+
+#### 20.4 Popup import — cải thiện preview
+[x] Task 12: Thêm 2 cột computed: Thành tiền nhập, Thành tiền bán (SL × Giá)
+  - File: `V2BaseImportTable.vue` — thêm type `computed` (render text thuần, gọi `col.compute(row)`)
+  - File: `edit.vue` — thêm 2 cột computed vào importColumns
+  - File: `import-helper.js` — skip cột computed khi check headers, parse data, check blank rows
+  - File: `V2BaseImportModal.vue` — skip cột computed khi build dataRows gửi server
+
+#### 20.5 Import xử lý nhóm hàng
+[x] Task 13: BE nhận diện row nhóm (STT La Mã) — skip validate Code/giá
+  - File: `QuotationController::validateImportPrices` — check `isRomanNumeral`, validate tên nhóm khớp BOM
+[x] Task 14: BE importPrices skip row nhóm
+  - File: `QuotationController::importPrices` — thêm check La Mã trước khi xử lý
+[x] Task 15: Blade render nhóm vào đúng cell (không colspan)
+  - File: `bom_list.blade.php` — row nhóm render STT (La Mã) + Name riêng biệt thay vì colspan gộp
+[x] Task 16: FE preview — row nhóm bỏ input, background riêng
+  - File: `V2BaseImportTable.vue` — thêm props `isGroupRow` + `groupDisplayKeys`, render row nhóm text thuần, background #e8f4fd
+  - File: `V2BaseImportModal.vue` — forward 2 props
+  - File: `edit.vue` — truyền `isImportGroupRow` (check La Mã) + `groupDisplayKeys: ['STT', 'Name']`
+
+#### 20.6 Test thủ công
+[ ] Task 17: Test xuất Excel — cột đúng thứ tự (Mã trước Tên), có VAT con, có Tỷ suất LN
+[ ] Task 18: Test file mẫu — bỏ tổng, lock cột, công thức thành tiền, nhóm render đúng cell
+[ ] Task 19: Test import từ file mẫu — nhóm validate tên, hàng hoá validate giá, preview đúng
+[ ] Task 20: Test hyperlink Dự án + Giải pháp — click mở tab mới
+
+### Phase 21: Dịch vụ bổ sung + Đảo logic cha-con + Làm tròn (2026-05-09)
+
+> **Spec:** docs/superpowers/specs/2026-05-09-quotation-phase21-design.md
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.
+
+**Goal:** Cho phép thêm dòng dịch vụ bổ sung trên báo giá, đảo logic giá cha-con (giá bán+VAT nhập ở cha), thêm làm tròn đơn giá.
+
+#### 21.1 BE — Migration + Entity dịch vụ bổ sung
+
+- [ ] Task 1: Tạo migration bảng `quotation_service_items`
+  - File tạo: `hrm-api/database/migrations/2026_05_09_000001_create_quotation_service_items_table.php`
+  - Schema theo spec 2.1: id, quotation_id (FK cascade), code(50), name, unit_id, qty, estimated_price, quoted_price, vat_percent, note, sort_order, created_by, updated_by, timestamps
+  - Index trên quotation_id
+
+- [ ] Task 2: Tạo Entity `QuotationServiceItem`
+  - File tạo: `hrm-api/Modules/Assign/Entities/QuotationServiceItem.php`
+  - fillable: quotation_id, code, name, unit_id, qty, estimated_price, quoted_price, vat_percent, note, sort_order, created_by, updated_by
+  - casts: qty, estimated_price, quoted_price, vat_percent → decimal:2
+  - appends: import_total, sale_total, vat_amount, after_vat (accessors tính toán)
+  - relations: quotation() → belongsTo Quotation, unit() → belongsTo Unit
+  - static `getNextCode($quotationCode)`: tìm max code `DV-{quotationCode}-%` → +1 → format `DV-{code}-{NNN}`
+
+- [ ] Task 3: Thêm relation `serviceItems()` vào Quotation entity
+  - File sửa: `hrm-api/Modules/Assign/Entities/Quotation.php` (sau line ~108)
+  - `return $this->hasMany(QuotationServiceItem::class)->orderBy('sort_order');`
+
+#### 21.2 BE — CRUD API dịch vụ bổ sung
+
+- [ ] Task 4: Thêm 3 routes cho service items
+  - File sửa: `hrm-api/Modules/Assign/Routes/api.php` (trong group quotations, sau line 384)
+  ```php
+  Route::post('/{id}/service-items', [QuotationController::class, 'storeServiceItem']);
+  Route::put('/{id}/service-items/{itemId}', [QuotationController::class, 'updateServiceItem']);
+  Route::delete('/{id}/service-items/{itemId}', [QuotationController::class, 'deleteServiceItem']);
+  ```
+
+- [ ] Task 5: Controller method `storeServiceItem()`
+  - File sửa: `hrm-api/Modules/Assign/Http/Controllers/Api/V1/QuotationController.php`
+  - Validate: quotation status = STATUS_DANG_TAO, name required|max:255, qty numeric|min:0.01, estimated_price numeric|min:0, quoted_price numeric|min:0, vat_percent numeric|min:0|max:100, unit_id nullable|exists:units,id, note nullable
+  - Auto-gen code via `QuotationServiceItem::getNextCode($quotation->code)`
+  - Create QuotationServiceItem với created_by = auth user
+  - Gọi `$this->service->publicRecomputeTotals($quotation)`
+  - Return item với unit relation
+
+- [ ] Task 6: Controller method `updateServiceItem()`
+  - File sửa: `QuotationController.php`
+  - Validate tương tự storeServiceItem
+  - Validate item thuộc quotation: `$quotation->serviceItems()->findOrFail($itemId)`
+  - Update fields, updated_by = auth user
+  - Gọi recomputeTotals
+  - Return item
+
+- [ ] Task 7: Controller method `deleteServiceItem()`
+  - File sửa: `QuotationController.php`
+  - Validate status = STATUS_DANG_TAO
+  - `$quotation->serviceItems()->findOrFail($itemId)->delete()`
+  - Gọi recomputeTotals
+  - Return success message
+
+#### 21.3 BE — Cập nhật show + update để xử lý service items
+
+- [ ] Task 8: Eager load serviceItems trong show()
+  - File sửa: `QuotationController.php` line 73
+  - Thêm `'serviceItems.unit'` vào mảng with():
+  ```php
+  $item = Quotation::with([
+      'pricingRequest', 'bomList', 'project', 'solution', 'solutionVersion',
+      'solutionModule', 'solutionModuleVersion', 'currency', 'creator.info',
+      'tpApprover.info', 'approver.info', 'serviceItems.unit',
+  ])->findOrFail($id);
+  ```
+
+- [ ] Task 9: Sửa QuotationService::update() để sync service_items
+  - File sửa: `hrm-api/Modules/Assign/Services/QuotationService.php`
+  - Trong method update(), sau khi xử lý products, thêm xử lý `$data['service_items']`:
+  ```php
+  if (isset($data['service_items'])) {
+      $existingIds = $quotation->serviceItems()->pluck('id')->toArray();
+      $incomingIds = collect($data['service_items'])->pluck('id')->filter()->toArray();
+      
+      // Delete removed items
+      $toDelete = array_diff($existingIds, $incomingIds);
+      if (!empty($toDelete)) {
+          QuotationServiceItem::whereIn('id', $toDelete)
+              ->where('quotation_id', $quotation->id)
+              ->delete();
+      }
+      
+      // Upsert
+      foreach ($data['service_items'] as $i => $itemData) {
+          if (!empty($itemData['id'])) {
+              $item = $quotation->serviceItems()->find($itemData['id']);
+              if ($item) {
+                  $item->update(array_merge($itemData, [
+                      'sort_order' => $i,
+                      'updated_by' => auth()->id(),
+                  ]));
+              }
+          } else {
+              QuotationServiceItem::create(array_merge($itemData, [
+                  'quotation_id' => $quotation->id,
+                  'code' => QuotationServiceItem::getNextCode($quotation->code),
+                  'sort_order' => $i,
+                  'created_by' => auth()->id(),
+              ]));
+          }
+      }
+  }
+  ```
+
+#### 21.4 BE — Đảo logic computeTotals (giá bán cha trực tiếp)
+
+- [ ] Task 10: Sửa `computeTotals()` — bỏ roll-up giá bán từ con
+  - File sửa: `hrm-api/Modules/Assign/Services/QuotationService.php` lines 233-281
+  - Thay đổi: bỏ block `if ($hasChildren)` roll-up lineSale từ con, thay bằng:
+  ```php
+  // MỚI: luôn dùng trực tiếp quoted_price × qty (giá bán nhập ở cha)
+  $pQty = (float) ($p->qty_needed ?? 0);
+  $lineSale = ($price ? (float) $price->quoted_price : 0) * $pQty;
+  ```
+  - Giữ nguyên logic skip children (parent_id check)
+  - Giữ nguyên VAT calculation
+
+- [ ] Task 11: Thêm service items vào computeTotals()
+  - File sửa: `QuotationService.php` — sau vòng foreach products, trước return
+  ```php
+  // Cộng dịch vụ bổ sung
+  foreach ($quotation->serviceItems as $item) {
+      $totalSale += (float) $item->quoted_price * (float) $item->qty;
+      $totalVat += (float) $item->quoted_price * (float) $item->qty * (float) $item->vat_percent / 100;
+  }
+  ```
+
+#### 21.5 BE — Export Excel cập nhật
+
+- [ ] Task 12: BomListExport — thêm support serviceItems
+  - File sửa: `hrm-api/app/ExcelExport/BomListExport.php`
+  - Thêm property `protected $serviceItems = [];`
+  - Thêm method:
+  ```php
+  public function withServiceItems($items): self
+  {
+      $this->serviceItems = $items;
+      return $this;
+  }
+  ```
+  - Trong `view()`: truyền thêm `'serviceItems' => $this->serviceItems` vào data array
+
+- [ ] Task 13: bom_list.blade.php — thêm section dịch vụ bổ sung + bỏ giá bán/VAT con
+  - File sửa: `hrm-api/resources/views/exports/bom_list.blade.php`
+  - **Child rows**: set quoted_price, vat_percent, vat_amount, after_vat = '' (để trống)
+    - Lines ~134-154 (grouped) và ~200-220 (ungrouped): thay `$child->quoted_price` → `''`, `$child->vat_percent` → `''`
+  - **Section dịch vụ bổ sung**: chèn trước `<tfoot>`, sau block grouped/ungrouped:
+  ```blade
+  @if(count($serviceItems ?? []) > 0)
+  <tr>
+      <td colspan="{{ count($fieldMap) }}" style="font-weight:bold; background-color:#f0f0f0;">
+          Dịch vụ bổ sung
+      </td>
+  </tr>
+  @foreach($serviceItems as $si => $item)
+  <tr>
+      @foreach($fieldMap as $key => $label)
+          @if($key === 'stt')
+              <td>{{ $si + 1 }}</td>
+          @elseif($key === 'code')
+              <td>{{ $item->code }}</td>
+          @elseif($key === 'name')
+              <td>{{ $item->name }}</td>
+          @elseif($key === 'qty')
+              <td>{{ $item->qty }}</td>
+          @elseif($key === 'unit')
+              <td>{{ $item->unit->name ?? '' }}</td>
+          @elseif($key === 'estimated_price')
+              <td>{{ $item->estimated_price }}</td>
+          @elseif($key === 'import_amount')
+              <td>{{ $item->import_total }}</td>
+          @elseif($key === 'sale_price')
+              <td>{{ $item->quoted_price }}</td>
+          @elseif($key === 'amount')
+              <td>{{ $item->sale_total }}</td>
+          @elseif($key === 'profit_margin')
+              <td>{{ $item->quoted_price > 0 ? round(($item->quoted_price - $item->estimated_price) / $item->quoted_price * 100, 2) : 0 }}%</td>
+          @elseif($key === 'vat_percent')
+              <td>{{ $item->vat_percent }}</td>
+          @elseif($key === 'vat_amount')
+              <td>{{ $item->vat_amount }}</td>
+          @elseif($key === 'after_vat')
+              <td>{{ $item->after_vat }}</td>
+          @else
+              <td></td>
+          @endif
+      @endforeach
+  </tr>
+  @endforeach
+  @endif
+  ```
+
+- [ ] Task 14: QuotationController::exportExcel — truyền serviceItems + bỏ roll-up cha
+  - File sửa: `QuotationController.php` lines 224-303
+  - Bỏ block roll-up quoted_price cha từ con (lines ~263-274)
+  - Hàng hoá con: set `quoted_price = null`, `vat_percent = null` trong product object
+  - Load serviceItems: `$quotation->load('serviceItems.unit')`
+  - Truyền: `->withServiceItems($quotation->serviceItems)`
+
+- [ ] Task 15: QuotationController::exportImportTemplate — cập nhật tương tự
+  - File sửa: `QuotationController.php` lines 305-345
+  - Tương tự Task 14: bỏ roll-up, con blank giá bán/VAT, truyền serviceItems
+  - Template mode: unlock giá bán+VAT cho cha (thay vì con), lock cho con
+
+- [ ] Task 16: BomListExport — đảo lock/unlock cha-con trong templateMode
+  - File sửa: `BomListExport.php` registerEvents() lines 163-207
+  - Hiện tại: unlock estimated_price, sale_price, vat_percent cho child rows
+  - Mới: unlock estimated_price cho child + orphan, unlock sale_price + vat_percent cho parent + orphan
+  - Lock sale_price + vat_percent cho child rows
+
+#### 21.6 BE — Import prices cập nhật
+
+- [ ] Task 17: Sửa validateImportPrices — đảo validate cha-con + nhận DV-*
+  - File sửa: `QuotationController.php` lines 372-611
+  - **Pass 1 thay đổi:**
+    - Dòng mã `DV-*`: validate tồn tại trong `$quotation->serviceItems`, validate giá nhập/bán/VAT numeric ≥ 0
+    - Hàng hoá cha (có con): validate quoted_price + vat_percent (editable), skip estimated_price
+    - Hàng hoá con: validate estimated_price only, skip quoted_price + vat_percent
+  - **Pass 2 thay đổi:**
+    - Bỏ validate parent sale total = SUM(children sale)
+    - Bỏ validate parent VAT = MAX(children VAT)
+    - Giữ validate parent import total = SUM(children import) (hoặc bỏ nếu muốn đơn giản)
+
+- [ ] Task 18: Sửa importPrices — đảo import fields + nhận DV-*
+  - File sửa: `QuotationController.php` lines 613-698
+  - **Cha (có con):** update quoted_price + vat_percent (KHÔNG update estimated_price — roll-up)
+  - **Con:** update estimated_price only (KHÔNG update quoted_price, vat_percent)
+  - **Orphan:** update cả 3 (giữ nguyên)
+  - **Dòng DV-*:** tìm trong serviceItems theo code, update estimated_price + quoted_price + vat_percent
+  - Sau import: gọi recomputeTotals (đã có)
+
+#### 21.7 FE — Đảo logic giá cha-con
+
+- [ ] Task 19: Sửa `refreshParentRollups()` — bỏ roll-up giá bán + VAT
+  - File sửa: `hrm-client/pages/assign/quotations/_id/edit.vue` lines 690-712
+  - Bỏ 2 dòng:
+    - `p.quoted_price = parentQty > 0 ? sumQuoted / parentQty : 0` (line ~709)
+    - `p.vat_percent = maxVat` (line ~710)
+  - Giữ nguyên roll-up estimated_price
+
+- [ ] Task 20: Sửa `lineSaleTotal()` — cha dùng trực tiếp thay vì SUM con
+  - File sửa: `edit.vue` lines 658-663
+  - Thay đổi:
+  ```javascript
+  lineSaleTotal(p) {
+      // Luôn dùng trực tiếp, kể cả cha có con
+      return (Number(p.quoted_price) || 0) * (Number(p.qty_needed) || 0)
+  }
+  ```
+
+- [ ] Task 21: Template — cha editable giá bán + VAT, con disable
+  - File sửa: `edit.vue`
+  - **Parent rows (lines ~207-222):**
+    - `estimated_price`: giữ disabled (roll-up)
+    - `quoted_price`: BỎ disabled → cho nhập tay
+    - `vat_percent`: BỎ disabled → cho nhập tay
+  - **Child rows (lines ~257-276):**
+    - `estimated_price`: giữ editable
+    - `quoted_price`: THÊM disabled, hiện "—" hoặc giá trị nhưng không cho sửa
+    - `vat_percent`: THÊM disabled, hiện "—"
+
+#### 21.8 FE — VAT đồng loạt bỏ con
+
+- [ ] Task 22: Sửa `applyVatToProducts()` — skip children
+  - File sửa: `edit.vue` lines 940-951
+  - Thêm check `if (p.parent_id) return` ở đầu forEach:
+  ```javascript
+  applyVatToProducts(vatPercent, mode) {
+      let count = 0
+      this.products.forEach(p => {
+          if (p.parent_id) return  // skip children
+          if (mode === 'zero_only' && Number(p.vat_percent || 0) !== 0) return
+          p.vat_percent = vatPercent
+          p._lastVatValue = vatPercent
+          count++
+      })
+      // Áp cho dịch vụ bổ sung (thêm sau khi có serviceItems)
+      if (this.serviceItems) {
+          this.serviceItems.forEach(s => {
+              if (mode === 'zero_only' && Number(s.vat_percent || 0) !== 0) return
+              s.vat_percent = vatPercent
+          })
+      }
+      this.vatBulkKey++
+      return count
+  }
+  ```
+
+#### 21.9 FE — Dịch vụ bổ sung (section + modal + CRUD)
+
+- [ ] Task 23: Thêm data properties cho service items
+  - File sửa: `edit.vue` data()
+  - Thêm:
+  ```javascript
+  serviceItems: [],
+  showAddServiceModal: false,
+  newServiceItem: {
+      name: '', unit_id: null, qty: 1,
+      estimated_price: 0, quoted_price: 0,
+      vat_percent: 0, note: '',
+  },
+  savingServiceItem: false,
+  ```
+
+- [ ] Task 24: Load serviceItems từ API response
+  - File sửa: `edit.vue` — trong fetchData() hoặc method xử lý API response
+  - Sau khi load quotation: `this.serviceItems = this.item.service_items || []`
+
+- [ ] Task 25: Template — Section "Dịch vụ bổ sung" cuối bảng
+  - File sửa: `edit.vue` — sau tất cả grouped rows, trước footer tổng cộng
+  ```html
+  <!-- Section dịch vụ bổ sung -->
+  <tr class="group-row">
+      <td :colspan="totalColumns" class="font-weight-bold" style="background:#f0f0f0;">
+          Dịch vụ bổ sung
+          <V2BaseButton v-if="canEdit" light size="sm" class="ml-2"
+              @click="showAddServiceModal = true">
+              <template #prefix><i class="ri-add-line"></i></template>
+              Thêm dịch vụ
+          </V2BaseButton>
+      </td>
+  </tr>
+  <tr v-for="(svc, si) in serviceItems" :key="'svc-' + svc.id" class="service-item-row">
+      <td>{{ si + 1 }}</td>
+      <td>{{ svc.code }}</td>
+      <td>
+          <input v-if="canEdit" v-model="svc.name"
+              class="form-control form-control-sm" placeholder="Tên dịch vụ" />
+          <span v-else>{{ svc.name }}</span>
+      </td>
+      <td>
+          <input v-if="canEdit" v-model.number="svc.qty" type="number" min="0.01" step="0.01"
+              class="form-control form-control-sm text-right" />
+          <span v-else>{{ svc.qty }}</span>
+      </td>
+      <td><!-- ĐVT select --></td>
+      <td>
+          <input v-if="canEdit" v-model.number="svc.estimated_price" type="number" min="0"
+              class="form-control form-control-sm text-right" />
+          <span v-else>{{ formatMoney(svc.estimated_price) }}</span>
+      </td>
+      <td class="text-right">{{ formatMoney(svc.estimated_price * svc.qty) }}</td>
+      <td>
+          <input v-if="canEdit" v-model.number="svc.quoted_price" type="number" min="0"
+              class="form-control form-control-sm text-right" />
+          <span v-else>{{ formatMoney(svc.quoted_price) }}</span>
+      </td>
+      <td class="text-right">{{ formatMoney(svc.quoted_price * svc.qty) }}</td>
+      <td class="text-right">
+          {{ svc.quoted_price > 0 ? ((svc.quoted_price - svc.estimated_price) / svc.quoted_price * 100).toFixed(2) : 0 }}%
+      </td>
+      <td>
+          <input v-if="canEdit" v-model.number="svc.vat_percent" type="number" min="0" max="100"
+              class="form-control form-control-sm text-right" />
+          <span v-else>{{ svc.vat_percent }}%</span>
+      </td>
+      <td class="text-right">{{ formatMoney(svc.quoted_price * svc.qty * svc.vat_percent / 100) }}</td>
+      <td class="text-right">{{ formatMoney(svc.quoted_price * svc.qty * (1 + svc.vat_percent / 100)) }}</td>
+      <td v-if="canEdit">
+          <button class="btn btn-sm btn-outline-danger" @click="removeServiceItem(si)">
+              <i class="ri-delete-bin-line"></i>
+          </button>
+      </td>
+  </tr>
+  ```
+
+- [ ] Task 26: Modal thêm dịch vụ mới
+  - File sửa: `edit.vue` — thêm `<b-modal>` sau các modal hiện tại
+  ```html
+  <b-modal v-model="showAddServiceModal" title="Thêm dịch vụ bổ sung"
+      centered ok-title="Thêm" cancel-title="Huỷ"
+      :ok-disabled="!newServiceItem.name || savingServiceItem"
+      @ok.prevent="addServiceItem" @hidden="resetNewServiceItem">
+      <div class="form-group">
+          <label class="font-weight-bold">Tên dịch vụ <span class="text-danger">*</span></label>
+          <input v-model="newServiceItem.name" class="form-control" placeholder="Nhập tên dịch vụ" />
+      </div>
+      <div class="row">
+          <div class="col-6 form-group">
+              <label>Số lượng</label>
+              <input v-model.number="newServiceItem.qty" type="number" min="0.01" class="form-control" />
+          </div>
+          <div class="col-6 form-group">
+              <label>Đơn vị tính</label>
+              <!-- Select ĐVT từ master data -->
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-6 form-group">
+              <label>Đơn giá nhập</label>
+              <input v-model.number="newServiceItem.estimated_price" type="number" min="0" class="form-control" />
+          </div>
+          <div class="col-6 form-group">
+              <label>Đơn giá bán</label>
+              <input v-model.number="newServiceItem.quoted_price" type="number" min="0" class="form-control" />
+          </div>
+      </div>
+      <div class="row">
+          <div class="col-6 form-group">
+              <label>VAT (%)</label>
+              <input v-model.number="newServiceItem.vat_percent" type="number" min="0" max="100" class="form-control" />
+          </div>
+      </div>
+      <div class="form-group">
+          <label>Ghi chú</label>
+          <textarea v-model="newServiceItem.note" class="form-control" rows="2"></textarea>
+      </div>
+  </b-modal>
+  ```
+
+- [ ] Task 27: Methods CRUD dịch vụ
+  - File sửa: `edit.vue` methods
+  ```javascript
+  async addServiceItem() {
+      this.savingServiceItem = true
+      try {
+          const res = await this.$store.dispatch('apiPostMethod', {
+              url: `assign/quotations/${this.quotationId}/service-items`,
+              payload: this.newServiceItem,
+          })
+          this.serviceItems.push(res.data?.data || res.data)
+          this.showAddServiceModal = false
+          this.resetNewServiceItem()
+          this.$toasted?.global?.success?.({ message: 'Đã thêm dịch vụ' })
+      } catch (e) {
+          this.$toasted?.global?.error?.({ message: e?.response?.data?.message || 'Lỗi thêm dịch vụ' })
+      } finally {
+          this.savingServiceItem = false
+      }
+  },
+  removeServiceItem(index) {
+      const item = this.serviceItems[index]
+      if (item.id) {
+          // Confirm xoá
+          this.$bvModal.msgBoxConfirm('Bạn có chắc muốn xoá dịch vụ này?', {
+              title: 'Xác nhận xoá',
+              okTitle: 'Xoá', cancelTitle: 'Huỷ', okVariant: 'danger',
+          }).then(async (ok) => {
+              if (!ok) return
+              try {
+                  await this.$store.dispatch('apiDeleteMethod', {
+                      url: `assign/quotations/${this.quotationId}/service-items/${item.id}`,
+                  })
+                  this.serviceItems.splice(index, 1)
+                  this.$toasted?.global?.success?.({ message: 'Đã xoá dịch vụ' })
+              } catch (e) {
+                  this.$toasted?.global?.error?.({ message: 'Lỗi xoá dịch vụ' })
+              }
+          })
+      } else {
+          this.serviceItems.splice(index, 1)
+      }
+  },
+  resetNewServiceItem() {
+      this.newServiceItem = {
+          name: '', unit_id: null, qty: 1,
+          estimated_price: 0, quoted_price: 0,
+          vat_percent: 0, note: '',
+      }
+  },
+  ```
+
+#### 21.10 FE — Disable thông tin BOM kế thừa
+
+- [ ] Task 28: Disable input tên/mã/SL/ĐVT dòng BOM + ẩn nút xoá
+  - File sửa: `edit.vue` template
+  - Các input tên, mã, SL, ĐVT của dòng BOM (cả cha/con/orphan): thêm `disabled`
+  - Nút xoá row: thêm `v-if="false"` hoặc ẩn cho dòng BOM (phân biệt bằng `bom_list_product_id`)
+  - Dòng dịch vụ bổ sung (Task 25): vẫn cho sửa + xoá
+
+#### 21.11 FE — Làm tròn đơn giá
+
+- [ ] Task 29: Thêm data + UI làm tròn
+  - File sửa: `edit.vue`
+  - Data: `roundingMode: null`
+  - Template — thêm vào toolbar (cạnh VAT đồng loạt), chỉ hiện khi canEdit:
+  ```html
+  <div class="d-flex align-items-center ml-3" v-if="canEdit">
+      <b-form-select v-model="roundingMode" size="sm" style="width:200px">
+          <option :value="null" disabled>Chọn kiểu làm tròn</option>
+          <option value="-1">Làm tròn hàng chục</option>
+          <option value="0">Làm tròn số nguyên</option>
+          <option value="1">Làm tròn 1 số thập phân</option>
+      </b-form-select>
+      <V2BaseButton light size="sm" class="ml-1" @click="confirmRounding"
+          :disabled="roundingMode === null">
+          <template #prefix><i class="ri-calculator-line mr-1"></i></template>
+          Làm tròn
+      </V2BaseButton>
+  </div>
+  ```
+
+- [ ] Task 30: Methods confirmRounding + applyRounding
+  - File sửa: `edit.vue` methods
+  ```javascript
+  confirmRounding() {
+      const labels = { '-1': 'hàng chục', '0': 'số nguyên', '1': '1 số thập phân' }
+      const label = labels[String(this.roundingMode)]
+      this.$bvModal.msgBoxConfirm(
+          `Bạn có chắc muốn làm tròn đến ${label} cho toàn bộ đơn giá? Thao tác này không thể hoàn tác.`,
+          { title: 'Xác nhận làm tròn', okTitle: 'Làm tròn', cancelTitle: 'Huỷ' }
+      ).then((ok) => {
+          if (ok) this.applyRounding()
+      })
+  },
+  applyRounding() {
+      const precision = parseInt(this.roundingMode)
+      const roundVal = (val, p) => {
+          const factor = Math.pow(10, p)
+          return Math.round(val * factor) / factor
+      }
+      this.products.forEach(p => {
+          const isChild = !!p.parent_id
+          const hasChildren = this.products.some(
+              c => Number(c.parent_id) === Number(p.bom_list_product_id)
+          )
+          // Giá nhập: round cho con + orphan
+          if (!hasChildren) {
+              p.estimated_price = roundVal(parseFloat(p.estimated_price) || 0, precision)
+          }
+          // Giá bán: round cho cha + orphan (con không có giá bán)
+          if (!isChild) {
+              p.quoted_price = roundVal(parseFloat(p.quoted_price) || 0, precision)
+          }
+      })
+      this.refreshParentRollups()
+      // Dịch vụ bổ sung
+      this.serviceItems.forEach(s => {
+          s.estimated_price = roundVal(parseFloat(s.estimated_price) || 0, precision)
+          s.quoted_price = roundVal(parseFloat(s.quoted_price) || 0, precision)
+      })
+      this.vatBulkKey++
+      this.$toasted?.global?.success?.({ message: 'Đã làm tròn đơn giá' })
+  },
+  ```
+
+#### 21.12 FE — Save gửi service_items + Tổng cộng gộp dịch vụ
+
+- [ ] Task 31: Sửa save() — gửi service_items trong payload
+  - File sửa: `edit.vue` lines 844-888
+  - Trong payload, thêm:
+  ```javascript
+  service_items: this.serviceItems.map((s, i) => ({
+      id: s.id || null,
+      name: s.name,
+      unit_id: s.unit_id,
+      qty: s.qty,
+      estimated_price: s.estimated_price,
+      quoted_price: s.quoted_price,
+      vat_percent: s.vat_percent,
+      note: s.note,
+      sort_order: i,
+  })),
+  ```
+
+- [ ] Task 32: Sửa computed tổng cộng — gộp dịch vụ bổ sung
+  - File sửa: `edit.vue`
+  - Trong các computed/methods tính tổng (totalSale, totalImport, totalVat, totalAfterVat):
+  ```javascript
+  // Cộng thêm dịch vụ bổ sung
+  this.serviceItems.forEach(s => {
+      totalSale += (parseFloat(s.quoted_price) || 0) * (parseFloat(s.qty) || 0)
+      totalImport += (parseFloat(s.estimated_price) || 0) * (parseFloat(s.qty) || 0)
+      const svcLineSale = (parseFloat(s.quoted_price) || 0) * (parseFloat(s.qty) || 0)
+      totalVat += svcLineSale * (parseFloat(s.vat_percent) || 0) / 100
+  })
+  ```
+
+#### 21.13 FE — Trang xem chi tiết (show) cập nhật
+
+- [ ] Task 33: index.vue — load + hiển thị serviceItems
+  - File sửa: `hrm-client/pages/assign/quotations/_id/index.vue`
+  - Data: thêm `serviceItems: []`
+  - fetchData: `this.serviceItems = this.item.service_items || []`
+  - Template: thêm section "Dịch vụ bổ sung" cuối bảng (readonly, tương tự edit nhưng không có input)
+
+- [ ] Task 34: index.vue — đảo logic cha-con giống edit
+  - File sửa: `index.vue`
+  - Sửa `lineSaleTotal()` lines 589-594: bỏ SUM từ con, dùng trực tiếp `quoted_price × qty`
+  - Template: con hiện "—" ở cột giá bán + VAT%
+  - Tổng cộng: gộp dịch vụ bổ sung
+
+#### 21.14 Test thủ công
+
+- [ ] Task 35: Test thêm/sửa/xoá dịch vụ bổ sung
+  - Mở báo giá status=Đang tạo → bấm "Thêm dịch vụ" → nhập thông tin → lưu
+  - Dịch vụ hiện cuối bảng, mã DV-* tự sinh
+  - Sửa inline giá → bấm Lưu → reload → giá đúng
+  - Xoá dịch vụ → confirm → dịch vụ biến mất
+
+- [ ] Task 36: Test BOM kế thừa không sửa được
+  - Dòng BOM: tên/mã/SL/ĐVT disabled, không có nút xoá
+  - Chỉ sửa được giá nhập (con/orphan), giá bán (cha/orphan), VAT (cha/orphan)
+
+- [ ] Task 37: Test logic giá cha-con mới
+  - Cha có con: giá bán + VAT% editable ở cha, disabled ở con
+  - Sửa giá nhập con → giá nhập cha tự roll-up
+  - Sửa giá bán cha → thành tiền bán tính đúng (giá bán × SL cha)
+  - Orphan: tất cả editable
+
+- [ ] Task 38: Test VAT đồng loạt
+  - Áp VAT 10% → cha + orphan + dịch vụ bổ sung có VAT=10%, con không bị ảnh hưởng
+
+- [ ] Task 39: Test làm tròn
+  - Chọn "Làm tròn hàng chục" → confirm → đơn giá nhập/bán được round(-1)
+  - Chọn "Làm tròn số nguyên" → giá round(0)
+  - Chọn "Làm tròn 1 số thập phân" → giá round(1)
+  - Giá = 0 không bị lỗi
+
+- [ ] Task 40: Test export Excel
+  - Xuất Excel → file có section "Dịch vụ bổ sung" cuối
+  - Hàng hoá con: cột giá bán + VAT% trống
+  - Tổng cộng gộp cả dịch vụ
+
+- [ ] Task 41: Test import Excel
+  - Import file: cha import giá bán + VAT, con import giá nhập, DV-* import đầy đủ
+  - Validate đúng logic mới
+  - Dòng không khớp → báo unmatched
+
+- [ ] Task 42: Test trang xem chi tiết
+  - Dịch vụ bổ sung hiện đúng
+  - Con hiện "—" ở giá bán + VAT%
+  - Tổng cộng đúng
+
+#### 21.9 Bug fix — Session 2026-05-10
+
+- [x] Task 43: Fix unit_id null sau import dịch vụ (cross-DB TpUnit resolution)
+  - BE: `importPrices()` đổi `TpUnit::all()` sang `DB::connection('mysql2')->table()`
+  - BE: `DetailQuotationResource` thêm `resolveServiceItems()` manual TpUnit lookup
+  - BE: `validateImportPrices()` thêm validate `Đơn vị tính không được để trống` cho DV-*
+  - FE: `validatePrices()` thêm check `!s.unit_id`
+
+- [x] Task 44: Fix CKEditor duplicate instances khi toggle section
+  - FE: `edit.vue` đổi `v-show="!bottomCollapsed"` → `v-if` cho CompactReviewEditor
+
+- [x] Task 45: Chuẩn hoá format tiền tệ Việt Nam + cho nhập thập phân
+  - FE: `V2BaseCurrencyInput.vue` rewrite formatCurrency/parseRawValue/onInput (dấu `.` ngăn cách hàng nghìn, dấu `,` thập phân)
+  - FE: `edit.vue` `formatMoney` bỏ `Math.round()` → `Intl.NumberFormat('vi-VN')`
+
+- [x] Task 46: Thêm row tổng cộng + format tiền trên popup import
+  - FE: `V2BaseImportTable.vue` thêm `computedSummary` computed + summary row sticky
+
+- [x] Task 47: Overhaul lịch sử báo giá theo pattern BomListLog
+  - BE: `QuotationHistory.php` thêm ACTION_LABELS/ACTION_COLORS + accessors
+  - BE: `QuotationController::histories()` thêm action_label/action_color/content
+  - BE: `QuotationService::update()` rewrite snapshot BEFORE update, per-product price detail, strip HTML rich text
+  - BE: `QuotationService::applyBulkVat()` thêm logHistory
+  - BE: `QuotationController` thêm `logServiceHistory()` cho store/delete service items
+  - FE: `QuotationHistoryModal.vue` rewrite matching BomListLogModal
+
+- [x] Task 48: Fix popup import — row tổng cộng đè dòng đầu + thêm cột sau VAT + button chọn file
+  - FE: `V2BaseImportTable.vue` fix sticky `top: 37px` → `40px`
+  - FE: `edit.vue` importColumns thêm `_afterVatTotal` computed column
+  - FE: `V2BaseImportToolbar.vue` đưa "Chọn file Excel" lên đầu + đổi `primary`
+
+- [x] Task 49: Fix validate message lệch dòng trên popup import
+  - BE: `validateImportPrices()` thêm `usort($rows, ...)` theo index trước khi trả response (service rows push pass 1, group+product push pass 2 → thứ tự xáo trộn)
+  - FE: `handleValidateImport()` map 1:1 theo index (bỏ logic skip group rows sai)
+
+### Phase 22: In báo giá (2026-05-10)
+
+> **Spec:** .plans/Bomlist-Quotation/design-phase22.md
+
+**Goal:** Button "In" trên trang chi tiết báo giá → chọn cột → preview → in (window.print). Hoàn toàn FE, không cần API mới.
+
+#### 22.1 FE — Modal chọn cột (QuotationPrintConfigModal)
+
+- [x] Task 1: Tạo component `QuotationPrintConfigModal.vue`
+  - File tạo: `hrm-client/components/assign/quotation/QuotationPrintConfigModal.vue`
+  - Props: `show` (Boolean)
+  - Emit: `@preview(config)`, `@close`
+  - UI: Danh sách 14 checkbox cột + checkbox "Chọn tất cả" + checkbox "Hiện hàng hoá cấp con"
+  - Button "Xem trước" emit config: `{ selectedColumns: [...], includeChildren: Boolean }`
+
+- [x] Task 2: Tích hợp vào trang show
+  - File sửa: `hrm-client/pages/assign/quotations/_id/index.vue`
+  - Import QuotationPrintConfigModal
+  - Enable button "In" (bỏ `:disabled="true"` + tooltip)
+  - Click "In" → mở modal config
+  - Data: `showPrintConfig: false`, `printConfig: null`
+
+#### 22.2 FE — Modal preview in (QuotationPrintPreview)
+
+- [x] Task 3: Tạo component `QuotationPrintPreview.vue`
+  - File tạo: `hrm-client/components/assign/quotation/QuotationPrintPreview.vue`
+  - Props: `show`, `config`, `item`, `products`, `groups`, `serviceItems`, `companyHeader`, `salesEmployeeName`
+  - Template: layout theo design-phase22.md (banner → header info → bảng → footer)
+  - Bảng sản phẩm: render theo `config.selectedColumns`, nhóm La Mã, cha-con (toggle qua `config.includeChildren`)
+  - Dịch vụ bổ sung: section cuối bảng
+  - Footer: tổng cộng + VAT + sau VAT + điều khoản + ghi chú KD + chữ ký
+  - Button: "In" (gọi printContent) + "Đóng"
+  - Method `printContent()`: `window.print()` — CSS `@media print` ẩn mọi thứ trừ `.print-content`
+
+- [x] Task 4: CSS print styles
+  - File sửa: component QuotationPrintPreview.vue `<style>`
+  - `@media print`: ẩn `.no-print`, ẩn modal backdrop/header/footer buttons
+  - `@page { size: A4 landscape; margin: 10mm; }`
+  - Table: border collapse, font-size 11px, th background #f5f5f5
+  - Row nhóm: bold background nhạt
+  - Row con: indent tên, text-muted cho cột giá bán/VAT (hiện "—")
+  - Row tổng: bold border-top
+
+- [x] Task 5: Tích hợp vào trang show
+  - File sửa: `index.vue`
+  - Import QuotationPrintPreview
+  - Khi QuotationPrintConfigModal emit `@preview(config)` → set `printConfig = config`, mở preview modal
+  - Truyền props: item, products, groups, serviceItems
+  - `companyHeader`: computed từ `$store.state.employee_company.header` (nếu null → fallback `@/assets/images/info-tpe.jpg`)
+  - `salesEmployeeName`: resolve `item.project.main_sale_employee_id` từ `$store.state.employees`
+
+#### 22.3 FE — Logic render bảng
+
+- [x] Task 6: Computed/methods render bảng in
+  - File sửa: `QuotationPrintPreview.vue`
+  - `filteredColumns`: lọc theo `config.selectedColumns`
+  - `groupedData`: transform products → grouped (reuse logic tương tự index.vue)
+  - `getChildren(parent)`: trả children nếu `config.includeChildren`, else rỗng
+  - `lineSaleTotal(p)`: `quoted_price × qty_needed` (cha dùng trực tiếp)
+  - `lineVatAmount(p)`: `lineSaleTotal × vat_percent / 100`
+  - `lineAfterVat(p)`: `lineSaleTotal + lineVatAmount`
+  - `formatMoney(v)`: `Intl.NumberFormat('vi-VN')`
+  - `stripHtml(html)`: remove HTML tags cho cột thông số kỹ thuật
+  - `totalSale`, `totalVat`, `totalAfterVat`: computed gộp sản phẩm + dịch vụ
+
+- [x] Task 7: Render header thông tin
+  - Banner: `<img :src="companyHeader" />`
+  - Bảng 2 cột thông tin (kính gửi, tên đơn vị, địa chỉ... | mã BG, dự án, ngày, ĐDKD...)
+  - Dòng intro: "Chúng tôi xin gửi đến quý khách hàng..."
+
+- [x] Task 8: Render footer
+  - Điều khoản thanh toán (v-html stripped)
+  - Ghi chú kinh doanh (v-html stripped)
+  - Block chữ ký: "Ngày {dd} Tháng {mm} Năm {yyyy}" + "ĐẠI DIỆN KINH DOANH" + tên NVKD
+
+#### 22.4 Test thủ công
+
+- [ ] Task 9: Test chọn cột
+  - Mở modal → bỏ chọn vài cột → preview → bảng chỉ hiện cột đã chọn
+  - "Chọn tất cả" toggle đúng
+  - Không chọn cột nào → warning
+
+- [ ] Task 10: Test preview + in
+  - Preview hiển thị đúng layout (banner, header, bảng, footer)
+  - Bấm "In" → browser print dialog mở
+  - Chỉ nội dung báo giá hiện trên bản in (ẩn sidebar, topbar, buttons)
+
+- [ ] Task 11: Test cấp con
+  - Bật "Hiện cấp con" → con hiện dưới cha (STT 1.1, 1.2...)
+  - Tắt → chỉ hiện cha + orphan
+
+- [ ] Task 12: Test dịch vụ bổ sung + tổng
+  - Dịch vụ hiện cuối bảng
+  - Tổng cộng + VAT + sau VAT đúng (gộp sản phẩm + DV)
+
+#### 22.5 FE — Tích hợp trang danh sách + Fix bugs
+
+- [x] Task 13: Thêm button In trên trang danh sách báo giá
+  - File sửa: `hrm-client/pages/assign/quotations/index.vue`
+  - Button ri-printer-line trong row-actions
+  - Method `openPrintConfig(item)`: gọi API lấy chi tiết báo giá → mở modal config
+  - Import QuotationPrintConfigModal + QuotationPrintPreview
+
+- [x] Task 14: Fix lỗi in từ trang show
+  - Fix blank page: chuyển từ `@media print` sang `window.open()` approach (mở cửa sổ mới với HTML+CSS inline)
+  - Fix Chrome print dialog không mở: dùng `setTimeout(300)` thay `onload`
+  - Fix footer chữ ký lặp mỗi trang: đổi `<tfoot>` sang `<tbody>`
+  - Fix nhóm + dịch vụ mất border: xóa `border-left/right: none` trên `.group-row td`
+  - Fix header image mất khi in
+
+- [x] Task 15: Fix lỗi 404 trang danh sách
+  - Nguyên nhân: `QuotationPrintPreview` render khi `item=null` → crash cả trang
+  - Fix: thêm `v-if="item"` trên `<b-modal>`
+
+- [x] Task 16: Fix API call trang danh sách
+  - Nguyên nhân: `apiGetMethod` nhận string URL, không nhận object `{ url: ... }`
+  - Fix: đổi `dispatch('apiGetMethod', { url: ... })` → `dispatch('apiGetMethod', 'assign/quotations/${item.id}')`
+
+- [x] Task 17: Đưa button In lên header modal preview
+  - Chuyển button In từ footer lên `#modal-title` slot
+  - Xóa footer buttons (Đóng + In)
+
+### Checkpoint — 2026-05-10 (Phase 22)
+Vừa hoàn thành: Phase 22 — In báo giá (Task 1-8 + Task 13-17)
+  - 2 component: QuotationPrintConfigModal + QuotationPrintPreview (đặt trong components/assign/quotation/)
+  - Tích hợp cả trang show + trang danh sách
+  - window.open() approach cho in chuẩn A4 landscape
+  - Fix: null item crash, apiGetMethod syntax, print CSS issues
+Đang làm dở: không
+Bước tiếp theo: Test thủ công (Task 9-12)
+Blocked: không
+
+### Checkpoint — 2026-05-10 (Phase 21 bug fix)
+Vừa hoàn thành: 7 bug fix tasks (43-49) cho Phase 21
+  - Fix cross-DB TpUnit resolution (import + show)
+  - Fix CKEditor duplicate (v-show → v-if)
+  - Chuẩn hoá format tiền VN (dấu `.` ngăn cách, dấu `,` thập phân) + cho nhập thập phân
+  - Import popup: row tổng cộng sticky + cột sau VAT + button nổi bật + fix validate message lệch dòng
+  - Lịch sử báo giá: overhaul theo BomListLog pattern (labels, colors, per-product detail, strip HTML, service CRUD log)
+Đang làm dở: Không
+Bước tiếp theo: Test thủ công Tasks 35-42 + test lại các bug fix
+Blocked: Không
+
+### Checkpoint — 2026-05-09 (Phase 21)
+Vừa hoàn thành: Phase 21 — 34/42 tasks code done (còn 8 test thủ công Tasks 35-42)
+  - BE: Migration quotation_service_items + Entity + Relation + CRUD API (3 routes) + show eager load + update sync
+  - BE: computeTotals đảo logic (giá bán cha trực tiếp, gộp dịch vụ bổ sung)
+  - BE: Export Excel (section DV bổ sung, con blank giá bán/VAT, đảo lock template)
+  - BE: Import prices (cha import giá bán+VAT, con chỉ giá nhập, DV-* update service items)
+  - FE edit.vue: đảo cha-con (cha editable giá bán+VAT, con hiện "—"), VAT skip children, section DV bổ sung + modal + CRUD, disable BOM kế thừa, làm tròn (dropdown 3 mức + confirm), save gửi service_items, tổng gộp DV
+  - FE index.vue: hiển thị DV readonly, đảo cha-con, tổng gộp
+Đang làm dở: Không
+Bước tiếp theo: Chạy migration + test thủ công Tasks 35-42
+Blocked: Không
+
+### Checkpoint — 2026-05-09 (Phase 20)
+Vừa hoàn thành: Phase 20 — 16 tasks code (Hyperlink + Fix Excel + File mẫu + Import nhóm)
+  - Hyperlink: Dự án + Giải pháp trên cả màn sửa + xem báo giá
+  - Excel export: fix Mã/Tên đảo (ungrouped blocks), thêm VAT con, thêm cột Tỷ suất LN
+  - File mẫu riêng: endpoint /export-import-template, bỏ tfoot, lock cột trừ 3 editable, công thức thành tiền
+  - Import nhóm: BE nhận diện La Mã + validate tên nhóm, blade render cell riêng, FE preview row nhóm background xanh nhạt không input
+  - Components: V2BaseImportTable hỗ trợ type=computed + isGroupRow
+Đang làm dở: Không
+Bước tiếp theo: Test thủ công Tasks 17-20
+Blocked: Không
+
+### Checkpoint — 2026-05-08
+Vừa hoàn thành: Phase 19 — Xuất/Import Excel trên màn sửa Báo giá (Tasks 1-7 code + nhiều vòng fix)
+  - BE: 2 route validate + import (JSON-based, không upload file). Controller 2-pass validate: con validate giá/VAT số, cha validate thành tiền = Σ(con × qty) + VAT = max(con). Strip ký tự %/, trong giá/VAT. Skip rows không có STT. Validate qty khớp BOM.
+  - BE: BomListExport thêm withSkipHeader() — quotation export bỏ 8 dòng header info, bỏ cột profit_margin.
+  - FE: V2BaseImportModal dùng chung, bỏ step pills toàn cục, thêm slot extra-config. Import helper hỗ trợ headerRow param (chọn dòng tiêu đề).
+  - FE: edit.vue — 2 button Xuất/Import Excel, modal import với chọn dòng tiêu đề, 7 cột preview (STT, Mã, Tên, SL, Giá nhập, Giá bán, VAT%), filter bỏ row không STT trước validate.
+  - FE: V2BaseImportTable — cột "#" (50px) thay "Dòng dữ liệu" (120px).
+  - Fix: export 404 (thiếu /api/v1), double modal-body padding, CSS scoped không reach teleported modal, VAT "8.00%" lỗi, row tổng cộng import vào.
+Đang làm dở: Không
+Bước tiếp theo: Test thủ công export/import trên /assign/quotations/{id}/edit (Tasks 8-10)
+Blocked: Không
+
+### Checkpoint — 2026-05-07
+Vừa hoàn thành: Phase 18 — 28 tasks (UI fix + logic fix + lịch sử BOM)
+  - UI: bỏ bold 3 cột, Loại BOM text thuần, button Xuất Excel 2 chỗ, "Lưu và tiếp tục"
+  - Cấu hình: di chuyển tỷ suất LN mức sàn, fix input ẩn, validate nối tiếp
+  - Logic: fix double-count tổng nhập, profit margin formula /sale, VAT FE-only, Vue 2 reactivity
+  - Lịch sử: migration + entity + 5 chỗ ghi log + API + FE modal + buttons danh sách + chi tiết
+  - Chi tiết log: resolve tên FK, tracking thay đổi sản phẩm (thêm/xoá/sửa + children)
+Đang làm dở: Không
+Bước tiếp theo: Chạy migration bom_list_logs + test lịch sử BOM
+Blocked: Không

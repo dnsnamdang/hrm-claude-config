@@ -1234,7 +1234,27 @@ Expected: Tab YCĐC hiện danh sách nhưng KHÔNG hiện nút "Tạo yêu cầ
 ## Checkpoint
 
 ### Checkpoint — 2026-05-06 (2)
-Vừa hoàn thành: Phase 1-5 + 5B + 5C code DONE. BE: 8 files mới + sửa api.php + fix notification URL. FE: 1 file mới (SolutionAdjustmentTab.vue) + sửa 2 file (prospective-projects manager.vue + solutions manager.vue). Nhiều vòng fix UI theo feedback.
+Vừa hoàn thành: Phase 1-5 + 5B + 5C code DONE. Nhiều vòng fix UI theo feedback.
+
+### Checkpoint — 2026-05-06 (3)
+Vừa hoàn thành:
+- Thêm cột Hành động (Xem/Tiếp nhận/Từ chối) cho màn TP/PM, buttons luôn hiển thị (style="opacity:1")
+- Fix BaseConfirmModal: đổi @confirm → @event (event name thực tế)
+- Fix Tiếp nhận từ popup chi tiết: đóng detail modal trước, $nextTick rồi mở confirm
+- Thêm cột Version vào bảng danh sách (BE: thêm relationship solutionVersion + trả solution_version_code)
+- Đổi popup chi tiết sang dạng table bordered text (bỏ input/textarea disabled)
+- Fix notification URL: thêm /manager vào path
+- Tạo SRS: docs/srs/solution-adjustment-request-SRS.html
+- Tạo test cases: docs/srs/solution-adjustment-request-testcases.html + .xlsx (47 TC)
 Đang làm dở: Chưa test
-Bước tiếp theo: Chạy migration (`php artisan migrate`) + test thủ công theo Phase 6
+Bước tiếp theo: Chạy migration (`php artisan migrate`) + test thủ công theo Phase 6 (47 test cases)
+Blocked:
+
+### Checkpoint — 2026-05-06 (4)
+Vừa hoàn thành:
+- Fix FileAttachmentTable overflow trong popup chi tiết: chuyển ra ngoài table bordered, dùng div riêng
+- Fix FileAttachmentTable readonly: đổi :editable="false" → disabled (prop đúng của component)
+- Đổi sort danh sách từ id asc → id desc (mới nhất nằm trên)
+Đang làm dở: Chưa test
+Bước tiếp theo: Chạy migration (`php artisan migrate`) + test thủ công theo Phase 6 (47 test cases)
 Blocked:
