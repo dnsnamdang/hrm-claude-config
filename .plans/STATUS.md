@@ -1,6 +1,7 @@
 # STATUS.md
 
 ## Đang làm
+
 - request-solution-adjustment → @dnsnamdang → .plans/request-solution-adjustment/plan.md
   Trạng thái: Code DONE. Chờ migration + test thủ công (47 test cases).
   Spec: docs/superpowers/specs/2026-05-06-request-solution-adjustment-design.md
@@ -56,6 +57,8 @@
 
 ## Hoàn thành
 
+- optimize-getall-manager-context → @manhcuong → .plans/optimize-getall-manager-context/plan.md
+  Hoàn thành: 2026-05-11. Tối ưu API getAll khi tạo Task/Issue từ màn Manager: BE thêm filter id vào 2 service, FE truyền id param + lock select. 6 file (2 BE + 4 FE). Spec: docs/superpowers/specs/2026-05-11-optimize-getall-manager-context-design.md
 - task-status-notification → @khoipv → .plans/task-status-notification/plan.md
   Hoàn thành: 2026-05-07. 8 case thông báo push (Redis+FCM) khi task đổi trạng thái. Code đã có sẵn trong TaskService::handleStatusNotification(). Spec: docs/superpowers/specs/2026-05-07-task-status-notification-design.md
 - learning-path → @khoipv → .plans/learning-path/plan.md
