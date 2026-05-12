@@ -1166,12 +1166,12 @@ Blocked: Không
 
 #### 21.1 BE — Migration + Entity dịch vụ bổ sung
 
-- [ ] Task 1: Tạo migration bảng `quotation_service_items`
+- [x] Task 1: Tạo migration bảng `quotation_service_items`
   - File tạo: `hrm-api/database/migrations/2026_05_09_000001_create_quotation_service_items_table.php`
   - Schema theo spec 2.1: id, quotation_id (FK cascade), code(50), name, unit_id, qty, estimated_price, quoted_price, vat_percent, note, sort_order, created_by, updated_by, timestamps
   - Index trên quotation_id
 
-- [ ] Task 2: Tạo Entity `QuotationServiceItem`
+- [x] Task 2: Tạo Entity `QuotationServiceItem`
   - File tạo: `hrm-api/Modules/Assign/Entities/QuotationServiceItem.php`
   - fillable: quotation_id, code, name, unit_id, qty, estimated_price, quoted_price, vat_percent, note, sort_order, created_by, updated_by
   - casts: qty, estimated_price, quoted_price, vat_percent → decimal:2
@@ -1179,13 +1179,13 @@ Blocked: Không
   - relations: quotation() → belongsTo Quotation, unit() → belongsTo Unit
   - static `getNextCode($quotationCode)`: tìm max code `DV-{quotationCode}-%` → +1 → format `DV-{code}-{NNN}`
 
-- [ ] Task 3: Thêm relation `serviceItems()` vào Quotation entity
+- [x] Task 3: Thêm relation `serviceItems()` vào Quotation entity
   - File sửa: `hrm-api/Modules/Assign/Entities/Quotation.php` (sau line ~108)
   - `return $this->hasMany(QuotationServiceItem::class)->orderBy('sort_order');`
 
 #### 21.2 BE — CRUD API dịch vụ bổ sung
 
-- [ ] Task 4: Thêm 3 routes cho service items
+- [x] Task 4: Thêm 3 routes cho service items
   - File sửa: `hrm-api/Modules/Assign/Routes/api.php` (trong group quotations, sau line 384)
   ```php
   Route::post('/{id}/service-items', [QuotationController::class, 'storeServiceItem']);
@@ -1193,7 +1193,7 @@ Blocked: Không
   Route::delete('/{id}/service-items/{itemId}', [QuotationController::class, 'deleteServiceItem']);
   ```
 
-- [ ] Task 5: Controller method `storeServiceItem()`
+- [x] Task 5: Controller method `storeServiceItem()`
   - File sửa: `hrm-api/Modules/Assign/Http/Controllers/Api/V1/QuotationController.php`
   - Validate: quotation status = STATUS_DANG_TAO, name required|max:255, qty numeric|min:0.01, estimated_price numeric|min:0, quoted_price numeric|min:0, vat_percent numeric|min:0|max:100, unit_id nullable|exists:units,id, note nullable
   - Auto-gen code via `QuotationServiceItem::getNextCode($quotation->code)`
@@ -1201,7 +1201,7 @@ Blocked: Không
   - Gọi `$this->service->publicRecomputeTotals($quotation)`
   - Return item với unit relation
 
-- [ ] Task 6: Controller method `updateServiceItem()`
+- [x] Task 6: Controller method `updateServiceItem()`
   - File sửa: `QuotationController.php`
   - Validate tương tự storeServiceItem
   - Validate item thuộc quotation: `$quotation->serviceItems()->findOrFail($itemId)`
@@ -1209,7 +1209,7 @@ Blocked: Không
   - Gọi recomputeTotals
   - Return item
 
-- [ ] Task 7: Controller method `deleteServiceItem()`
+- [x] Task 7: Controller method `deleteServiceItem()`
   - File sửa: `QuotationController.php`
   - Validate status = STATUS_DANG_TAO
   - `$quotation->serviceItems()->findOrFail($itemId)->delete()`
@@ -1218,7 +1218,7 @@ Blocked: Không
 
 #### 21.3 BE — Cập nhật show + update để xử lý service items
 
-- [ ] Task 8: Eager load serviceItems trong show()
+- [x] Task 8: Eager load serviceItems trong show()
   - File sửa: `QuotationController.php` line 73
   - Thêm `'serviceItems.unit'` vào mảng with():
   ```php
@@ -1229,7 +1229,7 @@ Blocked: Không
   ])->findOrFail($id);
   ```
 
-- [ ] Task 9: Sửa QuotationService::update() để sync service_items
+- [x] Task 9: Sửa QuotationService::update() để sync service_items
   - File sửa: `hrm-api/Modules/Assign/Services/QuotationService.php`
   - Trong method update(), sau khi xử lý products, thêm xử lý `$data['service_items']`:
   ```php
@@ -1269,7 +1269,7 @@ Blocked: Không
 
 #### 21.4 BE — Đảo logic computeTotals (giá bán cha trực tiếp)
 
-- [ ] Task 10: Sửa `computeTotals()` — bỏ roll-up giá bán từ con
+- [x] Task 10: Sửa `computeTotals()` — bỏ roll-up giá bán từ con
   - File sửa: `hrm-api/Modules/Assign/Services/QuotationService.php` lines 233-281
   - Thay đổi: bỏ block `if ($hasChildren)` roll-up lineSale từ con, thay bằng:
   ```php
@@ -1280,7 +1280,7 @@ Blocked: Không
   - Giữ nguyên logic skip children (parent_id check)
   - Giữ nguyên VAT calculation
 
-- [ ] Task 11: Thêm service items vào computeTotals()
+- [x] Task 11: Thêm service items vào computeTotals()
   - File sửa: `QuotationService.php` — sau vòng foreach products, trước return
   ```php
   // Cộng dịch vụ bổ sung
@@ -1292,7 +1292,7 @@ Blocked: Không
 
 #### 21.5 BE — Export Excel cập nhật
 
-- [ ] Task 12: BomListExport — thêm support serviceItems
+- [x] Task 12: BomListExport — thêm support serviceItems
   - File sửa: `hrm-api/app/ExcelExport/BomListExport.php`
   - Thêm property `protected $serviceItems = [];`
   - Thêm method:
@@ -1305,7 +1305,7 @@ Blocked: Không
   ```
   - Trong `view()`: truyền thêm `'serviceItems' => $this->serviceItems` vào data array
 
-- [ ] Task 13: bom_list.blade.php — thêm section dịch vụ bổ sung + bỏ giá bán/VAT con
+- [x] Task 13: bom_list.blade.php — thêm section dịch vụ bổ sung + bỏ giá bán/VAT con
   - File sửa: `hrm-api/resources/views/exports/bom_list.blade.php`
   - **Child rows**: set quoted_price, vat_percent, vat_amount, after_vat = '' (để trống)
     - Lines ~134-154 (grouped) và ~200-220 (ungrouped): thay `$child->quoted_price` → `''`, `$child->vat_percent` → `''`
@@ -1944,12 +1944,74 @@ Blocked: Không
   - Chuyển button In từ footer lên `#modal-title` slot
   - Xóa footer buttons (Đóng + In)
 
-### Checkpoint — 2026-05-10 (Phase 22)
-Vừa hoàn thành: Phase 22 — In báo giá (Task 1-8 + Task 13-17)
-  - 2 component: QuotationPrintConfigModal + QuotationPrintPreview (đặt trong components/assign/quotation/)
-  - Tích hợp cả trang show + trang danh sách
-  - window.open() approach cho in chuẩn A4 landscape
-  - Fix: null item crash, apiGetMethod syntax, print CSS issues
+#### 22.6 Sửa công thức tỷ suất LN + Cảnh báo DV
+
+- [x] Task 18: Sửa công thức tỷ suất LN toàn bộ codebase (7 chỗ)
+  - Công thức chuẩn: (thành_tiền_bán - thành_tiền_nhập) / thành_tiền_nhập × 100 (mẫu số = NHẬP)
+  - BE QuotationService.php:462 — /totalSale → /totalImport
+  - BE QuotationController.php:257 — /quoted → /est
+  - FE edit.vue: marginPercent (line 697) /totalSale → /totalImport
+  - FE edit.vue: lineMarginPercent (line 812) /sale → /imp
+  - FE edit.vue: service inline margin (line 321) /svc.quoted_price → /svc.estimated_price
+  - FE index.vue: marginPercent (line 562) /totalSale → /totalImport
+  - FE index.vue: lineMarginPercent (line 672) /sale → /imp
+  - FE index.vue: svcMarginPercent (line 678) /sale → /imp
+
+- [x] Task 19: Thêm cảnh báo màu tỷ suất LN cho dịch vụ bổ sung (edit)
+  - File sửa: edit.vue line 320
+  - Thêm `:class="marginColorClass(...)"` vào td tỷ suất DV
+  - Dùng formula: (svc.quoted_price - svc.estimated_price) / svc.estimated_price × 100
+
+- [x] Task 20: Cập nhật SRS báo giá
+  - Tạo mới: docs/srs/quotation-srs.html (9 sections, 14 UC, 15 BR, 4 bảng DB, 23 API)
+  - Sửa BR-04: công thức roll-up CHA = SUM(con.estimated_price × con.qty) / cha.qty
+  - Sửa BR-08: tỷ suất LN mẫu số = totalImport
+
+- [x] Task 21: Tạo test cases Phase 22
+  - HTML: docs/srs/quotation-phase22-testcases.html (48 TC, 7 sections)
+  - Excel: docs/srs/quotation-phase22-testcases.xlsx (54 TC)
+  - Script: docs/srs/quotation-phase22-generate-testcase.py
+  - Phạm vi: in BG (config + preview + print + danh sách), tỷ suất LN (7 chỗ), cảnh báo màu DV, tổng nhập/bán, E2E
+
+#### 22.7 Bug fixes + Cải tiến (2026-05-11~12)
+
+- [x] Task 22: Fix V2BaseCurrencyInput parse sai giá từ API
+  - Nguyên nhân: formatCurrency nhận string "20000.00" (US format) nhưng parse theo VN (`.` = separator) → "2000000"
+  - Fix: formatCurrency luôn dùng Number(value) thay vì replace `.` rồi convert
+
+- [x] Task 23: Fix validate duyệt BG theo logic giá mới
+  - BE ensureAllPricesPositive: phân biệt CHA/CON/Orphan, CON skip validate, CHA chỉ validate quoted_price, thêm validate service items
+  - FE validatePrices: CHA validate quoted_price > 0 (trước đây skip), CON skip (trước đây validate estimated_price)
+
+- [x] Task 24: Fix popup gửi duyệt thiếu giá nhập DV bổ sung
+  - BE calculateTotals: totalImport chỉ loop BOM products → thêm loop serviceItems cộng estimated_price × qty
+
+- [x] Task 25: Import BOM auto-create danh mục mới
+  - BE resolveLookupId thêm param autoCreate: tìm trên ERP DB, nếu không có → tạo mới (model/brand/origin/unit)
+  - resolveErpEmployeeId: lấy employees.id trên ERP DB thay vì auth()->id() (FK constraint)
+  - validateImportData: bỏ lỗi "không tồn tại trong danh mục" (chỉ giữ "là bắt buộc")
+  - importProducts: gọi resolveLookupId với autoCreate=true
+
+- [x] Task 26: Bỏ validate giá con khi duyệt BG
+  - BE ensureAllPricesPositive: CON → continue (skip hoàn toàn)
+  - FE validatePrices: CON → continue
+
+- [x] Task 27: Mẫu in BG — khối tổng căn phải + có viền
+  - QuotationPrintPreview: đổi div text thành bảng nhỏ có border, 3 dòng (Tổng trước thuế / Tổng VAT / Thành tiền sau VAT), căn phải (flex-end)
+  - Thêm CSS .totals-summary-table cho cả preview + inline print styles
+
+- [x] Task 28: Mở rộng làm tròn từ 3 → 6 options
+  - Select: -3 (hàng nghìn), -2 (hàng trăm), -1 (hàng chục), 0 (số nguyên), 1 (1 thập phân), 2 (2 thập phân)
+  - Logic roundVal đã hỗ trợ precision âm sẵn (Math.pow(10, p))
+
+### Checkpoint — 2026-05-12 (Phase 22 bug fix + improvements)
+Vừa hoàn thành: Task 22-28 — 7 bug fixes + improvements
+  - Fix V2BaseCurrencyInput parse sai giá API (×100)
+  - Fix validate duyệt: phân biệt CHA/CON/Orphan, bỏ validate con, thêm validate DV
+  - Fix popup gửi duyệt: totalImport thiếu DV bổ sung
+  - Import BOM: auto-create model/brand/origin/unit trên ERP DB
+  - Mẫu in: khối tổng căn phải có viền (3 dòng)
+  - Làm tròn: 6 options (-3 đến 2)
 Đang làm dở: không
 Bước tiếp theo: Test thủ công (Task 9-12)
 Blocked: không

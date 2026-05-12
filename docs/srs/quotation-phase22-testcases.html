@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cases UI — In Báo Giá + Sửa Tỷ Suất LN (Phase 22)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f7f9fc;
+            color: #1a1a2e;
+        }
+        h1 { color: #1F4E79; border-bottom: 3px solid #4472C4; padding-bottom: 10px; font-size: 22px; }
+        h2 { color: #1F4E79; margin-top: 30px; font-size: 18px; border-left: 4px solid #4472C4; padding-left: 10px; }
+        h3 { color: #2E5A88; font-size: 15px; margin-top: 20px; }
+        .summary-box {
+            background: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px;
+            padding: 12px 18px; margin: 15px 0; font-size: 14px;
+        }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 13px; }
+        th { background: #4472C4; color: white; padding: 8px 10px; text-align: left; font-size: 12px; }
+        td { padding: 7px 10px; border: 1px solid #d1d5db; vertical-align: top; }
+        tr:nth-child(even) td { background: #f0f4ff; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .tag-page { background: #dbeafe; color: #1e40af; }
+        .tag-func { background: #dcfce7; color: #166534; }
+        .tag-edge { background: #fef3c7; color: #92400e; }
+        .tag-api  { background: #e0e7ff; color: #3730a3; }
+        code { background: #e5e7eb; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+        p { margin: 5px 0; }
+        @media print {
+            body { max-width: 100%; padding: 10px; background: white; font-size: 11px; }
+            h1 { font-size: 16px; } h2 { font-size: 14px; } h3 { font-size: 13px; }
+            table { font-size: 10px; } td, th { padding: 4px 6px; }
+            @page { size: A4 landscape; margin: 8mm; }
+        }
+    </style>
+</head>
+<body>
+
+<h1>TEST CASES UI — IN BÁO GIÁ + SỬA TỶ SUẤT LỢI NHUẬN (Phase 22)</h1>
+<p>Dự án: ERP TPE — Module Giao việc / Báo giá | Ngày: 2026-05-10 | Phiên bản: 1.0</p>
+<div class="summary-box">
+    Tổng hợp: <strong>48 test cases</strong> | 3 trang UI (danh sách, chi tiết, sửa) | 2 components mới (QuotationPrintConfigModal, QuotationPrintPreview)
+    <br>Phạm vi: In báo giá (Task 1-8, 13-17), Sửa công thức tỷ suất LN (7 chỗ), Cảnh báo margin dịch vụ bổ sung
+</div>
+
+<!-- ===== SECTION 1: MODAL CHỌN CỘT ===== -->
+<h2>1. MODAL CẤU HÌNH IN BÁO GIÁ</h2>
+<p><strong>Component:</strong> <code>QuotationPrintConfigModal.vue</code></p>
+<p><strong>Mở từ:</strong> Trang chi tiết → Button "In" | Trang danh sách → Icon máy in trên row</p>
+
+<h3>1.1 Giao diện modal</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_001.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Hiển thị modal cấu hình in</td>
+    <td>1. Mở trang chi tiết báo giá<br>2. Click button "In"</td>
+    <td>Modal mở với title "Cấu hình in báo giá". Có: checkbox "Hiện hàng hoá cấp con" (mặc định bật), danh sách 14 checkbox cột, checkbox "Chọn tất cả", 2 button "Huỷ" + "Xem trước"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_001.002</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>14 cột hiển thị đúng</td>
+    <td>1. Mở modal cấu hình in</td>
+    <td>Danh sách cột: STT, Tên hàng hoá, Mã hàng hoá, Model, Thương hiệu, Xuất xứ, Đơn vị tính, Thông số kỹ thuật, Số lượng, Đơn giá bán, Thành tiền bán, VAT (%), Tiền VAT, Thành tiền sau VAT</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_001.003</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Mặc định chọn tất cả cột</td>
+    <td>1. Mở modal cấu hình in</td>
+    <td>Tất cả 14 checkbox cột đều được check. Checkbox "Chọn tất cả" cũng đang check</td>
+    <td></td>
+</tr>
+</table>
+
+<h3>1.2 Chức năng chọn/bỏ cột</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_001.004</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>"Chọn tất cả" toggle bỏ chọn</td>
+    <td>1. Mở modal → tất cả cột đang check<br>2. Bỏ check "Chọn tất cả"</td>
+    <td>Tất cả 14 checkbox cột bị bỏ check</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_001.005</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>"Chọn tất cả" toggle chọn lại</td>
+    <td>1. Bỏ chọn vài cột<br>2. Check "Chọn tất cả"</td>
+    <td>Tất cả 14 checkbox cột được check lại</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_001.006</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Auto uncheck "Chọn tất cả" khi bỏ 1 cột</td>
+    <td>1. Tất cả cột đang check<br>2. Bỏ check 1 cột bất kỳ (ví dụ: Model)</td>
+    <td>Checkbox "Chọn tất cả" tự bỏ check</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_001.007</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Auto check "Chọn tất cả" khi check đủ 14</td>
+    <td>1. Bỏ check 1 cột → "Chọn tất cả" bỏ check<br>2. Check lại cột vừa bỏ</td>
+    <td>Checkbox "Chọn tất cả" tự check lại</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_001.008</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>Không chọn cột nào → warning</td>
+    <td>1. Bỏ check "Chọn tất cả" (0 cột)<br>2. Click "Xem trước"</td>
+    <td>Hiện thông báo đỏ: "Vui lòng chọn ít nhất 1 cột để in". Modal KHÔNG đóng</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_001.009</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Warning tự ẩn khi chọn lại cột</td>
+    <td>1. Trigger warning (QP_001.008)<br>2. Check 1 cột bất kỳ</td>
+    <td>Thông báo đỏ biến mất</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ===== SECTION 2: PREVIEW + IN ===== -->
+<h2>2. MODAL XEM TRƯỚC BÁO GIÁ (QuotationPrintPreview)</h2>
+<p><strong>Component:</strong> <code>QuotationPrintPreview.vue</code></p>
+
+<h3>2.1 Giao diện preview</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_002.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Layout preview đúng cấu trúc</td>
+    <td>1. Mở modal cấu hình → chọn tất cả cột<br>2. Click "Xem trước"</td>
+    <td>Modal XL mở. Layout từ trên xuống: Banner công ty → Title "BÁO GIÁ HÀNG HÓA" → Header info 2 cột → Bảng sản phẩm → Tổng VAT/sau VAT → Điều khoản → Ghi chú → Chữ ký</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.002</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Header info trái hiển thị đúng</td>
+    <td>1. Xem preview báo giá có đầy đủ thông tin khách hàng</td>
+    <td>Cột trái hiện: Kính gửi (tên liên hệ), Tên đơn vị (khách hàng), Địa chỉ, Điện thoại/Email, Hiệu lực báo giá (X ngày), Bảo hành (X tháng)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.003</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Header info phải hiển thị đúng</td>
+    <td>1. Xem preview</td>
+    <td>Cột phải hiện: Báo giá số (mã), Dự án, Ngày (dd/mm/yyyy), ĐDKD/Email, Giao hàng (ngày), Loại tiền tệ</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.004</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Button In nằm trên header modal</td>
+    <td>1. Xem preview</td>
+    <td>Button "In" (icon ri-printer-line) nằm cạnh title "Xem trước báo giá" ở header modal. KHÔNG có footer buttons</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.005</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Chữ ký hiển thị đúng</td>
+    <td>1. Scroll xuống cuối preview</td>
+    <td>Căn phải: "Ngày {dd} Tháng {mm} Năm {yyyy}" (ngày hiện tại) + "ĐẠI DIỆN KINH DOANH" (bold) + tên NVKD</td>
+    <td></td>
+</tr>
+</table>
+
+<h3>2.2 Bảng sản phẩm</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_002.006</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Chỉ hiện cột đã chọn</td>
+    <td>1. Modal config → bỏ chọn: Model, Thương hiệu, Xuất xứ<br>2. Click "Xem trước"</td>
+    <td>Bảng sản phẩm chỉ hiện 11 cột (không có Model, Thương hiệu, Xuất xứ). Header + data + tổng đều khớp số cột</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.007</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Nhóm La Mã hiển thị đúng</td>
+    <td>1. Xem preview báo giá có sản phẩm phân nhóm</td>
+    <td>Mỗi nhóm có header row: "I. Tên nhóm", "II. Tên nhóm"... Background xanh nhạt (#e8f0fe), bold, colspan toàn bộ cột</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.008</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Sản phẩm cha hiển thị đúng</td>
+    <td>1. Xem preview có sản phẩm cha + con</td>
+    <td>Row cha hiện: STT (1, 2...), tên, mã, model, brand, origin, ĐVT, thông số (plain text không HTML), SL, đơn giá bán, thành tiền bán, VAT%, tiền VAT, sau VAT. Tất cả giá format Intl vi-VN</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.009</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Hiện cấp con khi bật toggle</td>
+    <td>1. Config → check "Hiện hàng hoá cấp con"<br>2. Xem trước</td>
+    <td>Dưới mỗi cha có các row con. STT con: 1.1, 1.2... Text màu xám (#555). Tên lùi 20px. Cột giá bán/thành tiền/VAT/tiền VAT/sau VAT hiện "—"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.010</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Ẩn cấp con khi tắt toggle</td>
+    <td>1. Config → bỏ check "Hiện hàng hoá cấp con"<br>2. Xem trước</td>
+    <td>Chỉ hiện row cha + orphan. Không có row con. Không có STT dạng x.y</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.011</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Dịch vụ bổ sung hiển thị cuối bảng</td>
+    <td>1. Xem preview báo giá có dịch vụ bổ sung</td>
+    <td>Sau tất cả nhóm sản phẩm, có header "Dịch vụ bổ sung" (background xanh nhạt, bold). Dưới đó là các row dịch vụ với: STT riêng (1, 2...), mã DV-xxx, tên, ĐVT, SL, giá bán, thành tiền, VAT%, tiền VAT, sau VAT</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.012</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Row TỔNG CỘNG đúng</td>
+    <td>1. Xem preview</td>
+    <td>Row cuối bảng: bold, border-top 2px, background #f9f9f9. Cột "Tên hàng hoá" hiện "TỔNG CỘNG". Cột thành tiền/tiền VAT/sau VAT hiện tổng (gộp sản phẩm + dịch vụ)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.013</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Tổng VAT + sau VAT bên dưới bảng</td>
+    <td>1. Chọn cột "Tiền VAT" + "Thành tiền sau VAT"<br>2. Xem trước</td>
+    <td>Bên dưới bảng hiện: "Tổng VAT: {số}" + "Tổng sau VAT: {số}". Nếu bỏ chọn cột tương ứng → không hiện</td>
+    <td></td>
+</tr>
+</table>
+
+<h3>2.3 In (print)</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_002.014</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>In mở cửa sổ mới + print dialog</td>
+    <td>1. Xem preview<br>2. Click button "In" trên header modal</td>
+    <td>Mở cửa sổ trình duyệt mới chứa nội dung báo giá (HTML thuần). Sau ~300ms tự mở print dialog của trình duyệt</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.015</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Bản in đúng format A4 landscape</td>
+    <td>1. In báo giá → xem print preview của trình duyệt</td>
+    <td>Trang A4 ngang. Font Times New Roman. Bảng font 10px, header info 12px. Banner công ty hiện đầy đủ. Background nhóm/header in ra (print-color-adjust: exact)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.016</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Chỉ nội dung báo giá trên bản in</td>
+    <td>1. In báo giá</td>
+    <td>Cửa sổ in chỉ chứa nội dung báo giá. Không có sidebar, topbar, modal buttons, footer navigation của ứng dụng</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_002.017</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Bảng dài tự xuống trang + lặp header</td>
+    <td>1. In báo giá có >20 sản phẩm → nhiều hơn 1 trang</td>
+    <td>Bảng tự page-break hợp lý (page-break-inside: avoid trên tr). Header bảng lặp ở mỗi trang (display: table-header-group)</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ===== SECTION 3: IN TỪ TRANG DANH SÁCH ===== -->
+<h2>3. IN TỪ TRANG DANH SÁCH BÁO GIÁ</h2>
+<p><strong>URL:</strong> <code>/assign/quotations</code></p>
+
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_003.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td>Icon máy in trên row</td>
+    <td>1. Mở trang danh sách báo giá</td>
+    <td>Mỗi row báo giá có icon máy in (ri-printer-line) trong cột actions</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_003.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Click icon In → gọi API → mở modal config</td>
+    <td>1. Click icon máy in trên 1 row</td>
+    <td>Gọi API GET <code>/assign/quotations/{id}</code> lấy chi tiết. Sau đó mở QuotationPrintConfigModal</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_003.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Preview + In hoạt động đúng từ trang danh sách</td>
+    <td>1. Click icon In → modal config mở<br>2. Click "Xem trước" → modal preview mở<br>3. Click "In"</td>
+    <td>Toàn bộ flow giống in từ trang chi tiết: preview đúng data, in mở cửa sổ mới + print dialog</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_003.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>API lỗi → thông báo lỗi</td>
+    <td>1. Mở danh sách → click In trên báo giá đã bị xoá (hoặc ngắt mạng)</td>
+    <td>Hiện toast/alert: "Không tải được chi tiết báo giá". Không crash trang, không mở modal config</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_003.005</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>Trang danh sách không crash khi chưa chọn báo giá</td>
+    <td>1. Load trang danh sách báo giá<br>2. Không click In → chỉ browse bình thường</td>
+    <td>Trang hoạt động bình thường. Không có lỗi console. QuotationPrintPreview có v-if="item" nên không render khi item=null</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ===== SECTION 4: CÔNG THỨC TỶ SUẤT LỢI NHUẬN ===== -->
+<h2>4. CÔNG THỨC TỶ SUẤT LỢI NHUẬN</h2>
+<p><strong>Công thức chuẩn:</strong> <code>Tỷ suất LN = (Thành tiền bán - Thành tiền nhập) / Thành tiền nhập × 100</code></p>
+<p><strong>BR:</strong> Mẫu số là thành tiền NHẬP (không phải bán). Áp dụng cho cả tổng và từng dòng.</p>
+
+<h3>4.1 Tỷ suất LN tổng — Trang sửa</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_004.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>marginPercent dùng /totalImport (edit)</td>
+    <td>1. Mở sửa báo giá<br>2. Nhập giá sao cho: totalSale = 120, totalImport = 100<br>3. Xem tỷ suất LN tổng</td>
+    <td>Tỷ suất = (120-100)/100 × 100 = <strong>20%</strong>. KHÔNG phải (120-100)/120 = 16.67%</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_004.002</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>totalImport = 0 → hiện 0% (edit)</td>
+    <td>1. Tạo báo giá mới, chưa nhập giá nhập nào<br>2. Nhập giá bán cho 1 sản phẩm orphan</td>
+    <td>Tỷ suất = 0%. Không lỗi chia cho 0</td>
+    <td></td>
+</tr>
+</table>
+
+<h3>4.2 Tỷ suất LN tổng — Trang chi tiết</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_004.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>marginPercent dùng /totalImport (show)</td>
+    <td>1. Mở trang chi tiết báo giá đã có giá<br>2. Ví dụ: totalSale = 200, totalImport = 150</td>
+    <td>Tỷ suất = (200-150)/150 × 100 = <strong>33.33%</strong></td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_004.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>totalImport = 0 → hiện 0% (show)</td>
+    <td>1. Xem chi tiết báo giá không có giá nhập</td>
+    <td>Tỷ suất = 0%</td>
+    <td></td>
+</tr>
+</table>
+
+<h3>4.3 Tỷ suất LN per-row — Sản phẩm</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_004.005</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>lineMarginPercent dùng /import (edit)</td>
+    <td>1. Sửa báo giá có sản phẩm orphan<br>2. Nhập: giá nhập = 80, SL = 2 → thành tiền nhập = 160<br>3. Nhập: giá bán = 100, SL = 2 → thành tiền bán = 200</td>
+    <td>Tỷ suất dòng = (200-160)/160 × 100 = <strong>25%</strong></td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_004.006</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>lineMarginPercent cho sản phẩm CHA</td>
+    <td>1. Sửa báo giá có sản phẩm cha + con<br>2. Con: giá nhập 50, SL 3 → import con = 150<br>3. Cha SL = 1 → giá nhập cha (roll-up) = 150/1 = 150<br>4. Cha giá bán = 200</td>
+    <td>Thành tiền nhập cha = 150×1 = 150, thành tiền bán cha = 200×1 = 200. Tỷ suất = (200-150)/150 × 100 = <strong>33.33%</strong></td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_004.007</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>lineMarginPercent dùng /import (show)</td>
+    <td>1. Xem chi tiết báo giá<br>2. Kiểm tra cột tỷ suất của từng row</td>
+    <td>Công thức giống edit: (thành_tiền_bán - thành_tiền_nhập) / thành_tiền_nhập × 100</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_004.008</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>import = 0 → hiện "—" (không phải NaN/Infinity)</td>
+    <td>1. Sản phẩm có giá nhập = 0, giá bán > 0</td>
+    <td>Cột tỷ suất hiện "—" (null → text-muted)</td>
+    <td></td>
+</tr>
+</table>
+
+<h3>4.4 Tỷ suất LN Backend</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_004.009</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td>QuotationService::computeTotals dùng /totalImport</td>
+    <td>1. Sửa + Lưu báo giá với giá bán + giá nhập<br>2. Kiểm tra field profit_margin trong response hoặc DB</td>
+    <td>profit_margin = (totalSale - totalImport) / totalImport × 100, guard totalImport > 0</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_004.010</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td>Controller per-line profit_margin dùng /import</td>
+    <td>1. GET /assign/quotations/{id}<br>2. Kiểm tra mỗi product trong response</td>
+    <td>product.profit_margin = (quoted_total - est_total) / est_total × 100, guard est > 0, else null</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ===== SECTION 5: CẢNH BÁO MÀU TỶ SUẤT ===== -->
+<h2>5. CẢNH BÁO MÀU TỶ SUẤT LỢI NHUẬN</h2>
+<p><strong>BR:</strong> So với cấu hình <code>profit_margin_threshold</code> (tỷ suất LN mức sàn) trong store.</p>
+<p><strong>Logic:</strong> margin &lt; threshold → <span style="color:red">đỏ (text-danger)</span> | margin ≥ threshold → <span style="color:green">xanh (text-success)</span> | null → <span style="color:gray">xám (text-muted)</span></p>
+
+<h3>5.1 Cảnh báo trên trang sửa</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_005.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Tổng tỷ suất — đỏ khi &lt; threshold</td>
+    <td>1. Cấu hình tỷ suất mức sàn = 15%<br>2. Sửa báo giá sao cho tỷ suất tổng = 10%</td>
+    <td>Số "10%" hiện màu <strong>đỏ</strong> (text-danger) tại row tổng + ô thống kê</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_005.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Tổng tỷ suất — xanh khi ≥ threshold</td>
+    <td>1. Cấu hình tỷ suất mức sàn = 15%<br>2. Sửa báo giá sao cho tỷ suất tổng = 20%</td>
+    <td>Số "20%" hiện màu <strong>xanh</strong> (text-success)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_005.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Per-row sản phẩm — đỏ/xanh</td>
+    <td>1. Cấu hình threshold = 15%<br>2. Sản phẩm A: margin = 10% → đỏ<br>3. Sản phẩm B: margin = 25% → xanh</td>
+    <td>Cột tỷ suất từng dòng: A hiện đỏ, B hiện xanh</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_005.004</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Dịch vụ bổ sung — cảnh báo màu</td>
+    <td>1. Cấu hình threshold = 15%<br>2. Dịch vụ: giá nhập = 100, giá bán = 105 → margin = 5%</td>
+    <td>Cột tỷ suất dòng dịch vụ hiện <strong>đỏ</strong> (5% < 15%). Có :class="marginColorClass(...)" trên td</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_005.005</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Dịch vụ bổ sung — xanh khi đạt</td>
+    <td>1. Dịch vụ: giá nhập = 100, giá bán = 150 → margin = 50%</td>
+    <td>Cột tỷ suất dòng dịch vụ hiện <strong>xanh</strong> (50% ≥ 15%)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_005.006</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>Margin = null → xám</td>
+    <td>1. Sản phẩm/dịch vụ có giá nhập = 0</td>
+    <td>Cột tỷ suất hiện "—" màu <strong>xám</strong> (text-muted)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_005.007</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>Threshold = 0 → mọi margin ≥ 0 đều xanh</td>
+    <td>1. Cấu hình tỷ suất mức sàn = 0%<br>2. Sản phẩm có margin = 0%</td>
+    <td>margin 0% ≥ threshold 0% → hiện xanh</td>
+    <td></td>
+</tr>
+</table>
+
+<h3>5.2 Cảnh báo trên trang chi tiết</h3>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_005.008</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Tổng + per-row + dịch vụ có cảnh báo màu (show)</td>
+    <td>1. Xem chi tiết báo giá có nhiều sản phẩm + dịch vụ<br>2. Kiểm tra cột tỷ suất</td>
+    <td>Tất cả cell tỷ suất đều có màu đỏ/xanh/xám dựa trên threshold, giống trang sửa</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_005.009</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>svcMarginPercent dùng /import cho dịch vụ (show)</td>
+    <td>1. Xem chi tiết. DV: giá nhập = 80, giá bán = 100, SL = 1</td>
+    <td>Tỷ suất DV = (100-80)/80 × 100 = 25%. Hiện 25% + màu tương ứng threshold</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ===== SECTION 6: TÍNH TỔNG (totalImport / totalSale) ===== -->
+<h2>6. TÍNH TỔNG NHẬP / BÁN</h2>
+<p><strong>BR:</strong> totalImport = Σ(CON + ORPHAN + DV), skip CHA (tránh đếm đôi). totalSale = Σ(CHA + ORPHAN + DV), skip CON.</p>
+
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_006.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>totalSale skip CON</td>
+    <td>1. Báo giá có: Cha (giá bán 200, SL 1) + Con A (giá nhập 50, SL 2) + Con B (giá nhập 30, SL 1)</td>
+    <td>totalSale = 200×1 = 200. KHÔNG cộng con vào (tránh đếm đôi với cha)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_006.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>totalImport skip CHA (có con)</td>
+    <td>1. Cùng báo giá: Con A (import = 50×2 = 100), Con B (import = 30×1 = 30)</td>
+    <td>totalImport tính từ con: 100+30 = 130. KHÔNG cộng thêm cha roll-up (tránh đếm đôi)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_006.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Dịch vụ bổ sung cộng vào cả 2 tổng</td>
+    <td>1. Thêm dịch vụ: giá nhập 80, giá bán 100, SL 1</td>
+    <td>totalImport += 80. totalSale += 100</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_006.004</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>Orphan tính cả import và sale</td>
+    <td>1. Sản phẩm orphan: giá nhập 60, giá bán 90, SL 2</td>
+    <td>totalImport += 60×2 = 120. totalSale += 90×2 = 180</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ===== SECTION 7: E2E FLOW ===== -->
+<h2>7. E2E — FLOW IN BÁO GIÁ ĐẦY ĐỦ</h2>
+
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+<tr>
+    <td>QP_007.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>E2E: In từ trang chi tiết</td>
+    <td>1. Mở chi tiết báo giá có: 2 nhóm, cha+con, orphan, dịch vụ<br>2. Click "In" → modal config mở<br>3. Bỏ chọn: Model, Thương hiệu → click "Xem trước"<br>4. Verify preview: nhóm La Mã, sản phẩm, con (có STT 1.1), dịch vụ cuối, tổng đúng<br>5. Click "In" → print dialog mở<br>6. Huỷ in → đóng cửa sổ</td>
+    <td>Mọi bước hoạt động đúng. Preview hiện 12 cột (bỏ Model + Thương hiệu). Tổng cộng = sản phẩm + dịch vụ. Bản in đúng A4 ngang</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_007.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td>E2E: In từ trang danh sách</td>
+    <td>1. Mở danh sách báo giá<br>2. Click icon In trên 1 row<br>3. Đợi load chi tiết → modal config mở<br>4. Chọn tất cả cột, bật cấp con → "Xem trước"<br>5. Verify preview<br>6. Click "In" → print dialog mở</td>
+    <td>Giống E2E trang chi tiết. Data load đúng từ API. Không crash, không 404</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_007.003</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>In báo giá không có sản phẩm (chỉ dịch vụ)</td>
+    <td>1. Tạo báo giá chỉ có dịch vụ bổ sung, không có BOM products<br>2. In từ trang chi tiết</td>
+    <td>Preview hiện: header "Dịch vụ bổ sung" + các row dịch vụ + tổng. Không có nhóm La Mã. Không lỗi</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_007.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>In báo giá không có dịch vụ</td>
+    <td>1. Báo giá chỉ có sản phẩm BOM, không có dịch vụ<br>2. Xem preview</td>
+    <td>Không hiện section "Dịch vụ bổ sung". Tổng = chỉ từ sản phẩm</td>
+    <td></td>
+</tr>
+<tr>
+    <td>QP_007.005</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td>Báo giá thiếu thông tin khách hàng</td>
+    <td>1. Báo giá không có: liên hệ KH, địa chỉ, email, số ĐT<br>2. Xem preview</td>
+    <td>Các field thiếu hiện trống (không hiện "null" hay "undefined"). Layout không vỡ</td>
+    <td></td>
+</tr>
+</table>
+
+</body>
+</html>

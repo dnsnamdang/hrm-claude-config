@@ -13,10 +13,11 @@
   Checkpoint: 2026-05-04 — Phase 9 done. Bước tiếp: test toàn bộ flow.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
-  Trạng thái: Phase 22 code DONE (Task 1-8 + 13-17). Branch `tpe-develop-assign`.
-  Phase 22 (2026-05-10): In báo giá — button In → chọn cột → preview → window.open() print. Cả trang show + danh sách.
+  Trạng thái: Phase 22 DONE (Task 1-8 + 13-21). Branch `tpe-develop-assign`.
+  Phase 22 (2026-05-10~11): In báo giá (chọn cột → preview → window.open() print, cả show + danh sách) + sửa công thức tỷ suất LN 7 chỗ (mẫu số = nhập) + cảnh báo màu DV + SRS mới + 54 test cases.
   Spec: .plans/Bomlist-Quotation/design-phase22.md
-  Checkpoint: 2026-05-10 — Code done, fix null crash + apiGetMethod syntax + print CSS. Bước tiếp: test thủ công (Task 9-12).
+  SRS: docs/srs/quotation-srs.html | Testcases: docs/srs/quotation-phase22-testcases.xlsx
+  Checkpoint: 2026-05-11 — Code + SRS + Testcases done. Bước tiếp: test thủ công (Task 9-12).
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
   Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
