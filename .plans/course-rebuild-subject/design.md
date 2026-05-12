@@ -10,6 +10,14 @@ Rebuild FE màn tạo/sửa `subjects` (module Training) theo prototype `hrm-cli
 - **BE:** thêm 12 cột vào `subjects` + 4 bảng mới (`subject_exams`, `subject_exam_graders`, `subject_assignees` polymorphic, `subject_certificate_fields`). Refactor `SubjectService` + `SubjectBuilderRequest`. Upload ảnh cert template dùng endpoint chung `POST /files/upload` (giống `FileAttachmentTable.vue`), không thêm route mới.
 - **Migration:** 7 file — schema + backfill (`evaluation_config` JSON → `subject_exams`; `working_position_subjects.is_encouraged` + `capability_subjects` → `subject_assignees`) + rename permission `Quản lý môn học` → `Quản lý khoá học`.
 
+## Scope bổ sung (2026-05-12)
+
+- **3 field display info** thêm vào `subjects`: `what_includes` / `for_who` / `will_learn` (TEXT nullable) — hiển thị 3 card giới thiệu trên trang detail khoá học ("Khoá học này có gì?", "Dành cho ai?", "Bạn sẽ học được gì?")
+- Nhập liệu qua **`BulletListEditor`** (component mới tại `components/shared/BulletListEditor.vue`) — CKEditor minimal: chỉ B / I / U / BulletedList / Undo / Redo. Lưu HTML, render `v-html` trên detail. Gọi `window.CKEDITOR.replace()` trực tiếp (không qua `$loadCKEditor`) để tránh bị override toolbar.
+- Vị trí UI: bên dưới trường **Mô tả** trong Tab 1 (cột trái, `TabInfo.vue`)
+
+---
+
 ## Quyết định chính
 - **Approach 1 (normalize):** tách bảng mới thay JSON `evaluation_config`. Giữ `evaluation_config` cho backward-compat, không xoá.
 - **Polymorphic `subject_assignees`:** 1 bảng cho 3 loại (department/position/capability) với `is_mandatory` flag.
