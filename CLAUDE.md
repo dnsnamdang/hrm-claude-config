@@ -185,6 +185,16 @@ Trước khi implement bất kỳ pattern lặp lại nào,
 kiểm tra `.claude/skills/` xem đã có SKILL.md chưa.
 Nếu có → đọc trước khi viết code.
 
+**Skill bắt buộc đọc theo ngữ cảnh:**
+
+| Khi làm gì | Đọc skill nào |
+|---|---|
+| Tạo/sửa button (nút bấm) trên FE | `.claude/skills/button-convention/SKILL.md` |
+| Tạo/sửa modal, popup, dialog trên FE | `.claude/skills/modal-popup/SKILL.md` |
+| Tạo màn danh sách mới | `.claude/skills/list-page/SKILL.md` (nếu có) |
+
+→ Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
+
 ---
 
 ## Lưu ý fix bug
