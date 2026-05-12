@@ -2,7 +2,7 @@
 
 ## Trạng thái
 - Bắt đầu: 2026-04-16
-- Tiến độ: 5/5 task code ✅ (uncommitted), chờ chạy migration + manual test
+- Tiến độ: ✅ Hoàn thành 2026-04-29 (5 task code + migration + 5 manual test)
 
 ## Phase 1: DB
 - [x] Task 1: Migration thêm `total_cost_transition decimal(16,2) nullable` vào `delivery_trip_accounting`
@@ -21,14 +21,14 @@
 
 ## Phase 6: Manual test
 
-- [ ] Chạy migration: `php artisan migrate`
-- [ ] Tạo phiếu hạch toán từ chuyến xe đã duyệt:
+- [x] Chạy migration: `php artisan migrate`
+- [x] Tạo phiếu hạch toán từ chuyến xe đã duyệt:
   - Header "Cước vận chuyển thực tế" cho phép sửa
   - Tick/untick "Công ty hỗ trợ" tất cả activities → tooltip hiện, cước thực tế cap theo max
   - Bỏ tick 1 activity → fallback logic cũ (cap theo delivery_recipe + price_additional)
-- [ ] Edit phiếu hạch toán đã lưu → giá trị `total_cost_transition` load đúng
-- [ ] Show phiếu hạch toán (mode show) → header disabled, giá trị hiển thị đúng
-- [ ] Submit form → BE lưu `total_cost_transition` vào bảng `delivery_trip_accounting`, không ghi đè `delivery_trips`
+- [x] Edit phiếu hạch toán đã lưu → giá trị `total_cost_transition` load đúng
+- [x] Show phiếu hạch toán (mode show) → header disabled, giá trị hiển thị đúng
+- [x] Submit form → BE lưu `total_cost_transition` vào bảng `delivery_trip_accounting`, không ghi đè `delivery_trips`
 
 ## Checkpoint
 
@@ -41,4 +41,10 @@ Vừa hoàn thành: 5/5 task code — 6 files (1 migration + 5 modified)
 - create + edit blade: gán formDeliveryTrip + priceListDeliveryVehiclePayload vào form, +helper recalcMaxCostTransition
 Đang làm dở: Chờ user migrate + test + tự commit
 Bước tiếp theo: User test → commit → báo lại
+Blocked: không
+
+### Checkpoint — 2026-04-29
+Vừa hoàn thành: ✅ Migration chạy + 5 case manual test pass. Đóng feature.
+Đang làm dở: không
+Bước tiếp theo: không
 Blocked: không

@@ -2,18 +2,36 @@
 
 ## Đang làm
 
-- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan-phase16.md
-  Trạng thái: Phase 16 code DONE (UI polish). Tổng Phase 11-16 đều ở trạng thái code DONE chờ user test. Branch `tpe-develop-assign`.
-  Phase 14B (parent roll-up) + Phase 15 (xoá báo giá) + Phase 16 (per-row VAT cho dòng con + Sửa/Xoá YCBG trong tab Hồ sơ + `V2BaseSelectRemote` cho Model/Brand/Xuất xứ trong popup thêm hàng hoá + nút Làm mới filter).
-  Component mới: `components/V2BaseSelectRemote.vue` (jQuery Select2 ajax, dùng prop `fetchFn(keyword)`).
-  Checkpoint: 2026-04-23 — Wrap up Phase 16. Pending user test task 8-13 phase 16 + các task test tồn từ phase 12/13/14/15.
+- request-solution-adjustment → @dnsnamdang → .plans/request-solution-adjustment/plan.md
+  Trạng thái: Code DONE. Chờ migration + test thủ công (47 test cases).
+  Spec: docs/superpowers/specs/2026-05-06-request-solution-adjustment-design.md
+  SRS: docs/srs/solution-adjustment-request-SRS.html | Testcases: docs/srs/solution-adjustment-request-testcases.xlsx
+  Checkpoint: 2026-05-06 — BE 8 files + FE 3 files. Fix: BaseConfirmModal @event, cột Hành động luôn hiện, cột Version, popup chi tiết dạng bảng, notification URL /manager, FileAttachmentTable readonly (disabled prop), sort id desc. Bước tiếp: chạy migration + test.
+
+- my-todo → @dnsnamdang → .plans/my-todo/plan.md
+  Trạng thái: Phase 1-5 + Phase 7-9 DONE. Branch `tpe-develop-assign`. Còn Phase 6 (Test).
+  Phase 9 (2026-05-04): đổi tên UI ("Lịch làm việc của tôi", "Tạo nhắc việc cá nhân"), sửa nhắc việc (cả màn chính + danh sách), confirm BaseConfirmModal, fix reload, fix 422 due_time, sort theo thời gian, sub-items đồng nhất, cascade toggle (parent↔sub kiểu Google Tasks).
+  Checkpoint: 2026-05-04 — Phase 9 done. Bước tiếp: test toàn bộ flow.
+
+- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
+  Trạng thái: Phase 22 DONE (Task 1-8 + 13-21). Branch `tpe-develop-assign`.
+  Phase 22 (2026-05-10~11): In báo giá (chọn cột → preview → window.open() print, cả show + danh sách) + sửa công thức tỷ suất LN 7 chỗ (mẫu số = nhập) + cảnh báo màu DV + SRS mới + 54 test cases.
+  Spec: .plans/Bomlist-Quotation/design-phase22.md
+  SRS: docs/srs/quotation-srs.html | Testcases: docs/srs/quotation-phase22-testcases.xlsx
+  Checkpoint: 2026-05-11 — Code + SRS + Testcases done. Bước tiếp: test thủ công (Task 9-12).
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
   Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
   Checkpoint: 2026-04-28 — P14 (đang tiếp): fix mã auto-gen BE, override_completion reset, modal info bài học + trạng thái ghi đè, format tiêu chí hoàn thành (giây+%), labels tiếng Việt mapping/prerequisite, DRAFT canDelete, assignee pill auto-open, confirm lock modal. Phase 10 manual test còn 10 test case.
 
+- fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
+  Trạng thái: V6 DONE. Branch `tpe-develop-assign`. Test passed 2026-05-07.
+  V6: Tiếp nhận tất cả + filter cascade + submitted_at + đổi cột "Tiến độ %".
+
 - close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
-  Trạng thái: Phase 17 code DONE (2026-04-23) — cascade RequestSolution + không ẩn Đóng khỏi 3 list (pricing-requests/request-solution/solution-modules) + filter "Đóng" + guard BE + banner/prop isClosed trên solution-modules manager. Chờ user test Task 32-35. Branch `tpe-develop-assign`.
+  Trạng thái: Phase 17C code DONE. Branch `tpe-develop-assign`.
+  Phase 17C (2026-05-08): Fix hồ sơ trình duyệt không hiện "Đã chốt" + chốt GP đổi YC làm GP sang "Đã hoàn thành" thay vì "Đã chốt giải pháp".
+  Checkpoint: 2026-05-08 — Chờ user test.
 
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
   Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
@@ -21,6 +39,12 @@
   Trạng thái: Implementing. Validate total_cost_transition theo CP xăng + cầu đường + công tác phí + CP khác (TanPhatDev)
 - delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
   Trạng thái: Implementing. Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp (TanPhatDev)
+- my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
+  Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
+  Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+- xuat-ghep-tu-hang-giu → @nguyentrancu97 → .plans/xuat-ghep-tu-hang-giu/plan.md
+  Trạng thái: Brainstorming PAUSED 2026-04-28. Đã chốt 7 quyết định (hiển thị tồn/giữ qua API stockOfProducts, validate `qty ≤ in_stock + prepick_qty`, cascade nhập ghép giữ toàn bộ thành phẩm, customer per-parent, hạn giữ = today + Config.max_prepick_date, xuất thẳng tái sử dụng pattern export_prepick_qty/hold_qty/total_qty + FIFO consume). Còn 6 câu hỏi mở (Q6-Q11): customer_id cấp nào, validate hạn giữ, approval, pending lock prepick, popup filter, edit/cancel. (TanPhatDev)
+  Checkpoint: 2026-04-28 — Paused tại Q6 (customer_id lưu cấp parent vs recipe + cascade khi YCXG có >1 customer).
 
 ## Tạm dừng
 
@@ -34,10 +58,23 @@
 
 ## Hoàn thành
 
+- optimize-getall-manager-context → @manhcuong → .plans/optimize-getall-manager-context/plan.md
+  Hoàn thành: 2026-05-11. Tối ưu API getAll khi tạo Task/Issue từ màn Manager: BE thêm filter id vào 2 service, FE truyền id param + lock select. 6 file (2 BE + 4 FE). Spec: docs/superpowers/specs/2026-05-11-optimize-getall-manager-context-design.md
+- task-status-notification → @khoipv → .plans/task-status-notification/plan.md
+  Hoàn thành: 2026-05-07. 8 case thông báo push (Redis+FCM) khi task đổi trạng thái. Code đã có sẵn trong TaskService::handleStatusNotification(). Spec: docs/superpowers/specs/2026-05-07-task-status-notification-design.md
+- learning-path → @khoipv → .plans/learning-path/plan.md
+  Hoàn thành: 2026-05-04. Phase 1-7 (24 task). CRUD lộ trình học (3 bảng DB, 4 tab FE: thông tin+builder khoá học, kết quả, người học, chứng chỉ). Danh sách V2Base với lock/unlock, bộ lọc nâng cao 7 ô, popup bài thi + điều kiện học. Spec: docs/superpowers/specs/2026-04-29-learning-path-design.md
+- progress-percent-auto-from-log → @manhcuong → .plans/progress-percent-auto-from-log/plan.md
+  Hoàn thành: 2026-05-05. Mode B ImportResultModal: Tiến độ hoàn thành tự động từ log gần nhất có giá trị (computed latestLogProgressPct). BE validate tiến độ tăng dần + bắt buộc 100% khi chuyển sang REVIEW/DONE. Spec: docs/superpowers/specs/2026-05-04-progress-percent-auto-from-log-design.md
+
 - issue-completion-flow → @khoipv → .plans/issue-completion-flow/plan.md
   Hoàn thành: 2026-04-28. 22/22 task. Thêm 2 trạng thái completed/rejected vào flow Issue + branching logic approver (duyệt/từ chối) + notification cho approver khi resolved và assignee khi rejected. BE: 1 migration + entity + service + resource + controller. FE: index + modal. Spec: docs/superpowers/specs/2026-04-28-issue-completion-flow-design.md
 - add-description-column-list → @khoipv → .plans/add-description-column-list/plan.md
   Hoàn thành: 2026-04-28. 8/8 task. Thêm cột "Mô tả" vào 7 màn danh sách module Giao việc (industry-groups, customer-scopes, solution-groups, application, project_items, project_role, meeting_type). Chỉ FE, không sửa BE/API.
+- progress-version-snapshot → @manhcuong → .plans/progress-version-snapshot/plan.md
+  Hoàn thành: 2026-04-29. BE snapshot progress version + filter module theo version hiện tại + FE hiển thị version hiện tại và tiến độ trên danh sách giải pháp.
+  Checkpoint: 2026-04-29 — user test OK.
+
 - subjects-list-ui → @junfoke → .plans/subjects-list-ui/plan.md
   Hoàn thành: 2026-04-25. Fix 3 bug logic (`exportExcel` formFilter→filters, `lockItem`/`unlockItem` getData→loadData, `getTrainingTypes` method xung đột computed) + 1 bug CSS (`::v-deep` row-actions hover) + thêm nút lock/unlock toggle trong cột Trạng thái + status pill dùng global `tpl-status-*` class từ `v2-styles.scss`. Xóa dead code `onEditClick`/`eventHandler`. Chỉ 1 file: `hrm-client/pages/training/subjects/index.vue`.
 - merge-module-review-profiles → @manhcuong → .plans/merge-module-review-profiles/plan.md
@@ -50,8 +87,6 @@
   Hoàn thành: 2026-04-21. Thêm `Task::scopeOverdue` + áp ở `TaskController::index` + `SolutionService::getCategoriesWithLateTasks`/`getPeopleWithLateTasks` + `SolutionModuleService::getPeopleWithLateTasks`. Đồng bộ `late_tasks_count` + card Overview với logic `overdue_total` tab Task (status NOT IN [1,8,9], CONCAT due_date+due_time). Review pass 0 Critical/Important. Test OK.
 - my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
   Hoàn thành: 2026-04-21. Phase 1–2 (BE) + Phase 4–8 (FE). BE: routes + service + Resource + Export + Helper. FE: index.vue wiring + AssignBusinessTab.vue đầy đủ (filter 8 ô, bảng 8 cột, 13 row actions dropdown, column customization, ExportModal, ConfirmDelete, ConfirmCancelApprove). Test OK.
-- fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
-  Hoàn thành: 2026-04-18. 7/7 task. V2: fix sai message khi 2 tab cùng chọn 1 task (BE 422→423 + lookup task.code). V3: reject sau TP duyệt → chuyển task về TP + notify TP + log tên TP. Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
   Hoàn thành: 2026-04-07. 2/2 task. Button "Lưu và duyệt" khi has_modules=false
 - solution-version-report → @manhcuong → .plans/solution-version-report/plan.md
@@ -80,3 +115,15 @@
   Hoàn thành: 2026-04-13. 11/11 task. Thêm filter + cột thương hiệu, hãng SX vào 3 danh sách YCHG/YCTG/Phiếu TG (TanPhatDev, 9 files)
 - bill-settlement-remove-checkbox → @nguyentrancu97 → .plans/bill-settlement-remove-checkbox/plan.md
   Hoàn thành: 2026-04-13. 4/4 task. Xoá UI checkbox chọn nhân viên form Quyết toán thưởng NS quý (TanPhatDev)
+- bill-income-report-fix-accounting → @nguyentrancu97 → .plans/bill-income-report-fix-accounting/plan.md
+  Hoàn thành: 2026-04-29. 4/4 task. Lọc + chạy lại hạch toán phiếu báo có sai. 3 method thêm vào `database/seeds/UpdateDB.php`: `findInvalidBillIncomeReports()`, `fixCustomerSupplierSwap()`, `rerunBillIncomeReportAccounting($ids)`. User chạy 4 step tinker + verify giảm error (TanPhatDev)
+- bill-income-supplier-export → @nguyentrancu97 → .plans/bill-income-supplier-export/plan.md
+  Hoàn thành: 2026-04-29. 13/13 task. Phiếu báo có loại NCC: thay search HĐ mua trực tiếp bằng search phiếu xuất hàng (3 type 1/2/15) → auto-fill HĐ mua. 8 BE + 1 migration + 3 FE. Test 7 case pass (TanPhatDev)
+- pi-inland-supplement-annex → @nguyentrancu97 → .plans/pi-inland-supplement-annex/plan.md
+  Hoàn thành: 2026-04-29. 12/12 task. Lập phụ lục bổ sung cho PI trong nước (firm type=4 + free type=5, KHÔNG migration). 2 BE + 5 FE. Test 6 case pass (TanPhatDev)
+- delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
+  Hoàn thành: 2026-04-29. 10/10 task. Validate cước phiếu hạch toán + enable edit header + tick is_company_sp. 1 migration + controller + JS class + 3 view. Test 5 case pass (TanPhatDev)
+- delivery-trip-actual-cost-validate → @nguyentrancu97 → .plans/delivery-trip-actual-cost-validate/plan.md
+  Hoàn thành: 2026-04-29. 10/10 task. Validate `total_cost_transition` theo CP xăng + cầu đường + công tác phí + CP khác (xe Tân Phát). JS class + 2 view. Test 6 case pass (TanPhatDev)
+- firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
+  Hoàn thành: 2026-04-29. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev). User xác nhận đã làm xong (plan.md không có task chi tiết)

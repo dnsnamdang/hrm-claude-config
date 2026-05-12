@@ -2,7 +2,7 @@
 
 ## Trạng thái
 - Bắt đầu: 2026-04-16
-- Tiến độ: 4/5 task code ✅ (uncommitted), chờ manual test
+- Tiến độ: ✅ Hoàn thành 2026-04-29 (4 task code + 6 manual test)
 
 ## Phase 1: JS class
 
@@ -20,18 +20,18 @@
 
 ## Phase 3: Manual test
 
-- [ ] Test xe Tân Phát — nhập toll_cost + business_trip_cost lớn (vd formula=100k, actual=150k):
+- [x] Test xe Tân Phát — nhập toll_cost + business_trip_cost lớn (vd formula=100k, actual=150k):
   - TH2: cước thực tế = formula (100k), tooltip = "Cước vận chuyển theo công thức + cước vượt trội thực tế"
   - Cho sửa nhỏ hơn 100k OK
   - Sửa lớn hơn 100k → auto cap về 100k
-- [ ] Test xe Tân Phát — nhập ít chi phí (vd formula=200k, actual=100k):
+- [x] Test xe Tân Phát — nhập ít chi phí (vd formula=200k, actual=100k):
   - TH1: cước thực tế = actual (100k), tooltip = "CP xăng + cầu đường + CP khác + công tác phí"
   - Cho sửa nhỏ hơn 100k OK
   - Sửa lớn hơn 100k → cap về 100k
-- [ ] Kiểm tra CP xăng xe + CP khác hiển thị đúng (= vehicle.fuel.price × payload.fuel × km_approved, payload.bribery_cost × km_approved)
-- [ ] Thay đổi `price_additional`, `toll_cost`, `business_trip_cost` → `total_cost_transition` auto cập nhật
-- [ ] Xe ngoài → giữ nguyên logic cũ (cap theo `delivery_recipe + price_additional`)
-- [ ] Kiểm tra sum_transition_cost (phân bổ cho activities) vẫn hoạt động đúng
+- [x] Kiểm tra CP xăng xe + CP khác hiển thị đúng (= vehicle.fuel.price × payload.fuel × km_approved, payload.bribery_cost × km_approved)
+- [x] Thay đổi `price_additional`, `toll_cost`, `business_trip_cost` → `total_cost_transition` auto cập nhật
+- [x] Xe ngoài → giữ nguyên logic cũ (cap theo `delivery_recipe + price_additional`)
+- [x] Kiểm tra sum_transition_cost (phân bổ cho activities) vẫn hoạt động đúng
 
 ## Checkpoint
 
@@ -42,4 +42,10 @@ Vừa hoàn thành: 4/4 task code — 3 files modified (JS class, approveForm, a
 - Approve form: pass priceListDeliveryVehiclePayload vào form, +helper recalcMaxCostTransition
 Đang làm dở: Chờ user manual test + tự commit
 Bước tiếp theo: User test → commit → báo lại
+Blocked: không
+
+### Checkpoint — 2026-04-29
+Vừa hoàn thành: ✅ Toàn bộ 6 case manual test pass. Đóng feature.
+Đang làm dở: không
+Bước tiếp theo: không
 Blocked: không

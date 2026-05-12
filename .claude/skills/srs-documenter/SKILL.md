@@ -281,6 +281,31 @@ Auth: Bearer Token (JWT)
 - Không thêm requirement mà code không có (trừ khi SRS cho feature chưa code)
 - Không bỏ sót enum values — đọc constants trong Entity
 
+## Sơ đồ bắt buộc
+
+### Use Case Diagram
+- Vẽ bằng SVG inline trong file HTML
+- Hiển thị: Actor (hình người), System boundary (hình chữ nhật nét đứt), Use Case (ellipse)
+- Phân màu theo nhóm chức năng (xem/lọc, CRUD todo, CRUD list, actions, internal)
+- Thể hiện mối quan hệ `<<include>>` nếu có
+- Có legend giải thích màu
+
+### Swimlane Diagram
+- Vẽ bằng HTML/CSS (div layout với flex)
+- Mỗi use case chính cần 1 swimlane diagram
+- Các lane tối thiểu: User (FE), Backend (API), Database
+- Mỗi step là 1 box với màu theo loại: start (xanh lá), end (đỏ nhạt), decision (vàng), api (xanh dương nhạt)
+- Có mũi tên chỉ hướng flow giữa các step
+- Swimlane bắt buộc cho: UC xem tổng hợp, UC tạo entity chính, UC có optimistic update, UC tương tác cross-component
+
+### Quy tắc chung cho sơ đồ
+- KHÔNG dùng thư viện ngoài (Mermaid, PlantUML...) — dùng SVG inline hoặc HTML/CSS thuần
+- Sơ đồ phải render được khi mở file HTML trực tiếp trên trình duyệt (không cần server)
+- Responsive: sơ đồ có thể scroll ngang nếu quá rộng
+
+---
+
 ## Output
-- File markdown: `docs/srs/[feature-name].md`
+- File chính: `docs/srs/[feature-name].html` — bao gồm toàn bộ nội dung SRS + sơ đồ Use Case + Swimlane
+- File markdown (tham khảo): `docs/srs/[feature-name].md` — bản text-only, không có sơ đồ
 - Nếu feature lớn, tách thành: `docs/srs/[feature-name]/` với nhiều file con

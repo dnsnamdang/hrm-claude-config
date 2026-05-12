@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cases UI - Lộ trình học</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 13px; line-height: 1.5; padding: 20px; color: #1a1a1a; }
+        h1 { font-size: 20px; margin-bottom: 4px; color: #1F4E79; }
+        h2 { font-size: 16px; margin: 28px 0 10px; color: #1F4E79; border-bottom: 2px solid #4472C4; padding-bottom: 4px; }
+        h3 { font-size: 14px; margin: 16px 0 8px; color: #2c5aa0; }
+        p { margin: 4px 0; }
+        code { background: #f0f4f8; padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+        .meta { color: #555; margin-bottom: 16px; }
+        .summary-box { background: #e8f0fe; border: 1px solid #4472C4; border-radius: 6px; padding: 10px 16px; margin: 12px 0 20px; display: inline-block; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { background: #4472C4; color: #fff; font-weight: 600; text-align: left; padding: 8px 6px; font-size: 12px; }
+        td { border: 1px solid #d0d7e2; padding: 6px; vertical-align: top; font-size: 12px; }
+        tr:nth-child(even) { background: #f7f9fc; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+        .tag-page { background: #dbeafe; color: #1e40af; }
+        .tag-func { background: #dcfce7; color: #166534; }
+        .tag-edge { background: #fef3c7; color: #92400e; }
+        .tag-api  { background: #e0e7ff; color: #3730a3; }
+        .priority { font-weight: 700; }
+        .p0 { color: #dc2626; }
+        .p1 { color: #d97706; }
+        .p2 { color: #6b7280; }
+        @media print { body { padding: 10px; font-size: 11px; } h2 { page-break-before: always; } table { page-break-inside: auto; } }
+    </style>
+</head>
+<body>
+    <h1>TEST CASES UI - TÍNH NĂNG LỘ TRÌNH HỌC</h1>
+    <p class="meta">Dự án: ERP TPE - Module Đào tạo (Training/LearningPath) | Ngày: 2026-05-05 | Phiên bản: 1.0</p>
+    <div class="summary-box">Tổng hợp: 88 test cases | 4 trang UI | 4 tab components | 8 API endpoints</div>
+
+    <!-- ===== I. DANH SÁCH ===== -->
+    <h2>I. DANH SÁCH LỘ TRÌNH HỌC</h2>
+    <p><strong>URL:</strong> <code>/training/learning-path</code></p>
+
+    <h3>1.1 Giao diện danh sách</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_001.001</td><td><span class="tag tag-page">Giao diện</span></td><td>Hiển thị trang danh sách khi truy cập</td><td>1. Vào menu Đào tạo > Lộ trình học</td><td>Hiển thị bộ lọc nhanh + bảng đầy đủ cột: STT, Mã+Tên, Loại đào tạo, Người tạo, Số khoá học, Tổng bài học, Điều kiện đạt, Trạng thái, Cập nhật. Nút "Thêm mới" hiện.</td><td></td></tr>
+    <tr><td>LTH_001.002</td><td><span class="tag tag-page">Giao diện</span></td><td>Badge trạng thái đúng màu</td><td>1. Quan sát cột Trạng thái</td><td>Nháp = xám (#64748B), Đang dùng = xanh lá (#16A34A), Khoá = đỏ (#DC2626)</td><td></td></tr>
+    <tr><td>LTH_001.023</td><td><span class="tag tag-page">Giao diện</span></td><td>Hiển thị số khoá học và tổng bài học</td><td>1. Quan sát cột "Số khoá học" và "Tổng bài học"</td><td>Số khoá học = count subjects, Tổng bài học = sum lessons tất cả subjects</td><td></td></tr>
+    </table>
+
+    <h3>1.2 Tìm kiếm & Bộ lọc</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_001.003</td><td><span class="tag tag-func">Chức năng</span></td><td>Tìm kiếm nhanh theo mã</td><td>1. Nhập "LP-2026" vào ô tìm kiếm<br>2. Enter</td><td>Hiển thị lộ trình có code chứa "LP-2026"</td><td></td></tr>
+    <tr><td>LTH_001.004</td><td><span class="tag tag-func">Chức năng</span></td><td>Tìm kiếm nhanh theo tên</td><td>1. Nhập "Onboarding"<br>2. Enter</td><td>Hiển thị lộ trình có name chứa "Onboarding"</td><td></td></tr>
+    <tr><td>LTH_001.005</td><td><span class="tag tag-func">Chức năng</span></td><td>Filter theo Trạng thái</td><td>1. Mở bộ lọc nâng cao<br>2. Chọn "Đang dùng"<br>3. Tìm kiếm</td><td>Chỉ hiển thị lộ trình status = 2</td><td></td></tr>
+    <tr><td>LTH_001.006</td><td><span class="tag tag-func">Chức năng</span></td><td>Filter theo Loại đào tạo</td><td>1. Chọn loại đào tạo<br>2. Tìm kiếm</td><td>Chỉ hiển thị lộ trình thuộc loại đào tạo đã chọn</td><td></td></tr>
+    <tr><td>LTH_001.007</td><td><span class="tag tag-func">Chức năng</span></td><td>Filter theo Điều kiện đạt</td><td>1. Chọn result_rule<br>2. Tìm kiếm</td><td>Chỉ hiển thị lộ trình khớp rule</td><td></td></tr>
+    <tr><td>LTH_001.008</td><td><span class="tag tag-func">Chức năng</span></td><td>Filter theo Người tạo</td><td>1. Chọn người tạo<br>2. Tìm kiếm</td><td>Chỉ hiển thị lộ trình do người đó tạo</td><td></td></tr>
+    <tr><td>LTH_001.009</td><td><span class="tag tag-func">Chức năng</span></td><td>Filter theo Người cập nhật</td><td>1. Chọn người cập nhật<br>2. Tìm kiếm</td><td>Chỉ hiển thị lộ trình updated_by = user đã chọn</td><td></td></tr>
+    <tr><td>LTH_001.010</td><td><span class="tag tag-func">Chức năng</span></td><td>Filter theo khoảng Ngày cập nhật</td><td>1. Nhập từ ngày / đến ngày<br>2. Tìm kiếm</td><td>Chỉ hiển thị lộ trình updated_at trong khoảng</td><td></td></tr>
+    <tr><td>LTH_001.011</td><td><span class="tag tag-func">Chức năng</span></td><td>Kết hợp nhiều filter (AND)</td><td>1. Chọn 2+ filter<br>2. Tìm kiếm</td><td>Kết quả thoả tất cả điều kiện</td><td></td></tr>
+    <tr><td>LTH_001.012</td><td><span class="tag tag-func">Chức năng</span></td><td>Reset bộ lọc</td><td>1. Nhấn Reset</td><td>Tất cả filter về mặc định, bảng hiện toàn bộ</td><td></td></tr>
+    </table>
+
+    <h3>1.3 Sort & Pagination</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_001.013</td><td><span class="tag tag-func">Chức năng</span></td><td>Sort theo Mã lộ trình</td><td>1. Click header "Mã" 2 lần</td><td>Lần 1: ASC, Lần 2: DESC</td><td></td></tr>
+    <tr><td>LTH_001.014</td><td><span class="tag tag-func">Chức năng</span></td><td>Sort theo Ngày cập nhật</td><td>1. Click header "Cập nhật"</td><td>Sort tăng/giảm dần updated_at</td><td></td></tr>
+    <tr><td>LTH_001.015</td><td><span class="tag tag-func">Chức năng</span></td><td>Chuyển trang</td><td>1. Click trang 2</td><td>Load dữ liệu trang 2</td><td></td></tr>
+    <tr><td>LTH_001.016</td><td><span class="tag tag-func">Chức năng</span></td><td>Đổi số dòng/trang</td><td>1. Chọn 50</td><td>Hiển thị tối đa 50/trang</td><td></td></tr>
+    </table>
+
+    <h3>1.4 Actions trên dòng</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_001.017</td><td><span class="tag tag-func">Chức năng</span></td><td>Xem chi tiết</td><td>1. Click icon Xem</td><td>Điều hướng /training/learning-path/{id}</td><td></td></tr>
+    <tr><td>LTH_001.018</td><td><span class="tag tag-func">Chức năng</span></td><td>Sửa chỉ hiện cho Nháp</td><td>1. Quan sát cột Hành động</td><td>Nháp: icon Sửa hiện. Đang dùng/Khoá: ẩn</td><td></td></tr>
+    <tr><td>LTH_001.019</td><td><span class="tag tag-func">Chức năng</span></td><td>Xoá chỉ hiện cho Nháp</td><td>1. Click Xoá<br>2. Confirm</td><td>Xoá thành công. Status khác: nút Xoá ẩn</td><td></td></tr>
+    <tr><td>LTH_001.020</td><td><span class="tag tag-func">Chức năng</span></td><td>Toggle Khoá (Nháp → Khoá)</td><td>1. Click toggle<br>2. Confirm</td><td>Status = Khoá. Toast đúng</td><td></td></tr>
+    <tr><td>LTH_001.021</td><td><span class="tag tag-func">Chức năng</span></td><td>Toggle Mở khoá (Khoá → Nháp)</td><td>1. Click toggle<br>2. Confirm</td><td>Status = Nháp. Toast đúng</td><td></td></tr>
+    <tr><td>LTH_001.022</td><td><span class="tag tag-func">Chức năng</span></td><td>Toggle Khoá cho Đang dùng → bị chặn</td><td>1. Click toggle trên lộ trình Active</td><td>Báo lỗi "Lộ trình đang dùng, không thể khoá"</td><td></td></tr>
+    </table>
+
+    <!-- ===== II. TẠO LỘ TRÌNH ===== -->
+    <h2>II. TẠO LỘ TRÌNH HỌC</h2>
+    <p><strong>URL:</strong> <code>/training/learning-path/add</code></p>
+
+    <h3>2.1 Tab Thông tin lộ trình</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_002.001</td><td><span class="tag tag-page">Giao diện</span></td><td>Form hiển thị 4 tab</td><td>1. Click "Thêm mới"</td><td>4 tab: Thông tin, Kết quả, Người học, Chứng chỉ. Tab 1 active</td><td></td></tr>
+    <tr><td>LTH_002.002</td><td><span class="tag tag-func">Chức năng</span></td><td>Mã lộ trình tự sinh</td><td>1. Quan sát field Mã</td><td>Format LP-YYYY-NNNNN, read-only</td><td></td></tr>
+    <tr><td>LTH_002.003</td><td><span class="tag tag-func">Chức năng</span></td><td>Validate bắt buộc Tên</td><td>1. Để trống Tên<br>2. Lưu</td><td>Báo lỗi required. Không gọi API</td><td></td></tr>
+    <tr><td>LTH_002.004</td><td><span class="tag tag-edge">Edge case</span></td><td>Tên > 255 ký tự</td><td>1. Nhập 260 ký tự<br>2. Lưu</td><td>Báo lỗi max:255</td><td></td></tr>
+    <tr><td>LTH_002.005</td><td><span class="tag tag-func">Chức năng</span></td><td>Chọn Loại đào tạo</td><td>1. Mở dropdown<br>2. Chọn</td><td>Load danh sách training_types. Gán giá trị đúng</td><td></td></tr>
+    <tr><td>LTH_002.006</td><td><span class="tag tag-page">Giao diện</span></td><td>Status mặc định Nháp</td><td>1. Quan sát field Status</td><td>Mặc định = Nháp (1)</td><td></td></tr>
+    <tr><td>LTH_002.007</td><td><span class="tag tag-func">Chức năng</span></td><td>Switch "Học tuần tự"</td><td>1. Bật switch</td><td>linear_required = true</td><td></td></tr>
+    <tr><td>LTH_002.008</td><td><span class="tag tag-func">Chức năng</span></td><td>Switch "Công khai"</td><td>1. Bật switch</td><td>is_public = true</td><td></td></tr>
+    <tr><td>LTH_002.009</td><td><span class="tag tag-func">Chức năng</span></td><td>Nhập Mô tả, Mục tiêu, Ghi chú</td><td>1. Nhập text 3 field</td><td>Dữ liệu lưu đúng. admin_note > 500 → lỗi</td><td></td></tr>
+    <tr><td>LTH_002.010</td><td><span class="tag tag-func">Chức năng</span></td><td>Thêm khoá học</td><td>1. Click "Thêm khoá học"<br>2. Chọn 2 khoá<br>3. Xác nhận</td><td>2 khoá hiện trong list với sort_order</td><td></td></tr>
+    <tr><td>LTH_002.011</td><td><span class="tag tag-func">Chức năng</span></td><td>Kéo thả sắp xếp khoá</td><td>1. Kéo khoá 3 lên vị trí 1</td><td>Thứ tự cập nhật, sort_order gán lại</td><td></td></tr>
+    <tr><td>LTH_002.012</td><td><span class="tag tag-func">Chức năng</span></td><td>Cấu hình khoá: bắt buộc + ghi chú</td><td>1. Click config<br>2. Toggle bắt buộc<br>3. Nhập ghi chú</td><td>is_required = true, note lưu đúng</td><td></td></tr>
+    <tr><td>LTH_002.013</td><td><span class="tag tag-func">Chức năng</span></td><td>Xoá khoá khỏi lộ trình</td><td>1. Click xoá khoá<br>2. Xác nhận</td><td>Khoá biến mất, sort_order reindex</td><td></td></tr>
+    </table>
+
+    <h3>2.2 Tab Cấu hình kết quả</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_002.014</td><td><span class="tag tag-func">Chức năng</span></td><td>Chọn REQUIRED_ONLY</td><td>1. Chọn "Tất cả khoá bắt buộc ĐẠT"</td><td>Không hiện field %. rule = REQUIRED_ONLY</td><td></td></tr>
+    <tr><td>LTH_002.015</td><td><span class="tag tag-func">Chức năng</span></td><td>Chọn ALL_COURSES</td><td>1. Chọn "Tất cả khoá trong lộ trình ĐẠT"</td><td>Không hiện field %. rule = ALL_COURSES</td><td></td></tr>
+    <tr><td>LTH_002.016</td><td><span class="tag tag-func">Chức năng</span></td><td>Chọn MIN_PERCENT + nhập %</td><td>1. Chọn "Đạt tối thiểu X%"<br>2. Nhập 70</td><td>Field % hiện. Giá trị 70 set đúng</td><td></td></tr>
+    <tr><td>LTH_002.017</td><td><span class="tag tag-func">Chức năng</span></td><td>Validate % phải 1-100</td><td>1. Nhập 0<br>2. Nhập 101<br>3. Để trống</td><td>Cả 3 báo lỗi. Chỉ chấp nhận 1-100</td><td></td></tr>
+    <tr><td>LTH_002.018</td><td><span class="tag tag-page">Giao diện</span></td><td>Thống kê khoá</td><td>1. Xem panel thống kê</td><td>Tổng khoá, Bắt buộc, Tuỳ chọn hiện đúng</td><td></td></tr>
+    <tr><td>LTH_002.028</td><td><span class="tag tag-func">Chức năng</span></td><td>Validate result_rule bắt buộc</td><td>1. Không chọn rule<br>2. Lưu</td><td>Báo lỗi validate required</td><td></td></tr>
+    </table>
+
+    <h3>2.3 Tab Cấu hình người học</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_002.019</td><td><span class="tag tag-func">Chức năng</span></td><td>Thêm PB mandatory</td><td>1. Cột Bắt buộc → Phòng ban<br>2. Chọn 2 PB</td><td>2 PB hiện trong cột Bắt buộc</td><td></td></tr>
+    <tr><td>LTH_002.020</td><td><span class="tag tag-func">Chức năng</span></td><td>Thêm Vị trí recommended</td><td>1. Cột Khuyến nghị → Vị trí<br>2. Chọn</td><td>Vị trí hiện cột Khuyến nghị</td><td></td></tr>
+    <tr><td>LTH_002.021</td><td><span class="tag tag-func">Chức năng</span></td><td>Thêm Năng lực</td><td>1. Pill Năng lực<br>2. Chọn</td><td>Capability hiện trong list</td><td></td></tr>
+    </table>
+
+    <h3>2.4 Tab Chứng chỉ</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_002.022</td><td><span class="tag tag-func">Chức năng</span></td><td>Bật/tắt chứng chỉ</td><td>1. Bật switch "Cấp chứng chỉ"</td><td>Panel config hiện. Tắt: panel ẩn</td><td></td></tr>
+    <tr><td>LTH_002.023</td><td><span class="tag tag-func">Chức năng</span></td><td>Upload template</td><td>1. Upload file ảnh 1600x900</td><td>Preview hiện trên canvas</td><td></td></tr>
+    <tr><td>LTH_002.024</td><td><span class="tag tag-func">Chức năng</span></td><td>Cấu hình 4 field vị trí</td><td>1. Nhập x, y, size, weight</td><td>certificate_fields lưu đúng 4 field</td><td></td></tr>
+    <tr><td>LTH_002.025</td><td><span class="tag tag-func">Chức năng</span></td><td>Render + Download PDF</td><td>1. Click Render<br>2. Click Download</td><td>Canvas preview đúng. PDF tải về</td><td></td></tr>
+    </table>
+
+    <h3>2.5 Lưu</h3>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_002.026</td><td><span class="tag tag-func">Chức năng</span></td><td>Lưu Nháp thành công</td><td>1. Nhập tên + rule + khoá<br>2. Lưu</td><td>Toast thành công. Redirect danh sách. Code LP-YYYY-NNNNN</td><td></td></tr>
+    <tr><td>LTH_002.027</td><td><span class="tag tag-func">Chức năng</span></td><td>Lưu với status Đang dùng</td><td>1. Chọn Status = Đang dùng<br>2. Lưu</td><td>Tạo thành công status = 2</td><td></td></tr>
+    </table>
+
+    <!-- ===== III. SỬA ===== -->
+    <h2>III. SỬA LỘ TRÌNH HỌC</h2>
+    <p><strong>URL:</strong> <code>/training/learning-path/{id}/edit</code></p>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_003.001</td><td><span class="tag tag-func">Chức năng</span></td><td>Load dữ liệu đầy đủ 4 tab</td><td>1. Vào edit</td><td>Tất cả tab hiện data đã lưu</td><td></td></tr>
+    <tr><td>LTH_003.002</td><td><span class="tag tag-func">Chức năng</span></td><td>Sửa tên + lưu</td><td>1. Đổi tên<br>2. Lưu</td><td>Toast "Cập nhật thành công". Tên mới hiện</td><td></td></tr>
+    <tr><td>LTH_003.003</td><td><span class="tag tag-func">Chức năng</span></td><td>Thêm/bớt khoá khi sửa</td><td>1. Xoá 1 + thêm 2<br>2. Lưu</td><td>Subjects sync đúng. sort_order cập nhật</td><td></td></tr>
+    <tr><td>LTH_003.004</td><td><span class="tag tag-func">Chức năng</span></td><td>Đổi result_rule</td><td>1. Đổi sang MIN_PERCENT<br>2. Nhập 60%<br>3. Lưu</td><td>Data update đúng</td><td></td></tr>
+    <tr><td>LTH_003.005</td><td><span class="tag tag-func">Chức năng</span></td><td>Thay đổi assignees</td><td>1. Bỏ 1, thêm 1<br>2. Lưu</td><td>Assignees sync đúng</td><td></td></tr>
+    <tr><td>LTH_003.006</td><td><span class="tag tag-func">Chức năng</span></td><td>Không cho sửa Đang dùng</td><td>1. Truy cập edit cho status=2</td><td>Form read-only hoặc redirect</td><td></td></tr>
+    <tr><td>LTH_003.007</td><td><span class="tag tag-func">Chức năng</span></td><td>Không cho sửa Khoá</td><td>1. Truy cập edit cho status=3</td><td>Form read-only hoặc redirect</td><td></td></tr>
+    </table>
+
+    <!-- ===== IV. XEM CHI TIẾT ===== -->
+    <h2>IV. XEM CHI TIẾT</h2>
+    <p><strong>URL:</strong> <code>/training/learning-path/{id}</code></p>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_004.001</td><td><span class="tag tag-page">Giao diện</span></td><td>Hiển thị đầy đủ 4 tab read-only</td><td>1. Vào chi tiết</td><td>Data hiện đúng. Không có field editable</td><td></td></tr>
+    <tr><td>LTH_004.002</td><td><span class="tag tag-func">Chức năng</span></td><td>Nút Sửa chỉ hiện cho Nháp</td><td>1. Quan sát nút hành động</td><td>Nháp: nút Sửa hiện. Đang dùng/Khoá: ẩn</td><td></td></tr>
+    <tr><td>LTH_004.003</td><td><span class="tag tag-page">Giao diện</span></td><td>Danh sách khoá + bài học lồng nhau</td><td>1. Xem tab Thông tin</td><td>Mỗi khoá: tên, bắt buộc/tuỳ chọn, lessons + exams</td><td></td></tr>
+    <tr><td>LTH_004.004</td><td><span class="tag tag-page">Giao diện</span></td><td>Thông tin người tạo + cập nhật</td><td>1. Xem meta</td><td>Hiện đúng tên + thời gian</td><td></td></tr>
+    <tr><td>LTH_004.005</td><td><span class="tag tag-edge">Edge case</span></td><td>Lộ trình không tồn tại</td><td>1. Mở /training/learning-path/99999</td><td>404 hoặc thông báo lỗi</td><td></td></tr>
+    </table>
+
+    <!-- ===== V. XOÁ ===== -->
+    <h2>V. XOÁ LỘ TRÌNH HỌC</h2>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_005.001</td><td><span class="tag tag-func">Chức năng</span></td><td>Xoá Nháp thành công</td><td>1. Xoá<br>2. Confirm</td><td>Xoá thành công + cascade subjects/assignees</td><td></td></tr>
+    <tr><td>LTH_005.002</td><td><span class="tag tag-func">Chức năng</span></td><td>Xoá Đang dùng bị chặn</td><td>1. API DELETE status=2</td><td>400: "Chỉ xoá được trạng thái Nháp"</td><td></td></tr>
+    <tr><td>LTH_005.003</td><td><span class="tag tag-func">Chức năng</span></td><td>Xoá Khoá bị chặn</td><td>1. API DELETE status=3</td><td>400: "Chỉ xoá được trạng thái Nháp"</td><td></td></tr>
+    <tr><td>LTH_005.004</td><td><span class="tag tag-func">Chức năng</span></td><td>Huỷ modal xác nhận</td><td>1. Click Huỷ</td><td>Modal đóng, data giữ nguyên</td><td></td></tr>
+    </table>
+
+    <!-- ===== VI. API VALIDATION ===== -->
+    <h2>VI. API - VALIDATION & SECURITY</h2>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_006.001</td><td><span class="tag tag-api">API/Data</span></td><td>store thiếu name → 422</td><td>1. POST thiếu name</td><td>422: name required</td><td></td></tr>
+    <tr><td>LTH_006.002</td><td><span class="tag tag-api">API/Data</span></td><td>status invalid → 422</td><td>1. POST status=5</td><td>422: status in 1,2,3</td><td></td></tr>
+    <tr><td>LTH_006.003</td><td><span class="tag tag-api">API/Data</span></td><td>result_rule invalid → 422</td><td>1. POST result_rule="INVALID"</td><td>422: result_rule invalid</td><td></td></tr>
+    <tr><td>LTH_006.004</td><td><span class="tag tag-api">API/Data</span></td><td>MIN_PERCENT thiếu percent → 422</td><td>1. POST MIN_PERCENT không có %</td><td>422: required_if fail</td><td></td></tr>
+    <tr><td>LTH_006.005</td><td><span class="tag tag-api">API/Data</span></td><td>subjects.*.subject_id required</td><td>1. POST subjects thiếu subject_id</td><td>422: subject_id required</td><td></td></tr>
+    <tr><td>LTH_006.006</td><td><span class="tag tag-api">API/Data</span></td><td>assignee_type invalid</td><td>1. POST type="invalid"</td><td>422: not in allowed values</td><td></td></tr>
+    <tr><td>LTH_006.007</td><td><span class="tag tag-api">API/Data</span></td><td>assignment_mode invalid</td><td>1. POST mode="optional"</td><td>422: not in allowed values</td><td></td></tr>
+    <tr><td>LTH_006.008</td><td><span class="tag tag-api">API/Data</span></td><td>training_type_id not exists</td><td>1. POST id=99999</td><td>422: exists validation fail</td><td></td></tr>
+    <tr><td>LTH_006.009</td><td><span class="tag tag-api">API/Data</span></td><td>getAll chỉ trả Active</td><td>1. GET /getAll</td><td>Chỉ có status=2</td><td></td></tr>
+    <tr><td>LTH_006.010</td><td><span class="tag tag-api">API/Data</span></td><td>getNextCode format đúng</td><td>1. GET /get-next-code</td><td>LP-YYYY-NNNNN regex match</td><td></td></tr>
+    <tr><td>LTH_006.011</td><td><span class="tag tag-api">API/Data</span></td><td>toggleLock Active → 400</td><td>1. POST toggle-lock cho status=2</td><td>400 error</td><td></td></tr>
+    <tr><td>LTH_006.012</td><td><span class="tag tag-api">API/Data</span></td><td>delete non-Draft → 400</td><td>1. DELETE status=2</td><td>400 error</td><td></td></tr>
+    <tr><td>LTH_006.013</td><td><span class="tag tag-api">API/Data</span></td><td>User không permission → 403</td><td>1. Gọi API without permission</td><td>403 Forbidden</td><td></td></tr>
+    </table>
+
+    <!-- ===== VII. E2E ===== -->
+    <h2>VII. BUSINESS RULES & LUỒNG E2E</h2>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_007.001</td><td><span class="tag tag-func">Chức năng</span></td><td>Happy path: Tạo → Active → Khoá → Mở khoá</td><td>1. Tạo Nháp<br>2. Sửa → Đang dùng<br>3. Toggle Khoá (fail)<br>4. Sửa → Nháp<br>5. Toggle Khoá (OK)<br>6. Toggle Mở khoá</td><td>Luồng 1→2→(chặn)→1→3→1</td><td></td></tr>
+    <tr><td>LTH_007.002</td><td><span class="tag tag-func">Chức năng</span></td><td>E2E: Tạo đầy đủ 4 tab</td><td>1. Tab Info: 5 khoá<br>2. Tab KQ: MIN_PERCENT 80%<br>3. Tab Người học: PB + Position<br>4. Tab Chứng chỉ: template<br>5. Lưu Active</td><td>Xem chi tiết hiện đúng tất cả</td><td></td></tr>
+    <tr><td>LTH_007.003</td><td><span class="tag tag-func">Chức năng</span></td><td>Mã code auto-increment</td><td>1. Tạo A → 00001<br>2. Tạo B → 00002<br>3. Xoá A<br>4. Tạo C</td><td>C = 00003 (dựa max id, không tái dùng)</td><td></td></tr>
+    <tr><td>LTH_007.004</td><td><span class="tag tag-api">API/Data</span></td><td>Sync subjects khi update</td><td>1. Sửa: xoá hết + thêm mới<br>2. Lưu<br>3. Check DB</td><td>Bảng learning_path_subjects chỉ chứa records mới</td><td></td></tr>
+    <tr><td>LTH_007.005</td><td><span class="tag tag-api">API/Data</span></td><td>Sync assignees khi update</td><td>1. Sửa assignees<br>2. Lưu<br>3. Check DB</td><td>Bảng learning_path_assignees sync đúng</td><td></td></tr>
+    <tr><td>LTH_007.006</td><td><span class="tag tag-api">API/Data</span></td><td>Xoá cascade subjects + assignees</td><td>1. Xoá lộ trình<br>2. Check DB</td><td>Cả 3 bảng đều xoá records tương ứng</td><td></td></tr>
+    </table>
+
+    <!-- ===== VIII. EDGE CASES ===== -->
+    <h2>VIII. EDGE CASES</h2>
+    <table>
+    <tr><th style="width:70px">ID</th><th style="width:80px">Loại</th><th style="width:200px">Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+    <tr><td>LTH_008.001</td><td><span class="tag tag-edge">Edge case</span></td><td>Lộ trình không có khoá (subjects rỗng)</td><td>1. Lưu không thêm khoá</td><td>API cho phép (nullable). UI nên warning</td><td></td></tr>
+    <tr><td>LTH_008.002</td><td><span class="tag tag-edge">Edge case</span></td><td>Lộ trình không có assignees</td><td>1. Lưu không thêm người học</td><td>API cho phép. Lộ trình chưa gán ai</td><td></td></tr>
+    <tr><td>LTH_008.003</td><td><span class="tag tag-edge">Edge case</span></td><td>Thêm cùng 1 subject 2 lần</td><td>1. Thêm khoá A<br>2. Thêm khoá A lần nữa</td><td>FE chặn trùng hoặc API deduplicate</td><td></td></tr>
+    <tr><td>LTH_008.004</td><td><span class="tag tag-edge">Edge case</span></td><td>admin_note > 500 ký tự</td><td>1. Nhập 510 ký tự<br>2. Lưu</td><td>422: max 500</td><td></td></tr>
+    <tr><td>LTH_008.005</td><td><span class="tag tag-edge">Edge case</span></td><td>certificate_template_url > 500</td><td>1. URL quá dài</td><td>422: max 500</td><td></td></tr>
+    <tr><td>LTH_008.006</td><td><span class="tag tag-edge">Edge case</span></td><td>Sort + Filter + Pagination kết hợp</td><td>1. Filter<br>2. Sort<br>3. Chuyển trang</td><td>Trang 2 giữ filter + sort, data nhất quán</td><td></td></tr>
+    <tr><td>LTH_008.007</td><td><span class="tag tag-edge">Edge case</span></td><td>subject_id không tồn tại</td><td>1. API subjects=[{subject_id:99999}]</td><td>Xử lý graceful, không crash 500</td><td></td></tr>
+    <tr><td>LTH_008.008</td><td><span class="tag tag-edge">Edge case</span></td><td>Concurrent update cùng lộ trình</td><td>1. 2 user save cùng lúc</td><td>Last-write-wins, không crash</td><td></td></tr>
+    <tr><td>LTH_008.009</td><td><span class="tag tag-edge">Edge case</span></td><td>Toggle lock ID không tồn tại</td><td>1. POST toggle-lock /99999</td><td>404</td><td></td></tr>
+    <tr><td>LTH_008.010</td><td><span class="tag tag-edge">Edge case</span></td><td>result_min_pass_percent khi rule khác</td><td>1. POST ALL_COURSES + percent=80</td><td>API bỏ qua %, không lỗi</td><td></td></tr>
+    </table>
+
+    <hr style="margin-top: 30px;">
+    <p style="color: #666; font-size: 11px;">Generated: 2026-05-05 | Module: Training/LearningPath | Total: 88 test cases</p>
+</body>
+</html>

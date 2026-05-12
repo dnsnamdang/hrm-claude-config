@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cases — Yêu cầu điều chỉnh giải pháp (YCĐC GP)</title>
+    <style>
+        :root { --primary: #4a7cfb; --success: #22c55e; --warning: #d4a03c; --danger: #e25c5c; --border: #dee2e6; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; color: #333; line-height: 1.5; background: #f8f9fa; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 25px 30px; background: #fff; min-height: 100vh; }
+        h1 { font-size: 22px; color: var(--primary); border-bottom: 3px solid var(--primary); padding-bottom: 8px; margin-bottom: 10px; }
+        h2 { font-size: 17px; color: #2c3e50; margin-top: 30px; margin-bottom: 10px; border-bottom: 2px solid var(--border); padding-bottom: 6px; }
+        p { font-size: 13px; margin-bottom: 8px; }
+        .summary-box { background: #f1f3f5; padding: 12px 18px; border-radius: 6px; margin: 12px 0 20px; font-size: 13px; display: flex; gap: 20px; flex-wrap: wrap; }
+        .summary-box span { font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin: 8px 0 18px; font-size: 12px; }
+        th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+        th { background: #4472C4; color: #fff; font-weight: 600; font-size: 11px; text-align: center; }
+        tr:nth-child(even) { background: #fafbfc; }
+        td:nth-child(1) { width: 100px; font-family: Consolas, monospace; font-size: 11px; }
+        td:nth-child(2) { width: 70px; text-align: center; }
+        td:nth-child(6) { width: 50px; text-align: center; }
+        code { background: #e9ecef; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+        .tag { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+        .tag-page { background: #dbeafe; color: #1e40af; }
+        .tag-func { background: #dcfce7; color: #166534; }
+        .tag-edge { background: #fef3c7; color: #92400e; }
+        .tag-api { background: #e0e7ff; color: #3730a3; }
+        .p0 { color: #dc2626; font-weight: 700; }
+        .p1 { color: #d97706; font-weight: 600; }
+        .p2 { color: #6b7280; }
+        @media print { .container { padding: 10px; } h2 { break-before: auto; } table { font-size: 11px; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>TEST CASES UI — YÊU CẦU ĐIỀU CHỈNH GIẢI PHÁP (YCĐC GP)</h1>
+<p>Dự án: ERP TPE — Module Giao việc (Assign) | Ngày: 2026-05-06 | Phiên bản: 1.0</p>
+
+<div class="summary-box">
+    <div>Tổng: <span>47 test cases</span></div>
+    <div>P0: <span>28</span></div>
+    <div>P1: <span>19</span></div>
+    <div>Sections: <span>8</span></div>
+    <div>Màn hình: <span>2</span> (KD + TP/PM)</div>
+</div>
+
+<!-- I. GIAO DIỆN MÀN KD -->
+<h2>I. Giao diện — Màn KD (Dự án TKT > Tab GP > YCĐC)</h2>
+<p><strong>URL:</strong> <code>/assign/prospective-projects/:id/manager</code> → Tab "Giải pháp" → Tab con "Yêu cầu điều chỉnh GP"</p>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_001.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Hiển thị tab con "Yêu cầu điều chỉnh GP"</td>
+    <td>1. Vào chi tiết Dự án TKT<br>2. Click tab "Giải pháp"</td>
+    <td>Tab "Giải pháp" tách 2 tab con: "Thông tin giải pháp" (mặc định) + "Yêu cầu điều chỉnh GP"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.002</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Bảng danh sách hiển thị đầy đủ cột</td>
+    <td>1. Click tab con "YCĐC GP"</td>
+    <td>Bảng: STT, Mã yêu cầu, Version, Người yêu cầu, Ngày gửi, Trạng thái. <strong>Không có</strong> cột Hành động (màn KD)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.003</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Hiện nút "Tạo yêu cầu" khi user là KD + GP đã duyệt</td>
+    <td>1. Đăng nhập KD phụ trách<br>2. GP status = 11<br>3. Vào tab YCĐC GP</td>
+    <td>Nút "Tạo yêu cầu" hiển thị góc phải</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.004</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Ẩn nút "Tạo yêu cầu" khi không phải KD phụ trách</td>
+    <td>1. Đăng nhập user khác<br>2. Vào cùng dự án<br>3. Vào tab YCĐC GP</td>
+    <td>Không hiện nút "Tạo yêu cầu"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.005</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Ẩn nút "Tạo yêu cầu" khi GP chưa đến status cho phép</td>
+    <td>1. Đăng nhập KD phụ trách<br>2. GP status = Nháp (1)<br>3. Vào tab YCĐC GP</td>
+    <td>Không hiện nút "Tạo yêu cầu"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.006</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1 — Empty state khi chưa có YCĐC</td>
+    <td>1. Vào tab YCĐC GP (chưa có phiếu)</td>
+    <td>"Chưa có yêu cầu điều chỉnh giải pháp nào."</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.007</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Badge trạng thái đúng màu</td>
+    <td>1. Quan sát cột Trạng thái</td>
+    <td>Đã gửi = #2563EB (xanh dương)<br>Tiếp nhận = #16A34A (xanh lá)<br>Từ chối = #DC2626 (đỏ)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.008</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1 — Cột Version hiển thị đúng</td>
+    <td>1. Quan sát cột Version</td>
+    <td>Hiện "V1", "V2"... tương ứng version tại thời điểm tạo phiếu</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.009</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Click mã yêu cầu → mở popup chi tiết</td>
+    <td>1. Click mã "YCDCGP.00001"</td>
+    <td>Popup "Chi tiết yêu cầu điều chỉnh GP" dạng bảng text: Mã, GP, Người YC, Ngày gửi, Trạng thái, Nội dung</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.010</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1 — Popup chi tiết dạng bảng gọn (không input)</td>
+    <td>1. Mở popup chi tiết</td>
+    <td>Dạng table bordered, mỗi dòng: label bold + giá trị text. Không dùng input/textarea disabled</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.011</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Popup chi tiết hiện lý do từ chối khi status = 3</td>
+    <td>1. Click mã phiếu bị từ chối</td>
+    <td>Hiện thêm: "Lý do từ chối" + "Người xử lý — Ngày xử lý"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.012</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1 — Popup chi tiết hiện file đính kèm</td>
+    <td>1. Click mã phiếu có file</td>
+    <td>Hiện dòng "File đính kèm" với bảng file</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_001.013</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1 — Phân trang hoạt động</td>
+    <td>1. Có > 20 phiếu<br>2. Click trang 2</td>
+    <td>Bảng chuyển trang 2, STT tính tiếp (21, 22...)</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- II. TẠO YÊU CẦU -->
+<h2>II. Tạo yêu cầu điều chỉnh</h2>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_002.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Popup tạo hiển thị đúng layout</td>
+    <td>1. Click "Tạo yêu cầu"</td>
+    <td>Popup: GP readonly + Nội dung textarea + File đính kèm + Footer: "Gửi" | "Đóng"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Tạo YCĐC thành công (happy path)</td>
+    <td>1. Nhập nội dung<br>2. Click "Gửi"</td>
+    <td>Toast "Gửi yêu cầu điều chỉnh thành công". Popup đóng. Danh sách hiện phiếu mới: YCDCGP.XXXXX, "Đã gửi"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1 — Tạo YCĐC với file đính kèm</td>
+    <td>1. Nhập nội dung<br>2. Thêm file<br>3. Click "Gửi"</td>
+    <td>Tạo thành công. Xem chi tiết → hiện file</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p0">P0 — Validate: nội dung trống</td>
+    <td>1. Để trống nội dung<br>2. Click "Gửi"</td>
+    <td>Lỗi: "Nội dung điều chỉnh không được để trống". Không gọi API</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.005</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p1">P1 — Validate: nội dung chỉ khoảng trắng</td>
+    <td>1. Nhập "   "<br>2. Click "Gửi"</td>
+    <td>Lỗi: "Nội dung điều chỉnh không được để trống"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.006</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Mã phiếu tự sinh đúng format</td>
+    <td>1. Tạo phiếu<br>2. Xem mã</td>
+    <td>Format: YCDCGP.XXXXX (5 chữ số zero-pad). VD: YCDCGP.00001</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.007</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Version snapshot tại thời điểm tạo</td>
+    <td>1. GP ở V2<br>2. Tạo YCĐC<br>3. Xem chi tiết</td>
+    <td>Cột Version = "V2". Chi tiết: "GP.XXXXX - Tên GP (V2)"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.008</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1 — Button "Gửi" hiện loading khi submit</td>
+    <td>1. Click "Gửi"</td>
+    <td>Button hiện loading spinner. "Đóng" bị disabled</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.009</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1 — Đóng popup → reset form</td>
+    <td>1. Nhập nội dung<br>2. Click "Đóng"<br>3. Mở lại</td>
+    <td>Form reset: nội dung trống, file trống</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_002.010</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Tạo phiếu mới sau khi phiếu trước bị từ chối</td>
+    <td>1. Có phiếu bị từ chối<br>2. Tạo phiếu mới</td>
+    <td>Tạo thành công. Danh sách hiện cả phiếu cũ (Từ chối) + mới (Đã gửi)</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- III. GIAO DIỆN MÀN TP/PM -->
+<h2>III. Giao diện — Màn TP/PM (Quản lý GP > Tab YC Điều chỉnh)</h2>
+<p><strong>URL:</strong> <code>/assign/solutions/:id/manager</code> → Tab "YC Điều chỉnh"</p>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_003.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Tab "YC Điều chỉnh" hiển thị trên màn quản lý GP</td>
+    <td>1. Vào /assign/solutions/:id/manager</td>
+    <td>Có tab "YC Điều chỉnh" với icon ri-edit-2-line</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_003.002</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Bảng có cột Hành động</td>
+    <td>1. Click tab "YC Điều chỉnh"</td>
+    <td>7 cột: STT, Mã YC, Version, Người YC, Ngày gửi, Trạng thái, <strong>Hành động</strong></td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_003.003</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Buttons hành động luôn hiển thị (không chỉ hover)</td>
+    <td>1. Không hover vào dòng<br>2. Quan sát cột Hành động</td>
+    <td>Các icon luôn hiện: 👁 Xem | ✓ Tiếp nhận (xanh) | ✗ Từ chối (đỏ)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_003.004</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Không hiện nút "Tạo yêu cầu" trên màn TP/PM</td>
+    <td>1. Quan sát góc phải</td>
+    <td>Không có nút "Tạo yêu cầu"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_003.005</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Ẩn nút Tiếp nhận/Từ chối khi phiếu đã xử lý</td>
+    <td>1. Quan sát phiếu status "Tiếp nhận" hoặc "Từ chối"</td>
+    <td>Chỉ hiện 👁 Xem. Không hiện ✓/✗</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_003.006</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0 — Popup chi tiết có nút Tiếp nhận/Từ chối</td>
+    <td>1. Click 👁 xem phiếu "Đã gửi"</td>
+    <td>Footer: "Tiếp nhận" (xanh) | "Từ chối" (đỏ) | "Đóng"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_003.007</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1 — Popup chi tiết ẩn nút duyệt khi đã xử lý</td>
+    <td>1. Click 👁 xem phiếu "Tiếp nhận"</td>
+    <td>Footer chỉ có "Đóng"</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- IV. TIẾP NHẬN -->
+<h2>IV. Tiếp nhận yêu cầu</h2>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_004.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Tiếp nhận từ cột Hành động</td>
+    <td>1. Click ✓ trên dòng phiếu<br>2. Popup xác nhận hiện<br>3. Click "Đồng ý"</td>
+    <td>Toast "Đã tiếp nhận YC điều chỉnh". Badge → "Tiếp nhận" (xanh lá). Không còn nút ✓/✗</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_004.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Tiếp nhận từ popup chi tiết</td>
+    <td>1. Mở chi tiết phiếu "Đã gửi"<br>2. Click "Tiếp nhận"<br>3. Popup chi tiết đóng → confirm hiện<br>4. Click "Đồng ý"</td>
+    <td>Toast thành công. Danh sách reload</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_004.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1 — Hủy tiếp nhận</td>
+    <td>1. Click ✓<br>2. Click "Không" trên confirm</td>
+    <td>Popup đóng, phiếu giữ status "Đã gửi"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_004.004</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Ghi nhận người xử lý + thời gian</td>
+    <td>1. Tiếp nhận phiếu<br>2. Xem chi tiết</td>
+    <td>Hiện "Người xử lý": Tên TP/PM — dd/mm/yyyy</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- V. TỪ CHỐI -->
+<h2>V. Từ chối yêu cầu</h2>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_005.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Từ chối từ cột Hành động</td>
+    <td>1. Click ✗ trên dòng<br>2. Popup từ chối mở<br>3. Nhập lý do<br>4. Click "Gửi"</td>
+    <td>Toast "Đã từ chối YC điều chỉnh". Badge → "Từ chối" (đỏ)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_005.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Từ chối từ popup chi tiết</td>
+    <td>1. Mở chi tiết<br>2. Click "Từ chối" (đỏ)<br>3. Popup chi tiết đóng → popup từ chối mở<br>4. Nhập lý do → "Gửi"</td>
+    <td>Toast thành công. Danh sách reload</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_005.003</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p0">P0 — Validate: lý do trống</td>
+    <td>1. Để trống lý do<br>2. Click "Gửi"</td>
+    <td>Lỗi: "Lý do từ chối không được để trống". Không gọi API</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_005.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p1">P1 — Validate: lý do chỉ khoảng trắng</td>
+    <td>1. Nhập "   "<br>2. Click "Gửi"</td>
+    <td>Lỗi: "Lý do từ chối không được để trống"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_005.005</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Lý do từ chối hiện trong chi tiết</td>
+    <td>1. Từ chối phiếu<br>2. Xem chi tiết</td>
+    <td>Hiện "Lý do từ chối" + "Người xử lý — Ngày"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_005.006</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1 — Hủy từ chối</td>
+    <td>1. Mở popup từ chối<br>2. Click "Đóng"</td>
+    <td>Popup đóng, phiếu giữ status "Đã gửi"</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- VI. NOTIFICATION -->
+<h2>VI. Thông báo (Notification)</h2>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_006.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — PM nhận thông báo khi KD tạo YCĐC</td>
+    <td>1. KD tạo phiếu<br>2. Đăng nhập PM</td>
+    <td>Thông báo: "Yêu cầu điều chỉnh giải pháp mới" + nội dung chi tiết</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_006.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — TP phòng nhận thông báo</td>
+    <td>1. KD tạo phiếu<br>2. Đăng nhập TP</td>
+    <td>TP nhận thông báo tương tự PM</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_006.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — Click thông báo → đúng màn hình + tab</td>
+    <td>1. Click thông báo</td>
+    <td>Chuyển đến <code>/assign/solutions/{id}/manager?active_tab=adjustment-requests</code><br>Tab "YC Điều chỉnh" active</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_006.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p1">P1 — Không gửi trùng nếu PM = TP</td>
+    <td>1. PM đồng thời là TP<br>2. KD tạo phiếu</td>
+    <td>Chỉ nhận 1 thông báo (deduplicate)</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- VII. PHÂN QUYỀN -->
+<h2>VII. Phân quyền & Bảo mật</h2>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_007.001</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p0">P0 — User không phải KD → API trả 422</td>
+    <td>1. POST .../solution-adjustment-requests với user khác</td>
+    <td>HTTP 422: "Chỉ nhân viên KD phụ trách dự án mới được tạo yêu cầu điều chỉnh"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_007.002</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p0">P0 — User không phải TP/PM → không duyệt được</td>
+    <td>1. PUT .../accept với user không phải TP/PM</td>
+    <td>is_can_accept = false trên FE. BE kiểm tra isCurrentUserTPOrPM()</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_007.003</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p0">P0 — Tạo YCĐC cho GP status không hợp lệ</td>
+    <td>1. POST với solution_id = GP nháp</td>
+    <td>HTTP 422: "Giải pháp chưa được duyệt, không thể tạo yêu cầu điều chỉnh"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_007.004</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p0">P0 — Tạo YCĐC cho GP không thuộc dự án</td>
+    <td>1. POST trên dự án B với solution_id thuộc dự án A</td>
+    <td>HTTP 422: "Giải pháp không thuộc dự án này"</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- VIII. E2E -->
+<h2>VIII. E2E Flow</h2>
+<table>
+<tr><th>ID</th><th>Loại</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th>KQ</th></tr>
+
+<tr>
+    <td>YCDC_008.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — E2E: KD tạo → TP tiếp nhận</td>
+    <td>1. [KD] Tạo YCĐC<br>2. [TP/PM] Nhận thông báo → click<br>3. [TP/PM] Tab YC Điều chỉnh → Tiếp nhận<br>4. [KD] Reload → status "Tiếp nhận"</td>
+    <td>Toàn bộ flow: phiếu đúng mã, notification đúng người, click đúng trang, tiếp nhận ghi nhận người xử lý, KD thấy cập nhật</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_008.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0 — E2E: KD tạo → PM từ chối → KD tạo lại</td>
+    <td>1. [KD] Tạo YCĐC<br>2. [PM] Từ chối + lý do<br>3. [KD] Xem chi tiết → thấy từ chối + lý do<br>4. [KD] Tạo phiếu mới<br>5. [PM] Nhận thông báo mới</td>
+    <td>KD thấy lý do từ chối. KD tạo phiếu mới OK. PM nhận thông báo phiếu mới</td>
+    <td></td>
+</tr>
+<tr>
+    <td>YCDC_008.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1 — E2E: Nhiều phiếu cùng 1 GP</td>
+    <td>1. [KD] Tạo 2 phiếu<br>2. [TP] Tiếp nhận phiếu 1<br>3. [TP] Từ chối phiếu 2</td>
+    <td>Danh sách: phiếu 1 "Tiếp nhận" (xanh lá), phiếu 2 "Từ chối" (đỏ). Mã tăng dần</td>
+    <td></td>
+</tr>
+</table>
+
+</div>
+</body>
+</html>

@@ -42,3 +42,4 @@ Hoàn thiện chức năng quản lý BOM List trong module Giao việc. BOM Lis
 4. Trang danh sách cần hiển thị BOM của tất cả dự án hay chỉ trong context 1 giải pháp cụ thể?
 5. Có cần phân quyền riêng cho BOM (ai được tạo/sửa/xoá) hay dùng chung quyền của giải pháp/hạng mục?
 
+
