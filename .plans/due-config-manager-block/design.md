@@ -2,36 +2,25 @@
 
 ## Bối cảnh
 
-Hệ thống đã có Tab 1 "Chặn nhân viên" (middleware `CheckDueConfigs`, bảng `due_configs` + `company_due_configs`). Yêu cầu: thêm Tab 2 "Chặn trưởng phòng duyệt" + lịch sử chỉnh sửa. TP bị chặn duyệt nếu BẤT KỲ NV nào trong phòng do TP quản lý có quá hạn (hàng mượn/giữ/NXT).
+Tab 2 "Chặn trưởng phòng duyệt" đã triển khai xong (middleware, service, UI config, hook routes). Yêu cầu mới: **sửa cách hiển thị thông báo chặn** từ text/toast → popup (modal) hiển thị danh sách NV quá hạn + xuất Excel.
 
-## Thay đổi
+Spec chi tiết: `docs/superpowers/specs/2026-05-05-due-config-manager-block-popup-design.md`
 
-### Phase 1: DB + Seed + UI config
+## Phase đã hoàn thành (trước đó)
 
-**Migration:**
-- `due_configs`: thêm cột `tab tinyint default 1` (1=chặn NV, 2=chặn TP)
-- Bảng mới `due_config_histories`: id, content text, updated_by bigint FK employees, created_at
+- Phase 1: DB + Seed + UI config ✅
+- Phase 2: Logic chặn TP (ERP) ✅
+- Phase 3: Hook vào routes ✅
 
-**Seed:** 30 records `due_configs` tab=2 (danh sách phiếu duyệt theo spec)
+## Phase 4: Popup thông báo + Xuất Excel (mới)
 
-**View `due_configs/edit.blade.php`:** Tab 2 checkboxes + bảng lịch sử chỉnh sửa (STT, Thời gian, Nội dung, Người cập nhật)
+**API mới:** `GET /api/v1/due-configs/overdue-employees` — trả danh sách NV quá hạn (JSON) hoặc file Excel (export=1)
 
-**Controller `update()`:** So sánh before/after → ghi log vào `due_config_histories`
+**ERP frontend:** Modal Bootstrap hiển thị bảng NV quá hạn khi AJAX approve bị chặn + nút xuất Excel
 
-### Phase 2: Logic chặn TP (ERP)
+**HRM frontend:** Sửa axios interceptor nhận diện 403 quá hạn → hiển thị global modal (BootstrapVue) + nút xuất Excel
 
-**Service `DueConfigBlockService`:**
-- `isManagerBlocked($userId, $actionName)`: query `employee_manage_departments` → lấy NV trong phòng → check 3 loại quá hạn → check `company_due_configs` tab=2
-- Reuse logic detection quá hạn từ middleware `CheckDueConfigs` hiện có
-
-**API cho HRM:** `GET /api/v1/due-configs/check-manager-block?user_id=X&action=Y`
-
-### Phase 3: Hook vào routes
-
-**ERP:** Middleware `checkDueConfigsManager` hoặc gọi service trong controller approve
-**HRM (hrm-api):** Gọi HTTP sang ERP API trước khi approve (pattern `ErpApiService`)
+**HRM API:** Proxy endpoint gọi ERP API
 
 ## Không thay đổi
-- Tab 1 logic hiện tại
-- Bảng `company_due_configs` dùng chung
-- 3 loại quá hạn detection — reuse
+- Logic chặn 3 loại quá hạn, middleware, Tab 1, Tab 2 config UI

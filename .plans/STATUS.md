@@ -42,6 +42,18 @@
 - my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
   Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
   Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+- due-config-manager-block → @nguyentrancu97 → .plans/due-config-manager-block/plan.md
+  Trạng thái: Phase 4 code DONE (2026-05-05). Popup danh sách NV quá hạn + xuất Excel khi TP bị chặn duyệt. BE: API endpoint + Excel export (ERP + HRM proxy). FE: ajaxComplete intercept + modal Bootstrap (ERP) + OverdueEmployeesModal.vue (HRM). Chờ user test.
+  Spec: docs/superpowers/specs/2026-05-05-due-config-manager-block-popup-design.md
+
+- search-product-sellable-stock → @nguyentrancu97 → .plans/search-product-sellable-stock/plan.md
+  Trạng thái: Code DONE (2026-05-06). Đổi cột in_stock popup searchProduct từ tồn sổ sách sang tồn có thể bán (trừ prepick + hold + YCXK). Chờ user test.
+  Spec: docs/superpowers/specs/2026-05-06-search-product-sellable-stock-design.md
+
+- supplier-debt-detail-popup → @nguyentrancu97 → .plans/supplier-debt-detail-popup/plan.md
+  Trạng thái: Code DONE (2026-05-05). Popup chi tiết phát sinh 5 cột trên 2 màn công nợ NCC. Chờ user test.
+  Spec: docs/superpowers/specs/2026-05-05-supplier-debt-detail-popup-design.md
+
 - xuat-ghep-tu-hang-giu → @nguyentrancu97 → .plans/xuat-ghep-tu-hang-giu/plan.md
   Trạng thái: Brainstorming PAUSED 2026-04-28. Đã chốt 7 quyết định (hiển thị tồn/giữ qua API stockOfProducts, validate `qty ≤ in_stock + prepick_qty`, cascade nhập ghép giữ toàn bộ thành phẩm, customer per-parent, hạn giữ = today + Config.max_prepick_date, xuất thẳng tái sử dụng pattern export_prepick_qty/hold_qty/total_qty + FIFO consume). Còn 6 câu hỏi mở (Q6-Q11): customer_id cấp nào, validate hạn giữ, approval, pending lock prepick, popup filter, edit/cancel. (TanPhatDev)
   Checkpoint: 2026-04-28 — Paused tại Q6 (customer_id lưu cấp parent vs recipe + cascade khi YCXG có >1 customer).
