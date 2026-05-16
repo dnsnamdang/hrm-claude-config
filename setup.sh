@@ -9,7 +9,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-SYMLINK_ITEMS=(".claude" ".plans" "docs" "CLAUDE.md")
+SYMLINK_ITEMS=(".claude" ".plans" "docs" "CLAUDE.md" ".gitignore")
 
 usage() {
     echo "Usage:"
@@ -81,24 +81,6 @@ do_link() {
         fi
     done
 
-    # .gitignore.project → copy thành .gitignore
-    local gitignore_src="$project_dir/.gitignore.project"
-    local gitignore_target="$target_path/.gitignore"
-
-    if [ -f "$gitignore_src" ]; then
-        if [ -f "$gitignore_target" ] && [ ! -L "$gitignore_target" ]; then
-            if ask_overwrite ".gitignore"; then
-                cp "$gitignore_src" "$gitignore_target"
-                echo -e "${GREEN}[OK] .gitignore → copy${NC}"
-            else
-                echo -e "${YELLOW}[SKIP] .gitignore — giữ nguyên${NC}"
-            fi
-        else
-            cp "$gitignore_src" "$gitignore_target"
-            echo -e "${GREEN}[OK] .gitignore → copy${NC}"
-        fi
-    fi
-
     echo "---"
     echo -e "${GREEN}Done!${NC}"
 }
@@ -139,7 +121,7 @@ STATUS_EOF
 (Cập nhật hướng dẫn cho project tại đây)
 CLAUDE_EOF
 
-    cat > "$project_dir/.gitignore.project" << 'GI_EOF'
+    cat > "$project_dir/.gitignore" << 'GI_EOF'
 # Repo con (API + Client)
 *-api/
 *-client/
