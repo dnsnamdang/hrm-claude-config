@@ -25,7 +25,7 @@ usage() {
 ask_overwrite() {
     local target="$1"
     echo -e "${YELLOW}[!] '$target' đã tồn tại và không phải symlink.${NC}"
-    read -p "    Overwrite (backup cũ rồi tạo symlink)? [y/N] " answer
+    read -p "    Overwrite? [y/N] " answer
     case "$answer" in
         [yY]) return 0 ;;
         *) return 1 ;;
@@ -69,10 +69,9 @@ do_link() {
             echo -e "${GREEN}[OK] $item → symlink (đã thay symlink cũ)${NC}"
         elif [ -e "$target" ]; then
             if ask_overwrite "$item"; then
-                local backup="${target}.backup.$(date +%Y%m%d%H%M%S)"
-                mv "$target" "$backup"
+                rm -rf "$target"
                 ln -s "$source" "$target"
-                echo -e "${GREEN}[OK] $item → symlink (backup: $(basename "$backup"))${NC}"
+                echo -e "${GREEN}[OK] $item → symlink${NC}"
             else
                 echo -e "${YELLOW}[SKIP] $item — giữ nguyên${NC}"
             fi
@@ -89,10 +88,8 @@ do_link() {
     if [ -f "$gitignore_src" ]; then
         if [ -f "$gitignore_target" ] && [ ! -L "$gitignore_target" ]; then
             if ask_overwrite ".gitignore"; then
-                local backup="${gitignore_target}.backup.$(date +%Y%m%d%H%M%S)"
-                cp "$gitignore_target" "$backup"
                 cp "$gitignore_src" "$gitignore_target"
-                echo -e "${GREEN}[OK] .gitignore → copy (backup: $(basename "$backup"))${NC}"
+                echo -e "${GREEN}[OK] .gitignore → copy${NC}"
             else
                 echo -e "${YELLOW}[SKIP] .gitignore — giữ nguyên${NC}"
             fi
