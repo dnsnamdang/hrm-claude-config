@@ -1,0 +1,22 @@
+# Chỉ track config Claude Code — bỏ qua repo con
+hrm-thanhan-api/
+hrm-thanhan-client/
+
+# OS
+.DS_Store
+~$*
+Thumbs.db
+
+# Claude Code local config
+.claude/
+
+# Plans - file PDF/HTML không cần track
+.plans/**/*.pdf
+.plans/**/*.html
+
+# Docs - file tham chiếu gốc không cần track
+docs/references/
+docs/test-cases/*.xlsx
+docs/test-cases/~$*
+docs/superpowers/
+.vscode
