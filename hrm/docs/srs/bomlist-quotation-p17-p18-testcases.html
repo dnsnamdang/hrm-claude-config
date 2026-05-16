@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Cases — Cascade Status + Chốt giải pháp (P17-P18)</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 20px; color: #1a1a1a; font-size: 13px; }
+    h1 { color: #1F4E79; border-bottom: 3px solid #4472C4; padding-bottom: 8px; font-size: 20px; }
+    h2 { color: #1F4E79; background: #D6E4F0; padding: 8px 12px; border-radius: 4px; margin-top: 30px; font-size: 16px; }
+    h3 { color: #2563EB; margin-top: 16px; font-size: 14px; }
+    .summary-box { background: #f0f4ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px 16px; margin: 12px 0 20px; }
+    .summary-box b { color: #1F4E79; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+    th { background: #4472C4; color: #fff; font-size: 12px; padding: 6px 8px; text-align: left; }
+    td { border: 1px solid #d1d5db; padding: 6px 8px; vertical-align: top; font-size: 12px; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .tag-page { background: #dbeafe; color: #1e40af; }
+    .tag-func { background: #dcfce7; color: #166534; }
+    .tag-edge { background: #fef3c7; color: #92400e; }
+    .tag-api  { background: #e0e7ff; color: #3730a3; }
+    .p0 { color: #dc2626; font-weight: bold; }
+    .p1 { color: #d97706; font-weight: bold; }
+    .p2 { color: #6b7280; }
+    code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+    @media print { body { margin: 10mm; font-size: 11px; } h1 { font-size: 16px; } table { page-break-inside: auto; } tr { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<h1>TEST CASES UI — CASCADE STATUS + CHỐT GIẢI PHÁP (Phase 17-18)</h1>
+<p><b>Dự án:</b> ERP TPE — Module Giao việc / Bomlist-Quotation &nbsp;|&nbsp; <b>Ngày:</b> 2026-05-06 &nbsp;|&nbsp; <b>Phiên bản:</b> Phase 17-18</p>
+
+<div class="summary-box">
+    <b>Tổng hợp:</b> 33 test cases &nbsp;|&nbsp; 6 sections &nbsp;|&nbsp; 20 P0 + 10 P1 + 3 P2
+    <br><b>Phase 17:</b> Cascade status khi gửi YCBG (5 TC) + duyệt báo giá (6 TC)
+    <br><b>Phase 18:</b> Button chốt GP (5 TC) + Popup UI (6 TC) + Chức năng (11 TC) + Edge cases (7 TC) = 29 TC (Phase 18 chiếm chính)
+</div>
+
+<!-- ============================================= -->
+<h2>I. CASCADE STATUS KHI GỬI YCBG (Phase 17)</h2>
+<p><b>Trigger:</b> <code>PricingRequestService::send()</code> &nbsp;|&nbsp; <b>API:</b> <code>POST /assign/pricing-requests/{id}/send</code></p>
+
+<table>
+<tr><th style="width:70px">ID</th><th style="width:60px">Loại</th><th style="width:50px">P</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:30px">KQ</th></tr>
+
+<tr>
+    <td>CSG_001.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Gửi YCBG → Dự án TKT đổi sang "Dự toán"</td>
+    <td>1. Vào chi tiết dự án TKT &gt; tab Hồ sơ<br>2. Mở YCBG trạng thái "Đang tạo"<br>3. Click "Lưu và gửi"<br>4. Kiểm tra trạng thái dự án TKT</td>
+    <td>Dự án TKT hiển thị trạng thái <b>"Dự toán"</b> (status=6)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_001.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Gửi YCBG → Giải pháp đổi sang "Chờ làm giá"</td>
+    <td>1. Sau khi gửi YCBG thành công<br>2. Vào chi tiết giải pháp<br>3. Kiểm tra trạng thái</td>
+    <td>Giải pháp hiển thị <b>"Chờ làm giá"</b> (status=15)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_001.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Gửi YCBG → YCBG đổi sang "Chờ XD giá"</td>
+    <td>1. Kiểm tra trạng thái YCBG trong tab Hồ sơ sau khi gửi</td>
+    <td>YCBG hiển thị <b>"Chờ XD giá"</b> (status=2)<br>Có timestamp sent_at</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_001.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p1">P1</td>
+    <td>Gửi YCBG nhiều lần → status vẫn đúng (idempotent)</td>
+    <td>1. Tạo YCBG mới cho cùng dự án<br>2. Gửi YCBG mới<br>3. Kiểm tra status dự án TKT + giải pháp</td>
+    <td>Dự án vẫn "Dự toán" (6)<br>Giải pháp vẫn "Chờ làm giá" (15)<br>Không lỗi</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_001.005</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1</td>
+    <td>Gửi YCBG → Thông báo đến người xây dựng giá</td>
+    <td>1. Gửi YCBG thành công<br>2. Đăng nhập user có quyền "Xây dựng giá Bom giải pháp"<br>3. Kiểm tra thông báo</td>
+    <td>User nhận thông báo mới về YCBG vừa gửi</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ============================================= -->
+<h2>II. CASCADE STATUS KHI DUYỆT BÁO GIÁ (Phase 17)</h2>
+<p><b>Trigger:</b> <code>QuotationService::selfApprove/tpApprove/bgdApprove</code></p>
+
+<table>
+<tr><th style="width:70px">ID</th><th style="width:60px">Loại</th><th style="width:50px">P</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:30px">KQ</th></tr>
+
+<tr>
+    <td>CSG_002.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Tự duyệt (Level 1) → cascade status đúng</td>
+    <td>1. Vào báo giá Level 1 &gt; click "Gửi duyệt"<br>2. Hệ thống xác nhận tự duyệt → click "Tự duyệt"<br>3. Kiểm tra status 4 đối tượng</td>
+    <td>Báo giá → <b>"Đã duyệt"</b> (4)<br>Dự án TKT → <b>"Thương thảo giá"</b> (7)<br>Giải pháp → <b>"Đã duyệt giá"</b> (13)<br>YCBG → "Đã có báo giá" (4)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_002.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>TP duyệt (Level 2) → cascade status đúng</td>
+    <td>1. Đăng nhập TP<br>2. Duyệt báo giá Level 2<br>3. Kiểm tra status 4 đối tượng</td>
+    <td>Báo giá → <b>"Đã duyệt"</b> (4)<br>Dự án TKT → <b>"Thương thảo giá"</b> (7)<br>Giải pháp → <b>"Đã duyệt giá"</b> (13)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_002.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>BGĐ duyệt (Level 3) → cascade status đúng</td>
+    <td>1. Đăng nhập BGĐ<br>2. Duyệt báo giá Level 3 (đã qua TP)<br>3. Kiểm tra status 4 đối tượng</td>
+    <td>Báo giá → <b>"Đã duyệt"</b> (4)<br>Dự án TKT → <b>"Thương thảo giá"</b> (7)<br>Giải pháp → <b>"Đã duyệt giá"</b> (13)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_002.004</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p0">P0</td>
+    <td>TP duyệt Level 3 → KHÔNG cascade (chỉ chuyển BGĐ)</td>
+    <td>1. Đăng nhập TP<br>2. Duyệt báo giá Level 3 (bước 1)<br>3. Kiểm tra status dự án + giải pháp</td>
+    <td>Báo giá → "Chờ BGĐ duyệt" (3)<br>Dự án TKT <b>KHÔNG đổi</b><br>Giải pháp <b>KHÔNG đổi</b><br>(Chưa cascade vì chưa phải bước cuối)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_002.005</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p1">P1</td>
+    <td>Từ chối báo giá → KHÔNG rollback status</td>
+    <td>1. TP/BGĐ từ chối báo giá<br>2. Kiểm tra status dự án + giải pháp</td>
+    <td>Báo giá → "Đang tạo" (1)<br>Dự án/Giải pháp <b>giữ nguyên</b> status<br>Không rollback</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_002.006</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Giải pháp hiển thị "Đã duyệt giá" đúng màu</td>
+    <td>1. Sau khi duyệt báo giá thành công<br>2. Kiểm tra badge giải pháp</td>
+    <td>Badge "Đã duyệt giá" màu <b>#059669</b> (xanh emerald)</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ============================================= -->
+<h2>III. BUTTON "CHỐT GIẢI PHÁP" — HIỂN THỊ (Phase 18)</h2>
+<p><b>Vị trí:</b> Footer chi tiết dự án TKT (<code>manager.vue</code>)</p>
+
+<table>
+<tr><th style="width:70px">ID</th><th style="width:60px">Loại</th><th style="width:50px">P</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:30px">KQ</th></tr>
+
+<tr>
+    <td>CSG_003.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0</td>
+    <td>Button hiện khi NV KD + có hồ sơ Đã duyệt</td>
+    <td>1. Đăng nhập NV KD phụ trách<br>2. Vào chi tiết dự án có hồ sơ "Đã duyệt"</td>
+    <td>Footer hiển thị button <b>"Chốt giải pháp"</b><br>Icon ri-check-double-line, màu primary</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_003.002</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0</td>
+    <td>Button hiện khi có hồ sơ "Hết hiệu lực"</td>
+    <td>1. Dự án chỉ có hồ sơ status=expired<br>2. Đăng nhập NV KD</td>
+    <td>Button "Chốt giải pháp" vẫn hiển thị</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_003.003</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0</td>
+    <td>Button ẨN khi không phải NV KD</td>
+    <td>1. Đăng nhập user khác (PM, Leader)<br>2. Vào chi tiết dự án có hồ sơ Đã duyệt</td>
+    <td>KHÔNG thấy button "Chốt giải pháp"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_003.004</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1</td>
+    <td>Button ẨN khi không có hồ sơ đủ điều kiện</td>
+    <td>1. Dự án chỉ có hồ sơ Nháp/Chờ duyệt<br>2. Đăng nhập NV KD</td>
+    <td>KHÔNG thấy button "Chốt giải pháp"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_003.005</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1</td>
+    <td>Button ẨN khi dự án đã đóng</td>
+    <td>1. Vào chi tiết dự án đã đóng (status=11)</td>
+    <td>KHÔNG thấy button "Chốt giải pháp"<br>Hiển thị banner đỏ "Dự án đã đóng"</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ============================================= -->
+<h2>IV. POPUP CHỐT GIẢI PHÁP — GIAO DIỆN (Phase 18)</h2>
+<p><b>Component:</b> <code>FinalizeSolutionModal.vue</code></p>
+
+<table>
+<tr><th style="width:70px">ID</th><th style="width:60px">Loại</th><th style="width:50px">P</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:30px">KQ</th></tr>
+
+<tr>
+    <td>CSG_004.001</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p0">P0</td>
+    <td>Popup hiển thị đúng cấu trúc</td>
+    <td>1. Click button "Chốt giải pháp"</td>
+    <td>Title: "Chốt giải pháp"<br>Bảng: Radio, Mã hồ sơ, Version GP, Trạng thái, Ngày duyệt<br>Textarea: ghi chú<br>Button: "Lưu & gửi thông báo" + "Đóng"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_004.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Bảng chỉ hiện hồ sơ Đã duyệt + Hết hiệu lực</td>
+    <td>1. Có hồ sơ ở 5 status khác nhau<br>2. Mở popup</td>
+    <td>Chỉ hiện "Đã duyệt" và "Hết hiệu lực"<br>Không hiện Nháp/Chờ duyệt/Không duyệt</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_004.003</td>
+    <td><span class="tag tag-page">Giao diện</span></td>
+    <td class="p1">P1</td>
+    <td>Badge trạng thái đúng màu</td>
+    <td>1. Quan sát cột Trạng thái</td>
+    <td>Đã duyệt = xanh lá (#16A34A)<br>Hết hiệu lực = xám (#6B7280)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_004.004</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Button disabled khi chưa chọn hồ sơ</td>
+    <td>1. Mở popup, chưa chọn hồ sơ nào</td>
+    <td>"Lưu & gửi thông báo" bị disabled</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_004.005</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Chọn hồ sơ → enable button</td>
+    <td>1. Click vào 1 dòng hồ sơ<br>2. Kiểm tra button</td>
+    <td>Radio chọn, dòng highlight<br>Button enable<br>Chỉ chọn 1 (radio)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_004.006</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p2">P2</td>
+    <td>Ghi chú tối đa 1000 ký tự</td>
+    <td>1. Nhập > 1000 ký tự vào textarea</td>
+    <td>Textarea giới hạn maxlength=1000</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ============================================= -->
+<h2>V. CHỐT GIẢI PHÁP — CHỨC NĂNG (Phase 18)</h2>
+<p><b>API:</b> <code>POST /assign/prospective-projects/{id}/finalize-solution</code></p>
+
+<table>
+<tr><th style="width:70px">ID</th><th style="width:60px">Loại</th><th style="width:50px">P</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:30px">KQ</th></tr>
+
+<tr>
+    <td>CSG_005.001</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Chốt thành công → toast + đóng popup</td>
+    <td>1. Chọn 1 hồ sơ "Đã duyệt"<br>2. Nhập ghi chú<br>3. Click "Lưu & gửi thông báo"</td>
+    <td>Toast: "Đã chốt giải pháp thành công"<br>Popup đóng, trang reload</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.002</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Hồ sơ → status "Đã chốt"</td>
+    <td>1. Kiểm tra trạng thái hồ sơ vừa chọn</td>
+    <td>Status = "Đã chốt" (finalized), badge #4F46E5<br>finalized_at có giá trị<br>finalized_note = ghi chú đã nhập</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.003</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>YCGP → status "Đã chốt giải pháp"</td>
+    <td>1. Kiểm tra trạng thái YCGP (RequestSolution)</td>
+    <td>YCGP = "Đã chốt giải pháp" (status=11)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.004</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Giải pháp → status "Chốt giải pháp"</td>
+    <td>1. Vào chi tiết giải pháp</td>
+    <td>Giải pháp = "Chốt giải pháp" (status=17)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.005</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Dự án TKT → status "Thương thảo dự án HĐ"</td>
+    <td>1. Kiểm tra trạng thái dự án TKT</td>
+    <td>Dự án = "Thương thảo dự án hợp đồng" (status=8)</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.006</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Thông báo gửi PM giải pháp</td>
+    <td>1. Đăng nhập PM<br>2. Kiểm tra thông báo</td>
+    <td>PM nhận: "[NV KD] đã chốt giải pháp dự án [Tên]. Hồ sơ: [Mã]."<br>URL → chi tiết dự án</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.007</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Thông báo gửi người tạo GP</td>
+    <td>1. Đăng nhập người tạo GP (khác PM)<br>2. Kiểm tra thông báo</td>
+    <td>Nhận thông báo tương tự PM</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.008</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p1">P1</td>
+    <td>NV KD KHÔNG nhận thông báo cho chính mình</td>
+    <td>1. Kiểm tra thông báo NV KD vừa thực hiện</td>
+    <td>NV KD KHÔNG nhận thông báo</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.009</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1</td>
+    <td>Chốt với ghi chú trống</td>
+    <td>1. Chọn hồ sơ, để trống ghi chú<br>2. Click "Lưu & gửi thông báo"</td>
+    <td>Chốt thành công<br>finalized_note = null</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.010</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p1">P1</td>
+    <td>Chốt hồ sơ "Hết hiệu lực"</td>
+    <td>1. Chọn hồ sơ status=expired<br>2. Click "Lưu & gửi thông báo"</td>
+    <td>Chốt thành công, cascade đầy đủ</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_005.011</td>
+    <td><span class="tag tag-func">Chức năng</span></td>
+    <td class="p0">P0</td>
+    <td>Sau chốt → button biến mất</td>
+    <td>1. Kiểm tra footer sau khi popup đóng</td>
+    <td>Button "Chốt giải pháp" KHÔNG còn hiển thị</td>
+    <td></td>
+</tr>
+</table>
+
+<!-- ============================================= -->
+<h2>VI. EDGE CASES + BẢO MẬT (Phase 18)</h2>
+<p><b>API:</b> <code>POST /assign/prospective-projects/{id}/finalize-solution</code></p>
+
+<table>
+<tr><th style="width:70px">ID</th><th style="width:60px">Loại</th><th style="width:50px">P</th><th>Mô tả</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:30px">KQ</th></tr>
+
+<tr>
+    <td>CSG_006.001</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p0">P0</td>
+    <td>API bị gọi bởi user không phải NV KD</td>
+    <td>1. Gọi API trực tiếp với user khác NV KD</td>
+    <td>Response <b>403</b>: "Chỉ NV KD phụ trách mới được chốt giải pháp."</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_006.002</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p0">P0</td>
+    <td>Profile_id không thuộc solution của dự án</td>
+    <td>1. Gọi API với profile_id thuộc dự án khác</td>
+    <td>Response <b>422</b>: "Hồ sơ không hợp lệ..."</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_006.003</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p0">P0</td>
+    <td>Profile_id ở status draft/pending/rejected</td>
+    <td>1. Gọi API với profile status=draft</td>
+    <td>Response <b>422</b>: "Hồ sơ không hợp lệ..."</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_006.004</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p1">P1</td>
+    <td>Profile_id không tồn tại</td>
+    <td>1. Gọi API với review_profile_id = 999999</td>
+    <td>Response <b>422</b>: "Hồ sơ không tồn tại"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_006.005</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p1">P1</td>
+    <td>Note > 1000 ký tự</td>
+    <td>1. Gọi API với note = 1001 ký tự</td>
+    <td>Response <b>422</b>: "Ghi chú tối đa 1000 ký tự"</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_006.006</td>
+    <td><span class="tag tag-api">API/Data</span></td>
+    <td class="p1">P1</td>
+    <td>Dự án chưa có giải pháp</td>
+    <td>1. Gọi API cho dự án chưa tạo GP</td>
+    <td>Response <b>422</b>: "Dự án chưa có giải pháp."</td>
+    <td></td>
+</tr>
+<tr>
+    <td>CSG_006.007</td>
+    <td><span class="tag tag-edge">Edge case</span></td>
+    <td class="p2">P2</td>
+    <td>Chốt đồng thời (concurrent)</td>
+    <td>1. Tab A + Tab B cùng chọn hồ sơ X<br>2. Click "Lưu" gần đồng thời</td>
+    <td>Tab A thành công<br>Tab B lỗi 422 (hồ sơ đã chuyển finalized)</td>
+    <td></td>
+</tr>
+</table>
+
+</body>
+</html>

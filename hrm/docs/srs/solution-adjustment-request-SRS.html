@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRS: Yêu cầu điều chỉnh giải pháp — ERP TPE</title>
+    <style>
+        :root {
+            --primary: #4a7cfb;
+            --success: #22c55e;
+            --warning: #d4a03c;
+            --danger: #e25c5c;
+            --info: #0ea5e9;
+            --secondary: #8e99a4;
+            --teal: #14b8a6;
+            --purple: #8b5cf6;
+            --bg: #f8f9fa;
+            --border: #dee2e6;
+            --text: #333;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text); line-height: 1.6; background: var(--bg); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 40px; background: #fff; min-height: 100vh; }
+        h1 { font-size: 28px; color: var(--primary); border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { font-size: 22px; color: #2c3e50; margin-top: 40px; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+        h3 { font-size: 17px; color: #34495e; margin-top: 25px; margin-bottom: 10px; }
+        h4 { font-size: 15px; margin-top: 18px; margin-bottom: 8px; }
+        p, li { font-size: 14px; }
+        ul, ol { padding-left: 22px; margin-bottom: 12px; }
+        li { margin-bottom: 4px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+        th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; }
+        th { background: #f1f3f5; font-weight: 600; }
+        tr:nth-child(even) { background: #fafbfc; }
+        code { background: #e9ecef; padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: 'Consolas', monospace; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 6px; overflow-x: auto; font-size: 12px; margin: 10px 0 18px; }
+        .meta-table { max-width: 400px; }
+        .meta-table td:first-child { font-weight: 600; width: 120px; }
+        .toc { background: #f1f3f5; padding: 20px 25px; border-radius: 8px; margin: 20px 0 30px; }
+        .toc h3 { margin-top: 0; }
+        .toc a { color: var(--primary); text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .toc ol { padding-left: 20px; }
+        .toc li { margin-bottom: 5px; }
+        .diagram-container { margin: 20px 0; overflow-x: auto; }
+        .diagram-title { font-size: 14px; font-weight: 600; text-align: center; margin-bottom: 10px; color: #2c3e50; }
+        svg { display: block; margin: 0 auto; }
+        svg text { font-family: 'Segoe UI', Tahoma, sans-serif; }
+        .swimlane { border: 2px solid #adb5bd; border-radius: 8px; margin: 20px 0; overflow: hidden; }
+        .swimlane-title { background: #343a40; color: #fff; padding: 10px 16px; font-weight: 600; font-size: 15px; }
+        .swimlane-body { display: flex; min-height: 180px; }
+        .lane { flex: 1; border-right: 1px solid #dee2e6; padding: 12px; position: relative; }
+        .lane:last-child { border-right: none; }
+        .lane-header { text-align: center; font-weight: 600; font-size: 13px; color: #495057; background: #e9ecef; padding: 6px; margin: -12px -12px 12px; }
+        .lane-step { background: #fff; border: 1px solid #ced4da; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; font-size: 12px; text-align: center; position: relative; }
+        .lane-step.start { background: #d4edda; border-color: var(--success); }
+        .lane-step.end { background: #f8d7da; border-color: var(--danger); }
+        .lane-step.decision { background: #fff3cd; border-color: var(--warning); }
+        .lane-step.api { background: #d1ecf1; border-color: var(--info); }
+        .lane-arrow { text-align: center; color: #6c757d; font-size: 16px; margin: 2px 0; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+        .badge-primary { color: #2563EB; background: #EFF6FF; border: 1px solid #2563EB; }
+        .badge-success { color: #16A34A; background: #F0FDF4; border: 1px solid #16A34A; }
+        .badge-danger { color: #DC2626; background: #FEF2F2; border: 1px solid #DC2626; }
+        .note { background: #fff3cd; border-left: 4px solid var(--warning); padding: 10px 15px; margin: 12px 0; font-size: 13px; border-radius: 0 4px 4px 0; }
+        .flow-box { display: inline-block; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; margin: 4px; }
+        .flow-arrow { display: inline-block; font-size: 18px; color: #6c757d; vertical-align: middle; margin: 0 4px; }
+        @media print { .container { padding: 15px; } .toc { break-after: page; } }
+    </style>
+</head>
+<body>
+<div class="container">
+
+<h1>SRS: Yêu cầu điều chỉnh giải pháp (YCĐC GP)</h1>
+
+<table class="meta-table">
+    <tr><td>Module</td><td>Assign (Giao việc)</td></tr>
+    <tr><td>Phiên bản</td><td>1.0</td></tr>
+    <tr><td>Ngày tạo</td><td>2026-05-06</td></tr>
+    <tr><td>Trạng thái</td><td>Approved</td></tr>
+</table>
+
+<!-- TOC -->
+<div class="toc">
+    <h3>Mục lục</h3>
+    <ol>
+        <li><a href="#s1">Giới thiệu</a></li>
+        <li><a href="#s2">Actors & Quyền hạn</a></li>
+        <li><a href="#s3">Luồng nghiệp vụ tổng quan</a></li>
+        <li><a href="#s4">Use Cases</a></li>
+        <li><a href="#s5">Business Rules</a></li>
+        <li><a href="#s6">Data Model</a></li>
+        <li><a href="#s7">API Specification</a></li>
+        <li><a href="#s8">UI Specification</a></li>
+        <li><a href="#s9">Hướng dẫn sử dụng</a></li>
+        <li><a href="#s10">Phụ lục</a></li>
+    </ol>
+</div>
+
+<!-- 1. Giới thiệu -->
+<h2 id="s1">1. Giới thiệu</h2>
+
+<h3>1.1. Mục đích</h3>
+<p>Khi giải pháp (GP) đã được duyệt và đang triển khai, khách hàng có thể yêu cầu điều chỉnh. Tính năng này cho phép nhân viên Kinh doanh (KD) tạo phiếu yêu cầu điều chỉnh giải pháp gửi đến Trưởng phòng GP (TP) và PM phụ trách để tiếp nhận hoặc từ chối. Sau khi tiếp nhận, TP/PM sẽ chủ động tạo version mới để triển khai điều chỉnh.</p>
+
+<h3>1.2. Phạm vi</h3>
+<p><strong>Trong scope:</strong></p>
+<ul>
+    <li>KD tạo phiếu YCĐC GP (nội dung + file đính kèm)</li>
+    <li>TP/PM tiếp nhận hoặc từ chối phiếu YCĐC</li>
+    <li>Gửi thông báo (notification) đến TP/PM khi có phiếu mới</li>
+    <li>Xem danh sách & chi tiết phiếu YCĐC ở cả 2 màn hình</li>
+</ul>
+<p><strong>Ngoài scope:</strong></p>
+<ul>
+    <li>Tự động tạo version mới khi tiếp nhận (TP/PM tạo thủ công)</li>
+    <li>Sửa hoặc xóa phiếu đã gửi</li>
+</ul>
+
+<h3>1.3. Thuật ngữ</h3>
+<table>
+    <tr><th>Thuật ngữ</th><th>Giải thích</th></tr>
+    <tr><td>GP</td><td>Giải pháp (Solution)</td></tr>
+    <tr><td>YCĐC GP</td><td>Yêu cầu điều chỉnh giải pháp (Solution Adjustment Request)</td></tr>
+    <tr><td>Dự án TKT</td><td>Dự án tiềm năng / triển khai (Prospective Project)</td></tr>
+    <tr><td>KD</td><td>Nhân viên kinh doanh — người tạo dự án TKT (<code>main_sale_employee_id</code>)</td></tr>
+    <tr><td>TP</td><td>Trưởng phòng giải pháp — quản lý phòng nhận GP</td></tr>
+    <tr><td>PM</td><td>Project Manager — PM phụ trách GP (<code>solution.pm_id</code>)</td></tr>
+    <tr><td>Version</td><td>Phiên bản giải pháp (<code>solution_version</code>)</td></tr>
+</table>
+
+<!-- 2. Actors -->
+<h2 id="s2">2. Actors & Quyền hạn</h2>
+
+<table>
+    <tr><th>Actor</th><th>Mô tả</th><th>Quyền</th></tr>
+    <tr>
+        <td><strong>Nhân viên KD</strong></td>
+        <td>Người tạo dự án TKT (<code>main_sale_employee_id</code>)</td>
+        <td>Tạo phiếu YCĐC GP, xem danh sách & chi tiết</td>
+    </tr>
+    <tr>
+        <td><strong>Trưởng phòng GP (TP)</strong></td>
+        <td>Quản lý phòng nhận GP (<code>EmployeeManageDepartment</code>)</td>
+        <td>Xem danh sách & chi tiết, tiếp nhận, từ chối</td>
+    </tr>
+    <tr>
+        <td><strong>PM phụ trách</strong></td>
+        <td>PM được gán cho GP (<code>solution.pm_id</code>)</td>
+        <td>Xem danh sách & chi tiết, tiếp nhận, từ chối</td>
+    </tr>
+    <tr>
+        <td><strong>Nhân viên khác</strong></td>
+        <td>Có quyền vào màn dự án TKT / GP</td>
+        <td>Chỉ xem danh sách & chi tiết (không tạo / duyệt)</td>
+    </tr>
+</table>
+
+<!-- 3. Luồng nghiệp vụ -->
+<h2 id="s3">3. Luồng nghiệp vụ tổng quan</h2>
+
+<div class="diagram-container">
+    <div class="diagram-title">Luồng xử lý YCĐC GP</div>
+    <div style="text-align: center; padding: 20px 0;">
+        <span class="flow-box" style="background: #dbeafe; border: 1px solid #2563EB;">Khách hàng yêu cầu điều chỉnh</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-box" style="background: #dbeafe; border: 1px solid #2563EB;">KD tạo phiếu YCĐC</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-box" style="background: #fef3c7; border: 1px solid #d4a03c;">Thông báo gửi đến TP + PM</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-box" style="background: #fff3cd; border: 1px solid #d4a03c;">TP/PM xem xét</span>
+        <br><br>
+        <span class="flow-arrow" style="visibility: hidden">→→</span>
+        <span class="flow-arrow" style="visibility: hidden">→→→→→→→→→→</span>
+        <span class="flow-arrow">↙</span>
+        <span style="display: inline-block; width: 120px;"></span>
+        <span class="flow-arrow">↘</span>
+        <br>
+        <span class="flow-box" style="background: #d1fae5; border: 1px solid #16A34A;">Tiếp nhận → Tạo version mới (thủ công)</span>
+        <span style="display: inline-block; width: 40px;"></span>
+        <span class="flow-box" style="background: #fee2e2; border: 1px solid #DC2626;">Từ chối (nhập lý do)</span>
+    </div>
+</div>
+
+<h3>Trạng thái phiếu YCĐC</h3>
+<table>
+    <tr><th>Status</th><th>Giá trị</th><th>Màu badge</th><th>Mô tả</th></tr>
+    <tr>
+        <td><span class="badge badge-primary">Đã gửi</span></td>
+        <td><code>1</code></td>
+        <td><code>#2563EB</code> (xanh dương)</td>
+        <td>KD vừa gửi, chờ TP/PM xử lý</td>
+    </tr>
+    <tr>
+        <td><span class="badge badge-success">Tiếp nhận</span></td>
+        <td><code>2</code></td>
+        <td><code>#16A34A</code> (xanh lá)</td>
+        <td>TP/PM đã tiếp nhận, sẽ tạo version mới</td>
+    </tr>
+    <tr>
+        <td><span class="badge badge-danger">Từ chối</span></td>
+        <td><code>3</code></td>
+        <td><code>#DC2626</code> (đỏ)</td>
+        <td>TP/PM từ chối, kèm lý do</td>
+    </tr>
+</table>
+
+<!-- Use Case Diagram -->
+<div class="diagram-container">
+    <div class="diagram-title">Use Case Diagram</div>
+    <svg width="750" height="380" viewBox="0 0 750 380">
+        <!-- System boundary -->
+        <rect x="180" y="20" width="400" height="340" rx="10" fill="none" stroke="#adb5bd" stroke-width="2" stroke-dasharray="8,4"/>
+        <text x="380" y="45" text-anchor="middle" font-size="14" font-weight="bold" fill="#495057">YCĐC Giải pháp</text>
+
+        <!-- Actor: KD -->
+        <circle cx="60" cy="140" r="18" fill="none" stroke="#2563EB" stroke-width="2"/>
+        <line x1="60" y1="158" x2="60" y2="200" stroke="#2563EB" stroke-width="2"/>
+        <line x1="35" y1="175" x2="85" y2="175" stroke="#2563EB" stroke-width="2"/>
+        <line x1="60" y1="200" x2="40" y2="230" stroke="#2563EB" stroke-width="2"/>
+        <line x1="60" y1="200" x2="80" y2="230" stroke="#2563EB" stroke-width="2"/>
+        <text x="60" y="250" text-anchor="middle" font-size="12" fill="#2563EB" font-weight="bold">KD (Sale)</text>
+
+        <!-- Actor: TP/PM -->
+        <circle cx="690" cy="140" r="18" fill="none" stroke="#16A34A" stroke-width="2"/>
+        <line x1="690" y1="158" x2="690" y2="200" stroke="#16A34A" stroke-width="2"/>
+        <line x1="665" y1="175" x2="715" y2="175" stroke="#16A34A" stroke-width="2"/>
+        <line x1="690" y1="200" x2="670" y2="230" stroke="#16A34A" stroke-width="2"/>
+        <line x1="690" y1="200" x2="710" y2="230" stroke="#16A34A" stroke-width="2"/>
+        <text x="690" y="250" text-anchor="middle" font-size="12" fill="#16A34A" font-weight="bold">TP / PM</text>
+
+        <!-- Use Cases -->
+        <!-- UC1: Tạo YCĐC -->
+        <ellipse cx="310" cy="100" rx="95" ry="25" fill="#dbeafe" stroke="#2563EB" stroke-width="1.5"/>
+        <text x="310" y="105" text-anchor="middle" font-size="12">Tạo phiếu YCĐC</text>
+        <line x1="95" y1="140" x2="215" y2="105" stroke="#666" stroke-width="1"/>
+
+        <!-- UC2: Xem danh sách -->
+        <ellipse cx="380" cy="170" rx="95" ry="25" fill="#f3f4f6" stroke="#8e99a4" stroke-width="1.5"/>
+        <text x="380" y="175" text-anchor="middle" font-size="12">Xem danh sách YCĐC</text>
+        <line x1="95" y1="155" x2="285" y2="170" stroke="#666" stroke-width="1"/>
+        <line x1="655" y1="155" x2="475" y2="170" stroke="#666" stroke-width="1"/>
+
+        <!-- UC3: Xem chi tiết -->
+        <ellipse cx="380" cy="235" rx="95" ry="25" fill="#f3f4f6" stroke="#8e99a4" stroke-width="1.5"/>
+        <text x="380" y="240" text-anchor="middle" font-size="12">Xem chi tiết YCĐC</text>
+        <line x1="95" y1="175" x2="285" y2="235" stroke="#666" stroke-width="1"/>
+        <line x1="655" y1="175" x2="475" y2="235" stroke="#666" stroke-width="1"/>
+
+        <!-- UC4: Tiếp nhận -->
+        <ellipse cx="430" cy="300" rx="85" ry="25" fill="#d1fae5" stroke="#16A34A" stroke-width="1.5"/>
+        <text x="430" y="305" text-anchor="middle" font-size="12">Tiếp nhận YCĐC</text>
+        <line x1="655" y1="195" x2="515" y2="295" stroke="#666" stroke-width="1"/>
+
+        <!-- UC5: Từ chối -->
+        <ellipse cx="280" cy="330" rx="85" ry="25" fill="#fee2e2" stroke="#DC2626" stroke-width="1.5"/>
+        <text x="280" y="335" text-anchor="middle" font-size="12">Từ chối YCĐC</text>
+        <line x1="655" y1="200" x2="365" y2="325" stroke="#666" stroke-width="1"/>
+    </svg>
+</div>
+
+<!-- 4. Use Cases -->
+<h2 id="s4">4. Use Cases</h2>
+
+<h3>UC-01: Tạo phiếu YCĐC GP</h3>
+<table>
+    <tr><td style="width:160px"><strong>Actor</strong></td><td>Nhân viên KD (người tạo dự án TKT)</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>
+        <ul>
+            <li>User đã đăng nhập và là <code>main_sale_employee_id</code> của dự án TKT</li>
+            <li>Dự án TKT có giải pháp với status: <span class="badge badge-success">Đã duyệt GP</span> (11), <span class="badge badge-success">Đã duyệt giá</span> (13), <span class="badge badge-primary">Chờ làm giá</span> (15), hoặc <span class="badge badge-primary">Chốt GP</span> (17)</li>
+        </ul>
+    </td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>KD vào màn chi tiết Dự án TKT → Tab "Giải pháp" → Tab con "Yêu cầu điều chỉnh GP"</li>
+            <li>Bấm nút <strong>"Tạo yêu cầu"</strong></li>
+            <li>Popup hiện ra: Giải pháp (readonly) + Nội dung điều chỉnh (bắt buộc) + File đính kèm (tuỳ chọn)</li>
+            <li>KD điền nội dung → bấm <strong>"Gửi"</strong></li>
+            <li>Hệ thống validate → tạo phiếu với mã tự sinh <code>YCDCGP.XXXXX</code>, trạng thái = "Đã gửi"</li>
+            <li>Gửi thông báo đến TP + PM phụ trách GP</li>
+            <li>Danh sách reload, hiện phiếu mới</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Phiếu YCĐC được tạo với status = 1 (Đã gửi). TP/PM nhận được notification.</td></tr>
+    <tr><td><strong>Exception</strong></td><td>
+        <ul>
+            <li>Nội dung trống → hiện lỗi "Nội dung điều chỉnh không được để trống"</li>
+            <li>GP không thuộc dự án → hiện lỗi "Giải pháp không thuộc dự án này"</li>
+            <li>GP chưa đến trạng thái cho phép → hiện lỗi "Giải pháp chưa được duyệt"</li>
+            <li>User không phải KD phụ trách → hiện lỗi "Chỉ nhân viên KD phụ trách mới được tạo"</li>
+        </ul>
+    </td></tr>
+</table>
+
+<h3>UC-02: Xem danh sách & chi tiết YCĐC</h3>
+<table>
+    <tr><td style="width:160px"><strong>Actor</strong></td><td>KD, TP, PM, hoặc nhân viên có quyền truy cập</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>User có quyền vào màn dự án TKT hoặc quản lý GP</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li><strong>Phía KD:</strong> Dự án TKT → Tab "Giải pháp" → Tab con "Yêu cầu điều chỉnh GP"</li>
+            <li><strong>Phía TP/PM:</strong> Quản lý giải pháp (<code>/assign/solutions/:id/manager</code>) → Tab "YC Điều chỉnh"</li>
+            <li>Bảng danh sách hiện: STT, Mã yêu cầu, Version, Người yêu cầu, Ngày gửi, Trạng thái [, Hành động (chỉ màn TP/PM)]</li>
+            <li>Click vào mã yêu cầu → mở popup chi tiết dạng bảng</li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Không thay đổi dữ liệu</td></tr>
+</table>
+
+<h3>UC-03: Tiếp nhận YCĐC</h3>
+<table>
+    <tr><td style="width:160px"><strong>Actor</strong></td><td>TP hoặc PM phụ trách GP</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Phiếu YCĐC có trạng thái = "Đã gửi" (1). User là TP phòng nhận GP hoặc PM phụ trách GP.</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>TP/PM click thông báo → vào màn quản lý GP → tab "YC Điều chỉnh"</li>
+            <li>Bấm icon <strong>Tiếp nhận</strong> (✓) trên bảng danh sách hoặc bấm nút "Tiếp nhận" trong popup chi tiết</li>
+            <li>Hệ thống hiện popup xác nhận: "Bạn có chắc muốn tiếp nhận yêu cầu điều chỉnh này?"</li>
+            <li>Bấm <strong>"Đồng ý"</strong></li>
+            <li>Hệ thống cập nhật: status → "Tiếp nhận", ghi nhận người xử lý + thời gian</li>
+            <li>Danh sách reload, badge chuyển sang <span class="badge badge-success">Tiếp nhận</span></li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Phiếu chuyển status = 2. TP/PM sau đó tự tạo version mới để điều chỉnh.</td></tr>
+</table>
+
+<h3>UC-04: Từ chối YCĐC</h3>
+<table>
+    <tr><td style="width:160px"><strong>Actor</strong></td><td>TP hoặc PM phụ trách GP</td></tr>
+    <tr><td><strong>Precondition</strong></td><td>Phiếu YCĐC có trạng thái = "Đã gửi" (1). User là TP phòng nhận GP hoặc PM phụ trách GP.</td></tr>
+    <tr><td><strong>Main Flow</strong></td><td>
+        <ol>
+            <li>Bấm icon <strong>Từ chối</strong> (✗) trên bảng danh sách hoặc bấm nút "Từ chối" trong popup chi tiết</li>
+            <li>Popup "Từ chối yêu cầu điều chỉnh" hiện ra</li>
+            <li>Nhập lý do từ chối (bắt buộc) → bấm <strong>"Gửi"</strong></li>
+            <li>Hệ thống cập nhật: status → "Từ chối", lưu lý do + người xử lý + thời gian</li>
+            <li>Danh sách reload, badge chuyển sang <span class="badge badge-danger">Từ chối</span></li>
+        </ol>
+    </td></tr>
+    <tr><td><strong>Postcondition</strong></td><td>Phiếu chuyển status = 3. KD có thể tạo phiếu YCĐC mới.</td></tr>
+    <tr><td><strong>Exception</strong></td><td>Lý do từ chối trống → hiện lỗi "Lý do từ chối không được để trống"</td></tr>
+</table>
+
+<!-- Swimlane: Tạo YCĐC -->
+<h3>Swimlane: Tạo phiếu YCĐC GP</h3>
+<div class="swimlane">
+    <div class="swimlane-title">UC-01: Tạo phiếu YCĐC GP</div>
+    <div class="swimlane-body">
+        <div class="lane">
+            <div class="lane-header">KD (Frontend)</div>
+            <div class="lane-step start">Mở tab "YC điều chỉnh GP"</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Bấm "Tạo yêu cầu"</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Điền nội dung + đính kèm file</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Bấm "Gửi"</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step end">Toast "Gửi thành công" + reload danh sách</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Backend (API)</div>
+            <div class="lane-step" style="margin-top: 100px;">Validate: solution thuộc project?</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">GP status ∈ {11,13,15,17}?</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">User = main_sale_employee_id?</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">Tạo record + upload files</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">Gửi notification → TP + PM</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Database</div>
+            <div class="lane-step" style="margin-top: 175px;">INSERT solution_adjustment_requests</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">INSERT files (nếu có)</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">INSERT notifications</div>
+        </div>
+    </div>
+</div>
+
+<!-- Swimlane: Tiếp nhận / Từ chối -->
+<h3>Swimlane: Tiếp nhận / Từ chối YCĐC</h3>
+<div class="swimlane">
+    <div class="swimlane-title">UC-03 / UC-04: Tiếp nhận hoặc Từ chối</div>
+    <div class="swimlane-body">
+        <div class="lane">
+            <div class="lane-header">TP / PM (Frontend)</div>
+            <div class="lane-step start">Nhận thông báo → click vào</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Mở màn GP → tab "YC Điều chỉnh"</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">Chọn: Tiếp nhận hoặc Từ chối</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step">Tiếp nhận: confirm popup<br>Từ chối: nhập lý do</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step end">Toast thành công + reload</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Backend (API)</div>
+            <div class="lane-step" style="margin-top: 120px;">PUT .../accept hoặc .../reject</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">User là TP hoặc PM?</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step decision">Status = "Đã gửi"?</div>
+            <div class="lane-arrow">↓</div>
+            <div class="lane-step api">Cập nhật status + processed_by + processed_at</div>
+        </div>
+        <div class="lane">
+            <div class="lane-header">Database</div>
+            <div class="lane-step" style="margin-top: 195px;">UPDATE solution_adjustment_requests<br>SET status = 2 hoặc 3</div>
+        </div>
+    </div>
+</div>
+
+<!-- 5. Business Rules -->
+<h2 id="s5">5. Business Rules</h2>
+
+<table>
+    <tr><th>ID</th><th>Rule</th><th>Mô tả</th><th>Áp dụng</th></tr>
+    <tr>
+        <td>BR-01</td>
+        <td>Chỉ KD tạo dự án mới tạo YCĐC</td>
+        <td><code>prospective_project.main_sale_employee_id == auth()->user()->id</code></td>
+        <td>UC-01 / API store</td>
+    </tr>
+    <tr>
+        <td>BR-02</td>
+        <td>GP phải ở trạng thái cho phép</td>
+        <td>Solution status ∈ {11 (Đã duyệt GP), 13 (Đã duyệt giá), 15 (Chờ làm giá), 17 (Chốt GP)}</td>
+        <td>UC-01 / API store</td>
+    </tr>
+    <tr>
+        <td>BR-03</td>
+        <td>GP phải thuộc dự án TKT</td>
+        <td><code>solution.prospective_project_id == prospectiveProject.id</code></td>
+        <td>UC-01 / API store</td>
+    </tr>
+    <tr>
+        <td>BR-04</td>
+        <td>Chỉ TP/PM mới tiếp nhận/từ chối</td>
+        <td>User phải là <code>solution.pm_id</code> hoặc quản lý phòng nhận GP (<code>EmployeeManageDepartment</code>)</td>
+        <td>UC-03, UC-04 / Entity accessor</td>
+    </tr>
+    <tr>
+        <td>BR-05</td>
+        <td>Chỉ duyệt phiếu status "Đã gửi"</td>
+        <td>Tiếp nhận / Từ chối chỉ khả dụng khi <code>status == 1</code></td>
+        <td>UC-03, UC-04</td>
+    </tr>
+    <tr>
+        <td>BR-06</td>
+        <td>Từ chối bắt buộc lý do</td>
+        <td><code>reject_reason</code> là trường required khi từ chối</td>
+        <td>UC-04 / API reject</td>
+    </tr>
+    <tr>
+        <td>BR-07</td>
+        <td>Mã phiếu tự sinh</td>
+        <td>Format: <code>YCDCGP.XXXXX</code> (5 chữ số, zero-pad). Lấy <code>MAX(id) + 1</code></td>
+        <td>UC-01 / Entity getNextCode()</td>
+    </tr>
+    <tr>
+        <td>BR-08</td>
+        <td>Không xóa / sửa phiếu đã gửi</td>
+        <td>Phiếu sau khi gửi không thể chỉnh sửa hoặc xóa. KD tạo phiếu mới nếu cần.</td>
+        <td>Toàn bộ</td>
+    </tr>
+    <tr>
+        <td>BR-09</td>
+        <td>Notification gửi đến TP + PM</td>
+        <td>Khi KD tạo phiếu, gửi notification đến PM (<code>solution.pm_id</code>) và tất cả TP quản lý phòng nhận GP</td>
+        <td>UC-01 / Service sendNotification()</td>
+    </tr>
+    <tr>
+        <td>BR-10</td>
+        <td>Lưu version tại thời điểm tạo</td>
+        <td><code>solution_version_id = solution.current_version_id</code> — snapshot version hiện tại</td>
+        <td>UC-01 / API store</td>
+    </tr>
+</table>
+
+<!-- 6. Data Model -->
+<h2 id="s6">6. Data Model</h2>
+
+<h3>6.1. Entity Relationship</h3>
+<pre>
+ProspectiveProject  1──N  SolutionAdjustmentRequest
+Solution            1──N  SolutionAdjustmentRequest
+SolutionVersion     1──N  SolutionAdjustmentRequest
+Employee            1──N  SolutionAdjustmentRequest (processed_by)
+File                N──1  SolutionAdjustmentRequest (table='solution_adjustment_requests')
+</pre>
+
+<h3>6.2. Bảng: <code>solution_adjustment_requests</code></h3>
+<table>
+    <tr><th>Cột</th><th>Type</th><th>Nullable</th><th>Default</th><th>Mô tả</th></tr>
+    <tr><td><code>id</code></td><td>bigint PK</td><td>No</td><td>auto</td><td>ID</td></tr>
+    <tr><td><code>code</code></td><td>varchar (unique)</td><td>No</td><td>—</td><td>Mã phiếu: YCDCGP.XXXXX</td></tr>
+    <tr><td><code>prospective_project_id</code></td><td>bigint unsigned</td><td>No</td><td>—</td><td>FK → prospective_projects</td></tr>
+    <tr><td><code>solution_id</code></td><td>bigint unsigned</td><td>No</td><td>—</td><td>FK → solutions</td></tr>
+    <tr><td><code>solution_version_id</code></td><td>bigint unsigned</td><td>No</td><td>—</td><td>FK → solution_versions (snapshot)</td></tr>
+    <tr><td><code>content</code></td><td>text</td><td>No</td><td>—</td><td>Nội dung điều chỉnh</td></tr>
+    <tr><td><code>status</code></td><td>tinyint</td><td>No</td><td>1</td><td>1=Đã gửi, 2=Tiếp nhận, 3=Từ chối</td></tr>
+    <tr><td><code>reject_reason</code></td><td>text</td><td>Yes</td><td>NULL</td><td>Lý do từ chối</td></tr>
+    <tr><td><code>processed_by</code></td><td>bigint unsigned</td><td>Yes</td><td>NULL</td><td>FK → employees (người xử lý)</td></tr>
+    <tr><td><code>processed_at</code></td><td>timestamp</td><td>Yes</td><td>NULL</td><td>Thời gian xử lý</td></tr>
+    <tr><td><code>company_id</code></td><td>bigint unsigned</td><td>Yes</td><td>NULL</td><td>Cấp tổ chức (auto by BaseModel)</td></tr>
+    <tr><td><code>department_id</code></td><td>bigint unsigned</td><td>Yes</td><td>NULL</td><td>Cấp tổ chức (auto by BaseModel)</td></tr>
+    <tr><td><code>part_id</code></td><td>bigint unsigned</td><td>Yes</td><td>NULL</td><td>Cấp tổ chức (auto by BaseModel)</td></tr>
+    <tr><td><code>created_by</code></td><td>bigint unsigned</td><td>Yes</td><td>NULL</td><td>Người tạo (auto by BaseModel)</td></tr>
+    <tr><td><code>updated_by</code></td><td>bigint unsigned</td><td>Yes</td><td>NULL</td><td>Người cập nhật (auto by BaseModel)</td></tr>
+    <tr><td><code>created_at</code></td><td>timestamp</td><td>Yes</td><td>NULL</td><td>Ngày tạo</td></tr>
+    <tr><td><code>updated_at</code></td><td>timestamp</td><td>Yes</td><td>NULL</td><td>Ngày cập nhật</td></tr>
+</table>
+
+<h3>6.3. Enum Values</h3>
+<table>
+    <tr><th>Entity</th><th>Constant</th><th>Value</th><th>Meaning</th></tr>
+    <tr><td>SolutionAdjustmentRequest</td><td>STATUS_DA_GUI</td><td>1</td><td>Đã gửi</td></tr>
+    <tr><td>SolutionAdjustmentRequest</td><td>STATUS_TIEP_NHAN</td><td>2</td><td>Tiếp nhận</td></tr>
+    <tr><td>SolutionAdjustmentRequest</td><td>STATUS_TU_CHOI</td><td>3</td><td>Từ chối</td></tr>
+</table>
+
+<!-- 7. API Specification -->
+<h2 id="s7">7. API Specification</h2>
+
+<p>Base URL: <code>/api/v1/assign/prospective-projects/{prospectiveProject}/solution-adjustment-requests</code></p>
+<p>Auth: Bearer Token (JWT)</p>
+
+<h3>7.1. Danh sách YCĐC</h3>
+<pre>GET /</pre>
+<p><strong>Query params:</strong></p>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Mô tả</th></tr>
+    <tr><td><code>page</code></td><td>integer</td><td>No</td><td>Trang hiện tại (default: 1)</td></tr>
+    <tr><td><code>per_page</code></td><td>integer</td><td>No</td><td>Số bản ghi / trang (default: 20)</td></tr>
+    <tr><td><code>keyword</code></td><td>string</td><td>No</td><td>Tìm theo mã phiếu</td></tr>
+    <tr><td><code>status</code></td><td>integer</td><td>No</td><td>Lọc theo trạng thái (1/2/3)</td></tr>
+    <tr><td><code>sort_by</code></td><td>string</td><td>No</td><td>Cột sắp xếp (default: id)</td></tr>
+    <tr><td><code>sort_desc</code></td><td>boolean</td><td>No</td><td>Sắp xếp giảm dần</td></tr>
+</table>
+<p><strong>Response (200):</strong></p>
+<pre>{
+  "status": 200,
+  "data": [
+    {
+      "id": 1,
+      "code": "YCDCGP.00001",
+      "solution_version_code": "V1",
+      "employee_create_name": "Nguyễn Văn A",
+      "created_at": "06/05/2026",
+      "status": 1,
+      "status_name": "Đã gửi",
+      "status_color": "#2563EB",
+      "is_can_accept": true,
+      "is_can_reject": true
+    }
+  ],
+  "meta": { "total": 1, "current_page": 1, "per_page": 20 }
+}</pre>
+
+<h3>7.2. Tạo YCĐC</h3>
+<pre>POST /</pre>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Validate</th><th>Mô tả</th></tr>
+    <tr><td><code>solution_id</code></td><td>integer</td><td>Yes</td><td>exists:solutions,id</td><td>ID giải pháp</td></tr>
+    <tr><td><code>content</code></td><td>string</td><td>Yes</td><td>required|string</td><td>Nội dung điều chỉnh</td></tr>
+    <tr><td><code>files</code></td><td>array</td><td>No</td><td>—</td><td>Danh sách file đính kèm</td></tr>
+</table>
+<p><strong>Custom validation:</strong></p>
+<ul>
+    <li>Solution phải thuộc prospective project đang xét</li>
+    <li>Solution status ∈ {11, 13, 15, 17}</li>
+    <li><code>prospectiveProject.main_sale_employee_id == auth()->user()->id</code></li>
+</ul>
+
+<h3>7.3. Chi tiết YCĐC</h3>
+<pre>GET /{solutionAdjustmentRequest}</pre>
+<p><strong>Response (200):</strong></p>
+<pre>{
+  "status": 200,
+  "data": {
+    "id": 1,
+    "code": "YCDCGP.00001",
+    "solution_id": 31,
+    "solution_code": "GP.00031",
+    "solution_name": "Giải pháp ABC",
+    "solution_version": "V1",
+    "content": "Nội dung cần điều chỉnh...",
+    "employee_create_name": "Nguyễn Văn A",
+    "created_at": "06/05/2026",
+    "status": 1,
+    "status_name": "Đã gửi",
+    "status_color": "#2563EB",
+    "reject_reason": null,
+    "processed_by_name": "",
+    "processed_at": "",
+    "files": [],
+    "is_can_accept": true,
+    "is_can_reject": true
+  }
+}</pre>
+
+<h3>7.4. Tiếp nhận YCĐC</h3>
+<pre>PUT /{solutionAdjustmentRequest}/accept</pre>
+<p>Không cần body. Cập nhật status → 2, ghi <code>processed_by</code> + <code>processed_at</code>.</p>
+
+<h3>7.5. Từ chối YCĐC</h3>
+<pre>PUT /{solutionAdjustmentRequest}/reject</pre>
+<table>
+    <tr><th>Field</th><th>Type</th><th>Required</th><th>Validate</th><th>Mô tả</th></tr>
+    <tr><td><code>reject_reason</code></td><td>string</td><td>Yes</td><td>required|string</td><td>Lý do từ chối</td></tr>
+</table>
+
+<!-- 8. UI Specification -->
+<h2 id="s8">8. UI Specification</h2>
+
+<h3>8.1. Màn hình KD — Dự án TKT</h3>
+<ul>
+    <li><strong>Route:</strong> <code>/assign/prospective-projects/:id/manager</code></li>
+    <li><strong>Vị trí:</strong> Tab "Giải pháp" → Tab con "Yêu cầu điều chỉnh GP"</li>
+    <li><strong>Quyền tạo:</strong> Chỉ hiện nút "Tạo yêu cầu" khi user là <code>main_sale_employee_id</code> VÀ GP status ∈ {11,13,15,17}</li>
+    <li><strong>Không có cột Hành động</strong> (KD chỉ xem, click mã để xem chi tiết)</li>
+</ul>
+
+<h3>8.2. Màn hình TP/PM — Quản lý giải pháp</h3>
+<ul>
+    <li><strong>Route:</strong> <code>/assign/solutions/:id/manager</code></li>
+    <li><strong>Vị trí:</strong> Tab "YC Điều chỉnh"</li>
+    <li><strong>Có cột Hành động</strong> với các icon button luôn hiển thị (không chờ hover):</li>
+</ul>
+
+<h4>Bảng danh sách (cả 2 màn hình)</h4>
+<table>
+    <tr><th>Cột</th><th>Key</th><th>Width</th><th>Ghi chú</th></tr>
+    <tr><td>STT</td><td><code>index</code></td><td>60px</td><td>Số thứ tự theo trang</td></tr>
+    <tr><td>Mã yêu cầu</td><td><code>code</code></td><td>auto</td><td>Click → mở popup chi tiết</td></tr>
+    <tr><td>Version</td><td><code>solution_version_code</code></td><td>100px</td><td>VD: V1, V2</td></tr>
+    <tr><td>Người yêu cầu</td><td><code>employee_create_name</code></td><td>auto</td><td></td></tr>
+    <tr><td>Ngày gửi</td><td><code>created_at</code></td><td>120px</td><td>Format: dd/mm/yyyy</td></tr>
+    <tr><td>Trạng thái</td><td><code>status_name</code></td><td>120px</td><td>Badge có màu hex</td></tr>
+    <tr><td>Hành động</td><td><code>actions</code></td><td>140px</td><td><strong>Chỉ hiện ở màn TP/PM.</strong> Gồm: Xem (👁), Tiếp nhận (✓), Từ chối (✗)</td></tr>
+</table>
+
+<h4>Popup chi tiết (dạng bảng)</h4>
+<table>
+    <tr><th>Trường</th><th>Hiển thị</th><th>Điều kiện</th></tr>
+    <tr><td>Mã yêu cầu</td><td>Text</td><td>Luôn hiện</td></tr>
+    <tr><td>Giải pháp</td><td>Code - Tên (Version)</td><td>Luôn hiện</td></tr>
+    <tr><td>Người yêu cầu</td><td>Text</td><td>Luôn hiện</td></tr>
+    <tr><td>Ngày gửi</td><td>dd/mm/yyyy</td><td>Luôn hiện</td></tr>
+    <tr><td>Trạng thái</td><td>Badge</td><td>Luôn hiện</td></tr>
+    <tr><td>Nội dung điều chỉnh</td><td>Text (white-space: pre-line)</td><td>Luôn hiện</td></tr>
+    <tr><td>Lý do từ chối</td><td>Text</td><td>Chỉ khi status = 3</td></tr>
+    <tr><td>Người xử lý</td><td>Tên — dd/mm/yyyy</td><td>Chỉ khi đã xử lý</td></tr>
+    <tr><td>File đính kèm</td><td>FileAttachmentTable</td><td>Chỉ khi có file</td></tr>
+</table>
+<p><strong>Footer popup:</strong> Tiếp nhận (xanh, chỉ khi <code>is_can_accept</code>) | Từ chối (đỏ, chỉ khi <code>is_can_reject</code>) | Đóng</p>
+
+<h4>Popup tạo yêu cầu</h4>
+<table>
+    <tr><th>Trường</th><th>Component</th><th>Required</th></tr>
+    <tr><td>Giải pháp</td><td>Input readonly</td><td>—</td></tr>
+    <tr><td>Nội dung điều chỉnh</td><td>Textarea (5 rows)</td><td>Yes</td></tr>
+    <tr><td>File đính kèm</td><td>FileAttachmentTable (editable)</td><td>No</td></tr>
+</table>
+<p><strong>Footer:</strong> Gửi (primary) | Đóng (light)</p>
+
+<h4>Popup từ chối</h4>
+<table>
+    <tr><th>Trường</th><th>Component</th><th>Required</th></tr>
+    <tr><td>Lý do từ chối</td><td>Textarea (4 rows)</td><td>Yes</td></tr>
+</table>
+<p><strong>Footer:</strong> Gửi (primary) | Đóng (light)</p>
+
+<!-- 9. Hướng dẫn sử dụng -->
+<h2 id="s9">9. Hướng dẫn sử dụng</h2>
+
+<h3>9.1. Dành cho Kinh doanh (KD) — Tạo yêu cầu điều chỉnh</h3>
+<ol>
+    <li>Đăng nhập hệ thống → vào module <strong>Giao việc</strong></li>
+    <li>Mở <strong>Dự án TKT</strong> mà bạn phụ trách → bấm vào dự án cần điều chỉnh GP</li>
+    <li>Chọn tab <strong>"Giải pháp"</strong> → chọn tab con <strong>"Yêu cầu điều chỉnh GP"</strong></li>
+    <li>Bấm nút <strong>"Tạo yêu cầu"</strong> (góc phải)</li>
+    <li>Trong popup:
+        <ul>
+            <li><strong>Giải pháp:</strong> Hiển thị sẵn (readonly)</li>
+            <li><strong>Nội dung điều chỉnh:</strong> Nhập chi tiết nội dung khách hàng yêu cầu thay đổi</li>
+            <li><strong>File đính kèm:</strong> Đính kèm tài liệu liên quan (nếu có)</li>
+        </ul>
+    </li>
+    <li>Bấm <strong>"Gửi"</strong> → hệ thống tạo phiếu và thông báo đến TP/PM</li>
+    <li>Theo dõi trạng thái phiếu trong bảng danh sách:
+        <ul>
+            <li><span class="badge badge-primary">Đã gửi</span> — đang chờ xử lý</li>
+            <li><span class="badge badge-success">Tiếp nhận</span> — TP/PM đã tiếp nhận, sẽ tạo version mới</li>
+            <li><span class="badge badge-danger">Từ chối</span> — bị từ chối, xem lý do trong chi tiết. Có thể tạo phiếu mới.</li>
+        </ul>
+    </li>
+</ol>
+
+<div class="note">
+    <strong>Lưu ý:</strong> Nút "Tạo yêu cầu" chỉ hiện khi giải pháp đã được duyệt (status ≥ Đã duyệt GP). Nếu không thấy nút, hãy kiểm tra trạng thái giải pháp.
+</div>
+
+<h3>9.2. Dành cho Trưởng phòng GP / PM — Tiếp nhận hoặc từ chối</h3>
+<ol>
+    <li>Khi KD gửi yêu cầu, bạn sẽ nhận <strong>thông báo</strong> trên hệ thống</li>
+    <li>Bấm vào thông báo → hệ thống chuyển đến màn <strong>Quản lý giải pháp</strong> → tab <strong>"YC Điều chỉnh"</strong></li>
+    <li>Xem danh sách phiếu YCĐC. Các phiếu <span class="badge badge-primary">Đã gửi</span> sẽ có nút hành động:
+        <ul>
+            <li>👁 <strong>Xem:</strong> mở popup chi tiết để đọc nội dung yêu cầu</li>
+            <li>✓ <strong>Tiếp nhận:</strong> xác nhận tiếp nhận yêu cầu</li>
+            <li>✗ <strong>Từ chối:</strong> từ chối kèm lý do</li>
+        </ul>
+    </li>
+</ol>
+
+<h4>Tiếp nhận yêu cầu:</h4>
+<ol>
+    <li>Bấm icon ✓ (Tiếp nhận) trên dòng phiếu, hoặc mở chi tiết rồi bấm nút "Tiếp nhận"</li>
+    <li>Popup xác nhận hiện ra → bấm <strong>"Đồng ý"</strong></li>
+    <li>Phiếu chuyển sang <span class="badge badge-success">Tiếp nhận</span></li>
+    <li>Sau đó, bạn tạo <strong>version mới</strong> cho giải pháp để triển khai điều chỉnh</li>
+</ol>
+
+<h4>Từ chối yêu cầu:</h4>
+<ol>
+    <li>Bấm icon ✗ (Từ chối) trên dòng phiếu, hoặc mở chi tiết rồi bấm nút "Từ chối"</li>
+    <li>Popup hiện ra → nhập <strong>lý do từ chối</strong> (bắt buộc)</li>
+    <li>Bấm <strong>"Gửi"</strong></li>
+    <li>Phiếu chuyển sang <span class="badge badge-danger">Từ chối</span>. KD có thể xem lý do trong chi tiết.</li>
+</ol>
+
+<div class="note">
+    <strong>Lưu ý:</strong> Bạn chỉ có thể tiếp nhận / từ chối phiếu ở trạng thái "Đã gửi". Phiếu đã xử lý không thể thay đổi.
+</div>
+
+<!-- 10. Phụ lục -->
+<h2 id="s10">10. Phụ lục</h2>
+
+<h3>10.1. File references</h3>
+<table>
+    <tr><th>Layer</th><th>File path</th></tr>
+    <tr><td>Migration</td><td><code>Modules/Assign/Database/migrations/2026_05_06_000001_create_solution_adjustment_requests_table.php</code></td></tr>
+    <tr><td>Entity</td><td><code>Modules/Assign/Entities/SolutionAdjustmentRequest.php</code></td></tr>
+    <tr><td>Controller</td><td><code>Modules/Assign/Http/Controllers/Api/V1/SolutionAdjustmentRequestController.php</code></td></tr>
+    <tr><td>Service</td><td><code>Modules/Assign/Services/SolutionAdjustmentRequestService.php</code></td></tr>
+    <tr><td>Store Request</td><td><code>Modules/Assign/Http/Requests/Solution/StoreSolutionAdjustmentRequestRequest.php</code></td></tr>
+    <tr><td>Reject Request</td><td><code>Modules/Assign/Http/Requests/Solution/RejectSolutionAdjustmentRequestRequest.php</code></td></tr>
+    <tr><td>List Resource</td><td><code>Modules/Assign/Transformers/SolutionAdjustmentRequestResource.php</code></td></tr>
+    <tr><td>Detail Resource</td><td><code>Modules/Assign/Transformers/DetailSolutionAdjustmentRequestResource.php</code></td></tr>
+    <tr><td>Routes</td><td><code>Modules/Assign/Routes/api.php</code> (dòng 237-244)</td></tr>
+    <tr><td>FE Component</td><td><code>pages/assign/prospective-projects/components/SolutionAdjustmentTab.vue</code></td></tr>
+    <tr><td>FE Trang KD</td><td><code>pages/assign/prospective-projects/_id/manager.vue</code></td></tr>
+    <tr><td>FE Trang TP/PM</td><td><code>pages/assign/solutions/_id/manager.vue</code></td></tr>
+</table>
+
+<h3>10.2. Notification</h3>
+<table>
+    <tr><th>Thuộc tính</th><th>Giá trị</th></tr>
+    <tr><td>URL click</td><td><code>/assign/solutions/{solutionId}/manager?active_tab=adjustment-requests</code></td></tr>
+    <tr><td>Title</td><td>Yêu cầu điều chỉnh giải pháp mới</td></tr>
+    <tr><td>Content</td><td>Có yêu cầu điều chỉnh giải pháp: {code} - GP: {solution.code} - {solution.name}</td></tr>
+    <tr><td>Type</td><td><code>solution_adjustment_request</code></td></tr>
+    <tr><td>Người nhận</td><td>PM phụ trách GP + Tất cả TP quản lý phòng nhận GP</td></tr>
+</table>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Test Cases UI - My To Do</title>
+<style>
+@page { size: A4; margin: 12mm; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    font-size: 11px; line-height: 1.5; color: #1a1a1a; margin: 0; padding: 20px;
+}
+h1 { font-size: 20px; color: #1e3a5f; border-bottom: 3px solid #1e3a5f; padding-bottom: 8px; }
+h2 { font-size: 16px; color: #2c5282; border-bottom: 1px solid #cbd5e0; padding-bottom: 5px; margin-top: 28px; page-break-after: avoid; }
+h3 { font-size: 13px; color: #2d3748; margin-top: 16px; page-break-after: avoid; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 10px; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid #cbd5e0; padding: 5px 7px; text-align: left; vertical-align: top; }
+th { background-color: #2c5282; color: white; font-weight: 600; }
+tr:nth-child(even) { background-color: #f7fafc; }
+.pass { color: #16a34a; font-weight: bold; }
+.fail { color: #dc2626; font-weight: bold; }
+.na { color: #6b7280; }
+.tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; margin-right: 3px; }
+.tag-page { background: #dbeafe; color: #1e40af; }
+.tag-func { background: #dcfce7; color: #166534; }
+.tag-edge { background: #fef3c7; color: #92400e; }
+.tag-perm { background: #fce7f3; color: #9d174d; }
+.tag-api { background: #e0e7ff; color: #3730a3; }
+.summary-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px 16px; margin: 12px 0; }
+.summary-box strong { color: #0369a1; }
+.note { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 6px 10px; margin: 6px 0; font-size: 10px; }
+code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+.section-header { background: #f8fafc; padding: 8px 12px; border-radius: 6px; margin: 12px 0 8px 0; border-left: 4px solid #3b82f6; }
+</style>
+</head>
+<body>
+
+<h1>TEST CASES UI - TÍNH NĂNG MY TO DO</h1>
+<p><strong>Dự án:</strong> ERP TPE - Module Giao việc | <strong>Ngày:</strong> 2026-05-02 | <strong>Phiên bản:</strong> My To Do v1.0</p>
+
+<div class="summary-box">
+<strong>Tổng hợp:</strong> 95 test cases | 2 màn hình chính | 9 components<br>
+<strong>Phân loại:</strong>
+<span class="tag tag-func">Chức năng</span>
+<span class="tag tag-edge">Edge case</span>
+<span class="tag tag-page">Giao diện</span>
+<span class="tag tag-api">API/Data</span>
+</div>
+
+<!-- ==================== 1. MÀN HÌNH CHÍNH ==================== -->
+<h2>1. MÀN HÌNH CHÍNH — TỔNG HỢP CÔNG VIỆC</h2>
+<p><strong>URL:</strong> <code>/assign/my-todo</code></p>
+
+<h3>1.1 Hiển thị giao diện</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-01</td><td><span class="tag tag-page">Giao diện</span></td><td>Hiển thị trang My To Do</td><td>Đăng nhập → Menu sidebar Giao việc → My To Do</td><td>Trang hiển thị 2 cột: cột trái (danh sách items) + cột phải (calendar + danh sách cá nhân). Title "My To Do" trên topbar</td><td></td></tr>
+<tr><td>TD-02</td><td><span class="tag tag-page">Giao diện</span></td><td>Stats bar hiển thị đúng</td><td>Mở trang My To Do</td><td>Hiện 4 ô stats: Quá hạn (đỏ), Hôm nay (xanh), Tuần này (teal), Tổng (xám). Số đếm chính xác</td><td></td></tr>
+<tr><td>TD-03</td><td><span class="tag tag-page">Giao diện</span></td><td>Filter bar hiển thị</td><td>Kiểm tra phần filter</td><td>Có dropdown Loại, dropdown Trạng thái, ô tìm kiếm, nút "Tạo todo"</td><td></td></tr>
+<tr><td>TD-04</td><td><span class="tag tag-page">Giao diện</span></td><td>Sidebar calendar hiển thị</td><td>Xem cột phải</td><td>Mini calendar tháng hiện tại, có nút chuyển tháng trước/sau. Dot indicator trên ngày có items</td><td></td></tr>
+<tr><td>TD-05</td><td><span class="tag tag-page">Giao diện</span></td><td>Danh sách cá nhân trên sidebar</td><td>Xem phần dưới calendar</td><td>Tiêu đề "DANH SÁCH CÁ NHÂN", liệt kê lists với dot màu + tên + "completed/total", nút "+ Tạo danh sách mới"</td><td></td></tr>
+</table>
+
+<h3>1.2 Nhóm thời gian</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-06</td><td><span class="tag tag-func">Chức năng</span></td><td>Nhóm "Hôm nay" mở mặc định</td><td>Mở trang, xem nhóm Hôm nay</td><td>Nhóm Hôm nay luôn mở (expand). Header xanh #4a7cfb, hiện ngày DD/MM + count items</td><td></td></tr>
+<tr><td>TD-07</td><td><span class="tag tag-func">Chức năng</span></td><td>Nhóm "Ngày mai" thu gọn mặc định</td><td>Xem nhóm Ngày mai</td><td>Thu gọn (collapse), header vàng #d4a03c. Click → expand hiện items</td><td></td></tr>
+<tr><td>TD-08</td><td><span class="tag tag-func">Chức năng</span></td><td>Nhóm "Tuần này" thu gọn mặc định</td><td>Xem nhóm Tuần này</td><td>Thu gọn, header teal #14b8a6</td><td></td></tr>
+<tr><td>TD-09</td><td><span class="tag tag-func">Chức năng</span></td><td>Nhóm "Quá hạn" hiển thị đúng</td><td>Có items quá hạn (due_date < hôm nay)</td><td>Nhóm Quá hạn hiện, header đỏ #e25c5c, thu gọn mặc định</td><td></td></tr>
+<tr><td>TD-10</td><td><span class="tag tag-func">Chức năng</span></td><td>Nhóm "Không hạn" cho items không có due_date</td><td>Tạo todo không chọn ngày hạn</td><td>Item xuất hiện trong nhóm "Không hạn"</td><td></td></tr>
+<tr><td>TD-11</td><td><span class="tag tag-func">Chức năng</span></td><td>Toggle collapse/expand nhóm</td><td>Click vào header 1 nhóm đang collapse</td><td>Nhóm mở ra hiện items. Click lại → thu gọn</td><td></td></tr>
+<tr><td>TD-12</td><td><span class="tag tag-edge">Edge case</span></td><td>Nhóm rỗng vẫn hiển thị</td><td>Không có item nào hôm nay</td><td>Nhóm "Hôm nay" vẫn hiển thị với count = 0</td><td></td></tr>
+</table>
+
+<h3>1.3 Hiển thị item</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-13</td><td><span class="tag tag-page">Giao diện</span></td><td>Item Task hiển thị đúng</td><td>Có task được giao, xem item</td><td>Viền trái xanh dương, icon task, dòng 1: title + badge "Được giao" (xanh), dòng 2: status badge + tên DA + người phụ trách, góc phải: ngày hạn</td><td></td></tr>
+<tr><td>TD-14</td><td><span class="tag tag-page">Giao diện</span></td><td>Item Issue hiển thị đúng</td><td>Có issue được giao, xem item</td><td>Viền trái đỏ, icon issue, badge "Được giao", status badge (Mới/Đang xử lý/...)</td><td></td></tr>
+<tr><td>TD-15</td><td><span class="tag tag-page">Giao diện</span></td><td>Item Meeting hiển thị đúng</td><td>Có meeting sắp tới, xem item</td><td>Viền trái xanh dương nhạt, badge "Tham gia" (xanh lá), hiện số thành viên + địa điểm</td><td></td></tr>
+<tr><td>TD-16</td><td><span class="tag tag-page">Giao diện</span></td><td>Item Personal Todo hiển thị đúng</td><td>Tạo 1 todo cá nhân, xem item</td><td>Viền trái xám, checkbox (thay icon), badge "Cá nhân" (xám), status "Việc cần làm" (secondary)</td><td></td></tr>
+<tr><td>TD-17</td><td><span class="tag tag-page">Giao diện</span></td><td>Role badge hiển thị đúng màu</td><td>Xem các item khác loại source</td><td>Được giao = xanh dương pill, Tham gia = xanh lá pill, Cần duyệt = vàng pill, Theo dõi = tím pill, Cá nhân = xám pill</td><td></td></tr>
+<tr><td>TD-18</td><td><span class="tag tag-page">Giao diện</span></td><td>Status badge có border + background</td><td>Xem status trên dòng 2 của item</td><td>Badge có viền (border), background nhạt, text nhỏ (10px). Ví dụ: "Đang làm" = viền xanh + nền xanh nhạt</td><td></td></tr>
+<tr><td>TD-19</td><td><span class="tag tag-page">Giao diện</span></td><td>Dot separator giữa meta items</td><td>Xem dòng 2 có nhiều thông tin</td><td>Giữa status, project, assignee có dấu chấm tròn nhỏ (3px xám) ngăn cách</td><td></td></tr>
+<tr><td>TD-20</td><td><span class="tag tag-func">Chức năng</span></td><td>Ngày hạn hôm nay hiện giờ thay ngày</td><td>Có item due_date = hôm nay, due_time = 14:00</td><td>Góc phải hiện "14:00" thay vì "02/05"</td><td></td></tr>
+<tr><td>TD-21</td><td><span class="tag tag-page">Giao diện</span></td><td>Ngày hạn quá hạn hiện đỏ</td><td>Có item quá hạn</td><td>Ngày hạn ở góc phải hiện chữ đỏ. Title KHÔNG đỏ (giữ màu bình thường)</td><td></td></tr>
+<tr><td>TD-22</td><td><span class="tag tag-func">Chức năng</span></td><td>Sub-task hiển thị dưới todo cha</td><td>Tạo todo có sub-task</td><td>Sub-tasks hiện bên dưới todo cha, thụt vào, mỗi sub-task có checkbox + title</td><td></td></tr>
+</table>
+
+<h3>1.4 Bộ lọc & Tìm kiếm</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-23</td><td><span class="tag tag-func">Chức năng</span></td><td>Lọc theo loại: Task</td><td>Chọn "Task" trong dropdown Loại</td><td>Chỉ hiện items type = task. Stats cập nhật theo bộ lọc</td><td></td></tr>
+<tr><td>TD-24</td><td><span class="tag tag-func">Chức năng</span></td><td>Lọc theo loại: Issue</td><td>Chọn "Issue" trong dropdown Loại</td><td>Chỉ hiện items type = issue</td><td></td></tr>
+<tr><td>TD-25</td><td><span class="tag tag-func">Chức năng</span></td><td>Lọc theo loại: Meeting</td><td>Chọn "Meeting" trong dropdown Loại</td><td>Chỉ hiện items type = meeting</td><td></td></tr>
+<tr><td>TD-26</td><td><span class="tag tag-func">Chức năng</span></td><td>Lọc theo loại: Cá nhân</td><td>Chọn "Cá nhân" trong dropdown Loại</td><td>Chỉ hiện items type = personal</td><td></td></tr>
+<tr><td>TD-27</td><td><span class="tag tag-func">Chức năng</span></td><td>Lọc trạng thái: Chưa xong</td><td>Chọn "Chưa xong" (pending)</td><td>Chỉ hiện items chưa hoàn thành (mặc định)</td><td></td></tr>
+<tr><td>TD-28</td><td><span class="tag tag-func">Chức năng</span></td><td>Lọc trạng thái: Đã xong</td><td>Chọn "Đã xong" (done)</td><td>Chỉ hiện personal todos đã hoàn thành (BR-10: bỏ qua entity hệ thống)</td><td></td></tr>
+<tr><td>TD-29</td><td><span class="tag tag-func">Chức năng</span></td><td>Lọc trạng thái: Tất cả</td><td>Chọn "Tất cả"</td><td>Hiện cả items chưa xong và đã xong</td><td></td></tr>
+<tr><td>TD-30</td><td><span class="tag tag-func">Chức năng</span></td><td>Tìm kiếm theo title</td><td>Gõ "báo cáo" vào ô tìm kiếm</td><td>Danh sách filter client-side, chỉ hiện items có title chứa "báo cáo" (không phân biệt hoa thường)</td><td></td></tr>
+<tr><td>TD-31</td><td><span class="tag tag-edge">Edge case</span></td><td>Tìm kiếm không có kết quả</td><td>Gõ "XYZNOTEXIST" vào ô tìm kiếm</td><td>Danh sách trống, các nhóm vẫn hiện header nhưng không có items</td><td></td></tr>
+<tr><td>TD-32</td><td><span class="tag tag-func">Chức năng</span></td><td>Kết hợp filter loại + trạng thái</td><td>Chọn Loại = Task + Trạng thái = Chưa xong</td><td>Chỉ hiện tasks chưa hoàn thành</td><td></td></tr>
+</table>
+
+<h3>1.5 Calendar</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-33</td><td><span class="tag tag-func">Chức năng</span></td><td>Click ngày trên calendar</td><td>Click vào ngày 03/05 trên mini calendar</td><td>Danh sách chuyển sang flat mode, chỉ hiện items có due_date = 03/05. Ngày được highlight</td><td></td></tr>
+<tr><td>TD-34</td><td><span class="tag tag-func">Chức năng</span></td><td>Click lại cùng ngày → bỏ chọn</td><td>Click lại ngày 03/05 đang chọn</td><td>Bỏ highlight, quay về grouped mode (nhóm theo thời hạn)</td><td></td></tr>
+<tr><td>TD-35</td><td><span class="tag tag-func">Chức năng</span></td><td>Dot indicator trên calendar</td><td>Xem calendar, có items ngày 01/05 và 02/05</td><td>Ngày 01/05 và 02/05 có dot indicator (chấm nhỏ bên dưới số ngày)</td><td></td></tr>
+<tr><td>TD-36</td><td><span class="tag tag-func">Chức năng</span></td><td>Chuyển tháng trước/sau</td><td>Click nút ◀ / ▶ trên calendar</td><td>Calendar chuyển sang tháng trước/sau. Dot indicator cập nhật theo dữ liệu tháng mới</td><td></td></tr>
+<tr><td>TD-37</td><td><span class="tag tag-edge">Edge case</span></td><td>Click ngày không có items</td><td>Click ngày không có bất kỳ item nào</td><td>Chuyển flat mode, danh sách trống</td><td></td></tr>
+</table>
+
+<!-- ==================== 2. CRUD TODO CÁ NHÂN ==================== -->
+<h2>2. CRUD TODO CÁ NHÂN</h2>
+
+<h3>2.1 Tạo todo</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-38</td><td><span class="tag tag-func">Chức năng</span></td><td>Mở modal tạo todo</td><td>Click nút "Tạo todo" trên filter bar</td><td>Modal TodoFormModal hiện với: title (*), description, dropdown danh sách, date picker, time picker</td><td></td></tr>
+<tr><td>TD-39</td><td><span class="tag tag-func">Chức năng</span></td><td>Tạo todo thành công</td><td>Điền title "Gọi NCC", chọn list, chọn ngày hạn → Lưu</td><td>Modal đóng, todo mới xuất hiện trong danh sách đúng nhóm thời gian. Toast thành công</td><td></td></tr>
+<tr><td>TD-40</td><td><span class="tag tag-func">Chức năng</span></td><td>Tạo todo không có ngày hạn</td><td>Điền title, KHÔNG chọn ngày hạn → Lưu</td><td>Tạo thành công, item xuất hiện trong nhóm "Không hạn"</td><td></td></tr>
+<tr><td>TD-41</td><td><span class="tag tag-edge">Edge case</span></td><td>Tạo todo thiếu title</td><td>Để trống title → Lưu</td><td>Hiện lỗi validation "Tiêu đề là bắt buộc"</td><td></td></tr>
+<tr><td>TD-42</td><td><span class="tag tag-func">Chức năng</span></td><td>Tạo todo với description</td><td>Điền title + description dài → Lưu</td><td>Tạo thành công, description lưu đúng</td><td></td></tr>
+<tr><td>TD-43</td><td><span class="tag tag-func">Chức năng</span></td><td>Hủy tạo todo</td><td>Mở modal, điền thông tin, bấm "Hủy"</td><td>Modal đóng, không tạo todo mới</td><td></td></tr>
+</table>
+
+<h3>2.2 Toggle hoàn thành</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-44</td><td><span class="tag tag-func">Chức năng</span></td><td>Đánh dấu hoàn thành todo</td><td>Click checkbox todo cá nhân chưa xong</td><td>Checkbox checked, title gạch ngang (line-through), status = "Hoàn thành" (success). Gọi API PATCH toggle</td><td></td></tr>
+<tr><td>TD-45</td><td><span class="tag tag-func">Chức năng</span></td><td>Bỏ đánh dấu hoàn thành</td><td>Click checkbox todo đã xong</td><td>Checkbox unchecked, title bỏ gạch ngang, status = "Việc cần làm" (secondary)</td><td></td></tr>
+<tr><td>TD-46</td><td><span class="tag tag-func">Chức năng</span></td><td>Toggle sub-task</td><td>Click checkbox 1 sub-task</td><td>Sub-task toggle hoàn thành. Title gạch ngang hoặc bỏ gạch</td><td></td></tr>
+<tr><td>TD-47</td><td><span class="tag tag-api">API/Data</span></td><td>Completed_at ghi đúng</td><td>Đánh hoàn thành → kiểm tra DB</td><td><code>completed_at = now()</code> khi đánh hoàn thành, <code>completed_at = null</code> khi bỏ</td><td></td></tr>
+</table>
+
+<h3>2.3 Sửa todo</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-48</td><td><span class="tag tag-func">Chức năng</span></td><td>Sửa title todo</td><td>Mở modal sửa todo → đổi title → Lưu</td><td>Title cập nhật trên danh sách</td><td></td></tr>
+<tr><td>TD-49</td><td><span class="tag tag-func">Chức năng</span></td><td>Đổi ngày hạn</td><td>Mở modal sửa → chọn ngày hạn mới → Lưu</td><td>Item chuyển sang nhóm thời gian tương ứng</td><td></td></tr>
+<tr><td>TD-50</td><td><span class="tag tag-func">Chức năng</span></td><td>Chuyển todo sang list khác</td><td>Mở modal sửa → đổi danh sách → Lưu</td><td>Todo chuyển sang list mới. Count cũ giảm, count mới tăng</td><td></td></tr>
+</table>
+
+<h3>2.4 Xóa todo</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-51</td><td><span class="tag tag-func">Chức năng</span></td><td>Xóa todo cá nhân</td><td>Hover todo → click nút xóa → xác nhận</td><td>Todo biến mất khỏi danh sách, count giảm</td><td></td></tr>
+<tr><td>TD-52</td><td><span class="tag tag-func">Chức năng</span></td><td>Xóa todo có sub-tasks (cascade)</td><td>Xóa todo cha có 2 sub-tasks</td><td>Todo cha + 2 sub-tasks đều bị xóa (BR-04)</td><td></td></tr>
+<tr><td>TD-53</td><td><span class="tag tag-func">Chức năng</span></td><td>Hủy xóa</td><td>Click xóa → bấm "Hủy" trong confirm</td><td>Dialog đóng, todo vẫn còn</td><td></td></tr>
+</table>
+
+<h3>2.5 Sub-task</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-54</td><td><span class="tag tag-func">Chức năng</span></td><td>Tạo sub-task</td><td>Trong chi tiết list, click "Thêm bước con" dưới todo cha → nhập title → Enter</td><td>Sub-task xuất hiện dưới todo cha, thụt vào</td><td></td></tr>
+<tr><td>TD-55</td><td><span class="tag tag-edge">Edge case</span></td><td>Không cho tạo sub-task cấp 2</td><td>Cố tạo sub-task cho 1 sub-task (parent.parent_id != null)</td><td>API trả lỗi 400. Không tạo được (BR-01)</td><td></td></tr>
+<tr><td>TD-56</td><td><span class="tag tag-func">Chức năng</span></td><td>Xóa sub-task</td><td>Hover sub-task → click xóa</td><td>Sub-task bị xóa, todo cha vẫn còn</td><td></td></tr>
+</table>
+
+<!-- ==================== 3. CRUD DANH SÁCH CÁ NHÂN ==================== -->
+<h2>3. CRUD DANH SÁCH CÁ NHÂN</h2>
+
+<h3>3.1 Tạo danh sách</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-57</td><td><span class="tag tag-func">Chức năng</span></td><td>Tạo danh sách mới</td><td>Click "+ Tạo danh sách mới" trên sidebar → điền tên → Lưu</td><td>Modal đóng, list mới xuất hiện trên sidebar với count "0/0"</td><td></td></tr>
+<tr><td>TD-58</td><td><span class="tag tag-edge">Edge case</span></td><td>Tạo danh sách thiếu tên</td><td>Mở modal → để trống name → Lưu</td><td>Lỗi validation "Tên danh sách là bắt buộc"</td><td></td></tr>
+<tr><td>TD-59</td><td><span class="tag tag-func">Chức năng</span></td><td>Tạo danh sách với mô tả</td><td>Điền name + description → Lưu</td><td>Tạo thành công, description lưu đúng</td><td></td></tr>
+<tr><td>TD-60</td><td><span class="tag tag-api">API/Data</span></td><td>Sort order tự tăng</td><td>Tạo list thứ 3</td><td>sort_order = max(sort_order) + 1 (BR-08). List mới xuất hiện cuối cùng</td><td></td></tr>
+</table>
+
+<h3>3.2 Sửa danh sách</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-61</td><td><span class="tag tag-func">Chức năng</span></td><td>Sửa tên danh sách</td><td>Mở chi tiết list → click "Sửa" → đổi tên → Lưu</td><td>Tên cập nhật trên sidebar + header chi tiết</td><td></td></tr>
+<tr><td>TD-62</td><td><span class="tag tag-func">Chức năng</span></td><td>Sửa mô tả danh sách</td><td>Mở modal sửa → thêm/sửa description → Lưu</td><td>Description cập nhật</td><td></td></tr>
+</table>
+
+<h3>3.3 Xóa danh sách</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-63</td><td><span class="tag tag-func">Chức năng</span></td><td>Xóa danh sách rỗng</td><td>Xóa list không có todo → xác nhận</td><td>List biến mất khỏi sidebar</td><td></td></tr>
+<tr><td>TD-64</td><td><span class="tag tag-func">Chức năng</span></td><td>Xóa danh sách có todos (cascade)</td><td>Xóa list có 3 todos → xác nhận</td><td>List + tất cả 3 todos bị xóa (BR-03). Quay về trang chính nếu đang xem chi tiết list đó</td><td></td></tr>
+<tr><td>TD-65</td><td><span class="tag tag-func">Chức năng</span></td><td>Hủy xóa danh sách</td><td>Click xóa → bấm Hủy</td><td>Confirm đóng, list vẫn còn</td><td></td></tr>
+</table>
+
+<h3>3.4 Kéo thả sắp xếp</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-66</td><td><span class="tag tag-func">Chức năng</span></td><td>Drag handle hiện khi hover</td><td>Hover vào 1 list trên sidebar</td><td>Icon drag handle (≡) xuất hiện bên trái tên list</td><td></td></tr>
+<tr><td>TD-67</td><td><span class="tag tag-func">Chức năng</span></td><td>Kéo thả đổi vị trí list</td><td>Kéo list "Follow up" lên trên "Việc cần làm"</td><td>UI cập nhật ngay (optimistic update). Thứ tự mới hiển thị đúng</td><td></td></tr>
+<tr><td>TD-68</td><td><span class="tag tag-api">API/Data</span></td><td>Kéo thả persist sau reload</td><td>Kéo thả → reload trang (F5)</td><td>Thứ tự giữ nguyên sau reload (API đã lưu sort_order)</td><td></td></tr>
+<tr><td>TD-69</td><td><span class="tag tag-edge">Edge case</span></td><td>Kéo thả khi chỉ có 1 list</td><td>Chỉ có 1 list, cố kéo thả</td><td>Không có gì thay đổi (chỉ 1 item)</td><td></td></tr>
+<tr><td>TD-70</td><td><span class="tag tag-edge">Edge case</span></td><td>Kéo thả API lỗi → rollback</td><td>Kéo thả (giả lập API lỗi)</td><td>UI rollback về vị trí cũ, hiện toast "Không thể sắp xếp danh sách" (danger)</td><td></td></tr>
+</table>
+
+<h3>3.5 List mặc định</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-71</td><td><span class="tag tag-api">API/Data</span></td><td>Tự tạo list mặc định khi chưa có</td><td>User mới (chưa có list) truy cập My To Do lần đầu</td><td>Hệ thống tự tạo list "Mac dinh". Sidebar hiện 1 list (BR-02)</td><td></td></tr>
+<tr><td>TD-72</td><td><span class="tag tag-api">API/Data</span></td><td>Không tạo thêm nếu đã có list</td><td>User đã có 2 lists, truy cập lại My To Do</td><td>Không tạo list mặc định mới. Vẫn giữ 2 lists cũ</td><td></td></tr>
+</table>
+
+<!-- ==================== 4. CHI TIẾT DANH SÁCH ==================== -->
+<h2>4. MÀN HÌNH CHI TIẾT DANH SÁCH</h2>
+
+<h3>4.1 Hiển thị</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-73</td><td><span class="tag tag-func">Chức năng</span></td><td>Click list → mở chi tiết</td><td>Click tên list "Việc cần làm" trên sidebar</td><td>Cột trái chuyển sang TodoListDetail: header (tên + mô tả + nút Sửa/Xóa), danh sách todos, input thêm mới</td><td></td></tr>
+<tr><td>TD-74</td><td><span class="tag tag-func">Chức năng</span></td><td>Click lại list → quay về chính</td><td>Đang ở chi tiết list, click lại tên list đó</td><td>Quay về trang chính (toggle behavior)</td><td></td></tr>
+<tr><td>TD-75</td><td><span class="tag tag-page">Giao diện</span></td><td>Header chi tiết hiển thị đúng</td><td>Mở chi tiết list</td><td>Hiện: "My To Do > [Tên list]", thống kê "Tổng: X việc | Hoàn thành: Y", nút Sửa + Xóa</td><td></td></tr>
+<tr><td>TD-76</td><td><span class="tag tag-page">Giao diện</span></td><td>Phân tách pending vs completed</td><td>List có 3 todo chưa xong, 2 đã xong</td><td>3 todos chưa xong hiện trước, 2 đã xong hiện sau (có thể gạch ngang title)</td><td></td></tr>
+</table>
+
+<h3>4.2 Thao tác inline</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-77</td><td><span class="tag tag-func">Chức năng</span></td><td>Thêm todo inline</td><td>Gõ "Việc mới" vào input cuối → Enter</td><td>Todo mới xuất hiện cuối danh sách. Input xóa trắng sẵn sàng nhập tiếp</td><td></td></tr>
+<tr><td>TD-78</td><td><span class="tag tag-func">Chức năng</span></td><td>Thêm sub-task inline</td><td>Click "Thêm bước con" dưới 1 todo → gõ title → Enter</td><td>Sub-task xuất hiện dưới todo cha</td><td></td></tr>
+<tr><td>TD-79</td><td><span class="tag tag-func">Chức năng</span></td><td>Toggle todo trong chi tiết</td><td>Click checkbox 1 todo</td><td>Todo chuyển trạng thái. Stats header cập nhật ("Hoàn thành: Y+1")</td><td></td></tr>
+<tr><td>TD-80</td><td><span class="tag tag-func">Chức năng</span></td><td>Xóa todo trong chi tiết</td><td>Hover todo → click icon xóa</td><td>Todo bị xóa. Stats cập nhật</td><td></td></tr>
+<tr><td>TD-81</td><td><span class="tag tag-edge">Edge case</span></td><td>Thêm inline với title rỗng</td><td>Enter ở input trống (không gõ gì)</td><td>Không tạo todo, không gọi API</td><td></td></tr>
+</table>
+
+<!-- ==================== 5. TƯƠNG TÁC ITEM HỆ THỐNG ==================== -->
+<h2>5. TƯƠNG TÁC ITEM HỆ THỐNG (TASK / ISSUE)</h2>
+
+<h3>5.1 Action buttons Task</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-82</td><td><span class="tag tag-func">Chức năng</span></td><td>Hover hiện action buttons</td><td>Hover vào item Task</td><td>Hiện các action buttons tùy quyền: Xem, Sửa (nếu can_edit), Nhập KQ (nếu can_import_result), Duyệt (nếu can_approve), Lịch sử</td><td></td></tr>
+<tr><td>TD-83</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Xem" task</td><td>Click nút Xem trên item Task (status 1-3,10)</td><td>Mở CreateTaskModal ở chế độ view (readonly)</td><td></td></tr>
+<tr><td>TD-84</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Sửa" task</td><td>Click nút Sửa trên item Task (can_edit = true)</td><td>Mở CreateTaskModal chế độ edit</td><td></td></tr>
+<tr><td>TD-85</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Nhập KQ" task</td><td>Click nút Nhập KQ (can_import_result = true)</td><td>Mở ImportResultModal</td><td></td></tr>
+<tr><td>TD-86</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Duyệt" task</td><td>Click nút Duyệt (can_approve = true)</td><td>Mở ImportResultModal chế độ duyệt</td><td></td></tr>
+<tr><td>TD-87</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Lịch sử" task</td><td>Click nút Lịch sử</td><td>Mở TaskHistoryModal</td><td></td></tr>
+</table>
+
+<h3>5.2 Action buttons Issue</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-88</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Xem" issue</td><td>Click nút Xem trên item Issue</td><td>Mở CreateIssueModal chế độ view</td><td></td></tr>
+<tr><td>TD-89</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Xử lý" issue</td><td>Click nút Xử lý (can_handle = true)</td><td>Mở CreateIssueModal chế độ xử lý</td><td></td></tr>
+<tr><td>TD-90</td><td><span class="tag tag-func">Chức năng</span></td><td>Click "Lịch sử" issue</td><td>Click nút Lịch sử</td><td>Mở IssueHistoryModal</td><td></td></tr>
+</table>
+
+<h3>5.3 Items AssignJob / AssignBusiness / Meeting</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-91</td><td><span class="tag tag-func">Chức năng</span></td><td>Click AssignJob → mở tab mới</td><td>Click vào item Phiếu giao việc</td><td><code>window.open(item.url, '_blank')</code> — mở tab mới tới trang chi tiết phiếu</td><td></td></tr>
+<tr><td>TD-92</td><td><span class="tag tag-func">Chức năng</span></td><td>Click Meeting → mở tab mới</td><td>Click vào item Meeting</td><td>Mở tab mới tới trang chi tiết cuộc họp</td><td></td></tr>
+</table>
+
+<!-- ==================== 6. DỮ LIỆU & BẢO MẬT ==================== -->
+<h2>6. DỮ LIỆU & BẢO MẬT</h2>
+
+<h3>6.1 Cô lập dữ liệu</h3>
+<table>
+<tr><th style="width:60px">ID</th><th style="width:90px">Loại</th><th>Mô tả test case</th><th>Bước thực hiện</th><th>Kết quả mong đợi</th><th style="width:50px">KQ</th></tr>
+<tr><td>TD-93</td><td><span class="tag tag-api">API/Data</span></td><td>User chỉ thấy dữ liệu của mình</td><td>Đăng nhập User A, tạo 2 todos. Đăng nhập User B, xem My To Do</td><td>User B KHÔNG thấy todos của User A (BR-05)</td><td></td></tr>
+<tr><td>TD-94</td><td><span class="tag tag-api">API/Data</span></td><td>Deduplicate items</td><td>User vừa là assignee vừa là watcher 1 task</td><td>Task chỉ hiện 1 lần với source = "assigned" (ưu tiên cao nhất, BR-06)</td><td></td></tr>
+<tr><td>TD-95</td><td><span class="tag tag-api">API/Data</span></td><td>Stats đếm đúng cấp 1</td><td>Xem list có 3 todo cấp 1 (1 xong), 2 sub-task (1 xong)</td><td>Count hiện "1/3" (chỉ đếm cấp 1, BR-09). Không đếm sub-tasks</td><td></td></tr>
+</table>
+
+<div class="note">
+<strong>Lưu ý test:</strong> Cần có ít nhất 2 account để test cô lập dữ liệu (TD-93). Task/Issue phải có trong hệ thống để test hiển thị item hệ thống (section 5).
+</div>
+
+<hr style="margin-top: 30px">
+<p style="font-size: 10px; color: #999;">Test Cases My To Do v1.0 — Generated 2026-05-02 — ERP TPE / Module Assign — 95 test cases</p>
+
+</body>
+</html>

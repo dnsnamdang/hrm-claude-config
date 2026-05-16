@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Tóm tắt: Notify Task Report — Logic luồng + Ghi chú</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  @page { size: A4; margin: 14mm 14mm; }
+  body { font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-size: 11.5pt; line-height: 1.5; color: #1a1a1a; max-width: 920px; margin: 0 auto; padding: 12px; }
+  h1 { font-size: 19pt; color: #0f172a; border-bottom: 3px solid #2563eb; padding-bottom: 6px; margin: 0 0 8px; }
+  h2 { font-size: 13pt; color: #1e3a8a; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; margin-top: 18px; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; color: #334155; margin-top: 12px; page-break-after: avoid; }
+  p, li { font-size: 11pt; }
+  code { background: #f1f5f9; padding: 1px 5px; border-radius: 3px; font-size: 10pt; color: #be185d; }
+  pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 9px 11px; font-size: 9.5pt; overflow-x: auto; page-break-inside: avoid; }
+  pre code { background: none; padding: 0; color: #0f172a; }
+  table { border-collapse: collapse; width: 100%; margin: 7px 0; font-size: 10pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #d1d5db; padding: 4px 7px; text-align: left; vertical-align: top; }
+  th { background: #eef2ff; color: #1e3a8a; font-weight: 700; }
+  tr:nth-child(even) td { background: #fafafa; }
+  .mermaid { text-align: center; margin: 10px 0; page-break-inside: avoid; }
+  .header-meta { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 12px; margin: 8px 0 14px; font-size: 10pt; color: #475569; display: flex; gap: 18px; flex-wrap: wrap; }
+  .header-meta b { color: #0f172a; }
+  .step { background: #f0f9ff; border-left: 3px solid #0284c7; padding: 7px 12px; margin: 6px 0; border-radius: 0 4px 4px 0; }
+  .step b { color: #0c4a6e; }
+  .note { padding: 8px 12px; margin: 7px 0; border-radius: 0 4px 4px 0; font-size: 10.5pt; }
+  .note-warn { background: #fef3c7; border-left: 3px solid #d97706; color: #78350f; }
+  .note-danger { background: #fee2e2; border-left: 3px solid #dc2626; color: #7f1d1d; }
+  .note-info { background: #dbeafe; border-left: 3px solid #2563eb; color: #1e3a8a; }
+  .note-ok { background: #dcfce7; border-left: 3px solid #16a34a; color: #14532d; }
+  .note b { display: inline-block; margin-right: 4px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 9.5pt; font-weight: 700; }
+  .badge-time { background: #1e3a8a; color: #fff; }
+  .badge-status { background: #2563eb; color: #fff; }
+  .num { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: #2563eb; color: #fff; text-align: center; font-weight: 700; line-height: 22px; margin-right: 6px; font-size: 10pt; }
+  ul.compact, ol.compact { margin: 4px 0 8px 18px; padding: 0; }
+  ul.compact li, ol.compact li { margin: 2px 0; }
+  .legend { font-size: 9pt; color: #64748b; font-style: italic; margin-top: 4px; }
+</style>
+</head>
+<body>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
+
+<h1>Notify Task Report — Tóm tắt logic luồng + Ghi chú quan trọng</h1>
+
+<div class="header-meta">
+  <span><b>Module:</b> Assign (Giao việc)</span>
+  <span><b>Phiên bản:</b> 2.0 (Phase 12 + 13)</span>
+  <span><b>Ngày:</b> 2026-04-17</span>
+  <span><b>Trang nhập:</b> <code>/assign/tasks/daily-report</code></span>
+  <span><b>Cron:</b> <code>assign:notify-task-report</code></span>
+</div>
+
+<!-- ============================================ -->
+<h2>1. Tổng quan 1 đoạn</h2>
+<p>
+Mỗi 30 phút cron chạy. Tới <strong>4 mốc cố định 08:30 / 11:30 / 14:30 / 17:30</strong>, hệ thống quét các task <code>IN_PROGRESS</code> có rule báo cáo định kỳ active, đến lịch hôm nay nhưng chưa nhập tiến độ; gom theo assignee rồi gửi <strong>Web Push (FCM)</strong> tới browser. User click notification → mở thẳng trang <code>/assign/tasks/daily-report</code> → nhập tiến độ hàng loạt. Khi user nhập <code>progress_pct &gt; 0</code> ở mốc kế thì không bị nhắc nữa.
+</p>
+
+<!-- ============================================ -->
+<h2>2. Luồng end-to-end</h2>
+
+<div class="mermaid">
+flowchart LR
+    A["User login<br/>+ mở app"] --> B["FE xin permission<br/>+ getToken()"]
+    B --> C["POST /fcm-tokens<br/>upsert vào DB"]
+    C --> D["Cron mỗi 30p"]
+    D --> E{"now ∈ {8:30,<br/>11:30,14:30,17:30}?"}
+    E -->|No| Z["return 0"]
+    E -->|Yes| F["Query Task IN_PROGRESS<br/>+ rule active<br/>+ progressLogs(today,pct&gt;0)"]
+    F --> G["Filter due today<br/>(daily/weekly/monthly)"]
+    G --> H["Skip task đã nhập"]
+    H --> I["Group by assignee<br/>→ tokens"]
+    I --> J["FCM send<br/>(notification + data + link)"]
+    J --> K["Browser SW<br/>hiện push"]
+    K --> L["User click"]
+    L --> M["Mở /assign/tasks/<br/>daily-report"]
+    M --> N["Nhập today,<br/>validate ≤ 100%"]
+    N --> O["POST save<br/>→ updateOrCreate log<br/>→ sync task.progress_pct"]
+    O --> P["Mốc kế:<br/>không nhắc lại task này"]
+
+    style E fill:#fef3c7,stroke:#d97706
+    style H fill:#fef3c7,stroke:#d97706
+    style J fill:#dbeafe,stroke:#2563eb
+    style P fill:#dcfce7,stroke:#16a34a
+</div>
+
+<h3>Các bước chi tiết</h3>
+
+<div class="step"><span class="num">1</span><b>Đăng ký FCM Token</b> — User login → FE plugin <code>fcm-push.js</code> đăng ký SW <code>firebase-messaging-sw.js</code> → xin <code>Notification.requestPermission()</code> → <code>messaging.getToken()</code> → <code>POST /assign/fcm-tokens {token, device_info}</code>. BE <code>updateOrCreate</code> theo <code>token</code>.</div>
+
+<div class="step"><span class="num">2</span><b>Cron trigger</b> — Schedule <code>everyThirtyMinutes()->withoutOverlapping()</code> trong <code>Kernel.php</code>. Command tự gate: nếu <code>currentMinutes ∉ {510, 690, 870, 1050}</code> → log skip + return 0.</div>
+
+<div class="step"><span class="num">3</span><b>Query task</b> — Eager load <code>Task IN_PROGRESS</code> + <code>progressReportRule.is_active=true</code> + <code>progressLogs</code> đã filter <code>report_date=today AND progress_pct&gt;0</code> (bỏ N+1).</div>
+
+<div class="step"><span class="num">4</span><b>Filter due today</b> — Theo <code>cycle_type</code>: DAILY luôn true; WEEKLY <code>today.dayOfWeek ∈ week_days</code>; MONTHLY <code>today.day == month_day</code>.</div>
+
+<div class="step"><span class="num">5</span><b>Skip đã nhập</b> — Task có <code>progressLogs.isNotEmpty()</code> (sẵn pct &gt; 0 hôm nay) → bỏ qua. Group còn lại theo <code>assignee_id</code> → đếm số task per user.</div>
+
+<div class="step"><span class="num">6</span><b>Gửi FCM</b> — Lấy tất cả token của user; build <code>CloudMessage</code> = <code>Notification(title, body)</code> + <code>Data(click_action, task_count)</code> + <code>WebPushConfig(tag, fcm_options.link = FRONTEND_URL/assign/tasks/daily-report)</code>. Token <code>NotFound</code> → tự xoá khỏi <code>fcm_tokens</code>.</div>
+
+<div class="step"><span class="num">7</span><b>User click</b> — Background: SW custom <code>notificationclick</code> chạy trước Firebase + <code>stopImmediatePropagation()</code> → <code>clients.openWindow(link)</code> hoặc focus tab. Foreground: <code>onMessage</code> → toast trong app.</div>
+
+<div class="step"><span class="num">8</span><b>Nhập tiến độ</b> — Trang load qua <code>GET /daily-report</code> → render task chưa nhập trước (sort theo <code>send_time</code>). User edit chỉ dòng today → "Lưu tất cả" → FE validate sum past + today ≤ 100% → <code>POST /daily-report/save</code>.</div>
+
+<div class="step"><span class="num">9</span><b>Lưu + sync</b> — BE re-validate ownership (<code>assignee_id == auth()->id()</code>) + <code>report_date == today</code> + sum ≤ 100%. <code>updateOrCreate task_result_progress_logs</code> (key: <code>task_id + report_date</code>) → <code>task.progress_pct = log mới nhất theo report_date</code>.</div>
+
+<div class="step"><span class="num">10</span><b>Mốc kế</b> — Khi cron chạy mốc tiếp theo, task vừa nhập có <code>progressLogs.isNotEmpty()</code> → skip → user không bị nhắc nữa. Lặp đến hết 4 mốc/ngày.</div>
+
+<!-- ============================================ -->
+<h2>3. Bảng tham chiếu nhanh</h2>
+
+<div class="grid-2">
+<div>
+<h3>4 mốc gửi cố định</h3>
+<table>
+<tr><th>Phút từ 00:00</th><th>Giờ</th></tr>
+<tr><td>510</td><td><span class="badge badge-time">08:30</span></td></tr>
+<tr><td>690</td><td><span class="badge badge-time">11:30</span></td></tr>
+<tr><td>870</td><td><span class="badge badge-time">14:30</span></td></tr>
+<tr><td>1050</td><td><span class="badge badge-time">17:30</span></td></tr>
+</table>
+</div>
+
+<div>
+<h3>Điều kiện trigger task</h3>
+<table>
+<tr><th>Field</th><th>Yêu cầu</th></tr>
+<tr><td><code>task.status</code></td><td>= 4 (<span class="badge badge-status">IN_PROGRESS</span>)</td></tr>
+<tr><td><code>task.assignee_id</code></td><td>NOT NULL</td></tr>
+<tr><td><code>rule.is_active</code></td><td>= true</td></tr>
+<tr><td><code>cycle_type</code></td><td>due today (xem flow)</td></tr>
+<tr><td><code>log today pct&gt;0</code></td><td>KHÔNG tồn tại</td></tr>
+</table>
+</div>
+</div>
+
+<h3>API endpoints</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Mục đích</th></tr>
+<tr><td>POST</td><td><code>/assign/fcm-tokens</code></td><td>Upsert FCM token (login)</td></tr>
+<tr><td>DELETE</td><td><code>/assign/fcm-tokens</code></td><td>Xoá token (logout)</td></tr>
+<tr><td>GET</td><td><code>/assign/tasks/daily-report</code></td><td>DS task + progress_rows</td></tr>
+<tr><td>POST</td><td><code>/assign/tasks/daily-report/save</code></td><td>Lưu hàng loạt (chỉ today, sum ≤ 100%)</td></tr>
+<tr><td>GET</td><td><code>/assign/tasks/daily-report/count</code></td><td>Badge count sidebar</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2>4. ⚠️ GHI CHÚ QUAN TRỌNG</h2>
+
+<div class="note note-danger">
+  <b>🚨 DEPLOY ORDER:</b> Phải deploy <strong>code BE + FE TRƯỚC</strong>, sau đó mới chạy <code>php artisan migrate</code>. Nếu migrate trước → code cũ query <code>whereNotNull('task_report_notify_time')</code> trên column đã bị drop → <strong>fatal error</strong>.
+</div>
+
+<div class="note note-danger">
+  <b>🔒 HTTPS BẮT BUỘC:</b> Web Push API + Service Worker chỉ hoạt động trên HTTPS (trừ <code>localhost</code>). Dev server HTTP → user không nhận được push. Đây là blocker đã ghi nhận từ Phase 11.
+</div>
+
+<div class="note note-warn">
+  <b>⚙️ ENV bắt buộc:</b> <code>FIREBASE_CREDENTIALS</code> (path JSON service account) + <code>FRONTEND_URL</code> (URL tuyệt đối, vd <code>https://erp.tpe.vn</code>) — thiếu <code>FRONTEND_URL</code> → <code>fcm_options.link</code> sai → click notification không navigate đúng.
+</div>
+
+<div class="note note-warn">
+  <b>🕐 TIMEZONE:</b> <code>Carbon::now()</code> dùng <code>config/app.php</code> timezone (đã set <code>Asia/Ho_Chi_Minh</code>). Nếu deploy môi trường khác mà timezone không phải VN → 4 mốc gửi sẽ lệch giờ.
+</div>
+
+<div class="note note-warn">
+  <b>📅 dayOfWeek convention:</b> Carbon dùng <code>0=Chủ nhật ... 6=Thứ 7</code>. Nếu DB lưu <code>week_days</code> theo convention khác (1=T2…7=CN) sẽ sai logic <code>isReportDueToday</code> cho cycle WEEKLY. Cần verify khi tạo rule mới.
+</div>
+
+<div class="note note-warn">
+  <b>🔁 Spam UX:</b> Trước Phase 13 cron gửi 21 mốc/ngày. <strong>Hiện đã giảm xuống 4 mốc</strong>. Nếu tăng lại → user có nguy cơ tắt notification toàn site. Tag <code>task-daily-report</code> + <code>renotify:true</code> nghĩa là mỗi mốc đều kêu lại, không gộp.
+</div>
+
+<div class="note note-info">
+  <b>🔐 Permission ownership:</b> <code>daily-report</code> + <code>save</code> chỉ trả/chấp nhận task có <code>assignee_id = auth()->id()</code>. User A không thấy task của user B; ngay cả khi gửi <code>task_id</code> bậy, BE silent skip.
+</div>
+
+<div class="note note-info">
+  <b>📊 Validate 100%:</b> Sum <code>progress_pct</code> của tất cả log per task ≤ 100%. Validate cả FE (chặn submit) lẫn BE (skip task vi phạm + ghi <code>errors</code>, các task khác vẫn lưu).
+</div>
+
+<div class="note note-info">
+  <b>🔄 Sync <code>task.progress_pct</code>:</b> Sau lưu log, task gốc cập nhật <code>= latestLog.progress_pct</code> theo <code>report_date</code> lớn nhất (KHÔNG phải tổng cumulative). Nếu user nhập lùi ngày, vẫn lấy log có <code>report_date</code> lớn nhất.
+</div>
+
+<div class="note note-info">
+  <b>♻️ Auto-cleanup token:</b> FCM trả <code>NotFound</code> (token revoke/expired) → BE tự xoá row khỏi <code>fcm_tokens</code> → không retry vô hạn. Nhưng token vẫn cần được "refresh" định kỳ ở FE — nếu user không mở app lâu, token cũ có thể không còn valid.
+</div>
+
+<div class="note note-ok">
+  <b>✅ withoutOverlapping:</b> Đã thêm trong Kernel để chống 2 instance cron chạy chồng (gửi double push). Lock mặc định 24h — nếu instance chết mà lock không release, lần kế bị block; trường hợp này phải xoá lock thủ công trong cache.
+</div>
+
+<div class="note note-ok">
+  <b>✅ Đã fix N+1:</b> Eager load <code>progressLogs</code> đã filter today + pct&gt;0 → loop trong PHP <code>$task->progressLogs->isNotEmpty()</code> không tốn query. Trước đó mỗi task gọi 1 query riêng.
+</div>
+
+<div class="note note-ok">
+  <b>✅ Skip đã nhập:</b> Điều kiện hiện tại là <code>progress_pct &gt; 0</code>. Nghĩa là user nhập 0% (chỉ giờ + ghi chú) sẽ vẫn bị tính là "chưa nhập" và bị nhắc lại ở mốc kế. Nếu cần đổi → review BR-03.
+</div>
+
+<div class="note note-info">
+  <b>📅 Edge case MONTHLY:</b> Rule cycle MONTHLY với <code>month_day = 31</code> → tháng 30 ngày sẽ không bao giờ trigger. Đây là behavior cố định, không phải bug.
+</div>
+
+<!-- ============================================ -->
+<h2>5. Test checklist nhanh</h2>
+<table>
+<tr><th>#</th><th>Tình huống</th><th>Cách test</th><th>Expected</th></tr>
+<tr><td>1</td><td>Cron đúng mốc</td><td><code>php artisan assign:notify-task-report</code> lúc 8:30</td><td>Log "Sent: X" + browser nhận push</td></tr>
+<tr><td>2</td><td>Cron sai mốc</td><td>Chạy lúc 9:00, 12:00, etc</td><td>Log "Không phải mốc gửi" + return 0</td></tr>
+<tr><td>3</td><td>Đã nhập rồi</td><td>Nhập 1 task pct &gt; 0, đợi mốc kế</td><td>Task đó không bị gửi push lại</td></tr>
+<tr><td>4</td><td>Vượt 100%</td><td>Task có log past 80% + today nhập 30%</td><td>FE chặn submit; BE skip task đó + errors entry</td></tr>
+<tr><td>5</td><td>Token expired</td><td>Revoke token trong Firebase console rồi cron</td><td>Row trong <code>fcm_tokens</code> tự bị xoá</td></tr>
+<tr><td>6</td><td>Click notification</td><td>Tap push trên Chrome (background)</td><td>Mở/focus tab <code>/assign/tasks/daily-report</code></td></tr>
+<tr><td>7</td><td>Foreground</td><td>Đang ở app, đợi mốc</td><td>Hiện toast trong app, không hiện system notification</td></tr>
+<tr><td>8</td><td>Overlap</td><td>Giả lập command treo &gt; 30p</td><td><code>withoutOverlapping()</code> block instance thứ 2</td></tr>
+<tr><td>9</td><td>HTTPS</td><td>Truy cập app qua HTTP (không phải localhost)</td><td>SW không đăng ký được, browser từ chối</td></tr>
+<tr><td>10</td><td>Permission ownership</td><td>User A gửi save với <code>task_id</code> của user B</td><td>BE silent skip, task không bị thay đổi</td></tr>
+</table>
+
+<p class="legend">Tài liệu này tóm tắt từ SRS đầy đủ tại <code>docs/srs/notify-task-report.html</code> (sơ đồ use case, swimlane, ER chi tiết) + plan tại <code>.plans/notify-task-report/plan.md</code>.</p>
+
+</body>
+</html>

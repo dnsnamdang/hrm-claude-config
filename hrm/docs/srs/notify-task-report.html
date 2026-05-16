@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>SRS: Notify Task Report — Nhắc báo cáo tiến độ task</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  @page { size: A4; margin: 15mm 20mm; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; max-width: 900px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 22px; color: #0f172a; border-bottom: 3px solid #2563eb; padding-bottom: 8px; page-break-before: avoid; }
+  h2 { font-size: 17px; color: #0f172a; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; margin-top: 28px; page-break-after: avoid; }
+  h3 { font-size: 14px; color: #334155; margin-top: 18px; page-break-after: avoid; }
+  h4 { font-size: 13px; color: #475569; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 12px; page-break-inside: avoid; }
+  th, td { border: 1px solid #d1d5db; padding: 5px 8px; text-align: left; vertical-align: top; }
+  th { background: #f8fafc; font-weight: 700; color: #0f172a; }
+  tr:nth-child(even) { background: #fafafa; }
+  code { background: #f1f5f9; padding: 1px 4px; border-radius: 3px; font-size: 11px; color: #be185d; }
+  pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; font-size: 11px; overflow-x: auto; page-break-inside: avoid; }
+  pre code { background: none; padding: 0; color: #0f172a; }
+  .mermaid { text-align: center; margin: 16px 0; page-break-inside: avoid; }
+  .diagram-title { text-align: center; font-weight: 700; font-size: 13px; color: #374151; margin-bottom: 4px; }
+  .toc { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 24px; margin: 16px 0; }
+  .toc a { color: #2563eb; text-decoration: none; }
+  .toc li { margin: 3px 0; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-orange { background: #ffedd5; color: #9a3412; }
+  .badge-purple { background: #f3e8ff; color: #6b21a8; }
+  .badge-gray { background: #f3f4f6; color: #374151; }
+  .page-break { page-break-before: always; }
+  blockquote { border-left: 3px solid #f59e0b; background: #fffbeb; padding: 8px 12px; margin: 10px 0; color: #92400e; font-size: 12px; }
+  @media print { body { font-size: 11px; } h1 { font-size: 18px; } h2 { font-size: 14px; } .no-print { display: none; } }
+</style>
+</head>
+<body>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
+
+<h1>SRS: Notify Task Report — Nhắc báo cáo tiến độ task</h1>
+
+<table>
+<tr><th style="width:120px">Thông tin</th><th>Chi tiết</th></tr>
+<tr><td>Module</td><td>Assign (Giao việc)</td></tr>
+<tr><td>Phiên bản</td><td>2.0 (Phase 12 + 13)</td></tr>
+<tr><td>Ngày tạo</td><td>2026-04-17</td></tr>
+<tr><td>Người tạo</td><td>@dnsnamdang</td></tr>
+<tr><td>Trạng thái</td><td><span class="badge badge-green">Approved</span></td></tr>
+</table>
+
+<div class="toc">
+<strong>Mục lục</strong>
+<ol>
+<li><a href="#s1">Giới thiệu</a></li>
+<li><a href="#s2">Actors & Permissions</a></li>
+<li><a href="#s3">Sơ đồ Use Case</a></li>
+<li><a href="#s4">Swimlane — Luồng xử lý chính</a></li>
+<li><a href="#s5">Use Cases chi tiết</a></li>
+<li><a href="#s6">Business Rules</a></li>
+<li><a href="#s7">Data Model</a></li>
+<li><a href="#s8">Flow Logic — Cron gate 4 mốc</a></li>
+<li><a href="#s9">API Specification</a></li>
+<li><a href="#s10">UI Specification</a></li>
+<li><a href="#s11">Scheduled Jobs & Deploy</a></li>
+<li><a href="#s12">Non-functional Requirements</a></li>
+<li><a href="#s13">File References</a></li>
+</ol>
+</div>
+
+<!-- ============================================ -->
+<h2 id="s1">1. Giới thiệu</h2>
+
+<h3>1.1. Mục đích</h3>
+<p>Hệ thống nhắc nhở nhân viên (assignee) báo cáo tiến độ các task đang thực hiện thông qua <strong>Web Push Notification (FCM)</strong>, đồng thời cung cấp <strong>trang nhập tiến độ hàng loạt</strong> giúp user xử lý nhanh nhiều task cùng lúc trong ngày.</p>
+<ul>
+  <li>Nhắc tự động qua trình duyệt (kể cả khi không mở tab) tại <strong>4 mốc cố định</strong>: 08:30, 11:30, 14:30, 17:30</li>
+  <li>Áp dụng đồng nhất cho toàn hệ thống — không cấu hình per company</li>
+  <li>Chỉ nhắc task <code>IN_PROGRESS</code> có rule báo cáo active, đến lịch hôm nay và <strong>chưa nhập</strong> tiến độ</li>
+</ul>
+
+<h3>1.2. Phạm vi</h3>
+<p><strong>Trong scope:</strong> Đăng ký FCM token, cron phát hiện task chưa báo cáo và gửi push, trang nhập tiến độ hàng loạt, badge count sidebar, click notification navigate.</p>
+<p><strong>Ngoài scope:</strong> Push mobile (FCM topic riêng), email, cấu hình giờ nhắc per company/user, thay đổi cấu trúc <code>task_progress_report_rules</code>.</p>
+
+<h3>1.3. Thuật ngữ</h3>
+<table>
+<tr><th>Thuật ngữ</th><th>Giải thích</th></tr>
+<tr><td>FCM</td><td>Firebase Cloud Messaging — dịch vụ push notification của Google</td></tr>
+<tr><td>Service Worker (SW)</td><td>Script chạy nền trong trình duyệt để nhận push khi tab đóng</td></tr>
+<tr><td>Assignee</td><td>Nhân viên được giao thực hiện task</td></tr>
+<tr><td>Progress Report Rule</td><td>Quy tắc báo cáo định kỳ của task (daily/weekly/monthly)</td></tr>
+<tr><td>Progress Log</td><td>Bản ghi tiến độ task theo từng ngày báo cáo</td></tr>
+<tr><td>Cycle Type</td><td>Chu kỳ báo cáo: 1=daily, 2=weekly, 3=monthly</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="s2">2. Actors & Permissions</h2>
+
+<table>
+<tr><th>Actor</th><th>Mô tả</th><th>Quyền</th></tr>
+<tr><td><strong>Nhân viên (Assignee)</strong></td><td>Người được giao thực hiện task</td><td>Xem + nhập tiến độ task của bản thân; nhận push notification</td></tr>
+<tr><td><strong>Hệ thống (Cron)</strong></td><td>Job tự động chạy mỗi 30 phút</td><td>Truy vấn task + gửi push qua FCM</td></tr>
+<tr><td><strong>FCM Service</strong></td><td>Dịch vụ Google đẩy push tới browser</td><td>Nhận message từ BE và đẩy đến Service Worker</td></tr>
+<tr><td><strong>Service Worker</strong></td><td>Chạy nền trong browser của user</td><td>Hiển thị notification + xử lý click navigate</td></tr>
+</table>
+<p><em>Auth: Tất cả endpoint yêu cầu <strong>Bearer JWT Token</strong>.</em></p>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s3">3. Sơ đồ Use Case</h2>
+
+<p class="diagram-title">Use Case Diagram — Notify Task Report</p>
+<div class="mermaid">
+graph LR
+    subgraph Actors
+        NV["Nhân viên<br/>(Assignee)"]
+        CRON["Hệ thống<br/>(Cron)"]
+        FCM["FCM Service<br/>(Google)"]
+        SW["Service Worker<br/>(Browser)"]
+    end
+
+    subgraph "Token Management"
+        UC01["UC-01: Đăng ký FCM Token"]
+    end
+
+    subgraph "Notification Flow"
+        UC02["UC-02: Cron gửi Push"]
+        UC03["UC-03: Nhận & click notification"]
+    end
+
+    subgraph "Report Entry"
+        UC04["UC-04: Xem DS task cần báo cáo"]
+        UC05["UC-05: Nhập báo cáo hàng loạt"]
+        UC06["UC-06: Xem badge count"]
+    end
+
+    NV --> UC01
+    NV --> UC03
+    NV --> UC04
+    NV --> UC05
+    NV --> UC06
+    CRON --> UC02
+    UC02 --> FCM
+    FCM --> SW
+    SW --> UC03
+</div>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s4">4. Swimlane — Luồng xử lý chính</h2>
+
+<h3>4.1. Luồng đăng ký FCM Token</h3>
+<p class="diagram-title">Swimlane — User login → FE xin permission → Lưu token vào DB</p>
+<div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant FE as FE Plugin<br/>(fcm-push.js)
+    participant SW as Service Worker
+    participant BE as BE<br/>(FcmTokenController)
+    participant DB as DB (fcm_tokens)
+
+    U->>FE: Login + mở app
+    FE->>SW: register('/firebase-messaging-sw.js')
+    SW-->>FE: Active (skipWaiting + claim)
+    FE->>U: Notification.requestPermission()
+    U-->>FE: granted
+    FE->>FE: messaging.getToken() → fcm_token
+    FE->>BE: POST /assign/fcm-tokens {token, device_info}
+    BE->>BE: auth()->id()
+    BE->>DB: updateOrCreate(['token'], [employee_id, device_info])
+    DB-->>BE: ok
+    BE-->>FE: 200 {message: "success"}
+</div>
+
+<h3>4.2. Luồng cron gửi push notification</h3>
+<p class="diagram-title">Swimlane — Cron trigger → Check mốc → Query task → Push FCM → User click</p>
+<div class="mermaid">
+sequenceDiagram
+    participant C as System Cron
+    participant CMD as NotifyTaskReport<br/>Command
+    participant DB as DB
+    participant FCM as FCM Service
+    participant SW as Service Worker
+    participant U as User
+
+    C->>CMD: schedule:run (every 1 min)
+    CMD->>CMD: everyThirtyMinutes() → run tại phút 0/30
+    CMD->>CMD: Check now ∈ {08:30, 11:30, 14:30, 17:30}?
+
+    alt Không phải mốc
+        CMD-->>C: Return 0 (log skip)
+    else Đúng mốc
+        CMD->>DB: Query Task IN_PROGRESS + rule active<br/>eager load progressLogs(today, pct>0)
+        DB-->>CMD: List tasks
+        CMD->>CMD: Filter isReportDueToday() + progressLogs.isEmpty()
+        CMD->>CMD: Group by assignee_id
+        CMD->>DB: Query fcm_tokens per employee
+        DB-->>CMD: tokens[]
+        CMD->>FCM: send(Notification + Data + WebPushConfig.link)
+
+        alt NotFound (token expired)
+            FCM-->>CMD: NotFoundException
+            CMD->>DB: DELETE fcm_tokens WHERE token=X
+        else Success
+            FCM->>SW: Push message
+            alt Background (tab đóng)
+                SW->>U: Hiện system notification
+            else Foreground (tab mở)
+                FE->>U: Hiện toast qua onMessage
+            end
+            U->>SW: Click notification
+            SW->>SW: notificationclick + stopImmediatePropagation()
+            SW->>U: openWindow(FRONTEND_URL/assign/tasks/daily-report)
+        end
+
+        CMD-->>C: Log "Sent: X, Failed: Y, Users: Z"
+    end
+</div>
+
+<div class="page-break"></div>
+<h3>4.3. Luồng nhập báo cáo tiến độ hàng loạt</h3>
+<p class="diagram-title">Swimlane — Truy cập trang → Load data → Nhập → Validate → Lưu</p>
+<div class="mermaid">
+sequenceDiagram
+    participant U as User
+    participant FE as FE<br/>(daily-report.vue)
+    participant CTL as BE<br/>(TaskController)
+    participant SV as TaskService
+    participant DB as DB
+
+    U->>FE: Truy cập /assign/tasks/daily-report
+    FE->>CTL: GET /assign/tasks/daily-report
+    CTL->>SV: getDailyReportTasks()
+    SV->>DB: Query task của user + IN_PROGRESS + rule active
+    DB-->>SV: tasks
+    SV->>SV: Filter due today + flag is_reported_today
+    SV->>SV: Sort (chưa nhập trước, theo send_time)
+    SV-->>CTL: [tasks with progress_rows]
+    CTL-->>FE: 200 data
+    FE->>U: Render summary + accordion collapse
+
+    U->>FE: Click expand task
+    FE-->>U: Hiện progress_rows (past readonly, today editable, future disabled)
+    U->>FE: Nhập hours/progress_pct/note
+    U->>FE: Click "Lưu tất cả"
+
+    FE->>FE: Validate: sum past + today ≤ 100%
+    alt Vượt 100%
+        FE-->>U: Toast error + highlight, dừng
+    else OK
+        FE->>CTL: POST /daily-report/save {tasks: [...]}
+        CTL->>SV: saveDailyReport($tasks)
+        loop Mỗi task
+            SV->>SV: Check assignee_id == auth()->id() + report_date == today
+            SV->>DB: SUM progress_pct (loại today)
+            alt existing + new > 100
+                SV-->>SV: Skip + errors[]
+            else OK
+                SV->>DB: updateOrCreate task_result_progress_logs
+                SV->>DB: UPDATE task.progress_pct = latestLog.progress_pct
+            end
+        end
+        SV-->>CTL: {success: N, errors: []}
+        CTL-->>FE: 200 "Lưu tiến độ thành công"
+        FE->>U: Toast success + reload data
+    end
+</div>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s5">5. Use Cases chi tiết</h2>
+
+<h3>UC-01: Đăng ký nhận push notification (FCM Token)</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Nhân viên</td></tr>
+<tr><td><strong>Precondition</strong></td><td>User đã login; trình duyệt hỗ trợ Notification + Service Worker (HTTPS bắt buộc trừ localhost)</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. User mở app sau login<br>2. FE đăng ký SW <code>firebase-messaging-sw.js</code><br>3. FE gọi <code>Notification.requestPermission()</code> → user "Cho phép"<br>4. FE gọi <code>getToken()</code> → fcm_token<br>5. FE gửi <code>POST /assign/fcm-tokens</code> với <code>{token, device_info}</code><br>6. BE <code>updateOrCreate</code> token vào <code>fcm_tokens</code> (key: <code>token</code>)<br>7. BE trả 200 success</td></tr>
+<tr><td><strong>Postcondition</strong></td><td>Token gắn với <code>employee_id</code> → cron có thể gửi push</td></tr>
+<tr><td><strong>Alternative</strong></td><td>User từ chối permission → không gửi token, không nhận push (FE silent skip)</td></tr>
+<tr><td><strong>Exception</strong></td><td>Token đã tồn tại → upsert update <code>employee_id</code> mới</td></tr>
+</table>
+
+<h3>UC-02: Hệ thống tự động gửi push notification (Cron)</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Hệ thống (Cron)</td></tr>
+<tr><td><strong>Precondition</strong></td><td><code>schedule:run</code> được system cron gọi mỗi phút; FCM credentials đã cấu hình <code>FIREBASE_CREDENTIALS</code></td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. Schedule trigger <code>assign:notify-task-report</code> mỗi 30 phút<br>2. Command check <code>now ∈ {08:30, 11:30, 14:30, 17:30}</code>? Không → return 0<br>3. Query Task IN_PROGRESS + rule active; eager load progressLogs(today, pct>0)<br>4. Filter due today theo <code>cycle_type</code> (daily/weekly/monthly)<br>5. Skip task có <code>progressLogs.isNotEmpty()</code><br>6. Group theo <code>assignee_id</code> → đếm số task<br>7. Gửi FCM message: notification + data + webpush (fcm_options.link)<br>8. <code>NotFound</code> → xoá token<br>9. Log "Sent: X, Failed: Y"</td></tr>
+<tr><td><strong>Postcondition</strong></td><td>User chưa nhập tiến độ nhận push notification</td></tr>
+<tr><td><strong>Alternative</strong></td><td>Không có user cần nhắc → log "Không có user nào"</td></tr>
+<tr><td><strong>Exception</strong></td><td>Firebase không khả dụng → log error, return 1; <code>withoutOverlapping()</code> đảm bảo không double-send</td></tr>
+</table>
+
+<h3>UC-03: User nhận và click vào notification</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Nhân viên</td></tr>
+<tr><td><strong>Precondition</strong></td><td>UC-01 thành công, UC-02 đã gửi push</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. FCM đẩy message tới browser<br>2. <strong>Foreground</strong>: <code>onMessage</code> → toast trong app<br>3. <strong>Background</strong>: SW nhận → browser hiện system notification<br>4. User click notification<br>5. SW custom <code>notificationclick</code> handler chạy trước Firebase + <code>stopImmediatePropagation()</code><br>6. SW <code>clients.openWindow(fcm_options.link)</code> hoặc focus tab existing → navigate <code>/assign/tasks/daily-report</code></td></tr>
+<tr><td><strong>Postcondition</strong></td><td>User được đưa đến trang nhập báo cáo</td></tr>
+<tr><td><strong>Exception</strong></td><td>Token expired → BE auto-delete ở UC-02 step 8, lần sau không gửi</td></tr>
+</table>
+
+<h3>UC-04: Xem danh sách task cần báo cáo hôm nay</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Nhân viên</td></tr>
+<tr><td><strong>Precondition</strong></td><td>User login, truy cập <code>/assign/tasks/daily-report</code></td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. FE gọi <code>GET /assign/tasks/daily-report</code><br>2. BE lấy task của <code>auth()->id()</code> có IN_PROGRESS + rule active<br>3. Filter due today<br>4. Generate <code>progress_rows</code>: past + today + future, gắn log đã có<br>5. Set flag <code>is_reported_today</code> nếu hôm nay đã có log pct>0<br>6. Sort: chưa nhập trước, theo <code>send_time</code> tăng dần<br>7. FE render summary + accordion collapse + bảng progress_rows</td></tr>
+<tr><td><strong>Alternative</strong></td><td>Không có task → empty state "Không có task cần báo cáo tiến độ hôm nay"</td></tr>
+</table>
+
+<h3>UC-05: Nhập và lưu báo cáo tiến độ hàng loạt</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Nhân viên</td></tr>
+<tr><td><strong>Precondition</strong></td><td>UC-04 đã load; task IN_PROGRESS của bản thân</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. Expand task → hiện progress_rows<br>2. Chỉ dòng today editable; past readonly; future disabled<br>3. Nhập hours, progress_pct, note ≥ 1 task<br>4. Click "Lưu tất cả"<br>5. FE validate: sum past + today ≤ 100% (vượt → toast error + highlight)<br>6. Build payload chỉ task có dữ liệu today<br>7. POST <code>/daily-report/save</code><br>8. BE validate lại: ownership + report_date=today + ≤ 100%<br>9. <code>updateOrCreate</code> task_result_progress_logs (key: task_id + report_date)<br>10. Sync <code>task.progress_pct = latestLog.progress_pct</code><br>11. Trả <code>{success, errors}</code><br>12. FE toast success + reload</td></tr>
+<tr><td><strong>Postcondition</strong></td><td>Tiến độ lưu; user không bị nhắc lần kế (pct>0)</td></tr>
+<tr><td><strong>Exception</strong></td><td>Vượt 100% → BE skip task đó, các task khác vẫn lưu</td></tr>
+</table>
+
+<h3>UC-06: Xem badge count trên sidebar</h3>
+<table>
+<tr><th style="width:140px"></th><th></th></tr>
+<tr><td><strong>Actor</strong></td><td>Nhân viên</td></tr>
+<tr><td><strong>Main Flow</strong></td><td>1. FE gọi <code>GET /daily-report/count</code> (on-mount/định kỳ)<br>2. BE đếm task IN_PROGRESS của user, due today, pct=0<br>3. Trả <code>{count: N}</code><br>4. FE hiện badge số N; N=0 ẩn</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s6">6. Business Rules</h2>
+
+<table>
+<tr><th style="width:50px">ID</th><th style="width:200px">Rule</th><th>Mô tả</th><th style="width:140px">Áp dụng tại</th></tr>
+<tr><td>BR-01</td><td>Cửa sổ gửi push</td><td>Chỉ gửi tại 4 mốc cố định: 08:30, 11:30, 14:30, 17:30 (exact match <code>now.hour*60 + now.minute</code>)</td><td>UC-02 / <code>NotifyTaskReport::handle()</code></td></tr>
+<tr><td>BR-02</td><td>Chỉ task IN_PROGRESS</td><td>Chỉ task <code>status = 4</code> được tính + cho phép nhập</td><td>UC-02, UC-04, UC-05 / <code>canImportResult()</code></td></tr>
+<tr><td>BR-03</td><td>Skip task đã nhập</td><td>Có log <code>report_date=today AND progress_pct > 0</code> = đã nhập, không nhắc lại</td><td>UC-02, UC-04, UC-06</td></tr>
+<tr><td>BR-04</td><td>Tổng tiến độ ≤ 100%</td><td>Sum <code>progress_pct</code> per task không vượt 100%; vượt → reject FE + BE</td><td>UC-05 / <code>saveDailyReport()</code></td></tr>
+<tr><td>BR-05</td><td>Chỉ today editable</td><td>Dòng <code>report_date=today</code> edit; past readonly; future disabled</td><td>UC-04, UC-05</td></tr>
+<tr><td>BR-06</td><td>Cycle weekly</td><td>Due nếu <code>today.dayOfWeek ∈ rule.week_days</code> (Carbon: 0=CN, 6=T7)</td><td>UC-02, UC-04 / <code>isReportDueToday()</code></td></tr>
+<tr><td>BR-07</td><td>Cycle monthly</td><td>Due nếu <code>today.day == rule.month_day</code></td><td>UC-02, UC-04 / <code>isReportDueToday()</code></td></tr>
+<tr><td>BR-08</td><td>Auto-delete token expired</td><td>FCM <code>NotFound</code> → xoá token khỏi <code>fcm_tokens</code></td><td>UC-02</td></tr>
+<tr><td>BR-09</td><td>Cron không chạy chồng</td><td><code>withoutOverlapping()</code> đảm bảo 1 instance tại 1 thời điểm</td><td>UC-02 / Kernel.php</td></tr>
+<tr><td>BR-10</td><td><code>FRONTEND_URL</code> bắt buộc</td><td><code>fcm_options.link</code> cần URL tuyệt đối — đọc <code>env('FRONTEND_URL')</code></td><td>UC-02, UC-03</td></tr>
+<tr><td>BR-11</td><td>Sync task progress</td><td>Sau lưu log → <code>task.progress_pct = latestLog.progress_pct</code> theo <code>report_date</code> lớn nhất</td><td>UC-05</td></tr>
+<tr><td>BR-12</td><td>Permission ownership</td><td>Daily-report chỉ trả task của <code>auth()->id()</code>; save chỉ chấp nhận task có <code>assignee_id = auth()->id()</code></td><td>UC-04, UC-05, UC-06</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s7">7. Data Model</h2>
+
+<h3>7.1. Entity Relationship</h3>
+<div class="mermaid">
+erDiagram
+    Employee ||--o{ FcmToken : owns
+    Employee ||--o{ Task : "assignee_id"
+    Task ||--|| TaskProgressReportRule : "1-1"
+    Task ||--o{ TaskResultProgressLog : logs
+
+    FcmToken {
+        bigint id PK
+        bigint employee_id FK
+        string token UK
+        string device_info
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    Task {
+        bigint id PK
+        bigint assignee_id FK
+        tinyint status
+        decimal progress_pct
+    }
+
+    TaskProgressReportRule {
+        bigint id PK
+        bigint task_id UK
+        tinyint cycle_type
+        time send_time
+        string week_days
+        tinyint month_day
+        tinyint is_active
+    }
+
+    TaskResultProgressLog {
+        bigint id PK
+        bigint task_result_id FK
+        date report_date
+        decimal hours
+        tinyint progress_pct
+        text note
+    }
+</div>
+
+<h3>7.2. Bảng dữ liệu</h3>
+
+<h4>Bảng: <code>fcm_tokens</code></h4>
+<table>
+<tr><th>Cột</th><th>Type</th><th>Nullable</th><th>Default</th><th>Mô tả</th></tr>
+<tr><td>id</td><td>bigint PK</td><td>No</td><td>auto</td><td></td></tr>
+<tr><td>employee_id</td><td>unsignedBigInteger</td><td>No</td><td>—</td><td>ID nhân viên (index)</td></tr>
+<tr><td>token</td><td>string(500) UNIQUE</td><td>No</td><td>—</td><td>FCM registration token</td></tr>
+<tr><td>device_info</td><td>string(255)</td><td>Yes</td><td>null</td><td>User-Agent / browser info</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamps</td><td>Yes</td><td>null</td><td></td></tr>
+</table>
+
+<h4>Bảng: <code>task_progress_report_rules</code></h4>
+<table>
+<tr><th>Cột</th><th>Type</th><th>Nullable</th><th>Default</th><th>Mô tả</th></tr>
+<tr><td>id</td><td>bigint PK</td><td>No</td><td>auto</td><td></td></tr>
+<tr><td>task_id</td><td>unsignedBigInteger UNIQUE</td><td>No</td><td>—</td><td>1-1 với Task</td></tr>
+<tr><td>cycle_type</td><td>tinyInteger</td><td>No</td><td>1</td><td>1=daily, 2=weekly, 3=monthly</td></tr>
+<tr><td>send_time</td><td>time</td><td>No</td><td>—</td><td>Giờ yêu cầu báo cáo (sort UI)</td></tr>
+<tr><td>week_days</td><td>string(50)</td><td>Yes</td><td>null</td><td>CSV thứ (vd "1,3,5") khi weekly</td></tr>
+<tr><td>month_day</td><td>unsignedTinyInteger</td><td>Yes</td><td>null</td><td>Ngày (1-31) khi monthly</td></tr>
+<tr><td>next_send_at</td><td>dateTime</td><td>Yes</td><td>null</td><td>(Reserved)</td></tr>
+<tr><td>is_active</td><td>tinyInteger</td><td>No</td><td>1</td><td>1=active, 0=tắt</td></tr>
+<tr><td>created_by</td><td>unsignedBigInteger</td><td>Yes</td><td>null</td><td></td></tr>
+<tr><td>created_at / updated_at</td><td>timestamps</td><td>Yes</td><td>null</td><td></td></tr>
+</table>
+
+<h4>Bảng: <code>task_result_progress_logs</code></h4>
+<table>
+<tr><th>Cột</th><th>Type</th><th>Nullable</th><th>Default</th><th>Mô tả</th></tr>
+<tr><td>id</td><td>bigint PK</td><td>No</td><td>auto</td><td></td></tr>
+<tr><td>task_result_id</td><td>unsignedBigInteger</td><td>No</td><td>—</td><td>FK task/task_result (index)</td></tr>
+<tr><td>report_date</td><td>date</td><td>No</td><td>—</td><td>Ngày báo cáo (index)</td></tr>
+<tr><td>hours</td><td>decimal(8,2)</td><td>Yes</td><td>null</td><td>Số giờ làm trong kỳ</td></tr>
+<tr><td>progress_pct</td><td>unsignedTinyInteger</td><td>No</td><td>0</td><td>Tiến độ % (0-100)</td></tr>
+<tr><td>note</td><td>text</td><td>Yes</td><td>null</td><td>Ghi chú</td></tr>
+<tr><td>created_at / updated_at</td><td>timestamps</td><td>Yes</td><td>null</td><td></td></tr>
+</table>
+
+<blockquote><strong>Phase 12:</strong> cột <code>task_report_notify_time</code> trên <code>general_regulations</code> đã bị <strong>drop</strong> trong migration <code>2026_04_17_100003</code> — không còn cấu hình giờ per company.</blockquote>
+
+<h3>7.3. Enum Values</h3>
+
+<h4>Task Status (trích 10 giá trị, chỉ <strong>IN_PROGRESS (4)</strong> áp dụng cho feature này)</h4>
+<table>
+<tr><th>Value</th><th>Constant</th><th>Tên</th><th>Màu</th></tr>
+<tr><td>1</td><td>DRAFT</td><td>Nháp</td><td style="background:#94a3b8;color:#fff">#94a3b8</td></tr>
+<tr><td>2</td><td>PENDING_APPROVAL</td><td>Chờ phê duyệt triển khai</td><td style="background:#0ea5e9;color:#fff">#0ea5e9</td></tr>
+<tr><td>3</td><td>TODO</td><td>Chờ bắt đầu</td><td style="background:#64748b;color:#fff">#64748b</td></tr>
+<tr><td><strong>4</strong></td><td><strong>IN_PROGRESS</strong></td><td><strong>Đang thực hiện</strong></td><td style="background:#2563eb;color:#fff">#2563eb</td></tr>
+<tr><td>5</td><td>PAUSED</td><td>Tạm dừng</td><td style="background:#f59e0b;color:#fff">#f59e0b</td></tr>
+<tr><td>6</td><td>REVIEW</td><td>Hoàn thành - Chờ duyệt</td><td style="background:#7c3aed;color:#fff">#7c3aed</td></tr>
+<tr><td>7</td><td>REJECTED</td><td>Từ chối kết quả</td><td style="background:#ef4444;color:#fff">#ef4444</td></tr>
+<tr><td>8</td><td>DONE</td><td>Hoàn thành</td><td style="background:#16a34a;color:#fff">#16a34a</td></tr>
+<tr><td>9</td><td>CANCELLED</td><td>Huỷ</td><td style="background:#0f172a;color:#fff">#0f172a</td></tr>
+<tr><td>10</td><td>REJECTED_START</td><td>Từ chối triển khai</td><td style="background:#f43f5e;color:#fff">#f43f5e</td></tr>
+</table>
+
+<h4>TaskProgressReportRule — Cycle Type</h4>
+<table>
+<tr><th>Value</th><th>Constant</th><th>Ý nghĩa</th></tr>
+<tr><td>1</td><td>CYCLE_DAILY</td><td>Báo cáo hàng ngày</td></tr>
+<tr><td>2</td><td>CYCLE_WEEKLY</td><td>Báo cáo theo tuần (dùng <code>week_days</code>)</td></tr>
+<tr><td>3</td><td>CYCLE_MONTHLY</td><td>Báo cáo theo tháng (dùng <code>month_day</code>)</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s8">8. Flow Logic — Cron gate 4 mốc</h2>
+
+<p class="diagram-title">Flowchart — NotifyTaskReport command</p>
+<div class="mermaid">
+flowchart TD
+    A["Schedule trigger<br/>everyThirtyMinutes"] --> B["now = Carbon::now()"]
+    B --> C["currentMinutes =<br/>hour*60 + minute"]
+    C --> D{"currentMinutes ∈<br/>{510, 690, 870, 1050}?"}
+
+    D -->|No| E["Log: Không phải mốc gửi"]
+    E --> Z["Return 0"]
+
+    D -->|Yes| F["Query Task IN_PROGRESS<br/>+ rule active<br/>+ eager load progressLogs<br/>(today, pct>0)"]
+    F --> G["Loop tasks"]
+    G --> H{"isReportDueToday?<br/>(daily/weekly/monthly)"}
+    H -->|No| G
+    H -->|Yes| I{"progressLogs.isNotEmpty?<br/>(đã nhập)"}
+    I -->|Yes| G
+    I -->|No| J["userTaskCounts[assignee_id]++"]
+
+    J --> G
+    G --> K["Group by assignee_id"]
+    K --> L["Với mỗi user:<br/>query fcm_tokens"]
+    L --> M["Build CloudMessage:<br/>Notification + Data + WebPushConfig"]
+    M --> N["messaging→send(message)"]
+
+    N --> O{"Response?"}
+    O -->|Success| P["sent++"]
+    O -->|NotFound| Q["Delete token"]
+    O -->|Error| R["failed++ + log"]
+
+    P --> S["Log Sent: X, Failed: Y"]
+    Q --> S
+    R --> S
+    S --> Z
+
+    style D fill:#fef3c7,stroke:#d97706
+    style I fill:#fef3c7,stroke:#d97706
+    style J fill:#dcfce7,stroke:#16a34a
+    style Q fill:#fee2e2,stroke:#dc2626
+</div>
+
+<p><strong>Mapping mốc gửi:</strong></p>
+<table>
+<tr><th>Phút (từ 00:00)</th><th>Giờ</th></tr>
+<tr><td>510</td><td>08:30</td></tr>
+<tr><td>690</td><td>11:30</td></tr>
+<tr><td>870</td><td>14:30</td></tr>
+<tr><td>1050</td><td>17:30</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s9">9. API Specification</h2>
+
+<p>Base URL: <code>/api/v1/assign</code> | Auth: Bearer Token (JWT)</p>
+
+<h3>9.1. FCM Token Management</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Mô tả</th></tr>
+<tr><td>POST</td><td>/fcm-tokens</td><td>Upsert FCM token (body: <code>{token, device_info}</code>)</td></tr>
+<tr><td>DELETE</td><td>/fcm-tokens</td><td>Xoá token khi logout (body: <code>{token}</code>)</td></tr>
+</table>
+
+<h3>9.2. Daily Report</h3>
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Mô tả</th></tr>
+<tr><td>GET</td><td>/tasks/daily-report</td><td>DS task cần báo cáo hôm nay + progress_rows</td></tr>
+<tr><td>POST</td><td>/tasks/daily-report/save</td><td>Lưu hàng loạt (chỉ today, validate ≤ 100%)</td></tr>
+<tr><td>GET</td><td>/tasks/daily-report/count</td><td>Đếm task chưa nhập (badge)</td></tr>
+</table>
+
+<h3>9.3. Payload chi tiết</h3>
+
+<h4>GET /tasks/daily-report — Response 200</h4>
+<pre>{
+  "message": "success",
+  "status": 200,
+  "data": [
+    {
+      "id": 123,
+      "title": "...",
+      "status_name": "Đang thực hiện",
+      "status_color": "#2563eb",
+      "priority": 2,
+      "project_name": "...",
+      "due_date": "2026-04-30",
+      "due_time": "17:00",
+      "is_reported_today": false,
+      "report_rule": {"cycle_type": 1, "send_time": "17:00"},
+      "progress_rows": [
+        {"report_date": "2026-04-15", "hours": 8, "progress_pct": 30, "note": "...",
+         "is_today": false, "is_past": true, "is_future": false},
+        {"report_date": "2026-04-17", "hours": null, "progress_pct": null, "note": null,
+         "is_today": true, "is_past": false, "is_future": false},
+        {"report_date": "2026-04-18", "hours": null, "progress_pct": null, "note": null,
+         "is_today": false, "is_past": false, "is_future": true}
+      ]
+    }
+  ]
+}</pre>
+
+<h4>POST /tasks/daily-report/save — Request</h4>
+<pre>{
+  "tasks": [
+    {
+      "task_id": 123,
+      "progress_logs": [
+        {"report_date": "2026-04-17", "hours": 4, "progress_pct": 50, "note": "..."}
+      ]
+    }
+  ]
+}</pre>
+
+<h4>Response 200</h4>
+<pre>{
+  "message": "Lưu tiến độ thành công",
+  "status": 200,
+  "data": { "success": 2, "errors": [] }
+}</pre>
+
+<h3>9.4. Validate rules</h3>
+<table>
+<tr><th>Endpoint</th><th>Rule</th></tr>
+<tr><td>POST /fcm-tokens</td><td><code>token</code> required, non-empty</td></tr>
+<tr><td>POST /daily-report/save</td><td><code>tasks</code> = array non-empty; <code>task_id</code> thuộc auth user; <code>report_date</code> = today; sum <code>progress_pct</code> ≤ 100%</td></tr>
+</table>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s10">10. UI Specification</h2>
+
+<h3>10.1. Trang <code>/assign/tasks/daily-report</code></h3>
+<p><strong>Layout</strong>: <code>default-sidebar</code>; <strong>Mixin</strong>: <code>PageTitleMixin</code> đẩy title lên topbar.</p>
+<pre>┌──────────────────────────────────────────────────────────────┐
+│ Trang chủ / Công việc / Nhập kết quả báo cáo tiến độ         │
+│                                       📅 17/04/2026 [Lưu tất cả] │
+├──────────────────────────────────────────────────────────────┤
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐                        │
+│ │Tổng task │ │Chờ b.cáo │ │ Đã h.thành│                       │
+│ │    N     │ │    N     │ │   N / T  │                        │
+│ └──────────┘ └──────────┘ └──────────┘                        │
+├──────────────────────────────────────────────────────────────┤
+│ ▶ [1] Task A                  [Đang thực hiện] [Trung bình]   │
+│ ▶ [2] Task B                  [Đang thực hiện] [Cao]          │
+│ ▼ [3] Task C                  [Đang thực hiện] [Thấp]         │
+│   ┌─Hồ sơ task: Project, Hạn, Giờ hạn───────────────────────┐ │
+│   │ Nhật ký tiến độ                                         │ │
+│   │ ┌──────────────┬────────┬─────────┬──────────────────┐  │ │
+│   │ │ NGÀY B.CÁO   │ SỐ GIỜ │ TIẾN ĐỘ │ GHI CHÚ          │  │ │
+│   │ │ 15/04 (past) │  8h    │  30%    │ ...              │  │ │
+│   │ │ 17/04 today  │ [_]    │ [_]%    │ [____________]   │  │ │ ← editable
+│   │ │ 18/04 future │  —     │   —     │ Chưa đến ngày    │  │ │
+│   │ └──────────────┴────────┴─────────┴──────────────────┘  │ │
+│   └──────────────────────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────────────────┤
+│ Footer sticky: Tổng giờ: Xh/8h | TB: Y% | Z chưa nhập        │
+│                                       [Đóng] [Lưu tất cả]    │
+└──────────────────────────────────────────────────────────────┘</pre>
+
+<h4>User interactions</h4>
+<table>
+<tr><th>Action</th><th>Behavior</th><th>API</th></tr>
+<tr><td>Mount page</td><td>Load data, accordion collapse mặc định</td><td><code>GET /daily-report</code></td></tr>
+<tr><td>Click task header</td><td>Toggle expand / collapse</td><td>(client)</td></tr>
+<tr><td>Edit dòng today</td><td>v-model hours, progress_pct, note</td><td>(client)</td></tr>
+<tr><td>Click "Lưu tất cả"</td><td>Validate client + POST batch</td><td><code>POST /daily-report/save</code></td></tr>
+<tr><td>Click "Đóng"</td><td>Quay về <code>/assign/tasks</code></td><td>(router)</td></tr>
+</table>
+
+<h4>Validation client</h4>
+<ul>
+  <li>Tổng past + today ≤ 100% per task → highlight + toast khi vi phạm</li>
+  <li><code>hours</code>: 0-24, step 0.5</li>
+  <li><code>progress_pct</code>: 0-100</li>
+</ul>
+
+<h3>10.2. Sidebar menu — Badge count</h3>
+<ul>
+  <li>Item "Báo cáo tiến độ task" hiển thị badge số task chưa nhập</li>
+  <li>Refresh badge: on-mount + (tuỳ FE) định kỳ</li>
+</ul>
+
+<h3>10.3. Plugin FCM — <code>plugins/fcm-push.js</code></h3>
+<ul>
+  <li>Đăng ký <code>firebase-messaging-sw.js</code> từ <code>/static/</code></li>
+  <li>Xin permission Notification (silent skip nếu denied)</li>
+  <li>Lấy token → <code>POST /assign/fcm-tokens</code></li>
+  <li>Đăng ký <code>onMessage</code> → toast khi foreground</li>
+</ul>
+
+<h3>10.4. Service Worker — <code>static/firebase-messaging-sw.js</code></h3>
+<ul>
+  <li><code>self.skipWaiting()</code> + <code>self.clients.claim()</code> — activate ngay khi update</li>
+  <li>Đăng ký <code>notificationclick</code> <strong>trước</strong> khi import Firebase SDK + <code>event.stopImmediatePropagation()</code></li>
+  <li>Click → <code>clients.openWindow(fcm_options.link)</code> hoặc focus tab existing + <code>postMessage</code> để FE navigate</li>
+</ul>
+
+<!-- ============================================ -->
+<div class="page-break"></div>
+<h2 id="s11">11. Scheduled Jobs & Deploy</h2>
+
+<h3>11.1. Scheduled Jobs</h3>
+<table>
+<tr><th>Command</th><th>Schedule</th><th>File</th><th>Logic</th></tr>
+<tr><td><code>assign:notify-task-report</code></td><td><code>everyThirtyMinutes()<br/>->withoutOverlapping()</code></td><td><code>app/Console/Commands/<br/>NotifyTaskReport.php</code></td><td>Gate 4 mốc 08:30/11:30/14:30/17:30 → query task chưa nhập → push FCM</td></tr>
+</table>
+
+<h3>11.2. Biến môi trường</h3>
+<table>
+<tr><th>Key</th><th>Required</th><th>Mô tả</th></tr>
+<tr><td><code>FIREBASE_CREDENTIALS</code></td><td>Yes</td><td>Path Firebase service account JSON (BE)</td></tr>
+<tr><td><code>FRONTEND_URL</code></td><td>Yes</td><td>URL tuyệt đối FE (vd <code>https://erp.tpe.vn</code>) — dùng cho <code>fcm_options.link</code></td></tr>
+</table>
+
+<h3>11.3. Thứ tự deploy</h3>
+<ol>
+  <li>Deploy code BE + FE (không còn reference <code>task_report_notify_time</code>)</li>
+  <li>Sau đó chạy <code>php artisan migrate</code> để drop column</li>
+  <li>Restart queue / scheduler nếu cần</li>
+</ol>
+<blockquote><strong>Cảnh báo</strong>: Nếu chạy <code>migrate</code> trước khi deploy code, code cũ query <code>whereNotNull('task_report_notify_time')</code> sẽ fatal.</blockquote>
+
+<h3>11.4. Test cases</h3>
+<table>
+<tr><th>Test case</th><th>Cách làm</th><th>Expected</th></tr>
+<tr><td>Cron đúng mốc</td><td><code>php artisan assign:notify-task-report</code> lúc 8:30</td><td>Gửi push, log "Sent: X"</td></tr>
+<tr><td>Cron sai mốc</td><td>Chạy lúc 9:00 / 12:00 / etc</td><td>Log "Không phải mốc gửi", return 0</td></tr>
+<tr><td>Lưu vượt 100%</td><td>Nhập task có sum &gt; 100%</td><td>BE skip + errors entry</td></tr>
+<tr><td>Token expired</td><td>Token đã revoke Firebase</td><td>BE auto-delete row fcm_tokens</td></tr>
+<tr><td>Click notification</td><td>Tap push trên browser</td><td>Mở/focus tab <code>/assign/tasks/daily-report</code></td></tr>
+<tr><td>Overlap</td><td>Chạy lâu → cron trigger kế</td><td><code>withoutOverlapping()</code> block instance thứ 2</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="s12">12. Non-functional Requirements</h2>
+<table>
+<tr><th>Hạng mục</th><th>Chi tiết</th></tr>
+<tr><td>Performance</td><td>Eager load <code>progressLogs</code> filtered today+pct&gt;0 → tránh N+1; window check đặt trước query DB → ngoài giờ không tốn DB call; <code>withoutOverlapping()</code> chống chồng instance</td></tr>
+<tr><td>Security</td><td>JWT Bearer auth; daily-report + save chỉ trả/chấp nhận task của <code>auth()->id()</code>; FCM credentials trong <code>.env</code></td></tr>
+<tr><td>Compatibility</td><td>PHP 7.4, Laravel 8, MySQL, Nuxt 2.14, Vue 2, Bootstrap 4</td></tr>
+<tr><td>Browser</td><td>Chrome, Firefox, Edge (Safari hỗ trợ hạn chế Web Push). HTTPS bắt buộc cho Notification + SW (trừ localhost)</td></tr>
+<tr><td>Reliability</td><td>Token expired (FCM <code>NotFound</code>) auto-cleanup → tránh retry vô hạn</td></tr>
+</table>
+
+<!-- ============================================ -->
+<h2 id="s13">13. File References</h2>
+
+<h3>Backend (<code>hrm-api</code>)</h3>
+<table>
+<tr><th>Layer</th><th>File path</th></tr>
+<tr><td>Migration <code>fcm_tokens</code></td><td><code>database/migrations/2026_03_31_110000_create_fcm_tokens_table.php</code></td></tr>
+<tr><td>Migration <code>task_progress_report_rules</code></td><td><code>database/migrations/2026_02_07_092420_create_task_progress_report_rules_table.php</code></td></tr>
+<tr><td>Migration <code>task_result_progress_logs</code></td><td><code>database/migrations/2026_02_28_100001_create_task_result_progress_logs_table.php</code></td></tr>
+<tr><td>Migration drop column</td><td><code>database/migrations/2026_04_17_100003_drop_task_report_notify_time_from_general_regulations_table.php</code></td></tr>
+<tr><td>Entity <code>FcmToken</code></td><td><code>Modules/Assign/Entities/FcmToken.php</code></td></tr>
+<tr><td>Entity <code>Task</code></td><td><code>Modules/Assign/Entities/Task/Task.php:70-132</code></td></tr>
+<tr><td>Entity <code>TaskProgressReportRule</code></td><td><code>Modules/Assign/Entities/Task/TaskProgressReportRule.php:38-40</code></td></tr>
+<tr><td>Cron command</td><td><code>app/Console/Commands/NotifyTaskReport.php</code></td></tr>
+<tr><td>Schedule</td><td><code>app/Console/Kernel.php:52-55</code></td></tr>
+<tr><td>Controller FCM</td><td><code>Modules/Assign/Http/Controllers/Api/V1/FcmTokenController.php</code></td></tr>
+<tr><td>Controller daily-report</td><td><code>Modules/Assign/Http/Controllers/Api/V1/TaskController.php:237-278</code></td></tr>
+<tr><td>Service daily-report</td><td><code>Modules/Assign/Services/TaskService.php:760-924</code></td></tr>
+<tr><td>Routes</td><td><code>Modules/Assign/Routes/api.php:499-509</code></td></tr>
+</table>
+
+<h3>Frontend (<code>hrm-client</code>)</h3>
+<table>
+<tr><th>Layer</th><th>File path</th></tr>
+<tr><td>Trang nhập tiến độ</td><td><code>pages/assign/tasks/daily-report.vue</code></td></tr>
+<tr><td>Plugin FCM</td><td><code>plugins/fcm-push.js</code></td></tr>
+<tr><td>Service Worker</td><td><code>static/firebase-messaging-sw.js</code></td></tr>
+<tr><td>Sidebar menu</td><td><code>components/menu-sidebar.js</code></td></tr>
+</table>
+
+<h3>Plans & Docs</h3>
+<table>
+<tr><th>File</th><th>Mục đích</th></tr>
+<tr><td><code>.plans/notify-task-report/design.md</code></td><td>Design quyết định kiến trúc</td></tr>
+<tr><td><code>.plans/notify-task-report/plan.md</code></td><td>Danh sách 37 task (Phase 1-13)</td></tr>
+<tr><td><code>docs/notify-task-report-mobile.md</code></td><td>Tài liệu cho dev mobile (FCM payload format)</td></tr>
+</table>
+
+</body>
+</html>
