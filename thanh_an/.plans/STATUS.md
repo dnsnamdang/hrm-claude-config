@@ -18,6 +18,10 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Hạn mức công nợ nhóm KH** — Thêm 2 trường (hạn mức + trạng thái áp dụng) vào CRUD + list nhóm khách hàng, BE + FE hoàn thành, user đã chạy migration + test browser xong (@khoipv) — 2026-05-18
+  - Spec: `docs/superpowers/specs/2026-05-18-customer-group-credit-limit-design.md`
+  - Plan: `.plans/customer-group-credit-limit/plan.md`
+
 - **Giá bán HĐ trước** — Populate cột Giá bán HĐ trước bằng đơn giá bán từ HĐ gần nhất cùng KH, fallback cùng tỉnh. Áp dụng cho báo giá, gói thầu, hợp đồng. (@khoipv) — 2026-05-13
   - Plan: `.plans/previous-contract-price/plan.md`
 
