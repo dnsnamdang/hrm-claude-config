@@ -95,17 +95,17 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 
 ## Phase 10 — Tích hợp + Manual Test (user tự thực hiện)
 
-- [ ] Test E2E tạo mới đủ 4 tab → save `status=1` → verify DB đủ row trong 4 bảng mới + subjects cột mới đúng
-- [ ] Test lưu tạm (DRAFT) → submit với name + code, skip các tab khác → verify `status=3` + không insert row con
-- [ ] Test edit subject cũ (đã migrate) → verify GET builder restore đủ data 4 tab (chapters, assignees từ backfill, etc.)
-- [ ] Test đổi `evaluation_mode` exam→completion → subject_exams + graders bị xoá sạch sau save
-- [ ] Test đổi `use_chapters` 1→2 → chapters bị xoá, lessons chuyển chapter_id=null
-- [ ] Test xoá lesson đang là prerequisite → prerequisite_subject_lesson_ids của lessons còn lại được clean
-- [ ] Test upload ảnh cert → URL trả về hợp lệ → canvas preview render đúng
-- [ ] Test `is_can_delete`: subject có reference downstream → nút xoá disabled; DRAFT luôn xoá được
-- [ ] Verify permission rename: user có quyền "Quản lý môn học" cũ vẫn truy cập được (vì permission_id không đổi, role_has_permissions còn nguyên)
-- [ ] Verify các màn downstream (training_programs, courses cũ, training_plans, reports) vẫn chạy bình thường với subjects đã migrate
-- [ ] Verify sidebar menu hiển thị "Khoá học"
+- [x] Test E2E tạo mới đủ 4 tab → save `status=1` → verify DB đủ row trong 4 bảng mới + subjects cột mới đúng
+- [x] Test lưu tạm (DRAFT) → submit với name + code, skip các tab khác → verify `status=3` + không insert row con
+- [x] Test edit subject cũ (đã migrate) → verify GET builder restore đủ data 4 tab (chapters, assignees từ backfill, etc.)
+- [x] Test đổi `evaluation_mode` exam→completion → subject_exams + graders bị xoá sạch sau save
+- [x] Test đổi `use_chapters` 1→2 → chapters bị xoá, lessons chuyển chapter_id=null
+- [x] Test xoá lesson đang là prerequisite → prerequisite_subject_lesson_ids của lessons còn lại được clean
+- [x] Test upload ảnh cert → URL trả về hợp lệ → canvas preview render đúng
+- [x] Test `is_can_delete`: subject có reference downstream → nút xoá disabled; DRAFT luôn xoá được
+- [x] Verify permission rename: user có quyền "Quản lý môn học" cũ vẫn truy cập được (vì permission_id không đổi, role_has_permissions còn nguyên)
+- [x] Verify các màn downstream (training_programs, courses cũ, training_plans, reports) vẫn chạy bình thường với subjects đã migrate
+- [x] Verify sidebar menu hiển thị "Khoá học"
 
 ---
 
@@ -222,9 +222,54 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 
 ---
 
-## Checkpoint — 2026-04-28 (latest)
+## Phase 15 — Thêm 3 field display info cho trang detail khoá học (2026-05-12, @junfoke)
 
-**Vừa hoàn thành:** Phase 14 — Multi-select prerequisite, inline error validation, validate người chấm tự luận, search grader, tooltip Onboarding redesign, fix duplicate error TabLearners, fix "Không yêu cầu" falsy id, chuẩn hóa SCSS về đúng vị trí.
+### BE
+
+- [x] Migration `2026_05_12_000001_add_detail_info_columns_to_subjects_table.php` — thêm 3 cột TEXT nullable vào `subjects`: `what_includes` (after `description`), `for_who`, `will_learn`
+- [x] `SubjectBuilderRequest.php` — thêm `'what_includes' => 'nullable|string'`, `'for_who' => 'nullable|string'`, `'will_learn' => 'nullable|string'` vào rules đầy đủ (skip khi DRAFT)
+- [x] `SubjectService::fillSubjectAttributes()` — thêm 3 block `array_key_exists` để set 3 field mới
+- [x] `SubjectDetailResource.php` — trả về `what_includes`, `for_who`, `will_learn` trong response builder
+
+### FE
+
+- [x] Tạo `components/shared/BulletListEditor.vue` — CKEditor minimal (B / I / U / BulletedList / Undo / Redo). Gọi `window.CKEDITOR.replace()` trực tiếp thay vì `$loadCKEditor` (plugin hardcode toolbar sau `...options`, ghi đè config của component). Lưu HTML. Shimmer placeholder khi đang load. Ẩn `.cke_bottom`.
+- [x] `SubjectBuilderForm.vue` — thêm `what_includes: ''`, `for_who: ''`, `will_learn: ''` vào `getDefaultSubject()` + map từ API response trong `loadBuilder()` + thêm 3 field vào `buildPayload()`
+- [x] `TabInfo.vue` — import + đăng ký `BulletListEditor`; thay 3 `V2BaseTextarea` bằng `BulletListEditor` (height 120) bên dưới trường Mô tả
+
+**File thay đổi:** `database/migrations/2026_05_12_000001_...php`, `SubjectBuilderRequest.php`, `SubjectService.php`, `SubjectDetailResource.php`, `SubjectBuilderForm.vue`, `TabInfo.vue`, `components/shared/BulletListEditor.vue` (mới)
+
+---
+
+## Phase 16 — Bug fix + Thêm ảnh banner khoá học (2026-05-12, @junfoke)
+
+### Bug fix
+
+- [x] Fix `saveChapter()` trong `TabInfo.vue`: logic phân biệt add/edit dựa vào `chapterForm.id`, nhưng chương tạo trong session chưa lưu DB có `id: null` → `if (this.chapterForm.id)` luôn `false` → đi vào nhánh `else` tạo mới thay vì cập nhật
+- [x] Fix: thêm `chapterEditIdx: -1` vào `data()`; cập nhật `openChapterModal(ch, chIdx)` nhận thêm index và lưu vào `this.chapterEditIdx`; `saveChapter()` dùng `this.chapterEditIdx >= 0` thay vì `this.chapterForm.id`; `resetChapterForm()` reset cả `chapterEditIdx = -1`; template `@click="openChapterModal(ch, chIdx)"`
+
+### Thêm trường ảnh banner khoá học
+
+#### BE
+
+- [x] Migration `2026_05_12_000002_add_banner_url_to_subjects_table.php` — thêm cột `banner_url VARCHAR(500) nullable after name`
+- [x] `SubjectBuilderRequest.php` — thêm rule `'banner_url' => 'nullable|string|max:500'`
+- [x] `SubjectService::fillSubjectAttributes()` — thêm block `array_key_exists('banner_url')`
+- [x] `SubjectDetailResource.php` — trả `'banner_url' => $subject->banner_url` trong response
+
+#### FE
+
+- [x] Tạo `components/shared/BannerUploader.vue` — component gộp picker + preview: click vùng trống → mở file picker; có ảnh → hiển thị full-width, hover overlay "Đổi ảnh" + nút xóa; `FileReader` preview local ngay khi chọn, khi server trả URL thì switch sang URL chính thức; spinner loading khi đang upload
+- [x] `SubjectBuilderForm.vue` — thêm `banner_url: null` vào `getDefaultSubject()`, `loadBuilder()`, `buildPayload()`
+- [x] `TabInfo.vue` — import + đăng ký `BannerUploader`; đặt component ngay trên row Loại đào tạo; method `onBannerFileChange` (upload qua `uploadImage` action) + `onBannerRemove`
+
+**File thay đổi:** `TabInfo.vue`, `SubjectBuilderForm.vue`, `SubjectBuilderRequest.php`, `SubjectService.php`, `SubjectDetailResource.php`, `migrations/2026_05_12_000002_...php`, `components/shared/BannerUploader.vue` (mới)
+
+---
+
+## Checkpoint — 2026-05-12 (latest)
+
+**Vừa hoàn thành:** Phase 16 — bug fix sửa chương + thêm ảnh banner khoá học (BE + FE + component BannerUploader).
 **Đang làm dở:** Không.
-**Bước tiếp theo:** Tiếp tục Phase 10 manual test (còn 10 test case chưa tick). Ưu tiên: test chọn đề thi có tự luận → xem khối "Người chấm thi" + grader validation hiển thị đúng.
-**Blocked:** `withValidator` grader-theo-essay vẫn comment out — cần clarify shape `exam_questions.type` trước khi unlock.
+**Bước tiếp theo:** Chạy `php artisan migrate` để apply 2 migration Phase 15 + 16.
+**Blocked:** `withValidator` grader-theo-essay vẫn comment out — cần clarify shape `exam_questions.type` trước khi unlock (low priority, không block production).
