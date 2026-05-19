@@ -18,9 +18,21 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
-- **Hạn mức công nợ nhóm KH** — Thêm 2 trường (hạn mức + trạng thái áp dụng) vào CRUD + list nhóm khách hàng, BE + FE hoàn thành, user đã chạy migration + test browser xong (@khoipv) — 2026-05-18
-  - Spec: `docs/superpowers/specs/2026-05-18-customer-group-credit-limit-design.md`
+- **Hạn mức công nợ theo từng KH** — Chuyển hạn mức công nợ từ nhóm KH xuống từng khách hàng, xóa 2 cột khỏi customer_groups, thêm vào category_customers, dọn FE/BE (@khoipv) — 2026-05-19
+  - Spec: `docs/superpowers/specs/2026-05-19-customer-credit-limit-design.md`
   - Plan: `.plans/customer-group-credit-limit/plan.md`
+
+- **Điều khoản thanh toán trên hợp đồng** — Thêm bảng điều khoản thanh toán (4 loại: 100% trước giao, giới hạn thời gian, giới hạn giá trị, gối đầu đơn hàng) vào tab "Cài đặt công nợ thanh toán" trong form HĐ (section 3 mock cảnh báo công nợ) (@khoipv) — 2026-05-19
+  - Spec: `docs/superpowers/specs/2026-05-18-contract-payment-terms-design.md`
+  - Plan: `.plans/contract-payment-terms/plan.md`
+
+- **Phiếu xác định & quy tắc xử lý vi phạm công nợ** — Cấu hình loại phiếu được tính là công nợ + hành động khi điều khoản bị vi phạm (mục 4 của mock cảnh báo công nợ) (@khoipv) — 2026-05-19
+  - Spec: `docs/superpowers/specs/2026-05-18-debt-violation-rules-design.md`
+  - Plan: `.plans/debt-violation-rules/plan.md`
+
+- **Hạn mức công nợ nhóm KH** — ~~Thêm 2 trường vào nhóm KH~~ → Đã thay thế bởi "Hạn mức công nợ theo từng KH" (2026-05-19) — chuyển hạn mức xuống cấp từng khách hàng (@khoipv) — 2026-05-18
+  - Spec cũ: `docs/superpowers/specs/2026-05-18-customer-group-credit-limit-design.md`
+  - Spec mới: `docs/superpowers/specs/2026-05-19-customer-credit-limit-design.md`
 
 - **Giá bán HĐ trước** — Populate cột Giá bán HĐ trước bằng đơn giá bán từ HĐ gần nhất cùng KH, fallback cùng tỉnh. Áp dụng cho báo giá, gói thầu, hợp đồng. (@khoipv) — 2026-05-13
   - Plan: `.plans/previous-contract-price/plan.md`
