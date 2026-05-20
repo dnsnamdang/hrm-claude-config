@@ -18,6 +18,14 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Đính kèm file cho người thân** — Bổ sung chức năng upload/xóa file đính kèm (tối đa 5 file) cho từng thành viên gia đình trong Thông tin nhân sự, hỗ trợ cả flow yêu cầu cập nhật (@khoipv) — 2026-05-20
+  - Spec: `docs/superpowers/specs/2026-05-20-family-attachment-design.md`
+  - Plan: `.plans/family-attachment/plan.md`
+
+- **Từ chối phân công dự toán** — Thêm chức năng từ chối phân công trên màn dự toán, nhập lý do, chuyển status = 17 (Hủy dự toán), trạng thái cuối cùng (@khoipv) — 2026-05-20
+  - Spec: `docs/superpowers/specs/2026-05-20-reject-assignment-design.md`
+  - Plan: `.plans/reject-assignment/plan.md`
+
 - **Thêm cột KH sử dụng cuối cùng vào BCCT báo giá** — Thêm cột `customer_last_used_name` vào màn plan/detail-report (web + Excel) (@khoipv) — 2026-05-19
   - Spec: `docs/superpowers/specs/2026-05-19-detail-report-customer-last-used-design.md`
   - Plan: `.plans/detail-report-customer-last-used/plan.md`
