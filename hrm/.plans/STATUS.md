@@ -68,6 +68,9 @@
 
 ## Hoàn thành
 
+- customer-development-report → @manhcuong → .plans/customer-development-report/plan.md
+  Hoàn thành: 2026-05-19. Testcases báo cáo QLDA_BC_10 đã bổ sung trong Testcase _baocao.xlsx. Spec: docs/superpowers/specs/2026-05-18-customer-development-report-design.md
+
 - optimize-getall-manager-context → @manhcuong → .plans/optimize-getall-manager-context/plan.md
   Hoàn thành: 2026-05-11. Tối ưu API getAll khi tạo Task/Issue từ màn Manager: BE thêm filter id vào 2 service, FE truyền id param + lock select. 6 file (2 BE + 4 FE). Spec: docs/superpowers/specs/2026-05-11-optimize-getall-manager-context-design.md
 - task-status-notification → @khoipv → .plans/task-status-notification/plan.md
