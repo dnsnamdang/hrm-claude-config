@@ -1706,6 +1706,16 @@ Verify:
 - [x] BE: Thêm filter `created_by`, `updated_by`, `updated_from`, `updated_to` vào LearningPathController::index()
 - [x] FE: Đăng ký V2BaseDatePicker vào components + computed `employeeOptions`
 
+## Phase 8: Banner + Highlights cho form Lộ trình học
+
+- [x] Migration `add_banner_and_highlights_to_learning_paths_table` — thêm 4 cột: `banner_url` (varchar 500), `what_includes` (text), `for_who` (text), `will_learn` (text)
+- [x] BE `LearningPathRequest` — thêm validation rules cho 4 trường mới
+- [x] BE `LearningPathService` store/update — gán 4 trường mới vào model
+- [x] BE `LearningPathDetailResource` — thêm 4 trường vào response (fix edit không hiển thị data)
+- [x] BE `LearningPathPublicResource` + `LearningPathLearnerResource` — thêm `banner_url` (3 trường `what_includes`, `for_who`, `will_learn` đã có sẵn)
+- [x] FE `LearningPathForm` — thêm 4 trường vào `DEFAULT_FORM` + `loadLearningPath`
+- [x] FE `TabInfo` — thêm `BannerUploader` (sau header, trước Loại đào tạo) + 3 `BulletListEditor` (sau Mục đích), tham khảo pattern từ Subject/TabInfo
+
 ---
 
 ## File Map (Tổng kết)
