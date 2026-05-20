@@ -18,6 +18,10 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Thêm cột KH sử dụng cuối cùng vào BCCT báo giá** — Thêm cột `customer_last_used_name` vào màn plan/detail-report (web + Excel) (@khoipv) — 2026-05-19
+  - Spec: `docs/superpowers/specs/2026-05-19-detail-report-customer-last-used-design.md`
+  - Plan: `.plans/detail-report-customer-last-used/plan.md`
+
 - **Hạn mức công nợ theo từng KH** — Chuyển hạn mức công nợ từ nhóm KH xuống từng khách hàng, xóa 2 cột khỏi customer_groups, thêm vào category_customers, dọn FE/BE (@khoipv) — 2026-05-19
   - Spec: `docs/superpowers/specs/2026-05-19-customer-credit-limit-design.md`
   - Plan: `.plans/customer-group-credit-limit/plan.md`
