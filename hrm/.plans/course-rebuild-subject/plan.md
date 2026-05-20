@@ -267,9 +267,47 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 
 ---
 
-## Checkpoint — 2026-05-12 (latest)
+## Phase 17 — Fix luồng thảo luận + rating badge trang Elearning (2026-05-20, @junfoke)
 
-**Vừa hoàn thành:** Phase 16 — bug fix sửa chương + thêm ảnh banner khoá học (BE + FE + component BannerUploader).
+### Bug fix composable useDiscussion
+
+- [x] Fix `totalCount` hiển thị sai — `useDiscussion.js`: đổi từ đếm node trong `tree.value` (chỉ đếm comment đã load) sang dùng `total.value` từ API pagination, fallback đếm tree nodes khi API không trả `total`
+- [x] Fix xoá bình luận không cập nhật rating — `useDiscussion.js`: thêm `findNode()` helper; `deleteComment()` tìm rate trước khi xoá, cập nhật `ratingSummary` (average, total, counts), return rate để caller sync store
+
+### BE — Pagination cho Subject comments
+
+- [x] `SubjectCommentController::index()` — đổi `->get()` sang `->paginate($perPage)` (default 5); thêm filter `->when($request->rate, ...)` lọc theo số sao; response trả `total`, `page`, `last_page` giống `LearningPathCommentController`
+
+### FE — Rating badge trên trang chi tiết
+
+- [x] `learningPathDetail.js` store — thêm state `ratingSummary` + action `fetchRatingSummary`
+- [x] `subjectDetail.js` store — thêm state `ratingSummary` + action `fetchRatingSummary`
+- [x] `PathHero.vue` — thêm badge `⭐ X/5 (N đánh giá)` cùng hàng badges, click chuyển tab Thảo luận
+- [x] `SubjectHero.vue` — thay badge rating tĩnh bằng badge động từ API, click chuyển tab Thảo luận
+- [x] `LearningPathDetailView.vue` — gọi `fetchRatingSummary`, truyền `rating` prop + event `go-discussion` cho PathHero
+- [x] `SubjectDetailView.vue` — gọi `fetchRatingSummary`, truyền `rating` prop + event `go-discussion` cho SubjectHero
+
+### FE — Giới hạn 5 comment trong tab thảo luận + link "Xem thêm"
+
+- [x] `SubjectDiscussion.vue` — thêm `visibleComments` (slice 5), `showMoreLink`, `moreCount`; chỉ hiện 5 comment + link sang trang thảo luận riêng
+- [x] `PathDiscussion.vue` — đồng bộ logic giống SubjectDiscussion
+
+### FE — Sync store ratingSummary khi thêm/xoá bình luận
+
+- [x] `SubjectDiscussion.vue` — sync `subjectStore.ratingSummary` khi post + delete comment
+- [x] `PathDiscussion.vue` — sync `pathStore.ratingSummary` khi post + delete comment
+- [x] `SubjectDiscussionView.vue` — sync `subjectStore.ratingSummary` khi post + delete comment
+- [x] `LearningPathDiscussionView.vue` — sync `pathStore.ratingSummary` khi post + delete comment
+
+**File thay đổi:**
+- BE: `SubjectCommentController.php`
+- FE: `useDiscussion.js`, `learningPathDetail.js`, `subjectDetail.js`, `PathHero.vue`, `SubjectHero.vue`, `LearningPathDetailView.vue`, `SubjectDetailView.vue`, `SubjectDiscussion.vue`, `PathDiscussion.vue`, `SubjectDiscussionView.vue`, `LearningPathDiscussionView.vue`
+
+---
+
+## Checkpoint — 2026-05-20 (latest)
+
+**Vừa hoàn thành:** Phase 17 — fix luồng thảo luận (pagination BE, totalCount, rating badge, sync khi thêm/xoá).
 **Đang làm dở:** Không.
-**Bước tiếp theo:** Chạy `php artisan migrate` để apply 2 migration Phase 15 + 16.
+**Bước tiếp theo:** Test lại luồng thảo luận khoá học + lộ trình trên browser (pagination, badge rating, xoá comment).
 **Blocked:** `withValidator` grader-theo-essay vẫn comment out — cần clarify shape `exam_questions.type` trước khi unlock (low priority, không block production).
