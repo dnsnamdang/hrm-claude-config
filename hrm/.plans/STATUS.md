@@ -2,6 +2,11 @@
 
 ## Đang làm
 
+- elearning-learning-path-detail → @junfoke → .plans/elearning-learning-path-detail/plan.md
+  Trạng thái: Code DONE (38/38 task, 9 phases). Đã migrate. Chờ test full flow trên browser.
+  Spec: docs/superpowers/specs/2026-05-19-elearning-learning-path-detail-design.md
+  Checkpoint: 2026-05-20 — Phase 9: UI polish — header compact (giảm padding/logo/button/font), trang thảo luận thêm context banner + rating summary (điểm TB + bar chart) + filter bình luận theo sao (BE+FE), refactor views/ theo folder chức năng (home/, learning-path/, subject/). Bước tiếp: test rating summary + filter sao + kiểm tra trang chi tiết LP vẫn OK.
+
 - elearning-auth → @manhcuong → .plans/elearning-auth/plan.md
   Trạng thái: Code DONE. 20/20 tasks, 5 phases hoàn thành. Chờ migration + cấu hình env + test thủ công.
   Spec: docs/superpowers/specs/2026-05-12-elearning-auth-design.md
