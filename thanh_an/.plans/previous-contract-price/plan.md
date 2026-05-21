@@ -28,8 +28,20 @@
 
 - [ ] Task 12: Test thủ công end-to-end (3 màn + export + edge cases)
 
-### Checkpoint — 2026-05-13
-Vừa hoàn thành: Tất cả task implement (1-11)
-Đang làm dở: Chờ chạy migration + test thủ công
-Bước tiếp theo: Chạy `php artisan migrate`, test trên browser
+## Phase 5 — Bugfix: Import Excel thiếu coefficient (Task 13-14)
+
+- [x] Task 13: Thêm `coefficient` vào `units` trong `ProductQuotationImport.php`
+- [x] Task 14: Thêm `coefficient` vào `units` trong `ProductContractImport.php`
+  - Lưu ý: `ProductBidPackageImport.php` đã có sẵn, không cần sửa
+- [x] Task 15: Thêm `_prev_unit_id` vào `handleImportSuccess` — 3 màn Quotation, BidPackage, Contract
+  - Quotation: 2 block (nhóm tồn tại + nhóm mới)
+  - BidPackage: 1 block (chỉ tạo nhóm mới)
+  - Contract: 2 block (nhóm tồn tại + nhóm mới)
+- [x] Task 16: Thêm `_prev_unit_id` vào `addProduct` — 3 màn Quotation, BidPackage, Contract
+  - Mỗi màn có 2 block: duplicate + normal
+
+### Checkpoint — 2026-05-21
+Vừa hoàn thành: Fix 3 bug liên quan quy đổi giá bán HĐ trước khi đổi đơn vị — đã test OK
+Đang làm dở: (không có)
+Bước tiếp theo: Done — chờ merge
 Blocked: (không có)
