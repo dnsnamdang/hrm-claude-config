@@ -2,6 +2,11 @@
 
 ## Đang làm
 
+- subject-enrollment → @junfoke → .plans/subject-enrollment/plan.md
+  Trạng thái: Spec done, chờ duyệt → lên plan → implement.
+  Spec: docs/superpowers/specs/2026-05-21-subject-enrollment-design.md
+  Scope: BE (migration + model + service + controller + route) + FE (store + composable + placeholder page + button update)
+
 - elearning-learning-path-detail → @junfoke → .plans/elearning-learning-path-detail/plan.md
   Trạng thái: Code DONE (38/38 task, 9 phases). Đã migrate. Chờ test full flow trên browser.
   Spec: docs/superpowers/specs/2026-05-19-elearning-learning-path-detail-design.md
