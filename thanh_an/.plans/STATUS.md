@@ -18,6 +18,10 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Mở rộng mối quan hệ gia đình** — Thêm Ông, Bà, Khác (text tự do) vào dropdown mối quan hệ trong Thông tin gia đình, áp dụng 4 màn employee_info (@khoipv) — 2026-05-21
+  - Spec: `docs/superpowers/specs/2026-05-21-family-relation-extend-design.md`
+  - Plan: `.plans/family-relation-extend/plan.md`
+
 - **Đính kèm file cho người thân** — Bổ sung chức năng upload/xóa file đính kèm (tối đa 5 file) cho từng thành viên gia đình trong Thông tin nhân sự, hỗ trợ cả flow yêu cầu cập nhật (@khoipv) — 2026-05-20
   - Spec: `docs/superpowers/specs/2026-05-20-family-attachment-design.md`
   - Plan: `.plans/family-attachment/plan.md`
