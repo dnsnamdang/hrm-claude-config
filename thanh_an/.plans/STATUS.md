@@ -18,6 +18,14 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Bộ lọc ngân hàng thực hiện** — Thêm filter "Ngân hàng thực hiện" vào danh sách hợp đồng, lọc qua `whereHas('guarantees')` theo `bank_guarantee_id` (@khoipv) — 2026-05-22
+  - Spec: `docs/superpowers/specs/2026-05-22-contract-bank-guarantee-filter-design.md`
+  - Plan: `.plans/contract-bank-guarantee-filter/plan.md`
+
+- **Bộ lọc kết quả thầu** — Thêm filter "Kết quả thầu" (Trúng/Trượt/Chưa có) vào màn danh sách gói thầu, lọc theo trường `result` trong bảng `bid_packages` (@khoipv) — 2026-05-22
+  - Spec: `docs/superpowers/specs/2026-05-22-bid-package-result-filter-design.md`
+  - Plan: `.plans/bid-package-result-filter/plan.md`
+
 - **Thêm cột Sale phụ trách vào danh sách khách hàng** — Hiển thị tên Sale (dept 83) + mảng hàng hoá phụ trách từ tab Phân công phụ trách, eager load trong query list (@khoipv) — 2026-05-22
   - Spec: `docs/superpowers/specs/2026-05-22-sale-person-charge-column-design.md`
   - Plan: `.plans/sale-person-charge-column/plan.md`
