@@ -18,6 +18,10 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Thêm cột Sale phụ trách vào danh sách khách hàng** — Hiển thị tên Sale (dept 83) + mảng hàng hoá phụ trách từ tab Phân công phụ trách, eager load trong query list (@khoipv) — 2026-05-22
+  - Spec: `docs/superpowers/specs/2026-05-22-sale-person-charge-column-design.md`
+  - Plan: `.plans/sale-person-charge-column/plan.md`
+
 - **Danh sách phụ lục chờ duyệt** — Trang gộp 6 loại phụ lục HĐ chờ duyệt vào 1 danh sách (API gộp BE + trang FE approve.vue) (@khoipv) — 2026-05-21
   - Spec: `docs/superpowers/specs/2026-05-21-contract-annex-approve-list-design.md`
   - Plan: `.plans/contract-annex-approve/plan.md`
