@@ -18,6 +18,10 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Mẫu in riêng cho hợp đồng lao động** — Mỗi HĐLĐ lưu bản mẫu in riêng (longText) thay vì FK dùng chung. FE 2 tab + CKEditor. Migration backfill data cũ. (@khoipv) — 2026-05-23
+  - Spec: `docs/superpowers/specs/2026-05-22-employment-contract-print-template-design.md`
+  - Plan: `.plans/employment-contract-print-template/plan.md`
+
 - **Bộ lọc ngân hàng thực hiện** — Thêm filter "Ngân hàng thực hiện" vào danh sách hợp đồng, lọc qua `whereHas('guarantees')` theo `bank_guarantee_id` (@khoipv) — 2026-05-22
   - Spec: `docs/superpowers/specs/2026-05-22-contract-bank-guarantee-filter-design.md`
   - Plan: `.plans/contract-bank-guarantee-filter/plan.md`
