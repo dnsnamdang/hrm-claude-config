@@ -4,15 +4,20 @@
 
 ### BE
 
-- [ ] Sửa `Modules/Human/Entities/EmployeeInfo.php` — accessor `getLaborContractStatusAttribute()` trả về 1 trong 4 string: `effective` / `expiring_soon` / `expired` / `none`
-- [ ] Thêm helper `expiredDecisionLaborContract()` trên EmployeeInfo: query HĐLĐ approved có `end_date < today` mới nhất (chỉ dùng khi current null)
-- [ ] Bổ sung cột "Hạn HĐLĐ" + "Trạng thái HĐLĐ" vào `app/ExcelExport/PersonnelExport.php` (format text VN)
+- [x] Sửa `Modules/Human/Entities/EmployeeInfo.php` — accessor `getLaborContractStatusAttribute()` trả về 1 trong 4 string: `effective` / `expiring_soon` / `expired` / `none` (inline exists() check, không cần thêm relation riêng)
+- [x] Bổ sung 2 cột "Hạn HĐLĐ" + "Trạng thái HĐLĐ" vào `resources/views/exports/personnel_report.blade.php` (chèn trước cột "Tổng thu nhập" + helper `laborContractStatusText`)
 
 ### FE
 
-- [ ] Sửa `pages/human/personnel/index.vue` — `getStatusTextLaborContract()` map 4 string → text VN ("Có hiệu lực" / "Sắp hết hạn" / "Hết hiệu lực" / "Chưa có HĐLĐ")
-- [ ] Sửa `pages/human/personnel/index.vue` — `getStatusClass()` map 4 string → badge xanh / vàng / đỏ / xám
-- [ ] Kiểm tra `pages/human/personnel/print.vue` — nếu có cột HĐLĐ thì đồng bộ logic
+- [x] Sửa `pages/human/personnel/index.vue` — `getStatusTextLaborContract()` map 4 string → text VN ("Có hiệu lực" / "Sắp hết hạn" / "Hết hiệu lực" / "Chưa có HĐLĐ")
+- [x] Sửa `pages/human/personnel/index.vue` — `getStatusClass()` map 4 string → badge xanh / vàng / đỏ / xám
+- [x] Kiểm tra `pages/human/personnel/print.vue` — không có cột HĐLĐ, skip
+
+### Checkpoint — 2026-05-23
+Vừa hoàn thành: Phase 1 BE + FE + Excel export đã code xong.
+Đang làm dở: chưa test
+Bước tiếp theo: user test 6 case dưới
+Blocked: -
 
 ### Test
 

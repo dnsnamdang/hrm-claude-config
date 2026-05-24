@@ -30,7 +30,6 @@
   SRS: docs/srs/quotation-srs.html | Testcases: docs/srs/quotation-phase22-testcases.xlsx
   Checkpoint: 2026-05-11 — Code + SRS + Testcases done. Bước tiếp: test thủ công (Task 9-12).
 
-
 - fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
   Trạng thái: V6 DONE. Branch `tpe-develop-assign`. Test passed 2026-05-07.
   V6: Tiếp nhận tất cả + filter cascade + submitted_at + đổi cột "Tiến độ %".
@@ -61,6 +60,9 @@
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- project-implementation-types → @manhcuong → .plans/project-implementation-types/plan.md
+  Hoàn thành: 2026-05-24. Bổ sung 3 phương án triển khai dự án TKT (1=Tự triển khai, 2=Theo phòng, 3=Liên phòng ban). Type=1: KD tự làm GP không qua YC, Solution skip duyệt PM/Leader, Hồ sơ TĐ auto-approve. Type=2: lock receive_dept = phòng KD phụ trách. Type=3 giữ nguyên (backward-compat). 2 migration + ~15 file BE/FE. Spec: docs/superpowers/specs/2026-05-23-project-implementation-types-design.md
 
 - solution-module-show-closed → @manhcuong → .plans/solution-module-show-closed/plan.md
   Trạng thái: Brainstorming DONE (2026-05-22). Design + plan + spec đã viết. Đang implement BE.
