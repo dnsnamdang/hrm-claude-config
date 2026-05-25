@@ -5,6 +5,10 @@
 
 ## Đang làm
 
+- **Tab Dữ liệu liên quan trên báo giá** — Thay tab input thủ công bằng tab read-only tự động lấy chứng từ liên quan (Dự toán/Thầu/Hợp đồng) từ project_id, endpoint BE mới + component FE mới (@khoipv) — 2026-05-25
+  - Spec: `docs/superpowers/specs/2026-05-25-quotation-related-data-design.md`
+  - Plan: `.plans/quotation-related-data/plan.md`
+
 - **Tính Thuế TNCN trong bảng lương** — Áp biểu lũy tiến 7 bậc, config theo company + ngày hiệu lực, mở rộng employee_relationships để đánh dấu người phụ thuộc (@khoipv) — 2026-05-13, code xong Phase 1-5 + verify integration end-to-end (bảng lương 108, NV 42) vào 2026-05-14, chờ user test thêm case khác trước khi merge
   - Spec: `docs/superpowers/specs/2026-05-13-personal-income-tax-design.md`
   - Plan: `.plans/personal-income-tax/plan.md`
