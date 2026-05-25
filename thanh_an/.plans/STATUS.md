@@ -18,6 +18,10 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Tab Dữ liệu liên quan trên dự toán** — Hiển thị chứng từ nghiệp vụ liên quan (Kế hoạch/Thầu/Hợp đồng) với mã chứng từ (link) + người thực hiện, endpoint BE mới + implement FE component (@khoipv) — 2026-05-25
+  - Spec: `docs/superpowers/specs/2026-05-25-project-related-data-design.md`
+  - Plan: `.plans/project-related-data/plan.md`
+
 - **Mẫu in riêng cho hợp đồng lao động** — Mỗi HĐLĐ lưu bản mẫu in riêng (longText) thay vì FK dùng chung. FE 2 tab + CKEditor. Migration backfill data cũ. (@khoipv) — 2026-05-23
   - Spec: `docs/superpowers/specs/2026-05-22-employment-contract-print-template-design.md`
   - Plan: `.plans/employment-contract-print-template/plan.md`
