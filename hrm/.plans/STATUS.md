@@ -12,11 +12,6 @@
   Spec: docs/superpowers/specs/2026-05-19-elearning-learning-path-detail-design.md
   Checkpoint: 2026-05-20 — Phase 9: UI polish — header compact (giảm padding/logo/button/font), trang thảo luận thêm context banner + rating summary (điểm TB + bar chart) + filter bình luận theo sao (BE+FE), refactor views/ theo folder chức năng (home/, learning-path/, subject/). Bước tiếp: test rating summary + filter sao + kiểm tra trang chi tiết LP vẫn OK.
 
-- elearning-auth → @manhcuong → .plans/elearning-auth/plan.md
-  Trạng thái: Code DONE. 20/20 tasks, 5 phases hoàn thành. Chờ migration + cấu hình env + test thủ công.
-  Spec: docs/superpowers/specs/2026-05-12-elearning-auth-design.md
-  Checkpoint: 2026-05-12 — BE 18 files (module scaffold, 2 migration, 2 model, 3 request, 1 middleware, 1 service, 1 controller, 2 mailable, 2 email template, config auth, modules_statuses) + FE 10 files (api util, auth store, auth layout, 5 auth views, router, header). Bước tiếp: chạy migration + thêm ELEARNING_CLIENT_URL vào .env + test.
-
 - request-solution-adjustment → @dnsnamdang → .plans/request-solution-adjustment/plan.md
   Trạng thái: Code DONE. Chờ migration + test thủ công (47 test cases).
   Spec: docs/superpowers/specs/2026-05-06-request-solution-adjustment-design.md
@@ -35,10 +30,6 @@
   SRS: docs/srs/quotation-srs.html | Testcases: docs/srs/quotation-phase22-testcases.xlsx
   Checkpoint: 2026-05-11 — Code + SRS + Testcases done. Bước tiếp: test thủ công (Task 9-12).
 
-- course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
-  Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
-  Checkpoint: 2026-04-28 — P14 (đang tiếp): fix mã auto-gen BE, override_completion reset, modal info bài học + trạng thái ghi đè, format tiêu chí hoàn thành (giây+%), labels tiếng Việt mapping/prerequisite, DRAFT canDelete, assignee pill auto-open, confirm lock modal. Phase 10 manual test còn 10 test case.
-
 - fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
   Trạng thái: V6 DONE. Branch `tpe-develop-assign`. Test passed 2026-05-07.
   V6: Tiếp nhận tất cả + filter cascade + submitted_at + đổi cột "Tiến độ %".
@@ -54,9 +45,6 @@
   Trạng thái: Implementing. Validate total_cost_transition theo CP xăng + cầu đường + công tác phí + CP khác (TanPhatDev)
 - delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
   Trạng thái: Implementing. Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp (TanPhatDev)
-- my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
-  Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
-  Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
 - xuat-ghep-tu-hang-giu → @nguyentrancu97 → .plans/xuat-ghep-tu-hang-giu/plan.md
   Trạng thái: Brainstorming PAUSED 2026-04-28. Đã chốt 7 quyết định (hiển thị tồn/giữ qua API stockOfProducts, validate `qty ≤ in_stock + prepick_qty`, cascade nhập ghép giữ toàn bộ thành phẩm, customer per-parent, hạn giữ = today + Config.max_prepick_date, xuất thẳng tái sử dụng pattern export_prepick_qty/hold_qty/total_qty + FIFO consume). Còn 6 câu hỏi mở (Q6-Q11): customer_id cấp nào, validate hạn giữ, approval, pending lock prepick, popup filter, edit/cancel. (TanPhatDev)
   Checkpoint: 2026-04-28 — Paused tại Q6 (customer_id lưu cấp parent vs recipe + cascade khi YCXG có >1 customer).
@@ -73,8 +61,48 @@
 
 ## Hoàn thành
 
+- project-implementation-types → @manhcuong → .plans/project-implementation-types/plan.md
+  Hoàn thành: 2026-05-24. Bổ sung 3 phương án triển khai dự án TKT (1=Tự triển khai, 2=Theo phòng, 3=Liên phòng ban). Type=1: KD tự làm GP không qua YC, Solution skip duyệt PM/Leader, Hồ sơ TĐ auto-approve. Type=2: lock receive_dept = phòng KD phụ trách. Type=3 giữ nguyên (backward-compat). 2 migration + ~15 file BE/FE. Spec: docs/superpowers/specs/2026-05-23-project-implementation-types-design.md
+
+- solution-module-show-closed → @manhcuong → .plans/solution-module-show-closed/plan.md
+  Trạng thái: Brainstorming DONE (2026-05-22). Design + plan + spec đã viết. Đang implement BE.
+  Spec: docs/superpowers/specs/2026-05-22-solution-module-show-closed-design.md
+  Checkpoint: 2026-05-22 — Sửa SolutionModuleService::index() để hạng mục thuộc Solution status=Đóng vẫn hiện ra. Bước tiếp: edit dòng 121-123, user test.
+
+- add-member-no-modules → @manhcuong → .plans/add-member-no-modules/plan.md
+  Trạng thái: Code DONE (2026-05-22). Phase 1 BE + Phase 2 FE xong, đã spec-review PASS. Chờ user test 9 case.
+  Spec: docs/superpowers/specs/2026-05-22-add-member-no-modules-design.md
+  Checkpoint: 2026-05-22 — BE: AddMemberRequest (nullable), SolutionService::addMember (DB::transaction + rẽ nhánh has_modules, insert solution_module_members hoặc solution_members, check trùng, throw ValidationException), SolutionController::addMember (catch ValidationException → responseUnprocessableEntity). FE: HumanResourceTab.vue title động, v-if has_modules cho field Hạng mục, availableMembersOptions 2 nhánh, openAddMemberModal/submitAddMember conditional. Bước tiếp: user test 9 case ở spec section 6.
+
+- improve-testcase-baocao → @manhcuong → .plans/improve-testcase-baocao/plan.md
+  Trạng thái: Phase 1-3 DONE (2026-05-22). File Testcase_baocao.xlsx đã sửa. Backup giữ .bak. Chờ user review file.
+  Checkpoint: 2026-05-22 — 10 sheet báo cáo đều có khối "MÔ TẢ BÁO CÁO" 9 dòng đầu + cột mới "Giải thích nghiệp vụ" + cột "KQ thực tế" đã dịch jargon. Script ở `tools/improve_testcase_baocao.py`. Bước tiếp: user xem file rồi quyết định cleanup (.bak + sheet-data.md).
+
+- personnel-report-contract-status → @manhcuong → .plans/personnel-report-contract-status/plan.md
+  Trạng thái: Brainstorming DONE (2026-05-21). Design + plan đã viết. Chờ code.
+  Checkpoint: 2026-05-21 — Bổ sung logic trạng thái HĐLĐ theo ngày còn lại (effective/expiring_soon/expired/none) + cập nhật FE text/badge + cột HĐLĐ trong Excel export. Bước tiếp: code BE accessor.
+
+- solution-employee-cross-department → @manhcuong → .plans/solution-employee-cross-department/plan.md
+  Trạng thái: Brainstorming DONE (2026-05-20). Spec + design + plan đã viết. Chờ verify payload BE rồi bắt đầu code.
+  Spec: docs/superpowers/specs/2026-05-20-solution-employee-cross-department-design.md
+  Checkpoint: 2026-05-20 — Mở rộng PM/Leader/Member dropdown ra toàn công ty (cùng `current_company`, `status=1`), đồng bộ cho cả modal "Tiếp nhận yêu cầu giải pháp". BE mở rộng `checkPermissionList` để leader/member phòng khác xem được Solution.
+
+- elearning-auth → @manhcuong → .plans/elearning-auth/plan.md
+  Trạng thái: Code DONE v2 (2026-05-20). Phase 0→7 hoàn thành. Chờ: chạy migration + test thủ công 15 TC.
+  Spec: docs/superpowers/specs/2026-05-20-elearning-auth-design.md
+  Spec cũ (deprecated): docs/superpowers/specs/2026-05-12-elearning-auth-design.md
+  Checkpoint: 2026-05-20 — BE 18 files (2 migration, 2 entity, 1 middleware, 6 request, 1 service, 1 controller, 2 resource, 1 mail, 1 blade, module scaffold, config auth, Kernel, modules_statuses) + FE elearning 8 files (api util, store, router, 5 view) + FE hrm-client 1 file (pages/sso/elearning.vue) + env. Bước tiếp: chạy `php artisan migrate` + test 15 TC.
+
+- course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
+  Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
+  Checkpoint: 2026-04-28 — P14 (đang tiếp): fix mã auto-gen BE, override_completion reset, modal info bài học + trạng thái ghi đè, format tiêu chí hoàn thành (giây+%), labels tiếng Việt mapping/prerequisite, DRAFT canDelete, assignee pill auto-open, confirm lock modal. Phase 10 manual test còn 10 test case.
+
+- my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
+  Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
+  Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+
 - customer-development-report → @manhcuong → .plans/customer-development-report/plan.md
-  Hoàn thành: 2026-05-19. Testcases báo cáo QLDA_BC_10 đã bổ sung trong Testcase _baocao.xlsx. Spec: docs/superpowers/specs/2026-05-18-customer-development-report-design.md
+  Hoàn thành: 2026-05-19. Testcases báo cáo QLDA_BC_10 đã bổ sung trong Testcase \_baocao.xlsx. Spec: docs/superpowers/specs/2026-05-18-customer-development-report-design.md
 
 - optimize-getall-manager-context → @manhcuong → .plans/optimize-getall-manager-context/plan.md
   Hoàn thành: 2026-05-11. Tối ưu API getAll khi tạo Task/Issue từ màn Manager: BE thêm filter id vào 2 service, FE truyền id param + lock select. 6 file (2 BE + 4 FE). Spec: docs/superpowers/specs/2026-05-11-optimize-getall-manager-context-design.md
