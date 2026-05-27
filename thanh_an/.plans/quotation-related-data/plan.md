@@ -275,3 +275,11 @@ Mở trang chi tiết báo giá (`/plan/quotation/{id}`):
 4. Nếu báo giá có hợp đồng → hiện dòng "Hợp đồng"
 5. Click link chứng từ → chuyển đúng trang chi tiết
 6. Báo giá không có dữ liệu liên quan → bảng trống, chỉ có header
+
+---
+
+### Checkpoint — 2026-05-25 (hoàn tất)
+Vừa hoàn thành: Toàn bộ feature — Task 1 (relationship `creator()` trên Project), Task 2 (endpoint `relatedData` + route), Task 3 (component `QuotationRelatedDataComponent.vue`), Task 4 (sửa `GeneralComponent.vue` thay tab input bằng component read-only). Đã verify trên browser
+Đang làm dở: không
+Bước tiếp theo: Chuyển STATUS.md sang mục Hoàn thành, merge code
+Blocked: không

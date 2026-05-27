@@ -5,10 +5,6 @@
 
 ## Đang làm
 
-- **Tab Dữ liệu liên quan trên báo giá** — Thay tab input thủ công bằng tab read-only tự động lấy chứng từ liên quan (Dự toán/Thầu/Hợp đồng) từ project_id, endpoint BE mới + component FE mới (@khoipv) — 2026-05-25
-  - Spec: `docs/superpowers/specs/2026-05-25-quotation-related-data-design.md`
-  - Plan: `.plans/quotation-related-data/plan.md`
-
 - **Tính Thuế TNCN trong bảng lương** — Áp biểu lũy tiến 7 bậc, config theo company + ngày hiệu lực, mở rộng employee_relationships để đánh dấu người phụ thuộc (@khoipv) — 2026-05-13, code xong Phase 1-5 + verify integration end-to-end (bảng lương 108, NV 42) vào 2026-05-14, chờ user test thêm case khác trước khi merge
   - Spec: `docs/superpowers/specs/2026-05-13-personal-income-tax-design.md`
   - Plan: `.plans/personal-income-tax/plan.md`
@@ -22,6 +18,14 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Tab Dữ liệu liên quan trên báo giá** — Thay tab input thủ công bằng tab read-only tự động lấy chứng từ liên quan (Dự toán/Thầu/Hợp đồng) qua endpoint BE mới `GET /quotations/{id}/related-data` + component `QuotationRelatedDataComponent.vue` (@khoipv) — 2026-05-25
+  - Spec: `docs/superpowers/specs/2026-05-25-quotation-related-data-design.md`
+  - Plan: `.plans/quotation-related-data/plan.md`
+
+- **BC Tổng hợp Vòng đời DT → HĐ** — Báo cáo tổng hợp 1 dòng/DT, grouped headers 4 giai đoạn (DT/BG/GT/HĐ), KPI cards, popup drill-down, export Excel, phân quyền 3 cấp dùng lại bộ "Xem báo cáo chi tiết dự toán theo ..." (ID 504-506) (@khoipv) — 2026-05-27
+  - Spec: `docs/superpowers/specs/2026-05-25-report-project-contract-design.md`
+  - Plan: `.plans/report-project-contract/plan.md`
+
 - **Tab Dữ liệu liên quan trên dự toán** — Hiển thị chứng từ nghiệp vụ liên quan (Kế hoạch/Thầu/Hợp đồng) với mã chứng từ (link) + người thực hiện, endpoint BE mới + implement FE component (@khoipv) — 2026-05-25
   - Spec: `docs/superpowers/specs/2026-05-25-project-related-data-design.md`
   - Plan: `.plans/project-related-data/plan.md`
