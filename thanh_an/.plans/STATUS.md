@@ -9,10 +9,6 @@
   - Spec: `docs/superpowers/specs/2026-05-25-quotation-related-data-design.md`
   - Plan: `.plans/quotation-related-data/plan.md`
 
-- **Tính Thuế TNCN trong bảng lương** — Áp biểu lũy tiến 7 bậc, config theo company + ngày hiệu lực, mở rộng employee_relationships để đánh dấu người phụ thuộc (@khoipv) — 2026-05-13, code xong Phase 1-5 + verify integration end-to-end (bảng lương 108, NV 42) vào 2026-05-14, chờ user test thêm case khác trước khi merge
-  - Spec: `docs/superpowers/specs/2026-05-13-personal-income-tax-design.md`
-  - Plan: `.plans/personal-income-tax/plan.md`
-
 - **Báo cáo chi tiết hợp đồng** — Báo cáo tổng hợp sản phẩm từ nhiều hợp đồng (27 cột, 8 filters, phân quyền 3 cấp, export Excel) (@khoipv) — 2026-05-06
   - Spec: `docs/superpowers/specs/2026-05-06-detail-report-contract-design.md`
   - Plan: `.plans/detail-report-contract/plan.md`
@@ -22,6 +18,15 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+
+- **Tab Thuế TNCN lưu cả bảng 1 lần** — Thay pattern edit per-row bằng 1 nút Lưu chung dưới bảng trong tab Thuế TNCN của màn employee_info/edit, BE thêm endpoint bulk (@manhcuong) — 2026-05-26
+  - Spec: `docs/superpowers/specs/2026-05-26-employee-tax-bulk-save-design.md`
+  - Plan: `.plans/employee-tax-bulk-save/plan.md`
+
+- **Tính Thuế TNCN trong bảng lương** — Áp biểu lũy tiến 7 bậc + đa-đoạn tax_type theo khoảng ngày + 3 cột giảm trừ INFO trên bảng lương. Config global (1 row dùng chung mọi company). Quy ước nội bộ KHÁC TT 111: (1) BHXH giảm trừ = NLĐ+NSDLĐ (32%) thay vì chỉ NLĐ; (2) đoạn 10%/20% dùng `probation_salary` (@manhcuong) — 2026-05-13, Phase 1-10 xong + verified, chờ E2E qua UI bảng lương thật
+  - Spec: `docs/superpowers/specs/2026-05-13-personal-income-tax-design.md`
+  - Plan: `.plans/personal-income-tax/plan.md`
+
 - **Tab Dữ liệu liên quan trên dự toán** — Hiển thị chứng từ nghiệp vụ liên quan (Kế hoạch/Thầu/Hợp đồng) với mã chứng từ (link) + người thực hiện, endpoint BE mới + implement FE component (@khoipv) — 2026-05-25
   - Spec: `docs/superpowers/specs/2026-05-25-project-related-data-design.md`
   - Plan: `.plans/project-related-data/plan.md`

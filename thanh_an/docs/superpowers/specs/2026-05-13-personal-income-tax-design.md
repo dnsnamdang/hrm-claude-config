@@ -11,15 +11,28 @@
 Hoàn thiện logic tính Thuế Thu Nhập Cá Nhân (TNCN) trong flow tính bảng lương theo luật VN, áp dụng biểu lũy tiến 7 bậc, tự động trừ vào tổng khấu trừ để ra thực lĩnh.
 
 **Phạm vi MVP:**
-- Áp **biểu lũy tiến** cho mọi nhân viên (mặc định). Nếu nhân viên đã có row `employee_taxs` và `tax_type ≠ 1` (Miễn / 10% / 20%) → trả 0 (các case này bổ sung sau khi có UI khai báo).
-- Bảng `employee_taxs` hiện đang rỗng → mọi nhân viên rơi vào nhánh mặc định = Lũy tiến.
-- UI khai báo `employee_taxs` (dropdown chọn loại thuế từng NV) → **tách ticket sau**.
-- Trừ trước thuế: BHXH/BHYT/BHTN NLĐ đóng (từ `insurance_configs`) + Đoàn phí công đoàn (từ `tncn_tax_configs.union_fee_rate`, default 1%) + giảm trừ bản thân + giảm trừ người phụ thuộc.
-- Composition `THUE_TNCN` (feature=2 KHẤU TRỪ) được tự động cộng vào `total_deduction` → **không sửa công thức `thuc_linh = total_income - total_deduction - advance`**.
+- Áp **biểu lũy tiến** cho mọi nhân viên (mặc định) HOẶC theo loại thuế khai báo trong `employee_taxs`.
+- Hỗ trợ **đa-đoạn-tax-type trong cùng 1 kỳ lương** (vd: 01–10/04 chịu 10% cố định, 11–30/04 chịu lũy tiến). Thực hiện bằng cách cho phép `employee_taxs` có nhiều row theo khoảng ngày (`start_date`, `end_date`). Xem [Section 9](#9-đa-đoạn-tax-type-trong-một-kỳ-lương).
+- **Đoạn lũy tiến** — base = `sumTaxableIncome($h)` (tổng các phần lương có cờ `*_tax=1`):
+  - Trừ trước thuế: BHXH **(NLĐ 10.5% + NSDLĐ 21.5% = 32%)** × `insurance_salary` + Công đoàn 1% × `insurance_salary` + giảm trừ bản thân 11M (nguyên tháng) + giảm trừ NPT 4.4M × số NPT (nguyên tháng).
+  - BHXH/CĐ chia tỷ lệ ngày theo `D_lt/D_total`.
+- **Đoạn 10% / 20% cố định** — base = `probation_salary`:
+  - Công thức: `probation_salary × D_seg / D_total × rate`.
+  - KHÔNG giảm trừ.
+- **Đoạn Miễn** (`tax_type=0`): thuế = 0.
+- **Config global:** `tncn_tax_configs` + `insurance_configs` chỉ giữ 1 row dùng chung cho mọi company. Query bỏ filter `company_id`.
+- Composition `THUE_TNCN` (feature=2 KHẤU TRỪ) tự cộng vào `total_deduction` → **không sửa công thức `thuc_linh = total_income - total_deduction - advance`**.
+
+**⚠️ QUY ƯỚC KHÁC LUẬT (cần biết để revert nếu muốn):**
+
+| Quy ước hiện tại | Chuẩn TT 111/2013 | Lý do chọn |
+|---|---|---|
+| BHXH giảm trừ = NLĐ + NSDLĐ (32%) | Chỉ NLĐ (10.5%) | Doanh nghiệp muốn giảm thuế cho NV bằng cách trừ luôn phần công ty đóng. Revert: bỏ `$employerRate` trong `calcInsuranceDeduction()`. |
+| Đoạn 10% / 20% dùng `probation_salary` | 10% dùng thu nhập từ HĐ vụ việc; 20% dùng thu nhập của NV không cư trú | Codebase này dùng cả 2 loại cho case thử việc / HĐ ngắn hạn. Revert 20%: switch case trong `calc()` đổi sang `totalIncome`. |
+| `tncn_tax_configs` global | Có thể khác giữa các công ty (hiếm) | Tất cả công ty trong hệ thống đều ở VN, áp cùng luật. Revert: thêm lại filter `where('company_id', ...)` trong helper + service. |
 
 **Ngoài phạm vi:**
 - Thuế cho intern/probation (đã có `tax_generals.intern_tax_type` / `probation_tax_type` riêng).
-- Thuế suất 10% / 20% cố định.
 - Quyết toán thuế cuối năm.
 - Thuế TNCN được hoàn / Thuế TNCN khấu trừ thêm.
 
@@ -212,7 +225,10 @@ TaxCalculator::calc(
 Logic tóm tắt:
 1. Lấy `EmployeeTax` của nhân viên. **Nếu không có row → mặc định coi tax_type = 1 (Lũy tiến).** Nếu có row và `tax_type !== 1` → return 0.
 2. **Thu nhập chịu thuế** = sum các phần lương có cờ `*_tax = true` + sum phụ cấp động có `is_tax = 1`.
-3. **Giảm trừ BHXH NLĐ** = nếu `has_insurance` → `insurance_salary × (worker_retire + worker_sick + worker_accident + worker_unemployment_insurance + worker_health_insurance) / 100` (lấy `insurance_configs` có `date ≤ periodDate` mới nhất).
+3. **Giảm trừ BHXH** = nếu `has_insurance` → `insurance_salary × (tỷ_lệ_NLĐ + tỷ_lệ_NSDLĐ) / 100` (lấy `insurance_configs` có `date ≤ periodDate` mới nhất, KHÔNG filter company).
+   - Tỷ lệ NLĐ = `worker_retire + worker_sick + worker_accident + worker_unemployment_insurance + worker_health_insurance` (~10.5%)
+   - Tỷ lệ NSDLĐ = `retire + sick + accident + unemployment_insurance + health_insurance` (~21.5%)
+   - **Cộng cả 2 portion** theo quyết định nội bộ doanh nghiệp (khác TT 111 chuẩn).
 4. **Giảm trừ công đoàn** = nếu `has_union` → `insurance_salary × tax_config.union_fee_rate / 100` (lấy từ config thuế hiệu lực ở bước 5).
 5. **Pick config thuế** = `tncn_tax_configs` có `company_id` + `date ≤ periodDate` mới nhất. Nếu không có → return 0.
 6. **Số người phụ thuộc** = count `employee_relationships` có `employee_info_id` + `is_dependent = true` + `(dependent_start_date IS NULL OR ≤ periodDate)` + `(dependent_end_date IS NULL OR ≥ periodDate)`.
@@ -302,7 +318,7 @@ Sau khi `THUE_TNCN` được thêm vào template lương (qua màn cấu hình s
 | # | Edge case | Hành xử |
 |---|-----------|---------|
 | 1 | Không tìm thấy `tncn_tax_configs` cho company tại period | Return 0 (không tính thuế, log warning). |
-| 2 | `tax_type` của nhân viên ≠ 1 (Lũy tiến) — chỉ áp khi có row `employee_taxs` | Return 0 (MVP). |
+| 2 | `tax_type` của nhân viên ≠ 1 (Lũy tiến) cho TOÀN bộ kỳ | Áp công thức theo từng đoạn — xem [Section 9](#9-đa-đoạn-tax-type-trong-một-kỳ-lương). |
 | 3 | `thu_nhap_tinh_thue ≤ 0` (sau giảm trừ) | Return 0. |
 | 4 | Không có row `employee_taxs` cho nhân viên | **Mặc định coi như Lũy tiến (tax_type = 1)** — tính thuế bình thường. |
 | 5 | `has_insurance = false` | Không trừ BHXH; vẫn tính thuế bình thường. |
@@ -329,8 +345,152 @@ Sau khi `THUE_TNCN` được thêm vào template lương (qua màn cấu hình s
 
 ## 8. Câu hỏi mở (bổ sung sau khi cần)
 
-- UI khai báo `employee_taxs` (dropdown Miễn / Lũy tiến / 10% / 20%) trên màn nhân viên — ticket riêng.
-- Thuế cho `tax_type = 2` (10% cố định) và `tax_type = 3` (20% cố định) — áp trên gross hay trên taxable income?
 - Thuế cho intern/probation (`tax_generals.intern_tax_type`) — flow tách riêng?
 - Quyết toán thuế cuối năm (so sánh thu nhập 12 tháng so với biểu thuế năm) — feature lớn hơn, tách spec sau.
 - Báo cáo thuế (Mẫu 05/KK-TNCN, 02/KK-TNCN) — tách spec sau.
+
+---
+
+## 9. Đa-đoạn-tax-type trong một kỳ lương
+
+### 9.1. Bối cảnh
+
+Nhân viên có thể đổi loại thuế giữa kỳ lương — vd: thử việc (10%) → chính thức (lũy tiến), hoặc NV nước ngoài đổi diện cư trú. Trước đây `employee_taxs` chỉ 1 row cố định → không cover được. Giải pháp: **mở rộng `employee_taxs` thành nhiều row theo khoảng ngày**, mỗi row có `tax_type` riêng, áp cho khoảng `[start_date, end_date]`.
+
+### 9.2. Schema — alter `employee_taxs`
+
+```php
+// Migration: alter_employee_taxs_add_date_range.php
+Schema::table('employee_taxs', function (Blueprint $table) {
+    $table->date('start_date')->nullable()->after('tax_type')->comment('Ngày bắt đầu áp loại thuế này');
+    $table->date('end_date')->nullable()->after('start_date')->comment('Ngày kết thúc (null = vô cực)');
+    $table->index(['employee_info_id', 'start_date']);
+});
+```
+
+- `start_date = NULL` → áp từ vô cực về trước.
+- `end_date = NULL` → áp đến vô cực về sau.
+- 1 NV có thể có nhiều row — **các khoảng không được overlap**, validate ở Request.
+- Migration data: row cũ (nếu có) → set `start_date = NULL`, `end_date = NULL`.
+
+### 9.3. Logic chia đoạn
+
+```
+periodStart = ngày đầu kỳ lương
+periodEnd   = ngày cuối kỳ lương
+D_total     = số ngày DƯƠNG LỊCH của kỳ (periodEnd - periodStart + 1)
+
+1. Load tất cả EmployeeTax rows của NV có overlap với [periodStart, periodEnd], sort theo start_date.
+2. Nếu không có row nào phủ hết kỳ → các khoảng trống mặc định tax_type=1 (Lũy tiến).
+3. Cắt kỳ thành các segment_i = [seg_start_i, seg_end_i] theo từng tax_type liên tục.
+4. Mỗi segment_i:
+   - D_i = số ngày dương lịch trong [seg_start_i, seg_end_i]
+   - income_i = thu_nhap_chiu_thue_ca_ky × D_i / D_total
+   - Tính thuế segment_i theo tax_type tương ứng (xem 9.4)
+5. tax_total = Σ tax_segment_i
+```
+
+**Lưu ý:**
+- Dùng **ngày dương lịch** (không phải ngày công thực tế) để cắt đoạn — đơn giản, không phụ thuộc salary_calendar, khớp thực tiễn payroll VN.
+- `thu_nhap_chiu_thue_ca_ky` lấy nguyên trên `EmployeeSalaryHistory` đang active tại `periodEnd` (giữ logic Cách A hiện tại). Việc chia theo ngày chỉ ảnh hưởng phân bổ thu nhập giữa các đoạn, không thay đổi tổng.
+
+### 9.4. Công thức theo `tax_type`
+
+| `tax_type` | Income base | Công thức cho đoạn |
+|---|---|---|
+| 0 (Miễn) | — | `tax_segment = 0` |
+| 1 (Lũy tiến) | `sumTaxableIncome($h)` | `taxable = income_i − BHXH_i − union_i − self_deduction − dependent_deduction × NPT`<br>`tax_segment = apply_progressive(taxable)` nếu > 0, ngược lại 0 |
+| 2 (10% cố định) | `probation_salary` | `tax_segment = probation_salary × D_seg / D_total × 10%` |
+| 3 (20% cố định) | `probation_salary` | `tax_segment = probation_salary × D_seg / D_total × 20%` |
+
+**Lưu ý:** Đoạn 10%/20% dùng `probation_salary` (lương thử việc) chứ KHÔNG dùng `totalIncome` chính thức. Phù hợp với case NV thử việc / HĐ ngắn hạn — nếu cần áp 20% cho NV nước ngoài không cư trú, sửa case 3 trong `TaxCalculator::calc()` đổi sang `totalIncome`.
+
+**Quan trọng — giảm trừ bản thân + NPT theo TT 111/2013:**
+- Giảm trừ áp **NGUYÊN THÁNG** vào đoạn lũy tiến đầu tiên trong kỳ (không chia theo tỷ lệ ngày).
+- Nếu trong kỳ có nhiều đoạn lũy tiến không liên tục (hiếm) → cộng dồn `income_i` của tất cả đoạn lũy tiến rồi áp giảm trừ 1 lần.
+- BHXH + công đoàn cũng tính 1 lần trên tổng `income_lt` (= Σ income_i của các đoạn lũy tiến), không chia theo ngày.
+
+→ **Công thức gộp đoạn lũy tiến:**
+```
+income_lt = Σ income_i (i thuộc đoạn lũy tiến)
+BHXH_lt   = insurance_salary × tỷ_lệ_BHXH × (D_lt / D_total)   nếu has_insurance
+union_lt  = insurance_salary × union_rate × (D_lt / D_total)   nếu has_union
+taxable   = income_lt − BHXH_lt − union_lt − 11tr − 4.4tr × NPT
+tax_lt    = apply_progressive(max(taxable, 0))
+```
+
+Các đoạn 10% / 20% / Miễn vẫn tính độc lập theo bảng trên.
+
+### 9.5. Cập nhật `TaxCalculator::calc(...)`
+
+```php
+TaxCalculator::calc(
+    int $employeeInfoId,
+    EmployeeSalaryHistory $salaryHistory,
+    int $companyId,
+    string $periodStart,   // YYYY-MM-DD ngày đầu kỳ
+    string $periodEnd      // YYYY-MM-DD ngày cuối kỳ (cũng dùng để pick config)
+): int
+```
+
+- Đổi signature: thay `$periodDate` bằng `$periodStart` + `$periodEnd`. D_total tự tính bằng số ngày dương lịch giữa 2 mốc.
+- Trong `SalaryService::calcData()`: lấy `periodStart`, `periodEnd` từ salary record (`apply_date` cũ chính là `periodEnd`; `periodStart` lấy từ start_date của salary hoặc ngày 1 của tháng).
+
+### 9.6. UI — Tab "Thuế TNCN" trên màn nhân viên
+
+Thêm tab mới trong `pages/human/employees/[id].vue` (hoặc form NV), pattern giống `employee_salary_histories`:
+
+| STT | Loại thuế | Từ ngày | Đến ngày | Ghi chú | Action |
+|---|---|---|---|---|---|
+| 1 | Lũy tiến | 2026-01-01 | (null) | Chính thức | [Sửa] [Xóa] |
+| 2 | 10% | 2025-10-01 | 2025-12-31 | Thử việc | [Sửa] [Xóa] |
+
+- Dropdown `tax_type`: Miễn / Lũy tiến / 10% / 20%.
+- DatePicker `start_date`, `end_date` (nullable).
+- Validate FE + BE: không overlap, `start_date ≤ end_date`.
+- Không có row → mặc định Lũy tiến (giữ behavior cũ, backward compatible).
+
+### 9.7. Use case: NV áp 1 loại thuế cố định, chưa biết ngày chuyển (open-ended)
+
+Rất phổ biến: NV mới vào áp 10% cố định, chưa biết bao giờ lên chính thức để chuyển sang lũy tiến.
+
+**Khi tạo NV:**
+
+Tạo 1 row duy nhất trong `employee_taxs`:
+```
+tax_type    = 2 (10%)
+start_date  = 2026-01-01   ← ngày bắt đầu áp
+end_date    = NULL          ← vô cực, chưa biết khi nào dừng
+```
+
+Mỗi kỳ lương, `TaxCalculator` phủ row này lên `[periodStart, periodEnd]` → 1 segment duy nhất = toàn kỳ, tính `income × 10%`, không giảm trừ.
+
+**Khi NV chuyển sang chính thức (vd: 2026-06-15):**
+
+Thao tác trên UI tab thuế (Section 9.6):
+1. Sửa row cũ → set `end_date = 2026-06-14`.
+2. Thêm row mới → `tax_type=1`, `start_date=2026-06-15`, `end_date=NULL`.
+
+Khuyến nghị UI: khi user bấm "Thêm dòng mới" và row gần nhất có `end_date=NULL`, **auto-set** `end_date = start_date_new − 1` để tránh báo lỗi overlap.
+
+**Kỳ lương tháng giao thoa (06/2026):**
+
+- Segment 1: `[06-01, 06-14]` — 14 ngày, tax_type=2 → `income × (14/D_total) × 10%`.
+- Segment 2: `[06-15, 06-30]` — 16 ngày, tax_type=1 → gộp vào nhóm lũy tiến, hưởng FULL giảm trừ 11tr + NPT (theo Section 9.4), BHXH/CD chia tỷ lệ `16/D_total`.
+- Tổng thuế kỳ này = tax_segment_1 + tax_segment_2.
+
+**Validate Request:**
+
+- Không cho overlap → buộc user phải close row cũ trước khi thêm row mới.
+- `end_date = NULL` chỉ được phép ở row có `start_date` lớn nhất của NV (row "đang mở").
+
+### 9.8. Edge case bổ sung
+
+| # | Edge case | Hành xử |
+|---|-----------|---------|
+| 12 | Khoảng trống giữa 2 row `employee_taxs` (gap) | Đoạn gap mặc định Lũy tiến |
+| 13 | Row `employee_taxs` overlap nhau | Validate Request không cho lưu |
+| 14 | `start_date > periodEnd` hoặc `end_date < periodStart` | Bỏ qua row, không cắt đoạn |
+| 15 | NV chuyển loại đúng ngày đầu/cuối kỳ | Đoạn 0 ngày → skip, không gây chia 0 |
+| 16 | Toàn kỳ chỉ có 1 `tax_type` | Engine vẫn chạy qua flow chia đoạn — 1 segment duy nhất, kết quả khớp behavior cũ |
+| 17 | `D_total = 0` (NV nghỉ cả kỳ) | Trả 0, không chia 0 |
