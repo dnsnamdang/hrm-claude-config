@@ -2,6 +2,12 @@
 
 ## Đang làm
 
+
+- external-user-list → @junfoke → .plans/external-user-list/plan.md
+  Trạng thái: Brainstorming DONE, spec viết xong. Chờ user review spec → lên plan → implement.
+  Spec: docs/superpowers/specs/2026-05-25-external-user-list-design.md
+  Scope: Migration (4 field mới elearning_learners) + BE Training (controller + route + export) + FE hrm-client (index.vue list page)
+
 - subject-enrollment → @junfoke → .plans/subject-enrollment/plan.md
   Trạng thái: Spec done, chờ duyệt → lên plan → implement.
   Spec: docs/superpowers/specs/2026-05-21-subject-enrollment-design.md
@@ -60,6 +66,9 @@
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- google-login → @junfoke → .plans/google-login/plan.md
+  Hoàn thành: 2026-05-26. Đăng nhập Google bằng GIS (Google Identity Services). Migration (password nullable + google_id + avatar_url) + BE endpoint auth/google (verify token, tìm/tạo learner, auth_source='google') + FE composable useGoogleAuth + nút Google trên LoginView + RegisterView + avatar fallback. Spec: docs/superpowers/specs/2026-05-26-google-login-design.md
 
 - project-implementation-types → @manhcuong → .plans/project-implementation-types/plan.md
   Hoàn thành: 2026-05-24. Bổ sung 3 phương án triển khai dự án TKT (1=Tự triển khai, 2=Theo phòng, 3=Liên phòng ban). Type=1: KD tự làm GP không qua YC, Solution skip duyệt PM/Leader, Hồ sơ TĐ auto-approve. Type=2: lock receive_dept = phòng KD phụ trách. Type=3 giữ nguyên (backward-compat). 2 migration + ~15 file BE/FE. Spec: docs/superpowers/specs/2026-05-23-project-implementation-types-design.md
