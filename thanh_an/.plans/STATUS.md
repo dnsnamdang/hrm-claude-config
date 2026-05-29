@@ -13,6 +13,10 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Popup DT gom hàng hóa 4 phân hệ + quy đổi ĐVT** — Enhancement cho report-project-contract: popup chi tiết DT hiển thị tất cả HH từ DT/BG/Thầu/HĐ, thêm 3 cột SL quy đổi về ĐVT chính (@khoipv) — 2026-05-29
+  - Spec: `docs/superpowers/specs/2026-05-29-lifecycle-detail-aggregate-products-design.md`
+  - Plan: `.plans/report-project-contract/plan.md`
+
 - **Sửa BCCT báo giá — mỗi báo giá 1 dòng** — Đổi plan/detail-report từ mỗi hàng hóa 1 dòng sang mỗi báo giá 1 dòng + popup chi tiết sản phẩm (@khoipv) — 2026-05-29
   - Spec: `docs/superpowers/specs/2026-05-28-detail-report-quotation-summary-design.md`
   - Plan: `.plans/detail-report-quotation-summary/plan.md`

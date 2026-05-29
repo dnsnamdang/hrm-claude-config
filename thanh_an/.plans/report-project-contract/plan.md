@@ -524,3 +524,323 @@ Blocked: không
 - `product_group` (Mảng HH) lấy từ `projects.array_product_name` (đã có trên bảng projects)
 - Menu item đã có sẵn trong `utils/MenuSale.js` (không cần thêm)
 - **Phân quyền:** Dùng lại permission danh sách DT (`Xem danh sách dự toán theo ...`), KHÔNG tạo permission mới. Logic copy từ `ProjectService.php:153-177`, bao gồm cả `TP duyệt báo giá`, `employee_id`, `contract_manager_id`, KH phụ trách
+
+---
+---
+
+# Enhancement: Popup DT — Gom hàng hóa 4 phân hệ + Quy đổi ĐVT
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Nâng cấp popup chi tiết dự toán để hiển thị tất cả hàng hóa từ 4 phân hệ (DT/BG/Thầu/HĐ), thêm 3 cột SL (BG/Thầu/HĐ) đã quy đổi về ĐVT chính.
+
+**Architecture:** Sửa method `lifecycleDetail` trong ProjectController — thay query `project_products` bằng UNION 4 bảng, lấy master info từ `products`, quy đổi SL qua `product_package_informations.conversion_factor` dùng `ConversionHelper`. FE thêm 3 cột vào popup `dt-detail`.
+
+**Tech Stack:** PHP 7.4 / Laravel 8, Nuxt 2 / Vue 2, Bootstrap-Vue
+
+**Spec:** `docs/superpowers/specs/2026-05-29-lifecycle-detail-aggregate-products-design.md`
+
+---
+
+## File Structure
+
+| File | Action | Mô tả |
+|------|--------|-------|
+| `hrm-thanhan-api/Modules/Category/Http/Controllers/Api/V1/ProjectController.php` | Modify | Sửa method `lifecycleDetail` (dòng 774-843) |
+| `hrm-thanhan-client/pages/sale/report-project-contract/index.vue` | Modify | Sửa popup `dt-detail` (dòng 487-563) |
+
+---
+
+## Task 6: BE — Sửa method `lifecycleDetail` để gom hàng hóa 4 phân hệ + quy đổi ĐVT
+
+**Files:**
+- Modify: `hrm-thanhan-api/Modules/Category/Http/Controllers/Api/V1/ProjectController.php:774-843`
+
+- [x] **Step 1: Thêm import `ConversionHelper`**
+
+Thêm dòng `use` ở đầu file (sau dòng 20, cùng khu vực `use`):
+
+```php
+use Modules\Category\Helpers\ConversionHelper;
+```
+
+- [x] **Step 2: Thay thế toàn bộ phần query `$items` trong method `lifecycleDetail`**
+
+Thay thế đoạn code từ dòng 813-825 (query `project_products`) bằng logic mới. Giữ nguyên phần query `$project` metadata (dòng 790-811) và phần response format (dòng 827-843).
+
+Thay đoạn:
+```php
+$items = DB::table('project_products as pp')
+    ->where('pp.project_id', $projectId)
+    ->select([
+        'pp.product_code',
+        'pp.internal_code',
+        'pp.product_name',
+        'pp.unit_name',
+        'pp.array_product_name',
+        'pp.specification',
+        'pp.model',
+        'pp.producer_country',
+    ])
+    ->get();
+```
+
+Bằng:
+```php
+// Bước 1: Lấy entity IDs liên quan
+$quotationIds = DB::table('quotations')
+    ->where('project_id', $projectId)->pluck('id')->toArray();
+$bidPackageIds = DB::table('bid_packages')
+    ->where('project_id', $projectId)->pluck('id')->toArray();
+$contractIds = DB::table('contracts')
+    ->where('project_id', $projectId)
+    ->where('record_type', Contract::HOP_DONG)
+    ->pluck('id')->toArray();
+
+// Bước 2: UNION DISTINCT product_id từ 4 bảng
+$productIdsFromProject = DB::table('project_products')
+    ->where('project_id', $projectId)
+    ->pluck('product_id')->toArray();
+
+$productIdsFromQuotation = !empty($quotationIds)
+    ? DB::table('quotation_tab_products')
+        ->whereIn('quotation_id', $quotationIds)
+        ->pluck('product_id')->toArray()
+    : [];
+
+$productIdsFromBidPackage = !empty($bidPackageIds)
+    ? DB::table('bid_package_products')
+        ->whereIn('bid_package_id', $bidPackageIds)
+        ->pluck('product_id')->toArray()
+    : [];
+
+$productIdsFromContract = !empty($contractIds)
+    ? DB::table('contract_products')
+        ->whereIn('contract_id', $contractIds)
+        ->pluck('product_id')->toArray()
+    : [];
+
+$allProductIds = collect(array_merge(
+    $productIdsFromProject,
+    $productIdsFromQuotation,
+    $productIdsFromBidPackage,
+    $productIdsFromContract
+))->unique()->values()->toArray();
+
+if (empty($allProductIds)) {
+    $items = [];
+} else {
+    // Bước 3: Lấy thông tin master từ products + units + array_products
+    $products = DB::table('products as p')
+        ->leftJoin('units as u', 'u.id', '=', 'p.unit_id')
+        ->leftJoin('array_products as ap', 'ap.id', '=', 'p.array_product_id')
+        ->whereIn('p.id', $allProductIds)
+        ->select([
+            'p.id as product_id',
+            'p.product_code',
+            'p.internal_code',
+            'p.product_name',
+            'p.unit_id',
+            'u.name as unit_name',
+            'ap.name as array_product_name',
+            'p.specification',
+            'p.model',
+            'p.producer_country',
+        ])
+        ->get()
+        ->keyBy('product_id');
+
+    // Bước 4: Lấy conversion factors từ product_package_informations
+    $packageInfos = DB::table('product_package_informations')
+        ->whereIn('product_id', $allProductIds)
+        ->whereNull('deleted_at')
+        ->select(['product_id', 'unit_id', 'conversion_factor'])
+        ->get();
+
+    // Build map: conversionMap[product_id][unit_id] = parsed_coeff
+    $conversionMap = [];
+    foreach ($packageInfos as $info) {
+        $coeff = ConversionHelper::parseConversionFactor($info->conversion_factor);
+        if ($coeff > 0) {
+            $conversionMap[$info->product_id][$info->unit_id] = $coeff;
+        }
+    }
+
+    // Bước 5: Lấy SUM(qty) GROUP BY (product_id, unit_id) cho 3 phân hệ
+    $qtyQuotation = [];
+    if (!empty($quotationIds)) {
+        $rows = DB::table('quotation_tab_products')
+            ->whereIn('quotation_id', $quotationIds)
+            ->select([
+                'product_id',
+                'unit_id',
+                DB::raw('SUM(qty) as total_qty'),
+            ])
+            ->groupBy('product_id', 'unit_id')
+            ->get();
+        foreach ($rows as $row) {
+            $qtyQuotation[$row->product_id][$row->unit_id] = (float) $row->total_qty;
+        }
+    }
+
+    $qtyBidPackage = [];
+    if (!empty($bidPackageIds)) {
+        $rows = DB::table('bid_package_products')
+            ->whereIn('bid_package_id', $bidPackageIds)
+            ->select([
+                'product_id',
+                'unit_id',
+                DB::raw('SUM(qty) as total_qty'),
+            ])
+            ->groupBy('product_id', 'unit_id')
+            ->get();
+        foreach ($rows as $row) {
+            $qtyBidPackage[$row->product_id][$row->unit_id] = (float) $row->total_qty;
+        }
+    }
+
+    $qtyContract = [];
+    if (!empty($contractIds)) {
+        $rows = DB::table('contract_products')
+            ->whereIn('contract_id', $contractIds)
+            ->select([
+                'product_id',
+                'unit_id',
+                DB::raw('SUM(qty) as total_qty'),
+            ])
+            ->groupBy('product_id', 'unit_id')
+            ->get();
+        foreach ($rows as $row) {
+            $qtyContract[$row->product_id][$row->unit_id] = (float) $row->total_qty;
+        }
+    }
+
+    // Bước 6: Quy đổi về ĐVT chính + build items
+    $items = [];
+    foreach ($allProductIds as $productId) {
+        $prod = $products->get($productId);
+        if (!$prod) {
+            continue;
+        }
+
+        $primaryUnitId = $prod->unit_id;
+        $primaryCoeff = $conversionMap[$productId][$primaryUnitId] ?? 1;
+
+        // Hàm quy đổi SL về ĐVT chính
+        $convertQty = function ($qtyMap) use ($productId, $primaryCoeff, $conversionMap) {
+            if (empty($qtyMap[$productId])) {
+                return 0;
+            }
+            $total = 0;
+            foreach ($qtyMap[$productId] as $unitId => $qty) {
+                $sourceCoeff = $conversionMap[$productId][$unitId] ?? 1;
+                if ($primaryCoeff > 0) {
+                    $total += $qty * ($sourceCoeff / $primaryCoeff);
+                } else {
+                    $total += $qty;
+                }
+            }
+            return $total;
+        };
+
+        $items[] = [
+            'product_code' => $prod->product_code,
+            'internal_code' => $prod->internal_code,
+            'product_name' => $prod->product_name,
+            'array_product_name' => $prod->array_product_name,
+            'unit_name' => $prod->unit_name,
+            'specification' => $prod->specification,
+            'model' => $prod->model,
+            'producer_country' => $prod->producer_country,
+            'qty_quotation' => $convertQty($qtyQuotation),
+            'qty_bid_package' => $convertQty($qtyBidPackage),
+            'qty_contract' => $convertQty($qtyContract),
+        ];
+    }
+}
+```
+
+- [x] **Step 3: Verify — chạy API kiểm tra**
+
+Dùng Postman hoặc curl:
+```
+GET /api/v1/category/projects/{project_id}/lifecycle-detail
+Authorization: Bearer {token}
+```
+
+Expected response:
+- `data` chứa metadata dự toán (giữ nguyên)
+- `items` chứa danh sách sản phẩm với 11 trường: `product_code`, `internal_code`, `product_name`, `array_product_name`, `unit_name`, `specification`, `model`, `producer_country`, `qty_quotation`, `qty_bid_package`, `qty_contract`
+- Sản phẩm từ tất cả 4 phân hệ đều xuất hiện
+- SL đã quy đổi về ĐVT chính
+
+---
+
+## Task 7: FE — Thêm 3 cột SL vào popup chi tiết dự toán
+
+**Files:**
+- Modify: `hrm-thanhan-client/pages/sale/report-project-contract/index.vue:529-556`
+
+- [x] **Step 1: Thêm 3 header cột vào `<b-thead>` của popup dt-detail**
+
+Tìm block `<b-thead>` trong template `dt-detail` (dòng 529-541). Thêm 3 `<b-th>` mới sau cột "Hãng/Nước SX":
+
+Thay đoạn:
+```html
+<b-th>Hãng/Nước SX</b-th>
+</b-tr>
+</b-thead>
+```
+
+(trong phần dt-detail) bằng:
+```html
+<b-th>Hãng/Nước SX</b-th>
+<b-th class="text-center">SL trong BG</b-th>
+<b-th class="text-center">SL trong Thầu</b-th>
+<b-th class="text-center">SL trong HĐ</b-th>
+</b-tr>
+</b-thead>
+```
+
+- [x] **Step 2: Thêm 3 data cells vào `<b-tbody>` của popup dt-detail**
+
+Tìm block `<b-tbody>` trong template `dt-detail` (dòng 542-557). Thêm 3 `<b-td>` mới sau cột `producer_country`:
+
+Thay đoạn:
+```html
+<b-td>{{ item.producer_country }}</b-td>
+</b-tr>
+```
+
+(trong v-for loop của dt-detail) bằng:
+```html
+<b-td>{{ item.producer_country }}</b-td>
+<b-td class="text-center">{{ item.qty_quotation }}</b-td>
+<b-td class="text-center">{{ item.qty_bid_package }}</b-td>
+<b-td class="text-center">{{ item.qty_contract }}</b-td>
+</b-tr>
+```
+
+- [x] **Step 3: Cập nhật colspan của dòng "Không có sản phẩm"**
+
+Thay đoạn:
+```html
+<b-td colspan="9" class="text-center text-muted">Không có sản phẩm</b-td>
+```
+
+Bằng:
+```html
+<b-td colspan="12" class="text-center text-muted">Không có sản phẩm</b-td>
+```
+
+- [ ] **Step 4: Verify trên browser**
+
+Mở browser → truy cập `/sale/report-project-contract`.
+Kiểm tra:
+- [ ] Click Mã DT → popup chi tiết DT mở
+- [ ] Bảng sản phẩm hiển thị đủ 12 cột (9 cũ + 3 SL mới)
+- [ ] Sản phẩm từ tất cả 4 phân hệ đều xuất hiện (không chỉ từ project_products)
+- [ ] SL hiển thị đúng: có giá trị hoặc 0
+- [ ] ĐVT hiển thị là ĐVT chính
+- [ ] Sản phẩm dùng ĐVT khác ở BG/Thầu/HĐ → SL đã quy đổi đúng
+- [ ] Các popup khác (GT, HĐ) vẫn hoạt động bình thường

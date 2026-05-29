@@ -18,5 +18,13 @@ Xây dựng trang báo cáo tổng hợp theo dõi vòng đời 4 giai đoạn: 
 - **Popup DT không có đơn giá/thành tiền** (vì project_products không lưu giá)
 - **Giữ nhóm header "Dự toán" riêng** (chỉ chứa 2 cột detail: NV, Ngày lập)
 
-## Spec chi tiết
+## Enhancement: Gom hàng hóa 4 phân hệ + Quy đổi ĐVT (2026-05-29)
+
+Nâng cấp popup chi tiết DT: hiển thị tất cả hàng hóa từ 4 phân hệ (DT/BG/Thầu/HĐ), thêm 3 cột SL (BG/Thầu/HĐ) đã quy đổi về ĐVT chính.
+
+- Sửa BE `lifecycleDetail`: UNION product_id từ 4 bảng, quy đổi bằng `ConversionHelper`
+- Sửa FE popup `dt-detail`: thêm 3 cột SL
+- Spec: `docs/superpowers/specs/2026-05-29-lifecycle-detail-aggregate-products-design.md`
+
+## Spec chi tiết (feature gốc)
 → `docs/superpowers/specs/2026-05-25-report-project-contract-design.md`
