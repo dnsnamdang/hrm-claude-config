@@ -17,6 +17,7 @@
 ### Task 1: Migration tạo 3 bảng
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Database/Migrations/2026_04_29_100000_create_learning_path_tables.php`
 
 - [x] **Step 1: Tạo file migration**
@@ -96,6 +97,7 @@ Expected: 3 bảng được tạo thành công.
 ### Task 2: Model LearningPath
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Entities/LearningPath.php`
 
 - [x] **Step 1: Tạo model**
@@ -185,6 +187,7 @@ class LearningPath extends BaseModel
 ### Task 3: Model LearningPathSubject
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Entities/LearningPathSubject.php`
 
 - [x] **Step 1: Tạo model**
@@ -229,6 +232,7 @@ class LearningPathSubject extends BaseModel
 ### Task 4: Model LearningPathAssignee
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Entities/LearningPathAssignee.php`
 
 - [x] **Step 1: Tạo model**
@@ -265,6 +269,7 @@ class LearningPathAssignee extends BaseModel
 ### Task 5: LearningPathRequest (Form Validation)
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Http/Requests/LearningPath/LearningPathRequest.php`
 
 - [x] **Step 1: Tạo request class**
@@ -320,6 +325,7 @@ class LearningPathRequest extends FormRequest
 ### Task 6: LearningPathService
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Services/LearningPath/LearningPathService.php`
 
 - [x] **Step 1: Tạo service class**
@@ -356,7 +362,7 @@ class LearningPathService
             $learningPath->certificate_fields = isset($data['certificate_fields'])
                 ? (is_string($data['certificate_fields']) ? json_decode($data['certificate_fields'], true) : $data['certificate_fields'])
                 : null;
-            $learningPath->company_id = auth()->payload()->get('current_company');
+            $learningPath->company_id = auth()->user() ? auth()->user()->current_company_role : auth()->payload()->get('current_company');
             $learningPath->department_id = auth()->payload()->get('current_department');
             $learningPath->part_id = auth()->payload()->get('current_part');
             $learningPath->created_by = auth()->id();
@@ -475,6 +481,7 @@ class LearningPathService
 ### Task 7: LearningPathListResource
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Transformers/LearningPathResource/LearningPathListResource.php`
 
 - [x] **Step 1: Tạo resource**
@@ -525,6 +532,7 @@ class LearningPathListResource extends ResourceCollection
 ### Task 8: LearningPathDetailResource
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Transformers/LearningPathResource/LearningPathDetailResource.php`
 
 - [x] **Step 1: Tạo resource**
@@ -628,6 +636,7 @@ class LearningPathDetailResource extends JsonResource
 ### Task 9: LearningPathController
 
 **Files:**
+
 - Create: `hrm-api/Modules/Training/Http/Controllers/V1/LearningPathController.php`
 
 - [x] **Step 1: Tạo controller**
@@ -790,6 +799,7 @@ class LearningPathController extends BaseApiController
 ### Task 10: Thêm routes
 
 **Files:**
+
 - Modify: `hrm-api/Modules/Training/Routes/api.php`
 
 - [x] **Step 1: Thêm import controller ở đầu file** (cùng nhóm use statements)
@@ -829,24 +839,34 @@ Expected: 7 routes hiển thị.
 ### Task 11: Thêm API calls vào store
 
 **Files:**
+
 - Không cần tạo file store riêng — dùng `this.$store.dispatch('apiGetMethod', url)` pattern đã có.
 
 - [x] **Step 1: Skip** — FE gọi API trực tiếp qua store dispatch, không cần thêm file store. Các component sẽ gọi:
 
 ```js
 // GET
-await this.$store.dispatch('apiGetMethod', 'training/learning-paths/get-next-code')
-await this.$store.dispatch('apiGetMethod', `training/learning-paths/${id}`)
-await this.$store.dispatch('apiGetMethod', 'training/subjects/getAll')
+await this.$store.dispatch(
+  "apiGetMethod",
+  "training/learning-paths/get-next-code",
+);
+await this.$store.dispatch("apiGetMethod", `training/learning-paths/${id}`);
+await this.$store.dispatch("apiGetMethod", "training/subjects/getAll");
 
 // POST (store)
-await this.$store.dispatch('apiPostMethod', { url: 'training/learning-paths', payload })
+await this.$store.dispatch("apiPostMethod", {
+  url: "training/learning-paths",
+  payload,
+});
 
 // POST (update)
-await this.$store.dispatch('apiPostMethod', { url: `training/learning-paths/${id}`, payload })
+await this.$store.dispatch("apiPostMethod", {
+  url: `training/learning-paths/${id}`,
+  payload,
+});
 
 // DELETE
-await this.$store.dispatch('apiDeleteMethod', `training/learning-paths/${id}`)
+await this.$store.dispatch("apiDeleteMethod", `training/learning-paths/${id}`);
 ```
 
 ---
@@ -854,327 +874,401 @@ await this.$store.dispatch('apiDeleteMethod', `training/learning-paths/${id}`)
 ### Task 12: Page add.vue — Orchestrator
 
 **Files:**
+
 - Modify: `hrm-client/pages/training/learning-path/add.vue`
 
 - [x] **Step 1: Viết page orchestrator**
 
 ```vue
 <template>
-    <div class="v2-styles">
-        <div class="container-fluid mt-3" v-if="hasAPermission('Quản lý lộ trình học')">
-            <div class="page-shell">
-                <!-- HEADER -->
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-between mb-3">
-                    <div class="mb-2 mb-md-0">
-                        <div class="text-uppercase text-muted" style="font-size: 11px; letter-spacing: 0.08em">
-                            Đào tạo • Lộ trình học
-                        </div>
-                        <h1 class="h6 font-weight-bold mb-0 text-dark mt-1" style="font-size: 15px">
-                            {{ isEdit ? 'Sửa lộ trình học' : 'Tạo lộ trình học' }}
-                        </h1>
-                        <div class="tp-sub mt-1">
-                            Lộ trình gồm nhiều <b>Khoá học</b> • Kết quả dựa trên <b>Đạt/Không đạt</b> của các khoá.
-                        </div>
-                    </div>
-                    <div class="d-flex flex-wrap align-items-center justify-content-end" style="gap: 10px">
-                        <span class="badge badge-light border px-2 py-1">
-                            <i class="ri-stack-line mr-1"></i>{{ formData.subjects.length }} khoá
-                        </span>
-                    </div>
-                </div>
-
-                <!-- TABS -->
-                <ul class="nav nav-pills tp-tabs mb-3" role="tablist">
-                    <li class="nav-item mr-2">
-                        <a class="nav-link" :class="{ active: currentTab === 0 }" href="#" @click.prevent="currentTab = 0">
-                            <i class="ri-settings-3-line mr-1"></i>Thông tin lộ trình học
-                        </a>
-                    </li>
-                    <li class="nav-item mr-2">
-                        <a class="nav-link" :class="{ active: currentTab === 1 }" href="#" @click.prevent="currentTab = 1">
-                            <i class="ri-shield-check-line mr-1"></i>Cấu hình kết quả
-                        </a>
-                    </li>
-                    <li class="nav-item mr-2">
-                        <a class="nav-link" :class="{ active: currentTab === 2 }" href="#" @click.prevent="currentTab = 2">
-                            <i class="ri-team-line mr-1"></i>Cấu hình người học
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" :class="{ active: currentTab === 3 }" href="#" @click.prevent="currentTab = 3">
-                            <i class="ri-award-line mr-1"></i>Chứng chỉ
-                        </a>
-                    </li>
-                </ul>
-
-                <!-- ALERT -->
-                <div v-if="formError" class="alert alert-danger mb-3" style="font-size: 12px">
-                    <i class="ri-error-warning-line mr-1"></i>{{ formError }}
-                </div>
-
-                <!-- TAB CONTENT -->
-                <div v-show="currentTab === 0">
-                    <TabInfo
-                        :form-data="formData"
-                        :training-types="trainingTypes"
-                        :code="nextCode"
-                        :is-show="isShow"
-                        :errors="errors"
-                        @update="handleUpdate"
-                        @update-subjects="handleUpdateSubjects"
-                    />
-                </div>
-
-                <div v-show="currentTab === 1">
-                    <TabResult
-                        :result-rule="formData.result_rule"
-                        :min-pass-percent="formData.result_min_pass_percent"
-                        :subjects="formData.subjects"
-                        :is-show="isShow"
-                        @update="handleUpdate"
-                    />
-                </div>
-
-                <div v-show="currentTab === 2">
-                    <TabLearners
-                        :assignees="formData.assignees"
-                        :is-show="isShow"
-                        @update-assignees="handleUpdateAssignees"
-                    />
-                </div>
-
-                <div v-show="currentTab === 3">
-                    <TabCertificate
-                        :certificate-enabled="formData.certificate_enabled"
-                        :certificate-fields="formData.certificate_fields"
-                        :certificate-template-url="formData.certificate_template_url"
-                        :course-name="formData.name"
-                        :is-show="isShow"
-                        @update="handleUpdate"
-                        @update-template-file="handleUpdateTemplateFile"
-                    />
-                </div>
-
-                <!-- FOOTER -->
-                <div class="d-flex justify-content-end mt-3" style="gap: 10px" v-if="!isShow">
-                    <button class="btn btn-light border btn-sm" @click="goBack">
-                        <i class="ri-arrow-left-line mr-1"></i>Quay về
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" @click="saveDraft" :disabled="isSaving">
-                        <i class="ri-save-3-line mr-1"></i>Lưu tạm
-                    </button>
-                    <button class="btn btn-success btn-sm" @click="savePublish" :disabled="isSaving">
-                        <i class="ri-check-line mr-1"></i>Lưu
-                    </button>
-                </div>
+  <div class="v2-styles">
+    <div
+      class="container-fluid mt-3"
+      v-if="hasAPermission('Quản lý lộ trình học')"
+    >
+      <div class="page-shell">
+        <!-- HEADER -->
+        <div
+          class="d-flex flex-column flex-md-row align-items-md-center justify-content-md-between mb-3"
+        >
+          <div class="mb-2 mb-md-0">
+            <div
+              class="text-uppercase text-muted"
+              style="font-size: 11px; letter-spacing: 0.08em"
+            >
+              Đào tạo • Lộ trình học
             </div>
+            <h1
+              class="h6 font-weight-bold mb-0 text-dark mt-1"
+              style="font-size: 15px"
+            >
+              {{ isEdit ? "Sửa lộ trình học" : "Tạo lộ trình học" }}
+            </h1>
+            <div class="tp-sub mt-1">
+              Lộ trình gồm nhiều <b>Khoá học</b> • Kết quả dựa trên
+              <b>Đạt/Không đạt</b> của các khoá.
+            </div>
+          </div>
+          <div
+            class="d-flex flex-wrap align-items-center justify-content-end"
+            style="gap: 10px"
+          >
+            <span class="badge badge-light border px-2 py-1">
+              <i class="ri-stack-line mr-1"></i
+              >{{ formData.subjects.length }} khoá
+            </span>
+          </div>
         </div>
+
+        <!-- TABS -->
+        <ul class="nav nav-pills tp-tabs mb-3" role="tablist">
+          <li class="nav-item mr-2">
+            <a
+              class="nav-link"
+              :class="{ active: currentTab === 0 }"
+              href="#"
+              @click.prevent="currentTab = 0"
+            >
+              <i class="ri-settings-3-line mr-1"></i>Thông tin lộ trình học
+            </a>
+          </li>
+          <li class="nav-item mr-2">
+            <a
+              class="nav-link"
+              :class="{ active: currentTab === 1 }"
+              href="#"
+              @click.prevent="currentTab = 1"
+            >
+              <i class="ri-shield-check-line mr-1"></i>Cấu hình kết quả
+            </a>
+          </li>
+          <li class="nav-item mr-2">
+            <a
+              class="nav-link"
+              :class="{ active: currentTab === 2 }"
+              href="#"
+              @click.prevent="currentTab = 2"
+            >
+              <i class="ri-team-line mr-1"></i>Cấu hình người học
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              :class="{ active: currentTab === 3 }"
+              href="#"
+              @click.prevent="currentTab = 3"
+            >
+              <i class="ri-award-line mr-1"></i>Chứng chỉ
+            </a>
+          </li>
+        </ul>
+
+        <!-- ALERT -->
+        <div
+          v-if="formError"
+          class="alert alert-danger mb-3"
+          style="font-size: 12px"
+        >
+          <i class="ri-error-warning-line mr-1"></i>{{ formError }}
+        </div>
+
+        <!-- TAB CONTENT -->
+        <div v-show="currentTab === 0">
+          <TabInfo
+            :form-data="formData"
+            :training-types="trainingTypes"
+            :code="nextCode"
+            :is-show="isShow"
+            :errors="errors"
+            @update="handleUpdate"
+            @update-subjects="handleUpdateSubjects"
+          />
+        </div>
+
+        <div v-show="currentTab === 1">
+          <TabResult
+            :result-rule="formData.result_rule"
+            :min-pass-percent="formData.result_min_pass_percent"
+            :subjects="formData.subjects"
+            :is-show="isShow"
+            @update="handleUpdate"
+          />
+        </div>
+
+        <div v-show="currentTab === 2">
+          <TabLearners
+            :assignees="formData.assignees"
+            :is-show="isShow"
+            @update-assignees="handleUpdateAssignees"
+          />
+        </div>
+
+        <div v-show="currentTab === 3">
+          <TabCertificate
+            :certificate-enabled="formData.certificate_enabled"
+            :certificate-fields="formData.certificate_fields"
+            :certificate-template-url="formData.certificate_template_url"
+            :course-name="formData.name"
+            :is-show="isShow"
+            @update="handleUpdate"
+            @update-template-file="handleUpdateTemplateFile"
+          />
+        </div>
+
+        <!-- FOOTER -->
+        <div
+          class="d-flex justify-content-end mt-3"
+          style="gap: 10px"
+          v-if="!isShow"
+        >
+          <button class="btn btn-light border btn-sm" @click="goBack">
+            <i class="ri-arrow-left-line mr-1"></i>Quay về
+          </button>
+          <button
+            class="btn btn-outline-secondary btn-sm"
+            @click="saveDraft"
+            :disabled="isSaving"
+          >
+            <i class="ri-save-3-line mr-1"></i>Lưu tạm
+          </button>
+          <button
+            class="btn btn-success btn-sm"
+            @click="savePublish"
+            :disabled="isSaving"
+          >
+            <i class="ri-check-line mr-1"></i>Lưu
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 </template>
 
 <script>
-import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
-import CheckPermission from '@/utils/mixins/CheckPermission'
-import TabInfo from './components/TabInfo.vue'
-import TabResult from './components/TabResult.vue'
-import TabLearners from './components/TabLearners.vue'
-import TabCertificate from './components/TabCertificate.vue'
+import PageTitleMixin from "@/utils/mixins/PageTitleMixin";
+import CheckPermission from "@/utils/mixins/CheckPermission";
+import TabInfo from "./components/TabInfo.vue";
+import TabResult from "./components/TabResult.vue";
+import TabLearners from "./components/TabLearners.vue";
+import TabCertificate from "./components/TabCertificate.vue";
 
 const DEFAULT_FORM = () => ({
-    name: '',
-    training_type_id: null,
-    status: 1,
-    is_public: false,
-    linear_required: false,
-    description: '',
-    purpose: '',
-    admin_note: '',
-    subjects: [],
-    result_rule: 'REQUIRED_ONLY',
-    result_min_pass_percent: null,
-    assignees: [],
-    certificate_enabled: false,
-    certificate_fields: null,
-    certificate_template_file: null,
-    certificate_template_url: null,
-})
+  name: "",
+  training_type_id: null,
+  status: 1,
+  is_public: false,
+  linear_required: false,
+  description: "",
+  purpose: "",
+  admin_note: "",
+  subjects: [],
+  result_rule: "REQUIRED_ONLY",
+  result_min_pass_percent: null,
+  assignees: [],
+  certificate_enabled: false,
+  certificate_fields: null,
+  certificate_template_file: null,
+  certificate_template_url: null,
+});
 
 export default {
-    layout: 'default-sidebar',
-    mixins: [PageTitleMixin, CheckPermission],
-    components: { TabInfo, TabResult, TabLearners, TabCertificate },
+  layout: "default-sidebar",
+  mixins: [PageTitleMixin, CheckPermission],
+  components: { TabInfo, TabResult, TabLearners, TabCertificate },
 
-    head() {
-        return { title: this.pageTitle }
+  head() {
+    return { title: this.pageTitle };
+  },
+
+  data() {
+    return {
+      currentTab: 0,
+      formData: DEFAULT_FORM(),
+      nextCode: "",
+      formError: "",
+      errors: {},
+      isSaving: false,
+      isEdit: false,
+      isShow: false,
+      trainingTypes: [],
+    };
+  },
+
+  computed: {
+    pageTitle() {
+      return this.isEdit ? "Sửa lộ trình học" : "Tạo lộ trình học";
+    },
+  },
+
+  async mounted() {
+    await this.fetchTrainingTypes();
+    await this.fetchNextCode();
+  },
+
+  methods: {
+    async fetchTrainingTypes() {
+      await this.$store.dispatch("optionsSelect/fetchTrainingTypes");
+      this.trainingTypes =
+        this.$store.getters["optionsSelect/getTrainingTypes"];
     },
 
-    data() {
-        return {
-            currentTab: 0,
-            formData: DEFAULT_FORM(),
-            nextCode: '',
-            formError: '',
-            errors: {},
-            isSaving: false,
-            isEdit: false,
-            isShow: false,
-            trainingTypes: [],
+    async fetchNextCode() {
+      try {
+        const res = await this.$store.dispatch(
+          "apiGetMethod",
+          "training/learning-paths/get-next-code",
+        );
+        this.nextCode = res.data?.code || res.code || "";
+      } catch (e) {
+        console.error("fetchNextCode error", e);
+      }
+    },
+
+    handleUpdate(payload) {
+      Object.keys(payload).forEach((key) => {
+        this.$set(this.formData, key, payload[key]);
+      });
+    },
+
+    handleUpdateSubjects(subjects) {
+      this.$set(this.formData, "subjects", subjects);
+    },
+
+    handleUpdateAssignees(assignees) {
+      this.$set(this.formData, "assignees", assignees);
+    },
+
+    handleUpdateTemplateFile(file) {
+      this.formData.certificate_template_file = file;
+    },
+
+    validate() {
+      this.errors = {};
+      this.formError = "";
+
+      if (!this.formData.name || !this.formData.name.trim()) {
+        this.errors.name = "Vui lòng nhập tên lộ trình học";
+        this.formError = "Vui lòng nhập tên lộ trình học";
+        this.currentTab = 0;
+        return false;
+      }
+
+      if (this.formData.result_rule === "MIN_PERCENT") {
+        const pct = this.formData.result_min_pass_percent;
+        if (!pct || pct < 1 || pct > 100) {
+          this.errors.result_min_pass_percent = "Ngưỡng % phải từ 1 đến 100";
+          this.formError = "Vui lòng nhập ngưỡng % hợp lệ (1-100)";
+          this.currentTab = 1;
+          return false;
         }
+      }
+
+      return true;
     },
 
-    computed: {
-        pageTitle() {
-            return this.isEdit ? 'Sửa lộ trình học' : 'Tạo lộ trình học'
-        },
+    buildPayload(statusOverride) {
+      const fd = new FormData();
+
+      fd.append("name", this.formData.name?.trim() || "");
+      fd.append("training_type_id", this.formData.training_type_id || "");
+      fd.append(
+        "status",
+        statusOverride != null ? statusOverride : this.formData.status,
+      );
+      fd.append("is_public", this.formData.is_public ? 1 : 0);
+      fd.append("linear_required", this.formData.linear_required ? 1 : 0);
+      fd.append("description", this.formData.description || "");
+      fd.append("purpose", this.formData.purpose || "");
+      fd.append("admin_note", this.formData.admin_note || "");
+      fd.append("result_rule", this.formData.result_rule || "REQUIRED_ONLY");
+      fd.append(
+        "result_min_pass_percent",
+        this.formData.result_min_pass_percent || "",
+      );
+      fd.append(
+        "certificate_enabled",
+        this.formData.certificate_enabled ? 1 : 0,
+      );
+
+      if (this.formData.certificate_fields) {
+        fd.append(
+          "certificate_fields",
+          JSON.stringify(this.formData.certificate_fields),
+        );
+      }
+
+      if (this.formData.certificate_template_file) {
+        fd.append(
+          "certificate_template_file",
+          this.formData.certificate_template_file,
+        );
+      }
+
+      this.formData.subjects.forEach((s, i) => {
+        fd.append(`subjects[${i}][subject_id]`, s.subject_id);
+        fd.append(`subjects[${i}][sort_order]`, s.sort_order ?? i);
+        fd.append(`subjects[${i}][is_required]`, s.is_required ? 1 : 0);
+        fd.append(`subjects[${i}][note]`, s.note || "");
+      });
+
+      this.formData.assignees.forEach((a, i) => {
+        fd.append(`assignees[${i}][assignee_type]`, a.assignee_type);
+        fd.append(`assignees[${i}][assignee_id]`, a.assignee_id);
+        fd.append(`assignees[${i}][assignment_mode]`, a.assignment_mode);
+      });
+
+      return fd;
     },
 
-    async mounted() {
-        await this.fetchTrainingTypes()
-        await this.fetchNextCode()
+    async saveDraft() {
+      if (!this.formData.name || !this.formData.name.trim()) {
+        this.formError = "Vui lòng nhập tên lộ trình học";
+        this.errors = { name: "Vui lòng nhập tên lộ trình học" };
+        this.currentTab = 0;
+        return;
+      }
+      await this.doSave(1);
     },
 
-    methods: {
-        async fetchTrainingTypes() {
-            await this.$store.dispatch('optionsSelect/fetchTrainingTypes')
-            this.trainingTypes = this.$store.getters['optionsSelect/getTrainingTypes']
-        },
-
-        async fetchNextCode() {
-            try {
-                const res = await this.$store.dispatch('apiGetMethod', 'training/learning-paths/get-next-code')
-                this.nextCode = res.data?.code || res.code || ''
-            } catch (e) {
-                console.error('fetchNextCode error', e)
-            }
-        },
-
-        handleUpdate(payload) {
-            Object.keys(payload).forEach((key) => {
-                this.$set(this.formData, key, payload[key])
-            })
-        },
-
-        handleUpdateSubjects(subjects) {
-            this.$set(this.formData, 'subjects', subjects)
-        },
-
-        handleUpdateAssignees(assignees) {
-            this.$set(this.formData, 'assignees', assignees)
-        },
-
-        handleUpdateTemplateFile(file) {
-            this.formData.certificate_template_file = file
-        },
-
-        validate() {
-            this.errors = {}
-            this.formError = ''
-
-            if (!this.formData.name || !this.formData.name.trim()) {
-                this.errors.name = 'Vui lòng nhập tên lộ trình học'
-                this.formError = 'Vui lòng nhập tên lộ trình học'
-                this.currentTab = 0
-                return false
-            }
-
-            if (this.formData.result_rule === 'MIN_PERCENT') {
-                const pct = this.formData.result_min_pass_percent
-                if (!pct || pct < 1 || pct > 100) {
-                    this.errors.result_min_pass_percent = 'Ngưỡng % phải từ 1 đến 100'
-                    this.formError = 'Vui lòng nhập ngưỡng % hợp lệ (1-100)'
-                    this.currentTab = 1
-                    return false
-                }
-            }
-
-            return true
-        },
-
-        buildPayload(statusOverride) {
-            const fd = new FormData()
-
-            fd.append('name', this.formData.name?.trim() || '')
-            fd.append('training_type_id', this.formData.training_type_id || '')
-            fd.append('status', statusOverride != null ? statusOverride : this.formData.status)
-            fd.append('is_public', this.formData.is_public ? 1 : 0)
-            fd.append('linear_required', this.formData.linear_required ? 1 : 0)
-            fd.append('description', this.formData.description || '')
-            fd.append('purpose', this.formData.purpose || '')
-            fd.append('admin_note', this.formData.admin_note || '')
-            fd.append('result_rule', this.formData.result_rule || 'REQUIRED_ONLY')
-            fd.append('result_min_pass_percent', this.formData.result_min_pass_percent || '')
-            fd.append('certificate_enabled', this.formData.certificate_enabled ? 1 : 0)
-
-            if (this.formData.certificate_fields) {
-                fd.append('certificate_fields', JSON.stringify(this.formData.certificate_fields))
-            }
-
-            if (this.formData.certificate_template_file) {
-                fd.append('certificate_template_file', this.formData.certificate_template_file)
-            }
-
-            this.formData.subjects.forEach((s, i) => {
-                fd.append(`subjects[${i}][subject_id]`, s.subject_id)
-                fd.append(`subjects[${i}][sort_order]`, s.sort_order ?? i)
-                fd.append(`subjects[${i}][is_required]`, s.is_required ? 1 : 0)
-                fd.append(`subjects[${i}][note]`, s.note || '')
-            })
-
-            this.formData.assignees.forEach((a, i) => {
-                fd.append(`assignees[${i}][assignee_type]`, a.assignee_type)
-                fd.append(`assignees[${i}][assignee_id]`, a.assignee_id)
-                fd.append(`assignees[${i}][assignment_mode]`, a.assignment_mode)
-            })
-
-            return fd
-        },
-
-        async saveDraft() {
-            if (!this.formData.name || !this.formData.name.trim()) {
-                this.formError = 'Vui lòng nhập tên lộ trình học'
-                this.errors = { name: 'Vui lòng nhập tên lộ trình học' }
-                this.currentTab = 0
-                return
-            }
-            await this.doSave(1)
-        },
-
-        async savePublish() {
-            if (!this.validate()) return
-            await this.doSave(null)
-        },
-
-        async doSave(statusOverride) {
-            this.isSaving = true
-            this.formError = ''
-            try {
-                const payload = this.buildPayload(statusOverride)
-                const url = this.isEdit
-                    ? `training/learning-paths/${this.$route.params.id}`
-                    : 'training/learning-paths'
-                await this.$store.dispatch('apiPostMethod', { url, payload })
-                this.$toasted?.global?.success?.({
-                    message: this.isEdit ? 'Cập nhật lộ trình học thành công' : 'Tạo lộ trình học thành công',
-                })
-                this.$router.push('/training/learning-path')
-            } catch (e) {
-                const msg = e?.response?.data?.message || 'Có lỗi xảy ra'
-                this.formError = msg
-            } finally {
-                this.isSaving = false
-            }
-        },
-
-        goBack() {
-            this.$router.push('/training/learning-path')
-        },
+    async savePublish() {
+      if (!this.validate()) return;
+      await this.doSave(null);
     },
-}
+
+    async doSave(statusOverride) {
+      this.isSaving = true;
+      this.formError = "";
+      try {
+        const payload = this.buildPayload(statusOverride);
+        const url = this.isEdit
+          ? `training/learning-paths/${this.$route.params.id}`
+          : "training/learning-paths";
+        await this.$store.dispatch("apiPostMethod", { url, payload });
+        this.$toasted?.global?.success?.({
+          message: this.isEdit
+            ? "Cập nhật lộ trình học thành công"
+            : "Tạo lộ trình học thành công",
+        });
+        this.$router.push("/training/learning-path");
+      } catch (e) {
+        const msg = e?.response?.data?.message || "Có lỗi xảy ra";
+        this.formError = msg;
+      } finally {
+        this.isSaving = false;
+      }
+    },
+
+    goBack() {
+      this.$router.push("/training/learning-path");
+    },
+  },
+};
 </script>
 
 <style scoped>
 .page-shell {
-    max-width: calc(100% - 50px);
+  max-width: calc(100% - 50px);
 }
 </style>
 ```
@@ -1186,6 +1280,7 @@ export default {
 ### Task 13: TabInfo.vue — Thông tin + Builder khoá học
 
 **Files:**
+
 - Create: `hrm-client/pages/training/learning-path/components/TabInfo.vue`
 
 - [x] **Step 1: Tạo component TabInfo.vue**
@@ -1193,12 +1288,14 @@ export default {
 Đây là component lớn nhất — gồm form thông tin (trái) + builder khoá học drag-drop (phải) + modal chọn khoá.
 
 Template gồm:
+
 - **Cột trái (col-lg-5):** form fields — Loại đào tạo (V2BaseSelect), Mã LP (disabled input), Tên (required input), Trạng thái (select), Học tuần tự (select), Switch Public, Ghi chú, Mô tả, Mục đích
 - **Cột phải (col-lg-7):** panel với header (nút "Thêm khoá học"), body là `<draggable>` chứa danh sách khoá, mỗi khoá hiển thị code + name + badge bài học + expand bài học (read-only) + actions (cấu hình modal, xoá)
 - **Modal "Thêm khoá học":** bảng subjects (từ `/subjects/getAll`), tìm kiếm, nút thêm (disable nếu đã có)
 - **Modal "Cấu hình khoá trong lộ trình":** form bắt buộc/không + ghi chú
 
 Script cần:
+
 - Props: `formData`, `trainingTypes`, `code`, `isShow`, `errors`
 - Events: `@update(payload)`, `@update-subjects(subjects)`
 - Data: `subjectBank[]`, `bankSearch`, `showPickerModal`, `showConfigModal`, `configEditing`, `configForm`
@@ -1215,121 +1312,165 @@ Xem chi tiết code trong file tạo ra — file này sẽ ~400 dòng template +
 ### Task 14: TabResult.vue — Cấu hình kết quả
 
 **Files:**
+
 - Create: `hrm-client/pages/training/learning-path/components/TabResult.vue`
 
 - [x] **Step 1: Tạo component**
 
 ```vue
 <template>
-    <div class="row">
-        <div class="col-lg-7 mb-3 mb-lg-0">
-            <section class="tp-card p-3">
-                <div class="d-flex align-items-center mb-3 p-2 rounded" style="background: #f8fafc; border: 1px solid #e5e7eb">
-                    <div class="d-flex align-items-center justify-content-center mr-2"
-                        style="width: 28px; height: 28px; border-radius: 999px; background: rgba(22,163,74,.1); color: #16a34a">
-                        <i class="ri-award-line"></i>
-                    </div>
-                    <div>
-                        <div class="font-weight-bold text-dark" style="font-size: 12px">Cấu hình kết quả lộ trình học</div>
-                        <div class="text-muted" style="font-size: 11px">Dựa trên Đạt/Không đạt của khoá</div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="col-md-8 mb-2">
-                        <label class="tp-label">Điều kiện đạt lộ trình</label>
-                        <select
-                            :value="resultRule"
-                            @change="$emit('update', { result_rule: $event.target.value })"
-                            class="form-control form-control-sm"
-                            :disabled="isShow"
-                        >
-                            <option value="REQUIRED_ONLY">Tất cả khoá bắt buộc ĐẠT</option>
-                            <option value="ALL_COURSES">Tất cả khoá trong lộ trình ĐẠT</option>
-                            <option value="MIN_PERCENT">Đạt tối thiểu X% số khoá</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-2" v-if="resultRule === 'MIN_PERCENT'">
-                        <label class="tp-label">Ngưỡng (%)</label>
-                        <input
-                            type="number"
-                            :value="minPassPercent"
-                            @input="$emit('update', { result_min_pass_percent: Number($event.target.value) || null })"
-                            class="form-control form-control-sm"
-                            min="1"
-                            max="100"
-                            :disabled="isShow"
-                        />
-                    </div>
-                </div>
-
-                <div class="border rounded p-2 mt-2" style="background: #f8fafc; font-size: 12px">
-                    <div class="d-flex flex-wrap" style="gap: 10px">
-                        <div><b>Tổng khoá:</b> <span class="font-monospace">{{ stats.total }}</span></div>
-                        <div>•</div>
-                        <div><b>Bắt buộc:</b> <span class="font-monospace">{{ stats.required }}</span></div>
-                        <div>•</div>
-                        <div><b>Không bắt buộc:</b> <span class="font-monospace">{{ stats.optional }}</span></div>
-                    </div>
-                    <div class="text-muted mt-1" style="font-size: 11px">
-                        "Đạt/Không đạt" của từng khoá do cấu hình khoá quyết định. Lộ trình chỉ gom kết quả.
-                    </div>
-                </div>
-            </section>
+  <div class="row">
+    <div class="col-lg-7 mb-3 mb-lg-0">
+      <section class="tp-card p-3">
+        <div
+          class="d-flex align-items-center mb-3 p-2 rounded"
+          style="background: #f8fafc; border: 1px solid #e5e7eb"
+        >
+          <div
+            class="d-flex align-items-center justify-content-center mr-2"
+            style="width: 28px; height: 28px; border-radius: 999px; background: rgba(22,163,74,.1); color: #16a34a"
+          >
+            <i class="ri-award-line"></i>
+          </div>
+          <div>
+            <div class="font-weight-bold text-dark" style="font-size: 12px">
+              Cấu hình kết quả lộ trình học
+            </div>
+            <div class="text-muted" style="font-size: 11px">
+              Dựa trên Đạt/Không đạt của khoá
+            </div>
+          </div>
         </div>
 
-        <div class="col-lg-5">
-            <section class="tp-card p-3">
-                <div class="d-flex align-items-center mb-3 p-2 rounded" style="background: #f8fafc; border: 1px solid #e5e7eb">
-                    <div class="d-flex align-items-center justify-content-center mr-2"
-                        style="width: 28px; height: 28px; border-radius: 999px; background: rgba(22,163,74,.1); color: #16a34a">
-                        <i class="ri-lightbulb-flash-line"></i>
-                    </div>
-                    <div>
-                        <div class="font-weight-bold text-dark" style="font-size: 12px">Tóm tắt kết quả</div>
-                        <div class="text-muted" style="font-size: 11px">Hiển thị nhanh cho admin</div>
-                    </div>
-                </div>
-
-                <div class="border rounded p-2" style="background: #f8fafc; font-size: 12px">
-                    <div class="font-weight-bold text-dark mb-1">Hiện tại</div>
-                    <div class="text-muted" style="line-height: 1.6">
-                        • Rule: <b>{{ ruleLabel }}</b><br />
-                        • Khoá: <b>{{ stats.total }}</b> (bắt buộc <b>{{ stats.required }}</b>)<br />
-                        <template v-if="resultRule === 'MIN_PERCENT'">
-                            • Ngưỡng: <b>{{ minPassPercent || 0 }}%</b>
-                        </template>
-                    </div>
-                </div>
-            </section>
+        <div class="form-row">
+          <div class="col-md-8 mb-2">
+            <label class="tp-label">Điều kiện đạt lộ trình</label>
+            <select
+              :value="resultRule"
+              @change="$emit('update', { result_rule: $event.target.value })"
+              class="form-control form-control-sm"
+              :disabled="isShow"
+            >
+              <option value="REQUIRED_ONLY">Tất cả khoá bắt buộc ĐẠT</option>
+              <option value="ALL_COURSES">
+                Tất cả khoá trong lộ trình ĐẠT
+              </option>
+              <option value="MIN_PERCENT">Đạt tối thiểu X% số khoá</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-2" v-if="resultRule === 'MIN_PERCENT'">
+            <label class="tp-label">Ngưỡng (%)</label>
+            <input
+              type="number"
+              :value="minPassPercent"
+              @input="
+                $emit('update', {
+                  result_min_pass_percent: Number($event.target.value) || null,
+                })
+              "
+              class="form-control form-control-sm"
+              min="1"
+              max="100"
+              :disabled="isShow"
+            />
+          </div>
         </div>
+
+        <div
+          class="border rounded p-2 mt-2"
+          style="background: #f8fafc; font-size: 12px"
+        >
+          <div class="d-flex flex-wrap" style="gap: 10px">
+            <div>
+              <b>Tổng khoá:</b>
+              <span class="font-monospace">{{ stats.total }}</span>
+            </div>
+            <div>•</div>
+            <div>
+              <b>Bắt buộc:</b>
+              <span class="font-monospace">{{ stats.required }}</span>
+            </div>
+            <div>•</div>
+            <div>
+              <b>Không bắt buộc:</b>
+              <span class="font-monospace">{{ stats.optional }}</span>
+            </div>
+          </div>
+          <div class="text-muted mt-1" style="font-size: 11px">
+            "Đạt/Không đạt" của từng khoá do cấu hình khoá quyết định. Lộ trình
+            chỉ gom kết quả.
+          </div>
+        </div>
+      </section>
     </div>
+
+    <div class="col-lg-5">
+      <section class="tp-card p-3">
+        <div
+          class="d-flex align-items-center mb-3 p-2 rounded"
+          style="background: #f8fafc; border: 1px solid #e5e7eb"
+        >
+          <div
+            class="d-flex align-items-center justify-content-center mr-2"
+            style="width: 28px; height: 28px; border-radius: 999px; background: rgba(22,163,74,.1); color: #16a34a"
+          >
+            <i class="ri-lightbulb-flash-line"></i>
+          </div>
+          <div>
+            <div class="font-weight-bold text-dark" style="font-size: 12px">
+              Tóm tắt kết quả
+            </div>
+            <div class="text-muted" style="font-size: 11px">
+              Hiển thị nhanh cho admin
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="border rounded p-2"
+          style="background: #f8fafc; font-size: 12px"
+        >
+          <div class="font-weight-bold text-dark mb-1">Hiện tại</div>
+          <div class="text-muted" style="line-height: 1.6">
+            • Rule: <b>{{ ruleLabel }}</b
+            ><br />
+            • Khoá: <b>{{ stats.total }}</b> (bắt buộc
+            <b>{{ stats.required }}</b
+            >)<br />
+            <template v-if="resultRule === 'MIN_PERCENT'">
+              • Ngưỡng: <b>{{ minPassPercent || 0 }}%</b>
+            </template>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
 </template>
 
 <script>
 export default {
-    props: {
-        resultRule: { type: String, default: 'REQUIRED_ONLY' },
-        minPassPercent: { type: Number, default: null },
-        subjects: { type: Array, default: () => [] },
-        isShow: { type: Boolean, default: false },
+  props: {
+    resultRule: { type: String, default: "REQUIRED_ONLY" },
+    minPassPercent: { type: Number, default: null },
+    subjects: { type: Array, default: () => [] },
+    isShow: { type: Boolean, default: false },
+  },
+  computed: {
+    stats() {
+      const total = this.subjects.length;
+      const required = this.subjects.filter((s) => s.is_required).length;
+      return { total, required, optional: total - required };
     },
-    computed: {
-        stats() {
-            const total = this.subjects.length
-            const required = this.subjects.filter((s) => s.is_required).length
-            return { total, required, optional: total - required }
-        },
-        ruleLabel() {
-            const map = {
-                REQUIRED_ONLY: 'Tất cả khoá bắt buộc ĐẠT',
-                ALL_COURSES: 'Tất cả khoá trong lộ trình ĐẠT',
-                MIN_PERCENT: `Đạt tối thiểu ${this.minPassPercent || 0}%`,
-            }
-            return map[this.resultRule] || this.resultRule
-        },
+    ruleLabel() {
+      const map = {
+        REQUIRED_ONLY: "Tất cả khoá bắt buộc ĐẠT",
+        ALL_COURSES: "Tất cả khoá trong lộ trình ĐẠT",
+        MIN_PERCENT: `Đạt tối thiểu ${this.minPassPercent || 0}%`,
+      };
+      return map[this.resultRule] || this.resultRule;
     },
-}
+  },
+};
 </script>
 ```
 
@@ -1338,6 +1479,7 @@ export default {
 ### Task 15: TabLearners.vue — Cấu hình người học
 
 **Files:**
+
 - Create: `hrm-client/pages/training/learning-path/components/TabLearners.vue`
 
 - [x] **Step 1: Tạo component**
@@ -1345,6 +1487,7 @@ export default {
 Component gồm 2 cột (Bắt buộc / Khuyến khích), mỗi cột có 3 pill toggle (Phòng ban, Chức vụ, Năng lực), khi active hiện multi-select.
 
 Script cần:
+
 - Props: `assignees`, `isShow`
 - Events: `@update-assignees(assignees)`
 - Data: `departments[]`, `positions[]`, `capabilities[]`, `mandatoryTypes[]`, `recommendedTypes[]`
@@ -1361,6 +1504,7 @@ Multi-select: dùng `V2BaseSelect` với `multiple` nếu có, hoặc tự build
 ### Task 16: TabCertificate.vue — Chứng chỉ
 
 **Files:**
+
 - Create: `hrm-client/pages/training/learning-path/components/TabCertificate.vue`
 
 - [x] **Step 1: Cài jsPDF**
@@ -1372,6 +1516,7 @@ cd hrm-client && npm install jspdf@2.5.1 --save
 - [x] **Step 2: Tạo component**
 
 Component gồm:
+
 - Switch bật/tắt certificate
 - Khi bật: layout 2 cột (config trái + canvas preview phải)
 - Config: upload ảnh + 4 field (courseName, fullName, issueDate, signer) mỗi field có text/x/y/size/weight
@@ -1379,6 +1524,7 @@ Component gồm:
 - Nút: "Render lại" + "Download PDF"
 
 Script cần:
+
 - Props: `certificateEnabled`, `certificateFields`, `certificateTemplateUrl`, `courseName`, `isShow`
 - Events: `@update(payload)`, `@update-template-file(file)`
 - Data: `fields` (4 trường với default x/y/size/weight), `templateDataUrl` (base64 ảnh preview)
@@ -1387,12 +1533,14 @@ Script cần:
 - Import: `jsPDF` from `jspdf`
 
 Canvas render logic:
+
 1. Clear canvas
 2. Nếu có template image → drawImage fill canvas
 3. Nếu không → fill background xám + border
 4. Vẽ 4 text tại vị trí x/y với font-size + font-weight
 
 Download PDF:
+
 1. Tạo jsPDF landscape A4
 2. Add canvas as image
 3. Save file
@@ -1403,9 +1551,10 @@ Download PDF:
 
 ## Phase 5: Frontend — Edit + Show Pages
 
-### Task 17: Page _id/edit.vue
+### Task 17: Page \_id/edit.vue
 
 **Files:**
+
 - Create: `hrm-client/pages/training/learning-path/_id/edit.vue`
 
 - [x] **Step 1: Tạo page**
@@ -1414,12 +1563,15 @@ Tái sử dụng `add.vue` pattern nhưng set `isEdit = true` và load data từ
 
 ```vue
 <template>
-    <div class="v2-styles">
-        <div class="container-fluid mt-3" v-if="hasAPermission('Quản lý lộ trình học')">
-            <!-- Copy toàn bộ template từ add.vue -->
-            <!-- Chỉ khác: isEdit = true, mounted gọi fetchDetail() -->
-        </div>
+  <div class="v2-styles">
+    <div
+      class="container-fluid mt-3"
+      v-if="hasAPermission('Quản lý lộ trình học')"
+    >
+      <!-- Copy toàn bộ template từ add.vue -->
+      <!-- Chỉ khác: isEdit = true, mounted gọi fetchDetail() -->
     </div>
+  </div>
 </template>
 
 <script>
@@ -1437,28 +1589,28 @@ Pattern theo subjects:
 
 ```vue
 <template>
-    <div class="v2-styles">
-        <div class="container-fluid mt-3">
-            <!-- Dùng lại add.vue nhưng truyền id -->
-        </div>
+  <div class="v2-styles">
+    <div class="container-fluid mt-3">
+      <!-- Dùng lại add.vue nhưng truyền id -->
     </div>
+  </div>
 </template>
 
 <script>
-import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
+import PageTitleMixin from "@/utils/mixins/PageTitleMixin";
 
 export default {
-    layout: 'default-sidebar',
-    mixins: [PageTitleMixin],
-    head() {
-        return { title: this.pageTitle }
+  layout: "default-sidebar",
+  mixins: [PageTitleMixin],
+  head() {
+    return { title: this.pageTitle };
+  },
+  computed: {
+    pageTitle() {
+      return "Sửa lộ trình học";
     },
-    computed: {
-        pageTitle() {
-            return 'Sửa lộ trình học'
-        },
-    },
-}
+  },
+};
 </script>
 ```
 
@@ -1472,38 +1624,42 @@ Move toàn bộ logic hiện tại của `add.vue` vào `components/LearningPath
 
 ```vue
 <template>
-    <div class="v2-styles">
-        <div class="container-fluid mt-3">
-            <LearningPathForm :learning-path-id="null" @saved="handleSaved" @cancel="handleCancel" />
-        </div>
+  <div class="v2-styles">
+    <div class="container-fluid mt-3">
+      <LearningPathForm
+        :learning-path-id="null"
+        @saved="handleSaved"
+        @cancel="handleCancel"
+      />
     </div>
+  </div>
 </template>
 
 <script>
-import LearningPathForm from './components/LearningPathForm.vue'
-import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
+import LearningPathForm from "./components/LearningPathForm.vue";
+import PageTitleMixin from "@/utils/mixins/PageTitleMixin";
 
 export default {
-    layout: 'default-sidebar',
-    mixins: [PageTitleMixin],
-    components: { LearningPathForm },
-    head() {
-        return { title: this.pageTitle }
+  layout: "default-sidebar",
+  mixins: [PageTitleMixin],
+  components: { LearningPathForm },
+  head() {
+    return { title: this.pageTitle };
+  },
+  computed: {
+    pageTitle() {
+      return "Tạo lộ trình học";
     },
-    computed: {
-        pageTitle() {
-            return 'Tạo lộ trình học'
-        },
+  },
+  methods: {
+    handleSaved() {
+      this.$router.push("/training/learning-path");
     },
-    methods: {
-        handleSaved() {
-            this.$router.push('/training/learning-path')
-        },
-        handleCancel() {
-            this.$router.push('/training/learning-path')
-        },
+    handleCancel() {
+      this.$router.push("/training/learning-path");
     },
-}
+  },
+};
 </script>
 ```
 
@@ -1511,85 +1667,90 @@ export default {
 
 ```vue
 <template>
-    <div class="v2-styles">
-        <div class="container-fluid mt-3">
-            <LearningPathForm :learning-path-id="$route.params.id" @saved="handleSaved" @cancel="handleCancel" />
-        </div>
+  <div class="v2-styles">
+    <div class="container-fluid mt-3">
+      <LearningPathForm
+        :learning-path-id="$route.params.id"
+        @saved="handleSaved"
+        @cancel="handleCancel"
+      />
     </div>
+  </div>
 </template>
 
 <script>
-import LearningPathForm from '../components/LearningPathForm.vue'
-import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
+import LearningPathForm from "../components/LearningPathForm.vue";
+import PageTitleMixin from "@/utils/mixins/PageTitleMixin";
 
 export default {
-    layout: 'default-sidebar',
-    mixins: [PageTitleMixin],
-    components: { LearningPathForm },
-    head() {
-        return { title: this.pageTitle }
+  layout: "default-sidebar",
+  mixins: [PageTitleMixin],
+  components: { LearningPathForm },
+  head() {
+    return { title: this.pageTitle };
+  },
+  computed: {
+    pageTitle() {
+      return "Sửa lộ trình học";
     },
-    computed: {
-        pageTitle() {
-            return 'Sửa lộ trình học'
-        },
+  },
+  methods: {
+    handleSaved() {
+      this.$router.push("/training/learning-path");
     },
-    methods: {
-        handleSaved() {
-            this.$router.push('/training/learning-path')
-        },
-        handleCancel() {
-            this.$router.push('/training/learning-path')
-        },
+    handleCancel() {
+      this.$router.push("/training/learning-path");
     },
-}
+  },
+};
 </script>
 ```
 
 ---
 
-### Task 18: Page _id/index.vue (Show/Chi tiết)
+### Task 18: Page \_id/index.vue (Show/Chi tiết)
 
 **Files:**
+
 - Create: `hrm-client/pages/training/learning-path/_id/index.vue`
 
 - [x] **Step 1: Tạo page xem chi tiết**
 
 ```vue
 <template>
-    <div class="v2-styles">
-        <div class="container-fluid mt-3">
-            <LearningPathForm
-                :learning-path-id="$route.params.id"
-                :is-show-mode="true"
-                @cancel="handleBack"
-            />
-        </div>
+  <div class="v2-styles">
+    <div class="container-fluid mt-3">
+      <LearningPathForm
+        :learning-path-id="$route.params.id"
+        :is-show-mode="true"
+        @cancel="handleBack"
+      />
     </div>
+  </div>
 </template>
 
 <script>
-import LearningPathForm from '../components/LearningPathForm.vue'
-import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
+import LearningPathForm from "../components/LearningPathForm.vue";
+import PageTitleMixin from "@/utils/mixins/PageTitleMixin";
 
 export default {
-    layout: 'default-sidebar',
-    mixins: [PageTitleMixin],
-    components: { LearningPathForm },
-    head() {
-        return { title: this.pageTitle }
+  layout: "default-sidebar",
+  mixins: [PageTitleMixin],
+  components: { LearningPathForm },
+  head() {
+    return { title: this.pageTitle };
+  },
+  computed: {
+    pageTitle() {
+      return "Chi tiết lộ trình học";
     },
-    computed: {
-        pageTitle() {
-            return 'Chi tiết lộ trình học'
-        },
+  },
+  methods: {
+    handleBack() {
+      this.$router.push("/training/learning-path");
     },
-    methods: {
-        handleBack() {
-            this.$router.push('/training/learning-path')
-        },
-    },
-}
+  },
+};
 </script>
 ```
 
@@ -1638,6 +1799,7 @@ Expected: 200, trả về `{ id: 1 }`.
 Truy cập: `http://localhost:3000/training/learning-path/add`
 
 Verify:
+
 - 4 tabs hiển thị đúng
 - Form fields hoạt động
 - Modal thêm khoá học load subjects
@@ -1721,35 +1883,39 @@ Verify:
 ## File Map (Tổng kết)
 
 ### Backend — Tạo mới:
-| # | File | Mô tả |
-|---|------|-------|
-| 1 | `Modules/Training/Database/Migrations/2026_04_29_100000_create_learning_path_tables.php` | Migration 3 bảng |
-| 2 | `Modules/Training/Entities/LearningPath.php` | Model chính |
-| 3 | `Modules/Training/Entities/LearningPathSubject.php` | Model pivot subjects |
-| 4 | `Modules/Training/Entities/LearningPathAssignee.php` | Model pivot assignees |
-| 5 | `Modules/Training/Http/Requests/LearningPath/LearningPathRequest.php` | Form validation |
-| 6 | `Modules/Training/Services/LearningPath/LearningPathService.php` | Business logic |
-| 7 | `Modules/Training/Transformers/LearningPathResource/LearningPathListResource.php` | List transformer |
-| 8 | `Modules/Training/Transformers/LearningPathResource/LearningPathDetailResource.php` | Detail transformer |
-| 9 | `Modules/Training/Http/Controllers/V1/LearningPathController.php` | Controller |
+
+| #   | File                                                                                     | Mô tả                 |
+| --- | ---------------------------------------------------------------------------------------- | --------------------- |
+| 1   | `Modules/Training/Database/Migrations/2026_04_29_100000_create_learning_path_tables.php` | Migration 3 bảng      |
+| 2   | `Modules/Training/Entities/LearningPath.php`                                             | Model chính           |
+| 3   | `Modules/Training/Entities/LearningPathSubject.php`                                      | Model pivot subjects  |
+| 4   | `Modules/Training/Entities/LearningPathAssignee.php`                                     | Model pivot assignees |
+| 5   | `Modules/Training/Http/Requests/LearningPath/LearningPathRequest.php`                    | Form validation       |
+| 6   | `Modules/Training/Services/LearningPath/LearningPathService.php`                         | Business logic        |
+| 7   | `Modules/Training/Transformers/LearningPathResource/LearningPathListResource.php`        | List transformer      |
+| 8   | `Modules/Training/Transformers/LearningPathResource/LearningPathDetailResource.php`      | Detail transformer    |
+| 9   | `Modules/Training/Http/Controllers/V1/LearningPathController.php`                        | Controller            |
 
 ### Backend — Sửa:
-| # | File | Mô tả |
-|---|------|-------|
-| 10 | `Modules/Training/Routes/api.php` | Thêm routes |
+
+| #   | File                              | Mô tả       |
+| --- | --------------------------------- | ----------- |
+| 10  | `Modules/Training/Routes/api.php` | Thêm routes |
 
 ### Frontend — Tạo mới:
-| # | File | Mô tả |
-|---|------|-------|
-| 11 | `pages/training/learning-path/components/LearningPathForm.vue` | Form chính (refactor từ add.vue) |
-| 12 | `pages/training/learning-path/components/TabInfo.vue` | Tab 1: Thông tin + Builder |
-| 13 | `pages/training/learning-path/components/TabResult.vue` | Tab 2: Kết quả |
-| 14 | `pages/training/learning-path/components/TabLearners.vue` | Tab 3: Người học |
-| 15 | `pages/training/learning-path/components/TabCertificate.vue` | Tab 4: Chứng chỉ |
+
+| #   | File                                                           | Mô tả                            |
+| --- | -------------------------------------------------------------- | -------------------------------- |
+| 11  | `pages/training/learning-path/components/LearningPathForm.vue` | Form chính (refactor từ add.vue) |
+| 12  | `pages/training/learning-path/components/TabInfo.vue`          | Tab 1: Thông tin + Builder       |
+| 13  | `pages/training/learning-path/components/TabResult.vue`        | Tab 2: Kết quả                   |
+| 14  | `pages/training/learning-path/components/TabLearners.vue`      | Tab 3: Người học                 |
+| 15  | `pages/training/learning-path/components/TabCertificate.vue`   | Tab 4: Chứng chỉ                 |
 
 ### Frontend — Sửa:
-| # | File | Mô tả |
-|---|------|-------|
-| 16 | `pages/training/learning-path/add.vue` | Page wrapper tạo mới |
-| 17 | `pages/training/learning-path/_id/edit.vue` | Page wrapper sửa |
-| 18 | `pages/training/learning-path/_id/index.vue` | Page wrapper xem |
+
+| #   | File                                         | Mô tả                |
+| --- | -------------------------------------------- | -------------------- |
+| 16  | `pages/training/learning-path/add.vue`       | Page wrapper tạo mới |
+| 17  | `pages/training/learning-path/_id/edit.vue`  | Page wrapper sửa     |
+| 18  | `pages/training/learning-path/_id/index.vue` | Page wrapper xem     |
