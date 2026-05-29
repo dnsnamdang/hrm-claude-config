@@ -2,18 +2,25 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
+> Cập nhật lần cuối: 2026-05-29
 
 ## Đang làm
 
-- **Báo cáo chi tiết hợp đồng** — Báo cáo tổng hợp sản phẩm từ nhiều hợp đồng (27 cột, 8 filters, phân quyền 3 cấp, export Excel) (@khoipv) — 2026-05-06
-  - Spec: `docs/superpowers/specs/2026-05-06-detail-report-contract-design.md`
-  - Plan: `.plans/detail-report-contract/plan.md`
+_(chưa có)_
 
 ## Tạm dừng
 
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Sửa BCCT báo giá — mỗi báo giá 1 dòng** — Đổi plan/detail-report từ mỗi hàng hóa 1 dòng sang mỗi báo giá 1 dòng + popup chi tiết sản phẩm (@khoipv) — 2026-05-29
+  - Spec: `docs/superpowers/specs/2026-05-28-detail-report-quotation-summary-design.md`
+  - Plan: `.plans/detail-report-quotation-summary/plan.md`
+
+- **Báo cáo chi tiết hợp đồng** — Báo cáo tổng hợp sản phẩm từ nhiều hợp đồng (27 cột, 8 filters, phân quyền 3 cấp, export Excel) (@khoipv) — 2026-05-29
+  - Spec: `docs/superpowers/specs/2026-05-06-detail-report-contract-design.md`
+  - Plan: `.plans/detail-report-contract/plan.md`
+
 - **Tab Dữ liệu liên quan trên báo giá** — Thay tab input thủ công bằng tab read-only tự động lấy chứng từ liên quan (Dự toán/Thầu/Hợp đồng) qua endpoint BE mới `GET /quotations/{id}/related-data` + component `QuotationRelatedDataComponent.vue` (@khoipv) — 2026-05-25
   - Spec: `docs/superpowers/specs/2026-05-25-quotation-related-data-design.md`
   - Plan: `.plans/quotation-related-data/plan.md`
