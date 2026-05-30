@@ -12,6 +12,15 @@
   Trạng thái: Brainstorming DONE, spec viết xong. Chờ user duyệt spec → sang writing-plans.
   Spec: docs/superpowers/specs/2026-05-27-bulk-permission-design.md
   Scope: Popup "Phân quyền hàng loạt" trên /timesheet/setting/roles — cấp/thu hồi permission hàng loạt cho NV theo Khối/PB/BP/CV/CD, scope current_company, dùng V2Base. KHÔNG đụng Role. Defer lịch sử (#10455).
+- learning-session-api → @junfoke → .plans/learning-session-api/plan.md
+  Trạng thái: Code DONE (13/13 task). Chờ chạy migration + test API thật trên browser.
+  Spec: docs/superpowers/specs/2026-05-28-learning-session-api-design.md
+  Scope: BE (migration enrollment_lesson_progress + entity + service + controller + routes) + FE (sửa store + viewers + bỏ nút Hoàn thành). Heartbeat 30s + auto-mark done + comment bài học.
+
+- elearning-lesson-viewer → @junfoke → .plans/elearning-lesson-viewer/plan.md
+  Trạng thái: Code DONE (14/14 task). Browser test passed. Chờ kết nối API thật (→ learning-session-api).
+  Spec: docs/superpowers/specs/2026-05-28-elearning-lesson-viewer-design.md
+  Scope: FE elearning — màn học đầy đủ (viewer YouTube+PDF+HTML, sidebar outline, tracking giả lập, prerequisite, focus mode, tabs, mock data). SCORM mở rộng sau.
 
 - external-user-list → @junfoke → .plans/external-user-list/plan.md
   Trạng thái: Brainstorming DONE, spec viết xong. Chờ user review spec → lên plan → implement.
