@@ -86,7 +86,9 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 ```
 .plans/[feature]/
 ├── design.md          ← design duy nhất
-└── plan.md            ← plan duy nhất
+├── plan.md            ← plan duy nhất
+├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+└── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
 ```
 
 **Feature lớn (3+ phase):**
@@ -96,6 +98,8 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 ├── design.md          ← tóm tắt tổng thể feature (scope, hiện trạng, quyết định chung)
 ├── design-phase{N}.md ← design chi tiết cho từng phase lớn
 ├── plan.md            ← TẤT CẢ tasks (append phase mới vào cuối, trước checkpoint)
+├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+├── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
 └── (các file phụ: testcase, script...)
 ```
 
@@ -104,6 +108,8 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 - `design.md`: tóm tắt chung, KHÔNG chứa spec chi tiết từng phase
 - `design-phase{N}.md`: spec đầy đủ (DB, BE, FE, edge cases) — tạo khi phase có nhiều thay đổi
 - `plan.md`: 1 file duy nhất chứa tất cả phase, append liên tục
+- SRS: 2 file output (`srs.html` + `srs.docx`) — lưu cùng folder feature
+- Testcase: chỉ Excel (`testcase.xlsx`) — lưu cùng folder feature
 - KHÔNG tạo `plan-phase{N}.md` riêng (đã có convention cũ nhưng không tiếp tục)
 
 ---

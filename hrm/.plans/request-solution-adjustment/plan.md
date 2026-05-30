@@ -1231,6 +1231,59 @@ Expected: Tab YCĐC hiện danh sách nhưng KHÔNG hiện nút "Tạo yêu cầ
 
 ---
 
+## Phase 7: Cascade dừng YCXD giá + Báo giá khi tiếp nhận YCĐC
+
+### Task 12: Thêm STATUS_DUNG = 6 vào PricingRequest + Quotation
+
+**Files:**
+- Modify: `hrm-api/Modules/Assign/Entities/PricingRequest.php`
+- Modify: `hrm-api/Modules/Assign/Entities/Quotation.php`
+
+- [x] **Step 1: Thêm constant + status list entry cho PricingRequest**
+- [x] **Step 2: Thêm constant + status list entry cho Quotation**
+
+### Task 13: Cascade logic trong accept()
+
+**Files:**
+- Modify: `hrm-api/Modules/Assign/Services/SolutionAdjustmentRequestService.php`
+
+- [x] **Step 1: Thêm cascadeStopPricingRequests() — gọi sau khi đổi YCĐC sang Tiếp nhận**
+
+Logic:
+- Query PricingRequest theo project_id, status IN (2=Chờ XD giá, 3=Đang XD giá)
+- Chờ XD giá (2) → đổi sang Dừng (6)
+- Đang XD giá (3) → đổi sang Dừng (6) + tìm Quotation chưa duyệt (status 1/2/3) → đổi sang Dừng (6) + gửi notification cho người tạo báo giá
+
+- [x] **Step 2: Thêm notifyQuotationCreatorStopped() — gửi notification**
+
+### Task 14: Chặn action khi status = Dừng
+
+**Files:**
+- Modify: `hrm-api/Modules/Assign/Services/PricingRequestService.php`
+
+- [x] **Step 1: Thêm check STATUS_DUNG vào ensureDraftAndOwner()**
+
+Note: QuotationService::ensureEditableByCreator() đã chặn đúng (chỉ cho sửa khi STATUS_DANG_TAO), không cần sửa thêm.
+
+### Task 15: Thêm option filter "Dừng" ở FE
+
+**Files:**
+- Modify: `hrm-client/pages/assign/pricing-requests/index.vue`
+- Modify: `hrm-client/pages/assign/quotations/index.vue`
+
+- [x] **Step 1: Thêm { value: 6, label: 'Dừng' } vào statusOptions cả 2 file**
+
+### Task 16: Test thủ công Phase 7
+
+- [ ] **Step 1:** Tạo YCXD giá ở trạng thái "Chờ xây dựng giá" → Tiếp nhận YCĐC → Verify YCXD giá chuyển sang "Dừng"
+- [ ] **Step 2:** Tạo YCXD giá "Đang xây dựng giá" + Báo giá "Đang tạo" → Tiếp nhận YCĐC → Verify cả 2 chuyển sang "Dừng" + notification
+- [ ] **Step 3:** Tạo YCXD giá "Đang xây dựng giá" + Báo giá "Đã duyệt" → Tiếp nhận YCĐC → Verify YCXD giá = "Dừng", Báo giá giữ "Đã duyệt"
+- [ ] **Step 4:** Verify YCXD giá ở trạng thái "Dừng" không sửa/xoá được
+- [ ] **Step 5:** Verify Báo giá ở trạng thái "Dừng" không sửa/gửi duyệt được
+- [ ] **Step 6:** Verify filter "Dừng" hoạt động ở cả 2 danh sách
+
+---
+
 ## Checkpoint
 
 ### Checkpoint — 2026-05-06 (2)
@@ -1257,4 +1310,28 @@ Vừa hoàn thành:
 - Đổi sort danh sách từ id asc → id desc (mới nhất nằm trên)
 Đang làm dở: Chưa test
 Bước tiếp theo: Chạy migration (`php artisan migrate`) + test thủ công theo Phase 6 (47 test cases)
+Blocked:
+
+## Phase 8: Bug fixes UI (2026-05-14)
+
+[x] Task 17: Validate required textarea "Nội dung" khi gửi YCĐC — thêm class is-invalid viền đỏ
+[x] Task 18: Popup confirm tiếp nhận — bổ sung title "Phê duyệt yêu cầu điều chỉnh"
+[x] Task 19: Popup chi tiết — hiển thị "Người tiếp nhận" (status=2) hoặc "Người từ chối" (status=3) + tên + ngày. Fix BE processedByEmployee->info->fullname + eager load
+
+---
+
+### Checkpoint — 2026-05-14
+Vừa hoàn thành: Phase 8 — 3 bug fixes UI (validate content, title confirm, thông tin người xử lý)
+Đang làm dở: không
+Bước tiếp theo: Test thủ công
+Blocked: không
+
+### Checkpoint — 2026-05-12
+Vừa hoàn thành: Phase 7 code DONE (Task 12-15). Cascade dừng YCXD giá + Báo giá khi tiếp nhận YCĐC GP.
+- PricingRequest + Quotation: thêm STATUS_DUNG = 6 (màu đỏ #EF4444)
+- SolutionAdjustmentRequestService::accept() → cascade: query PricingRequest theo project_id, dừng YCXD giá + báo giá chưa duyệt + notification
+- PricingRequestService::ensureDraftAndOwner() → chặn sửa/xoá khi status = Dừng
+- FE: thêm filter "Dừng" vào danh sách YCXD giá + Báo giá
+Đang làm dở: Chưa test
+Bước tiếp theo: Chạy migration + test Phase 6 (47 TC) + Phase 7 (6 TC)
 Blocked:

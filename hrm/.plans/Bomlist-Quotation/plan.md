@@ -571,6 +571,218 @@
 
 **Tổng: 66 tasks (32 plan + 34 bugfix/polish)**
 
+### Phase 29: Chiết khấu báo giá
+
+> Spec chi tiết: `design-phase29-discount.md`
+
+#### 29.1 — Danh mục loại chiết khấu (CRUD)
+
+- [x] Task 1: Migration `create_discount_types_table`
+- [x] Task 2: Model `DiscountType` + Resource (DiscountTypeResource + DetailDiscountTypeResource)
+- [x] Task 3: Controller CRUD + lock/unlock + routes (8 endpoints)
+- [x] Task 4: FormRequest validation (code unique, name required)
+- [x] Task 5: FE — Trang danh sách V2Base `/assign/discount-types`
+- [x] Task 6: FE — Modal tạo/sửa loại CK
+- [x] Task 7: FE — Thêm menu "Danh mục loại chiết khấu" (sidebar assign)
+- [x] Task 7b: Fix — Thêm bộ lọc (người tạo, ngày tạo từ/đến) + Mã tự sinh tăng dần (CK-YYYY-NNNNN)
+
+#### 29.2 — Database + Model cho CK báo giá
+
+- [x] Task 8: Migration `create_quotation_discounts_table`
+- [x] Task 9: Migration alter `quotations` (discount_method, total_discount_amount)
+- [x] Task 10: Migration alter `quotation_product_prices` (4 cột CK)
+- [x] Task 11: Migration alter `quotation_service_items` (4 cột CK)
+- [x] Task 12: Model `QuotationDiscount` + relationships
+- [x] Task 13: Update Model `Quotation` (relationship quotationDiscounts, constant DISCOUNT_METHOD_*)
+- [x] Task 14: Update Model `QuotationProductPrice` (casts, accessors CK)
+- [x] Task 15: Update Model `QuotationServiceItem` (casts, accessors CK)
+
+#### 29.3 — BE: Logic tính toán + API
+
+- [x] Task 16: Update `computeTotals()` — tính toán có CK (cả 2 method)
+- [x] Task 17: Update `calculateTotals()` — trả thêm total_discount, total_sale_after_discount
+- [x] Task 18: Update `upsertPrices()` — lưu discount fields per line
+- [x] Task 19: Thêm method `syncQuotationDiscounts()` — CRUD khoản CK tổng
+- [x] Task 20: Thêm method `allocateDiscount()` — Largest Remainder phân bổ tự động
+- [x] Task 21: Thêm endpoint `POST /quotations/{id}/allocate-discount`
+- [x] Task 22: Update `show()` — eager load quotationDiscounts, discount fields
+- [x] Task 23: Update `update()` — nhận + xử lý discount data
+- [x] Task 24: Update Resource — trả discount fields
+
+#### 29.4 — FE: CK theo mặt hàng (method=1)
+
+- [x] Task 25: Toolbar — radio chọn phương thức CK (cùng hàng VAT đồng loạt)
+- [x] Task 26: Confirm khi chuyển method đã có dữ liệu CK
+- [x] Task 27: Thêm 3 cột bảng: CK(%), CK(₫), Đơn giá sau CK (ẩn/hiện theo method)
+- [x] Task 28: Logic nhập CK%↔CK₫ (nhập 1 tính cái kia, dựa trên input_mode)
+- [x] Task 29: Cập nhật computed: lineSaleTotal, lineVatAmount, lineAfterVat (tính trên giá sau CK)
+- [x] Task 30: Dịch vụ bổ sung — thêm CK tương tự sản phẩm cha
+- [x] Task 31: Validate: CK ≥ 0, CK₫ ≤ Giá bán, Đơn giá sau CK ≥ 0
+
+#### 29.5 — FE: CK theo tổng (method=2)
+
+- [x] Task 32: Section CK tổng dưới bảng sản phẩm (bảng khoản CK + CRUD)
+- [x] Task 33: Select loại CK từ danh mục (chỉ status=1) + "Thêm nhanh loại CK"
+- [x] Task 34: Toggle % / ₫ cho mỗi khoản CK + tính thành tiền
+- [x] Task 35: Thêm 1 cột "CK phân bổ" trên bảng sản phẩm (readonly/editable)
+- [x] Task 36: Nút "Phân bổ tự động" — gọi API allocate-discount
+- [x] Task 37: Nút "Phân bổ lại" — reset + gọi lại API
+- [x] Task 38: Cho phép sửa tay cột "CK phân bổ" + thanh trạng thái realtime
+- [x] Task 39: Validate trước submit: Σ(phân bổ) = Tổng CK
+- [x] Task 40: Cảnh báo khi sửa giá bán mà đã phân bổ → bắt buộc phân bổ lại
+
+#### 29.6 — Footer tổng + Cấp duyệt
+
+- [x] Task 41: Cập nhật footer: Tổng CK + Tổng bán sau CK (ẩn khi không CK)
+- [x] Task 42: Cập nhật Tỷ suất LN tính trên giá sau CK
+- [x] Task 43: Cập nhật clientLevelPreview tính trên tổng sau CK
+- [x] Task 44: Cập nhật popup gửi duyệt — hiển thị tổng sau CK
+
+#### 29.7 — Export / Import
+
+- [x] Task 45: Export Excel — thêm cột CK theo method (3 cột method=1, 1 cột method=2)
+- [x] Task 46: Export Excel — section tóm tắt khoản CK tổng (method=2)
+- [x] Task 47: Import Excel — template thêm CK%, CK₫
+- [x] Task 48: Import Excel — validate + parse CK (method=1)
+
+#### 29.8 — Lịch sử + Xem báo giá
+
+- [x] Task 49: Ghi log chi tiết khi thay đổi CK (quotation_histories)
+- [x] Task 50: Màn xem báo giá (index.vue) — hiển thị CK readonly theo method
+- [x] Task 51: Lịch sử báo giá — render action CK (labels, detail per-line)
+
+#### 29.9 — Test thủ công
+
+- [ ] Task 52: Test CRUD danh mục loại CK
+- [ ] Task 53: Test CK theo mặt hàng — nhập %, nhập ₫, sửa giá bán
+- [ ] Task 54: Test CK theo tổng — tạo khoản CK, phân bổ tự động, sửa tay
+- [ ] Task 55: Test chuyển method CK — confirm xóa dữ liệu cũ
+- [ ] Task 56: Test footer tổng + cấp duyệt sau CK
+- [ ] Task 57: Test export/import với CK
+- [ ] Task 58: Test lịch sử ghi log CK
+- [ ] Task 59: Test báo giá cũ (không CK) vẫn hoạt động bình thường
+
+#### 29.10 — Bảng tổng hợp giá trị + Validate phân bổ + Fix bugs + In báo giá (2026-05-23)
+
+- [x] Task 60: Bảng tổng hợp giá trị 8 dòng trên form edit (Tổng giá nhập → TSLN sau CK)
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - 8 rows: Tổng giá nhập, Tổng DT trước CK, Tổng CK, Tổng DT sau CK, Tổng VAT, Tổng TT sau VAT, TSLN trước CK, TSLN sau CK
+  - Label CK thay đổi theo discountMethod (1: "theo mặt hàng", 2: "theo tổng")
+  - TSLN chỉ hiện khi canViewImportPrice
+- [x] Task 61: Layout CK tổng + Bảng tổng hợp trên 1 row (50/50)
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - Flex row d-flex, mỗi section flex: 0 0 50%
+  - Bỏ max-width + margin-left auto khỏi .summary-table
+- [x] Task 62: Validate bắt buộc phân bổ hết trước khi lưu (CK tổng)
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - save() kiểm tra allocationMatch khi discountMethod=2 + totalQuotationDiscount>0
+  - Thêm option skipAllocationCheck để handleAllocateDiscount + openImportModal bypass
+- [x] Task 63: Fix bug 2 lỗi đồng thời khi chuyển CK method 1→2 rồi phân bổ
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - handleAllocateDiscount gọi save(true, {skipAllocationCheck: true}) + check kết quả trước khi tiếp
+- [x] Task 64: Hiện số tiền còn lại chưa phân bổ trên header cột CK phân bổ
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - "Còn: xxx" text-success khi match, text-danger khi chưa match
+- [x] Task 65: Export Excel — bảng tổng hợp giá trị 8 dòng ở cuối
+  - File: `hrm-api/Modules/Assign/Http/Controllers/Api/V1/QuotationController.php` (tính summaryData)
+  - File: `hrm-api/app/ExcelExport/BomListExport.php` (withSummaryData setter)
+  - File: `hrm-api/resources/views/exports/bom_list.blade.php` (render 8 rows summary)
+  - TSLN xanh/đỏ theo giá trị dương/âm, dòng Tổng TT sau VAT highlight blue
+- [x] Task 66: Thêm field unit_price_after_discount vào DB + auto-compute
+  - Migration: `2026_05_23_100000_add_unit_price_after_discount_to_quotation_tables.php`
+  - File: `hrm-api/Modules/Assign/Entities/QuotationProductPrice.php` (cast)
+  - File: `hrm-api/Modules/Assign/Entities/QuotationServiceItem.php` (cast)
+  - File: `hrm-api/Modules/Assign/Services/QuotationService.php` (recomputeUnitPriceAfterDiscount)
+  - Tự động tính trong recomputeTotals() — method 1: giá bán - CK₫, method 2: (giá×SL - phân bổ)/SL
+- [x] Task 67: Cập nhật màn xem báo giá (index.vue) — CK columns + bảng tổng hợp
+  - File: `hrm-client/pages/assign/quotations/_id/index.vue`
+  - discountMethod dùng Number() conversion
+  - "Thành tiền bán" → lineSaleAfterDiscount / svcSaleAfterDiscount
+  - Footer TỔNG → totalSaleAfterDiscount
+  - Bảng tổng hợp 8 dòng + layout 50/50 với CK tổng section
+- [x] Task 68: Cập nhật In báo giá — config modal + preview + list page
+  - File: `hrm-client/components/assign/quotation/QuotationPrintConfigModal.vue` (dynamic columns theo discountMethod)
+  - File: `hrm-client/components/assign/quotation/QuotationPrintPreview.vue` (CK columns + summary table)
+  - File: `hrm-client/pages/assign/quotations/index.vue` (truyền :discountMethod cho config modal)
+  - File: `hrm-client/pages/assign/quotations/_id/index.vue` (truyền :discountMethod cho config modal)
+
+### Phase 30: Báo giá tự xây dựng (Standalone Quotation)
+
+> Spec chi tiết: `design-phase30-standalone-quotation.md`
+
+#### 30.1 — Database + Model
+
+- [ ] Task 1: Migration alter `quotations` — thêm `type` (default 1), nullable hoá `bom_list_id`, `pricing_request_id`, `solution_id`, `solution_version_id`. Drop unique constraint `pricing_request_id`. Backfill `type=1`.
+- [ ] Task 2: Migration alter `quotation_product_prices` — nullable hoá `bom_list_product_id`, drop unique constraint, thêm 13 cột metadata (erp_product_id, code, name, product_attributes, model_id, brand_id, origin_id, unit_id, qty, parent_id, group_name, group_sort_order, product_type, sort_order)
+- [ ] Task 3: Update Model `Quotation` — constants TYPE_BOM_BASED/TYPE_STANDALONE, scopes, nullable bomList relationship
+- [ ] Task 4: Update Model `QuotationProductPrice` — relationships (tpModel, tpBrand, tpOrigin, tpUnit, erpProduct, parent, children), casts, accessors
+
+#### 30.2 — BE: API tạo standalone
+
+- [ ] Task 5: FormRequest `StoreStandaloneQuotationRequest` — validate project_id required, solution_id nullable, currency_id required
+- [ ] Task 6: QuotationService::createStandalone() — snapshot customer từ dự án TKT, auto-gen code, tạo quotation type=2
+- [ ] Task 7: Controller endpoint `POST /quotations/standalone` + route
+
+#### 30.3 — BE: CRUD sản phẩm trên quotation
+
+- [ ] Task 8: Endpoint `POST /quotations/{id}/products` — thêm SP đơn lẻ hoặc batch. Mode 1: chọn ERP (copy metadata). Mode 2: thêm nhanh (nhận trực tiếp). Guard: type=2 + status=1
+- [ ] Task 9: Endpoint `PUT /quotations/{id}/products/{productId}` — sửa thông tin + giá SP
+- [ ] Task 10: Endpoint `DELETE /quotations/{id}/products/{productId}` — xoá SP, cascade xoá children, recompute totals
+- [ ] Task 11: Auto-create model/brand/origin/unit trên ERP DB nếu chưa có (reuse logic BOM import)
+
+#### 30.4 — BE: Cập nhật logic tính toán (6 method)
+
+- [ ] Task 12: `computeTotals()` — nhánh standalone: đọc hierarchy từ `quotation_product_prices.parent_id`, qty từ cùng bảng
+- [ ] Task 13: `upsertPrices()` — standalone: match by `id` thay vì `bom_list_product_id`
+- [ ] Task 14: `applyBulkVat()` — standalone: lấy cha/orphan từ self-ref `parent_id`
+- [ ] Task 15: `calculateTotals()` — standalone: skip BOM dependency
+- [ ] Task 16: `recomputeUnitPriceAfterDiscount()` — standalone: parent check từ self-ref
+- [ ] Task 17: `allocateDiscount()` — verify hoạt động với standalone (đã dùng productPrices trực tiếp)
+
+#### 30.5 — BE: Resource + Export/Import
+
+- [ ] Task 18: `DetailQuotationResource` — trả metadata khi standalone (code, name, model, brand, origin, unit, qty, parent_id, group_name, product_type, sort_order)
+- [ ] Task 19: Export Excel — standalone lấy product info từ `quotation_product_prices` trực tiếp
+- [ ] Task 20: Import Excel — standalone import cả SP + giá (parse STT cha-con, nhóm hàng, tạo rows)
+
+#### 30.6 — BE: Lịch sử
+
+- [ ] Task 21: Log 3 action mới trong `quotation_histories`: `add_product`, `remove_product`, `update_product` (kèm metadata SP)
+
+#### 30.7 — FE: Tạo báo giá standalone
+
+- [ ] Task 22: Button "Tạo báo giá" trên toolbar trang danh sách `/assign/quotations/index.vue`
+- [ ] Task 23: Modal tạo — 4 field: Dự án TKT (bắt buộc, cascading), Giải pháp (tuỳ chọn), Loại tiền tệ (bắt buộc, default VND), Mô tả
+- [ ] Task 24: Submit modal → gọi `POST /quotations/standalone` → redirect `/quotations/{id}/edit`
+
+#### 30.8 — FE: Edit page — mode standalone
+
+- [ ] Task 25: Header info — ẩn trường BOM + YCBG khi `type=2`, giữ các field còn lại
+- [ ] Task 26: Toolbar — thêm buttons "Chọn hàng hoá" + "Thêm nhanh" + "Thêm nhóm" (chỉ hiện khi standalone + status=1)
+- [ ] Task 27: Bảng SP editable — inline sửa tên, mã, SL, ĐVT, TSKT. Nút xoá per row. Reuse rendering hiện có
+- [ ] Task 28: Modal chọn hàng hoá từ ERP — adapt từ BOM pattern, gọi API quotation
+- [ ] Task 29: Modal thêm nhanh SP — adapt từ BOM pattern, gọi API quotation
+- [ ] Task 30: Logic nhóm hàng — thêm/xoá/đổi tên nhóm, group row rendering
+- [ ] Task 31: Logic cha-con — "Thêm con" per row, expand/collapse, cascade xoá
+- [ ] Task 32: Import Excel standalone — import cả SP + giá, preview + validate
+
+#### 30.9 — FE: Danh sách + View + Print
+
+- [ ] Task 33: Cột + filter "Loại BG" trên trang danh sách (2 option: Kế thừa BOM / Tự xây dựng)
+- [ ] Task 34: Trang view `_id/index.vue` — ẩn BOM/YCBG khi standalone, hiển thị SP metadata
+- [ ] Task 35: In báo giá — ẩn mục BOM trên bản in khi standalone
+
+#### 30.10 — Test thủ công
+
+- [ ] Task 36: Test tạo báo giá standalone (modal, redirect, data đúng)
+- [ ] Task 37: Test CRUD sản phẩm — thêm nhanh, chọn ERP, sửa, xoá, cha-con, nhóm
+- [ ] Task 38: Test tính toán — tổng giá, VAT, CK theo mặt hàng, CK theo tổng, phân bổ
+- [ ] Task 39: Test export/import Excel standalone
+- [ ] Task 40: Test workflow duyệt (submit → TP → BGĐ) cho standalone
+- [ ] Task 41: Test báo giá cũ (BOM-based) vẫn hoạt động bình thường
+- [ ] Task 42: Test lịch sử ghi log CRUD product
+- [ ] Task 43: Test in báo giá standalone
+
 ## Checkpoint
 - 2026-03-28: Phase 1 done
 - 2026-03-29: Phase 1.5 + 2 done
@@ -2004,6 +2216,441 @@ Blocked: Không
   - Select: -3 (hàng nghìn), -2 (hàng trăm), -1 (hàng chục), 0 (số nguyên), 1 (1 thập phân), 2 (2 thập phân)
   - Logic roundVal đã hỗ trợ precision âm sẵn (Math.pow(10, p))
 
+### Phase 23: Đổi nguồn dữ liệu Danh sách hàng hoá dự án
+> Design: `.plans/Bomlist-Quotation/design-phase23.md`
+> Mục tiêu: Chuyển trang `/assign/product-project` từ `product_projects` sang `bom_list_products` (BOM Tổng hợp + Đã duyệt). Bỏ bảng cũ. Thêm trạng thái đồng bộ ERP. Trang read-only.
+
+#### BE — Database + Entity
+
+- [x] Task 1: Migration — thêm cột `erp_sync_status` + drop bảng cũ
+  - Tạo file: `hrm-api/Modules/Assign/Database/Migrations/2026_05_12_000001_phase23_product_project_to_bom.php`
+  - `up()`:
+    1. `Schema::table('bom_list_products', fn => $table->tinyInteger('erp_sync_status')->default(0)->after('sort_order'))`
+    2. `Schema::dropIfExists('product_project_attachments')`
+    3. `Schema::dropIfExists('product_projects')`
+  - `down()`:
+    1. Tạo lại `product_projects` + `product_project_attachments` (copy schema từ entity hiện tại)
+    2. Bỏ cột `erp_sync_status` khỏi `bom_list_products`
+
+- [x] Task 2: Thêm relationship `bomList()` vào BomListProduct entity
+  - File: `hrm-api/Modules/Assign/Entities/BomListProduct.php`
+  - Thêm `use Modules\Assign\Entities\BomList;` ở đầu file
+  - Thêm method:
+    ```php
+    public function bomList()
+    {
+        return $this->belongsTo(BomList::class, 'bom_list_id');
+    }
+    ```
+  - Thêm accessor `getErpSyncStatusNameAttribute()`:
+    ```php
+    public function getErpSyncStatusNameAttribute()
+    {
+        return $this->erp_sync_status == 1 ? 'Đã đồng bộ' : 'Chưa đồng bộ';
+    }
+    ```
+  - Thêm `'erp_sync_status_name'` vào `$appends`
+
+- [x] Task 3: Thêm relationship `createdByEmployee()` vào BomListProduct
+  - File: `hrm-api/Modules/Assign/Entities/BomListProduct.php`
+  - Thêm `use Modules\Human\Entities\Employee;`
+  - Thêm method:
+    ```php
+    public function createdByEmployee()
+    {
+        return $this->belongsTo(Employee::class, 'created_by');
+    }
+    ```
+
+#### BE — Controller + Routes
+
+- [x] Task 4: Viết lại method `index()` trong ProductProjectController
+  - File: `hrm-api/Modules/Assign/Http/Controllers/Api/V1/ProductProjectController.php`
+  - Bỏ dependency injection `ProductProjectService` (constructor)
+  - Bỏ import `ProductProjectService`, `ProductProject`, `ProductProjectRequest`, `ProductProjectListResource`, `DetailProductProjectResource`
+  - Thêm import: `Modules\Assign\Entities\BomListProduct`, `Modules\Assign\Entities\BomList`
+  - Viết lại `index()`:
+    ```php
+    public function index(Request $request)
+    {
+        $query = BomListProduct::query()
+            ->join('bom_lists', 'bom_list_products.bom_list_id', '=', 'bom_lists.id')
+            ->where('bom_lists.bom_list_type', BomList::TYPE_AGGREGATE)
+            ->where('bom_lists.status', BomList::STATUS_DA_DUYET)
+            ->leftJoin('tp_models', 'bom_list_products.model_id', '=', 'tp_models.id')
+            ->leftJoin('tp_brands', 'bom_list_products.brand_id', '=', 'tp_brands.id')
+            ->leftJoin('tp_origins', 'bom_list_products.origin_id', '=', 'tp_origins.id')
+            ->leftJoin('tp_units', 'bom_list_products.unit_id', '=', 'tp_units.id')
+            ->select(
+                'bom_list_products.*',
+                'bom_lists.code as bom_code',
+                'bom_lists.name as bom_name',
+                'bom_lists.prospective_project_id',
+                'bom_lists.solution_id',
+                'tp_models.name as model_name',
+                'tp_brands.name as brand_name',
+                'tp_origins.name as origin_name',
+                'tp_units.name as unit_name'
+            )
+            ->with(['bomList.prospectiveProject', 'bomList.solution', 'createdByEmployee.info']);
+
+        // Filters
+        if ($request->keyword) {
+            $kw = escapeLikeKeyword($request->keyword);
+            $query->where(function ($q) use ($kw) {
+                $q->where('bom_list_products.code', 'like', "%{$kw}%")
+                  ->orWhere('bom_list_products.name', 'like', "%{$kw}%");
+            });
+        }
+        if ($request->model_id) $query->where('bom_list_products.model_id', $request->model_id);
+        if ($request->brand_id) $query->where('bom_list_products.brand_id', $request->brand_id);
+        if ($request->origin_id) $query->where('bom_list_products.origin_id', $request->origin_id);
+        if ($request->unit_id) $query->where('bom_list_products.unit_id', $request->unit_id);
+        if ($request->prospective_project_id) $query->where('bom_lists.prospective_project_id', $request->prospective_project_id);
+        if ($request->solution_id) $query->where('bom_lists.solution_id', $request->solution_id);
+        if ($request->created_by) $query->where('bom_list_products.created_by', $request->created_by);
+        if (isset($request->erp_sync_status)) $query->where('bom_list_products.erp_sync_status', $request->erp_sync_status);
+
+        $sortField = $request->sort_field ?? 'created_at';
+        $sortDir = $request->sort_dir ?? 'desc';
+        $query->orderBy("bom_list_products.{$sortField}", $sortDir);
+
+        $perPage = $request->per_page ?? 10;
+        $paginated = $query->paginate($perPage);
+
+        // Transform
+        $paginated->getCollection()->transform(function ($item) {
+            $project = $item->bomList->prospectiveProject ?? null;
+            $solution = $item->bomList->solution ?? null;
+            $creator = $item->createdByEmployee->info ?? null;
+
+            return [
+                'id' => $item->id,
+                'code' => $item->code,
+                'name' => $item->name,
+                'model_name' => $item->model_name,
+                'brand_name' => $item->brand_name,
+                'origin_name' => $item->origin_name,
+                'unit_name' => $item->unit_name,
+                'qty_needed' => $item->qty_needed,
+                'estimated_price' => $item->estimated_price,
+                'quoted_price' => $item->quoted_price,
+                'product_attributes' => $item->product_attributes,
+                'bom_list_id' => $item->bom_list_id,
+                'bom_code' => $item->bom_code,
+                'bom_name' => $item->bom_name,
+                'prospective_project_id' => $item->prospective_project_id,
+                'prospective_project_code' => $project->code ?? null,
+                'prospective_project_name' => $project->name ?? null,
+                'solution_id' => $item->solution_id,
+                'solution_code' => $solution->code ?? null,
+                'solution_name' => $solution->name ?? null,
+                'erp_sync_status' => $item->erp_sync_status,
+                'erp_sync_status_name' => $item->erp_sync_status == 1 ? 'Đã đồng bộ' : 'Chưa đồng bộ',
+                'created_by_name' => $creator->fullname ?? null,
+                'created_at' => $item->created_at ? $item->created_at->format('d/m/Y H:i') : null,
+            ];
+        });
+
+        return $this->apiGetList($paginated);
+    }
+    ```
+
+- [x] Task 5: Viết lại method `export()` trong ProductProjectController
+  - File: `hrm-api/Modules/Assign/Http/Controllers/Api/V1/ProductProjectController.php`
+  - Dùng cùng query logic như `index()` nhưng `->get()` thay vì `->paginate()`
+  - Truyền vào `ProductProjectExport` view
+  - Cập nhật `ProductProjectExport` class và blade view (`exports/product_projects.blade.php`) để render dữ liệu mới (thêm cột Mã BOM, Trạng thái ĐB)
+
+- [x] Task 6: Xoá các methods CRUD + import trong ProductProjectController
+  - File: `hrm-api/Modules/Assign/Http/Controllers/Api/V1/ProductProjectController.php`
+  - Xoá methods: `store()`, `show()`, `update()`, `destroy()`, `getAll()`, `importValidate()`, `importProducts()`, `buildProductProjectImportMaps()`
+  - Giữ lại: `index()`, `export()`, `getModel()`, `getGroupProduct()`, `getTaxRates()`, `getBrands()`, `getManufacturers()`, `getOrigins()`, `getUnits()`, `getSuppliers()`, `createModel()`, `createBrand()`, `createOrigin()`, `createUnit()`, `createMasterReference()`
+
+- [x] Task 7: Cập nhật routes — bỏ routes CRUD + import
+  - File: `hrm-api/Modules/Assign/Routes/api.php` (dòng 298-321)
+  - Bỏ:
+    - `Route::post('/', ...)` (store)
+    - `Route::get('/getAll', ...)` (getAll)
+    - `Route::get('/{productProject}', ...)` (show)
+    - `Route::put('/{productProject}', ...)` (update)
+    - `Route::delete('/{productProject}', ...)` (destroy)
+    - `Route::post('/import/validate', ...)`
+    - `Route::post('/import', ...)`
+  - Giữ: GET `/`, GET `/export`, GET `/get-*`, POST `/create-*`
+
+- [x] Task 8: Xoá file BE không còn dùng + sửa references trong BomListService + BomListProduct
+  - Xoá: `Modules/Assign/Entities/ProductProject.php`
+  - Xoá: `Modules/Assign/Entities/ProductProjectAttachment.php`
+  - Xoá: `Modules/Assign/Services/ProductProjectService.php`
+  - Xoá: `Modules/Assign/Transformers/ProductProjectResource/ProductProjectListResource.php`
+  - Xoá: `Modules/Assign/Transformers/ProductProjectResource/DetailProductProjectResource.php`
+  - Xoá: `Modules/Assign/Http/Requests/ProductProject/ProductProjectRequest.php`
+  - Kiểm tra xem còn file nào import `ProductProject` entity không → nếu có, xoá hoặc sửa reference
+
+#### FE — Sửa trang danh sách
+
+- [x] Task 9: Bỏ CRUD + Import trên `product-project/index.vue`
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - Bỏ components: `CreateProductProjectModal`, `V2BaseImportModal`, `BaseConfirmModal` (confirm delete)
+  - Bỏ template sections: button Tạo mới, button Import Excel, confirm delete modal, create modal, import modal
+  - Bỏ data: `modalMode`, `selectedProductId`, `itemToDelete`, import-related data
+  - Bỏ methods: `openCreateModal()`, `openImportModal()`, `handleDownloadImportTemplate()`, `handleValidateImportData()`, `handleImportProductProjects()`, `handleProductSaved()`, `viewItem()`, `editItem()`, `confirmDelete()`, `handleConfirmDelete()`
+  - Bỏ computed: `importColumns`, `importRequiredFields`, `importValidationRules`, `deleteConfirmMessage`
+  - Bỏ các select options không còn dùng: `productCateOptions`, `groupOptions`, `supplierOptions`, `manufacturerOptions`, `vatOptions` + PRODUCT_CATE_MAP constant
+
+- [x] Task 10: Đổi row actions → chỉ "Xem BOM"
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - `getRowActions()` chỉ trả 1 action:
+    ```javascript
+    getRowActions(item) {
+        return [{
+            key: 'view-bom',
+            title: 'Xem BOM',
+            icon: 'ri-eye-line',
+            class: 'pp-icon-btn',
+        }]
+    }
+    ```
+  - `handleRowAction()`: navigate `this.$router.push('/assign/bom-list/' + item.bom_list_id)`
+
+- [x] Task 11: Thêm cột Mã BOM + Trạng thái ĐB vào table
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - Thêm vào `defaultTableColumns` (sau cột `productInfo`):
+    ```javascript
+    { key: 'bomCode', label: 'Mã BOM', title: 'Mã BOM', width: '140px', minWidth: '140px', align: 'left', isVisible: 'bomCode' },
+    ```
+  - Thêm vào cuối columns:
+    ```javascript
+    { key: 'erpSyncStatus', label: 'Trạng thái ĐB', title: 'Trạng thái đồng bộ', width: '140px', minWidth: '140px', align: 'center', isVisible: 'erpSyncStatus' },
+    ```
+  - Thêm template slots:
+    ```html
+    <template #cell-bomCode="{ item }">
+        <a class="pp-code-badge" style="cursor:pointer" @click="$router.push('/assign/bom-list/' + item.bom_list_id)">
+            {{ item.bom_code || '—' }}
+        </a>
+    </template>
+    <template #cell-erpSyncStatus="{ item }">
+        <span :class="['pp-chip', item.erp_sync_status === 1 ? 'green' : 'gray']">
+            {{ item.erp_sync_status_name }}
+        </span>
+    </template>
+    ```
+
+- [x] Task 12: Thêm filter Trạng thái đồng bộ ERP
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - Thêm `erp_sync_status: undefined` vào `initialFilters`
+  - Thêm filter select trong template:
+    ```html
+    <div class="col-md-3 mb-2">
+        <V2BaseLabel text="Trạng thái đồng bộ" />
+        <V2BaseSelect
+            v-model="filters.erp_sync_status"
+            :options="erpSyncOptions"
+            size="sm"
+            placeholder="Tất cả"
+        />
+    </div>
+    ```
+  - Thêm data: `erpSyncOptions: [{ id: 0, name: 'Chưa đồng bộ' }, { id: 1, name: 'Đã đồng bộ' }]`
+  - Thêm `erp_sync_status` vào `apiFilters` trong `loadData()`
+
+- [x] Task 13: Cập nhật `loadSelectOptions()` — bỏ API không dùng
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - Bỏ calls: `get-group-product`, `get-manufacturer`, `get-tax-rates`, `get-suppliers`
+  - Giữ: `get-model`, `get-brand`, `get-origin`, `get-unit`, prospective-projects, solutions
+
+- [x] Task 14: Bỏ filters cũ không còn dùng
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - Bỏ khỏi `initialFilters`: `product_cate`, `group_id`, `supplier_id`, `manufacture_id`, `vat_percent_tax_rate_id`
+  - Bỏ khỏi `apiFilters` trong `loadData()`: tương tự
+  - Xoá commented-out filter blocks trong template (Loại hàng hoá, Nhóm hàng hoá, Nhà cung cấp, Hãng sản xuất, Thuế VAT)
+
+- [x] Task 15: Xoá file FE không còn dùng
+  - Xoá: `hrm-client/pages/assign/product-project/components/CreateProductProjectModal.vue`
+
+- [x] Task 16: Cập nhật export blade view
+  - File: `hrm-api/resources/views/exports/product_projects.blade.php`
+  - Thêm cột "Mã BOM" + "Trạng thái ĐB"
+  - Cập nhật data binding: dùng trực tiếp `$item->bom_code`, `$item->model_name`, etc. (đã join sẵn)
+  - Bỏ PHP logic lấy relation (`$item->prospectiveProject`, `$item->tpModel`) — data đã flatten qua select
+
+#### Test thủ công
+
+- [ ] Task 17: Chạy migration trên local
+  - `php artisan migrate` — verify cột `erp_sync_status` được thêm, 2 bảng cũ bị drop
+
+- [ ] Task 18: Test trang danh sách
+  - Mở `/assign/product-project` → xác nhận hiển thị dữ liệu từ BOM đã duyệt
+  - Không còn button Tạo mới, Import
+  - Row action chỉ có "Xem BOM" → navigate đúng
+  - Filters hoạt động: keyword, model, brand, origin, unit, dự án, giải pháp, người tạo, trạng thái ĐB
+  - Cột Mã BOM hiển thị đúng, click navigate sang BOM
+  - Cột Trạng thái ĐB hiển thị pill đúng màu
+
+- [ ] Task 19: Test export Excel
+  - Click "Xuất Excel" → download file → verify cột mới (Mã BOM, Trạng thái ĐB)
+  - Verify filters áp dụng khi export
+
+- [ ] Task 20: Test edge cases
+  - BOM chưa duyệt → hàng hoá KHÔNG hiển thị
+  - BOM loại Thành phần → hàng hoá KHÔNG hiển thị
+  - BOM Tổng hợp + Đã duyệt → hàng hoá hiển thị
+  - Pagination + sorting hoạt động đúng
+
+### Phase 24: Bug fixes + UI improvements (2026-05-12)
+
+[x] Task 1: Thêm cột "Mã hàng" trước "Tên hàng" trong BomBuilderTableCard.vue (header, total, parent, child, group, standalone — 6 vị trí + visibleColumnCount +1)
+[x] Task 2: BomBuilderInfoCard.vue — căn đều col-3 cho tất cả trường thông tin chung (Tên BOM col-9→col-3, Dự án/GP/HM col-4→col-3)
+[x] Task 3: Sửa điều kiện lấy dự án khi tạo BOM — chuyển từ "nhân sự dự án" sang "nhân sự giải pháp" (PM, solution_members, solution_module_members)
+[x] Task 4: Sửa điều kiện hiện nút Sửa BOM — status 1/2/6 + chỉ người tạo. BE thêm check created_by + cho sửa status 6 (Không duyệt)
+[x] Task 5: Validate mã hàng hoá bắt buộc khi Lưu nháp / Lưu BOM (FE toast + BE validateProductCodes)
+[x] Task 6: Quick create model/brand/origin — check unique (BE trả existed flag + check code brand, FE hiện lỗi inline thay vì tạo trùng)
+[x] Task 7: Làm tròn báo giá — đổi label "Làm tròn giá" + icon info tooltip + button "Áp dụng" + disable khi chưa chọn
+[ ] Task 8: Test thủ công Phase 24
+
+---
+
+### Phase 25: Bug fixes (2026-05-14)
+
+[x] Task 1: Sửa điều kiện lấy dự án khi tạo BOM — thêm leader hạng mục (solution_modules.leader_id) + chuyển về dùng whereHas('solution') thay whereExists
+[x] Task 2: Fix lỗi floating point hiển thị giá nhập — formatMoney dùng Math.round(num*100)/100 + maximumFractionDigits: 2 (BomBuilderTableCard.vue)
+[x] Task 3: Thêm STATUS_DUNG (6) vào whereIn phân quyền NLG trên trang danh sách yêu cầu XD giá (PricingRequestController)
+
+---
+
+### Phase 26: Bỏ required giá nhập/bán khi Lưu nháp (2026-05-16)
+
+[x] Task 1: FE — đổi handleSaveDraft() từ strict:true → strict:false
+  - File: `hrm-client/pages/assign/quotations/_id/edit.vue`
+  - `handleSaveDraft()` gọi `save(false, { strict: false })` thay vì `strict: true`
+[x] Task 2: BE — đổi service_items estimated_price + quoted_price từ required → nullable
+  - File: `hrm-api/Modules/Assign/Http/Requests/Quotation/QuotationUpdateRequest.php`
+  - `service_items.*.estimated_price` → `nullable|numeric|min:0`
+  - `service_items.*.quoted_price` → `nullable|numeric|min:0`
+[ ] Task 3: Test thủ công — lưu nháp không nhập giá, submit vẫn bắt buộc giá
+
+---
+
+### Phase 27: Fix + bổ sung cột trang Hàng hoá dự án (2026-05-16)
+
+[x] Task 1: Fix text "Không có hàng hoá nào" khi có data — response không có `meta`, FE destructure sai
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - Response format: `{ code, message, data, current_page, total, per_page, from, to, ... }` (flat, không có `meta`)
+  - Fix: destructure response đúng format flat thay vì `{ data, meta }`
+[x] Task 2: Bỏ class font-weight-bold ở cột Mã hàng
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - Bỏ `font-weight-bold` ở template #cell-code
+[x] Task 3: Bổ sung 3 cột mới + BE trả thêm data
+  - BE: `ProductProjectController::transformItem()` thêm `product_attributes`, `parent_code`, `parent_name`, `note`
+  - BE: `buildQuery()` thêm left join self (parent) để lấy parent code+name
+  - FE: thêm 3 cột vào `defaultTableColumns`: Đặc điểm/TSKT, Hàng hoá cha, Ghi chú
+  - FE: thêm 3 template slots
+[x] Task 4: Bổ sung 3 cột mới vào export Excel
+  - File: `hrm-api/resources/views/exports/product_projects.blade.php`
+  - Thêm header + body cho: Đặc điểm/TSKT, Hàng hoá cha, Ghi chú
+[x] Task 5: Fix tuỳ chọn cột thiếu cột mới — merge cột mới vào saved config
+  - File: `hrm-client/pages/assign/product-project/index.vue`
+  - `defaultTableColumns`: nếu server config thiếu cột → append cột mới vào cuối
+[x] Task 6: Cột Đặc điểm dùng v-html + spec-preview (giống BOM detail) thay vì stripHtml
+  - FE: `v-html` + class `spec-preview` (max-height 80px, scroll, format p/ul/ol)
+  - CSS: copy `.spec-preview` styles từ BomBuilderTableCard.vue
+[x] Task 7: Tăng width cột Hàng hoá cha 200→300px, minWidth 150→250px
+[x] Task 8: Fix font chữ cột Đặc điểm trong Excel — thêm html_entity_decode + font-family Times New Roman
+
+---
+
+## Phase 28 — UI cải thiện chi tiết Dự án TKT (2026-05-16)
+
+[x] Task 1: Topbar title hiển thị Mã. Tên dự án + trạng thái dự án (pill inline HTML)
+  - File: `hrm-client/pages/assign/prospective-projects/_id/manager.vue`
+  - `pageTitle` computed trả HTML: label + `<span>` pill (inline style, border-radius, bg color)
+  - `projectStatusInfo` computed map status ID → { name, color } với label rút gọn + màu riêng
+[x] Task 2: Tab Yêu cầu — thay "Dự án TKT" bằng trạng thái yêu cầu khi disabled
+  - File: `hrm-client/pages/assign/request-solution/components/RequestTab.vue`
+  - Khi `disabled=true`: hiện request status pill (outlined style, dot indicator, CSS `color-mix`)
+  - CSS: `.request-status-pill` + `.request-status-dot` dùng CSS variable `--pill-color`
+[x] Task 3: Tab Yêu cầu — thêm mã yêu cầu trước trạng thái
+  - File: `manager.vue` — thêm `code` vào `this.request` object từ API response
+  - File: `RequestTab.vue` — hiển thị mã yêu cầu (bold) + trạng thái (pill) cùng dòng
+[x] Task 4: Tab Hồ sơ — chuyển button Thao tác vào cột Mã hồ sơ, hover mới hiện
+  - File: `hrm-client/pages/assign/prospective-projects/components/ProspectiveProjectReviewProfilesTab.vue`
+  - Xoá cột `actions` khỏi `tableColumns`
+  - Merge button (Xem chi tiết + YC XD giá) vào `#cell-profileInfo` cùng dòng mã hồ sơ
+  - CSS: `.row-actions` opacity 0 → 1 on `tr:hover`, transition 0.15s
+[x] Task 5: Click mã hồ sơ → mở popup xem chi tiết
+  - Mã hồ sơ đổi `text-primary`, cursor pointer, underline hover, emit `view-profile`
+
+---
+
+### Checkpoint — 2026-05-23 (Phase 29.10)
+Vừa hoàn thành: Phase 29.10 — 9 task (Task 60-68). Bảng tổng hợp giá trị + validate phân bổ + fix bugs + in báo giá
+  - Bảng tổng hợp 8 dòng trên form edit + view + export Excel + print preview
+  - Layout CK tổng + bảng tổng hợp trên 1 row (50/50)
+  - Validate bắt buộc phân bổ hết trước khi lưu (CK tổng) + skipAllocationCheck cho allocate/import
+  - Fix bug 2 lỗi đồng thời khi chuyển CK method 1→2 rồi phân bổ
+  - Hiện "Còn: xxx" trên header cột CK phân bổ (xanh/đỏ)
+  - Export Excel: bảng tổng hợp 8 dòng (TSLN xanh/đỏ, TT sau VAT highlight blue)
+  - DB field unit_price_after_discount + auto-compute trong recomputeTotals()
+  - In báo giá: config modal dynamic columns theo discountMethod + preview CK columns + summary table
+  - Fix discountMethod string→Number() conversion (API trả string)
+Đang làm dở: không
+Bước tiếp theo: Chạy migration unit_price_after_discount + Test thủ công Phase 29.9 (Task 52-59)
+Blocked: không
+
+### Checkpoint — 2026-05-16 (Phase 28)
+Vừa hoàn thành: Phase 28 — 5 task UI cải thiện chi tiết Dự án TKT
+  - Topbar title: Mã. Tên + status pill inline
+  - Tab Yêu cầu: mã YC + trạng thái pill (thay vị trí Dự án TKT khi disabled)
+  - Tab Hồ sơ: button gộp vào cột Mã hồ sơ (hover), click mã → popup chi tiết
+Đang làm dở: không
+Bước tiếp theo: nhận yêu cầu mới
+Blocked: không
+
+### Checkpoint — 2026-05-16 (Phase 27)
+Vừa hoàn thành: Phase 27 — 8 task fix + bổ sung cột trang Hàng hoá dự án
+  - Fix pagination text "Không có hàng hoá nào" (destructure flat response thay vì { data, meta })
+  - Bỏ bold cột Mã hàng
+  - Thêm 3 cột: Đặc điểm/TSKT (v-html spec-preview), Hàng hoá cha (mã . tên, 300px), Ghi chú
+  - BE: left join parent_product, trả thêm product_attributes, parent_code, parent_name, note
+  - Export Excel: thêm 3 cột + fix font Đặc điểm (html_entity_decode + Times New Roman)
+  - Merge cột mới vào saved column config
+Đang làm dở: không
+Bước tiếp theo: nhận yêu cầu mới
+Blocked: không
+
+### Checkpoint — 2026-05-16 (Phase 26)
+Vừa hoàn thành: Phase 26 — bỏ required giá nhập/bán khi Lưu nháp báo giá
+  - FE: handleSaveDraft() đổi strict:true → strict:false (edit.vue:1120)
+  - BE: service_items estimated_price + quoted_price đổi required → nullable (QuotationUpdateRequest.php)
+  - Gửi duyệt vẫn giữ validate giá > 0 (strict:true + ensureAllPricesPositive)
+Đang làm dở: không
+Bước tiếp theo: Test thủ công Phase 26
+Blocked: không
+
+### Checkpoint — 2026-05-14 (Phase 25)
+Vừa hoàn thành: 3 bug fixes
+  - Filter dự án: thêm leader hạng mục, dùng whereHas gọn hơn
+  - Giá nhập: fix floating point 839.100.093,7099999 → 839.100.093,71
+  - YCXD giá: NLG thấy được trạng thái Dừng trong danh sách + bộ lọc
+Đang làm dở: không
+Bước tiếp theo: Test thủ công
+Blocked: không
+
+### Checkpoint — 2026-05-12 (Phase 24)
+Vừa hoàn thành: 7 task code done — bug fixes + UI improvements
+  - Mã hàng: cột mới trong bảng BOM (tạo/sửa/xem chi tiết)
+  - Info card: col-3 đều nhau
+  - Lấy dự án: filter theo nhân sự giải pháp (PM + members + module members)
+  - Nút Sửa: chỉ người tạo, thêm status Không duyệt
+  - Validate mã hàng bắt buộc (FE + BE)
+  - Check unique tạo nhanh model/brand/origin
+  - Làm tròn giá: label + tooltip + button + disable
+Đang làm dở: không
+Bước tiếp theo: Test thủ công Phase 24
+Blocked: không
+
 ### Checkpoint — 2026-05-12 (Phase 22 bug fix + improvements)
 Vừa hoàn thành: Task 22-28 — 7 bug fixes + improvements
   - Fix V2BaseCurrencyInput parse sai giá API (×100)
@@ -2037,6 +2684,20 @@ Vừa hoàn thành: Phase 21 — 34/42 tasks code done (còn 8 test thủ công 
   - FE index.vue: hiển thị DV readonly, đảo cha-con, tổng gộp
 Đang làm dở: Không
 Bước tiếp theo: Chạy migration + test thủ công Tasks 35-42
+Blocked: Không
+
+### Checkpoint — 2026-05-28 (Phase 30)
+Vừa hoàn thành: Phase 30 — BOM ẩn giá ERP + Báo giá load giá ERP + Hiệu lực báo giá + Tab báo giá dự án
+  - BOM: Ẩn giá nhập hàng ERP (cả cha + con) trên FE (hiển thị "—") + BE (force estimated_price=0)
+  - Báo giá: Load giá nhập ERP khi chọn BOM → quy đổi tỷ giá. Hàng con ERP load trực tiếp, cha rollup từ con
+  - Hiệu lực: Đổi từ số ngày → ngày cụ thể (validity_date). Migration rename cột. Tính realtime trên FE, lưu khi save/approve
+  - Icon cảnh báo: Hàng cha ERP sắp đổi giá → warning icon + tooltip ngày thay đổi (cả màn edit + xem)
+  - Tab báo giá dự án TKT: Hiển thị tất cả trạng thái (bỏ filter chỉ Đã duyệt), thêm cột Người lập + Trạng thái
+  - Button "Tạo báo giá" theo chuẩn V2BaseButton trong slot #actions, bỏ điều kiện implementationType
+  - Buttons theo quyền: Sửa/Xoá khi status=1 + là người tạo, Ghi chú KD khi status=4 + là Sale
+  - Màn xem: Toolbar hiển thị Chiết khấu, TSLN chỉ hiện 1 dòng khi không CK
+Đang làm dở: Không
+Bước tiếp theo: Chạy migration validity_date + test thủ công
 Blocked: Không
 
 ### Checkpoint — 2026-05-09 (Phase 20)
