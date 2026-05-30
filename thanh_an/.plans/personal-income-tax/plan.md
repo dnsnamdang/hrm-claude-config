@@ -260,6 +260,85 @@
 
 ---
 
+## Phase 7 — Đa-đoạn tax_type trong 1 kỳ lương
+
+> **Spec:** Section 9 trong `docs/superpowers/specs/2026-05-13-personal-income-tax-design.md`
+> **Mục tiêu:** Hỗ trợ NV đổi loại thuế giữa kỳ (vd: 01–10/04 chịu 10%, 11–30/04 chịu lũy tiến).
+
+### Task 7.1 — Migration alter `employee_taxs` ✅
+
+**File tạo:**
+- `Modules/Payroll/Database/Migrations/2026_05_26_100001_add_date_range_to_employee_taxs_table.php`
+
+- [x] Thêm 2 cột: `start_date` (date nullable), `end_date` (date nullable)
+- [x] Thêm index `[employee_info_id, start_date]`
+- [x] Down: drop 2 cột + index
+- [x] Migrate → verify
+
+### Task 7.2 — Update Entity + Request `EmployeeTax` ✅
+
+- [x] `EmployeeTax`: thêm `start_date`, `end_date` vào `$fillable` + cast date
+- [x] Request validate: `start_date ≤ end_date`, không overlap, chỉ row mới nhất được end_date=NULL
+
+### Task 7.3 — `EmployeeTaxService` CRUD nhiều row/NV ✅
+
+- [x] Thêm `listByEmployee`, `storeRow`, `updateRow` (giữ `delete` cũ)
+- [x] Tạo `EmployeeTaxController` (4 endpoints) + 4 routes `human/employee_tax`
+- [x] `php artisan route:list` xác nhận hoạt động
+
+### Task 7.4 — Refactor `TaxCalculator::calc(...)` hỗ trợ đa đoạn ✅
+
+**File sửa:**
+- `Modules/Payroll/Helpers/TaxCalculator.php`
+
+- [x] Đổi signature: `($empId, $h, $companyId, $periodStart, $periodEnd)` — D_total tự tính từ ngày dương lịch
+- [x] `buildSegments()` load EmployeeTax rows overlap kỳ, cắt thành segments, gap → mặc định Lũy tiến
+- [x] `calcProgressivePortion()` gộp các đoạn lũy tiến, BHXH/CD chia tỷ lệ ngày, giảm trừ NGUYÊN THÁNG
+- [x] Đoạn 10%/20%: `income_i × rate`, không giảm trừ
+- [x] Đoạn Miễn: 0
+
+### Task 7.5 — Update `SalaryService::calcData()` truyền params mới ✅
+
+**File sửa:**
+- `Modules/Payroll/Services/SalaryService.php` (case 'THUE_TNCN')
+
+- [x] Derive `periodStart` = đầu tháng, `periodEnd` = cuối tháng từ `apply_date`
+- [x] Truyền vào `TaxCalculator::calc(...)`
+
+### Task 7.6 — Smoke test TaxCalculator đa đoạn ✅ (qua tinker, 6/6 PASS)
+
+- [x] Test 1 — No row, full LT, 0 NPT → 1.395.961 (khớp tay với self=1M)
+- [x] Test 2 — Toàn kỳ 10% → 1.600.000 (16M × 10%)
+- [x] Test 3 — Toàn kỳ 20% → 3.200.000
+- [x] Test 4 — Toàn kỳ Miễn → 0
+- [x] Test 5 — 10% (10d) + LT (20d) → 1.203.760 (533K + 670K)
+- [x] Test 6 — 10% (5d) + gap LT (14d) + 20% (11d) → 1.804.299 (267K + 1.173K + 364K)
+- [ ] PHPUnit test thật — để sau (smoke đủ cover logic)
+
+### Task 7.7 — FE: Tab "Thuế TNCN" trên màn nhân viên ✅
+
+**File tạo:**
+- `components/human-components/employee_info/EmployeeTaxTab.vue`
+
+**File sửa:**
+- `components/human-components/employee_info/EmployeeInfoForm.vue` — import + mount tab mới sau tab "Thông tin thu nhập và bảo hiểm" (chỉ hiện khi `id` đã tồn tại)
+
+- [x] Bảng inline edit: STT | Loại thuế | Từ ngày | Đến ngày | Action
+- [x] Dropdown 4 loại: Miễn / Lũy tiến / 10% / 20%
+- [x] DatePicker `start_date`, `end_date` (nullable, hiển thị "Vô cực" nếu trống)
+- [x] Auto-set end_date của row đang mở khi thêm row mới (tránh overlap)
+- [x] Gọi `apiGet`/`apiPostMethod`/`apiPutMethod`/`apiDelete`
+
+### Task 7.8 — Test E2E đa đoạn
+
+- [ ] Tạo NV có 2 row tax: 01–10/04 = 10%, 11–30/04 = Lũy tiến
+- [ ] Chạy bảng lương tháng 04 → verify số thuế = tax_10 + tax_lt
+- [ ] Verify đoạn 10% không trừ giảm trừ
+- [ ] Verify đoạn lũy tiến hưởng full 11tr + NPT
+- [ ] Test backward compat: NV không có row nào → kết quả khớp behavior cũ
+
+---
+
 ## Checkpoint
 
 _(cập nhật khi wrap up)_
@@ -283,6 +362,50 @@ Vừa hoàn thành:
 Bước tiếp theo: Anh test trên các kỳ lương khác + các case khác (NV có nhiều phần lương chịu thuế, NPT theo nhiều khoảng thời gian) để xác nhận trước khi đóng feature
 
 Blocked: Không
+
+### Checkpoint — 2026-05-27 (Phase 8/9/10 + tinh chỉnh)
+Vừa hoàn thành:
+- **Phase 8 (4 cột giảm trừ):** Tạo 3 system composition `GIAM_TRU_BAN_THAN`, `GIAM_TRU_NPT`, `GIAM_TRU_BHXH_TNCN` (feature=3 INFO). `TaxCalculator::breakdown()` trả `[self, npt, bhxh]`. Tổng giảm trừ KHÔNG còn system — user tự tạo custom với formula `GIAM_TRU_BAN_THAN + GIAM_TRU_NPT + GIAM_TRU_BHXH_TNCN`.
+- **Phase 9 (Config global):** Consolidate `tncn_tax_configs` còn 1 row chuẩn (self=11M). Bỏ filter `company_id` trong TaxCalculator + InsuranceConfig query + TncnTaxConfigService. Tham số `$companyId` trong helper giờ là legacy.
+- **Phase 10 (Quy ước nghiệp vụ — KHÁC TT 111):**
+  - Đoạn 10% và 20% cố định: base income = `probation_salary × D_seg/D_total × rate` (KHÔNG dùng total income chính thức)
+  - BHXH cho mục đích TNCN = NLĐ (10.5%) + NSDLĐ (21.5%) = **32%** × `insurance_salary` — quyết định nội bộ doanh nghiệp để giảm thuế cho NV (chuẩn luật chỉ trừ phần NLĐ)
+  - 6 test case PASS sau khi sửa
+- **Tài liệu:** Cập nhật `design.md` + spec — ghi rõ 3 quy ước khác chuẩn + cách revert nếu muốn
+
+Đang làm dở: Không
+
+Bước tiếp theo:
+- Anh test trên FE: tab Thuế TNCN của NV + 4 cột mới trên bảng lương
+- E2E qua bảng lương thật (Task 7.8 + 8.5)
+- Nếu công ty muốn đổi quy ước (BHXH chỉ NLĐ / 10%/20% không dùng probation / config theo company) → đọc design.md mục "Các quyết định lớn" để biết cách sửa
+
+Blocked: Không
+
+---
+
+### Checkpoint — 2026-05-26 (Phase 7 — Đa đoạn tax_type)
+Vừa hoàn thành:
+- **Task 7.1 (DB):** Migration alter `employee_taxs` thêm `start_date`, `end_date` (nullable) + index `[employee_info_id, start_date]` — migrated OK
+- **Task 7.2 (Entity + Request):** Cast date, validate non-overlap + chỉ row mới nhất được `end_date=NULL`
+- **Task 7.3 (Service + Controller + Routes):** `EmployeeTaxService` thêm `listByEmployee/storeRow/updateRow`, tạo `EmployeeTaxController` + 4 routes `human/employee_tax/{GET,POST,PUT,DELETE}`
+- **Task 7.4 (TaxCalculator):** Refactor signature `($empId, $h, $companyId, $periodStart, $periodEnd)`, dùng ngày dương lịch (D_total = ngày trong kỳ), `buildSegments()` cắt kỳ theo tax_type, gap → mặc định Lũy tiến, đoạn LT gộp lại để áp giảm trừ NGUYÊN THÁNG + BHXH/CD theo tỷ lệ ngày, đoạn 10%/20% áp gross
+- **Task 7.5 (SalaryService):** Derive `periodStart/periodEnd` từ `apply_date` (đầu→cuối tháng), truyền vào TaxCalculator
+- **Task 7.6 (Smoke test):** 6/6 case PASS qua tinker (full LT/10%/20%/Miễn/half-half/gap)
+- **Task 7.7 (FE):** Tạo `EmployeeTaxTab.vue` (component riêng, gọi API trực tiếp), mount vào `EmployeeInfoForm.vue` thành tab mới "Thuế TNCN" sau tab thu nhập
+
+Đang làm dở: Task 7.8 (E2E qua bảng lương thật) — chờ user chạy server FE để test
+
+Bước tiếp theo:
+1. Anh chạy FE → vào màn nhân viên → tab "Thuế TNCN" → thêm row tax_type=2 từ 01-10/04, row tax_type=1 từ 11/04 vô cực
+2. Tạo bảng lương tháng 04 → verify số thuế hiển thị
+3. Test edge: NV không có row → kết quả khớp behavior cũ
+
+Blocked: Không
+Lưu ý:
+- Spec đã update: dùng **ngày dương lịch** (calendar days) thay vì working days — đơn giản, không phụ thuộc salary_calendar
+- Backward compat: NV không có row `employee_taxs` → mặc định toàn kỳ Lũy tiến (giữ behavior trước Phase 7)
+- Spell-check tiếng Việt báo nhiều warning trong TaxCalculator.php — bỏ qua
 
 ### Checkpoint — 2026-05-14
 Vừa hoàn thành:

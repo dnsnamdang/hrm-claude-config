@@ -11,6 +11,7 @@
 - Trước khi làm màn danh sách mới → hỏi có cần phân quyền theo cấp không
 - Trước khi viết accessor `is_can_delete` → hỏi điều kiện xóa cụ thể của màn đó
 - Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu
+- `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
 
 ---
 
@@ -72,6 +73,8 @@
   }
   ```
 - **Mã code tự sinh**: pattern `PREFIX-YYYY-NNNNN`, implement `getNextCode()` trên Entity (copy pattern `BomList::getNextCode()`).
+- **Permission**: Khi thêm/sửa/đổi tên/xóa permission → sửa trực tiếp trong file `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php`. KHÔNG tạo migration riêng cho permission.
+- **Middleware checkPermission**: Khi có quyền tương ứng trong `PermissionsTableSeeder`, các route thao tác dữ liệu (store, update, destroy, approve, toggle,...) phải gắn middleware `checkPermission:TênQuyền`. Route xem (index, show) chỉ gắn nếu có quyền xem riêng. Cú pháp: `->middleware('checkPermission:Tên quyền')`, nhiều quyền dùng `|`: `->middleware('checkPermission:Quyền A|Quyền B')`. Không gắn middleware nếu chưa có quyền tương ứng trong seeder.
 
 **Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.claude/skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.claude/skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.claude/skills/bug-fixer/SKILL.md`.
 
@@ -203,11 +206,14 @@ Nếu có → đọc trước khi viết code.
 
 **Skill bắt buộc đọc theo ngữ cảnh:**
 
-| Khi làm gì                           | Đọc skill nào                                |
-| ------------------------------------ | -------------------------------------------- |
-| Tạo/sửa button (nút bấm) trên FE     | `.claude/skills/button-convention/SKILL.md`  |
-| Tạo/sửa modal, popup, dialog trên FE | `.claude/skills/modal-popup/SKILL.md`        |
-| Tạo màn danh sách mới                | `.claude/skills/list-page/SKILL.md` (nếu có) |
+| Khi làm gì                                          | Đọc skill nào                                |
+| --------------------------------------------------- | -------------------------------------------- |
+| Tạo/sửa button (nút bấm) trên FE hrm-client         | `.claude/skills/button-convention/SKILL.md`  |
+| Tạo/sửa modal, popup, dialog trên FE hrm-client     | `.claude/skills/modal-popup/SKILL.md`        |
+| Tạo màn danh sách mới ở hrm-client                  | `.claude/skills/list-page/SKILL.md` (nếu có) |
+| Làm code trong project **elearning** (Vue 3 + Vite) | `.claude/skills/elearning-base/SKILL.md`     |
+| Validate, error, toast trong elearning              | `.claude/skills/elearning-validate/SKILL.md` |
+| Auth, SSO, profile, avatar trong elearning          | `.claude/skills/elearning-auth/SKILL.md`     |
 
 → Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
 

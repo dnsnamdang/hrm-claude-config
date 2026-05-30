@@ -10,8 +10,14 @@ Hoàn thiện logic tính Thuế TNCN trong flow tính bảng lương theo luậ
 
 ## Scope MVP
 
-- Chỉ tính cho `employee_taxs.tax_type = 1` (Lũy tiến). Các loại khác trả 0.
-- Trừ trước thuế: BHXH NLĐ + Công đoàn 1% + giảm trừ bản thân + giảm trừ NPT.
+- Hỗ trợ cả 4 `tax_type`: Miễn / Lũy tiến / 10% / 20%, **có thể đổi loại giữa kỳ lương** (đa đoạn).
+- Đoạn lũy tiến — trừ trước thuế:
+  - **BHXH = NLĐ (10.5%) + NSDLĐ (21.5%) = 32%** trên `insurance_salary` *(quyết định nội bộ doanh nghiệp — KHÁC TT 111/2013 chuẩn chỉ trừ 10.5%; muốn đổi về chuẩn thì sửa `TaxCalculator::calcInsuranceDeduction`, bỏ phần employer rate)*
+  - Công đoàn 1%
+  - Giảm trừ bản thân 11M nguyên tháng
+  - Giảm trừ NPT 4.4M × số NPT nguyên tháng
+- Đoạn 10%/20%: thuế = `probation_salary × D_seg/D_total × rate` *(KHÔNG dùng total income chính thức; KHÔNG giảm trừ)*
+- Đoạn Miễn: 0
 - `THUE_TNCN` (feature=2) tự cộng vào `total_deduction` — không sửa công thức `thuc_linh`.
 
 ## Các quyết định lớn
@@ -22,6 +28,12 @@ Hoàn thiện logic tính Thuế TNCN trong flow tính bảng lương theo luậ
 4. **Công đoàn:** Thêm cột `union_fee_rate` (%) vào `tncn_tax_configs` (default 1%). Tính `insurance_salary × rate / 100` nếu `has_union=true`.
 5. **UI config:** Section mới trong `pages/human/settings/index.vue`, pattern giống bảng BHXH (inline edit + ngày hiệu lực). Brackets ở modal riêng.
 6. **UI người PT:** Bổ sung 3 trường trong tab Quan hệ thân nhân của màn nhân viên.
+7. **Đa-đoạn tax_type:** Mở rộng `employee_taxs` thành nhiều row theo khoảng ngày (`start_date`, `end_date`). `TaxCalculator` cắt kỳ lương thành các đoạn, mỗi đoạn áp công thức theo `tax_type` tương ứng. Giảm trừ bản thân + NPT áp **nguyên tháng** vào đoạn lũy tiến (theo TT 111/2013), không chia tỷ lệ ngày. Xem chi tiết Section 9 trong spec.
+8. **UI Tab thuế NV:** Thêm tab "Thuế TNCN" trên màn nhân viên — list các dòng tax_type theo khoảng ngày, dropdown loại thuế, validate không overlap.
+9. **Đoạn 10% / 20% dùng `probation_salary`:** Khác với đoạn lũy tiến (dùng total income chính thức), đoạn 10%/20% lấy `employee_salary_histories.probation_salary` làm base, chia tỷ lệ ngày. Phù hợp với case NV thử việc / HĐ ngắn hạn. Muốn đổi (vd 20% dùng total income cho NV nước ngoài không cư trú) → sửa switch case trong `TaxCalculator::calc()`.
+10. **BHXH cho TNCN cộng cả NSDLĐ:** `calcInsuranceDeduction()` cộng tổng tỷ lệ NLĐ (10.5%) + NSDLĐ (21.5%) = 32% × `insurance_salary`. Đây là QUYẾT ĐỊNH NỘI BỘ — chuẩn luật VN chỉ trừ phần NLĐ. Muốn revert về chuẩn TT 111 → bỏ phần `$employerRate` trong helper.
+11. **Config global:** `tncn_tax_configs` chỉ giữ 1 row dùng chung cho mọi company. Query trong TaxCalculator + Service đã bỏ filter `company_id`. Tham số `$companyId` trong helper hiện chỉ legacy, không ảnh hưởng kết quả.
+12. **4 cột giảm trừ (Phase 8):** 3 system composition `GIAM_TRU_BAN_THAN`, `GIAM_TRU_NPT`, `GIAM_TRU_BHXH_TNCN` (feature=3 INFO) — tự tính qua `TaxCalculator::breakdown()`. Tổng giảm trừ KHÔNG còn là system, user tạo custom với formula `GIAM_TRU_BAN_THAN + GIAM_TRU_NPT + GIAM_TRU_BHXH_TNCN`.
 
 ## Component chính
 
