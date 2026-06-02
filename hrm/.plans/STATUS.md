@@ -14,6 +14,25 @@
 - solution-manager-assignment → @dnsnamdang → .plans/solution-manager-assignment/plan.md
   Trạng thái: Code DONE. Phân công PM/Leader + lịch sử + notification + confirm. SRS + Testcase đã tạo.
   Checkpoint: 2026-05-17 — Phase 1+2 done. BE 7 file, FE 3 file. 28 test cases. Bước tiếp: deploy.
+- elearning-tracking-fix → @junfoke → .plans/elearning-tracking-fix/plan.md
+  Trạng thái: CODE DONE (2026-06-02, ~12 file: 1 BE + FE). Chờ verify browser trong Docker (Node ≥18). Scope: (1) hiển thị thời gian 3:12, (2) completionHint theo config, (3) video tracking thật IFrame Player API (free), (4) tối ưu heartbeat (keepalive + dừng khi done), (5) fix status chậm (optimistic learning) + toast bắn nhầm khi quay lại bài đã xong (dùng just_completed), (6) toàn vẹn tracking: chống tua video (SEEK_THRESHOLD, cho 2x) + rời tab khi đọc tài liệu (useReadingTracker + ReadingGateOverlay "Tiếp tục học"). Tiếp nối learning-session-api + elearning-lesson-viewer. Defer: idle-trong-tab, enforce scroll/dwell, Redis/queue (chỉ khi scale nghìn).
+
+- scorm-preview-runtime → @junfoke → .plans/scorm-preview-runtime/plan.md
+  Trạng thái: CODE DONE (2026-06-01). Chờ user restart dev server + verify trên browser (upload gói SCORM → preview hết lỗi objective).
+  Spec: docs/superpowers/specs/2026-06-01-scorm-preview-runtime-design.md
+  Scope: CHỈ FE hrm-client. Port runtime SCORM (scorm-again + proxy same-origin) sang panel preview màn quản lý bài học (LessonForm.vue type=4) để hết lỗi "could not find objective". Rút gọn: KHÔNG tracking/resume/commit BE. Proxy bằng Nuxt serverMiddleware. Tiếp nối scorm-lms-runtime (elearning) + scorm-upload.
+
+- scorm-lms-runtime → @junfoke → .plans/scorm-lms-runtime/plan.md
+  Trạng thái: DONE — chạy đúng end-to-end trên browser (completion + resume + popup). Chờ note OPS cấu hình nginx prod + merge.
+  Spec: docs/superpowers/specs/2026-05-30-scorm-lms-runtime-design.md (mục 11 = các fix khi debug) | Plan: docs/superpowers/plans/2026-05-30-scorm-lms-runtime.md
+  Scope: Học bài SCORM (type=4) trên elearning. Reverse-proxy S3 same-origin (window.parent.API) + scorm-again v3 (1.2+2004) + ScormPlayer.vue + endpoint scorm-commit + 9 cột scorm_* (resume + completion theo cấu hình bài). Tiếp nối scorm-upload.
+  Checkpoint: 2026-05-30 — Verify PASS với gói Run-Time SCORM 2004 (scorm.com): "Đã xong" + resume. Fix phát sinh: host tanphat.s3, :key chống kẹt bài, proxy inject window.confirm=()=>true + no-store chặn 2 native confirm, popup resume riêng. OPS: nginx /scorm-proxy + sub_filter inject + no-store (spec mục 2&11). elearning cần Node ≥18; scorm-again cài trong container.
+
+- customer-scope-group → @manhcuong → .plans/customer-scope-group/plan.md
+  Trạng thái: CODE DONE (Phase 1-7). Chờ chạy migration + test browser (Phase 8).
+  Spec: docs/superpowers/specs/2026-05-28-customer-scope-group-design.md
+  Scope: Chèn tầng trung gian "Nhóm lĩnh vực khách hàng" giữa Lĩnh vực ⟷ Ứng dụng (bỏ pivot trực tiếp application_customer_scopes). Màn Nhóm full CRUD + import/export + 2 permission (id 1093/1094). Sửa Ứng dụng (Lĩnh vực→Nhóm), Lĩnh vực (Số ứng dụng→Số nhóm), Dự án tiềm năng (thêm customer_scope_group_id, cascade Ứng dụng→Nhóm→Lĩnh vực, 2 luồng chọn). Downstream MeetingProject resolve qua nhóm. Migrate dữ liệu cũ.
+  Checkpoint: 2026-05-29 — ĐỔI MÔ HÌNH (Phase 10): Nhóm LVKH giờ là CHA của Lĩnh vực (1-n), Lĩnh vực bắt buộc chọn Nhóm cha; Ứng dụng↔Lĩnh vực giữ n-n. Migration 2026_05_29_000001 đã chạy (thêm customer_scopes.customer_scope_group_id, khôi phục application_customer_scopes, drop 2 pivot n-n). BE+FE đã revert/sửa toàn bộ (R1-R7). Verify: Eloquent + API getAll + FE compile 200. Còn lại: click-through UI thủ công + file mẫu import Lĩnh vực cần thêm cột GroupCode.
 
 - learning-session-api → @junfoke → .plans/learning-session-api/plan.md
   Trạng thái: Code DONE (13/13 task). Chờ chạy migration + test API thật trên browser.
