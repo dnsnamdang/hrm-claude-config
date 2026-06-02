@@ -305,9 +305,35 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 
 ---
 
-## Checkpoint — 2026-05-20 (latest)
+## Checkpoint — 2026-05-20
 
 **Vừa hoàn thành:** Phase 17 — fix luồng thảo luận (pagination BE, totalCount, rating badge, sync khi thêm/xoá).
 **Đang làm dở:** Không.
 **Bước tiếp theo:** Test lại luồng thảo luận khoá học + lộ trình trên browser (pagination, badge rating, xoá comment).
 **Blocked:** `withValidator` grader-theo-essay vẫn comment out — cần clarify shape `exam_questions.type` trước khi unlock (low priority, không block production).
+
+---
+
+### Fix — Builder không load lại Kỹ năng (skill_id) khi sửa khoá học
+
+Lưu `skill_id` đã đúng (SubjectService::fillSubjectAttributes) nhưng endpoint `showBuilder` trả `SubjectDetailResource` thiếu field `skill_id`/`skill` → dropdown Kỹ năng rỗng khi mở form Sửa, dễ dính validate `skill_id required`.
+
+- [x] `Subject.php` — thêm relation `skill()` (belongsTo Skill)
+- [x] `SubjectService::getDetailForBuilder` — eager-load `'skill'`
+- [x] `SubjectController::showBuilder` (nhánh slug) — eager-load `'skill'`
+- [x] `SubjectDetailResource` — trả thêm `skill_id` + object `skill { id, name }`
+
+### Fix — Ẩn nút "Lưu nháp" khi khoá học đã phát hành
+
+Footer builder luôn hiện "Lưu nháp" ở mọi trường hợp sửa. Nghiệp vụ: khoá đã Hoạt động (1) hoặc Khoá (2) thì không cho đưa về nháp. Quyết định dựa trên trạng thái **gốc** lúc load (đổi dropdown trên form không làm nút hiện lại).
+
+- [x] `SubjectBuilderForm.vue` — thêm const `STATUS_LOCKED = 2`, state `originalStatus`
+- [x] `loadBuilder` — lưu `originalStatus` từ `data.status`
+- [x] `footerMenu` — `submit_and_draft = false` khi `originalStatus ∈ {1, 2}`; tạo mới / nháp (3) vẫn hiện
+
+## Checkpoint — 2026-06-01 (latest)
+
+**Vừa hoàn thành:** (1) Fix builder không load lại Kỹ năng khi sửa khoá học; (2) Ẩn nút "Lưu nháp" khi khoá đã Hoạt động/Khoá (theo trạng thái gốc).
+**Đang làm dở:** Không.
+**Bước tiếp theo:** Test trên browser: (a) mở Sửa khoá đã có kỹ năng → dropdown "Kỹ năng" hiển thị đúng; (b) mở Sửa khoá đang Hoạt động → không còn nút "Lưu nháp"; mở khoá Nháp / tạo mới → vẫn còn.
+**Blocked:** Không.
