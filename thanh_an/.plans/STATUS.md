@@ -13,6 +13,10 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Tab "Phụ lục liên quan" — Chi tiết hợp đồng** — Điền tab rỗng trong màn chi tiết/sửa HĐ bằng bảng phụ lục (STT, Mã PL, Loại PL, Trạng thái); mã PL click → chi tiết đúng loại, trạng thái badge màu. BE: thêm `annexes` + `annex_type_label` vào `ContractDetailResource`. (@khoipv) — 2026-06-03
+  - Spec: `docs/superpowers/specs/2026-06-03-contract-detail-related-annex-tab-design.md`
+  - Plan: `.plans/contract-detail-related-annex-tab/plan.md`
+
 - **Cột "Phụ lục liên quan" — Danh sách hợp đồng** — Thêm cột hiển thị mọi mã phụ lục của hợp đồng (mỗi mã 1 dòng, mọi trạng thái), click → chi tiết phụ lục đúng loại qua `ANNEX_TYPE_ROUTE_MAP`. BE: relation `Contract::annexes` + eager load + expose ở `ContractResource`. (@khoipv) — 2026-06-03
   - Spec: `docs/superpowers/specs/2026-06-02-contract-list-related-annex-column-design.md`
   - Plan: `.plans/contract-related-annex-column/plan.md`
