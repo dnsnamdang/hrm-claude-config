@@ -2,7 +2,7 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
-> Cập nhật lần cuối: 2026-05-29
+> Cập nhật lần cuối: 2026-06-03
 
 ## Đang làm
 
@@ -13,6 +13,10 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Cột "Phụ lục liên quan" — Danh sách hợp đồng** — Thêm cột hiển thị mọi mã phụ lục của hợp đồng (mỗi mã 1 dòng, mọi trạng thái), click → chi tiết phụ lục đúng loại qua `ANNEX_TYPE_ROUTE_MAP`. BE: relation `Contract::annexes` + eager load + expose ở `ContractResource`. (@khoipv) — 2026-06-03
+  - Spec: `docs/superpowers/specs/2026-06-02-contract-list-related-annex-column-design.md`
+  - Plan: `.plans/contract-related-annex-column/plan.md`
+
 - **Popup DT gom hàng hóa 4 phân hệ + quy đổi ĐVT** — Enhancement cho report-project-contract: popup chi tiết DT hiển thị tất cả HH từ DT/BG/Thầu/HĐ, thêm 3 cột SL quy đổi về ĐVT chính (@khoipv) — 2026-05-29
   - Spec: `docs/superpowers/specs/2026-05-29-lifecycle-detail-aggregate-products-design.md`
   - Plan: `.plans/report-project-contract/plan.md`
