@@ -238,3 +238,7 @@ Lỗi BE → đọc log tại:
 - Không tự sửa hàm dùng chung khi chưa được xác nhận
 - Không tự quyết định điều kiện `is_can_delete` — phải hỏi
 - Không tự thêm phân quyền theo cấp — phải hỏi
+
+---
+
+

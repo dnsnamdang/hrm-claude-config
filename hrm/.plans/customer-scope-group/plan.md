@@ -138,3 +138,14 @@ User chỉnh lại: **Nhóm LVKH là cha của Lĩnh vực (1-n)**; tạo Lĩnh 
 - [ ] (Cần click-through người dùng) Màn Nhóm: tạo/sửa/xem/xóa, khóa/mở khóa, import/export, validate inline
 - [ ] (Cần click-through) Ứng dụng: form chọn Nhóm + list/filter; Lĩnh vực: cột "Số nhóm" + chặn khóa/xóa
 - [ ] (Cần click-through) Dự án tiềm năng 2 luồng cascade + edit dự án cũ; Họp chọn ứng dụng→lĩnh vực
+
+---
+
+## Phase 11 — Testcase (Excel) — 2026-06-03
+
+### Testcase
+- [x] Tab mới "7.1 DM Nhóm LVKH" (ngay sau tab 7) — 72 TC đầy đủ: phân quyền, list (cột Số lĩnh vực), tìm kiếm/lọc, thêm/sửa (mã NLVKH.*), khóa/mở khóa + xóa theo lĩnh vực con, xem chi tiết, import/export, UI/UX, phân trang
+- [x] Sửa tab "7.DM Lĩnh vực khách hàng" (+8 TC, renumber liền mạch → 90): cột "Nhóm LVKH", filter theo Nhóm, modal có dropdown Nhóm cha (*) bắt buộc, load/đổi Nhóm khi sửa
+- [x] Sửa tab "12.Dự án TKT" (+6 TC → 138): cascade thêm cấp Nhóm LVKH → Lĩnh vực (2 chiều), reset con khi đổi Nhóm, validate bắt buộc, cột/filter Nhóm
+- [x] Tab "1.DM Ứng dụng": rà lại — đã dùng "Lĩnh vực khách hàng" đúng mô hình cuối (Ứng dụng↔Lĩnh vực n-n) → KHÔNG đổi
+- [x] Kỹ thuật: chỉnh sửa cấp XML (giữ nguyên 93 part comments/threaded-comment/ảnh byte-identical); backup `testcase.xlsx.bak`
