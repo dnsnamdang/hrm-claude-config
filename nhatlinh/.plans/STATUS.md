@@ -2,6 +2,11 @@
 
 ## Đang làm
 
+- product-catalog → @manhcuong → .plans/product-catalog/plan.md
+  Spec: docs/superpowers/specs/2026-06-03-product-catalog-design.md
+
+## Chờ
+
 - claude-config-repo → @manhcuong → .plans/claude-config-repo/plan.md
   Spec: docs/superpowers/specs/2026-05-16-claude-config-repo-design.md
 
