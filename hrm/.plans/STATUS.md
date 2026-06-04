@@ -98,6 +98,9 @@
 
 ## Hoàn thành
 
+- quotation-finalize → @khoipv → .plans/quotation-finalize/plan.md
+  Hoàn thành: 2026-06-04. 8 task (6 BE + 2 FE), verify browser PASS. Tab "Báo giá" màn assign/prospective-projects/{id}/manager: nút Chốt báo giá (Đã duyệt 4 → Trúng thầu 7) + Hủy chốt (7 → 4, bắt buộc lý do). Mỗi dự án 1 báo giá trúng thầu (BE chặn + báo lỗi nếu đã có). Nút chỉ hiện khi đúng trạng thái + isSaleOfProject. BE: +status 7, +2 history action, +finalize/unfinalize service, +2 route (không middleware/permission/migration — chỉ ghi history): Quotation.php, QuotationHistory.php, QuotationUnfinalizeRequest.php (mới), QuotationService.php, QuotationController.php, Routes/api.php. FE: ProspectiveProjectQuotationsTab.vue (2 icon-button + modal lý do hủy chốt validate inline). Spec: .plans/quotation-finalize/design.md
+
 - termination-filter-include-resigned → @khoipv → .plans/termination-filter-include-resigned/plan.md
   Hoàn thành: 2026-06-02. Dropdown "Nhân viên" màn decision/termination-labor-contract/index hiển thị cả người đã nghỉ việc (Hướng A: endpoint riêng `GET decision/termination-labor-contract/employee-options` trả toàn bộ employee_infos bất kể status; FE bind vào data local `employeeFilterOptions` thay vì state global). BE 2 file (controller method + route) + FE 1 file (index.vue). Không đụng state global lẫn hàm dùng chung. Spec: .plans/termination-filter-include-resigned/design.md
 
