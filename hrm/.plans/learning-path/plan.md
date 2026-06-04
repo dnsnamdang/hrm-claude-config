@@ -1919,3 +1919,42 @@ Verify:
 | 16  | `pages/training/learning-path/add.vue`       | Page wrapper tạo mới |
 | 17  | `pages/training/learning-path/_id/edit.vue`  | Page wrapper sửa     |
 | 18  | `pages/training/learning-path/_id/index.vue` | Page wrapper xem     |
+
+---
+
+### Fix — Detail không trả Kỹ năng (skill_id) khi sửa lộ trình
+
+Lưu `skill_id` đã đúng (LearningPathService + LearningPathRequest validate) nhưng endpoint `show` (`training/learning-paths/{id}`) trả `LearningPathDetailResource` thiếu `skill_id` → khi mở form Sửa, dropdown Kỹ năng rỗng, dễ dính validate `skill_id required`.
+
+- [x] `LearningPath.php` — thêm relation `skill()` (belongsTo Skill)
+- [x] `LearningPathController::show` — eager-load `'skill'`
+- [x] `LearningPathDetailResource` — trả thêm `skill_id` + `skill_name`
+
+#### Checkpoint — 2026-06-03
+**Vừa hoàn thành:** Fix detail lộ trình không trả `skill_id` (cùng pattern bug với subject/khoá học).
+**Bước tiếp theo:** Test browser: mở Sửa lộ trình đã có kỹ năng → dropdown "Kỹ năng" hiển thị đúng giá trị đã lưu.
+**Blocked:** Không.
+
+---
+
+### Rule — Lộ trình Public chỉ chứa khoá học Public
+
+Nghiệp vụ: LP Public chỉ được gắn khoá học (subject) Public; LP không Public thì gắn gì cũng được. Quyết định: **FE lọc** danh sách + **BE validate chặn lưu** (báo rõ khoá vi phạm). Khi LP đã có khoá private mà bật Public → chặn lưu, không tự xoá.
+
+**Backend:**
+- [x] `LearningPathRequest::withValidator` — nếu `is_public` true, query subjects, khoá nào `is_public=0/null` → add error key `subjects` (liệt kê code). FormRequest tự trả 422 (không bị controller catch thành 500).
+- [x] `LearningPathDetailResource` — subject sub-object trả thêm `is_public` (để FE edit nhận biết khoá đã thêm có public không).
+
+**Frontend (`learning-path/components/TabInfo.vue`):**
+- [x] computed `isPathPublic`, `violatingPublicSubjects`, `errorSubjectsMessage`; helper `isSubjectPublic`
+- [x] `filteredBank` — ẩn khoá không Public trong modal "Thêm khoá học" khi LP Public
+- [x] Banner cảnh báo đỏ trong builder khi LP Public còn chứa khoá chưa Public (liệt kê code) + hiển thị lỗi 422 từ BE
+- [x] Badge đỏ "Cần Public" trên từng dòng khoá vi phạm
+- [x] Ghi chú trong modal khi LP Public (chỉ hiện khoá Public)
+- [x] CSS `.badge-danger`, `.public-warning`
+- [x] Căn lại banner cảnh báo: `align-items: center` + `line-height` cho icon thẳng hàng với chữ
+
+#### Checkpoint — 2026-06-03
+**Vừa hoàn thành:** Rule LP Public chỉ chứa khoá Public (FE lọc + cảnh báo, BE validate 422) + căn lại banner cảnh báo.
+**Bước tiếp theo:** Test browser: (a) LP Public → modal chỉ hiện khoá Public; (b) LP có khoá private rồi bật Public → banner đỏ + badge "Cần Public", bấm Lưu bị chặn 422; (c) LP không Public → chọn gì cũng được.
+**Blocked:** Không.
