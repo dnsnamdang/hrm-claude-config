@@ -2,6 +2,18 @@
 
 ## Đang làm
 
+- elearning-home-need-to-learn → @khoipv → .plans/elearning-home-need-to-learn/plan.md
+  Trạng thái: CODE DONE (2026-06-04). Phase 1 BE + Phase 2 FE xong, lint + test runtime endpoint qua tinker PASS. Chờ user verify browser (Phase 3).
+  Spec: .plans/elearning-home-need-to-learn/design.md
+  Scope: Section "Bạn cần học" trang chủ elearning (3001) lấy data thật (khóa học + lộ trình, trộn, tối đa 4, mới nhất trước). Khách=public, nhân viên HRM=đang dùng. BE 1 endpoint mới (public/home-content + optional auth, tái dùng SubjectBrowseResource + LearningPathBrowseResource) + FE 3 file (stores/elearning.js + HomeView.vue + LearnCard.vue mở rộng type='path'). Cùng quy tắc visibility với elearning-learning-path-visibility.
+  Checkpoint: 2026-06-04 — Data thực: guest=0 khóa public+2 lộ trình public; employee=27 khóa+5 lộ trình (top 4). Phase 4: fix bug thời lượng — 2 resource dùng chung (SubjectBrowseResource + LearningPathBrowseResource) trước cộng ceil(duration/60) từng bài → phồng (NPK 30s→3 phút); sửa cộng tổng giây rồi mới quy đổi + thêm field duration_seconds, card dùng formatLessonDuration (mm:ss) khớp trang chi tiết. Ảnh hưởng cả màn list /lo-trinh-hoc-tap, /khoa-hoc (số liệu chính xác hơn). Bước tiếp: user chạy elearning verify khách vs SSO HRM + thời lượng card + click card điều hướng.
+
+- skills-v2-redesign → @khoipv → .plans/skills-v2-redesign/plan.md
+  Trạng thái: CODE DONE (2026-06-03, 2 file FE). Chờ user verify browser (Task 3).
+  Spec: docs/superpowers/specs/2026-06-03-skills-v2-redesign-design.md | Plan: docs/superpowers/plans/2026-06-03-skills-v2-redesign.md
+  Scope: CHỈ FE hrm-client. Đổi giao diện màn training/skills cho giống learning-path (V2BaseFilterPanel + V2BaseDataTable + BaseConfirmModal), gộp cột, toggle khóa inline. Giữ modal thêm/sửa (restyle V2 + validate inline), giữ Excel/In/Lịch sử/Khóa. Không đổi BE/API/permission. Giữ tham số & shape response API cũ.
+  Checkpoint: 2026-06-03 — Rewrite index.vue + add_skill_modal.vue xong, review prop/slot V2 đạt (không lỗi runtime). Bước tiếp: user chạy npm run dev + duyệt browser theo Task 3.
+
 - project-implementation-types → @dnsnamdang → .plans/project-implementation-types/plan.md
   Trạng thái: Phase A+B done. Phase C đã pivot sang quotation-redesign. Branch `tpe-develop-assign`.
   Checkpoint: 2026-05-27 — Phase C scope mở rộng → tách thành feature riêng quotation-redesign.
