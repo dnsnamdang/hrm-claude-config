@@ -39,6 +39,15 @@ Owner: @junfoke · Bắt đầu: 2026-06-02
 
 Quyết định với user: tài liệu/bài viết = pause + overlay xác nhận; video = cho tua nhanh tính giây-video thật. Video tab-switch không cần overlay (YouTube tự pause, người dùng tự nhận biết).
 
+## Phase 7 — Fix loop heartbeat 1s/lần (phát hiện khi test)
+
+- [x] FE-7.1: `handleProgress` đổi flush-khi-đạt-ngưỡng sang **edge-triggered** (`thresholdFlushedFor`): chỉ flush 1 lần đúng lúc VỪA vượt ngưỡng, thay vì flush mỗi tick khi đã ≥ ngưỡng mà bài chưa/không done → trước đó gây loop heartbeat 1 giây/lần.
+
+## Phase 8 — Fix "Tiếp tục học" vào sai bài (phát hiện khi test)
+
+- [x] FE-8.1: `learningSession` store thêm action `resumeLessonId()` — chọn bài tiếp tục: (1) bài `learning` chưa khoá mới nhất → (2) bài chưa xong đầu tiên chưa khoá → (3) fallback `firstUnlockedId`
+- [x] FE-8.2: `SubjectLearnView.vue` onMounted khi không có `lessonId` trên URL → dùng `resumeLessonId()` thay `firstUnlockedId()`. Bug: nhấn "Tiếp tục học" (chỉ push slug, không kèm lessonId) luôn mở bài đầu thay vì bài đang học dở.
+
 ## Verify
 
 - [ ] Test browser: video 3:12 hiện đúng; play thật mới tăng %, pause thì dừng; đạt ngưỡng config → "Đã xong"; tài liệu/bài viết đếm giây + done theo config; đổi bài/đóng tab không mất tiến độ
@@ -54,3 +63,14 @@ Vừa hoàn thành: CODE DONE cả 4 phase (8 file: 1 BE + 7 FE).
 Đang làm dở: Không. Chờ verify trên browser (trong Docker, Node ≥18).
 Bước tiếp theo: User chạy/refresh dev server elearning + test theo mục Verify; nếu PASS → wrap up (fill spec chi tiết) + merge.
 Blocked: Không build/lint local được do Node local = 14, Vite 5 cần ≥18 (chạy trong container).
+
+### Checkpoint — 2026-06-03
+
+Vừa hoàn thành: Phase 8 — fix nút "Tiếp tục học" vào sai bài (2 file FE).
+- `stores/learningSession.js`: thêm action `resumeLessonId()` (ưu tiên bài đang học chưa khoá mới nhất → bài chưa xong đầu tiên → fallback `firstUnlockedId`).
+- `views/subject/SubjectLearnView.vue`: onMounted khi URL không có `lessonId` → dùng `resumeLessonId()` thay `firstUnlockedId()`.
+- Nguyên nhân: `handleStartLearn()` chỉ push route kèm `slug`, không kèm `lessonId` → view luôn mở bài mở đầu tiên.
+
+Đang làm dở: Không.
+Bước tiếp theo: Verify trên browser — vào khoá đang học dở (vd 83%) → nhấn "Tiếp tục học" → phải mở đúng bài đang học, không về bài đầu. Logic dựa vào field `status` từng lesson từ API `/subjects/{slug}/learn`.
+Blocked: Không build/lint local được (Node local = 14, Vite 5 cần ≥18 — chạy trong Docker).

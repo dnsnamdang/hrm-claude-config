@@ -13,6 +13,26 @@
   Spec: docs/superpowers/specs/2026-06-03-skills-v2-redesign-design.md | Plan: docs/superpowers/plans/2026-06-03-skills-v2-redesign.md
   Scope: CHỈ FE hrm-client. Đổi giao diện màn training/skills cho giống learning-path (V2BaseFilterPanel + V2BaseDataTable + BaseConfirmModal), gộp cột, toggle khóa inline. Giữ modal thêm/sửa (restyle V2 + validate inline), giữ Excel/In/Lịch sử/Khóa. Không đổi BE/API/permission. Giữ tham số & shape response API cũ.
   Checkpoint: 2026-06-03 — Rewrite index.vue + add_skill_modal.vue xong, review prop/slot V2 đạt (không lỗi runtime). Bước tiếp: user chạy npm run dev + duyệt browser theo Task 3.
+- elearning-completion-criteria → @junfoke → .plans/elearning-completion-criteria/plan.md
+  Trạng thái: CODE DONE Hướng A + SCORM viewed (+min giây mở) + Hướng B (2026-06-04). Chờ user rebuild + verify browser. KHÔNG migration.
+  Spec: docs/superpowers/specs/2026-06-04-elearning-completion-criteria-enforcement-design.md
+  Scope: Khớp form cấu hình tiêu chí hoàn thành với enforcement thật. (A) Form tạo bài text/file thêm "Min thời gian đọc (giây)" (trường BE thực dùng), gắn nhãn "(chưa áp dụng)" cho field % + các tiêu chí scroll/dwell/seek/active-tab/allow-download chưa enforce (giữ, vẫn nhập được). (B) SCORM thêm option viewed (mở là xong, cho gói content single-page; đã bỏ browsed sau test vì browse-mode gần như không xảy ra) + sửa completionHint màn học cho viewed. 6 file, KHÔNG migration. Hướng B (implement scroll/dwell/seek-block...) để sau. Tiếp nối elearning-tracking-fix + scorm-lms-runtime.
+
+- elearning-sequential-lock → @junfoke → .plans/elearning-sequential-lock/plan.md
+  Trạng thái: CODE DONE (2026-06-03). Chờ verify browser trong Docker (Node ≥18).
+  Scope: Fix khoá bài học khi vào học. (1) Khoá "Học tuần tự" (subjects.linear_required) không enforce → tạo LessonLockResolver (nguồn chân lý chung BE), transformer + service dùng chung. (2) Prerequisite ALL/ANY trên từng bài (đã có sẵn, dọn về resolver). (3) Defense-in-depth: chặn heartbeat/scorm-commit bài đang khoá (423). (4) FE: disable click bài khoá + disable nút Trước/Sau (hasPrev/hasNext) + sửa badge tiền ĐK. (5) Fix bài kế không mở khi hoàn thành (phải F5) → recomputeLocks() client mirror resolver, gọi trong handleHeartbeatResponse. Tiếp nối learning-session-api + elearning-tracking-fix.
+
+- elearning-learning-path-seamless → @junfoke → .plans/elearning-learning-path-seamless/plan.md
+  Trạng thái: CODE DONE (2026-06-03, 13/13 task / 6 phase, subagent-driven). BE 5 file + FE 8 file. Không migration. Chờ user verify browser (Docker Node ≥18) 8 kịch bản.
+  Spec: docs/superpowers/specs/2026-06-03-elearning-learning-path-seamless-design.md
+  Plan: docs/superpowers/plans/2026-06-03-elearning-learning-path-seamless.md
+  Scope: Học liền mạch lộ trình — context ?lp trong màn học, Quay lại về lộ trình, resume xuyên khoá, lock cấp khoá (linear_required), modal 3 biến thể (khoá tiếp theo / hoàn thành lộ trình / khoá lẻ), chứng chỉ lộ trình (mirror cert khoá, không migration). Tiếp nối elearning-learning-path-detail (đã fix Phase 10: trạng thái bài + % trung bình khoá + nút Vào học/Tiếp tục học).
+
+- elearning-course-completion → @junfoke → .plans/elearning-course-completion/plan.md
+  Trạng thái: CODE DONE (13/13 task, 4 phase — 2026-06-03). Chờ verify browser trong Docker (Node ≥18).
+  Spec: docs/superpowers/specs/2026-06-03-elearning-course-completion-design.md
+  Plan: docs/superpowers/plans/2026-06-03-elearning-course-completion.md
+  Checkpoint: 2026-06-03 — Implement xong qua subagent-driven. BE 4 file (CertificateService + CertificateController + route /subjects/{slug}/certificate + certificate_enabled vào LearningSessionResource). FE 9 file: store certificate.js, CertificateView+CertificateCanvas+route /certificate/:slug+print CSS, courseCompletionSignal trong learningSession, CourseCompleteModal tích hợp SubjectLearnView, map certificateEnabled (subjectDetail), DetailEnrollCard đổi "Chứng nhận"→"Chứng chỉ"+nút "Xem lại nội dung", ContentDetailView nối router, nút "Chứng chỉ" sidebar màn học. Phương án A (endpoint riêng), chứng chỉ render web in qua window.print. Bước tiếp: user chạy dev server Docker → verify 4 kịch bản (100%→modal; có cert→in được; không cert→khám phá/xem lại; vào thẳng /certificate chưa xong→403). Defer: nút cert ở My Learning, PDF/email BE, QR, cert cho LearningPath.
 
 - project-implementation-types → @dnsnamdang → .plans/project-implementation-types/plan.md
   Trạng thái: Phase A+B done. Phase C đã pivot sang quotation-redesign. Branch `tpe-develop-assign`.
@@ -67,9 +87,9 @@
   Scope: BE (migration + model + service + controller + route) + FE (store + composable + placeholder page + button update)
 
 - elearning-learning-path-detail → @junfoke → .plans/elearning-learning-path-detail/plan.md
-  Trạng thái: Code DONE (38/38 task, 9 phases). Đã migrate. Chờ test full flow trên browser.
+  Trạng thái: Code DONE (70 task, 11 phases). Đã migrate. Chờ verify browser (Docker, Node ≥18).
   Spec: docs/superpowers/specs/2026-05-19-elearning-learning-path-detail-design.md
-  Checkpoint: 2026-05-20 — Phase 9: UI polish — header compact (giảm padding/logo/button/font), trang thảo luận thêm context banner + rating summary (điểm TB + bar chart) + filter bình luận theo sao (BE+FE), refactor views/ theo folder chức năng (home/, learning-path/, subject/). Bước tiếp: test rating summary + filter sao + kiểm tra trang chi tiết LP vẫn OK.
+  Checkpoint: 2026-06-03 (6) — Phase 11: hiển thị cấp Chương (learner PathOutline + builder TabInfo, BE trả chapters[]/loose_lessons + chapter_id), quy đổi giờ-phút toàn bộ (helper formatMinutes), badge tổng "X khoá/chương • Y bài • giờ-phút" + gộp nút "Mở tất cả", fix trạng thái bài/chương màn chi tiết môn (BE đính learn_status từ EnrollmentLessonProgress + FE deriveChapterStatus), placeholder overview "Chưa có thông tin". Bước tiếp: verify browser 4 điểm (chương→bài+thời lượng, builder hiện chương, bài xong hiện "Đã xong"/chương "Đạt", overview rỗng placeholder). Defer: status chương exam chưa tính kết quả thi.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
   Trạng thái: Phase 30 CODE DONE. Branch `tpe-develop-assign`.
@@ -200,6 +220,7 @@
   Hoàn thành: 2026-04-25. 7/7 task. Gộp hồ sơ trình duyệt hạng mục vào tab Hồ sơ giải pháp. BE: mở rộng `getSolutionReviewProfiles()` merge 2 query (solution + module) + manual paginate + transform + auto-force type theo filter. FE: 3 filter mới (Loại/Hạng mục/Version HM) + 2 cột mới + deep watcher auto-search + row actions phân loại + tích hợp `ModuleApprovalModal` để PM duyệt hồ sơ hạng mục. Lọc bỏ draft. Spec: docs/superpowers/specs/2026-04-25-merge-module-review-profiles-design.md
 - scorm-upload → @khoipv → .plans/scorm-upload/plan.md
   Hoàn thành: 2026-04-22. 14/14 task. Spec: docs/superpowers/specs/2026-04-22-scorm-upload-design.md. BE: `CmcS3Helper::putLocalFile` + `UploadScormRequest` + `LessonService::handleScormUpload` (ZipArchive extract → parseScormManifest → upload S3 recursive với MIME chuẩn → cleanup tmp) + Controller `uploadScorm` + route `POST /training/lessons/upload-scorm`. FE: `LessonForm.vue` block SCORM thêm `V2BaseFile(.zip)` + spinner + info card + `onUploadScormZip` / `clearScormPackage`; submit type=4 gửi thêm `package_path / package_title / file_size / file_name`. Giới hạn 1GB, 2000 files. Known issue pending: cross-origin SCORM API (S3 ≠ LMS domain) — để lại cho feature sau `scorm-lms-runtime`.
+  Phase 4 fix (2026-06-02, @junfoke): (4.1-4.3) parser manifest robust — dò identifierref đệ quy qua item lồng nhau + xml:base + fallback quét đệ quy → hết 422 với gói SCORM.com "Randomized Testing"; (4.4) launch URL đổi path-style → virtual-hosted (tanphat.s3.cloud.cmctelecom.vn/<key>) → hết 403 AccessDenied khi preview qua /scorm-proxy; (4.5) bỏ default scorm_min_score=60 → null (gói nội dung không chấm điểm vẫn hoàn thành) + hint UI; (4.6) prune tracking_completion khi submit chỉ giữ key đúng loại bài. Lesson tạo trước fix cần gỡ gói + tải lại rồi lưu lại.
 - ke-toan-module-scaffold → @manhcuong → .plans/ke-toan-module-scaffold/plan.md
   Hoàn thành: 2026-04-22. Scaffold phân hệ Kế toán (module mới). BE `Modules/Accounting/` đầy đủ structure + `module.json` + `composer.json` + `AccountingServiceProvider` + `RouteServiceProvider` + `Routes/api.php` (`GET /dashboard`) + `DashboardController` + đăng ký `modules_statuses.json`. FE: layout riêng `layouts/accounting.vue` + sidebar `accounting-components/accounting-slidebar.vue` + topbar `AccountingMenu.vue` (dùng `<BasicSubsystem />`) + `custom-accounting.scss` + `icon_ke_toan.svg` placeholder + Vuex flag `is_use_accounting` (master-setting `use_accounting`) + checkbox "Sử dụng kế toán" tại `/timesheet/setting/setting-master` + tile `BasicSubsystem.vue`/`pages/index.vue` + `pages/accounting/index.vue`+`dashboard.vue`. Tài liệu tổng quan: `docs/accounting.md`. Spec: `docs/superpowers/specs/2026-04-21-ke-toan-module-scaffold-design.md`.
 - overdue-task-unified-predicate → @manhcuong → .plans/overdue-task-unified-predicate/plan.md
