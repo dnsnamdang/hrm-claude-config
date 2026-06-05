@@ -934,6 +934,41 @@ git -C D:/laragon/www/hrm/hrm-client commit -m "feat(human): them nut Lich su tr
 
 ---
 
+## Task 8 (bugfix): "Ngày cập nhật" ở danh sách lấy sai
+
+**Triệu chứng:** Cột "Ngày cập nhật" trên màn `human/employee` hiển thị sai ngày.
+
+**Nguyên nhân:** Trong query danh sách (`EmployeeService::getList...`), `select` liệt kê `employees.updated_at`/`employees.created_at` **trước** `employee_infos.*`. Do `employee_infos.*` cũng chứa cột `updated_at`/`created_at` trùng tên nên Eloquent lấy cột sau cùng → `$data->updated_at` thực chất là `employee_infos.updated_at`, không đúng chủ đích. Theo yêu cầu, "Ngày cập nhật" nên phản ánh **lần thay đổi gần nhất trong lịch sử tài khoản** (`employee_history`).
+
+**Files:**
+- Modify: `hrm-api/Modules/Human/Services/EmployeeService.php` — thêm subquery `last_changed_at = MAX(employee_history.changed_at)` vào select danh sách
+- Modify: `hrm-api/Modules/Human/Transformers/EmployeeResource/EmployeeListResource.php` — `updated_at` map từ `last_changed_at`, fallback `updated_at` cũ khi nhân viên chưa có lịch sử
+
+- [x] **Step 1:** Thêm subquery `last_changed_at` vào `select` của hàm danh sách trong `EmployeeService.php`
+- [x] **Step 2:** Sửa `EmployeeListResource.php` dùng `$data->last_changed_at ?? $data->updated_at`
+- [ ] **Step 3 (verify thủ công):** Mở `human/employee`, đổi 1 thông tin tài khoản (vd trạng thái) → cột "Ngày cập nhật" của dòng đó cập nhật đúng theo thời điểm vừa thay đổi (khớp dòng mới nhất trong modal Lịch sử). Nhân viên chưa có lịch sử → vẫn hiển thị ngày cũ, không trống.
+
+---
+
+## Task 9: Bộ lọc trong popup Lịch sử thay đổi
+
+**Yêu cầu:** Thêm lọc trong modal lịch sử: Trường chỉnh sửa, Người thực hiện (kể cả nhân viên đã nghỉ việc), Từ ngày, Đến ngày.
+
+**Cách làm:** Lọc **client-side** (modal đã load toàn bộ lịch sử 1 nhân viên một lần). BE bổ sung 2 field vào response `formatHistories` để lọc ổn định.
+
+**Files:**
+- Modify: `hrm-api/Modules/Human/Http/Controllers/Api/V1/EmployeeController.php` — `formatHistories()` trả thêm `changed_by` (id) + `changed_at_raw` (Y-m-d)
+- Modify: `hrm-client/pages/human/employee/components/EmployeeHistoryModal.vue` — filter bar (4 control) + computed `fieldOptions`/`performerOptions`/`filteredHistory`/`hasActiveFilter` + `itemMatchesField`/`resetFilters`
+
+- [x] **Step 1 (BE):** Thêm `changed_by` + `changed_at_raw` vào `formatHistories()`. Người thực hiện đã nghỉ việc vẫn resolve được tên (tài khoản không xóa cứng) và xuất hiện trong dropdown vì options gom từ chính lịch sử.
+- [x] **Step 2 (FE):** Filter bar dùng đồng bộ V2Base: `V2BaseLabel` + `V2BaseSelect` (trường, người thực hiện) + `V2BaseDatePicker` (từ/đến ngày) + `V2BaseButton` Tìm kiếm (primary, `ri-search-line`) / Làm mới (tertiary, `ri-refresh-line`).
+- [x] **Step 3 (FE):** Apply-on-click: `filters` (nháp) ↔ `appliedFilters` (driving filter). Logic: người thực hiện theo `changed_by` (so String); trường theo `itemMatchesField` (change_status→status, update→khớp change, create→không khớp trường cụ thể); ngày so sánh `changed_at_raw` (string YYYY-MM-DD).
+- [x] **Step 4 (FE):** State rỗng riêng khi lọc không ra kết quả; "Làm mới" reset cả filters + appliedFilters; reset filter mỗi lần mở modal.
+- [x] **Step 4b (FE):** Filter bar đặt trong `b-collapse` (mặc định đóng), nút toggle "Bộ lọc" (`V2BaseButton secondary`, `ri-filter-3-line`); reset `showFilter=false` mỗi lần mở modal.
+- [ ] **Step 5 (verify thủ công):** Mở modal 1 tài khoản có nhiều lịch sử. Test: lọc theo từng trường (Email/Trạng thái/Công ty/Địa điểm/Mật khẩu), theo người thực hiện (gồm người đã nghỉ việc), theo khoảng ngày; kết hợp nhiều điều kiện; nút Xóa lọc.
+
+---
+
 ## Self-Review checklist (đã rà)
 
 - **Spec coverage:** Migration+entity (Task 1) ✓; ghi create bao phủ cả luồng auto-tạo từ hồ sơ (Task 2, vì cùng đi qua `createEmployee`) ✓; update/change_status (Task 3) ✓; updateStatus (Task 4) ✓; endpoint + resolve ID→tên (Task 5) ✓; modal + nút danh sách (Task 6–7) ✓; mật khẩu chỉ cờ, không lưu giá trị (Task 2 snapshot + Task 6 hiển thị) ✓.
