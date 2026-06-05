@@ -118,6 +118,9 @@
 
 ## Hoàn thành
 
+- meeting-bien-ban-phuong-an-xu-ly → @khoipv → .plans/meeting-bien-ban-phuong-an-xu-ly/plan.md
+  Hoàn thành: 2026-06-05. Verify browser PASS. Thêm cột text "Phương án xử lý" (solution, nullable) vào biên bản cuộc họp màn assign/meeting create/edit, sau cột Nội dung. Đồng bộ 3 nơi: màn nhập (grid Nội dung 3/Phương án 2), Excel export (5→6 cột A:F), màn in (blade meeting_record fill td solution). BE: migration cột solution + fillable MeetingReport (syncReports/Resource không sửa) + rule nullable 2 request. Không bắt buộc nhập. 6 task / 6 file. Spec: .plans/meeting-bien-ban-phuong-an-xu-ly/design.md
+
 - copy-form-template → @khoipv → .plans/copy-form-template/plan.md
   Hoàn thành: 2026-06-05. Verify browser PASS. Nút "Sao chép" ở list assign/form-templates → vào form Tạo mới đã prefill từ mẫu gốc (Hướng A). Tên + Nhóm ngành (scope_id) giữ nguyên; Nhóm giải pháp (industry_id) để trống (chọn lại); status=Nháp; Section sao chép 100% giữ position. Câu hỏi application_scope=1 (Tất cả)→CLONE, =2 (Theo nhóm giải pháp)→BỎ QUA (tra qua survey_question_id→SurveyQuestion). BE 3 file: +1 route copy-data + controller method + service prepareCopyData + CopyFormTemplatesResource. FE 2 file: +action copy (index.vue) + nhánh prefill ?copyFrom (add.vue). Dùng chung quyền "Quản lý danh mục mẫu phiếu thu thập thông tin", KHÔNG migration, KHÔNG sửa transformer dùng chung. Spec: docs/superpowers/specs/2026-06-05-copy-form-template-design.md | Design: .plans/copy-form-template/design.md
 
