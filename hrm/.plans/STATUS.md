@@ -118,6 +118,9 @@
 
 ## Hoàn thành
 
+- meeting-list-permission → @khoipv → .plans/meeting-list-permission/plan.md
+  Hoàn thành: 2026-06-05. Verify browser PASS. Phân quyền xem danh sách màn assign/meeting theo 4 cấp (tổng cty/cty/phòng/bộ phận) như màn giải pháp — dùng checkPermissionList + OR own/participant (company_members type=1). Thêm 4 permission (id 1095-1098, group 'Quản lý meeting'). Gán company_id/department_id/part_id khi store (KHÔNG backfill, KHÔNG đụng update). FE filter động theo hasAPermission. BE 4 file + FE 1 file, không migration. T1-T5. Spec: .plans/meeting-list-permission/design.md
+
 - meeting-bien-ban-phuong-an-xu-ly → @khoipv → .plans/meeting-bien-ban-phuong-an-xu-ly/plan.md
   Hoàn thành: 2026-06-05. Verify browser PASS. Thêm cột text "Phương án xử lý" (solution, nullable) vào biên bản cuộc họp màn assign/meeting create/edit, sau cột Nội dung. Đồng bộ 3 nơi: màn nhập (grid Nội dung 3/Phương án 2), Excel export (5→6 cột A:F), màn in (blade meeting_record fill td solution). BE: migration cột solution + fillable MeetingReport (syncReports/Resource không sửa) + rule nullable 2 request. Không bắt buộc nhập. 6 task / 6 file. Spec: .plans/meeting-bien-ban-phuong-an-xu-ly/design.md
 
