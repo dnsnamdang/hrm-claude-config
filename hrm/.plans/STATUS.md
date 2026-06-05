@@ -2,6 +2,11 @@
 
 ## Đang làm
 
+- copy-form-template → @khoipv → .plans/copy-form-template/plan.md
+  Trạng thái: CODE DONE (2026-06-05). BE 3 file (service + controller + route) + FE 2 file (index.vue + add.vue). php -l PASS, tinker verify logic lọc OK. Chờ user verify browser 5 kịch bản. KHÔNG migration, KHÔNG sửa transformer dùng chung.
+  Spec: docs/superpowers/specs/2026-06-05-copy-form-template-design.md | Design: .plans/copy-form-template/design.md
+  Scope: Thêm nút "Sao chép" ở list assign/form-templates → vào form Tạo mới đã prefill từ mẫu gốc (Hướng A). Tên + Nhóm ngành (scope_id) giữ nguyên; Nhóm giải pháp (industry_id) để trống (chọn lại); status=Nháp; Section sao chép 100% giữ position. Câu hỏi application_scope=1 (Tất cả)→CLONE, =2 (Theo nhóm giải pháp)→BỎ QUA (tra qua survey_question_id→SurveyQuestion). BE: +1 route copy-data + controller method + service prepareCopyData + CopyFormTemplatesResource. FE: +action copy (index.vue) + nhánh prefill ?copyFrom (add.vue). Dùng chung quyền "Quản lý danh mục mẫu phiếu thu thập thông tin", không migration, không sửa transformer dùng chung.
+
 - elearning-home-need-to-learn → @khoipv → .plans/elearning-home-need-to-learn/plan.md
   Trạng thái: CODE DONE (2026-06-04). Phase 1 BE + Phase 2 FE xong, lint + test runtime endpoint qua tinker PASS. Chờ user verify browser (Phase 3).
   Spec: .plans/elearning-home-need-to-learn/design.md
