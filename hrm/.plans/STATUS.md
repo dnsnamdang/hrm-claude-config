@@ -2,6 +2,13 @@
 
 ## Đang làm
 
+- form-templates-print → @khoipv → .plans/form-templates-print/plan.md
+  Trạng thái: CODE DONE (2026-06-06, subagent-driven Opus 4.8, 3 file FE). Chờ user verify browser (Task 4).
+  Spec: .plans/form-templates-print/design.md
+  Scope: CHỈ FE hrm-client. In mẫu phiếu bản TRỐNG từ màn assign/form-templates (nút ở list cạnh "Sửa" mọi trạng thái + màn chi tiết), modal preview + window.print. Component RIÊNG components/FormTemplatePrintSheet.vue (copy layout SurveyPrintSheet, KHÔNG sửa file dùng chung). Header: bỏ Giai đoạn dự án/Ứng dụng/Địa chỉ, thêm "Ngày khảo sát" trước "Người khảo sát"; Nhóm ngành+Nhóm giải pháp điền từ template, còn lại (Tên KH/Tên DA/Mã DA/Phân loại) để trống. Bảng đổi cột "Thông tin thu thập"→"Đáp án/giá trị thu thập cho tôi", cột đáp án để trống hoàn toàn. KHÔNG BE/permission/migration.
+  File: components/FormTemplatePrintSheet.vue (mới), pages/assign/form-templates/_id/index.vue + index.vue (sửa). Quy ước: ref=printSheet, method=handlePrint. List page fetch GET assign/form-templates/{id} lấy sections trước khi mở modal.
+  Checkpoint: 2026-06-06 — Implement xong 3 task qua 2 vòng review/task (spec+quality) đều Approved. Bước tiếp: user chạy npm run dev verify (chi tiết + danh sách + edge cases). Note: số "1.1" hiện 2 lần ở dòng câu hỏi con là theo layout SurveyPrintSheet (gỡ được nếu muốn).
+
 - elearning-home-need-to-learn → @khoipv → .plans/elearning-home-need-to-learn/plan.md
   Trạng thái: CODE DONE (2026-06-04). Phase 1 BE + Phase 2 FE xong, lint + test runtime endpoint qua tinker PASS. Chờ user verify browser (Phase 3).
   Spec: .plans/elearning-home-need-to-learn/design.md
