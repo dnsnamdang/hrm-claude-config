@@ -118,6 +118,12 @@
 
 ## Hoàn thành
 
+- fix-employee-avatar-missing → @khoipv → .plans/fix-employee-avatar-missing/plan.md
+  Hoàn thành: 2026-06-06. Bước 1 (chặn bug) + Bước 2/3 (khôi phục) XONG. Root cause: sync mặt (`ConnInfoService`/`RiceConnInfoService::deleteS3ByUrl`) xóa nhầm file avatar vì `face_image_url` = URL avatar khi tạo nhân sự có face_recognition (`EmployeeInfoService:779`). Fix: thêm guard không xóa nếu URL đang là `employee_infos.image` (2 file BE, lint PASS). Khôi phục: set image=face_image_url cho 56 nhân sự (query builder, bỏ qua sync ERP), verify 56/56 OK. CÒN LẠI: nhóm cũ path-style mất ~77% không có face_image_url → cần upload tay/ERP. LƯU Ý: fix BE mới ở local, cần deploy production.
+
+- accept-personnel-seniority-manual → @khoipv → .plans/accept-personnel-seniority-manual/plan.md
+  Hoàn thành: 2026-06-06. Verify browser PASS. CHỈ FE hrm-client. Cho nhập tay Số tháng + Số tiền lương thâm niên khi human/settings = "Không dùng định biên" (using_manpower=false) ở 3 màn quyết định. Phase 1 accept-personnel (FormComponent.vue + add.vue): số tiền text tĩnh, nhập độc lập. Phase 2 salary-change (CurrentIncomeComponent.vue khối "new" + add.vue): dùng định biên giữ auto-tính số tiền (newSeniorityPay = p1×tang_tham_nien×floor(tháng/12)), không định biên nhập tay độc lập. Phase 3 transfer-personnel (CurrentIncomeComponent.vue khối "new" + add.vue): giống accept-personnel (số tiền text tĩnh). Mirror pattern P1/P2/P3 (v-if isUsingManpower text / v-else input + required + helper-error). BE không đổi cả 3 màn (lưu thẳng, không recompute). Show/approve readonly (addDisabledToElement). T1-T15. Spec: .plans/accept-personnel-seniority-manual/design.md
+
 - form-templates-print → @khoipv → .plans/form-templates-print/plan.md
   Hoàn thành: 2026-06-06. Verify browser PASS. CHỈ FE hrm-client. In mẫu phiếu bản TRỐNG từ màn assign/form-templates (nút ở list cạnh "Sửa" mọi trạng thái + màn chi tiết), modal preview + window.print. Component RIÊNG components/FormTemplatePrintSheet.vue (copy layout SurveyPrintSheet, KHÔNG sửa file dùng chung). Header: bỏ Giai đoạn dự án/Ứng dụng/Địa chỉ, thêm "Ngày khảo sát" trước "Người khảo sát"; Nhóm ngành+Nhóm giải pháp điền từ template, còn lại (Tên KH/Tên DA/Mã DA/Phân loại) để trống. Bảng đổi cột "Thông tin thu thập"→"Đáp án/giá trị thu thập cho tôi", cột đáp án để trống hoàn toàn. KHÔNG BE/permission/migration. File: components/FormTemplatePrintSheet.vue (mới), pages/assign/form-templates/_id/index.vue + index.vue (sửa). Quy ước: ref=printSheet, method=handlePrint. Spec: .plans/form-templates-print/design.md
 
