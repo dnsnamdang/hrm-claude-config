@@ -2,13 +2,6 @@
 
 ## Đang làm
 
-- form-templates-print → @khoipv → .plans/form-templates-print/plan.md
-  Trạng thái: CODE DONE (2026-06-06, subagent-driven Opus 4.8, 3 file FE). Chờ user verify browser (Task 4).
-  Spec: .plans/form-templates-print/design.md
-  Scope: CHỈ FE hrm-client. In mẫu phiếu bản TRỐNG từ màn assign/form-templates (nút ở list cạnh "Sửa" mọi trạng thái + màn chi tiết), modal preview + window.print. Component RIÊNG components/FormTemplatePrintSheet.vue (copy layout SurveyPrintSheet, KHÔNG sửa file dùng chung). Header: bỏ Giai đoạn dự án/Ứng dụng/Địa chỉ, thêm "Ngày khảo sát" trước "Người khảo sát"; Nhóm ngành+Nhóm giải pháp điền từ template, còn lại (Tên KH/Tên DA/Mã DA/Phân loại) để trống. Bảng đổi cột "Thông tin thu thập"→"Đáp án/giá trị thu thập cho tôi", cột đáp án để trống hoàn toàn. KHÔNG BE/permission/migration.
-  File: components/FormTemplatePrintSheet.vue (mới), pages/assign/form-templates/_id/index.vue + index.vue (sửa). Quy ước: ref=printSheet, method=handlePrint. List page fetch GET assign/form-templates/{id} lấy sections trước khi mở modal.
-  Checkpoint: 2026-06-06 — Implement xong 3 task qua 2 vòng review/task (spec+quality) đều Approved. Bước tiếp: user chạy npm run dev verify (chi tiết + danh sách + edge cases). Note: số "1.1" hiện 2 lần ở dòng câu hỏi con là theo layout SurveyPrintSheet (gỡ được nếu muốn).
-
 - elearning-home-need-to-learn → @khoipv → .plans/elearning-home-need-to-learn/plan.md
   Trạng thái: CODE DONE (2026-06-04). Phase 1 BE + Phase 2 FE xong, lint + test runtime endpoint qua tinker PASS. Chờ user verify browser (Phase 3).
   Spec: .plans/elearning-home-need-to-learn/design.md
@@ -124,6 +117,9 @@
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- form-templates-print → @khoipv → .plans/form-templates-print/plan.md
+  Hoàn thành: 2026-06-06. Verify browser PASS. CHỈ FE hrm-client. In mẫu phiếu bản TRỐNG từ màn assign/form-templates (nút ở list cạnh "Sửa" mọi trạng thái + màn chi tiết), modal preview + window.print. Component RIÊNG components/FormTemplatePrintSheet.vue (copy layout SurveyPrintSheet, KHÔNG sửa file dùng chung). Header: bỏ Giai đoạn dự án/Ứng dụng/Địa chỉ, thêm "Ngày khảo sát" trước "Người khảo sát"; Nhóm ngành+Nhóm giải pháp điền từ template, còn lại (Tên KH/Tên DA/Mã DA/Phân loại) để trống. Bảng đổi cột "Thông tin thu thập"→"Đáp án/giá trị thu thập cho tôi", cột đáp án để trống hoàn toàn. KHÔNG BE/permission/migration. File: components/FormTemplatePrintSheet.vue (mới), pages/assign/form-templates/_id/index.vue + index.vue (sửa). Quy ước: ref=printSheet, method=handlePrint. Spec: .plans/form-templates-print/design.md
 
 - meeting-list-permission → @khoipv → .plans/meeting-list-permission/plan.md
   Hoàn thành: 2026-06-05. Verify browser PASS. Phân quyền xem danh sách màn assign/meeting theo 4 cấp (tổng cty/cty/phòng/bộ phận) như màn giải pháp — dùng checkPermissionList + OR own/participant (company_members type=1). Thêm 4 permission (id 1095-1098, group 'Quản lý meeting'). Gán company_id/department_id/part_id khi store (KHÔNG backfill, KHÔNG đụng update). FE filter động theo hasAPermission. BE 4 file + FE 1 file, không migration. T1-T5. Spec: .plans/meeting-list-permission/design.md
