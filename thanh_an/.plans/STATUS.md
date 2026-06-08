@@ -2,7 +2,7 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
-> Cập nhật lần cuối: 2026-06-03
+> Cập nhật lần cuối: 2026-06-08
 
 ## Đang làm
 
@@ -13,6 +13,14 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Bắt buộc field khi gửi duyệt gói thầu lên TP** — Bắt buộc `bid_opening_time`, `bid_closing_time`, `execution_time` (numeric>0), `execution_time_unit` khi nhân viên bấm "Gửi duyệt" (status=3) trong `StoreBidPackageRequest`. Lưu nháp/Lưu và gửi vẫn để trống được. (@khoipv) — 2026-06-08
+  - Spec: `docs/superpowers/specs/2026-06-08-bid-package-send-approve-required-fields-design.md`
+  - Plan: `.plans/bid-package-send-approve-required-fields/plan.md`
+
+- **Đồng bộ thông tin hợp đồng gốc xuống phụ lục** — Sửa số HĐ / ngày ký / ngày kết thúc / thời gian thực hiện ở hợp đồng gốc (màn 203, sau duyệt) → đồng bộ 4 trường vào TẤT CẢ snapshot `ContractVersion` để mọi phụ lục hiển thị giá trị mới. BE sửa `updateDataAfterApprove` (bọc transaction); FE gửi thêm `time_progress`. (@khoipv) — 2026-06-08
+  - Spec: `docs/superpowers/specs/2026-06-08-dong-bo-thong-tin-hop-dong-xuong-phu-luc-design.md`
+  - Plan: `.plans/dong-bo-thong-tin-hop-dong-xuong-phu-luc/plan.md`
+
 - **Tab "Phụ lục liên quan" — Chi tiết hợp đồng** — Điền tab rỗng trong màn chi tiết/sửa HĐ bằng bảng phụ lục (STT, Mã PL, Loại PL, Trạng thái); mã PL click → chi tiết đúng loại, trạng thái badge màu. BE: thêm `annexes` + `annex_type_label` vào `ContractDetailResource`. (@khoipv) — 2026-06-03
   - Spec: `docs/superpowers/specs/2026-06-03-contract-detail-related-annex-tab-design.md`
   - Plan: `.plans/contract-detail-related-annex-tab/plan.md`
