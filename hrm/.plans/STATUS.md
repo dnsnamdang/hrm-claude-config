@@ -2,6 +2,17 @@
 
 ## Đang làm
 
+- external-user-report → @junfoke → .plans/external-user-report/plan.md
+  Trạng thái: CODE DONE (2026-06-06). Nối API thật. Chờ user verify browser.
+  Spec: .plans/external-user-report/design.md
+  Scope: Màn báo cáo học tập học viên ngoài công ty (Đào tạo → Danh mục, tạm thời). BE 2 endpoint mới trong ExternalUserController: `report` (gộp subject+learning_path qua learner_id, filter/sort/KPI, không phân trang) + `{id}/enrollments` (drill-down). FE 1 trang `pages/training/external-user-report/index.vue`: danh sách dùng V2BaseFilterPanel + V2BaseDataTable (rowClickable mở popup), popup chi tiết dùng table CUSTOM (không bắt buộc V2Base — theo yêu cầu). Sửa component chung V2BaseDataTable: thêm prop opt-in `rowClickable` (mặc định false → an toàn màn khác) + emit row-click. Thêm mục menu vào training-sidebar.vue.
+  Checkpoint: 2026-06-06 — Tiến độ/trạng thái lộ trình tính theo logic chuẩn MyLearningService: % = TB progress các khoá trong lộ trình; hoàn thành khi status=DONE hoặc progress>=100 (status DB của LP không đáng tin). Fix bug LP 94% hiện 50% + LP 100% kẹt "Đã đăng ký" — sửa cả report() lẫn enrollments(). Bước tiếp: user verify browser. Defer: cột "Đạt"=hoàn thành (DB chưa có is_passed), Xuất Excel báo cáo còn demo, chưa phân trang, menu chưa gắn permission.
+
+- goc-hoc-tap-ca-nhan → @junfoke → .plans/goc-hoc-tap-ca-nhan/plan.md
+  Trạng thái: CODE DONE Phase 1-5 (2026-06-06). Chờ user verify browser (Docker 3001) + nhập cấu hình deadline ở form admin.
+  Spec: docs/superpowers/specs/2026-06-05-goc-hoc-tap-ca-nhan-design.md | Plan: .plans/goc-hoc-tap-ca-nhan/plan.md (chi tiết từng phase + checkpoint ở đây)
+  Scope: FE elearning. Trang /goc-hoc-tap 4 tab (Tổng quan/Tôi cần học/Tôi đang học/Chứng chỉ) + tìm kiếm global kiểu f8. API thật qua MyLearningController/Service (GET my/learning-space). Deadline = enrolled_at + complete_within_days (đã migrate). Auto-complete lộ trình khi đủ khóa con (LearningSessionService.syncLearningPathCompletion, backfill đã chạy). Tiến độ path = TB % khóa con + nhãn "Khoá x/y"; đếm theo đơn vị gốc (ẩn khóa con khỏi khóa lẻ). Verify php -l + lint + build PASS.
+
 - elearning-home-need-to-learn → @khoipv → .plans/elearning-home-need-to-learn/plan.md
   Trạng thái: CODE DONE (2026-06-04). Phase 1 BE + Phase 2 FE xong, lint + test runtime endpoint qua tinker PASS. Chờ user verify browser (Phase 3).
   Spec: .plans/elearning-home-need-to-learn/design.md
@@ -60,12 +71,6 @@
   Scope: Học bài SCORM (type=4) trên elearning. Reverse-proxy S3 same-origin (window.parent.API) + scorm-again v3 (1.2+2004) + ScormPlayer.vue + endpoint scorm-commit + 9 cột scorm_* (resume + completion theo cấu hình bài). Tiếp nối scorm-upload.
   Checkpoint: 2026-05-30 — Verify PASS với gói Run-Time SCORM 2004 (scorm.com): "Đã xong" + resume. Fix phát sinh: host tanphat.s3, :key chống kẹt bài, proxy inject window.confirm=()=>true + no-store chặn 2 native confirm, popup resume riêng. OPS: nginx /scorm-proxy + sub_filter inject + no-store (spec mục 2&11). elearning cần Node ≥18; scorm-again cài trong container.
 
-- customer-scope-group → @manhcuong → .plans/customer-scope-group/plan.md
-  Trạng thái: CODE DONE (Phase 1-7). Chờ chạy migration + test browser (Phase 8).
-  Spec: docs/superpowers/specs/2026-05-28-customer-scope-group-design.md
-  Scope: Chèn tầng trung gian "Nhóm lĩnh vực khách hàng" giữa Lĩnh vực ⟷ Ứng dụng (bỏ pivot trực tiếp application_customer_scopes). Màn Nhóm full CRUD + import/export + 2 permission (id 1093/1094). Sửa Ứng dụng (Lĩnh vực→Nhóm), Lĩnh vực (Số ứng dụng→Số nhóm), Dự án tiềm năng (thêm customer_scope_group_id, cascade Ứng dụng→Nhóm→Lĩnh vực, 2 luồng chọn). Downstream MeetingProject resolve qua nhóm. Migrate dữ liệu cũ.
-  Checkpoint: 2026-05-29 — ĐỔI MÔ HÌNH (Phase 10): Nhóm LVKH giờ là CHA của Lĩnh vực (1-n), Lĩnh vực bắt buộc chọn Nhóm cha; Ứng dụng↔Lĩnh vực giữ n-n. Migration 2026_05_29_000001 đã chạy (thêm customer_scopes.customer_scope_group_id, khôi phục application_customer_scopes, drop 2 pivot n-n). BE+FE đã revert/sửa toàn bộ (R1-R7). Verify: Eloquent + API getAll + FE compile 200. Còn lại: click-through UI thủ công + file mẫu import Lĩnh vực cần thêm cột GroupCode.
-
 - learning-session-api → @junfoke → .plans/learning-session-api/plan.md
   Trạng thái: Code DONE (13/13 task). Chờ chạy migration + test API thật trên browser.
   Spec: docs/superpowers/specs/2026-05-28-learning-session-api-design.md
@@ -117,6 +122,9 @@
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- prospective-project-autofill-single-option → @manhcuong → .plans/prospective-project-autofill-single-option/plan.md
+  Hoàn thành: 2026-06-04. Màn /assign/prospective-projects/add: auto-fill các dropdown phân loại kỹ thuật CHỈ khi còn đúng 1 option (thay vì luôn lấy [0]), lan truyền đến ổn định, không ghi đè lựa chọn tay. FE-only 1 file ProjectInfoSection.vue (autoFillSingleOptions + 5 watcher field + xóa autoFillFromApplication). Pass review spec + review chất lượng. Spec: docs/superpowers/specs/2026-06-04-prospective-project-autofill-single-option-design.md
 
 - fix-employee-avatar-missing → @khoipv → .plans/fix-employee-avatar-missing/plan.md
   Hoàn thành: 2026-06-06. Bước 1 (chặn bug) + Bước 2/3 (khôi phục) XONG. Root cause: sync mặt (`ConnInfoService`/`RiceConnInfoService::deleteS3ByUrl`) xóa nhầm file avatar vì `face_image_url` = URL avatar khi tạo nhân sự có face_recognition (`EmployeeInfoService:779`). Fix: thêm guard không xóa nếu URL đang là `employee_infos.image` (2 file BE, lint PASS). Khôi phục: set image=face_image_url cho 56 nhân sự (query builder, bỏ qua sync ERP), verify 56/56 OK. CÒN LẠI: nhóm cũ path-style mất ~77% không có face_image_url → cần upload tay/ERP. LƯU Ý: fix BE mới ở local, cần deploy production.
