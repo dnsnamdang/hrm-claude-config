@@ -2,6 +2,17 @@
 
 ## Đang làm
 
+- external-user-report → @junfoke → .plans/external-user-report/plan.md
+  Trạng thái: CODE DONE (2026-06-06). Nối API thật. Chờ user verify browser.
+  Spec: .plans/external-user-report/design.md
+  Scope: Màn báo cáo học tập học viên ngoài công ty (Đào tạo → Danh mục, tạm thời). BE 2 endpoint mới trong ExternalUserController: `report` (gộp subject+learning_path qua learner_id, filter/sort/KPI, không phân trang) + `{id}/enrollments` (drill-down). FE 1 trang `pages/training/external-user-report/index.vue`: danh sách dùng V2BaseFilterPanel + V2BaseDataTable (rowClickable mở popup), popup chi tiết dùng table CUSTOM (không bắt buộc V2Base — theo yêu cầu). Sửa component chung V2BaseDataTable: thêm prop opt-in `rowClickable` (mặc định false → an toàn màn khác) + emit row-click. Thêm mục menu vào training-sidebar.vue.
+  Checkpoint: 2026-06-06 — Tiến độ/trạng thái lộ trình tính theo logic chuẩn MyLearningService: % = TB progress các khoá trong lộ trình; hoàn thành khi status=DONE hoặc progress>=100 (status DB của LP không đáng tin). Fix bug LP 94% hiện 50% + LP 100% kẹt "Đã đăng ký" — sửa cả report() lẫn enrollments(). Bước tiếp: user verify browser. Defer: cột "Đạt"=hoàn thành (DB chưa có is_passed), Xuất Excel báo cáo còn demo, chưa phân trang, menu chưa gắn permission.
+
+- goc-hoc-tap-ca-nhan → @junfoke → .plans/goc-hoc-tap-ca-nhan/plan.md
+  Trạng thái: CODE DONE Phase 1-5 (2026-06-06). Chờ user verify browser (Docker 3001) + nhập cấu hình deadline ở form admin.
+  Spec: docs/superpowers/specs/2026-06-05-goc-hoc-tap-ca-nhan-design.md | Plan: .plans/goc-hoc-tap-ca-nhan/plan.md (chi tiết từng phase + checkpoint ở đây)
+  Scope: FE elearning. Trang /goc-hoc-tap 4 tab (Tổng quan/Tôi cần học/Tôi đang học/Chứng chỉ) + tìm kiếm global kiểu f8. API thật qua MyLearningController/Service (GET my/learning-space). Deadline = enrolled_at + complete_within_days (đã migrate). Auto-complete lộ trình khi đủ khóa con (LearningSessionService.syncLearningPathCompletion, backfill đã chạy). Tiến độ path = TB % khóa con + nhãn "Khoá x/y"; đếm theo đơn vị gốc (ẩn khóa con khỏi khóa lẻ). Verify php -l + lint + build PASS.
+
 - elearning-home-need-to-learn → @khoipv → .plans/elearning-home-need-to-learn/plan.md
   Trạng thái: CODE DONE (2026-06-04). Phase 1 BE + Phase 2 FE xong, lint + test runtime endpoint qua tinker PASS. Chờ user verify browser (Phase 3).
   Spec: .plans/elearning-home-need-to-learn/design.md
