@@ -1,11 +1,11 @@
 # Force Change Password — Design (tóm tắt)
 
-**Mục tiêu:** Buộc đổi mật khẩu mặc định. Lần login đầu cho vào; từ lần 2 trở đi nếu chưa từng đổi → **chặn cứng**, ép sang màn `/change_password` đến khi đổi xong.
+**Mục tiêu:** Buộc đổi mật khẩu mặc định. Ngay từ **lần login đầu tiên**, nếu chưa từng đổi → **chặn cứng**, ép sang màn `/change_password` đến khi đổi xong.
 
 **Phạm vi:** Chỉ tài khoản tạo mới sau deploy (tài khoản cũ miễn — backfill khi migrate).
 
 ## Quyết định chốt (brainstorming 2026-06-01)
-- Điều kiện bắt: `login_count >= 2 && password_changed_at IS NULL`.
+- Điều kiện bắt: `login_count >= 1 && password_changed_at IS NULL` (bắt ngay từ lần login đầu — cập nhật 2026-06-05, trước đó là `>= 2`).
 - Chặn cứng: enforce cả **FE** (route guard) **lẫn BE** (middleware chặn mọi API trừ updatePass/logout/profile).
 - Tái dùng màn `/change_password` có sẵn (không làm popup mới); thêm chế độ "bắt buộc" (banner + nút Đóng = logout).
 - Rule mật khẩu mới áp cho **mọi lần đổi**: 7–20 ký tự, đủ 4 yếu tố (số/hoa/thường/đặc biệt), khác `123456@`.

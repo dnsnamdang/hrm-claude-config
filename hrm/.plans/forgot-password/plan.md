@@ -5,6 +5,11 @@ Design tóm tắt: `.plans/forgot-password/design.md`
 
 ---
 
+## Tài liệu
+
+### Testcase
+- [x] Viết testcase UI người dùng cuối → `.plans/forgot-password/testcase.xlsx` (24 TC: hiển thị, gửi yêu cầu, đặt lại, edge case captcha/token/validate, bảo mật, E2E). Generator: `.plans/forgot-password/generate-testcase.py`
+
 ## Phase 0 — Setup
 
 ### BE
@@ -29,6 +34,14 @@ Design tóm tắt: `.plans/forgot-password/design.md`
 - [x] `pages/forgot_password/index.vue` (layout auth): email + captcha ảnh + reload + validate inline + message TH1/TH2
 - [x] `pages/reset_password/index.vue` (layout auth): token+email query + mật khẩu mới + checklist + map lỗi 422/token
 - [x] `middleware/authenticated.js`: whitelist `/forgot_password` + `/reset_password` (trang public)
+
+## Phase 4 — Fix bảo mật: vô hiệu hoá phiên cũ khi reset mật khẩu
+
+### BE
+- [x] `AuthNewController@resetPassword`: tăng `token_version` của HumanEmployee (mirror `updatePass`) để mọi phiên ở app/tab/thiết bị khác bị thoát (middleware Authenticate kiểm token_version)
+- [x] Sync `token_version` + password sang ERP `HumanTpEmployee` (bọc try/catch, log warning nếu lỗi) — giống `updatePass`
+- [x] `php -l` pass, import `HumanTpEmployee` đã có sẵn
+- [x] Rà luồng admin reset password nhân viên (`EmployeeService@updateEmployee` dòng 227 + 252-254): ĐÃ có sẵn tăng token_version + sync ERP → KHÔNG cần sửa
 
 ## Phase 3 — Test thủ công (chờ user)
 

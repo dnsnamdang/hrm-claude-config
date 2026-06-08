@@ -5,6 +5,11 @@ Design tóm tắt: `.plans/force-change-password/design.md`
 
 ---
 
+## Tài liệu
+
+### Testcase
+- [x] Viết testcase UI người dùng cuối → `.plans/force-change-password/testcase.xlsx` (21 TC: ép đổi lần đầu, banner/checklist, đổi mật khẩu, edge case validate, chặn BE/route guard, E2E). Generator: `.plans/force-change-password/generate-testcase.py`
+
 ## Phase 1 — Database
 
 ### BE
@@ -46,6 +51,25 @@ Design tóm tắt: `.plans/force-change-password/design.md`
 - [ ] Tài khoản cũ (backfill) → không bị ép
 - [ ] Gọi API khác khi đang bị chặn → 403 → ép về `/change_password`
 - [ ] Đổi mật khẩu tự nguyện từ menu → rule mới vẫn áp dụng
+
+## Phase 5 — Đổi mốc bắt buộc sang lần login đầu (2026-06-05)
+
+### BE
+- [x] `AuthNewController@login`: đổi điều kiện `login_count >= 2` → `>= 1` (bắt ngay lần login đầu)
+- [x] Middleware `MustChangePassword`: đổi `login_count >= 2` → `>= 1`
+- [x] Cập nhật design.md + spec (điều kiện, edge case, mục tiêu)
+
+### Test
+- [ ] Tài khoản mới: login lần 1 (chưa đổi) → bị ép sang `/change_password` ngay
+- [ ] Tài khoản cũ (backfill) → vẫn không bị ép
+
+---
+
+### Checkpoint — 2026-06-05
+Vừa hoàn thành: Phase 5 — đổi mốc bắt buộc đổi mật khẩu từ "lần login thứ 2" sang "lần login đầu". Sửa 2 chỗ BE (`AuthNewController@login` dòng 83, `MustChangePassword` dòng 31) `>= 2` → `>= 1`. FE không đổi (chỉ phản ứng theo cờ BE). Cập nhật design.md + spec.
+Đang làm dở: (không)
+Bước tiếp theo: User test lại 2 case Phase 5 + 8 case Phase 4 trên tài khoản mới.
+Blocked: (không)
 
 ---
 

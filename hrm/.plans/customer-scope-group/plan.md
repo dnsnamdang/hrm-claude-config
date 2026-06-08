@@ -69,7 +69,7 @@
 - [x] `store/optionsSelect.js`: thêm state/mutation/getter + action `fetchCustomerScopeGroups` (map customer_scope_ids thành viên)
 - [x] `store/optionsSelect.js`: sửa `fetchApplications` map `customer_scope_group_ids`
 - [x] Thêm menu (menu-sidebar.js) — route tự sinh từ file pages/
-- [ ] (Phụ) Tạo file mẫu `public/Mau_import_NLVKH.xlsx`
+- [x] (Phụ) Cập nhật file mẫu `static/Mau_import_LVKH.xlsx` — thêm cột "Mã nhóm lĩnh vực khách hàng" (tùy chọn, nhiều mã ngăn cách dấu phẩy) + ghi chú + 2 dòng mẫu (2026-06-04)
 
 ---
 
@@ -149,3 +149,54 @@ User chỉnh lại: **Nhóm LVKH là cha của Lĩnh vực (1-n)**; tạo Lĩnh 
 - [x] Sửa tab "12.Dự án TKT" (+6 TC → 138): cascade thêm cấp Nhóm LVKH → Lĩnh vực (2 chiều), reset con khi đổi Nhóm, validate bắt buộc, cột/filter Nhóm
 - [x] Tab "1.DM Ứng dụng": rà lại — đã dùng "Lĩnh vực khách hàng" đúng mô hình cuối (Ứng dụng↔Lĩnh vực n-n) → KHÔNG đổi
 - [x] Kỹ thuật: chỉnh sửa cấp XML (giữ nguyên 93 part comments/threaded-comment/ảnh byte-identical); backup `testcase.xlsx.bak`
+
+---
+
+## Phase 12 — ĐỔI MÔ HÌNH: Lĩnh vực thuộc NHIỀU Nhóm (n-n) — 2026-06-03
+
+User chỉnh: lúc tạo/sửa **Lĩnh vực khách hàng** chọn **nhiều Nhóm** (không phải 1). Đổi Lĩnh vực↔Nhóm từ 1-n (cột FK) → **n-n (pivot `customer_scope_group_members`)**. Quyết định: (1) bắt buộc ≥1 nhóm; (2) Dự án tiềm năng cascade n-n đầy đủ; (3) import nhiều mã ngăn cách dấu phẩy. Ứng dụng↔Lĩnh vực giữ n-n trực tiếp. `prospective_projects.customer_scope_group_id` giữ nguyên (1 dự án vẫn 1 nhóm).
+
+### DB
+- [x] Migration `2026_06_03_000001`: tạo pivot `customer_scope_group_members` (unique pair), backfill từ `customer_scopes.customer_scope_group_id`, drop cột FK; `down()` khôi phục cột + backfill ngược. Đã chạy (--path) + verify
+
+### BE
+- [x] `CustomerScope`: `group()` belongsTo → `groups()` belongsToMany; bỏ `customer_scope_group_id` khỏi fillable
+- [x] `CustomerScopeGroup`: `customerScopes()` hasMany → belongsToMany (qua pivot); isCanLockUpdate qua pivot
+- [x] `CustomerScopeService`: index/getAll eager `groups`, updateOrCreate/update sync `groups` theo `customer_scope_group_ids`; import tách nhiều `groupCode` + attach
+- [x] `CustomerScopeGroupService`: subquery `customer_scopes_count` đếm qua pivot
+- [x] `CustomerScopeRequest`: `customer_scope_group_id` → `customer_scope_group_ids` required|array|min:1, mỗi phần tử exists
+- [x] `CustomerScopeResource` + Detail: `customer_scope_group_id/name` → `customer_scope_group_ids` + `customer_scope_group_names`
+- [x] `CustomerScopeController`: show load `groups`
+- [x] Export blade lĩnh vực: thêm cột "Nhóm lĩnh vực khách hàng"
+- [x] `ProspectiveProjectService::autoFillFromApplication`: lấy nhóm qua quan hệ n-n (nhóm đầu tiên của lĩnh vực)
+
+### FE
+- [x] `store/optionsSelect.js`: `fetchCustomerScopes` map `customer_scope_group_ids` (từ `scope.groups`)
+- [x] `AddScopeModal.vue`: dropdown đơn → multi-select `customer_scope_group_ids` (extraSettings multiple, load detail, payload, reset, groupError)
+- [x] `customer-scopes/index.vue`: cột Nhóm hiển thị `customer_scope_group_names`; thêm cột import GroupCode + map payload
+- [x] `ProjectInfoSection.vue`: `scopeGroupId` → `scopeGroupIds` (array); cascade n-n (nhóm chứa lĩnh vực / lĩnh vực thuộc nhóm); watcher + autoFill theo array
+- [x] `prospective-projects/index.vue`: cascade filter n-n (cùng helper)
+
+### Test
+- [x] Migration chạy + verify: pivot tạo, cột FK drop, quan hệ n-n 2 chiều OK, isCanLockUpdate qua pivot OK, count subquery OK
+- [ ] (Cần click-through) Lĩnh vực: tạo/sửa chọn nhiều nhóm + validate ≥1; list cột nhiều nhóm; import nhiều mã; Dự án TKT cascade n-n 2 luồng
+
+### Checkpoint — 2026-06-03
+Vừa hoàn thành: Đổi mô hình Lĩnh vực↔Nhóm 1-n → n-n (pivot `customer_scope_group_members`); sửa toàn bộ BE + FE + migration đã chạy & verify trên dev
+Đang làm dở: (không)
+Bước tiếp theo: User click-through 3 màn (Lĩnh vực tạo/sửa/import, Dự án TKT cascade)
+Blocked:
+
+## Phase 13 — Tinh chỉnh file mẫu import + lọc nhóm khoá (2026-06-04)
+
+### FE
+- [x] File mẫu `static/Mau_import_LVKH.xlsx`: thêm cột "Mã nhóm lĩnh vực khách hàng" (sau cột Tên), ghi chú "(Được chọn nhiều, mỗi mã nhóm cách nhau bằng dấu ',')" + 2 dòng mẫu; dời Trạng thái/Mô tả + dropdown sang E/F
+- [x] `customer-scopes/index.vue`: reorder `importColumns` — cột GroupCode lên ngay sau Name để preview khớp file mẫu
+- [x] `AddScopeModal.vue`: `ensureGroupOptions` luôn refetch + gọi trong `resetModal` → dropdown Nhóm khi tạo/sửa chỉ hiển thị nhóm đang mở khoá (getAll đã lọc active, fix stale cache)
+
+### BE
+- [x] `CustomerScopeRequest`: rule `customer_scope_group_ids.*` đổi từ `exists` → closure chặn nhóm đã khoá (status != active), message kèm tên nhóm; áp dụng cả create + update (chống race-condition 2 tab khoá nhóm)
+- [x] `CustomerScopeService` import: `validateImportData` + `importCustomerScopes` thêm check status nhóm — báo lỗi "Nhóm ... đã bị khoá" (phân biệt với "không tồn tại"), chặn cả luồng validate lẫn import thực
+
+### Data (seeder)
+- [x] Seeder `UpdateCustomerScopeGroupsSeeder` (Modules/Assign/Database/Seeders) — upsert 59 lĩnh vực theo file `DM_linhvuckh_update_020626.xlsx` (theo mã, idempotent): cập nhật tên/trạng thái/mô tả + sync nhóm theo mã NLVKH; tự mở khoá nhóm được tham chiếu nếu đang khoá (NLVKH.0006/0008). Chạy thử dev: 0 tạo mới, 59 cập nhật. Lệnh: `php artisan db:seed --class="Modules\Assign\Database\Seeders\UpdateCustomerScopeGroupsSeeder"` (2026-06-04)

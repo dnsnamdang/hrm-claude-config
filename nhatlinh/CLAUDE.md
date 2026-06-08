@@ -61,6 +61,16 @@
 
 ---
 
+## Convention hiển thị Trạng thái (status) — BẮT BUỘC
+
+Mọi nơi hiển thị trạng thái phải theo **1 kiểu duy nhất**: **text + màu do Backend trả về**, Frontend chỉ render bằng **`V2BaseBadge`**.
+
+- **BE — định nghĩa trạng thái trên Entity**: khai báo `const STATUSES` dạng mảng `['id','name','color']` (color là mã hex, vd `#16A34A`). Dùng trait `Modules\Category\Entities\Concerns\HasStatusBadge` để có sẵn accessor `status_name` + `status_color` (không khai báo `STATUSES` thì trait mặc định: 1=Hoạt động `#16A34A`, 2=Khoá `#6B7280`). Module khác chưa có trait thì copy pattern này (accessor đọc `static::STATUSES`).
+- **BE — Resource**: list + detail resource phải trả thêm `'status_name' => $this->status_name` và `'status_color' => $this->status_color` (cạnh `'status'`).
+- **FE — hiển thị**: chỉ dùng `<V2BaseBadge :color="item.status_color">{{ item.status_name }}</V2BaseBadge>`. KHÔNG tự render HTML badge/pill, KHÔNG map text/màu trạng thái ở FE (không `renderStatus`, không hardcode tên/màu theo id).
+- **FE — filter**: dropdown lọc trạng thái vẫn có thể dùng options id+name riêng (đây là input chọn, không phải hiển thị badge).
+- Bảng màu tham khảo: Hoạt động `#16A34A`, Khoá/Đóng `#6B7280`, Nháp `#D97706`, Chờ duyệt `#D97706`, Đang xử lý `#2563EB`, Đã duyệt `#059669`.
+
 ## Convention Database (toàn project)
 
 - **Cấp tổ chức**: luôn dùng `company_id`, `department_id`, `part_id` — tất cả `unsignedBigInteger nullable`. KHÔNG dùng `branch_id`.
