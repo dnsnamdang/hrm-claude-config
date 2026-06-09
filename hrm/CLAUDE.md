@@ -222,8 +222,11 @@ Nếu có → đọc trước khi viết code.
 | Làm code trong project **elearning** (Vue 3 + Vite) | `.claude/skills/elearning-base/SKILL.md`     |
 | Validate, error, toast trong elearning              | `.claude/skills/elearning-validate/SKILL.md` |
 | Auth, SSO, profile, avatar trong elearning          | `.claude/skills/elearning-auth/SKILL.md`     |
+| Viết tài liệu HDSD / hướng dẫn sử dụng màn hình     | `.claude/skills/hdsd-documenter/SKILL.md`    |
 
 → Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
+
+**Nguyên tắc viết tài liệu hướng dẫn (HDSD):** Phải CỰC KỲ CHI TIẾT, click-by-click tới từng hành động nhỏ. Liệt kê nút thôi là CHƯA ĐỦ — mỗi nút Tạo mới/Sửa/Duyệt/Nhập kết quả/Xóa… phải mô tả form mở ra, **từng trường nhập (bắt buộc + giá trị mặc định/điền sẵn)**, cách lưu, kết quả. Ảnh **chụp thật** từ hệ thống (Playwright MCP). Theo `.claude/skills/hdsd-documenter/SKILL.md`.
 
 ---
 

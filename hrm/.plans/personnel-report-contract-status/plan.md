@@ -27,3 +27,21 @@ Blocked: -
 - [ ] Test NV có HĐLĐ đã quá hạn (không gia hạn) → "Hết hiệu lực"
 - [ ] Test NV chưa có HĐLĐ approved → "Chưa có HĐLĐ"
 - [ ] Test export Excel hiển thị đúng text VN ở 2 cột mới
+
+## Phase 2 — Bộ lọc theo trạng thái HĐLĐ trên màn danh sách nhân sự
+
+### BE
+
+- [x] `EmployeeController::getPersonnel()` — nhận thêm filter `labor_contract_status`
+- [x] `EmployeeService::getPersonnel()` — lọc `list_employees` theo `labor_contract_status` ở cả cấp phòng ban và bộ phận (đặt cạnh block lọc `labor_contract_end_date`)
+
+### FE
+
+- [x] `pages/human/personnel/index.vue` — thêm `labor_contract_status: null` vào `formFilter` + `laborContractStatusOptions` (4 option)
+- [x] `pages/human/personnel/index.vue` — thêm dropdown `base-select2` "Trạng thái HĐLĐ" vào vùng filter
+
+### Checkpoint — 2026-06-18
+Vừa hoàn thành: Phase 2 BE + FE code xong
+Đang làm dở: chưa test
+Bước tiếp theo: user verify lọc 4 trạng thái trên trình duyệt
+Blocked: -

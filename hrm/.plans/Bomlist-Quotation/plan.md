@@ -2916,3 +2916,17 @@ Vừa hoàn thành: Phase 18 — 28 tasks (UI fix + logic fix + lịch sử BOM)
 Đang làm dở: Không
 Bước tiếp theo: Chạy migration bom_list_logs + test lịch sử BOM
 Blocked: Không
+
+## Phase 11-fix — FE preview BOM tổng hợp khớp validate BE (Tự triển khai)
+
+- [x] FE: `loadPreviewBom` (SolutionApprovalModal.vue) luôn set `bom_list_type=2` — bỏ điều kiện `if (!isSelfImplementation)` khiến giải pháp Tự triển khai hiển thị nhầm BOM Thành phần
+- [x] FE: gộp cảnh báo "chưa có BOM" về 1 message "BOM tổng hợp" (bỏ nhánh self-impl ghi "BOM" gây hiểu nhầm)
+
+### Checkpoint — 2026-07-01
+Vừa hoàn thành: Fix lỗi 422 "Chưa có BOM tổng hợp Hoàn thành" khi gửi hồ sơ trình duyệt giải pháp Tự triển khai dù UI hiện có BOM.
+  - Nguyên nhân: BE (SolutionService.php:1948) submit LUÔN bắt bom_list_type=TYPE_AGGREGATE(2). FE (SolutionApprovalModal.vue:627 cũ) chỉ lọc type=2 khi KHÔNG tự triển khai → giải pháp Tự triển khai hiện nhầm BOM Thành phần (type=1) lên ô "BOM tổng hợp gắn vào hồ sơ" → submit 422.
+  - Dữ liệu thực tế solution 86: current_version_id=103; BOM-2026-00286 type=1 (Thành phần) status=2 version=103 → thoả FE preview lỏng nhưng trượt validate BE.
+  - Hướng chốt (user chọn A): sửa FE khớp BE — luôn yêu cầu BOM Tổng hợp.
+Đang làm dở: Không
+Bước tiếp theo: User verify trên UI — mở modal trình duyệt giải pháp Tự triển khai chưa có BOM Tổng hợp → phải hiện cảnh báo đỏ "Chưa có BOM tổng hợp" thay vì hiện BOM Thành phần.
+Blocked: Không

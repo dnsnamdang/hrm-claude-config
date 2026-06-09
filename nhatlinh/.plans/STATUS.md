@@ -72,6 +72,16 @@
   - Còn: user reload test UI đầy đủ + commit 2 repo. Lưu ý team: seed quyền MODULE-1 + Báo giá bán + Bảng giá (1113/1114) khi deploy; chạy SaleDemoSeeder nếu cần data mẫu.
   Checkpoint 2026-06-28: **UI danh sách + Xuất Excel** (chưa commit). Mã BG là link → chi tiết; nút **Xuất Excel** (#actions) — BE SaleQuotationExport + QuotationController::export (getListForUser scope + Resource resolve, route /quotations/export trước /{id} + checkPermission như index), FE tải arraybuffer theo filter. Review opus Spec ✅/Quality Approved (fix 3 minor). Permission Sale đã tách **type=9 "Phân hệ kinh doanh"** (hiện trên màn role qua accordion mới).
 
+- sale-module-scaffold (Khung phân hệ Kinh doanh) → @manhcuong → .plans/sale-module-scaffold/plan.md
+  Spec: docs/superpowers/specs/2026-06-25-sale-module-scaffold-design.md · Plan: docs/superpowers/plans/2026-06-25-sale-module-scaffold.md
+  Phạm vi: chỉ scaffold khung module `Sale` (BE + FE), dashboard trống vào qua switcher. Chưa entity/permission/nghiệp vụ. PA A (layout chung default.vue).
+
+  ### Checkpoint — 2026-06-25 (CODE HOÀN THÀNH)
+  Vừa hoàn thành: **Toàn bộ khung phân hệ Kinh doanh (module `Sale`)** (BE+FE, subagent-driven, chạy main chưa commit). BE module `Sale` Enabled, endpoint `GET api/v1/sale/dashboard`. FE dashboard placeholder + menu sale.js + wire default.vue + tile switcher "Kinh doanh" + icon_sale.svg. 2 task review PASS, integration nhất quán.
+  Đang làm dở: (không).
+  Bước tiếp theo: User test thủ công (BE endpoint + JWT; FE yarn dev + click tile) → user tự commit. Đợt sau: nghiệp vụ Kinh doanh.
+  Blocked: (không)
+
 - sales-contract (MODULE 2 — Hợp đồng bán hàng) → @manhcuong → .plans/sales-contract/plan.md
   Spec: docs/superpowers/specs/2026-06-08-sales-contract-design.md · Plan: docs/superpowers/plans/2026-06-08-sales-contract.md
   Phạm vi đợt này: HD-01 (Danh sách HĐ) + HD-02 (Tạo/sửa HĐ). Module mới `Modules/Sale`. Hoãn HD-03/04/05.
