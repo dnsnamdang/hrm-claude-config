@@ -123,6 +123,9 @@
 
 ## Hoàn thành
 
+- employee-relationship-export-columns → @khoipv → .plans/employee-relationship-export-columns/plan.md
+  Hoàn thành: 2026-06-10. Verify browser PASS. FE-only. Thêm modal chọn cột khi xuất Excel màn human/employee-relationships (pattern employee_info), decouple cột export khỏi cột bảng. BE đã sẵn (visible_fields[]). 1 file mới ExportRelationshipModal.vue + sửa index.vue (nút mở modal, đăng ký, exportEx nhận selectedKeys). Cột cố định luôn xuất; không chọn cột vẫn xuất 6 cột. Spec: docs/superpowers/specs/2026-06-09-employee-relationship-export-columns-design.md | Design: .plans/employee-relationship-export-columns/design.md
+
 - prospective-project-autofill-single-option → @manhcuong → .plans/prospective-project-autofill-single-option/plan.md
   Hoàn thành: 2026-06-04. Màn /assign/prospective-projects/add: auto-fill các dropdown phân loại kỹ thuật CHỈ khi còn đúng 1 option (thay vì luôn lấy [0]), lan truyền đến ổn định, không ghi đè lựa chọn tay. FE-only 1 file ProjectInfoSection.vue (autoFillSingleOptions + 5 watcher field + xóa autoFillFromApplication). Pass review spec + review chất lượng. Spec: docs/superpowers/specs/2026-06-04-prospective-project-autofill-single-option-design.md
 

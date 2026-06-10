@@ -2,7 +2,7 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
-> Cập nhật lần cuối: 2026-06-08
+> Cập nhật lần cuối: 2026-06-10
 
 ## Đang làm
 
@@ -13,6 +13,10 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Ghi chú + Lưu-sau-duyệt tab Điều khoản thanh toán** — Thêm 1 ô ghi chú chung cho tab Điều khoản thanh toán (cột `payment_terms_note` trên `contracts`) + nút Lưu mở khóa & lưu cả bảng + ghi chú khi HĐ đã duyệt (endpoint mới `updatePaymentTermsAfterApprove`, tái dùng `syncPaymentTerms`). Chỉ form `contract/contract`. (@khoipv) — 2026-06-10, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-09-contract-payment-terms-note-approve-design.md`
+  - Plan: `.plans/contract-payment-terms-note-approve/plan.md`
+
 - **Bắt buộc field khi gửi duyệt gói thầu lên TP** — Bắt buộc `bid_opening_time`, `bid_closing_time`, `execution_time` (numeric>0), `execution_time_unit` khi nhân viên bấm "Gửi duyệt" (status=3) trong `StoreBidPackageRequest`. Lưu nháp/Lưu và gửi vẫn để trống được. (@khoipv) — 2026-06-08
   - Spec: `docs/superpowers/specs/2026-06-08-bid-package-send-approve-required-fields-design.md`
   - Plan: `.plans/bid-package-send-approve-required-fields/plan.md`
