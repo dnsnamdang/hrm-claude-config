@@ -2,7 +2,7 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
-> Cập nhật lần cuối: 2026-06-10
+> Cập nhật lần cuối: 2026-06-10 (chuyển 2 feature HĐ "Không thực hiện" sang Hoàn thành)
 
 ## Đang làm
 
@@ -13,6 +13,14 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Duyệt HĐ "Không thực hiện" → Hủy hợp đồng** — TP bấm Duyệt HĐ có `result=2` → HĐ chuyển trạng thái mới "Hủy hợp đồng" (Contract `HUY=5`) + đẩy dự toán/báo giá/gói thầu sang trạng thái mới "Hủy hợp đồng" (const mới mỗi entity) + ghi lịch sử kèm lý do. Tái dùng nút Duyệt, không snapshot. (@khoipv) — 2026-06-10, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-10-contract-cancel-not-executed-on-approve-design.md`
+  - Plan: `.plans/contract-cancel-not-executed-on-approve/plan.md`
+
+- **Bỏ validate khi hợp đồng "Không thực hiện"** — Khi tạo/sửa HĐ (từ gói thầu/báo giá) chọn `result = 2` (Không thực hiện) → bỏ TẤT CẢ validate, chỉ bắt buộc `reason`. Áp dụng FE + BE, tạo mới + cập nhật. `result = 1`/trống → validate đầy đủ như cũ. (@khoipv) — 2026-06-10, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-10-contract-not-executed-skip-validate-design.md`
+  - Plan: `.plans/contract-not-executed-skip-validate/plan.md`
+
 - **Ghi chú + Lưu-sau-duyệt tab Điều khoản thanh toán** — Thêm 1 ô ghi chú chung cho tab Điều khoản thanh toán (cột `payment_terms_note` trên `contracts`) + nút Lưu mở khóa & lưu cả bảng + ghi chú khi HĐ đã duyệt (endpoint mới `updatePaymentTermsAfterApprove`, tái dùng `syncPaymentTerms`). Chỉ form `contract/contract`. (@khoipv) — 2026-06-10, verify UI PASS
   - Spec: `docs/superpowers/specs/2026-06-09-contract-payment-terms-note-approve-design.md`
   - Plan: `.plans/contract-payment-terms-note-approve/plan.md`
