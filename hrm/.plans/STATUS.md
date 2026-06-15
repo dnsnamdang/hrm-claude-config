@@ -123,6 +123,12 @@
 
 ## Hoàn thành
 
+- employee-info-concurrent-allowance → @khoipv → .plans/employee-info-concurrent-allowance/design.md
+  Hoàn thành: 2026-06-15. Verify browser PASS (Task 6 + Task 7 3 kịch bản nhập PC_KN). Tab "Thông tin thu nhập" màn hồ sơ NS — khi NV có ≥1 dòng phòng ban kiêm nhiệm thì popup hiện ô nhập Phụ cấp kiêm nhiệm (PC_KN, nhập tay), lưu thật vào employee_salary_history_allowances, cột PC_KN hiện trên bảng. BE 3 file (Request validate mảng + Service syncAllowances forceDelete resolve theo allowance_id/allowance_code + Controller store trong transaction) + FE 2 file (add-salary-history-modal prop concurrentPositions + computed hasConcurrent/nonConcurrentAllowances/pcknEntry + prepareConcurrentAllowance + dòng PC_KN editable; EmployeeInfoForm truyền prop + prepare 2 nhánh openSalaryHistory). Task 7 (BUG báo cáo lương): SalaryService::report() chuyển PC_KN từ dòng phòng chính → dòng phòng kiêm nhiệm (cd.id=MIN), bỏ pckn khỏi mainQuery. KHÔNG migration. Spec: .plans/employee-info-concurrent-allowance/design.md
+
+- appoint-concurrent-sync-employee → @khoipv → .plans/appoint-concurrent-sync-employee/design.md
+  Hoàn thành: 2026-06-15. Verify browser PASS (3 kịch bản: kiêm nhiệm thêm dòng & giữ vị trí chính / chống trùng / regression bổ nhiệm thường). Khi duyệt QĐ bổ nhiệm có tick Kiêm nhiệm (is_concurrently=1) → THÊM 1 dòng vào "Phòng ban/Chức vụ kiêm nhiệm" của hồ sơ NS (employee_concurrently_department_has_positions), GIỮ NGUYÊN vị trí chính. Phương án A: thêm cột is_concurrently vào appendix_labor_contracts (đã migrate DB dev); copy từ DecisionAppointPersonnel. Sửa AppendixLaborContractService::autogenousAppendixLaborContract (copy cờ) + updateEmployeeInfo (rẽ nhánh) + addConcurrentlyDepartmentPosition (chống trùng theo employee_info_id+department_id+working_position_id + null-guard). BE-only, không FE/permission. Spec: .plans/appoint-concurrent-sync-employee/design.md
+
 - employee-relationship-export-columns → @khoipv → .plans/employee-relationship-export-columns/plan.md
   Hoàn thành: 2026-06-10. Verify browser PASS. FE-only. Thêm modal chọn cột khi xuất Excel màn human/employee-relationships (pattern employee_info), decouple cột export khỏi cột bảng. BE đã sẵn (visible_fields[]). 1 file mới ExportRelationshipModal.vue + sửa index.vue (nút mở modal, đăng ký, exportEx nhận selectedKeys). Cột cố định luôn xuất; không chọn cột vẫn xuất 6 cột. Spec: docs/superpowers/specs/2026-06-09-employee-relationship-export-columns-design.md | Design: .plans/employee-relationship-export-columns/design.md
 
