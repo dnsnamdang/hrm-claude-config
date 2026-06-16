@@ -2,7 +2,6 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
-> Cập nhật lần cuối: 2026-06-16 (chuyển "In QUYẾT ĐỊNH cử đi công tác" sang Hoàn thành)
 
 ## Đang làm
 
@@ -13,7 +12,12 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
-- **In QUYẾT ĐỊNH cử đi công tác** — Đổi bản in màn `timesheet/jobassignment/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" theo mẫu Word (chỉ trang 1). 1 bản QĐ liệt kê tất cả NV, header 2 cột text, Điều 1 dạng đoạn văn, không số QĐ. Chỉ sửa FE `print.vue`. (@khoipv) — 2026-06-15, verify UI PASS
+- **In QUYẾT ĐỊNH cử đi công tác (Business Trip)** — Đổi bản in màn `timesheet/business_trip_assigns/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" (copy mẫu từ `jobassignment/_id/print.vue`). 1 QĐ liệt kê tất cả NV. BE thêm field `employee_account_id`; FE viết lại template+script `print.vue`. (@khoipv) — 2026-06-16, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-16-business-trip-print-design.md`
+  - Plan: `docs/superpowers/plans/2026-06-16-business-trip-print.md`
+  - Plan tổng quát: `.plans/business-trip-print/plan.md`
+
+- **In phiếu giao việc** — Đổi bản in màn `timesheet/jobassignment/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" theo mẫu Word (chỉ trang 1). 1 bản QĐ liệt kê tất cả NV, header 2 cột text, Điều 1 dạng đoạn văn, không số QĐ. Chỉ sửa FE `print.vue`. (@khoipv) — 2026-06-15, verify UI PASS
   - Spec: `docs/superpowers/specs/2026-06-15-in-quyet-dinh-cong-tac-phi-design.md`
   - Plan: `docs/superpowers/plans/2026-06-15-in-quyet-dinh-cong-tac-phi.md`
   - Plan tổng quát: `.plans/in-quyet-dinh-cong-tac-phi/plan.md`
