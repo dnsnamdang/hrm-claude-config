@@ -2,7 +2,7 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
-> Cập nhật lần cuối: 2026-06-10 (chuyển 2 feature HĐ "Không thực hiện" sang Hoàn thành)
+> Cập nhật lần cuối: 2026-06-16 (chuyển "In QUYẾT ĐỊNH cử đi công tác" sang Hoàn thành)
 
 ## Đang làm
 
@@ -13,6 +13,11 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **In QUYẾT ĐỊNH cử đi công tác** — Đổi bản in màn `timesheet/jobassignment/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" theo mẫu Word (chỉ trang 1). 1 bản QĐ liệt kê tất cả NV, header 2 cột text, Điều 1 dạng đoạn văn, không số QĐ. Chỉ sửa FE `print.vue`. (@khoipv) — 2026-06-15, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-15-in-quyet-dinh-cong-tac-phi-design.md`
+  - Plan: `docs/superpowers/plans/2026-06-15-in-quyet-dinh-cong-tac-phi.md`
+  - Plan tổng quát: `.plans/in-quyet-dinh-cong-tac-phi/plan.md`
+
 - **Duyệt HĐ "Không thực hiện" → Hủy hợp đồng** — TP bấm Duyệt HĐ có `result=2` → HĐ chuyển trạng thái mới "Hủy hợp đồng" (Contract `HUY=5`) + đẩy dự toán/báo giá/gói thầu sang trạng thái mới "Hủy hợp đồng" (const mới mỗi entity) + ghi lịch sử kèm lý do. Tái dùng nút Duyệt, không snapshot. (@khoipv) — 2026-06-10, verify UI PASS
   - Spec: `docs/superpowers/specs/2026-06-10-contract-cancel-not-executed-on-approve-design.md`
   - Plan: `.plans/contract-cancel-not-executed-on-approve/plan.md`
