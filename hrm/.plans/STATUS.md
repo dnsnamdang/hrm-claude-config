@@ -2,6 +2,24 @@
 
 ## Đang làm
 
+- elearning-notification-center → @junfoke → .plans/elearning-notification-center/plan.md
+  Trạng thái: CODE DONE + VERIFIED (2026-06-15). User xác nhận chuông hiện thông báo onboarding thật, click điều hướng góc học tập. Chờ merge. Tiếp nối onboarding-auto-enroll.
+  Điều chỉnh sau verify: chuông hiện cho mọi user đã đăng nhập (learner rỗng); trigger auto-enroll chuyển sang NotificationController::index (noti hiện ngay sau đăng nhập ở mọi trang); ghi DB notification đồng bộ (không cần queue worker) gom trong OnboardingAutoEnrollService::runAndNotify().
+  Spec: docs/superpowers/specs/2026-06-15-elearning-notification-center-design.md | Plan: docs/superpowers/plans/2026-06-15-elearning-notification-center.md
+  Scope: Trung tâm thông báo THẬT + realtime trên header elearning (thay chuông mock). BE: NotificationController trong Modules/Elearning (index/markAsRead/markAllAsRead, lọc data.type ∈ whitelist ['OnboardingAutoEnroll'], chỉ employee, learner rỗng) + 3 route /api/v1/elearning/notifications. FE: socket.io-client@^2.3.0 connect socket server có sẵn (8891) bằng JWT employee nghe event 'notification' → fetch lại list (payload realtime thiếu UUID); store notification.js + composable useNotificationSocket.js + dropdown thật trong AppHeader.vue (badge unread + mark-read + click router.push nội bộ). KHÔNG sửa backend socket.
+
+- onboarding-auto-enroll → @junfoke → .plans/onboarding-auto-enroll/plan.md
+  Trạng thái: CODE DONE + VERIFIED (2026-06-15, subagent-driven). User xác nhận: auto-enroll chạy khi vào app, thông báo hiện, hạn "Còn 10 ngày" + độ khó đúng. Chờ merge.
+  Spec: docs/superpowers/specs/2026-06-15-onboarding-auto-enroll-design.md | Plan: docs/superpowers/plans/2026-06-15-onboarding-auto-enroll.md | Tóm tắt: .plans/onboarding-auto-enroll/design.md
+  Fix sau verify: trigger chuyển sang app-load (NotificationController) + bỏ guard enter_date cho days=0 + wire due_date vào hiển thị hạn (DeadlineHelper::resolve ở MyLearningService/SubjectDetailController) + fix độ khó StudyCard (level_name + icon ri-bar-chart-box-line + ẩn khi rỗng).
+  Scope: Bổ sung phần THỰC THI cho Onboarding (UI cấu hình đã có ở TabLearners). Lazy auto-enroll khi NV vào "Không gian học tập" (GET elearning/my/learning-space). Chỉ user_type=employee, dùng enter_date. Gán mọi khóa onboarding_enabled=1 + status=HOAT_DONG (publish) cho NV mới (days=0 → gán cả NV cũ). Thêm cột due_date vào subject_enrollments. 1 noti gộp qua SendNotificationToEmployee khi có khóa mới.
+  Checkpoint: 2026-06-15 — BE 3 file mới (migration due_date + OnboardingAutoEnrollService + Unit test) + 1 file sửa (MyLearningController hook autoEnrollOnboarding, chỉ employee, try/catch nuốt lỗi). Logic: isNewEmployee (days=0/null luôn mới, <=ngưỡng, guard '0000-00-00'/date rác) + computeDueDate. Hướng B (tự tạo enrollment, không đụng SubjectEnrollmentService). Review spec+chất lượng pass; xác nhận TpEmployee->info tồn tại nên noti an toàn. Bước tiếp: user `php artisan migrate` + verify 6 kịch bản. FE không đổi.
+
+- course-level → @junfoke → .plans/course-level/plan.md
+  Trạng thái: DESIGN DONE (2026-06-09). Đang lên plan.
+  Spec: docs/superpowers/specs/2026-06-09-course-level-design.md | Tóm tắt: .plans/course-level/design.md
+  Scope: Thêm trường "Độ khó" (level) cho Khóa học (Subject) — 3 mức cố định (Cơ bản/Trung cấp/Nâng cao), cột DB nullable, bắt buộc ở form. BE: migration + hằng Subject::LEVELS + validate store/update + SubjectDetailResource/SubjectBrowseResource + PublicBrowseController (filterOptions levels + filter level). FE admin (hrm-client): TabInfo dropdown + SubjectBuilderForm payload. FE elearning: filterOptions store + sidebar filter "Độ khó" + card badge + subjectDetail dùng level thật. Lộ trình ngoài scope.
+
 - external-user-report → @junfoke → .plans/external-user-report/plan.md
   Trạng thái: CODE DONE (2026-06-06). Nối API thật. Chờ user verify browser.
   Spec: .plans/external-user-report/design.md
@@ -13,11 +31,11 @@
   Spec: docs/superpowers/specs/2026-06-05-goc-hoc-tap-ca-nhan-design.md | Plan: .plans/goc-hoc-tap-ca-nhan/plan.md (chi tiết từng phase + checkpoint ở đây)
   Scope: FE elearning. Trang /goc-hoc-tap 4 tab (Tổng quan/Tôi cần học/Tôi đang học/Chứng chỉ) + tìm kiếm global kiểu f8. API thật qua MyLearningController/Service (GET my/learning-space). Deadline = enrolled_at + complete_within_days (đã migrate). Auto-complete lộ trình khi đủ khóa con (LearningSessionService.syncLearningPathCompletion, backfill đã chạy). Tiến độ path = TB % khóa con + nhãn "Khoá x/y"; đếm theo đơn vị gốc (ẩn khóa con khỏi khóa lẻ). Verify php -l + lint + build PASS.
 
-- elearning-home-need-to-learn → @khoipv → .plans/elearning-home-need-to-learn/plan.md
-  Trạng thái: CODE DONE (2026-06-04). Phase 1 BE + Phase 2 FE xong, lint + test runtime endpoint qua tinker PASS. Chờ user verify browser (Phase 3).
+- elearning-home-need-to-learn → @khoipv (P1-4) / @junfoke (P5) → .plans/elearning-home-need-to-learn/plan.md
+  Trạng thái: CODE DONE (Phase 5 — 2026-06-08). Lint BE PASS. Chờ user verify browser.
   Spec: .plans/elearning-home-need-to-learn/design.md
-  Scope: Section "Bạn cần học" trang chủ elearning (3001) lấy data thật (khóa học + lộ trình, trộn, tối đa 4, mới nhất trước). Khách=public, nhân viên HRM=đang dùng. BE 1 endpoint mới (public/home-content + optional auth, tái dùng SubjectBrowseResource + LearningPathBrowseResource) + FE 3 file (stores/elearning.js + HomeView.vue + LearnCard.vue mở rộng type='path'). Cùng quy tắc visibility với elearning-learning-path-visibility.
-  Checkpoint: 2026-06-04 — Data thực: guest=0 khóa public+2 lộ trình public; employee=27 khóa+5 lộ trình (top 4). Phase 4: fix bug thời lượng — 2 resource dùng chung (SubjectBrowseResource + LearningPathBrowseResource) trước cộng ceil(duration/60) từng bài → phồng (NPK 30s→3 phút); sửa cộng tổng giây rồi mới quy đổi + thêm field duration_seconds, card dùng formatLessonDuration (mm:ss) khớp trang chi tiết. Ảnh hưởng cả màn list /lo-trinh-hoc-tap, /khoa-hoc (số liệu chính xác hơn). Bước tiếp: user chạy elearning verify khách vs SSO HRM + thời lượng card + click card điều hướng.
+  Scope: Trang chủ elearning (3001) lấy data thật cho 4 section qua 1 endpoint `public/home-content`. P1-2: "Bạn cần học". P5: thêm 3 section "Khuyến nghị cho bạn" / "Nội dung nhiều người học" / "Nội dung mới". Khách=public, nhân viên HRM=đang dùng. Tái dùng SubjectBrowseResource + LearningPathBrowseResource.
+  Checkpoint: 2026-06-08 (P9) — Trang chủ data thật 4 section + màn "Xem tất cả". P5: response `{need_to_learn, recommend, popular, newest}`. P6: "Bạn cần học"=nội dung bắt buộc khớp profile (user ngoài/guest ẩn). P7: card hiển thị trạng thái học (Học tiếp/Xem lại + badge); BE dựng progress map subject+path. P8: Khuyến nghị loại item đã hoàn thành + sửa text subtitle. P9: endpoint phân trang `home-section` (trộn khóa+lộ trình theo mode) + màn `HomeSectionView` (/noi-dung/:type) + wire 4 nút "Xem tất cả". BE refactor helper dùng chung (sectionBaseQueries/applySectionConstraints/transformSectionItems/recommendExcludeIds). Lint BE PASS. Bước tiếp: user verify browser toàn bộ.
 
 - skills-v2-redesign → @khoipv → .plans/skills-v2-redesign/plan.md
   Trạng thái: CODE DONE (2026-06-03, 2 file FE). Chờ user verify browser (Task 3).
