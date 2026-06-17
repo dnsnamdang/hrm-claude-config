@@ -44,6 +44,10 @@
   Spec: docs/superpowers/specs/2026-06-09-course-level-design.md | Tóm tắt: .plans/course-level/design.md
   Scope: Thêm trường "Độ khó" (level) cho Khóa học (Subject) — 3 mức cố định (Cơ bản/Trung cấp/Nâng cao), cột DB nullable, bắt buộc ở form. BE: migration + hằng Subject::LEVELS + validate store/update + SubjectDetailResource/SubjectBrowseResource + PublicBrowseController (filterOptions levels + filter level). FE admin (hrm-client): TabInfo dropdown + SubjectBuilderForm payload. FE elearning: filterOptions store + sidebar filter "Độ khó" + card badge + subjectDetail dùng level thật. Lộ trình ngoài scope.
 
+- customer-catalog → @dnsnamdang → .plans/customer-catalog/plan.md
+  Trạng thái: Brainstorming (2026-06-09). Màn "Danh mục Khách hàng" trong menu Danh mục (Assign), trên "Lĩnh vực khách hàng". Xem DS + thêm/sửa KH, ghi vào DB ERP (TanPhatDev). Tiền lệ tích hợp: `app/Models/TpCustomer.php` (mysql2) + `app/Services/ErpApiService.php`.
+  Spec: docs/superpowers/specs/2026-06-09-customer-catalog-design.md
+
 - external-user-report → @junfoke → .plans/external-user-report/plan.md
   Trạng thái: CODE DONE (2026-06-06). Nối API thật. Chờ user verify browser.
   Spec: .plans/external-user-report/design.md
