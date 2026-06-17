@@ -62,6 +62,32 @@
   Spec: docs/superpowers/specs/2026-06-03-elearning-course-completion-design.md
   Plan: docs/superpowers/plans/2026-06-03-elearning-course-completion.md
   Checkpoint: 2026-06-03 — Implement xong qua subagent-driven. BE 4 file (CertificateService + CertificateController + route /subjects/{slug}/certificate + certificate_enabled vào LearningSessionResource). FE 9 file: store certificate.js, CertificateView+CertificateCanvas+route /certificate/:slug+print CSS, courseCompletionSignal trong learningSession, CourseCompleteModal tích hợp SubjectLearnView, map certificateEnabled (subjectDetail), DetailEnrollCard đổi "Chứng nhận"→"Chứng chỉ"+nút "Xem lại nội dung", ContentDetailView nối router, nút "Chứng chỉ" sidebar màn học. Phương án A (endpoint riêng), chứng chỉ render web in qua window.print. Bước tiếp: user chạy dev server Docker → verify 4 kịch bản (100%→modal; có cert→in được; không cert→khám phá/xem lại; vào thẳng /certificate chưa xong→403). Defer: nút cert ở My Learning, PDF/email BE, QR, cert cho LearningPath.
+- hrm-quotation-to-erp-contract → @dnsnamdang → .plans/hrm-quotation-to-erp-contract/plan.md
+  Cross-system (ERP-primary). **CODE DONE cả 3 phase (không commit), chờ test E2E.** Lập HĐ ERP thẳng từ báo giá Assign HRM (status=7 + tmp synced + VND), bỏ firm-quotation. Phần HRM (done): migration `quotations.erp_firm_contract_id` (đã chạy) + `buildContractSummary` trong `QuotationController::byProject` + banner/nút "Lập hợp đồng ERP" deep-link trong `ProspectiveProjectQuotationsTab.vue`. Spec authoritative: `ERP/.plans/hrm-quotation-to-erp-contract/design.md`.
+
+- timesheet-detail-note → @dnsnamdang → .plans/timesheet-detail-note/plan.md
+  Thêm cột "Ghi chú" vào modal Chi tiết chấm công (tab Dữ liệu chấm công), lấy từ `timesheets.note` (app mobile đã lưu, web chưa show). Chỉ modal `TimeSheetDetailModal.vue` + field `note` trong `TimekeeperListResource`. Không migration.
+  Spec: docs/superpowers/specs/2026-06-15-timesheet-detail-note-design.md
+  Checkpoint: 2026-06-15 — Brainstorm + spec DONE. Chờ user review spec → writing-plans.
+
+- chan-tp-duyet-qua-han → .plans/chan-tp-duyet-qua-han/plan.md
+  Testcase luồng chặn TP duyệt khi NV có hàng quá hạn (HRM gọi API ERP). testcase.xlsx 29 TC (use_erp, mapping NV, fail-open, 20 phiếu Timesheet+Assign, modal). Cặp ERP ở `ERP/.plans/chan-tp-duyet-qua-han/`. Checkpoint 2026-06-11: đã sinh xong, chờ user review.
+
+- sync-hang-tam → @dnsnamdang → .plans/sync-hang-tam/plan.md
+  Trạng thái: ĐÃ COMMIT (branch sync_quotation, 3 repo — CHƯA push/merge). ERP 04efffe32d · hrm-api b3f8ee7e4 · hrm-client b119b1d0. Đã test E2E bug duyệt hàng tạm OK trên dev_erp_2.
+  Spec: docs/superpowers/specs/2026-06-06-sync-hang-tam-design.md | Plan: docs/superpowers/plans/2026-06-06-sync-hang-tam.md
+  Checkpoint: 2026-06-06 — Đã thực thi toàn bộ plan 12 task/4 phase qua subagent-driven (branch sync_quotation cả 3 repo, KHÔNG commit).
+    Phase 1 (ERP): migration 4 cột hrm_* trên tmp_product_requests + FormRequest + TmpProductRequestSyncService + TmpProductRequestSyncController + route v1/tmp-product-requests (sync-from-hrm, approved-status). Migration đã chạy thật. Approved.
+    Phase 2 (HRM api): migration erp_tmp_product_id + tmp_sync_status/tmp_synced_at + TmpProductSyncService(push/pull) + QuotationController(sendTmpApproval/pullTmpApproval) + byProject/QuotationResource(3 field) + 2 route. Migration đã chạy thật. Approved.
+    Phase 3 (HRM client): ProspectiveProjectQuotationsTab.vue — nút Gửi duyệt hàng tạm + badge trạng thái + nút Cập nhật kết quả duyệt + autoPullSyncing. Approved (bác bỏ 1 false-positive về response path: apiPostMethod trả body nên res.data.counts ĐÚNG).
+    Phase 4: retrySync early-return "tạm tắt" (giữ code cũ trong comment) + ẩn nút FE retry-sync (v-if=false). QuotationErpSyncService + route giữ nguyên.
+    Data contract 2 chiều HRM↔ERP đã verify khớp trên code.
+  Checkpoint: 2026-06-06 (b) — DEBUG + MỞ RỘNG (đã test ERP thật trên dev_erp_2): 
+    Bugfix: (1) ERP tmp_products NOT NULL brand/manufacture/origin → migration nullable + product_cate='[]'; (2) approved-status chỉ trả product_id khi status=1; (3) sendApproval guard map rỗng → gửi lỗi không kẹt syncing. Reset BG-2026-00044 đang kẹt.
+    Mở rộng: 2 nút header (gửi/cập nhật cấp dự án, endpoint sendTmpApprovalForProject/pullTmpApprovalForProject + cờ tmp_can_send/tmp_can_pull) + cột "Trạng thái đồng bộ" + giữ nút per-row.
+    Quyết định: 1 dự án = 1 báo giá trúng thầu (giữ rule finalize). Bước tiếp: user test E2E từ UI rồi commit (3 repo branch sync_quotation, chưa commit).
+  Checkpoint: 2026-06-06 (c) — Bugfix ERP `TmpProductsController::approve`: duyệt hàng tạm khi sửa trường (hãng SX/nhóm hàng hoá/avatar/units...) trước chỉ lưu sang Product, KHÔNG lưu về tmp_products. Fix: cập nhật đầy đủ field vô hướng + re-sync quan hệ (suppliers/barcodes/videos sync; attributes/galleries/units+prices xoá→insert) mirror store(), cùng transaction. Cô lập luồng sync (tmp_products không có cột sync; approved-status chỉ đọc status+product_id; HRM map theo tmp_products.id không đổi). ĐÃ TEST E2E OK trên dev_erp_2. Bước tiếp: user commit.
+  Checkpoint: 2026-06-08 — MỞ RỘNG: hàng tạm "Đang tạo" trước khi gửi duyệt. Spec docs/superpowers/specs/2026-06-08-tmp-product-draft-status-design.md · Plan docs/superpowers/plans/2026-06-08-tmp-product-draft-status.md. Chỉ đụng ERP, không migration. Đang triển khai inline 8 task. Bước tiếp: code Task 1→8 rồi user test E2E trên dev_erp_2.
 
 - project-implementation-types → @dnsnamdang → .plans/project-implementation-types/plan.md
   Trạng thái: Phase A+B done. Phase C đã pivot sang quotation-redesign. Branch `tpe-develop-assign`.
@@ -119,16 +145,6 @@
   Phase 30 (2026-05-28): BOM ẩn giá ERP, báo giá load giá ERP + quy đổi tỷ giá, validity_date, tab báo giá dự án TKT, icon cảnh báo thay đổi giá, toolbar CK+TSLN màn xem.
   Checkpoint: 2026-05-28 — Phase 30 done. Bước tiếp: chạy migration validity_date + test thủ công.
 
-- firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
-  Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
-- delivery-trip-actual-cost-validate → @nguyentrancu97 → .plans/delivery-trip-actual-cost-validate/plan.md
-  Trạng thái: Implementing. Validate total_cost_transition theo CP xăng + cầu đường + công tác phí + CP khác (TanPhatDev)
-- delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
-  Trạng thái: Implementing. Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp (TanPhatDev)
-- xuat-ghep-tu-hang-giu → @nguyentrancu97 → .plans/xuat-ghep-tu-hang-giu/plan.md
-  Trạng thái: Brainstorming PAUSED 2026-04-28. Đã chốt 7 quyết định (hiển thị tồn/giữ qua API stockOfProducts, validate `qty ≤ in_stock + prepick_qty`, cascade nhập ghép giữ toàn bộ thành phẩm, customer per-parent, hạn giữ = today + Config.max_prepick_date, xuất thẳng tái sử dụng pattern export_prepick_qty/hold_qty/total_qty + FIFO consume). Còn 6 câu hỏi mở (Q6-Q11): customer_id cấp nào, validate hạn giữ, approval, pending lock prepick, popup filter, edit/cancel. (TanPhatDev)
-  Checkpoint: 2026-04-28 — Paused tại Q6 (customer_id lưu cấp parent vs recipe + cascade khi YCXG có >1 customer).
-
 ## Tạm dừng
 
 - training-elearning → @dnsnamdang → .plans/training-elearning/plan.md
@@ -173,6 +189,8 @@
 
 - quotation-finalize → @khoipv → .plans/quotation-finalize/plan.md
   Hoàn thành: 2026-06-04. 8 task (6 BE + 2 FE), verify browser PASS. Tab "Báo giá" màn assign/prospective-projects/{id}/manager: nút Chốt báo giá (Đã duyệt 4 → Trúng thầu 7) + Hủy chốt (7 → 4, bắt buộc lý do). Mỗi dự án 1 báo giá trúng thầu (BE chặn + báo lỗi nếu đã có). Nút chỉ hiện khi đúng trạng thái + isSaleOfProject. BE: +status 7, +2 history action, +finalize/unfinalize service, +2 route (không middleware/permission/migration — chỉ ghi history): Quotation.php, QuotationHistory.php, QuotationUnfinalizeRequest.php (mới), QuotationService.php, QuotationController.php, Routes/api.php. FE: ProspectiveProjectQuotationsTab.vue (2 icon-button + modal lý do hủy chốt validate inline). Spec: .plans/quotation-finalize/design.md
+- xuat-ghep-tu-hang-giu → @nguyentrancu97 → .plans/xuat-ghep-tu-hang-giu/plan.md
+  Hoàn thành: 2026-06-16. Xuất ghép từ hàng giữ (TanPhatDev). User xác nhận đã làm xong toàn bộ. (Brainstorm 2026-04-28 chốt 7 quyết định: hiển thị tồn/giữ qua API stockOfProducts, validate `qty ≤ in_stock + prepick_qty`, cascade nhập ghép giữ toàn bộ thành phẩm, customer per-parent, hạn giữ = today + Config.max_prepick_date, xuất thẳng tái dùng pattern export_prepick_qty/hold_qty/total_qty + FIFO consume.)
 
 - termination-filter-include-resigned → @khoipv → .plans/termination-filter-include-resigned/plan.md
   Hoàn thành: 2026-06-02. Dropdown "Nhân viên" màn decision/termination-labor-contract/index hiển thị cả người đã nghỉ việc (Hướng A: endpoint riêng `GET decision/termination-labor-contract/employee-options` trả toàn bộ employee_infos bất kể status; FE bind vào data local `employeeFilterOptions` thay vì state global). BE 2 file (controller method + route) + FE 1 file (index.vue). Không đụng state global lẫn hàm dùng chung. Spec: .plans/termination-filter-include-resigned/design.md
@@ -313,8 +331,8 @@
 - pi-inland-supplement-annex → @nguyentrancu97 → .plans/pi-inland-supplement-annex/plan.md
   Hoàn thành: 2026-04-29. 12/12 task. Lập phụ lục bổ sung cho PI trong nước (firm type=4 + free type=5, KHÔNG migration). 2 BE + 5 FE. Test 6 case pass (TanPhatDev)
 - delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
-  Hoàn thành: 2026-04-29. 10/10 task. Validate cước phiếu hạch toán + enable edit header + tick is_company_sp. 1 migration + controller + JS class + 3 view. Test 5 case pass (TanPhatDev)
+  Hoàn thành: 2026-06-16 (vòng 2 — đã làm xong). Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp. (Vòng 1: 2026-04-29, 10/10 task, 1 migration + controller + JS class + 3 view, test 5 case pass) (TanPhatDev)
 - delivery-trip-actual-cost-validate → @nguyentrancu97 → .plans/delivery-trip-actual-cost-validate/plan.md
-  Hoàn thành: 2026-04-29. 10/10 task. Validate `total_cost_transition` theo CP xăng + cầu đường + công tác phí + CP khác (xe Tân Phát). JS class + 2 view. Test 6 case pass (TanPhatDev)
+  Hoàn thành: 2026-06-16 (vòng 2 — đã làm xong). Validate `total_cost_transition` theo CP xăng + cầu đường + công tác phí + CP khác. (Vòng 1: 2026-04-29, 10/10 task, JS class + 2 view, test 6 case pass) (TanPhatDev)
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
-  Hoàn thành: 2026-04-29. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev). User xác nhận đã làm xong (plan.md không có task chi tiết)
+  Hoàn thành: 2026-06-16 (vòng 2 — đã làm xong). Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT. (Vòng 1: 2026-04-29) (TanPhatDev)

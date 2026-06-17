@@ -1,5 +1,13 @@
 ## Dự án TanPhatDev (ERP Tân Phát)
 
+### Scope thư mục
+
+> **Thư mục gốc của dự án ERP là `ERP/`** (chứa file CLAUDE.md này).
+> Tất cả đường dẫn tương đối trong file này (`TanPhatDev/`, `app/`, `resources/`, `public/`, `routes/`, `database/`) đều tính từ thư mục `ERP/`, KHÔNG phải từ thư mục cha `ERP-HRM/`.
+> Khi tạo file, đọc file, hay thao tác git — luôn thực hiện bên trong `ERP/`.
+
+---
+
 ### Tổng quan
 
 Hệ thống ERP quản lý bán hàng, kho, kế toán, bảo hành, vận chuyển cho công ty Tân Phát. Repo nằm tại `/TanPhatDev`. Đây là dự án **Laravel thuần** (không dùng `nwidart/laravel-modules`), frontend render bằng **Blade + AngularJS 1.3.9** (KHÔNG phải Vue/Nuxt như hrm-client).
@@ -187,3 +195,137 @@ php artisan tinker
 - `APP_DEBUG=true` trên local → PHP notice/warning có thể phá JS nếu output vào giữa `<script>` block
 - Khi sửa hàm `getForSelect()` hoặc hàm trả data cho `@json()` → luôn kiểm tra null relation trước khi access property
 - Nhiều model dùng `auth()->user()->info->company_id` — nếu chạy trong tinker sẽ ra notice vì không có auth context
+
+---
+
+## Nguyên tắc chung
+
+- Luôn gợi ý và làm việc bằng tiếng Việt
+- Không xử lý commit hay đẩy code lên git
+- Không đọc file thư viện hệ thống (`vendor/`, `node_modules/`) — tốn token không cần thiết
+- Ưu tiên dùng helper có sẵn (`app/Helpers/`), tạo helper mới nếu logic dùng lại nhiều nơi
+- Khi cần sửa hàm dùng chung → hỏi ý kiến trước khi làm
+- Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`)
+- `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
+
+---
+
+## Quy luật tổ chức tài liệu feature
+
+Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`.
+
+**Feature nhỏ (1-2 phase):**
+
+```
+.plans/[feature]/
+├── design.md          ← design duy nhất
+├── plan.md            ← plan duy nhất
+├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+└── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
+```
+
+**Feature lớn (3+ phase):**
+
+```
+.plans/[feature]/
+├── design.md          ← tóm tắt tổng thể feature (scope, hiện trạng, quyết định chung)
+├── design-phase{N}.md ← design chi tiết cho từng phase lớn
+├── plan.md            ← TẤT CẢ tasks (append phase mới vào cuối, trước checkpoint)
+├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+├── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
+└── (các file phụ: testcase, script...)
+```
+
+**Quy tắc:**
+
+- `design.md`: tóm tắt chung, KHÔNG chứa spec chi tiết từng phase
+- `design-phase{N}.md`: spec đầy đủ (DB, BE, FE, edge cases) — tạo khi phase có nhiều thay đổi
+- `plan.md`: 1 file duy nhất chứa tất cả phase, append liên tục
+- SRS: 2 file output (`srs.html` + `srs.docx`) — lưu cùng folder feature
+- Testcase: chỉ Excel (`testcase.xlsx`) — lưu cùng folder feature
+- KHÔNG tạo `plan-phase{N}.md` riêng
+
+---
+
+## Quản lý session
+
+**Bắt đầu session mới — bắt buộc theo thứ tự:**
+
+1. Đọc `.plans/STATUS.md`
+2. Tìm feature đang ở mục "Đang làm"
+3. Đọc `.plans/[feature]/design.md` + `plan.md`
+4. Báo lại: "Đang làm [feature], checkpoint cuối: [X], task tiếp theo: [Y]"
+5. Chờ xác nhận trước khi bắt đầu
+
+**Khi nhận yêu cầu làm tiếp / cập nhật feature đã có — theo thứ tự:**
+
+1. Cập nhật `STATUS.md` → chuyển feature về "Đang làm"
+2. Đọc lại toàn bộ `.plans/[feature-name]/` (design.md + plan.md)
+3. Kiểm tra branch:
+   - Feature đã merge vào nhánh hiện tại → hỏi có tạo branch mới để update không?
+   - Feature vẫn ở branch riêng → hỏi có chuyển về branch đó để làm tiếp không?
+4. Yêu cầu nhập spec để brainstorming yêu cầu mới
+
+**Khi nhận yêu cầu "tạo tính năng mới" / "tạo feature" — làm NGAY:**
+
+1. Tạo folder `.plans/[feature-name]/`
+2. Tạo file `.plans/[feature-name]/design.md` (placeholder, sẽ fill sau brainstorming)
+3. Tạo file `.plans/[feature-name]/plan.md` (placeholder, sẽ fill sau khi lên plan)
+4. Cập nhật `STATUS.md` → thêm vào "Đang làm"
+5. Sau đó mới bắt đầu brainstorming / hỏi yêu cầu
+
+**Khi nhận yêu cầu mới (feature/fix/task) — BẮT BUỘC trước khi code:**
+
+1. Cập nhật `.plans/[feature]/plan.md` với danh sách task cụ thể
+2. Đánh `[x]` khi xong mỗi task
+3. Kể cả fix bug nhỏ cũng phải có task trong plan.md
+
+**Khi nghe "wrap up" — làm ngay theo thứ tự:**
+
+1. Cập nhật `plan.md` — đánh `[x]` task xong, ghi checkpoint
+2. Cập nhật `STATUS.md` — trạng thái feature hiện tại
+3. Nếu là lần wrap up đầu tiên của feature (design.md còn trống hoặc chỉ có placeholder) → cập nhật `.plans/[feature]/design.md` dựa trên hiểu biết đã tích luỹ trong session
+4. Báo ra chat: "Đã cập nhật xong. Bước tiếp theo: [X]"
+
+Không làm gì khác cho đến khi các việc trên xong.
+
+**Checkpoint format bắt buộc:**
+
+```
+### Checkpoint — [timestamp]
+Vừa hoàn thành: [task vừa xong]
+Đang làm dở: [file + dòng + dừng ở đâu]
+Bước tiếp theo: [hành động cụ thể]
+Blocked: [để trống nếu không có]
+```
+
+**Quy tắc STATUS.md — chỉ cập nhật khi có 1 trong 4 sự kiện:**
+
+1. Tạo feature mới → thêm vào "Đang làm"
+2. Nghe "wrap up" → cập nhật Checkpoint
+3. Chuyển feature → move giữa các mục
+4. Merge xong → move vào "Hoàn thành", giữ tối đa 3 entry
+
+---
+
+## Custom skills
+
+Các skill tùy chỉnh nằm trong `.claude/skills/`.
+Trước khi implement bất kỳ pattern lặp lại nào,
+kiểm tra `.claude/skills/` xem đã có SKILL.md chưa.
+Nếu có → đọc trước khi viết code.
+
+---
+
+## Khi làm việc với git
+
+- Repo nằm ở: `TanPhatDev/`
+
+---
+
+## Không làm
+
+- Không commit hay push git khi chưa có yêu cầu
+- Không đọc file trong `vendor/`, `node_modules/`
+- Không tự sửa hàm dùng chung khi chưa được xác nhận
+- Không tự quyết định điều kiện xóa — phải hỏi
