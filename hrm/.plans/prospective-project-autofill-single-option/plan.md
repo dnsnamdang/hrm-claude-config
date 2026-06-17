@@ -22,3 +22,11 @@ Spec: `docs/superpowers/specs/2026-06-04-prospective-project-autofill-single-opt
 - [ ] Luồng Lĩnh vực KH: chọn Lĩnh vực thuộc nhiều nhóm → để trống Nhóm LVKH; thuộc 1 nhóm → tự fill
 - [ ] Đổi qua lại lựa chọn → field không hợp lệ bị xóa, không kẹt giá trị sai
 - [ ] Màn xem (isShow) / dự án đã duyệt → không auto-fill
+
+## Phase 3 — Fix: chọn select sau làm mất select đã chọn trước
+
+Triệu chứng: chọn Ứng dụng xong chọn Nhóm giải pháp → Ứng dụng bị xóa. Nguyên nhân: 2 nhánh "augmentation" liên kết trực tiếp Nhóm ngành↔Nhóm giải pháp trong `formScopeOptions`/`formIndustryOptions` cho hiện cả option lệch với các field đã chọn → khi chọn option lệch, `pruneInvalidCascade()` xóa field cũ. Yêu cầu: mọi dropdown chỉ hiện option tương thích với TẤT CẢ field đã chọn.
+
+- [x] `formIndustryOptions`: chỉ chạy augmentation (thêm GP gắn trực tiếp Nhóm ngành) khi KHÔNG có field thu hẹp khác đang chọn (`!application_id && !customer_scope_group_id && !customer_scope_id`)
+- [x] `formScopeOptions`: chỉ chạy augmentation (thêm Nhóm ngành gắn trực tiếp GP) khi `!application_id && !customer_scope_group_id && !customer_scope_id`
+- [ ] Kiểm thử: chọn Ứng dụng → Nhóm giải pháp → Ứng dụng giữ nguyên; lặp tương tự cho các cặp select còn lại

@@ -161,9 +161,20 @@
   Scope: BE (migration + model + service + controller + route) + FE (store + composable + placeholder page + button update)
 
 - elearning-learning-path-detail → @junfoke → .plans/elearning-learning-path-detail/plan.md
-  Trạng thái: Code DONE (70 task, 11 phases). Đã migrate. Chờ verify browser (Docker, Node ≥18).
+  Trạng thái: Code DONE (38/38 task, 9 phases). Đã migrate. Chờ test full flow trên browser.
   Spec: docs/superpowers/specs/2026-05-19-elearning-learning-path-detail-design.md
-  Checkpoint: 2026-06-03 (6) — Phase 11: hiển thị cấp Chương (learner PathOutline + builder TabInfo, BE trả chapters[]/loose_lessons + chapter_id), quy đổi giờ-phút toàn bộ (helper formatMinutes), badge tổng "X khoá/chương • Y bài • giờ-phút" + gộp nút "Mở tất cả", fix trạng thái bài/chương màn chi tiết môn (BE đính learn_status từ EnrollmentLessonProgress + FE deriveChapterStatus), placeholder overview "Chưa có thông tin". Bước tiếp: verify browser 4 điểm (chương→bài+thời lượng, builder hiện chương, bài xong hiện "Đã xong"/chương "Đạt", overview rỗng placeholder). Defer: status chương exam chưa tính kết quả thi.
+  Checkpoint: 2026-05-20 — Phase 9: UI polish — header compact (giảm padding/logo/button/font), trang thảo luận thêm context banner + rating summary (điểm TB + bar chart) + filter bình luận theo sao (BE+FE), refactor views/ theo folder chức năng (home/, learning-path/, subject/). Bước tiếp: test rating summary + filter sao + kiểm tra trang chi tiết LP vẫn OK.
+
+- request-solution-adjustment → @dnsnamdang → .plans/request-solution-adjustment/plan.md
+  Trạng thái: Code DONE. Chờ migration + test thủ công (47 test cases).
+  Spec: docs/superpowers/specs/2026-05-06-request-solution-adjustment-design.md
+  SRS: docs/srs/solution-adjustment-request-SRS.html | Testcases: docs/srs/solution-adjustment-request-testcases.xlsx
+  Checkpoint: 2026-05-06 — BE 8 files + FE 3 files. Fix: BaseConfirmModal @event, cột Hành động luôn hiện, cột Version, popup chi tiết dạng bảng, notification URL /manager, FileAttachmentTable readonly (disabled prop), sort id desc. Bước tiếp: chạy migration + test.
+
+- my-todo → @dnsnamdang → .plans/my-todo/plan.md
+  Trạng thái: Phase 1-5 + Phase 7-9 DONE. Branch `tpe-develop-assign`. Còn Phase 6 (Test).
+  Phase 9 (2026-05-04): đổi tên UI ("Lịch làm việc của tôi", "Tạo nhắc việc cá nhân"), sửa nhắc việc (cả màn chính + danh sách), confirm BaseConfirmModal, fix reload, fix 422 due_time, sort theo thời gian, sub-items đồng nhất, cascade toggle (parent↔sub kiểu Google Tasks).
+  Checkpoint: 2026-05-04 — Phase 9 done. Bước tiếp: test toàn bộ flow.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
   Trạng thái: Phase 31 BRAINSTORM DONE (spec viết xong). Branch `tpe-develop-assign`.
@@ -293,10 +304,11 @@
 
 - my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
   Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
-  Hoàn thành: 2026-04-21. Phase 1–2 (BE) + Phase 4–8 (FE). BE: routes + service + Resource + Export + Helper. FE: index.vue wiring + AssignBusinessTab.vue đầy đủ (filter 8 ô, bảng 8 cột, 13 row actions dropdown, column customization, ExportModal, ConfirmDelete, ConfirmCancelApprove). Test OK.
+  Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
 
 - customer-development-report → @manhcuong → .plans/customer-development-report/plan.md
   Hoàn thành: 2026-05-19. Testcases báo cáo QLDA_BC_10 đã bổ sung trong Testcase \_baocao.xlsx. Spec: docs/superpowers/specs/2026-05-18-customer-development-report-design.md
+
 - optimize-getall-manager-context → @manhcuong → .plans/optimize-getall-manager-context/plan.md
   Hoàn thành: 2026-05-11. Tối ưu API getAll khi tạo Task/Issue từ màn Manager: BE thêm filter id vào 2 service, FE truyền id param + lock select. 6 file (2 BE + 4 FE). Spec: docs/superpowers/specs/2026-05-11-optimize-getall-manager-context-design.md
 - task-status-notification → @khoipv → .plans/task-status-notification/plan.md
@@ -320,11 +332,12 @@
   Hoàn thành: 2026-04-25. 7/7 task. Gộp hồ sơ trình duyệt hạng mục vào tab Hồ sơ giải pháp. BE: mở rộng `getSolutionReviewProfiles()` merge 2 query (solution + module) + manual paginate + transform + auto-force type theo filter. FE: 3 filter mới (Loại/Hạng mục/Version HM) + 2 cột mới + deep watcher auto-search + row actions phân loại + tích hợp `ModuleApprovalModal` để PM duyệt hồ sơ hạng mục. Lọc bỏ draft. Spec: docs/superpowers/specs/2026-04-25-merge-module-review-profiles-design.md
 - scorm-upload → @khoipv → .plans/scorm-upload/plan.md
   Hoàn thành: 2026-04-22. 14/14 task. Spec: docs/superpowers/specs/2026-04-22-scorm-upload-design.md. BE: `CmcS3Helper::putLocalFile` + `UploadScormRequest` + `LessonService::handleScormUpload` (ZipArchive extract → parseScormManifest → upload S3 recursive với MIME chuẩn → cleanup tmp) + Controller `uploadScorm` + route `POST /training/lessons/upload-scorm`. FE: `LessonForm.vue` block SCORM thêm `V2BaseFile(.zip)` + spinner + info card + `onUploadScormZip` / `clearScormPackage`; submit type=4 gửi thêm `package_path / package_title / file_size / file_name`. Giới hạn 1GB, 2000 files. Known issue pending: cross-origin SCORM API (S3 ≠ LMS domain) — để lại cho feature sau `scorm-lms-runtime`.
-  Phase 4 fix (2026-06-02, @junfoke): (4.1-4.3) parser manifest robust — dò identifierref đệ quy qua item lồng nhau + xml:base + fallback quét đệ quy → hết 422 với gói SCORM.com "Randomized Testing"; (4.4) launch URL đổi path-style → virtual-hosted (tanphat.s3.cloud.cmctelecom.vn/<key>) → hết 403 AccessDenied khi preview qua /scorm-proxy; (4.5) bỏ default scorm_min_score=60 → null (gói nội dung không chấm điểm vẫn hoàn thành) + hint UI; (4.6) prune tracking_completion khi submit chỉ giữ key đúng loại bài. Lesson tạo trước fix cần gỡ gói + tải lại rồi lưu lại.
 - ke-toan-module-scaffold → @manhcuong → .plans/ke-toan-module-scaffold/plan.md
   Hoàn thành: 2026-04-22. Scaffold phân hệ Kế toán (module mới). BE `Modules/Accounting/` đầy đủ structure + `module.json` + `composer.json` + `AccountingServiceProvider` + `RouteServiceProvider` + `Routes/api.php` (`GET /dashboard`) + `DashboardController` + đăng ký `modules_statuses.json`. FE: layout riêng `layouts/accounting.vue` + sidebar `accounting-components/accounting-slidebar.vue` + topbar `AccountingMenu.vue` (dùng `<BasicSubsystem />`) + `custom-accounting.scss` + `icon_ke_toan.svg` placeholder + Vuex flag `is_use_accounting` (master-setting `use_accounting`) + checkbox "Sử dụng kế toán" tại `/timesheet/setting/setting-master` + tile `BasicSubsystem.vue`/`pages/index.vue` + `pages/accounting/index.vue`+`dashboard.vue`. Tài liệu tổng quan: `docs/accounting.md`. Spec: `docs/superpowers/specs/2026-04-21-ke-toan-module-scaffold-design.md`.
 - overdue-task-unified-predicate → @manhcuong → .plans/overdue-task-unified-predicate/plan.md
   Hoàn thành: 2026-04-21. Thêm `Task::scopeOverdue` + áp ở `TaskController::index` + `SolutionService::getCategoriesWithLateTasks`/`getPeopleWithLateTasks` + `SolutionModuleService::getPeopleWithLateTasks`. Đồng bộ `late_tasks_count` + card Overview với logic `overdue_total` tab Task (status NOT IN [1,8,9], CONCAT due_date+due_time). Review pass 0 Critical/Important. Test OK.
+- my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
+  Hoàn thành: 2026-04-21. Phase 1–2 (BE) + Phase 4–8 (FE). BE: routes + service + Resource + Export + Helper. FE: index.vue wiring + AssignBusinessTab.vue đầy đủ (filter 8 ô, bảng 8 cột, 13 row actions dropdown, column customization, ExportModal, ConfirmDelete, ConfirmCancelApprove). Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
   Hoàn thành: 2026-04-07. 2/2 task. Button "Lưu và duyệt" khi has_modules=false
 - solution-version-report → @manhcuong → .plans/solution-version-report/plan.md
