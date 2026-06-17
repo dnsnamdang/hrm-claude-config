@@ -305,9 +305,70 @@ Tất cả migration đặt tại `hrm-api/database/migrations/`.
 
 ---
 
-## Checkpoint — 2026-05-20 (latest)
+## Checkpoint — 2026-05-20
 
 **Vừa hoàn thành:** Phase 17 — fix luồng thảo luận (pagination BE, totalCount, rating badge, sync khi thêm/xoá).
 **Đang làm dở:** Không.
 **Bước tiếp theo:** Test lại luồng thảo luận khoá học + lộ trình trên browser (pagination, badge rating, xoá comment).
 **Blocked:** `withValidator` grader-theo-essay vẫn comment out — cần clarify shape `exam_questions.type` trước khi unlock (low priority, không block production).
+
+---
+
+### Fix — Builder không load lại Kỹ năng (skill_id) khi sửa khoá học
+
+Lưu `skill_id` đã đúng (SubjectService::fillSubjectAttributes) nhưng endpoint `showBuilder` trả `SubjectDetailResource` thiếu field `skill_id`/`skill` → dropdown Kỹ năng rỗng khi mở form Sửa, dễ dính validate `skill_id required`.
+
+- [x] `Subject.php` — thêm relation `skill()` (belongsTo Skill)
+- [x] `SubjectService::getDetailForBuilder` — eager-load `'skill'`
+- [x] `SubjectController::showBuilder` (nhánh slug) — eager-load `'skill'`
+- [x] `SubjectDetailResource` — trả thêm `skill_id` + object `skill { id, name }`
+
+### Fix — Ẩn nút "Lưu nháp" khi khoá học đã phát hành
+
+Footer builder luôn hiện "Lưu nháp" ở mọi trường hợp sửa. Nghiệp vụ: khoá đã Hoạt động (1) hoặc Khoá (2) thì không cho đưa về nháp. Quyết định dựa trên trạng thái **gốc** lúc load (đổi dropdown trên form không làm nút hiện lại).
+
+- [x] `SubjectBuilderForm.vue` — thêm const `STATUS_LOCKED = 2`, state `originalStatus`
+- [x] `loadBuilder` — lưu `originalStatus` từ `data.status`
+- [x] `footerMenu` — `submit_and_draft = false` khi `originalStatus ∈ {1, 2}`; tạo mới / nháp (3) vẫn hiện
+
+## Checkpoint — 2026-06-03 — Fix Kỹ năng + Lưu nháp (khoá học)
+
+**Vừa hoàn thành:** (1) Fix builder không load lại Kỹ năng khi sửa khoá học; (2) Ẩn nút "Lưu nháp" khi khoá đã Hoạt động/Khoá (theo trạng thái gốc).
+**Đang làm dở:** Không.
+**Bước tiếp theo:** Test trên browser: (a) mở Sửa khoá đã có kỹ năng → dropdown "Kỹ năng" hiển thị đúng; (b) mở Sửa khoá đang Hoạt động → không còn nút "Lưu nháp"; mở khoá Nháp / tạo mới → vẫn còn.
+**Blocked:** Không.
+
+---
+
+### Fix — Thêm bài học vào chương không hiện ngay trong builder (phải thao tác lần 2)
+
+Nhấn `+` trên chương → chọn bài học → lưu cấu hình mapping, bài học không hiện trong builder; phải làm lại lần 2 mới thấy.
+
+**Nguyên nhân:** `addLessonFromBank` tìm chương đích bằng so sánh tham chiếu `this.chapters.find(c => c === this.pickerTarget)` và mutate trực tiếp `ch.subject_lessons.push(sl)` (không `$emit('input')`). Tham chiếu chương cũ không khớp object hiện tại sau khi cha rebuild `formData` → `find` trả `undefined` → không thêm được + không reactive.
+
+- [x] `TabInfo.vue` — bắt `chIdx` khi mở picker (`openLessonPicker(ch, chIdx)`), lưu `pickerTargetIdx`
+- [x] `TabInfo.vue` — `addLessonFromBank` thêm bài vào chương theo **index** + update **immutable** qua setter `chapters` (tự emit input)
+
+## Checkpoint — 2026-06-02
+
+**Vừa hoàn thành:** Fix thêm bài học vào chương không hiện ngay trong builder (đổi từ so sánh tham chiếu + mutate trực tiếp → bắt theo index + update immutable qua setter chapters).
+**Đang làm dở:** Không.
+**Bước tiếp theo:** Test trên browser: mở Sửa khoá có chương → nhấn `+` trên 1 chương → chọn bài học → lưu cấu hình → bài học hiện ngay trong đúng chương (lần 1).
+**Blocked:** Không.
+
+---
+
+### Fix — Tích Public bị tự bỏ khi đổi banner / sửa thông tin khoá học
+
+Mở form Sửa khoá → tích Public → đổi ảnh banner thì Public tự bỏ tích.
+
+**Nguyên nhân:** `loadBuilder()` bị gọi **2 lần**: (1) `watch.subjectId` `immediate: true` lúc tạo component (nhanh) → form hiện dữ liệu, người dùng tích Public + sửa; (2) `mounted()` gọi lại `loadBuilder()` nhưng **sau `await fetchExamKits()`** (endpoint exams `limit=1000` chậm) → resolve muộn, `this.formData = {...}` ghi đè lại bằng dữ liệu server (`is_public = false`) → mất thay đổi người dùng. Trùng đúng lúc đổi banner nên tưởng banner gây lỗi.
+
+- [x] `SubjectBuilderForm.vue` — bỏ `immediate: true` ở watcher `subjectId` (chỉ load lần đầu trong `mounted` sau khi đã có `examKitOptions`); watcher chỉ xử lý khi `subjectId` đổi về sau
+
+## Checkpoint — 2026-06-02 (b)
+
+**Vừa hoàn thành:** Fix Public tự bỏ tích khi đổi banner/sửa thông tin — do `loadBuilder()` gọi 2 lần (watcher immediate + mounted), lần 2 resolve muộn ghi đè edit của người dùng. Bỏ `immediate`, chỉ load 1 lần.
+**Đang làm dở:** Không.
+**Bước tiếp theo:** Test browser: mở Sửa khoá → tích Public → đổi banner + sửa vài field → Public + các field giữ nguyên (không bị reset).
+**Blocked:** Không.

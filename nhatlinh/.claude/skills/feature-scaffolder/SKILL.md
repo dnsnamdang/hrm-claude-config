@@ -99,6 +99,27 @@ class EntityService extends BaseService
 - Màn danh sách: `.skills/list-page/SKILL.md`
 - Import Excel: `.skills/import-excel/SKILL.md`
 
+## Permission — BẮT BUỘC khi tạo feature mới
+
+Mỗi feature mới có middleware `checkPermission` **PHẢI** thêm permission vào 2 nơi:
+
+### 1. PermissionsTableSeeder (để seed lại DB khi cần)
+- File: `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php`
+- Tìm ID cuối cùng (grep `'id' =>` | sort -n | tail -1), tăng lên 1
+- Format: `Permission::create(['id' => NEXT_ID, 'guard_name' => 'api', 'name' => '...', 'display_name' => '...', 'group' => '...', 'type' => N]);`
+- `type`: 3 = HCNS, 4 = Giao việc/Danh mục, 5 = Tính lương, 6 = Quyết định
+- Thường cần 2 quyền: `Quản lý danh mục X` (full CRUD) + `Xem danh mục X` (chỉ xem)
+
+### 2. Insert trực tiếp vào DB (để test ngay, không cần chạy seeder)
+```php
+DB::table('permissions')->insert([...]);
+```
+- Sau đó gán cho role Super admin (id=18): `DB::table('role_has_permissions')->insert([...])`
+
+### 3. Thêm menu vào sidebar
+- File menu nằm tại: `components/default-menu/[module].js`
+- Thêm item mới với `label` và `link`
+
 ## Quy tắc
 - Hỏi user trước khi thêm phân quyền theo cấp
 - Hỏi user điều kiện `is_can_delete` cụ thể

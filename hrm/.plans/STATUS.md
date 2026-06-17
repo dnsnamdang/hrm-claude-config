@@ -12,6 +12,92 @@
   Trạng thái: CODE DONE (BE B1-B5 + FE F1-F11 + P3 tách bảng service riêng cho BOM). Chờ E2E browser test.
   Scope: Dòng dịch vụ/chi phí trong BOM + Quotation chọn từ danh mục `costs` ERP (mysql2; chỉ status=1 & kind_of=2, phân loại bằng revenue_calculation 1=Dịch vụ có tính DT / 0=Chi phí khác, type=null) + tạo nhanh ghi thẳng `costs`. Popup hợp nhất "Thêm mới" 2 tab (Hàng hoá ERP / Dịch vụ & Chi phí — CostCatalogPanel). Quick-create overlay z-index 5300. P3: BOM tách "Dịch vụ & Chi phí khác" thành bảng riêng `bom_list_service_items` (đồng nhất quotation_service_items), copy sang báo giá khi tạo. Ghi mysql2 trực tiếp (created_by qua TpEmployee). Branch `tpe-develop-assign`.
   Checkpoint: 2026-06-05 — Phase P12→P19 DONE (sau P11): P12 createFromRequest copy service items BOM→báo giá; P13-P14 chốt tỷ lệ giá vốn (tự lập khoá giá vốn tính từ rate ERP; từ BOM nhập cả giá vốn+giá bán, PM tính tỷ lệ + ghi rate_value_capital về ERP khi lưu — syncServiceCostRatesToErp); P15 hiển thị tỷ giá + ngày tạo (edit toolbar + view); P16 fix validate giá dịch vụ false-positive (bỏ check unit_id + giá vốn>0, giữ giá bán>0); P17-P18 validate con không trùng mã CHA trực tiếp (so theo erp_product_id, không chặn hàng tạm theo code) + dedupe mã hàng tạm khi gộp BOM; P19 khoá sửa mã hàng tạm màn edit. Compile sạch + php -l OK. Bước tiếp: user E2E test P12→P19 + (tồn) chốt BOM aggregate có cho thêm dịch vụ thủ công không.
+- elearning-notification-center → @junfoke → .plans/elearning-notification-center/plan.md
+  Trạng thái: CODE DONE + VERIFIED (2026-06-15). User xác nhận chuông hiện thông báo onboarding thật, click điều hướng góc học tập. Chờ merge. Tiếp nối onboarding-auto-enroll.
+  Điều chỉnh sau verify: chuông hiện cho mọi user đã đăng nhập (learner rỗng); trigger auto-enroll chuyển sang NotificationController::index (noti hiện ngay sau đăng nhập ở mọi trang); ghi DB notification đồng bộ (không cần queue worker) gom trong OnboardingAutoEnrollService::runAndNotify().
+  Spec: docs/superpowers/specs/2026-06-15-elearning-notification-center-design.md | Plan: docs/superpowers/plans/2026-06-15-elearning-notification-center.md
+  Scope: Trung tâm thông báo THẬT + realtime trên header elearning (thay chuông mock). BE: NotificationController trong Modules/Elearning (index/markAsRead/markAllAsRead, lọc data.type ∈ whitelist ['OnboardingAutoEnroll'], chỉ employee, learner rỗng) + 3 route /api/v1/elearning/notifications. FE: socket.io-client@^2.3.0 connect socket server có sẵn (8891) bằng JWT employee nghe event 'notification' → fetch lại list (payload realtime thiếu UUID); store notification.js + composable useNotificationSocket.js + dropdown thật trong AppHeader.vue (badge unread + mark-read + click router.push nội bộ). KHÔNG sửa backend socket.
+
+- onboarding-auto-enroll → @junfoke → .plans/onboarding-auto-enroll/plan.md
+  Trạng thái: CODE DONE + VERIFIED (2026-06-15, subagent-driven). User xác nhận: auto-enroll chạy khi vào app, thông báo hiện, hạn "Còn 10 ngày" + độ khó đúng. Chờ merge.
+  Spec: docs/superpowers/specs/2026-06-15-onboarding-auto-enroll-design.md | Plan: docs/superpowers/plans/2026-06-15-onboarding-auto-enroll.md | Tóm tắt: .plans/onboarding-auto-enroll/design.md
+  Fix sau verify: trigger chuyển sang app-load (NotificationController) + bỏ guard enter_date cho days=0 + wire due_date vào hiển thị hạn (DeadlineHelper::resolve ở MyLearningService/SubjectDetailController) + fix độ khó StudyCard (level_name + icon ri-bar-chart-box-line + ẩn khi rỗng).
+  Scope: Bổ sung phần THỰC THI cho Onboarding (UI cấu hình đã có ở TabLearners). Lazy auto-enroll khi NV vào "Không gian học tập" (GET elearning/my/learning-space). Chỉ user_type=employee, dùng enter_date. Gán mọi khóa onboarding_enabled=1 + status=HOAT_DONG (publish) cho NV mới (days=0 → gán cả NV cũ). Thêm cột due_date vào subject_enrollments. 1 noti gộp qua SendNotificationToEmployee khi có khóa mới.
+  Checkpoint: 2026-06-15 — BE 3 file mới (migration due_date + OnboardingAutoEnrollService + Unit test) + 1 file sửa (MyLearningController hook autoEnrollOnboarding, chỉ employee, try/catch nuốt lỗi). Logic: isNewEmployee (days=0/null luôn mới, <=ngưỡng, guard '0000-00-00'/date rác) + computeDueDate. Hướng B (tự tạo enrollment, không đụng SubjectEnrollmentService). Review spec+chất lượng pass; xác nhận TpEmployee->info tồn tại nên noti an toàn. Bước tiếp: user `php artisan migrate` + verify 6 kịch bản. FE không đổi.
+
+- course-level → @junfoke → .plans/course-level/plan.md
+  Trạng thái: DESIGN DONE (2026-06-09). Đang lên plan.
+  Spec: docs/superpowers/specs/2026-06-09-course-level-design.md | Tóm tắt: .plans/course-level/design.md
+  Scope: Thêm trường "Độ khó" (level) cho Khóa học (Subject) — 3 mức cố định (Cơ bản/Trung cấp/Nâng cao), cột DB nullable, bắt buộc ở form. BE: migration + hằng Subject::LEVELS + validate store/update + SubjectDetailResource/SubjectBrowseResource + PublicBrowseController (filterOptions levels + filter level). FE admin (hrm-client): TabInfo dropdown + SubjectBuilderForm payload. FE elearning: filterOptions store + sidebar filter "Độ khó" + card badge + subjectDetail dùng level thật. Lộ trình ngoài scope.
+
+- external-user-report → @junfoke → .plans/external-user-report/plan.md
+  Trạng thái: CODE DONE (2026-06-06). Nối API thật. Chờ user verify browser.
+  Spec: .plans/external-user-report/design.md
+  Scope: Màn báo cáo học tập học viên ngoài công ty (Đào tạo → Danh mục, tạm thời). BE 2 endpoint mới trong ExternalUserController: `report` (gộp subject+learning_path qua learner_id, filter/sort/KPI, không phân trang) + `{id}/enrollments` (drill-down). FE 1 trang `pages/training/external-user-report/index.vue`: danh sách dùng V2BaseFilterPanel + V2BaseDataTable (rowClickable mở popup), popup chi tiết dùng table CUSTOM (không bắt buộc V2Base — theo yêu cầu). Sửa component chung V2BaseDataTable: thêm prop opt-in `rowClickable` (mặc định false → an toàn màn khác) + emit row-click. Thêm mục menu vào training-sidebar.vue.
+  Checkpoint: 2026-06-06 — Tiến độ/trạng thái lộ trình tính theo logic chuẩn MyLearningService: % = TB progress các khoá trong lộ trình; hoàn thành khi status=DONE hoặc progress>=100 (status DB của LP không đáng tin). Fix bug LP 94% hiện 50% + LP 100% kẹt "Đã đăng ký" — sửa cả report() lẫn enrollments(). Bước tiếp: user verify browser. Defer: cột "Đạt"=hoàn thành (DB chưa có is_passed), Xuất Excel báo cáo còn demo, chưa phân trang, menu chưa gắn permission.
+
+- goc-hoc-tap-ca-nhan → @junfoke → .plans/goc-hoc-tap-ca-nhan/plan.md
+  Trạng thái: CODE DONE Phase 1-5 (2026-06-06). Chờ user verify browser (Docker 3001) + nhập cấu hình deadline ở form admin.
+  Spec: docs/superpowers/specs/2026-06-05-goc-hoc-tap-ca-nhan-design.md | Plan: .plans/goc-hoc-tap-ca-nhan/plan.md (chi tiết từng phase + checkpoint ở đây)
+  Scope: FE elearning. Trang /goc-hoc-tap 4 tab (Tổng quan/Tôi cần học/Tôi đang học/Chứng chỉ) + tìm kiếm global kiểu f8. API thật qua MyLearningController/Service (GET my/learning-space). Deadline = enrolled_at + complete_within_days (đã migrate). Auto-complete lộ trình khi đủ khóa con (LearningSessionService.syncLearningPathCompletion, backfill đã chạy). Tiến độ path = TB % khóa con + nhãn "Khoá x/y"; đếm theo đơn vị gốc (ẩn khóa con khỏi khóa lẻ). Verify php -l + lint + build PASS.
+
+- elearning-home-need-to-learn → @khoipv (P1-4) / @junfoke (P5) → .plans/elearning-home-need-to-learn/plan.md
+  Trạng thái: CODE DONE (Phase 5 — 2026-06-08). Lint BE PASS. Chờ user verify browser.
+  Spec: .plans/elearning-home-need-to-learn/design.md
+  Scope: Trang chủ elearning (3001) lấy data thật cho 4 section qua 1 endpoint `public/home-content`. P1-2: "Bạn cần học". P5: thêm 3 section "Khuyến nghị cho bạn" / "Nội dung nhiều người học" / "Nội dung mới". Khách=public, nhân viên HRM=đang dùng. Tái dùng SubjectBrowseResource + LearningPathBrowseResource.
+  Checkpoint: 2026-06-08 (P9) — Trang chủ data thật 4 section + màn "Xem tất cả". P5: response `{need_to_learn, recommend, popular, newest}`. P6: "Bạn cần học"=nội dung bắt buộc khớp profile (user ngoài/guest ẩn). P7: card hiển thị trạng thái học (Học tiếp/Xem lại + badge); BE dựng progress map subject+path. P8: Khuyến nghị loại item đã hoàn thành + sửa text subtitle. P9: endpoint phân trang `home-section` (trộn khóa+lộ trình theo mode) + màn `HomeSectionView` (/noi-dung/:type) + wire 4 nút "Xem tất cả". BE refactor helper dùng chung (sectionBaseQueries/applySectionConstraints/transformSectionItems/recommendExcludeIds). Lint BE PASS. Bước tiếp: user verify browser toàn bộ.
+
+- skills-v2-redesign → @khoipv → .plans/skills-v2-redesign/plan.md
+  Trạng thái: CODE DONE (2026-06-03, 2 file FE). Chờ user verify browser (Task 3).
+  Spec: docs/superpowers/specs/2026-06-03-skills-v2-redesign-design.md | Plan: docs/superpowers/plans/2026-06-03-skills-v2-redesign.md
+  Scope: CHỈ FE hrm-client. Đổi giao diện màn training/skills cho giống learning-path (V2BaseFilterPanel + V2BaseDataTable + BaseConfirmModal), gộp cột, toggle khóa inline. Giữ modal thêm/sửa (restyle V2 + validate inline), giữ Excel/In/Lịch sử/Khóa. Không đổi BE/API/permission. Giữ tham số & shape response API cũ.
+  Checkpoint: 2026-06-03 — Rewrite index.vue + add_skill_modal.vue xong, review prop/slot V2 đạt (không lỗi runtime). Bước tiếp: user chạy npm run dev + duyệt browser theo Task 3.
+- elearning-completion-criteria → @junfoke → .plans/elearning-completion-criteria/plan.md
+  Trạng thái: CODE DONE Hướng A + SCORM viewed (+min giây mở) + Hướng B (2026-06-04). Chờ user rebuild + verify browser. KHÔNG migration.
+  Spec: docs/superpowers/specs/2026-06-04-elearning-completion-criteria-enforcement-design.md
+  Scope: Khớp form cấu hình tiêu chí hoàn thành với enforcement thật. (A) Form tạo bài text/file thêm "Min thời gian đọc (giây)" (trường BE thực dùng), gắn nhãn "(chưa áp dụng)" cho field % + các tiêu chí scroll/dwell/seek/active-tab/allow-download chưa enforce (giữ, vẫn nhập được). (B) SCORM thêm option viewed (mở là xong, cho gói content single-page; đã bỏ browsed sau test vì browse-mode gần như không xảy ra) + sửa completionHint màn học cho viewed. 6 file, KHÔNG migration. Hướng B (implement scroll/dwell/seek-block...) để sau. Tiếp nối elearning-tracking-fix + scorm-lms-runtime.
+
+- elearning-sequential-lock → @junfoke → .plans/elearning-sequential-lock/plan.md
+  Trạng thái: CODE DONE (2026-06-03). Chờ verify browser trong Docker (Node ≥18).
+  Scope: Fix khoá bài học khi vào học. (1) Khoá "Học tuần tự" (subjects.linear_required) không enforce → tạo LessonLockResolver (nguồn chân lý chung BE), transformer + service dùng chung. (2) Prerequisite ALL/ANY trên từng bài (đã có sẵn, dọn về resolver). (3) Defense-in-depth: chặn heartbeat/scorm-commit bài đang khoá (423). (4) FE: disable click bài khoá + disable nút Trước/Sau (hasPrev/hasNext) + sửa badge tiền ĐK. (5) Fix bài kế không mở khi hoàn thành (phải F5) → recomputeLocks() client mirror resolver, gọi trong handleHeartbeatResponse. Tiếp nối learning-session-api + elearning-tracking-fix.
+
+- elearning-learning-path-seamless → @junfoke → .plans/elearning-learning-path-seamless/plan.md
+  Trạng thái: CODE DONE (2026-06-03, 13/13 task / 6 phase, subagent-driven). BE 5 file + FE 8 file. Không migration. Chờ user verify browser (Docker Node ≥18) 8 kịch bản.
+  Spec: docs/superpowers/specs/2026-06-03-elearning-learning-path-seamless-design.md
+  Plan: docs/superpowers/plans/2026-06-03-elearning-learning-path-seamless.md
+  Scope: Học liền mạch lộ trình — context ?lp trong màn học, Quay lại về lộ trình, resume xuyên khoá, lock cấp khoá (linear_required), modal 3 biến thể (khoá tiếp theo / hoàn thành lộ trình / khoá lẻ), chứng chỉ lộ trình (mirror cert khoá, không migration). Tiếp nối elearning-learning-path-detail (đã fix Phase 10: trạng thái bài + % trung bình khoá + nút Vào học/Tiếp tục học).
+
+- elearning-course-completion → @junfoke → .plans/elearning-course-completion/plan.md
+  Trạng thái: CODE DONE (13/13 task, 4 phase — 2026-06-03). Chờ verify browser trong Docker (Node ≥18).
+  Spec: docs/superpowers/specs/2026-06-03-elearning-course-completion-design.md
+  Plan: docs/superpowers/plans/2026-06-03-elearning-course-completion.md
+  Checkpoint: 2026-06-03 — Implement xong qua subagent-driven. BE 4 file (CertificateService + CertificateController + route /subjects/{slug}/certificate + certificate_enabled vào LearningSessionResource). FE 9 file: store certificate.js, CertificateView+CertificateCanvas+route /certificate/:slug+print CSS, courseCompletionSignal trong learningSession, CourseCompleteModal tích hợp SubjectLearnView, map certificateEnabled (subjectDetail), DetailEnrollCard đổi "Chứng nhận"→"Chứng chỉ"+nút "Xem lại nội dung", ContentDetailView nối router, nút "Chứng chỉ" sidebar màn học. Phương án A (endpoint riêng), chứng chỉ render web in qua window.print. Bước tiếp: user chạy dev server Docker → verify 4 kịch bản (100%→modal; có cert→in được; không cert→khám phá/xem lại; vào thẳng /certificate chưa xong→403). Defer: nút cert ở My Learning, PDF/email BE, QR, cert cho LearningPath.
+- hrm-quotation-to-erp-contract → @dnsnamdang → .plans/hrm-quotation-to-erp-contract/plan.md
+  Cross-system (ERP-primary). **CODE DONE cả 3 phase (không commit), chờ test E2E.** Lập HĐ ERP thẳng từ báo giá Assign HRM (status=7 + tmp synced + VND), bỏ firm-quotation. Phần HRM (done): migration `quotations.erp_firm_contract_id` (đã chạy) + `buildContractSummary` trong `QuotationController::byProject` + banner/nút "Lập hợp đồng ERP" deep-link trong `ProspectiveProjectQuotationsTab.vue`. Spec authoritative: `ERP/.plans/hrm-quotation-to-erp-contract/design.md`.
+
+- timesheet-detail-note → @dnsnamdang → .plans/timesheet-detail-note/plan.md
+  Thêm cột "Ghi chú" vào modal Chi tiết chấm công (tab Dữ liệu chấm công), lấy từ `timesheets.note` (app mobile đã lưu, web chưa show). Chỉ modal `TimeSheetDetailModal.vue` + field `note` trong `TimekeeperListResource`. Không migration.
+  Spec: docs/superpowers/specs/2026-06-15-timesheet-detail-note-design.md
+  Checkpoint: 2026-06-15 — Brainstorm + spec DONE. Chờ user review spec → writing-plans.
+
+- chan-tp-duyet-qua-han → .plans/chan-tp-duyet-qua-han/plan.md
+  Testcase luồng chặn TP duyệt khi NV có hàng quá hạn (HRM gọi API ERP). testcase.xlsx 29 TC (use_erp, mapping NV, fail-open, 20 phiếu Timesheet+Assign, modal). Cặp ERP ở `ERP/.plans/chan-tp-duyet-qua-han/`. Checkpoint 2026-06-11: đã sinh xong, chờ user review.
+
+- sync-hang-tam → @dnsnamdang → .plans/sync-hang-tam/plan.md
+  Trạng thái: ĐÃ COMMIT (branch sync_quotation, 3 repo — CHƯA push/merge). ERP 04efffe32d · hrm-api b3f8ee7e4 · hrm-client b119b1d0. Đã test E2E bug duyệt hàng tạm OK trên dev_erp_2.
+  Spec: docs/superpowers/specs/2026-06-06-sync-hang-tam-design.md | Plan: docs/superpowers/plans/2026-06-06-sync-hang-tam.md
+  Checkpoint: 2026-06-06 — Đã thực thi toàn bộ plan 12 task/4 phase qua subagent-driven (branch sync_quotation cả 3 repo, KHÔNG commit).
+    Phase 1 (ERP): migration 4 cột hrm_* trên tmp_product_requests + FormRequest + TmpProductRequestSyncService + TmpProductRequestSyncController + route v1/tmp-product-requests (sync-from-hrm, approved-status). Migration đã chạy thật. Approved.
+    Phase 2 (HRM api): migration erp_tmp_product_id + tmp_sync_status/tmp_synced_at + TmpProductSyncService(push/pull) + QuotationController(sendTmpApproval/pullTmpApproval) + byProject/QuotationResource(3 field) + 2 route. Migration đã chạy thật. Approved.
+    Phase 3 (HRM client): ProspectiveProjectQuotationsTab.vue — nút Gửi duyệt hàng tạm + badge trạng thái + nút Cập nhật kết quả duyệt + autoPullSyncing. Approved (bác bỏ 1 false-positive về response path: apiPostMethod trả body nên res.data.counts ĐÚNG).
+    Phase 4: retrySync early-return "tạm tắt" (giữ code cũ trong comment) + ẩn nút FE retry-sync (v-if=false). QuotationErpSyncService + route giữ nguyên.
+    Data contract 2 chiều HRM↔ERP đã verify khớp trên code.
+  Checkpoint: 2026-06-06 (b) — DEBUG + MỞ RỘNG (đã test ERP thật trên dev_erp_2): 
+    Bugfix: (1) ERP tmp_products NOT NULL brand/manufacture/origin → migration nullable + product_cate='[]'; (2) approved-status chỉ trả product_id khi status=1; (3) sendApproval guard map rỗng → gửi lỗi không kẹt syncing. Reset BG-2026-00044 đang kẹt.
+    Mở rộng: 2 nút header (gửi/cập nhật cấp dự án, endpoint sendTmpApprovalForProject/pullTmpApprovalForProject + cờ tmp_can_send/tmp_can_pull) + cột "Trạng thái đồng bộ" + giữ nút per-row.
+    Quyết định: 1 dự án = 1 báo giá trúng thầu (giữ rule finalize). Bước tiếp: user test E2E từ UI rồi commit (3 repo branch sync_quotation, chưa commit).
+  Checkpoint: 2026-06-06 (c) — Bugfix ERP `TmpProductsController::approve`: duyệt hàng tạm khi sửa trường (hãng SX/nhóm hàng hoá/avatar/units...) trước chỉ lưu sang Product, KHÔNG lưu về tmp_products. Fix: cập nhật đầy đủ field vô hướng + re-sync quan hệ (suppliers/barcodes/videos sync; attributes/galleries/units+prices xoá→insert) mirror store(), cùng transaction. Cô lập luồng sync (tmp_products không có cột sync; approved-status chỉ đọc status+product_id; HRM map theo tmp_products.id không đổi). ĐÃ TEST E2E OK trên dev_erp_2. Bước tiếp: user commit.
+  Checkpoint: 2026-06-08 — MỞ RỘNG: hàng tạm "Đang tạo" trước khi gửi duyệt. Spec docs/superpowers/specs/2026-06-08-tmp-product-draft-status-design.md · Plan docs/superpowers/plans/2026-06-08-tmp-product-draft-status.md. Chỉ đụng ERP, không migration. Đang triển khai inline 8 task. Bước tiếp: code Task 1→8 rồi user test E2E trên dev_erp_2.
 
 - project-implementation-types → @dnsnamdang → .plans/project-implementation-types/plan.md
   Trạng thái: Phase A+B done. Phase C đã pivot sang quotation-redesign. Branch `tpe-develop-assign`.
@@ -25,16 +111,20 @@
 - solution-manager-assignment → @dnsnamdang → .plans/solution-manager-assignment/plan.md
   Trạng thái: Code DONE. Phân công PM/Leader + lịch sử + notification + confirm. SRS + Testcase đã tạo.
   Checkpoint: 2026-05-17 — Phase 1+2 done. BE 7 file, FE 3 file. 28 test cases. Bước tiếp: deploy.
-- customer-scope-group → @manhcuong → .plans/customer-scope-group/plan.md
-  Trạng thái: CODE DONE (Phase 1-7). Chờ chạy migration + test browser (Phase 8).
-  Spec: docs/superpowers/specs/2026-05-28-customer-scope-group-design.md
-  Scope: Chèn tầng trung gian "Nhóm lĩnh vực khách hàng" giữa Lĩnh vực ⟷ Ứng dụng (bỏ pivot trực tiếp application_customer_scopes). Màn Nhóm full CRUD + import/export + 2 permission (id 1093/1094). Sửa Ứng dụng (Lĩnh vực→Nhóm), Lĩnh vực (Số ứng dụng→Số nhóm), Dự án tiềm năng (thêm customer_scope_group_id, cascade Ứng dụng→Nhóm→Lĩnh vực, 2 luồng chọn). Downstream MeetingProject resolve qua nhóm. Migrate dữ liệu cũ.
-  Checkpoint: 2026-05-29 — ĐỔI MÔ HÌNH (Phase 10): Nhóm LVKH giờ là CHA của Lĩnh vực (1-n), Lĩnh vực bắt buộc chọn Nhóm cha; Ứng dụng↔Lĩnh vực giữ n-n. Migration 2026_05_29_000001 đã chạy (thêm customer_scopes.customer_scope_group_id, khôi phục application_customer_scopes, drop 2 pivot n-n). BE+FE đã revert/sửa toàn bộ (R1-R7). Verify: Eloquent + API getAll + FE compile 200. Còn lại: click-through UI thủ công + file mẫu import Lĩnh vực cần thêm cột GroupCode.
+- elearning-tracking-fix → @junfoke → .plans/elearning-tracking-fix/plan.md
+  Trạng thái: CODE DONE (2026-06-02, ~12 file: 1 BE + FE). Chờ verify browser trong Docker (Node ≥18). Scope: (1) hiển thị thời gian 3:12, (2) completionHint theo config, (3) video tracking thật IFrame Player API (free), (4) tối ưu heartbeat (keepalive + dừng khi done), (5) fix status chậm (optimistic learning) + toast bắn nhầm khi quay lại bài đã xong (dùng just_completed), (6) toàn vẹn tracking: chống tua video (SEEK_THRESHOLD, cho 2x) + rời tab khi đọc tài liệu (useReadingTracker + ReadingGateOverlay "Tiếp tục học"). Tiếp nối learning-session-api + elearning-lesson-viewer. Defer: idle-trong-tab, enforce scroll/dwell, Redis/queue (chỉ khi scale nghìn).
 
-- bulk-permission → @dnsnamdang → .plans/bulk-permission/plan.md
-  Trạng thái: Brainstorming DONE, spec viết xong. Chờ user duyệt spec → sang writing-plans.
-  Spec: docs/superpowers/specs/2026-05-27-bulk-permission-design.md
-  Scope: Popup "Phân quyền hàng loạt" trên /timesheet/setting/roles — cấp/thu hồi permission hàng loạt cho NV theo Khối/PB/BP/CV/CD, scope current_company, dùng V2Base. KHÔNG đụng Role. Defer lịch sử (#10455).
+- scorm-preview-runtime → @junfoke → .plans/scorm-preview-runtime/plan.md
+  Trạng thái: CODE DONE (2026-06-01). Chờ user restart dev server + verify trên browser (upload gói SCORM → preview hết lỗi objective).
+  Spec: docs/superpowers/specs/2026-06-01-scorm-preview-runtime-design.md
+  Scope: CHỈ FE hrm-client. Port runtime SCORM (scorm-again + proxy same-origin) sang panel preview màn quản lý bài học (LessonForm.vue type=4) để hết lỗi "could not find objective". Rút gọn: KHÔNG tracking/resume/commit BE. Proxy bằng Nuxt serverMiddleware. Tiếp nối scorm-lms-runtime (elearning) + scorm-upload.
+
+- scorm-lms-runtime → @junfoke → .plans/scorm-lms-runtime/plan.md
+  Trạng thái: DONE — chạy đúng end-to-end trên browser (completion + resume + popup). Chờ note OPS cấu hình nginx prod + merge.
+  Spec: docs/superpowers/specs/2026-05-30-scorm-lms-runtime-design.md (mục 11 = các fix khi debug) | Plan: docs/superpowers/plans/2026-05-30-scorm-lms-runtime.md
+  Scope: Học bài SCORM (type=4) trên elearning. Reverse-proxy S3 same-origin (window.parent.API) + scorm-again v3 (1.2+2004) + ScormPlayer.vue + endpoint scorm-commit + 9 cột scorm_* (resume + completion theo cấu hình bài). Tiếp nối scorm-upload.
+  Checkpoint: 2026-05-30 — Verify PASS với gói Run-Time SCORM 2004 (scorm.com): "Đã xong" + resume. Fix phát sinh: host tanphat.s3, :key chống kẹt bài, proxy inject window.confirm=()=>true + no-store chặn 2 native confirm, popup resume riêng. OPS: nginx /scorm-proxy + sub_filter inject + no-store (spec mục 2&11). elearning cần Node ≥18; scorm-again cài trong container.
+
 - learning-session-api → @junfoke → .plans/learning-session-api/plan.md
   Trạng thái: Code DONE (13/13 task). Chờ chạy migration + test API thật trên browser.
   Spec: docs/superpowers/specs/2026-05-28-learning-session-api-design.md
@@ -56,13 +146,9 @@
   Scope: BE (migration + model + service + controller + route) + FE (store + composable + placeholder page + button update)
 
 - elearning-learning-path-detail → @junfoke → .plans/elearning-learning-path-detail/plan.md
-  Trạng thái: Code DONE (38/38 task, 9 phases). Đã migrate. Chờ test full flow trên browser.
+  Trạng thái: Code DONE (70 task, 11 phases). Đã migrate. Chờ verify browser (Docker, Node ≥18).
   Spec: docs/superpowers/specs/2026-05-19-elearning-learning-path-detail-design.md
-  Checkpoint: 2026-05-20 — Phase 9: UI polish — header compact (giảm padding/logo/button/font), trang thảo luận thêm context banner + rating summary (điểm TB + bar chart) + filter bình luận theo sao (BE+FE), refactor views/ theo folder chức năng (home/, learning-path/, subject/). Bước tiếp: test rating summary + filter sao + kiểm tra trang chi tiết LP vẫn OK.
-
-- request-solution-adjustment → @dnsnamdang → .plans/request-solution-adjustment/plan.md
-  Trạng thái: Phase 8 code DONE. Đã review logic cascade khi Tiếp nhận YCĐC.
-  Checkpoint: 2026-05-16 — Review code: gửi YCĐC không đổi trạng thái dự án TKT. Tiếp nhận cascade dừng YCXD giá + Báo giá chưa duyệt. Bước tiếp: nhận yêu cầu mới từ user hoặc test.
+  Checkpoint: 2026-06-03 (6) — Phase 11: hiển thị cấp Chương (learner PathOutline + builder TabInfo, BE trả chapters[]/loose_lessons + chapter_id), quy đổi giờ-phút toàn bộ (helper formatMinutes), badge tổng "X khoá/chương • Y bài • giờ-phút" + gộp nút "Mở tất cả", fix trạng thái bài/chương màn chi tiết môn (BE đính learn_status từ EnrollmentLessonProgress + FE deriveChapterStatus), placeholder overview "Chưa có thông tin". Bước tiếp: verify browser 4 điểm (chương→bài+thời lượng, builder hiện chương, bài xong hiện "Đã xong"/chương "Đạt", overview rỗng placeholder). Defer: status chương exam chưa tính kết quả thi.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
   Trạng thái: Phase 31 BRAINSTORM DONE (spec viết xong). Branch `tpe-develop-assign`.
@@ -72,28 +158,6 @@
   Spec test: .plans/Bomlist-Quotation/test-summary-phase31.md
   Checkpoint: 2026-06-10 — Phase 31 CODE DONE + fixes test vòng 2: giữ nguyên giá ERP (revert roll-up) + validate giá vốn cha<Σcon chặn gửi duyệt; tổng "Thành tiền nhập"=Σ dòng cha (Cách A) đồng bộ mọi nơi; CK hiển thị số dương; validate bắt buộc "Điều khoản thanh toán" khi gửi duyệt; sync auto-allocation+layout edit↔view. CHƯA migrate, CHƯA test browser. Bước tiếp: user migrate + build + test.
   (2026-06-09) Phase 31 CODE DONE toàn bộ (Task 1-20 + nhiều fix sau review). BE+FE đồng bộ BOM + Báo giá. Logic cha-con: cha ERP có recipe → con auto snapshot KHOÁ hoàn toàn (không thêm/xoá/sửa, SL nhân theo SL cha) + toggle show_children; cha tạm → chọn con ERP (cần quyền "Xem giá vốn hàng hoá")/tự tạo, hiện giá bán con, validate cha≥Σcon (gửi duyệt). Validate báo giá: VAT/CK 0-100% (cả nháp+gửi), thành tiền>0/giá nhập tự nhập/dịch vụ (gửi duyệt), hàng ERP giá nhập=0 hợp lệ. Khác: bỏ spinner SL, confirm xoá (cascade con), text "Bảng giá bán lẻ" sau tỷ giá, sync auto-allocation+layout+dòng tổng CK edit↔view. Chọn Cách A (BE tin payload FE). CHƯA migrate, CHƯA test browser. Bước tiếp: user `php artisan migrate` + build FE + test theo test-summary-phase31.md.
-
-- course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
-  Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
-  Checkpoint: 2026-04-28 — P14 (đang tiếp): fix mã auto-gen BE, override_completion reset, modal info bài học + trạng thái ghi đè, format tiêu chí hoàn thành (giây+%), labels tiếng Việt mapping/prerequisite, DRAFT canDelete, assignee pill auto-open, confirm lock modal. Phase 10 manual test còn 10 test case.
-- fix-handover → @dnsnamdang → .plans/fix-handover/plan.md
-  Trạng thái: V6 DONE. Branch `tpe-develop-assign`. Test passed 2026-05-07.
-  V6: Tiếp nhận tất cả + filter cascade + submitted_at + đổi cột "Tiến độ %".
-
-- close-prospective-projects → @dnsnamdang → .plans/close-prospective-projects/plan.md
-  Trạng thái: Phase 17C code DONE. Branch `tpe-develop-assign`.
-  Phase 17C (2026-05-08): Fix hồ sơ trình duyệt không hiện "Đã chốt" + chốt GP đổi YC làm GP sang "Đã hoàn thành" thay vì "Đã chốt giải pháp".
-  Checkpoint: 2026-05-08 — Chờ user test.
-
-- firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
-  Trạng thái: Implementing. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev)
-- delivery-trip-actual-cost-validate → @nguyentrancu97 → .plans/delivery-trip-actual-cost-validate/plan.md
-  Trạng thái: Implementing. Validate total_cost_transition theo CP xăng + cầu đường + công tác phí + CP khác (TanPhatDev)
-- delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
-  Trạng thái: Implementing. Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp (TanPhatDev)
-- xuat-ghep-tu-hang-giu → @nguyentrancu97 → .plans/xuat-ghep-tu-hang-giu/plan.md
-  Trạng thái: Brainstorming PAUSED 2026-04-28. Đã chốt 7 quyết định (hiển thị tồn/giữ qua API stockOfProducts, validate `qty ≤ in_stock + prepick_qty`, cascade nhập ghép giữ toàn bộ thành phẩm, customer per-parent, hạn giữ = today + Config.max_prepick_date, xuất thẳng tái sử dụng pattern export_prepick_qty/hold_qty/total_qty + FIFO consume). Còn 6 câu hỏi mở (Q6-Q11): customer_id cấp nào, validate hạn giữ, approval, pending lock prepick, popup filter, edit/cancel. (TanPhatDev)
-  Checkpoint: 2026-04-28 — Paused tại Q6 (customer_id lưu cấp parent vs recipe + cascade khi YCXG có >1 customer).
 
 ## Tạm dừng
 
@@ -106,6 +170,65 @@
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- employee-info-concurrent-allowance → @khoipv → .plans/employee-info-concurrent-allowance/design.md
+  Hoàn thành: 2026-06-15. Verify browser PASS (Task 6 + Task 7 3 kịch bản nhập PC_KN). Tab "Thông tin thu nhập" màn hồ sơ NS — khi NV có ≥1 dòng phòng ban kiêm nhiệm thì popup hiện ô nhập Phụ cấp kiêm nhiệm (PC_KN, nhập tay), lưu thật vào employee_salary_history_allowances, cột PC_KN hiện trên bảng. BE 3 file (Request validate mảng + Service syncAllowances forceDelete resolve theo allowance_id/allowance_code + Controller store trong transaction) + FE 2 file (add-salary-history-modal prop concurrentPositions + computed hasConcurrent/nonConcurrentAllowances/pcknEntry + prepareConcurrentAllowance + dòng PC_KN editable; EmployeeInfoForm truyền prop + prepare 2 nhánh openSalaryHistory). Task 7 (BUG báo cáo lương): SalaryService::report() chuyển PC_KN từ dòng phòng chính → dòng phòng kiêm nhiệm (cd.id=MIN), bỏ pckn khỏi mainQuery. KHÔNG migration. Spec: .plans/employee-info-concurrent-allowance/design.md
+
+- appoint-concurrent-sync-employee → @khoipv → .plans/appoint-concurrent-sync-employee/design.md
+  Hoàn thành: 2026-06-15. Verify browser PASS (3 kịch bản: kiêm nhiệm thêm dòng & giữ vị trí chính / chống trùng / regression bổ nhiệm thường). Khi duyệt QĐ bổ nhiệm có tick Kiêm nhiệm (is_concurrently=1) → THÊM 1 dòng vào "Phòng ban/Chức vụ kiêm nhiệm" của hồ sơ NS (employee_concurrently_department_has_positions), GIỮ NGUYÊN vị trí chính. Phương án A: thêm cột is_concurrently vào appendix_labor_contracts (đã migrate DB dev); copy từ DecisionAppointPersonnel. Sửa AppendixLaborContractService::autogenousAppendixLaborContract (copy cờ) + updateEmployeeInfo (rẽ nhánh) + addConcurrentlyDepartmentPosition (chống trùng theo employee_info_id+department_id+working_position_id + null-guard). BE-only, không FE/permission. Spec: .plans/appoint-concurrent-sync-employee/design.md
+
+- employee-relationship-export-columns → @khoipv → .plans/employee-relationship-export-columns/plan.md
+  Hoàn thành: 2026-06-10. Verify browser PASS. FE-only. Thêm modal chọn cột khi xuất Excel màn human/employee-relationships (pattern employee_info), decouple cột export khỏi cột bảng. BE đã sẵn (visible_fields[]). 1 file mới ExportRelationshipModal.vue + sửa index.vue (nút mở modal, đăng ký, exportEx nhận selectedKeys). Cột cố định luôn xuất; không chọn cột vẫn xuất 6 cột. Spec: docs/superpowers/specs/2026-06-09-employee-relationship-export-columns-design.md | Design: .plans/employee-relationship-export-columns/design.md
+
+- prospective-project-autofill-single-option → @manhcuong → .plans/prospective-project-autofill-single-option/plan.md
+  Hoàn thành: 2026-06-04. Màn /assign/prospective-projects/add: auto-fill các dropdown phân loại kỹ thuật CHỈ khi còn đúng 1 option (thay vì luôn lấy [0]), lan truyền đến ổn định, không ghi đè lựa chọn tay. FE-only 1 file ProjectInfoSection.vue (autoFillSingleOptions + 5 watcher field + xóa autoFillFromApplication). Pass review spec + review chất lượng. Spec: docs/superpowers/specs/2026-06-04-prospective-project-autofill-single-option-design.md
+
+- fix-employee-avatar-missing → @khoipv → .plans/fix-employee-avatar-missing/plan.md
+  Hoàn thành: 2026-06-06. Bước 1 (chặn bug) + Bước 2/3 (khôi phục) XONG. Root cause: sync mặt (`ConnInfoService`/`RiceConnInfoService::deleteS3ByUrl`) xóa nhầm file avatar vì `face_image_url` = URL avatar khi tạo nhân sự có face_recognition (`EmployeeInfoService:779`). Fix: thêm guard không xóa nếu URL đang là `employee_infos.image` (2 file BE, lint PASS). Khôi phục: set image=face_image_url cho 56 nhân sự (query builder, bỏ qua sync ERP), verify 56/56 OK. CÒN LẠI: nhóm cũ path-style mất ~77% không có face_image_url → cần upload tay/ERP. LƯU Ý: fix BE mới ở local, cần deploy production.
+
+- accept-personnel-seniority-manual → @khoipv → .plans/accept-personnel-seniority-manual/plan.md
+  Hoàn thành: 2026-06-06. Verify browser PASS. CHỈ FE hrm-client. Cho nhập tay Số tháng + Số tiền lương thâm niên khi human/settings = "Không dùng định biên" (using_manpower=false) ở 3 màn quyết định. Phase 1 accept-personnel (FormComponent.vue + add.vue): số tiền text tĩnh, nhập độc lập. Phase 2 salary-change (CurrentIncomeComponent.vue khối "new" + add.vue): dùng định biên giữ auto-tính số tiền (newSeniorityPay = p1×tang_tham_nien×floor(tháng/12)), không định biên nhập tay độc lập. Phase 3 transfer-personnel (CurrentIncomeComponent.vue khối "new" + add.vue): giống accept-personnel (số tiền text tĩnh). Mirror pattern P1/P2/P3 (v-if isUsingManpower text / v-else input + required + helper-error). BE không đổi cả 3 màn (lưu thẳng, không recompute). Show/approve readonly (addDisabledToElement). T1-T15. Spec: .plans/accept-personnel-seniority-manual/design.md
+
+- form-templates-print → @khoipv → .plans/form-templates-print/plan.md
+  Hoàn thành: 2026-06-06. Verify browser PASS. CHỈ FE hrm-client. In mẫu phiếu bản TRỐNG từ màn assign/form-templates (nút ở list cạnh "Sửa" mọi trạng thái + màn chi tiết), modal preview + window.print. Component RIÊNG components/FormTemplatePrintSheet.vue (copy layout SurveyPrintSheet, KHÔNG sửa file dùng chung). Header: bỏ Giai đoạn dự án/Ứng dụng/Địa chỉ, thêm "Ngày khảo sát" trước "Người khảo sát"; Nhóm ngành+Nhóm giải pháp điền từ template, còn lại (Tên KH/Tên DA/Mã DA/Phân loại) để trống. Bảng đổi cột "Thông tin thu thập"→"Đáp án/giá trị thu thập cho tôi", cột đáp án để trống hoàn toàn. KHÔNG BE/permission/migration. File: components/FormTemplatePrintSheet.vue (mới), pages/assign/form-templates/_id/index.vue + index.vue (sửa). Quy ước: ref=printSheet, method=handlePrint. Spec: .plans/form-templates-print/design.md
+
+- meeting-list-permission → @khoipv → .plans/meeting-list-permission/plan.md
+  Hoàn thành: 2026-06-05. Verify browser PASS. Phân quyền xem danh sách màn assign/meeting theo 4 cấp (tổng cty/cty/phòng/bộ phận) như màn giải pháp — dùng checkPermissionList + OR own/participant (company_members type=1). Thêm 4 permission (id 1095-1098, group 'Quản lý meeting'). Gán company_id/department_id/part_id khi store (KHÔNG backfill, KHÔNG đụng update). FE filter động theo hasAPermission. BE 4 file + FE 1 file, không migration. T1-T5. Spec: .plans/meeting-list-permission/design.md
+
+- meeting-bien-ban-phuong-an-xu-ly → @khoipv → .plans/meeting-bien-ban-phuong-an-xu-ly/plan.md
+  Hoàn thành: 2026-06-05. Verify browser PASS. Thêm cột text "Phương án xử lý" (solution, nullable) vào biên bản cuộc họp màn assign/meeting create/edit, sau cột Nội dung. Đồng bộ 3 nơi: màn nhập (grid Nội dung 3/Phương án 2), Excel export (5→6 cột A:F), màn in (blade meeting_record fill td solution). BE: migration cột solution + fillable MeetingReport (syncReports/Resource không sửa) + rule nullable 2 request. Không bắt buộc nhập. 6 task / 6 file. Spec: .plans/meeting-bien-ban-phuong-an-xu-ly/design.md
+
+- copy-form-template → @khoipv → .plans/copy-form-template/plan.md
+  Hoàn thành: 2026-06-05. Verify browser PASS. Nút "Sao chép" ở list assign/form-templates → vào form Tạo mới đã prefill từ mẫu gốc (Hướng A). Tên + Nhóm ngành (scope_id) giữ nguyên; Nhóm giải pháp (industry_id) để trống (chọn lại); status=Nháp; Section sao chép 100% giữ position. Câu hỏi application_scope=1 (Tất cả)→CLONE, =2 (Theo nhóm giải pháp)→BỎ QUA (tra qua survey_question_id→SurveyQuestion). BE 3 file: +1 route copy-data + controller method + service prepareCopyData + CopyFormTemplatesResource. FE 2 file: +action copy (index.vue) + nhánh prefill ?copyFrom (add.vue). Dùng chung quyền "Quản lý danh mục mẫu phiếu thu thập thông tin", KHÔNG migration, KHÔNG sửa transformer dùng chung. Spec: docs/superpowers/specs/2026-06-05-copy-form-template-design.md | Design: .plans/copy-form-template/design.md
+
+- quotation-finalize → @khoipv → .plans/quotation-finalize/plan.md
+  Hoàn thành: 2026-06-04. 8 task (6 BE + 2 FE), verify browser PASS. Tab "Báo giá" màn assign/prospective-projects/{id}/manager: nút Chốt báo giá (Đã duyệt 4 → Trúng thầu 7) + Hủy chốt (7 → 4, bắt buộc lý do). Mỗi dự án 1 báo giá trúng thầu (BE chặn + báo lỗi nếu đã có). Nút chỉ hiện khi đúng trạng thái + isSaleOfProject. BE: +status 7, +2 history action, +finalize/unfinalize service, +2 route (không middleware/permission/migration — chỉ ghi history): Quotation.php, QuotationHistory.php, QuotationUnfinalizeRequest.php (mới), QuotationService.php, QuotationController.php, Routes/api.php. FE: ProspectiveProjectQuotationsTab.vue (2 icon-button + modal lý do hủy chốt validate inline). Spec: .plans/quotation-finalize/design.md
+- xuat-ghep-tu-hang-giu → @nguyentrancu97 → .plans/xuat-ghep-tu-hang-giu/plan.md
+  Hoàn thành: 2026-06-16. Xuất ghép từ hàng giữ (TanPhatDev). User xác nhận đã làm xong toàn bộ. (Brainstorm 2026-04-28 chốt 7 quyết định: hiển thị tồn/giữ qua API stockOfProducts, validate `qty ≤ in_stock + prepick_qty`, cascade nhập ghép giữ toàn bộ thành phẩm, customer per-parent, hạn giữ = today + Config.max_prepick_date, xuất thẳng tái dùng pattern export_prepick_qty/hold_qty/total_qty + FIFO consume.)
+
+- termination-filter-include-resigned → @khoipv → .plans/termination-filter-include-resigned/plan.md
+  Hoàn thành: 2026-06-02. Dropdown "Nhân viên" màn decision/termination-labor-contract/index hiển thị cả người đã nghỉ việc (Hướng A: endpoint riêng `GET decision/termination-labor-contract/employee-options` trả toàn bộ employee_infos bất kể status; FE bind vào data local `employeeFilterOptions` thay vì state global). BE 2 file (controller method + route) + FE 1 file (index.vue). Không đụng state global lẫn hàm dùng chung. Spec: .plans/termination-filter-include-resigned/design.md
+
+- print-template-delete → @khoipv → .plans/print-template-delete/plan.md
+  Hoàn thành: 2026-06-02. Xóa mềm mẫu in màn decision/category/print_templates (cột status, xóa = set status 0, list lọc status=1). Nút Xóa chỉ hiện khi can_delete=true; chặn xóa nếu mẫu đang dùng ở 9 bảng FK (decisions, department_establishments, department_dissolutions, trouble_shooting_reports, decision_labor_contracts, appendix_labor_contracts, training_contracts, self_notifications, suspend_labor_contracts.print_template_agreement_id) HOẶC code ∈ PrintTemplate::PROTECTED_CODES (BIEN_BAN_CUOC_HOP, HOP_DONG_DAO_TAO, PHU_LUC_HOP_DONG_LAO_DONG, QUYET_DINH_DIEU_CHINH_LUONG, HOP_DONG_LAO_DONG_CHINH_THUC_KHONG_THOI_HAN — mẫu hệ thống bị code hardcode tra cứu theo code). BE: migration cột status + entity PROTECTED_CODES + service getUsedTemplateIds/isPrintTemplateInUse/deletePrintTemplate (can_delete precompute theo lô tránh N+1) + controller delete($id) 4 nhánh (not_found/protected/in_use/ok) + Resource trả status+can_delete. FE: index.vue nút Xóa v-if="item.can_delete" + đọc message lỗi BE + dọn code chết, popup xác nhận tái dùng confirm-delete-selected. Branch `tpe` (đã migrate DB dev). Spec: docs/superpowers/specs/2026-06-02-print-template-delete-design.md
+
+- employee-account-change-history → @khoipv → .plans/employee-account-change-history/plan.md
+  Hoàn thành: 2026-06-02. Lịch sử thay đổi cho màn human/employee (quản lý tài khoản đăng nhập NV), mirror pattern task_history của module Assign. BE: migration bảng employee_history (employee_id, action create/update/change_status, old_value/new_value JSON, changed_by, changed_at) + entity EmployeeHistory + quan hệ Employee::history() + EmployeeService logHistory()/buildHistorySnapshot() ghi snapshot khi create/update (theo dõi email, status, rice_setting_location_id, company_ids, cờ password_changed — KHÔNG lưu giá trị mật khẩu) + endpoint GET /human/employee/{id}/histories + resource formatHistory (resolve ID→tên, enum→nhãn, format ngày). FE: nút "Lịch sử" mỗi dòng pages/human/employee/index.vue + modal timeline diff old/new. Spec: docs/superpowers/specs/2026-06-01-employee-account-change-history-design.md
+
+- forgot-password → @manhcuong → .plans/forgot-password/plan.md
+  Hoàn thành: 2026-06-01. Quên mật khẩu từ màn login. Link "Quên mật khẩu?" → màn forgot_password (email + captcha ảnh BE mews/captcha) → BE check tài khoản (TH1 tồn tại+status=1 gửi mail link reset token 30p, TH2 không/khóa báo "Không tìm thấy tài khoản") → màn reset_password (rule 7-20+4 yếu tố) → verify token (≤30p, dùng 1 lần, bảng password_resets) → đổi mật khẩu + set password_changed_at. BE: mews/captcha ^3.4, ForgotPasswordRequest/ResetPasswordRequest, AuthNewController captcha/forgotPassword/resetPassword, ResetPasswordMail + blade, 3 route public. FE: 3 store action, link login, 2 màn forgot/reset_password, whitelist authenticated.js. LƯU Ý deploy: composer install trên PHP 7.4. Spec: docs/superpowers/specs/2026-06-01-forgot-password-design.md
+
+- force-change-password → @manhcuong → .plans/force-change-password/plan.md
+  Hoàn thành: 2026-06-01. Bắt buộc đổi mật khẩu từ lần login thứ 2 nếu chưa từng đổi (chỉ tài khoản mới tạo). Chặn FE (route guard) + BE (middleware MustChangePassword). Tái dùng màn /change_password (chế độ bắt buộc + banner + nút Đóng=logout). DB: thêm login_count + password_changed_at vào employees (backfill now() cho tài khoản cũ). Rule mật khẩu mới: 7-20 ký tự, đủ 4 yếu tố, khác 123456@. Refactor updatePass sang UpdatePasswordRequest/ValidationException. Spec: docs/superpowers/specs/2026-06-01-force-change-password-design.md
+
+- customer-scope-group → @manhcuong → .plans/customer-scope-group/plan.md
+  Hoàn thành: 2026-06-01. Nhóm lĩnh vực khách hàng là CHA của Lĩnh vực (1-n), Lĩnh vực bắt buộc chọn Nhóm cha; Ứng dụng↔Lĩnh vực giữ n-n. Màn Nhóm full CRUD + import/export + 2 permission (id 1093/1094). Migration 2026_05_29_000001 (thêm customer_scopes.customer_scope_group_id, khôi phục application_customer_scopes, drop 2 pivot n-n). Downstream MeetingProject resolve qua nhóm. Spec: docs/superpowers/specs/2026-05-28-customer-scope-group-design.md
+
+- bulk-permission → @manhcuong → .plans/bulk-permission/plan.md
+  Hoàn thành: 2026-06-01. Popup "Phân quyền hàng loạt" trên /timesheet/setting/roles — cấp/thu hồi permission hàng loạt cho NV theo Khối/PB/BP/CV/CD, scope current_company, dùng V2Base. KHÔNG đụng Role. Defer lịch sử (#10455). Spec: docs/superpowers/specs/2026-05-27-bulk-permission-design.md
+
+- request-solution-adjustment → @manhcuong → .plans/request-solution-adjustment/plan.md
+  Hoàn thành: 2026-06-01. BE 8 files + FE 3 files. Fix: BaseConfirmModal @event, cột Hành động luôn hiện, cột Version, popup chi tiết dạng bảng, notification URL /manager, FileAttachmentTable readonly (disabled prop), sort id desc. Phase 8: review logic cascade khi Tiếp nhận YCĐC — gửi YCĐC không đổi trạng thái dự án TKT, tiếp nhận cascade dừng YCXD giá + Báo giá chưa duyệt. Spec: docs/superpowers/specs/2026-05-06-request-solution-adjustment-design.md | SRS: docs/srs/solution-adjustment-request-SRS.html | Testcases: docs/srs/solution-adjustment-request-testcases.xlsx
 
 - my-todo → @dnsnamdang → .plans/my-todo/plan.md
   Hoàn thành: 2026-05-16. Phase 1-5 + 7-9 done. Nhắc việc cá nhân + lịch làm việc (cascade toggle, sub-items, confirm modal).
@@ -155,7 +278,7 @@
 
 - my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
   Spec: docs/superpowers/specs/2026-04-20-my-job-assign-business-tab-design.md
-  Trạng thái: Brainstorming — thêm tab "Phiếu giao công tác" vào /assign/my-job theo style V2Base giống tab Giải pháp
+  Hoàn thành: 2026-04-21. Phase 1–2 (BE) + Phase 4–8 (FE). BE: routes + service + Resource + Export + Helper. FE: index.vue wiring + AssignBusinessTab.vue đầy đủ (filter 8 ô, bảng 8 cột, 13 row actions dropdown, column customization, ExportModal, ConfirmDelete, ConfirmCancelApprove). Test OK.
 
 - customer-development-report → @manhcuong → .plans/customer-development-report/plan.md
   Hoàn thành: 2026-05-19. Testcases báo cáo QLDA_BC_10 đã bổ sung trong Testcase \_baocao.xlsx. Spec: docs/superpowers/specs/2026-05-18-customer-development-report-design.md
@@ -182,12 +305,11 @@
   Hoàn thành: 2026-04-25. 7/7 task. Gộp hồ sơ trình duyệt hạng mục vào tab Hồ sơ giải pháp. BE: mở rộng `getSolutionReviewProfiles()` merge 2 query (solution + module) + manual paginate + transform + auto-force type theo filter. FE: 3 filter mới (Loại/Hạng mục/Version HM) + 2 cột mới + deep watcher auto-search + row actions phân loại + tích hợp `ModuleApprovalModal` để PM duyệt hồ sơ hạng mục. Lọc bỏ draft. Spec: docs/superpowers/specs/2026-04-25-merge-module-review-profiles-design.md
 - scorm-upload → @khoipv → .plans/scorm-upload/plan.md
   Hoàn thành: 2026-04-22. 14/14 task. Spec: docs/superpowers/specs/2026-04-22-scorm-upload-design.md. BE: `CmcS3Helper::putLocalFile` + `UploadScormRequest` + `LessonService::handleScormUpload` (ZipArchive extract → parseScormManifest → upload S3 recursive với MIME chuẩn → cleanup tmp) + Controller `uploadScorm` + route `POST /training/lessons/upload-scorm`. FE: `LessonForm.vue` block SCORM thêm `V2BaseFile(.zip)` + spinner + info card + `onUploadScormZip` / `clearScormPackage`; submit type=4 gửi thêm `package_path / package_title / file_size / file_name`. Giới hạn 1GB, 2000 files. Known issue pending: cross-origin SCORM API (S3 ≠ LMS domain) — để lại cho feature sau `scorm-lms-runtime`.
+  Phase 4 fix (2026-06-02, @junfoke): (4.1-4.3) parser manifest robust — dò identifierref đệ quy qua item lồng nhau + xml:base + fallback quét đệ quy → hết 422 với gói SCORM.com "Randomized Testing"; (4.4) launch URL đổi path-style → virtual-hosted (tanphat.s3.cloud.cmctelecom.vn/<key>) → hết 403 AccessDenied khi preview qua /scorm-proxy; (4.5) bỏ default scorm_min_score=60 → null (gói nội dung không chấm điểm vẫn hoàn thành) + hint UI; (4.6) prune tracking_completion khi submit chỉ giữ key đúng loại bài. Lesson tạo trước fix cần gỡ gói + tải lại rồi lưu lại.
 - ke-toan-module-scaffold → @manhcuong → .plans/ke-toan-module-scaffold/plan.md
   Hoàn thành: 2026-04-22. Scaffold phân hệ Kế toán (module mới). BE `Modules/Accounting/` đầy đủ structure + `module.json` + `composer.json` + `AccountingServiceProvider` + `RouteServiceProvider` + `Routes/api.php` (`GET /dashboard`) + `DashboardController` + đăng ký `modules_statuses.json`. FE: layout riêng `layouts/accounting.vue` + sidebar `accounting-components/accounting-slidebar.vue` + topbar `AccountingMenu.vue` (dùng `<BasicSubsystem />`) + `custom-accounting.scss` + `icon_ke_toan.svg` placeholder + Vuex flag `is_use_accounting` (master-setting `use_accounting`) + checkbox "Sử dụng kế toán" tại `/timesheet/setting/setting-master` + tile `BasicSubsystem.vue`/`pages/index.vue` + `pages/accounting/index.vue`+`dashboard.vue`. Tài liệu tổng quan: `docs/accounting.md`. Spec: `docs/superpowers/specs/2026-04-21-ke-toan-module-scaffold-design.md`.
 - overdue-task-unified-predicate → @manhcuong → .plans/overdue-task-unified-predicate/plan.md
   Hoàn thành: 2026-04-21. Thêm `Task::scopeOverdue` + áp ở `TaskController::index` + `SolutionService::getCategoriesWithLateTasks`/`getPeopleWithLateTasks` + `SolutionModuleService::getPeopleWithLateTasks`. Đồng bộ `late_tasks_count` + card Overview với logic `overdue_total` tab Task (status NOT IN [1,8,9], CONCAT due_date+due_time). Review pass 0 Critical/Important. Test OK.
-- my-job-assign-business-tab → @manhcuong → .plans/my-job-assign-business-tab/plan.md
-  Hoàn thành: 2026-04-21. Phase 1–2 (BE) + Phase 4–8 (FE). BE: routes + service + Resource + Export + Helper. FE: index.vue wiring + AssignBusinessTab.vue đầy đủ (filter 8 ô, bảng 8 cột, 13 row actions dropdown, column customization, ExportModal, ConfirmDelete, ConfirmCancelApprove). Test OK.
 - solution-save-and-approve → @manhcuong → .plans/solution-save-and-approve/plan.md
   Hoàn thành: 2026-04-07. 2/2 task. Button "Lưu và duyệt" khi has_modules=false
 - solution-version-report → @manhcuong → .plans/solution-version-report/plan.md
@@ -223,8 +345,8 @@
 - pi-inland-supplement-annex → @nguyentrancu97 → .plans/pi-inland-supplement-annex/plan.md
   Hoàn thành: 2026-04-29. 12/12 task. Lập phụ lục bổ sung cho PI trong nước (firm type=4 + free type=5, KHÔNG migration). 2 BE + 5 FE. Test 6 case pass (TanPhatDev)
 - delivery-trip-accounting-cost-validate → @nguyentrancu97 → .plans/delivery-trip-accounting-cost-validate/plan.md
-  Hoàn thành: 2026-04-29. 10/10 task. Validate cước phiếu hạch toán + enable edit header + tick is_company_sp. 1 migration + controller + JS class + 3 view. Test 5 case pass (TanPhatDev)
+  Hoàn thành: 2026-06-16 (vòng 2 — đã làm xong). Áp dụng logic validate cước cho phiếu hạch toán + enable edit header + tick is_company_sp. (Vòng 1: 2026-04-29, 10/10 task, 1 migration + controller + JS class + 3 view, test 5 case pass) (TanPhatDev)
 - delivery-trip-actual-cost-validate → @nguyentrancu97 → .plans/delivery-trip-actual-cost-validate/plan.md
-  Hoàn thành: 2026-04-29. 10/10 task. Validate `total_cost_transition` theo CP xăng + cầu đường + công tác phí + CP khác (xe Tân Phát). JS class + 2 view. Test 6 case pass (TanPhatDev)
+  Hoàn thành: 2026-06-16 (vòng 2 — đã làm xong). Validate `total_cost_transition` theo CP xăng + cầu đường + công tác phí + CP khác. (Vòng 1: 2026-04-29, 10/10 task, JS class + 2 view, test 6 case pass) (TanPhatDev)
 - firm-order-contact-select → @nguyentrancu97 → .plans/firm-order-contact-select/plan.md
-  Hoàn thành: 2026-04-29. Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT (TanPhatDev). User xác nhận đã làm xong (plan.md không có task chi tiết)
+  Hoàn thành: 2026-06-16 (vòng 2 — đã làm xong). Select người liên hệ cho đơn hàng nguyên tắc thay vì copy từ HĐNT. (Vòng 1: 2026-04-29) (TanPhatDev)

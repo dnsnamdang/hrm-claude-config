@@ -2,7 +2,6 @@
 
 > Cập nhật khi: tạo feature mới, wrap up, chuyển feature, hoặc merge xong.
 > Không xóa entry trong "Hoàn thành".
-> Cập nhật lần cuối: 2026-05-29
 
 ## Đang làm
 
@@ -13,6 +12,44 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **In QUYẾT ĐỊNH cử đi công tác (Business Trip)** — Đổi bản in màn `timesheet/business_trip_assigns/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" (copy mẫu từ `jobassignment/_id/print.vue`). 1 QĐ liệt kê tất cả NV. BE thêm field `employee_account_id`; FE viết lại template+script `print.vue`. (@khoipv) — 2026-06-16, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-16-business-trip-print-design.md`
+  - Plan: `docs/superpowers/plans/2026-06-16-business-trip-print.md`
+  - Plan tổng quát: `.plans/business-trip-print/plan.md`
+
+- **In phiếu giao việc** — Đổi bản in màn `timesheet/jobassignment/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" theo mẫu Word (chỉ trang 1). 1 bản QĐ liệt kê tất cả NV, header 2 cột text, Điều 1 dạng đoạn văn, không số QĐ. Chỉ sửa FE `print.vue`. (@khoipv) — 2026-06-15, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-15-in-quyet-dinh-cong-tac-phi-design.md`
+  - Plan: `docs/superpowers/plans/2026-06-15-in-quyet-dinh-cong-tac-phi.md`
+  - Plan tổng quát: `.plans/in-quyet-dinh-cong-tac-phi/plan.md`
+
+- **Duyệt HĐ "Không thực hiện" → Hủy hợp đồng** — TP bấm Duyệt HĐ có `result=2` → HĐ chuyển trạng thái mới "Hủy hợp đồng" (Contract `HUY=5`) + đẩy dự toán/báo giá/gói thầu sang trạng thái mới "Hủy hợp đồng" (const mới mỗi entity) + ghi lịch sử kèm lý do. Tái dùng nút Duyệt, không snapshot. (@khoipv) — 2026-06-10, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-10-contract-cancel-not-executed-on-approve-design.md`
+  - Plan: `.plans/contract-cancel-not-executed-on-approve/plan.md`
+
+- **Bỏ validate khi hợp đồng "Không thực hiện"** — Khi tạo/sửa HĐ (từ gói thầu/báo giá) chọn `result = 2` (Không thực hiện) → bỏ TẤT CẢ validate, chỉ bắt buộc `reason`. Áp dụng FE + BE, tạo mới + cập nhật. `result = 1`/trống → validate đầy đủ như cũ. (@khoipv) — 2026-06-10, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-10-contract-not-executed-skip-validate-design.md`
+  - Plan: `.plans/contract-not-executed-skip-validate/plan.md`
+
+- **Ghi chú + Lưu-sau-duyệt tab Điều khoản thanh toán** — Thêm 1 ô ghi chú chung cho tab Điều khoản thanh toán (cột `payment_terms_note` trên `contracts`) + nút Lưu mở khóa & lưu cả bảng + ghi chú khi HĐ đã duyệt (endpoint mới `updatePaymentTermsAfterApprove`, tái dùng `syncPaymentTerms`). Chỉ form `contract/contract`. (@khoipv) — 2026-06-10, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-09-contract-payment-terms-note-approve-design.md`
+  - Plan: `.plans/contract-payment-terms-note-approve/plan.md`
+
+- **Bắt buộc field khi gửi duyệt gói thầu lên TP** — Bắt buộc `bid_opening_time`, `bid_closing_time`, `execution_time` (numeric>0), `execution_time_unit` khi nhân viên bấm "Gửi duyệt" (status=3) trong `StoreBidPackageRequest`. Lưu nháp/Lưu và gửi vẫn để trống được. (@khoipv) — 2026-06-08
+  - Spec: `docs/superpowers/specs/2026-06-08-bid-package-send-approve-required-fields-design.md`
+  - Plan: `.plans/bid-package-send-approve-required-fields/plan.md`
+
+- **Đồng bộ thông tin hợp đồng gốc xuống phụ lục** — Sửa số HĐ / ngày ký / ngày kết thúc / thời gian thực hiện ở hợp đồng gốc (màn 203, sau duyệt) → đồng bộ 4 trường vào TẤT CẢ snapshot `ContractVersion` để mọi phụ lục hiển thị giá trị mới. BE sửa `updateDataAfterApprove` (bọc transaction); FE gửi thêm `time_progress`. (@khoipv) — 2026-06-08
+  - Spec: `docs/superpowers/specs/2026-06-08-dong-bo-thong-tin-hop-dong-xuong-phu-luc-design.md`
+  - Plan: `.plans/dong-bo-thong-tin-hop-dong-xuong-phu-luc/plan.md`
+
+- **Tab "Phụ lục liên quan" — Chi tiết hợp đồng** — Điền tab rỗng trong màn chi tiết/sửa HĐ bằng bảng phụ lục (STT, Mã PL, Loại PL, Trạng thái); mã PL click → chi tiết đúng loại, trạng thái badge màu. BE: thêm `annexes` + `annex_type_label` vào `ContractDetailResource`. (@khoipv) — 2026-06-03
+  - Spec: `docs/superpowers/specs/2026-06-03-contract-detail-related-annex-tab-design.md`
+  - Plan: `.plans/contract-detail-related-annex-tab/plan.md`
+
+- **Cột "Phụ lục liên quan" — Danh sách hợp đồng** — Thêm cột hiển thị mọi mã phụ lục của hợp đồng (mỗi mã 1 dòng, mọi trạng thái), click → chi tiết phụ lục đúng loại qua `ANNEX_TYPE_ROUTE_MAP`. BE: relation `Contract::annexes` + eager load + expose ở `ContractResource`. (@khoipv) — 2026-06-03
+  - Spec: `docs/superpowers/specs/2026-06-02-contract-list-related-annex-column-design.md`
+  - Plan: `.plans/contract-related-annex-column/plan.md`
+
 - **Popup DT gom hàng hóa 4 phân hệ + quy đổi ĐVT** — Enhancement cho report-project-contract: popup chi tiết DT hiển thị tất cả HH từ DT/BG/Thầu/HĐ, thêm 3 cột SL quy đổi về ĐVT chính (@khoipv) — 2026-05-29
   - Spec: `docs/superpowers/specs/2026-05-29-lifecycle-detail-aggregate-products-design.md`
   - Plan: `.plans/report-project-contract/plan.md`

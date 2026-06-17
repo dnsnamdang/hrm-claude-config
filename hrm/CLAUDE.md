@@ -1,5 +1,13 @@
 # HRM Project — Hướng dẫn cho AI
 
+## Scope thư mục
+
+> **Thư mục gốc của dự án HRM là `HRM/`** (chứa file CLAUDE.md này).
+> Tất cả đường dẫn tương đối trong file này (`.plans/`, `docs/`, `.claude/`, `hrm-api/`, `hrm-client/`, `Modules/`, `pages/`) đều tính từ thư mục `HRM/`, KHÔNG phải từ thư mục cha `ERP-HRM/`.
+> Khi tạo file, đọc file, hay thao tác git — luôn thực hiện bên trong `HRM/`.
+
+---
+
 ## Nguyên tắc chung
 
 - Luôn gợi ý và làm việc bằng tiếng Việt
@@ -237,3 +245,7 @@ Lỗi BE → đọc log tại:
 - Không tự sửa hàm dùng chung khi chưa được xác nhận
 - Không tự quyết định điều kiện `is_can_delete` — phải hỏi
 - Không tự thêm phân quyền theo cấp — phải hỏi
+
+---
+
+
