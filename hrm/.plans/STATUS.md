@@ -2,14 +2,25 @@
 
 ## Đang làm
 
+- quotation-shipping-cost → @dnsnamdang → .plans/quotation-shipping-cost/plan.md
+  Trạng thái: CODE DONE Phase 1–17 (BE + FE edit/view/print + Excel + product-project). php -l sạch. Chờ user migrate + E2E. Branch `tpe-develop-assign`.
+  Spec: docs/superpowers/specs/2026-06-06-quotation-shipping-cost-design.md
+  Scope: Redesign "Tổng hợp giá trị báo giá" (bảng nhóm chi phí 6/7 cột động) + Chi phí vận chuyển cấp phiếu (5 cột DB: shipping_cost/vat_percent/discount/allocated_discount/import_price). Mô hình cuối: VC tính vào TSLN + dòng Tổng bảng Tổng hợp + Footer, KHÔNG vào bảng HH/DV phía trên. Kèm nhiều fix phụ (popup gửi duyệt, currency tab Hồ sơ, toolbar gọn, middleware duyệt, product-project gộp báo giá tự lập, validate CK ≤ đơn giá bán...).
+  Checkpoint: 2026-06-08 — Phase 8–17 done (xem plan.md). Migration mới: `2026_06_07_000001_add_shipping_import_price_to_quotations_table` (backfill = sau CK cũ). Bước tiếp: ⏳ user `php artisan migrate` + hard-refresh + E2E toàn bộ (các mục Verify `[ ]`).
+
+- erp-cost-catalog → @dnsnamdang → .plans/erp-cost-catalog/plan.md
+  Trạng thái: CODE DONE (BE B1-B5 + FE F1-F11 + P3 tách bảng service riêng cho BOM). Chờ E2E browser test.
+  Scope: Dòng dịch vụ/chi phí trong BOM + Quotation chọn từ danh mục `costs` ERP (mysql2; chỉ status=1 & kind_of=2, phân loại bằng revenue_calculation 1=Dịch vụ có tính DT / 0=Chi phí khác, type=null) + tạo nhanh ghi thẳng `costs`. Popup hợp nhất "Thêm mới" 2 tab (Hàng hoá ERP / Dịch vụ & Chi phí — CostCatalogPanel). Quick-create overlay z-index 5300. P3: BOM tách "Dịch vụ & Chi phí khác" thành bảng riêng `bom_list_service_items` (đồng nhất quotation_service_items), copy sang báo giá khi tạo. Ghi mysql2 trực tiếp (created_by qua TpEmployee). Branch `tpe-develop-assign`.
+  Checkpoint: 2026-06-05 — Phase P12→P19 DONE (sau P11): P12 createFromRequest copy service items BOM→báo giá; P13-P14 chốt tỷ lệ giá vốn (tự lập khoá giá vốn tính từ rate ERP; từ BOM nhập cả giá vốn+giá bán, PM tính tỷ lệ + ghi rate_value_capital về ERP khi lưu — syncServiceCostRatesToErp); P15 hiển thị tỷ giá + ngày tạo (edit toolbar + view); P16 fix validate giá dịch vụ false-positive (bỏ check unit_id + giá vốn>0, giữ giá bán>0); P17-P18 validate con không trùng mã CHA trực tiếp (so theo erp_product_id, không chặn hàng tạm theo code) + dedupe mã hàng tạm khi gộp BOM; P19 khoá sửa mã hàng tạm màn edit. Compile sạch + php -l OK. Bước tiếp: user E2E test P12→P19 + (tồn) chốt BOM aggregate có cho thêm dịch vụ thủ công không.
+
 - project-implementation-types → @dnsnamdang → .plans/project-implementation-types/plan.md
   Trạng thái: Phase A+B done. Phase C đã pivot sang quotation-redesign. Branch `tpe-develop-assign`.
   Checkpoint: 2026-05-27 — Phase C scope mở rộng → tách thành feature riêng quotation-redesign.
 
 - quotation-redesign → @dnsnamdang → .plans/quotation-redesign/plan.md
-  Trạng thái: Brainstorm DONE, spec DONE. Chờ user review spec → lên plan.
+  Trạng thái: Code DONE (Task 1-13) + bugfix Phase 6/7. Branch `tpe-develop-assign`.
   Spec: docs/superpowers/specs/2026-05-27-quotation-redesign-design.md
-  Checkpoint: 2026-05-27 — Spec đầy đủ: DB migration + BE refactor + FE tách component. Branch `tpe-develop-assign`. Bước tiếp: user review spec → writing-plans.
+  Checkpoint: 2026-06-02 — Phase 7 (Task 15): fix flash "Không tìm thấy báo giá" khi vào màn tạo báo giá (bật loading=true bao quanh mounted edit.vue). Test PASS. Bước tiếp: nhận yêu cầu mới hoặc test các flow còn lại.
 
 - solution-manager-assignment → @dnsnamdang → .plans/solution-manager-assignment/plan.md
   Trạng thái: Code DONE. Phân công PM/Leader + lịch sử + notification + confirm. SRS + Testcase đã tạo.
@@ -54,9 +65,13 @@
   Checkpoint: 2026-05-16 — Review code: gửi YCĐC không đổi trạng thái dự án TKT. Tiếp nhận cascade dừng YCXD giá + Báo giá chưa duyệt. Bước tiếp: nhận yêu cầu mới từ user hoặc test.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
-  Trạng thái: Phase 30 CODE DONE. Branch `tpe-develop-assign`.
+  Trạng thái: Phase 31 BRAINSTORM DONE (spec viết xong). Branch `tpe-develop-assign`.
+  Spec Phase 31: .plans/Bomlist-Quotation/design-phase31.md
+  Phase 31 (2026-06-08): Logic hàng hoá cha-con. Cha ERP → con auto từ recipe_products (snapshot, khoá) + toggle show_children/dòng; ERP không recipe → hàng lẻ. Cha tự tạo → chọn con ERP (cần quyền "Xem giá vốn hàng hoá")/tự tạo, giá nhập auto roll-up, giá bán nhập tay + validate cha ≥ Σ con (thành tiền, chỉ Báo giá). Con cha tạm hiện giá bán; con cha ERP giữ ẩn. Migration: thêm show_children vào bom_list_products + quotation_product_prices.
   Phase 30 (2026-05-28): BOM ẩn giá ERP, báo giá load giá ERP + quy đổi tỷ giá, validity_date, tab báo giá dự án TKT, icon cảnh báo thay đổi giá, toolbar CK+TSLN màn xem.
-  Checkpoint: 2026-05-28 — Phase 30 done. Bước tiếp: chạy migration validity_date + test thủ công.
+  Spec test: .plans/Bomlist-Quotation/test-summary-phase31.md
+  Checkpoint: 2026-06-10 — Phase 31 CODE DONE + fixes test vòng 2: giữ nguyên giá ERP (revert roll-up) + validate giá vốn cha<Σcon chặn gửi duyệt; tổng "Thành tiền nhập"=Σ dòng cha (Cách A) đồng bộ mọi nơi; CK hiển thị số dương; validate bắt buộc "Điều khoản thanh toán" khi gửi duyệt; sync auto-allocation+layout edit↔view. CHƯA migrate, CHƯA test browser. Bước tiếp: user migrate + build + test.
+  (2026-06-09) Phase 31 CODE DONE toàn bộ (Task 1-20 + nhiều fix sau review). BE+FE đồng bộ BOM + Báo giá. Logic cha-con: cha ERP có recipe → con auto snapshot KHOÁ hoàn toàn (không thêm/xoá/sửa, SL nhân theo SL cha) + toggle show_children; cha tạm → chọn con ERP (cần quyền "Xem giá vốn hàng hoá")/tự tạo, hiện giá bán con, validate cha≥Σcon (gửi duyệt). Validate báo giá: VAT/CK 0-100% (cả nháp+gửi), thành tiền>0/giá nhập tự nhập/dịch vụ (gửi duyệt), hàng ERP giá nhập=0 hợp lệ. Khác: bỏ spinner SL, confirm xoá (cascade con), text "Bảng giá bán lẻ" sau tỷ giá, sync auto-allocation+layout+dòng tổng CK edit↔view. Chọn Cách A (BE tin payload FE). CHƯA migrate, CHƯA test browser. Bước tiếp: user `php artisan migrate` + build FE + test theo test-summary-phase31.md.
 
 - course-rebuild-subject → @manhcuong/@junfoke → .plans/course-rebuild-subject/plan.md
   Trạng thái: Code DONE P1-P9 (2026-04-22). Phase 13+14 bug fix 2026-04-28.
@@ -92,7 +107,6 @@
 
 ## Hoàn thành
 
-<<<<<<< HEAD
 - my-todo → @dnsnamdang → .plans/my-todo/plan.md
   Hoàn thành: 2026-05-16. Phase 1-5 + 7-9 done. Nhắc việc cá nhân + lịch làm việc (cascade toggle, sub-items, confirm modal).
 - fix-handover → @dnsnamdang → .plans/fix-handover/plan.md

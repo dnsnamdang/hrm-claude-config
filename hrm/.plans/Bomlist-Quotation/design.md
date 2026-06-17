@@ -35,6 +35,15 @@ Hoàn thiện chức năng quản lý BOM List trong module Giao việc. BOM Lis
 5. **Detail page**: reuse BomBuilderEditor ở chế độ readonly (disabled)
 6. **Mã BOM**: giữ nguyên format `BOM-{YYYY}-{NNNNN}` tự tăng
 
+## Phase 31 — Logic hàng hoá cha-con (2026-06-08)
+Chi tiết: `design-phase31.md`. Tóm tắt:
+- **Cha ERP**: con auto snapshot từ `recipe_products` (bộ ghép ERP), khoá hoàn toàn. ERP không recipe → hàng lẻ, không con.
+- **Cha tự tạo**: tự chọn con (ERP cần quyền "Xem giá vốn hàng hoá", hoặc tự tạo). Bỏ rule cũ chặn con ERP dưới cha tạm.
+- **Giá**: hàng ERP khoá giá; cha tạm giữ auto roll-up giá nhập, giá bán nhập tay + validate `giá bán cha × SL ≥ Σ(giá bán con × SL)` (chỉ Báo giá, chặn lưu, lỗi inline). Cha ERP không validate.
+- **Hiển thị**: con cha tạm hiện giá bán đầy đủ; con cha ERP giữ ẩn. Toggle `show_children` cấp từng dòng cha ERP (xem/in/export).
+- **DB**: thêm cột `show_children` (tinyint default 1) vào `bom_list_products` + `quotation_product_prices`. Con dùng `parent_id` sẵn có.
+- Áp dụng cả BOM + Báo giá tự lập.
+
 ## Câu hỏi cần xác nhận
 1. Khi xoá BOM List, cần kiểm tra ràng buộc gì? (đang reference trong giải pháp/hạng mục đã duyệt thì có cho xoá không?)
 2. Export Excel gồm những cột nào? Chỉ thông tin BOM hay bao gồm cả danh sách product bên trong?
