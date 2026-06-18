@@ -10,9 +10,12 @@ Config bao gồm: `CLAUDE.md`, `.claude/` (skills, commands, settings), `.plans/
 
 | Project | Mô tả | Folder trong repo |
 |---------|-------|-------------------|
+| ERP TPE | ERP Tân Phát (Laravel + AngularJS, repo `TanPhatDev`) | `erp/` |
 | HRM gốc | Project HRM chính (TPE) | `hrm/` |
 | Nhất Linh | HRM cho công ty Nhất Linh | `nhatlinh/` |
 | Thành An | HRM cho công ty Thành An | `thanh_an/` |
+
+> **ERP + HRM thường được mở chung trong 1 workspace `ERP-HRM/`** — xem [Setup workspace ERP-HRM](#setup-workspace-erp-hrm-gộp-erp--hrm-trong-1-cửa-sổ-claude) bên dưới.
 
 ---
 
@@ -66,6 +69,93 @@ claude
 ```
 
 Claude Code sẽ tự động đọc `CLAUDE.md` và `.claude/skills/` qua symlink — không cần config gì thêm.
+
+---
+
+## Setup workspace ERP-HRM (gộp ERP + HRM trong 1 cửa sổ Claude)
+
+Đây là cách setup **giống máy đang dùng**: ERP và HRM nằm trong **một workspace `ERP-HRM/`** để mở chung 1 phiên Claude Code, mỗi project con vẫn dùng config riêng (`erp/`, `hrm/`) trong repo này qua symlink.
+
+### Cấu trúc đích
+
+```
+~/DEV/code/
+├── hrm-claude-config/         ← repo này (clone song song, KHÔNG nằm trong ERP-HRM)
+│   ├── erp/   hrm/  ...        ← config từng project
+│   └── setup.sh  README.md
+│
+└── ERP-HRM/                   ← workspace mở Claude ở đây
+    ├── CLAUDE.md              ← FILE THẬT (không symlink) — trỏ sang 2 project con
+    ├── ERP/                   ← repo ERP (chứa TanPhatDev/)
+    │   ├── .claude   → hrm-claude-config/erp/.claude
+    │   ├── .plans    → hrm-claude-config/erp/.plans
+    │   ├── docs      → hrm-claude-config/erp/docs
+    │   ├── CLAUDE.md → hrm-claude-config/erp/CLAUDE.md
+    │   ├── .gitignore→ hrm-claude-config/erp/.gitignore
+    │   └── TanPhatDev/         ← source code Laravel thật
+    └── HRM/                   ← repo HRM (chứa hrm-api/, hrm-client/)
+        ├── .claude   → hrm-claude-config/hrm/.claude
+        ├── .plans    → hrm-claude-config/hrm/.plans
+        ├── docs      → hrm-claude-config/hrm/docs
+        ├── CLAUDE.md → hrm-claude-config/hrm/CLAUDE.md
+        ├── .gitignore→ hrm-claude-config/hrm/.gitignore
+        ├── hrm-api/            ← source code BE thật
+        └── hrm-client/         ← source code FE thật
+```
+
+> Symlink luôn là **5 item**: `.claude`, `.plans`, `docs`, `CLAUDE.md`, `.gitignore` (khai báo trong `setup.sh` → `SYMLINK_ITEMS`).
+
+### Các bước
+
+```bash
+# 0. Vào thư mục gốc chứa code (tùy máy, ví dụ ~/DEV/code)
+cd ~/DEV/code
+
+# 1. Clone repo config (song song, KHÔNG đặt trong ERP-HRM)
+git clone git@github.com:dnsnamdang/hrm-claude-config.git
+
+# 2. Tạo workspace + clone 2 project con vào trong
+mkdir -p ERP-HRM
+git clone <git-repo-ERP> ERP-HRM/ERP     # repo ERP (bên trong có TanPhatDev/)
+git clone <git-repo-HRM> ERP-HRM/HRM     # repo HRM (bên trong có hrm-api/, hrm-client/)
+
+# 3. Tạo CLAUDE.md gốc của workspace (FILE THẬT, không symlink)
+cat > ERP-HRM/CLAUDE.md << 'EOF'
+# ERP-HRM Workspace
+
+Workspace chứa 2 dự án. Luôn đọc và tuân thủ CLAUDE.md của cả 2 project:
+
+@ERP/CLAUDE.md
+@HRM/CLAUDE.md
+
+## Quy tắc quan trọng — Scope thư mục
+
+- Khi làm việc cho dự án **HRM** → mọi thao tác (tạo file, đọc file, git) thực hiện trong `HRM/`
+- Khi làm việc cho dự án **ERP** → mọi thao tác (tạo file, đọc file, git) thực hiện trong `ERP/`
+- KHÔNG tạo file code, `.plans/`, `docs/` ở thư mục root `ERP-HRM/`
+- Đường dẫn tương đối trong mỗi CLAUDE.md con đều tính từ thư mục chứa nó, không phải từ root
+EOF
+
+# 4. Link config vào từng project con
+cd ~/DEV/code/hrm-claude-config
+./setup.sh link erp ~/DEV/code/ERP-HRM/ERP
+./setup.sh link hrm ~/DEV/code/ERP-HRM/HRM
+
+# 5. Verify symlink
+ls -la ~/DEV/code/ERP-HRM/ERP   | grep '\->'
+ls -la ~/DEV/code/ERP-HRM/HRM   | grep '\->'
+
+# 6. Mở Claude tại workspace (đọc cả 3 CLAUDE.md: root + ERP + HRM)
+cd ~/DEV/code/ERP-HRM
+claude
+```
+
+### Lưu ý quan trọng
+
+- **`ERP-HRM/CLAUDE.md` là file thật**, KHÔNG link từ repo config. Nó chỉ `@ERP/CLAUDE.md` + `@HRM/CLAUDE.md` để Claude nạp cả 2 khi mở ở root.
+- **`ERP-HRM/CLAUDE.md` không được commit vào source ERP/HRM** (nó nằm ở thư mục cha workspace, ngoài 2 repo).
+- Mỗi project con tự là 1 git repo riêng → thao tác git luôn `cd` vào đúng `ERP/` hoặc `HRM/`.
+- Config (`.claude/.plans/docs/CLAUDE.md`) sửa ở project nào → tự phản ánh vào `hrm-claude-config/erp` hoặc `/hrm`; commit trong repo config (xem [Cập nhật config](#cập-nhật-config-workflow-hàng-ngày)).
 
 ---
 
@@ -201,6 +291,16 @@ hrm-claude-config/
 ├── setup.sh            ← script quản lý
 ├── .gitignore          ← ignore chung cho repo
 │
+├── erp/                ← config cho project ERP TPE (TanPhatDev)
+│   ├── .claude/
+│   │   ├── skills/     ← custom skills
+│   │   ├── commands/
+│   │   └── settings.json
+│   ├── .plans/         ← kế hoạch feature (STATUS.md + từng feature/)
+│   ├── docs/
+│   ├── CLAUDE.md
+│   └── .gitignore
+│
 ├── hrm/                ← config cho project HRM gốc
 │   ├── .claude/
 │   │   ├── skills/     ← custom skills (button-convention, list-page, ...)
@@ -209,7 +309,7 @@ hrm-claude-config/
 │   ├── .plans/         ← kế hoạch feature (STATUS.md + từng feature/)
 │   ├── docs/           ← conventions.md, shared.md, onboarding.md, ...
 │   ├── CLAUDE.md       ← hướng dẫn chính cho AI
-│   └── .gitignore.project
+│   └── .gitignore
 │
 ├── nhatlinh/           ← config cho project Nhất Linh
 │   └── (cấu trúc tương tự)

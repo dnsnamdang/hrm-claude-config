@@ -1,6 +1,6 @@
 # Chỉ track config Claude Code — bỏ qua repo con
-hrm-api/
-hrm-client/
+# hrm-api/
+# hrm-client/
 
 # OS
 .DS_Store
