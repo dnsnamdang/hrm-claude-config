@@ -21,3 +21,13 @@ Vừa hoàn thành: Chuyển sang popup giống hệt jobassignment — modal pr
 Đang làm dở: không
 Bước tiếp theo: User chạy thật verify popup (có NV / không NV / nút In). Cân nhắc xóa page `_id/print.vue` cũ nếu không cần URL trực tiếp.
 Blocked:
+
+### Checkpoint — 2026-06-16 (bổ sung)
+Vừa hoàn thành:
+- "Đi công tác tại" đổi sang lấy `description` (Nội dung công việc)
+- Ngày trên đầu QĐ = NGÀY DUYỆT PHIẾU (không phải duyệt kết quả):
+  - BE: migration thêm cột `approved_at` (backfill = `created_at` cho phiếu status ∈ 2,5,6,7); set `approved_at = now()` khi duyệt phiếu (`storeApprove`, nhánh `approve`); thêm fillable; expose `approved_at` ở DetailResource
+  - FE: modal computed `approvedDateText` → `……, ngày DD tháng MM năm YYYY`
+Đang làm dở: không
+Bước tiếp theo: CHẠY MIGRATION `php artisan migrate`; rồi verify popup (ngày = ngày duyệt phiếu)
+Blocked:

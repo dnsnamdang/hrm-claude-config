@@ -12,6 +12,9 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Biên bản nghiệm thu (BBNT) — màn thêm mới + Backend CRUD** — FE `pages/contract/acceptance_report/add.vue` wizard 3 bước, đủ 5 loại NT, UI lai, chia nhiều component con. BE đầy đủ (Modules/Category): 3 bảng + entities + service CRUD + meta (lần kế tiếp/loại được phép/lũy kế) + duyệt/từ chối + auto code. Quy tắc khóa loại **tonghd-sticky**. FE đã nối API thật (meta + submit + khóa loại). Đã có đủ **danh sách + thêm + chi tiết + sửa + duyệt/từ chối/xóa** (wizard tách `AcceptanceReportForm` dùng chung create/edit/show, prefill + readonly). type & hien_trang lưu integer. Migrate + route:list OK. (@khoipv) — 2026-06-18, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-16-acceptance-report-add-design.md`
+  - Plan: `.plans/acceptance-report-add/plan.md`
 - **In QUYẾT ĐỊNH cử đi công tác (Business Trip)** — Đổi bản in màn `timesheet/business_trip_assigns/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" (copy mẫu từ `jobassignment/_id/print.vue`). 1 QĐ liệt kê tất cả NV. BE thêm field `employee_account_id`; FE viết lại template+script `print.vue`. (@khoipv) — 2026-06-16, verify UI PASS
   - Spec: `docs/superpowers/specs/2026-06-16-business-trip-print-design.md`
   - Plan: `docs/superpowers/plans/2026-06-16-business-trip-print.md`
