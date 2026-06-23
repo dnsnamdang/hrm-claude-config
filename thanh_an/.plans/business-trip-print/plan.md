@@ -22,6 +22,19 @@ Vừa hoàn thành: Chuyển sang popup giống hệt jobassignment — modal pr
 Bước tiếp theo: User chạy thật verify popup (có NV / không NV / nút In). Cân nhắc xóa page `_id/print.vue` cũ nếu không cần URL trực tiếp.
 Blocked:
 
+## Phase 3 — Bổ sung tỉnh/thành công ty trước ngày (2026-06-18)
+- [x] Modal `BusinessTripDecisionPrintModal.vue`: thêm `companyProvince`, fetch `human/company/{id}` lấy `province.text`, hàm `cleanProvinceName` cắt tiền tố "Thành phố/TP/Tỉnh"; ghép vào `approvedDateText` (giữ nguyên logic ngày)
+- [x] Page `_id/print.vue` (dead): cập nhật tương tự cho đồng bộ
+- [ ] Verify UI: mở popup In → đầu QĐ hiển thị "<Tỉnh>, ngày DD tháng MM năm YYYY" (chờ user chạy)
+
+---
+
+### Checkpoint — 2026-06-18
+Vừa hoàn thành: Thêm tỉnh/thành công ty vào trước phần ngày ở bản in QĐ cử đi công tác (modal + page). Nguồn: `human/company/{id}` → `province.text` (DB đã lưu tên sạch); có hàm cắt tiền tố phòng hờ. Giữ nguyên logic ngày = ngày duyệt phiếu.
+Đang làm dở: không
+Bước tiếp theo: User mở popup In verify tỉnh/thành hiển thị đúng
+Blocked:
+
 ### Checkpoint — 2026-06-16 (bổ sung)
 Vừa hoàn thành:
 - "Đi công tác tại" đổi sang lấy `description` (Nội dung công việc)

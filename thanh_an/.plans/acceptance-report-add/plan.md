@@ -2,6 +2,8 @@
 
 **Phụ trách:** @khoipv
 **Spec:** `docs/superpowers/specs/2026-06-16-acceptance-report-add-design.md`
+**Spec đợt 2 (demo 2):** `docs/superpowers/specs/2026-06-19-acceptance-report-add-demo2-changes-design.md`
+**Spec bổ sung (tổng hóa đơn header):** `docs/superpowers/specs/2026-06-22-acceptance-report-invoice-total-header-design.md`
 
 ## Phase 0 — Tài liệu
 - [x] Tạo `.plans/acceptance-report-add/{design.md,plan.md}`
@@ -94,6 +96,53 @@
 - [x] tonghd không cần danh mục hàng hóa (gate step3)
 - [x] Verify end-to-end qua UI (chờ chạy dev)
 
+## Phase 10 — Cập nhật theo demo (2) (2026-06-19)
+Khớp màn thêm/sửa với `bbnt_demo (2).html`. Spec: `2026-06-19-acceptance-report-add-demo2-changes-design.md`.
+- [x] BE `AcceptanceReportService::selectableContracts` select thêm `customer_id`, `customer_name` (Contract có sẵn cột; không migrate).
+- [x] Bước 1 `Step1SelectContract.vue`: thêm dropdown **Khách hàng** (cascade KH→HĐ→Loại); tiêu đề "Chọn khách hàng, hợp đồng & loại nghiệm thu"; hint "Chỉ hiển thị hợp đồng do bạn lập — {fullname} ({email})" (từ `current_employee_info`); KH suy ra từ danh sách HĐ; đổi KH → emit `@reset`; prefill + readonly KH cho edit/show (fallback customerOptions từ `contract`).
+- [x] `AcceptanceReportForm.vue`: nối `@reset="resetContractSelection"`.
+- [x] `ContractSummary.vue`: tên KH kèm **địa bàn** (`customer_area_name`); nhãn "Nhà cung cấp". (Bỏ "lần nghiệm thu kế tiếp" theo yêu cầu — đã gỡ prop `times`.)
+- [x] Form "Theo tháng" `FormByMonth.vue`: viết lại có 2 sub-tab "Nhập theo tháng" / "**Tổng hợp (gộp hàng nhiều HĐ)**" (aggRows + dupbadge + cột "Thuộc hóa đơn" + banner vượt SL). `ProductGrid.vue` emit thêm `rows`; event `update` lên cha giữ nguyên.
+- [x] Form "Chi tiết từng hóa đơn" `FormByInvoiceDetail.vue`: **bỏ** sub-tab "Tổng hợp (gộp hàng trùng)" + computed aggRows/aggTotal/aggAnyOver + data activeTab (theo demo 2).
+- [x] Dropdown KH hiển thị **mã KH**: BE `selectableContracts` join `category_customers` lấy `customer_code`; FE helper `customerLabel` format "mã — tên" (fallback edit/show dùng `contract.customer_code`).
+- [x] Tab Tổng hợp (theo tháng): gộp theo **product_id + ĐVT** (không gộp ĐVT khác nhau). `normalizeContractItems` thêm `unit_id`; `aggRows` key composite `${product_id}|${unit_id}`, `:key="row.aggKey"`; hint nói rõ khác ĐVT để riêng.
+- [x] Fix show/edit không hiện KH: watch `contract` đổi sang `immediate: true` (wizard chỉ render sau khi tắt loading nên contractRaw đã có sẵn trước mount → watch thường bỏ lỡ → selectedCustomerId null).
+- [x] Dropdown KH load **toàn bộ danh mục khách hàng** (`category/customers?per_page=2000`), KHÔNG còn rút ra từ HĐ của tôi (theo yêu cầu user: "khách hàng không cần phải lấy khách hàng của tôi"). `Step1SelectContract`: thêm `customers[]` + `getCustomers()`; `customerOptions` map từ `this.customers` (fallback edit/show từ `contract`). HĐ vẫn lọc theo KH đã chọn + chỉ HĐ do tôi lập.
+- [x] User verify: bước 1 KH (full danh mục) → HĐ OK. Lưu ý nghiệp vụ: danh mục có **KH trùng tên** (vd "Ninh Bình": ĐA KHOA `BNB_BV0095` id 1530 vs Mắt `BNB_BV0196` id 1714) → phải chọn đúng mã KH thì HĐ mới hiện; chọn nhầm KH không có HĐ → ô HĐ trống (đúng hành vi). Nhãn KH "mã — tên" giúp phân biệt.
+- [x] Đính chính chẩn đoán "BBNT Nháp treo chặn tạo mới": SAI — bản Nháp id 4 đã **xóa mềm** (AcceptanceReport dùng SoftDeletes) nên không chặn. Quy tắc giữ nguyên: chỉ chặn khi có BBNT Nháp/Chờ duyệt còn active.
+- [x] **Bỏ quy tắc khóa loại "tổng hóa đơn"** (theo yêu cầu user): trước đây đã có BBNT loại tonghd → các lần sau chỉ được chọn tonghd. Gỡ ở `AcceptanceReportService`: `allowedTypes()` luôn trả `TYPES` (đủ 5 loại); bỏ gọi `assertTypeAllowed` ở `store()` + `update()`; xóa hẳn hàm `assertTypeAllowed`. FE không cần sửa (meta trả đủ loại → dropdown mở hết). Lũy kế giá trị tonghd (`accumulatedAmount`) giữ nguyên.
+
+## Phase 11 — Thêm "Tổng hóa đơn" lên header block cthd (2026-06-22)
+Spec: `2026-06-22-acceptance-report-invoice-total-header-design.md`. Chỉ FE, thuần hiển thị.
+- [x] `FormByInvoiceDetail.vue`: thêm cụm hiển thị read-only "Tổng hóa đơn" = `fmtMoney(subtotal(block))` trong `.invhead`, bên cạnh "Ngày hóa đơn"; giữ nguyên "Cộng hóa đơn" cuối block.
+
+## Phase 12 — Cập nhật bổ sung (Ngày BB + File lưu trữ) ở mọi trạng thái (2026-06-22)
+Spec: `2026-06-22-acceptance-report-supplement-update-design.md`. Plan chi tiết: `docs/superpowers/plans/2026-06-22-acceptance-report-supplement-update.md`. Pattern: "Tiến độ thực hiện" màn HĐ (endpoint riêng, mọi trạng thái).
+### BE
+- [x] T1: Migration `acceptance_report_files` (không khóa ngoại) + entity `AcceptanceReportFile` + relation `files()` + `canSupplement()` trên `AcceptanceReport`. (review sạch)
+- [x] T2: `UpdateAcceptanceReportSupplementRequest` + service `updateSupplement`/`assertCanSupplement` + controller action + route `POST /{id}/updateSupplement`.
+- [x] T3: `show` load `files` + resource trả `files` + `can_supplement`. (review sạch)
+### FE
+- [x] T4: Component `SupplementUpdate.vue` (bảng file Tên tài liệu/File/Ghi chú, upload S3).
+- [x] T5: Nhúng vào `AcceptanceReportForm` + CSS miễn nhiễm `readonly-view`.
+
+### Phase 12b — Chỉnh theo phản hồi user (2026-06-22, sửa trực tiếp inline + final review Opus SẴN SÀNG MERGE)
+Yêu cầu mới: file lưu trữ hiện ở **mọi màn (gồm Thêm mới)**, lưu chung form chính khi thêm/sửa; ngày biên bản chỉ ở Step2, cho sửa mọi trạng thái; ở Chi tiết có **2 nút Lưu độc lập** (ngày BB / file).
+- [x] BE: `store`/`update` gọi `saveFiles(...)` (lưu file kèm form chính); `StoreAcceptanceReportRequest` thêm rule `files.*`; `updateSupplement` tách `has('acceptance_date')`/`has('files')` độc lập (không mất dữ liệu); `saveFiles` private dùng chung.
+- [x] FE: `SupplementUpdate.vue` viết lại = **chỉ bảng file** (bỏ ngày BB), mutate `formSubmit.files`, prop `editable`/`showSaveButton`, emit `save`; render ở mọi màn (sau khi chọn HĐ).
+- [x] FE: `Step2Config.vue` — ngày BB thêm nút "Lưu" riêng (emit `save-date`) + class `sup-editable` cho sửa khi readonly; props `dateEditable`/`showSaveDate`.
+- [x] FE: `AcceptanceReportForm.vue` — `formSubmit.files` khai báo trong data + load từ `report.files`; computed `canSupplementReport`/`fileSectionEditable`; handler `saveAcceptanceDate`/`saveFiles`/`saveSupplement`; CSS override `.sup-editable` + `.supplement-update.supplement-editable`; buildPayload spread `files` → store/update lưu kèm.
+
+### Phase 12c — Thu hẹp cột Quy cách (2026-06-22)
+- [x] Cột "Quy cách" giới hạn bề rộng (120–180px) + xuống dòng: thêm class `spec-col` trong `AcceptanceReportForm.vue`, áp cho header + ô ở `ProductGrid.vue`, `FormByMonth.vue`, `FormByInvoiceDetail.vue`.
+
+### Phase 12d — Tách khoảng tháng có cấu trúc period_from/period_to (2026-06-22)
+Mục tiêu: loại "theo tháng" lưu Từ/Đến tháng thành 2 cột DATE riêng (thay vì chỉ chuỗi `period`) để sau này LỌC HÓA ĐƠN theo khoảng (`WHERE ngay BETWEEN period_from AND period_to`). Có **backfill dữ liệu cũ**.
+- [x] BE migration `2026_06_22_130000_add_period_range_to_acceptance_reports`: thêm `period_from`,`period_to` (DATE, sau `period`) + backfill từ chuỗi `period` cũ (type=1, regex MM/YYYY: cặp đầu→from đầu tháng, cặp cuối→to cuối tháng).
+- [x] BE entity fillable + casts `date:Y-m-d`; service `applyPeriodRange` (THANG: from=Y-m-01, to=Y-m-t; loại khác null) gọi trong store/update; request rule nullable|date; resource trả 2 trường.
+- [x] FE `Step2Config`: `applyPeriod` set `period_from/period_to` từ monthFrom/monthTo; đổi sang loại khác → clear. `AcceptanceReportForm`: khai báo 2 key trong formSubmit + load từ resource (buildPayload spread sẵn → store/update nhận).
+- [x] **Mở Từ/Đến tháng cho MỌI loại** (theo phản hồi): các loại khác "theo tháng" cũng chọn được Từ/Đến tháng nhưng KHÔNG bắt buộc; vẫn giữ ô "Kỳ / thời gian" (text). FE `Step2Config`: hiện Từ/Đến tháng luôn (Required chỉ khi theo tháng) + Kỳ chỉ khi !theo tháng; `applyPeriod` luôn set from/to mọi loại, chỉ ghép `period` khi theo tháng; bỏ clear khi đổi loại; `created` prefill 2 ô tháng từ `period_from/to` (fallback split chuỗi). BE: `applyPeriodRange` bỏ gate THANG (áp mọi loại); `StoreAcceptanceReportRequest` đưa `period_from`/`period_to` (nullable, `period_to after_or_equal period_from`) ra rule chung, `period` vẫn chỉ required khi theo tháng. (Backfill giữ nguyên type=1 — loại khác cũ không có dữ liệu tháng để tách.)
+
 ---
 
 ### Checkpoint — 2026-06-16
@@ -101,3 +150,18 @@ Vừa hoàn thành: Full BE BBNT (CRUD + meta + khóa loại tonghd + lũy kế 
 Đang làm dở: (không).
 Bước tiếp theo: Chạy `npm run dev` + BE, verify end-to-end cả 5 loại (đặc biệt: tạo tonghd rồi kiểm tra các lần sau chỉ còn tonghd; lũy kế cập nhật sau khi duyệt).
 Blocked: (không).
+
+### Checkpoint — 2026-06-19 (đợt 2 — demo 2)
+Vừa hoàn thành: Phase 10 code BE+FE đầy đủ (KH cascade, địa bàn + lần kế tiếp, theo tháng có tab Tổng hợp, cthd bỏ tab Tổng hợp).
+Đang làm dở: (không).
+Bước tiếp theo: user verify UI (không cần migrate).
+Blocked: (không).
+
+### Checkpoint — 2026-06-22 (Phase 11 + 12)
+Vừa hoàn thành:
+- Phase 11: hiển thị "Tổng hóa đơn" (read-only, thẻ pill) trên header block cthd — FE xong.
+- Phase 12: "Cập nhật bổ sung" (Ngày BB + File lưu trữ, mọi trạng thái) — code đầy đủ T1-T5 (BE 3 task + FE 2 task), qua subagent-driven + review từng task + final review (SẴN SÀNG MERGE, không Critical/Important).
+Đang làm dở: (không).
+Bước tiếp theo: **user chạy `php artisan migrate` (bảng `acceptance_report_files`) + `npm run dev` verify UI** màn Chi tiết/Sửa BBNT (đặc biệt: lưu bổ sung ở trạng thái Đã duyệt; tài khoản không phải owner/không quyền duyệt → ẩn nút).
+Blocked: (không).
+Minor để ngỏ (không chặn): M3 — ngày biên bản hiển thị 2 nơi ở màn Sửa (Step2 + block bổ sung), spec đã chấp nhận.
