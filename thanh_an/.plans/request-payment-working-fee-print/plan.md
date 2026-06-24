@@ -106,3 +106,14 @@ Blocked: chờ user verify UI
   - Fix: thêm `@page { size: A4; margin: 0; }` vào CSS in → không còn vùng lề để vẽ header/footer; nội dung giữ lề nhờ padding body/.print-data.
 Bước tiếp theo: user in thử lại xác nhận đã hết header/footer
 Blocked: chờ user verify
+
+### Checkpoint — 2026-06-23 (fix bảng dính mép + cắt đôi hàng khi in)
+- [x] **T9. Sửa lỗi bảng dính mép trang & hàng bị cắt đôi khi tách trang**
+  - File: `components/modal/RequestPaymentWorkingFeePrintModal.vue` > `getPrintStyles()`
+  - Nguyên nhân: `@page { margin: 0 }` (T8) bỏ lề mọi trang → trang 2,3 dính sát mép trên; + thiếu quy tắc page-break → 1 hàng bị cắt làm đôi tại mép trang.
+  - Fix (thuần CSS in, theo xác nhận user — cho tách + lặp tiêu đề, thêm lề trên-dưới mọi trang):
+    - `@page { size: A4; margin: 15mm 0 }` — lề trên-dưới lặp ở MỌI trang (padding body chỉ tạo lề trang đầu nên không đủ). Trái-phải 0, lề ngang dùng `body { padding: 0 50px }`.
+    - Header/footer trình duyệt (ngày giờ, title, about:blank): KHÔNG tắt được bằng CSS khi @page margin>0 → hướng dẫn user bỏ chọn "Đầu trang và chân trang" trong hộp thoại in.
+    - `.ctp-table { page-break-inside: auto }`, `.ctp-table tr { page-break-inside: avoid }`, `.ctp-table thead { display: table-header-group }`.
+Bước tiếp theo: user in thử lại xác nhận hết dính mép + không cắt đôi hàng
+Blocked: chờ user verify

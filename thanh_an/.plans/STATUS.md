@@ -15,6 +15,12 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Từ chối lập gói thầu** — Bổ sung chức năng từ chối lập gói thầu trên màn `bid_package/quotation` (báo giá đã gửi thầu, status=7). Quyền "Lập gói thầu" mới được từ chối, bắt buộc nhập lý do; báo giá → status 20, dự toán → status 19 (cùng nhãn "Từ chối lập gói thầu"). Không migration (tái dùng `reason_deny`). (@khoipv) — 2026-06-23, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-23-bid-package-quotation-reject-design.md`
+  - Plan chi tiết: `docs/superpowers/plans/2026-06-23-bid-package-quotation-reject.md`
+  - Design tóm tắt: `.plans/bid-package-quotation-reject/design.md`
+  - Plan tổng quát: `.plans/bid-package-quotation-reject/plan.md`
+
 - **Biên bản nghiệm thu (BBNT) — đợt 2: cập nhật theo demo (2)** — Khớp màn thêm/sửa BBNT với `bbnt_demo (2).html`: (1) Bước 1 thêm dropdown Khách hàng (cascade KH→HĐ→Loại) + tiêu đề/hint "chỉ HĐ do bạn lập"; (2) ContractSummary thêm địa bàn (`customer_area_name`) + "lần nghiệm thu kế tiếp"; (3) Form Theo tháng thêm sub-tab "Tổng hợp (gộp hàng nhiều HĐ)"; (4) Form cthd **bỏ** tab Tổng hợp. BE: `selectableContracts` select thêm customer_id/customer_name (không migrate). FE 6 file. (@khoipv) — 2026-06-19, verify UI PASS
   - Spec gốc: `docs/superpowers/specs/2026-06-16-acceptance-report-add-design.md`
   - Spec đợt 2: `docs/superpowers/specs/2026-06-19-acceptance-report-add-demo2-changes-design.md`
