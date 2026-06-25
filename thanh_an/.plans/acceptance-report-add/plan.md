@@ -143,6 +143,10 @@ Mục tiêu: loại "theo tháng" lưu Từ/Đến tháng thành 2 cột DATE ri
 - [x] FE `Step2Config`: `applyPeriod` set `period_from/period_to` từ monthFrom/monthTo; đổi sang loại khác → clear. `AcceptanceReportForm`: khai báo 2 key trong formSubmit + load từ resource (buildPayload spread sẵn → store/update nhận).
 - [x] **Mở Từ/Đến tháng cho MỌI loại** (theo phản hồi): các loại khác "theo tháng" cũng chọn được Từ/Đến tháng nhưng KHÔNG bắt buộc; vẫn giữ ô "Kỳ / thời gian" (text). FE `Step2Config`: hiện Từ/Đến tháng luôn (Required chỉ khi theo tháng) + Kỳ chỉ khi !theo tháng; `applyPeriod` luôn set from/to mọi loại, chỉ ghép `period` khi theo tháng; bỏ clear khi đổi loại; `created` prefill 2 ô tháng từ `period_from/to` (fallback split chuỗi). BE: `applyPeriodRange` bỏ gate THANG (áp mọi loại); `StoreAcceptanceReportRequest` đưa `period_from`/`period_to` (nullable, `period_to after_or_equal period_from`) ra rule chung, `period` vẫn chỉ required khi theo tháng. (Backfill giữ nguyên type=1 — loại khác cũ không có dữ liệu tháng để tách.)
 
+### Phase 12e — Dropdown KH chỉ hiện KH đã từng lập HĐ (2026-06-24)
+Yêu cầu user: ở Bước 1, ô chọn Khách hàng chỉ hiển thị những KH mà **đã từng lập hợp đồng** (trong các HĐ do mình lập, đã duyệt) — đảo lại Phase 10 dòng 110 (đang load full danh mục). FE-only.
+- [x] `Step1SelectContract.vue`: `customerOptions` suy ra từ `this.contracts` (dedupe theo `customer_id`, nhãn "mã — tên" từ `customer_code/customer_name`); bỏ `getCustomers()`/`customers[]`/gọi API `category/customers`. Giữ fallback edit/show từ `contract`. Hint giữ nguyên ("chỉ HĐ do bạn lập").
+
 ---
 
 ### Checkpoint — 2026-06-16
