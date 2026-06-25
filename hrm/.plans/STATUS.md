@@ -2,6 +2,14 @@
 
 ## Đang làm
 
+- elearning-exam-mode → @junfoke → .plans/elearning-exam-mode/plan.md
+  Trạng thái: CODE DONE toàn bộ (BE+FE, additive — không đụng luồng course cũ). Chờ user chạy 2 migration + build elearning + verify browser. Chi tiết phase + checkpoint xem plan.md. Spec: docs/superpowers/specs/2026-06-15-elearning-exam-mode-design.md.
+  Kiến trúc: engine thi NHẬN BIẾT SUBJECT (tách khỏi course), deep-link theo subject_id (route /training/subjects/{id}/exams/{examId}/todo, tái dùng ExamToDoForm). Chỉ employee thi.
+  Tổng kết phase: P1 chặn auto-done exam-mode • P2 migration exam_test_results.subject_id + subject_enrollments.exam_score/exam_result (CHƯA chạy) + getForSubjectTodo + canReplyDoExamSubject • P3 syncSubjectExamCompletion (chấm theo exam_score_rule → set done + chứng chỉ) • P4 endpoint exam-status • P5 FE (màn làm bài hrm-client + DetailEnrollCard khối exam-mode) • P7 chấm tự luận subject (ExaminerService UNION subject_exams/graders) • P8 notify elearning khi chấm xong (type ExamGraded → màn khóa học xem điểm).
+  LƯU Ý: không tự chạy migration. DEFER: widget dashboard chờ chấm.
+  Tóm tắt: .plans/elearning-exam-mode/design.md
+  Scope: Xử lý khóa `evaluation_mode='exam'` ở elearning — học viên vẫn học bài, nhưng làm bài thi đi theo luồng đào tạo cũ (HRM, deep-link); điểm quyết định hoàn thành + chứng chỉ. Nút "Làm đề thi" thay "Tiếp tục học", gate theo `exam_participation_required` (=1 cần đạt `exam_min_required_percent` mới được thi; =0 thi ngay). Phát hiện: Training đã có luồng thi cho employee (exam_test_results/ExamTestResult) nhưng CHƯA có logic set enrollment done theo điểm; elearning chưa có route exam; `recalculateCourseProgress` đang tự done theo % bài (sai cho exam-mode). Quyết định mở: deep-link HRM, mối nối subject↔ExamTestResult.course_id, ai set done theo điểm, employee vs external learner.
+
 - elearning-notification-center → @junfoke → .plans/elearning-notification-center/plan.md
   Trạng thái: CODE DONE + VERIFIED (2026-06-15). User xác nhận chuông hiện thông báo onboarding thật, click điều hướng góc học tập. Chờ merge. Tiếp nối onboarding-auto-enroll.
   Điều chỉnh sau verify: chuông hiện cho mọi user đã đăng nhập (learner rỗng); trigger auto-enroll chuyển sang NotificationController::index (noti hiện ngay sau đăng nhập ở mọi trang); ghi DB notification đồng bộ (không cần queue worker) gom trong OnboardingAutoEnrollService::runAndNotify().
@@ -122,6 +130,7 @@
 
 - elearning-lesson-viewer → @junfoke → .plans/elearning-lesson-viewer/plan.md
   Trạng thái: Code DONE (14/14 task). Browser test passed. Chờ kết nối API thật (→ learning-session-api).
+  Fix 2026-06-16: đổi bài học hết nháy spinner toàn màn (App.vue routeKey cố định cho route subject-learn). Chờ verify.
   Spec: docs/superpowers/specs/2026-05-28-elearning-lesson-viewer-design.md
   Scope: FE elearning — màn học đầy đủ (viewer YouTube+PDF+HTML, sidebar outline, tracking giả lập, prerequisite, focus mode, tabs, mock data). SCORM mở rộng sau.
 
