@@ -10,7 +10,8 @@
 - FE: Tuân thủ style list của module đang triển khai (mỗi module có thể khác nhau)
 - Trước khi làm màn danh sách mới → hỏi có cần phân quyền theo cấp không
 - Trước khi viết accessor `is_can_delete` → hỏi điều kiện xóa cụ thể của màn đó
-- `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
+- `.claude`, `.plans`, `docs`, `CLAUDE.md`, `demos` là symlink sang `hrm-claude-config/thanh_an/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
+- **File demo/prototype HTML standalone** → LUÔN tạo trong thư mục `demos/` (symlink sang `hrm-claude-config/thanh_an/demos/` để đẩy chung repo config). Đặt tên `demo-<ten-man-hinh>.html` (tiếng Việt không dấu, gạch ngang). Cập nhật `demos/README.md` (index). KHÔNG để file demo rải rác trong `hrm-thanhan-api` / `hrm-thanhan-client`.
 
 ---
 

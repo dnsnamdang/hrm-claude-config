@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BC Vòng đời Dự toán → Hợp đồng — Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Design Tokens
+   ============================================================ */
+:root {
+  /* Phase colors */
+  --c-dt:  #1F4E78;
+  --c-bg:  #2E75B6;
+  --c-gt:  #C65911;
+  --c-hd:  #548235;
+  --c-rpt: #7030A0;
+
+  --c-dt-50:  #EDF2F7;
+  --c-bg-50:  #E8F0F8;
+  --c-gt-50:  #FBEFE2;
+  --c-hd-50:  #EFF4E8;
+  --c-rpt-50: #F2EAF8;
+
+  --c-dt-100:  #D9E2F3;
+  --c-bg-100:  #CFE0F1;
+  --c-gt-100:  #F8DFC4;
+  --c-hd-100:  #DCE8C8;
+  --c-rpt-100: #E4D7F0;
+
+  /* Neutrals */
+  --c-paper: #FAFAF7;          /* warm off-white */
+  --c-surface: #FFFFFF;
+  --c-border: #E5E2DA;
+  --c-border-strong: #C9C5BA;
+  --c-text-1: #1A1815;         /* near black, warm */
+  --c-text-2: #4A453C;
+  --c-text-3: #82796A;
+  --c-text-4: #ADA496;
+
+  /* Status colors */
+  --c-success: #2D7A3F;
+  --c-success-bg: #E4F2E6;
+  --c-warning: #B5650E;
+  --c-warning-bg: #FAEBD5;
+  --c-info: #1F578C;
+  --c-info-bg: #E1EBF5;
+  --c-muted-bg: #F0EEE8;
+  --c-muted-fg: #6E665A;
+  --c-danger: #A52A1A;
+  --c-danger-bg: #F7DDD7;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  /* Typography */
+  --font-display: 'Fraunces', 'Be Vietnam Pro', Georgia, serif;
+  --font-body: 'Be Vietnam Pro', system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --shadow-sm: 0 1px 2px rgba(20, 18, 14, 0.04);
+  --shadow-md: 0 4px 12px rgba(20, 18, 14, 0.08);
+  --shadow-lg: 0 12px 32px rgba(20, 18, 14, 0.14);
+  --shadow-modal: 0 24px 64px rgba(20, 18, 14, 0.22);
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--c-text-1);
+  background: var(--c-paper);
+  font-feature-settings: 'tnum' 1, 'cv11' 1;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle paper texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(112, 48, 160, 0.015) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(31, 78, 120, 0.015) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+button { font: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+input, select { font: inherit; color: inherit; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.app {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+  position: relative;
+  z-index: 1;
+}
+
+.brand-header {
+  padding: var(--space-8) 0 var(--space-4);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--c-text-1);
+  margin: 0 0 var(--space-2);
+}
+
+.brand-subtitle {
+  color: var(--c-text-3);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.brand-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-rpt);
+  background: var(--c-rpt-50);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  margin-left: var(--space-3);
+  vertical-align: middle;
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin: var(--space-4) 0 0;
+  border-bottom: 1px solid var(--c-border);
+  position: sticky;
+  top: 0;
+  background: var(--c-paper);
+  z-index: 10;
+  padding-top: var(--space-2);
+}
+
+.tab {
+  background: transparent;
+  border: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-3);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab[hidden] { display: none; }
+
+.tab:hover { color: var(--c-text-1); }
+
+.tab.active {
+  color: var(--c-text-1);
+  border-bottom-color: var(--c-rpt);
+  font-weight: 600;
+}
+
+.tab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.tab-dot.dt  { background: var(--c-dt); }
+.tab-dot.bg  { background: var(--c-bg); }
+.tab-dot.gt  { background: var(--c-gt); }
+.tab-dot.hd  { background: var(--c-hd); }
+.tab-dot.rpt { background: var(--c-rpt); }
+
+/* ============================================================
+   Panels
+   ============================================================ */
+.panel { display: none; padding: var(--space-8) 0; }
+.panel.active { display: block; animation: fade-in .25s ease-out; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.panel-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-1);
+}
+
+.panel-desc {
+  color: var(--c-text-3);
+  font-size: 13px;
+  max-width: 600px;
+}
+
+/* ============================================================
+   KPI Cards
+   ============================================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.kpi-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px 8px 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent, var(--c-rpt));
+}
+
+.kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-text-3);
+  margin-bottom: 2px;
+}
+
+.kpi-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--c-text-1);
+  font-feature-settings: 'tnum' 1;
+}
+
+.kpi-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--c-text-3);
+  line-height: 1.3;
+}
+
+/* ============================================================
+   Filter bar
+   ============================================================ */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+}
+
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-text-3);
+}
+
+.filter-select, .filter-input {
+  padding: 6px 10px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  font-size: 13px;
+  min-width: 140px;
+}
+
+.filter-input { min-width: 180px; }
+
+.filter-select:focus, .filter-input:focus {
+  outline: 2px solid var(--c-rpt);
+  outline-offset: -1px;
+  border-color: var(--c-rpt);
+}
+
+.toggle-group {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.toggle-btn {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--c-text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all .15s;
+}
+
+.toggle-btn.on {
+  background: var(--c-text-1);
+  color: var(--c-paper);
+  border-color: var(--c-text-1);
+}
+
+.toggle-btn:hover:not(.on) {
+  background: var(--c-muted-bg);
+}
+
+/* ============================================================
+   Tables (general)
+   ============================================================ */
+.table-wrap {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  position: relative;
+  max-width: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+th, td {
+  text-align: left;
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--c-border);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+th {
+  background: var(--c-paper);
+  font-weight: 600;
+  color: var(--c-text-2);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+tbody tr {
+  transition: background .12s;
+}
+tbody tr:hover {
+  background: var(--c-paper);
+}
+
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.center { text-align: center; }
+td.code { font-family: var(--font-mono); font-size: 12px; }
+
+/* ============================================================
+   Tổng hợp table — grouped 2-tier headers
+   ============================================================ */
+.th-group {
+  text-align: center;
+  font-weight: 700;
+  color: #fff;
+  padding: var(--space-2) var(--space-3);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  border-right: 1px solid rgba(255,255,255,0.2);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+.th-group.g-class   { background: #44546A; }
+.th-group.g-kh      { background: var(--c-rpt); }
+.th-group.g-dt      { background: var(--c-dt); }
+.th-group.g-bg      { background: var(--c-bg); }
+.th-group.g-gt      { background: var(--c-gt); }
+.th-group.g-hd      { background: var(--c-hd); }
+.th-group.g-sum     { background: #4F2D7F; }
+
+.th-col {
+  font-weight: 600;
+  position: sticky;
+  top: 31px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border-strong);
+  border-top: 1px solid var(--c-border);
+  font-size: 11px;
+  z-index: 2;
+}
+
+.th-col.detail { background: repeating-linear-gradient(
+  -45deg,
+  var(--c-surface) 0px, var(--c-surface) 4px,
+  var(--c-paper) 4px, var(--c-paper) 8px
+); }
+
+/* Hide detail columns when group is collapsed */
+.tonghop tbody td.detail-col,
+.tonghop thead th.detail-col {
+  display: none;
+}
+.tonghop.show-kh tbody td.col-kh-detail,
+.tonghop.show-kh thead th.col-kh-detail { display: table-cell; }
+.tonghop.show-dt tbody td.col-dt-detail,
+.tonghop.show-dt thead th.col-dt-detail { display: table-cell; }
+.tonghop.show-bg tbody td.col-bg-detail,
+.tonghop.show-bg thead th.col-bg-detail { display: table-cell; }
+.tonghop.show-hd tbody td.col-hd-detail,
+.tonghop.show-hd thead th.col-hd-detail { display: table-cell; }
+
+/* Sticky 3 cột đầu (STT, Mã DT, Tên DT) khi scroll ngang */
+.tonghop thead tr:nth-child(2) th:nth-child(1) { width: 48px; min-width: 48px; max-width: 48px; }
+.tonghop thead tr:nth-child(2) th:nth-child(2) { width: 92px; min-width: 92px; max-width: 92px; }
+.tonghop thead tr:nth-child(2) th:nth-child(3) { width: 240px; min-width: 240px; max-width: 240px; white-space: normal; }
+
+.tonghop tbody td:nth-child(1),
+.tonghop tbody td:nth-child(2),
+.tonghop tbody td:nth-child(3) {
+  position: sticky;
+  background: var(--c-surface);
+  z-index: 1;
+}
+.tonghop tbody tr:hover td:nth-child(1),
+.tonghop tbody tr:hover td:nth-child(2),
+.tonghop tbody tr:hover td:nth-child(3) {
+  background: var(--c-paper);
+}
+.tonghop tbody td:nth-child(1) { left: 0; }
+.tonghop tbody td:nth-child(2) { left: 48px; }
+.tonghop tbody td:nth-child(3) {
+  left: 140px;
+  white-space: normal;
+  border-right: 2px solid var(--c-border-strong);
+}
+
+.tonghop thead tr:nth-child(2) th:nth-child(1),
+.tonghop thead tr:nth-child(2) th:nth-child(2),
+.tonghop thead tr:nth-child(2) th:nth-child(3) {
+  position: sticky;
+  top: 31px;
+  z-index: 3;
+  background: var(--c-surface);
+}
+.tonghop thead tr:nth-child(2) th:nth-child(1) { left: 0; }
+.tonghop thead tr:nth-child(2) th:nth-child(2) { left: 48px; }
+.tonghop thead tr:nth-child(2) th:nth-child(3) {
+  left: 140px;
+  border-right: 2px solid var(--c-border-strong);
+}
+
+/* Group header — first cell (Định danh, colspan=3) sticky cùng */
+.tonghop thead tr:nth-child(1) th:nth-child(1) {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  border-right: 2px solid var(--c-border-strong);
+}
+
+/* Clickable cells (drill-down to popup) */
+td.clickable {
+  cursor: pointer;
+  color: var(--c-rpt);
+  font-weight: 600;
+  position: relative;
+  user-select: none;
+}
+td.clickable:hover {
+  background: var(--c-rpt-50);
+  color: var(--c-rpt);
+}
+td.clickable::after {
+  content: '↗';
+  margin-left: 4px;
+  opacity: 0.4;
+  font-size: 11px;
+}
+td.clickable:hover::after { opacity: 1; }
+td.clickable.zero {
+  color: var(--c-text-4);
+  cursor: default;
+  font-weight: 400;
+}
+td.clickable.zero::after { content: '–'; opacity: 0.5; }
+td.clickable.zero:hover { background: transparent; color: var(--c-text-4); }
+
+/* ============================================================
+   Badges & Status
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge.success { background: var(--c-success-bg); color: var(--c-success); }
+.badge.warning { background: var(--c-warning-bg); color: var(--c-warning); }
+.badge.info    { background: var(--c-info-bg);    color: var(--c-info); }
+.badge.muted   { background: var(--c-muted-bg);   color: var(--c-muted-fg); }
+.badge.danger  { background: var(--c-danger-bg);  color: var(--c-danger); }
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+}
+.delta.pos { color: var(--c-success); background: var(--c-success-bg); }
+.delta.neg { color: var(--c-danger); background: var(--c-danger-bg); }
+.delta.zero { color: var(--c-text-4); }
+
+.pct-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.pct-bar-track {
+  width: 40px;
+  height: 4px;
+  background: var(--c-border);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.pct-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #DC4C3F, #E89B14, #2D7A3F);
+}
+
+/* ============================================================
+   Modal (popup chi tiết)
+   ============================================================ */
+dialog.modal {
+  border: 0;
+  padding: 0;
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  box-shadow: var(--shadow-modal);
+  max-width: 1100px;
+  width: calc(100% - 48px);
+  max-height: 85vh;
+  overflow: hidden;
+}
+dialog.modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+dialog.modal::backdrop {
+  background: rgba(26, 24, 21, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.modal-header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--c-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-1);
+  color: var(--c-text-1);
+}
+
+.modal-subtitle {
+  font-size: 12px;
+  color: var(--c-text-3);
+}
+
+.modal-close,
+.modal-back {
+  background: transparent;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 13px;
+  color: var(--c-text-2);
+  white-space: nowrap;
+}
+.modal-close:hover,
+.modal-back:hover { background: var(--c-muted-bg); }
+.modal-back { color: var(--c-rpt); }
+
+.modal-head-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-body {
+  padding: var(--space-5) var(--space-6);
+  overflow: auto;
+  flex: 1;
+}
+
+.modal-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px dashed var(--c-border);
+}
+.modal-meta-item .lbl {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-text-3);
+  margin-bottom: 2px;
+}
+.modal-meta-item .val {
+  font-weight: 500;
+  color: var(--c-text-1);
+}
+.modal-meta-item .val.num { font-variant-numeric: tabular-nums; }
+
+.modal-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-text-3);
+  margin: 0 0 var(--space-3);
+}
+
+/* ============================================================
+   Overview / Help
+   ============================================================ */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  margin-top: var(--space-4);
+}
+.overview-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+.overview-card h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+  font-size: 16px;
+}
+.overview-card p { color: var(--c-text-2); margin: 0 0 var(--space-2); }
+.overview-card ul { margin: var(--space-2) 0; padding-left: var(--space-5); color: var(--c-text-2); }
+.overview-card li { margin: 4px 0; }
+
+.flow-diagram {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+  flex-wrap: wrap;
+}
+.flow-step {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 12px;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.flow-step.dt  { background: var(--c-dt); }
+.flow-step.bg  { background: var(--c-bg); }
+.flow-step.gt  { background: var(--c-gt); }
+.flow-step.hd  { background: var(--c-hd); }
+.flow-arrow { color: var(--c-text-4); font-weight: 300; }
+
+/* ============================================================
+   Timeline tab
+   ============================================================ */
+.timeline-select {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+
+.timeline-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.timeline-stage {
+  border-left: 3px solid var(--accent);
+  padding: var(--space-2) 0 var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+  position: relative;
+}
+.timeline-stage::before {
+  content: '';
+  width: 11px;
+  height: 11px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: absolute;
+  left: -7px;
+  top: 6px;
+  box-shadow: 0 0 0 3px var(--c-paper);
+}
+
+.stage-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+.stage-content { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-3); }
+.stage-title { font-weight: 600; font-size: 15px; }
+.stage-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.stage-meta { color: var(--c-text-3); font-size: 12px; }
+
+/* ============================================================
+   Misc
+   ============================================================ */
+.note-box {
+  background: var(--c-rpt-50);
+  border-left: 3px solid var(--c-rpt);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  margin: var(--space-4) 0;
+  font-size: 13px;
+  color: var(--c-text-2);
+}
+
+.empty-state {
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+  color: var(--c-text-3);
+}
+
+.text-muted { color: var(--c-text-3); }
+.text-mono { font-family: var(--font-mono); }
+
+footer.app-footer {
+  padding: var(--space-6) 0 var(--space-10);
+  margin-top: var(--space-10);
+  border-top: 1px solid var(--c-border);
+  color: var(--c-text-4);
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@media (max-width: 768px) {
+  .overview-grid { grid-template-columns: 1fr; }
+  .brand-title { font-size: 24px; }
+  .app { padding: 0 var(--space-4); }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============================================================
+       Brand header
+       ============================================================ -->
+  <header class="brand-header">
+    <h1 class="brand-title">
+      Báo cáo Vòng đời Dự toán → Hợp đồng
+      <span class="brand-tag">Demo v0.1</span>
+    </h1>
+    <div class="brand-subtitle">
+      Thiết kế template ERP — theo dõi 4 giai đoạn: Dự toán · Báo giá · Gói thầu · Hợp đồng
+    </div>
+  </header>
+
+  <!-- ============================================================
+       Tabs
+       ============================================================ -->
+  <nav class="tabs" id="tabs">
+    <button class="tab" data-tab="overview" hidden><span class="tab-dot rpt"></span>Tổng quan</button>
+    <button class="tab" data-tab="dt" hidden><span class="tab-dot dt"></span>DM Dự toán</button>
+    <button class="tab" data-tab="bg" hidden><span class="tab-dot bg"></span>DM Báo giá</button>
+    <button class="tab" data-tab="gt" hidden><span class="tab-dot gt"></span>DM Gói thầu</button>
+    <button class="tab" data-tab="hd" hidden><span class="tab-dot hd"></span>DM Hợp đồng</button>
+    <button class="tab active" data-tab="tonghop"><span class="tab-dot rpt"></span>BC Tổng hợp</button>
+    <button class="tab" data-tab="timeline" hidden><span class="tab-dot rpt"></span>BC Timeline</button>
+    <button class="tab" data-tab="chitiethh" hidden><span class="tab-dot rpt"></span>BC Chi tiết HH</button>
+  </nav>
+
+  <!-- ============================================================
+       Panel: Overview
+       ============================================================ -->
+  <section class="panel" data-panel="overview">
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">Tổng quan thiết kế</h2>
+        <div class="panel-desc">Theo dõi chu trình từ Dự toán đến Hợp đồng. Mỗi giai đoạn ánh xạ 1 sheet trong template.</div>
+      </div>
+    </div>
+
+    <div class="flow-diagram">
+      <span class="flow-step dt">① Dự toán</span><span class="flow-arrow">→</span>
+      <span class="flow-step bg">② Báo giá</span><span class="flow-arrow">→</span>
+      <span class="flow-step gt">③ Gói thầu</span><span class="flow-arrow">→</span>
+      <span class="flow-step hd">④ Hợp đồng</span>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card">
+        <h3>Quan hệ giữa các giai đoạn</h3>
+        <ul>
+          <li><b>1 Dự toán → 1 Báo giá</b> (1:1)</li>
+          <li><b>1 Báo giá → N Gói thầu</b> (1:N, chia theo phần thầu)</li>
+          <li><b>1 Gói thầu → N Hợp đồng</b> (1:N, chia theo nhà cung cấp)</li>
+          <li>Một hàng hóa có thể xuất hiện ở nhiều Gói thầu / Hợp đồng khác nhau</li>
+        </ul>
+      </div>
+
+      <div class="overview-card">
+        <h3>Cấu trúc các tab</h3>
+        <ul>
+          <li><b>DM Dự toán / BG / GT / HĐ</b>: 4 sheet nguồn — chi tiết hàng hóa từng giai đoạn</li>
+          <li><b>BC Tổng hợp</b>: 1 dòng / Dự toán, cột group + popup drill-down</li>
+          <li><b>BC Timeline</b>: chọn 1 Mã DT, xem toàn bộ vòng đời theo trục thời gian</li>
+          <li><b>BC Chi tiết HH</b>: ma trận hàng hóa × 4 giai đoạn (SL, ĐG, Thành tiền)</li>
+        </ul>
+      </div>
+
+      <div class="overview-card">
+        <h3>Tương tác trên BC Tổng hợp</h3>
+        <ul>
+          <li>Click ô <b>"Số gói thầu"</b> hoặc <b>"Số HĐ"</b> → popup hiện danh sách chi tiết</li>
+          <li>Toggle nút <b>+ KH / + DT / + BG / + HĐ</b> ở thanh filter để mở/đóng các cột chi tiết</li>
+          <li>Filter theo Loại DT / Trạng thái + ô tìm kiếm Mã/Tên DT</li>
+        </ul>
+      </div>
+
+      <div class="overview-card">
+        <h3>Bảng màu định danh</h3>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:10px 14px;font-size:13px;align-items:center;">
+          <span class="flow-step dt">Dự toán</span><span class="text-muted">Giai đoạn 1 — đề xuất giá trị ban đầu</span>
+          <span class="flow-step bg">Báo giá</span><span class="text-muted">Giai đoạn 2 — báo giá chính thức cho KH</span>
+          <span class="flow-step gt">Gói thầu</span><span class="text-muted">Giai đoạn 3 — chia theo phần thầu</span>
+          <span class="flow-step hd">Hợp đồng</span><span class="text-muted">Giai đoạn 4 — hợp đồng với nhà cung cấp</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      💡 Đây là <b>prototype thiết kế</b>. Tất cả số liệu là demo, không phải data thật. Mục đích: thống nhất cấu trúc báo cáo trước khi áp dụng vào phần mềm ERP.
+    </div>
+  </section>
+
+  <!-- Other panels will be rendered dynamically by JS -->
+  <section class="panel" data-panel="dt"><div class="panel-header"><div><h2 class="panel-title">DM Dự toán — chi tiết hàng hóa</h2><div class="panel-desc">Mỗi dòng = 1 hàng hóa trong 1 Dự toán. Metadata DT (Loại, Mảng, NV, KH...) lặp trên các dòng cùng Mã DT.</div></div></div><div id="dt-content"></div></section>
+
+  <section class="panel" data-panel="bg"><div class="panel-header"><div><h2 class="panel-title">DM Báo giá — chi tiết hàng hóa</h2><div class="panel-desc">Mỗi dòng = 1 hàng hóa trong 1 Báo giá. 1 BG ánh xạ 1 DT.</div></div></div><div id="bg-content"></div></section>
+
+  <section class="panel" data-panel="gt"><div class="panel-header"><div><h2 class="panel-title">DM Gói thầu — chi tiết hàng hóa</h2><div class="panel-desc">Mỗi dòng = 1 hàng hóa trong 1 Gói thầu. 1 BG có thể chia thành nhiều GT.</div></div></div><div id="gt-content"></div></section>
+
+  <section class="panel" data-panel="hd"><div class="panel-header"><div><h2 class="panel-title">DM Hợp đồng — chi tiết hàng hóa</h2><div class="panel-desc">Mỗi dòng = 1 hàng hóa trong 1 Hợp đồng. 1 GT có thể chia thành nhiều HĐ với các nhà cung cấp khác nhau.</div></div></div><div id="hd-content"></div></section>
+
+  <section class="panel active" data-panel="tonghop"><div id="tonghop-content"></div></section>
+
+  <section class="panel" data-panel="timeline"><div id="timeline-content"></div></section>
+
+  <section class="panel" data-panel="chitiethh"><div id="chitiethh-content"></div></section>
+
+  <footer class="app-footer">
+    <div>Prototype thiết kế · không phải production</div>
+    <div>Single-file HTML · mở local trong mọi browser</div>
+  </footer>
+</div>
+
+<!-- Modal popup for drill-down -->
+<dialog class="modal" id="modal">
+  <div class="modal-header">
+    <div class="modal-head-left">
+      <button class="modal-back" id="modal-back" style="display:none;" onclick="popModal()">← Quay lại</button>
+      <div>
+        <h3 class="modal-title" id="modal-title">Chi tiết</h3>
+        <div class="modal-subtitle" id="modal-subtitle"></div>
+      </div>
+    </div>
+    <button class="modal-close" onclick="closeModal()">Đóng ✕</button>
+  </div>
+  <div class="modal-body" id="modal-body"></div>
+</dialog>
+
+<script>
+/* ============================================================
+   DATA — sample DT001 + DT002
+   ============================================================ */
+const DATA = {
+  dts: [
+    {
+      ma: 'DT001',
+      ten: 'Dự toán Cầu vượt Cát Linh',
+      ngay: '15/01/2025',
+      loai: 'Hợp đồng dự án',
+      mang: 'Vật liệu xây dựng',
+      nv: 'Nguyễn Văn An',
+      duAn: 'Cầu vượt Cát Linh',
+      khachHang: 'Sở GTVT HN',
+      maKH: 'KH001',
+      diaBan: 'Miền Bắc',
+      tinh: 'Hà Nội',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300',     dvt: 'm³',  sl: 500,    dg: 1500000 },
+        { maHH: 'HH002', tenHH: 'Thép phi 16',      dvt: 'kg',  sl: 25000,  dg: 18000 },
+        { maHH: 'HH003', tenHH: 'Cốt pha thép',     dvt: 'm²',  sl: 800,    dg: 350000 },
+        { maHH: 'HH004', tenHH: 'Cáp điện CXV-25',  dvt: 'm',   sl: 2500,   dg: 65000 },
+        { maHH: 'HH005', tenHH: 'Đèn LED 100W',     dvt: 'cái', sl: 80,     dg: 1200000 },
+      ],
+    },
+    {
+      ma: 'DT002',
+      ten: 'Dự toán Nhà máy nước Hòa Lạc',
+      ngay: '20/02/2025',
+      loai: 'Trong thầu',
+      mang: 'Thiết bị cấp nước & VLXD',
+      nv: 'Trần Thị Bích',
+      duAn: 'NM nước Hòa Lạc',
+      khachHang: 'Cty CP Cấp nước',
+      maKH: 'KH002',
+      diaBan: 'Miền Bắc',
+      tinh: 'Hà Nội',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300',    dvt: 'm³',  sl: 1200,   dg: 1500000 },
+        { maHH: 'HH006', tenHH: 'Bơm ly tâm 50HP', dvt: 'bộ',  sl: 4,      dg: 85000000 },
+        { maHH: 'HH007', tenHH: 'Ống thép D300',   dvt: 'm',   sl: 1500,   dg: 420000 },
+      ],
+    },
+    {
+      ma: 'DT003',
+      ten: 'Cải tạo trường Tiểu học Trần Phú',
+      ngay: '05/03/2025',
+      loai: 'Trong thầu',
+      mang: 'Vật liệu xây dựng',
+      nv: 'Đỗ Minh Hoàng',
+      duAn: 'Trường TH Trần Phú',
+      khachHang: 'Phòng GD Bắc Ninh',
+      maKH: 'KH003',
+      diaBan: 'Miền Bắc',
+      tinh: 'Bắc Ninh',
+      items: [
+        { maHH: 'HH008', tenHH: 'Gạch tuynel',     dvt: 'viên', sl: 50000, dg: 2500 },
+        { maHH: 'HH002', tenHH: 'Thép phi 16',     dvt: 'kg',   sl: 8000,  dg: 18000 },
+        { maHH: 'HH009', tenHH: 'Sơn nội thất',    dvt: 'lít',  sl: 600,   dg: 180000 },
+        { maHH: 'HH001', tenHH: 'Bê tông M300',    dvt: 'm³',   sl: 200,   dg: 1500000 },
+      ],
+    },
+    {
+      ma: 'DT004',
+      ten: 'Văn phòng cao ốc Pearl Plaza',
+      ngay: '12/03/2025',
+      loai: 'Hợp đồng dự án',
+      mang: 'Thiết bị điện',
+      nv: 'Lê Quang Cường',
+      duAn: 'Pearl Plaza',
+      khachHang: 'Cty BĐS Phúc Long',
+      maKH: 'KH004',
+      diaBan: 'Miền Nam',
+      tinh: 'TP.HCM',
+      items: [
+        { maHH: 'HH010', tenHH: 'Máy điều hòa âm trần', dvt: 'bộ', sl: 50,  dg: 18000000 },
+        { maHH: 'HH005', tenHH: 'Đèn LED 100W',         dvt: 'cái', sl: 200, dg: 1200000 },
+        { maHH: 'HH004', tenHH: 'Cáp điện CXV-25',      dvt: 'm',  sl: 3000, dg: 65000 },
+      ],
+    },
+    {
+      ma: 'DT005',
+      ten: 'Đường ống cấp nước Phú Quốc',
+      ngay: '22/03/2025',
+      loai: 'Trong thầu',
+      mang: 'Thiết bị cấp nước',
+      nv: 'Trần Thị Bích',
+      duAn: 'Cấp nước Phú Quốc',
+      khachHang: 'Cty CP Cấp nước PQ',
+      maKH: 'KH005',
+      diaBan: 'Miền Nam',
+      tinh: 'Kiên Giang',
+      items: [
+        { maHH: 'HH011', tenHH: 'Ống PVC D200',    dvt: 'm',   sl: 2000, dg: 280000 },
+        { maHH: 'HH012', tenHH: 'Van cổng D200',   dvt: 'cái', sl: 50,   dg: 8500000 },
+        { maHH: 'HH006', tenHH: 'Bơm ly tâm 50HP', dvt: 'bộ',  sl: 2,    dg: 85000000 },
+      ],
+    },
+    {
+      ma: 'DT006',
+      ten: 'Chiếu sáng đô thị Đà Nẵng',
+      ngay: '02/04/2025',
+      loai: 'Hợp đồng dự án',
+      mang: 'Thiết bị điện',
+      nv: 'Nguyễn Văn An',
+      duAn: 'Chiếu sáng ĐN',
+      khachHang: 'UBND TP Đà Nẵng',
+      maKH: 'KH006',
+      diaBan: 'Miền Trung',
+      tinh: 'Đà Nẵng',
+      items: [
+        { maHH: 'HH013', tenHH: 'Đèn LED đường 150W', dvt: 'bộ',  sl: 400,  dg: 3500000 },
+        { maHH: 'HH014', tenHH: 'Cột đèn 9m',         dvt: 'cây', sl: 380,  dg: 5500000 },
+        { maHH: 'HH015', tenHH: 'Cáp ngầm 4x16',      dvt: 'm',   sl: 5000, dg: 120000 },
+      ],
+    },
+  ],
+
+  bgs: [
+    {
+      ma: 'BG001', maDT: 'DT001',
+      ten: 'BG Cầu vượt Cát Linh',
+      ngay: '20/01/2025', hanHL: '20/03/2025',
+      nv: 'Nguyễn Văn An', trangThai: 'Gửi KH',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300',     dvt: 'm³',  sl: 500,    dg: 1550000 },
+        { maHH: 'HH002', tenHH: 'Thép phi 16',      dvt: 'kg',  sl: 25000,  dg: 18500 },
+        { maHH: 'HH003', tenHH: 'Cốt pha thép',     dvt: 'm²',  sl: 800,    dg: 360000 },
+        { maHH: 'HH004', tenHH: 'Cáp điện CXV-25',  dvt: 'm',   sl: 2500,   dg: 68000 },
+        { maHH: 'HH005', tenHH: 'Đèn LED 100W',     dvt: 'cái', sl: 80,     dg: 1250000 },
+      ],
+    },
+    {
+      ma: 'BG002', maDT: 'DT002',
+      ten: 'BG NM nước Hòa Lạc',
+      ngay: '25/02/2025', hanHL: '25/04/2025',
+      nv: 'Trần Thị Bích', trangThai: 'Gửi KH',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300',    dvt: 'm³',  sl: 1200,   dg: 1550000 },
+        { maHH: 'HH006', tenHH: 'Bơm ly tâm 50HP', dvt: 'bộ',  sl: 4,      dg: 86000000 },
+        { maHH: 'HH007', tenHH: 'Ống thép D300',   dvt: 'm',   sl: 1500,   dg: 430000 },
+      ],
+    },
+    {
+      ma: 'BG003', maDT: 'DT003',
+      ten: 'BG Trường TH Trần Phú',
+      ngay: '10/03/2025', hanHL: '10/05/2025',
+      nv: 'Đỗ Minh Hoàng', trangThai: 'Gửi KH',
+      items: [
+        { maHH: 'HH008', tenHH: 'Gạch tuynel',  dvt: 'viên', sl: 50000, dg: 2600 },
+        { maHH: 'HH002', tenHH: 'Thép phi 16',  dvt: 'kg',   sl: 8000,  dg: 18500 },
+        { maHH: 'HH009', tenHH: 'Sơn nội thất', dvt: 'lít',  sl: 600,   dg: 185000 },
+        { maHH: 'HH001', tenHH: 'Bê tông M300', dvt: 'm³',   sl: 200,   dg: 1550000 },
+      ],
+    },
+    {
+      ma: 'BG004', maDT: 'DT004',
+      ten: 'BG Pearl Plaza',
+      ngay: '18/03/2025', hanHL: '18/05/2025',
+      nv: 'Lê Quang Cường', trangThai: 'Gửi KH',
+      items: [
+        { maHH: 'HH010', tenHH: 'Máy điều hòa âm trần', dvt: 'bộ',  sl: 50,   dg: 18500000 },
+        { maHH: 'HH005', tenHH: 'Đèn LED 100W',         dvt: 'cái', sl: 200,  dg: 1250000 },
+        { maHH: 'HH004', tenHH: 'Cáp điện CXV-25',      dvt: 'm',   sl: 3000, dg: 67000 },
+      ],
+    },
+    {
+      ma: 'BG005', maDT: 'DT005',
+      ten: 'BG Cấp nước Phú Quốc',
+      ngay: '28/03/2025', hanHL: '28/05/2025',
+      nv: 'Trần Thị Bích', trangThai: 'Gửi KH',
+      items: [
+        { maHH: 'HH011', tenHH: 'Ống PVC D200',    dvt: 'm',   sl: 2000, dg: 285000 },
+        { maHH: 'HH012', tenHH: 'Van cổng D200',   dvt: 'cái', sl: 50,   dg: 8700000 },
+        { maHH: 'HH006', tenHH: 'Bơm ly tâm 50HP', dvt: 'bộ',  sl: 2,    dg: 86000000 },
+      ],
+    },
+    {
+      ma: 'BG006', maDT: 'DT006',
+      ten: 'BG Chiếu sáng ĐN',
+      ngay: '08/04/2025', hanHL: '08/06/2025',
+      nv: 'Nguyễn Văn An', trangThai: 'Gửi KH',
+      items: [
+        { maHH: 'HH013', tenHH: 'Đèn LED đường 150W', dvt: 'bộ',  sl: 400,  dg: 3600000 },
+        { maHH: 'HH014', tenHH: 'Cột đèn 9m',         dvt: 'cây', sl: 380,  dg: 5650000 },
+        { maHH: 'HH015', tenHH: 'Cáp ngầm 4x16',      dvt: 'm',   sl: 5000, dg: 125000 },
+      ],
+    },
+  ],
+
+  gts: [
+    {
+      ma: 'GT001', maBG: 'BG001', maDT: 'DT001',
+      ten: 'GT Phần thân cầu',
+      ngayMo: '01/02/2025', ngayDong: '15/02/2025',
+      nv: 'Lê Quang Cường', trangThai: 'Trúng',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300',     dvt: 'm³', sl: 500,   dg: 1580000 },
+        { maHH: 'HH002', tenHH: 'Thép phi 16',      dvt: 'kg', sl: 20000, dg: 18700 },
+        { maHH: 'HH003', tenHH: 'Cốt pha thép',     dvt: 'm²', sl: 800,   dg: 365000 },
+      ],
+    },
+    {
+      ma: 'GT002', maBG: 'BG001', maDT: 'DT001',
+      ten: 'GT Phần điện chiếu sáng',
+      ngayMo: '05/02/2025', ngayDong: '20/02/2025',
+      nv: 'Lê Quang Cường', trangThai: 'Trúng',
+      items: [
+        { maHH: 'HH002', tenHH: 'Thép phi 16',      dvt: 'kg',  sl: 5000,  dg: 18800 },
+        { maHH: 'HH004', tenHH: 'Cáp điện CXV-25',  dvt: 'm',   sl: 2500,  dg: 69000 },
+        { maHH: 'HH005', tenHH: 'Đèn LED 100W',     dvt: 'cái', sl: 80,    dg: 1260000 },
+      ],
+    },
+    {
+      ma: 'GT003', maBG: 'BG002', maDT: 'DT002',
+      ten: 'GT Phần xây dựng NM nước',
+      ngayMo: '10/03/2025', ngayDong: '25/03/2025',
+      nv: 'Phạm Thu Diệu', trangThai: 'Trúng',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300', dvt: 'm³', sl: 1200, dg: 1580000 },
+        { maHH: 'HH007', tenHH: 'Ống thép D300', dvt: 'm', sl: 1500, dg: 435000 },
+      ],
+    },
+    {
+      ma: 'GT004', maBG: 'BG002', maDT: 'DT002',
+      ten: 'GT Phần thiết bị NM nước',
+      ngayMo: '12/03/2025', ngayDong: '28/03/2025',
+      nv: 'Phạm Thu Diệu', trangThai: 'Đang chấm thầu',
+      items: [
+        { maHH: 'HH006', tenHH: 'Bơm ly tâm 50HP', dvt: 'bộ', sl: 4, dg: 87000000 },
+      ],
+    },
+    {
+      ma: 'GT005', maBG: 'BG003', maDT: 'DT003',
+      ten: 'GT Cải tạo trường TH Trần Phú',
+      ngayMo: '15/03/2025', ngayDong: '30/03/2025',
+      nv: 'Đỗ Minh Hoàng', trangThai: 'Trúng',
+      items: [
+        { maHH: 'HH008', tenHH: 'Gạch tuynel',  dvt: 'viên', sl: 50000, dg: 2650 },
+        { maHH: 'HH002', tenHH: 'Thép phi 16',  dvt: 'kg',   sl: 8000,  dg: 18700 },
+        { maHH: 'HH009', tenHH: 'Sơn nội thất', dvt: 'lít',  sl: 600,   dg: 190000 },
+        { maHH: 'HH001', tenHH: 'Bê tông M300', dvt: 'm³',   sl: 200,   dg: 1580000 },
+      ],
+    },
+    {
+      ma: 'GT006', maBG: 'BG004', maDT: 'DT004',
+      ten: 'GT Thiết bị điện Pearl Plaza',
+      ngayMo: '22/03/2025', ngayDong: '06/04/2025',
+      nv: 'Lê Quang Cường', trangThai: 'Đang chấm thầu',
+      items: [
+        { maHH: 'HH010', tenHH: 'Máy điều hòa âm trần', dvt: 'bộ',  sl: 50,   dg: 18800000 },
+        { maHH: 'HH005', tenHH: 'Đèn LED 100W',         dvt: 'cái', sl: 200,  dg: 1280000 },
+        { maHH: 'HH004', tenHH: 'Cáp điện CXV-25',      dvt: 'm',   sl: 3000, dg: 69000 },
+      ],
+    },
+    {
+      ma: 'GT007', maBG: 'BG006', maDT: 'DT006',
+      ten: 'GT Đèn & Cột Chiếu sáng ĐN',
+      ngayMo: '12/04/2025', ngayDong: '27/04/2025',
+      nv: 'Nguyễn Văn An', trangThai: 'Trúng',
+      items: [
+        { maHH: 'HH013', tenHH: 'Đèn LED đường 150W', dvt: 'bộ',  sl: 400, dg: 3650000 },
+        { maHH: 'HH014', tenHH: 'Cột đèn 9m',         dvt: 'cây', sl: 380, dg: 5700000 },
+      ],
+    },
+    {
+      ma: 'GT008', maBG: 'BG006', maDT: 'DT006',
+      ten: 'GT Cáp ngầm Chiếu sáng ĐN',
+      ngayMo: '15/04/2025', ngayDong: '30/04/2025',
+      nv: 'Nguyễn Văn An', trangThai: 'Trúng',
+      items: [
+        { maHH: 'HH015', tenHH: 'Cáp ngầm 4x16', dvt: 'm', sl: 5000, dg: 128000 },
+      ],
+    },
+  ],
+
+  hds: [
+    {
+      ma: 'HD001', maGT: 'GT001', maBG: 'BG001', maDT: 'DT001',
+      ten: 'HĐ cung cấp Bê tông',
+      ngayKy: '20/02/2025', ngayKT: '31/12/2025',
+      ncc: 'Cty BT Hà Nội', nv: 'Nguyễn Văn An', ctyTH: 'MOTA Hà Nội', trangThai: 'Đang thực hiện',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300', dvt: 'm³', sl: 500, dg: 1600000 },
+      ],
+    },
+    {
+      ma: 'HD002', maGT: 'GT001', maBG: 'BG001', maDT: 'DT001',
+      ten: 'HĐ cung cấp Thép + Cốt pha',
+      ngayKy: '22/02/2025', ngayKT: '31/12/2025',
+      ncc: 'Cty Thép Việt Đức', nv: 'Nguyễn Văn An', ctyTH: 'MOTA Hà Nội', trangThai: 'Đang thực hiện',
+      items: [
+        { maHH: 'HH002', tenHH: 'Thép phi 16',  dvt: 'kg', sl: 20000, dg: 18800 },
+        { maHH: 'HH003', tenHH: 'Cốt pha thép', dvt: 'm²', sl: 800,   dg: 370000 },
+      ],
+    },
+    {
+      ma: 'HD003', maGT: 'GT002', maBG: 'BG001', maDT: 'DT001',
+      ten: 'HĐ cung cấp Điện cầu',
+      ngayKy: '25/02/2025', ngayKT: '15/11/2025',
+      ncc: 'Cty Điện Hồng Hà', nv: 'Nguyễn Văn An', ctyTH: 'MOTA Hà Nội', trangThai: 'Đang thực hiện',
+      items: [
+        { maHH: 'HH002', tenHH: 'Thép phi 16',      dvt: 'kg',  sl: 5000, dg: 19000 },
+        { maHH: 'HH004', tenHH: 'Cáp điện CXV-25',  dvt: 'm',   sl: 2500, dg: 70000 },
+        { maHH: 'HH005', tenHH: 'Đèn LED 100W',     dvt: 'cái', sl: 80,   dg: 1270000 },
+      ],
+    },
+    {
+      ma: 'HD004', maGT: 'GT003', maBG: 'BG002', maDT: 'DT002',
+      ten: 'HĐ Bê tông NM nước',
+      ngayKy: '01/04/2025', ngayKT: '30/06/2026',
+      ncc: 'Cty BT Sông Đà', nv: 'Trần Thị Bích', ctyTH: 'MOTA Hà Nội', trangThai: 'Đã ký',
+      items: [
+        { maHH: 'HH001', tenHH: 'Bê tông M300', dvt: 'm³', sl: 1200, dg: 1600000 },
+      ],
+    },
+    {
+      ma: 'HD005', maGT: 'GT003', maBG: 'BG002', maDT: 'DT002',
+      ten: 'HĐ Ống thép NM nước',
+      ngayKy: '03/04/2025', ngayKT: '30/06/2026',
+      ncc: 'Cty Thép Hòa Phát', nv: 'Trần Thị Bích', ctyTH: 'MOTA Hà Nội', trangThai: 'Đã ký',
+      items: [
+        { maHH: 'HH007', tenHH: 'Ống thép D300', dvt: 'm', sl: 1500, dg: 440000 },
+      ],
+    },
+    {
+      ma: 'HD006', maGT: 'GT005', maBG: 'BG003', maDT: 'DT003',
+      ten: 'HĐ Cải tạo trường TH Trần Phú',
+      ngayKy: '05/04/2025', ngayKT: '30/09/2025',
+      ncc: 'Cty Xây dựng Kinh Bắc', nv: 'Đỗ Minh Hoàng', ctyTH: 'MOTA Bắc Ninh', trangThai: 'Đang thực hiện',
+      items: [
+        { maHH: 'HH008', tenHH: 'Gạch tuynel',  dvt: 'viên', sl: 50000, dg: 2700 },
+        { maHH: 'HH002', tenHH: 'Thép phi 16',  dvt: 'kg',   sl: 8000,  dg: 18900 },
+        { maHH: 'HH009', tenHH: 'Sơn nội thất', dvt: 'lít',  sl: 600,   dg: 195000 },
+        { maHH: 'HH001', tenHH: 'Bê tông M300', dvt: 'm³',   sl: 200,   dg: 1600000 },
+      ],
+    },
+    {
+      ma: 'HD007', maGT: 'GT007', maBG: 'BG006', maDT: 'DT006',
+      ten: 'HĐ Đèn LED Chiếu sáng ĐN',
+      ngayKy: '02/05/2025', ngayKT: '31/12/2025',
+      ncc: 'Cty Rạng Đông', nv: 'Nguyễn Văn An', ctyTH: 'MOTA Đà Nẵng', trangThai: 'Đang thực hiện',
+      items: [
+        { maHH: 'HH013', tenHH: 'Đèn LED đường 150W', dvt: 'bộ', sl: 400, dg: 3700000 },
+      ],
+    },
+    {
+      ma: 'HD008', maGT: 'GT007', maBG: 'BG006', maDT: 'DT006',
+      ten: 'HĐ Cột đèn Chiếu sáng ĐN',
+      ngayKy: '05/05/2025', ngayKT: '31/12/2025',
+      ncc: 'Cty Cơ khí Quang Trung', nv: 'Nguyễn Văn An', ctyTH: 'MOTA Đà Nẵng', trangThai: 'Đã ký',
+      items: [
+        { maHH: 'HH014', tenHH: 'Cột đèn 9m', dvt: 'cây', sl: 380, dg: 5750000 },
+      ],
+    },
+    {
+      ma: 'HD009', maGT: 'GT008', maBG: 'BG006', maDT: 'DT006',
+      ten: 'HĐ Cáp ngầm Chiếu sáng ĐN',
+      ngayKy: '07/05/2025', ngayKT: '31/12/2025',
+      ncc: 'Cty Cadivi', nv: 'Nguyễn Văn An', ctyTH: 'MOTA Đà Nẵng', trangThai: 'Đã ký',
+      items: [
+        { maHH: 'HH015', tenHH: 'Cáp ngầm 4x16', dvt: 'm', sl: 5000, dg: 130000 },
+      ],
+    },
+  ],
+};
+
+/* ============================================================
+   Utils
+   ============================================================ */
+const fmt = {
+  vnd: (n) => n == null || n === 0 ? '–' : n.toLocaleString('vi-VN') + ' đ',
+  vndShort: (n) => n == null || n === 0 ? '–' : n.toLocaleString('vi-VN') + ' đ',
+  int: (n) => n == null ? '–' : n.toLocaleString('vi-VN'),
+  pct: (n) => n == null ? '–' : (n * 100).toFixed(1) + '%',
+};
+
+const sum = (arr, fn) => arr.reduce((s, x) => s + (fn(x) || 0), 0);
+const itemTotal = (it) => (it.sl || 0) * (it.dg || 0);
+const recordTotal = (rec) => sum(rec.items, itemTotal);
+
+/* ============================================================
+   Computed: aggregate per DT for tổng hợp report
+   ============================================================ */
+function aggregateByDT() {
+  return DATA.dts.map(dt => {
+    const bgs = DATA.bgs.filter(b => b.maDT === dt.ma);
+    const gts = DATA.gts.filter(g => g.maDT === dt.ma);
+    const hds = DATA.hds.filter(h => h.maDT === dt.ma);
+    const giaTriDT = recordTotal(dt);
+    const giaTriBG = sum(bgs, recordTotal);
+    const giaTriGT = sum(gts, recordTotal);
+    const giaTriHD = sum(hds, recordTotal);
+    const chenhLech = giaTriHD - giaTriDT;
+    const pctConv = giaTriDT > 0 ? giaTriHD / giaTriDT : 0;
+    let trangThai = 'Chỉ có Dự toán';
+    if (giaTriHD > 0) trangThai = pctConv >= 0.95 ? 'Hoàn tất' : 'Một phần';
+    else if (giaTriGT > 0) trangThai = 'Đã có Gói thầu';
+    else if (giaTriBG > 0) trangThai = 'Đã Báo giá';
+
+    const firstBG = bgs[0] || {};
+    const firstHD = hds[0] || {};
+    return {
+      ...dt,
+      giaTriDT, giaTriBG, giaTriGT, giaTriHD,
+      chenhLech, pctConv, trangThai,
+      soGT: gts.length, soHD: hds.length,
+      maBG: firstBG.ma || '–', nvBG: firstBG.nv || '–', ngayBG: firstBG.ngay || '–',
+      ctyTH: firstHD.ctyTH || '–', ngayKyHD: firstHD.ngayKy || '–', ngayKTHD: firstHD.ngayKT || '–',
+      bgs, gts, hds,
+    };
+  });
+}
+
+/* ============================================================
+   Tab switching
+   ============================================================ */
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tab');
+  if (!btn) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === btn));
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
+  if (renderers[tab]) renderers[tab]();
+});
+
+/* ============================================================
+   Status helpers
+   ============================================================ */
+function statusBadge(s) {
+  const map = {
+    'Hoàn tất':         { cls: 'success', icon: '' },
+    'Đã ký':            { cls: 'success', icon: '' },
+    'Trúng':            { cls: 'success', icon: '' },
+    'Một phần':         { cls: 'warning', icon: '' },
+    'Đang thực hiện':   { cls: 'info', icon: '' },
+    'Đang chấm thầu':   { cls: 'warning', icon: '' },
+    'Đã có Gói thầu':   { cls: 'warning', icon: '' },
+    'Đã Báo giá':       { cls: 'info', icon: '' },
+    'Gửi KH':           { cls: 'info', icon: '' },
+    'Chỉ có Dự toán':   { cls: 'muted', icon: '' },
+  };
+  const m = map[s] || { cls: 'muted', icon: '' };
+  return `<span class="badge ${m.cls}">${s}</span>`;
+}
+
+function pctBar(v) {
+  const clamped = Math.max(0, Math.min(1, v));
+  const w = Math.round(clamped * 100);
+  return `<span class="pct-bar"><span class="pct-bar-track"><span class="pct-bar-fill" style="width:${w}%"></span></span>${fmt.pct(v)}</span>`;
+}
+
+function deltaCell(v) {
+  if (v === 0) return `<span class="delta zero">±0</span>`;
+  const cls = v > 0 ? 'pos' : 'neg';
+  const sign = v > 0 ? '+' : '';
+  return `<span class="delta ${cls}">${sign}${fmt.vndShort(v)}</span>`;
+}
+
+/* ============================================================
+   Source-data table renderers
+   ============================================================ */
+function renderSourceTable(target, headers, rows) {
+  const html = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>${headers.map(h => `<th class="${h.cls || ''}">${h.label}</th>`).join('')}</tr></thead>
+        <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td class="${headers[i].cls || ''}">${c}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById(target).innerHTML = html;
+}
+
+const renderers = {
+  overview() {},  // static
+  dt() {
+    const headers = [
+      { label: 'Mã DT', cls: 'code' },
+      { label: 'Tên Dự toán' },
+      { label: 'Ngày lập' },
+      { label: 'Loại DT' },
+      { label: 'Mảng HH' },
+      { label: 'NV' },
+      { label: 'Khách hàng' },
+      { label: 'Tỉnh' },
+      { label: 'Mã HH', cls: 'code' },
+      { label: 'Tên hàng hóa' },
+      { label: 'ĐVT', cls: 'center' },
+      { label: 'SL', cls: 'num' },
+      { label: 'Đơn giá', cls: 'num' },
+      { label: 'Thành tiền', cls: 'num' },
+    ];
+    const rows = [];
+    DATA.dts.forEach(dt => {
+      dt.items.forEach(it => {
+        rows.push([
+          dt.ma, dt.ten, dt.ngay, dt.loai, dt.mang, dt.nv, dt.khachHang, dt.tinh,
+          it.maHH, it.tenHH, it.dvt, fmt.int(it.sl), fmt.vnd(it.dg), fmt.vnd(itemTotal(it)),
+        ]);
+      });
+    });
+    renderSourceTable('dt-content', headers, rows);
+  },
+  bg() {
+    const headers = [
+      { label: 'Mã BG', cls: 'code' }, { label: 'Mã DT', cls: 'code' }, { label: 'Tên Báo giá' },
+      { label: 'Ngày BG' }, { label: 'Hạn hiệu lực' }, { label: 'NV BG' }, { label: 'Trạng thái' },
+      { label: 'Mã HH', cls: 'code' }, { label: 'Tên hàng hóa' }, { label: 'ĐVT', cls: 'center' },
+      { label: 'SL', cls: 'num' }, { label: 'Đơn giá', cls: 'num' }, { label: 'Thành tiền', cls: 'num' },
+    ];
+    const rows = [];
+    DATA.bgs.forEach(bg => {
+      bg.items.forEach(it => {
+        rows.push([
+          bg.ma, bg.maDT, bg.ten, bg.ngay, bg.hanHL, bg.nv, statusBadge(bg.trangThai),
+          it.maHH, it.tenHH, it.dvt, fmt.int(it.sl), fmt.vnd(it.dg), fmt.vnd(itemTotal(it)),
+        ]);
+      });
+    });
+    renderSourceTable('bg-content', headers, rows);
+  },
+  gt() {
+    const headers = [
+      { label: 'Mã GT', cls: 'code' }, { label: 'Mã BG', cls: 'code' }, { label: 'Mã DT', cls: 'code' },
+      { label: 'Tên Gói thầu' }, { label: 'Ngày mở' }, { label: 'Ngày đóng' },
+      { label: 'NV thầu' }, { label: 'Trạng thái' },
+      { label: 'Mã HH', cls: 'code' }, { label: 'Tên hàng hóa' }, { label: 'ĐVT', cls: 'center' },
+      { label: 'SL', cls: 'num' }, { label: 'Đơn giá', cls: 'num' }, { label: 'Thành tiền', cls: 'num' },
+    ];
+    const rows = [];
+    DATA.gts.forEach(gt => {
+      gt.items.forEach(it => {
+        rows.push([
+          gt.ma, gt.maBG, gt.maDT, gt.ten, gt.ngayMo, gt.ngayDong, gt.nv, statusBadge(gt.trangThai),
+          it.maHH, it.tenHH, it.dvt, fmt.int(it.sl), fmt.vnd(it.dg), fmt.vnd(itemTotal(it)),
+        ]);
+      });
+    });
+    renderSourceTable('gt-content', headers, rows);
+  },
+  hd() {
+    const headers = [
+      { label: 'Mã HĐ', cls: 'code' }, { label: 'Mã GT', cls: 'code' }, { label: 'Mã DT', cls: 'code' },
+      { label: 'Tên HĐ' }, { label: 'Ngày ký' }, { label: 'Ngày KT' },
+      { label: 'Nhà cung cấp' }, { label: 'NV HĐ' }, { label: 'Cty TH' }, { label: 'Trạng thái' },
+      { label: 'Mã HH', cls: 'code' }, { label: 'Tên hàng hóa' }, { label: 'ĐVT', cls: 'center' },
+      { label: 'SL', cls: 'num' }, { label: 'Đơn giá', cls: 'num' }, { label: 'Thành tiền', cls: 'num' },
+    ];
+    const rows = [];
+    DATA.hds.forEach(hd => {
+      hd.items.forEach(it => {
+        rows.push([
+          hd.ma, hd.maGT, hd.maDT, hd.ten, hd.ngayKy, hd.ngayKT, hd.ncc, hd.nv, hd.ctyTH,
+          statusBadge(hd.trangThai),
+          it.maHH, it.tenHH, it.dvt, fmt.int(it.sl), fmt.vnd(it.dg), fmt.vnd(itemTotal(it)),
+        ]);
+      });
+    });
+    renderSourceTable('hd-content', headers, rows);
+  },
+  tonghop: renderTongHop,
+  timeline: renderTimeline,
+  chitiethh: renderChiTietHH,
+};
+
+/* ============================================================
+   BC Tổng hợp — flagship table
+   ============================================================ */
+function renderTongHop() {
+  const container = document.getElementById('tonghop-content');
+  const aggData = aggregateByDT();
+
+  // Compute KPIs
+  const kpis = {
+    soDT: aggData.length,
+    tongDT: sum(aggData, x => x.giaTriDT),
+    tongHD: sum(aggData, x => x.giaTriHD),
+    pctTong: 0,
+    hoanTat: aggData.filter(x => x.trangThai === 'Hoàn tất').length,
+  };
+  kpis.pctTong = kpis.tongDT > 0 ? kpis.tongHD / kpis.tongDT : 0;
+
+  container.innerHTML = `
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">BC Tổng hợp — 1 dòng / Dự toán</h2>
+        <div class="panel-desc">Click ô số GT/HĐ để xem chi tiết. Bấm "Xem chi tiết" để mở rộng cột phụ.</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--accent: var(--c-rpt)">
+        <div class="kpi-label">Số Dự toán</div>
+        <div class="kpi-value tabular">${kpis.soDT}</div>
+        <div class="kpi-sub">${kpis.hoanTat} đã hoàn tất</div>
+      </div>
+      <div class="kpi-card" style="--accent: var(--c-dt)">
+        <div class="kpi-label">Tổng giá trị DT</div>
+        <div class="kpi-value tabular">${fmt.vnd(kpis.tongDT)}</div>
+        <div class="kpi-sub">${kpis.soDT} dự toán</div>
+      </div>
+      <div class="kpi-card" style="--accent: var(--c-hd)">
+        <div class="kpi-label">Tổng giá trị HĐ</div>
+        <div class="kpi-value tabular">${fmt.vnd(kpis.tongHD)}</div>
+        <div class="kpi-sub">${sum(aggData, x => x.soHD)} hợp đồng</div>
+      </div>
+      <div class="kpi-card" style="--accent: ${kpis.pctTong >= 0.95 ? 'var(--c-success)' : 'var(--c-warning)'}">
+        <div class="kpi-label">% Chuyển đổi DT → HĐ</div>
+        <div class="kpi-value tabular">${fmt.pct(kpis.pctTong)}</div>
+        <div class="kpi-sub">${kpis.tongHD >= kpis.tongDT ? 'Vượt' : 'Thiếu'} so với DT</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Lọc</span>
+      <select class="filter-select" id="filter-loai">
+        <option value="">Tất cả Loại DT</option>
+        ${[...new Set(DATA.dts.map(d => d.loai))].map(l => `<option>${l}</option>`).join('')}
+      </select>
+      <select class="filter-select" id="filter-status">
+        <option value="">Tất cả Trạng thái</option>
+        ${['Hoàn tất','Một phần','Đã có Gói thầu','Đã Báo giá','Chỉ có Dự toán'].map(s => `<option>${s}</option>`).join('')}
+      </select>
+      <input class="filter-input" id="filter-search" placeholder="🔍 Tìm Mã DT, Tên DT, Khách hàng...">
+
+      <div class="toggle-group">
+        <button class="toggle-btn" id="toggle-detail">Xem chi tiết</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="tonghop" id="tonghop-table">
+        <thead>
+          <tr>
+            <th class="th-group g-class" colspan="3">Định danh</th>
+            <th class="th-group g-class" colspan="2">Phân loại</th>
+            <th class="th-group g-kh" colspan="1" id="kh-span">Khách hàng</th>
+            <th class="th-group g-dt" colspan="1" id="dt-span">Dự toán</th>
+            <th class="th-group g-bg" colspan="1" id="bg-span">Báo giá</th>
+            <th class="th-group g-gt" colspan="2">Gói thầu</th>
+            <th class="th-group g-hd" colspan="2" id="hd-span">Hợp đồng</th>
+            <th class="th-group g-sum" colspan="3">Tổng kết</th>
+          </tr>
+          <tr>
+            <th class="th-col">STT</th>
+            <th class="th-col">Mã DT</th>
+            <th class="th-col">Tên DT</th>
+            <th class="th-col">Loại DT</th>
+            <th class="th-col">Mảng HH</th>
+            <!-- KH group -->
+            <th class="th-col">Khách hàng</th>
+            <th class="th-col detail-col col-kh-detail">Mã KH</th>
+            <th class="th-col detail-col col-kh-detail">Địa bàn</th>
+            <th class="th-col detail-col col-kh-detail">Tỉnh/Thành</th>
+            <!-- DT group -->
+            <th class="th-col" style="text-align:right;">Giá trị DT</th>
+            <th class="th-col detail-col col-dt-detail">NV khởi tạo</th>
+            <th class="th-col detail-col col-dt-detail">Ngày khởi tạo</th>
+            <!-- BG group -->
+            <th class="th-col" style="text-align:right;">Giá trị BG</th>
+            <th class="th-col detail-col col-bg-detail">Mã BG</th>
+            <th class="th-col detail-col col-bg-detail">NV BG</th>
+            <th class="th-col detail-col col-bg-detail">Ngày BG</th>
+            <!-- GT group -->
+            <th class="th-col" style="text-align:center;">Số GT</th>
+            <th class="th-col" style="text-align:right;">Giá trị thầu</th>
+            <!-- HD group -->
+            <th class="th-col" style="text-align:center;">Số HĐ</th>
+            <th class="th-col" style="text-align:right;">Giá trị HĐ</th>
+            <th class="th-col detail-col col-hd-detail">Công ty TH</th>
+            <th class="th-col detail-col col-hd-detail">Ngày ký HĐ</th>
+            <th class="th-col detail-col col-hd-detail">Ngày KT</th>
+            <!-- Sum group -->
+            <th class="th-col" style="text-align:right;">Chênh lệch</th>
+            <th class="th-col" style="text-align:right;">% Chuyển đổi</th>
+            <th class="th-col" style="text-align:center;">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody id="tonghop-body"></tbody>
+      </table>
+    </div>
+
+    <div class="note-box">
+      💡 <b>Tương tác:</b> Cột "Số GT" và "Số HĐ" có thể click để mở popup. Bấm <b>"Xem chi tiết"</b> để mở rộng toàn bộ các cột phụ (KH / DT / BG / HĐ). 3 cột đầu (STT, Mã DT, Tên DT) sticky khi scroll ngang.
+    </div>
+  `;
+
+  // Render body
+  renderTongHopBody(aggData);
+
+  // Wire up filters
+  ['filter-loai', 'filter-status', 'filter-search'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const filtered = applyFilters(aggData);
+      renderTongHopBody(filtered);
+    });
+  });
+
+  // Wire up single toggle button (expand/collapse all detail columns)
+  document.getElementById('toggle-detail').addEventListener('click', () => {
+    const table = document.getElementById('tonghop-table');
+    const btn = document.getElementById('toggle-detail');
+    const groups = ['show-kh', 'show-dt', 'show-bg', 'show-hd'];
+    const expanded = groups.every(g => table.classList.contains(g));
+    if (expanded) {
+      groups.forEach(g => table.classList.remove(g));
+      btn.textContent = 'Xem chi tiết';
+      btn.classList.remove('on');
+    } else {
+      groups.forEach(g => table.classList.add(g));
+      btn.textContent = 'Xem thu gọn';
+      btn.classList.add('on');
+    }
+    updateColspan();
+  });
+}
+
+function applyFilters(data) {
+  const loai = document.getElementById('filter-loai').value;
+  const status = document.getElementById('filter-status').value;
+  const search = document.getElementById('filter-search').value.toLowerCase().trim();
+  return data.filter(d => {
+    if (loai && d.loai !== loai) return false;
+    if (status && d.trangThai !== status) return false;
+    if (search) {
+      const hay = (d.ma + ' ' + d.ten + ' ' + d.khachHang + ' ' + d.maKH).toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+}
+
+function updateColspan() {
+  const t = document.getElementById('tonghop-table');
+  document.getElementById('kh-span').colSpan = t.classList.contains('show-kh') ? 4 : 1;
+  document.getElementById('dt-span').colSpan = t.classList.contains('show-dt') ? 3 : 1;
+  document.getElementById('bg-span').colSpan = t.classList.contains('show-bg') ? 4 : 1;
+  document.getElementById('hd-span').colSpan = t.classList.contains('show-hd') ? 5 : 2;
+}
+
+function renderTongHopBody(data) {
+  const body = document.getElementById('tonghop-body');
+  if (!data.length) {
+    body.innerHTML = `<tr><td colspan="26" style="text-align:center;color:var(--c-text-3);padding:40px;">Không có dữ liệu phù hợp với bộ lọc</td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map((d, i) => `
+    <tr>
+      <td class="center">${i + 1}</td>
+      <td class="code clickable" onclick="openModal('dt','${d.ma}')"><b>${d.ma}</b></td>
+      <td>${d.ten}</td>
+      <td>${d.loai}</td>
+      <td>${d.mang}</td>
+      <!-- KH -->
+      <td>${d.khachHang}</td>
+      <td class="code detail-col col-kh-detail">${d.maKH}</td>
+      <td class="detail-col col-kh-detail">${d.diaBan}</td>
+      <td class="detail-col col-kh-detail">${d.tinh}</td>
+      <!-- DT -->
+      <td class="num"><b>${fmt.vndShort(d.giaTriDT)}</b></td>
+      <td class="detail-col col-dt-detail">${d.nv}</td>
+      <td class="detail-col col-dt-detail">${d.ngay}</td>
+      <!-- BG -->
+      <td class="num">${fmt.vndShort(d.giaTriBG)}</td>
+      <td class="code detail-col col-bg-detail">${d.maBG}</td>
+      <td class="detail-col col-bg-detail">${d.nvBG}</td>
+      <td class="detail-col col-bg-detail">${d.ngayBG}</td>
+      <!-- GT -->
+      <td class="center clickable ${d.soGT === 0 ? 'zero' : ''}" ${d.soGT > 0 ? `onclick="openModal('gt','${d.ma}')"` : ''}>${d.soGT || '0'}</td>
+      <td class="num">${fmt.vndShort(d.giaTriGT)}</td>
+      <!-- HD -->
+      <td class="center clickable ${d.soHD === 0 ? 'zero' : ''}" ${d.soHD > 0 ? `onclick="openModal('hd','${d.ma}')"` : ''}>${d.soHD || '0'}</td>
+      <td class="num"><b>${fmt.vndShort(d.giaTriHD)}</b></td>
+      <td class="detail-col col-hd-detail">${d.ctyTH}</td>
+      <td class="detail-col col-hd-detail">${d.ngayKyHD}</td>
+      <td class="detail-col col-hd-detail">${d.ngayKTHD}</td>
+      <!-- Sum -->
+      <td class="num">${deltaCell(d.chenhLech)}</td>
+      <td class="num">${pctBar(d.pctConv)}</td>
+      <td class="center">${statusBadge(d.trangThai)}</td>
+    </tr>
+  `).join('');
+}
+
+/* ============================================================
+   Modal — drill-down popup (stack-based navigation)
+   ============================================================ */
+let modalStack = [];
+
+const APPROVER_MAP = {
+  'Nguyễn Văn An':   'Hoàng Văn Bình',
+  'Trần Thị Bích':   'Hoàng Văn Bình',
+  'Lê Quang Cường':  'Trương Thị Mai',
+  'Phạm Thu Diệu':   'Hoàng Văn Bình',
+  'Đỗ Minh Hoàng':   'Trương Thị Mai',
+};
+function approverFor(nv) { return APPROVER_MAP[nv] || 'Trương Thị Mai'; }
+
+function shiftDate(ddmmyyyy, deltaDays) {
+  const [d, m, y] = ddmmyyyy.split('/').map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + deltaDays);
+  return `${String(date.getDate()).padStart(2,'0')}/${String(date.getMonth()+1).padStart(2,'0')}/${date.getFullYear()}`;
+}
+
+window.openModal = function(type, id) {
+  modalStack = [{ type, id }];
+  renderModal();
+  const modal = document.getElementById('modal');
+  if (!modal.open) modal.showModal();
+};
+
+window.pushModal = function(type, id) {
+  modalStack.push({ type, id });
+  renderModal();
+};
+
+window.popModal = function() {
+  modalStack.pop();
+  if (modalStack.length === 0) {
+    closeModal();
+  } else {
+    renderModal();
+  }
+};
+
+window.closeModal = function() {
+  modalStack = [];
+  document.getElementById('modal').close();
+};
+
+document.getElementById('modal').addEventListener('close', () => {
+  modalStack = [];
+});
+
+function renderModal() {
+  const cur = modalStack[modalStack.length - 1];
+  const title = document.getElementById('modal-title');
+  const subtitle = document.getElementById('modal-subtitle');
+  const body = document.getElementById('modal-body');
+  const back = document.getElementById('modal-back');
+
+  back.style.display = modalStack.length > 1 ? '' : 'none';
+
+  if (cur.type === 'dt') {
+    const dt = DATA.dts.find(d => d.ma === cur.id);
+    title.textContent = `Chi tiết Dự toán — ${dt.ma}`;
+    subtitle.textContent = dt.ten;
+    body.innerHTML = renderDTDetail(dt);
+  } else if (cur.type === 'gt') {
+    const dt = DATA.dts.find(d => d.ma === cur.id);
+    const gts = DATA.gts.filter(g => g.maDT === cur.id);
+    title.textContent = `Danh sách Gói thầu — ${dt.ma}`;
+    subtitle.textContent = `${gts.length} gói thầu · ${dt.ten}`;
+    body.innerHTML = renderGTListTable(gts, dt);
+  } else if (cur.type === 'gt-item') {
+    const gt = DATA.gts.find(g => g.ma === cur.id);
+    title.textContent = `Chi tiết Gói thầu — ${gt.ma}`;
+    subtitle.textContent = gt.ten;
+    body.innerHTML = renderGTDetail(gt);
+  } else if (cur.type === 'hd') {
+    const dt = DATA.dts.find(d => d.ma === cur.id);
+    const hds = DATA.hds.filter(h => h.maDT === cur.id);
+    title.textContent = `Danh sách Hợp đồng — ${dt.ma}`;
+    subtitle.textContent = `${hds.length} hợp đồng · ${dt.ten}`;
+    body.innerHTML = renderHDListTable(hds, dt);
+  } else if (cur.type === 'hd-item') {
+    const hd = DATA.hds.find(h => h.ma === cur.id);
+    title.textContent = `Chi tiết Hợp đồng — ${hd.ma}`;
+    subtitle.textContent = hd.ten;
+    body.innerHTML = renderHDDetail(hd);
+  }
+
+  body.scrollTop = 0;
+}
+
+function renderItemsTable(items) {
+  return `
+    <table>
+      <thead><tr>
+        <th>Mã HH</th><th>Tên hàng hóa</th><th class="center">ĐVT</th>
+        <th style="text-align:right;">SL</th><th style="text-align:right;">Đơn giá</th><th style="text-align:right;">Thành tiền</th>
+      </tr></thead>
+      <tbody>
+        ${items.map(it => `
+          <tr>
+            <td class="code">${it.maHH}</td>
+            <td>${it.tenHH}</td>
+            <td class="center">${it.dvt}</td>
+            <td class="num">${fmt.int(it.sl)}</td>
+            <td class="num">${fmt.vnd(it.dg)}</td>
+            <td class="num"><b>${fmt.vnd(itemTotal(it))}</b></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderDTDetail(dt) {
+  return `
+    <div class="modal-meta">
+      <div class="modal-meta-item"><div class="lbl">Mã DT</div><div class="val text-mono">${dt.ma}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Loại / Mảng</div><div class="val">${dt.loai} · ${dt.mang}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Ngày lập</div><div class="val">${dt.ngay}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Người lập</div><div class="val">${dt.nv}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Người duyệt</div><div class="val">${approverFor(dt.nv)}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Khách hàng</div><div class="val">${dt.khachHang} (${dt.maKH})</div></div>
+      <div class="modal-meta-item"><div class="lbl">Địa bàn</div><div class="val">${dt.diaBan} · ${dt.tinh}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Tổng giá trị DT</div><div class="val num"><b>${fmt.vnd(recordTotal(dt))}</b></div></div>
+    </div>
+    <h4 class="modal-section-title">Hàng hóa (${dt.items.length})</h4>
+    ${renderItemsTable(dt.items)}
+  `;
+}
+
+function renderGTListTable(gts, dt) {
+  return `
+    <div class="modal-meta">
+      <div class="modal-meta-item"><div class="lbl">Dự toán</div><div class="val">${dt.ma} — ${dt.ten}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Khách hàng</div><div class="val">${dt.khachHang}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Số gói thầu</div><div class="val">${gts.length}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Tổng giá trị thầu</div><div class="val num"><b>${fmt.vnd(sum(gts, recordTotal))}</b></div></div>
+    </div>
+    <h4 class="modal-section-title">Danh sách Gói thầu (click Số GT để xem chi tiết hàng hóa)</h4>
+    <table>
+      <thead><tr>
+        <th class="center">STT</th>
+        <th>Số GT</th>
+        <th>Tên Gói thầu</th>
+        <th style="text-align:right;">Giá trị thầu</th>
+        <th>Ngày lập</th>
+        <th>Ngày ký KQ</th>
+        <th>Người lập</th>
+        <th>Người duyệt</th>
+        <th class="center">Trạng thái</th>
+      </tr></thead>
+      <tbody>
+        ${gts.map((gt, i) => `
+          <tr>
+            <td class="center">${i + 1}</td>
+            <td class="code clickable" onclick="pushModal('gt-item','${gt.ma}')"><b>${gt.ma}</b></td>
+            <td>${gt.ten}</td>
+            <td class="num"><b>${fmt.vnd(recordTotal(gt))}</b></td>
+            <td>${gt.ngayMo}</td>
+            <td>${gt.ngayDong}</td>
+            <td>${gt.nv}</td>
+            <td>${approverFor(gt.nv)}</td>
+            <td class="center">${statusBadge(gt.trangThai)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderGTDetail(gt) {
+  return `
+    <div class="modal-meta">
+      <div class="modal-meta-item"><div class="lbl">Mã GT</div><div class="val text-mono">${gt.ma}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Thuộc Báo giá</div><div class="val text-mono">${gt.maBG}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Thuộc Dự toán</div><div class="val text-mono">${gt.maDT}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Ngày mở thầu</div><div class="val">${gt.ngayMo}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Ngày đóng thầu</div><div class="val">${gt.ngayDong}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Người lập</div><div class="val">${gt.nv}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Người duyệt</div><div class="val">${approverFor(gt.nv)}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Trạng thái</div><div class="val">${statusBadge(gt.trangThai)}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Tổng giá trị</div><div class="val num"><b>${fmt.vnd(recordTotal(gt))}</b></div></div>
+    </div>
+    <h4 class="modal-section-title">Hàng hóa (${gt.items.length})</h4>
+    ${renderItemsTable(gt.items)}
+  `;
+}
+
+function renderHDListTable(hds, dt) {
+  return `
+    <div class="modal-meta">
+      <div class="modal-meta-item"><div class="lbl">Dự toán</div><div class="val">${dt.ma} — ${dt.ten}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Khách hàng</div><div class="val">${dt.khachHang}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Số hợp đồng</div><div class="val">${hds.length}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Tổng giá trị HĐ</div><div class="val num"><b>${fmt.vnd(sum(hds, recordTotal))}</b></div></div>
+    </div>
+    <h4 class="modal-section-title">Danh sách Hợp đồng (click Số HĐ để xem chi tiết hàng hóa)</h4>
+    <table>
+      <thead><tr>
+        <th class="center">STT</th>
+        <th>Số HĐ</th>
+        <th>Tên HĐ</th>
+        <th style="text-align:right;">Giá trị HĐ</th>
+        <th>Ngày lập</th>
+        <th>Ngày ký</th>
+        <th>Người lập</th>
+        <th>Người duyệt</th>
+        <th class="center">Trạng thái</th>
+      </tr></thead>
+      <tbody>
+        ${hds.map((hd, i) => `
+          <tr>
+            <td class="center">${i + 1}</td>
+            <td class="code clickable" onclick="pushModal('hd-item','${hd.ma}')"><b>${hd.ma}</b></td>
+            <td>${hd.ten}</td>
+            <td class="num"><b>${fmt.vnd(recordTotal(hd))}</b></td>
+            <td>${shiftDate(hd.ngayKy, -7)}</td>
+            <td>${hd.ngayKy}</td>
+            <td>${hd.nv}</td>
+            <td>${approverFor(hd.nv)}</td>
+            <td class="center">${statusBadge(hd.trangThai)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderHDDetail(hd) {
+  return `
+    <div class="modal-meta">
+      <div class="modal-meta-item"><div class="lbl">Số HĐ</div><div class="val text-mono">${hd.ma}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Thuộc Gói thầu</div><div class="val text-mono">${hd.maGT}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Thuộc Dự toán</div><div class="val text-mono">${hd.maDT}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Nhà cung cấp</div><div class="val">${hd.ncc}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Cty thực hiện</div><div class="val">${hd.ctyTH}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Ngày lập</div><div class="val">${shiftDate(hd.ngayKy, -7)}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Ngày ký</div><div class="val">${hd.ngayKy}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Ngày kết thúc</div><div class="val">${hd.ngayKT}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Người lập</div><div class="val">${hd.nv}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Người duyệt</div><div class="val">${approverFor(hd.nv)}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Trạng thái</div><div class="val">${statusBadge(hd.trangThai)}</div></div>
+      <div class="modal-meta-item"><div class="lbl">Tổng giá trị</div><div class="val num"><b>${fmt.vnd(recordTotal(hd))}</b></div></div>
+    </div>
+    <h4 class="modal-section-title">Hàng hóa (${hd.items.length})</h4>
+    ${renderItemsTable(hd.items)}
+  `;
+}
+
+/* ============================================================
+   BC Timeline — vòng đời 1 DT
+   ============================================================ */
+function renderTimeline() {
+  const container = document.getElementById('timeline-content');
+  container.innerHTML = `
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">BC Timeline — Vòng đời 1 Dự toán</h2>
+        <div class="panel-desc">Chọn 1 Mã DT để xem toàn bộ chuỗi DT → BG → GT → HĐ trên trục thời gian.</div>
+      </div>
+    </div>
+    <div class="timeline-select">
+      <span class="filter-label">Chọn Mã DT</span>
+      <select class="filter-select" id="timeline-pick">
+        ${DATA.dts.map(d => `<option value="${d.ma}">${d.ma} — ${d.ten}</option>`).join('')}
+      </select>
+    </div>
+    <div id="timeline-output"></div>
+  `;
+  const update = () => renderTimelineFor(document.getElementById('timeline-pick').value);
+  document.getElementById('timeline-pick').addEventListener('change', update);
+  update();
+}
+
+function renderTimelineFor(maDT) {
+  const dt = DATA.dts.find(d => d.ma === maDT);
+  const bgs = DATA.bgs.filter(b => b.maDT === maDT);
+  const gts = DATA.gts.filter(g => g.maDT === maDT);
+  const hds = DATA.hds.filter(h => h.maDT === maDT);
+  const output = document.getElementById('timeline-output');
+
+  const stages = [];
+  // DT stage
+  stages.push({
+    accent: 'var(--c-dt)', label: 'DỰ TOÁN',
+    title: `${dt.ma} — ${dt.ten}`,
+    value: fmt.vnd(recordTotal(dt)),
+    meta: `Ngày lập: ${dt.ngay} · ${dt.items.length} HH · NV: ${dt.nv}`,
+  });
+  bgs.forEach(bg => stages.push({
+    accent: 'var(--c-bg)', label: 'BÁO GIÁ',
+    title: `${bg.ma} — ${bg.ten}`,
+    value: fmt.vnd(recordTotal(bg)),
+    meta: `Gửi: ${bg.ngay} · Hết hạn: ${bg.hanHL} · ${bg.items.length} HH · ${statusBadge(bg.trangThai)}`,
+  }));
+  gts.forEach(gt => stages.push({
+    accent: 'var(--c-gt)', label: 'GÓI THẦU',
+    title: `${gt.ma} — ${gt.ten}`,
+    value: fmt.vnd(recordTotal(gt)),
+    meta: `Mở: ${gt.ngayMo} · Đóng: ${gt.ngayDong} · ${gt.items.length} HH · ${statusBadge(gt.trangThai)}`,
+  }));
+  hds.forEach(hd => stages.push({
+    accent: 'var(--c-hd)', label: 'HỢP ĐỒNG',
+    title: `${hd.ma} — ${hd.ten}`,
+    value: fmt.vnd(recordTotal(hd)),
+    meta: `Ký: ${hd.ngayKy} · KT: ${hd.ngayKT} · NCC: ${hd.ncc} · ${statusBadge(hd.trangThai)}`,
+  }));
+
+  output.innerHTML = `
+    <div class="timeline-card">
+      ${stages.map(s => `
+        <div class="timeline-stage" style="--accent: ${s.accent}">
+          <div class="stage-label">${s.label}</div>
+          <div class="stage-content">
+            <span class="stage-title">${s.title}</span>
+            <span class="stage-value">${s.value}</span>
+          </div>
+          <div class="stage-meta">${s.meta}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/* ============================================================
+   BC Chi tiết HH — ma trận hàng hóa qua 4 giai đoạn
+   ============================================================ */
+function renderChiTietHH() {
+  const container = document.getElementById('chitiethh-content');
+  // For each (maDT, maHH) build a row showing SL/ĐG/TT at each stage
+  const rows = [];
+  DATA.dts.forEach(dt => {
+    const bg = DATA.bgs.find(b => b.maDT === dt.ma);
+    const gtsHere = DATA.gts.filter(g => g.maDT === dt.ma);
+    const hdsHere = DATA.hds.filter(h => h.maDT === dt.ma);
+    dt.items.forEach(dtIt => {
+      const bgIt = bg ? bg.items.find(x => x.maHH === dtIt.maHH) : null;
+      // Sum across all GT for this DT × HH
+      const gtAggSl = sum(gtsHere, gt => sum(gt.items.filter(x => x.maHH === dtIt.maHH), x => x.sl));
+      const gtAggTT = sum(gtsHere, gt => sum(gt.items.filter(x => x.maHH === dtIt.maHH), itemTotal));
+      const hdAggSl = sum(hdsHere, hd => sum(hd.items.filter(x => x.maHH === dtIt.maHH), x => x.sl));
+      const hdAggTT = sum(hdsHere, hd => sum(hd.items.filter(x => x.maHH === dtIt.maHH), itemTotal));
+      rows.push({
+        maDT: dt.ma, maHH: dtIt.maHH, tenHH: dtIt.tenHH, dvt: dtIt.dvt,
+        dtSL: dtIt.sl, dtTT: itemTotal(dtIt),
+        bgSL: bgIt?.sl || 0, bgTT: bgIt ? itemTotal(bgIt) : 0,
+        gtSL: gtAggSl, gtTT: gtAggTT,
+        hdSL: hdAggSl, hdTT: hdAggTT,
+      });
+    });
+  });
+
+  container.innerHTML = `
+    <div class="panel-header">
+      <div>
+        <h2 class="panel-title">BC Chi tiết hàng hóa — ma trận 4 giai đoạn</h2>
+        <div class="panel-desc">Mỗi dòng = 1 hàng hóa trong 1 Dự toán. Xem SL & Thành tiền chuyển qua DT → BG → GT → HĐ.</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="th-group g-class" colspan="4">Hàng hóa</th>
+            <th class="th-group g-dt" colspan="2">Dự toán</th>
+            <th class="th-group g-bg" colspan="2">Báo giá</th>
+            <th class="th-group g-gt" colspan="2">Gói thầu</th>
+            <th class="th-group g-hd" colspan="2">Hợp đồng</th>
+          </tr>
+          <tr>
+            <th class="th-col">Mã DT</th><th class="th-col">Mã HH</th><th class="th-col">Tên hàng hóa</th><th class="th-col">ĐVT</th>
+            <th class="th-col" style="text-align:right;">SL</th><th class="th-col" style="text-align:right;">Thành tiền</th>
+            <th class="th-col" style="text-align:right;">SL</th><th class="th-col" style="text-align:right;">Thành tiền</th>
+            <th class="th-col" style="text-align:right;">SL</th><th class="th-col" style="text-align:right;">Thành tiền</th>
+            <th class="th-col" style="text-align:right;">SL</th><th class="th-col" style="text-align:right;">Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td class="code"><b>${r.maDT}</b></td>
+              <td class="code">${r.maHH}</td>
+              <td>${r.tenHH}</td>
+              <td class="center">${r.dvt}</td>
+              <td class="num">${fmt.int(r.dtSL)}</td>
+              <td class="num">${fmt.vndShort(r.dtTT)}</td>
+              <td class="num ${r.bgSL === 0 ? 'text-muted' : ''}">${r.bgSL || '–'}</td>
+              <td class="num ${r.bgTT === 0 ? 'text-muted' : ''}">${fmt.vndShort(r.bgTT)}</td>
+              <td class="num ${r.gtSL === 0 ? 'text-muted' : ''}">${r.gtSL || '–'}</td>
+              <td class="num ${r.gtTT === 0 ? 'text-muted' : ''}">${fmt.vndShort(r.gtTT)}</td>
+              <td class="num ${r.hdSL === 0 ? 'text-muted' : ''}">${r.hdSL || '–'}</td>
+              <td class="num ${r.hdTT === 0 ? 'text-muted' : ''}">${fmt.vndShort(r.hdTT)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+/* Auto-render BC Tổng hợp on load (other tabs hidden) */
+renderTongHop();
+
+</script>
+</body>
+</html>

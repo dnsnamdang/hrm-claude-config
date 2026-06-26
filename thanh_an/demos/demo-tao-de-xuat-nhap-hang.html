@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo đề xuất nhập hàng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --c-nt:#0F766E; --c-nt-50:#E6F1F0; --c-nt-100:#CFE6E4;
+  --c-paper:#FAFAF7; --c-surface:#FFFFFF; --c-border:#E5E2DA; --c-border-strong:#C9C5BA;
+  --c-text-1:#1A1815; --c-text-2:#4A453C; --c-text-3:#82796A; --c-text-4:#ADA496;
+  --c-success:#2D7A3F; --c-success-bg:#E4F2E6; --c-warning:#B5650E; --c-warning-bg:#FAEBD5;
+  --c-info:#1F578C; --c-info-bg:#E1EBF5; --c-muted-bg:#F0EEE8; --c-muted-fg:#6E665A;
+  --c-danger:#A52A1A; --c-danger-bg:#F7DDD7;
+  --r:10px;
+}
+*{ box-sizing:border-box; }
+body{ margin:0; background:var(--c-paper); color:var(--c-text-1);
+  font-family:"Be Vietnam Pro",system-ui,sans-serif; font-size:14px; line-height:1.45;
+  font-feature-settings:'tnum' 1; }
+.serif{ font-family:"Fraunces",Georgia,serif; }
+.mono{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.num{ text-align:right; font-variant-numeric:tabular-nums; }
+.muted{ color:var(--c-text-3); }
+
+/* Brand header */
+.brand{ background:var(--c-nt); color:#fff; padding:14px 22px; display:flex; align-items:center; gap:14px; }
+.brand .logo{ width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,.18);
+  display:grid; place-items:center; font-family:"Fraunces",serif; font-weight:700; }
+.brand h1{ font-family:"Fraunces",serif; font-size:18px; font-weight:600; margin:0; }
+.brand .sub{ font-size:12px; opacity:.85; }
+.wrap{ max-width:1720px; margin:18px auto; padding:0 18px 60px; }
+#step3{ max-width:none; }
+
+/* Step cards */
+.step{ background:var(--c-surface); border:1px solid var(--c-border); border-radius:var(--r);
+  padding:16px 18px; margin-bottom:14px; }
+.step.dim{ opacity:.5; pointer-events:none; }
+.step-h{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.step-n{ width:24px; height:24px; border-radius:50%; background:var(--c-nt); color:#fff;
+  display:grid; place-items:center; font-size:13px; font-weight:600; flex:none; }
+.step-h b{ font-family:"Fraunces",serif; font-size:15px; }
+.row{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-end; }
+.row.grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.row.grid3 .fld{ min-width:0; }
+.row.grid3 select, .row.grid3 input.txt{ min-width:0; width:100%; }
+.cfg .fld{ min-width:0; }
+.cfg select, .cfg input.txt{ min-width:0; width:100%; }
+.fld{ display:flex; flex-direction:column; gap:4px; }
+.fld label{ font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--c-text-3); }
+select,input.txt{ border:1px solid var(--c-border-strong); border-radius:8px; padding:8px 10px;
+  font:inherit; background:#FFFDF7; min-width:200px; }
+select:focus,input:focus{ outline:2px solid var(--c-nt-100); border-color:var(--c-nt); }
+input.txt[readonly]{ background:var(--c-muted-bg); color:var(--c-text-2); }
+
+.req{ color:var(--c-danger); }
+
+/* tables */
+.scroll{ overflow-x:auto; border:1px solid var(--c-border); border-radius:var(--r); }
+table.t{ width:100%; border-collapse:collapse; font-size:12px; white-space:nowrap; }
+table.t th{ background:var(--c-muted-bg); text-align:left; padding:6px 8px; color:var(--c-text-2);
+  font-weight:600; border-bottom:1px solid var(--c-border); position:sticky; top:0; z-index:1;
+  white-space:normal; vertical-align:bottom; }
+table.t td{ padding:5px 8px; border-bottom:1px solid #EFEDE7; }
+table.t td.nm{ white-space:normal; min-width:180px; max-width:260px; }
+table.t tr:last-child td{ border-bottom:0; }
+.grp td{ background:var(--c-nt-50); font-weight:600; color:#0c5d57; }
+input.cell{ width:80px; text-align:right; border:1px solid var(--c-border-strong); border-radius:6px;
+  padding:3px 6px; font:inherit; font-size:12.5px; background:#FFFDF7; }
+input.cell.wide{ width:140px; text-align:left; }
+input.cell.bad{ border-color:var(--c-danger); background:var(--c-danger-bg); }
+.rem-ok{ color:var(--c-success); } .rem-bad{ color:var(--c-danger); font-weight:700; }
+
+/* config theo loại (gộp trong Bước 1) */
+.cfg{ margin-top:14px; }
+.hint{ font-size:11.5px; color:var(--c-text-3); margin-top:8px; }
+
+/* footer summary + actions */
+.foot{ display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap;
+  background:var(--c-nt-50); border:1px solid var(--c-nt-100); border-radius:var(--r);
+  padding:12px 16px; margin-top:14px; }
+.foot .tt{ font-family:"Fraunces",serif; font-size:18px; font-weight:600; }
+.banner{ border-radius:8px; padding:6px 12px; font-size:12.5px; font-weight:500; }
+.banner.ok{ background:var(--c-success-bg); color:var(--c-success); }
+.banner.bad{ background:var(--c-danger-bg); color:var(--c-danger); }
+.actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center; }
+.btn{ background:var(--c-nt); color:#fff; border:0; border-radius:8px; padding:9px 16px; font:inherit;
+  font-weight:500; cursor:pointer; }
+.btn:disabled{ opacity:.45; cursor:not-allowed; }
+.btn.ghost{ background:#fff; color:var(--c-text-2); border:1px solid var(--c-border-strong); }
+.addrow{ background:#fff; color:var(--c-nt); border:1px dashed var(--c-nt-100); border-radius:8px;
+  padding:7px 13px; font:inherit; cursor:pointer; margin-top:10px; }
+.del{ color:var(--c-danger); cursor:pointer; font-size:13px; border:0; background:none; }
+.pill{ display:inline-block; padding:2px 9px; border-radius:999px; font-size:11px; font-weight:600; }
+.p-bgd{ background:var(--c-danger-bg); color:var(--c-danger); }
+.p-appr{ background:var(--c-warning-bg); color:var(--c-warning); }
+.p-must{ background:var(--c-info-bg); color:var(--c-info); }
+.section-title{ font-family:"Fraunces",serif; font-size:14px; margin:0 0 8px; }
+
+/* goods picker modal */
+dialog#goodsModal{ width:min(820px,92vw); max-height:84vh; border:1px solid var(--c-border-strong);
+  border-radius:14px; padding:0; overflow:hidden; }
+dialog#goodsModal::backdrop{ background:rgba(26,24,21,.42); }
+.gm-head{ display:flex; gap:14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--c-border);
+  position:sticky; top:0; background:#fff; }
+.gm-head input{ flex:1; min-width:0; }
+.gm-list{ overflow:auto; max-height:56vh; padding:6px 10px; }
+.gm-item{ display:grid; grid-template-columns:22px 1fr auto auto; align-items:center; gap:10px;
+  padding:8px 10px; border-bottom:1px solid #EFEDE7; font-size:12.5px; cursor:pointer; border-radius:8px; }
+.gm-item:hover{ background:var(--c-nt-50); }
+.gm-item.added{ opacity:.55; }
+.gm-name{ font-weight:500; }
+.gm-meta{ font-size:11.5px; color:var(--c-text-3); white-space:nowrap; }
+.gm-foot{ display:flex; gap:10px; align-items:center; padding:12px 18px; border-top:1px solid var(--c-border);
+  background:#FCFBF7; position:sticky; bottom:0; }
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="logo">DX</div>
+  <div>
+    <h1>Tạo đề xuất nhập hàng</h1>
+    <div class="sub">Prototype · 3 loại đề xuất (Theo HĐ bán · Mua khác · Mua hàng tồn kho) · không nhập giá, không chọn NCC ở bước này</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- STEP 1 -->
+  <div class="step" id="step1">
+    <div class="step-h"><span class="step-n">1</span><b>Chọn loại đề xuất &amp; thông tin chung</b></div>
+    <div class="row grid3">
+      <div class="fld"><label>Loại đề xuất <span class="req">*</span></label>
+        <select id="cfgLoai" onchange="onType(this.value)">
+          <option value="">— Chọn loại đề xuất —</option>
+          <option value="hopdong">Đề xuất nhập hàng theo HĐ bán</option>
+          <option value="muakhac">Đề xuất mua khác</option>
+          <option value="tonkho">Đề xuất mua hàng tồn kho (NK/PPL)</option>
+        </select>
+      </div>
+      <div class="fld"><label>Mã đề xuất</label><input class="txt" value="DXNH-2026-0007" readonly></div>
+      <div class="fld"><label>Người đề xuất</label><input class="txt" value="Đặng Hoàng Nam" readonly></div>
+    </div>
+    <div class="row grid3" style="margin-top:14px">
+      <div class="fld"><label>Ngày đề xuất</label><input class="txt" id="cfgNgay" value="25/06/2026"></div>
+      <div class="fld" style="grid-column:span 2"><label>Diễn giải chung</label><input class="txt" id="cfgDienGiai" placeholder="Lý do/diễn giải đề xuất nhập hàng"></div>
+    </div>
+    <div id="cfgArea"></div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step dim" id="step3">
+    <div class="step-h"><span class="step-n">2</span><b>Danh sách hàng hóa đề xuất nhập</b></div>
+    <div id="detailArea" class="muted">Danh sách hàng hóa sẽ hiện ở đây.</div>
+    <div id="footArea"></div>
+    <div class="actions" id="actArea" style="display:none">
+      <button class="btn" id="btnSave">Lưu đề xuất</button>
+      <span class="muted" style="margin-left:auto;font-size:11.5px">Đề xuất sẽ chuyển sang luồng duyệt theo loại đã chọn</span>
+    </div>
+  </div>
+
+</div>
+
+<dialog id="goodsModal">
+  <div class="gm-head">
+    <b class="serif">Chọn hàng hóa từ danh mục</b>
+    <input id="gmSearch" class="txt" placeholder="Tìm theo tên / tên thương mại / mã NSX / hãng..." oninput="filterGm()">
+  </div>
+  <div class="gm-list" id="gmList"></div>
+  <div class="gm-foot">
+    <span id="gmCount" class="muted">0 mặt hàng đã chọn</span>
+    <span style="margin-left:auto"></span>
+    <button class="btn ghost" onclick="closeGoodsModal()">Đóng</button>
+    <button class="btn" onclick="confirmGoods()">Thêm vào đề xuất</button>
+  </div>
+</dialog>
+
+<script>
+/* ============== DATA (hardcoded) ============== */
+// HĐ bán đã duyệt (phẳng theo id): ten, khachHang, soHD, ngayKy, items
+// item: ten, tm, ma, hang, dvt, qc, slHd (SL theo HĐ), slDx (lũy kế đã đề xuất), phan
+const HOP_DONG = {
+  HD001:{ ten:"Cung cấp hóa chất xét nghiệm miễn dịch - sinh hóa", khachHang:"BV Đa khoa tỉnh Bắc Ninh", diaBan:"Bắc Ninh", ncc:"Công ty CP Thành An", soHD:"01/2026/HĐKT-BN", ngayKy:"15/01/2026", thoiHan:"15/01/2026 – 31/12/2026",
+    items:[
+      {ten:"Chất hiệu chuẩn xét nghiệm CA 125", tm:"CA 125 II CalSet II", ma:"7030207190", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"4 x 1ml", slHd:10, slDx:2, phan:"Phần 1 — Dấu ấn ung thư"},
+      {ten:"Thuốc thử xét nghiệm CA 15-3", tm:"Elecsys CA 15-3 II", ma:"3045838214", hang:"Roche (Suzhou)/Trung Quốc", dvt:"Hộp", qc:"100 test", slHd:12, slDx:4, phan:"Phần 1 — Dấu ấn ung thư"},
+      {ten:"Thuốc thử xét nghiệm TSH", tm:"Elecsys TSH", ma:"8429324190", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"200 test", slHd:20, slDx:8, phan:"Phần 2 — Tuyến giáp"},
+      {ten:"Chất hiệu chuẩn xét nghiệm TSH", tm:"TSH CalSet", ma:"8443459190", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"4 x 1,3 ml", slHd:6, slDx:0, phan:"Phần 2 — Tuyến giáp"},
+      {ten:"Thuốc thử xét nghiệm Troponin T tim", tm:"Elecsys Troponin T hs", ma:"9315322190", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"200 test", slHd:15, slDx:5, phan:"Phần 3 — Tim mạch"}
+    ]},
+  HD002:{ ten:"Cung cấp vật tư tiêu hao xét nghiệm", khachHang:"BV Đa khoa tỉnh Bắc Ninh", diaBan:"Bắc Ninh", ncc:"Công ty CP Thành An", soHD:"02/2026/HĐKT-BN", ngayKy:"01/03/2026", thoiHan:"01/03/2026 – 28/02/2027",
+    items:[
+      {ten:"Ống nghiệm EDTA K3", tm:"VacuTube EDTA", ma:"VT-EDTA", hang:"Greiner Bio-One/Đức", dvt:"Cái", qc:"Hộp 100", slHd:5000, slDx:1000, phan:"Phần 1 — Vật tư"},
+      {ten:"Đầu côn vàng 200µL", tm:"Tip 200", ma:"TIP-200", hang:"Cellpro/Trung Quốc", dvt:"Cái", qc:"Túi 1000", slHd:20000, slDx:8000, phan:"Phần 1 — Vật tư"},
+      {ten:"Găng tay khám không bột size M", tm:"Glove M", ma:"GLV-M", hang:"VRG Khải Hoàn/Việt Nam", dvt:"Hộp", qc:"100 chiếc", slHd:600, slDx:200, phan:"Phần 1 — Vật tư"}
+    ]},
+  HD003:{ ten:"Cung cấp hóa chất vi sinh - PCR - điện di", khachHang:"BV Đa khoa Trung ương", diaBan:"Hà Nội", ncc:"Công ty CP Thành An", soHD:"05/2026/HĐKT-TW", ngayKy:"01/01/2026", thoiHan:"01/01/2026 – 31/12/2026",
+    items:[
+      {ten:"Matrix Forward and Reverse Grouping Card", tm:"Matrix FR Card", ma:"TUL-FR01", hang:"Tulip Diagnostics/Ấn Độ", dvt:"Card", qc:"Hộp 12", slHd:4032, slDx:1500, phan:"Phần 8 — Định nhóm máu"},
+      {ten:"MELAB Columbia Agar + 5% Sheep Blood", tm:"Columbia Agar", ma:"MEL-COL", hang:"SEMIND/Việt Nam", dvt:"Đĩa", qc:"Túi 10", slHd:6000, slDx:2000, phan:"Phần 9 — Thạch, KSĐ"},
+      {ten:"Rapid Anti-HIV Test", tm:"Anti-HIV", ma:"INT-HIV", hang:"InTec Products/Trung Quốc", dvt:"Test", qc:"Hộp 25", slHd:21000, slDx:9000, phan:"Phần 10 — Test nhanh"}
+    ]},
+  HD004:{ ten:"Cung cấp hóa chất huyết học", khachHang:"BV Đa khoa Trung ương", diaBan:"Hà Nội", ncc:"Công ty CP Thành An", soHD:"06/2026/HĐKT-TW", ngayKy:"10/02/2026", thoiHan:"10/02/2026 – 09/02/2027",
+    items:[
+      {ten:"Thuốc thử huyết học Cellpack DCL", tm:"Cellpack DCL", ma:"SYS-DCL", hang:"Sysmex/Nhật Bản", dvt:"Can", qc:"20L", slHd:50, slDx:18, phan:"Phần 1 — Huyết học"},
+      {ten:"Dung dịch ly giải Stromatolyser", tm:"Stromatolyser", ma:"SYS-SLS", hang:"Sysmex/Nhật Bản", dvt:"Chai", qc:"500ml", slHd:120, slDx:40, phan:"Phần 1 — Huyết học"}
+    ]}
+};
+
+// danh mục hàng hóa chung (dùng cho loại 2 & 3)
+const DANH_MUC = [
+  {ten:"Thuốc thử xét nghiệm Albumin (ALB2)", tm:"ALB2", ma:"ALB2-300", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"300 Test", phan:"Sinh hóa"},
+  {ten:"Thuốc thử xét nghiệm Ferritin (FERR4)", tm:"Ferritin", ma:"FERR4-250", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"250 test", phan:"Miễn dịch"},
+  {ten:"Thuốc thử xét nghiệm Cortisol", tm:"Elecsys Cortisol II", ma:"CORT-100", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"100 test", phan:"Miễn dịch"},
+  {ten:"Thuốc thử huyết học Cellpack DCL", tm:"Cellpack DCL", ma:"SYS-DCL", hang:"Sysmex/Nhật Bản", dvt:"Can", qc:"20L", phan:"Huyết học"},
+  {ten:"Đầu côn hút mẫu (AssayTip)", tm:"AssayTip", ma:"TIP-3600", hang:"Balde Medical/Đức", dvt:"Hộp", qc:"30 x 120", phan:"Vật tư"},
+  {ten:"Ống nghiệm EDTA K3", tm:"VacuTube EDTA", ma:"VT-EDTA", hang:"Greiner Bio-One/Đức", dvt:"Cái", qc:"Hộp 100", phan:"Vật tư"},
+  {ten:"Găng tay khám không bột size M", tm:"Glove M", ma:"GLV-M", hang:"VRG Khải Hoàn/Việt Nam", dvt:"Hộp", qc:"100 chiếc", phan:"Vật tư"},
+  {ten:"Dung dịch rửa máy sinh hóa", tm:"Wash Solution", ma:"WS-5L", hang:"Roche/Đức", dvt:"Can", qc:"5L", phan:"Vật tư"},
+  {ten:"Kit tách chiết DNA/RNA", tm:"Extract Kit", ma:"EXT-96", hang:"Qiagen/Đức", dvt:"Kit", qc:"96 test", phan:"Sinh học phân tử"},
+  {ten:"Que test nhanh SARS-CoV-2 Antigen", tm:"Ag Combo", ma:"MED-COMBO", hang:"Medomics/Trung Quốc", dvt:"Test", qc:"Hộp 20", phan:"Test nhanh"},
+  {ten:"Linh kiện sửa chữa máy ly tâm (rotor)", tm:"Rotor 24x", ma:"RT-24", hang:"Hettich/Đức", dvt:"Cái", qc:"Bộ", phan:"Phụ tùng - sửa chữa"},
+  {ten:"Bóng đèn halogen máy sinh hóa", tm:"Halogen 12V", ma:"HL-12V", hang:"Osram/Đức", dvt:"Cái", qc:"Vỉ", phan:"Phụ tùng - sửa chữa"}
+];
+
+const TYPE_LABEL = { hopdong:"Đề xuất nhập hàng theo HĐ bán", muakhac:"Đề xuất mua khác", tonkho:"Đề xuất mua hàng tồn kho" };
+const APPR_LABEL = { hopdong:"BGĐ duyệt", muakhac:"Phải xét duyệt", tonkho:"Bắt buộc phê duyệt" };
+
+/* ============== utils ============== */
+const fmtN = n => (n||0).toLocaleString('vi-VN');
+const $ = s => document.querySelector(s);
+function itemRemain(it){ return it.slHd - it.slDx; }
+function parseNum(v){ return parseFloat(String(v).replace(/[^\d.-]/g,''))||0; }
+
+/* ============== state ============== */
+let state = { type:"", khId:"", hdId:"" };
+
+/* ============== STEP 1 — chọn loại ============== */
+function onType(type){
+  state.type=type; state.khId=""; state.hdId="";
+  renderConfig();
+  if(!type || type==='hopdong') resetStep3();   // chưa chọn / chờ chọn HĐ
+  else renderDetail();
+}
+
+function resetStep3(){
+  $('#step3').classList.add('dim');
+  $('#detailArea').innerHTML='<span class="muted">Danh sách hàng hóa sẽ hiện ở đây.</span>';
+  $('#footArea').innerHTML=''; $('#actArea').style.display='none';
+}
+
+/* ============== config theo loại (gộp trong Bước 1) ============== */
+function renderConfig(){
+  // Loại "Mua hàng tồn kho" / chưa chọn → không có thông tin theo loại
+  let html='';
+  if(state.type==='hopdong'){
+    const khList = [...new Set(Object.values(HOP_DONG).map(hd=>hd.khachHang))];
+    const opts = khList.map(kh=>`<option value="${kh}">${kh}</option>`).join('');
+    html = `<div class="cfg">
+      <div class="row grid3">
+        <div class="fld"><label>Khách hàng <span class="req">*</span></label>
+          <select id="cfgKh" onchange="onKhachHang()"><option value="">— Chọn khách hàng —</option>${opts}</select></div>
+        <div class="fld"><label>Hợp đồng bán (đã duyệt) <span class="req">*</span></label>
+          <select id="cfgHd" onchange="onHd()" disabled><option value="">— Chọn hợp đồng —</option></select></div>
+        <div class="fld"><label>Khách hàng (chủ đầu tư)</label>
+          <input class="txt" id="hdKh" readonly placeholder="—"></div>
+      </div>
+      <div id="hdInfo"></div>
+    </div>`;
+  } else if(state.type==='muakhac'){
+    html = `<div class="cfg">
+      <div class="row grid3">
+        <div class="fld"><label>Lý do mua <span class="req">*</span></label>
+          <select id="cfgLyDo" onchange="onLyDo()">
+            <option value="">— Chọn lý do —</option>
+            <option>Sửa chữa máy móc</option><option>Hàng cho/tặng</option><option>Phục vụ nội bộ</option><option>Khác</option>
+          </select></div>
+        <span id="lyDoExtra" style="display:contents"></span>
+        <div class="fld"><label>Diễn giải lý do</label>
+          <input class="txt" id="cfgLyDoNote" placeholder="Mô tả chi tiết lý do mua"></div>
+      </div>
+    </div>`;
+  }
+  $('#cfgArea').innerHTML = html;
+}
+
+function onLyDo(){
+  // "Hàng cho/tặng" → hiện thêm ô chọn khách hàng nhận hàng
+  if($('#cfgLyDo').value==='Hàng cho/tặng'){
+    const khList = [...new Set(Object.values(HOP_DONG).map(hd=>hd.khachHang))];
+    const opts = khList.map(kh=>`<option value="${kh}">${kh}</option>`).join('');
+    $('#lyDoExtra').innerHTML = `<div class="fld"><label>Khách hàng (nhận hàng cho/tặng) <span class="req">*</span></label>
+      <select id="cfgKhTang"><option value="">— Chọn khách hàng —</option>${opts}</select></div>`;
+  } else {
+    $('#lyDoExtra').innerHTML='';
+  }
+}
+function onKhachHang(){
+  state.khId = $('#cfgKh').value; state.hdId="";
+  const sel = $('#cfgHd');
+  sel.innerHTML = '<option value="">— Chọn hợp đồng —</option>';
+  if(state.khId){
+    Object.keys(HOP_DONG).filter(id=>HOP_DONG[id].khachHang===state.khId)
+      .forEach(id=>{ const o=document.createElement('option'); o.value=id; o.textContent=`${HOP_DONG[id].soHD} — ${HOP_DONG[id].ten}`; sel.appendChild(o); });
+  }
+  sel.disabled=!state.khId;
+  $('#hdKh').value=''; $('#hdInfo').innerHTML=''; resetStep3();
+}
+function onHd(){
+  state.hdId = $('#cfgHd').value;
+  if(!state.hdId){ $('#hdKh').value=''; $('#hdInfo').innerHTML=''; resetStep3(); return; }
+  const hd = HOP_DONG[state.hdId];
+  $('#hdKh').value = hd.khachHang + (hd.diaBan?` · ${hd.diaBan}`:'');
+  $('#hdInfo').innerHTML = `<div class="row grid3" style="margin-top:14px">
+    <div class="fld"><label>Số HĐ · Ngày ký</label><input class="txt" readonly value="${hd.soHD} · ${hd.ngayKy}"></div>
+    <div class="fld"><label>Nhà cung cấp</label><input class="txt" readonly value="${hd.ncc}"></div>
+    <div class="fld"><label>Thời hạn thực hiện HĐ</label><input class="txt" readonly value="${hd.thoiHan||'—'}"></div>
+  </div>`;
+  renderDetail();
+}
+
+/* ============== STEP 3 — bảng chi tiết ============== */
+function renderDetail(){
+  $('#step3').classList.remove('dim');
+  if(state.type==='hopdong') $('#detailArea').innerHTML = tplHopDong();
+  else $('#detailArea').innerHTML = tplDanhMuc();
+  $('#actArea').style.display='flex';
+  bindInputs(); recompute();
+}
+
+// cụm cột hàng hóa dùng chung
+function headGoods(){
+  return `<th>Tên hàng hóa</th><th>Tên thương mại</th><th>Mã NSX</th><th>Hãng/nước SX</th><th>ĐVT</th><th>Quy cách</th>`;
+}
+function cellGoods(it){
+  return `<td class="nm">${it.ten}</td><td class="nm">${it.tm}</td><td class="mono">${it.ma}</td><td>${it.hang}</td><td>${it.dvt}</td><td>${it.qc}</td>`;
+}
+
+/* ---- Loại 1: hàng hóa thuộc HĐ ---- */
+function tplHopDong(){
+  const hd = HOP_DONG[state.hdId];
+  let body='', curPhan='';
+  hd.items.forEach(it=>{
+    if(it.phan!==curPhan){ curPhan=it.phan; body+=`<tr class="grp"><td colspan="12">${curPhan}</td></tr>`; }
+    const rem=itemRemain(it);
+    body+=`<tr data-rem="${rem}">
+      <td class="stt"></td>${cellGoods(it)}
+      <td class="num">${fmtN(it.slHd)}</td><td class="num">${fmtN(it.slDx)}</td>
+      <td class="num ${rem>0?'rem-ok':'rem-bad'}">${fmtN(rem)}</td>
+      <td class="num"><input class="cell sl" data-v value="0"></td>
+      <td><input class="cell wide" placeholder="ghi chú"></td></tr>`;
+  });
+  return `<div class="section-title">Hàng hóa thuộc hợp đồng ${hd.soHD}</div>
+    <div class="scroll"><table class="t" id="dtl">
+      <thead><tr><th>STT</th>${headGoods()}
+        <th class="num">SL theo HĐ</th><th class="num">SL đã đề xuất</th><th class="num">SL còn lại</th>
+        <th class="num">SL đề xuất nhập</th><th>Ghi chú</th></tr></thead>
+      <tbody>${body}</tbody></table></div>
+    <div class="hint">Nhập <b>SL đề xuất nhập</b> ở các dòng cần mua. Vượt quá <b>SL còn lại</b> sẽ được cảnh báo (không chặn lưu).</div>`;
+}
+
+/* ---- Loại 2 & 3: chọn từ danh mục ---- */
+function tplDanhMuc(){
+  return `<div class="scroll"><table class="t" id="dtl">
+      <thead><tr><th>STT</th>${headGoods()}<th class="num">SL đề xuất</th><th>Ghi chú</th><th></th></tr></thead>
+      <tbody></tbody></table></div>
+    <button class="addrow" onclick="openGoodsModal()">+ Chọn hàng hóa</button>
+    <div class="hint">Chọn hàng hóa từ <b>danh mục hàng hóa</b> chung. Có thể thêm nhiều mặt hàng qua popup tìm kiếm.</div>`;
+}
+function addGoodsRow(idx){
+  const it = DANH_MUC[idx];
+  const tb = $('#dtl tbody');
+  if(tb.querySelector(`tr[data-idx="${idx}"]`)) return;   // tránh trùng
+  const tr=document.createElement('tr'); tr.dataset.idx=idx;
+  tr.innerHTML = `<td class="stt"></td>${cellGoods(it)}
+    <td class="num"><input class="cell sl" data-v value="0"></td>
+    <td><input class="cell wide" placeholder="ghi chú"></td>
+    <td><button class="del" onclick="this.closest('tr').remove();recompute()">✕</button></td>`;
+  tb.appendChild(tr); bindInputs(); recompute();
+}
+
+/* ---- Popup chọn hàng hóa từ danh mục ---- */
+function openGoodsModal(){
+  $('#gmSearch').value='';
+  renderGmList(DANH_MUC.map((it,i)=>({it,i})));
+  $('#goodsModal').showModal();
+}
+function renderGmList(list){
+  const tb = $('#dtl tbody');
+  $('#gmList').innerHTML = list.map(({it,i})=>{
+    const added = tb && tb.querySelector(`tr[data-idx="${i}"]`);
+    return `<label class="gm-item${added?' added':''}">
+      <input type="checkbox" value="${i}" ${added?'checked disabled':''} onchange="updateGmCount()">
+      <span class="gm-name">${it.ten} <span class="muted">(${it.tm})</span></span>
+      <span class="gm-meta mono">${it.ma}</span>
+      <span class="gm-meta">${it.dvt} · ${it.phan}</span>
+    </label>`;
+  }).join('') || `<div class="muted" style="padding:10px">Không tìm thấy mặt hàng phù hợp.</div>`;
+  updateGmCount();
+}
+function filterGm(){
+  const q=$('#gmSearch').value.toLowerCase().trim();
+  const list=DANH_MUC.map((it,i)=>({it,i}))
+    .filter(({it})=>(it.ten+' '+it.tm+' '+it.ma+' '+it.hang+' '+it.phan).toLowerCase().includes(q));
+  renderGmList(list);
+}
+function updateGmCount(){
+  const n=$('#gmList').querySelectorAll('input:checked:not(:disabled)').length;
+  $('#gmCount').textContent=n+' mặt hàng đã chọn';
+}
+function confirmGoods(){
+  $('#gmList').querySelectorAll('input:checked:not(:disabled)').forEach(c=>addGoodsRow(+c.value));
+  closeGoodsModal();
+}
+function closeGoodsModal(){ $('#goodsModal').close(); }
+
+/* ============== compute + validate ============== */
+function bindInputs(){
+  document.querySelectorAll('#detailArea input[data-v]').forEach(inp=>{
+    inp.removeEventListener('input', recompute);
+    inp.addEventListener('input', recompute);
+  });
+}
+function renumber(){
+  let i=0;
+  document.querySelectorAll('#dtl tbody tr').forEach(tr=>{
+    if(tr.classList.contains('grp')) return;
+    const c=tr.querySelector('.stt'); if(c){ i++; c.textContent=i; }
+  });
+}
+function recompute(){
+  let count=0, totSl=0, over=0;
+  document.querySelectorAll('#dtl tbody tr').forEach(tr=>{
+    const inp=tr.querySelector('.sl'); if(!inp) return;
+    const sl=parseNum(inp.value);
+    if(sl>0) count++;
+    totSl+=sl;
+    if(tr.dataset.rem!==undefined){
+      const bad = sl>(+tr.dataset.rem);
+      inp.classList.toggle('bad', bad);
+      if(bad) over++;
+    }
+  });
+  renumber();
+  renderFoot(count, totSl, over);
+}
+function renderFoot(count, totSl, over){
+  let banner='';
+  if(state.type==='hopdong' && over>0) banner=`<span class="banner bad">⚠ Có ${over} mặt hàng vượt số lượng còn lại của HĐ (vẫn lưu được)</span>`;
+  else if(count>0) banner=`<span class="banner ok">✓ Hợp lệ — ${APPR_LABEL[state.type]}</span>`;
+  else banner=`<span class="muted">Chưa nhập số lượng đề xuất cho mặt hàng nào</span>`;
+  $('#footArea').innerHTML = `<div class="foot">
+    <div>Tổng đề xuất: <span class="tt">${count} mặt hàng</span>
+      <span class="muted" style="font-size:12px"> · tổng số lượng: <b>${fmtN(totSl)}</b></span></div>
+    <div>${banner}</div></div>`;
+}
+
+/* save (luôn cho lưu — không chặn) */
+document.addEventListener('click', e=>{
+  if(e.target && e.target.id==='btnSave'){
+    alert('Đã lưu "'+TYPE_LABEL[state.type]+'".\nCấp duyệt: '+APPR_LABEL[state.type]+'.\n(Prototype — chưa ghi xuống dữ liệu thật.)');
+  }
+});
+</script>
+</body>
+</html>
