@@ -18,6 +18,14 @@
   Trạng thái: CODE DONE (BE B1-B5 + FE F1-F11 + P3 tách bảng service riêng cho BOM). Chờ E2E browser test.
   Scope: Dòng dịch vụ/chi phí trong BOM + Quotation chọn từ danh mục `costs` ERP (mysql2; chỉ status=1 & kind_of=2, phân loại bằng revenue_calculation 1=Dịch vụ có tính DT / 0=Chi phí khác, type=null) + tạo nhanh ghi thẳng `costs`. Popup hợp nhất "Thêm mới" 2 tab (Hàng hoá ERP / Dịch vụ & Chi phí — CostCatalogPanel). Quick-create overlay z-index 5300. P3: BOM tách "Dịch vụ & Chi phí khác" thành bảng riêng `bom_list_service_items` (đồng nhất quotation_service_items), copy sang báo giá khi tạo. Ghi mysql2 trực tiếp (created_by qua TpEmployee). Branch `tpe-develop-assign`.
   Checkpoint: 2026-06-05 — Phase P12→P19 DONE (sau P11): P12 createFromRequest copy service items BOM→báo giá; P13-P14 chốt tỷ lệ giá vốn (tự lập khoá giá vốn tính từ rate ERP; từ BOM nhập cả giá vốn+giá bán, PM tính tỷ lệ + ghi rate_value_capital về ERP khi lưu — syncServiceCostRatesToErp); P15 hiển thị tỷ giá + ngày tạo (edit toolbar + view); P16 fix validate giá dịch vụ false-positive (bỏ check unit_id + giá vốn>0, giữ giá bán>0); P17-P18 validate con không trùng mã CHA trực tiếp (so theo erp_product_id, không chặn hàng tạm theo code) + dedupe mã hàng tạm khi gộp BOM; P19 khoá sửa mã hàng tạm màn edit. Compile sạch + php -l OK. Bước tiếp: user E2E test P12→P19 + (tồn) chốt BOM aggregate có cho thêm dịch vụ thủ công không.
+- elearning-exam-mode → @junfoke → .plans/elearning-exam-mode/plan.md
+  Trạng thái: CODE DONE toàn bộ (BE+FE, additive — không đụng luồng course cũ). Chờ user chạy 2 migration + build elearning + verify browser. Chi tiết phase + checkpoint xem plan.md. Spec: docs/superpowers/specs/2026-06-15-elearning-exam-mode-design.md.
+  Kiến trúc: engine thi NHẬN BIẾT SUBJECT (tách khỏi course), deep-link theo subject_id (route /training/subjects/{id}/exams/{examId}/todo, tái dùng ExamToDoForm). Chỉ employee thi.
+  Tổng kết phase: P1 chặn auto-done exam-mode • P2 migration exam_test_results.subject_id + subject_enrollments.exam_score/exam_result (CHƯA chạy) + getForSubjectTodo + canReplyDoExamSubject • P3 syncSubjectExamCompletion (chấm theo exam_score_rule → set done + chứng chỉ) • P4 endpoint exam-status • P5 FE (màn làm bài hrm-client + DetailEnrollCard khối exam-mode) • P7 chấm tự luận subject (ExaminerService UNION subject_exams/graders) • P8 notify elearning khi chấm xong (type ExamGraded → màn khóa học xem điểm).
+  LƯU Ý: không tự chạy migration. DEFER: widget dashboard chờ chấm.
+  Tóm tắt: .plans/elearning-exam-mode/design.md
+  Scope: Xử lý khóa `evaluation_mode='exam'` ở elearning — học viên vẫn học bài, nhưng làm bài thi đi theo luồng đào tạo cũ (HRM, deep-link); điểm quyết định hoàn thành + chứng chỉ. Nút "Làm đề thi" thay "Tiếp tục học", gate theo `exam_participation_required` (=1 cần đạt `exam_min_required_percent` mới được thi; =0 thi ngay). Phát hiện: Training đã có luồng thi cho employee (exam_test_results/ExamTestResult) nhưng CHƯA có logic set enrollment done theo điểm; elearning chưa có route exam; `recalculateCourseProgress` đang tự done theo % bài (sai cho exam-mode). Quyết định mở: deep-link HRM, mối nối subject↔ExamTestResult.course_id, ai set done theo điểm, employee vs external learner.
+
 - elearning-notification-center → @junfoke → .plans/elearning-notification-center/plan.md
   Trạng thái: CODE DONE + VERIFIED (2026-06-15). User xác nhận chuông hiện thông báo onboarding thật, click điều hướng góc học tập. Chờ merge. Tiếp nối onboarding-auto-enroll.
   Điều chỉnh sau verify: chuông hiện cho mọi user đã đăng nhập (learner rỗng); trigger auto-enroll chuyển sang NotificationController::index (noti hiện ngay sau đăng nhập ở mọi trang); ghi DB notification đồng bộ (không cần queue worker) gom trong OnboardingAutoEnrollService::runAndNotify().
@@ -138,6 +146,7 @@
 
 - elearning-lesson-viewer → @junfoke → .plans/elearning-lesson-viewer/plan.md
   Trạng thái: Code DONE (14/14 task). Browser test passed. Chờ kết nối API thật (→ learning-session-api).
+  Fix 2026-06-16: đổi bài học hết nháy spinner toàn màn (App.vue routeKey cố định cho route subject-learn). Chờ verify.
   Spec: docs/superpowers/specs/2026-05-28-elearning-lesson-viewer-design.md
   Scope: FE elearning — màn học đầy đủ (viewer YouTube+PDF+HTML, sidebar outline, tracking giả lập, prerequisite, focus mode, tabs, mock data). SCORM mở rộng sau.
 

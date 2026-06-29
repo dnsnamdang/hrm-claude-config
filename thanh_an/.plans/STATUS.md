@@ -5,16 +5,27 @@
 
 ## Đang làm
 
-- **Thanh lý hợp đồng — prototype UI** — Dựng prototype HTML tĩnh `pages/contract/acceptance_report/thanh_ly_demo.html`: tổng hợp BBNT của 1 HĐ + đối chiếu thanh toán. Dùng lại CSS + DATA của `bbnt_demo (2).html`. 3 bảng TẬP 1/2/3 dạng tab; có ô nhập tay (Giá trị thanh toán → Còn chưa TT, Ngày thanh lý, Kết luận); KHÔNG chữ ký. Chưa nối BE. (@khoipv) — 2026-06-22, **đang dựng HTML**
-  - Spec: `docs/superpowers/specs/2026-06-22-contract-liquidation-demo-design.md`
-  - Design tóm tắt: `.plans/contract-liquidation/design.md`
-  - Plan: `.plans/contract-liquidation/plan.md`
+_(chưa có)_
 
 ## Tạm dừng
 
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Demo "Tạo đề xuất nhập hàng" (prototype)** — File demo HTML standalone cho màn tạo đề xuất nhập hàng, 3 loại (① Theo HĐ bán đã duyệt — BGĐ duyệt; ② Mua khác — lý do mua; ③ Mua hàng tồn kho NK/PPL — nước NK + kho đích + hạn dùng). Theo style `bbnt_demo (2).html`: wizard 3 bước, modal chọn hàng từ danh mục, cảnh báo (không chặn) khi L1 vượt SL còn lại. **Không nhập giá, không chọn NCC**; footer theo số mặt hàng + tổng SL. Output: `demos/demo-tao-de-xuat-nhap-hang.html`. (@khoipv) — 2026-06-26
+  - Spec: `docs/superpowers/specs/2026-06-25-purchase-proposal-demo-design.md`
+  - Design tóm tắt + Plan: `.plans/purchase-proposal-demo/design.md` · `plan.md`
+
+- **Lọc Hãng/nước SX — màn detail-report** — Thêm bộ lọc "Hãng, nước sản xuất" (dropdown chọn 1) vào màn `plan/detail-report`. Lọc báo giá có dòng hàng thuộc hãng/nước được chọn qua `whereExists` trên `quotation_tab_products.producer_country`. Dropdown lấy danh mục `producer_countries` (thêm param `all` bỏ lọc created_by). Export Excel tự hưởng filter. Không migration. (@khoipv) — 2026-06-26
+  - Spec: `docs/superpowers/specs/2026-06-25-detail-report-producer-country-filter-design.md`
+  - Design tóm tắt + Plan: `.plans/detail-report-producer-country-filter/design.md` · `plan.md`
+
+- **Thanh lý hợp đồng — build thật (BE + FE)** — Xây màn Biên bản thanh lý hợp đồng: chứng từ lưu DB có duyệt (CRUD giống BBNT), 1 thanh lý/HĐ, gom BBNT đã duyệt → 3 tab (Tổng hợp hóa đơn có nhập tay thanh toán + Chi tiết hóa đơn + Tổng hợp hàng hóa), snapshot khi lưu. 4 bảng (không khóa ngoại), 2 quyền mới (id 509/510), HĐ không đổi trạng thái. BE: migration + 4 entity + service (buildAggregation + CRUD) + request + controller (transaction) + 2 resource + routes (9). FE: helpers + menu + list + approve + form + Summary + Tabs. Đồng bộ UI theo BBNT (Phase 4–5), chặn trùng số hóa đơn (Phase 6), bổ sung cột hàng hóa, cập nhật bổ sung ngày+file (Phase 7), validate ngày thanh lý + base components (Phase 9). Excel/In để sau. (@khoipv) — 2026-06-25, verify UI PASS
+  - Spec build: `docs/superpowers/specs/2026-06-24-contract-liquidation-design.md`
+  - Plan chi tiết (11 task): `docs/superpowers/plans/2026-06-24-contract-liquidation.md`
+  - Spec prototype: `docs/superpowers/specs/2026-06-22-contract-liquidation-demo-design.md`
+  - Design tóm tắt + Plan tổng quát: `.plans/contract-liquidation/design.md` · `plan.md`
+
 - **Từ chối lập gói thầu** — Bổ sung chức năng từ chối lập gói thầu trên màn `bid_package/quotation` (báo giá đã gửi thầu, status=7). Quyền "Lập gói thầu" mới được từ chối, bắt buộc nhập lý do; báo giá → status 20, dự toán → status 19 (cùng nhãn "Từ chối lập gói thầu"). Không migration (tái dùng `reason_deny`). (@khoipv) — 2026-06-23, verify UI PASS
   - Spec: `docs/superpowers/specs/2026-06-23-bid-package-quotation-reject-design.md`
   - Plan chi tiết: `docs/superpowers/plans/2026-06-23-bid-package-quotation-reject.md`

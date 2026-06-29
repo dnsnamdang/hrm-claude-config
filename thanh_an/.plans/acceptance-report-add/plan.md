@@ -143,6 +143,15 @@ Mục tiêu: loại "theo tháng" lưu Từ/Đến tháng thành 2 cột DATE ri
 - [x] FE `Step2Config`: `applyPeriod` set `period_from/period_to` từ monthFrom/monthTo; đổi sang loại khác → clear. `AcceptanceReportForm`: khai báo 2 key trong formSubmit + load từ resource (buildPayload spread sẵn → store/update nhận).
 - [x] **Mở Từ/Đến tháng cho MỌI loại** (theo phản hồi): các loại khác "theo tháng" cũng chọn được Từ/Đến tháng nhưng KHÔNG bắt buộc; vẫn giữ ô "Kỳ / thời gian" (text). FE `Step2Config`: hiện Từ/Đến tháng luôn (Required chỉ khi theo tháng) + Kỳ chỉ khi !theo tháng; `applyPeriod` luôn set from/to mọi loại, chỉ ghép `period` khi theo tháng; bỏ clear khi đổi loại; `created` prefill 2 ô tháng từ `period_from/to` (fallback split chuỗi). BE: `applyPeriodRange` bỏ gate THANG (áp mọi loại); `StoreAcceptanceReportRequest` đưa `period_from`/`period_to` (nullable, `period_to after_or_equal period_from`) ra rule chung, `period` vẫn chỉ required khi theo tháng. (Backfill giữ nguyên type=1 — loại khác cũ không có dữ liệu tháng để tách.)
 
+### Phase 12f — Loại "Theo tháng": chọn hàng từ HĐ thay vì đổ mặc định (2026-06-26)
+Yêu cầu user: loại "Theo tháng" đang đổ TẤT CẢ hàng hóa HĐ mặc định → đổi sang **chọn hàng** từ HĐ (bắt đầu trống + nút "+ Chọn hàng hóa" mở GoodsPickerModal, có nút xóa dòng), GIỮ nguyên cột Số HĐ / Ngày HĐ mỗi dòng. FE-only, BE không đổi (payload items giữ `{product_id, sl_nghiem_thu, so_hd, ngay_hd}`).
+- [x] `FormByMonth.vue`: tách khỏi `ProductGrid` dùng chung; tự quản bảng riêng (tab "Nhập theo tháng") có picker (`GoodsPickerModal`, `excludeIds`=product_id đã có) + nút xóa dòng (`b-button btn-small` + icon trash, đồng nhất FormByInvoiceTotal/Detail); prefill từ `initial` khi edit/show (join với `items` lấy info HH); readonly khi show qua CSS `readonly-view` (`.addrow` + input/datepicker tự ẩn/khóa); giữ tab "Tổng hợp" tính trên `this.rows` đã chọn. Payload `detail.items` giữ `{product_id, sl_nghiem_thu, so_hd, ngay_hd}` → BE không đổi.
+- [x] Để nguyên `ProductGrid.vue` (vẫn phục vụ mathang/luyke); không sửa hàm dùng chung. Nhánh `variant==='thang'` trong ProductGrid trở thành code chết vô hại (không xóa để tránh đụng component dùng chung).
+
+### Phase 12e — Dropdown KH chỉ hiện KH đã từng lập HĐ (2026-06-24)
+Yêu cầu user: ở Bước 1, ô chọn Khách hàng chỉ hiển thị những KH mà **đã từng lập hợp đồng** (trong các HĐ do mình lập, đã duyệt) — đảo lại Phase 10 dòng 110 (đang load full danh mục). FE-only.
+- [x] `Step1SelectContract.vue`: `customerOptions` suy ra từ `this.contracts` (dedupe theo `customer_id`, nhãn "mã — tên" từ `customer_code/customer_name`); bỏ `getCustomers()`/`customers[]`/gọi API `category/customers`. Giữ fallback edit/show từ `contract`. Hint giữ nguyên ("chỉ HĐ do bạn lập").
+
 ---
 
 ### Checkpoint — 2026-06-16

@@ -41,6 +41,17 @@ Vừa hoàn thành: Toàn bộ 14/14 task. Browser test passed.
 Bước tiếp theo: Kết nối API thật thay mock data khi BE sẵn sàng. Mở rộng SCORM viewer.
 Blocked: (không có)
 
+## Fix: chuyển bài học nháy spinner toàn màn (2026-06-16)
+- [x] Task F1: Sửa `src/App.vue` — `<router-view :key>` không còn dùng `route.path` cho route `subject-learn`
+
+### Checkpoint — 2026-06-16
+Vừa hoàn thành: Fix bug chuyển bài học load lại toàn màn (spinner full-screen, mất mượt).
+Nguyên nhân: `App.vue` dùng `<router-view :key="route.path">`. `lessonId` là path param (`/khoa-hoc/:slug/hoc/:lessonId`) → đổi bài làm `route.path` đổi → key đổi → Vue remount cả `SubjectLearnView` → `onMounted(initCourse)` → `fetchCourseData()` bật `store.loading` → spinner toàn màn. Trong khi view đã có sẵn watcher `route.params.lessonId` → `selectLesson` (local, không fetch) để đổi bài mượt, nhưng bị remount vô hiệu hoá.
+Fix: thêm computed `routeKey` trong `App.vue` — route `subject-learn` trả key cố định `'subject-learn'` (không gồm lessonId/slug → đổi bài/đổi khoá trong lộ trình do watcher xử lý), các route khác giữ `route.path`. 1 file: `elearning/src/App.vue`.
+Đang làm dở: không.
+Bước tiếp theo: User rebuild elearning (Docker) + verify browser 4 case: (1) đổi bài ở sidebar không nháy spinner, (2) nút Trước/Sau mượt, (3) "Học khoá tiếp theo" trong lộ trình (đổi slug) vẫn nạp đúng khoá mới, (4) chuyển giữa trang chi tiết khoá ↔ lộ trình vẫn remount/refetch đúng.
+Blocked: không.
+
 #### Ghi chú fix trong quá trình test
 - YouTube mock URL đổi sang `dQw4w9WgXcQ` (embeddable)
 - Focus mode CSS: target `header.sticky` + `footer` + `.max-w-container`, đổi `<main>` → `<section>` tránh xung đột selector

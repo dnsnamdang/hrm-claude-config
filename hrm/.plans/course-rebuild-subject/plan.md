@@ -372,3 +372,85 @@ Mở form Sửa khoá → tích Public → đổi ảnh banner thì Public tự 
 **Đang làm dở:** Không.
 **Bước tiếp theo:** Test browser: mở Sửa khoá → tích Public → đổi banner + sửa vài field → Public + các field giữ nguyên (không bị reset).
 **Blocked:** Không.
+
+---
+
+### Fix — Khoá vẫn "Đã hoàn thành" sau khi rebuild bài học (chưa học bài nào)
+
+Màn chi tiết khoá ở elearning hiện badge "Đã hoàn thành" trong khi phần nội dung không bài nào được học.
+
+**Nguyên nhân gốc:** Badge trạng thái đọc từ `enrollment.status=3 (done)` lưu sẵn trong DB; còn `learn_status` từng bài suy ra từ `EnrollmentLessonProgress` khớp với `SubjectLesson` **hiện tại**. Khi admin sửa khoá làm thay đổi danh sách bài (`syncChaptersAndLessons` xoá/tạo lại `SubjectLesson`), enrollment `done` từ lần học cũ **không được tính lại** → bài mới chưa có progress nhưng enrollment vẫn `done`. Hai nguồn dữ liệu lệch nhau.
+
+- [x] `SubjectService::recalcEnrollmentsAfterRebuild` (private) — sau khi sync bài học, tính lại progress + status cho mọi enrollment của subject theo bộ bài hiện tại. <100% và không phải exam-mode → tụt `done` về `learning`/`enrolled` (xoá `completed_at`); đủ 100% → giữ/đặt `done`. Exam-mode chỉ cập nhật progress, KHÔNG đụng status (kết quả thi quyết định)
+- [x] `SubjectService::updateWithStructure` — gọi `recalcEnrollmentsAfterRebuild` trong transaction sau `syncChaptersAndLessons`
+- [x] Downstream chứng chỉ: KHÔNG cần xử lý — chứng chỉ KHÓA (`CertificateService`) và LỘ TRÌNH (`LearningPathCertificateService`) đều tính on-the-fly, gate theo `status==done` → tự thu hồi khi enrollment tụt khỏi done
+- [x] Downstream lộ trình: `SubjectService::recalcLearningPathCompletion` (private) — khi 1 khoá con bị demote khỏi done, demote luôn `learning_path_enrollments` đang `done` mà không còn đủ khoá hoàn thành (về `learning` + xoá `completed_at`), tránh lộ trình vẫn nằm tab "Chứng chỉ đã nhận" ở MyLearning
+- [ ] Verify: sửa khoá đã có người hoàn thành, thêm 1 bài mới → lưu → chi tiết elearning hết badge "Đã hoàn thành", về "Đang học"; sửa khoá không đổi bài → trạng thái giữ nguyên
+- [ ] Verify lộ trình: khoá thuộc lộ trình đã hoàn thành → demote khoá → lộ trình rời tab "Chứng chỉ" về "Tôi đang học", nút chứng chỉ lộ trình 403
+
+### Fix — Lộ trình vẫn "Đã hoàn thành" sau khi rebuild khoá (bug tương tự khoá học)
+
+`LearningPathService::update` gọi `syncSubjects` (xoá/tạo lại `learning_path_subjects`) nhưng KHÔNG đụng `learning_path_enrollments`. Thêm khoá mới vào lộ trình đã có người hoàn thành → lộ trình vẫn `done` dù khoá mới chưa ai học.
+
+- [x] `LearningPathService::recalcEnrollmentsAfterRebuild` (private) — sau `syncSubjects`, demote các enrollment lộ trình đang `done` mà không còn đủ khoá hoàn thành (toàn bộ khoá done) → về `learning` + xoá `completed_at`. Chứng chỉ lộ trình tự thu hồi (on-the-fly)
+- [x] `LearningPathService::update` — gọi `recalcEnrollmentsAfterRebuild` trong transaction sau `syncSubjects`
+- [ ] Verify: thêm 1 khoá mới vào lộ trình đã có người hoàn thành → lưu → lộ trình rời tab "Chứng chỉ" về "Tôi đang học"
+
+### Fix FE — Validate inline cho field bắt buộc builder (khoá học + lộ trình)
+
+Các field `:required` ở builder chỉ dựa BE 422, không chặn FE; `training_type_id` còn không có `<V2BaseError>` nên lỗi BE bị nuốt. Vi phạm convention CLAUDE.md.
+
+- [x] Khoá học: `SubjectBuilderForm.validate()` thêm check `training_type_id` + `skill_id`; `tabs/TabInfo.vue` thêm `<V2BaseError>` cho `error.training_type_id`
+- [x] Lộ trình: `LearningPathForm.vue` thêm `validate()` (name + training_type_id + skill_id + result_min_pass_percent khi rule MIN_PERCENT) + `clientErrors` merge vào `mergedErrors` + truyền `:errors` xuống TabResult; `add.vue`/`edit.vue` chặn submit qua `$refs.learningPathForm.validate()`
+- [x] Lộ trình: `TabInfo.vue` thêm `<V2BaseError>` cho `errors.training_type_id`; `TabResult.vue` thêm prop `errors` + `<V2BaseError>` cho `errors.result_min_pass_percent`
+- [ ] Verify browser: bấm Lưu khi để trống loại đào tạo/kỹ năng/tên (+ ngưỡng % khi MIN_PERCENT) → hiện lỗi inline + nhảy đúng tab, không submit
+
+## Checkpoint — 2026-06-24 (b)
+
+**Vừa hoàn thành:** Fix FE validate inline cho 2 builder. Khoá học bổ sung validate training_type/skill + V2BaseError training_type. Lộ trình thêm hẳn cơ chế validate FE (form expose `validate()`, page cha gọi qua ref trước submit) + V2BaseError cho training_type & ngưỡng %.
+**Đang làm dở:** Không.
+**Bước tiếp theo:** User verify browser. (BE #3 permission + #4 result_rule chờ user quyết định riêng.)
+**Blocked:** Không.
+
+---
+
+### DEFER — BE #4: Gom 1 chuẩn "lộ trình hoàn thành" theo `result_rule` (chưa làm)
+
+**Quyết định (2026-06-24):** HOÃN sau demo khách hàng (demo 2026-06-25). KHÔNG đụng trước demo vì rủi ro thấp nhưng không cần thiết gấp.
+
+**Vấn đề:** "lộ trình hoàn thành" hiện có **3 định nghĩa độc lập**:
+
+- Promote stored status — [`LearningSessionService::syncLearningPathCompletion`](../../hrm-api/Modules/Elearning/Services/LearningSessionService.php) dùng **"tất cả khoá done"** (all-done).
+- Cấp chứng chỉ — [`LearningPathCertificateService::isPathDone`](../../hrm-api/Modules/Elearning/Services/LearningPathCertificateService.php) dùng **`result_rule`** (ALL_COURSES/REQUIRED_ONLY/MIN_PERCENT).
+- Màn chi tiết learner — [`LearningPathLearnerResource::checkPathDone`](../../hrm-api/Modules/Training/Transformers/LearningPathResource/LearningPathLearnerResource.php) dùng **`result_rule`**.
+
+**Tiến độ (thanh %)**: luôn recompute = TB % khoá con (MyLearningService), KHÔNG đọc stored → luôn đúng, không bị ảnh hưởng.
+
+**Khi nào lệch:** chỉ khi lộ trình có khoá KHÔNG bắt buộc + rule REQUIRED_ONLY/MIN_PERCENT. Triệu chứng duy nhất: stored status (tab "Tôi đang học"/"Đã hoàn thành"/"Chứng chỉ đã nhận" + list "Bạn cần học") kẹt ở LEARNING dù cert + chi tiết đã báo done. Mọi khoá bắt buộc → 3 chuẩn trùng → không lệch.
+
+**Ngữ nghĩa đã CHỐT:** lấy `result_rule` làm chuẩn DUY NHẤT — với REQUIRED_ONLY/MIN_PERCENT, lộ trình DONE khi **thỏa rule DÙ khoá optional chưa xong** (đúng nghĩa "không bắt buộc").
+
+**Kế hoạch khi làm (sau demo):**
+
+- [ ] Tạo helper chung `LearningPath::isCompletedByRows($rule, $minPercent, $rows)` (pure, đặt trên entity Training; cả Elearning lẫn Training import được). `$rows` = `[{is_required, done}]`. Fix luôn edge REQUIRED_ONLY khi không có khoá bắt buộc (cert trả false, resource trả true → thống nhất).
+- [ ] `syncLearningPathCompletion` (promote) — dùng helper, cho phép set DONE theo rule (không còn bắt all-done).
+- [ ] `recalcLearningPathCompletion` (SubjectService) + `LearningPathService::recalcEnrollmentsAfterRebuild` — dùng helper, recompute đầy đủ (promote/demote) thay vì chỉ demote all-done.
+- [ ] `isPathDone` + `checkPathDone` — refactor gọi helper (đã result_rule, chỉ gom code).
+- [ ] Backfill 1 lần: tính lại `learning_path_enrollments.status` + `completed_at` theo helper cho enrollment cũ.
+- [ ] Verify: lộ trình optional + REQUIRED_ONLY → học xong khoá bắt buộc → vào đúng tab "Đã hoàn thành"/"Chứng chỉ".
+
+**Lưu ý cho demo 2026-06-25:** dùng lộ trình mọi khoá `is_required=true` để an toàn tuyệt đối; tránh dựng ca optional + REQUIRED_ONLY/MIN_PERCENT.
+
+### DEFER — BE #3: Gắn `checkPermission` route ghi (chưa làm)
+
+**Quyết định (2026-06-24):** Tạo quyền cho lộ trình sau cũng được (user OK defer).
+
+- Khoá học: quyền `Quản lý khoá học` (id 212) ĐÃ có trong seeder → gắn middleware cho store-builder/{id}/builder update+delete/lock/unlock; bỏ check trùng trong code; thêm null-check + check quyền cho lock/unlock.
+- Lộ trình: CHƯA có quyền trong seeder (mấy quyền "lộ trình" là *lộ trình thăng tiến* — khác) → phải thêm quyền mới (vd `Quản lý lộ trình học`) vào `PermissionsTableSeeder` RỒI mới gắn middleware.
+
+## Checkpoint — 2026-06-24
+
+**Vừa hoàn thành:** Fix khoá vẫn "Đã hoàn thành" sau khi rebuild bài học (`recalcEnrollmentsAfterRebuild`) + xử lý downstream: chứng chỉ tự thu hồi (on-the-fly), demote lộ trình chứa khoá (`recalcLearningPathCompletion`). Gọi sau `syncChaptersAndLessons` trong `updateWithStructure`.
+**Đang làm dở:** Không.
+**Bước tiếp theo:** User verify browser + re-save khoá "Test các cấu hình mới thêm" (SUB-0049) để fix bản ghi lỗi hiện có.
+**Blocked:** Không.
