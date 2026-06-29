@@ -5,13 +5,44 @@
 
 ## Đang làm
 
-_(chưa có)_
+- **Thanh lý hợp đồng — prototype UI** — Dựng prototype HTML tĩnh `pages/contract/acceptance_report/thanh_ly_demo.html`: tổng hợp BBNT của 1 HĐ + đối chiếu thanh toán. Dùng lại CSS + DATA của `bbnt_demo (2).html`. 3 bảng TẬP 1/2/3 dạng tab; có ô nhập tay (Giá trị thanh toán → Còn chưa TT, Ngày thanh lý, Kết luận); KHÔNG chữ ký. Chưa nối BE. (@khoipv) — 2026-06-22, **đang dựng HTML**
+  - Spec: `docs/superpowers/specs/2026-06-22-contract-liquidation-demo-design.md`
+  - Design tóm tắt: `.plans/contract-liquidation/design.md`
+  - Plan: `.plans/contract-liquidation/plan.md`
 
 ## Tạm dừng
 
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Từ chối lập gói thầu** — Bổ sung chức năng từ chối lập gói thầu trên màn `bid_package/quotation` (báo giá đã gửi thầu, status=7). Quyền "Lập gói thầu" mới được từ chối, bắt buộc nhập lý do; báo giá → status 20, dự toán → status 19 (cùng nhãn "Từ chối lập gói thầu"). Không migration (tái dùng `reason_deny`). (@khoipv) — 2026-06-23, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-23-bid-package-quotation-reject-design.md`
+  - Plan chi tiết: `docs/superpowers/plans/2026-06-23-bid-package-quotation-reject.md`
+  - Design tóm tắt: `.plans/bid-package-quotation-reject/design.md`
+  - Plan tổng quát: `.plans/bid-package-quotation-reject/plan.md`
+
+- **Biên bản nghiệm thu (BBNT) — đợt 2: cập nhật theo demo (2)** — Khớp màn thêm/sửa BBNT với `bbnt_demo (2).html`: (1) Bước 1 thêm dropdown Khách hàng (cascade KH→HĐ→Loại) + tiêu đề/hint "chỉ HĐ do bạn lập"; (2) ContractSummary thêm địa bàn (`customer_area_name`) + "lần nghiệm thu kế tiếp"; (3) Form Theo tháng thêm sub-tab "Tổng hợp (gộp hàng nhiều HĐ)"; (4) Form cthd **bỏ** tab Tổng hợp. BE: `selectableContracts` select thêm customer_id/customer_name (không migrate). FE 6 file. (@khoipv) — 2026-06-19, verify UI PASS
+  - Spec gốc: `docs/superpowers/specs/2026-06-16-acceptance-report-add-design.md`
+  - Spec đợt 2: `docs/superpowers/specs/2026-06-19-acceptance-report-add-demo2-changes-design.md`
+  - Plan: `.plans/acceptance-report-add/plan.md` (Phase 10)
+
+- **BBNT — bổ sung nhỏ (Phase 11 + 12)** — (11) Thêm hiển thị "Tổng hóa đơn" (read-only) lên header mỗi block loại "chi tiết từng hóa đơn". (12) Chức năng "Cập nhật bổ sung": sửa Ngày biên bản + bảng File lưu trữ (Tên tài liệu/File/Ghi chú) ở **mọi trạng thái** qua endpoint riêng `updateSupplement` (pattern "Tiến độ thực hiện" màn HĐ), chỉ owner/người có quyền duyệt; bảng mới `acceptance_report_files` (không khóa ngoại) + component `SupplementUpdate.vue`. (@khoipv) — 2026-06-22, verify UI PASS
+  - Spec 11: `docs/superpowers/specs/2026-06-22-acceptance-report-invoice-total-header-design.md`
+  - Spec 12: `docs/superpowers/specs/2026-06-22-acceptance-report-supplement-update-design.md`
+  - Plan 12 chi tiết: `docs/superpowers/plans/2026-06-22-acceptance-report-supplement-update.md`
+  - Plan tổng quát: `.plans/acceptance-report-add/plan.md` (Phase 11, 12)
+
+- **Cột "Số hóa đơn" — Nội dung công tác phí** — Thêm cột text `invoice_number` (không bắt buộc) vào bảng Nội dung công tác phí màn `timesheet/request-payment-working-fee`, sau cột "Nội dung", cả người tạo & người duyệt sửa được. BE: migration + 3 chỗ create trong service + resource. FE: `RequestPaymentWorkingFeeForm.vue` (header + input + default + colspan). (@khoipv) — 2026-06-18, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-18-working-fee-invoice-number-column-design.md`
+  - Plan: `.plans/working-fee-invoice-number-column/plan.md`
+
+- **In phiếu đề nghị thanh toán công tác phí** — Trang in mới `_id/print.vue` theo mẫu "GIẤY ĐỀ NGHỊ THANH TOÁN": header 2 cột (công ty/tỉnh theo người tạo) → người đề nghị → lặp từng phiếu công tác (bảng đủ cột đề xuất + duyệt + số hóa đơn) → bảng tổng hợp → lý do trễ hạn → khối ký. BE: thêm block `requester` vào `DetailRequestPaymentWorkingFeeResource`. FE: **modal popup** `components/modal/RequestPaymentWorkingFeePrintModal.vue` (giống `BusinessTripDecisionPrintModal`), mở từ dropdown danh sách; nút In dùng window.open + print. (@khoipv) — 2026-06-18, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-18-request-payment-working-fee-print-design.md`
+  - Plan: `.plans/request-payment-working-fee-print/plan.md`
+
+- **Biên bản nghiệm thu (BBNT) — màn thêm mới + Backend CRUD** — FE `pages/contract/acceptance_report/add.vue` wizard 3 bước, đủ 5 loại NT, UI lai, chia nhiều component con. BE đầy đủ (Modules/Category): 3 bảng + entities + service CRUD + meta (lần kế tiếp/loại được phép/lũy kế) + duyệt/từ chối + auto code. Quy tắc khóa loại **tonghd-sticky**. FE đã nối API thật (meta + submit + khóa loại). Đã có đủ **danh sách + thêm + chi tiết + sửa + duyệt/từ chối/xóa** (wizard tách `AcceptanceReportForm` dùng chung create/edit/show, prefill + readonly). type & hien_trang lưu integer. Migrate + route:list OK. (@khoipv) — 2026-06-18, verify UI PASS
+  - Spec: `docs/superpowers/specs/2026-06-16-acceptance-report-add-design.md`
+  - Plan: `.plans/acceptance-report-add/plan.md`
 - **In QUYẾT ĐỊNH cử đi công tác (Business Trip)** — Đổi bản in màn `timesheet/business_trip_assigns/:id/print` từ "GIẤY ĐI ĐƯỜNG" sang "QUYẾT ĐỊNH cử người lao động đi công tác" (copy mẫu từ `jobassignment/_id/print.vue`). 1 QĐ liệt kê tất cả NV. BE thêm field `employee_account_id`; FE viết lại template+script `print.vue`. (@khoipv) — 2026-06-16, verify UI PASS
   - Spec: `docs/superpowers/specs/2026-06-16-business-trip-print-design.md`
   - Plan: `docs/superpowers/plans/2026-06-16-business-trip-print.md`

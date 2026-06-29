@@ -2,6 +2,12 @@
 
 ## Đang làm
 
+- playwright-e2e → @dnsnamdang → .plans/playwright-e2e/plan.md
+  Trạng thái: PLAN DONE (2026-06-26). Spec + plan chi tiết đã viết. Chờ user chọn cách thực thi (subagent-driven / inline) để code Phase 0.
+  Spec: docs/superpowers/specs/2026-06-26-playwright-e2e-design.md | Plan: docs/superpowers/plans/2026-06-26-playwright-e2e.md | Tóm tắt: .plans/playwright-e2e/design.md
+  Scope: Tích hợp Playwright E2E cho hrm-client (Nuxt2). Thư mục `HRM/e2e/` độc lập Node 18+ (app Nuxt Node 14 — tách tránh xung đột), TypeScript, auth qua storageState (login.setup.ts), Page Object Model. Môi trường local FE 3000/API 8000. Pilot Phase 1: module Human (CRUD nhân viên). 2 mục tiêu: regression suite + Claude verify qua Playwright MCP. Ngoài scope: CI ngay, ERP, visual regression.
+  Bước tiếp: user review spec → writing-plans lập plan chi tiết → code Phase 0 Bootstrap.
+
 - quotation-shipping-cost → @dnsnamdang → .plans/quotation-shipping-cost/plan.md
   Trạng thái: CODE DONE Phase 1–17 (BE + FE edit/view/print + Excel + product-project). php -l sạch. Chờ user migrate + E2E. Branch `tpe-develop-assign`.
   Spec: docs/superpowers/specs/2026-06-06-quotation-shipping-cost-design.md
