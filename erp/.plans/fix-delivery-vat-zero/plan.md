@@ -51,3 +51,16 @@ Vừa hoàn thành: Sửa `app.directive.js:725` (early-return zero amount khi v
 Đang làm dở: chờ user verify browser
 Bước tiếp theo: user test repro 5 bước (mục Test)
 Blocked:
+
+### Checkpoint — 2026-06-19 (user báo "chưa được" trên firm-quotations/43974/edit)
+Điều tra lại:
+- Fix ĐÃ commit (9ce872b9c9, 15/06) và ĐÃ deploy: `curl js/angular/app.directive.js` từ production → dòng 727 `if (!scope.value && !scope.reCalculatePercent)` CÓ mặt.
+- Màn báo giá hãng (`sale/firm/quotations/partials/payment-info.blade.php:61-64`) DÙNG đúng directive `input-group-percent` (value=`_delivery_cost`, amount=`delivery_vat`, `disabled=true`, KHÔNG reCalc) → logic fix phải chạy khi gõ thành tiền=0.
+- `_delivery_cost` set qua `this.number=['delivery_cost']` → `parseNumberString("0")=0` → watch value=0 → amount=0. Logic ĐÚNG.
+=> Kết luận: **không phải lỗi code**. Nguyên nhân = **cache trình duyệt**: asset nhúng `?version={{ env('APP_VERSION','1') }}`; APP_VERSION vẫn '1' → URL `app.directive.js?version=1` không đổi → browser tiếp tục dùng bản JS cũ đã cache.
+
+Bước tiếp theo (cho user):
+1. Test ngay: hard refresh (Cmd/Ctrl+Shift+R) hoặc xoá cache → gõ thành tiền vận chuyển = 0 → VAT về 0.
+2. Vĩnh viễn cho mọi user: bump `APP_VERSION` trong .env SERVER production ('1'→'2') + clear config cache → URL `?version=2` ép mọi browser tải lại JS mới.
+Lưu ý: báo giá bán hàng thường (`resources/views/quotations/`) KHÔNG dùng directive này — nếu cũng lỗi ở màn đó là code path khác.
+Blocked:
