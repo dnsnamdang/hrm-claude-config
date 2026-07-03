@@ -25,9 +25,13 @@ Xem thêm memory: `feedback_hdsd_detail_level`, `reference_hdsd_format`, `refere
 
 ## Quy trình (4 bước)
 
-### Bước 1 — Khảo sát màn (đọc code)
-- Đọc `index.vue` / page chính để biết các tab, các modal, các nút, API gọi.
-- Dùng **agent Explore** quét toàn bộ component các tab/modal → liệt kê: hiển thị gì, cột bảng, nút (text+icon), nút mở modal/điều hướng gì, empty state, API endpoint.
+### Bước 1 — Khảo sát màn (đọc code — BẮT BUỘC đọc ĐỦ SOURCE MỌI LUỒNG LIÊN QUAN)
+User đã chốt: **không chỉ đọc FE của màn** — phải đọc source code **tất cả các luồng liên quan** để tài liệu mô tả đúng nghiệp vụ, không đoán từ UI:
+- **FE màn chính**: `index.vue` / page chính → tab, modal, nút, API gọi; quét toàn bộ component con (agent Explore/Opus).
+- **BE đầy đủ**: Routes (middleware/permission) → Controller → Service → Entity/Model → FormRequest (rule + message) → Resource → **Migration/Seeder** (cột, giá trị mặc định thật). Đọc cả bảng Log/History nếu có.
+- **LUỒNG XUÔI + NGƯỢC (downstream/upstream)**: grep tên Entity/Service/config xem **nơi nào KHÁC sử dụng** — vd màn cấu hình thì phải đọc service tiêu thụ cấu hình (cấu hình duyệt giá → `QuotationService::calculateApprovalLevel` + luồng gửi duyệt/TP/BGĐ + badge realtime trên form làm giá); màn tổng hợp thì đọc query gom từng loại dữ liệu (điều kiện lấy, loại trừ trạng thái nào). Trả lời được: **cấu hình/dữ liệu này sinh ra từ đâu, ảnh hưởng tới màn nào, chốt tại thời điểm nào, đổi rồi có tính lại không**.
+- **Modal/form tái dùng từ module khác**: đọc tận file gốc (mode view/edit/approve khác nhau thế nào), không suy diễn.
+- Kết quả khảo sát phải đủ để viết mục "Ý nghĩa nghiệp vụ / tác động" kèm **ví dụ số cụ thể** và các **edge case** (ranh giới ≥/<, giá trị rơi ngoài khoảng, quyền, thời điểm chốt dữ liệu).
 - Hỏi user nếu cần: bỏ tab nào không, format (mặc định Word), ảnh chụp thật hay placeholder.
 
 ### Bước 2 — Chụp ảnh thật (Playwright MCP)
@@ -69,6 +73,7 @@ Bìa → MỤC LỤC → DANH MỤC HÌNH ẢNH → **TỔNG QUAN PHẦN MỀM**
 - **Sửa / Duyệt / Nhập kết quả / Xử lý / Lịch sử / Xóa** (mô tả khác biệt, ảnh nếu cần).
 
 ## Checklist độ đầy đủ (tự kiểm trước khi giao)
+- [ ] Đã đọc source ĐỦ các luồng liên quan (FE màn + BE route→service→entity→migration + nơi khác tiêu thụ dữ liệu/cấu hình) — tài liệu có mục giải thích nghiệp vụ/tác động kèm ví dụ, không viết mò từ UI.
 - [ ] Mỗi nút "Tạo mới" có ảnh form thật + bảng từng trường + cột "Bắt buộc" + cột "Giá trị mặc định".
 - [ ] Đã ghi rõ giá trị điền sẵn (người tạo/người duyệt/người theo dõi/ngày/giờ/trạng thái/phòng ban…).
 - [ ] Mỗi thao tác thay đổi dữ liệu (Sửa/Duyệt/Từ chối/Nhập kết quả/Xóa) đều được mô tả: mở ra gì, nhập gì, lưu thế nào, kết quả.
