@@ -783,7 +783,190 @@
 - [ ] Task 42: Test lịch sử ghi log CRUD product
 - [ ] Task 43: Test in báo giá standalone
 
+### Phase 31: Logic hàng hoá cha-con (BOM + Báo giá) (2026-06-08)
+
+> Spec: `design-phase31.md`. Áp dụng cả BOM + Báo giá (type=1 từ BOM + type=2 tự lập). Branch `tpe-develop-assign`.
+>
+> **Bối cảnh đã verify (KHÔNG được làm sai):**
+> - Type=1 (từ BOM): `quotation_product_prices` chỉ là **overlay giá** key theo `bom_list_product_id`. Cấu trúc cha-con + attributes + `erp_product_id` lấy qua **join `bom_list_products`** trong `DetailQuotationResource` (nhánh else, dòng 72-123). KHÔNG copy `parent_id` ở các hàm `create()`.
+> - Type=2 (tự lập): mọi field nằm trên `quotation_product_prices` (có `parent_id`, `code`, `name`, `erp_product_id`). Resource nhánh if (dòng 20-67).
+> - `quoted_price` (giá bán) ĐÃ luôn trả trong resource (chỉ `estimated_price` bị gate quyền) → ẩn giá bán con hiện tại là do **FE template**.
+> - `show_children` per-phiếu → lưu trên `quotation_product_prices` overlay của dòng cha (cả 2 type) + `bom_list_products` cho màn BOM. KHÔNG đụng BOM gốc khi toggle trên báo giá.
+> - 2 editor FE TÁCH BIỆT: BOM = `BomBuilderEditor.vue` (+ BomBuilderTableCard/AddProductModal); Báo giá = `pages/assign/quotations/_id/edit.vue` (~3800 dòng) + `_id/index.vue` (view) + `QuotationPrintPreview.vue` (in). Sửa CẢ 2.
+> - Recipe snapshot xảy ra khi LƯU (BE): `BomListService` (BOM) + `QuotationService::saveProductsFromFE` (báo giá type=2 pick ERP combo). Type=1 thừa hưởng từ BOM, không re-fetch.
+> - Bảng "Tổng hợp giá trị" + footer TSLN chỉ lặp dòng CHA (`parent_id` null) → KHÔNG cộng dồn con. Hiện giá bán con là display-only, KHÔNG được cộng vào tổng.
+> - Dịch vụ tách bảng `bom_list_service_items`/`quotation_service_items` KHÔNG có `parent_id` → không đụng cha-con.
+
+#### 31.1 — Backend: DB + Entity
+
+- [x] Task 1: Migration `2026_06_08_000001_add_show_children_to_bom_and_quotation_products` — thêm `show_children` tinyint default 1 vào `bom_list_products` (after `parent_id`) + `quotation_product_prices` (after `parent_id`) ✓
+- [x] Task 2: `BomListProduct` + `QuotationProductPrice` (entity ĐÃ tồn tại, có `parent()`/`children()`, `$guarded=[]`) — `show_children` tự fillable (xác nhận cả 2 dùng `$guarded=[]`, không cần sửa) ✓
+
+#### 31.2 — Backend: Endpoint recipe children
+
+- [x] Task 3: `BomListController::getErpRecipeChildren(Request)` — input `erp_product_id` + `qty` (SL cha). Query `recipe_products` (mysql2, `env('DB_DATABASE_SECOND')`) theo `base_product_id`. Rỗng → trả `[]` (hàng lẻ) ✓
+- [x] Task 4: Map con (pattern `searchErpProducts`): info + giá + `qty = recipe.qty × qtyCha`, `source='ERP'`, `is_recipe_child=true`. `cost_price=null` nếu thiếu quyền. **KHÔNG lọc status=1** (snapshot giữ con ngừng bán) ✓
+- [x] Task 5: Route `GET /assign/bom-lists/erp-recipe-children` (cạnh `erp-products`) ✓
+
+#### 31.3 — Backend: BomListService (tạo/sửa cha-con)
+
+- [x] Task 6: `syncProducts()` (dòng 868-869) — lưu `show_children` cho dòng cha ✓
+- [x] Task 7: **Cách A** — recipe ERP read-only, BE tin payload FE cho con cha ERP (không re-derive). Không cần code thêm ✓
+- [x] Task 8: Bỏ rule cũ chặn con ERP dưới cha tạm (dòng 891-893). Thay bằng: con ERP dưới cha tạm thiếu quyền `Xem giá vốn hàng hoá` → `\Illuminate\Validation\ValidationException::withMessages`. Áp cả store+update ✓
+- [x] Task 9: Giữ nguyên strip con khi cha là dịch vụ (863-866) + auto roll-up giá nhập (FE) ✓
+
+#### 31.4 — Backend: QuotationService + Resource
+
+- [x] Task 10: Lưu `show_children` ở `upsertBomProducts` (dòng 817) + `saveDirectProduct` (dòng 901). Check quyền ERP-child gộp vào `validateParentChildRules` (type=2) ✓
+- [x] Task 11: `validateParentChildRules()` gọi đầu `upsertPrices` (dòng 775) — validate `quoted_price_cha × qty ≥ Σ(con)` cho cả type=1 (qty từ bom_list_products) + type=2 (qty từ payload), chỉ cha KHÔNG-ERP, epsilon 0.01, throw `\Illuminate\Validation\ValidationException` ✓
+- [x] Task 12: Xác nhận `create()/createFromRequest()/createFromBom()` KHÔNG cần copy `parent_id` (type=1 thừa hưởng từ BOM), `show_children` dùng DB default ✓
+- [x] Task 13: `DetailQuotationResource` — thêm `show_children` CẢ 2 nhánh (type=2 dòng 46, type=1 dòng 102, đều từ `$qpp` overlay). `quoted_price` con giữ trả như cũ ✓
+
+#### 31.5 — Frontend BOM (`BomBuilderEditor.vue` + components) + BE flag
+
+- [x] Task 14a: BE — `DetailBomListResource` thêm `can_view_cost_price` ✓
+- [x] Task 14b: `BomBuilderEditor.handleAddProductApply` (async, ~2400) — pick cha ERP → gọi `erp-recipe-children` → push con khoá (`lockedPrice`, `isRecipeChild`, qty/giá từ recipe); rỗng=hàng lẻ; for...of await tuần tự; try/catch ✓
+- [x] Task 14c: `mapProductToRow` (1030) thêm `showChildren`+`isRecipeChild`; `buildSavePayload` (2117) thêm `show_children` vào parent; `loadBomDetail` (897) set `canViewCostPrice` ✓
+- [x] Task 15: `BomBuilderAddProductModal` props `canViewCostPrice`+`isAddingChild`, computed `displayedProducts`/`hideErpForChild` ẩn ERP khi thêm con thiếu quyền + ghi chú; editor truyền prop (`addProductParentRowId`) ✓
+- [x] Task 16a: nút "Thêm con" thêm `&& !group.parent.erpProductId` (cả 2 nhánh có/không nhóm) ✓
+- [x] Task 16b: nút mắt toggle `group.parent.showChildren` trên dòng cha ERP có con (cả 2 nhánh), độc lập `group.expanded` ✓
+
+#### 31.6 — Frontend Báo giá (`quotations/_id/edit.vue` + `_id/index.vue` + print)
+
+- [x] Task 18: `edit.vue` — hiện giá bán con của cha **tự tạo** (cha ERP giữ `—`) + cột thành tiền con; validate inline `isParentSalePriceInvalid` + flag `priceTouched`, chặn `save(strict)`; tổng/TSLN không đổi (FE-A1 ✓ — chờ test browser)
+- [x] Task 17: `edit.vue` — pick cha ERP gọi recipe-children (async, parent_id=`_tempId`→BE resolve) + con khoá; ẩn nút thêm con cha ERP; toggle show_children; truyền props modal; load+save show_children. **+ Fix: guard cha ERP trong `refreshParentRollups` (edit) + `refreshParentTotals` (BOM) — không roll-up đè giá vốn combo ERP** ✓
+- [x] Task 19: `index.vue` + `QuotationPrintPreview.vue` — con cha tự tạo hiện giá bán + thành tiền (cha ERP `—`); `visibleChildren()`/điều kiện ẩn con khi cha ERP `show_children=0`; print đổi chữ ký `renderChildCell(...,parent,...)` + điều kiện per-cha kèm `config.includeChildren`. Thêm helper `isErpProduct` ở cả 2 file. (Toggle ở edit.vue đã làm ở Task 17) ✓
+
+#### 31.7 — Frontend: export tôn trọng show_children
+
+- [x] Task 20: `resources/views/exports/bom_list.blade.php` (2 nhánh) + `BomListExport::registerEvents` — ẩn dòng con khi cha ERP `show_children=0` (bổ sung cho `includeChildren` global); row-count blade khớp registerEvents ✓
+
+#### 31.9 — Fix sau verify (2026-06-09)
+
+- [x] Fix quyền chọn con ERP ở chế độ TẠO MỚI: BOM `canViewCostPrice` chỉ set trong `loadBomDetail` (edit) → create=false (chặn nhầm); báo giá item mặc định `can_view_import_price:true` → create=true (quá lỏng). Sửa: lấy quyền strict từ `$store.state.permissions` (name 'Xem giá vốn hàng hoá'). BOM set trong `mounted`; edit.vue thêm computed `canPickErpChild` (riêng, không đụng `canViewCostPrice` hiển thị) + repoint prop modal. Khớp BE gate (strict, không gồm isCreator) ✓
+- [x] Fix rule cũ P17 còn sót trong `BomBuilderAddProductModal`: `allProducts` loại bỏ ERP khi `isAddingChildToNonErp` (cha tạm) bất kể quyền → cha tạm KHÔNG chọn được con ERP dù có quyền (báo "chỉ được chọn hàng tự tạo làm hàng con"). Sửa: `allProducts` luôn gồm ERP, để `hideErpForChild` (theo quyền) lo ẩn/hiện; bỏ computed `isAddingChildToNonErp` + cảnh báo cũ ✓
+- [x] Fix UX 422 khi lưu báo giá có con ERP dưới cha tạm: validate `validateParentChildRules` (BE dòng 845) chặn vì giá bán cha < Σ giá bán con (con ERP tự điền list_price). Giữ rule. Sửa UX: (1) FE chuyển check cha≥con ra MỌI nút lưu (trước chỉ ở `strict`/gửi duyệt) → `handleSaveDraft` cũng chặn client-side + inline `priceTouched` + toast; (2) BE `QuotationController::update` thêm `catch (ValidationException)` trả message cụ thể thay vì "The given data was invalid." ✓
+- [x] Đồng nhất validate dịch vụ giống hàng hoá (chặn khi GỬI DUYỆT, cả FE+BE): nội dung = tên + SL>0 + giá bán>0 + CK≤đơn giá. FE: thêm inline đỏ `cell-invalid` ở ô giá bán DV (giống goods); name/SL/giá bán đã có trong `validatePrices` + CK trong `validateDiscountPerItem` (toast chung). BE `ensureAllPricesPositive`: DV thêm SL>0+tên+CK≤giá, **bỏ** chặn giá vốn DV=0 (over-strict cũ); goods thêm CK≤giá cho đồng bộ; message gộp rõ ràng ✓
+- [x] Fix gửi duyệt báo "Chưa nhập đủ giá" cho hàng ERP có giá bán nhưng giá nhập (cost ERP)=0: ô giá nhập ERP khoá, user không sửa được → KHÔNG được bắt buộc. Bỏ chặn giá nhập với hàng ERP ở `validatePrices` (FE) + `ensureAllPricesPositive` (BE). Giá nhập chỉ bắt buộc + báo inline (đã có ở ô) cho hàng TỰ NHẬP ✓
+- [x] validate giá cha ≥ Σ con CHỈ khi gửi duyệt (lưu tạm bỏ qua): FE chuyển check vào khối `strict` (chỉ `openSubmit`). BE tách `validateParentChildRules` (upsertPrices, mọi save) chỉ còn **check quyền** con ERP; thêm `assertParentSalePriceFloor` (DB-based, type1+type2) gọi ở `submit()` + `selfApprove()` (chỉ lúc gửi duyệt/tự duyệt) ✓
+- [x] Fix nút "Ẩn/Hiện con" (báo giá edit) không có tác dụng: màn edit render con qua `getChildren` không phụ thuộc `show_children`. Thêm method `visibleChildren(parent)` (ẩn con khi cha ERP + show_children=0) cho vòng render con; totals/validate vẫn dùng `getChildren`. Bỏ chặn nuốt lỗi recipe (log + toast) ✓
+- [x] SL con recipe KHOÁ + tự nhân theo SL cha (đổi quyết định cũ "không re-scale") — báo giá: BE endpoint trả `recipe_qty`; FE lưu `_recipeUnitQty` (load phục hồi = qty/SL cha), input SL con `:disabled="isRecipeChild"`, `@input` SL cha → `onParentQtyChange` nhân lại con. Bỏ spinner input SL (class `.no-spin` + CSS) ✓
+- [x] Đồng nhất BOM: `BomBuilderEditor` lưu `recipeUnitQty` lúc tạo con + derive khi load (`mapProductsToGroups`) + method `onParentQtyChange` (ERP scale con + refresh, tạm chỉ refresh); `BomBuilderTableCard` input SL cha `@input` emit `parent-qty-change` + SL con `:disabled` khi cha ERP + class `.no-spin` (4 input) + CSS. Báo giá đã test PASS ✓
+- [x] (REVERTED — user yêu cầu giữ nguyên giá ERP, không tự roll-up) Đã khôi phục guard `if isErpProduct return` trong refreshParentRollups (edit) + refreshParentTotals (BOM); bỏ BE `rollupParentImportCost`. Thay bằng VALIDATE: giá vốn cha < Σ giá vốn con → CHẶN gửi duyệt (không sửa giá). FE `isParentImportInvalid` + check trong save(strict) (gate canViewCostPrice); BE `assertParentImportFloor` gọi ở submit()+selfApprove() (check cả cha ERP). ✓
+- [x] Validate bắt buộc "Điều khoản thanh toán" khi gửi duyệt: FE `validateForm` (strip HTML rich editor) + label `required` + lỗi inline; BE `submit()` guard `strip_tags(payment_terms)` rỗng → throw ✓
+- [x] Bỏ hiển thị số tiền CK dạng âm (5 chỗ): edit.vue (dòng V + footer pricing), index.vue (dòng V + bảng tổng cũ), QuotationPrintPreview (tổng CK) — bỏ dấu `-`, giữ màu đỏ ✓
+- [x] Tổng "Thành tiền nhập" = Σ dòng CHA (Cách A, user duyệt): sửa `totalImport` + `productImportTotal` ở edit.vue + index.vue (bỏ kiểu Σ con cho dòng-có-con → dùng `lineImportTotal(p)`/`lineImport(p)` của cha). Bảng Tổng hợp (summaryBreakdown FE + computeSummaryBreakdown BE) vốn đã Σ dòng cha. Giờ đồng bộ: line-items + Tổng hợp + in đều = Σ dòng cha ✓
+- [x] Sync màn xem ↔ tạo/sửa: dòng V "Tổng giá trị" cột CK ở index.vue hiện `-X` đỏ (text-danger) giống edit (trước hiện plain). Đã rà: cấu trúc bảng tổng hợp (I-V, cột), hasCk≡discountMethod, TSLN trước/sau CK, auto-allocation — đều khớp. (Bảng "CK tổng" edit có thêm cột Kiểu/% để nhập — index read-only 2 cột là hợp lý, không đổi) ✓
+- [x] Màn xem chi tiết: layout CK tổng + Tổng hợp giá trị đổi từ side-by-side 50/50 sang **full width stacked** (giống edit/create) — `d-flex flex-wrap` + mỗi section `flex:0 0 100%` ✓
+- [x] Fixbug CK phân bổ tự động lệch giữa màn tạo (edit.vue) và xem chi tiết (index.vue): index.vue tính `autoAllocationMap` thiếu chi phí vận chuyển trong base + làm tròn nguyên (56) vs edit có VC + cents (54,57). Sửa index.vue khớp edit: thêm dòng SHIP (`item.shipping_cost`) vào base + dùng cents (÷100); `totalAutoAllocatedDiscount` loại SHIP để footer khớp dòng hiển thị. (Giá trị thực `allocated_discount_amount` vốn đã khớp — chỉ cột tham chiếu lệch) ✓
+- [x] Nới rộng + `white-space:nowrap` 4 cột header bảng báo giá (Thành tiền nhập 150px, CK phân bổ tự động 170px, Thành tiền bán 150px, Thành tiền sau VAT 170px) để title không xuống 2 dòng ✓
+- [x] Thêm confirm khi xoá hàng hoá khỏi báo giá (`removeDirectProduct`): `$bvModal.msgBoxConfirm` (okVariant danger); xoá cha → xoá luôn con kèm theo (cascade, dùng String so khớp parent_id — sửa luôn bug cũ orphan qua Number sai với cha tạm) ✓
+- [x] Fixbug: hàng cha ERP (bộ ghép) đang cho XOÁ con → ẩn nút Xoá con: báo giá `edit.vue` nút xoá con `v-if="!isRecipeChild(child)"`; BOM `BomBuilderTableCard` div action con (Sửa+Xoá) thêm `&& !group.parent.erpProductId` (2 nhánh). Thêm con đã ẩn sẵn (cha ERP không có nút "Thêm con"). Con recipe nay khoá hoàn toàn (không thêm/xoá/sửa/đổi SL) ✓
+- [x] Thêm text "- Bảng giá bán lẻ" sau tỷ giá ở 3 màn báo giá (edit `Tỷ giá: 1 USD = X VND (ngày) - Bảng giá bán lẻ`, index, print `exchangeRateText`). Chỉ hiện khi currency ≠ VND (đi kèm dòng tỷ giá) ✓
+- [x] Thêm validate báo giá: (1) VAT 0–100% + (2) CK% 0–100% → áp CẢ lưu nháp + gửi duyệt (`validateVat` mở rộng + `validateDiscountPercentRange`, gọi đầu `save()`); (3) thành tiền bán mỗi hàng hoá/dịch vụ > 0 → CHỈ gửi duyệt (khối strict, dùng `lineSaleAfterDiscount`/`svcSaleAfterDiscount`), CPVC không validate (giữ Phase 26 cho nháp). BE: VAT/CK range đã enforce sẵn qua `QuotationUpdateRequest` (min:0|max:100 cho products/service/shipping/quotation_discounts) ✓
+
+- [x] Fix rule cũ P17 còn sót chỗ THỨ 2 — `BomBuilderEditor.handleAddProductApply` (dòng 2346-2352): cha tạm + có item ERP → chặn cứng `'Hàng cha là hàng tự tạo — không được thêm hàng ERP làm hàng con.'` bất kể quyền (lần fix trước chỉ gỡ ở AddProductModal `allProducts`). Triệu chứng: có quyền, popup hiện hàng ERP, chọn → vẫn báo lỗi & không thêm được. Sửa: thay chặn cứng bằng guard theo quyền `!this.canViewCostPrice` (đồng nhất message + logic BE `BomListService:892`). Có quyền → cho thêm con ERP dưới cha tạm ✓
+
+- [x] Fix cột "CK phân bổ tự động" màn XEM (index.vue) làm tròn nguyên (55, 23) trong khi màn tạo/sửa (edit.vue) giữ 2 số lẻ (54,57 / 22,74) → lệch hiển thị. Nguyên nhân: `index.formatMoney` dùng `Math.round(n)`, edit `formatMoney` không round. Giá trị `autoAllocationMap` hai bên đã khớp (cents) từ fix trước — chỉ lệch ở format. **Phương án 2 (user chọn):** bỏ `Math.round` ở `formatMoney` chung của index.vue → TOÀN BỘ cột tiền màn xem giữ số lẻ giống edit (đồng nhất hoàn toàn). Print/export là component riêng (`QuotationPrintPreview.vue`), không bị ảnh hưởng ✓
+
+#### 31.8 — Test thủ công
+
+- [ ] Task 21: BOM — cha ERP có recipe → con auto, khoá, toggle ẩn/hiện; cha ERP không recipe → không con/không nút thêm
+- [ ] Task 22: BOM — cha tạm + con ERP (có quyền) / chặn khi không quyền; cha tạm + con tự tạo OK
+- [ ] Task 23: Báo giá type=1 (từ BOM) — cha-con hiển thị đúng, con cha tạm hiện giá bán, con cha ERP ẩn, toggle hoạt động
+- [ ] Task 24: Báo giá type=2 (tự lập) — pick ERP combo → con auto khoá; cha tạm + con; validate cha ≥ Σ con chặn lưu đúng
+- [ ] Task 25: Tổng hợp giá trị + TSLN + footer không đổi khi hiện giá bán con (không double-count); báo giá cũ vẫn chạy
+- [ ] Task 26: Import Excel báo giá giữ validate cha ≥ Σ con; in + export tôn trọng show_children
+
+### Phase 32: Làm tròn số nhất quán toàn báo giá (2026-06-10)
+
+> Quyết định (user chốt): GIỮ nút "Áp dụng" ghi đè đơn giá như cũ + LƯU `rounding_mode` theo báo giá. TẤT CẢ cột số tiền làm tròn theo mode đã chọn; chưa chọn = mặc định **tối đa 2 số lẻ**. Áp cho cả 3 màn: sửa (`edit.vue`), xem (`index.vue`), in (`QuotationPrintPreview.vue`).
+> Giá trị mode: -3 (nghìn), -2 (trăm), -1 (chục), 0 (nguyên), 1 (1 lẻ), 2 (2 lẻ), null = mặc định 2 lẻ.
+
+#### 32.1 — Backend
+
+- [x] B1: Migration `2026_06_10_000001_add_rounding_mode_to_quotations_table` — `tinyInteger('rounding_mode')->nullable()->after('discount_method')` ✓
+- [x] B2: Quotation entity — thêm cast `'rounding_mode' => 'integer'` ($guarded=[] sẵn) ✓
+- [x] B3: QuotationService — `'rounding_mode' => $data['rounding_mode'] ?? null` ở create standalone (dòng 80) + thêm `'rounding_mode'` vào loop update field (dòng 555). createFromBom để null ✓
+- [x] B4: QuotationUpdateRequest (`sometimes|nullable|integer|between:-3,2`) + QuotationStoreRequest (`nullable|integer|between:-3,2`) ✓
+- [x] B5: DetailQuotationResource — trả `'rounding_mode'` (int hoặc null) ✓. php -l 6 file sạch
+
+#### 32.2 — Frontend (helper format chung 3 màn)
+
+- [x] F1: `edit.vue` — computed `roundingPrecision` = `roundingMode ?? 2`; formatMoney round value + `maximumFractionDigits: max(0,p)`; thêm `rounding_mode` vào payload save (parseInt) + load từ detail (String). Option đầu select đổi thành "Mặc định (tối đa 2 số lẻ)" (bỏ disabled → quay lại null được). Cập nhật tooltip ✓
+- [x] F2: `index.vue` — computed `roundingPrecision` = `item.rounding_mode ?? 2`; formatMoney dùng precision ✓
+- [x] F3: `QuotationPrintPreview.vue` — computed `roundingPrecision` = `item.rounding_mode ?? 2`; formatMoney dùng precision ✓
+- [ ] F4: Test thủ công: chọn mode (vd Số nguyên) ở edit → save → xem + in đều hiển thị số nguyên; không chọn → cả 3 màn hiển thị tối đa 2 lẻ đồng nhất (⏳ chờ user migrate + E2E)
+
+- [x] Bỏ bắt buộc trường **Model** khi tạo hàng hoá TẠM (`BomBuilderAddProductModal.createProduct` — gỡ check `model_id` bắt buộc + bỏ `required` ở label Model). Modal dùng chung BOM + Báo giá → áp cả 2 màn. Brand/Origin/ĐVT/Tên vẫn bắt buộc
+- [x] Fix bug: gộp BOM thành phần (cha tạm + con ERP) vào BOM tổng hợp → con ERP biến thành mã hàng tạm `HH-xxxxx`. Nguyên nhân: `cloneSubBomGroup` map object hàng CON thiếu `erpProductId` (chỉ object cha có) → `dedupeTempGoodsCodes` coi là hàng tạm (đổi mã HH khi trùng) + lưu `erp_product_id=null`. Sửa: thêm `erpProductId/productType/costId/isRecipeChild` cho con + `showChildren` cho cha trong `cloneSubBomGroup`
+
+- [x] Màn DANH SÁCH báo giá (`quotations/index.vue`): cột "Tổng giá trị" (đang lấy `total_sale` = tổng tạm chỉ từ product prices, sai) → đổi label "Tổng giá trị sau VAT" + lấy `total_after_vat` (cột DB, BE `recomputeTotals` = sau CK + VAT). Gỡ cột "Tổng sau VAT" trùng. Fallback `|| total_sale` cho phiếu cũ total_after_vat=0
+- [x] Fix bug cache `total_after_vat` SAI (list hiện 1.748 vs chi tiết 3.781.747,99): `QuotationService::update()` gọi `upsertPrices`→`recomputeTotals` ở dòng 601 TRƯỚC khi lưu service items (605+) + CK tổng (644+) → cache theo giá dịch vụ CŨ. Sửa: thêm `recomputeTotals` LẦN CUỐI ở cuối `update()` (sau syncServiceCostRatesToErp) + `$quotation->load('serviceItems')` để đọc giá mới. computeTotals vốn đã cộng dịch vụ đúng. php -l sạch
+- [x] Backfill cache total_after_vat cho báo giá CŨ stale (user duyệt): chạy reflection gọi `recomputeTotals` toàn bộ (timestamps off). 22 phiếu xử lý, 3 phiếu sai đã sửa. BG23 = 3.781.747,99 / VAT 280.000 ✓ (local)
+- [x] Tạo seeder `RecomputeQuotationTotalsSeeder` (Modules/Assign/Database/Seeders) để chạy backfill trên PRODUCT: reflection gọi `recomputeTotals` toàn bộ, timestamps off. Lệnh: `php artisan db:seed --class="Modules\Assign\Database\Seeders\RecomputeQuotationTotalsSeeder"`. php -l sạch
+
+- [x] Fix bug: lập báo giá từ YCBG (yêu cầu xây dựng giá) báo "Bạn không phải Sale phụ trách dự án này" dù user có quyền xây giá (dự án Liên phòng ban). Nguyên nhân: `QuotationController::store()` gate CỨNG `main_sale_employee_id` cho mọi trường hợp. FE "Tạo báo giá" từ YCBG gọi `POST assign/quotations` với `pricing_request_id` → trúng gate sai. (`createFromRequest` có gate đúng `ensureBuildPricePermission` nhưng là DEAD CODE.) Sửa: khi có `pricing_request_id` → gate theo quyền xây giá theo `implementation_type` (BY_DEPT=2 → "Xây dựng giá bán theo phòng" + cùng phòng; SELF/CROSS_DEPT/null → "Xây dựng giá bán theo công ty"); không có → giữ gate sale phụ trách. php -l sạch
+  - Ghi chú (chưa sửa, ngoài phạm vi): path `create()` không đổi status YCBG (→ Đã có báo giá) + không khóa race như `createFromRequest`. Cần xác nhận có cần bổ sung không
+
+- [x] Màn `/assign/product-project`: chỉ lấy hàng hoá TẠM (tự tạo), bỏ hàng từ ERP. Thêm `->whereNull('p.erp_product_id')` vào `ProductProjectController::bomKeyQuery` (bom_list_products) + `quotationKeyQuery` (quotation_product_prices). Key query quyết định tập hàng → buildQuery/buildQuotationQuery (lấy chi tiết theo id đã lọc) không cần sửa. php -l sạch
+
+- [x] Fix bug: dịch vụ ERP (chọn từ danh mục, có `cost_id` + hệ số `rate_value_capital`) trong báo giá TỪ BOM (type=1) đang cho nhập cả giá bán + giá nhập. Đúng: giá nhập = giá bán × hệ số giá vốn, KHOÁ. Nguyên nhân: `svcCostLocked` + `onSvcSalePriceChange` gate `isDirectQuotation` → chỉ type=2 khoá+auto. Sửa (edit.vue): `svcCostLocked = svcHasRate` (khoá cả type=1+2 khi có hệ số); `onSvcSalePriceChange` luôn `recalcSvcCost`; recompute giá nhập khi LOAD (canEdit) để đồng bộ ngay. `rate_value_capital` BE đã trả ở resolveServiceItems cho cả 2 type. estimated_price đã có trong payload save
+  - Ghi chú: dịch vụ ERP KHÔNG có hệ số (rate null) → vẫn cho nhập tay (fallback, không khoá). BE chưa enforce (trust FE) — phiếu type=1 cũ giữ giá vốn BOM tới khi mở sửa+lưu lại. Cần BE enforce/backfill không?
+- [x] Mô hình giá vốn dịch vụ ERP (user chốt): phân biệt theo **hệ số `rate_value_capital`**:
+  - **Hệ số > 0 (đã thiết lập — danh mục có sẵn / thêm nhanh từ báo giá đã set):** giá nhập KHOÁ = giá bán × hệ số. BE ENFORCE (tự tính lại, không tin FE). KHÔNG ghi ngược danh mục.
+  - **Hệ số = 0/null (chưa thiết lập — thêm nhanh từ BOM ẩn giá):** giá nhập NHẬP TAY; khi lưu BE tính hệ số = giá vốn/giá bán → GHI NGƯỢC danh mục ERP. Lần sau dịch vụ đó có hệ số → khoá.
+  - FE `edit.vue`: `svcCostLocked`/`svcHasRate`/`recalcSvcCost` đổi điều kiện sang `rate > 0`.
+  - BE `QuotationService`: thêm `enforceServiceCostsFromRate` (rate>0 → cost=sale×rate); `syncServiceCostRatesToErp` chỉ chạy cho rate=0/null (bỏ guard `isDirectQuotation`, thêm filter rate). Gọi cả ở `create()` + `update()` trước recomputeTotals. php -l sạch.
+  - Test: dịch vụ danh mục (rate>0) → giá nhập khoá; dịch vụ thêm nhanh từ BOM (rate=0) → nhập tay, lưu xong danh mục có hệ số, mở lại → khoá
+
+- [x] Nguyên tắc kiến trúc: **BOM KHÔNG quản lý giá** (giá nhập/giá bán/hệ số/tỷ suất) — toàn bộ logic giá ở Báo giá. BOM = cơ cấu hàng hoá (cha-con, SL, model/brand/origin/ĐVT, thông số). Cleanup BE `QuotationService`: gỡ mọi chỗ đọc `estimated_price` từ BOM khi tạo báo giá → init = 0 (hàng tạm + dịch vụ); hàng ERP giữ lấy giá từ danh mục ERP. Sửa: `create()` (127,151), `createFromBom()` (443,470 + gỡ `$bomRate` thừa), `createFromRequest()` (312,333 — dead nhưng đồng nhất). php -l sạch. (Cột giá BOM editor đã ẩn sẵn `visibleColumns=false`)
+
+- [x] VAT hàng hoá ERP: lấy từ bảng `products` ERP (cột `vat_percent`), KHÔNG cho user sửa.
+  - BE: `searchErpProducts` + `getErpRecipeChildren` + `getErpProductPrices` trả thêm `vat_percent`. Method mới `QuotationService::enforceErpProductVat` (dùng `resolveProductsAndPrices`, xử lý type=1+type=2) set `quotation_product_prices.vat_percent` = ERP `products.vat_percent` cho hàng có `erp_product_id`; gọi ở `create()`/`update()`/`createFromBom()` trước recomputeTotals. `applyBulkVat` (type=1) skip hàng ERP.
+  - FE `edit.vue`: ô VAT hàng cha `:disabled` thêm `|| isErpProduct(parent)` + tooltip; set `vat_percent` từ ERP khi thêm (handleAddProductApply + recipe children + mapProduct nạp BOM); `applyVatToProducts` skip hàng ERP.
+  - VAT đồng loạt KHÔNG áp cho Dịch vụ & Chi phí khác (VAT lấy từ danh mục ERP): bỏ block áp service trong `applyVatToProducts`. BE `applyBulkVat` vốn chỉ đụng products, không đụng service.
+  - php -l sạch. Lưu ý: phiếu cũ có hàng ERP vat sai sẽ tự đúng khi mở sửa + lưu lại (enforce). Cần backfill không?
+
+- [x] Fix bug: hàng ERP từ BOM bị "đồng bộ hàng tạm sang ERP" (`TmpProductSyncService`) nhầm là hàng tạm. Nguyên nhân: overlay `quotation_product_prices` (type=1) KHÔNG set `erp_product_id` (chỉ overlay giá); `TmpProductSyncService::sendApproval/pullStatus` đọc trực tiếp `whereNull('erp_product_id')` → hàng ERP (overlay erp=null) bị coi là tạm + items map code/name=null. Sửa: đồng bộ định danh (`erp_product_id` + code/name/model/brand/origin/unit/product_attributes) từ bom_list_products sang overlay ở `create()` + `createFromBom()` + `upsertBomProducts()`. upsertBomProducts chỉ set erp_product_id khi BOM là ERP (giữ giá trị overlay cho hàng tạm đã được pullStatus duyệt). Seeder `BackfillQuotationProductErpIdSeeder` (COALESCE, không ghi đè) cho phiếu cũ. php -l sạch. Resource type=1 vẫn dùng join nên hiển thị không đổi
+
+- [x] Fix bug: tạo hồ sơ trình duyệt GIẢI PHÁP tự động lấy BOM loại Thành phần (đáng lẽ chỉ Tổng hợp). Nguyên nhân: `SolutionService::storeSolutionReviewProfile` (~1914) chỉ filter `TYPE_AGGREGATE` khi `!$isSelfImpl` → dự án Tự triển khai (type=1) bỏ filter → pick bất kỳ BOM Hoàn thành mới nhất (gồm Thành phần). User chốt (A): LUÔN chỉ lấy Tổng hợp. Sửa: gỡ điều kiện `if (!$isSelfImpl)`, luôn `where bom_list_type = TYPE_AGGREGATE` + thống nhất message lỗi "Chưa có BOM tổng hợp Hoàn thành". `$isSelfImpl` giữ cho logic status auto-duyệt. Hồ sơ HẠNG MỤC (`SolutionModuleService`) vốn đã filter aggregate không điều kiện → đã đúng. php -l sạch
+  - Lưu ý: dự án Tự triển khai giờ BẮT BUỘC có BOM Tổng hợp Hoàn thành mới gửi được hồ sơ (trước cho phép Thành phần)
+
+- [x] Dịch vụ/chi phí từ BOM sang báo giá: ĐÃ chạy đúng (user xác nhận load đủ ở cả flow nút "Lập báo giá" lẫn màn danh sách). Verify: BE createFromBom/create + resource + fetchData copy dịch vụ ĐÚNG (test BOM 41 → 3 dịch vụ). Bổ sung (CHƯA commit, cần deploy): FE `loadBomProducts` copy `bom.service_items` → serviceItems (flow chọn BOM trong dropdown trước giờ chưa copy); BE `DetailBomListResource` thêm `rate_value_capital` vào service_items (khoá giá nhập dịch vụ ERP). php -l sạch
+
+- [x] Fix lỗi làm tròn: giá nhập cha tạm hiện `13.419999999999998` (= 8.95 + 4.47 sai số float). Nguyên nhân: `refreshParentRollups` (edit.vue) + `refreshParentTotals` (BomBuilderEditor) tính `estimated_price = sumChildImport / parentQty` KHÔNG làm tròn → ô input (raw, không qua formatMoney) hiện số float dài. Sửa: làm tròn roll-up — edit.vue theo `roundingPrecision` (kiểu chọn trên toolbar "Làm tròn", chưa chọn = mặc định 2 số lẻ); BomBuilderEditor 2 số lẻ (BOM không có toolbar làm tròn). Gọi `refreshParentRollups` khi load (fetchData + loadBomProducts) để làm sạch float cũ ngay
+
+### Phase 33: Validate báo giá hiển thị inline tại ô (bỏ toast) (2026-06-10)
+
+> Yêu cầu: mọi validate (Giá bán, VAT, chiết khấu, giá nhập, thành tiền, CPVC, CK tổng, field bắt buộc) phải hiện INLINE tại đúng ô (`is-invalid`/`cell-invalid` + `invalid-feedback`, flag touched), KHÔNG hiện trên toast. Chỉ ở màn tạo/sửa `edit.vue` (view/print read-only).
+
+- [x] Thêm flag `rangeTouched` (VAT + CK% range validate mọi lần lưu) + helper `isVatInvalid` / `isShippingVatInvalid` / `isDiscountPercentRangeInvalid`
+- [x] Inline VAT 0–100%: ô VAT hàng cha + dịch vụ + chi phí vận chuyển (is-invalid + feedback)
+- [x] Inline CK% 0–100% (method 1): ô CK% hàng cha + dịch vụ; CK tổng % đã có sẵn (qdRowErrors)
+- [x] Inline giá bán/thành tiền > 0: ô giá bán cha + dịch vụ dùng `lineSaleAfterDiscount/svcSaleAfterDiscount ≤ 0` (gộp giá ≤ 0 + thành tiền ≤ 0) + message
+- [x] Inline giá nhập > 0 (tự nhập) + giá vốn cha ≥ Σ con: ô giá nhập hàng cha
+- [x] Inline CK theo dòng ≤ đơn giá bán (đã có is-invalid) + thêm message; CPVC giá nhập/giá/CK thêm message
+- [x] `save()`: gỡ TẤT CẢ toast validate field; bật touched tương ứng + gọi `scrollToFirstError()` cuộn tới ô lỗi đầu tiên
+- [x] Method `scrollToFirstError()` — `$nextTick` querySelector `.is-invalid/.cell-invalid/.text-small-error` → scrollIntoView + focus
+- [x] Fix bug: CK tổng %>100 bấm Lưu/Gửi duyệt "không phản hồi" — `validateDiscountPercentRange` short-circuit return TRƯỚC khi `validateQuotationDiscounts` bật `qdTouched` → inline CK tổng không hiện + scroll không thấy gì. Sửa: bật `qdTouched=true` ngay đầu `save()` (cùng `rangeTouched`). Đồng thời `validateVat` chỉ quét hàng CHA (con không có ô VAT) để không chặn ngầm không inline
+- [ ] Test thủ công: nhập VAT 150 / CK dòng 120% / CK tổng 120% / bỏ trống giá bán → bấm Lưu/Gửi duyệt → KHÔNG có toast, ô lỗi viền đỏ + text + tự cuộn tới (⏳ chờ user)
+- Giữ toast (không phải validate field): nhắc "phân bổ lại CK khi đổi giá" (workflow), "trùng mã hàng con khi thêm" (chưa có ô), lỗi mạng/hệ thống, server 422 fallback
+
 ## Checkpoint
+
+### Checkpoint — 2026-06-10 (Phase 31 — fixes test vòng 2)
+Vừa hoàn thành: (1) REVERT tự ý roll-up giá vốn cha ERP → giữ nguyên giá ERP (khôi phục guard edit+BOM, bỏ BE rollupParentImportCost). (2) Validate giá vốn cha < Σ con → CHẶN gửi duyệt (FE isParentImportInvalid + BE assertParentImportFloor, không sửa giá). (3) Tổng "Thành tiền nhập" = Σ dòng CHA (Cách A — sửa totalImport+productImportTotal ở edit+index; summaryBreakdown/BE vốn đã đúng). (4) Bỏ hiển thị số tiền CK dạng âm (5 chỗ edit/index/print). (5) Validate bắt buộc "Điều khoản thanh toán" khi gửi duyệt (FE validateForm strip HTML + BE submit guard). (6) Sync auto-allocation + layout full-width + dòng tổng CK giữa edit↔view (vòng trước). Lưu memory: hỏi trước khi đổi logic + hàng ERP giữ nguyên giá.
+Đang làm dở: Không
+Bước tiếp theo: User chạy `php artisan migrate` + build FE + test theo test-summary-phase31.md. Tồn: "Bảng giá bán lẻ" khi VND; validate VAT/CK range cho màn BOM (nếu cần).
+Blocked: Không
+
+### Checkpoint — 2026-06-09 (Phase 31 + fixes sau review)
+Vừa hoàn thành: Phase 31 (logic hàng hoá cha-con BOM + Báo giá) CODE DONE toàn bộ (Task 1-20 + 31.9 fixes). BE: migration show_children, endpoint erp-recipe-children (+recipe_qty), BomListService (check quyền con ERP), QuotationService (validateParentChildRules quyền + assertParentSalePriceFloor submit + ensureAllPricesPositive đồng nhất DV), Resource trả show_children + can_view_cost_price. FE BOM + Báo giá: recipe snapshot + con khoá (thêm/xoá/sửa/SL đều khoá) + SL con nhân theo SL cha + toggle show_children + hiện giá bán con cha tạm + validate (VAT/CK range cả nháp+gửi, thành tiền>0/cha≥con/giá nhập tự nhập/dịch vụ chỉ gửi duyệt) + bỏ spinner + confirm xoá + text "Bảng giá bán lẻ" + sync auto-allocation/layout/dòng tổng CK giữa edit↔view.
+Đang làm dở: Không
+Bước tiếp theo: User chạy `php artisan migrate` (cột show_children) + build FE + test theo `test-summary-phase31.md`. Còn tồn (chờ user xác nhận nếu cần): "Bảng giá bán lẻ" hiển thị khi VND; siết BE chống sửa payload recipe (Cách B); áp validate VAT/CK range cho màn BOM.
+Blocked: Không
+
 - 2026-03-28: Phase 1 done
 - 2026-03-29: Phase 1.5 + 2 done
 - 2026-03-29: Phase 3 + 4 done

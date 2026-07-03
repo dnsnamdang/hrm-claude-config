@@ -1233,7 +1233,25 @@ Truy cập `/assign/quotations/create?project_id=X` với user không phải Sal
 
 ---
 
+## Phase 7: Bugfix — Flash "Không tìm thấy báo giá" khi tạo mới
+
+### Task 15: Fix thông báo gây hiểu lầm khi vào màn tạo báo giá
+
+**Triệu chứng:** Tab Báo giá (chi tiết dự án) → click "Tạo báo giá" → hiện "Không tìm thấy báo giá" rồi mới render form tạo mới.
+**Nguyên nhân:** `edit.vue` `mounted()` `await Promise.all([...])` trước khi `initCreateMode()` set `item`. Trong lúc await: `loading=false` + `item=null` → template hiện "Không tìm thấy báo giá".
+
+- [x] **Step 1:** Bật `loading=true` bao quanh `mounted()` (try/finally) → hiện "Đang tải..." thay vì "Không tìm thấy báo giá" trong lúc khởi tạo (fix cả create + edit)
+- [x] **Step 2:** Test browser — vào tab Báo giá → "Tạo báo giá" không còn hiện "Không tìm thấy báo giá". PASS (2026-06-02)
+
+---
+
 ## Checkpoint
+
+### Checkpoint — 2026-06-02
+Vừa hoàn thành: Task 15 (Phase 7) — fix flash "Không tìm thấy báo giá" khi vào màn tạo báo giá. Bọc `mounted()` trong try/finally + bật `loading=true`. Test browser PASS.
+Đang làm dở: Không
+Bước tiếp theo: Nhận yêu cầu mới hoặc test nốt các flow E2E còn lại (Task 13: regression YCXD giá, tạo từ BOM, quyền Sale phụ trách)
+Blocked: Không
 
 ### Checkpoint — 2026-05-27
 Vừa hoàn thành: Tất cả 13 tasks (Task 1-13) — BE + FE hoàn chỉnh

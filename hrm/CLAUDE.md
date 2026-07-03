@@ -235,7 +235,6 @@ Lỗi BE → đọc log tại:
 ---
 
 ## Khi làm việc với git
-
 - Repo API nằm ở: /hrm-api
 - Repo Client nằm ở: /hrm-client
 
