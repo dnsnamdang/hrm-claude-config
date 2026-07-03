@@ -29,6 +29,13 @@
 ## Bổ sung sau (2026-07-02)
 - [x] Phân trang client-side ở cấp mặt hàng (giống UI `plan/detail-report`: chọn số dòng/trang + `b-pagination` + "Tổng số mặt hàng"). KPI/Tổng cộng vẫn tính trên toàn bộ; Excel vẫn xuất tất cả trang. Tách `buildRows` (lọc + reset trang) và `renderRows` (dựng dòng theo trang), thêm computed `pagedItems`/`totalRows`/`currentPage`, `onPageChange`, watcher `per_page`.
 
+## Bổ sung sau (2026-07-03)
+- [x] Fix border bảng "chưa rõ" so với `sale/report-project-contract`. Gốc rễ: `custom-table.scss` có `.basic-table .table { border-collapse: collapse }` (import vào scoped) thắng specificity so với selector `.banhang-table` → bảng bị `collapse` → viền ô sticky (header + cột đầu) không hiển thị. Sửa: đổi selector `::v-deep .banhang-table` → `::v-deep .basic-table-border .banhang-table` để `border-collapse: separate` có hiệu lực (giống cách report-project-contract dùng `.basic-table-border .table`).
+
+- [x] Fix tên hàng hóa dài bị tràn đè cột ĐVT/Mảng HH/Hãng-Nước SX. Gốc rễ: rule `th, td { white-space: nowrap }` (cho cột số) đè lên cột Hạng mục sticky làm text không ngắt dòng. Sửa: nâng specificity selector cột Hạng mục → `::v-deep .basic-table-border .banhang-table td.gh-sticky` + thêm `word-break: break-word; overflow-wrap: anywhere` để tên dài ngắt dòng trong ô (max-width 480px).
+
+- [x] Fix dòng mặt hàng (lvl-item) bị lệch màu: ô Hạng mục sticky nền trắng còn các ô khác nền xám. Do lần fix border trước nâng specificity `.basic-table-border .banhang-table td.gh-sticky` (nền trắng) thắng rule `tr.lvl-item td.gh-sticky`. Sửa: prefix cả 2 rule nền dòng item thành `.basic-table-border .banhang-table tr.lvl-item td[.gh-sticky]` để nền xám #eef1f5 phủ đều toàn dòng.
+
 ## Còn lại (cần user chạy/kiểm)
 - [ ] Chạy `npm run dev` client, mở `/contract/reports/sale-product` kiểm thị giao diện + collapse + drill-down + Excel.
 - [ ] Gán quyền `Xem báo cáo bán hàng theo mặt hàng` cho role qua UI phân quyền.
