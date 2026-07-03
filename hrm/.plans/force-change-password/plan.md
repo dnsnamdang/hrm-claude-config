@@ -63,6 +63,33 @@ Design tóm tắt: `.plans/force-change-password/design.md`
 - [ ] Tài khoản mới: login lần 1 (chưa đổi) → bị ép sang `/change_password` ngay
 - [ ] Tài khoản cũ (backfill) → vẫn không bị ép
 
+## Phase 6 — Check link reset ngay khi mở trang + cấu hình hạn qua env (2026-06-08)
+
+### BE
+- [x] Thêm `AuthNewController@checkResetToken` (GET): kiểm tra token tồn tại + khớp + còn hạn, KHÔNG đổi mật khẩu. Hết hạn → xóa token + 422 "Link đặt lại đã hết hạn"; sai/thiếu → 422 "Link đặt lại không hợp lệ"
+- [x] Đăng ký route `GET /v1/users/auth/check-reset-token`
+- [x] **Fix bug 401→login:** thêm `checkResetToken` vào danh sách `except` của `auth:api` trong constructor `AuthNewController` (thiếu → route bị yêu cầu auth → 401 → FE `handleError` đá về `/login`)
+- [x] Sửa hạn token: `subMinutes(1)` (số test sót) → đọc từ `env('PASSWORD_RESET_EXPIRE_MINUTES', 30)` ở cả `resetPassword` và `checkResetToken`
+- [x] Thêm `PASSWORD_RESET_EXPIRE_MINUTES=30` vào `.env`
+
+### FE
+- [x] `store/actions.js`: thêm action `checkResetToken` (apiGet kèm params email + token)
+- [x] `pages/reset_password/index.vue`: `mounted` gọi `checkLink()` — thiếu token/email hoặc API trả lỗi → hiện màn "Link không hợp lệ/đã hết hạn" ngay, ẩn form (3 trạng thái: đang kiểm tra / hỏng / form)
+
+### Test (chờ user)
+- [ ] Mở link hết hạn (> ngưỡng env) → hiện màn "Link đặt lại đã hết hạn" ngay, không cần submit
+- [ ] Mở link sai token → "Link đặt lại không hợp lệ" ngay
+- [ ] Mở link còn hạn → hiện form đổi mật khẩu bình thường
+- [ ] Đổi `PASSWORD_RESET_EXPIRE_MINUTES` trong `.env` (vd 1) → link hết hạn đúng theo phút mới
+
+---
+
+### Checkpoint — 2026-06-08
+Vừa hoàn thành: Phase 6 — check link reset ngay khi mở trang. BE thêm `checkResetToken` + route `GET /check-reset-token`; đưa hạn token vào `env('PASSWORD_RESET_EXPIRE_MINUTES', 30)` (phát hiện code đang để `subMinutes(1)` — số test sót — đã sửa). FE `reset_password` gọi check khi mounted, ẩn form khi link hỏng/hết hạn.
+Đang làm dở: (không)
+Bước tiếp theo: User test 4 case Phase 6. Lưu ý: nếu BE từng chạy `php artisan config:cache` thì phải `php artisan config:clear` để `.env` mới có hiệu lực.
+Blocked: (không)
+
 ---
 
 ### Checkpoint — 2026-06-05

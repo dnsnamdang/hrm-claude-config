@@ -72,6 +72,30 @@
   - Còn: user reload test UI đầy đủ + commit 2 repo. Lưu ý team: seed quyền MODULE-1 + Báo giá bán + Bảng giá (1113/1114) khi deploy; chạy SaleDemoSeeder nếu cần data mẫu.
   Checkpoint 2026-06-28: **UI danh sách + Xuất Excel** (chưa commit). Mã BG là link → chi tiết; nút **Xuất Excel** (#actions) — BE SaleQuotationExport + QuotationController::export (getListForUser scope + Resource resolve, route /quotations/export trước /{id} + checkPermission như index), FE tải arraybuffer theo filter. Review opus Spec ✅/Quality Approved (fix 3 minor). Permission Sale đã tách **type=9 "Phân hệ kinh doanh"** (hiện trên màn role qua accordion mới).
 
+- sale-module-scaffold (Khung phân hệ Kinh doanh) → @manhcuong → .plans/sale-module-scaffold/plan.md
+  Spec: docs/superpowers/specs/2026-06-25-sale-module-scaffold-design.md · Plan: docs/superpowers/plans/2026-06-25-sale-module-scaffold.md
+  Phạm vi: chỉ scaffold khung module `Sale` (BE + FE), dashboard trống vào qua switcher. Chưa entity/permission/nghiệp vụ. PA A (layout chung default.vue).
+
+  ### Checkpoint — 2026-06-25 (CODE HOÀN THÀNH)
+  Vừa hoàn thành: **Toàn bộ khung phân hệ Kinh doanh (module `Sale`)** (BE+FE, subagent-driven, chạy main chưa commit). BE module `Sale` Enabled, endpoint `GET api/v1/sale/dashboard`. FE dashboard placeholder + menu sale.js + wire default.vue + tile switcher "Kinh doanh" + icon_sale.svg. 2 task review PASS, integration nhất quán.
+  Đang làm dở: (không).
+  Bước tiếp theo: User test thủ công (BE endpoint + JWT; FE yarn dev + click tile) → user tự commit. Đợt sau: nghiệp vụ Kinh doanh.
+  Blocked: (không)
+
+- sales-contract (MODULE 2 — Hợp đồng bán hàng) → @manhcuong → .plans/sales-contract/plan.md
+  Spec: docs/superpowers/specs/2026-06-08-sales-contract-design.md · Plan: docs/superpowers/plans/2026-06-08-sales-contract.md
+  Phạm vi đợt này: HD-01 (Danh sách HĐ) + HD-02 (Tạo/sửa HĐ). Module mới `Modules/Sale`. Hoãn HD-03/04/05.
+
+  ### Checkpoint — 2026-06-08
+  Vừa hoàn thành: **CODE HOÀN THÀNH TOÀN BỘ HD-01+HD-02** (BE+FE, subagent-driven, chạy main chưa commit).
+   - BE: module `Sale` (3 bảng + 3 entity + Request + Service + Controller + 2 Resource + Excel export FromView + 10 route). Mã HĐ `HĐ.NNNNN`, luồng Nháp→Chờ duyệt→Đã duyệt→Huỷ, VAT/dòng, đợt TT validate 100%, scope theo company, HĐ nháp riêng tư.
+   - Permission 1105 Quản lý / 1106 Duyệt / 1107 Xem HĐ bán hàng (seeder + DB + gán Super admin role 18).
+   - FE: pages/sale/contracts/index.vue + ContractForm.vue + create/edit/view + menu sale.js (đăng ký layout + checkPermission).
+   - **BE smoke-test PASS 8/8** (in-process HTTP kernel, emp 13): create HĐ.00001 total 2.200.000, show badge/items/terms, submit→approve, chặn xoá HĐ đã duyệt (400), items rỗng 422, %≠100 422, list. **FE compile sạch** cả 5 file Vue.
+  Đang làm dở: (không) — feature đợt này đã xong code.
+  Bước tiếp theo: user test UI trên trình duyệt + commit (tôi không commit). Đợt sau: HD-03/04/05.
+  Blocked: (không)
+
 - product-bom-inline → @manhcuong → .plans/product-bom-inline/plan.md
   Spec: docs/superpowers/specs/2026-06-06-product-bom-inline-design.md
   Đổi BOM thành inline trong tab hàng hoá (lưu nested), bỏ hẳn danh mục BOM riêng + permission BOM. Mỗi SP ≤1 BOM = bảng NVL; bỏ Mã/Tên BOM; status theo hàng hoá.

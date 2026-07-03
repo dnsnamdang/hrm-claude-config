@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Design: Cập nhật luồng triển khai Dự án TKT
 
 ## Mục đích

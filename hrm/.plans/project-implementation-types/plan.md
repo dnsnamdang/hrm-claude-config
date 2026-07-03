@@ -1994,3 +1994,14 @@ User test xong type=1 và type=2 → OK. Các fix bổ sung trong quá trình te
 - Filter BE: loại dự án type=1 ra khỏi dropdown chọn dự án trong form tạo YC làm GP
 
 Trạng thái: ✅ Hoàn thành, đã chuyển sang "Hoàn thành" trong STATUS.md.
+
+## Bugfix — 2026-07-01: Tạo giải pháp (Tự triển khai) không đẩy status dự án
+
+### BE
+- [x] `SolutionService::store()` — thêm gọi `syncStatusBySolution($solution->prospective_project_id)` trước `return` (dòng ~390). Trước đó chỉ `update()` gọi sync → tạo mới bằng "Lưu & gửi" (solution=7 Đang triển khai) mà dự án kẹt ở status=2 Thu thập thông tin. Idempotent, an toàn cho cả Lưu nháp (TAO_NHAP → không đổi) lẫn Lưu & gửi (→ status=4 Đang làm GP).
+
+### Checkpoint — 2026-07-01
+Vừa hoàn thành: Fix root cause store() thiếu sync status dự án TKT khi tạo giải pháp (type=1 Tự triển khai, Lưu & gửi).
+Đang làm dở: không
+Bước tiếp theo: User verify end-to-end (tạo dự án Tự triển khai + cần làm GP → Tạo giải pháp → Lưu & gửi → dự án phải hiện "Đang làm giải pháp").
+Blocked: không

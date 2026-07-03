@@ -87,6 +87,17 @@ Mọi nơi hiển thị trạng thái phải theo **1 kiểu duy nhất**: **tex
 - **Permission**: Khi thêm/sửa/đổi tên/xóa permission → sửa trực tiếp trong file `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php`. KHÔNG tạo migration riêng cho permission.
 - **Middleware checkPermission**: Khi có quyền tương ứng trong `PermissionsTableSeeder`, các route thao tác dữ liệu (store, update, destroy, approve, toggle,...) phải gắn middleware `checkPermission:TênQuyền`. Route xem (index, show) chỉ gắn nếu có quyền xem riêng. Cú pháp: `->middleware('checkPermission:Tên quyền')`, nhiều quyền dùng `|`: `->middleware('checkPermission:Quyền A|Quyền B')`. Không gắn middleware nếu chưa có quyền tương ứng trong seeder.
 
+## Convention Menu FE — BẮT BUỘC khi làm chức năng/module mới
+
+Làm màn/chức năng mới mà KHÔNG đăng ký menu thì menu bị **mồ côi** (chỉ vào được bằng gõ URL). Khi thêm trang mới, BẮT BUỘC kiểm và cập nhật đủ các chỗ sau (FE `nhatlinh-client`):
+
+1. **Sidebar menu** — `components/default-menu/<module>.js`: khai báo nhóm + item `{ label, link, isShow: ['Tên quyền xem'] }`. Trang có phân quyền thì dùng `isShow` (mảng tên permission); không quyền thì bỏ `isShow` (như `category.js`).
+2. **Map sidebar theo URL** — `layouts/default.vue`: thêm `import { <module>Items } from '@/components/default-menu/<module>'` và nhánh `if (firstUri === '<module>') this.menuItems = <module>Items` (sidebar load theo segment đầu URL).
+3. **Hiệu lực phân quyền** — `middleware/checkPermission.js`: thêm `...<module>Items` vào `allMenuItems` (nếu item có `isShow`). Không đăng ký thì quyền bị bỏ qua, route không bị chặn.
+4. **Switcher phân hệ cấp cao** — `components/BasicSubsystem.vue`: thêm 1 ô `dropdown-icon-item` (icon + label) link tới trang chính của module. **Đây là nơi user chuyển giữa các module — thiếu bước này menu KHÔNG vào được dù đã làm 1-3.** Link tới `/<module>/dashboard/` nếu có dashboard, không thì link thẳng trang chính (vd `/sale/contracts`). Icon tái dùng file có sẵn trong `assets/images/` (kiểm tra file tồn tại trước).
+
+→ Làm chức năng mới → kiểm đủ 4 bước trên, KHÔNG cần user nhắc.
+
 **Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.claude/skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.claude/skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.claude/skills/bug-fixer/SKILL.md`.
 
 ---
