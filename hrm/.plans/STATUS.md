@@ -2,6 +2,10 @@
 
 ## Đang làm
 
+- price-approval-hdsd → @manhcuong → .plans/price-approval-hdsd/plan.md
+  Trạng thái: DONE (2026-07-03, inline Fable). HDSD Word màn "Cấu hình duyệt giá" (/assign/settings/price-approval). 6 phần: bố cục 4 khối (3 nút Lưu độc lập), mức sàn tỷ suất LN (cảnh báo đỏ màn làm giá, lưu general-regulations, KHÔNG ghi log timeline), ngưỡng theo giá trị ĐH (mặc định 1 tỷ/20 tỷ, cascade Từ=Đến cấp trước, validate FE-only), ngưỡng theo tỷ suất LN (logic ngược, 20%/10%), lịch sử thay đổi (badge Giá trị ĐH/Tỷ suất LN, cũ đỏ→mới xanh, ∞), và phần nghiệp vụ: cấp duyệt báo giá = max(levelV, levelM) → C1 tự duyệt / C2 TP / C3 TP+BGĐ, CHỐT lúc gửi duyệt (đổi cấu hình không tính lại BG đã gửi), hở khoảng → C3, bảng ví dụ 5 case, badge realtime footer màn Làm giá. Spec từ agent Opus đọc FE 506 dòng + BE BomPriceApprovalConfig* + QuotationService (1572-1822). Ảnh THẬT dev-hrm namdangit: 6 ảnh hdsd_priceapproval_shots/ (footer BG-2026-00151 badge C3 + LN 0% đỏ; cảnh báo validate — không lưu DB). Output: HDSD_luongchinh/HDSD_CauHinhDuyetGia.docx (~0.7MB, 9 Heading1, 6 hình, 7 bảng, broken=0). Generator scratchpad/gen_priceapproval.py. Bước tiếp: chờ user review.
+  Tóm tắt: .plans/price-approval-hdsd/design.md
+
 - playwright-e2e → @dnsnamdang → .plans/playwright-e2e/plan.md
   Trạng thái: PLAN DONE (2026-06-26). Spec + plan chi tiết đã viết. Chờ user chọn cách thực thi (subagent-driven / inline) để code Phase 0.
   Spec: docs/superpowers/specs/2026-06-26-playwright-e2e-design.md | Plan: docs/superpowers/plans/2026-06-26-playwright-e2e.md | Tóm tắt: .plans/playwright-e2e/design.md
