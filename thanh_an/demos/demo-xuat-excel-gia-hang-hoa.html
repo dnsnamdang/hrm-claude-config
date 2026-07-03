@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Demo — Chọn trường & loại giá khi xuất Excel (Quản lý giá hàng hóa)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 24px; max-width: 720px; }
+        fieldset { margin-bottom: 16px; }
+        label { display: inline-block; margin-right: 16px; }
+        .err { color: #c00; font-size: 13px; }
+        button { padding: 8px 16px; }
+    </style>
+</head>
+<body>
+    <h2>Demo xuất Excel giá hàng hóa</h2>
+
+    <fieldset>
+        <legend>Chọn trường thông tin</legend>
+        <label><input type="checkbox" class="f-all" data-group="fields" checked /> <b>Chọn tất cả</b></label>
+        <div id="fields"></div>
+        <div class="err" id="err-fields"></div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Chọn loại giá</legend>
+        <label><input type="checkbox" class="f-all" data-group="priceTypes" checked /> <b>Chọn tất cả</b></label>
+        <div id="priceTypes"></div>
+        <div class="err" id="err-priceTypes"></div>
+    </fieldset>
+
+    <button id="btn-export">Xuất Excel</button>
+
+    <script>
+        // ----- Dữ liệu mẫu (mirror product.unit_prices của API) -----
+        const FIELD_DEFS = [
+            { key: 'stt', label: 'STT', width: 8, align: 'center' },
+            { key: 'product_name', label: 'Tên hàng hóa', width: 35, align: 'left' },
+            { key: 'internal_code', label: 'Mã nội bộ', width: 15, align: 'left' },
+            { key: 'product_code', label: 'Mã hàng hóa', width: 25, align: 'center' },
+            { key: 'model', label: 'Model', width: 25, align: 'left' },
+            { key: 'specification', label: 'Quy cách', width: 15, align: 'left' },
+            { key: 'content', label: 'Thông số kỹ thuật', width: 40, align: 'left' },
+            { key: 'producer_country', label: 'Hãng, nước sản xuất', width: 25, align: 'left' },
+            { key: 'owner_country', label: 'Hãng, nước chủ sở hữu', width: 25, align: 'left' },
+            { key: 'import_type_name', label: 'Hàng hóa', width: 15, align: 'center' },
+            { key: 'coefficient', label: 'HSQĐ', width: 10, align: 'center' },
+            { key: 'unit_name', label: 'ĐVT', width: 12, align: 'left' },
+        ]
+        const PRICE_TYPE_OPTIONS = [
+            { id: 'capital', text: 'Giá vốn' },
+            { id: 5, text: 'Giá bán lẻ' },
+            { id: 7, text: 'Giá đại lý' },
+        ]
+        const PRODUCTS = [
+            {
+                product_name: 'Máy đo huyết áp', internal_code: 'NB001', product_code: 'HH001',
+                model: 'M-2000', specification: 'Hộp',
+                content: '<p>Điện áp: <b>220V</b></p><ul><li>Dải đo: 0-300mmHg</li><li>Bộ nhớ 60 lần</li></ul>',
+                producer_country: 'Omron / Nhật', owner_country: 'Omron Corp / Nhật',
+                import_type_name: 'Nhập khẩu', coefficient: 1, unit_name: 'Cái',
+                unit_prices: [
+                    { price_type_id: null, price_type_name: 'Giá vốn', price: 1200000 },
+                    { price_type_id: 5, price_type_name: 'Giá bán lẻ', price: 1500000 },
+                    { price_type_id: 7, price_type_name: 'Giá đại lý', price: 1350000 },
+                ],
+            },
+            {
+                product_name: 'Nhiệt kế điện tử', internal_code: 'NB002', product_code: '',
+                model: 'T-100', specification: 'Cái',
+                content: '<p>Đo trán, không tiếp xúc</p>',
+                producer_country: 'Microlife / Thụy Sĩ', owner_country: 'Microlife AG / Thụy Sĩ',
+                import_type_name: 'Phân phối lại', coefficient: 1, unit_name: 'Cái',
+                unit_prices: [
+                    { price_type_id: null, price_type_name: 'Giá vốn', price: 90000 },
+                    { price_type_id: 5, price_type_name: 'Giá bán lẻ', price: 130000 },
+                ],
+            },
+        ]
+
+        // ----- Render checkbox -----
+        function renderGroup(id, options, idKey, labelKey) {
+            const box = document.getElementById(id)
+            box.innerHTML = options
+                .map((o) => `<label><input type="checkbox" data-group="${id}" value="${o[idKey]}" checked /> ${o[labelKey]}</label>`)
+                .join('')
+        }
+        renderGroup('fields', FIELD_DEFS, 'key', 'label')
+        renderGroup('priceTypes', PRICE_TYPE_OPTIONS, 'id', 'text')
+
+        document.querySelectorAll('.f-all').forEach((all) => {
+            all.addEventListener('change', (e) => {
+                const grp = e.target.dataset.group
+                document.querySelectorAll(`input[data-group="${grp}"]`).forEach((c) => (c.checked = e.target.checked))
+            })
+        })
+
+        function getSelected(group) {
+            return Array.from(document.querySelectorAll(`input[data-group="${group}"]:checked`)).map((c) => c.value)
+        }
+
+        // ----- Strip HTML (Thông số kỹ thuật là rich text) — giống màn danh mục hàng hóa -----
+        function stripHtmlForExport(value) {
+            if (value === null || value === undefined) return ''
+            const html = value.toString()
+            const withMarkers = html
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/?(p|div|li|tr|h[1-6]|blockquote)[^>]*>/gi, '\n')
+            const div = document.createElement('div')
+            div.innerHTML = withMarkers
+            const text = div.textContent || div.innerText || ''
+            return text
+                .replace(/[ \t]+/g, ' ')
+                .replace(/\n[ \t]*/g, '\n')
+                .replace(/\n{2,}/g, '\n')
+                .trim()
+        }
+
+        // ----- Logic dựng dữ liệu xuất (sẽ copy sang generateWorkbook) -----
+        function buildExportRows(products, selection, fieldDefs, priceTypeOptions) {
+            const infoCols = fieldDefs.filter((f) => selection.fields.map(String).includes(String(f.key)))
+            const priceCols = priceTypeOptions.filter((p) => selection.priceTypes.map(String).includes(String(p.id)))
+            const headers = [...infoCols.map((c) => c.label), ...priceCols.map((c) => c.text)]
+            let rowCount = 1
+            const rows = []
+            products.forEach((product) => {
+                if (!product.unit_prices || product.unit_prices.length === 0) return
+                const infoValues = infoCols.map((c) => {
+                    if (c.key === 'stt') return rowCount
+                    const raw = product[c.key]
+                    if (c.key === 'content') return stripHtmlForExport(raw)
+                    return raw != null && raw !== '' ? raw : ''
+                })
+                const priceValues = priceCols.map((c) => {
+                    let up
+                    if (String(c.id) === 'capital') {
+                        up = product.unit_prices.find((u) => u.price_type_name === 'Giá vốn')
+                    } else {
+                        up = product.unit_prices.find(
+                            (u) => String(u.price_type_id) === String(c.id) || u.price_type_name === c.text,
+                        )
+                    }
+                    return up && up.price != null ? up.price : null
+                })
+                rows.push([...infoValues, ...priceValues])
+                rowCount++
+            })
+            return { headers, rows, infoCount: infoCols.length, infoCols, priceCols }
+        }
+
+        // ----- Xuất -----
+        document.getElementById('btn-export').addEventListener('click', async () => {
+            const selection = { fields: getSelected('fields'), priceTypes: getSelected('priceTypes') }
+            document.getElementById('err-fields').textContent =
+                selection.fields.length === 0 ? 'Yêu cầu chọn ít nhất 1 trường thông tin' : ''
+            document.getElementById('err-priceTypes').textContent =
+                selection.priceTypes.length === 0 ? 'Yêu cầu chọn ít nhất 1 loại giá' : ''
+            if (selection.fields.length === 0 || selection.priceTypes.length === 0) return
+
+            const { headers, rows, infoCount, infoCols } = buildExportRows(PRODUCTS, selection, FIELD_DEFS, PRICE_TYPE_OPTIONS)
+            const wb = new ExcelJS.Workbook()
+            const ws = wb.addWorksheet('Danh sách giá hàng hóa')
+            const headerRow = ws.addRow(headers)
+            headerRow.eachCell((cell) => {
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 }
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4F81BD' } }
+                cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true }
+            })
+            rows.forEach((r) => {
+                const row = ws.addRow(r)
+                row.eachCell((cell, colNumber) => {
+                    if (colNumber > infoCount) {
+                        cell.alignment = { horizontal: 'right', vertical: 'middle' }
+                        if (cell.value != null && cell.value !== '') cell.numFmt = '#,##0'
+                    } else {
+                        cell.alignment = { horizontal: infoCols[colNumber - 1].align, vertical: 'middle', wrapText: true }
+                    }
+                })
+            })
+            const buf = await wb.xlsx.writeBuffer()
+            saveAs(new Blob([buf]), 'demo_gia_hang_hoa.xlsx')
+        })
+    </script>
+</body>
+</html>

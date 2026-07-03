@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tạo đề xuất nhập hàng</title>
+<title>Tạo đề xuất cung ứng hàng hóa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet">
@@ -98,6 +98,8 @@ input.cell.bad{ border-color:var(--c-danger); background:var(--c-danger-bg); }
 .p-bgd{ background:var(--c-danger-bg); color:var(--c-danger); }
 .p-appr{ background:var(--c-warning-bg); color:var(--c-warning); }
 .p-must{ background:var(--c-info-bg); color:var(--c-info); }
+.p-in{ background:var(--c-success-bg); color:var(--c-success); }
+.p-out{ background:var(--c-warning-bg); color:var(--c-warning); }
 .section-title{ font-family:"Fraunces",serif; font-size:14px; margin:0 0 8px; }
 
 /* goods picker modal */
@@ -106,16 +108,30 @@ dialog#goodsModal{ width:min(820px,92vw); max-height:84vh; border:1px solid var(
 dialog#goodsModal::backdrop{ background:rgba(26,24,21,.42); }
 .gm-head{ display:flex; gap:14px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--c-border);
   position:sticky; top:0; background:#fff; }
-.gm-head input{ flex:1; min-width:0; }
-.gm-list{ overflow:auto; max-height:56vh; padding:6px 10px; }
-.gm-item{ display:grid; grid-template-columns:22px 1fr auto auto; align-items:center; gap:10px;
-  padding:8px 10px; border-bottom:1px solid #EFEDE7; font-size:12.5px; cursor:pointer; border-radius:8px; }
-.gm-item:hover{ background:var(--c-nt-50); }
-.gm-item.added{ opacity:.55; }
+.gm-head input#gmSearch{ flex:1; min-width:0; }
+.gm-list{ overflow:auto; max-height:56vh; }
+.gm-table{ font-size:12.5px; }
+.gm-table .th-check{ width:36px; text-align:center; }
+.gm-table .th-stt{ width:48px; text-align:center; }
+.gm-table td.text-center, .gm-table th.text-center{ text-align:center; }
+.gm-row{ cursor:pointer; }
+.gm-row:hover{ background:var(--c-nt-50); }
+.gm-row.added{ opacity:.55; cursor:default; }
+.gm-row input[type=checkbox]{ cursor:pointer; }
 .gm-name{ font-weight:500; }
 .gm-meta{ font-size:11.5px; color:var(--c-text-3); white-space:nowrap; }
 .gm-foot{ display:flex; gap:10px; align-items:center; padding:12px 18px; border-top:1px solid var(--c-border);
   background:#FCFBF7; position:sticky; bottom:0; }
+
+/* file lưu trữ */
+.tip{ color:var(--c-text-4); cursor:help; font-size:12px; margin-left:6px; font-weight:400; }
+.filebtn{ position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:6px;
+  background:var(--c-info-bg); color:var(--c-info); border-radius:6px; padding:4px 10px; font-size:12px;
+  cursor:pointer; white-space:nowrap; }
+.filebtn input[type=file]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+.attach{ margin-left:8px; color:var(--c-info); font-size:12px; word-break:break-all; }
+input.cell.fw{ width:100%; min-width:120px; text-align:left; }
+table.t th.text-center, table.t td.text-center{ text-align:center; }
 </style>
 </head>
 <body>
@@ -123,8 +139,8 @@ dialog#goodsModal::backdrop{ background:rgba(26,24,21,.42); }
 <div class="brand">
   <div class="logo">DX</div>
   <div>
-    <h1>Tạo đề xuất nhập hàng</h1>
-    <div class="sub">Prototype · 3 loại đề xuất (Theo HĐ bán · Mua khác · Mua hàng tồn kho) · không nhập giá, không chọn NCC ở bước này</div>
+    <h1>Tạo đề xuất cung ứng hàng hóa</h1>
+    <div class="sub">Prototype · 2 loại đề xuất (Theo khách hàng · Theo nội bộ) · không nhập giá, không chọn NCC ở bước này</div>
   </div>
 </div>
 
@@ -137,9 +153,8 @@ dialog#goodsModal::backdrop{ background:rgba(26,24,21,.42); }
       <div class="fld"><label>Loại đề xuất <span class="req">*</span></label>
         <select id="cfgLoai" onchange="onType(this.value)">
           <option value="">— Chọn loại đề xuất —</option>
-          <option value="hopdong">Đề xuất nhập hàng theo HĐ bán</option>
-          <option value="muakhac">Đề xuất mua khác</option>
-          <option value="tonkho">Đề xuất mua hàng tồn kho (NK/PPL)</option>
+          <option value="hopdong">Đề xuất cung ứng theo khách hàng</option>
+          <option value="muakhac">Đề xuất cung ứng theo nội bộ</option>
         </select>
       </div>
       <div class="fld"><label>Mã đề xuất</label><input class="txt" value="DXNH-2026-0007" readonly></div>
@@ -147,7 +162,7 @@ dialog#goodsModal::backdrop{ background:rgba(26,24,21,.42); }
     </div>
     <div class="row grid3" style="margin-top:14px">
       <div class="fld"><label>Ngày đề xuất</label><input class="txt" id="cfgNgay" value="25/06/2026"></div>
-      <div class="fld" style="grid-column:span 2"><label>Diễn giải chung</label><input class="txt" id="cfgDienGiai" placeholder="Lý do/diễn giải đề xuất nhập hàng"></div>
+      <div class="fld" style="grid-column:span 2"><label>Diễn giải chung</label><input class="txt" id="cfgDienGiai" placeholder="Lý do/diễn giải đề xuất"></div>
     </div>
     <div id="cfgArea"></div>
   </div>
@@ -157,6 +172,26 @@ dialog#goodsModal::backdrop{ background:rgba(26,24,21,.42); }
     <div class="step-h"><span class="step-n">2</span><b>Danh sách hàng hóa đề xuất nhập</b></div>
     <div id="detailArea" class="muted">Danh sách hàng hóa sẽ hiện ở đây.</div>
     <div id="footArea"></div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step dim" id="stepFiles">
+    <div class="step-h"><span class="step-n">3</span><b>File lưu trữ</b>
+      <span class="tip" title="Các loại file có thể tải lên (tối đa 20MB): .jpg, .jpeg, .png, .pdf, .doc, .docx, .rar">ⓘ</span></div>
+    <div class="scroll">
+      <table class="t" id="fileTbl">
+        <thead><tr>
+          <th class="text-center" style="width:48px">STT</th>
+          <th>Tên tài liệu</th>
+          <th>File đính kèm</th>
+          <th>Ghi chú</th>
+          <th class="text-center" style="width:56px">Xóa</th>
+        </tr></thead>
+        <tbody id="fileBody"></tbody>
+      </table>
+    </div>
+    <button class="addrow" onclick="addFileRow()">+ Thêm tài liệu</button>
+
     <div class="actions" id="actArea" style="display:none">
       <button class="btn" id="btnSave">Lưu đề xuất</button>
       <span class="muted" style="margin-left:auto;font-size:11.5px">Đề xuất sẽ chuyển sang luồng duyệt theo loại đã chọn</span>
@@ -167,10 +202,20 @@ dialog#goodsModal::backdrop{ background:rgba(26,24,21,.42); }
 
 <dialog id="goodsModal">
   <div class="gm-head">
-    <b class="serif">Chọn hàng hóa từ danh mục</b>
+    <b class="serif" id="gmTitle">Chọn hàng hóa từ danh mục</b>
     <input id="gmSearch" class="txt" placeholder="Tìm theo tên / tên thương mại / mã NSX / hãng..." oninput="filterGm()">
   </div>
-  <div class="gm-list" id="gmList"></div>
+  <div class="gm-list">
+    <table class="t gm-table">
+      <thead><tr>
+        <th class="th-check"><input type="checkbox" id="gmAll" title="Chọn tất cả" onchange="toggleAllGm(this)"></th>
+        <th class="th-stt">STT</th>
+        <th>Tên hàng hóa</th><th>Tên thương mại</th><th>Mã NSX</th>
+        <th class="text-center">ĐVT</th><th>Nguồn</th>
+      </tr></thead>
+      <tbody id="gmList"></tbody>
+    </table>
+  </div>
   <div class="gm-foot">
     <span id="gmCount" class="muted">0 mặt hàng đã chọn</span>
     <span style="margin-left:auto"></span>
@@ -211,7 +256,7 @@ const HOP_DONG = {
     ]}
 };
 
-// danh mục hàng hóa chung (dùng cho loại 2 & 3)
+// danh mục hàng hóa chung (dùng cho loại 2)
 const DANH_MUC = [
   {ten:"Thuốc thử xét nghiệm Albumin (ALB2)", tm:"ALB2", ma:"ALB2-300", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"300 Test", phan:"Sinh hóa"},
   {ten:"Thuốc thử xét nghiệm Ferritin (FERR4)", tm:"Ferritin", ma:"FERR4-250", hang:"Roche Diagnostics GmbH/Đức", dvt:"Hộp", qc:"250 test", phan:"Miễn dịch"},
@@ -227,8 +272,8 @@ const DANH_MUC = [
   {ten:"Bóng đèn halogen máy sinh hóa", tm:"Halogen 12V", ma:"HL-12V", hang:"Osram/Đức", dvt:"Cái", qc:"Vỉ", phan:"Phụ tùng - sửa chữa"}
 ];
 
-const TYPE_LABEL = { hopdong:"Đề xuất nhập hàng theo HĐ bán", muakhac:"Đề xuất mua khác", tonkho:"Đề xuất mua hàng tồn kho" };
-const APPR_LABEL = { hopdong:"BGĐ duyệt", muakhac:"Phải xét duyệt", tonkho:"Bắt buộc phê duyệt" };
+const TYPE_LABEL = { hopdong:"Đề xuất cung ứng theo khách hàng", muakhac:"Đề xuất cung ứng theo nội bộ" };
+const APPR_LABEL = { hopdong:"BGĐ duyệt", muakhac:"Phải xét duyệt" };
 
 /* ============== utils ============== */
 const fmtN = n => (n||0).toLocaleString('vi-VN');
@@ -237,11 +282,15 @@ function itemRemain(it){ return it.slHd - it.slDx; }
 function parseNum(v){ return parseFloat(String(v).replace(/[^\d.-]/g,''))||0; }
 
 /* ============== state ============== */
-let state = { type:"", khId:"", hdId:"" };
+let state = { type:"", khId:"" };
+let pool = [];   // danh sách hàng hóa cho popup chọn (L1: hàng trong các HĐ của khách; L2: danh mục chung)
+let files = [];  // file lưu trữ đính kèm: {ten, fileName, ghiChu}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
 /* ============== STEP 1 — chọn loại ============== */
 function onType(type){
-  state.type=type; state.khId=""; state.hdId="";
+  state.type=type; state.khId="";
   renderConfig();
   if(!type || type==='hopdong') resetStep3();   // chưa chọn / chờ chọn HĐ
   else renderDetail();
@@ -251,11 +300,34 @@ function resetStep3(){
   $('#step3').classList.add('dim');
   $('#detailArea').innerHTML='<span class="muted">Danh sách hàng hóa sẽ hiện ở đây.</span>';
   $('#footArea').innerHTML=''; $('#actArea').style.display='none';
+  $('#stepFiles').classList.add('dim');
+}
+
+/* ============== File lưu trữ ============== */
+function renderFiles(){
+  $('#fileBody').innerHTML = files.map((f,i)=>`
+    <tr>
+      <td class="text-center">${i+1}</td>
+      <td><input class="cell fw" value="${esc(f.ten)}" placeholder="Tên tài liệu" oninput="setFileField(${i},'ten',this.value)"></td>
+      <td>
+        <label class="filebtn"><span>⭳ Chọn file</span><input type="file" onchange="onFilePick(${i}, this)"></label>
+        ${f.fileName ? `<a class="attach mono" title="${esc(f.fileName)}">${esc(f.fileName)}</a>` : '<span class="muted" style="margin-left:8px">Chưa có file</span>'}
+      </td>
+      <td><input class="cell fw" value="${esc(f.ghiChu)}" placeholder="ghi chú" oninput="setFileField(${i},'ghiChu',this.value)"></td>
+      <td class="text-center"><button class="del" onclick="removeFileRow(${i})">✕</button></td>
+    </tr>`).join('') || `<tr><td colspan="5" class="muted text-center" style="padding:10px">Chưa có file lưu trữ. Bấm "+ Thêm tài liệu" để đính kèm.</td></tr>`;
+}
+function setFileField(i, k, v){ if(files[i]) files[i][k]=v; }
+function addFileRow(){ files.push({ten:'', fileName:'', ghiChu:''}); renderFiles(); }
+function removeFileRow(i){ files.splice(i,1); renderFiles(); }
+function onFilePick(i, input){
+  const f = input.files && input.files[0];
+  if(f){ files[i].fileName = f.name; renderFiles(); }
 }
 
 /* ============== config theo loại (gộp trong Bước 1) ============== */
 function renderConfig(){
-  // Loại "Mua hàng tồn kho" / chưa chọn → không có thông tin theo loại
+  // chưa chọn loại → không có thông tin theo loại
   let html='';
   if(state.type==='hopdong'){
     const khList = [...new Set(Object.values(HOP_DONG).map(hd=>hd.khachHang))];
@@ -264,10 +336,10 @@ function renderConfig(){
       <div class="row grid3">
         <div class="fld"><label>Khách hàng <span class="req">*</span></label>
           <select id="cfgKh" onchange="onKhachHang()"><option value="">— Chọn khách hàng —</option>${opts}</select></div>
-        <div class="fld"><label>Hợp đồng bán (đã duyệt) <span class="req">*</span></label>
-          <select id="cfgHd" onchange="onHd()" disabled><option value="">— Chọn hợp đồng —</option></select></div>
-        <div class="fld"><label>Khách hàng (chủ đầu tư)</label>
-          <input class="txt" id="hdKh" readonly placeholder="—"></div>
+        <div class="fld"><label>Địa bàn</label>
+          <input class="txt" id="hdDiaBan" readonly placeholder="—"></div>
+        <div class="fld"><label>Số hợp đồng đã duyệt</label>
+          <input class="txt" id="hdCount" readonly placeholder="—"></div>
       </div>
       <div id="hdInfo"></div>
     </div>`;
@@ -281,7 +353,7 @@ function renderConfig(){
           </select></div>
         <span id="lyDoExtra" style="display:contents"></span>
         <div class="fld"><label>Diễn giải lý do</label>
-          <input class="txt" id="cfgLyDoNote" placeholder="Mô tả chi tiết lý do mua"></div>
+          <input class="txt" id="cfgLyDoNote" placeholder="Mô tả chi tiết lý do"></div>
       </div>
     </div>`;
   }
@@ -300,36 +372,32 @@ function onLyDo(){
   }
 }
 function onKhachHang(){
-  state.khId = $('#cfgKh').value; state.hdId="";
-  const sel = $('#cfgHd');
-  sel.innerHTML = '<option value="">— Chọn hợp đồng —</option>';
-  if(state.khId){
-    Object.keys(HOP_DONG).filter(id=>HOP_DONG[id].khachHang===state.khId)
-      .forEach(id=>{ const o=document.createElement('option'); o.value=id; o.textContent=`${HOP_DONG[id].soHD} — ${HOP_DONG[id].ten}`; sel.appendChild(o); });
-  }
-  sel.disabled=!state.khId;
-  $('#hdKh').value=''; $('#hdInfo').innerHTML=''; resetStep3();
-}
-function onHd(){
-  state.hdId = $('#cfgHd').value;
-  if(!state.hdId){ $('#hdKh').value=''; $('#hdInfo').innerHTML=''; resetStep3(); return; }
-  const hd = HOP_DONG[state.hdId];
-  $('#hdKh').value = hd.khachHang + (hd.diaBan?` · ${hd.diaBan}`:'');
-  $('#hdInfo').innerHTML = `<div class="row grid3" style="margin-top:14px">
-    <div class="fld"><label>Số HĐ · Ngày ký</label><input class="txt" readonly value="${hd.soHD} · ${hd.ngayKy}"></div>
-    <div class="fld"><label>Nhà cung cấp</label><input class="txt" readonly value="${hd.ncc}"></div>
-    <div class="fld"><label>Thời hạn thực hiện HĐ</label><input class="txt" readonly value="${hd.thoiHan||'—'}"></div>
-  </div>`;
+  state.khId = $('#cfgKh').value;
+  if(!state.khId){ $('#hdDiaBan').value=''; $('#hdCount').value=''; $('#hdInfo').innerHTML=''; resetStep3(); return; }
+  const list = Object.keys(HOP_DONG).filter(id=>HOP_DONG[id].khachHang===state.khId);
+  const first = HOP_DONG[list[0]];
+  $('#hdDiaBan').value = first.diaBan || '—';
+  $('#hdCount').value = `${list.length} hợp đồng đã duyệt`;
+  $('#hdInfo').innerHTML = `<div class="hint" style="margin-top:12px">Lấy hàng hóa từ tất cả HĐ đã duyệt của khách hàng: ${list.map(id=>HOP_DONG[id].soHD).join(' · ')}</div>`;
   renderDetail();
 }
 
 /* ============== STEP 3 — bảng chi tiết ============== */
 function renderDetail(){
   $('#step3').classList.remove('dim');
-  if(state.type==='hopdong') $('#detailArea').innerHTML = tplHopDong();
-  else $('#detailArea').innerHTML = tplDanhMuc();
+  if(state.type==='hopdong'){ pool = buildPoolHopDong(); $('#detailArea').innerHTML = tplHopDong(); }
+  else { pool = DANH_MUC; $('#detailArea').innerHTML = tplDanhMuc(); }
   $('#actArea').style.display='flex';
+  $('#stepFiles').classList.remove('dim'); renderFiles();
   bindInputs(); recompute();
+}
+// Loại 1: pool = hàng TRONG HĐ (gom mọi HĐ đã duyệt của khách, gắn số HĐ) + hàng NGOÀI HĐ (danh mục chung)
+function buildPoolHopDong(){
+  const p=[];
+  Object.keys(HOP_DONG).filter(id=>HOP_DONG[id].khachHang===state.khId)
+    .forEach(id=>{ const hd=HOP_DONG[id]; hd.items.forEach(it=> p.push({...it, inHd:true, soHD:hd.soHD})); });
+  DANH_MUC.forEach(it=> p.push({...it, inHd:false}));
+  return p;
 }
 
 // cụm cột hàng hóa dùng chung
@@ -342,28 +410,17 @@ function cellGoods(it){
 
 /* ---- Loại 1: hàng hóa thuộc HĐ ---- */
 function tplHopDong(){
-  const hd = HOP_DONG[state.hdId];
-  let body='', curPhan='';
-  hd.items.forEach(it=>{
-    if(it.phan!==curPhan){ curPhan=it.phan; body+=`<tr class="grp"><td colspan="12">${curPhan}</td></tr>`; }
-    const rem=itemRemain(it);
-    body+=`<tr data-rem="${rem}">
-      <td class="stt"></td>${cellGoods(it)}
-      <td class="num">${fmtN(it.slHd)}</td><td class="num">${fmtN(it.slDx)}</td>
-      <td class="num ${rem>0?'rem-ok':'rem-bad'}">${fmtN(rem)}</td>
-      <td class="num"><input class="cell sl" data-v value="0"></td>
-      <td><input class="cell wide" placeholder="ghi chú"></td></tr>`;
-  });
-  return `<div class="section-title">Hàng hóa thuộc hợp đồng ${hd.soHD}</div>
+  return `<div class="section-title">Hàng hóa từ các hợp đồng đã duyệt của ${state.khId}</div>
     <div class="scroll"><table class="t" id="dtl">
-      <thead><tr><th>STT</th>${headGoods()}
-        <th class="num">SL theo HĐ</th><th class="num">SL đã đề xuất</th><th class="num">SL còn lại</th>
-        <th class="num">SL đề xuất nhập</th><th>Ghi chú</th></tr></thead>
-      <tbody>${body}</tbody></table></div>
-    <div class="hint">Nhập <b>SL đề xuất nhập</b> ở các dòng cần mua. Vượt quá <b>SL còn lại</b> sẽ được cảnh báo (không chặn lưu).</div>`;
+      <thead><tr><th>STT</th>${headGoods()}<th>Hợp đồng</th>
+        <th class="num">SL theo HĐ</th><th class="num">SL đã xuất</th><th class="num">SL còn lại</th>
+        <th class="num">SL đặt đơn</th><th>Ghi chú</th><th></th></tr></thead>
+      <tbody></tbody></table></div>
+    <button class="addrow" onclick="openGoodsModal()">+ Chọn hàng hóa</button>
+    <div class="hint">Chọn hàng từ <b>hợp đồng đã duyệt</b> của khách (<span class="pill p-in">Trong HĐ</span>) hoặc từ <b>danh mục chung</b> (<span class="pill p-out">Ngoài HĐ</span>). Hàng Trong HĐ: nhập <b>SL đặt đơn</b> vượt <b>SL còn lại</b> sẽ cảnh báo (không chặn lưu); hàng Ngoài HĐ không ràng buộc SL.</div>`;
 }
 
-/* ---- Loại 2 & 3: chọn từ danh mục ---- */
+/* ---- Loại 2: chọn từ danh mục ---- */
 function tplDanhMuc(){
   return `<div class="scroll"><table class="t" id="dtl">
       <thead><tr><th>STT</th>${headGoods()}<th class="num">SL đề xuất</th><th>Ghi chú</th><th></th></tr></thead>
@@ -372,45 +429,84 @@ function tplDanhMuc(){
     <div class="hint">Chọn hàng hóa từ <b>danh mục hàng hóa</b> chung. Có thể thêm nhiều mặt hàng qua popup tìm kiếm.</div>`;
 }
 function addGoodsRow(idx){
-  const it = DANH_MUC[idx];
+  const it = pool[idx];
   const tb = $('#dtl tbody');
   if(tb.querySelector(`tr[data-idx="${idx}"]`)) return;   // tránh trùng
   const tr=document.createElement('tr'); tr.dataset.idx=idx;
-  tr.innerHTML = `<td class="stt"></td>${cellGoods(it)}
-    <td class="num"><input class="cell sl" data-v value="0"></td>
-    <td><input class="cell wide" placeholder="ghi chú"></td>
-    <td><button class="del" onclick="this.closest('tr').remove();recompute()">✕</button></td>`;
+  if(state.type==='hopdong'){
+    if(it.inHd){
+      const rem=itemRemain(it); tr.dataset.rem=rem;   // ngưỡng cảnh báo: SL đặt đơn vượt SL còn lại
+      tr.innerHTML = `<td class="stt"></td>${cellGoods(it)}
+        <td><span class="pill p-in">Trong HĐ</span> <span class="mono">${it.soHD}</span></td>
+        <td class="num">${fmtN(it.slHd)}</td><td class="num">${fmtN(it.slDx)}</td>
+        <td class="num ${rem>0?'rem-ok':'rem-bad'}">${fmtN(rem)}</td>
+        <td class="num"><input class="cell sl" data-v value="0"></td>
+        <td><input class="cell wide" placeholder="ghi chú"></td>
+        <td><button class="del" onclick="this.closest('tr').remove();recompute()">✕</button></td>`;
+    } else {
+      tr.innerHTML = `<td class="stt"></td>${cellGoods(it)}
+        <td><span class="pill p-out">Ngoài HĐ</span></td>
+        <td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td>
+        <td class="num"><input class="cell sl" data-v value="0"></td>
+        <td><input class="cell wide" placeholder="ghi chú"></td>
+        <td><button class="del" onclick="this.closest('tr').remove();recompute()">✕</button></td>`;
+    }
+  } else {
+    tr.innerHTML = `<td class="stt"></td>${cellGoods(it)}
+      <td class="num"><input class="cell sl" data-v value="0"></td>
+      <td><input class="cell wide" placeholder="ghi chú"></td>
+      <td><button class="del" onclick="this.closest('tr').remove();recompute()">✕</button></td>`;
+  }
   tb.appendChild(tr); bindInputs(); recompute();
 }
 
 /* ---- Popup chọn hàng hóa từ danh mục ---- */
 function openGoodsModal(){
   $('#gmSearch').value='';
-  renderGmList(DANH_MUC.map((it,i)=>({it,i})));
+  $('#gmTitle').textContent = state.type==='hopdong'
+    ? 'Chọn hàng hóa từ các hợp đồng của khách hàng' : 'Chọn hàng hóa từ danh mục';
+  renderGmList(pool.map((it,i)=>({it,i})));
   $('#goodsModal').showModal();
 }
 function renderGmList(list){
   const tb = $('#dtl tbody');
-  $('#gmList').innerHTML = list.map(({it,i})=>{
+  $('#gmList').innerHTML = list.map(({it,i},pos)=>{
     const added = tb && tb.querySelector(`tr[data-idx="${i}"]`);
-    return `<label class="gm-item${added?' added':''}">
-      <input type="checkbox" value="${i}" ${added?'checked disabled':''} onchange="updateGmCount()">
-      <span class="gm-name">${it.ten} <span class="muted">(${it.tm})</span></span>
-      <span class="gm-meta mono">${it.ma}</span>
-      <span class="gm-meta">${it.dvt} · ${it.phan}</span>
-    </label>`;
-  }).join('') || `<div class="muted" style="padding:10px">Không tìm thấy mặt hàng phù hợp.</div>`;
+    const nguon = it.inHd===true ? `<span class="pill p-in">Trong HĐ</span> <span class="mono">${it.soHD}</span>`
+                : it.inHd===false ? `<span class="pill p-out">Ngoài HĐ</span>`
+                : `<span class="muted">${it.phan}</span>`;
+    return `<tr class="gm-row${added?' added':''}" ${added?'':`onclick="gmRowClick(${i})"`}>
+      <td class="text-center"><input type="checkbox" value="${i}" ${added?'checked disabled':''} onclick="event.stopPropagation()" onchange="updateGmCount()"></td>
+      <td class="text-center">${pos+1}</td>
+      <td class="gm-name nm">${it.ten}</td><td class="nm">${it.tm}</td><td class="mono">${it.ma}</td>
+      <td class="text-center">${it.dvt}</td><td>${nguon}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="7" class="muted text-center" style="padding:10px">Không tìm thấy mặt hàng phù hợp.</td></tr>`;
   updateGmCount();
+}
+function gmRowClick(i){
+  const cb = $(`#gmList input[type=checkbox][value="${i}"]`);
+  if(cb && !cb.disabled){ cb.checked=!cb.checked; updateGmCount(); }
 }
 function filterGm(){
   const q=$('#gmSearch').value.toLowerCase().trim();
-  const list=DANH_MUC.map((it,i)=>({it,i}))
-    .filter(({it})=>(it.ten+' '+it.tm+' '+it.ma+' '+it.hang+' '+it.phan).toLowerCase().includes(q));
+  const list=pool.map((it,i)=>({it,i}))
+    .filter(({it})=>{
+      const inout = it.inHd===true?'trong hđ':it.inHd===false?'ngoài hđ danh mục':'';
+      return (it.ten+' '+it.tm+' '+it.ma+' '+it.hang+' '+(it.phan||'')+' '+(it.soHD||'')+' '+inout).toLowerCase().includes(q);
+    });
   renderGmList(list);
 }
+function toggleAllGm(cb){
+  $('#gmList').querySelectorAll('input[type=checkbox]:not(:disabled)').forEach(c=>{ c.checked=cb.checked; });
+  updateGmCount();
+}
 function updateGmCount(){
-  const n=$('#gmList').querySelectorAll('input:checked:not(:disabled)').length;
+  const all=[...$('#gmList').querySelectorAll('input[type=checkbox]:not(:disabled)')];
+  const n=all.filter(c=>c.checked).length;
   $('#gmCount').textContent=n+' mặt hàng đã chọn';
+  const gmAll=$('#gmAll');
+  if(gmAll){ gmAll.disabled = all.length===0; gmAll.checked = all.length>0 && n===all.length; gmAll.indeterminate = n>0 && n<all.length; }
 }
 function confirmGoods(){
   $('#gmList').querySelectorAll('input:checked:not(:disabled)').forEach(c=>addGoodsRow(+c.value));
@@ -450,7 +546,7 @@ function recompute(){
 }
 function renderFoot(count, totSl, over){
   let banner='';
-  if(state.type==='hopdong' && over>0) banner=`<span class="banner bad">⚠ Có ${over} mặt hàng vượt số lượng còn lại của HĐ (vẫn lưu được)</span>`;
+  if(state.type==='hopdong' && over>0) banner=`<span class="banner bad">⚠ Có ${over} mặt hàng có SL đặt đơn vượt SL còn lại của HĐ (vẫn lưu được)</span>`;
   else if(count>0) banner=`<span class="banner ok">✓ Hợp lệ — ${APPR_LABEL[state.type]}</span>`;
   else banner=`<span class="muted">Chưa nhập số lượng đề xuất cho mặt hàng nào</span>`;
   $('#footArea').innerHTML = `<div class="foot">
@@ -462,7 +558,8 @@ function renderFoot(count, totSl, over){
 /* save (luôn cho lưu — không chặn) */
 document.addEventListener('click', e=>{
   if(e.target && e.target.id==='btnSave'){
-    alert('Đã lưu "'+TYPE_LABEL[state.type]+'".\nCấp duyệt: '+APPR_LABEL[state.type]+'.\n(Prototype — chưa ghi xuống dữ liệu thật.)');
+    const nFile = files.filter(f=>f.fileName).length;
+    alert('Đã lưu "'+TYPE_LABEL[state.type]+'".\nCấp duyệt: '+APPR_LABEL[state.type]+'.\nFile lưu trữ đính kèm: '+nFile+'.\n(Prototype — chưa ghi xuống dữ liệu thật.)');
   }
 });
 </script>

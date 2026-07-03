@@ -152,6 +152,13 @@ Yêu cầu user: loại "Theo tháng" đang đổ TẤT CẢ hàng hóa HĐ mặ
 Yêu cầu user: ở Bước 1, ô chọn Khách hàng chỉ hiển thị những KH mà **đã từng lập hợp đồng** (trong các HĐ do mình lập, đã duyệt) — đảo lại Phase 10 dòng 110 (đang load full danh mục). FE-only.
 - [x] `Step1SelectContract.vue`: `customerOptions` suy ra từ `this.contracts` (dedupe theo `customer_id`, nhãn "mã — tên" từ `customer_code/customer_name`); bỏ `getCustomers()`/`customers[]`/gọi API `category/customers`. Giữ fallback edit/show từ `contract`. Hint giữ nguyên ("chỉ HĐ do bạn lập").
 
+### Phase 13 — Cảnh báo đỏ rõ khi SL nghiệm thu > còn lại (2026-07-01)
+Yêu cầu user (@khoipv): ở màn `add`, khi nhập SL nghiệm thu > SL còn lại thì ô hàng đó CHƯA báo đỏ rõ. Mong muốn: **cho nhập nhưng ô đỏ đậm + dòng chữ đỏ báo lỗi ngay dưới ô, và chặn lưu** (chặn lưu đã có sẵn qua `hasQtyError`). FE-only, style của loại BBNT giữ nguyên altitude. Nguyên nhân: style `input.cell.bad` chỉ đổi viền + nền hồng rất nhạt (`#f7ddd7`) → nhìn như không đổi; không có thông báo lỗi inline.
+- [x] `AcceptanceReportForm.vue`: mạnh hóa style `input.cell.bad` (viền đỏ đậm 1.5px + nền đỏ nhạt rõ + chữ đỏ đậm); thêm class `.qty-err` (dòng chữ đỏ nhỏ dưới ô).
+- [x] `ProductGrid.vue` (mathang/luyke): thêm `<div class="qty-err">` dưới `currency-input` khi `parseNum(row.sl) > row.rem`, nội dung "Vượt SL còn lại (X)".
+- [x] `FormByMonth.vue` (theo tháng): thêm `qty-err` khi `isOver(ri, row)`, X = `rowRemain(ri, row)`.
+- [x] `FormByInvoiceDetail.vue` (chi tiết HĐ): thêm `qty-err` khi `parseNum(row.sl) > effRem(bi, row)`, X = `effRem(bi, row)`.
+
 ---
 
 ### Checkpoint — 2026-06-16

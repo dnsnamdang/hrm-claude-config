@@ -207,6 +207,18 @@ Verify: vue-template-compiler + new Function(script) compile clean.
 Bước tiếp theo (người dùng tự làm): `npm run dev` xem lập mới — chọn KH → HĐ lọc đúng → preview.
 Blocked: (không)
 
+### Phase 5 — Hiển thị mã KH ở dropdown chọn khách hàng (2026-07-01)
+Yêu cầu user (@khoipv): màn `add` — dropdown chọn KH không hiện mã KH; sửa giống màn nghiệm thu ("mã — tên").
+Nguyên nhân: endpoint `selectable-contracts` của thanh lý không trả `customer_code`; FE chỉ dùng `customer_name`.
+- [x] BE `ContractLiquidationService::selectableContracts`: leftJoin `category_customers as cus` + select `cus.code as customer_code` (đồng nhất `AcceptanceReportService`).
+- [x] FE `ContractLiquidationForm.vue`: `customerOptions` dùng `customerLabel(customer_code, customer_name)`; thêm method `customerLabel` (copy từ `Step1SelectContract`).
+
+### Phase 6 — Bỏ điều kiện HĐ phải có BBNT đã duyệt mới được thanh lý (2026-07-01)
+Yêu cầu user (@khoipv): màn `add` — cho chọn cả HĐ chưa có biên bản nghiệm thu (bỏ ràng buộc "đã có BBNT đã duyệt"). Giữ các điều kiện khác: do mình lập + chưa thanh lý.
+- [x] BE `selectableContracts`: bỏ `whereExists(acceptance_reports DA_DUYET)`.
+- [x] BE `store`: bỏ gọi `assertHasApprovedReport`; xóa luôn method (dead code). Import `AcceptanceReport` vẫn giữ (preview tổng hợp còn dùng); HĐ không BBNT → phần tổng hợp = rỗng/0, không lỗi.
+- [x] FE `ContractLiquidationForm.vue`: sửa hint còn "Chỉ hiển thị hợp đồng do bạn lập và chưa thanh lý."
+
 ### Checkpoint — 2026-06-24 (Phase 4 — đồng bộ form theo BBNT)
 Vừa hoàn thành: Task 12–14. Rework 3 file FE form thanh lý sang đúng shell + theme BBNT:
 - `ContractLiquidationForm.vue`: `pages-container category-container contract-liquidation-form` +

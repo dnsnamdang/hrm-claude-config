@@ -6,8 +6,9 @@
 
 | File | Mô tả | Spec liên quan |
 |------|-------|----------------|
-| `demo-tao-de-xuat-nhap-hang.html` | Tạo đề xuất nhập hàng — 3 loại (Theo HĐ bán · Mua khác · Mua hàng tồn kho), wizard 2 bước, modal chọn hàng từ danh mục, cảnh báo vượt SL còn lại (không chặn). | `docs/superpowers/specs/2026-06-25-purchase-proposal-demo-design.md` |
+| `demo-tao-de-xuat-cung-ung-hang-hoa.html` | Tạo đề xuất cung ứng hàng hóa — 2 loại (Theo khách hàng · Theo nội bộ), wizard 2 bước, popup chọn hàng (bảng + chọn-all), phân biệt Trong/Ngoài HĐ, cảnh báo vượt SL theo HĐ (không chặn), đính kèm File lưu trữ. | `docs/superpowers/specs/2026-06-25-purchase-proposal-demo-design.md` |
 | `demo-bc-vong-doi-du-toan-hop-dong.html` | Báo cáo vòng đời Dự toán → Hợp đồng. (Chuyển về từ `hrm-thanhan-client/pages/sale/report-project-contract/`) | — |
+| `demo-xuat-excel-gia-hang-hoa.html` | Chọn trường + loại giá khi xuất Excel màn Quản lý giá hàng hóa | — |
 
 ## Quy ước
 
