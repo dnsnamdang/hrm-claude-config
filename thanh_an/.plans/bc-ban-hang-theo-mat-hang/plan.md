@@ -36,6 +36,13 @@
 
 - [x] Fix dòng mặt hàng (lvl-item) bị lệch màu: ô Hạng mục sticky nền trắng còn các ô khác nền xám. Do lần fix border trước nâng specificity `.basic-table-border .banhang-table td.gh-sticky` (nền trắng) thắng rule `tr.lvl-item td.gh-sticky`. Sửa: prefix cả 2 rule nền dòng item thành `.basic-table-border .banhang-table tr.lvl-item td[.gh-sticky]` để nền xám #eef1f5 phủ đều toàn dòng.
 
+## Bổ sung sau (2026-07-04)
+- [x] Thêm 3 cột info cấp mặt hàng: **Nhóm HH** (`product_group_name`), **Loại HH** (`import_type_id`: 1=Nhập khẩu, 2=Phân phối lại/PPL), **Quy cách** (`specification`). Đặt sau cột "Mảng HH", nhóm chung khối phân loại. Đều nằm trong nhóm `col-info` (ẩn/hiện theo nút "Ẩn cột TT").
+  - BE: `saleProductReport` select thêm `cp.import_type_id`, `cp.specification`; `buildSaleProductTree` thêm 2 field vào node (product_group_name đã có sẵn).
+  - FE: header 2 dòng (+3 th rowspan=2), hàng TỔNG CỘNG (+3 td col-info trống), dòng dữ liệu (+3 td, chỉ hiện ở cấp item), colspan "Chưa có dữ liệu" 15→18, helper `importTypeText`, export Excel (+3 cột).
+
+- [x] Popup "Chi tiết Hợp đồng": mã HĐ ngay trên **tiêu đề popup** là link mở **tab mới** sang màn chi tiết HĐ (`/contract/contract/{id}`) — không thêm dòng meta thừa. FE: computed `modalTitleParts` (tách prefix/code/href, chỉ hd-detail có href); slot `#modal-title` render code bằng `<b-link :to target="_blank">`. (Giữ nhánh `m.href` trong template meta như capability chung.)
+
 ## Còn lại (cần user chạy/kiểm)
 - [ ] Chạy `npm run dev` client, mở `/contract/reports/sale-product` kiểm thị giao diện + collapse + drill-down + Excel.
 - [ ] Gán quyền `Xem báo cáo bán hàng theo mặt hàng` cho role qua UI phân quyền.
