@@ -12,6 +12,17 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Phụ lục thay đổi điều khoản thanh toán** — Loại phụ lục HĐ thứ 7 (`annex_type='change_payment_terms'`), nhân bản slice `contract_annex_time`. Lập/duyệt/in chứng từ đổi bộ điều khoản thanh toán (bảng 4 điều khoản `contract_payment_terms` + `payment_terms_note`) của HĐ đã duyệt. Khi duyệt: ghi đè điều khoản live + note + nhúng snapshot version mới + `ContractChange`. Giữ nút sửa inline sẵn có. Có In bảng động Cũ→Mới. Form 1 bảng mới (prefill hiện tại, tái dùng `PaymentTermsTab.vue`). Chỉ HĐ status=3. Không migration, tái dùng quyền "Lập/Duyệt hợp đồng". Không đụng `syncPaymentTerms` gốc. BE mới: Service+Controller+Request+DetailResource+routes; sửa `ANNEX_TYPE_LABELS`. FE mới bộ trang `contract_annex_payment_terms/`; sửa 3× ROUTE_MAP + API_MAP + option approve.vue + menu. Fix bổ sung: `mt-3` header–tabs; fix crash chi tiết (`formSubmit.contract={}`); `ContractDetailResource` đọc `payment_terms`/`payment_terms_note` từ snapshot v0 (fallback live); đăng ký 4 biến mẫu in (`NGAY_LAP`, `BANG_DIEU_KHOAN`, `GHI_CHU_CU`, `GHI_CHU_MOI`); chặn tạo phụ lục khi HĐ đang có phụ lục dở (filter `exclude_in_progress_annex` cho cả 8 màn). (@khoipv) — 2026-07-07, HOÀN THÀNH (verify UI PASS)
+  - Spec: `docs/superpowers/specs/2026-07-07-contract-annex-payment-terms-design.md`
+  - Design + Plan: `.plans/contract-annex-payment-terms/design.md` · `plan.md`
+
+- **Thông báo dự toán chờ phân công sắp hết hạn** — Màn Dự toán (`sale/project`): Console Command mới `projects:notify-assignment-due` chạy dailyAt 07:00, quét dự toán status=2 (Chờ phân công) còn ≤2 ngày làm việc là tới `expected_time` → gửi thông báo cho tất cả người có quyền `'Phân công báo giá'` (dùng `listEmployeeInfoByPermission` + `sendToAllContractNotification`, `Carbon::diffInWeekdays` trừ T7/CN). Không gửi cuối tuần/quá hạn. Chỉ BE, không FE/migration. (@khoipv) — 2026-07-06, HOÀN THÀNH
+  - Spec: `docs/superpowers/specs/2026-07-06-notify-project-assignment-due-design.md`
+  - Design + Plan: `.plans/notify-project-assignment-due/design.md` · `plan.md`
+
+- **Giữ lọc màn bid_package/dashboard + contract/dashboard (tham chiếu plan/dashboard)** — Cơ chế giữ lọc dashboard nằm trong 3 card dùng chung (`FilterPieChartCard/LineChartCard/ColumnChartCard`), lưu localStorage qua `utils/dashboard-chart-filter.js` theo prop `module`. `BidPackageDashboard.vue` & `ContractDashboard.vue` đã có `module` nên đã lưu, nhưng thiếu/sai prop mapping so với `PlanDashboard.vue` (chuẩn) → khôi phục lọc không map lại được id. Fix FE 2 file: Pie đổi `region-mapping`→`area-mapping`; Column thêm `status-options`/`status-mapping`/`area-mapping`. (@khoipv) — 2026-07-06, HOÀN THÀNH (verify UI PASS)
+  - Plan: `.plans/bid-package-dashboard-giu-loc/plan.md`
+
 - **Giữ bộ lọc khi rời trang — 4 phân hệ (Danh mục/Kinh doanh/Kế hoạch/Quản lý thầu)** — Rà soát toàn bộ màn danh sách, chuẩn hoá giữ bộ lọc + trang phân trang khi vào chi tiết rồi back (tham chiếu `plan/quotation`, mixin `searchMixinPlugin.js`). Phạm vi: 8 màn (sale/assign-kpi, sale/register-kpi, sale/report-project-contract, sale/detail-report, plan/detail-report, bid_package/detail-report, category/customer_handover, customer_handover/waiting-approve) + fix trùng `localStorageKey` của plan/project & bid_package/project. Bỏ ~24 danh mục con Category (CRUD modal, không rời trang). Chỉ FE. (@khoipv) — 2026-07-04, HOÀN THÀNH (verify UI PASS)
   - Spec: `docs/superpowers/specs/2026-07-04-giu-loc-danh-sach-design.md`
   - Design + Plan: `.plans/giu-loc-danh-sach/design.md` · `plan.md`
