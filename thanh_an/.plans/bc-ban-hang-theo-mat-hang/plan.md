@@ -43,6 +43,11 @@
 
 - [x] Popup "Chi tiết Hợp đồng": mã HĐ ngay trên **tiêu đề popup** là link mở **tab mới** sang màn chi tiết HĐ (`/contract/contract/{id}`) — không thêm dòng meta thừa. FE: computed `modalTitleParts` (tách prefix/code/href, chỉ hd-detail có href); slot `#modal-title` render code bằng `<b-link :to target="_blank">`. (Giữ nhánh `m.href` trong template meta như capability chung.)
 
+## Bổ sung sau (2026-07-09)
+- [x] Thêm cột **Tên thương mại** (`product_trade_name`) cấp mặt hàng + **bộ lọc** tương ứng.
+  - BE: `saleProductReport` select thêm `COALESCE(NULLIF(cp.product_trade_name,''), pr.trade_name) as product_trade_name`; `buildSaleProductTree` thêm field vào node item.
+  - FE: header (+1 th col-info rowspan=2 "Tên thương mại"), TỔNG CỘNG (+1 td col-info trống), dòng dữ liệu (+1 td chỉ cấp item), colspan "Chưa có dữ liệu" 18→19; filter Select2 `trade_name` (uniqueOptions) + đưa vào `buildRows`/`reset`/watch; include vào keyword search; export Excel (+1 cột).
+
 ## Còn lại (cần user chạy/kiểm)
 - [ ] Chạy `npm run dev` client, mở `/contract/reports/sale-product` kiểm thị giao diện + collapse + drill-down + Excel.
 - [ ] Gán quyền `Xem báo cáo bán hàng theo mặt hàng` cho role qua UI phân quyền.
