@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lập hợp đồng mua — Demo</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mdi/6.5.95/css/materialdesignicons.min.css">
+<style>
+  body{ background:#f4f6f9; font-size:13px; color:#212529; }
+  .pages-container{ max-width:1500px; margin:14px auto; padding:0 16px 60px; }
+  .page-header{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .page-header h3{ font-size:18px; margin:0; }
+  .breadcrumb{ background:transparent; padding:4px 0; margin:0; font-size:12px; }
+  .category-card{ background:#fff; border:1px solid #e3e8ee; border-radius:6px; padding:14px 16px; margin-bottom:14px; }
+  .category-card h4{ font-size:14px; font-weight:600; margin-bottom:10px; color:#2c3e50; }
+  label{ font-size:12px; font-weight:500; margin-bottom:3px; }
+  .req{ color:#dc3545; font-weight:700; margin-left:2px; }
+  .form-control, .custom-select{ font-size:12.5px; }
+  .nav-tabs.nav-bordered{ border-bottom:2px solid #e3e8ee; }
+  .nav-tabs.nav-bordered .nav-link{ border:0; border-bottom:2px solid transparent; color:#6c757d; font-size:13px; padding:8px 14px; }
+  .nav-tabs.nav-bordered .nav-link.active{ color:#0d6efd; border-bottom-color:#0d6efd; background:transparent; }
+  .nav-tabs.nav-bordered .nav-link.tab-error{ color:#dc3545; }
+  .equal-width{ width:120px !important; }
+  .col-thuongmai{ display:none; }
+  body.mode-thuongmai .col-thuongmai{ display:table-cell; }
+  .editor-box{ border:1px solid #ced4da; border-radius:4px; min-height:280px; padding:10px 12px; background:#fff; overflow:auto; font-size:12.5px; line-height:1.5; }
+  .editor-box h5{ font-size:13px; font-weight:700; margin:10px 0 4px; }
+  /* ===== Bảng hàng hóa kiểu HĐ bán ===== */
+  .product-table{ font-size:12px; margin-bottom:8px; }
+  .product-table thead.thead-sticky th{ position:sticky; top:0; z-index:2; background:#eef4f3; color:#2c3e50; font-size:11.5px; font-weight:600; text-align:center; vertical-align:middle; white-space:normal; border:1px solid #d9e2e0; }
+  .product-table td{ vertical-align:middle; border:1px solid #e3e8ee; padding:4px 6px; }
+  .product-table td.num, .product-table th.num{ text-align:right; }
+  .product-table .warning-row td{ background:#fcefec; }
+  .product-table input.form-control-sm{ font-size:11.5px; height:28px; }
+  .product-table .cell-name{ min-width:220px; white-space:normal; }
+  .product-table .cell-name .sub{ font-size:10.5px; color:#8a97a3; }
+  .drag-handle{ cursor:grab; text-align:center; color:#7a8894; }
+  .total-block .row{ margin-bottom:2px; }
+  .btn-xs{ padding:2px 7px; font-size:11px; }
+  .filter-wrap{ background:#f7faf9; border:1px solid #e3e8ee; border-radius:6px; padding:10px 12px; margin-top:6px; }
+  .product-table td.cell-purpose{ min-width:220px; white-space:normal; line-height:1.5; }
+  .cell-purpose .pp-lb{ color:#8a97a3; font-size:10.5px; }
+  .btn-unlink-purpose{ border:0; background:transparent; color:#c0392b; padding:0 2px; cursor:pointer; font-size:13px; line-height:1; }
+  .btn-unlink-purpose:hover{ color:#e74c3c; }
+  /* ===== Modal chọn hàng hóa ===== */
+  .gm-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1050; display:flex; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; }
+  .gm-dialog{ background:#fff; border-radius:8px; width:100%; max-width:1040px; box-shadow:0 10px 40px rgba(0,0,0,.3); }
+  .gm-head{ padding:12px 16px; border-bottom:1px solid #e3e8ee; display:flex; justify-content:space-between; align-items:center; }
+  .gm-head h4{ margin:0; font-size:15px; font-weight:600; color:#2c3e50; }
+  .gm-body{ padding:12px 16px; max-height:60vh; overflow:auto; }
+  .gm-foot{ padding:12px 16px; border-top:1px solid #e3e8ee; display:flex; justify-content:space-between; align-items:center; }
+  .gm-table{ font-size:12px; margin-bottom:0; }
+  .gm-table thead th{ position:sticky; top:0; background:#eef4f3; color:#2c3e50; font-size:11.5px; font-weight:600; text-align:center; vertical-align:middle; border:1px solid #d9e2e0; }
+  .gm-table td{ vertical-align:middle; border:1px solid #e3e8ee; padding:4px 6px; }
+  .gm-table td.num, .gm-table th.num{ text-align:right; }
+  .gm-table tbody tr{ cursor:pointer; }
+  .gm-table tbody tr.gm-sel td{ background:#eaf4ff; }
+  .gm-pill{ display:inline-block; padding:1px 8px; border-radius:10px; font-size:10.5px; font-weight:600; white-space:nowrap; }
+  .gm-pill-rep{ background:#e3f1ff; color:#0d6efd; }
+  .gm-pill-cat{ background:#fff3e0; color:#e07b00; }
+</style>
+</head>
+<body>
+<div class="pages-container">
+  <div class="page-header">
+    <div>
+      <h3>Lập hợp đồng mua</h3>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs nav-bordered" role="tablist">
+    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tab-general">Thông tin chung</a></li>
+    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tab-products">Hàng hóa</a></li>
+  </ul>
+  <div class="tab-content pt-3">
+    <div class="tab-pane fade show active" id="tab-general"></div>
+    <div class="tab-pane fade" id="tab-products"></div>
+  </div>
+
+  <div class="text-right mt-2">
+    <button class="btn btn-secondary equal-width" id="btn-cancel">Hủy</button>
+    <button class="btn btn-primary equal-width" id="btn-save">Lưu</button>
+    <button class="btn btn-primary equal-width" id="btn-save-send">Lưu và gửi</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ===== DATA GIẢ LẬP + STATE ===== */
+const fmtN = n => (Number(n)||0).toLocaleString('vi-VN');
+const SEED = {
+  companies: [
+    { id:'TA', code:'THANHAN', name:'CÔNG TY CỔ PHẦN THIẾT BỊ Y TẾ THÀNH AN',
+      address:'Số 98 đường Yên Phụ, Phường Ba Đình, TP Hà Nội', tax:'0106622681', phone:'0243 927 5777',
+      bankNo:'19133893337017', bankName:'Techcombank - CN Hà Thành', bankBranch:'Hà Thành, Hà Nội',
+      rep:'Ông Vũ Văn Trung', title:'Giám đốc', authDoc:'' },
+    { id:'TA2', code:'THANHAN-CN2', name:'CÔNG TY CỔ PHẦN THIẾT BỊ Y TẾ THÀNH AN - CN HCM',
+      address:'Số 12 Nguyễn Văn Trỗi, Phường Phú Nhuận, TP Hồ Chí Minh', tax:'0106622681-001', phone:'028 3845 1234',
+      bankNo:'060123456789', bankName:'Vietcombank - CN TP.HCM', bankBranch:'TP.HCM',
+      rep:'Bà Trần Thị Mai', title:'Giám đốc chi nhánh', authDoc:'UQ số 05/2026/UQ-GĐ ngày 02/01/2026' },
+  ],
+  suppliers: [
+    { id:'HA', code:'NCC-HONGANH', name:'CÔNG TY TNHH KỸ THUẬT HỒNG ANH',
+      address:'11B Ngọc Hà, Phường Ba Đình, TP Hà Nội', tax:'0107627280', phone:'024 3734 5678',
+      bankNo:'0021000388756', bankName:'Vietcombank - CN Hà Nội', bankBranch:'Hà Nội',
+      rep:'Bà Nguyễn Thị Hồng Thu', title:'Phó Giám đốc', authDoc:'UQ số 152/2025/UQ-GĐ ngày 15/12/2025' },
+    { id:'ROCHE', code:'NCC-ROCHE', name:'CÔNG TY TNHH ROCHE VIỆT NAM',
+      address:'Tầng 12, Tòa nhà Pearl Plaza, 561A Điện Biên Phủ, TP Hồ Chí Minh', tax:'0312345678', phone:'028 3822 9999',
+      bankNo:'11122233344455', bankName:'HSBC Việt Nam', bankBranch:'TP.HCM',
+      rep:'Ông Nguyễn Minh Đức', title:'Giám đốc', authDoc:'' },
+  ],
+  // Hàng hóa đã được chọn sẵn từ Báo cáo nhu cầu mua → danh sách phẳng, không chia nhóm.
+  products: [
+    { source:'report', internalCode:'HH-01', code:'7030207190', name:'Chất hiệu chuẩn xét nghiệm CA 125', tradeName:'CA 125 II CalSet II', spec:'2 x 1 mL', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:2, proposedQty:10, orderQty:8, vat:5, price:4200000, qty:8, note:'' },
+    { source:'report', internalCode:'HH-02', code:'3045838214', name:'Thuốc thử xét nghiệm CA 15-3', tradeName:'Elecsys CA 15-3 II', spec:'100 tests', unit:'Hộp', maker:'Roche (Suzhou)/TQ', customer:'Cung ứng nội bộ', saleContract:'—', proposal:'PĐXM-2026/019', stockQty:1, proposedQty:4, orderQty:4, vat:5, price:3850000, qty:4, note:'' },
+    { source:'report', internalCode:'HH-03', code:'8429324190', name:'Thuốc thử xét nghiệm TSH', tradeName:'Elecsys TSH', spec:'200 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:3, proposedQty:8, orderQty:8, vat:5, price:5100000, qty:8, note:'' },
+    { source:'report', internalCode:'HH-04', code:'9315322190', name:'Thuốc thử xét nghiệm Troponin T tim', tradeName:'Elecsys Troponin T hs', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Trung ương', saleContract:'HĐB-2026/052', proposal:'PĐXM-2026/021', stockQty:0, proposedQty:6, orderQty:5, vat:5, price:6200000, qty:5, note:'' },
+    // Ví dụ: 1 hàng hóa (CEA) phục vụ 2 khách hàng / 2 phiếu đề xuất khác nhau → TÁCH thành 2 dòng riêng, mỗi phiếu có SL đề xuất mua riêng.
+    { source:'report', internalCode:'HH-09', code:'7712634190', name:'Thuốc thử xét nghiệm CEA', tradeName:'Elecsys CEA', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh',   saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:1, proposedQty:8, orderQty:8, vat:5, price:4950000, qty:8, note:'' },
+    { source:'report', internalCode:'HH-10', code:'7712634190', name:'Thuốc thử xét nghiệm CEA', tradeName:'Elecsys CEA', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Trung ương', saleContract:'HĐB-2026/052', proposal:'PĐXM-2026/023', stockQty:0, proposedQty:6, orderQty:5, vat:5, price:4950000, qty:5, note:'' },
+  ],
+  // Hàng hóa còn trong Báo cáo nhu cầu mua nhưng CHƯA được đưa vào HĐ mua nào → nguồn "Trong báo cáo".
+  availableProducts: [
+    { source:'report', internalCode:'HH-05', code:'6612048190', name:'Thuốc thử xét nghiệm FT4', tradeName:'Elecsys FT4 III', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:1, proposedQty:6, orderQty:6, vat:5, price:4650000, qty:6, note:'' },
+    { source:'report', internalCode:'HH-06', code:'5521193190', name:'Thuốc thử xét nghiệm PSA toàn phần', tradeName:'Elecsys total PSA', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Trung ương', saleContract:'HĐB-2026/052', proposal:'PĐXM-2026/021', stockQty:0, proposedQty:5, orderQty:4, vat:5, price:5350000, qty:4, note:'' },
+    { source:'report', internalCode:'HH-07', code:'4408271190', name:'Dung dịch rửa hệ thống miễn dịch', tradeName:'ProCell II M', spec:'2 x 2 L', unit:'Thùng', maker:'Roche (Suzhou)/TQ', customer:'Cung ứng nội bộ', saleContract:'—', proposal:'PĐXM-2026/019', stockQty:2, proposedQty:12, orderQty:10, vat:5, price:1850000, qty:10, note:'' },
+    { source:'report', internalCode:'HH-08', code:'3317502190', name:'Thuốc thử xét nghiệm HbA1c', tradeName:'Tina-quant HbA1c Gen.3', spec:'400 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:4, proposedQty:5, orderQty:5, vat:5, price:7200000, qty:5, note:'' },
+  ],
+  // Danh mục hàng hóa chung — NGOÀI Báo cáo nhu cầu mua (không gắn HĐ bán / phiếu đề xuất / SL đề xuất).
+  catalogProducts: [
+    { source:'catalog', internalCode:'DM-01', code:'2201045190', name:'Ống nghiệm chân không EDTA 2mL', tradeName:'BD Vacutainer K2E', spec:'100 ống/hộp', unit:'Hộp', maker:'BD/Hoa Kỳ', customer:'—', saleContract:'—', proposal:'—', stockQty:12, proposedQty:null, orderQty:0, vat:8, price:320000, qty:0, note:'' },
+    { source:'catalog', internalCode:'DM-02', code:'2209318190', name:'Đầu côn có lọc 1000µL', tradeName:'Eppendorf epT.I.P.S.', spec:'96 đầu/khay', unit:'Khay', maker:'Eppendorf/Đức', customer:'—', saleContract:'—', proposal:'—', stockQty:8, proposedQty:null, orderQty:0, vat:8, price:540000, qty:0, note:'' },
+    { source:'catalog', internalCode:'DM-03', code:'2251177190', name:'Găng tay khám nghiệm nitrile không bột', tradeName:'Nitrile Blue M', spec:'100 chiếc/hộp', unit:'Hộp', maker:'Top Glove/Malaysia', customer:'—', saleContract:'—', proposal:'—', stockQty:20, proposedQty:null, orderQty:0, vat:8, price:180000, qty:0, note:'' },
+    { source:'catalog', internalCode:'DM-04', code:'2278402190', name:'Cồn sát khuẩn Isopropyl 70%', tradeName:'—', spec:'Can 5 lít', unit:'Can', maker:'VN', customer:'—', saleContract:'—', proposal:'—', stockQty:5, proposedQty:null, orderQty:0, vat:8, price:260000, qty:0, note:'' },
+  ],
+  dieuKhoanHTML: `
+    <h5>ĐIỀU 1. ĐỐI TƯỢNG HỢP ĐỒNG</h5>
+    <p>Bên Bán đồng ý bán và Bên Mua đồng ý mua hàng hóa là hóa chất, vật tư xét nghiệm (chi tiết theo danh mục hàng hóa đính kèm Hợp đồng). Số lượng hàng hóa cung cấp theo đơn đặt hàng dự trù của Bên Mua và khả năng cung ứng của Bên Bán.</p>
+    <h5>ĐIỀU 2. GIÁ CẢ - CHẤT LƯỢNG HÀNG HÓA</h5>
+    <p>Danh sách hàng hóa và giá cả được quy định chi tiết tại danh mục đính kèm Hợp đồng. Đơn giá có thể thay đổi theo thị trường, Bên Bán thông báo đơn giá mới trước tối thiểu 10 ngày. Hàng hóa còn mới 100%, nguyên đai nguyên kiện, được phép lưu hành tại Việt Nam.</p>
+    <h5>ĐIỀU 3. GIAO NHẬN HÀNG HÓA</h5>
+    <p>Thời gian giao: 03-05 ngày với mặt hàng thường quy, 06-08 tuần với mặt hàng đặc biệt kể từ khi Bên Bán xác nhận đơn đặt hàng. Địa điểm giao: Kho của Bên Mua. Bên Mua kiểm tra số lượng, chủng loại, xuất xứ, chất lượng và ký Biên bản giao nhận.</p>
+    <h5>ĐIỀU 4. THANH TOÁN</h5>
+    <p>Bên Mua thanh toán 100% giá trị hàng hóa theo từng lần giao hàng trước khi giao. Hình thức: chuyển khoản. Đồng tiền: Việt Nam Đồng.</p>
+    <h5>ĐIỀU 5. QUYỀN VÀ NGHĨA VỤ CỦA CÁC BÊN</h5>
+    <p>Bên Bán giao hàng đủ số lượng, đúng chất lượng, quy cách; hỗ trợ kỹ thuật khi có yêu cầu. Bên Mua thanh toán đầy đủ, đúng hạn; bảo quản hàng hóa sau khi nhận.</p>
+    <h5>ĐIỀU 6. VI PHẠM HỢP ĐỒNG</h5>
+    <p>Bên Mua chậm thanh toán chịu lãi 0,05%/ngày; quá 30 ngày Bên Bán được đơn phương chấm dứt và phạt 8% giá trị vi phạm. Bên Bán chậm giao chịu phạt 0,05%/ngày, tối đa 8% giá trị hàng chậm giao.</p>
+    <h5>ĐIỀU 7. BẤT KHẢ KHÁNG - GIẢI QUYẾT TRANH CHẤP</h5>
+    <p>Các Bên không chịu trách nhiệm khi xảy ra sự kiện bất khả kháng. Tranh chấp ưu tiên thương lượng; không thành đưa ra Tòa án có thẩm quyền.</p>
+    <h5>ĐIỀU 8. ĐIỀU KHOẢN CHUNG</h5>
+    <p>Hợp đồng có hiệu lực kể từ ngày ký, được lập thành 04 bản có giá trị pháp lý như nhau, mỗi Bên giữ 02 bản.</p>`,
+};
+let STATE = { contractType: 'nguyen_tac' };
+
+/* ===== TAB 1: THÔNG TIN CHUNG ===== */
+function opt(list, val, txt){ return list.map(x=>`<option value="${x[val]}">${x[txt]}</option>`).join(''); }
+function partyBlock(prefix, title){
+  const isA = prefix==='ben-a';
+  const list = isA ? SEED.companies : SEED.suppliers;
+  return `<div class="category-card"><h4>${title}</h4>
+    <div class="form-row">
+      <div class="form-group col-md-4"><label>${isA?'Công ty thực hiện':'Nhà cung cấp'}<span class="req">*</span></label>
+        <select class="custom-select" id="sel-${isA?'company':'supplier'}">
+          <option value="">— Chọn —</option>${opt(list,'id','name')}</select></div>
+      ${isA?'':`<div class="form-group col-md-4"><label>Mã NCC</label><input class="form-control" id="${prefix}-code" readonly></div>`}
+      <div class="form-group col-md-4"><label>MST</label><input class="form-control" id="${prefix}-tax"></div>
+      <div class="form-group col-md-8"><label>Địa chỉ<span class="req">*</span></label><input class="form-control" id="${prefix}-address"></div>
+      <div class="form-group col-md-4"><label>Điện thoại</label><input class="form-control" id="${prefix}-phone"></div>
+      <div class="form-group col-md-4"><label>Số tài khoản</label><input class="form-control" id="${prefix}-bankNo"></div>
+      <div class="form-group col-md-4"><label>Ngân hàng</label><input class="form-control" id="${prefix}-bankName"></div>
+      <div class="form-group col-md-4"><label>Chi nhánh NH</label><input class="form-control" id="${prefix}-bankBranch"></div>
+      <div class="form-group col-md-4"><label>Đại diện<span class="req">*</span></label><input class="form-control" id="${prefix}-rep"></div>
+      <div class="form-group col-md-4"><label>Chức vụ</label><input class="form-control" id="${prefix}-title"></div>
+    </div></div>`;
+}
+function renderGeneral(){
+  document.getElementById('tab-general').innerHTML = `
+    <div class="category-card"><h4>Thông tin hợp đồng</h4>
+      <div class="form-row">
+        <div class="form-group col-md-4"><label>Loại hợp đồng<span class="req">*</span></label>
+          <select class="custom-select" id="sel-type">
+            <option value="nguyen_tac">Nguyên tắc</option>
+            <option value="thuong_mai">Thương mại</option></select></div>
+        <div class="form-group col-md-4"><label>Số hợp đồng<span class="req">*</span></label><input class="form-control" id="f-number" value="143-2026/HĐNT/HA-TA"></div>
+        <div class="form-group col-md-4"><label>Tên hợp đồng<span class="req">*</span></label><input class="form-control" id="f-name" value="HĐ nguyên tắc mua bán hóa chất, vật tư xét nghiệm"></div>
+        <div class="form-group col-md-4"><label>Ngày ký<span class="req">*</span></label><input type="date" class="form-control" id="f-sign" value="2026-06-12"></div>
+        <div class="form-group col-md-4"><label>Ngày hiệu lực (đến ngày)<span class="req">*</span></label><input type="date" class="form-control" id="f-end" value="2026-12-31"></div>
+      </div></div>
+    ${partyBlock('ben-a','Bên Mua (Bên A) — Công ty thực hiện')}
+    ${partyBlock('ben-b','Bên Bán (Bên B) — Nhà cung cấp')}
+    <div class="category-card"><h4>Giao nhận hàng hóa</h4>
+      <div class="form-row">
+        <div class="form-group col-md-4"><label>Phương thức giao hàng<span class="req">*</span></label>
+          <select class="custom-select"><option>Giao tại kho Bên Mua</option><option>Giao tại kho Bên Bán</option></select></div>
+        <div class="form-group col-md-4"><label>Địa điểm giao (kho nhận)<span class="req">*</span></label><input class="form-control" value="Kho tổng - Bên Mua"></div>
+        <div class="form-group col-md-4"><label>Phí giao hàng</label>
+          <select class="custom-select"><option>Bên Bán chịu</option><option>Bên Mua chịu</option></select></div>
+        <div class="form-group col-md-12"><label>Thời gian giao</label><input class="form-control" value="03-05 ngày kể từ khi Bên Bán xác nhận đơn đặt hàng"></div>
+      </div></div>
+    <div class="category-card"><h4>Điều khoản<span class="req">*</span></h4>
+      <div class="editor-box" id="f-dieukhoan" contenteditable="true">${SEED.dieuKhoanHTML}</div></div>`;
+}
+function fillParty(prefix, obj){
+  ['code','tax','address','phone','bankNo','bankName','bankBranch','rep','title']
+    .forEach(k=>{ const el=document.getElementById(`${prefix}-${k}`); if(el) el.value = obj?.[k] ?? ''; });
+}
+window.renderTotals = window.renderTotals || function(){};
+function onContractTypeChange(val){
+  STATE.contractType = val;
+  document.body.classList.toggle('mode-thuongmai', val==='thuong_mai');
+  document.body.classList.toggle('mode-nguyentac', val==='nguyen_tac');
+  if(typeof renderProducts==='function' && document.getElementById('tab-products')) renderProducts();
+  else window.renderTotals();
+}
+
+/* ===== TAB 2: HÀNG HÓA ===== */
+/* Cột bám theo 2 mẫu tham chiếu của user:
+   - Nguyên tắc  → PL HĐ NT 143: STT · Mã hàng · Tên hàng · Quy cách · ĐVT · Hãng/Nước SX · Đơn giá có VAT (KHÔNG số lượng)
+   - Thương mại → Qmedic (ĐIỀU 1): thêm Số lượng · Thành tiền · Ghi chú + Tổng cộng & bằng chữ (giá đã gồm VAT)
+   Cột SL tồn kho / SL đặt mua = hỗ trợ từ BC nhu cầu mua, chỉ hiện ở Thương mại.
+   tm:true → chỉ hiện khi loại HĐ = Thương mại */
+const COLUMNS = [
+  { key:'product_code',     label:'Mã hàng',              prop:'code',     type:'text',    visible:true },
+  { key:'specification',    label:'Quy cách',             prop:'spec',     type:'text',    visible:true },
+  { key:'unit',             label:'Đơn vị tính',          prop:'unit',     type:'text',    visible:true },
+  { key:'producer_country', label:'Hãng, nước sản xuất',  prop:'maker',    type:'text',    visible:true },
+  { key:'stock_qty',        label:'SL tồn kho',           prop:'stockQty', type:'ronum',   visible:true, num:true, tm:true },
+  { key:'proposed_qty',     label:'SL đề xuất mua',       prop:'proposedQty', type:'ronum', visible:true, num:true, tm:true },
+  { key:'order_qty',        label:'SL đặt mua',           prop:'orderQty', type:'inpnum',  visible:true, num:true, tm:true },
+  { key:'price',            label:'Đơn giá có VAT (VNĐ)', prop:'price',    type:'money',   visible:true, num:true },
+  { key:'amount',           label:'Thành tiền (VNĐ)',     type:'amount',   visible:true, num:true, tm:true },
+  { key:'note',             label:'Ghi chú',              prop:'note',     type:'inptext', visible:true, tm:true },
+  { key:'purpose',          label:'Mục đích mua',         type:'purpose',  visible:true },
+];
+function visibleCols(){ return COLUMNS.filter(c=>c.visible && (!c.tm || STATE.contractType==='thuong_mai')); }
+function amountOf(p){ return (Number(p.price)||0)*(Number(p.orderQty)||0); }
+function esc(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+function docSo(n){
+  const chu=['không','một','hai','ba','bốn','năm','sáu','bảy','tám','chín'];
+  function doc3(num, full){
+    const t=Math.floor(num/100), ch=Math.floor((num%100)/10), dv=num%10; let s='';
+    if(t>0) s+=chu[t]+' trăm'; else if(full) s+='không trăm';
+    if(ch>1){ s+=' '+chu[ch]+' mươi'; if(dv===1) s+=' mốt'; else if(dv===5) s+=' lăm'; else if(dv>0) s+=' '+chu[dv]; }
+    else if(ch===1){ s+=' mười'; if(dv===5) s+=' lăm'; else if(dv>0) s+=' '+chu[dv]; }
+    else if(dv>0){ if(t>0||full) s+=' lẻ'; s+=' '+chu[dv]; }
+    return s.trim();
+  }
+  n=Math.round(Number(n)||0); if(n<=0) return 'Không đồng';
+  const units=['',' nghìn',' triệu',' tỷ']; let g=[], m=n;
+  while(m>0){ g.push(m%1000); m=Math.floor(m/1000); }
+  let top=g.length-1; while(top>0 && g[top]===0) top--;
+  let out='';
+  for(let i=g.length-1;i>=0;i--){ if(g[i]===0) continue; out+=doc3(g[i], i!==top)+units[i]+' '; }
+  out=out.trim().replace(/\s+/g,' ');
+  return out.charAt(0).toUpperCase()+out.slice(1)+' đồng./.';
+}
+
+function cellFor(col, idx, p){
+  const gi = `data-idx="${idx}"`;
+  switch(col.type){
+    case 'text':   return `<td>${p[col.prop]||''}</td>`;
+    case 'inpnum': return `<td class="num"><input type="number" class="form-control form-control-sm text-right inp-field" ${gi} data-field="${col.prop}" value="${p[col.prop]||0}"></td>`;
+    case 'money':  return `<td class="num"><input type="number" class="form-control form-control-sm text-right inp-field" ${gi} data-field="price" value="${p.price||0}"></td>`;
+    case 'inptext':return `<td><input class="form-control form-control-sm inp-field" ${gi} data-field="${col.prop}" value="${esc(p[col.prop])}"></td>`;
+    case 'ronum':  { const v=p[col.prop]; return `<td class="num">${(v===null||v===undefined||v==='')?'—':fmtN(v)}</td>`; }
+    case 'amount': return `<td class="num cell-amount">${fmtN(amountOf(p))}</td>`;
+    case 'purpose':{
+      const pr = String(p.proposal||'').trim();
+      if(!pr || pr==='—') return `<td class="cell-purpose"><span class="text-muted">Mua ngoài phiếu đề xuất</span></td>`;
+      return `<td class="cell-purpose">${pr} / ${(p.customer||'—')} / ${(p.saleContract||'—')}
+        <button type="button" class="btn-unlink-purpose" data-idx="${idx}" title="Bỏ gắn phiếu đề xuất (mua ngoài phiếu)"><i class="mdi mdi-link-variant-off"></i></button></td>`;
+    }
+  }
+  return '<td></td>';
+}
+function matchFilter(p){
+  const f = STATE.pFilter; if(!f) return true;
+  const norm = s => String(s||'').toLowerCase();
+  if(f.name && !norm(p.name).includes(f.name.toLowerCase())) return false;
+  if(f.code && !norm(p.code).includes(f.code.toLowerCase())) return false;
+  if(f.noProposal){ const pr=String(p.proposal||'').trim(); if(pr && pr!=='—') return false; }
+  return true;
+}
+function productRow(pi, p, stt){
+  const cols = visibleCols();
+  return `<tr>
+    <td class="drag-handle">${stt}</td>
+    <td class="cell-name">${p.name||''}</td>
+    ${cols.map(c=>cellFor(c, pi, p)).join('')}
+    <td class="text-center"><button class="btn btn-xs btn-outline-danger btn-del-row" data-idx="${pi}" title="Xóa hàng"><i class="mdi mdi-delete"></i> Xóa</button></td>
+  </tr>`;
+}
+function renderProducts(){
+  const cols = visibleCols();
+  const tm = STATE.contractType==='thuong_mai';
+  const host = document.getElementById('tab-products');
+  const header = `<tr>
+    <th style="width:42px">STT</th>
+    <th class="cell-name">Tên hàng hóa</th>
+    ${cols.map(c=>`<th class="${c.num?'num':''}">${c.label}</th>`).join('')}
+    <th style="width:64px">Xóa</th>
+  </tr>`;
+  let stt=0;
+  const rows = SEED.products.map((p,pi)=>({p,pi})).filter(x=>matchFilter(x.p))
+    .map(x=>productRow(x.pi, x.p, ++stt)).join('');
+  const colspan = cols.length + 3;
+  const body = rows || `<tr><td colspan="${colspan}" class="text-center text-muted py-3">Không có hàng hóa phù hợp bộ lọc.</td></tr>`;
+  host.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h4 class="m-0">Danh sách hàng hóa</h4>
+      <div class="d-flex align-items-center">
+        <button class="btn btn-sm btn-primary mr-2" id="btn-add-goods" title="Chọn thêm hàng hóa từ Báo cáo nhu cầu mua"><i class="mdi mdi-plus"></i> Chọn hàng hóa</button>
+        <button class="btn btn-sm btn-light" id="btn-filter" title="Bộ lọc"><i class="mdi mdi-filter-variant"></i> Bộ lọc</button>
+      </div>
+    </div>
+    <div class="filter-wrap" id="filter-box" style="display:none">
+      <div class="form-row align-items-end">
+        <div class="form-group col-md-3 mb-1"><label>Tên hàng hóa</label><input class="form-control form-control-sm" id="flt-name" value="${esc(STATE.pFilter?.name)}"></div>
+        <div class="form-group col-md-3 mb-1"><label>Mã hàng</label><input class="form-control form-control-sm" id="flt-code" value="${esc(STATE.pFilter?.code)}"></div>
+        <div class="form-group col-auto mb-1">
+          <div class="custom-control custom-checkbox mt-4">
+            <input type="checkbox" class="custom-control-input" id="flt-noproposal" ${STATE.pFilter?.noProposal?'checked':''}>
+            <label class="custom-control-label" for="flt-noproposal">Không có phiếu đề xuất mua</label>
+          </div>
+        </div>
+        <div class="form-group col-auto mb-1">
+          <button class="btn btn-sm btn-outline-secondary" id="flt-reset">Đặt lại</button>
+          <button class="btn btn-sm btn-primary" id="flt-apply">Áp dụng</button>
+        </div>
+      </div>
+    </div>
+    <div class="table-responsive"><table class="table table-bordered product-table">
+      <thead class="thead-sticky">${header}</thead>
+      <tbody>${body}</tbody>
+    </table></div>
+    <div class="text-muted small mt-1"><i class="mdi mdi-information-outline"></i> Hàng hóa lấy từ <b>Báo cáo nhu cầu mua</b>. Bấm <b>Chọn hàng hóa</b> để bổ sung: hàng <b>chưa có HĐ mua</b> trong báo cáo, hoặc hàng <b>ngoài báo cáo</b> từ danh mục hàng hóa chung.</div>
+    ${tm
+      ? `<div class="text-muted small mt-1"><i class="mdi mdi-information-outline"></i> <b>SL tồn kho</b> chỉ đọc; <b>SL đặt mua</b> lấy gợi ý từ Báo cáo nhu cầu mua và có thể sửa. Thành tiền = Đơn giá × SL đặt mua. Đơn giá đã bao gồm thuế VAT.</div>`
+      : `<div class="text-muted small mt-1"><i class="mdi mdi-information-outline"></i> Hợp đồng nguyên tắc chỉ khai báo <b>đơn giá có VAT</b> — không có số lượng / thành tiền.</div>`}
+    <div class="category-card total-block mt-2" id="total-block" style="display:${tm?'':'none'}">
+      <div class="row"><div class="col-md-4 offset-md-4"><label class="mb-0 font-weight-bold">Tổng giá trị hợp đồng (đã gồm VAT)</label></div><div class="col-md-4 num h5 text-primary mb-0" id="tot-after">0</div></div>
+      <div class="row mt-1"><div class="col-md-12 text-right"><em>Bằng chữ: <span id="tot-words">—</span></em></div></div>
+    </div>`;
+  bindProductEvents();
+  renderTotals();
+}
+window.renderTotals = function(){
+  const tm = STATE.contractType==='thuong_mai';
+  const tb = document.getElementById('total-block'); if(tb) tb.style.display = tm?'':'none';
+  let after=0;
+  SEED.products.forEach(p=>{ after += amountOf(p); });
+  const a=document.getElementById('tot-after'); if(a) a.textContent=fmtN(after);
+  const w=document.getElementById('tot-words'); if(w) w.textContent=docSo(after);
+};
+function removeRow(idx){
+  if(!confirm('Xóa hàng hóa này khỏi hợp đồng?')) return;
+  // Picker giữ nguyên hàng gốc (không tiêu thụ) → xóa dòng chỉ cần bỏ khỏi hợp đồng, không cần trả lại pool.
+  SEED.products.splice(idx,1);
+  renderProducts();
+}
+/* ===== MODAL CHỌN HÀNG HÓA — 2 nguồn: Trong Báo cáo nhu cầu mua (chưa có HĐ mua) + Ngoài báo cáo (Danh mục hàng hóa) ===== */
+let GM = { term:'', src:'all', sel:new Set(), list:[] };  // sel giữ tham chiếu object hàng hóa
+function gmCandidates(){ return SEED.availableProducts.concat(SEED.catalogProducts); }
+function gmMatch(p){
+  if(GM.src==='report'  && p.source!=='report')  return false;
+  if(GM.src==='catalog' && p.source!=='catalog') return false;
+  const t = GM.term.trim().toLowerCase(); if(!t) return true;
+  return [p.name,p.code,p.maker,p.proposal].some(v=>String(v||'').toLowerCase().includes(t));
+}
+function gmPill(p){
+  return p.source==='catalog'
+    ? '<span class="gm-pill gm-pill-cat">Ngoài báo cáo</span>'
+    : '<span class="gm-pill gm-pill-rep">Trong BC nhu cầu mua</span>';
+}
+function gmRenderRows(){
+  GM.list = gmCandidates().filter(gmMatch);
+  const tbody = document.getElementById('gm-tbody');
+  if(!GM.list.length){ tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">Không còn hàng hóa phù hợp.</td></tr>`; }
+  else tbody.innerHTML = GM.list.map((p,k)=>`
+    <tr class="${GM.sel.has(p)?'gm-sel':''}" data-k="${k}">
+      <td class="text-center"><input type="checkbox" class="gm-chk" ${GM.sel.has(p)?'checked':''}></td>
+      <td class="text-center">${k+1}</td>
+      <td>${p.name||''}</td>
+      <td>${p.code||''}</td>
+      <td class="text-center">${p.unit||''}</td>
+      <td>${p.maker||''}</td>
+      <td class="num">${(p.proposedQty===null||p.proposedQty===undefined||p.proposedQty==='')?'—':fmtN(p.proposedQty)}</td>
+      <td>${p.proposal||'—'}</td>
+      <td class="text-center">${gmPill(p)}</td>
+    </tr>`).join('');
+  const all = document.getElementById('gm-all');
+  const selVis = GM.list.filter(p=>GM.sel.has(p)).length;
+  if(all){ all.checked = GM.list.length>0 && selVis===GM.list.length; all.indeterminate = selVis>0 && selVis<GM.list.length; }
+  const cnt = document.getElementById('gm-count'); if(cnt) cnt.textContent = GM.sel.size;
+}
+function openGoodsModal(){
+  GM = { term:'', src:'all', sel:new Set(), list:[] };
+  const ov = document.createElement('div');
+  ov.className='gm-overlay'; ov.id='gm-overlay';
+  ov.innerHTML = `
+    <div class="gm-dialog">
+      <div class="gm-head">
+        <h4><i class="mdi mdi-plus-box-outline"></i> Chọn hàng hóa</h4>
+        <button class="btn btn-sm btn-light" id="gm-x">✕</button>
+      </div>
+      <div class="gm-body">
+        <div class="form-row align-items-center mb-2">
+          <div class="col-md-7"><input class="form-control form-control-sm" id="gm-search" placeholder="Tìm theo tên / mã hàng / hãng / phiếu đề xuất mua…"></div>
+          <div class="col-md-5"><select class="custom-select custom-select-sm" id="gm-source">
+            <option value="all">Tất cả nguồn</option>
+            <option value="report">Trong Báo cáo nhu cầu mua (chưa có HĐ mua)</option>
+            <option value="catalog">Ngoài báo cáo (Danh mục hàng hóa)</option>
+          </select></div>
+        </div>
+        <div class="table-responsive"><table class="table table-bordered gm-table">
+          <thead><tr>
+            <th style="width:40px"><input type="checkbox" id="gm-all"></th>
+            <th style="width:42px">STT</th>
+            <th>Tên hàng hóa</th>
+            <th>Mã hàng</th>
+            <th style="width:70px">ĐVT</th>
+            <th>Hãng, nước SX</th>
+            <th class="num" style="width:90px">SL đề xuất mua</th>
+            <th>Phiếu đề xuất mua</th>
+            <th style="width:130px">Nguồn</th>
+          </tr></thead>
+          <tbody id="gm-tbody"></tbody>
+        </table></div>
+      </div>
+      <div class="gm-foot">
+        <span class="text-muted small">Đã chọn: <b id="gm-count">0</b> mặt hàng</span>
+        <span>
+          <button class="btn btn-sm btn-outline-secondary" id="gm-cancel">Đóng</button>
+          <button class="btn btn-sm btn-primary" id="gm-add"><i class="mdi mdi-plus"></i> Thêm vào hợp đồng</button>
+        </span>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  gmRenderRows();
+  const close=()=>ov.remove();
+  ov.addEventListener('click', e=>{ if(e.target===ov) close(); });
+  document.getElementById('gm-x').addEventListener('click', close);
+  document.getElementById('gm-cancel').addEventListener('click', close);
+  document.getElementById('gm-search').addEventListener('input', e=>{ GM.term=e.target.value; gmRenderRows(); });
+  document.getElementById('gm-source').addEventListener('change', e=>{ GM.src=e.target.value; gmRenderRows(); });
+  document.getElementById('gm-all').addEventListener('change', e=>{
+    if(e.target.checked) GM.list.forEach(p=>GM.sel.add(p)); else GM.list.forEach(p=>GM.sel.delete(p));
+    gmRenderRows();
+  });
+  document.getElementById('gm-tbody').addEventListener('click', e=>{
+    const tr=e.target.closest('tr[data-k]'); if(!tr) return;
+    const p=GM.list[+tr.dataset.k]; if(!p) return;
+    if(GM.sel.has(p)) GM.sel.delete(p); else GM.sel.add(p);
+    gmRenderRows();
+  });
+  document.getElementById('gm-add').addEventListener('click', ()=>{
+    if(!GM.sel.size){ alert('Chưa chọn hàng hóa nào.'); return; }
+    // Không tiêu thụ hàng khỏi picker: mỗi lần thêm tạo 1 bản sao độc lập → có thể mua lại cùng 1 hàng cho mục đích/SL khác.
+    [...GM.sel].forEach(p=>{ SEED.products.push(Object.assign({}, p)); });
+    close();
+    renderProducts();
+  });
+}
+function bindProductEvents(){
+  document.getElementById('btn-add-goods').addEventListener('click', openGoodsModal);
+  document.getElementById('btn-filter').addEventListener('click', ()=>{ const b=document.getElementById('filter-box'); b.style.display=b.style.display==='none'?'':'none'; });
+  const applyFlt=()=>{ STATE.pFilter={ name:document.getElementById('flt-name').value.trim(), code:document.getElementById('flt-code').value.trim(), noProposal:document.getElementById('flt-noproposal').checked }; renderProducts(); };
+  const fa=document.getElementById('flt-apply'); if(fa) fa.addEventListener('click', applyFlt);
+  const fr=document.getElementById('flt-reset'); if(fr) fr.addEventListener('click', ()=>{ STATE.pFilter=null; renderProducts(); });
+  document.querySelectorAll('.btn-del-row').forEach(b=>b.addEventListener('click',()=>removeRow(+b.dataset.idx)));
+  document.querySelectorAll('.btn-unlink-purpose').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirm('Bỏ gắn phiếu đề xuất cho dòng này? Dòng sẽ tính là mua ngoài phiếu đề xuất.')) return;
+    const p=SEED.products[+b.dataset.idx]; p.proposal=''; p.customer=''; p.saleContract=''; p.proposedQty=null;
+    renderProducts();
+  }));
+  document.querySelectorAll('.inp-field').forEach(i=>i.addEventListener('input',()=>{
+    const p=SEED.products[+i.dataset.idx], f=i.dataset.field;
+    p[f] = (i.type==='number') ? +i.value : i.value;
+    if(f==='price'||f==='orderQty'){
+      const tr=i.closest('tr');
+      const ac=tr.querySelector('.cell-amount'); if(ac) ac.textContent=fmtN(amountOf(p));
+      renderTotals();
+    }
+  }));
+}
+/* ===== FOOTER: LƯU / LƯU VÀ GỬI ===== */
+function validateRequired(){
+  const missing = [];
+  [['sel-supplier','Nhà cung cấp'],['f-number','Số hợp đồng'],['f-name','Tên hợp đồng'],['ben-a-rep','Đại diện Bên Mua'],['ben-b-rep','Đại diện Bên Bán']]
+    .forEach(([id,lbl])=>{ const el=document.getElementById(id); if(el && !el.value.trim()) missing.push(lbl); });
+  if(!SEED.products.length) missing.push('Hàng hóa (ít nhất 1 dòng)');
+  return missing;
+}
+function doSave(send){
+  const miss = validateRequired();
+  if(miss.length){ alert('Vui lòng nhập: '+miss.join(', ')); return; }
+  const loai = STATE.contractType==='thuong_mai'?'Thương mại':'Nguyên tắc';
+  alert(`Đã ${send?'lưu và gửi':'lưu'} hợp đồng mua (loại ${loai}) gồm ${SEED.products.length} hàng hóa.\n(Demo — chưa ghi dữ liệu thật.)`);
+}
+function bindFooter(){
+  document.getElementById('btn-cancel').addEventListener('click', ()=>{ if(confirm('Hủy và rời form?')) location.reload(); });
+  document.getElementById('btn-save').addEventListener('click', ()=>doSave(false));
+  document.getElementById('btn-save-send').addEventListener('click', ()=>doSave(true));
+}
+
+/* ===== KHỞI TẠO ===== */
+function initGeneral(){
+  renderGeneral();
+  document.getElementById('sel-type').addEventListener('change', e=>onContractTypeChange(e.target.value));
+  document.getElementById('sel-company').addEventListener('change', e=>fillParty('ben-a', SEED.companies.find(c=>c.id===e.target.value)));
+  document.getElementById('sel-supplier').addEventListener('change', e=>fillParty('ben-b', SEED.suppliers.find(c=>c.id===e.target.value)));
+  document.getElementById('sel-company').value='TA'; fillParty('ben-a', SEED.companies[0]);
+  document.getElementById('sel-supplier').value='HA'; fillParty('ben-b', SEED.suppliers[0]);
+  renderProducts();
+  bindFooter();
+  onContractTypeChange('nguyen_tac');
+}
+document.addEventListener('DOMContentLoaded', initGeneral);
+</script>
+</body>
+</html>
