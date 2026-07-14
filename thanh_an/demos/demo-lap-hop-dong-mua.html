@@ -41,6 +41,7 @@
   .filter-wrap{ background:#f7faf9; border:1px solid #e3e8ee; border-radius:6px; padding:10px 12px; margin-top:6px; }
   .product-table td.cell-purpose{ min-width:220px; white-space:normal; line-height:1.5; }
   .cell-purpose .pp-lb{ color:#8a97a3; font-size:10.5px; }
+  .cell-purpose .pp-sep{ color:#c0c8d0; font-weight:600; padding:0 2px; }
   .btn-unlink-purpose{ border:0; background:transparent; color:#c0392b; padding:0 2px; cursor:pointer; font-size:13px; line-height:1; }
   .btn-unlink-purpose:hover{ color:#e74c3c; }
   /* ===== Modal chọn hàng hóa ===== */
@@ -113,13 +114,12 @@ const SEED = {
   ],
   // Hàng hóa đã được chọn sẵn từ Báo cáo nhu cầu mua → danh sách phẳng, không chia nhóm.
   products: [
-    { source:'report', internalCode:'HH-01', code:'7030207190', name:'Chất hiệu chuẩn xét nghiệm CA 125', tradeName:'CA 125 II CalSet II', spec:'2 x 1 mL', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:2, proposedQty:10, orderQty:8, vat:5, price:4200000, qty:8, note:'' },
-    { source:'report', internalCode:'HH-02', code:'3045838214', name:'Thuốc thử xét nghiệm CA 15-3', tradeName:'Elecsys CA 15-3 II', spec:'100 tests', unit:'Hộp', maker:'Roche (Suzhou)/TQ', customer:'Cung ứng nội bộ', saleContract:'—', proposal:'PĐXM-2026/019', stockQty:1, proposedQty:4, orderQty:4, vat:5, price:3850000, qty:4, note:'' },
-    { source:'report', internalCode:'HH-03', code:'8429324190', name:'Thuốc thử xét nghiệm TSH', tradeName:'Elecsys TSH', spec:'200 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:3, proposedQty:8, orderQty:8, vat:5, price:5100000, qty:8, note:'' },
-    { source:'report', internalCode:'HH-04', code:'9315322190', name:'Thuốc thử xét nghiệm Troponin T tim', tradeName:'Elecsys Troponin T hs', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Trung ương', saleContract:'HĐB-2026/052', proposal:'PĐXM-2026/021', stockQty:0, proposedQty:6, orderQty:5, vat:5, price:6200000, qty:5, note:'' },
-    // Ví dụ: 1 hàng hóa (CEA) phục vụ 2 khách hàng / 2 phiếu đề xuất khác nhau → TÁCH thành 2 dòng riêng, mỗi phiếu có SL đề xuất mua riêng.
-    { source:'report', internalCode:'HH-09', code:'7712634190', name:'Thuốc thử xét nghiệm CEA', tradeName:'Elecsys CEA', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Bắc Ninh',   saleContract:'HĐB-2026/045', proposal:'PĐXM-2026/018', stockQty:1, proposedQty:8, orderQty:8, vat:5, price:4950000, qty:8, note:'' },
-    { source:'report', internalCode:'HH-10', code:'7712634190', name:'Thuốc thử xét nghiệm CEA', tradeName:'Elecsys CEA', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', customer:'BV Đa khoa Trung ương', saleContract:'HĐB-2026/052', proposal:'PĐXM-2026/023', stockQty:0, proposedQty:6, orderQty:5, vat:5, price:4950000, qty:5, note:'' },
+    { source:'report', internalCode:'HH-01', code:'7030207190', name:'Chất hiệu chuẩn xét nghiệm CA 125', tradeName:'CA 125 II CalSet II', spec:'2 x 1 mL', unit:'Hộp', maker:'Roche/Đức', purposes:[{proposal:'PĐXM-2026/018', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045'}], stockQty:2, proposedQty:10, orderQty:8, vat:5, price:4200000, qty:8, note:'' },
+    { source:'report', internalCode:'HH-02', code:'3045838214', name:'Thuốc thử xét nghiệm CA 15-3', tradeName:'Elecsys CA 15-3 II', spec:'100 tests', unit:'Hộp', maker:'Roche (Suzhou)/TQ', purposes:[{proposal:'PĐXM-2026/019', customer:'Cung ứng nội bộ', saleContract:'—'}], stockQty:1, proposedQty:4, orderQty:4, vat:5, price:3850000, qty:4, note:'' },
+    { source:'report', internalCode:'HH-03', code:'8429324190', name:'Thuốc thử xét nghiệm TSH', tradeName:'Elecsys TSH', spec:'200 tests', unit:'Hộp', maker:'Roche/Đức', purposes:[{proposal:'PĐXM-2026/018', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045'}], stockQty:3, proposedQty:8, orderQty:8, vat:5, price:5100000, qty:8, note:'' },
+    { source:'report', internalCode:'HH-04', code:'9315322190', name:'Thuốc thử xét nghiệm Troponin T tim', tradeName:'Elecsys Troponin T hs', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', purposes:[{proposal:'PĐXM-2026/021', customer:'BV Đa khoa Trung ương', saleContract:'HĐB-2026/052'}], stockQty:0, proposedQty:6, orderQty:5, vat:5, price:6200000, qty:5, note:'' },
+    // 1 mã hàng (CEA) phục vụ 2 khách hàng / 2 phiếu đề xuất khác nhau → GỘP thành 1 dòng: ô "Mục đích mua" ghép cả 2 phiếu, SL đề xuất (8+6=14) và SL đặt mua (8+5=13) cộng dồn.
+    { source:'report', internalCode:'HH-09', code:'7712634190', name:'Thuốc thử xét nghiệm CEA', tradeName:'Elecsys CEA', spec:'100 tests', unit:'Hộp', maker:'Roche/Đức', purposes:[{proposal:'PĐXM-2026/018', customer:'BV Đa khoa Bắc Ninh', saleContract:'HĐB-2026/045'},{proposal:'PĐXM-2026/023', customer:'BV Đa khoa Trung ương', saleContract:'HĐB-2026/052'}], stockQty:1, proposedQty:14, orderQty:13, vat:5, price:4950000, qty:13, note:'' },
   ],
   // Hàng hóa còn trong Báo cáo nhu cầu mua nhưng CHƯA được đưa vào HĐ mua nào → nguồn "Trong báo cáo".
   availableProducts: [
@@ -153,6 +153,18 @@ const SEED = {
     <h5>ĐIỀU 8. ĐIỀU KHOẢN CHUNG</h5>
     <p>Hợp đồng có hiệu lực kể từ ngày ký, được lập thành 04 bản có giá trị pháp lý như nhau, mỗi Bên giữ 02 bản.</p>`,
 };
+// Pool tổng "Báo cáo nhu cầu mua" — gồm cả hàng đã chọn sẵn trong HĐ (products) + hàng chưa đưa vào HĐ (availableProducts).
+// Popup luôn lọc bỏ mã đã có trong HĐ → xóa hàng khỏi HĐ thì hàng đó hiện lại để chọn.
+SEED.reportPool = (function(){
+  const pool = [];
+  SEED.products.filter(p=>p.source==='report').forEach(p=>{
+    const e = Object.assign({}, p);
+    e.purposes = (p.purposes||[]).map(x=>Object.assign({}, x));
+    pool.push(e);
+  });
+  SEED.availableProducts.forEach(p=>pool.push(Object.assign({}, p)));
+  return pool;
+})();
 let STATE = { contractType: 'nguyen_tac' };
 
 /* ===== TAB 1: THÔNG TIN CHUNG ===== */
@@ -268,10 +280,15 @@ function cellFor(col, idx, p){
     case 'ronum':  { const v=p[col.prop]; return `<td class="num">${(v===null||v===undefined||v==='')?'—':fmtN(v)}</td>`; }
     case 'amount': return `<td class="num cell-amount">${fmtN(amountOf(p))}</td>`;
     case 'purpose':{
-      const pr = String(p.proposal||'').trim();
-      if(!pr || pr==='—') return `<td class="cell-purpose"><span class="text-muted">Mua ngoài phiếu đề xuất</span></td>`;
-      return `<td class="cell-purpose">${pr} / ${(p.customer||'—')} / ${(p.saleContract||'—')}
-        <button type="button" class="btn-unlink-purpose" data-idx="${idx}" title="Bỏ gắn phiếu đề xuất (mua ngoài phiếu)"><i class="mdi mdi-link-variant-off"></i></button></td>`;
+      const list = Array.isArray(p.purposes) ? p.purposes.filter(x=>x && x.proposal && String(x.proposal).trim() && x.proposal!=='—') : [];
+      if(!list.length) return `<td class="cell-purpose"><span class="text-muted">Mua ngoài phiếu đề xuất</span></td>`;
+      const lines = list.map(x=>{
+        const parts = [x.proposal, x.customer||'—'];
+        if(x.saleContract && x.saleContract!=='—') parts.push(x.saleContract);
+        return `<div>${parts.join('<span class="pp-sep"> / </span>')}</div>`;
+      }).join('');
+      return `<td class="cell-purpose">${lines}
+        <button type="button" class="btn-unlink-purpose" data-idx="${idx}" title="Bỏ gắn tất cả phiếu đề xuất (mua ngoài phiếu)"><i class="mdi mdi-link-variant-off"></i></button></td>`;
     }
   }
   return '<td></td>';
@@ -281,7 +298,7 @@ function matchFilter(p){
   const norm = s => String(s||'').toLowerCase();
   if(f.name && !norm(p.name).includes(f.name.toLowerCase())) return false;
   if(f.code && !norm(p.code).includes(f.code.toLowerCase())) return false;
-  if(f.noProposal){ const pr=String(p.proposal||'').trim(); if(pr && pr!=='—') return false; }
+  if(f.noProposal){ const has=Array.isArray(p.purposes) && p.purposes.some(x=>x && x.proposal && x.proposal!=='—'); if(has) return false; }
   return true;
 }
 function productRow(pi, p, stt){
@@ -361,24 +378,62 @@ function removeRow(idx){
   SEED.products.splice(idx,1);
   renderProducts();
 }
+/* ===== THÊM HÀNG VÀO HĐ — quy về mã hàng (không tách): mã đã có → cộng dồn SL + ghép phiếu; mã mới → tạo dòng ===== */
+function sumQty(a,b){ const an=(a===null||a===undefined||a===''), bn=(b===null||b===undefined||b===''); if(an&&bn) return null; return (Number(a)||0)+(Number(b)||0); }
+function poolToLine(pi){
+  const line = Object.assign({}, pi);
+  if(Array.isArray(pi.purposes)){
+    line.purposes = pi.purposes.map(x=>Object.assign({}, x));
+  } else {
+    line.purposes = (pi.proposal && pi.proposal!=='—')
+      ? [{proposal:pi.proposal, customer:pi.customer, saleContract:pi.saleContract}] : [];
+  }
+  delete line.proposal; delete line.customer; delete line.saleContract;
+  return line;
+}
+function addPoolItem(pi){
+  const line = poolToLine(pi);
+  const ex = SEED.products.find(x=>x.code===line.code);
+  if(!ex){ SEED.products.push(line); return; }
+  ex.proposedQty = sumQty(ex.proposedQty, line.proposedQty);
+  ex.orderQty = (Number(ex.orderQty)||0)+(Number(line.orderQty)||0);
+  if(!Array.isArray(ex.purposes)) ex.purposes = [];
+  (line.purposes||[]).forEach(np=>{ if(!ex.purposes.some(q=>q.proposal===np.proposal && q.customer===np.customer)) ex.purposes.push(np); });
+}
 /* ===== MODAL CHỌN HÀNG HÓA — 2 nguồn: Trong Báo cáo nhu cầu mua (chưa có HĐ mua) + Ngoài báo cáo (Danh mục hàng hóa) ===== */
 let GM = { term:'', src:'all', sel:new Set(), list:[] };  // sel giữ tham chiếu object hàng hóa
-function gmCandidates(){ return SEED.availableProducts.concat(SEED.catalogProducts); }
+function gmCandidates(){
+  const inContract = new Set(SEED.products.map(p=>p.code));   // ẩn mã đã có trong HĐ
+  return SEED.reportPool.concat(SEED.catalogProducts).filter(p=>!inContract.has(p.code));
+}
+// Lấy text phiếu / khách hàng để hiển thị & tìm kiếm (pool item có thể ở dạng purposes[] gộp hoặc phẳng).
+function gmPurpose(p){
+  if(Array.isArray(p.purposes) && p.purposes.length){
+    return { proposal:p.purposes.map(x=>x.proposal).join(' / '), customer:p.purposes.map(x=>x.customer||'—').join(' / ') };
+  }
+  return { proposal:p.proposal||'—', customer:p.customer||'—' };
+}
+function gmHasPp(p){
+  if(Array.isArray(p.purposes) && p.purposes.length) return p.purposes.some(x=>x.proposal && x.proposal!=='—');
+  return !!(p.proposal && p.proposal!=='—');
+}
 function gmMatch(p){
-  if(GM.src==='report'  && p.source!=='report')  return false;
-  if(GM.src==='catalog' && p.source!=='catalog') return false;
+  const hasPp = gmHasPp(p);
+  if(GM.src==='withpp' && !hasPp) return false;
+  if(GM.src==='nopp'   &&  hasPp) return false;
   const t = GM.term.trim().toLowerCase(); if(!t) return true;
-  return [p.name,p.code,p.maker,p.proposal].some(v=>String(v||'').toLowerCase().includes(t));
+  const pp = gmPurpose(p);
+  return [p.name,p.code,p.maker,pp.proposal,pp.customer].some(v=>String(v||'').toLowerCase().includes(t));
 }
 function gmPill(p){
-  return p.source==='catalog'
-    ? '<span class="gm-pill gm-pill-cat">Ngoài báo cáo</span>'
-    : '<span class="gm-pill gm-pill-rep">Trong BC nhu cầu mua</span>';
+  return gmHasPp(p)
+    ? '<span class="gm-pill gm-pill-rep">Theo phiếu đề xuất</span>'
+    : '<span class="gm-pill gm-pill-cat">Không theo phiếu</span>';
 }
 function gmRenderRows(){
   GM.list = gmCandidates().filter(gmMatch);
   const tbody = document.getElementById('gm-tbody');
-  if(!GM.list.length){ tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">Không còn hàng hóa phù hợp.</td></tr>`; }
+  if(!GM.list.length){ tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-3">Không còn hàng hóa phù hợp.</td></tr>`; }
   else tbody.innerHTML = GM.list.map((p,k)=>`
     <tr class="${GM.sel.has(p)?'gm-sel':''}" data-k="${k}">
       <td class="text-center"><input type="checkbox" class="gm-chk" ${GM.sel.has(p)?'checked':''}></td>
@@ -388,7 +443,8 @@ function gmRenderRows(){
       <td class="text-center">${p.unit||''}</td>
       <td>${p.maker||''}</td>
       <td class="num">${(p.proposedQty===null||p.proposedQty===undefined||p.proposedQty==='')?'—':fmtN(p.proposedQty)}</td>
-      <td>${p.proposal||'—'}</td>
+      <td>${gmPurpose(p).proposal}</td>
+      <td>${gmPurpose(p).customer}</td>
       <td class="text-center">${gmPill(p)}</td>
     </tr>`).join('');
   const all = document.getElementById('gm-all');
@@ -410,9 +466,9 @@ function openGoodsModal(){
         <div class="form-row align-items-center mb-2">
           <div class="col-md-7"><input class="form-control form-control-sm" id="gm-search" placeholder="Tìm theo tên / mã hàng / hãng / phiếu đề xuất mua…"></div>
           <div class="col-md-5"><select class="custom-select custom-select-sm" id="gm-source">
-            <option value="all">Tất cả nguồn</option>
-            <option value="report">Trong Báo cáo nhu cầu mua (chưa có HĐ mua)</option>
-            <option value="catalog">Ngoài báo cáo (Danh mục hàng hóa)</option>
+            <option value="all">Tất cả</option>
+            <option value="withpp">Theo phiếu đề xuất</option>
+            <option value="nopp">Không theo phiếu đề xuất</option>
           </select></div>
         </div>
         <div class="table-responsive"><table class="table table-bordered gm-table">
@@ -425,6 +481,7 @@ function openGoodsModal(){
             <th>Hãng, nước SX</th>
             <th class="num" style="width:90px">SL đề xuất mua</th>
             <th>Phiếu đề xuất mua</th>
+            <th>Khách hàng SD</th>
             <th style="width:130px">Nguồn</th>
           </tr></thead>
           <tbody id="gm-tbody"></tbody>
@@ -458,8 +515,8 @@ function openGoodsModal(){
   });
   document.getElementById('gm-add').addEventListener('click', ()=>{
     if(!GM.sel.size){ alert('Chưa chọn hàng hóa nào.'); return; }
-    // Không tiêu thụ hàng khỏi picker: mỗi lần thêm tạo 1 bản sao độc lập → có thể mua lại cùng 1 hàng cho mục đích/SL khác.
-    [...GM.sel].forEach(p=>{ SEED.products.push(Object.assign({}, p)); });
+    // Quy về mã hàng: mã đã có trong HĐ → cộng dồn SL + ghép phiếu; mã mới → tạo dòng.
+    [...GM.sel].forEach(p=>addPoolItem(p));
     close();
     renderProducts();
   });
@@ -472,8 +529,8 @@ function bindProductEvents(){
   const fr=document.getElementById('flt-reset'); if(fr) fr.addEventListener('click', ()=>{ STATE.pFilter=null; renderProducts(); });
   document.querySelectorAll('.btn-del-row').forEach(b=>b.addEventListener('click',()=>removeRow(+b.dataset.idx)));
   document.querySelectorAll('.btn-unlink-purpose').forEach(b=>b.addEventListener('click',()=>{
-    if(!confirm('Bỏ gắn phiếu đề xuất cho dòng này? Dòng sẽ tính là mua ngoài phiếu đề xuất.')) return;
-    const p=SEED.products[+b.dataset.idx]; p.proposal=''; p.customer=''; p.saleContract=''; p.proposedQty=null;
+    if(!confirm('Bỏ gắn tất cả phiếu đề xuất cho dòng này? Dòng sẽ tính là mua ngoài phiếu đề xuất.')) return;
+    const p=SEED.products[+b.dataset.idx]; p.purposes=[]; p.proposedQty=null;
     renderProducts();
   }));
   document.querySelectorAll('.inp-field').forEach(i=>i.addEventListener('input',()=>{
