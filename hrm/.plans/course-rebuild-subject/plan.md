@@ -454,3 +454,22 @@ Các field `:required` ở builder chỉ dựa BE 422, không chặn FE; `traini
 **Đang làm dở:** Không.
 **Bước tiếp theo:** User verify browser + re-save khoá "Test các cấu hình mới thêm" (SUB-0049) để fix bản ghi lỗi hiện có.
 **Blocked:** Không.
+
+## FIX — Lỗi validate cấp chương không hiện inline (2026-07-16)
+
+**Triệu chứng:** Khoá ở trạng thái Nháp, bấm **Lưu** → API 422 `chapters.0.subject_lessons` ("Mỗi chương phải có ít nhất một bài học khi chọn Có chương") nhưng UI không hiện lỗi ở đâu cả, cũng không có toast.
+
+**Root cause:** `applyBackendErrors` gán `error['chapters.0.subject_lessons']`, nhưng `TabInfo.vue` chỉ render `error.chapters` / `error.subject_lessons` (mức danh sách) — không có binding cho key có index từng chương. Nhánh toast bị bỏ qua vì `hasBackendErrors = true` → lỗi hoàn toàn vô hình.
+
+- [x] FE: thêm helper `chapterFieldError(chIdx, field)` + `hasChapterError(chIdx)` trong `TabInfo.vue` — KHÔNG đặt tên `chapterError`, tên đó đã bị data property của modal chương chiếm (Vue ưu tiên data → hỏng modal)
+- [x] FE: render `V2BaseError` cho `chapters.N.code` / `chapters.N.name` / `chapters.N.subject_lessons` trong từng chapter card + viền đỏ card/dropzone
+- [x] FE: validate client-side trong `SubjectBuilderForm.validate()` — chương rỗng bài học / chưa có chương / chưa có bài học (chế độ không chương) chặn ngay, không cần round-trip
+- [x] Verify static: `vue-template-compiler` compile template + parse script 2 file → không lỗi
+- [ ] Verify browser: khoá Nháp có chương rỗng → bấm Lưu → thấy lỗi đỏ tại chương (Playwright báo "Browser is already in use", chưa chạy được)
+
+### Checkpoint — 2026-07-16
+
+Vừa hoàn thành: Fix lỗi validate cấp chương không hiện inline khi lưu khoá học từ trạng thái Nháp.
+Đang làm dở: Không.
+Bước tiếp theo: Verify trên browser (SUB-0038, chương CH01 rỗng bài học → bấm Lưu).
+Blocked: Playwright MCP khoá profile Chrome → cần đóng Chrome đang mở mới tự verify được.
