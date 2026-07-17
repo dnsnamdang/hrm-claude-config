@@ -5,7 +5,8 @@
 
 ## Đang làm
 
-_(chưa có)_
+- **Giữ nguyên tên file gốc khi upload** — Tên file đính kèm bị đổi khác lúc upload (phát hiện ở `timesheet/request-payment-working-fee/add`, thực chất lỗi TOÀN HỆ THỐNG). Root cause `CmcS3Helper::putFile()`: `Str::slug` cả tên lẫn extension (`.pdf`→`-pdf`, mất dấu tiếng Việt) + nối `-{timestamp}-{random4}`. Sửa: giữ nguyên 100% tên gốc, chuyển phần chống trùng sang path thư mục `{folder}/{timestamp}-{random}/{Tên gốc}.pdf`. FE: `fileNameFromUrl()` copy-paste ở 27 file → gom về `utils/helpers.js` có `decodeURIComponent` (URL S3 nay percent-encoded); 13/27 bản là code chết đã xóa. Verify tĩnh PASS (parse 27/27 .vue, php -l, unit test 6 case gồm URL format cũ). CHƯA verify end-to-end trên S3 thật. Tồn: `putFileProduct()` cùng bug, chưa sửa. CHƯA commit. (@khoipv) — 2026-07-16
+  - Plan: `.plans/upload-file-giu-ten-goc/plan.md`
 
 ## Tạm dừng
 

@@ -1042,3 +1042,212 @@ Blocked: (không)
 - History insert trong save() không bọc try/catch — giống pattern EmployeeService gốc; nếu muốn hardening thì sửa cả 2 nơi sau.
 - BaseModel (spatie LogsActivity) ghi kèm activity_log cho mỗi dòng history — hành vi có sẵn toàn project.
 - ⚠️ LỖI CÓ SẴN không thuộc feature: `php artisan route:list` crash do `Modules/Decision/Routes/web.php:17` trỏ `DecisionController` thiếu namespace `V1` — cần báo team Decision.
+
+---
+
+## Phase 6 — Tách lịch sử tab "Khung giờ làm thêm" thành lịch sử riêng từng dòng
+
+**Người phụ trách:** @khoipv
+**Goal:** Bỏ nút "Lịch sử thay đổi" tổng ở đầu tab; mỗi dòng khung giờ có lịch sử riêng, mở từ dropdown thao tác (Sửa / Xóa / Lịch sử thay đổi), chỉ hiện lịch sử của chính dòng đó.
+**Quyết định user:** tách theo TỪNG DÒNG khung giờ (không theo loại); BỎ nút tổng hoàn toàn (dòng đã Xóa không xem được lịch sử — chấp nhận).
+
+### Task 19: BE — histories() lọc theo overtime_hour_id
+**Files:**
+- Edit: `hrm-api/Modules/Timesheet/Http/Controllers/Api/V1/OvertimeHourController.php`
+- Edit: `hrm-api/Modules/Timesheet/Services/OvertimeHourService.php`
+
+- [x] `histories(Request $request)` nhận query `overtime_hour_id`, truyền xuống service
+- [x] `OvertimeHourService::histories($overtimeHourId = null)` thêm `->where('overtime_hour_id', $overtimeHourId)` khi có param; giữ scope company + sort cũ→mới; giữ format trả về
+- [x] Route giữ nguyên (`/histories` đã trước `/{id}`); log CRUD giữ nguyên
+- [x] `php -l` 2 file sạch
+
+### Task 20: FE — bỏ nút tổng, thêm dropdown-item per-dòng
+**Files:**
+- Edit: `hrm-client/pages/timesheet/setting/overtime/index.vue`
+- Edit: `hrm-client/components/setting/overtime/OvertimeHourHistoryModal.vue`
+
+- [x] index.vue: bỏ nút "Lịch sử thay đổi" đầu bảng (giữ "Thêm mới")
+- [x] index.vue: thêm `b-dropdown-item` "Lịch sử thay đổi" (icon ri-history-line) DƯỚI Sửa/Xóa → `open(item)`
+- [x] Modal: `open(item)` lưu `overtimeHourId=item.id` + info dòng (hour, type_name); header phụ "Khung giờ: {hour} · {type_name}"
+- [x] Modal: fetch `timesheet/overtime-hour/histories?overtime_hour_id=${id}`
+- [x] Modal: rút gọn bộ lọc Thao tác còn Thêm/Sửa (bỏ Xóa); giữ Người/ngày
+- [x] FE compile sạch
+
+### Task 21: Verify
+- [x] tinker: histories(null) trả tất cả; histories(id) chỉ trả log của dòng đó, đúng thứ tự cũ→mới
+- [x] Playwright: dropdown dòng có "Lịch sử thay đổi" → modal chỉ hiện log dòng đó (create+update), header phụ đúng khung giờ; không còn nút tổng; mở/đóng không bắn POST
+- [x] Dọn data test nếu có
+
+---
+
+### Checkpoint Phase 6 — 2026-07-14
+Vừa hoàn thành: Task 19→21 (inline Opus 4.8). Tách lịch sử tab "Khung giờ làm thêm" thành lịch sử RIÊNG TỪNG DÒNG.
+- BE: `OvertimeHourController::histories(Request $request)` nhận query `overtime_hour_id`; `OvertimeHourService::histories($overtimeHourId = null)` thêm điều kiện `where('overtime_hour_id', ...)` khi có param (giữ scope company + sort cũ→mới + format). Route/log CRUD giữ nguyên. php -l 2 file sạch.
+- FE: `index.vue` bỏ nút "Lịch sử thay đổi" tổng đầu tab (giữ "Thêm mới") + thêm `b-dropdown-item` "Lịch sử thay đổi" DƯỚI Sửa/Xóa → `open(item)`. `OvertimeHourHistoryModal.vue`: `open(item)` lưu id + rowLabel (hour · type_name) hiện ở header phụ; fetch `?overtime_hour_id=`; bộ lọc Thao tác rút gọn Thêm/Sửa.
+- VERIFY: tinker query tương đương (co=1,null→3 log ids 4,5,6; oh=28→1 create; oh=4→1 update; oh=1(đã xóa)→1 delete; oh=999→0; co=2→0). Playwright DNS Admin: nút tổng đã biến mất; dropdown mỗi dòng có "Lịch sử thay đổi" dưới Sửa/Xóa; dòng 4 → chỉ 1 update (17:00→01:00, 22:00→01:30) header "01:00 - 01:30 · Làm thêm hưởng lương"; dòng 28 → chỉ 1 create; dòng 3 → empty state; network chỉ GET `?overtime_hour_id=` (không POST tự phát). Không tạo data test nên không cần dọn.
+Đang làm dở: (không)
+Bước tiếp theo: user verify bằng mắt trên browser (hard-refresh tab "Khung giờ làm thêm").
+Blocked: (không)
+
+---
+
+## Phase 7 — Lịch sử thay đổi tab "Chung" màn Quy định nghỉ (/timesheet/setting/holiday)
+
+**Người phụ trách:** @khoipv
+**Goal:** Mirror Phase 3 (subset-diff) cho tab Chung màn holiday (entity `attendance_watch_regulations`, màn AUTO-SAVE).
+**Quyết định user (2026-07-14):** track 26 trường hiển thị trên màn (BỎ `weekend` + `increase_attendance_according_to_seniority_from` — không có UI); KHÔNG phân quyền riêng (route auth:api).
+
+### Task 22: BE — migration + entity history
+- [x] Migration `2026_07_14_000001_create_attendance_watch_regulation_history_table.php` (mirror overtime_regulation_history; cột id = attendance_watch_regulation_id; PHPDoc up/down)
+- [x] Entity `AttendanceWatchRegulationHistory` (fillable + relation user())
+- [x] Chạy migrate (hỏi user trước)
+
+### Task 23: BE — service diff + histories + controller + route
+- [x] `AttendanceWatchRegulationService`: TRACKED_FIELDS (26) + BOOLEAN_TRACKED_FIELDS (9) + buildTrackedSnapshot + normalizeTrackedValue + logHistoryIfChanged; save() snapshot trước fill → log sau
+- [x] histories() scope company, sort cũ→mới, trả changed_by_name + changed_at_raw (chỉ action update)
+- [x] Controller `histories()` (try/catch)
+- [x] Route `GET attendance_watch_regulations/histories` (auth:api, cùng group)
+- [x] php -l sạch
+
+### Task 24: FE — nút + modal
+- [x] `AttendanceWatchHistoryModal.vue` (mirror OvertimeHistoryModal, chỉ nhánh field-diff; FIELD_LABELS 26 + map enum _type + bool Bật/Tắt)
+- [x] `GeneralHoliday.vue`: nút V2BaseButton light + ri-history-line đầu tab → open(); đăng ký modal + ref; KHÔNG đụng model/watcher (auto-save)
+- [x] FE compile sạch
+
+### Task 25: Verify
+- [x] tinker: đổi 1 trường → 1 log subset; không đổi → không log; boolean true/"1" → không log rác; 2 trường 1 dòng; histories() format + thứ tự
+- [x] Playwright: đổi giá trị tab Chung → modal hiện dòng đỏ→xanh + người + giờ; bộ lọc; mở/đóng không bắn POST thừa
+- [x] Dọn log test + khôi phục giá trị
+
+---
+
+### Checkpoint Phase 7 — 2026-07-14
+Vừa hoàn thành: Task 22→25 (inline Opus 4.8). Lịch sử thay đổi tab "Chung" màn Quy định nghỉ (/timesheet/setting/holiday) — mirror Phase 3 subset-diff, entity `attendance_watch_regulations` (màn AUTO-SAVE).
+- BE: migration `2026_07_14_000001_create_attendance_watch_regulation_history_table` ĐÃ CHẠY (index đặt tên ngắn awr_history_awr_id_idx / awr_history_company_id_idx vì tên mặc định >64 ký tự MySQL). Entity `AttendanceWatchRegulationHistory`. Service: TRACKED_FIELDS (26, bỏ weekend + ..._from theo user), BOOLEAN_TRACKED_FIELDS (9), buildTrackedSnapshot + normalizeTrackedValue + logHistoryIfChanged; save() snapshot trước fill → log sau. histories() scope company + sort cũ→mới. Controller histories() try/catch. Route GET attendance_watch_regulations/histories (auth:api). php -l sạch.
+- FE: `AttendanceWatchHistoryModal.vue` (mirror OvertimeHistoryModal, chỉ nhánh field-diff; FIELD_LABELS 26 + TYPE_LABELS 7 radio + BOOLEAN Bật/Tắt). `GeneralHoliday.vue`: nút V2BaseButton light + ri-history-line đầu tab → open(); đăng ký modal + ref; KHÔNG đụng model/watcher (auto-save).
+- VERIFY: tinker reflection (bool true/'1'/1→1, false/'0'→0; numeric '12'/12→12; enum '2'/2→2; ''/null→NULL; snapshot 26 keys; đổi 2 trường→diff đúng 2 keys). Playwright DNS Admin: nút hiện đầu tab; mở modal → empty state + chỉ GET histories (KHÔNG POST); tick "Tính phép cho tháng nghỉ việc" → POST update 200 → modal hiện 1 log "Bật/tắt tính phép cho tháng nghỉ việc: Tắt(đỏ)→Bật(xanh)" + người + giờ (subset chỉ 1 trường). Khôi phục: bỏ tick → entity month_off_work về 0; 2 log test (subset sạch) đã XÓA, bảng về 0 dòng.
+Đang làm dở: (không)
+Bước tiếp theo: user verify bằng mắt trên browser (hard-refresh tab Chung màn Quy định nghỉ).
+Blocked: (không)
+
+---
+
+## Phase 8 — Lịch sử thay đổi tab "Loại nghỉ" (/timesheet/setting/holiday) — RIÊNG TỪNG DÒNG
+
+**Người phụ trách:** @khoipv
+**Goal:** Full-snapshot per-dòng cho tab Loại nghỉ (entity `leave_types`), mở từ dropdown thao tác (Sửa/Khóa/Mở khóa/Xóa/Lịch sử thay đổi).
+**Quyết định user (2026-07-14):** tách theo TỪNG DÒNG (mirror Phase 6). 5 thao tác: create/update/lock/unlock/delete. KHÔNG phân quyền riêng.
+Track 9 trường: name, symbol, group_id, salary_ratio, is_calc_holiday(bool), need_nshc_approve(bool), usable_leave_days, description, status.
+
+### Task 26: BE — migration + entity + helper log
+- [x] Migration `2026_07_14_000002_create_leave_type_history_table` (mirror overtime_hour_history; cột leave_type_id; PHPDoc up/down)
+- [x] Entity `LeaveTypeHistory` + static log($action,$leaveTypeId,$companyId,$old,$new) try/catch \Throwable
+
+### Task 27: BE — service logging + histories + controller + route
+- [x] `LeaveTypeService`: TRACKED_FIELDS(9)+BOOLEAN(2)+buildSnapshot+normalize; save() log create/update; lock() log 'lock'; unlock() log 'unlock'; delete() log 'delete' CHỈ khi xóa thật (boot deleting có thể chặn)
+- [x] histories($leaveTypeId=null) scope company + sort cũ→mới + format changed_by_name/changed_at_raw
+- [x] Controller histories(Request) nhận leave_type_id; route GET timesheet/leave-type/histories TRƯỚC /{id}
+- [x] php -l sạch
+
+### Task 28: FE — dropdown-item + modal
+- [x] `LeaveTypeHistoryModal.vue` (mirror OvertimeHourHistoryModal per-row; open(item) header phụ name·symbol; actions create liệt kê xanh / update diff amber / lock đỏ / unlock xanh / delete đỏ; FIELD_LABELS 9 + map group/bool/status)
+- [x] `LeaveType.vue`: b-dropdown-item "Lịch sử thay đổi" + đăng ký modal + ref; fetch ?leave_type_id=
+- [x] FE compile sạch
+
+### Task 29: Verify
+- [x] tinker: create→1 log snapshot; update 1 trường→1 log diff; lock/unlock→log status; delete→log; histories(id) chỉ dòng đó
+- [x] Playwright: dropdown có "Lịch sử thay đổi"; sửa/khóa/mở khóa 1 dòng → modal hiện đúng; mở/đóng không lỗi
+- [x] Dọn data test + khôi phục
+
+---
+
+### Checkpoint Phase 8 — 2026-07-14
+Vừa hoàn thành: Task 26→29 (inline Opus 4.8). Lịch sử thay đổi tab "Loại nghỉ" (/timesheet/setting/holiday) — full-snapshot RIÊNG TỪNG DÒNG, 5 thao tác.
+- BE: bảng `leave_type_history` (migrate 2026_07_14_000002 ĐÃ CHẠY) + entity `LeaveTypeHistory` (helper static log() try/catch \Throwable). `LeaveTypeService`: TRACKED_FIELDS(9: name/symbol/group_id/salary_ratio/is_calc_holiday/need_nshc_approve/usable_leave_days/description/status) + BOOLEAN(2) + buildSnapshot + normalizeTrackedValue + logIfChanged; save() log create(new snapshot)/update(diff nếu đổi); lock() log 'lock'; unlock() log 'unlock'; delete() log 'delete' CHỈ khi xóa thật (boot deleting có thể chặn). histories($leaveTypeId=null) scope company + sort cũ→mới. Controller histories(Request) nhận leave_type_id; route GET timesheet/leave-type/histories ĐẶT TRƯỚC /{id}. php -l sạch.
+- FE: `LeaveTypeHistoryModal.vue` (mirror OvertimeHourHistoryModal per-row; open(item) header phụ "name · symbol"; ACTION_META create xanh-liệt kê / update amber-diff / lock đỏ-diff / unlock xanh-diff / delete đỏ-liệt kê; FIELD_LABELS 9 + GROUP_LABELS + STATUS_LABELS + bool Có/Không; fetch ?leave_type_id=). `LeaveType.vue`: b-dropdown-item "Lịch sử thay đổi" (dưới Sửa/Khóa/Mở khóa/Xóa) + đăng ký modal + ref.
+- VERIFY: tinker reflection (normalize bool 1/'1'/true→1, 0/false→0; snapshot 9 keys; đổi salary→diff 1 trường). Playwright DNS Admin: tạo loại nghỉ test "ZZ TEST LSU" (id 58) → log create snapshot 9 trường đúng; dropdown có mục "Lịch sử thay đổi" (dưới Sửa/Khóa/Xóa); Khóa → log lock (Trạng thái Hoạt động→Khóa); modal render đúng (header name·symbol, create xanh liệt kê map Nhóm/bool Có-Không/Trạng thái/rỗng→(trống), lock đỏ→xanh diff status). tinker delete(58) → log delete (old snapshot, new null) + xóa row. ĐỦ 5 action log đúng (mỗi HTTP write = 1 log, subset chuẩn). Dọn: khôi phục lt46 salary về 0 (test tự động lỡ đụng — query builder không sinh log), xóa 6 log test (bảng về 0), lt58 đã xóa.
+Đang làm dở: (không)
+Bước tiếp theo: user verify bằng mắt trên browser (hard-refresh tab Loại nghỉ → dropdown 1 dòng → Lịch sử thay đổi).
+Blocked: (không)
+
+---
+
+## Phase 9 — Lịch sử thay đổi tab "Nghỉ lễ" (/timesheet/setting/holiday) — RIÊNG TỪNG DÒNG
+
+**Người phụ trách:** @khoipv
+**Goal:** Full-snapshot per-dòng cho tab Nghỉ lễ (entity `holidays`), mở từ dropdown thao tác (Sửa/Xóa/Lịch sử thay đổi). Mirror Phase 6 (overtime_hour), 3 thao tác create/update/delete (không lock/unlock).
+**Track 6 trường:** name, code, date, salary_ratio, is_sub_day(bool), description. KHÔNG phân quyền riêng.
+
+### Task 30: BE — migration + entity + helper
+- [x] Migration `2026_07_14_000003_create_holiday_history_table` (mirror overtime_hour_history; cột holiday_id; PHPDoc)
+- [x] Entity `HolidayHistory` + static log() try/catch \Throwable
+
+### Task 31: BE — service + histories + controller + route
+- [x] `HolidayService`: TRACKED_FIELDS(6)+BOOLEAN(is_sub_day)+DATE(date→d/m/Y)+buildSnapshot+normalizeTrackedValue; save() log create/update; delete() log delete chỉ khi xóa thật
+- [x] histories($holidayId=null) scope company + sort cũ→mới; controller histories(Request) nhận holiday_id; route GET timesheet/holiday/histories TRƯỚC /{id}
+- [x] php -l sạch
+
+### Task 32: FE — dropdown-item + modal
+- [x] `HolidayHistoryModal.vue` (mirror LeaveTypeHistoryModal per-row, bỏ lock/unlock; FIELD_LABELS 6 + is_sub_day Có/Không; header phụ name·code)
+- [x] `Holiday.vue`: b-dropdown-item "Lịch sử thay đổi" + đăng ký modal + ref; fetch ?holiday_id=
+- [x] FE compile sạch
+
+### Task 33: Verify
+- [x] tinker reflection: snapshot 6 keys, date→d/m/Y, is_sub_day bool, đổi 1 trường→diff
+- [x] Playwright: create/update/delete 1 dòng → modal render đúng; dropdown có mục lịch sử
+- [x] Dọn data test + khôi phục
+
+---
+
+### Checkpoint Phase 9 — 2026-07-14
+Vừa hoàn thành: Task 30→33 (inline Opus 4.8). Lịch sử thay đổi tab "Nghỉ lễ" (/timesheet/setting/holiday) — full-snapshot RIÊNG TỪNG DÒNG, 3 thao tác create/update/delete (mirror Phase 6 overtime_hour).
+- BE: bảng `holiday_history` (migrate 2026_07_14_000003 ĐÃ CHẠY) + entity `HolidayHistory` (helper log() try/catch). `HolidayService`: TRACKED_FIELDS(6: name/code/date/salary_ratio/is_sub_day/description) + BOOLEAN(is_sub_day) + DATE(date→d/m/Y) + buildSnapshot + normalizeTrackedValue; save() log create(new)/update(diff nếu đổi); delete() log delete chỉ khi xóa thật. histories($holidayId=null) scope company + sort cũ→mới. Controller histories(Request) nhận holiday_id; route GET timesheet/holiday/histories ĐẶT TRƯỚC /{id}. php -l sạch.
+- FE: `HolidayHistoryModal.vue` (mirror Holiday/LeaveTypeHistoryModal per-row, bỏ lock/unlock; FIELD_LABELS 6 + is_sub_day Có/Không; header phụ "name · code"; date hiển thị thẳng d/m/Y từ BE). `Holiday.vue`: b-dropdown-item "Lịch sử thay đổi" (dưới Sửa/Xóa) + đăng ký modal + ref.
+- VERIFY: tinker reflection (date '2026-05-01...'→01/05/2026, is_sub_day '1'/1→1 '0'/0→0, snapshot 6 keys, đổi salary→diff 1 trường). Playwright DNS Admin: tạo ngày nghỉ test "ZZ TEST NGAY LE" (id 168, date 02/09/2026, salary 300) → log create snapshot 6 trường đúng (date d/m/Y, is_sub_day null→(trống)); dropdown có mục "Lịch sử thay đổi" dưới Sửa/Xóa; modal render đúng (header name·code, xanh liệt kê). tinker delete(168) → log delete (old snapshot, new null) + xóa row. Dọn: xóa 2 log test (bảng về 0), holiday 168 đã xóa, KHÔNG đụng data thật (test lần này sạch, không phát sinh phantom action).
+Đang làm dở: (không)
+Bước tiếp theo: user verify bằng mắt trên browser (hard-refresh tab Nghỉ lễ → dropdown 1 dòng → Lịch sử thay đổi).
+Blocked: (không)
+
+---
+
+## Phase 10 — Lịch sử thay đổi tab "Nghỉ cắt phép" (/timesheet/setting/holiday) — RIÊNG TỪNG DÒNG
+
+**Người phụ trách:** @khoipv
+**Goal:** Full-snapshot per-dòng cho tab Nghỉ cắt phép (entity `truncated_leaves` + bảng phụ `truncated_leave_excepts`), 3 thao tác create/update/delete.
+**Quyết định user (2026-07-14):** track 5 trường thường (name/code/date/day/description) + danh sách "Nhân viên đi làm" (except_employees, hiển thị tên, so sánh thêm/bớt). KHÔNG phân quyền riêng.
+
+### Task 34: BE — migration + entity + helper
+- [x] Migration `2026_07_14_000004_create_truncated_leave_history_table` (cột truncated_leave_id; PHPDoc)
+- [x] Entity `TruncatedLeaveHistory` + static log() try/catch
+
+### Task 35: BE — service + histories + controller + route
+- [x] `TruncatedLeaveService`: TRACKED_FIELDS(5)+DATE(date)+buildSnapshot (thêm except_employees = tên NV từ truncated_leave_excepts, sort) + normalize; save() log create/update (build OLD snapshot TRƯỚC fill+xóa excepts, NEW sau re-insert); delete() log delete
+- [x] histories($truncatedLeaveId=null) scope company + sort cũ→mới; controller histories(Request); route GET timesheet/truncated-leave/histories TRƯỚC /{id}
+- [x] php -l sạch
+
+### Task 36: FE — dropdown-item + modal
+- [x] `TruncatedLeaveHistoryModal.vue` (per-row; FIELD_LABELS 5 + except_employees "Nhân viên đi làm"; array so sánh JSON, hiển thị join ', ' / '(không có)'; date d/m/Y)
+- [x] `TruncatedLeave.vue`: b-dropdown-item "Lịch sử thay đổi" + đăng ký modal + ref; fetch ?truncated_leave_id=
+- [x] FE compile sạch
+
+### Task 37: Verify
+- [x] tinker: snapshot có except_employees (tên NV); đổi field/đổi danh sách NV → diff đúng
+- [x] Playwright: create/update 1 dòng (kèm chọn NV) → modal render đúng; dropdown có mục lịch sử
+- [x] Dọn data test + khôi phục
+
+---
+
+### Checkpoint Phase 10 — 2026-07-14
+Vừa hoàn thành: Task 34→37 (inline Opus 4.8). Lịch sử thay đổi tab "Nghỉ cắt phép" (/timesheet/setting/holiday) — full-snapshot RIÊNG TỪNG DÒNG + danh sách nhân viên.
+- BE: bảng `truncated_leave_history` (migrate 2026_07_14_000004, index ngắn tl_history_*) + entity `TruncatedLeaveHistory` (helper log()). `TruncatedLeaveService`: TRACKED_FIELDS(5: name/code/date/day/description) + DATE(date→d/m/Y) + buildSnapshot THÊM except_employees (danh sách "MÃ - Họ tên" resolve từ truncated_leave_excepts qua EmployeeInfo, sort). save() log create/update (OLD snapshot chụp TRƯỚC fill + TRƯỚC xóa excepts, NEW sau re-insert); delete() log delete. histories($truncatedLeaveId). Controller + route GET timesheet/truncated-leave/histories trước /{id}. php -l sạch.
+- FE: `TruncatedLeaveHistoryModal.vue` (per-row; FIELD_LABELS 6 gồm except_employees "Nhân viên đi làm"; LIST_FIELDS xử lý mảng — so sánh JSON.stringify, hiển thị join ', ' hoặc '(không có)'; date d/m/Y). `TruncatedLeave.vue`: b-dropdown-item "Lịch sử thay đổi" + đăng ký modal + ref.
+- VERIFY: tinker reflection (snapshot 6 keys; except_employees resolve đúng 12 tên cho tl id=4; date d/m/Y). Playwright DNS Admin: tạo dòng test "ZZ TEST CAT PHEP" (id 73, chọn 1 NV qua Select2 search) → create log except_employees=["10510014 - Trần Ngọc Duy"] (resolve tên đúng); dropdown có mục "Lịch sử thay đổi"; modal render đúng (header name·code, xanh liệt kê + "Nhân viên đi làm: 10510014 - Trần Ngọc Duy"). tinker delete(73) → delete log #3. Update path verify tình cờ qua phantom log #1 (Playwright tự động lỡ đụng tl=49: day 1→1.2 + đổi danh sách NV — diff list capture ĐÚNG). ⚠️ ĐÃ KHÔI PHỤC tl=49 nguyên trạng (day=1, 50 NV từ snapshot cũ, query builder không sinh log) + xóa tl=73 + purge 3 log test (bảng về 0). LƯU Ý harness Playwright trên modal shared + Select2 dễ gây phantom write dòng khác — cần kiểm tra & khôi phục khi test.
+Đang làm dở: (không)
+Bước tiếp theo: user verify bằng mắt (hard-refresh tab Nghỉ cắt phép → dropdown 1 dòng → Lịch sử thay đổi). Toàn bộ 4 tab màn Quy định nghỉ + 2 tab màn Quy định làm thêm đã có lịch sử.
+Blocked: (không)
+
+### Task 38: FE fix — diff danh sách NV chỉ hiện thêm/bớt (Phase 10)
+- [x] `TruncatedLeaveHistoryModal.vue`: thao tác Sửa, trường except_employees chỉ hiện NV được Thêm (xanh) / bị Bỏ (đỏ), KHÔNG liệt kê cả list cũ→mới
+
+### Checkpoint Task 38 — 2026-07-14
+FE fix: modal Nghỉ cắt phép — thao tác Sửa, trường "Nhân viên đi làm" chỉ hiện NV được Thêm (xanh "+ Thêm:") / bị Bỏ (đỏ "− Bỏ:"), KHÔNG liệt kê cả list cũ→mới. Logic: added=new\old, removed=old\new (parseHistoryItem, LIST_FIELDS). create/delete vẫn liệt kê full list (cả bản ghi). VERIFY: đọc lại code đúng; KHÔNG chụp được browser (MCP chrome kẹt lockfile, không kill Chrome). Đã dọn log giả + phantom (browser đóng lại lỡ update tl=49 lần 2 → ĐÃ khôi phục day=1 + 50 NV, xóa log). Chờ user hard-refresh verify bằng mắt.
