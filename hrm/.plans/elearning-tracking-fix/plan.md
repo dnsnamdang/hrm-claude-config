@@ -74,3 +74,38 @@ Vừa hoàn thành: Phase 8 — fix nút "Tiếp tục học" vào sai bài (2 f
 Đang làm dở: Không.
 Bước tiếp theo: Verify trên browser — vào khoá đang học dở (vd 83%) → nhấn "Tiếp tục học" → phải mở đúng bài đang học, không về bài đầu. Logic dựa vào field `status` từng lesson từ API `/subjects/{slug}/learn`.
 Blocked: Không build/lint local được (Node local = 14, Vite 5 cần ≥18 — chạy trong Docker).
+
+## Phase 9 — Fix "Chặn tua video" không có hiệu lực (BE + FE)
+
+Bug: (1) cấu hình "Cho tua video = Không" không chặn được tua; (2) tua tới cuối video → bài chuyển "Hoàn thành".
+
+- [x] BE-9.1: `SubjectBuilderRequest` thêm `prepareForValidation()` chuẩn hoá boolean trong `tracking_completion_override` (cả `chapters.*.subject_lessons.*` và `subject_lessons.*`) — copy pattern đã có ở `LessonRequest`
+- [x] FE-9.1: `YoutubePlayer.vue` — `blockSeek()` / `requireActiveTab()` parse được cả boolean lẫn chuỗi "true"/"false" (dữ liệu override cũ đã lưu dạng chuỗi trong DB)
+- [x] FE-9.2: `YoutubePlayer.vue` — ENDED chỉ snap 100% khi đã thực sự phát gần hết (`played >= duration - SEEK_THRESHOLD`); nếu đang chặn tua mà ENDED do nhảy cóc → kéo về `maxReached`
+- [x] FE-9.3: `YoutubePlayer.vue` — khoá cứng thanh tua (user chốt 2026-07-16, thay vì chỉ snap-back): bài cấm tua → `playerVars.controls = 0` + `disablekb = 1` (bỏ hẳn thanh tua + phím tắt), tự render control riêng (Play/Pause + thanh tiến độ read-only + mm:ss + icon khoá). Bài cho phép tua giữ nguyên control YouTube. Snap-back giữ làm lớp phòng thủ cuối.
+- [x] FE-9.4: Control tự vẽ bổ sung tốc độ phát 0.5x/1x/1.25x/1.5x/2x — PM chỉ cấm kéo tua, KHÔNG cấm xem nhanh. Trần 2x nằm dưới `SEEK_THRESHOLD` (4) nên tiến độ vẫn cộng đúng khi phát nhanh. Sync ngược qua `onPlaybackRateChange`.
+- [x] FE-9.6: Gom tốc độ vào menu nút bánh răng (thay vì 1 hàng nút) — popup có header "Tốc độ" + tick mốc đang chọn, click ra ngoài tự đóng. KHÔNG có mục chất lượng: YouTube đã deprecate `setPlaybackQuality()` (chất lượng auto theo băng thông) → thêm nút sẽ là nút chết. Chỉ làm được nếu sau này video self-host (mp4/HLS).
+- [x] FE-9.5: Control tự vẽ bổ sung nút toàn màn hình (ẩn `controls` làm mất luôn nút fullscreen gốc) — `requestFullscreen()` trên wrapper để control tự vẽ vẫn hiện khi toàn màn hình
+
+## Verify Phase 9
+
+- [x] Bài cấm tua (lesson 7, khoá `sa-tai-sao-lai-co-thong-tin-sai-lech`) → iframe có `controls=0&disablekb=1`, không còn thanh tua YouTube
+- [x] Control tự vẽ chạy đúng: Play/Pause đổi trạng thái, đồng hồ chạy `0:39 / 3:12`, thanh tiến độ 20.3% khớp 39/192
+- [x] Ép `seekTo(170)` qua JS API của iframe → vị trí KHÔNG nhảy tới 2:50, phát tiếp bình thường từ mốc đã xem
+- [x] Chọn 2x → đồng hồ chạy 0:41 → 0:51 trong 5 giây thật (đúng 2x), nút 2x sáng
+- [x] Menu bánh răng: mở ra đủ 5 mốc `0.5x / 1x / 1.25x / 1.5x / 2x`, tick đúng mốc đang chọn, click ra ngoài đóng menu
+- [x] Nút toàn màn hình → `document.fullscreenElement` = wrapper, video cao 824/876px, control bar vẫn hiện, nút đổi thành "Thoát toàn màn hình"; thoát về lại bình thường
+- [ ] Override cấp môn học "Cho tua video = Không" → lưu lại → DB lưu boolean false (BE đã verify bằng unit-run, chưa test qua UI admin)
+- [ ] Tua thẳng tới cuối video → KHÔNG chuyển "Hoàn thành" (chưa test tay)
+- [ ] Xem hết video bình thường → vẫn đạt 100% → "Hoàn thành" (chưa test tay)
+
+### Checkpoint — 2026-07-16
+
+Vừa hoàn thành: Phase 9 — fix "chặn tua không có hiệu lực" (1 file BE + 1 file FE).
+- Nguyên nhân 1: `SubjectBuilderRequest` thiếu chuẩn hoá boolean → select2 gửi chuỗi `"false"` → lưu thẳng vào cột JSON → FE so sánh `=== false` không khớp. Bằng chứng: `subject_lessons` id 30 lưu `"true"` kiểu STRING trong khi `lessons` lưu `false` kiểu BOOLEAN.
+- Nguyên nhân 2: `YoutubePlayer` handler ENDED gán `played = getDuration()` vô điều kiện; kéo tua tới cuối làm YouTube bắn ENDED mà không qua PLAYING → vòng poll chặn tua không kịp chạy.
+- Giải pháp cuối (user chốt): khoá cứng bằng `controls: 0` + control tự vẽ, thay vì chỉ snap-back.
+
+Đang làm dở: Không.
+Bước tiếp theo: Test tay 3 mục Verify còn lại (luồng ENDED + lưu override qua UI admin).
+Blocked: Không.
