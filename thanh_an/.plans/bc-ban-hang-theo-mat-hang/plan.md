@@ -53,6 +53,10 @@
   - BE: `saleProductReport` select thêm `COALESCE(NULLIF(cp.internal_code,''), pr.internal_code) as internal_code`; `buildSaleProductTree` thêm field vào node item.
   - FE: header (+1 th col-info rowspan=2 "Mã nội bộ" đặt ngay sau cột Hạng mục), TỔNG CỘNG (+1 td col-info trống), dòng dữ liệu (+1 td chỉ cấp item), colspan "Chưa có dữ liệu" 19→20; filter input `internal_code` + đưa vào `buildRows`/`reset`/watch; include vào keyword search; export Excel (+1 cột).
 
+## Bổ sung sau (2026-07-17)
+- [x] Thêm **2 bộ lọc** cấp mặt hàng: **Nhóm HH** (`product_group_name`) và **Loại HH** (`import_type_id`: 1=Nhập khẩu, 2=Phân phối lại). Lọc client-side trên `rawItems` (dữ liệu đã tải sẵn về, không đổi API).
+  - FE: template thêm 2 Select2 trong khối filter (Nhóm HH dùng `productGroupOptions` đã có sẵn, bind `product_group_name`; Loại HH dùng options cố định `importTypeOptions` [{1,Nhập khẩu},{2,Phân phối lại}], bind `import_type_id`). `formFilter` thêm `import_type_id` (product_group_name đã có). Computed `importTypeOptions`. Watcher `import_type_id`. `buildRows` thêm điều kiện lọc `import_type_id` (product_group_name đã lọc sẵn). `reset` thêm `import_type_id: null`.
+
 ## Còn lại (cần user chạy/kiểm)
 - [ ] Chạy `npm run dev` client, mở `/contract/reports/sale-product` kiểm thị giao diện + collapse + drill-down + Excel.
 - [ ] Gán quyền `Xem báo cáo bán hàng theo mặt hàng` cho role qua UI phân quyền.

@@ -20,6 +20,21 @@
 ## Phase 4 — Wrap up
 - [x] 4.1 Cập nhật plan/STATUS (chờ user verify UI E2E)
 
+## Phase 5 — Chuẩn hoá bộ lọc theo base project (2026-07-20)
+- [x] 5.1 Viết lại khối bộ lọc `index.vue` theo base `contract/contract`: thanh action phải + nút "Bộ lọc" toggle `b-collapse`, panel `search-wrap` grid `col-md-3`, placeholder làm label, cặp nút Đặt lại / Áp dụng
+- [x] 5.2 Chuyển các nút report-specific (Xuất excel, Tạo YCGH, Lập HĐ mua) + checkbox "Chỉ mã chưa có HĐ mua" vào layout base
+- [x] 5.3 Dọn style `pdr-bar`/`pdr-chk`… không dùng nữa (giữ `.pdr-btn` vì modal còn dùng)
+- [x] 5.4 Tách 1 nút "Lập HĐ mua / Đơn mua" thành 2 nút riêng **Lập HĐ mua** (`openLapHdMua('hd')`) + **Lập đơn mua** (`openLapHdMua('don')`); modal bỏ dropdown "Hình thức" (chỉ hiển thị loại đã chọn), tiêu đề động theo `kind`
+
+### Checkpoint — 2026-07-20
+Vừa hoàn thành: chuẩn hoá bộ lọc màn `supply/reports/purchase-demand` theo base project (tham chiếu `contract/contract`).
+- Thay `pdr-bar` custom → `card > card-body` + thanh action `dataTables_filter text-md-right` (Xuất excel, Tạo YCGH, Lập HĐ mua, nút "Bộ lọc" toggle) + `b-collapse#collapse-1 visible` chứa `search-wrap` form grid `col-md-3`.
+- Các select đổi placeholder làm label (bỏ `<label>` + bỏ `@input="fetchReport"`); tìm kiếm Enter = Áp dụng; checkbox "Chỉ mã chưa có HĐ mua" đưa vào lưới lọc; cặp nút **Đặt lại** (`btn-reset` → `resetFilter`) / **Áp dụng** (submit → `applyFilter`).
+- Thêm method `applyFilter()`; xoá style `pdr-bar/pdr-fields/fld/pdr-input/pdr-controls/pdr-chk/pdr-actions`.
+Đang làm dở: —
+Bước tiếp theo: user chạy client verify UI (`/supply/reports/purchase-demand`) — mở/đóng "Bộ lọc", đổi filter + Áp dụng, Đặt lại, các nút action ẩn/hiện đúng.
+Blocked: —
+
 ## Ghi chú
 - Không migration, không commit git, không test tự động (verify tinker/route:list/UI).
 - Cột tồn kho/tồn thầu/HĐ mua NCC + 2 nút hành động: chừa chỗ, chờ module.
