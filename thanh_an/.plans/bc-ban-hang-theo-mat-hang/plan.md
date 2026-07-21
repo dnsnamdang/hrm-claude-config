@@ -49,7 +49,7 @@
   - FE: header (+1 th col-info rowspan=2 "Tên thương mại"), TỔNG CỘNG (+1 td col-info trống), dòng dữ liệu (+1 td chỉ cấp item), colspan "Chưa có dữ liệu" 18→19; filter Select2 `trade_name` (uniqueOptions) + đưa vào `buildRows`/`reset`/watch; include vào keyword search; export Excel (+1 cột).
 
 ## Bổ sung sau (2026-07-13)
-- [ ] Thêm cột **Mã nội bộ** (`internal_code`) cấp mặt hàng + **bộ lọc** lọc theo mã nội bộ.
+- [x] Thêm cột **Mã nội bộ** (`internal_code`) cấp mặt hàng + **bộ lọc** lọc theo mã nội bộ. (làm 2026-07-21)
   - BE: `saleProductReport` select thêm `COALESCE(NULLIF(cp.internal_code,''), pr.internal_code) as internal_code`; `buildSaleProductTree` thêm field vào node item.
   - FE: header (+1 th col-info rowspan=2 "Mã nội bộ" đặt ngay sau cột Hạng mục), TỔNG CỘNG (+1 td col-info trống), dòng dữ liệu (+1 td chỉ cấp item), colspan "Chưa có dữ liệu" 19→20; filter input `internal_code` + đưa vào `buildRows`/`reset`/watch; include vào keyword search; export Excel (+1 cột).
 
@@ -67,3 +67,9 @@ Vừa hoàn thành: toàn bộ Task 1–7 (BE verify qua tinker/reflection; FE v
 Đang làm dở: chưa chạy nuxt dev để xác nhận render (Node 14, cần user chạy)
 Bước tiếp theo: user chạy client + gán quyền cho role + đối chiếu số liệu
 Blocked: 
+
+### Checkpoint — 2026-07-21
+Vừa hoàn thành: cột + bộ lọc **Mã nội bộ** (`internal_code`). BE: `saleProductReport` select `COALESCE(NULLIF(cp.internal_code,''), pr.internal_code)`, `buildSaleProductTree` thêm field node. FE: ô lọc input `internal_code`, cột "Mã nội bộ" (col-info) đặt sau Hạng mục, TỔNG CỘNG +1 td, colspan 19→20, watch/reset/buildRows + gộp vào keyword search, export Excel +1 cột.
+Đang làm dở: chưa chạy nuxt dev xác nhận render (Node 14, cần user chạy)
+Bước tiếp theo: user chạy client mở /contract/reports/sale-product kiểm tra lọc + cột hiển thị + Excel
+Blocked:
