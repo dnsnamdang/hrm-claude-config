@@ -44,3 +44,16 @@
 
 ### Checkpoint — 2026-04-28
 Hoàn thành: 22/22 task. Feature Issue Completion Flow đã test thủ công xong, hoạt động đúng.
+
+## Phase 7: Hotfix — Không mở lại được issue ở trạng thái Hoàn thành
+
+**Bối cảnh:** Issue ISS-202607-0005 (status=completed) không mở lại (reopen) được từ UI. Điều tra thấy `getAllowedNextStatuses()` cho phép `completed → reopened` (creator/assignee), nhưng `canEdit()` trả false ở completed và `canHandle()` không cover completed → cả 3 tầng bị chặn: (1) list không hiện nút Sửa/Xử lý (gác theo can_edit/can_handle), (2) modal "Xem" khoá ô trạng thái (`isReadOnly && !isHandling`), (3) `IssueService::update()` guard `!canEdit && !canHandle` ném lỗi. Task 22 trước đó tưởng đã test reopen nhưng thực tế hỏng.
+
+- [x] Task 23: Sửa `Issue::canHandle()` — trả true khi (creator hoặc assignee) và status = `completed` (để mở lại), đồng thời thêm `reopened` vào danh sách status assignee được xử lý tiếp (reopened → in_progress). Lint PHP pass.
+- [ ] Task 24: Verify live — CHỜ DEPLOY. `dev-hrm.eteksofts.com` là server remote (124.158.4.24), không chạy code local; verify sau khi deploy bản sửa lên dev.
+
+### Checkpoint — 2026-07-22
+Vừa hoàn thành: Task 23 — sửa `Issue::canHandle()` phủ case completed → reopened (creator/assignee) + reopened cho assignee. `php -l` pass.
+Đang làm dở: không.
+Bước tiếp theo: deploy lên dev rồi verify Task 24 (list hiện nút "Xử lý" cho issue completed → chọn "Mở lại" → lưu PUT → status = reopened).
+Blocked: Task 24 chờ deploy code lên server remote dev-hrm (local edit không phản ánh lên live).
