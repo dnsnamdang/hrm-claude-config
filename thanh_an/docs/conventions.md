@@ -478,3 +478,13 @@ export default {
 - Action Vuex: `apiGet` / `apiGetMethod` để đọc, `apiPostMethod` / `apiPutMethod` để ghi, `apiDelete` để xóa (không có `apiDeleteMethod`)
 - Tuân thủ style list của module đang triển khai (xem thêm `assets/scss/custom-*.scss`)
 - Dùng `async/await` cho mọi API dispatch
+- **Label field bắt buộc: LUÔN dùng component `<Required />`** (`@/components/common/Required.vue` — render dấu `*` màu đỏ). KHÔNG viết `*` trần trong text label (vd `label="Lý do *"` là SAI vì dấu sao không đỏ). Với `<b-form-group>` phải dùng slot label:
+
+  ```vue
+  <b-form-group>
+      <template #label>Lý do đẩy trả <Required /></template>
+      <b-form-textarea ... />
+  </b-form-group>
+  ```
+
+  và đăng ký component: `Required: () => import('@/components/common/Required.vue')`

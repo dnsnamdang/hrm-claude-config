@@ -159,6 +159,15 @@ Yêu cầu user (@khoipv): ở màn `add`, khi nhập SL nghiệm thu > SL còn 
 - [x] `FormByMonth.vue` (theo tháng): thêm `qty-err` khi `isOver(ri, row)`, X = `rowRemain(ri, row)`.
 - [x] `FormByInvoiceDetail.vue` (chi tiết HĐ): thêm `qty-err` khi `parseNum(row.sl) > effRem(bi, row)`, X = `effRem(bi, row)`.
 
+### Phase 14 — Thêm 2 cột "Tổng đã NT (cả lần này)" + "Còn lại (sau lần này)" (2026-07-21)
+Yêu cầu user (@khoipv): màn `add`, bảng hàng hóa bổ sung 2 cột tính toán (FE-only, không đụng BE) đặt sau "SL nghiệm thu", trước "Thành tiền". Áp cho cả 4 loại có bảng hàng hóa (mathang, luyke, thang, cthd).
+- Công thức: **Tổng đã NT (cả lần này)** = Đã NT (hiệu lực) + SL nghiệm thu; **Còn lại (sau lần này)** = Còn lại (hiệu lực) − SL nghiệm thu. Cột "Còn lại sau" tô màu `rem-ok` khi ≥ 0, `rem-bad` khi < 0 (âm = vượt).
+- [x] `ProductGrid.vue` (mathang/luyke): 2 header + 2 cell (`tongDaNt`/`conLaiSau` = sl_nt/rem ± sl); `totalCols` base 7→9.
+- [x] `FormByMonth.vue` (thang): pane "Nhập theo tháng" (dùng `rowEffNt`/`rowRemain` ± sl) + pane "Tổng hợp" (dùng sl_nt/rem ± aggSl); colspan dòng trống 17→19.
+- [x] `FormByInvoiceDetail.vue` (cthd): 2 header + 2 cell (`effNt`/`effRem` ± sl); colspan dòng trống 14→16.
+- [x] Đổi vị trí 2 cột: đặt SAU cột "Thành tiền" (theo yêu cầu user) — cả ProductGrid + FormByMonth (2 pane) + FormByInvoiceDetail.
+- [x] STT hàng hóa đếm lại từ 1 trong mỗi nhóm (giống màn HĐ `ProductComponent.vue` dùng `pIndex+1` cục bộ). `ProductGrid.buildRows`: thêm `sttInGroup` reset về 0 khi `groupHead`, `_stt = showGroup ? sttInGroup : i+1`. (Chỉ ProductGrid có nhóm — mathang/luyke; FormByMonth/cthd không chia nhóm.)
+
 ---
 
 ### Checkpoint — 2026-06-16

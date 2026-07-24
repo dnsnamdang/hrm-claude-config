@@ -9,6 +9,7 @@
 | `demo-tao-de-xuat-cung-ung-hang-hoa.html` | Tạo đề xuất cung ứng hàng hóa — 2 loại (Theo khách hàng · Theo nội bộ), wizard 2 bước, popup chọn hàng (bảng + chọn-all), phân biệt Trong/Ngoài HĐ, cảnh báo vượt SL theo HĐ (không chặn), đính kèm File lưu trữ. | `docs/superpowers/specs/2026-06-25-purchase-proposal-demo-design.md` |
 | `demo-bc-vong-doi-du-toan-hop-dong.html` | Báo cáo vòng đời Dự toán → Hợp đồng. (Chuyển về từ `hrm-thanhan-client/pages/sale/report-project-contract/`) | — |
 | `demo-xuat-excel-gia-hang-hoa.html` | Chọn trường + loại giá khi xuất Excel màn Quản lý giá hàng hóa | — |
+| `demo-lap-hop-dong-mua.html` | Lập hợp đồng mua với NCC (đảo vai Bên Mua/Bên Bán), 2 loại HĐ Nguyên tắc/Thương mại (ẩn-hiện cột SL/Thành tiền + tổng giá trị), hàng hóa chia nhóm, điều khoản rich-text điền sẵn, 5 tab như form HĐ bán. | `docs/superpowers/specs/2026-07-13-lap-hop-dong-mua-design.md` |
 
 ## Quy ước
 

@@ -173,3 +173,93 @@ Files FE hrm-client (1): pages/sso/elearning.vue (ghi đè bản cũ).
 Đang làm dở: không có.
 Bước tiếp theo: User chạy `cd hrm-api && php artisan migrate` → restart server hrm-api + dev server elearning + nuxt hrm-client → chạy 15 TC ở Phase 8 plan.
 Blocked: chưa test thủ công, chưa biết hành vi thực tế của `hrm-api/users/auth/logout` có blacklist JWT thật không (xem TC9).
+
+---
+
+## Phase 9 — Fix "nhân đôi tab ra nhầm tài khoản" (cross-tab auth sync)
+
+**Bug user báo (2026-07-15):** Đăng nhập tk học viên ngoài → đăng xuất → đăng nhập bằng SSO HRM → nhân đôi tab (Chrome Duplicate) → tab nhân đôi lại là tk học viên ngoài.
+
+**Root cause (đã xác minh bằng Playwright, không suy đoán):**
+Auth store chỉ đọc `localStorage` ĐÚNG 1 LẦN lúc tab khởi tạo (`stores/auth.js:8-9`) và KHÔNG có tab nào lắng nghe event `storage`. Đổi tài khoản ở 1 tab → các tab elearning đang mở giữ identity CŨ trong RAM nhưng request lại gửi TOKEN MỚI (vì `utils/api.js:16-18` đọc localStorage LIVE mỗi request). Tab nhân đôi đọc localStorage thật → ra tài khoản khác tab gốc.
+→ Duplicate tab KHÔNG phải nguyên nhân, chỉ là thứ phơi bày sự lệch pha. Hướng lệch (tab gốc sai hay tab mới sai) phụ thuộc tab nào là tab zombie.
+
+**Bằng chứng đo được:** tab zombie hiển thị header "Akira Lee (HV)" trong khi `GET /elearning/auth/profile` bằng chính token trong localStorage trả về "DNS ADMIN update" (employee, sub=13). → Không chỉ lỗi hiển thị: thao tác trong tab đó GHI DỮ LIỆU VÀO NHẦM TÀI KHOẢN.
+
+**Đã loại trừ:** BE `refresh` (AuthController:331-360) chọn guard theo claim TRONG token → không thể trộn tài khoản. BE `ssoExchange` (:126-145) đúng. Luồng 1 tab sạch (logout learner → SSO HRM → mở tab mới) KHÔNG tái hiện.
+
+### Task
+
+- [x] FE: `stores/auth.js` — thêm `initCrossTabSync()` lắng nghe event `storage`; so sánh IDENTITY (claim `sub` + `user_type` decode từ JWT) chứ KHÔNG so token thô — để `tryRefresh` định kỳ (cùng user, token mới) không gây reload oan
+- [x] FE: `stores/auth.js` — token bị xoá ở tab khác (logout) → `clearAuth()` + về `/` (single sign-out giữa các tab)
+- [x] FE: `stores/auth.js` — identity đổi ở tab khác (đăng nhập tk khác) → `window.location.reload()` để mọi store fetch lại theo đúng user (patch riêng auth store là chưa đủ: dữ liệu các store khác — my-learning, notification… — vẫn của user cũ)
+- [x] FE: `App.vue` — gọi `initCrossTabSync()` trong `onMounted`
+- [x] Verify bằng Playwright: 2 tab, đổi tài khoản ở tab 1 → tab 0 tự đồng bộ, không còn zombie
+
+### Test case
+
+- [x] TC16: Tab A learner + tab B → logout ở B → tab A tự về trạng thái chưa đăng nhập (không còn hiện tên learner)
+- [x] TC17: Tab A learner + tab B → ở B logout rồi SSO HRM → tab A tự reload thành employee (header đúng tên nhân viên)
+- [x] TC18: Sau TC17, nhân đôi tab A → tab nhân đôi khớp tài khoản với tab gốc
+- [x] TC19: Token tự refresh (cùng user) → các tab khác KHÔNG bị reload oan
+
+### Checkpoint — 2026-07-15
+Vừa hoàn thành: Phase 9 — fix cross-tab auth sync. 2 file FE elearning:
+- `src/stores/auth.js` — thêm helper `tokenIdentity()` (decode claim `sub` + `user_type`) + action `initCrossTabSync()` lắng nghe event `storage`: token bị xoá ở tab khác → `clearAuth()` + về `/`; identity đổi → `window.location.reload()`; identity KHÔNG đổi (refresh token) → bỏ qua.
+- `src/App.vue` — gọi `auth.initCrossTabSync()` trong `onMounted`.
+Verify thật bằng Playwright (2 tab + tab nhân đôi, learner akiralee2002 ↔ employee namdangit): TC16/17/18/19 PASS. Đo trực tiếp `GET /elearning/auth/profile` để đối chiếu header hiển thị vs identity BE trả về → đã khớp. TC19 dùng canary `window.__reloadCanary` chứng minh refresh token cùng user KHÔNG reload oan tab khác. `eslint src/stores/auth.js src/App.vue` → exit 0.
+Không đụng BE, không migration, không permission, không git.
+Đang làm dở: không có.
+Bước tiếp theo: User verify tay trên Chrome thật bằng Duplicate tab (Ctrl+Shift+D) — Playwright chỉ mở tab mới cùng URL, tương đương về localStorage nhưng KHÔNG copy sessionStorage như Duplicate thật.
+Blocked: không có.
+
+---
+
+## Phase 10 — Fix link xác thực email hỏng (`http:///verify-email`)
+
+**Bug user báo (2026-07-16):** Bấm nút "Xác thực email" trong mail đăng ký → Google chặn với thông báo "Trang trước đó đang đưa bạn tới một url không hợp lệ (`http:///verify-email?token=705edbb7-...`)". Link thiếu hoàn toàn phần host.
+
+**Root cause (đã trace, không suy đoán):**
+`.env` của `hrm-api` KHÔNG khai báo key `ELEARNING_CLIENT_URL`, trong khi `AuthService.php:132` build link bằng `rtrim(env('ELEARNING_CLIENT_URL', ''), '/') . '/verify-email?token=' . $token`.
+→ `env()` trả về default `''` → `$verifyUrl` = `/verify-email?token=...` (đường dẫn tương đối, không host) → blade render thẳng vào `href` (`emails/verify-email.blade.php:13`) → Gmail resolve link tương đối trong email thành `http:///verify-email?token=...` → URL không hợp lệ. Khớp 100% với ảnh user gửi.
+
+**Bug thứ 2 cùng gốc (grep toàn repo, chỉ 2 chỗ dùng key này):**
+`AuthService.php:171` sinh link `reset-password` y hệt → mail quên mật khẩu cũng đang hỏng, chỉ là chưa ai test tới.
+
+**Cạm bẫy thứ 2 (nghiêm trọng hơn, phải fix cùng):**
+Gọi `env()` NGOÀI file config → khi server chạy `php artisan config:cache`, Laravel bỏ nạp `.env` → `env()` trả `null` → link vỡ lại y hệt kể cả khi .env đã có key. Local hiện chưa cache config nên chỉ lộ nguyên nhân 1, nhưng lên staging/production dính ngay. Module Elearning hiện KHÔNG có thư mục `Config/`.
+
+**Ghi chú môi trường:** `.env` local dùng `MAIL_HOST=mailhog` → mail local không ra Gmail. Email hỏng user nhận là do SERVER ĐÃ DEPLOY gửi → `.env` trên server đó cũng thiếu key, user phải tự thêm (ngoài tầm sửa của session này).
+
+**User đã chốt:** URL FE elearning = `https://elearning.eteksofts.com` (FE ở root, API dưới `/api/v1/elearning`) · fix cả 2 dòng · được sửa `.env` local.
+
+### Task
+
+- [x] BE: Tạo `Modules/Elearning/Config/config.php` + `registerConfig()` trong `ElearningServiceProvider` (mẫu `AssignServiceProvider`) — `'client_url' => env('ELEARNING_CLIENT_URL', 'http://localhost:3001')` (chỗ hợp lệ DUY NHẤT để gọi `env()`, an toàn với `config:cache`)
+- [x] BE: `AuthService.php:132` — `env('ELEARNING_CLIENT_URL', '')` → `config('elearning.client_url')` (link verify-email)
+- [x] BE: `AuthService.php:171` — `env('ELEARNING_CLIENT_URL', '')` → `config('elearning.client_url')` (link reset-password)
+- [x] BE: Thêm `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com` vào `.env` local của hrm-api
+- [x] Verify: build lại link bằng tinker/route thật → link phải có đủ host, không còn `http:///`
+
+### Test case
+
+- [x] TC20: Đăng ký tk mới → mail nhận được có link dạng `https://elearning.eteksofts.com/verify-email?token=...` (đủ host)
+- [ ] TC21: Bấm link trong mail → vào đúng trang verify, tài khoản được kích hoạt, không còn cảnh báo Google
+- [x] TC22: Quên mật khẩu → link reset dạng `https://elearning.eteksofts.com/reset-password?token=...` (đủ host)
+- [ ] TC23: ~~Chạy `php artisan config:cache` rồi sinh lại link~~ → KHÔNG kiểm chứng được: `config:cache` hỏng sẵn toàn repo do `config/ckfinder.php:27` chứa Closure (bug riêng, ngoài scope). Để lại khi nào ckfinder được fix.
+
+### Checkpoint — 2026-07-16
+Vừa hoàn thành: Phase 10 — fix link xác thực email hỏng. 4 file BE (`hrm-api`, branch `tpe-develop-elearning`):
+- `Modules/Elearning/Config/config.php` — file MỚI, khai báo `client_url` (chỗ hợp lệ duy nhất gọi `env()`).
+- `Modules/Elearning/Providers/ElearningServiceProvider.php` — thêm `registerConfig()` (publishes + mergeConfigFrom) + gọi trong `boot()`, copy đúng mẫu `AssignServiceProvider:48-56`. Module trước đó KHÔNG nạp config nào.
+- `Modules/Elearning/Services/AuthService.php` — dòng 132 (verify-email) + 171 (reset-password): `env('ELEARNING_CLIENT_URL','')` -> `config('elearning.client_url')`.
+- `.env` (local) — thêm `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com` ngay dưới `ERP_URL`.
+
+Verify thật (không suy đoán): `tinker` -> `config('elearning.client_url')` = `https://elearning.eteksofts.com`; render Mailable `LearnerVerifyEmail` THẬT -> `href` = `https://elearning.eteksofts.com/verify-email?token=...`, khẳng định không còn chuỗi `http:///`. TC20 (phần build link) + TC22 PASS ở mức code.
+
+PHÁT HIỆN THÊM: `php artisan config:cache` HỎNG SẴN toàn repo (KHÔNG do thay đổi này) — `config/ckfinder.php:27` gán Closure vào `$config['authentication']` -> `LogicException: Your configuration files are not serializable` (`Closure::__set_state()`). Hệ quả: server không cache config được, nên cạm bẫy `env()` chưa từng kích hoạt -> nguyên nhân sống DUY NHẤT là `.env` thiếu key. TC23 không kiểm chứng được chừng nào ckfinder chưa fix -> KHÔNG đánh pass.
+
+Không đụng DB, không migration, không permission, không git.
+Đang làm dở: không có.
+Bước tiếp theo: User thêm `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com` vào `.env` của SERVER đã deploy (elearning.eteksofts.com) — email hỏng user nhận là do server đó gửi (local dùng `MAIL_HOST=mailhog`, không ra Gmail được). Sau đó chạy TC21 (đăng ký thật -> bấm link trong mail).
+Blocked: TC21 cần .env server (ngoài tầm session). TC23 cần fix `config/ckfinder.php` trước (bug riêng, ngoài scope phase này).
