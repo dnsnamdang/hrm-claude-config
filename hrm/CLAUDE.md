@@ -16,6 +16,7 @@
 - Ưu tiên dùng helper có sẵn, tạo helper mới nếu logic dùng lại nhiều nơi
 - Khi cần sửa hàm dùng chung → hỏi ý kiến trước khi làm
 - FE: Tuân thủ style list của module đang triển khai (mỗi module có thể khác nhau)
+- FE: Select trong modal/popup BẮT BUỘC dùng `V2BaseSelectInModal` thay cho `V2BaseSelect` (chi tiết xem `.claude/skills/modal-popup/SKILL.md`)
 - Trước khi làm màn danh sách mới → hỏi có cần phân quyền theo cấp không
 - Trước khi viết accessor `is_can_delete` → hỏi điều kiện xóa cụ thể của màn đó
 - Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu

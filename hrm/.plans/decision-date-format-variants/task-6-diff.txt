@@ -1,0 +1,74 @@
+diff --git a/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php b/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php
+index 368c06808..86fca3283 100644
+--- a/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php
++++ b/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php
+@@ -17,12 +17,13 @@ use Modules\Decision\Services\DecisionRegulationSalary\DecisionRegulationSalaryS
+ use Modules\Decision\Transformers\DecisionRegulationSalary\DecisionRegulationSalaryResource;
+ use Modules\Decision\Transformers\DecisionRegulationSalary\DetailDecisionRegulationSalaryAllResource;
+ use App\ExcelExport\RegulationSalaryExport;
+ use Maatwebsite\Excel\Facades\Excel;
+ use Modules\Decision\Transformers\DecisionRegulationSalary\ReportDecisionRegulationSalaryAllResource;
+ use Modules\Decision\Export\ReportDecisionRegulationSalaryAllExport;
++use Modules\Human\Helper\Helper;
+ 
+ class DecisionRegulationSalaryController extends ApiController
+ {
+ 
+     protected $decisionRegulationSalaryService;
+     protected $decisionService;
+@@ -123,13 +124,13 @@ class DecisionRegulationSalaryController extends ApiController
+ 
+     public function print(DecisionRegulationSalaryAll $decisionRegulationSalaryAll)
+     {
+         try {
+             $result = [];
+             $result['SO_QUYET_DINH'] = $decisionRegulationSalaryAll->decision->code;
+-            $result['NGAY_QUYET_DINH'] = date('d/m/Y', strtotime($decisionRegulationSalaryAll->decision->effective_date));
++            Helper::fillDateVariants($result, 'NGAY_QUYET_DINH', $decisionRegulationSalaryAll->decision->effective_date, 'so');
+             $result['TEN_CONG_TY'] = $decisionRegulationSalaryAll->decision->company->name;
+             $result['NGUOI_DUYET'] = $decisionRegulationSalaryAll->decision->employee_approve_full_name ?? '';
+ 
+             $template = fillReport($decisionRegulationSalaryAll->decision->print_template, $result);
+             $template = clearNull($template);
+             $data = [
+diff --git a/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php b/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php
+index 7028f99ce..b33a6ec9c 100644
+--- a/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php
++++ b/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php
+@@ -151,26 +151,34 @@ class EmployeeDisciplineController extends ApiController
+             $result['SO_BB_XU_LY_SC'] = $employeeDiscipline->trouble_shooting_report_code;
+             $result['HINH_THUC_KY_LUAT'] = EmployeeDiscipline::ProcessingMethods[$employeeDiscipline->processing_method] ?? '';
+ 
+             // Thời gian kỷ luật, ngày sa thải, số tháng chậm tăng lương, nội dung khiển trách/cảnh cáo
+             if ($employeeDiscipline->from_date && $employeeDiscipline->to_date) {
+                 $result['THOI_GIAN_KY_LUAT'] = 'Kể từ ngày ' . Helper::formatDate($employeeDiscipline->from_date) . ' đến ngày ' . Helper::formatDate($employeeDiscipline->to_date);
++                $result['THOI_GIAN_KY_LUAT_SO'] = 'Kể từ ngày ' . Helper::formatDate($employeeDiscipline->from_date) . ' đến ngày ' . Helper::formatDate($employeeDiscipline->to_date);
++                $result['THOI_GIAN_KY_LUAT_CHU'] = 'Kể từ ' . Helper::formatDateVICapitalInline($employeeDiscipline->from_date) . ' đến ' . Helper::formatDateVICapitalInline($employeeDiscipline->to_date);
+             } else {
+                 $result['THOI_GIAN_KY_LUAT'] = '';
++                $result['THOI_GIAN_KY_LUAT_SO'] = '';
++                $result['THOI_GIAN_KY_LUAT_CHU'] = '';
++            }
++            if ($employeeDiscipline->dismissal_date) {
++                Helper::fillDateVariants($result, 'NGAY_SA_THAI', $employeeDiscipline->dismissal_date, 'so');
++            } else {
++                $result['NGAY_SA_THAI'] = '';
+             }
+-            $result['NGAY_SA_THAI'] = $employeeDiscipline->dismissal_date ? Helper::formatDate($employeeDiscipline->dismissal_date) : '';
+             $result['SO_THANG_CHAM_TANG_LUONG'] = $employeeDiscipline->month_delay_increase_salary ?? '';
+             $result['ND_KHIEN_TRACH'] = $employeeDiscipline->content_reprimand ?? '';
+             $result['ND_CANH_CAO'] = $employeeDiscipline->content_warning ?? '';
+ 
+             //Loại biên bản xử lý sự cố (nếu có liên kết biên bản)
+             if ($employeeDiscipline->trouble_shooting_report_id) {
+                 $report = TroubleShootingReport::find($employeeDiscipline->trouble_shooting_report_id);
+                 $result['LOAI_BIEN_BAN_XU_LY_SU_CO'] = $report && $report->incidentType ? $report->incidentType->name : '';
+                 $result['LOAI_SU_CO'] = $report && $report->incidentType ? $report->incidentType->name : '';
+-                $result['NGAY_XAY_RA'] = Helper::formatDate($report->incident_date);
++                Helper::fillDateVariants($result, 'NGAY_XAY_RA', $report->incident_date, 'so');
+                 $result['NOI_XAY_RA'] = $report->incident_address;
+                 $result['TONG_THIET_HAI'] = formatCurrency($report->total_damage);
+                 $result['MO_TA_SU_CO'] = $report->incident_description;
+             }
+ 
+ 

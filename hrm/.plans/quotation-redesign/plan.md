@@ -1245,6 +1245,17 @@ Truy cập `/assign/quotations/create?project_id=X` với user không phải Sal
 
 ---
 
+## Phase 8 — Fix UI (2026-07-04)
+
+### Task 16: Cột "Tên hàng" và "Thông số kỹ thuật" bị bóp quá hẹp ở màn xem chi tiết báo giá
+
+**Triệu chứng:** Màn `/assign/quotations/{id}` (xem chi tiết) — 2 cột Tên hàng và Thông số kỹ thuật bị ép hẹp, chữ xuống dòng từng ký tự (màn create/edit không bị vì đã có `min-width`).
+**Nguyên nhân:** `_id/index.vue` bảng `quotation-view-table` (width:100%, >20 cột) không set width cho 2 cột này → auto-layout chia hết chỗ trống cho các cột cố định, còn lại bị bóp.
+
+- [x] Thêm `min-width: 220px` cho `<th>Tên hàng</th>` và `min-width: 160px` cho `<th>Thông số kỹ thuật</th>` trong `pages/assign/quotations/_id/index.vue` (khớp màn edit; bảng đã có `.products-scroll{overflow-x:auto}` nên tràn ngang tự cuộn)
+
+---
+
 ## Checkpoint
 
 ### Checkpoint — 2026-06-02
@@ -1262,3 +1273,9 @@ Blocked: Không
 **Thay đổi so với plan gốc:**
 - Task 7-8: Không tách QuotationForm.vue (rủi ro cao với 2800 dòng). Thay vào đó refactor edit.vue tại chỗ: đổi `is_direct_quotation` → `type`, thêm BOM detection trong `selectProject()`, thêm BOM picker modal.
 - Task 9: `create.vue` chỉ là redirect page → `/assign/quotations/new/edit` (tận dụng create mode có sẵn trong edit.vue)
+
+### Checkpoint — 2026-07-17
+Vừa hoàn thành: Full toolbar CKEditor cho ô "Điều khoản báo giá" (giống ERP). Thêm prop `removeButtons` vào `components/shared/CompactReviewEditor.vue` (mặc định giữ toolbar compact cho 8 nơi đang dùng); ô "Điều khoản báo giá" trong `edit.vue` truyền `:remove-buttons="''"` → hiện full. Làm trên worktree HRM-tpe (nhánh tpe).
+Đang làm dở: Không
+Bước tiếp theo: User test trên FE :3001
+Blocked: Không

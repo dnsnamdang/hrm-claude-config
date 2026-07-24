@@ -1,0 +1,1106 @@
+diff --git a/Modules/Decision/Http/Controllers/V1/AcceptPersonnelController.php b/Modules/Decision/Http/Controllers/V1/AcceptPersonnelController.php
+index b184c9633..dffc866f2 100644
+--- a/Modules/Decision/Http/Controllers/V1/AcceptPersonnelController.php
++++ b/Modules/Decision/Http/Controllers/V1/AcceptPersonnelController.php
+@@ -17,12 +17,13 @@ use Modules\Decision\Http\Requests\AcceptPersonnel\AcceptPersonnelRequest;
+ use Modules\Decision\Services\AcceptPersonnel\AcceptPersonnelService;
+ use Modules\Decision\Services\Decision\DecisionService;
+ use Modules\Decision\Transformers\AcceptPersonnel\AcceptPersonnelAllPaginateResource;
+ use Modules\Decision\Transformers\AcceptPersonnel\AcceptPersonnelResource;
+ use Modules\Decision\Transformers\AcceptPersonnel\DetailAcceptPersonnelResource;
+ use Modules\Human\Entities\EmployeeInfo;
++use Modules\Human\Helper\Helper;
+ use Modules\Timesheet\Entities\GeneralRegulation;
+ use Modules\Human\Entities\Employee;
+ use Excel;
+ use App\ExcelExport\AcceptPersonnelExport;
+ use App\Helper\WordHelper;
+ use PhpOffice\PhpWord\PhpWord;
+@@ -244,22 +245,22 @@ class AcceptPersonnelController extends ApiController
+                 + $p3Amount
+                 + (float) $supportPayments->sum('actual_amount')
+                 + (float) $salaryAllowances->sum('actual_amount');
+             $result['TONG_THU_NHAP_100%'] = formatCurrency($total100);
+ 
+             // Thời gian tiếp nhận
+-            $result['THOI_GIAN_TIEP_NHAN_TU'] = $acceptPersonnel->enter_date ? Carbon::parse($acceptPersonnel->enter_date)->format('d/m/Y') : '';
+-            $result['THOI_GIAN_TIEP_NHAN_DEN'] = $acceptPersonnel->enter_date_to ? Carbon::parse($acceptPersonnel->enter_date_to)->format('d/m/Y') : '';
++            Helper::fillDateVariants($result, 'THOI_GIAN_TIEP_NHAN_TU', $acceptPersonnel->enter_date, 'so');
++            Helper::fillDateVariants($result, 'THOI_GIAN_TIEP_NHAN_DEN', $acceptPersonnel->enter_date_to, 'so');
+ 
+             // Thông tin hồ sơ nhân sự (HSNS) của người được tiếp nhận
+             $info = $acceptPersonnel->recipientEmployeeInfo;
+-            $result['NGAY_SINH'] = ($info && $info->birthday) ? Carbon::parse($info->birthday)->format('d/m/Y') : '';
++            Helper::fillDateVariants($result, 'NGAY_SINH', $info ? $info->birthday : null, 'so');
+             $result['GIOI_TINH'] = $info ? ($info->gender == 1 ? 'Nam' : 'Nữ') : '';
+             $result['CMTND'] = $info ? ($info->id_card ?? '') : '';
+             $result['NOI_CAP_CMTND'] = $info ? ($info->grant_location ?? '') : '';
+-            $result['NGAY_CAP_CMTND'] = ($info && $info->grant_date) ? Carbon::parse($info->grant_date)->format('d/m/Y') : '';
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $info ? $info->grant_date : null, 'so');
+             $result['DIA_CHI_THUONG_TRU'] = $info ? ($info->full_address_residence ?? '') : '';
+             $result['TRINH_DO_HOC_VAN'] = ($info && isset(EmployeeInfo::listAcademicLevels[$info->academic_level]))
+                 ? EmployeeInfo::listAcademicLevels[$info->academic_level] : '';
+             $lastEducation = $info ? $info->employee_educations->last() : null;
+             $result['CHUYEN_NGANH'] = $lastEducation ? ($lastEducation->specialty ?? '') : '';
+ 
+diff --git a/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php b/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php
+index 652dcb0c7..d9a355960 100644
+--- a/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php
+@@ -146,15 +146,15 @@ class AppendixLaborContractController extends ApiController
+             $result['TEN_CONG_TY'] = $appendixLaborContract->company->name;
+             $result['SO_HOP_DONG'] = $appendixLaborContract->decision_labor_contract_code ?? '';
+             // Số phụ lục / số HĐ / số QĐ trong phụ lục
+             $result['SO_PL_HDLD'] = $appendixLaborContract->code ?? '';
+             $result['SO_HD_TRONG_PLHD'] = $appendixLaborContract->decision_labor_contract_code ?? '';
+             $result['SO_QD_TRONG_PLHD'] = $appendixLaborContract->decision_code ?? '';
+-            $result['NGAY_HOP_DONG'] = $decisionContract ? Helper::formatDate($decisionContract->created_at) : '';
++            Helper::fillDateVariants($result, 'NGAY_HOP_DONG', $decisionContract ? $decisionContract->created_at : null, 'so');
+             $result['TEN_NHAN_SU'] = stripCodePrefix($appendixLaborContract->employee_name ?? '');
+-            $result['NGAY_SINH'] = Helper::formatDate($appendixLaborContract->birthday);
++            Helper::fillDateVariants($result, 'NGAY_SINH', $appendixLaborContract->birthday, 'so');
+             $result['DIA_CHI_THUONG_TRU'] = $appendixLaborContract->full_address_residence;
+             $result['CMTND'] = $appendixLaborContract->id_card;
+ 
+             // Biến mẫu in cho PL HĐLĐ (tổng thu nhập, BHXH, 100% và P1/P2/P3)
+             $result['TONG_THU_NHAP_TRUOC_THAY_DOI'] = formatCurrency($appendixLaborContract->old_total_salary);
+             $result['TONG_THU_NHAP_SAU_THAY_DOI'] = formatCurrency($appendixLaborContract->new_total_salary);
+@@ -186,13 +186,13 @@ class AppendixLaborContractController extends ApiController
+             $info = $appendixLaborContract->employeeRelation ? $appendixLaborContract->employeeRelation->info : null;
+             $company = $appendixLaborContract->company;
+             $result['LOAI_QD'] = AppendixLaborContract::DECISION_TYPE[$appendixLaborContract->decision_type] ?? '';
+             $result['TEN_NHAN_VIEN'] = stripCodePrefix($appendixLaborContract->employee_name ?? '');
+             $result['GIOI_TINH'] = $info ? ($info->gender == 1 ? 'Nam' : 'Nữ') : '';
+             $result['QUE_QUAN'] = $appendixLaborContract->place_of_birth ?? '';
+-            $result['NGAY_CAP_CMTND'] = $appendixLaborContract->grant_date ? Helper::formatDate($appendixLaborContract->grant_date) : '';
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $appendixLaborContract->grant_date, 'so');
+             $result['NOI_CAP_CMTND'] = $info ? ($info->grant_location ?? '') : '';
+             $lastEducation = $info ? $info->employee_educations->last() : null;
+             $result['CHUYEN_NGANH'] = $lastEducation ? ($lastEducation->specialty ?? '') : '';
+             $result['TRINH_DO_HOC_VAN'] = $appendixLaborContract->academic_level_name
+                 ?: (($info && isset(EmployeeInfo::listAcademicLevels[$info->academic_level])) ? EmployeeInfo::listAcademicLevels[$info->academic_level] : '');
+             $result['BANG_CAP'] = $appendixLaborContract->academic_level_name ?? '';
+diff --git a/Modules/Decision/Http/Controllers/V1/AppointPersonnelController.php b/Modules/Decision/Http/Controllers/V1/AppointPersonnelController.php
+index 6956d73ed..ee3648a95 100644
+--- a/Modules/Decision/Http/Controllers/V1/AppointPersonnelController.php
++++ b/Modules/Decision/Http/Controllers/V1/AppointPersonnelController.php
+@@ -207,14 +207,14 @@ class AppointPersonnelController extends ApiController
+             $result['BO_PHAN_TRUOC_THAY_DOI'] = $decisionAppointPersonnel->old_part_name;
+             $result['BO_PHAN_SAU_THAY_DOI'] = $decisionAppointPersonnel->new_part_name;
+             $result['CHUC_VU_TRUOC_THAY_DOI'] = $decisionAppointPersonnel->old_working_position_name;
+             $result['CHUC_VU_SAU_THAY_DOI'] = $decisionAppointPersonnel->new_working_position_name;
+             $result['CHUC_DANH_TRUOC_THAY_DOI'] = $decisionAppointPersonnel->old_title_name;
+             $result['CHUC_DANH_SAU_THAY_DOI'] = $decisionAppointPersonnel->new_title_name;
+-            $result['THOI_GIAN_BO_NHIEM_TU'] = Helper::formatDateVILong($decisionAppointPersonnel->appoint_date_from);
+-            $result['THOI_GIAN_BO_NHIEM_DEN'] = Helper::formatDateVILong($decisionAppointPersonnel->appoint_date_to);
++            Helper::fillDateVariants($result, 'THOI_GIAN_BO_NHIEM_TU', $decisionAppointPersonnel->appoint_date_from, 'chu');
++            Helper::fillDateVariants($result, 'THOI_GIAN_BO_NHIEM_DEN', $decisionAppointPersonnel->appoint_date_to, 'chu');
+ 
+             // Lương thâm niên trước/sau bổ nhiệm
+             $result['LUONG_TN_TRUOC_BO_NHIEM'] = formatCurrency($decisionAppointPersonnel->old_seniority_pay ?? 0);
+             $result['LUONG_TN_SAU_BO_NHIEM'] = formatCurrency($decisionAppointPersonnel->new_seniority_pay ?? 0);
+             $result['SO_THANG_TN_TRUOC_BO_NHIEM'] = $decisionAppointPersonnel->old_seniority_review_period_month ?? 0;
+             $result['SO_THANG_TN_SAU_BO_NHIEM'] = $decisionAppointPersonnel->new_seniority_review_period_month ?? 0;
+diff --git a/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php b/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php
+index c7d433b70..7efb284dd 100644
+--- a/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php
+@@ -23,12 +23,13 @@ use Excel;
+ use App\ExcelExport\DecisionLaborContractExport;
+ use Modules\Human\Entities\Allowance;
+ use PhpOffice\PhpWord\PhpWord;
+ use PhpOffice\PhpWord\IOFactory;
+ use PhpOffice\PhpWord\Shared\Html;
+ use App\Helper\WordHelper;
++use Modules\Human\Helper\Helper;
+ 
+ class DecisionLaborContractController extends ApiController
+ {
+ 
+     protected $decisionService;
+     protected $decisionLaborContractService;
+@@ -126,12 +127,14 @@ class DecisionLaborContractController extends ApiController
+     public function print(DecisionLaborContract $decisionLaborContract)
+     {
+         try {
+             $result = [];
+             $result['SO_HOP_DONG'] = $decisionLaborContract->code ?? '';
+             $result['NGAY_HOP_DONG'] = 'ngày ' . date('d', strtotime($decisionLaborContract->created_at)) . ' tháng ' . date('m', strtotime($decisionLaborContract->created_at)) . ' năm ' . date('Y', strtotime($decisionLaborContract->created_at));
++            $result['NGAY_HOP_DONG_SO'] = Helper::formatDate($decisionLaborContract->created_at);
++            $result['NGAY_HOP_DONG_CHU'] = Helper::formatDateVICapital($decisionLaborContract->created_at);
+ 
+             // Công ty
+             $result['TEN_CONG_TY'] = $decisionLaborContract->company->name;
+             $result['MST_CONG_TY'] = $decisionLaborContract->company->tax_code;
+             $result['DIA_CHI_CONG_TY'] = $decisionLaborContract->company->address;
+             $result['DAI_DIEN_CONG_TY'] = 'Bà Trần Thị Huyền';
+@@ -139,31 +142,35 @@ class DecisionLaborContractController extends ApiController
+             $result['DIEN_THOAI_CONG_TY'] = $decisionLaborContract->company->phone ?? '';
+             $result['EMAIL_CONG_TY'] = $decisionLaborContract->company->email ?? '';
+ 
+             // Nhân sự
+             $result['TEN_NHAN_SU'] = $decisionLaborContract->employeeInfo->fullname;
+             $result['NGAY_SINH'] = Carbon::parse($decisionLaborContract->employeeInfo->birthday)->format('d-m-Y');
++            Helper::fillDateVariants($result, 'NGAY_SINH', $decisionLaborContract->employeeInfo->birthday, 'keep');
+             $result['GIOI_TINH'] = $decisionLaborContract->employeeInfo->gender == 1 ? 'Nam' : 'Nữ';
+             $result['CMTND'] = $decisionLaborContract->employeeInfo->id_card ?? '';
+             $result['NOI_CAP_CMTND'] = $decisionLaborContract->employeeInfo->grant_location ?? '';
+             $result['NGAY_CAP_CMTND'] = Carbon::parse($decisionLaborContract->employeeInfo->grant_date)->format('d-m-Y');
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $decisionLaborContract->employeeInfo->grant_date, 'keep');
+             $result['DIA_CHI_THUONG_TRU'] = $decisionLaborContract->employeeInfo->full_address_residence ?? '';
+             $result['QUE_QUAN'] = $decisionLaborContract->employeeInfo->place_of_birth ?? '';
+             $result['DIEN_THOAI'] = $decisionLaborContract->employeeInfo->personal_telephone ?: ($decisionLaborContract->employeeInfo->telephone ?? '');
+             $result['MAIL'] = $decisionLaborContract->employeeInfo->email ?? '';
+             $result['HOC_VAN'] = $decisionLaborContract->employeeInfo->level_name ?? '';
+             $result['CHUYEN_NGANH'] = $decisionLaborContract->specialty ?? '';
+             $result['TRINH_DO_HOC_VAN'] = $decisionLaborContract->academic_level_name ?? '';
+             $result['PHONG_BAN'] = formatDepartmentName($decisionLaborContract->labor_contract_department_name ?? '');
+-            $result['NGAY_HIEU_LUC'] = Carbon::parse($decisionLaborContract->start_date)->format('d/m/Y');
++            Helper::fillDateVariants($result, 'NGAY_HIEU_LUC', $decisionLaborContract->start_date, 'so');
+             $result['THOI_HAN'] = Carbon::parse($decisionLaborContract->start_date)->diffInMonths(Carbon::parse($decisionLaborContract->end_date)) . ' tháng';
+             $result['BANG_CAP'] = $decisionLaborContract->academic_level_name ?? '';
+ 
+             $result['DIA_CHI_LAM_VIEC'] = $decisionLaborContract->labor_contract_company_name ?? '';
+             $result['THOI_HAN_HOP_DONG'] = 'Từ ngày ' . Carbon::parse($decisionLaborContract->start_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->start_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->start_date)->format('Y') .
+                 ' đến ngày ' . Carbon::parse($decisionLaborContract->end_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->end_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->end_date)->format('Y');
++            $result['THOI_HAN_HOP_DONG_SO'] = 'Từ ngày ' . Helper::formatDate($decisionLaborContract->start_date) . ' đến ngày ' . Helper::formatDate($decisionLaborContract->end_date);
++            $result['THOI_HAN_HOP_DONG_CHU'] = 'Từ ' . Helper::formatDateVICapitalInline($decisionLaborContract->start_date) . ' đến ' . Helper::formatDateVICapitalInline($decisionLaborContract->end_date);
+             $result['CHUC_DANH'] = $decisionLaborContract->employee_role_name ?? '';
+             $result['CHUC_VU'] = $decisionLaborContract->working_position_name ?? '';
+             $result['TONG_THU_NHAP'] = formatCurrency($decisionLaborContract->total_salary);
+             // convertNumberToWords (ICU vi SPELLOUT) đã tự kèm "đồng", không cộng thêm nữa
+             $result['TONG_THU_NHAP_BANG_CHU'] = ucfirst(convertNumberToWords($decisionLaborContract->total_salary, false));
+             $result['TONG_THU_NHAP_100%'] = formatCurrency($this->calcTotalIncomeFullRate($decisionLaborContract));
+@@ -297,37 +304,43 @@ class DecisionLaborContractController extends ApiController
+      */
+     private function prepareContractData($decisionLaborContract)
+     {
+         $data = [];
+         $data['SO_HOP_DONG'] = $decisionLaborContract->code ?? '';
+         $data['NGAY_HOP_DONG'] = 'ngày ' . date('d', strtotime($decisionLaborContract->created_at)) . ' tháng ' . date('m', strtotime($decisionLaborContract->created_at)) . ' năm ' . date('Y', strtotime($decisionLaborContract->created_at));
++        $data['NGAY_HOP_DONG_SO'] = Helper::formatDate($decisionLaborContract->created_at);
++        $data['NGAY_HOP_DONG_CHU'] = Helper::formatDateVICapital($decisionLaborContract->created_at);
+ 
+         $data['TEN_CONG_TY'] = $decisionLaborContract->company->name;
+         $data['MST_CONG_TY'] = $decisionLaborContract->company->tax_code;
+         $data['DIA_CHI_CONG_TY'] = $decisionLaborContract->company->address;
+         $data['DAI_DIEN_CONG_TY'] = 'Bà Trần Thị Huyền';
+         $data['CHUC_VU_DAI_DIEN_CONG_TY'] = 'Giám đốc NSHC';
+ 
+         $data['TEN_NHAN_SU'] = $decisionLaborContract->employeeInfo->fullname;
+         $data['NGAY_SINH'] = Carbon::parse($decisionLaborContract->employeeInfo->birthday)->format('d-m-Y');
++        Helper::fillDateVariants($data, 'NGAY_SINH', $decisionLaborContract->employeeInfo->birthday, 'keep');
+         $data['GIOI_TINH'] = $decisionLaborContract->employeeInfo->gender == 1 ? 'Nam' : 'Nữ';
+         $data['CMTND'] = $decisionLaborContract->employeeInfo->id_card ?? '';
+         $data['NOI_CAP_CMTND'] = $decisionLaborContract->employeeInfo->grant_location ?? '';
+         $data['NGAY_CAP_CMTND'] = Carbon::parse($decisionLaborContract->employeeInfo->grant_date)->format('d-m-Y');
++        Helper::fillDateVariants($data, 'NGAY_CAP_CMTND', $decisionLaborContract->employeeInfo->grant_date, 'keep');
+         $data['DIA_CHI_THUONG_TRU'] = $decisionLaborContract->employeeInfo->full_address_residence ?? '';
+         $data['HOC_VAN'] = $decisionLaborContract->employeeInfo->level_name ?? '';
+         $data['CHUYEN_NGANH'] = $decisionLaborContract->specialty ?? '';
+         $data['TRINH_DO_HOC_VAN'] = $decisionLaborContract->academic_level_name ?? '';
+         $data['PHONG_BAN'] = formatDepartmentName($decisionLaborContract->labor_contract_department_name ?? '');
+-        $data['NGAY_HIEU_LUC'] = Carbon::parse($decisionLaborContract->start_date)->format('d/m/Y');
++        Helper::fillDateVariants($data, 'NGAY_HIEU_LUC', $decisionLaborContract->start_date, 'so');
+         $data['THOI_HAN'] = Carbon::parse($decisionLaborContract->start_date)->diffInMonths(Carbon::parse($decisionLaborContract->end_date)) . ' tháng';
+         $data['BANG_CAP'] = $decisionLaborContract->academic_level_name ?? '';
+ 
+         $data['DIA_CHI_LAM_VIEC'] = $decisionLaborContract->labor_contract_company_name ?? '';
+         $data['THOI_HAN_HOP_DONG'] = 'Từ ngày ' . Carbon::parse($decisionLaborContract->start_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->start_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->start_date)->format('Y') .
+             ' đến ngày ' . Carbon::parse($decisionLaborContract->end_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->end_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->end_date)->format('Y');
++        $data['THOI_HAN_HOP_DONG_SO'] = 'Từ ngày ' . Helper::formatDate($decisionLaborContract->start_date) . ' đến ngày ' . Helper::formatDate($decisionLaborContract->end_date);
++        $data['THOI_HAN_HOP_DONG_CHU'] = 'Từ ' . Helper::formatDateVICapitalInline($decisionLaborContract->start_date) . ' đến ' . Helper::formatDateVICapitalInline($decisionLaborContract->end_date);
+         $data['CHUC_DANH'] = $decisionLaborContract->employee_role_name ?? '';
+         $data['CHUC_VU'] = $decisionLaborContract->working_position_name ?? '';
+         $data['TONG_THU_NHAP'] = formatCurrency($decisionLaborContract->total_salary);
+         // convertNumberToWords (ICU vi SPELLOUT) đã tự kèm "đồng", không cộng thêm nữa
+         $data['TONG_THU_NHAP_BANG_CHU'] = ucfirst(convertNumberToWords($decisionLaborContract->total_salary, false));
+         $data['TONG_THU_NHAP_100%'] = formatCurrency($this->calcTotalIncomeFullRate($decisionLaborContract));
+diff --git a/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php b/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php
+index 368c06808..86fca3283 100644
+--- a/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php
++++ b/Modules/Decision/Http/Controllers/V1/DecisionRegulationSalaryController.php
+@@ -17,12 +17,13 @@ use Modules\Decision\Services\DecisionRegulationSalary\DecisionRegulationSalaryS
+ use Modules\Decision\Transformers\DecisionRegulationSalary\DecisionRegulationSalaryResource;
+ use Modules\Decision\Transformers\DecisionRegulationSalary\DetailDecisionRegulationSalaryAllResource;
+ use App\ExcelExport\RegulationSalaryExport;
+ use Maatwebsite\Excel\Facades\Excel;
+ use Modules\Decision\Transformers\DecisionRegulationSalary\ReportDecisionRegulationSalaryAllResource;
+ use Modules\Decision\Export\ReportDecisionRegulationSalaryAllExport;
++use Modules\Human\Helper\Helper;
+ 
+ class DecisionRegulationSalaryController extends ApiController
+ {
+ 
+     protected $decisionRegulationSalaryService;
+     protected $decisionService;
+@@ -123,13 +124,13 @@ class DecisionRegulationSalaryController extends ApiController
+ 
+     public function print(DecisionRegulationSalaryAll $decisionRegulationSalaryAll)
+     {
+         try {
+             $result = [];
+             $result['SO_QUYET_DINH'] = $decisionRegulationSalaryAll->decision->code;
+-            $result['NGAY_QUYET_DINH'] = date('d/m/Y', strtotime($decisionRegulationSalaryAll->decision->effective_date));
++            Helper::fillDateVariants($result, 'NGAY_QUYET_DINH', $decisionRegulationSalaryAll->decision->effective_date, 'so');
+             $result['TEN_CONG_TY'] = $decisionRegulationSalaryAll->decision->company->name;
+             $result['NGUOI_DUYET'] = $decisionRegulationSalaryAll->decision->employee_approve_full_name ?? '';
+ 
+             $template = fillReport($decisionRegulationSalaryAll->decision->print_template, $result);
+             $template = clearNull($template);
+             $data = [
+diff --git a/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php b/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php
+index 7028f99ce..b33a6ec9c 100644
+--- a/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php
++++ b/Modules/Decision/Http/Controllers/V1/EmployeeDisciplineController.php
+@@ -151,26 +151,34 @@ class EmployeeDisciplineController extends ApiController
+             $result['SO_BB_XU_LY_SC'] = $employeeDiscipline->trouble_shooting_report_code;
+             $result['HINH_THUC_KY_LUAT'] = EmployeeDiscipline::ProcessingMethods[$employeeDiscipline->processing_method] ?? '';
+ 
+             // Thời gian kỷ luật, ngày sa thải, số tháng chậm tăng lương, nội dung khiển trách/cảnh cáo
+             if ($employeeDiscipline->from_date && $employeeDiscipline->to_date) {
+                 $result['THOI_GIAN_KY_LUAT'] = 'Kể từ ngày ' . Helper::formatDate($employeeDiscipline->from_date) . ' đến ngày ' . Helper::formatDate($employeeDiscipline->to_date);
++                $result['THOI_GIAN_KY_LUAT_SO'] = 'Kể từ ngày ' . Helper::formatDate($employeeDiscipline->from_date) . ' đến ngày ' . Helper::formatDate($employeeDiscipline->to_date);
++                $result['THOI_GIAN_KY_LUAT_CHU'] = 'Kể từ ' . Helper::formatDateVICapitalInline($employeeDiscipline->from_date) . ' đến ' . Helper::formatDateVICapitalInline($employeeDiscipline->to_date);
+             } else {
+                 $result['THOI_GIAN_KY_LUAT'] = '';
++                $result['THOI_GIAN_KY_LUAT_SO'] = '';
++                $result['THOI_GIAN_KY_LUAT_CHU'] = '';
++            }
++            if ($employeeDiscipline->dismissal_date) {
++                Helper::fillDateVariants($result, 'NGAY_SA_THAI', $employeeDiscipline->dismissal_date, 'so');
++            } else {
++                $result['NGAY_SA_THAI'] = '';
+             }
+-            $result['NGAY_SA_THAI'] = $employeeDiscipline->dismissal_date ? Helper::formatDate($employeeDiscipline->dismissal_date) : '';
+             $result['SO_THANG_CHAM_TANG_LUONG'] = $employeeDiscipline->month_delay_increase_salary ?? '';
+             $result['ND_KHIEN_TRACH'] = $employeeDiscipline->content_reprimand ?? '';
+             $result['ND_CANH_CAO'] = $employeeDiscipline->content_warning ?? '';
+ 
+             //Loại biên bản xử lý sự cố (nếu có liên kết biên bản)
+             if ($employeeDiscipline->trouble_shooting_report_id) {
+                 $report = TroubleShootingReport::find($employeeDiscipline->trouble_shooting_report_id);
+                 $result['LOAI_BIEN_BAN_XU_LY_SU_CO'] = $report && $report->incidentType ? $report->incidentType->name : '';
+                 $result['LOAI_SU_CO'] = $report && $report->incidentType ? $report->incidentType->name : '';
+-                $result['NGAY_XAY_RA'] = Helper::formatDate($report->incident_date);
++                Helper::fillDateVariants($result, 'NGAY_XAY_RA', $report->incident_date, 'so');
+                 $result['NOI_XAY_RA'] = $report->incident_address;
+                 $result['TONG_THIET_HAI'] = formatCurrency($report->total_damage);
+                 $result['MO_TA_SU_CO'] = $report->incident_description;
+             }
+ 
+ 
+diff --git a/Modules/Decision/Http/Controllers/V1/IncreaseSeniorityController.php b/Modules/Decision/Http/Controllers/V1/IncreaseSeniorityController.php
+index 80c3a1c61..fec993bd3 100644
+--- a/Modules/Decision/Http/Controllers/V1/IncreaseSeniorityController.php
++++ b/Modules/Decision/Http/Controllers/V1/IncreaseSeniorityController.php
+@@ -210,17 +210,17 @@ class IncreaseSeniorityController extends ApiController
+     public function print(IncreaseSeniority $increaseSeniority)
+     {
+         try {
+             $result = [];
+             $this->decisionService->setValuePrintDecision($increaseSeniority->decision, $result);
+ 
+-            $result['NGAY_XET_THAM_NIEN'] = date('d/m/Y', strtotime($increaseSeniority->current_seniority_date));
++            Helper::fillDateVariants($result, 'NGAY_XET_THAM_NIEN', $increaseSeniority->current_seniority_date, 'so');
+             $result['CHU_KY_XET_TN'] = ($increaseSeniority->seniority_cycle ?? 0) . ' tháng';
+             $result['HE_SO_TN'] = ($increaseSeniority->seniority_rate ?? 0) . '%/năm';
+-            $result['NGAY_XET_TN'] = Helper::formatDateVILong($increaseSeniority->current_seniority_date);
+-            $result['NGAY_XET_TN_GAN_NHAT'] = Helper::formatDateVILong($increaseSeniority->last_seniority_date_past);
++            Helper::fillDateVariants($result, 'NGAY_XET_TN', $increaseSeniority->current_seniority_date, 'chu');
++            Helper::fillDateVariants($result, 'NGAY_XET_TN_GAN_NHAT', $increaseSeniority->last_seniority_date_past, 'chu');
+ 
+             $template = fillReport($increaseSeniority->decision->print_template, $result);
+             $template = clearNull($template);
+             $data = [
+                 'template' => $template,
+             ];
+diff --git a/Modules/Decision/Http/Controllers/V1/RenewLaborContractController.php b/Modules/Decision/Http/Controllers/V1/RenewLaborContractController.php
+index 2740e7156..2d5b0414a 100644
+--- a/Modules/Decision/Http/Controllers/V1/RenewLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/RenewLaborContractController.php
+@@ -11,12 +11,13 @@ use Illuminate\Support\Facades\DB;
+ use Illuminate\Support\Facades\Log;
+ use Modules\Decision\Entities\Decision;
+ use Modules\Decision\Entities\DecisionLaborContract\DecisionLaborContract;
+ use Modules\Decision\Entities\RenewLaborContract\RenewLaborContract;
+ use Modules\Decision\Services\Decision\DecisionService;
+ use Modules\Human\Entities\EmployeeInfo;
++use Modules\Human\Helper\Helper;
+ use Modules\Decision\Services\RenewLaborContract\RenewLaborContractService;
+ use Modules\Decision\Transformers\RenewLaborContract\EmployeeInfoResource;
+ use Modules\Decision\Http\Requests\RenewLaborContract\RenewLaborContractRequest;
+ use Modules\Decision\Transformers\RenewLaborContract\DetailRenewLaborContractResource;
+ use Modules\Decision\Transformers\RenewLaborContract\RenewLaborContractResource;
+ use Excel;
+@@ -182,22 +183,22 @@ class RenewLaborContractController extends ApiController
+                 + $p3Amount
+                 + (float) $supportPayments->sum('actual_amount')
+                 + (float) $salaryAllowances->sum('actual_amount');
+             $result['TONG_THU_NHAP_100%'] = formatCurrency($total100);
+ 
+             // Thời gian gia hạn
+-            $result['THOI_GIAN_TIEP_NHAN_TU'] = $renewLaborContract->renew_date_from ? Carbon::parse($renewLaborContract->renew_date_from)->format('d/m/Y') : '';
+-            $result['THOI_GIAN_TIEP_NHAN_DEN'] = $renewLaborContract->renew_date_to ? Carbon::parse($renewLaborContract->renew_date_to)->format('d/m/Y') : '';
++            Helper::fillDateVariants($result, 'THOI_GIAN_TIEP_NHAN_TU', $renewLaborContract->renew_date_from, 'so');
++            Helper::fillDateVariants($result, 'THOI_GIAN_TIEP_NHAN_DEN', $renewLaborContract->renew_date_to, 'so');
+ 
+             // Thông tin hồ sơ nhân sự (HSNS) của người được ký HĐLĐ
+             $info = $renewLaborContract->renewEmployeeInfo;
+-            $result['NGAY_SINH'] = ($info && $info->birthday) ? Carbon::parse($info->birthday)->format('d/m/Y') : '';
++            Helper::fillDateVariants($result, 'NGAY_SINH', $info ? $info->birthday : null, 'so');
+             $result['GIOI_TINH'] = $info ? ($info->gender == 1 ? 'Nam' : 'Nữ') : '';
+             $result['CMTND'] = $info ? ($info->id_card ?? '') : '';
+             $result['NOI_CAP_CMTND'] = $info ? ($info->grant_location ?? '') : '';
+-            $result['NGAY_CAP_CMTND'] = ($info && $info->grant_date) ? Carbon::parse($info->grant_date)->format('d/m/Y') : '';
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $info ? $info->grant_date : null, 'so');
+             $result['DIA_CHI_THUONG_TRU'] = $info ? ($info->full_address_residence ?? '') : '';
+             $result['TRINH_DO_HOC_VAN'] = ($info && isset(EmployeeInfo::listAcademicLevels[$info->academic_level]))
+                 ? EmployeeInfo::listAcademicLevels[$info->academic_level] : '';
+             $lastEducation = $info ? $info->employee_educations->last() : null;
+             $result['CHUYEN_NGANH'] = $lastEducation ? ($lastEducation->specialty ?? '') : '';
+ 
+diff --git a/Modules/Decision/Http/Controllers/V1/RetirementController.php b/Modules/Decision/Http/Controllers/V1/RetirementController.php
+index d60633f6c..c19bb0232 100644
+--- a/Modules/Decision/Http/Controllers/V1/RetirementController.php
++++ b/Modules/Decision/Http/Controllers/V1/RetirementController.php
+@@ -125,13 +125,13 @@ class RetirementController extends ApiController
+             $result['PHONG_BAN_TRUOC_THAY_DOI'] = formatDepartmentName($retirement->retirement_department_name);
+             $result['BO_PHAN_TRUOC_THAY_DOI'] = $retirement->retirement_part_name;
+             $result['CHUC_VU_TRUOC_THAY_DOI'] = $retirement->working_position_name;
+             $result['CHUC_DANH_TRUOC_THAY_DOI'] = $retirement->employee_role_name;
+ 
+             $result['MA_BHXH'] = $retirement->social_insurance_code;
+-            $result['THOI_GIAN_BAT_DAU_NGHI_HUU'] = Helper::formatDateVILong($retirement->retirement_date_start);
++            Helper::fillDateVariants($result, 'THOI_GIAN_BAT_DAU_NGHI_HUU', $retirement->retirement_date_start, 'chu');
+             $result['NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI'] = $retirement->employee_info_manager_name ?? '';
+ 
+ 
+             $template = fillReport($retirement->decision->print_template, $result);
+             $template = clearNull($template);
+             $data = [
+diff --git a/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php b/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php
+index 55b0e5461..b21988bd0 100644
+--- a/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php
+@@ -9,12 +9,13 @@ use Illuminate\Http\Request;
+ use Illuminate\Http\Response;
+ use Illuminate\Support\Facades\DB;
+ use Illuminate\Support\Facades\Log;
+ use Modules\Decision\Entities\Decision;
+ use Modules\Decision\Entities\SuspendLaborContract\SuspendLaborContract;
+ use Modules\Human\Entities\EmployeeInfo;
++use Modules\Human\Helper\Helper;
+ use Modules\Decision\Http\Requests\SuspendLaborContract\SuspendLaborContractRequest;
+ use Modules\Decision\Services\Decision\DecisionService;
+ use Modules\Decision\Services\SuspendLaborContract\SuspendLaborContractService;
+ use Modules\Decision\Transformers\SuspendLaborContract\DetailSuspendLaborContractResource;
+ use Modules\Decision\Transformers\SuspendLaborContract\SuspendLaborContractResource;
+ use App\ExcelExport\SuspendLaborContractExport;
+@@ -121,17 +122,17 @@ class SuspendLaborContractController extends ApiController
+             $result = [];
+             $this->decisionService->setValuePrintDecision($suspendLaborContract->decision, $result);
+             $result['LY_DO_TAM_HOAN_HDLD'] = $suspendLaborContract->decision->reason;
+ 
+ 
+             $result['TEN_NGUOI_BI_TAM_HOAN_HĐLĐ'] = stripCodePrefix($suspendLaborContract->employee_info_name ?? '');
+-            $result['NGAY_SINH'] = Carbon::parse($suspendLaborContract->birthday)->format('d/m/Y') ?? '';
++            Helper::fillDateVariants($result, 'NGAY_SINH', $suspendLaborContract->birthday, 'so');
+             $result['NOI_CU_TRU'] = $suspendLaborContract->address ?? '';
+             $result['CCCD'] = $suspendLaborContract->id_card ?? '';
+-            $result['THOI_GIAN_TAM_HOAN_TU'] = Carbon::parse($suspendLaborContract->suspend_date_start)->format('d/m/Y') ?? '';
+-            $result['THOI_GIAN_TAM_HOAN_DEN'] = Carbon::parse($suspendLaborContract->suspend_date_end)->format('d/m/Y') ?? '';
++            Helper::fillDateVariants($result, 'THOI_GIAN_TAM_HOAN_TU', $suspendLaborContract->suspend_date_start, 'so');
++            Helper::fillDateVariants($result, 'THOI_GIAN_TAM_HOAN_DEN', $suspendLaborContract->suspend_date_end, 'so');
+             $result['SO_HDLD'] = $suspendLaborContract->labor_contract_code;
+ 
+             $result['PHONG_BAN_TRUOC_THAY_DOI'] = formatDepartmentName($suspendLaborContract->suspend_department_name);
+             $result['BO_PHAN_TRUOC_THAY_DOI'] = $suspendLaborContract->suspend_part_name;
+             $result['CHUC_VU_TRUOC_THAY_DOI'] = $suspendLaborContract->working_position_name;
+             $trinhDoHocVan = $suspendLaborContract->academic_level_name ?:
+@@ -169,17 +170,17 @@ class SuspendLaborContractController extends ApiController
+             $result = [];
+             $this->decisionService->setValuePrintDecision($suspendLaborContract->decision, $result);
+             $result['LY_DO_TAM_HOAN_HDLD'] = $suspendLaborContract->decision->reason;
+ 
+ 
+             $result['TEN_NGUOI_BI_TAM_HOAN_HĐLĐ'] = $suspendLaborContract->employee_info_name ?? '';
+-            $result['NGAY_SINH'] = Carbon::parse($suspendLaborContract->birthday)->format('d/m/Y') ?? '';
++            Helper::fillDateVariants($result, 'NGAY_SINH', $suspendLaborContract->birthday, 'so');
+             $result['NOI_CU_TRU'] = $suspendLaborContract->address ?? '';
+             $result['CCCD'] = $suspendLaborContract->id_card ?? '';
+-            $result['THOI_GIAN_TAM_HOAN_TU'] = Carbon::parse($suspendLaborContract->suspend_date_start)->format('d/m/Y') ?? '';
+-            $result['THOI_GIAN_TAM_HOAN_DEN'] = Carbon::parse($suspendLaborContract->suspend_date_end)->format('d/m/Y') ?? '';
++            Helper::fillDateVariants($result, 'THOI_GIAN_TAM_HOAN_TU', $suspendLaborContract->suspend_date_start, 'so');
++            Helper::fillDateVariants($result, 'THOI_GIAN_TAM_HOAN_DEN', $suspendLaborContract->suspend_date_end, 'so');
+             $result['PHONG_BAN_NHAN_BAN_GIAO'] = formatDepartmentName($suspendLaborContract->handover_department_name ?? '');
+             $result['BO_PHAN_NHAN_BAN_GIAO'] = $suspendLaborContract->handover_part_name ?? '';
+             $result['NV_NHAN_BAN_GIAO'] = $suspendLaborContract->handover_employee_name ?? '';
+             $result['NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI'] = $suspendLaborContract->employee_info_manager_name ?? '';
+ 
+             $template = fillReport($suspendLaborContract->print_template_agreement, $result);
+diff --git a/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php b/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php
+index 8b6881c29..15edde280 100644
+--- a/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php
+@@ -168,26 +168,26 @@ class TerminationLaborContractController extends ApiController
+             $result['TEN_NGUOI_CHAM_DUT_HOP_DONG_LAO_DONG'] = $terminationLaborContract->terminationEmployeeInfo ? $terminationLaborContract->terminationEmployeeInfo->fullname : '';
+             $result['SO_HDLD'] = $terminationLaborContract->labor_contract_code;
+ 
+             $result['PHONG_BAN_TRUOC_THAY_DOI'] = formatDepartmentName($terminationLaborContract->termination_department_name);
+             $result['BO_PHAN_TRUOC_THAY_DOI'] = $terminationLaborContract->termination_part_name;
+             $result['CHUC_VU_TRUOC_THAY_DOI'] = $terminationLaborContract->working_position_name;
+-            $result['THOI_GIAN_BD_CHAM_DUT_HDLD'] = Helper::formatDateVILong($terminationLaborContract->termination_date_start);
++            Helper::fillDateVariants($result, 'THOI_GIAN_BD_CHAM_DUT_HDLD', $terminationLaborContract->termination_date_start, 'chu');
+             $result['PHONG_BAN_NHAN_BAN_GIAO'] = formatDepartmentName($terminationLaborContract->handover_department_name);
+             $result['BO_PHAN_NHAN_BAN_GIAO'] = $terminationLaborContract->handover_part_name;
+             $result['NV_NHAN_BAN_GIAO'] = stripCodePrefix($terminationLaborContract->handover_employee_name ?? '');
+             $result['NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI'] = stripCodePrefix($terminationLaborContract->termination_manager_name ?? '');
+ 
+             // Biến thông tin hiện tại của nhân sự (dùng chung với QĐ tạm hoãn HĐLĐ) — tên người bỏ mã
+             $info = $terminationLaborContract->terminationEmployeeInfo;
+             $result['CHUC_VU'] = $terminationLaborContract->working_position_name ?? '';
+             $result['PHONG_BAN'] = formatDepartmentName($terminationLaborContract->termination_department_name ?? '');
+             $result['BO_PHAN'] = stripCodePrefix($terminationLaborContract->termination_part_name ?? '');
+             $result['NGUOI_QUAN_LY_TRUC_TIEP'] = stripCodePrefix($terminationLaborContract->termination_manager_name ?? '');
+             $result['CHUC_VU_NGUOI_QUAN_LY_TRUC_TIEP'] = $terminationLaborContract->termination_manager_working_position_name ?? '';
+-            $result['NGAY_SINH'] = ($info && $info->birthday) ? Carbon::parse($info->birthday)->format('d/m/Y') : '';
++            Helper::fillDateVariants($result, 'NGAY_SINH', $info ? $info->birthday : null, 'so');
+             $result['NOI_CU_TRU'] = $info ? ($info->full_address_residence ?? '') : '';
+             $result['CCCD'] = $info ? ($info->id_card ?? '') : '';
+             $result['TRINH_DO_HOC_VAN'] = ($info && isset(\Modules\Human\Entities\EmployeeInfo::listAcademicLevels[$info->academic_level]))
+                 ? \Modules\Human\Entities\EmployeeInfo::listAcademicLevels[$info->academic_level] : '';
+ 
+             $template = fillReport($terminationLaborContract->decision->print_template, $result);
+diff --git a/Modules/Decision/Http/Controllers/V1/TrainingContractController.php b/Modules/Decision/Http/Controllers/V1/TrainingContractController.php
+index 746241c8a..9bcef1e6d 100644
+--- a/Modules/Decision/Http/Controllers/V1/TrainingContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/TrainingContractController.php
+@@ -90,42 +90,42 @@ class TrainingContractController extends ApiController
+                 ->where('status', 2)
+                 ->first();
+ 
+             if ($laborContract) {
+                 $result['SO_HOP_DONG_LAO_DONG'] = $laborContract->code ?? null;
+                 $decision = $laborContract->decision;
+-                $result['NGAY_KY_HDLĐ'] = $decision ? Carbon::parse($decision->effective_date)->format('d/m/Y') : '';
++                Helper::fillDateVariants($result, 'NGAY_KY_HĐLĐ', $decision ? $decision->effective_date : null, 'so');
+             } else {
+                 $result['SO_HOP_DONG_LAO_DONG'] = null;
+-                $result['NGAY_KY_HDLĐ'] = '';
++                $result['NGAY_KY_HĐLĐ'] = '';
+             }
+ 
+             $result['TEN_CONG_TY'] = $trainingContract->company->name;
+             $result['SO_HOP_DONG_DAO_TAO'] = $trainingContract->code;
+             $result['TEN_NGUOI_DUOC_CU_DI_DAO_TAO'] = $trainingContract->employee_info->fullname ?? '';
+-            $result['NGAY_SINH'] = Carbon::parse($trainingContract->employee_info->birthday)->format('d/m/Y') ?? '';
++            Helper::fillDateVariants($result, 'NGAY_SINH', $trainingContract->employee_info->birthday, 'so');
+             $result['NOI_CU_TRU'] = $trainingContract->employee_info->address ?? '';
+             $result['NGHE_NGHIEP'] = Title::find($trainingContract->employee_info->employee_role_id)->name ?? '';
+             $result['CCCD'] = $trainingContract->employee_info->id_card ?? '';
+             $result['TEN_KHOA_HOC'] = $trainingContract->subject_name ?? '';
+             $result['DON_VI_DAO_TAO'] = $trainingContract->unit_training ?? '';
+             $result['CHI_PHI_DAO_TAO'] = $trainingContract->person_cost_course_training_manager_approve ?? '';
+             $result['THOI_GIAN_DAO_TAO'] = $trainingContract->from_time . ' - ' . $trainingContract->to_time ?? '';
+             $result['DIA_DIEM_DAO_TAO'] = $trainingContract->address_training ?? '';
+-            $result['NGAY_HIEU_LUC'] = Carbon::parse($trainingContract->assign_training->decision->effective_date)->format('d/m/Y') ?? '';
++            Helper::fillDateVariants($result, 'NGAY_HIEU_LUC', $trainingContract->assign_training->decision->effective_date, 'so');
+             // Trường nhập nhiều dòng (textarea): chuyển \n thành <br> để giữ xuống dòng khi in (HTML)
+             $result['NGHIA_VU_PHAI_THUC_HIEN'] = nl2br($trainingContract->obligation_of_training ?? '');
+             $result['QUYEN_LOI_CUA_NGUOI_DUOC_CU_DI_DAO_TAO'] = nl2br($trainingContract->benefit_of_training ?? '');
+             $result['SO_THANG_CAM_KET'] = 12;
+ 
+             $result['SO_QD_CU_DI_DAO_TAO'] = $trainingContract->assign_training_code;
+             $result['CHUC_VU'] = $trainingContract->position;
+             $result['CHUC_DANH'] = $trainingContract->title;
+             $result['PHONG_BAN'] = formatDepartmentName($trainingContract->department);
+             $result['BO_PHAN'] = $trainingContract->part;
+-            $result['NGAY_CAP_CCCD'] = Helper::formatDate($trainingContract->grant_date);
++            Helper::fillDateVariants($result, 'NGAY_CAP_CCCD', $trainingContract->grant_date, 'so');
+             $result['NOI_CAP_CCCD'] = $trainingContract->grant_location;
+             $result['LOAI_DAO_TAO'] = $trainingContract->training_type_name;
+             $result['MON_HOC'] = $trainingContract->subject_name;
+             $result['HINH_THUC_DAO_TAO'] = $trainingContract->training_formal_name ?? '';
+             $result['NOI_DUNG_DAO_TAO'] = $trainingContract->content;
+             $result['CONG_TY_HO_TRO'] = $trainingContract->person_cost_support_request_training_manager_approve ? formatCurrency($trainingContract->person_cost_support_request_training_manager_approve) : '';
+diff --git a/Modules/Decision/Http/Controllers/V1/TransferPersonnelController.php b/Modules/Decision/Http/Controllers/V1/TransferPersonnelController.php
+index c4d080eab..bcec0e257 100644
+--- a/Modules/Decision/Http/Controllers/V1/TransferPersonnelController.php
++++ b/Modules/Decision/Http/Controllers/V1/TransferPersonnelController.php
+@@ -227,14 +227,14 @@ class TransferPersonnelController extends ApiController
+             $result['BO_PHAN_TRUOC_THAY_DOI'] = $decisionTransferPersonnel->old_part_name;
+             $result['BO_PHAN_SAU_THAY_DOI'] = $decisionTransferPersonnel->new_part_name;
+             $result['CHUC_VU_TRUOC_THAY_DOI'] = $decisionTransferPersonnel->old_working_position_name;
+             $result['CHUC_VU_SAU_THAY_DOI'] = $decisionTransferPersonnel->new_working_position_name;
+             $result['CHUC_DANH_TRUOC_THAY_DOI'] = $decisionTransferPersonnel->old_title_name;
+             $result['CHUC_DANH_SAU_THAY_DOI'] = $decisionTransferPersonnel->new_title_name;
+-            $result['THOI_GIAN_DIEU_CHUYEN_TU'] = Helper::formatDateVILong($decisionTransferPersonnel->transfer_date_from);
+-            $result['THOI_GIAN_DIEU_CHUYEN_DEN'] = Helper::formatDateVILong($decisionTransferPersonnel->transfer_date_to);
++            Helper::fillDateVariants($result, 'THOI_GIAN_DIEU_CHUYEN_TU', $decisionTransferPersonnel->transfer_date_from, 'chu');
++            Helper::fillDateVariants($result, 'THOI_GIAN_DIEU_CHUYEN_DEN', $decisionTransferPersonnel->transfer_date_to, 'chu');
+ 
+             // Lương thâm niên trước/sau điều chuyển
+             $result['LUONG_TN_TRUOC_DIEU_CHUYEN'] = formatCurrency($decisionTransferPersonnel->old_seniority_pay ?? 0);
+             $result['LUONG_TN_SAU_DIEU_CHUYEN'] = formatCurrency($decisionTransferPersonnel->new_seniority_pay ?? 0);
+             $result['SO_THANG_TN_TRUOC_DIEU_CHUYEN'] = $decisionTransferPersonnel->old_seniority_review_period_month ?? 0;
+             $result['SO_THANG_TN_SAU_DIEU_CHUYEN'] = $decisionTransferPersonnel->new_seniority_review_period_month ?? 0;
+@@ -336,14 +336,14 @@ class TransferPersonnelController extends ApiController
+         $result['BO_PHAN_TRUOC_THAY_DOI'] = $decisionTransferPersonnel->old_part_name;
+         $result['BO_PHAN_SAU_THAY_DOI'] = $decisionTransferPersonnel->new_part_name;
+         $result['CHUC_VU_TRUOC_THAY_DOI'] = $decisionTransferPersonnel->old_working_position_name;
+         $result['CHUC_VU_SAU_THAY_DOI'] = $decisionTransferPersonnel->new_working_position_name;
+         $result['CHUC_DANH_TRUOC_THAY_DOI'] = $decisionTransferPersonnel->old_title_name;
+         $result['CHUC_DANH_SAU_THAY_DOI'] = $decisionTransferPersonnel->new_title_name;
+-        $result['THOI_GIAN_DIEU_CHUYEN_TU'] = Helper::formatDateVILong($decisionTransferPersonnel->transfer_date_from);
+-        $result['THOI_GIAN_DIEU_CHUYEN_DEN'] = Helper::formatDateVILong($decisionTransferPersonnel->transfer_date_to);
++        Helper::fillDateVariants($result, 'THOI_GIAN_DIEU_CHUYEN_TU', $decisionTransferPersonnel->transfer_date_from, 'chu');
++        Helper::fillDateVariants($result, 'THOI_GIAN_DIEU_CHUYEN_DEN', $decisionTransferPersonnel->transfer_date_to, 'chu');
+ 
+         // Lương thâm niên trước/sau điều chuyển
+         $result['LUONG_TN_TRUOC_DIEU_CHUYEN'] = formatCurrency($decisionTransferPersonnel->old_seniority_pay ?? 0);
+         $result['LUONG_TN_SAU_DIEU_CHUYEN'] = formatCurrency($decisionTransferPersonnel->new_seniority_pay ?? 0);
+         $result['SO_THANG_TN_TRUOC_DIEU_CHUYEN'] = $decisionTransferPersonnel->old_seniority_review_period_month ?? 0;
+         $result['SO_THANG_TN_SAU_DIEU_CHUYEN'] = $decisionTransferPersonnel->new_seniority_review_period_month ?? 0;
+diff --git a/Modules/Decision/Http/Controllers/V1/TroubleShootingReportController.php b/Modules/Decision/Http/Controllers/V1/TroubleShootingReportController.php
+index 5edde5b0e..c3c846e03 100644
+--- a/Modules/Decision/Http/Controllers/V1/TroubleShootingReportController.php
++++ b/Modules/Decision/Http/Controllers/V1/TroubleShootingReportController.php
+@@ -213,19 +213,19 @@ class TroubleShootingReportController extends ApiController
+     {
+         try {
+             $result = [];
+             $result['TEN_CONG_TY'] = $troubleShootingReport->company->name;
+             $result['SO_BIEN_BAN'] = $troubleShootingReport->code;
+             $result['TEN_SU_CO'] = $troubleShootingReport->incident_name;
+-            $result['NGAY_HOP'] = Carbon::parse($troubleShootingReport->meeting_date)->format('d/m/Y');
++            Helper::fillDateVariants($result, 'NGAY_HOP', $troubleShootingReport->meeting_date, 'so');
+             $result['DIA_DIEM_HOP'] = $troubleShootingReport->meeting_address;
+             $result['THANH_PHAN_THAM_GIA'] = $troubleShootingReport->getDataMeetingParticipant();
+             $result['KET_LUAN_XU_LY'] = $troubleShootingReport->getProcessResultTable();
+ 
+             $result['LOAI_SU_CO'] = $troubleShootingReport->incidentType->name ?? '';
+-            $result['NGAY_XAY_RA'] = Helper::formatDate($troubleShootingReport->incident_date);
++            Helper::fillDateVariants($result, 'NGAY_XAY_RA', $troubleShootingReport->incident_date, 'so');
+             $result['NOI_XAY_RA'] = $troubleShootingReport->incident_address;
+             $result['TONG_THIET_HAI'] = formatCurrency($troubleShootingReport->total_damage);
+             $result['MO_TA_SU_CO'] = $troubleShootingReport->incident_description;
+ 
+ 
+             $template = fillReport($troubleShootingReport->print_template, $result);
+diff --git a/Modules/Decision/Services/Decision/DecisionService.php b/Modules/Decision/Services/Decision/DecisionService.php
+index 230ead556..6a6b01e17 100644
+--- a/Modules/Decision/Services/Decision/DecisionService.php
++++ b/Modules/Decision/Services/Decision/DecisionService.php
+@@ -470,15 +470,15 @@ class DecisionService extends BaseService
+         ]);
+     }
+ 
+     public function setValuePrintDecision($decision, &$result)
+     {
+         $result['SO_QUYET_DINH'] = $decision->code;
+-        $result['NGAY_QUYET_DINH'] = Helper::formatDate($decision->effective_date);
+-        $result['NGAY_KY'] = Helper::formatDateVILong($decision->signing_date);
+-        $result['NGAY_HIEU_LUC'] = Helper::formatDateVILong($decision->effective_date);
++        Helper::fillDateVariants($result, 'NGAY_QUYET_DINH', $decision->effective_date, 'so');
++        Helper::fillDateVariants($result, 'NGAY_KY', $decision->signing_date, 'chu');
++        Helper::fillDateVariants($result, 'NGAY_HIEU_LUC', $decision->effective_date, 'chu');
+         $result['NGUOI_DUYET'] = $decision->employee_approve_full_name ?? '';
+         $result['TEN_CONG_TY'] = $decision->company->name ?? '';
+         $result['TEN_PHONG_BAN'] = formatDepartmentName($decision->department->name ?? '');
+ 
+         if ($decision->is_object_all_company) {
+             $result['DOI_TUONG_THUC_THI'] = 'Toàn công ty';
+diff --git a/Modules/Human/Entities/PrintTemplateVariable.php b/Modules/Human/Entities/PrintTemplateVariable.php
+index db780bc6e..5c155b4c0 100644
+--- a/Modules/Human/Entities/PrintTemplateVariable.php
++++ b/Modules/Human/Entities/PrintTemplateVariable.php
+@@ -71,19 +71,19 @@ class PrintTemplateVariable extends Model
+         // BIÊN BẢN XỬ LÝ
+         self::BIEN_BAN => [
+             // THÔNG TIN CHUNG
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_BIEN_BAN', 'description' => 'Số biên bản'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_SU_CO', 'description' => 'Tên sự cố'],
+-            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HOP', 'description' => 'Ngày họp'],
++            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HOP', 'description' => 'Ngày họp', 'is_date' => true],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'DIA_DIEM_HOP', 'description' => 'Địa điểm họp'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'THANH_PHAN_THAM_GIA', 'description' => 'Thành phần tham gia'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'KET_LUAN_XU_LY', 'description' => 'Kết luận xử lý'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'KET_QUA_XU_LY', 'description' => 'Bảng kết quả xử lý (người vi phạm)'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'LOAI_SU_CO', 'description' => 'Loại sự cố'],
+-            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra'],
++            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra', 'is_date' => true],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NOI_XAY_RA', 'description' => 'Nơi xảy ra'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TONG_THIET_HAI', 'description' => 'Tổng thiệt hại'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'MO_TA_SU_CO', 'description' => 'Mô tả sự cố'],
+             // Biến bổ sung theo yêu cầu loại biên bản xử lý sự cố
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'LOAI_BIEN_BAN_XU_LY_SU_CO', 'description' => 'Loại biên bản xử lý sự cố'],
+ 
+@@ -94,24 +94,24 @@ class PrintTemplateVariable extends Model
+         ],
+ 
+         self::HOP_DONG_DAO_TAO => [
+             // THÔNG TIN CHUNG
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_HOP_DONG_DAO_TAO', 'description' => 'Số hợp đồng đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_HOP_DONG_LAO_DONG', 'description' => 'Số hợp đồng lao động'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_KY_HĐLĐ', 'description' => 'Ngày ký hợp đồng lao động'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_KY_HĐLĐ', 'description' => 'Ngày ký hợp đồng lao động', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_NGUOI_DUOC_CU_DI_DAO_TAO', 'description' => 'Tên người được cử đi đào tạo'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGHE_NGHIEP', 'description' => 'Nghề nghiệp'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CCCD', 'description' => 'số CCCD'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CHUC_DANH', 'description' => 'Chức danh'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'PHONG_BAN', 'description' => 'Phòng ban'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_CAP_CCCD', 'description' => 'Ngày cấp CCCD'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_CAP_CCCD', 'description' => 'Ngày cấp CCCD', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NOI_CAP_CCCD', 'description' => 'Nơi cấp CCCD'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'LOAI_DAO_TAO', 'description' => 'Loại đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'MON_HOC', 'description' => 'Môn học'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'HINH_THUC_DAO_TAO', 'description' => 'Hình thức đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NOI_DUNG_DAO_TAO', 'description' => 'Nội dung đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CONG_TY_HO_TRO', 'description' => 'Công ty hỗ trợ'],
+@@ -119,13 +119,13 @@ class PrintTemplateVariable extends Model
+ 
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_KHOA_HOC', 'description' => 'Tên khóa học'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'DON_VI_DAO_TAO', 'description' => 'Đơn vị đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CHI_PHI_DAO_TAO', 'description' => 'Chi phí đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'THOI_GIAN_DAO_TAO', 'description' => 'Thời gian đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'DIA_DIEM_DAO_TAO', 'description' => 'Địa điểm đào tạo'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGHIA_VU_PHAI_THUC_HIEN', 'description' => 'Nghĩa vụ phải thực hiện'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'QUYEN_LOI_CUA_NGUOI_DUOC_CU_DI_DAO_TAO', 'description' => 'Quyền lợi của người được cử đi đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_THANG_CAM_KET', 'description' => 'Số tháng cam kết'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_QD_CU_DI_DAO_TAO', 'description' => 'Số quyết định cử đi đào tạo'],
+ 
+ 
+@@ -172,16 +172,16 @@ class PrintTemplateVariable extends Model
+ 
+     /**
+      * Biến CHUNG cho cả HĐLĐ chính và Phụ lục HĐLĐ.
+      */
+     public const LABOR_CONTRACT_COMMON_VARIABLES = [
+         ['name' => 'SO_HOP_DONG', 'description' => 'Số hợp đồng'],
+-        ['name' => 'NGAY_HOP_DONG', 'description' => 'Ngày lập hợp đồng'],
++        ['name' => 'NGAY_HOP_DONG', 'description' => 'Ngày lập hợp đồng', 'is_date' => true],
+         ['name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+         ['name' => 'TEN_NHAN_SU', 'description' => 'Tên nhân sự'],
+-        ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++        ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+         ['name' => 'DIA_CHI_THUONG_TRU', 'description' => 'Địa chỉ thường trú'],
+         ['name' => 'CMTND', 'description' => 'Chứng minh thư / căn cước'],
+         ['name' => 'TONG_THU_NHAP_BANG_CHU', 'description' => 'Tổng thu nhập bằng chữ'],
+         ['name' => 'LUONG_P1', 'description' => 'Lương P1'],
+         ['name' => 'LUONG_P2', 'description' => 'Lương P2'],
+         ['name' => 'LUONG_P3', 'description' => 'Lương P3'],
+@@ -200,24 +200,24 @@ class PrintTemplateVariable extends Model
+         self::LABOR_CONTRACT_MAIN => [
+             ['name' => 'CAP_BAC', 'description' => 'Cấp bậc'],
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+             ['name' => 'HINH_THUC_P3', 'description' => 'Hình thức P3 (Khoán/Cố định)'],
+             ['name' => 'TY_LE_HUONG_LUONG', 'description' => 'Tỷ lệ hưởng lương (%)'],
+             ['name' => 'SO_QD_TRONG_HDLD', 'description' => 'Số quyết định trong hợp đồng lao động'],
+-            ['name' => 'THOI_HAN_HOP_DONG', 'description' => 'Thời hạn hợp đồng (từ ngày _ đến ngày)'],
++            ['name' => 'THOI_HAN_HOP_DONG', 'description' => 'Thời hạn hợp đồng (từ ngày _ đến ngày)', 'is_date' => true],
+             ['name' => 'LOAI_HDLD', 'description' => 'Loại hợp đồng lao động'],
+             ['name' => 'DIA_CHI_LAM_VIEC', 'description' => 'Địa chỉ làm việc'],
+             ['name' => 'PHAN_CONG_NHIEM_VU', 'description' => 'Phân công nhiệm vụ'],
+             ['name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['name' => 'CHUC_DANH', 'description' => 'Chức danh (vị trí công tác)'],
+             ['name' => 'PHONG_BAN', 'description' => 'Phòng ban'],
+-            ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực HĐLĐ'],
++            ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực HĐLĐ', 'is_date' => true],
+             ['name' => 'THOI_HAN', 'description' => 'Thời hạn HĐLĐ'],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'QUE_QUAN', 'description' => 'Quê quán'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND', 'is_date' => true],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMTND'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+             ['name' => 'BANG_CAP', 'description' => 'Bằng cấp'],
+             ['name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['name' => 'QUOC_TICH', 'description' => 'Quốc tịch'],
+@@ -243,13 +243,13 @@ class PrintTemplateVariable extends Model
+             ['name' => 'SO_QD_TRONG_PLHD', 'description' => 'Số quyết định trong phụ lục hợp đồng'],
+             // 3.1. Cá nhân
+             ['name' => 'LOAI_QD', 'description' => 'Loại quyết định'],
+             ['name' => 'TEN_NHAN_VIEN', 'description' => 'Họ và tên nhân viên'],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'QUE_QUAN', 'description' => 'Quê quán'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND', 'is_date' => true],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMTND'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+             ['name' => 'BANG_CAP', 'description' => 'Bằng cấp'],
+             ['name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['name' => 'DIA_CHI_THUONG_TRU', 'description' => 'Địa chỉ thường trú'],
+@@ -306,15 +306,15 @@ class PrintTemplateVariable extends Model
+             ['name' => 'TONG_THU_NHAP_100%_SAU_THAY_DOI', 'description' => 'Tổng thu nhập 100% sau thay đổi'],
+         ],
+     ];
+ 
+     public const DECISION_COMMON_VARIABLES = [
+         ['name' => 'SO_QUYET_DINH', 'description' => 'Số quyết định'],
+-        ['name' => 'NGAY_QUYET_DINH', 'description' => 'Ngày quyết định'],
+-        ['name' => 'NGAY_KY', 'description' => 'Ngày ký'],
+-        ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực'],
++        ['name' => 'NGAY_QUYET_DINH', 'description' => 'Ngày quyết định', 'is_date' => true],
++        ['name' => 'NGAY_KY', 'description' => 'Ngày ký', 'is_date' => true],
++        ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực', 'is_date' => true],
+         ['name' => 'NGUOI_DUYET', 'description' => 'Người duyệt'],
+         ['name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+         ['name' => 'TEN_PHONG_BAN', 'description' => 'Phòng ban ban hành QĐ'],
+         ['name' => 'DOI_TUONG_THUC_THI', 'description' => 'Đối tượng thực thi'],
+         ['name' => 'SO_TIEN_HT_XANG_XE', 'description' => 'Số tiền hỗ trợ xăng xe'],
+         ['name' => 'SO_TIEN_HT_DIEN_THOAI', 'description' => 'Số tiền hỗ trợ điện thoại'],
+@@ -348,30 +348,30 @@ class PrintTemplateVariable extends Model
+             ['name' => 'CHUC_VU_NGUOI_QUAN_LY_TRUC_TIEP', 'description' => 'Chức vụ người quản lý trực tiếp'],
+             ['name' => 'PHONG_BAN_TIEP_NHAN', 'description' => 'Phòng ban tiếp nhận'],
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+             ['name' => 'CHUC_DANH', 'description' => 'Chức danh'],
+             ['name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['name' => 'CAP_BAC', 'description' => 'Cấp bậc'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian tiếp nhận từ'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian tiếp nhận đến'],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian tiếp nhận từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian tiếp nhận đến', 'is_date' => true],
+             ['name' => 'LUONG_P1', 'description' => 'Lương P1'],
+             ['name' => 'LUONG_P2', 'description' => 'Lương P2'],
+             ['name' => 'LUONG_P3', 'description' => 'Lương P3'],
+             ['name' => 'HINH_THUC_P3', 'description' => 'Hình thức P3 (Khoán/Cố định)'],
+             ['name' => 'TY_LE_HUONG_LUONG', 'description' => 'Tỷ lệ hưởng lương (%)'],
+             ['name' => 'TONG_THU_NHAP', 'description' => 'Tổng thu nhập (đã nhân tỷ lệ hưởng lương)'],
+             ['name' => 'TONG_LUONG_BHXH', 'description' => 'Tổng lương BHXH'],
+             ['name' => 'TONG_THU_NHAP_100%', 'description' => 'Tổng thu nhập 100% (chưa nhân tỷ lệ hưởng lương)'],
+             ['name' => 'PC_DT', 'description' => 'Phụ cấp điện thoại'],
+             ['name' => 'PC_XX', 'description' => 'Phụ cấp xăng xe'],
+             ['name' => 'PC_K', 'description' => 'Phụ cấp khác'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'CMTND', 'description' => 'CMND/CCCD'],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMND/CCCD'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD', 'is_date' => true],
+             ['name' => 'DIA_CHI_THUONG_TRU', 'description' => 'Địa chỉ thường trú'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+         ],
+         Decision::TYPE_RENEW_LABOR_CONTRACT => [
+             ['name' => 'TEN_NGUOI_DUOC_GIA_HAN_HOP_DONG_LAO_DONG', 'description' => 'Tên người được ký hợp đồng lao động'],
+@@ -379,40 +379,40 @@ class PrintTemplateVariable extends Model
+             ['name' => 'CHUC_VU_NGUOI_QUAN_LY_TRUC_TIEP', 'description' => 'Chức vụ người quản lý trực tiếp'],
+             ['name' => 'PHONG_BAN_TIEP_NHAN', 'description' => 'Phòng ban'],
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+             ['name' => 'CHUC_DANH', 'description' => 'Chức danh'],
+             ['name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['name' => 'CAP_BAC', 'description' => 'Cấp bậc'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian gia hạn từ'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian gia hạn đến'],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian gia hạn từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian gia hạn đến', 'is_date' => true],
+             ['name' => 'LUONG_P1', 'description' => 'Lương P1'],
+             ['name' => 'LUONG_P2', 'description' => 'Lương P2'],
+             ['name' => 'LUONG_P3', 'description' => 'Lương P3'],
+             ['name' => 'HINH_THUC_P3', 'description' => 'Hình thức P3 (Khoán/Cố định)'],
+             ['name' => 'TY_LE_HUONG_LUONG', 'description' => 'Tỷ lệ hưởng lương (%)'],
+             ['name' => 'TONG_THU_NHAP', 'description' => 'Tổng thu nhập (đã nhân tỷ lệ hưởng lương)'],
+             ['name' => 'TONG_LUONG_BHXH', 'description' => 'Tổng lương BHXH'],
+             ['name' => 'TONG_THU_NHAP_100%', 'description' => 'Tổng thu nhập 100% (chưa nhân tỷ lệ hưởng lương)'],
+             ['name' => 'PC_DT', 'description' => 'Phụ cấp điện thoại'],
+             ['name' => 'PC_XX', 'description' => 'Phụ cấp xăng xe'],
+             ['name' => 'PC_K', 'description' => 'Phụ cấp khác'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'CMTND', 'description' => 'CMND/CCCD'],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMND/CCCD'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD', 'is_date' => true],
+             ['name' => 'DIA_CHI_THUONG_TRU', 'description' => 'Địa chỉ thường trú'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+         ],
+         Decision::TYPE_APPOINT_PERSONNEL => [
+             ['name' => 'TEN_NGUOI_DUOC_BO_NHIEM', 'description' => 'Tên người được bổ nhiệm'],
+             ['name' => 'LY_DO_BO_NHIEM', 'description' => 'Lý do bổ nhiệm'],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_BO_NHIEM_TU', 'description' => 'Thời gian bổ nhiệm từ'],
+-            ['name' => 'THOI_GIAN_BO_NHIEM_DEN', 'description' => 'Thời gian bổ nhiệm đến'],
++            ['name' => 'THOI_GIAN_BO_NHIEM_TU', 'description' => 'Thời gian bổ nhiệm từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_BO_NHIEM_DEN', 'description' => 'Thời gian bổ nhiệm đến', 'is_date' => true],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'PHONG_BAN_SAU_THAY_DOI', 'description' => 'Phòng ban của nhân sự (sau thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_SAU_THAY_DOI', 'description' => 'Bộ phận của nhân sự (sau thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_SAU_THAY_DOI', 'description' => 'Chức vụ của nhân sự (sau thay đổi)'],
+@@ -435,14 +435,14 @@ class PrintTemplateVariable extends Model
+             ['name' => 'LUONG_P3', 'description' => 'Lương P3'],
+         ],
+         Decision::TYPE_TRANSFER_PERSONNEL => [
+             ['name' => 'TEN_NGUOI_DUOC_DIEU_CHUYEN', 'description' => 'Tên người được điều chuyển'],
+             ['name' => 'LY_DO_DIEU_CHUYEN', 'description' => 'Lý do điều chuyển'],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_DIEU_CHUYEN_TU', 'description' => 'Thời gian điều chuyển từ'],
+-            ['name' => 'THOI_GIAN_DIEU_CHUYEN_DEN', 'description' => 'Thời gian điều chuyển đến'],
++            ['name' => 'THOI_GIAN_DIEU_CHUYEN_TU', 'description' => 'Thời gian điều chuyển từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_DIEU_CHUYEN_DEN', 'description' => 'Thời gian điều chuyển đến', 'is_date' => true],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'PHONG_BAN_SAU_THAY_DOI', 'description' => 'Phòng ban của nhân sự (sau thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_SAU_THAY_DOI', 'description' => 'Bộ phận của nhân sự (sau thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_SAU_THAY_DOI', 'description' => 'Chức vụ của nhân sự (sau thay đổi)'],
+@@ -497,36 +497,36 @@ class PrintTemplateVariable extends Model
+         Decision::TYPE_TERMINATION_LABOR_CONTRACT => [
+             ['name' => 'TEN_NGUOI_CHAM_DUT_HOP_DONG_LAO_DONG', 'description' => 'Tên người bị chấm dứt hợp đồng lao động'],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+-            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động'],
++            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động', 'is_date' => true],
+             ['name' => 'PHONG_BAN_NHAN_BAN_GIAO', 'description' => 'Phòng ban nhận bàn giao'],
+             ['name' => 'BO_PHAN_NHAN_BAN_GIAO', 'description' => 'Bộ phận nhận bàn giao'],
+             ['name' => 'NV_NHAN_BAN_GIAO', 'description' => 'Nhân viên nhận bàn giao'],
+             ['name' => 'NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI', 'description' => 'Quản lý trực tiếp của nhân sự (trước thay đổi)'],
+             // Biến thông tin hiện tại của nhân sự (dùng chung với QĐ tạm hoãn HĐLĐ)
+             ['name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['name' => 'PHONG_BAN', 'description' => 'Phòng ban hiện tại'],
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận hiện tại'],
+             ['name' => 'NGUOI_QUAN_LY_TRUC_TIEP', 'description' => 'Người quản lý trực tiếp'],
+             ['name' => 'CHUC_VU_NGUOI_QUAN_LY_TRUC_TIEP', 'description' => 'Chức vụ người quản lý trực tiếp'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+             ['name' => 'CCCD', 'description' => 'Số CCCD'],
+         ],
+         Decision::TYPE_SUSPEND_LABOR_CONTRACT => [
+             ['name' => 'TEN_NGUOI_BI_TAM_HOAN_HĐLĐ', 'description' => 'Tên người bị tạm hoãn hợp đồng lao động'],
+             ['name' => 'LY_DO_TAM_HOAN_HDLD', 'description' => 'Lý do tạm hoãn hợp đồng lao động'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['name' => 'CCCD', 'description' => 'Số CCCD'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến'],
++            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến', 'is_date' => true],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+             ['name' => 'TRINH_DO', 'description' => 'Trình độ'],
+             ['name' => 'PHONG_BAN_NHAN_BAN_GIAO', 'description' => 'Phòng ban nhận bàn giao'],
+@@ -546,13 +546,13 @@ class PrintTemplateVariable extends Model
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_DANH_TRUOC_THAY_DOI', 'description' => 'Chức danh của nhân sự (trước thay đổi)'],
+             ['name' => 'MA_BHXH', 'description' => 'Mã BHXH'],
+-            ['name' => 'THOI_GIAN_BAT_DAU_NGHI_HUU', 'description' => 'Thời gian bắt đầu nghỉ hưu'],
++            ['name' => 'THOI_GIAN_BAT_DAU_NGHI_HUU', 'description' => 'Thời gian bắt đầu nghỉ hưu', 'is_date' => true],
+             ['name' => 'NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI', 'description' => 'Quản lý trực tiếp của nhân sự (trước thay đổi)'],
+         ],
+         Decision::TYPE_DECISION_REWARD => [
+             ['name' => 'TEN_DOT_KHEN_THUONG', 'description' => 'Tên đợt khen thưởng'],
+         ],
+         Decision::TYPE_EMPLOYEE_DISCIPLINE => [
+@@ -561,37 +561,37 @@ class PrintTemplateVariable extends Model
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+             ['name' => 'TRINH_DO', 'description' => 'Trình độ'],
+             ['name' => 'SO_BB_XU_LY_SC', 'description' => 'Số biên bản xử lý sự cố'],
+             ['name' => 'HINH_THUC_KY_LUAT', 'description' => 'Hình thức kỷ luật'],
+-            ['name' => 'THOI_GIAN_KY_LUAT', 'description' => 'Thời gian kỷ luật'],
+-            ['name' => 'NGAY_SA_THAI', 'description' => 'Ngày sa thải'],
++            ['name' => 'THOI_GIAN_KY_LUAT', 'description' => 'Thời gian kỷ luật', 'is_date' => true],
++            ['name' => 'NGAY_SA_THAI', 'description' => 'Ngày sa thải', 'is_date' => true],
+             ['name' => 'SO_THANG_CHAM_TANG_LUONG', 'description' => 'Số tháng chậm tăng lương'],
+             ['name' => 'ND_KHIEN_TRACH', 'description' => 'Nội dung khiển trách'],
+             ['name' => 'ND_CANH_CAO', 'description' => 'Nội dung cảnh cáo'],
+             ['name' => 'LOAI_BIEN_BAN_XU_LY_SU_CO', 'description' => 'Loại biên bản xử lý sự cố'],
+             ['name' => 'LOAI_SU_CO', 'description' => 'Loại sự cố'],
+-            ['name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra'],
++            ['name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra', 'is_date' => true],
+             ['name' => 'NOI_XAY_RA', 'description' => 'Nơi xảy ra'],
+             ['name' => 'TONG_THIET_HAI', 'description' => 'Tổng thiệt hại'],
+             ['name' => 'MO_TA_SU_CO', 'description' => 'Mô tả sự cố'],
+         ],
+         Decision::TYPE_ASSIGN_TRAINING => [
+             ['name' => 'LOAI_DAO_TAO', 'description' => 'Loại đào tạo'],
+             ['name' => 'LY_DO_CU_DI_DAO_TAO', 'description' => 'Lý do cử đi đào tạo'],
+             ['name' => 'NGHIA_VU_CAN_THUC_HIEN_CUA_NGUOI_DUOC_CU_DI_DAO_TAO', 'description' => 'Nghĩa vụ phải thực hiện của người được cử đi đào tạo'],
+             ['name' => 'QUYEN_LOI_CUA_NGUOI_DUOC_CU_DI_DAO_TAO', 'description' => 'Quyền lợi của người được cử đi đào tạo'],
+             ['name' => 'SO_DE_XUAT_DAO_TAO', 'description' => 'Số đề xuất đào tạo'],
+         ],
+         Decision::TYPE_INCREASE_SENIORITY => [
+-            ['name' => 'NGAY_XET_THAM_NIEN', 'description' => 'Ngày xét thâm niên'],
++            ['name' => 'NGAY_XET_THAM_NIEN', 'description' => 'Ngày xét thâm niên', 'is_date' => true],
+             ['name' => 'CHU_KY_XET_TN', 'description' => 'Chu kỳ xét thâm niên'],
+             ['name' => 'HE_SO_TN', 'description' => 'Hệ số thâm niên'],
+-            ['name' => 'NGAY_XET_TN', 'description' => 'Ngày xét thâm niên'],
+-            ['name' => 'NGAY_XET_TN_GAN_NHAT', 'description' => 'Ngày xét thâm niên gần nhất'],
++            ['name' => 'NGAY_XET_TN', 'description' => 'Ngày xét thâm niên', 'is_date' => true],
++            ['name' => 'NGAY_XET_TN_GAN_NHAT', 'description' => 'Ngày xét thâm niên gần nhất', 'is_date' => true],
+         ],
+         Decision::TYPE_DECISION_SALARY_BONUS => [
+             ['name' => 'NAM_THUONG_LUONG', 'description' => 'Năm thưởng lương'],
+         ],
+ 
+         // Quy chế (chỉ một phần biến chung)
+@@ -601,15 +601,15 @@ class PrintTemplateVariable extends Model
+         // Loại gộp chấm dứt/tạm hoãn HĐLĐ
+         Decision::TYPE_TERMINATION_AND_SUSPEND_LABOR_CONTRACT => [
+             ['name' => 'TEN_NGUOI_CHAM_DUT_HOP_DONG_LAO_DONG', 'description' => 'Tên người chấm dứt hợp đồng lao động'],
+             ['name' => 'TEN_NGUOI_BI_TAM_HOAN_HĐLĐ', 'description' => 'Tên người bị tạm hoãn hợp đồng lao động'],
+             ['name' => 'LY_DO_TAM_HOAN_HDLD', 'description' => 'Lý do tạm hoãn hợp đồng lao động'],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến'],
++            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến', 'is_date' => true],
+             ['name' => 'PHONG_BAN_NHAN_BAN_GIAO', 'description' => 'Phòng ban nhận bàn giao'],
+             ['name' => 'BO_PHAN_NHAN_BAN_GIAO', 'description' => 'Bộ phận nhận bàn giao'],
+             ['name' => 'NV_NHAN_BAN_GIAO', 'description' => 'Nhân viên nhận bàn giao'],
+             ['name' => 'NV_PHAI_THUC_HIEN_KHI_CHAM_DUT_HDLĐ', 'description' => 'Nghĩa vụ phải thực hiện khi chấm dứt HĐLĐ'],
+         ],
+     ];
+@@ -679,23 +679,23 @@ class PrintTemplateVariable extends Model
+ 
+         $result[] = [
+             'stt' => Helper::convertToRoman($groupIndex++),
+             'group' => self::GROUP[self::GROUP_THONG_TIN_CHUNG],
+             'type_name' => null,
+             'objects' => [
+-                ['type' => null, 'items' => $commonVariables],
++                ['type' => null, 'items' => self::expandDateVariables($commonVariables)],
+             ],
+         ];
+ 
+         if ($subTypeLabel && !empty($subTypeVariables)) {
+             $result[] = [
+                 'stt' => Helper::convertToRoman($groupIndex++),
+                 'group' => $subTypeLabel,
+                 'type_name' => $subTypeLabel,
+                 'objects' => [
+-                    ['type' => null, 'items' => $subTypeVariables],
++                    ['type' => null, 'items' => self::expandDateVariables($subTypeVariables)],
+                 ],
+             ];
+         }
+ 
+         return $result;
+     }
+@@ -733,12 +733,14 @@ class PrintTemplateVariable extends Model
+         }
+         return [$groupName, $typeName];
+     }
+ 
+     protected static function buildObjectsForGroup($items): array
+     {
++        $items = self::expandDateVariables(is_array($items) ? $items : $items->all());
++
+         $items = collect($items)->map(function ($i) {
+             $objectKey = $i['object'] ?? (isset($i['type']) ? (self::TYPE_TO_OBJECT[$i['type']] ?? null) : null);
+             $i['__object'] = $objectKey;
+             return $i;
+         });
+ 
+@@ -767,7 +769,27 @@ class PrintTemplateVariable extends Model
+                 })->values()->all(),
+             ];
+         }
+ 
+         return $objects;
+     }
++
++    /**
++     * Với item is_date=true: thay bằng 2 item _CHU + _SO (ẩn item gốc khỏi picker).
++     * Item thường: giữ nguyên (loại bỏ khóa is_date nếu có).
++     */
++    protected static function expandDateVariables(array $items): array
++    {
++        $expanded = [];
++        foreach ($items as $item) {
++            if (!empty($item['is_date'])) {
++                $desc = $item['description'] ?? $item['name'];
++                $expanded[] = ['name' => $item['name'] . '_CHU', 'description' => $desc . ' (dạng chữ: Ngày … tháng … năm …)'];
++                $expanded[] = ['name' => $item['name'] . '_SO', 'description' => $desc . ' (dạng số: dd/mm/yyyy)'];
++            } else {
++                unset($item['is_date']);
++                $expanded[] = $item;
++            }
++        }
++        return $expanded;
++    }
+ }
+diff --git a/Modules/Human/Helper/Helper.php b/Modules/Human/Helper/Helper.php
+index f8f1f59ff..21ef05771 100644
+--- a/Modules/Human/Helper/Helper.php
++++ b/Modules/Human/Helper/Helper.php
+@@ -74,12 +74,50 @@ class Helper
+ 
+         $carbonDate = Carbon::parse($date);
+ 
+         return 'ngày ' . $carbonDate->format('j') . ' tháng ' . $carbonDate->format('n') . ' năm ' . $carbonDate->format('Y');
+     }
+ 
++    public static function formatDateVICapital($date)
++    {
++        if (!$date) {
++            return '';
++        }
++
++        $carbonDate = Carbon::parse($date);
++
++        return 'Ngày ' . $carbonDate->format('d') . ' tháng ' . $carbonDate->format('m') . ' năm ' . $carbonDate->format('Y');
++    }
++
++    public static function formatDateVICapitalInline($date)
++    {
++        if (!$date) {
++            return '';
++        }
++
++        $carbonDate = Carbon::parse($date);
++
++        return 'ngày ' . $carbonDate->format('d') . ' tháng ' . $carbonDate->format('m') . ' năm ' . $carbonDate->format('Y');
++    }
++
++    /**
++     * Gán 1 lượt biến ngày: gốc (theo $legacyFormat) + _CHU + _SO.
++     * $legacyFormat: 'chu' (formatDateVILong) | 'so' (formatDate) | 'keep' (không set gốc).
++     */
++    public static function fillDateVariants(array &$result, string $baseName, $date, string $legacyFormat = 'so')
++    {
++        if ($legacyFormat === 'chu') {
++            $result[$baseName] = self::formatDateVILong($date);
++        } elseif ($legacyFormat === 'so') {
++            $result[$baseName] = self::formatDate($date);
++        }
++
++        $result[$baseName . '_CHU'] = self::formatDateVICapital($date);
++        $result[$baseName . '_SO'] = self::formatDate($date);
++    }
++
+     public static function array_find_el($arr, $func)
+     {
+         $index = -1;
+         for ($i = 0; $i < count($arr); $i++) {
+             if ($func($arr[$i])) $index = $i;
+         }

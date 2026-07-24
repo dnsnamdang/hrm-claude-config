@@ -1,0 +1,364 @@
+diff --git a/Modules/Human/Entities/PrintTemplateVariable.php b/Modules/Human/Entities/PrintTemplateVariable.php
+index db780bc6e..5c155b4c0 100644
+--- a/Modules/Human/Entities/PrintTemplateVariable.php
++++ b/Modules/Human/Entities/PrintTemplateVariable.php
+@@ -73,15 +73,15 @@ class PrintTemplateVariable extends Model
+             // THÔNG TIN CHUNG
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_BIEN_BAN', 'description' => 'Số biên bản'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_SU_CO', 'description' => 'Tên sự cố'],
+-            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HOP', 'description' => 'Ngày họp'],
++            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HOP', 'description' => 'Ngày họp', 'is_date' => true],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'DIA_DIEM_HOP', 'description' => 'Địa điểm họp'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'THANH_PHAN_THAM_GIA', 'description' => 'Thành phần tham gia'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'KET_LUAN_XU_LY', 'description' => 'Kết luận xử lý'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'KET_QUA_XU_LY', 'description' => 'Bảng kết quả xử lý (người vi phạm)'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'LOAI_SU_CO', 'description' => 'Loại sự cố'],
+-            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra'],
++            ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra', 'is_date' => true],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NOI_XAY_RA', 'description' => 'Nơi xảy ra'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TONG_THIET_HAI', 'description' => 'Tổng thiệt hại'],
+             ['template_type_id' => self::BIEN_BAN, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'MO_TA_SU_CO', 'description' => 'Mô tả sự cố'],
+             // Biến bổ sung theo yêu cầu loại biên bản xử lý sự cố
+@@ -96,20 +96,20 @@ class PrintTemplateVariable extends Model
+         self::HOP_DONG_DAO_TAO => [
+             // THÔNG TIN CHUNG
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_HOP_DONG_DAO_TAO', 'description' => 'Số hợp đồng đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_HOP_DONG_LAO_DONG', 'description' => 'Số hợp đồng lao động'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_KY_HĐLĐ', 'description' => 'Ngày ký hợp đồng lao động'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_KY_HĐLĐ', 'description' => 'Ngày ký hợp đồng lao động', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'TEN_NGUOI_DUOC_CU_DI_DAO_TAO', 'description' => 'Tên người được cử đi đào tạo'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGHE_NGHIEP', 'description' => 'Nghề nghiệp'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CCCD', 'description' => 'số CCCD'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CHUC_DANH', 'description' => 'Chức danh'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'PHONG_BAN', 'description' => 'Phòng ban'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_CAP_CCCD', 'description' => 'Ngày cấp CCCD'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_CAP_CCCD', 'description' => 'Ngày cấp CCCD', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NOI_CAP_CCCD', 'description' => 'Nơi cấp CCCD'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'LOAI_DAO_TAO', 'description' => 'Loại đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'MON_HOC', 'description' => 'Môn học'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'HINH_THUC_DAO_TAO', 'description' => 'Hình thức đào tạo'],
+@@ -121,9 +121,9 @@ class PrintTemplateVariable extends Model
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'DON_VI_DAO_TAO', 'description' => 'Đơn vị đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'CHI_PHI_DAO_TAO', 'description' => 'Chi phí đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'THOI_GIAN_DAO_TAO', 'description' => 'Thời gian đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'DIA_DIEM_DAO_TAO', 'description' => 'Địa điểm đào tạo'],
+-            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực'],
++            ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực', 'is_date' => true],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'NGHIA_VU_PHAI_THUC_HIEN', 'description' => 'Nghĩa vụ phải thực hiện'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'QUYEN_LOI_CUA_NGUOI_DUOC_CU_DI_DAO_TAO', 'description' => 'Quyền lợi của người được cử đi đào tạo'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_THANG_CAM_KET', 'description' => 'Số tháng cam kết'],
+             ['template_type_id' => self::HOP_DONG_DAO_TAO, 'group' => self::GROUP_THONG_TIN_CHUNG, 'type' => null, 'name' => 'SO_QD_CU_DI_DAO_TAO', 'description' => 'Số quyết định cử đi đào tạo'],
+@@ -174,12 +174,12 @@ class PrintTemplateVariable extends Model
+      * Biến CHUNG cho cả HĐLĐ chính và Phụ lục HĐLĐ.
+      */
+     public const LABOR_CONTRACT_COMMON_VARIABLES = [
+         ['name' => 'SO_HOP_DONG', 'description' => 'Số hợp đồng'],
+-        ['name' => 'NGAY_HOP_DONG', 'description' => 'Ngày lập hợp đồng'],
++        ['name' => 'NGAY_HOP_DONG', 'description' => 'Ngày lập hợp đồng', 'is_date' => true],
+         ['name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+         ['name' => 'TEN_NHAN_SU', 'description' => 'Tên nhân sự'],
+-        ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++        ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+         ['name' => 'DIA_CHI_THUONG_TRU', 'description' => 'Địa chỉ thường trú'],
+         ['name' => 'CMTND', 'description' => 'Chứng minh thư / căn cước'],
+         ['name' => 'TONG_THU_NHAP_BANG_CHU', 'description' => 'Tổng thu nhập bằng chữ'],
+         ['name' => 'LUONG_P1', 'description' => 'Lương P1'],
+@@ -202,20 +202,20 @@ class PrintTemplateVariable extends Model
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+             ['name' => 'HINH_THUC_P3', 'description' => 'Hình thức P3 (Khoán/Cố định)'],
+             ['name' => 'TY_LE_HUONG_LUONG', 'description' => 'Tỷ lệ hưởng lương (%)'],
+             ['name' => 'SO_QD_TRONG_HDLD', 'description' => 'Số quyết định trong hợp đồng lao động'],
+-            ['name' => 'THOI_HAN_HOP_DONG', 'description' => 'Thời hạn hợp đồng (từ ngày _ đến ngày)'],
++            ['name' => 'THOI_HAN_HOP_DONG', 'description' => 'Thời hạn hợp đồng (từ ngày _ đến ngày)', 'is_date' => true],
+             ['name' => 'LOAI_HDLD', 'description' => 'Loại hợp đồng lao động'],
+             ['name' => 'DIA_CHI_LAM_VIEC', 'description' => 'Địa chỉ làm việc'],
+             ['name' => 'PHAN_CONG_NHIEM_VU', 'description' => 'Phân công nhiệm vụ'],
+             ['name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['name' => 'CHUC_DANH', 'description' => 'Chức danh (vị trí công tác)'],
+             ['name' => 'PHONG_BAN', 'description' => 'Phòng ban'],
+-            ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực HĐLĐ'],
++            ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực HĐLĐ', 'is_date' => true],
+             ['name' => 'THOI_HAN', 'description' => 'Thời hạn HĐLĐ'],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'QUE_QUAN', 'description' => 'Quê quán'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND', 'is_date' => true],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMTND'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+             ['name' => 'BANG_CAP', 'description' => 'Bằng cấp'],
+@@ -245,9 +245,9 @@ class PrintTemplateVariable extends Model
+             ['name' => 'LOAI_QD', 'description' => 'Loại quyết định'],
+             ['name' => 'TEN_NHAN_VIEN', 'description' => 'Họ và tên nhân viên'],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'QUE_QUAN', 'description' => 'Quê quán'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMTND', 'is_date' => true],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMTND'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+             ['name' => 'BANG_CAP', 'description' => 'Bằng cấp'],
+@@ -308,11 +308,11 @@ class PrintTemplateVariable extends Model
+     ];
+ 
+     public const DECISION_COMMON_VARIABLES = [
+         ['name' => 'SO_QUYET_DINH', 'description' => 'Số quyết định'],
+-        ['name' => 'NGAY_QUYET_DINH', 'description' => 'Ngày quyết định'],
+-        ['name' => 'NGAY_KY', 'description' => 'Ngày ký'],
+-        ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực'],
++        ['name' => 'NGAY_QUYET_DINH', 'description' => 'Ngày quyết định', 'is_date' => true],
++        ['name' => 'NGAY_KY', 'description' => 'Ngày ký', 'is_date' => true],
++        ['name' => 'NGAY_HIEU_LUC', 'description' => 'Ngày hiệu lực', 'is_date' => true],
+         ['name' => 'NGUOI_DUYET', 'description' => 'Người duyệt'],
+         ['name' => 'TEN_CONG_TY', 'description' => 'Tên công ty'],
+         ['name' => 'TEN_PHONG_BAN', 'description' => 'Phòng ban ban hành QĐ'],
+         ['name' => 'DOI_TUONG_THUC_THI', 'description' => 'Đối tượng thực thi'],
+@@ -350,10 +350,10 @@ class PrintTemplateVariable extends Model
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+             ['name' => 'CHUC_DANH', 'description' => 'Chức danh'],
+             ['name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['name' => 'CAP_BAC', 'description' => 'Cấp bậc'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian tiếp nhận từ'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian tiếp nhận đến'],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian tiếp nhận từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian tiếp nhận đến', 'is_date' => true],
+             ['name' => 'LUONG_P1', 'description' => 'Lương P1'],
+             ['name' => 'LUONG_P2', 'description' => 'Lương P2'],
+             ['name' => 'LUONG_P3', 'description' => 'Lương P3'],
+             ['name' => 'HINH_THUC_P3', 'description' => 'Hình thức P3 (Khoán/Cố định)'],
+@@ -363,13 +363,13 @@ class PrintTemplateVariable extends Model
+             ['name' => 'TONG_THU_NHAP_100%', 'description' => 'Tổng thu nhập 100% (chưa nhân tỷ lệ hưởng lương)'],
+             ['name' => 'PC_DT', 'description' => 'Phụ cấp điện thoại'],
+             ['name' => 'PC_XX', 'description' => 'Phụ cấp xăng xe'],
+             ['name' => 'PC_K', 'description' => 'Phụ cấp khác'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'CMTND', 'description' => 'CMND/CCCD'],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMND/CCCD'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD', 'is_date' => true],
+             ['name' => 'DIA_CHI_THUONG_TRU', 'description' => 'Địa chỉ thường trú'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+         ],
+@@ -381,10 +381,10 @@ class PrintTemplateVariable extends Model
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận'],
+             ['name' => 'CHUC_DANH', 'description' => 'Chức danh'],
+             ['name' => 'CHUC_VU', 'description' => 'Chức vụ'],
+             ['name' => 'CAP_BAC', 'description' => 'Cấp bậc'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian gia hạn từ'],
+-            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian gia hạn đến'],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_TU', 'description' => 'Thời gian gia hạn từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TIEP_NHAN_DEN', 'description' => 'Thời gian gia hạn đến', 'is_date' => true],
+             ['name' => 'LUONG_P1', 'description' => 'Lương P1'],
+             ['name' => 'LUONG_P2', 'description' => 'Lương P2'],
+             ['name' => 'LUONG_P3', 'description' => 'Lương P3'],
+             ['name' => 'HINH_THUC_P3', 'description' => 'Hình thức P3 (Khoán/Cố định)'],
+@@ -394,23 +394,23 @@ class PrintTemplateVariable extends Model
+             ['name' => 'TONG_THU_NHAP_100%', 'description' => 'Tổng thu nhập 100% (chưa nhân tỷ lệ hưởng lương)'],
+             ['name' => 'PC_DT', 'description' => 'Phụ cấp điện thoại'],
+             ['name' => 'PC_XX', 'description' => 'Phụ cấp xăng xe'],
+             ['name' => 'PC_K', 'description' => 'Phụ cấp khác'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'GIOI_TINH', 'description' => 'Giới tính'],
+             ['name' => 'CMTND', 'description' => 'CMND/CCCD'],
+             ['name' => 'NOI_CAP_CMTND', 'description' => 'Nơi cấp CMND/CCCD'],
+-            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD'],
++            ['name' => 'NGAY_CAP_CMTND', 'description' => 'Ngày cấp CMND/CCCD', 'is_date' => true],
+             ['name' => 'DIA_CHI_THUONG_TRU', 'description' => 'Địa chỉ thường trú'],
+             ['name' => 'CHUYEN_NGANH', 'description' => 'Chuyên ngành'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+         ],
+         Decision::TYPE_APPOINT_PERSONNEL => [
+             ['name' => 'TEN_NGUOI_DUOC_BO_NHIEM', 'description' => 'Tên người được bổ nhiệm'],
+             ['name' => 'LY_DO_BO_NHIEM', 'description' => 'Lý do bổ nhiệm'],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_BO_NHIEM_TU', 'description' => 'Thời gian bổ nhiệm từ'],
+-            ['name' => 'THOI_GIAN_BO_NHIEM_DEN', 'description' => 'Thời gian bổ nhiệm đến'],
++            ['name' => 'THOI_GIAN_BO_NHIEM_TU', 'description' => 'Thời gian bổ nhiệm từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_BO_NHIEM_DEN', 'description' => 'Thời gian bổ nhiệm đến', 'is_date' => true],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'PHONG_BAN_SAU_THAY_DOI', 'description' => 'Phòng ban của nhân sự (sau thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_SAU_THAY_DOI', 'description' => 'Bộ phận của nhân sự (sau thay đổi)'],
+@@ -437,10 +437,10 @@ class PrintTemplateVariable extends Model
+         Decision::TYPE_TRANSFER_PERSONNEL => [
+             ['name' => 'TEN_NGUOI_DUOC_DIEU_CHUYEN', 'description' => 'Tên người được điều chuyển'],
+             ['name' => 'LY_DO_DIEU_CHUYEN', 'description' => 'Lý do điều chuyển'],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_DIEU_CHUYEN_TU', 'description' => 'Thời gian điều chuyển từ'],
+-            ['name' => 'THOI_GIAN_DIEU_CHUYEN_DEN', 'description' => 'Thời gian điều chuyển đến'],
++            ['name' => 'THOI_GIAN_DIEU_CHUYEN_TU', 'description' => 'Thời gian điều chuyển từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_DIEU_CHUYEN_DEN', 'description' => 'Thời gian điều chuyển đến', 'is_date' => true],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'PHONG_BAN_SAU_THAY_DOI', 'description' => 'Phòng ban của nhân sự (sau thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_SAU_THAY_DOI', 'description' => 'Bộ phận của nhân sự (sau thay đổi)'],
+@@ -499,9 +499,9 @@ class PrintTemplateVariable extends Model
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+-            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động'],
++            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động', 'is_date' => true],
+             ['name' => 'PHONG_BAN_NHAN_BAN_GIAO', 'description' => 'Phòng ban nhận bàn giao'],
+             ['name' => 'BO_PHAN_NHAN_BAN_GIAO', 'description' => 'Bộ phận nhận bàn giao'],
+             ['name' => 'NV_NHAN_BAN_GIAO', 'description' => 'Nhân viên nhận bàn giao'],
+             ['name' => 'NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI', 'description' => 'Quản lý trực tiếp của nhân sự (trước thay đổi)'],
+@@ -510,21 +510,21 @@ class PrintTemplateVariable extends Model
+             ['name' => 'PHONG_BAN', 'description' => 'Phòng ban hiện tại'],
+             ['name' => 'BO_PHAN', 'description' => 'Bộ phận hiện tại'],
+             ['name' => 'NGUOI_QUAN_LY_TRUC_TIEP', 'description' => 'Người quản lý trực tiếp'],
+             ['name' => 'CHUC_VU_NGUOI_QUAN_LY_TRUC_TIEP', 'description' => 'Chức vụ người quản lý trực tiếp'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['name' => 'TRINH_DO_HOC_VAN', 'description' => 'Trình độ học vấn'],
+             ['name' => 'CCCD', 'description' => 'Số CCCD'],
+         ],
+         Decision::TYPE_SUSPEND_LABOR_CONTRACT => [
+             ['name' => 'TEN_NGUOI_BI_TAM_HOAN_HĐLĐ', 'description' => 'Tên người bị tạm hoãn hợp đồng lao động'],
+             ['name' => 'LY_DO_TAM_HOAN_HDLD', 'description' => 'Lý do tạm hoãn hợp đồng lao động'],
+-            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh'],
++            ['name' => 'NGAY_SINH', 'description' => 'Ngày sinh', 'is_date' => true],
+             ['name' => 'NOI_CU_TRU', 'description' => 'Nơi cư trú'],
+             ['name' => 'CCCD', 'description' => 'Số CCCD'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến'],
++            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến', 'is_date' => true],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+             ['name' => 'PHONG_BAN_TRUOC_THAY_DOI', 'description' => 'Phòng ban của nhân sự (trước thay đổi)'],
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+@@ -548,9 +548,9 @@ class PrintTemplateVariable extends Model
+             ['name' => 'BO_PHAN_TRUOC_THAY_DOI', 'description' => 'Bộ phận của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+             ['name' => 'CHUC_DANH_TRUOC_THAY_DOI', 'description' => 'Chức danh của nhân sự (trước thay đổi)'],
+             ['name' => 'MA_BHXH', 'description' => 'Mã BHXH'],
+-            ['name' => 'THOI_GIAN_BAT_DAU_NGHI_HUU', 'description' => 'Thời gian bắt đầu nghỉ hưu'],
++            ['name' => 'THOI_GIAN_BAT_DAU_NGHI_HUU', 'description' => 'Thời gian bắt đầu nghỉ hưu', 'is_date' => true],
+             ['name' => 'NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI', 'description' => 'Quản lý trực tiếp của nhân sự (trước thay đổi)'],
+         ],
+         Decision::TYPE_DECISION_REWARD => [
+             ['name' => 'TEN_DOT_KHEN_THUONG', 'description' => 'Tên đợt khen thưởng'],
+@@ -563,16 +563,16 @@ class PrintTemplateVariable extends Model
+             ['name' => 'CHUC_VU_TRUOC_THAY_DOI', 'description' => 'Chức vụ của nhân sự (trước thay đổi)'],
+             ['name' => 'TRINH_DO', 'description' => 'Trình độ'],
+             ['name' => 'SO_BB_XU_LY_SC', 'description' => 'Số biên bản xử lý sự cố'],
+             ['name' => 'HINH_THUC_KY_LUAT', 'description' => 'Hình thức kỷ luật'],
+-            ['name' => 'THOI_GIAN_KY_LUAT', 'description' => 'Thời gian kỷ luật'],
+-            ['name' => 'NGAY_SA_THAI', 'description' => 'Ngày sa thải'],
++            ['name' => 'THOI_GIAN_KY_LUAT', 'description' => 'Thời gian kỷ luật', 'is_date' => true],
++            ['name' => 'NGAY_SA_THAI', 'description' => 'Ngày sa thải', 'is_date' => true],
+             ['name' => 'SO_THANG_CHAM_TANG_LUONG', 'description' => 'Số tháng chậm tăng lương'],
+             ['name' => 'ND_KHIEN_TRACH', 'description' => 'Nội dung khiển trách'],
+             ['name' => 'ND_CANH_CAO', 'description' => 'Nội dung cảnh cáo'],
+             ['name' => 'LOAI_BIEN_BAN_XU_LY_SU_CO', 'description' => 'Loại biên bản xử lý sự cố'],
+             ['name' => 'LOAI_SU_CO', 'description' => 'Loại sự cố'],
+-            ['name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra'],
++            ['name' => 'NGAY_XAY_RA', 'description' => 'Ngày xảy ra', 'is_date' => true],
+             ['name' => 'NOI_XAY_RA', 'description' => 'Nơi xảy ra'],
+             ['name' => 'TONG_THIET_HAI', 'description' => 'Tổng thiệt hại'],
+             ['name' => 'MO_TA_SU_CO', 'description' => 'Mô tả sự cố'],
+         ],
+@@ -583,13 +583,13 @@ class PrintTemplateVariable extends Model
+             ['name' => 'QUYEN_LOI_CUA_NGUOI_DUOC_CU_DI_DAO_TAO', 'description' => 'Quyền lợi của người được cử đi đào tạo'],
+             ['name' => 'SO_DE_XUAT_DAO_TAO', 'description' => 'Số đề xuất đào tạo'],
+         ],
+         Decision::TYPE_INCREASE_SENIORITY => [
+-            ['name' => 'NGAY_XET_THAM_NIEN', 'description' => 'Ngày xét thâm niên'],
++            ['name' => 'NGAY_XET_THAM_NIEN', 'description' => 'Ngày xét thâm niên', 'is_date' => true],
+             ['name' => 'CHU_KY_XET_TN', 'description' => 'Chu kỳ xét thâm niên'],
+             ['name' => 'HE_SO_TN', 'description' => 'Hệ số thâm niên'],
+-            ['name' => 'NGAY_XET_TN', 'description' => 'Ngày xét thâm niên'],
+-            ['name' => 'NGAY_XET_TN_GAN_NHAT', 'description' => 'Ngày xét thâm niên gần nhất'],
++            ['name' => 'NGAY_XET_TN', 'description' => 'Ngày xét thâm niên', 'is_date' => true],
++            ['name' => 'NGAY_XET_TN_GAN_NHAT', 'description' => 'Ngày xét thâm niên gần nhất', 'is_date' => true],
+         ],
+         Decision::TYPE_DECISION_SALARY_BONUS => [
+             ['name' => 'NAM_THUONG_LUONG', 'description' => 'Năm thưởng lương'],
+         ],
+@@ -603,11 +603,11 @@ class PrintTemplateVariable extends Model
+             ['name' => 'TEN_NGUOI_CHAM_DUT_HOP_DONG_LAO_DONG', 'description' => 'Tên người chấm dứt hợp đồng lao động'],
+             ['name' => 'TEN_NGUOI_BI_TAM_HOAN_HĐLĐ', 'description' => 'Tên người bị tạm hoãn hợp đồng lao động'],
+             ['name' => 'LY_DO_TAM_HOAN_HDLD', 'description' => 'Lý do tạm hoãn hợp đồng lao động'],
+             ['name' => 'SO_HDLD', 'description' => 'Số hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ'],
+-            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến'],
++            ['name' => 'THOI_GIAN_BD_CHAM_DUT_HDLD', 'description' => 'Thời gian bắt đầu chấm dứt hợp đồng lao động', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TAM_HOAN_TU', 'description' => 'Thời gian tạm hoãn HĐLĐ từ', 'is_date' => true],
++            ['name' => 'THOI_GIAN_TAM_HOAN_DEN', 'description' => 'Thời gian tạm hoãn HĐLĐ đến', 'is_date' => true],
+             ['name' => 'PHONG_BAN_NHAN_BAN_GIAO', 'description' => 'Phòng ban nhận bàn giao'],
+             ['name' => 'BO_PHAN_NHAN_BAN_GIAO', 'description' => 'Bộ phận nhận bàn giao'],
+             ['name' => 'NV_NHAN_BAN_GIAO', 'description' => 'Nhân viên nhận bàn giao'],
+             ['name' => 'NV_PHAI_THUC_HIEN_KHI_CHAM_DUT_HDLĐ', 'description' => 'Nghĩa vụ phải thực hiện khi chấm dứt HĐLĐ'],
+@@ -681,9 +681,9 @@ class PrintTemplateVariable extends Model
+             'stt' => Helper::convertToRoman($groupIndex++),
+             'group' => self::GROUP[self::GROUP_THONG_TIN_CHUNG],
+             'type_name' => null,
+             'objects' => [
+-                ['type' => null, 'items' => $commonVariables],
++                ['type' => null, 'items' => self::expandDateVariables($commonVariables)],
+             ],
+         ];
+ 
+         if ($subTypeLabel && !empty($subTypeVariables)) {
+@@ -691,9 +691,9 @@ class PrintTemplateVariable extends Model
+                 'stt' => Helper::convertToRoman($groupIndex++),
+                 'group' => $subTypeLabel,
+                 'type_name' => $subTypeLabel,
+                 'objects' => [
+-                    ['type' => null, 'items' => $subTypeVariables],
++                    ['type' => null, 'items' => self::expandDateVariables($subTypeVariables)],
+                 ],
+             ];
+         }
+ 
+@@ -735,8 +735,10 @@ class PrintTemplateVariable extends Model
+     }
+ 
+     protected static function buildObjectsForGroup($items): array
+     {
++        $items = self::expandDateVariables(is_array($items) ? $items : $items->all());
++
+         $items = collect($items)->map(function ($i) {
+             $objectKey = $i['object'] ?? (isset($i['type']) ? (self::TYPE_TO_OBJECT[$i['type']] ?? null) : null);
+             $i['__object'] = $objectKey;
+             return $i;
+@@ -769,5 +771,25 @@ class PrintTemplateVariable extends Model
+         }
+ 
+         return $objects;
+     }
++
++    /**
++     * Với item is_date=true: thay bằng 2 item _CHU + _SO (ẩn item gốc khỏi picker).
++     * Item thường: giữ nguyên (loại bỏ khóa is_date nếu có).
++     */
++    protected static function expandDateVariables(array $items): array
++    {
++        $expanded = [];
++        foreach ($items as $item) {
++            if (!empty($item['is_date'])) {
++                $desc = $item['description'] ?? $item['name'];
++                $expanded[] = ['name' => $item['name'] . '_CHU', 'description' => $desc . ' (dạng chữ: Ngày … tháng … năm …)'];
++                $expanded[] = ['name' => $item['name'] . '_SO', 'description' => $desc . ' (dạng số: dd/mm/yyyy)'];
++            } else {
++                unset($item['is_date']);
++                $expanded[] = $item;
++            }
++        }
++        return $expanded;
++    }
+ }

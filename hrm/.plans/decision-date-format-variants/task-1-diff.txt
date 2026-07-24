@@ -1,0 +1,59 @@
+diff --git a/Modules/Human/Helper/Helper.php b/Modules/Human/Helper/Helper.php
+index f8f1f59ff..21ef05771 100644
+--- a/Modules/Human/Helper/Helper.php
++++ b/Modules/Human/Helper/Helper.php
+@@ -72,16 +72,54 @@ class Helper
+             return '';
+         }
+ 
+         $carbonDate = Carbon::parse($date);
+ 
+         return 'ngày ' . $carbonDate->format('j') . ' tháng ' . $carbonDate->format('n') . ' năm ' . $carbonDate->format('Y');
+     }
+ 
++    public static function formatDateVICapital($date)
++    {
++        if (!$date) {
++            return '';
++        }
++
++        $carbonDate = Carbon::parse($date);
++
++        return 'Ngày ' . $carbonDate->format('d') . ' tháng ' . $carbonDate->format('m') . ' năm ' . $carbonDate->format('Y');
++    }
++
++    public static function formatDateVICapitalInline($date)
++    {
++        if (!$date) {
++            return '';
++        }
++
++        $carbonDate = Carbon::parse($date);
++
++        return 'ngày ' . $carbonDate->format('d') . ' tháng ' . $carbonDate->format('m') . ' năm ' . $carbonDate->format('Y');
++    }
++
++    /**
++     * Gán 1 lượt biến ngày: gốc (theo $legacyFormat) + _CHU + _SO.
++     * $legacyFormat: 'chu' (formatDateVILong) | 'so' (formatDate) | 'keep' (không set gốc).
++     */
++    public static function fillDateVariants(array &$result, string $baseName, $date, string $legacyFormat = 'so')
++    {
++        if ($legacyFormat === 'chu') {
++            $result[$baseName] = self::formatDateVILong($date);
++        } elseif ($legacyFormat === 'so') {
++            $result[$baseName] = self::formatDate($date);
++        }
++
++        $result[$baseName . '_CHU'] = self::formatDateVICapital($date);
++        $result[$baseName . '_SO'] = self::formatDate($date);
++    }
++
+     public static function array_find_el($arr, $func)
+     {
+         $index = -1;
+         for ($i = 0; $i < count($arr); $i++) {
+             if ($func($arr[$i])) $index = $i;
+         }
+         if ($index != -1) return $arr[$index];
+         return null;

@@ -25,6 +25,13 @@
 - [x] Export blade dùng cùng `canView`+ternary (canView=false→`-` đã chứng minh) — masking đồng bộ
 - Ghi chú: tài khoản namdangit có quyền "TKT tổng công ty" + không có quyền meeting + toàn bộ data company_id=1 → không trigger được nhánh che qua UI bằng chính account này; đã chứng minh nhánh che qua actingAs nhân viên khác. Muốn xem `-` trực tiếp trên UI: đăng nhập 1 tài khoản sales không sở hữu/không quản lý các bản ghi này.
 
+## Phase 2 — Bugfix: `-` round-trip khi Sửa meeting (validation 400)
+
+### BE
+- [x] `MeetingUpdateApiRequest::prepareForValidation()`: nếu `customer_contact_phone` = `-` (MASK) → khôi phục SĐT thật đang lưu trong DB trước khi validate (validation pass + không ghi đè null/`-` lên số thật). Áp cả `customer_members[].phone` = `-` → khôi phục theo `id` bản ghi thành viên (thành viên mới không id → null). FE không sửa.
+- [x] `php -l` file sửa — sạch
+- [x] Verify tinker: Meeting#11 (số rỗng) gửi `-` → null (pass nullable); Meeting#3 (số `0936488882`) gửi `-` → giữ nguyên `0936488882`; gửi số mới `0912345678` → giữ số mới. OK 100%
+
 ## Checkpoint
 ### Checkpoint — 2026-06-23
 Vừa hoàn thành: Phase 1 BE + VERIFY. Helper `CustomerPhoneVisibility` + masking ở 5 resource/transformer + getDataForShow + 2 blade; unit test 8/8; php -l sạch. Verify: full path qua browser (namdangit) + cả 2 nhánh full/che qua resource thật bằng actingAs (TKT + Meeting + tab TKT). Kết quả đúng 100%.
