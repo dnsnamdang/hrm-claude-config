@@ -263,3 +263,74 @@ Không đụng DB, không migration, không permission, không git.
 Đang làm dở: không có.
 Bước tiếp theo: User thêm `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com` vào `.env` của SERVER đã deploy (elearning.eteksofts.com) — email hỏng user nhận là do server đó gửi (local dùng `MAIL_HOST=mailhog`, không ra Gmail được). Sau đó chạy TC21 (đăng ký thật -> bấm link trong mail).
 Blocked: TC21 cần .env server (ngoài tầm session). TC23 cần fix `config/ckfinder.php` trước (bug riêng, ngoài scope phase này).
+
+---
+
+## Phase 11 — Fix "đăng xuất elearning kéo theo đăng xuất HRM"
+
+**Bug user báo (2026-07-17):** Employee đăng nhập elearning qua SSO HRM → đăng xuất ở elearning → HRM bị đăng xuất theo. Yêu cầu: logout elearning KHÔNG được ảnh hưởng phiên HRM.
+
+**Root cause (đã xác minh, không suy đoán):**
+Employee dùng CHUNG một JWT với HRM (`ssoExchange` trả lại chính token HRM — AuthController:144 `loginResponse($request->token, 'employee', ...)`). Trong `stores/auth.js logout()`, nhánh employee redirect sang `${HRM_CLIENT_URL}/sso/elearning-logout` (hrm-client `pages/sso/elearning-logout.vue`) — trang này gọi `/users/auth/logout` (blacklist JWT dùng chung) + xoá `access_token` + clear Vuex `current_employee` của HRM → HRM chết theo. Đây là "Single Sign-Out" thiết kế cũ (skill elearning-auth mục 8), trái mong muốn user.
+
+**Fix (1 file FE elearning):**
+- `src/stores/auth.js logout()` — bỏ hoàn toàn nhánh redirect sang HRM gate. Employee logout giờ CHỈ `clearAuth()` cục bộ + về `/` (route public → KHÔNG auto-SSO lại). KHÔNG gọi BE / KHÔNG blacklist token (vì token dùng chung, blacklist sẽ giết HRM). Learner vẫn `api.post('/auth/logout')` bình thường (phiên riêng). Gỡ luôn const `HRM_CLIENT_URL` không còn dùng.
+- `pages/sso/elearning-logout.vue` (hrm-client) trở thành dead code — KHÔNG xoá (repo chung, để lại vô hại; không route nào gọi nữa).
+
+**Quyết định UX (user chốt 2026-07-17):** Sau logout elearning, HRM còn phiên → bấm lại "Đăng nhập bằng HRM" vào thẳng không cần mật khẩu. GIỮ NGUYÊN (đúng bản chất SSO).
+
+### Task
+- [x] FE: `stores/auth.js` — employee logout chỉ clear cục bộ + về `/`, không đụng HRM
+- [x] FE: `stores/auth.js` — gỡ const HRM_CLIENT_URL không dùng
+- [x] Verify Playwright: login HRM → SSO elearning → logout elearning → HRM còn `access_token` + check-login 200 `logged_in:true` + không bị đá về /login
+
+### Test case
+- [x] TC20: Login HRM → SSO elearning (employee) → logout elearning → elearning token null, ở lại `/`, header "Đăng nhập"
+- [x] TC21: Sau TC20 → HRM 127.0.0.1:3000 vẫn đăng nhập (token jti không đổi, không bị blacklist, không redirect /login)
+
+### Checkpoint — 2026-07-17
+Vừa hoàn thành: Phase 11 — fix logout elearning không kéo theo logout HRM. 1 file FE: `src/stores/auth.js` (logout() bỏ nhánh HRM gate + gỡ HRM_CLIENT_URL). `eslint src/stores/auth.js` exit 0.
+Verify Playwright thật (namdangit/DNS ADMIN, token jti F5CYPZ655ssJ82FR dùng chung): TC20 + TC21 PASS. Đo trực tiếp check-login trả 200 logged_in:true, token HRM giữ nguyên jti, không bị đá về login.
+Không đụng BE, không migration, không permission, không git. hrm-client `elearning-logout.vue` thành dead code (giữ lại).
+Đang làm dở: không có.
+Bước tiếp theo: User verify tay trên Chrome thật (login HRM → SSO elearning → logout elearning → check HRM còn login).
+Blocked: không có.
+
+---
+
+## Phase 12 — Fix routing SSO/reset khi mở URL ở trình duyệt lạ & reset lúc còn phiên
+
+**Bug user báo (2026-07-24):**
+1. Copy URL trang bảo vệ elearning (vd `/goc-hoc-tap`) paste sang trình duyệt lạ → bị redirect sang HRM thay vì ở lại elearning.
+2. Đang còn phiên đăng nhập ở 1 trình duyệt → đặt lại mật khẩu qua mail, nhấn link → bị đá thẳng về trang chủ, không tới màn đặt lại mật khẩu.
+
+**Root cause (đã trace, không suy đoán) — cả 2 ở `src/router/index.js` `beforeEach`:**
+- Bug 1: dòng ~211-214 — chưa auth + route bảo vệ → LUÔN `window.location = ${HRM_CLIENT_URL}/sso/elearning` (auto-SSO chủ đích cũ). Người mở URL ở trình duyệt lạ / learner ngoài không có TK HRM bị ném sang HRM.
+- Bug 2: dòng 183-184 — `if (auth.isAuthenticated) { if (to.meta.guest) return next({name:'home'}) }`. `reset-password` có `meta.guest=true` → user còn phiên mở link mail bị đá về home. Link mail build đúng (`${ELEARNING_CLIENT_URL}/reset-password?token=`), KHÔNG phải lỗi link.
+
+**Quyết định user chốt (2026-07-24):**
+- Bug 1 → về màn login CỦA elearning (kèm `?redirect=<path>`), KHÔNG ép SSO sang HRM. Màn login vẫn có nút "Đăng nhập bằng HRM" cho nhân viên tự SSO 1-click.
+- Bug 2 → cho phép vào `reset-password`/`verify-email` khi có `?token=` trên URL dù đang đăng nhập.
+
+**Fix (1 file FE elearning — `src/router/index.js`):**
+- Block authenticated: thêm ngoại lệ — `reset-password`/`verify-email` + có `to.query.token` → cho `next()` thay vì đá về home.
+- Bỏ hoàn toàn khối auto-SSO sang HRM + throttle `sso=failed` + const `HRM_CLIENT_URL`, `SSO_THROTTLE_MS` (không còn dùng). Chưa auth + route bảo vệ → `next({ name:'login', query:{ redirect: to.fullPath } })`.
+- LoginView đã sẵn đọc `route.query.redirect` (không cần sửa).
+
+### Task
+- [x] FE: `router/index.js` — ngoại lệ token cho reset-password/verify-email khi còn phiên (Bug 2)
+- [x] FE: `router/index.js` — bỏ auto-SSO HRM, chưa auth + route bảo vệ → login elearning kèm redirect (Bug 1)
+- [x] FE: gỡ const `HRM_CLIENT_URL`, `SSO_THROTTLE_MS` không còn dùng
+- [x] FE: `ResetPasswordView.vue` — reset thành công → `clearAuth()` để về được /login + đăng nhập lại bằng mật khẩu mới (bug 2 lúc còn phiên)
+- [x] FE: `router/index.js` — (điều chỉnh theo user 2026-07-24) chưa auth + route bảo vệ → về TRANG CHỦ (`name:'home'`), KHÔNG phải màn login. LoginView không cần stash redirect nữa (đã gỡ).
+- [ ] Verify tay (user, browser thật): (Bug 2) còn phiên → mở link mail /reset-password?token=x → vào màn đặt lại → đặt xong về /login đăng nhập mật khẩu mới; (Bug 1) trình duyệt lạ → mở /goc-hoc-tap → về /login?redirect=/goc-hoc-tap ở lại elearning, login xong về /goc-hoc-tap
+
+### Checkpoint — 2026-07-24
+Vừa hoàn thành: Phase 12 — fix 2 bug routing auth elearning.
+- Root cause (trace, không đoán): Bug 2 = guard `if(isAuthenticated){if(meta.guest)→home}` đá user còn phiên khỏi /reset-password (meta.guest). Bug 1 = guard auto-redirect mọi route bảo vệ sang `${HRM_CLIENT_URL}/sso/elearning`.
+- Sửa 3 file FE elearning: `src/router/index.js`, `src/views/auth/ResetPasswordView.vue` (clearAuth sau reset), `src/views/auth/LoginView.vue` (stash redirect vào sso_redirect giữ deep-link qua HRM SSO).
+- KHÔNG đụng BE, không migration, không permission, không git. Không build local (Docker auto rebuild).
+- Lint: eslint local fail do Node cũ — không phải lỗi code; grep xác nhận không còn tham chiếu biến đã xoá.
+Đang làm dở: không có.
+Bước tiếp theo: User verify tay 2 luồng trên browser thật.
+Blocked: không có.

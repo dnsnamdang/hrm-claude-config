@@ -87,6 +87,24 @@ Bug: (1) cấu hình "Cho tua video = Không" không chặn được tua; (2) tu
 - [x] FE-9.6: Gom tốc độ vào menu nút bánh răng (thay vì 1 hàng nút) — popup có header "Tốc độ" + tick mốc đang chọn, click ra ngoài tự đóng. KHÔNG có mục chất lượng: YouTube đã deprecate `setPlaybackQuality()` (chất lượng auto theo băng thông) → thêm nút sẽ là nút chết. Chỉ làm được nếu sau này video self-host (mp4/HLS).
 - [x] FE-9.5: Control tự vẽ bổ sung nút toàn màn hình (ẩn `controls` làm mất luôn nút fullscreen gốc) — `requestFullscreen()` trên wrapper để control tự vẽ vẫn hiện khi toàn màn hình
 
+## Phase 10 — Resume vị trí xem video khi mở lại bài (FE)
+
+Bug: mở lại bài video luôn phát từ 0, không nhớ chỗ đã xem. Tận dụng `read_seconds` (BE đã lưu qua heartbeat, trả trong payload lesson) — KHÔNG đổi DB.
+
+- [x] FE-10.1: `LessonViewer.vue` truyền `:resume-seconds` xuống `YoutubePlayer` = `lesson.read_seconds` (bài `done` → 0 để cho xem lại từ đầu)
+- [x] FE-10.2: `YoutubePlayer.vue` nhận prop `resumeSeconds`, khi player ready → `seekTo(resume)` + seed `played`/`maxReached`/`curTime` = resume (chạy 1 lần, guard `didResume`); bỏ qua nếu resume ≈ cuối video (`>= duration - SEEK_THRESHOLD`)
+- [x] FE-10.3: Fix side-effect autoplay — `seekTo()` từ trạng thái "cued" bị YouTube tự phát. `applyResume(keepPaused)`: lúc onReady (chưa ai bấm play) → `pauseVideo()` ngay sau seek để giữ đúng vị trí mà không auto-play; nhánh dự phòng ở PLAYING (user đã bấm play) → không pause
+- [x] FE-10.4: **Fix màn đen khi tắt tab vào lại** (user báo, trên prod có extension chặn quảng cáo). Nguyên nhân: gọi `seekTo`/`pauseVideo` động lên player — khi extension phá iframe YouTube (lỗi `postMessage origin mismatch` + `ERR_BLOCKED_BY_CLIENT`), player ở trạng thái lỗi → seekTo để lại màn đen. Đổi sang **playerVar `start`** (áp lúc tạo player): video cued sẵn tại mốc resume, hiện thumbnail, không tự phát, KHÔNG gọi API động. Thay `applyResume`→`seedResume` (chỉ seed `played`/`maxReached`/`curTime`, không đụng player). Verify local: iframe có `?start=45`, hiện thumbnail (không đen), play tiếp từ 0:45, chặn tua tiến vẫn OK.
+
+## Verify Phase 10
+
+- [x] Bài `done` (sa-tai-sao lesson 7) mở lại → đồng hồ `0:00 / 3:12` (gate done→0 đúng, prop `resume-seconds` truyền OK)
+- [x] Reset tạm lesson 7 về `learning` read_seconds=45 (user cho phép 2026-07-17) → mở lại: đồng hồ `0:45 / 3:12`, **paused** (không tự phát), sau 3s vẫn 0:45
+- [x] Bấm play → tiếp tục từ 0:45; ép `seekTo(150)` qua JS API → bị chặn (đứng ở ~1:05, không nhảy) → `maxReached`=resume hoạt động
+- [x] Khôi phục DB lesson 7 về done gốc (status=2, pct=75, read_seconds=143)
+
+**Quyết định (user chốt 2026-07-17):** bài ĐÃ HOÀN THÀNH mở lại → phát từ đầu (resume chỉ áp dụng cho bài đang học dở).
+
 ## Verify Phase 9
 
 - [x] Bài cấm tua (lesson 7, khoá `sa-tai-sao-lai-co-thong-tin-sai-lech`) → iframe có `controls=0&disablekb=1`, không còn thanh tua YouTube
@@ -108,4 +126,13 @@ Vừa hoàn thành: Phase 9 — fix "chặn tua không có hiệu lực" (1 file
 
 Đang làm dở: Không.
 Bước tiếp theo: Test tay 3 mục Verify còn lại (luồng ENDED + lưu override qua UI admin).
+Blocked: Không.
+
+### Checkpoint — 2026-07-17
+Vừa hoàn thành: Phase 9 (chặn tua cứng) + Phase 10 (resume vị trí video) — CODE DONE + VERIFIED browser.
+- BE (1 file): SubjectBuilderRequest.php thêm prepareForValidation() normalize boolean override cấp môn.
+- FE (2 file): YoutubePlayer.vue (controls:0+disablekb:1 khi cấm tua, control tự vẽ Play/Pause+progress+tốc độ menu+fullscreen, resume qua seekTo+pause chống autoplay, fix ENDED); LessonViewer.vue (truyền :resume-seconds).
+- Verify: iframe controls=0 khi cấm tua; ép seekTo bị chặn; tốc độ 2x đúng; toàn màn hình OK; resume 0:45 paused; bài done phát từ 0. Reset tạm 1 progress row để test resume, đã khôi phục về done gốc.
+Đang làm dở: Không.
+Bước tiếp theo: user merge (chưa git). Còn tồn verify tay: luồng tua-tới-cuối-không-hoàn-thành qua UI thật; lưu override "Không cho tua" qua UI admin (BE đã verify bằng unit-run).
 Blocked: Không.

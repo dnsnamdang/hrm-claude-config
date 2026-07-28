@@ -20,8 +20,8 @@ Yêu cầu gốc từ sếp: *"cho họ cấu hình cách lấy dữ liệu ra r
 | 3 | **Top N cấu hình riêng từng danh hiệu** |
 | 4 | **"Gương mặt tiêu biểu" = tiêu chí tổng hợp tự tính**: lọt top của ≥ `min_criteria` bảng khác. Biến danh hiệu chủ quan duy nhất thành tính được |
 | 5 | "Đạt tiêu chí" = **lọt top** của tiêu chí đó (tương đối), không phải vượt ngưỡng tuyệt đối |
-| 6 | **Mỗi người đúng 1 thẻ** — khử trùng theo `sort_order`, bảng dưới nhường suất cho người kế tiếp |
-| 7 | **Một kỳ chung** cho cả khối, mặc định **30 ngày gần nhất** (tránh trang chủ hụt một mảng mỗi đầu tháng) |
+| 6 | ~~Mỗi người đúng 1 thẻ (khử trùng theo sort_order)~~ → **ĐẢO 2026-07-27**: bỏ khử trùng, mỗi danh hiệu lấy top_n độc lập, 1 người hiện ở TẤT CẢ danh hiệu đạt; bỏ `sort_order`; thẻ hiện **giá trị thật đạt được** |
+| 7 | ~~Một kỳ chung cho cả khối~~ → **ĐẢO 2026-07-18**: **kỳ tính RIÊNG từng danh hiệu** (composite không có kỳ); redesign màn cấu hình + popup theo v2-styles |
 | 8 | **Học viên ngoài có lên bảng vàng**, dòng phòng ban ghi "Học viên ngoài" |
 | 9 | **Quyền mới** `Quản lý vinh danh học viên` (ID 1082) trong `PermissionsTableSeeder` |
 | 10 | **Dùng chung 1 icon** huy chương vàng như mock — không cho chọn icon từng danh hiệu |

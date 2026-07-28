@@ -189,3 +189,42 @@ không có cột `progress`, 1 khoá thuộc nhiều lộ trình, Q2 đã bắn 
 Bước tiếp theo: User quyết định code Phase 5 luôn hay để user chạy migrate + verify UI Phase 1-4 trước rồi mới làm.
 
 Blocked: Không.
+
+---
+
+## Fix — Số nội dung danh mục + icon menu (16/07/2026) @junfoke
+
+**Bug 1 — số trên thẻ danh mục không khớp màn bấm vào:**
+User báo "đếm cả khoá public lẫn không public". Điều tra bác bỏ: filter `is_public` theo `user_type`
+đã chạy đúng (verify tinker: loại `id=1` → guest 7 / employee 9, đúng 2 khoá `is_public=0` bị loại;
+token learner có claim `user_type='learner'` nên không rơi nhầm nhánh employee).
+Root cause thật: `HomeCategoryService` đếm `subjects + learning_paths`, nhưng bấm vào thẻ mở
+`learning-by-category` — màn này chỉ gọi `/public/subjects`, không list lộ trình.
+→ Loại `id=1`: thẻ ghi 7, màn chỉ ra 5 (thiếu đúng 2 lộ trình).
+**Quyết định (user chốt):** count chỉ đếm khoá học, bỏ lộ trình → số khớp đúng nội dung màn liệt kê được.
+
+**Bug 2 — icon menu "Học theo loại đào tạo" không theo danh mục:** endpoint `filter-options`
+chỉ `select('id','name')` (thiếu `icon`), và `AppHeader.vue` hardcode `ri-price-tag-3-line` cho mọi item.
+
+### BE
+- [x] `HomeCategoryService::build()` — bỏ `$pathCounts` + import `LearningPath`, chỉ đếm subjects; sửa docblock nêu lý do
+- [x] `PublicBrowseController::filterOptions()` — thêm `icon` vào `select`
+
+### FE
+- [x] `AppHeader.vue` — dùng `item.icon || DEFAULT_CATEGORY_ICON` thay icon hardcode
+
+### Verify
+- [x] `php -l` 2 file BE sạch; `vite build` pass (Node 24 — Node 14 mặc định không chạy được Vite 5)
+- [x] Tinker: cả 6 loại × 2 user type → `card == list` (trước fix loại `id=1` guest 7/5, employee 9/7)
+- [x] Tinker: `filter-options` trả key `icon` (null khi chưa set → FE fallback)
+- [x] Browser (localhost:3001, đang login employee): thẻ "phát triển bản thân" = 7 → bấm vào ra "7 nội dung", Trang 1/1
+- [x] Browser: menu "Học theo loại đào tạo" — "Đào tạo chuyên viên" hiện icon loa riêng, loại chưa set icon dùng fallback tag
+
+### Checkpoint — 2026-07-16
+
+Vừa hoàn thành: Fix 2 bug danh mục nội dung (3 file: `HomeCategoryService`, `PublicBrowseController::filterOptions`, `AppHeader.vue`).
+Điều tra bác bỏ giả thuyết ban đầu của user (đếm cả khoá không public) — filter `is_public` theo `user_type` vốn đã đúng;
+root cause thật là count cộng lộ trình trong khi màn đích chỉ list khoá học. Verify động bằng tinker + browser thật.
+Đang làm dở: Không.
+Bước tiếp theo: User set `icon` cho các loại đào tạo còn lại ở hrm-client `/training/training_types` (hiện chỉ "Đào tạo chuyên viên" có icon, còn lại fallback tag).
+Blocked: Không.

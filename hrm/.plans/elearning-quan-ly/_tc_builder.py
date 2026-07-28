@@ -81,7 +81,7 @@ def build(output_file, sheet_name, feature_name, module_name, description_block,
             tc(f"TC-ROLE-{suf}", func, prio, pre, steps, td, exp, note, "Phân quyền & truy cập")
 
     for roman, title, tcs in sections:
-        base = roman.rstrip("b")  # cho phép "VIIb" gộp cùng số VII
+        base = roman.rstrip("abcdefghijklmnopqrstuvwxyz")  # cho phép hậu tố "VIIb"/"IIc" gộp cùng số
         section(f"{base}. {title}")
         for num, func, prio, pre, steps, td, exp, note in tcs:
             tcid = f"TC_{ROMAN[base]:02d}.{int(num):03d}"

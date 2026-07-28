@@ -51,6 +51,11 @@ Triệu chứng: bấm "Học khoá tiếp theo" sang khoá cuối, vừa vào (
 Nguyên nhân: `initCourse` gọi `heartbeat.teardown()`/`scormCommit.flush()` cho khoá CŨ (fire-and-forget) RỒI `fetchCourseData` khoá mới. Response commit khoá cũ (`enrollment_status=done`) vọng về SAU khi `this.enrollment` đã là khoá mới → `handleHeartbeatResponse` gán nhầm done + `courseCompletionSignal++` → modal sai. BE không bị ảnh hưởng (outline đúng).
 Fix: `learningSession.handleHeartbeatResponse` — early return nếu `subject_lesson_id` của response không thuộc khoá đang mở (`!lesson`). Chặn luôn toast "hoàn thành bài" sai. File: `elearning/src/stores/learningSession.js`.
 
+### Fix (2026-07-18): card lộ trình hiện "Đang học"/"Tiếp tục" sai khi mới ghi danh
+Triệu chứng: card lộ trình ở màn browse — ghi danh lộ trình (chỉ enroll các khoá con, chưa vào học) → progress 0% nhưng chip hiện "Đang học" và nút "Tiếp tục". Khác với khoá lẻ (bấm Tham gia là vào thẳng màn học nên "Đang học" hợp lý).
+Nguyên nhân: `PathCard.vue` `learnState` gộp mọi trạng thái đã ghi danh + progress <100 thành `'learning'`, và nút chỉ dựa `isEnrolled`. Trong khi BE (`PublicBrowseController.buildUserProgressMap`) đã phân biệt `learn_status`: `enrolled` (0%) | `learning` (>0%) | `done` (>=100%).
+Fix (FE thuần): `learnState` map đúng `learn_status` BE trả — `'enrolled'` → `not_started` ("Chưa bắt đầu"), fallback theo progress khi thiếu. Thêm computed `isLearning` cho nút: chỉ "Tiếp tục" (style primary + icon arrow) khi đang thực sự học, còn lại "Xem chi tiết" (flat + icon info). Chip + progress bar giữ nguyên (enrolled-0% → "Chưa bắt đầu" + 0%). File: `elearning/src/components/base/PathCard.vue`.
+
 ### Quyết định (2026-06-03): lock cấp BÀI ở outline
 Lock cấp bài (linear_required của khoá + prerequisite) CHỈ enforce trong màn học (LessonLockResolver BE + recomputeLocks FE); vào bài bị khoá → tự nhảy về bài được phép. Outline lộ trình KHÔNG hiển thị 🔒 cấp bài (hardcode locked=false) — nhất quán với outline khoá lẻ. User chốt GIỮ NGUYÊN, không thêm tính `locked` cấp bài vào outline.
 Đang làm dở: không.

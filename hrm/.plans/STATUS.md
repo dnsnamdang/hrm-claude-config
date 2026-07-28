@@ -2,11 +2,17 @@
 
 ## Đang làm
 
-- elearning-hall-of-fame → @junfoke → .plans/elearning-hall-of-fame/plan.md
-  Trạng thái: CODE DONE 5 phase + user đã migrate/seed/gán quyền 1082 (2026-07-16). Verify UI màn cấu hình PASS.
-  Scope: Khối "Vinh danh học viên" trang chủ elearning → bảng vàng tự tính theo cấu hình (2 bảng mới, 7 tiêu chí, màn /training/hall_of_fame). Đã xoá mockData.js → trang chủ hết sạch mock.
-  Spec: docs/superpowers/specs/2026-07-16-elearning-hall-of-fame-design.md | Tóm tắt: .plans/elearning-hall-of-fame/design.md
-  Bước tiếp: verify UI trang chủ elearning + E2E CRUD danh hiệu (còn tồn: on_time_rate chưa có data thật để verify; cần PR sửa elearning/CLAUDE.md + skill elearning-page vẫn trỏ mockData.js đã xoá).
+- general-regulations-history → @khoipv → .plans/general-regulations-history/plan.md
+  Trạng thái: CODE DONE + VERIFIED cả 3 phase (2026-07-10). Model Opus 4.8 (user đổi 2026-07-10). Chờ user verify browser bằng mắt (3 màn) + quyết định phát sinh Phase 2 (mục 1 dưới).
+  PHASE 5 (2026-07-10, inline Opus): lịch sử CRUD tab "Khung giờ làm thêm" (entity overtime_hours: type/start_at/end_at/3 hệ số) — biến thể FULL-SNAPSHOT create/update/delete (như employee_history). Bảng riêng overtime_hour_history (ĐÃ migrate 2026_07_10_000004), helper OvertimeHourHistory::log() try/catch (an toàn trong DB::transaction store). OvertimeHourService log 3 action (create=new snapshot / update=old+new nếu đổi / delete=old snapshot) + histories() ASC theo công ty. Route GET timesheet/overtime-hour/histories ĐẶT TRƯỚC /{id}. Nút+modal RIÊNG trên tab Khung giờ (OvertimeHourHistoryModal: Thêm xanh liệt kê / Sửa amber diff cũ→mới / Xóa đỏ liệt kê; bộ lọc Thao tác/Người/ngày). VERIFY tinker CRUD PASS (create/update/no-op không log/delete/histories) + route web 200 + FE compile; dọn data test. Chờ user verify browser (hard-refresh).
+  PHASE 4 (2026-07-10, inline Opus): thêm log 3 danh sách trên tab Chung màn overtime (user báo chưa ghi nhận) — biến thể ACTION-LOG thêm/bớt, GỘP CHUNG modal + endpoint histories. 3 điểm: OvertimeCompanyService::store (công ty áp dụng, global), OvertimePositionRestrictionService::store (chức vụ cấm làm thêm theo công ty), P3TechnicalBasedOnWorkingPositionService::store (chức vụ Khoán P3). Ghi bảng overtime_regulation_history action mới company_restriction_update/position_restriction_update/p3_position_update; new_value JSON {context, added:[tên], removed:[tên]}, overtime_regulation_id=0; helper static OvertimeRegulationHistory::logListChange (try/catch). histories() partition: field-diff(action='update') lọc theo công ty + list-action(!='update') global. FE OvertimeHistoryModal render 2 dạng (field cũ→mới; list Thêm xanh/Bỏ đỏ + context tên công ty). VERIFY tinker 3 danh sách + partition PASS, config khôi phục nguyên, FE compile sạch; web server restart. LƯU Ý FE gửi overtime_company_id CHÍNH LÀ company_id (Human) → resolve tên qua Company::find. Chờ user verify browser.
+  PHASE 3 (2026-07-10, inline Opus): lịch sử tab "Chung" màn Quy định làm thêm (/timesheet/setting/overtime) — mirror Phase 1 subset-diff. Bảng `overtime_regulation_history` (ĐÃ migrate 2026_07_10_000003). Track 9 trường overtime_regulations = đúng $request->only OvertimeRegulationController::update (basis_for_calculating_overtime, minimum/maximum/have_continuous_time là boolean, minimum_time/maximum_time/continuous_time_max/continuous_time_relax/time_from). Endpoint riêng màn này (Vuex saveOvertimeConfig) → không rủi ro trường lạ. BE: OvertimeRegulationService::save() diff snapshot + histories() ASC scope company; OvertimeRegulationController::histories try/catch; route GET overtime_regulations/histories (auth:api). FE: OvertimeHistoryModal.vue (mirror GeneralHistoryModal, 9 FIELD_LABELS + BASIS_LABELS 3 phương án, không có trường HTML) + nút light+ri-history-line trên components/setting/overtime/General.vue (màn auto-save — không đụng model/watcher). KHÔNG permission riêng. VERIFY: tinker 6 case PASS + E2E write-path qua web server thật (restart php -S nạp code mới; POST update→GET histories đúng diff 3 trường + boolean 0/1 + changed_by_name + giờ) + FE compile sạch; đã dọn sạch bảng history. Chờ user verify browser tab Chung màn overtime.
+  PHASE 2 (2026-07-10, user duyệt làm CẢ 2 tab miễn chấm công + cho chèn log 2 hàm dùng chung Human): bảng `timekeeping_exemption_history` (ĐÃ migrate; action add/remove + snapshot NV {employee_id,code,fullname} + source manual/department_sync/employee_sync + type_employee lọc tab) + helper static `TimekeepingExemptionHistory::log()` (try/catch \Throwable — không bao giờ fail luồng chính). 4 điểm log: TimekeepingExemptionService save (chỉ khi thực create)/delete (per-row, giữ type); DepartmentService::createDepartment (chuyển thường→CTV = 2 dòng remove+add, tạo CTV, bulk delete CTV — INSERT-ONLY 12 dòng); EmployeeInfoService::createTimekeepingExemption (+2 dòng). Endpoint GET timekeeping-exemptions/histories?type=normal|cooperation (auth:api, KHÔNG lọc company — khớp hành vi 2 list; partition NULL-safe orWhereNull). FE: TimekeepingExemptionHistoryModal.vue dùng chung (prop type, modal id theo type), nút light+ri-history-line cả 2 tab; Thêm=xanh/Xóa=đỏ + badge nguồn; bộ lọc Thao tác/Người/Từ-Đến ngày. E2E Playwright 7/7 PASS + tinker; đã dọn data test.
+  ⚠️ PHÁT SINH CHỜ QUYẾT: hook `EmployeeInfo::updated` (Human, entity nhạy cảm ERP-sync) tự xoá exemptions khi NV rời phòng ban vận hành = điểm mutation thứ 5 CHƯA log → lịch sử có thể lệch (Thêm không có Xóa). Cần user đồng ý mới chèn log vào hook này. (Chấp nhận ship: company_id history luôn NULL; add ghi type NULL vs remove ghi 0 — cùng partition.)
+  Scope: Lịch sử chỉnh sửa 14 trường tab "Chung" màn Quy định chung (/timesheet/setting/general) theo mẫu EmployeeHistoryModal. BE: GeneralRegulationService::save() diff snapshot trước/sau (chuẩn hoá bool true/false↔0/1, numeric, rỗng→null — tránh log rác), ghi old/new = JSON CHỈ gồm trường thay đổi; endpoint GET general-regulations/histories (auth:api, scope company, KHÔNG permission riêng) trả changed_by_name + d/m/Y H:i:s + changed_at_raw. FE: nút "Lịch sử thay đổi" (V2BaseButton light theo button-convention) + GeneralHistoryModal.vue (modal theo skill modal-popup: hide-footer + footer tertiary Đóng, header icon tròn; timeline cũ đỏ→mới xanh, nhãn 14 trường + nghỉ tuần 6 phương án + bản đồ, note_email strip HTML cắt 100 ký tự; bộ lọc client-side Trường/Người/Từ-Đến ngày). KHÔNG log profit_margin_threshold (verify: lưu từ màn Cấu hình duyệt giá không sinh log).
+  VERIFY: tinker 6 case diff PASS (đổi 1 trường/không đổi/chỉ profit_margin/boolean equivalence/2 trường 1 dòng/format histories); Playwright E2E PASS (flow đổi giá trị → modal hiện đúng dòng đỏ/xanh + người + giờ, bộ lọc 4 loại, mở/đóng modal không tự bắn POST, case price-approval không log); đã dọn log test + khôi phục giá trị. FILES: BE migration+entity GeneralRegulationHistory + service + controller + route; FE General.vue + GeneralHistoryModal.vue. KHÔNG git.
+  ⚠️ Phát hiện lỗi CÓ SẴN không thuộc feature: php artisan route:list crash do Modules/Decision/Routes/web.php:17 trỏ DecisionController thiếu namespace V1 — cần báo team.
+  Spec: docs/superpowers/specs/2026-07-10-general-regulations-history-design.md | Tóm tắt: .plans/general-regulations-history/design.md
 
 - playwright-e2e → @dnsnamdang → .plans/playwright-e2e/plan.md
   Trạng thái: PLAN DONE (2026-06-26). Spec + plan chi tiết đã viết. Chờ user chọn cách thực thi (subagent-driven / inline) để code Phase 0.
@@ -494,8 +500,57 @@
   ⚠️ Phát hiện lỗi CÓ SẴN không thuộc feature: php artisan route:list crash do Modules/Decision/Routes/web.php:17 trỏ DecisionController thiếu namespace V1 — cần báo team.
   Spec: docs/superpowers/specs/2026-07-10-general-regulations-history-design.md | Tóm tắt: .plans/general-regulations-history/design.md
 
+- skill-icon → @junfoke → .plans/skill-icon/plan.md
+  Hoàn thành: 2026-07-27. Chọn icon riêng cho từng Kỹ năng (mirror cơ chế icon của TrainingType): migration `skills.icon`, BE Training (fillable) + Elearning (filterOptions), hrm-client icon-picker 20 icon + cột icon, elearning dropdown "Học theo kỹ năng". ⚠️ Cần chạy `php artisan migrate`.
+  Tóm tắt: .plans/skill-icon/design.md
+
+- elearning-category-contents → @junfoke → .plans/elearning-category-contents/plan.md
+  Hoàn thành: 2026-07-27. Màn "Học theo danh mục" mới (/hoc-theo-danh-muc) trộn lộ trình + khóa học cùng danh mục, badge phân biệt, filter/sort server-side. BE endpoint gộp GET public/contents (tái dùng helper homeSection); FE CategoryContentsView + điều hướng từ trang chủ. Không migration. Review: sẵn sàng merge (3 minor backlog ghi ở plan.md).
+  Tóm tắt: .plans/elearning-category-contents/design.md
+
+- dong-bo-han-hoan-thanh → @junfoke → .plans/dong-bo-han-hoan-thanh/plan.md
+  Hoàn thành: 2026-07-24. Đồng bộ hạn hoàn thành khoá/lộ trình theo cơ chế DYNAMIC (tính khi đọc, đổi cấu hình dời hạn cả người đã tham gia) qua 1 helper duy nhất. Migration `subject_enrollments.is_onboarding` (thay due_date, có backfill); 10 file BE (Training + Elearning) + FE hrm-client/elearning. Công thức: khoá days=(is_onboarding&&must_finish>0)?must_finish:complete_within_days; lộ trình=complete_within_days.
+  ✅ Verified browser (Playwright): đổi complete_within_days → pill hạn dời đúng, không cần re-enroll; DB đã khôi phục.
+  Tóm tắt: .plans/dong-bo-han-hoan-thanh/design.md
+
+- cau-hinh-trang-chu-elearning → @junfoke → .plans/cau-hinh-trang-chu-elearning/plan.md
+  Hoàn thành: 2026-07-23 (bổ sung quota 2026-07-27). Admin cấu hình Hero slide (bật/tắt + kéo-thả thứ tự + quota mỗi nguồn + tổng slide) và Footer trang chủ elearning tại /training/home_config, thay hardcode. Bảng singleton `elearning_home_settings`, quyền id 1084, FE store useSiteConfigStore. Thuật toán hero 2-pass theo quota (fix winner-takes-all).
+  ✅ Verified E2E Playwright cả admin + portal; cấu hình đã khôi phục mặc định.
+  Tóm tắt: .plans/cau-hinh-trang-chu-elearning/design.md
+
+- hoc-vien-ngoai-thi → @junfoke → .plans/hoc-vien-ngoai-thi/plan.md
+  Hoàn thành: 2026-07-23. Học viên ngoài thi khóa evaluation_mode='exam' + is_public=1 NGAY trong app elearning (bỏ deep-link HRM), tái dùng engine thi Training. Migration `exam_test_results.learner_id`; BE Elearning + Training learner-aware; FE SubjectExamView + SubjectExamResultView; màn chấm tự luận HRM hiện tên learner + badge "Học viên ngoài"; thông báo chấm xong cho learner (chuông DB + Redis channel riêng).
+  ✅ Verified Playwright luồng learner (bài 970, chờ chấm). ⚠️ socket-server phải rebuild container mới có realtime; test data exam_test_result id=970 còn trên DB dev.
+  Kèm 5 fix phát sinh (examiner list, nhất quán "Kết quả" lịch sử thi vs card, tiến độ khóa con trong lộ trình 3 endpoint) — chi tiết ở plan.md.
+  Tóm tắt: .plans/hoc-vien-ngoai-thi/design.md
+
+- elearning-learning-flow-fixes → @junfoke → .plans/elearning-learning-flow-fixes/plan.md
+  Hoàn thành: 2026-07-22. 3 bug luồng học: (1)+(3) nút "Tiếp tục/Xem lại nội dung" trỏ vào khóa không khả dụng → kẹt 423 (thiếu điều kiện `available` ở FE + linear-lock BE); (2) đếm "x bài học" gồm cả bài admin-KHÓA làm lệch "Bài x/y" (helper learnableLessonCount áp 4 chỗ). 5 file BE+FE, không migration.
+  Tồn (độc lập, chờ user quyết): 23 khóa con thuộc lộ trình đã ghi danh thiếu SubjectEnrollment → 403.
+
+- elearning-private-course-access → @junfoke → .plans/elearning-private-course-access/plan.md
+  Hoàn thành: 2026-07-21 (4 phase). Khóa/lộ trình chuyển public→private thì học viên ngoài bị chặn học tiếp (423 scope='private'), góc học tập hiện card "Không còn khả dụng"; nhân viên không ảnh hưởng. Phase 3: private = chỉ nội bộ tuyệt đối (bỏ ngoại lệ qua lộ trình public). Phase 4: tiến trình lộ trình loại khóa con không khả dụng + modal cảnh báo tác động khi đổi visibility (guard 409 require_confirm).
+  ✅ Verified tinker 7/7 case; DB khôi phục. Tóm tắt: .plans/elearning-private-course-access/design.md
+
+- training-inuse-status → @junfoke → .plans/training-inuse-status/plan.md
+  Hoàn thành: 2026-07-20 (4 phase). Chuẩn hoá "đang dùng" cho Bài học → Khóa học → Lộ trình: nhãn LP "Đang dùng"→"Hoạt động"; isInUse() 3 entity + hợp nhất is_can_delete; chỉ chặn Xóa (Khóa/Sửa vẫn cho); nới xóa LP theo enrollment; khóa lộ trình chặn học khóa con (423); badge "Đã khóa" ở góc học tập elearning.
+  ⚠️ Đổi hành vi: LP Hoạt động chưa ai học giờ xóa được; mở khóa LP về Hoạt động. ✅ Verified API + UI, data đã khôi phục.
+  Tóm tắt: .plans/training-inuse-status/design.md
+
+- elearning-news → @junfoke → .plans/elearning-news/plan.md
+  Hoàn thành: 2026-07-17. Mục "Tin tức, Thông báo" portal elearning = CMS một chiều (chỉ admin đăng, có danh mục + bài nổi bật + đếm lượt xem). 2 bảng mới, admin ở Modules/Training, portal đọc qua Modules/Elearning, quyền id 1083. Verified 3 tầng: tinker + admin hrm-client + portal.
+  ⚠️ Lỗi CÓ SẴN không thuộc feature: `php artisan route:list` crash do Modules/Decision thiếu DecisionController.
+  Tóm tắt: .plans/elearning-news/design.md
+
+- elearning-hall-of-fame → @junfoke → .plans/elearning-hall-of-fame/plan.md
+  Hoàn thành: 2026-07-16 (5 phase). Khối "Vinh danh học viên" trang chủ elearning → bảng vàng tự tính theo cấu hình (2 bảng mới, 7 tiêu chí, màn /training/hall_of_fame, quyền 1082). Đã xoá mockData.js → trang chủ hết mock.
+  Tồn: tiêu chí on_time_rate chưa có data thật để verify; elearning/CLAUDE.md + skill elearning-page còn trỏ mockData.js đã xoá (cần PR).
+  Tóm tắt: .plans/elearning-hall-of-fame/design.md
+
 - elearning-auth → @junfoke → .plans/elearning-auth/plan.md
   Hoàn thành: 2026-07-16. Phase 9: fix cross-tab auth sync (nhân đôi tab ra nhầm tài khoản) — 2 file FE, Playwright TC16-19 PASS. Phase 10: fix link xác thực email `http:///verify-email` (thiếu `ELEARNING_CLIENT_URL`) — 4 file BE, verify tinker PASS. ⚠️ Còn tồn ngoài code: .env SERVER deploy phải có `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com`, chưa có thì link mail vẫn hỏng.
+  Phase 11 (2026-07-17, inline Opus): fix "đăng xuất elearning kéo theo đăng xuất HRM". Employee dùng chung JWT với HRM → logout() cũ redirect sang hrm-client gate `sso/elearning-logout` blacklist token dùng chung → giết HRM. Fix: employee logout CHỈ clearAuth cục bộ + về `/` (public, không auto-SSO), không gọi BE/không blacklist; gỡ const HRM_CLIENT_URL. 1 file FE (src/stores/auth.js). hrm-client `elearning-logout.vue` thành dead code (giữ lại). Verify Playwright TC20-21 PASS (HRM check-login 200 logged_in:true, token jti không đổi). UX user chốt: giữ auto vào lại qua SSO.
+  ⚠️ LƯU Ý: cross-tab (Phase 9) STATUS ghi done 2026-07-16 nhưng working tree session 2026-07-17 KHÔNG có initCrossTabSync → đã re-implement + verify lại trong tree này. Có thể trùng công việc đã merge ở branch khác — cần user check branch/merge.
 
 - elearning-home-dynamic → @junfoke → .plans/elearning-home-dynamic/plan.md
   Hoàn thành: 2026-07-16. 13 file. Bỏ hardcode 2 khối trang chủ elearning — "Hoạt động gần đây" (API mới recent-activities) + "Danh mục nội dung" (dùng training_types có sẵn + cột icon/sort_order). 2 migration additive. Spec: docs/superpowers/specs/2026-07-15-elearning-home-dynamic-design.md
@@ -575,6 +630,9 @@
 
 - elearning-tracking-fix → @junfoke → .plans/elearning-tracking-fix/plan.md
   Trạng thái: CODE DONE (2026-06-02, ~12 file: 1 BE + FE). Chờ verify browser trong Docker (Node ≥18). Scope: (1) hiển thị thời gian 3:12, (2) completionHint theo config, (3) video tracking thật IFrame Player API (free), (4) tối ưu heartbeat (keepalive + dừng khi done), (5) fix status chậm (optimistic learning) + toast bắn nhầm khi quay lại bài đã xong (dùng just_completed), (6) toàn vẹn tracking: chống tua video (SEEK_THRESHOLD, cho 2x) + rời tab khi đọc tài liệu (useReadingTracker + ReadingGateOverlay "Tiếp tục học"). Tiếp nối learning-session-api + elearning-lesson-viewer. Defer: idle-trong-tab, enforce scroll/dwell, Redis/queue (chỉ khi scale nghìn).
+  PHASE 9 (2026-07-16/17) — VERIFIED browser: fix "chặn tua không hiệu lực" + khoá cứng thanh tua. 2 root cause: BE SubjectBuilderRequest thiếu prepareForValidation() → select2 ghi chuỗi "false" vào JSON tracking_completion_override (fix: normalize boolean như LessonRequest); FE handler ENDED gán played=duration vô điều kiện. Chốt khoá cứng: bài cấm tua dùng controls:0+disablekb:1 + control tự vẽ (play/pause, progress read-only, tốc độ, toàn màn hình). Chỉ cấm tua, KHÔNG cấm xem nhanh; đổi chất lượng video không làm được (YouTube deprecate setPlaybackQuality).
+  PHASE 10 (2026-07-17) — VERIFIED browser: resume vị trí video khi mở lại bài, tận dụng read_seconds (KHÔNG đổi DB); bài done → phát lại từ đầu. Kèm fix seekTo từ trạng thái "cued" bị YouTube auto-play (pauseVideo khi onReady).
+  Bước tiếp: user merge (chưa git). Files: BE SubjectBuilderRequest.php; FE YoutubePlayer.vue + LessonViewer.vue.
 
 - scorm-preview-runtime → @junfoke → .plans/scorm-preview-runtime/plan.md
   Trạng thái: CODE DONE (2026-06-01). Chờ user restart dev server + verify trên browser (upload gói SCORM → preview hết lỗi objective).
