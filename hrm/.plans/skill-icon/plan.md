@@ -37,9 +37,13 @@
 - [x] Bug: `SkillListResource` (resource whitelist field) thiếu `icon` → FE nhận undefined → rơi về DEFAULT_SKILL_ICON. Modal Sửa đúng vì show() dùng CompanyDetailResource trả full record.
 - [x] Fix: thêm `'icon' => $obj->icon` vào SkillListResource
 
+## Task 7 — Fix sort cột "Cập nhật" trả 500 — ✅ DONE
+- [x] Bug: cột dùng `key: 'updatedAt'`, V2BaseDataTable emit `column.key` khi sort → BE `orderBy('updatedAt')` → cột không tồn tại → 500. Load đầu OK vì default sort_field='updated_at'.
+- [x] Fix: đổi `key: 'updatedAt'` → `'updated_at'` + slot `#cell-updatedAt` → `#cell-updated_at` (khớp cột DB, arrow hiển thị đúng ngay từ đầu)
+
 ### Checkpoint — 2026-07-28
-Vừa hoàn thành: Fix bug icon danh sách kỹ năng (Task 6) — bổ sung `icon` vào SkillListResource.
-Bước tiếp: user verify màn Quản lý kỹ năng hiện đúng icon từng kỹ năng.
+Vừa hoàn thành: Fix bug icon danh sách kỹ năng (Task 6) + fix sort cột Cập nhật trả 500 (Task 7).
+Bước tiếp: user verify màn Quản lý kỹ năng — icon đúng + sort cột "Cập nhật" không còn lỗi.
 Blocked:
 
 ### Checkpoint — 2026-07-27
