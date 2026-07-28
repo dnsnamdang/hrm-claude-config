@@ -24,7 +24,11 @@ Vừa hoàn thành: Phase 1 BE + Phase 2 FE, đã spec-review PASS cả 2.
 Bước tiếp theo: user test 9 case (spec section 6).
 Blocked: —
 
-## Phase 3 — Test
+## Phase 3 — Fix bug footer modal ✅ DONE 2026-07-03
+
+- [x] Fix modal `add-member-modal` (HumanResourceTab.vue): nút "Thêm nhân sự"/"Huỷ" đặt trong slot `#modal-footer` nhưng modal có `hide-footer` → footer không render, popup không có nút. Chuyển 2 nút thành `<div class="modal-footer">` trong body theo skill modal-popup.
+
+## Phase 4 — Test
 
 - [ ] Test solution has_modules=true: flow cũ vẫn hoạt động (chọn hạng mục → chọn thành viên → submit)
 - [ ] Test solution has_modules=false: modal không có field hạng mục, chọn thành viên trực tiếp, submit OK, hiển thị trong tree + table

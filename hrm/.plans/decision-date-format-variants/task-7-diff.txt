@@ -1,0 +1,128 @@
+diff --git a/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php b/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php
+index 652dcb0c7..d9a355960 100644
+--- a/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/AppendixLaborContractController.php
+@@ -148,11 +148,11 @@ class AppendixLaborContractController extends ApiController
+             // Số phụ lục / số HĐ / số QĐ trong phụ lục
+             $result['SO_PL_HDLD'] = $appendixLaborContract->code ?? '';
+             $result['SO_HD_TRONG_PLHD'] = $appendixLaborContract->decision_labor_contract_code ?? '';
+             $result['SO_QD_TRONG_PLHD'] = $appendixLaborContract->decision_code ?? '';
+-            $result['NGAY_HOP_DONG'] = $decisionContract ? Helper::formatDate($decisionContract->created_at) : '';
++            Helper::fillDateVariants($result, 'NGAY_HOP_DONG', $decisionContract ? $decisionContract->created_at : null, 'so');
+             $result['TEN_NHAN_SU'] = stripCodePrefix($appendixLaborContract->employee_name ?? '');
+-            $result['NGAY_SINH'] = Helper::formatDate($appendixLaborContract->birthday);
++            Helper::fillDateVariants($result, 'NGAY_SINH', $appendixLaborContract->birthday, 'so');
+             $result['DIA_CHI_THUONG_TRU'] = $appendixLaborContract->full_address_residence;
+             $result['CMTND'] = $appendixLaborContract->id_card;
+ 
+             // Biến mẫu in cho PL HĐLĐ (tổng thu nhập, BHXH, 100% và P1/P2/P3)
+@@ -188,9 +188,9 @@ class AppendixLaborContractController extends ApiController
+             $result['LOAI_QD'] = AppendixLaborContract::DECISION_TYPE[$appendixLaborContract->decision_type] ?? '';
+             $result['TEN_NHAN_VIEN'] = stripCodePrefix($appendixLaborContract->employee_name ?? '');
+             $result['GIOI_TINH'] = $info ? ($info->gender == 1 ? 'Nam' : 'Nữ') : '';
+             $result['QUE_QUAN'] = $appendixLaborContract->place_of_birth ?? '';
+-            $result['NGAY_CAP_CMTND'] = $appendixLaborContract->grant_date ? Helper::formatDate($appendixLaborContract->grant_date) : '';
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $appendixLaborContract->grant_date, 'so');
+             $result['NOI_CAP_CMTND'] = $info ? ($info->grant_location ?? '') : '';
+             $lastEducation = $info ? $info->employee_educations->last() : null;
+             $result['CHUYEN_NGANH'] = $lastEducation ? ($lastEducation->specialty ?? '') : '';
+             $result['TRINH_DO_HOC_VAN'] = $appendixLaborContract->academic_level_name
+diff --git a/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php b/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php
+index c7d433b70..7efb284dd 100644
+--- a/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/DecisionLaborContractController.php
+@@ -25,8 +25,9 @@ use Modules\Human\Entities\Allowance;
+ use PhpOffice\PhpWord\PhpWord;
+ use PhpOffice\PhpWord\IOFactory;
+ use PhpOffice\PhpWord\Shared\Html;
+ use App\Helper\WordHelper;
++use Modules\Human\Helper\Helper;
+ 
+ class DecisionLaborContractController extends ApiController
+ {
+ 
+@@ -128,8 +129,10 @@ class DecisionLaborContractController extends ApiController
+         try {
+             $result = [];
+             $result['SO_HOP_DONG'] = $decisionLaborContract->code ?? '';
+             $result['NGAY_HOP_DONG'] = 'ngày ' . date('d', strtotime($decisionLaborContract->created_at)) . ' tháng ' . date('m', strtotime($decisionLaborContract->created_at)) . ' năm ' . date('Y', strtotime($decisionLaborContract->created_at));
++            $result['NGAY_HOP_DONG_SO'] = Helper::formatDate($decisionLaborContract->created_at);
++            $result['NGAY_HOP_DONG_CHU'] = Helper::formatDateVICapital($decisionLaborContract->created_at);
+ 
+             // Công ty
+             $result['TEN_CONG_TY'] = $decisionLaborContract->company->name;
+             $result['MST_CONG_TY'] = $decisionLaborContract->company->tax_code;
+@@ -141,27 +144,31 @@ class DecisionLaborContractController extends ApiController
+ 
+             // Nhân sự
+             $result['TEN_NHAN_SU'] = $decisionLaborContract->employeeInfo->fullname;
+             $result['NGAY_SINH'] = Carbon::parse($decisionLaborContract->employeeInfo->birthday)->format('d-m-Y');
++            Helper::fillDateVariants($result, 'NGAY_SINH', $decisionLaborContract->employeeInfo->birthday, 'keep');
+             $result['GIOI_TINH'] = $decisionLaborContract->employeeInfo->gender == 1 ? 'Nam' : 'Nữ';
+             $result['CMTND'] = $decisionLaborContract->employeeInfo->id_card ?? '';
+             $result['NOI_CAP_CMTND'] = $decisionLaborContract->employeeInfo->grant_location ?? '';
+             $result['NGAY_CAP_CMTND'] = Carbon::parse($decisionLaborContract->employeeInfo->grant_date)->format('d-m-Y');
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $decisionLaborContract->employeeInfo->grant_date, 'keep');
+             $result['DIA_CHI_THUONG_TRU'] = $decisionLaborContract->employeeInfo->full_address_residence ?? '';
+             $result['QUE_QUAN'] = $decisionLaborContract->employeeInfo->place_of_birth ?? '';
+             $result['DIEN_THOAI'] = $decisionLaborContract->employeeInfo->personal_telephone ?: ($decisionLaborContract->employeeInfo->telephone ?? '');
+             $result['MAIL'] = $decisionLaborContract->employeeInfo->email ?? '';
+             $result['HOC_VAN'] = $decisionLaborContract->employeeInfo->level_name ?? '';
+             $result['CHUYEN_NGANH'] = $decisionLaborContract->specialty ?? '';
+             $result['TRINH_DO_HOC_VAN'] = $decisionLaborContract->academic_level_name ?? '';
+             $result['PHONG_BAN'] = formatDepartmentName($decisionLaborContract->labor_contract_department_name ?? '');
+-            $result['NGAY_HIEU_LUC'] = Carbon::parse($decisionLaborContract->start_date)->format('d/m/Y');
++            Helper::fillDateVariants($result, 'NGAY_HIEU_LUC', $decisionLaborContract->start_date, 'so');
+             $result['THOI_HAN'] = Carbon::parse($decisionLaborContract->start_date)->diffInMonths(Carbon::parse($decisionLaborContract->end_date)) . ' tháng';
+             $result['BANG_CAP'] = $decisionLaborContract->academic_level_name ?? '';
+ 
+             $result['DIA_CHI_LAM_VIEC'] = $decisionLaborContract->labor_contract_company_name ?? '';
+             $result['THOI_HAN_HOP_DONG'] = 'Từ ngày ' . Carbon::parse($decisionLaborContract->start_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->start_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->start_date)->format('Y') .
+                 ' đến ngày ' . Carbon::parse($decisionLaborContract->end_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->end_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->end_date)->format('Y');
++            $result['THOI_HAN_HOP_DONG_SO'] = 'Từ ngày ' . Helper::formatDate($decisionLaborContract->start_date) . ' đến ngày ' . Helper::formatDate($decisionLaborContract->end_date);
++            $result['THOI_HAN_HOP_DONG_CHU'] = 'Từ ' . Helper::formatDateVICapitalInline($decisionLaborContract->start_date) . ' đến ' . Helper::formatDateVICapitalInline($decisionLaborContract->end_date);
+             $result['CHUC_DANH'] = $decisionLaborContract->employee_role_name ?? '';
+             $result['CHUC_VU'] = $decisionLaborContract->working_position_name ?? '';
+             $result['TONG_THU_NHAP'] = formatCurrency($decisionLaborContract->total_salary);
+             // convertNumberToWords (ICU vi SPELLOUT) đã tự kèm "đồng", không cộng thêm nữa
+@@ -299,8 +306,10 @@ class DecisionLaborContractController extends ApiController
+     {
+         $data = [];
+         $data['SO_HOP_DONG'] = $decisionLaborContract->code ?? '';
+         $data['NGAY_HOP_DONG'] = 'ngày ' . date('d', strtotime($decisionLaborContract->created_at)) . ' tháng ' . date('m', strtotime($decisionLaborContract->created_at)) . ' năm ' . date('Y', strtotime($decisionLaborContract->created_at));
++        $data['NGAY_HOP_DONG_SO'] = Helper::formatDate($decisionLaborContract->created_at);
++        $data['NGAY_HOP_DONG_CHU'] = Helper::formatDateVICapital($decisionLaborContract->created_at);
+ 
+         $data['TEN_CONG_TY'] = $decisionLaborContract->company->name;
+         $data['MST_CONG_TY'] = $decisionLaborContract->company->tax_code;
+         $data['DIA_CHI_CONG_TY'] = $decisionLaborContract->company->address;
+@@ -308,24 +317,28 @@ class DecisionLaborContractController extends ApiController
+         $data['CHUC_VU_DAI_DIEN_CONG_TY'] = 'Giám đốc NSHC';
+ 
+         $data['TEN_NHAN_SU'] = $decisionLaborContract->employeeInfo->fullname;
+         $data['NGAY_SINH'] = Carbon::parse($decisionLaborContract->employeeInfo->birthday)->format('d-m-Y');
++        Helper::fillDateVariants($data, 'NGAY_SINH', $decisionLaborContract->employeeInfo->birthday, 'keep');
+         $data['GIOI_TINH'] = $decisionLaborContract->employeeInfo->gender == 1 ? 'Nam' : 'Nữ';
+         $data['CMTND'] = $decisionLaborContract->employeeInfo->id_card ?? '';
+         $data['NOI_CAP_CMTND'] = $decisionLaborContract->employeeInfo->grant_location ?? '';
+         $data['NGAY_CAP_CMTND'] = Carbon::parse($decisionLaborContract->employeeInfo->grant_date)->format('d-m-Y');
++        Helper::fillDateVariants($data, 'NGAY_CAP_CMTND', $decisionLaborContract->employeeInfo->grant_date, 'keep');
+         $data['DIA_CHI_THUONG_TRU'] = $decisionLaborContract->employeeInfo->full_address_residence ?? '';
+         $data['HOC_VAN'] = $decisionLaborContract->employeeInfo->level_name ?? '';
+         $data['CHUYEN_NGANH'] = $decisionLaborContract->specialty ?? '';
+         $data['TRINH_DO_HOC_VAN'] = $decisionLaborContract->academic_level_name ?? '';
+         $data['PHONG_BAN'] = formatDepartmentName($decisionLaborContract->labor_contract_department_name ?? '');
+-        $data['NGAY_HIEU_LUC'] = Carbon::parse($decisionLaborContract->start_date)->format('d/m/Y');
++        Helper::fillDateVariants($data, 'NGAY_HIEU_LUC', $decisionLaborContract->start_date, 'so');
+         $data['THOI_HAN'] = Carbon::parse($decisionLaborContract->start_date)->diffInMonths(Carbon::parse($decisionLaborContract->end_date)) . ' tháng';
+         $data['BANG_CAP'] = $decisionLaborContract->academic_level_name ?? '';
+ 
+         $data['DIA_CHI_LAM_VIEC'] = $decisionLaborContract->labor_contract_company_name ?? '';
+         $data['THOI_HAN_HOP_DONG'] = 'Từ ngày ' . Carbon::parse($decisionLaborContract->start_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->start_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->start_date)->format('Y') .
+             ' đến ngày ' . Carbon::parse($decisionLaborContract->end_date)->format('d') . ' tháng ' . Carbon::parse($decisionLaborContract->end_date)->format('m') . ' năm ' . Carbon::parse($decisionLaborContract->end_date)->format('Y');
++        $data['THOI_HAN_HOP_DONG_SO'] = 'Từ ngày ' . Helper::formatDate($decisionLaborContract->start_date) . ' đến ngày ' . Helper::formatDate($decisionLaborContract->end_date);
++        $data['THOI_HAN_HOP_DONG_CHU'] = 'Từ ' . Helper::formatDateVICapitalInline($decisionLaborContract->start_date) . ' đến ' . Helper::formatDateVICapitalInline($decisionLaborContract->end_date);
+         $data['CHUC_DANH'] = $decisionLaborContract->employee_role_name ?? '';
+         $data['CHUC_VU'] = $decisionLaborContract->working_position_name ?? '';
+         $data['TONG_THU_NHAP'] = formatCurrency($decisionLaborContract->total_salary);
+         // convertNumberToWords (ICU vi SPELLOUT) đã tự kèm "đồng", không cộng thêm nữa

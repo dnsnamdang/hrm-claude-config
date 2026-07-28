@@ -63,6 +63,21 @@ Người phụ trách: @namdangit
 - [x] V11 hồi quy: xóa register → ERP vietvt lại ẨN đúng. Data test đã dọn (0 sót)
 - HƯỚNG DẪN SEED TEST: INSERT vào dev_erp.customer_registers (customer_id, customer_contact_id=NULL với KH cá nhân / =id contact với DN, employee_id=ERP employees.id của sales đăng ký, expired_date >= hôm nay, note tùy ý) — xóa dòng đó để trả lại trạng thái
 
+## Phase 3 — Popup: KH TỔ CHỨC hiện tất cả, không bám quyền (yêu cầu 2026-07-03)
+
+### BE (hrm-api)
+
+- [x] CustomerService::index + applyErpVisibilityScope: nhận cờ `all_business=1` → thêm nhánh `orWhere customer_type != 1` vào lớp quyền (tổ chức pass quyền; cá nhân vẫn qua lớp quyền + ownership như cũ)
+
+### FE (hrm-client)
+
+- [x] ChooseErpCustomerModal: gửi thêm `all_business: 1` khi gọi GET assign/customers (chỉ popup; màn /assign/customers không đổi)
+
+### Verify (2026-07-03, user vietvt id 78 — không có cấp quyền nào)
+
+- [x] Service-level: popup mới 11.001 (tổ chức 10.858 = TOÀN BỘ tổ chức Hoạt động is_customer=1; cá nhân 143 = giữ nguyên, không leak); màn chính (không cờ) vẫn 262
+- [x] HTTP thật (JWT vietvt): popup total=11.001, màn chính total=262
+
 ### Checkpoint — 2026-07-02 (Phase 2 xong + test tổng)
 
 Vừa hoàn thành: (1) FIX gap escape SĐT màn chính HRM — ô MST/SĐT (tax_code) + ô mobile giờ đều kích hoạt hiện KH TH3 khi khớp đúng full SĐT (trước chỉ popup có bypass mới hiện); (2) che SĐT ERP theo TH1 (searchData cột tax_code); (3) TEST TỔNG 27 case PASS 100%: BE HRM 7 (TH1/2/3 + contact locked + tổng 16.619) + HTTP validate 4 (422 TKT KH/contact, meeting TH2 chặn/TH1 không) + UI Playwright 15 (màn chính U1-4: tổng 16.971, TH3 ẩn, TH1 SĐT rõ, TH2 che; popup meeting U5-9: badge/chặn/ẩn-hiện/chọn TH3 OK; contact U10-13: auto-fill né khóa, nhãn 🔒, toast, reset; TKT U14-15) + ERP 8 (E1-8: ẩn/hiện/che SĐT/tổng 16.971). Đã dọn 3 register test.

@@ -2930,3 +2930,86 @@ Vừa hoàn thành: Fix lỗi 422 "Chưa có BOM tổng hợp Hoàn thành" khi 
 Đang làm dở: Không
 Bước tiếp theo: User verify trên UI — mở modal trình duyệt giải pháp Tự triển khai chưa có BOM Tổng hợp → phải hiện cảnh báo đỏ "Chưa có BOM tổng hợp" thay vì hiện BOM Thành phần.
 Blocked: Không
+
+## Phase 32 — Tối ưu UI popup "Thêm hàng hoá" (dồn diện tích cho bảng hàng hoá)
+
+Bối cảnh: popup `QuotationProductSearchModal.vue` (dùng chung `/assign/bom-list/add|edit` + `/assign/quotations/_id/edit`).
+Khi mở "Tìm kiếm nâng cao" chỉ còn thấy ~2 dòng hàng hoá — vùng quan trọng nhất lại ít diện tích nhất.
+
+- [x] FE (component chung): `V2BaseFilterPanel.vue` thêm slot `header-actions` (bổ sung, không truyền → render rỗng) để màn cha chèn nút ngang hàng nút toggle "Tìm kiếm nâng cao" — các màn danh sách khác giữ nguyên
+- [x] FE: chuyển nút "Thêm hàng tạm" vào slot `header-actions` — bỏ hẳn 1 hàng riêng phía trên bảng
+- [x] FE: khối lọc nâng cao từ 4 `filter-row` cứng (5 ô/hàng + 2 ô rỗng độn) → 1 CSS grid `auto-fit minmax(190px,1fr)` — 1920px: 9 ô/hàng còn 2 hàng; 1366px: 6 ô/hàng còn 3 hàng
+- [x] FE: hàng "Nhóm hàng" nhãn xếp chồng (~56px) → inline ngang control (32px)
+- [x] FE: popup 95vw×95vh → 98vw×98vh, backdrop padding 12→6px, nén padding modal-head/body/footer + tp-card + tab-content
+- [x] FE: cột chữ dài (Loại HH / Tên / Ghi chú / Tính chất HH) bọc `.cell-clamp` cắt 2 dòng + `title` tooltip — dòng cao 45-81px → đều 39-40px
+- [x] FE: ảnh thumbnail 32→26px (yếu tố quyết định chiều cao dòng)
+
+### Checkpoint — 2026-07-15
+Vừa hoàn thành: Phase 32 — tối ưu diện tích bảng trong popup Thêm hàng hoá (2 file FE, không BE/migration/permission).
+  - Đo thực tế Playwright @1920x1080 (DNS Admin, /assign/bom-list/add):
+    - Nâng cao MỞ + có Nhóm hàng (case user báo): 2 dòng → **15 dòng** đầy đủ; bảng = 61% chiều cao popup (643px)
+    - Nâng cao ĐÓNG: 18-19 dòng; khối lọc 236px → 86px (đóng) / 193px (mở)
+    - Dòng: 45-81px → 39-40px đều; nút "Thêm hàng tạm" y=63 NGANG HÀNG "Tìm kiếm nâng cao" y=63
+  - Regression: `/assign/bom-list` (index) filter panel giữ nguyên — toggle vẫn sát mép phải (gap=0), 1 button, title đúng
+  - Select2 lọc vẫn mở đúng, on-screen, search field 186px (không bị co 0) ; @1366x768 grid tự co 6 ô/hàng, không tràn ngang
+  - Lưu ý: `pages/assign/bom-list/components/BomBuilderAddProductModal.vue` là CODE CHẾT (BomBuilderEditor đã dùng QuotationProductSearchModal) — chưa xoá
+Đang làm dở: Không
+Bước tiếp theo: User hard-refresh verify popup ở cả 2 màn (BOM + Báo giá `/assign/quotations/{id}/edit`)
+Blocked: Không
+
+## Phase 32b — Fix lỗi UI select2 chọn nhiều + nén khối phân trang
+
+- [x] FE fix: ô search select2 multiple ĐÈ LÊN chip khi đã chọn (lỗi CÓ SẴN TỪ TRƯỚC, không do Phase 32)
+  - Nguyên nhân gốc: hack CSS cũ ép `.select2-search--inline { width:100%; float:none }` MỌI LÚC → ô search thành block full-width nằm đè chip đang float. Hack chỉ cần cho trạng thái RỖNG (select2 init lúc panel `v-show=false` → `resizeSearch()` đọc width ul = 0 → field width ~0 → mất placeholder/con nháy).
+  - Fix: giới hạn hack bằng `.select2-selection__rendered > .select2-search--inline:only-child` (rỗng thì ô search là con DUY NHẤT; có chip thì ul có thêm `__clear` + `__choice`) → có chip là trả về float mặc định của select2. Bỏ `width:100%!important` + `margin-top` vô điều kiện trên field.
+- [x] FE: nén khối phân trang — `.row.paging` bỏ `mt-3` (24px) → 4px, bỏ padding 10px; `.page-total` font 12px; select "Số dòng/trang" 28px; `.page-link` padding gọn
+  - (Rule cũ đoán sai selector `.v2-pagination`/`.pagination-wrapper` — KHÔNG tồn tại, đã thay bằng `.row.paging` / `.page-total` thật của V2BasePagination)
+
+### Checkpoint — 2026-07-15
+Vừa hoàn thành: Phase 32b — 1 file FE (`QuotationProductSearchModal.vue`, chỉ CSS).
+  - Đo Playwright @1920x1080 (click/gõ THẬT, không giả lập):
+    - RỖNG: ô search 186px, placeholder "Tất cả" đủ, hộp 32px → fix gốc KHÔNG tái phát
+    - CÓ CHIP: overlap `true` → `false`; ô search float left ngay sau chip (x=387), hộp 33px
+    - GÕ "Nhập" khi có chip: lọc đúng 3 kết quả (Nhập thường xuyên / theo yêu cầu / mẫu), không đè chip, field nằm trong hộp
+    - Chứng minh lỗi CÓ SẴN: ép lại bề rộng cột cũ 350px → vẫn `overlap: true`
+  - Phân trang: gap bảng↔paging 24px → 4px; khối 54px → 34px; nâng cao ĐÓNG 20 dòng (trọn trang), MỞ 17 dòng
+Đang làm dở: Không
+Bước tiếp theo: User hard-refresh verify chọn nhiều + phân trang ở cả 2 màn (BOM + Báo giá)
+Blocked: Không
+Ghi chú (ngoài scope, KHÔNG sửa): lint cảnh báo `v-else` dòng 257 (`<tr v-for v-else>`) là code CÓ SẴN — không nằm trong diff, bảng vẫn render đúng.
+
+## Phase 32c — Viết skill "popup chứa bảng dữ liệu" + fix Bẫy 1 ở file mẫu
+
+- [x] Skill: `.claude/skills/modal-popup/SKILL.md` thêm **mục 4** "Popup chứa BẢNG dữ liệu — dồn diện tích cho bảng" (8 điểm bắt buộc, dạng hợp đồng/recipe) + checklist riêng cho popup có bảng
+- [x] Skill: thêm file tham chiếu `.claude/skills/modal-popup/table-popup-layout.md` — CSS copy-paste đầy đủ, 7 bẫy, ngân sách chiều cao, snippet đo Playwright
+- [x] FE fix: `QuotationProductSearchModal.vue` `.modal-body` `overflow-y: auto` → `overflow: hidden` (chính là Bẫy 1 mà skill cảnh báo — file mẫu tự vi phạm)
+
+### Checkpoint — 2026-07-15
+Vừa hoàn thành: Phase 32c — viết skill theo TDD (superpowers:writing-skills) + fix file mẫu.
+  - RED (baseline, 2 subagent Opus KHÔNG có skill): cả 2 tự tìm ra QuotationProductSearchModal và copy công thức → baseline BỊ NHIỄU (file mẫu đã chứa lời giải). Vẫn thu được:
+    - Hội tụ (bằng chứng công thức đúng): chuỗi flex + min-height:0, bỏ max-height cứng, cell-clamp, grid auto-fit, mt-3 của paging
+    - Căn nguyên sắc hơn: `.modal-body{overflow-y:auto}` khiến mở filter ĐẨY BẢNG TRÔI khỏi màn (bảng vẫn 400px) — đó mới là lý do "2 dòng"
+    - Phân kỳ (chỗ cần siết): tự chế "dense toggle", trần 22vh + overflow trên lưới lọc, nghi vấn `.modal-content`/z-index
+  - Kiểm chứng nghi vấn `.modal-content` (đo live, KHÔNG suy đoán): V2BaseSelectInModal chỉ set dropdownParent khi có `.modal-content` → popup overlay không có → append `<body>`. NHƯNG chính component đã set `z-index:9999 !important` (V2BaseSelectInModal.vue:264/296/299) → nổi trên backdrop 5000. Đo: containerZIndex=9999, elementFromPoint giữa dropdown chạm `.select2-results__option`, hitIsInsideDropdown=true → KHÔNG lỗi, không cần vá. Đã ghi thành Bẫy 6.
+  - GREEN (1 subagent Opus CÓ skill, bối cảnh khác — Timesheet): đọc đúng SKILL.md mục 4 + table-popup-layout.md, áp đủ 8 điểm, tự dựng harness tĩnh (Bootstrap + CSS thật của V2BaseFilterPanel) và ĐO: 1920 đóng/mở = 19/17 dòng, 1366 = 11/8; bodyMustNotScroll=true cả 4; sweep minmax 190→170px (+1 dòng @1366). PASS.
+  - GREEN bắt được lỗi thật: file mẫu vẫn để `.modal-body{overflow-y:auto}` = đúng Bẫy 1 skill cảnh báo → đã fix thành `overflow:hidden`.
+  - Verify sau fix (app thật): 1280x720 nâng cao MỞ → 6 dòng, paging KHÔNG bị cắt, footer còn, body không cuộn; 1920x1080 MỞ → 17 dòng, bảng 68%, không thoái lui.
+Đang làm dở: Không
+Bước tiếp theo: User review skill; theo quy tắc team `.claude/skills/` sửa qua PR (chưa commit/push).
+Blocked: Không
+
+### Checkpoint — 2026-07-17 (bugfix)
+Vừa hoàn thành: Fix lỗi 500 "Class 'Modules\CRM\Entities\Customer' not found" khi update BomList (BomListService::buildChanges, resolver customer_id). Sai class (CRM không có Customer entity) + sai field (`->name`, cột thực là `fullname`). Đổi sang `\Modules\Human\Entities\Customer` (đúng class BomList::customer() dùng) + `->fullname` (đúng như BomListListResource). Lint PHP OK.
+Đang làm dở: Không
+Bước tiếp theo: User test update BomList có đổi khách hàng → không còn 500, log thay đổi hiện đúng tên KH
+Blocked: Không
+
+### Checkpoint — 2026-07-17 (bugfix - đính chính nguồn KH)
+Đính chính Bug class Customer: KH của BomList là customer_id **ERP** (giống nguồn màn /assign/customers → CustomerService đọc trực tiếp ERP qua App\Models\TpCustomer, connection mysql2). Bảng customers HRM chỉ chứa tập KH đã sync → id ERP (43244, 43305, 27127...) phần lớn KHÔNG có → Human\Customer::find trả null. Fix cuối: resolver customer_id dùng `\App\Models\TpCustomer::find($id)->fullname`, bọc try/catch như resolver currency_id. Đã verify 3 id ERP đều resolve được fullname. Lint OK.
+Bước tiếp theo: User test update BomList đổi KH → log thay đổi hiện đúng tên KH (kể cả KH chưa sync sang HRM).
+
+### Checkpoint — 2026-07-18 (bugfix - màn edit BOM không hiện khách hàng)
+Vừa hoàn thành: Fix ô Khách hàng trống ở màn `/assign/bom-list/{id}/edit`. Root cause: FE `loadBomDetail` gọi vòng 2 `human/customers/{id}` (bảng customers HRM) để lấy tên, nhưng customer_id của BomList là id ERP (TpCustomer/mysql2) → 404 → catch nuốt lỗi → trống. (Tạo mới hiện được vì `handleProjectChange` fill tên từ option dự án.)
+Fix tại gốc: (1) BE `DetailBomListResource` trả thêm `customer_name` từ relation ERP `$this->customer->fullname`; (2) `BomListService::loadDetail` eager-load thêm `'customer'`; (3) FE `BomBuilderEditor.loadBomDetail` set thẳng `bomForm.customer_name`/`customer` từ `detail.customer_name`, bỏ call + xóa method chết `loadCustomerInfo`.
+Bước tiếp theo: User reload màn edit BOM → ô Khách hàng hiện đúng tên (kể cả KH chưa sync HRM).
+Blocked: Không
