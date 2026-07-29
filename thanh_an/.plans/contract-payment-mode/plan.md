@@ -68,3 +68,18 @@ Không Critical. Đối chiếu đạt: data-loss sync (cleanup chạy cuối, m
 - [ ] Ghi chú chung nằm ngoài 2 card, lưu đúng
 - [ ] Lưu HĐ → reload/mở lại: mode + đợt + điều khoản từng khối nạp đúng
 - [ ] HĐ đã duyệt: sửa điều khoản/đợt/mode → nút "Lưu" bật (hasPaymentTermChanges), submit updatePaymentTermsAfterApprove OK, data KPI không bị mất
+
+---
+
+## Bug fix — Làm tròn tỷ lệ đợt làm sai số tiền (2026-07-28) @namdangit
+
+**Triệu chứng (user báo, HĐ 215, giá trị 2.576.000.000, 12 đợt):** nhập 11 đợt 215.000.000 + đợt cuối 211.000.000 → lưu xong mở sửa hiện 215.096.000 (×11) và 210.974.400.
+
+**Nguyên nhân gốc:** FE gửi cả `amount` (đúng) lẫn `percent` (làm tròn 2 số lẻ, 8,35). BE `syncPaymentInstallments` (ContractService.php:621-624) ƯU TIÊN `percent` → tính lại amount = round(8,35% × 2,576 tỷ) = 215.096.000, VỨT số tiền user nhập. Trái thiết kế ("số tiền là giá trị gốc").
+
+**Cách chọn (user quyết 2026-07-28):** Cách 1 "đợt cuối bù tỷ lệ" — số tiền là nguồn chuẩn (khớp tuyệt đối), cột % dồn phần lẻ vào đợt cuối để CỘNG ĐÚNG 100,00%.
+
+- [x] BE: `syncPaymentInstallments` ưu tiên `amount` do FE gửi, chỉ suy từ `percent` khi thiếu amount (ContractService.php:621-627, php -l sạch). ContractDetailResource:264 trả thẳng amount lưu, không recompute → OK
+- [x] FE `PaymentBlockCard.vue`: thêm `rebalancePercents()` (% dẫn xuất từ số tiền; tổng tiền == giá trị HĐ → đợt cuối = 100 − Σ% khác). Gọi trong emitUpdate + watch installments + created()
+- [ ] Verify UI (user bấm): 11×215tr + 211tr → lưu/mở lại số tiền khớp, đợt cuối 8,15%, tổng % = 100,00
+- [ ] Lưu ý user: HĐ 215 đã lưu sai amount trong DB → phải nhập lại đúng số tiền rồi lưu để chữa (không tự khôi phục được intent gốc)

@@ -31,3 +31,18 @@ Màn Hồ sơ nhân sự → tab thông tin thân nhân (/human/employee_info):
 - [x] php -l 2 file request → sạch
 - [x] Parse 4 file .vue (vue-template-compiler + @babel/parser) → ALL OK
 - [ ] Test browser: tích giảm trừ + để trống ngày → chặn + lỗi inline; nhập CCCD → MST tự điền (chờ user)
+
+### Bổ sung 2026-07-28 — dấu (*) header cột "Thời điểm bắt đầu tính giảm trừ"
+- [x] `EmployeeInfoForm.vue` (form chính, màn /human/employee_info/:id): thêm `<span class="field-required">(*)</span>` vào header cột, hiện khi có ≥1 dòng tick "Kê khai giảm trừ gia cảnh" (computed `hasDeductionDeclaration`)
+- [x] `request-update/EmployeeInfoForm.vue`: tương tự
+- [x] `request-update/EditEmployeeInfoForm.vue`: tương tự
+- [x] `my-info-request/EmployeeInfoForm.vue`: tương tự
+- [~] `my-info-request/EditEmployeeInfoForm.vue`: KHÔNG cần — bảng thân nhân rút gọn, không có cột giảm trừ
+- [~] `EmployeeInfoShow.vue` + view_change_histories.vue: KHÔNG sửa — màn xem read-only, không có input bắt buộc
+- [x] Verify: vue-template-compiler compile template 4 file → OK hết
+
+### Checkpoint — 2026-07-28
+Vừa hoàn thành: thêm (*) động ở header cột Thời điểm bắt đầu tính giảm trừ cho cả 4 form (form chính + request-update x2 + my-info-request)
+Đang làm dở: không
+Bước tiếp theo: user test browser (tick/bỏ tick checkbox → (*) hiện/ẩn)
+Blocked: không

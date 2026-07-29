@@ -43,6 +43,8 @@
   .product-table td.cell-propsum{ background:#f7faf9; color:#2c3e50; }
   .product-table input.inp-oq{ width:78px; text-align:right; }
   .product-table input.inp-note{ min-width:170px; }
+  .product-table input.inp-buyer{ min-width:150px; }
+  .product-table td.cell-saleco{ vertical-align:top; text-align:center; line-height:1.6; }
   .product-table input.inp-oq.oq-over{ background:#fdecea; border-color:#e74c3c; color:#c0392b; font-weight:700; }
   .product-table input.inp-oq.oq-under{ background:#fff8e1; border-color:#f0ad4e; color:#a97812; font-weight:700; }
   .oq-legend{ display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-1px; margin:0 3px 0 8px; border:1px solid transparent; }
@@ -90,6 +92,33 @@
   .gm-table tbody tr.gm-sel td{ background:#eaf4ff; }
   .gm-table tbody tr.gm-disabled{ opacity:.45; cursor:not-allowed; }
   .gm-table .sub{ font-size:10.5px; color:#8a97a3; }
+  /* Link mã phiếu → mở popup chi tiết */
+  .gm-table a.dd-link{ color:#0d6efd; font-weight:600; text-decoration:underline; cursor:pointer; }
+  .gm-table a.dd-link:hover{ color:#0a58ca; }
+  /* ===== Popup chi tiết phiếu đề xuất cung ứng ===== */
+  .dd-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px 24px; margin-bottom:14px; }
+  .dd-grid .dd-f{ font-size:12.5px; }
+  .dd-grid .dd-lb{ color:#8a97a3; font-size:10.5px; text-transform:uppercase; letter-spacing:.3px; margin-bottom:1px; }
+  .dd-grid .dd-v{ color:#2c3e50; font-weight:600; }
+  .dd-grid .dd-full{ grid-column:1 / -1; }
+  .dd-sec{ font-size:12.5px; font-weight:600; color:#2c3e50; margin:6px 0 6px; padding-bottom:4px; border-bottom:1px solid #e3e8ee; }
+  /* ===== Điều khoản thanh toán (port từ demo-lap-hop-dong-mua) ===== */
+  .pay-mode-switch{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .pay-table{ font-size:12.5px; margin-bottom:6px; }
+  .pay-table th{ background:#eef4f3; color:#2c3e50; font-size:11.5px; font-weight:600; text-align:center; vertical-align:middle; }
+  .pay-table td{ vertical-align:middle; }
+  .pay-table td.num, .pay-table th.num{ text-align:right; }
+  .pay-table tfoot td{ background:#f7faf9; }
+  .pay-pct-sum-ok{ color:#1e8e4e; font-weight:700; }
+  .pay-pct-sum-bad{ color:#dc3545; font-weight:700; }
+  .pay-term-table{ font-size:12.5px; margin-bottom:6px; }
+  .pay-term-table th{ background:#eef4f3; color:#2c3e50; font-size:11.5px; font-weight:600; vertical-align:middle; }
+  .pay-term-table td{ vertical-align:middle; }
+  .pay-term-table .term-name{ font-weight:600; font-size:13px; color:#1d1d1f; }
+  .pay-term-table .term-meta{ font-size:11.5px; color:#86868b; margin-top:2px; }
+  .pay-term-table tr.pay-term-locked{ opacity:.4; }
+  .pay-term-table tr.pay-term-off .term-name{ color:#6c757d; }
+  .pay-alert-exclusive{ background:#fff5e6; border-radius:8px; padding:10px 14px; display:flex; align-items:flex-start; gap:8px; font-size:12.5px; color:#b25e00; line-height:1.5; margin-top:10px; }
 </style>
 </head>
 <body>
@@ -113,11 +142,12 @@
           <div class="form-group col-md-4"><label>Mã đơn<span class="req">*</span></label><input id="f-code" class="form-control form-control-sm" value="DMH-2026-0001"></div>
           <div class="form-group col-md-4"><label>Ngày lập<span class="req">*</span></label><input id="f-date" type="date" class="form-control form-control-sm"></div>
           <div class="form-group col-md-4"><label>Người lên đơn</label><input id="f-creator" class="form-control form-control-sm" value="Nguyễn Văn An"></div>
-          <div class="form-group col-md-4"><label>Công ty thực hiện<span class="req">*</span></label>
-            <select id="f-company" class="custom-select custom-select-sm">
-              <option value="TA">TA — Thành An</option><option value="AV">AV</option><option value="VL">VL</option><option value="TB">TB</option><option value="MN">MN</option>
+          <div class="form-group col-md-4"><label>Loại đơn<span class="req">*</span></label>
+            <select id="f-order-type" class="custom-select custom-select-sm">
+              <option value="rep" selected>Theo phiếu đề xuất</option>
+              <option value="dutru">Mua dự trù</option>
             </select></div>
-          <div class="form-group col-md-4"><label>Diễn giải</label><textarea id="f-note" rows="2" class="form-control form-control-sm"></textarea></div>
+          <div class="form-group col-md-8"><label>Diễn giải</label><textarea id="f-note" rows="2" class="form-control form-control-sm"></textarea></div>
         </div>
       </div>
 
@@ -137,7 +167,6 @@
             </select></div>
           <div class="form-group col-md-8"><label>Địa chỉ giao hàng</label>
             <input id="f-deliver-addr" class="form-control form-control-sm" placeholder="Địa chỉ nhận hàng (kho / công trình / văn phòng)…"></div>
-          <div class="form-group col-md-12"><label>Điều khoản thanh toán</label><textarea id="f-payterms" rows="2" class="form-control form-control-sm" placeholder="Tự nhập hoặc auto theo HĐ mua tham chiếu…"></textarea></div>
         </div>
         <div class="debt-box" id="debt-box">
           <div>
@@ -147,6 +176,8 @@
           <div id="debt-detail"><div class="text-muted" style="font-size:12px;">Chọn NCC để xem chi tiết dư nợ theo công ty.</div></div>
         </div>
       </div>
+
+      <div class="category-card" id="pay-card"></div>
     </div>
 
     <!-- ================= TAB HÀNG HÓA ================= -->
@@ -167,11 +198,11 @@
                 <th class="col-demand">Mục đích mua (Phiếu đề xuất / KH / HĐ bán)</th>
                 <th class="num col-demand">SL đề xuất mua</th><th class="num">SL mua</th>
                 <th class="num">Đơn giá có VAT</th><th class="num">%VAT</th><th class="num">Thành tiền</th>
-                <th class="col-demand">Cty ký kết</th><th>Ngày cần</th><th>Ghi chú</th><th style="width:64px;">Xóa</th>
+                <th class="col-demand">Cty thực hiện bán</th><th>Cty thực hiện mua</th><th>Ngày cần</th><th>Ghi chú</th><th style="width:64px;">Xóa</th>
               </tr>
             </thead>
             <tbody id="pt-body">
-              <tr class="empty-row"><td colspan="17" class="text-center text-muted py-3">Chưa có hàng hóa — bấm nút chọn hàng phía trên.</td></tr>
+              <tr class="empty-row"><td colspan="18" class="text-center text-muted py-3">Chưa có hàng hóa — bấm nút chọn hàng phía trên.</td></tr>
             </tbody>
           </table>
         </div>
@@ -202,7 +233,7 @@
     </div>
     <div class="gm-body">
       <div class="form-row mb-2">
-        <div class="col-md-3">
+        <div class="col-md-3" id="dm-src-wrap">
           <select id="dm-filter-src" class="custom-select custom-select-sm">
             <option value="all" selected>Tất cả nguồn hàng</option>
             <option value="rep">Theo phiếu đề xuất</option>
@@ -226,6 +257,21 @@
         <button class="btn btn-secondary btn-sm" data-close="modal-pick">Đóng</button>
         <button class="btn btn-primary btn-sm" id="dm-confirm">Thêm vào đơn</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: chi tiết phiếu đề xuất cung ứng (tham chiếu module Supply) ===== -->
+<div class="gm-overlay" id="modal-demand" style="z-index:1060;">
+  <div class="gm-dialog gm-sm">
+    <div class="gm-head">
+      <h4 id="dd-title">Chi tiết phiếu đề xuất cung ứng</h4>
+      <button class="close" data-close="modal-demand">&times;</button>
+    </div>
+    <div class="gm-body" id="dd-body"></div>
+    <div class="gm-foot">
+      <span class="text-muted" style="font-size:11.5px;"><i class="mdi mdi-information-outline"></i> Dữ liệu tham chiếu phân hệ Cung ứng — phiếu đề xuất cung ứng (DXCU)</span>
+      <button class="btn btn-secondary btn-sm" data-close="modal-demand">Đóng</button>
     </div>
   </div>
 </div>
@@ -289,9 +335,41 @@ const POS = {
   'PO-2026-02':{ supplier:'THANHAN', signer:'AV', terms:'Tạm ứng 50% khi đặt hàng, thanh toán 50% còn lại trong 15 ngày sau giao hàng.' },
 };
 
+/* HĐ bán → Mã Công ty thực hiện bán (nguồn cho cột "Cty thực hiện bán") */
+const SALE_CONTRACTS = {
+  'HĐB-2026/045':{ company:'TA' },
+  'HĐB-2026/047':{ company:'AV' },
+  'HĐB-2026/052':{ company:'VL' },
+};
+/* Trả về mã cty thực hiện bán THEO TỪNG PHIẾU (mỗi phiếu 1 dòng, khớp cột Mục đích mua) */
+function saleCompaniesOf(purposes){
+  return (purposes||[]).map(x => (x.sale && SALE_CONTRACTS[x.sale]) ? SALE_CONTRACTS[x.sale].company : '—').join('<br>');
+}
+
 /* ================= STATE ================= */
 const state = { lines:[], nextKey:1 };
 /* line: {key, p, demandId|null, doc, from, qty, price, vat, type, purpose, customer, need, po, signer, remain|null, purposeEditable} */
+
+/* ---- Loại đơn: 'rep' = theo phiếu đề xuất (chỉ chọn hàng theo phiếu) | 'dutru' = mua dự trù (chưa làm) ---- */
+state.orderType = 'rep';
+
+/* ---- Điều khoản thanh toán (2 hình thức: theo đợt / theo đơn — port từ HĐ mua) ---- */
+const esc = s => String(s==null?'':s).replace(/"/g,'&quot;');
+state.payMode = 'dot'; // 'dot' = theo đợt | 'don' = theo đơn
+state.payDot = [
+  { label:'Lần 1: Tạm ứng trước khi giao hàng', pct:50, time:'' },
+  { label:'Lần 2: Sau khi giao hàng',           pct:30, time:'' },
+  { label:'Lần 3: Sau khi nghiệm thu',          pct:20, time:'' },
+];
+/* Thanh toán theo đơn — 4 loại điều khoản (đồng bộ màn HĐ bán) */
+const PAY_DON_TERMS = [
+  { code:'100PCT',  name:'100% trước giao hàng', meta:'Yêu cầu thanh toán đủ trước khi giao — loại trừ với các điều khoản khác', field:null,        exclusive:true },
+  { code:'TIME',    name:'Giới hạn thời gian',   meta:'Số ngày tối đa cho phép chậm thanh toán kể từ ngày giao hàng',            field:'max_days',   exclusive:false },
+  { code:'VALUE',   name:'Giới hạn giá trị',     meta:'Tổng dư nợ tối đa trên đơn hàng',                                         field:'max_value',  exclusive:false },
+  { code:'ROLLING', name:'Gối đầu đơn hàng',     meta:'Số đơn hàng đang còn nợ tối đa cho phép',                                 field:'max_orders', exclusive:false },
+];
+state.payDon = PAY_DON_TERMS.map(()=>({ enabled:false, max_days:'', max_value:'', max_orders:'' }));
+state.payNote = '';
 
 /* ================= INIT FORM ================= */
 const today = new Date().toISOString().slice(0,10);
@@ -318,6 +396,33 @@ function applySupplier(key){
 }
 document.getElementById('f-supplier').addEventListener('change', e => applySupplier(e.target.value));
 
+/* ================= LOẠI ĐƠN ================= */
+function applyOrderType(){
+  state.orderType = document.getElementById('f-order-type').value;
+  const isDutru = state.orderType === 'dutru';
+  /* Ẩn bộ lọc nguồn trong popup khi chỉ mua theo phiếu */
+  const wrap = document.getElementById('dm-src-wrap');
+  if(wrap) wrap.style.display = state.orderType === 'rep' ? 'none' : '';
+  /* Tạm thời: loại "Mua dự trù" ẩn tab Hàng hóa (chưa làm) */
+  const prodLink = document.getElementById('tablink-products');
+  const prodLi = prodLink.closest('.nav-item');
+  if(prodLi) prodLi.style.display = isDutru ? 'none' : '';
+  if(isDutru && prodLink.classList.contains('active')) $('#tablink-general').tab('show');
+}
+document.getElementById('f-order-type').addEventListener('change', e => {
+  if(e.target.value === 'rep'){
+    /* Chuyển sang "theo phiếu" mà đơn đang có hàng ngoài phiếu → hỏi xóa */
+    if(state.lines.some(l => l.purposeEditable)){
+      if(!confirm('Loại "Theo phiếu đề xuất" không cho phép hàng ngoài phiếu.\nXóa các dòng hàng ngoài phiếu đã thêm?')){
+        e.target.value = 'dutru'; return; /* giữ nguyên loại cũ */
+      }
+      state.lines = state.lines.filter(l => !l.purposeEditable);
+      renderTable();
+    }
+  }
+  applyOrderType();
+});
+
 /* ================= MODAL helpers ================= */
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
   document.getElementById(b.dataset.close).classList.remove('show');
@@ -332,7 +437,9 @@ function demandUsed(id){ return state.lines.some(l => (l.purposes||[]).some(x =>
 function catUsed(code){ return state.lines.some(l => l.purposeEditable && l.p === code); }
 function renderPickModal(){
   const q = document.getElementById('dm-search').value.trim().toLowerCase();
-  const src = document.getElementById('dm-filter-src').value;
+  /* Loại đơn "theo phiếu đề xuất" → ép chỉ hiện nguồn theo phiếu, bỏ hàng ngoài phiếu */
+  const repOnly = state.orderType === 'rep';
+  const src = repOnly ? 'rep' : document.getElementById('dm-filter-src').value;
   const body = document.getElementById('dm-body');
   const match = pr => !q || `${pr.code} ${pr.trade} ${pr.name} ${pr.tradeName}`.toLowerCase().includes(q);
   let rows = '';
@@ -346,7 +453,7 @@ function renderPickModal(){
         <td class="text-center">${pr.unit}</td>
         <td>${pr.maker}</td>
         <td class="text-center"><span class="pill pill-rep">Theo phiếu đề xuất</span></td>
-        <td class="cell-code">${d.doc}<div class="sub">từ ${d.from}</div></td>
+        <td class="cell-code"><a href="#" class="dd-link" data-doc="${d.doc}" title="Xem chi tiết phiếu đề xuất cung ứng">${d.doc}</a><div class="sub">từ ${d.from}</div></td>
         <td class="num"><b>${fmtN(d.remain)}</b></td>
         <td><span class="pill ${d.type==='Cung ứng cho KH'?'pill-kh':'pill-nb'}">${d.type}</span></td>
         <td>${d.customer||'—'}</td>
@@ -381,11 +488,65 @@ document.getElementById('btn-pick').addEventListener('click', () => {
 document.getElementById('dm-search').addEventListener('input', renderPickModal);
 document.getElementById('dm-filter-src').addEventListener('change', renderPickModal);
 document.getElementById('dm-body').addEventListener('click', e => {
+  /* Click mã phiếu → mở chi tiết, không chọn dòng */
+  const link = e.target.closest('a.dd-link');
+  if(link){ e.preventDefault(); openDemandDetail(link.dataset.doc); return; }
   const tr = e.target.closest('tr[data-id]'); if(!tr || tr.classList.contains('gm-disabled')) return;
   const id = tr.dataset.id;
   dmSel.has(id) ? dmSel.delete(id) : dmSel.add(id);
   renderPickModal();
 });
+
+/* ================= CHI TIẾT PHIẾU ĐỀ XUẤT CUNG ỨNG (mô phỏng module Supply) =================
+   1 phiếu (doc) gồm nhiều dòng hàng hóa = tất cả DEMANDS cùng mã phiếu. Header suy từ dòng đầu. */
+function openDemandDetail(doc){
+  const lines = DEMANDS.filter(d => d.doc === doc);
+  if(!lines.length) return;
+  const h = lines[0];
+  const isKH = h.type === 'Cung ứng cho KH';
+  const custs = [...new Set(lines.map(x => x.customer).filter(Boolean))];
+  const needVN = h.need ? h.need.split('-').reverse().join('/') : '—';
+  const purposeHead = (!isKH && h.purpose && h.purpose !== '—') ? h.purpose : '';
+  const totalRemain = lines.reduce((s,x)=>s+(Number(x.remain)||0),0);
+
+  const rows = lines.map((d,i) => {
+    const pr = PRODUCTS[d.p];
+    return `<tr>
+      <td class="text-center">${i+1}</td>
+      <td class="cell-code">${pr.code}</td>
+      <td class="cell-code">${pr.trade}</td>
+      <td class="cell-name">${pr.name}<div class="sub">${pr.tradeName} · ${pr.group}</div></td>
+      <td class="text-center">${pr.unit}</td>
+      <td>${pr.spec}</td>
+      <td>${isKH ? (d.customer||'—') : 'Cung ứng nội bộ'}</td>
+      <td class="cell-code">${d.sale || '—'}</td>
+      <td>${d.purpose && d.purpose!=='—' ? d.purpose : '—'}</td>
+      <td class="num"><b>${fmtN(d.remain)}</b></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('dd-title').textContent = `Chi tiết phiếu đề xuất cung ứng — ${doc}`;
+  document.getElementById('dd-body').innerHTML = `
+    <div class="dd-grid">
+      <div class="dd-f"><div class="dd-lb">Số đề xuất</div><div class="dd-v">${doc}</div></div>
+      <div class="dd-f"><div class="dd-lb">Nguồn sinh phiếu</div><div class="dd-v">${h.from||'—'}</div></div>
+      <div class="dd-f"><div class="dd-lb">Trạng thái</div><div class="dd-v"><span class="pill pill-po">Đã gửi</span></div></div>
+      <div class="dd-f"><div class="dd-lb">Loại đề xuất</div><div class="dd-v"><span class="pill ${isKH?'pill-kh':'pill-nb'}">${h.type}</span></div></div>
+      ${!isKH ? `<div class="dd-f"><div class="dd-lb">Mục đích nội bộ</div><div class="dd-v">${purposeHead||'—'}</div></div>` : ''}
+      <div class="dd-f"><div class="dd-lb">Ngày cần giao</div><div class="dd-v">${needVN}</div></div>
+      <div class="dd-f"><div class="dd-lb">Người đề xuất</div><div class="dd-v">${h.by||'—'}</div></div>
+      <div class="dd-f dd-full"><div class="dd-lb">Nội dung đề xuất</div><div class="dd-v" style="font-weight:400;">Đề xuất cung ứng ${fmtN(lines.length)} mặt hàng phục vụ ${isKH?('cung ứng cho khách hàng'+(custs.length===1?(' '+custs[0]):'')):'nhu cầu nội bộ'}. Tổng SL còn lại: ${fmtN(totalRemain)}.</div></div>
+    </div>
+    <div class="dd-sec">Hàng hóa đề xuất (${fmtN(lines.length)} dòng)</div>
+    <div class="table-responsive"><table class="table gm-table">
+      <thead><tr>
+        <th style="width:34px;">STT</th><th>Mã nội bộ</th><th>Mã hàng hóa</th><th>Tên hàng hóa</th><th>ĐVT</th><th>Quy cách</th>
+        <th>${isKH?'Khách hàng':'Đối tượng'}</th><th>HĐ bán</th><th>Mục đích</th><th class="num">SL còn lại</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  document.getElementById('modal-demand').classList.add('show');
+}
 document.getElementById('dm-check-all').addEventListener('change', e => {
   document.querySelectorAll('#dm-body tr[data-id]:not(.gm-disabled)').forEach(tr => {
     e.target.checked ? dmSel.add(tr.dataset.id) : dmSel.delete(tr.dataset.id);
@@ -438,7 +599,7 @@ function oqTip(w){ return w==='oq-over' ? 'Mua NHIỀU hơn tổng SL đề xu�
 function renderTable(){
   const body = document.getElementById('pt-body');
   if(!state.lines.length){
-    body.innerHTML = '<tr class="empty-row"><td colspan="17" class="text-center text-muted py-3">Chưa có hàng hóa — bấm nút chọn hàng phía trên.</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="18" class="text-center text-muted py-3">Chưa có hàng hóa — bấm nút chọn hàng phía trên.</td></tr>';
     renderTotals(); return;
   }
   const uniq = a => [...new Set(a)];
@@ -448,11 +609,11 @@ function renderTable(){
     const pr = PRODUCTS[l.p];
     const amount = (Number(l.orderQty)||0) * (Number(l.price)||0);
     const w = oqWarn(l), prop = propSum(l);
-    let purposeCell, signerCell, needCell;
+    let purposeCell, saleCoCell, needCell;
     if(l.purposeEditable){
       /* Dòng chọn từ danh mục — không gắn phiếu đề xuất nào (giống HĐ mua) */
       purposeCell = `<td class="cell-purpose col-demand"><span class="pp-none"><i class="mdi mdi-cart-plus"></i> Mua ngoài phiếu đề xuất</span></td>`;
-      signerCell = '—';
+      saleCoCell = '—';
       needCell = `<input type="date" class="form-control form-control-sm inp-date" data-f="need" value="${l.need}">`;
     }else{
       const multi = l.purposes.length > 1;
@@ -463,7 +624,8 @@ function renderTable(){
         return `<div class="pp-line">${parts.join('<span class="pp-sep"> / </span>')} <span class="pp-qty" title="SL đề xuất còn lại theo phiếu">ĐX ${fmtN(x.qty)}</span><span class="pp-buy-wrap">Mua <input type="number" min="0" class="pp-buy" data-f="ppbuy" data-pi="${k}" value="${x.buyQty}" title="SL mua theo phiếu ${x.doc}"></span></div>`;
       }).join('');
       purposeCell = `<td class="cell-purpose col-demand">${head}${lines}</td>`;
-      signerCell = uniq(l.purposes.map(x => x.signer || '—')).join(', ');
+      /* Cty thực hiện bán — mã cty theo TỪNG phiếu; chèn spacer khớp dòng tiêu đề "Gộp N phiếu" */
+      saleCoCell = (multi ? '<div class="pp-multi" style="visibility:hidden">·</div>' : '') + saleCompaniesOf(l.purposes);
       needCell = uniq(l.purposes.map(x => x.need ? x.need.split('-').reverse().join('/') : '—')).join('<br>');
     }
     html += `<tr data-key="${l.key}">
@@ -480,7 +642,8 @@ function renderTable(){
       <td><input type="number" min="0" class="form-control form-control-sm inp-price" data-f="price" value="${l.price}"></td>
       <td><input type="number" min="0" max="100" class="form-control form-control-sm inp-vat" data-f="vat" value="${l.vat}"></td>
       <td class="num cell-amount">${fmtN(amount)}</td>
-      <td class="text-center col-demand">${signerCell}</td>
+      <td class="cell-saleco col-demand">${saleCoCell}</td>
+      <td><input class="form-control form-control-sm inp-buyer" data-f="buyerCompany" value="${esc(l.buyerCompany||'')}" placeholder="Nhập cty thực hiện mua"></td>
       <td class="text-center">${needCell}</td>
       <td><input class="form-control form-control-sm inp-note" data-f="note" value="${l.note||''}" placeholder="Ghi chú"></td>
       <td class="text-center"><button class="btn btn-xs btn-outline-danger btn-del" title="Xóa dòng"><i class="mdi mdi-delete"></i> Xóa</button></td></tr>`;
@@ -499,6 +662,8 @@ function renderTotals(){
   document.getElementById('t-before').textContent = fmtD(Math.round(before));
   document.getElementById('t-vat').textContent = fmtD(Math.round(after - before));
   document.getElementById('t-grand').textContent = fmtD(after);
+  /* Tổng đơn đổi → cập nhật số tiền các đợt thanh toán */
+  if(typeof payRecalc === 'function') payRecalc();
 }
 /* Cập nhật TẠI CHỖ thành tiền + màu cảnh báo + tổng cho 1 dòng — không render lại bảng
    để không mất focus / vị trí con trỏ / vị trí cuộn khi đang gõ (giống demo HĐ mua). */
@@ -533,6 +698,156 @@ document.getElementById('pt-body').addEventListener('click', e => {
   renderTable();
 });
 
+/* ================= ĐIỀU KHOẢN THANH TOÁN =================
+   Tổng đơn (đã gồm VAT) = Σ SL mua × Đơn giá có VAT — dùng làm gốc chia số tiền các đợt. */
+function orderTotal(){ return state.lines.reduce((s,l)=>s+(Number(l.orderQty)||0)*(Number(l.price)||0),0); }
+function renderPayment(){
+  const host = document.getElementById('pay-card'); if(!host) return;
+  const P = state.payDot, total = orderTotal();
+  const rows = P.map((r,i)=>{
+    const amt = Math.round((Number(r.pct)||0)/100*total);
+    return `<tr data-row="${i}">
+      <td class="text-center">${i+1}</td>
+      <td><input class="form-control form-control-sm pay-label" data-i="${i}" value="${esc(r.label)}" placeholder="VD: Lần 1 - tạm ứng"></td>
+      <td class="num" style="width:110px"><input type="number" min="0" max="100" step="0.01" class="form-control form-control-sm text-right pay-pct" data-i="${i}" value="${r.pct===''||r.pct==null?'':r.pct}"></td>
+      <td class="num" style="width:150px"><input type="text" inputmode="numeric" class="form-control form-control-sm text-right pay-amt" data-i="${i}" value="${fmtN(amt)}"></td>
+      <td style="width:170px"><input type="date" class="form-control form-control-sm pay-time" data-i="${i}" value="${r.time||''}"></td>
+      <td class="text-center"><button type="button" class="btn btn-xs btn-outline-danger pay-del" data-i="${i}" title="Xóa đợt">&times;</button></td>
+    </tr>`;
+  }).join('');
+  const sumPct = P.reduce((s,r)=>s+(Number(r.pct)||0),0);
+  host.innerHTML = `<h4>Điều khoản thanh toán</h4>
+    <div class="pay-mode-switch">
+      <label class="mb-0 font-weight-bold">Hình thức thanh toán:</label>
+      <select class="custom-select custom-select-sm" id="pay-mode" style="width:auto">
+        <option value="dot" ${state.payMode==='dot'?'selected':''}>Thanh toán theo đợt</option>
+        <option value="don" ${state.payMode==='don'?'selected':''}>Thanh toán theo đơn</option>
+      </select>
+    </div>
+
+    <div class="pay-dot" style="display:${state.payMode==='dot'?'':'none'}">
+      <div class="d-flex justify-content-end align-items-center mb-2">
+        <button type="button" class="btn btn-sm btn-primary" id="pay-add" ${sumPct>=100?'disabled title="Tổng tỷ lệ đã đủ 100% — không thể thêm đợt"':''}><i class="mdi mdi-plus"></i> Thêm đợt</button>
+      </div>
+      <div class="table-responsive"><table class="table table-bordered pay-table">
+        <thead><tr>
+          <th style="width:44px">Đợt</th><th>Nội dung thanh toán</th>
+          <th class="num" style="width:100px">Tỷ lệ (%)</th><th class="num" style="width:150px">Số tiền (VNĐ)</th>
+          <th style="width:180px">Thời gian thanh toán</th><th style="width:52px"></th>
+        </tr></thead>
+        <tbody>${rows||`<tr><td colspan="6" class="text-center text-muted py-2">Chưa có đợt thanh toán — bấm "Thêm đợt".</td></tr>`}</tbody>
+        <tfoot><tr>
+          <td colspan="2" class="text-right font-weight-bold">Tổng cộng</td>
+          <td class="num" id="pay-sum-pct"></td>
+          <td class="num font-weight-bold" id="pay-sum-amt"></td>
+          <td colspan="2"></td>
+        </tr></tfoot>
+      </table></div>
+      <div class="text-danger small" id="pay-warn" style="display:none"><i class="mdi mdi-alert-outline"></i> Tổng tỷ lệ các đợt thanh toán phải bằng 100%.</div>
+    </div>
+
+    <div class="pay-don" style="display:${state.payMode==='don'?'':'none'}">
+      <div class="table-responsive"><table class="table table-bordered pay-term-table">
+        <thead><tr>
+          <th class="text-center" style="width:70px">Áp dụng</th>
+          <th style="width:360px">Loại điều khoản</th>
+          <th class="num" style="width:150px">Số ngày tối đa</th>
+          <th class="num" style="width:180px">Giá trị tối đa (VNĐ)</th>
+          <th class="num" style="width:150px">Số đơn hàng tối đa</th>
+        </tr></thead>
+        <tbody>${payDonRows()}</tbody>
+      </table></div>
+      ${state.payDon.some((t,i)=>PAY_DON_TERMS[i].exclusive && t.enabled)
+        ? `<div class="pay-alert-exclusive"><i class="mdi mdi-alert-outline" style="font-size:16px"></i>
+            <span><b>Đã chọn điều khoản loại trừ "100% trước giao".</b> Các điều khoản kết hợp khác đã bị vô hiệu hóa. Bỏ tick dòng này để mở lại các loại còn lại.</span></div>`
+        : ''}
+    </div>
+
+    <div class="form-group mt-2 mb-0"><label>Ghi chú</label><textarea class="form-control form-control-sm" rows="2" id="pay-note" placeholder="Nhập ghi chú">${esc(state.payNote)}</textarea></div>`;
+  bindPaymentEvents();
+  payRecalc();
+}
+/* Dựng các dòng "Thanh toán theo đơn". Tick "100% trước giao" → khóa 3 dòng còn lại. */
+function payDonRows(){
+  const hasExclusive = state.payDon.some((t,i)=>PAY_DON_TERMS[i].exclusive && t.enabled);
+  return PAY_DON_TERMS.map((def,i)=>{
+    const t = state.payDon[i];
+    const rowLocked = hasExclusive && !def.exclusive;
+    const cls = rowLocked ? 'pay-term-locked' : (!t.enabled ? 'pay-term-off' : '');
+    const inpDis = !t.enabled || rowLocked;
+    const cell = field => {
+      if(def.field!==field) return '<span class="text-muted">—</span>';
+      if(field==='max_value')
+        return `<input type="text" inputmode="numeric" class="form-control form-control-sm text-right pay-don-money" data-i="${i}" value="${t.max_value?fmtN(t.max_value):''}" placeholder="VD: 500.000.000" ${inpDis?'disabled':''}>`;
+      return `<input type="number" min="1" class="form-control form-control-sm text-right pay-don-num" data-i="${i}" data-field="${field}" value="${t[field]||''}" placeholder="${field==='max_days'?'VD: 30':'VD: 3'}" ${inpDis?'disabled':''}>`;
+    };
+    return `<tr class="${cls}">
+      <td class="text-center align-middle"><input type="checkbox" class="pay-don-chk" data-i="${i}" ${t.enabled?'checked':''} ${rowLocked?'disabled':''}></td>
+      <td class="align-middle"><div class="term-name">${def.name}</div><div class="term-meta">${def.meta}</div></td>
+      <td class="num align-middle">${cell('max_days')}</td>
+      <td class="num align-middle">${cell('max_value')}</td>
+      <td class="num align-middle">${cell('max_orders')}</td>
+    </tr>`;
+  }).join('');
+}
+function payRecalc(){
+  const host = document.getElementById('pay-card'); if(!host || !host.querySelector('.pay-table')) return;
+  const P = state.payDot, total = orderTotal();
+  let sumPct=0, sumAmt=0;
+  host.querySelectorAll('.pay-table tbody tr[data-row]').forEach(tr=>{
+    const i=+tr.dataset.row, pct=Number(P[i]?.pct)||0, amt=Math.round(pct/100*total);
+    sumPct+=pct; sumAmt+=amt;
+    /* Cột Số tiền là ô nhập → cập nhật value, nhưng bỏ qua ô đang gõ để không nhảy con trỏ */
+    const c=tr.querySelector('.pay-amt'); if(c && document.activeElement!==c) c.value=fmtN(amt);
+  });
+  const ps=document.getElementById('pay-sum-pct'); if(ps){ ps.textContent=fmtN(sumPct)+'%'; ps.className='num '+(sumPct===100?'pay-pct-sum-ok':'pay-pct-sum-bad'); }
+  const addBtn=document.getElementById('pay-add'); if(addBtn){ addBtn.disabled = sumPct>=100; addBtn.title = sumPct>=100?'Tổng tỷ lệ đã đủ 100% — không thể thêm đợt':''; }
+  const as=document.getElementById('pay-sum-amt'); if(as) as.textContent=fmtN(sumAmt);
+  const wn=document.getElementById('pay-warn'); if(wn) wn.style.display=(!P.length||sumPct===100)?'none':'';
+}
+function bindPaymentEvents(){
+  const host=document.getElementById('pay-card'); if(!host) return;
+  const P=state.payDot;
+  host.querySelectorAll('.pay-label').forEach(el=>el.addEventListener('input', e=>{ P[+e.target.dataset.i].label=e.target.value; }));
+  host.querySelectorAll('.pay-time').forEach(el=>el.addEventListener('change', e=>{ P[+e.target.dataset.i].time=e.target.value; }));
+  host.querySelectorAll('.pay-pct').forEach(el=>el.addEventListener('input', e=>{ P[+e.target.dataset.i].pct = e.target.value===''?'':Number(e.target.value); payRecalc(); }));
+  // Gõ Số tiền → quy ngược ra tỷ lệ % (làm tròn 2 chữ số) rồi cập nhật ô % + tổng.
+  host.querySelectorAll('.pay-amt').forEach(el=>el.addEventListener('input', e=>{
+    const i=+e.target.dataset.i, raw=e.target.value.replace(/\D/g,''), money=raw?+raw:0, total=orderTotal();
+    P[i].pct = total>0 ? Math.round(money/total*10000)/100 : 0;
+    const pctInp=host.querySelector(`.pay-pct[data-i="${i}"]`); if(pctInp) pctInp.value = P[i].pct;
+    e.target.value = raw?fmtN(money):''; // định dạng ngăn cách nghìn ngay khi gõ
+    payRecalc();
+  }));
+  host.querySelectorAll('.pay-del').forEach(el=>el.addEventListener('click', e=>{ P.splice(+e.currentTarget.dataset.i,1); renderPayment(); }));
+  const add=document.getElementById('pay-add'); if(add) add.addEventListener('click', ()=>{
+    const sumPct=P.reduce((s,r)=>s+(Number(r.pct)||0),0);
+    if(sumPct>=100){ alert('Tổng tỷ lệ thanh toán đã đủ 100% — không thể thêm đợt mới.'); return; }
+    P.push({label:'',pct:'',time:''}); renderPayment();
+  });
+  const ntm=document.getElementById('pay-note'); if(ntm) ntm.addEventListener('input', e=>{ state.payNote=e.target.value; });
+  // Chuyển hình thức thanh toán (theo đợt / theo đơn) → dựng lại.
+  const modeSel=document.getElementById('pay-mode'); if(modeSel) modeSel.addEventListener('change', e=>{
+    state.payMode = e.target.value; renderPayment();
+  });
+  // Tick/bỏ tick loại điều khoản theo đơn — tick "100% trước giao" thì tắt các loại còn lại.
+  host.querySelectorAll('.pay-don-chk').forEach(el=>el.addEventListener('change', e=>{
+    const i=+e.target.dataset.i, on=e.target.checked;
+    state.payDon[i].enabled = on;
+    if(PAY_DON_TERMS[i].exclusive && on)
+      state.payDon.forEach((t,k)=>{ if(!PAY_DON_TERMS[k].exclusive) t.enabled=false; });
+    renderPayment();
+  }));
+  host.querySelectorAll('.pay-don-num').forEach(el=>el.addEventListener('input', e=>{
+    const i=+e.target.dataset.i, f=e.target.dataset.field, v=e.target.value;
+    state.payDon[i][f] = v===''?'':(parseInt(v)||'');
+  }));
+  host.querySelectorAll('.pay-don-money').forEach(el=>el.addEventListener('input', e=>{
+    const i=+e.target.dataset.i, raw=e.target.value.replace(/\D/g,'');
+    state.payDon[i].max_value = raw?+raw:''; e.target.value = raw?fmtN(+raw):'';
+  }));
+}
+
 /* ================= LƯU ================= */
 function summary(status){
   const supKey = document.getElementById('f-supplier').value;
@@ -558,6 +873,8 @@ document.getElementById('btn-save-send').addEventListener('click', () => summary
 document.getElementById('btn-cancel').addEventListener('click', () => alert('[DEMO] Quay về danh sách Đơn mua hàng.'));
 
 renderTable();
+renderPayment();
+applyOrderType();
 </script>
 </body>
 </html>
