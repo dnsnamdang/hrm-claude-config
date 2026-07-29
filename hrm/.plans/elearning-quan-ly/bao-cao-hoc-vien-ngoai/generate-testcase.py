@@ -22,7 +22,7 @@ DESCRIPTION_BLOCK = [
     ("8. Cách tính các ô thống kê",
      "Thẻ KPI trên thanh: 'Học viên' = số học viên sau lọc; 'Đăng ký' = tổng đăng ký; 'Đang học' = tổng đang học; 'Hoàn thành' = tổng hoàn thành; 'Đạt' = tổng đã đạt. Cột 'Tỷ lệ HT' = Hoàn thành / Đăng ký (%)."),
     ("9. Ghi chú đọc bảng",
-     "Nút 'Xuất Excel' hiện chỉ là demo (toast 'Xuất Excel (demo)', chưa tải file). Nút 'In báo cáo' in bảng hiện tại. Thẻ KPI + bảng tính lại theo bộ lọc."),
+     "Nút 'Xuất Excel' tải file thật (bao-cao-hoc-vien-ngoai-YYYYMMDD-HHmm.xlsx) gồm tiêu đề + dòng KPI + bảng theo bộ lọc hiện tại. Nút 'In báo cáo' in bảng hiện tại. Thẻ KPI + bảng tính lại theo bộ lọc."),
 ]
 
 SECTIONS = [
@@ -117,12 +117,18 @@ SECTIONS = [
          "—"),
     ]),
     ("IV", "XUẤT EXCEL / IN", [
-        ("001", "Xuất Excel (demo)", "P2",
-         "Đang xem báo cáo",
+        ("001", "Xuất Excel theo bộ lọc", "P1",
+         "Đang xem báo cáo có dữ liệu (đã lọc)",
          "1. Bấm 'Xuất Excel'",
          "—",
-         "- Hiện toast 'Xuất Excel (demo)' (chưa tải file thật — ghi nhận chức năng chưa hoàn thiện)",
-         "Xuất Excel đang demo"),
+         "- Nút hiện 'Đang xuất...'; tải file bao-cao-hoc-vien-ngoai-YYYYMMDD-HHmm.xlsx\n- File gồm: tiêu đề 'DANH SÁCH HỌC VIÊN NGOÀI — THỐNG KÊ HỌC TẬP', dòng KPI (Học viên/Đăng ký/Đang học/Hoàn thành/Đạt), bảng cột STT/Họ tên/Email/Công ty/Nguồn đăng ký/Ngày tham gia/Đăng ký/Đang học/Hoàn thành/Đã đạt/Tỷ lệ HT (%)\n- Toast 'Đã xuất Excel thành công'",
+         "Xuất theo tableData hiện tại"),
+        ("003", "Xuất Excel khi không có dữ liệu", "P2",
+         "Bộ lọc không ra kết quả (bảng rỗng)",
+         "1. Bấm 'Xuất Excel'",
+         "—",
+         "- Toast 'Không có dữ liệu để xuất', không tải file",
+         "Chặn xuất khi rỗng"),
         ("002", "In báo cáo", "P2",
          "Đang xem báo cáo",
          "1. Bấm 'In báo cáo'",

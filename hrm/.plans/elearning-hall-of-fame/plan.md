@@ -78,6 +78,103 @@
 
 > **User chốt hướng A** (2026-07-16): giữ khử trùng "mỗi người 1 thẻ". Lý do: với hàng trăm người học, A cho ~11-12 gương mặt KHÁC NHAU được vinh danh; còn bỏ khử trùng (B) thì "số khoá hoàn thành" và "số bài học hoàn thành" tương quan mạnh → top trùng nhau → marquee lặp vài gương mặt.
 
+## Phase 6 — Kỳ tính theo từng danh hiệu + Redesign UI (user 2026-07-18)
+
+> User: *"cho kỳ tính vào từng danh hiệu hợp lý hơn... 'Top học tập tháng' mà kỳ chung là quý thì không hợp lý"* + *"màn này không hề đẹp, cả popup tạo mới cũng thế"*.
+> Đảo quyết định #7 (một kỳ chung) → **kỳ tính thuộc từng danh hiệu**.
+> Chốt: (a) bỏ hẳn kỳ chung, mỗi danh hiệu required kỳ riêng, composite không có kỳ; (b) trang chủ elearning bỏ nhãn kỳ, không hiện kỳ trên thẻ; (c) backfill danh hiệu cũ = kỳ chung đang lưu.
+
+### BE
+
+- [x] Migration mới `2026_07_18_100000_add_period_to_hall_of_fame_badges`: thêm cột `period` vào `elearning_hall_of_fame_badges` (varchar 20, default `last_30_days`, sau `min_criteria`); backfill = period của `settings`; drop cột `period` khỏi `settings`. `down()` phục hồi. ⏳ user tự chạy
+- [x] `HallOfFameBadge`: thêm hằng `PERIODS` + `periodRange()` (chuyển từ Setting)
+- [x] `HallOfFameSetting`: bỏ `PERIODS`/`periodRange()`/`periodLabel()`, `current()` chỉ còn `is_enabled`
+- [x] `HallOfFameService::build()`: bỏ `$since` chung, mỗi badge dùng `periodRange($badge->period)`; bỏ `period_label` khỏi output
+- [x] `HallOfFameController::index()`: trả `period` + `period_name` mỗi badge (composite → null), `setting` chỉ còn `is_enabled`, `periods` lấy từ `HallOfFameBadge::PERIODS`
+- [x] `HallOfFameController::store()`: validate + lưu `period` (badge thường required, composite ép `PERIOD_LAST_30_DAYS` cho hợp NOT NULL)
+- [x] `HallOfFameController::updateSetting()`: bỏ `period`, chỉ còn `is_enabled`
+- [x] `PublicBrowseController::hallOfFame()`: trả thẳng `build()` — không có period_label → không cần sửa
+
+### FE hrm-client
+
+- [x] `pages/training/hall_of_fame/index.vue`: viết lại theo v2-styles + V2BaseDataTable + V2BaseButton; card cấu hình chung chỉ còn toggle (nút Lưu chỉ bật khi đổi); cột "Kỳ tính" mới; pill tiêu chí/trạng thái, cột canh giữa, "—" mờ; cột Hành động = 3 nút inline (Sửa/Bật-Tắt/Xóa) bỏ dropdown
+- [x] `components/modal/add_hall_of_fame_badge_modal.vue`: viết lại theo skill modal-popup (V2Base + header icon tròn + footer Lưu/Đóng); thêm Select2 Kỳ tính (required, ẩn khi composite + note); nhóm 2 section; validate inline 422
+- [x] `store/actions.js`: generic pass-through, page chỉ gửi `is_enabled` → không cần sửa
+
+### FE elearning
+
+- [x] `components/home/HallOfFame.vue`: bỏ prop `periodLabel` + pill nhãn kỳ ở tiêu đề
+- [x] `stores/elearning.js`: bỏ state `hallOfFamePeriodLabel` + 2 chỗ set; `HomeView.vue` bỏ binding `:period-label`
+
+### Verify Phase 6
+
+- [x] `php -l` 5 file BE (2 entity, service, migration, controller) — sạch
+- [x] Grep sạch tham chiếu cũ (`hallOfFamePeriodLabel`, `period_label`, `setting.period`, `HallOfFameSetting::PERIODS`) ở cả 3 codebase
+- [x] **User đã chạy migration** — verify tinker: badges CÓ cột `period` (backfill `last_30_days`), settings ĐÃ bỏ `period`
+- [x] **E2E Playwright màn cấu hình** (localhost:3000, 0 console error): card cấu hình chỉ còn toggle; bảng 9 cột đúng (Kỳ tính pill / composite "—", pill tiêu chí tím-xanh, trạng thái pill, 3 nút inline Sửa/Bật-Tắt/Xóa); popup Thêm mới có Kỳ tính mặc định "30 ngày gần nhất"; **chọn composite → Kỳ tính ẩn + hiện Số tiêu chí tối thiểu + note xanh**
+- [x] **Round-trip per-badge period**: sửa "Top học tập tháng" → "Tháng hiện tại" → Lưu → DB=`current_month` + UI cell đổi đúng; hoàn nguyên về `last_30_days` (DB xác nhận)
+- [ ] ⏳ `vite build` elearning (Node ≥18 — shell hiện Node 14; thay đổi chỉ là bỏ 1 prop + 1 state, grep sạch tham chiếu, rủi ro thấp) — chưa chạy build/live-check trang chủ elearning
+
+---
+
+### Checkpoint — 2026-07-18
+Vừa hoàn thành: Phase 6 — kỳ tính theo từng danh hiệu + redesign UI. BE (migration + 2 entity + service + controller) `php -l` sạch, user đã migrate. FE hrm-client viết lại index + modal theo v2-styles/V2BaseDataTable/skill button+modal. FE elearning bỏ nhãn kỳ. Verify E2E Playwright màn cấu hình PASS (UI mới, popup composite ẩn kỳ, round-trip per-badge period lưu + hiển thị đúng, đã hoàn nguyên seed).
+Đang làm dở: Không.
+Bước tiếp theo: (tuỳ chọn) build + live-check trang chủ elearning bằng Node ≥18 để xác nhận khối vinh danh không còn nhãn kỳ. Nếu cần cập nhật design.md/spec cho Phase 6 → làm khi user "wrap up".
+Blocked: Không.
+
+## Phase 7 — Bỏ khử trùng + hiển thị giá trị đạt được (user 2026-07-27)
+
+> User: *"không xử lý mỗi người tối đa 1 danh hiệu nữa, ai đạt danh hiệu nào thì hiển thị ra hết. ko cần thứ tự hay gì nữa, chỉ lấy theo top và tiêu chí. hiển thị theo tiêu chí đạt được bao nhiêu điểm/khóa... để người khác khâm phục."*
+> **Đảo quyết định #6** (mỗi người 1 thẻ + khử trùng theo sort_order). Chốt: (a) bỏ hẳn khử trùng — mỗi danh hiệu lấy đúng top_n người, 1 người đạt nhiều danh hiệu hiện ở tất cả; (b) bỏ hẳn sắp xếp thứ tự + sort_order; (c) thẻ elearning hiện tên danh hiệu + mô tả + **giá trị thật đạt được**.
+
+### BE
+
+- [x] `HallOfFameService::build()`: bỏ `$seen`/khử trùng; mỗi badge `topSlice(winners, top_n)`; order badges theo `id`; item mang thêm `value`
+- [x] `HallOfFameService::formatValue()` thay `describe()`: chuỗi giá trị theo tiêu chí ("Hoàn thành N khoá học", "Đạt N chứng chỉ", "Đúng hạn N%", "Điểm thi TB: 9.2", composite "Đạt N tiêu chí") + `trimNumber()`
+- [x] `attachPeople()`: mang thêm `value` ra thẻ
+- [x] `HallOfFameBadge`: bỏ `scopeOrderByHomePosition()` + cast `sort_order`
+- [x] `HallOfFameController`: `index()` order theo `id`, bỏ trả `sort_order`; `store()` bỏ set `sort_order`; **xoá method `updateSortOrder()`**
+- [x] `Routes/api.php`: xoá route `POST /hall_of_fame/sort-order`
+- [x] `HallOfFameSeeder`: bỏ `sort_order`; **fix bug tồn từ Phase 6** (còn `HallOfFameSetting::PERIOD_LAST_30_DAYS` đã xoá + set `period` trên settings) → dùng `HallOfFameBadge::PERIOD_*` + settings chỉ `is_enabled`
+- [x] Migration mới `2026_07_18_110000_drop_sort_order_from_hall_of_fame_badges` — code đã column-agnostic. ⏳ user tự chạy
+
+### FE
+
+- [x] `pages/training/hall_of_fame/index.vue`: bỏ nút "Sắp xếp thứ tự" + method `openSort` + import/dùng `SortHallOfFameModal` + cột "Thứ tự"
+- [x] **Xoá file** `components/modal/sort_hall_of_fame_modal.vue`
+- [x] `elearning/components/home/HallOfFame.vue`: thẻ hiện tên danh hiệu + mô tả (nếu có) + pill giá trị đạt được (`h.value`)
+
+### Verify Phase 7
+
+- [x] `php -l` 6 file BE — sạch
+- [x] `build()` tinker DB thật: 5 thẻ, giá trị format đúng ("Hoàn thành 2 khoá học", "Hoàn thành 1 bài học"); không còn `$seen` → cấu trúc cho phép 1 người nhiều thẻ (dataset 30 ngày ít trùng nên chưa thấy trùng thực tế — data artifact, không phải lỗi)
+- [x] E2E Playwright màn cấu hình (0 error): bỏ nút Sắp xếp, header bảng còn 8 cột (không còn "Thứ tự")
+- [ ] ⏳ user chạy migration drop sort_order (không bắt buộc — code chạy dù còn/không cột)
+- [ ] ⏳ live-check trang chủ elearning: thẻ hiện giá trị đạt được (cần Node ≥18)
+
+### Checkpoint — 2026-07-27
+Vừa hoàn thành: Phase 7 — bỏ khử trùng (mỗi người có thể nhiều thẻ), bỏ sort_order/sắp xếp, thẻ elearning hiện giá trị thật. BE 6 file `php -l` sạch + `build()` chạy đúng trên DB thật. FE hrm-client bỏ cột/nút sắp xếp (verify Playwright). FE elearning thêm pill giá trị. Tiện tay fix bug seeder tồn từ Phase 6.
+Đang làm dở: Không.
+Bước tiếp theo: (tuỳ chọn) user chạy migration drop sort_order + live-check trang chủ elearning. Cập nhật design.md/spec (quyết định #6, #7) khi "wrap up".
+Blocked: Không.
+
+## Phase 7b — Polish thẻ elearning + bỏ tiêu chí lesson_completed (user 2026-07-27)
+
+- [x] **Thẻ elearning `HallOfFame.vue`**: pill giá trị bị co cụm như nút → đổi thành **dải full-width** tách khỏi khối danh hiệu; sau đó bỏ luôn icon 🎖 trong dải (user thấy 2 icon rối) → thẻ còn 1 icon 🏅 + dải vàng chỉ con số
+- [x] **Bỏ tiêu chí `lesson_completed`** ("Số bài học hoàn thành") — quá granular + trùng lặp với `subject_completed`:
+  - [x] `HallOfFameBadge::METRICS` bỏ `lesson_completed` (còn 6 tiêu chí)
+  - [x] `HallOfFameService`: bỏ case trong `leaderboard()` + `formatValue()`, xoá `countLessons()` + hằng `LESSON_DONE`
+  - [x] `HallOfFameSeeder`: badge "Tiến độ nổi bật" đổi `lesson_completed` → `path_completed`, mô tả "Hoàn thành nhiều lộ trình đào tạo"
+  - [x] Badge id=4 trong DB: cập nhật `path_completed` **qua màn cấu hình** (không ghi DB thô) — verify Playwright + tinker
+- [x] `php -l` 3 file BE sạch; grep sạch lesson_completed/countLessons/LESSON_DONE; `build()` chạy không lỗi; dropdown tiêu chí còn 6 (không còn "Số bài học hoàn thành"); bảng cấu hình row 4 = "Số lộ trình hoàn thành"
+
+### Checkpoint — 2026-07-27 (2)
+Vừa hoàn thành: Phase 7b — polish dải giá trị thẻ elearning (bỏ pill co cụm + bỏ icon thừa) + bỏ tiêu chí "Số bài học hoàn thành" (đổi badge Tiến độ nổi bật sang Số lộ trình hoàn thành). Cập nhật spec §5.2 + §12.3, design.md. Verify Playwright + tinker PASS.
+Đang làm dở: Không.
+Bước tiếp theo: (tuỳ chọn) user chạy migration drop sort_order + refresh trang chủ elearning xem thẻ mới.
+Blocked: Không.
+
 ## Verify
 
 - [x] `php -l` 10 file BE — sạch; ID quyền 1082 xuất hiện đúng 1 lần
