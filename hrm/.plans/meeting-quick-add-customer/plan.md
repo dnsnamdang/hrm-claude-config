@@ -22,6 +22,9 @@ Không BE / migration / permission / git.
 - Bug pre-existing: `GeneralInfo.vue` khai báo computed `isFromProject` 2 lần (~dòng 651 & 713) — trùng key, có sẵn từ trước, nằm ngoài vùng diff. Nêu để cân nhắc sửa riêng.
 - `hasCustomer` vừa là prop (default true) vừa là computed (theo loại meeting) — computed override, nút dùng đúng giá trị. Vấn đề đặt tên cũ.
 
+### Fix — 2026-07-24
+- [x] Bug: trường "Công ty mẹ" (V2BaseSelectRemote) không gõ tìm kiếm được khi form nằm trong popup thêm nhanh KH. Nguyên nhân: select2 không set `dropdownParent` → ô search gắn vào `<body>` bị focus-trap của Bootstrap modal cướp focus. Fix: `V2BaseSelectRemote.vue` dò `.modal-content` (closest) và set `dropdownParent` khi ở trong modal — thuần cộng thêm, ngoài modal không đổi hành vi.
+
 ### Checkpoint — 2026-07-17
 Vừa hoàn thành: Task 1–4 (code trong GeneralInfo.vue), task-review SPEC ✅ + QUALITY Approved, đã áp Minor fix (thêm catch + console.error vào handleCustomerCreated).
 Đang làm dở: Task 5 — E2E verify (chưa chạy, cần dev server FE 3000 + tài khoản có quyền tạo KH; sẽ tạo KH thật cần dọn).

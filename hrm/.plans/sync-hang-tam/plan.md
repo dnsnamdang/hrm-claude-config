@@ -22,3 +22,7 @@ _(Phase 1–4 ban đầu: xem checkpoint trong STATUS.md — đã commit branch 
 - [x] Task 8b: `TmpProduct::searchByFilter` — thêm `orWhere('created_by', current)` để người tạo luôn thấy hàng nháp của mình (đã xác nhận sửa hàm dùng chung)
 - [x] Task 8c: gộp "Gửi duyệt lại" vào `updateDraft` — guard nhận status {0,3}; reset comment/approver khi gửi lại từ status=0; notify permission holders (A); nút "Gửi duyệt lại" gọi `saveDraft(1)`; xóa `resubmit()` + route + JS. Spec §10.
 - [ ] Task 9: verify E2E thủ công (dev_erp_2) — gồm cả gửi duyệt lại hàng bị từ chối (lưu field + validate)
+
+## Testcase
+
+- [x] Viết 34 testcase (TC-ROLE-241→274) cho task #10565 (AC1–AC6 + edge case) → `.plans/sync-hang-tam/testcase-issue-10565.csv` (+ script `.py`), đã chèn vào Google Sheet `Testcase _Quản lý dự án` tab `12.Dự án TKT` khối "UPDATE NỘI DUNG 31/07/2026" (dòng 322–356)

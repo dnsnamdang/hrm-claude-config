@@ -43,6 +43,15 @@ nút không dùng. Fix đúng chỗ:
 - Ghi chú: Phase B cũ (BomListExport `/export-excel`) để nguyên — dormant (BomListExport dùng chung cho BOM export, chỉ kích hoạt cột khi field `image`/`warranty` có mặt; nút không truyền → không ảnh hưởng). Có thể dọn sau nếu muốn.
 - ⚠️ Deploy: chỉ đổi `QuotationExcelExport.php` (PHP class) → deploy bình thường (opcache reset). KHÔNG cần view:clear (blade không đổi).
 
+## Re-verify — 2026-07-30 (@manhcuong, user giao lại task)
+Chạy lại AC1–AC4 trên env hiện tại (FE :3000 / BE :8000, DB `hrm_prod_local`), báo giá **116 (BG-2026-00092)** — báo giá duy nhất gần đây có hàng ERP kèm cả ảnh lẫn bảo hành.
+- [x] BE: `GET /assign/quotations/116` trả `image` (URL S3) + `warranty` ("6 tháng") cho hàng có `erp_product_id`; hàng khai tay = null → đúng thiết kế
+- [x] AC1: popup có đủ 2 checkbox `image`/`warranty`, nằm cuối danh sách sau "Thành tiền sau VAT", `checked=true` mặc định
+- [x] AC2: tích cả 2 → header `… | Thành tiền sau VAT | Hình ảnh | Thời gian bảo hành`, render 2 `<img class=prod-img>` + ô "6 tháng"
+- [x] AC3: bỏ cả 2 → header dừng ở "Thành tiền sau VAT", 0 ảnh, bảng co lại 828px (từ 893px) — tự căn lại, không tràn
+- [x] AC4: chỉ tích Hình ảnh → có "Hình ảnh", không có "Thời gian bảo hành", 2 ảnh vẫn render
+- Ghi chú test: bỏ tích 2 checkbox trong **cùng 1 tick JS** thì bootstrap-vue chỉ nhận 1 thay đổi (artifact của cách thao tác, không phải bug sản phẩm) — click tuần tự thì đúng.
+
 ## Checkpoint — 2026-07-18
 Vừa hoàn thành: TOÀN BỘ Phase A + B. Playwright AC1–AC4 (bản in) PASS trên báo giá 57; Excel verify qua smoke test (3 ảnh nhúng + cột bảo hành).
 - AC1: popup có 2 checkbox Hình ảnh + Thời gian bảo hành, tích sẵn ✓

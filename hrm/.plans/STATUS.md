@@ -2,6 +2,31 @@
 
 ## Đang làm
 
+- du-an-cha-con → @cuong61n → .plans/du-an-cha-con/plan.md
+  Trạng thái: Phase 1 XONG. Phase 2 (Báo giá tổng): BE XONG (E2E API 31/31 PASS) + FE LUỒNG CỐT LÕI XONG 30/07 (tab Khu vực 1+2, popup gộp nguồn, màn xem/sửa BGT, luồng duyệt 1 cấp — verify Playwright). Còn lại: kéo-thả Section, In/Excel, filter màn Quản lý báo giá, khoá GG/tiền tệ/bảng giá ở báo giá dự án con. Branch `tpe-develop-assign` (cả 2 repo).
+  Redmine: #10882 [PL8 - Quản lý dự án TKT] — Bổ sung luồng tạo dự án cha và tạo báo giá tổng hợp cho dự án cha
+  Spec P1: docs/superpowers/specs/2026-07-27-du-an-cha-con-design.md | Spec P2: docs/superpowers/specs/2026-07-28-bao-gia-tong-design.md | Tóm tắt: .plans/du-an-cha-con/design.md
+  Scope Phase 1: 3 loại dự án (độc lập/cha/con), form cha rút gọn + enum trạng thái riêng, mã `{phòng}.{năm}.DAC{seq}`, kế thừa & khóa KH/giảm giá/tiền tệ/bảng giá xuống con, chặn cứng ngân sách + timeline con, tree view danh sách, màn chi tiết cha 3 tab, đóng cha cascade con. Phase 2 (báo giá tổng) + Phase 3 (hợp đồng tổng) tách riêng.
+  Bước tiếp: ⏳ user duyệt spec Phase 2 → code. Lưu ý khi deploy: phải chạy `php artisan migrate`.
+
+- bao-gia-cho-duyet-hdsd → @cuong61n → .plans/bao-gia-cho-duyet-hdsd/plan.md
+  Trạng thái: DONE (2026-07-27). Đã xuất `HDSD_luongchinh/HDSD_PheDuyet_BaoGiaChoDuyet.docx` (12 Heading 1, 11 hình thật, 13 bảng).
+  Scope: HDSD màn `/assign/quotations/pending-approval` — hàng đợi duyệt giá TP/BGĐ: phạm vi dữ liệu (TP theo phòng quản lý, BGĐ theo công ty), cơ chế cấp duyệt max(theo giá trị đơn hàng, theo TSLN), đọc phiếu trước khi duyệt (TSLN & mức sàn), Duyệt/Duyệt & chuyển BGĐ/BGĐ duyệt, Từ chối (reset cấp duyệt), hệ quả sau duyệt (ERP + dự án + giải pháp), thông báo tự động.
+  Tóm tắt: .plans/bao-gia-cho-duyet-hdsd/design.md
+  Bước tiếp: user review nội dung.
+
+- phe-duyet-ycgp-hdsd → @cuong61n → .plans/phe-duyet-ycgp-hdsd/plan.md
+  Trạng thái: DONE (2026-07-27). Đã xuất `HDSD_luongchinh/HDSD_PheDuyet_YeuCauGiaiPhap.docx` (14 Heading 1, 12 hình thật, 16 bảng).
+  Scope: HDSD màn `/assign/request-solution/pending` — hàng đợi YC làm GP chờ tiếp nhận: phạm vi dữ liệu theo implementation_type, hạn tiếp nhận & nhãn Trong hạn/Sắp đến hạn/Quá hạn, popup Tiếp nhận (từng trường + mặc định), Yêu cầu bổ sung thông tin, Xuất Excel, thông báo tự động, downstream sang Giải pháp.
+  Tóm tắt: .plans/phe-duyet-ycgp-hdsd/design.md
+  Bước tiếp: user review nội dung. Đã ghi 3 điểm nghi vấn code trong plan.md (close_solution_date bị ghi đè bằng now(); 2 nhãn ngày trong popup bind hoán vị; canReceive FE luôn true).
+
+- field-hint-tooltip → @cuong61n → .plans/field-hint-tooltip/plan.md
+  Trạng thái: DONE (2026-07-27). Code + E2E Playwright 14 màn trên FE :3000 — AC1/AC2/AC3 PASS. Chờ review + merge.
+  Scope: Icon ⓘ + tooltip định nghĩa 5 thuật ngữ (Nhóm ngành, Nhóm giải pháp, Ứng dụng, Loại hình hoạt động KH, Lĩnh vực kinh doanh KH) trên MỌI màn có trường đó. Cơ chế: `V2BaseLabel` tự tra từ điển `utils/constants/field-hints.js` theo nhãn → không phải gắn tay từng màn.
+  Tóm tắt: .plans/field-hint-tooltip/design.md
+  Bước tiếp: user review + merge. Fix phát sinh khi E2E: application-modal truyền sẵn tooltip nội dung cũ → đã gỡ.
+
 - elearning-hall-of-fame → @junfoke → .plans/elearning-hall-of-fame/plan.md
   Trạng thái: CODE DONE 5 phase + user đã migrate/seed/gán quyền 1082 (2026-07-16). Verify UI màn cấu hình PASS.
   Scope: Khối "Vinh danh học viên" trang chủ elearning → bảng vàng tự tính theo cấu hình (2 bảng mới, 7 tiêu chí, màn /training/hall_of_fame). Đã xoá mockData.js → trang chủ hết sạch mock.

@@ -40,6 +40,7 @@ HEAD_SHA: [commit hiện tại]
 ### Frontend (Nuxt 2 / Vue 2)
 - [ ] Không dùng Vue 3 syntax (Composition API, `<script setup>`, `defineProps`)
 - [ ] Dùng V2Base components có sẵn (V2BaseButton, V2BaseBadge, V2BaseFilterPanel...)
+- [ ] Select trong modal/popup (`b-modal`, component `*Modal.vue`) BẮT BUỘC dùng `V2BaseSelectInModal`, KHÔNG dùng `V2BaseSelect` — gặp `V2BaseSelect` trong modal → đổi (chi tiết: `.claude/skills/modal-popup/SKILL.md`)
 - [ ] Style import `@import '@/assets/scss/v2-styles.scss';` trong `<style lang="scss">`
 - [ ] API call qua `this.$store.dispatch('apiGetMethod', ...)` / `apiPostMethod`
 - [ ] Cascading filter đúng thứ tự: Công ty >> Phòng ban >> Bộ phận

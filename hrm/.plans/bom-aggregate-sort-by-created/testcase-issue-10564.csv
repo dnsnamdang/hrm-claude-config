@@ -1,0 +1,49 @@
+﻿,,XV. TỔNG HỢP BOM — SẮP XẾP HÀNG HOÁ/DỊCH VỤ THEO NGÀY TẠO BOM THÀNH PHẦN (Task #10564),,,,,,,,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.001,AC1+AC2 — Gộp 3 BOM thành phần tạo ở 3 thời điểm khác nhau,P0,"Có 3 BOM Thành phần cùng dự án/giải pháp, cùng loại tiền tệ, cùng cấu trúc (đều không nhóm): BL-A ngày tạo 01/07, BL-B ngày tạo 03/07, BL-C ngày tạo 05/07; mỗi BOM có 2 hàng hoá","1. Tạo BOM Tổng hợp mới → bước Tổng hợp bom.
+2. Bấm chọn BL con → tick BL-A, BL-B, BL-C.
+3. Bấm ""Gộp BOM con"".
+4. Quan sát thứ tự dòng hàng hoá trên lưới.","BL-A 01/07, BL-B 03/07, BL-C 05/07","- Lưới hiển thị lần lượt: 2 hàng của BL-A → 2 hàng của BL-B → 2 hàng của BL-C.
+- Thứ tự đúng theo ngày tạo BOM thành phần tăng dần (cũ → mới).",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.002,Thứ tự không phụ thuộc thứ tự tick chọn BOM con,P0,"Bộ dữ liệu như TC_15.001 (BL-A 01/07, BL-B 03/07, BL-C 05/07)","1. Mở popup ""Chọn BOM con để gộp"".
+2. Tick theo thứ tự ngược: BL-C → BL-A → BL-B.
+3. Bấm ""Gộp BOM con"".
+4. Quan sát thứ tự dòng hàng hoá.","Thứ tự tick: C, A, B","Kết quả vẫn là BL-A → BL-B → BL-C (theo ngày tạo), KHÔNG theo thứ tự người dùng tick chọn.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.003,"Sắp xếp theo ngày tạo, không theo ID BOM thành phần",P0,"3 BOM Thành phần có ID ngược chiều ngày tạo: ID 15 tạo 01/07 (cũ nhất), ID 16 tạo 05/07 (mới nhất), ID 17 tạo 03/07","1. Tạo BOM Tổng hợp → chọn cả 3 BOM con → ""Gộp BOM con"".
+2. Quan sát thứ tự hàng hoá.",ID 15 = 01/07; ID 16 = 05/07; ID 17 = 03/07,Thứ tự hiển thị: hàng của ID 15 (01/07) → ID 17 (03/07) → ID 16 (05/07). Không sắp theo ID tăng dần.,,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.004,Danh sách Dịch vụ & Chi phí khác cũng sắp theo ngày tạo BOM thành phần,P0,"3 BOM Thành phần như TC_15.001, mỗi BOM có 1 dòng Dịch vụ/Chi phí khác: SVC-A (BL-A), SVC-B (BL-B), SVC-C (BL-C)","1. Gộp 3 BOM con (tick lộn xộn).
+2. Quan sát bảng Dịch vụ & Chi phí khác.",SVC-A/B/C thuộc BL-A/B/C,"Bảng Dịch vụ & Chi phí khác hiển thị lần lượt SVC-A → SVC-B → SVC-C, đúng theo ngày tạo BOM thành phần.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.005,Giữ nguyên thứ tự các dòng hàng bên trong cùng một BOM thành phần,P0,"BL-B có 3 hàng theo thứ tự đã lưu: H1, H2, H3","1. Gộp BL-A, BL-B, BL-C.
+2. Quan sát cụm dòng thuộc BL-B.","BL-B: H1, H2, H3","Cụm hàng của BL-B giữ nguyên thứ tự H1 → H2 → H3 (chỉ sắp xếp giữa các BOM, không xáo trộn trong 1 BOM).",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.006,Thứ tự được lưu đúng vào CSDL sau khi lưu BOM tổng hợp,P0,Đã gộp 3 BOM con và lưới đang hiển thị đúng thứ tự A → B → C,"1. Bấm Lưu BOM Tổng hợp.
+2. Thoát khỏi màn hình.
+3. Mở lại BOM Tổng hợp vừa lưu (Xem chi tiết / Sửa).
+4. Quan sát thứ tự dòng hàng hoá và dịch vụ.",-,"Thứ tự sau khi mở lại giống hệt lúc trước khi lưu (A → B → C), không bị đảo theo id hay theo tên.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.007,Hai BOM thành phần có cùng ngày giờ tạo,P1,BL-D và BL-E có created_at trùng nhau tới giây; ID BL-D < ID BL-E,"1. Gộp BL-D và BL-E.
+2. Quan sát thứ tự hàng hoá.
+3. Lặp lại thao tác gộp lần 2.",BL-D và BL-E cùng thời điểm tạo,"- Hàng của BL-D đứng trước BL-E (ưu tiên ID nhỏ hơn).
+- Kết quả ổn định, lặp lại nhiều lần cho thứ tự giống nhau, không lỗi.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.008,Gộp BOM thành phần có nhóm hàng hoá,P1,"3 BOM Thành phần đều có nhóm; BL-A (01/07) và BL-C (05/07) cùng có nhóm tên ""Thiết bị mạng""","1. Gộp 3 BOM con.
+2. Quan sát danh sách nhóm và thứ tự hàng trong từng nhóm.","Nhóm trùng tên: ""Thiết bị mạng""","- Nhóm trùng tên được gộp thành 1 nhóm duy nhất.
+- Trong nhóm gộp, hàng của BL-A (cũ hơn) đứng trước hàng của BL-C.
+- Thứ tự các nhóm theo BOM thành phần cũ → mới.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.009,Gộp chỉ 1 BOM thành phần,P1,Có ít nhất 1 BOM Thành phần hợp lệ với 3 dòng hàng,"1. Tạo BOM Tổng hợp → chọn duy nhất 1 BOM con → ""Gộp BOM con"".
+2. Quan sát lưới.",1 BOM con,"Toàn bộ hàng hoá/dịch vụ được đưa vào đúng thứ tự gốc của BOM con, không lỗi, không mất dòng.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.010,Gộp lại sau khi phát sinh thêm BOM thành phần mới,P1,Đã gộp BL-A (01/07) + BL-B (03/07); sau đó có thêm BL-Z tạo ngày 10/07,"1. Mở lại popup chọn BOM con.
+2. Tick thêm BL-Z (giữ BL-A, BL-B).
+3. Bấm ""Gộp BOM con"".
+4. Quan sát thứ tự.",BL-Z tạo 10/07 (mới nhất),Hàng của BL-Z nằm cuối cùng; thứ tự tổng thể vẫn là 01/07 → 03/07 → 10/07.,,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.011,Hàng cha–con giữ đúng vị trí sau khi sắp xếp,P1,BL-B chứa 1 hàng cha kèm 2 hàng con (cấu hình cha-con),"1. Gộp BL-A, BL-B, BL-C.
+2. Quan sát cụm hàng cha–con của BL-B.",1 cha + 2 con,"Hai dòng con vẫn nằm ngay dưới dòng cha tương ứng, không bị tách rời hay chèn dòng của BOM khác vào giữa.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.012,Vẫn chặn khi BOM con khác loại tiền tệ với BOM tổng hợp,P1,BOM Tổng hợp loại tiền VND; BL-C loại tiền USD,"1. Chọn BL-A, BL-B, BL-C → ""Gộp BOM con"".
+2. Quan sát thông báo.",BL-C: USD,"- Hiển thị lỗi ""Loại tiền tệ không khớp: BL-C. BOM tổng hợp và BOM thành phần phải cùng loại tiền tệ.""
+- Không gộp dữ liệu, lưới giữ nguyên như trước.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.013,Vẫn chặn khi các BOM con không cùng cấu trúc nhóm,P1,"BL-A và BL-B có nhóm hàng hoá, BL-C không có nhóm","1. Chọn cả 3 BOM con → ""Gộp BOM con"".
+2. Quan sát thông báo.",BL-A/BL-B có nhóm; BL-C không nhóm,"- Hiển thị lỗi ""Các BOM con phải có cùng cấu trúc. BOM có nhóm: … BOM không có nhóm: …"".
+- Không gộp dữ liệu.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.014,Bấm Gộp BOM con khi chưa tick BOM nào,P2,"Đang mở popup ""Chọn BOM con để gộp"", chưa tick dòng nào","1. Bấm ""Gộp BOM con"".
+2. Quan sát thông báo.",-,"Hiển thị cảnh báo ""Chưa chọn BL con nào.""; không gộp, không đóng màn hình.",,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.015,Xuất Excel / In BOM tổng hợp giữ đúng thứ tự,P1,BOM Tổng hợp đã gộp và lưu với thứ tự A → B → C,"1. Mở BOM Tổng hợp.
+2. Bấm Xuất Excel (và In).
+3. Đối chiếu thứ tự dòng trong file/bản in với trên lưới.",-,Thứ tự dòng hàng hoá và dịch vụ trong file Excel/bản in khớp 100% với thứ tự hiển thị trên màn hình.,,,,,,,,,,
+BOM & Báo giá,TỔNG HỢP BOM — SẮP XẾP THEO NGÀY TẠO,TC_15.016,Tạo báo giá từ BOM tổng hợp giữ đúng thứ tự dòng hàng,P1,"BOM Tổng hợp đã duyệt, thứ tự hàng hoá A → B → C","1. Tạo báo giá từ BOM Tổng hợp này.
+2. Quan sát thứ tự dòng hàng hoá trên báo giá.",-,Danh sách hàng hoá trên báo giá giữ đúng thứ tự của BOM Tổng hợp (theo ngày tạo BOM thành phần tăng dần).,,,,,,,,,,
