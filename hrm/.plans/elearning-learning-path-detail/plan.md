@@ -138,3 +138,19 @@ Vừa hoàn thành: Phase 11 — hiển thị cấp Chương (learner + builder)
 Bước tiếp theo: User verify browser (Docker, Node ≥18) — (1) lộ trình & môn hiện đúng Chương → Bài + thời lượng giờ-phút, (2) builder lộ trình hiện Chương, (3) bài đã học xong hiện "Đã xong" + chương hiện "Đạt", (4) overview rỗng hiện placeholder.
 Lưu ý/Defer: status chương kiểu thi (exam) mới derive theo tiến độ bài, chưa tính kết quả bài thi; PathOutline (learner) lesson learn_status đã fix ở Phase 10 nhưng vẫn theo từng subject enrollment.
 Blocked: không
+
+## Phase 12: Fix trạng thái lộ trình sai "Đang học" khi vừa tham gia (2026-07-22)
+
+- [x] Task 71: BE `LearningPathLearnerResource` (dòng 43) — `$hasLearning` KHÔNG gộp `'enrolled'` nữa, chỉ đếm `learn_status === 'learning'`. Nguyên nhân: `enrollPath()` tự tạo `SubjectEnrollment` status ENROLLED cho mọi khoá con khi tham gia → mọi khoá 'enrolled' → path bị đẩy 'learning' → FE hiện "Đang học" dù chưa vào học (0%). Sau fix: vừa tham gia → path 'enrolled' → "Đã tham gia (chưa học)"; chỉ khi thực sự có khoá đang học/đã xong mới lên "Đang học".
+
+**Góc học tập cá nhân (My Learning) — cùng bug hiển thị "Đang học" khi chưa học**
+- [x] Task 72: BE `MyLearningService::resultLabel` — subject status ENROLLED + progress 0 trả `'Đã tham gia (chưa học)'` (trước gộp ENROLLED vào 'Đang học'). Ảnh hưởng nhãn khoá con trong lộ trình + hàng bảng tab "Tôi cần học".
+- [x] Task 73: BE `MyLearningService::getInProgress` — thêm cờ `started` cho card khoá lẻ (`status===LEARNING || progress>0`) và card lộ trình (`coursesDone>0` hoặc có khoá con status LEARNING/DONE). `started` phản ánh học viên đã thực sự vào học chưa (subject lên LEARNING ngay từ heartbeat mở bài).
+- [x] Task 74: FE `StudyCard.vue` — badge chính đổi từ 2 trạng thái (Hoàn thành/Đang học) sang 3 trạng thái qua computed `statusBadge`: Hoàn thành (100%) / Đang học (started) / "Đã tham gia (chưa học)" (started=false, màu amber).
+- [x] Task 75: FE `RequirementTable.vue` — thêm nhánh style + icon (amber, `ri-time-line`) cho nhãn "Đã tham gia (chưa học)" ở tab "Tôi cần học".
+
+### Checkpoint — 2026-07-22
+Vừa hoàn thành: Phase 12 — fix trạng thái "Đang học" sai khi chưa vào học ở CẢ màn chi tiết lộ trình VÀ góc học tập cá nhân (card + khoá con + tab cần học).
+Đang làm dở: không
+Bước tiếp theo: User verify browser — (1) chi tiết lộ trình vừa tham gia → "Đã tham gia (chưa học)" 0%; (2) Góc học tập → card lộ trình/khoá vừa tham gia → badge amber "Đã tham gia (chưa học)"; (3) vào học 1 bài (heartbeat) → cả 2 chuyển "Đang học".
+Blocked: không
