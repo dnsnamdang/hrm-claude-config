@@ -2916,3 +2916,503 @@ Vừa hoàn thành: Phase 18 — 28 tasks (UI fix + logic fix + lịch sử BOM)
 Đang làm dở: Không
 Bước tiếp theo: Chạy migration bom_list_logs + test lịch sử BOM
 Blocked: Không
+
+---
+
+## BUG FIX — Rò rỉ giá vốn ERP ở Form tạo báo giá độc lập (2026-07-03)
+
+Triệu chứng: NV KHÔNG có quyền "Xem giá vốn hàng hoá" (1092) vẫn thấy giá vốn ở cột "Giá nhập" khi tạo báo giá độc lập (type=2).
+
+Root cause (3 bug, defense-in-depth):
+- [x] FE `quotations/_id/edit.vue` `initCreateMode`: ép cứng `canViewCostPrice = true` (dòng ~1800) + `can_view_import_price: true` (dòng ~1781) → cột Giá nhập luôn hiện. Fix: lấy quyền thật qua `this.canPickErpChild` (đọc `$store.state.permissions` — cùng nguồn gate BE). Hàng tự tạo (non-ERP) creator vẫn nhập được (template dòng 400 v-else); tổng vẫn hiện qua `hasUserCreatedProducts`.
+- [x] BE `BomListController::searchErpProducts` (dòng 308): trả `cost_price` KHÔNG gate. Fix: `isCurrentEmployeeHasPermission('Xem giá vốn hàng hoá') ? cost : null` (mirror `getErpRecipeChildren`). Dùng chung modal BOM+báo giá — an toàn: BOM lưu ERP estimated_price=0, báo giá BE tự lấy giá ERP khi save.
+- [x] BE `BomListController::getErpProductPrices` (dòng 429): trả `cost_price` KHÔNG gate. Fix: gate tương tự. Endpoint chỉ báo giá gọi.
+
+Verify: user không quyền 1092 tạo báo giá độc lập → cột Giá nhập hàng ERP hiện "—", hàng tự tạo vẫn nhập được; network `cost_price=null`. User có quyền → hiện đủ.
+
+Rà soát toàn bộ điểm BE trả giá vốn cho luồng báo giá (defense-in-depth):
+- [x] `searchErpProducts` (295→311) gate ✓ · `getErpProductPrices` (430→435) gate ✓ · `getErpRecipeChildren` (358→404) gate sẵn ✓ · `QuotationController@show` reload báo giá độc lập (703→734) gate sẵn (`$est = $canSeeThisPrice ? $estRaw : null`) ✓
+- [x] Điều tra nguồn gốc: hard-code `= true` vào từ commit `ec93512f` "big update quotation" (28/05) — cách tắt nhanh cho báo giá độc lập khi `hasUserCreatedProducts` chưa có; commit `f00b049c` (06/06) thêm `hasUserCreatedProducts` (cơ chế đúng) nhưng KHÔNG xoá `= true` cũ → leftover fail-open ~5 tuần. Quét: không còn hard-code cờ quyền nào khác (BomBuilderEditor làm đúng dòng 828).
+- [x] Thêm quy ước "Cờ phân quyền fail-closed" vào `HRM/CLAUDE.md` (Nguyên tắc chung).
+
+### Checkpoint — 2026-07-03 (bug fix rò rỉ giá vốn)
+Vừa hoàn thành: Fix 3 bug rò rỉ giá vốn ERP ở form tạo báo giá độc lập (2 BE gate `BomListController::searchErpProducts`/`getErpProductPrices` + 1 FE `edit.vue::initCreateMode` bỏ hard-code `canViewCostPrice=true` → `this.canPickErpChild`). Điều tra root cause (git), rà soát toàn bộ BE, thêm quy ước fail-closed vào CLAUDE.md. `php -l` sạch.
+Đang làm dở: Không
+Bước tiếp theo: commit git 2 repo (hrm-api BomListController + hrm-client edit.vue) khi user yêu cầu; đưa CLAUDE.md qua PR hrm-claude-config.
+Blocked: Không
+Verify: **User đã test OK (2026-07-03)** — NV không quyền 1092 thấy "—" ở cột Giá nhập hàng ERP, hàng tự tạo vẫn nhập được; có quyền hiện đủ; màn BOM không regression.
+
+---
+
+## BUG FIX (mở rộng) — Rà soát TẤT CẢ form báo giá: ẩn giá vốn ERP + tổng thành tiền nhập nếu không quyền 1092 (2026-07-04)
+
+Quy tắc chốt (user): (a) hàng USER TỰ TẠO (non-ERP) → được nhập/xem giá nhập (dữ liệu do user tạo); (b) hàng ERP → giá nhập chỉ hiện khi có quyền "Xem giá vốn hàng hoá"; (c) MỌI tổng thành tiền nhập + TSLN → chỉ hiện khi có quyền (bỏ bypass "người tạo" + `hasUserCreatedProducts`). Áp dụng tất cả form + mẫu in (HTML + Excel).
+
+Điểm lộ phát hiện qua rà soát:
+- Màn In `QuotationPrintPreview` cột "Thành tiền nhập" KHÔNG gate → lộ cho mọi người.
+- Màn Xem `_id/index.vue` + `QuotationSubmitModal` dùng cờ lỏng `can_view_cost_price` (=quyền OR người tạo) → người tạo không quyền vẫn thấy tổng/TSLN.
+- BE `DetailQuotationResource.summary_breakdown` (line 203) trả `.nhap` không gate; `can_view_cost_price` (237) = lỏng.
+- Form Sửa `edit.vue` tổng dùng `canViewCostPrice || hasUserCreatedProducts`.
+- Excel `exportExcel` (932) unset total_import theo cờ lỏng `$canSeeCostPrice`.
+
+Fix (per-row giữ nguyên — BE line 35/91 `canViewCostPrice || (!isErp && isCreator)` đã đúng luật: ERP cần quyền, hàng tự tạo creator xem được):
+- [x] BE `DetailQuotationResource`: thêm `hideCostInBreakdown()` null `summary_breakdown[*]['nhap']` khi `!$canViewCostPrice`; `can_view_cost_price` (237) → `$canViewCostPrice` (strict, bỏ `|| $isCreator`).
+- [x] BE `QuotationController::exportExcel` (932): `!$canSeeCostPrice` → `!$canViewCostPrice` (Excel blade tự ẩn cột "Thành tiền nhập" qua `$showImport`).
+- [x] FE `edit.vue`: 7 chỗ `canViewCostPrice || hasUserCreatedProducts` → `canViewCostPrice`.
+- [x] FE `QuotationPrintPreview`: **bản in gửi khách → `showImportCol` LUÔN `false`** (ẩn cột "Thành tiền nhập" bất kể quyền — theo yêu cầu user 2026-07-04). Bảng sản phẩm bản in vốn không có cột giá nhập/TSLN (Phase 22).
+- [x] FE `_id/index.vue`: computed `showImportCol` ẩn cột "Thành tiền nhập" bảng breakdown (1 th + 5 td); tổng/TSLN tự strict theo BE `can_view_cost_price`.
+- [x] `SubmitModal` KHÔNG cần sửa — đọc `can_view_cost_price` từ endpoint `calculate-level` (`QuotationService::calculateLevel` line 1656) vốn ĐÃ strict (`isCurrentEmployeeHasPermission`).
+- Per-row màn Xem/Sửa: hàng tự tạo (non-ERP) creator vẫn thấy/nhập giá nhập (`estimated_price != null`); hàng ERP → "—" nếu không quyền. `php -l` sạch.
+
+### Checkpoint — 2026-07-04/05 (ẩn giá vốn toàn bộ form báo giá)
+Vừa hoàn thành: Rà soát + fix ẩn giá vốn ERP + tổng thành tiền nhập/TSLN theo quyền 1092 ở tất cả form báo giá.
+  • BE 2 file: `DetailQuotationResource` (can_view_cost_price → strict, bỏ `|| isCreator`; `hideCostInBreakdown()` null `summary_breakdown.nhap`); `exportExcel` (932) strict.
+  • FE 3 file: `edit.vue` (bỏ bypass `hasUserCreatedProducts` 7 chỗ); `_id/index.vue` (computed `showImportCol` theo quyền — màn nội bộ); `QuotationPrintPreview` (**`showImportCol` = false CỨNG — bản in gửi khách LUÔN ẩn**, không theo quyền — chốt 2026-07-04).
+  • Per-row hàng tự tạo (non-ERP): creator luôn xem/nhập được (`estimated_price != null`); hàng ERP → "—" nếu không quyền.
+  • Phân biệt: bản in HTML = luôn ẩn (khách); Excel export = theo quyền (nội bộ, có cột TSLN); màn Xem/Sửa/Submit = theo quyền.
+`php -l` sạch.
+Đang làm dở: Không
+Bước tiếp theo: (1) user build FE + test không quyền/có quyền + bản in; (2) **XÁC NHẬN: Excel export là bản nội bộ (giữ theo quyền) hay gửi khách (cần luôn ẩn như bản in HTML)?** Chưa commit git.
+Blocked: Không
+
+---
+
+## Bugfix — Bản in báo giá độc lập nhân đôi hàng hoá thành "dòng con" (2026-07-07)
+
+**Triệu chứng:** Báo giá độc lập (type=2) chỉ có N hàng hoá cha, nhưng bản in (`QuotationPrintPreview`) render lại chính các mã đó thành dòng con dưới mỗi cha. Màn Xem/Sửa không lỗi.
+
+**Root cause:** `QuotationPrintPreview.getChildren()` match con-cha bằng `parent.bom_list_product_id`. Với báo giá độc lập, BE (`DetailQuotationResource:47`) trả `bom_list_product_id = null` → `Number(null)=0`; dòng cha top-level có `parent_id = null` → `Number(null)=0` ⇒ `0===0` khớp mọi dòng cha thành con của nhau. Màn Xem đúng vì dùng `productIdKey = isDirectQuotation ? price_id : bom_list_product_id`.
+
+**Fix (FE, `components/assign/quotation/QuotationPrintPreview.vue`):**
+- [x] Thêm computed `isDirectQuotation` (mirror index.vue).
+- [x] Thêm method `productIdKey(p)` = `isDirectQuotation ? p.price_id : p.bom_list_product_id`.
+- [x] `getChildren()` match theo `productIdKey(parent)` + guard key null/undefined → `[]`.
+
+**Verify:**
+- [ ] user build FE + in thử báo giá độc lập (không còn dòng con nhân đôi) + báo giá từ BOM (con vẫn hiện đúng, toggle show_children vẫn tôn trọng).
+- [x] (cùng defect) `groupedData()` nhóm theo `groupKey = isDirectQuotation ? quotation_group_id : bom_list_group_id` (trước đây hardcode `bom_list_group_id` → báo giá độc lập có nhóm tùy chỉnh bị mất hàng khi in).
+
+---
+
+## Bugfix — In báo giá có group chỉ hiện dòng group, mất chi tiết bên trong (2026-07-07)
+
+**Triệu chứng:** Bản in báo giá có nhóm chỉ render dòng tiêu đề nhóm, không có hàng hoá bên trong.
+
+**Root cause:** `QuotationPrintPreview.groupedData()` map thẳng theo `this.groups` và chỉ khớp hàng theo `group_id`, KHÔNG xử lý:
+- Hàng **không nhóm** (group_id null) khi vẫn tồn tại group → không khớp group nào → biến mất khỏi bản in (chỉ còn header nhóm).
+- Group rỗng vẫn render header thừa.
+Màn Xem (`index.vue groupedRows`) đã xử lý đúng: gom orphan về nhóm "Không nhóm" (không header), bỏ group rỗng, đánh số La Mã theo group thực.
+
+**Fix (FE, `QuotationPrintPreview.vue`):**
+- [x] `groupedData()` viết lại mirror `groupedRows`: lọc parents theo `groupKey` (direct→quotation_group_id, BOM→bom_list_group_id), chỉ push group có hàng (`romanIndex` tăng dần), gom orphan `{id:null}` lên đầu.
+- [x] Template group header: `v-if="group.id"` (orphan không header — khách không thấy "Không nhóm") + số La Mã theo `group.romanIndex + 1`.
+- Lưu ý hành vi: báo giá KHÔNG có nhóm nào → in hàng hoá không kèm header "Hàng hoá" (đồng nhất màn Xem). Nếu muốn giữ header cũ → báo lại.
+
+**Verify:**
+- [ ] In báo giá có nhóm: hiện đủ hàng trong từng nhóm, đánh số La Mã đúng.
+- [ ] In báo giá vừa có hàng trong nhóm vừa có hàng không nhóm: hàng không nhóm hiện (không header), nhóm hiện đủ.
+- [ ] In báo giá không nhóm: hiện đủ hàng.
+
+---
+
+## Bugfix — Tab Báo giá (chi tiết dự án TKT): phiếu nháp không hiện "Tổng giá trị" (2026-07-07)
+
+**Triệu chứng:** Báo giá status=1 (đang tạo) hiện "0" ở cột Tổng giá trị báo giá trên tab Báo giá của màn chi tiết dự án TKT.
+
+**Root cause (evidence DB, drafts 29/30):** cột cache `quotations.total_after_vat` bị **0 (lệch)** ở một số phiếu nháp dù đã có hàng (`quoted_price 22M × qty 3` → đáng lẽ ~66M). Màn danh sách chính che lỗi bằng `total_after_vat || total_sale` + eager-load `productPrices.bomListProduct:id,qty_needed`. Tab `byProject`:
+  - BE eager-load `productPrices:id,quotation_id,erp_product_id,erp_tmp_product_id` (thiếu `quoted_price`+`bomListProduct`) → `QuotationResource.total_sale = 0`.
+  - FE chỉ đọc `total_after_vat` (không fallback).
+
+**Fix (mirror màn danh sách chính, không đụng hàm dùng chung):**
+- [x] BE `QuotationController::byProject`: đổi eager-load thành `productPrices.bomListProduct:id,qty_needed` (thêm cột, an toàn — vẫn đủ `erp_product_id` cho `has_temp_products`). `php -l` OK.
+- [x] FE `ProspectiveProjectQuotationsTab.vue:194`: `formatMoney(item.total_after_vat || item.total_sale)`.
+
+**Tồn đọng (root cause sâu — chờ user quyết):**
+- Cache `total_after_vat=0` ở phiếu nháp là bug cache (recompute không chạy/chạy trước khi lưu). Có sẵn `RecomputeQuotationTotalsSeeder` để backfill. `total_sale` là tổng TRƯỚC VAT nên fallback hiển thị hơi thấp hơn tổng sau VAT thật ở các phiếu cache lệch. Nên chạy seeder backfill để đồng bộ (cần user đồng ý vì đổi data).
+- `QuotationResource.total_sale` (hàm dùng chung) chưa cộng đúng báo giá độc lập (blp null → qty=0) & có thể double-count con — giữ nguyên như màn chính, KHÔNG tự sửa.
+
+**Verify:**
+- [ ] user build FE + mở tab Báo giá dự án có phiếu nháp cache lệch (vd BG-2026-00030) → hiện ~66.000.000 thay vì 0.
+
+**Root cause tận gốc (đã fix BE):** `QuotationService::createFromBom()` chèn productPrices có giá + copy service items nhưng KHÔNG gọi `recomputeTotals()` → báo giá nháp tạo-từ-BOM có `total_after_vat=0` cho tới khi user mở Sửa & lưu. (Các path khác — store/update/upsertPrices — đã recompute nên type=2 & phiếu đã sửa không dính.)
+- [x] BE `createFromBom`: thêm `$this->recomputeTotals($quotation)` sau `enforceErpProductVat`, trước `logHistory`. `php -l` OK. → từ nay báo giá tạo từ BOM có cache tổng đúng ngay.
+- [ ] (tồn) Backfill phiếu nháp cũ đã bị 0 (vd 29,30): chạy `RecomputeQuotationTotalsSeeder` — CHỜ user đồng ý (đổi data). FE fallback đã che phần hiển thị.
+
+**Vì sao BE tự tính lại thay vì tin total từ FE:** (1) bảo mật — total quyết định cấp duyệt giá/giá trị HĐ, client sửa được; (2) nhất quán với rows đã lưu; (3) một công thức duy nhất cho export/ERP/báo cáo. → Fix đúng là bổ sung recompute ở path thiếu, không phải tin FE.
+
+**Backfill đã chạy (2026-07-07):** `db:seed RecomputeQuotationTotalsSeeder` → xử lý 24 phiếu, sửa 2 (BG-2026-00027 & BG-2026-00030: 0 → 72.600.000 = 66M + VAT10%). 4 phiếu còn 0 (BG-2026-00013..16) là nháp RỖNG không có dòng hàng → 0 đúng. `updated_at` không đổi.
+- [x] Backfill data cũ xong.
+
+---
+
+## Feature nhỏ — Hiện "Người lập · Ngày tạo" trên title bar "Thông tin chung" (màn xem chi tiết báo giá) (2026-07-07)
+
+**Yêu cầu:** Thêm Người lập - Ngày tạo ở góc phải title bar "Thông tin chung", gần nút thu gọn.
+**Data:** `item.creator_name`, `item.created_at` (DetailQuotationResource đã trả sẵn). Luôn hiện (cả khi thu gọn).
+
+- [x] FE `quotations/_id/index.vue`: thêm `<span.header-meta>` (icon user + Người lập + Ngày tạo) trước `.toggle-icon`.
+- [x] CSS: `.header-meta` margin-left:auto + muted; `.toggle-icon` margin-left→6px. Luôn hiện kể cả khi thu gọn.
+
+---
+
+### Checkpoint — 2026-07-07 (session fix bug bản in + tổng giá trị + UI người lập)
+Vừa hoàn thành (4 việc trong session, đều CODE DONE, chưa commit git):
+1. **Bản in nhân đôi hàng thành dòng con** (báo giá độc lập): `QuotationPrintPreview.getChildren()` hardcode `bom_list_product_id` (null với type=2) → `Number(null)=0` khớp mọi dòng cha. Fix: thêm `isDirectQuotation`+`productIdKey` (price_id vs bom_list_product_id) + guard key null. Kèm fix `groupedData` cùng defect (grouping direct dùng quotation_group_id).
+2. **In báo giá có group mất chi tiết**: `groupedData` viết lại mirror `index.vue groupedRows` — lọc theo groupKey, gom orphan (id=null không header), bỏ group rỗng, số La Mã theo romanIndex.
+3. **Tab Báo giá (chi tiết dự án TKT) phiếu nháp không hiện Tổng giá trị**:
+   - Tận gốc BE: `QuotationService::createFromBom()` thiếu `recomputeTotals()` → thêm vào (sau enforceErpProductVat). php -l OK.
+   - Backfill data cũ: chạy `RecomputeQuotationTotalsSeeder` → sửa 2 phiếu (BG-27, BG-30: 0→72.6M). 4 phiếu còn 0 là nháp rỗng (đúng).
+   - Hiển thị: FE tab `total_after_vat || total_sale` + BE byProject eager-load `productPrices.bomListProduct:id,qty_needed`.
+4. **UI Người lập · Ngày tạo** trên title bar "Thông tin chung" màn xem chi tiết báo giá (góc phải cạnh nút thu gọn). FE-only.
+
+Đang làm dở: (không)
+Bước tiếp theo:
+  - user build FE + E2E: (1) in báo giá độc lập không nhân đôi con; (2) in báo giá có group/orphan hiện đủ; (3) tab dự án phiếu nháp hiện tổng đúng; (4) title bar hiện Người lập/Ngày tạo.
+  - **Deploy production**: chạy seeder backfill: `php artisan db:seed --class="Modules\Assign\Database\Seeders\RecomputeQuotationTotalsSeeder" --force` (sau khi deploy code).
+  - commit git khi user yêu cầu (hrm-api: QuotationController+QuotationService; hrm-client: QuotationPrintPreview+ProspectiveProjectQuotationsTab+quotations/_id/index.vue).
+Blocked: (không)
+Files đã sửa:
+  - hrm-api: `Modules/Assign/Http/Controllers/Api/V1/QuotationController.php` (byProject eager-load), `Modules/Assign/Services/QuotationService.php` (createFromBom recompute)
+  - hrm-client: `components/assign/quotation/QuotationPrintPreview.vue`, `pages/assign/prospective-projects/components/ProspectiveProjectQuotationsTab.vue`, `pages/assign/quotations/_id/index.vue`
+
+---
+
+## Feature — Màn `/assign/product-project` hiển thị cả hàng ERP + hàng tạm (2026-07-09)
+
+**Yêu cầu chốt:**
+- Nguồn 1: BOM **tổng hợp Đã duyệt** → lấy CẢ hàng ERP + hàng tạm (bỏ điều kiện loại `erp_product_id`).
+- Nguồn 2: Báo giá **tự lập** status **Đã duyệt (4) + Trúng thầu (7)** → lấy CẢ hàng ERP + hàng tạm.
+- Cả 2 nguồn: **chỉ hàng CHA** (`parent_id IS NULL`) → tự gỡ xung đột con-cha-ERP (`show_children`).
+- Hàng ERP luôn hiện; hàng tạm đã đồng bộ vẫn hiện + thêm cột **"Mã đồng bộ ERP"** hiển thị mã ERP thật.
+
+**Quyết định hiển thị:**
+- Cột mới `erp_code` = `mysql2.products.code` (batch-load theo `whereIn(erp_product_id)`, tránh N+1, không dùng snapshot local). Strip leading quote.
+- Trạng thái đồng bộ redefine theo cột: `erp_product_id` có → "Đã đồng bộ"; `erp_tmp_product_id` có & `erp_product_id` null (chỉ báo giá) → "Đang đồng bộ"; cả 2 null → "Chưa đồng bộ".
+- Filter "Trạng thái đồng bộ": giữ 2 option (Đã/Chưa), "đã" = `erp_product_id` not null (thống nhất cả 2 nguồn; bỏ dựa cột `bom_list_products.erp_sync_status` không tin cậy).
+- Trùng dòng: giữ nguyên mỗi bản ghi = 1 dòng, KHÔNG gộp.
+
+**Tasks:**
+- [x] BE `ProductProjectController::bomKeyQuery`: bỏ `whereNull(erp_product_id)`, thêm `whereNull(parent_id)`.
+- [x] BE `quotationKeyQuery`: bỏ block `erp_product_id null OR erp_tmp not null`, thêm `whereNull(parent_id)`.
+- [x] BE `applyKeyFilters`: erp_sync_status filter thống nhất theo `erp_product_id` cho cả 2 nguồn.
+- [x] BE `hydrateAndTransform`: batch-load `erpCodeMap` từ `TpProduct` (mysql2), truyền vào transform.
+- [x] BE `transformItem` (BOM): thêm `erp_code`; status theo `erp_product_id`.
+- [x] BE `transformQuotationItem`: thêm `erp_code`; status 3 mức (Đã/Đang/Chưa).
+- [x] BE import `TpProduct`.
+- [x] FE `product-project/index.vue`: thêm cột "Mã đồng bộ ERP" (`erpCode`) + cell; chip trạng thái thêm mức "Đang đồng bộ" (vàng).
+- [x] Excel `exports/product_projects.blade.php`: thêm cột "Mã đồng bộ ERP", colspan 15→16.
+- [x] `php -l` các file BE.
+
+**Verify (user):**
+- [ ] Hàng ERP hiện ở màn (cả BOM tổng hợp lẫn báo giá tự lập).
+- [ ] Chỉ hàng cha, không có dòng con.
+- [ ] Hàng tạm đã sync hiện mã ERP ở cột "Mã đồng bộ ERP"; hàng tạm chưa sync để trống.
+- [ ] Filter Đã/Chưa đồng bộ đúng; Export Excel có cột mã ERP.
+
+---
+
+## Audit — Phân quyền xem giá nhập / thành tiền nhập ở màn duyệt báo giá (2026-07-09)
+
+**Yêu cầu:** Kiểm tra phân quyền "Xem giá vốn hàng hoá" (id 1092) gate GIÁ NHẬP / THÀNH TIỀN NHẬP (import price) trên các màn duyệt báo giá (pending-approval, view chi tiết, edit, print, danh sách). Xác định lỗ hổng fail-open (FE hiện không gate / BE trả data không gate / cờ quyền default true).
+
+**Tasks:**
+- [ ] Audit FE + BE (agent) → liệt kê chỗ đã gate / chưa gate.
+- [ ] Trình user danh sách lỗ hổng + đề xuất fix.
+- [ ] (chờ user duyệt) Fix theo defense-in-depth: FE ẩn theo cờ quyền default false + BE gate `isCurrentEmployeeHasPermission('Xem giá vốn hàng hoá')`.
+
+---
+
+## Bugfix — "Thêm nhanh Model/Thương hiệu/Xuất xứ/ĐVT" trên popup hàng tạm lỗi FK created_by (2026-07-09)
+
+**Triệu chứng:** Popup "Thêm nhanh Model" → lưu → `SQLSTATE[23000] 1452 FK product_models_created_by_foreign`.
+
+**Root cause:** `ProductProjectController::createMasterReference()` set `created_by = auth()->id()` (id user HRM, vd 1845). Nhưng TpModel/TpBrand/TpOrigin/TpUnit đều ở DB ERP (`erp_new`, connection `mysql2`), cột `created_by` FK → `erp_new.employees.id`. Id user HRM ≠ id employee ERP → vi phạm FK. (company_id HRM cũng không khớp ERP.)
+
+**Fix:** Trong `createMasterReference`, khi model ở connection `mysql2` (bảng ERP): dùng `App\Helpers\ErpPermissionHelper::erpEmployeeId()` (map qua employee_info_id) cho `created_by`/`updated_by`, null → bỏ set (DB default). KHÔNG ghi `company_id` HRM vào bảng ERP. Bảng HRM giữ nguyên (id user + company).
+
+**Tasks:**
+- [x] BE `createMasterReference`: resolve owner id theo connection (ERP employee cho mysql2), skip company_id cho bảng ERP.
+- [x] Import `ErpPermissionHelper`. `php -l` sạch.
+
+**Verify (user):** Thêm nhanh Model/Thương hiệu/Xuất xứ/ĐVT trên popup hàng tạm → lưu thành công, không lỗi FK.
+
+---
+
+## Phase 32 — Chọn/đổi ĐVT cho hàng hoá ở màn Tạo/Sửa BOM (2026-07-14)
+
+> Spec: `docs/superpowers/specs/2026-07-14-bom-unit-select-design.md` · Tóm tắt: `design.md` mục Phase 32.
+> **Goal:** Dòng cha ERP đơn ở màn Tạo/Sửa BOM chọn được ĐVT (BOM không quản lý giá → chỉ đổi unit_id + nhãn); báo giá tạo từ BOM lấy giá ERP theo ĐVT đã chọn.
+> **Ràng buộc chung:** PHP 7.4 (arrow fn OK), không migration, không permission mới, không commit git khi chưa yêu cầu, `unit_options` nhúng detail KHÔNG kèm giá. KHÔNG đụng: `getRetailPrices`/`getCostPrices`, `createFromRequest` (init 0), `upsertBomProducts` (đã sync unit_id từ BOM), màn báo giá type=1/2, hàng tạm, combo recipe.
+
+### Task 32.1 — BE: `DetailBomListResource` nhúng `unit_options` (không giá)
+
+File: `hrm-api/Modules/Assign/Transformers/BomListResource/DetailBomListResource.php`
+Interfaces — Produces: mỗi phần tử `products[]` đủ điều kiện (cha ERP đơn, không con) có thêm `unit_options: [{unit_id:int, unit_name:string, is_base:int}]`; dòng khác `unit_options: []`. FE Task 32.4 đọc field này.
+
+- [x] Thêm import đầu file: `use Modules\Human\Entities\TpProductUnitPrice;`
+- [x] Đầu `toArray()` (sau block `$svcRateMap`), batch-load map — mirror pattern `$svcRevMap` sẵn có trong file:
+
+```php
+// Phase 32: options ĐVT cho dòng CHA ERP đơn (không combo) — không kèm giá, khỏi gate quyền giá vốn
+$unitOptionsMap = [];
+$parentIdsWithChildren = collect();
+if ($this->products && $this->products->count()) {
+  $parentIdsWithChildren = $this->products->pluck('parent_id')->filter()->map(fn ($v) => (string) $v)->flip();
+  $erpParentIds = $this->products
+    ->filter(function ($p) use ($parentIdsWithChildren) {
+      return $p->erp_product_id && !$p->parent_id && !isset($parentIdsWithChildren[(string) $p->id]);
+    })
+    ->pluck('erp_product_id')->map(fn ($v) => (int) $v)->unique()->values()->all();
+  if (!empty($erpParentIds)) {
+    foreach (TpProductUnitPrice::getUnitOptions($erpParentIds) as $pid => $units) {
+      $unitOptionsMap[$pid] = array_map(function ($u) {
+        return ['unit_id' => $u['unit_id'], 'unit_name' => $u['unit_name'], 'is_base' => $u['is_base']];
+      }, $units);
+    }
+  }
+}
+```
+
+- [x] Trong closure map `products` (dòng ~53): thêm `use ($unitOptionsMap, $parentIdsWithChildren)` và field mới (đặt cạnh `unit_name`):
+
+```php
+'unit_options' => ($item->erp_product_id && !$item->parent_id && !isset($parentIdsWithChildren[(string) $item->id]))
+  ? ($unitOptionsMap[(int) $item->erp_product_id] ?? [])
+  : [],
+```
+
+- [x] Verify: `php -l Modules/Assign/Transformers/BomListResource/DetailBomListResource.php` → No syntax errors.
+
+### Task 32.2 — BE: `BomListService::syncErpFields()` giữ `unit_id` hợp lệ
+
+File: `hrm-api/Modules/Assign/Services/BomListService.php` (method dòng ~973-998)
+Interfaces — Produces: `bom_list_products.unit_id` sau lưu = unit user chọn nếu thuộc `product_units` của sản phẩm; không thuộc (null/rác/đơn vị đã xoá bên ERP/import Excel) → base unit như cũ. Task 32.3 tin giá trị này.
+
+- [x] Thêm import đầu file (cạnh `use Modules\Human\Entities\TpProduct;`): `use Modules\Human\Entities\TpProductUnitPrice;`
+- [x] Đầu `syncErpFields()`, sau `$erpProducts = ...get();` thêm guard + batch:
+
+```php
+if ($erpProducts->isEmpty()) {
+    return;
+}
+
+// Phase 32: đơn vị hợp lệ theo từng sản phẩm — giữ unit_id user chọn nếu hợp lệ, sai → ép về base
+$unitOptionsMap = TpProductUnitPrice::getUnitOptions(
+    $erpProducts->pluck('erp_product_id')->map(function ($v) { return (int) $v; })->unique()->values()->all()
+);
+```
+
+- [x] Trong vòng foreach, TRƯỚC `$bomProduct->update([...])` thêm:
+
+```php
+$validUnitIds = array_map('intval', array_column($unitOptionsMap[(int) $bomProduct->erp_product_id] ?? [], 'unit_id'));
+$keepUnitId = $bomProduct->unit_id && in_array((int) $bomProduct->unit_id, $validUnitIds, true);
+```
+
+- [x] Đổi dòng `'unit_id' => ...` (hiện ~994) thành:
+
+```php
+'unit_id' => $keepUnitId
+    ? $bomProduct->unit_id
+    : ($erpProduct->baseUnit ? $erpProduct->baseUnit->unit_id : $bomProduct->unit_id),
+```
+
+Giữ nguyên mọi field khác (`estimated_price => 0`, snapshot name/code/model/brand/origin/attributes). Dòng con recipe cũng qua logic này — unit con vốn là base nên hành vi không đổi.
+- [x] Verify: `php -l Modules/Assign/Services/BomListService.php` → No syntax errors.
+
+### Task 32.3 — BE: copy BOM → báo giá lấy giá theo ĐVT đã chọn (2 đường)
+
+File: `hrm-api/Modules/Assign/Services/QuotationService.php`
+Interfaces — Consumes: `bom_list_products.unit_id` đã validate ở Task 32.2. Produces: `quotation_product_prices.estimated_price/quoted_price` theo đúng đơn vị của dòng BOM.
+
+- [x] Thêm private helper (đặt gần `saveDirectProduct`):
+
+```php
+/**
+ * Phase 32 (BOM chọn ĐVT): giá {cost, retail} VNĐ theo unit_id dòng BOM.
+ * unit_id null/không khớp → fallback đơn vị cơ bản; sản phẩm không có đơn vị → 0.
+ */
+private function pickUnitPrices(array $unitOptionsMap, int $erpId, $unitId): array
+{
+    $base = null;
+    foreach (($unitOptionsMap[$erpId] ?? []) as $u) {
+        if ($unitId && (int) $u['unit_id'] === (int) $unitId) {
+            return ['cost' => (float) $u['cost_price'], 'retail' => (float) $u['retail_price']];
+        }
+        if (!empty($u['is_base'])) {
+            $base = $u;
+        }
+    }
+    return [
+        'cost' => $base ? (float) $base['cost_price'] : 0.0,
+        'retail' => $base ? (float) $base['retail_price'] : 0.0,
+    ];
+}
+```
+
+- [x] **Đường 1 — `create()`** (block ~113-123): thay 2 dòng
+
+```php
+$retailPrices = TpProductUnitPrice::getRetailPrices($erpIds);
+$costPrices = TpProductUnitPrice::getCostPrices($erpIds);
+```
+
+bằng `$unitOptionsMap = TpProductUnitPrice::getUnitOptions($erpIds);` và trong foreach thay
+
+```php
+$costVnd = $erpId ? ($costPrices[$erpId] ?? 0) : 0;
+$retailVnd = $erpId ? ($retailPrices[$erpId] ?? 0) : 0;
+```
+
+bằng:
+
+```php
+$unitPrices = $erpId ? $this->pickUnitPrices($unitOptionsMap, $erpId, $bp->unit_id) : ['cost' => 0.0, 'retail' => 0.0];
+$costVnd = $unitPrices['cost'];
+$retailVnd = $unitPrices['retail'];
+```
+
+- [x] **Đường 2 — `createFromBom()`** (block ~438-451): thay tương tự — batch `getUnitOptions($erpIds)`, nhánh `if ($erpId)` dùng:
+
+```php
+$unitPrices = $this->pickUnitPrices($unitOptionsMap, $erpId, $bp->unit_id);
+$costVnd = $unitPrices['cost'];
+$retailVnd = $unitPrices['retail'];
+$estimatedPrice = $exchangeRate > 1 ? round($costVnd / $exchangeRate, 2) : $costVnd;
+$quotedPrice = $exchangeRate > 1 ? round($retailVnd / $exchangeRate, 2) : $retailVnd;
+```
+
+(giữ nguyên quy đổi tỷ giá + round 2 số lẻ + nhánh else hàng tạm = 0; `recomputeTotals` đã có sau đó — không đụng).
+- [x] KHÔNG sửa `createFromRequest` (init giá 0) và `upsertBomProducts`.
+- [x] Verify: `php -l Modules/Assign/Services/QuotationService.php` → No syntax errors. Regression: BOM toàn base unit (data cũ) → `pickUnitPrices` trả đúng giá base = kết quả cũ.
+
+### Task 32.4 — FE: `BomBuilderEditor.vue` — map options + isUnitSelectable/onChangeUnit/loader
+
+File: `hrm-client/pages/assign/bom-list/components/BomBuilderEditor.vue`
+Interfaces — Consumes: `unit_options` từ detail (32.1); endpoint sẵn `POST assign/quotations/erp-product-units` (payload `{erp_product_ids: []}`, response `{data: {<erp_id>: [{unit_id, unit_name, is_base, ...giá bỏ qua}]}}`). Produces: row cha có `unitOptions[]`; methods `isUnitSelectable(group)`, `onChangeUnit(row, unitId)` cho Task 32.5.
+
+- [x] `mapProductToRow` (~dòng 1036-1064): thêm field cạnh `unitId`:
+
+```js
+unitOptions: Array.isArray(item.unit_options) ? item.unit_options : [],
+```
+
+- [x] Thêm 3 methods (cạnh `mapProductsToGroups`):
+
+```js
+// Phase 32: dòng CHA ERP đơn (không con) mới được chọn ĐVT — mirror isUnitSelectable báo giá
+isUnitSelectable(group) {
+    return !!(group && group.parent && group.parent.erpProductId) && !(group.children || []).length
+},
+// Nạp options cho các cha ERP đơn chưa có (sau thêm hàng ERP / gộp sub-BOM). Detail đã nhúng sẵn.
+async loadUnitOptionsForErpParents() {
+    const targets = this.groups.filter((g) => this.isUnitSelectable(g) && !(g.parent.unitOptions || []).length)
+    const ids = [...new Set(targets.map((g) => g.parent.erpProductId).filter(Boolean))]
+    if (!ids.length) return
+    try {
+        const res = await this.$store.dispatch('apiPostMethod', {
+            url: 'assign/quotations/erp-product-units',
+            payload: { erp_product_ids: ids },
+        })
+        const map = res?.data || {}
+        targets.forEach((g) => {
+            const units = map[g.parent.erpProductId] || map[String(g.parent.erpProductId)] || []
+            // BOM không quản lý giá — chỉ giữ unit_id/unit_name/is_base, bỏ field giá của response
+            this.$set(g.parent, 'unitOptions', units.map((u) => ({ unit_id: u.unit_id, unit_name: u.unit_name, is_base: u.is_base })))
+        })
+    } catch (e) {
+        // im lặng: ERP lỗi → dòng giữ text, không chặn màn
+    }
+},
+onChangeUnit(row, unitId) {
+    row.unitId = unitId
+    const opt = (row.unitOptions || []).find((u) => Number(u.unit_id) === Number(unitId))
+    if (opt) row.uom = opt.unit_name
+    // BOM không quản lý giá — không đụng estimatedPrice/salePrice
+},
+```
+
+- [x] Cuối `handleAddProductApply` (sau `this.refreshParentTotals()` ~dòng 2558): thêm `await this.loadUnitOptionsForErpParents()` (cha ERP có recipe con → tự bị loại bởi điều kiện `!children.length`).
+- [x] Cuối `mergeSubBomGroups` (sau `this.refreshParentTotals()`): thêm `this.loadUnitOptionsForErpParents()` (dòng clone giữ `unitId`, cần nạp options; method không async-block).
+- [x] `cloneSubBomGroup` (~dòng 1938): parent clone thêm `unitOptions: []` (để loader nạp lại theo điều kiện mới).
+- [x] Binding component `<BomBuilderTableCard ...>` (~dòng 39-60): thêm `@change-unit="onChangeUnit"`.
+- [x] `mapGroupRowForSave` đã gửi `unit_id` — KHÔNG đổi.
+
+### Task 32.5 — FE: `BomBuilderTableCard.vue` — cột ĐVT render select (2 chỗ dòng cha)
+
+File: `hrm-client/pages/assign/bom-list/components/BomBuilderTableCard.vue`
+Interfaces — Consumes: `group.parent.unitOptions`, prop `viewOnly` sẵn có (editor truyền `viewOnly || pricingMode`). Produces: emit `change-unit(row, unitId)` → Editor `onChangeUnit`.
+
+- [x] Thay `<td v-if="visibleColumns.uom">{{ group.parent.uom || '-' }}</td>` ở **2 chỗ dòng CHA** (view COMPONENT ~dòng 235 và view AGGREGATE ~dòng 437) bằng:
+
+```html
+<td v-if="visibleColumns.uom">
+    <select
+        v-if="!viewOnly && group.parent.erpProductId && !(group.children || []).length && (group.parent.unitOptions || []).length"
+        class="table-input"
+        :value="group.parent.unitId"
+        @change="$emit('change-unit', group.parent, Number($event.target.value))"
+    >
+        <option v-for="u in group.parent.unitOptions" :key="u.unit_id" :value="u.unit_id">{{ u.unit_name }}</option>
+    </select>
+    <span v-else>{{ group.parent.uom || '-' }}</span>
+</td>
+```
+
+- [x] Dòng CON (~dòng 315, 523) giữ nguyên text `{{ child.uom || '-' }}`.
+- [x] Sản phẩm 1 đơn vị vẫn render select 1 option (nhất quán báo giá — theo spec mục 6).
+
+### Task 32.6 — Verify tổng thể (user)
+
+- [ ] `php -l` 3 file BE sạch (đã chạy ở từng task).
+- [ ] Build FE (`npm run dev`) + E2E:
+  - [ ] Mở Sửa BOM có hàng ERP đơn → cột ĐVT là select, đủ đơn vị, chọn sẵn đúng unit đang lưu; hàng tạm/dòng con/cha combo recipe vẫn text.
+  - [ ] Đổi ĐVT → lưu BOM → mở lại: unit giữ đúng (không bị ép về base — verify fix `syncErpFields`).
+  - [ ] Thêm hàng ERP đơn mới từ popup → select ĐVT xuất hiện (loader sau add); hàng ERP có recipe → text.
+  - [ ] Gộp sub-BOM vào BOM tổng hợp → dòng cha ERP đơn từ BOM con có select + đúng unit.
+  - [ ] Tạo báo giá từ BOM có dòng đổi ĐVT → giá bán/giá vốn dòng đó theo đơn vị đã chọn; dòng base unit giữ giá như trước (regression). Màn báo giá type=1: ĐVT hiển thị text (khoá).
+  - [ ] Màn Xem chi tiết BOM (view-only): ĐVT text.
+  - [ ] BOM cũ chưa đổi ĐVT: mọi hành vi như trước.
+- [ ] Commit git khi user yêu cầu.
+
+### Fix wave sau final review (2026-07-14) — CODE DONE, re-review Approved
+
+Final review toàn phase phát hiện 1 Important + 2 Minor, user đã duyệt fix cả 3:
+- [x] **I-1 (Important)** `QuotationService::upsertBomProducts`: trước đây sync `unit_id` từ BOM vào dòng báo giá type=1 ĐÃ TỒN TẠI mỗi lần lưu → BOM đổi ĐVT xong, báo giá cũ lưu lại sẽ lệch nhãn ĐVT ↔ giá snapshot. Fix (phương án a — user chốt): preload `$existingPriceIds` (1 query), dòng ERP đã tồn tại GIỮ ĐVT snapshot; dòng mới tạo / hàng tạm vẫn lấy theo BOM. Khớp nguyên tắc "báo giá là snapshot — muốn ĐVT mới thì tạo lại báo giá".
+- [x] **M-1** `BomBuilderTableCard`: unit đã lưu bị xoá bên ERP → select trống. Thêm option fallback (hiện `uom` cũ) trước `v-for` ở cả 2 select.
+- [x] **M-2** `BomBuilderEditor::handleConfirmDeleteAction` (nhánh remove-child): xoá hết con recipe → cha thành ERP đơn nhưng select chưa hiện. Thêm `loadUnitOptionsForErpParents()` fire-and-forget sau splice.
+
+Minor để sau (đã triage, không chặn): `pluck('parent_id')->filter()` giòn nếu parent_id=0 (không xảy ra với data thật); fallback `map[String(id)]` thừa vô hại; điều kiện selectable inline lặp ở TableCard (đổi logic phải sửa Editor + 2 chỗ TableCard).
+Lưu ý test tay: `syncErpFields` giờ giữ unit hợp lệ cho CẢ dòng con recipe (trước ép base) — cover trong E2E combo.
+
+### Checkpoint — 2026-07-14 (Phase 32 CODE DONE)
+Vừa hoàn thành: Toàn bộ Phase 32 qua subagent-driven (5 task implement + review từng task Approved + final review + fix wave I-1/M-1/M-2 re-review Approved). `php -l` sạch 3 file BE. Chưa commit git.
+Files đã sửa (session này):
+  - hrm-api: `Modules/Assign/Transformers/BomListResource/DetailBomListResource.php` (unit_options), `Modules/Assign/Services/BomListService.php` (syncErpFields), `Modules/Assign/Services/QuotationService.php` (pickUnitPrices + create/createFromBom + upsertBomProducts snapshot)
+  - hrm-client: `pages/assign/bom-list/components/BomBuilderEditor.vue`, `BomBuilderTableCard.vue`
+Đang làm dở: (không)
+Bước tiếp theo: user build FE + E2E theo Task 32.6 (thêm case: BOM có báo giá cũ → đổi ĐVT ở BOM → lưu lại báo giá cũ phải GIỮ ĐVT+giá snapshot; combo recipe con giữ unit hợp lệ). Commit git khi user yêu cầu.
+Blocked: (không)
+
+---
+
+### Checkpoint — 2026-07-12
+Vừa hoàn thành (session này, CODE DONE, chưa commit git):
+1. **Màn `/assign/product-project` hiển thị cả hàng ERP + hàng tạm** — BE `ProductProjectController` (bomKeyQuery/quotationKeyQuery bỏ lọc erp_product_id + thêm `whereNull(parent_id)` chỉ hàng cha; applyKeyFilters thống nhất erp_sync theo erp_product_id; hydrateAndTransform batch-load erpCodeMap từ TpProduct mysql2 + resolveErpCode; transformItem/transformQuotationItem thêm `erp_code` + trạng thái Đã/Đang/Chưa). FE `product-project/index.vue` thêm cột "Mã đồng bộ ERP" + chip vàng "Đang đồng bộ". Excel blade thêm cột, colspan 15→16. `php -l` sạch. (Lưu ý: FE user chỉnh thêm — cột "Mã BOM" chỉ link khi có `bom_list_id`.)
+2. **Bugfix FK created_by khi "Thêm nhanh Model/Thương hiệu/Xuất xứ/ĐVT"** — `createMasterReference`: bảng ERP (mysql2) dùng `ErpPermissionHelper::erpEmployeeId()` cho created_by/updated_by (phương án A: null → bỏ set), không ghi company_id HRM vào bảng ERP. `php -l` sạch.
+
+Điều tra (không sửa code):
+3. **Audit phân quyền giá vốn màn duyệt báo giá** — TẠM GÁC theo yêu cầu user. Kết luận sơ bộ: BE gate ổn (DetailQuotationResource + exportExcel null-out estimated_price; QuotationResource list không lộ; FE `can_view_cost_price` default false). Điểm bất nhất nhẹ: exportExcel cho người tạo xem giá nhập dịch vụ (creator bypass) còn detail thì permission-only — chờ user quyết có siết không.
+4. **Quy tắc sinh mã hàng khi sync ERP** — XÁC NHẬN đúng & nhất quán: cả tạo hàng thường (`ProductsController::store`) lẫn duyệt hàng tạm (`TmpProductsController::approve`) đều dùng chung `Product::createRecord` → `generateCode()` + chung validate `Product::getRules` (manufacture_id/model_id required). Công thức: `[slug(manufacture.code)]-[slug(barcode.name|model.name)]` ≤32 ký tự, trùng thêm `:NN`. Mã dài kiểu `4ACT-1445...` KHÔNG phải lỗi sinh mã mà do **model.name là chuỗi số quá dài** (ERP dùng số làm tên model; hàng này model.name ≥27 số → mã lấp đầy 32 ký tự). Nguồn data xấu nhiều khả năng từ popup "Thêm nhanh Model" (HRM).
+
+Đang làm dở: (không)
+Bước tiếp theo:
+  - **Product-project feature** (task 1): user build FE + E2E các mục Verify (hàng ERP hiện, chỉ hàng cha, mã ERP cột mới, filter, export).
+  - **FK bugfix** (task 2): user test lại 4 nút "Thêm nhanh" trên popup hàng tạm → lưu OK.
+  - **Mã hàng dài** (task 4): chờ user chọn hướng — (A) validate độ dài tên Model ở popup "Thêm nhanh Model" HRM + màn tạo Model ERP [khuyến nghị]; (B) dọn data model.name dài; (C) đổi generateCode cắt phần model [hàm dùng chung — cần xác nhận].
+  - Commit git khi user yêu cầu.
+Blocked: (không)
+Files đã sửa (session này):
+  - hrm-api: `Modules/Assign/Http/Controllers/Api/V1/ProductProjectController.php`, `resources/views/exports/product_projects.blade.php`
+  - hrm-client: `pages/assign/product-project/index.vue`
+  - (ERP: chỉ đọc, không sửa)

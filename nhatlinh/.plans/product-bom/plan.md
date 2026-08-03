@@ -92,3 +92,7 @@
 - [x] FE: tạo `pages/category/boms/components/BomHistoryModal.vue` (timeline ho-timeline giống TaskHistoryModal) — diff snapshot liên tiếp: code/name/status/note + NVL (added/removed, resolve tên qua products/units getAll); bản đầu = "Tạo BOM", mới nhất lên đầu
 - [x] FE: ProductForm tab BOM thêm nút "Xem lịch sử" (icon ri-history-line) mở modal với productBom
 - [x] Test: BOM show trả histories kèm snapshot (2 bản, diff name/note/norm OK)
+
+## Bugfix 2026-07-03 — BomBuilderAddProductModal (popup tìm hàng ERP + thêm hàng tạm)
+
+- [x] ĐÃ FIX (2026-07-03, chưa commit, cần user verify browser): **Nguyên nhân gốc** — V2BaseSelectRemote dùng select2 append dropdown vào `<body>` (z-index 1051) trong khi modal BOM z-index 5000 → dropdown bị modal che, click không trúng option nên không nhận giá trị. ĐÃ LOẠI TRỪ: data local đủ (34.978 model/1.046 brand/101 origin) + 2 file Vue CLEAN giống VPS (không phải regression chưa commit). **Fix**: (1) `components/V2BaseSelectRemote.vue` thêm prop opt-in `dropdownParent` (default null = hành vi cũ — nơi khác dùng không ảnh hưởng, backward compatible); (2) `BomBuilderAddProductModal.vue` truyền `:dropdown-parent` cho cả 6 select (2 tab) + ref/position relative. Compile 0 lỗi. **Chưa giải thích được** vì sao VPS không lỗi (z-index là tất định) — khả năng VPS chưa test đúng modal này. User verify: mở popup Thêm hàng hoá ở assign/bom-list → dropdown lọc phải đè lên modal và chọn được.

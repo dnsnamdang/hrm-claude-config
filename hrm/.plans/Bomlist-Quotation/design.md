@@ -44,6 +44,15 @@ Chi tiết: `design-phase31.md`. Tóm tắt:
 - **DB**: thêm cột `show_children` (tinyint default 1) vào `bom_list_products` + `quotation_product_prices`. Con dùng `parent_id` sẵn có.
 - Áp dụng cả BOM + Báo giá tự lập.
 
+## Phase 32 — Chọn/đổi ĐVT ở màn Tạo/Sửa BOM (2026-07-14)
+Spec chi tiết: `docs/superpowers/specs/2026-07-14-bom-unit-select-design.md`. Tóm tắt:
+- Dòng **cha ERP đơn** (không combo, không dòng con) ở màn Tạo/Sửa BOM: cột ĐVT → select. BOM không quản lý giá → đổi ĐVT chỉ đổi `unit_id` + nhãn.
+- Options: detail BOM nhúng `unit_options` (không kèm giá — khỏi gate quyền); hàng ERP mới thêm → gọi endpoint sẵn `assign/quotations/erp-product-units`.
+- BE `syncErpFields` bỏ ghi đè base unit: giữ unit_id nếu thuộc `product_units` của sản phẩm (validate), không thuộc → fallback base.
+- 2 đường copy BOM→báo giá (`createFromBom` + tạo từ dự án) lấy giá theo `unit_id` của BOM (batch `getUnitOptions`, không khớp → base).
+- Báo giá type=1: ĐVT khoá (text) — muốn đổi thì sửa BOM, tạo lại báo giá. Không migration/permission.
+- Fix I-1 (final review): `upsertBomProducts` — dòng ERP đã tồn tại giữ ĐVT snapshot của báo giá (không sync từ BOM nữa), dòng mới/hàng tạm vẫn theo BOM.
+
 ## Câu hỏi cần xác nhận
 1. Khi xoá BOM List, cần kiểm tra ràng buộc gì? (đang reference trong giải pháp/hạng mục đã duyệt thì có cho xoá không?)
 2. Export Excel gồm những cột nào? Chỉ thông tin BOM hay bao gồm cả danh sách product bên trong?

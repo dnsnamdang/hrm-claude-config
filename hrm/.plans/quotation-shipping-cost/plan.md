@@ -227,6 +227,27 @@
 - [x] **PP4. Verify** `php -l` OK.
 - [ ] **PP5. Verify E2E** (user): tạo báo giá tự lập + duyệt → hàng hoá hiện ở /assign/product-project; filter + phân trang + export đúng; hàng từ BOM không hồi quy.
 
+## Phase 18 — Màn /assign/product-project: lấy cả Báo giá tự lập "Trúng thầu" (status=7)
+
+> Yêu cầu: hàng hoá tạm của Báo giá TỰ LẬP không chỉ hiện khi Đã duyệt (status=4) mà còn khi đã **Chốt trúng thầu** (status=7 — feature `quotation-finalize`). Trước đó chỉ lấy status=4 → báo giá sau khi chốt bị mất khỏi màn này. Chỉ áp cho nguồn báo giá tự lập; BOM không có trạng thái trúng thầu nên giữ nguyên.
+
+- [x] **T1. BE `ProductProjectController::quotationKeyQuery`** (sub-query khóa): đổi `->where('q.status', STATUS_DA_DUYET)` → `->whereIn('q.status', [STATUS_DA_DUYET, STATUS_TRUNG_THAU])`.
+- [x] **T2. BE `ProductProjectController::buildQuotationQuery`** (hydrate Eloquent): đổi `->where('quotations.status', STATUS_DA_DUYET)` → `->whereIn('quotations.status', [STATUS_DA_DUYET, STATUS_TRUNG_THAU])` để khớp điều kiện với sub-query khóa (nếu lệch → dòng bị null sau hydrate).
+- [x] **T3. Verify** `php -l` OK. Export dùng chung union nên tự thừa hưởng.
+- [ ] **T4. Verify E2E** (user): báo giá tự lập → duyệt (hiện) → Chốt trúng thầu (vẫn hiện) → Hủy chốt về Đã duyệt (vẫn hiện). BOM không hồi quy.
+
+## Phase 19 — BUGFIX: hàng tạm báo giá sau khi đồng bộ ERP biến mất khỏi /product-project
+
+> Lỗi: hàng hoá tạm của báo giá tự lập, sau khi **đồng bộ sang ERP** (feature sync-hang-tam), không còn hiển thị ở màn Danh sách hàng hoá dự án.
+> Root cause: `TmpProductSyncService` khi ERP duyệt xong ghi `quotation_product_prices.erp_product_id = <product_id ERP>`. Nhưng `ProductProjectController::quotationKeyQuery` lọc `whereNull('erp_product_id')` (ý định loại hàng CHỌN TỪ ERP) → hàng tạm đã sync (giờ có erp_product_id) bị loại nhầm.
+> Phân biệt: hàng tạm đã sync có `erp_tmp_product_id` NOT NULL; hàng chọn-từ-ERP có `erp_tmp_product_id` NULL.
+
+- [x] **B1. `quotationKeyQuery`**: đổi `whereNull('p.erp_product_id')` → `where(erp_product_id IS NULL OR erp_tmp_product_id IS NOT NULL)`. Giữ loại hàng chọn-từ-ERP (erp_product_id set + erp_tmp_product_id null).
+- [x] **B2. `applyKeyFilters`** (nhánh báo giá, `$hasErpSync=false`): filter "Trạng thái đồng bộ" nay theo `erp_product_id` (đồng bộ='1'→whereNotNull, '0'→whereNull) thay vì coi báo giá luôn = 0.
+- [x] **B3. `transformQuotationItem`**: `erp_sync_status` = `erp_product_id ? 1 : 0` + name "Đã đồng bộ"/"Chưa đồng bộ" (thay vì hardcode 0).
+- [x] **B4. Verify** `php -l` OK. `buildQuotationQuery` select `quotation_product_prices.*` (đủ erp_product_id/erp_tmp_product_id để transform + hydrate theo id đã chọn).
+- [ ] **B5. Verify E2E** (user): báo giá tự lập có hàng tạm → duyệt (hiện ở /product-project, "Chưa đồng bộ") → Gửi duyệt hàng tạm + ERP duyệt + Cập nhật kết quả → **vẫn hiện**, cột chuyển "Đã đồng bộ"; filter trạng thái đồng bộ đúng; hàng chọn-trực-tiếp-từ-ERP vẫn KHÔNG hiện.
+
 ## Phase 13 — Giá nhập CPVC do user tự nhập (thay vì suy ra = sau CK)
 
 > Yêu cầu: cho user nhập "giá nhập" (giá vốn) riêng cho Chi phí vận chuyển; điều chỉnh mọi tính toán dùng giá nhập VC (TSLN, tổng giá nhập).

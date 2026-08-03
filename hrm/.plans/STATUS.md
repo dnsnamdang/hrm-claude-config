@@ -2,11 +2,86 @@
 
 ## Đang làm
 
+- erp-to-hrm-migration → @dnsnamdang → .plans/erp-to-hrm-migration/plan.md
+  Trạng thái: **SIZING DONE — chờ DB production để đối chiếu bất đồng bộ T3 (2026-07-27)**. Umbrella hợp nhất ERP⊕HRM + chuyển 4 mảng (Báo giá · HĐ bán/firm · HĐ dịch vụ · Kế toán). **Mục tiêu lớn nhất = gộp chung 1 database** (không phải chỉ viết lại UI). ĐÃ CHỐT: chỉ gộp 1 pháp nhân `hrm_tpe`⊕`erp2326` (bỏ connection etek/tpe); đích = **1 schema HRM duy nhất** (HRM canonical); ERP repoint sang DB HRM + retire dần (Strangler); prefix legacy `tp_` phía ERP; KHÔNG ETL — colocate + dedupe dần theo domain. Phân tích: ERP 1.225 bảng / HRM 635 / **trùng tên 50** → phân tầng T0 auth(không merge)·T1 giả(rename, gồm `quotations`)·T2 danh mục·T3 lõi tổ chức(rủi ro CAO NHẤT)·T4 nghiệp vụ KH/HĐ. ~165 bảng 4 mảng phần lớn KHÔNG trùng → bê nguyên tên. T3 đã sync sẵn HRM→ERP (id lệch, map qua natural key: companies=tax_code, departments/employee_infos=code, employees=email, parts=name) → gộp 1 DB thì gỡ luôn sync. Lộ trình 2 phase: P1 hợp nhất hạ tầng (đạt "1 DB chung", data nguyên vẹn) → P2 viết lại UI + dedupe theo domain (T2→master/KH→báo giá→HĐ→kế toán).
+  Blocker phụ: `Modules/Accounting/{Routes/api.php, module.json}` merge conflict → tinker không boot (dùng mysql CLI thay thế).
+  Spec: docs/superpowers/specs/2026-07-27-erp-to-hrm-migration-design.md · phase2-risk-map.md · collisions-50-tables.txt
+  Bước tiếp: user kéo DB production về local → verify cơ chế sync trong code (chốt đúng field mapping) → chạy lại harness đối chiếu → xuất danh sách bản ghi bất đồng bộ (id 2 bên) làm đầu vào bảng ánh xạ id merge T3.
+
+- du-an-cha-con → @dnsnamdang → .plans/du-an-cha-con/plan.md
+  Trạng thái: **DESIGN DONE — chờ user review spec (2026-07-20)**. Bổ sung quản lý dự án TKT (`prospective_projects`) theo cấp Dự án cha → Dự án con (Modules/Assign), từ bước dự án tới phê duyệt báo giá. Phát hiện: `parent_id` + picker "Dự án cha" (`RelatedSection.vue`) + `canDelete()` chặn cha có con ĐÃ CÓ sẵn → phương án A hoàn thiện trên nền này. Chốt 5 QĐ: con tự chủ hoàn toàn (BOM/báo giá/duyệt riêng) · 2 tầng · tạo con 2 đường (nút chi tiết cha prefill KH khóa + picker) cùng khách hàng · cấp duyệt báo giá GIỮ NGUYÊN theo từng báo giá · chặn đóng cha khi con chưa Đóng(11)/Kết thúc(12) · DS phẳng + cột/filter "Dự án cha" + tab "Dự án con" roll-up giá bán đã duyệt (không lộ giá vốn). Việc phải làm: migration index + validation parent_id (6 rule) + chặn close() + API `{id}/children` + `getAll?parent_candidates=1` + resource/filter + FE (RelatedSection dọn, tab con, nút tạo con prefill, cột/filter cha). Không permission mới, không sửa QuotationService.
+  Spec: docs/superpowers/specs/2026-07-20-du-an-cha-con-design.md
+  Bước tiếp: user review spec → writing-plans lên plan chi tiết hoặc code Phase 1 BE. Xác nhận branch (dự kiến tpe-develop-assign) trước khi code.
+
+- demo-man-hinh-ke-toan → @dnsnamdang → .plans/demo-man-hinh-ke-toan/plan.md
+  Trạng thái: **DEMO DONE Phase 1–24 (2026-07-26), chờ user review + gửi khách/deploy VPS**. Bộ demo HTML tĩnh phân hệ Kế toán tại `.plans/demo-man-hinh-ke-toan/demo/` (mở index.html, offline, style V2 hrm-client) — 14 nhóm màn: Khế ước đi vay/cho vay (6 màn) · Sổ NKC S03a (81 dòng bút toán T1–T3/2026, 3 pháp nhân, sắp xếp chuẩn kế toán; tổng PS 2.620.224.000 sau khi thêm chứng từ chi phí gắn mã phí) · NK thu/chi S03a1-a2 (2 cột Mã/Tên đối tượng trước Diễn giải) · Sổ quỹ tiền mặt S04a/S04b (tồn realtime, đối chiếu 3 số dư, cảnh báo chi TM ≥5tr NĐ 181/2025) · Sổ Cái S03b (dẫn xuất NKC, link chéo ?line=) · Bảng CĐKT B01-DN (màn hình về ĐÚNG mẫu chuẩn TT99 5 cột; số hợp nhất đã loại trừ GD nội bộ ngầm, select Phạm vi xem từng pháp nhân) · BC số dư tiền (TK kế toán bỏ mã NH) · **Bảng kê hóa đơn bán hàng, dịch vụ** (bang-ke-hoa-don-ban-hang.html — theo mẫu Fast rpt_sobk1t đã khảo sát Playwright: nguồn Phiếu xuất hàng + Phiếu hạch toán dịch vụ ERP, 9 cột chuẩn Tiền/Thuế/CK/Phải thu, link Số CT NKC ?line= động, ảnh tham-khao/fast-bang-ke-hdbh-*.png) · **Bảng kê chứng từ theo mã phí** (bang-ke-chung-tu-ma-phi.html — theo mẫu Fast rpt_gldtbkb: nhóm theo mã phí, mỗi nghiệp vụ 2 vế cân đối, tổng 405.224.000; danh mục COST_CODES + 9 chứng từ chi phí bổ sung vào JOURNAL_ROWS, note-box hướng dẫn dev; ảnh tham-khao/fast-bkct-maphi-*.png) · **Sổ tổng hợp chữ T của một tài khoản** (so-tong-hop-chu-t.html — theo mẫu Excel Fast: chọn 1 TK → SDĐK + bảng theo TK đối ứng PS Nợ/Có + Tổng phát sinh + SDCK, tái dùng công thức số dư Sổ Cái, khớp số 131 toàn tập đoàn 780→1.313tr) · **Cấu hình hạch toán** (posting-rule-engine-v3.html — Vue 3 vendor offline: nhóm bút toán theo loại phiếu, công thức ƒx + điều kiện, kéo thả dòng, lưu cấu hình theo phiên bản + modal lịch sử chỉnh sửa, select TK có search). Chuẩn UI thống nhất mọi màn sổ/báo cáo (helper chung app.js — createPager/setupColumnConfig/setupColumnSort/setupFilterHide): bộ lọc mặc định = trường bắt buộc + khối Công ty–PB–BP + nút Ẩn bộ lọc + hàng tìm nhanh kèm nút Tìm kiếm/Nhập lại · cấu hình cột ẩn/hiện + kéo thả (cột chuẩn mẫu sổ khóa) · icon sort mọi cột (lũy kế/tồn quỹ giữ giá trị theo trình tự thời gian) · phân trang 10/25/50/100/Tất cả · header 1 hàng (bỏ group) · bỏ thẻ stat-row (thông tin đưa vào bảng) · tách cột Mã/Tên đối tượng (danh mục OBJECT_NAMES) · bản in mẫu chuẩn TT99 giữ nguyên · cài đặt lưu localStorage theo màn · tất cả verify Playwright với bộ số liệu bất biến.
+  Spec: docs/superpowers/specs/2026-07-14-demo-man-hinh-ke-toan-design.md
+  ### Checkpoint — 2026-07-26 (đợt nâng cấp): + màn **Chọn phân hệ** (chon-phan-he.html — splash lõi 3 múi hover + 4 nhóm nghiệp vụ drill-down 2 cấp + popup phân hệ mặc định ⭐ + auto-fit 1 màn) · **sidebar 2 cấp** (rail icon nhóm cha + flyout submenu, hết tràn) · **sticky cột đầu** khi cuộn ngang cho 9 báo cáo (helper app.js: đo width động + MutationObserver + resize) · Sổ Cái bỏ 2 cột Trang/STT NKC + bỏ 3 dòng tổng cuối bảng · Sổ NKC đưa Mã/Tên đối tượng thành cột cố định TRƯỚC Diễn giải (dòng tổng colspan động) · Sổ quỹ VNĐ gộp Số phiếu thu/chi → **Số chứng từ** + thêm Loại phiếu/Người yêu cầu/lập/nhận-nộp · **2 báo cáo mới**: Bảng cân đối phát sinh công nợ trên nhiều tài khoản (debtbalance.js — 131/1368/331/3368/334 × đối tượng, thu gọn/mở) + Bảng cân đối phát sinh trên nhiều tài khoản / trial balance (trialbalance.js — tự thêm 411 cân SDĐK → tổng cân Nợ=Có cả 3 cặp, lọc bằng select TK, in S06-DN) · **topbar thêm tiêu đề màn hình** (breadcrumb nhóm + tên trang từ `<title>`) trong renderShell. Preview ảnh trong folder feature.
+  Bước tiếp: user hard-refresh review tổng thể → zip demo/ gửi khách hoặc deploy VPS dev. Tuỳ chọn còn treo: tab Sổ quỹ USD (S04b) chưa gộp Số PT/PC · bản in các sổ chưa thêm cột mới · 334 công nợ chưa lấy đối tượng theo emp · đổi tên posting-rule-engine-v3.html → cau-hinh-hach-toan.html.
+
+- prospective-projects → @dnsnamdang → .plans/prospective-projects/plan.md
+  Trạng thái: **CODE DONE (2026-07-13, FE-only)**. Chờ user build FE + test. Branch `tpe-develop-assign`.
+  Scope: màn `/assign/prospective-projects`. (1) Đổi label filter "Nhân viên kinh doanh"→"Nhân viên KD phụ trách". (2) Gộp 2 select nhân viên → chỉ còn 1 "Nhân viên KD phụ trách": ẩn select thừa của `V2BaseCompanyDepartmentFilter` (`:disable_employee`), select KD phụ trách lọc cascade Công ty→Phòng ban→Bộ phận (`mainSaleEmployeeOptions`), disable đến khi chọn Phòng ban, reset khi đổi cấp tổ chức. BE `main_sale_employee_id` filter đã đúng — không sửa. File: `hrm-client/pages/assign/prospective-projects/index.vue`.
+
+- fix-ten-thong-bao-quan-ly-du-an → @dnsnamdang → .plans/fix-ten-thong-bao-quan-ly-du-an/plan.md
+  Trạng thái: **CODE DONE (2026-07-13, BE)**. Chờ user build + restart queue worker + test. Branch `tpe-develop-assign`.
+  Scope: fix thứ tự Họ Tên trong thông báo Modules/Assign (đang "Tên trước Họ" → "Họ Tên"). Root cause: `first_name`=Họ và đệm, `last_name`=Tên; 3 chỗ ghép ngược `last_name.' '.first_name` → sửa thành `first_name.' '.last_name`. Files: `QuotationService.php:2518`, `ProspectiveProjectService.php:1547`, `BomPriceApprovalConfigController.php:53` (log). Audit toàn module: 16 chỗ notification còn lại đều đúng (dùng `fullname`). KHÔNG đụng field `fullname` global.
+
+- quotation-print-config → @dnsnamdang → .plans/quotation-print-config/plan.md
+  Trạng thái: **CODE DONE (2026-07-13, FE-only)**. Chờ user build FE + test. Branch `tpe-develop-assign`.
+  Scope: popup "Cấu hình in báo giá" → chọn cột hiển thị: bỏ tích mặc định cột "Mã hàng hoá" (`code`). Thêm `defaultUncheckedColumns:['code']` + method `selectDefault()`; mặc định (mounted/mở modal/đổi discountMethod) dùng selectDefault, nút "Chọn tất cả" giữ selectAll. File: `hrm-client/components/assign/quotation/QuotationPrintConfigModal.vue`.
+
+- quotation-unit-select → @dnsnamdang → .plans/quotation-unit-select/plan.md
+  Trạng thái: **CODE DONE + E2E 5/5 PASS + USER TEST OK (2026-07-12)**. Chưa commit git. Branch `tpe-develop-assign`.
+  Gồm: feature ĐVT (Task 1-5) + fix chiết khấu khi đổi ĐVT + testcase 30 TC + UI popup "Thêm hàng hoá" (bỏ tab title 1-tab, header nowrap scroll ngang, input+nút inline 100% qua prop opt-in inlineSearchButtons ở V2BaseFilterPanel). Harness HRM/e2e/ (đồng nhất nhatlinh + e2e_provision.php seed 2 user permission). Đã revert 1 fix robustness sai (gây 404 màn tạo) về gốc.
+  Bước tiếp: commit git khi user yêu cầu (không cần migration/permission). Chi tiết files + checkpoint xem plan.md.
+  Scope: chọn ĐVT dòng hàng ERP ở màn Tạo/Sửa báo giá (CHỈ type=2, hàng ERP đơn, loại combo); đổi ĐVT → lấy lại giá bán+vốn theo đơn vị. BE nguồn chân lý (saveDirectProduct re-derive theo unit_id, create+update). Endpoint erp-product-units gate giá vốn tại API + helper getUnitOptions/getUnitPrice. FE isUnitSelectable/loadUnitOptions/onChangeUnit + cột ĐVT select. Detail giữ text. Không migration/permission.
+  Files: hrm-api (TpProductUnitPrice, QuotationController, Routes/api, QuotationService) + hrm-client (quotations/_id/edit.vue). Spec: docs/superpowers/specs/2026-07-12-quotation-unit-select-design.md.
+  Bước tiếp: user build FE + E2E (mục "Verify tổng thể" plan.md); commit khi yêu cầu.
+
+- Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
+  Trạng thái: **Phase 32 CODE DONE (2026-07-14)** + 2 việc 2026-07-12 CODE DONE — tất cả chờ user build FE + E2E, chưa commit. Branch `tpe-develop-assign`.
+  **Phase 32 — Chọn/đổi ĐVT màn Tạo/Sửa BOM** (spec: docs/superpowers/specs/2026-07-14-bom-unit-select-design.md): dòng cha ERP đơn chọn ĐVT (BOM không quản lý giá → chỉ đổi unit_id+nhãn); detail BOM nhúng unit_options (không giá); BE syncErpFields giữ unit hợp lệ (validate, rác→base); create()/createFromBom() lấy giá theo ĐVT của BOM (pickUnitPrices); báo giá type=1 khoá ĐVT + fix I-1 upsertBomProducts giữ ĐVT snapshot cho dòng ERP đã tồn tại (BOM đổi ĐVT không kéo báo giá cũ); M-1 option fallback khi unit bị xoá bên ERP; M-2 nạp options sau xoá hết con recipe. Subagent-driven 5 task + final review, tất cả Approved. php -l sạch. Không migration/permission.
+  Files P32: hrm-api DetailBomListResource + BomListService (syncErpFields) + QuotationService (pickUnitPrices/create/createFromBom/upsertBomProducts); hrm-client BomBuilderEditor.vue + BomBuilderTableCard.vue.
+  E2E P32 (Task 32.6 plan.md): select đúng phạm vi (ERP đơn; tạm/con/combo/view-only = text), lưu giữ unit không bị ép base, tạo báo giá giá theo unit + regression base unit, báo giá cũ giữ snapshot khi BOM đổi ĐVT, combo recipe con giữ unit hợp lệ.
+  Việc 2026-07-12 (chờ test): (1) màn `/assign/product-project` hiện cả hàng ERP + hàng tạm (chỉ hàng cha; cột "Mã đồng bộ ERP"; trạng thái Đã/Đang/Chưa); (2) bugfix FK created_by popup "Thêm nhanh Model/Thương hiệu/Xuất xứ/ĐVT" (map ERP employee id).
+  Điều tra tồn: mã sync ERP dài do model.name là chuỗi số quá dài (data) — chờ user chọn hướng (A validate tên Model [khuyến nghị]/B dọn data/C sửa generateCode). Audit quyền giá vốn màn duyệt tạm gác (BE gate ổn). Chi tiết + checkpoint xem plan.md.
+
+- accounting-posting-config → @dnsnamdang → .plans/accounting-posting-config/plan.md
+  Trạng thái: **UI CODE DONE (6/6 task, FE mock data)** trên nhánh `tpe-develop-accounting` (hrm-client). 8 commit `4f63af86..cd7fb13a`, CHƯA push. Qua subagent-driven (impl+review mỗi task) + final review opus (0 Critical, 2 Important đã fix).
+  Scope: UI/UX màn "Cấu hình hạch toán cho các phiếu". Master-detail: danh sách loại phiếu (ERP/HRM) + bảng bút toán (Diễn giải/TK Nợ/TK Có/Nguồn/Điều kiện/Hệ số) + kéo-thả + validation inline + Lưu/Huỷ + cảnh báo chưa lưu + modal "Xem thử bút toán". Toàn bộ mock data.
+  Spec: docs/superpowers/specs/2026-07-07-accounting-posting-config-design.md · Plan: docs/superpowers/plans/2026-07-07-accounting-posting-config-ui.md
+  Bước tiếp theo: user `npm run dev` test trực quan `/accounting/posting-config` → quyết định push/merge. Ngoài scope (spec sau): DB/API/đồng bộ TK+loại phiếu từ ERP/engine sinh bút toán thật.
+  ⏸️ 2026-07-08: TẠM DỪNG theo yêu cầu user để check ý tưởng (code local chưa push, không tiến trình nền).
+
+- quotation-currency-editable → @dnsnamdang → .plans/quotation-currency-editable/plan.md
+  Trạng thái: CODE DONE (2026-07-02, FE-only). Chờ user build FE + E2E. Branch `tpe-develop-assign`.
+  Scope: Màn tạo/sửa báo giá. Field "Loại tiền tệ" tự kế thừa dự án TKT (đã có qua selectProject) + cho chọn lại — CHỈ khi lập MỚI (`:disabled="!isCreateMode"`), form Sửa khoá (theo note user). Wire `@change="handleChangeCurrency"` (đã có confirm giá không đổi) + sync làm tròn theo tiền tệ mới (VNĐ→Số nguyên). Lưu: `currency_id` trong `form`→payload (BE store/update đã lưu). FE `quotations/_id/edit.vue`. Không BE/migration.
+
+- quotation-currency-format → @dnsnamdang → .plans/quotation-currency-format/plan.md
+  Trạng thái: CODE DONE (2026-07-02). Chờ user build FE + E2E. Branch `tpe-develop-assign`.
+  Scope: Chuẩn hoá định dạng số tiền luồng báo giá/BOM/dự án (Assign, KHÔNG gồm báo cáo): hàng nghìn=",", thập phân="." (vi-VN→en-US). Hiển thị: 9 file đổi `NumberFormat/toLocaleString('vi-VN')`→`'en-US'` (giữ `toLocaleDateString`). Ô nhập: `V2BaseCurrencyInput` (Assign-only) format thousands `,`/decimal `.` + parse. BE: `QuotationService::fmtNum` (log đổi giá) `.`→`,`. product-project (raw) + Excel blade (summary đã `,` nghìn) không đổi. Giữ nguyên công thức. Không migration/permission.
+
+- quotation-rounding-vnd → @dnsnamdang → .plans/quotation-rounding-vnd/plan.md
+  Trạng thái: CODE DONE (2026-07-03, FE-only, Phase 1–4). Chờ user build FE + E2E. Branch `tpe-develop-assign`.
+  P4 (tinh chỉnh non-VNĐ): (1) đổi giữa 2 ngoại tệ CÓ phần lẻ (USD↔EUR) giữ nguyên lựa chọn làm tròn; (2) tiền KHÔNG phần lẻ (JPY/KRW — `zeroDecimalCurrencyCodes`) mặc định "Số nguyên (0)" nhưng vẫn cho đổi (chỉ VNĐ khoá). Thêm computed `isZeroDecimalCurrency` + `currencyDefaultRounding`; sửa init/reset/handleChangeCurrency.
+  P3 (BUGFIX nhận diện VNĐ): mã VNĐ trong ERP `currencies` là **'VNĐ'** (ký tự đ), rate=1 — KHÔNG phải 'VND'. Detection `currencyCode === 'VND'` luôn false → chọn VNĐ nhưng select làm tròn không ép "Số nguyên (0)". Fix: `isVndCurrency` chuẩn hoá `toUpperCase().replace(/Đ/g,'D')` (edit.vue + index.vue view) + watcher/tỷ giá dùng isVndCurrency. Print đã tự xử lý 'VNĐ'.
+  Scope P1: Màn tạo/sửa báo giá (độc lập type=2 + từ BOM type=1). Trường "Làm tròn" tự động theo tiền tệ: VNĐ → ép "Số nguyên (0)" + disable + tooltip; khác VNĐ → "tối đa 2 số lẻ" (null), chọn tự do. Tái dùng `roundingPrecision` cho thành tiền/thuế/tổng (formatMoney). FE `quotations/_id/edit.vue`: `isVndCurrency`, watcher `currencyCode`, init roundingMode (loadDetail+selectProject+initCreateMode), disable+tooltip.
+  Scope P2 (fix ô nhập chưa làm tròn): thêm prop `precision` cho `V2BaseCurrencyInput` (Assign-only) — làm tròn theo precision, precision=0 chặn nhập thập phân + reformat khi đổi tiền tệ. Wire `:precision="roundingPrecision"` vào 16 ô TIỀN (₫: giá nhập/bán parent/child/svc, CK₫, CK phân bổ, CPVC, VAT₫); KHÔNG áp ô % (VAT%/CK%). VNĐ→ô tiền chỉ nhập số nguyên; USD→2 số lẻ.
+  Không migration/BE/permission (BE đã lưu rounding_mode, 0 hợp lệ).
+
+- rename-loai-chiet-khau-giam-gia → @dnsnamdang → .plans/rename-loai-chiet-khau-giam-gia/plan.md
+  Trạng thái: CODE DONE (2026-07-01, Phase 1 + 2 + 3). Chờ user build FE + **reseed permission** + E2E. Branch `tpe-develop-assign`.
+  Scope: Đổi "Chiết khấu/CK" → "Giảm giá/GG" toàn hệ thống. P1: danh mục "Loại giảm giá" (menu/tiêu đề/nhãn/toast) + tiền tố mã `CK-`→`GG-`. P2: đổi tên QUYỀN `...loại chiết khấu` → `...loại giảm giá` (seeder id=1090 giữ nguyên → phân quyền cũ không mất) + 7 middleware + menu isShow. P3: đổi nhãn Chiết khấu→Giảm giá trên toàn màn Báo giá (edit/view/print/submit/history + Excel blade + BE controller/service/history) — CHỈ text hiển thị, giữ biến/khóa/công thức/alias import cũ. GIỮ nguyên: route `/assign/discount-types`, bảng `discount_types`, API, mã bản ghi cũ.
+  File: BE `DiscountType`, `PermissionsTableSeeder`(id1090), `Assign/Routes/api.php`, `QuotationController`, `QuotationService`, `QuotationHistory`, `DiscountTypeRequest/Controller`, `exports/bom_list.blade.php`; FE `menu-sidebar.js`, `discount-types/index.vue`, `discount-type-modal.vue`, `quotations/_id/edit.vue`+`index.vue`, `QuotationPrintPreview/PrintConfigModal/SubmitModal/HistoryModal.vue`. Không migration.
+  ⚠️ DEPLOY: phải reseed PermissionsTableSeeder cùng lúc deploy code (middleware check tên MỚI; DB chưa reseed → 403). Import Excel báo giá cũ (header "CK(%)") vẫn chạy nhờ alias.
+
 - playwright-e2e → @dnsnamdang → .plans/playwright-e2e/plan.md
-  Trạng thái: PLAN DONE (2026-06-26). Spec + plan chi tiết đã viết. Chờ user chọn cách thực thi (subagent-driven / inline) để code Phase 0.
+  Trạng thái: CHUẨN TEAM DONE + PILOT nhatlinh CHẠY ĐƯỢC (2026-07-01). HRM/e2e/ chưa dựng (pivot sang chuẩn team + nhatlinh).
   Spec: docs/superpowers/specs/2026-06-26-playwright-e2e-design.md | Plan: docs/superpowers/plans/2026-06-26-playwright-e2e.md | Tóm tắt: .plans/playwright-e2e/design.md
-  Scope: Tích hợp Playwright E2E cho hrm-client (Nuxt2). Thư mục `HRM/e2e/` độc lập Node 18+ (app Nuxt Node 14 — tách tránh xung đột), TypeScript, auth qua storageState (login.setup.ts), Page Object Model. Môi trường local FE 3000/API 8000. Pilot Phase 1: module Human (CRUD nhân viên). 2 mục tiêu: regression suite + Claude verify qua Playwright MCP. Ngoài scope: CI ngay, ERP, visual regression.
-  Bước tiếp: user review spec → writing-plans lập plan chi tiết → code Phase 0 Bootstrap.
+  Scope gốc: Playwright E2E cho hrm-client. Đã mở rộng thành CHUẨN TEAM: e2e/ riêng Node 20 local + @playwright/test + storageState + POM (KHÔNG webServer auto).
+  Đã làm: skill `playwright-setup` đặt ở hrm/nhatlinh/erp/thanh_an trong hrm-claude-config (user tự commit/push) + guide websites/playwright-e2e-setup-guide.md. Pilot nhatlinh/e2e migrate script cũ → @playwright/test+POM; chạy thật 6 pass/5 fail (5 fail do data tồn kho E2E_PROD=0 + selector kho — KHÔNG do setup, WIP user).
+  Bước tiếp: (khi cần) scaffold HRM/e2e/ bằng skill playwright-setup, pilot module Human. Git skill: user tự đẩy.
 
 - quotation-shipping-cost → @dnsnamdang → .plans/quotation-shipping-cost/plan.md
   Trạng thái: CODE DONE Phase 1–17 (BE + FE edit/view/print + Excel + product-project). php -l sạch. Chờ user migrate + E2E. Branch `tpe-develop-assign`.
@@ -166,7 +241,36 @@
   Checkpoint: 2026-06-03 (6) — Phase 11: hiển thị cấp Chương (learner PathOutline + builder TabInfo, BE trả chapters[]/loose_lessons + chapter_id), quy đổi giờ-phút toàn bộ (helper formatMinutes), badge tổng "X khoá/chương • Y bài • giờ-phút" + gộp nút "Mở tất cả", fix trạng thái bài/chương màn chi tiết môn (BE đính learn_status từ EnrollmentLessonProgress + FE deriveChapterStatus), placeholder overview "Chưa có thông tin". Bước tiếp: verify browser 4 điểm (chương→bài+thời lượng, builder hiện chương, bài xong hiện "Đã xong"/chương "Đạt", overview rỗng placeholder). Defer: status chương exam chưa tính kết quả thi.
 
 - Bomlist-Quotation → @dnsnamdang → .plans/Bomlist-Quotation/plan.md
-  Trạng thái: Phase 31 BRAINSTORM DONE (spec viết xong). Branch `tpe-develop-assign`.
+  Trạng thái: Phase 31 CODE DONE + SRS/TESTCASE (2026-07-03) + **4 fix bug/UI (2026-07-07) CODE DONE, chưa commit**. Branch `tpe-develop-assign`.
+  ### Checkpoint — 2026-07-07 (fix bản in + tổng giá trị + UI người lập)
+  Vừa hoàn thành: (1) Bản in báo giá độc lập nhân đôi hàng thành dòng con — `QuotationPrintPreview.getChildren` hardcode `bom_list_product_id` (null→0 khớp mọi cha); fix bằng `isDirectQuotation`/`productIdKey`; (2) In báo giá có group mất chi tiết — `groupedData` mirror `index.vue groupedRows` (orphan/empty-group/roman); (3) Tab dự án TKT phiếu nháp không hiện Tổng giá trị — tận gốc `createFromBom` thiếu `recomputeTotals` (đã thêm) + backfill seeder (sửa BG-27,BG-30: 0→72.6M) + FE fallback `total_after_vat||total_sale` + BE byProject eager-load qty; (4) UI Người lập·Ngày tạo trên title bar "Thông tin chung" màn xem chi tiết.
+  Đang làm dở: (không)
+  Bước tiếp theo: user build FE + E2E 4 mục; deploy production chạy `db:seed RecomputeQuotationTotalsSeeder --force` sau deploy code; commit git khi user yêu cầu.
+  Blocked: (không)
+  ### Checkpoint — 2026-07-03
+  Vừa hoàn thành: Rà soát toàn bộ feature (Phase 7→31 + 7 folder quotation-* điều chỉnh) qua 7 agent song song (data model, entity/enum, API+validation, business rules BR-01→70, design phases, quotation-* adjustments, FE+testcase cũ) → viết tài liệu chuẩn dự án:
+    • `srs.html` (SRS đầy đủ + sơ đồ SVG use-case + swimlane tạo/duyệt/chốt báo giá) + `srs.docx` (pandoc, 27 bảng).
+    • `testcase.xlsx` (135 TC, P0 40%, section Phân quyền + 14 section La Mã: BOM CRUD/cha-con/import-export + Báo giá tạo/làm giá/VAT/CK/VC/làm tròn/cha-con P31/duyệt/chốt/in-xuất/ERP + edge/bảo mật/E2E).
+  Đang làm dở: (không)
+  Bước tiếp theo: user review SRS + testcase; (feature code) user migrate + build + test E2E theo test-summary-phase31.md.
+  Blocked:
+  ### Checkpoint — 2026-07-03 (bug fix rò rỉ giá vốn)
+  Vừa hoàn thành: Fix bug NV không quyền "Xem giá vốn hàng hoá" (1092) vẫn thấy giá vốn ở cột Giá nhập form tạo báo giá độc lập. 3 layer:
+    • BE `BomListController::searchErpProducts` + `getErpProductPrices` — gate `cost_price` theo quyền (trả null nếu thiếu), mirror `getErpRecipeChildren`. Rà soát toàn bộ: show báo giá độc lập (703→734) đã gate sẵn.
+    • FE `quotations/_id/edit.vue::initCreateMode` — bỏ hard-code `canViewCostPrice=true`/`can_view_import_price:true`, lấy quyền thật `this.canPickErpChild`.
+    • Root cause: leftover hard-code `= true` từ commit ec93512f (28/05), bị `hasUserCreatedProducts` (06/06) thay thế nhưng không xoá. Thêm quy ước fail-closed vào HRM/CLAUDE.md.
+  Đang làm dở: (không). `php -l` sạch. **User đã test OK (2026-07-03).** Chưa commit git.
+  Bước tiếp theo: commit git (khi user yêu cầu); đưa thay đổi CLAUDE.md qua PR hrm-claude-config.
+  Blocked:
+  ### Checkpoint — 2026-07-04/05 (ẩn giá vốn toàn bộ form báo giá)
+  Vừa hoàn thành: Mở rộng ẩn giá vốn ERP + tổng thành tiền nhập/TSLN theo quyền 1092 ở TẤT CẢ form báo giá.
+    • BE: `DetailQuotationResource` (can_view_cost_price → strict; null `summary_breakdown.nhap`); `exportExcel` strict.
+    • FE: `edit.vue` (bỏ bypass hasUserCreatedProducts); `_id/index.vue` (ẩn cột breakdown "Thành tiền nhập" theo quyền); `QuotationPrintPreview` (**bản in gửi khách LUÔN ẩn** — showImportCol=false cứng).
+    • Quy tắc: hàng tự tạo (non-ERP) creator luôn xem/nhập; hàng ERP + mọi tổng nhập/TSLN cần quyền 1092. Bản in HTML luôn ẩn; Excel theo quyền (nội bộ).
+  Đang làm dở: (không). `php -l` sạch. Chưa commit git.
+  Bước tiếp theo: user build FE + test; xác nhận Excel export là bản nội bộ hay gửi khách (quyết định có ẩn cứng như bản in không).
+  Blocked:
+  ---
   Spec Phase 31: .plans/Bomlist-Quotation/design-phase31.md
   Phase 31 (2026-06-08): Logic hàng hoá cha-con. Cha ERP → con auto từ recipe_products (snapshot, khoá) + toggle show_children/dòng; ERP không recipe → hàng lẻ. Cha tự tạo → chọn con ERP (cần quyền "Xem giá vốn hàng hoá")/tự tạo, giá nhập auto roll-up, giá bán nhập tay + validate cha ≥ Σ con (thành tiền, chỉ Báo giá). Con cha tạm hiện giá bán; con cha ERP giữ ẩn. Migration: thêm show_children vào bom_list_products + quotation_product_prices.
   Phase 30 (2026-05-28): BOM ẩn giá ERP, báo giá load giá ERP + quy đổi tỷ giá, validity_date, tab báo giá dự án TKT, icon cảnh báo thay đổi giá, toolbar CK+TSLN màn xem.

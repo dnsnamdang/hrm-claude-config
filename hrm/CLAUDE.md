@@ -19,6 +19,7 @@
 - Trước khi làm màn danh sách mới → hỏi có cần phân quyền theo cấp không
 - Trước khi viết accessor `is_can_delete` → hỏi điều kiện xóa cụ thể của màn đó
 - Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu
+- **Cờ phân quyền phải fail-closed (KHÔNG BAO GIỜ hard-code `= true`)**: mọi cờ quyền FE (`canViewCostPrice`, `canEdit`, `canDelete`, `can_view_*`,…) BẮT BUỘC khởi tạo mặc định `false` và chỉ set từ `$store.state.permissions` (quyền thật) hoặc field BE trả về. TUYỆT ĐỐI không gán literal `true` cho cờ quyền (kể cả ở màn tạo mới / khi "chưa có data") — đây là lỗ hổng fail-open làm lộ dữ liệu nhạy cảm (vd giá vốn). Nếu màn tạo mới cần hiện dữ liệu do user tự nhập, dùng cờ nghiệp vụ riêng (vd `hasUserCreatedProducts`), KHÔNG bật cờ quyền. BE: mọi endpoint trả dữ liệu nhạy cảm (giá vốn/cost, lương…) phải gate bằng `isCurrentEmployeeHasPermission('<Tên quyền>')` trước khi trả, trả `null` nếu không quyền — không dựa vào FE ẩn (defense-in-depth). Khi review: chặn pattern `can[A-Za-z]*\s*=\s*true`.
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
 
 ---

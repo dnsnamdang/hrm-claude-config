@@ -28,3 +28,19 @@
 
 ## Tài liệu
 - [ ] `e2e/README.md` — hướng dẫn sử dụng dev (cài Node 18, chạy, viết test, debug, report)
+
+---
+
+## Diễn biến thực tế (session pivot)
+
+Feature khởi đầu là "Playwright cho HRM" nhưng trong quá trình làm đã **mở rộng thành chuẩn team + pilot ở nhatlinh**:
+
+- ✅ **Chuẩn team**: tạo skill `playwright-setup` (Claude Code tự setup đúng chuẩn) đặt trong 4 project của `hrm-claude-config` (hrm, nhatlinh, erp, thanh_an) + guide người-đọc `websites/playwright-e2e-setup-guide.md`. Chốt: e2e/ riêng · Node 20 local · `@playwright/test` · storageState · POM · không webServer auto.
+- ✅ **Pilot nhatlinh** (`nhatlinh/e2e/`): migrate script cũ (global playwright) → `@playwright/test` + POM (TypeScript). Chạy thật: **6 pass / 5 fail** — 5 fail KHÔNG do setup (3 API fail vì tồn kho E2E_PROD=0 → API chạy đúng; 2 UI kho fail do selector). Suite kho là WIP của user, không đụng.
+- ⏳ **HRM e2e/ (Phase 0-1 gốc): CHƯA làm** — chưa dựng `HRM/e2e/`. Nếu cần, chạy skill `playwright-setup` để scaffold theo chuẩn, pilot module Human.
+
+### Checkpoint — 2026-07-01
+Vừa hoàn thành: Chuẩn team hoá Playwright (skill 4 project + guide) + pilot nhatlinh chạy được (6 pass). Xác minh setup nhatlinh OK bằng cách chạy suite thật.
+Đang làm dở: Không có — đã chốt "setup Playwright OK". 5 test kho fail là WIP của user (data tồn kho + selector), không thuộc phần setup, không tự sửa.
+Bước tiếp theo: (a) User tự commit/push skill lên hrm-claude-config (đã chọn tự làm git); (b) khi cần, scaffold `HRM/e2e/` bằng skill playwright-setup (pilot Human).
+Blocked: (không)

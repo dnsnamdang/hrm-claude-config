@@ -159,6 +159,8 @@ export class LoginPage {
 }
 ```
 
+> **Lưu ý ô mật khẩu show/hide:** nhiều trang login có nút ẩn/hiện mật khẩu, tạo **2 input cùng `placeholder="Mật khẩu"`** (1 `type=password` + 1 `type=text`, hoặc 1 bản bị comment trong DOM). `.first()` có thể trỏ ô đang ẩn → mật khẩu không vào ô thật → BE trả 422. Kiểm chắc ăn: sau `fill`, assert `(await field.inputValue()).length > 0`; nếu sai, target ô hiển thị (`locator('input[type="password"]:visible')`).
+
 ## Helper cho stack team — `utils/select2.ts`
 
 Stack team dùng **Select2 (`v-select2-component`)** + **vue2-datepicker** (khó tự động hoá). Copy nguyên file này vào mọi project Nuxt:
@@ -264,6 +266,42 @@ npm run report      # xem HTML report (trace + screenshot khi fail)
 npm run codegen     # tự sinh selector
 ```
 
+## Tài khoản test — mô hình auth & cách tạo (nếu chưa có)
+
+Bước 4 (điền `.env`) chỉ chạy nếu **có tài khoản hợp lệ trên DB local**. Nếu login fail, hiểu mô hình auth thật trước khi loay hoay:
+
+**Mô hình auth (Nuxt + JWT tymon + spatie tùy biến):**
+- Login: `POST /api/v1/users/auth/login` body `{email,password}` → `auth()->attempt(['email','password','status'=>1])`. Account **phải `status=1`**. Response `{ meta:{code,message}, data:{ access_token,... } }` — token key = **`access_token`**; sai creds → **422** `"Tên đăng nhập hoặc mật khẩu không đúng"` (KHÔNG phải 401).
+- **Xác thực bằng bảng `employees`** (KHÔNG phải `users`). User và Employee là **cùng 1 bản ghi** (`auth()->user()->id == Employee::find(id)->id`).
+- Quyền qua bảng tùy biến **`employee_has_roles`** (cột `role_id, model_type, employee_id, company_id`; morph key = `employee_id`, model_type = `Modules\Timesheet\Entities\Employee`) — KHÔNG phải `model_has_roles` mặc định. `role_has_permissions` có thêm cột `company_id`.
+
+**Tạo user E2E chuyên dụng** (idempotent — đặt script ở `<api>/database/e2e_provision.php`, chạy `php artisan tinker --execute="require base_path('database/e2e_provision.php');"`):
+```php
+$infoId = DB::table('employee_infos')->insertGetId([
+    'code'=>'E2E','fullname'=>'E2E User','image'=>'e2e.png','telephone'=>'0900000000',
+    'company_id'=>1,'department_id'=>1,'status'=>1,'created_at'=>now(),'updated_at'=>now(),
+]);
+$empId = DB::table('employees')->insertGetId([
+    'email'=>'e2e@test.local','password'=>Hash::make('Password@123'),'status'=>1,
+    'employee_info_id'=>$infoId,'created_at'=>now(),'updated_at'=>now(),
+]);
+DB::table('company_employees')->insert(['employee_id'=>$empId,'company_id'=>1]); // BẮT BUỘC: thiếu → login crash null
+DB::table('employee_has_roles')->insert([
+    'role_id'=>1,'model_type'=>'Modules\\Timesheet\\Entities\\Employee','employee_id'=>$empId,'company_id'=>1,
+]); // role 1 = Admin (đủ quyền). Đổi role_id nếu cần quyền hẹp hơn để test 403.
+app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions(); // cache spatie 24h
+```
+Gotcha: `employee_infos.image` NOT NULL (+CHECK) → giá trị **khác rỗng** (vd `'e2e.png'`). `company_employees` bắt buộc. Sau insert **phải reset cache spatie**. Rồi `.env`: `TEST_EMAIL=e2e@test.local` / `TEST_PASSWORD=Password@123`. **KHÔNG đoán mật khẩu tài khoản thật** — tạo user E2E.
+
+## Tùy chọn: E2E API-level (khi FE chưa dựng được)
+
+Khi FE không chạy được (Node cũ, build lỗi node-sass/openssl) nhưng cần kiểm luồng nghiệp vụ ngay, dùng Playwright `request` gọi thẳng API (vẫn trong `e2e/`, Node 20):
+- `globalSetup`: provision user+fixtures (shell `php artisan tinker`) → login lấy `access_token` → ghi `.auth/state.json` (token + id fixtures).
+- Test đọc token → header `Authorization: Bearer <token>`, gọi endpoint thật, assert `status()` + JSON. Fixtures tạo mới mỗi lần → đọc id từ `state.json`, KHÔNG hardcode.
+- Lỗi nghiệp vụ (validate, vượt tồn, vượt hạn mức HĐ) BE trả **422** (Controller rethrow `ValidationException` trước `catch Exception`) — assert **422**, không phải 400. Không token → **401**.
+- Ưu: không cần FE/Select2/datepicker, chạy nhanh, ổn định. Nhược: không kiểm Vue render. Có thể chạy song song với UI test trong cùng `e2e/` (project Playwright riêng).
+- Lưu ý DB dev có thể thiếu bảng phụ (vd `customer_categories` chưa migrate → `GET /sale/contracts/{id}` 500 do eager-load): né bằng cách assert qua endpoint khác (vd `issued`/`remaining`) thay vì gọi đúng endpoint lỗi.
+
 ## Nếu project dùng AngularJS/Blade (ERP — KHÁC stack)
 
 Nguyên tắc 1–7 vẫn giữ nguyên (e2e riêng, Node 20, local, storageState, POM). Chỉ khác **selector**:
@@ -283,3 +321,7 @@ Nguyên tắc 1–7 vẫn giữ nguyên (e2e riêng, Node 20, local, storageStat
 | "phải cài lại Playwright" tái diễn | Đang dùng bản global → cài **local** trong `e2e/package.json`. |
 | Select2 không có option | Tăng `waitForTimeout` ở bước mở form, hoặc truyền `optionText` để search. |
 | Click bị overlay/toast che | `.click({ force: true })` fallback. |
+| Mọi test fail `ENOENT '.auth/user.json'` | Project `setup` không chạy: file `login.setup.ts` nằm trong `./auth` (ngoài `testDir: './tests'`). Đảm bảo project `setup` có **`testDir: './auth'`** (đã có trong template). Verify: `npx playwright test --list` phải thấy `[setup]`. |
+| Login API trả **422** "...mật khẩu không đúng" | Sai creds, account không `status=1`, hoặc account không có trong bảng `employees` (auth KHÔNG dùng bảng `users`). Xem mục "Tài khoản test" → tạo user E2E chuyên dụng, KHÔNG đoán mật khẩu. |
+| Ô mật khẩu trống dù đã `fill` | Nút show/hide tạo 2 input trùng `placeholder="Mật khẩu"` → `.first()` trỏ ô ẩn. Target `input[type="password"]:visible`; assert `inputValue().length>0` sau fill. |
+| `getAllPermissions()`/quyền không có dù đã gán role | Reset cache spatie: `php artisan permission:cache-reset` (hoặc `forgetCachedPermissions()`); roles gắn qua `employee_has_roles` (không phải `model_has_roles`). |

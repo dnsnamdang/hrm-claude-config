@@ -224,14 +224,16 @@ Nếu có → đọc trước khi viết code.
 ## Lưu ý fix bug
 
 Lỗi BE → đọc log tại:
-`hrm-api/storage/logs/laravel-[ngày-hôm-nay].log`
+`nhatlinh-api/storage/logs/laravel-[ngày-hôm-nay].log`
 
 ---
 
 ## Khi làm việc với git
 
-- Repo API nằm ở: /hrm-api
-- Repo Client nằm ở: /hrm-client
+- Repo API nằm ở: /nhatlinh-api
+- Repo Client nằm ở: /nhatlinh-client
+- Thư mục cha (`nhatlinh/`) và `e2e/` KHÔNG phải git repo — chỉ 2 repo trên có git
+- Tài liệu/skill cũ có thể còn ghi `hrm-api`/`hrm-client` → tự quy đổi sang tên mới
 
 ## Không làm
 

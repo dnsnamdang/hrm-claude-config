@@ -1333,3 +1333,52 @@ Bước tiếp theo: user reload test click mã + In.
 ### Checkpoint — 2026-06-28 (Xuất Excel danh sách)
 Vừa hoàn thành: nút **Xuất Excel** màn danh sách báo giá (slot #actions, V2BaseButton secondary + ri-download-line). BE: `Modules/Sale/Exports/SaleQuotationExport.php` (FromCollection+WithHeadings+WithMapping+ShouldAutoSize, 10 cột STT/Mã/KH/Ngày BG/Tổng tiền/Trạng thái/Ngày tạo/Người tạo/Ngày duyệt/Người duyệt, tổng tiền (float)); `QuotationController::export()` dùng `getListForUser($filters)->get()` → `SaleQuotationResource::collection()->resolve()` → `Excel::download(...,'bao_gia_ban.xlsx')`; route `GET /quotations/export` ĐẶT TRƯỚC `/{id}` + checkPermission giống index. FE exportExcel(): token + buildQueryString(filters) (không page/per_page) + axios arraybuffer + blob download (revoke URL). Review opus: Spec ✅ + Quality Approved (đã fix 3 minor: float/revoke/MIME). Không N+1 (service eager-load customer + createdBy/approvedBy.info).
 Bước tiếp: user test xuất theo filter.
+
+## Phase — Cột Ảnh hàng hoá (2026-07-11)
+
+Yêu cầu: thêm cột Ảnh hàng hoá (sau cột Mã hàng / Hàng hoá) ở 4 màn của Báo giá bán. Ảnh = ảnh ĐẦU TIÊN của hàng hoá (bảng `files`, `table='products'`, `file_path` là URL trực tiếp), đọc LIVE (không snapshot, không migration). Không có ảnh → hiện `–`. Ngoài scope: Excel không nhúng ảnh, không đụng Hợp đồng.
+
+### Tasks
+- [x] BE-1: `ProductService::getAll` eager load `files` (FE lấy `files[0].file_path`)
+- [x] BE-2: `DetailSaleQuotationResource` items thêm `product_image` + controller eager load `items.product.files`
+- [x] FE-1: `QuotationForm` cột "Ảnh" sau "Hàng hoá" (thumbnail ~40px, trong nhóm ẩn/hiện cột, click → popup xem lớn); dòng từ picker lấy ảnh từ list products, dòng edit lấy `product_image`
+- [x] FE-2: Trang chi tiết `_id/index.vue` cột "Ảnh" + click phóng to
+- [x] FE-3: `QuotationPrintPreview` cột "Ảnh" sau cột "Mã" (~50-60px, in được)
+- [x] FE-4: `ProductPickerModal` cột thumbnail
+
+## Phase — Import hàng hoá từ Excel (2026-07-12)
+
+Spec: docs/superpowers/specs/2026-07-12-quotation-import-excel-design.md
+Popup import trong form báo giá: tải file mẫu → chọn file → chọn dòng bắt đầu + cột mã → preview đối chiếu (đã có / chưa có trên PM) → mã chưa có chọn Tạo mã mới (nhập Tên + ĐVT, ĐVT lạ tự tạo) / Loại bỏ (mặc định) → thêm vào bảng dòng hàng. Endpoint import-quick CHỈ CẦN ĐĂNG NHẬP (không permission). Không migration.
+
+### Tasks
+- [x] BE-1: `ProductService::importQuick` (transaction: find-or-create Unit theo tên + tạo Product `vat=0,status=1` + product_unit base `price_p0=0`; code tồn tại → trả product hiện có; ValidationException rethrow) + `ProductController::importQuick` + route `POST /products/import-quick` (chỉ auth)
+- [x] FE-1: copy MAU_IMPORT.xlsx vào `static/templates/`
+- [x] FE-2: `QuotationImportModal.vue` bước 1 (tải mẫu, chọn file, parse XLSX, chọn dòng bắt đầu + cột mã kèm giá trị mẫu, auto-detect cột "mã")
+- [x] FE-3: `QuotationImportModal.vue` bước 2 (preview 2 nhóm, dedupe file + dedupe với form.items, radio Tạo mới/Loại bỏ, input Tên+ĐVT validate inline, đếm tổng)
+- [x] FE-4: nút "Import Excel" trong QuotationForm + handler xác nhận (gọi import-quick nếu có tạo mới → append productRaw → add dòng tái dùng logic onPickProducts) + toast kết quả
+- [x] Test: smoke BE tinker PASS + **E2E Playwright 8/8 PASS** (2026-07-12): `tests/sale/quotation-import.api.spec.ts` 5 test API (tạo mới + ĐVT lạ, idempotent, 422, items rỗng 400, >500 items 400) + `tests/sale/quotation-import.spec.ts` 3 test UI (cột Ảnh form+picker; luồng import đủ: chọn file → auto-detect cột D → đối chiếu → tạo mã mới → thêm 2 dòng; import lại → bỏ qua + nút disable). Fixture `e2e/fixtures/import-bao-gia.xlsx`. Regression `quotation.spec.ts` PASS. Config e2e mở rộng pattern api project cho `sale/*.api.spec.ts`. Lưu ý hạ tầng: Nuxt dev chạy cổng 3000 (PORT env bị nuxt.config bỏ qua), API 8000 VÀ 8100 đều là nhatlinh-api (ghi chú cũ trong e2e/.env về HRM cổng 8000 đã lỗi thời) — E2E chạy với BASE_URL=http://127.0.0.1:3000 override. CÒN (user): test tay trên trình duyệt với file MAU_IMPORT.xlsx thật (~1000 dòng).
+
+**Review subagent (2026-07-12): 0 Critical / 3 Important / 8 Minor — ĐÃ FIX 5 điểm:**
+- [x] FE chunk createItems ≤500/request gọi tuần tự (Important 1)
+- [x] Race trùng code product: try/catch QueryException 23000 → re-fetch product hiện có (Important 2)
+- [x] `Unit::getNextCode` thêm `lockForUpdate()` chống trùng mã DVT song song (Important 3)
+- [x] `Unit::create` thêm `part_id` theo pattern UnitService (Minor)
+- [x] Nút "Tải file mẫu" bỏ button-trong-anchor → method downloadTemplate (Minor)
+
+Minor ghi nhận chưa fix: N+1 importQuick (~4k query/500 items, chấp nhận với cap 500 — có thể prefetch sau); message lỗi validate dùng index mảng không phải số dòng Excel; toast "tạo mới X" đếm cả product BE trả về do đã tồn tại; maxCols cap 20 cột (A–T); tự parse XLSX thay vì tách hàm chung từ import-helper. **CHỜ USER CHỐT nghiệp vụ:** mã đã tồn tại nhưng đang KHOÁ → hiện vẫn được thêm vào báo giá (giữ nguyên hành vi, cần xác nhận).
+Smoke test lại sau fix: PASS (tạo mới + part_id unit + code tồn tại).
+
+**Bugfix (2026-07-12): popup import đóng nhầm khi thao tác input "Dòng bắt đầu".** Root cause (repro Playwright 3 kịch bản): mousedown trong input → kéo chuột → mouseup trên backdrop → browser phát `click` tại ancestor chung (= backdrop) → `@click.self="close"` đóng modal (click thường + gõ phím KHÔNG gây lỗi). Fix: đổi `@click.self` → `@mousedown.self` ở backdrop `QuotationImportModal.vue` + `ProductPickerModal.vue` (cùng lỗi tiềm ẩn); click hẳn backdrop vẫn đóng đúng convention modal-popup. Test hồi quy thêm vào `quotation-import.spec.ts` (kéo không đóng + click backdrop đóng) — 4/4 UI PASS.
+
+**Bổ sung (2026-07-12): prefill Tên/ĐVT cho mã tạo mới từ cột file.** Bước 1 thêm 2 select tuỳ chọn "Cột Tên hàng" + "Cột ĐVT" (default "— Không lấy —", auto-detect header "tên hàng"/"đvt|đơn vị (tính)" cùng cơ chế với cột Mã); bước 2 dòng "Chưa có trên PM" được prefill Tên/ĐVT từ dòng đầu tiên chứa mã đó trong file (vẫn sửa tay từng dòng, validate giữ nguyên). buildPreview lưu rowIdx theo mã. E2E cập nhật: assert auto-detect B/E + giá trị prefill — 4/4 UI PASS. Lưu ý hạ tầng: Nuxt dev Node 12 bị segfault (exit 139) sau thời gian chạy → khởi động lại với NODE_OPTIONS=--max-old-space-size=4096.
+
+### Checkpoint — 2026-07-12 (wrap up)
+Vừa hoàn thành: **2 phase mới của Báo giá bán, code + review + E2E xong toàn bộ, CHƯA COMMIT (2 repo đang trên main):**
+1. **Cột Ảnh hàng hoá** (4 màn: form / chi tiết / bản In / modal chọn hàng — ảnh đầu tiên từ bảng files, đọc live, click phóng to, không migration).
+2. **Import Excel vào báo giá** (nút Import Excel trong form → modal 2 bước 96vw: chọn file + dòng bắt đầu + cột Mã/Tên/ĐVT auto-detect → preview 3 nhóm → mã chưa có chọn Tạo mã mới (prefill Tên/ĐVT từ file, sửa được) / Loại bỏ → thêm dòng; BE `POST category/products/import-quick` CHỈ CẦN ĐĂNG NHẬP, transaction, race-safe, cap 500/request + FE chunk; fixture mẫu `static/MAU_IMPORT_BAO_GIA.xlsx`).
+3. **Bugfix**: backdrop `mousedown.self` (cả ProductPickerModal); 3 Important từ review đã fix.
+Verify: BE smoke tinker PASS; **E2E 10/10 PASS** (`quotation-import.api.spec.ts` 5 + `quotation-import.spec.ts` 4 + regression `quotation.spec.ts`); e2e config mở rộng api project cho `sale/*.api.spec.ts`.
+Đang làm dở: (không)
+Bước tiếp theo: user test tay trình duyệt (localhost:3000, chú ý file thật ~1000 dòng + tải file mẫu + prefill) → commit 2 repo + hrm-claude-config (file mới FE: QuotationImportModal.vue + static/MAU_IMPORT_BAO_GIA.xlsx untracked; e2e: 2 spec + fixture + config). Dọn dev DB nếu muốn: bản ghi files test-image.jpg (ảnh placeholder gắn product dòng đầu báo giá đầu — DELETE FROM files WHERE file_name='test-image.jpg' AND `table`='products').
+Blocked: CHỜ USER CHỐT nghiệp vụ: mã đã tồn tại nhưng đang KHOÁ có được thêm vào báo giá qua import không (hiện: có).
