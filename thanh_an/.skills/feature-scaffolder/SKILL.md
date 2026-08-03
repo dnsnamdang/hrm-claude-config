@@ -88,6 +88,13 @@ class EntityService extends BaseService
 - Cascading filter: Công ty >> Phòng ban >> Bộ phận
 - API qua `this.$store.dispatch('apiGetMethod', ...)`
 
+### FE — Quy tắc input/dropdown (bắt buộc mọi màn)
+- **KHÔNG dùng `<input>` / `<select>` native.** Luôn dùng base component tương ứng:
+  - Dropdown/select (form, bộ lọc, popup/modal) → `base-select2`; options `{ id, text }`, placeholder qua prop, cho xóa chọn bằng `:settings="{ allowClear: true }"`
+  - Ô nhập / tìm kiếm → `b-form-input` (Bootstrap-Vue); field form có label/đơn vị → `base-input-field`
+- Khi `allowClear` clear giá trị, v-model trả về `null` → guard filter phải dùng truthy, không so sánh `''`
+- Label field bắt buộc dùng component `<Required />` (sao đỏ), không viết `*` trần
+
 ## Tham khảo chi tiết
 - Pattern CRUD đầy đủ: `docs/conventions.md`
 - Base classes & components: `docs/shared.md`

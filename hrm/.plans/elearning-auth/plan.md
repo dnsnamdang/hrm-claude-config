@@ -173,3 +173,164 @@ Files FE hrm-client (1): pages/sso/elearning.vue (ghi đè bản cũ).
 Đang làm dở: không có.
 Bước tiếp theo: User chạy `cd hrm-api && php artisan migrate` → restart server hrm-api + dev server elearning + nuxt hrm-client → chạy 15 TC ở Phase 8 plan.
 Blocked: chưa test thủ công, chưa biết hành vi thực tế của `hrm-api/users/auth/logout` có blacklist JWT thật không (xem TC9).
+
+---
+
+## Phase 9 — Fix "nhân đôi tab ra nhầm tài khoản" (cross-tab auth sync)
+
+**Bug user báo (2026-07-15):** Đăng nhập tk học viên ngoài → đăng xuất → đăng nhập bằng SSO HRM → nhân đôi tab (Chrome Duplicate) → tab nhân đôi lại là tk học viên ngoài.
+
+**Root cause (đã xác minh bằng Playwright, không suy đoán):**
+Auth store chỉ đọc `localStorage` ĐÚNG 1 LẦN lúc tab khởi tạo (`stores/auth.js:8-9`) và KHÔNG có tab nào lắng nghe event `storage`. Đổi tài khoản ở 1 tab → các tab elearning đang mở giữ identity CŨ trong RAM nhưng request lại gửi TOKEN MỚI (vì `utils/api.js:16-18` đọc localStorage LIVE mỗi request). Tab nhân đôi đọc localStorage thật → ra tài khoản khác tab gốc.
+→ Duplicate tab KHÔNG phải nguyên nhân, chỉ là thứ phơi bày sự lệch pha. Hướng lệch (tab gốc sai hay tab mới sai) phụ thuộc tab nào là tab zombie.
+
+**Bằng chứng đo được:** tab zombie hiển thị header "Akira Lee (HV)" trong khi `GET /elearning/auth/profile` bằng chính token trong localStorage trả về "DNS ADMIN update" (employee, sub=13). → Không chỉ lỗi hiển thị: thao tác trong tab đó GHI DỮ LIỆU VÀO NHẦM TÀI KHOẢN.
+
+**Đã loại trừ:** BE `refresh` (AuthController:331-360) chọn guard theo claim TRONG token → không thể trộn tài khoản. BE `ssoExchange` (:126-145) đúng. Luồng 1 tab sạch (logout learner → SSO HRM → mở tab mới) KHÔNG tái hiện.
+
+### Task
+
+- [x] FE: `stores/auth.js` — thêm `initCrossTabSync()` lắng nghe event `storage`; so sánh IDENTITY (claim `sub` + `user_type` decode từ JWT) chứ KHÔNG so token thô — để `tryRefresh` định kỳ (cùng user, token mới) không gây reload oan
+- [x] FE: `stores/auth.js` — token bị xoá ở tab khác (logout) → `clearAuth()` + về `/` (single sign-out giữa các tab)
+- [x] FE: `stores/auth.js` — identity đổi ở tab khác (đăng nhập tk khác) → `window.location.reload()` để mọi store fetch lại theo đúng user (patch riêng auth store là chưa đủ: dữ liệu các store khác — my-learning, notification… — vẫn của user cũ)
+- [x] FE: `App.vue` — gọi `initCrossTabSync()` trong `onMounted`
+- [x] Verify bằng Playwright: 2 tab, đổi tài khoản ở tab 1 → tab 0 tự đồng bộ, không còn zombie
+
+### Test case
+
+- [x] TC16: Tab A learner + tab B → logout ở B → tab A tự về trạng thái chưa đăng nhập (không còn hiện tên learner)
+- [x] TC17: Tab A learner + tab B → ở B logout rồi SSO HRM → tab A tự reload thành employee (header đúng tên nhân viên)
+- [x] TC18: Sau TC17, nhân đôi tab A → tab nhân đôi khớp tài khoản với tab gốc
+- [x] TC19: Token tự refresh (cùng user) → các tab khác KHÔNG bị reload oan
+
+### Checkpoint — 2026-07-15
+Vừa hoàn thành: Phase 9 — fix cross-tab auth sync. 2 file FE elearning:
+- `src/stores/auth.js` — thêm helper `tokenIdentity()` (decode claim `sub` + `user_type`) + action `initCrossTabSync()` lắng nghe event `storage`: token bị xoá ở tab khác → `clearAuth()` + về `/`; identity đổi → `window.location.reload()`; identity KHÔNG đổi (refresh token) → bỏ qua.
+- `src/App.vue` — gọi `auth.initCrossTabSync()` trong `onMounted`.
+Verify thật bằng Playwright (2 tab + tab nhân đôi, learner akiralee2002 ↔ employee namdangit): TC16/17/18/19 PASS. Đo trực tiếp `GET /elearning/auth/profile` để đối chiếu header hiển thị vs identity BE trả về → đã khớp. TC19 dùng canary `window.__reloadCanary` chứng minh refresh token cùng user KHÔNG reload oan tab khác. `eslint src/stores/auth.js src/App.vue` → exit 0.
+Không đụng BE, không migration, không permission, không git.
+Đang làm dở: không có.
+Bước tiếp theo: User verify tay trên Chrome thật bằng Duplicate tab (Ctrl+Shift+D) — Playwright chỉ mở tab mới cùng URL, tương đương về localStorage nhưng KHÔNG copy sessionStorage như Duplicate thật.
+Blocked: không có.
+
+---
+
+## Phase 10 — Fix link xác thực email hỏng (`http:///verify-email`)
+
+**Bug user báo (2026-07-16):** Bấm nút "Xác thực email" trong mail đăng ký → Google chặn với thông báo "Trang trước đó đang đưa bạn tới một url không hợp lệ (`http:///verify-email?token=705edbb7-...`)". Link thiếu hoàn toàn phần host.
+
+**Root cause (đã trace, không suy đoán):**
+`.env` của `hrm-api` KHÔNG khai báo key `ELEARNING_CLIENT_URL`, trong khi `AuthService.php:132` build link bằng `rtrim(env('ELEARNING_CLIENT_URL', ''), '/') . '/verify-email?token=' . $token`.
+→ `env()` trả về default `''` → `$verifyUrl` = `/verify-email?token=...` (đường dẫn tương đối, không host) → blade render thẳng vào `href` (`emails/verify-email.blade.php:13`) → Gmail resolve link tương đối trong email thành `http:///verify-email?token=...` → URL không hợp lệ. Khớp 100% với ảnh user gửi.
+
+**Bug thứ 2 cùng gốc (grep toàn repo, chỉ 2 chỗ dùng key này):**
+`AuthService.php:171` sinh link `reset-password` y hệt → mail quên mật khẩu cũng đang hỏng, chỉ là chưa ai test tới.
+
+**Cạm bẫy thứ 2 (nghiêm trọng hơn, phải fix cùng):**
+Gọi `env()` NGOÀI file config → khi server chạy `php artisan config:cache`, Laravel bỏ nạp `.env` → `env()` trả `null` → link vỡ lại y hệt kể cả khi .env đã có key. Local hiện chưa cache config nên chỉ lộ nguyên nhân 1, nhưng lên staging/production dính ngay. Module Elearning hiện KHÔNG có thư mục `Config/`.
+
+**Ghi chú môi trường:** `.env` local dùng `MAIL_HOST=mailhog` → mail local không ra Gmail. Email hỏng user nhận là do SERVER ĐÃ DEPLOY gửi → `.env` trên server đó cũng thiếu key, user phải tự thêm (ngoài tầm sửa của session này).
+
+**User đã chốt:** URL FE elearning = `https://elearning.eteksofts.com` (FE ở root, API dưới `/api/v1/elearning`) · fix cả 2 dòng · được sửa `.env` local.
+
+### Task
+
+- [x] BE: Tạo `Modules/Elearning/Config/config.php` + `registerConfig()` trong `ElearningServiceProvider` (mẫu `AssignServiceProvider`) — `'client_url' => env('ELEARNING_CLIENT_URL', 'http://localhost:3001')` (chỗ hợp lệ DUY NHẤT để gọi `env()`, an toàn với `config:cache`)
+- [x] BE: `AuthService.php:132` — `env('ELEARNING_CLIENT_URL', '')` → `config('elearning.client_url')` (link verify-email)
+- [x] BE: `AuthService.php:171` — `env('ELEARNING_CLIENT_URL', '')` → `config('elearning.client_url')` (link reset-password)
+- [x] BE: Thêm `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com` vào `.env` local của hrm-api
+- [x] Verify: build lại link bằng tinker/route thật → link phải có đủ host, không còn `http:///`
+
+### Test case
+
+- [x] TC20: Đăng ký tk mới → mail nhận được có link dạng `https://elearning.eteksofts.com/verify-email?token=...` (đủ host)
+- [ ] TC21: Bấm link trong mail → vào đúng trang verify, tài khoản được kích hoạt, không còn cảnh báo Google
+- [x] TC22: Quên mật khẩu → link reset dạng `https://elearning.eteksofts.com/reset-password?token=...` (đủ host)
+- [ ] TC23: ~~Chạy `php artisan config:cache` rồi sinh lại link~~ → KHÔNG kiểm chứng được: `config:cache` hỏng sẵn toàn repo do `config/ckfinder.php:27` chứa Closure (bug riêng, ngoài scope). Để lại khi nào ckfinder được fix.
+
+### Checkpoint — 2026-07-16
+Vừa hoàn thành: Phase 10 — fix link xác thực email hỏng. 4 file BE (`hrm-api`, branch `tpe-develop-elearning`):
+- `Modules/Elearning/Config/config.php` — file MỚI, khai báo `client_url` (chỗ hợp lệ duy nhất gọi `env()`).
+- `Modules/Elearning/Providers/ElearningServiceProvider.php` — thêm `registerConfig()` (publishes + mergeConfigFrom) + gọi trong `boot()`, copy đúng mẫu `AssignServiceProvider:48-56`. Module trước đó KHÔNG nạp config nào.
+- `Modules/Elearning/Services/AuthService.php` — dòng 132 (verify-email) + 171 (reset-password): `env('ELEARNING_CLIENT_URL','')` -> `config('elearning.client_url')`.
+- `.env` (local) — thêm `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com` ngay dưới `ERP_URL`.
+
+Verify thật (không suy đoán): `tinker` -> `config('elearning.client_url')` = `https://elearning.eteksofts.com`; render Mailable `LearnerVerifyEmail` THẬT -> `href` = `https://elearning.eteksofts.com/verify-email?token=...`, khẳng định không còn chuỗi `http:///`. TC20 (phần build link) + TC22 PASS ở mức code.
+
+PHÁT HIỆN THÊM: `php artisan config:cache` HỎNG SẴN toàn repo (KHÔNG do thay đổi này) — `config/ckfinder.php:27` gán Closure vào `$config['authentication']` -> `LogicException: Your configuration files are not serializable` (`Closure::__set_state()`). Hệ quả: server không cache config được, nên cạm bẫy `env()` chưa từng kích hoạt -> nguyên nhân sống DUY NHẤT là `.env` thiếu key. TC23 không kiểm chứng được chừng nào ckfinder chưa fix -> KHÔNG đánh pass.
+
+Không đụng DB, không migration, không permission, không git.
+Đang làm dở: không có.
+Bước tiếp theo: User thêm `ELEARNING_CLIENT_URL=https://elearning.eteksofts.com` vào `.env` của SERVER đã deploy (elearning.eteksofts.com) — email hỏng user nhận là do server đó gửi (local dùng `MAIL_HOST=mailhog`, không ra Gmail được). Sau đó chạy TC21 (đăng ký thật -> bấm link trong mail).
+Blocked: TC21 cần .env server (ngoài tầm session). TC23 cần fix `config/ckfinder.php` trước (bug riêng, ngoài scope phase này).
+
+---
+
+## Phase 11 — Fix "đăng xuất elearning kéo theo đăng xuất HRM"
+
+**Bug user báo (2026-07-17):** Employee đăng nhập elearning qua SSO HRM → đăng xuất ở elearning → HRM bị đăng xuất theo. Yêu cầu: logout elearning KHÔNG được ảnh hưởng phiên HRM.
+
+**Root cause (đã xác minh, không suy đoán):**
+Employee dùng CHUNG một JWT với HRM (`ssoExchange` trả lại chính token HRM — AuthController:144 `loginResponse($request->token, 'employee', ...)`). Trong `stores/auth.js logout()`, nhánh employee redirect sang `${HRM_CLIENT_URL}/sso/elearning-logout` (hrm-client `pages/sso/elearning-logout.vue`) — trang này gọi `/users/auth/logout` (blacklist JWT dùng chung) + xoá `access_token` + clear Vuex `current_employee` của HRM → HRM chết theo. Đây là "Single Sign-Out" thiết kế cũ (skill elearning-auth mục 8), trái mong muốn user.
+
+**Fix (1 file FE elearning):**
+- `src/stores/auth.js logout()` — bỏ hoàn toàn nhánh redirect sang HRM gate. Employee logout giờ CHỈ `clearAuth()` cục bộ + về `/` (route public → KHÔNG auto-SSO lại). KHÔNG gọi BE / KHÔNG blacklist token (vì token dùng chung, blacklist sẽ giết HRM). Learner vẫn `api.post('/auth/logout')` bình thường (phiên riêng). Gỡ luôn const `HRM_CLIENT_URL` không còn dùng.
+- `pages/sso/elearning-logout.vue` (hrm-client) trở thành dead code — KHÔNG xoá (repo chung, để lại vô hại; không route nào gọi nữa).
+
+**Quyết định UX (user chốt 2026-07-17):** Sau logout elearning, HRM còn phiên → bấm lại "Đăng nhập bằng HRM" vào thẳng không cần mật khẩu. GIỮ NGUYÊN (đúng bản chất SSO).
+
+### Task
+- [x] FE: `stores/auth.js` — employee logout chỉ clear cục bộ + về `/`, không đụng HRM
+- [x] FE: `stores/auth.js` — gỡ const HRM_CLIENT_URL không dùng
+- [x] Verify Playwright: login HRM → SSO elearning → logout elearning → HRM còn `access_token` + check-login 200 `logged_in:true` + không bị đá về /login
+
+### Test case
+- [x] TC20: Login HRM → SSO elearning (employee) → logout elearning → elearning token null, ở lại `/`, header "Đăng nhập"
+- [x] TC21: Sau TC20 → HRM 127.0.0.1:3000 vẫn đăng nhập (token jti không đổi, không bị blacklist, không redirect /login)
+
+### Checkpoint — 2026-07-17
+Vừa hoàn thành: Phase 11 — fix logout elearning không kéo theo logout HRM. 1 file FE: `src/stores/auth.js` (logout() bỏ nhánh HRM gate + gỡ HRM_CLIENT_URL). `eslint src/stores/auth.js` exit 0.
+Verify Playwright thật (namdangit/DNS ADMIN, token jti F5CYPZ655ssJ82FR dùng chung): TC20 + TC21 PASS. Đo trực tiếp check-login trả 200 logged_in:true, token HRM giữ nguyên jti, không bị đá về login.
+Không đụng BE, không migration, không permission, không git. hrm-client `elearning-logout.vue` thành dead code (giữ lại).
+Đang làm dở: không có.
+Bước tiếp theo: User verify tay trên Chrome thật (login HRM → SSO elearning → logout elearning → check HRM còn login).
+Blocked: không có.
+
+---
+
+## Phase 12 — Fix routing SSO/reset khi mở URL ở trình duyệt lạ & reset lúc còn phiên
+
+**Bug user báo (2026-07-24):**
+1. Copy URL trang bảo vệ elearning (vd `/goc-hoc-tap`) paste sang trình duyệt lạ → bị redirect sang HRM thay vì ở lại elearning.
+2. Đang còn phiên đăng nhập ở 1 trình duyệt → đặt lại mật khẩu qua mail, nhấn link → bị đá thẳng về trang chủ, không tới màn đặt lại mật khẩu.
+
+**Root cause (đã trace, không suy đoán) — cả 2 ở `src/router/index.js` `beforeEach`:**
+- Bug 1: dòng ~211-214 — chưa auth + route bảo vệ → LUÔN `window.location = ${HRM_CLIENT_URL}/sso/elearning` (auto-SSO chủ đích cũ). Người mở URL ở trình duyệt lạ / learner ngoài không có TK HRM bị ném sang HRM.
+- Bug 2: dòng 183-184 — `if (auth.isAuthenticated) { if (to.meta.guest) return next({name:'home'}) }`. `reset-password` có `meta.guest=true` → user còn phiên mở link mail bị đá về home. Link mail build đúng (`${ELEARNING_CLIENT_URL}/reset-password?token=`), KHÔNG phải lỗi link.
+
+**Quyết định user chốt (2026-07-24):**
+- Bug 1 → về màn login CỦA elearning (kèm `?redirect=<path>`), KHÔNG ép SSO sang HRM. Màn login vẫn có nút "Đăng nhập bằng HRM" cho nhân viên tự SSO 1-click.
+- Bug 2 → cho phép vào `reset-password`/`verify-email` khi có `?token=` trên URL dù đang đăng nhập.
+
+**Fix (1 file FE elearning — `src/router/index.js`):**
+- Block authenticated: thêm ngoại lệ — `reset-password`/`verify-email` + có `to.query.token` → cho `next()` thay vì đá về home.
+- Bỏ hoàn toàn khối auto-SSO sang HRM + throttle `sso=failed` + const `HRM_CLIENT_URL`, `SSO_THROTTLE_MS` (không còn dùng). Chưa auth + route bảo vệ → `next({ name:'login', query:{ redirect: to.fullPath } })`.
+- LoginView đã sẵn đọc `route.query.redirect` (không cần sửa).
+
+### Task
+- [x] FE: `router/index.js` — ngoại lệ token cho reset-password/verify-email khi còn phiên (Bug 2)
+- [x] FE: `router/index.js` — bỏ auto-SSO HRM, chưa auth + route bảo vệ → login elearning kèm redirect (Bug 1)
+- [x] FE: gỡ const `HRM_CLIENT_URL`, `SSO_THROTTLE_MS` không còn dùng
+- [x] FE: `ResetPasswordView.vue` — reset thành công → `clearAuth()` để về được /login + đăng nhập lại bằng mật khẩu mới (bug 2 lúc còn phiên)
+- [x] FE: `router/index.js` — (điều chỉnh theo user 2026-07-24) chưa auth + route bảo vệ → về TRANG CHỦ (`name:'home'`), KHÔNG phải màn login. LoginView không cần stash redirect nữa (đã gỡ).
+- [ ] Verify tay (user, browser thật): (Bug 2) còn phiên → mở link mail /reset-password?token=x → vào màn đặt lại → đặt xong về /login đăng nhập mật khẩu mới; (Bug 1) trình duyệt lạ → mở /goc-hoc-tap → về /login?redirect=/goc-hoc-tap ở lại elearning, login xong về /goc-hoc-tap
+
+### Checkpoint — 2026-07-24
+Vừa hoàn thành: Phase 12 — fix 2 bug routing auth elearning.
+- Root cause (trace, không đoán): Bug 2 = guard `if(isAuthenticated){if(meta.guest)→home}` đá user còn phiên khỏi /reset-password (meta.guest). Bug 1 = guard auto-redirect mọi route bảo vệ sang `${HRM_CLIENT_URL}/sso/elearning`.
+- Sửa 3 file FE elearning: `src/router/index.js`, `src/views/auth/ResetPasswordView.vue` (clearAuth sau reset), `src/views/auth/LoginView.vue` (stash redirect vào sso_redirect giữ deep-link qua HRM SSO).
+- KHÔNG đụng BE, không migration, không permission, không git. Không build local (Docker auto rebuild).
+- Lint: eslint local fail do Node cũ — không phải lỗi code; grep xác nhận không còn tham chiếu biến đã xoá.
+Đang làm dở: không có.
+Bước tiếp theo: User verify tay 2 luồng trên browser thật.
+Blocked: không có.

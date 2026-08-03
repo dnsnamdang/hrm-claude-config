@@ -60,7 +60,7 @@ BOM List (Bill of Materials) quản lý danh mục hàng hoá/dịch vụ cần 
 
 | Permission | Mô tả | Phạm vi dữ liệu |
 |-----------|-------|-----------------|
-| Xem tất cả danh sách BOM List | Xem toàn bộ BOM (trừ status Đang tạo của người khác) | Tất cả |
+| Xem danh sách BOM List theo tổng công ty | Xem toàn bộ BOM (trừ status Đang tạo của người khác) | Tất cả |
 | Xem danh sách BOM List theo công ty | Xem BOM cùng công ty + BOM do mình tạo | company_id |
 | Xem danh sách BOM List theo phòng ban | Xem BOM cùng phòng ban quản lý + BOM do mình tạo | department_id |
 | Xem danh sách BOM List theo bộ phận | Xem BOM cùng bộ phận quản lý + BOM do mình tạo | part_id |

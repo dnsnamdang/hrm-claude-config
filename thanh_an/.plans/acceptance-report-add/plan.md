@@ -152,6 +152,22 @@ Yêu cầu user: loại "Theo tháng" đang đổ TẤT CẢ hàng hóa HĐ mặ
 Yêu cầu user: ở Bước 1, ô chọn Khách hàng chỉ hiển thị những KH mà **đã từng lập hợp đồng** (trong các HĐ do mình lập, đã duyệt) — đảo lại Phase 10 dòng 110 (đang load full danh mục). FE-only.
 - [x] `Step1SelectContract.vue`: `customerOptions` suy ra từ `this.contracts` (dedupe theo `customer_id`, nhãn "mã — tên" từ `customer_code/customer_name`); bỏ `getCustomers()`/`customers[]`/gọi API `category/customers`. Giữ fallback edit/show từ `contract`. Hint giữ nguyên ("chỉ HĐ do bạn lập").
 
+### Phase 13 — Cảnh báo đỏ rõ khi SL nghiệm thu > còn lại (2026-07-01)
+Yêu cầu user (@khoipv): ở màn `add`, khi nhập SL nghiệm thu > SL còn lại thì ô hàng đó CHƯA báo đỏ rõ. Mong muốn: **cho nhập nhưng ô đỏ đậm + dòng chữ đỏ báo lỗi ngay dưới ô, và chặn lưu** (chặn lưu đã có sẵn qua `hasQtyError`). FE-only, style của loại BBNT giữ nguyên altitude. Nguyên nhân: style `input.cell.bad` chỉ đổi viền + nền hồng rất nhạt (`#f7ddd7`) → nhìn như không đổi; không có thông báo lỗi inline.
+- [x] `AcceptanceReportForm.vue`: mạnh hóa style `input.cell.bad` (viền đỏ đậm 1.5px + nền đỏ nhạt rõ + chữ đỏ đậm); thêm class `.qty-err` (dòng chữ đỏ nhỏ dưới ô).
+- [x] `ProductGrid.vue` (mathang/luyke): thêm `<div class="qty-err">` dưới `currency-input` khi `parseNum(row.sl) > row.rem`, nội dung "Vượt SL còn lại (X)".
+- [x] `FormByMonth.vue` (theo tháng): thêm `qty-err` khi `isOver(ri, row)`, X = `rowRemain(ri, row)`.
+- [x] `FormByInvoiceDetail.vue` (chi tiết HĐ): thêm `qty-err` khi `parseNum(row.sl) > effRem(bi, row)`, X = `effRem(bi, row)`.
+
+### Phase 14 — Thêm 2 cột "Tổng đã NT (cả lần này)" + "Còn lại (sau lần này)" (2026-07-21)
+Yêu cầu user (@khoipv): màn `add`, bảng hàng hóa bổ sung 2 cột tính toán (FE-only, không đụng BE) đặt sau "SL nghiệm thu", trước "Thành tiền". Áp cho cả 4 loại có bảng hàng hóa (mathang, luyke, thang, cthd).
+- Công thức: **Tổng đã NT (cả lần này)** = Đã NT (hiệu lực) + SL nghiệm thu; **Còn lại (sau lần này)** = Còn lại (hiệu lực) − SL nghiệm thu. Cột "Còn lại sau" tô màu `rem-ok` khi ≥ 0, `rem-bad` khi < 0 (âm = vượt).
+- [x] `ProductGrid.vue` (mathang/luyke): 2 header + 2 cell (`tongDaNt`/`conLaiSau` = sl_nt/rem ± sl); `totalCols` base 7→9.
+- [x] `FormByMonth.vue` (thang): pane "Nhập theo tháng" (dùng `rowEffNt`/`rowRemain` ± sl) + pane "Tổng hợp" (dùng sl_nt/rem ± aggSl); colspan dòng trống 17→19.
+- [x] `FormByInvoiceDetail.vue` (cthd): 2 header + 2 cell (`effNt`/`effRem` ± sl); colspan dòng trống 14→16.
+- [x] Đổi vị trí 2 cột: đặt SAU cột "Thành tiền" (theo yêu cầu user) — cả ProductGrid + FormByMonth (2 pane) + FormByInvoiceDetail.
+- [x] STT hàng hóa đếm lại từ 1 trong mỗi nhóm (giống màn HĐ `ProductComponent.vue` dùng `pIndex+1` cục bộ). `ProductGrid.buildRows`: thêm `sttInGroup` reset về 0 khi `groupHead`, `_stt = showGroup ? sttInGroup : i+1`. (Chỉ ProductGrid có nhóm — mathang/luyke; FormByMonth/cthd không chia nhóm.)
+
 ---
 
 ### Checkpoint — 2026-06-16

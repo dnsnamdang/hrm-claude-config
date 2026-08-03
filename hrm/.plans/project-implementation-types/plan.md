@@ -1994,3 +1994,34 @@ User test xong type=1 và type=2 → OK. Các fix bổ sung trong quá trình te
 - Filter BE: loại dự án type=1 ra khỏi dropdown chọn dự án trong form tạo YC làm GP
 
 Trạng thái: ✅ Hoàn thành, đã chuyển sang "Hoàn thành" trong STATUS.md.
+
+## Bugfix — 2026-07-01: Tạo giải pháp (Tự triển khai) không đẩy status dự án
+
+### BE
+- [x] `SolutionService::store()` — thêm gọi `syncStatusBySolution($solution->prospective_project_id)` trước `return` (dòng ~390). Trước đó chỉ `update()` gọi sync → tạo mới bằng "Lưu & gửi" (solution=7 Đang triển khai) mà dự án kẹt ở status=2 Thu thập thông tin. Idempotent, an toàn cho cả Lưu nháp (TAO_NHAP → không đổi) lẫn Lưu & gửi (→ status=4 Đang làm GP).
+
+### Checkpoint — 2026-07-01
+Vừa hoàn thành: Fix root cause store() thiếu sync status dự án TKT khi tạo giải pháp (type=1 Tự triển khai, Lưu & gửi).
+Đang làm dở: không
+Bước tiếp theo: User verify end-to-end (tạo dự án Tự triển khai + cần làm GP → Tạo giải pháp → Lưu & gửi → dự án phải hiện "Đang làm giải pháp").
+Blocked: không
+
+## Bugfix — 2026-07-24: Khóa "Cách triển khai dự án" + "Có cần làm GP?" theo status
+
+Chỉ cho sửa 2 trường khi status = Đang tạo(1) / Thu thập thông tin(2). Khóa read-only khi status ∈ {3,4,5,8} (và mọi status ≥3).
+
+### FE
+- [x] `ProjectInfoSection.vue` — computed `isEditableByProjectStatus` (status rỗng=màn thêm→cho sửa, else chỉ 1|2); `isImplementationTypeEditable` AND thêm điều kiện này; import STATUS_DANG_TAO, STATUS_THU_THAP_THONG_TIN_DU_AN
+- [x] `SolutionSection.vue` — computed `isEditableByProjectStatus` tương tự; radio has_solution `:disabled` thêm `|| !isEditableByProjectStatus`; import 2 status const
+
+### BE
+- [x] `ProspectiveProjectService::update()` — capture status gốc trước fill; nếu status gốc ∉ {1,2} → restore giá trị gốc `implementation_type` + `has_solution` sau fill (khóa cứng server-side)
+
+### Checkpoint — 2026-07-24 (đã test)
+Vừa hoàn thành: Fix + test khóa 2 trường "Cách triển khai dự án" + "Có cần làm GP?" theo status.
+Kết quả test (HRM stack FE :3000 / BE :8000):
+- FE Playwright: id27 (status 2, impl=1) → cả 2 trường ENABLED; id22 (status 4, impl=1) → cả 2 trường DISABLED. Các select khác (Ứng dụng/Quy mô/Phân loại) vẫn enabled ở status 4 (không over-lock).
+- BE tinker (transaction rollback): status≥3 gửi đổi has_solution & implementation_type → BE GIỮ NGUYÊN giá trị gốc; status 2 → đổi thành công. DB không bị thay đổi.
+Đang làm dở: không
+Bước tiếp theo: Áp thay đổi sang HRM-tpe nếu cần deploy lên nhánh tpe.
+Blocked: không

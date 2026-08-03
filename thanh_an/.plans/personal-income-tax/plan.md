@@ -339,6 +339,50 @@
 
 ---
 
+## Phase 11 — Cột "Thu nhập tính thuế" (composition INFO)
+
+> **Mục tiêu:** Thêm cột hiển thị thu nhập tính thuế của đoạn lũy tiến (= thu nhập chịu thuế prorate − BHXH − công đoàn − giảm trừ bản thân − NPT, clamp ≥ 0). Kiểu INFO feature=3 giống Phase 8, đoạn 10%/20% → 0.
+
+### Task 11.1 — BE: Mở rộng `TaxCalculator::breakdown()` trả `taxable` ✅
+
+**File sửa:**
+- `Modules/Payroll/Helpers/TaxCalculator.php`
+
+- [x] Refactor: tách `aggregateSegments()` (đi segment → progressiveDays/Income + fixedTax) và `progressiveDeductions()` (insurance/union/self/npt/taxable) dùng chung cho `calc()` + `breakdown()` — bỏ trùng lặp với `calcProgressivePortion()` cũ
+- [x] `breakdown()` trả thêm key `taxable` (đã clamp ≥ 0)
+- [x] `calc()` dùng helper mới, giữ nguyên kết quả (verify smoke test)
+
+### Task 11.2 — BE: Migration insert composition `THU_NHAP_TINH_THUE` ✅
+
+**File tạo:**
+- `Modules/Payroll/Database/migrations/2026_06_18_100001_insert_thu_nhap_tinh_thue_composition.php`
+
+- [x] `type=7, feature=3 (INFO), value_type=2, tax_deduction=false, is_show_paycheck=true, status=1` (check tồn tại theo code)
+- [x] Down: delete theo code
+- [x] Migrate → verify row OK
+
+### Task 11.3 — BE: `SalaryService::calcData()` thêm case ✅
+
+**File sửa:**
+- `Modules/Payroll/Services/SalaryService.php`
+
+- [x] Thêm `'THU_NHAP_TINH_THUE'` vào `$tncnCodes`
+- [x] `case 'THU_NHAP_TINH_THUE': return $bd['taxable'];`
+
+### Task 11.4 — Smoke test ✅
+
+- [x] TN chịu thuế 16tr, không BHXH/CĐ/NPT → taxable=5.000.000, thuế=250.000 (5tr×5%)
+- [x] TN 10tr < giảm trừ 11tr → taxable=0 (clamp)
+- [x] Verify `calc()` không đổi kết quả sau refactor
+
+### Task 11.5 — Test E2E (chờ user)
+
+- [ ] Thêm composition `THU_NHAP_TINH_THUE` vào salary template (FE đã có sẵn cơ chế hiển thị composition INFO — không cần code FE mới)
+- [ ] Tạo bảng lương → verify cột "Thu nhập tính thuế" hiển thị đúng
+- [ ] Verify cột KHÔNG cộng vào total_income/total_deduction/thuc_linh
+
+---
+
 ## Checkpoint
 
 _(cập nhật khi wrap up)_

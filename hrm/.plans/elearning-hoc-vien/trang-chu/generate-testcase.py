@@ -1,0 +1,105 @@
+# -*- coding: utf-8 -*-
+"""Testcase Trang chủ (elearning) — theo nhãn UI thật."""
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from _tc_builder import build
+
+DESCRIPTION_BLOCK = [
+    ("1. Mục đích tính năng",
+     "Trang chủ app học viên: hoạt động gần đây, danh mục nội dung, vinh danh học viên và 4 nhóm gợi ý (Bạn cần học / Khuyến nghị cho bạn / Nội dung nhiều người học / Nội dung mới). Điều hướng tới chi tiết + trang xem tất cả."),
+    ("2. Đối tượng được tính / hiển thị",
+     "► 4 nhóm nội dung chỉ hiện khi có dữ liệu.\n► Thẻ hiển thị trạng thái học ('Đã hoàn thành'/'Đang học {n}%') khi đã đăng nhập.\n► Loại thẻ: 'Lộ trình' / 'Môn học' / 'Khoá học'."),
+    ("3. Đối tượng bị ẩn / không tính",
+     "► Nhóm không có dữ liệu bị ẩn.\n► Nội dung cá nhân hóa (Bạn cần học) cần đăng nhập."),
+    ("4. Bộ lọc thời gian áp dụng cho", "Không áp dụng."),
+    ("5. Cấu trúc dữ liệu / cây phân cấp", "Banner → Danh mục → Vinh danh → 4 nhóm nội dung (lưới thẻ)."),
+    ("6. Quy tắc cộng dồn / deduplicate", "Nút 'Xem tất cả' của 4 nhóm + Danh mục điều hướng thật; click danh mục/hoạt động gần đây/CTA carousel mở chi tiết tương ứng."),
+    ("7. Phân quyền cấp", "Public. Không phân quyền cấp."),
+    ("8. Cách tính các ô thống kê", "CategoryCard hiển thị '{n} nội dung'. Không có KPI khác."),
+    ("9. Ghi chú đọc bảng",
+     "Nửa trái banner là HeroCarousel (tự chạy 6s, có CTA điều hướng thật). 'Hoạt động gần đây' + 'Danh mục nội dung' + CTA carousel đều điều hướng thật tới chi tiết/danh sách. Vinh danh dùng dữ liệu thật, thẻ KHÔNG click, ẩn khi admin tắt."),
+]
+
+SECTIONS = [
+    ("I", "HIỂN THỊ TRANG CHỦ", [
+        ("001", "Load trang chủ", "P0", "Có dữ liệu home",
+         "1. Mở /", "—",
+         "- Hiện banner, 'Hoạt động gần đây', 'Danh mục nội dung', 'Vinh danh học viên', các nhóm nội dung", "—"),
+        ("002", "4 nhóm nội dung hiển thị", "P1", "Có dữ liệu 4 nhóm",
+         "1. Cuộn xuống", "—",
+         "- Thấy 'Bạn cần học', 'Khuyến nghị cho bạn', 'Nội dung nhiều người học', 'Nội dung mới'", "—"),
+        ("003", "Nhóm rỗng bị ẩn", "P2", "1 nhóm không có dữ liệu",
+         "1. Cuộn xem nhóm đó", "—",
+         "- Nhóm không có dữ liệu không hiển thị", "BR-01"),
+    ]),
+    ("II", "HERO CAROUSEL (MỚI)", [
+        ("001", "Carousel tự chạy", "P1", "Có ≥2 slide (cần học/khuyến nghị/nổi bật)",
+         "1. Vào trang chủ, quan sát HeroCarousel ~6s", "—",
+         "- Slide tự chuyển sau ~6s; dot indicator đổi theo", "BR-05"),
+        ("002", "Chuyển slide thủ công", "P1", "Có ≥2 slide",
+         "1. Bấm nút › (hoặc dot / phím →)", "—",
+         "- Chuyển sang slide kế; đồng hồ tự chạy nạp lại", "—"),
+        ("003", "Tạm dừng khi hover / nút pause", "P2", "Có ≥2 slide",
+         "1. Rê chuột vào slide (hoặc bấm nút pause)", "—",
+         "- Carousel dừng tự chuyển; rời chuột/bấm play → chạy lại", "—"),
+        ("004", "Bấm CTA vào học", "P0", "Slide là khóa đang học",
+         "1. Bấm nút CTA (VD 'Học tiếp 40%')", "—",
+         "- Mở chi tiết khóa/lộ trình tương ứng", "—"),
+        ("005", "Slide fallback khi rỗng", "P2", "Không có dữ liệu gợi ý",
+         "1. Vào trang chủ", "—",
+         "- Hiện 1 slide 'Học theo khoá • Theo dõi rõ', KHÔNG có CTA, KHÔNG click được", "BR-05"),
+    ]),
+    ("IIb", "DANH MỤC & HOẠT ĐỘNG GẦN ĐÂY (ĐIỀU HƯỚNG THẬT)", [
+        ("001", "Xem tất cả Danh mục nội dung", "P0", "Ở trang chủ",
+         "1. Bấm 'Xem tất cả' ở 'Danh mục nội dung'", "—",
+         "- Mở /hoc-theo-loai-dao-tao (danh sách khóa)", "BR-03"),
+        ("002", "Click 1 danh mục", "P0", "Có danh mục",
+         "1. Click 1 thẻ CategoryCard", "—",
+         "- Mở danh sách khóa lọc theo loại đó (/hoc-theo-loai-dao-tao?training_type_id=...)", "BR-03"),
+        ("003", "Click 1 hoạt động gần đây", "P1", "Có hoạt động có slug",
+         "1. Click 1 dòng trong 'Hoạt động gần đây'", "—",
+         "- Mở chi tiết khóa/lộ trình tương ứng", "BR-04"),
+        ("004", "Hoạt động gần đây rỗng", "P2", "Chưa có hoạt động",
+         "1. Xem panel 'Hoạt động gần đây'", "—",
+         "- Hiện 'Chưa có hoạt động nào'", "—"),
+    ]),
+    ("IIc", "VINH DANH (DỮ LIỆU THẬT)", [
+        ("001", "Vinh danh hiển thị dữ liệu thật", "P1", "Admin bật khối + có học viên vinh danh",
+         "1. Cuộn tới 'Vinh danh học viên'", "—",
+         "- Hiện thẻ thật (avatar, tên, phòng ban, thành tích); thẻ KHÔNG click được", "BR-06"),
+        ("002", "Ẩn khối khi admin tắt", "P1", "Admin tắt khối vinh danh (is_enabled=0)",
+         "1. Vào trang chủ", "—",
+         "- Khối 'Vinh danh học viên' KHÔNG hiển thị", "BR-06"),
+        ("003", "Marquee cuộn khi >3 thẻ", "P2", "Có >3 học viên vinh danh",
+         "1. Quan sát khối vinh danh, rê chuột vào", "—",
+         "- Thẻ tự cuộn ngang; hover → dừng cuộn", "—"),
+    ]),
+    ("III", "ĐIỀU HƯỚNG THẬT", [
+        ("001", "Xem tất cả 'Bạn cần học'", "P0", "Nhóm có dữ liệu",
+         "1. Bấm 'Xem tất cả' ở 'Bạn cần học'", "—",
+         "- Mở trang /noi-dung/bat-buoc (danh sách đầy đủ)", "BR-01"),
+        ("002", "Xem tất cả 'Nội dung mới'", "P1", "Nhóm có dữ liệu",
+         "1. Bấm 'Xem tất cả' ở 'Nội dung mới'", "—",
+         "- Mở /noi-dung/moi", "—"),
+        ("003", "Click thẻ khóa học", "P0", "Có thẻ loại 'Khoá học'",
+         "1. Click 1 thẻ 'Khoá học'/'Môn học'", "—",
+         "- Mở chi tiết khóa (/khoa-hoc/:slug)", "BR-02"),
+        ("004", "Click thẻ lộ trình", "P0", "Có thẻ loại 'Lộ trình'",
+         "1. Click 1 thẻ 'Lộ trình'", "—",
+         "- Mở chi tiết lộ trình (/lo-trinh/:slug)", "BR-02"),
+    ]),
+    ("IV", "TRANG XEM TẤT CẢ (/noi-dung/:type)", [
+        ("001", "Xem thêm nối danh sách", "P1", "Nhóm có > 12 mục",
+         "1. Vào /noi-dung/pho-bien\n2. Bấm 'Xem thêm'", "—",
+         "- Nối thêm 12 mục; dòng 'Đã hiển thị {n} / {total} nội dung'", "BR-04"),
+        ("002", "Slug sai → mặc định", "P2", "—",
+         "1. Vào /noi-dung/khong-hop-le", "—",
+         "- Mặc định về 'Nội dung mới'", "—"),
+    ]),
+]
+
+build(
+    output_file=r"d:\CompanyProject\hrm-cursor\.plans\elearning-hoc-vien\trang-chu\testcase.xlsx",
+    sheet_name="TrangChu", feature_name="Trang chủ", module_name="Trang chủ",
+    description_block=DESCRIPTION_BLOCK, sections=SECTIONS, role_tcs=None,
+)

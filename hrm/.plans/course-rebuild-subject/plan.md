@@ -454,3 +454,46 @@ Các field `:required` ở builder chỉ dựa BE 422, không chặn FE; `traini
 **Đang làm dở:** Không.
 **Bước tiếp theo:** User verify browser + re-save khoá "Test các cấu hình mới thêm" (SUB-0049) để fix bản ghi lỗi hiện có.
 **Blocked:** Không.
+
+## FIX — Lỗi validate cấp chương không hiện inline (2026-07-16)
+
+**Triệu chứng:** Khoá ở trạng thái Nháp, bấm **Lưu** → API 422 `chapters.0.subject_lessons` ("Mỗi chương phải có ít nhất một bài học khi chọn Có chương") nhưng UI không hiện lỗi ở đâu cả, cũng không có toast.
+
+**Root cause:** `applyBackendErrors` gán `error['chapters.0.subject_lessons']`, nhưng `TabInfo.vue` chỉ render `error.chapters` / `error.subject_lessons` (mức danh sách) — không có binding cho key có index từng chương. Nhánh toast bị bỏ qua vì `hasBackendErrors = true` → lỗi hoàn toàn vô hình.
+
+- [x] FE: thêm helper `chapterFieldError(chIdx, field)` + `hasChapterError(chIdx)` trong `TabInfo.vue` — KHÔNG đặt tên `chapterError`, tên đó đã bị data property của modal chương chiếm (Vue ưu tiên data → hỏng modal)
+- [x] FE: render `V2BaseError` cho `chapters.N.code` / `chapters.N.name` / `chapters.N.subject_lessons` trong từng chapter card + viền đỏ card/dropzone
+- [x] FE: validate client-side trong `SubjectBuilderForm.validate()` — chương rỗng bài học / chưa có chương / chưa có bài học (chế độ không chương) chặn ngay, không cần round-trip
+- [x] Verify static: `vue-template-compiler` compile template + parse script 2 file → không lỗi
+- [ ] Verify browser: khoá Nháp có chương rỗng → bấm Lưu → thấy lỗi đỏ tại chương (Playwright báo "Browser is already in use", chưa chạy được)
+
+### Checkpoint — 2026-07-16
+
+Vừa hoàn thành: Fix lỗi validate cấp chương không hiện inline khi lưu khoá học từ trạng thái Nháp.
+Đang làm dở: Không.
+Bước tiếp theo: Verify trên browser (SUB-0038, chương CH01 rỗng bài học → bấm Lưu).
+Blocked: Playwright MCP khoá profile Chrome → cần đóng Chrome đang mở mới tự verify được.
+
+## FIX — Bài học lỗi trong builder (bài gốc bị xóa khỏi ngân hàng) (2026-07-19)
+
+**Triệu chứng:** Trong builder khoá học, một bài học hiển thị mã/tên `—` và loại "Khác" (row rỗng). Nguyên nhân: bài học gốc đã bị xóa khỏi ngân hàng → BE eager-load quan hệ `subjectLessons.lesson` trả `null`. Trước đây FE không phát hiện, `validate()` vẫn cho lưu → payload gửi `lesson_id` trỏ tới bài đã xóa.
+
+**Cách xử lý (user chốt):** Tô đỏ + cảnh báo + chặn lưu (không auto-gỡ).
+
+- [x] FE `TabInfo.vue`: method `isBrokenLesson(sl)` (=`!sl.lesson || !sl.lesson.id`) + computed `brokenLessonCount`
+- [x] FE `TabInfo.vue`: banner cảnh báo đỏ đầu builder-body khi `brokenLessonCount > 0` + chỗ hiện `error.broken_lessons`
+- [x] FE `TabInfo.vue`: row bài lỗi thêm class `lesson-row--broken` (nền/viền đỏ), thay meta bằng thông báo "Bài học đã bị xóa khỏi ngân hàng — vui lòng gỡ khỏi khoá học", ẩn nút Xem/Cấu hình (giữ nút Xóa) — áp cả chế độ Có chương và Không chương
+- [x] FE `SubjectBuilderForm.vue`: helper `countBrokenSubjectLessons()` + chặn `save()` và `saveDraft()` khi còn bài lỗi (set `error.broken_lessons`, chuyển về tab Thông tin)
+- [x] SCSS `scss/_index.scss`: style `.lesson-row--broken` / `.lesson-broken-msg` / `.broken-lesson-alert`
+- [x] Verify static: vue-template-compiler compile 2 template PASS
+- [ ] Verify browser: mở khoá có bài lỗi → thấy banner + row đỏ + chặn Lưu; gỡ bài → hết chặn
+
+### Checkpoint — 2026-07-19
+Vừa hoàn thành: Xử lý bài học lỗi (bài gốc bị xóa khỏi ngân hàng) trong builder — tô đỏ + cảnh báo + chặn lưu.
+Đang làm dở: Không.
+Bước tiếp theo: Verify browser trên khoá có bài lỗi (vd khoá "Test 17/7" trong ảnh).
+Blocked: Không.
+
+### Bổ sung (2026-07-19) — Rõ text popup xóa bài lỗi
+- [x] FE `TabInfo.vue`: computed `confirmDeleteLessonMessage` — bài lỗi hiện "Bạn có chắc muốn xóa bài học lỗi (bài gốc đã bị xóa khỏi ngân hàng) này khỏi chương/môn?" thay vì tên `—`
+- [x] Verify browser: mở modal xóa bài lỗi → text đúng (Playwright, inject runtime, không đụng DB)

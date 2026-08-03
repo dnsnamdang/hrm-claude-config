@@ -1,0 +1,85 @@
+diff --git a/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php b/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php
+index b21988bd0..4a91923bd 100644
+--- a/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/SuspendLaborContractController.php
+@@ -148,12 +148,25 @@ class SuspendLaborContractController extends ApiController
+             $result['PHONG_BAN'] = formatDepartmentName($suspendLaborContract->suspend_department_name ?? '');
+             $result['BO_PHAN'] = stripCodePrefix($suspendLaborContract->suspend_part_name ?? '');
+             $result['NGUOI_QUAN_LY_TRUC_TIEP'] = stripCodePrefix($suspendLaborContract->employee_info_manager_name ?? '');
+             $result['CHUC_VU_NGUOI_QUAN_LY_TRUC_TIEP'] = $suspendLaborContract->employee_manager_working_position_name ?? '';
+             $result['TRINH_DO_HOC_VAN'] = $trinhDoHocVan;
+ 
++            // 9 biến bổ sung từ HSNS + thời gian HĐLĐ (lấy qua quan hệ employeeInfo)
++            $info = $suspendLaborContract->employeeInfo;
++            $result['GIOI_TINH'] = $info ? ($info->gender == 1 ? 'Nam' : 'Nữ') : '';
++            $result['NOI_CAP_CMTND'] = $info ? ($info->grant_location ?? '') : '';
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $info ? $info->grant_date : null, 'so');
++            $result['DIA_CHI_THUONG_TRU'] = $info ? ($info->full_address_residence ?? '') : '';
++            $result['CHUYEN_NGANH'] = $info ? (optional($info->employee_educations->last())->specialty ?? "") : "";
++            $result['QUE_QUAN'] = $info ? ($info->home_town ?? '') : '';
++            $result['QUOC_TICH'] = $info ? ($info->national ?? '') : '';
++            $result['DIEN_THOAI'] = $info ? ($info->personal_telephone ?: ($info->telephone ?? "")) : "";
++            $startHdld = optional(\Modules\Decision\Entities\DecisionLaborContract\DecisionLaborContract::find($suspendLaborContract->labor_contract_id))->start_date;
++            Helper::fillDateVariants($result, 'THOI_GIAN_HDLD_HIEN_TAI', $startHdld, 'so');
++
+             $template = fillReport($suspendLaborContract->decision->print_template, $result);
+             $template = clearNull($template);
+             $data = [
+                 'template' => $template,
+             ];
+             return $this->responseJson('success', Response::HTTP_OK, $data);
+@@ -180,12 +193,25 @@ class SuspendLaborContractController extends ApiController
+             Helper::fillDateVariants($result, 'THOI_GIAN_TAM_HOAN_DEN', $suspendLaborContract->suspend_date_end, 'so');
+             $result['PHONG_BAN_NHAN_BAN_GIAO'] = formatDepartmentName($suspendLaborContract->handover_department_name ?? '');
+             $result['BO_PHAN_NHAN_BAN_GIAO'] = $suspendLaborContract->handover_part_name ?? '';
+             $result['NV_NHAN_BAN_GIAO'] = $suspendLaborContract->handover_employee_name ?? '';
+             $result['NGUOI_QUAN_LY_TRUC_TIEP_TRUOC_THAY_DOI'] = $suspendLaborContract->employee_info_manager_name ?? '';
+ 
++            // 9 biến bổ sung từ HSNS + thời gian HĐLĐ (lấy qua quan hệ employeeInfo)
++            $info = $suspendLaborContract->employeeInfo;
++            $result['GIOI_TINH'] = $info ? ($info->gender == 1 ? 'Nam' : 'Nữ') : '';
++            $result['NOI_CAP_CMTND'] = $info ? ($info->grant_location ?? '') : '';
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $info ? $info->grant_date : null, 'so');
++            $result['DIA_CHI_THUONG_TRU'] = $info ? ($info->full_address_residence ?? '') : '';
++            $result['CHUYEN_NGANH'] = $info ? (optional($info->employee_educations->last())->specialty ?? "") : "";
++            $result['QUE_QUAN'] = $info ? ($info->home_town ?? '') : '';
++            $result['QUOC_TICH'] = $info ? ($info->national ?? '') : '';
++            $result['DIEN_THOAI'] = $info ? ($info->personal_telephone ?: ($info->telephone ?? "")) : "";
++            $startHdld = optional(\Modules\Decision\Entities\DecisionLaborContract\DecisionLaborContract::find($suspendLaborContract->labor_contract_id))->start_date;
++            Helper::fillDateVariants($result, 'THOI_GIAN_HDLD_HIEN_TAI', $startHdld, 'so');
++
+             $template = fillReport($suspendLaborContract->print_template_agreement, $result);
+             $template = clearNull($template);
+             $data = [
+                 'template' => $template,
+             ];
+             return $this->responseJson('success', Response::HTTP_OK, $data);
+diff --git a/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php b/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php
+index 15edde280..787ad05e6 100644
+--- a/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php
++++ b/Modules/Decision/Http/Controllers/V1/TerminationLaborContractController.php
+@@ -187,12 +187,24 @@ class TerminationLaborContractController extends ApiController
+             Helper::fillDateVariants($result, 'NGAY_SINH', $info ? $info->birthday : null, 'so');
+             $result['NOI_CU_TRU'] = $info ? ($info->full_address_residence ?? '') : '';
+             $result['CCCD'] = $info ? ($info->id_card ?? '') : '';
+             $result['TRINH_DO_HOC_VAN'] = ($info && isset(\Modules\Human\Entities\EmployeeInfo::listAcademicLevels[$info->academic_level]))
+                 ? \Modules\Human\Entities\EmployeeInfo::listAcademicLevels[$info->academic_level] : '';
+ 
++            // 9 biến bổ sung từ HSNS + thời gian HĐLĐ
++            $result['GIOI_TINH'] = $info ? ($info->gender == 1 ? 'Nam' : 'Nữ') : '';
++            $result['NOI_CAP_CMTND'] = $info ? ($info->grant_location ?? '') : '';
++            Helper::fillDateVariants($result, 'NGAY_CAP_CMTND', $info ? $info->grant_date : null, 'so');
++            $result['DIA_CHI_THUONG_TRU'] = $info ? ($info->full_address_residence ?? '') : '';
++            $result['CHUYEN_NGANH'] = $info ? (optional($info->employee_educations->last())->specialty ?? "") : "";
++            $result['QUE_QUAN'] = $info ? ($info->home_town ?? '') : '';
++            $result['QUOC_TICH'] = $info ? ($info->national ?? '') : '';
++            $result['DIEN_THOAI'] = $info ? ($info->personal_telephone ?: ($info->telephone ?? "")) : "";
++            $startHdld = optional(\Modules\Decision\Entities\DecisionLaborContract\DecisionLaborContract::find($terminationLaborContract->labor_contract_id))->start_date;
++            Helper::fillDateVariants($result, 'THOI_GIAN_HDLD_HIEN_TAI', $startHdld, 'so');
++
+             $template = fillReport($terminationLaborContract->decision->print_template, $result);
+             $template = clearNull($template);
+             $data = [
+                 'template' => $template,
+             ];
+             return $this->responseJson('success', Response::HTTP_OK, $data);

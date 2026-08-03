@@ -494,3 +494,56 @@ Khuyến nghị UI: khi user bấm "Thêm dòng mới" và row gần nhất có 
 | 15 | NV chuyển loại đúng ngày đầu/cuối kỳ | Đoạn 0 ngày → skip, không gây chia 0 |
 | 16 | Toàn kỳ chỉ có 1 `tax_type` | Engine vẫn chạy qua flow chia đoạn — 1 segment duy nhất, kết quả khớp behavior cũ |
 | 17 | `D_total = 0` (NV nghỉ cả kỳ) | Trả 0, không chia 0 |
+
+---
+
+## 10. Cột "Thu nhập tính thuế" (Phase 11)
+
+**Mục tiêu:** Hiển thị thu nhập tính thuế của đoạn lũy tiến trên bảng lương như một cột thông tin.
+
+### 10.1. Định nghĩa
+
+```
+THU_NHAP_TINH_THUE = max(0,
+      thu nhập chịu thuế (prorate theo ngày đoạn lũy tiến)
+    − BHXH (prorate ngày)
+    − công đoàn (prorate ngày)
+    − giảm trừ bản thân (nguyên tháng)
+    − giảm trừ NPT (nguyên tháng) )
+```
+
+Đây CHÍNH là cơ sở (`taxable`) mà `TaxCalculator` đem áp biểu lũy tiến 7 bậc. Đoạn 10%/20% **không** đóng góp vào cột này (chúng tính thẳng trên `probation_salary`, không có khái niệm giảm trừ) → NV toàn kỳ 10%/20% thì cột = 0.
+
+### 10.2. Kiểu composition
+
+System composition INFO, giống nhóm Phase 8:
+
+| Cột | Giá trị |
+|---|---|
+| `code` | `THU_NHAP_TINH_THUE` |
+| `name` | Thu nhập tính thuế |
+| `type` | 7 |
+| `feature` | 3 (INFO — chỉ hiển thị, không cộng total) |
+| `value_type` | 2 |
+| `tax_deduction` | false |
+| `is_show_paycheck` | true |
+| `status` | 1 |
+
+→ **KHÔNG** cộng vào `total_income` / `total_deduction` / `thuc_linh`. User tự kéo vào salary template khi cần.
+
+### 10.3. Thực thi
+
+1. **`TaxCalculator`** — refactor tách 2 private helper dùng chung cho `calc()` + `breakdown()`:
+   - `aggregateSegments()`: đi qua segment → `progressiveDays`, `progressiveIncome` (prorate), `fixedTax` (10%/20%), `totalDays`.
+   - `progressiveDeductions()`: trả `insurance`, `union`, `self`, `npt`, `taxable` (clamp ≥ 0).
+   - `breakdown()` trả thêm key `taxable`. `calc()` giữ nguyên kết quả (chỉ tái cấu trúc nội bộ).
+2. **Migration** `2026_06_18_100001_insert_thu_nhap_tinh_thue_composition.php` — insert composition (check tồn tại theo code).
+3. **`SalaryService::calcData()`** — thêm code vào `$tncnCodes` + `case 'THU_NHAP_TINH_THUE': return $bd['taxable'];`.
+4. **FE** — không code mới; tận dụng cơ chế hiển thị composition INFO sẵn có.
+
+### 10.4. Smoke test (PASS)
+
+| Case | taxable | thuế |
+|---|---:|---:|
+| TN chịu thuế 16tr, không BHXH/CĐ/NPT, toàn LT | 5.000.000 | 250.000 |
+| TN 10tr < giảm trừ 11tr | 0 | 0 |

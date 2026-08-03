@@ -2,6 +2,18 @@
 
 > **Trạng thái: ĐÃ TEST XONG — CHỜ COMMIT**
 
+---
+
+## Bugfix 2026-07-06 — Lập HĐ từ màn `contract/quotation_render` bị ép loại "Ngoài thầu"
+
+**Triệu chứng:** Ở màn `contract/quotation_render`, báo giá có loại dự toán = Cho/Tặng / Đặt/Mượn / Nguyên tắc (project_type 4/5/6), bấm "Lập hợp đồng" → sang `contract/contract/add?quotation_id=...` thì loại hợp đồng luôn bị đặt = **Ngoài thầu** (type 2).
+
+**Root cause:** `pages/contract/contract/add.vue → getDataQuotation()` ép cứng `data.type = 2` cho mọi báo giá, không map theo loại dự toán. (Mapping đúng project_type→type: `{4:3, 5:4, 6:5}`, đối chiếu `getDataProject()` và `getQuotationsForContract()` đã có sẵn.)
+
+- [x] FE: `add.vue → getDataQuotation()` — với project_type 4/5/6, set `formSubmit.type` = 3/4/5 rồi đi qua đúng flow đã test (`getQuotationsForContract()` + `onQuotationChange(id)`) thay vì `addNegotiation` với type=2. Loại thường giữ nguyên type=2.
+- [x] FE: `ProductComponent.vue → visibleFieldsExceptName` — với loại HĐ 3/4/5 vẫn hiện cột "Đơn giá báo giá" (`price_quotation`), chỉ ẩn "Đơn giá thầu" (`price_bid_package`). (Trước đó ẩn cả hai.)
+- [ ] Verify UI: tạo HĐ từ quotation_render cho từng loại 4/5/6 → loại HĐ hiển thị đúng Cho/Tặng/Đặt/Mượn/Nguyên tắc, dropdown báo giá hiển thị đúng, **bảng hàng hóa hiện cột Đơn giá báo giá có giá trị**, lưu qua BE không lỗi validate.
+
 ### Checkpoint — 2026-04-25 (2)
 Vừa hoàn thành: Test xong toàn bộ flow + fix bug + thêm tính năng hợp đồng liên quan
 Đang làm dở: Không
