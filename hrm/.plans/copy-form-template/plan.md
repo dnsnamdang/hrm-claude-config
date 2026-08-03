@@ -436,3 +436,6 @@ Vừa hoàn thành: Triển khai đủ Phase 1 (BE) + Phase 2 (FE) theo plan.
 Đang làm dở: không.
 Bước tiếp theo: user chạy `npm run dev` (hrm-client) + verify browser 5 kịch bản ở Task 5 Step 5.
 Blocked: route:list không chạy được do lỗi sẵn có module Decision (không liên quan) — đã verify route bằng cách khác (logic service qua tinker).
+
+## Testcase
+- [x] Viết 25 testcase (TC-ROLE-131→155) cho task #10546 (In mẫu phiếu TTTT — theo code hiện tại) → `.plans/copy-form-template/testcase-issue-10546.csv` (+ script `.py`), đã chèn vào Google Sheet `Testcase _Quản lý dự án` tab `13.Mẫu phiếu TTTT` khối "UPDATE BỔ SUNG 31/07/2026" (dòng 138–167)

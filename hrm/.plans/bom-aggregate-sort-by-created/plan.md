@@ -31,3 +31,6 @@ KẾT LUẬN: created_at ASC đúng ở cả UI (real API) lẫn DB (real BE per
 Đang làm dở: không
 Bước tiếp: (tuỳ chọn) user verify trên browser bằng thao tác tay đầy đủ
 Blocked:
+
+## Testcase
+- [x] Viết 16 testcase (TC_15.001→016) cho task #10564 → `.plans/bom-aggregate-sort-by-created/testcase-issue-10564.csv` (+ script `.py`), đã chèn vào Google Sheet `Testcase _Quản lý dự án` tab `22.1 BOM list update` mục "XV. TỔNG HỢP BOM — SẮP XẾP..." (dòng 167–183)

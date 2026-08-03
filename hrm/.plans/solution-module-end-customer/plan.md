@@ -13,6 +13,10 @@
 - [x] Playwright (login namdangit, /assign/solution-modules/1/manager tab Thông tin): card "KHÁCH HÀNG CUỐI" hiện ngay dưới "THÔNG TIN KHÁCH HÀNG", đủ Mã.Tên + người liên hệ/chức vụ/email/SĐT — PASS
 - [x] Case ẩn: tạm set project 7 (của module 1) is_intermediary_customer=0 → BE trả is_intermediary=false → Playwright reload màn manager 1: card "KHÁCH HÀNG CUỐI" BIẾN MẤT (chỉ còn THÔNG TIN KHÁCH HÀNG → YÊU CẦU LÀM GIẢI PHÁP) PASS → ĐÃ khôi phục is_intermediary=1/benefit=43239
 
+## Phase 4 — Fix bug card bị đè (2026-07-30) ✅
+- [x] `ProjectInfoTab.vue`: cột trái thêm class `.customer-stack` (flex column, `.info-card{height:auto}`, card đầu `flex:1`) — trước đó `.info-card{height:100%}` khiến card KHÁCH HÀNG CUỐI tràn khỏi cột và bị card DỰ ÁN TIỀN KHẢ THI vẽ đè, nhìn như mất
+- [x] Playwright module 3: KH cuối top=678 / DỰ ÁN TKT top=971 — hết chồng lấn, card hiện đủ nội dung
+
 ## Checkpoint — 2026-06-26
 Vừa hoàn thành: BE + FE + verify (tinker + Playwright PASS). CHƯA commit/git.
 Bước tiếp theo: xong; user review thêm nếu cần.

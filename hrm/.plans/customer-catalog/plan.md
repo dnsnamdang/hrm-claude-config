@@ -114,3 +114,16 @@ Bước tiếp: TEST BROWSER (chưa chạy). Rủi ro: (1) cascade district↔wa
 - Thêm 2 trường bắt buộc: Nhóm lĩnh vực KH (`customer_scope_group_id`) + Lĩnh vực KH (`customer_scope_id`) — V2BaseSelect searchable, đồng bộ 2 chiều client-side (Top-Down lọc theo nhóm; Bottom-Up auto-fill nhóm: 1 nhóm→điền, nhiều nhóm→bắt chọn). Nguồn: `assign/customer-scope-groups` + `assign/customer-scopes/getAll` (mỗi scope có `customer_scope_group_ids`).
 - BE: FormRequest customer_type in:1-5, scope_group_id/scope_id required + check scope thuộc nhóm (pivot customer_scope_group_members); Service ghi 2 cột vào HRM customers (cột đã có sẵn qua migration Human 2026_06_09), map ERP customer_type (1→1, 2-5→2); CustomerDetailResource trả scope_group_id/scope_id để prefill. List filter + render: 5 loại + nhãn "Loại hình tổ chức".
 - Cần test browser: scope dropdown nạp đúng (field `customer_scope_group_ids`), đồng bộ 2 chiều, prefill edit, lưu ghi đúng 2 cột HRM. Cần chạy migration Human 2026_06_09 nếu chưa.
+
+### Checkpoint — 2026-07-30 (Fix: chặn xem chi tiết KH khi không có quyền)
+- [x] FE: thêm `middleware/checkCustomerPermission.js` — gọi `assign/customers/my-permissions`, không có `view` → redirect `/extras/404` + toast; `/add` không có `create` → về danh sách; `/edit` không có `edit` → về màn chi tiết.
+- [x] FE: gắn `middleware: 'checkCustomerPermission'` cho 5 trang `pages/assign/customers` (index, add, _id/index, _id/edit, _id/manager/index).
+- Lưu ý: BE `GET /assign/customers/{id}` vẫn để mở (Meeting + Dự án TKT gọi endpoint này để lấy thông tin KH) → chưa gắn `erpPermission:Xem khách hàng`.
+
+### Checkpoint — 2026-07-30 (Fix vòng 2: chặn theo PHẠM VI DỮ LIỆU, không chỉ theo cờ quyền)
+Nguyên nhân thật: tài khoản daivv có `Xem khách hàng` = true nhưng KHÔNG có cấp xem nào (all_company/company/department/part đều false) → list rỗng, còn `GET /assign/customers/{id}` không lọc phạm vi nên dán URL là xem được.
+- [x] BE: `CustomerService::isVisible($id, $allBusiness)` — dùng lại `applyErpVisibilityScope` + `applyB2cOwnershipVisibility` (đúng luật màn danh sách).
+- [x] BE: `CustomerController::show()` → 403 "Bạn không có quyền xem khách hàng này" nếu ngoài phạm vi; nhận `?all_business=1` cho luật popup (KH tổ chức).
+- [x] FE: Meeting `GeneralInfo.vue` (2 chỗ) + Dự án TKT `CustomerInfoSection.vue` (2 chỗ) gọi `assign/customers/{id}?all_business=1` để không vỡ luồng chọn KH.
+- [x] FE: `CustomerForm.loadCustomer` gặp 403 → `$router.replace('/assign/customers')` (không toast thêm, interceptor axios đã toast).
+- [x] Verify: daivv → /43244, /43244/edit, /43244/manager đều bật về danh sách; API 43244 = 403, 43244?all_business=1 = 200. Tinker: user full quyền (16923 KH) và user scope hẹp đều `isVisible=true` cho KH trong list → không chặn nhầm.
