@@ -29,6 +29,27 @@ thuộc sẽ báo `SQLSTATE[HY000] [1049] Unknown database`. Nhớ backup và kh
 Điều kiện đủ để bỏ: **mọi bảng mà code đang trỏ tới đều đã có trên DB gộp** — đã verify 66/66 bảng của
 79 model có tiền tố đều có sẵn. Nên đây là việc cơ học, không vướng dữ liệu.
 
+## 0b. CẬP NHẬT 2026-08-03 — đã gộp chung bảng `employees` + `employee_infos`
+
+Commit `gộp bảng employees: HRM đọc lại bảng employees chung (revert hrm_employees)`.
+`App\Models\TpEmployee::$table` giờ là **`employees`**.
+
+→ **`auth()->user()->id` chính là id nhân viên duy nhất.** KHÔNG còn khái niệm "ERP employee id"
+tách riêng, KHÔNG phải map qua `employee_infos` nữa.
+
+- `hrm_employees` vẫn còn trong DB nhưng là **bản cũ bỏ đi** — lệch 290 id và 164 `employee_info_id`
+  so với `employees`. **Đừng đọc bảng đó.**
+- Đã gỡ khỏi `Modules/Finance` + `Modules/CustomerCare`: `FinanceService` 3 hàm map → 1 hàm
+  `currentEmployeeId()`; xóa model `Modules\Finance\Entities\ErpEmployee`, dùng
+  `Modules\Human\Entities\Employee`.
+- ⚠️ **CÒN NỢ**: `app/Helpers/ErpPermissionHelper.php` vẫn đọc qua `mysql2` và còn được gọi ở
+  `Modules/Assign` (CustomerService, MeetingController, ProductProjectController,
+  CustomerManagerService) + `app/Helper/CustomerOwnership.php` → thuộc đúng mục tiêu 0 ở trên,
+  cần rà dứt điểm.
+
+⚠️ Mục 1 dưới đây ghi DB gộp tên `local_hrm_erp`, nhưng `hrm-api/.env` hiện đang trỏ **`gop_db`** —
+cần thống nhất lại tên.
+
 ## 1. Mục tiêu
 
 Gộp 2 hệ thống đang chạy độc lập về một nền tảng duy nhất:
