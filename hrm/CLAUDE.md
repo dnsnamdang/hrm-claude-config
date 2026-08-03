@@ -126,6 +126,52 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 
 ---
 
+## ⚠️ Phần GỘP DATABASE — nhánh `gop_db` (bắt buộc cả team)
+
+### 0. Cách nhận biết — NHÌN VÀO NHÁNH GIT, không đoán theo tên feature
+
+**Bước bắt buộc trước mọi task đụng tới code:** kiểm tra nhánh đang đứng ở repo đang sửa.
+
+```bash
+git branch --show-current                              # nhánh hiện tại
+git merge-base --is-ancestor gop_db HEAD && echo GOPDB # nhánh có checkout ra từ gop_db không
+```
+
+- Đang ở **`gop_db`**, hoặc nhánh **checkout ra từ `gop_db`** (lệnh trên in `GOPDB`) → **áp dụng toàn bộ mục 1-3 dưới đây**: tài liệu vào `.plans/gop-db/`, spec vào `docs/superpowers/specs/gop-db/`
+- Đang ở nhánh khác (`tpe`, `tpe-develop-assign`, `main`…) → làm theo quy luật thường ở mục trên, tài liệu để `.plans/[feature]/`
+- Nhánh không suy ra được (worktree lạ, detached HEAD) → **hỏi** trước khi tạo folder tài liệu, đừng đoán
+
+### 1. Tài liệu — thêm 1 cấp `gop-db/`
+
+```
+.plans/gop-db/
+├── design.md                    ← NỀN TẢNG chung của việc gộp DB (đọc TRƯỚC khi làm bất kỳ feature nào)
+├── [feature-a]/design.md + plan.md
+├── [feature-b]/design.md + plan.md
+└── ...
+docs/superpowers/specs/gop-db/YYYY-MM-DD-<feature>-design.md   ← spec chi tiết (cũng thêm 1 cấp gop-db/)
+```
+
+- Code đang làm trên nhánh `gop_db` (hoặc nhánh con của nó) → **KHÔNG** tạo folder ở `.plans/[feature]/` mà tạo ở **`.plans/gop-db/[feature]/`**, kể cả khi tên feature nghe không liên quan gì tới database (VD: `finance-account-catalog`)
+- Ngược lại, nhánh khác → vẫn để ở `.plans/[feature]/` như cũ
+- `STATUS.md` vẫn dùng chung 1 file ở `.plans/STATUS.md`, ghi đường dẫn đầy đủ `.plans/gop-db/[feature]/plan.md`
+- Cấu trúc bên trong mỗi feature giữ nguyên quy luật ở mục trên (design.md / plan.md / srs / testcase)
+
+### 2. Code — luôn đứng trên nhánh `gop_db`
+
+- Code của phần này **chỉ làm trên nhánh `gop_db`**, hoặc nhánh con **checkout ra từ `gop_db`** (KHÔNG checkout từ `tpe`, `tpe-develop-assign`, `main`)
+- Xong việc → merge/PR **về lại `gop_db`**, không merge thẳng sang nhánh khác
+- Trước khi code: kiểm tra nhánh hiện tại ở CẢ 2 repo (`git branch --show-current`); đứng sai nhánh thì `Modules/Finance`, `components/subsystems.js`, `pages/finance`… sẽ không tồn tại
+- Mỗi người tự chọn cách làm việc trên nhánh này (checkout thẳng hay dùng git worktree riêng) — không bắt buộc theo ai. Nếu dùng worktree: worktree KHÔNG có `.plans/`, `.claude/`, `docs/`, `CLAUDE.md` (là symlink ra ngoài repo) → **tài liệu luôn ghi về `HRM/.plans/gop-db/`**, worktree chỉ chứa code
+
+### 3. Ràng buộc thường trực trên nhánh `gop_db`
+
+- **KHÔNG dùng `DB_CONNECTION_SECOND` / connection `mysql2`** cho bất kỳ tính năng mới nào, kể cả ghép tiền tố tên bảng bằng `env('DB_DATABASE_SECOND')` trong constructor model — `mysql2` đang trỏ DB ERP CŨ, id lệch
+- Bảng trùng tên: **ưu tiên bản ERP**; bản HRM đã đổi tên thành `hrm_*` (24 bảng). Model con không khai `$table` sẽ đọc nhầm bảng ERP
+- Trước khi làm bất kỳ feature nào trong nhóm này → **đọc `.plans/gop-db/design.md`** (7 gotcha khi port màn ERP → HRM)
+
+---
+
 ## Quản lý session
 
 **Bắt đầu session mới — bắt buộc theo thứ tự:**

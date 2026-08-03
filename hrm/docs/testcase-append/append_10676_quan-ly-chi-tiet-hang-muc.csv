@@ -1,0 +1,54 @@
+﻿Update 03/08/2026,,Khách hàng cuối tại hạng mục dự án,Task: http://quanly.dnsmedia.vn/issues/10676,,,,,,,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-141,Màn chi tiết hạng mục — hiển thị trường 'Khách hàng cuối' khi KH cuối ≠ KH trực tiếp,P0,"Dự án TKT có is_intermediary_customer = true, KH trực tiếp = 'CÔNG TY A', KH cuối = 'CÔNG TY B'; hạng mục HM-01 thuộc dự án này","1. Vào Dự án TKT >> Hạng mục dự án
+2. Mở chi tiết hạng mục HM-01
+3. Mở tab Thông tin
+4. Quan sát phân vùng 'Thông tin dự án'",Hạng mục HM-01; KH cuối = CÔNG TY B,"- Phân vùng 'Thông tin dự án' có dòng 'Khách hàng cuối' nằm NGAY DƯỚI dòng 'Khách hàng'
+- Hiển thị dạng: <Mã KH> - <Tên KH cuối> (giống format dòng Khách hàng)",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-142,Link KH cuối mở chi tiết khách hàng ở tab mới,P1,Như TC-ROLE-141; user có quyền 'Xem khách hàng',"1. Ở tab Thông tin, click vào tên KH cuối",KH cuối = CÔNG TY B,"- Mở TAB MỚI sang màn chi tiết/quản lý KH của CÔNG TY B
+- Tab hạng mục hiện tại giữ nguyên",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-143,Màn chi tiết hạng mục — KH cuối = KH trực tiếp thì KHÔNG hiển thị,P0,Dự án TKT có is_intermediary_customer = false (KH thụ hưởng cuối trùng KH trực tiếp); hạng mục HM-02 thuộc dự án này,"1. Mở chi tiết hạng mục HM-02 >> tab Thông tin
+2. Quan sát phân vùng 'Thông tin dự án'",Hạng mục HM-02,"- KHÔNG hiển thị dòng 'Khách hàng cuối'
+- Layout phân vùng không bị trống/lệch",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-144,Dự án đánh dấu KH trung gian nhưng chưa chọn KH cuối,P1,Dự án có is_intermediary_customer = true nhưng customer_benefit_id = null; hạng mục HM-03,1. Mở chi tiết hạng mục HM-03 >> tab Thông tin,customer_benefit_id = null,"- KHÔNG hiển thị dòng 'Khách hàng cuối' (không hiện dòng rỗng hay '—' thừa)
+- Không lỗi console",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-145,Màn quản lý hạng mục — hiển thị phân vùng 'KHÁCH HÀNG CUỐI' (lỗi phản hồi #4),P0,"Hạng mục HM-01 (KH cuối = CÔNG TY B, có đủ người liên hệ KH cuối)","1. Vào Dự án TKT >> Hạng mục dự án
+2. Click nút Quản lý của HM-01
+3. Mở tab Thông tin
+4. Quan sát dưới phân vùng 'THÔNG TIN KHÁCH HÀNG'",Hạng mục HM-01,"- Hiển thị khối 'Khách hàng cuối' NGAY DƯỚI phân vùng 'THÔNG TIN KHÁCH HÀNG'
+- Đủ các dòng: Khách hàng cuối, Người liên hệ (KH cuối), Chức vụ người liên hệ (KH cuối), Email người liên hệ (KH cuối), SĐT người liên hệ (KH cuối)
+- Không còn tình trạng trống như lỗi phản hồi ngày 14/07/2026",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-146,Màn quản lý hạng mục — nội dung KH cuối khớp dữ liệu dự án,P0,"Dự án: KH cuối 'CÔNG TY B' (mã KH0002), người liên hệ 'Trần B', chức vụ 'Giám đốc', email b@ctyb.vn, SĐT 0912345678","1. Mở màn quản lý hạng mục HM-01 >> tab Thông tin
+2. Đối chiếu từng dòng KH cuối với thông tin trên dự án TKT",Dự án TKT tương ứng,"- Mã + tên KH cuối = KH0002 . CÔNG TY B
+- Người liên hệ = Trần B; Chức vụ = Giám đốc; Email = b@ctyb.vn; SĐT = 0912345678
+- Trùng khớp 100% với dữ liệu dự án (kế thừa, không nhập lại)",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-147,Màn quản lý hạng mục — không có KH cuối thì ẩn phân vùng,P0,Hạng mục HM-02 (dự án không dùng KH trung gian),1. Mở màn quản lý hạng mục HM-02 >> tab Thông tin,Hạng mục HM-02,"- KHÔNG hiển thị khối 'Khách hàng cuối'
+- Phân vùng 'THÔNG TIN KHÁCH HÀNG' hiển thị bình thường, layout không vỡ",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-148,Thiếu thông tin liên hệ KH cuối — hiển thị '—',P1,Dự án có KH cuối nhưng chưa nhập người liên hệ / email / SĐT KH cuối,"1. Mở màn quản lý hạng mục >> tab Thông tin
+2. Quan sát các dòng KH cuối",customer_benefit_contact_* = null,"- Dòng 'Khách hàng cuối' vẫn hiển thị mã + tên
+- Các dòng thiếu dữ liệu hiển thị '—', không hiển thị 'null'/rỗng",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-149,Thông tin KH cuối ở hạng mục là CHỈ ĐỌC,P0,User có quyền quản lý hạng mục,"1. Ở tab Thông tin (cả màn chi tiết và màn quản lý)
+2. Thử click/sửa các dòng KH cuối",Hạng mục HM-01,"- Không có input/nút sửa cho KH cuối tại hạng mục
+- Chỉ có thể thay đổi từ màn dự án TKT",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-150,Cập nhật KH cuối trên dự án → hạng mục hiển thị theo,P0,Hạng mục HM-01 đang hiển thị KH cuối = CÔNG TY B,"1. Vào dự án TKT tương ứng, đổi KH cuối sang 'CÔNG TY C'
+2. Lưu dự án
+3. Quay lại chi tiết + màn quản lý hạng mục HM-01, reload",KH cuối mới = CÔNG TY C,"- Cả 2 màn hiển thị KH cuối = CÔNG TY C cùng thông tin liên hệ mới
+- Không còn dữ liệu KH cũ",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-151,Bỏ cờ KH trung gian trên dự án → hạng mục ẩn KH cuối,P1,Hạng mục HM-01 đang hiển thị KH cuối,"1. Vào dự án TKT, bỏ chọn KH thụ hưởng cuối khác KH trực tiếp
+2. Lưu
+3. Reload chi tiết + màn quản lý hạng mục HM-01",is_intermediary_customer = false,"- Trường/phân vùng 'Khách hàng cuối' biến mất ở cả 2 màn
+- Không lỗi hiển thị",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-152,API chi tiết hạng mục trả đủ field KH cuối,P1,Hạng mục HM-01 có KH cuối,"1. Gọi API chi tiết hạng mục HM-01
+2. Kiểm tra response",GET chi tiết solution-module,"- Response có: is_intermediary_customer, customer_benefit_id, customer_benefit_code, customer_benefit_name, customer_benefit_contact_name/role/email/phone
+- Giá trị khớp dự án nguồn",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-153,Tên KH cuối rất dài — không vỡ layout,P2,KH cuối có tên > 120 ký tự,"1. Mở tab Thông tin ở cả 2 màn
+2. Quan sát hiển thị",Tên KH cuối dài 120+ ký tự,"- Text xuống dòng hoặc cắt gọn có tooltip
+- Không tràn khỏi card, không đẩy lệch các dòng khác",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-154,Hạng mục cũ (tạo trước khi có tính năng),P1,"Hạng mục tạo trước ngày phát hành, dự án nguồn không có dữ liệu KH cuối",1. Mở chi tiết + màn quản lý hạng mục cũ >> tab Thông tin,Hạng mục cũ,"- Không hiển thị KH cuối, không báo lỗi
+- Các thông tin khác của hạng mục hiển thị đầy đủ như trước",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-155,Reload/F5 giữ nguyên hiển thị KH cuối,P2,Đang ở tab Thông tin của màn quản lý hạng mục HM-01,"1. Nhấn F5
+2. Quan sát sau khi tải lại",Hạng mục HM-01,"- Sau reload vẫn ở tab Thông tin, khối KH cuối hiển thị đầy đủ như trước",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-156,User chỉ có quyền xem hạng mục vẫn thấy KH cuối,P1,User chỉ có quyền xem hạng mục dự án (không có quyền sửa),1. Mở chi tiết hạng mục HM-01 >> tab Thông tin,User: chỉ quyền xem,"- Vẫn hiển thị đầy đủ trường/phân vùng KH cuối (chỉ đọc)
+- Không hiện nút thao tác nào",,,,,,,,,,,
+Quản lý hạng mục,,TC-ROLE-157,So sánh cấu trúc hiển thị với phân vùng THÔNG TIN KHÁCH HÀNG,P1,Hạng mục HM-01 có KH cuối,"1. Mở màn quản lý hạng mục >> tab Thông tin
+2. So sánh thứ tự các dòng của khối KH cuối với khối THÔNG TIN KHÁCH HÀNG",Hạng mục HM-01,"- Thứ tự dòng tương ứng: Khách hàng → Người liên hệ → Chức vụ → Email → SĐT
+- Cùng kiểu font/căn lề/định dạng, chỉ khác nhãn có hậu tố '(KH cuối)'",,,,,,,,,,,

@@ -1,0 +1,87 @@
+﻿Update 03/08/2026,,,Task: http://quanly.dnsmedia.vn/issues/10617,,,,,,,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.001,Link/nút tại trường Tên KH hiển thị khi có quyền 'Xem khách hàng',P0,User có quyền ERP 'Xem khách hàng'; danh sách có ≥ 5 KH,"1. Vào Danh mục >> Khách hàng
+2. Quan sát cột Tên khách hàng",User: quyền 'Xem khách hàng',"- Tên KH hiển thị dạng link bấm được (đổi màu/underline khi hover)
+- Tooltip/con trỏ dạng pointer",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.002,Không có quyền 'Xem khách hàng' — nút tại Tên KH ẩn/disable (AC 1),P0,User KHÔNG có quyền ERP 'Xem khách hàng',"1. Vào Danh mục >> Khách hàng
+2. Quan sát cột Tên khách hàng",User: không có quyền xem,"- Không vào được màn danh sách KH (bị chặn) HOẶC nếu vào được thì Tên KH KHÔNG phải link (text thường, không click được)
+- Không điều hướng sang màn Quản lý KH",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.003,Click Tên KH → điều hướng màn Quản lý khách hàng (AC 2),P0,User có quyền 'Xem khách hàng'; KH 'CÔNG TY ABC' id = 123,"1. Vào danh sách KH
+2. Click vào Tên KH 'CÔNG TY ABC'",customer id = 123,"- Điều hướng tới /assign/customers/123/manager
+- Tiêu đề trang = 'Quản lý khách hàng'
+- Tab mặc định = 'Thông tin chung', dữ liệu KH 123 được load đúng",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.004,Mở màn Quản lý KH ở tab trình duyệt mới,P1,User có quyền 'Xem khách hàng',1. Ctrl/Cmd + Click vào Tên KH (hoặc chuột phải >> Mở tab mới),customer id = 123,"- Mở tab mới đúng URL /assign/customers/123/manager
+- Tab hiện tại giữ nguyên danh sách + bộ lọc",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.005,Truy cập thẳng URL màn Quản lý KH khi KHÔNG có quyền xem (theo phản hồi #6),P0,Copy URL /assign/customers/123/manager từ tài khoản có quyền; đăng nhập tài khoản KHÔNG có quyền 'Xem khách hàng',"1. Dán URL /assign/customers/123/manager vào trình duyệt
+2. Enter
+3. Quan sát",User: không có quyền xem KH,"- Bị chặn NGAY, KHÔNG hiển thị bất kỳ thông tin KH nào và KHÔNG thấy nút Lưu
+- Toast 'Bạn không có quyền xem khách hàng'
+- Điều hướng về trang 404 (middleware checkCustomerPermission)",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.006,Truy cập thẳng URL Thêm KH khi không có quyền 'Thêm khách hàng',P0,"User có 'Xem khách hàng', KHÔNG có 'Thêm khách hàng'",1. Truy cập /assign/customers/add,User: chỉ quyền xem,"- Toast 'Bạn không có quyền thêm khách hàng'
+- Redirect về /assign/customers",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.007,Truy cập thẳng URL Sửa KH khi không có quyền 'Sửa khách hàng',P0,"User có 'Xem khách hàng', KHÔNG có 'Sửa khách hàng'",1. Truy cập /assign/customers/123/edit,User: chỉ quyền xem,"- Toast 'Bạn không có quyền sửa khách hàng'
+- Redirect về /assign/customers/123 (chỉ xem)",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.008,"Có quyền Xem, KHÔNG có quyền Sửa — toàn bộ trường read-only (AC 3)",P0,"User có 'Xem khách hàng', KHÔNG có 'Sửa khách hàng'; đang ở màn Quản lý KH 123","1. Mở màn Quản lý KH
+2. Thử click/nhập vào Tên KH, SĐT, Email, Địa chỉ, Nhóm/Lĩnh vực KH
+3. Quan sát nút Lưu",User: chỉ quyền xem,"- Mọi input/select/datepicker ở trạng thái disabled, không nhập được
+- Không có nút thêm/xóa dòng (SĐT, người đại diện, người liên hệ)
+- Nút 'Lưu' ẩn hoặc disable",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.009,Có quyền Sửa — các trường cho phép chỉnh sửa (AC 3),P0,User có 'Xem khách hàng' + 'Sửa khách hàng'; đang ở màn Quản lý KH 123,"1. Mở màn Quản lý KH
+2. Nhập lại Tên KH, thêm 1 SĐT
+3. Quan sát nút Lưu",User: quyền xem + sửa,"- Các trường được phân quyền sửa cho nhập bình thường
+- Nút thêm/xóa dòng hiển thị
+- Nút 'Lưu' hiển thị và bấm được",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.010,Mã KH luôn read-only kể cả khi có quyền Sửa,P1,User có quyền Sửa; KH 123 đã có mã,"1. Mở màn Quản lý KH
+2. Thử sửa ô Mã KH",code = KH-2026-00123,"- Ô Mã KH disabled, không sửa được ở mọi trạng thái quyền",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.011,Cấu trúc tab màn Quản lý KH,P0,User có quyền 'Xem khách hàng',"1. Mở màn Quản lý KH
+2. Quan sát thanh tab",customer id = 123,"- Hiển thị đủ 6 tab đúng thứ tự: Thông tin chung, Thông tin liên hệ, Báo giá, Hợp đồng, Danh sách trang thiết bị, Thông tin khác
+- Tab 'Thông tin chung' active mặc định",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.012,Tab Thông tin chung — dữ liệu đọc từ ERP đúng,P0,"KH 123 trên ERP: Tên 'CÔNG TY ABC', MST 0101234567, Nhóm KH 'Doanh nghiệp'","1. Mở tab Thông tin chung
+2. Đối chiếu từng trường với dữ liệu ERP",customer id = 123,"- Tên/MST/Loại KH/Nhóm-Lĩnh vực/Địa chỉ/Người phụ trách hiển thị đúng giá trị đang lưu trên ERP
+- Không có trường nào rỗng sai lệch so với ERP",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.013,Tab Thông tin liên hệ hiển thị đúng,P1,"KH 123 có 2 người liên hệ, 1 người đại diện","1. Chuyển sang tab Thông tin liên hệ
+2. Quan sát",customer id = 123,"- Liệt kê đủ 2 người liên hệ + 1 người đại diện (Họ tên, chức vụ, SĐT, email)
+- Nếu không có quyền Sửa: các dòng ở chế độ chỉ đọc",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.014,Tab Báo giá / Hợp đồng — cần quyền 'Xem khách hàng',P1,"KH 123 có 3 báo giá, 2 hợp đồng","1. Mở tab Báo giá
+2. Mở tab Hợp đồng
+3. Bấm Xuất Excel (nếu có)",customer id = 123,"- Grid tải đúng 3 báo giá / 2 hợp đồng của KH 123
+- Không lẫn dữ liệu KH khác
+- Xuất Excel tải file thành công",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.015,Tab Danh sách trang thiết bị — thao tác serial cần quyền Sửa,P1,KH 123 có ≥ 1 thiết bị/serial; user chỉ có quyền Xem,"1. Mở tab Danh sách trang thiết bị
+2. Thử các nút Sửa serial / Đổi serial / Xóa serial / Tăng số lượng",User: chỉ quyền xem,"- Xem được danh sách thiết bị
+- Các nút thao tác (sửa/đổi/xóa serial, tăng số lượng) ẩn hoặc disable
+- Nếu gọi API trực tiếp → BE trả 403",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.016,Tab Thông tin khác — upload ảnh/tài liệu cần quyền Sửa,P1,User chỉ có quyền Xem,"1. Mở tab Thông tin khác
+2. Thử upload ảnh / xóa file",file: anh_kh.jpg,"- Nút upload/xóa file ẩn hoặc disable
+- Gọi thẳng API upload-image / media → 403",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.017,Sửa và Lưu thành công — dữ liệu đồng bộ ERP (AC 4),P0,User có quyền Sửa; KH 123 tên cũ 'CÔNG TY ABC',"1. Mở màn Quản lý KH
+2. Sửa Tên KH thành 'CÔNG TY ABC MỚI', thêm SĐT 0987654321
+3. Click 'Lưu'
+4. Kiểm tra lại bản ghi trên ERP",fullname='CÔNG TY ABC MỚI'; phone thêm '0987654321',"- Toast 'Cập nhật khách hàng thành công'
+- Load lại màn hình: dữ liệu mới hiển thị đúng
+- Bản ghi ERP (bảng customers) cập nhật đúng cả 2 trường, logic lưu khớp ERP",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.018,Lưu khi thiếu trường bắt buộc — validate inline,P0,User có quyền Sửa; đang ở màn Quản lý KH,"1. Xóa trống Tên KH
+2. Click 'Lưu'",fullname = trống,"- BE trả 422, KHÔNG ghi dữ liệu
+- Lỗi inline tại Tên KH (viền đỏ is-invalid + text 'Bắt buộc phải nhập')
+- Toast báo chưa nhập đủ thông tin",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.019,Bypass UI — gọi API Lưu khi không có quyền Sửa (AC 5),P0,User chỉ có quyền 'Xem khách hàng'; có JWT hợp lệ,"1. Dùng Postman gọi POST /api/v1/assign/customers/123 với payload hợp lệ
+2. Quan sát response + dữ liệu ERP",POST /assign/customers/123,"- BE trả 403 Forbidden
+- KHÔNG có thay đổi nào trên bản ghi ERP",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.020,Bypass UI — gọi API xem chi tiết KH khi không có quyền Xem (AC 5),P0,User KHÔNG có quyền 'Xem khách hàng'; có JWT hợp lệ,"1. Postman gọi GET /api/v1/assign/customers/123
+2. Gọi GET /api/v1/assign/customers/123/documents",GET /assign/customers/123,"- BE trả 403 Forbidden cho cả 2 request
+- Không lộ bất kỳ trường dữ liệu KH nào trong response",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.021,API my-permissions trả đúng quyền của user hiện tại,P1,"3 tài khoản: (a) chỉ xem, (b) xem+sửa, (c) không quyền",1. Với từng tài khoản gọi GET /api/v1/assign/customers/my-permissions,3 user như tiền điều kiện,"- (a) {view:true, create:false, edit:false}
+- (b) {view:true, edit:true}
+- (c) {view:false, create:false, edit:false}
+- FE hiển thị/ẩn nút đúng theo response",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.022,Thu hồi quyền Sửa khi user đang mở màn hình,P1,User đang mở màn Quản lý KH 123 với quyền Sửa,"1. Admin gỡ quyền 'Sửa khách hàng' của user trên ERP
+2. User (không reload) sửa 1 trường và bấm 'Lưu'",Gỡ quyền lúc form đang mở,"- BE trả 403, toast báo không có quyền
+- Dữ liệu không bị ghi
+- Reload lại: form về chế độ chỉ đọc",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.023,Truy cập màn Quản lý KH với id không tồn tại,P2,User có quyền Xem,1. Truy cập /assign/customers/99999999/manager,id = 99999999,"- Thông báo không tìm thấy KH (hoặc về 404), không crash trắng trang
+- Không hiển thị form rỗng kèm nút Lưu",,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.024,Quay lại danh sách giữ nguyên bộ lọc,P2,"Danh sách đang lọc theo Nhóm KH = 'Doanh nghiệp', trang 2","1. Click Tên KH vào màn Quản lý
+2. Bấm 'Quay lại'",filter: nhóm KH = Doanh nghiệp; page = 2,- Về đúng danh sách với bộ lọc và trang 2 như trước,,,,,,,,,,
+Khách hàng,Màn Quản lý khách hàng (#10617),TC_07.025,Hai user cùng sửa 1 KH (đồng thời),P2,User A và User B cùng mở KH 123 với quyền Sửa,"1. A sửa Tên KH và Lưu
+2. B (không reload) sửa SĐT và Lưu
+3. Kiểm tra dữ liệu ERP",2 phiên song song,"- Cả 2 lần Lưu đều trả kết quả rõ ràng (thành công hoặc báo dữ liệu đã thay đổi)
+- Dữ liệu ERP không bị mất trường của người lưu trước một cách âm thầm",,,,,,,,,,

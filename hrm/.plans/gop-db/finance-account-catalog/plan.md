@@ -1,6 +1,6 @@
 # Plan — finance-account-catalog
 
-> Tóm tắt: `.plans/finance-account-catalog/design.md`
+> Tóm tắt: `.plans/gop-db/finance-account-catalog/design.md`
 > Spec: `docs/superpowers/specs/2026-07-30-finance-account-catalog-design.md`
 
 ## Phase 0 — Khảo sát (DONE)

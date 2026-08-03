@@ -1,8 +1,38 @@
 # STATUS.md
 
+## ⚠️ Nền tảng — đọc TRƯỚC khi làm việc trên nhánh `gop_db`
+
+**`.plans/gop-db/design.md`** — nhánh `gop_db` (cả 2 repo) gộp DB ERP + HRM thành DB duy nhất `local_hrm_erp`.
+Ảnh hưởng tới MỌI feature làm trên nhánh này: bảng trùng tên ưu tiên bản ERP (bản HRM đổi tên `hrm_*`, 24 bảng),
+`employees`/`roles`/`permissions`/`files`/`groups` là của **ERP** — dữ liệu HRM nằm ở `hrm_*`;
+`mysql2` vẫn trỏ DB ERP CŨ (nguồn bug id lệch); kèm 7 gotcha bắt buộc biết khi port màn ERP → HRM.
+Việc gộp DB **không có migration trong repo** → không tái tạo được từ code, phải xin dump.
+
+**Quy tắc bắt buộc (chi tiết ở `CLAUDE.md` mục "Phần GỘP DATABASE"):**
+- Nhận biết bằng **nhánh git đang đứng**, không đoán theo tên feature: đang ở `gop_db` hoặc nhánh checkout ra từ `gop_db` → áp dụng quy tắc này
+- Tài liệu: feature làm trên nhánh đó nằm trong **`.plans/gop-db/[feature]/`**, spec chi tiết ở `docs/superpowers/specs/gop-db/`
+- Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
+- KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
+
 ## Đang làm
 
-- finance-account-catalog → @junfoke → .plans/finance-account-catalog/plan.md
+- du-an-cha-con (Redmine #10921 — 13 điểm feedback tester) → @cuong61n → .plans/du-an-cha-con/plan.md
+  Trạng thái: **XONG 13/13 + ĐÃ VERIFY TRÊN DEV** (2026-08-03, nhánh `tpe-develop-assign`, cả 2 repo).
+  BE 5 file (`Quotation` thêm SUMMARY_STATUS_DONG, `SummaryQuotationService` cộng dồn phí VC +
+  `closeByParentProject`, `QuotationController` giữ "Đã gộp BG Tổng" khi dự án đóng,
+  `ProspectiveProjectService` gọi luồng đóng mới, `ProspectiveProject` đổi nhãn trạng thái 11),
+  FE 4 file (GeneralInfo meeting, bảng dự án con, tab Báo giá dự án cha, SummaryQuotationForm).
+  Verify Playwright trên localhost:3000/:8000, đã trả toàn bộ dữ liệu test về nguyên trạng.
+  Bước tiếp: chờ tester kiểm lại; mục 6 & 7 tester mô tả khác hiện trạng dev — xem ghi chú trong plan.md.
+
+- customer-cut-mysql2 → .plans/gop-db/customer-cut-mysql2/plan.md
+  Trạng thái: **HOÀN TẤT + ĐÃ TEST** (2026-08-01, nhánh `gop_db`). Khách hàng còn ĐÚNG 1 luồng `/assign/customers`.
+  Gồm: cắt hết `mysql2` khỏi luồng KH (35 file) · xoá 6 bảng `hrm_customer_*` + migration `2026_08_01_000001_drop_hrm_customer_tables` (đã test round-trip) ·
+  gỡ toàn bộ tầng sync 2 chiều · xoá màn `/human/customers` + `/timesheet/setting/customers` · chuyển 10 picker sang luồng mới · thêm `GET assign/customers/search`.
+  Test: 52/52 endpoint HTTP + 12 màn browser + luồng ghi (tạo/sửa/thêm liên hệ, có rollback). **7 lỗi thật đã sửa** (xem plan.md Phase 11-12).
+  ⚠️ Đọc trước khi làm tiếp trên nhánh này: `.plans/gop-db/design.md`.
+
+- finance-account-catalog → @junfoke → .plans/gop-db/finance-account-catalog/plan.md
   Trạng thái: **PHASE 1 + PHASE 3 CODE DONE + VERIFIED** (2026-07-31) — BE `type-accounts` xong (11 file mới, 2 file sửa BE + 1 file sửa FE), verify 2 lớp: script service 9 nhóm PASS + HTTP thật (php -S + JWT) 12 case PASS + 403 đúng cho user thiếu quyền; export trả xlsx 80KB đúng content-type. Đã tắt server test, xóa file tạm, DB sạch (7/0/0). ⚠️ Đã checkout branch **`gop_db`** cả 2 repo (nền tảng gộp phân hệ chỉ có ở branch này; trước đó đứng ở `tpe` nên `Modules/Finance` + `components/subsystems.js` + `pages/finance` đều không tồn tại). Quyền: 4 quyền id 1107-1110 `type=8`, user duyệt thêm khối accordion thứ 8 "Phân hệ tài chính" vào `components/setting/Permission.vue`; đã insert + cấp cho vai trò Super admin ở DB local. ⚠️ **KHÔNG chạy `PermissionsTableSeeder`** trên DB có dữ liệu — `run()` truncate cả `hrm_permissions`. Đã verify browser bằng Playwright MCP: khối accordion thứ 8 hiện đúng, 4 checkbox quyền, type 1-7 không đổi; đã tắt server + xóa screenshot.
   **PHASE 2 CODE DONE + VERIFIED** (2026-07-31) — BE `accounts` xong (8 file mới + sửa Routes/api.php + thêm `FinanceService::erpEmployeeId()` bản không ném lỗi cho luồng chỉ đọc). 12 route. **21 case HTTP thật PASS**: 4 case validate, create cấp 1 + cấp 2 (`root` 999 / 999.1 đúng công thức ERP), chặn xóa TK cha khi còn con, update sinh đúng 3 dòng history nhãn tiếng Việt, update không đổi → 0 version, lock/unlock + chặn thao tác trên bản ghi người khác tạo, 8 bộ lọc, export xlsx 80KB, **print fill đúng template ERP id 459** (letterhead + dữ liệu, không sót placeholder), xóa con → xóa cha OK. DB nguyên trạng (308/0/0). 3 chỗ chủ động SỬA LỖI so với ERP: bộ lọc `name` thiếu `%` cuối; `is_account_follow_dept` để `required` làm checkbox false trượt validate; `identify_number_parent` ép null khi cấp 1. Tối ưu: cờ `is_can_*` tốn 2 query/dòng nên chỉ tính khi controller bật `with_permission_flags` (export/print 308 dòng không bật). 
   **PHASE 4-6 (TOÀN BỘ FE) + IMPORT EXCEL DONE + VERIFIED** (2026-07-31) — 26 route `api/v1/finance`. FE mới: `components/subsystem-menu/finance.js`, `components/modal/finance/{type-account-modal,finance-history-modal}.vue`, `pages/finance/type-accounts/index.vue`, `pages/finance/accounts/{index,add,print}.vue` + `components/AccountFormComponent.vue` + `_id/edit.vue`, `utils/download-excel.js`, `utils/mixins/FinanceImportMixin.js`. FE sửa: `components/subsystems.js`, `components/setting/Permission.vue`. Verify browser PASS toàn luồng (2 màn DS, form thêm/sửa, modal lịch sử đỏ/xanh, màn In); import verify HTTP (validate bắt đúng lỗi trùng mã / cha không tồn tại / loại TK sai, import OK, cha tạo trước con dù trong file cha nằm sau). Đã dọn data test + screenshot + tắt server, DB nguyên trạng.
@@ -21,7 +51,7 @@
   ⚠️ GOTCHA khác: `ErpPermissionHelper` đọc quyền qua `mysql2` → `DB_DATABASE_SECOND=erp_dev_24_09`, **không phải `gop_db`** → drift khi cắt hẳn sang DB gộp. `accounts` được 97 file ERP tham chiếu + `account_details` 965k dòng → cấm đổi schema. Quyền mới phải khai trong `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (rule: không migration riêng cho permission).
   Style FE (chốt 2026-07-30): toàn bộ dùng bộ **V2Base**, dựng giao diện mới theo chuẩn HRM, KHÔNG port markup/DATATABLE/AngularJS của ERP (chỉ port nghiệp vụ). Select trong modal bắt buộc `V2BaseSelectInModal`. Skill phải đọc trước khi code FE: `list-page`, `modal-popup`, `button-convention`, `entity-history`, `import-excel`, `print-page`. Bảng component đầy đủ ở spec §4.6.
   Bước tiếp: Phase 1 — BE `Modules/Finance` cho `type-accounts` (làm trước vì nhỏ, màn tài khoản phụ thuộc dropdown loại tài khoản).
-  Spec: docs/superpowers/specs/2026-07-30-finance-account-catalog-design.md | Tóm tắt: .plans/finance-account-catalog/design.md
+  Spec: docs/superpowers/specs/gop-db/2026-07-30-finance-account-catalog-design.md | Tóm tắt: .plans/gop-db/finance-account-catalog/design.md
 
 - general-regulations-history → @khoipv → .plans/general-regulations-history/plan.md
   Trạng thái: CODE DONE + VERIFIED cả 3 phase (2026-07-10). Model Opus 4.8 (user đổi 2026-07-10). Chờ user verify browser bằng mắt (3 màn) + quyết định phát sinh Phase 2 (mục 1 dưới).
@@ -165,11 +195,11 @@
   ⚠️ GOTCHA: (1) `WorkingPosition` + `Title` có global scope `FilterByCompanyManagerScope` lọc `company_id` theo user → danh mục `company_id = NULL` KHÔNG bao giờ match, báo "không tồn tại trên PM" dù màn danh mục vẫn thấy. (2) DB local là snapshot tenant khác → mọi tra danh mục của KH đều miss, đừng kết luận từ kết quả local. (3) Chạy import ở tinker phải dựng `App\Models\User` rỗng gán `id` của 1 employee có thật (guard JWT + bảng `users` local rỗng). (4) File KH còn 2 lỗi dữ liệu phải sửa trước khi import thật: cột email sheet chính lệch 1 dòng so với tên ở dòng 11→25 (15 người → tạo HĐLĐ gắn sai người) + "Tên mẫu in" điền sai tên loại HĐ ở 100/100 dòng.
   Spec: docs/superpowers/specs/2026-07-31-import-decision-excel-info-sheet-error-design.md | Tóm tắt: .plans/import-decision-excel-info-sheet-error/design.md
 
-- tach-phan-he-erp-hrm → @junfoke → .plans/tach-phan-he-erp-hrm/plan.md
+- tach-phan-he-erp-hrm → @junfoke → .plans/gop-db/tach-phan-he-erp-hrm/plan.md
   Trạng thái: **XONG GIAI ĐOẠN 1 (khung phân hệ + menu) — 2026-07-30.** Đã test thật 9 màn trên dev. Tồn: user test 17 màn edit/detail. Giai đoạn 2 (di chuyển code màn sang route mới) chưa bắt đầu — xem Phase 7 trong plan.md.
   Scope: Quy hoạch lại phân hệ ERP + HRM theo Sơ đồ tổng thể v1.6 → 24 phân hệ / 5 nhóm. Dựng base 17 phân hệ mới (BE 17 module skeleton, FE registry `components/subsystems.js` + menu + dashboard stub + icon SVG), dựng lại màn chọn phân hệ + menu chuyển nhanh, phân hệ mới đi menu dọc (`layouts/subsystem.vue`).
   ⚠️ GOTCHA: (1) mỗi link chỉ được thuộc ĐÚNG 1 phân hệ, trùng là `resolveSubsystem` trả sai. (2) layout dùng SidebarMenu phải có method `toggleMenu`, thiếu thì bấm thu gọn menu ra trang 404. (3) item menu không có `subItems` phải khai `isShow: true`, quên thì sidebar rỗng. (4) dự án nạp 2 bản Remix Icon xung đột codepoint → icon phân hệ dùng SVG tự vẽ.
-  Spec: docs/superpowers/specs/2026-07-30-tach-phan-he-erp-hrm-design.md | Tóm tắt: .plans/tach-phan-he-erp-hrm/design.md
+  Spec: docs/superpowers/specs/gop-db/2026-07-30-tach-phan-he-erp-hrm-design.md | Tóm tắt: .plans/gop-db/tach-phan-he-erp-hrm/design.md
 
 - import-baogia-v2 → @manhcuong → .plans/import-baogia-v2/plan.md
   Trạng thái: **CODE-COMPLETE 9 phase + verify (BE tinker toàn bộ, FE Phase 2 E2E browser). Còn: E2E UI Phase 6/copy + deploy.** Xong: Phase 1 cột ẩn ID (E2E round-trip) · Phase 2 routing+popup+gộp lưới (E2E: Update/cross-import/BOM/permission) · Phase 3 mã hàng tạm Rule1/2/3 (tinker: lệch→chặn, giống→ok) · Phase 4 BOM partial+khóa Model/ĐVT+SL dịch vụ=1 (tinker) · Phase 5 copy 3 loại+detach BOM (🔴 Ngừng KD hoãn — ERP không status) · Phase 6 popup lỗi 3 nút (compile-check) · Phase 7 tên file dmY · Phase 9 giới hạn ký tự (tinker) · fix bug dịch vụ round-trip · phân quyền creator-based. Round-trip 3 báo giá (q66/q91/q91-GG-tổng/q78-BOM) đều 0 lỗi. CÒN E2E UI: Phase 6 popup lỗi, Phase 3/4 trên browser, copy preview, thay-thế/file-trống. Tài khoản test 48/Test@12345. CHƯA COMMIT/DEPLOY.

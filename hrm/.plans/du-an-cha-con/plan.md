@@ -655,3 +655,152 @@ Bộ dữ liệu test sạch: dự án cha #88 (RT.2026.DACX) + 3 con #89/#90/#9
 - [x] Kế thừa đơn giá đúng tài liệu: nguồn không giảm giá → báo giá tổng lấy **Đơn giá bán**
       (thử bẫy: để `unit_price_after_discount` = 1đ, báo giá tổng vẫn lấy đúng 100.000.000)
 - [x] Nhánh "có giảm giá" cũ không bị ảnh hưởng: BGT-2026-00010 vẫn hiện bảng giảm giá gộp 2.000.000
+
+## Fix: tick "Quản lý tất cả phòng ban" vẫn không duyệt được báo giá (2026-08-01)
+
+- [x] **Lỗi**: ô tick "Quản lý tất cả phòng ban" (`company_employees.all_department`) chỉ set cờ, KHÔNG sinh
+      bản ghi nào trong `employee_manage_departments`. Hai hàm gác quyền duyệt lại chỉ đọc bảng đó
+      → người quản lý tất cả phòng ban hoá ra không quản lý phòng nào, luôn bị chặn với thông báo
+      "Bạn không quản lý phòng ban của báo giá này". Ảnh hưởng CẢ báo giá thường lẫn báo giá tổng.
+- [x] **Sửa theo pattern sẵn có của hệ thống** (`AssignJobService::listManageDepartmentIds`):
+      thêm `QuotationService::managedDepartmentIdsOf()` — `all_department = 1` thì trả về toàn bộ phòng ban
+      của công ty, ngược lại đọc `employee_manage_departments` như cũ.
+      `SummaryQuotationService::ensureCanApprove()` gọi chung hàm này thay vì tự query.
+- [x] Kiểm chứng: NV #36 (tick tất cả phòng ban, 0 bản ghi phòng) trước đây quản lý 0 phòng → nay 36 phòng.
+      Xoá tạm 21 bản ghi phòng của tài khoản đang dùng, chỉ để lại cờ: duyệt được báo giá tổng
+      (BGT-2026-00012 → Đã duyệt) và báo giá thường (NOGG-BG-002 → Đã duyệt). Đã khôi phục lại dữ liệu.
+      Người không tick và không quản lý phòng nào (NV #25) vẫn bị chặn đúng.
+
+## Redmine #10921 — 13 điểm feedback tester (2026-08-03)
+
+- [x] 1. Meeting tạo từ dự án (tab Meetings → Tạo mới) rồi chọn loại "Meeting nội bộ" → mất sạch thông tin KH.
+      Nguyên nhân: watcher `form.meeting_type_id` (GeneralInfo.vue) xoá toàn bộ trường KH khi loại meeting có
+      `has_customer = 0`, nhưng khối "Khách hàng & Người liên hệ" vẫn hiện + vẫn bắt buộc vì meeting gắn dự án
+      (KH kế thừa từ dự án) → màn trống trơn, không lưu được.
+      → Thêm cờ `keepCustomerFromProject` (has_prospective_project / isFromProject / đã chọn dự án): meeting gắn
+      dự án thì KHÔNG xoá KH khi đổi loại meeting. Verify A/B trên dev: code gốc customer_id → null; sau fix giữ
+      nguyên KH 43244 + người liên hệ.
+- [x] 2. Bảng "Dự án con" bám theo màn danh sách dự án TKT: thêm 4 cột Tiến trình dự án (pill cùng bảng màu
+      .pj-status-*), Giải pháp, Version giải pháp, Khách hàng; cột Mã - Tên bổ sung Bộ phận / Ngày tạo / Ngày
+      cập nhật. API `children` đã dùng chung ProspectiveProjectResource nên không phải sửa BE.
+- [x] 3. Bỏ hẳn cột "Loại" khỏi bảng chi tiết báo giá tổng (user chốt 03/08): báo giá con không có cột này,
+      phân biệt đã nằm ở dòng nhóm A/B. baseColspan 7 → 6, gỡ hàm rowKind. Verify: 15 cột khi bật "Hiện cột
+      chi tiết", tổng colspan mọi dòng khớp 15/15.
+- [x] 4. Block A/B đổi sang bộ màu của báo giá con: nền #e2f5ee, chữ #0f8a63, viền dưới 2px #9bdcc6.
+      Dòng Section (tên dự án con) giữ màu tím nhạt riêng để còn phân biệt cấp.
+- [x] 5. Khối cuối đổi thành "Thanh toán & Ghi chú nội bộ" y như báo giá con: thêm nút thu gọn
+      (bottomCollapsed), label "Điều khoản báo giá" gắn required, dropdown mẫu điều khoản full width.
+- [x] 6. Thêm dòng "TSLN trước GG / TSLN sau GG" ngay dưới bảng Tổng hợp giá trị (chỉ hiện khi xem được
+      giá vốn), dựng như báo giá dự án con — công thức (doanh thu − giá vốn)/giá vốn, khác công thức /doanh thu
+      của cột TSLN trong bảng (giữ nguyên đúng như báo giá con). Verify: BGT-2026-00013 hiện 46.17%.
+- [x] 7. Phí vận chuyển: trước chỉ cộng `shipping_cost` nên dòng "Chi phí vận chuyển" ở bảng Tổng hợp có
+      Thành tiền nhập = 0 và Thuế VAT = 0. Nay cộng dồn thêm `shipping_import_price` và quy %VAT về mức bình
+      quân theo giá trị (helper `SummaryQuotationService::weightedVatPercent`) ở CẢ `buildSectionsFromSources`
+      (lưu/sync) lẫn `preview`; FE `localBreakdown` truyền giá nhập + tiền VAT vào dòng vận chuyển.
+      Verify: nguồn 3tr/VAT10% + 1tr/VAT5% → tổng 4tr, nhập 2,5tr, %VAT 8.75, tiền VAT 350.000 (đúng 300k+50k).
+      Đã trả dữ liệu test về 0.
+- [x] 8. Thêm thanh cuộn ngang phụ phía TRÊN bảng chi tiết, đồng bộ 2 chiều với thanh cuộn của bảng
+      (copy pattern .products-scroll-top + ResizeObserver của báo giá con). Verify: spacer width = table
+      scrollWidth (1120px), kéo thanh trên → bảng cuộn theo.
+- [x] 9. Màn XEM báo giá tổng render thẳng `payment_terms` nên lộ nguyên `{{VAT_NOTE}}`,
+      `{{VAN_CHUYEN_NOTE}}`. Nay dùng chung helper `substituteQuotationTermPlaceholders`
+      (utils/assign/quotation-term.js) như báo giá con — số liệu lấy từ breakdown (gồm VAT vận chuyển).
+      Bản in đã dùng helper từ trước nên không phải sửa. Bản LƯU vẫn giữ placeholder (mẫu còn động).
+      Verify: {{VAT_NOTE}} → "Giá trên đã bao gồm thuế VAT", {{THANH_TIEN}} → 665.000.000.
+- [x] 10. Vùng "Báo giá tổng" dựng lại theo đúng vùng "Báo giá từ dự án con": gom toàn bộ icon vào cột
+      "Tên - Mã báo giá tổng" (dưới mã, cùng loại icon + cỡ 17px + class tp-icon-btn), BỎ cột "Thao tác"
+      riêng đang trùng icon Xem. Bổ sung nút In và Sao chép cho đủ bộ; In/Excel/Sao chép chỉ hiện từ
+      "Đã duyệt" trở đi (canExportOrPrintSummary) đúng như màn xem, Sao chép gọi endpoint
+      `summary-quotations/{id}/duplicate` (KHÔNG dùng QuotationCopyMixin của báo giá thường).
+- [x] 11. `ProspectiveProject::PARENT_STATUS` id 11 đổi nhãn "Đóng / Hủy dự án" → "Đóng/Không thực hiện
+      dự án" (trùng nhãn của dự án con). FE đọc `status_name` từ BE nên không phải sửa. Verify: màn
+      RT2.2026.CHA hiện đúng nhãn mới.
+- [x] 12. Cột "Trạng thái sử dụng" tính theo `SUMMARY_ACTIVE_STATUSES`, mà đóng dự án lại đẩy báo giá tổng
+      ra khỏi nhóm này → báo giá con tụt về "Chưa dùng". Nay `QuotationController::childrenQuotations` tính
+      thêm báo giá tổng ở trạng thái ĐÓNG. Phân biệt rõ: đóng theo dự án thì GIỮ "Đã gộp BG Tổng", còn hết
+      hiệu lực do có bản tổng mới thì vẫn về "Chưa dùng" (verify cả 2 chiều bằng API).
+      Đổi tên cột "Trạng thái duyệt" → "Trạng thái".
+- [x] 13. Thêm `Quotation::SUMMARY_STATUS_DONG = 5` (trùng id với STATUS_DONG của báo giá thường) + nhãn
+      "Đóng" trong `getSummaryStatusList`. Tách hàm `SummaryQuotationService::closeByParentProject()` cho
+      luồng đóng dự án (giữ nguyên `expireByParentProject`/`expireActiveSummaries` cho luồng "có bản mới
+      thay thế"); `ProspectiveProjectService::closeParentProject` gọi hàm mới. Bản ĐÃ TẠO HỢP ĐỒNG vẫn
+      được giữ nguyên trạng thái. Verify: đóng dự án cha #99 → BGT-2026-00012/13 chuyển "Đóng"; đã khôi
+      phục dữ liệu test.
+
+### Verify bổ sung #10921 (2026-08-03, sau khi user hỏi "test kỹ chưa")
+
+Bốn chỗ trước đó mới verify gián tiếp, nay đã chạy thật:
+
+- [x] Nút **Sao chép báo giá tổng** (mục 10 — code mới, trước đó chưa chạy lần nào vì đang đăng nhập tài khoản
+      không phải sale chính nên nút bị ẩn): bấm thật trên BGT-2026-00011 → popup xác nhận → tạo BGT-2026-00014
+      (id 228) + điều hướng sang bản mới, bản cũ chuyển Hết hiệu lực. `apiPostMethod` key `payload` đúng.
+- [x] Nút **In báo giá tổng** (mục 10) + **biến điều khoản trên BẢN IN** (mục 9): modal cấu hình in mở đúng,
+      bản xem trước ra "Giá trên đã bao gồm thuế VAT, đã bao gồm chi phí vận chuyển. Tổng: 666.280.000",
+      không còn `{{`.
+- [x] **Mục 6 + 7 ở màn TẠO** (nhánh `localBreakdown` tính client-side, khác nhánh breakdown từ BE đã test
+      trước): 2 nguồn 8tr/nhập 5tr/VAT 8% → dòng Chi phí vận chuyển hiện nhập 10.000.000, VAT 1.280.000;
+      dòng TSLN tổng hiện 122.79% (khớp (606tr−272tr)/272tr).
+- [x] **Mục 13 qua đúng `ProspectiveProjectService::closeParentProject`** (trước đó mới gọi thẳng
+      `closeByParentProject`): chạy trong `DB::beginTransaction()` → dự án cha #99 sang "Đóng/Không thực hiện
+      dự án", 2 dự án con đóng theo, BGT-2026-00012/13 sang "Đóng" → `DB::rollBack()`, dữ liệu nguyên trạng.
+
+Dọn sau test: xoá BGT-2026-00014 (0 group / 0 source còn lại), trả BGT-2026-00011 về "Đang tạo",
+gỡ role "Xem giá vốn ERP" cấp tạm cho NV#13, xoá payment_terms test.
+
+CHƯA test: build production FE (chỉ chạy dev server), bảng "Dự án con" khi dự án cha chưa có con nào.
+
+### Bổ sung mục 2 (2026-08-03 — user phản hồi "vẫn không đủ trường")
+
+- [x] Bảng "Dự án con" **bê nguyên bộ cột của màn danh sách dự án TKT** thay vì chỉ thêm 4 cột như lần đầu:
+      đủ 20 cột theo đúng thứ tự `allColumns` của `index.vue` (STT, Mã - Tên dự án TKT, Loại DA, Tiến trình
+      dự án, Giải pháp, Version giải pháp, Khách hàng, Khách hàng cuối, Giai đoạn dự án, Quy mô dự án,
+      Phân loại đầu tư, Nguồn vốn, Tổng số ngày hoàn thành, Phòng làm GP, PM giải pháp, Ngày KH cần GP,
+      Ngày dự kiến chốt GP, Ứng dụng, Lĩnh vực KD KH, Loại hình hoạt động KH) + copy nguyên cell template
+      và các hàm đổi id → tên (getStatusLabel/getNameScale/getNameInvestmentType/getNameFundingSource),
+      cộng 2 cột đặc thù cha - con ở cuối (Ngân sách dự kiến, Thời gian). Nút Xem/Sửa chuyển vào cột
+      Mã - Tên như màn danh sách, bỏ cột "Thao tác" riêng.
+      API `children` đã dùng chung `ProspectiveProjectResource` nên trả sẵn đủ trường → không sửa BE.
+      Verify: 22 cột render đúng, badge "Dự án con", pill tiến trình đúng màu, 0 lỗi console của component
+      (8 warning còn lại là của TktTab/ChooseErpCustomerModal/SolutionApprovalModal, có sẵn từ trước).
+      CHƯA bê: bộ lọc nâng cao và nút "Cấu hình cột hiển thị" của màn danh sách (nút này lưu cấu hình theo
+      key `prospective_projects` dùng chung — bật ở tab sẽ ảnh hưởng luôn màn danh sách).
+
+### Bổ sung mục 10 (2026-08-03 — user: "icon nhỏ thôi, như ở tab Dự án con")
+
+- [x] Bỏ `tp-icon-btn` (ô vuông 32×32) + `style="font-size: 17px"` khỏi **cả hai** vùng của tab Báo giá
+      (Báo giá từ dự án con + Báo giá tổng), dùng đúng kiểu nút của bảng tab "Dự án con":
+      `class="btn btn-light border btn-sm mr-1"`, icon để cỡ mặc định. Sửa cả 2 vùng vì yêu cầu gốc #10921
+      là 2 vùng phải thống nhất — chỉ thu nhỏ vùng tổng sẽ lại lệch nhau. Class `.tp-icon-btn` trong file
+      đã hết chỗ dùng nên xoá luôn.
+      Verify: icon 13px và nút 29×28 ở cả 2 vùng, khớp tab "Dự án con" (13px).
+
+### Bổ sung mục 5 (2026-08-03 — user: "ở màn show tôi đang thấy khác nhau")
+
+- [x] Lần đầu mới làm khớp CHẾ ĐỘ SỬA (section-header + thu gọn + editor như quotations/_id/edit.vue),
+      còn chế độ XEM vẫn là hộp `terms-box` bo góc — khác màn xem báo giá con. Nay phân nhánh theo chế độ:
+      * Tạo/Sửa: giữ section "Thanh toán & Ghi chú nội bộ" + nút thu gọn (như edit.vue báo giá con)
+      * Xem: bảng 2 cột y hệt quotations/_id/index.vue — hàng "Điều khoản báo giá" (đã thay biến) +
+        hàng "Ghi chú nội bộ" chỉ hiện khi có; không tiêu đề, không hộp riêng.
+      Style copy đúng thông số màn xem báo giá con nhưng đặt trong class riêng `.terms-table`, KHÔNG sửa
+      `.info-table` chung (đang dùng cho khối Thông tin chung của chính màn này). Gỡ `.terms-box` hết dùng.
+      Verify bằng getComputedStyle 2 màn: padding 6px 10px · font-size 12.5px · color rgb(55,65,81) ·
+      nền rgb(249,250,251) · width 160px · vertical-align top — khớp 100%.
+      KHÁC BIỆT CÒN LẠI (chưa làm, cần chốt): màn xem báo giá con có thêm hàng "Ghi chú Kinh doanh"
+      (ô nhập + nút Lưu ghi chú) khi báo giá Đã duyệt — báo giá tổng có sẵn cột `sales_note` nhưng chưa
+      có UI này, thêm vào là thêm hành vi nghiệp vụ mới nên đang để nguyên.
+
+### Bổ sung mục 5 — hàng "Ghi chú Kinh doanh" (2026-08-03, user: "làm giống hệt báo giá con")
+
+- [x] BE: `SummaryQuotationService::updateSalesNote()` — bản sao của `QuotationService::updateSalesNote`
+      cho báo giá tổng: chỉ sửa khi Đã duyệt (status 4) + chỉ NV KD phụ trách chính của DỰ ÁN CHA,
+      ghi lịch sử `update_sales_note` (from = to = 4, meta old/new). KHÔNG tái dùng `updateHeader`
+      vì hàm đó `ensureEditable` chặn ở mọi trạng thái khác "Đang tạo".
+      Thêm `SummaryQuotationController::updateSalesNote` + route `PUT assign/summary-quotations/{id}/sales-note`
+      (đối xứng route của báo giá thường).
+- [x] FE: hàng "Ghi chú Kinh doanh" ở cuối bảng điều khoản màn xem, hiện khi status = 4 —
+      KD phụ trách thấy ô nhập + nút "Lưu ghi chú", người khác chỉ đọc (giống hệt quotations/_id/index.vue).
+      `form.sales_note` bổ sung ở `_id/index.vue`, lưu xong emit `sales-note-saved` → page `loadData()`.
+- [x] Verify: API chặn đúng 3 case (người không phụ trách → 422 "Chỉ NV Kinh doanh phụ trách dự án...",
+      bản Đang tạo → 422 "Chỉ có thể sửa ghi chú khi báo giá tổng đã duyệt", sale chính → 200);
+      UI nhập + bấm Lưu thật → DB lưu đúng + sinh 1 dòng lịch sử `update_sales_note`; đăng nhập NV khác
+      thì hàng chỉ hiển thị text, không có ô nhập/nút lưu. Đã xoá sales_note + 2 dòng history test.
