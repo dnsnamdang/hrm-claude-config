@@ -96,3 +96,34 @@ User chốt: export/import Excel để sau; tab "Thông tin hàng hóa" chỉ xe
 ## Bugfix
 
 - [x] Nút Export Excel màn chi tiết "không hiện": ROOT CAUSE = theme đặt `$secondary: $white` → `variant="outline-secondary"` render viền + chữ TRẮNG trên nền trắng = vô hình. Fix: đổi về `variant="secondary"` + đặt nút trên hàng `d-flex justify-content-end mb-2` ngay trên `HandlingSummaryTabs`, gỡ CSS cũ. Đã verify bằng Playwright (PXL-2026-0001) — nút hiện rõ, enabled.
+
+## Bổ sung cột Đơn giá báo giá — tab Thông tin hàng hóa (2026-07-29)
+
+- [x] Tab "Thông tin hàng hóa" (HandlingSummaryTabs) thêm cột **Đơn giá báo giá (gồm VAT)** — canh phải, chỉ loại KH (`!isInternal`), fmtNum, rỗng → '—'. Nguồn: `contract_products.price_quotation` (nhãn "Đơn giá báo giá (gồm VAT)" — snapshot báo giá trong HĐ).
+- [x] BE `SupplyHandlingService::productInfoMap` — thêm `price_quotation` vào query contract_products + map trả về (`$cp ? $cp->price_quotation : null`). Chỉ có giá trị khi dòng gắn HĐ; hàng ngoài HĐ / nội bộ = null → FE hiện '—'.
+- Ghi chú: ban đầu làm theo "Giá kế hoạch" (`bid_package_products.price_plan`) → user đổi sang "Đơn giá báo giá".
+
+## Popup chi tiết phiếu — BC nhu cầu mua hàng (2026-07-29)
+
+> Màn: `supply/reports/purchase-demand`. Cột "Phiếu đề xuất mua" có 2 mã: PXL (`handling_code`) + đề xuất gốc (`proposal_code`).
+
+- [x] User chốt: bấm **cả 2 mã** đều mở popup chi tiết.
+- [x] BE `SupplyReportService::purchaseDemand` — select thêm `sh.id as handling_id`, `sp.id as proposal_id`; mỗi `line` trả thêm `handling_id` + `proposal_id`.
+- [x] FE `purchase-demand/index.vue`: 2 mã thành link (`.lnk`). Bấm PXL → `openHandlingDetail(id)` gọi `GET supply/supply-handlings/{id}` → modal `pdr-handling-modal` (header + bảng hàng hóa: đặt đơn / đề xuất mua / đã xử lý). Bấm đề xuất → `openProposalDetail(id)` gọi `GET supply/supply-proposals/{id}` → modal `pdr-proposal-modal` (header + bảng: SL đề xuất / đã xử lý). Có trạng thái loading, đọc `res.data.data`. Route show 2 endpoint không gắn permission → truy cập được.
+- [x] Sửa giao diện popup theo mẫu `sale/report-project-contract`: dùng `b-modal` + `b-table-simple` (`modal-sticky-table`, header sticky), khối meta 2 cột (`popup-meta` — bảng `table-sm table-borderless`), khung cuộn `modal-table-scroll`, footer tổng số mặt hàng `modal-table-footer`. Thêm computed `handlingProducts`/`proposalProducts`. Bỏ CSS cũ `pdr-modal-loading`; thêm block non-scoped `.pdr-drill-modal .modal-body`.
+- [x] Popup đề xuất đổi `size="lg"` → `size="xl"` cho bằng popup phiếu xử lý.
+
+## Thêm 3 cột báo cáo — BC nhu cầu mua hàng (2026-07-29)
+
+> Màn: `supply/reports/purchase-demand`, nhóm cột "Chi tiết đề xuất mua". Thêm: Mục đích, Cty thực hiện, Ngày đề xuất.
+
+- [x] User chốt: **Cty thực hiện = công ty Bên A (main_company) của HĐ BÁN liên kết theo dòng** (`shp.contract_id` → `contracts.main_company.code`, = `contract_company`). Không dùng `company_id` trên phiếu (luôn null vì không set khi tạo).
+- [x] BE `SupplyReportService::purchaseDemand`: select thêm `shp.contract_id`, `sp.purpose`, `sp.created_at as proposal_created_at`. Enrich `$companyByContract` = map contract_id → `optional(main_company)->code` (eager load `Contract::with('main_company')`, connection mysql2). Mỗi `line` trả thêm `purpose_name` (helper `purposeName` map `SupplyProposal::PURPOSES` 1 Tặng/2 Mượn, KH rỗng), `company_name`, `proposal_date` (`fmtDate` của created_at).
+- [x] FE `purchase-demand/index.vue`: group header colspan 6→9; thêm 3 `<th>` (Mục đích / Cty thực hiện / Ngày đề xuất) + 3 `<td>` (`line.purpose_name` / `line.company_name` / `line.proposal_date`). Colspan dòng rỗng 15→18, 16→19. Excel export thêm 3 cột tương ứng (`purpose_name`, `company_name`, `proposal_date`).
+
+## Link mã trong list PXL — supply_handlings (2026-07-29)
+
+> Màn: `supply/supply_handlings` (list). Thêm link cho cột Mã PXL + Đề xuất gốc.
+
+- [x] `SupplyHandlingResource` (list) sẵn có `supply_proposal_id` → dùng để link đề xuất gốc.
+- [x] FE `supply_handlings/index.vue`: thêm cell template `code` (link `<a>` → `onViewClick` mở chi tiết PXL) và `proposal_code` (link → `onViewProposalClick` → `/supply/supply_proposals/add?mode=show&id={supply_proposal_id}`, guard theo `supply_proposal_id`, không có thì hiện text/'—'). Style `text-primary` mirror màn đề xuất.

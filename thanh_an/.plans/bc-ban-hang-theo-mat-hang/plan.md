@@ -57,6 +57,20 @@
 - [x] Thêm **2 bộ lọc** cấp mặt hàng: **Nhóm HH** (`product_group_name`) và **Loại HH** (`import_type_id`: 1=Nhập khẩu, 2=Phân phối lại). Lọc client-side trên `rawItems` (dữ liệu đã tải sẵn về, không đổi API).
   - FE: template thêm 2 Select2 trong khối filter (Nhóm HH dùng `productGroupOptions` đã có sẵn, bind `product_group_name`; Loại HH dùng options cố định `importTypeOptions` [{1,Nhập khẩu},{2,Phân phối lại}], bind `import_type_id`). `formFilter` thêm `import_type_id` (product_group_name đã có). Computed `importTypeOptions`. Watcher `import_type_id`. `buildRows` thêm điều kiện lọc `import_type_id` (product_group_name đã lọc sẵn). `reset` thêm `import_type_id: null`.
 
+## Bổ sung sau (2026-07-30)
+- [x] Thêm **2 bộ lọc khoảng ngày** (server-side, bấm "Áp dụng" mới lọc): **Ngày ký HĐ** từ→đến và **Ngày kết thúc HĐ** từ→đến. UI: label nhóm phía trên + placeholder trong ô, dùng `<date-picker>` (vue2-datepicker, `type=date` `format=DD/MM/YYYY` `value-type=YYYY-MM-DD` `clearable`) giống pattern `reports/guarantee_contract`.
+  - FE: `formFilter` đổi `date_from/date_to` → `sign_date_from/sign_date_to`, thêm `end_date_from/end_date_to`; 4 ô date-picker đặt **ngay trên dòng tiêu đề** (`header-action-row`, luôn hiển thị, không nằm trong panel Bộ lọc) — bar `date-filter-bar`/`date-field`, mỗi ô `@change="getData"` lọc ngay khi chọn; đưa cả 4 vào `serverFilter` của `getData` + `reset`.
+  - BE: `saleProductReport` đọc `sign_date_from/sign_date_to` (lọc `c.contract_sign_time`) và `end_date_from/end_date_to` (lọc `c.contract_end_time`). Giữ tương thích: vẫn nhận `date_from/date_to` cũ map vào ngày ký.
+  - Thêm nút **reset icon** (`variant=success`, `fa-sync-alt`) cạnh cụm nút Ẩn cột TT / Thu gọn / Bộ lọc trên đầu → gọi `reset()` (xóa toàn bộ filter + tải lại). Bỏ tiêu đề trùng "Báo cáo bán hàng theo mặt hàng" ở dòng này. Cụm nút `size=sm` cho gọn.
+- [x] Popup **Chi tiết Hợp đồng**: thêm dòng meta **Ngày kết thúc** (`contract_end_time`, `fmtDate`) ngay sau "Ngày ký".
+- [x] Tinh chỉnh UI cụm lọc trên `header-action-row`: 3 nút (Ẩn cột TT / Thu gọn / Bộ lọc) **bỏ text, chỉ hiện tooltip khi hover** (`v-b-tooltip.hover` + `:title`), thu nhỏ `btn-icon-only` (31×31). Nút **reset** cũng thu nhỏ như 2 nút kia và đưa **sát ô "Ngày kết thúc đến"** (`.date-reset` cuối `date-filter-bar`).
+- [x] Cho 4 ô date-picker **cao bằng ô input/select bên cạnh**: global `_datepicker.scss` ép `.mx-input` = `$input-height` (~34px, có `!important`) trong khi `.form-control` toàn cục = 38px → date-picker thấp hơn. Fix: `::v-deep .mx-input { height: 38px !important; box-sizing: border-box !important }` (độ đặc hiệu cao hơn + `!important` để thắng rule global). Đã thử ép line-height/wrapper nhưng làm vỡ layout → rút gọn chỉ đổi height.
+- [x] **Bật nút Xuất Excel** (trước bị `v-if="false"`): hàm `exportExcel`/`generateWorkbook` (ExcelJS) đã có sẵn, xuất từ `filteredItems` nên **tự động theo trạng thái lọc hiện tại** (cả filter client-side keyword/cột lẫn server-side ngày ký/kết thúc/công ty/khách hàng). Nút để dạng `btn-icon-only` `variant=success`, tooltip "Xuất Excel (theo bộ lọc hiện tại)", có spinner khi đang xuất. Bỏ CSS `.btn-export min-width` thừa.
+- [x] **Ngày kết thúc tính cả phụ lục gia hạn thời gian**: khi phụ lục gia hạn được DUYỆT, `ContractAnnexTimeService@approve` update thẳng `contracts.contract_end_time` = ngày mới → bộ lọc `whereDate(c.contract_end_time)` đã tự động đúng, KHÔNG cần sửa. Nhưng popup dùng `ContractDetailResource` trả **bản gốc v0** (ưu tiên `version0Data`) → lệch. Fix (không đụng resource dùng chung): report select thêm `c.contract_end_time as contract_end_time_current` → đưa vào flow (`contract_end_time`); FE `openHDModal(id, endTime)` truyền `overrides` cho `openDocModal` để ghi đè `detail.contract_end_time` bằng ngày hiện hành từ dòng report.
+
+- [x] **Hoán 2 cột hiển thị**: cột cây "Hàng hóa" trước hiện `product_code — product_name` → đổi hiện `product_code — product_trade_name` (tên thương mại). Cột "Tên thương mại" (`product_trade_name`) → đổi **tiêu đề "Mã hàng hóa"** + data hiện `product_code` (bỏ class `col-wrap` vì mã ngắn).
+- [x] **Excel xuất dạng cây gộp theo hàng hóa** (thay bảng phẳng): viết lại `generateWorkbook` — bỏ cột "Tên thương mại"/"Tên hàng hóa"/"Khách hàng" riêng, thêm cột **"Hàng hóa"** làm cột cây. 3 tầng giống màn: dòng **TỔNG CỘNG** (đậm, nền xanh nhạt, điền cột số tổng từ `grandTotal`) → dòng **MẶT HÀNG** (STT La Mã, `mã — tên thương mại` + đủ info HH: mã nội bộ/ĐVT/mảng/nhóm/loại/quy cách/hãng, đậm nền `#EEF1F5`, cột số trống) → dòng **KHÁCH HÀNG** (STT `n`, tên khách thụt lề, in nghiêng nền `#F7F9FB`) → dòng **FLOW** (STT `n.m`, mã DT·tên DT thụt lề, các cột DT/BG/GT/HĐ). Helper `styleRow` gán border + căn phải/`#,##0` cho cột số; căn trái cột cây. Vẫn lặp trên `filteredItems` nên tôn trọng bộ lọc. Cột Thực xuất vẫn để trống (scope v1).
+
 ## Còn lại (cần user chạy/kiểm)
 - [ ] Chạy `npm run dev` client, mở `/contract/reports/sale-product` kiểm thị giao diện + collapse + drill-down + Excel.
 - [ ] Gán quyền `Xem báo cáo bán hàng theo mặt hàng` cho role qua UI phân quyền.
@@ -72,4 +86,18 @@ Blocked:
 Vừa hoàn thành: cột + bộ lọc **Mã nội bộ** (`internal_code`). BE: `saleProductReport` select `COALESCE(NULLIF(cp.internal_code,''), pr.internal_code)`, `buildSaleProductTree` thêm field node. FE: ô lọc input `internal_code`, cột "Mã nội bộ" (col-info) đặt sau Hạng mục, TỔNG CỘNG +1 td, colspan 19→20, watch/reset/buildRows + gộp vào keyword search, export Excel +1 cột.
 Đang làm dở: chưa chạy nuxt dev xác nhận render (Node 14, cần user chạy)
 Bước tiếp theo: user chạy client mở /contract/reports/sale-product kiểm tra lọc + cột hiển thị + Excel
+Blocked:
+
+### Checkpoint — 2026-07-30
+Vừa hoàn thành: **2 bộ lọc khoảng ngày server-side** — Ngày ký HĐ (từ→đến) + Ngày kết thúc HĐ (từ→đến).
+  - BE `ProjectController@saleProductReport`: đọc `sign_date_from/sign_date_to` (fallback từ `date_from/date_to` cũ) lọc `whereDate(c.contract_sign_time)`; đọc `end_date_from/end_date_to` lọc `whereDate(c.contract_end_time)`.
+  - FE `sale-product/index.vue`: đổi field `date_from/date_to`→`sign_date_from/sign_date_to`, thêm `end_date_from/end_date_to`; 4 ô `<date-picker>` (label nhóm phía trên + placeholder) trong khối filter; đưa cả 4 vào `serverFilter` (getData) + `reset`; CSS `.filter-label` + ép `.mx-datepicker` width 100%.
+Đang làm dở: chưa chạy nuxt dev xác nhận render (Node 14, cần user chạy)
+Bước tiếp theo: user chạy client mở /contract/reports/sale-product → mở Bộ lọc, chọn khoảng ngày ký/kết thúc → bấm Áp dụng, đối chiếu số liệu
+Blocked:
+
+### Checkpoint — 2026-07-30 (bổ sung UI)
+Vừa hoàn thành: hoàn thiện UI cụm lọc trên dòng tiêu đề — 4 ô ngày đưa lên `header-action-row` chia đều, bỏ tiêu đề trùng; 3 nút icon-only + tooltip hover, thu nhỏ 31×31; nút reset thu nhỏ đặt sát ô "Ngày kết thúc đến"; popup HĐ thêm dòng "Ngày kết thúc" (ghi đè bằng ngày hiện hành từ report — đã bao gồm phụ lục gia hạn); **4 ô date-picker cao bằng ô select2** qua `::v-deep .mx-input` (công thức `calc(1.5em + 0.8rem + 2px)`).
+Đang làm dở: không
+Bước tiếp theo: user chạy nuxt dev mở /contract/reports/sale-product kiểm tra: 4 ô ngày cùng chiều cao với select cạnh, tooltip 3 nút, reset, popup ngày kết thúc
 Blocked:

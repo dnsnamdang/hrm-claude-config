@@ -3,3 +3,4 @@
 - Quyền xem tất cả =>> Lấy tất cả bản ghi trừ trạng thái Đang tạo / Nháp
 - Các quyền còn lại query theo các field tương ứng
 - Bộ lọc luôn bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Dùng `<b-button v-b-toggle>` + `<b-collapse>` cho filter panel
+- **Bộ lọc KHÔNG dùng `<input>` / `<select>` native**: select → `base-select2` (options `{ id, text }`, `:settings="{ allowClear: true }"`); ô tìm kiếm → `b-form-input`. Khi allowClear trả `null` → guard filter dùng truthy, không so sánh `''`

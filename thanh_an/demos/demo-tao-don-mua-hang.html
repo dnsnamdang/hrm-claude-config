@@ -43,7 +43,7 @@
   .product-table td.cell-propsum{ background:#f7faf9; color:#2c3e50; }
   .product-table input.inp-oq{ width:78px; text-align:right; }
   .product-table input.inp-note{ min-width:170px; }
-  .product-table input.inp-buyer{ min-width:150px; }
+  .product-table input.inp-buyer, .product-table select.inp-buyer{ min-width:160px; }
   .product-table td.cell-saleco{ vertical-align:top; text-align:center; line-height:1.6; }
   .product-table input.inp-oq.oq-over{ background:#fdecea; border-color:#e74c3c; color:#c0392b; font-weight:700; }
   .product-table input.inp-oq.oq-under{ background:#fff8e1; border-color:#f0ad4e; color:#a97812; font-weight:700; }
@@ -158,7 +158,8 @@
             <select id="f-supplier" class="custom-select custom-select-sm"><option value="">— Chọn NCC —</option></select></div>
           <div class="form-group col-md-4"><label>Mã NCC</label><input id="f-sup-code" class="form-control form-control-sm" readonly></div>
           <div class="form-group col-md-4"><label>MST</label><input id="f-sup-tax" class="form-control form-control-sm" readonly></div>
-          <div class="form-group col-md-4"><label>Số điện thoại liên hệ</label><input id="f-sup-phone" class="form-control form-control-sm"></div>
+          <div class="form-group col-md-4"><label>Người liên hệ</label><input id="f-sup-contact" class="form-control form-control-sm"></div>
+          <div class="form-group col-md-4"><label>SĐT người liên hệ</label><input id="f-sup-phone" class="form-control form-control-sm"></div>
           <div class="form-group col-md-8"><label>Địa chỉ <small class="text-muted">(sửa được theo địa chỉ thực lấy hàng)</small></label>
             <input id="f-sup-addr" class="form-control form-control-sm"></div>
           <div class="form-group col-md-4"><label>Hình thức vận chuyển</label>
@@ -319,13 +320,13 @@ const DEMANDS = [
 ];
 
 const SUPPLIERS = {
-  ROCHE:   { name:'Công ty TNHH Roche Việt Nam', code:'NCC-ROCHE', tax:'0312345678', phone:'028 3822 9999',
+  ROCHE:   { name:'Công ty TNHH Roche Việt Nam', code:'NCC-ROCHE', tax:'0312345678', contact:'Nguyễn Thị Hồng Nhung', phone:'028 3822 9999',
              addr:'Tầng 12, Tòa nhà Pearl Plaza, 561A Điện Biên Phủ, TP Hồ Chí Minh',
              debt:{ total:1250000000, detail:{ TA:450000000, AV:620000000, VL:180000000 } } },
-  THANHAN: { name:'Công ty CP Thành An', code:'NCC-THANHAN', tax:'0106622681', phone:'0243 927 5777',
+  THANHAN: { name:'Công ty CP Thành An', code:'NCC-THANHAN', tax:'0106622681', contact:'Trần Quốc Bảo', phone:'0243 927 5777',
              addr:'Số 98 đường Yên Phụ, Phường Ba Đình, TP Hà Nội',
              debt:{ total:320000000, detail:{ AV:200000000, TB:120000000 } } },
-  DEKA:    { name:'Công ty Deka', code:'NCC_234', tax:'876534099', phone:'98765444',
+  DEKA:    { name:'Công ty Deka', code:'NCC_234', tax:'876534099', contact:'Lê Minh Khoa', phone:'98765444',
              addr:'456 Lạc Long Quân, Tây Hồ, Hà Nội',
              debt:{ total:0, detail:{} } },
 };
@@ -334,6 +335,19 @@ const POS = {
   'PO-2026-01':{ supplier:'ROCHE',   signer:'TA', terms:'Thanh toán 100% trong 30 ngày kể từ ngày nhận đủ hàng và hóa đơn hợp lệ.' },
   'PO-2026-02':{ supplier:'THANHAN', signer:'AV', terms:'Tạm ứng 50% khi đặt hàng, thanh toán 50% còn lại trong 15 ngày sau giao hàng.' },
 };
+
+/* Danh mục công ty trong tập đoàn (nguồn cho select "Cty thực hiện mua") */
+const COMPANIES = {
+  TA: 'Công ty CP Thành An',
+  AV: 'Công ty CP Anh Vũ',
+  VL: 'Công ty CP Vạn Lộc',
+  TB: 'Công ty CP Thái Bình',
+};
+function companyOptions(selected){
+  return '<option value="">— Chọn công ty —</option>'
+    + Object.keys(COMPANIES).map(c =>
+        `<option value="${c}" ${c===selected?'selected':''}>${COMPANIES[c]}</option>`).join('');
+}
 
 /* HĐ bán → Mã Công ty thực hiện bán (nguồn cho cột "Cty thực hiện bán") */
 const SALE_CONTRACTS = {
@@ -384,8 +398,9 @@ function applySupplier(key){
   const s = SUPPLIERS[key];
   document.getElementById('f-sup-code').value  = s ? s.code : '';
   document.getElementById('f-sup-tax').value   = s ? s.tax : '';
-  document.getElementById('f-sup-addr').value  = s ? s.addr : '';
-  document.getElementById('f-sup-phone').value = s ? s.phone : '';
+  document.getElementById('f-sup-addr').value    = s ? s.addr : '';
+  document.getElementById('f-sup-contact').value = s ? s.contact : '';
+  document.getElementById('f-sup-phone').value   = s ? s.phone : '';
   const total = document.getElementById('debt-total'), detail = document.getElementById('debt-detail');
   if(!s){ total.textContent = '0 đ'; detail.innerHTML = '<div class="text-muted" style="font-size:12px;">Chọn NCC để xem chi tiết dư nợ theo công ty.</div>'; return; }
   total.textContent = fmtD(s.debt.total);
@@ -643,7 +658,7 @@ function renderTable(){
       <td><input type="number" min="0" max="100" class="form-control form-control-sm inp-vat" data-f="vat" value="${l.vat}"></td>
       <td class="num cell-amount">${fmtN(amount)}</td>
       <td class="cell-saleco col-demand">${saleCoCell}</td>
-      <td><input class="form-control form-control-sm inp-buyer" data-f="buyerCompany" value="${esc(l.buyerCompany||'')}" placeholder="Nhập cty thực hiện mua"></td>
+      <td><select class="custom-select custom-select-sm inp-buyer" data-f="buyerCompany">${companyOptions(l.buyerCompany||'')}</select></td>
       <td class="text-center">${needCell}</td>
       <td><input class="form-control form-control-sm inp-note" data-f="note" value="${l.note||''}" placeholder="Ghi chú"></td>
       <td class="text-center"><button class="btn btn-xs btn-outline-danger btn-del" title="Xóa dòng"><i class="mdi mdi-delete"></i> Xóa</button></td></tr>`;

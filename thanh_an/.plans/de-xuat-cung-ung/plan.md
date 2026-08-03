@@ -142,3 +142,25 @@ User chốt: áp dụng cho **Phiếu xử lý cung ứng (nội bộ)**; Dư n�
 
 - BE `sort_by` chưa whitelist (rủi ro thấp — FE chỉ gửi cột hợp lệ).
 - BE route dùng literal chuỗi quyền thay `SupplyProposal::PERM_*` (cosmetic).
+
+## Validate SL đề xuất (2026-07-31, @khoipv)
+
+- [x] FE `supply/supply_proposals/add.vue` — hàm `validate()`: chặn submit (cả Lưu nháp & Gửi) khi có dòng hàng hóa `quantity` không > 0. Toast "SL đề xuất của hàng hóa phải lớn hơn 0."
+- [x] FE `GoodsTable.vue` — báo lỗi inline ngay dưới ô SL đề xuất của dòng vi phạm (viền đỏ + chữ đỏ "SL đề xuất phải lớn hơn 0"). Prop `show-errors` do add.vue bật khi validate lỗi, tắt khi hợp lệ.
+
+## Polish + validate (2026-08-01, @khoipv)
+
+- [x] FE `supply/supply_proposals/add.vue` — "Ngày cần giao" chặn chọn ngày quá khứ (`disabled-date=disabledBeforeToday`).
+- [x] BE `StoreSupplyProposalRequest` — `delivery_date` thêm `after_or_equal:today` khi tạo mới (edit không chặn), message tiếng Việt.
+- [x] FE `supply/supply_proposals/index.vue` + `inbox.vue` — cột Khách hàng: loại nội bộ hiển thị `usage_customer_name`, loại KH hiển thị `customer_name`.
+- [x] FE `supply/supply_proposals/add.vue` — mọi lỗi validate 422 hiển thị inline ngay dưới đúng trường (thêm `formError`, `handleSubmitError` map lỗi từng trường, `<base-helper-error>` dưới type/purpose/customer_id/usage_customer_id/delivery_date/note/content).
+
+## HĐ mua — chặn tỉ lệ % (2026-08-01, @khoipv)
+
+- [x] FE `purchase_contracts/components/GeneralTab.vue` — ô Tỷ lệ (%) đợt thanh toán: đổi sang native input `:value`+`@input="onPctInput"`, clamp [0,100] (âm→0, >100→100), đồng bộ lại ô khi bị chặn. Số tiền đợt = pct/100×tổng nên tự hết âm/vượt.
+- [x] FE `GeneralTab.vue` — chặn ngày: Ngày ký không cho quá khứ (`disabledBeforeToday`); Ngày kết thúc + Ngày thanh toán không trước ngày ký (`disabledBeforeSign`); đổi ngày ký tự xóa các ngày đã chọn nếu sớm hơn (`onSignChange`).
+- [x] BE `StorePurchaseContractRequest` — chặn ngày: `sign_time` after_or_equal:today (chỉ khi tạo mới); `end_time` after_or_equal:sign_time; `progress.*.time` after_or_equal:sign_time; message tiếng Việt.
+
+## Chỉnh UI nhỏ (2026-08-03, @khoipv)
+
+- [x] FE `supply/supply_proposals/add.vue` — ô "Ghi chú" thiếu placeholder → thêm `placeholder="Nhập ghi chú"`.
