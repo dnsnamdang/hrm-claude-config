@@ -145,6 +145,7 @@ git merge-base --is-ancestor gop_db HEAD && echo GOPDB # nhánh có checkout ra 
 
 ```
 .plans/gop-db/
+├── STATUS.md                    ← STATUS RIÊNG của phần gộp DB (Đang làm / Tạm dừng / Hoàn thành)
 ├── design.md                    ← NỀN TẢNG chung của việc gộp DB (đọc TRƯỚC khi làm bất kỳ feature nào)
 ├── [feature-a]/design.md + plan.md
 ├── [feature-b]/design.md + plan.md
@@ -154,7 +155,8 @@ docs/superpowers/specs/gop-db/YYYY-MM-DD-<feature>-design.md   ← spec chi ti�
 
 - Code đang làm trên nhánh `gop_db` (hoặc nhánh con của nó) → **KHÔNG** tạo folder ở `.plans/[feature]/` mà tạo ở **`.plans/gop-db/[feature]/`**, kể cả khi tên feature nghe không liên quan gì tới database (VD: `finance-account-catalog`)
 - Ngược lại, nhánh khác → vẫn để ở `.plans/[feature]/` như cũ
-- `STATUS.md` vẫn dùng chung 1 file ở `.plans/STATUS.md`, ghi đường dẫn đầy đủ `.plans/gop-db/[feature]/plan.md`
+- **STATUS riêng**: mọi cập nhật trạng thái (tạo feature mới, `wrap up`, chuyển mục, merge xong) ghi vào **`.plans/gop-db/STATUS.md`**, KHÔNG ghi vào `.plans/STATUS.md`. File gốc chỉ giữ 1 khối con trỏ sang đây
+- Đầu session, nếu đang đứng trên nhánh `gop_db` → đọc **`.plans/gop-db/STATUS.md`** thay cho `.plans/STATUS.md`
 - Cấu trúc bên trong mỗi feature giữ nguyên quy luật ở mục trên (design.md / plan.md / srs / testcase)
 
 ### 2. Code — luôn đứng trên nhánh `gop_db`
@@ -176,9 +178,9 @@ docs/superpowers/specs/gop-db/YYYY-MM-DD-<feature>-design.md   ← spec chi ti�
 
 **Bắt đầu session mới — bắt buộc theo thứ tự:**
 
-1. Đọc `.plans/STATUS.md`
+1. Đọc `.plans/STATUS.md` — nếu đang đứng trên nhánh `gop_db` (hoặc nhánh con của nó) thì đọc `.plans/gop-db/STATUS.md`
 2. Tìm feature đang ở mục "Đang làm"
-3. Đọc `.plans/[feature]/design.md` + `plan.md`
+3. Đọc `.plans/[feature]/design.md` + `plan.md` (nhánh `gop_db` → `.plans/gop-db/[feature]/`)
 4. Báo lại: "Đang làm [feature], checkpoint cuối: [X], task tiếp theo: [Y]"
 5. Chờ xác nhận trước khi bắt đầu
 
