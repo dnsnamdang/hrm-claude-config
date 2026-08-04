@@ -154,6 +154,12 @@
   - User revert Task 38 (soft badge), yêu cầu dùng đúng style pill pastel của danh sách HĐ bán.
   - FE `index.vue`: dùng component dùng chung `BaseStatusColor` (:status + :colorMap) thay `b-badge`. colorMap map 5 trạng thái sang class pill giống contract: 1 Nháp→pj-status-blue (giống "Đang tạo"), 2 Chờ duyệt→pj-status-yellow, 3 Đã duyệt→pj-status-green, 4 Từ chối→pj-status-red, 5 Hủy→pj-status-rose. Không đổi BE, không sửa component dùng chung.
 
+### Checkpoint — 2026-08-03 (Task 38f — root cause dấu "—" lệch cao 4 cột tham chiếu)
+Vừa hoàn thành: Tìm ra và sửa root cause thật (sau 5 lần fix CSS hụt): newline template + `pre-line` tạo dòng trống trong 3 cột ghi chú → dấu "—" cột Đơn giá báo giá cao hơn. Fix: span.ref-val bao sát giá trị (pre-line chỉ ở value), td ghi chú về white-space normal. Repro Playwright đo pixel xác nhận trước/sau.
+Đang làm dở: (không)
+Bước tiếp theo: user reload supply/purchase_orders/add, thêm dòng hàng có HĐ bán nhưng chưa có báo giá → dấu "—" 4 cột tham chiếu phải thẳng hàng; ghi chú nhiều dòng vẫn xuống dòng đúng.
+Blocked:
+
 ### Checkpoint — 2026-08-03 (Task 38 — badge trạng thái soft/pill)
 Vừa hoàn thành: Danh sách đơn mua hàng đổi badge trạng thái sang dạng "soft" nền nhạt + pill bo tròn — "Nháp" (secondary) nhẹ nhàng, đồng bộ đẹp cho cả 5 trạng thái.
 Đang làm dở: (không)
@@ -277,3 +283,19 @@ Blocked:
 - [x] Task 38b — Canh đều dấu "—" (lần 2, dứt điểm) 4 cột tham chiếu ở ProductsTab (2026-08-03, @khoipv)
   - Task 38 (chỉ sửa .ref-none) không đủ: dấu "—" trong ảnh nằm ở nhánh `v-if` (.ref-line, giá trị refPrice/refNote='—'), không phải .ref-none. Cột Đơn giá báo giá còn `td.num` (text-align:right) → dấu dạt phải, lệch với 3 cột ghi chú căn trái.
   - Sửa: bỏ class `num` ở cả `<th>` lẫn `<td>` cột "Đơn giá báo giá" → 4 cột tham chiếu đều căn trái, cùng .ref-line (line-height 1.5) + td vertical-align:middle → dấu "—" thẳng hàng ngang + dọc. `.ref-none` đổi về căn trái + line-height:1.5 cho khớp .ref-line.
+
+- [x] Task 38c — Canh giữa DỌC nội dung 4 cột tham chiếu bằng flex wrapper (2026-08-03, @khoipv)
+  - Gốc rễ: các `.ref-line`/`.ref-none` là block con của td → `td vertical-align:middle` KHÔNG middle được block con (chỉ áp inline/table-cell). Dòng cao thấp khác nhau → dấu "—" dính top, lệch giữa các dòng.
+  - Sửa: bọc nội dung mỗi ô 4 cột vào `<div class="ref-wrap">` (flex-column, justify-center, height:100%) → nội dung căn giữa dọc thật theo chiều cao ô. Dấu "—" / dòng ref-line 4 cột thẳng hàng ngang (đều căn trái từ 38b) + dọc.
+
+- [x] Task 38d — Hack height:1px cho td.cell-ref để .ref-wrap flex căn giữa dọc ăn thật (2026-08-03, @khoipv)
+  - 38c thêm .ref-wrap{height:100%} nhưng KHÔNG ăn: trong <td>, height:100% của con = auto vì td không có chiều cao xác định → nội dung vẫn dính top.
+  - Sửa: `td.cell-ref { height: 1px }` làm "mồi" (trình duyệt coi là min-height, ô vẫn cao theo nội dung) → .ref-wrap{height:100%} giãn full ô → justify-content:center căn giữa dọc thật. Kỹ thuật chuẩn cho vertical-center trong table cell.
+
+- [x] Task 38e — Căn giữa dọc bằng inline-block + vertical-align:middle (bỏ flex/height hack) (2026-08-03, @khoipv)
+  - 38d (height:1px + flex height:100%) vẫn KHÔNG ăn trong b-table sticky (border-collapse:separate) → cột Đơn giá báo giá vẫn cao hơn.
+  - Sửa dứt điểm: `td.cell-ref { vertical-align:middle; text-align:center }` + `.ref-wrap { display:inline-block; vertical-align:middle; text-align:left }`. Cơ chế căn giữa dọc CHUẨN cho table cell (không phụ thuộc height:100% vốn không hoạt động trong td). Khối nội dung được td căn giữa cả dọc lẫn ngang; text bên trong vẫn trái. 4 cột thẳng hàng.
+
+- [x] Task 38f — ROOT CAUSE THẬT của dấu "—" lệch cao (systematic-debugging, có repro đo pixel) (2026-08-03, @khoipv)
+  - 38a–38e đều fix CĂN GIỮA nhưng gốc rễ là NỘI DUNG 2 Ô KHÔNG CAO BẰNG NHAU: Vue compiler của Nuxt (không set `whitespace` → mặc định preserve) giữ nguyên newline template quanh `{{ refNote(...) }}` → text node trong `.ref-line` là `"\n    —\n"`. 3 cột ghi chú có `td white-space: pre-line` → newline render thành DÒNG TRỐNG trên dấu "—" (ô cao 2 dòng, dấu nằm dòng dưới); cột Đơn giá báo giá `nowrap` → 1 dòng căn giữa → dấu "—" cao hơn. Đã chứng minh bằng chính `vue-template-compiler` của client (render fn chứa `_v("\n  "+_s(refNote...)+"\n ")`) + repro HTML đo Playwright: bug ref-line 35px vs 17px, sau fix cả hai 17px cùng vị trí.
+  - Sửa `ProductsTab.vue`: (1) template — bao sát giá trị 3 cột ghi chú bằng `<span class="ref-val">{{ refNote(...) }}</span>` (mustache dính liền tag, không newline trong span); (2) CSS — `td.cell-ref-note` đổi `pre-line → normal` (newline template collapse thành space, vẫn wrap trong max-width 240px), thêm `.ref-val { white-space: pre-line }` → newline THẬT trong dữ liệu ghi chú vẫn xuống dòng (verify repro: ghi chú 2 dòng vẫn 2 dòng). Nhánh rỗng `.ref-none` không đổi. Compile template 0 errors.

@@ -8,6 +8,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+<<<<<<< Updated upstream
 - erp-to-hrm-migration → @dnsnamdang → .plans/erp-to-hrm-migration/plan.md
   Trạng thái: **SIZING DONE — chờ DB production để đối chiếu bất đồng bộ T3 (2026-07-27)**. Umbrella hợp nhất ERP⊕HRM + chuyển 4 mảng (Báo giá · HĐ bán/firm · HĐ dịch vụ · Kế toán). **Mục tiêu lớn nhất = gộp chung 1 database** (không phải chỉ viết lại UI). ĐÃ CHỐT: chỉ gộp 1 pháp nhân `hrm_tpe`⊕`erp2326` (bỏ connection etek/tpe); đích = **1 schema HRM duy nhất** (HRM canonical); ERP repoint sang DB HRM + retire dần (Strangler); prefix legacy `tp_` phía ERP; KHÔNG ETL — colocate + dedupe dần theo domain. Phân tích: ERP 1.225 bảng / HRM 635 / **trùng tên 50** → phân tầng T0 auth(không merge)·T1 giả(rename, gồm `quotations`)·T2 danh mục·T3 lõi tổ chức(rủi ro CAO NHẤT)·T4 nghiệp vụ KH/HĐ. ~165 bảng 4 mảng phần lớn KHÔNG trùng → bê nguyên tên. T3 đã sync sẵn HRM→ERP (id lệch, map qua natural key: companies=tax_code, departments/employee_infos=code, employees=email, parts=name) → gộp 1 DB thì gỡ luôn sync. Lộ trình 2 phase: P1 hợp nhất hạ tầng (đạt "1 DB chung", data nguyên vẹn) → P2 viết lại UI + dedupe theo domain (T2→master/KH→báo giá→HĐ→kế toán).
   Blocker phụ: `Modules/Accounting/{Routes/api.php, module.json}` merge conflict → tinker không boot (dùng mysql CLI thay thế).
@@ -81,6 +82,33 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Scope: Đổi "Chiết khấu/CK" → "Giảm giá/GG" toàn hệ thống. P1: danh mục "Loại giảm giá" (menu/tiêu đề/nhãn/toast) + tiền tố mã `CK-`→`GG-`. P2: đổi tên QUYỀN `...loại chiết khấu` → `...loại giảm giá` (seeder id=1090 giữ nguyên → phân quyền cũ không mất) + 7 middleware + menu isShow. P3: đổi nhãn Chiết khấu→Giảm giá trên toàn màn Báo giá (edit/view/print/submit/history + Excel blade + BE controller/service/history) — CHỈ text hiển thị, giữ biến/khóa/công thức/alias import cũ. GIỮ nguyên: route `/assign/discount-types`, bảng `discount_types`, API, mã bản ghi cũ.
   File: BE `DiscountType`, `PermissionsTableSeeder`(id1090), `Assign/Routes/api.php`, `QuotationController`, `QuotationService`, `QuotationHistory`, `DiscountTypeRequest/Controller`, `exports/bom_list.blade.php`; FE `menu-sidebar.js`, `discount-types/index.vue`, `discount-type-modal.vue`, `quotations/_id/edit.vue`+`index.vue`, `QuotationPrintPreview/PrintConfigModal/SubmitModal/HistoryModal.vue`. Không migration.
   ⚠️ DEPLOY: phải reseed PermissionsTableSeeder cùng lúc deploy code (middleware check tên MỚI; DB chưa reseed → 403). Import Excel báo giá cũ (header "CK(%)") vẫn chạy nhờ alias.
+=======
+- bank-account-catalog → @khoipv → .plans/gop-db/bank-account-catalog/plan.md
+  Trạng thái: **DESIGN XONG, CHỜ USER DUYỆT SPEC** (2026-08-03, nhánh `gop_db`). Port màn ERP "Danh mục tài khoản ngân hàng"
+  (`admin/accounting/account-banks`, model `CompanyAccount`, bảng `company_accounts` 40 dòng — 59 file ERP tham chiếu, KHÔNG đổi schema)
+  sang HRM `Modules/Finance` + `pages/finance/account-banks` (slot xám có sẵn `finance.js:42`), chuẩn base Assign + FE V2Base.
+  Đã chốt: tối giản như ERP (không Xóa/export/lịch sử), scope công ty user login, 1 quyền `Quản lý danh mục tài khoản ngân hàng`
+  (type=8, group Danh mục tài chính), sửa 4 lỗi nhỏ ERP khi port. TẠM DỪNG 2026-08-03 (session sau làm tiếp).
+  Bước tiếp: user duyệt spec → writing-plans lập task chi tiết → code. Chưa code gì, chưa tạo branch riêng.
+  Spec: docs/superpowers/specs/gop-db/2026-08-03-bank-account-catalog-design.md
+
+- banks-cut-mysql2 → @khoipv → .plans/gop-db/banks-cut-mysql2/plan.md
+  Trạng thái: **CODE DONE + VERIFIED** (2026-08-03, nhánh `gop_db`, chỉ `hrm-api`, 2 file sửa). Bỏ 8 khối sync `use_erp`
+  (TpBank/TpBankBranch) khỏi `BankService` màn `/human/banks` — sau gộp DB chúng ghi trùng 2 lần vào cùng bảng
+  `banks`/`bank_branches` (use_erp=1 đang bật thật), nhánh create nguy cơ duplicate PK. Giữ file TpBank/TpBankBranch
+  (user chốt, hiện 0 tham chiếu), giữ sync CRM (`use_crm`). Kèm fix 2 vết sót gộp DB trong `BankBranch.php`:
+  comment mysql2 + constructor nuốt `parent::__construct` (trước fix, tạo chi nhánh không fill attribute).
+  Verify: php -l + smoke tinker rollback (tạo/sửa/khoá/mở/xoá bank+branch PASS, DB nguyên trạng), log sạch.
+  **Phase 3-4 FE (2026-08-03)**: thêm loading `$nuxt.$loading` cho 6 thao tác ghi + làm lại TOÀN BỘ UI màn /human/banks theo V2Base
+  (tham khảo assign/industry-groups): FilterPanel + DataTable + 4 modal V2 (form bank, DS chi nhánh, form chi nhánh, tra cứu VietQR),
+  status pill + toggle lock, BaseConfirmModal xoá/khoá. Verify Playwright: E2E tạo→xoá bank sạch DB, validate inline, modal lồng OK.
+  ⚠️ Bug đã fix: set `editItem` rồi `$bvModal.show()` cùng tick → `@show` đọc prop id cũ (modal con rỗng) → phải bọc `$nextTick`.
+  **Phase 5 (2026-08-03)**: thêm nút Xem chi tiết (ri-eye-line, Xem → Sửa → Xoá) — modal read-only: input disabled + ô Trạng thái,
+  ẩn Tra cứu/upload logo, footer chỉ Đóng; verify Playwright cả chiều Xem → đóng → Sửa (isShow reset đúng).
+  Bước tiếp: user test lại toàn màn /human/banks trên browser.
+  Spec: docs/superpowers/specs/gop-db/2026-08-03-banks-cut-mysql2-design.md
+
+>>>>>>> Stashed changes
 - du-an-cha-con (Redmine #10921 — 13 điểm feedback tester) → @cuong61n → .plans/du-an-cha-con/plan.md
   Trạng thái: **XONG 13/13 + ĐÃ VERIFY TRÊN DEV** (2026-08-03, nhánh `tpe-develop-assign`, cả 2 repo).
   BE 5 file (`Quotation` thêm SUMMARY_STATUS_DONG, `SummaryQuotationService` cộng dồn phí VC +
