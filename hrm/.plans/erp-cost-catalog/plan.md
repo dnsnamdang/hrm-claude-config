@@ -337,3 +337,106 @@ Vừa hoàn thành: Toàn bộ Phase B (BE) + Phase F (FE).
 Bước tiếp theo: Chạy dev server test E2E (search, tạo nhanh DV/chi phí, thêm DV vào báo giá + BOM, backward-compat). Verify `openEditRow` giữ costId. Test `store()` ghi `costs` ERP thật.
 Blocked: Không.
 Lưu ý: `bỏ chiết khấu` khỏi tạo nhanh (không có mapping company HRM→ERP); `route:list` lỗi toàn cục do module Decision (pre-existing).
+
+---
+
+## ⚠️ SỬA TỪ NGOÀI — 2026-08-03, bởi @junfoke (nhánh `gop_db`, KHÔNG phải `tpe-develop-assign`)
+
+> **Gửi @dnsnamdang** — feature này bị sửa từ bên ngoài khi tôi chuyển màn ERP
+> "Danh mục dịch vụ sửa chữa và chi phí khác" (`admin/accounting/costs?kind_of=2`) sang HRM.
+> Hai bên **ghi cùng bảng `costs`** nên buộc phải thống nhất. Đọc mục này trước khi merge.
+>
+> Tài liệu màn mới: `.plans/gop-db/customer-care-cost-catalog/` ·
+> spec: `docs/superpowers/specs/gop-db/2026-08-03-customer-care-cost-catalog-design.md`
+
+### Vì sao phải sửa
+
+Nhánh `gop_db` đã **gộp DB ERP + HRM thành một** và đặt ràng buộc: **cấm dùng connection `mysql2`**
+(nó trỏ `DB_DATABASE_SECOND = erp_dev_24_09` — **DB ERP CŨ**). Code của feature này còn đọc/ghi
+`costs`, `employees`, `currencies`, `brands`… qua `mysql2`, tức là **ghi vào DB cũ** trong khi màn
+danh mục mới đọc DB gộp → dữ liệu tạo từ BOM/Báo giá sẽ **không hiện** ở màn danh mục, và ngược lại.
+
+### 1. Gom 2 model về 1 — `TpCost` giờ là alias
+
+`Modules\Human\Entities\TpCost` và model mới `Modules\CustomerCare\Entities\Cost\Cost` cùng trỏ
+bảng `costs`, mỗi bên khai một bộ hằng riêng → chắc chắn lệch về sau.
+
+- `TpCost` **giữ lại nhưng đánh `@deprecated`**, giờ `extends Cost`. Hằng cũ (`KIND_CHI_PHI`,
+  `KIND_DICH_VU`, `TYPE_*`, `getKindList()`, `getTypeList()`) vẫn dùng được, giá trị **không đổi**.
+  → Code cũ của bạn ở nhánh khác **vẫn chạy** sau khi merge.
+- Toàn bộ chỗ đang gọi `TpCost` trong repo đã đổi sang `Cost` (7 file). Code mới xin dùng `Cost`.
+
+Nghiệp vụ của bảng `costs` giờ nằm một chỗ trong `Cost`: `status` **1 = Hoạt động / 0 = Khóa**,
+`kind_of` 1/2, `type` 8 loại, danh sách tên bị chặn sửa/xóa (`Chi phí đi lại`, `Chi phí vận chuyển`),
+điều kiện **khóa-thay-vì-xóa** khi đã phát sinh ở `firm_quotation_costs` / `firm_contract_costs`.
+
+### 2. Bỏ `mysql2` khỏi luồng danh mục chi phí
+
+| File | Chỗ sửa |
+| --- | --- |
+| `ErpCostController` | `index`/`store` dùng `Cost`; xóa `use TpCost` |
+| `BomListService` | `preloadMasterData()`, `resolveLookupId()`, `resolveOrCreateMasterId()`, `getDefaultCurrencyId()`, `Schema::connection('mysql2')` |
+| `QuotationImportService` | `resolveOrCreateCost()`, `resolveCostByName()`, `resolveOrCreateMasterId()`, `Schema::connection('mysql2')` |
+| `QuotationErpSyncService` | `findOrCreateCosts()`, `createTmpProducts()` |
+| `QuotationService`, `QuotationExcelExport`, `DetailBomListResource`, `DetailQuotationResource`, `ErpCostStoreRequest` | đổi `TpCost` → `Cost` |
+
+Đã đối chiếu: cả 7 bảng liên quan (`costs`, `company_costs`, `employees`, `currencies`, `brands`,
+`origins`, `units`, `product_models`) **đều có sẵn trên DB gộp**, số dòng đầy đủ.
+
+### 3. Ba lỗi THẬT phát hiện khi chuyển (không phải chỉ đổi connection)
+
+**a. `ErpCostController::store` — transaction sai connection, không hề rollback**
+
+```php
+DB::connection('mysql2')->transaction(function () { $cost = new TpCost(); ... $cost->save(); });
+```
+
+`TpCost` **không khai `$connection`** nên lưu bằng connection **mặc định**, trong khi transaction mở
+trên `mysql2`. Tức là lệnh ghi **nằm ngoài transaction** — lỗi giữa chừng sẽ không rollback được gì.
+→ Đổi thành `DB::transaction(...)`.
+
+**b. `QuotationErpSyncService::findOrCreateCosts` — insert thiếu `kind_of`, ghi nhầm `type`**
+
+```php
+DB::...->table('costs')->insertGetId(['name' => ..., 'type' => 2, 'status' => 1, ...]);
+```
+
+`kind_of` là cột **NOT NULL không có default** → dòng tạo ra rơi vào `kind_of = 0`, **không hiện ở
+cả 2 màn danh mục**. `type = 2` cũng sai (ERP ép `type = null` khi `kind_of = 2`).
+→ Bổ sung `kind_of = 2`, `type = null`, `vat_percent = 0`, `created_by`/`updated_by`.
+
+*(Ghi chú: 6 dòng `kind_of = 0` hiện có trong DB là dữ liệu 2020-2021, KHÔNG phải do hàm này sinh
+ra — tôi đã kiểm tra trước khi kết luận.)*
+
+**c. `QuotationImportService::resolveOrCreateCost` — ghi `type = 1` cho dòng `kind_of = 2`**
+
+Màn danh mục kiểm trùng tên **theo nhóm `type`** (đúng như `CostsController::store` của ERP:
+`unique('costs')->where('type', $request->type)`). Để `type = 1` thì dòng tạo từ import nằm khác
+nhóm với dòng tạo từ màn danh mục → **lọt qua kiểm trùng tên**, sinh 2 bản ghi cùng tên.
+→ Đổi thành `type = null`.
+
+### 4. Bỏ bước map HRM user → ERP employee
+
+ERP và HRM **đã gộp chung bảng `employees`** (`TpEmployee::$table = 'employees'`), nên
+`auth()->user()->id` chính là id nhân viên. 3 hàm `resolveErpEmployeeId()` / `getErpEmployeeId()`
+(ở `ErpCostController`, `BomListService`, `QuotationImportService`, `QuotationErpSyncService`) trước
+đây map qua `employee_info_id` trên `mysql2` — vừa thừa vừa có thể lấy nhầm dòng khi một
+`employee_info_id` ứng với nhiều bản ghi. Đã rút gọn về `auth()->user()->id`.
+
+### 5. Đã verify sau khi sửa
+
+`Cost::active()->kind_of=2` → 519 dòng · `resolveCostByName('Chi phí sửa chữa, thay thế')` → id 35,
+vat 8 · `getDefaultCurrencyId()` → 1 (VNĐ) · `resolveErpEmployeeId()` → 13 ·
+`preloadMasterData()` → model 38.278 / brand 1.126 / origin 103 / unit 142 · `php -l` sạch toàn bộ.
+
+### 6. CHƯA đụng — cần bạn xử lý tiếp
+
+Các chỗ còn dùng `mysql2` **ngoài phạm vi danh mục chi phí**, tôi cố ý không sửa vì thuộc feature khác:
+
+- `QuotationImportService` — tra `products` theo mã hàng
+- `QuotationService` — `recipe_products`, số ngày giao hàng mặc định (4 chỗ)
+- `AssignBusinessController` (15 chỗ), `QuotationController`, `BomListController`,
+  `ProductProjectController`, `TpProductUnitPrice`, `DecisionRewardService`,
+  `BonusDistributionService`, các command `CheckEmployee*`
+
+Trên nhánh `gop_db` những chỗ này vẫn đang đọc **DB ERP cũ**.

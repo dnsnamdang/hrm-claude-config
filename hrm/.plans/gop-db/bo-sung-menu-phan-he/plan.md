@@ -107,7 +107,22 @@ nên không ai thấy. Rà rộng ra toàn bộ `erp-menu-inventory`.
       "Khởi tạo phiếu yêu cầu" (Quản lý sản xuất / Bán hàng) tách riêng đúng, màu cột Nguồn đúng
 - [x] Chạy lại toàn bộ kiểm thử — PASS, số cuối: **345 xám mờ + 10 link ERP = 355**
 
-## Phase 9 — CÒN LẠI (chưa làm)
+## Phase 9 — Mua hàng / Kho / Vận chuyển: hiện card, trỏ sang ERP
+
+User đổi yêu cầu: thay vì ẩn hẳn, 3 phân hệ này vẫn hiện ở màn chọn phân hệ, bấm vào thì sang ERP.
+
+- [x] `subsystems.js`: bỏ cờ `hidden`, thay bằng `external: true` + `erpPath` cho 3 phân hệ
+- [x] Resolve màn ERP đại diện cho từng phân hệ từ `TanPhatDev/routes/web.php`
+      (ERP không có landing riêng — topmenubar chỉ có Danh mục/Khởi tạo/Kinh doanh/Kế toán/CSKH/QTTT)
+- [x] `pages/index.vue` + `SubsystemSwitcher.vue`: `openERP()` nhận tham số subsystem để
+      ghép `ERP_URL + erpPath`; bỏ nhánh `hidden` trong `isShow()`; 4 chỗ gọi trong template
+- [x] `getPermissionSubsystemGroups()`: đổi `!s.hidden` -> `!s.external`
+- [x] Verify `check-external.js` — 17/17 PASS: 3 card hiện lại, nhóm SẢN XUẤT - CUNG ỨNG đủ
+      4 phân hệ, permissionType 20/21/22 giữ nguyên, màn Phân quyền còn 21 khối, card ERP tổng
+      vẫn về trang chủ, `resolveSubsystem` không đổi
+- [x] Compile 3 template (`index.vue`, `SubsystemSwitcher.vue`, `Sidebar.vue`) — 0 lỗi
+
+## Phase 10 — CÒN LẠI (chưa làm)
 
 - [ ] **Verify trên browser thật** — chưa chạy. Cần kiểm bằng mắt:
       - mục xám mờ hiển thị đúng độ mờ và không bấm được (kiểm cả hover)
@@ -120,12 +135,17 @@ nên không ai thấy. Rà rộng ra toàn bộ `erp-menu-inventory`.
       để ngoài phạm vi feature này — gộp vào đợt dọn dẹp sau)
 - [ ] Quyết định lại vụ `Danh mục ngân hàng` bị liệt kê ở 2 phân hệ trong sheet
       (hiện chỉ giữ ở Danh mục chung)
+- [ ] ⚠️ **Xung đột link `/assign/customers`** — sau commit `564125504 gop database khach hang`,
+      mục "Khách hàng" ở `master-data.js` đổi sang `/assign/customers`, trùng với mục
+      "Khách hàng" trong nhóm Danh mục của `sale.js`. Vi phạm bất biến *mỗi link chỉ thuộc
+      đúng 1 phân hệ*: mở `/assign/customers` giờ luôn hiện sidebar **Danh mục chung**
+      (đứng trước trong `SUBSYSTEMS`), không bao giờ ra Bán hàng. Cần bỏ 1 trong 2.
 
 ---
 
 ## Checkpoint — 2026-08-01
 
-**Vừa hoàn thành:** Phase 0-8. Toàn bộ code đã xong và **kiểm thử tự động PASS hết** bằng cách
+**Vừa hoàn thành:** Phase 0-9. Toàn bộ code đã xong và **kiểm thử tự động PASS hết** bằng cách
 render thật template `Sidebar.vue` qua `vue-server-renderer`.
 
 Số liệu chốt: **355 mục menu mới** (345 xám mờ + 10 link ERP) trên 14 phân hệ; 3 phân hệ
@@ -147,7 +167,7 @@ Phụ lục A của spec đã được sinh lại từ code.
 
 **Đang làm dở:** (không)
 
-**Bước tiếp theo:** Phase 9 — verify trên browser thật. Đây là phần **duy nhất** chưa được
+**Bước tiếp theo:** Phase 10 — verify trên browser thật. Đây là phần **duy nhất** chưa được
 kiểm chứng: mọi thứ hiện mới chỉ được xác nhận ở mức render HTML, chưa nhìn bằng mắt trên
 trình duyệt (đặc biệt là độ mờ của mục xám mờ và chiều dài sidebar của Bán hàng / Tài chính).
 

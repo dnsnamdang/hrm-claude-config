@@ -17,8 +17,8 @@ mục chưa có màn, để mỗi phân hệ phản ánh đúng quy hoạch.
   kpi (5), legal (9), asset (4), iso (6), operation (2), assign (18), production (7),
   sale (153), customer-care (17), finance (101).
 - **10 mục link thật sang ERP** (mở tab mới), 345 mục còn lại hiển thị **xám mờ**.
-- **Ẩn 3 phân hệ** Mua hàng / Kho / Vận chuyển khỏi màn chọn phân hệ, dropdown chuyển phân hệ
-  và màn Phân quyền.
+- **Mua hàng / Kho / Vận chuyển**: vẫn hiện card ở màn chọn phân hệ + dropdown, bấm vào thì
+  điều hướng sang ERP (`external` + `erpPath`); không hiện ở màn Phân quyền.
 - **Tái phân bổ 14 màn** bị khuất do việc ẩn trên: 4 màn Kiểm kê → Tài chính (kèm link ERP),
   10 phiếu Khởi tạo yêu cầu → Bán hàng.
 - **Bổ sung 5 màn** có trong `erp-menu-inventory` nhưng thiếu khỏi sheet gộp (4 màn báo giá
@@ -40,8 +40,9 @@ di chuyển code màn ERP sang HRM, phân quyền cho mục mới.
   đúng yêu cầu user, tránh đưa người dùng nhảy qua lại 2 cổng.
 - **Phân hệ "Danh mục hàng hóa - dịch vụ" (35 màn) không tạo** — user phát hiện nó **không có
   trong sơ đồ v1.6**, là ô chứa do người lập sheet tự thêm. Sơ đồ thắng sheet khi mâu thuẫn.
-- **Ẩn bằng cờ `hidden` trong registry, giữ nguyên `permissionType` 20/21/22** — cột `type`
-  của `hrm_permissions` có thể đã có dữ liệu, đánh số lại sẽ làm lệch quyền.
+- **Mua hàng / Kho / Vận chuyển dùng `external` + `erpPath`** (ban đầu là cờ `hidden`, user
+  đổi ý 2026-08-01). Giữ nguyên `permissionType` 20/21/22 — cột `type` của `hrm_permissions`
+  có thể đã có dữ liệu, đánh số lại sẽ làm lệch quyền.
 - **Không sửa `isShowMenuParent`/`isShowSubItemMenu`** (hàm dùng chung). Hành vi mặc định đã
   đúng: subItem không khai `isShow` thì hiện; nhóm cha hiện khi có ≥1 sub hiện. Chỉ **thêm**
   nhánh render vào `Sidebar.vue`, không đổi nhánh `router-link` hiện có.
@@ -72,8 +73,8 @@ di chuyển code màn ERP sang HRM, phân quyền cho mục mới.
 
 ## Trạng thái
 
-Phase 0-8 xong, kiểm thử tự động PASS hết (render thật template qua `vue-server-renderer`).
-Còn Phase 9: **verify trên browser thật** — xem `plan.md`.
+Phase 0-9 xong, kiểm thử tự động PASS hết (render thật template qua `vue-server-renderer`).
+Còn Phase 10: **verify trên browser thật** — xem `plan.md`.
 
 ⚠️ Con số 326 ở bản đầu là sai (đối chiếu nhãn toàn hệ thống nên bỏ sót mục trùng tên giữa
 2 phân hệ). Số thực tế sau cài đặt là 336, cộng 14 màn tái phân bổ (Phase 7) và 5 màn bổ sung
