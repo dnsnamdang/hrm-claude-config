@@ -804,3 +804,16 @@ CHƯA test: build production FE (chỉ chạy dev server), bảng "Dự án con"
       bản Đang tạo → 422 "Chỉ có thể sửa ghi chú khi báo giá tổng đã duyệt", sale chính → 200);
       UI nhập + bấm Lưu thật → DB lưu đúng + sinh 1 dòng lịch sử `update_sales_note`; đăng nhập NV khác
       thì hàng chỉ hiển thị text, không có ô nhập/nút lưu. Đã xoá sales_note + 2 dòng history test.
+
+### Bỏ trường "Tên báo giá" và "Ngày lập báo giá" (2026-08-04, user yêu cầu ở màn /assign/summary-quotations/227)
+
+- [x] FE `components/SummaryQuotationForm.vue`: bỏ ô "Tên báo giá" (Mã báo giá tổng colspan=3) + bỏ hàng
+      "Ngày lập báo giá" (Bảng giá colspan=3) — áp cho cả 3 màn xem/tạo/sửa.
+- [x] FE `add.vue`, `_id/edit.vue`: bỏ `name` khỏi `form`, bỏ validate `if (!this.form.name) return`,
+      bỏ prop `:initial-name`; edit không map `data.name` (BE `updateHeader` dùng array_intersect_key
+      → thiếu key name thì không ghi đè, name cũ giữ nguyên).
+- [x] FE `SummaryQuotationSourceModal.vue`: bỏ input "Tên báo giá tổng" + prop `initialName` + `form.name`,
+      emit `selected` chỉ còn `{ sourceIds }`, payload tạo không gửi `name`.
+- [x] FE danh sách `ProspectiveProjectParentQuotationsTab.vue`: cột `name` "Tên - Mã báo giá tổng" → cột
+      `code` "Mã báo giá tổng" (slot `#cell-code`, bỏ dòng sub tên); text confirm sao chép/xoá dùng `item.code`.
+- [x] BE: không sửa gì — `quotations.name` nullable, controller/service nhận `name` optional.
