@@ -133,7 +133,43 @@ Vừa hoàn thành: Phase 4 code + verify tinker toàn bộ (subagent-driven: 3 
 Bước tiếp theo: user verify browser (hrm-client 3 case guard + elearning tiến trình lộ trình). FE hrm-client Docker/dev tự build.
 Blocked:
 
+## Phase 5 — Fix mất tiến độ khi lưu form builder (public↔private) — 2026-07-29
+
+Bug (user báo): khóa public có bài 1/bài 2, học viên ngoài học xong bài 1 (progress 50%) → khóa chuyển private/khóa rồi chuyển lại public → tiến độ về 0, coi như học lại từ đầu.
+
+RCA: `enrollment_lesson_progress` khóa theo `subject_lesson_id`. Đổi `is_public` chỉ làm qua form builder → `updateBuilder` → `updateWithStructure` → `syncChaptersAndLessons`. Nhánh KHÔNG dùng chương (khóa phẳng) `else` LUÔN `SubjectLesson::delete()` sạch rồi tạo lại → `subject_lessons` nhận ID mới → progress cũ mồ côi → `recalcEnrollmentsAfterRebuild` đếm 0 done → progress=0. (Không riêng private — MỌI lần lưu builder khóa phẳng đều wipe.)
+
+- [x] P5.1 `SubjectService::syncChaptersAndLessons` nhánh phẳng (`else`): bỏ `SubjectLesson::delete()` vô điều kiện; chỉ xóa bài thuộc chương cũ (`whereNotNull('chapter_id')`); nếu `subject_lessons` rỗng → xóa hết bài phẳng còn lại. Để `syncSubjectLessonsForChapter` tái dùng hàng cũ theo `(lesson_id, chapter_id=null)` → giữ nguyên `subject_lesson_id`. DONE 2026-07-29.
+- [x] P5.2 `php -l` sạch. (Verify runtime reuse ID trên browser/DB: chờ user — dự án dùng manual verify, không chạy DB test tự động.)
+- [ ] P5.3 (chờ user) khôi phục data đã mất: cần backup DB để dò lại theo lesson_id — orphan progress hiện không map được.
+
+### Checkpoint — 2026-07-29 (Phase 5)
+Vừa hoàn thành: Fix RCA mất tiến độ khi lưu form builder khóa phẳng — sửa nhánh else của `syncChaptersAndLessons` (SubjectService.php ~L451-L465) để reuse `subject_lessons` thay vì wipe+recreate. php -l sạch.
+Đang làm dở: không
+Bước tiếp theo: user verify browser (học 1 bài → lưu lại form builder khóa/đổi public-private → tiến độ giữ nguyên). Quyết định P5.3 khôi phục data cũ (cần backup).
+Blocked: khôi phục tiến độ đã mất trước fix cần nguồn backup DB.
+
+## Phase 6 — Cho học lẻ khóa con của lộ trình bị KHÓA — 2026-07-29
+
+Bug (user báo): học khóa lẻ (`/subjects/{slug}/learn`) báo 423 "Lộ trình đã bị khóa" (scope=path) dù khóa đó còn Hoạt động + public. Nguyên nhân: `checkSubjectAccessLock` chặn khi khóa thuộc 1 lộ trình đã ghi danh đang KHÓA (rule từ `training-inuse-status` Phase 4). Nhưng tới nhánh này khóa LUÔN truy cập lẻ hợp lệ (đã loại KHOA + private ở trên) → chặn nhầm khóa public độc lập.
+
+Quyết định user: cho học lẻ (bỏ chặn path-lock) + lộ trình đang KHÓA KHÔNG được nhảy trạng thái học/hoàn thành khi học viên học lẻ khóa con của nó.
+
+- [x] P6.1 `LearningSessionService::checkSubjectAccessLock`: bỏ block path-lock (scope=path) + gỡ query `$enrolledPathIds`/`$containingPaths` không còn dùng. Giữ 2 check: KHOA (course) + private (học viên ngoài). DONE 2026-07-29.
+- [x] P6.2 `LearningSessionService::syncLearningPathCompletion`: loại lộ trình `STATUS_LOCKED` khỏi tập xét (whereNotIn $lockedPathIds) → học lẻ khóa con KHÔNG promote lộ trình khóa sang learning/done. Phủ mọi caller (recalculateCourseProgress + syncSubjectExamCompletion). DONE 2026-07-29.
+- [x] P6.3 `php -l` sạch.
+- [x] P6.4 `MyLearningService::getInProgress`: khóa con của lộ trình KHÓA giờ được THẢ thành thẻ khóa lẻ riêng ("Đang học") nếu còn học lẻ được — thêm helper `isLearnableStandalone` (bỏ qua path-lock), dùng cho quyết định thả thay vì `childLockState`. Giữ nguyên `childLockState` (còn bước path-lock) để thẻ lộ trình khóa vẫn liệt kê khóa con "Đã khóa" + giữ 0/0, 0% (không đếm/không nhảy). Option A user duyệt. DONE 2026-07-29.
+- [ ] P6.5 (user verify browser) học lẻ khóa con của lộ trình khóa → vào học OK (không còn 423 path); hoàn thành khóa → lộ trình khóa GIỮ nguyên trạng thái (không nhảy done/learning); màn "Tôi đang học" → khóa hiện thành THẺ RIÊNG "Đang học 50%", lộ trình khóa vẫn 0/0 0% + liệt kê khóa con "Đã khóa".
+
+### Checkpoint — 2026-07-29 (Phase 6)
+Vừa hoàn thành: Bỏ chặn học-lẻ theo lộ trình khóa + chặn lộ trình khóa đổi trạng thái do học lẻ. 1 file BE (LearningSessionService.php). php -l sạch.
+Đang làm dở: không
+Bước tiếp theo: user verify browser (học lẻ khóa con lộ trình khóa + kiểm tra trạng thái lộ trình khóa không nhảy). Lưu ý: FE nhánh xử lý 423 scope=path giờ thành dead-branch (vô hại).
+Blocked: không
+
 ## Ghi chú
+- (Phase 6, 2026-07-29) Nới rule từ training-inuse-status Phase 4: lộ trình KHÓA không còn chặn học LẺ khóa con còn Hoạt động/public; và không promote trạng thái lộ trình khóa khi học lẻ. FE disable nút Học trong màn lộ trình vẫn là lớp chặn điều hướng theo lộ trình.
+- (Phase 5, 2026-07-29) Fix mất tiến độ khi lưu builder khóa phẳng: nhánh else của syncChaptersAndLessons wipe subject_lessons → mồ côi enrollment_lesson_progress. Data cũ đã mất không tự khôi phục.
 - (Đã xử lý ở Phase 2) Lộ trình private cho người đã enroll.
 - (Phase 3, 2026-07-21) ĐẢO Quyết định #3: khóa private không còn "truy cập hợp lệ qua lộ trình public".
 - (Phase 4, 2026-07-21) Tiến trình loại khóa không khả dụng + guard cảnh báo đổi visibility (chưa code, đã có spec+plan).
