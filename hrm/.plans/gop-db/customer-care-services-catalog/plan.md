@@ -1,0 +1,730 @@
+# Plan — Danh mục gói bảo dưỡng (ERP → HRM, phân hệ CSKH)
+
+> **For agentic workers:** REQUIRED SUB-SKILL: dùng superpowers:subagent-driven-development (khuyến nghị)
+> hoặc superpowers:executing-plans để thực thi từng task. Đánh `[x]` khi xong từng step.
+
+Phụ trách: @khoipv · Nhánh: `gop_db` (cả 2 repo) · Spec: `docs/superpowers/specs/gop-db/2026-08-04-customer-care-services-catalog-design.md`
+
+**Goal:** Port màn ERP "Quản lý gói bảo dưỡng" (`admin/sale/services`) sang HRM `/customer-care/services` — đầy đủ CRUD + Sao chép + In + Export + Đính kèm S3, không đổi schema, 2 cổng chạy song song.
+
+**Architecture:** BE `Modules/CustomerCare` theo khuôn CostController/CostService/CostResource có sẵn; FE theo khuôn `pages/finance/accounts/` (index + add + \_id/edit + print + components/FormComponent) vì cùng dạng form trang riêng, list theo khuôn `pages/customer-care/costs/index.vue`.
+
+**Tech stack:** Laravel 8 (PHP 7.4) · Nuxt 2 / Vue 2 / Bootstrap-Vue · maatwebsite/excel · CmcS3Helper (S3) · fillReport + bảng `report_templates` chung.
+
+## Global constraints (áp cho MỌI task)
+
+- Nhánh `gop_db` cả 2 repo — KHÔNG migration, KHÔNG sửa schema, KHÔNG dùng `mysql2`/`DB_DATABASE_SECOND`.
+- KHÔNG commit git ở bất kỳ step nào (chỉ commit khi user yêu cầu).
+- KHÔNG sửa `PermissionsTableSeeder` — quyền dùng lại 3 bản ghi ERP 101023/101024/101025 theo TÊN.
+- `auth()->user()->id` = id nhân viên duy nhất (employees đã gộp — mục 0b `.plans/gop-db/design.md`).
+- BE rethrow `ValidationException` (không catch chung); messages tiếng Việt như ERP.
+- FE: đọc `.claude/skills/button-convention/SKILL.md` + `.claude/skills/modal-popup/SKILL.md` trước khi code; task in đọc thêm `.claude/skills/print-page/SKILL.md`. Validate inline `is-invalid` + `invalid-feedback` + flag `touched`.
+- Verify FE bằng `vue-template-compiler` + babel parse (KHÔNG dùng eslint — project không có config).
+- Migration/quyền: chỉ update tay DB local bằng SQL (ghi trong task), không seeder.
+
+---
+
+## Phase 1 — BE `Modules/CustomerCare` (hrm-api)
+
+### Task 1.1 — Entities
+
+**Files (tạo mới):**
+- `Modules/CustomerCare/Entities/Service/Service.php`
+- `Modules/CustomerCare/Entities/Service/ServiceMaintain.php`
+- `Modules/CustomerCare/Entities/Service/ServiceMaintainLevel.php`
+- `Modules/CustomerCare/Entities/Service/ServiceLevel.php`
+
+**Interfaces (task sau dùng):** `Service::maintains()`, `serviceLevels()`, `companies()` (pivot `coefficient`), `products()` (pivot `group_id`), `company()`, `employeeCreate()`, `employeeUpdate()`, `serviceQuotationItems()` (query builder — không cần model riêng), `isCanDelete(): bool`, `Service::STATUS_ACTIVE = 1`, `STATUS_LOCK = 0`.
+
+- [ ] **Step 1: Viết 4 entity.** Mẫu code (PHPDoc theo convention file mẫu project):
+
+```php
+<?php
+
+namespace Modules\CustomerCare\Entities\Service;
+
+use App\Models\BaseModel;
+use Illuminate\Support\Facades\DB;
+use Modules\CustomerCare\Entities\Level\Level;
+use Modules\Human\Entities\Employee;
+use Modules\Timesheet\Entities\Company;
+
+/**
+ * Gói bảo dưỡng — bảng ERP `services` trên DB gộp.
+ * 2 cổng ERP/HRM chạy song song trên cùng bảng — KHÔNG đổi schema/hành vi ghi.
+ */
+class Service extends BaseModel
+{
+    protected $table = 'services';
+
+    const STATUS_ACTIVE = 1;
+    const STATUS_LOCK = 0;
+
+    const STATUSES = [
+        self::STATUS_ACTIVE => 'Hoạt động',
+        self::STATUS_LOCK => 'Khóa',
+    ];
+
+    protected $fillable = [
+        'name', 'code', 'status', 'note', 'sale_max_percent', 'attachments',
+        'company_id', 'coefficient_cost_price_service', 'vat_percent',
+        'created_by', 'updated_by',
+    ];
+
+    /** ERP luôn lưu mã in hoa. */
+    public function setCodeAttribute($value)
+    {
+        $this->attributes['code'] = mb_strtoupper(trim((string) $value), 'UTF-8');
+    }
+
+    public function maintains()
+    {
+        return $this->hasMany(ServiceMaintain::class, 'service_id');
+    }
+
+    public function serviceLevels()
+    {
+        return $this->hasMany(ServiceLevel::class, 'service_id')->orderBy('order');
+    }
+
+    public function companies()
+    {
+        return $this->belongsToMany(Company::class, 'company_service_coefficients')
+            ->withPivot('coefficient');
+    }
+
+    public function products()
+    {
+        // Bảng `products` của ERP trên DB gộp — không có model HRM, join bảng trực tiếp.
+        return $this->belongsToMany(\Modules\CustomerCare\Entities\Service\ErpProduct::class,
+            'service_has_products', 'service_id', 'product_id')->withPivot('group_id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id');
+    }
+
+    public function employeeCreate()
+    {
+        return $this->belongsTo(Employee::class, 'created_by');
+    }
+
+    public function employeeUpdate()
+    {
+        return $this->belongsTo(Employee::class, 'updated_by');
+    }
+
+    /**
+     * Điều kiện xóa GIỮ NGUYÊN ERP (user chốt 2026-08-04): chưa gắn hàng hoá và chưa có
+     * `service_quotation_items`. ⚠️ 6 bảng `wr_*` đang dùng service_id KHÔNG kiểm — rủi ro
+     * đã báo, user quyết giữ nguyên (spec mục 3.4).
+     */
+    public function isCanDelete(): bool
+    {
+        return !DB::table('service_has_products')->where('service_id', $this->id)->exists()
+            && !DB::table('service_quotation_items')->where('service_id', $this->id)->exists();
+    }
+}
+```
+
+  - `ErpProduct`: model tối giản `protected $table = 'products'` (đặt cùng thư mục, PHPDoc ghi rõ là bảng ERP dùng chung) — chỉ để belongsToMany hoạt động.
+  - `ServiceMaintain`: `$table = 'service_maintains'`, fillable `service_id, name, unit_id, quantity`, `maintainLevels()` hasMany `ServiceMaintainLevel` (`service_maintain_id`). Kế thừa `Model` thuần (bảng KHÔNG có created_by/updated_by — chỉ timestamps).
+  - `ServiceMaintainLevel`: `$table = 'service_maintain_levels'`, fillable `service_maintain_id, level_id, note_maintenance_id, order`, `Model` thuần.
+  - `ServiceLevel`: `$table = 'service_levels'`, fillable `service_id, level_id, quota_work, benefit_coefficient, base_price, key_word, order`, `level()` belongsTo `Modules\CustomerCare\Entities\Level\Level`, `Model` thuần.
+  - ⚠️ Kiểm tra `Modules\Timesheet\Entities\Company` có accessor gì lạ không trước khi dùng; cần cột `work_price`, `header`, `name` (bảng `companies` dùng chung — đã xác nhận trong spec).
+
+- [ ] **Step 2: Verify:** `php -l` từng file sạch; `php artisan tinker --execute="echo Modules\CustomerCare\Entities\Service\Service::query()->count();"` ra 207.
+
+### Task 1.2 — ServiceRequest (validation)
+
+**Files (tạo mới):** `Modules/CustomerCare/Http/Requests/Service/ServiceRequest.php`
+
+**Interfaces:** dùng cho cả store + update (phân biệt qua `$this->route('service')`); Task 1.5 controller type-hint class này.
+
+- [ ] **Step 1: Viết request** — mẫu theo `Http/Requests/Cost/CostRequest.php` (extends `Modules\Training\Http\Requests\BaseRequest`):
+
+```php
+protected function prepareForValidation()
+{
+    $data = [];
+    if ($this->has('name')) {
+        $data['name'] = trim((string) $this->name);
+    }
+    if ($this->has('code')) {
+        $data['code'] = mb_strtoupper(trim((string) $this->code), 'UTF-8');
+    }
+    // Các trường phần trăm/hệ số: dấu phẩy là dấu THẬP PHÂN (bài học màn costs — không strip).
+    foreach (['vat_percent', 'sale_max_percent', 'coefficient_cost_price_service'] as $field) {
+        if ($this->has($field)) {
+            $data[$field] = str_replace(',', '.', (string) $this->get($field));
+        }
+    }
+    if (!empty($data)) {
+        $this->merge($data);
+    }
+}
+
+public function rules()
+{
+    $service = $this->route('service');
+    $ignoreId = is_object($service) ? $service->id : $service;
+    $isUpdate = (bool) $ignoreId;
+
+    return [
+        'name' => ['required', 'max:255', Rule::unique('services', 'name')->ignore($ignoreId)],
+        'code' => ['required', 'max:255', Rule::unique('services', 'code')->ignore($ignoreId)],
+        // Sửa lỗi ERP: rule cũ `max:100` thiếu numeric nên chạy theo độ dài chuỗi (spec mục 6.1).
+        'vat_percent' => ['required', 'numeric', 'min:0', 'max:100'],
+        'sale_max_percent' => ['nullable', 'numeric', 'min:0', 'max:99'],
+        'company_id' => ['required', 'exists:companies,id'],
+        // Sửa lỗi ERP: validate cả khi store (spec mục 6.4).
+        'coefficient_cost_price_service' => ['nullable', 'numeric', 'min:1', 'max:100'],
+        'status' => $isUpdate ? ['required', 'in:0,1'] : ['nullable'],
+        'note' => ['nullable', 'max:255'],
+        'attachments' => ['nullable', 'array'],
+        'attachments.*' => ['file', 'mimes:pdf'],
+        'product_groups' => ['nullable', 'array'],
+        'product_groups.*.product_id' => ['required', 'exists:products,id'],
+        'product_groups.*.group_id' => ['required', 'exists:groups,id'],
+        'maintains' => ['nullable', 'array'],
+        'maintains.*.name' => ['required', 'max:255'],
+        'maintains.*.unit_id' => ['required', 'numeric', 'exists:units,id'],
+        'maintains.*.quantity' => ['required', 'numeric'],
+        'maintains.*.levels' => ['required', 'array'],
+        'maintains.*.levels.*.level_id' => ['required', 'exists:levels,id'],
+        'maintains.*.levels.*.note_maintenance_ids' => ['required', 'array'],
+        'maintains.*.levels.*.note_maintenance_ids.*' => ['numeric', 'exists:note_maintenances,id'],
+        'maintains.0.levels.*.quota_work' => ['required', 'numeric'],
+        'maintains.0.levels.*.benefit_coefficient' => ['nullable', 'numeric'],
+        'maintains.0.levels.*.base_price' => ['nullable', 'numeric'],
+        'maintains.0.levels.*.key_word' => ['nullable'],
+    ];
+}
+```
+
+  - `messages()`: port đủ messages ERP (`'Bắt buộc phải nhập'`, `'Đã tồn tại'`, `'Phải là số'`, `'Không tồn tại'`…) cho từng rule như `ServiceStoreRequest`/`ServiceUpdateRequest` ERP + messages cho rule mới thêm (`vat_percent.max` → `'Tối đa 100'`, `attachments.*.mimes` → `'Chỉ nhận file PDF'`).
+  - `attributes()`: tên trường tiếng Việt (Tên gói bảo dưỡng, Mã gói bảo dưỡng, VAT, Định mức đàm phán giá, Công ty quản lý, Hệ số giá bán, Nội dung kiểm tra, ĐVT, SL, Định mức công…).
+  - ⚠️ FE gửi multipart (có file) nên `maintains`/`product_groups`/`companies` gửi dạng JSON string → trong `prepareForValidation` thêm decode:
+
+```php
+foreach (['maintains', 'product_groups', 'companies'] as $field) {
+    if ($this->has($field) && is_string($this->get($field))) {
+        $data[$field] = json_decode($this->get($field), true) ?: [];
+    }
+}
+```
+
+- [ ] **Step 2: Verify:** `php -l` sạch.
+
+### Task 1.3 — ServiceService (business logic)
+
+**Files (tạo mới):** `Modules/CustomerCare/Services/ServiceService.php`
+
+**Interfaces (controller Task 1.5 gọi):**
+- `index(Request): Builder` — with đủ quan hệ, lọc name/code/status/created_by, sort whitelist, default `created_at desc`
+- `optionsData(): array` — `['units' => …, 'levels' => …, 'note_maintenances' => …, 'companies' => …]`
+- `dataForEdit(Service): array` — object + maintains (gộp levels) + groups + companies + company_work_price
+- `store(Request): Service` / `update(Request, Service): Service` — throw `ValidationException` khi vướng cấp đã dùng
+- `destroy(Service): string` — `'deleted'|'locked'`
+- `searchProducts(Request): Collection` / `searchGroups(Request): Collection`
+- `priceByLevel(Service): array` — cho tooltip + export
+
+- [ ] **Step 1: Viết service.** Khung + các đoạn cốt lõi:
+
+```php
+public function index(Request $request)
+{
+    $query = Service::query()->with([
+        'employeeCreate.info', 'employeeUpdate.info', 'company',
+        'serviceLevels.level',
+    ]);
+
+    foreach (['name', 'code'] as $field) {
+        if ($request->filled($field)) {
+            $value = escapeLikeKeyword($request->get($field));
+            if ($value !== '') {
+                $query->where($field, 'like', '%' . $value . '%');
+            }
+        }
+    }
+    // status nhận cả '0' — kiểm has() như CostService.
+    if ($request->has('status') && $request->get('status') !== '' && $request->get('status') !== null) {
+        $query->where('status', (int) $request->get('status'));
+    }
+    if ($request->filled('created_by')) {
+        $query->where('created_by', $request->get('created_by'));
+    }
+
+    $allowedSortFields = ['name', 'code', 'status', 'created_at', 'updated_at'];
+    if ($request->filled('sort_by') && in_array($request->sort_by, $allowedSortFields, true)) {
+        return $query->orderBy($request->sort_by,
+            strtolower($request->get('sort_desc')) === 'true' ? 'desc' : 'asc');
+    }
+
+    return $query->orderBy('created_at', 'desc');
+}
+
+/** Giá hiển thị tooltip/export: floor(đơn giá công cty quản lý × định mức × hệ số giá bán gói). */
+public function priceByLevel(Service $service): array
+{
+    $workPrice = $service->company->work_price ?? 0;
+    $coefficient = $service->coefficient_cost_price_service ?? 1;
+
+    return $service->serviceLevels->map(function ($sl) use ($workPrice, $coefficient) {
+        return [
+            'level_name' => $sl->level->name ?? ('Cấp ' . $sl->order),
+            'price' => floor($workPrice * $sl->quota_work * $coefficient),
+        ];
+    })->all();
+}
+```
+
+  - `optionsData()`: units (`DB::table('units')->select('id','name')->orderBy('name')` — bảng ERP chung), levels (`Level::query()->select('id','name')->orderBy('name')`), note_maintenances (`NoteMaintenance::query()->select('id','name','key_name')`), companies (`Company::query()->select('id','name','work_price','header')`).
+  - `store(Request)` (controller bọc transaction):
+
+```php
+public function store(Request $request): Service
+{
+    $employeeId = auth()->user()->id;
+
+    $service = Service::create([
+        'name' => $request->name,
+        'code' => $request->code,
+        'sale_max_percent' => $request->sale_max_percent,
+        'note' => $request->note,
+        'company_id' => $request->company_id,
+        'coefficient_cost_price_service' => $request->coefficient_cost_price_service ?? 1,
+        'status' => Service::STATUS_ACTIVE,
+        'vat_percent' => $request->vat_percent,
+        'attachments' => $this->uploadAttachments($request, null),
+        'created_by' => $employeeId,
+        'updated_by' => $employeeId,
+    ]);
+
+    $this->saveServiceMaintain($service, $request->get('maintains') ?: []);
+    $this->syncCompanies($service, $request->get('companies') ?: []);
+    $this->syncProducts($service, $request->get('product_groups') ?: []);
+
+    return $service;
+}
+```
+
+  - `update()`: như store nhưng `fill` + cho `status`; `attachments` = `uploadAttachments($request, $service->attachments)` (NỐI chuỗi cũ — sửa lỗi ERP nối kiểu phần tử, spec 6.3).
+  - `uploadAttachments(Request $request, ?string $existing): ?string` — dùng `App\Helper\CmcS3Helper::putFiles($request->file('attachments'), 'services')` (mẫu `Modules/Assign/Services/CustomerService.php:917`); ghép `implode(', ', $urls)`, có `$existing` thì `$existing . ', ' . $new`. Không file mới → trả `$existing` nguyên vẹn.
+  - `saveServiceMaintain(Service $service, array $maintains): void` — port NGUYÊN logic ERP `Service::saveServiceMaintain()` (delete-all-recreate `service_maintains` + `service_maintain_levels`; sync `service_levels` theo `maintains[0]['levels']` bằng firstOrNew `service_id`+`level_id`, set `quota_work/benefit_coefficient/base_price/key_word(json_encode)/order`). Điểm khác duy nhất: chỗ ERP `return false` khi cấp bị loại còn `service_quotation_items.service_level_id` → **throw ValidationException**:
+
+```php
+if (ServiceQuotationItemQuery/* DB::table('service_quotation_items') */
+        ->whereIn('service_level_id', $serviceLevelsQuery->pluck('id'))->exists()) {
+    throw \Illuminate\Validation\ValidationException::withMessages([
+        'maintains' => ['Không thể xóa cấp dịch vụ đã được sử dụng!'],
+    ]);
+}
+```
+
+    (`$maintains` rỗng → return sớm, không đụng dữ liệu cũ — như ERP `if ($request->maintains)`.)
+  - `syncCompanies`: `[$id => ['coefficient' => $c]]`, dòng `company_id` quản lý ép coefficient 1; mảng rỗng → không sync (như ERP `if ($request->companies)`).
+  - `syncProducts`: `products()->sync([product_id => ['group_id' => g]])` — LUÔN sync kể cả rỗng (ERP sync `[]` để xóa hết — giữ nguyên).
+  - `destroy(Service): string` — port `delete()` + `deleteDB()` ERP:
+
+```php
+public function destroy(Service $service): string
+{
+    if (!$service->isCanDelete()) {
+        $service->status = Service::STATUS_LOCK;
+        $service->updated_by = auth()->user()->id;
+        $service->save();
+        return 'locked';
+    }
+
+    foreach ($service->maintains as $maintain) {
+        $maintain->maintainLevels()->delete();
+    }
+    $service->maintains()->delete();
+    $service->serviceLevels()->delete();
+    // ERP không dọn pivot companies khi xóa — GIỮ NGUYÊN (spec 4.3); products rỗng sẵn (điều kiện isCanDelete).
+    $service->delete();
+    return 'deleted';
+}
+```
+
+  - `dataForEdit(Service): array` — port `Service::getDataForEdit()` ERP: load `products` (kèm pivot group_id + tên nhóm từ bảng `groups`), `maintains.maintainLevels`, `serviceLevels`, `companies`; gộp maintainLevels theo `order` thành `levels[] = ['level_id', 'note_maintenance_ids' => [...], 'quota_work', 'benefit_coefficient', 'key_word' => json_decode, 'base_price']` (join `serviceLevels` keyBy `order`); `groups` gom products theo group; companies không pivot → toàn bộ companies coefficient=1; kèm `company_work_price`.
+  - `searchProducts(Request)`: `DB::table('products')->where('status', 1)` + lọc `keyword` (name/code like) hoặc `group_id`, select `id, name, code, group_id` + join `groups` lấy `group_name`, limit 50.
+  - `searchGroups(Request)`: `DB::table('groups')->where('status', 1)` + lọc name like, select `id, name`, limit 50.
+  - ⚠️ Kiểm tra thực tế cột `status` của `products`/`groups` trên DB gộp trước khi code (ERP lọc `status=1` ở `groups.searchData` — xác nhận lại bằng `SHOW COLUMNS`).
+
+- [ ] **Step 2: Verify:** `php -l` sạch.
+
+### Task 1.4 — Transformers + Export Excel
+
+**Files (tạo mới):**
+- `Modules/CustomerCare/Transformers/ServiceResource/ServiceListResource.php`
+- `Modules/CustomerCare/Transformers/ServiceResource/ServiceDetailResource.php`
+- `hrm-api/app/ExcelExport/ServiceExport.php`
+- `hrm-api/resources/views/exports/services.blade.php`
+
+**Interfaces:** ListResource cho index/export; DetailResource cho show (edit + copy).
+
+- [ ] **Step 1: `ServiceListResource`** (extends `Modules\Human\Transformers\ApiResource`, mẫu `CostResource`):
+
+```php
+return [
+    'id' => $this->id,
+    'name' => $this->name,
+    'code' => $this->code,
+    'company_name' => $this->company->name ?? '',
+    'status' => $this->status,
+    'status_name' => Service::STATUSES[$this->status] ?? null,
+    'price_by_level' => $this->price_by_level,   // service gán trước khi resolve (mảng level_name/price)
+    'created_by_name' => $this->created_by_name,
+    'updated_by_name' => $this->updated_by_name,
+    'created_at' => Helper::formatDateTime($this->created_at, 'd/m/Y'),
+    'updated_at' => Helper::formatDateTime($this->updated_at, 'd/m/Y'),
+    'is_can_delete' => true,   // nút Xóa LUÔN hiện như ERP; BE tự quyết xóa/khóa (spec 3.4)
+];
+```
+
+  (`price_by_level`: controller/service map `$item->price_by_level = $this->priceByLevel($item)` sau khi paginate — tránh N+1 vì đã eager load.)
+- [ ] **Step 2: `ServiceDetailResource`** — trả nguyên cấu trúc `dataForEdit`: các cột `services` + `maintains[]` (name, unit_id, quantity, levels[] như Interfaces Task 1.3) + `groups[]` (id, name, products[] {id, name, code}) + `companies[]` (id, name, work_price, coefficient) + `company_work_price` + `attachments` (tách chuỗi thành mảng URL cho FE render icon file).
+- [ ] **Step 3: `ServiceExport`** — copy y nguyên khuôn `app/ExcelExport/CostExport.php` (FromView + Exportable), view `exports.services`. View 6 cột như bản ERP `sale/services/export/list.blade.php`: STT · Tên dịch vụ · Mã dịch vụ · Giá dịch vụ (implode `', '` từ `price_by_level`: `"{level_name}: {number_format(price)}"`) · Công ty quản lý dịch vụ · Trạng thái. Tiêu đề "Danh sách dịch vụ".
+- [ ] **Step 4: Verify:** `php -l` 3 file PHP sạch; view blade render thử qua tinker với 1 mảng giả.
+
+### Task 1.5 — Controller + Routes + print-data
+
+**Files:**
+- Tạo: `Modules/CustomerCare/Http/Controllers/V1/ServiceController.php`
+- Sửa: `Modules/CustomerCare/Routes/api.php` (thêm group `/services` cuối file, trong group `/v1/customer-care` sẵn có)
+
+**Interfaces (FE Phase 2-4 gọi):**
+
+| Method | URI | Response |
+|---|---|---|
+| GET | `/v1/customer-care/services` | paginate ServiceListResource |
+| GET | `/v1/customer-care/services/options-data` | `{units, levels, note_maintenances, companies}` |
+| GET | `/v1/customer-care/services/export` | file xlsx `Danh_sach_dich_vu.xlsx` |
+| GET | `/v1/customer-care/services/search-products?keyword=&group_id=` | `[{id,name,code,group_id,group_name}]` |
+| GET | `/v1/customer-care/services/search-groups?keyword=` | `[{id,name}]` |
+| GET | `/v1/customer-care/services/{service}` | ServiceDetailResource |
+| GET | `/v1/customer-care/services/{service}/print-data` | `{template: html}` |
+| POST | `/v1/customer-care/services` | created |
+| POST | `/v1/customer-care/services/{service}` | updated (multipart nên dùng POST, không PUT) |
+| DELETE | `/v1/customer-care/services/{service}` | `{message}` — báo rõ 'đã khóa' hay 'đã xóa' |
+
+- [ ] **Step 1: Routes** — theo khuôn group `/costs` trong `Routes/api.php:42-60`. Route tĩnh (`options-data`, `export`, `search-products`, `search-groups`) đặt TRƯỚC `/{service}`. Middleware:
+  - store: `->middleware('checkPermission:Thêm danh mục gói bảo dưỡng')`
+  - update: `->middleware('checkPermission:Sửa danh mục gói bảo dưỡng')`
+  - delete: `->middleware('checkPermission:Xóa danh mục gói bảo dưỡng')`
+  - index/show/print-data/export/options/search: KHÔNG gate (như ERP — user chốt).
+- [ ] **Step 2: Controller** — khuôn `CostController`: constructor inject `ServiceService`; `index` → `apiGetList(ServiceListResource::apiPaginate(...))` (gán `price_by_level` cho từng item trước); `show` → load `dataForEdit`; `store/update` bọc `DB::transaction`, catch `\Exception` nhưng **rethrow `ValidationException`** trước khi catch chung:
+
+```php
+} catch (\Illuminate\Validation\ValidationException $e) {
+    throw $e;
+} catch (Exception $e) {
+    Log::error($e);
+    return $this->responseBadRequest($e->getMessage());
+}
+```
+
+  `delete` → message theo kết quả `'locked'|'deleted'` (khuôn CostController::delete). `export` → `Excel::download((new ServiceExport())->forData($data), 'Danh_sach_dich_vu.xlsx')` — **KHÔNG áp filter** (ERP export toàn bộ, spec 4.3): dùng `Service::query()->with(...)->get()` chứ không `index($request)`.
+- [ ] **Step 3: `printData(Service $service)`** — port `Service::getPrintDataAttribute()` + `getNote()` ERP (nguồn: `D:\laragon\www\erp\app\Model\Sale\Service.php:286-402`) thành method `buildPrintData(Service): string` trong `ServiceService` — copy nguyên HTML string ERP (bảng thead 2 hàng: STT/Nội dung/SL + colspan Cấp bảo dưỡng theo levels + 2 cột Kiểm tra Có/Không + Ghi chú; mỗi maintain 1 hàng, ô cấp = implode `key_name` của note_maintenances theo level; chú giải toàn bộ note_maintenances; khối Nội dung đề xuất; bảng ký KTV/KHÁCH HÀNG). Controller theo khuôn `Modules/Finance/.../AccountController.php:237-253`:
+
+```php
+const DANH_MUC_KIEM_TRA_BAO_DUONG = 191;   // đặt trong ErpReportTemplate hoặc Service entity
+
+$template = \Modules\Finance\Entities\ErpReportTemplate::query()->find(191);
+$html = fillReport($template->template, [
+    'HEADER' => $this->serviceService->companyHeader(),   // copy AccountService::companyHeader()
+    'NOI_DUNG_BAO_DUONG' => $this->serviceService->buildPrintData($service),
+    'TEN_DICH_VU' => mb_strtoupper($service->name, 'UTF-8'),
+]);
+$html = clearNull($html);
+return $this->responseJson('success', Response::HTTP_OK, ['template' => $html]);
+```
+
+  - Thêm const `DANH_MUC_KIEM_TRA_BAO_DUONG = 191` vào `ErpReportTemplate` (sửa file `Modules/Finance/Entities/ErpReportTemplate.php` — chỉ THÊM const, hỏi lại nếu thấy conflict) hoặc để const trong `Service` entity nếu không muốn đụng module Finance → **chọn để trong `Service` entity**, không sửa file module khác.
+  - ⚠️ Kiểm `fillReport()` + `clearNull()` có trong `app/Helper/FormatHelper.php` hrm-api (đã xác nhận `fillReport` có; `clearNull` chưa — nếu thiếu thì port hàm từ ERP helpers vào FormatHelper, hàm chỉ regex bỏ placeholder `{...}` còn sót).
+- [ ] **Step 4: Update quyền (data, chạy tay local):**
+
+```sql
+UPDATE permissions SET type = 24 WHERE id IN (101023, 101024, 101025);
+```
+
+  Ghi SQL này vào plan checkpoint để chạy lại trên staging/production khi deploy.
+- [ ] **Step 5: Verify BE tổng thể:**
+  - `php -l` toàn bộ file mới/sửa.
+  - `php artisan route:list | grep customer-care/services` đủ 10 route.
+  - Smoke test bằng token user thật (curl): index trả 207 bản ghi phân trang; show 1 gói có maintains/groups/companies đúng cấu trúc; store gói mới tối giản (không maintains) → xóa được (deleted); store + maintains 2 cấp → sửa bỏ 1 cấp chưa dùng OK; user KHÔNG quyền gọi store → 403; export tải được file; print-data trả HTML chứa tên gói uppercase.
+  - So sánh chéo: mở màn ERP `admin/sale/services` cùng gói vừa tạo từ HRM — hiển thị/sửa bình thường (2 cổng song song OK).
+
+---
+
+## Phase 2 — FE màn danh sách (hrm-client)
+
+### Task 2.1 — `pages/customer-care/services/index.vue` + menu
+
+**Files:**
+- Tạo: `hrm-client/pages/customer-care/services/index.vue`
+- Sửa: `hrm-client/components/subsystem-menu/customer-care.js:27` — mục "Danh mục gói bảo dưỡng" thêm `link: '/customer-care/services'`, `isShow: true` (màn không gate quyền xem, như ERP)
+
+**Interfaces:** dùng API index/export/delete Task 1.5. Đọc skill `button-convention` + `modal-popup` trước khi code.
+
+- [ ] **Step 1: Dựng list** — khuôn `pages/customer-care/costs/index.vue` (575 dòng, cùng phân hệ):
+  - Cột: STT · Tên gói bảo dưỡng (kèm tooltip/popover hover hiện các dòng `price_by_level`: "Cấp X: 1.234.000") · Mã · Công ty quản lý gói bảo dưỡng · Trạng thái (badge xanh Hoạt động / đỏ Khóa) · Người tạo · Ngày tạo · Người sửa · Ngày sửa · Hành động.
+  - Filter: Tên, Mã, Trạng thái (select 2 giá trị), Người tạo (select nhân viên — nguồn theo cách costs/index.vue lấy dropdown nhân viên) — server-side qua query params `name/code/status/created_by`.
+  - Sort server-side các cột name/code/status/created_at/updated_at (khớp whitelist BE).
+  - Phân trang chuẩn V2 (áp 4 bài học phân trang Phase 8 finance-account-catalog — xem costs/index.vue đã áp sẵn).
+- [ ] **Step 2: Hành động + quyền** — `$can('Thêm danh mục gói bảo dưỡng')` v.v.:
+  - Đầu trang: **Thêm mới** (quyền Thêm) → `/customer-care/services/create`; **Xuất excel** (không gate) → gọi `/services/export` responseType blob, tải `Danh_sach_dich_vu.xlsx`.
+  - Từng dòng: **Sao chép** (quyền Thêm) → `/customer-care/services/create?copy_from={id}` · **Sửa** (quyền Sửa) → `/customer-care/services/{id}/edit` · **In** (không gate) → `/customer-care/services/{id}/print` (mở tab mới) · **Xóa** (quyền Xóa) → modal confirm theo skill modal-popup, message giải thích "gói đang dùng sẽ chuyển sang Khóa thay vì xóa"; sau khi gọi DELETE hiện message BE trả về (đã khóa / đã xóa) rồi reload list.
+- [ ] **Step 3: Verify:** build FE (`npm run dev` sẵn chạy — hard refresh); parse check bằng vue-template-compiler; browser: mở màn với user có/không quyền — nút ẩn đúng; lọc từng field + lọc `status=0`; phân trang; export tải file mở được; xóa gói đang dùng → badge chuyển Khóa; menu CSKH sáng mục "Danh mục gói bảo dưỡng".
+
+---
+
+## Phase 3 — FE form tạo/sửa/sao chép
+
+### Task 3.1 — Form component + trang create/edit
+
+**Files:**
+- Tạo: `hrm-client/pages/customer-care/services/components/ServiceFormComponent.vue` (form dùng chung)
+- Tạo: `hrm-client/pages/customer-care/services/create.vue`
+- Tạo: `hrm-client/pages/customer-care/services/_id/edit.vue`
+- Tạo: `hrm-client/pages/customer-care/services/components/ProductSearchModal.vue` + `GroupSearchModal.vue`
+
+**Interfaces:** cấu trúc thư mục + cách create/edit bọc form chung: theo `pages/finance/accounts/` (`add.vue`, `_id/edit.vue`, `components/AccountFormComponent.vue`). Data submit multipart: các field scalar + `attachments[]` file + `maintains`/`companies`/`product_groups` JSON string (khớp decode Task 1.2).
+
+- [ ] **Step 1: Khối 1 — Thông tin chung** (2 hàng × 4 cột): Tên\*, Mã\* (uppercase khi nhập), Định mức đàm phán giá (%), VAT (%)\*, Công ty quản lý\* (select từ options-data, mặc định = công ty user login lấy từ store; đổi → gọi `recalcPrices()`), Trạng thái (chỉ edit, select Hoạt động/Khóa), Ghi chú, Hệ số giá bán gói bảo dưỡng (mặc định 1, đổi → `recalcPrices()`). Validate inline `is-invalid`/`invalid-feedback` + `touched`.
+- [ ] **Step 2: Khối 2 — Ma trận bảo dưỡng.** State:
+
+```js
+form: {
+  maintains: [ { name: '', unit_id: null, quantity: null } ],   // hàng
+  levels: [ { level_id: null, quota_work: null, benefit_coefficient: null,
+              base_price: null, key_word: [] } ],                // cột (dùng chung mọi hàng)
+  cells: {}  // cells[`${rowIdx}_${colIdx}`] = [note_maintenance_id, ...]
+}
+```
+
+  - Header cột: select cấp (options levels) + nút ✕ xóa cột; nút + thêm cột. Hàng: nút thêm/xóa hàng nội dung (Tên*, ĐVT* select units, SL* số nguyên).
+  - Ô ma trận: multi-select ghi chú (options note_maintenances, hiển thị `key_name`).
+  - Hàng chân bảng theo cột: Định mức công* (input) · Hệ số công nghệ (input) · Giá vốn (readonly) · Giá công thức (readonly) · Giá bán cơ sở (input) · Gợi ý hàng hoá (tags — dùng `b-form-tags` Bootstrap-Vue) · Giá bán theo công ty (readonly mỗi công ty 1 hàng, công ty quản lý in đậm ×1).
+  - Công thức (port nguyên ERP — `ServiceMaintainLevel.blade.php`):
+
+```js
+primeCost(level)  = companyWorkPrice * level.quota_work * (level.benefit_coefficient || 1)
+recipeCost(level) = primeCost(level) * form.coefficient_cost_price_service
+// đổi quota_work HOẶC benefit_coefficient -> base_price tự set = recipeCost
+// giá bán theo công ty = base_price * (company.id == form.company_id ? 1 : company.coefficient)
+```
+
+  - Submit build `maintains` payload đúng cấu trúc BE (mỗi maintain: name/unit_id/quantity + `levels[]` = cột: level_id, note_maintenance_ids (từ cells), quota_work/benefit_coefficient/base_price/key_word — chỉ maintain đầu cần đủ thông số, các maintain sau copy level_id + note_ids như ERP submit_data).
+- [ ] **Step 3: Khối 3 — Giá vốn theo công ty**: bảng companies từ options-data — STT · Công ty · Đơn giá công (`work_price`) · Giá vốn từng cấp (= quota_work × work_price) · Hệ số giá bán (input; dòng công ty quản lý disabled giá trị 1, đổi công ty quản lý → dòng mới disabled, dòng cũ mở lại).
+- [ ] **Step 4: Khối 4 — Áp dụng cho hàng hóa**: 2 nút mở `ProductSearchModal` (search keyword → bảng kết quả id/mã/tên/nhóm, chọn từng dòng) và `GroupSearchModal` (search tên nhóm → chọn nhóm → gọi search-products?group_id → add toàn bộ). Modal theo skill modal-popup. Bảng kết quả gom theo nhóm (khuôn ERP form.blade khối 4): header nhóm + nút xóa nhóm (confirm "xóa nhóm sẽ xóa toàn bộ hàng"), từng hàng có nút xóa. Chống trùng: hàng đã có → toast warning "Hàng hóa đã được chọn".
+- [ ] **Step 5: Khối 5 — Đính kèm PDF**: input file multiple accept=".pdf"; danh sách file mới thêm/xóa trước khi lưu; file cũ (edit) render icon + link mở tab mới, KHÔNG có nút xóa (nguyên trạng ERP).
+- [ ] **Step 6: create.vue / edit.vue / copy**:
+  - `create.vue`: bọc form, submit POST `/services`. Nếu có `?copy_from={id}` → gọi show, prefill toàn bộ (kể cả tên/mã — user tự sửa vì unique; đính kèm KHÔNG prefill), toast nhắc "Đang sao chép từ gói {name} — hãy đổi tên/mã trước khi lưu".
+  - `edit.vue`: gọi show → prefill (maintains → dựng lại levels/cells theo `order`; groups; companies; attachments cũ); submit POST `/services/{id}`.
+  - Lỗi validate BE dạng `maintains.0.levels.2.quota_work` → map về đúng ô/cột trên ma trận; lỗi khác hiện inline theo field; lỗi `maintains` (cấp đã dùng) hiện toast + giữ nguyên form.
+- [ ] **Step 7: Verify:** parse check các file .vue; browser đủ kịch bản: tạo gói mới đủ 5 khối → so số liệu giá từng cấp với màn ERP cùng input; sửa gói thật (chọn gói CHƯA dùng ở báo giá) đổi định mức → giá tự tính lại; copy gói 207 dòng có sẵn → đổi tên/mã lưu OK; xóa cột cấp đã dùng ở `service_quotation_items` → BE chặn + toast đúng message; validate: bỏ trống Tên/Mã/VAT/ĐVT/SL/Định mức công → lỗi inline đúng ô; upload 2 PDF lưu rồi mở lại thấy link S3.
+
+---
+
+## Phase 4 — In phiếu
+
+### Task 4.1 — `_id/print.vue`
+
+**Files:**
+- Tạo: `hrm-client/pages/customer-care/services/_id/print.vue`
+
+**Interfaces:** GET `/services/{id}/print-data` → `{template: html}`. Đọc skill `print-page` TRƯỚC khi code (chống mất viền/tràn cột/không tự bật hộp thoại in).
+
+- [ ] **Step 1:** Khuôn `pages/finance/accounts/print.vue` (cùng cơ chế template HTML từ `report_templates` ERP): fetch print-data, render `v-html` trong layout in, tự bật `window.print()` theo skill.
+- [ ] **Step 2: Verify:** in thử 1 gói có ≥2 cấp + ≥5 nội dung — đối chiếu bản in ERP cùng gói (cột cấp, tick ghi chú, chú giải, khối ký); kiểm gói có ghi chú (`note`) hiện dòng "Ghi chú: …"; kiểm sang trang không mất viền theo checklist skill print-page.
+
+---
+
+## Verify tổng thể (sau 4 phase)
+
+- [ ] Chạy lại đủ smoke BE (Task 1.5 Step 5) sau khi FE hoàn thiện.
+- [ ] Regression 4 màn CSKH cũ (levels / note-maintenances / costs) vẫn hoạt động — cùng module, routes chung file.
+- [ ] Tạo 1 gói từ HRM → mở ERP sửa → mở lại HRM thấy thay đổi (song song 2 chiều).
+- [ ] Xóa gói test đã tạo (dọn data).
+- [ ] Cập nhật STATUS.md + checkpoint; nhắc SQL update quyền `type=24` cho môi trường deploy.
+
+### Checkpoint — 2026-08-04
+Vừa hoàn thành: plan chi tiết 4 phase / 8 task (sau khi spec được user duyệt)
+Đang làm dở: (không)
+Bước tiếp theo: user chọn cách thực thi (subagent-driven / inline) → code Task 1.1
+Blocked: (không)
+
+---
+
+## Phase 5 — Chỉnh sửa theo yêu cầu user (sau khi code 4 phase xong)
+
+### Task 5.1 — Bỏ cột "Hành động", chuyển nút vào cột "Tên gói bảo dưỡng" (2026-08-05)
+
+**File sửa:** `hrm-client/pages/customer-care/services/index.vue`
+
+- [x] Bỏ cột `actions` khỏi `tableColumns` + xóa template `#cell-actions`
+- [x] Trong `#cell-name`: giữ tên (kèm tooltip giá theo cấp) + thêm `div.row-actions` bên dưới chứa 4 nút V2BaseIconButton (Sao chép · Sửa · In · Xóa) — dùng class `.row-actions` có sẵn trong `v2-styles.scss`, quyền gate giữ nguyên
+- [x] Verify: parse template bằng vue-template-compiler
+
+### Task 5.2 — Form tạo mới: hệ số giá bán + cột Giá vốn (2026-08-05)
+
+**File sửa:** `hrm-client/pages/customer-care/services/components/ServiceFormComponent.vue`
+
+- [x] "Hệ số giá bán gói bảo dưỡng" tạo mới để TRỐNG như ERP (`new Service({})` không prefill),
+      bỏ mặc định `1` trong `emptyForm()` — công thức `recipeCost()` vẫn coi trống = 1, placeholder
+      "Mặc định 1" giữ nguyên; edit/copy vẫn load giá trị từ DB (`?? 1`)
+- [x] Bảng "Giá vốn theo công ty": LUÔN hiện cột "Giá vốn" như ERP (ERP render `colspan=0` kể cả
+      khi chưa có cấp) — chưa có cột cấp thì hiện 1 cột "Giá vốn" rowspan 2, ô body "—"; có cấp thì
+      colspan theo số cấp như cũ; ẩn hàng header phụ khi rỗng
+- [x] Verify: parse template + script bằng vue-template-compiler
+
+### Task 5.3 — Hệ số giá bán: placeholder + bỏ mặc định 1 ở bảng công ty (2026-08-05)
+
+**File sửa:** `hrm-client/pages/customer-care/services/components/ServiceFormComponent.vue`
+
+- [x] Placeholder "Hệ số giá bán gói bảo dưỡng": "Mặc định 1" → "Nhập hệ số"
+- [x] Bảng "Giá vốn theo công ty", cột Hệ số giá bán: ~~tạo mới để TRỐNG~~ → **user chốt LẠI
+      (2026-08-05, muộn hơn): mặc định 1 như ERP** (`ServiceController::create()` gán coefficient=1).
+      Đã khôi phục init `coefficient: 1`; dòng công ty quản lý disabled hiển thị theo giá trị.
+      Riêng ô "Hệ số giá bán gói bảo dưỡng" khối 1 VẪN để trống (chốt cũ giữ nguyên)
+- [x] Ô trống quy về 1 khi TÍNH giá bán theo công ty + khi SUBMIT (pivot
+      `company_service_coefficients.coefficient` NOT NULL DEFAULT 1.00 — gửi `num('')=0` sẽ làm giá ×0,
+      null sẽ lỗi SQL; cùng pattern benefit_coefficient)
+- [x] Verify: parse template + script bằng vue-template-compiler
+
+### Task 5.4 — Popup chọn hàng hóa theo UX popup báo giá (2026-08-05)
+
+User yêu cầu "dùng popup chọn hàng hóa như màn assign/quotations/create". KHÔNG tái dùng nguyên
+`QuotationProductSearchModal` vì: (1) nó search qua `ErpApiService` → HTTP sang ERP CŨ (cấm trên
+nhánh gop_db cho tính năng mới); (2) payload apply không có `group_id` mà form gói bảo dưỡng bắt
+buộc. → Dựng lại `ProductSearchModal` của services THEO ĐÚNG UX popup báo giá (filter panel + tick
+chọn nhiều + chọn cả trang + phân trang server-side + "Thêm N hàng hoá" không đóng popup), search
+trên DB gộp qua API CSKH.
+
+**Files:**
+- `hrm-api/Modules/CustomerCare/Services/ServiceService.php` — mở rộng `searchProducts` (join
+  brands/product_models, filter brand/manufacture/origin/group, keyword match cả model; CÓ `page`
+  → paginate `{total, products}`, KHÔNG có → giữ limit 50 cho GroupSearchModal) + `productCatalogs()`
+- `hrm-api/Modules/CustomerCare/Http/Controllers/V1/ServiceController.php` + `Routes/api.php` —
+  action + route GET `services/product-catalogs`
+- `hrm-client/pages/customer-care/services/components/ProductSearchModal.vue` — viết lại theo
+  skill modal-popup mục 4 (8 điểm bắt buộc) + table-popup-layout.md
+- `hrm-client/pages/customer-care/services/components/ServiceFormComponent.vue` — `@select` đơn lẻ
+  → `@apply` mảng, toast tổng hợp thêm/trùng
+
+- [x] BE: mở rộng searchProducts + productCatalogs + route
+- [x] FE: viết lại ProductSearchModal (filter panel, multi-select, phân trang, footer Thêm N)
+- [x] FE: ServiceFormComponent nhận apply mảng
+- [x] Verify: php -l + route:list + parse 2 file Vue
+- [x] **Bộ cột giống tab Hàng hoá popup báo giá** (user yêu cầu 2026-08-05): ☑ · Ảnh · Loại hàng hóa ·
+      Tên hàng hoá · Model · Mã hàng · Giá niêm yết (/ĐVT cơ bản) · Bảo hành · VAT(%) · Định mức đàm
+      phán giá (%) · Ghi chú · Tính chất hàng hóa. BỎ 3 cột SL tồn/KM/LR (tồn kho realtime chỉ tính
+      được bên ERP, không có trên DB gộp) + cột Nguồn (services luôn là hàng ERP thật).
+      BE enrich nhánh phân trang theo đúng công thức ERP `SearchController:394-412`: giá lẻ đơn vị
+      cơ bản (`product_unit_prices` price_type 1) × `product_company_coefficients` theo công ty user
+      (làm tròn nghìn); `sale_max_percent` từ `product_unit_prices`; map PRODUCT_TYPES/PRODUCT_CATES
+      port từ `App\BaseProduct` ERP; bảo hành "X tháng/ngày/năm" như DetailQuotationResource;
+      `avatar_url` tuyệt đối theo ERP_URL. Smoke tinker: dòng mẫu đủ field, legacy branch giữ 7 key.
+- [x] **Cột "Hình ảnh" ở bảng "Áp dụng cho hàng hóa" ngoài form** (user yêu cầu 2026-08-05):
+      thumbnail 26px + placeholder icon, group-head colspan 3→4, empty colspan 4→5.
+      `avatar_url` phủ đủ 3 luồng: popup tick chọn (emit kèm) · chọn cả nhóm (nhánh legacy
+      search-products giờ cũng map avatar_url) · load edit/copy (`dataForEdit` thêm field, show
+      endpoint trả thẳng dataForEdit không qua resource). Helper chung `productAvatarUrl()`.
+      Smoke tinker 3 luồng đều ra URL S3.
+- [x] **Popup chọn nhóm hàng hóa cùng phong cách** (user yêu cầu 2026-08-05): viết lại
+      GroupSearchModal — tick chọn NHIỀU nhóm + chọn cả trang + giữ lựa chọn qua trang, phân trang
+      server-side 20/50/100, cột "Số hàng hóa" (selectSub cùng điều kiện lọc products), debounce
+      400ms, footer "Thêm N nhóm hàng" không tự đóng, backdrop không đóng. BE `searchGroups` thêm
+      chế độ `page` → `{total, groups}` (không page giữ limit 50). Form: `onSelectGroup` (1 nhóm,
+      tự đóng) → `onApplyGroups` (mảng, Promise.all nạp hàng từng nhóm, toast tổng hợp
+      thêm/trùng/nhóm rỗng).
+      🐛 **Sửa kèm bug thật**: luồng "chọn cả nhóm" trước bị `limit 50` cắt hàng — nhóm lớn nhất
+      2.288 hàng chỉ nạp 50 (ERP addProductGroup nạp đủ). Giờ `search-products?group_id=` không
+      limit (chỉ limit 50 khi search tự do không page). Smoke: nhóm 2301 trả đủ 2.288.
+      **Chỉnh theo user (cùng ngày)**: popup BÉ như modal ERP chooseProductGroup (680px × 84vh,
+      không full màn), cột giống ERP: STT + Tên nhóm (bỏ cột Số hàng hóa; BE vẫn trả
+      products_count, FE không hiển thị). Giữ tick nhiều + phân trang + footer Thêm N.
+      Ẩn nhãn "Số dòng/trang:" của V2BasePagination bằng CSS scoped ở CẢ 2 popup (không sửa
+      component gốc); bỏ label "Tên nhóm" ở hàng tìm kiếm popup nhóm.
+
+### Task 5.5 — VAT không bắt buộc (2026-08-05)
+
+User chốt VAT không bắt buộc (form ERP không đánh dấu required-label, dù rule BE ERP là
+`required|max:100` — HRM theo UI/user, không theo rule ERP).
+
+- [x] `ServiceRequest`: `vat_percent` required → nullable (giữ numeric/min/max — vẫn là fix lỗi
+      thiếu numeric của ERP); bỏ message required; `prepareForValidation` bỏ qua null/'' cho 3
+      trường số (ép `(string) null` = '' sẽ làm `nullable` mất tác dụng, '' vẫn chạy numeric)
+- [x] `ServiceService` store/update: `vat_percent ?? 0` — cột `services.vat_percent` NOT NULL
+      DEFAULT 0, gửi null sẽ lỗi SQL
+- [x] FE: bỏ `<Required />` ở label VAT (%) + bỏ check bắt buộc trong `validate()`
+- [x] Verify: php -l 2 file + parse ServiceFormComponent
+
+### Task 5.6 — Sao chép mang theo file đính kèm (2026-08-05)
+
+User báo ERP copy vẫn lấy file đính kèm. Thực tế ERP chỉ HIỂN THỊ file gói nguồn ở màn copy
+(form.documents), khi lưu thì RƠI MẤT (submit_data không gửi kèm — thiếu sót ERP). HRM làm trọn:
+hiển thị VÀ lưu hẳn vào gói mới (dùng chung URL S3 — an toàn vì không có luồng xóa file S3).
+
+- [x] FE `loadService`: bỏ `isCopy ? [] :` — copy giữ `attachmentsList`; `buildFormData` (create)
+      gửi `existing_attachments` = join(', ')
+- [x] BE: rule `existing_attachments nullable|string`; `store()` truyền vào `uploadAttachments`
+      làm chuỗi nền, file mới upload nối sau
+- [x] Verify: php -l + parse Vue
+- [x] Hệ số giá bán bảng công ty hiện "1.00" khi edit → ép `(float)` ở `dataForEdit` + `Number()`
+      ở FE loadService (cột decimal(4,2) trả chuỗi). Smoke gói 228: trả 1
+- [x] Căn phải ô nhập hệ số: rule `.v2-input__wrapper.text-right .v2-input` trong `.service-form`
+      (class trên V2BaseInput rơi vào wrapper, input không kế thừa text-align) + thêm text-right
+      cho ô hệ số khối 1
+- [x] Toast validate theo chuẩn base dự án (khuôn `shift-detail/add.vue`): fail client-side lẫn
+      BE 422 đều toast lỗi "Vui lòng kiểm tra lại dữ liệu nhập" + `scrollToInputError()`
+      (`@/utils/helpers`, bắt cả `.v2-error`) cuộn tới ô lỗi đầu tiên; bỏ toast warning
+      "Bạn chưa nhập đầy đủ thông tin". Lỗi nghiệp vụ `maintains` (cấp đã dùng) vẫn toast message
+      riêng của BE
+- [x] Nút "Sao chép" ở màn SỬA như ERP (edit.blade.php): secondary + ri-file-copy-line, đứng
+      giữa Lưu và Hủy (thứ tự skill button-convention), cả header + cuối trang; chỉ hiện khi
+      `isEdit && canCreate` (quyền Thêm — cùng gate với nút ở màn danh sách; hasAPermission là
+      mixin GLOBAL plugins/global-mixins.js, không cần import); mở TAB MỚI
+      `/create?copy_from={id}` như ERP target=_blank
+- [x] Màn PREVIEW in `/services/{id}/print`: nền trắng (khuôn insurance-packages — layout mặc
+      định nền xám) + viền bảng cho preview bằng scoped CSS `::v-deep` (nội dung v-html; bộ style
+      trong `options.styles` CHỈ sang cửa sổ in nên preview trước đó không có viền). Trừ bảng
+      `.no-border` (khối ký) như bản in
+- [x] Font/style màn in khớp ERP `public/css/pdf.css` (áp CẢ preview lẫn options.styles):
+      Times New Roman 16px · viền ô `1px solid black` padding 5px 8px · th giữa/đậm/middle ·
+      `td > p` bỏ margin · `.block` page-break-inside avoid · lề in đổi 12mm 10mm →
+      **15mm 10mm 15mm 20mm** khớp cửa sổ in ERP (print.blade.php)
+### Task 5.7 — Popup chọn hàng hóa: đủ bộ lọc như popup báo giá (2026-08-05)
+
+User yêu cầu bộ lọc "đầy đủ... giống bên báo giá". Popup báo giá có 18 trường; làm 17 (BỎ "Tồn kho"
+— cần subquery stock realtime của ERP, không tái tạo trên DB gộp). Toàn bộ query trên DB gộp,
+port semantics từ ERP `SearchController::searchProductStockBuyerApi:1263-1567`.
+
+- [x] BE `searchProducts` thêm filter: product_types/product_cates (multi; cates =
+      orWhereJsonContains) · brand_ids/manufacture_ids (multi) · model (model_id) ·
+      scope/chapter/job_group/job_cluster (qua `product_group_classifies` → group_ids) ·
+      group_id_use/product_id_use/vehicle_manufact/brand/model/life (qua `productables`
+      polymorphic — type strings 'App\Model\Product\Group', 'App\Product',
+      'App\Model\Common\Vehicle*')
+- [x] BE `productCatalogs` mở rộng: product_types/product_cates (từ const) + scopes, chapters
+      (kèm scope_id), job_groups (kèm chapter_id), job_clusters (group_id → job_group_id),
+      group_classifies (1.018 dòng cho cascade FE), vehicle_manufacts/brands/models (kèm khoá cha),
+      vehicle_lifes (bảng `vehicle_life` số ít, KHÔNG có status)
+- [x] BE endpoint mới `GET /services/search-models?keyword=` (product_models 38.280 dòng → remote)
+- [x] FE ProductSearchModal: 17 ô lọc + cascade client-side y khuôn popup báo giá (Lĩnh vực→Chương→
+      Nhóm CV→Cụm CV→Nhóm hàng; Hãng xe→Loại xe→Model xe; watcher reset cấp dưới + availableGroups
+      gỡ giá trị không còn hợp lệ); Model + "Dùng cho máy" dùng V2BaseSelectRemote
+- [x] Verify: php -l + smoke tinker từng nhóm filter + parse Vue
+- [x] Bỏ nhóm nút Lưu/Sao chép/Hủy ở HEADER form (user chốt 2026-08-05) — nút hành động chỉ đặt
+      cuối trang như ERP; header giữ tiêu đề + icon
+
+- [x] 🐛 In dính chữ "In" + khoảng trống trên header + tràn 2 tờ: do TỰ BẬT in khi tải xong —
+      window.open không có user gesture bị chặn popup → plugin fallback `window.print()` in
+      nguyên trang preview (kèm layout). Fix: BỎ auto-print, chờ user bấm nút In như mọi màn
+      print.vue khác (printPackage gọi ĐỒNG BỘ trong click handler — không await trước
+      window.open); bỏ waitImagesLoaded (ảnh đã cache từ preview). Kèm lưới an toàn `@media print`
+      trên preview: ẩn .no-print + bỏ padding container nếu user tự Ctrl+P

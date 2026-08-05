@@ -65,3 +65,7 @@ Vừa hoàn thành: brainstorming + spec đầy đủ + plan chi tiết + khung 
 Đang làm dở: chuẩn bị chạy Task 1 (migrations)
 Bước tiếp theo: subagent code Task 1 → review → Task 2...
 Blocked: (không)
+
+- [x] Fix 8: Điều khoản thanh toán (Theo đợt) sửa giống Đơn mua hàng — nhập 2 chiều tỉ lệ↔số tiền (2026-08-05, @khoipv)
+    - FE `purchase_contracts/components/PaymentTab.vue`: cột Số tiền dùng `currency-input` (sửa được), cột Tỷ lệ `base-input-field` + `onRowInput`; port logic calcAmount/calcPercent/maxAmount/rebalancePercents + watch totalAmount + created; nút "Thêm đợt" → `base-add-button` (ml-auto); thêm banner cảnh báo `.pay-warning` khi tổng ≠ 100%. GIỮ nhánh Nguyên tắc, disabledBeforeSign, base-helper-error (progress.N.time + progress_total).
+    - FE `PurchaseContractForm.vue`: thêm `amount:null` vào progressRows mặc định + applyInitial. buildPayload vẫn gửi pct (BE không đổi).
