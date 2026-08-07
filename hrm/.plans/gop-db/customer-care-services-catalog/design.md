@@ -15,10 +15,13 @@ công ty, hàng hoá liên quan, in phiếu, sao chép, export Excel, đính kè
 
 1. **Port ĐẦY ĐỦ tính năng**: CRUD + In phiếu (template 191 `report_templates` chung) + Sao chép +
    Export Excel + File đính kèm S3 (giữ hành vi add-only như ERP).
-2. **Quyền: dùng lại 3 quyền ERP theo tên** (`Thêm/Sửa/Xóa danh mục gói bảo dưỡng`, id
-   101023–101025, role đã gán giữ nguyên). KHÔNG tạo quyền mới/sửa seeder; chỉ update tay
-   `type=24` để hiện trong tab CSKH màn Phân quyền HRM (ERP không lọc type → vô hại).
-   Danh sách/xem/in/export KHÔNG gate (như ERP).
+2. **Quyền: 3 quyền HRM mới trong seeder** — ~~dùng lại 3 quyền ERP 101023–101025 + update tay
+   type=24~~ (design cũ, user ĐỔI 2026-08-06 theo pattern màn `bank-account-catalog`):
+   seeder thêm id **1126/1127/1128** `Thêm/Sửa/Xóa danh mục gói bảo dưỡng` (guard `api`,
+   group `Danh mục dịch vụ bảo dưỡng`, type 24); DB local insert tay (KHÔNG chạy seeder —
+   truncate) + copy grant role từ quyền ERP cùng tên; quyền ERP cũ revert `type = NULL`
+   (ẩn khỏi màn Phân quyền HRM, role ERP cũ vẫn qua vì `CheckPermission` so theo TÊN).
+   Danh sách/xem/in/export KHÔNG gate (như ERP). Chi tiết SQL: plan.md Task 5.8.
 3. **Form tạo/sửa = trang riêng** (`create.vue` + `_id/edit.vue`), không nhét modal.
 4. **Điều kiện xóa GIỮ NGUYÊN ERP**: chưa gắn hàng hoá + chưa có `service_quotation_items` → xóa
    thật; ngược lại chuyển Khóa. ⚠️ Rủi ro đã báo và user chốt bỏ qua: 6 bảng `wr_*` đang dùng

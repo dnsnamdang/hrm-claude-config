@@ -445,13 +445,10 @@ return $this->responseJson('success', Response::HTTP_OK, ['template' => $html]);
 
   - Thêm const `DANH_MUC_KIEM_TRA_BAO_DUONG = 191` vào `ErpReportTemplate` (sửa file `Modules/Finance/Entities/ErpReportTemplate.php` — chỉ THÊM const, hỏi lại nếu thấy conflict) hoặc để const trong `Service` entity nếu không muốn đụng module Finance → **chọn để trong `Service` entity**, không sửa file module khác.
   - ⚠️ Kiểm `fillReport()` + `clearNull()` có trong `app/Helper/FormatHelper.php` hrm-api (đã xác nhận `fillReport` có; `clearNull` chưa — nếu thiếu thì port hàm từ ERP helpers vào FormatHelper, hàm chỉ regex bỏ placeholder `{...}` còn sót).
-- [ ] **Step 4: Update quyền (data, chạy tay local):**
-
-```sql
-UPDATE permissions SET type = 24 WHERE id IN (101023, 101024, 101025);
-```
-
-  Ghi SQL này vào plan checkpoint để chạy lại trên staging/production khi deploy.
+- [x] ~~**Step 4: Update quyền (data, chạy tay local):** `UPDATE permissions SET type = 24
+  WHERE id IN (101023, 101024, 101025);`~~ — ĐÃ LÀM rồi ĐỔI HƯỚNG (Task 5.8, 2026-08-06):
+  type đã revert về NULL, quyền giờ là 3 bản ghi HRM mới 1126-1128 trong seeder.
+  KHÔNG chạy SQL này khi deploy — dùng bộ SQL ở Task 5.8.
 - [ ] **Step 5: Verify BE tổng thể:**
   - `php -l` toàn bộ file mới/sửa.
   - `php artisan route:list | grep customer-care/services` đủ 10 route.
@@ -550,7 +547,8 @@ recipeCost(level) = primeCost(level) * form.coefficient_cost_price_service
 - [ ] Regression 4 màn CSKH cũ (levels / note-maintenances / costs) vẫn hoạt động — cùng module, routes chung file.
 - [ ] Tạo 1 gói từ HRM → mở ERP sửa → mở lại HRM thấy thay đổi (song song 2 chiều).
 - [ ] Xóa gói test đã tạo (dọn data).
-- [ ] Cập nhật STATUS.md + checkpoint; nhắc SQL update quyền `type=24` cho môi trường deploy.
+- [ ] Cập nhật STATUS.md + checkpoint; nhắc bộ SQL quyền cho môi trường deploy — ~~update `type=24`~~
+      ĐÃ ĐỔI theo Task 5.8: INSERT 3 quyền 1126-1128 + copy grant + revert type NULL.
 
 ### Checkpoint — 2026-08-04
 Vừa hoàn thành: plan chi tiết 4 phase / 8 task (sau khi spec được user duyệt)
@@ -728,3 +726,54 @@ port semantics từ ERP `SearchController::searchProductStockBuyerApi:1263-1567`
       print.vue khác (printPackage gọi ĐỒNG BỘ trong click handler — không await trước
       window.open); bỏ waitImagesLoaded (ảnh đã cache từ preview). Kèm lưới an toàn `@media print`
       trên preview: ẩn .no-print + bỏ padding container nếu user tự Ctrl+P
+
+### Task 5.8 — Chuyển 3 quyền sang seeder theo pattern màn TK ngân hàng (2026-08-06)
+
+User chốt ĐỔI hướng quyền: thay vì dùng lại 3 quyền ERP 101023–101025 (design cũ QĐ số 2),
+làm như màn `bank-account-catalog` — tạo quyền HRM MỚI guard `api` trong seeder, quyền ERP cũ
+giữ nguyên `type = NULL` (ẩn khỏi màn Phân quyền HRM; role ERP cũ vẫn dùng được vì
+`CheckPermission` so theo TÊN). Routes + FE check theo tên → KHÔNG sửa code.
+
+- [x] Seeder `PermissionsTableSeeder.php`: thêm 3 quyền id 1126/1127/1128 —
+      `Thêm/Sửa/Xóa danh mục gói bảo dưỡng`, guard `api`, group `Danh mục dịch vụ bảo dưỡng`, type 24
+- [x] DB local `gop_db` (KHÔNG chạy seeder — `run()` truncate): INSERT tay 3 bản ghi
+      + copy grant role từ quyền ERP cùng tên (101023→{18,100062,100097}, 101024→{18,100062,100097},
+      101025→{18,100062}) vào `role_has_permissions`
+- [x] Revert `UPDATE permissions SET type = NULL WHERE id IN (101023,101024,101025)`
+      (gỡ hack type=24 cũ — tránh hiện trùng tên trong tab CSKH)
+- [x] Reset cache spatie (`permission:cache-reset` báo "Unable to flush" dù driver file —
+      dùng `php artisan cache:forget spatie.permission.cache` thay thế, verify key đã mất)
+- [x] Verify: `php -l` seeder sạch; query DB 3 quyền mới đủ grants (1126/1127→{18,100062,100097},
+      1128→{18,100062}); smoke tinker employee 461 (role 100062) `getAllPermissions()` chứa đủ
+      3 tên quyền → middleware sẽ PASS; design.md QĐ số 2 đã cập nhật
+- [x] Nhắc deploy (thay SQL `type=24` cũ ở "Verify tổng thể"): môi trường khác chạy tay bộ SQL —
+      INSERT 3 quyền 1126-1128 + copy grant từ 101023-25 + revert type NULL (xem lệnh ở trên)
+
+⚠️ Phát hiện kèm (2026-08-06, NGOÀI scope task này): 6 quyền CSKH seeder 1119–1124
+(`Quản lý/Xem cấp dịch vụ bảo dưỡng`, `ghi chú kiểm tra`, `dịch vụ sửa chữa và chi phí khác`)
+KHÔNG tồn tại trong DB local `gop_db` (query theo tên = 0 dòng) → 3 màn levels /
+note-maintenances / costs đang 403 toàn bộ route có gate trên local. Chờ user xác nhận
+hướng xử lý (insert tay 6 quyền + gán role tương tự?).
+
+---
+
+## Phase 5 — Tài liệu test case (yêu cầu user 2026-08-07)
+
+- [x] Rà lại BE: `ServiceController`, `ServiceService` (index/optionsData/dataForEdit/store/update/destroy/priceByLevel/saveServiceMaintain/syncCompanies/syncProducts/searchProducts/searchGroups/buildPrintData), `Service` entity, `ServiceRequest`, `ServiceListResource`, `Routes/api.php`
+- [x] Rà lại FE: `pages/customer-care/services/index.vue`, `create.vue`, `_id/edit.vue`, `_id/print.vue`, `components/ServiceFormComponent.vue`, `ProductSearchModal.vue`, `GroupSearchModal.vue`
+- [x] Xác định phân quyền: 3 quyền `Thêm/Sửa/Xóa danh mục gói bảo dưỡng` chỉ gate 3 route ghi; xem/in/export/options KHÔNG gate; menu không gate → sinh section TC-ROLE 7 TC
+- [x] Viết `generate-testcase.py` theo skill `testcase-documenter`
+- [x] Sinh `testcase.xlsx` — 137 TC (7 TC-ROLE + 8 section La mã), P0 = 87 (64%)
+
+### Checkpoint — 2026-08-07 (Phase 5)
+Vừa hoàn thành: `testcase.xlsx` (137 TC) + `generate-testcase.py` cho màn Danh mục gói bảo dưỡng.
+Đang làm dở: không.
+Bước tiếp theo: QA review file; cần chỉnh thì sửa `generate-testcase.py` rồi chạy lại (`python .plans/gop-db/customer-care-services-catalog/generate-testcase.py`).
+Blocked: không.
+
+### Điểm cần nghiệp vụ xác nhận (ghi nhận khi viết test case, chưa sửa code)
+- **Tooltip giá ở danh sách lệch với form**: `ServiceService::priceByLevel()` = floor(work_price × quota_work × coefficient_cost_price_service) — KHÔNG nhân `benefit_coefficient`, trong khi `primeCost()` ở form CÓ nhân. Gói có Hệ số công nghệ ≠ 1 sẽ thấy 2 con số khác nhau (TC_04.006, TC_08.002).
+- **Bất đối xứng khi lưu**: xóa hết hàng ma trận rồi lưu thì dữ liệu cũ KHÔNG bị xóa (`saveServiceMaintain` return khi mảng rỗng), nhưng xóa hết hàng hóa rồi lưu thì pivot BỊ xóa sạch (`syncProducts` luôn sync). Hai hành vi ngược nhau, đều là nguyên trạng ERP (TC_06.017 vs TC_06.018).
+- **Export Excel không áp bộ lọc** — xuất toàn bộ danh mục (TC_05.053), giữ nguyên theo ERP.
+- **`isCanDelete()` không kiểm 6 bảng `wr_*`** đang dùng `service_id` — rủi ro đã báo và user chốt giữ nguyên (ghi lại để QA không coi là bug mới).
+- **FE không chặn URL form theo quyền**: user thiếu quyền vẫn mở được `/create` và `/{id}/edit`, chỉ bị chặn khi Lưu (403) — TC-ROLE-07.
