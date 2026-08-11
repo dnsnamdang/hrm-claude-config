@@ -37,3 +37,19 @@ Blocked: (không)
 
 ### Verify (bổ sung)
 - [ ] Tạo dự án TKT từ màn sửa meeting với KH (nhập Email KH) → mở chi tiết dự án: Email khách hàng hiển thị đúng giá trị đã nhập (kể cả KH ERP-only)
+
+### BE (hrm-api) — bổ sung 2026-08-10
+- [x] Bug 5: 1 hành động (Lên lịch / Chốt lịch ở màn Sửa) bắn 2 thông báo nội dung khác nhau. Nguyên nhân: `MeetingController::update()` gọi cả `MeetingService::sendMeetingNotification()` (thêm 04/02/2026, commit 20c8ca50e) lẫn hàm private `sendMeetingNotification()` cùng tên của controller (có từ 23/12/2025) — người thêm sau không xoá lời gọi cũ. Fix: bỏ lời gọi hàm private ở `update()`, chỉ giữ 1 nguồn là Service (dùng chung với `store()`); tiện thể dời lời gọi ra sau `DB::commit()` để không bắn noti khi rollback. Hàm private giữ nguyên vì vẫn phục vụ luồng Huỷ (`changeStatus`).
+
+### Verify (bổ sung)
+- [ ] Màn Sửa meeting → bấm "Lên lịch hẹn": thành viên chỉ nhận 1 thông báo (`[Meeting]: <tên>. Thời gian dự kiến ...`)
+- [ ] Màn Sửa meeting → bấm "Đã chốt lịch": chỉ 1 thông báo
+- [ ] Huỷ meeting: vẫn nhận đúng 1 thông báo `<tên> đã bị <người huỷ> huỷ. Lý do: ...`
+- [ ] Tài liệu tham chiếu: `.plans/meeting-create-bugfix/thong-bao-meeting.xlsx`
+- [x] Bug 6: Bấm "Lưu" khi meeting ĐÃ CHỐT LỊCH mà không đổi giờ vẫn bắn lại thông báo chốt lịch cho toàn bộ thành viên. Fix FE `MeetingForm.vue:767-781` (`handleSave`): nhánh else gửi kèm `send_notification: 0`; đồng thời ép `Number(this.form.status)` khi so sánh để không lọt trường hợp status là chuỗi. Luồng đổi giờ (popup xác nhận → `confirmTimeChange`) giữ nguyên: vẫn gửi thông báo với giờ mới.
+- [ ] Verify: meeting status 2 → sửa ghi chú/biên bản/điểm danh → bấm Lưu: thành viên KHÔNG nhận thông báo; đổi giờ → xác nhận popup: nhận đúng 1 thông báo với giờ mới
+
+### FE (hrm-client) — bổ sung 2026-08-11
+- [x] Thêm radio "Phân loại họp" (Họp khách hàng / Họp nội bộ) ở tab Thông tin chung màn tạo/sửa meeting (`pages/assign/meeting/components/GeneralInfo.vue`): lọc dropdown "Loại meeting" theo `has_customer`; đổi radio thì bỏ loại đang chọn nếu không khớp; màn sửa/xem tự set radio theo loại meeting đang có
+- [x] Lưu phân loại họp xuống DB: migration `2026_08_11_090000_add_is_customer_meeting_to_meetings_table` (cột `is_customer_meeting` boolean default 1, backfill theo `meeting_types.has_customer`); fillable Meeting; rule `nullable|boolean` ở Meeting Create/Update Request; gán ở `MeetingController::store/update` (ưu tiên FE gửi, fallback theo loại meeting); trả về ở `MeetingTransformer`; FE bind radio vào `form.is_customer_meeting`
+- [x] Verify (Playwright, FE :3000 / BE :8000): migrate OK (cột `is_customer_meeting` tinyint default 1, backfill 13 nội bộ / 2 KH); tạo mới chọn "Họp nội bộ" → dropdown chỉ 5 loại nội bộ, lưu `is_customer_meeting=0` (meeting id 17 — dữ liệu test); màn Sửa nạp lại đúng radio; đổi radio sang "Họp khách hàng" + chọn loại + chọn KH → lưu `is_customer_meeting=1`

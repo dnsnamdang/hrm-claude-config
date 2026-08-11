@@ -62,3 +62,8 @@ Nguyên nhân: `loadBomProducts()` (edit.vue) map sản phẩm từ BOM chỉ se
 Vừa hoàn thành: fix FE loadBomProducts bổ sung 3 field name. Nuxt hot-reload, không cần restart.
 Bước tiếp theo: user tạo báo giá từ BOM xác nhận bằng mắt.
 Blocked: (không)
+
+### Bỏ thụt lề tên hàng con khi in (2026-08-07)
+
+- [x] FE `QuotationPrintPreview.vue`: xoá `.print-table .child-row td:nth-child(2) { padding-left: 20px }`
+      ở cả CSS cửa sổ in lẫn style component → tên hàng con căn lề y hệt hàng cha.

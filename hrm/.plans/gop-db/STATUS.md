@@ -21,6 +21,31 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 
 ## Đang làm
 
+- fix-employee-fk-remap → @junfoke → .plans/gop-db/fix-employee-fk-remap/plan.md
+  Trạng thái: **CODE DONE, DRY PASS — CHƯA CHẠY THẬT** (2026-08-04). Vá các cột FK `employees`
+  bị `ReconcileEmployeesSeeder` bỏ sót khi gộp DB: **42 cột / 20.231 dòng** đang trỏ SAI NGƯỜI (gồm 4 cột remap có điều kiện).
+  Nguyên nhân: seeder gốc dò cột theo **danh sách tên cột cứng** (39 tên) nên bỏ qua mọi cột tên "lạ"
+  (`main_sale_employee_id`, `actor_id`, `pm_id`, `member_id`, `salary_change_employee_id`…), và bộ
+  phân loại đòi **100%** giá trị nằm trong `hrm_employees` nên loại nhầm 40 cột chỉ vì vài dòng trỏ
+  nhân viên đã xoá. Nó cũng bỏ qua cột `varchar` chứa id và cột JSON chứa mảng id.
+  ⚠️ Hỏng **im lặng**: id sai vẫn lọt dải hợp lệ → trỏ sang NGƯỜI KHÁC, không sinh lỗi FK.
+  Ví dụ: Sale mất quyền thao tác báo giá dự án của chính mình (`QuotationController:161`).
+  Đã làm: `FixMissedEmployeeFkSeeder` (3 dạng lưu int/varchar/JSON, DRY mặc định, không drop
+  `hrm_employees`) · sửa gốc `ReconcileEmployeesSeeder` sang **dò theo dữ liệu + fail-closed**
+  (còn cột chưa phân loại thì DỪNG, không remap gì) + mốc `gop_db_steps` chống chạy lại + xử lý cột JSON.
+  🐛 **Lỗi nền tảng phát hiện được**: `GopDbHelper::run(string $sql)` trùng tên `Seeder::run()` →
+  method của class thắng method của trait → **đệ quy vô hạn, 5/7 seeder GopDb chưa từng chạy được**
+  (không ai biết vì trên DB đã gộp chúng luôn thoát ở nhánh SKIP). Đã đổi tên thành `exec()`, sửa 44 chỗ.
+  ⚠️ **164 id vừa là id HRM cũ của người này vừa là id ERP mới của người khác** → chạy remap lần hai
+  là hỏng nặng hơn. TUYỆT ĐỐI không chạy `ReconcileEmployeesSeeder` trên DB đã gộp khi
+  `hrm_employees` còn tồn tại.
+  Bước tiếp: user backup DB → chạy `GOP_DB_APPLY=1` cho `FixMissedEmployeeFkSeeder`.
+  Đã kiểm thử thật trên schema nhân bản 44 bảng: 0 bảng đổi số dòng, **1.005 cột ngoài danh sách không bị đụng**,
+  42 cột đích 0 sai map, chạy lần 2 bị chặn. Đối chiếu độc lập: BH 718/718 khớp `created_by`, rice 927/927 khớp `employee_info_id`.
+  📌 **Bài học**: vòng đầu chỉ đọc BE nên 6 cột bị xếp "chưa kết luận"; đọc thêm FE (`hrm-client`) thì cả 6 đều
+  kết luận được và lộ thêm 1 cột nữa. Không còn cột nào chờ quyết định.
+  Spec: docs/superpowers/specs/gop-db/2026-08-04-fix-employee-fk-remap-design.md | Tóm tắt: .plans/gop-db/fix-employee-fk-remap/design.md
+
 - customer-care-cost-catalog → @junfoke → .plans/gop-db/customer-care-cost-catalog/plan.md
   Trạng thái: **BE + FE DONE, verify BE xong** (2026-08-03) — chuyển "Danh mục dịch vụ sửa chữa và
   chi phí khác" (`costs`, `kind_of=2`, 524 dòng) sang phân hệ CSKH. 8 route

@@ -127,3 +127,11 @@ Nguyên nhân thật: tài khoản daivv có `Xem khách hàng` = true nhưng KH
 - [x] FE: Meeting `GeneralInfo.vue` (2 chỗ) + Dự án TKT `CustomerInfoSection.vue` (2 chỗ) gọi `assign/customers/{id}?all_business=1` để không vỡ luồng chọn KH.
 - [x] FE: `CustomerForm.loadCustomer` gặp 403 → `$router.replace('/assign/customers')` (không toast thêm, interceptor axios đã toast).
 - [x] Verify: daivv → /43244, /43244/edit, /43244/manager đều bật về danh sách; API 43244 = 403, 43244?all_business=1 = 200. Tinker: user full quyền (16923 KH) và user scope hẹp đều `isVisible=true` cho KH trong list → không chặn nhầm.
+
+### Checkpoint — 2026-08-10 (Mở quyền XEM: ai cũng thấy được KH do mình tạo)
+Yêu cầu: bỏ hàng rào cứng quyền ERP "Xem khách hàng" ở màn danh sách — mọi tài khoản vào được, tối thiểu thấy KH do chính mình tạo. Quyền Thêm/Sửa/Xóa GIỮ NGUYÊN theo ERP; 3 tab dữ liệu ERP (Báo giá/Hợp đồng/Trang thiết bị) GIỮ gate.
+- [x] BE: bỏ `erpPermission:Xem khách hàng` khỏi `GET /assign/customers` (`Modules/Assign/Routes/api.php`). Phạm vi dữ liệu vẫn do `applyErpVisibilityScope` lọc (không có cấp xem nào → `created_by` = mình + KH mình đăng ký/tương tác).
+- [x] FE: `middleware/checkCustomerPermission.js` bỏ nhánh chặn `!perm.view` → 404; chỉ còn chặn /add (create) và /edit (edit), fail-closed khi API lỗi.
+- [x] FE: `CustomerForm.vue` thêm cờ `canViewErpCustomer` (mặc định false, lấy từ `my-permissions`, chỉ gọi khi `tabbed`) → ẩn 3 tab Báo giá/Hợp đồng/Trang thiết bị khi không có quyền, tránh bấm vào rồi 403.
+- Không đổi: `CustomerController::show` vẫn 403 nếu KH ngoài phạm vi; route store/update/serial/media vẫn gate erpPermission.
+- Chưa test browser.

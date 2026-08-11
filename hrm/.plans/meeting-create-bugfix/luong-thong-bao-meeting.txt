@@ -1,0 +1,99 @@
+====================================================================
+LUỒNG GỬI THÔNG BÁO CỦA MEETING (module Assign)
+Ngày rà soát: 10/08/2026
+Màn liên quan: http://127.0.0.1:3000/assign/meeting/create
+====================================================================
+
+1. NGUỒN SINH THÔNG BÁO
+--------------------------------------------------------------------
+Toàn bộ thông báo của luồng meeting do 2 hàm sinh ra:
+
+  (A) MeetingService::sendMeetingNotification($status, $meeting)
+      hrm-api/Modules/Assign/Services/MeetingService.php:1072
+
+  (B) MeetingController::sendMeetingNotification($meeting, $status, $cancelReason)  [private]
+      hrm-api/Modules/Assign/Http/Controllers/Api/V1/MeetingController.php:522
+
+Cả 2 đều đẩy qua:
+  EmployeeInfoService::sendToAllNotification()
+  hrm-api/Modules/Timesheet/Services/EmployeeInfoService.php:511 (-> sendNotification dòng 466)
+
+Mỗi lần gửi, người nhận nhận qua 3 kênh:
+  - Redis publish 'user_notification_{employee_id}'  -> chuông realtime trên web
+  - Job SendNotification::dispatch()                 -> push mobile
+  - EmployeeInfo->notify(new BaseNotification)       -> lưu bảng notifications
+
+
+2. ĐỐI TƯỢNG NHẬN THÔNG BÁO
+--------------------------------------------------------------------
+- CHỈ thành viên nội bộ: lấy từ bảng meeting_employees có employee_id
+  (tab "Thành viên công ty"), map sang employee_info_id.
+- Người tạo meeting mặc định được FE thêm vào danh sách thành viên công ty
+  -> người tạo cũng nhận thông báo.
+- THÀNH VIÊN KHÁCH HÀNG KHÔNG NHẬN GÌ (không email/SMS cho khách).
+- KHÔNG có cron/job nhắc trước giờ họp (đã kiểm tra app/Console/Kernel.php,
+  không có schedule nào liên quan meeting).
+
+Trạng thái meeting (Modules/Assign/Entities/Meeting/Meeting.php:61-65):
+  0 = Đang tạo (nháp), 1 = Lên lịch, 2 = Chốt lịch, 3 = Hoàn thành, 4 = Huỷ
+
+
+3. CÁC BƯỚC CÓ / KHÔNG GỬI THÔNG BÁO
+--------------------------------------------------------------------
+Bước / nút bấm                                | Status | Gửi? | Nội dung
+----------------------------------------------+--------+------+-------------------------------------------
+Lưu nháp (màn create)                         |   0    |  KO  | -
+Lên lịch hẹn (create hoặc edit)               |   1    |  CÓ  | "[Meeting]: <tên>. Thời gian dự kiến
+                                              |        |      |  (từ - đến) Địa điểm: … Hình thức: …"
+Đã chốt lịch                                  |   2    |  CÓ  | "[Meeting]: <tên>. Thời gian (từ - đến)
+                                              |        |      |  Địa điểm: … Hình thức: …"
+Nút "Lưu" khi meeting đang ở Lên lịch         |   1    |  KO  | FE gửi send_notification = 0
+                                              |        |      |  (MeetingForm.vue:770)
+Lưu / đổi giờ khi đã chốt lịch                |   2    |  CÓ  | Gửi lại thông báo chốt lịch với giờ mới
+ (qua popup xác nhận đổi thời gian)           |        |      |
+Hoàn thành (chốt biên bản)                    |   3    |  KO  | Không có thông báo nào
+Huỷ (POST /assign/meeting/{id}/change-status) |   4    |  CÓ  | "<tên meeting> đã bị <người huỷ> huỷ.
+                                              |        |      |  Lý do: <lý do huỷ>"
+Xoá meeting nháp                              |   -    |  KO  | -
+
+Payload thông báo dùng chung:
+  url   = '/assign/meeting/{id}/show'
+  type  = 'meeting'
+  id    = meeting id
+
+
+4. CHI TIẾT ĐIỂM GỌI TRONG CODE
+--------------------------------------------------------------------
+- Tạo mới (store)   : MeetingController.php:176 -> service (A)
+                      => chỉ thực sự gửi khi status = 1 hoặc 2
+- Cập nhật (update) : MeetingController.php:325-334
+                      $shouldNotify = $request->boolean('send_notification', true)
+                      -> :327 gọi service (A)
+                      -> :332-333 nếu status ∈ [1,2] gọi tiếp hàm private (B)
+- Đổi trạng thái    : MeetingController.php:220-222 (changeStatus)
+                      chỉ khi status = 4 (Huỷ) -> hàm private (B)
+
+FE quyết định cờ send_notification:
+  hrm-client/pages/assign/meeting/components/MeetingForm.vue
+  - scheduleMeeting()  : save(1, { send_notification: 1 })   dòng 652
+  - handleSave() khi status = 1 : save(1, { send_notification: 0 })  dòng 770
+  - confirmMeeting() / handleSave khi status = 2 : save(2) -> không gửi cờ
+    -> BE mặc định true -> CÓ gửi thông báo
+  - completeMeeting()  : save(3) -> BE không có nhánh status 3 -> không gửi
+
+
+5. HAI ĐIỂM BẤT THƯỜNG CẦN LƯU Ý
+--------------------------------------------------------------------
+(1) TRÙNG THÔNG BÁO khi UPDATE với status 1 hoặc 2:
+    MeetingController.php:327 gọi service (A) và :333 gọi tiếp private (B)
+    -> người dùng nhận 2 thông báo khác nội dung cho cùng 1 hành động:
+       - "[Meeting]: <tên>. Thời gian (…) …"
+       - "Bạn có lịch họp dự kiến với KH <tên KH> lịch chi tiết như sau: …"
+    Ở màn TẠO MỚI (store) chỉ gọi (A) -> chỉ 1 thông báo.
+    => Nên gộp về một nguồn duy nhất.
+
+(2) GỬI THÔNG BÁO BÊN TRONG TRANSACTION ở store:
+    MeetingController.php:176 nằm trước DB::commit() (dòng 178).
+    Nếu commit lỗi / rollback thì noti + push đã bắn đi trong khi
+    meeting không tồn tại -> người nhận bấm vào link sẽ 404.
+    => Nên chuyển việc gửi ra sau commit.
