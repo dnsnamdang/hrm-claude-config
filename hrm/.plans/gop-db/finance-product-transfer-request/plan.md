@@ -469,3 +469,95 @@ Vừa hoàn thành: user xác nhận xong toàn bộ hạng mục còn treo — 
 Đang làm dở: không.
 Bước tiếp theo: (1) ghi ngược nội dung PO đã chốt vào mục "Chờ xác nhận PO / task riêng" ở trên — hiện vẫn đang để dạng câu hỏi; (2) mở TASK RIÊNG rà quyền `gop_db`: middleware `CheckPermission` bỏ sót role gán từ ERP (model_type mismatch) trên MỌI route đang gắn nó + mapping quyền web-guard chưa surface vào `store.state.permissions` FE (kéo theo B2 — menu feature này chưa gắn được `isShow`).
 Blocked: không.
+
+---
+
+## Phase bổ sung — Thêm ô lọc "Mã yêu cầu" vào bộ lọc nâng cao (2026-08-10)
+
+**User báo:** màn `finance/product-transfer-requests` thiếu lọc theo mã yêu cầu.
+
+**Hiện trạng khi kiểm:** filter `code` ĐÃ có đủ đường dẫn — BE
+`ProductTransferRequest::searchByFilter()` có nhánh `filled('code')` → `like %code%`; FE có
+`code` trong `initialStateForm`, `buildParams()` gửi lên, và ô tìm nhanh trên cùng panel bind
+`:quickSearchValue="filters.code"` (placeholder "Tìm theo mã yêu cầu..."). Thiếu ở chỗ: mở
+"Tìm kiếm nâng cao" thì KHÔNG thấy trường "Mã yêu cầu" nào — trong khi ERP có ô này ngay trong
+hàng lọc (`warehouse/product_transfer_requests/index.blade.php:58` search_columns).
+
+- [x] FE `index.vue`: thêm ô "Mã yêu cầu" (`V2BaseInput v-model="filters.code"`) làm trường
+      ĐẦU TIÊN của bộ lọc nâng cao, khớp thứ tự ERP; dùng CHUNG state với ô tìm nhanh nên gõ ở
+      đâu cũng như nhau. Sắp lại 2 hàng cho đủ 4 cột/hàng: hàng 1 = Mã yêu cầu · Trạng thái ·
+      Tên/mã hàng hóa · Người tạo; hàng 2 = Người tiếp nhận · Ngày tạo từ · Ngày tạo đến · (Công ty/Phòng ban)
+- [x] KHÔNG đụng BE — filter `code` đã có sẵn
+- [x] Verify: SFC parse sạch (vue-template-compiler + babel)
+- [ ] Chờ user test tay: nhập mã ở ô nâng cao → bấm Tìm kiếm → lọc đúng; ô tìm nhanh trên cùng hiện đúng giá trị vừa gõ
+
+### Checkpoint — 2026-08-10
+Vừa hoàn thành: thêm ô lọc "Mã yêu cầu" vào bộ lọc nâng cao màn danh sách yêu cầu chuyển hàng.
+Đang làm dở: không.
+Bước tiếp theo: user test tay trên `finance/product-transfer-requests`.
+Blocked: không.
+
+---
+
+## Phase bổ sung — Khối File đính kèm đồng bộ với màn gói bảo dưỡng (2026-08-10)
+
+User yêu cầu áp cùng cách xử lý vừa làm ở `customer-care/services` (Phase 9 của
+`.plans/gop-db/customer-care-services-catalog/plan.md`) cho `ProductTransferRequestForm.vue`
+(dùng chung cho cả `create` và `_id/edit`).
+
+- [x] FE `onFilesPicked()`: thêm kiểm chữ ký `%PDF-` (5 byte đầu qua `FileReader` trên
+      `file.slice(0, 5)`) — chuyển sang `async/for…of`. Chặn file mang tên .pdf nhưng nội dung
+      không phải PDF (ca thật: file tải từ cổng hoá đơn/BBNT lỗi, ruột là JSON) ngay lúc chọn,
+      thay vì để BE `mimes:pdf` trả 422 lúc Lưu
+- [x] FE: bỏ toast cho lỗi chọn file → gom vào `attachmentsLocalErrors` + computed
+      `attachmentsErrors` (gộp lỗi FE + lỗi BE theo key `attachments` LẪN `attachments.{i}`),
+      hiện INLINE bằng `V2BaseError :messages`. `removeNewFile()` xoá cảnh báo cũ
+- [x] Giữ nguyên validate FE "Bắt buộc phải đính kèm ít nhất 1 file PDF" (key `attachments`) —
+      computed mới vẫn bắt key này nên lỗi hiện đúng chỗ như trước
+- [x] KHÔNG đụng nút xóa file đã lưu: màn này ĐÃ có sẵn `askDeleteOldFile()` gọi
+      `DELETE /{id}/files` (xóa thật trên S3) — khác màn gói bảo dưỡng (chỉ gỡ khỏi gói)
+- [x] KHÔNG đụng BE
+- [x] Verify: SFC parse sạch (vue-template-compiler + babel)
+- [ ] Chờ user test tay: chọn file .pdf hỏng → báo đỏ ngay dưới khối đính kèm, không thêm vào danh
+      sách; chọn PDF thật → thêm bình thường; tạo phiếu không đính kèm → vẫn báo "Bắt buộc…"
+
+### Checkpoint — 2026-08-10 (file đính kèm)
+Vừa hoàn thành: đồng bộ xử lý file đính kèm với màn gói bảo dưỡng (chặn PDF giả + lỗi inline).
+Đang làm dở: không.
+Bước tiếp theo: user test tay trên `finance/product-transfer-requests/create` và `/{id}/edit`.
+Blocked: không.
+
+---
+
+## Phase bổ sung — Fix màn IN: icon nút In lỗi + ảnh letterhead vỡ (2026-08-10)
+
+**User báo:** `finance/product-transfer-requests/7380/print` — nút In hiện ô vuông tofu "□ In"
+và ngay dưới có icon ảnh vỡ.
+
+**Nguyên nhân 1 (icon tofu — LỖI CODE):** nút dùng `<i class="fa fa-print">` nhưng hrm-client
+KHÔNG nạp FontAwesome ở bất kỳ đâu — `nuxt.config.js` chỉ có `remixicon@4.3.0` CDN, `app.scss`
+không import FA. Mọi `fa fa-*` đều ra tofu.
+→ ⚠️ CÙNG LỖI ở ~20 màn print khác (`pages/decision/*/print.vue`, `pages/assign/job_requests`,
+`pages/assign/questions`…) — ngoài scope task này, chưa sửa, ghi lại để mở task riêng.
+
+**Nguyên nhân 2 (ảnh vỡ — DỮ LIỆU LOCAL, không phải lỗi code):** `companies.logo` =
+`/uploads/1778661674z...jpg`, BE ghép ERP_URL thành `http://erp.test:8080/uploads/...`. Probe
+thực tế: root ERP trả 302 (server sống) nhưng ảnh trả **404** — thư mục `erp/public/uploads/`
+trên máy local RỖNG (0 file), nên mọi logo/header đều 404. Trên môi trường thật file có sẵn nên
+không tái hiện. Không sửa BE.
+
+- [x] FE `_id/print.vue`: nút In đổi sang `V2BaseButton primary size="sm"` + icon
+      `ri-printer-line` qua slot `#prefix` (skill button-convention), `:interactable` thay cho
+      `:disabled`
+- [x] FE: thêm `hideBrokenImages()` chạy sau khi set `template` (``) — ảnh 404 thì ẩn
+      hẳn thay vì vẽ icon ảnh vỡ (icon đó còn bị copy sang cửa sổ in). Gắn listener bằng DOM vì nội
+      dung là `v-html`; xử lý cả ca ảnh lỗi TRƯỚC khi gắn listener (`complete && naturalWidth === 0`)
+- [x] KHÔNG đụng BE `erpAssetUrl()` — logic đúng, chỉ thiếu file ở local
+- [x] Verify: SFC parse sạch; curl xác nhận `erp.test:8080` 302 / ảnh 404 / `erp/public/uploads` rỗng
+- [ ] Chờ user test tay: nút In hiện icon máy in đúng; không còn icon ảnh vỡ; bấm In vẫn tự bật hộp thoại
+
+### Checkpoint — 2026-08-10 (màn in)
+Vừa hoàn thành: fix icon nút In (FontAwesome không tồn tại trong hrm-client) + ẩn ảnh letterhead 404.
+Đang làm dở: không.
+Bước tiếp theo: user test tay `finance/product-transfer-requests/{id}/print`.
+Blocked: logo chỉ hiện được khi `erp/public/uploads/` có file (local đang rỗng) — không phải lỗi code.

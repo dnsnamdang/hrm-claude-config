@@ -1446,3 +1446,12 @@ Blocked: không.
 - `account_number` unique TOÀN BẢNG `company_accounts`, không scope theo `company_id` → công ty A không đặt được số tài khoản mà công ty B đã dùng (TC_06.007). Cần xác nhận đây có đúng mong muốn không.
 - Bộ lọc text không trim khoảng trắng đầu/cuối trước khi LIKE (TC_06.019 màn banks, TC_02.019 màn này).
 - Không có cơ chế chống ghi đè khi 2 user cùng công ty sửa song song 1 bản ghi (TC_06.021) — hiện trạng giống ERP.
+
+### Task 17: Tài khoản đã khóa thì không cho sửa (yêu cầu user 2026-08-07)
+
+- [x] BE `Modules/Finance/Http/Controllers/V1/CompanyAccountController.php` — `update()` chặn khi `status = STATUS_LOCKED`, trả 422 "Tài khoản ngân hàng đang bị khóa, không thể sửa"
+- [x] FE `pages/finance/account-banks/index.vue` — nút Sửa `:disabled` khi `item.status === '0'` + tooltip "Không thể sửa tài khoản đang bị khóa"
+- [x] FE — `openEdit()` guard thêm (toast lỗi) phòng dữ liệu bảng đã cũ
+- [ ] Verify trên UI: tài khoản khóa → nút Sửa mờ, nút Xem vẫn dùng được, mở khóa xong sửa lại bình thường
+
+Ghi chú: muốn sửa tài khoản đã khóa thì phải Mở khóa trước (nút toggle ở cột Trạng thái vẫn hoạt động).

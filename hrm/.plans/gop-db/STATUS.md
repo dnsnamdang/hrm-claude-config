@@ -30,6 +30,80 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 
 ## Hoàn thành
 
+- customer-column-config → @khoipv → .plans/gop-db/customer-column-config/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Nút **Cấu hình cột hiển thị** cho `/assign/customers` (ẩn/hiện + kéo thả thứ tự, lưu theo user),
+  tương đương "Tùy chỉnh cột" của ERP nhưng lưu DB thay vì localStorage.
+  Dùng lại hạ tầng sẵn có: `components/modal/column-customization-modal.vue` + API `human/column-customizations`.
+  Chốt: **18 cột** = 10 cột cũ + 8 cột ẩn của ERP (Tên đơn vị, Tên viết tắt, Địa chỉ xuất HĐ, Công ty mẹ,
+  Hãng xe, Cấp đại lý, Người tạo, Người sửa — mặc định ẩn) · **khoá** STT + Mã KH-Tên KH bằng cách
+  KHÔNG truyền vào modal (tránh sửa component dùng chung của 20+ màn) · cột Nhóm KH khi đó để tạm `'—'`
+  (**đã nối dữ liệu thật ở việc `customer-form-group`, 2026-08-10**) ·
+  file xuất CSV/Excel giữ bộ cột cố định.
+  Migration thêm cột JSON `customers` vào `column_customizations` (đã chạy) + cast Entity.
+  ⚠️ GOTCHA 1: 4 cột Công ty mẹ/Hãng xe/Người tạo/Người sửa cần 5 leftJoin → `COUNT` phân trang chậm
+  ~3,7 lần (42.077 KH: 0,12s→0,43s). `index()` dùng chung với popup chọn KH nên gate sau cờ
+  **`with_extra_columns`**; FE chỉ gửi khi user thực sự bật ≥1 trong 4 cột; `exportQuery()` tự join.
+  ⚠️ GOTCHA 2: modal chung dùng `b-form-checkbox :value="column.key"` → cột hiện mặc định PHẢI khai
+  `isVisible: '<đúng key>'`; để `undefined` là modal bỏ tích hết, bấm OK ẩn sạch bảng.
+  Verify: 3 luồng query (popup/danh sách/export) đúng như thiết kế · round-trip lưu-đọc cấu hình ·
+  17/17 check logic cột FE (nạp thẳng source computed, 4 kịch bản gồm cấu hình cũ khi thêm cột mới).
+  Ghi nhận không sửa: `ColumnCustomizationService` nhét thẳng `$request->table` vào tên cột SQL, không whitelist.
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-column-config-design.md
+
+- customer-form-group → @khoipv → .plans/gop-db/customer-form-group/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Thêm trường **Nhóm khách hàng** (chọn nhiều, không bắt buộc) vào form KH cho giống ERP.
+  Sửa ở component dùng chung `CustomerForm.vue` → 5 màn cùng có (add · edit · xem chi tiết readonly ·
+  quản lý KH · modal thêm nhanh). BE chỉ thêm 2 dòng validate — pivot `customer_has_groups`,
+  API `customer-groups`, `syncGroups()` và `show()->group_ids` đều đã có sẵn.
+  ⚠️ Sửa kèm 1 lỗi MẤT DỮ LIỆU có sẵn: `syncGroups()` xoá-rồi-ghi vô điều kiện trong khi form chưa
+  bao giờ gửi `groups` → mỗi lần sửa KH trên HRM là xoá sạch nhóm KH do ERP gán. `buildPayload()`
+  giờ LUÔN gửi `groups`.
+  Kèm theo: **cột "Nhóm KH" trên màn danh sách trước đây luôn hiện `—`** vì `CustomerListResource`
+  hardcode placeholder (di sản của `customer-column-config`) → nối dữ liệu thật bằng subquery tương quan
+  `groupNamesSql()` dùng chung cho `index()` + `exportQuery()`. Đo: COUNT 17.544 KH vẫn 308 ms
+  (subquery ở SELECT nên không đụng COUNT), lấy 20 dòng 9 ms.
+  Không migration, không permission mới.
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-form-group-design.md
+
+- customer-export-file → @khoipv → .plans/gop-db/customer-export-file/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Bổ sung 3 nút **Xuất CSV** / **Xuất Excel** / **Xuất PDF** cho `/assign/customers`, tương đương ERP
+  (`Sale\CustomersController@exportCSV|exportExcel|exportPDF`).
+  Chốt: Excel **tải trực tiếp** (ERP đẩy queue + gửi mail) · bộ cột giống ERP (CSV 5 cột / Excel 20 cột) ·
+  quyền ERP `Xuất dữ liệu khách hàng` (thêm key `export` vào `ErpPermissionHelper`) ·
+  **không giới hạn số dòng**, tối ưu bằng `FromQuery` + chunk 5.000 + select 26 cột cần thay `customers.*` (59 cột)
+  + cột phụ bằng JOIN/subquery (không N+1) + `StringValueBinder` + bỏ `ShouldAutoSize` ·
+  **giữ luật che SĐT** của màn danh sách trong file xuất (KH cá nhân không phải "của mình" → `-`).
+  Sửa 3 lỗi của bản ERP: thiếu header *Chức vụ liên hệ* (19 th/20 td → lệch cột) · CSV không BOM UTF-8 (vỡ dấu) ·
+  SĐT/MST mất số 0 đứng đầu do binder mặc định.
+  Đo thực tế 17.542 KH: CSV 25,3s→~13s · XLSX 60,2s→~32s (RAM đỉnh 206 MB).
+  Không migration, không thêm permission vào seeder (quyền ERP đã có sẵn, id 100074).
+  **Đợt bổ sung 2026-08-10**: mẫu Excel theo chuẩn HRM (logo · tiêu đề gộp ô đậm · header nền xám có viền ·
+  dữ liệu có viền · đóng băng dòng header · autofilter) → xuất 17.544 KH ~32s lên **~44s**, RAM 206→266 MB.
+  Thêm **Xuất PDF**: cài `barryvdh/laravel-dompdf ^1.0` (⚠️ team phải `composer install` sau khi kéo nhánh),
+  5 cột như ERP, A4 ngang, `App\PdfExport\CustomerPdfExport` dùng chung trait format với CSV/Excel.
+  ⚠️ GOTCHA PDF 1: blade PHẢI đặt `font-family: "DejaVu Sans"` — font mặc định dompdf không có dấu tiếng Việt.
+  ⚠️ GOTCHA PDF 2: dompdf giữ 1 Cellmap cho mỗi `<table>` → chia 200 dòng/bảng nâng trần từ ~1.000 lên
+  ~3.000 dòng. **Vẫn KHÔNG xuất nổi toàn bộ 17.544 KH** (512M: 3.000 dòng = 436 MB/30,7s; 4.000 dòng vỡ).
+  User chốt không giới hạn số dòng nên code không chặn → bấm Xuất PDF khi không lọc sẽ chết request
+  (memory exhausted là fatal error, try/catch không bắt được).
+  **CÒN NỢ (không chặn nghiệm thu, xử lý sau nếu cần)**: chọn 1 trong 3 hướng — chặn số dòng /
+  nâng `memory_limit` riêng cho action / đẩy queue + mail.
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-export-file-design.md
+
+- customer-import-excel → @khoipv → .plans/gop-db/customer-import-excel/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Bổ sung Import Excel cho `/assign/customers` —
+  chức năng ERP có (`Sale\CustomersController@importExcel`) mà HRM thiếu.
+  Chốt: **25 cột** = 24 cột file mẫu ERP + 1 cột Lĩnh vực kinh doanh dạng cặp `MãLoạiHình:MãLĩnhVực`
+  (gộp Loại hình vào chung 1 cột, đúng cách màn `/assign/application`; loại hình suy ra từ vế trái) · danh mục tra theo tên KHÔNG tự tạo mới (chung `gop_db`, tránh rác địa danh ERP) ·
+  bỏ trống cột Tên = dòng con (thêm liên hệ / TK ngân hàng) · trùng MST/CCCD báo lỗi, chỉ tạo mới ·
+  `V2BaseImportModal` 4 bước · import gọi lại đúng `CustomerService::save()`.
+  Không migration, không permission mới (dùng `erpPermission:Thêm khách hàng`).
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-import-excel-design.md
+
 - customer-care-serial-catalog → @junfoke → .plans/gop-db/customer-care-serial-catalog/plan.md
   Trạng thái: **CODE DONE + ĐÃ VERIFY (BE + trình duyệt)** (2026-08-06).
   Scope: chuyển "Danh mục serial thiết bị làm dịch vụ" (`serials`, 21.632 dòng) từ ERP sang **CSKH**

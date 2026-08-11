@@ -777,3 +777,190 @@ Blocked: không.
 - **Export Excel không áp bộ lọc** — xuất toàn bộ danh mục (TC_05.053), giữ nguyên theo ERP.
 - **`isCanDelete()` không kiểm 6 bảng `wr_*`** đang dùng `service_id` — rủi ro đã báo và user chốt giữ nguyên (ghi lại để QA không coi là bug mới).
 - **FE không chặn URL form theo quyền**: user thiếu quyền vẫn mở được `/create` và `/{id}/edit`, chỉ bị chặn khi Lưu (403) — TC-ROLE-07.
+
+---
+
+## Phase 6 — Fix bug: hệ số giá bán theo công ty bị cắt về 99.99 (2026-08-07)
+
+**Triệu chứng:** màn `customer-care/services/{id}/edit`, nhập "Hệ số giá bán" (khối 3 — Giá vốn
+theo công ty) ≥ 100 → lưu thành công nhưng mở lại thấy 99.99.
+
+**Nguyên nhân:** `company_service_coefficients.coefficient` là `decimal(4,2)` (trần 99.99);
+MySQL chạy non-strict (`config/database.php` `'strict' => false`) nên clamp âm thầm, không báo
+lỗi. `ServiceRequest` cũng không có rule `max` cho `companies.*.coefficient`.
+
+- [x] BE: migration `2026_08_07_000001_alter_coefficient_precision_company_service_coefficients.php`
+      ALTER `company_service_coefficients.coefficient` `decimal(4,2)` → `decimal(10,2)`
+      (giữ NOT NULL DEFAULT 1.00) — bảng dùng chung ERP, user chốt đổi schema 2026-08-07. Đã chạy local (3.3s)
+- [x] BE: `ServiceRequest` thêm `max:99999999.99` cho `companies.*.coefficient` + message "Tối đa 99.999.999,99"
+- [x] FE: `ServiceFormComponent.vue` thêm `companyKey(i, field)` + viền đỏ `is-invalid` và `V2BaseError`
+      cho ô hệ số từng công ty (key lỗi `companies.{index}.coefficient` — payload build đúng thứ tự `companyRows`)
+- [x] ~~Data-fix: 4 dòng bị cắt của gói 232 reset về 1.00~~ — **ĐÃ REVERT** (user chốt 2026-08-07:
+      không sửa dữ liệu đã lưu). id 1461-1464 trả lại 99.99 đúng nguyên trạng; user tự nhập lại trên UI nếu muốn
+- [x] Verify: `SHOW COLUMNS` → `decimal(10,2)`; smoke SQL ghi 150.50 đọc lại đúng 150.50 (đã revert);
+      `php -l` 2 file BE sạch; SFC parse sạch (vue-template-compiler + babel)
+- [ ] Chờ user test tay trên UI: nhập hệ số 100 / 150.5 → lưu → mở lại màn sửa phải đúng giá trị
+- [ ] Nhắc deploy: môi trường khác phải chạy migration này (hoặc SQL
+      `ALTER TABLE company_service_coefficients MODIFY coefficient DECIMAL(10,2) NOT NULL DEFAULT 1.00;`)
+
+### Checkpoint — 2026-08-07 (Phase 6)
+Vừa hoàn thành: fix bug hệ số giá bán theo công ty bị clamp về 99.99 (migration + validate BE + lỗi inline FE + data-fix).
+Đang làm dở: không.
+Bước tiếp theo: user test tay trên `customer-care/services/{id}/edit`.
+Lưu ý: KHÔNG tự động sửa dữ liệu nghiệp vụ đã lưu — chỉ sửa schema/code, data để user tự nhập lại.
+Blocked: không.
+
+---
+
+## Phase 7 — Ô "Hệ số giá bán" bảng Giá vốn theo công ty dùng base định dạng số (2026-08-10)
+
+**File sửa:** `hrm-client/pages/customer-care/services/components/ServiceFormComponent.vue`
+
+- [x] FE: đổi `V2BaseInput` + `@input.native="sanitizeNumberEvent($event, 2)"` → `V2BaseCurrencyInput`
+      (`v-model="company.coefficient"`, `:precision="2"`, placeholder `1`) — cùng khuôn ô "Giá bán cơ sở"
+      đã dùng ở khối 2. Có phân tách hàng nghìn khi nhập/hiển thị, tự chặn ký tự lạ + tối đa 2 số lẻ
+- [x] Giữ nguyên `:disabled="isManagingCompany(company)"`, `class="text-right"` và `is-invalid`
+      (style `.is-invalid .v2-currency-input` đã có sẵn ở cuối file)
+- [x] Ô trống: base emit `null` — `companyPrice()` và payload submit đã xử lý `null → 1`, không cần sửa
+- [x] Verify: SFC parse sạch (vue-template-compiler + babel)
+- [ ] Chờ user test tay: nhập `1500.5` → hiện `1,500.5`; xoá trống → lưu vẫn về 1; dòng công ty quản lý vẫn khoá
+
+### Checkpoint — 2026-08-10 (Phase 7)
+Vừa hoàn thành: ô "Hệ số giá bán" (khối 3 — Giá vốn theo công ty) chuyển sang `V2BaseCurrencyInput` precision 2.
+Đang làm dở: không.
+Bước tiếp theo: user test tay trên `customer-care/services/create` và `/{id}/edit`.
+Blocked: không.
+
+---
+
+## Phase 8 — Khóa nút Xóa cho gói đã được sử dụng (2026-08-10)
+
+**Triệu chứng user báo:** gói vừa tạo, chưa dùng ở đâu, bấm Xóa vẫn hiện cảnh báo
+"Gói đang được sử dụng sẽ chuyển sang trạng thái Khóa thay vì xóa…".
+
+**Nguyên nhân:** `ServiceListResource` hardcode `is_can_delete => true` (Task 1.4 — chủ ý copy ERP:
+nút Xóa luôn hiện, BE tự quyết xóa hay khóa) nên FE không biết gói nào dùng được; câu cảnh báo trong
+`deleteConfirmMessage()` là text TĨNH, hiện cho MỌI dòng. Kiểm DB: gói 231 "Gói bảo dưỡng 0708"
+có `service_has_products` = 0 và `service_quotation_items` = 0 → thực tế xóa được, cảnh báo sai.
+
+**Quyết định (user 2026-08-10):** KHÁC ERP có chủ đích — ERP luôn cho bấm Xóa rồi âm thầm chuyển
+Khóa (`Sale\ServiceController::delete()`); HRM khóa hẳn nút Xóa với gói đã dùng. Điều kiện "đã dùng"
+GIỮ NGUYÊN `Service::isCanDelete()` đã chốt 2026-08-04 (đã gắn hàng hoá HOẶC đã dùng ở báo giá).
+
+- [x] BE: `ServiceService::markCanDelete($services)` — tính cờ cho cả trang bằng 2 query gộp
+      (`whereIn` trên `service_has_products` + `service_quotation_items`), tránh 2 query × N dòng
+- [x] BE: `ServiceController::index()` gọi `markCanDelete()` sau vòng gán `price_by_level`
+- [x] BE: `ServiceListResource` trả `is_can_delete` thật (`?? true` cho luồng export — export không dùng cờ này)
+- [x] FE: `index.vue` nút Xóa `:interactable="!!item.is_can_delete"`, bọc `<span :title>` vì
+      V2BaseIconButton disabled có `pointer-events: none` nên title trên nút không hiện
+- [x] FE: `deleteConfirmMessage()` bỏ câu "sẽ chuyển sang trạng thái Khóa" →
+      "Bạn có chắc chắn muốn xóa gói bảo dưỡng 'X'? Hành động này không thể hoàn tác."
+- [x] FE: `confirmDeleteItem()` chặn sớm nếu `!is_can_delete` (phòng gọi nhầm)
+- [x] BE `destroy()` GIỮ NGUYÊN nhánh chuyển Khóa — chốt chặn cuối nếu dữ liệu đổi giữa lúc load list và lúc bấm Xóa
+- [x] Verify: `php -l` 3 file; smoke tinker `markCanDelete()` khớp 100% `isCanDelete()` từng dòng
+      (id 1/2/3 = false, 231 = true); resource resolve ra `is_can_delete` đúng; SFC parse sạch
+- [ ] Chờ user test tay: gói 231 xóa được (không còn cảnh báo sai); gói đã gắn hàng hoá/báo giá → nút Xóa mờ + tooltip
+
+**Lưu ý nghiệp vụ:** trước đây bấm Xóa ở gói đang dùng = cách khóa nhanh gói đó. Giờ nút đã khóa,
+muốn chuyển gói sang trạng thái Khóa phải vào màn Sửa → trường Trạng thái.
+
+### Task 8.1 — Chốt lại điều kiện `is_can_delete` + wording tooltip (2026-08-10)
+
+User hỏi vì sao gói 227 "Gói bảo dưỡng test" (K-HA) không xóa được. Tra DB: gói này **chưa phát
+sinh nghiệp vụ ở đâu** — `service_quotation_items` = 0, cả 6 bảng `wr_*` = 0, hợp đồng/phụ lục/
+xuất kho/hạch toán DV = 0. Chỉ vướng `service_has_products` = 2 dòng (2 hàng hoá tick ở khối 4
+"Áp dụng cho hàng hóa" của chính gói đó: `CH-PRO-8125`, `AVC-CAUTRUC1TON`).
+
+Đã đưa 3 phương án (chặn theo nghiệp vụ thật + quét đủ bảng wr_* / chỉ bỏ vế hàng hoá / giữ nguyên ERP).
+→ **User chốt: GIỮ NGUYÊN như ERP** (`!products()->exists() && !serviceQuotationItems()->exists()`).
+Muốn xóa gói đã gắn hàng hoá thì vào màn Sửa bỏ hết hàng hoá → Lưu → Xóa.
+
+- [x] KHÔNG đổi `Service::isCanDelete()` / `ServiceService::destroy()` — giữ nguyên điều kiện ERP
+- [x] FE: sửa wording tooltip nút Xóa bị khóa cho đúng CẢ HAI vế + chỉ luôn cách xử lý:
+      "Không thể xóa: gói đã gắn hàng hoá hoặc đã được dùng ở báo giá. Vào Sửa bỏ hết hàng hoá nếu
+      muốn xóa gói." (câu cũ "đã được sử dụng" gây hiểu nhầm đúng như tình huống gói 227)
+- [x] Verify: SFC parse sạch
+
+**Rủi ro vẫn còn (đã báo, user giữ nguyên):** 6 bảng `wr_*` dùng `service_id` KHÔNG nằm trong điều
+kiện xóa — số dòng thực tế trên DB gộp: `wr_service_quotation_extend_product_services` 15.233 ·
+`wr_import_result_services` 3.511 · `wr_assign_task_extend_product_services` 2.769 ·
+`wr_service_contract_extend_product_services` 1.811 · `wr_accounting_service_items` 1.562 ·
+`wr_import_result_extend_product_services` 1.348. Gói chưa gắn hàng hoá + chưa có báo giá nhưng đã
+phát sinh ở các bảng này VẪN xóa được → để lại dữ liệu mồ côi.
+
+### Checkpoint — 2026-08-10 (Phase 8)
+Vừa hoàn thành: BE trả `is_can_delete` thật + FE khóa nút Xóa cho gói đã được sử dụng.
+Đang làm dở: không.
+Bước tiếp theo: user test tay trên `customer-care/services`.
+Blocked: không.
+
+---
+
+## Phase 9 — File .pdf giả lọt bước chọn, lưu mới báo 422 (2026-08-10)
+
+**Triệu chứng user báo:** chọn được file `DT_DN_0356560090-…_BBNT.pdf` ở khối "File đính kèm (PDF)"
+nhưng bấm Lưu thì 422 `{"attachments.0": "Chỉ nhận file PDF"}`.
+
+**Nguyên nhân:** file KHÔNG phải PDF — 128 byte, nội dung là JSON lỗi của cổng phát hành BBNT:
+`{"type":"ERROR","code":null,"message":"system_error","errors":["Illegal base64 character 2d"]}`,
+`file` nhận diện "JSON text data". Trình duyệt vẫn lưu tên `.pdf` nên:
+- FE `onFilesPicked()` chỉ kiểm ĐUÔI TÊN (`/\.pdf$/i`) → lọt
+- `<input accept=".pdf">` cũng chỉ lọc theo đuôi → hộp chọn file vẫn cho tick
+- BE `ServiceRequest` `mimes:pdf` đọc NỘI DUNG THẬT (finfo) → chặn đúng lúc Lưu
+
+Phụ: lỗi BE trả theo key `attachments.0` nhưng FE chỉ đọc `fieldError('attachments')` → không có
+lỗi inline nào hiện, user chỉ thấy JSON 422 thô. BE hoàn toàn đúng, sửa 2 điểm ở FE.
+
+- [x] FE `onFilesPicked()`: thêm kiểm chữ ký `%PDF-` (5 byte đầu, `FileReader.readAsArrayBuffer`
+      trên `file.slice(0, 5)`) — chuyển sang `async/for…of` vì đọc file là bất đồng bộ.
+      File hỏng bị chặn ngay lúc chọn
+- [x] FE: computed `attachmentsErrors` gộp lỗi chọn file phía FE (`attachmentsLocalErrors`) + lỗi BE
+      theo key `attachments` LẪN `attachments.{i}` → hiện inline dưới khối đính kèm thay vì im lặng
+- [x] FE (user yêu cầu 2026-08-10): bỏ toast cho lỗi chọn file — tên file dài, toast trôi nhanh khó
+      đọc. Cả 2 lỗi (sai đuôi / không phải PDF thật) hiện INLINE bằng `V2BaseError :messages`
+      (component tự join nhiều dòng). Lỗi FE hiện ngay khi chọn; lỗi BE vẫn chờ `touched`;
+      `removeNewFile()` xoá cảnh báo cũ
+- [x] KHÔNG đụng BE — `mimes:pdf` đang chặn đúng
+- [x] Verify: SFC parse sạch (vue-template-compiler + babel)
+- [ ] Chờ user test tay: chọn lại đúng file lỗi → bị chặn ngay kèm toast; chọn PDF thật → thêm + lưu bình thường
+
+### Checkpoint — 2026-08-10 (Phase 9)
+Vừa hoàn thành: chặn file .pdf giả ngay lúc chọn + hiện lỗi `attachments.{i}` inline.
+Đang làm dở: không.
+Bước tiếp theo: user test tay khối File đính kèm ở màn tạo/sửa gói bảo dưỡng.
+Blocked: không.
+
+---
+
+## Phase 10 — Cho gỡ file đính kèm đã lưu ở màn Sửa (2026-08-10)
+
+**User hỏi:** `customer-care/services/235/edit` sao không xóa được file đã thêm lúc tạo.
+
+**Hiện trạng (không phải bug):** port đúng ERP — `sale/services/form.blade.php:419-423` render
+`form.documents` (file đã lưu) chỉ có 2 thẻ `<a>` để xem, KHÔNG có nút xóa; chỉ
+`addition_attachments` (file mới chọn) mới có `removeFile()`. BE `services.attachments` là chuỗi URL
+nối nhau, `uploadAttachments()` chỉ append.
+
+**User chốt 2026-08-10:** thêm nút gỡ, **chỉ gỡ khỏi gói — KHÔNG xóa object trên S3** (gói tạo bằng
+Sao chép dùng CHUNG URL với gói nguồn, xóa thật sẽ làm hỏng file của gói kia).
+
+- [x] BE `ServiceService::keptAttachments($request, $service)` — danh sách file giữ lại khi update:
+      không gửi `existing_attachments` (cổng ERP/client cũ) → giữ nguyên; gửi rỗng → gỡ hết;
+      `array_intersect` với chuỗi hiện có của CHÍNH gói đó → chặn client nhét URL lạ vào cột
+- [x] BE `update()` dùng `uploadAttachments($request, $this->keptAttachments(...))` thay cho
+      `$service->attachments`; tách helper `splitAttachments()` dùng chung với `dataForEdit()`
+- [x] BE KHÔNG gọi S3 delete — cố ý (xem lý do trên)
+- [x] FE: file đã lưu có nút ✕ `removeSavedFile(index)`, title "Gỡ file khỏi gói (bấm Lưu mới có
+      hiệu lực)"; không confirm — cùng kiểu `removeProduct()`, chưa Lưu thì chưa mất gì
+- [x] FE `buildFormData()`: màn Sửa LUÔN gửi `existing_attachments` (kể cả chuỗi rỗng = gỡ hết);
+      màn Tạo vẫn chỉ gửi khi sao chép từ gói khác
+- [x] Verify: `php -l` sạch; smoke reflection `keptAttachments()` 5 ca (không gửi key → giữ nguyên ·
+      giữ 1 · giữ 2 · rỗng → NULL · URL lạ → NULL) đều đúng; SFC parse sạch
+- [ ] Chờ user test tay trên gói 235: gỡ file → Lưu → mở lại không còn file; gỡ hết → cột
+      `attachments` = NULL; link S3 cũ vẫn mở được (không xóa object)
+
+### Checkpoint — 2026-08-10 (Phase 10)
+Vừa hoàn thành: màn Sửa gỡ được file đính kèm đã lưu (chỉ gỡ khỏi gói, giữ file trên S3).
+Đang làm dở: không.
+Bước tiếp theo: user test tay trên `customer-care/services/235/edit`.
+Blocked: không.

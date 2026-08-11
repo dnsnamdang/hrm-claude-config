@@ -16,6 +16,15 @@ Người phụ trách: @khoipv
 
 - [x] 5. Đồng bộ màu placeholder tất cả component V2 base về `#adb5bd` (= `$input-placeholder-color`/`$gray-500` của form-control tìm kiếm nhanh): V2BaseSelect (3 chỗ, gồm cả multiple search field) + V2BaseSelectInModal + V2BaseInput + V2BaseCodeInput + V2BaseCurrencyInput (bỏ opacity 0.6) + V2BaseDatePicker + V2BaseTextarea. Verify: compile 7 file OK + Playwright đo computed color quick-search / select2 / datepicker đều `rgb(173,181,189)`. Ảnh: `placeholder-color-after.png`
 
+- [x] 6. Fix nút "Xóa tất cả" (×) ở **multiple mode** nhảy lên đầu (trước các tag) — phát hiện tại `/assign/customers/43711/edit` ô "Hãng xe". Root cause: select2 4.0.13 prepend `<span class="select2-selection__clear">` vào đầu `<ul.select2-selection__rendered>` rồi đẩy sang phải bằng `float: right`; nhưng task 1 làm "sống lại" rule `.v2-select .select2-selection--multiple .select2-selection__rendered { display: flex !important }` (V2BaseSelect.vue) → **float bị bỏ qua với flex item** → nút × hiển thị theo đúng thứ tự DOM, tức đứng đầu. Fix: ghim tuyệt đối vào mép phải (`position: absolute; right: 6px; top: 50%; translateY(-50%)`) + `padding-right: 28px` cho `__rendered` để tag không đè lên. Prefix `div.v2-select` để đè `padding` shorthand của các rule size `.v2-select--xs/sm/md/lg`. Sửa cả 2 file `V2BaseSelect.vue` + `V2BaseSelectInModal.vue` (Modal không có style multiple riêng, đang ăn ké rule của V2BaseSelect qua class chung `.v2-select`)
+- [x] 7. Verify task 6 bằng Playwright trên dev server: `/assign/customers/43711/edit` (V2BaseSelectInModal) — × cách mép phải 6.8px, căn giữa dọc lệch 0px, tag "Honda" nằm bên trái; chèn 6 tag giả cho wrap 2 dòng → không đè lên tag. `/timesheet/timeworking/shift-history` (V2BaseSelect, ô "Nguồn phân ca") — cùng kết quả; bấm × xóa sạch tag và dropdown không bị bung kèm
+
+### Checkpoint — 2026-08-10
+Vừa hoàn thành: task 6 + 7 — fix nút "Xóa tất cả" (×) của select2 multiple bị nhảy lên đầu danh sách tag, sửa ở cả `V2BaseSelect.vue` và `V2BaseSelectInModal.vue`, đã verify Playwright 2 màn (form + filter).
+Đang làm dở: (không có)
+Bước tiếp theo: user kiểm tra thêm các màn khác có select multiple (filter danh sách, form modal) xem vị trí nút × đã đúng mép phải.
+Blocked:
+
 ### Checkpoint — 2026-08-05
 Vừa hoàn thành: 5 task — fix căn giữa dọc placeholder/text cho V2BaseSelect + V2BaseSelectInModal (V2BaseSelectRemote hưởng theo vì dùng chung class `.v2-select`) + đồng bộ màu placeholder mọi component V2 base về #adb5bd, đã verify Playwright.
 Đang làm dở: (không có)
