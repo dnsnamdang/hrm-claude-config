@@ -19,8 +19,15 @@
 - FE: Select trong modal/popup BẮT BUỘC dùng `V2BaseSelectInModal` thay cho `V2BaseSelect` (chi tiết xem `.claude/skills/modal-popup/SKILL.md`)
 - Trước khi làm màn danh sách mới → hỏi có cần phân quyền theo cấp không
 - Trước khi viết accessor `is_can_delete` → hỏi điều kiện xóa cụ thể của màn đó
-- Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu
+- Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu (áp dụng cho màn cũ)
+- **Màn MỚI: validate realtime bằng `vee-validate` gắn trên component `V2Base*`** — chỉ trường **Tên** mới gắn `required` ở FE (vì Lưu nháp không được chặn các trường khác), required còn lại do BE quyết theo `status` rồi trả 422 → FE map vào `formError`. Chi tiết: `.claude/skills/form-validate/SKILL.md`
 - **Cờ phân quyền phải fail-closed (KHÔNG BAO GIỜ hard-code `= true`)**: mọi cờ quyền FE (`canViewCostPrice`, `canEdit`, `canDelete`, `can_view_*`,…) BẮT BUỘC khởi tạo mặc định `false` và chỉ set từ `$store.state.permissions` (quyền thật) hoặc field BE trả về. TUYỆT ĐỐI không gán literal `true` cho cờ quyền (kể cả ở màn tạo mới / khi "chưa có data") — đây là lỗ hổng fail-open làm lộ dữ liệu nhạy cảm (vd giá vốn). Nếu màn tạo mới cần hiện dữ liệu do user tự nhập, dùng cờ nghiệp vụ riêng (vd `hasUserCreatedProducts`), KHÔNG bật cờ quyền. BE: mọi endpoint trả dữ liệu nhạy cảm (giá vốn/cost, lương…) phải gate bằng `isCurrentEmployeeHasPermission('<Tên quyền>')` trước khi trả, trả `null` nếu không quyền — không dựa vào FE ẩn (defense-in-depth). Khi review: chặn pattern `can[A-Za-z]*\s*=\s*true`.
+- **Mọi màn form (Tạo mới/Sửa) phải cảnh báo khi thoát lúc chưa lưu** — dùng mixin có sẵn `@/utils/mixins/unsavedChangesMixin`, gọi `markFormSaved()` sau khi lưu thành công; KHÔNG tự viết `beforeRouteLeave` riêng. Chi tiết: `.claude/skills/unsaved-changes/SKILL.md`
+- **Mọi thông báo nghiệp vụ (chuông/push/socket) theo template `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`** — tên đối tượng ≤ 50 ký tự và in đậm, tổng ≤ 120 ký tự, deep-link bắt buộc kèm ID. Chi tiết + bảng prefix/nhóm hành động: `.claude/skills/notification-convention/SKILL.md` (đọc trước khi code phần có thông báo)
+- **Danh mục bị khoá / ngừng hoạt động vẫn phải hiện ở bản ghi đang dùng nó** (nghiệp vụ xuyên suốt MỌI màn, mọi module): dropdown/select lấy từ danh mục (giai đoạn dự án, loại hình, lĩnh vực, nguồn khách hàng, phòng ban, chức danh…) mặc định chỉ liệt kê bản ghi còn hoạt động (`is_active = 1` / chưa khoá), NHƯNG khi mở màn Sửa/Chi tiết của đối tượng đã chọn giá trị nay bị khoá thì giá trị đó BẮT BUỘC vẫn là 1 option và hiển thị đúng tên — không được để select trống, không tự đổi sang giá trị khác, không mất dữ liệu khi lưu lại.
+  - **BE**: API danh mục nhận thêm id đang dùng (vd `include_ids` / `current_id`) → `where('is_active', 1)->orWhereIn('id', $includeIds)`. Nếu không sửa được API danh mục thì Resource của đối tượng phải trả kèm object danh mục đang chọn (id + name) để FE merge.
+  - **FE**: sau khi load options, nếu `form.xxx_id` có giá trị mà không có trong options → push object đang chọn (lấy từ data detail) vào mảng options. Hiển thị **đúng tên gốc**, KHÔNG thêm hậu tố kiểu `(đã khoá)`; nếu cần đánh dấu thì dùng cờ dữ liệu (`is_locked`), không đổi text.
+  - Áp dụng cả cho filter màn danh sách (giá trị đang lọc/đã lưu), cột hiển thị trong bảng và màn in/export.
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
 
 ---
@@ -273,6 +280,9 @@ Nếu có → đọc trước khi viết code.
 | Validate, error, toast trong elearning              | `.claude/skills/elearning-validate/SKILL.md` |
 | Auth, SSO, profile, avatar trong elearning          | `.claude/skills/elearning-auth/SKILL.md`     |
 | Viết tài liệu HDSD / hướng dẫn sử dụng màn hình     | `.claude/skills/hdsd-documenter/SKILL.md`    |
+| Bắn/sửa thông báo nghiệp vụ (chuông, push, socket)  | `.claude/skills/notification-convention/SKILL.md` |
+| Tạo/sửa màn form (add/edit, modal nhập liệu)        | `.claude/skills/unsaved-changes/SKILL.md`    |
+| Validate form ở màn mới (realtime, required, lỗi)   | `.claude/skills/form-validate/SKILL.md`      |
 
 → Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
 
