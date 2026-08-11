@@ -56,6 +56,13 @@
 - [x] Subject item đã có sẵn training_type_name + skill_name (SubjectBrowseResource) — không đụng BE
 - [ ] Verify browser (user)
 
+## Bugfix — Filter "Bắt buộc" khi guest/tài khoản ngoài vẫn ra list — ✅ DONE
+- [x] Root cause: applyContentFilters truyền $emptyProfile → applyAssigneeProfileFilter tạo nested where rỗng (no-op) → whereHas chỉ lọc is_mandatory=1 KHÔNG theo hồ sơ → guest ra hết
+- [x] Fix: rẽ nhánh theo profileHasScope($userProfile) — mandatory+không hồ sơ → whereRaw('1=0') (rỗng); optional+không hồ sơ → không ràng buộc (tất cả); có hồ sơ → lọc theo hồ sơ thật. Khớp ngữ nghĩa buildHomeSection + badge is_mandatory
+- [x] php -l sạch
+- [x] Đồng bộ fix cho subjects() + learningPaths() (user xác nhận "có"): dùng profileHasScope + applyAssigneeProfileFilter (DRY, bỏ 2 khối inline dept/position/capability trùng lặp). Hành vi user CÓ hồ sơ giữ nguyên; chỉ sửa guest/không hồ sơ. Áp cho cả 4 màn (Học theo danh mục / loại đào tạo / kỹ năng / Lộ trình). php -l sạch.
+- [ ] Verify browser guest (user)
+
 ### Checkpoint — 2026-07-27
 Vừa hoàn thành: CODE DONE 3/3 task (subagent-driven, implement haiku, review sonnet). Final review = SẴN SÀNG MERGE, 0 Critical/Important. php -l sạch. Không migration. KHÔNG commit git.
 Đang làm dở: (không)

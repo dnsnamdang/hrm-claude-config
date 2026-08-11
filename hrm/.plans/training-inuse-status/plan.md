@@ -60,3 +60,6 @@ Vừa hoàn thành: CODE DONE cả 3 phase + VERIFIED Phase 1 (API) & Phase 2 (U
 Đang làm dở: (không) — chờ user verify mắt + quyết định có setup enrollment lộ trình khóa để test badge live.
 Bước tiếp theo: User verify UI hrm-client (hard-refresh) + elearning; nếu muốn test badge → setup enrollment + khóa lộ trình.
 Blocked:
+
+### Cập nhật sau (2026-07-29) — nới rule chặn học khóa con lộ trình khóa
+Rule Phase 4 spec dòng 95-96 ("khóa lộ trình phải chặn thật việc học khóa con") chặn nhầm khóa public/Hoạt động HỌC LẺ được: học viên vào `/subjects/{slug}/learn` báo 423 "Lộ trình đã bị khóa" chỉ vì có ghi danh 1 lộ trình đã khóa chứa khóa đó. Theo yêu cầu user, đã NỚI: lộ trình khóa không còn chặn học lẻ khóa con còn khả dụng, và không promote trạng thái lộ trình khóa khi học lẻ. Chi tiết + code: `.plans/elearning-private-course-access/plan.md` Phase 6.

@@ -305,3 +305,20 @@ dự án**, phải liệt kê từng tên file; và chụp screenshot vào thư 
 **Blocked:** không.
 
 **Bước tiếp theo:** như checkpoint (3) — Phase 7 + 2 file mẫu Excel.
+
+## Phase 9 — Trau chuốt modal lịch sử + chặn nhập Số tài khoản (2026-08-06)
+
+- [x] Cân đối 4 ô lọc modal lịch sử (4-4-2-2 → 3-3-3-3) — `components/modal/finance/finance-history-modal.vue`
+- [x] Fix tràn viền modal khi giá trị cũ/mới là chuỗi số rất dài (`overflow-wrap: anywhere` cho `.history-change`)
+- [x] Số tài khoản: chặn gõ ký tự không phải số (`@keypress.native`) + `maxlength=20` + lọc lại khi paste
+      (ghi thẳng DOM vì Vue không patch lại khi giá trị sạch trùng lần render trước)
+- [x] Validate FE inline trước khi submit: bắt buộc, chỉ chữ số, 3–20 chữ số
+- [x] BE `AccountRequest`: `numeric` → `digits_between:3,20` + message tiếng Việt
+
+### Checkpoint — 2026-08-06
+
+**Vừa hoàn thành:** Phase 9 (3 phản hồi UI của user trên màn Danh mục tài khoản / Loại tài khoản).
+
+**Đang làm dở:** không. **Blocked:** không.
+
+**Bước tiếp theo:** user test lại 3 điểm trên; vẫn còn tồn Phase 7 (đối chiếu 2 cổng + 2 file mẫu Excel).

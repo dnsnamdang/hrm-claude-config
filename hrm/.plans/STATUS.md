@@ -13,7 +13,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Spec: docs/superpowers/specs/2026-08-06-pl8-thong-tin-he-thong-design.md
   Bước tiếp: code Phase 1 (màn Báo giá) → user duyệt UI → nhân bản Phase 2/3.
 
-<<<<<<< Updated upstream
 - erp-to-hrm-migration → @dnsnamdang → .plans/erp-to-hrm-migration/plan.md
   Trạng thái: **SIZING DONE — chờ DB production để đối chiếu bất đồng bộ T3 (2026-07-27)**. Umbrella hợp nhất ERP⊕HRM + chuyển 4 mảng (Báo giá · HĐ bán/firm · HĐ dịch vụ · Kế toán). **Mục tiêu lớn nhất = gộp chung 1 database** (không phải chỉ viết lại UI). ĐÃ CHỐT: chỉ gộp 1 pháp nhân `hrm_tpe`⊕`erp2326` (bỏ connection etek/tpe); đích = **1 schema HRM duy nhất** (HRM canonical); ERP repoint sang DB HRM + retire dần (Strangler); prefix legacy `tp_` phía ERP; KHÔNG ETL — colocate + dedupe dần theo domain. Phân tích: ERP 1.225 bảng / HRM 635 / **trùng tên 50** → phân tầng T0 auth(không merge)·T1 giả(rename, gồm `quotations`)·T2 danh mục·T3 lõi tổ chức(rủi ro CAO NHẤT)·T4 nghiệp vụ KH/HĐ. ~165 bảng 4 mảng phần lớn KHÔNG trùng → bê nguyên tên. T3 đã sync sẵn HRM→ERP (id lệch, map qua natural key: companies=tax_code, departments/employee_infos=code, employees=email, parts=name) → gộp 1 DB thì gỡ luôn sync. Lộ trình 2 phase: P1 hợp nhất hạ tầng (đạt "1 DB chung", data nguyên vẹn) → P2 viết lại UI + dedupe theo domain (T2→master/KH→báo giá→HĐ→kế toán).
   Blocker phụ: `Modules/Accounting/{Routes/api.php, module.json}` merge conflict → tinker không boot (dùng mysql CLI thay thế).
@@ -87,33 +86,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Scope: Đổi "Chiết khấu/CK" → "Giảm giá/GG" toàn hệ thống. P1: danh mục "Loại giảm giá" (menu/tiêu đề/nhãn/toast) + tiền tố mã `CK-`→`GG-`. P2: đổi tên QUYỀN `...loại chiết khấu` → `...loại giảm giá` (seeder id=1090 giữ nguyên → phân quyền cũ không mất) + 7 middleware + menu isShow. P3: đổi nhãn Chiết khấu→Giảm giá trên toàn màn Báo giá (edit/view/print/submit/history + Excel blade + BE controller/service/history) — CHỈ text hiển thị, giữ biến/khóa/công thức/alias import cũ. GIỮ nguyên: route `/assign/discount-types`, bảng `discount_types`, API, mã bản ghi cũ.
   File: BE `DiscountType`, `PermissionsTableSeeder`(id1090), `Assign/Routes/api.php`, `QuotationController`, `QuotationService`, `QuotationHistory`, `DiscountTypeRequest/Controller`, `exports/bom_list.blade.php`; FE `menu-sidebar.js`, `discount-types/index.vue`, `discount-type-modal.vue`, `quotations/_id/edit.vue`+`index.vue`, `QuotationPrintPreview/PrintConfigModal/SubmitModal/HistoryModal.vue`. Không migration.
   ⚠️ DEPLOY: phải reseed PermissionsTableSeeder cùng lúc deploy code (middleware check tên MỚI; DB chưa reseed → 403). Import Excel báo giá cũ (header "CK(%)") vẫn chạy nhờ alias.
-=======
-- bank-account-catalog → @khoipv → .plans/gop-db/bank-account-catalog/plan.md
-  Trạng thái: **DESIGN XONG, CHỜ USER DUYỆT SPEC** (2026-08-03, nhánh `gop_db`). Port màn ERP "Danh mục tài khoản ngân hàng"
-  (`admin/accounting/account-banks`, model `CompanyAccount`, bảng `company_accounts` 40 dòng — 59 file ERP tham chiếu, KHÔNG đổi schema)
-  sang HRM `Modules/Finance` + `pages/finance/account-banks` (slot xám có sẵn `finance.js:42`), chuẩn base Assign + FE V2Base.
-  Đã chốt: tối giản như ERP (không Xóa/export/lịch sử), scope công ty user login, 1 quyền `Quản lý danh mục tài khoản ngân hàng`
-  (type=8, group Danh mục tài chính), sửa 4 lỗi nhỏ ERP khi port. TẠM DỪNG 2026-08-03 (session sau làm tiếp).
-  Bước tiếp: user duyệt spec → writing-plans lập task chi tiết → code. Chưa code gì, chưa tạo branch riêng.
-  Spec: docs/superpowers/specs/gop-db/2026-08-03-bank-account-catalog-design.md
 
-- banks-cut-mysql2 → @khoipv → .plans/gop-db/banks-cut-mysql2/plan.md
-  Trạng thái: **CODE DONE + VERIFIED** (2026-08-03, nhánh `gop_db`, chỉ `hrm-api`, 2 file sửa). Bỏ 8 khối sync `use_erp`
-  (TpBank/TpBankBranch) khỏi `BankService` màn `/human/banks` — sau gộp DB chúng ghi trùng 2 lần vào cùng bảng
-  `banks`/`bank_branches` (use_erp=1 đang bật thật), nhánh create nguy cơ duplicate PK. Giữ file TpBank/TpBankBranch
-  (user chốt, hiện 0 tham chiếu), giữ sync CRM (`use_crm`). Kèm fix 2 vết sót gộp DB trong `BankBranch.php`:
-  comment mysql2 + constructor nuốt `parent::__construct` (trước fix, tạo chi nhánh không fill attribute).
-  Verify: php -l + smoke tinker rollback (tạo/sửa/khoá/mở/xoá bank+branch PASS, DB nguyên trạng), log sạch.
-  **Phase 3-4 FE (2026-08-03)**: thêm loading `$nuxt.$loading` cho 6 thao tác ghi + làm lại TOÀN BỘ UI màn /human/banks theo V2Base
-  (tham khảo assign/industry-groups): FilterPanel + DataTable + 4 modal V2 (form bank, DS chi nhánh, form chi nhánh, tra cứu VietQR),
-  status pill + toggle lock, BaseConfirmModal xoá/khoá. Verify Playwright: E2E tạo→xoá bank sạch DB, validate inline, modal lồng OK.
-  ⚠️ Bug đã fix: set `editItem` rồi `$bvModal.show()` cùng tick → `@show` đọc prop id cũ (modal con rỗng) → phải bọc `$nextTick`.
-  **Phase 5 (2026-08-03)**: thêm nút Xem chi tiết (ri-eye-line, Xem → Sửa → Xoá) — modal read-only: input disabled + ô Trạng thái,
-  ẩn Tra cứu/upload logo, footer chỉ Đóng; verify Playwright cả chiều Xem → đóng → Sửa (isShow reset đúng).
-  Bước tiếp: user test lại toàn màn /human/banks trên browser.
-  Spec: docs/superpowers/specs/gop-db/2026-08-03-banks-cut-mysql2-design.md
-
->>>>>>> Stashed changes
 - app-phieu-nhap-kq-fix → @cuong61n → .plans/app-phieu-nhap-kq-fix/plan.md
   Trạng thái: **CODE DONE + VERIFY END-TO-END, chưa commit** (2026-08-06).
   Repo: `hrm-api` nhánh **`tpe`** (3 file) · `TPE_APP` nhánh **`develop`**.
@@ -297,6 +270,10 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Scope: Sửa thông báo lỗi 4 file import Quyết định (`Modules/Payroll/ExcelImports/DecisionLaborContract{,NoManpower}Import.php`, `DecisionSalaryChange{,NoManpower}Import.php`). KH báo "import HĐLĐ khớp email mà lỗi hàng loạt": sheet phụ (`ThongTinHopDong`/`ThongTinChung`) chỉ nạp `infoByEmail` khi dòng sạch lỗi → 1 lỗi tra danh mục làm cả dòng bị loại → sheet chính đẻ ra 2 thông báo sai bản chất ("Không tìm thấy thông tin ... với email" + "Loại hợp đồng chưa có tỷ lệ hưởng lương hợp lệ"). Nay báo thẳng "Dòng N của sheet ThongTinHopDong bị lỗi", bỏ lỗi tỷ lệ hưởng lương giả, nhãn `[ThongTinHopDong]` chuyển lên cột "Dòng". KHÔNG đổi luật validate. Phase 2 (cùng ngày, sau khi KH chạy thử): lỗi sheet phụ đưa **lên đầu** danh sách (trước nằm cuối, phải kéo qua hàng trăm dòng) + FE `components/modal/import-excel-modal.vue` thêm class `.import-error` cho `<pre>` (`white-space: pre-wrap`) vì thông báo dài tràn ngang bảng.
   ⚠️ GOTCHA: (1) `WorkingPosition` + `Title` có global scope `FilterByCompanyManagerScope` lọc `company_id` theo user → danh mục `company_id = NULL` KHÔNG bao giờ match, báo "không tồn tại trên PM" dù màn danh mục vẫn thấy. (2) DB local là snapshot tenant khác → mọi tra danh mục của KH đều miss, đừng kết luận từ kết quả local. (3) Chạy import ở tinker phải dựng `App\Models\User` rỗng gán `id` của 1 employee có thật (guard JWT + bảng `users` local rỗng). (4) File KH còn 2 lỗi dữ liệu phải sửa trước khi import thật: cột email sheet chính lệch 1 dòng so với tên ở dòng 11→25 (15 người → tạo HĐLĐ gắn sai người) + "Tên mẫu in" điền sai tên loại HĐ ở 100/100 dòng.
   Spec: docs/superpowers/specs/2026-07-31-import-decision-excel-info-sheet-error-design.md | Tóm tắt: .plans/import-decision-excel-info-sheet-error/design.md
+- dong-bo-loai-dao-tao → @junfoke → .plans/dong-bo-loai-dao-tao/plan.md
+  Hoàn thành: 2026-07-28. Ràng buộc đồng bộ loại đào tạo: Khóa học chỉ chứa bài học cùng loại, Lộ trình chỉ chứa khóa học cùng loại. Popup ẩn item khác loại + guard chưa chọn loại; data cũ lẫn loại → cảnh báo (banner/dòng đỏ/badge) + chặn Lưu, không tự xóa; chốt chặn ở BE. 8 file, không migration.
+  ✅ Verified Playwright cả 2 màn. ⚠️ Phát sinh đã fix: picker bài học dùng `LessonService::getAllForSelect` thiếu `training_type_id` trong select() → filter FE ẩn sạch bài.
+  Tóm tắt: .plans/dong-bo-loai-dao-tao/design.md
 
 - import-baogia-v2 → @manhcuong → .plans/import-baogia-v2/plan.md
   Trạng thái: **CODE-COMPLETE 9 phase + verify (BE tinker toàn bộ, FE Phase 2 E2E browser). Còn: E2E UI Phase 6/copy + deploy.** Xong: Phase 1 cột ẩn ID (E2E round-trip) · Phase 2 routing+popup+gộp lưới (E2E: Update/cross-import/BOM/permission) · Phase 3 mã hàng tạm Rule1/2/3 (tinker: lệch→chặn, giống→ok) · Phase 4 BOM partial+khóa Model/ĐVT+SL dịch vụ=1 (tinker) · Phase 5 copy 3 loại+detach BOM (🔴 Ngừng KD hoãn — ERP không status) · Phase 6 popup lỗi 3 nút (compile-check) · Phase 7 tên file dmY · Phase 9 giới hạn ký tự (tinker) · fix bug dịch vụ round-trip · phân quyền creator-based. Round-trip 3 báo giá (q66/q91/q91-GG-tổng/q78-BOM) đều 0 lỗi. CÒN E2E UI: Phase 6 popup lỗi, Phase 3/4 trên browser, copy preview, thay-thế/file-trống. Tài khoản test 48/Test@12345. CHƯA COMMIT/DEPLOY.

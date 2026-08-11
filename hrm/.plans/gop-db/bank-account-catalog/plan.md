@@ -1407,3 +1407,51 @@ Blocked: không.
 ### Task 14: Placeholder input bộ lọc (yêu cầu user 2026-08-04, micro — làm inline)
 
 - [x] 4 input bộ lọc nâng cao thêm placeholder "Nhập số tài khoản / Nhập tên chủ tài khoản / Nhập tên ngân hàng / Nhập tên chi nhánh" (convention màn banks); select Trạng thái: placeholder "Chọn trạng thái" + allowClear, bỏ option "Tất cả" (mirror banks — bổ sung theo yêu cầu user). Parse OK.
+
+### Task 15: Liên kết danh mục ngân hàng ↔ tài khoản ngân hàng (yêu cầu user 2026-08-05)
+
+Yêu cầu: (a) ngân hàng đã dùng ở `company_accounts` → màn danh mục ngân hàng disable nút Xóa + tooltip hover (pattern assign — FE banks ĐÃ có sẵn disabled + `:title` theo `can_delete`, chỉ cần BE tính đúng); (b) tài khoản NH thuộc ngân hàng bị KHÓA: Xem chi tiết vẫn hiển thị tên ngân hàng, nhưng Thêm/Sửa không cho chọn ngân hàng khóa.
+
+**BE (hrm-api):**
+- [x] `Modules/MasterData/Entities/Bank.php` — `canDelete()` check thêm `company_accounts.bank_id` (exists)
+- [x] `Modules/MasterData/Services/BankService.php` — `deleteBank()` guard server-side: đã dùng → throw Exception (message tiếng Việt)
+- [x] `Modules/MasterData/Http/Controllers/V1/BankController.php` — `delete()` try/catch → 400 kèm message
+- [x] `Modules/Finance/Services/CompanyAccountService.php` — `options()` chỉ trả banks `status = 1` (bank_branches giữ nguyên để chế độ Xem còn hiển thị chi nhánh của bank khóa)
+- [x] `Modules/Finance/Transformers/CompanyAccountResource/CompanyAccountDetailResource.php` — trả thêm `bank_name`, `bank_branch` (cột denormalized có sẵn)
+- [x] `Modules/Finance/Http/Requests/CompanyAccount/CompanyAccountRequest.php` — `bank_id` phải là ngân hàng đang hoạt động (`exists` + `where status=1`), message "Ngân hàng không tồn tại hoặc đã bị khóa"
+
+**FE (hrm-client):**
+- [x] `pages/finance/account-banks/AccountBankModal.vue` — chế độ Xem: nếu bank_id không còn trong options (bank khóa) → append option tạm từ `bank_name` detail để select hiển thị; chế độ Sửa: bank khóa → clear bank/chi nhánh + toast báo phải chọn ngân hàng khác
+- [x] `pages/master-data/banks/index.vue` — KHÔNG sửa (đã có disabled + tooltip theo `can_delete`)
+
+**Verify:**
+- [x] php -l 6 file BE sạch; tinker: bank 1 (11 dòng company_accounts) → `canDelete()=false`, bank 12 (không dùng đâu) → `true`; khóa tạm bank 1 trong transaction → options trả 20/21 bank, không chứa bank 1, branches giữ nguyên 127; Validator rule: bank khóa fail, bank hoạt động pass (rollback sạch)
+- [x] Parse AccountBankModal.vue bằng vue-template-compiler + @babel/parser — PARSE OK
+
+### Task 16: Tài liệu test case (yêu cầu user 2026-08-07)
+
+- [x] Rà lại BE: `CompanyAccountController`, `CompanyAccountService`, `CompanyAccount`, `CompanyAccountRequest`, `Routes/api.php` (7 route), List/Detail Resource
+- [x] Rà lại FE: `pages/finance/account-banks/index.vue` + `AccountBankModal.vue` (kèm CheckPermission, filterStateMixin, DedupeLoadMixin)
+- [x] Xác định phân quyền: 1 quyền `Quản lý danh mục tài khoản ngân hàng` gắn cho TẤT CẢ route (kể cả index) + menu `finance.js` isShow theo cùng quyền → CÓ sinh section TC-ROLE (6 TC)
+- [x] Viết `generate-testcase.py` theo skill `testcase-documenter`
+- [x] Sinh `testcase.xlsx` — 102 TC (6 TC-ROLE + 8 section La mã), P0 = 65 (64%)
+
+### Checkpoint — 2026-08-07 (Task 16)
+Vừa hoàn thành: `testcase.xlsx` (102 TC) + `generate-testcase.py` cho màn Danh mục tài khoản ngân hàng.
+Đang làm dở: không.
+Bước tiếp theo: QA review file; cần chỉnh thì sửa `generate-testcase.py` rồi chạy lại (`python .plans/gop-db/bank-account-catalog/generate-testcase.py`).
+Blocked: không.
+
+### Điểm cần nghiệp vụ xác nhận (ghi nhận khi viết test case, chưa sửa code)
+- `account_number` unique TOÀN BẢNG `company_accounts`, không scope theo `company_id` → công ty A không đặt được số tài khoản mà công ty B đã dùng (TC_06.007). Cần xác nhận đây có đúng mong muốn không.
+- Bộ lọc text không trim khoảng trắng đầu/cuối trước khi LIKE (TC_06.019 màn banks, TC_02.019 màn này).
+- Không có cơ chế chống ghi đè khi 2 user cùng công ty sửa song song 1 bản ghi (TC_06.021) — hiện trạng giống ERP.
+
+### Task 17: Tài khoản đã khóa thì không cho sửa (yêu cầu user 2026-08-07)
+
+- [x] BE `Modules/Finance/Http/Controllers/V1/CompanyAccountController.php` — `update()` chặn khi `status = STATUS_LOCKED`, trả 422 "Tài khoản ngân hàng đang bị khóa, không thể sửa"
+- [x] FE `pages/finance/account-banks/index.vue` — nút Sửa `:disabled` khi `item.status === '0'` + tooltip "Không thể sửa tài khoản đang bị khóa"
+- [x] FE — `openEdit()` guard thêm (toast lỗi) phòng dữ liệu bảng đã cũ
+- [ ] Verify trên UI: tài khoản khóa → nút Sửa mờ, nút Xem vẫn dùng được, mở khóa xong sửa lại bình thường
+
+Ghi chú: muốn sửa tài khoản đã khóa thì phải Mở khóa trước (nút toggle ở cột Trạng thái vẫn hoạt động).

@@ -58,6 +58,24 @@ Vừa hoàn thành: chức năng Xem chi tiết ngân hàng (read-only modal).
 Bước tiếp theo: user test lại toàn màn /human/banks trên browser.
 Blocked: không.
 
+## Phase 6 — Tài liệu test case màn Danh mục ngân hàng (yêu cầu user 2026-08-07)
+
+- [x] Rà lại BE: `BankController`, `BankService`, `Bank`, `BankBranch`, `CreateBankRequest`, `CreateBankBranchesRequest`, `Routes/api.php`, 3 Resource
+- [x] Rà lại FE: `pages/master-data/banks/index.vue` + 4 component (BankModel, BankBranchesModel, BankBranchesAddModel, BankSearch)
+- [x] Xác định phân quyền: route chỉ có `auth:api`, KHÔNG gắn `checkPermission`, menu `master-data.js` không có permission key → không sinh section TC-ROLE
+- [x] Viết `generate-testcase.py` theo skill `testcase-documenter`
+- [x] Sinh `testcase.xlsx` — 106 TC / 8 section La mã, P0 = 61 (58%)
+
+### Checkpoint — 2026-08-07 (Phase 6)
+Vừa hoàn thành: `testcase.xlsx` (106 TC) + `generate-testcase.py` cho màn Danh mục ngân hàng.
+Đang làm dở: không.
+Bước tiếp theo: QA review file; cần chỉnh thì sửa `generate-testcase.py` rồi chạy lại (`python .plans/gop-db/banks-cut-mysql2/generate-testcase.py`).
+Blocked: không.
+
+### Điểm nghi vấn ghi nhận khi viết test case (chưa fix, chỉ để QA kiểm chứng)
+- `BankService::getBanks` dòng 32-34: `where(name like)->orWhere(code like)` không bọc nhóm → kết hợp keyword + status/short_name có thể lọt bản ghi sai (TC_02.009, TC_02.010).
+- `getBankBranches` dùng INNER JOIN `provinces` còn cột đếm chi nhánh dùng `with('branches')` → chi nhánh `province_id` null bị đếm nhưng không hiện trong modal (TC_06.019).
+
 ### Bug phát hiện & fix trong Phase 4
 - **Race `editItem` → `$bvModal.show`**: set prop rồi show modal cùng tick khiến `@show` đọc `id` cũ (modal chi nhánh mở ra rỗng dù count > 0) → bọc `$nextTick` quanh mọi chỗ show modal có prop id (index.vue 3 chỗ + BankBranchesModel 2 chỗ)
 

@@ -46,6 +46,128 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
   kết luận được và lộ thêm 1 cột nữa. Không còn cột nào chờ quyết định.
   Spec: docs/superpowers/specs/gop-db/2026-08-04-fix-employee-fk-remap-design.md | Tóm tắt: .plans/gop-db/fix-employee-fk-remap/design.md
 
+- customer-cut-mysql2 → .plans/gop-db/customer-cut-mysql2/plan.md
+  Trạng thái: **HOÀN TẤT + ĐÃ TEST** (2026-08-01, nhánh `gop_db`). Khách hàng còn ĐÚNG 1 luồng `/assign/customers`.
+  Gồm: cắt hết `mysql2` khỏi luồng KH (35 file) · xoá 6 bảng `hrm_customer_*` + migration `2026_08_01_000001_drop_hrm_customer_tables` (đã test round-trip) ·
+  gỡ toàn bộ tầng sync 2 chiều · xoá màn `/human/customers` + `/timesheet/setting/customers` · chuyển 10 picker sang luồng mới · thêm `GET assign/customers/search`.
+  Test: 52/52 endpoint HTTP + 12 màn browser + luồng ghi (tạo/sửa/thêm liên hệ, có rollback). **7 lỗi thật đã sửa** (xem plan.md Phase 11-12).
+  ⚠️ Đọc trước khi làm tiếp trên nhánh này: `.plans/gop-db/design.md`.
+
+## Hoàn thành
+
+- customer-column-config → @khoipv → .plans/gop-db/customer-column-config/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Nút **Cấu hình cột hiển thị** cho `/assign/customers` (ẩn/hiện + kéo thả thứ tự, lưu theo user),
+  tương đương "Tùy chỉnh cột" của ERP nhưng lưu DB thay vì localStorage.
+  Dùng lại hạ tầng sẵn có: `components/modal/column-customization-modal.vue` + API `human/column-customizations`.
+  Chốt: **18 cột** = 10 cột cũ + 8 cột ẩn của ERP (Tên đơn vị, Tên viết tắt, Địa chỉ xuất HĐ, Công ty mẹ,
+  Hãng xe, Cấp đại lý, Người tạo, Người sửa — mặc định ẩn) · **khoá** STT + Mã KH-Tên KH bằng cách
+  KHÔNG truyền vào modal (tránh sửa component dùng chung của 20+ màn) · cột Nhóm KH khi đó để tạm `'—'`
+  (**đã nối dữ liệu thật ở việc `customer-form-group`, 2026-08-10**) ·
+  file xuất CSV/Excel giữ bộ cột cố định.
+  Migration thêm cột JSON `customers` vào `column_customizations` (đã chạy) + cast Entity.
+  ⚠️ GOTCHA 1: 4 cột Công ty mẹ/Hãng xe/Người tạo/Người sửa cần 5 leftJoin → `COUNT` phân trang chậm
+  ~3,7 lần (42.077 KH: 0,12s→0,43s). `index()` dùng chung với popup chọn KH nên gate sau cờ
+  **`with_extra_columns`**; FE chỉ gửi khi user thực sự bật ≥1 trong 4 cột; `exportQuery()` tự join.
+  ⚠️ GOTCHA 2: modal chung dùng `b-form-checkbox :value="column.key"` → cột hiện mặc định PHẢI khai
+  `isVisible: '<đúng key>'`; để `undefined` là modal bỏ tích hết, bấm OK ẩn sạch bảng.
+  Verify: 3 luồng query (popup/danh sách/export) đúng như thiết kế · round-trip lưu-đọc cấu hình ·
+  17/17 check logic cột FE (nạp thẳng source computed, 4 kịch bản gồm cấu hình cũ khi thêm cột mới).
+  Ghi nhận không sửa: `ColumnCustomizationService` nhét thẳng `$request->table` vào tên cột SQL, không whitelist.
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-column-config-design.md
+
+- customer-form-group → @khoipv → .plans/gop-db/customer-form-group/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Thêm trường **Nhóm khách hàng** (chọn nhiều, không bắt buộc) vào form KH cho giống ERP.
+  Sửa ở component dùng chung `CustomerForm.vue` → 5 màn cùng có (add · edit · xem chi tiết readonly ·
+  quản lý KH · modal thêm nhanh). BE chỉ thêm 2 dòng validate — pivot `customer_has_groups`,
+  API `customer-groups`, `syncGroups()` và `show()->group_ids` đều đã có sẵn.
+  ⚠️ Sửa kèm 1 lỗi MẤT DỮ LIỆU có sẵn: `syncGroups()` xoá-rồi-ghi vô điều kiện trong khi form chưa
+  bao giờ gửi `groups` → mỗi lần sửa KH trên HRM là xoá sạch nhóm KH do ERP gán. `buildPayload()`
+  giờ LUÔN gửi `groups`.
+  Kèm theo: **cột "Nhóm KH" trên màn danh sách trước đây luôn hiện `—`** vì `CustomerListResource`
+  hardcode placeholder (di sản của `customer-column-config`) → nối dữ liệu thật bằng subquery tương quan
+  `groupNamesSql()` dùng chung cho `index()` + `exportQuery()`. Đo: COUNT 17.544 KH vẫn 308 ms
+  (subquery ở SELECT nên không đụng COUNT), lấy 20 dòng 9 ms.
+  Không migration, không permission mới.
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-form-group-design.md
+
+- customer-export-file → @khoipv → .plans/gop-db/customer-export-file/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Bổ sung 3 nút **Xuất CSV** / **Xuất Excel** / **Xuất PDF** cho `/assign/customers`, tương đương ERP
+  (`Sale\CustomersController@exportCSV|exportExcel|exportPDF`).
+  Chốt: Excel **tải trực tiếp** (ERP đẩy queue + gửi mail) · bộ cột giống ERP (CSV 5 cột / Excel 20 cột) ·
+  quyền ERP `Xuất dữ liệu khách hàng` (thêm key `export` vào `ErpPermissionHelper`) ·
+  **không giới hạn số dòng**, tối ưu bằng `FromQuery` + chunk 5.000 + select 26 cột cần thay `customers.*` (59 cột)
+  + cột phụ bằng JOIN/subquery (không N+1) + `StringValueBinder` + bỏ `ShouldAutoSize` ·
+  **giữ luật che SĐT** của màn danh sách trong file xuất (KH cá nhân không phải "của mình" → `-`).
+  Sửa 3 lỗi của bản ERP: thiếu header *Chức vụ liên hệ* (19 th/20 td → lệch cột) · CSV không BOM UTF-8 (vỡ dấu) ·
+  SĐT/MST mất số 0 đứng đầu do binder mặc định.
+  Đo thực tế 17.542 KH: CSV 25,3s→~13s · XLSX 60,2s→~32s (RAM đỉnh 206 MB).
+  Không migration, không thêm permission vào seeder (quyền ERP đã có sẵn, id 100074).
+  **Đợt bổ sung 2026-08-10**: mẫu Excel theo chuẩn HRM (logo · tiêu đề gộp ô đậm · header nền xám có viền ·
+  dữ liệu có viền · đóng băng dòng header · autofilter) → xuất 17.544 KH ~32s lên **~44s**, RAM 206→266 MB.
+  Thêm **Xuất PDF**: cài `barryvdh/laravel-dompdf ^1.0` (⚠️ team phải `composer install` sau khi kéo nhánh),
+  5 cột như ERP, A4 ngang, `App\PdfExport\CustomerPdfExport` dùng chung trait format với CSV/Excel.
+  ⚠️ GOTCHA PDF 1: blade PHẢI đặt `font-family: "DejaVu Sans"` — font mặc định dompdf không có dấu tiếng Việt.
+  ⚠️ GOTCHA PDF 2: dompdf giữ 1 Cellmap cho mỗi `<table>` → chia 200 dòng/bảng nâng trần từ ~1.000 lên
+  ~3.000 dòng. **Vẫn KHÔNG xuất nổi toàn bộ 17.544 KH** (512M: 3.000 dòng = 436 MB/30,7s; 4.000 dòng vỡ).
+  User chốt không giới hạn số dòng nên code không chặn → bấm Xuất PDF khi không lọc sẽ chết request
+  (memory exhausted là fatal error, try/catch không bắt được).
+  **CÒN NỢ (không chặn nghiệm thu, xử lý sau nếu cần)**: chọn 1 trong 3 hướng — chặn số dòng /
+  nâng `memory_limit` riêng cho action / đẩy queue + mail.
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-export-file-design.md
+
+- customer-import-excel → @khoipv → .plans/gop-db/customer-import-excel/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
+  Bổ sung Import Excel cho `/assign/customers` —
+  chức năng ERP có (`Sale\CustomersController@importExcel`) mà HRM thiếu.
+  Chốt: **25 cột** = 24 cột file mẫu ERP + 1 cột Lĩnh vực kinh doanh dạng cặp `MãLoạiHình:MãLĩnhVực`
+  (gộp Loại hình vào chung 1 cột, đúng cách màn `/assign/application`; loại hình suy ra từ vế trái) · danh mục tra theo tên KHÔNG tự tạo mới (chung `gop_db`, tránh rác địa danh ERP) ·
+  bỏ trống cột Tên = dòng con (thêm liên hệ / TK ngân hàng) · trùng MST/CCCD báo lỗi, chỉ tạo mới ·
+  `V2BaseImportModal` 4 bước · import gọi lại đúng `CustomerService::save()`.
+  Không migration, không permission mới (dùng `erpPermission:Thêm khách hàng`).
+  Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-import-excel-design.md
+
+- customer-care-serial-catalog → @junfoke → .plans/gop-db/customer-care-serial-catalog/plan.md
+  Trạng thái: **CODE DONE + ĐÃ VERIFY (BE + trình duyệt)** (2026-08-06).
+  Scope: chuyển "Danh mục serial thiết bị làm dịch vụ" (`serials`, 21.632 dòng) từ ERP sang **CSKH**
+  — 1 màn danh sách READ-ONLY + Xuất Excel, 2 route `/v1/customer-care/serials`, quyền mới **1126**.
+  Màn danh mục thứ 5 của phân hệ.
+  ⚠️ GOTCHA: 7/9 route của `SerialController` ERP **không thuộc màn này** (thuộc màn Quản lý khách
+  hàng, HRM đã có) → không port. Xuất Excel **dựng ở FE** (ExcelJS + fetch theo lô), BE không có
+  route export vì 21 nghìn dòng dựng ở BE sẽ timeout trên server.
+  Còn treo: user rà bằng mắt; chốt cách lọc 13 bản ghi `status` 0/3 (xem design.md).
+  Spec: docs/superpowers/specs/gop-db/2026-08-06-customer-care-serial-catalog-design.md | Tóm tắt: .plans/gop-db/customer-care-serial-catalog/design.md
+
+- chuyen-code-phan-he → @junfoke → .plans/gop-db/chuyen-code-phan-he/plan.md
+  Trạng thái: **XONG 3 phân hệ, ĐÃ VERIFY TRÌNH DUYỆT** (2026-08-05) — giai đoạn 2 của
+  `tach-phan-he-erp-hrm`: đưa **code** màn về đúng phân hệ, không chỉ menu.
+  Scope: 3 phân hệ ở trạng thái "menu đã chuyển, code chưa chuyển" →
+  **Danh mục chung** 10 màn (122 route `/v1/master-data/*`),
+  **Bảo hiểm xã hội** 7 màn (38 route `/v1/insurance/*`),
+  **Bán hàng** 27 màn qua 3 đợt — Danh mục+Thiết lập 11 → Báo cáo 8 → Dự án TKT+Phê duyệt 8
+  (313 route `/v1/sale/*`). Tổng **98 cặp redirect** giữ URL cũ sống, **6 migration quyền**.
+  Chốt xuyên suốt: chuyển cả 3 lớp (FE route + BE module + dọn quyền), giữ nguyên tên đoạn cuối
+  route cho dễ đối chiếu, redirect vĩnh viễn ở `nuxt.config.js::extendRoutes`, verify sau mỗi đợt.
+  Kèm 2 việc chuẩn hoá: **layout hub (kiểu MISA) thành chuẩn chung** cho phân hệ mới —
+  sidebar + màn Tổng quan đều dùng component chung, thêm phân hệ chỉ cần khai `key` trong
+  `HUB_SUBSYSTEMS`; và **tách quyền / đưa 10 quyền khách hàng về đúng phân hệ**.
+  ⚠️ 3 route `/v1/assign/quotations/erp-contract/*` **cố ý giữ URL cũ** — hợp đồng tích hợp với
+  codebase ERP ngoài repo, đổi là ERP gọi hỏng.
+  Đã sửa 10 lỗi trong quá trình làm (6 lỗi có sẵn chặn màn + 4 lỗi tự gây) — chi tiết ở plan.md.
+  Còn nợ: 7 màn địa lý-ngân hàng chưa có permission nào; bộ quyền KH cũ của HRM (id 166-169)
+  còn song song, chưa quyết gộp/bỏ; verify màn Tạo phiếu BH ở môi trường có thông báo còn hiệu lực.
+  Bước tiếp: các phân hệ còn lại chưa tới lượt chuyển code.
+  **Phase 17-19 (2026-08-06), ĐÃ VERIFY TRÌNH DUYỆT**: chuẩn hub phủ **14/17 phân hệ** (thêm CSKH,
+  Tài chính + 9 phân hệ mới); menu Tài chính gom 24 → 11 nhóm bám mega-menu `Kế toán` của ERP qua
+  cờ `hubGroup`; sửa 3 lỗi có sẵn — sidebar hub không lọc quyền, `deriveHubGroups()` nuốt `erpPath`,
+  icon rail hardcode túi Bán hàng.
+  ⚠️ GOTCHA: gate quyền Bán hàng nằm ở `sale-hub.js::SALE_LINK_PERMISSIONS`, không phải `sale.js`.
+  Còn nợ: `master-data` mới gate 2/10 màn (7 màn địa lý-ngân hàng chưa có permission nào trong DB).
+  Spec: docs/superpowers/specs/gop-db/2026-08-04-chuyen-code-phan-he-master-data-insurance-design.md
+  và docs/superpowers/specs/gop-db/2026-08-06-hub-menu-customer-care-finance-design.md | Tóm tắt: .plans/gop-db/chuyen-code-phan-he/design.md
+
 - customer-care-cost-catalog → @junfoke → .plans/gop-db/customer-care-cost-catalog/plan.md
   Trạng thái: **BE + FE DONE, verify BE xong** (2026-08-03) — chuyển "Danh mục dịch vụ sửa chữa và
   chi phí khác" (`costs`, `kind_of=2`, 524 dòng) sang phân hệ CSKH. 8 route
@@ -74,14 +196,32 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
   Bước tiếp: user verify bằng mắt `/customer-care/costs`.
   Spec: docs/superpowers/specs/gop-db/2026-08-03-customer-care-cost-catalog-design.md | Tóm tắt: .plans/gop-db/customer-care-cost-catalog/design.md
 
-- customer-cut-mysql2 → .plans/gop-db/customer-cut-mysql2/plan.md
-  Trạng thái: **HOÀN TẤT + ĐÃ TEST** (2026-08-01, nhánh `gop_db`). Khách hàng còn ĐÚNG 1 luồng `/assign/customers`.
-  Gồm: cắt hết `mysql2` khỏi luồng KH (35 file) · xoá 6 bảng `hrm_customer_*` + migration `2026_08_01_000001_drop_hrm_customer_tables` (đã test round-trip) ·
-  gỡ toàn bộ tầng sync 2 chiều · xoá màn `/human/customers` + `/timesheet/setting/customers` · chuyển 10 picker sang luồng mới · thêm `GET assign/customers/search`.
-  Test: 52/52 endpoint HTTP + 12 màn browser + luồng ghi (tạo/sửa/thêm liên hệ, có rollback). **7 lỗi thật đã sửa** (xem plan.md Phase 11-12).
-  ⚠️ Đọc trước khi làm tiếp trên nhánh này: `.plans/gop-db/design.md`.
+- finance-product-transfer-request → @khoipv → .plans/gop-db/finance-product-transfer-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong (2026-08-07).** Code Phase 1–7 (D1–D17) + final review + fix wave, **đã commit**: `hrm-api 3a0acce08` · `hrm-client ed0abb049` (+ `690515fc4` fix bug), nhánh `gop_db`.
+  Đã xong: BE (3 entity + searchByFilter phân quyền 4 cấp + CRUD + reject + notification chuông HRM + in template 87 + export Excel + 4 API phụ trợ form) · FE (list + form create/edit + chi tiết + print + menu finance.js:134) · Phase 7 (dùng chung QuotationProductSearchModal của màn báo giá, dọn conflict marker subsystems.js, `testcase.xlsx` 127 TC). Verify D12: ma trận quyền 6 nhóm × 6 action khớp SQL, Playwright toàn luồng PASS, round-trip 2 cổng tầng dữ liệu PASS, DB nguyên trạng. Ledger: sdd-progress.md.
+  User đã xử lý xong (2026-08-07): verify browser bằng mắt · 5 mục "Chờ xác nhận PO" trong plan.md (thông báo cổng ERP, scope canView B1, SL lẻ, template 87, task rà quyền) · ENV DEPLOY `ERP_URL` cả 2 repo · **SQL DEPLOY đã chạy môi trường thật** (INSERT quyền 1129-1133 + `UPDATE permissions SET type = NULL WHERE id IN (100878,100879,100880,100881)`).
+  ⚠️ Phát hiện quan trọng — **CHƯA mở task, còn nợ team**: middleware `CheckPermission` hỏng trên gop_db (spatie bỏ sót role gán từ ERP do model_type mismatch) → route reject của feature này phải bỏ middleware, chặn bằng `canApprove()`. Cần TASK RIÊNG rà mọi route khác đang gắn `checkPermission` + mapping quyền FE (accounts/currencies/account-banks 404 với mọi user — lỗi có sẵn của môi trường, không phải regression).
+  Tồn: nội dung chốt của 5 mục PO chưa ghi ngược vào plan.md (mục "Chờ xác nhận PO / task riêng" vẫn đang để dạng câu hỏi).
+  — Bối cảnh port gốc: màn ERP `admin/warehouse/product_transfer_requests?type=all`, 3 bảng, mã `PYCCH-xxxxx`, 13 trạng thái → phân hệ **Tài chính** → nhóm **Xuất hàng** (slot `finance.js:134`).
+  **HRM là bản thay thế lâu dài**, 2 cổng song song cùng bảng, KHÔNG đổi schema. HRM chỉ ghi status 2↔3; 1, 4–12 do chuỗi kho ERP đẩy.
+  Chốt 6 QĐ: port đầy đủ (nút Tổng hợp mở tab ERP) · dùng lại quyền ERP + "Kế toán kho" · 1 màn list duy nhất (=type=all) · form đủ popup hàng + Xem tồn + giá/ĐVT · xóa giữ ERP (status=3 + người tạo) · nới validate after:today khi sửa.
+  Spec: docs/superpowers/specs/gop-db/2026-08-05-finance-product-transfer-request-design.md | Tóm tắt: .plans/gop-db/finance-product-transfer-request/design.md
 
-## Hoàn thành
+- customer-care-services-catalog → @khoipv → .plans/gop-db/customer-care-services-catalog/plan.md
+  Trạng thái: **CODE DONE P1–P5, user xác nhận xong (2026-08-05)** — port trọn màn "Danh mục gói
+  bảo dưỡng" (ERP `Sale\ServiceController`, `services` 207 dòng + 5 bảng con) sang
+  `/customer-care/services`: BE `Modules/CustomerCare` (4 entity + ServiceRequest + ServiceService +
+  resource/export + controller, 12 route), FE list + form 5 khối (ma trận bảo dưỡng × cấp, giá vốn
+  theo công ty, popup hàng hóa/nhóm theo UX popup báo giá với 17 bộ lọc, đính kèm S3), in template 191.
+  Phase 5: 7 cụm chỉnh theo user (bỏ cột Hành động, VAT nullable, copy giữ đính kèm, fix auto-print…).
+  🐛 Đã sửa 2 lỗi CRITICAL `key_word` shape `{text}` (88/207 gói có nguy cơ hỏng màn báo giá DV ERP).
+  ⚠️ Bug HỆ THỐNG chưa sửa (file chung, cần báo team): `V2BaseSelect.vue:59` rớt option id=0.
+  F3 (sửa gói xóa hết dòng ma trận = no-op im lặng) giữ nguyên theo ERP — user ruling trong sdd-progress.md.
+  ⚠️ **Khi DEPLOY phải chạy tay 3 SQL** (chi tiết sdd-progress.md Task 1.5): UPDATE permissions
+  type=24 (101023-101025) · mirror `employee_has_roles` sang model_type HRM · INSERT
+  `role_has_permissions` cho Super admin; DB local còn thiếu quyền CSKH 1115-1120 của 2 feature trước.
+  Tồn: checklist "Verify tổng thể" cuối plan.md chưa tick (regression 4 màn CSKH cũ, round-trip ERP↔HRM 2 chiều).
+  Spec: docs/superpowers/specs/gop-db/2026-08-04-customer-care-services-catalog-design.md | Ledger: .plans/gop-db/customer-care-services-catalog/sdd-progress.md
 
 - bo-sung-menu-phan-he → @junfoke → .plans/gop-db/bo-sung-menu-phan-he/plan.md
   Trạng thái: **CODE DONE + KIỂM THỬ TỰ ĐỘNG PASS** (2026-08-03) — Phase 0-9 xong.
