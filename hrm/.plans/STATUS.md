@@ -8,6 +8,11 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- pl8-thong-tin-he-thong → @dnsnamdang → .plans/pl8-thong-tin-he-thong/plan.md
+  Trạng thái: **DESIGN DONE, đang code Phase 1 (2026-08-06)**. Redmine #10814 — thống nhất 9 màn Xem chi tiết QLDA TKT: mã phiếu trên tiêu đề + phân vùng "Thông tin hệ thống" (lịch sử phiếu, mặc định thu gọn) + đủ action như màn danh sách. Chốt: UI timeline giống modal Lịch sử Task; 1 component FE chung `SystemInfoSection.vue` + 1 endpoint chuẩn hoá `GET assign/system-logs/{type}/{id}` với adapter đọc log sẵn có từng entity (không migrate data cũ); 3 entity chưa có log (Meeting, Hạng mục dự án, YCGP) dùng bảng mới `assign_entity_logs` ở Phase 2; không thêm quyền. Nhánh `tpe-develop-assign`.
+  Spec: docs/superpowers/specs/2026-08-06-pl8-thong-tin-he-thong-design.md
+  Bước tiếp: code Phase 1 (màn Báo giá) → user duyệt UI → nhân bản Phase 2/3.
+
 - erp-to-hrm-migration → @dnsnamdang → .plans/erp-to-hrm-migration/plan.md
   Trạng thái: **SIZING DONE — chờ DB production để đối chiếu bất đồng bộ T3 (2026-07-27)**. Umbrella hợp nhất ERP⊕HRM + chuyển 4 mảng (Báo giá · HĐ bán/firm · HĐ dịch vụ · Kế toán). **Mục tiêu lớn nhất = gộp chung 1 database** (không phải chỉ viết lại UI). ĐÃ CHỐT: chỉ gộp 1 pháp nhân `hrm_tpe`⊕`erp2326` (bỏ connection etek/tpe); đích = **1 schema HRM duy nhất** (HRM canonical); ERP repoint sang DB HRM + retire dần (Strangler); prefix legacy `tp_` phía ERP; KHÔNG ETL — colocate + dedupe dần theo domain. Phân tích: ERP 1.225 bảng / HRM 635 / **trùng tên 50** → phân tầng T0 auth(không merge)·T1 giả(rename, gồm `quotations`)·T2 danh mục·T3 lõi tổ chức(rủi ro CAO NHẤT)·T4 nghiệp vụ KH/HĐ. ~165 bảng 4 mảng phần lớn KHÔNG trùng → bê nguyên tên. T3 đã sync sẵn HRM→ERP (id lệch, map qua natural key: companies=tax_code, departments/employee_infos=code, employees=email, parts=name) → gộp 1 DB thì gỡ luôn sync. Lộ trình 2 phase: P1 hợp nhất hạ tầng (đạt "1 DB chung", data nguyên vẹn) → P2 viết lại UI + dedupe theo domain (T2→master/KH→báo giá→HĐ→kế toán).
   Blocker phụ: `Modules/Accounting/{Routes/api.php, module.json}` merge conflict → tinker không boot (dùng mysql CLI thay thế).
@@ -81,6 +86,39 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Scope: Đổi "Chiết khấu/CK" → "Giảm giá/GG" toàn hệ thống. P1: danh mục "Loại giảm giá" (menu/tiêu đề/nhãn/toast) + tiền tố mã `CK-`→`GG-`. P2: đổi tên QUYỀN `...loại chiết khấu` → `...loại giảm giá` (seeder id=1090 giữ nguyên → phân quyền cũ không mất) + 7 middleware + menu isShow. P3: đổi nhãn Chiết khấu→Giảm giá trên toàn màn Báo giá (edit/view/print/submit/history + Excel blade + BE controller/service/history) — CHỈ text hiển thị, giữ biến/khóa/công thức/alias import cũ. GIỮ nguyên: route `/assign/discount-types`, bảng `discount_types`, API, mã bản ghi cũ.
   File: BE `DiscountType`, `PermissionsTableSeeder`(id1090), `Assign/Routes/api.php`, `QuotationController`, `QuotationService`, `QuotationHistory`, `DiscountTypeRequest/Controller`, `exports/bom_list.blade.php`; FE `menu-sidebar.js`, `discount-types/index.vue`, `discount-type-modal.vue`, `quotations/_id/edit.vue`+`index.vue`, `QuotationPrintPreview/PrintConfigModal/SubmitModal/HistoryModal.vue`. Không migration.
   ⚠️ DEPLOY: phải reseed PermissionsTableSeeder cùng lúc deploy code (middleware check tên MỚI; DB chưa reseed → 403). Import Excel báo giá cũ (header "CK(%)") vẫn chạy nhờ alias.
+
+- app-phieu-nhap-kq-fix → @cuong61n → .plans/app-phieu-nhap-kq-fix/plan.md
+  Trạng thái: **CODE DONE + VERIFY END-TO-END, chưa commit** (2026-08-06).
+  Repo: `hrm-api` nhánh **`tpe`** (3 file) · `TPE_APP` nhánh **`develop`**.
+  Fix 3 lỗi màn Phiếu nhập KQ: (1) resource dùng nhầm bảng nhãn `TpWrAssignTask` → sinh "Đã thanh toán";
+  bổ sung trạng thái thứ 6 `KHONG_DUYET` hrm-api còn thiếu; (2) lọc `wr_assign_tasks.status` trong khi
+  hiển thị `wr_import_results.status` — sửa về đúng cột; (3) thêm bộ lọc 7 trường như ERP.
+  Chặn sửa/xoá sau duyệt: BE trả `can_edit` theo rule ERP (người tạo && Đang tạo/Không duyệt),
+  app ẩn menu theo cờ (entity default false — fail-closed). Nút Xoá chết (handler rỗng + BE không có
+  route DELETE) đã gỡ hẳn theo hướng A user chốt.
+  Sửa thêm UI badge: bỏ width cứng (hết xuống dòng) + lấy màu theo `type` BE trả (trước đây LUÔN xanh lá,
+  kể cả trạng thái từ chối).
+  Verify: API local đối chiếu count DB (status=6→58, status=1→4, created_by=6→1, tháng 8→154);
+  app flavor `erp` trỏ BE local, đã trả lại `build_config.dart` sau test.
+  CHƯA: commit; chưa chứng minh nhánh `can_edit = true` (tài khoản test không sở hữu phiếu ở trạng thái 1/6).
+  ⚠️ Deploy phải BE TRƯỚC app — app mới gặp BE cũ sẽ mất nút Sửa ở mọi dòng (fail-closed).
+
+- app-loc-phieu-giao-cong-tac → @cuong61n → .plans/app-loc-phieu-giao-cong-tac/plan.md
+  Trạng thái: **CODE DONE + VERIFY TRÊN EMULATOR** (2026-08-06, repo `TPE_APP` nhánh **`develop`**).
+  ⚠️ Bản làm trên `main` chỉ là nháp (user báo nhầm nhánh) — đã stash lại, code thật nằm trên `develop`.
+  Thêm bộ lọc 14 trường cho màn Danh sách phiếu giao công tác trên app Flutter, mirror web
+  `/assign/assign_business`. Không sửa BE (`AssignBusinessService::searchByFilter` đã nhận đủ 14 param).
+  Chốt: dùng `FilterView` end-drawer có sẵn · Công ty mặc định = công ty user · ẩn Công ty/Phòng ban/Bộ phận
+  theo quyền giống web · cascade PB theo CT, BP theo PB, Nhân viên không cascade.
+  Spec: docs/superpowers/specs/2026-08-06-app-loc-phieu-giao-cong-tac-design.md
+  Trên `develop`: bản port sạch hơn — KHÔNG sửa widget dùng chung (dùng `DateInput` sẵn có),
+  KHÔNG ghim dependency, dùng `FilterView.activeCount`. Verify Android bằng log request:
+  `business_type=2` trả đúng bộ phiếu "Phiếu công tác khác". Chưa build lại iOS trên develop.
+  Môi trường: `develop` pin Flutter 3.41.7 (phải qua `fvm`); emulator API 29 cần `--no-enable-impeller`.
+  iOS trên develop: BLOCKED — MapboxMaps 11.22.0 cần Swift 6.2 ⇒ Xcode 26 ⇒ macOS Sequoia 15.6
+  (máy đang 15.3.2). Đã thử Xcode 16.4 và ép SWIFT_VERSION=5.0 cho pod: đều KHÔNG khỏi. Không phải lỗi code.
+  Bước tiếp: user quyết việc nâng Xcode; review code; test nốt các trường còn lại.
+
 - du-an-cha-con (Redmine #10921 — 13 điểm feedback tester) → @cuong61n → .plans/du-an-cha-con/plan.md
   Trạng thái: **XONG 13/13 + ĐÃ VERIFY TRÊN DEV** (2026-08-03, nhánh `tpe-develop-assign`, cả 2 repo).
   BE 5 file (`Quotation` thêm SUMMARY_STATUS_DONG, `SummaryQuotationService` cộng dồn phí VC +

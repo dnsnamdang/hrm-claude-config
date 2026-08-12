@@ -817,3 +817,14 @@ CHƯA test: build production FE (chỉ chạy dev server), bảng "Dự án con"
 - [x] FE danh sách `ProspectiveProjectParentQuotationsTab.vue`: cột `name` "Tên - Mã báo giá tổng" → cột
       `code` "Mã báo giá tổng" (slot `#cell-code`, bỏ dòng sub tên); text confirm sao chép/xoá dùng `item.code`.
 - [x] BE: không sửa gì — `quotations.name` nullable, controller/service nhận `name` optional.
+
+### Redmine #10945 — Dự án cha con lần 2 (2026-08-04)
+
+- [x] BE `ProspectiveProjectRequest::addParentChildErrors()`: xoá rule 5 chặn "Ngân sách dự kiến"
+      của dự án con vượt phần còn lại của dự án cha (giữ nguyên rule 1-4).
+- [x] FE `quotations/_id/edit.vue`: banner Mỏ neo đổi "của dự án này" → "của dự án cha"; câu
+      "Hàng hoá cùng mã và đơn vị tính phải khớp với báo giá này..." → "Tất cả Hàng hoá cùng mã và
+      đơn vị tính trong phạm vi dự án cha, các dự án con phải đồng nhất về giá nhập/giá bán/giảm giá
+      để đảm bảo giá bán cuối cùng bằng với báo giá mỏ neo trước khi Trình duyệt."
+- [x] FE `quotations/_id/edit.vue`: fix banner Mỏ neo "dính" ở màn tạo mới — reset `createAnchorInfo = null`
+      khi chọn dự án không có cha (`selectProject`) và khi bỏ chọn dự án (`onProjectSelect`).

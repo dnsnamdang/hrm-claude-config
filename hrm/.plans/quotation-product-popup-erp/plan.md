@@ -147,3 +147,8 @@ Blocked: không
 
 ### FE — placeholder ô tìm kiếm
 - [x] `QuotationProductSearchModal.vue` — đổi `quickSearchPlaceholder` "Nhập tên hoặc mã hàng hoá..." → "Nhập tên, mã hoặc model hàng hoá..." (phản ánh việc search đã hỗ trợ Model). Popup dùng chung BOM + Báo giá.
+
+### Đồng bộ hành vi chọn hàng với popup ERP (2026-08-07)
+
+- [x] FE `QuotationProductSearchModal.vue`: click DÒNG → thêm ngay hàng đó vào lưới (`addRowNow`);
+      checkbox + chọn-tất-cả chỉ tích chọn, thêm bằng nút "Thêm N hàng hoá"; bỏ `autoApply`/`autoAddedUids`.
