@@ -1,11 +1,13 @@
 ---
 name: entity-history
-description: Use when làm bất kỳ tính năng "lịch sử thay đổi / lịch sử chỉnh sửa / audit log ai sửa gì, cũ → mới, lúc nào" cho một màn/entity — tạo mới, sửa cách hiển thị, đổi text/màu/bộ lọc của popup lịch sử, hoặc thêm mục Lịch sử vào màn chi tiết.
+description: Use when làm bất kỳ tính năng "lịch sử thay đổi / lịch sử chỉnh sửa / audit log ai sửa gì, giá trị cũ → giá trị mới, lúc nào" cho một màn/entity — tạo mới, sửa cách hiển thị, đổi text/màu/bộ lọc của popup lịch sử, hoặc thêm mục Lịch sử vào màn chi tiết.
 ---
 
 # Skill: Entity History (Lịch sử thay đổi)
 
-Chuẩn hoá cách làm tính năng "Lịch sử thay đổi" (audit log ai sửa gì, cũ → mới, lúc nào) cho một màn/entity.
+Chuẩn hoá cách làm tính năng "Lịch sử thay đổi" (audit log ai sửa gì, giá trị cũ → giá trị mới, lúc nào) cho một màn/entity.
+⚠️ **Đừng nhầm 2 chiều**: trong 1 dòng log là **giá trị cũ (đỏ) → giá trị mới (xanh)**;
+còn **thứ tự danh sách luôn MỚI → CŨ** (mới nhất lên đầu, §4) — chốt từ 2026-08-12, áp cho mọi entity.
 Áp dụng khi user yêu cầu: "bổ sung lịch sử chỉnh sửa", "lịch sử thay đổi", "log ai sửa", "audit" cho bất kỳ màn nào.
 
 > **UI: KHÔNG tự thiết kế.** Mọi popup / mục lịch sử phải theo đúng base đã chốt ở màn Khách hàng
@@ -52,6 +54,9 @@ Bảng `<entity>_history` (số ít):
 
 Snapshot lưu **GIÁ TRỊ HIỂN THỊ** (tên tỉnh, tên nhóm, "Có/Không") chứ không lưu id → log tự chứa,
 đổi tên danh mục sau này không làm sai log cũ.
+Chụp snapshot tracked TRƯỚC `fill()` → save → diff → có thay đổi mới insert 1 dòng
+(`changed_by = auth()->id()`, JSON `JSON_UNESCAPED_UNICODE`). Không đổi gì → không ghi.
+PHP 7.4: không `?->`.
 
 **Trường thường:** `[khoá => chuỗi]`, chuẩn hoá trước khi so (rỗng/null → null, boolean → '0'/'1',
 số → chuỗi số). Không chuẩn hoá = log rác `"5" → 5`.
@@ -155,11 +160,13 @@ từ chối, duyệt (nếu có ô ghi chú duyệt), hủy, đóng, khóa, hủ
 ## 7. Verify bắt buộc trước khi báo xong
 
 1. `php -l` + tinker: đổi 1 trường → 1 log đúng subset; không đổi → không log; trường ngoài whitelist → không log;
-   boolean `true` vs `"1"` → không log rác; **thêm 1 bản ghi con → chỉ 1 dòng `+`**; **sửa 1 cột của bản ghi con → chỉ 1 dòng `~` đúng cột đó**.
+   boolean `true` vs `"1"` → không log rác; đổi 2 trường → 1 dòng 2 key; thứ tự trả về mới → cũ;
+   **thêm 1 bản ghi con → chỉ 1 dòng `+`**; **sửa 1 cột của bản ghi con → chỉ 1 dòng `~` đúng cột đó**.
 2. FE: compile template (`vue-template-compiler`) + render thật (`vue-server-renderer`) so output **popup và mục chi tiết giống hệt nhau**;
-   test 3 bộ lọc (loại hành động / người thực hiện / khoảng ngày) trả đúng.
+   test 3 bộ lọc (loại hành động / người thực hiện / khoảng ngày) trả đúng; mở/đóng modal không tự bắn POST.
    (hrm-client KHÔNG có ESLint config chạy được trên Node 14 — đừng dùng eslint làm cổng verify.)
-3. Dọn log test bằng tinker, KHÔNG xoá log thật của user.
+3. Dọn log test bằng tinker (`where('id','>',$maxTrướcTest)->delete()`), khôi phục giá trị đã đổi.
+   KHÔNG xoá log thật của user.
 
 ---
 

@@ -83,6 +83,20 @@
 - [x] **Ghi chú đầy đủ cho @dnsnamdang** ở cuối `.plans/erp-cost-catalog/plan.md`
       (mục "⚠️ SỬA TỪ NGOÀI — 2026-08-03")
 
+## Phase — Tài liệu bàn giao (2026-08-12)
+
+- [x] Nghiên cứu 2 file mẫu của team: `D:\CompanyProject\Document\TC mẫu phần bomlist.xlsx`
+      (form testcase) và `D:\CompanyProject\Document\HDSD_Bomlist.docx` (form HDSD)
+- [x] Chụp 9 ảnh thật trên cổng dev `hrm-crm.eteksofts.com` → `hdsd_costs_shots/`
+      (menu, danh sách, bộ lọc, tạo mới, lỗi validate, sửa, xem, xác nhận xóa, xác nhận khóa)
+- [x] `testcase.xlsx` — 140 TC (P0 56%), 10 nhóm: Phân quyền + I…IX. Bám form file mẫu:
+      9 mục mô tả, TEST SUMMARY 2 khối DNS/TP, header 17 cột, dropdown check 3 lần cho mỗi khối
+- [x] `HDSD_Danh muc dich vu sua chua va chi phi khac.docx` — dựng từ khung `HDSD_Bomlist.docx`
+      (giữ bìa + mục lục + danh mục hình ảnh + styles), 9 phần, 8 bảng, 9 ảnh thật
+- Generator (scratchpad, chạy lại được): `gen_tc_costs.py`, `gen_hdsd_costs.py` — dùng
+  `openpyxl` / `python-docx`; HDSD strip body từ heading "TỔNG QUAN", clone proto Caption có SEQ
+  field, purge media mồ côi, bật `updateFields`
+
 ## Việc còn lại
 
 - [ ] `kind_of = 1` (Chi phí phải trả / Chi phí bán hàng) — user tạm gác
