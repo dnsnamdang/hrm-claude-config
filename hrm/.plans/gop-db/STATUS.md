@@ -44,6 +44,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- unsaved-changes-catalogs → @junfoke → .plans/gop-db/unsaved-changes-catalogs/plan.md
+  Trạng thái: **CODE DONE, CHƯA TEST TRÌNH DUYỆT** (2026-08-12). Popup "Thông tin chưa lưu"
+  khi thoát màn form — đợt 1: 14 màn danh mục customer-care + finance.
+  Thêm 2 mixin MỚI (`unsavedModalMixin` cho modal, `unsavedChildFormMixin` cho trang vỏ);
+  **không sửa** `unsavedChangesMixin` cũ — phương án gộp chờ anh Nam chốt.
+  Còn lại ~147 form trang + ~180 modal của các phân hệ cũ → đợt 2/3.
+
 - fix-employee-fk-remap → @junfoke → .plans/gop-db/fix-employee-fk-remap/plan.md
   Trạng thái: **CODE DONE, DRY PASS — CHƯA CHẠY THẬT** (2026-08-04). Vá các cột FK `employees`
   bị `ReconcileEmployeesSeeder` bỏ sót khi gộp DB: **42 cột / 20.231 dòng** đang trỏ SAI NGƯỜI (gồm 4 cột remap có điều kiện).

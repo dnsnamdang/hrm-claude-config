@@ -89,8 +89,13 @@
       (form testcase) và `D:\CompanyProject\Document\HDSD_Bomlist.docx` (form HDSD)
 - [x] Chụp 9 ảnh thật trên cổng dev `hrm-crm.eteksofts.com` → `hdsd_costs_shots/`
       (menu, danh sách, bộ lọc, tạo mới, lỗi validate, sửa, xem, xác nhận xóa, xác nhận khóa)
-- [x] `testcase.xlsx` — 140 TC (P0 56%), 10 nhóm: Phân quyền + I…IX. Bám form file mẫu:
+- [x] `testcase.xlsx` — 139 TC (P0 56%), 10 nhóm: Phân quyền + I…IX. Bám form file mẫu:
       9 mục mô tả, TEST SUMMARY 2 khối DNS/TP, header 17 cột, dropdown check 3 lần cho mỗi khối
+- [x] **Viết lại toàn bộ nội dung TC bằng ngôn ngữ nghiệp vụ** (user phản hồi 2026-08-12: tài liệu
+      cho QA chứ không cho dev) — bỏ hết tên bảng/cột, id quyền, route, mã HTTP; generator có bộ
+      kiểm tra regex chặn tái phạm. Xem [[feedback_tailieu_khong_dung_thuat_ngu_code]]
+- [x] Sửa 2 lỗi HDSD: mục lục + danh mục hình ảnh còn nội dung template BOM (`updateFields` chỉ là
+      lời mời Word, phải gọi Word COM cập nhật thật) và dòng tiêu đề trên bìa chưa được thay
 - [x] `HDSD_Danh muc dich vu sua chua va chi phi khac.docx` — dựng từ khung `HDSD_Bomlist.docx`
       (giữ bìa + mục lục + danh mục hình ảnh + styles), 9 phần, 8 bảng, 9 ảnh thật
 - Generator (scratchpad, chạy lại được): `gen_tc_costs.py`, `gen_hdsd_costs.py` — dùng
