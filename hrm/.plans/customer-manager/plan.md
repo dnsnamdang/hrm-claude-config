@@ -181,3 +181,42 @@ Blocked: không.
 3. serials.created_by + updated_by NOT NULL → currentUserId() resolve ERP employee id (ErpPermissionHelper::erpEmployeeId) + fallback created_by của KH; set cả created_by/updated_by khi insert serial.
 Verify cuối: php -l PASS + 8 class autoload OK + vtc/@babel parser PASS 9 file FE. route:list KHÔNG chạy (lỗi sẵn Module Decision, không liên quan).
 Còn lại: user verify UI trên browser.
+
+---
+
+## Phase 4 — Fix: ô Số lượng (modal Thêm/Sửa thiết bị) không cho nhập số âm
+
+- [x] FE `EquipmentTab.vue` — chặn gõ/dán số âm ở ô **Số lượng** của modal thiết bị (`min`/`step` + chặn phím `-`,`+`,`e` + lọc lại giá trị khi input)
+- [x] FE `EquipmentTab.vue` — tách thông báo lỗi: bỏ trống vs nhập 0 (trước đây cả 2 đều ra "Vui lòng nhập số lượng")
+- [x] Verify: parse SFC (vue-template-compiler + @babel/parser) + mô phỏng bộ lọc với các chuỗi gõ/dán
+
+### Checkpoint — 2026-08-11 (Phase 4)
+Vừa hoàn thành: ô **Số lượng** trong modal Thêm/Sửa thiết bị (`EquipmentTab.vue`) không cho nhập số âm.
+
+Hiện trạng cũ: `<V2BaseInput v-model="eqForm.qty" type="number">` — không có `min`, `type=number`
+vẫn cho gõ `-`, `+`, `e`. Nhập `-5` chỉ bị chặn lúc bấm Lưu, lại báo sai là "Vui lòng nhập số lượng".
+
+Cách sửa (3 lớp, chỉ FE):
+1. `min="1" step="1"` — chặn ở nút tăng/giảm + constraint của trình duyệt
+2. `@keydown.native="blockNegativeKey"` — chặn phím `-` `+` `e` `E` `.` `,`
+3. `@input.native="onQtyInput"` — lọc lại giá trị (chặn đường **dán chuỗi**), lấy **cụm chữ số đầu tiên**
+
+⚠️ 2 điểm dễ sai đã xử lý:
+- Đổi `v-model` → `:value` + `@input.native`: cần chạm thẳng DOM input. Nếu chỉ gán lại `eqForm.qty`
+  mà giá trị sau lọc trùng giá trị cũ thì Vue không render lại → ô nhập vẫn hiện ký tự vừa gõ.
+  Vì vậy `onQtyInput` gán cả `event.target.value`.
+- Lọc bằng `replace(/[^0-9]/g,'')` sẽ biến `3.5` thành `35` (lệch 10 lần) → dùng `match(/\d+/)`
+  lấy cụm chữ số đầu tiên, `3.5` → `3`.
+
+Verify (trích thẳng 2 hàm từ SFC ra chạy, không chép tay): template compile 0 lỗi, script parse PASS,
+render fn có `nativeOn`; `-5`→5, `-0`→0, `3.5`→3, `-12abc`→12, `  -7 `→7; qty rỗng → "Vui lòng nhập
+số lượng", qty=0 → "Số lượng phải lớn hơn 0".
+
+⚠️ CÒN NỢ: **BE không validate qty** — `CustomerManagerService::addOldEquipment/updateOldEquipment`
+nhận thẳng `$request->get('qty')` vào `TpEquipmentOld`. Gọi API trực tiếp vẫn lưu được số âm.
+Chưa sửa vì user chỉ yêu cầu chặn ở ô nhập.
+
+Đang làm dở: không có.
+Bước tiếp theo: user chạy `npm run dev` hrm-client → mở `/assign/customers/43707/manager` tab Thiết bị
+→ Thêm thiết bị cũ → thử gõ và dán số âm vào ô Số lượng.
+Blocked: không có.

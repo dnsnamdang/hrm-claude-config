@@ -280,6 +280,7 @@ Nếu có → đọc trước khi viết code.
 | Validate, error, toast trong elearning              | `.claude/skills/elearning-validate/SKILL.md` |
 | Auth, SSO, profile, avatar trong elearning          | `.claude/skills/elearning-auth/SKILL.md`     |
 | Viết tài liệu HDSD / hướng dẫn sử dụng màn hình     | `.claude/skills/hdsd-documenter/SKILL.md`    |
+| Lịch sử thay đổi / audit log (BE ghi log + UI)      | `.claude/skills/entity-history/SKILL.md`     |
 | Bắn/sửa thông báo nghiệp vụ (chuông, push, socket)  | `.claude/skills/notification-convention/SKILL.md` |
 | Tạo/sửa màn form (add/edit, modal nhập liệu)        | `.claude/skills/unsaved-changes/SKILL.md`    |
 | Validate form ở màn mới (realtime, required, lỗi)   | `.claude/skills/form-validate/SKILL.md`      |

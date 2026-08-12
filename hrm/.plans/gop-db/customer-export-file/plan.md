@@ -100,3 +100,35 @@ Vừa hoàn thành: user test trình duyệt xong Phase 4 (CSV / Excel / PDF) �
 Khi nào muốn xử lý thì chọn 1 trong 3: chặn số dòng / nâng `memory_limit` riêng cho action / queue + mail.
 Bước tiếp theo: không có (đã chuyển sang mục "Hoàn thành" ở `.plans/gop-db/STATUS.md`).
 Blocked: không có.
+
+---
+
+## Phase 6 — Fix logo letterhead bị co lại (PDF + Excel)
+
+- [x] BE `resources/views/exports/customers_pdf.blade.php` — logo trải hết bề ngang trang (`width:100%; height:auto`) thay vì ép `height: 42px`
+- [x] BE `app/ExcelExport/CustomerExcelExport.php` — bỏ `setHeight(52)`, giữ kích thước gốc ảnh + set chiều cao dòng 1 theo ảnh
+- [x] Verify: render thử PDF + Excel, đo lại kích thước logo trong file xuất
+
+### Checkpoint — 2026-08-11 (Phase 6)
+Vừa hoàn thành: fix logo letterhead bị co lại ở cả Xuất PDF và Xuất Excel.
+
+Nguyên nhân: `public/images/info-tpe.jpg` là banner ngang **1600x150** (tỉ lệ ~10.7:1), nhưng cả 2
+file xuất đều ép chiều cao cố định nên bề ngang ảnh bị co theo tỉ lệ:
+- PDF: `.letterhead img { height: 42px }` → ảnh chỉ rộng ~336pt / 841.89pt = **40% bề ngang trang**
+- Excel: `$drawing->setHeight(52)` → ảnh chỉ rộng 554px trong khi bảng 20 cột rộng ~3.200px
+
+Số đo sau khi sửa (script render thật + đọc content stream PDF / `xl/drawings/drawing1.xml`):
+
+| | Trước | Sau |
+| --- | --- | --- |
+| PDF (A4 ngang 841.89pt) | 336 x 31,5 pt — 40% bề ngang | **773,9 x 72,5 pt — 92% bề ngang** (hết vùng nội dung) |
+| Excel | 554 x 52 px, dòng 1 cao 42px | **1600 x 150 px** (kích thước gốc), dòng 1 cao 112,5pt = 150px |
+
+Đang làm dở: không có.
+Bước tiếp theo: user tải lại file Xuất PDF / Xuất Excel trên UI để xác nhận bằng mắt.
+Blocked: không có.
+
+**Ghi chú Phase 6 — Xuất CSV:** KHÔNG sửa (user chốt 2026-08-11). CSV là text thuần, không chứa
+được ảnh/định dạng nên vốn dĩ không có logo — chỉ có BOM UTF-8 + dòng tên cột + dữ liệu. Đã cân
+nhắc thêm dòng chữ "DANH SÁCH KHÁCH HÀNG" ở đầu file nhưng bỏ, vì sẽ đẩy dòng tên cột xuống dòng 2
+làm mọi công cụ import (kể cả chức năng Import khách hàng của chính hệ thống) đọc sai header.

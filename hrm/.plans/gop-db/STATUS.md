@@ -55,6 +55,51 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 
 ## Hoàn thành
 
+- customer-history → @khoipv → .plans/gop-db/customer-history/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-12)**, nhánh `gop_db`.
+  Lịch sử thay đổi khách hàng cho `/assign/customers` ở **cả màn danh sách và màn chi tiết**, dùng lại
+  base của báo giá: endpoint chung `GET /assign/system-logs/{type}/{id}` (thêm `type=customer`) +
+  `SystemLogService` (adapter `customerLogs()` map về DTO dùng chung) + modal timeline cũ ĐỎ → mới XANH.
+  Chốt với user: track **tất cả** (cột `customers` + danh sách con: người liên hệ / người đại diện /
+  TK ngân hàng / nhóm KH / loại hình / lĩnh vực / hãng xe / địa điểm giao hàng + ảnh, video, tài liệu);
+  action `create` (gồm import Excel) · `update` · `update_media` · `lock` · `unlock`; KH cũ chưa có log →
+  dựng 2 dòng từ cột audit; **không permission riêng**.
+  BE: bảng mới `customer_history` (subset-diff, snapshot lưu **giá trị hiển thị** chứ không lưu id) ·
+  `CustomerHistoryService` · hook trong `CustomerService::save/setStatus/updateMedia/deleteAttachmentFile`.
+  FE: **màn danh sách** — nút icon `ri-history-line` trong cột thao tác mở
+  `components/assign/customer/CustomerHistoryModal.vue`; **màn chi tiết** — dùng base dùng chung
+  `components/assign/SystemInfoSection.vue` (`entity-type="customer"`) đặt DƯỚI CÙNG form, đúng như
+  màn chi tiết Task (thu gọn mặc định, lazy load, badge số dòng + Làm mới). Chỉ render khi
+  `readonly && !modalMode` nên nhánh thêm/sửa/quản lý KH không đổi; `V2Footer` giữ Sửa · Quay lại.
+  Ghi nhận 1: endpoint lịch sử không kiểm tra phạm vi xem KH (đúng quyết định "không quyền riêng") —
+  cần siết thì thêm `isVisible()` vào adapter.
+  Ghi nhận 2 (phát hiện khi user test): KHÔNG track 4 trường màn KH không có ô nhập nhưng luồng lưu
+  vẫn ghi đè — `district` (`CustomerForm.buildPayload()` gửi cố định `district_id: null` vì đã bỏ cấp
+  huyện ⇒ **mỗi lần lưu KH cũ là xoá luôn Quận/Huyện trong DB**), 2 hạn mức công nợ, và
+  `type_calculate_interest`. Thêm `SystemLogService::CUSTOMER_HIDDEN_FIELDS` để log đã sinh trước đó
+  cũng không hiện dòng rác.
+  Spec: docs/superpowers/specs/gop-db/2026-08-11-customer-history-design.md
+
+- customer-lock → @khoipv → .plans/gop-db/customer-lock/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-12)**, nhánh `gop_db`.
+  Khóa / Mở khóa khách hàng cho `/assign/customers`, tương đương ERP
+  (`Sale\CustomersController@delete` / `@unlock`): khóa = `customers.status = 0`, mở khóa = `1`,
+  **không** chặn điều kiện nghiệp vụ (ERP `canDelete()` luôn true), gate bằng **quyền ERP
+  `Xóa khách hàng`** (FE đã có sẵn `perm.delete`) → không thêm permission, không migration.
+  BE: `CustomerService::setStatus()` (set `updated_by` tường minh bằng ERP employee id — BaseModel
+  tự gán sẽ ra HRM user id, sai hệ id) · `CustomerController::lock/unlock` ·
+  2 route `POST /assign/customers/{id}/lock|unlock` (ERP dùng GET, HRM đổi sang POST).
+  FE `pages/assign/customers/index.vue`: nút `ri-lock-line`/`ri-lock-unlock-line` đặt trong **cột
+  Trạng thái** cạnh badge — theo khuôn màn danh mục `finance/currencies` (user chốt vị trí này) —
+  + `BaseConfirmModal` xác nhận → gọi API → toast → `loadData()` giữ trang/bộ lọc.
+  ⚠️ PHÁT HIỆN LÀM GỌN PHẠM VI: popup chọn KH của form Dự án TKT / Meeting / Phiếu chuyển hàng dùng
+  chung `components/modals/ChooseErpCustomerModal.vue` và **đã lọc `status: 1` sẵn** → chỉ còn ô
+  "Công ty mẹ" (`CustomerService::parentOptions()`) phải thêm `where status = 1`. 21 chỗ còn lại lấy
+  danh sách KH đều là **ô lọc** → giữ nguyên (user chốt: ô lọc vẫn hiện KH khóa để tra cứu dữ liệu cũ).
+  Ghi nhận không sửa: `filteredCustomers` trong `pages/assign/meeting/components/GeneralInfo.vue` là
+  code chết (gán nhưng không render).
+  Spec: docs/superpowers/specs/gop-db/2026-08-11-customer-lock-design.md
+
 - customer-column-config → @khoipv → .plans/gop-db/customer-column-config/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
   Nút **Cấu hình cột hiển thị** cho `/assign/customers` (ẩn/hiện + kéo thả thứ tự, lưu theo user),
