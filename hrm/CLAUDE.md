@@ -273,6 +273,7 @@ Nếu có → đọc trước khi viết code.
 | Validate, error, toast trong elearning              | `.claude/skills/elearning-validate/SKILL.md` |
 | Auth, SSO, profile, avatar trong elearning          | `.claude/skills/elearning-auth/SKILL.md`     |
 | Viết tài liệu HDSD / hướng dẫn sử dụng màn hình     | `.claude/skills/hdsd-documenter/SKILL.md`    |
+| Lịch sử thay đổi / audit log (BE ghi log + UI)      | `.claude/skills/entity-history/SKILL.md`     |
 
 → Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
 

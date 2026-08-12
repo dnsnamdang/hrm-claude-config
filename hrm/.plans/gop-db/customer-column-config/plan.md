@@ -60,3 +60,47 @@ Vừa hoàn thành: user test trình duyệt xong Phase 4 → **feature HOÀN TH
 Đang làm dở: không có.
 Bước tiếp theo: không có (đã chuyển sang mục "Hoàn thành" ở `.plans/gop-db/STATUS.md`).
 Blocked: không có.
+
+---
+
+## Phase — Tách "Tên viết tắt" thành cột riêng (bỏ dòng phụ dưới Tên KH)
+
+- [x] FE `pages/assign/customers/index.vue` — chuyển `shortName` khỏi nhóm "cột bổ sung mặc định ẩn", đặt ngay sau cột `customerInfo`, đổi `isVisible: false` → `'shortName'`
+- [x] FE — bỏ dòng phụ "Tên viết tắt: X" dưới tên KH (`buildCustomerSubs` + prop `:subs`)
+- [x] Kiểm tra tác động lên cấu hình cột đã lưu (`column_customizations.customers`) — user đã lưu config thì `defaultTableColumns` ưu tiên bản lưu
+- [x] Verify: parse SFC + chạy thật computed `allColumns`/`defaultTableColumns`/`tableColumns` cho cả user chưa lưu và user đã lưu config
+- [x] FE — đổi khoá cột `shortName` → `customerShortName` để cấu hình cột đã lưu coi là cột MỚI (user duyệt 2026-08-11)
+- [x] FE — sửa cơ chế chèn cột mới trong `defaultTableColumns`: lùi dần tìm mốc thay vì chỉ soi 1 cột liền trước
+
+### Checkpoint — 2026-08-11
+Vừa hoàn thành: "Tên viết tắt" tách khỏi cell "Mã KH - Tên khách hàng" thành cột riêng, đứng ngay sau cột đó.
+
+Chỉ sửa 1 file: `pages/assign/customers/index.vue`.
+1. `allColumns`: chuyển `shortName` khỏi nhóm "cột bổ sung mặc định ẩn" lên vị trí sau `customerInfo`, `isVisible: false` → hiện mặc định. Comment nhóm cũ đổi 8 → 7 cột.
+2. Gỡ `buildCustomerSubs()` + prop `:subs` (prop có default `[]` nên không cần truyền).
+3. **Đổi khoá `shortName` → `customerShortName`** — cấu hình cột đã lưu (`column_customizations.customers`)
+   ghim thứ tự + ẩn/hiện THEO KHOÁ. Giữ khoá cũ thì user từng lưu cấu hình vẫn thấy cột ở vị trí cũ,
+   tệ hơn là MẤT HẲN nếu họ từng tắt (vì dòng phụ dưới tên KH đã gỡ). Đổi khoá ⇒ coi là cột mới:
+   mục `shortName` cũ bị lọc bỏ, cột được chèn lại đúng vị trí + hiện mặc định. Không đụng dữ liệu DB.
+
+⚠️ BUG PHÁT HIỆN THÊM (đã sửa): cơ chế chèn cột mới trong `defaultTableColumns` chỉ soi **đúng 1 cột
+liền trước** trong `allColumns` để tìm mốc. Hai cột khoá (`index`, `customerInfo`) KHÔNG nằm trong cấu
+hình đã lưu (modal chỉ nhận `customizableColumns`), nên cột mới đứng ngay sau chúng không tìm ra mốc và
+bị `push` xuống CUỐI bảng. Đã đổi thành lùi dần tìm mốc gần nhất, không có mốc thì `unshift` lên đầu.
+→ Cùng đoạn logic này được chú thích "Cùng logic với màn dự án tiềm năng" nên màn đó nhiều khả năng
+còn lỗi tương tự — CHƯA sửa (ngoài phạm vi yêu cầu).
+
+Verify (nạp thật options object của SFC rồi gọi computed, dùng bản ghi cấu hình THẬT id=2 của user 13):
+
+| Trường hợp | Cột hiển thị |
+| --- | --- |
+| User chưa lưu cấu hình | `STT \| Mã KH - Tên KH \| Tên viết tắt \| Loại \| MST \| ...` ✓ |
+| User đã lưu (bản ghi thật) | `STT \| Mã KH - Tên KH \| Tên viết tắt \| ...` + giữ nguyên thứ tự/ẩn hiện các cột khác ✓ |
+| User đã lưu và TỪNG TẮT cột này | `STT \| Mã KH - Tên KH \| Tên viết tắt \| ...` ✓ (không còn mất cột) |
+
+Cả 3 case đều có cột trong modal Cấu hình cột. Template compile 0 lỗi, script parse PASS,
+không còn tham chiếu mồ côi `buildCustomerSubs`.
+
+Đang làm dở: không có.
+Bước tiếp theo: user build lại hrm-client → mở /assign/customers kiểm tra cột + modal Cấu hình cột.
+Blocked: không có.

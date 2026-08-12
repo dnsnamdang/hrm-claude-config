@@ -561,3 +561,118 @@ Vừa hoàn thành: fix icon nút In (FontAwesome không tồn tại trong hrm-c
 Đang làm dở: không.
 Bước tiếp theo: user test tay `finance/product-transfer-requests/{id}/print`.
 Blocked: logo chỉ hiện được khi `erp/public/uploads/` có file (local đang rỗng) — không phải lỗi code.
+
+---
+
+## Phase bổ sung — Tìm nhanh theo Mã yêu cầu HOẶC Người tạo (2026-08-11)
+
+**User yêu cầu:** ô tìm nhanh màn `/finance/product-transfer-requests` đang chỉ lọc theo mã
+yêu cầu (`filters.code`) → đổi thành tìm theo **mã yêu cầu hoặc người tạo**.
+
+**Chốt cách làm:** tách ô tìm nhanh sang param riêng `keyword` (đúng convention skill `list-page`),
+GIỮ nguyên ô "Mã yêu cầu" trong bộ lọc nâng cao (`code`) và select "Người tạo" (`created_by`).
+
+- [x] BE `ProductTransferRequest::searchByFilter()` — thêm nhánh `keyword`: bọc trong closure
+      `code LIKE %kw% OR whereHas('employee_create.info', fullname LIKE %kw%)` (bọc closure để
+      không phá các nhánh OR của phạm vi quyền). Áp dụng cho cả index và export (dùng chung hàm)
+- [x] FE `pages/finance/product-transfer-requests/index.vue` — quick search bind `filters.keyword`,
+      placeholder "Tìm theo mã yêu cầu hoặc người tạo...", `handleQuickSearchChange` set `keyword`,
+      thêm `keyword` vào `initialStateForm` + `ignoredFields` (giữ `code` trong ignoredFields để ô
+      lọc nâng cao vẫn chờ nút Tìm kiếm)
+- [x] Verify: php -l + tinker query thật (tìm theo mã, theo tên người tạo, không khớp) + parse SFC
+- [ ] Chờ user test trình duyệt
+
+### Checkpoint — 2026-08-11 (tìm nhanh mã yêu cầu / người tạo)
+Vừa hoàn thành: ô tìm nhanh màn danh sách tách sang param `keyword`, BE lọc `code LIKE` OR
+`employee_create.info.fullname LIKE`; áp dụng cho cả danh sách và Xuất Excel (dùng chung
+`searchByFilter`).
+Đang làm dở: không.
+Bước tiếp theo: user hard-refresh `/finance/product-transfer-requests`, gõ mã (PYCCH-...) và gõ tên
+người tạo vào ô tìm nhanh → bấm Tìm kiếm.
+Blocked: không.
+
+---
+
+## Phase bổ sung — Đưa nút hành động xuống dưới cột Mã yêu cầu (2026-08-11)
+
+**User yêu cầu:** bỏ cột "Hành động", chuyển 4 nút xuống ngay dưới mã yêu cầu.
+
+- [x] FE `index.vue`: `#cell-code` thêm `<div class="row-actions mt-1">` gồm Sửa / Tổng hợp /
+      In yêu cầu / Xóa — đổi từ `<button class="btn btn-light">` sang `V2BaseIconButton`
+      (khuôn `pages/customer-care/services/index.vue`), nút bị khoá bọc `<span :title>` vì
+      V2BaseIconButton lúc disabled có `pointer-events: none` nên tooltip không hiện
+- [x] FE: xóa cột `actions` khỏi `tableColumns` + xóa template `#cell-actions`
+- [x] FE: cột `code` nới `150px` → `175px` (+ `minWidth`) để 4 nút không xuống dòng; xóa CSS
+      `.action-icon-btn` không còn dùng (`.row-actions` đã có sẵn trong `v2-styles.scss`)
+- [x] Verify: parse SFC sạch, không còn tham chiếu `action-icon-btn`/`cell-actions`
+- [ ] Chờ user test trình duyệt (kiểm tra nút khoá theo quyền vẫn đúng: Sửa/Xóa mờ khi không có quyền)
+
+### Checkpoint — 2026-08-11 (gộp nút vào cột Mã yêu cầu)
+Vừa hoàn thành: bỏ cột Hành động, 4 nút chuyển xuống dưới mã yêu cầu theo khuôn `row-actions`.
+Đang làm dở: không.
+Bước tiếp theo: user hard-refresh `/finance/product-transfer-requests` xem bố cục + quyền nút.
+Blocked: không.
+
+---
+
+## Phase bổ sung — Đầu trang màn in dùng ảnh letterhead (2026-08-11)
+
+**User yêu cầu:** header màn `/finance/product-transfer-requests/{id}/print` lấy giống màn
+`/customer-care/services/{id}/print` (ảnh letterhead full-width), thay bảng "ô logo 195px +
+tên/địa chỉ công ty dạng chữ".
+
+**Chẩn đoán trước đó (logo không hiện ở local):** không phải lỗi code — `companies.logo/header`
+chỉ là đường dẫn text `/uploads/...`, file ảnh nằm trên đĩa server ERP; `erp/public/uploads/` bị
+`.gitignore` nên máy dev không có file → `http://erp.test:8080/uploads/...` trả 404 (đã curl từng
+file). Trên server thật `https://erp.eteksofts.com/uploads/...` trả 200. Cả 2 màn in dùng CHUNG
+một công thức `ERP_URL + đường dẫn` nên local đều trống như nhau.
+
+- [x] Chốt phạm vi với user: **chỉ sửa phía HRM**, KHÔNG sửa `report_templates` id 87 (ERP in
+      phiếu này bằng đúng bản ghi đó — `erp/app/Http/Controllers/Warehouse/
+      ProductTransferRequestsController.php:381` → `ReportTemplate::YEU_CAU_CHUYEN_HANG = 87`)
+- [x] Chốt nguồn ảnh: `companies.header` của **công ty NGƯỜI TẠO phiếu** (không theo người đang
+      đăng nhập như màn customer-care) → in lại phiếu cũ vẫn ra đúng letterhead công ty lập phiếu
+- [x] BE `ProductTransferRequestService::buildPrintData()` — query thêm cột `header`, thêm biến
+      `HEADER` (URL tuyệt đối qua `erpAssetUrl()`); giữ nguyên LOGO/CONG_TY/DIA_CHI_CONG_TY làm
+      fallback
+- [x] BE `ProductTransferRequestService::applyLetterheadHeader()` (mới) — thay khối
+      `<table ...>…{{LOGO}}…</table>` đầu template bằng `<img src="{{HEADER}}" style="width:100%">`
+      TRƯỚC khi `fillReport()`. Fallback giữ nguyên bảng cũ khi công ty chưa có ảnh letterhead
+      hoặc khi regex không khớp (mẫu 87 bị sửa) → bản in không vỡ
+- [x] Verify: `php -l` sạch + gọi thật `GET /api/v1/finance/product-transfer-requests/7380/print-data`
+      bằng JWT local → template trả về mở đầu bằng `<img src="…/uploads/1751696586ts-hn.png"
+      style="width:100%" />` (đúng file letterhead mà màn customer-care đang dùng), phần còn lại
+      của phiếu giữ nguyên
+- [ ] Chờ user test trình duyệt
+
+### Checkpoint — 2026-08-11 (header màn in dùng letterhead)
+Vừa hoàn thành: đầu trang in phiếu chuyển hàng đổi sang ảnh letterhead full-width theo công ty
+người tạo, xử lý ở code HRM nên bản in ERP không đổi.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/product-transfer-requests/7380/print` xem header. LƯU Ý: trên
+máy local ảnh vẫn 404 (ERP local không có thư mục `uploads`) và FE `hideBrokenImages()` ẩn ảnh lỗi
+→ muốn thấy ở local phải tải file logo/header về `erp/public/uploads/`; trên server thì hiện bình
+thường.
+Blocked: không.
+
+---
+
+## Phase bổ sung — Ô "Mã yêu cầu" tự tìm khi gõ (2026-08-11)
+
+**User báo:** ô "Mã yêu cầu" trong lọc nâng cao gõ vào không tự tìm như ô "Tên/mã hàng hóa".
+
+**Nguyên nhân:** `index.vue` khai `ignoredFields: ['keyword', 'code']` → deep watcher trên
+`filters` bỏ qua khi chỉ `code` đổi nên phải bấm nút Tìm kiếm; còn `product_name` không nằm
+trong danh sách này nên tự gọi `loadData()` ngay khi gõ. Skill `list-page` quy định chỉ ô tìm
+nhanh (`keyword`) mới chờ nút.
+
+- [x] FE `index.vue`: `ignoredFields` bỏ `'code'` → còn `['keyword']`; cập nhật comment ở data
+      và ở khối template mô tả ô "Mã yêu cầu"
+- [x] Verify: parse SFC sạch (vue-template-compiler + babel), `ignoredFields: ['keyword']`
+- [ ] Chờ user test trình duyệt
+
+### Checkpoint — 2026-08-11 (mã yêu cầu tự tìm khi gõ)
+Vừa hoàn thành: ô "Mã yêu cầu" trong lọc nâng cao tự gọi API khi gõ, đồng bộ với "Tên/mã hàng hóa".
+Đang làm dở: không.
+Bước tiếp theo: user hard-refresh `/finance/product-transfer-requests`, mở lọc nâng cao gõ mã.
+Blocked: không.

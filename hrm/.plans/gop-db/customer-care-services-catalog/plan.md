@@ -964,3 +964,198 @@ Vừa hoàn thành: màn Sửa gỡ được file đính kèm đã lưu (chỉ g
 Đang làm dở: không.
 Bước tiếp theo: user test tay trên `customer-care/services/235/edit`.
 Blocked: không.
+
+---
+
+## Phase 11 — Màn Sao chép thiếu trường Trạng thái (2026-08-11)
+
+**User báo:** `customer-care/services/create?copy_from=235` không có trường Trạng thái.
+
+**Nguyên nhân (lỗi port):** FE gate `v-if="isEdit"` → màn sao chép (mode `create`) bị ẩn. ERP gốc
+`sale/services/form.blade.php:84` gate bằng `ng-if="form.id"`, mà luồng copy của ERP gán
+`$scope.form = new Service(response.data.service)` (có `id`) → ERP CÓ hiện Trạng thái ở màn sao chép,
+prefill theo gói nguồn.
+
+**User chốt 2026-08-11:** chỉ sửa FE cho giống ERP — BE giữ nguyên `store()` luôn lưu
+`STATUS_ACTIVE` (ERP `ServiceController@store:134` cũng hardcode `status = 1`). Màn Thêm mới
+(không có `?copy_from`) vẫn ẩn Trạng thái như ERP.
+
+- [x] FE: thêm computed `isCopy` (mode create + có `copyFromId`)
+- [x] FE: trường Trạng thái đổi gate `v-if="isEdit"` → `v-if="isEdit || isCopy"`
+- [x] FE `loadService()`: bỏ ép `status: isCopy ? 1`, prefill theo trạng thái gói nguồn như ERP
+- [x] FE `buildFormData()`: giữ nguyên chỉ gửi `status` khi Sửa (BE bỏ qua khi tạo)
+- [x] Verify: SFC parse sạch (vue-template-compiler + babel)
+- [ ] Chờ user test tay: mở `create?copy_from=235` -> có Trạng thái đúng trạng thái gói 235; màn Thêm mới thuần vẫn không có; Lưu bản sao -> gói mới ở Hoạt động
+
+## Phase 11b — Căn phải các ô nhập số ở form gói bảo dưỡng (2026-08-11)
+
+**User yêu cầu:** các ô nhập số căn phải hết cho dễ đọc.
+
+Dùng lại pattern có sẵn: `class="text-right"` trên `V2BaseInput` (class rơi vào `.v2-input__wrapper`,
+scss `.service-form .v2-input__wrapper.text-right .v2-input` đã có sẵn ở cuối file trỏ xuống input con).
+`V2BaseCurrencyInput` (Giá bán cơ sở, Hệ số giá bán) vốn đã căn phải sẵn qua class `--currency`.
+
+- [x] Định mức đàm phán giá (%) — `form.sale_max_percent`
+- [x] VAT (%) — `form.vat_percent`
+- [x] SL (bảng ma trận) — `maintain.quantity`
+- [x] Định mức công — `col.quota_work`
+- [x] Hệ số công nghệ — `col.benefit_coefficient`
+- [x] Hệ số giá bán gói bảo dưỡng — đã có sẵn từ trước
+- [x] Verify: SFC parse sạch. KHÔNG chạy prettier trên file này — bản prettier cài qua npx format
+      lệch với style hiện có (đụng 82 dòng không liên quan), đã revert.
+- [ ] Chờ user xem lại giao diện form tạo/sửa
+
+### Checkpoint — 2026-08-11 (Phase 11)
+Vừa hoàn thành: màn Sao chép hiện lại trường Trạng thái (prefill theo gói nguồn, đúng ERP) + căn phải toàn bộ ô nhập số ở form.
+Đang làm dở: không.
+Bước tiếp theo: user test tay `customer-care/services/create?copy_from=235`.
+Blocked: không.
+
+## Phase 11c — Bảng rỗng ở form chiếm nửa màn hình (2026-08-11)
+
+**User yêu cầu:** ở `customer-care/services/create`, bảng "Danh mục kiểm tra bảo dưỡng định kỳ" và
+"Áp dụng cho hàng hóa" khi chưa có dữ liệu vẫn cao chình ình → thừa khoảng trống theo CHIỀU CAO.
+Muốn bảng cao đúng bằng nội dung, có data tới đâu nở tới đó.
+
+**Nguyên nhân:** `assets/scss/default.scss:85` — style chung `.table-responsive { min-height: 50vh }`
+(hợp lý cho màn danh sách). Form này có 3 bảng bọc trong `.table-responsive` nên mỗi bảng dù rỗng
+vẫn chiếm tối thiểu nửa viewport.
+
+- [x] `ServiceFormComponent.vue`: override cục bộ `.service-form .table-responsive { min-height: 0 }`
+      (specificity 0,2,0 > 0,1,0 của rule chung; style block không scoped nhưng bọc trong `.service-form`)
+- [x] KHÔNG sửa `assets/scss/default.scss` — file dùng chung toàn hệ thống, đụng vào là ảnh hưởng mọi màn danh sách
+- [x] Verify: template + script parse sạch (vue-template-compiler + @babel/parser), SCSS compile sạch (node-sass)
+- [ ] Chờ user xem lại giao diện form tạo mới
+
+**Ghi chú lần đầu làm sai:** hiểu nhầm thành thu hẹp chiều NGANG (thêm class `matrix-table--fit`,
+`width: auto`) — đã revert sạch, không còn dấu vết trong code.
+
+## Phase 11d — File đính kèm thành trường bắt buộc (2026-08-11)
+
+**User yêu cầu:** khối "File đính kèm (PDF)" ở form gói bảo dưỡng phải bắt buộc.
+
+**Quy tắc chốt:** sau khi lưu, gói phải còn ít nhất 1 file — tính CẢ file mới upload (`attachments`)
+lẫn file đã lưu được giữ lại / mang sang khi sao chép (`existing_attachments`).
+
+BE (`ServiceRequest.php`):
+- [x] `attachments` => `required_without:existing_attachments|array|min:1` (bỏ `nullable`)
+- [x] Message `attachments.required_without` + `attachments.min` = "Bắt buộc phải đính kèm ít nhất 1 file PDF"
+- [x] Verify semantics bằng `artisan tinker`: existing rỗng/không gửi -> chặn; existing có URL -> cho qua
+      (Laravel coi `existing_attachments = ''` là failing-required nên vẫn bắt upload — đúng ca "gỡ hết file")
+
+FE (`ServiceFormComponent.vue`):
+- [x] Tiêu đề khối thêm `<Required />`
+- [x] `validate()`: thiếu file -> `errors.attachments`, hiện inline qua computed `attachmentsErrors` sẵn có
+- [x] Viền đỏ đặt trên ô "Thêm file" (`document-item--invalid`) vì khối này không có `<input>` hiển thị
+- [x] `syncAttachmentError()` gọi ở `onFilesPicked` / `removeNewFile` / `removeSavedFile` — sau lần submit đầu,
+      thêm file là lỗi tắt ngay, gỡ hết file là lỗi bật lại (không phải bấm Lưu mới biết)
+- [x] Verify: template + script + scss sạch; PHP `php -l` sạch
+
+**Lưu ý downstream:** gói CŨ chưa có file đính kèm sẽ không lưu được ở màn Sửa cho tới khi bổ sung file.
+
+## Phase 11e — Ô "Chọn ghi chú" (multi-select) thiếu icon dropdown (2026-08-11)
+
+**Nguyên nhân:** Select2 chỉ render `.select2-selection__arrow` cho chế độ chọn 1; bản `--multiple`
+không có phần tử đó. `V2BaseSelect.vue` cũng chỉ style mũi tên dưới `.select2-selection--single`
+(dòng ~300) nên mọi multi-select đều không có icon — ô ghi chú trong ma trận trông như ô text.
+
+- [x] Vẽ lại mũi tên bằng `::after` trên `.select2-selection--multiple` (tam giác 5px 4px 0 4px, #888 —
+      khớp mặc định select2), lật lên khi `.select2-container--open`
+- [x] `padding-right: 20px !important` cho `.select2-selection__rendered` để tag/ô search không đè icon
+      (specificity 4 class > `.v2-select--sm ...` 3 class nên thắng `padding: 4px 8px !important`)
+- [x] Để CỤC BỘ trong `.service-form`, KHÔNG sửa `V2BaseSelect.vue` (component dùng chung — cần user duyệt)
+- [x] Verify: SFC sạch, selector sinh ra đúng `.service-form .select2-selection--multiple::after`
+- [ ] Hỏi user: có muốn chuyển fix này vào `V2BaseSelect` để mọi multi-select toàn hệ thống có icon không
+
+## Phase 11f — "Gợi ý hàng hoá" nhập lúc tạo mới nhưng mở màn Sửa lại rỗng (2026-08-11)
+
+**Trace (không đoán):**
+- `service_levels.key_word` của gói mới (234/235/236) = `'[]'` — tức FE ĐÃ gửi mảng rỗng, không phải BE làm mất
+- Gói cũ 220 = `[{"text":"Lọc trần"},...]`; chạy `dataForEdit(220)` trả đúng mảng object -> đường ĐỌC (BE + `normalizeKeyWord`) không lỗi
+- => lỗi ở khâu NHẬP: `b-form-tags` mặc định chỉ chốt chữ đang gõ thành tag khi bấm Enter hoặc gõ dấu
+  phân cách `,`. Gõ xong bấm thẳng nút Lưu -> chữ vẫn nằm trong ô nhập, `v-model` vẫn `[]` -> lưu rỗng
+
+- [x] Thêm prop `add-on-change` cho `b-form-tags` (bootstrap-vue 2.21.2 có prop này) — blur/change cũng chốt tag,
+      nên bấm Lưu ngay sau khi gõ vẫn ăn (blur chạy trước click)
+- [x] Verify: DB + `dataForEdit` đã kiểm bằng tinker; SFC parse sạch
+- [ ] Chờ user test: tạo mới -> gõ gợi ý -> bấm Lưu luôn (KHÔNG Enter) -> mở Sửa phải thấy tag
+- [ ] Dữ liệu đã lưu rỗng trước đó (gói 234/235/236...) phải nhập lại thủ công — không tự sửa data nghiệp vụ
+
+**Chưa đụng:** `components/modal/other-allowance-modal.vue`, `other-deduction-modal.vue`,
+`other-income-modal.vue` cũng dùng `b-form-tags` không có `add-on-change` -> dính cùng bẫy (ngoài scope, cần user duyệt).
+
+## Phase 11g — Lọc nhanh theo TÊN + MÃ ở màn danh sách (2026-08-11)
+
+**User yêu cầu:** ô tìm kiếm nhanh ở `customer-care/services` lọc được cả tên lẫn mã
+(trước đó ô này bind thẳng `filters.name` nên chỉ ra tên).
+
+BE (`ServiceService::index()`):
+- [x] Thêm nhánh `keyword`: `where(fn => name LIKE % OR code LIKE %)` bọc closure để `orWhere` không
+      phá các điều kiện status/created_by; dùng `escapeLikeKeyword()` như `searchProducts`
+- [x] Verify tinker: SQL ra `where (name like ? or code like ?) and status = ?`; tìm theo mã / theo tên đều trúng
+
+FE (`pages/customer-care/services/index.vue`):
+- [x] `initialStateForm` thêm `keyword`; panel bind `:quickSearchValue="filters.keyword"`,
+      placeholder "Tìm theo tên hoặc mã gói bảo dưỡng..."
+- [x] `handleQuickSearchChange` ghi vào `filters.keyword`; xóa trắng ô (nút ×) -> tự `handleSearch()`
+      để bỏ lọc ngay, không bắt bấm thêm nút Tìm kiếm
+- [x] `ignoredFields` = `['keyword', 'name', 'code']` — các ô GÕ TAY chờ Enter/nút Tìm kiếm.
+      (Trước đây `code` không nằm trong danh sách -> gõ mã ở bộ lọc nâng cao bắn 1 request mỗi ký tự)
+- [x] Ô "Tên gói bảo dưỡng" / "Mã" ở bộ lọc nâng cao GIỮ NGUYÊN (lọc chính xác từng trường)
+- [x] Verify: SFC parse sạch, `php -l` sạch
+- [ ] Chờ user test: gõ mã vào ô tìm nhanh -> Enter -> ra đúng gói
+
+### Bổ sung — auto-search cho ô gõ tay (user hỏi 2026-08-11)
+
+User phản hồi: ô "Tên gói bảo dưỡng"/"Mã" phải tự search như filter Trạng thái. Đổi từ "chờ Enter"
+sang auto-search có debounce 400ms (khuôn `ProductSearchModal.vue` cùng feature, timer module scope).
+
+- [x] `ignoredFields` -> `debouncedFields = ['keyword','name','code']`; watcher: ô gõ tay chờ 400ms,
+      filter dropdown gọi API ngay như cũ
+- [x] `handleSearch` (Enter / nút Tìm kiếm) `clearTimeout` -> tìm ngay, không chờ debounce
+- [x] `handleReset` + `beforeDestroy` cũng `clearTimeout` (tránh request cũ bắn sau khi reset/rời màn)
+- [x] `handleQuickSearchChange` bỏ nhánh gọi `handleSearch()` khi xóa trắng — watcher lo hết, tránh 2 request
+- [x] Verify: SFC parse sạch, không còn tham chiếu `ignoredFields`
+
+## Phase 11h — Nút In ở màn print không hiện icon (2026-08-11)
+
+**Nguyên nhân:** `_id/print.vue` dùng `<i class="fa fa-print">` — cú pháp Font Awesome **4**.
+Project nhúng Font Awesome **5** (`assets/fonts/fa-solid-900.*`), FA5 yêu cầu class họ `fas`/`far`/`fab`;
+class `fa` trơ không set `font-family` nên glyph không render (nút chỉ còn chữ "In").
+
+- [x] Thay `<button class="btn btn-primary">` thô bằng `V2BaseButton primary size="sm"` + icon
+      `ri-printer-line` qua slot `#prefix` (skill button-convention: In = primary + ri-printer-line)
+- [x] `:disabled` -> `:interactable="!loading && !!template"` (prop của V2BaseButton)
+- [x] Import + đăng ký `V2BaseButton`; giữ class `no-print`
+- [x] Verify: SFC parse sạch
+
+**Ghi nhận (ngoài scope):** còn nhiều màn khác dùng cú pháp FA4 `class="fa fa-*"` (assign_business,
+assign_approve_result...) — cùng lỗi tiềm ẩn, chưa đụng.
+
+## Phase 11i — Multi-select không có icon dropdown (2026-08-11)
+
+**User báo:** popup "Chọn hàng hóa áp dụng" ở `customer-care/services/create` — 4 ô lọc đầu
+(Tính chất hàng hóa, Loại hàng hóa, Thương hiệu, Hãng sản xuất) không có mũi tên dropdown,
+các ô còn lại có.
+
+**Nguyên nhân:** 4 ô đó là select2 **multiple**. select2 chỉ render thẻ
+`<span class="select2-selection__arrow">` ở chế độ **single**; multiple không có thẻ nào để style
+→ rule mũi tên `V2BaseSelect.vue:300` (`.select2-selection--single .select2-selection__arrow`)
+không bám vào đâu. Không phải lỗi riêng màn này — mọi multi-select toàn project đều thiếu.
+
+**User chốt 2026-08-11:** sửa cả `V2BaseSelect` + `V2BaseSelectInModal` (component dùng chung)
+để đồng bộ toàn project, không vá riêng popup.
+
+- [x] `V2BaseSelect.vue`: `.select2-selection--multiple` thêm `position: relative` + `::after` vẽ
+      tam giác bằng border (đúng thông số theme default: `border-width: 5px 4px 0`, màu `#888`,
+      `right: 12px` để trùng vị trí mũi tên của single), `pointer-events: none` để click xuyên qua
+- [x] `V2BaseSelect.vue`: `.select2-container--open` lật mũi tên lên (khớp hành vi single)
+- [x] `V2BaseSelect.vue`: chừa `padding-right` cho `.select2-selection__rendered` ở multiple —
+      sửa cả rule base (26px) lẫn 4 rule size xs(24) / sm(26) / md(26) / lg(28) vì chúng dùng
+      shorthand `padding` đè lên rule base
+- [x] `V2BaseSelectInModal.vue`: nút xóa tất cả (×) đang ghim `right: 6px` sẽ đè mũi tên →
+      đẩy sang `right: 26px`, `padding-right` của rendered tăng 28px → 44px
+- [x] Verify: SFC parse sạch (vue-template-compiler) + 3 khối style compile sạch (node-sass)
+- [x] Rà `.none-select-arrow` (rule ẩn mũi tên ở `custom-theme.scss`): chỉ 1 nơi dùng và đã comment,
+      lại là Select2 single thuần — không xung đột
+- [ ] Chờ user test: popup chọn hàng hóa + các màn khác có multi-select (trong và ngoài modal)
