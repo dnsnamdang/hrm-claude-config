@@ -152,3 +152,9 @@ Blocked: không
 
 - [x] FE `QuotationProductSearchModal.vue`: click DÒNG → thêm ngay hàng đó vào lưới (`addRowNow`);
       checkbox + chọn-tất-cả chỉ tích chọn, thêm bằng nút "Thêm N hàng hoá"; bỏ `autoApply`/`autoAddedUids`.
+
+### Đồng bộ select "Hãng sản xuất" (2026-08-12)
+
+- [x] FE `V2BaseSelectInModal.vue`: thêm prop opt-in `searchInDropdown` — dựng lại `dropdownAdapter` (Dropdown + Search + CloseOnSelect + AttachBody) để select multiple có ô search trong dropdown như select chọn 1; ẩn ô search inline bằng class `v2-select--dropdown-search`. Mặc định `false` → không đổi hành vi màn cũ.
+- [x] FE `QuotationProductSearchModal.vue`: filter "Hãng sản xuất" thêm `searchInDropdown` (vẫn chọn nhiều, giữ nguyên `manufacture_ids`).
+- [x] FE `V2BaseSelectInModal.vue` (fix kèm): gán `id` duy nhất cho mỗi `<select>` (`v2-select-N`). `v-select2-component` render `<select id="">` → select2 sinh `container.id = 'select2-'` cho MỌI instance → handler đóng-select-khác đăng ký cùng namespace `mousedown.select2.select2-`, select này đóng gỡ luôn handler select kia ⇒ mở Xuất xứ rồi bấm Hãng sản xuất/Thương hiệu thì select cũ không đóng. Verify Playwright: 7 lần bấm liên tiếp giữa 5 select → luôn chỉ 1 dropdown mở (PASS).
