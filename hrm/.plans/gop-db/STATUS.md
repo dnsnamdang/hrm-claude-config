@@ -55,6 +55,56 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 
 ## Hoàn thành
 
+- chuyen-menu-nhom-giai-phap → @khoipv → .plans/gop-db/chuyen-menu-nhom-giai-phap/plan.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong (2026-08-12)**, nhánh `gop_db`.
+  **Không test Playwright** (user chốt) — chất lượng dựa vào bộ check tự động nạp thật module menu;
+  user rà bằng mắt lúc tiện.
+  Đưa 2 mục menu **Nhóm giải pháp** (`/assign/solution-groups`) + **Ứng dụng** (`/assign/application`)
+  từ Bán hàng (Danh mục → Dự án - Giải pháp) sang phân hệ **Danh mục dùng chung**, thành 2 mục
+  cấp 1 phẳng đứng sau Nhóm ngành. Cùng khuôn với `chuyen-menu-nhom-nganh` làm trước đó cùng ngày.
+  Phạm vi user chốt: **CHỈ menu** — 3 file `hrm-client`: `subsystem-menu/sale-hub.js` (bỏ 2 mục,
+  nhóm còn 4), `subsystem-menu/sale.js` (bỏ 2 gate quyền đã thành code chết),
+  `subsystem-menu/master-data.js` (thêm 2 mục, giữ nguyên link + 4 tên quyền cũ,
+  icon `ri-lightbulb-line` / `ri-apps-2-line`). **Giữ nguyên route, code FE/BE, quyền/seeder/DB.**
+  4 mục còn lại của nhóm `Dự án - Giải pháp` (Hạng mục / Giai đoạn / Vai trò dự án / Lý do thất bại)
+  ở lại Bán hàng theo yêu cầu.
+  ✅ Hệ quả tốt: 3 link chéo giữa các màn (`industry-groups → solution-groups`,
+  `industry-groups → application`, `solution-groups → application`) giờ nằm **cùng 1 phân hệ**
+  → hết cảnh bấm sang là nhảy về sidebar Bán hàng.
+  **Phase 4 (cùng ngày) — thử rồi HOÀN TÁC**: user yêu cầu "chuyển tiếp menu Loại hình hoạt động
+  kinh doanh khách hàng" — khảo sát ra màn `/assign/customer-scope-groups` **đã ở Danh mục dùng chung
+  từ trước**, chỉ nằm trong nhóm cấp 2 `Đối tác` → tách lên cấp 1, sau đó **user đổi ý: giữ nguyên ở
+  nhóm Đối tác** → đã trả về y nguyên bản gốc (`git diff` vùng đó rỗng, nhóm Đối tác đủ 8 mục).
+  📌 Lần sau **không đề xuất tách mục này lên cấp 1**.
+  ⚠️ Nợ giữ nguyên như đợt Nhóm ngành: 4 quyền vẫn `group = 'Danh mục'` → màn Phân quyền vẫn
+  xếp ở tab Giao việc › Danh mục (đổi mỗi `type` là vô ích hoặc kéo nhầm cả nhóm quyền Giao việc).
+  Verify: mini-loader Node nạp thật `subsystems.js` + `hub.js` + 3 file menu → `resolveSubsystem()`,
+  `deriveHubNavLinks()`, `hubNavLinksFor()` (4 kịch bản quyền), đối chiếu khai trùng link + icon.
+  📌 Bẫy khi test: tài khoản dev đang đăng nhập có **0 quyền** → `middleware/checkPermission.js`
+  đẩy mọi màn gated về `/pages/extras/404`.
+  Spec: docs/superpowers/specs/gop-db/2026-08-12-chuyen-menu-nhom-giai-phap-design.md | Tóm tắt: .plans/gop-db/chuyen-menu-nhom-giai-phap/design.md
+
+- chuyen-menu-nhom-nganh → @khoipv → .plans/gop-db/chuyen-menu-nhom-nganh/plan.md
+  Trạng thái: **HOÀN THÀNH — user test xong (2026-08-12)**, nhánh `gop_db`.
+  Đưa mục menu **Nhóm ngành** (`/assign/industry-groups`) từ phân hệ Bán hàng (Danh mục →
+  Danh mục chung) sang phân hệ **Danh mục dùng chung**, thành mục cấp 1 phẳng đứng sau Ngân hàng.
+  Phạm vi user chốt: **CHỈ menu** — 3 file ở `hrm-client`: `subsystem-menu/sale-hub.js` (bỏ mục),
+  `subsystem-menu/sale.js` (bỏ gate quyền đã thành code chết), `subsystem-menu/master-data.js`
+  (thêm mục, giữ nguyên link + 2 tên quyền cũ). **Giữ nguyên route, code FE/BE, quyền/seeder/DB.**
+  Không phải sửa gì thêm vì `resolveSubsystem()` map route → phân hệ theo link khai trong menu,
+  `default-sidebar.vue` chọn sidebar hub theo `HUB_SUBSYSTEMS` (master-data đã có sẵn),
+  `deriveHubNavLinks()` tự biến mục cấp 1 phẳng thành nút rail.
+  ⚠️ **Quyết định đáng nhớ**: KHÔNG đổi `type` quyền 983/998 sang phân hệ mới — `Permission.vue`
+  gom khối **chỉ theo tên `group`**, mà 983/998 dùng chung group `Danh mục` với 29 quyền Giao việc
+  → đổi mỗi `type` là vô ích hoặc kéo nhầm cả 29 quyền sang tab khác. Hệ quả chấp nhận:
+  màn Phân quyền vẫn xếp 2 quyền này ở tab Giao việc › Danh mục.
+  Test: Playwright xác minh trong app đang chạy (Bán hàng còn 3 mục ở "Danh mục chung";
+  Danh mục chung có `Nhóm ngành → /assign/industry-groups`, ẩn đúng khi thiếu quyền;
+  `/human/banks` không vỡ) + user tự test nốt phần cần tài khoản có quyền.
+  📌 **Bẫy khi test**: tài khoản dev đang đăng nhập có **0 quyền** → mọi màn gated bị
+  `middleware/checkPermission.js` đẩy về `/pages/extras/404`, kể cả màn không đụng tới.
+  Spec: docs/superpowers/specs/gop-db/2026-08-12-chuyen-menu-nhom-nganh-design.md | Tóm tắt: .plans/gop-db/chuyen-menu-nhom-nganh/design.md
+
 - customer-history → @khoipv → .plans/gop-db/customer-history/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-12)**, nhánh `gop_db`.
   Lịch sử thay đổi khách hàng cho `/assign/customers` ở **cả màn danh sách và màn chi tiết**, dùng lại
@@ -268,8 +318,15 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
   Tồn: checklist "Verify tổng thể" cuối plan.md chưa tick (regression 4 màn CSKH cũ, round-trip ERP↔HRM 2 chiều).
   Spec: docs/superpowers/specs/gop-db/2026-08-04-customer-care-services-catalog-design.md | Ledger: .plans/gop-db/customer-care-services-catalog/sdd-progress.md
 
-- bo-sung-menu-phan-he → @junfoke → .plans/gop-db/bo-sung-menu-phan-he/plan.md
+- bo-sung-menu-phan-he → @junfoke (Phase 11: @khoipv) → .plans/gop-db/bo-sung-menu-phan-he/plan.md
   Trạng thái: **CODE DONE + KIỂM THỬ TỰ ĐỘNG PASS** (2026-08-03) — Phase 0-9 xong.
+  **PHASE 11 (2026-08-12, @khoipv)**: dọn nhãn menu phân hệ **Danh mục chung** theo yêu cầu user —
+  bỏ tiền tố "Danh mục" ở toàn bộ 15 nhãn, tách `Ngân hàng` khỏi nhóm địa lý thành **item cấp 1
+  riêng** (`ri-bank-line` → `/human/banks`), nhóm địa lý đổi tên `Địa lý` (còn 6 mục),
+  nhóm đối tác đổi thành `Đối tác` (bỏ "(KH - NCC)"). Chỉ đụng `subsystem-menu/master-data.js`.
+  Đã verify bằng Node: `walkMenu()` thu cả link ở item cấp 1 → `resolveSubsystem('/human/banks')`
+  không đổi; `/human/banks` vẫn khai đúng 1 lần; icon có thật trong `_remixicon.scss`.
+  → Chốt luôn tồn đọng "Danh mục ngân hàng liệt kê ở 2 phân hệ": **chỉ giữ ở Danh mục chung**.
   Khai 355 mục menu trên 14 phân hệ theo sheet `Gộp phân hệ ERP-HRM` (10 mục link thật sang ERP, 345 mục xám mờ),
   Chỉ đụng `hrm-client`. Kiểm thử bằng cách render THẬT `Sidebar.vue`
   qua `vue-server-renderer`; regression 11 bộ menu cũ cho kết quả render-identical với bản `git show HEAD`.

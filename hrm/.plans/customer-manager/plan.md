@@ -220,3 +220,146 @@ Chưa sửa vì user chỉ yêu cầu chặn ở ô nhập.
 Bước tiếp theo: user chạy `npm run dev` hrm-client → mở `/assign/customers/43707/manager` tab Thiết bị
 → Thêm thiết bị cũ → thử gõ và dán số âm vào ô Số lượng.
 Blocked: không có.
+
+---
+
+## Phase 5 — Gỡ khối "Serial (tùy chọn)" khỏi form Thêm thiết bị (parity ERP)
+
+- [x] Đối chiếu ERP: xác nhận ERP đã gỡ khối nhập serial khỏi CẢ 2 modal thêm thiết bị
+- [x] FE `EquipmentTab.vue` — xoá block `v-if="!eqIsEdit"` (label "Serial (tùy chọn)" + list input + nút "Thêm serial")
+- [x] FE `EquipmentTab.vue` — bỏ `payload.addSerials` trong `submitEquipment()` + bỏ `addSerials: []` trong `emptyEqForm()`
+- [x] Verify: vue-template-compiler compile 0 lỗi + @babel/parser PASS + render fn không còn tham chiếu `addSerials`
+- [ ] User verify trình duyệt: `/assign/customers/43711/manager` → tab Thiết bị → Thêm thiết bị NCC khác / Thêm thiết bị cũ
+
+### Checkpoint — 2026-08-12 (Phase 5)
+Vừa hoàn thành: gỡ khối nhập serial ở form Thêm thiết bị (cả "thiết bị cũ" và "thiết bị NCC khác" — dùng chung 1 modal).
+
+**Vì sao HRM có mà ERP không có** (điều tra trong repo `D:\laragon\www\erp`):
+- Commit `0f76240` (11/04/2024, "cập nhật lại các file luồng sửa serial") **comment toàn bộ** khối
+  `<tr ng-repeat="addSerial in addSerials">` + nút "Thêm serial" trong CẢ 2 modal `#externalEquipment`
+  và `#oldEquipment` (`resources/views/customercare/customermanager/show_.blade.php`), đồng thời comment
+  dòng `data.addSerials = $scope.addSerials` trong `submitExternalEquipment` (`handleJs.blade.php:144-149`).
+- Commit `bf391cb` (17/04/2024) xoá hẳn đoạn comment đó.
+- ⚠️ **BE ERP không được dọn theo**: `CustomerManagerController::addExternalEquipment()` (dòng 647-720) vẫn
+  còn nguyên `foreach ($request->addSerials ...)` + validate "Số lượng serial không được vượt quá số lượng
+  của thiết bị" (dòng 665) → **code chết**. Khi port sang HRM, phía HRM lấy BE ERP làm chuẩn parity nên
+  dựng lại UI cho nhánh chết này (Phase 3, task P3-FE2 "serial khi thêm").
+- Bản port cũng đã méo sẵn: ERP bản cũ khối serial có thêm cột **Vị trí (`space`)** + **file ảnh đính kèm**,
+  HRM chỉ port mỗi ô `serial`.
+- ⇒ Mô hình đúng của ERP hiện tại: tạo thiết bị trước, serial nhập sau qua modal riêng
+  ("Thêm serial cho thiết bị cũ/ncc khác" `show_.blade.php:2615`, "Thêm serial cho phiếu xuất" dòng 2671).
+  HRM đã có đủ 2 modal này → không mất chức năng gì.
+
+BE HRM (`CustomerManagerService::addOldEquipment/addExternalEquipment` đọc `addSerials`) **giữ nguyên**,
+không ai gọi nữa — đúng như ERP đang để. Xoá được nếu sau này dọn code.
+
+Verify: template compile 0 lỗi, script parse PASS, render fn không còn `addSerials`, template không còn
+"Serial (tùy chọn)".
+
+⚠️ CÒN NỢ (phát hiện khi điều tra, CHƯA sửa vì ngoài scope yêu cầu):
+`serialRowsFor()` (`CustomerManagerService.php:675`) lọc `->where('s.product_id', $productId)`. Với thiết bị
+NCC khác tick **"Hàng công ty không bán"** thì `product_id = NULL` → SQL thành `s.product_id = NULL` →
+không bao giờ khớp ⇒ serial của loại hàng này luôn hiện **Xem (0)** dù đã lưu trong bảng `serials`
+(serial mồ côi, còn chiếm chỗ khiến lần sau nhập lại báo "đã tồn tại"). Fix: dùng `whereNull('s.product_id')`
+khi `$productId` rỗng, kết hợp điều kiện `product_no_sale_name` đã có sẵn.
+
+Đang làm dở: không có.
+Bước tiếp theo: user mở `/assign/customers/43711/manager` tab Thiết bị, kiểm tra 2 popup thêm thiết bị
+không còn ô Serial, và luồng thêm serial qua "Xem (n)" → "Thêm serial" vẫn chạy.
+Blocked: không có.
+
+---
+
+## Phase 6 — Chuyển 2 ô picker trong modal thiết bị sang `V2BaseSelectRemote`
+
+- [x] FE `EquipmentTab.vue` — ô **Nhà cung cấp** (chỉ có ở popup NCC khác): bỏ dropdown tự chế → `V2BaseSelectRemote` + `fetchSuppliers(keyword)`
+- [x] FE `EquipmentTab.vue` — ô **Trang thiết bị** (dùng chung 2 popup): bỏ dropdown tự chế → `V2BaseSelectRemote` + `fetchProducts(keyword)`
+- [x] FE — xoá state chết `productKeyword/productResults/supplierKeyword/supplierResults` + CSS `.product-dropdown/.product-item`
+- [x] Verify: template compile 0 lỗi, script parse PASS, 2 ô `V2BaseSelectRemote`, không còn tham chiếu state cũ
+- [ ] User verify trình duyệt
+
+### Checkpoint — 2026-08-12 (Phase 6)
+Vừa hoàn thành: 2 ô picker trong modal Thêm/Sửa thiết bị dùng đúng component chuẩn.
+
+**Hiện trạng cũ**: cả 2 ô là `V2BaseInput` + `<div class="product-dropdown">` tự dựng tay
+(Phase 3, 16/06/2026). Trong CÙNG modal thì ô "Tình trạng thiết bị" lại dùng `V2BaseSelectInModal`
+→ 2 kiểu UI lệch nhau.
+
+**Vì sao lúc đó không dùng `V2BaseSelectInModal`**: component này chỉ nhận `options` TĨNH, search
+client-side. NCC có **~6900 bản ghi** (`CustomerManagerService.php:726`, BE `limit(50)` theo keyword),
+sản phẩm cũng `limit(30)` → không nạp hết vào options được.
+**Nhưng** repo đã có sẵn `components/V2BaseSelectRemote.vue` (select2 + ajax, tự set
+`dropdownParent = .modal-content` để không bị focus-trap của b-modal cướp focus), tạo **23/04/2026** —
+trước màn này 2 tháng. Component cha `CustomerForm.vue` (bọc chính `EquipmentTab`) đã dùng nó.
+⇒ Đây là thiếu sót lúc port, không phải giới hạn kỹ thuật.
+
+**Lợi ích thu được** (đều là khiếm khuyết của bản tự chế): debounce 300ms thay vì gọi API mỗi ký tự ·
+select2 huỷ request cũ nên hết race-condition gõ nhanh · click ra ngoài / Esc đóng dropdown · điều hướng
+bằng phím ↑↓ Enter · nút × xoá lựa chọn (`allowClear`) · giá trị đã chọn hiện TRONG ô (trước đây chỉ nằm ở
+`placeholder` + dòng "Đã chọn: …" nên mở form Sửa nhìn như chưa chọn gì).
+
+⚠️ Ô **Trang thiết bị** dùng chung 2 popup → popup "Thêm mới thiết bị cũ" cũng đổi theo (đúng ý đồ).
+Nhánh tick "Hàng công ty không bán" giữ nguyên `V2BaseInput` nhập tay, không đụng.
+
+2 điểm dễ sai đã xử lý:
+- Option text hiển thị "MÃ - Tên" (giống dropdown cũ) nhưng `eqForm.product_name` phải là tên THUẦN →
+  thêm cache `productSearchCache` để tra ngược theo id trong `onSelectProduct`, không cắt chuỗi.
+- `initialOption` để hiện sẵn nhãn khi mở form **Sửa** — không có nó thì select2 chỉ có value, hiện ô rỗng.
+
+BE **không sửa gì**: `assign/customers/manager/suppliers?keyword=` và `.../search-products?keyword=`
+đã đúng dạng `[{id, name, code}]` mà `fetchFn` cần.
+
+Verify: vue-template-compiler compile 0 lỗi · @babel/parser PASS · template có đúng 2 `<V2BaseSelectRemote>` ·
+0 tham chiếu còn sót tới `productKeyword/productResults/supplierKeyword/supplierResults/onProductSearch/
+onSupplierSearch/selectProduct/selectSupplier` · CSS `.product-dropdown`/`.product-item` đã xoá.
+
+Đang làm dở: không có.
+Bước tiếp theo: user mở `/assign/customers/43711/manager` tab Thiết bị → Thêm thiết bị NCC khác:
+gõ tìm NCC + sản phẩm, chọn, bấm ×, mở Sửa xem có hiện sẵn tên NCC/sản phẩm không.
+Blocked: không có.
+
+---
+
+## Phase 7 — Ảnh letterhead đầu trang IN (tab Báo giá / Hợp đồng / Trang thiết bị)
+
+- [x] BE `CustomerManagerService::companyHeader()` — `companies.header` của công ty người đang in, ghép `ERP_URL` thành URL TUYỆT ĐỐI, trả `''` nếu thiếu
+- [x] BE `CustomerManagerController::printHeader()` + route `GET assign/customers/manager/print-header`
+- [x] FE `utils/assign/customer-print-header.js` — `loadCustomerPrintHeader(store)` (nhớ kết quả, gọi API 1 lần) + `printHeaderImgTag(url)`
+- [x] FE `DocumentTable.vue` (dùng cho CẢ tab Báo giá + Hợp đồng, 4 instance) — nạp header lúc mounted, chèn `<img>` đầu `<body>` trước `<h3>`
+- [x] FE `EquipmentTab.vue` — tương tự cho `printList()`
+- [x] Verify: `php -l` 3 file BE · route resolve đúng controller · smoke tinker ra URL thật · SFC compile/parse PASS · chạy thật `printHeaderImgTag`
+- [ ] User verify trình duyệt (xem lưu ý môi trường bên dưới)
+
+### Checkpoint — 2026-08-12 (Phase 7)
+Vừa hoàn thành: 3 bản in của màn Quản lý KH có ảnh letterhead đầu trang, cùng nguồn dữ liệu với
+bản in "Yêu cầu chuyển hàng" (`ProductTransferRequestService::buildPrintData` → `HEADER`).
+
+**Nguồn ảnh**: `companies.header` của **công ty NGƯỜI ĐANG IN** (`auth()->user()->info->company_id`).
+Khác phiếu Yêu cầu chuyển hàng (lấy theo công ty NGƯỜI TẠO PHIẾU) vì 3 tab này là **báo cáo danh sách**,
+không gắn với chứng từ của công ty nào. Cùng khuôn `AccountService::companyHeader()`.
+
+⚠️ **Bắt buộc URL TUYỆT ĐỐI** (skill print-page mục 4): `companies.header` lưu đường dẫn tương đối
+`/uploads/xxx.png` trên server ERP. Cửa sổ in mở bằng `window.open('')` có base `about:blank` → đường dẫn
+tương đối vừa 404 (mất ảnh) vừa làm `onload` không nổ ⇒ **không tự bật hộp thoại in**. Nên BE ghép `ERP_URL`.
+
+⚠️ **Không được `await` trước `window.open`** — trình duyệt chặn popup. Vì vậy header **nạp sẵn lúc mounted**
+vào `printHeaderUrl`, hàm in giữ nguyên đồng bộ. Util nhớ kết quả (module-scope promise) vì 3 tab dựng tới
+**5 instance** bảng (Báo giá 2 + Hợp đồng 2 + Thiết bị 1) — nếu mỗi cái tự gọi thì dư 5 request cùng giá trị.
+
+Chống vỡ: ảnh 404/bị xóa → `onerror="this.style.display='none'"` (không dính icon ảnh vỡ, `onload` vẫn nổ
+nên vẫn tự bật hộp thoại in). Công ty chưa có ảnh / chưa cấu hình `ERP_URL` → trả `''` → không chèn thẻ
+`<img>`, bản in ra y như trước.
+
+Verify: `php -l` PASS 3 file · route resolve `GET api/v1/assign/customers/manager/print-header` →
+`CustomerManagerController@printHeader` · tinker (auth TpEmployee 13, company 1) trả
+`http://erp.test:8080/uploads/1751696586ts-hn.png` · 2 SFC compile 0 lỗi + script parse PASS ·
+chạy thật `printHeaderImgTag`: có URL → thẻ img đúng, rỗng → chuỗi rỗng, `"` trong URL được escape.
+
+🖥️ **Lưu ý môi trường (không phải lỗi code)**: máy local có `ERP_URL=http://erp.test:8080` nhưng
+`erp/public/uploads/` **rỗng** → ảnh 404 và bị ẩn, in ra không thấy letterhead. Bản in Yêu cầu chuyển hàng
+cũng vậy trên máy này. Muốn thấy ảnh khi test local: copy file vào `erp/public/uploads/` hoặc trỏ `ERP_URL`
+sang ERP thật.
+
+Đang làm dở: không có.
+Bước tiếp theo: user mở `/assign/customers/43711/manager` → tab Báo giá / Hợp đồng / Trang thiết bị → bấm In.
+Blocked: không có.

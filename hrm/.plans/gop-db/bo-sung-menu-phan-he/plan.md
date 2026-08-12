@@ -141,6 +141,27 @@ User đổi yêu cầu: thay vì ẩn hẳn, 3 phân hệ này vẫn hiện ở 
       đúng 1 phân hệ*: mở `/assign/customers` giờ luôn hiện sidebar **Danh mục chung**
       (đứng trước trong `SUBSYSTEMS`), không bao giờ ra Bán hàng. Cần bỏ 1 trong 2.
 
+## Phase 11 — Dọn nhãn menu phân hệ Danh mục chung (2026-08-12, @khoipv)
+
+Yêu cầu user: bỏ tiền tố "Danh mục" ở mọi nhãn, tách Ngân hàng ra menu riêng, bỏ "(KH - NCC)".
+Chỉ đụng đúng 1 file: `hrm-client/components/subsystem-menu/master-data.js`.
+
+- [x] Bỏ tiền tố `Danh mục` ở toàn bộ nhãn (2 nhóm cha + 13 sub item)
+- [x] Tách `Danh mục ngân hàng` khỏi nhóm địa lý → **item cấp 1 độc lập** `Ngân hàng`
+      (`icon: 'ri-bank-line'`, `link: '/human/banks'`, `isShow: true`) đặt ngay sau nhóm Địa lý
+- [x] Nhóm cũ `Danh mục địa lý - ngân hàng` → `Địa lý` (còn 6 mục), cập nhật lại comment
+      cũ ("thứ tự nằm sau Ngân hàng") vì mốc tham chiếu đã bị chuyển đi
+- [x] `Danh mục đối tác (KH - NCC)` → `Đối tác`
+- [x] Verify: parse file bằng Node → cấu trúc 4 item cấp 1 đúng như thiết kế;
+      `walkMenu()` trong `subsystems.js` đi cả item cấp 1 có `link` nên `/human/banks`
+      **vẫn nằm trong registry** → `resolveSubsystem('/human/banks')` không đổi
+- [x] Verify: `/human/banks` vẫn chỉ được khai **đúng 1 lần** trong toàn bộ `subsystem-menu/`
+      (finance.js chỉ nhắc trong comment, không khai link) → không tạo xung đột phân hệ mới
+- [x] Verify: class `.ri-bank-line` có thật trong `assets/scss/custom/plugins/icons/_remixicon.scss:521`
+
+**Không đụng tới:** các file `subsystem-menu/*.js` khác, sheet gộp, `Sidebar.vue`.
+**Chưa làm:** xem bằng mắt trên browser (gộp vào Phase 10).
+
 ---
 
 ## Checkpoint — 2026-08-01
@@ -170,5 +191,27 @@ Phụ lục A của spec đã được sinh lại từ code.
 **Bước tiếp theo:** Phase 10 — verify trên browser thật. Đây là phần **duy nhất** chưa được
 kiểm chứng: mọi thứ hiện mới chỉ được xác nhận ở mức render HTML, chưa nhìn bằng mắt trên
 trình duyệt (đặc biệt là độ mờ của mục xám mờ và chiều dài sidebar của Bán hàng / Tài chính).
+
+**Blocked:** (không)
+
+---
+
+## Checkpoint — 2026-08-12
+
+**Vừa hoàn thành:** Phase 11 — dọn nhãn menu phân hệ **Danh mục chung**
+(`components/subsystem-menu/master-data.js`, đúng 1 file): bỏ tiền tố "Danh mục" ở 15 nhãn,
+tách `Ngân hàng` thành item cấp 1 riêng (`ri-bank-line` → `/human/banks`), nhóm địa lý còn
+6 mục và đổi tên thành `Địa lý`, nhóm đối tác đổi thành `Đối tác` (bỏ "(KH - NCC)").
+
+Đã kiểm bằng Node (parse file + đối chiếu registry): cấu trúc menu đúng, `/human/banks` vẫn
+được `walkMenu()` thu vào registry nên `resolveSubsystem()` không đổi hành vi, link vẫn chỉ khai
+1 lần trong toàn bộ `subsystem-menu/`, icon `ri-bank-line` có thật trong bộ Remix Icon của repo.
+
+**Đang làm dở:** (không)
+
+**Bước tiếp theo:** Phase 10 vẫn treo — verify bằng mắt trên browser (nay thêm mục cần nhìn:
+item cấp 1 `Ngân hàng` render đúng như `Tổng quan`, có active-state khi ở `/human/banks`).
+Ngoài ra 2 tồn đọng cũ chưa xử lý: xung đột link `/assign/customers` giữa `master-data.js` và
+`sale.js`, và nhãn `'Quyết định '` thừa dấu cách ở `default-menu/decision.js`.
 
 **Blocked:** (không)

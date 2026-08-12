@@ -115,3 +115,21 @@ Vừa hoàn thành: user test trình duyệt xong (tải file mẫu → 4 bướ
 Đang làm dở: không có.
 Bước tiếp theo: không có (đã chuyển sang mục "Hoàn thành" ở `.plans/gop-db/STATUS.md`).
 Blocked: không có.
+
+## Phase 5 — Tooltip ghi chú định dạng ở header bảng preview
+
+- [x] `V2BaseImportTable`: header cột hỗ trợ thêm `col.hint` → render `V2BaseFieldHint` (icon ⓘ, tooltip hover) bên cạnh `col.label`
+- [x] `pages/assign/customers/index.vue`: chuyển ghi chú của 2 cột sang `hint`
+  - `ContactPhones` — "(nhiều số ngăn dấu phẩy)"
+  - `CustomerScopeCode` — "(cặp MãLoạiHình:MãLĩnhVực, ngăn nhau bằng dấu phẩy)"
+
+### Checkpoint — 2026-08-12 (tooltip header import)
+Vừa hoàn thành: user thấy tiêu đề 2 cột dài do gắn kèm ghi chú định dạng → đưa ghi chú vào tooltip
+hover giống nhãn ở bộ lọc màn danh sách (`V2BaseFieldHint`).
+- Header bảng preview render bằng `v-html="col.label"` nên không nhét component vào từ page được
+  → thêm hỗ trợ `col.hint` ngay trong `V2BaseImportTable` (cộng thêm, không phá màn import khác).
+- Label rút gọn về đúng tên cột trong file mẫu → khớp header Excel trực tiếp, không phải nhờ `aliases`.
+- Verify: `vue-template-compiler` + babel parse 2 file — không lỗi.
+Đang làm dở: không có.
+Bước tiếp theo: user build FE + hover thử trên trình duyệt.
+Blocked: không có.
