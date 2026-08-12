@@ -1,31 +1,251 @@
 ---
 name: srs-documenter
-description: Generate tài liệu SRS cho feature đã triển khai hoặc sắp triển khai
+description: Generate tài liệu SRS cho feature/màn hình đã triển khai hoặc sắp triển khai, theo FORM CHUẨN của team (file .docx)
 ---
 
-# SRS Documenter — ERP TPE
+# SRS Documenter — HRM / ERP TPE
 
 ## Mục đích
-Generate tài liệu SRS (Software Requirements Specification) cho feature đã triển khai hoặc sắp triển khai, dựa trên code thực tế + design document + business rules.
+
+Generate tài liệu SRS (Software Requirements Specification) cho **một màn hình** đã triển khai
+hoặc sắp triển khai, dựa trên code thực tế + design document + business rules.
 
 ## Khi nào dùng
-- Feature đã code xong, cần tài liệu SRS để bàn giao / lưu trữ
+
+- Màn hình đã code xong, cần tài liệu SRS để bàn giao / nghiệm thu / lưu trữ
 - Cần SRS trước khi code để align với stakeholder
-- BA / PM yêu cầu tài liệu đặc tả cho feature
+- BA / PM yêu cầu tài liệu đặc tả cho màn hình
 
-## Input cần thiết
+---
 
-### Nếu feature đã code:
-1. Tên feature + module
-2. `.plans/[feature]/design.md` (nếu có)
-3. `.plans/[feature]/plan.md` (danh sách task)
-4. Code BE: Routes, Controller, Service, Entity, Migration
-5. Code FE: Pages, Components chính
+## ⚠️ FORM CHUẨN — ĐỌC TRƯỚC KHI VIẾT
 
-### Nếu feature chưa code:
-1. Mô tả yêu cầu từ user / PM / BA
-2. Wireframe / mockup (nếu có)
-3. Business rules đã thống nhất
+**File mẫu bắt buộc:** `D:\CompanyProject\Document\SRS - Lĩnh vực.docx` (màn Danh mục lĩnh vực).
+
+Trước khi sinh SRS, **luôn đọc lại file mẫu** để bám đúng khung và cách hành văn:
+
+```bash
+python -c "
+from docx import Document
+from docx.table import Table
+from docx.text.paragraph import Paragraph
+from docx.oxml.ns import qn
+d=Document(r'D:\CompanyProject\Document\SRS - Lĩnh vực.docx')
+def blocks(doc):
+    for c in doc.element.body.iterchildren():
+        if c.tag==qn('w:p'): yield Paragraph(c,doc)
+        elif c.tag==qn('w:tbl'): yield Table(c,doc)
+for b in blocks(d):
+    if isinstance(b,Paragraph):
+        if b.text.strip(): print('[%s] %s'%(b.style.name,b.text.strip()))
+    else:
+        print('  >>> TABLE %dx%d'%(len(b.rows),len(b.columns)))
+        for r in b.rows[:3]: print('     |',' | '.join(c.text.strip()[:50] for c in r.cells))
+"
+```
+
+**KHÔNG dùng template markdown/HTML tự chế.** Form của team là chuẩn duy nhất.
+
+---
+
+## Cấu trúc SRS chuẩn (6 chương)
+
+```
+SOFTWARE REQUIREMENTS SPECIFICATION (SRS)      [Heading 1]
+  Màn hình: <Tên màn hình>                     [Heading 2]
+  Phân hệ: <Tên phân hệ> – nhóm <Tên nhóm menu>[Heading 2]
+  (bảng thông tin: Mã màn hình / Đường dẫn / Phiên bản / Ngày lập / Người lập /
+   Trạng thái tài liệu / Nguồn đối chiếu)
+
+1. Giới thiệu
+   1.1 Mục đích              — gạch đầu dòng, nêu SRS này nhằm gì
+   1.2 Phạm vi               — "Màn hình … cung cấp chức năng:" + "Ngoài phạm vi:"
+   1.3 Thuật ngữ và viết tắt — BẢNG 2 cột (Thuật ngữ | Mô tả), có cả P1/P2/SRS
+
+2. Tổng quan
+   2.1 Bối cảnh nghiệp vụ    — "… dùng để:" + "Do đó cần:"
+   2.2 Nhóm người dùng       — liệt kê theo P1 / P2 / không có quyền
+
+3. Phân quyền và kiểm soát truy cập
+   3.1 Danh sách quyền       — BẢNG (Ký hiệu | Tên quyền | Mã quyền | Nhóm quyền)
+   3.2 Quy tắc truy cập bắt buộc
+   3.3 Ma trận phân quyền    — BẢNG (Chức năng | P1 | P2 | Không có quyền), dùng ✅ / ❌
+
+4. Danh mục chức năng (Function list)
+   BẢNG (ID | Chức năng | Mô tả đặc tả thu nhỏ (Mini-Spec) | Quyền), ID dạng FR-01, FR-02…
+
+5. Đặc tả chi tiết theo từng chức năng (FUNCTIONAL PACKAGING)
+   5.1 Sơ đồ UML tổng quan   — ẢNH use case tổng quan
+   5.2 Đặc tả chi tiết từng chức năng
+   5.2.1 <Chức năng 1>  … 5.2.N <Chức năng N>
+
+6. Quy tắc nghiệp vụ (Business Rules)
+   BR-01, BR-02… mỗi rule 1 đoạn tiêu đề + gạch đầu dòng
+   Cuối chương: dòng "Chức năng liên quan: FR-xx …"
+```
+
+### Mỗi chức năng ở 5.2.x có 6 mục con CỐ ĐỊNH
+
+| Thứ tự | Mục con | Nội dung |
+|---|---|---|
+| 5.2.x.1 | Biểu đồ Usecase | **Ảnh PNG** (xem mục "Sinh ảnh biểu đồ Use Case") |
+| 5.2.x.2 | Giới thiệu | Bảng 8 dòng (xem dưới) |
+| 5.2.x.3 | Layout màn hình | **Đường dẫn vào màn**, KHÔNG chụp ảnh |
+| 5.2.x.4 | Mô tả chi tiết giao diện | Bảng 8 cột (xem dưới) |
+| 5.2.x.5 | Tiêu chí nghiệm thu | Gạch đầu dòng, nhóm theo vai trò/tình huống |
+| 5.2.x.6 | Danh sách event và xử lý event | Bảng 4 cột (xem dưới) |
+
+> Chức năng KHÔNG có tương tác riêng (vd Xem danh sách, Tìm kiếm, Xuất Excel) thì **bỏ mục
+> "Biểu đồ Usecase"** — bản mẫu cũng làm vậy. Đánh số các mục con lùi lại 1 bậc.
+
+---
+
+## 3 BẢNG BẮT BUỘC — đúng số cột, đúng tên cột
+
+### Bảng "Giới thiệu" — 2 cột × 8 dòng
+
+| Mục | Nội dung |
+|---|---|
+| Tên chức năng | |
+| Mô tả | |
+| Tác nhân | `Admin; User được phân quyền …` |
+| Điều kiện ban đầu | |
+| Dòng sự kiện chính | Đánh số `1. 2. 3.` mỗi bước 1 dòng |
+| Dòng sự kiện phụ | Gạch đầu dòng `•`, mỗi nhánh 1 dòng |
+| Yêu cầu đặc biệt | Để trống nếu không có |
+
+### Bảng "Mô tả chi tiết giao diện" — 8 cột
+
+`STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả`
+
+- **Loại**: `Label`, `Text`, `Textbox`, `Textarea`, `Dropdown`, `Datepicker`, `Number`, `Badge`,
+  `Button`, `Icon Button`, `Table/Grid`, `Modal`, `Pagination`, `Toast / Alert`, `Loading`
+- **Trạng thái**: `Enable`, `Disable`, `Read-only`, `Enable / Ẩn`, `Hiển thị`
+- **Phạm vi**: `0–255 ký tự`, `≥ 0`, `0 – 100`, `dd/mm/yyyy`, `Danh sách`, hoặc `–`
+- **Bắt buộc**: `Có` / `Không` / `–`
+- **Giá trị ban đầu**: `Trống`, `Ngầm định trống`, `Lấy từ hệ thống`, `Ẩn`, giá trị mặc định cụ thể
+- Liệt kê **đủ mọi phần tử** trên màn: cả nút, cột bảng, phân trang, thông báo lỗi, trạng thái rỗng
+
+### Bảng "Danh sách event và xử lý event" — 4 cột
+
+`STT | Event | Loại event | Xử lý event`
+
+- **Loại event**: `Click`, `Change`, `Keypress`, `Hover`, `System`, `Change / Blur`
+- **Xử lý event** của các thao tác ghi phải viết theo **3 cụm**:
+
+```
+Before:
+– Kiểm tra quyền …
+– Nếu không có quyền → hiển thị "Bạn không có quyền thực hiện chức năng này." và dừng xử lý.
+During:
+– <trường> trống → hiển thị "<thông báo lỗi>"
+– <trường> trùng → hiển thị "<thông báo lỗi>"
+– Nếu có lỗi validate → không thực hiện bước After.
+After:
+– <hành động ghi dữ liệu>
+– Hiển thị thông báo "<thông báo thành công>"
+```
+
+---
+
+## Layout màn hình — CHỈ GHI ĐƯỜNG DẪN
+
+**Quy ước riêng của team (user chốt 2026-08-07):** KHÔNG chèn ảnh chụp màn hình như bản mẫu.
+Mục "Layout màn hình" chỉ ghi 3 dòng:
+
+```
+Đường dẫn màn hình:
+• Menu: Phân hệ <X> → <Nhóm menu> → <Tên màn>
+• Route (FE): /duong-dan-man
+• URL đầy đủ: https://<host-hrm>/duong-dan-man
+```
+
+Với modal/popup, thêm 1 câu: *"Modal <Tên> được mở ngay trên màn hình danh sách theo đường dẫn ở trên."*
+
+---
+
+## Sinh ảnh biểu đồ Use Case — BẮT BUỘC LÀ ẢNH THẬT
+
+**TUYỆT ĐỐI KHÔNG vẽ sơ đồ bằng ký tự box-drawing (ASCII art)** — user đã phản hồi "xấu quá".
+
+### Script dùng chung (đã có sẵn trong repo)
+
+| File | Vai trò |
+|---|---|
+| `scripts/srs_uml_render.py` | Module vẽ PNG bằng Pillow — `draw_overview()` và `draw_usecase()`. Tên snake_case để import được |
+| `scripts/gen-srs-cost-catalog.py` | **Bản mẫu tham chiếu**: dựng trọn SRS theo form chuẩn. Copy file này rồi thay nội dung là nhanh nhất |
+
+Phụ thuộc: `pip install pillow` (không cần cairosvg / playwright / trình duyệt).
+
+### Cách gọi
+
+```python
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # để import được từ scripts/
+import srs_uml_render as uml
+
+# 5.1 Sơ đồ UML tổng quan
+uml.draw_overview(
+    'img/overview.png',
+    'HỆ THỐNG HRM — <Tên màn hình>',
+    [('Người quản lý danh mục (P1)', [0,1,2,3,4,5,6]),   # (tên actor, chỉ số use case nối tới)
+     ('Người xem danh mục (P2)',     [0,1,2,6])],
+    [('FR-01','Truy cập màn hình','view',   None),        # (mã, tên, nhóm màu, ghi chú)
+     ('FR-04','Tạo mới',          'crud',   None),
+     ('FR-06','Xoá / Khoá',       'action', '«extend» Khoá khi đã phát sinh chứng từ'),
+     ('FR-07','Xuất Excel',       'io',     None)])
+
+# 5.2.x.1 Biểu đồ use case của 1 chức năng
+uml.draw_usecase('img/uc_fr06.png', 'Người quản lý danh mục (P1)',
+                 'FR-06', 'Xoá / Khoá <đối tượng>', 'action',
+                 [('include', 'Kiểm tra chứng từ phát sinh'),
+                  ('extend',  'Khoá dịch vụ khi đã phát sinh chứng từ')])
+```
+
+**Nhóm màu ellipse:** `view` (xanh dương — xem/lọc/tra cứu) · `crud` (xanh lá — thêm/sửa) ·
+`action` (cam — thao tác trạng thái) · `io` (tím — xuất/nhập/in) · `sub` (xám — use case include/extend).
+
+### Chèn vào docx + chú thích
+
+```python
+par = doc.add_paragraph(); par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+par.add_run().add_picture(png, width=Inches(6.2))
+cap = doc.add_paragraph(); cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+r = cap.add_run('Hình %d: %s' % (n, caption)); r.italic = True; r.font.size = Pt(9.5)
+```
+
+Ảnh tổng quan chèn ở **6.3 inch**, ảnh từng chức năng **6.2 inch**.
+
+### 4 bẫy khi render ảnh (đã trả giá)
+
+1. **Xuất ảnh ≥ 1700px** (tổng quan 2000px). Xuất 1350px thì dấu `ụ ị ọ` tiếng Việt **bị mất**
+   khi Word thu nhỏ. 1700px @6.2in ≈ 274 DPI là đủ.
+2. **Vẽ ở tỷ lệ 3x rồi `resize(..., Image.LANCZOS)`** — không thì viền ellipse răng cưa.
+3. **Nhãn «include»/«extend» đặt PHÍA TRÊN đường nối** (offset y ≈ `-24*S`). Đặt giữa đường sẽ
+   cắt nét đứt, trông như mũi tên lỗi.
+4. **Chừa `top_pad` đủ lớn** cho tiêu đề khung hệ thống, nếu không tiêu đề đè lên ellipse đầu tiên.
+
+Font dùng `C:\Windows\Fonts\segoeui.ttf` / `segoeuib.ttf` / `segoeuii.ttf` — đủ dấu tiếng Việt.
+
+---
+
+## Thiết lập file .docx
+
+```python
+sec = doc.sections[0]
+sec.page_width  = Inches(8.5);  sec.page_height = Inches(11)     # Letter, bám bản mẫu
+sec.left_margin = Inches(1.25); sec.right_margin = Inches(1.25)
+
+doc.styles['Normal'].font.name = 'Calibri'
+doc.styles['Normal'].font.size = Pt(11)
+for name, size in [('Heading 1',20), ('Heading 2',16), ('Heading 3',14)]:
+    doc.styles[name].font.size = Pt(size)
+    doc.styles[name].font.color.rgb = RGBColor(0x2F,0x54,0x96)   # xanh navy như bản mẫu
+```
+
+Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(10)`, dòng tiêu đề in đậm.
+
+---
 
 ## Quy trình generate SRS
 
@@ -34,227 +254,62 @@ Generate tài liệu SRS (Software Requirements Specification) cho feature đã 
 **BE — đọc theo thứ tự:**
 ```
 1. Migration        → Database schema, data types, constraints
-2. Entity/Model     → Relationships, constants (STATUS, TYPE), accessors
-3. Routes           → API endpoints, HTTP methods
-4. Request          → Validation rules (required, type, min/max...)
+2. Entity/Model     → Relationships, constants (STATUS, TYPE), accessors, điều kiện is_can_*
+3. Routes           → API endpoints + middleware checkPermission (nguồn của chương 3)
+4. Request          → Validation rules (nguồn của cột "Phạm vi"/"Bắt buộc" + thông báo lỗi)
 5. Controller       → Request flow, response format
-6. Service          → Business logic, conditions, calculations
+6. Service          → Business logic, điều kiện, phép tính (nguồn của chương 6)
 7. Transformer      → Response data structure
-8. Console Command  → Scheduled jobs, cron logic
+8. PermissionsTableSeeder → Mã quyền + tên quyền + group (nguồn của bảng 3.1)
+9. Console Command  → Scheduled jobs, cron logic
 ```
 
 **FE — đọc theo thứ tự:**
 ```
-1. Page component   → UI layout, user interactions
-2. API calls        → Endpoints consumed, payload format
-3. Computed/methods → Client-side validation, data transformation
-4. Menu sidebar     → Navigation entry point
+1. Page component   → Cột bảng, nút, bộ lọc (nguồn của bảng "Mô tả chi tiết giao diện")
+2. Modal component  → Trường nhập, giá trị mặc định, trạng thái enable/disable
+3. API calls        → Endpoint + payload
+4. Menu sidebar     → Đường dẫn menu (nguồn của mục "Layout màn hình")
 ```
 
 ### Bước 2: Phân tích & tổng hợp
 
-- Xác định **actors** (ai dùng feature: nhân viên, trưởng phòng, admin...)
-- Liệt kê **use cases** từ API endpoints + UI flows
-- Trích xuất **business rules** từ service layer (if/else, validate, calculate)
-- Xác định **data model** từ migration + entity relationships
-- Phát hiện **constraints** từ request validation + DB constraints
-- Xác định **permissions** từ isShow trong menu + middleware
+- Xác định **actors** → quy về ký hiệu **P1 (quản lý) / P2 (xem)**, khớp đúng quyền trong seeder
+- Liệt kê **chức năng FR-01…FR-0N** từ route + nút trên màn
+- Trích **business rules BR-01…** từ service layer (if/else, validate, calculate, điều kiện chặn)
+- Lập **ma trận phân quyền** từ middleware của từng route
+- Lấy **thông báo lỗi** đúng nguyên văn từ Request `messages()` để điền vào cột "Xử lý event"
 
-### Bước 3: Viết SRS theo template
+### Bước 3: Viết script sinh docx
 
----
+Copy `scripts/gen-srs-cost-catalog.py`, đổi phần nội dung, chạy:
 
-## Template SRS
-
-```markdown
-# SRS: [Tên Feature]
-
-| Thông tin | Chi tiết |
-|-----------|----------|
-| Module | [Assign / Human / Timesheet / ...] |
-| Phiên bản | 1.0 |
-| Ngày tạo | [YYYY-MM-DD] |
-| Người tạo | [tên] |
-| Trạng thái | Draft / Review / Approved |
-
----
-
-## 1. Giới thiệu
-
-### 1.1. Mục đích
-[Feature này giải quyết vấn đề gì? Tại sao cần?]
-
-### 1.2. Phạm vi
-**Trong scope:**
-- [Chức năng 1]
-- [Chức năng 2]
-
-**Ngoài scope:**
-- [Không làm gì]
-
-### 1.3. Thuật ngữ
-
-| Thuật ngữ | Giải thích |
-|-----------|-----------|
-| [Term] | [Definition] |
-
----
-
-## 2. Actors & Permissions
-
-| Actor | Mô tả | Permissions |
-|-------|-------|-------------|
-| [Nhân viên] | [Ai?] | [Quyền gì?] |
-| [Trưởng phòng] | [Ai?] | [Quyền gì?] |
-
----
-
-## 3. Use Cases
-
-### UC-01: [Tên use case]
-| | |
-|---|---|
-| **Actor** | [Ai thực hiện] |
-| **Precondition** | [Điều kiện trước] |
-| **Main Flow** | |
-| 1 | [Bước 1] |
-| 2 | [Bước 2] |
-| 3 | [Bước 3] |
-| **Postcondition** | [Kết quả sau khi thực hiện] |
-| **Alternative Flow** | [Nhánh phụ nếu có] |
-| **Exception** | [Lỗi có thể xảy ra] |
-
-### UC-02: [Tên use case]
-...
-
----
-
-## 4. Business Rules
-
-| ID | Rule | Mô tả | Áp dụng tại |
-|----|------|-------|-------------|
-| BR-01 | [Tên rule] | [Chi tiết] | [UC nào / API nào] |
-| BR-02 | [Tên rule] | [Chi tiết] | [UC nào / API nào] |
-
----
-
-## 5. Data Model
-
-### 5.1. Entity Relationship Diagram (text)
-
-\`\`\`
-[Entity A] 1──N [Entity B]
-[Entity B] N──1 [Entity C]
-\`\`\`
-
-### 5.2. Bảng dữ liệu
-
-#### Bảng: [table_name]
-
-| Cột | Type | Nullable | Default | Mô tả |
-|-----|------|----------|---------|-------|
-| id | bigint PK | No | auto | |
-| [field] | [type] | [Yes/No] | [default] | [mô tả] |
-
-#### Bảng: [table_name_2]
-...
-
-### 5.3. Enum Values
-
-| Entity | Constant | Value | Meaning |
-|--------|----------|-------|---------|
-| [Task] | [STATUS_DRAFT] | [1] | [Nháp] |
-
----
-
-## 6. API Specification
-
-### 6.1. [Tên endpoint]
-
-\`\`\`
-[METHOD] /api/v1/[path]
-Auth: Bearer Token (JWT)
-\`\`\`
-
-**Request:**
-| Field | Type | Required | Validate | Mô tả |
-|-------|------|----------|----------|-------|
-| [field] | [string] | [Yes] | [max:255] | [mô tả] |
-
-**Response (200):**
-\`\`\`json
-{
-  "message": "success",
-  "status": 200,
-  "data": {}
-}
-\`\`\`
-
-**Error cases:**
-| HTTP Code | Condition | Message |
-|-----------|-----------|---------|
-| 400 | [điều kiện] | [message] |
-| 403 | [điều kiện] | [message] |
-
----
-
-## 7. UI Specification
-
-### 7.1. Màn hình [Tên]
-- **Route**: `/assign/[path]`
-- **Layout**: [mô tả layout]
-- **Components chính**: [V2BaseButton, V2BaseFilterPanel...]
-
-**Wireframe (text):**
-\`\`\`
-┌─────────────────────────────────┐
-│  Header: [Breadcrumb] [Actions] │
-├─────────────────────────────────┤
-│  Filter: [...]                  │
-├─────────────────────────────────┤
-│  Table / Content                │
-├─────────────────────────────────┤
-│  Footer: [Pagination / Summary] │
-└─────────────────────────────────┘
-\`\`\`
-
-**User interactions:**
-| Action | Behavior | API call |
-|--------|----------|----------|
-| Click [nút] | [gì xảy ra] | [endpoint] |
-
----
-
-## 8. Scheduled Jobs / Background
-
-| Command | Schedule | Logic |
-|---------|----------|-------|
-| [artisan command] | [everyXMinutes] | [mô tả ngắn] |
-
----
-
-## 9. Non-functional Requirements
-
-- **Performance**: [yêu cầu hiệu năng nếu có]
-- **Security**: [JWT auth, permission-based access]
-- **Compatibility**: [PHP 7.4, Laravel 8, Nuxt 2, Vue 2]
-- **Browser**: [Chrome, Firefox, Safari, Edge]
-
----
-
-## 10. Phụ lục
-
-### 10.1. File references
-
-| Layer | File path |
-|-------|-----------|
-| Migration | `database/migrations/...` |
-| Entity | `Modules/[Module]/Entities/...` |
-| Controller | `Modules/[Module]/Http/Controllers/...` |
-| Service | `Modules/[Module]/Services/...` |
-| Routes | `Modules/[Module]/Routes/api.php` |
-| FE Page | `pages/[module]/[page].vue` |
+```bash
+cd d:/CompanyProject/hrm/scripts && python gen-srs-<ten-man>.py
 ```
+
+### Bước 4: Tự kiểm tra trước khi báo xong
+
+```python
+from docx import Document
+d = Document(OUT)
+print('tables', len(d.tables), 'paragraphs', len(d.paragraphs))
+print('ảnh nhúng:', sum(1 for r in d.part.rels.values() if 'image' in r.reltype))
+bad = [x.text for x in d.paragraphs if '┌' in x.text or '○' in x.text]
+print('còn sơ đồ ký tự:', len(bad))    # PHẢI = 0
+```
+
+---
+
+## Output
+
+- **File chính:** `.plans/[feature]/SRS - <Tên màn hình>.docx`
+  (nhánh `gop_db` → `.plans/gop-db/[feature]/…`)
+- **Script sinh:** `scripts/gen-srs-<ten-man>.py` — commit kèm để tái sinh được
+- Ảnh PNG chỉ là file trung gian, đã nhúng trong .docx nên không cần commit
+
+> Bản HTML (`srs.html`) là format CŨ, chỉ giữ cho các feature đã sinh trước 2026-08-07.
+> Feature mới chỉ cần bản .docx theo form chuẩn.
 
 ---
 
@@ -262,50 +317,33 @@ Auth: Bearer Token (JWT)
 
 ### Nguyên tắc chung
 - Viết bằng **tiếng Việt**, thuật ngữ kỹ thuật giữ tiếng Anh
-- Mỗi use case phải có **precondition + postcondition**
-- Business rules phải **truy vết được** tới code (ghi rõ file + dòng nếu cần)
-- Data model lấy từ **migration thực tế**, không đoán
-- API spec lấy từ **controller + request validation thực tế**
-- Validation rules phải khớp **100%** với code trong Request class
+- Mỗi chức năng phải có **Điều kiện ban đầu + Dòng sự kiện chính + Dòng sự kiện phụ**
+- Business rules phải **truy vết được** tới code
+- Validation rules và **thông báo lỗi** phải khớp **100%** với Request class
+- Mã quyền trong bảng 3.1 phải khớp **đúng id** trong `PermissionsTableSeeder`
+- Mọi hành vi KHÁC với màn ERP gốc (nếu là màn port) phải ghi rõ là **chủ đích**
 
 ### Nguồn dữ liệu ưu tiên
-1. **Code** (migration, entity, service) — nguồn chính xác nhất
+1. **Code** (migration, entity, request, service, routes, seeder) — nguồn chính xác nhất
 2. **design.md** trong `.plans/` — context về quyết định thiết kế
 3. **plan.md** trong `.plans/` — scope đã thống nhất
 4. **User mô tả** — bổ sung business context mà code không thể hiện
 
 ### Không được
+- **Không vẽ sơ đồ bằng ký tự** — phải là ảnh PNG
+- **Không chèn ảnh chụp màn hình** — mục Layout chỉ ghi đường dẫn
+- Không dùng template markdown/HTML tự chế thay cho form chuẩn
+- Không đổi số cột / tên cột của 3 bảng bắt buộc
 - Không đoán response format — đọc transformer/resource
 - Không đoán validation rules — đọc Request class
 - Không đoán database schema — đọc migration
-- Không thêm requirement mà code không có (trừ khi SRS cho feature chưa code)
 - Không bỏ sót enum values — đọc constants trong Entity
-
-## Sơ đồ bắt buộc
-
-### Use Case Diagram
-- Vẽ bằng SVG inline trong file HTML
-- Hiển thị: Actor (hình người), System boundary (hình chữ nhật nét đứt), Use Case (ellipse)
-- Phân màu theo nhóm chức năng (xem/lọc, CRUD todo, CRUD list, actions, internal)
-- Thể hiện mối quan hệ `<<include>>` nếu có
-- Có legend giải thích màu
-
-### Swimlane Diagram
-- Vẽ bằng HTML/CSS (div layout với flex)
-- Mỗi use case chính cần 1 swimlane diagram
-- Các lane tối thiểu: User (FE), Backend (API), Database
-- Mỗi step là 1 box với màu theo loại: start (xanh lá), end (đỏ nhạt), decision (vàng), api (xanh dương nhạt)
-- Có mũi tên chỉ hướng flow giữa các step
-- Swimlane bắt buộc cho: UC xem tổng hợp, UC tạo entity chính, UC có optimistic update, UC tương tác cross-component
-
-### Quy tắc chung cho sơ đồ
-- KHÔNG dùng thư viện ngoài (Mermaid, PlantUML...) — dùng SVG inline hoặc HTML/CSS thuần
-- Sơ đồ phải render được khi mở file HTML trực tiếp trên trình duyệt (không cần server)
-- Responsive: sơ đồ có thể scroll ngang nếu quá rộng
+- Không thêm requirement mà code không có (trừ khi SRS cho feature chưa code)
 
 ---
 
-## Output
-- File chính: `docs/srs/[feature-name].html` — bao gồm toàn bộ nội dung SRS + sơ đồ Use Case + Swimlane
-- File markdown (tham khảo): `docs/srs/[feature-name].md` — bản text-only, không có sơ đồ
-- Nếu feature lớn, tách thành: `docs/srs/[feature-name]/` với nhiều file con
+## Bản đã làm theo chuẩn này
+
+| Màn hình | File |
+|---|---|
+| Danh mục dịch vụ sửa chữa và chi phí khác (CSKH) | `.plans/gop-db/customer-care-cost-catalog/SRS - Danh mục dịch vụ sửa chữa và chi phí khác.docx` |

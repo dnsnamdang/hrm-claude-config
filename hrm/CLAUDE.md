@@ -107,7 +107,7 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 .plans/[feature]/
 ├── design.md          ← design duy nhất
 ├── plan.md            ← plan duy nhất
-├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+├── SRS - <Tên màn hình>.docx ← SRS (tạo khi được yêu cầu, CHỈ 1 file .docx)
 └── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
 ```
 
@@ -118,7 +118,7 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 ├── design.md          ← tóm tắt tổng thể feature (scope, hiện trạng, quyết định chung)
 ├── design-phase{N}.md ← design chi tiết cho từng phase lớn
 ├── plan.md            ← TẤT CẢ tasks (append phase mới vào cuối, trước checkpoint)
-├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+├── SRS - <Tên màn hình>.docx ← SRS (tạo khi được yêu cầu, CHỈ 1 file .docx)
 ├── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
 └── (các file phụ: testcase, script...)
 ```
@@ -128,7 +128,7 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 - `design.md`: tóm tắt chung, KHÔNG chứa spec chi tiết từng phase
 - `design-phase{N}.md`: spec đầy đủ (DB, BE, FE, edge cases) — tạo khi phase có nhiều thay đổi
 - `plan.md`: 1 file duy nhất chứa tất cả phase, append liên tục
-- SRS: 2 file output (`srs.html` + `srs.docx`) — lưu cùng folder feature
+- SRS: **CHỈ 1 file `.docx`** đặt tên `SRS - <Tên màn hình>.docx`, lưu cùng folder feature. Bám **form chuẩn của team** (`D:\CompanyProject\Document\SRS - Lĩnh vực.docx`) — biểu đồ Use Case phải là **ảnh thật**, mục Layout màn hình **chỉ ghi đường dẫn vào màn**, KHÔNG chụp màn hình. Bắt buộc đọc `.claude/skills/srs-documenter/SKILL.md` trước khi viết. (`srs.html` là format CŨ, chỉ còn ở feature sinh trước 2026-08-07, không tạo mới)
 - Testcase: chỉ Excel (`testcase.xlsx`) — lưu cùng folder feature
 - KHÔNG tạo `plan-phase{N}.md` riêng (đã có convention cũ nhưng không tiếp tục)
 
@@ -281,6 +281,8 @@ Nếu có → đọc trước khi viết code.
 | Auth, SSO, profile, avatar trong elearning          | `.claude/skills/elearning-auth/SKILL.md`     |
 | Viết tài liệu HDSD / hướng dẫn sử dụng màn hình     | `.claude/skills/hdsd-documenter/SKILL.md`    |
 | Lịch sử thay đổi / audit log (BE ghi log + UI)      | `.claude/skills/entity-history/SKILL.md`     |
+| Viết tài liệu SRS / đặc tả yêu cầu màn hình         | `.claude/skills/srs-documenter/SKILL.md`     |
+| Viết tài liệu test case cho màn hình                | `.claude/skills/testcase-documenter/SKILL.md` |
 | Bắn/sửa thông báo nghiệp vụ (chuông, push, socket)  | `.claude/skills/notification-convention/SKILL.md` |
 | Tạo/sửa màn form (add/edit, modal nhập liệu)        | `.claude/skills/unsaved-changes/SKILL.md`    |
 | Validate form ở màn mới (realtime, required, lỗi)   | `.claude/skills/form-validate/SKILL.md`      |

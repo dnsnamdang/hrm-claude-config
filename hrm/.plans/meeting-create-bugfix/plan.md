@@ -53,3 +53,18 @@ Blocked: (không)
 - [x] Thêm radio "Phân loại họp" (Họp khách hàng / Họp nội bộ) ở tab Thông tin chung màn tạo/sửa meeting (`pages/assign/meeting/components/GeneralInfo.vue`): lọc dropdown "Loại meeting" theo `has_customer`; đổi radio thì bỏ loại đang chọn nếu không khớp; màn sửa/xem tự set radio theo loại meeting đang có
 - [x] Lưu phân loại họp xuống DB: migration `2026_08_11_090000_add_is_customer_meeting_to_meetings_table` (cột `is_customer_meeting` boolean default 1, backfill theo `meeting_types.has_customer`); fillable Meeting; rule `nullable|boolean` ở Meeting Create/Update Request; gán ở `MeetingController::store/update` (ưu tiên FE gửi, fallback theo loại meeting); trả về ở `MeetingTransformer`; FE bind radio vào `form.is_customer_meeting`
 - [x] Verify (Playwright, FE :3000 / BE :8000): migrate OK (cột `is_customer_meeting` tinyint default 1, backfill 13 nội bộ / 2 KH); tạo mới chọn "Họp nội bộ" → dropdown chỉ 5 loại nội bộ, lưu `is_customer_meeting=0` (meeting id 17 — dữ liệu test); màn Sửa nạp lại đúng radio; đổi radio sang "Họp khách hàng" + chọn loại + chọn KH → lưu `is_customer_meeting=1`
+
+### BE + FE — Thông báo theo thay đổi thực tế (2026-08-11)
+> Lưu ý: 2 fix ngày 10/08 (bỏ bắn trùng ở `update()`, tắt noti khi lưu meeting đã chốt) không còn trong working tree khi bắt đầu task này — đã áp lại cùng logic mới.
+- [x] BE `MeetingService::notifyMeetingChanges()` (mới): so sánh snapshot trước/sau khi lưu → đổi thời gian họp báo toàn bộ thành viên nội bộ đang ở trong meeting (`Thay đổi lịch`); người được thêm nhận `Cập nhật: … Bạn được thêm vào cuộc họp. Thời gian: …`; người bị xoá nhận `Cập nhật: … Bạn đã được đưa ra khỏi cuộc họp.` Người vừa thêm KHÔNG nhận thêm noti đổi lịch. Không đổi gì → không báo ai.
+- [x] BE helper trong MeetingService: `buildMeetingNotificationContent()` theo chuẩn `.claude/skills/notification-convention` (`[MET] {Nhóm hành động}: <b>{Tên ≤50}</b>. {Ghi chú}`, tổng ≤120, cắt ghi chú trước), `formatMeetingTimeRange()`, `isSameDateTime()` (Carbon::parse, chịu lệch format), `notifyMeetingEmployees()`
+- [x] BE `MeetingController::update()`: snapshot `start_date/end_date/company_members` TRƯỚC khi sync (syncCompanyMembers xoá sạch rồi tạo lại); sau `DB::commit()` — đổi trạng thái (nút Lên lịch/Chốt lịch) → báo toàn bộ như cũ, giữ nguyên trạng thái (nút Lưu) → gọi `notifyMeetingChanges`. Gộp về 1 nguồn gửi (bỏ lời gọi hàm private gây bắn trùng), gửi sau commit
+- [x] FE `MeetingForm.vue` `handleSave()`: bỏ cờ `send_notification` (BE tự quyết), ép `Number(status)` khi so sánh để không lọt popup xác nhận đổi giờ khi status là chuỗi
+
+### Verify (bổ sung)
+- [ ] Meeting status 1 hoặc 2 → sửa ghi chú/biên bản, không đổi giờ, không đổi thành viên → bấm Lưu: KHÔNG ai nhận thông báo
+- [ ] Đổi giờ họp → Lưu: toàn bộ thành viên nội bộ nhận `[MET] Thay đổi lịch: …. Thời gian mới: …`
+- [ ] Thêm 1 người nội bộ → Lưu: chỉ người đó nhận `[MET] Cập nhật: …. Bạn được thêm vào cuộc họp. Thời gian: …`
+- [ ] Bớt 1 người nội bộ → Lưu: chỉ người bị xoá nhận `[MET] Cập nhật: …. Bạn đã được đưa ra khỏi cuộc họp.`
+- [ ] Vừa đổi giờ vừa thêm người → người mới chỉ nhận 1 noti "được thêm vào", người cũ nhận noti đổi lịch
+- [ ] Nút "Lên lịch hẹn" / "Đã chốt lịch": vẫn báo toàn bộ thành viên, mỗi người đúng 1 noti

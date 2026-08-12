@@ -19,7 +19,37 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Tài liệu SRS + Testcase (2026-08-07)
+
+Đã sinh `srs.html` + `srs.docx` + `testcase.xlsx` cho **6 màn nghiệp vụ của @junfoke**
+(tổng 438 test case, P0 54-62%).
+Bám code thật: validation lấy từ Request class, schema từ Entity, API từ Routes, business rule từ Service.
+
+| Feature | TC | Feature | TC |
+| --- | --- | --- | --- |
+| finance-account-catalog | 98 | customer-care-cost-catalog | 82 |
+| finance-currency-catalog | 68 | customer-care-serial-catalog | 58 |
+| customer-care-maintenance-catalogs | 74 | customer-care-service-price-config | 58 |
+
+**Chưa sinh:** `bank-account-catalog` và `customer-care-services-catalog` (của @khoipv — chủ feature tự làm);
+nhóm hạ tầng/refactor (tach-phan-he-erp-hrm, bo-sung-menu-phan-he, chuyen-code-phan-he,
+customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
+
+⚠️ **2 việc phát hiện khi soát code để viết tài liệu:**
+
+1. `PermissionsTableSeeder` khai TRÙNG quyền tiền tệ: id 1115/1116 và 1117/1118 cùng `name` cùng guard `api`
+   → chạy seeder trên DB sạch sẽ nổ lỗi trùng khóa. Cần bỏ 1 cặp.
+2. `bank-account-catalog` (@khoipv) có design.md + plan.md, code đã xong nhưng **chưa có mục trong STATUS.md này**
+   → nhờ @khoipv bổ sung.
+
 ## Đang làm
+
+- unsaved-changes-catalogs → @junfoke → .plans/gop-db/unsaved-changes-catalogs/plan.md
+  Trạng thái: **CODE DONE, CHƯA TEST TRÌNH DUYỆT** (2026-08-12). Popup "Thông tin chưa lưu"
+  khi thoát màn form — đợt 1: 14 màn danh mục customer-care + finance.
+  Thêm 2 mixin MỚI (`unsavedModalMixin` cho modal, `unsavedChildFormMixin` cho trang vỏ);
+  **không sửa** `unsavedChangesMixin` cũ — phương án gộp chờ anh Nam chốt.
+  Còn lại ~147 form trang + ~180 modal của các phân hệ cũ → đợt 2/3.
 
 - fix-employee-fk-remap → @junfoke → .plans/gop-db/fix-employee-fk-remap/plan.md
   Trạng thái: **CODE DONE, DRY PASS — CHƯA CHẠY THẬT** (2026-08-04). Vá các cột FK `employees`
@@ -149,6 +179,16 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
   Ghi nhận không sửa: `filteredCustomers` trong `pages/assign/meeting/components/GeneralInfo.vue` là
   code chết (gán nhưng không render).
   Spec: docs/superpowers/specs/gop-db/2026-08-11-customer-lock-design.md
+- customer-care-service-price-config → @junfoke → .plans/gop-db/customer-care-service-price-config/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-12)**, nhánh `gop_db`.
+  Chuyển "Cập nhật nhanh giá dịch vụ" từ ERP sang **CSKH** — 1 form 2 trường lưu vào
+  `service_price_config` (1 dòng) + ghi đè hàng loạt 207 gói bảo dưỡng / 242 cấp dịch vụ,
+  2 route `/v1/customer-care/service-price-config`. Màn danh mục thứ 6 của phân hệ.
+  ⚠️ GOTCHA: **quyền ERP dùng guard `web`, HRM dùng guard `api`** — FE chỉ nạp quyền guard api nên
+  gate menu bằng tên quyền ERP sẽ đá về 404, `checkPermission` ở BE cũng luôn 403. Cách làm: thêm
+  quyền api **1130** trùng tên + gate route bằng **`erpPermission`**. Bấm Lưu **ghi đè hệ số +
+  định mức cho MỌI gói**, kể cả gói đã chỉnh riêng → đã thêm popup xác nhận nêu rõ số gói.
+  Spec: docs/superpowers/specs/gop-db/2026-08-06-customer-care-service-price-config-design.md | Tóm tắt: .plans/gop-db/customer-care-service-price-config/design.md
 
 - customer-column-config → @khoipv → .plans/gop-db/customer-column-config/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
