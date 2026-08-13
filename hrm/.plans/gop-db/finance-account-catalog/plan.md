@@ -322,3 +322,13 @@ dự án**, phải liệt kê từng tên file; và chụp screenshot vào thư 
 **Đang làm dở:** không. **Blocked:** không.
 
 **Bước tiếp theo:** user test lại 3 điểm trên; vẫn còn tồn Phase 7 (đối chiếu 2 cổng + 2 file mẫu Excel).
+
+## Phase — Tai lieu ban giao (2026-08-13)
+
+- [x] `testcase - Danh muc tai khoan.xlsx` — 128 TC (P0 66%); generator `gen_testcase_tai_khoan.py`
+- [x] `testcase - Danh muc loai tai khoan.xlsx` — 104 TC (P0 61%);
+      generator `gen_testcase_loai_tai_khoan.py`
+- [x] `HDSD_Danh muc tai khoan.docx` — 16 trang; generator `gen_hdsd_tai_khoan.py`
+- [x] `HDSD_Danh muc loai tai khoan.docx` — 16 trang; generator `gen_hdsd_loai_tai_khoan.py`
+- [x] Anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)
+- [x] Da xoa `testcase.xlsx` cu (format 15 cot, gop ca 2 man) — user chot 2026-08-13

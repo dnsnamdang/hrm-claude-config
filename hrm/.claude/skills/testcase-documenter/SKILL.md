@@ -1,468 +1,314 @@
 ---
 name: testcase-documenter
-description: Generate tài liệu test case cho feature đã triển khai — output Excel (.xlsx) đầy đủ block mô tả nghiệp vụ + summary + phân quyền + 3 cột check
+description: Generate tài liệu test case cho feature đã triển khai — output Excel (.xlsx) đầy đủ block mô tả nghiệp vụ + summary + phân quyền + các cột check, viết bằng ngôn ngữ nghiệp vụ cho QA
 ---
 
 # Test Case Documenter — ERP TPE
 
 ## Mục đích
-Generate test cases cho feature/báo cáo đã hoặc sắp triển khai. Output gồm:
-1. **File Excel (.xlsx)** — chuẩn QA dùng test thực tế (dropdown Status, công thức tổng hợp, 3 lần check)
-2. **File HTML** (tuỳ chọn) — review nhanh, in A4
+Generate test cases cho feature/báo cáo đã hoặc sắp triển khai. Output là **file Excel (.xlsx)** để QA dùng test thực tế (dropdown trạng thái, công thức tổng hợp, nhiều lần check).
 
 File Excel chuẩn phải có **ĐỦ 4 KHỐI** theo đúng thứ tự (xem mục Layout bên dưới):
 1. Khối **MÔ TẢ TÍNH NĂNG / BÁO CÁO** (9 mục cố định)
-2. Khối **TEST SUMMARY** (5 công thức COUNTIF)
-3. **Header testcase** (15 cột) + (nếu có phân quyền) section **TC-ROLE**
+2. Khối **TEST SUMMARY** (2 khối công thức: DNS và TP)
+3. **Header testcase** (17 cột) + (nếu có phân quyền) section **TC-ROLE**
 4. **Các section testcase** đánh số La mã
 
 ## Khi nào dùng
 - Feature/báo cáo đã code xong, cần test case cho QA
 - User yêu cầu "tạo testcase", "viết test case", "viết test"
 
+---
+
+## ⚠️ NGUYÊN TẮC SỐ 1 — NGÔN NGỮ NGHIỆP VỤ, KHÔNG PHẢI NGÔN NGỮ CODE
+
+**Người đọc tài liệu này là QA và bộ phận nghiệp vụ, KHÔNG phải dev.** (User chốt 2026-08-12:
+*"tài liệu này dev có dùng đâu mà toàn id như code thế này"*.)
+
+**TUYỆT ĐỐI KHÔNG viết vào bất kỳ ô nào của file:**
+
+| Cấm | Ví dụ vi phạm |
+|---|---|
+| Tên bảng / tên cột DB | `costs`, `company_costs`, `status`, `revenue_calculation`, `updated_by` |
+| Id permission, group, type, guard | "permission id 1123", "type 24", `role_has_permissions`, "guard api" |
+| Tên hàm / class / file | `CustomerListResource`, `filled()`, `has()`, `number_format` |
+| Đường dẫn route / endpoint | `/api/v1/customer-care/costs`, `GET /{cost}/lock`, `checkPermission` |
+| Mã HTTP | "BE trả 422", "403 Forbidden", "trả 404" |
+| Tên tham số kỹ thuật | `sort_by=name`, `per_page`, `meta.total`, `current_company_role`, `localStorage`, `filterCollapsed` |
+
+**Thay bằng đúng nhãn hiển thị trên màn hình + câu chữ người dùng hiểu được:**
+
+| Thay vì | Viết là |
+|---|---|
+| `status = 0` | "trạng thái Khóa" |
+| `revenue_calculation = 1` | "Có tính doanh thu" (đúng nhãn trên lưới) |
+| "BE trả 422, lỗi inline tại ô X" | "hệ thống báo lỗi đỏ ngay dưới ô X, cửa sổ không đóng, dữ liệu đã nhập vẫn còn" |
+| "BE trả 403 Forbidden" | "hệ thống từ chối, báo không có quyền" |
+| "BE trả 404" | "hệ thống báo dữ liệu đã thay đổi, không treo trang" |
+| "Postman gọi `PUT /api/v1/...`" | "dùng công cụ kiểm thử API gọi thẳng chức năng Sửa, bỏ qua giao diện" |
+| `firm_quotation_costs` | "Báo giá hãng" (tên nghiệp vụ) |
+| `sort_by = updated_at` | "Sắp xếp theo cột Cập nhật" |
+| `meta.total` | "tổng số bản ghi khớp bộ lọc" |
+| "lưu localStorage TTL 10 phút" | "hệ thống ghi nhớ bộ lọc trong 10 phút" |
+
+**Vẫn ĐƯỢC giữ** (đây là ngôn ngữ tester, không phải jargon nội bộ):
+- Tên quyền nguyên văn tiếng Việt như trong seeder ("Quản lý dịch vụ sửa chữa và chi phí khác")
+- Nhóm test bảo mật gọi thẳng API — viết dạng *"dùng công cụ kiểm thử API gọi thẳng chức năng
+  Xóa, bỏ qua giao diện"*. Bỏ hẳn nhóm này thì mất khả năng phát hiện lỗ hổng phân quyền; ghi
+  chú ở mục 9 rằng nhóm này dành cho tester kỹ thuật.
+
+**Bắt buộc gắn bộ kiểm tra tự động vào cuối generator** — in kết quả trước khi xuất file:
+
+```python
+import re
+BANNED = [
+    r"`[a-z_]{3,}`", r"\bBE\b", r"\bFE\b", r"\bHTTP\b",
+    r"trả (400|403|404|422)", r"\b(400|403|404|422)\b",
+    r"permission id", r"/api/v1", r"\bAPI /", r"localStorage",
+    r"number_format", r"meta\.", r"sort_by", r"per_page",
+    r"role_has_permissions", r"current_company_role",
+]
+text_all = "\n".join(mọi ô mô tả + mọi ô của từng TC)
+found = {p: len(re.findall(p, text_all)) for p in BANNED if re.findall(p, text_all)}
+print("!!! CON THUAT NGU KY THUAT:", found) if found else print("OK - sach")
+```
+
+⚠️ **File mẫu của team cũng vi phạm điều này** (`erp_product_id`, `CustomerListResource`,
+`filterCollapsed`) — bám form TRÌNH BÀY của mẫu nhưng KHÔNG bắt chước cách viết đó.
+
+---
+
 ## Input cần thiết
 1. **Bắt buộc**: Tên feature + module, SRS hoặc design.md (use case + business rules)
 2. **Tự thu thập từ code**: Routes, Controller, Service, Entity, Request, FE Pages/Components, Plan.md
+3. **Nên có**: ảnh/quan sát thật màn hình trên cổng dev để lấy đúng nhãn cột, đúng chữ trên nút và
+   đúng nội dung thông báo — viết TC theo tên field trong code là nguồn gốc của lỗi ngôn ngữ ở trên
 
 ## Layout file Excel (chuẩn) — TUYỆT ĐỐI tuân thủ
 
+> **File mẫu đóng gói ngay trong skill:** `.claude/skills/testcase-documenter/assets/TC_MAU.xlsx`
+> (bản gốc là `TC mẫu phần bomlist.xlsx` user đã duyệt — đã copy vào repo để ai clone về cũng có).
+> Bản dựng đúng chuẩn để đối chiếu: `.plans/gop-db/customer-care-cost-catalog/testcase.xlsx`
+
 ```
-Row 1  : "MÔ TẢ TÍNH NĂNG (đọc trước khi xem testcase)" (merge B1:O1, nền đậm)
+Row 1  : "MÔ TẢ TÍNH NĂNG (đọc trước khi xem testcase)" (merge A1:N1, bold 12pt)
 Row 2  : 1. Mục đích tính năng              | <nội dung>
-Row 3  : 2. Đối tượng được tính / hiển thị  | <nội dung — liệt kê đầy đủ status, điều kiện>
+Row 3  : 2. Đối tượng được tính / hiển thị  | <liệt kê đầy đủ trạng thái, điều kiện>
 Row 4  : 3. Đối tượng bị ẩn / không tính    | <nội dung>
-Row 5  : 4. Bộ lọc thời gian áp dụng cho    | <nội dung — chỉ rõ cột nào, range nào>
+Row 5  : 4. Bộ lọc thời gian áp dụng cho    | <chỉ rõ cột nào, range nào>
 Row 6  : 5. Cấu trúc dữ liệu / cây phân cấp | <nội dung>
 Row 7  : 6. Quy tắc cộng dồn / deduplicate  | <nội dung>
-Row 8  : 7. Phân quyền cấp                  | <liệt kê từng permission code>
-Row 9  : 8. Cách tính các ô thống kê        | <công thức từng ô>
-Row 10 : 9. Ghi chú đọc bảng                | <phân trang, định dạng…>
+Row 8  : 7. Phân quyền cấp                  | <liệt kê từng tên quyền tiếng Việt>
+Row 9  : 8. Cách tính các ô thống kê        | <công thức từng ô, diễn giải bằng lời>
+Row 10 : 9. Ghi chú đọc bảng                | <phân trang, định dạng, bẫy dễ sai…>
+         (cột A nền #FFF2CC bold; cột B merge B:N)
 
-Row 11 : "Testcase _ <Tên feature>"         (col A, merge B11:O11)
-Row 11 col F: "TEST SUMMARY" (merge F11:H11)
-Row 11 col I: "Số trường hợp kiểm thử đạt (P):"     | L11: =COUNTIF(L18:N500,"Passed")
-Row 12 col I: "Số trường hợp kiểm thử không đạt (F):"| L12: =COUNTIF(L18:N500,"Failed")
-Row 13 col I: "Số trường hợp kiểm thử đang xem xét:" | L13: =COUNTIF(L18:N500,"Pending")
-Row 14 col I: "Số trường hợp kiểm thử chưa thực hiện:"| L14: =COUNTIF(L18:N500,"Not Executed")
-Row 15 col I: "Tổng số trường hợp kiểm thử:"         | L15: =COUNTIF(L18:N500,"<>")
+Row 11 : A11 "Testcase _ <Tên feature> - Cập nhật ngày dd/mm/yyyy" (merge A11:E11,
+             nền #4472C4, chữ trắng bold 15pt)
+         F11 "TEST SUMMARY" (merge F11:H15, cùng nền xanh)
+         → 2 KHỐI SUMMARY song song:
+           • Khối DNS  : nhãn I:J (nền #00FF00), giá trị K:L
+           • Khối TP   : nhãn M:N (nền trắng),   giá trị O:Q
+Row 11 : Số trường hợp … đạt (P)            | =COUNTIF(K18:M1000,"Passed") | … | =COUNTIF(O18:Q1000,"P")
+Row 12 : … không đạt (F)                    | =COUNTIF(K18:M1000,"Failed") | … | =COUNTIF(O18:Q1000,"F")
+Row 13 : … đang xem xét (PE)                | =COUNTIF(K18:M1000,"Pending")| … | =COUNTIF(O18:Q1000,"PE")
+Row 14 : … chưa thực hiện                   | =COUNTIF(K18:K1000,"Not Executed")
+Row 15 : Tổng số trường hợp                 | =COUNTIF(K18:K1000,"<>")     | … | =COUNTIF(C18:C1000,"TC*")
 
-Row 16 : (trống — spacing)
+Row 16 : (trống — spacing, height 8)
 
-Row 17 : HEADER 15 cột
+Row 17 : HEADER 17 cột
   A Module | B Nhóm chức năng | C TC ID | D Chức năng | E Priority
   F Tiền điều kiện | G Bước thực hiện | H Test Data
-  I Expected Result (chi tiết) | J Giải thích nghiệp vụ | K KQ thực tế
-  L trạng thái check lần 1 | M trạng thái check lần 2 | N trạng thái check lần 3
-  O Ghi chú
+  I Expected Result (chi tiết) | J KQ thực tế
+  K/L/M DNS check lần 1/2/3 | N Ghi chú | O/P/Q TP check lần 1/2/3
 
-Row 18+: Data — bắt đầu bằng section "TC-ROLE" (nếu có phân quyền), sau đó section La mã
+Row 18+: Data — section "Phân quyền & truy cập" (nếu có), sau đó section La mã
 ```
 
+⚠️ **2 lỗi CÓ TRONG file mẫu — đừng copy theo:**
+1. File mẫu **thiếu hẳn dòng header cột** (row 17 là section band luôn). Phải có header.
+2. Công thức summary lệch range (`K12` bắt đầu từ `K18`, `K15` đếm `"Passed"` thay vì tổng).
+   Dùng range thống nhất như bảng trên.
+
 ### Quy tắc nội dung 9 mục mô tả
-- **Không bỏ mục nào**. Nếu feature không áp dụng, ghi "—" hoặc "Không áp dụng" + 1 dòng lý do
-- Mục 2 & 3 (đối tượng tính / ẩn) **PHẢI liệt kê từng status / điều kiện cụ thể**, không nói chung chung
-- Mục 7 (phân quyền) **PHẢI liệt kê đầy đủ tên permission code** đã định nghĩa trong code
-- Mục 8 (công thức) viết dạng: `Ô X = <công thức>`, ví dụ `Ô 'Quá hạn' = COUNT(due_date < today)`
+- **Không bỏ mục nào**. Không áp dụng thì ghi "Không áp dụng" + 1 dòng lý do
+- Mục 2 & 3 **PHẢI liệt kê từng trạng thái / điều kiện cụ thể**, không nói chung chung
+- Mục 7 **PHẢI liệt kê đầy đủ tên quyền tiếng Việt** đúng như trong seeder
+- Mục 8 viết công thức bằng lời: `Ô 'Hiển thị a–b / N' = a là dòng đầu trang, N là tổng bản ghi khớp bộ lọc`
+- Mục 9 là nơi cảnh báo **các bẫy dễ sai nhất của màn** (định dạng số, dấu phẩy thập phân, ô nào
+  chặn trần ô nào không…) — QA đọc mục này trước khi chạy test
 
 ## Phân loại + đánh số section
 
-### Section "Phân quyền & truy cập" (CHỈ khi feature phân quyền theo cấp)
+### Section "Phân quyền & truy cập"
 - Đứng **đầu tiên** sau header (trước section La mã)
-- ID format: `TC-ROLE-01`, `TC-ROLE-02`, ...
-- Liệt kê 1 TC cho **TỪNG permission code** (vd: "Xem … theo tổng công ty", "… theo công ty", "… theo phòng ban", "… không có quyền")
-- Nếu feature không phân cấp → bỏ qua section này
+- ID format: `TC-ROLE-00`, `TC-ROLE-01`, ...
+- Liệt kê 1 TC cho **TỪNG tên quyền** + TC "không có quyền nào" + TC bypass giao diện cho từng
+  thao tác ghi dữ liệu
+- Feature không phân quyền → bỏ section này
 
 ### Sections nghiệp vụ — đánh số La mã
 ```
 I.   HIỂN THỊ TRANG & TRUY CẬP
 II.  BỘ LỌC & TÌM KIẾM
-III. STATS / THỐNG KÊ ĐẦU TRANG
-IV.  DANH SÁCH / GRID DỮ LIỆU
-V.   CHỨC NĂNG CHÍNH (CRUD / action)
-VI.  EDGE CASES & VALIDATION
-VII. CÔ LẬP DỮ LIỆU & BẢO MẬT
-VIII.E2E FLOW
+III. DANH SÁCH, SẮP XẾP & PHÂN TRANG
+IV.  CHỨC NĂNG CHÍNH (TẠO / SỬA / XEM)
+V.   CÁC THAO TÁC TRẠNG THÁI (Khóa/Mở khóa, Duyệt/Từ chối…)
+VI.  XÓA
+VII. XUẤT EXCEL / IN
+VIII.RÀNG BUỘC NHẬP LIỆU
+IX.  CÔ LẬP DỮ LIỆU & THAO TÁC ĐỒNG THỜI
+X.   E2E FLOW
 ```
-- Tên section là **dòng riêng**, merge C:O, font bold xanh đậm trên nền xanh nhạt
-- Thứ tự cố định, bỏ section nào không áp dụng
+- Tên section là **dòng riêng**, merge C:Q, bold 12pt màu `#1F4E79` trên nền `#D6E4F0`
+- Bỏ section không áp dụng; thứ tự giữ nguyên
+- ⚠️ Đặt tên section bằng ngôn ngữ nghiệp vụ: dùng "RÀNG BUỘC NHẬP LIỆU" thay cho
+  "EDGE CASES & VALIDATION"
 
 ### TC ID
-- Trong section La mã: `TC_{section:02d}.{tc:03d}` — ví dụ `TC_01.001`, `TC_02.015`
-- Trong section ROLE: `TC-ROLE-01`, `TC-ROLE-02`, ...
+- Section La mã: `TC_{section:02d}.{tc:03d}` — `TC_01.001`, `TC_02.015`
+- Section quyền: `TC-ROLE-01`, `TC-ROLE-02`, ...
 
 ### Priority
-- `P0` — critical (chiếm ≥40% tổng)
-- `P1` — important
-- `P2` — nice-to-have
+`P0` critical (≥40% tổng) · `P1` important · `P2` nice-to-have
 
 ## Quy tắc viết từng test case
 
 | Cột | Quy tắc |
 |-----|--------|
-| **Module (A)** | Tên feature ngắn (vd "Lịch làm việc"). Có thể merge ô khi nhiều TC cùng module. |
-| **Nhóm chức năng (B)** | Tên section không có "I./II./" (vd "HIỂN THỊ TRANG & TRUY CẬP") |
+| **Module (A)** | Tên feature ngắn (vd "DV sửa chữa & CP khác") |
+| **Nhóm chức năng (B)** | Tên section không có số La mã |
 | **TC ID (C)** | `TC_NN.NNN` hoặc `TC-ROLE-NN` |
-| **Chức năng (D)** | 1 câu mô tả mục tiêu test, không lặp lại tên section |
+| **Chức năng (D)** | 1 câu mô tả mục tiêu test, không lặp tên section |
 | **Priority (E)** | P0/P1/P2 |
-| **Tiền điều kiện (F)** | **CỤ THỂ**, có số liệu. ❌ "User có vài task". ✅ "User có: 2 Task ngày hạn = hôm qua, 1 Issue ngày hạn = tuần trước, 3 việc ngày hạn = hôm nay" |
-| **Bước thực hiện (G)** | Đánh số `1. … 2. …`, mỗi bước 1 dòng, dùng `\n` xuống dòng |
-| **Test Data (H)** | Giá trị thật: ngày cụ thể `Hôm nay = 22/05/2026`, role cụ thể `User: P2`, hoặc `—` nếu không cần |
-| **Expected Result (I)** | **Kiểm chứng được**, liệt kê bằng bullet `-`. Ghi rõ tên cột/badge/icon/số đếm |
-| **Giải thích nghiệp vụ (J)** | Khi TC liên quan business rule: ghi công thức/quy tắc. Vd: `Công thức: due_date < today`, `BR — Mọi user đều truy cập được`, `Range: today → endOfWeek` |
-| **KQ thực tế (K)** | Để trống (QA điền) |
-| **L/M/N (3 lần check)** | Default `"Not Executed"`. Dropdown 4 giá trị: Passed, Failed, Pending, Not Executed |
-| **Ghi chú (O)** | Để trống hoặc note đặc biệt |
+| **Tiền điều kiện (F)** | **CỤ THỂ, có số liệu**. ❌ "User có vài dịch vụ". ✅ "Dịch vụ X: công ty 1 là 5%, công ty 4 là 12%; tài khoản C thuộc công ty 1" |
+| **Bước thực hiện (G)** | Đánh số `1. … 2. …`, mỗi bước 1 dòng (`\n`). Mô tả thao tác người dùng thấy được: "Bấm nút Sửa (biểu tượng bút chì)" |
+| **Test Data (H)** | Giá trị thật, viết bằng nhãn màn hình: `% Tính giá vốn: 12,5`, `Trạng thái: Khóa`. `—` nếu không cần |
+| **Expected Result (I)** | **Kiểm chứng được**, bullet `-`, ghi rõ tên cột/nhãn/chữ trên nút/nội dung thông báo. Chỗ nào là bẫy thì mở đầu bằng `⚠️` |
+| **KQ thực tế (J)** | Để trống (QA điền) |
+| **K/L/M** | DNS check 3 lần. Default `"Not Executed"`. Dropdown: Passed, Failed, Pending, Not Executed |
+| **Ghi chú (N)** | Để trống hoặc note đặc biệt |
+| **O/P/Q** | TP check 3 lần. Để TRỐNG. Dropdown: P, F, PE |
+
+**Không có cột "Giải thích nghiệp vụ" riêng** (bản 15 cột cũ có cột J này). Business rule viết
+thẳng vào Expected Result dưới dạng câu cảnh báo `⚠️` — QA đọc một chỗ, không phải liếc 2 cột.
 
 ## Style + format
 
-**Description block (rows 1-10):**
-- Cột A: font bold 11pt, wrap text, vertical top, nền `#FFF2CC` (vàng nhạt)
-- Cột B (merge B-O): font 11pt, wrap text, vertical top
-- Border thin xám
-
-**Title row (row 11):**
-- Cột A: font bold 14pt, nền `#4472C4`, chữ trắng
-- F11 "TEST SUMMARY": font bold 12pt, nền `#4472C4`, chữ trắng, center
-- I11-I15: font bold 11pt, align right, nền `#D9E1F2`
-- L11-L15: font 11pt bold, align center, nền `#D9E1F2`
-
-**Header row (row 17):**
-- Font trắng bold 11pt, nền `#4472C4`, center + wrap, border thin
-- Row height = 36
-
-**Section title row** (merge C:O):
-- Font bold 12pt màu `#1F4E79`, nền `#D6E4F0`, align left
-- Row height = 26
-
-**Data row:**
-- Font 11pt, wrap text, vertical top, border thin
-- Even-row highlight `#F2F2F2`
-- Row height auto (≥ 30)
-
-**Data Validation** trên `L18:N500`:
-```
-Dropdown list = "Passed,Failed,Pending,Not Executed"
-allowBlank=True, showDropDown=False
-```
+- **Font toàn file: Times New Roman 12** (riêng title row 15pt, tiêu đề mô tả row 1 là 12pt bold)
+- Description block: cột A bold + nền `#FFF2CC`; cột B merge B:N; wrap text, vertical center
+- Title row 11: nền `#4472C4`, chữ trắng bold 15pt
+- Summary DNS: nền `#00FF00` · Summary TP: nền trắng · đều có border thin
+- Header row 17: chữ trắng bold, nền `#4472C4`, center + wrap, height 40
+- Section row: bold 12pt `#1F4E79` trên nền `#D6E4F0`, merge C:Q, height 26
+- Data row: nền trắng, border thin `BFBFBF`, wrap, vertical center, height auto (≥34)
+- **KHÔNG dùng `freeze_panes`** — để user scroll tự do toàn bộ file
 
 **Column widths:**
 ```python
-col_widths = {
-    'A': 22, 'B': 22, 'C': 16, 'D': 42, 'E': 10,
-    'F': 32, 'G': 55, 'H': 22, 'I': 65, 'J': 35,
-    'K': 18, 'L': 16, 'M': 16, 'N': 16, 'O': 22
+COL_WIDTHS = {
+    'A': 26.9, 'B': 27.1, 'C': 16, 'D': 26.6, 'E': 9,
+    'F': 22.8, 'G': 18.6, 'H': 22, 'I': 43.9, 'J': 41.6,
+    'K': 14, 'L': 14, 'M': 14, 'N': 20,
+    'O': 11, 'P': 11, 'Q': 11,
 }
 ```
 
-**Freeze panes:** **KHÔNG dùng** `freeze_panes`. Để user scroll tự do toàn bộ file (description block + summary + data). Lý do: 17 hàng đầu quá nhiều, freeze sẽ chiếm hết màn hình khi scroll xuống data.
+**Data Validation:**
+```python
+K18:M<last+50>  →  list "Passed,Failed,Pending,Not Executed"   (allow_blank, showDropDown=False)
+O18:Q<last+50>  →  list "P,F,PE"                               (allow_blank, showDropDown=False)
+```
 
-## Template Python generator (copy-paste, sửa block CONFIG)
+## Generator
 
-Lưu vào `docs/srs/<feature>-generate-testcase.py`, chạy `python3 <file>.py`.
+**Dùng engine chung, KHÔNG nhân bản 1.300 dòng cho mỗi màn:**
+`.claude/skills/testcase-documenter/assets/tc_engine.py` (Windows, `python` + `openpyxl`).
+Nó lo toàn bộ phần dựng Excel, style, data validation, chống trùng TC ID và bộ kiểm tra thuật ngữ.
+
+Generator của từng màn chỉ còn 3 khối CONFIG:
 
 ```python
-"""Generate testcase Excel cho feature <FEATURE_NAME>."""
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-from openpyxl.utils import get_column_letter
-from openpyxl.worksheet.datavalidation import DataValidation
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "..", "..", ".claude", "skills",
+                                "testcase-documenter", "assets"))
+from tc_engine import build
 
-# =========================================================================
-# CONFIG — SỬA PHẦN NÀY CHO TỪNG FEATURE
-# =========================================================================
-OUTPUT_FILE  = "docs/srs/<feature>-testcases.xlsx"
-SHEET_NAME   = "<TenFeatureKhongDau>"
-FEATURE_NAME = "<Tên feature đầy đủ>"
-MODULE_NAME  = "<Tên module>"
+DESCRIPTION_BLOCK = [...]   # đúng 9 mục, engine assert
+ROLE_TCS = [...]            # (hậu tố, chức năng, priority, tiền điều kiện, bước, test data, expected)
+SECTIONS = [...]            # (số La Mã, tên section, [tc...])
 
-# 9 mục mô tả (KHÔNG BỎ MỤC NÀO — ghi "—" nếu không áp dụng)
-DESCRIPTION_BLOCK = [
-    ("1. Mục đích tính năng",                 "..."),
-    ("2. Đối tượng được tính / hiển thị",     "► ...\n► ..."),
-    ("3. Đối tượng bị ẩn / không tính",       "► ..."),
-    ("4. Bộ lọc thời gian áp dụng cho",       "..."),
-    ("5. Cấu trúc dữ liệu / cây phân cấp",    "..."),
-    ("6. Quy tắc cộng dồn / deduplicate",     "..."),
-    ("7. Phân quyền cấp",                     "• <permission_code_1> — ...\n• <permission_code_2> — ..."),
-    ("8. Cách tính các ô thống kê",           "► Ô 'X' = ...\n► Ô 'Y' = ..."),
-    ("9. Ghi chú đọc bảng",                   "..."),
-]
+build(output_file=..., sheet_name="Trang tính1", feature_name=..., module_name=...,
+      description_block=DESCRIPTION_BLOCK, role_tcs=ROLE_TCS, sections=SECTIONS)
+```
 
-# True nếu feature có phân quyền theo cấp → sinh section TC-ROLE
-HAS_ROLE_SECTION = True
-ROLE_TCS = [
-    # (tc_id_suffix, function, priority, precondition, steps, test_data, expected, business_note)
-    ("00", "Truy cập màn hình mặc định",
-        "", "User đã đăng nhập",
-        "1. Truy cập menu ...\n2. Quan sát hiển thị",
-        "User bất kỳ",
-        "Màn hình chỉ hiển thị dữ liệu thoả điều kiện ...",
-        "Mặc định: chỉ thấy dữ liệu do mình tạo / phụ trách"),
-    ("01", "Truy cập với quyền 'Xem theo tổng công ty'", "P0",
-        "User có quyền 'xem_bc_xxx_tong_cty'; đã đăng nhập",
-        "1. Truy cập menu ...\n2. Quan sát phạm vi dữ liệu",
-        "User: quyền tổng cty",
-        "Hiển thị toàn bộ dữ liệu mọi công ty.",
-        "Permission: xem_bc_xxx_tong_cty"),
-    # ... thêm cho từng permission code
-]
+`build()` tự in kết quả bộ kiểm tra thuật ngữ, tổng TC và tỉ lệ P0 — đọc dòng in ra trước khi báo done.
 
-# Sections nghiệp vụ — list (roman_num, section_title, [tcs...])
-# Mỗi tc = (tc_num_str, function, priority, precondition, steps, test_data, expected, business_note)
-SECTIONS = [
-    ("I", "HIỂN THỊ TRANG & TRUY CẬP", [
-        ("001", "Truy cập trang", "P0",
-            "User đã đăng nhập",
-            "1. Truy cập URL ...\n2. Quan sát layout",
-            "User bất kỳ",
-            "Trang load thành công với layout:\n- Cột trái: ...\n- Cột phải: ...",
-            "BR — Mọi user đều truy cập được"),
-        # ... thêm TC
-    ]),
-    ("II", "BỘ LỌC & TÌM KIẾM", [
-        # ...
-    ]),
-    # ("III", ...), ("IV", ...), ...
-]
+*(`assets/gen_testcase_mau.py` là bản đầy đủ một file, giữ lại để tham chiếu cách dựng; màn mới
+nên dùng `tc_engine.py`.)*
 
-# =========================================================================
-# STYLES
-# =========================================================================
-THIN   = Side(style="thin", color="BFBFBF")
-BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
+**Một feature có nhiều màn** → mỗi màn một file `testcase - <Tên màn>.xlsx`, đừng gộp chung một
+file. Generator có thể đặt chung một script gọi `build()` nhiều lần (xem
+`.plans/gop-db/customer-care-maintenance-catalogs/gen_testcase.py`).
 
-DESC_LABEL_FONT = Font(name="Calibri", size=11, bold=True)
-DESC_LABEL_FILL = PatternFill("solid", fgColor="FFF2CC")
-DESC_BODY_FONT  = Font(name="Calibri", size=11)
-WRAP_TOP_LEFT   = Alignment(wrap_text=True, vertical="top", horizontal="left")
-WRAP_TOP_CENTER = Alignment(wrap_text=True, vertical="top", horizontal="center")
+Lưu bản của feature vào `.plans/[feature]/gen_testcase.py` (cùng thư mục tài liệu, được version
+control), output ra `.plans/[feature]/testcase.xlsx`.
 
-TITLE_FONT      = Font(name="Calibri", size=14, bold=True, color="FFFFFF")
-TITLE_FILL      = PatternFill("solid", fgColor="4472C4")
-
-SUMMARY_LABEL_FONT  = Font(name="Calibri", size=11, bold=True)
-SUMMARY_LABEL_FILL  = PatternFill("solid", fgColor="D9E1F2")
-SUMMARY_VALUE_FONT  = Font(name="Calibri", size=11, bold=True)
-SUMMARY_VALUE_ALIGN = Alignment(horizontal="center", vertical="center")
-
-HEADER_FONT  = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-HEADER_FILL  = PatternFill("solid", fgColor="4472C4")
-HEADER_ALIGN = Alignment(wrap_text=True, vertical="center", horizontal="center")
-
-SECTION_FONT = Font(name="Calibri", size=12, bold=True, color="1F4E79")
-SECTION_FILL = PatternFill("solid", fgColor="D6E4F0")
-SECTION_ALIGN = Alignment(wrap_text=True, vertical="center", horizontal="left", indent=1)
-
-DATA_FONT_FILL_EVEN = PatternFill("solid", fgColor="F2F2F2")
-
-COL_WIDTHS = {
-    'A': 22, 'B': 22, 'C': 16, 'D': 42, 'E': 10,
-    'F': 32, 'G': 55, 'H': 22, 'I': 65, 'J': 35,
-    'K': 18, 'L': 16, 'M': 16, 'N': 16, 'O': 22
-}
-
-# =========================================================================
-# BUILD
-# =========================================================================
-wb = Workbook()
-ws = wb.active
-ws.title = SHEET_NAME
-
-# Column widths
-for col, w in COL_WIDTHS.items():
-    ws.column_dimensions[col].width = w
-
-# --- ROW 1: Tiêu đề mô tả tính năng ---
-ws.cell(1, 1, "MÔ TẢ TÍNH NĂNG (đọc trước khi xem testcase)").font = Font(bold=True, size=12)
-ws.merge_cells("B1:O1")
-ws.row_dimensions[1].height = 22
-
-# --- ROW 2-10: 9 mục mô tả ---
-for idx, (label, body) in enumerate(DESCRIPTION_BLOCK, start=2):
-    a = ws.cell(idx, 1, label)
-    a.font = DESC_LABEL_FONT
-    a.fill = DESC_LABEL_FILL
-    a.alignment = WRAP_TOP_LEFT
-    a.border = BORDER
-    b = ws.cell(idx, 2, body)
-    b.font = DESC_BODY_FONT
-    b.alignment = WRAP_TOP_LEFT
-    b.border = BORDER
-    ws.merge_cells(start_row=idx, start_column=2, end_row=idx, end_column=15)
-    ws.row_dimensions[idx].height = max(40, body.count("\n") * 16 + 30)
-
-# --- ROW 11: Title + Test Summary ---
-t = ws.cell(11, 1, f"Testcase _ {FEATURE_NAME}")
-t.font = TITLE_FONT
-t.fill = TITLE_FILL
-t.alignment = Alignment(vertical="center", horizontal="left", indent=1)
-ws.merge_cells("B11:E11")
-ws.merge_cells("F11:H11")
-fs = ws.cell(11, 6, "TEST SUMMARY")
-fs.font = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
-fs.fill = TITLE_FILL
-fs.alignment = Alignment(vertical="center", horizontal="center")
-ws.row_dimensions[11].height = 28
-
-# --- ROW 11-15: Summary formulas ---
-summary_rows = [
-    (11, "Số trường hợp kiểm thử đạt (P):",              '=COUNTIF(L18:N500,"Passed")'),
-    (12, "Số trường hợp kiểm thử không đạt (F):",         '=COUNTIF(L18:N500,"Failed")'),
-    (13, "Số trường hợp kiểm thử đang xem xét (PE):",     '=COUNTIF(L18:N500,"Pending")'),
-    (14, "Số trường hợp kiểm thử chưa thực hiện:",        '=COUNTIF(L18:N500,"Not Executed")'),
-    (15, "Tổng số trường hợp kiểm thử:",                  '=COUNTIF(L18:N500,"<>")'),
-]
-for r, label, formula in summary_rows:
-    lc = ws.cell(r, 9, label)
-    lc.font = SUMMARY_LABEL_FONT
-    lc.fill = SUMMARY_LABEL_FILL
-    lc.alignment = Alignment(vertical="center", horizontal="right")
-    lc.border = BORDER
-    ws.merge_cells(start_row=r, start_column=9, end_row=r, end_column=11)
-    vc = ws.cell(r, 12, formula)
-    vc.font = SUMMARY_VALUE_FONT
-    vc.fill = SUMMARY_LABEL_FILL
-    vc.alignment = SUMMARY_VALUE_ALIGN
-    vc.border = BORDER
-    ws.merge_cells(start_row=r, start_column=12, end_row=r, end_column=15)
-    if r > 11:
-        ws.row_dimensions[r].height = 22
-
-# Row 16 trống
-ws.row_dimensions[16].height = 8
-
-# --- ROW 17: Header 15 cột ---
-HEADERS = [
-    "Module", "Nhóm chức năng", "TC ID", "Chức năng", "Priority",
-    "Tiền điều kiện", "Bước thực hiện", "Test Data",
-    "Expected Result (chi tiết)", "Giải thích nghiệp vụ", "KQ thực tế",
-    "trạng thái check lần 1", "trạng thái check lần 2", "trạng thái check lần 3",
-    "Ghi chú",
-]
-for i, h in enumerate(HEADERS, start=1):
-    c = ws.cell(17, i, h)
-    c.font = HEADER_FONT
-    c.fill = HEADER_FILL
-    c.alignment = HEADER_ALIGN
-    c.border = BORDER
-ws.row_dimensions[17].height = 36
-
-# KHÔNG freeze_panes — user muốn scroll tự do toàn bộ file
-# (đừng thêm ws.freeze_panes = ... ở đây)
-
-# --- DATA ROWS ---
-current_row = 18
-data_row_idx = 0
-
-def write_section_row(title: str):
-    global current_row
-    cell = ws.cell(current_row, 3, title)
-    cell.font = SECTION_FONT
-    cell.fill = SECTION_FILL
-    cell.alignment = SECTION_ALIGN
-    cell.border = BORDER
-    ws.merge_cells(start_row=current_row, start_column=3, end_row=current_row, end_column=15)
-    # Fill A,B với border
-    for col in (1, 2):
-        ws.cell(current_row, col).fill = SECTION_FILL
-        ws.cell(current_row, col).border = BORDER
-    ws.row_dimensions[current_row].height = 26
-    current_row += 1
-
-def write_tc(tc_id, function, priority, precondition, steps, test_data, expected, business_note, module=MODULE_NAME, group=""):
-    global current_row, data_row_idx
-    values = [
-        module, group, tc_id, function, priority,
-        precondition, steps, test_data,
-        expected, business_note, "",
-        "Not Executed", "Not Executed", "Not Executed",
-        "",
-    ]
-    fill = DATA_FONT_FILL_EVEN if data_row_idx % 2 == 1 else None
-    for i, v in enumerate(values, start=1):
-        c = ws.cell(current_row, i, v)
-        c.font = Font(name="Calibri", size=11)
-        c.alignment = WRAP_TOP_LEFT if i != 5 else WRAP_TOP_CENTER
-        c.border = BORDER
-        if fill:
-            c.fill = fill
-    # Row height heuristic
-    longest = max(len(str(v)) for v in values)
-    ws.row_dimensions[current_row].height = max(30, min(180, longest // 4))
-    current_row += 1
-    data_row_idx += 1
-
-# Section ROLE (nếu có)
-if HAS_ROLE_SECTION:
-    write_section_row("Phân quyền & truy cập")
-    for suffix, func, prio, pre, steps, td, exp, note in ROLE_TCS:
-        write_tc(f"TC-ROLE-{suffix}", func, prio, pre, steps, td, exp, note,
-                 group="Phân quyền & truy cập")
-
-# Section La mã
-for roman, title, tcs in SECTIONS:
-    write_section_row(f"{roman}. {title}")
-    for i, (tc_num, func, prio, pre, steps, td, exp, note) in enumerate(tcs, start=1):
-        sec_idx = ["I","II","III","IV","V","VI","VII","VIII","IX","X"].index(roman) + 1
-        tc_id = f"TC_{sec_idx:02d}.{int(tc_num):03d}" if tc_num.isdigit() else f"TC_{sec_idx:02d}.{tc_num}"
-        write_tc(tc_id, func, prio, pre, steps, td, exp, note, group=title)
-
-# --- DATA VALIDATION cho 3 cột check ---
-dv = DataValidation(
-    type="list",
-    formula1='"Passed,Failed,Pending,Not Executed"',
-    allow_blank=True,
-    showDropDown=False,
-)
-dv.add(f"L18:N{current_row + 100}")
-ws.add_data_validation(dv)
-
-wb.save(OUTPUT_FILE)
-print(f"✅ Generated: {OUTPUT_FILE}")
-print(f"   Rows: 1-10 description, 11-15 summary, 17 header, 18-{current_row-1} data")
+⚠️ Đầu file luôn có đoạn sau, nếu không `print()` chuỗi tiếng Việt sẽ ném `UnicodeEncodeError`
+(console Windows mặc định cp1252):
+```python
+import sys
+try: sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception: pass
 ```
 
 ## Checklist coverage (bắt buộc kiểm trước khi báo done)
 
+- [ ] **Bộ kiểm tra thuật ngữ in "OK - sach"** — không còn tên bảng/cột, id quyền, route, mã HTTP
 - [ ] **9 mục mô tả** đầy đủ, không bỏ mục
-- [ ] Mục 2/3: liệt kê **từng status / điều kiện cụ thể**, không nói chung chung
-- [ ] Mục 7: liệt kê **tên permission code** đúng như trong code
-- [ ] Mục 8: viết **công thức** từng ô thống kê
-- [ ] Test Summary: 5 công thức COUNTIF đúng range `L18:N500`
-- [ ] Header 15 cột đúng thứ tự, dòng 17
-- [ ] (Nếu phân cấp) Section `TC-ROLE-XX` đứng đầu, cover **mọi permission code**
-- [ ] Section nghiệp vụ đánh **La mã** (I, II, III…)
-- [ ] **Tiền điều kiện có data cụ thể** (số liệu, ngày, role)
-- [ ] **Test Data có giá trị thật** (ngày cụ thể, vai trò cụ thể)
-- [ ] **Expected Result kiểm chứng được** (bullet, có số/tên cụ thể)
-- [ ] **Cột J (Giải thích nghiệp vụ)** điền đầy đủ cho TC liên quan BR (công thức / range / BR-XX)
-- [ ] 3 cột check L/M/N default `Not Executed` + dropdown validation
+- [ ] Mục 2/3: liệt kê **từng trạng thái / điều kiện cụ thể**
+- [ ] Mục 7: liệt kê **tên quyền tiếng Việt** đúng như trong seeder
+- [ ] Mục 9: đã ghi các **bẫy dễ sai nhất** của màn
+- [ ] Test Summary: 2 khối DNS + TP, range thống nhất
+- [ ] **Có dòng header 17 cột ở row 17** (file mẫu thiếu — đừng quên)
+- [ ] (Nếu phân quyền) Section `TC-ROLE-XX` đứng đầu, cover **mọi tên quyền** + TC bypass giao diện
+- [ ] Section nghiệp vụ đánh **La mã**, tên section bằng ngôn ngữ nghiệp vụ
+- [ ] **Tiền điều kiện có số liệu cụ thể**
+- [ ] **Test Data viết bằng nhãn màn hình**, không phải tên field
+- [ ] **Expected Result kiểm chứng được**, bẫy có gắn `⚠️`
+- [ ] K/L/M default `Not Executed` + dropdown; O/P/Q để trống + dropdown
 - [ ] P0 ≥ 40% tổng TC
 - [ ] Mỗi business rule có ≥ 1 TC
-- [ ] **KHÔNG** dùng freeze_panes (scroll tự do)
+- [ ] **Không trùng TC ID** (assert trong generator)
+- [ ] **KHÔNG** dùng freeze_panes
 
 ## Quy tắc viết
 
-- Tiếng Việt, thuật ngữ kỹ thuật giữ tiếng Anh
-- Mỗi business rule (BR-XX) PHẢI có ≥ 1 test case + ghi rõ ở cột J
-- Số lượng tối thiểu: 30 TC (feature nhỏ), 60-100 (trung), 100+ (lớn)
-- Section trống → vẫn ghi tên section + 1 dòng "Không áp dụng cho feature này", không bỏ section
+- Tiếng Việt, dùng đúng nhãn hiển thị trên màn hình
+- Mỗi business rule PHẢI có ≥ 1 test case
+- Số lượng tối thiểu: 30 TC (feature nhỏ), 60–100 (trung), 100+ (lớn).
+  Tham chiếu: màn danh mục 1 bảng + 1 modal ra ~139 TC
+- Section trống → vẫn ghi tên section + 1 dòng "Không áp dụng cho feature này"
 
 ## Không được
 
+- **Không dùng thuật ngữ code** (xem NGUYÊN TẮC SỐ 1) — lỗi nghiêm trọng nhất
 - Không bỏ qua bất kỳ mục nào trong 9 mục mô tả
 - Không viết tiền điều kiện chung chung ("user có data") — phải có **số liệu cụ thể**
 - Không viết Expected Result mơ hồ ("hiển thị đúng") — phải nói **đúng cái gì**
-- Không bỏ cột J khi TC liên quan business rule
-- Không tự chế permission code — phải copy đúng từ code (`spatie/laravel-permission`)
-- Không thay 3 cột check bằng 1 cột (QA chạy nhiều round)
-- Không đoán validation — đọc Request class thực tế
+- Không tự chế tên quyền — copy đúng từ `PermissionsTableSeeder`
+- Không thay các cột check bằng 1 cột (QA chạy nhiều round, có 2 bên DNS và TP)
+- Không đoán validation — đọc Request class thực tế rồi DIỄN GIẢI ra ngôn ngữ người dùng
 
-## File tham chiếu chuẩn (đọc khi cần xem mẫu)
+## File tham chiếu
+
+Tất cả đều nằm **trong repo** — không phụ thuộc máy cá nhân.
 
 | Mục đích | File |
 |---------|------|
-| Mẫu Excel chuẩn (feature) | `docs/srs/lich-lam-viec-testcases.xlsx` |
-| Mẫu Excel chuẩn (báo cáo nhiều quyền) | `hrm-api/database/files/Testcase _baocao.xlsx` |
-| Generator Python mẫu | `docs/srs/lich-lam-viec-generate-testcase.py` |
-| Mẫu HTML | `docs/references/handover-ui-testcases.html` |
+| **Form mẫu (đóng gói trong skill)** | `.claude/skills/testcase-documenter/assets/TC_MAU.xlsx` |
+| **Generator mẫu (đóng gói trong skill)** | `.claude/skills/testcase-documenter/assets/gen_testcase_mau.py` |
+| **Bản dựng đúng chuẩn để đối chiếu** | `.plans/gop-db/customer-care-cost-catalog/testcase.xlsx` |
+| Mẫu Excel báo cáo nhiều quyền | `hrm-api/database/files/Testcase _baocao.xlsx` |

@@ -20,7 +20,8 @@ hoặc sắp triển khai, dựa trên code thực tế + design document + busi
 
 ## ⚠️ FORM CHUẨN — ĐỌC TRƯỚC KHI VIẾT
 
-**File mẫu bắt buộc:** `D:\CompanyProject\Document\SRS - Lĩnh vực.docx` (màn Danh mục lĩnh vực).
+**File mẫu bắt buộc — đóng gói trong skill:** `.claude/skills/srs-documenter/assets/SRS_MAU.docx`
+(bản gốc là `SRS - Lĩnh vực.docx`, màn Danh mục lĩnh vực — đã copy vào repo để ai clone về cũng có).
 
 Trước khi sinh SRS, **luôn đọc lại file mẫu** để bám đúng khung và cách hành văn:
 
@@ -30,7 +31,7 @@ from docx import Document
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 from docx.oxml.ns import qn
-d=Document(r'D:\CompanyProject\Document\SRS - Lĩnh vực.docx')
+d=Document(r'.claude/skills/srs-documenter/assets/SRS_MAU.docx')
 def blocks(doc):
     for c in doc.element.body.iterchildren():
         if c.tag==qn('w:p'): yield Paragraph(c,doc)
@@ -168,20 +169,35 @@ Với modal/popup, thêm 1 câu: *"Modal <Tên> được mở ngay trên màn h�
 
 **TUYỆT ĐỐI KHÔNG vẽ sơ đồ bằng ký tự box-drawing (ASCII art)** — user đã phản hồi "xấu quá".
 
-### Script dùng chung (đã có sẵn trong repo)
+### Script dùng chung — ĐÓNG GÓI TRONG SKILL
+
+Cả 3 file nằm ở `.claude/skills/srs-documenter/assets/` nên ai clone repo về cũng có:
 
 | File | Vai trò |
 |---|---|
-| `scripts/srs_uml_render.py` | Module vẽ PNG bằng Pillow — `draw_overview()` và `draw_usecase()`. Tên snake_case để import được |
-| `scripts/gen-srs-cost-catalog.py` | **Bản mẫu tham chiếu**: dựng trọn SRS theo form chuẩn. Copy file này rồi thay nội dung là nhanh nhất |
+| `assets/srs_uml_render.py` | Module vẽ PNG bằng Pillow — `draw_overview()` và `draw_usecase()`. Tên snake_case để import được |
+| `assets/srs_docx_lib.py` | Lớp `SrsDoc` dựng file .docx theo form chuẩn (`gen_srs_mau.py` import từ đây) |
+| `assets/gen_srs_mau.py` | **Bản mẫu tham chiếu**: dựng trọn SRS theo form chuẩn. Copy file này rồi thay nội dung là nhanh nhất |
 
-Phụ thuộc: `pip install pillow` (không cần cairosvg / playwright / trình duyệt).
+Generator của từng màn đã làm nằm ở `.plans/gop-db/<feature>/gen_srs.py` — xem để đối chiếu:
+`customer-care-serial-catalog` (màn chỉ đọc, đơn giản nhất) · `customer-care-cost-catalog`
+(có vẽ biểu đồ use case) · `finance-account-catalog` · `finance-currency-catalog`.
+
+Ảnh UML là file **trung gian**, đã nhúng vào .docx nên `srs_docx_lib` ghi chúng vào thư mục tạm
+của hệ điều hành — không rải rác vào repo. Muốn giữ lại để xem thì truyền `img_dir='...'`.
+
+Phụ thuộc: `pip install pillow python-docx` (không cần cairosvg / playwright / trình duyệt).
+
+> ⚠️ Tài liệu cũ trỏ 3 file này vào `hrm/scripts/`. Thư mục đó **nằm ngoài mọi git repo**
+> (`d:\CompanyProject\hrm\` không phải repo — chỉ `hrm-api`, `hrm-client`, `hrm-claude-config` là
+> repo), nên file để đó không đi theo repo và dev khác không có. Luôn lấy bản trong `assets/`.
 
 ### Cách gọi
 
 ```python
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))   # để import được từ scripts/
+# Trỏ vào thư mục assets của skill để import được 2 module dùng chung
+sys.path.insert(0, r"<đường dẫn>/.claude/skills/srs-documenter/assets")
 import srs_uml_render as uml
 
 # 5.1 Sơ đồ UML tổng quan
@@ -282,10 +298,20 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(10)`, dòng tiêu đ
 
 ### Bước 3: Viết script sinh docx
 
-Copy `scripts/gen-srs-cost-catalog.py`, đổi phần nội dung, chạy:
+Copy `.claude/skills/srs-documenter/assets/gen_srs_mau.py` sang `.plans/[feature]/gen_srs.py`,
+đổi phần nội dung, chạy:
 
 ```bash
-cd d:/CompanyProject/hrm/scripts && python gen-srs-<ten-man>.py
+python .plans/[feature]/gen_srs.py
+```
+
+⚠️ Đầu file thêm đoạn sau, nếu không `print()` chuỗi tiếng Việt sẽ ném `UnicodeEncodeError`
+(console Windows mặc định cp1252):
+
+```python
+import sys
+try: sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception: pass
 ```
 
 ### Bước 4: Tự kiểm tra trước khi báo xong
@@ -305,8 +331,14 @@ print('còn sơ đồ ký tự:', len(bad))    # PHẢI = 0
 
 - **File chính:** `.plans/[feature]/SRS - <Tên màn hình>.docx`
   (nhánh `gop_db` → `.plans/gop-db/[feature]/…`)
-- **Script sinh:** `scripts/gen-srs-<ten-man>.py` — commit kèm để tái sinh được
-- Ảnh PNG chỉ là file trung gian, đã nhúng trong .docx nên không cần commit
+- **Script sinh:** `.plans/[feature]/gen_srs.py` — đặt cùng thư mục tài liệu để **commit kèm được**,
+  nhờ đó tái sinh lại file .docx bất cứ lúc nào.
+  ⚠️ KHÔNG để ở `hrm/scripts/` — thư mục đó nằm ngoài mọi git repo nên "commit kèm" là bất khả thi.
+- **Ảnh PNG: CHỈ ĐỂ LOCAL, KHÔNG commit.** Ảnh đã nhúng sẵn trong .docx nên người khác không cần
+  bản rời; đẩy lên chỉ làm nặng repo. `srs_docx_lib` mặc định ghi ảnh vào thư mục tạm của hệ điều
+  hành; nếu truyền `img_dir` để giữ lại thì đặt tên thư mục là `img/` hoặc `*_shots/` — `.gitignore`
+  đã chặn sẵn 2 dạng này.
+- Trước khi báo xong, chạy `git status`: chỉ được thấy `.docx` và `gen_srs.py`, không được thấy `.png`.
 
 > Bản HTML (`srs.html`) là format CŨ, chỉ giữ cho các feature đã sinh trước 2026-08-07.
 > Feature mới chỉ cần bản .docx theo form chuẩn.

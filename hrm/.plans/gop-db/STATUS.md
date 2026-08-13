@@ -19,6 +19,30 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Tài liệu TC + HDSD theo form mẫu của team (2026-08-13)
+
+Sinh lại **testcase** theo form mẫu chuẩn (17 cột, 2 khối summary DNS/TP) và **HDSD Word**
+cho **7 màn chuyển phân hệ của @junfoke** — tổng **623 test case** và **7 file HDSD**.
+Ảnh HDSD chụp thật trên cổng dev `hrm-crm.eteksofts.com` (22 ảnh, chỉ để local).
+
+| Màn hình | TC | P0 | HDSD |
+| --- | --- | --- | --- |
+| Danh mục tiền tệ | 117 | 49% | 17 trang |
+| Danh mục tài khoản | 128 | 66% | 16 trang |
+| Danh mục loại tài khoản | 104 | 61% | 16 trang |
+| Cấp dịch vụ bảo dưỡng | 75 | 56% | 11 trang |
+| Danh mục ghi chú kiểm tra bảo dưỡng | 75 | 55% | 11 trang |
+| Danh mục serial thiết bị làm dịch vụ | 67 | 63% | 11 trang |
+| Cập nhật nhanh giá dịch vụ | 57 | 63% | 11 trang |
+
+Đóng gói thêm 2 engine dùng chung vào skill (trước đây mỗi feature phải nhân bản ~1.300 dòng):
+`.claude/skills/testcase-documenter/assets/tc_engine.py` và
+`.claude/skills/hdsd-documenter/assets/hdsd_engine.py`.
+Generator của từng màn nằm cùng thư mục tài liệu (`gen_testcase*.py`, `gen_hdsd*.py`).
+
+Đã xóa 2 file `testcase.xlsx` bản cũ (format 15 cột, gộp nhiều màn) ở `finance-account-catalog` và
+`customer-care-maintenance-catalogs` — user chốt 2026-08-13, thay bằng file tách theo từng màn.
+
 ## Tài liệu SRS + Testcase (2026-08-07)
 
 Đã sinh `srs.html` + `srs.docx` + `testcase.xlsx` cho **6 màn nghiệp vụ của @junfoke**

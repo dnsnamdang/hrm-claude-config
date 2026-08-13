@@ -1001,3 +1001,10 @@ Xuất Excel đã chuyển hẳn sang FE (Phase 6), BE không còn route export.
 Bước tiếp theo: user rà bằng mắt `/customer-care/serials`; chốt cách lọc cho 13 bản ghi
 `status` 0/3; bật ERP local nếu muốn đối chiếu 2 màn (mục 5.5).
 Blocked: không.
+
+## Phase — Tai lieu ban giao (2026-08-13)
+
+- [x] `testcase.xlsx` — 67 TC (P0 63%); generator `gen_testcase.py`
+- [x] `HDSD_Danh muc serial thiet bi lam dich vu.docx` — 11 trang; generator `gen_hdsd.py`
+- [x] Anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)
+- TC va HDSD deu ghi ro diem cho chot: nhom serial co gia tri trang thai la khong lot vao bo loc
