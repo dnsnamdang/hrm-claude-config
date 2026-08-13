@@ -340,6 +340,11 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   — Bối cảnh port gốc: màn ERP `admin/warehouse/product_transfer_requests?type=all`, 3 bảng, mã `PYCCH-xxxxx`, 13 trạng thái → phân hệ **Tài chính** → nhóm **Xuất hàng** (slot `finance.js:134`).
   **HRM là bản thay thế lâu dài**, 2 cổng song song cùng bảng, KHÔNG đổi schema. HRM chỉ ghi status 2↔3; 1, 4–12 do chuỗi kho ERP đẩy.
   Chốt 6 QĐ: port đầy đủ (nút Tổng hợp mở tab ERP) · dùng lại quyền ERP + "Kế toán kho" · 1 màn list duy nhất (=type=all) · form đủ popup hàng + Xem tồn + giá/ĐVT · xóa giữ ERP (status=3 + người tạo) · nới validate after:today khi sửa.
+  **Đợt chỉnh 2026-08-13 (Phase 8, @khoipv) — CODE DONE, CHỜ USER TEST:** chuẩn hoá footer 2 màn
+  (form `create`/`edit` + màn chi tiết) sang `V2Footer` dùng chung. Nhãn đổi theo chuẩn footer:
+  "Lưu" → **"Lưu nháp"**, "In yêu cầu" → **"In"**, "Hủy" → **"Quay lại"**; nút **Lưu & Gửi duyệt giờ
+  có popup xác nhận**; thứ tự nút màn chi tiết thành *Sửa · In · Không duyệt · Tổng hợp · Quay lại*
+  (Tổng hợp qua slot `custom-actions`). Mất icon spinner ở 3 nút — guard chống bấm 2 lần vẫn còn trong JS.
   Spec: docs/superpowers/specs/gop-db/2026-08-05-finance-product-transfer-request-design.md | Tóm tắt: .plans/gop-db/finance-product-transfer-request/design.md
 
 - customer-care-services-catalog → @khoipv → .plans/gop-db/customer-care-services-catalog/plan.md
