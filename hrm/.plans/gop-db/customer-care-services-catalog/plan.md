@@ -1159,3 +1159,94 @@ không bám vào đâu. Không phải lỗi riêng màn này — mọi multi-sel
 - [x] Rà `.none-select-arrow` (rule ẩn mũi tên ở `custom-theme.scss`): chỉ 1 nơi dùng và đã comment,
       lại là Select2 single thuần — không xung đột
 - [ ] Chờ user test: popup chọn hàng hóa + các màn khác có multi-select (trong và ngoài modal)
+
+## Phase 11j — Xuất Excel: cảnh báo "Number stored as text" ở cột Mã dịch vụ (2026-08-13)
+
+**User báo:** mở file `Danh_sach_dich_vu.xlsx`, ô mã `01` (C7) hiện tam giác xanh
+*"The number in this cell is formatted as text or preceded by an apostrophe"*.
+
+**Nguyên nhân:** `ServiceExport` dùng `FromView` → Maatwebsite dựng file bằng **Html Reader** của
+PhpSpreadsheet, mỗi ô đi qua `DefaultValueBinder`:
+- `125` → nhìn như số → ghi thành **number** (căn phải)
+- `01` → có số 0 đứng đầu → binder giữ **text** → Excel gắn cờ *number stored as text*
+→ Không mất dữ liệu, nhưng cột Mã **không đồng nhất kiểu** và Excel cảnh báo.
+
+**Ràng buộc:** `phpoffice/phpspreadsheet` **1.25.2** — API chính thức `getIgnoredErrors()` chỉ có từ
+**1.26**; Html Reader 1.25 cũng chưa hỗ trợ `data-type` trên `<td>` → không ép kiểu trong blade được.
+
+**User chốt (2026-08-13):** ép text + tắt tam giác, **chỉ sửa BE của màn này** (không nâng vendor);
+phạm vi **cả vùng dữ liệu** (Tên · Mã · Giá · Công ty · Trạng thái), cột STT giữ number.
+
+- [x] `ServiceExport` implements `WithEvents` — `AfterSheet`: ép B4:F{last} thành `TYPE_STRING`
+      + number format `@`; cột A (STT) giữ number. Vùng đã ép lưu ở `textRange()` để controller vá tiếp
+- [x] File mới `app/ExcelExport/IgnoredErrorsPatcher.php` — vá `<ignoredErrors sqref=... numberStoredAsText="1"/>`
+      vào `xl/worksheets/sheet1.xml`, chèn **trước `<drawing>`** (đúng thứ tự schema OOXML, sai chỗ Excel báo hỏng file);
+      có guard chống vá 2 lần + fallback chèn trước `</worksheet>` nếu file không có ảnh
+- [x] `ServiceController::export()` — `Excel::raw()` → ghi file tạm → patch → `response()->download()->deleteFileAfterSend(true)`
+      (KHÔNG dùng `Excel::store()`: nó ghi qua disk Laravel nên đường dẫn temp tuyệt đối bị ghép vào gốc disk)
+- [x] Verify trên dữ liệu thật (215 gói): **1.071/1.071 ô vùng B..F đều là text** (0 ô sai kiểu),
+      mã toàn số `222` giữ nguyên dạng text · STT vẫn là number · `<ignoredErrors sqref="B4:F222">` có mặt và
+      **đứng trước `<drawing>`** · XML parse lại sạch · logo letterhead còn (1 drawing) · 3 dòng chữ ký còn nguyên
+- [x] Verify end-to-end qua chính `ServiceController::export()`: HTTP 200, `Content-Disposition` +
+      `Content-Type` xlsx đúng, file 90.732 bytes đã được vá
+- [ ] Chờ user test: mở bằng Excel thật, hết tam giác xanh
+
+**Ghi nhận (không sửa):** dòng chữ ký cuối (Ngày…/Người lập/(Ký, họ tên)) cũng nằm trong vùng ép text
+và vùng `ignoredErrors` — vô hại, vì vốn đã là chữ.
+
+**Nợ kỹ thuật:** khi dự án nâng `phpoffice/phpspreadsheet` lên >= 1.26 thì bỏ `IgnoredErrorsPatcher`
+và dùng API chính thức `Cell::getIgnoredErrors()->setNumberStoredAsText(true)`.
+
+## Phase 11k — Xuất Excel: đổi "dịch vụ" → "gói bảo dưỡng", nới cột, giá xuống dòng (2026-08-13)
+
+**User yêu cầu:** file Excel còn dùng chữ "dịch vụ" (di sản copy từ ERP) trong khi màn danh sách đã
+đổi hết sang "gói bảo dưỡng"; các cột hẹp; cột Giá gộp nhiều cấp trên 1 dòng dài.
+
+**Chốt:** đổi tên file + tiêu đề + 4 header cột; nới rộng toàn bộ cột; mỗi mức giá theo cấp dịch vụ
+xuống 1 dòng riêng trong ô. Giữ nguyên tên danh mục **"cấp dịch vụ"** (là danh mục riêng, không đổi).
+
+- [x] `hrm-client/pages/customer-care/services/index.vue` — tên file tải về `Danh_sach_dich_vu.xlsx`
+      → `Danh_sach_goi_bao_duong.xlsx` (tên thật khi lưu do FE quyết định)
+- [x] `ServiceController::export()` — đổi tên file ở `response()->download()` cho khớp FE
+- [x] `resources/views/exports/services.blade.php` — tiêu đề "Danh sách gói bảo dưỡng"; header
+      Tên / Mã / Giá / Công ty quản lý **gói bảo dưỡng**; mỗi cấp giá 1 dòng (`<br>`)
+- [x] `ServiceExport` — khai độ rộng cột (nguồn duy nhất, bỏ `width` trong blade) + wrap text
+      + chiều cao dòng tự động cho vùng dữ liệu
+- [x] Verify: sinh file thật qua chính luồng export, đọc lại bằng PhpSpreadsheet đối chiếu
+      header / độ rộng / ô Giá có ký tự xuống dòng / wrapText / vùng ép text còn nguyên
+- [ ] Chờ user test: mở bằng Excel thật
+
+### Checkpoint — 2026-08-13
+Vừa hoàn thành: Phase 11k — file xuất Excel đổi hết "dịch vụ" → "gói bảo dưỡng" (tên file + tiêu đề
++ 4 header cột), nới rộng 6 cột, cột Giá tách mỗi cấp dịch vụ 1 dòng.
+Đang làm dở: không có — code xong, đã verify bằng file sinh thật.
+Bước tiếp theo: user mở file bằng Excel thật để xác nhận (rộng cột vừa mắt, giá xuống dòng đúng ý).
+Blocked:
+
+## Phase 11l — Form gói bảo dưỡng dùng V2Footer chuẩn (2026-08-13)
+
+**User yêu cầu:** màn (form Thêm/Sửa) chưa dùng `V2Footer` — đang tự dựng hàng nút cuối trang.
+
+**Chốt:** dùng chuẩn `V2Footer` cố định đáy; nút Lưu lấy từ `menu.submit_form`
+(**chấp nhận mất icon spinner**, chống bấm 2 lần vẫn còn ở đầu `save()` + loading bar toàn cục);
+nút Sao chép đi qua slot `custom-actions`; nút "Hủy" đổi thành "Quay lại" của footer.
+
+- [x] `ServiceFormComponent.vue` — thay khối `d-flex justify-content-end` bằng `<V2Footer>`
+      (`:menu="footerMenu"` = `{ submit_form: true }`, `url-back="/customer-care/services"`,
+      `@submitForm="save"`, slot `custom-actions` chứa nút Sao chép)
+- [x] import + đăng ký component `V2Footer`, thêm computed `footerMenu`
+- [x] `.service-form { padding-bottom: 90px }` — footer `position: fixed` cao 50px sẽ che khối cuối
+- [x] Giữ nguyên `goBack()` (luồng sau khi lưu) và popup "Thông tin chưa lưu" ở trang vỏ
+      (`unsavedChildFormMixin.beforeRouteLeave` — không phụ thuộc nút bấm)
+- [x] Verify: SFC parse + template compile sạch (vue-template-compiler), script parse sạch (babel),
+      8 check template + 5 check script + style; `V2Footer` có thật slot `custom-actions` và
+      `menu.submit_form`; không đụng id modal (`confirm-service-form` vs `confirm` của footer)
+- [ ] Chờ user test trình duyệt: 2 màn `create` + `edit`
+
+**Ghi nhận:** cả 2 trang `create.vue` / `_id/edit.vue` dùng chung `ServiceFormComponent` nên chỉ sửa 1 file.
+
+### Checkpoint — 2026-08-13
+Vừa hoàn thành: Phase 11l — form Thêm/Sửa gói bảo dưỡng chuyển sang footer chuẩn `V2Footer`.
+Đang làm dở: không có.
+Bước tiếp theo: user mở `/customer-care/services/create` và màn sửa để xác nhận footer + nút Sao chép.
+Blocked:

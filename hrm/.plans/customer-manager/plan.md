@@ -363,3 +363,87 @@ sang ERP thật.
 Đang làm dở: không có.
 Bước tiếp theo: user mở `/assign/customers/43711/manager` → tab Báo giá / Hợp đồng / Trang thiết bị → bấm In.
 Blocked: không có.
+
+---
+
+## Phase 8 — Parity ERP: thiếu ô "Hàng công ty tương đương" khi tick "Hàng công ty không bán"
+
+User báo: popup **Thêm mới thiết bị NCC khác**, khi tick "Hàng công ty không bán" thì các trường
+khác với popup ERP. Đối chiếu `erp/resources/views/customercare/customermanager/show.blade.php:1074-1196`
+(modal `#externalEquipment`): ERP có thêm trường **"Hàng công ty tương đương" (\*)** — picker sản phẩm,
+chỉ hiện khi tick, và **ghi thẳng vào `product_id`** (`show.blade.php:1407-1411` `addProductEquiValent`),
+BE ERP bắt buộc `product_id => required|exists:products,id` kể cả khi đã tick
+(`AddExternalEquipmentRequest.php:32`). HRM thiếu ô này → lưu ra `product_id = NULL`,
+`product_name = ''` (cột NOT NULL nhưng MySQL không bật STRICT nên nuốt thành rỗng).
+Hệ quả: check trùng theo `product_id` mất tác dụng, thiết bị rơi vào nhóm "Chưa phân nhóm"
+(nhóm theo `products.group_id`), serial gắn theo `product_id` cũng lệch.
+Dữ liệu thật xác nhận ý đồ ERP: 2.600 dòng `external_equipments`, 1.300 dòng hàng không bán
+nhưng chỉ 27 dòng `product_id` rỗng.
+
+Phạm vi user chốt: **thêm ô còn thiếu + siết validate BE**. KHÔNG xếp lại thứ tự trường,
+KHÔNG sửa nhãn (giữ "(\*)" ở Nhà cung cấp và chữ "(tháng)" ở Thời gian sử dụng), KHÔNG đụng dữ liệu cũ.
+
+- [x] P8-FE1: `EquipmentTab.vue` — thêm ô **Hàng công ty tương đương (\*)**, hiện khi
+      `eqModalType === 'external_equipment' && eqForm.product_no_sale`, đặt full-width ngay dưới ô
+      "Trang thiết bị" (giữ layout 2 cột hiện có). Ghi vào `eqForm.product_id`.
+- [x] P8-FE1b: cách chọn = **popup tìm hàng hóa** như ERP (user chốt, sau khi bản đầu dùng `V2BaseSelectRemote`):
+      ô chỉ đọc + nút kính lúp → **dùng lại `pages/customer-care/services/components/ProductSearchModal.vue`**
+      của màn Gói bảo dưỡng, prop `addOnRowClick` (click 1 dòng là chọn). KHÔNG sửa gì trong component đó.
+      Đặt popup NGOÀI `b-modal` thiết bị + thêm `no-enforce-focus` cho `b-modal` (focus-trap của b-modal
+      cướp focus ô tìm kiếm — tiền lệ `pages/human/districts/components/DistrictModel.vue:2`)
+- [x] P8-FE1c: ô hiển thị hàng tương đương dùng **V2Base** (user yêu cầu): `V2BaseInput` (`readonly` + `hasSuffix`,
+      click mở popup) — bỏ `input-group` + `<input>`/`<button>` thuần Bootstrap.
+      Nút kính lúp: làm rồi nhưng **user yêu cầu bỏ** → chỉ còn ô, bấm vào ô là mở popup. Style scoped `.eq-picker-input ::v-deep .v2-input { cursor: pointer }` (UA stylesheet ép
+      `cursor: text` cho input nên phải nhắm thẳng `.v2-input`, không thể trông vào kế thừa từ wrapper)
+- [x] P8-FE2: `validateEquipment()` — khi đã tick thì bắt buộc `product_id`, lỗi inline `V2BaseError`
+- [x] P8-FE3: `openEdit()` + `emptyEqForm()` + `onSelectProduct()` — thêm `equivalent_product_name`
+      để preload đúng nhãn picker khi mở form Sửa
+- [x] P8-BE1: `CustomerManagerService::buildExternalRows()` — trả thêm `equivalent_product_name`
+      (tên thật join từ `products`; key `product_name` đang bị ghi đè bằng `product_no_sale_name`)
+- [x] P8-BE2: `addExternalEquipment()` + `updateExternalEquipment()` — validate như ERP:
+      `product_id` required + exists, `product_no_sale_name` required khi tick, `qty` required|integer|min:1;
+      ném `ValidationException` (wrapper `equipmentAction()` đã rethrow sẵn → 422 chuẩn)
+- [x] P8-V: Verify — `php -l`, compile SFC, gọi service qua tinker trên KH thật (có rollback)
+
+### Checkpoint — 2026-08-13 (Phase 8)
+Vừa hoàn thành: bổ sung ô "Hàng công ty tương đương" (parity ERP) + siết validate BE cho thiết bị NCC khác.
+- FE `EquipmentTab.vue`: ô mới `V2BaseSelectRemote` v-model `eqForm.product_id`, hiện khi `external_equipment` + đã tick;
+  `equivalent_product_name` thêm vào `emptyEqForm/openEdit/onSelectProduct` (2 ô picker dùng chung `product_id` nên
+  chọn ở ô nào cũng cập nhật nhãn ô kia); `validateEquipment()` chặn thiếu hàng tương đương khi đã tick.
+- BE `CustomerManagerService`: `validateExternalEquipment()` dùng chung cho add + update
+  (product_id required|integer|exists, product_no_sale_name required khi tick, qty required|integer|min:1),
+  message tiếng Việt đổi theo trạng thái tick; `buildExternalRows()` trả thêm `equivalent_product_name`.
+⚠️ Bẫy đã dính và đã sửa: rule `exists:<db>.products,id` — Laravel đọc "a.b" là **connection**.table
+  chứ không phải database.table → phải để trần `exists:products,id` (products nằm trên connection mặc định).
+Verify (chạy thật trên DB `gop_db`): php -l PASS · SFC compile 0 lỗi + script parse PASS ·
+  tinker 6 case add (tick thiếu product_id → "Vui lòng chọn hàng công ty tương đương"; không tick thiếu →
+  "Vui lòng chọn trang thiết bị"; product_id ma → "không tồn tại"; qty=0 → chặn; hợp lệ → tạo được, rollback) ·
+  2 case update (thiếu product_id → 422; hợp lệ → ok, rollback, bản ghi NGUYÊN VẸN) ·
+  `buildExternalRows` KH7620: product_name='Máy cân bằng động HM30BU' vs
+  equivalent_product_name='Máy cân bằng động ngang gối cứng HM4BU' → đúng 2 tên khác nhau, chứng minh cần field riêng.
+Đang làm dở: không có.
+Bước tiếp theo: user mở `/assign/customers/<id>/manager` → tab Trang thiết bị → "Thêm thiết bị NCC khác" →
+  tick "Hàng công ty không bán" → kiểm tra ô "Hàng công ty tương đương" + thử lưu khi bỏ trống.
+Blocked: không có (tài khoản dev 0 quyền nên không tự bấm UI được — route gắn `erpPermission:Sửa khách hàng`).
+
+### Checkpoint — 2026-08-13 (Phase 8 — đổi sang popup tìm hàng hóa)
+Vừa hoàn thành: user chỉ ra ERP dùng **popup tìm kiếm hàng hóa** (`#searchProductEquivalent`) cho ô này,
+không phải dropdown. Đã đổi ô "Hàng công ty tương đương" sang ô chỉ đọc + nút kính lúp mở popup.
+**Tái dùng `ProductSearchModal.vue` của màn Gói bảo dưỡng** (user chỉ định) — 17 bộ lọc + phân trang
++ 12 cột, gọi `customer-care/services/search-products` + `product-catalogs` (2 route CHỈ có `auth:api`,
+không gắn `checkPermission` → dùng được từ màn khách hàng). Component đó **không bị sửa 1 dòng nào**
+(`git diff --name-only` chỉ có EquipmentTab.vue).
+Quyết định giữ nguyên: ô **Trang thiết bị** (khi KHÔNG tick) vẫn là `V2BaseSelectRemote` theo Phase 6 —
+user chốt chỉ đổi riêng ô Hàng tương đương, chấp nhận 2 kiểu chọn trong cùng modal.
+⚠️ Bẫy đã xử lý: `b-modal` bẫy focus (focusin → kéo về .modal-content) sẽ làm không gõ được vào ô tìm
+kiếm của popup con → thêm `no-enforce-focus`, và render popup NGOÀI `b-modal`.
+📌 Còn lệch (chấp nhận, do tái dùng nguyên trạng): popup giữ tiêu đề "Chọn hàng hóa áp dụng",
+cột checkbox và nút "Thêm N hàng hoá" của chế độ chọn nhiều — ô này chỉ lấy phần tử đầu.
+Muốn bỏ thì phải thêm prop vào component dùng chung ⇒ cần hỏi trước theo quy tắc dự án.
+Verify: 2 SFC compile 0 lỗi + script parse PASS · route `customer-care/services/{search-products,product-catalogs,search-models}`
+tồn tại, middleware group chỉ `auth:api`, 3 method có trong `ServiceController`.
+(`php artisan route:list` không chạy được do lỗi SẴN CÓ của `PermissionHelper.php:23` khi chạy CLI — không liên quan thay đổi này.)
+Đang làm dở: không có.
+Bước tiếp theo: user test trình duyệt — tick "Hàng công ty không bán" → bấm kính lúp → popup tìm hàng hóa
+mở đè lên modal thiết bị, gõ tìm được, click 1 dòng → tên hàng điền vào ô → lưu.
+Blocked: không có.

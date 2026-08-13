@@ -37,6 +37,38 @@
       Ở lại giữ nguyên dữ liệu · lưu xong → không hỏi
 - [x] T4.2 Cập nhật `.claude/skills/unsaved-changes/SKILL.md` bổ sung mục modal
 
+## Phase 5 — Đợt bổ sung (@khoipv, 2026-08-12)
+
+User yêu cầu bổ sung popup cho 4 màn: danh mục ngân hàng · danh mục tài khoản ngân hàng ·
+danh mục gói bảo dưỡng · yêu cầu chuyển hàng.
+Rà lại thì **3/4 màn đã làm ở đợt 1** → chỉ còn màn ngân hàng (`/human/banks`) là chưa có.
+
+- [x] T5.1 `pages/human/banks/components/BankModel.vue` — modal Tạo mới/Sửa/Xem ngân hàng
+      (`unsavedModalMixin`, snapshot `this.data` mặc định, ref `my-modal` mặc định → không phải override)
+- [x] T5.2 `pages/human/banks/components/BankBranchesAddModel.vue` — modal Thêm/Sửa chi nhánh
+      (như trên)
+- [x] T5.3 Rà 3 màn đợt 1 user nêu tên — **đã đúng khuôn, không phải sửa gì**:
+      `finance/account-banks/AccountBankModal.vue` (3 sự kiện + `markFormPristine` cuối `loadDetail`
+      vì `open()` show trước khi load) · `customer-care/services/*` (`unsavedChildFormMixin` ở
+      create/edit + `unsavedChangesMixin` ở `ServiceFormComponent`, snapshot gộp `form` + `maintains`
+      + `levelCols` + `groups` + `attachmentsList` + `newFiles.length`) ·
+      `finance/product-transfer-requests/*` (cùng khuôn, `markFormSaved()` ở cả 2 nhánh lưu)
+- [x] T5.4 Verify parse template + script 5 file (vue-template-compiler + @babel/parser) → PASS
+- [x] T5.6 User báo popup xác nhận ở màn ngân hàng **to hơn** popup màn dự án tiền khả thi.
+      Truy ra: 2 màn vốn dùng CHUNG đúng 1 popup (`$bvModal.msgBoxConfirm`, options y hệt ở cả
+      `unsavedChangesMixin` lẫn `unsavedModalMixin`) — thủ phạm là CSS khung modal của chính màn
+      ngân hàng khai `::v-deep .modal-dialog { min-width: 600px; max-width: 800px }` **trần**,
+      phủ luôn popup mở chồng lên. Fix: tách khối CSS khung modal sang block `<style>` KHÔNG scoped,
+      bọc trong id modal (`#modal-bank` / `#modal-bank-branches` / `#modal-bank-branches-add`)
+      → popup về 500px mặc định. Sửa 3 file, gồm cả `BankBranchesModel.vue` (không gắn guard
+      nhưng CSS cũng leak).
+      ⚠️ Lưu ý chung cho các đợt sau: modal nào khai `::v-deep .modal-dialog/.modal-header/...`
+      trần đều làm popup xác nhận méo — rà khi gắn guard.
+- [ ] T5.5 **CHƯA TEST TRÌNH DUYỆT** — 5 ca/modal cho 2 modal màn ngân hàng + xác nhận kích thước popup
+
+**Ngoài phạm vi T5:** `BankBranchesModel.vue` (modal danh sách chi nhánh) — chỉ có ô lọc
+Tỉnh/TP + Tên chi nhánh, không phải form nhập liệu lưu DB → không gắn guard.
+
 ## Phát sinh khi làm
 
 - Thêm mixin thứ 3 `unsavedChildFormMixin.js`: 4 màn (device-errors, services, accounts,

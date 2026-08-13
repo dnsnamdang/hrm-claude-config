@@ -676,3 +676,40 @@ Vừa hoàn thành: ô "Mã yêu cầu" trong lọc nâng cao tự gọi API khi
 Đang làm dở: không.
 Bước tiếp theo: user hard-refresh `/finance/product-transfer-requests`, mở lọc nâng cao gõ mã.
 Blocked: không.
+
+## Phase 8 — Dùng footer chuẩn V2Footer (2026-08-13, @khoipv)
+
+**User yêu cầu:** cả màn phiếu yêu cầu chuyển hàng chưa dùng `V2Footer` — 2 chỗ tự dựng hàng nút
+cuối trang: form (`create` + `_id/edit` dùng chung `ProductTransferRequestForm.vue`) và màn chi tiết
+(`_id/index.vue`). Trang `_id/print.vue` giữ nguyên (nút In thuộc khu vực in).
+
+**User chốt 3 điểm khi chuẩn hoá:**
+1. Nút "Lưu" (status 3 = *Đang tạo*) → dùng `menu.submit_and_draft`, **nhãn đổi thành "Lưu nháp"**
+2. Nút "Lưu & Gửi duyệt" (status 2 = *Chờ duyệt*) → `menu.save_and_submit_approve`, **có thêm popup
+   xác nhận** sẵn có của V2Footer (trước đây bấm là gửi luôn)
+3. Màn chi tiết: "In yêu cầu" → **nhãn chuẩn "In"** (`menu.print`)
+Chấp nhận **mất icon spinner** ở 3 nút (Lưu, Lưu & Gửi duyệt, Không duyệt) — chống bấm 2 lần vẫn còn
+trong JS (`save()`: `if (this.isSubmitSave) return`; `doReject()`: `if (this.rejecting) return`).
+
+- [x] `ProductTransferRequestForm.vue` — `<V2Footer :menu="{ submit_and_draft, save_and_submit_approve }"`
+      `url-back="/finance/product-transfer-requests"` `@submitAndDraft="save(3)"` `@saveAndSubmitApprove="save(2)"`;
+      import + đăng ký component + computed `footerMenu`; `.ptr-form { padding-bottom: 90px }`
+- [x] Dọn code chết theo: bỏ `cancel()` (chỉ gọi `goBack()`, giờ footer đi qua `url-back`),
+      bỏ state `submittingStatus` (chỉ dùng cho spinner đã bỏ), bỏ import `V2BaseButton` (không còn nút nào)
+- [x] `_id/index.vue` — `<V2Footer :menu="{ edit: is_can_edit, print: true, reject_approve: is_can_approve }"`
+      `@print="printRequest"` `@rejectApprove="askReject"` `@edit="goEdit"`; nút **Tổng hợp** (mở ERP tab mới)
+      qua slot `custom-actions`; `.ptr-detail { padding-bottom: 90px }`
+- [x] Verify: 2 SFC parse + template compile 0 lỗi, script parse sạch, 13 + 11 check khớp;
+      V2Footer có đủ 5 khoá menu đang dùng; id modal riêng (`confirm-ptr-form`, `confirm-reject-ptr`)
+      không trùng id `confirm` của footer
+- [ ] Chờ user test trình duyệt: create · edit · chi tiết (nút hiện đúng theo quyền)
+
+⚠️ **Thứ tự nút màn chi tiết đổi** theo thứ tự cố định của V2Footer:
+cũ *In yêu cầu · Tổng hợp · Không duyệt · Sửa · Quay lại* → mới **Sửa · In · Không duyệt · Tổng hợp · Quay lại**
+(nút Sửa cũng từ `secondary` thành `primary` theo chuẩn footer).
+
+### Checkpoint — 2026-08-13
+Vừa hoàn thành: Phase 8 — 2 màn form + chi tiết chuyển sang footer chuẩn `V2Footer`.
+Đang làm dở: không có.
+Bước tiếp theo: user test trình duyệt 3 màn (create · edit · chi tiết).
+Blocked:

@@ -164,6 +164,38 @@ Chỉ đụng đúng 1 file: `hrm-client/components/subsystem-menu/master-data.j
 
 ---
 
+## Phase 12 — Dọn nhãn menu phân hệ CSKH (2026-08-13, @khoipv)
+
+Yêu cầu user: nhóm `Danh mục - Dịch vụ` bỏ đuôi `- Dịch vụ`, bỏ tiền tố "Danh mục" ở các mục
+con, tách `Cập nhật nhanh giá dịch vụ` ra ngoài. Chỉ đụng đúng 1 file:
+`hrm-client/components/subsystem-menu/customer-care.js`.
+
+- [x] `Danh mục - Dịch vụ` → `Danh mục`
+- [x] Bỏ tiền tố `Danh mục` ở 4 nhãn con: `Công việc, lỗi thiết bị`, `Gói bảo dưỡng`,
+      `Ghi chú kiểm tra bảo dưỡng`, `Dịch vụ sửa chữa và chi phí khác`,
+      `Serial thiết bị làm dịch vụ` (`Cấp dịch vụ bảo dưỡng` vốn không có tiền tố)
+- [x] Tách `Cập nhật nhanh giá dịch vụ` khỏi nhóm → **item cấp 1 độc lập**
+      (`icon: 'ri-price-tag-3-line'`, `link: '/customer-care/service-price-config'`),
+      đặt ngay sau nhóm `Danh mục`. Nhóm `Danh mục` còn 6 mục
+- [x] Giữ `isShow` dạng **mảng quyền** `['Cập nhật nhanh giá dịch vụ']` (KHÔNG đổi thành `true`
+      như `Ngân hàng` ở Phase 11) vì màn này có gate quyền — mảng chạy đúng ở cả 2 kiểu sidebar:
+      hub (`hub.js::isScreenVisible`) và dọc (`Sidebar.vue::isShowMenuParent` nhánh `Array.isArray`)
+- [x] Verify: parse file bằng Node → 6 item cấp 1, nhóm `Danh mục` 6 con, không có link trùng
+- [x] Verify: `deriveHubNavLinks()` thu đúng `Cập nhật nhanh giá dịch vụ` thành nút rail đi thẳng
+      (`hubNavLinksFor()` loại link `/customer-care/dashboard` vì rail đã có nút Tổng quan)
+- [x] Verify: `walkMenu()` đi cả item cấp 1 có `link` → `/customer-care/service-price-config`
+      vẫn trong registry, `resolveSubsystem()` không đổi hành vi
+- [x] Verify: class `.ri-price-tag-3-line` có thật trong
+      `assets/scss/custom/plugins/icons/_remixicon.scss:4538`
+
+**Không đụng tới:** `sale-hub.js` (phân hệ Bán hàng, có khối nhãn viết tắt "DM ..." riêng cho
+CSKH — nằm ngoài yêu cầu), tiêu đề màn ở `pages/customer-care/**` (vd "Danh mục gói bảo dưỡng"
+trong `services/index.vue`), `subsystems.js`.
+**Chưa làm:** xem bằng mắt trên browser (gộp vào Phase 10). Nhãn phân hệ `CSKH` ở
+`subsystems.js:451` — user hỏi nhưng chưa chốt tên mới.
+
+---
+
 ## Checkpoint — 2026-08-01
 
 **Vừa hoàn thành:** Phase 0-9. Toàn bộ code đã xong và **kiểm thử tự động PASS hết** bằng cách
