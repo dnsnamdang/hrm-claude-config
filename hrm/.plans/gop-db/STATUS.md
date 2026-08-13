@@ -356,6 +356,20 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   type=24 (101023-101025) · mirror `employee_has_roles` sang model_type HRM · INSERT
   `role_has_permissions` cho Super admin; DB local còn thiếu quyền CSKH 1115-1120 của 2 feature trước.
   Tồn: checklist "Verify tổng thể" cuối plan.md chưa tick (regression 4 màn CSKH cũ, round-trip ERP↔HRM 2 chiều).
+  **Đợt chỉnh 2026-08-13 (Phase 11j-11l, @khoipv) — CODE DONE, CHỜ USER TEST:**
+  · **11j** — file xuất Excel hết cảnh báo "Number stored as text" ở cột Mã: `ServiceExport` ép cả vùng
+    B..F thành text + `app/ExcelExport/IgnoredErrorsPatcher.php` vá thẻ `<ignoredErrors>` vào
+    `sheet1.xml` (phpspreadsheet 1.25 chưa có API `getIgnoredErrors()`; thẻ PHẢI đứng trước `<drawing>`).
+  · **11k** — file Excel đổi hết "dịch vụ" → "gói bảo dưỡng" (tên file `Danh_sach_goi_bao_duong.xlsx`
+    ở CẢ `index.vue` lẫn `ServiceController::export()`, tiêu đề + 4 header cột); độ rộng cột chuyển về
+    khai 1 chỗ `ServiceExport::COLUMN_WIDTHS` (blade không khai `width` nữa); cột Giá tách **mỗi cấp
+    dịch vụ 1 dòng** bằng `<br>` — Html Reader đổi thành `\n` và tự bật wrap.
+    Tên danh mục "cấp dịch vụ" GIỮ NGUYÊN (là danh mục riêng, không đổi theo).
+  · **11l** — form Thêm/Sửa dùng footer chuẩn `V2Footer` thay hàng nút tự dựng: `menu.submit_form`
+    (nút Lưu), Sao chép qua slot `custom-actions`, "Hủy" → "Quay lại" (`url-back`), `.service-form`
+    chừa `padding-bottom: 90px`. ⚠️ Đánh đổi user đã chốt: **nút Lưu mất icon spinner** (chống bấm 2
+    lần vẫn còn ở đầu `save()`); popup "Thông tin chưa lưu" không ảnh hưởng vì nằm ở `beforeRouteLeave`
+    của trang vỏ.
   Spec: docs/superpowers/specs/gop-db/2026-08-04-customer-care-services-catalog-design.md | Ledger: .plans/gop-db/customer-care-services-catalog/sdd-progress.md
 
 - bo-sung-menu-phan-he → @junfoke (Phase 11: @khoipv) → .plans/gop-db/bo-sung-menu-phan-he/plan.md

@@ -43,3 +43,16 @@ công ty, hàng hoá liên quan, in phiếu, sao chép, export Excel, đính kè
   theo quyết định user.
 - FE đọc skill `button-convention`, `modal-popup`, `print-page` trước khi code; validate inline
   chuẩn CLAUDE.md; áp 4 bài học phân trang finance-account-catalog.
+
+## Quyết định bổ sung (2026-08-13, Phase 11j-11l)
+
+6. **Từ ngữ trong file xuất Excel bám theo màn**: bỏ hết chữ "dịch vụ" (di sản ERP) → "gói bảo dưỡng"
+   ở tên file (`Danh_sach_goi_bao_duong.xlsx`), tiêu đề và 4 header cột. Riêng **"cấp dịch vụ"** là
+   tên danh mục khác nên giữ nguyên.
+7. **Độ rộng cột file Excel khai ở `ServiceExport::COLUMN_WIDTHS`** (không dùng `ShouldAutoSize`,
+   không khai `width` trong blade) — autosize không hiểu wrap text sẽ kéo cột Tên/Giá rộng vô lý.
+   Cột Giá hiển thị **mỗi cấp dịch vụ 1 dòng** (`<br>` trong blade → Html Reader đổi thành `
+`).
+8. **Form Thêm/Sửa dùng `V2Footer`** thay vì hàng nút tự dựng. Đánh đổi user chốt: nút Lưu chuẩn của
+   footer **không có spinner** (chống bấm 2 lần vẫn còn trong `save()`); nút Sao chép đi qua slot
+   `custom-actions`; "Hủy" đổi tên thành "Quay lại".
