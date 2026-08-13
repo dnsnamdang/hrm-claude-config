@@ -85,6 +85,53 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- device-errors-load-data → @khoipv → .plans/gop-db/device-errors-load-data/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-13)**, nhánh `gop_db`.
+  Màn `customer-care/device-errors` vào là hiện "Không có dữ liệu phù hợp bộ lọc." dù bảng có 2768 dòng:
+  `mounted()` `await loadOptionsData()` (2 API dropdown tuần tự ~8s) TRƯỚC `loadData()`, mà `loading`
+  khởi tạo `false` nên bảng in nhầm empty text trong lúc chờ. Sửa 1 file FE: `loading: true`,
+  `loadOptionsData()` chạy nền, 2 request options gọi song song. Không đụng BE.
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-device-errors-load-data-design.md | Tóm tắt: .plans/gop-db/device-errors-load-data/design.md
+
+- pagination-100-rows → @khoipv → .plans/gop-db/pagination-100-rows/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-13)**, nhánh `gop_db`.
+  Thêm option **100** vào ô "Số dòng/trang" cho các màn đã chuyển sang HRM ở phần gop-db.
+  Khảo sát ra **1 điểm sửa duy nhất**: default prop `pageSizeOptions` của `components/V2BaseDataTable.vue`
+  (`[5,10,20,50]` → `[5,10,20,50,100]`) — 16 màn gop-db (8 finance + 6 customer-care +
+  `/assign/customers` + `/human/banks`) đều dùng default này, không màn nào tự truyền list thiếu 100.
+  `V2BasePagination` và 3 modal tìm kiếm gop-db đã có sẵn 100 từ trước.
+  ⚠️ User chốt sửa thẳng **component dùng chung** (93 file đang dùng, 75 file ngoài gop-db cũng có thêm 100)
+  thay vì truyền prop 16 chỗ — chỉ THÊM option, không màn nào mất lựa chọn cũ. Giữ option `5` để user
+  đang để 5 dòng/trang không bị select lệch giá trị.
+  BE **không phải sửa dòng nào** (đã soát thật): phần lớn endpoint truyền thẳng `per_page` vào
+  `paginate()`; 3 chỗ cap `min(100, …)` (`DeviceErrorController:303`, `ServiceService:484`/`:719`)
+  thì 100 đúng bằng trần nên vẫn lọt; `/human/banks` dùng param `limit` (FE-BE khớp, không cap).
+  ⚠️ Muốn thêm option `200`/`500` sau này thì 3 chỗ cap đó sẽ âm thầm ghim lại 100 → phải sửa BE trước.
+  📌 Ghi nhận: repo có **2 component phân trang song song** với default lệch nhau
+  (`V2BaseDataTable` `[5,10,20,50]` vs `V2BasePagination` `[10,20,50,100]`) — đợt này không gộp;
+  ai sửa phân trang lần sau nhớ có 2 nơi.
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-pagination-100-rows-design.md | Tóm tắt: .plans/gop-db/pagination-100-rows/design.md
+
+- customer-date-no-future → @khoipv → .plans/gop-db/customer-date-no-future/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-13)**, nhánh `gop_db`.
+  Chặn chọn/nhập **ngày tương lai** ở 3 ô ngày màn KH `/assign/customers`: Ngày cấp (`grant_date`),
+  Sinh nhật KH (`date_of_birth`), Sinh nhật người liên hệ (`contacts[].date_of_birth`) — hôm nay vẫn hợp lệ.
+  Chặn **2 lớp** vì `V2BaseDatePicker` để `editable` mặc định `true` (xám lịch thôi là gõ tay vẫn lọt):
+  FE thêm method `disableFutureDate()` + prop `:disabled-date`; BE thêm `before_or_equal:today`
+  vào `SaveCustomerRequest` + `UpdateCustomerRequest` kèm 6 message tiếng Việt.
+  📌 **KHÔNG phải sửa component dùng chung**: `V2BaseDatePicker` đã khai sẵn prop `disabledDate`
+  (`Function`, mặc định `() => false`) truyền thẳng xuống `vue2-datepicker` → màn nào cần chặn ngày
+  chỉ việc truyền prop, khỏi đụng file dùng chung của ~93 màn.
+  Sửa 1 chỗ `CustomerForm.vue` → 5 màn cùng ăn (add · edit · chi tiết · quản lý KH · modal thêm nhanh).
+  📌 2 ô của KH nằm trong khối `v-if="form.customer_type == 1"`, khớp đúng nhánh rule BE cho KH cá nhân.
+  Không migration, không quyền mới, **không đụng dữ liệu cũ** — KH đang có ngày tương lai vẫn hiện
+  bình thường nhưng lần sửa sau sẽ bị BE chặn tới khi user sửa lại ngày.
+  Verify tự động: compile template + parse script, `php -l`, chạy thật `disableFutureDate` (hôm nay
+  false / mai true) và Laravel Validator (hôm nay + null PASS, mai FAIL đúng 3 trường, message tiếng Việt).
+  ⚠️ Lưu ý vận hành: `before_or_equal:today` so theo timezone app Laravel, không phải timezone trình duyệt.
+  Ngoài phạm vi (user chốt): ô ngày ở các màn khác (hồ sơ nhân sự, hợp đồng…).
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-customer-date-no-future-design.md | Tóm tắt: .plans/gop-db/customer-date-no-future/design.md
+
 - chuyen-menu-nhom-giai-phap → @khoipv → .plans/gop-db/chuyen-menu-nhom-giai-phap/plan.md
   Trạng thái: **HOÀN THÀNH — user xác nhận xong (2026-08-12)**, nhánh `gop_db`.
   **Không test Playwright** (user chốt) — chất lượng dựa vào bộ check tự động nạp thật module menu;
