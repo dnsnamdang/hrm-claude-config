@@ -77,3 +77,15 @@
       `app/Helper/CustomerOwnership.php`. Gộp bảng xong thì phần này nên bỏ luôn — ngoài phạm vi
       2 màn này
 - [ ] Chạy seeder quyền trên môi trường thật (local đã insert tay)
+
+## Phase — Tai lieu ban giao (2026-08-13)
+
+- [x] `testcase - Cap dich vu bao duong.xlsx` — 75 TC (P0 56%)
+- [x] `testcase - Danh muc ghi chu kiem tra bao duong.xlsx` — 75 TC (P0 55%)
+- [x] `HDSD_Cap dich vu bao duong.docx` — 11 trang
+- [x] `HDSD_Danh muc ghi chu kiem tra bao duong.docx` — 11 trang
+- [x] Generator chung: `gen_testcase.py`, `gen_hdsd.py`; anh nguon `hdsd_shots/` (CHI LOCAL)
+- [x] Da xoa `testcase.xlsx` cu (format 15 cot) — user chot 2026-08-13
+- [x] User cap quyen "Quan ly ghi chu kiem tra bao duong" -> da CHUP LAI anh danh sach
+      (co du nut Tao moi / Sua / Xoa) va bo sung anh cua so Them; sinh lai ca TC va HDSD.
+      Phat hien them: ca 2 man deu co nut "Luu & Tiep tuc" — truoc do tai lieu ghi thieu

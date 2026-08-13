@@ -128,7 +128,7 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 - `design.md`: tóm tắt chung, KHÔNG chứa spec chi tiết từng phase
 - `design-phase{N}.md`: spec đầy đủ (DB, BE, FE, edge cases) — tạo khi phase có nhiều thay đổi
 - `plan.md`: 1 file duy nhất chứa tất cả phase, append liên tục
-- SRS: **CHỈ 1 file `.docx`** đặt tên `SRS - <Tên màn hình>.docx`, lưu cùng folder feature. Bám **form chuẩn của team** (`D:\CompanyProject\Document\SRS - Lĩnh vực.docx`) — biểu đồ Use Case phải là **ảnh thật**, mục Layout màn hình **chỉ ghi đường dẫn vào màn**, KHÔNG chụp màn hình. Bắt buộc đọc `.claude/skills/srs-documenter/SKILL.md` trước khi viết. (`srs.html` là format CŨ, chỉ còn ở feature sinh trước 2026-08-07, không tạo mới)
+- SRS: **CHỈ 1 file `.docx`** đặt tên `SRS - <Tên màn hình>.docx`, lưu cùng folder feature. Bám **form chuẩn của team** (`.claude/skills/srs-documenter/assets/SRS_MAU.docx`) — biểu đồ Use Case phải là **ảnh thật**, mục Layout màn hình **chỉ ghi đường dẫn vào màn**, KHÔNG chụp màn hình. Bắt buộc đọc `.claude/skills/srs-documenter/SKILL.md` trước khi viết. (`srs.html` là format CŨ, chỉ còn ở feature sinh trước 2026-08-07, không tạo mới)
 - Testcase: chỉ Excel (`testcase.xlsx`) — lưu cùng folder feature
 - KHÔNG tạo `plan-phase{N}.md` riêng (đã có convention cũ nhưng không tiếp tục)
 

@@ -103,3 +103,9 @@ emit `column.key` chứ không có lớp map nào ở giữa.
 
 - [ ] Chạy seeder quyền trên môi trường thật (local đã insert tay)
 - [ ] User verify bằng mắt màn `/finance/currencies`
+
+## Phase — Tai lieu ban giao (2026-08-13)
+
+- [x] `testcase.xlsx` — 117 TC (P0 49%), form 17 cot 2 khoi DNS/TP; generator `gen_testcase.py`
+- [x] `HDSD_Danh muc tien te.docx` — 17 trang, 11 Heading 1, 8 bang, 6 anh chup that;
+      generator `gen_hdsd.py`, anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)

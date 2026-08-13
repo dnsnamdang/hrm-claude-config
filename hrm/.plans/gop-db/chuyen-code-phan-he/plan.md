@@ -1124,3 +1124,21 @@ Tài khoản DNS Admin (573 quyền), dev server cổng 3000. **0 console error*
       CSKH 4 nhóm · admin 5 · production 2 · master-data 2 · insurance 4 · legal 1 · iso 1 ·
       recruitment 1 · kpi 1 · tax 1 · asset 1 · operation 1.
       Bảo hiểm và Danh mục chung nay hiện icon riêng (khiên / thư mục) thay vì túi mua sắm.
+
+## Fix — rail sidebar hub không cuộn được trên màn hình thấp (2026-08-12)
+
+- [x] **Lỗi**: `.left-side-menu` của theme là `position: fixed; top: 0; bottom: 0` (cao đúng bằng
+      màn hình) nhưng KHÔNG có vùng cuộn. Phân hệ menu dài — Tài chính 14 nhóm — thì các mục cuối
+      bị cắt và không kéo xuống được. Đo trên local ở viewport 600px: mục cuối "Chờ duyệt" nằm ở
+      691px (tràn 91px), `scrollTop` của cả rail lẫn `.cats-list` đều đứng im ở 0.
+- [x] **Sửa** trong `components/sale/SaleHubSidebar.vue` (scoped, không đụng file theme chung):
+      `.sale-cats` thành `display: flex; flex-direction: column; overflow: hidden`; logo + ô tìm
+      kiếm `flex: 0 0 auto`; `.cats-list` nhận `flex: 1 1 auto; min-height: 0; overflow-y: auto`
+      + `overscroll-behavior: contain` + thanh cuộn mảnh 6px chỉ hiện khi hover.
+      ⚠️ `min-height: 0` là bắt buộc — thiếu nó flex item không co lại được nên `overflow-y` vô tác dụng.
+- [x] **Phạm vi**: component dùng chung cho toàn bộ phân hệ hub → tất cả cùng được sửa.
+      Tài chính chỉ là phân hệ lộ lỗi trước vì menu dài nhất.
+- [x] **Kiểm chứng trên local** (dev đang build): viewport 600px cuộn hết menu, mục cuối hiện đủ
+      (đáy 578 < 600); viewport 900px không sinh thanh cuộn thừa, layout không đổi; CSKH bình thường;
+      panel menu con vẫn mở đủ (`.misa-detail` là anh em của rail, không phải con → `overflow: hidden`
+      không cắt).

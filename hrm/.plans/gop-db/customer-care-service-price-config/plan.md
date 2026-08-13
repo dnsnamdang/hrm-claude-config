@@ -211,3 +211,11 @@ trên).
 Bước tiếp theo: user rà bằng mắt `/customer-care/service-price-config` + kiểm mục menu trong
 sidebar CSKH.
 Blocked: không.
+
+## Phase — Tai lieu ban giao (2026-08-13)
+
+- [x] `testcase.xlsx` — 57 TC (P0 63%); generator `gen_testcase.py`
+- [x] `HDSD_Cap nhat nhanh gia dich vu.docx` — 11 trang; generator `gen_hdsd.py`
+- [x] Anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)
+- Ghi nhan khi chup anh tren cong dev: dong ghi chu duoi 2 o hien "0 goi bao duong" trong khi hop
+  xac nhan hien 221 goi -> con so trong dong ghi chu co the chua kip nap luc mo man. CAN KIEM LAI

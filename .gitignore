@@ -13,3 +13,13 @@
 **/docs/test-cases/*.xlsx
 **/docs/test-cases/~$*
 **/docs/references/
+# Python cache của các generator tài liệu
+**/__pycache__/
+*.pyc
+
+# Ảnh NGUỒN của tài liệu (HDSD/SRS) — chỉ để LOCAL, không đẩy lên repo.
+# Ảnh đã nhúng sẵn trong .docx nên người khác không cần bản rời; giữ local để còn
+# sửa/xóa/chụp lại khi cập nhật tài liệu.
+**/.plans/**/img/
+**/.plans/**/*_shots/
+**/.plans/**/*_screenshots/
