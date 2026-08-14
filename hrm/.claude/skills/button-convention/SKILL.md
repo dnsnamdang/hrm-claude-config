@@ -19,7 +19,7 @@ Chuẩn hoá quy tắc sử dụng V2BaseButton và V2BaseIconButton trong toàn
 | Nhóm hành động | Variant | Mô tả |
 |----------------|---------|--------|
 | **Action chính** | `primary` | Hành động chính của màn hình — Thêm mới, Lưu, Xác nhận, Duyệt, Chọn, In |
-| **Action phụ** | `secondary` | Hành động bổ trợ — Lưu & Tiếp tục, Xuất Excel, Import, Cấu hình cột, Gửi thử |
+| **Action phụ** | `secondary` | Hành động bổ trợ — Lưu và tiếp tục, Xuất file, Import, Cấu hình cột, Gửi thử. Màu phân biệt theo `status`, xem mục 2b |
 | **Thoát / Huỷ** | `tertiary` | Đóng, Huỷ, Quay lại, Đóng modal |
 | **Reset / Phụ trợ** | `tertiary` | Nhập lại, Làm mới, Xoá trắng, Xem thêm |
 | **Nguy hiểm** | `primary` + `status="danger"` | Xoá, Từ chối, Huỷ duyệt |
@@ -31,6 +31,43 @@ Chuẩn hoá quy tắc sử dụng V2BaseButton và V2BaseIconButton trong toàn
 3. Hành động đóng/thoát/huỷ? → `tertiary`
 4. Hành động nguy hiểm, không thể hoàn tác? → `primary` + `status="danger"`
 5. Nút phụ nhẹ ngoài page (không phải trong modal)? → `light`
+
+---
+
+## 2b. Màu (`status`) — phân biệt các nút cùng variant
+
+`variant` quyết định **độ nổi**, `status` quyết định **màu**. Cả nhóm nút phụ mà để chung một màu trắng thì user phải đọc chữ mới phân biệt được — nhất là nhóm Import/Xuất file đứng cạnh nhau.
+
+`status` khả dụng: `info` (mặc định) · `success` (xanh lá) · `warning` (cam) · `danger` (đỏ).
+
+### Nhóm Import / Xuất file
+
+| Nút | Khai báo | Màu |
+| --- | --- | --- |
+| **Import Excel** | `secondary status="warning"` | **cam** |
+| **Xuất CSV / Xuất Excel / Xuất PDF** | `secondary status="success"` | **xanh lá** — cả nhóm CÙNG một màu |
+
+Nguyên tắc: phân biệt theo **bản chất thao tác**, không theo định dạng file.
+
+- **Import** ghi dữ liệu vào hệ thống → tách hẳn tông (cam).
+- **Nhóm Xuất** chỉ đọc dữ liệu ra, cùng bản chất → **cùng màu**, phân biệt bằng chữ + icon riêng của từng định dạng (`ri-file-text-line` / `ri-file-excel-2-line` / `ri-file-pdf-line`).
+
+📄 Bảng tra nhanh dạng Excel (màu · icon · text · thứ tự): `.plans/gop-db/list-page-action-column/quy-tac-mau-button.xlsx`
+
+⚠️ Đừng tô mỗi nút xuất một màu theo thương hiệu file (Excel xanh, PDF đỏ): 3 nút cùng làm một việc mà 3 màu thì đọc như 3 mức độ nguy hiểm khác nhau, và đỏ ở đây đá vào quy ước "đỏ = phá huỷ dữ liệu".
+
+### Các nhóm còn lại
+
+| Hành động | Khai báo |
+| --- | --- |
+| Tạo mới · Lưu · Lưu nháp | `primary` (teal) |
+| Duyệt · Hoàn thành · Kích hoạt | `primary status="success"` |
+| Gửi duyệt · Khóa · Cảnh báo | `primary status="warning"` |
+| Xóa · Từ chối · Hủy duyệt · Mở khóa dữ liệu đã chốt | `primary status="danger"` |
+| In · Cấu hình cột · Làm mới · Xem thêm | `secondary` / `tertiary` (info) |
+| Đóng · Hủy · Quay lại | `tertiary` (info) |
+
+⚠️ **Không dùng `danger` cho thao tác vô hại** (xóa điều kiện lọc, đóng popup) — đỏ chỉ dành cho việc phá huỷ/không hoàn tác được, dùng tràn lan là mất tác dụng cảnh báo.
 
 ---
 
@@ -226,5 +263,6 @@ Hai hành động giống nhau ở 2 màn khác nhau PHẢI dùng **cùng một 
 - [ ] Không dùng `light` trong modal footer
 - [ ] Thứ tự button: action chính → phụ → danger → reset → thoát (cuối cùng)
 - [ ] Icon phản ánh đúng ngữ nghĩa hành động
+- [ ] Nút cùng variant đứng cạnh nhau đã phân biệt màu bằng `status` (mục 2b); nhóm nút CÙNG bản chất (3 nút Xuất) phải CÙNG màu
 - [ ] Chữ trên nút đúng bảng text chuẩn mục 4 (dấu kiểu mới: Xóa/Hủy/Khóa; nêu rõ đối tượng: Import Excel)
 - [ ] Table action dùng V2BaseIconButton qua `V2BaseRowActions`, thứ tự: Sửa → Xoá/Khoá → `⋮` (không còn nút Xem)
