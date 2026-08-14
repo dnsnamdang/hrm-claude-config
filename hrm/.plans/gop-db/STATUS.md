@@ -75,6 +75,35 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   **không sửa** `unsavedChangesMixin` cũ — phương án gộp chờ anh Nam chốt.
   Còn lại ~147 form trang + ~180 modal của các phân hệ cũ → đợt 2/3.
 
+- filter-customization → .plans/gop-db/filter-customization/plan.md
+  Trạng thái: **CODE DONE Phase 1–3 — chờ chạy migration + user test** (2026-08-12, nhánh `gop_db`, cả 2 repo).
+  Cho user tự chọn trường lọc hiển thị + **kéo thả sắp xếp vị trí** (popup "Cài đặt bộ lọc"), giống "Tuỳ chỉnh cột" nhưng cho bộ lọc; mặc định hiện đủ. UX tham chiếu demo kế toán `demo 3/assets/app.js` (`setupFilterSettings` chưa kéo thả + `setupColumnConfig` có kéo thả) → ghép 2 cái, lưu BE thay localStorage.
+  Chốt: bảng mới **generic** `filter_customizations (created_by, table, config json)` unique(created_by, table) — KHÔNG copy schema cột-mỗi-màn của `column_customizations` (Entity đó 25 cột trong `$casts`, thêm màn là phải migration); khoá màn = tên bảng chính (`'customers'`); `config = [{key,isVisible}]`, thứ tự mảng = thứ tự hiển thị, không lưu label; bỏ tick = **ẩn hẳn + reset giá trị lọc** (tránh lọc ngầm); không có field locked; **component mới**, KHÔNG sửa `V2BaseFilterPanel`.
+  BE (`gop_db-api`): migration + `FilterCustomization` (có khai `$table`) + Service + FormRequest + Controller + 2 route `human/filter-customizations`, không thêm quyền.
+  FE (`gop_db-client`): `components/V2BaseSmartFilterPanel.vue` (schema field + slot escape hatch `#field-<key>` + `wrapperClass`/`hideLabel`/`resetKeys` cho field gom nhiều control) + `components/modal/filter-customization-modal.vue` (checkbox + vuedraggable). **Merge DB ↔ schema nằm trong component**: key mất khỏi FE → bỏ hẳn, key mới → append cuối và hiện ⇒ bổ sung trường lọc sau này không lỗi.
+  Pilot: `pages/assign/customers/index.vue` — 15 field khai báo bằng `filterFields`, khối Công ty/PB/NV và CascadePairSelect đi qua slot. Class wrapper đổi `advanced-filters` → `smart-advanced-filters` để dropdown CascadePairSelect không bị cắt (rule scoped cũ ở page đã bỏ).
+  Spec: docs/superpowers/specs/gop-db/2026-08-12-filter-customization-design.md
+  Bước tiếp: chạy `php artisan migrate` (module Human) → build FE → user test popup Cài đặt bộ lọc trên `/assign/customers`.
+
+- customer-list-empty-placeholder → .plans/gop-db/customer-list-empty-placeholder/plan.md
+  Trạng thái: **CODE DONE — CHỜ USER TEST TRÌNH DUYỆT** (2026-08-12, nhánh `gop_db`, 2 file).
+  Ô "không có dữ liệu" ở màn `/assign/customers` hiển thị không đồng nhất: mọi cột ra `—` (em dash),
+  riêng **SĐT ra `-`** vì `CustomerListResource` tự chèn sẵn chuỗi `'-'` từ BE (cả khi trống lẫn khi
+  bị che do không phải KH của mình) → FE nhận chuỗi khác rỗng nên `|| '—'` không chạy.
+  Fix: BE trả `null`, placeholder do FE quyết định; popup chọn KH thêm slot fallback `#cell()`
+  (7 cột trước đây để ô trắng, riêng SĐT ra `-`) → tất cả về `—`.
+  Giữ nguyên `'-'` trong file xuất CSV/Excel (`CustomerExportFormatter::taxCodeOrMobile`) — theo mẫu ERP,
+  ngữ cảnh file bàn giao khác màn hình. Không migration, không quyền mới.
+
+- list-page-action-column → @junfoke → .plans/gop-db/list-page-action-column/plan.md
+  Trạng thái: **CODE DONE — CHỜ USER VERIFY UI** (2026-08-12). Chuẩn hoá cột "Hành động" cho màn danh sách,
+  màn mẫu `/assign/customers`: cột Hành động chốt cuối bảng, tối đa 3 nút (2 chính + menu "⋮" dọc),
+  bỏ hành động Xem (tên KH thành link chi tiết), cột Trạng thái dời xuống ngay trước cột Hành động,
+  nút Khóa/Mở khóa chuyển từ ô Trạng thái sang cột Hành động.
+  Component dùng chung mới: `components/V2BaseRowActions.vue` (menu appendChild ra body + position fixed
+  vì bảng có overflow sẽ cắt mất menu). Hành động chuyển trang khai `to` → render `<nuxt-link>` để mở tab mới được.
+  Tóm tắt: .plans/gop-db/list-page-action-column/design.md
+
 - fix-employee-fk-remap → @junfoke → .plans/gop-db/fix-employee-fk-remap/plan.md
   Trạng thái: **CODE DONE, DRY PASS — CHƯA CHẠY THẬT** (2026-08-04). Vá các cột FK `employees`
   bị `ReconcileEmployeesSeeder` bỏ sót khi gộp DB: **42 cột / 20.231 dòng** đang trỏ SAI NGƯỜI (gồm 4 cột remap có điều kiện).

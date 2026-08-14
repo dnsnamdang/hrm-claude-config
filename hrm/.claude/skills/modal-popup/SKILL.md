@@ -159,6 +159,111 @@ Khi review modal: gặp `V2BaseSelect` nằm trong `b-modal` → đổi sang `V2
 
 ---
 
+## 3a. Popup XÁC NHẬN — chỉ dùng MỘT component duy nhất
+
+Mọi thao tác cần hỏi lại (Xóa · Khóa/Mở khóa · Duyệt/Từ chối · Hủy · Gửi duyệt · thoát khi chưa lưu…) đều dùng **`components/modal/base-confirm-modal.vue`**. **KHÔNG tạo confirm riêng cho từng màn**, **KHÔNG dùng `$bvModal.msgBoxConfirm()`** (popup mặc định của bootstrap-vue: nút không icon, khác kiểu với cả hệ thống).
+
+> Hiện `components/modal/` còn 26 component confirm cũ (`confirm-delete-selected`, `confirm-cancel-approve`, `confirm-modal`, `ConfirmLockSelected`…). Đó là NỢ KỸ THUẬT, không phải mẫu để copy. Màn cũ chuyển dần sang `base-confirm-modal` khi có dịp đụng vào.
+
+### Cách 1 — đặt trong template (phổ biến)
+
+```vue
+<BaseConfirmModal
+    id="confirm-lock-customer"
+    :title="lockConfirmTitle"
+    :message="lockConfirmMessage"
+    text-close="Hủy"
+    :text-accept="lockConfirmAccept"
+    danger
+    @event="handleConfirmLock"
+/>
+```
+Mở bằng `this.$bvModal.show('confirm-lock-customer')`, bắt kết quả ở `@event`.
+
+### Cách 2 — gọi từ code, ngoài template (route guard, mixin, helper)
+
+```js
+const ok = await this.$confirm({
+    title: 'Xác nhận xóa',
+    message: `Bạn có chắc muốn xóa "${name}"?`,
+    textAccept: 'Xóa',
+    danger: true,
+})
+if (!ok) return
+```
+`$confirm()` (plugin `plugins/confirm-dialog.js`) render chính `base-confirm-modal` rồi trả `Promise<boolean>` — nên popup gọi từ code trông y hệt popup đặt trong template.
+
+### Props
+
+| Prop | Ý nghĩa |
+| --- | --- |
+| `title` | Tiêu đề (bỏ trống → "Xác nhận") |
+| `message` | Nội dung, nhận HTML |
+| `textAccept` / `textClose` | Chữ 2 nút (mặc định "Xác nhận" / "Hủy" — theo bảng text chuẩn của `button-convention`) |
+| `danger` | Thao tác phá huỷ (Xóa/Khóa/Từ chối): nút xác nhận **đỏ** + icon cảnh báo đỏ ở header |
+| `acceptIcon` | Ghi đè icon nút xác nhận (vd `ri-lock-line` cho Khóa) |
+| `showInput` + `inputLabel`/`inputPlaceholder`/`inputType` | Kèm ô nhập lý do |
+
+Sự kiện: `@event` (đồng ý, kèm giá trị ô nhập nếu có) · `@close` (đóng/hủy).
+
+## 3b. Footer phải LUÔN nhìn thấy (popup có danh sách dài)
+
+`b-modal` render slot default vào `.modal-body` của nó — nên footer tự viết mà đặt thẳng trong slot sẽ **cuộn theo nội dung**, danh sách dài (20+ dòng) thì user phải kéo hết mới thấy nút Lưu.
+
+Cách làm đúng — vùng cuộn và footer TÁCH nhau:
+
+```vue
+<b-modal hide-footer body-class="xxx-modal-wrap" ...>
+    <template #modal-header>…</template>
+
+    <!-- CHỈ khối này cuộn. KHÔNG đặt class `modal-body` cho nó (xem bẫy dưới) -->
+    <div class="xxx-modal-body">…nội dung dài…</div>
+
+    <!-- nằm NGOÀI vùng cuộn -->
+    <div class="modal-footer">…nút…</div>
+</b-modal>
+```
+
+```scss
+/* Tắt cuộn ở `.modal-body` của chính b-modal */
+/deep/ .xxx-modal-wrap {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.xxx-modal-body {
+    max-height: 55vh;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* Chốt thêm: màn hình thấp mà b-modal tự cho phần thân cuộn thì footer vẫn dính đáy */
+.modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    z-index: 2;
+}
+```
+
+⚠️ **Bẫy 2 thanh cuộn dọc**: `b-modal` render slot default vào `.modal-body` của nó, mà bootstrap cho khối đó `overflow-y: auto`. Thêm một vùng cuộn nữa bên trong → **2 thanh cuộn lồng nhau**. Phải tắt cuộn khối ngoài bằng `body-class`, và **đừng đặt lại class `modal-body`** cho div của mình (nó kế thừa luôn `overflow` + padding của bootstrap).
+
+Verify bằng số đo (Playwright), ở **cả 1920×1080 và 1366×768**, sau khi đã cuộn hết danh sách:
+
+```js
+// đếm số khối đang cuộn dọc trong modal — phải bằng ĐÚNG 1
+modal.querySelectorAll('*').forEach(el => { const cs = getComputedStyle(el)
+  if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && el.scrollHeight > el.clientHeight + 1) n++ })
+// và footer luôn trong tầm nhìn
+footer.getBoundingClientRect().bottom <= window.innerHeight
+```
+
+File mẫu: `components/modal/column-customization-modal.vue`.
+
+---
+
 ## 4. Popup chứa BẢNG dữ liệu — dồn diện tích cho bảng
 
 Áp dụng khi popup có **bảng dữ liệu để chọn/xem** (popup chọn hàng hoá, chọn NV, chọn thiết bị...).

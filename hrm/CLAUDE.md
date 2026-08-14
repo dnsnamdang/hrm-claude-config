@@ -15,6 +15,12 @@
 - Không đọc file thư viện hệ thống — tốn token không cần thiết
 - Ưu tiên dùng helper có sẵn, tạo helper mới nếu logic dùng lại nhiều nơi
 - Khi cần sửa hàm dùng chung → hỏi ý kiến trước khi làm
+- **BẮT BUỘC rà project trước khi làm bất kỳ UI/logic nào — không tự phát minh kiểu mới.** Trước khi code 1 thành phần (icon, tooltip, popup, badge/chip, bảng, filter, upload, phân trang, xác nhận xoá, kéo thả, biểu đồ, export…) phải **grep xem trong project đã có chỗ nào làm chưa, kể cả ở phân hệ/chức năng khác**, rồi **copy đúng pattern đó** hoặc tách ra component dùng chung. Mỗi màn tự làm một kiểu là lỗi, không phải "tuỳ ý thiết kế".
+  - Cách rà: grep theo class/tên component đặc trưng (vd `custom-class="info-popover"`, `V2Base`, `draggable`, `BaseConfirmModal`), và quét `.claude/skills/` xem đã có SKILL.md quy định chưa.
+  - Đã có ≥1 màn làm đúng → **bám theo màn đó**, ghi rõ trong plan.md: "copy pattern từ `<file:dòng>`".
+  - Chưa có ở đâu → tự thiết kế, nhưng phải **tách thành component/util dùng chung** ngay từ lần đầu và bổ sung SKILL.md để lần sau không lệch.
+  - Phát hiện project đang có **nhiều kiểu khác nhau** cho cùng 1 thứ → nêu ra cho user chọn kiểu chuẩn, KHÔNG tự chọn rồi làm tiếp, cũng KHÔNG tự sửa đại trà các màn cũ.
+- **Icon Info (chữ "i") + tooltip mô tả**: dùng `ri-information-line` 14px màu `#94a3b8` + `b-popover` với `custom-class="info-popover"`. KHÔNG dùng `fa-info-circle`, không tự vẽ vòng tròn chữ `i`, không dùng `title=""` thuần, không dùng `v-b-tooltip`. Chi tiết + trường hợp icon nằm trong dropdown select2: `.claude/skills/info-icon-tooltip/SKILL.md`
 - FE: Tuân thủ style list của module đang triển khai (mỗi module có thể khác nhau)
 - FE: Select trong modal/popup BẮT BUỘC dùng `V2BaseSelectInModal` thay cho `V2BaseSelect` (chi tiết xem `.claude/skills/modal-popup/SKILL.md`)
 - Trước khi làm màn danh sách mới → hỏi có cần phân quyền theo cấp không
@@ -22,12 +28,23 @@
 - Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu (áp dụng cho màn cũ)
 - **Màn MỚI: validate realtime bằng `vee-validate` gắn trên component `V2Base*`** — chỉ trường **Tên** mới gắn `required` ở FE (vì Lưu nháp không được chặn các trường khác), required còn lại do BE quyết theo `status` rồi trả 422 → FE map vào `formError`. Chi tiết: `.claude/skills/form-validate/SKILL.md`
 - **Cờ phân quyền phải fail-closed (KHÔNG BAO GIỜ hard-code `= true`)**: mọi cờ quyền FE (`canViewCostPrice`, `canEdit`, `canDelete`, `can_view_*`,…) BẮT BUỘC khởi tạo mặc định `false` và chỉ set từ `$store.state.permissions` (quyền thật) hoặc field BE trả về. TUYỆT ĐỐI không gán literal `true` cho cờ quyền (kể cả ở màn tạo mới / khi "chưa có data") — đây là lỗ hổng fail-open làm lộ dữ liệu nhạy cảm (vd giá vốn). Nếu màn tạo mới cần hiện dữ liệu do user tự nhập, dùng cờ nghiệp vụ riêng (vd `hasUserCreatedProducts`), KHÔNG bật cờ quyền. BE: mọi endpoint trả dữ liệu nhạy cảm (giá vốn/cost, lương…) phải gate bằng `isCurrentEmployeeHasPermission('<Tên quyền>')` trước khi trả, trả `null` nếu không quyền — không dựa vào FE ẩn (defense-in-depth). Khi review: chặn pattern `can[A-Za-z]*\s*=\s*true`.
+- **Mọi popup XÁC NHẬN dùng đúng 1 component `components/modal/base-confirm-modal.vue`** (Xóa, Khóa/Mở khóa, Duyệt/Từ chối, Hủy, thoát khi chưa lưu…). Gọi từ code ngoài template thì dùng `await this.$confirm({...})` — plugin render chính component đó. TUYỆT ĐỐI không tạo confirm riêng cho từng màn và không dùng `$bvModal.msgBoxConfirm()`. Chi tiết: `.claude/skills/modal-popup/SKILL.md` mục 3a
 - **Mọi màn form (Tạo mới/Sửa) phải cảnh báo khi thoát lúc chưa lưu** — dùng mixin có sẵn `@/utils/mixins/unsavedChangesMixin`, gọi `markFormSaved()` sau khi lưu thành công; KHÔNG tự viết `beforeRouteLeave` riêng. Chi tiết: `.claude/skills/unsaved-changes/SKILL.md`
 - **Mọi thông báo nghiệp vụ (chuông/push/socket) theo template `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`** — tên đối tượng ≤ 50 ký tự và in đậm, tổng ≤ 120 ký tự, deep-link bắt buộc kèm ID. Chi tiết + bảng prefix/nhóm hành động: `.claude/skills/notification-convention/SKILL.md` (đọc trước khi code phần có thông báo)
 - **Danh mục bị khoá / ngừng hoạt động vẫn phải hiện ở bản ghi đang dùng nó** (nghiệp vụ xuyên suốt MỌI màn, mọi module): dropdown/select lấy từ danh mục (giai đoạn dự án, loại hình, lĩnh vực, nguồn khách hàng, phòng ban, chức danh…) mặc định chỉ liệt kê bản ghi còn hoạt động (`is_active = 1` / chưa khoá), NHƯNG khi mở màn Sửa/Chi tiết của đối tượng đã chọn giá trị nay bị khoá thì giá trị đó BẮT BUỘC vẫn là 1 option và hiển thị đúng tên — không được để select trống, không tự đổi sang giá trị khác, không mất dữ liệu khi lưu lại.
   - **BE**: API danh mục nhận thêm id đang dùng (vd `include_ids` / `current_id`) → `where('is_active', 1)->orWhereIn('id', $includeIds)`. Nếu không sửa được API danh mục thì Resource của đối tượng phải trả kèm object danh mục đang chọn (id + name) để FE merge.
-  - **FE**: sau khi load options, nếu `form.xxx_id` có giá trị mà không có trong options → push object đang chọn (lấy từ data detail) vào mảng options. Hiển thị **đúng tên gốc**, KHÔNG thêm hậu tố kiểu `(đã khoá)`; nếu cần đánh dấu thì dùng cờ dữ liệu (`is_locked`), không đổi text.
+  - **FE**: sau khi load options, nếu `form.xxx_id` có giá trị mà không có trong options → push object đang chọn (lấy từ data detail) vào mảng options. Hiển thị **đúng tên gốc**, KHÔNG thêm hậu tố kiểu `(đã khoá)` vào text.
+  - **Đánh dấu bằng 🔒 — TỰ ĐỘNG**: BE trả cờ `is_locked`, FE **không phải khai gì**: `utils/select2LockedOption.js` đã được `V2BaseSelect` + `V2BaseSelectInModal` gọi sẵn, tự gắn `🔒 ` trước tên option **chỉ trong danh sách chọn** (chip/giá trị đã chọn giữ tên gốc). KHÔNG nối chữ vào `name`, KHÔNG tự viết `templateResult` ở từng màn. Chi tiết: `.claude/skills/list-page/SKILL.md` mục 11.
   - Áp dụng cả cho filter màn danh sách (giá trị đang lọc/đã lưu), cột hiển thị trong bảng và màn in/export.
+- **Code phải TỐI ƯU HIỆU NĂNG, không phải "chạy được là xong"** — mọi màn/API viết ra đều phải cân nhắc số request, số query, khối lượng dữ liệu trả về. Cụ thể:
+  - **FE: 1 màn = càng ít API càng tốt.** Không bắn hàng loạt API rời rạc lúc mở màn — gom danh mục dùng chung vào 1 endpoint tổng hợp (vd `GET .../form-options`) hoặc trả kèm trong API detail. TUYỆT ĐỐI không gọi API trong vòng lặp / trong `v-for` (mỗi dòng 1 request).
+  - **Lazy load**: danh mục chỉ dùng ở tab/modal/select chưa mở → chỉ gọi khi mở, không gọi ở `mounted`. Select danh mục lớn (khách hàng, nhân viên, hàng hoá…) dùng search server-side có `limit`, KHÔNG load toàn bộ danh sách.
+  - **Cache & huỷ request**: danh mục ít thay đổi (phòng ban, chức danh, đơn vị tính…) lưu Vuex/localStorage, không gọi lại mỗi lần vào màn. Ô tìm kiếm gõ liên tục → debounce ≥ 300ms + cancel request cũ.
+  - **BE: cấm N+1 query** — luôn `with()` / `load()` eager load quan hệ dùng trong Resource; đếm/tổng hợp bằng `withCount` / `selectRaw`, không loop `->count()` từng dòng.
+  - **Luôn phân trang**, không trả cả bảng. KHÔNG dùng `per_page` khổng lồ (5000…) — có endpoint `search?limit=` thì dùng. Chỉ `select` cột thực sự cần, không `SELECT *` rồi map.
+  - **Index DB**: cột dùng `where` / `join` / `order by` thường xuyên phải có index; thêm bảng mới hoặc filter mới → kiểm tra index trước khi bàn giao.
+  - Xử lý nặng (export, tính lương, tổng hợp báo cáo) → queue/job hoặc chunk, không chạy đồng bộ trong request.
+  - Khi review/bàn giao: 1 màn gọi > 5 API lúc load, hoặc 1 request > 2s → phải nêu ra và đề xuất phương án gộp/tối ưu, không im lặng cho qua.
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
 
 ---
@@ -286,6 +303,7 @@ Nếu có → đọc trước khi viết code.
 | Bắn/sửa thông báo nghiệp vụ (chuông, push, socket)  | `.claude/skills/notification-convention/SKILL.md` |
 | Tạo/sửa màn form (add/edit, modal nhập liệu)        | `.claude/skills/unsaved-changes/SKILL.md`    |
 | Validate form ở màn mới (realtime, required, lỗi)   | `.claude/skills/form-validate/SKILL.md`      |
+| Icon Info (chữ "i") + tooltip/popover mô tả         | `.claude/skills/info-icon-tooltip/SKILL.md`  |
 
 → Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
 

@@ -8,6 +8,17 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- meeting-pl8-support → @dnsnamdang → .plans/meeting-pl8-support/plan.md
+  Trạng thái: **CODE DONE (2026-08-14), chờ user migrate + build FE + test**. Nhánh `tpe-develop-assign`.
+  Gộp 4 task hỗ trợ PL8 Quản lý Meeting (Redmine đã chuyển "Đang tiến hành"):
+  **#10884** đổi placeholder Tên meeting (FE 1 dòng) ·
+  **#11015** kéo thả sắp xếp thành phần tham gia — cột mới `meeting_employees.sort_order` + `orderBy` đặt ngay trong 2 relation `company_members`/`customer_members` nên tab Điểm danh và bản In biên bản kế thừa thứ tự mà không phải sửa; FE `vuedraggable` 2 group riêng (`pull/put=false` → chặn kéo chéo bảng), icon 6 chấm dựng SVG mới `components/common/DragIndicatorIcon.vue` (remixicon bundle KHÔNG có `ri-draggable`) ·
+  **#11045** icon Info + tooltip mô tả Loại meeting — component mới `components/MeetingTypeSelect.vue` (không sửa V2BaseSelect dùng chung) + tooltip singleton `utils/meetingTypeInfoTooltip.js` (dropdown select2 append ra body nên b-tooltip không dùng được); 6 màn filter đổi nguồn options sang `assign/meeting_types/getAll` vì `MasterDataSelectResource` dùng chung không trả `description` ·
+  **#11014** bắt buộc biên bản + auto hủy — 2 tham số cấu hình động ghép vào khối "Cấu hình hạn" có sẵn (`meeting_report_lock_days`=1, `meeting_report_warning_hours`=3 → có lịch sử thay đổi miễn phí), command mới `assign:meeting-report-deadline` chạy 15 phút/lần, guard 423 chặn cập nhật biên bản quá hạn, banner hạn ở tab Biên bản. KPI không phải sửa (`REPORT_STATUSES` đã loại trạng thái Hủy).
+  Lệch Redmine đã xử lý theo convention: nội dung thông báo bỏ emoji ⏰, dùng nhóm hành động chuẩn `Nhắc báo cáo` / `Hủy`, ≤120 ký tự.
+  Spec: docs/superpowers/specs/2026-08-14-meeting-pl8-support-design.md
+  Bước tiếp: `php artisan migrate` (3 migration) → build FE Node 14.21.3 → test theo AC từng task → kiểm tra cron `schedule:run` đang chạy.
+
 - pl8-thong-tin-he-thong → @dnsnamdang → .plans/pl8-thong-tin-he-thong/plan.md
   Trạng thái: **DESIGN DONE, đang code Phase 1 (2026-08-06)**. Redmine #10814 — thống nhất 9 màn Xem chi tiết QLDA TKT: mã phiếu trên tiêu đề + phân vùng "Thông tin hệ thống" (lịch sử phiếu, mặc định thu gọn) + đủ action như màn danh sách. Chốt: UI timeline giống modal Lịch sử Task; 1 component FE chung `SystemInfoSection.vue` + 1 endpoint chuẩn hoá `GET assign/system-logs/{type}/{id}` với adapter đọc log sẵn có từng entity (không migrate data cũ); 3 entity chưa có log (Meeting, Hạng mục dự án, YCGP) dùng bảng mới `assign_entity_logs` ở Phase 2; không thêm quyền. Nhánh `tpe-develop-assign`.
   Spec: docs/superpowers/specs/2026-08-06-pl8-thong-tin-he-thong-design.md
