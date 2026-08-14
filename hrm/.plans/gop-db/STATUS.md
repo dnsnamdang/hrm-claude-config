@@ -109,6 +109,139 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- form-validate-base → @khoipv → .plans/gop-db/form-validate-base/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-14)**, nhánh `gop_db`. Sửa **base** để gắn được
+  `v-validate` (vee-validate v2) thẳng lên `V2Base*` ở mọi màn → lỗi hiện **realtime**, không phải
+  bấm Lưu mới biết.
+  2 mixin mới: `utils/mixins/v2ValidateMixin.js` (khai `$_veeValidate.name()/.value()` + prop
+  `invalid`) và `utils/mixins/formValidateMixin.js` (gộp lỗi FE realtime + lỗi BE 422 vào
+  `fieldError()` / `hasFieldError()` / `validateForm()` / `applyServerErrors()`).
+  7 component đã gắn: Input, Textarea, Select, SelectInModal, SelectRemote, DatePicker, CurrencyInput.
+  ⚠️ Phát hiện kèm: `:class="{'is-invalid':…}"` truyền vào `V2Base*` trước nay **không đổi màu viền**
+  (class rơi vào thẻ bọc, Bootstrap chỉ style `.form-control.is-invalid`) → nay base tự tô.
+  Màn mẫu: **Gói bảo dưỡng** — theo skill `form-validate`, FE chỉ còn `required` ô **Tên**; Mã /
+  Công ty / file / ma trận để BE trả 422.
+  **Đợt 2 (cùng ngày)**: nhân ra **14 màn gop-db còn lại** (8 Finance + 5 CSKH + `/human/banks`;
+  Serial không có form nên không phải sửa). Mỗi màn: bỏ chặn required tự viết (trừ ô Tên) và bê
+  rule ĐỊNH DẠNG của BE sang FE. **Message FE viết đúng nguyên văn message BE** (user chốt) — lấy từ
+  `FormRequest::messages()`, thiếu thì lấy `hrm-api/resources/lang/vi/validation.php`.
+  Thêm 7 rule vào `plugins/vee-validate.js` (**thuần thêm, không sửa rule cũ** — user chốt giữ
+  `max:255` với câu cũ): `number_only`, `min_value`, `max_value_decimal`, `digits_between`,
+  `number_vn`/`positive_vn`/`max_value_vn` (ô Tỷ giá nhập định dạng VN `26.520,00`) + dictionary
+  `custom` cho 3 trường có câu chữ riêng.
+  ⚠️ Ngoại lệ giữ lại 1 chặn required: `device_error_costs.price`/`price_service` — BE khai
+  `nullable` nhưng cột NOT NULL, gửi rỗng nổ SQL 1048 (500) chứ không phải 422.
+  Verify: parse 25 file + `vi.json`; nạp thật thân hàm rule bằng `vm` chạy 20 case → 20/20 đúng.
+  **Đợt 3 (cùng ngày)**: đối chiếu **Checklist chuyển đổi ERP =>> HRM.xlsx** trên Drive
+  (sheet "Chi tiết chức năng", lọc `Đã test` = **23 màn**) → đợt 2 mới phủ 16, bổ sung nốt
+  **6 màn Danh mục địa chỉ** (Quốc gia / Khu vực / Tỉnh-TP / Quận-Huyện / Phường-Xã / Đường-Phố)
+  → phủ **22/23**, còn `/assign/customers` user chốt để sau.
+  ⚠️ Đổi hướng về message: thay vì truyền câu lỗi vào rule FE, **chuẩn hoá BE** (user chốt) —
+  14 FormRequest bỏ message riêng theo trường, dùng câu chung đúng bằng câu FE nói
+  (`Phải là số` · `Không được nhỏ hơn :min` · `Tối đa :max` · `Chỉ được nhập chữ số, từ :min đến :max chữ số`
+  · `max` chuỗi để rơi về lang vi `Vui lòng nhập tối đa :max ký tự.`). Xoá hẳn dictionary `custom`
+  theo tên trường ở FE (vee-validate chỉ có 1 dictionary toàn cục, `name`/`code`/`note` trùng nhau
+  ở hàng chục màn). Giữ override của `unique`/`exists`/`in`/`not_in`/closure.
+  📌 Vá luôn 1 lỗi cũ: `AccountRequest` báo "từ 3 đến **10** chữ số" trong khi hằng số là **15**.
+  Verify: parse 31 file FE + `vi.json`, `php -l` 15 file BE, chạy lại 20 case rule → 20/20 đúng.
+  **Đợt 4 (cùng ngày)**: làm nốt màn **Danh mục khách hàng** (`CustomerForm.vue`, dùng chung 5 màn)
+  → **phủ đủ 23/23 màn** của checklist. Màn này trước đó KHÔNG có validate FE nào.
+  Ô top-level dùng `v-validate` (`fullname` là ô Tên duy nhất có `required`; email / mã số thuế /
+  SĐT / độ dài / ngày không tương lai); khối LẶP (SĐT, người đại diện, người liên hệ) dùng hàm
+  `validateRepeatBlocks()` + watcher deep vì tên field phải trùng key BE theo chỉ số.
+  Thêm 3 rule `phone_number` (regex `^(0)[0-9]{9,11}$` — rule `phone` cũ chỉ nhận đúng 10 số),
+  `tax_code`, `not_future`. Chuẩn hoá message `SaveCustomerRequest` + `UpdateCustomerRequest`.
+  ✅ Gỡ được ngoại lệ duy nhất còn lại: BE đã vá `costs.*.price`/`price_service` thành
+  `required|numeric|min:0` → màn Lỗi thiết bị bỏ chặn bỏ trống ở FE. Nay FE chỉ chặn bỏ trống ô Tên.
+  ✅ User đã test trình duyệt đủ **23/23 màn** (2026-08-14).
+  Còn lại (không chặn hoàn thành): PR cập nhật `.claude/skills/form-validate/SKILL.md`
+  (bỏ `data-vv-value-path`).
+  Spec: docs/superpowers/specs/gop-db/2026-08-14-form-validate-base-design.md | Tóm tắt: .plans/gop-db/form-validate-base/design.md
+
+- finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-14)**, nhánh `gop_db`.
+  Xong toàn bộ 7 phase (BE + FE), đã verify.
+  FE (9 file mới + 1 file menu): danh sách · chờ duyệt · thêm/sửa · chi tiết + Không duyệt · in ·
+  3 popup (hợp đồng bán / hợp đồng mua / nhà cung cấp). Màn chờ duyệt DÙNG LẠI màn danh sách qua prop
+  `pendingMode` để 2 màn không bao giờ lệch cột/bộ lọc.
+  Verify: contract FE↔BE tự động (endpoint · field đọc · field gửi · fail-closed) 0 vấn đề ·
+  vòng đời phiếu chạy bằng ĐÚNG payload FE dựng 13/13 đạt · Playwright mở thật 4 màn **0 lỗi console** ·
+  màn in đo theo skill `print-page`: tràn mép phải **0px**, viền đủ 4 cạnh, logo tải được.
+  🐛 **Lỗi thật bắt được khi test**: màn chờ duyệt đá về 404 với **Super admin** —
+  `middleware/checkPermission.js` chỉ so tên quyền trong store, KHÔNG có nhánh bỏ qua cho super admin,
+  trong khi BE cho phép. Role 18 giữ 2.148 quyền api nhưng thiếu 5 quyền mới → đã gán qua seeder.
+  🐛 **Lỗi thứ 2 — user phát hiện khi review**: form/chi tiết ban đầu chép khuôn từ
+  `ProductTransferRequestForm.vue` chứ không bám màn mẫu khách hàng như đã dặn. Các class
+  `form-card` / `form-header` / `readonly-cell` **KHÔNG có trong `v2-styles.scss`** (chỉ có trong
+  `<style>` riêng của màn đó) → 2 màn render bằng div trơn, mất hết khung. **Đã sửa** sang đúng khuôn
+  `CustomerForm.vue`: `.card` + `card-header py-2` + `<h6>` · `<Required />` · `text-small-error` ·
+  `V2BaseInput :disabled`. Đo Playwright khớp 100% với `/assign/customers/add`
+  (card bg/#viền/radius/margin, header bg `rgb(237,239,241)`, h6 12px).
+  📌 **Bài học chung**: chép khuôn từ màn khác thì phải kiểm class nằm ở `v2-styles.scss` (dùng chung)
+  hay ở `<style>` riêng của màn đó — chép template mà bỏ style là mất sạch giao diện.
+  🔁 **Đợt sửa 3 (user yêu cầu "form giống form ERP")**: dựng lại bố cục + luồng nhập theo
+  `form.blade.php` của ERP — 2 cột `col-md-6`, Loại tiền + Tỷ giá chung 1 cột, tỷ giá có addon **VND**,
+  bỏ ô "Người nộp tiền" (ERP không có), bảng chỉ hiện sau khi chọn Loại thu, **header bảng 2 tầng**
+  (cột tiền tách đôi khi ngoại tệ), nút **+** thêm dòng ở header bảng, và **chọn khách hàng + hợp đồng
+  THEO TỪNG DÒNG** bằng ô readonly + kính lúp.
+  ⚠️ Chọn theo dòng là yêu cầu DỮ LIỆU chứ không phải thẩm mỹ: đếm trên DB thật có
+  **1.128/2.411 phiếu (46%) gom từ 2 khách hàng trở lên**, cao nhất 25 KH/phiếu — mô hình 1 KH/phiếu
+  không nhập nổi gần nửa số phiếu thực tế.
+  ⚠️ Ghi nhận khi chốt hoàn thành (user chốt không cần làm thêm): **không** đối chiếu trực tiếp trên
+  **giao diện ERP** (thiếu môi trường + tài khoản ERP) và chỉ test **3/4 cấp quyền**
+  (super admin / kế toán / không quyền).
+  📌 Ghi nhận không sửa: `ChooseErpCustomerModal.vue` có cảnh báo Vue "computed 'fields' đã định nghĩa trong data" —
+  lỗi CÓ SẴN của component dùng chung, hiện ở mọi màn nhúng nó.
+  Phase 3 (3 endpoint popup): `search-contracts` UNION 3 nguồn (hrm_contracts thay firm_contracts + HĐ đầu kỳ
+  + HĐ bảo dưỡng) — total khớp SQL thuần, loại đúng HĐ HRM status 2/3, không còn dòng FirmContract nào;
+  `search-buy-contracts` UNION 5 nguồn — NCC 127 ra 19 dòng, chia đúng từng nguồn 11/5/2/1/0 khớp SQL;
+  `search-suppliers` 9.547 dòng = đúng `is_supplier=1`, không lọt khách hàng thường.
+  ⚠️ Bẫy đã tránh: gọi `where()` thẳng trên builder UNION thì điều kiện **chỉ dính nhánh đầu tiên** →
+  phải bọc `fromSub()` rồi mới lọc. Tên bảng/cột đối chiếu `information_schema` trước khi viết (plan ghi
+  thiếu: `wr_service_contracts` CÓ `total_after_vat`, `opening_contracts` KHÔNG có `status`).
+  📌 Tham số `has_dept=1` popup ERP gửi là **tham số chết** (grep toàn repo ERP không nơi nào dùng) → không port.
+  Phase 2 (BE ghi): tạo/sửa/xoá nháp · gửi duyệt · Không duyệt — 12 nhóm kiểm thử HTTP đều đạt.
+  Siết validate mạnh hơn ERP (7/7 ca xấu bị 422: `status=4` lách sang "Đã hạch toán", `object_type` lạ,
+  `exchange_rate=0`, `details` rỗng…); 403 đúng chỗ khi người khác sửa/xoá; thông báo gửi duyệt tới
+  **29 kế toán cùng công ty**, nội dung đúng chuẩn `notification-convention`
+  (`[DNTT] Chờ duyệt: <b>{mã phiếu}</b>. Người đề nghị: … Số tiền: …` + deep-link kèm ID).
+  📌 **Seeder dữ liệu test** (user chốt 2026-08-14): `Modules/Finance/Database/Seeders/BillIncomeRequestTestDataSeeder.php`
+  — mặc định DRY-RUN, chạy thật bằng `FINANCE_TEST_DATA=1`. Đã sinh 8 hợp đồng HRM `HĐ-TEST-DNTT-01..08`
+  (dựng từ báo giá thật; 6 cái đúng tập trạng thái popup + 2 cái phải bị loại) · 2 phiếu mẫu `TEST.DNTT.*` ·
+  gán 5 quyền HRM mới cho đúng role đang giữ quyền ERP cùng tên (23 dòng `role_has_permissions`).
+  Phase 1 (BE nền: entity + morphMap + list/show): 15 file mới + 3 file sửa ở `hrm-api`.
+  `GET /v1/finance/bill-income-requests` trả **2.398/2.411 phiếu ERP** (ẩn đúng 13 nháp của người
+  khác), `/pending` lọc đúng công ty kế toán, `/{id}` trả đủ chi tiết — **7562/7562 dòng resolve
+  được hợp đồng qua morphMap**, công nợ khớp 100% SQL thuần. 5 quyền mới id 1148-1152 đã INSERT DB dev.
+  ⚠️ **Quyết định đáng nhớ**: KHÔNG dùng middleware `checkPermission` cho nhánh kế toán — nó resolve
+  quyền qua spatie `getAllPermissions()` (lọc `model_type`), mà **1.252/1.691 dòng `employee_has_roles`
+  trên DB gộp là `model_type='App\Employee'` (từ ERP)**; đo thật: 2/2 kế toán có quyền đều bị spatie
+  trả `false` → middleware 403 oan. Gate bằng `BillIncomeRequest::isAccountant()` query thẳng pivot
+  (tiền lệ `ProductTransferRequestController::reject()`).
+  📌 3 chỗ **plan/spec ghi sai, đã sửa khi làm**: `Supplier` là bảng `customers` + `is_supplier=1`
+  (bảng `suppliers` có thật nhưng 0 dòng) · `Modules\Assign\Entities\Customer` không tồn tại →
+  `App\Models\TpCustomer` · filter `customer_name` của ERP là code chết (gọi quan hệ `customer()`
+  không khai) → lọc qua `details.customer`.
+  🐛 Tự phát hiện & sửa: `canView()` fail-open khi chưa đăng nhập (`approved_id == auth()->id()`
+  với cả 2 vế NULL → true).
+  ⚠️ **`hrm_contracts` đang 0 dòng trên DB dev** → Phase 2/3 chưa có hợp đồng HRM để test popup + tạo phiếu.
+  Cần user chốt: có gộp 3 method quyền của `ProductTransferRequest` sang trait mới
+  `Modules/Finance/Entities/Concerns/ChecksEmployeePermission.php` không (sửa code đang chạy).
+  Bước tiếp: **Phase 2 — BE ghi** (store/update/destroy/changeStatus + thông báo gửi duyệt).
+  ---
+  Plan 7 phase / 20 task. Port màn ERP
+  "Phiếu đề nghị thu tiền" (`admin/income-expenditure/bill_income_requests`) sang HRM phân hệ
+  **Tài chính** (slot xám `finance.js:46` / `:82` / `:403`).
+  Chốt: dùng chung bảng ERP (không đổi schema) · giữ logic ERP 1:1, chỉ đổi nguồn hợp đồng
+  `firm_contracts` → **`hrm_contracts`** · công nợ vẫn đọc `account_details` TK 1311/3311
+  (HĐ HRM sẽ hiển thị 0 tới khi có hạch toán) · giữ cả 2 loại thu · bỏ nhánh HĐ nguyên tắc +
+  phân bổ phiếu YCXH · 5 quyền mới id 1148–1152 guard `api` · **không đụng repo ERP**.
+  Màn Phiếu thu sẽ port ở feature sau → đợt này chưa có nút "Tạo phiếu thu".
+  ⚠️ Rủi ro chấp nhận: phiếu do HRM tạo mở bên ERP sẽ lỗi `Class not found` (ERP không có class
+  trỏ `hrm_contracts`).
+  Base UI danh sách bám `pages/assign/customers/index.vue`.
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-income-request/design.md
+
 - device-errors-load-data → @khoipv → .plans/gop-db/device-errors-load-data/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-13)**, nhánh `gop_db`.
   Màn `customer-care/device-errors` vào là hiện "Không có dữ liệu phù hợp bộ lọc." dù bảng có 2768 dòng:
