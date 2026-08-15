@@ -208,18 +208,32 @@ class SrsDoc(object):
         self.figure(png, caption or ('Biểu đồ Use Case — %s %s' % (code, name)), width_in=6.2)
 
     # ------------------------------------------------------------ layout
-    def layout(self, note='', modal=None):
-        """Muc 'Layout man hinh' — KHONG chen anh chup, chi ghi duong dan."""
+    def layout(self, note='', modal=None, route=None, shot=None, shot_caption=None):
+        """Muc 'Layout man hinh' — duong dan + ANH CHUP THAT (rule 2026-08-13).
+
+        shot         : duong dan file .png chup that cua DUNG chuc nang do (6.2 inch)
+        shot_caption : chu thich duoi anh; mac dinh lay theo ten chuc nang truyen vao
+        route        : ghi de route/URL rieng cho chuc nang (vd man them moi /add)
+        """
+        r = route or self.route
+        base = self.full_url
+        if route:
+            base = self.full_url.replace(self.route, route) if self.route in self.full_url \
+                else self.full_url
         self.p('Đường dẫn màn hình:')
         self.bullets([
             'Menu: %s' % self.menu,
-            'Route (FE): %s' % self.route,
-            'URL đầy đủ: %s' % self.full_url,
+            'Route (FE): %s' % r,
+            'URL đầy đủ: %s' % base,
         ])
         if modal:
             self.p('Modal %s được mở ngay trên màn hình danh sách theo đường dẫn ở trên.' % modal)
         if note:
             self.p(note)
+        if shot:
+            if not os.path.exists(shot):
+                raise IOError('Thieu anh chup cho muc Layout: %s' % shot)
+            self.figure(shot, shot_caption or 'Màn hình thực tế', width_in=6.2)
 
     # -------------------------------------------------------------- save
     def save(self, verbose=True):

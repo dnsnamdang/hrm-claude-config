@@ -91,7 +91,7 @@ SOFTWARE REQUIREMENTS SPECIFICATION (SRS)      [Heading 1]
 |---|---|---|
 | 5.2.x.1 | Biểu đồ Usecase | **Ảnh PNG** (xem mục "Sinh ảnh biểu đồ Use Case") |
 | 5.2.x.2 | Giới thiệu | Bảng 8 dòng (xem dưới) |
-| 5.2.x.3 | Layout màn hình | **Đường dẫn vào màn**, KHÔNG chụp ảnh |
+| 5.2.x.3 | Layout màn hình | **Đường dẫn vào màn + ẢNH CHỤP THẬT** của chức năng (đổi 2026-08-13) |
 | 5.2.x.4 | Mô tả chi tiết giao diện | Bảng 8 cột (xem dưới) |
 | 5.2.x.5 | Tiêu chí nghiệm thu | Gạch đầu dòng, nhóm theo vai trò/tình huống |
 | 5.2.x.6 | Danh sách event và xử lý event | Bảng 4 cột (xem dưới) |
@@ -149,19 +149,45 @@ After:
 
 ---
 
-## Layout màn hình — CHỈ GHI ĐƯỜNG DẪN
+## Layout màn hình — ĐƯỜNG DẪN **+ ẢNH CHỤP THẬT** (đổi 2026-08-13)
 
-**Quy ước riêng của team (user chốt 2026-08-07):** KHÔNG chèn ảnh chụp màn hình như bản mẫu.
-Mục "Layout màn hình" chỉ ghi 3 dòng:
+> ⚠️ **Quy ước ĐÃ THAY ĐỔI — đọc kỹ, đừng làm theo bản cũ.**
+> - 2026-08-07: từng chốt BỎ ảnh, mục Layout chỉ ghi đường dẫn.
+> - **2026-08-13: user chốt ĐƯA ẢNH QUAY LẠI** — *"nay phải bổ sung lại ảnh hướng dẫn chức năng
+>   trong srs"*. Tức là quay về đúng bản mẫu `SRS_MAU.docx` (bản mẫu có 26 ảnh nhúng).
 
+Mục **`5.2.x.3 Layout màn hình` của MỖI chức năng** gồm 2 phần, theo thứ tự:
+
+**1. Đường dẫn** (giữ nguyên như quy ước cũ — vẫn hữu ích, không bỏ):
 ```
 Đường dẫn màn hình:
 • Menu: Phân hệ <X> → <Nhóm menu> → <Tên màn>
 • Route (FE): /duong-dan-man
 • URL đầy đủ: https://<host-hrm>/duong-dan-man
 ```
-
 Với modal/popup, thêm 1 câu: *"Modal <Tên> được mở ngay trên màn hình danh sách theo đường dẫn ở trên."*
+
+**2. Ảnh chụp thật của ĐÚNG chức năng đó**, canh giữa, rộng **6.2 inch**, kèm caption
+`Hình N: <mô tả>` (in nghiêng, 9.5pt, canh giữa) — dùng đúng helper ở mục "Sinh ảnh biểu đồ Use Case".
+
+| Chức năng | Ảnh phải chụp |
+|---|---|
+| Truy cập màn hình | Toàn màn danh sách lúc mới vào |
+| Xem danh sách | Bảng danh sách (thấy rõ các cột) |
+| Tìm kiếm & lọc | Panel bộ lọc nâng cao ĐANG MỞ |
+| Tạo mới | Form/modal Tạo mới (trống, chưa nhập) |
+| Chỉnh sửa | Form/modal Sửa có dữ liệu thật |
+| Xem chi tiết | Màn/modal chi tiết ở chế độ chỉ đọc |
+| Khóa / Mở khóa | Hộp thoại xác nhận |
+| Xóa | Hộp thoại xác nhận xóa |
+| Import / Export | Modal chọn cột / chọn file |
+| Validate | Form đang hiện lỗi đỏ inline (nếu tách thành mục riêng) |
+
+**Cách chụp:** Playwright MCP, resize 1440×900, ảnh thật từ hệ thống — **giống hệt quy trình của
+`hdsd-documenter` Bước 2**. Làm SRS + HDSD cho cùng một màn thì **chụp 1 lần, dùng chung**
+thư mục ảnh `.plans/[feature]/<feature>_shots/`, đừng chụp 2 lần.
+
+**Không được**: vẽ mô phỏng bằng ký tự/bảng, dùng ảnh của màn khác, hay để trống mục Layout.
 
 ---
 
@@ -363,7 +389,7 @@ print('còn sơ đồ ký tự:', len(bad))    # PHẢI = 0
 
 ### Không được
 - **Không vẽ sơ đồ bằng ký tự** — phải là ảnh PNG
-- **Không chèn ảnh chụp màn hình** — mục Layout chỉ ghi đường dẫn
+- **Không bỏ ảnh ở mục Layout** — từ 2026-08-13 mỗi chức năng BẮT BUỘC có ảnh chụp thật kèm đường dẫn
 - Không dùng template markdown/HTML tự chế thay cho form chuẩn
 - Không đổi số cột / tên cột của 3 bảng bắt buộc
 - Không đoán response format — đọc transformer/resource

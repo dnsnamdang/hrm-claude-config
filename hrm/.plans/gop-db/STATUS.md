@@ -68,6 +68,59 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
+  Trạng thái: **XONG CODE PHASE 0-9, ĐÃ VERIFY HTTP END-TO-END** (2026-08-15). Nhánh
+  `feat/finance-prepick-cancel` (từ `gop_db`, cả 2 repo, checkout thẳng).
+  BE 21 file `Modules/Finance` + 2 migration (2 bảng lịch sử — thay đổi DB duy nhất) + 25 route.
+  FE 19 file + 2 mục menu.
+  Verify: 16/16 route GET · luồng ghi end-to-end (tạo → sửa + gửi duyệt → duyệt vượt bị chặn 422
+  rollback sạch → duyệt thật → trừ FIFO đúng thứ tự `expire_date` 2 lô → 2 dòng `prepick_logs`
+  đúng chuỗi lớp ERP → lịch sử 4 + 1 mốc) · luồng Không duyệt · dọn dữ liệu test rồi đối chiếu
+  TỪNG CỘT 6 bảng với bản sao lưu: **0 lệch**.
+  ⚠️ Bài học: script `preg_replace` sai regex trả `null` đã ghi đè 2 service thành file RỖNG —
+  phải dựng lại. Script sửa hàng loạt bắt buộc có chốt kiểm nội dung trước khi ghi.
+  ⚠️ Bẫy mới: `$request->get()` KHÔNG đọc body JSON (API Symfony) → lý do không duyệt lưu rỗng.
+  Toàn bộ feature đã đổi sang `$request->input()`.
+  Bước tiếp: user bấm tay trên trình duyệt + đối chiếu 2 cổng trên dev + test bằng tài khoản
+  `Quản lý giữ hàng` không phải Super admin. 6 bảng `bak_*_20260815` cố ý giữ lại tới lúc đó.
+  Port **2 màn** ERP sang phân hệ **Tài chính**, nhóm **Giữ hàng** (2 mục menu đã có sẵn
+  placeholder, chỉ thiếu link): `Yêu cầu hủy hàng giữ` (`prepickCancelRequest`, 3.521 phiếu) và
+  `Phiếu hủy hàng giữ` (`prepickCancel`, 3.478 phiếu).
+  ⚠️ **Màn ĐẦU TIÊN của HRM ghi vào tồn kho thật** — duyệt = trừ FIFO theo `expire_date` trên
+  `prepick_details` (53.832 dòng) + ghi `prepick_logs` (110.744 dòng, `objectable_type` phải ghi
+  đúng chuỗi lớp ERP `App\Model\Warehouse\PrepickCancel` để ERP đọc được).
+  Chốt: dùng lại 4 quyền ERP có sẵn (`Quản lý giữ hàng` + 3 cấp `Xem phiếu hàng giữ theo ...`),
+  không tạo quyền mới; giữ nguyên cách đánh số trạng thái lệch của ERP (3 Đang tạo · 2 Chờ duyệt ·
+  1 Đã duyệt); **tự dựng 4 mẫu in mới** trong `Modules/Finance/Resources/views/prints/` (ERP không
+  có mẫu, KHÔNG ghi thêm dòng vào `report_templates` dùng chung); bổ sung **2 bảng lịch sử** mới.
+  **Sửa 13 lỗi ERP**, nặng nhất: `canView()` phiếu hủy luôn trả `true`; `updateWarehouse()` không
+  kiểm đủ tồn (trừ hụt im lặng); `update()` bỏ quên kiểm tra validate; thông báo gửi theo
+  `warehouse_id` không tồn tại nên chưa bao giờ tới ai; hằng số mẫu in `YEU_CAU_HUY_HANG_GIU`
+  không tồn tại → nút In chết hẳn.
+  Bước tiếp: Phase 0 — tạo nhánh `feat/finance-prepick-cancel` + sao lưu 6 bảng.
+
+- finance-product-import-direct-transfer → @junfoke → .plans/gop-db/finance-product-import-direct-transfer/plan.md
+  Trạng thái: **XONG PHASE 0-7, ĐÃ VERIFY HTTP + TRÌNH DUYỆT** (2026-08-15). Nhánh
+  `feat/finance-product-import-direct-transfer` (từ `gop_db`, cả 2 repo, checkout thẳng).
+  BE 12 file `Modules/Finance` + 1 migration (bảng lịch sử — thay đổi DB duy nhất) + 13 route.
+  FE 11 file `pages/finance/product-import-direct-transfers` (2.709 dòng) + 1 mục menu.
+  Verify: 13/13 route đúng mã · luồng end-to-end trên trình duyệt (tạo → gửi duyệt → duyệt →
+  tồn chuyển 5→3 và 0→2 + 2 dòng log → lịch sử 4 mốc → in mẫu 465/471 → Excel 868 dòng) ·
+  đối chiếu TỪNG CỘT 865 phiếu với bản sao lưu: **0 lệch**.
+  ⚠️ Bài học: quét route bằng vòng lặp curl đã **duyệt thật** phiếu 870 — khôi phục được nhờ bản
+  sao lưu Phase 0. Đừng bắn POST/PUT/DELETE vào id bản ghi thật.
+  Bước tiếp: user so cạnh nhau 2 cổng trên dev + test bằng tài khoản Kế toán kho không phải Super admin.
+  Port màn ERP "Phiếu chuyển hàng nhập thẳng" (`productImportDirectTransfers`, 13 route,
+  4 bảng: transfers 865 dòng / products 2.349 / details 15.834 / detail_logs 32.730)
+  sang phân hệ **Tài chính**, nhóm **Điều chuyển** của `finance.js`, cạnh "Phiếu điều chuyển hàng".
+  Chốt: 1 mục menu + 1 màn danh sách nhận `?type=` (all / waiting_approve theo quyền Kế toán kho);
+  dùng lại quyền ERP 100711-714 + `Kế toán kho`, không tạo quyền mới, kiểm quyền bằng query
+  thẳng pivot; **sửa 3 lỗi ERP** (canView bỏ sót 4 quyền cấp · popup tồn lấy sai nhân viên ·
+  store/update nhận thẳng `status`); **bổ sung tab Lịch sử** (bảng mới, migration duy nhất);
+  port đủ In phiếu (mẫu 465) + In danh sách (mẫu 471) + Xuất Excel.
+  Ngoài phạm vi: 2 màn báo cáo hàng nhập xuất thẳng — vẫn ở ERP.
+  Bước tiếp: Phase 0 — tạo nhánh ở cả 2 repo, sao lưu 4 bảng trước khi test luồng duyệt.
+
 - finance-product-import-request → @junfoke → .plans/gop-db/finance-product-import-request/plan.md
   Trạng thái: **XONG PHASE 1-7, ĐÃ VERIFY** (2026-08-14). Chờ so cạnh nhau trên dev.
   Phase 7: đã merge `gop_db` (cả 2 repo, 0 conflict) và áp bộ chuẩn UI mới — cột Hành động cuối
@@ -339,6 +392,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Còn nợ: `master-data` mới gate 2/10 màn (7 màn địa lý-ngân hàng chưa có permission nào trong DB).
   Spec: docs/superpowers/specs/gop-db/2026-08-04-chuyen-code-phan-he-master-data-insurance-design.md
   và docs/superpowers/specs/gop-db/2026-08-06-hub-menu-customer-care-finance-design.md | Tóm tắt: .plans/gop-db/chuyen-code-phan-he/design.md
+
+- customer-docs → @junfoke → .plans/gop-db/customer-docs/plan.md
+  Trạng thái: **DONE** (2026-08-15) — bộ 3 tài liệu cho màn Danh mục khách hàng `/assign/customers`
+  (code do @khoipv làm, @junfoke phụ trách tài liệu): `testcase.xlsx` 235 TC, `SRS` 12 chức năng +
+  12 quy tắc nghiệp vụ, `HDSD` 38 trang. Tài liệu bám CODE HIỆN TẠI, đã sửa 6 điểm lệch so với
+  design cũ (5 nhãn loại hình tổ chức, 6 thẻ màn Quản lý KH, Khóa là icon riêng, 3 nút Import,
+  cửa sổ Chọn trường xuất) — bảng đối chiếu trong plan.md.
 
 - customer-care-cost-catalog → @junfoke → .plans/gop-db/customer-care-cost-catalog/plan.md
   Trạng thái: **BE + FE DONE, verify BE xong** (2026-08-03) — chuyển "Danh mục dịch vụ sửa chữa và
