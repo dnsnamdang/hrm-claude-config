@@ -35,7 +35,50 @@ còn **thứ tự danh sách luôn MỚI → CŨ** (mới nhất lên đầu, §
 2. **Ai được xem?** Mặc định: KHÔNG permission riêng (ai vào được màn thì xem được lịch sử). Chỉ thêm permission khi user yêu cầu (sửa `PermissionsTableSeeder`, không migration).
 3. **Có action nào ngoài `update` không?** (create / khóa / mở khóa / đổi trạng thái / duyệt / từ chối)
    → action nào có ô lý do hoặc ghi chú thì phải hiện trên lịch sử (§4.1)
+   → nhưng bộ lọc "Loại hoạt động" thì KHÔNG liệt kê chúng: luôn đúng 3 nhóm cố định (§0a)
 4. **Có bảng con dạng danh sách không?** (người liên hệ, tài khoản ngân hàng, địa điểm...) → bắt buộc dùng **khoá dạng bảng** ở §3.
+
+## 0a. Bộ lọc "Loại hoạt động" — CỐ ĐỊNH 3 NHÓM, mọi màn như nhau
+
+Dropdown "Loại hoạt động" (khối Lịch sử ở màn chi tiết **và** popup Lịch sử ở màn danh sách)
+luôn có **đúng 3 lựa chọn này, không hơn không kém, không đổi chữ, không gắn tên đối tượng**:
+
+| value | Nhãn hiển thị |
+| --- | --- |
+| `create` | **Tạo mới** |
+| `update` | **Thay đổi thông tin** |
+| `status` | **Thay đổi trạng thái** |
+
+❌ SAI (kiểu cũ, mỗi entity một danh mục): "Tạo khách hàng", "Chỉnh sửa thông tin",
+"Cập nhật ảnh / tài liệu / video", "Khóa khách hàng", "Gửi duyệt", "Nghiệm thu hạng mục"…
+→ mỗi màn ra một dropdown khác nhau, user không đối chiếu được giữa các màn.
+
+**Nhóm chỉ dùng cho BỘ LỌC. Nhãn chi tiết của từng dòng vẫn giữ nguyên trên timeline**
+(vẫn hiện "Khóa khách hàng", "Duyệt", "Từ chối"…) → lọc thì đồng nhất, xem thì không mất thông tin.
+
+### Cách ánh xạ (BE)
+`SystemLogService` khai sẵn, **không tự khai lại ở từng entity**:
+- `ACTION_GROUP_LABELS` — 3 nhãn trên
+- `ACTION_GROUP_MAP` — action cụ thể → nhóm:
+  - `create` / `created` / `store` → `create`
+  - `update` / `updated` / `update_media` → `update`
+  - `change_status` / `lock` / `unlock` / `submitted` / `resubmitted` / `approved` / `rejected` /
+    `item_accepted` / `item_rejected` / `completed` → `status`
+- `groupOfAction()` — action **chưa khai** mặc định vào `status` (phần lớn action đặc thù còn lại
+  đều là chuyển trạng thái phiếu) ⇒ entity mới thêm sau vẫn lọc được ngay, không phải sửa map.
+- `finalize()` gắn `action_group` cho MỌI dòng log → tự áp cho cả 10 loại đối tượng.
+- `getFilterOptions()` trả 3 nhóm này cho **mọi `$type`**.
+
+⚠️ Trong `getFilterOptions()`, phần **`performers` thì NGƯỢC LẠI**: chỉ trả cho loại nào suy được
+công ty của bản ghi (hiện mới có `customer`). Loại khác trả rỗng để FE tự suy từ log — nếu trả
+danh mục thì `performerOptions()` không lọc được công ty và sẽ liệt kê **toàn bộ nhân viên hệ thống**.
+
+### FE
+- `actionOptions()` lấy từ `filter-options`; fallback là **3 nhóm hard-code**, KHÔNG suy từ log
+  (suy từ log = mỗi bản ghi ra một dropdown khác nhau, đúng thứ cần bỏ).
+- Lọc bằng `log.action_group`, có fallback `log.action` cho BE cũ:
+  `if (f.action && (log.action_group || log.action) !== f.action) return false`
+- Sửa **cả 2 nơi** (`SystemInfoSection.vue` + popup lịch sử của entity) — xem §5.1.
 
 ## 1. Chọn biến thể
 
@@ -175,7 +218,8 @@ từ chối, duyệt (nếu có ô ghi chú duyệt), hủy, đóng, khóa, hủ
 - [ ] Đã chốt với user: trường track / quyền xem / loại action / có bảng con không
 - [ ] Bảng `<entity>_history` đúng cột mẫu, migration có PHPDoc
 - [ ] Snapshot lưu giá trị hiển thị; bảng con dùng bản ghi `[nhãn => giá trị] + __key`
-- [ ] DTO trả đủ `action_label/action_color/actor_*/department_name/created_at/created_at_raw`
+- [ ] DTO trả đủ `action_label/action_color/action_group/actor_*/department_name/created_at/created_at_raw`
+- [ ] **Bộ lọc "Loại hoạt động" đúng 3 nhóm cố định** (Tạo mới / Thay đổi thông tin / Thay đổi trạng thái) — giống hệt mọi màn khác, và nhãn chi tiết trên timeline vẫn giữ nguyên (§0a)
 - [ ] Sắp xếp mới → cũ
 - [ ] `changed[]` chỉ chứa trường đã đổi (không in lại cả bản ghi)
 - [ ] **Mọi thao tác có lý do/ghi chú (từ chối, hủy, đóng, duyệt kèm ghi chú…) đều hiện đủ trên lịch sử** (§4.1)

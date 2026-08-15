@@ -68,3 +68,11 @@ Blocked: (không)
 - [ ] Bớt 1 người nội bộ → Lưu: chỉ người bị xoá nhận `[MET] Cập nhật: …. Bạn đã được đưa ra khỏi cuộc họp.`
 - [ ] Vừa đổi giờ vừa thêm người → người mới chỉ nhận 1 noti "được thêm vào", người cũ nhận noti đổi lịch
 - [ ] Nút "Lên lịch hẹn" / "Đã chốt lịch": vẫn báo toàn bộ thành viên, mỗi người đúng 1 noti
+
+### Merge tpe-develop-assign → tpe (2026-08-14)
+- [x] Fix conflict `MeetingController.php` (khối gửi thông báo ở `update()`) và `MeetingForm.vue` (conflict cả file do nhánh dev đổi LF→CRLF — merge lại 3-way sau khi chuẩn hoá LF, còn đúng 1 conflict thật ở `handleSave()`)
+- [x] Chốt giữ luồng thông báo của `tpe-develop-assign`: BE khôi phục snapshot + nhánh `notifyMeetingChanges`; FE `handleSave()` bỏ cờ `send_notification` (nút Lưu báo đúng người bị ảnh hưởng)
+- [x] So sánh trạng thái ở `handleSave()` dùng `==` (không dùng `Number(...) === `) theo yêu cầu
+- [x] Xuất lại `.plans/meeting-create-bugfix/thong-bao-meeting.xlsx` theo hành vi sau merge (17 hành động + quy tắc chung + tham chiếu code); xác nhận KHÔNG còn lặp thông báo
+- [ ] Còn tồn: `store()` vẫn gửi thông báo TRƯỚC `DB::commit()` (MeetingController:180 vs 182) — nên chuyển xuống sau commit như `update()`
+- [ ] Còn tồn: trạng thái Hoàn thành (3) không bắn thông báo cho ai — cần xác nhận nghiệp vụ

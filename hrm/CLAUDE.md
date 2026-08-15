@@ -31,6 +31,19 @@
 - **Mọi popup XÁC NHẬN dùng đúng 1 component `components/modal/base-confirm-modal.vue`** (Xóa, Khóa/Mở khóa, Duyệt/Từ chối, Hủy, thoát khi chưa lưu…). Gọi từ code ngoài template thì dùng `await this.$confirm({...})` — plugin render chính component đó. TUYỆT ĐỐI không tạo confirm riêng cho từng màn và không dùng `$bvModal.msgBoxConfirm()`. Chi tiết: `.claude/skills/modal-popup/SKILL.md` mục 3a
 - **Mọi màn form (Tạo mới/Sửa) phải cảnh báo khi thoát lúc chưa lưu** — dùng mixin có sẵn `@/utils/mixins/unsavedChangesMixin`, gọi `markFormSaved()` sau khi lưu thành công; KHÔNG tự viết `beforeRouteLeave` riêng. Chi tiết: `.claude/skills/unsaved-changes/SKILL.md`
 - **Mọi thông báo nghiệp vụ (chuông/push/socket) theo template `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`** — tên đối tượng ≤ 50 ký tự và in đậm, tổng ≤ 120 ký tự, deep-link bắt buộc kèm ID. Chi tiết + bảng prefix/nhóm hành động: `.claude/skills/notification-convention/SKILL.md` (đọc trước khi code phần có thông báo)
+- **Bản ghi ĐÃ KHOÁ thì KHÔNG cho sửa/xoá nữa — chặn ở BE, không chỉ ẩn nút ở FE** (áp cho mọi màn, mọi module: danh mục, khách hàng, phiếu, dự án…). Muốn sửa thì phải Mở khoá trước.
+  - **BE (bắt buộc, là chốt chặn thật)**: mọi endpoint `update` / `destroy` / thao tác đổi dữ liệu phải kiểm tra trạng thái khoá NGAY ĐẦU HÀM, trước cả validate nghiệp vụ → trả `423 LOCKED` kèm message rõ ("Bản ghi đang bị khoá, vui lòng mở khoá trước khi cập nhật."). Đặt điều kiện trong 1 accessor/method của Entity (vd `isLocked()` / `isCanEdit()`) rồi dùng lại, KHÔNG rải `if ($x->status == ...)` khắp controller.
+    - ⚠️ **Controller nhận `FormRequest` thì `if` ở đầu hàm KHÔNG chạy trước validate** — Laravel validate ngay lúc resolve tham số, payload thiếu trường sẽ trả `422` và guard không bao giờ tới lượt. Trường hợp này phải đặt guard ở **middleware route** (khuôn `CheckCustomerNotLocked` / `CheckServiceNotLocked`, alias `customerNotLocked` / `serviceNotLocked`), KHÔNG gắn cho route mở khoá và route chỉ đọc.
+    - **Chặn update thì phải có lối MỞ KHOÁ** — màn nào chưa có thao tác mở khoá thì bổ sung endpoint + nút, nếu không bản ghi bị khoá sẽ kẹt vĩnh viễn.
+  - **FE**: ẩn (KHÔNG disable) nút Sửa, Xoá và mọi nút thao tác đổi dữ liệu khi `is_locked` / `is_can_edit = false`; vào màn Sửa bằng URL trực tiếp thì chuyển về màn Chi tiết. FE chỉ là lớp trải nghiệm — **không được coi là đã chặn**.
+  - **Ngoại lệ duy nhất là thao tác Mở khoá** (và các thao tác chỉ đọc: xem, in, export, xem lịch sử).
+  - **Ẩn nút phải làm ĐỦ CẢ 2 NƠI**: dòng ở màn danh sách VÀ footer màn chi tiết (xem gạch đầu dòng dưới).
+  - Thao tác Khoá/Mở khoá vẫn phải ghi lịch sử (nhóm "Thay đổi trạng thái" — xem `.claude/skills/entity-history/SKILL.md`).
+- **Badge trạng thái dùng component chung `V2BaseBadge`**, KHÔNG tự khai `<span class="status-pill">` / class badge riêng cho từng màn (`variant`: `brand` = hoạt động, `required` = khoá/từ chối, `muted` = nháp). Text lấy từ `status_text` BE trả về, không tự map số → chữ ở FE. Khuôn: `pages/customer-care/device-errors/index.vue`. Chi tiết: `.claude/skills/list-page/SKILL.md` mục 3c
+- **Nút KHÔNG DÙNG ĐƯỢC thì ẨN HẲN — không hiện rồi disable.** Áp cho MỌI lý do: không có quyền, **và cả** chưa đủ điều kiện nghiệp vụ (đã phát sinh chứng từ, sai trạng thái, đã khoá…). Điều kiện phải nằm trong `visible` / `v-if`, KHÔNG dùng `interactable` + `disabledTitle` để hiện nút xám. Áp cho cả cột Hành động ở màn danh sách lẫn footer màn chi tiết (nút ẩn ở danh sách thì phải ẩn ở chi tiết). Cần cho user biết vì sao không thao tác được thì ghi ở chỗ khác (cột Trạng thái, ghi chú trong form), không giữ nút xám trên giao diện.
+- **Màn chi tiết/form: nút BẮT BUỘC đặt trong `V2Footer`**, không tự dựng khối `<div class="d-flex justify-content-end">` + loạt `V2BaseButton`. Hành động không có sẵn trong `V2Footer.menu`, hoặc cần variant/màu khác với mặc định của component, thì đưa vào slot `#custom-actions`. `V2Footer` tự render "Quay lại" ở cuối — đừng tự thêm. Chi tiết: `.claude/skills/list-page/SKILL.md` mục 7.2
+- **Tiêu đề màn chi tiết chỉ ghép mã khi bản ghi CÓ mã**: `Chi tiết <đối tượng>: <mã>`. Bảng không có cột mã → để tiêu đề TRẦN, **không lấy tên thay thế** (tên dài làm tiêu đề/tab lê thê mà không giúp định danh).
+- **Hành động ở màn CHI TIẾT phải khớp màn DANH SÁCH của đúng bản ghi đó** — giống cả danh sách hành động lẫn **điều kiện hiện/ẩn**. Với cùng 1 bản ghi, số nút ở 2 màn phải bằng nhau (chi tiết chỉ được thiếu "Xem" vì đang ở màn xem, và "Lịch sử" nếu đã có mục Lịch sử nhúng sẵn trong form). Nút ẩn ngoài danh sách mà chi tiết vẫn hiện là SAI. Sai hay gặp: danh sách gate `perm.edit && isActive`, chi tiết chỉ gate `perm.edit`. Điều kiện nên đọc từ cùng 1 nguồn (cờ BE `is_can_edit`/`is_can_delete` hoặc computed dùng chung). **Sửa điều kiện của 1 hành động thì phải kiểm cả 2 nơi trước khi báo xong.** Chi tiết + cách tự kiểm: `.claude/skills/list-page/SKILL.md` mục 7.2
 - **Danh mục bị khoá / ngừng hoạt động vẫn phải hiện ở bản ghi đang dùng nó** (nghiệp vụ xuyên suốt MỌI màn, mọi module): dropdown/select lấy từ danh mục (giai đoạn dự án, loại hình, lĩnh vực, nguồn khách hàng, phòng ban, chức danh…) mặc định chỉ liệt kê bản ghi còn hoạt động (`is_active = 1` / chưa khoá), NHƯNG khi mở màn Sửa/Chi tiết của đối tượng đã chọn giá trị nay bị khoá thì giá trị đó BẮT BUỘC vẫn là 1 option và hiển thị đúng tên — không được để select trống, không tự đổi sang giá trị khác, không mất dữ liệu khi lưu lại.
   - **BE**: API danh mục nhận thêm id đang dùng (vd `include_ids` / `current_id`) → `where('is_active', 1)->orWhereIn('id', $includeIds)`. Nếu không sửa được API danh mục thì Resource của đối tượng phải trả kèm object danh mục đang chọn (id + name) để FE merge.
   - **FE**: sau khi load options, nếu `form.xxx_id` có giá trị mà không có trong options → push object đang chọn (lấy từ data detail) vào mảng options. Hiển thị **đúng tên gốc**, KHÔNG thêm hậu tố kiểu `(đã khoá)` vào text.
@@ -321,6 +334,18 @@ Lỗi BE → đọc log tại:
 ## Khi làm việc với git
 - Repo API nằm ở: /hrm-api
 - Repo Client nằm ở: /hrm-client
+
+---
+
+## ⚠️ Line ending — GIỮ NGUYÊN CRLF
+
+Nhiều file trong `hrm-client` (và một số file `hrm-api`) đang dùng **CRLF (`\r\n`)**. Khi sửa code **KHÔNG được đổi line ending của file** — đổi cả file sang LF làm diff phình lên hàng nghìn dòng giả, che mất thay đổi thật và gây conflict vô nghĩa khi merge.
+
+- **Kiểm tra trước khi sửa** file lạ: `file <path>` (thấy `with CRLF line terminators`) hoặc `grep -c $'\r' <path>`
+- File đang CRLF → dòng **mới thêm vào cũng phải kết thúc bằng `\r\n`**, KHÔNG trộn 2 kiểu trong 1 file
+- **Nguy hiểm nhất là sửa hàng loạt bằng script** (Python `open().write()`, `sed -i`, `awk`, prettier/eslint `--fix`): mặc định ghi ra LF → nuốt sạch `\r` toàn file. Dùng Python thì mở `newline=''` cho cả đọc lẫn ghi
+- Sau khi sửa bằng script, **luôn chạy `git diff --stat` kiểm tra**: số dòng thay đổi lớn bất thường (cả file bị đánh dấu đổi) = đã phá line ending → trả lại ngay, không commit đè
+- KHÔNG tự ý thêm `.gitattributes`, đổi `core.autocrlf`, hay "chuẩn hoá toàn bộ repo về LF" — muốn làm phải hỏi trước
 
 ## Không làm
 

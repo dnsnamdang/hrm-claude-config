@@ -62,12 +62,22 @@ Nguyên tắc: phân biệt theo **bản chất thao tác**, không theo định
 | --- | --- |
 | Tạo mới · Lưu · Lưu nháp | `primary` (teal) |
 | Duyệt · Hoàn thành · Kích hoạt | `primary status="success"` |
-| Gửi duyệt · Khóa · Cảnh báo | `primary status="warning"` |
+| Gửi duyệt · **Khóa** · Cảnh báo | `primary status="warning"` |
+| **Mở khóa** · Khôi phục · Kích hoạt lại | `primary status="success"` |
 | Xóa · Từ chối · Hủy duyệt · Mở khóa dữ liệu đã chốt | `primary status="danger"` |
 | In · Cấu hình cột · Làm mới · Xem thêm | `secondary` / `tertiary` (info) |
 | Đóng · Hủy · Quay lại | `tertiary` (info) |
 
 ⚠️ **Không dùng `danger` cho thao tác vô hại** (xóa điều kiện lọc, đóng popup) — đỏ chỉ dành cho việc phá huỷ/không hoàn tác được, dùng tràn lan là mất tác dụng cảnh báo.
+
+⚠️ **Nút đổi trạng thái phải ĐỔI MÀU theo trạng thái**, không để cứng một màu:
+
+```vue
+<!-- Khóa: cam (hạn chế) · Mở khóa: xanh lá (cho hoạt động lại) -->
+<V2BaseButton primary :status="isActive ? 'warning' : 'success'" @click="toggleLock">
+```
+
+Để cứng `status="danger"` cho cả 2 chiều là sai — "Mở khóa" là hành động **khôi phục**, tô đỏ khiến user tưởng sắp phá huỷ dữ liệu. Trong cột hành động của bảng (`V2BaseIconButton` chỉ có `danger` boolean) thì **không set `danger`** cho Khóa/Mở khóa — để trung tính, giữ đỏ riêng cho Xóa.
 
 ---
 
