@@ -138,280 +138,90 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
+  Trạng thái: **HOÀN THÀNH** (2026-08-15) — user đã test trình duyệt toàn màn. Nhánh `gop_db`,
+  đã commit: `hrm-api` `6eed9d2a6` · `hrm-client` `8c0ffb424`.
+  Port màn ERP "Phiếu đề nghị thanh toán" → `/finance/bill-payment-requests` (phân hệ Tài chính),
+  chứng từ **duyệt 5 cấp**, 4 loại chi. 8 phase / 29 task · **17 route** BE · **12 file FE** ·
+  9 quyền id 1153–1161 · dùng chung bảng ERP `bill_payment_requests`.
+  ⚠️ Còn sót trên **DB local** khi test (dọn khi không cần nữa, snapshot ở scratchpad):
+  `employee_manage_departments` id 368 · `departments.id = 111` bật lại `status = 1` ·
+  8 phiếu mẫu `TEST.DNTT-CHI.*` (seeder có sẵn câu lệnh dọn).
+  Quyết định, lỗi đã bắt, cách test loại chi 12 (NCC nào có dữ liệu): xem **Checkpoint mới nhất**
+  trong plan.md.
+  Spec: docs/superpowers/specs/gop-db/2026-08-14-finance-bill-payment-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment-request/design.md
+
 - form-validate-base → @khoipv → .plans/gop-db/form-validate-base/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-14)**, nhánh `gop_db`. Sửa **base** để gắn được
-  `v-validate` (vee-validate v2) thẳng lên `V2Base*` ở mọi màn → lỗi hiện **realtime**, không phải
-  bấm Lưu mới biết.
-  2 mixin mới: `utils/mixins/v2ValidateMixin.js` (khai `$_veeValidate.name()/.value()` + prop
-  `invalid`) và `utils/mixins/formValidateMixin.js` (gộp lỗi FE realtime + lỗi BE 422 vào
-  `fieldError()` / `hasFieldError()` / `validateForm()` / `applyServerErrors()`).
-  7 component đã gắn: Input, Textarea, Select, SelectInModal, SelectRemote, DatePicker, CurrencyInput.
-  ⚠️ Phát hiện kèm: `:class="{'is-invalid':…}"` truyền vào `V2Base*` trước nay **không đổi màu viền**
-  (class rơi vào thẻ bọc, Bootstrap chỉ style `.form-control.is-invalid`) → nay base tự tô.
-  Màn mẫu: **Gói bảo dưỡng** — theo skill `form-validate`, FE chỉ còn `required` ô **Tên**; Mã /
-  Công ty / file / ma trận để BE trả 422.
-  **Đợt 2 (cùng ngày)**: nhân ra **14 màn gop-db còn lại** (8 Finance + 5 CSKH + `/human/banks`;
-  Serial không có form nên không phải sửa). Mỗi màn: bỏ chặn required tự viết (trừ ô Tên) và bê
-  rule ĐỊNH DẠNG của BE sang FE. **Message FE viết đúng nguyên văn message BE** (user chốt) — lấy từ
-  `FormRequest::messages()`, thiếu thì lấy `hrm-api/resources/lang/vi/validation.php`.
-  Thêm 7 rule vào `plugins/vee-validate.js` (**thuần thêm, không sửa rule cũ** — user chốt giữ
-  `max:255` với câu cũ): `number_only`, `min_value`, `max_value_decimal`, `digits_between`,
-  `number_vn`/`positive_vn`/`max_value_vn` (ô Tỷ giá nhập định dạng VN `26.520,00`) + dictionary
-  `custom` cho 3 trường có câu chữ riêng.
-  ⚠️ Ngoại lệ giữ lại 1 chặn required: `device_error_costs.price`/`price_service` — BE khai
-  `nullable` nhưng cột NOT NULL, gửi rỗng nổ SQL 1048 (500) chứ không phải 422.
-  Verify: parse 25 file + `vi.json`; nạp thật thân hàm rule bằng `vm` chạy 20 case → 20/20 đúng.
-  **Đợt 3 (cùng ngày)**: đối chiếu **Checklist chuyển đổi ERP =>> HRM.xlsx** trên Drive
-  (sheet "Chi tiết chức năng", lọc `Đã test` = **23 màn**) → đợt 2 mới phủ 16, bổ sung nốt
-  **6 màn Danh mục địa chỉ** (Quốc gia / Khu vực / Tỉnh-TP / Quận-Huyện / Phường-Xã / Đường-Phố)
-  → phủ **22/23**, còn `/assign/customers` user chốt để sau.
-  ⚠️ Đổi hướng về message: thay vì truyền câu lỗi vào rule FE, **chuẩn hoá BE** (user chốt) —
-  14 FormRequest bỏ message riêng theo trường, dùng câu chung đúng bằng câu FE nói
-  (`Phải là số` · `Không được nhỏ hơn :min` · `Tối đa :max` · `Chỉ được nhập chữ số, từ :min đến :max chữ số`
-  · `max` chuỗi để rơi về lang vi `Vui lòng nhập tối đa :max ký tự.`). Xoá hẳn dictionary `custom`
-  theo tên trường ở FE (vee-validate chỉ có 1 dictionary toàn cục, `name`/`code`/`note` trùng nhau
-  ở hàng chục màn). Giữ override của `unique`/`exists`/`in`/`not_in`/closure.
-  📌 Vá luôn 1 lỗi cũ: `AccountRequest` báo "từ 3 đến **10** chữ số" trong khi hằng số là **15**.
-  Verify: parse 31 file FE + `vi.json`, `php -l` 15 file BE, chạy lại 20 case rule → 20/20 đúng.
-  **Đợt 4 (cùng ngày)**: làm nốt màn **Danh mục khách hàng** (`CustomerForm.vue`, dùng chung 5 màn)
-  → **phủ đủ 23/23 màn** của checklist. Màn này trước đó KHÔNG có validate FE nào.
-  Ô top-level dùng `v-validate` (`fullname` là ô Tên duy nhất có `required`; email / mã số thuế /
-  SĐT / độ dài / ngày không tương lai); khối LẶP (SĐT, người đại diện, người liên hệ) dùng hàm
-  `validateRepeatBlocks()` + watcher deep vì tên field phải trùng key BE theo chỉ số.
-  Thêm 3 rule `phone_number` (regex `^(0)[0-9]{9,11}$` — rule `phone` cũ chỉ nhận đúng 10 số),
-  `tax_code`, `not_future`. Chuẩn hoá message `SaveCustomerRequest` + `UpdateCustomerRequest`.
-  ✅ Gỡ được ngoại lệ duy nhất còn lại: BE đã vá `costs.*.price`/`price_service` thành
-  `required|numeric|min:0` → màn Lỗi thiết bị bỏ chặn bỏ trống ở FE. Nay FE chỉ chặn bỏ trống ô Tên.
-  ✅ User đã test trình duyệt đủ **23/23 màn** (2026-08-14).
-  Còn lại (không chặn hoàn thành): PR cập nhật `.claude/skills/form-validate/SKILL.md`
-  (bỏ `data-vv-value-path`).
+  Trạng thái: **HOÀN THÀNH — user test đủ 23/23 màn** (2026-08-14).
+  Gắn được `v-validate` thẳng lên `V2Base*` → lỗi hiện realtime. 2 mixin mới (`v2ValidateMixin`,
+  `formValidateMixin`), 7 component base, 7 rule mới ở `plugins/vee-validate.js` (thuần thêm).
+  Theo skill `form-validate`: FE chỉ `required` ô **Tên**, còn lại BE trả 422; **message BE chuẩn hoá
+  đúng bằng câu FE nói** (14 FormRequest).
+  Còn lại (không chặn): PR cập nhật `.claude/skills/form-validate/SKILL.md` (bỏ `data-vv-value-path`).
   Spec: docs/superpowers/specs/gop-db/2026-08-14-form-validate-base-design.md | Tóm tắt: .plans/gop-db/form-validate-base/design.md
 
 - finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-14)**, nhánh `gop_db`.
-  Xong toàn bộ 7 phase (BE + FE), đã verify.
-  FE (9 file mới + 1 file menu): danh sách · chờ duyệt · thêm/sửa · chi tiết + Không duyệt · in ·
-  3 popup (hợp đồng bán / hợp đồng mua / nhà cung cấp). Màn chờ duyệt DÙNG LẠI màn danh sách qua prop
-  `pendingMode` để 2 màn không bao giờ lệch cột/bộ lọc.
-  Verify: contract FE↔BE tự động (endpoint · field đọc · field gửi · fail-closed) 0 vấn đề ·
-  vòng đời phiếu chạy bằng ĐÚNG payload FE dựng 13/13 đạt · Playwright mở thật 4 màn **0 lỗi console** ·
-  màn in đo theo skill `print-page`: tràn mép phải **0px**, viền đủ 4 cạnh, logo tải được.
-  🐛 **Lỗi thật bắt được khi test**: màn chờ duyệt đá về 404 với **Super admin** —
-  `middleware/checkPermission.js` chỉ so tên quyền trong store, KHÔNG có nhánh bỏ qua cho super admin,
-  trong khi BE cho phép. Role 18 giữ 2.148 quyền api nhưng thiếu 5 quyền mới → đã gán qua seeder.
-  🐛 **Lỗi thứ 2 — user phát hiện khi review**: form/chi tiết ban đầu chép khuôn từ
-  `ProductTransferRequestForm.vue` chứ không bám màn mẫu khách hàng như đã dặn. Các class
-  `form-card` / `form-header` / `readonly-cell` **KHÔNG có trong `v2-styles.scss`** (chỉ có trong
-  `<style>` riêng của màn đó) → 2 màn render bằng div trơn, mất hết khung. **Đã sửa** sang đúng khuôn
-  `CustomerForm.vue`: `.card` + `card-header py-2` + `<h6>` · `<Required />` · `text-small-error` ·
-  `V2BaseInput :disabled`. Đo Playwright khớp 100% với `/assign/customers/add`
-  (card bg/#viền/radius/margin, header bg `rgb(237,239,241)`, h6 12px).
-  📌 **Bài học chung**: chép khuôn từ màn khác thì phải kiểm class nằm ở `v2-styles.scss` (dùng chung)
-  hay ở `<style>` riêng của màn đó — chép template mà bỏ style là mất sạch giao diện.
-  🔁 **Đợt sửa 3 (user yêu cầu "form giống form ERP")**: dựng lại bố cục + luồng nhập theo
-  `form.blade.php` của ERP — 2 cột `col-md-6`, Loại tiền + Tỷ giá chung 1 cột, tỷ giá có addon **VND**,
-  bỏ ô "Người nộp tiền" (ERP không có), bảng chỉ hiện sau khi chọn Loại thu, **header bảng 2 tầng**
-  (cột tiền tách đôi khi ngoại tệ), nút **+** thêm dòng ở header bảng, và **chọn khách hàng + hợp đồng
-  THEO TỪNG DÒNG** bằng ô readonly + kính lúp.
-  ⚠️ Chọn theo dòng là yêu cầu DỮ LIỆU chứ không phải thẩm mỹ: đếm trên DB thật có
-  **1.128/2.411 phiếu (46%) gom từ 2 khách hàng trở lên**, cao nhất 25 KH/phiếu — mô hình 1 KH/phiếu
-  không nhập nổi gần nửa số phiếu thực tế.
-  ⚠️ Ghi nhận khi chốt hoàn thành (user chốt không cần làm thêm): **không** đối chiếu trực tiếp trên
-  **giao diện ERP** (thiếu môi trường + tài khoản ERP) và chỉ test **3/4 cấp quyền**
-  (super admin / kế toán / không quyền).
-  📌 Ghi nhận không sửa: `ChooseErpCustomerModal.vue` có cảnh báo Vue "computed 'fields' đã định nghĩa trong data" —
-  lỗi CÓ SẴN của component dùng chung, hiện ở mọi màn nhúng nó.
-  Phase 3 (3 endpoint popup): `search-contracts` UNION 3 nguồn (hrm_contracts thay firm_contracts + HĐ đầu kỳ
-  + HĐ bảo dưỡng) — total khớp SQL thuần, loại đúng HĐ HRM status 2/3, không còn dòng FirmContract nào;
-  `search-buy-contracts` UNION 5 nguồn — NCC 127 ra 19 dòng, chia đúng từng nguồn 11/5/2/1/0 khớp SQL;
-  `search-suppliers` 9.547 dòng = đúng `is_supplier=1`, không lọt khách hàng thường.
-  ⚠️ Bẫy đã tránh: gọi `where()` thẳng trên builder UNION thì điều kiện **chỉ dính nhánh đầu tiên** →
-  phải bọc `fromSub()` rồi mới lọc. Tên bảng/cột đối chiếu `information_schema` trước khi viết (plan ghi
-  thiếu: `wr_service_contracts` CÓ `total_after_vat`, `opening_contracts` KHÔNG có `status`).
-  📌 Tham số `has_dept=1` popup ERP gửi là **tham số chết** (grep toàn repo ERP không nơi nào dùng) → không port.
-  Phase 2 (BE ghi): tạo/sửa/xoá nháp · gửi duyệt · Không duyệt — 12 nhóm kiểm thử HTTP đều đạt.
-  Siết validate mạnh hơn ERP (7/7 ca xấu bị 422: `status=4` lách sang "Đã hạch toán", `object_type` lạ,
-  `exchange_rate=0`, `details` rỗng…); 403 đúng chỗ khi người khác sửa/xoá; thông báo gửi duyệt tới
-  **29 kế toán cùng công ty**, nội dung đúng chuẩn `notification-convention`
-  (`[DNTT] Chờ duyệt: <b>{mã phiếu}</b>. Người đề nghị: … Số tiền: …` + deep-link kèm ID).
-  📌 **Seeder dữ liệu test** (user chốt 2026-08-14): `Modules/Finance/Database/Seeders/BillIncomeRequestTestDataSeeder.php`
-  — mặc định DRY-RUN, chạy thật bằng `FINANCE_TEST_DATA=1`. Đã sinh 8 hợp đồng HRM `HĐ-TEST-DNTT-01..08`
-  (dựng từ báo giá thật; 6 cái đúng tập trạng thái popup + 2 cái phải bị loại) · 2 phiếu mẫu `TEST.DNTT.*` ·
-  gán 5 quyền HRM mới cho đúng role đang giữ quyền ERP cùng tên (23 dòng `role_has_permissions`).
-  Phase 1 (BE nền: entity + morphMap + list/show): 15 file mới + 3 file sửa ở `hrm-api`.
-  `GET /v1/finance/bill-income-requests` trả **2.398/2.411 phiếu ERP** (ẩn đúng 13 nháp của người
-  khác), `/pending` lọc đúng công ty kế toán, `/{id}` trả đủ chi tiết — **7562/7562 dòng resolve
-  được hợp đồng qua morphMap**, công nợ khớp 100% SQL thuần. 5 quyền mới id 1148-1152 đã INSERT DB dev.
-  ⚠️ **Quyết định đáng nhớ**: KHÔNG dùng middleware `checkPermission` cho nhánh kế toán — nó resolve
-  quyền qua spatie `getAllPermissions()` (lọc `model_type`), mà **1.252/1.691 dòng `employee_has_roles`
-  trên DB gộp là `model_type='App\Employee'` (từ ERP)**; đo thật: 2/2 kế toán có quyền đều bị spatie
-  trả `false` → middleware 403 oan. Gate bằng `BillIncomeRequest::isAccountant()` query thẳng pivot
-  (tiền lệ `ProductTransferRequestController::reject()`).
-  📌 3 chỗ **plan/spec ghi sai, đã sửa khi làm**: `Supplier` là bảng `customers` + `is_supplier=1`
-  (bảng `suppliers` có thật nhưng 0 dòng) · `Modules\Assign\Entities\Customer` không tồn tại →
-  `App\Models\TpCustomer` · filter `customer_name` của ERP là code chết (gọi quan hệ `customer()`
-  không khai) → lọc qua `details.customer`.
-  🐛 Tự phát hiện & sửa: `canView()` fail-open khi chưa đăng nhập (`approved_id == auth()->id()`
-  với cả 2 vế NULL → true).
-  ⚠️ **`hrm_contracts` đang 0 dòng trên DB dev** → Phase 2/3 chưa có hợp đồng HRM để test popup + tạo phiếu.
-  Cần user chốt: có gộp 3 method quyền của `ProductTransferRequest` sang trait mới
-  `Modules/Finance/Entities/Concerns/ChecksEmployeePermission.php` không (sửa code đang chạy).
-  Bước tiếp: **Phase 2 — BE ghi** (store/update/destroy/changeStatus + thông báo gửi duyệt).
-  ---
-  Plan 7 phase / 20 task. Port màn ERP
-  "Phiếu đề nghị thu tiền" (`admin/income-expenditure/bill_income_requests`) sang HRM phân hệ
-  **Tài chính** (slot xám `finance.js:46` / `:82` / `:403`).
-  Chốt: dùng chung bảng ERP (không đổi schema) · giữ logic ERP 1:1, chỉ đổi nguồn hợp đồng
-  `firm_contracts` → **`hrm_contracts`** · công nợ vẫn đọc `account_details` TK 1311/3311
-  (HĐ HRM sẽ hiển thị 0 tới khi có hạch toán) · giữ cả 2 loại thu · bỏ nhánh HĐ nguyên tắc +
-  phân bổ phiếu YCXH · 5 quyền mới id 1148–1152 guard `api` · **không đụng repo ERP**.
-  Màn Phiếu thu sẽ port ở feature sau → đợt này chưa có nút "Tạo phiếu thu".
-  ⚠️ Rủi ro chấp nhận: phiếu do HRM tạo mở bên ERP sẽ lỗi `Class not found` (ERP không có class
-  trỏ `hrm_contracts`).
-  Base UI danh sách bám `pages/assign/customers/index.vue`.
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-14). 7 phase, BE + FE.
+  Port màn ERP "Phiếu đề nghị thu tiền" → `/finance/bill-income-requests`; nguồn hợp đồng đổi
+  `firm_contracts` → `hrm_contracts`; 5 quyền id 1148–1152. Màn chờ duyệt dùng lại màn danh sách qua
+  prop `pendingMode`. Form dựng theo `form.blade.php` của ERP, **chọn KH + hợp đồng theo TỪNG DÒNG**
+  (46% phiếu thật gom từ 2 KH trở lên).
+  ⚠️ Quyết định đáng nhớ: **không dùng middleware `checkPermission`** cho nhánh kế toán (spatie lọc
+  `model_type`, 1.252/1.691 dòng `employee_has_roles` là `App\Employee` từ ERP → 403 oan) — gate bằng
+  query thẳng pivot. Phiếu do HRM tạo mở bên ERP sẽ lỗi `Class not found` (rủi ro đã chấp nhận).
+  Ghi nhận: chưa đối chiếu trực tiếp giao diện ERP, mới test 3/4 cấp quyền.
   Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-income-request/design.md
 
 - device-errors-load-data → @khoipv → .plans/gop-db/device-errors-load-data/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-13)**, nhánh `gop_db`.
-  Màn `customer-care/device-errors` vào là hiện "Không có dữ liệu phù hợp bộ lọc." dù bảng có 2768 dòng:
-  `mounted()` `await loadOptionsData()` (2 API dropdown tuần tự ~8s) TRƯỚC `loadData()`, mà `loading`
-  khởi tạo `false` nên bảng in nhầm empty text trong lúc chờ. Sửa 1 file FE: `loading: true`,
-  `loadOptionsData()` chạy nền, 2 request options gọi song song. Không đụng BE.
-  Spec: docs/superpowers/specs/gop-db/2026-08-13-device-errors-load-data-design.md | Tóm tắt: .plans/gop-db/device-errors-load-data/design.md
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-13). Màn `customer-care/device-errors` hiện
+  "không có dữ liệu" oan do `loading` khởi tạo `false` và 2 API dropdown chạy tuần tự trước `loadData()`.
+  Sửa 1 file FE, không đụng BE.
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-device-errors-load-data-design.md
 
 - pagination-100-rows → @khoipv → .plans/gop-db/pagination-100-rows/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-13)**, nhánh `gop_db`.
-  Thêm option **100** vào ô "Số dòng/trang" cho các màn đã chuyển sang HRM ở phần gop-db.
-  Khảo sát ra **1 điểm sửa duy nhất**: default prop `pageSizeOptions` của `components/V2BaseDataTable.vue`
-  (`[5,10,20,50]` → `[5,10,20,50,100]`) — 16 màn gop-db (8 finance + 6 customer-care +
-  `/assign/customers` + `/human/banks`) đều dùng default này, không màn nào tự truyền list thiếu 100.
-  `V2BasePagination` và 3 modal tìm kiếm gop-db đã có sẵn 100 từ trước.
-  ⚠️ User chốt sửa thẳng **component dùng chung** (93 file đang dùng, 75 file ngoài gop-db cũng có thêm 100)
-  thay vì truyền prop 16 chỗ — chỉ THÊM option, không màn nào mất lựa chọn cũ. Giữ option `5` để user
-  đang để 5 dòng/trang không bị select lệch giá trị.
-  BE **không phải sửa dòng nào** (đã soát thật): phần lớn endpoint truyền thẳng `per_page` vào
-  `paginate()`; 3 chỗ cap `min(100, …)` (`DeviceErrorController:303`, `ServiceService:484`/`:719`)
-  thì 100 đúng bằng trần nên vẫn lọt; `/human/banks` dùng param `limit` (FE-BE khớp, không cap).
-  ⚠️ Muốn thêm option `200`/`500` sau này thì 3 chỗ cap đó sẽ âm thầm ghim lại 100 → phải sửa BE trước.
-  📌 Ghi nhận: repo có **2 component phân trang song song** với default lệch nhau
-  (`V2BaseDataTable` `[5,10,20,50]` vs `V2BasePagination` `[10,20,50,100]`) — đợt này không gộp;
-  ai sửa phân trang lần sau nhớ có 2 nơi.
-  Spec: docs/superpowers/specs/gop-db/2026-08-13-pagination-100-rows-design.md | Tóm tắt: .plans/gop-db/pagination-100-rows/design.md
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-13). Thêm option **100** dòng/trang: sửa đúng
+  1 chỗ — default `pageSizeOptions` của `components/V2BaseDataTable.vue` (user chốt sửa thẳng component
+  dùng chung, 93 file cùng ăn). BE không phải sửa.
+  ⚠️ Muốn thêm `200`/`500` sau này phải sửa BE trước — 3 chỗ cap `min(100, …)` sẽ âm thầm ghim lại 100.
+  📌 Repo có **2 component phân trang song song** default lệch nhau (`V2BaseDataTable` vs `V2BasePagination`).
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-pagination-100-rows-design.md
 
 - customer-date-no-future → @khoipv → .plans/gop-db/customer-date-no-future/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-13)**, nhánh `gop_db`.
-  Chặn chọn/nhập **ngày tương lai** ở 3 ô ngày màn KH `/assign/customers`: Ngày cấp (`grant_date`),
-  Sinh nhật KH (`date_of_birth`), Sinh nhật người liên hệ (`contacts[].date_of_birth`) — hôm nay vẫn hợp lệ.
-  Chặn **2 lớp** vì `V2BaseDatePicker` để `editable` mặc định `true` (xám lịch thôi là gõ tay vẫn lọt):
-  FE thêm method `disableFutureDate()` + prop `:disabled-date`; BE thêm `before_or_equal:today`
-  vào `SaveCustomerRequest` + `UpdateCustomerRequest` kèm 6 message tiếng Việt.
-  📌 **KHÔNG phải sửa component dùng chung**: `V2BaseDatePicker` đã khai sẵn prop `disabledDate`
-  (`Function`, mặc định `() => false`) truyền thẳng xuống `vue2-datepicker` → màn nào cần chặn ngày
-  chỉ việc truyền prop, khỏi đụng file dùng chung của ~93 màn.
-  Sửa 1 chỗ `CustomerForm.vue` → 5 màn cùng ăn (add · edit · chi tiết · quản lý KH · modal thêm nhanh).
-  📌 2 ô của KH nằm trong khối `v-if="form.customer_type == 1"`, khớp đúng nhánh rule BE cho KH cá nhân.
-  Không migration, không quyền mới, **không đụng dữ liệu cũ** — KH đang có ngày tương lai vẫn hiện
-  bình thường nhưng lần sửa sau sẽ bị BE chặn tới khi user sửa lại ngày.
-  Verify tự động: compile template + parse script, `php -l`, chạy thật `disableFutureDate` (hôm nay
-  false / mai true) và Laravel Validator (hôm nay + null PASS, mai FAIL đúng 3 trường, message tiếng Việt).
-  ⚠️ Lưu ý vận hành: `before_or_equal:today` so theo timezone app Laravel, không phải timezone trình duyệt.
-  Ngoài phạm vi (user chốt): ô ngày ở các màn khác (hồ sơ nhân sự, hợp đồng…).
-  Spec: docs/superpowers/specs/gop-db/2026-08-13-customer-date-no-future-design.md | Tóm tắt: .plans/gop-db/customer-date-no-future/design.md
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-13). Chặn ngày tương lai ở 3 ô ngày màn KH,
+  **2 lớp** (FE `:disabled-date` + BE `before_or_equal:today`) vì `V2BaseDatePicker` cho gõ tay.
+  📌 Không phải sửa component dùng chung — `disabledDate` đã có sẵn prop. Sửa 1 chỗ `CustomerForm.vue`
+  → 5 màn cùng ăn. KH đang có ngày tương lai vẫn hiện, chỉ chặn từ lần sửa sau.
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-customer-date-no-future-design.md
 
 - chuyen-menu-nhom-giai-phap → @khoipv → .plans/gop-db/chuyen-menu-nhom-giai-phap/plan.md
-  Trạng thái: **HOÀN THÀNH — user xác nhận xong (2026-08-12)**, nhánh `gop_db`.
-  **Không test Playwright** (user chốt) — chất lượng dựa vào bộ check tự động nạp thật module menu;
-  user rà bằng mắt lúc tiện.
-  Đưa 2 mục menu **Nhóm giải pháp** (`/assign/solution-groups`) + **Ứng dụng** (`/assign/application`)
-  từ Bán hàng (Danh mục → Dự án - Giải pháp) sang phân hệ **Danh mục dùng chung**, thành 2 mục
-  cấp 1 phẳng đứng sau Nhóm ngành. Cùng khuôn với `chuyen-menu-nhom-nganh` làm trước đó cùng ngày.
-  Phạm vi user chốt: **CHỈ menu** — 3 file `hrm-client`: `subsystem-menu/sale-hub.js` (bỏ 2 mục,
-  nhóm còn 4), `subsystem-menu/sale.js` (bỏ 2 gate quyền đã thành code chết),
-  `subsystem-menu/master-data.js` (thêm 2 mục, giữ nguyên link + 4 tên quyền cũ,
-  icon `ri-lightbulb-line` / `ri-apps-2-line`). **Giữ nguyên route, code FE/BE, quyền/seeder/DB.**
-  4 mục còn lại của nhóm `Dự án - Giải pháp` (Hạng mục / Giai đoạn / Vai trò dự án / Lý do thất bại)
-  ở lại Bán hàng theo yêu cầu.
-  ✅ Hệ quả tốt: 3 link chéo giữa các màn (`industry-groups → solution-groups`,
-  `industry-groups → application`, `solution-groups → application`) giờ nằm **cùng 1 phân hệ**
-  → hết cảnh bấm sang là nhảy về sidebar Bán hàng.
-  **Phase 4 (cùng ngày) — thử rồi HOÀN TÁC**: user yêu cầu "chuyển tiếp menu Loại hình hoạt động
-  kinh doanh khách hàng" — khảo sát ra màn `/assign/customer-scope-groups` **đã ở Danh mục dùng chung
-  từ trước**, chỉ nằm trong nhóm cấp 2 `Đối tác` → tách lên cấp 1, sau đó **user đổi ý: giữ nguyên ở
-  nhóm Đối tác** → đã trả về y nguyên bản gốc (`git diff` vùng đó rỗng, nhóm Đối tác đủ 8 mục).
-  📌 Lần sau **không đề xuất tách mục này lên cấp 1**.
-  ⚠️ Nợ giữ nguyên như đợt Nhóm ngành: 4 quyền vẫn `group = 'Danh mục'` → màn Phân quyền vẫn
-  xếp ở tab Giao việc › Danh mục (đổi mỗi `type` là vô ích hoặc kéo nhầm cả nhóm quyền Giao việc).
-  Verify: mini-loader Node nạp thật `subsystems.js` + `hub.js` + 3 file menu → `resolveSubsystem()`,
-  `deriveHubNavLinks()`, `hubNavLinksFor()` (4 kịch bản quyền), đối chiếu khai trùng link + icon.
-  📌 Bẫy khi test: tài khoản dev đang đăng nhập có **0 quyền** → `middleware/checkPermission.js`
-  đẩy mọi màn gated về `/pages/extras/404`.
-  Spec: docs/superpowers/specs/gop-db/2026-08-12-chuyen-menu-nhom-giai-phap-design.md | Tóm tắt: .plans/gop-db/chuyen-menu-nhom-giai-phap/design.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận** (2026-08-12). Đưa **Nhóm giải pháp** + **Ứng dụng** từ
+  Bán hàng sang **Danh mục dùng chung** (chỉ menu, 3 file `subsystem-menu/*`).
+  📌 Lần sau **không đề xuất tách** `/assign/customer-scope-groups` lên cấp 1 — đã thử, user đổi ý, đã hoàn tác.
+  ⚠️ Nợ chung với đợt Nhóm ngành: 4 quyền vẫn `group = 'Danh mục'` nên màn Phân quyền vẫn xếp ở tab Giao việc.
+  Spec: docs/superpowers/specs/gop-db/2026-08-12-chuyen-menu-nhom-giai-phap-design.md
 
 - chuyen-menu-nhom-nganh → @khoipv → .plans/gop-db/chuyen-menu-nhom-nganh/plan.md
-  Trạng thái: **HOÀN THÀNH — user test xong (2026-08-12)**, nhánh `gop_db`.
-  Đưa mục menu **Nhóm ngành** (`/assign/industry-groups`) từ phân hệ Bán hàng (Danh mục →
-  Danh mục chung) sang phân hệ **Danh mục dùng chung**, thành mục cấp 1 phẳng đứng sau Ngân hàng.
-  Phạm vi user chốt: **CHỈ menu** — 3 file ở `hrm-client`: `subsystem-menu/sale-hub.js` (bỏ mục),
-  `subsystem-menu/sale.js` (bỏ gate quyền đã thành code chết), `subsystem-menu/master-data.js`
-  (thêm mục, giữ nguyên link + 2 tên quyền cũ). **Giữ nguyên route, code FE/BE, quyền/seeder/DB.**
-  Không phải sửa gì thêm vì `resolveSubsystem()` map route → phân hệ theo link khai trong menu,
-  `default-sidebar.vue` chọn sidebar hub theo `HUB_SUBSYSTEMS` (master-data đã có sẵn),
-  `deriveHubNavLinks()` tự biến mục cấp 1 phẳng thành nút rail.
-  ⚠️ **Quyết định đáng nhớ**: KHÔNG đổi `type` quyền 983/998 sang phân hệ mới — `Permission.vue`
-  gom khối **chỉ theo tên `group`**, mà 983/998 dùng chung group `Danh mục` với 29 quyền Giao việc
-  → đổi mỗi `type` là vô ích hoặc kéo nhầm cả 29 quyền sang tab khác. Hệ quả chấp nhận:
-  màn Phân quyền vẫn xếp 2 quyền này ở tab Giao việc › Danh mục.
-  Test: Playwright xác minh trong app đang chạy (Bán hàng còn 3 mục ở "Danh mục chung";
-  Danh mục chung có `Nhóm ngành → /assign/industry-groups`, ẩn đúng khi thiếu quyền;
-  `/human/banks` không vỡ) + user tự test nốt phần cần tài khoản có quyền.
-  📌 **Bẫy khi test**: tài khoản dev đang đăng nhập có **0 quyền** → mọi màn gated bị
-  `middleware/checkPermission.js` đẩy về `/pages/extras/404`, kể cả màn không đụng tới.
-  Spec: docs/superpowers/specs/gop-db/2026-08-12-chuyen-menu-nhom-nganh-design.md | Tóm tắt: .plans/gop-db/chuyen-menu-nhom-nganh/design.md
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-12). Đưa **Nhóm ngành** từ Bán hàng sang
+  **Danh mục dùng chung** (chỉ menu, 3 file).
+  ⚠️ KHÔNG đổi `type` quyền 983/998: `Permission.vue` gom khối chỉ theo `group`, đổi sẽ kéo nhầm cả
+  29 quyền Giao việc.
+  📌 Bẫy khi test: tài khoản dev đang đăng nhập có **0 quyền** → mọi màn gated bị đẩy về 404.
+  Spec: docs/superpowers/specs/gop-db/2026-08-12-chuyen-menu-nhom-nganh-design.md
 
 - customer-history → @khoipv → .plans/gop-db/customer-history/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-12)**, nhánh `gop_db`.
-  Lịch sử thay đổi khách hàng cho `/assign/customers` ở **cả màn danh sách và màn chi tiết**, dùng lại
-  base của báo giá: endpoint chung `GET /assign/system-logs/{type}/{id}` (thêm `type=customer`) +
-  `SystemLogService` (adapter `customerLogs()` map về DTO dùng chung) + modal timeline cũ ĐỎ → mới XANH.
-  Chốt với user: track **tất cả** (cột `customers` + danh sách con: người liên hệ / người đại diện /
-  TK ngân hàng / nhóm KH / loại hình / lĩnh vực / hãng xe / địa điểm giao hàng + ảnh, video, tài liệu);
-  action `create` (gồm import Excel) · `update` · `update_media` · `lock` · `unlock`; KH cũ chưa có log →
-  dựng 2 dòng từ cột audit; **không permission riêng**.
-  BE: bảng mới `customer_history` (subset-diff, snapshot lưu **giá trị hiển thị** chứ không lưu id) ·
-  `CustomerHistoryService` · hook trong `CustomerService::save/setStatus/updateMedia/deleteAttachmentFile`.
-  FE: **màn danh sách** — nút icon `ri-history-line` trong cột thao tác mở
-  `components/assign/customer/CustomerHistoryModal.vue`; **màn chi tiết** — dùng base dùng chung
-  `components/assign/SystemInfoSection.vue` (`entity-type="customer"`) đặt DƯỚI CÙNG form, đúng như
-  màn chi tiết Task (thu gọn mặc định, lazy load, badge số dòng + Làm mới). Chỉ render khi
-  `readonly && !modalMode` nên nhánh thêm/sửa/quản lý KH không đổi; `V2Footer` giữ Sửa · Quay lại.
-  Ghi nhận 1: endpoint lịch sử không kiểm tra phạm vi xem KH (đúng quyết định "không quyền riêng") —
-  cần siết thì thêm `isVisible()` vào adapter.
-  Ghi nhận 2 (phát hiện khi user test): KHÔNG track 4 trường màn KH không có ô nhập nhưng luồng lưu
-  vẫn ghi đè — `district` (`CustomerForm.buildPayload()` gửi cố định `district_id: null` vì đã bỏ cấp
-  huyện ⇒ **mỗi lần lưu KH cũ là xoá luôn Quận/Huyện trong DB**), 2 hạn mức công nợ, và
-  `type_calculate_interest`. Thêm `SystemLogService::CUSTOMER_HIDDEN_FIELDS` để log đã sinh trước đó
-  cũng không hiện dòng rác.
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-12). Lịch sử thay đổi KH ở cả màn danh sách
+  (modal) và chi tiết (`SystemInfoSection`), dùng lại base của báo giá: bảng `customer_history` +
+  endpoint chung `GET /assign/system-logs/{type}/{id}`. Không permission riêng.
+  🐛 Phát hiện khi test, CHƯA sửa gốc: `CustomerForm.buildPayload()` gửi cố định `district_id: null`
+  ⇒ **mỗi lần lưu KH cũ là xoá Quận/Huyện trong DB** (mới chỉ ẩn khỏi log qua `CUSTOMER_HIDDEN_FIELDS`).
   Spec: docs/superpowers/specs/gop-db/2026-08-11-customer-history-design.md
 
 - customer-lock → @khoipv → .plans/gop-db/customer-lock/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-12)**, nhánh `gop_db`.
-  Khóa / Mở khóa khách hàng cho `/assign/customers`, tương đương ERP
-  (`Sale\CustomersController@delete` / `@unlock`): khóa = `customers.status = 0`, mở khóa = `1`,
-  **không** chặn điều kiện nghiệp vụ (ERP `canDelete()` luôn true), gate bằng **quyền ERP
-  `Xóa khách hàng`** (FE đã có sẵn `perm.delete`) → không thêm permission, không migration.
-  BE: `CustomerService::setStatus()` (set `updated_by` tường minh bằng ERP employee id — BaseModel
-  tự gán sẽ ra HRM user id, sai hệ id) · `CustomerController::lock/unlock` ·
-  2 route `POST /assign/customers/{id}/lock|unlock` (ERP dùng GET, HRM đổi sang POST).
-  FE `pages/assign/customers/index.vue`: nút `ri-lock-line`/`ri-lock-unlock-line` đặt trong **cột
-  Trạng thái** cạnh badge — theo khuôn màn danh mục `finance/currencies` (user chốt vị trí này) —
-  + `BaseConfirmModal` xác nhận → gọi API → toast → `loadData()` giữ trang/bộ lọc.
-  ⚠️ PHÁT HIỆN LÀM GỌN PHẠM VI: popup chọn KH của form Dự án TKT / Meeting / Phiếu chuyển hàng dùng
-  chung `components/modals/ChooseErpCustomerModal.vue` và **đã lọc `status: 1` sẵn** → chỉ còn ô
-  "Công ty mẹ" (`CustomerService::parentOptions()`) phải thêm `where status = 1`. 21 chỗ còn lại lấy
-  danh sách KH đều là **ô lọc** → giữ nguyên (user chốt: ô lọc vẫn hiện KH khóa để tra cứu dữ liệu cũ).
-  Ghi nhận không sửa: `filteredCustomers` trong `pages/assign/meeting/components/GeneralInfo.vue` là
-  code chết (gán nhưng không render).
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-12). Khóa/Mở khóa KH (`status` 0/1), gate bằng
+  quyền ERP `Xóa khách hàng`, không thêm permission/migration. 2 route POST (ERP dùng GET).
+  📌 Popup chọn KH dùng chung đã lọc `status: 1` sẵn; các ô LỌC vẫn hiện KH khóa (user chốt).
   Spec: docs/superpowers/specs/gop-db/2026-08-11-customer-lock-design.md
+
 - customer-care-service-price-config → @junfoke → .plans/gop-db/customer-care-service-price-config/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-12)**, nhánh `gop_db`.
   Chuyển "Cập nhật nhanh giá dịch vụ" từ ERP sang **CSKH** — 1 form 2 trường lưu vào
@@ -424,77 +234,34 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Spec: docs/superpowers/specs/gop-db/2026-08-06-customer-care-service-price-config-design.md | Tóm tắt: .plans/gop-db/customer-care-service-price-config/design.md
 
 - customer-column-config → @khoipv → .plans/gop-db/customer-column-config/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
-  Nút **Cấu hình cột hiển thị** cho `/assign/customers` (ẩn/hiện + kéo thả thứ tự, lưu theo user),
-  tương đương "Tùy chỉnh cột" của ERP nhưng lưu DB thay vì localStorage.
-  Dùng lại hạ tầng sẵn có: `components/modal/column-customization-modal.vue` + API `human/column-customizations`.
-  Chốt: **18 cột** = 10 cột cũ + 8 cột ẩn của ERP (Tên đơn vị, Tên viết tắt, Địa chỉ xuất HĐ, Công ty mẹ,
-  Hãng xe, Cấp đại lý, Người tạo, Người sửa — mặc định ẩn) · **khoá** STT + Mã KH-Tên KH bằng cách
-  KHÔNG truyền vào modal (tránh sửa component dùng chung của 20+ màn) · cột Nhóm KH khi đó để tạm `'—'`
-  (**đã nối dữ liệu thật ở việc `customer-form-group`, 2026-08-10**) ·
-  file xuất CSV/Excel giữ bộ cột cố định.
-  Migration thêm cột JSON `customers` vào `column_customizations` (đã chạy) + cast Entity.
-  ⚠️ GOTCHA 1: 4 cột Công ty mẹ/Hãng xe/Người tạo/Người sửa cần 5 leftJoin → `COUNT` phân trang chậm
-  ~3,7 lần (42.077 KH: 0,12s→0,43s). `index()` dùng chung với popup chọn KH nên gate sau cờ
-  **`with_extra_columns`**; FE chỉ gửi khi user thực sự bật ≥1 trong 4 cột; `exportQuery()` tự join.
-  ⚠️ GOTCHA 2: modal chung dùng `b-form-checkbox :value="column.key"` → cột hiện mặc định PHẢI khai
-  `isVisible: '<đúng key>'`; để `undefined` là modal bỏ tích hết, bấm OK ẩn sạch bảng.
-  Verify: 3 luồng query (popup/danh sách/export) đúng như thiết kế · round-trip lưu-đọc cấu hình ·
-  17/17 check logic cột FE (nạp thẳng source computed, 4 kịch bản gồm cấu hình cũ khi thêm cột mới).
-  Ghi nhận không sửa: `ColumnCustomizationService` nhét thẳng `$request->table` vào tên cột SQL, không whitelist.
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-11). Cấu hình cột hiển thị cho
+  `/assign/customers` (18 cột, lưu DB qua `column-customizations`), khoá STT + Mã-Tên bằng cách không
+  truyền vào modal dùng chung.
+  ⚠️ 4 cột cần 5 leftJoin làm COUNT chậm 3,7 lần → gate sau cờ `with_extra_columns`.
+  ⚠️ Modal chung dùng `:value="column.key"` ⇒ cột hiện mặc định PHẢI khai `isVisible: '<đúng key>'`.
+  📌 Ghi nhận không sửa: `ColumnCustomizationService` nhét thẳng `$request->table` vào tên cột SQL.
   Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-column-config-design.md
 
 - customer-form-group → @khoipv → .plans/gop-db/customer-form-group/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
-  Thêm trường **Nhóm khách hàng** (chọn nhiều, không bắt buộc) vào form KH cho giống ERP.
-  Sửa ở component dùng chung `CustomerForm.vue` → 5 màn cùng có (add · edit · xem chi tiết readonly ·
-  quản lý KH · modal thêm nhanh). BE chỉ thêm 2 dòng validate — pivot `customer_has_groups`,
-  API `customer-groups`, `syncGroups()` và `show()->group_ids` đều đã có sẵn.
-  ⚠️ Sửa kèm 1 lỗi MẤT DỮ LIỆU có sẵn: `syncGroups()` xoá-rồi-ghi vô điều kiện trong khi form chưa
-  bao giờ gửi `groups` → mỗi lần sửa KH trên HRM là xoá sạch nhóm KH do ERP gán. `buildPayload()`
-  giờ LUÔN gửi `groups`.
-  Kèm theo: **cột "Nhóm KH" trên màn danh sách trước đây luôn hiện `—`** vì `CustomerListResource`
-  hardcode placeholder (di sản của `customer-column-config`) → nối dữ liệu thật bằng subquery tương quan
-  `groupNamesSql()` dùng chung cho `index()` + `exportQuery()`. Đo: COUNT 17.544 KH vẫn 308 ms
-  (subquery ở SELECT nên không đụng COUNT), lấy 20 dòng 9 ms.
-  Không migration, không permission mới.
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-11). Thêm trường **Nhóm khách hàng** vào
+  `CustomerForm.vue` (5 màn cùng ăn) + nối dữ liệu thật cho cột "Nhóm KH" ở danh sách.
+  🐛 Sửa kèm lỗi MẤT DỮ LIỆU có sẵn: `syncGroups()` xoá-rồi-ghi vô điều kiện trong khi form chưa bao
+  giờ gửi `groups` ⇒ mỗi lần sửa KH trên HRM là xoá sạch nhóm do ERP gán.
   Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-form-group-design.md
 
 - customer-export-file → @khoipv → .plans/gop-db/customer-export-file/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
-  Bổ sung 3 nút **Xuất CSV** / **Xuất Excel** / **Xuất PDF** cho `/assign/customers`, tương đương ERP
-  (`Sale\CustomersController@exportCSV|exportExcel|exportPDF`).
-  Chốt: Excel **tải trực tiếp** (ERP đẩy queue + gửi mail) · bộ cột giống ERP (CSV 5 cột / Excel 20 cột) ·
-  quyền ERP `Xuất dữ liệu khách hàng` (thêm key `export` vào `ErpPermissionHelper`) ·
-  **không giới hạn số dòng**, tối ưu bằng `FromQuery` + chunk 5.000 + select 26 cột cần thay `customers.*` (59 cột)
-  + cột phụ bằng JOIN/subquery (không N+1) + `StringValueBinder` + bỏ `ShouldAutoSize` ·
-  **giữ luật che SĐT** của màn danh sách trong file xuất (KH cá nhân không phải "của mình" → `-`).
-  Sửa 3 lỗi của bản ERP: thiếu header *Chức vụ liên hệ* (19 th/20 td → lệch cột) · CSV không BOM UTF-8 (vỡ dấu) ·
-  SĐT/MST mất số 0 đứng đầu do binder mặc định.
-  Đo thực tế 17.542 KH: CSV 25,3s→~13s · XLSX 60,2s→~32s (RAM đỉnh 206 MB).
-  Không migration, không thêm permission vào seeder (quyền ERP đã có sẵn, id 100074).
-  **Đợt bổ sung 2026-08-10**: mẫu Excel theo chuẩn HRM (logo · tiêu đề gộp ô đậm · header nền xám có viền ·
-  dữ liệu có viền · đóng băng dòng header · autofilter) → xuất 17.544 KH ~32s lên **~44s**, RAM 206→266 MB.
-  Thêm **Xuất PDF**: cài `barryvdh/laravel-dompdf ^1.0` (⚠️ team phải `composer install` sau khi kéo nhánh),
-  5 cột như ERP, A4 ngang, `App\PdfExport\CustomerPdfExport` dùng chung trait format với CSV/Excel.
-  ⚠️ GOTCHA PDF 1: blade PHẢI đặt `font-family: "DejaVu Sans"` — font mặc định dompdf không có dấu tiếng Việt.
-  ⚠️ GOTCHA PDF 2: dompdf giữ 1 Cellmap cho mỗi `<table>` → chia 200 dòng/bảng nâng trần từ ~1.000 lên
-  ~3.000 dòng. **Vẫn KHÔNG xuất nổi toàn bộ 17.544 KH** (512M: 3.000 dòng = 436 MB/30,7s; 4.000 dòng vỡ).
-  User chốt không giới hạn số dòng nên code không chặn → bấm Xuất PDF khi không lọc sẽ chết request
-  (memory exhausted là fatal error, try/catch không bắt được).
-  **CÒN NỢ (không chặn nghiệm thu, xử lý sau nếu cần)**: chọn 1 trong 3 hướng — chặn số dòng /
-  nâng `memory_limit` riêng cho action / đẩy queue + mail.
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-11). 3 nút Xuất CSV / Excel / PDF cho
+  `/assign/customers`, dùng quyền ERP có sẵn. Sửa 3 lỗi của bản ERP (thiếu header, CSV không BOM,
+  mất số 0 đầu). 17.542 KH: CSV ~13s · XLSX ~44s (mẫu chuẩn HRM), RAM đỉnh 266 MB.
+  ⚠️ Team phải `composer install` sau khi kéo nhánh (thêm `barryvdh/laravel-dompdf ^1.0`).
+  ⚠️ **CÒN NỢ**: PDF không xuất nổi toàn bộ 17.544 KH (dompdf memory exhausted, fatal không bắt được);
+  chọn 1 trong 3 hướng: chặn số dòng / nâng `memory_limit` riêng / đẩy queue + mail.
   Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-export-file-design.md
 
 - customer-import-excel → @khoipv → .plans/gop-db/customer-import-excel/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong (2026-08-11)**, nhánh `gop_db`.
-  Bổ sung Import Excel cho `/assign/customers` —
-  chức năng ERP có (`Sale\CustomersController@importExcel`) mà HRM thiếu.
-  Chốt: **25 cột** = 24 cột file mẫu ERP + 1 cột Lĩnh vực kinh doanh dạng cặp `MãLoạiHình:MãLĩnhVực`
-  (gộp Loại hình vào chung 1 cột, đúng cách màn `/assign/application`; loại hình suy ra từ vế trái) · danh mục tra theo tên KHÔNG tự tạo mới (chung `gop_db`, tránh rác địa danh ERP) ·
-  bỏ trống cột Tên = dòng con (thêm liên hệ / TK ngân hàng) · trùng MST/CCCD báo lỗi, chỉ tạo mới ·
-  `V2BaseImportModal` 4 bước · import gọi lại đúng `CustomerService::save()`.
-  Không migration, không permission mới (dùng `erpPermission:Thêm khách hàng`).
+  Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-11). Import Excel 25 cột cho `/assign/customers`
+  (`V2BaseImportModal` 4 bước, gọi lại `CustomerService::save()`); danh mục tra theo tên, KHÔNG tự tạo
+  mới; trùng MST/CCCD báo lỗi, chỉ tạo mới.
   Spec: docs/superpowers/specs/gop-db/2026-08-10-customer-import-excel-design.md
 
 - customer-care-serial-catalog → @junfoke → .plans/gop-db/customer-care-serial-catalog/plan.md
@@ -565,49 +332,24 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Spec: docs/superpowers/specs/gop-db/2026-08-03-customer-care-cost-catalog-design.md | Tóm tắt: .plans/gop-db/customer-care-cost-catalog/design.md
 
 - finance-product-transfer-request → @khoipv → .plans/gop-db/finance-product-transfer-request/plan.md
-  Trạng thái: **HOÀN THÀNH — user xác nhận xong (2026-08-07).** Code Phase 1–7 (D1–D17) + final review + fix wave, **đã commit**: `hrm-api 3a0acce08` · `hrm-client ed0abb049` (+ `690515fc4` fix bug), nhánh `gop_db`.
-  Đã xong: BE (3 entity + searchByFilter phân quyền 4 cấp + CRUD + reject + notification chuông HRM + in template 87 + export Excel + 4 API phụ trợ form) · FE (list + form create/edit + chi tiết + print + menu finance.js:134) · Phase 7 (dùng chung QuotationProductSearchModal của màn báo giá, dọn conflict marker subsystems.js, `testcase.xlsx` 127 TC). Verify D12: ma trận quyền 6 nhóm × 6 action khớp SQL, Playwright toàn luồng PASS, round-trip 2 cổng tầng dữ liệu PASS, DB nguyên trạng. Ledger: sdd-progress.md.
-  User đã xử lý xong (2026-08-07): verify browser bằng mắt · 5 mục "Chờ xác nhận PO" trong plan.md (thông báo cổng ERP, scope canView B1, SL lẻ, template 87, task rà quyền) · ENV DEPLOY `ERP_URL` cả 2 repo · **SQL DEPLOY đã chạy môi trường thật** (INSERT quyền 1129-1133 + `UPDATE permissions SET type = NULL WHERE id IN (100878,100879,100880,100881)`).
-  ⚠️ Phát hiện quan trọng — **CHƯA mở task, còn nợ team**: middleware `CheckPermission` hỏng trên gop_db (spatie bỏ sót role gán từ ERP do model_type mismatch) → route reject của feature này phải bỏ middleware, chặn bằng `canApprove()`. Cần TASK RIÊNG rà mọi route khác đang gắn `checkPermission` + mapping quyền FE (accounts/currencies/account-banks 404 với mọi user — lỗi có sẵn của môi trường, không phải regression).
-  Tồn: nội dung chốt của 5 mục PO chưa ghi ngược vào plan.md (mục "Chờ xác nhận PO / task riêng" vẫn đang để dạng câu hỏi).
-  — Bối cảnh port gốc: màn ERP `admin/warehouse/product_transfer_requests?type=all`, 3 bảng, mã `PYCCH-xxxxx`, 13 trạng thái → phân hệ **Tài chính** → nhóm **Xuất hàng** (slot `finance.js:134`).
-  **HRM là bản thay thế lâu dài**, 2 cổng song song cùng bảng, KHÔNG đổi schema. HRM chỉ ghi status 2↔3; 1, 4–12 do chuỗi kho ERP đẩy.
-  Chốt 6 QĐ: port đầy đủ (nút Tổng hợp mở tab ERP) · dùng lại quyền ERP + "Kế toán kho" · 1 màn list duy nhất (=type=all) · form đủ popup hàng + Xem tồn + giá/ĐVT · xóa giữ ERP (status=3 + người tạo) · nới validate after:today khi sửa.
-  **Đợt chỉnh 2026-08-13 (Phase 8, @khoipv) — CODE DONE, CHỜ USER TEST:** chuẩn hoá footer 2 màn
-  (form `create`/`edit` + màn chi tiết) sang `V2Footer` dùng chung. Nhãn đổi theo chuẩn footer:
-  "Lưu" → **"Lưu nháp"**, "In yêu cầu" → **"In"**, "Hủy" → **"Quay lại"**; nút **Lưu & Gửi duyệt giờ
-  có popup xác nhận**; thứ tự nút màn chi tiết thành *Sửa · In · Không duyệt · Tổng hợp · Quay lại*
-  (Tổng hợp qua slot `custom-actions`). Mất icon spinner ở 3 nút — guard chống bấm 2 lần vẫn còn trong JS.
-  Spec: docs/superpowers/specs/gop-db/2026-08-05-finance-product-transfer-request-design.md | Tóm tắt: .plans/gop-db/finance-product-transfer-request/design.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận** (2026-08-07), đã commit `hrm-api 3a0acce08` ·
+  `hrm-client ed0abb049`. Port màn ERP "Phiếu yêu cầu chuyển hàng" sang Tài chính, 2 cổng song song
+  cùng bảng, HRM chỉ ghi status 2↔3. SQL DEPLOY đã chạy môi trường thật (quyền 1129–1133).
+  ⚠️ **CHƯA mở task, còn nợ team**: middleware `CheckPermission` hỏng trên `gop_db` (spatie bỏ sót role
+  gán từ ERP do `model_type` mismatch) → cần TASK RIÊNG rà mọi route đang gắn `checkPermission`.
+  **Đợt chỉnh 2026-08-13 (Phase 8) — CHỜ USER TEST**: chuẩn hoá footer 2 màn sang `V2Footer`
+  (nhãn "Lưu nháp"/"In"/"Quay lại", popup xác nhận khi Gửi duyệt; mất icon spinner ở 3 nút).
+  Spec: docs/superpowers/specs/gop-db/2026-08-05-finance-product-transfer-request-design.md
 
 - customer-care-services-catalog → @khoipv → .plans/gop-db/customer-care-services-catalog/plan.md
-  Trạng thái: **CODE DONE P1–P5, user xác nhận xong (2026-08-05)** — port trọn màn "Danh mục gói
-  bảo dưỡng" (ERP `Sale\ServiceController`, `services` 207 dòng + 5 bảng con) sang
-  `/customer-care/services`: BE `Modules/CustomerCare` (4 entity + ServiceRequest + ServiceService +
-  resource/export + controller, 12 route), FE list + form 5 khối (ma trận bảo dưỡng × cấp, giá vốn
-  theo công ty, popup hàng hóa/nhóm theo UX popup báo giá với 17 bộ lọc, đính kèm S3), in template 191.
-  Phase 5: 7 cụm chỉnh theo user (bỏ cột Hành động, VAT nullable, copy giữ đính kèm, fix auto-print…).
+  Trạng thái: **CODE DONE P1–P5, user xác nhận** (2026-08-05). Port "Danh mục gói bảo dưỡng"
+  (207 dòng + 5 bảng con) sang `/customer-care/services`: 12 route, form 5 khối, in template 191.
   🐛 Đã sửa 2 lỗi CRITICAL `key_word` shape `{text}` (88/207 gói có nguy cơ hỏng màn báo giá DV ERP).
-  ⚠️ Bug HỆ THỐNG chưa sửa (file chung, cần báo team): `V2BaseSelect.vue:59` rớt option id=0.
-  F3 (sửa gói xóa hết dòng ma trận = no-op im lặng) giữ nguyên theo ERP — user ruling trong sdd-progress.md.
-  ⚠️ **Khi DEPLOY phải chạy tay 3 SQL** (chi tiết sdd-progress.md Task 1.5): UPDATE permissions
-  type=24 (101023-101025) · mirror `employee_has_roles` sang model_type HRM · INSERT
-  `role_has_permissions` cho Super admin; DB local còn thiếu quyền CSKH 1115-1120 của 2 feature trước.
-  Tồn: checklist "Verify tổng thể" cuối plan.md chưa tick (regression 4 màn CSKH cũ, round-trip ERP↔HRM 2 chiều).
-  **Đợt chỉnh 2026-08-13 (Phase 11j-11l, @khoipv) — CODE DONE, CHỜ USER TEST:**
-  · **11j** — file xuất Excel hết cảnh báo "Number stored as text" ở cột Mã: `ServiceExport` ép cả vùng
-    B..F thành text + `app/ExcelExport/IgnoredErrorsPatcher.php` vá thẻ `<ignoredErrors>` vào
-    `sheet1.xml` (phpspreadsheet 1.25 chưa có API `getIgnoredErrors()`; thẻ PHẢI đứng trước `<drawing>`).
-  · **11k** — file Excel đổi hết "dịch vụ" → "gói bảo dưỡng" (tên file `Danh_sach_goi_bao_duong.xlsx`
-    ở CẢ `index.vue` lẫn `ServiceController::export()`, tiêu đề + 4 header cột); độ rộng cột chuyển về
-    khai 1 chỗ `ServiceExport::COLUMN_WIDTHS` (blade không khai `width` nữa); cột Giá tách **mỗi cấp
-    dịch vụ 1 dòng** bằng `<br>` — Html Reader đổi thành `\n` và tự bật wrap.
-    Tên danh mục "cấp dịch vụ" GIỮ NGUYÊN (là danh mục riêng, không đổi theo).
-  · **11l** — form Thêm/Sửa dùng footer chuẩn `V2Footer` thay hàng nút tự dựng: `menu.submit_form`
-    (nút Lưu), Sao chép qua slot `custom-actions`, "Hủy" → "Quay lại" (`url-back`), `.service-form`
-    chừa `padding-bottom: 90px`. ⚠️ Đánh đổi user đã chốt: **nút Lưu mất icon spinner** (chống bấm 2
-    lần vẫn còn ở đầu `save()`); popup "Thông tin chưa lưu" không ảnh hưởng vì nằm ở `beforeRouteLeave`
-    của trang vỏ.
+  ⚠️ Bug HỆ THỐNG chưa sửa (file chung, cần báo team): `V2BaseSelect.vue:59` rớt option `id = 0`.
+  ⚠️ **Khi DEPLOY phải chạy tay 3 SQL** (chi tiết `sdd-progress.md` Task 1.5).
+  **Đợt chỉnh 2026-08-13 (Phase 11j–11l) — CHỜ USER TEST**: Excel hết cảnh báo "Number stored as text",
+  đổi chữ "dịch vụ" → "gói bảo dưỡng", form dùng `V2Footer` (nút Lưu mất icon spinner — user đã chốt).
+  Tồn: checklist "Verify tổng thể" cuối plan.md chưa tick.
   Spec: docs/superpowers/specs/gop-db/2026-08-04-customer-care-services-catalog-design.md | Ledger: .plans/gop-db/customer-care-services-catalog/sdd-progress.md
 
 - bo-sung-menu-phan-he → @junfoke (Phase 11: @khoipv) → .plans/gop-db/bo-sung-menu-phan-he/plan.md
