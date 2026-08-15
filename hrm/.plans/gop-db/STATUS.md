@@ -68,6 +68,43 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- finance-product-import-request → @junfoke → .plans/gop-db/finance-product-import-request/plan.md
+  Trạng thái: **XONG PHASE 1-7, ĐÃ VERIFY** (2026-08-14). Chờ so cạnh nhau trên dev.
+  Phase 7: đã merge `gop_db` (cả 2 repo, 0 conflict) và áp bộ chuẩn UI mới — cột Hành động cuối
+  bảng bằng `V2BaseRowActions`, link mã phiếu `.v2-cell-link`, popup xác nhận dùng
+  `base-confirm-modal`, thứ tự request theo `list-page` mục 8, chuẩn nút (Tạo mới / Xóa /
+  Xuất Excel xanh lá), sắp xếp theo độ khớp ở BE.
+  Danh sách (4 preset theo quyền) + form Tạo/Sửa **7/8 loại** (loại 11 bị loại có chủ đích vì
+  ERP sinh tự động từ Phiếu YC nhập khẩu) + chi phí nội địa + dòng con khách hàng
+  + màn Chi tiết với 4 luồng duyệt (Kế toán kho / BKS / BGĐ / TP) + tab lịch sử.
+  + In (mẫu ERP 44) + xuất Excel + xoá file S3.
+  Verify: 16/16 route, luồng end-to-end trên trình duyệt, 0 migration, đối chiếu 2 cổng ở mức code
+  (12 trạng thái + 17 tên loại + mẫu in 44 trùng khớp).
+  2 việc đã chốt: (a) lỗ hổng "mọi trưởng phòng duyệt được phiếu phòng ban khác" — **giữ nguyên
+  như ERP**; (b) NCC/KH rỗng — **chỉ DB local thiếu bản ghi, trên dev đủ**, không phải lỗi.
+  Port màn ERP "Phiếu Yêu cầu nhập hàng"
+  (`productImportRequest.all`) sang phân hệ **Tài chính**, slot `finance.js:95`.
+  Chốt: 1 mục menu + 1 màn danh sách nhận `?type=` với 4 preset (all/for_approve/managerApprove/
+  departmentManagerApprove), form 8 loại — danh sách hiện 12 loại, quyền dùng lại ERP qua
+  `erpPermission` + bản ghi `guard=api` trùng tên. Worktree riêng ở cả 2 repo, nhánh
+  `feat/finance-product-import-request`.
+
+- history-action-groups → @dnsnamdang → .plans/gop-db/history-action-groups/plan.md
+  Trạng thái: **CODE DONE + ĐÃ TEST (2026-08-15)**. Chuẩn hoá bộ lọc "Loại hoạt động" của khối/popup
+  Lịch sử về **đúng 3 nhóm cố định dùng chung cho cả 10 màn**: `create` Tạo mới · `update` Thay đổi
+  thông tin · `status` Thay đổi trạng thái. Trước đây mỗi entity tự khai danh mục riêng (KH 5 loại,
+  task 3, phiếu bàn giao 8) + nhãn gắn tên đối tượng nên mỗi màn một dropdown.
+  Mấu chốt: **nhóm chỉ dùng để LỌC, nhãn chi tiết từng dòng vẫn giữ trên timeline** → không màn nào
+  mất khả năng lọc (7 hành động của Phiếu bàn giao đều là chuyển trạng thái → gom vào `status`).
+  BE: `SystemLogService` thêm `ACTION_GROUP_LABELS`/`ACTION_GROUP_MAP`/`groupOfAction()`, `finalize()`
+  gắn `action_group` cho mọi log, `getFilterOptions()` trả 3 nhóm cho mọi type.
+  ⚠️ Bẫy đã tránh: mở cố định cả `performers` thì `performerOptions()` không lọc được công ty cho 9 loại
+  còn lại → liệt kê **toàn bộ 783 nhân viên**; nên `performers` vẫn chỉ trả cho `customer`.
+  FE: `SystemInfoSection.vue` + `CustomerHistoryModal.vue` lọc theo `action_group`, options hard-code 3 nhóm.
+  Đã ghi vào tài sản chung: skill `entity-history` §0a + `CLAUDE.md` (nguyên tắc **bản ghi đã khoá thì
+  không cho sửa/xoá — chặn ở BE bằng 423, FE chỉ ẩn nút**).
+  Bước tiếp: user review. **Chưa port sang `tpe-develop-assign`** (nhánh đó cũng có khối Lịch sử) — chờ chốt.
+
 - unsaved-changes-catalogs → @junfoke → .plans/gop-db/unsaved-changes-catalogs/plan.md
   Trạng thái: **CODE DONE, CHƯA TEST TRÌNH DUYỆT** (2026-08-12). Popup "Thông tin chưa lưu"
   khi thoát màn form — đợt 1: 14 màn danh mục customer-care + finance.

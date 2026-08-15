@@ -8,6 +8,28 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- sync-assign-catalogs → @dnsnamdang → .plans/sync-assign-catalogs/plan.md
+  Trạng thái: **DONE — đã chạy thật trên `etek_power_hrm`, checksum 27/27 bảng khớp (2026-08-15)**. Nhánh `tpe`.
+  Command `php artisan assign:sync-catalogs` đẩy **28 bảng danh mục + cấu hình** của phân hệ Giao việc
+  (`/assign`: 14 màn nhóm menu "Danh mục" trừ Khách hàng, + nhóm "Cấu hình" gồm Cấu hình duyệt giá và
+  Cấu hình chung › tab Quản lý dự án — danh sách bảng chốt bằng cách trace menu → route →
+  controller → Entity → `getTable()`, không suy từ tên bảng) từ DB chính sang DB đích ở connection mới
+  `mysql_target` (biến `DB_*_TARGET` trong `.env`). Cách ghi: **mirror 1:1** — truncate rồi chèn lại,
+  giữ nguyên `id`, bản ghi chỉ có ở đích bị xoá. `created_by`/`updated_by` tra `employees.email =
+  SYNC_CATALOG_AUDIT_EMAIL` **trên DB đích**. Có `--dry-run` / `--tables` / `--force` / `--chunk`,
+  3 chốt an toàn (thiếu config, không kết nối được, đích trùng nguồn) và cảnh báo id sắp xoá đang bị
+  `quotation_discounts` / `form_question_options` tham chiếu. Không dùng `DB::transaction` quanh TRUNCATE.
+  **Ngoại lệ `general_regulations`**: Cấu hình hạn ghi ké vào bảng Quy định chung của Chấm công
+  (chứa cả `base_salary`), nên không mirror mà chỉ UPDATE 8 cột liên quan khớp theo `company_id`.
+  Không đẩy 3 bảng log/lịch sử cấu hình (trỏ `user_id` cổng nguồn).
+  Test sâu tìm ra 3 lỗi đã sửa: (1) email audit không tra được → ghi NULL vào cột NOT NULL làm chết
+  giữa chừng sau khi đã xoá dữ liệu đích; (2) không có đường lùi → đổi TRUNCATE sang DELETE + bọc cả
+  lượt trong 1 transaction, rollback sạch khi lỗi; (3) DELETE không reset id → thêm
+  `ALTER TABLE ... AUTO_INCREMENT = max(id)+1` chạy sau commit.
+  `.env` đang trỏ `DB_DATABASE_TARGET=etek_power_hrm`.
+  Spec: docs/superpowers/specs/2026-08-15-sync-assign-catalogs-design.md
+  Bước tiếp: user điền `DB_*_TARGET` trỏ cổng thật → `--dry-run` đối chiếu → chạy thật.
+
 - meeting-pl8-support → @dnsnamdang → .plans/meeting-pl8-support/plan.md
   Trạng thái: **CODE DONE (2026-08-14), chờ user migrate + build FE + test**. Nhánh `tpe-develop-assign`.
   Gộp 4 task hỗ trợ PL8 Quản lý Meeting (Redmine đã chuyển "Đang tiến hành"):

@@ -110,6 +110,44 @@ Icon nằm sát nút xoá (×) của select2 → chừa khoảng trống, nếu 
 
 ---
 
+## 3b. Icon Info hiển thị DỮ LIỆU của bản ghi trong bảng danh sách
+
+Áp dụng khi 1 cột có thông tin phụ **của từng dòng** (giá theo cấp, hệ số, tổng phụ…) mà không
+đáng chiếm hẳn 1 cột. Dùng **đúng chuẩn ở mục 1-2**, chỉ khác 2 điểm:
+
+- `id` ghép theo id bản ghi: `:id="'service-price-info-' + item.id"` + `:target` tương ứng.
+- Icon đặt **cạnh giá trị của ô**, không đặt trên tiêu đề cột (tiêu đề cột nói về CẢ cột,
+  còn đây là dữ liệu của riêng dòng đó).
+
+```vue
+<template #cell-name="{ item }">
+    <span class="field-line text-dark font-weight-normal">{{ item.name || '—' }}</span>
+    <template v-if="hasPriceByLevel(item)">
+        <span :id="`service-price-info-${item.id}`" class="ml-1" style="cursor: pointer; color: #94a3b8">
+            <i class="ri-information-line" style="font-size: 14px"></i>
+        </span>
+        <b-popover :target="`service-price-info-${item.id}`" triggers="hover focus"
+                   placement="bottom" custom-class="info-popover">
+            <div v-for="lv in item.price_by_level" :key="lv.level_name">
+                {{ lv.level_name }}: {{ formatPrice(lv.price) }}
+            </div>
+        </b-popover>
+    </template>
+</template>
+```
+
+Khuôn: `pages/customer-care/services/index.vue` (cột Tên gói bảo dưỡng — giá theo cấp dịch vụ).
+
+**Đừng gắn tooltip thẳng vào giá trị của ô.** Màn này trước đây để `v-b-tooltip` ngay trên tên gói:
+đúng nội dung nhưng (1) sai hệ tooltip, (2) nhìn vào không biết là hover được — cột Tên theo
+`list-page` mục 3 là chữ thường, không phải vùng tương tác. Phải tách ra icon `(i)` riêng.
+
+⚠️ **Chỉ dùng cho nội dung ĐỌC, gọn (vài dòng).** Nội dung là cả một bảng nhiều cột, hoặc bấm vào
+để làm gì đó → đó là **nút hành động**, không phải icon Info: dùng nút/link có nhãn rõ ràng mở
+popup (khuôn "Hàng hoá áp dụng" ở `pages/customer-care/device-errors/index.vue`).
+
+---
+
 ## 4. Không dùng
 
 | Kiểu | Vì sao không |

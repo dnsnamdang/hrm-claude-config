@@ -58,6 +58,10 @@
 - [x] Đưa cơ chế đánh dấu danh mục khoá thành DÙNG CHUNG: `utils/select2LockedOption.js` + gọi sẵn trong V2BaseSelect & V2BaseSelectInModal (màn không phải khai gì); gỡ helper riêng ở CustomerForm; ghi quy tắc vào skill list-page mục 11 + CLAUDE.md
 - [x] Chống lỗi FE-mới/BE-cũ ở phần Lịch sử: performerKey lùi dần actor_id → actor_code → actor_name, actorText lùi actor_dept_code → actor_code; verify bằng cách giả lập BE cũ (dropdown vẫn có giá trị, lọc vẫn đúng)
 - [x] Chuẩn hoá popup xác nhận: sửa base-confirm-modal theo skill (header icon tròn + footer V2BaseButton có icon + prop danger/acceptIcon), thêm plugin `$confirm()` render chính component đó, chuyển unsavedChangesMixin từ $bvModal.msgBoxConfirm sang $confirm; ghi quy tắc vào CLAUDE.md + skill modal-popup mục 3a
+- [x] Đa dạng màu button theo phản hồi tester: Import CAM (thao tác ghi) / cả 3 nút Xuất CÙNG xanh lá (cùng bản chất chỉ đọc, phân biệt bằng icon+chữ); dùng prop `status` có sẵn, không sửa component; ghi bảng màu đầy đủ vào skill button-convention mục 2b
+- [x] Xuất file Excel quy tắc button `quy-tac-mau-button.xlsx` (4 sheet: màu có swatch thật · icon · text chuẩn · thứ tự nút)
+- [x] Đổi quy tắc thời gian: Ngày tạo/Ngày cập nhật hiện NGÀY + GIỜ PHÚT (d/m/Y H:i, bỏ giây), nới cột 140px; bổ sung bảng quy tắc "định dạng thời gian theo cách nhập trên UI" vào skill
+- [x] Nút Khóa/Mở khóa đổi màu theo trạng thái (Khóa=cam, Mở khóa=xanh lá), bỏ đỏ; cột hành động bỏ `danger` cho Khóa — đỏ chỉ dành cho Xóa; ghi quy tắc vào skill button-convention
 - [ ] User verify bằng mắt `/assign/customers` (bấm tên vào chi tiết, chuột phải Sửa/Quản lý mở tab mới, menu ⋮ không bị bảng cắt khi ở dòng cuối)
 
 ### Checkpoint — 2026-08-12

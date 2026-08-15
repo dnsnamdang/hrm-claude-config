@@ -9,6 +9,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 - Các quyền còn lại query theo các field tương ứng
 - Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Tuân thủ theo V2BaseFilterPanel.vue
 - **Tiêu đề panel bộ lọc để mặc định `Bộ lọc danh sách`** — KHÔNG truyền prop `title`/`subtitle` để ghi riêng cho từng màn (`Bộ lọc danh sách khách hàng`, `Bộ lọc Issue`, `Bộ lọc hàng hoá`…). Tiêu đề bảng bên dưới đã nói rõ đang xem gì; `V2BaseFilterPanel` đã đặt sẵn default nên chỉ cần bỏ prop đi
+- **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleFields` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **không có nhãn** (dùng `placeholder`) để thẳng trục với ô tìm nhanh → `placeholder` của mỗi field phải tự nói rõ nó lọc gì ("Chọn trạng thái", không phải "Chọn..."). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
 - Style bắt buộc: luôn import `@import '@/assets/scss/v2-styles.scss';` trong thẻ `<style lang="scss">` của trang danh sách
 - Các khối bộ lọc theo logic Cascading filter: Công ty =>> Phòng ban =>> Bộ phận; Dự án TKT =>> Giải pháp =>> Hạng mục
 
@@ -133,8 +134,9 @@ getRowActions(item) {
     // THỨ TỰ QUAN TRỌNG: 2 phần tử đầu là hành động chính, phần còn lại vào menu ⋮
     return [
         { key: 'edit', title: 'Sửa', icon: 'ri-edit-line', to: `/.../${item.id}/edit`, visible: this.canEdit },
+        // Không xóa được -> ẨN (đưa điều kiện vào `visible`), KHÔNG hiện rồi disable
         { key: 'delete', title: 'Xóa', icon: 'ri-delete-bin-line', danger: true,
-          interactable: !!item.is_can_delete, disabledTitle: 'Không thể xóa: ...', visible: this.canDelete },
+          visible: this.canDelete && !!item.is_can_delete },
         { key: isActive ? 'lock' : 'unlock', title: isActive ? 'Khóa' : 'Mở khóa',
           icon: isActive ? 'ri-lock-line' : 'ri-lock-unlock-line', visible: this.canLock },
         { key: 'history', title: 'Lịch sử', icon: 'ri-history-line' },
@@ -176,6 +178,12 @@ Cột **Tên KHÔNG khoá**: user được ẩn / đổi vị trí tuỳ ý, nê
 </template>
 ```
 
+**Chữ trong ô bảng để THƯỜNG — KHÔNG in đậm, kể cả cột Mã** (user chốt 2026-08-15). Bỏ hết
+`font-weight-bold` / `font-weight: 600` / `titleBold` trong `#cell-*`: bảng mà ô nào cũng đậm thì
+không còn ô nào nổi bật, mắt không biết bám vào đâu. Cột định danh vẫn nhận ra được nhờ **màu navy
++ gạch chân đứt** của `.v2-cell-link` (class này đã để `font-weight: 400`). Muốn nhấn mạnh một giá
+trị thì dùng badge / màu, không dùng chữ đậm.
+
 **Kiểu link** — dùng class chung `.v2-cell-link` (đã khai trong `assets/scss/v2-styles.scss`), khuôn "mã phiếu":
 
 | Thuộc tính | Giá trị |
@@ -190,6 +198,32 @@ TUYỆT ĐỐI không dùng `<a href="javascript:void(0)" @click="$router.push(.
 ⚠️ Class khai bằng selector `a.v2-cell-link` (element + class) là CÓ CHỦ Ý: ô bảng thường mang kèm `.field-line`, mà class đó khai `color: #475569` nằm sau trong `v2-styles.scss` — để `.v2-cell-link` trần thì mã bản ghi ra **xám** thay vì navy.
 
 Nhớ khai map sắp xếp ở BE cho cả 2 khoá mới (`SORTABLE_COLUMNS`: `customerCode => code`, `customerName => fullname`).
+
+## 3a. Màn DANH MỤC dùng modal (không có màn chi tiết)
+
+Phần lớn danh mục (cấp dịch vụ, quốc gia, tỉnh/huyện/xã, loại tài khoản, tiền tệ, ngân hàng…)
+Thêm/Sửa/Xem đều nằm trong **modal**, không có route `/{id}`. Quy tắc cột định danh vẫn giữ nguyên
+tinh thần "bỏ hành động Xem", chỉ đổi cách mở (user chốt 2026-08-15):
+
+- Cột định danh (Mã, hoặc Tên nếu bảng không có mã) là **`<button class="v2-cell-link field-line">`**
+  → bấm vào **mở modal Xem**. `button.v2-cell-link` đã khai sẵn trong `assets/scss/v2-styles.scss`
+  (reset nền/viền/padding rồi dùng chung đúng kiểu link của màn lớn).
+- **BỎ nút "Xem"** khỏi cột Hành động — y như màn có route chi tiết.
+- Dùng `<button>`, KHÔNG dùng `<a href="javascript:void(0)">`: mở modal không phải điều hướng nên
+  không có gì để mở tab mới; `<a>` không href còn mất luôn khả năng bấm bằng bàn phím.
+- Có route chi tiết thật thì vẫn phải là `nuxt-link` như mục 3 — đừng đổi màn lớn sang kiểu này.
+
+**Cột Người tạo / Ngày tạo ở nhóm danh mục — LUÔN PHẢI CÓ** (user chốt 2026-08-15). Bảng thiếu
+`created_by` / `created_at` thì **thêm cột bằng migration**:
+
+- Cột `unsignedBigInteger nullable` (`created_by`, `updated_by`) + `timestamp nullable`
+  (`created_at`, `updated_at`) — đúng convention DB ở CLAUDE.md.
+- **Backfill dữ liệu cũ**: `created_by` = nhân viên của `namdangit@gmail.com`, `created_at` = thời
+  điểm chạy migration. Tra id theo email trong migration, KHÔNG viết cứng số.
+- ⚠️ Bảng ERP đang chạy song song 2 cổng: chỉ THÊM cột nullable, không đổi/xoá cột sẵn có.
+- ⚠️ KHÔNG bọc `addColumn` trong `DB::transaction` (MySQL implicit-commit → lỗi "no active transaction").
+
+---
 
 ## 3b. Sắp xếp theo ĐỘ KHỚP khi tìm bằng ô text
 
@@ -247,6 +281,30 @@ Chỉ **ô chữ**, theo thứ tự ưu tiên lấy 1 ô làm từ khoá chấm 
 
 ⚠️ Hàm dùng cho popup chọn (select2) thường gọi `index()` rồi `->reorder()` — kiểm tra lại để popup vẫn giữ thứ tự A-Z của nó.
 
+## 3c. Badge TRẠNG THÁI — dùng `V2BaseBadge`, không tự dựng pill
+
+Ô Trạng thái (và mọi badge phân loại: loại phiếu, mức độ, kết quả duyệt…) render bằng component
+chung **`components/V2BaseBadge.vue`**. KHÔNG tự khai `<span class="status-pill tpl-status-*">`
+hay class badge riêng của màn — mỗi màn tự dựng thì bo góc / cỡ chữ / màu lệch nhau, sửa 1 chỗ
+không lan sang chỗ khác.
+
+```vue
+<template #cell-status="{ item }">
+    <V2BaseBadge :variant="Number(item.status) === 1 ? 'brand' : 'required'">
+        {{ item.status_text }}
+    </V2BaseBadge>
+</template>
+```
+
+`variant` khả dụng: `brand` (xanh lá — đang hoạt động / hợp lệ) · `required` (đỏ — khoá / ngừng /
+từ chối) · `muted` (xám — nháp, chưa xác định) · `status-draft` · `status-ok` · `null`.
+
+Khuôn mẫu: `pages/customer-care/device-errors/index.vue`. Cột Trạng thái vẫn khai `align: 'center'`
++ `width: '130px'` (mục 15).
+
+⚠️ Text trạng thái ưu tiên lấy từ **`status_text` BE trả về**, không tự map `1 → 'Hoạt động'` ở FE:
+map ở FE thì thêm trạng thái mới phải sửa cả 2 nơi và dễ lệch chữ giữa danh sách / chi tiết / export.
+
 ## 4. Thứ tự cột + cột ghim trái
 
 `[cột khoá: STT → Mã → Tên] → [các cột dữ liệu theo cấu hình user] → [Người tạo] → [Ngày tạo] → [Trạng thái] → [Hành động]`
@@ -278,12 +336,28 @@ Màn danh sách mặc định **chỉ hiện 7 cột**:
 Cột `Người tạo` + `Ngày tạo` là **bắt buộc** ở mọi màn, đứng cuối nhóm cột dữ liệu (ngay trước Trạng thái → Hành động).
 
 - **Người tạo**: chỉ **TÊN** người tạo, KHÔNG kèm mã nhân viên.
-- **Ngày tạo**: chỉ **NGÀY** `dd/mm/yyyy`, KHÔNG kèm giờ → BE dùng `Helper::formatDate()`, không dùng `Helper::formatDateTime()`.
+- **Ngày tạo / Ngày cập nhật**: **NGÀY + GIỜ PHÚT** — `18/10/2026 16:15`. BE: `Helper::formatDateTime($x, 'd/m/Y H:i')` — truyền format để **bỏ giây** (mặc định của helper là `d/m/Y H:i:s`). Cột này khai `width: '140px'` (110px chỉ vừa phần ngày, thêm giờ là xuống dòng).
 
 ```js
 { key: 'createdByName', isVisible: 'createdByName', label: 'Người tạo', title: 'Người tạo', align: 'left', width: '170px' },
 { key: 'createdAt',     isVisible: 'createdAt',     label: 'Ngày tạo',  title: 'Ngày tạo',  align: 'left', width: '110px' },
 ```
+
+### Định dạng thời gian cho các trường KHÁC
+
+Hiển thị phải khớp với **cách người dùng nhập trên UI**, không tự quyết:
+
+| Ô nhập trên UI | Hiển thị (danh sách · chi tiết · in · export) | BE |
+| --- | --- | --- |
+| Chỉ chọn NGÀY (datepicker `type="date"`) | `18/10/2026` | `Helper::formatDate($x)` |
+| Chọn NGÀY + GIỜ (`type="datetime"`) | `18/10/2026 16:15` | `Helper::formatDateTime($x, 'd/m/Y H:i')` |
+| Chỉ chọn GIỜ (`type="time"`) | `16:15` | `Helper::formatDateTime($x, 'H:i')` |
+| Mốc hệ thống tự ghi (created_at, updated_at, thời điểm duyệt, thời điểm gửi…) | `18/10/2026 16:15` | `Helper::formatDateTime($x, 'd/m/Y H:i')` |
+
+2 điều luôn đúng:
+
+- **Không hiện GIÂY** ở giao diện nghiệp vụ — chỉ giữ giây trong log kỹ thuật nếu thật sự cần.
+- Ô nhập chỉ có ngày mà hiển thị kèm `00:00` là **sai** (người dùng không nhập giờ đó, hiện ra gây hiểu nhầm là "lúc nửa đêm").
 
 **BE — lấy tên người tạo bằng SUBQUERY, không leftJoin.** Cột này luôn trả về nên leftJoin sẽ làm chậm câu COUNT của phân trang (đo trên 42.077 KH: 0,12s → 0,43s khi thêm join). Khuôn `CustomerService::creatorNameSql()`:
 
@@ -300,9 +374,29 @@ Nếu màn có modal "Cấu hình cột hiển thị" và cột Người tạo t
 
 1. **Tiêu đề có mã bản ghi**: `Chi tiết <đối tượng>: <mã>` (vd `Chi tiết khách hàng: KH-00042`). Mã chỉ có sau khi form nạp xong dữ liệu → form `$emit('loaded', data)`, page bắt sự kiện rồi set `pageTitle` (dùng `PageTitleMixin`) và `head().title`. Chưa có dữ liệu thì hiện tiêu đề trần, không hiện `: undefined`.
 
+   ⚠️ **Bảng KHÔNG có cột mã → để tiêu đề TRẦN, không lấy tên thay thế.** Tên bản ghi thường dài
+   (`Chi tiết công việc / lỗi thiết bị: Hiệu chỉnh cảm biến cân trọng lượng bệ kiểm tra phanh xe tải`)
+   → tiêu đề trang và tên tab lê thê mà chẳng giúp định danh nhanh hơn. Chỉ ghép `: <mã>` khi **có mã**.
+
 2. **Footer phải có ĐỦ hành động như dòng ở màn danh sách**, TRỪ:
    - **"Xem"** — đang ở màn xem rồi;
    - **"Lịch sử"** — nếu màn chi tiết đã có mục Lịch sử ngay trong form (`SystemInfoSection`). Đừng để 2 lối vào cùng 1 nội dung.
+
+   ⚠️ **Giống cả ĐIỀU KIỆN HIỆN, không chỉ giống danh sách hành động.** Với CÙNG một bản ghi, số nút
+   ở màn chi tiết phải đúng bằng số nút ở dòng tương ứng ngoài danh sách. Nút nào ẩn ngoài danh sách
+   thì phải ẩn trong chi tiết, và ngược lại.
+   - Sai hay gặp nhất: danh sách gate `perm.edit && isActive` (bản ghi khoá thì ẩn Sửa) nhưng chi tiết
+     chỉ gate `perm.edit` → mở chi tiết vẫn thấy nút Sửa. **Sửa 1 bên mà quên bên kia là lệch.**
+   - Điều kiện nên đọc từ **cùng một nguồn** (cờ BE trả về như `is_can_edit` / `is_can_delete`, hoặc
+     computed dùng chung) thay vì mỗi màn tự viết lại biểu thức.
+   - Khi sửa điều kiện hiện của bất kỳ hành động nào → **kiểm tra ngay cả 2 nơi** rồi mới báo xong.
+
+   **Cách tự kiểm**: mở 1 bản ghi ở trạng thái bình thường và 1 bản ghi ở trạng thái đặc biệt
+   (đã khoá / đã duyệt / đã hủy), đối chiếu danh sách nút của 2 màn — phải trùng khớp từng nút.
+
+**BẮT BUỘC dùng `V2Footer`, KHÔNG tự dựng khối nút** (`<div class="d-flex justify-content-end">` + loạt
+`V2BaseButton`). Tự dựng thì mỗi màn ra một khoảng cách / thứ tự / vị trí "Quay lại" khác nhau, và
+không ăn theo khi `V2Footer` đổi.
 
 ```vue
 <V2Footer :menu="{ edit: perm.edit, history: true }" url-back="/assign/customers" @edit="goToEdit" @showHistory="historyModalShow = true">
@@ -312,9 +406,30 @@ Nếu màn có modal "Cấu hình cột hiển thị" và cột Người tạo t
 </V2Footer>
 ```
 
+Key có sẵn trong `menu`: `submit_and_draft` · `submit_form` · `edit` · `print` · `delete` · `cancel` ·
+`history` · `approve` · `complete` · `schedule` · `confirm` · `create_other_task`…
+Hành động không có trong danh sách đó, **hoặc cần disable + tooltip lý do** (nút `menu.delete` không
+hỗ trợ), thì đưa vào slot `#custom-actions`. `V2Footer` tự render "Quay lại" ở cuối — đừng tự thêm.
+
 - Dùng `menu` có sẵn của `V2Footer` cho Sửa / Xóa / Lịch sử; hành động riêng của màn đưa vào slot `#custom-actions`.
 - Thứ tự: Sửa (primary) → Lịch sử + hành động phụ (secondary) → Xóa / Khóa (danger) → **Quay lại luôn cuối** (V2Footer tự render).
 - Gate bằng đúng cờ quyền của màn danh sách, fail-closed (`perm.edit`, `perm.delete`), KHÔNG hard-code `true`.
+- **Nút KHÔNG DÙNG ĐƯỢC thì ẨN HẲN — không hiện rồi disable.** Áp cho MỌI lý do:
+  không có quyền, **và cả** chưa đủ điều kiện nghiệp vụ (đã phát sinh chứng từ, sai trạng thái…).
+
+  ```js
+  // ĐÚNG — điều kiện nằm trong `visible`
+  { key: 'delete', title: 'Xóa', danger: true, visible: this.canDelete && !!item.is_can_delete }
+
+  // SAI — hiện nút xám không bấm được
+  { key: 'delete', title: 'Xóa', interactable: !!item.is_can_delete, disabledTitle: '...' }
+  ```
+
+  Áp cho cả cột Hành động ở danh sách lẫn footer màn chi tiết — nút nào ẩn ở danh sách thì phải ẩn
+  ở chi tiết (mục 7.2). Muốn cho user biết vì sao không thao tác được thì đặt ghi chú/`title` ở
+  **chỗ khác** (cột Trạng thái, ghi chú trong form), không giữ nút xám trên giao diện.
+
+  📌 Quy ước này **đảo lại** cách làm cũ (hiện + disable + tooltip lý do) — chốt 2026-08-15.
 - Hành động đổi trạng thái (Khóa/Mở khóa) cập nhật state tại chỗ sau khi API thành công để nút đổi ngay, không nạp lại cả màn.
 
 ## 8. Thứ tự request khi vào màn (tốc độ hiển thị)
