@@ -68,6 +68,27 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- finance-product-import-request → @junfoke → .plans/gop-db/finance-product-import-request/plan.md
+  Trạng thái: **XONG PHASE 1-7, ĐÃ VERIFY** (2026-08-14). Chờ so cạnh nhau trên dev.
+  Phase 7: đã merge `gop_db` (cả 2 repo, 0 conflict) và áp bộ chuẩn UI mới — cột Hành động cuối
+  bảng bằng `V2BaseRowActions`, link mã phiếu `.v2-cell-link`, popup xác nhận dùng
+  `base-confirm-modal`, thứ tự request theo `list-page` mục 8, chuẩn nút (Tạo mới / Xóa /
+  Xuất Excel xanh lá), sắp xếp theo độ khớp ở BE.
+  Danh sách (4 preset theo quyền) + form Tạo/Sửa **7/8 loại** (loại 11 bị loại có chủ đích vì
+  ERP sinh tự động từ Phiếu YC nhập khẩu) + chi phí nội địa + dòng con khách hàng
+  + màn Chi tiết với 4 luồng duyệt (Kế toán kho / BKS / BGĐ / TP) + tab lịch sử.
+  + In (mẫu ERP 44) + xuất Excel + xoá file S3.
+  Verify: 16/16 route, luồng end-to-end trên trình duyệt, 0 migration, đối chiếu 2 cổng ở mức code
+  (12 trạng thái + 17 tên loại + mẫu in 44 trùng khớp).
+  2 việc đã chốt: (a) lỗ hổng "mọi trưởng phòng duyệt được phiếu phòng ban khác" — **giữ nguyên
+  như ERP**; (b) NCC/KH rỗng — **chỉ DB local thiếu bản ghi, trên dev đủ**, không phải lỗi.
+  Port màn ERP "Phiếu Yêu cầu nhập hàng"
+  (`productImportRequest.all`) sang phân hệ **Tài chính**, slot `finance.js:95`.
+  Chốt: 1 mục menu + 1 màn danh sách nhận `?type=` với 4 preset (all/for_approve/managerApprove/
+  departmentManagerApprove), form 8 loại — danh sách hiện 12 loại, quyền dùng lại ERP qua
+  `erpPermission` + bản ghi `guard=api` trùng tên. Worktree riêng ở cả 2 repo, nhánh
+  `feat/finance-product-import-request`.
+
 - unsaved-changes-catalogs → @junfoke → .plans/gop-db/unsaved-changes-catalogs/plan.md
   Trạng thái: **CODE DONE, CHƯA TEST TRÌNH DUYỆT** (2026-08-12). Popup "Thông tin chưa lưu"
   khi thoát màn form — đợt 1: 14 màn danh mục customer-care + finance.
