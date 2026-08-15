@@ -178,6 +178,12 @@ Cột **Tên KHÔNG khoá**: user được ẩn / đổi vị trí tuỳ ý, nê
 </template>
 ```
 
+**Chữ trong ô bảng để THƯỜNG — KHÔNG in đậm, kể cả cột Mã** (user chốt 2026-08-15). Bỏ hết
+`font-weight-bold` / `font-weight: 600` / `titleBold` trong `#cell-*`: bảng mà ô nào cũng đậm thì
+không còn ô nào nổi bật, mắt không biết bám vào đâu. Cột định danh vẫn nhận ra được nhờ **màu navy
++ gạch chân đứt** của `.v2-cell-link` (class này đã để `font-weight: 400`). Muốn nhấn mạnh một giá
+trị thì dùng badge / màu, không dùng chữ đậm.
+
 **Kiểu link** — dùng class chung `.v2-cell-link` (đã khai trong `assets/scss/v2-styles.scss`), khuôn "mã phiếu":
 
 | Thuộc tính | Giá trị |
