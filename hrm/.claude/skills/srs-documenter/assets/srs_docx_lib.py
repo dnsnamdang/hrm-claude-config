@@ -10,11 +10,21 @@ Cach dung: xem cac file .plans/gop-db/<feature>/gen_srs.py
     d.save()
 
 Quy uoc bat buoc (dung theo skill .claude/skills/srs-documenter/SKILL.md):
-  - Bang "Gioi thieu" 2 cot x 7 dong  -> intro_table()
-  - Bang "Mo ta chi tiet giao dien" 8 cot -> ui_table()
+  - Trang dau: 2 dong tieu de CAN GIUA, KHONG phai Heading -> title_block()
+  - Bang "Gioi thieu" 2 cot x 7-8 dong -> intro_table() (bo dong cuoi neu dacbiet=None)
+  - Bang "Mo ta chi tiet giao dien" 8 cot -> ui_table();
+    chuc nang CHI DOC bo cot "Bat buoc" -> ui_table(rows, required=False)
   - Bang "Danh sach event va xu ly event" 4 cot -> event_table()
-  - Muc "Layout man hinh" CHI ghi duong dan -> layout()
+  - Muc "Layout man hinh" = URL day du + ANH CHUP THAT -> layout()
   - Bieu do Use Case phai la ANH PNG that -> overview_figure() / uc_figure()
+
+FORM MOI (user chot 2026-08-17, ban mau SRS_MAU.docx = SRS Danh muc khach hang):
+  - Chi con 4 chuong: "Phan 1. Gioi thieu" / "Phan 2. Phan quyen" /
+    "Phan 3. Dac ta chi tiet theo tung chuc nang" / "Phan 4. Quy tac nghiep vu"
+  - DA BO: bang thong tin trang bia, muc "Pham vi", chuong "Tong quan",
+    muc "Quy tac truy cap bat buoc", chuong "Danh muc chuc nang (Function list)",
+    muc "Tieu chi nghiem thu", dong "Chuc nang lien quan: FR-xx"
+  - Muc Layout CHI con dong "URL day du", bo dong "Menu:" va "Route (FE):"
 """
 import os
 import tempfile
@@ -68,6 +78,21 @@ class SrsDoc(object):
             hs.font.color.rgb = RGBColor(0x2F, 0x54, 0x96)
         self.doc = doc
 
+    # -------------------------------------------------------- trang dau
+    def title_block(self, man_hinh):
+        """2 dong tieu de dau tai lieu — CAN GIUA, 24pt, KHONG dung Heading.
+
+        Ban mau khong con dong 'Phan he: ...' va khong con bang thong tin
+        (Ma man hinh / Phien ban / Ngay lap / Nguoi lap / ...).
+        """
+        for text in ('SOFTWARE REQUIREMENTS SPECIFICATION (SRS)',
+                     'Màn hình: %s' % man_hinh):
+            par = self.doc.add_paragraph()
+            par.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            r = par.add_run(text)
+            r.bold = True
+            r.font.size = Pt(24)
+
     # ------------------------------------------------------------- text
     def h1(self, t):
         self.doc.add_heading(t, level=1)
@@ -112,28 +137,54 @@ class SrsDoc(object):
         return t
 
     def info_table(self, rows):
-        """Bang thong tin o trang bia (Ma man hinh / Duong dan / ...)."""
+        """DEPRECATED — form moi (2026-08-17) khong con bang thong tin trang bia.
+
+        Giu lai de cac gen_srs.py cu chay duoc; KHONG dung cho tai lieu moi.
+        """
         return self.table(['Thông tin', 'Nội dung'], rows, widths=[1.8, 4.2])
 
-    def intro_table(self, ten, mota, tacnhan, dieukien, chinh, phu, dacbiet=''):
-        """Bang 'Gioi thieu' cua tung chuc nang."""
-        return self.table(['Mục', 'Nội dung'], [
+    def intro_table(self, ten, mota, tacnhan, dieukien, chinh, phu, dacbiet=None):
+        """Bang 'Gioi thieu' cua tung chuc nang.
+
+        dacbiet=None  -> BO HAN dong 'Yeu cau dac biet' (bang con 7 dong).
+        dacbiet=''    -> giu dong nhung de trong (ban mau van co vai cho nhu vay).
+        """
+        rows = [
             ('Tên chức năng', ten),
             ('Mô tả', mota),
             ('Tác nhân', tacnhan),
             ('Điều kiện ban đầu', dieukien),
             ('Dòng sự kiện chính', chinh),
             ('Dòng sự kiện phụ', phu),
-            ('Yêu cầu đặc biệt', dacbiet),
-        ], widths=[1.5, 4.5])
+        ]
+        if dacbiet is not None:
+            rows.append(('Yêu cầu đặc biệt', dacbiet))
+        return self.table(['Mục', 'Nội dung'], rows, widths=[1.5, 4.5])
 
-    def ui_table(self, rows):
-        """Bang 'Mo ta chi tiet giao dien' 8 cot (STT tu danh)."""
+    def ui_table(self, rows, required=True, scope=True):
+        """Bang 'Mo ta chi tiet giao dien' (STT tu danh).
+
+        required=True, scope=True  -> 8 cot (mac dinh, dung cho man co nhap lieu)
+        required=False             -> 7 cot, bo 'Bat buoc' (chuc nang CHI DOC:
+                                      xem danh sach, xem chi tiet, lich su...)
+        required=False, scope=False-> 6 cot, bo ca 'Pham vi' (hop xac nhan...)
+
+        So o trong moi dong PHAI khop so cot da chon.
+        """
+        headers = ['STT', 'Tên đối tượng', 'Loại', 'Trạng thái']
+        widths = [0.4, 1.2, 0.8, 0.75]
+        if scope:
+            headers.append('Phạm vi')
+            widths.append(0.85)
+        if required:
+            headers.append('Bắt buộc')
+            widths.append(0.6)
+        headers += ['Giá trị ban đầu', 'Mô tả']
+        widths += [0.85, 2.2 + (0 if scope else 0.85) + (0 if required else 0.6)]
         return self.table(
-            ['STT', 'Tên đối tượng', 'Loại', 'Trạng thái', 'Phạm vi', 'Bắt buộc',
-             'Giá trị ban đầu', 'Mô tả'],
+            headers,
             [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
-            widths=[0.4, 1.2, 0.8, 0.75, 0.85, 0.6, 0.85, 2.2])
+            widths=widths)
 
     def event_table(self, rows):
         """Bang 'Danh sach event va xu ly event' 4 cot (STT tu danh)."""
@@ -208,24 +259,26 @@ class SrsDoc(object):
         self.figure(png, caption or ('Biểu đồ Use Case — %s %s' % (code, name)), width_in=6.2)
 
     # ------------------------------------------------------------ layout
-    def layout(self, note='', modal=None, route=None, shot=None, shot_caption=None):
-        """Muc 'Layout man hinh' — duong dan + ANH CHUP THAT (rule 2026-08-13).
+    def layout(self, note='', modal=None, route=None, shot=None, shot_caption=None,
+               url=None):
+        """Muc 'Layout man hinh' — URL day du + ANH CHUP THAT.
+
+        Form moi (2026-08-17): CHI ghi dong 'URL day du'. Da BO 2 dong
+        'Menu: ...' va 'Route (FE): ...' cua form cu.
 
         shot         : duong dan file .png chup that cua DUNG chuc nang do (6.2 inch)
         shot_caption : chu thich duoi anh; mac dinh lay theo ten chuc nang truyen vao
-        route        : ghi de route/URL rieng cho chuc nang (vd man them moi /add)
+        route        : ghi de route rieng cho chuc nang (vd man them moi /add)
+        url          : ghi de thang URL day du, uu tien hon `route`
         """
-        r = route or self.route
-        base = self.full_url
-        if route:
-            base = self.full_url.replace(self.route, route) if self.route in self.full_url \
-                else self.full_url
+        base = url
+        if base is None:
+            base = self.full_url
+            if route:
+                base = self.full_url.replace(self.route, route) \
+                    if self.route in self.full_url else self.full_url
         self.p('Đường dẫn màn hình:')
-        self.bullets([
-            'Menu: %s' % self.menu,
-            'Route (FE): %s' % r,
-            'URL đầy đủ: %s' % base,
-        ])
+        self.bullets(['URL đầy đủ: %s' % base])
         if modal:
             self.p('Modal %s được mở ngay trên màn hình danh sách theo đường dẫn ở trên.' % modal)
         if note:
