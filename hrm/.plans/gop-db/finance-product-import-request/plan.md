@@ -658,3 +658,169 @@ vì nó gọi từ method của chính component có template — cách 2 dành 
 **Verify sau merge**: 8 route API + màn `bill-income-requests` của người khác đều 200; màn danh
 sách 9 cột + cột Hành động + link `.v2-cell-link`; màn chi tiết tiêu đề `: PYCNH-12200` với đủ 4
 nút. Console 0 lỗi.
+
+## Phase 8 — Bổ sung luồng "gửi thẳng Ban kiểm soát duyệt giá" (14/08/2026)
+
+**Thiếu sót phát hiện khi soạn tài liệu tester.** ERP: với loại **4 (bán trả lại)** và
+**9 (bán khi mượn trả lại)** mà hợp đồng ĐÃ QUYẾT TOÁN, nút gửi duyệt đổi thành `submit(10)`
+(`create.blade.php:32-36` + `edit.blade.php:29`) → phiếu vào thẳng **Chờ ban kiểm soát duyệt**,
+bỏ qua cả trưởng phòng lẫn kế toán kho. BE ERP nhận `status => required|in:2,3,10`.
+
+Bản port trước đó chỉ nhận `in:2,3` và không có chỗ nào đặt trạng thái 10 → phiếu như vậy lập từ
+HRM đi nhầm sang Chờ TP duyệt (loại 4) hoặc Chờ duyệt (loại 9), và **tab "Chờ BKS/BGĐ duyệt" không
+bao giờ có phiếu tạo từ HRM**. Đây là lỗi của bản port, không phải khác biệt có chủ ý.
+
+### Đã sửa
+
+- [x] `ProductImportRequestRequest`: `status` nhận thêm **10** (khớp ERP).
+- [x] `ProductImportRequestService::guardControlBoardStatus()` — **chặt hơn ERP**: BE đọc LẠI cờ
+      "đã quyết toán" từ chứng từ nguồn (`dataForSaleReturn` / `BorrowSellRequest::dataForImport`),
+      không tin cờ FE gửi lên. Sai điều kiện → 422 *"Chỉ phiếu trả lại có hợp đồng đã quyết toán
+      mới gửi Ban kiểm soát duyệt giá"*. ERP chỉ `in:2,3,10` chứ không kiểm tra lại → FE sửa
+      payload là đẩy được phiếu vòng qua trưởng phòng/kế toán kho.
+- [x] `handleAfterSubmit()`: thêm nhánh trạng thái 10 — giữ nguyên trạng thái, báo cho **mọi người
+      có quyền "Ban kiểm soát duyệt giá nhập hàng trả lại"**.
+- [x] `savedMessage()`: thông báo riêng *"Yêu cầu của bạn đã được gửi đến Ban kiểm soát duyệt giá"*.
+- [x] FE `ProductImportRequestForm`: computed `submitStatus` quyết trạng thái đích khi bấm
+      "Lưu và gửi duyệt" (2 hoặc 10) dựa trên `sourceInfo.is_settlement` — cờ này vốn đã có sẵn ở
+      cả màn Tạo mới lẫn màn Sửa. Tách 2 method `saveDraft()` / `submitForApproval()` thay cho
+      `save(3)` / `save(2)` gọi thẳng số trong template.
+
+### ⚠️ CHƯA verify chạy thật
+
+MySQL local (Laragon) đang tắt nên **chưa chạy được kịch bản thật**. Mới lint sạch toàn bộ file
+đụng tới. Cần bật Laragon rồi test 3 việc:
+1. Lập phiếu loại 4 với hợp đồng đã quyết toán → gửi duyệt → phải ra **Chờ ban kiểm soát duyệt**.
+2. Loại 4 với hợp đồng CHƯA quyết toán → vẫn ra **Chờ TP duyệt** như cũ.
+3. Gửi thẳng `status=10` cho phiếu không đủ điều kiện → phải bị chặn 422.
+
+Tài liệu tester `huong-dan-tester-4-tab.md` đã cập nhật theo luồng mới (mục 4 có kịch bản test đầy đủ).
+
+
+## Phase 9 — Sửa 16 bug tester Redmine 11074-11089 (17/08/2026, @junfoke)
+
+Nguồn: http://quanly.dnsmedia.vn — dự án "Fix Bug - HRM (Nội bộ)", 16 issue của Lê Huyền Trang
+ngày 15/08/2026, tất cả gắn nhãn `[ERP => HRM] - Khởi tạo - Hàng hóa (Nhập-xuất hàng) - Phiếu yêu
+cầu nhập hàng`.
+
+### Màn DANH SÁCH
+
+- [x] **11074 — thiếu nút "Cài đặt bộ lọc".** Đổi `V2BaseFilterPanel` → `V2BaseSmartFilterPanel`
+      (khuôn `pages/assign/customers/index.vue`), khai schema `filterFields` 12 trường; 3 trường
+      cần control riêng (`supplier`, `customer`, `org`) render qua slot `#field-<key>`.
+      `table="finance_product_import_requests"` là khoá lưu cấu hình.
+- [x] **11077 — thiếu sắp xếp Mã phiếu / Ngày lập / Ngày duyệt.** FE: `sortable: true` cho 4 cột
+      (`code`, `created_at`, `approved_time`, `received_time`) + `sort_by`/`sort_desc` trong
+      `filters` + `handleSort`. BE: `ProductImportRequest::applySort()` với whitelist
+      `SORTABLE_COLUMNS`. ⚠️ `code` sắp theo **id** vì mã là chuỗi `PYCNH-<id>`, sắp theo chữ thì
+      `PYCNH-9999` đứng sau `PYCNH-12232`.
+- [x] **11078 — nút In ở cột Hành động không chạy.** `V2BaseRowActions` emit ra **CHUỖI**
+      `action.key`, không phải object; code cũ so `action.key === 'print'` nên luôn `undefined`.
+- [x] **11075 — thiếu "Lịch sử phiếu".** Thêm mục `history` vào menu ⋮, mở
+      `ProductImportRequestHistoryModal` (mới).
+
+### Màn CHI TIẾT
+
+- [x] **11081 — khối Lịch sử sai design chung.** Bỏ bảng 3 cột tự chế, thay bằng
+      `ProductImportRequestHistoryPanel` (mới) — copy khuôn timeline
+      `ProductImportDirectTransferHistoryPanel.vue` (base chốt ở màn Khách hàng): dot màu theo hành
+      động, bộ lọc Loại hành động / Người thực hiện / Từ–Đến ngày, giá trị cũ đỏ → mới xanh.
+      Panel dùng CHUNG cho cả popup ở màn danh sách (11075) nên 2 nơi không thể lệch nhau.
+      BE `histories()` đổi sang DTO chuẩn của skill `entity-history` (`action`/`action_label`/
+      `action_color`/`actor_code`/`actor_name`/`department_name`/`note`/`changes[]`/`created_at_raw`).
+      Bảng dữ liệu KHÔNG đổi (vẫn dùng chung `product_import_request_versions` +
+      `_histories` với ERP) — "hành động" suy ra từ cột mốc thời gian đã đổi
+      (`rejected_time` → Từ chối, `approved_time` → Duyệt, `received_time` → Gửi duyệt…).
+- [x] **11082 — màu/chữ nút sai quy định.** "Không duyệt" → **"Từ chối"**, nút "In" xanh → **trắng**
+      (`secondary`) theo `.claude/skills/button-convention` mục 2b + 4.2. Khai trong slot
+      `#custom-actions` của màn này, KHÔNG sửa `V2Footer` (component dùng chung — xem mục "Còn nợ").
+      Đổi luôn text popup xác nhận và dòng mô tả "bắt buộc khi Từ chối".
+- [x] **11085 — nút "Tạo phiếu nhập hàng" không bấm được.** Đã **gỡ hẳn** 2 nút "Tạo đề nghị nhập
+      kho" / "Tạo phiếu nhập hàng": màn đích (phân hệ Kho) CHƯA port sang HRM nên không có gì để
+      mở, mà quy ước dự án là nút không dùng được thì ẨN chứ không hiện nút xám. Cờ BE
+      `is_can_approve` / `is_can_product_import` vẫn giữ để bật lại khi 2 màn kia port xong.
+- [x] **11084 — bản in không in đậm như ERP.** Mẫu in 44 vốn đã có `<strong>`/`<b>`, nhưng CSS
+      chung của hrm-client đặt `font-weight: 500` cho 2 thẻ đó, mà Times New Roman không có nét 500
+      → trình duyệt vẽ như chữ thường (đã đo `getComputedStyle` trên hrm-crm). Thêm rule
+      `#content b, #content strong { font-weight: 700 !important }` ở CẢ preview lẫn `options.styles`
+      của `$printContent`.
+
+### Màn THÊM / SỬA
+
+- [x] **11076 — Loại yêu cầu mặc định "Nhập hàng khác".** `form.type` mặc định `''`, giữ placeholder
+      "Chọn loại yêu cầu"; dấu (*) trên ô chứng từ nguồn chỉ hiện sau khi đã chọn loại.
+- [x] **11079 — danh sách Vận chuyển lệch ERP.** `1 = Tự vận chuyển` → **`Nhân viên vận chuyển`**
+      (2 và 3 đã đúng).
+- [x] **11080 — Số km dự kiến.** FE: bỏ rule vee-validate, dùng helper mới chặn gõ chữ ngay lúc
+      nhập. BE: `total_km_expected` đổi `min:1` → **`min:0`** (0.4 km là hợp lệ, bản cũ báo "phải
+      lớn hơn 0" dù nhập đúng) + câu lỗi riêng cho `numeric` / `max`.
+- [x] **11083 — Số lượng hàng hoá cho nhập chữ + lỗi UI.** Dùng helper chặn chữ, ô căn phải, bỏ ô
+      spinner tăng/giảm.
+- [x] **11088 — Giá trị trước VAT / % VAT cho nhập chữ, thiếu maxlength.** Chặn chữ; % VAT chặn
+      trần 100 ngay lúc gõ; bổ sung câu lỗi BE cho `numeric` / `min` / `max`.
+- [x] **11086 — tab Chi phí nội địa không validate.** Nguyên nhân thật: `buildInlandCostsPayload()`
+      **lọc bỏ** dòng chưa chọn chi phí (`filter(row => row.cost_id)`) → dòng bỏ trống bị vứt âm
+      thầm, BE không bao giờ thấy để mà báo lỗi. Nay gửi ĐỦ mọi dòng đang hiện; dòng user thêm rồi
+      để trống HOÀN TOÀN thì dọn khỏi mảng ngay trước khi lưu (`pruneEmptyInlandCosts`) để chỉ số
+      dòng trên bảng khớp chỉ số trong lỗi 422 (`inland_costs.0.cost_id`).
+- [x] **11087 — Sửa phiếu mất Nhà cung cấp của dòng chi phí.** 2 lỗi cộng lại:
+      (a) BE `inlandCosts()` chỉ trả `supplier_id`, không có tên → select2 remote không có option
+      nào để hiện (đã join `customers` lấy `supplier_name`);
+      (b) FE thiếu `:initialOption`, và `:key` của `v-for` đặt theo **index** nên Vue tái dùng
+      component cũ, `mounted` (nơi duy nhất đọc `initialOption`) không chạy lại → đã đổi sang
+      `rowKey` duy nhất sinh bởi `newInlandCostRow()`.
+- [x] **11089 — xóa dòng hàng hoá cuối rồi không thêm lại được.** Hàng hoá chỉ nạp được từ chứng từ
+      nguồn nên không có lối thêm tay. Còn đúng 1 dòng thì **ẩn** nút Xóa (đúng yêu cầu tester
+      "còn 1 hàng hóa thì không nên cho xóa").
+
+### File mới
+
+- `hrm-client/utils/number-input.js` — helper dùng chung `sanitizeInteger` / `sanitizeDecimal` /
+  `sanitizeNumberEvent` (thay directive `only-number` / `decimal-upto` của ERP). BẮT BUỘC dùng qua
+  `@input.native` vì `V2BaseInput` bind `:value`, chuỗi lọc xong trùng state cũ thì Vue không patch
+  lại DOM và ký tự rác vẫn nằm trong ô.
+- `hrm-client/pages/finance/product-import-requests/components/ProductImportRequestHistoryPanel.vue`
+- `hrm-client/pages/finance/product-import-requests/components/ProductImportRequestHistoryModal.vue`
+
+### ✅ ĐÃ VERIFY CHẠY THẬT (17/08/2026)
+
+Chạy trên máy local: `nuxt dev` :3000 + `php -S 127.0.0.1:8000` + MySQL Laragon. Kết quả **16/16 bug
+đạt**, console 0 lỗi JS (chỉ 1 lỗi tải ảnh S3 của file đính kèm cũ, không liên quan).
+
+| Bug | Bằng chứng đã đo |
+| --- | --- |
+| 11074 | Nút "Cài đặt bộ lọc" hiện; popup liệt kê đủ 12 trường, kéo thả + tích chọn được |
+| 11075 | Menu ⋮ có "Lịch sử" → popup hiện timeline đúng phiếu (PYCNH-12219) |
+| 11077 | 4 header có icon sắp xếp; sắp Mã tăng dần ra `PYCNH-00001…`; sắp Ngày lập giảm dần rồi sang trang 2 → **0 bản ghi trùng với trang 1** (tie-breaker chạy đúng) |
+| 11078 | Bấm In ở cột Hành động → mở tab mới `/12219/print` |
+| 11081 | Khối Lịch sử màn chi tiết = timeline chuẩn, giống hệt popup ở màn danh sách |
+| 11082 | Footer đọc đúng `In \| Từ chối \| Quay lại`; In màu trắng, Từ chối đỏ |
+| 11084 | `getComputedStyle` mọi thẻ b/strong trong `#content` = **700** (trước là 500); bản in đậm như ERP |
+| 11085 | Footer không còn 2 nút xám |
+| 11076 | Màn Thêm: Loại yêu cầu trống + placeholder "Chọn loại yêu cầu" |
+| 11079 | Dropdown Vận chuyển = `Nhân viên vận chuyển / Công ty vận chuyển / Khách hàng vận chuyển` |
+| 11080 | Gõ `abc12.345xyz` → ô còn `12.34`. API: `0.4` **không** còn báo lỗi; `abc` → "chỉ được nhập số"; `-3` → "không được là số âm" |
+| 11083 | Gõ `SL5abc` vào Số lượng → còn `5`, model khớp DOM |
+| 11086 | Dòng chi phí thiếu dữ liệu nay báo inline "Bắt buộc chọn loại chi phí" / "Bắt buộc chọn nhà cung cấp" đúng dòng (trước bị vứt âm thầm) |
+| 11087 | Lưu nháp PYCNH-12245 có NCC "…TÀU HORIZON" → mở màn Sửa, ô Nhà cung cấp hiện đúng tên |
+| 11088 | `ABC1500000xyz` → `1500000`; `TEST999` ở % VAT → `100` (chặn trần) |
+| 11089 | Phiếu 1 dòng hàng hoá (PYCXH-35650) → cột Xóa trống, nút đã ẩn |
+
+Bonus đã kiểm: cảnh báo "chưa lưu" khi rời màn Thêm vẫn hoạt động (trình duyệt bật hộp thoại
+beforeunload).
+
+⚠️ **Còn 1 việc chưa kiểm**: popup "Cài đặt bộ lọc" — tắt trường `org` có xoá luôn giá trị
+`company_id`/`department_id` đang lọc không (logic `resetKeys` của `V2BaseSmartFilterPanel`, dùng
+chung với màn Khách hàng nên rủi ro thấp). Không kiểm vì thao tác này ghi cấu hình vào DB của
+tài khoản test.
+
+📌 **Dữ liệu test để lại trên DB local**: phiếu nháp **PYCNH-12245** (id 12245, loại Nhập hàng
+khác, nguồn PYCXH-35650). Màn này không có chức năng Xóa (ERP cũng không) nên phải xoá tay
+bằng SQL nếu muốn dọn.
+
+### Còn nợ — cần user chốt
+
+`V2Footer` (component DÙNG CHUNG) đang để mặc định nút **In màu xanh (`primary`)** và chữ
+**"Không duyệt"**, cả hai đều lệch `.claude/skills/button-convention`. Màn này đã tự override trong
+slot, nhưng mọi màn khác dùng `menu.print` / `menu.reject_approve` vẫn sai. Sửa gốc ở `V2Footer` là
+đụng tài sản chung (ảnh hưởng toàn hệ thống) nên **chưa làm** — chờ ý kiến.

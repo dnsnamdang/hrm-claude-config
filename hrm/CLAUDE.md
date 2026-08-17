@@ -315,6 +315,7 @@ Nếu có → đọc trước khi viết code.
 
 | Khi làm gì                                          | Đọc skill nào                                |
 | --------------------------------------------------- | -------------------------------------------- |
+| **Chuyển/port màn từ ERP sang HRM** (dựng lại màn theo mẫu ERP) | `.claude/skills/erp-to-hrm-screen/SKILL.md` |
 | Tạo/sửa button (nút bấm) trên FE hrm-client         | `.claude/skills/button-convention/SKILL.md`  |
 | Tạo/sửa modal, popup, dialog trên FE hrm-client     | `.claude/skills/modal-popup/SKILL.md`        |
 | Tạo màn danh sách mới ở hrm-client                  | `.claude/skills/list-page/SKILL.md` (nếu có) |

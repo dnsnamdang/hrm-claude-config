@@ -122,7 +122,16 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Bước tiếp: Phase 0 — tạo nhánh ở cả 2 repo, sao lưu 4 bảng trước khi test luồng duyệt.
 
 - finance-product-import-request → @junfoke → .plans/gop-db/finance-product-import-request/plan.md
-  Trạng thái: **XONG PHASE 1-7, ĐÃ VERIFY** (2026-08-14). Chờ so cạnh nhau trên dev.
+  Trạng thái: **Phase 9 sửa 16 bug tester — XONG + ĐÃ VERIFY CHẠY THẬT 16/16 (17/08/2026)**.
+  Redmine 11074-11089 (Lê Huyền Trang, 15/08). Đáng nhớ nhất: nút In cột Hành động không chạy vì
+  `V2BaseRowActions` emit ra CHUỖI key chứ không phải object; chi phí nội địa "không validate" thực
+  chất là FE tự lọc bỏ dòng trống trước khi gửi; bản in nhạt hơn ERP vì CSS chung đặt
+  `font-weight: 500` cho `b/strong` mà Times New Roman không có nét 500.
+  Đã bỏ 2 nút "Tạo đề nghị nhập kho" / "Tạo phiếu nhập hàng" (màn đích thuộc phân hệ Kho, chưa port).
+  Còn nợ user chốt: `V2Footer` dùng chung đang để In màu xanh + chữ "Không duyệt", lệch chuẩn nút.
+  Dữ liệu test để lại trên DB local: phiếu nháp PYCNH-12245 (màn không có chức năng Xóa).
+  Bước tiếp: user review trên dev rồi đóng 16 issue Redmine.
+  (Phase 1-7 đã verify 2026-08-14, Phase 8 bổ sung luồng gửi thẳng Ban kiểm soát.)
   Phase 7: đã merge `gop_db` (cả 2 repo, 0 conflict) và áp bộ chuẩn UI mới — cột Hành động cuối
   bảng bằng `V2BaseRowActions`, link mã phiếu `.v2-cell-link`, popup xác nhận dùng
   `base-confirm-modal`, thứ tự request theo `list-page` mục 8, chuẩn nút (Tạo mới / Xóa /
