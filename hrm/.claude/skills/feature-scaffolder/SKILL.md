@@ -27,13 +27,20 @@ Trước khi scaffold, cần xác nhận:
 | File | Đường dẫn | Mô tả |
 |------|-----------|-------|
 | Migration | `database/migrations/YYYY_MM_DD_HHMMSS_create_[table]_table.php` | Hoặc đặt ở `database/migrations/` gốc |
-| Entity/Model | `Entities/[Entity].php` | Extends `BaseModel` |
+| Entity/Model | `Entities/[Entity].php` | **BẮT BUỘC** `use App\Models\BaseModel;` + `extends BaseModel` — xem ghi chú dưới bảng |
 | Controller | `Http/Controllers/Api/V1/[Entity]Controller.php` | Extends `ApiController` |
 | Service | `Services/[Entity]Service.php` | Extends `BaseService` |
 | Request | `Http/Requests/[Entity]/[Entity]Request.php` | Validation rules |
 | List Resource | `Transformers/[Entity]Resource/[Entity]ListResource.php` | Cho danh sách |
 | Detail Resource | `Transformers/[Entity]Resource/Detail[Entity]Resource.php` | Cho chi tiết |
 | Routes | `Routes/api.php` | Thêm routes vào file có sẵn |
+
+> ⚠️ **Entity KHÔNG được `extends Model` của Laravel.** `BaseModel` mang hook tự gán
+> `created_by` / `updated_by` + quan hệ `employee_create()` / `employee_update()`. Dùng `Model`
+> thuần thì cột **Người tạo / Người cập nhật** rỗng vĩnh viễn mà không có lỗi nào báo ra.
+> Nhớ đưa `created_by`, `updated_by` vào `$fillable`. Bắt buộc phải dùng `Model` thuần thì service
+> tự gán `$obj->updated_by = auth()->id();` ở mọi đường ghi (kể cả khoá/mở khoá).
+> Chi tiết + các bẫy đã dính thật: CLAUDE.md mục **Convention Database**.
 
 ### Frontend (trong repo hrm-client)
 

@@ -374,6 +374,7 @@ Màn danh sách mặc định **chỉ hiện 7 cột**:
 Cột `Người tạo` + `Ngày tạo` là **bắt buộc** ở mọi màn, đứng cuối nhóm cột dữ liệu (ngay trước Trạng thái → Hành động).
 
 - **Người tạo**: chỉ **TÊN** người tạo, KHÔNG kèm mã nhân viên.
+- ⚠️ **Cột Người cập nhật hay ra rỗng vì BE KHÔNG GHI `updated_by`, không phải vì thiếu cột FE.** Trước khi khai cột, kiểm 3 thứ: (1) Entity có `extends BaseModel` không — `extends Model` thuần thì không có hook audit, `updated_by` sẽ NULL vĩnh viễn (xem CLAUDE.md mục *Model MỚI BẮT BUỘC extends BaseModel*); (2) service có gán `updated_by` ở **cả đường khoá/mở khoá** không; (3) query danh sách có eager load / join quan hệ người cập nhật chưa. Cách kiểm nhanh: sửa 1 bản ghi rồi `select updated_by from <bang> where id = <id>` — ra NULL hoặc ra id không có trong `employees` là hỏng.
 - **Ngày tạo / Ngày cập nhật**: **NGÀY + GIỜ PHÚT** — `18/10/2026 16:15`. BE: `Helper::formatDateTime($x, 'd/m/Y H:i')` — truyền format để **bỏ giây** (mặc định của helper là `d/m/Y H:i:s`). Cột này khai `width: '140px'` (110px chỉ vừa phần ngày, thêm giờ là xuống dòng).
 
 ```js

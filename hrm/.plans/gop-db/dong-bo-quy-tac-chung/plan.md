@@ -1027,3 +1027,104 @@ thì xuất đủ cột (giữ hành vi cũ).
       đối tượng đều có danh mục người thực hiện.
       Đo lại: works 783 · khách hàng 783 (công ty của người tạo) · task/issue 1.063 (chưa suy được
       công ty → trả tất cả, đúng fallback).
+
+---
+
+## Phản hồi Redmine #11073 (ghi chú #12–#27, xử lý 2026-08-17)
+
+Bỏ qua #13 (DM tài khoản mất data — user tự sửa).
+
+### BE
+
+- [x] `device_errors` vào `CatalogHistoryService::TABLES` + `DeviceErrorService` dùng
+      `LogsCatalogHistory` (create/update/delete/lock/unlock) — ghi chú #17.
+- [x] `areas`: bản đồ nhãn thiếu `nation_name` (service log theo cột này) → lịch sử hiện thô
+      `nation_name`; thêm nhãn "Quốc gia", giữ `nation_id` cho log cũ — #16.
+- [x] **#16 vẫn lỗi sau lần sửa đầu** (user báo lại 2026-08-17): `logUpdate()` đổi tên cột sang nhãn
+      NGAY LÚC GHI rồi lưu thẳng nhãn làm khoá của `old_value`/`new_value` → mọi dòng log ghi TRƯỚC
+      khi bản đồ nhãn có cột đó bị **đóng băng tên cột thô**, sửa TABLES không cứu được log cũ.
+      Bổ sung map nhãn lần nữa khi ĐỌC (`changesOf()` nhận thêm `$table`) → log cũ của mọi bảng đều
+      hiện đúng nhãn, không cần script sửa dữ liệu. Đã test: dòng `nation_name` cũ đọc ra "Quốc gia".
+- [x] Thêm Người cập nhật cho danh mục địa lý: join `updated_by` ở `DistrictService`/`HamletService`,
+      quan hệ `Nation::updater()` + eager load; resource trả `updated_by_name`
+      (districts/hamlets/nations, alias thêm cho areas/wards/provinces) — #21, #22, #23.
+- [x] `CustomerService`: whitelist sort thêm `updatedAt` → cột Ngày cập nhật sắp xếp được — #24.
+
+### FE
+
+- [x] Device errors: "Khôi phục" → **"Mở khóa"** ở cả danh sách lẫn chi tiết — #12.
+- [x] `HamletModel`: khối Lịch sử bị lồng trong ô Tỉnh/TP → đưa xuống CUỐI form — #14.
+- [x] Popup Xem của 11 danh mục còn để `md` → `:size="isView ? 'lg' : 'md'"` cho khối Lịch sử đủ
+      chỗ (bảng lọc không bị bó) — #15.
+- [x] Device errors: thêm hành động **Lịch sử** ở menu ⋮ (CatalogHistoryModal) + khối
+      `SystemInfoSection` trong thân màn chi tiết — #17.
+- [x] **Mất data ở 2 màn** (`finance/type-accounts`, `finance/product-transfer-requests`): dòng
+      `params.fields = fields.join(',')` bị dán nhầm vào `loadData()` — `fields` không tồn tại nên
+      ném ReferenceError, bảng luôn rỗng. Gỡ bỏ (bản đúng nằm trong `runExport`) — #18, #27.
+- [x] Chuẩn hoá nhãn toàn bộ màn danh mục: "Người sửa"/"Người sửa (gần nhất)" → **Người cập nhật**,
+      "Ngày sửa" → **Ngày cập nhật**, "Người lập" → **Người tạo** (works, cost-debts, accounts,
+      type-accounts, banks, costs, services, serials, device-errors, customers) — #19, #20, #24.
+- [x] Danh mục địa lý: thêm cột **Người cập nhật** (nations, areas, provinces, districts, wards,
+      hamlets) — #21, #22, #23.
+- [x] **Chốt lại 2026-08-17 (user quyết)**: cột Người cập nhật / Ngày cập nhật **ẩn mặc định ở TẤT
+      CẢ màn danh mục**, kể cả màn địa lý và màn Khách hàng — giữ đúng `list-page` mục 6 (bảng mặc
+      định gọn, user tự bật ở "Cấu hình cột hiển thị"). KHÔNG chia màn này hiện / màn kia ẩn.
+- [x] Khách hàng: thêm cột **Ngày cập nhật** (`updatedAt`) + đổi tiêu đề màn/tab thành
+      **"Danh mục khách hàng"** — #24, #25.
+- [x] Dịch vụ sửa chữa & chi phí khác: bỏ ô lọc "Người cập nhật" → còn 2 ô + tìm nhanh nên
+      `V2BaseSmartFilterPanel` tự chuyển sang **bộ lọc gọn 1 hàng** — #26.
+
+### Checkpoint — 2026-08-17
+Vừa hoàn thành: 15/16 ghi chú phản hồi của #11073 (BE + FE).
+Đang làm dở: chưa chạy kiểm thử UI trên cổng 3002/8003.
+Bước tiếp theo: user xác nhận có cần verify bằng Playwright không, sau đó phản hồi lại Redmine.
+Blocked:
+
+### Footer che nội dung cuối trang (2026-08-17, user báo ở màn chi tiết device-errors)
+
+- [x] `components/V2Footer.vue`: thanh nút là `position: fixed` nên không chiếm chỗ trong luồng →
+      nội dung cuối trang bị đè. Bọc thêm khối TĨNH `.v2-footer-spacer` cao **66px** (50px thanh nút
+      + 16px khoảng thở) ngay trong component → **mọi màn dùng V2Footer tự có chỗ trống ở đáy**,
+      không phải tự thêm `margin-bottom`/`padding-bottom` ở từng trang.
+- [x] Gỡ 7 miếng vá thủ công ở các màn đã dùng V2Footer (nếu giữ sẽ chừa chỗ 2 lần):
+      `summary-quotations` (add/edit/index), `BillPaymentRequestForm`, `BillIncomeRequestForm`,
+      `CustomerForm`, `meeting/_id/show`. Các màn KHÔNG dùng V2Footer (bom-list, quotations,
+      contracts, EquipmentTab…) giữ nguyên vá cũ vì chúng chừa chỗ cho footer khác.
+
+### Bổ sung cột Người/Ngày cập nhật cho 5 màn còn thiếu (2026-08-17, user chỉ ra)
+
+Cột **ẩn mặc định** đúng chuẩn đã chốt — user bật ở "Cấu hình cột hiển thị".
+
+- [x] **BE — quan hệ `updater()`/`employee_update()` + eager load + trả `updated_by_name`**:
+      `Level`, `NoteMaintenance`, `Currency`, `CompanyAccount`, `ProductTransferRequest`.
+      3 Resource dùng helper `creatorName()` được bổ sung `updaterName()` cùng khuôn (chỉ đọc khi
+      quan hệ đã eager load → không sinh N+1).
+- [x] **BE — `ExportColumnRegistry`**: thêm `updated_by_name`/`updated_at` cho `note_maintenances`
+      và `currencies` (2 màn export dùng chính Resource nên dữ liệu có sẵn). `product_transfer_requests`
+      KHÔNG thêm vì màn đó dùng Export class riêng.
+- [x] **FE — thêm cột**: `levels`, `note-maintenances` (thiếu Người cập nhật) · `currencies`,
+      `account-banks`, `product-transfer-requests` (thiếu cả Người + Ngày cập nhật).
+      Popup "Chọn trường xuất file" của note-maintenances / currencies đồng bộ theo registry.
+
+Đo lại bằng tinker: levels · note_maintenances · currencies · company_accounts ·
+product_transfer_requests đều trả `updated_by_name` + `updated_at`
+(vd PYCCH-07359 → "Võ Thị Hà" / 27/07/2026 16:47).
+
+### Luồng GHI Người cập nhật của Khu vực / Quốc gia (2026-08-17, user báo "chưa thấy được")
+
+Thêm cột ở FE là chưa đủ — cột trống vì **BE không ghi `updated_by` đúng**. 2 nguyên nhân khác nhau:
+
+- [x] **Quốc gia**: `Nation` kế thừa `Model` THUẦN (không phải `BaseModel`) nên KHÔNG có hook audit
+      -> `nations.updated_by` luôn `NULL` (kiểm DB: 100% bản ghi null, kể cả bản vừa sửa hôm 15/08).
+      `NationService`: set tay `updated_by` (và `created_by` lúc tạo) ở create/update/lock/unlock.
+- [x] **Khu vực**: `Area::boot()` còn 2 hook đồng bộ ERP thời chưa gộp DB. Sau gộp, `TpArea` trỏ về
+      **CHÍNH bảng `areas`** -> hook `updated` ghi đè lên bản ghi vừa lưu và đóng dấu
+      `updated_by = auth()->user()->info->id` (**id bảng `employee_infos`**) trong khi cột lưu
+      `employees.id`. Kết quả: `areas.updated_by = 6` — id không tồn tại trong `employees` -> join
+      ra rỗng -> cột trống. **Gỡ hẳn 2 hook**; service tầng trên đã bỏ đồng bộ từ trước (có comment).
+- [x] **Lỗi y hệt ở `Province` và `Ward`** (TpProvince → `provinces`, TpWard → `wards`): gỡ luôn,
+      nếu không Tỉnh/TP và Phường/xã sẽ trống cột Người cập nhật đúng theo cách này.
+- [x] Bỏ `use MasterSetting` / `use Log` đã chết ở 3 entity.
+
+Đo lại (tinker, user id 13): areas sửa → 13 · areas khóa/mở khóa → 13 · nations sửa → 13;
+đọc qua Resource danh sách: AREA `updated_by_name = "DNS Admin"`, NATION `updated_by_name = "DNS Admin"`.

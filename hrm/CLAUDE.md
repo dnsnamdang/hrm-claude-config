@@ -123,6 +123,22 @@
 
 - **Cấp tổ chức**: luôn dùng `company_id`, `department_id`, `part_id` — tất cả `unsignedBigInteger nullable`. KHÔNG dùng `branch_id`.
 - **Audit**: dùng `$table->timestamps()` (tạo `created_at`, `updated_at`) + thêm thủ công `created_by`, `updated_by` (`unsignedBigInteger nullable`). KHÔNG dùng SoftDeletes cho entity chính (chỉ dùng cho bảng phụ như comment/log nếu thực sự cần).
+- **Model MỚI BẮT BUỘC `extends BaseModel`** (`use App\Models\BaseModel;`) — KHÔNG `extends Model` của Laravel. `BaseModel` có sẵn hook `creating`/`saving` tự gán `created_by` / `updated_by` và 2 quan hệ `employee_create()` / `employee_update()`. Thiếu nó thì cột **Người tạo / Người cập nhật** rỗng vĩnh viễn mà **không có lỗi nào báo ra** — code chạy bình thường, chỉ tới lúc QA soi bảng mới lộ (đã dính thật: `Nation` extends `Model` thuần → 100% bản ghi `nations.updated_by = NULL`).
+
+  ```php
+  use App\Models\BaseModel;
+
+  class Foo extends BaseModel   // KHÔNG: class Foo extends Model
+  {
+      protected $table = 'foos';
+      // created_by / updated_by PHẢI có trong $fillable, nếu không create() bỏ qua
+      protected $fillable = ['name', 'status', 'created_by', 'updated_by'];
+  }
+  ```
+
+  - Model **buộc** phải `extends Model` (kế thừa class khác, model bảng ERP có hook riêng…) → **service tự gán** `$obj->updated_by = auth()->id();` ở MỌI đường ghi: create, update **và cả khoá / mở khoá / đổi trạng thái** (đây cũng là một lần cập nhật, hay bị quên nhất). Ghi rõ lý do không dùng `BaseModel` ngay trên class.
+  - **Luôn lấy `auth()->id()`** (= `employees.id`). TUYỆT ĐỐI không dùng `auth()->user()->info->id` — đó là id bảng `employee_infos`, ghi vào `updated_by` sẽ trỏ tới nhân viên không tồn tại, join ra rỗng y như chưa ghi (bug thật ở hook đồng bộ ERP cũ của `Area` / `Province` / `Ward`).
+  - Xong một màn danh mục: **sửa thử 1 bản ghi rồi mở lại danh sách xem cột Người cập nhật có ra tên không.** Đây là cách DUY NHẤT phát hiện thiếu audit — không có exception, không có log.
 - **Version solution**: các entity gắn với solution phải có `solution_version_id` NOT NULL. Nếu áp dụng cả cấp module thì thêm `solution_module_id` + `solution_module_version_id` (nullable).
 - **File đính kèm**: KHÔNG tạo bảng pivot riêng. Dùng bảng `files` chung với `table='<table_name>'` + `table_id=<entity_id>`. Model khai báo:
   ```php

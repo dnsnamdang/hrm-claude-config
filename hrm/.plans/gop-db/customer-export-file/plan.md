@@ -132,3 +132,56 @@ Blocked: không có.
 được ảnh/định dạng nên vốn dĩ không có logo — chỉ có BOM UTF-8 + dòng tên cột + dữ liệu. Đã cân
 nhắc thêm dòng chữ "DANH SÁCH KHÁCH HÀNG" ở đầu file nhưng bỏ, vì sẽ đẩy dòng tên cột xuống dòng 2
 làm mọi công cụ import (kể cả chức năng Import khách hàng của chính hệ thống) đọc sai header.
+
+---
+
+## Phase 7 — Chuyển build file sang FE (user chốt 2026-08-17)
+
+Hướng: BE chỉ trả JSON theo trang, FE loop gọi rồi tự dựng CSV / Excel / PDF.
+Chốt: nguồn data = endpoint `export-rows` mới (API index thiếu 4 cột liên hệ); PDF cũng build ở FE.
+
+### BE
+- [x] `app/ExcelExport/CustomerExportRows.php` — class dùng trait `CustomerExportColumns` để map row → mảng giá trị (tái dùng nguyên logic của CSV/Excel)
+- [x] `CustomerService::exportRows($request)` — dùng lại `exportQuery()` + order theo `customers.id` + offset/limit, trả rows đã map
+- [x] `CustomerController::exportRows()` — trả `{ headings, keys, rows, total, page, limit }`, cap `limit` tối đa 5.000
+- [x] Route `GET /assign/customers/export-rows` + `erpPermission:Xuất dữ liệu khách hàng`
+- [x] Giữ nguyên 3 route export cũ (chưa xoá — chờ FE chạy ổn định)
+
+### FE
+- [x] Cài `jspdf` + `jspdf-autotable` (Node 14.21.3), font DejaVu Sans base64 lazy-load riêng
+- [x] `utils/export/customerExportFile.js` — `fetchAllRows()` (limit 2.000/lượt, gọi tuần tự, callback tiến độ), `buildCsv()`, `buildXlsx()` (ExcelJS), `buildPdf()` (jspdf-autotable)
+- [x] `pages/assign/customers/index.vue` — `exportFile()` gọi util thay vì tải thẳng từ BE; hiện tiến độ "đã tải x/y dòng"
+- [ ] Verify: xuất đủ 3 định dạng với bộ lọc rỗng (17.5k KH) + có lọc, đối chiếu số dòng với BE cũ
+
+### Checkpoint — 2026-08-17 (Phase 7)
+Vừa hoàn thành: BE endpoint `export-rows` + FE util dựng file ở trình duyệt cho cả CSV/Excel/PDF.
+Đo BE qua tinker: 2.000 dòng/lượt ~0,85-1,07s, offset sâu không tăng chi phí, RAM 60MB, total 17.542.
+→ tải hết 17.5k dòng ≈ 8-10s (9 lượt gọi), nhanh hơn BE dựng Excel (32-44s).
+Font PDF: subset DejaVu Sans 757KB → 78KB (regular) + 71KB (bold), import động, không vào bundle chính.
+Đang làm dở: không có.
+Bước tiếp theo: user mở màn bấm thử 3 nút xuất với bộ lọc rỗng (17.5k KH) để đo thời gian DỰNG file
+ở trình duyệt — đây là phần chưa đo được, xem cảnh báo dưới.
+⚠️ RỦI RO CHƯA ĐO: (1) ExcelJS phải kẻ viền + bọc chữ trên ~350k ô (17.5k x 20) — có thể mất vài
+chục giây và ngốn RAM tab; (2) PDF 17.5k dòng ra khoảng 600 trang, jsPDF dựng trong RAM nên đây là
+định dạng dễ treo tab nhất. Nếu chậm quá thì hạ tiếp: bỏ viền từng ô ở Excel, và chặn số dòng ở PDF.
+Blocked: không có.
+
+### Checkpoint — 2026-08-17 (Phase 7 — fix logo letterhead)
+Vừa hoàn thành: sửa lỗi FE không tải được logo `/images/info-tpe.jpg` (user báo "api ... bị lỗi").
+
+Nguyên nhân: ảnh nằm trong `public/` nên **web server trả file thẳng, không đi qua Laravel** →
+không có header CORS → trình duyệt chặn khi FE (3002) gọi axios sang API (8003). Mở URL trong tab
+vẫn xem được ảnh bình thường nên rất dễ chẩn đoán nhầm thành "ảnh hỏng". Chứng minh: gọi
+`/images/khong-co-that.jpg` (file không tồn tại → rơi vào Laravel) thì CÓ header CORS, còn file có
+thật thì KHÔNG.
+
+⚠️ Thêm `'images/*'` vào `config/cors.php` KHÔNG sửa được lỗi này (đã thử rồi trả lại nguyên trạng)
+— Laravel không hề được gọi tới thì middleware CORS không chạy. Muốn đi hướng đó phải sửa cấu hình
+nginx trên từng môi trường, mà local `artisan serve` vẫn chịu.
+
+Cách sửa: thêm `GET /api/v1/letterhead` (`app/Http/Controllers/Api/V1/LetterheadController.php`)
+trả thẳng file ảnh — đi qua Laravel nên có CORS, và vẫn giữ **một bản ảnh duy nhất** trong repo
+(không copy sang hrm-client). Verify: 200 · image/jpeg · 75.444 bytes · `Access-Control-Allow-Origin: *`.
+
+Bước tiếp theo: user bấm thử 3 nút xuất trên trình duyệt.
+Blocked: không có.
