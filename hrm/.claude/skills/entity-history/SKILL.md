@@ -69,9 +69,25 @@ luôn có **đúng 3 lựa chọn này, không hơn không kém, không đổi c
 - `finalize()` gắn `action_group` cho MỌI dòng log → tự áp cho cả 10 loại đối tượng.
 - `getFilterOptions()` trả 3 nhóm này cho **mọi `$type`**.
 
-⚠️ Trong `getFilterOptions()`, phần **`performers` thì NGƯỢC LẠI**: chỉ trả cho loại nào suy được
-công ty của bản ghi (hiện mới có `customer`). Loại khác trả rỗng để FE tự suy từ log — nếu trả
-danh mục thì `performerOptions()` không lọc được công ty và sẽ liệt kê **toàn bộ nhân viên hệ thống**.
+### Ô "Người thực hiện" — phải liệt kê ĐỦ nhân sự, KHÔNG suy từ log (chốt 2026-08-15)
+
+`getFilterOptions()` **luôn phải trả `performers`** = nhân viên **cùng công ty với người tạo bản
+ghi** (format `MÃ PHÒNG - Tên`, sắp theo tên), giống hệt màn Khách hàng. Áp cho MỌI loại đối tượng,
+kể cả danh mục nhỏ.
+
+- ❌ SAI (kiểu cũ): trả `performers: []` rồi để FE tự suy từ log đang tải. Log của 1 bản ghi thường
+  chỉ có 1-2 người → dropdown chỉ hiện 1-2 dòng, user tưởng hệ thống thiếu dữ liệu. Đây là lỗi
+  user đã phải chỉ ra.
+- Suy công ty: `created_by` của bản ghi → `employees.employee_info_id` → `employee_infos.company_id`.
+- Bảng không có `created_by`, hoặc bản ghi cũ để trống → **trả TẤT CẢ nhân sự**, còn hơn để rỗng.
+- **Logic nằm ở ĐÚNG 1 CHỖ: `App\Services\HistoryPerformerOptions`** (`forCompany()` +
+  `companyOfCreator()`). Cả `SystemLogService` (entity lớn) lẫn `CatalogHistoryService` (danh mục)
+  đều gọi helper này — đổi quy tắc (vd lọc theo công ty người ĐANG ĐĂNG NHẬP thay vì người tạo bản
+  ghi) thì **sửa 1 file duy nhất**, đừng copy logic sang service khác.
+- Màn danh mục: endpoint `catalog-histories/{table}/{id}/filter-options` phải truyền đủ `{table}` +
+  `{id}` (thiếu id thì không suy được công ty).
+- Kiểm nhanh: số option của ô "Người thực hiện" ở màn danh mục phải **bằng** màn Khách hàng
+  (`assign/system-logs/customer/{id}/filter-options`) — lệch là đang suy từ log.
 
 ### FE
 - `actionOptions()` lấy từ `filter-options`; fallback là **3 nhóm hard-code**, KHÔNG suy từ log
@@ -176,12 +192,47 @@ từ chối, duyệt (nếu có ô ghi chú duyệt), hủy, đóng, khóa, hủ
 
 | Nơi | Cách vào | Component |
 | --- | --- | --- |
-| **Màn DANH SÁCH** | menu ⋮ của từng dòng → mục `Lịch sử` (icon `ri-history-line`, KHÔNG gắn permission riêng) | popup riêng của entity, mẫu `CustomerHistoryModal.vue` |
-| **Màn CHI TIẾT** | khối "Lịch sử" cuối trang, mặc định thu gọn, lazy load lần mở đầu | `SystemInfoSection.vue` (`entity-type` + `entity-id`) |
+| **Màn DANH SÁCH** | menu ⋮ của từng dòng → mục `Lịch sử` (icon `ri-history-line`, KHÔNG gắn permission riêng) | **`components/modal/CatalogHistoryModal.vue`** (màn danh mục) · `CustomerHistoryModal.vue` (entity lớn có log riêng) |
+| **Màn CHI TIẾT** | khối "Lịch sử" trong thân trang, mặc định thu gọn, lazy load lần mở đầu | `SystemInfoSection.vue` (`entity-type` + `entity-id`) |
+| **Popup XEM của màn danh mục** | khối "Lịch sử" **cuối popup**, thu gọn sẵn | `SystemInfoSection.vue` — nhúng thẳng vào modal Xem |
+
+### Màn DANH MỤC — dùng bộ dùng chung, KHÔNG viết mới (chốt 2026-08-15)
+
+Nhóm danh mục (tiền tệ, vụ việc, mã phí, quốc gia, tỉnh/huyện/xã, ngân hàng, tài khoản…) đã có sẵn
+đủ bộ, thêm màn mới chỉ cần **khai báo**, không viết bảng log / adapter / popup riêng:
+
+| Lớp | Dùng cái gì |
+| --- | --- |
+| **DB** | bảng chung `catalog_histories` (`table_name` + `table_id`) — KHÔNG tạo `<entity>_history` mới |
+| **BE ghi log** | `use App\Services\Concerns\LogsCatalogHistory` trong service: khai `catalogTable()`, `catalogColumns()`, (tuỳ chọn) `catalogDisplay()`; gọi `logCatalogCreate` / `logCatalogUpdate` / `logCatalogStatus` / `logCatalogDelete` |
+| **BE đọc** | `App\Services\CatalogHistoryService` + endpoint chung `GET /api/v1/catalog-histories/{table}/{id}` — nhớ khai bảng + nhãn cột tiếng Việt vào `CatalogHistoryService::TABLES` (whitelist) |
+| **FE popup ở danh sách** | `<CatalogHistoryModal ref="historyModal" modal-id="history-<màn>" record-prefix="Vụ việc" />` rồi `this.$refs.historyModal.open('<table>', item.id, '<mã> - <tên>')` |
+| **FE khối ở chi tiết / popup Xem** | `<SystemInfoSection entity-type="<table>" :entity-id="id" endpoint-base="catalog-histories" />` |
+
+Entity lớn đã có bảng log riêng (khách hàng, báo giá, phiếu…) thì GIỮ nguyên `SystemLogService`.
+Entity từng có log kiểu version (`<x>_versions` + `<x>_histories`, vd `accounts`) đọc qua
+`CatalogHistoryService::LEGACY_VERSION_TABLES` để log cũ vẫn hiện — không phải chuyển dữ liệu.
+
+**`CatalogHistoryModal` dựng trên `V2BaseModal`** (khuôn popup dùng chung — skill `modal-popup`
+mục 0): header/body/footer theo đúng chuẩn, không tự khai style riêng.
+
+⚠️ `SystemInfoSection` khi nằm TRONG popup (`hide-header`) tự bật `si-borderless`: bỏ viền + bỏ
+`overflow` của vùng nội dung. Bỏ `overflow` là bắt buộc — để nguyên thì cụm bộ lọc `sticky` dính
+theo khối này (khối không cuộn) nên **trôi mất** khi user cuộn popup.
+
+⚠️ **Ở màn chi tiết, Lịch sử là KHỐI TRONG THÂN TRANG — KHÔNG phải nút ở `V2Footer`** (chốt
+2026-08-15, khuôn `/assign/customers/{id}`). Footer chỉ chứa hành động thao tác (Sửa, Khóa, Xóa,
+Quay lại). Đặt nút "Lịch sử" ở footer là sai: nội dung lịch sử thuộc về trang, không phải hành động.
+
+⚠️ **Danh mục Thêm/Sửa/Xem bằng modal cũng phải có khối Lịch sử trong popup Xem** (chốt 2026-08-15).
+Quy ước cũ "chi tiết mở dạng modal thì ẩn khối Lịch sử" đã BỎ.
+
+**Padding vùng nội dung của khối Lịch sử = `5px`** — dùng đúng một trị số này ở mọi màn (`.si-body`),
+không màn nào tự nới rộng.
 
 - Cùng 1 endpoint, cùng bố cục, cùng text/màu/bộ lọc, cùng thứ tự mới → cũ. User đối chiếu 2 màn với nhau.
 - Chỉ được làm 1 nơi khi entity **không có** màn còn lại (VD chỉ có màn cài đặt, không có danh sách) — và phải nói rõ lý do khi báo cáo.
-- Màn chi tiết mở dạng modal (`modalMode`) thì ẩn khối "Lịch sử" (đã có nút Lịch sử ngoài danh sách) — xem `CustomerForm.vue`.
+- (BỎ từ 2026-08-15) Quy ước cũ "màn chi tiết mở dạng modal thì ẩn khối Lịch sử" không còn áp dụng: popup Xem của danh mục vẫn phải có khối Lịch sử ở cuối.
 
 ### 5.2. Tóm tắt hiển thị
 

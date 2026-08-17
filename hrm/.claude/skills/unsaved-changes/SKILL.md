@@ -97,6 +97,15 @@ gỡ listener ở `beforeDestroy`.
 | `@hide` | guard, có thể `preventDefault()` | |
 | `@hidden` | reset dữ liệu + `$emit('closeModal')` | **KHÔNG reset ở `@hide`** — guard chặn lại thì form đã bị xoá trắng, bấm "Ở lại" cũng không còn gì |
 
+⚠️ **`ref` của `<b-modal>` phải là `my-modal`, không thì override `unsavedModalRef()`.** Mixin gọi
+`this.$refs[unsavedModalRef()].hide()` sau khi user chọn "Thoát", mặc định là `'my-modal'` — modal
+đặt `ref="modal"` (nhóm danh mục địa lý: Nation/Area/Province/District/Ward/Hamlet đều vậy) sẽ hiện
+popup bình thường nhưng **bấm Thoát xong modal đứng im**, nhìn như nút hỏng:
+
+```js
+unsavedModalRef() { return 'modal' },
+```
+
 Modal load detail SAU khi `show()` (kiểu `open(id)` → `show()` → `await loadDetail()`) thì
 phải gọi `markFormPristine()` cuối `loadDetail` — `@shown` đã chốt mốc trên form rỗng rồi.
 

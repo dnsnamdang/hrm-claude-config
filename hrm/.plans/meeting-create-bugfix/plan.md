@@ -76,3 +76,11 @@ Blocked: (không)
 - [x] Xuất lại `.plans/meeting-create-bugfix/thong-bao-meeting.xlsx` theo hành vi sau merge (17 hành động + quy tắc chung + tham chiếu code); xác nhận KHÔNG còn lặp thông báo
 - [ ] Còn tồn: `store()` vẫn gửi thông báo TRƯỚC `DB::commit()` (MeetingController:180 vs 182) — nên chuyển xuống sau commit như `update()`
 - [ ] Còn tồn: trạng thái Hoàn thành (3) không bắn thông báo cho ai — cần xác nhận nghiệp vụ
+
+### Fix — Loại meeting bị khoá mất giá trị đã chọn ở màn Sửa (2026-08-15)
+- [x] BE `MeetingTypeService::getAll($includeIds)` + `MeetingTypeController::getAll(Request)`: nhận `include_ids` → `where(status = ACTIVE)->orWhereIn('id', $includeIds)`; `MeetingTypeResource` trả thêm `is_locked`
+- [x] FE `GeneralInfo.vue`: `getMeetingType()` gửi `include_ids` theo `form.meeting_type_id`; watcher load lần đầu nạp lại danh mục nếu loại đang chọn không có trong list (tránh select trống + radio Họp đối tác/nội bộ set sai)
+- [x] FE `MeetingForm.vue`: `loadMeetingTypes()` gửi `include_ids` + watcher `form.meeting_type_id` nạp lại (tránh `hasCustomer` = false làm mất khối Khách hàng)
+- [x] FE icon 🔒 (skill `list-page` mục 11): port `utils/select2LockedOption.js` từ nhánh `gop_db` sang `tpe-develop-assign`, gắn `withLockedOptionMarker` vào `V2BaseSelect` + `V2BaseSelectInModal`; `DescriptionInfoSelect.vue` tự khai `templateResult` nên helper nhường → tự gắn 🔒 (chỉ trong dropdown, chip giữ tên gốc); `GeneralInfo.meetingTypeOptions` map thêm `is_locked`
+- [x] Tổ chức lại tài liệu (nguyên nhân gốc: rule 🔒 nằm ở `list-page` mục 11 → người sửa màn form không có đường tìm ra): tách mục 9–13 sang skill mới `.claude/skills/select-and-input-state/SKILL.md` (trigger theo TRIỆU CHỨNG), `list-page` để lại con trỏ, CLAUDE.md thêm 3 dòng bảng skill + ghi rõ ngoại lệ wrapper tự khai `templateResult`
+- [x] Guard trong code: `withLockedOptionMarker` console.warn khi có option `is_locked` mà settings tự khai `templateResult` (kèm cách sửa + link skill); wrapper đã xử lý thì khai `lockedMarkerHandled: true` để tắt

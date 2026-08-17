@@ -481,3 +481,549 @@ dòng đang dùng chỉ có Sửa ✓ · Tạo mới: bỏ trống → **3 lỗi
 popup) ✓, nhập đủ → lưu, DB ghi `created_by = 13` ✓ · dòng mới có Sửa + Xóa ✓ · Xóa → confirm đúng
 tên → DB còn 0 ✓.
 
+## ✅ 3. `customer-care/costs` — Dịch vụ sửa chữa & chi phí khác
+
+Bảng `costs` đã có đủ cột audit + cờ `is_can_edit/delete/lock/unlock` → không cần migration.
+
+### 🔑 Middleware DÙNG CHUNG cho quy tắc "bản ghi khoá không cho sửa"
+
+Trước đó mỗi màn một file (`CheckCustomerNotLocked`, `CheckServiceNotLocked`). Còn 18 màn nữa →
+viết **`App\Http\Middleware\CheckRecordNotLocked`** (alias `recordNotLocked:<tên route param>`):
+
+- Model đã được `SubstituteBindings` resolve sẵn → middleware KHÔNG cần biết class, chỉ cần entity
+  có `isLocked()`; entity khai thêm hằng `LOCKED_MESSAGE` nếu muốn thông điệp riêng.
+- Vẫn phải là middleware (không phải `if` đầu controller) vì controller nhận `FormRequest` →
+  validate chạy trước thân hàm, payload thiếu trường sẽ trả 422 và guard không tới lượt.
+- 2 middleware cũ giữ nguyên, không sửa (đang chạy ở màn Khách hàng / Gói bảo dưỡng).
+
+| Hạng mục | Trước | Sau |
+| --- | --- | --- |
+| BE khoá | `update()` chặn nhưng trả **400** và nằm SAU validate của `CostRequest` | `Cost::isLocked()` + `LOCKED_MESSAGE`, route `update`/`delete` gắn `recordNotLocked:cost` → **423** |
+| BE tên NV | `employeeDisplayName()` trả `"MÃ - Họ tên"` | chỉ TÊN (list-page mục 6) |
+| BE ngày | `created_at` `d/m/Y` | `d/m/Y H:i` |
+| U1 | `V2BaseFilterPanel` + 3 ô hard-code trong slot | `V2BaseSmartFilterPanel` + `filterFields` (Phân loại · Trạng thái · Người cập nhật) → 4 ô > 3 nên vẫn có nút "Tìm kiếm nâng cao" |
+| U2 | 3 nút tự dựng + nút Khóa nằm TRONG ô Trạng thái | `V2BaseRowActions`: Sửa · Xóa · Khóa/Mở khóa |
+| U3 | Tên là text đậm | `<button class="v2-cell-link">` mở modal Xem, bỏ nút Xem |
+| U4 | Cột "Cập nhật" gộp `ngày + bởi ai` trong `V2BaseTitleSubInfo` | Tách 4 cột: Người tạo · Ngày tạo (hiện) · Người sửa · Ngày sửa (ẩn) |
+| U5 | Hiện đủ 9 cột | 6 cột mặc định, cột nghiệp vụ để user tự bật |
+| U6 | STT `left`, Trạng thái `left` | `center` |
+| U7 | — | Cột đổi key `status` → `costStatus` (dời vị trí) nên `handleSort` map ngược về `status` |
+| U11/U15 | Xuất Excel `secondary` info | `secondary status="success"` |
+| U13 | Sửa / Xóa / Khóa hiện **xám + tooltip** khi không đủ điều kiện | **ẨN hẳn** theo cờ `is_can_*` |
+| Badge | `renderStatus()` tự dựng `span.status-pill` | `V2BaseBadge` |
+| Rác | CSS `.action-icon-btn`, import `V2BaseLabel`/`V2BaseSelect`/`V2BaseTitleSubInfo` | đã xoá |
+
+**Test**: cột STT · Tên · Người tạo · Ngày tạo · Trạng thái · Hành động ✓ · `Đào Thị Thúy` /
+`27/07/2026 09:43` ✓ · dòng Hoạt động: Sửa · Xóa · Khóa ✓ · lọc Trạng thái = Khóa → dòng khoá chỉ
+còn **Mở khóa** ✓ · panel nâng cao hiện đúng 3 ô ✓ · **API**: PUT/DELETE lên cost đang khoá → **423**
+đúng thông điệp; PUT lên cost hoạt động qua được middleware (422 do payload test thiếu trường);
+`unlock` không bị chặn (đã trả cost 44 về trạng thái khoá như cũ) ✓ · 0 lỗi console.
+
+## ✅ 4. `customer-care/service-price-config` — Cập nhật nhanh giá dịch vụ
+
+**KHÔNG phải màn danh sách** (form cấu hình 2 trường) → chỉ áp quy tắc form/nút.
+
+| Hạng mục | Trước | Sau |
+| --- | --- | --- |
+| U12 V2Footer | Nút Lưu tự dựng trong `.card-footer text-right` | `V2Footer` + `footerMenu = { submit_form: canUpdate }`; "Quay lại" do footer tự render |
+| U13 | Nút Lưu `:disabled="saving"` + đổi chữ "Đang lưu..." | Không quyền → không đưa vào menu (ẩn hẳn); chống bấm 2 lần đã chặn ở đầu `submit()` |
+| U10 | Nút modal xác nhận ghi "Đồng ý" | **"Xác nhận"** (bảng chuẩn button-convention 4.2) |
+
+Sẵn có đúng: `unsavedChangesMixin`, `formValidateMixin` (vee-validate realtime), `BaseConfirmModal`.
+
+**Test**: footer có Lưu + Quay lại ✓ · gõ `a` vào ô hệ số → lỗi inline **"Phải là số"** + viền đỏ,
+KHÔNG popup ✓ · bấm Lưu khi đang lỗi → **không mở** popup xác nhận ✓ · sửa hợp lệ → popup "Xác nhận
+cập nhật giá dịch vụ" nêu đúng 207 gói bị ảnh hưởng, nút **Xác nhận / Hủy** ✓ · sửa rồi bấm Quay lại
+→ popup "Thông tin chưa lưu", Ở lại giữ nguyên ✓ · 0 lỗi console.
+
+## ✅ 5. `customer-care/serials` — Serial thiết bị làm dịch vụ
+
+Màn **CHỈ ĐỌC** (thêm/sửa/xoá serial nằm ở màn Khách hàng) → không có cột Hành động, không có modal
+xem. Cột định danh `serial` để **text thường**: màn không có route chi tiết lẫn modal nên không bịa
+link (list-page mục 3a chỉ áp khi có modal Xem).
+
+| Hạng mục | Trước | Sau |
+| --- | --- | --- |
+| BE | Query không select `created_at`, Resource không trả; `updated_at` `d/m/Y` | Thêm `serials.created_at` vào select + `SORT_FIELDS`, Resource trả `created_at`/`updated_at` `d/m/Y H:i` |
+| U1 | `V2BaseFilterPanel` + 4 ô hard-code | `V2BaseSmartFilterPanel` + `filterFields`; Khách hàng là select tìm-từ-server nên giữ ở slot `#field-customer_id` |
+| U4 | Có Người tạo nhưng **thiếu Ngày tạo** | Thêm Ngày tạo, đứng cạnh Người tạo ngay trước Trạng thái |
+| U5 | Hiện đủ 8 cột | Mặc định 7 cột; Người sửa / Ngày cập nhật để user tự bật |
+| U6 | STT `left`, Trạng thái `left` | `center` |
+| U7 | Cột Trạng thái sortable | Bỏ (badge không thuộc nhóm được sort); đổi key `status` → `serialStatus` vì cột dời vị trí |
+| U11/U15 | Xuất Excel `secondary` info + `:disabled` | `secondary status="success"` + `:interactable` |
+| Badge | `span.status-pill` tự dựng | `V2BaseBadge`, text từ `status_text` |
+| Export | Cột Excel lọc theo key cột màn | Đổi `status` → `serialStatus` cho khớp (nếu quên thì file mất cột Trạng thái) + thêm cột Ngày tạo |
+
+**Test**: cột STT · Serial · Tên hàng · Khách hàng · Người tạo · Ngày tạo · Trạng thái ✓ ·
+`Nguyễn Thị Thu Hiền` / `28/07/2026 08:58` ✓ · badge chuẩn, không còn `.status-pill` ✓ · panel nâng
+cao đủ 4 ô (Khách hàng · Trạng thái · Người tạo · Người cập nhật) ✓ · lọc Trạng thái = Ngưng sử dụng
+→ ra đúng dòng "Ngưng sử dụng" ✓ · 0 lỗi console.
+
+## 🔧 Quy tắc BỔ SUNG giữa chừng (user chốt 2026-08-15)
+
+**Chữ trong ô bảng để THƯỜNG, không in đậm — kể cả cột Mã.** Gốc của việc cả bảng bị đậm là class
+dùng chung `.field-line` khai `font-weight: 600` trong `assets/scss/v2-styles.scss` → đổi về `400`,
+và `.v2-cell-link` (cột định danh) cũng từ 600 → 400. Ngoài ra bỏ `font-weight-bold` trong ô của
+8 file: costs · serials · currencies · banks · account-banks · accounts · product-transfer-requests ·
+type-accounts. Đã ghi vào skill `list-page` mục 3.
+
+Badge trạng thái (`V2BaseBadge`) vẫn giữ 600 — đó là chip có nền riêng, không phải chữ trong ô.
+
+**Verify**: `/assign/customers`, `/customer-care/device-errors`, `/customer-care/services` — mọi ô
+đều `font-weight: 400`, riêng badge 600; cột Mã vẫn nhận ra nhờ màu navy + gạch chân đứt.
+
+## ✅ 6. `human/nations` — Danh mục quốc gia
+
+| Hạng mục | Trước | Sau |
+| --- | --- | --- |
+| DB | 5/33 dòng thiếu `created_by` | Migration `2026_08_15_000002_backfill_created_by_on_nations_table` (bảng đã có sẵn cột, chỉ bù dữ liệu) |
+| BE | Resource không trả người tạo, ngày `d/m/Y` | `Nation::creator()` + eager load, trả `created_by_name`, ngày `d/m/Y H:i` |
+| U1 | `V2BaseFilterPanel` + 1 ô lọc trong slot | `V2BaseSmartFilterPanel`; 1 ô lọc + tìm nhanh = 2 ô → **chế độ gọn**, không nút nâng cao/cài đặt |
+| U2 | 4 nút tự dựng, Sửa/Xóa **xám + tooltip** | `V2BaseRowActions`: Sửa · Xóa · Khóa/Mở khóa, ẩn hẳn khi không dùng được |
+| U3 | Mã là text thường, không bấm được | `<button class="v2-cell-link">` mở **modal Xem** (modal trước đây KHÔNG có chế độ xem — đã thêm) |
+| U4 | Không có Người tạo/Ngày tạo | Đã thêm |
+| U5 | Hiện đủ 6 cột, thứ tự Tên trước Mã | Mặc định: STT · Mã · Tên · Người tạo · Ngày tạo · Trạng thái · Hành động; Mã bưu chính ẩn |
+| U6 | STT/Trạng thái `left` | `center` |
+| U10 | Nút "Thêm quốc gia"; modal "Lưu và làm tiếp" | **"Tạo mới"**; **"Lưu và tiếp tục"** |
+| Cấu hình cột | Không có | `columnCustomizationMixin` + modal + nút |
+| Modal | Không có `unsavedModalMixin`, nút dùng `:disabled` | Thêm mixin (3 sự kiện shown/hide/hidden), đổi sang `:interactable`, footer Lưu · Lưu và tiếp tục · Đóng |
+
+⚠️ **2 phát hiện phải nhớ cho các màn sau:**
+
+1. **Nhóm danh mục địa lý CHƯA CÓ permission nào** trong `PermissionsTableSeeder`, route BE cũng
+   không gắn `checkPermission`. Tôi đã thử gate bằng tên quyền tự đặt → nút biến mất hết. Đã bỏ, giữ
+   đúng hiện trạng "không gate quyền", và **KHÔNG tạo cờ giả `canManage = true`** (CLAUDE.md cấm).
+   → **Cần user quyết**: có bổ sung quyền cho nhóm danh mục địa lý vào seeder không?
+2. **`unsavedModalMixin` mặc định tìm `ref="my-modal"`.** Modal nhóm địa lý đặt `ref="modal"` →
+   popup "chưa lưu" hiện bình thường nhưng **bấm Thoát modal đứng im**. Phải override
+   `unsavedModalRef() { return 'modal' }`. Đã ghi vào skill `unsaved-changes`.
+
+**Test**: cột đúng thứ tự ✓ · `DNS Admin` / `03/08/2026 15:20` ✓ · bấm mã → modal "Xem quốc gia",
+3 ô disabled, chỉ nút Đóng ✓ · dòng Hoạt động: Sửa · Xóa · Khóa ✓ · Khóa "Poland" → confirm đúng
+tên → trạng thái đổi, nút còn **Mở khóa** ✓ → đã mở khóa trả lại trạng thái cũ ✓ · Tạo mới, gõ dở
+rồi bấm ×/Esc → popup "Thông tin chưa lưu", chọn Thoát → modal đóng thật ✓ · 0 lỗi console.
+
+## 🔧 Quy tắc BỔ SUNG lần 2 (user chốt 2026-08-15)
+
+**Placeholder ô lọc phải nói đúng trường đó lọc gì**: ô chọn `Chọn <tên trường>`, ô gõ tay
+`Nhập <tên trường>`, ô tìm nhanh `Tìm theo <các trường BE thực sự lọc>`. CẤM `Tất cả`, `Chọn...`,
+để trống. Lý do: bộ lọc ≤ 3 ô chạy **chế độ gọn** không render nhãn → placeholder là thứ DUY NHẤT
+cho user biết ô đó là gì, `Tất cả` lúc đó vô nghĩa. Đã sửa 10 chỗ ở serials · nations · areas ·
+provinces · districts (+ wards/hamlets viết mới đã đúng), ghi vào `list-page` và `CLAUDE.md`.
+
+## ✅ 7–11. Nhóm danh mục ĐỊA LÝ: `areas` · `provinces` · `districts` · `wards` · `hamlets`
+
+5 màn cùng khuôn với `nations` nên áp cùng một bộ sửa (BE + FE + modal).
+
+### BE (chung)
+
+| Việc | Chi tiết |
+| --- | --- |
+| Cột bắt buộc | 5 Resource trả thêm `created_by_name` (chỉ `fullname`) + `created_at`; `updated_at` đổi `d/m/Y - H:i` → `d/m/Y H:i` |
+| Tránh N+1 | `AreaService`/`ProvinceService`/`WardService` eager load `employee_create.info`; District/Hamlet vốn đã join sẵn `employee_infos` |
+| KHÔNG đụng hàm dùng chung | `BaseModel::employee_create_name` ghép `"MÃ - Tên"` — sửa nó là ảnh hưởng cả hệ thống, nên Resource tự đọc `optional(...)->fullname` |
+
+### FE (chung, mỗi màn)
+
+Bộ lọc mới (2 ô lọc + tìm nhanh = 3 ô → **chế độ gọn**, không nút nâng cao/cài đặt) · `V2BaseRowActions`
+thay 3-4 nút tự dựng · cột định danh thành `<button class="v2-cell-link">` mở **modal Xem** · thêm
+Người tạo/Ngày tạo · bộ cột mặc định gọn + popup Cấu hình cột · STT/Trạng thái căn giữa · nút
+"Thêm X" → **"Tạo mới"** · ẩn hẳn nút không dùng được.
+
+**Modal (5 file)**: thêm chế độ `isView` (mọi ô `:disabled`, footer chỉ còn Đóng) · `unsavedModalMixin`
++ override `unsavedModalRef() = 'modal'` · `markFormSaved()` trước khi đóng · text nút
+"Lưu và làm tiếp" → **"Lưu và tiếp tục"** · `:disabled` → `:interactable`.
+
+### 🐛 Lỗi phát hiện khi test (áp cho CẢ nations đã làm trước)
+
+**Lưu xong modal không đóng.** `submit()` gọi `$refs.modal.hide()` nhưng KHÔNG gọi `markFormSaved()`
+→ guard "chưa lưu" thấy form còn bẩn nên chặn luôn cú `hide()` của chính mình; user thấy bấm Lưu mà
+modal đứng im, dữ liệu thì đã lưu rồi. Đã bổ sung `markFormSaved()` cho cả 6 modal.
+
+### Khác biệt từng màn
+
+| Màn | Riêng |
+| --- | --- |
+| `areas` | Bảng đang RỖNG (0 dòng) — test bằng cách tạo bản ghi rồi xoá. Cột định danh = Tên (không có mã) |
+| `provinces` | Có cột Mã → Mã là cột định danh, đứng ngay sau STT |
+| `districts` | KHÔNG có cột Trạng thái (service chỉ lấy bản ghi hoạt động) → không có Khóa/Mở khóa |
+| `wards` | Giữ nguyên điều kiện nghiệp vụ: Xóa/Khóa chỉ hiện khi `can_delete` |
+| `hamlets` | Cột Quận/Huyện mặc định ẩn (VN đã bỏ cấp huyện, BE trả rỗng) |
+
+### Test (Playwright :3002)
+
+| Màn | Kết quả |
+| --- | --- |
+| `areas` | Tạo "TEST KHU VUC QT" → dòng hiện `DNS Admin` / `15/08/2026 15:01` ✓; bấm tên → modal "Xem khu vực" (ô + select disabled, chỉ nút Đóng) ✓; Sửa → đổi tên OK, **modal đóng được sau khi lưu** ✓; Khóa → nút còn "Mở khóa" ✓; nút Xóa ẩn đúng vì đã có 4 tỉnh trỏ tới ✓; đã xoá dữ liệu test |
+| `provinces` | Cột STT · Mã · Tên · Người tạo · Ngày tạo · Trạng thái · Hành động ✓; `Trịnh Thị Lợi` / `08/11/2025 08:37` ✓; modal "Xem Tỉnh/TP" khoá 3 input + 2 select ✓; lọc Trạng thái = Khóa → 0 dòng (DB không có tỉnh khoá) ✓ |
+| `districts` | 6 cột (không có Trạng thái) ✓; `Trần Hạnh Minh` / `19/06/2026 15:36` ✓; nút Sửa · Xóa ✓; modal "Xem quận/huyện" ✓ |
+| `wards` | 7 cột ✓; `Trịnh Thị Lợi` / `26/08/2025 09:50` ✓; nút Sửa · Xóa · Khóa ✓; modal "Xem phường/xã" ✓ |
+| `hamlets` | 7 cột (Quận/Huyện ẩn) ✓; `Nguyễn Hồng Hiệp` / `28/07/2026 08:49` ✓; nút Sửa · Xóa ✓; modal "Xem đường/phố" ✓ |
+
+Tất cả: hàng lọc 5 phần tử (tìm nhanh + 2 ô lọc + Tìm kiếm + Làm mới), không nút "Tìm kiếm nâng
+cao", 0 lỗi console.
+
+## 🔧 Quy tắc BỔ SUNG lần 3 (user chốt 2026-08-15)
+
+**Chọn cột định danh**: mặc định là **Mã**, đứng ngay sau STT (TRƯỚC Tên), sticky + locked + là link.
+Chỉ đổi sang **Tên** khi (a) bảng không có cột mã, hoặc (b) bảng có mã nhưng CÒN bản ghi bỏ trống mã
+— link ở ô `—` thì bấm cũng vô nghĩa. Phải kiểm bằng dữ liệu thật:
+`SELECT COUNT(*), SUM(code IS NULL OR code='') FROM <bang>`.
+
+Áp lại: `nations` (5/33 trống) và `provinces` (11/45 trống) → link ở **Tên**, Mã lùi xuống sau Tên.
+`services` · `accounts` · `customers` (mã đủ 100%) → giữ link ở **Mã**. Ghi vào `list-page` mục 3a.
+
+## ✅ 12. `finance/accounts` — Danh mục tài khoản
+
+| Hạng mục | Trước | Sau |
+| --- | --- | --- |
+| DB | 307/309 dòng thiếu `created_by` | Migration `2026_08_15_000003_backfill_created_by_on_finance_catalogs` — bù cho 5 bảng danh mục Tài chính cùng lúc (accounts · type_accounts · works · cost_debts · source_capitals) |
+| BE tên NV | `Account::employeeDisplayName()` trả `"MÃ - Tên"` | chỉ TÊN |
+| BE ngày | `created_at`/`updated_at` `d/m/Y` | `d/m/Y H:i` |
+| BE khoá | `update()`/`delete()` KHÔNG chặn tài khoản đã khoá | `Account::isLocked()` + `LOCKED_MESSAGE`, route gắn `recordNotLocked:account` → **423** |
+| U1 | `V2BaseFilterPanel` + 6 ô hard-code trong slot | `V2BaseSmartFilterPanel` + `filterFields` (6 field, > 3 nên vẫn có nút "Tìm kiếm nâng cao"); placeholder "Tất cả" → "Chọn theo dõi công nợ" |
+| U2 | 3 nút tự dựng + nút Khóa nằm TRONG ô Trạng thái | `V2BaseRowActions`: Sửa · Xóa · ⋮ (Khóa/Mở khóa, Lịch sử) |
+| U3 | Số tài khoản (cột Cấp 1/2/3) là text thường | Ô có giá trị thành `nuxt-link` vào màn chi tiết (giữ khuôn cây 3 cột của ERP) |
+| U4 | Cột "Ngày tạo"/"Cập nhật" gộp `ngày + bởi ai` | Tách 4 cột: Người tạo · Ngày tạo (hiện) · Người sửa · Ngày cập nhật (ẩn) |
+| U5 | Hiện đủ 10 cột | 9 cột mặc định (giữ 3 cột Cấp vì là số tài khoản); Loại TK / Theo dõi công nợ ẩn |
+| U9/U14 | **KHÔNG có màn chi tiết** | Thêm `_id/index.vue` (form mode `show`) + tiêu đề `Chi tiết tài khoản: <số TK>` |
+| U11/U15 | "In danh sách" `primary`, Xuất Excel `secondary` info | In `secondary`, Xuất Excel `secondary status="success"` |
+| U12 | Nút Lưu/Lưu&Thêm tiếp/Quay lại nằm ở **HEADER** của form | Chuyển hết vào `V2Footer` (+ slot cho "Lưu và tiếp tục") |
+| U13 | Sửa/Xóa/Khóa hiện xám + tooltip | ẨN hẳn theo cờ BE |
+| R3 parity | — | Footer chi tiết = Sửa · Lịch sử · Quay lại, khớp cột Hành động ngoài danh sách |
+| Badge | `renderStatus()` tự dựng `span.status-pill` | `V2BaseBadge` |
+| Rác | `V2BaseLabel`, `V2BaseSelect`, `renderStatus`, `lockButtonTitle`, `deleteButtonTitle` | đã xoá |
+
+**Test**: cột STT · Cấp 1/2/3 · Tên · Người tạo · Ngày tạo · Trạng thái · Hành động ✓ ·
+`DNS Admin` / `06/09/2023 14:29` ✓ · bấm số TK → `/finance/accounts/1`, tiêu đề tab
+**"Chi tiết tài khoản: 111"**, mọi ô + 4 select disabled ✓ · footer chi tiết Sửa · Lịch sử · Quay lại,
+bấm Lịch sử mở đúng modal ✓ · màn Sửa: footer Lưu · Quay lại ✓ · **khoá account 308 rồi vào thẳng
+`/308/edit` → tự chuyển về màn chi tiết**, footer chỉ còn Lịch sử · Quay lại ✓ · **API**: PUT lên
+account khoá → **423**; account hoạt động qua middleware (422 do payload test) ✓ · đã trả account 308
+về trạng thái Hoạt động · 0 lỗi console (đã sửa 1 lỗi thiếu prop `modalId` của modal lịch sử).
+
+⚠️ Ghi nhận: `Account::isCanUnlock()` chỉ cho **chính người tạo** mở khoá (`created_by == employeeId`)
+— dữ liệu ERP cũ có `created_by` là người khác nên admin không mở khoá được. Giữ nguyên hành vi ERP,
+KHÔNG tự sửa; nêu ra để user quyết.
+
+## ✅ 13. `finance/type-accounts` — Danh mục loại tài khoản
+
+| Hạng mục | Trước | Sau |
+| --- | --- | --- |
+| DB | thiếu `created_by` | Đã bù ở migration chung `2026_08_15_000003` |
+| BE | `employeeDisplayName()` trả `"MÃ - Tên"`; ngày `d/m/Y`; không chặn bản ghi khoá | chỉ TÊN; `d/m/Y H:i`; `TypeAccount::isLocked()` + `recordNotLocked:typeAccount` → **423** |
+| U1 | `V2BaseFilterPanel` + 5 ô hard-code | `V2BaseSmartFilterPanel` + `filterFields` (Trạng thái · Người tạo · Người cập nhật · Cập nhật từ/đến) |
+| U2 | 4 nút tự dựng + Khóa nằm trong ô Trạng thái | `V2BaseRowActions`: Sửa · Xóa · ⋮ (Khóa/Mở khóa, Lịch sử) |
+| U3 | Mã là text thường; Tên nhồi "Người tạo - Ngày lập" vào sub | Mã là `<button class="v2-cell-link">` mở modal Xem; Tên để trần |
+| U4 | Người tạo/Ngày lập nằm trong ô Tên; "Cập nhật" gộp ngày + người | Tách 4 cột riêng |
+| U5/U6 | 6 cột hiện hết, STT `left` | 7 cột mặc định gọn (Ghi chú, Người sửa, Ngày cập nhật ẩn), STT/Trạng thái `center` |
+| Badge | `renderStatus()` tự dựng | `V2BaseBadge` |
+
+**Test**: cột STT · Mã · Tên · Người tạo · Ngày tạo · Trạng thái · Hành động ✓ · `DNS Admin` /
+`04/08/2026 10:18` ✓ · dòng: Sửa · Xóa · ⋮ ✓ · bấm mã → modal "Xem loại tài khoản" (3 ô disabled,
+chỉ nút Đóng) ✓ · panel nâng cao đủ 5 ô kể cả 2 ô ngày ✓ · **API PUT lên bản ghi khoá → 423** ✓ ·
+0 lỗi console.
+
+## ✅ 14. `finance/currencies` — Danh mục tiền tệ
+
+| Hạng mục | Trước | Sau |
+| --- | --- | --- |
+| DB | Bảng **KHÔNG có** `created_by`/`updated_by` | Migration `2026_08_15_000004_add_audit_columns_to_currencies_table` + backfill 11 dòng |
+| BE | Không ghi audit; Resource không trả người tạo; ngày `d/m/Y` | `Currency::creator()` + `isLocked()` + `LOCKED_MESSAGE`; service ghi `created_by`/`updated_by`; Resource trả `created_by_name`, ngày `d/m/Y H:i`; route gắn `recordNotLocked:currency` |
+| U1 | `V2BaseFilterPanel` + 1 ô lọc trong slot | `V2BaseSmartFilterPanel`; 1 ô lọc + tìm nhanh = 2 ô → **chế độ gọn** |
+| U2 | 3 nút tự dựng + Khóa trong ô Trạng thái | `V2BaseRowActions`: Sửa · Xóa · Khóa/Mở khóa |
+| U3 | Mã là text; Tên gọi khác nhồi vào ô Tên | Mã là link mở modal Xem; Tên gọi khác thành cột riêng (mặc định ẩn) |
+| U4 | Không có Người tạo/Ngày tạo | Đã thêm |
+| Badge | `renderStatus()` | `V2BaseBadge` |
+
+**Test**: cột STT · Mã · Tên · Tỷ giá · Người tạo · Ngày tạo · Trạng thái · Hành động ✓ ·
+`DNS Admin` / `02/12/2021 09:11` ✓ · hàng lọc 4 phần tử, không nút nâng cao ✓ · bấm mã → modal
+"Xem tiền tệ" (4 ô disabled) ✓ · **Tạo mới "TQT" → DB ghi `created_by = updated_by = 13`** ✓ ·
+khoá bản ghi rồi PUT → **423** ✓ · đã xoá dữ liệu test · 0 lỗi console.
+
+## ✅ 15–20. Nhóm còn lại: `banks` · `account-banks` · `works` · `cost-debts` · `source-capitals` · `product-transfer-requests`
+
+### DB (migration)
+
+| Bảng | Việc |
+| --- | --- |
+| `banks` | Thiếu hẳn `created_by` → migration `2026_08_15_000005` thêm cột (kiểu `int` cho khớp `updated_by` sẵn có) + backfill |
+| `company_accounts` | Thiếu `created_by`/`updated_by` → migration `2026_08_15_000006` + backfill |
+| works · cost_debts · … | `created_by = 0` (kiểu "trống" thứ 2 của ERP, migration trước chỉ bù `NULL`) → migration `2026_08_15_000007` bù thêm 18 dòng |
+
+### BE
+
+- 5 Resource trả `created_by_name` (chỉ `fullname`) + `created_at`; mọi mốc thời gian đổi sang `d/m/Y H:i`
+- `CompanyAccount`/`Currency` ghi `created_by`/`updated_by` khi tạo/sửa (trước đó không ghi gì)
+- `isLocked()` + `LOCKED_MESSAGE` cho `CompanyAccount`, route `account-banks` gắn `recordNotLocked` → **423**
+
+**Mở rộng middleware dùng chung**: route `account-banks` nhận `{id}` thô (không bind model) nên
+`CheckRecordNotLocked` được bổ sung tham số thứ 2 là CLASS entity:
+`recordNotLocked:id,Modules\Finance\Entities\CompanyAccount\CompanyAccount` → middleware tự `find()`.
+
+### FE (cả 6 màn)
+
+Bộ lọc mới · `V2BaseRowActions` thay các nút tự dựng · cột định danh thành link/button mở modal Xem ·
+tách nút thao tác ra khỏi ô Mã và ô Trạng thái · `V2BaseBadge` · thêm Người tạo/Ngày tạo · bộ cột
+mặc định gọn · thêm chế độ **Xem** cho modal của works/cost-debts/source-capitals.
+
+### 🐛 3 lỗi phát hiện khi test
+
+1. **Text nút sai chuẩn ở 4 màn** (user chỉ ra ở `account-banks`): "Thêm tài khoản" / "Thêm mã phí" /
+   "Thêm nguồn vốn" / "Thêm mới" → **"Tạo mới"**. Rà tiếp toàn bộ 20 màn còn phát hiện:
+   "Lưu & Tiếp tục" → **"Lưu và tiếp tục"** (6 modal), tiêu đề modal "Thêm X" → "Tạo X" (7 modal),
+   "Xem chi tiết X" → "Xem X" (2 modal).
+2. **`rows="3"` truyền CHUỖI cho prop Number** của `V2BaseTextarea` → mỗi lần mở modal đẻ 3 dòng
+   `[Vue warn] Invalid prop: type check failed`. Lỗi có sẵn từ trước, sửa `:rows="3"` cho **55 file**
+   (bỏ qua 1 file `.html` mockup — file đó là HTML thuần, thêm `:` sẽ hỏng).
+3. Modal Xem của works/cost-debts còn 1 ô textarea chưa `:disabled` — đã bổ sung.
+
+### Test
+
+| Màn | Kết quả |
+| --- | --- |
+| `banks` | STT · Mã · Tên · Người tạo · Ngày tạo · Trạng thái · Hành động ✓; `DNS Admin` / `20/04/2026 09:35` ✓; nút Sửa · Xóa · ⋮ (Khóa, Chi nhánh) ✓; bấm mã → modal "Xem ngân hàng" (4 ô disabled, chỉ nút Đóng) ✓ |
+| `account-banks` | 8 cột chuẩn ✓; dòng Hoạt động: Sửa · Khóa — dòng Khóa chỉ còn **Mở khóa** ✓; API PUT lên bản ghi khoá → **423** ✓ |
+| `works` | `DNS Admin` / `15/08/2026 15:28` ✓; modal "Xem vụ việc" khoá đủ 3 ô ✓ |
+| `cost-debts` | 7 cột chuẩn ✓; modal "Xem mã phí" khoá đủ 3 ô ✓; 0 lỗi console sau khi sửa `rows` |
+| `source-capitals` | STT · Tên · Người tạo · Ngày tạo · Hành động ✓; hàng lọc 3 phần tử (chế độ gọn) ✓; modal "Xem nguồn vốn" chỉ còn nút Đóng ✓ |
+| `product-transfer-requests` | 8 cột ✓; bỏ hàng nút nhét dưới mã, chuyển sang cột Hành động ✓; badge chuẩn thay `status-pill` ✓; panel nâng cao đủ 6 ô ✓; bấm mã → `/7359`, tiêu đề "Chi tiết phiếu yêu cầu chuyển hàng PYCCH-07359" ✓ |
+
+**→ HOÀN THÀNH 20/20 màn user giao.**
+
+
+---
+
+## Đợt kiểm thử cuối — rà lại 20/20 màn theo tất cả skill (2026-08-15)
+
+Chạy lại từng màn trên trình duyệt (tải lại trang đầy đủ, chờ bảng render xong), kiểm: tên cột ·
+dữ liệu dòng 1 · nút hành động theo trạng thái · cột định danh là link · không nút disabled trong
+bảng · không còn `status-pill` · chữ trong ô không in đậm · số ô trên hàng lọc · text + **màu** nút ·
+modal Xem · lỗi console.
+
+### Lỗi phát hiện thêm và đã sửa
+
+- [x] **Màu nút sai `button-convention` mục 2b** (user chỉ ra ở màn chi tiết tài khoản):
+  - `accounts` chi tiết: nút Khóa để `secondary` (trắng) → `primary :status="isLocked ? 'success' : 'warning'"` (Khóa cam · Mở khóa xanh lá)
+  - `accounts` + `type-accounts`: Import Excel thiếu `status="warning"` + icon `ri-file-upload-line` → `ri-upload-line`
+  - `type-accounts` · `currencies` · `product-transfer-requests`: Xuất Excel thiếu `status="success"`
+  - `product-transfer-requests`: Xuất Excel đứng sau Cấu hình cột → đưa lên trước
+  - `AccountBankModal`: nút Lưu thiếu `size`, nút Đóng dùng `light` trong modal footer → `tertiary size="sm"`
+  - `BankModel`: icon nút "Xóa ảnh" là `ri-close-circle-line` (icon Từ chối) → `ri-delete-bin-line`
+  - `BankBranchesModel`: "Thêm chi nhánh" → "Tạo mới"
+  - `ServiceFormComponent`: 2 nút chọn hàng hoá để `primary` + icon `ri-search-line`, text thiếu động từ → `secondary`, icon `ri-checkbox-circle-line`, "Chọn hàng hóa" / "Chọn nhóm hàng"
+- [x] **Màn chi tiết `accounts` thiếu hành động so với danh sách** (list-page 7.2): danh sách có Sửa · Khóa · Lịch sử, footer chỉ có Sửa · Lịch sử → thêm nút Khóa/Mở khóa (`$confirm` chung) + nút Xóa gate bằng `is_can_delete`; điều kiện hiện đọc từ cùng cờ BE như dòng danh sách
+- [x] **Thiếu `head()`** (tab trình duyệt hiện tên mặc định của app): `account-banks`, `works`, `cost-debts`, `source-capitals`
+- [x] **`product-transfer-requests` — Ngày tạo thiếu giờ phút**: Resource để `d/m/Y` → `d/m/Y H:i` (cả `created_at` lẫn `approved_time`, cả List lẫn Detail Resource)
+- [x] `costs`: cột Phân loại còn `status-pill` → chữ thường, xoá `renderStatus` chết
+- [x] `source-capitals` + `product-transfer-requests`: thiếu `columnCustomizationMixin` → thêm mixin + `columnScreenKey` + nút Cấu hình cột + `ColumnCustomizationModal`
+
+### Giữ nguyên có chủ ý
+
+- Popup chọn hàng hoá/nhóm hàng của `services` giữ text "Thêm {n} hàng hoá" + icon `ri-add-line`
+  vì bám đúng popup dùng chung `QuotationProductSearchModal` của Báo giá — sửa 1 màn sẽ lệch màn kia.
+- `source-capitals` không có cột Mã (bảng `source_capitals` không có cột `code`) → link đặt ở Tên;
+  không có cột Trạng thái vì `status` dùng làm xoá mềm, danh sách chỉ hiện bản ghi còn hoạt động.
+- `works` / `cost-debts` không có nút Khóa/Mở khóa vì BE không có endpoint lock (trạng thái sửa trong form).
+
+### Kết quả
+
+20/20 màn đạt, 0 lỗi console ứng dụng (chỉ còn cảnh báo HMR của dev server khi vừa sửa file).
+Thao tác đã test thật: Khóa → Mở khóa ở chi tiết tài khoản (dữ liệu trả nguyên trạng), vào thẳng
+`/accounts/1/edit` khi bản ghi đang khoá → tự chuyển về màn Chi tiết, modal Xem của 9 màn danh mục.
+
+---
+
+## Lượt duyệt lại toàn bộ skill + 20 màn (2026-08-15, sau phản hồi của user)
+
+Đọc lại 6 skill (`list-page` đủ 615 dòng, `button-convention`, `modal-popup`, `unsaved-changes`,
+`form-validate`, `select-and-input-state`) rồi rà lại từng màn bằng 3 lớp: grep tĩnh · đo layout
+bằng Playwright · thao tác thật.
+
+### Lỗi mới phát hiện và đã sửa
+
+- [x] **`/human/banks` — nút "Tạo mới" lệch và dính nút bên cạnh** (user chỉ ra): nút thừa class `mb-2`
+      (đẩy lên 6px) và màn dùng slot `#actions` trong khi 19 màn kia dùng `#actions-bottom` —
+      slot `actions` KHÔNG có `gap` nên 2 nút dính sát nhau. Đã đưa về `#actions-bottom` + `btn-compact`
+      → cùng `top`, khoảng cách 10px như mọi màn.
+- [x] **Ô lọc select cao 32px trong khi ô tìm nhanh 30px** → hàng lọc gọn lệch 1px ở mọi màn có ô chọn.
+      Sửa ở `V2BaseSmartFilterPanel` (ép `select2`/`mx-datepicker` trong `.inline-field` về 30px).
+- [x] **Căn lề (list-page mục 15)**: cột STT ở `accounts` và `currencies` để `align: 'left'` → `center`.
+- [x] **Sortable (list-page "Cột nào được sort")** — chỉ cột định danh, Tên, tiền, ngày:
+  - Bỏ sort sai nhóm: `accounts` (Bậc), `costs` (ĐM giảm giá, % Tính giá vốn, % VAT),
+    `serials` (Tên hàng, Khách hàng, Người sửa, Người tạo), `note-maintenances` (Ký hiệu).
+  - **11 màn không có cơ chế sort nào** (thiếu cả `@sort`/`handleSort`/`sort_by`): works, cost-debts,
+    source-capitals, account-banks, product-transfer-requests, nations, areas, provinces, districts,
+    wards, hamlets → thêm `:sortBy`/`:sortDirection`/`@sort` + `handleSort` + truyền `sort_by`/`sort_desc`.
+  - **BE thiếu whitelist sắp xếp** → thêm cho: `WorkService`, `CostDebtService`, `SourceCapitalService`,
+    `CompanyAccountService`, `BankService`, `NationService`, `AreaService`, `ProvinceService`,
+    `WardService`, `DistrictService`, `HamletService`, `ProductTransferRequest::searchByFilter`.
+    4 service địa lý trước đó đọc `sortBy` (tên FE không hề gửi) và **ghép thẳng vào `orderBy`** —
+    vừa không ăn vừa hở SQL; nay đọc đúng `sort_by` qua whitelist.
+  - `AccountService` / `TypeAccountService`: FE khai key cột dạng camel (`createdAt`) → thêm alias
+    trong whitelist, nếu không bấm sort cột ngày sẽ im lặng không đổi.
+  - `CurrencyService`: bổ sung `created_at` vào whitelist.
+- [x] `/human/banks` còn 3 điểm lệch skill: cột "Chi nhánh" dùng `<a href="javascript:void(0)">` → `<button>`;
+      badge tự map `1 → 'Hoạt động'` ở FE → dùng `status_text` BE trả về (bổ sung vào `BankListResource`);
+      thiếu `filterStateMixin` (19 màn kia đều có); text "Khoá/Mở khoá" → "Khóa/Mở khóa".
+
+### Đã rà và KHÔNG có vi phạm
+
+`status-pill` · `font-weight-bold` trong ô · nút xám `disabledTitle` · `msgBoxConfirm` ·
+`no-close-on-backdrop` · cờ quyền hard-code `true` · `rows="3"` chuỗi · "Lưu & Tiếp tục" ·
+`v-b-tooltip`/`fa-info-circle` · `V2BaseSelect` trong modal · modal thiếu `hide-footer` ·
+modal thiếu `unsavedModalMixin`/`markFormSaved` · thiếu deep watcher filter · thiếu `columnCustomizationMixin`
+· thiếu import `v2-styles.scss` · `javascript:void(0)`.
+
+### Ghi chú (không phải lỗi)
+
+- `districts` / `hamlets` / `source-capitals` không có cột Trạng thái vì BE chỉ trả bản ghi đang hoạt động
+  ("Xóa" = khóa mềm) — mọi dòng cùng trạng thái.
+- Bảng `areas` hiện **0 dòng dữ liệu** trên DB gộp nên màn hiện "Không có dữ liệu" — không phải lỗi màn.
+- `service-price-config` là màn form cấu hình, không phải màn danh sách → không áp bộ quy tắc bảng.
+
+### Test đã chạy
+
+Sort thật (2 chiều) trên works · nations · wards · banks · account-banks · cost-debts ·
+product-transfer-requests; sort cột ngày của accounts và sort tên của type-accounts kiểm qua API.
+Đo layout (top/height/gap của nút toolbar + ô lọc, tràn ngang) trên 20/20 màn. 0 lỗi console ứng dụng.
+
+---
+
+## Đợt bổ sung LỊCH SỬ THAY ĐỔI cho 18 màn danh mục (2026-08-15)
+
+User chốt: mọi màn danh sách phải có nút **Lịch sử**; màn chi tiết / popup Xem phải có **khối**
+Lịch sử trong thân trang (KHÔNG để nút ở footer, khuôn `/assign/customers/{id}`); padding nội dung
+khối Lịch sử = **5px** đồng bộ mọi màn.
+
+### BE — nền dùng chung
+
+- [x] Bảng chung `catalog_histories` (`table_name` + `table_id`, subset-diff JSON, `note`, `changed_by`,
+      `changed_at`) — khuôn bảng `files` dùng chung, thay vì 18 bảng `<entity>_history` cho 18 danh mục.
+      Entity lớn (khách hàng, báo giá, phiếu) GIỮ NGUYÊN bảng riêng + `SystemLogService`.
+- [x] `App\Services\CatalogHistoryService` — ghi (`log`/`logUpdate`/`logStatus`) + đọc (`getLogs`)
+      trả **đúng hợp đồng DTO của `SystemLogService::finalize()`** để FE dùng lại `SystemInfoSection`.
+      Whitelist 20 bảng + nhãn cột tiếng Việt khai tập trung ở `TABLES`.
+- [x] `App\Services\Concerns\LogsCatalogHistory` — trait cho service danh mục (snapshot trước khi
+      sửa → diff → chỉ ghi khi thực sự đổi).
+- [x] Endpoint chung `GET /api/v1/catalog-histories/{table}/{id}` + `/filter-options`, whitelist bảng.
+- [x] Gắn ghi log vào **17 service**: services · levels · note-maintenances · costs · currencies ·
+      company_accounts · works · cost_debts · source_capitals · banks · nations · areas · provinces ·
+      districts · wards · hamlets · product_transfer_requests.
+      (serials là màn CHỈ ĐỌC — sửa serial nằm ở màn Quản lý khách hàng — nên chưa có chỗ ghi.)
+- [x] Adapter đọc **log cũ kiểu version** (`account_versions`/`type_account_versions`) rồi trộn vào
+      kết quả → accounts + type-accounts chuyển sang UI chung mà KHÔNG mất lịch sử đã có.
+- [x] `ServiceService::unlock()` — chuyển thao tác Mở khóa từ controller vào service để có ghi log.
+
+### FE
+
+- [x] `SystemInfoSection` thêm 3 prop: `endpointBase` (dùng cho `catalog-histories`), `defaultOpened`,
+      `hideHeader`; padding `.si-body` → **5px**.
+- [x] **Bộ lọc trong khối Lịch sử GHIM cố định** (`.si-filter-sticky`) — cuộn danh sách log không mất
+      nút Bộ lọc và các ô lọc (user phản hồi 2026-08-15).
+- [x] `components/modal/CatalogHistoryModal.vue` — popup Lịch sử dùng chung, ruột là chính
+      `SystemInfoSection` nên popup ở danh sách và khối ở chi tiết hiện GIỐNG HỆT nhau.
+- [x] Thêm hành động **Lịch sử** vào menu ⋮ của **20/20 màn** danh sách (serials phải thêm hẳn cột
+      Hành động vì màn chỉ đọc trước đó không có).
+- [x] Nhúng khối Lịch sử vào **cuối popup Xem** của 15 modal danh mục (chỉ hiện ở chế độ Xem).
+- [x] Màn chi tiết `accounts`: **bỏ nút Lịch sử khỏi `V2Footer`**, thay bằng khối `SystemInfoSection`
+      trong thân trang; accounts + type-accounts bỏ `FinanceHistoryModal` → dùng popup chung.
+
+### Skill đã cập nhật
+
+- `list-page` mục 1: **mọi màn danh sách BẮT BUỘC có hành động "Lịch sử"**, không gate quyền.
+- `entity-history` §5.1: thêm dòng "Popup XEM của màn danh mục" vào bảng 2 nơi hiển thị; ghi rõ
+  Lịch sử ở màn chi tiết là **khối trong thân trang, không phải nút footer**; padding nội dung 5px;
+  BỎ quy ước cũ "chi tiết mở dạng modal thì ẩn khối Lịch sử".
+
+### Test đã chạy
+
+Tinker: đổi 1 trường → 1 log 1 key; lưu không đổi gì → KHÔNG ghi log; khóa/mở khóa → 2 dòng nhóm
+"Thay đổi trạng thái"; thứ tự mới → cũ. UI: popup Lịch sử ở works/nations/banks/currencies, khối
+Lịch sử trong popup Xem (works, banks, nations, currencies), khối Lịch sử ở màn chi tiết accounts
+(đọc được 8 dòng log cũ), bộ lọc ghim khi cuộn (đo `top` không đổi), padding 5px. 0 lỗi console.
+
+### Chuẩn hoá POPUP dùng chung (2026-08-15, theo phản hồi của user)
+
+- [x] **`components/modal/V2BaseModal.vue`** — khuôn popup dùng chung, chốt sẵn 3 thứ trước đây mỗi
+      màn làm một kiểu: body cuộn riêng **padding `0.5rem`** (khuôn popup "Chọn trường xuất CSV"),
+      **footer ghim đáy** (`sticky`, nằm ngoài vùng cuộn) và header (icon tròn + tiêu đề + dòng mô tả).
+- [x] `CatalogHistoryModal` dựng lại trên `V2BaseModal`; dòng mô tả đổi thành
+      `Vụ việc: RRP - Rủi ro theo phòng` — chữ xám `#6b7280` / giá trị `#374151`, **KHÔNG in đậm,
+      KHÔNG màu đỏ**; truyền `record-prefix` đúng đối tượng cho 20 màn.
+- [x] `CustomerHistoryModal` (màn khách hàng): bỏ in đậm tên bản ghi + ghim footer + tách vùng cuộn.
+- [x] `V2BaseImportModal`: body `1rem` → `0.5rem`, footer `static` → `sticky` (popup Import trước đây
+      thừa khoảng trắng và mất nút khi bảng preview dài).
+- [x] Skill `modal-popup`: thêm **mục 0 — KHUÔN DÙNG CHUNG `V2BaseModal`** (kèm ví dụ + bảng chuẩn
+      body/footer/header) và bổ sung checklist; mục 1 ghi rõ footer BẮT BUỘC ghim đáy.
+- [x] `CLAUDE.md`: **chữ màu đỏ CHỈ dùng cho lỗi validate** (mô tả/phụ đề/ghi chú dùng chữ xám,
+      không in đậm) + popup mới bắt buộc dựng trên `V2BaseModal`.
+
+Đo lại sau khi sửa: popup Lịch sử — mô tả `rgb(107,114,128)`, giá trị `rgb(55,65,81)`, `font-weight 400`,
+body padding `8px`, footer `sticky` và vẫn trong tầm nhìn sau khi cuộn hết. Popup Import — body `8px`,
+footer `sticky`.
+
+### Sửa tiếp sau phản hồi (2026-08-15)
+
+- [x] **Popup Lịch sử danh mục bị "khung trong khung"**: `SystemInfoSection` luôn vẽ viền
+      `1px #e5e7eb` + đường kẻ trên vùng nội dung; nằm trong popup (đã có khung riêng) thì thành 2
+      lớp viền. Thêm class `si-borderless` — tự bật khi `hideHeader` (tức đang dùng trong popup).
+- [x] **Popup Lịch sử khách hàng chưa ghim nút Bộ lọc**: bọc cụm lọc vào `.ch-filter-sticky`
+      (`position: sticky; top: 0`), bỏ `pt-2` của vùng cuộn để không còn khe hở cho nội dung lọt lên
+      trên nút. Đo lại: `sticky_top == body_top` (khe hở = 0) sau khi cuộn hết.
+- [x] Popup Import: nội dung cách header 32px vì khối đầu body có `mt-3`. Triệt tận gốc trong
+      `V2BaseModal` (`.v2-modal-body > :first-child { margin-top: 0 }`) + áp cùng luật cho
+      `V2BaseImportModal`. Đo lại: khoảng cách header → nội dung còn **8px** (đúng bằng padding).
+
+---
+
+## Xuất file — popup "Chọn trường xuất file" cho mọi màn (2026-08-15, user chỉ ra thiếu)
+
+Trước đợt này chỉ màn Khách hàng có popup chọn cột; các màn khác bấm Xuất là tải thẳng cả bảng.
+**Skill cũng CHƯA có quy tắc** → đã bổ sung `list-page` **mục 14b** (kèm bảng lớp dùng chung + ví dụ).
+
+### Hạ tầng dùng chung (mới)
+
+- [x] BE `App\ExcelExport\ExportColumnRegistry` — khai `[key => nhãn]` cột xuất của từng màn, là
+      nguồn DUY NHẤT cho cả popup FE lẫn header file; `resolve()` lọc `fields` qua whitelist
+      (bỏ key lạ) và giữ ĐÚNG thứ tự user tick.
+- [x] BE `App\ExcelExport\DynamicExport` + view chung `resources/views/exports/dynamic.blade.php` —
+      cột động, tự chặn Excel hiểu nhầm công thức (`=`, `+`, `-`, `@` ở đầu chuỗi).
+- [x] FE `utils/mixins/exportFieldsMixin.js` — mở popup, nhớ loại file, nhận cột user tick rồi gọi
+      `runExport(type, fields)` của màn. Popup dùng lại `components/modal/export-fields-modal.vue`.
+
+### Đã áp cho 10 màn có nút Xuất
+
+`levels` · `note-maintenances` · `costs` · `services` · `serials` · `accounts` · `type-accounts` ·
+`currencies` · `product-transfer-requests` · **`device-errors`** (màn user chỉ ra).
+
+- 3 màn có Export class riêng vì định dạng đặc thù (`services` vá XML, `device-errors` có block
+  tiêu đề + định dạng cột, `serials` dựng file ở FE bằng ExcelJS vì >20k dòng) → GIỮ class riêng,
+  chỉ đổi nguồn cột sang `fields` của popup (`fields` ưu tiên, fallback tham số `columns` cũ).
+- 7 màn còn lại chuyển sang `DynamicExport` + registry, bỏ Export class + blade cứng cột.
+
+### Test
+
+Popup mở đúng ở levels / device-errors / serials (số option khớp registry). 8/8 endpoint export trả
+file 200. Đọc lại file thật của `levels` với `fields=created_at,name`: header ra **STT | Ngày tạo |
+Tên cấp** — đúng thứ tự user tick, dữ liệu khớp. Registry test: key lạ bị loại, không truyền `fields`
+thì xuất đủ cột (giữ hành vi cũ).
+
+### Bộ lọc "Người thực hiện" trong lịch sử (2026-08-15, user chỉ ra)
+
+- [x] `CatalogHistoryService::getFilterOptions()` trước đây trả `performers: []` (để FE tự suy từ
+      log) → dropdown chỉ hiện 1-2 người. Nay trả **đủ nhân sự cùng công ty với người tạo bản ghi**,
+      khuôn `SystemLogService::performerOptions()`; không suy được công ty thì trả tất cả.
+      Endpoint `filter-options` truyền thêm `{table}` + `{id}`.
+- [x] Skill `entity-history`: thay ghi chú cũ ("performers chỉ trả cho customer") bằng mục
+      **Ô "Người thực hiện" — phải liệt kê ĐỦ nhân sự, KHÔNG suy từ log**, kèm cách kiểm nhanh.
+
+Đo lại: works / nations / accounts đều trả **783** người — bằng đúng màn Khách hàng. Trên UI, ô
+"Người thực hiện" của popup Lịch sử màn Vụ việc có 783 option (trước đó 1).
+- [x] **Gộp logic "Người thực hiện" về 1 chỗ**: `App\Services\HistoryPerformerOptions`
+      (`forCompany()` + `companyOfCreator()`). `SystemLogService` và `CatalogHistoryService` đều gọi
+      helper này thay vì mỗi nơi một bản copy → sau này đổi quy tắc chỉ sửa 1 file.
+      Đồng thời bỏ cổng chặn cũ ở `SystemLogService` (chỉ `customer` mới trả danh sách) → mọi loại
+      đối tượng đều có danh mục người thực hiện.
+      Đo lại: works 783 · khách hàng 783 (công ty của người tạo) · task/issue 1.063 (chưa suy được
+      công ty → trả tất cả, đúng fallback).

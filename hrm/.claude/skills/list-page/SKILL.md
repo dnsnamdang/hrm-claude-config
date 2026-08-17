@@ -9,6 +9,11 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 - Các quyền còn lại query theo các field tương ứng
 - Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Tuân thủ theo V2BaseFilterPanel.vue
 - **Tiêu đề panel bộ lọc để mặc định `Bộ lọc danh sách`** — KHÔNG truyền prop `title`/`subtitle` để ghi riêng cho từng màn (`Bộ lọc danh sách khách hàng`, `Bộ lọc Issue`, `Bộ lọc hàng hoá`…). Tiêu đề bảng bên dưới đã nói rõ đang xem gì; `V2BaseFilterPanel` đã đặt sẵn default nên chỉ cần bỏ prop đi
+- **Placeholder của ô lọc phải NÓI ĐÚNG trường đó lọc gì** (user chốt 2026-08-15), theo công thức:
+  - Ô chọn (select/date): **`Chọn <tên trường>`** — `Chọn trạng thái`, `Chọn quốc gia`, `Chọn người tạo`, `Chọn ngày bắt đầu`.
+  - Ô gõ tay: **`Nhập <tên trường>`** — `Nhập tên hoặc mã hàng hoá`, `Nhập số tiền`.
+  - Ô tìm nhanh: **`Tìm theo <các trường BE thực sự lọc>`** — phải liệt kê đúng, đừng ghi "Tìm kiếm..." chung chung.
+  - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống, hay lặp lại nguyên si nhãn. Ở **chế độ gọn** (≤ 3 ô) panel KHÔNG render nhãn, placeholder là thứ DUY NHẤT cho user biết ô đó là gì — `Tất cả` lúc đó vô nghĩa.
 - **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleFields` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **không có nhãn** (dùng `placeholder`) để thẳng trục với ô tìm nhanh → `placeholder` của mỗi field phải tự nói rõ nó lọc gì ("Chọn trạng thái", không phải "Chọn..."). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
 - Style bắt buộc: luôn import `@import '@/assets/scss/v2-styles.scss';` trong thẻ `<style lang="scss">` của trang danh sách
 - Các khối bộ lọc theo logic Cascading filter: Công ty =>> Phòng ban =>> Bộ phận; Dự án TKT =>> Giải pháp =>> Hạng mục
@@ -117,6 +122,15 @@ async mounted() {
 - **BỎ hẳn hành động "Xem".** Tên (hoặc mã - tên) bản ghi ở cột đầu là **link vào màn chi tiết**.
 - Nút **Khóa / Mở khóa KHÔNG để trong ô Trạng thái** — đưa về cột Hành động.
 - Cột Hành động KHÔNG đưa vào modal "Cấu hình cột hiển thị" (không cho ẩn / kéo đổi chỗ) → khai riêng, đừng bỏ vào `allColumns`.
+- **MỌI màn danh sách BẮT BUỘC có hành động "Lịch sử"** (chốt 2026-08-15) — `{ key: 'history',
+  title: 'Lịch sử', icon: 'ri-history-line' }`, nằm trong menu `⋮`, **KHÔNG gắn permission riêng**
+  (ai vào được màn thì xem được). Áp cho cả màn danh mục nhỏ nhất (tiền tệ, quốc gia, phường/xã…).
+  - Chưa có audit log cho entity đó → phải làm log trước (skill `entity-history`), không được bỏ nút.
+  - **Màn danh mục dùng bộ DÙNG CHUNG**: popup `components/modal/CatalogHistoryModal.vue` +
+    trait BE `LogsCatalogHistory` + bảng chung `catalog_histories`. Không viết popup / bảng log
+    riêng cho từng danh mục — xem `entity-history` §5.1.
+  - Đi kèm ở màn chi tiết / popup Xem là **khối "Lịch sử"** trong thân trang, KHÔNG phải nút ở
+    `V2Footer` — xem `entity-history` §5.1.
 
 ## 2. Component dùng chung
 
@@ -212,6 +226,30 @@ tinh thần "bỏ hành động Xem", chỉ đổi cách mở (user chốt 2026-
 - Dùng `<button>`, KHÔNG dùng `<a href="javascript:void(0)">`: mở modal không phải điều hướng nên
   không có gì để mở tab mới; `<a>` không href còn mất luôn khả năng bấm bằng bàn phím.
 - Có route chi tiết thật thì vẫn phải là `nuxt-link` như mục 3 — đừng đổi màn lớn sang kiểu này.
+
+**Chọn cột định danh (user chốt 2026-08-15)** — mặc định là **Mã**, đứng ngay sau STT (TRƯỚC cột
+Tên), `sticky` + `locked`, là link. Chỉ đổi sang Tên trong 2 trường hợp:
+
+- Bảng **KHÔNG có cột mã** (levels, note_maintenances, device_errors, areas, wards, hamlets…).
+- Bảng có cột mã nhưng **có bản ghi bỏ trống mã** (nations 5/33, provinces 11/45…) → cột định danh là
+  **TÊN**; Mã vẫn giữ nhưng lùi xuống sau Tên, dạng text thường. Lý do: link nằm ở ô `—` thì user
+  không bấm được gì.
+
+Kiểm bằng dữ liệu thật trước khi quyết, đừng đoán theo schema:
+
+```sql
+SELECT COUNT(*) tong, SUM(code IS NULL OR code = '') thieu FROM <bang>;
+```
+
+Cột Mã trắng trơn trên UI → **kiểm BE trước khi kết luận**: có thể BE quên select hoặc quên alias
+(vd `nations.country_code` phải alias thành `code`). Thiếu ở BE thì lấy cho đủ; chỉ khi bảng thực sự
+không có mã mới bỏ cột đi — đừng để 1 cột chỉ toàn `—`.
+
+Kiểm nhanh mức độ trống trước khi bàn giao:
+
+```sql
+SELECT COUNT(*) tong, SUM(code IS NULL OR code = '') thieu FROM <bang>;
+```
 
 **Cột Người tạo / Ngày tạo ở nhóm danh mục — LUÔN PHẢI CÓ** (user chốt 2026-08-15). Bảng thiếu
 `created_by` / `created_at` thì **thêm cột bằng migration**:
@@ -476,132 +514,15 @@ async mounted() {
 
 ⚠️ Khi chuyển sang chạy song song, coi lại mọi chỗ **hàm nạp options GHI ĐÈ cả mảng** (`this.listX = [...]`) trong khi hàm nạp dữ liệu bản ghi lại `push` giá trị đang chọn vào mảng đó (option ngoài top-100). Song song thì thứ tự về không đảm bảo → giá trị đang chọn bị xoá, select hiện trống. Cách xử lý: nhớ giá trị đang chọn vào một biến (`selectedXOption`) và chèn lại sau khi cả 2 request cùng xong.
 
-## 9. Chip của select chọn nhiều
+## 9-13. Select, ô nhập liệu, danh mục bị khoá → skill `select-and-input-state`
 
-Giá trị đã chọn ở select `multiple` (`V2BaseSelect` / `V2BaseSelectInModal`) hiển thị **một khuôn chip duy nhất** trong toàn dự án — trùng với chip tự dựng `.csp-chip` (ô "Loại hình hoạt động khách hàng" ở `CustomerForm`):
+5 mục cũ ở đây (chip select nhiều, ô disabled/readonly, **danh mục bị khoá + 🔒**, focus ô nhập,
+FE mới + BE cũ) đã chuyển sang **`.claude/skills/select-and-input-state/SKILL.md`**.
 
-| Thuộc tính | Giá trị |
-| --- | --- |
-| Nền / viền / chữ | `#eff6ff` / `#bfdbfe` / `#1e40af` |
-| Bo góc | `5px` (KHÔNG bo tròn dạng pill) |
-| Chữ | `11px`, `font-weight: 500`, `line-height: 18px` |
-| Padding | `1px 7px` — giữ nguyên ở mọi `size`, size `sm` KHÔNG được ghi đè |
-| Hover chip | nền `#dbeafe`, viền `#93c5fd` |
-| Nút `×` trên chip | đứng **SAU** chữ, `13px`, `opacity .6`, không khung/không nền; hover `opacity 1` + đỏ `#dc3545` |
-
-Đã set sẵn trong `V2BaseSelect.vue` (style global theo `.v2-select`, `V2BaseSelectInModal` dùng chung class nên ăn theo). Khi thêm size mới hoặc biến thể select: **không khai lại `font-size`/`padding` cho `.select2-selection__choice`**.
-
-## 10. Ô nhập liệu bị KHOÁ (disabled / readonly) — một kiểu duy nhất
-
-| Thuộc tính | Giá trị |
-| --- | --- |
-| Nền | `#f1f5f9` |
-| Chữ | `#475569` (đọc rõ — màn chi tiết là nơi user ĐỌC dữ liệu) |
-| Viền | `#e2e8f0` |
-| Con trỏ | `not-allowed` |
-| `opacity` | **1** — KHÔNG làm mờ |
-
-Rule chung đặt ở `assets/scss/v2-styles.scss`, phủ đủ: `.v2-input:disabled`, `.v2-textarea:disabled`, `input/textarea/select.form-control:disabled`, `.mx-input:disabled` (datepicker), `.v2-code-input.is-disabled`, `.csp-control.is-disabled` (ô chip tự dựng), `.select2-container--disabled .select2-selection`.
-
-**Khi viết component mới có trạng thái khoá: KHÔNG tự đặt màu nền/chữ riêng** — chỉ khai `cursor`. Trước khi chuẩn hoá, mỗi component tự đặt một kiểu (input để trắng, textarea/datepicker `#f1f5f7`, select2 `#f1f5f9` + `opacity .6`, ô chip `#e9ecef`) → 5 kiểu khác nhau trên cùng một form.
-
-⚠️ 2 bẫy đã trả giá:
-
-- **`opacity` làm hỏng khả năng đọc** ở màn chi tiết, và chip trong ô bị chồng màu. Dùng màu chữ nhạt thay cho `opacity`.
-- **Selector nặng ký đè rule chung**: `V2BaseSelect` có `div.v2-select .select2-container.select2-container--default .select2-selection--multiple { background: #fff !important }` — đặc hiệu hơn rule chung nên ô select nhiều lựa chọn khi khoá vẫn trắng. Phải thêm `:not(.select2-container--disabled)` vào selector đó. Khi thấy 1 ô "không chịu đổi màu", tìm rule đè bằng cách duyệt `document.styleSheets` và lọc `el.matches(r.selectorText)`.
-
-**Chip bên trong ô bị khoá cũng chuyển XÁM**, dùng chung cho cả chip của select2 (`.select2-selection__choice`) lẫn chip tự dựng (`.csp-chip`):
-
-| Thuộc tính | Giá trị |
-| --- | --- |
-| Nền | `#e2e8f0` — **đậm hơn nền ô** (`#f1f5f9`) để chip không chìm thành một khối xám |
-| Chữ | `#475569` |
-| Viền | `#cbd5e1` |
-| Nút `×` | ẩn (`display: none`) |
-
-⚠️ **Ô tự dựng bằng `<div>` (không phải thẻ input) phải TỰ CHẶN thao tác khi khoá.** CSS `cursor: not-allowed` chỉ đổi con trỏ; `<div>` không có thuộc tính `disabled` của trình duyệt nên handler vẫn chạy — bấm vào ô khoá vẫn mở dropdown chọn. Chặn ngay đầu handler:
-
-```js
-toggleDropdown() {
-    if (this.readonly) return   // hoặc this.disabled
-    …
-}
-```
-Nhớ chặn ở **mọi** handler: mở dropdown, xoá chip, chọn item, xoá tất cả.
-
-⚠️ Phải phủ cả **thẻ con bên trong chip** (`.csp-chip *`, `.select2-selection__choice *`): chip dạng "Loại hình : Lĩnh vực" có `.csp-chip-group` tô xanh `#2563eb` riêng — không phủ thì nền chip đã xám mà chữ vẫn xanh.
-
-## 11. Danh mục bị KHOÁ trong select — tự động, không phải khai gì
-
-Nghiệp vụ (CLAUDE.md): dropdown chỉ liệt kê danh mục **còn hoạt động**, NHƯNG giá trị mà bản ghi đang chọn thì **vẫn phải hiện** dù danh mục đó đã khoá — không thì mở màn Sửa thấy ô trống, lưu lại là **mất dữ liệu**.
-
-### BE — 2 việc
-
-```php
-// 1. Nhận `include_ids` = id đang được chọn, giữ lại dù đã khoá
-$query->where(function ($q) use ($includeIds) {
-    $q->where('status', 1);
-    if (count($includeIds)) $q->orWhereIn('id', $includeIds);
-});
-
-// 2. Trả kèm cờ is_locked, GIỮ NGUYÊN tên (không nối "(đã khoá)" vào name)
-return ['id' => $x->id, 'name' => $x->name, 'is_locked' => (int) $x->status !== 1];
-```
-
-Khuôn: `CustomerService::customerGroups()`.
-
-### FE — chỉ 2 việc, KHÔNG phải khai gì để hiện 🔒
-
-1. Gọi API danh mục kèm `include_ids` = các id đang chọn.
-2. Nạp **lại** danh mục **sau khi có dữ liệu bản ghi** — lượt gọi ở `mounted` chưa biết bản ghi đang chọn id nào:
-
-```js
-if ((this.form.groups || []).length) this.loadCustomerGroups()   // trong loadDetail()
-```
-
-Phần hiển thị đã nằm trong `utils/select2LockedOption.js`, được **`V2BaseSelect` và `V2BaseSelectInModal` gọi sẵn**: options có cờ `is_locked` là tự gắn `🔒 ` trước tên **trong danh sách chọn**; chip/giá trị đã chọn giữ tên gốc. Không có option nào khoá thì không đổi gì.
-
-⚠️ Đừng làm 3 thứ sau:
-
-- **Nối `"(đã khoá)"` hay `"🔒 "` vào `name`** — chip cũng dính, và text lệch làm hỏng tìm kiếm/so sánh giá trị.
-- **Dựng thẻ `<i class="ri-lock-line">`** — select2 escape HTML nên phải render DOM qua template, dài dòng mà không đẹp hơn emoji.
-- **Viết `templateResult` riêng ở từng màn** — đã có sẵn trong component. Màn nào tự khai `templateResult` thì helper nhường, nên vẫn override được khi thật sự cần.
-
-## 12. FE mới + BE cũ — luôn có đường lùi
-
-Trên môi trường thật, FE và BE **không phải lúc nào cũng deploy cùng lúc**. Code FE dùng trường/endpoint mới phải chạy được cả khi BE chưa cập nhật, nếu không màn sẽ "trống trơn" mà không có lỗi nào hiện ra.
-
-2 chỗ hay dính nhất:
-
-- **Trường mới trong dữ liệu**: đừng để logic chỉ dựa vào 1 trường mới. Dùng chuỗi lùi dần, vd khoá nhận diện người thực hiện: `actor_id` → `actor_code` → `actor_name`; hiển thị: `actor_dept_code` → `actor_code` → chỉ tên.
-- **Endpoint mới**: `catch` rồi **fallback về cách tính cũ**, đừng để mảng rỗng. Và fallback đó **không được dùng trường mới** — nếu không thì fallback cũng chết theo.
-
-```js
-performerKey(log) {
-    if (log.actor_id) return String(log.actor_id)      // BE mới
-    return String(log.actor_code || log.actor_name || '')  // BE cũ vẫn lọc được
-},
-```
-
-Verify bằng cách **giả lập BE cũ ngay trên trình duyệt**: xoá trường mới khỏi dữ liệu rồi kiểm tra màn còn chạy không.
-
-```js
-vm.items = vm.items.map(({ actor_id, actor_dept_code, ...rest }) => rest)
-vm.options = { actions: [], performers: [] }   // giả lập endpoint mới chưa có
-```
-
-## 13. Trạng thái focus của ô nhập liệu
-
-Ô nhập / select / textarea khi được click vào **KHÔNG đổi màu viền sang xanh** (xanh lá thương hiệu hay xanh dương mặc định Bootstrap) và **không có quầng sáng** — chỉ đậm viền xám lên `#94a3b8`.
-
-Đã xử lý sẵn ở 2 tầng, màn mới không phải khai gì:
-
-- 10 component base: `V2BaseInput`, `V2BaseTextarea`, `V2BaseCodeInput`, `V2BaseDatePicker`, `V2BaseSelect`, `V2BaseSelectInModal`, `V2BaseFilterPanel`, `V2BaseSmartFilterPanel`, `SearchPicker`, `MultiSearchPicker`
-- `assets/scss/v2-styles.scss`: rule chung `.form-control:focus, input:focus, select:focus, textarea:focus` — bắt cả input dùng `.form-control` thuần
-
-Khi viết component mới có ô nhập: **cấm** đặt `border-color: #16a34a` / `box-shadow: rgba(22, 163, 74, …)` trong khối `:focus`.
-
-**Nút xóa (×) trong ô lọc/select:** hover **không tô nền** (`background: transparent`), chỉ đổi ký tự × sang đỏ `#dc2626`. Không dùng nền `#fee2e2` hay bất kỳ nền nào. Đã sửa sẵn trong `V2BaseSelect` + `V2BaseSelectInModal`.
+Lý do tách: chúng áp cho **mọi màn có select/ô nhập** — form Tạo/Sửa, modal, màn chi tiết, bộ lọc —
+chứ không riêng màn danh sách. Để ở đây thì người sửa màn form không có đường nào tìm ra
+(đã gây lỗi thật: sửa `meeting/{id}/edit`, danh mục bị khoá làm mất giá trị đã chọn mà bỏ sót
+quy tắc 🔒). Làm màn danh sách vẫn phải đọc skill đó cho phần select trong bộ lọc.
 
 ## 14. Dòng đếm bản ghi (dưới bảng)
 
@@ -611,6 +532,48 @@ Chỉ hiển thị **số**, KHÔNG kèm tên đối tượng phía sau:
 - Sai: `Hiển thị 1–10 / 17542 khách hàng`
 
 Tiêu đề bảng đã nói rõ đang xem gì nên lặp lại tên đối tượng chỉ làm dòng này dài thêm. `V2BaseDataTable` đã bỏ sẵn phần đuôi này — prop `itemLabel` giờ chỉ còn dùng cho câu rỗng `Không có <itemLabel> nào.`, vẫn phải truyền.
+
+## 14b. Xuất file — BẮT BUỘC hỏi user chọn trường trước (chốt 2026-08-15)
+
+**Mọi nút Xuất (Excel / CSV / PDF) phải mở popup "Chọn trường xuất file" trước, KHÔNG tải file
+ngay khi bấm.** Khuôn: màn Khách hàng `/assign/customers`. Xuất thẳng cả bảng là sai — file ra
+hàng chục cột thừa, user phải tự xoá cột trong Excel.
+
+| Lớp | Dùng cái gì |
+| --- | --- |
+| **FE popup** | `components/modal/export-fields-modal.vue` (đã có, KHÔNG viết popup mới) |
+| **FE logic** | mixin `utils/mixins/exportFieldsMixin.js` — lo mở popup, nhớ loại file, nhận cột user tick |
+| **BE cột** | `App\ExcelExport\ExportColumnRegistry::COLUMNS['<màn>']` = `[key => nhãn]` — nguồn DUY NHẤT cho cả popup lẫn header file |
+| **BE xuất** | `App\ExcelExport\DynamicExport` + view chung `resources/views/exports/dynamic.blade.php` — cột động, KHÔNG viết `XxxExport` + blade cứng cột cho từng màn |
+
+Màn dùng chỉ cần:
+
+```js
+mixins: [/* … */, exportFieldsMixin],
+data: () => ({ exportFieldsModalId: 'levels-export-fields-modal' }),
+computed: {
+    // `id` PHẢI khớp key ở ExportColumnRegistry, lệch là cột ra rỗng
+    exportFields() { return [{ id: 'name', name: 'Tên cấp' }, /* … */] },
+},
+methods: {
+    // mixin gọi lại sau khi user chọn; `fields` theo ĐÚNG thứ tự tick
+    async runExport(type, fields) { /* thêm `params.fields = fields.join(',')` rồi gọi API */ },
+},
+```
+
+```vue
+<V2BaseButton secondary status="success" size="sm" @click="openExportModal('excel')">Xuất Excel</V2BaseButton>
+<ExportFieldsModal :modal-id="exportFieldsModalId" :columns="exportFields" :exporting="exporting" @export="handleExportFields" />
+```
+
+Chốt kèm theo:
+
+- **Thứ tự cột trong file = thứ tự user tick** (popup tự nhớ thứ tự; BE lặp theo `fields`).
+- Không truyền `fields` → xuất đủ cột theo thứ tự khai trong registry (giữ hành vi cũ, không vỡ).
+- `fields` đến từ query string → BE **phải lọc qua whitelist** của màn, bỏ key lạ.
+- Xuất theo **đúng bộ lọc đang áp dụng** nhưng lấy TẤT CẢ dòng, không theo trang.
+- Màn tự dựng file bằng ExcelJS ở FE (dữ liệu quá lớn, vd `serials`) vẫn phải có popup — chỉ khác
+  chỗ lọc cột làm ở FE thay vì BE.
 
 ## 15. Căn lề cột (header + dữ liệu)
 
