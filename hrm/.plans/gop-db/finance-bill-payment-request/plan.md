@@ -3366,3 +3366,219 @@ re-review có phạm vi, rồi mới sang Task 1.3.** KHÔNG cần chạy lại 
 - [ ] **Người dùng tự chạy** `git rebase --continue` ở `hrm-api` (dự án cấm AI commit). File đã `git add` sẵn.
 
 **Lưu ý phát sinh:** `php artisan route:list` KHÔNG chạy được trên nhánh này — lỗi có sẵn từ `RequestUpdateTimeSheetController.php:51` gọi `isCurrentEmployeeHasPermission()` lúc boot khi chưa có user (`PermissionHelper.php:23`), không liên quan tới conflict.
+
+---
+
+### Task phụ — Cột Hành động + Tuỳ chỉnh cột màn danh sách (2026-08-18) — @khoipv
+
+Yêu cầu user: bỏ nút **Xem chi tiết** ở cột Hành động, thêm **Cấu hình cột hiển thị**.
+Phạm vi: CHỈ `hrm-client/pages/finance/bill-payment-requests/index.vue` (không đụng BE —
+`columnCustomizationMixin` lưu qua `human/column-customizations`, bảng key-value, không cần migration).
+
+- [x] Bỏ action `view` khỏi `getRowActions()` + gỡ nhánh `case 'view'` chết trong `handleRowAction()`
+      (lối vào chi tiết vẫn còn: `<nuxt-link>` ở cột Mã phiếu)
+- [x] Gắn `columnCustomizationMixin` + `columnScreenKey: 'finance_bill_payment_requests'`
+- [x] Đổi computed `tableColumns()` → `allColumns()`; thêm `locked: true` cho `index` / `code` / `actions`
+- [x] Thêm nút icon `ri-layout-column-line` (`title="Cấu hình cột hiển thị"`) vào slot `#actions`
+      + đặt `<ColumnCustomizationModal v-if="columnFieldsLoaded">` cuối template
+- [x] `mounted()`: `await Promise.all([this.loadColumnFields(), this.loadData()])`
+- [x] Verify: compile template + kiểm tra không còn tham chiếu `tableColumns` cũ
+
+**Ghi nhận:** BE không phải sửa gì — `ColumnCustomizationService::normalizeScreenKey()` nhận mọi
+khoá khớp `[a-z0-9_]{1,100}`, dữ liệu vào bảng key-value `user_column_settings` (1 dòng / user / màn).
+Đã kiểm chứng: `vue-template-compiler` + `@babel/parser` parse sạch file `index.vue`.
+**Chưa kiểm chứng trên trình duyệt** (user tự test): popup cấu hình, kéo thả thứ tự, cột ẩn/hiện sau F5.
+
+### Task phụ — Thêm cột Người / Ngày cập nhật vào bảng tuỳ chỉnh cột (2026-08-18) — @khoipv
+
+Yêu cầu user: bổ sung 2 cột **Ngày cập nhật** + **Người cập nhật** cho màn danh sách ĐNTT.
+`BillPaymentRequestListResource` chưa trả 2 field này ⇒ phải sửa cả BE, không chỉ FE.
+
+- [x] Entity `BillPaymentRequest`: thêm quan hệ `employee_update()` (`belongsTo Employee, updated_by`)
+- [x] Entity `applySort()`: whitelist thêm `updatedAt` / `updated_at` → cột `updated_at`
+      (không thêm thì bật `sortable` ở FE là bấm không ăn)
+- [x] `BillPaymentRequestService::searchByFilter()`: eager-load thêm `employee_update.info` (chống N+1)
+- [x] `BillPaymentRequestListResource`: trả `updated_by_name` + `updated_at` (`d/m/Y H:i`)
+- [x] FE `index.vue`: thêm 2 cột vào `allColumns` (trước cột Trạng thái, mặc định HIỆN,
+      `updatedAt` có `sortable`) + 2 template cell
+- [x] Verify
+
+**Kiểm chứng (chạy thật trên DB `gop_db`):**
+- Dữ liệu: `SELECT COUNT(*) … FROM bill_payment_requests` → **4.051/4.051** dòng có `updated_by`
+  trỏ đúng `employees` và `updated_at` khác NULL — 0 dòng rỗng, 0 dòng mồ côi.
+- Gọi thẳng Service + Resource với `sort_by=updatedAt`: SQL ra
+  `… order by \`updated_at\` desc limit 5` ✅, dữ liệu trả về đúng
+  (`updated_at='27/07/2026 17:40'`, `updated_by_name='Nguyễn Thị Ngọc Hà'`).
+- Không N+1: `per_page=5` và `per_page=50` cùng ra **13 query** (lần chạy đầu 27 là do warm-up config/permission).
+- `php -l` sạch 3 file BE · `vue-template-compiler` + `@babel/parser` parse sạch `index.vue`.
+- **Chưa kiểm chứng trên trình duyệt** (user tự test): 2 cột hiện đúng chỗ, bấm sort cột Ngày cập nhật,
+  tắt/bật 2 cột ở popup Cấu hình cột.
+
+### Task phụ — Đồng bộ định dạng cột ngày ở lưới (2026-08-18) — @khoipv
+
+Yêu cầu user: format lại **Ngày lập** + **Ngày nhận** cho khớp Ngày cập nhật → cả 3 cột ngày
+của lưới dùng `d/m/Y H:i`.
+
+- [x] `BillPaymentRequestListResource`: `created_at` và `manage_approved_time` → `d/m/Y H:i`
+- [x] FE `index.vue`: nới `createdAt` + `manageApprovedTime` từ 110px → **140px** (110px là xuống dòng)
+- [x] Verify
+
+**Kiểm chứng:**
+- Kiểu cột: `created_at` = `timestamp`, `manage_approved_time` = `datetime` → giờ:phút là dữ liệu
+  THẬT, **0/4.051 dòng** rơi vào `00:00:00` (không phải giờ độn thêm).
+- `manage_approved_time` NULL ở **44/4.051** phiếu (chưa qua TP duyệt) → FE vẫn hiện `—`.
+- Chạy thật Service + Resource: `lap='27/07/2026 10:49' · nhan='27/07/2026 10:55' · capnhat='27/07/2026 17:40'`.
+- `BillPaymentRequestListResource` chỉ có **1 nơi dùng** (`BillPaymentRequestController:389`) → không
+  ảnh hưởng màn chi tiết / in / xuất Excel (`BillPaymentRequestExport` là class riêng).
+- `php -l` sạch · `vue-template-compiler` + `@babel/parser` parse sạch.
+- **Chưa kiểm chứng trên trình duyệt** (user tự test): 3 cột ngày không xuống dòng ở 140px.
+
+### Task phụ — Việt hoá thông báo Select2 của ô lọc KH / NCC (2026-08-18) — @khoipv
+
+Yêu cầu user: ô lọc Khách hàng / Nhà cung cấp hiện "Please enter 2 or more characters" (text mặc
+định của Select2) → đổi sang tiếng Việt.
+
+Nguồn: `components/V2BaseSelectRemote.vue` **không truyền `language`** cho Select2, trong khi
+`V2BaseSelect.vue` đã có sẵn khối Việt hoá. **File dùng chung 18 màn** → đã hỏi và
+**user chốt 2026-08-18: sửa thẳng component chung** để toàn hệ thống nhất quán.
+
+- [x] Thêm computed `select2Language` vào `V2BaseSelectRemote.vue` — copy ĐÚNG bộ chữ của
+      `V2BaseSelect.vue` (`noResults` / `searching` / `inputTooShort` / `inputTooLong` /
+      `maximumSelected` / `loadingMore` / `errorLoading`) để 2 kiểu select trên cùng màn không lệch giọng
+- [x] Truyền `language: this.select2Language` vào `settings` lúc khởi tạo Select2
+- [x] Verify
+
+**Kiểm chứng:**
+- Chỉ đổi CHỮ hiển thị — `minimumInputLength`, `ajax`, `dropdownParent` và mọi hành vi khác giữ nguyên.
+- Màn ĐNTT truyền `:minimum-input-length="2"` cho cả 2 ô ⇒ chưa gõ gì thì hiện
+  **"Vui lòng nhập thêm 2 ký tự"**.
+- `vue-template-compiler` + `@babel/parser` parse sạch component.
+- **Chưa kiểm chứng trên trình duyệt** (user tự test): gõ 1 ký tự vào ô KH/NCC xem câu tiếng Việt,
+  và soát nhanh 17 màn còn lại dùng `V2BaseSelectRemote` (Báo giá, Hợp đồng, Yêu cầu nhập hàng,
+  Đề nghị thu tiền…) — chỉ đổi chữ nên không kỳ vọng lệch gì.
+
+### Task phụ — Điều tra "lọc KH không ra MEXMON" + đổi tiêu đề cột (2026-08-18) — @khoipv
+
+User báo: phiếu `TPE.DNTT0726.00256` hiện "MEXMON - MEXMON TECHNOLOGIES" ở cột **Khách hàng**,
+nhưng gõ `MEXMON` vào ô lọc Khách hàng thì không ra.
+
+**KẾT LUẬN: KHÔNG phải lỗi code — bộ lọc chạy đúng.** MEXMON là **nhà cung cấp**:
+
+| Bằng chứng (đo trên DB `gop_db`) | Kết quả |
+| --- | --- |
+| `customers.id = 40745` (MEXMON TECHNOLOGIES) | `is_customer = 0` · `is_supplier = 1` |
+| Phiếu `TPE.DNTT0726.00256` (id 4179) | `type = 1` (Chi trả NCC) · `supplier_id = 40745` · `customer_id = NULL` |
+| SQL của `assign/customers/search` (`CustomerService::searchForSelect2` → `index()`) | có `where customers.is_customer = ?` bind `1` |
+| Bảng `suppliers` | **0 dòng** — KH và NCC nằm chung bảng `customers`, phân biệt bằng 2 cờ trên |
+
+Chạy thật: ô **Khách hàng** q=MEXMON → **0** kết quả · ô **Nhà cung cấp** q=MEXMON → **1** kết quả (id 40745)
+· lọc `supplier_id=40745` → **10 phiếu, có 00256** ✅ · lọc `customer_id=40745` → 0 phiếu.
+
+**Nguồn gây hiểu nhầm (đã sửa):** cột `objectName` đặt tiêu đề "Khách hàng" nhưng nội dung là KH
+**hoặc** NCC tuỳ loại chi (loại 1 và 12 luôn là NCC — đúng luật `objectName()` port từ ERP).
+
+- [x] Đổi tiêu đề cột `objectName` → **"Khách hàng / Nhà cung cấp"** (bằng màn Đề nghị thu tiền).
+      User chốt 2026-08-18. CHỈ đổi chữ tiêu đề — dữ liệu, `objectName()` và 2 ô lọc giữ nguyên.
+- [x] Verify: `vue-template-compiler` + `@babel/parser` parse sạch.
+- [ ] **Chưa kiểm chứng trên trình duyệt** (user tự test): tiêu đề cột mới hiện đúng cả trên lưới
+      lẫn trong popup Cấu hình cột.
+
+**Không làm** (user không chọn): gộp 2 ô lọc KH + NCC thành 1 ô tìm cả hai — phải sửa BE và lệch
+khỏi cả ERP lẫn màn Đề nghị thu tiền.
+
+### Task phụ — Sửa sắp xếp cột lưới (2026-08-18) — @khoipv
+
+Yêu cầu user: bỏ sort 2 cột **Loại chi** + **Hình thức TT**, bổ sung sort cột
+**Khách hàng / Nhà cung cấp**.
+
+🐛 **Phát hiện khi làm: 3 cột đang bật `sortable` mà bấm KHÔNG ăn.** `V2BaseDataTable` emit đúng
+`column.key`, nhưng whitelist `applySort()` lại khai theo tên khác:
+
+| FE gửi (`key` cột) | Map BE có | Kết quả trước khi sửa |
+| --- | --- | --- |
+| `typeName` | `type` | ❌ rơi về `order by created_at desc` |
+| `typePaymentName` | `typePayment` | ❌ rơi về `order by created_at desc` |
+| `requestStatus` | `status` | ❌ rơi về `order by created_at desc` |
+| `code` · `createdAt` · `updatedAt` | khớp | ✅ |
+
+- [x] FE: bỏ `sortable` khỏi `typeName` + `typePaymentName`; BE: bỏ luôn `type` / `typePayment`
+      khỏi map (hết nơi dùng)
+- [x] BE: thêm `requestStatus => status` — cột Trạng thái vốn hiện mũi tên sort mà bấm không đổi gì
+      (**ngoài yêu cầu user, nhưng cùng đúng một lỗi map, sửa 1 dòng**)
+- [x] BE: thêm `applyObjectNameSort()` — dựng lại đúng 5 nhánh của `objectName()` bằng SQL
+- [x] FE: bật `sortable` cho cột `objectName`
+- [x] Verify
+
+**2 cách viết đã thử và LOẠI (ghi trong docblock để không ai dọn ngược):**
+1. `LEFT JOIN` thẳng bảng chi tiết + `customers` → nổ
+   `SQLSTATE[23000] Column 'created_by' in where clause is ambiguous` — `searchByFilter()` lọc bằng
+   tên cột trần, mà `customers` cũng có `created_by`.
+2. Subquery tương quan trong `ORDER BY` → chạy đúng nhưng **14,2 giây**:
+   `bill_payment_request_details` **chỉ có index PRIMARY**, không có index trên
+   `bill_payment_request_id` ⇒ 8.216 dòng bị quét lại cho từng phiếu trong 4.051 phiếu.
+
+**Cách đang dùng:** derived table quét bảng chi tiết đúng 1 lần rồi join theo phiếu — **0,046s**
+(nhanh ~300 lần), và chỉ lộ 3 cột đặt tên riêng nên không đụng tên cột nào của phiếu.
+
+**Kiểm chứng:**
+- Thứ tự SQL khớp giá trị Resource hiển thị trên **toàn bộ 4.051 phiếu** — hỏi lại chính MySQL:
+  **0 cặp liền kề sai thứ tự** theo collation `utf8mb4_unicode_ci` của cột. (So bằng `strcmp` của
+  PHP thì thấy "lệch" 18 dòng dạng `CỒNG TY` vs `CÔNG TY` — đó là byte-order của PHP, không phải
+  lỗi; MySQL sắp theo kiểu tiếng Việt mới là thứ tự người dùng mong đợi.)
+- Chạy kèm bộ lọc (`supplier_id`, `customer_id`, `status`, khoảng tiền, mã phiếu) và cả **4 chế độ**
+  (`all`/`mine`/`pending`/`approved`): không nhánh nào vỡ.
+- Sort toàn tập 4.051 phiếu: **0,52s**; 1 trang 6 dòng: **0,06–0,12s**.
+- 430 phiếu có ô này rỗng (377 loại 6 TM + 53 loại 2/6 CK) dồn lên đầu khi sắp A→Z — đúng kiểu quen thuộc.
+- `php -l` sạch · `vue-template-compiler` + `@babel/parser` parse sạch.
+- **Chưa kiểm chứng trên trình duyệt** (user tự test): bấm mũi tên sort trên cột KH/NCC và cột
+  Trạng thái, xác nhận 2 cột Loại chi / Hình thức TT không còn hiện mũi tên.
+
+**Nợ ghi sổ (không chặn):** `bill_payment_request_details` thiếu index trên `bill_payment_request_id`
+— bảng dùng chung 2 cổng ERP+HRM nên KHÔNG tự thêm; nếu sau này cần tối ưu thì hỏi user trước.
+
+---
+
+### Checkpoint — 2026-08-18 (đợt sửa UI màn danh sách — **HOÀN THÀNH, ĐÃ COMMIT**)
+
+**Vừa hoàn thành:** 6 việc user yêu cầu trong buổi, tất cả ở màn danh sách
+`/finance/bill-payment-requests` (5 task phụ ghi ở trên):
+
+1. Bỏ nút "Xem chi tiết" cột Hành động + gỡ nhánh `case 'view'` chết.
+2. Popup **Cấu hình cột hiển thị** — `columnCustomizationMixin`, khoá `finance_bill_payment_requests`,
+   khoá `locked` 3 cột (STT · Mã phiếu · Hành động). **BE không phải sửa gì**
+   (`ColumnCustomizationService` nhận mọi khoá `[a-z0-9_]{1,100}`, lưu ở `user_column_settings`).
+3. 2 cột **Người / Ngày cập nhật** — BE thêm quan hệ `employee_update()`, eager-load
+   `employee_update.info`, Resource trả `updated_by_name` + `updated_at`.
+4. 3 cột ngày về chung `d/m/Y H:i` + nới 140px.
+5. Tiêu đề cột `objectName` → **"Khách hàng / Nhà cung cấp"**.
+6. Sắp xếp: bỏ sort Loại chi + Hình thức TT · thêm sort cột KH/NCC (`applyObjectNameSort()`)
+   · sửa map cho cột Trạng thái (lỗi có sẵn).
+
+Ngoài ra sửa **1 file dùng chung** (user chốt): `components/V2BaseSelectRemote.vue` — Việt hoá
+thông báo Select2, ảnh hưởng 18 màn, chỉ đổi chữ.
+
+**File đã đụng (user đã tự commit 2026-08-18: `hrm-api` `decc26df7` · `hrm-client` `ba4518877`):**
+- `hrm-api`: `Modules/Finance/Entities/BillPaymentRequest/BillPaymentRequest.php` ·
+  `Modules/Finance/Services/BillPaymentRequestService.php` ·
+  `Modules/Finance/Transformers/BillPaymentRequestResource/BillPaymentRequestListResource.php`
+- `hrm-client`: `pages/finance/bill-payment-requests/index.vue` · `components/V2BaseSelectRemote.vue`
+
+**Đang làm dở:** không.
+
+**User đã test trình duyệt 2026-08-18 — ĐẠT đủ 6 điểm:**
+(a) cột Hành động không còn "Xem chi tiết", link Mã phiếu vẫn vào chi tiết ·
+(b) popup Cấu hình cột: tắt/bật cột, kéo đổi thứ tự, F5 giữ nguyên ·
+(c) 2 cột Người / Ngày cập nhật hiện đúng chỗ ·
+(d) 3 cột ngày hiện `dd/mm/yyyy hh:mm`, không xuống dòng ở 140px ·
+(e) sort cột KH/NCC + cột Trạng thái ăn thật, 2 cột Loại chi / Hình thức TT hết mũi tên ·
+(f) ô lọc KH/NCC báo "Vui lòng nhập thêm 2 ký tự".
+User tự commit cả 2 repo (Claude không commit): `hrm-api` `decc26df7` · `hrm-client` `ba4518877`
+— cả 2 cây làm việc sạch, đúng 5 file ở trên.
+
+**Blocked:** không.
+
+**Bước tiếp theo:** không còn việc của đợt này. **Feature đóng ở trạng thái HOÀN THÀNH.**
+Còn nợ (không chặn, để đợt sau nếu user yêu cầu): SRS / testcase / HDSD cho màn này ·
+chưa đối chiếu trực tiếp giao diện ERP · index cho `bill_payment_request_details`
+(bảng dùng chung 2 cổng, phải hỏi user) · dọn dữ liệu test còn sót trên DB local
+(`employee_manage_departments` id 368 · `departments.id = 111` · 8 phiếu `TEST.DNTT-CHI.*`).

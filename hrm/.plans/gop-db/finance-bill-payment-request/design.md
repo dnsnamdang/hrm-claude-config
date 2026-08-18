@@ -34,6 +34,29 @@ YCXH (0 dòng) · không đụng repo ERP.
 | 8 | Thêm **9 quyền mới id 1153–1161** vào `PermissionsTableSeeder`, **giữ nguyên văn tên ERP** (kể cả 2 chỗ ERP sai chính tả "đề **nghi**"); dùng lại `Kế toán thanh toán` id 1152 |
 | 9 | Base UI: danh sách bám `pages/assign/customers/index.vue`, form bám `CustomerForm.vue` |
 
+## Quyết định lớn bổ sung (user chốt 2026-08-18) — đợt sửa UI màn danh sách
+
+| # | Quyết định |
+| --- | --- |
+| 10 | Cột Hành động **KHÔNG có nút "Xem chi tiết"** — lối vào chi tiết là link ở cột Mã phiếu, nên cột đó bị khoá `locked`, không tắt được ở popup cấu hình cột |
+| 11 | Có popup **Cấu hình cột hiển thị** dùng `columnCustomizationMixin`, khoá `finance_bill_payment_requests` **dùng chung cho cả 4 chế độ** (tách khoá theo `mode` thì user phải cấu hình lại 4 lần). BE không cần migration |
+| 12 | Lưới có thêm 2 cột **Người / Ngày cập nhật** (mặc định hiện) — kéo theo quan hệ `employee_update()` + 2 field ở `BillPaymentRequestListResource` |
+| 13 | **3 cột ngày cùng định dạng `d/m/Y H:i`** (Ngày lập · Ngày nhận · Ngày cập nhật). Giờ:phút là dữ liệu thật, 0/4.051 dòng ở `00:00:00` |
+| 14 | Tiêu đề cột `objectName` là **"Khách hàng / Nhà cung cấp"** (không phải "Khách hàng") — nội dung cột đổi theo loại chi, loại 1 và 12 luôn hiện NCC. Dữ liệu và luật `objectName()` **giữ nguyên như ERP** (không đụng quyết định #4 cũ) |
+| 15 | Sắp xếp: **bỏ** sort cột Loại chi + Hình thức TT · **thêm** sort cột KH/NCC · cột Trạng thái sort thật (trước đó hỏng) |
+| 16 | Việt hoá thông báo Select2 sửa thẳng ở **component dùng chung** `V2BaseSelectRemote.vue` (18 màn), không chắp vá riêng cho màn này |
+
+**Điều tra kèm theo (không phải bug):** gõ tên nhà cung cấp vào ô lọc **Khách hàng** luôn ra 0 kết
+quả — bảng `customers` chứa **cả KH lẫn NCC**, phân biệt bằng `is_customer` / `is_supplier`
+(bảng `suppliers` có 0 dòng), mà `assign/customers/search` có điều kiện cứng `is_customer = 1`.
+Đó là lý do phải đổi tiêu đề cột ở quyết định #14.
+
+**Ràng buộc kỹ thuật phát sinh:** sort cột KH/NCC không map thẳng được sang cột DB nên có nhánh
+riêng `BillPaymentRequest::applyObjectNameSort()` dựng lại 5 nhánh của `objectName()` bằng SQL —
+**bắt buộc dùng derived table**, không dùng LEFT JOIN thẳng (nổ `created_by` ambiguous) và không
+dùng subquery tương quan (14,2s vì `bill_payment_request_details` thiếu index trên
+`bill_payment_request_id`). Lý do đầy đủ ghi trong docblock của hàm.
+
 ## Tận dụng được từ feature Đề nghị thu tiền
 
 - `Relation::morphMap()` cho **8 class hợp đồng ERP** đã đăng ký sẵn ở `FinanceServiceProvider`

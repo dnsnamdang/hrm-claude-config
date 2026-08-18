@@ -247,6 +247,24 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-18). Đã commit:
+  `hrm-api` `decc26df7` · `hrm-client` `ba4518877` (đợt sửa UI danh sách 2026-08-18);
+  port gốc xong 2026-08-15, commit `hrm-api` `6eed9d2a6` · `hrm-client` `8c0ffb424`.
+  Port màn ERP "Phiếu đề nghị thanh toán" → `/finance/bill-payment-requests` (phân hệ Tài chính),
+  **duyệt 5 cấp**, 4 loại chi. 8 phase / 29 task · 17 route BE · 12 file FE · 9 quyền id 1153–1161 ·
+  dùng chung bảng ERP `bill_payment_requests`. Đợt sửa UI gồm 6 việc màn danh sách (bỏ nút Xem chi tiết ·
+  popup Cấu hình cột · 2 cột Người/Ngày cập nhật · chuẩn hoá 3 cột ngày · đổi tiêu đề cột KH/NCC ·
+  sửa sắp xếp cột) — chi tiết + số liệu đo ở Checkpoint cuối `plan.md`.
+  ⚠️ Có sửa component dùng chung `components/V2BaseSelectRemote.vue` (18 màn) — chỉ Việt hoá chữ
+  Select2, không đổi hành vi (user chốt 2026-08-18).
+  ⚠️ DB local còn dữ liệu test: `employee_manage_departments` id 368 · `departments.id = 111` ·
+  8 phiếu `TEST.DNTT-CHI.*` (seeder có câu lệnh dọn).
+  📌 Chưa làm: SRS / testcase / HDSD · chưa đối chiếu trực tiếp giao diện ERP.
+  📌 Nợ ghi sổ (KHÔNG tự làm): `bill_payment_request_details` thiếu index `bill_payment_request_id`
+  — bảng dùng chung ERP+HRM, muốn thêm phải hỏi user.
+  Spec: docs/superpowers/specs/gop-db/2026-08-14-finance-bill-payment-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment-request/design.md
+
 - finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-18). Đã commit:
   `hrm-api` `bb4863e0e` · `hrm-client` `dde97025c`. Feature gốc đã hoàn thành
@@ -274,22 +292,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ DB local còn 6 phiếu mẫu `TEST.DNDCCN.*`. Chưa làm: nút "Chọn nhanh hợp đồng", SRS/testcase/HDSD.
   Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
 
-- finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
-  Trạng thái: **HOÀN THÀNH** (2026-08-15) — user đã test trình duyệt toàn màn. Nhánh `gop_db`,
-  đã commit: `hrm-api` `6eed9d2a6` · `hrm-client` `8c0ffb424`.
-  Port màn ERP "Phiếu đề nghị thanh toán" → `/finance/bill-payment-requests` (phân hệ Tài chính),
-  chứng từ **duyệt 5 cấp**, 4 loại chi. 8 phase / 29 task · **17 route** BE · **12 file FE** ·
-  9 quyền id 1153–1161 · dùng chung bảng ERP `bill_payment_requests`.
-  ⚠️ Còn sót trên **DB local** khi test (dọn khi không cần nữa, snapshot ở scratchpad):
-  `employee_manage_departments` id 368 · `departments.id = 111` bật lại `status = 1` ·
-  8 phiếu mẫu `TEST.DNTT-CHI.*` (seeder có sẵn câu lệnh dọn).
-  Quyết định, lỗi đã bắt, cách test loại chi 12 (NCC nào có dữ liệu): xem **Checkpoint mới nhất**
-  trong plan.md.
-  📌 2026-08-18: sửa thêm **Task BF.1** — bộ lọc lặp nhãn "Khách hàng" + "Nhà cung cấp" (cùng lỗi
-  thiếu `hideLabel` như màn thu tiền), user test xong, đã commit `hrm-client` `dde97025c`.
-  📌 Việc để sau (user chốt 2026-08-18): màn này **chưa có popup Cấu hình cột hiển thị** — làm y hệt
-  Task 8.2 của màn thu tiền (khoá gợi ý `finance_bill_payment_requests`).
-  Spec: docs/superpowers/specs/gop-db/2026-08-14-finance-bill-payment-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment-request/design.md
 
 - form-validate-base → @khoipv → .plans/gop-db/form-validate-base/plan.md
   Trạng thái: **HOÀN THÀNH — user test đủ 23/23 màn** (2026-08-14).
