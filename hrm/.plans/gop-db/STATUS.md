@@ -247,6 +247,22 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-18). Đã commit:
+  `hrm-api` `bb4863e0e` · `hrm-client` `dde97025c`. Feature gốc đã hoàn thành
+  2026-08-14 (7 phase, port màn ERP "Phiếu đề nghị thu tiền" — chi tiết ở design.md + plan.md);
+  đợt này là **sửa bug + bổ sung sau nghiệm thu**, nhánh `gop_db`:
+  · Task 8.1 — bộ lọc lặp nhãn "Nhà cung cấp" (slot tự render nhãn trong khi `V2BaseSmartFilterPanel`
+    đã render sẵn; thiếu `hideLabel`).
+  · Task 8.2 — thêm popup **Cấu hình cột hiển thị** (`columnCustomizationMixin`, khoá
+    `finance_bill_income_requests`, không cần migration) + 2 cột **Người/Ngày cập nhật** (có sort,
+    whitelist BE) + đồng bộ Ngày tạo sang `d/m/Y H:i` + nới 3 cột chữ dài bằng `minWidth`.
+  BE 4 file (`BillIncomeRequest`, service, list resource) · FE 1 file (`index.vue`).
+  Verify: `php -l` + compile template/script sạch · SQL sort đúng, khoá lạ bị chặn · DB 2.473 phiếu,
+  0 phiếu NULL `updated_by` · user test trình duyệt đạt.
+  Còn nợ từ đợt trước: chưa đối chiếu trực tiếp giao diện ERP, mới test 3/4 cấp quyền.
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-income-request/design.md
+
 - finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
   Trạng thái: **HOÀN THÀNH** (2026-08-18). Nhánh `gop_db`, đã commit:
   `hrm-api` `757a9baf7`+`30f3578a5`+`e04418092` · `hrm-client` `c96c87f62`+`53bf38cd0`.
@@ -269,6 +285,10 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   8 phiếu mẫu `TEST.DNTT-CHI.*` (seeder có sẵn câu lệnh dọn).
   Quyết định, lỗi đã bắt, cách test loại chi 12 (NCC nào có dữ liệu): xem **Checkpoint mới nhất**
   trong plan.md.
+  📌 2026-08-18: sửa thêm **Task BF.1** — bộ lọc lặp nhãn "Khách hàng" + "Nhà cung cấp" (cùng lỗi
+  thiếu `hideLabel` như màn thu tiền), user test xong, đã commit `hrm-client` `dde97025c`.
+  📌 Việc để sau (user chốt 2026-08-18): màn này **chưa có popup Cấu hình cột hiển thị** — làm y hệt
+  Task 8.2 của màn thu tiền (khoá gợi ý `finance_bill_payment_requests`).
   Spec: docs/superpowers/specs/gop-db/2026-08-14-finance-bill-payment-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment-request/design.md
 
 - form-validate-base → @khoipv → .plans/gop-db/form-validate-base/plan.md
@@ -279,18 +299,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   đúng bằng câu FE nói** (14 FormRequest).
   Còn lại (không chặn): PR cập nhật `.claude/skills/form-validate/SKILL.md` (bỏ `data-vv-value-path`).
   Spec: docs/superpowers/specs/gop-db/2026-08-14-form-validate-base-design.md | Tóm tắt: .plans/gop-db/form-validate-base/design.md
-
-- finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-14). 7 phase, BE + FE.
-  Port màn ERP "Phiếu đề nghị thu tiền" → `/finance/bill-income-requests`; nguồn hợp đồng đổi
-  `firm_contracts` → `hrm_contracts`; 5 quyền id 1148–1152. Màn chờ duyệt dùng lại màn danh sách qua
-  prop `pendingMode`. Form dựng theo `form.blade.php` của ERP, **chọn KH + hợp đồng theo TỪNG DÒNG**
-  (46% phiếu thật gom từ 2 KH trở lên).
-  ⚠️ Quyết định đáng nhớ: **không dùng middleware `checkPermission`** cho nhánh kế toán (spatie lọc
-  `model_type`, 1.252/1.691 dòng `employee_has_roles` là `App\Employee` từ ERP → 403 oan) — gate bằng
-  query thẳng pivot. Phiếu do HRM tạo mở bên ERP sẽ lỗi `Class not found` (rủi ro đã chấp nhận).
-  Ghi nhận: chưa đối chiếu trực tiếp giao diện ERP, mới test 3/4 cấp quyền.
-  Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-income-request/design.md
 
 - device-errors-load-data → @khoipv → .plans/gop-db/device-errors-load-data/plan.md
   Trạng thái: **HOÀN THÀNH — user test xong** (2026-08-13). Màn `customer-care/device-errors` hiện

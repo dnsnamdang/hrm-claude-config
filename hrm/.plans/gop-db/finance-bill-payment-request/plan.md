@@ -2869,6 +2869,27 @@ find Modules/Finance -newer composer.json -name "*.php" | xargs -n1 php -l | gre
 
 ---
 
+## Fix bug sau nghiệm thu
+
+### Task BF.1 — Bộ lọc: nhãn "Khách hàng" và "Nhà cung cấp" hiện 2 lần
+- [x] Cùng lỗi phát hiện ở màn Phiếu đề nghị thu tiền (Task 8.1 của `finance-bill-income-request`):
+      `V2BaseSmartFilterPanel.vue:126` đã render `<V2BaseLabel>{{ field.label }}</V2BaseLabel>` cho field
+      không khai `hideLabel`; slot `#field-customer_id` / `#field-supplier_id` render thêm 1 nhãn nữa.
+- [x] Sửa `hrm-client/pages/finance/bill-payment-requests/index.vue` (dòng 32-33 và 44-45):
+      bỏ 2 `<V2BaseLabel>` trong slot, để panel render nhãn từ schema (`index.vue:442-443`).
+- [x] Verify: compile `vue-template-compiler` — 0 lỗi; không còn nhãn tự render trong template.
+- [x] User mở trình duyệt xác nhận xong (2026-08-18).
+
+**Quy tắc:** slot `#field-<key>` chỉ tự render nhãn khi field khai `hideLabel: true`
+(kèm `wrapperClass: 'd-contents'` nếu slot dựng nhiều cột). Field 1 ô → KHÔNG đặt label trong slot.
+
+### Checkpoint — 2026-08-18 (fix bug bộ lọc)
+Vừa hoàn thành: Task BF.1 — bỏ 2 nhãn lặp ở bộ lọc màn danh sách (1 file FE). User test xong,
+đã commit `hrm-client` `dde97025c`.
+Đang làm dở: không có.
+Bước tiếp theo: bổ sung popup Cấu hình cột hiển thị cho màn này (user chốt làm sau).
+Blocked: không.
+
 ## Checkpoint
 
 ### Checkpoint — 2026-08-15 (ĐỢT SỬA THEO PHẢN HỒI USER — 10 hạng mục, ĐÃ COMMIT)

@@ -74,3 +74,22 @@ màn chờ duyệt do thiếu 5 quyền mới trong role 18.
 
 **Còn nợ (cần user hỗ trợ):** đối chiếu trực tiếp trên giao diện ERP · test đủ 4 tài khoản 4 cấp quyền ·
 quyết định gộp trait quyền dùng chung với `ProductTransferRequest`.
+
+---
+
+## Cập nhật sau nghiệm thu — 2026-08-18 (Phase 8 — user test xong, đã commit `bb4863e0e` / `dde97025c`)
+
+1. **Bộ lọc lặp nhãn "Nhà cung cấp"** — slot `#field-supplier_id` tự render `<V2BaseLabel>` trong khi
+   `V2BaseSmartFilterPanel` đã render nhãn từ schema. Quy tắc: slot chỉ tự đặt nhãn khi field khai
+   `hideLabel: true` (thường đi kèm `wrapperClass: 'd-contents'` cho slot nhiều cột).
+2. **Popup "Cấu hình cột hiển thị"** — gắn `columnCustomizationMixin`, khoá `finance_bill_income_requests`
+   (màn chờ duyệt dùng chung khoá vì cùng bộ cột). Lưu qua `human/column-customizations` → **không migration**.
+   `locked: true` chỉ cho STT / Mã phiếu / Hành động. Bộ cột mặc định **giữ nguyên bản nghiệm thu** —
+   user chốt không ẩn bớt cột nào.
+3. **2 cột mới Người / Ngày cập nhật** — BE thêm quan hệ `employee_update()`, eager load `employee_update.info`,
+   resource trả `updated_by_name` + `updated_at`. Cột **có sắp xếp** (thêm `updatedAt`/`updated_at` vào
+   whitelist `applySort`). DB: 2.473 phiếu, 0 phiếu NULL `updated_by` nên cột không rỗng.
+4. **Định dạng ngày** — `created_at` của danh sách đổi `d/m/Y` → `d/m/Y H:i` cho khớp Ngày cập nhật
+   (resource chi tiết vốn đã có giờ). Cột nới 110px → 140px.
+5. **Nới cột chữ dài** — `reason` 280px, `departmentName` 200px, kèm `objectName` 240px: khai thiếu 1 cột
+   thì auto-layout lấy chỗ đúng từ cột đó.

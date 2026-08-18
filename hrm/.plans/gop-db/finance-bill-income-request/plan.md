@@ -949,7 +949,106 @@ Nút **Tạo mới** không gắn cờ quyền (BE không gate hành vi tạo, �
 
 ---
 
+## Phase 8 — Fix bug sau nghiệm thu
+
+### Task 8.1 — Bộ lọc: nhãn "Nhà cung cấp" hiện 2 lần
+- [x] Xác định nguyên nhân: `V2BaseSmartFilterPanel.vue:126` đã render `<V2BaseLabel>{{ field.label }}</V2BaseLabel>`
+      cho mọi field không khai `hideLabel`; slot `#field-supplier_id` ở page render thêm 1 nhãn nữa → lặp.
+      Các field gộp nhiều ô (`org`, `income_money_range`, `created_range`) không dính vì đã có `hideLabel: true`.
+- [x] Sửa `hrm-client/pages/finance/bill-income-requests/index.vue`: bỏ `<V2BaseLabel>Nhà cung cấp</V2BaseLabel>`
+      trong slot, để panel là nơi DUY NHẤT render nhãn (trùng tên với popup "Cài đặt bộ lọc").
+- [x] Verify: compile template bằng `vue-template-compiler` — 0 lỗi; chuỗi "Nhà cung cấp" trong template còn 1 (comment).
+- [x] User mở trình duyệt xác nhận: bộ lọc chỉ còn 1 nhãn (2026-08-18).
+
+**Quy tắc rút ra:** slot `#field-<key>` của `V2BaseSmartFilterPanel` chỉ tự render nhãn khi field khai
+`hideLabel: true` (kèm `wrapperClass: 'd-contents'` nếu slot dựng nhiều cột). Field 1 ô → KHÔNG đặt label trong slot.
+
+**Cùng lỗi ở màn Phiếu đề nghị chi tiền — user chốt sửa luôn 2026-08-18, đã sửa:**
+`pages/finance/bill-payment-requests/index.vue` (`customer_id` + `supplier_id`) — ghi ở Task BF.1 của
+`.plans/gop-db/finance-bill-payment-request/plan.md`. Đã rà 3 màn còn lại dùng `V2BaseSmartFilterPanel`
+có slot tự render nhãn (`bill-adjust-dept-requests`, `device-errors`, `customer-care/serials`) — đều đã khai
+`hideLabel: true`, không bị lặp.
+
+### Task 8.2 — Bổ sung "Cấu hình cột hiển thị" + 2 cột Người/Ngày cập nhật
+User chốt 2026-08-18: chỉ làm cho màn Phiếu đề nghị thu tiền; bộ cột mặc định GIỮ NGUYÊN như bản
+đã nghiệm thu, thêm 2 cột mới cũng hiện mặc định (không ẩn cột nào của user đang dùng).
+
+**BE** (`hrm-api`, 3 file sửa):
+- [x] `BillIncomeRequest`: thêm quan hệ `employee_update()` (`belongsTo Employee, updated_by`).
+- [x] `BillIncomeRequestService::searchByFilter()`: eager load thêm `employee_update.info` (chống N+1).
+- [x] `BillIncomeRequestListResource`: trả thêm `updated_by_name` + `updated_at` (`d/m/Y H:i`).
+- [x] Verify DB thật: 2.473 phiếu, **0 phiếu NULL `updated_by`** (hook `saving` ở boot() ghi cột này
+      từ đầu, kể cả 2.4k phiếu nhập từ ERP) → cột không bị rỗng như cảnh báo ở skill list-page mục 6.
+
+**FE** (`hrm-client/pages/finance/bill-income-requests/index.vue`):
+- [x] `mixins: [..., columnCustomizationMixin]` + `columnScreenKey: 'finance_bill_income_requests'`
+      (đã đối chiếu 12 khoá `finance_*` khác — không trùng). Màn chờ duyệt dùng chung khoá vì cùng bộ cột.
+- [x] Đổi computed `tableColumns` → `allColumns`; thêm `locked: true` cho `index` + `code`
+      (`actions` đã có sẵn) — đúng skill list-page mục 5: chỉ 3 cột này khoá.
+- [x] Thêm 2 cột `updatedByName` (170px) + `updatedAt` (140px vì có giờ phút), đặt sau Ngày tạo,
+      trước Trạng thái; kèm 2 template ô dữ liệu.
+- [x] Nút mở popup (`ri-layout-column-line`) trong slot `#actions` + `<ColumnCustomizationModal>`.
+- [x] `mounted`: `Promise.all([loadColumnFields(), loadData()])` — chạy song song, không thêm độ trễ vào màn.
+- [x] Verify: compile template (`vue-template-compiler`) + parse script (babel) — 0 lỗi; không còn
+      computed `tableColumns` cứng; relation trả dữ liệu thật (phiếu 2504 → "DNS Admin", 14/08/2026 15:40).
+- [x] User test trình duyệt xong (2026-08-18): cấu hình cột, 2 cột Người/Ngày cập nhật, sort và độ rộng cột đều đạt.
+
+**Đồng bộ định dạng ngày (user chốt 2026-08-18):**
+- [x] `BillIncomeRequestListResource`: `created_at` đổi `d/m/Y` → **`d/m/Y H:i`**, khớp cột Ngày cập nhật
+      (skill list-page mục 6). `BillIncomeRequestDetailResource` vốn đã `d/m/Y H:i` nên màn chi tiết + In
+      không đổi gì.
+- [x] FE: cột `createdAt` nới `110px` → **`140px`** (110px chỉ vừa phần ngày, thêm giờ là xuống dòng).
+
+**Sắp xếp theo Ngày cập nhật (user chốt 2026-08-18):**
+- [x] BE `BillIncomeRequest::applySort()`: thêm `updatedAt` / `updated_at` → cột DB `updated_at` vào
+      whitelist (whitelist là bắt buộc — `sort_by` đi thẳng từ query string vào `orderBy`).
+- [x] FE: cột `updatedAt` thêm `sortable: true` — chỉ bật sau khi BE nhận khoá này, bật trước thì user
+      bấm mà bảng không đổi.
+- [x] Verify SQL sinh ra: `updatedAt` + desc/asc → `order by updated_at desc|asc`; khoá lạ (`hackerCol`)
+      → rơi về mặc định `order by created_at desc`, không nhét được vào SQL.
+
+**Nới cột chữ dài (user chốt 2026-08-18):**
+- [x] `reason` (Lý do thu) `minWidth: 280px`, `departmentName` (Phòng ban) `minWidth: 200px`.
+- [x] Khai luôn `minWidth: 240px` cho `objectName` (Khách hàng / NCC) dù user không yêu cầu: 3 cột chữ
+      dài của màn trước đó đều KHÔNG khai minWidth: nới 2 cột mà bỏ trống cột thứ 3 thì auto-layout lấy
+      chỗ đúng từ cột đó, nó bị bóp xuống 4-5 dòng (skill list-page mục 15, đúng lỗi từng gặp ở màn chi tiền).
+
+### Checkpoint — 2026-08-18 (thêm cấu hình cột)
+Vừa hoàn thành: Task 8.2 — popup Cấu hình cột hiển thị + 2 cột Người/Ngày cập nhật (3 file BE, 1 file FE).
+Đang làm dở: không có.
+Bước tiếp theo: user kiểm trên trình duyệt.
+Việc để sau (user chốt 2026-08-18): làm cấu hình cột cho **màn Phiếu đề nghị chi tiền** — màn đó cũng
+chưa có mixin/nút/modal, cách làm y hệt Task 8.2 (khoá gợi ý `finance_bill_payment_requests`).
+Blocked: không.
+
 ## Checkpoint
+
+### Checkpoint — 2026-08-18 (USER TEST XONG)
+Vừa hoàn thành: user test trình duyệt xong toàn bộ Phase 8 — không báo lỗi. Feature trở lại trạng thái
+HOÀN THÀNH.
+Đang làm dở: không có. **User đã commit**: `hrm-api` `bb4863e0e` "fix bug phiếu đề nghị thu tiền"
+(3 file) · `hrm-client` `dde97025c` "fix bug" (index.vue của cả 2 màn + package-lock.json).
+Bước tiếp theo: việc để sau — cấu hình cột cho màn Phiếu đề nghị chi tiền.
+Blocked: không.
+
+### Checkpoint — 2026-08-18 (hết phiên: Phase 8 xong code)
+Vừa hoàn thành: **Task 8.1 + 8.2 trọn vẹn** — 4 file BE (`BillIncomeRequest` relation `employee_update`
++ whitelist sort `updated_at` · `BillIncomeRequestService` eager load · `BillIncomeRequestListResource`
+2 field mới + `created_at` sang `d/m/Y H:i`) và 1 file FE (`pages/finance/bill-income-requests/index.vue`:
+bỏ nhãn lọc lặp · mixin cấu hình cột + nút + modal · `tableColumns` → `allColumns` + `locked` 3 cột ·
+2 cột Người/Ngày cập nhật có sort · nới `minWidth` 3 cột chữ dài).
+Đang làm dở: không có. **Chưa commit** (đúng quy tắc: chỉ commit khi user yêu cầu).
+Bước tiếp theo: user mở trình duyệt kiểm 5 điểm — (1) bộ lọc chỉ còn 1 nhãn "Nhà cung cấp";
+(2) popup Cấu hình cột: đủ cột, STT/Mã/Hành động xám, kéo thả + F5 còn giữ; (3) 2 cột Người/Ngày cập
+nhật có dữ liệu; (4) bấm sắp xếp cột Ngày cập nhật đổi thứ tự thật; (5) 3 cột chữ dài không bị bóp.
+Blocked: không.
+Việc để sau (user chốt): làm cấu hình cột cho **màn Phiếu đề nghị chi tiền** (`finance_bill_payment_requests`).
+
+### Checkpoint — 2026-08-18 (fix bug bộ lọc)
+Vừa hoàn thành: Task 8.1 — bỏ nhãn "Nhà cung cấp" lặp ở bộ lọc màn danh sách (1 file FE).
+Đang làm dở: không có.
+Bước tiếp theo: user mở trình duyệt xác nhận; chốt có sửa luôn 2 nhãn lặp tương tự ở màn Phiếu đề nghị chi tiền không.
+Blocked: không.
 
 ### Checkpoint — 2026-08-14 (CHỐT HOÀN THÀNH)
 
