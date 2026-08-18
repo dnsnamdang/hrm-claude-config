@@ -219,3 +219,55 @@ Blocked: không.
 - [x] Anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)
 - Ghi nhan khi chup anh tren cong dev: dong ghi chu duoi 2 o hien "0 goi bao duong" trong khi hop
   xac nhan hien 221 goi -> con so trong dong ghi chu co the chua kip nap luc mo man. CAN KIEM LAI
+
+
+---
+
+## Làm lại 3 loại tài liệu theo form mới — 18/08/2026
+
+> @junfoke · Bản tài liệu cũ (12–13/08) làm theo **form SRS 6 chương đã bị thay**. User yêu cầu
+> dựng lại theo form 4 phần chốt ngày 17/08 và xoá các file không đạt chuẩn.
+
+### Đã xoá
+- `srs.docx` và `srs.html` — bản HTML/docx generic của đợt đầu, không theo form nào.
+- Các `HDSD_*.docx` / `testcase*.xlsx` bản 13/08 (tên không dấu) — đã có bản mới thay thế.
+- Thư mục `hdsd_shots/` cũ — ảnh mới nằm ở thư mục `*_shots/` riêng của từng nhóm.
+
+### Bộ sinh dùng chung
+Ba thư viện mới đặt ở `.plans/gop-db/_catalog_docs_lib/`, dùng chung cho cả 7 màn:
+
+| File | Vai trò |
+|---|---|
+| `catalog_srs.py` | Dựng SRS đủ 4 phần, sinh mục 2.x theo danh sách `funcs` của từng màn |
+| `catalog_tc.py` | Dựng testcase, tự sinh ca kiểm tra bắt buộc / trùng từ danh sách `truong` |
+| `catalog_hdsd.py` | Dựng HDSD click-by-click, bảng ô nhập + bảng lỗi + câu hỏi thường gặp |
+
+Mỗi feature chỉ còn 1 file cấu hình (`*_config.py`) và 3 driver mỏng gọi thư viện chung.
+
+⚠️ `tc_engine` dùng chung chỉ hỗ trợ **tối đa 10 mục La Mã**. Màn nào nhiều chức năng hơn
+(Danh mục tài khoản) thì `catalog_tc.py` tự **gộp nhóm cuối** — kết xuất, in ấn, tùy chỉnh hiển
+thị và trải nghiệm — vào một mục, thay vì sửa engine dùng chung.
+
+### Kết quả
+
+- [x] Ảnh: **3** trong `sp_shots/`, chụp trên cổng dev
+- [x] `SRS - Cập nhật nhanh giá dịch vụ.docx` — 8 trang, 9 bảng, 4 ảnh, FR-01…FR-02
+- [x] `testcase - Cập nhật nhanh giá dịch vụ.xlsx` — **29 TC**, P0 55%
+- [x] `HDSD_Cập nhật nhanh giá dịch vụ.docx` — 8 trang
+
+Trên cổng dev màn này đang ảnh hưởng tới **221 gói bảo dưỡng** và **255 cấp dịch vụ**.
+
+### Lỗi phát hiện — chưa sửa
+
+**1. Bấm Lưu khi ô bắt buộc đang trống vẫn mở hộp thoại xác nhận.** Xoá trắng ô
+*Hệ số giá bán dịch vụ* rồi bấm Lưu thì hộp thoại “sẽ cập nhật cho tất cả 221 gói bảo dưỡng”
+vẫn hiện ra, và ô trống cũng không báo lỗi đỏ. Với màn ghi đè hàng loạt không hoàn tác được,
+việc kiểm tra dữ liệu phải chạy **trước** khi mở hộp thoại xác nhận.
+Đối chiếu: ô *Định mức đàm phán giá* nhập 150 thì báo “Tối đa 99” ngay — tức là phần kiểm tra
+khoảng giá trị có chạy, chỉ riêng ràng buộc bắt buộc là không.
+
+**2. Hai dòng ghi chú dùng chữ đỏ.** Dòng “Lưu thay đổi sẽ áp hệ số…” và “Cập nhật gần nhất:…”
+đang để màu `#dc3545`. Quy ước chốt 15/08: **đỏ chỉ dành cho lỗi validate**; chữ mô tả và ghi
+chú phải dùng xám. Người dùng nhìn vào tưởng màn đang có lỗi.
+→ Đổi `.config-note__line` sang màu xám; nếu cần nhấn mạnh cảnh báo thì dùng khối cảnh báo có
+nền, không tô đỏ chữ.

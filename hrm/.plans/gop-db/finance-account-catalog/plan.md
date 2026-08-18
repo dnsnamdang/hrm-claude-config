@@ -332,3 +332,66 @@ dự án**, phải liệt kê từng tên file; và chụp screenshot vào thư 
 - [x] `HDSD_Danh muc loai tai khoan.docx` — 16 trang; generator `gen_hdsd_loai_tai_khoan.py`
 - [x] Anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)
 - [x] Da xoa `testcase.xlsx` cu (format 15 cot, gop ca 2 man) — user chot 2026-08-13
+
+
+---
+
+## Làm lại 3 loại tài liệu theo form mới — 18/08/2026
+
+> @junfoke · Bản tài liệu cũ (12–13/08) làm theo **form SRS 6 chương đã bị thay**. User yêu cầu
+> dựng lại theo form 4 phần chốt ngày 17/08 và xoá các file không đạt chuẩn.
+
+### Đã xoá
+- `srs.docx` và `srs.html` — bản HTML/docx generic của đợt đầu, không theo form nào.
+- Các `HDSD_*.docx` / `testcase*.xlsx` bản 13/08 (tên không dấu) — đã có bản mới thay thế.
+- Thư mục `hdsd_shots/` cũ — ảnh mới nằm ở thư mục `*_shots/` riêng của từng nhóm.
+
+### Bộ sinh dùng chung
+Ba thư viện mới đặt ở `.plans/gop-db/_catalog_docs_lib/`, dùng chung cho cả 7 màn:
+
+| File | Vai trò |
+|---|---|
+| `catalog_srs.py` | Dựng SRS đủ 4 phần, sinh mục 2.x theo danh sách `funcs` của từng màn |
+| `catalog_tc.py` | Dựng testcase, tự sinh ca kiểm tra bắt buộc / trùng từ danh sách `truong` |
+| `catalog_hdsd.py` | Dựng HDSD click-by-click, bảng ô nhập + bảng lỗi + câu hỏi thường gặp |
+
+Mỗi feature chỉ còn 1 file cấu hình (`*_config.py`) và 3 driver mỏng gọi thư viện chung.
+
+⚠️ `tc_engine` dùng chung chỉ hỗ trợ **tối đa 10 mục La Mã**. Màn nào nhiều chức năng hơn
+(Danh mục tài khoản) thì `catalog_tc.py` tự **gộp nhóm cuối** — kết xuất, in ấn, tùy chỉnh hiển
+thị và trải nghiệm — vào một mục, thay vì sửa engine dùng chung.
+
+### Kết quả nhóm này
+
+- [x] Ảnh: **24** trong `acc_shots/`, chụp trên cổng dev
+- [x] `SRS - Danh mục tài khoản.docx` — 33 trang, 39 bảng, 22 ảnh, FR-01…FR-13
+- [x] `SRS - Danh mục loại tài khoản.docx` — 30 trang, 36 bảng, 19 ảnh, FR-01…FR-11
+- [x] `testcase - Danh mục tài khoản.xlsx` — **104 TC**, P0 56%
+- [x] `testcase - Danh mục loại tài khoản.xlsx` — **96 TC**, P0 54%
+- [x] `HDSD_Danh mục tài khoản.docx` — 21 trang · `HDSD_Danh mục loại tài khoản.docx` — 18 trang
+
+### Lỗi phát hiện — chưa sửa
+
+**1. Lịch sử màn Danh mục tài khoản hiện SỐ thay vì TÊN loại tài khoản.** Kiểm chứng trên dev:
+tài khoản `111 - Tiền mặt` có mốc lịch sử ghi `Loại tài khoản: 24`, trong khi màn chi tiết hiện
+đúng `LTK003 - Loại tài khoản ví dụ 1`.
+
+Nguyên nhân: hằng `Account::TYPES` chỉ có 7 giá trị cố định (id 1–7) từ thời hệ cũ, nhưng cột
+`type` thực tế trỏ sang bảng **Danh mục loại tài khoản** với id tự tăng. `Account::displayValue()`
+tra `TYPES[24]` không thấy nên rơi về in thẳng số.
+
+**2. Cùng gốc — bộ lọc “Loại tài khoản” chỉ liệt kê 7 loại cũ.** `getTypesForSelect()` cũng đọc
+từ `TYPES`, nên loại do người dùng tự tạo (LTK001…LTK004) **không lọc được** dù vẫn hiển thị ở
+cột và chọn được trong form.
+
+Đáng chú ý: `AccountResource` đã xử lý đúng — lấy `type_name` từ bảng loại tài khoản, kèm ghi chú
+giải thích vì sao không dùng hằng. Hai chỗ còn lại bị bỏ sót.
+→ Sửa cả `displayValue()` lẫn `getTypesForSelect()` đọc từ bảng loại tài khoản.
+
+**3. Bản ghi đã Khóa vẫn hiện nút Xóa.** Ở cả hai màn, `getRowActions()` gate nút Sửa bằng
+`canManage && !isLocked` nhưng nút Xóa chỉ gate bằng điều kiện xóa được, **thiếu `!isLocked`**.
+Kiểm chứng trên dev: dòng `LTK004` và `LTK002` đang ở trạng thái Khóa vẫn hiện nút Xóa màu đỏ.
+Máy chủ đã chặn đúng (route xóa có gác bản ghi khóa) nên không mất dữ liệu, nhưng người dùng bấm
+vào sẽ nhận lỗi — trái quy tắc “nút không dùng được thì ẩn hẳn”.
+→ Thêm `&& !isLocked` vào điều kiện hiện nút Xóa. **Lỗi này lặp ở cả 3 màn Tài chính** (tài khoản,
+loại tài khoản, tiền tệ).

@@ -78,6 +78,27 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Chưa đo được thời gian DỰNG file ở trình duyệt với 17.5k dòng — nhất là PDF (~600 trang).
   3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
 
+- finance-prepick-stock-list → @junfoke → .plans/gop-db/finance-prepick-stock-list/plan.md
+  Trạng thái: **XONG CODE PHASE 0-7, ĐÃ VERIFY HTTP** (2026-08-18). Nhánh
+  `feat/finance-prepick-stock-list` (từ `gop_db`, cả 2 repo).
+  Port màn **Danh sách hàng giữ** (`warehouseInfo.prepickIndex`) sang phân hệ **Tài chính**, nhóm
+  **Giữ hàng** — mục menu đã có sẵn placeholder, nay đã gắn `link: /finance/prepick-stocks`.
+  ⚠️ Màn **BÁO CÁO TRA CỨU, CHỈ ĐỌC** — không tạo/sửa/xoá, KHÔNG ghi một dòng nào vào
+  `prepick_details` / `prepick_logs`. Không migration, không seeder.
+  Bố cục **3 tầng lồng** như ERP (Hàng hoá → Nhân viên → Khách hàng), user chốt 2026-08-18.
+  Gate quyền `Quản lý giữ hàng` (ERP mở tự do) + phạm vi theo 3 quyền `Xem phiếu hàng giữ theo ...`.
+  BE 4 file (`PrepickStockReportService` CHỈ ĐỌC + controller + resource + blade in) + 6 route.
+  FE 4 file (`pages/finance/prepick-stocks/`, `PrepickStockLogModal.vue`) + 1 mục menu.
+  Verify: 6/6 endpoint 200 · 7/7 bộ lọc khớp SQL trực tiếp · phân quyền 3 nhánh đúng (895 / 70 /
+  403) · **2 bảng tồn y nguyên số dòng và SUM(qty) so với lúc bắt đầu**.
+  ⚠️ Đã vá 6 lỗi ERP, đáng chú ý: tầng 1 của ERP hiển thị Nhân viên/Thời hạn của **một lô ngẫu
+  nhiên** (`GROUP BY product_id` mà vẫn select 2 cột đó); In/Xuất khoá cứng công ty người đăng
+  nhập nên số bản in ≠ số trên màn; popup Lịch sử bỏ trắng chứng từ cho **1.645 dòng log**.
+  ⚠️ Bẫy mới: `V2BaseDataTable` KHÔNG có `sortKey` riêng (emit thẳng `column.key`) và
+  `V2BaseCompanyDepartmentFilter` TỰ render select gắn `form.employee_id` — màn nào có ô "Nhân
+  viên" riêng phải bật `:disable_employee`.
+  Bước tiếp: user bấm tay trên trình duyệt + đối chiếu 2 cổng trên dev.
+
 - finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
   Trạng thái: **XONG CODE PHASE 0-9, ĐÃ VERIFY HTTP END-TO-END** (2026-08-15). Nhánh
   `feat/finance-prepick-cancel` (từ `gop_db`, cả 2 repo, checkout thẳng).

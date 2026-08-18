@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Sinh testcase (17 cot, 2 khoi tong hop DNS/TP) cho cac man cua feature nay.
 
-Chay:  python .plans/gop-db/finance-currency-catalog/gen_testcase.py
+Chay:  python .plans/gop-db/finance-account-catalog/gen_testcase.py
 """
 import os
 import sys
@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "_catalog_docs_lib"))
 sys.path.insert(0, HERE)
 
 from catalog_tc import CatalogTc  # noqa: E402
-from cur_config import SCREENS  # noqa: E402
+from acc_config import SCREENS  # noqa: E402
 
 if __name__ == '__main__':
     tong = 0

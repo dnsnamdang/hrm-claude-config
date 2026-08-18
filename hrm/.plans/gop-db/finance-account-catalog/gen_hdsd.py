@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Sinh HDSD (huong dan su dung) cho cac man cua feature nay.
 
-Chay:  python .plans/gop-db/customer-care-service-price-config/gen_hdsd.py
+Chay:  python .plans/gop-db/finance-account-catalog/gen_hdsd.py
 """
 import os
 import sys
@@ -16,9 +16,9 @@ sys.path.insert(0, os.path.join(HERE, "..", "_catalog_docs_lib"))
 sys.path.insert(0, HERE)
 
 from catalog_hdsd import CatalogHdsd  # noqa: E402
-from sp_config import SCREENS  # noqa: E402
+from acc_config import SCREENS  # noqa: E402
 
-SHOTS = os.path.join(HERE, "sp_shots")
+SHOTS = os.path.join(HERE, "acc_shots")
 
 if __name__ == '__main__':
     for cfg in SCREENS:

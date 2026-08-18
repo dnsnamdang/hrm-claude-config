@@ -109,3 +109,48 @@ emit `column.key` chứ không có lớp map nào ở giữa.
 - [x] `testcase.xlsx` — 117 TC (P0 49%), form 17 cot 2 khoi DNS/TP; generator `gen_testcase.py`
 - [x] `HDSD_Danh muc tien te.docx` — 17 trang, 11 Heading 1, 8 bang, 6 anh chup that;
       generator `gen_hdsd.py`, anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)
+
+
+---
+
+## Làm lại 3 loại tài liệu theo form mới — 18/08/2026
+
+> @junfoke · Bản tài liệu cũ (12–13/08) làm theo **form SRS 6 chương đã bị thay**. User yêu cầu
+> dựng lại theo form 4 phần chốt ngày 17/08 và xoá các file không đạt chuẩn.
+
+### Đã xoá
+- `srs.docx` và `srs.html` — bản HTML/docx generic của đợt đầu, không theo form nào.
+- Các `HDSD_*.docx` / `testcase*.xlsx` bản 13/08 (tên không dấu) — đã có bản mới thay thế.
+- Thư mục `hdsd_shots/` cũ — ảnh mới nằm ở thư mục `*_shots/` riêng của từng nhóm.
+
+### Bộ sinh dùng chung
+Ba thư viện mới đặt ở `.plans/gop-db/_catalog_docs_lib/`, dùng chung cho cả 7 màn:
+
+| File | Vai trò |
+|---|---|
+| `catalog_srs.py` | Dựng SRS đủ 4 phần, sinh mục 2.x theo danh sách `funcs` của từng màn |
+| `catalog_tc.py` | Dựng testcase, tự sinh ca kiểm tra bắt buộc / trùng từ danh sách `truong` |
+| `catalog_hdsd.py` | Dựng HDSD click-by-click, bảng ô nhập + bảng lỗi + câu hỏi thường gặp |
+
+Mỗi feature chỉ còn 1 file cấu hình (`*_config.py`) và 3 driver mỏng gọi thư viện chung.
+
+⚠️ `tc_engine` dùng chung chỉ hỗ trợ **tối đa 10 mục La Mã**. Màn nào nhiều chức năng hơn
+(Danh mục tài khoản) thì `catalog_tc.py` tự **gộp nhóm cuối** — kết xuất, in ấn, tùy chỉnh hiển
+thị và trải nghiệm — vào một mục, thay vì sửa engine dùng chung.
+
+### Kết quả
+
+- [x] Ảnh: **9** trong `cur_shots/`, chụp trên cổng dev
+- [x] `SRS - Danh mục tiền tệ.docx` — 28 trang, 33 bảng, 16 ảnh, FR-01…FR-10
+- [x] `testcase - Danh mục tiền tệ.xlsx` — **84 TC**, P0 57%
+- [x] `HDSD_Danh mục tiền tệ.docx` — 18 trang
+
+Cổng dev đang có 20 loại tiền; chỉ `CNY` (0 lần dùng) là xóa được.
+
+### Lỗi phát hiện — chưa sửa
+
+**Bản ghi đã Khóa vẫn hiện nút Xóa.** Giống hệt hai màn tài khoản: `getRowActions()` gate nút
+Sửa bằng `canManage && !isLocked` nhưng nút Xóa chỉ gate bằng `canManage && !isUsed(item)`,
+thiếu `!isLocked`. Máy chủ đã chặn đúng nên không mất dữ liệu, nhưng nút vẫn hiện là trái quy
+tắc “nút không dùng được thì ẩn hẳn”.
+→ Sửa đồng thời ở cả 3 màn Tài chính.
