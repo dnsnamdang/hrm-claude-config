@@ -8,6 +8,17 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- menu-style-hub → @dnsnamdang → .plans/menu-style-hub/plan.md
+  Trạng thái: **CODE DONE (2026-08-17), chờ build FE + rà giao diện**. Nhánh `feature/menu-style-hub` (checkout từ `tpe-develop-assign`, chỉ `hrm-client`).
+  Bê **style** menu của nhánh `gop_db` sang: (A) màn chọn phân hệ bố cục bông hoa nền navy,
+  (B) sidebar rail + panel kiểu MISA cho 2 phân hệ Dự án & giao việc / Đào tạo, (C) popup chuyển
+  phân hệ chia nhóm ở topbar. **Nội dung menu và danh sách phân hệ giữ nguyên 100%** —
+  registry mới `components/subsystems.js` chỉ trỏ vào mảng menu cũ, không chép lại.
+  `sale-theme.scss` port RÚT GỌN (chỉ rail + topbar + panel, bỏ phần đổi style bảng/card).
+  Biết trước: badge đỏ "Báo cáo tiến độ task" không có trên sidebar hub (bản gop_db cũng vậy).
+  Spec: docs/superpowers/specs/2026-08-17-menu-style-hub-design.md
+  Bước tiếp: user chạy `npm run dev` (Node 14.21.3) rà 3 màn, chốt bố cục bông hoa 2 cánh.
+
 - sync-assign-catalogs → @dnsnamdang → .plans/sync-assign-catalogs/plan.md
   Trạng thái: **DONE — đã chạy thật trên `etek_power_hrm`, checksum 27/27 bảng khớp (2026-08-15)**. Nhánh `tpe`.
   Command `php artisan assign:sync-catalogs` đẩy **28 bảng danh mục + cấu hình** của phân hệ Giao việc

@@ -68,6 +68,16 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- customer-export-file (Phase 7) → @khoipv → .plans/gop-db/customer-export-file/plan.md
+  Trạng thái: **XONG CODE, CHỜ USER TEST TRÌNH DUYỆT** (2026-08-17). Chuyển việc dựng file
+  CSV/Excel/PDF của `/assign/customers` từ BE sang **build ở FE** theo yêu cầu user.
+  BE thêm `GET assign/customers/export-rows` (JSON theo trang, dùng chung bảng cột với 3 endpoint
+  xuất file cũ — 2.000 dòng/lượt ~0,85s, RAM 60MB). FE thêm `utils/export/customerExportFile.js`
+  (ExcelJS + jsPDF/autoTable + font DejaVu subset 78KB, import động).
+  ⚠️ Team phải `npm install` sau khi kéo nhánh (thêm `jspdf` + `jspdf-autotable`).
+  ⚠️ Chưa đo được thời gian DỰNG file ở trình duyệt với 17.5k dòng — nhất là PDF (~600 trang).
+  3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
+
 - finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
   Trạng thái: **XONG CODE PHASE 0-9, ĐÃ VERIFY HTTP END-TO-END** (2026-08-15). Nhánh
   `feat/finance-prepick-cancel` (từ `gop_db`, cả 2 repo, checkout thẳng).
