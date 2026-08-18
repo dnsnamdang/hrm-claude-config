@@ -289,12 +289,51 @@ class SrsDoc(object):
             self.figure(shot, shot_caption or 'Màn hình thực tế', width_in=6.2)
 
     # -------------------------------------------------------------- save
-    def save(self, verbose=True):
+    def save(self, verbose=True, update_fields=True):
         os.makedirs(os.path.dirname(self.out), exist_ok=True)
         self.doc.save(self.out)
+        if update_fields:
+            self._update_fields_by_word()
         if verbose:
             self.selfcheck()
         return self.out
+
+    def _update_fields_by_word(self):
+        """Ep Word cap nhat MUC LUC that su.
+
+        ⚠️ Chi chen truong TOC (`toc()`) thi Word MOI CHI hien dong nhac
+        "Nhan chuot phai -> Update Field" — nguoi doc phai tu lam. Phai goi Word
+        cap nhat roi luu lai thi file ban giao moi co muc luc + so trang san.
+        Cung cach `hdsd_engine._update_fields_by_word()` da dung.
+
+        May khong co Word (hoac loi COM) -> chi canh bao, KHONG lam gay generator.
+        """
+        import subprocess
+
+        ps = r"""
+$p = "{path}"
+$word = New-Object -ComObject Word.Application
+$word.Visible = $false
+$word.DisplayAlerts = 0
+$doc = $word.Documents.Open($p, $false, $false)
+$doc.Fields.Update() | Out-Null
+foreach ($toc in $doc.TablesOfContents) {{ $toc.Update() }}
+foreach ($tof in $doc.TablesOfFigures) {{ $tof.Update() }}
+$doc.Repaginate()
+$doc.Save()
+Write-Output ("Pages=" + $doc.ComputeStatistics(2))
+$doc.Close(0)
+$word.Quit()
+""".format(path=self.out)
+        try:
+            res = subprocess.run(["powershell", "-NonInteractive", "-Command", ps],
+                                 capture_output=True, text=True, timeout=180)
+            out = (res.stdout or '').strip() or (res.stderr or '').strip()
+        except Exception as exc:  # noqa: BLE001
+            out = 'LOI: %s' % exc
+        if not out.startswith('Pages='):
+            print('!!! Muc luc CHUA duoc Word cap nhat:', out[:200])
+        self._word_pages = out
 
     def selfcheck(self):
         """Buoc 4 cua skill: tu kiem tra truoc khi bao xong."""
@@ -303,8 +342,10 @@ class SrsDoc(object):
         imgs = sum(1 for r in d.part.rels.values() if 'image' in r.reltype)
         bad = [x.text for x in d.paragraphs
                if any(ch in x.text for ch in ('\u250c', '\u25cb', '\u2502', '\u2514'))]
-        out = ('OK %s | bang=%d | doan=%d | anh=%d | so-do-ky-tu=%d'
-               % (os.path.basename(self.out), len(d.tables), len(d.paragraphs), imgs, len(bad)))
+        pages = getattr(self, '_word_pages', '')
+        out = ('OK %s | bang=%d | doan=%d | anh=%d | so-do-ky-tu=%d | %s'
+               % (os.path.basename(self.out), len(d.tables), len(d.paragraphs), imgs,
+                  len(bad), pages or 'muc-luc=chua-cap-nhat'))
         try:
             print(out)
         except UnicodeEncodeError:

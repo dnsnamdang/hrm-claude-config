@@ -824,3 +824,222 @@ bằng SQL nếu muốn dọn.
 **"Không duyệt"**, cả hai đều lệch `.claude/skills/button-convention`. Màn này đã tự override trong
 slot, nhưng mọi màn khác dùng `menu.print` / `menu.reject_approve` vẫn sai. Sửa gốc ở `V2Footer` là
 đụng tài sản chung (ảnh hưởng toàn hệ thống) nên **chưa làm** — chờ ý kiến.
+## Phase 10 — 3 phản hồi bổ sung của tester (17/08/2026, @junfoke)
+
+Tester xem lại sau Phase 9 và bổ sung 3 việc (không mở issue Redmine mới):
+
+- [x] **Khối Lịch sử ở màn chi tiết phải THU GỌN được.** Trước đó timeline mở sẵn, lịch sử dài đẩy
+      nút thao tác ở footer xuống tít dưới. Nay tiêu đề khối có badge số mốc + nút
+      **"Xem lịch sử" / "Thu gọn"** + **"Làm mới"**, mặc định thu gọn, đúng khuôn khối "Lịch sử" của
+      màn Danh mục khách hàng (`components/assign/SystemInfoSection.vue`).
+      ⚠️ Dùng `v-if` chứ KHÔNG `v-show` cho phần thân: panel gọi API trong `mounted`, dựng sẵn rồi
+      ẩn đi là vẫn bắn request lúc vào màn → mất ý nghĩa lazy load. Đã đo: vào màn = **0 request**
+      `/histories`, bấm "Xem lịch sử" = 1 request.
+      Panel emit thêm sự kiện `loaded(count)` để màn cha hiện badge.
+- [x] **Bản in giãn dòng gấp đôi ERP.** Nguyên nhân: rule padding của bản port chỉ áp cho
+      `table:not(.no-border)`, nên **bảng thông tin chung** (Ngày lập / Loại yêu cầu / Kho nhập /
+      Ghi chú — nằm trong `table.no-border`) ăn `padding: 12.8px` của CSS chung hrm-client, cộng
+      `line-height: 24px` thừa hưởng từ Bootstrap. `pdf.css` của ERP áp
+      `td, th { padding: 5px 8px !important }` cho MỌI bảng và KHÔNG đặt line-height.
+      Đã sửa: padding áp cho mọi `td/th`, `line-height: normal` cho `#content` — ở CẢ preview lẫn
+      `options.styles` của `$printContent`. Đo lại: mỗi dòng **50px → 28px**.
+- [x] **Ô "Loại yêu cầu" thiếu nút × xoá nhanh** → `:allowClear="true"` (màn Sửa ô bị khoá nên
+      select2 tự ẩn nút ×). Đã đo: bấm × → model về `null`, placeholder trở lại.
+
+### ⚠️ Phát sinh: 1 lỗi console khi bấm × ở ô Loại yêu cầu
+
+Bấm × sinh log `The select2('isOpen') method was called on an element that is not using Select2.`
+**Chức năng KHÔNG sai** (giá trị được xoá, placeholder hiện lại đúng), chỉ là log.
+
+Nguyên nhân đã khoanh vùng bằng thực nghiệm:
+- Xoá giá trị làm các ô select PHỤ THUỘC loại (Vận chuyển / Khách hàng) bị `v-if` gỡ khỏi DOM
+  ngay trong luồng xử lý clear của select2 → select2 gọi tiếp `select2('isOpen')` trên element đã
+  bị `destroy`.
+- **Đổi loại (2 → 14) cũng gỡ đúng các ô đó nhưng KHÔNG lỗi** → lỗi chỉ thuộc luồng `allowClear`.
+- Chỗ gọi `select2('isOpen')` nằm trong `V2BaseSelect` / thư viện `v-select2-component`, tức
+  **tài sản dùng chung**. Mọi màn bật `allowClear` trên select mà việc đổi giá trị làm ô select
+  khác biến mất đều gặp.
+
+→ **Chưa sửa**, chờ user chốt vì phải đụng component dùng chung. Cách vá cục bộ (hoãn ẩn ô phụ
+thuộc 1 tick bằng biến layout riêng) đã cân nhắc và BỎ: làm `isOther`/`isConsignment` lệch model
+1 tick, mà 2 cờ đó quyết định payload gửi lên BE — rủi ro cao hơn lợi ích.
+## Phase 11 — "Vào màn Sửa không sửa được gì" (17/08/2026, @junfoke)
+
+User hỏi vì sao ở màn Sửa các ô **Loại yêu cầu**, **Phiếu YC xuất hàng** không sửa được. Đã đối
+chiếu thẳng blade ERP (`warehouse/product_import_requests/form.blade.php`) và đo trạng thái thật
+trên trình duyệt:
+
+| Ô | ERP | HRM (trước) | Kết luận |
+| --- | --- | --- | --- |
+| Loại yêu cầu | `ng-disabled="form.id"` (:40) | khoá | **Đúng** — giữ nguyên |
+| Nút Chọn chứng từ nguồn | `ng-disabled="form.id"` (:254) | khoá | **Đúng** — giữ nguyên |
+| Ô mã chứng từ nguồn | `disabled` (:259), chọn qua popup | readonly | **Đúng** |
+| **Nhập thẳng** | KHÔNG có `ng-disabled` (:54) | **khoá** | **LỆCH — bản port tự khoá thêm** |
+| Nhà cung cấp / Nhân viên (loại 99) | mở (:59-85) | mở | Đúng (ô trống là do phiếu chưa chọn, không phải bị khoá) |
+| Kho nhập · Ghi chú · Số lượng · File · tab Chi phí nội địa | mở | mở | Đúng |
+
+### Đã sửa
+
+- [x] **Mở lại checkbox "Nhập thẳng" ở màn Sửa** cho khớp ERP. An toàn vì BE lấy thẳng
+      `is_import_direct` từ request (`fillFromRequest`) và `warehouse_id` chỉ bắt buộc khi KHÔNG
+      nhập thẳng — bỏ tick là ô Kho nhập + Vận chuyển tự hiện ra (đã đo).
+- [x] **Thêm icon ⓘ + tooltip cho 2 ô CỐ Ý khoá** (Loại yêu cầu, chứng từ nguồn), chỉ hiện ở màn
+      Sửa. Lý do: ô khoá của bộ V2 nhìn **giống ô đang trống** nên người dùng tưởng màn hình lỗi —
+      đúng như phản hồi này. Theo `.claude/skills/info-icon-tooltip`: `ri-information-line` 14px
+      `#94a3b8` + `b-popover custom-class="info-popover"` `triggers="hover focus"`.
+      Nội dung: *"Phiếu đã lưu thì không đổi được loại yêu cầu: đổi loại là đổi cả chứng từ nguồn
+      lẫn danh sách hàng hoá. Cần loại khác thì lập phiếu mới."* (và câu tương ứng cho chứng từ nguồn).
+
+Đã verify trên trình duyệt: 2 icon ⓘ hiện đúng ở màn Sửa (màn Thêm không có), hover ra popover
+đúng style chung; bỏ tick Nhập thẳng → hiện thêm "Kho nhập *" và "Vận chuyển *".
+
+📌 **Bài học chung cho các màn port khác**: ô `disabled` của bộ V2 không có dấu hiệu nào phân biệt
+với ô trống → **mọi ô cố ý khoá đều nên kèm icon ⓘ giải thích**, nếu không tester/người dùng sẽ báo
+là lỗi.
+
+## Phase 12 — Thêm hàng hoá bằng tay cho loại 14 / 99 (17/08/2026, @junfoke)
+
+User phát hiện **ERP xoá được hàng hoá lúc Sửa rồi thêm lại**, còn HRM thì không. Đối chiếu blade
+ERP thì bản port đã kết luận SAI ở Phase 3a ("hàng hoá KHÔNG nhập tay, chỉ lấy từ chứng từ nguồn"):
+
+| Loại | ERP: thêm tay | ERP: xoá dòng | HRM trước Phase 12 |
+| --- | --- | --- | --- |
+| **14** (nhập gửi), **99** (nhập khác) | ✅ nút ➕ `searchProduct()` (`form.blade.php:896-913`) | ✅ ➖ `removeProduct` (`:944`) | ❌ không thêm được · xoá bị chặn khi còn 1 dòng (fix 11089 cũ) |
+| 2, 3, 4, 9, 15 | ❌ (bảng `:461/:538/:612/:733/:780` không có nút nào) | ❌ | ⚠️ vẫn cho xoá |
+
+`addProduct` có ở **cả create.blade lẫn edit.blade (`:95`)** → màn Sửa của ERP cũng thêm lại được.
+Vậy fix 11089 cũ (ẩn nút Xoá khi còn 1 dòng) chỉ là **vá triệu chứng**; gốc là thiếu nút thêm.
+
+### Đã làm — bám khuôn màn Phiếu YC chuyển hàng của CÙNG phân hệ (không dựng popup mới)
+
+- [x] **BE** `ProductImportRequestService::productUnits()` + Controller `productUnits()` + route
+      `GET /products/{id}/units` (khai TRƯỚC `/{id}`). Port nguyên
+      `ProductTransferRequestService::productUnits` — thứ tự ĐVT, công thức áp hệ số công ty
+      (`round(price * coefficient / 1000) * 1000`) và cách lấy giá niêm yết (`price_type_id = 1`)
+      giữ y nguyên để 2 màn không lệch.
+- [x] **FE** nút **"Thêm hàng hoá"** + popup DÙNG CHUNG `QuotationProductSearchModal`
+      (`goods-only` · `hide-manual-create` · `existing-products`), chỉ hiện với loại 14 / 99
+      (computed `canAddProduct`, hằng `MANUAL_PRODUCT_TYPES`).
+- [x] Cột **ĐVT thành select** cho 2 loại đó (ERP `:930`); đổi ĐVT thì cập nhật lại tên ĐVT, hệ số
+      và đơn giá theo `product_unit` (`onUnitChange`).
+- [x] **Xoá dòng**: cho xoá TỰ DO với 14 / 99 (đã có đường thêm lại), và **ẩn hẳn** với
+      2 / 3 / 4 / 9 / 15 — trước đây HRM cho xoá cả những loại ERP không cho.
+- [x] Cột "SL có thể nhập" hiện **—** cho dòng thêm tay / phiếu 14-99 không có chứng từ nguồn
+      (con số ở đó dễ bị hiểu là hạn mức).
+- [x] Dòng thêm tay gửi `detail_type = 1` — `syncProducts` của BE tự snapshot tên/mã/model/brand/
+      ĐVT/hệ số từ DB nên không phải gửi thêm gì; `product_export_request_detail_id` vốn đã nullable
+      trong FormRequest nên KHÔNG phải sửa validate.
+
+### 🐞 Bẫy đã dính khi làm
+
+`loadUnits()` gán `row.units = [...]` nhưng object dòng do `loadDetail()` dựng **KHÔNG khai sẵn key
+`units`** → Vue 2 không reactive với property thêm mới → dữ liệu có mà ô ĐVT vẫn là chữ, không thành
+select. Sửa: khai `units: []` sẵn trong cả `loadDetail` và `onChooseExportRequest`, thêm `$set` cho
+chắc. **Đo được bằng cách đếm `.select2-container` trong ô, không tin mắt nhìn.**
+
+### ✅ Đã verify chạy thật
+
+- `GET /products/45309/units` → 200, trả `code / name / model_name / brand_name / units[]`
+  (ĐVT "Đôi", giá 920.000); id không tồn tại → 404 "Không tìm thấy hàng hóa".
+- `onApplyProducts` với payload y như popup emit: thêm đúng hàng thật, **bỏ qua hàng tạm**
+  (`erp_product_id` rỗng) và **bỏ qua hàng trùng**, tự nạp ĐVT + giá.
+- Quét đủ 7 loại: nút "Thêm hàng hoá" chỉ hiện ở **14 và 99**, 5 loại còn lại không.
+- Lưu mới **PYCNH-12246** (loại 99, KHÔNG chứng từ nguồn) → BE snapshot đủ
+  tên/mã/model/brand/ĐVT, SL 3, giá 920.000.
+- Màn Sửa: ĐVT là select (đếm `.select2-container`), "SL có thể nhập" = —, và chạy đúng kịch bản
+  tester: **xoá dòng cuối → bảng rỗng → thêm lại → Lưu thành công**.
+
+⚠️ **Chưa test được trên local**: bản thân popup chọn hàng gọi qua **cầu nối ERP cổng 8001**
+(`assign/quotations/erp-product-search`), local không bật app ERP nên popup rỗng (500
+`Failed to connect to 127.0.0.1:8001`). Popup này đang chạy thật ở màn Phiếu YC chuyển hàng nên
+phần dữ liệu coi như đã được kiểm ở màn đó; cần bấm thử lại trên cổng dev.
+
+📌 Dữ liệu test để lại trên DB local: **PYCNH-12246** (loại Nhập hàng khác, hàng thêm tay).
+
+## Phase 13 — 3 phản hồi sau Phase 12 (17/08/2026, @junfoke)
+
+### 1. % VAT: VALIDATE, không tự sửa giá trị
+
+Bản Phase 9 chặn trần ngay lúc gõ (`sanitizeNumberEvent($event, { max: 100 })`) nên nhập `101` bị
+**tự kéo về `100`** — sửa ngầm số người dùng vừa nhập là mất dữ liệu không báo. Tester chốt: nhập
+ngoài khoảng 0-100 thì **BÁO ĐỎ**.
+
+- [x] Bỏ tham số `max` ở cả `% VAT` và `Giá trị trước VAT` (giá trị giữ nguyên như user gõ).
+- [x] Thêm 2 helper realtime `vatPercentError()` / `valueBeforeVatError()` — rule ĐỊNH DẠNG nên hiện
+      ngay khi gõ, không chờ bấm Lưu (skill `form-validate`). Ô đang gõ dở (`"12."`) thì chưa báo.
+- [x] `save()` chặn bằng `hasInlandCostFormatError()` — sai định dạng thì không gửi request.
+
+### 2. Cột "SL có thể nhập" ở bảng loại 14 / 99 là TỰ CHẾ
+
+Bảng ERP cho loại 14/99 (`form.blade.php:896-955`) có bộ cột: **STT · Tên hàng hóa · Model ·
+Mã hàng hóa · Thương hiệu · Số lượng · Đơn vị tính · Giá NCC · Thành tiền** + dòng **Tổng cộng /
+Tổng tiền**. Không có cột nào tên "SL có thể nhập".
+
+- [x] Bảng hàng hoá nay có **2 bộ cột theo loại phiếu**:
+      · 14 / 99 → đúng bộ cột ERP ở trên (10 cột tính cả Xoá), có dòng Tổng cộng.
+      · 2 / 3 / 4 / 9 / 15 → giữ bộ cũ có "SL có thể nhập" (bản port gộp các cột SL xuất / Đã trả /
+        SL trả của ERP về 1 cột trần số lượng còn nhập được) — cột này CHỈ có nghĩa khi hàng đến từ
+        chứng từ nguồn nên không hiện ở 14/99.
+- [x] `productColspan` computed cho `colspan` của dòng rỗng / dòng con khách hàng.
+- [x] Bổ sung `brand_name` vào dòng hàng ở cả 3 nguồn (loadDetail · popup · `/products/{id}/units`)
+      — trước đó cột Thương hiệu hiện "—" vì `loadDetail` không map field này.
+- [x] Gỡ cờ `is_manual` + helper `maxQtyText()` (không còn dùng sau khi tách cột).
+
+### 3. Chi phí nội địa: mặc định 0 như ERP + LUÔN báo lỗi
+
+ERP thêm dòng là điền sẵn `0`; HRM để trống với placeholder `"0"` nên nhìn như đã có 0, mà lưu thì
+im lặng.
+
+- [x] `newInlandCostRow()` đặt `value_before_vat: 0` và `vat_percent: 0` (giá trị THẬT, không phải
+      placeholder).
+- [x] **Bỏ hẳn `pruneEmptyInlandCosts()`**: trước đó dòng để trống hoàn toàn bị tự dọn nên lưu
+      thành công mà dòng biến mất không một lời báo. Nay đã bấm "Thêm chi phí" thì phải điền đủ hoặc
+      bấm Xoá — thiếu Chi phí / NCC là báo đỏ đúng dòng.
+
+### ✅ Đã verify chạy thật
+
+- Nhập `101` vào % VAT → ô **giữ nguyên 101** + báo đỏ *"% VAT phải từ 0 đến 100"*; bấm Lưu nháp →
+  **không gửi request**, vẫn ở màn Sửa, lỗi còn nguyên.
+- Bảng loại 99 đọc ra đúng thứ tự cột ERP: `STT · Tên hàng hoá · Model · Mã hàng hoá · Thương hiệu ·
+  Số lượng * · Đơn vị tính · Giá NCC · Thành tiền · Xóa`, có dòng `Tổng cộng 1 · Tổng tiền 920.000`.
+  Cột Thương hiệu hiện `KOURITSU`.
+- Dòng chi phí mới: 2 ô số ra `0` thật (state = số 0, không phải chuỗi rỗng).
+- Lưu khi dòng chi phí chưa chọn Chi phí/NCC → báo đỏ *"Bắt buộc chọn loại chi phí"* /
+  *"Bắt buộc chọn nhà cung cấp"* ngay dưới từng ô, KHÔNG lưu im lặng.
+
+## Phase 14 — Sửa log `select2('isOpen')` khi bấm × (17/08/2026, @junfoke)
+
+Lỗi console phát sinh ở Phase 10 khi bật `allowClear` cho ô Loại yêu cầu:
+`The select2('isOpen') method was called on an element that is not using Select2.`
+
+### Nguyên nhân (đã khoanh vùng chính xác)
+
+`plugins/select2-focus.js`, handler `select2:unselect` gọi `$el.select2('isOpen')` **không kiểm
+`$el.data('select2')`**. Grep cả project: đây là lời gọi `select2('isOpen')` **DUY NHẤT không có
+guard** — 3 chỗ còn lại đều đã guard (`ensureDropdownOpens` cùng file `:26`,
+`V2BaseSelectInModal.vue:63` và `:205`).
+
+Chuỗi sự kiện: select2 phát `select2:unselect` → wrapper `v-select2-component` `$emit('change')` →
+model về `null` → ô select phụ thuộc bị `v-if` gỡ → wrapper gọi `select2('destroy')` ở
+`beforeDestroy` → handler của plugin chạy tiếp trên element đã destroy → jQuery `$.fn.select2` văng.
+
+### Đã sửa (user đồng ý sửa file dùng chung)
+
+```js
+if ($el.data('select2') && $el.select2('isOpen')) { $el.select2('close') }
+```
+
+Fix **chỉ bỏ đi exception, không đổi hành vi**: handler `$emit('change')` của wrapper nằm trên thẻ
+`<select>` bên trong nên chạy TRƯỚC (event bubble từ trong ra ngoài) — vì vậy trước khi sửa thì clear
+vẫn đúng, chỉ bẩn console. Sửa 1 dòng + comment, diff 6 thêm / 1 xoá, không đụng line ending.
+
+### ✅ Verify
+
+Bấm × ở ô Loại yêu cầu (loại 14 — có ô Khách hàng phụ thuộc bị gỡ): **0 lỗi console** (hook
+`console.error` để đếm), model về `null`, placeholder trở lại, mở lại dropdown vẫn ra đủ 7 option và
+chọn được.
+
+📌 Hành vi CÓ SẴN của plugin (không phải lỗi, không sửa): cờ `isClearing` giữ 500ms để cú bấm × không
+làm dropdown bật lên → click vào ô ngay sau khi bấm × có thể chưa mở, click lần nữa là được.
+
+**Lợi ích ngoài màn này**: sửa cho MỌI màn có `allowClear` mà việc xoá làm ô select khác biến mất.

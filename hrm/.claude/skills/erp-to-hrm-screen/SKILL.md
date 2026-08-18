@@ -94,8 +94,14 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Placeholder nói đúng trường lọc gì (`Chọn <X>` / `Nhập <X>` / `Tìm theo <các trường>`) —
       không `Tất cả`, không `Chọn...`, không để trống
 - [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách**
+- [ ] **Bấm thật TỪNG ô lọc** rồi xem bảng có đổi không — đối chiếu param trên tab Network với
+      `searchByFilter` của BE. Ô lọc sai tên key **không báo lỗi gì**, nhìn giao diện y như đúng
+- [ ] Khối tổ chức khai đúng `company_id` / `department_id` / `part_id` / `employee_id` trong
+      `initialStateForm` (Vue 2 không reactive với property chưa khai)
 - [ ] Vào chi tiết rồi quay lại → **bộ lọc còn nguyên**
 - [ ] Có nút Cấu hình cột; STT / Mã / Hành động **không tắt được**
+- [ ] Panel lọc là **`V2BaseSmartFilterPanel` + schema `filterFields`** (KHÔNG phải
+      `V2BaseFilterPanel` + slot `#advanced-filters` tự dựng tay) → mới có popup "Cài đặt bộ lọc"
 - [ ] > 3 trường lọc → có popup "Cài đặt bộ lọc"; ≤ 3 trường → hiện thẳng, bỏ khối nâng cao
 
 ### B. Nút & hành động
@@ -103,6 +109,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Thứ tự toolbar danh sách: Thêm mới → Import → Xuất → Cấu hình cột
 - [ ] Thứ tự cột thao tác: Sửa → Xóa → menu "…"
 - [ ] > 3 hành động → chỉ hiện 2 nút chính + nút "Hành động khác"
+- [ ] **Bấm thật TỪNG nút trong cột Hành động** (kể cả nút trong menu "…") — `V2BaseRowActions`
+      emit **chuỗi key**, handler phải `switch (action)`; so `action.key` là nút im ru mà không
+      báo lỗi gì. Nút khai `to:` vẫn chạy nên nhìn qua tưởng màn không lỗi
 - [ ] Nút không dùng được thì **ẩn hẳn** (`visible`/`v-if`), KHÔNG hiện xám
 - [ ] Hành động ở màn **chi tiết khớp hệt** màn danh sách — cả danh sách nút lẫn điều kiện ẩn/hiện
 - [ ] Nút màn chi tiết/form nằm trong `V2Footer`, không tự dựng khối nút
@@ -110,7 +119,12 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       Import = vàng nhạt, Xuất = xanh nhạt)
 
 ### C. Hiển thị dữ liệu
-- [ ] Trạng thái dùng `V2BaseBadge`, text từ `status_text` của BE (không map số→chữ ở FE)
+- [ ] Trạng thái dùng `V2BaseBadge`, text từ `status_text` / `status_name` của BE (không map
+      số→chữ ở FE), variant lấy qua helper chung `utils/statusBadgeVariant.js` — KHÔNG tự viết
+      `statusPillClass()` + `<span class="status-pill">` cho từng màn
+- [ ] **Màu trạng thái đúng nhóm SRS**: Nháp/Đang tạo = **XÁM**, Chờ duyệt = vàng, Đã duyệt = xanh,
+      Từ chối/Không duyệt/Khóa = đỏ. Kiểm cả hằng `STATUSES` ở BE — ERP hay gán "Đang tạo" là
+      `danger` (đỏ), bê nguyên sang là sai
 - [ ] Căn lề đúng: STT/badge/hành động = giữa; số & tiền = phải; chữ & ngày = trái
 - [ ] Ngày `dd/mm/yyyy`, ngày+giờ `dd/mm/yyyy HH:mm` (BE trả sẵn, FE không format lại)
 - [ ] Tiền: `.` ngăn nghìn, `,` ngăn thập phân
@@ -139,7 +153,10 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Import dùng `V2BaseImportModal`; có file mẫu tải về được
 - [ ] Validate trước khi import; dòng lỗi đỏ sửa được tại chỗ, dòng hợp lệ xanh và khóa
 - [ ] Vẫn import được khi còn dòng lỗi (chỉ import dòng hợp lệ)
-- [ ] Xuất file: mở popup **chọn trường** trước, thứ tự cột theo user chọn
+- [ ] Xuất file: mở popup **chọn trường** (`ExportFieldsModal`) trước, KHÔNG xuất thẳng khi bấm nút;
+      thứ tự cột trong file theo đúng thứ tự user tick
+- [ ] BE trả **đủ** các trường có trong popup — kể cả cột đang ẩn ở màn danh sách, nếu không user
+      tick xong ra cột trống
 - [ ] Nút xuất bị khóa khi đang xuất + có dòng tiến độ
 
 ### G. Thông báo & xác nhận
@@ -160,19 +177,42 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 
 | Bẫy | Hậu quả | Cách tránh |
 |---|---|---|
+| **Copy màn HRM đã port trước đó làm khuôn** | Nhân bản y nguyên cái sai — 1 lỗi UI thành N màn lỗi | Khuôn chuẩn là **Danh mục khách hàng**, không phải màn gần nhất mình vừa làm. Muốn copy màn khác thì chạy checklist cho **màn nguồn** trước |
+| Dùng `V2BaseFilterPanel` + tự dựng `#advanced-filters` | Mất popup "Cài đặt bộ lọc", user không ẩn/sắp xếp được ô lọc | `V2BaseSmartFilterPanel` + schema `filterFields` cho MỌI màn > 3 ô lọc |
+| Bấm "Xuất Excel" là tải file luôn | Vi phạm quy tắc "user chọn trường xuất" | Mở `ExportFieldsModal` trước, truyền `selectedFields` xuống hàm dựng file |
+| Bê nguyên nhãn/màu trạng thái của ERP | "Đang tạo" hiện ĐỎ như phiếu bị từ chối | Đối chiếu hằng `STATUSES` với bảng màu SRS; nháp phải xám |
+| Mỗi màn tự viết `statusPillClass()` | Badge lệch nhau giữa các màn | `V2BaseBadge` + helper `utils/statusBadgeVariant.js` |
 | Port nút nhưng bỏ điều kiện ẩn/hiện của ERP | User không đủ điều kiện vẫn bấm được | Bước 1 ghi cả điều kiện, bước 5 đối chiếu lại |
+| Nút bị `interactable: false` + `disabledTitle` (rule CŨ) | Nút xám nằm chình ình, vi phạm rule hiện hành | Đổi sang `visible`. Màn cũ đầy pattern này — copy là dính |
+| Sửa màn danh sách mà quên khối Trạng thái trong **Form** | Danh sách 1 kiểu badge, chi tiết 1 kiểu | Grep `status-pill` / `statusPillClass` trong **cả thư mục feature** |
 | Danh sách gate `perm && isActive`, chi tiết chỉ gate `perm` | 2 màn lệch số nút | Đọc điều kiện từ **cùng 1 nguồn** (cờ BE `is_can_edit`) |
 | Trùng `columnScreenKey` / `localStorageKey` với màn khác | 2 màn ghi đè cấu hình của nhau | Đặt theo slug màn, grep kiểm trùng |
 | Tự dựng `<span class="status-pill">` | Badge lệch hẳn các màn khác | `V2BaseBadge` |
 | STT tính `index + 1` | Sai từ trang 2 | `getNumericalOrder(currentPage, pageSize, index)` |
 | Cột Mã để `@click` trên `<div>` | Không mở được tab mới (vi phạm SRS) | `<nuxt-link>` |
-| `V2BaseRowActions` so `action.key` | Nút bấm im ru | Nó emit **chuỗi key**, so `action === 'edit'` |
+| `V2BaseRowActions` so `action.key` | **Nút bấm im ru, không lỗi console** — và nút khai `to:` vẫn chạy nên rất dễ nghiệm thu nhầm là "màn chạy được" | Nó emit **chuỗi key** → `switch (action)`. Khuôn đúng: `pages/assign/customers/index.vue::handleRowAction`. ⚠️ Menu hành động **tự dựng tay** thì `action.key` lại đúng — chỉ sai khi qua `V2BaseRowActions` |
 | `V2BaseButton` truyền `disabled` | Không có prop đó → nút vẫn bấm được | Ẩn nút bằng `visible`, đừng disable |
+| Khai `company` / `department` / `part` trong `initialStateForm` | **Ô lọc Công ty/Phòng ban chọn xong không có gì xảy ra.** Hỏng 2 lần: Vue 2 không reactive với property chưa khai → deep watcher không bắn; và tên gửi lên không khớp param BE | `V2BaseCompanyDepartmentFilter` ghi vào **`company_id` / `department_id` / `part_id` / `employee_id`** — khai đúng 4 key này (kể cả key không dùng làm bộ lọc, vì watcher của nó vẫn reset). BE đọc cùng tên |
+| Để ô "Bộ phận"/"Nhân viên" hiện mà BE không lọc theo | Ô lọc chết, user chọn mãi không ra | `:disable_part` / `:disable_employee` — đối chiếu `searchByFilter` của BE xem thật sự lọc theo cấp nào |
 | `$axios` tải file thiếu `Authorization` | Xuất Excel 401 | Tự gắn token cho request export |
 | Bê nguyên `title` cho panel lọc | Mỗi màn một tiêu đề khác nhau | Bỏ prop, dùng mặc định "Bộ lọc danh sách" |
 | Đổi route mà quên dữ liệu đã lưu URL trong DB | Màn bị đá 404 | Grep xem đường dẫn có bị lưu DB / so khớp ở BE không; redirect FE **không** cứu được |
 
 ---
+
+## Tự kiểm nhanh bằng grep (chạy trên CẢ thư mục feature, không chỉ index.vue)
+
+```bash
+# Mỗi dòng kết quả là 1 vi phạm cần sửa
+grep -rn "status-pill\|statusPillClass"   <thư-mục-feature>   # phải dùng V2BaseBadge
+grep -rn "interactable:\|disabledTitle"   <thư-mục-feature>   # nút phải ẩn bằng visible
+grep -rn "action\.key ==="                <thư-mục-feature>   # V2BaseRowActions emit CHUỖI -> nút chết
+grep -rn "V2BaseFilterPanel"              <thư-mục-feature>   # phải là V2BaseSmartFilterPanel
+grep -rn "advanced-filters"               <thư-mục-feature>   # bộ lọc dựng tay
+grep -rn "thành công'"                    <thư-mục-feature>   # câu toast tự chế, so với bảng QLDA
+```
+
+Nếu grep ra sạch mà mắt vẫn thấy lệch → mở màn **Danh mục khách hàng** đặt cạnh và so từng khối.
 
 ## Khi phát hiện project đang có nhiều kiểu khác nhau
 

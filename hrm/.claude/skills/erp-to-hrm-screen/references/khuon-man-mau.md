@@ -79,6 +79,10 @@ sẽ làm 2 màn ghi đè cấu hình cột của nhau.
 
 ### Bộ lọc — khai bằng schema `filterFields`
 
+⚠️ Dùng **`V2BaseSmartFilterPanel`**, KHÔNG dùng `V2BaseFilterPanel`. `V2BaseFilterPanel` là bản cũ,
+màn phải tự dựng khối `#advanced-filters` bằng tay và **không có popup "Cài đặt bộ lọc"** — dựng
+xong là thiếu quy tắc chung mà nhìn ngoài giao diện không phát hiện ra.
+
 Không dựng tay từng `<input>`. Khai mảng schema để user tự bật/tắt + kéo sắp xếp trong popup
 "Cài đặt bộ lọc" (cấu hình lưu ở bảng `filter_customizations` theo `table=<slug>`):
 
@@ -121,8 +125,15 @@ Tạo mới (primary) → Import Excel (secondary + status="warning")
 - Cột **Tên** là chữ thường, KHÔNG phải link, KHÔNG in đậm: `field-line text-dark font-weight-normal`.
 - Giá trị rỗng → in `—` (em dash), không để trống.
 - Ngày giờ: BE trả sẵn chuỗi `dd/mm/yyyy HH:mm`, FE **không tự format lại**.
-- Trạng thái: `V2BaseBadge` với `variant` (`brand` = hoạt động, `required` = khóa/từ chối,
-  `muted` = nháp). KHÔNG tự khai `<span class="status-pill">`.
+- Trạng thái: `V2BaseBadge` với `variant`. KHÔNG tự khai `<span class="status-pill">` +
+  `statusPillClass()` cho từng màn.
+  - Màn có **trạng thái nhị phân** (hoạt động / khóa): `Number(item.status) === 1 ? 'brand' : 'required'`.
+  - Màn **phiếu nhiều trạng thái** (BE trả `status_type`): dùng helper chung
+    `@/utils/statusBadgeVariant.js` → `statusBadgeVariant(item.status_type)`.
+    Bảng quy đổi: `success`→`brand` (xanh) · `warning`→`status-draft` (vàng) ·
+    `danger`→`required` (đỏ) · còn lại →`muted` (xám).
+  - ⚠️ Kiểm hằng `STATUSES` ở BE: trạng thái **Nháp / Đang tạo phải là xám**, không phải `danger`.
+    ERP hay gán đỏ cho phiếu mới lập — bê nguyên sang là sai theo bảng màu SRS.
 
 ### Cột Hành động — `getRowActions(item)`
 

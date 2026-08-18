@@ -120,6 +120,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Bài học: quét route bằng vòng lặp curl đã **duyệt thật** phiếu 870 — khôi phục được nhờ bản
   sao lưu Phase 0. Đừng bắn POST/PUT/DELETE vào id bản ghi thật.
   Bước tiếp: user so cạnh nhau 2 cổng trên dev + test bằng tài khoản Kế toán kho không phải Super admin.
+  Cập nhật 2026-08-17 — **PHASE 8: vá 9 bug QA (redmine 11092-11108), ĐÃ VERIFY TRÌNH DUYỆT**.
+  Sort Số phiếu/Ngày tạo (thiếu `:sortBy`/`:sortDirection`) · bỏ lọc Bộ phận + thêm lọc Số phiếu ·
+  ngày hiện `d/m/Y H:i` + đổi text Người tạo/Ngày tạo + thêm cột Người/Ngày cập nhật · khối Lịch sử
+  có icon + "Xem lịch sử" · nút In trắng + "Từ chối" · bản in đậm 700 + giãn dòng · Lưu xong về
+  danh sách · số lượng vượt tồn **báo đỏ tại ô** thay vì tự kéo về trần · Excel + bản in danh sách
+  có khối ký Người lập. Ghi chú "XÓA ĐỔI MÀU XANH" của 11104 là nhầm — user chốt 18/08 giữ **Xóa đỏ**
+  `#dc2626` theo skill `button-convention`, user tự phản hồi lại bên ra quy tắc chung.
   Port màn ERP "Phiếu chuyển hàng nhập thẳng" (`productImportDirectTransfers`, 13 route,
   4 bảng: transfers 865 dòng / products 2.349 / details 15.834 / detail_logs 32.730)
   sang phân hệ **Tài chính**, nhóm **Điều chuyển** của `finance.js`, cạnh "Phiếu điều chuyển hàng".
@@ -132,13 +139,30 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Bước tiếp: Phase 0 — tạo nhánh ở cả 2 repo, sao lưu 4 bảng trước khi test luồng duyệt.
 
 - finance-product-import-request → @junfoke → .plans/gop-db/finance-product-import-request/plan.md
-  Trạng thái: **Phase 9 sửa 16 bug tester — XONG + ĐÃ VERIFY CHẠY THẬT 16/16 (17/08/2026)**.
+  Trạng thái: **Phase 9 (16 bug tester) + Phase 10-13 (phản hồi bổ sung) — XONG, ĐÃ VERIFY CHẠY THẬT**.
+  Phase 13: % VAT nhập ngoài 0-100 thì **báo đỏ** chứ không tự kéo về 100 (đừng sửa ngầm số user
+  nhập) · bảng hàng hoá loại 14/99 đổi sang **đúng bộ cột ERP** (bỏ cột "SL có thể nhập" tự chế,
+  thêm Thương hiệu / Giá NCC / Thành tiền + dòng Tổng cộng) · dòng chi phí nội địa mặc định 0 như ERP
+  và **bỏ tự dọn dòng trống** (trước đó lưu im lặng, dòng biến mất không báo).
+  Phase 12: bổ sung **THÊM HÀNG HOÁ BẰNG TAY cho loại 14/99** (bản port trước kết luận sai là hàng
+  hoá chỉ lấy được từ chứng từ nguồn → đây mới là gốc của bug 11089). Popup dùng chung của màn báo
+  giá + endpoint mới `/products/{id}/units`, bám khuôn màn Phiếu YC chuyển hàng. Ngược lại, 5 loại
+  2/3/4/9/15 nay ẩn hẳn nút Xoá vì ERP không cho xoá.
+  Phase 11: đối chiếu blade ERP về việc khoá ô ở màn Sửa — Loại yêu cầu + chứng từ nguồn khoá là
+  ĐÚNG ERP (thêm icon ⓘ giải thích vì ô khoá của bộ V2 nhìn giống ô trống), nhưng **Nhập thẳng thì
+  bản port tự khoá thêm** nên đã mở lại.
+  Phase 10: khối Lịch sử màn chi tiết thu gọn được (lazy load, 0 request khi vào màn) · bản in
+  thu dòng lại đúng ERP (50px → 28px/dòng, do padding chỉ áp cho bảng có viền) · nút × ở ô Loại yêu cầu.
   Redmine 11074-11089 (Lê Huyền Trang, 15/08). Đáng nhớ nhất: nút In cột Hành động không chạy vì
   `V2BaseRowActions` emit ra CHUỖI key chứ không phải object; chi phí nội địa "không validate" thực
   chất là FE tự lọc bỏ dòng trống trước khi gửi; bản in nhạt hơn ERP vì CSS chung đặt
   `font-weight: 500` cho `b/strong` mà Times New Roman không có nét 500.
   Đã bỏ 2 nút "Tạo đề nghị nhập kho" / "Tạo phiếu nhập hàng" (màn đích thuộc phân hệ Kho, chưa port).
-  Còn nợ user chốt: `V2Footer` dùng chung đang để In màu xanh + chữ "Không duyệt", lệch chuẩn nút.
+  Phase 14: sửa log `select2('isOpen')` khi bấm × — nguyên nhân là `plugins/select2-focus.js` thiếu
+  guard `$el.data('select2')` ở handler `select2:unselect` (lời gọi DUY NHẤT trong project không có
+  guard). User đồng ý sửa file dùng chung; fix 1 dòng, có lợi cho mọi màn dùng `allowClear`.
+  Còn nợ user chốt: `V2Footer` (tài sản dùng chung) để nút In màu xanh + chữ "Không duyệt", lệch
+  bảng text/màu nút chuẩn — mọi màn khác dùng `menu.print` / `menu.reject_approve` vẫn sai.
   Dữ liệu test để lại trên DB local: phiếu nháp PYCNH-12245 (màn không có chức năng Xóa).
   Bước tiếp: user review trên dev rồi đóng 16 issue Redmine.
   (Phase 1-7 đã verify 2026-08-14, Phase 8 bổ sung luồng gửi thẳng Ban kiểm soát.)
