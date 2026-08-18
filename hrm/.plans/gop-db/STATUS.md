@@ -237,6 +237,17 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Trạng thái: **HOÀN THÀNH** (2026-08-18). Nhánh `gop_db`, đã commit:
+  `hrm-api` `757a9baf7`+`30f3578a5`+`e04418092` · `hrm-client` `c96c87f62`+`53bf38cd0`.
+  Port màn ERP "Phiếu yêu cầu điều chỉnh công nợ" → `/finance/bill-adjust-dept-requests` (phân hệ
+  Tài chính). **Không thêm bảng** (dùng chung bảng ERP; lịch sử dùng `catalog_histories`).
+  BE 22 file + 20 route + 4 quyền id 1169–1172 · FE 7 file + 2 mục menu. 15 phase, test Playwright
+  TH1–TH19, hồi quy BE 76/76.
+  ⚠️ Môi trường khác phải chạy migration `2026_08_16_000001_create_catalog_histories_table` trước.
+  ⚠️ DB local còn 6 phiếu mẫu `TEST.DNDCCN.*`. Chưa làm: nút "Chọn nhanh hợp đồng", SRS/testcase/HDSD.
+  Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
+
 - finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
   Trạng thái: **HOÀN THÀNH** (2026-08-15) — user đã test trình duyệt toàn màn. Nhánh `gop_db`,
   đã commit: `hrm-api` `6eed9d2a6` · `hrm-client` `8c0ffb424`.
@@ -456,6 +467,11 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   **Đợt chỉnh 2026-08-13 (Phase 11j–11l) — CHỜ USER TEST**: Excel hết cảnh báo "Number stored as text",
   đổi chữ "dịch vụ" → "gói bảo dưỡng", form dùng `V2Footer` (nút Lưu mất icon spinner — user đã chốt).
   Tồn: checklist "Verify tổng thể" cuối plan.md chưa tick.
+  **Phase 12 (2026-08-17) — BỘ TÀI LIỆU BÀN GIAO XONG**: `testcase.xlsx` (171 TC, P0 63%, engine
+  17 cột), `SRS - Danh mục gói bảo dưỡng.docx` (form 4 chương, FR-01…FR-11, 37 trang),
+  `HDSD_Danh muc goi bao duong.docx` (31 trang) — sinh lại được bằng `gen_testcase.py` /
+  `gen_srs.py` / `gen_hdsd.py`. Chờ user chốt 2 điểm: xuất Excel + in + xem danh sách hiện KHÔNG
+  gắn quyền, và xuất Excel không áp bộ lọc màn hình (giữ nguyên như ERP).
   Spec: docs/superpowers/specs/gop-db/2026-08-04-customer-care-services-catalog-design.md | Ledger: .plans/gop-db/customer-care-services-catalog/sdd-progress.md
 
 - bo-sung-menu-phan-he → @junfoke (Phase 11: @khoipv) → .plans/gop-db/bo-sung-menu-phan-he/plan.md

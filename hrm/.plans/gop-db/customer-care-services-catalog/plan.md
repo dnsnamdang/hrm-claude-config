@@ -1250,3 +1250,51 @@ Vừa hoàn thành: Phase 11l — form Thêm/Sửa gói bảo dưỡng chuyển 
 Đang làm dở: không có.
 Bước tiếp theo: user mở `/customer-care/services/create` và màn sửa để xác nhận footer + nút Sao chép.
 Blocked:
+
+## Phase 12 — Bộ tài liệu bàn giao: Testcase + HDSD + SRS (2026-08-17)
+
+**User yêu cầu:** xuất bộ 3 tài liệu cho màn Danh mục gói bảo dưỡng theo skill mới nhất, bố cục
+bám bộ mẫu đã chốt của team (`.plans/gop-db/customer-docs/`).
+
+### Chuẩn bị
+- [x] Đọc lại toàn bộ code nguồn trên nhánh `gop_db` để tài liệu bám code thật:
+      BE `ServiceController` / `ServiceService` / `ServiceRequest` / `ServiceListResource` /
+      entity `Service` + `Routes/api.php` (3 quyền Thêm / Sửa / Xóa; list-detail-print-export
+      KHÔNG gate; `serviceNotLocked` gắn ở route sửa + xóa);
+      FE `pages/customer-care/services/*` + `components/ServiceFormComponent.vue`
+- [x] Chụp 14 ảnh thật trên cổng dev `hrm-crm.eteksofts.com` (1440×900) → `gbd_shots/`
+      (chỉ để local, `.gitignore` đã chặn `**/.plans/**/*_shots/`)
+
+### Testcase
+- [x] `gen_testcase.py` — dùng engine chung `tc_engine.py` (form 17 cột, 2 khối summary DNS/TP),
+      thay hẳn `generate-testcase.py` cũ (form 15 cột) → đã xoá file cũ
+- [x] `testcase.xlsx` — **171 TC**, P0 108 (63%), 11 TC-ROLE + 10 mục La Mã
+- [x] Bộ kiểm tra thuật ngữ kỹ thuật: sạch (đổi ví dụ giá 8.400.000 → 5.600.000 để không đụng
+      luật chặn mã lỗi 400/403/404/422)
+
+### SRS
+- [x] `gen_srs.py` — form MỚI 4 chương (Giới thiệu / Phân quyền / Đặc tả chi tiết / Quy tắc
+      nghiệp vụ), bám bản mẫu `SRS - Danh mục khách hàng.docx`: giữ dòng "Menu:" trong Layout,
+      nhãn mục con `2.x.y` và tiêu đề BR in đậm, tiêu đề trang đầu 24pt không in đậm
+- [x] `SRS - Danh mục gói bảo dưỡng.docx` — FR-01…FR-11, 38 bảng, 23 ảnh (14 ảnh thật +
+      1 sơ đồ tổng quan + 8 biểu đồ use case), **37 trang**, mục lục đã được Word cập nhật thật
+- [x] Tự kiểm: không còn mục nào của form cũ (Tổng quan / Mini-Spec / Tiêu chí nghiệm thu /
+      Ngoài phạm vi / Chức năng liên quan / Route (FE) / Phân hệ:)
+
+### HDSD
+- [x] `gen_hdsd.py` — bám bố cục `HDSD_Danh muc khach hang.docx`: TỔNG QUAN (thuật ngữ, cập nhật
+      tài liệu, giới thiệu, quyền + phạm vi dữ liệu) → 9 PHẦN chức năng → PHẦN 10 hướng dẫn theo
+      từng quyền + 9 câu hỏi thường gặp
+- [x] `HDSD_Danh muc goi bao duong.docx` — **31 trang**, 13 Heading 1, 9 bảng, 15 ảnh
+
+### Ghi nhận nghiệp vụ cần user chốt
+- [ ] Xuất Excel + In phiếu + Xem danh sách/chi tiết hiện KHÔNG gắn quyền — tài liệu đã ghi rõ là
+      hiện trạng giữ nguyên theo phần mềm cũ. Nếu nghiệp vụ muốn siết thì phải bổ sung quyền mới.
+- [ ] Xuất Excel không áp bộ lọc màn hình (luôn ra đủ toàn bộ danh mục) — giữ nguyên như ERP.
+
+### Checkpoint — 2026-08-17
+Vừa hoàn thành: Phase 12 — đủ bộ 3 tài liệu (testcase.xlsx 171 TC, SRS 37 trang, HDSD 31 trang)
+cho màn Danh mục gói bảo dưỡng, sinh bằng 3 script `gen_*.py` chạy lại được.
+Đang làm dở: không có.
+Bước tiếp theo: user đọc lại 3 file và chốt 2 câu hỏi nghiệp vụ ở mục "Ghi nhận nghiệp vụ cần user chốt".
+Blocked:

@@ -1455,3 +1455,37 @@ Blocked: không.
 - [ ] Verify trên UI: tài khoản khóa → nút Sửa mờ, nút Xem vẫn dùng được, mở khóa xong sửa lại bình thường
 
 Ghi chú: muốn sửa tài khoản đã khóa thì phải Mở khóa trước (nút toggle ở cột Trạng thái vẫn hoạt động).
+
+## Phase — Bộ tài liệu bàn giao: Test case + SRS + HDSD (2026-08-17)
+
+Sinh đủ 3 tài liệu theo bộ skill mới nhất, bám bản mẫu đã được user chốt
+(`.plans/gop-db/customer-docs/`), thay cho bản test case cũ 15 cột.
+
+- [x] Rà lại code: 7 route `/finance/account-banks` (tất cả gắn quyền `Quản lý danh mục tài khoản ngân hàng`, route sửa gắn thêm chốt chặn bản ghi đang khóa), `CompanyAccountService`, `CompanyAccountRequest`, 2 Resource, `AccountBankModal.vue`, `index.vue`
+- [x] Chụp 11 ảnh thật trên cổng dev `hrm-crm.eteksofts.com` (1440x900) → `tknh_shots/` (chỉ để local)
+- [x] `gen_testcase.py` (engine `tc_engine.py`) → `testcase.xlsx` — **135 TC / 9 TC phân quyền + 9 section La Mã, P0 = 82 (61%)**; bộ kiểm tra thuật ngữ in "OK - sach". Đã xoá `generate-testcase.py` bản cũ
+- [x] `gen_srs.py` (form MỚI 4 chương) → `SRS - Danh mục tài khoản ngân hàng.docx` — 8 chức năng FR-01…FR-08, 27 bảng, 16 ảnh (5 sơ đồ use case + 11 ảnh thật), 27 trang, mục lục đã cho Word cập nhật thật
+- [x] `gen_hdsd.py` (engine `hdsd_engine.py`) → `HDSD_Danh muc tai khoan ngan hang.docx` — 25 trang, 12 phần, 10 bảng, 11 ảnh; mục lục + danh mục hình ảnh đã cập nhật thật; đếm direct formatting khớp bản mẫu (heading 2, run trong ô bảng 0)
+
+### ⚠️ Local đang SAU origin/gop_db khi làm tài liệu
+
+`git fetch` cho thấy origin có thêm commit đụng màn này:
+- FE `pages/finance/account-banks/index.vue`: **+2 cột** `Người cập nhật` và `Ngày cập nhật` (mặc định ẩn)
+- BE `CompanyAccountListResource`: trả thêm `updated_by_name` / `updated_at`; `CompanyAccountService` nạp thêm quan hệ người cập nhật
+
+Cổng dev đã chạy bản mới nên **ảnh chụp có 2 cột đó**. Tài liệu viết theo bản MỚI (12 cột khả dụng,
+8 cột hiện mặc định). Working copy chưa pull — cần `git pull` ở cả 2 repo trước khi code tiếp,
+tôi không tự pull.
+
+### Ghi nhận khi soát code để viết tài liệu
+
+- Cột "Hành động" chỉ có 3 thao tác (Sửa / Khóa - Mở khóa / Lịch sử) nên hiện thẳng 3 nút, không có menu ⋮.
+- Nút Sửa của tài khoản đang khóa hiện **ẨN HẲN** (`visible: !isLocked`), khác ghi chú ở Task 17 (làm mờ + tooltip) — tài liệu viết theo code hiện tại.
+- Cảnh báo "Thông tin chưa lưu" khi đóng cửa sổ đang nhập dở **không hiện** trên bản đang chạy (giống màn Danh mục ngân hàng) — đã ghi vào test case TC_04.029 để QA kiểm chứng.
+- Popup Lịch sử của các bản ghi cũ đang trống vì lịch sử chỉ ghi từ khi có tính năng; ảnh minh hoạ trong tài liệu là trạng thái rỗng.
+
+### Checkpoint — 2026-08-17 (tài liệu)
+Vừa hoàn thành: testcase.xlsx (135 TC), SRS .docx (form 4 chương), HDSD .docx (25 trang) + 11 ảnh thật cho màn Danh mục tài khoản ngân hàng.
+Đang làm dở: không.
+Bước tiếp theo: user đọc 3 file; cần sửa thì sửa `gen_*.py` rồi chạy lại. Cân nhắc `git pull` để working copy khớp bản đã deploy trên dev.
+Blocked: không.
