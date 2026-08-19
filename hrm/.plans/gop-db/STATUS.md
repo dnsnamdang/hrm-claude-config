@@ -79,7 +79,7 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
 
 - finance-prepick-stock-list → @junfoke → .plans/gop-db/finance-prepick-stock-list/plan.md
-  Trạng thái: **XONG CODE PHASE 0-7, ĐÃ VERIFY HTTP** (2026-08-18). Nhánh
+  Trạng thái: **XONG CODE PHASE 0-7, ĐÃ VERIFY TRÊN TRÌNH DUYỆT (Playwright)** (2026-08-18). Nhánh
   `feat/finance-prepick-stock-list` (từ `gop_db`, cả 2 repo).
   Port màn **Danh sách hàng giữ** (`warehouseInfo.prepickIndex`) sang phân hệ **Tài chính**, nhóm
   **Giữ hàng** — mục menu đã có sẵn placeholder, nay đã gắn `link: /finance/prepick-stocks`.
@@ -97,7 +97,16 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Bẫy mới: `V2BaseDataTable` KHÔNG có `sortKey` riêng (emit thẳng `column.key`) và
   `V2BaseCompanyDepartmentFilter` TỰ render select gắn `form.employee_id` — màn nào có ô "Nhân
   viên" riêng phải bật `:disable_employee`.
-  Bước tiếp: user bấm tay trên trình duyệt + đối chiếu 2 cổng trên dev.
+  ⚠️ 3 lỗi CHỈ trình duyệt mới lộ, đã sửa: (1) `sortDirection=''` làm Vue warning đỏ mỗi lần
+  render — `V2BaseDataTable` có validator chỉ nhận 'asc'/'desc'; (2) bản in ra "Ngày lập: Ngày in:"
+  vì `_layout` in cứng nhãn "Ngày lập:"; (3) không đọc `?product_id=` từ query string trong khi
+  màn "Báo cáo hàng sắp về" bên ERP link thẳng sang kèm tham số đó.
+  Lỗi (1) và (2) tồn tại sẵn ở các màn port trước — user chốt sửa luôn: `sortDirection` vá ở
+  `prepick-cancel-requests` + `prepick-cancels` + `product-import-direct-transfers`; nhãn bản in vá
+  ở 2 blade `prepick-cancel-*-list` (chuyển `$filterText` xuống `infoRows` thành "Khoảng thời
+  gian", KHÔNG đụng `_layout.blade.php` dùng chung). Đã verify lại: 3 màn console 0 lỗi, 2 bản in
+  hết dòng "Ngày lập:" thừa.
+  Bước tiếp: user đối chiếu 2 cổng trên dev + test nhánh quyền `Xem phiếu hàng giữ theo phòng ban`.
 
 - finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
   Trạng thái: **XONG CODE PHASE 0-9, ĐÃ VERIFY HTTP END-TO-END** (2026-08-15). Nhánh

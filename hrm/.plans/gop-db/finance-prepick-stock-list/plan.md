@@ -2,7 +2,7 @@
 
 > @junfoke · nhánh `feat/finance-prepick-stock-list` (từ `gop_db`, cả 2 repo) · design: `./design.md`
 >
-> **Trạng thái: XONG PHASE 0-7 PHẦN CODE + ĐÃ VERIFY HTTP (2026-08-18).**
+> **Trạng thái: XONG PHASE 0-7 + ĐÃ VERIFY TRÊN TRÌNH DUYỆT BẰNG PLAYWRIGHT (2026-08-18).**
 >
 > BE 4 file mới (`PrepickStockReportService` 1.100 dòng · `PrepickStockController` ·
 > `PrepickStockProductResource` · blade in `prepick-stock-list`) + 6 route. Không migration.
@@ -14,7 +14,8 @@
 > / không quyền 403) · vá lỗi #6 đã chứng minh trên dữ liệu thật ·
 > **`prepick_details` + `prepick_logs` y nguyên số dòng và SUM(qty) so với Phase 0**.
 >
-> **Còn lại (user làm)**: bấm tay trên trình duyệt, đối chiếu 2 cổng trên dev.
+> **Còn lại (user làm)**: đối chiếu 2 cổng trên dev bằng tài khoản thường; test nhánh quyền
+> `Xem phiếu hàng giữ theo phòng ban` (chưa có tài khoản mẫu trên DB local).
 >
 > Màn **báo cáo tra cứu, CHỈ ĐỌC** — không tạo/sửa/xóa, **không ghi một dòng nào** vào
 > `prepick_details` / `prepick_logs`. Vì vậy KHÔNG cần sao lưu bảng như đợt Hủy hàng giữ.
@@ -422,6 +423,54 @@ grep -rn "advanced-filters"               pages/finance/prepick-stocks
       **không có quyền** (phải không thấy menu + API trả 403).
 - [x] Cập nhật `.plans/gop-db/STATUS.md`.
 
+### Verify trên trình duyệt (Playwright, tài khoản DNS Admin)
+
+- [x] Màn load: 10/895 dòng, phân trang, toolbar In / Xuất Excel / Cấu hình cột đủ.
+- [x] Bấm ▸ mở cây: tầng 2 (`row-employee`, nền xanh) + tầng 3 (`row-lot`, nền xanh dương) hiện
+      đúng — Tổng SL kho 20 · SL giữ 6 · NV "Đàm Phước Nhiên / Phòng KD Khu vực 2" · lô 6, hạn
+      15/08/2026, badge `v2-badge--required` (đỏ) "Hết hạn".
+- [x] Nút **Lịch sử giữ hàng** ở tầng 3 render và bấm được; popup hiện đủ khối thông tin + dòng
+      "Số lượng giữ hiện tại: 6 Cái." + sổ biến động, cột Chứng từ ra link `PXG-02132`.
+- [x] Lọc `product_name=Ampe` -> 3 dòng (khớp SQL), và cây **tự đóng hết + xoá cache**
+      (`expandedIds` 0, `detailsByProduct` 0).
+- [x] Bấm header **SL giữ** -> gửi `sort_by=prepick_qty&sort_dir=asc`, bảng đổi đúng.
+- [x] `?product_id=5345` -> đúng 1 hàng hóa, SL giữ 159 (khớp probe BE).
+- [x] Bản in: letterhead công ty + gom 3 cấp 1 / 1.1 / 1.1.1 đúng mẫu ERP.
+- [x] Popup **Chọn trường xuất Excel** mở đúng, 12/12 trường, có dòng nhắc thứ tự cột theo thứ tự tick.
+- [x] **Console 0 lỗi** trên cả màn danh sách lẫn màn in.
+
+3 lỗi CHỈ trình duyệt mới lộ, đã sửa:
+
+| # | Lỗi | Sửa |
+|---:|---|---|
+| 1 | `V2BaseDataTable.sortDirection` có validator chỉ nhận `'asc'`/`'desc'`; lúc chưa sắp xếp `sort.direction` là chuỗi rỗng -> **Vue warning đỏ mỗi lần render** | truyền `sort.direction \|\| 'asc'` |
+| 2 | Bản in ra **"Ngày lập: Ngày in: 18/08/2026"** — `_layout` in cứng nhãn "Ngày lập:" cho biến `createdAt`, mà báo cáo tra cứu không có ngày lập | `createdAt => null`, đưa "Ngày in" xuống `infoRows` |
+| 3 | **Không đọc `?product_id=` từ query string** — ERP có (`getParam('product_id')`), và màn "Báo cáo hàng sắp về" (`arriving_report.blade.php:184`) link thẳng sang kèm tham số này. Bỏ sót là link cũ chết | khai `product_id` trong `initialStateForm` + đọc `$route.query.product_id` ở `mounted()` (đè bộ lọc đã lưu) |
+
+⚠️ Lỗi #1 và #2 **tồn tại sẵn ở các màn đã port trước đó** (cùng pattern). User chốt 2026-08-18
+"lỗi thì cứ fix đi" -> ĐÃ SỬA LUÔN:
+
+- Lỗi #1 (`sortDirection`): `pages/finance/prepick-cancel-requests/index.vue:55` ·
+  `pages/finance/prepick-cancels/index.vue:29` ·
+  `pages/finance/product-import-direct-transfers/index.vue:56`.
+  (11 màn Tài chính khác dùng `filters.sort_desc ? 'desc' : 'asc'` — luôn ra giá trị hợp lệ,
+  KHÔNG dính lỗi, không đụng tới.)
+- Lỗi #2 (nhãn "Ngày lập:" thừa trên bản in danh sách):
+  `Modules/Finance/Resources/views/prints/prepick-cancel-request-list.blade.php` ·
+  `prepick-cancel-list.blade.php` — chuyển `$filterText` từ `createdAt` xuống `infoRows` thành
+  dòng **"Khoảng thời gian"**, bọc `array_filter` để không lọc ngày thì dòng đó không hiện.
+  KHÔNG sửa `_layout.blade.php` (file dùng chung của 5 mẫu in).
+
+Verify lại sau khi sửa (Playwright):
+- 3 màn danh sách `prepick-cancel-requests` / `prepick-cancels` / `product-import-direct-transfers`
+  đều load được, **console 0 lỗi** (trước đó có warning `sortDirection`).
+- Bản in `prepick-cancel-requests/print-list?startDate=2026-01-01&endDate=2026-08-18` ->
+  "Khoảng thời gian: Từ ngày 01/01/2026 đến ngày 18/08/2026" + "Tổng số phiếu: 0",
+  KHÔNG còn dòng "Ngày lập:".
+- Bản in `prepick-cancels/print-list` cùng bộ lọc -> "Tổng số phiếu: 2142", bảng render đủ.
+
+---
+
 ### Checkpoint — Phase 7
 
 ```text
@@ -440,9 +489,12 @@ Verify:
 - Phân quyền: NV 13 (Super admin) 895 hàng hóa · NV 27 (có `Quản lý giữ hàng`, không có quyền cấp
   nào) chỉ 70 hàng hóa của chính mình và mở chi tiết chỉ ra chính mình · NV 25 (không quyền) 403.
 
-CHƯA làm (cần trình duyệt/2 cổng — user làm):
-- Bấm thật từng ô lọc, mở/thu 3 tầng, đổi đơn vị trên 5 hàng hóa có 2 ĐVT.
-- Ctrl+P kiểm bản in không mất viền / không mất chữ đậm.
+ĐÃ verify trên trình duyệt bằng Playwright — xem mục "Verify trên trình duyệt" ở trên.
+
+CHƯA làm (user làm):
+- Đổi đơn vị trên 5 hàng hóa có >= 2 ĐVT (đều không nằm ở trang đầu, chưa lần ra để bấm).
+- Ctrl+P thật để kiểm viền / chữ đậm khi in ra giấy (Playwright chạy render phần mềm, không tin
+  được về artifact in ấn).
 - Đối chiếu số liệu với cổng ERP bằng tài khoản thường.
 ```
 
@@ -481,13 +533,12 @@ CHƯA làm (cần trình duyệt/2 cổng — user làm):
 
 ### Chưa làm — cần user/QA
 
-- Bấm thật **từng ô lọc** trên trình duyệt, đối chiếu param tab Network với `applyPrepickFilters()`
-  / `applyProductFilters()`.
-- Mở / thu 3 tầng trên nhiều hàng hóa; đổi bộ lọc rồi lật trang xem cây có đóng hết không.
 - Đổi **Đơn vị** trên 5 hàng hóa có >= 2 ĐVT, kiểm quy đổi lan đúng xuống tầng 2, tầng 3 và popup
-  Lịch sử giữ hàng.
-- `Ctrl+P` bản in: không mất viền phải/dưới, không mất chữ đậm dòng nhóm, tiêu đề bảng lặp mỗi trang.
-- Xuất Excel: tick 5/12 trường xem có ra đúng 5 cột đúng thứ tự tick không.
+  Lịch sử giữ hàng (890/895 hàng hóa chỉ có 1 ĐVT nên chưa lần ra được để bấm thử).
+- `Ctrl+P` bản in ra giấy: không mất viền phải/dưới, không mất chữ đậm dòng nhóm, tiêu đề bảng lặp
+  mỗi trang.
+- Xuất Excel: tick 5/12 trường xem có ra đúng 5 cột đúng thứ tự tick không (mới verify popup mở
+  đúng, chưa tải file thật).
 - **Đối chiếu 2 cổng trên dev** bằng tài khoản THƯỜNG (không phải Super admin): số hàng hóa tầng 1,
   tổng SL giữ, Tổng SL trong kho phải khớp ERP.
 - Test bằng tài khoản có `Quản lý giữ hàng` + quyền `Xem phiếu hàng giữ theo phòng ban` (nhánh này
