@@ -12,7 +12,7 @@
 
 ## Phase 2 — Verify UI
 
-- [ ] V1: User mở `/supply/...` kiểm tra dropdown hiển thị đúng, highlight đúng khi vào từng màn
+- [x] V1: User mở `/supply/...` kiểm tra dropdown hiển thị đúng, highlight đúng khi vào từng màn
 
 ## Checkpoint
 

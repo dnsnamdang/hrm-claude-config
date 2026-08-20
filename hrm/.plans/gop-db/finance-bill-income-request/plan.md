@@ -1021,7 +1021,45 @@ Việc để sau (user chốt 2026-08-18): làm cấu hình cột cho **màn Phi
 chưa có mixin/nút/modal, cách làm y hệt Task 8.2 (khoá gợi ý `finance_bill_payment_requests`).
 Blocked: không.
 
+### Task 8.3 — Seeder dữ liệu test: đủ 3 loại hợp đồng bán + đủ trạng thái
+User yêu cầu 2026-08-19: seeder `BillIncomeRequestTestDataSeeder` mới chỉ sinh hợp đồng BÁN
+(`hrm_contracts`), thiếu 2 nguồn còn lại mà popup "Chọn hợp đồng" union vào; cần đủ cả 3 loại và
+phủ hết trạng thái, đồng thời in ra danh sách khách hàng / NCC để biết chọn ai khi test.
+
+- [x] Bước 1a (hợp đồng bán) phủ ĐỦ 10 trạng thái của `Contract` (thêm 1 Đã duyệt + 7 Chờ hiệu lực).
+      Hàng đợi trạng thái ưu tiên cái CÒN THIẾU nên chạy bổ sung trên tập cũ vẫn vá được;
+      `$need = max(target - đã có, số trạng thái thiếu)` — đủ số lượng mà thiếu trạng thái vẫn tạo bù.
+- [x] Bước 1b MỚI — hợp đồng ĐẦU KỲ (`opening_contracts`, tiền tố `HĐ-TEST-DNTT-DK-`), mặc định 12 cái
+      (`FINANCE_TEST_OPENING`). Bảng KHÔNG có cột `status`/`total_*` → popup luôn hiện, cột Tổng giá trị
+      luôn 0 (service select `0 as total_value`), số có nghĩa duy nhất là Số tiền còn nợ.
+- [x] Bước 1c MỚI — hợp đồng BẢO DƯỠNG/DỊCH VỤ (`wr_service_contracts`, tiền tố `HĐ-TEST-DNTT-BD-`),
+      mặc định 14 cái (`FINANCE_TEST_WR`), phủ đủ 7 trạng thái có thật (1,2,3,4,5,10,11). Popup KHÔNG lọc
+      trạng thái nguồn này. `created_at` để gần hiện tại — khách hàng thật có hàng chục hợp đồng bảo dưỡng,
+      để ngày cũ là hợp đồng mẫu tụt xuống trang 3-4.
+- [x] 2 bảng trên là bảng ERP dùng chung, entity HRM khai read-only → seeder ghi bằng query builder.
+      Cột NOT NULL không mặc định của `wr_service_contracts` (`customer_address`, `customer_contact_name`,
+      `customer_name`, `customer_type`, `company_account_number`, `approver_id`) phải truyền đủ.
+- [x] Khách hàng của 2 loại mới lấy LẠI từ hợp đồng bán mẫu → 1 khách hàng có đủ 3 loại trong popup.
+- [x] Bước 2 (công nợ TK 1311) chạy cho CẢ 3 loại, khoá theo `contractable_type` thật; đổi từ
+      "đã có bút toán mẫu thì bỏ qua cả bước" sang bỏ qua theo TỪNG hợp đồng (không thì hợp đồng mới
+      thêm sẽ mãi không có công nợ).
+- [x] Bước 3 (phiếu): danh sách hợp đồng trộn XEN KẼ theo loại (`interleaveByKind`) nên 1 phiếu nhiều
+      dòng gom được cả 3 loại; `objectable_type` + tra công nợ dùng `type` của từng hợp đồng.
+- [x] Bước MỚI — in danh sách KHÁCH HÀNG (kèm số hợp đồng từng loại) và NHÀ CUNG CẤP đang dùng trong
+      phiếu mẫu, để mở form tạo phiếu là biết gõ tên nào. Cảnh báo `is_supplier=0` nếu có.
+- [x] Verify: chạy thật trên `gop_db` — 42 hợp đồng bán (đủ 10 trạng thái), 12 đầu kỳ, 14 bảo dưỡng
+      (đủ 7 trạng thái), 46 bút toán mới, 30 phiếu mới (dòng chi tiết: 35 bán / 14 đầu kỳ / 11 bảo dưỡng).
+      Gọi thẳng `searchSellContracts(customer_id=18505)` → trang 1 có đủ 3 loại kèm số còn nợ thật.
+
 ## Checkpoint
+
+### Checkpoint — 2026-08-19 (seeder đủ 3 loại hợp đồng)
+Vừa hoàn thành: Task 8.3 — mở rộng `BillIncomeRequestTestDataSeeder` (1 file BE) sang hợp đồng đầu kỳ
++ bảo dưỡng/dịch vụ, phủ hết trạng thái, in danh sách khách hàng / NCC để chọn khi test.
+Đang làm dở: không có. Đã chạy thật trên DB `gop_db`.
+Bước tiếp theo: user vào màn tạo phiếu chọn thử 1 khách hàng trong danh sách in ra (gợi ý #18505,
+#916, #13102 — có đủ cả 3 loại) và kiểm popup.
+Blocked: không.
 
 ### Checkpoint — 2026-08-18 (USER TEST XONG)
 Vừa hoàn thành: user test trình duyệt xong toàn bộ Phase 8 — không báo lỗi. Feature trở lại trạng thái

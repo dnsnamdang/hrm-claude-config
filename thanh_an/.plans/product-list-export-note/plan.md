@@ -21,7 +21,7 @@ Nguồn dữ liệu: field `additional_info` — chính là ô "Ghi chú" ở ta
 - [x] T2 — FE: thêm id 30 vào danh sách của `checkAllField()`
 - [x] T3 — BE `app/ExcelExport/ProductExport.php`: thêm `30 => 'additional_info'` vào `$arrayField`
 - [x] T4 — BE blade `resources/views/exports/product_report.blade.php`: thêm header + ô dữ liệu cột "Ghi chú" sau `special_note`
-- [ ] T5 — Verify: mở `category/product` → Kết xuất Excel → chọn/chọn tất cả trường → kiểm tra cột "Ghi chú" có dữ liệu
+- [x] T5 — Verify: mở `category/product` → Kết xuất Excel → chọn/chọn tất cả trường → kiểm tra cột "Ghi chú" có dữ liệu
 
 ### Checkpoint — 2026-08-14
 Vừa hoàn thành: T1–T4 (code xong cả FE + BE).

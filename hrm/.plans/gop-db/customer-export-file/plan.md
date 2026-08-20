@@ -151,7 +151,7 @@ Chốt: nguồn data = endpoint `export-rows` mới (API index thiếu 4 cột l
 - [x] Cài `jspdf` + `jspdf-autotable` (Node 14.21.3), font DejaVu Sans base64 lazy-load riêng
 - [x] `utils/export/customerExportFile.js` — `fetchAllRows()` (limit 2.000/lượt, gọi tuần tự, callback tiến độ), `buildCsv()`, `buildXlsx()` (ExcelJS), `buildPdf()` (jspdf-autotable)
 - [x] `pages/assign/customers/index.vue` — `exportFile()` gọi util thay vì tải thẳng từ BE; hiện tiến độ "đã tải x/y dòng"
-- [ ] Verify: xuất đủ 3 định dạng với bộ lọc rỗng (17.5k KH) + có lọc, đối chiếu số dòng với BE cũ
+- [x] Verify: xuất đủ 3 định dạng với bộ lọc rỗng (17.5k KH) + có lọc, đối chiếu số dòng với BE cũ
 
 ### Checkpoint — 2026-08-17 (Phase 7)
 Vừa hoàn thành: BE endpoint `export-rows` + FE util dựng file ở trình duyệt cho cả CSV/Excel/PDF.

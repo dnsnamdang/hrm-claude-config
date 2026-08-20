@@ -68,16 +68,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
-- customer-export-file (Phase 7) → @khoipv → .plans/gop-db/customer-export-file/plan.md
-  Trạng thái: **XONG CODE, CHỜ USER TEST TRÌNH DUYỆT** (2026-08-17). Chuyển việc dựng file
-  CSV/Excel/PDF của `/assign/customers` từ BE sang **build ở FE** theo yêu cầu user.
-  BE thêm `GET assign/customers/export-rows` (JSON theo trang, dùng chung bảng cột với 3 endpoint
-  xuất file cũ — 2.000 dòng/lượt ~0,85s, RAM 60MB). FE thêm `utils/export/customerExportFile.js`
-  (ExcelJS + jsPDF/autoTable + font DejaVu subset 78KB, import động).
-  ⚠️ Team phải `npm install` sau khi kéo nhánh (thêm `jspdf` + `jspdf-autotable`).
-  ⚠️ Chưa đo được thời gian DỰNG file ở trình duyệt với 17.5k dòng — nhất là PDF (~600 trang).
-  3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
-
 - finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
   Trạng thái: **XONG CODE PHASE 0-9, ĐÃ VERIFY HTTP END-TO-END** (2026-08-15). Nhánh
   `feat/finance-prepick-cancel` (từ `gop_db`, cả 2 repo, checkout thẳng).
@@ -247,6 +237,72 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-payment → @khoipv → .plans/gop-db/finance-bill-payment/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). Port màn ERP
+  `admin/income-expenditure/bill_payments` (Phiếu chi tiền) sang HRM phân hệ Tài chính, 23/23 task,
+  đủ 5 loại chi: nhánh A (1/2/6/12) lập từ đề nghị duyệt 1 cấp · nhánh B (loại 4 Chi thu nhập nhân viên)
+  lập trực tiếp, duyệt 2 cấp KT trưởng → Thủ quỹ, ghi sổ cái gộp theo `identify_number`.
+  1 màn danh sách duy nhất, in 2 liên 3 mẫu ERP, xuất Excel, chuông.
+  BE 21 file mới + 7 sửa · FE 9 mới + 2 sửa · 18/18 unit test PASS · không migration.
+  Sổ cái diff từng trường với ERP: nhánh A khớp 20/20 phiếu, nhánh B 5/5.
+  📌 Còn treo: 5 điểm chờ user quyết + 1 lỗi feature CŨ (Phiếu thu in "đồng đồng",
+  `BillIncomePrintService:155`) — xem design.md.
+  Spec: docs/superpowers/specs/gop-db/2026-08-19-finance-bill-payment-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment/design.md
+
+- cut-erp-sync → @khoipv → .plans/gop-db/cut-erp-sync/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). Dọn phần đồng bộ HRM → ERP
+  trong module Nhân sự sau khi gộp DB (các khối `use_erp` ghi lại chính bảng vừa ghi, có nguy cơ đè
+  nhầm tài khoản). Gỡ 5 khối `boot()` · sync password/status ở `EmployeeService` · `setConnection('mysql2')`
+  ở 2 model · 6 lệnh `Config::set(database.default)` ở `AuthController` · 2 job sync → no-op.
+  Giữ có chủ đích `Group`↔`TpGroup`, nhánh `use_crm`, các chỗ `use_erp` chỉ đọc.
+  Diff 13 file, -557/+105 · không migration · không đụng FE.
+  📌 Bug tiềm ẩn CHƯA sửa: `Group::boot()` gọi `TpGroup::find($model->code)` → có thể thêm dòng thừa
+  vào `department_groups`.
+  Spec: docs/superpowers/specs/gop-db/2026-08-19-cut-erp-sync-design.md | Tóm tắt: .plans/gop-db/cut-erp-sync/design.md
+
+- employee-create-bank-null → @khoipv → .plans/gop-db/employee-create-bank-null/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). Fix lỗi 500
+  `Creating default object from empty value` khi tạo mới nhân viên có nhập tài khoản ngân hàng
+  (`EmployeeInfoService.php:1317`) — `TpEmployeeInfo` chạy connection `mysql2` nằm ngoài transaction
+  nên không đọc được dòng `employee_infos` vừa INSERT. Sửa 3 file BE, không migration, không đụng FE.
+  📌 Nợ kỹ thuật cố ý: nhánh `use_erp` / model `Tp*` vẫn đọc-ghi qua connection thừa (đã xử ở cut-erp-sync).
+  Spec: docs/superpowers/specs/gop-db/2026-08-19-employee-create-bank-null-design.md | Tóm tắt: .plans/gop-db/employee-create-bank-null/design.md
+
+- finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). 15 phase gốc + Phase 16 sửa
+  6 điểm màn danh sách sau nghiệm thu (Tùy chỉnh cột · 2 cột Ngày/Người cập nhật · 3 cột ngày
+  `dd/mm/yyyy HH:mm` · mở sort Mã phiếu + 3 cột ngày · đổi nhãn Ngày tạo/Người tạo · nút Excel xanh lá)
+  + Phase 17 viết lại `_id/print.vue` bám nguyên mẫu ERP (report_template 209, khổ 297mm, Times New Roman,
+  6 ô chữ ký; bù `pdf.css` trong `options.styles` vì `hrm-client/static/css/` không có).
+  BE 3 file + 1 blade · FE 2 file · không migration.
+  📌 Còn nợ: file Excel phiếu vẫn lệch ERP (chờ user chốt có đồng bộ không) · nút "Chọn nhanh hợp đồng" ·
+  SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*`.
+  Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
+
+- finance-bill-income → @khoipv → .plans/gop-db/finance-bill-income/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). Port màn ERP
+  `admin/income-expenditure/bill_incomes` (Phiếu thu tiền) sang HRM phân hệ Tài chính, 18/18 task:
+  BE đầy đủ (entity, quyền, lọc, CRUD, dựng + ghi bút toán sổ cái, duyệt/hủy, in 2 liên, Excel);
+  FE 1 màn danh sách gộp 4 chế độ (bỏ `?mode=`) + form + chi tiết + trang in + menu.
+  Task 17 đối chiếu ngược ERP: 11/11 cột · 10/10 ô lọc, sửa 2 lệch (thiếu nút Sửa/Xóa ở chi tiết,
+  danh sách chưa dùng mixin CheckPermission). Verify: phpunit 36 tests OK · php -l sạch · parse 8/8 Vue ·
+  baseline DB khớp tuyệt đối.
+  📌 Ruling U4 (user chốt 2026-08-19): đồng bộ ngược trạng thái sang Phiếu đề nghị thu tiền GIỮ NGUYÊN
+  LOGIC ERP — 3 điểm hở (xóa không trả trạng thái · hủy là ngõ cụt · lưu nháp không đổi trạng thái)
+  KHÔNG phải bug, đừng sửa ở lượt review sau.
+  📌 Còn lại: 1 lượt review tổng toàn nhánh + phân loại ~45 minor đã park · chưa kiểm chứng 2 nhánh phân bổ
+  (DB 0 dòng) và in phiếu loại thu 3 · 4 file sửa ở Task 17 chưa commit.
+  Spec: docs/superpowers/specs/gop-db/2026-08-18-finance-bill-income-design.md
+
+- customer-export-file (Phase 7) → @khoipv → .plans/gop-db/customer-export-file/plan.md
+  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). Chuyển việc dựng file
+  CSV/Excel/PDF của `/assign/customers` từ BE sang build ở FE: BE thêm `GET assign/customers/export-rows`
+  (JSON theo trang, 2.000 dòng/lượt ~0,85s, RAM 60MB) · FE thêm `utils/export/customerExportFile.js`
+  (ExcelJS + jsPDF/autoTable + font DejaVu subset 78KB, import động).
+  ⚠️ Team phải `npm install` sau khi kéo nhánh (thêm `jspdf` + `jspdf-autotable`).
+  📌 3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
+
+
 - finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-18). Đã commit:
   `hrm-api` `decc26df7` · `hrm-client` `ba4518877` (đợt sửa UI danh sách 2026-08-18);
@@ -278,19 +334,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   BE 4 file (`BillIncomeRequest`, service, list resource) · FE 1 file (`index.vue`).
   Verify: `php -l` + compile template/script sạch · SQL sort đúng, khoá lạ bị chặn · DB 2.473 phiếu,
   0 phiếu NULL `updated_by` · user test trình duyệt đạt.
+  · Task 8.3 (2026-08-19) — seeder dữ liệu test `BillIncomeRequestTestDataSeeder` sinh đủ **3 loại
+    hợp đồng bán** mà popup union (bán `hrm_contracts` · đầu kỳ `opening_contracts` · bảo dưỡng
+    `wr_service_contracts`), phủ hết trạng thái từng loại, và in danh sách khách hàng / NCC để chọn
+    khi test. Đã chạy thật trên `gop_db`.
   Còn nợ từ đợt trước: chưa đối chiếu trực tiếp giao diện ERP, mới test 3/4 cấp quyền.
   Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-income-request/design.md
 
-- finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
-  Trạng thái: **HOÀN THÀNH** (2026-08-18). Nhánh `gop_db`, đã commit:
-  `hrm-api` `757a9baf7`+`30f3578a5`+`e04418092` · `hrm-client` `c96c87f62`+`53bf38cd0`.
-  Port màn ERP "Phiếu yêu cầu điều chỉnh công nợ" → `/finance/bill-adjust-dept-requests` (phân hệ
-  Tài chính). **Không thêm bảng** (dùng chung bảng ERP; lịch sử dùng `catalog_histories`).
-  BE 22 file + 20 route + 4 quyền id 1169–1172 · FE 7 file + 2 mục menu. 15 phase, test Playwright
-  TH1–TH19, hồi quy BE 76/76.
-  ⚠️ Môi trường khác phải chạy migration `2026_08_16_000001_create_catalog_histories_table` trước.
-  ⚠️ DB local còn 6 phiếu mẫu `TEST.DNDCCN.*`. Chưa làm: nút "Chọn nhanh hợp đồng", SRS/testcase/HDSD.
-  Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
 
 
 - form-validate-base → @khoipv → .plans/gop-db/form-validate-base/plan.md

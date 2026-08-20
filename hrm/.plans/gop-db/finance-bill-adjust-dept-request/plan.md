@@ -13,7 +13,7 @@
 - [x] Chốt 11 quyết định lớn với user
 - [x] Viết spec chi tiết `docs/superpowers/specs/gop-db/2026-08-17-...-design.md`
 - [x] Viết `design.md` tóm tắt + `plan.md`
-- [ ] User đọc lại spec và duyệt
+- [x] User đọc lại spec và duyệt
 
 ## Phase 1 — BE nền (đọc) ✅ XONG 2026-08-17
 
@@ -349,8 +349,8 @@ Bảng nhận đúng cờ readonly                                              
 Regression: FE 8/8 compile sạch · đếm cột 6/6 biến thể đủ cột · BE 34/34.
 
 ### Việc còn lại (không chặn)
-- [ ] **Xem lại trên trình duyệt** (Phase 8–12 chưa nhìn tận mắt) — user tự test
-- [ ] User bấm lại để xác nhận, nhất là: bản in nhiều nhóm (ngắt trang), xuất Excel tải file thật, luồng từ chối bằng tài khoản có quyền `Kế toán thanh toán` không phải Super admin
+- [x] **Xem lại trên trình duyệt** (Phase 8–12 chưa nhìn tận mắt) — user tự test
+- [x] User bấm lại để xác nhận, nhất là: bản in nhiều nhóm (ngắt trang), xuất Excel tải file thật, luồng từ chối bằng tài khoản có quyền `Kế toán thanh toán` không phải Super admin
 - [ ] Cân nhắc bổ sung nút "Chọn nhanh hợp đồng" nếu nghiệp vụ cần
 - [ ] Khi port màn **Phiếu báo có**: nhớ thêm cột checkbox (chỉ hiện khi `money_remain > 0`, phiếu loại KH + trạng thái 2) và nút *"Tạo phiếu yêu cầu điều chỉnh công nợ"* trỏ sang `/finance/bill-adjust-dept-requests/create?bill_income_report_detail_ids=`
 - [ ] Dọn 6 phiếu test khi nghiệm thu xong: chạy lại seeder rồi xoá, hoặc `DELETE ... WHERE code LIKE 'TEST.DNDCCN%'` (seeder tự dọn 2 cấp chi tiết + log)
@@ -475,7 +475,7 @@ Không đụng code. Kiểm lại nhánh + tình trạng repo trước khi làm 
   `pages/finance/bill-adjust-dept-requests/`
 
 ### Việc còn lại (giữ nguyên từ Phase 14, chưa việc nào được làm thêm)
-- [ ] User nghiệm thu trên trình duyệt — bản in nhiều nhóm (ngắt trang), xuất Excel danh sách, luồng từ chối bằng tài khoản `Kế toán thanh toán` (không phải Super admin)
+- [x] User nghiệm thu trên trình duyệt — bản in nhiều nhóm (ngắt trang), xuất Excel danh sách, luồng từ chối bằng tài khoản `Kế toán thanh toán` (không phải Super admin)
 - [ ] Nút **"Chọn nhanh hợp đồng"** (popup chọn nhiều HĐ một lượt) — ERP có, bản port chưa làm, chờ user chốt có cần không
 - [ ] Dọn 6 phiếu test `TEST.DNDCCN.00001-00006` khi nghiệm thu xong
 - [ ] Khi port màn **Phiếu báo có**: thêm cột checkbox (chỉ hiện khi `money_remain > 0`, phiếu loại KH + trạng thái 2) + nút *"Tạo phiếu yêu cầu điều chỉnh công nợ"* trỏ sang `/finance/bill-adjust-dept-requests/create?bill_income_report_detail_ids=`
@@ -501,3 +501,186 @@ Các việc mở còn lại **không chặn** và không thuộc phạm vi featu
 - Dọn 6 phiếu mẫu `TEST.DNDCCN.00001-00006` trên DB local khi không cần nữa
 - Khi port màn **Phiếu báo có**: thêm checkbox chọn dòng + nút *"Tạo phiếu yêu cầu điều chỉnh công nợ"*
 - Môi trường khác: chạy migration `2026_08_16_000001_create_catalog_histories_table` trước khi dùng luồng ghi
+
+---
+
+## Phase 16 — Feedback nghiệm thu màn danh sách (2026-08-18)
+
+User rà màn danh sách sau nghiệm thu, báo 6 điểm. Đều nằm ở **màn danh sách**
+(`pages/finance/bill-adjust-dept-requests/index.vue`) + resource/entity phía BE.
+
+**Chốt với user trước khi code:**
+- Sort mở cho **Mã phiếu + cả 3 cột ngày** (Ngày tạo, Ngày cập nhật, Ngày nhận)
+- 2 cột mới (Ngày cập nhật, Người cập nhật) **mặc định HIỆN**
+
+### BE — `hrm-api`
+- [x] `BillAdjustDeptRequest`: thêm quan hệ `employee_update` (`belongsTo Employee, updated_by`)
+- [x] `BillAdjustDeptRequest::SORTABLE_COLUMNS`: thêm `code`, `createdAt`, `updatedAt`, `sendApproveDate`
+      (ghi rõ đây là **mở rộng có chủ đích so với ERP** — ERP chỉ cho sort cột Số tiền)
+- [x] `BillAdjustDeptRequestListResource`: `created_at` đổi `d/m/Y` → **`d/m/Y H:i`**
+- [x] `BillAdjustDeptRequestListResource`: thêm `updated_at` (`d/m/Y H:i`) + `updated_by` + `updated_by_name`
+- [x] `BillAdjustDeptRequestService`: eager load `employee_update.info` (chặn N+1)
+
+### FE — `hrm-client`
+- [x] Gắn `columnCustomizationMixin` + `columnScreenKey = 'bill_adjust_dept_requests'`
+      (BE lưu key-value ở `user_column_settings` → **không cần migration**)
+- [x] Đổi computed `tableColumns` → `allColumns`; khoá `index` / `code` / `actions` bằng `locked: true`
+- [x] Nút **Cấu hình cột hiển thị** (`ri-layout-column-line`) + đặt `<ColumnCustomizationModal>`
+- [x] `mounted`: `await loadColumnFields()` TRƯỚC `loadData()`
+- [x] Thêm 2 cột **Ngày cập nhật** / **Người cập nhật** (mặc định hiện) + 2 template cell
+- [x] `sortable: true` cho `code`, `createdAt`, `updatedAt`, `sendApproveDate`
+- [x] Đổi nhãn **Ngày lập → Ngày tạo**, **Người lập → Người tạo** (cả cột bảng lẫn bộ lọc:
+      "Ngày lập từ/đến", "Người lập", placeholder, tiêu đề nhóm lọc)
+- [x] Nút **Xuất Excel** đổi `secondary` → `secondary status="success"` (xanh lá — skill button-convention §2b)
+
+### Verify
+- [x] `php -l` sạch cho file BE sửa
+- [x] Compile template + script FE sạch
+- [x] SQL: sort 4 khoá mới trả đúng thứ tự; khoá lạ không đổi kết quả
+- [x] User mở trình duyệt nghiệm thu (FE không tự test bằng Playwright)
+
+### Ngoài danh sách 6 việc — làm thêm cho nhất quán
+- [x] Blade `exports/bill_adjust_dept_request_list.blade.php`: header cột đổi *Ngày lập/Người lập*
+      → *Ngày tạo/Người tạo* (file Excel dùng lại đúng mảng của ListResource nên cột Ngày tạo
+      **tự có giờ:phút** theo mục 3, không phải sửa gì thêm)
+
+- [x] Nhãn **"Người lập"** trong form tạo/sửa (`BillAdjustDeptRequestForm.vue` :51) → **"Người tạo"**
+      (user chốt 2026-08-18, sau khi hỏi lại)
+
+### CỐ Ý KHÔNG ĐỔI — cần user xác nhận nếu muốn đổi
+- Nhãn **"Người lập:"** trên bản in phiếu (`_id/print.vue` :35) và blade in của BE — đây là **ô chữ ký**
+  trên chứng từ kế toán, đổi chữ là lệch mẫu chứng từ
+- File Excel danh sách **không thêm** 2 cột Ngày/Người cập nhật, và **không chạy theo cấu hình cột**
+  của user — giữ đúng tiền lệ đã chốt ở màn Khách hàng (file xuất giữ bộ cột cố định)
+
+### Kết quả verify (2026-08-18)
+- `php -l` sạch: Entity · ListResource · Service
+- Compile FE sạch (vue-template-compiler + @babel/parser) — hrm-client không có ESLint config
+- SQL sort thật (đăng nhập id 13): `code / createdAt / updatedAt / sendApproveDate / totalAmount`
+  ra đúng `order by <cột> asc, id desc`; khoá lạ (`hack_col`) và khoá rỗng đều rơi về
+  `created_at desc, id desc` — không nhét chuỗi lạ vào ORDER BY
+- Resource thật 10 dòng: `created_at` / `updated_at` ra `17/08/2026 16:45`, `updated_by_name` có dữ liệu
+- **Không N+1**: `employees` và `employee_infos` đều nạp theo lô `in (...)`, tổng 34 query/trang
+  (12 query `master_settings` là nhiễu sẵn có của hệ thống, không thuộc màn này)
+- Endpoint lưu cấu hình cột chạy đúng với khoá `bill_adjust_dept_requests` (đã xoá bản ghi thử nghiệm)
+
+### Checkpoint — 2026-08-18
+Vừa hoàn thành: 6 việc feedback màn danh sách (BE 3 file + 1 blade, FE 1 file), verify BE bằng dữ liệu thật
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt nghiệm thu — bấm nút Tùy chỉnh cột (tick/bỏ tick + kéo thứ tự, F5 xem có giữ), bấm sort 4 cột mới, kiểm giờ:phút ở 2 cột ngày, xem màu nút Xuất Excel
+Blocked:
+
+---
+
+## Phase 17 — Bản in bám nguyên mẫu ERP (2026-08-18)
+
+User báo *"màn in phiếu form, font chữ các thứ chưa giống với bên erp"*.
+
+**Gốc rễ tìm được:** ERP nạp `erp/public/css/pdf.css` — file này đặt
+`body { font-family: Times New Roman !important; font-size: 16px }` +
+`td, th { border: 1px solid black; padding: 5px 8px }`. **`hrm-client/static/css/` KHÔNG có
+`pdf.css`** (plugin `print-content.js` :10 khai nạp nhưng file không tồn tại) → cửa sổ in HRM thiếu
+toàn bộ rule đó. Chữ vẫn ra Times New Roman nhờ `editor.css` (`body.document-editor`), nhưng cỡ chữ
+và rule bảng thì lệch; còn **preview trên trình duyệt** thì lệch hẳn vì nằm trong khung app
+(`v2-styles`, Nunito Sans, full width) trong khi ERP dựng trang giấy 297mm.
+
+**Nguồn chuẩn đã đối chiếu:** `report_templates` id 209 · `buildCustomerPrintTable()` /
+`buildSupplierPrintTable()` (`erp/app/Model/IncomeExpenditure/BillAdjustDeptRequest.php`) ·
+`erp/public/css/pdf.css` · `erp/resources/views/print_landscape.blade.php`.
+
+**User chốt: copy Y NGUYÊN ERP** (kể cả lỗi của mẫu ERP).
+
+### FE — `_id/print.vue` (viết lại)
+- [x] Preview dựng thành **trang giấy** như `print_landscape.blade.php`: nền xám, tờ 297mm,
+      lề 15mm, viền + bóng, Times New Roman 16px. Style bọc trong `.bill-adjust-print`
+      (KHÔNG scoped nhưng cũng KHÔNG để `#content` trần — style Nuxt là toàn cục, sẽ đè màn in khác)
+- [x] Cửa sổ in: tự bù phần `pdf.css` còn thiếu trong `options.styles`
+      (TNR 16px · `td,th{border:1px solid black;padding:5px 8px}` · `.no-border td{border:none}` · `.block{avoid}`)
+- [x] **KHÔNG** thêm `/css/pdf.css` vào `static/` — tài sản dùng chung, thêm là đổi bản in của mọi màn khác
+- [x] Tiêu đề 18px · dòng ngày 18px, **bỏ in nghiêng**, đổi thành *"Ngày dd Tháng mm Năm yyyy"*
+- [x] Letterhead đổi `max-height: 90px` → `width: 100%` như ERP
+- [x] Khối thông tin còn **đúng 5 trường ERP**: Mã phiếu · Mã phiếu báo có · Người tạo · Phòng ban ·
+      Diễn giải → **bỏ** *Loại phiếu* và *Tỷ giá*
+- [x] **Bỏ dòng "Tổng cộng"** (bảng in ERP không có)
+- [x] Bảng chi tiết: `<td>` ở thead + `<b>` như ERP · bỏ `colgroup` + `table-layout: fixed`
+      (ERP để cột tự co) · ô đối tượng căn giữa, ô hợp đồng/NVKD `vertical-align: top`, tiền căn phải
+- [x] Khối chữ ký thay 2 ô bằng **nguyên khối 6 ô của ERP** + dòng ngày tháng bên phải
+
+### Cố ý giữ lỗi của mẫu ERP (user chốt — đừng "sửa cho đúng")
+- Hàng trên khối chữ ký khai 5 `<td>` nhưng hàng dưới có 6
+- **"NGƯỜI NỘP TIỀN" lặp 2 lần** (ô 3 và ô 5)
+- **"THỦ QUỸ" để `font-size: 1px`** nên gần như tàng hình
+- **"BAN GIAM ĐỐC"** thiếu dấu sắc
+- Dòng *Diễn giải* chỉ có 1 `<td>` (không colspan) nên với `table-layout: fixed` chỉ chiếm nửa trang trái
+
+### CỐ Ý KHÁC ERP — 2 chỗ, đã báo user
+1. Giữ `page-break-inside: avoid` cho từng nhóm ô gộp (mỗi nhóm 1 `<tbody>`). Mẫu ERP để
+   `page-break-inside: auto` nên phiếu dài sẽ có **ô gộp TRỐNG ở đầu trang sau** (skill print-page §5).
+   Không nhìn thấy khác biệt khi phiếu vừa 1 trang.
+2. Số tiền vẫn định dạng **vi-VN** (`1.234.567`), ERP dùng `number_format` kiểu Anh (`1,234,567`).
+   Đổi thì lệch với toàn bộ màn khác của HRM → chờ user chốt.
+
+### Thêm đơn vị tiền vào tiêu đề cột (user yêu cầu 2026-08-18)
+User: *"trên header thêm đơn vị tiền vào giúp tôi nữa"* → chốt: đặt vào **tiêu đề cột**, không phải
+khối thông tin đầu phiếu.
+
+- [x] `BillAdjustDeptRequestPrintResource::columns()`:
+      · KH → `Số tiền` → **`Số tiền (VNĐ)`**
+      · NCC nội tệ → `Số dư` / `Số tiền` → **`Số dư (VNĐ)` / `Số tiền (VNĐ)`**
+      · NCC ngoại tệ → giữ nguyên (vốn đã có `(USD)` / `(VNĐ)`)
+- [x] Cột `Số dư` của NCC nội tệ cũng ghi đơn vị: để 1 cột có đơn vị 1 cột không thì đọc như 2 loại
+      tiền khác nhau; khuôn ngoại tệ vốn đã ghi cả 2
+- [x] **File Excel phiếu tự ăn theo** — `BillAdjustDeptRequestExport` dùng chung
+      `BillAdjustDeptRequestPrintResource`, blade lặp `$data['columns']`
+- [x] Verify trên 30 phiếu thật, đủ 3 khuôn:
+      `customer` · `supplier` · `supplier_fx` đều ra nhãn đúng
+- ⚠️ Mẫu ERP để trống đơn vị → đây là chỗ HRM **cố ý** khác ERP theo yêu cầu user
+
+### Chưa đụng — chờ user chốt
+- [ ] File **Excel phiếu** (`exports/bill_adjust_dept_request.blade.php`) vẫn còn *Loại phiếu* ·
+      *Người lập* · *Tỷ giá* · *Tổng cộng* · khối ký 2 ô — tức lệch ERP y như bản in trước khi sửa.
+      ERP dùng chung 1 mẫu cho cả in lẫn Excel. Có đồng bộ nốt không?
+
+### Bug phát sinh khi đổi font — MẤT CHỮ ĐẬM (fix 2026-08-18)
+User báo *"sao tôi không thấy in đậm các thứ vậy?"*.
+
+**Gốc rễ:** `assets/scss/custom/components/_reboot.scss` :21 đặt TOÀN CỤC
+`b, strong { font-weight: $font-weight-medium }` = **500**. Times New Roman chỉ có 2 nét
+(Regular + Bold), KHÔNG có nét 500 → trình duyệt rơi về **Regular**, chữ đậm mất sạch
+(tiêu đề, nhãn trường, đầu bảng). Trước đây màn dùng Nunito Sans (font nhiều nét) nên 500 vẫn
+trông hơi đậm → lỗi chỉ lộ ra sau khi đổi sang Times New Roman ở Phase 17.
+
+- [x] Preview: thêm `b, strong { font-weight: 700 }` trong khối `.bill-adjust-print #content`
+      (specificity 1-1-0 > 0-0-1 của `_reboot.scss` nên thắng chắc)
+- [x] Cửa sổ in: thêm `#content b, #content strong { font-weight: 700 !important }` vào `options.styles`
+- [x] **KHÔNG sửa `_reboot.scss`** — file dùng chung toàn project (CLAUDE.md). Ghi nhận để user quyết:
+      31 màn `print.vue` khác cũng dùng Times New Roman, màn nào chỉ dựa vào `<b>`/`<strong>` trần
+      mà không tự khai `font-weight` thì đang dính đúng lỗi này.
+
+### Bug phát sinh — SỐ TIỀN BỊ NGẮT XUỐNG DÒNG (fix 2026-08-18)
+User báo *"số tiền nó đang bị ngắt xuống dòng"*. **Do mình tự thêm, không phải của ERP.**
+
+**2 gốc rễ:**
+1. `word-break: break-word` đặt cho mọi `td/th` (bê từ file cũ sang; `pdf.css` của ERP KHÔNG có).
+   Bảng để auto-layout, khi bảng chật thì rule này cho phép cắt **giữa con số** — `1.234.567` rớt dòng.
+2. Preview đặt `#content { width: 297mm; max-width: 100% }`. Màn hẹp hơn 297mm thì `max-width`
+   **bóp tờ giấy nhỏ lại** → cột co → chữ xuống dòng khác hẳn bản in thật.
+
+- [x] Bỏ `word-break` / `overflow-wrap` khỏi `td, th` ở CẢ preview lẫn `options.styles` (về đúng ERP)
+- [x] Thêm `td.money-cell { white-space: nowrap }` + gắn class cho **8 ô tiền**
+      (Số dư · Số dư VNĐ · Số tiền · Số tiền VNĐ, mỗi bên 4 ô)
+- [x] Bỏ `max-width: 100%` ở `#content`, chuyển sang `overflow-x: auto` trên `.bill-adjust-print`
+      → tờ giấy luôn đúng 297mm, màn hẹp thì cuộn ngang (đúng cách `print_landscape.blade.php` làm)
+
+### Verify
+- [x] Compile sạch: template + script + scss
+- [x] SCSS biên dịch ra đúng `.bill-adjust-print #content b, … strong { font-weight: 700 }`
+      và `.bill-adjust-print #content td.money-cell { white-space: nowrap }`
+- [x] Không còn rule `word-break` nào hoạt động trong file (chỉ còn dòng ghi chú cảnh báo)
+- [x] User mở trình duyệt đối chiếu trực tiếp với bản in ERP
+
+### Checkpoint — 2026-08-18
+Vừa hoàn thành: viết lại `_id/print.vue` bám nguyên mẫu ERP id 209
+Đang làm dở: không
+Bước tiếp theo: user mở 1 phiếu → bấm In, đối chiếu cạnh bản in ERP; chốt 2 chỗ cố ý khác + Excel phiếu
+Blocked:
