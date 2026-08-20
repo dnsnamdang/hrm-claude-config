@@ -445,3 +445,66 @@ nhắm vào bản ghi do chính mình tạo ra để test.
 | Thứ tự `STATUSES` | 3-1-2-4 (theo thứ tự khai hằng) | 1-2-3-4 | dropdown bộ lọc đọc xuôi; thuần hiển thị |
 | Popup chọn hàng | chọn trùng → toast cảnh báo sau khi bấm | khoá checkbox ngay từ đầu | chặn sớm rõ hơn |
 | Gom tồn | nhóm kèm `department_id`/`part_id` | gom theo `product_id` | ERP nhóm dư 2 cột đó → cùng 1 hàng của cùng nhân viên có thể ra nhiều dòng nếu lịch sử phòng ban đổi |
+
+## Phase 8 — Vá 11 lỗi QA đợt 17/08/2026 (redmine 11090–11108)
+
+Tester: Lê Huyền Trang / Nguyễn Minh Hằng. 11 issue, trong đó 2 issue thuộc màn khác
+(11090 → Phiếu YC nhập hàng, 11091 → Yêu cầu hủy hàng giữ).
+
+### Đã làm
+
+| Issue | Lỗi | Sửa ở đâu |
+| --- | --- | --- |
+| 11092 | Thừa bộ lọc Bộ phận, thiếu bộ lọc Mã phiếu | `index.vue`: thêm field `code` (BE đã nhận sẵn tham số này) + `:disable_part="true"` cho `V2BaseCompanyDepartmentFilter` |
+| 11093 | Xuất Excel thiếu khối ký Người lập cuối trang | `export-excel.js`: hàm `appendSignerBlock()` (bám mẫu in 471); BE `exportData()` trả thêm `signer_name`. Bổ sung luôn `NGUOI_LAP` cho `printListData()` vì bản in danh sách cũng bị thiếu |
+| 11095 | Cột ngày thiếu giờ:phút · text Người lập/Ngày lập · thiếu cột Người/Ngày cập nhật | `ProductImportDirectTransferListResource`: `formatDate()` → `formatDateTime()` (`d/m/Y H:i`), trả thêm `updater_name`/`updated_at`; model thêm quan hệ `employee_update` + eager load; FE đổi title, nâng width `110px → 140px`, thêm 2 cột ẩn mặc định |
+| 11096 + 11104 (màu nút) | Nút In xanh, chữ "Không duyệt" | Dựng In / Từ chối / Xóa ở `#custom-actions` của V2Footer; `footerMenu` chỉ còn `edit` + `approve` |
+| 11098 | Sort Số phiếu / Ngày lập không đổi gì | FE thiếu `:sortBy` + `:sortDirection` → `handleSort` của `V2BaseDataTable` luôn tính ra `asc`, icon không đổi. BE đã có `applySort()` sẵn |
+| 11103 | Khối Lịch sử thiếu icon + chữ "Xem lịch sử" | Port nguyên khuôn `history-head-toggle` của màn Phiếu YC nhập hàng (icon `ri-history-line` + badge số mốc + nút Làm mới / Thu gọn) |
+| 11104 (font in) | Mất chữ đậm + mất giãn dòng | `print.vue`: `#content b, strong { font-weight: 700 }` và chuyển `padding` ra `#content td, th` (không còn bọc trong `:not(.no-border)`) |
+| 11107 | Lưu nháp xong không quay về list | `save()` push về `/finance/product-import-direct-transfers` thay vì màn chi tiết |
+| 11108 | Validate số lượng sai: nhập 209 tự nhảy về 208 | Bỏ clamp; `validateQty()` báo đỏ NGAY TẠI Ô (`formErrors['products.N.qty']`), `hasQtyFormatError()` chặn `save()` |
+| 11090 | PYCNH thiếu cột Người/Ngày cập nhật | `ProductImportRequestListResource` + model `employee_update`; FE thêm 2 cột ẩn. Kèm luôn `d/m/Y H:i` cho `created_at` / `approved_time` / `received_time` |
+| 11091 | PYCHHG sort không hoạt động | Cùng nguyên nhân 11098 → thêm `:sortBy` / `:sortDirection` |
+
+### Bẫy mới ghi nhận
+
+1. **`:sortBy` / `:sortDirection` là BẮT BUỘC** khi dùng `@sort` của `V2BaseDataTable`. Thiếu 2 prop
+   này thì: (a) icon mũi tên không bao giờ đổi, (b) bấm lần 2 không ra `desc` vì component so
+   `sortBy === field && sortDirection === 'asc'` để đổi chiều. BE vẫn đúng nhưng user thấy "không
+   có gì thay đổi".
+2. **`padding` của bản in phải áp cho MỌI `td`/`th`**. Khối thông tin chung + khối ký của mẫu in
+   nằm trong bảng `.no-border`; bọc padding trong `:not(.no-border)` là các dòng dính sát nhau →
+   QA báo "không có cách giãn dòng".
+3. `formValidateMixin` KHÔNG có `setFieldError()`. Ghi lỗi FE bằng
+   `this.$set(this.formErrors, name, msg)` — `fieldError()` / `hasFieldError()` /
+   `clearFieldError()` đều đọc chung bucket này. Nhớ: `clearServerErrors()` xoá sạch bucket nên
+   phải gọi TRƯỚC khi validate lại trong `save()`.
+4. Slot `#custom-actions` của `V2Footer` nằm **sau** nút Xóa. Muốn đúng thứ tự quy ước
+   (chính → phụ → nguy hiểm → thoát) thì phải đưa cả Xóa vào slot, không bật cờ `delete`.
+
+### Verify (localhost:3000 + 127.0.0.1:8000, DB `gop_db`)
+
+- Sort Số phiếu: asc `TPE_CHNT_002` → desc `TPV_CHNT_853`; Ngày tạo: asc `06/08/2025 08:37` →
+  desc `27/07/2026 17:15`. PYCHHG: asc `PYCHHG-00001` → desc `PYCHHG-03538`.
+- Bộ lọc: Công ty · Phòng ban · Số phiếu · Trạng thái · Tên/mã hàng hóa · Người nhận · Người tạo ·
+  Ngày tạo từ · Ngày tạo đến (không còn Bộ phận). Lọc `code=TPV_CHNT_853` trả đúng 1 dòng.
+- API trả `created_at: 17/07/2026 10:08`, `updater_name`, `updated_at`. Popup Tuỳ chỉnh cột có
+  "Người cập nhật" + "Ngày cập nhật" ở CẢ 2 màn.
+- Footer màn chi tiết: `Duyệt [rgb(26,188,156)]` → `In [rgb(255,255,255)]` →
+  `Từ chối [rgb(220,38,38)]` → `Quay lại`.
+- Bản in: `strong` font-weight = 700, ô của bảng `.no-border` padding = `5px 8px`.
+- Số lượng: nhập 209 / tồn 208 → **giữ nguyên 209** + lỗi đỏ "Chỉ còn 208 theo đơn vị đang chọn";
+  nhập -3 → giữ -3 + "Số lượng không được nhỏ hơn 0"; bấm Lưu khi còn lỗi → **0 request**; hợp lệ →
+  điều hướng `/finance/product-import-direct-transfers`.
+- Excel: đọc lại file bằng exceljs → dòng 5-9 có "Ngày ...... tháng ...... năm ......",
+  "Người lập", "DNS Admin".
+
+### Còn treo
+
+- **11104 — ghi chú "XÓA ĐỔI MÀU XANH" là NHẦM**: user chốt 18/08/2026 giữ **Xóa màu đỏ**
+  `#dc2626` theo skill `button-convention` (nhóm NGUY HIỂM = Xóa · Từ chối); user tự trao đổi lại
+  với bên ra quy tắc chung. Đã đo trên trình duyệt sau khi hoàn nguyên:
+  `Duyệt #1abc9c → In #fff → Từ chối #dc2626 → Xóa #dc2626 → Quay lại #fff`.
+  Không đổi skill, không đổi nút Xóa icon ở cột Hành động.
+- `V2Footer` gốc vẫn sai ở 5 màn khác (In xanh + chữ "Không duyệt"): user chốt tạm hoãn.

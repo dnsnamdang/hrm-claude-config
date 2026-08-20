@@ -1008,3 +1008,47 @@ Blocked: không.
 - [x] `HDSD_Danh muc serial thiet bi lam dich vu.docx` — 11 trang; generator `gen_hdsd.py`
 - [x] Anh nguon `hdsd_shots/` (CHI LOCAL, khong commit)
 - TC va HDSD deu ghi ro diem cho chot: nhom serial co gia tri trang thai la khong lot vao bo loc
+
+
+---
+
+## Làm lại 3 loại tài liệu theo form mới — 18/08/2026
+
+> @junfoke · Bản tài liệu cũ (12–13/08) làm theo **form SRS 6 chương đã bị thay**. User yêu cầu
+> dựng lại theo form 4 phần chốt ngày 17/08 và xoá các file không đạt chuẩn.
+
+### Đã xoá
+- `srs.docx` và `srs.html` — bản HTML/docx generic của đợt đầu, không theo form nào.
+- Các `HDSD_*.docx` / `testcase*.xlsx` bản 13/08 (tên không dấu) — đã có bản mới thay thế.
+- Thư mục `hdsd_shots/` cũ — ảnh mới nằm ở thư mục `*_shots/` riêng của từng nhóm.
+
+### Bộ sinh dùng chung
+Ba thư viện mới đặt ở `.plans/gop-db/_catalog_docs_lib/`, dùng chung cho cả 7 màn:
+
+| File | Vai trò |
+|---|---|
+| `catalog_srs.py` | Dựng SRS đủ 4 phần, sinh mục 2.x theo danh sách `funcs` của từng màn |
+| `catalog_tc.py` | Dựng testcase, tự sinh ca kiểm tra bắt buộc / trùng từ danh sách `truong` |
+| `catalog_hdsd.py` | Dựng HDSD click-by-click, bảng ô nhập + bảng lỗi + câu hỏi thường gặp |
+
+Mỗi feature chỉ còn 1 file cấu hình (`*_config.py`) và 3 driver mỏng gọi thư viện chung.
+
+⚠️ `tc_engine` dùng chung chỉ hỗ trợ **tối đa 10 mục La Mã**. Màn nào nhiều chức năng hơn
+(Danh mục tài khoản) thì `catalog_tc.py` tự **gộp nhóm cuối** — kết xuất, in ấn, tùy chỉnh hiển
+thị và trải nghiệm — vào một mục, thay vì sửa engine dùng chung.
+
+### Kết quả
+
+- [x] Ảnh: **5** trong `sr_shots/`, chụp trên cổng dev
+- [x] `SRS - Danh mục serial thiết bị làm dịch vụ.docx` — 13 trang, 18 bảng, 9 ảnh, FR-01…FR-05
+- [x] `testcase - Danh mục serial thiết bị làm dịch vụ.xlsx` — **44 TC**, P0 43%
+- [x] `HDSD_Danh mục serial thiết bị làm dịch vụ.docx` — 10 trang
+
+Danh mục hiện có **21.635 dòng** trên cổng dev.
+
+### Lỗi phát hiện — chưa sửa
+
+**Ô lọc “Khách hàng” dùng placeholder `Tất cả`.** Quy ước placeholder của dự án cấm dùng
+`Tất cả` / `Chọn...` / để trống: ô chọn phải là `Chọn <tên trường>`. Bộ lọc màn này chạy chế
+độ gọn không có nhãn nên placeholder là thứ duy nhất cho người dùng biết ô đó lọc gì.
+→ Sửa thành `Chọn khách hàng`.
