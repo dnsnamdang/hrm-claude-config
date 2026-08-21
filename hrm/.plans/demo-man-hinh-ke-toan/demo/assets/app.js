@@ -37,6 +37,11 @@ function renderShell(activeKey, pageContentHTML) {
             icon: 'ri-git-merge-line', label: 'Thiết lập', children: [
                 { key: 'posting', label: 'Cấu hình hạch toán', href: 'posting-rule-engine-v3.html' }
             ]
+        },
+        {
+            icon: 'ri-shield-keyhole-line', label: 'Quản trị hệ thống', children: [
+                { key: 'permission', label: 'Phân quyền', href: 'phan-quyen.html' }
+            ]
         }
     ];
     var items = menu.map(function (m) {

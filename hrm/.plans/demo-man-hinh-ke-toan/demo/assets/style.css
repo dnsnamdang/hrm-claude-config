@@ -311,13 +311,13 @@ table.data-table { border-collapse: collapse; width: 100%; background: #fff; }
     border: 1px solid #e5e7eb; white-space: nowrap; font-size: 12px;
 }
 .data-table thead th {
-    background: #f8fafc; position: sticky; top: 0; z-index: 5;
-    padding: 6px 8px; text-align: left; color: #374151; font-weight: 600;
+    background: #aae1e6; position: sticky; top: 0; z-index: 5;
+    padding: 6px 8px; text-align: left; color: #0f3d44; font-weight: 600;
 }
 .data-table tbody td { padding: 6px 8px; color: #4b5563; vertical-align: middle; }
 .data-table tbody tr:nth-child(even) td { background: #f9fafb; }
 .data-table tbody tr.clickable { cursor: pointer; }
-.data-table tbody tr:hover td { background: #f0fdf4; }
+.data-table tbody tr:hover td { background: #d1fae5; }
 .data-table .text-right { text-align: right; }
 .data-table .text-center { text-align: center; }
 .data-table tfoot td {
@@ -333,10 +333,10 @@ table.data-table { border-collapse: collapse; width: 100%; background: #fff; }
    Sticky cột đầu khi cuộn ngang (áp dụng cho các báo cáo) — left/z do JS set
    ============================================================ */
 .data-table th.sticky-col, .data-table td.sticky-col { position: sticky; }
-.data-table thead th.sticky-col { z-index: 8; background: #f8fafc; }
+.data-table thead th.sticky-col { z-index: 8; background: #aae1e6; }
 .data-table tbody td.sticky-col { z-index: 3; background: #fff; }
 .data-table tbody tr:nth-child(even) td.sticky-col { background: #f9fafb; }
-.data-table tbody tr:hover td.sticky-col { background: #f0fdf4; }
+.data-table tbody tr:hover td.sticky-col { background: #d1fae5; }
 .data-table tfoot td.sticky-col { z-index: 4; background: #f8fafc; }
 /* nền khớp cho các dòng đặc biệt */
 .data-table tbody tr.row-total td.sticky-col,
@@ -531,8 +531,8 @@ tbody tr:hover .row-actions { opacity: 1; }
 .data-table thead tr:nth-child(2) th { top: 29px; } /* sticky tầng 2 dưới tầng nhóm */
 /* Header cho phép sort theo cột (setupColumnSort) */
 .data-table thead th.th-sort { cursor: pointer; user-select: none; }
-.data-table thead th.th-sort .sort-ico { font-size: 12px; color: #9ca3af; vertical-align: -1px; }
-.data-table thead th.th-sort:hover .sort-ico { color: #4b5563; }
+.data-table thead th.th-sort .sort-ico { font-size: 12px; color: #4b7a81; vertical-align: -1px; }
+.data-table thead th.th-sort:hover .sort-ico { color: #0f3d44; }
 .data-table thead th.th-sort .sort-ico.active { color: #16a34a; }
 .data-table thead th.th-sort.sorted { color: #16a34a; }
 /* Dòng tổng đặt ở đầu tbody (kèm bản sao ở tfoot) */
@@ -555,7 +555,7 @@ tbody tr:hover .row-actions { opacity: 1; }
 .data-table tbody tr.bs-l1:nth-child(even) td { background: #f8fafc; font-weight: 700; color: #0f172a; }
 .data-table tbody tr.bs-l2 td { font-weight: 600; color: #1f2937; }
 .data-table tbody tr.bs-toggle { cursor: pointer; }
-.data-table tbody tr.bs-toggle:hover td { background: #f0fdf4; }
+.data-table tbody tr.bs-toggle:hover td { background: #d1fae5; }
 
 /* Dòng bút toán được tham chiếu từ Sổ Cái (?line=N) */
 .data-table tbody tr.row-flash td,
