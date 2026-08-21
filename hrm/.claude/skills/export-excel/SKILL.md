@@ -99,9 +99,14 @@ class BillIncomeExport implements FromView, WithColumnWidths
 
 ## 4. Logo / letterhead công ty — `WithDrawings` + trait dùng chung
 
-Ảnh letterhead của HRM là **URL tuyệt đối trên server ERP** (`companies.header` + `ERP_URL`), trong
-khi HTML reader chỉ nhận ảnh có sẵn trên đĩa → `<img src="...">` trong blade **không bao giờ vào
-file**. Phải tải ảnh về rồi chèn bằng `WithDrawings`.
+Ảnh letterhead là **URL tuyệt đối** lấy từ `companies.header` (dữ liệu `gop_db` đã chuẩn hoá về
+tuyệt đối 2026-08-21; `ERP_URL` chỉ còn là lưới an toàn cho giá trị tương đối sót lại), trong khi
+HTML reader chỉ nhận ảnh có sẵn trên đĩa → `<img src="...">` trong blade **không bao giờ vào file**.
+Phải tải ảnh về rồi chèn bằng `WithDrawings`.
+
+⚠️ **Cách dựng URL đó nằm ở skill `print-page` mục 4b — đọc trước khi viết `HEADER`.** Tóm tắt: lấy
+công ty theo `company_id` GHI TRÊN CHỨNG TỪ (không phải người tạo, càng không phải người đăng nhập),
+dùng nguyên giá trị `companies.header`, thiếu `ERP_URL` thì trả nguyên path chứ không trả `''`.
 
 Dùng trait có sẵn `Modules\Finance\Exports\Concerns\EmbedsCompanyLetterhead`:
 
@@ -189,9 +194,11 @@ foreach (range('A','J') as $c) echo $c . '=' . $sheet->getColumnDimension($c)->g
 Mẹo tìm nhanh ô sai: quét ô kiểu `s` mà nội dung khớp `/^-?[\d.,]+$/` → đó chính là ô Excel sẽ
 cảnh báo "formatted as text".
 
-Ảnh letterhead trên máy local thường **không tải được** (`ERP_URL` trỏ server ERP) → thử nhánh có
-ảnh bằng một file PNG tạm qua `file:///`, và **nói rõ với user** phần logo chưa kiểm chứng trên
-môi trường thật.
+Ảnh letterhead trên máy local: sau khi `companies.header` đã chuẩn hoá về URL tuyệt đối
+(`https://erp.eteksofts.com/uploads/...`) thì **tải được ngay ở local** — kiểm bằng
+`$export->drawings()` phải trả 1 drawing `letterhead ...x72 @A1`, trả 0 là URL hỏng. Nếu môi trường
+chặn mạng ra ngoài, thử nhánh có ảnh bằng một file PNG tạm qua `file:///` và **nói rõ với user**
+phần logo chưa kiểm chứng trên môi trường thật.
 
 ---
 

@@ -3607,3 +3607,144 @@ Kiểm chứng lại sau khi đổi: C8 `[n] #,##0`, G10+ `[n] #,##0`, dòng T�
 drawing A1 463×72 — y như trước.
 
 Quy tắc rút ra đã gói vào `.claude/skills/export-excel/SKILL.md`.
+
+---
+
+## Phase G — Logo (letterhead) bản in phiếu thu dùng chung cách của màn Báo giá (2026-08-21)
+
+**Yêu cầu user:** "tham khảo màn báo giá, xem cách dùng logo ở màn in, sửa lại giống vậy — vì sau
+này sẽ dùng chung bên HRM cả."
+
+**Cách của Báo giá** (`pages/assign/quotations/_id/index.vue:1200` → `QuotationPrintPreview.vue:21`):
+lấy `companies.header` rồi **dùng NGUYÊN giá trị**, không bịa host — `startsWith('http')` thì trả
+thẳng, còn lại trả nguyên path. Chạy được vì DB HRM lưu header là **URL TUYỆT ĐỐI**
+(`https://tanphat.s3.cloud.cmctelecom.vn/...` hoặc `https://erp.eteksofts.com/uploads/...`).
+
+**Vì sao phiếu thu trống:** `gop_db` dùng bảng `companies` bản ERP → header là path TƯƠNG ĐỐI
+`/uploads/...`, nên `headerUrl()` phải ghép `ERP_URL`; `ERP_URL` rỗng/sai là ra chuỗi rỗng → mất
+logo. Cộng thêm: header lấy theo công ty NGƯỜI TẠO phiếu (ERP làm vậy), mà 133 phiếu `TPSG.*` do
+NV 785 lập có `employee_infos.company_id = NULL` → mất logo dù phiếu ghi rõ `company_id = 4`.
+
+- [x] G1 — `BillIncomePrintService::headerUrl()`: lấy công ty theo `bill_incomes.company_id` trước,
+      fallback công ty người tạo (fix 133 phiếu TPSG + 364 phiếu logo lệch công ty)
+- [x] G2 — Header đã là URL tuyệt đối / `data:` → trả nguyên trạng (đúng nhánh `startsWith('http')`
+      của báo giá) — đã có, giữ nguyên
+- [x] G3 — Header tương đối + KHÔNG có `ERP_URL` → trả **nguyên path tương đối** thay vì `''`
+      (đúng nhánh `return company.header_url || h` của báo giá). Sau này HRM tự phục vụ `/uploads`
+      là chạy luôn, không phải sửa code
+- [x] G4 — Áp dụng cho cả bản IN và bản EXCEL (2 chỗ đều gọi `headerUrl()`)
+- [x] G5 — Verify: render HTML thật + đối chiếu số phiếu ra được logo trước/sau
+
+**CHƯA làm (phải hỏi trước vì là code dùng chung):** `BillPaymentPrintService::companyHeader()`
+(Phiếu chi) và 3 bản sao cùng logic — `FormatHelper::erpCompanyHeader()`,
+`AccountService::companyHeader()`, `ServiceService::companyHeader()`.
+
+### Checkpoint - 2026-08-21 (G1-G5)
+Vua hoan thanh: logo ban in + Excel phieu thu dung chung cach cua man Bao gia.
+Chi sua 1 file `Modules/Finance/Services/BillIncomePrintService.php` (`headerUrl()` + 2 docblock).
+
+Do lai tren du lieu that (2.347 phieu):
+
+| | Truoc | Sau |
+| --- | --- | --- |
+| Phieu KHONG ra logo | 133 (toan bo `TPSG.*`) | **0** |
+| Phieu doi logo sang dung cong ty ghi tren phieu | - | 497 |
+| `ERP_URL` rong | `HEADER=''` -> mat logo | tra `/uploads/xxx.png` (trinh duyet tu phan giai) |
+
+Kiem chung bang `render()` that: `TPV.PT0726.00057` -> `.../cn-vinh.png`,
+`TPSG.PT0726.00001` (truoc trong) -> `.../tpsg.png`, `TPHP.PT0726.00020` (truoc ra logo cty 1)
+-> `.../cn-hp.png`. Ban Excel dung chung `headerUrl()` nen ra y het.
+
+**Chua kiem chung:** anh hien that tren trinh duyet - may local khong co thu muc
+`erp/public/uploads` (404 moi letterhead). Tren server co ERP that
+(`https://erp.eteksofts.com/uploads/...` tra 200) thi hien binh thuong.
+
+Buoc tiep theo: user mo lai ban in tren dev de xac nhan logo hien.
+Blocked: khong.
+
+## Phase H - Chuan hoa companies.header / companies.logo thanh URL tuyet doi (2026-08-21)
+
+**User chot:** "chuan hoa du lieu di, lam luon ca logo" - ca ERP lan HRM gio dung chung DB `gop_db`,
+nen dia chi anh phai la URL DUNG DUOC O MOI DOMAIN, khong the la path tuong doi cua rieng ERP.
+
+**Vi sao path tuong doi khong con dung:** file anh nam tren dia ERP, KHONG nam trong DB - gop DB
+khong keo file sang. Do tren dev: `https://erp.eteksofts.com/uploads/<file>` tra **200**, con
+`https://dev-hrm.eteksofts.com/uploads/<file>` tra **404** (`{"code":404,"message":"Route Not Found!"}`).
+=> Man in mo tren domain HRM bat buoc phai co URL tuyet doi. Day cung la ly do man **Bao gia** dang
+mat logo tren `gop_db` (no dung nguyen gia tri header, truoc kia chay vi DB HRM luu san URL tuyet doi).
+
+- [x] H1 - Sinh file rollback `rollback-companies-header-logo.sql` (8 dong, gia tri cu)
+- [x] H2 - `UPDATE companies SET header = CONCAT('https://erp.eteksofts.com', header) WHERE header LIKE '/uploads/%'` - 8 dong
+- [x] H3 - Lam tuong tu cho cot `logo` - 8 dong
+- [x] H4 - Verify lai ban in + Excel phieu thu, va anh huong sang cac man dung chung
+
+**An toan cho ERP:** ra soat 454 cho ERP dung `company->header`, KHONG cho nao boc `asset()`/`url()`,
+model `Company` khong co accessor - deu nhet thang vao `{{HEADER}}`. URL tuyet doi chay y het.
+Chinh DB HRM production cung dang luu kieu nay cho cong ty id 2/3/4.
+
+### Checkpoint - 2026-08-21 (H1-H4)
+Vua hoan thanh: chuan hoa 8 dong `companies.header` + 8 dong `companies.logo` tren `gop_db` local.
+
+Verify sau khi chuan hoa (render that, khong con ghep ERP_URL):
+
+| Phieu | src trong ban IN va file EXCEL |
+| --- | --- |
+| TPV.PT0726.00057 | `https://erp.eteksofts.com/uploads/1751696460cn-vinh.png` |
+| TPSG.PT0726.00001 | `https://erp.eteksofts.com/uploads/1751696416tpsg.png` |
+| TPHP.PT0726.00020 | `https://erp.eteksofts.com/uploads/1751696363cn-hp.png` |
+
+File Excel: `BillIncomeExport::drawings()` tra **1 drawing** `letterhead 549x72 @A1` - truoc khi
+chuan hoa la 0 (URL `erp.test:8080` tren may local 404). Nghia la **ban Excel gio co logo ngay ca
+tren local**.
+
+**Con lai (chua lam):**
+1. Dev / production phai chay 2 cau UPDATE nay tren DB that (local da chay). File rollback:
+   `.plans/gop-db/finance-bill-income/rollback-companies-header-logo.sql`.
+2. Van nen dat `ERP_URL=https://erp.eteksofts.com` trong `.env` cac moi truong lam luoi an toan:
+   man Sua cong ty ben ERP (`CompaniesController.php:275,601`) luu thang `$request->header` tu
+   file picker, tuc la ai sua lai anh cong ty se ghi de ve path tuong doi `/uploads/...`.
+   Code `headerUrl()` da xu ly san truong hop do.
+3. Cac ban sao cung logic chua gom: `BillPaymentPrintService::companyHeader()` (Phieu chi),
+   `FormatHelper::erpCompanyHeader()`, `AccountService::companyHeader()`,
+   `ServiceService::companyHeader()` - sau khi du lieu chuan hoa thi ca 4 deu tra URL tuyet doi
+   nguyen trang, khong con phu thuoc ERP_URL.
+
+Buoc tiep theo: user mo lai ban in phieu thu + man Bao gia tren dev de xac nhan logo hien.
+Blocked: khong.
+
+## Phase I — Ô "Số tiền duyệt thu" xoá trắng phải về 0 (2026-08-21)
+
+User báo ở `finance/bill-incomes/2352/edit`: xoá hết nội dung ô **Số tiền duyệt thu** thì ô rơi về
+placeholder (nhìn như chưa nhập gì), trong khi cột tiền phải luôn có số.
+
+- [x] I1 — Nguyên nhân: `V2BaseCurrencyInput.onInput()` emit **null** khi chuỗi rỗng, `formatCurrency(null)`
+      trả `''` → ô trống. (`formatCurrency(0)` trả `'0'`, nên chỉ cần giá trị là 0 thì hiện đúng.)
+- [x] I2 — `BillIncomeForm.vue::onApproveChange()`: `income_money_approve` là `null`/`''` → gán `0`
+      trước khi `recalcApprove()`. Không đụng `V2BaseCurrencyInput` (component dùng chung).
+- [x] I3 — Verify: compile template + babel parse 0 lỗi; chạy lại đúng hàm `formatCurrency`:
+      `null` → `''` (đúng triệu chứng), `0` → `'0'`, gõ tiếp `'05'` → `'5'` (không dính số 0 thừa,
+      nên quy về 0 không cản việc nhập số mới).
+- [ ] I4 — User mở trình duyệt xác nhận.
+
+**Chưa đụng:** các ô tiền khác của màn (phân bổ theo phiếu xuất hàng, tỷ giá) vẫn giữ hành vi cũ —
+user chỉ yêu cầu cột Số tiền duyệt thu.
+
+## Phase J — Duyệt phiếu thu xong thì về màn danh sách (2026-08-21)
+
+User báo ở `finance/bill-incomes/2345`: duyệt xong vẫn đứng lại màn chi tiết. Phiếu đã duyệt thì
+không còn việc gì làm ở đó (nút Duyệt/Hủy biến mất theo cờ `is_can_approve`).
+
+- [x] J1 — `_id/index.vue`: `<ApproveBillIncomeModal @approved>` đổi từ `reloadDetail` sang `onApproved()`
+      → `this.$router.push('/finance/bill-incomes')`. Modal tự `close()` TRƯỚC khi emit `approved`
+      nên không sót backdrop khi chuyển trang.
+- [x] J2 — `onApproved()` gọi `this.$refs.form?.markFormSaved?.()` trước khi push: form con
+      (`BillIncomeForm`) gắn `unsavedChangesMixin`, thiếu bước này có nguy cơ bị hỏi
+      "Thông tin chưa lưu" ngay sau khi vừa duyệt.
+- [x] J3 — Nhánh **409** (người khác vừa duyệt/hủy trước) GIỮ NGUYÊN `reloadDetail`: ở lại màn để
+      user thấy trạng thái thật, không đá về danh sách khi thao tác không thành.
+- [x] J4 — Nút **Hủy phiếu thu**: user chốt 2026-08-21 cho về danh sách luôn → `submitCancel()` gọi
+      `goToList()` sau khi đóng modal, thay cho `reloadDetail()`. Tách `goToList()` dùng chung cho cả
+      Duyệt và Hủy (markFormSaved + push). Nhánh 409 của Hủy vẫn ở lại + tải lại như J3.
+- [x] J5 — Verify: compile template + babel parse 0 lỗi; `markFormSaved()` có thật trong
+      `unsavedChangesMixin` (dòng 137) và `ref="form"` đúng là `BillIncomeForm`.
+- [ ] J6 — User mở trình duyệt xác nhận.

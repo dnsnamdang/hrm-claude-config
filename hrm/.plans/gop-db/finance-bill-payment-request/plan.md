@@ -2923,6 +2923,37 @@ mẫu `ncc_tm` (735/735 phiếu loại 1 tiền mặt không có số tài kho�
       (*Số tài khoản* / *Tài khoản* / *Tên ngân hàng*) — ERP cũng khác nhau giữa form và mẫu in,
       **không đồng bộ 2 nơi**.
 
+### Task BF.3 — Dropdown "Loại tiền" hiện kèm mã tiền tệ (2026-08-21) — @khoipv
+User chốt sửa đồng bộ với màn Phiếu đề nghị thu tiền (Task 8.3 của `finance-bill-income-request`):
+ô chọn Loại tiền hiện `MÃ — Tên` cho **tất cả** loại tiền. Phạm vi: **chỉ dropdown**, không đụng
+nhãn cột bảng chi tiết, cột "Loại tiền" ở danh sách và bản in.
+
+- [x] `BillPaymentRequestForm.vue::loadOptions()`: option `name` = `${code} — ${name}`; giữ tên thuần
+      ở khoá `short_name`. API `finance/currencies/getAll` đã trả sẵn `code` → **không sửa BE**.
+- [x] `currencyName()` đọc `short_name` — computed này truyền xuống `BillPaymentRequestDetailTable`
+      qua prop `currency-name` làm header cột 150px, dùng `name` đã ghép là vỡ layout.
+- [x] Verify: compile template + babel parse — 0 lỗi; không còn chỗ nào đọc `selectedCurrency.name` trần.
+- [ ] User mở trình duyệt xác nhận.
+
+### Task BF.4 — Lỗi validate của dòng chi tiết đã xoá vẫn bám sang dòng mới (2026-08-21) — @khoipv
+Sửa đồng bộ với Task 8.7 của `finance-bill-income-request` (user báo bug ở màn thu tiền, chốt sửa
+luôn màn chi tiền). `formErrors` khoá theo VỊ TRÍ dòng (`details.0.contractable_id`) mà `removeDetail()`
+chỉ `splice` mảng → xoá dòng đang báo "Bắt buộc nhập" rồi thêm dòng mới là thấy y nguyên câu lỗi,
+chưa kịp bấm Lưu. Bảng chi tiết nhận lỗi qua prop `:field-errors="formErrors"` nên hiện luôn.
+
+- [x] `BillPaymentRequestForm.vue`: thêm `shiftDetailErrors(removedIndex)` (xoá lỗi dòng bị xoá + dồn
+      index dòng sau) và `clearAllDetailErrors()`; `removeDetail()` gọi ngay sau `splice`.
+- [x] Gọi `clearAllDetailErrors()` ở 2 chỗ thay trắng bảng: `pendingAction` của confirm đổi đối tượng
+      (`form.details = []`) và lúc nạp lại bảng từ **chuyến giao hàng**
+      (`delivery-trip-accounting-details` — thay toàn bộ dòng, lỗi cũ không còn ứng với dòng nào).
+- [x] Verify: compile template + babel parse — 0 lỗi. Logic dồn index đã test ở màn thu tiền
+      (1 dòng lỗi bị xoá → sạch · xoá dòng giữa của 3 → `details.2.*` tụt về `details.1.*` ·
+      lỗi cấp phiếu `reason`/`details` giữ nguyên).
+- [ ] User mở trình duyệt xác nhận.
+
+**Ghi chú kỹ thuật:** 2 helper hiện **chép ở cả 2 form** thay vì đưa lên `utils/mixins/formValidateMixin.js`
+— mixin là file dùng chung, chưa được user chốt cho đụng. Nếu màn thứ 3 cần thì gom lên mixin.
+
 ### Checkpoint — 2026-08-20 (Task BF.2 — khối ngân hàng màn in)
 Vừa hoàn thành: sửa khối ngân hàng màn in về đúng luật ERP — 2 file:
 `hrm-api/Modules/Finance/Transformers/BillPaymentRequestResource/BillPaymentRequestPrintResource.php`

@@ -1013,6 +1013,97 @@ User chốt 2026-08-18: chỉ làm cho màn Phiếu đề nghị thu tiền; b�
       dài của màn trước đó đều KHÔNG khai minWidth: nới 2 cột mà bỏ trống cột thứ 3 thì auto-layout lấy
       chỗ đúng từ cột đó, nó bị bóp xuống 4-5 dòng (skill list-page mục 15, đúng lỗi từng gặp ở màn chi tiền).
 
+### Task 8.3 — Dropdown "Loại tiền" hiện kèm mã tiền tệ
+User yêu cầu 2026-08-21: ô chọn Loại tiền chỉ hiện tên, khó phân biệt — hiện thêm mã theo dạng
+`VND — Việt Nam Đồng` (đúng tiền lệ `AccountBankModal.vue` cùng phân hệ Tài chính).
+Phạm vi user chốt: **chỉ dropdown Loại tiền**, không đụng nhãn cột bảng chi tiết và bản in.
+
+- [x] `BillIncomeRequestForm.vue::loadOptions()`: `name` của option = `${c.code} — ${c.name}` cho **mọi** loại tiền
+      (API `finance/currencies/getAll` đã trả sẵn `code`, không cần sửa BE). Giữ tên thuần ở khoá
+      `short_name` — `currencyName` (nhãn cột số tiền ngoại tệ trong bảng chi tiết) phải hiện ĐÚNG tên,
+      nếu dùng luôn `name` đã ghép thì header cột thành "VND — Việt Nam Đồng", vỡ layout 150px.
+- [x] `currencyName()` đọc `short_name`, fallback `name` cho trường hợp thiếu code.
+- [x] Sửa comment "không ghép mã — user chốt 2026-08-14" cho khỏi lạc hậu.
+- [x] Verify: compile template + babel parse — 0 lỗi. DB thật (11 tiền tệ): `code` TRÙNG `name` ở 9/11 dòng
+      (VNĐ|VNĐ, USD|USD, JPY|JPY…), chỉ EUR|EURO và INR|RUPEE khác nhau. Bản đầu ghép có điều kiện để tránh
+      "VNĐ — VNĐ"; **user chốt 2026-08-21 ghép cho TẤT CẢ** để mọi dòng cùng một khuôn → bỏ điều kiện.
+- [ ] User mở trình duyệt xác nhận.
+
+### Task 8.4 — Popup chọn KH: ô "Tên / Mã khách hàng" tìm lan sang MST / SĐT / người tạo (2026-08-21)
+User báo: gõ vào ô "Tên / Mã khách hàng" của popup mà ra cả những KH chẳng liên quan.
+Nguyên nhân (đã trace, KHÔNG phải lọc theo nhóm KH): `CustomerService::index()` cho `keyword` khớp
+**5 tiêu chí** — `code`, `fullname`, `tax_code`, `mobile` và **tên người tạo** (EXISTS sang
+`employees` + `employee_infos`). Popup lại đã có 2 ô RIÊNG cho MST và SĐT → phần lan ra là dòng thừa.
+Bằng chứng DB thật: keyword "Hùng" → **3.299 dòng**, trong đó **1.459 dòng** tên/mã KH không hề chứa
+"Hùng" (vd `29TPHPKH-1 | A NAM`, `89THUXAN-1 | CÔNG TY TNHH ... ĐẠI ĐOÀN` — khớp nhờ tên người tạo).
+
+- [x] BE `Modules/Assign/Services/CustomerService.php::index()`: thêm cờ `keyword_scope=code_name`
+      → `keyword` chỉ khớp `customers.code` + `customers.fullname`. **Không đổi mặc định**: caller
+      không gửi cờ (ô tìm nhanh màn danh sách KH `/assign/customers`) giữ nguyên 5 tiêu chí cũ.
+- [x] FE `components/modals/ChooseErpCustomerModal.vue::getData()`: gửi `keyword_scope: 'code_name'`
+      khi ô có chữ. Popup này dùng chung **8 màn** (meeting, dự án tiềm năng, yêu cầu bảo hành sửa chữa,
+      phiếu điều chỉnh công nợ, phiếu ĐN thu tiền, phiếu thu, phiếu ĐN chi tiền, phiếu chuyển hàng)
+      → cả 8 màn cùng đổi, đúng nghĩa nhãn ô.
+- [x] **User chốt 2026-08-21 (sau khi được hỏi vì đây là popup + service DÙNG CHUNG): áp cho CẢ 8 màn**,
+      không tách prop riêng cho màn phiếu thu/chi tiền. Ô nào ghi "Tên / Mã khách hàng" thì tìm đúng
+      tên/mã ở mọi màn; MST và SĐT đã có ô riêng ngay cạnh.
+- [x] Verify: `php -l` sạch; compile template + babel parse 0 lỗi; đếm trên DB thật keyword "Hùng":
+      cũ 3.299 → mới 1.840 dòng, đúng bằng số dòng có tên/mã chứa từ khóa.
+- [ ] User mở trình duyệt xác nhận.
+
+### Task 8.5 — Lưu nháp không bắt buộc Lý do thu + bảng chi tiết (2026-08-21)
+User chốt: nút **Lưu nháp** (status = 1) chỉ để cất dở dang → bỏ bắt buộc `reason` và cho phép chưa
+có dòng chi tiết nào. Nút **Gửi duyệt** (status = 2) giữ nguyên ràng buộc cũ.
+
+- [x] BE `BillIncomeRequestStoreRequest::rules()` (UpdateRequest kế thừa nên có luôn): rule động theo
+      `status` — `reason` `nullable` khi nháp, `details` `nullable|array` khi nháp. Dòng ĐÃ thêm vẫn
+      phải đủ hợp đồng + số tiền (nới nữa chỉ đẻ dòng rác không mở được).
+- [x] BE `BillIncomeRequestService::store()` + `update()`: `'reason' => $request->get('reason') ?? ''`.
+      ⚠️ Bắt buộc: cột `reason` là `text NOT NULL` không default, mà Laravel bật
+      `ConvertEmptyStringsToNull` → ô trống về tới service là NULL, insert thẳng là nổ SQL 500.
+      Nới validate mà quên chỗ này thì bug đổi từ "422 bắt nhập" thành "500 khi lưu".
+- [x] FE: **không phải sửa** — `save()` chỉ chạy vee-validate (rule định dạng), required do BE quyết
+      theo status. Nhãn "Lý do thu *" giữ dấu sao vì gửi duyệt vẫn bắt buộc.
+- [x] Verify ma trận rule (Validator thật): nháp thiếu cả 2 → PASS · nháp details rỗng → PASS ·
+      gửi duyệt thiếu cả 2 → FAIL đúng 2 khoá `reason`, `details` · gửi duyệt details rỗng → FAIL `details`.
+- [x] Verify SQL thật: `store()` với `reason = null`, `details = []` → tạo được phiếu, `reason` lưu `''`,
+      0 dòng chi tiết (chạy trong transaction rồi rollback, không để lại dữ liệu rác).
+- [ ] User mở trình duyệt xác nhận.
+
+### Task 8.6 — Popup chọn KH giữ nguyên bộ lọc sau khi đóng (2026-08-21)
+User báo: tìm khách hàng xong đóng popup, mở lại vẫn thấy đúng kết quả đã lọc — tưởng hệ thống chỉ
+còn bấy nhiêu KH. Nguyên nhân: `ChooseErpCustomerModal.onModalShow()` cố ý `if (!this.loaded)` —
+chỉ tải lần đầu, các lần sau giữ nguyên `filter` / `filterTaxCode` / `filterPhone` / `currentPage`.
+
+- [x] `components/modals/ChooseErpCustomerModal.vue::onModalShow()` → gọi `resetSearch()`: xoá 3 ô lọc,
+      về trang 1, `perPage` 10 rồi `getData()`. Mỗi lần mở là một lượt tìm mới.
+- [x] Bỏ cờ `loaded` (data + phép gán trong `getData`): sau thay đổi trên không còn ai đọc nó.
+- [x] Verify: compile template + babel parse — 0 lỗi; grep `loaded` chỉ còn trong comment giải thích.
+- [ ] User mở trình duyệt xác nhận (popup này dùng chung 8 màn, xem Task 8.4).
+
+**2 popup còn lại của màn — user chốt sửa luôn 2026-08-21, ĐÃ SỬA:**
+- [x] `ContractSearchModal.vue` (chọn hợp đồng) + `SupplierSearchModal.vue` (chọn NCC): `onShow()`
+      trước chỉ `currentPage = 1` + `loadData()`, giữ nguyên ô tìm → đổi sang gọi `resetSearch()`
+      (xoá `keyword`, về trang 1, loadData). Không phát sinh lượt gọi API thừa: cả 2 nhánh đều
+      tải đúng 1 lần khi mở.
+- [x] Verify: compile template + babel parse cả 2 file — 0 lỗi.
+
+### Task 8.7 — Lỗi validate của dòng chi tiết đã xoá vẫn bám sang dòng mới (2026-08-21)
+User báo: thêm dòng → bấm Lưu → dòng báo "Bắt buộc nhập" → xoá dòng đó, thêm dòng khác → vẫn thấy
+nguyên câu lỗi cũ. Nguyên nhân: `formErrors` khoá theo **VỊ TRÍ** dòng (`details.0.object_id`) trong khi
+`removeDetail()` chỉ `splice` mảng dữ liệu → lỗi cũ nằm lại đúng ô đó, dòng thêm mới hứng luôn.
+vee-validate không quản mảng này nên không ai xoá hộ (khác các ô cấp phiếu).
+
+- [x] `BillIncomeRequestForm.vue`: thêm `shiftDetailErrors(removedIndex)` — xoá lỗi của dòng vừa xoá và
+      **dồn index** lỗi của các dòng phía sau lên 1; `removeDetail()` gọi ngay sau `splice`.
+- [x] Thêm `clearAllDetailErrors()` và gọi trong `onTypeChange()` (đổi loại thu = xoá trắng bảng):
+      không dọn thì dòng đầu tiên thêm lại sau đó lại hứng lỗi của dòng 0 lần trước.
+- [x] Lỗi cấp phiếu (`reason`) và lỗi cấp mảng (`details`) KHÔNG bị đụng khi dồn index.
+- [x] Verify: compile template + babel parse 0 lỗi; chạy thử hàm dồn index trên 3 tình huống —
+      1 dòng lỗi bị xoá → sạch · xoá dòng giữa của 3 dòng → `details.2.*` tụt về `details.1.*` ·
+      có `reason` + `details` → giữ nguyên.
+- [ ] User mở trình duyệt xác nhận.
+
 ### Checkpoint — 2026-08-18 (thêm cấu hình cột)
 Vừa hoàn thành: Task 8.2 — popup Cấu hình cột hiển thị + 2 cột Người/Ngày cập nhật (3 file BE, 1 file FE).
 Đang làm dở: không có.

@@ -70,6 +70,7 @@
   - **Index DB**: cột dùng `where` / `join` / `order by` thường xuyên phải có index; thêm bảng mới hoặc filter mới → kiểm tra index trước khi bàn giao.
   - Xử lý nặng (export, tính lương, tổng hợp báo cáo) → queue/job hoặc chunk, không chạy đồng bộ trong request.
   - Khi review/bàn giao: 1 màn gọi > 5 API lúc load, hoặc 1 request > 2s → phải nêu ra và đề xuất phương án gộp/tối ưu, không im lặng cho qua.
+- **Logo/letterhead trên MỌI bản in + file Excel chứng từ**: nguồn duy nhất là `companies.header` (và `companies.logo`), lấy theo **`company_id` GHI TRÊN CHỨNG TỪ** — KHÔNG lấy theo người tạo phiếu, càng KHÔNG lấy theo người đang đăng nhập (thủ quỹ công ty A in phiếu công ty B là ra sai letterhead). Dùng NGUYÊN giá trị trong DB (đã chuẩn hoá về URL tuyệt đối), chỉ ghép `ERP_URL` khi giá trị còn là path tương đối, và **thiếu `ERP_URL` thì trả nguyên path chứ KHÔNG trả chuỗi rỗng**. Khuôn copy: `BillIncomePrintService::headerUrl()`. Chi tiết + 3 cái bẫy đã trả giá: `.claude/skills/print-page/SKILL.md` mục 4b
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
 
 ---
@@ -349,6 +350,8 @@ Nếu có → đọc trước khi viết code.
 | Đụng tới **select / ô nhập** ở BẤT KỲ màn nào (form, modal, chi tiết, bộ lọc) | `.claude/skills/select-and-input-state/SKILL.md` |
 | Select danh mục **mất giá trị đã chọn**, danh mục bị khoá/ngừng hoạt động, icon 🔒 | `.claude/skills/select-and-input-state/SKILL.md` |
 | Ô nhập disabled/readonly sai màu hoặc vẫn bấm được; focus ra viền xanh/quầng sáng | `.claude/skills/select-and-input-state/SKILL.md` |
+| Xuất Excel ở BE (class `*Export` + blade `exports/`) | `.claude/skills/export-excel/SKILL.md`       |
+| Tạo/sửa màn IN (`print.vue`) · logo/letterhead đầu chứng từ | `.claude/skills/print-page/SKILL.md`         |
 
 → Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
 

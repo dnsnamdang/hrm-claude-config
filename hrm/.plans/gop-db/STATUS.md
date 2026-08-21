@@ -68,6 +68,25 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- finance-bill-payment (Phiếu chi) → @khoipv → .plans/gop-db/finance-bill-payment/plan.md
+  Trạng thái: **Phase I xong code, chờ user xác nhận trên trình duyệt** (2026-08-21).
+  Áp cùng cách xử lý logo như Phiếu thu (dùng nguyên `companies.header`, lấy công ty theo
+  `bill_payments.company_id`) → 162/1.305 phiếu hết in nhầm logo công ty khác.
+  Sửa 1 file `BillPaymentPrintService.php`; `BillPaymentExport` đã có sẵn trait letterhead.
+
+- finance-bill-income (Phiếu thu) → @khoipv → .plans/gop-db/finance-bill-income/plan.md
+  Trạng thái: **Phase G + H xong code + data local, chờ user xác nhận trên trình duyệt** (2026-08-21).
+  Logo bản in/Excel phiếu thu chuyển sang dùng chung cách của màn Báo giá (dùng nguyên
+  `companies.header`, chỉ ghép `ERP_URL` khi giá trị còn tương đối) và lấy công ty theo
+  `bill_incomes.company_id` thay vì công ty người tạo → 133 phiếu `TPSG.*` hết mất logo,
+  497 phiếu về đúng logo công ty trên phiếu. Sửa 1 file `BillIncomePrintService.php`.
+  **Chuẩn hoá dữ liệu dùng chung**: 8 dòng `companies.header` + 8 dòng `companies.logo` trên
+  `gop_db` local đổi từ `/uploads/...` sang `https://erp.eteksofts.com/uploads/...` — vì file ảnh
+  nằm trên đĩa ERP, gộp DB không kéo file sang, mà domain HRM không phục vụ `/uploads` (404).
+  Hưởng lợi cả màn Báo giá (đang mất logo trên `gop_db` vì lý do y hệt).
+  ⚠️ **Dev/production chưa chạy 2 câu UPDATE** — rollback ở
+  `.plans/gop-db/finance-bill-income/rollback-companies-header-logo.sql`.
+
 - finance-prepick-stock-list → @junfoke → .plans/gop-db/finance-prepick-stock-list/plan.md
   Trạng thái: **XONG CODE PHASE 0-7, ĐÃ VERIFY TRÊN TRÌNH DUYỆT (Playwright)** (2026-08-18). Nhánh
   `feat/finance-prepick-stock-list` (từ `gop_db`, cả 2 repo).

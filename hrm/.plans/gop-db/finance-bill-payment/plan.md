@@ -2040,3 +2040,39 @@ Blocked: không.
 
 ⚠️ `.claude/skills/export-excel/SKILL.md` và dòng mới trong bảng skill của `CLAUDE.md` là **tài sản
 chung** → theo quy tắc team phải đưa qua PR, chưa commit.
+
+
+---
+
+## Phase I - Logo (letterhead) dung chung cach cua man Bao gia (2026-08-21)
+
+Lam theo yeu cau user ngay sau khi xong ben Phieu thu (xem
+`.plans/gop-db/finance-bill-income/plan.md` Phase G + H cho ly do day du).
+
+- [x] I1 - `BillPaymentPrintService::headerUrl()`: lay cong ty theo `bill_payments.company_id`
+      truoc, fallback cong ty nguoi tao (ERP lay theo nguoi tao)
+- [x] I2 - Thieu `ERP_URL` -> tra nguyen path tuong doi thay vi `''` (dung nhanh
+      `return company.header_url || h` cua bao gia)
+- [x] I3 - Cap nhat docblock muc 5 cua class + docblock `headerUrl()`
+- [x] I4 - Verify ban IN (ca 5 loai phieu / 2 mau 211 + 236) va ban EXCEL
+
+**Chi sua 1 file**: `Modules/Finance/Services/BillPaymentPrintService.php` - 2 dong lenh, con lai
+la comment. `BillPaymentExport` da dung san trait `EmbedsCompanyLetterhead` nen khong phai sua.
+
+### Checkpoint - 2026-08-21 (I1-I4)
+Vua hoan thanh: logo ban in + Excel phieu chi.
+
+Do tren du lieu that (1.305 phieu chi): **0 phieu mat logo** truoc va sau (nguoi tao deu co
+`company_id`), nhung **162 phieu** truoc day in ra logo KHAC cong ty ghi tren phieu -> nay dung.
+
+Verify that:
+
+| | Ket qua |
+| --- | --- |
+| `TPHP.PC0726.00001` (phieu cty 2, nguoi tao cty 1) | ban in mau 211 -> `.../cn-hp.png` (truoc la `ts-hn.png`) |
+| `TPSG.PC0726.00011` (phieu cty 4, nguoi tao cty 5) | `.../tpsg.png` |
+| Ca 5 loai phieu (type 1/2/4/6/12, mau 211 + 236) | deu co `<img src="https://erp.eteksofts.com/uploads/...">` |
+| File Excel `BillPaymentExport::drawings()` | 1 drawing `letterhead 650x72 @A1` |
+
+**Chua kiem chung:** anh hien that tren trinh duyet - can user mo lai ban in tren dev.
+Blocked: khong.

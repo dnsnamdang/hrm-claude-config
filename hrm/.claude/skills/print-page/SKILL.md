@@ -1,6 +1,6 @@
 ---
 name: print-page
-description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc khi gặp lỗi in — mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu.
+description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc khi gặp lỗi in — mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu.
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
@@ -108,6 +108,110 @@ methods: {
 
 ---
 
+## 4b. LETTERHEAD CÔNG TY (logo đầu chứng từ) — BẮT BUỘC theo đúng khuôn này
+
+Áp dụng cho **mọi màn in chứng từ** (phiếu thu, phiếu chi, đề nghị, báo giá, hợp đồng…) — bản in HTML
+lẫn file Excel. Mục 4 ở trên nói về ảnh tĩnh trong `assets/`; mục này nói về **letterhead theo công ty**.
+
+### Nguồn dữ liệu — chỉ một chỗ duy nhất
+
+Cột `companies.header` (letterhead ngang đầu trang) và `companies.logo`. **Không có nguồn nào khác** —
+không `master_settings`, không ảnh tĩnh trong `assets/`, không hardcode theo công ty.
+
+⚠️ **File ảnh KHÔNG nằm trong DB** — nó là file trên đĩa server ERP (`erp/public/uploads/*.png`).
+Gộp DB dùng chung `gop_db` **không** kéo file sang. Vì vậy giá trị lưu trong cột phải là **URL tuyệt
+đối** thì mới mở được từ domain HRM.
+
+| Domain | `/uploads/1751696586ts-hn.png` |
+| --- | --- |
+| `https://erp.eteksofts.com` | **200** image/png |
+| `https://dev-hrm.eteksofts.com` | **404** `{"code":404,"message":"Route Not Found!"}` |
+
+Dữ liệu `companies.header/logo` trên `gop_db` đã được chuẩn hoá về tuyệt đối ngày 2026-08-21
+(`UPDATE companies SET header = CONCAT('https://erp.eteksofts.com', header) WHERE header LIKE '/uploads/%'`,
+làm tương tự cho `logo`). **Mỗi môi trường phải tự chạy 2 câu này.** Rollback:
+`.plans/gop-db/finance-bill-income/rollback-companies-header-logo.sql`.
+
+### Khuôn code BẮT BUỘC copy (BE)
+
+Nguyên bản: `Modules/Finance/Services/BillIncomePrintService.php::headerUrl()` (bản Phiếu chi
+`BillPaymentPrintService.php` y hệt). Cùng cách màn **Báo giá** đang dùng ở FE
+(`pages/assign/quotations/_id/index.vue::companyHeaderUrl`): **dùng NGUYÊN giá trị, không bịa host**.
+
+```php
+private function headerUrl(<Entity> $bill): string
+{
+    // 1. Công ty GHI TRÊN CHỨNG TỪ trước, người tạo chỉ là fallback (xem "3 cái bẫy" bên dưới)
+    $companyId = $bill->company_id ?: optional(optional($bill->employeeCreate)->info)->company_id;
+    if (!$companyId) {
+        return '';
+    }
+
+    $header = trim((string) (DB::table('companies')->where('id', $companyId)->value('header') ?? ''));
+    if ($header === '') {
+        return '';
+    }
+
+    // 2. Đã tuyệt đối / data URI -> dùng nguyên (nhánh này ăn dữ liệu đã chuẩn hoá)
+    if (preg_match('#^(https?:)?//#i', $header) || strpos($header, 'data:') === 0) {
+        return $header;
+    }
+
+    // 3. Còn tương đối -> ghép ERP_URL; KHÔNG có ERP_URL thì trả nguyên path, TUYỆT ĐỐI không trả ''
+    $erpUrl = rtrim((string) env('ERP_URL'), '/');
+
+    return $erpUrl === '' ? $header : $erpUrl . '/' . ltrim($header, '/');
+}
+```
+
+Mẫu in trong `report_templates` nhúng `<img src="{{HEADER}}" style="width:100%">` → chỉ cần đổ giá
+trị trên vào placeholder `HEADER`. File Excel dùng lại đúng hàm này qua trait
+`EmbedsCompanyLetterhead` (xem skill `export-excel` mục 4).
+
+### 3 cái bẫy đã trả giá thật (2026-08-21, màn Phiếu thu + Phiếu chi)
+
+1. **Lấy công ty theo NGƯỜI TẠO (như ERP) là sai với chứng từ.** ERP đọc
+   `employee_create->info->company->header`. Đo trên dữ liệu thật: **133/2.347 phiếu thu mất hẳn logo**
+   (nhân viên lập phiếu không có `employee_infos.company_id`) và **497 phiếu thu + 162 phiếu chi** in ra
+   logo của công ty KHÁC công ty ghi trên phiếu. Chứng từ có cột `company_id` riêng → ưu tiên cột đó.
+   Helper `erpCompanyHeader()` / `AccountService::companyHeader()` / `ServiceService::companyHeader()`
+   lấy công ty **NGƯỜI ĐANG ĐĂNG NHẬP** — chỉ hợp cho báo cáo/danh mục, **không dùng cho chứng từ**
+   (thủ quỹ công ty A in phiếu công ty B là ra sai letterhead).
+2. **Trả `''` khi thiếu `ERP_URL` = mất hẳn logo, im lặng.** Trả nguyên path tương đối thì trình duyệt
+   còn phân giải theo host đang mở, và sau này HRM tự phục vụ `/uploads` là chạy luôn, không phải sửa code.
+3. **Ảnh hỏng bị `display:none`, không có icon ảnh vỡ.** `print.vue` (`settleImages()`) cố ý ẩn ảnh lỗi
+   để bản in không dính icon vỡ → nhìn màn hình tưởng "code không đổ logo", thật ra là URL 404.
+   **Debug phải xem `src` thật**, đừng nhìn màn hình mà đoán.
+
+### Cách verify KHÔNG cần mở trình duyệt
+
+```php
+// tinker: đọc thẳng src trong HTML đã fill
+$svc = app(BillIncomePrintService::class);
+preg_match('/<img[^>]*src="([^"]*)"/i', $svc->render($bill), $m); echo $m[1];
+```
+```bash
+curl -sk -o /dev/null -w "%{http_code}
+" "<url vừa in ra>"    # phải 200, không phải 404
+```
+Đếm trước/sau bằng SQL để biết sửa có tác dụng thật không:
+```sql
+SELECT SUM(c.header IS NULL OR c.header='') AS mat_logo FROM <bang_chung_tu> t
+LEFT JOIN companies c ON c.id = COALESCE(NULLIF(t.company_id,0), (SELECT company_id FROM employee_infos WHERE id = t.created_by));
+```
+
+⚠️ Máy local **không có** `erp/public/uploads` (repo ERP không commit thư mục này) → mọi letterhead
+404 ở local. Verify tới bước "URL đúng + `curl` ra 200 trên server thật" là đủ, và **nói rõ với user**
+phần hiển thị chưa kiểm chứng bằng mắt.
+
+### Lưu ý vận hành
+
+Màn Sửa công ty bên ERP (`CompaniesController.php:275,601`) lưu thẳng `$request->header` từ file
+picker → ai sửa lại ảnh công ty sẽ ghi đè về path tương đối `/uploads/...`. Vì vậy **vẫn giữ
+`ERP_URL=https://erp.eteksofts.com` trong `.env`** làm lưới an toàn, dù dữ liệu đã chuẩn hoá.
+
+---
+
 ## 5. Bảng có Ô GỘP (rowspan) in qua NHIỀU TRANG — đánh đổi, KHÔNG có cách vẹn cả đôi đường
 
 Trình duyệt (`window.print`) **không thể lặp lại nội dung ô gộp ở đầu mỗi trang** — giới hạn cố hữu. Có 3 hướng, HỎI USER chọn:
@@ -167,4 +271,6 @@ doc.close()
 | Viền ngang đậm khác màu giữa nhóm | `print-app.css .table tbody + tbody { border-top:2px }` | Bỏ viền cấp tbody |
 | Ô gộp trống có viền ở đầu trang sau | rowspan bị cắt ngang trang | `page-break-inside: avoid` mỗi nhóm (1 tbody) |
 | Mất logo + phải Ctrl+P | Ảnh root-relative không tải ở about:blank | URL tuyệt đối `origin + require(...)` |
+| Mất logo letterhead (ảnh tĩnh vẫn OK) | `companies.header` là path tương đối / `ERP_URL` rỗng → `src` 404, bị `display:none` | Mục 4b — chuẩn hoá `companies.header` về URL tuyệt đối, không trả `''` |
+| Logo ra ĐÚNG ảnh nhưng SAI công ty | Lấy công ty người tạo / người đăng nhập thay vì `company_id` trên chứng từ | Mục 4b — `$bill->company_id` trước, người tạo chỉ là fallback |
 | Cột Ghi chú tự phình rộng | auto-layout ăn theo text dài | `table-layout: fixed` + `<colgroup>` % |
