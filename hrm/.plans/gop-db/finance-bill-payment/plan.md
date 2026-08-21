@@ -1990,3 +1990,53 @@ Blocked: khong co.
 Mot so step co ket qua LECH voi mo ta ban dau cua plan (namespace morph, ten bang, mau badge, cot
 Khach hang/NCC, chu ky service, ten class ApprovalFlow) — plan va spec DA duoc sua theo du lieu that;
 ly do tung thay doi ghi trong ledger `<scratchpad>/sdd/finance-bill-payment/progress.md`.
+
+### Sửa lỗi file Excel xuất phiếu chi — 2026-08-20 (user yêu cầu, cùng bộ lỗi của Phiếu thu)
+
+Cùng 3 triệu chứng đã sửa ở `.plans/gop-db/finance-bill-income/plan.md` mục F1-F5: thiếu logo
+letterhead, cột quá hẹp, cột số tiền bị Excel cảnh báo "The number in this cell is formatted as
+text". Phiếu chi nặng hơn Phiếu thu vì có **3 bố cục** (default / delivery / employee).
+
+- [x] G1. `BillPaymentPrintService`: các hàm dựng bảng bản EXCEL + ô số tiền xuất SỐ THÔ.
+      KHÔNG đụng bản IN.
+- [x] G2. `BillPaymentExport` implement `WithColumnWidths` — bề rộng riêng cho từng bố cục.
+- [x] G3. `BillPaymentExport` implement `WithDrawings` — nhúng letterhead vào A1 (bỏ quyết định cũ
+      "không nhúng ảnh": lý do cũ là `safeImage()` của ERP luôn trả ảnh trong suốt, HRM nay tải
+      thẳng URL nên ra ảnh thật).
+- [x] G4. `registerEvents()`: tính lại vùng ô tiền theo bố cục (vùng cứng của ERP đang trỏ trượt —
+      trước đây vô hại vì ô là chuỗi, nay ô là SỐ nên trỏ trượt = mất dấu phân cách).
+- [x] G5. Kiểm chứng: dựng file cho mỗi bố cục, đọc lại xác nhận kiểu ô + bề rộng + drawing.
+- [x] G6. Viết `.claude/skills/export-excel/SKILL.md` gói 3 quy tắc này (skill là tài sản chung →
+      tạo file, KHÔNG commit, để user đưa qua PR).
+
+**Cách làm chốt lại (khác đề xuất ban đầu ở G4):** không tính lại vùng ô nữa mà bỏ hẳn cơ chế vùng ô.
+HTML reader của PhpSpreadsheet đọc thuộc tính `data-format` trên từng thẻ `<td>`
+(`Reader/Html.php::processDomElementDataFormat()`), nên mỗi ô tiền tự khai `data-format="#,##0"`
+ngay chỗ dựng HTML → không còn phụ thuộc số dòng. Đã áp cùng cách cho Phiếu thu (sửa lại F4).
+
+Phần nhúng letterhead tách thành trait dùng chung
+`Modules/Finance/Exports/Concerns/EmbedsCompanyLetterhead.php` (Phiếu thu + Phiếu chi cùng dùng).
+
+**Kết quả kiểm chứng (dựng file thật cho cả 3 bố cục, đọc lại bằng PhpSpreadsheet):**
+
+| Bố cục | Phiếu | Trước | Sau |
+| --- | --- | --- | --- |
+| default (loại 1) | 918, 25 dòng | cột F dòng 12-36 `General` → `1000000` | F+G `#,##0` từ dòng đầu tới dòng Tổng cộng |
+| employee (loại 4) | 290, 20 dòng | ô "Số tiền thực chi" là CHUỖI `"120,058,380"`; bảng kê 2 mất định dạng từ dòng 46; cột Tổng cộng không bao giờ có | tất cả `[n]` + `#,##0`, hết bảng |
+| delivery (loại 12) | 1316, 60 dòng | 2 ô tiền khối Liên/Nợ/Có là CHUỖI | `[n]` + `#,##0` |
+| Bề rộng cột | cả 3 | A=7.14 · B=14.28 (đổi từ px) | đặt theo bố cục: vd default A=8 · C=30 · D/E=26 |
+| Logo | cả 3 | không có | drawing A1, dòng 1 cao 58pt |
+
+Bản IN của cả 3 loại chạy lại vẫn ra số có dấu phân cách như cũ (`render()` không đổi).
+
+**Chưa kiểm chứng:** ảnh letterhead thật (local không với tới `erp.test:8080/uploads/...`) — test
+bằng PNG tạm qua `file://`. Phiếu ngoại tệ: DB gộp 0 phiếu, chỉ đối chiếu code.
+
+### Checkpoint — 2026-08-20 (G1-G6)
+Vừa hoàn thành: sửa 3 lỗi file Excel phiếu chi + viết skill `.claude/skills/export-excel/SKILL.md`.
+Đang làm dở: không có.
+Bước tiếp theo: user tải lại Excel phiếu chi (thử cả loại 1, loại 4, loại 12) trên môi trường dev.
+Blocked: không.
+
+⚠️ `.claude/skills/export-excel/SKILL.md` và dòng mới trong bảng skill của `CLAUDE.md` là **tài sản
+chung** → theo quy tắc team phải đưa qua PR, chưa commit.

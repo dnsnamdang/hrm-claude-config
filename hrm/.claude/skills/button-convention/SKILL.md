@@ -60,13 +60,21 @@ Nguyên tắc: phân biệt theo **bản chất thao tác**, không theo định
 
 | Hành động | Khai báo |
 | --- | --- |
-| Tạo mới · Lưu · Lưu nháp | `primary` (teal) |
-| Duyệt · Hoàn thành · Kích hoạt | `primary status="success"` |
-| Gửi duyệt · **Khóa** · Cảnh báo | `primary status="warning"` |
+| Tạo mới · Lưu · Lưu nháp | `primary` (teal `#1abc9c`) |
+| **Duyệt · Gửi duyệt · Hoàn thành · Kích hoạt** | `primary` (teal `#1abc9c`) — **KHÔNG thêm `status`** |
+| **Khóa** · Cảnh báo | `primary status="warning"` |
 | **Mở khóa** · Khôi phục · Kích hoạt lại | `primary status="success"` |
 | Xóa · Từ chối · Hủy duyệt · Mở khóa dữ liệu đã chốt | `primary status="danger"` |
 | In · Cấu hình cột · Làm mới · Xem thêm | `secondary` / `tertiary` (info) |
 | Đóng · Hủy · Quay lại | `tertiary` (info) |
+
+📌 **Nhóm Duyệt dùng teal `#1abc9c`, không dùng xanh lá `#16a34a`** (user chốt 2026-08-20).
+`primary` không kèm `status` cho ra đúng `#1abc9c` (`components/V2BaseButton.vue` — `.v2-btn--primary`),
+còn `status="success"` là `#16a34a`. Chọn teal vì đây đã là màu nút **Duyệt / Lưu và duyệt / Trưởng
+phòng duyệt / BGĐ duyệt** mặc định của `components/V2Footer.vue` — component dùng chung mà hầu hết
+màn chi tiết đang dùng — nên để nhóm Duyệt cùng teal thì cả hệ thống mới nhất quán.
+**Gửi duyệt** trước đây xếp nhóm `warning` (cam), nay chuyển về cùng nhóm này: gửi duyệt là bước
+tiến của luồng nghiệp vụ, không phải cảnh báo. Cam giờ chỉ còn dành cho **Khóa · Cảnh báo**.
 
 ⚠️ **Không dùng `danger` cho thao tác vô hại** (xóa điều kiện lọc, đóng popup) — đỏ chỉ dành cho việc phá huỷ/không hoàn tác được, dùng tràn lan là mất tác dụng cảnh báo.
 

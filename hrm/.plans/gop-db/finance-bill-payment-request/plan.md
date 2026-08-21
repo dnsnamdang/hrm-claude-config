@@ -2890,6 +2890,67 @@ Vừa hoàn thành: Task BF.1 — bỏ 2 nhãn lặp ở bộ lọc màn danh s�
 Bước tiếp theo: bổ sung popup Cấu hình cột hiển thị cho màn này (user chốt làm sau).
 Blocked: không.
 
+### Task BF.2 — Màn IN: khối ngân hàng lệch ERP (2026-08-20) — @khoipv
+User hỏi "IBAN Number / Swift Code là gì, ở đâu, sao phiếu có phiếu không" → soi ra 3 lỗi thật.
+Đối chiếu nguồn ERP: `report_templates` id 406 (mẫu `ncc_ck`) + `BillPaymentRequest::getPrintData()`
+:818-819 và :835-840 của repo `erp`.
+
+- [x] **Bug 1 — điều kiện hiện Swift/IBAN/Phí sai.** ERP gắn 3 dòng này với **NCC nước ngoài**
+      (`customers.customer_type = 3`); nếu không phải thì `clearNull()` xoá cả nhãn. HRM lại gắn với
+      **mẫu in** `ncc_ck` (`_id/print.vue:253`) → **1.876/2.594 phiếu (72%)** in ra 4 dòng rỗng `—`.
+      Số liệu `gop_db`: mẫu ncc_ck có 718 phiếu NCC nước ngoài (718/718 có swift) và 1.876 phiếu
+      trong nước (0 phiếu có swift).
+- [x] **Bug 2 — mất Chi nhánh + Thành phố ở mẫu `ncc_ck`** (`_id/print.vue:267-271` nằm trong nhánh
+      `else`). Template 406 của ERP CÓ `{{CHI_NHANH}}` + `{{THANH_PHO}}`, set vô điều kiện. Cả
+      1.876 phiếu trong nước đều có dữ liệu 2 cột này → đang bị giấu. Thứ tự ERP: Thành phố trước Chi nhánh.
+- [x] **Bug 3 — BE không trả cờ để FE phân biệt.** `BillPaymentRequestPrintResource` khối `bank`
+      không có `customer_type` của NCC, `findForShow()` cũng không eager-load (Entity không có
+      quan hệ `supplier` cấp phiếu) → thêm `bank.is_foreign_supplier`, query `customers` theo
+      `supplier_id` giống cách `companyName()` đang làm.
+- [x] **Bỏ phần HRM tự thêm** (user chốt "fix lại giống ERP" 2026-08-20): dòng *Địa chỉ ngân hàng*
+      và khối *ngân hàng trung gian* (`mid_*`) — template 406 KHÔNG có placeholder nào cho chúng.
+      Gỡ luôn `bank_address` + 5 key `mid_*` khỏi PrintResource để không còn dữ liệu chết.
+- [x] Verify: `php -l` + parse `vue-template-compiler`; đối chiếu lại số phiếu từng nhánh bằng SQL.
+
+**Không dính lỗi này:** màn chi tiết (`_id/index.vue` dùng lại `BillPaymentRequestForm` readonly →
+theo đúng luật NCC nước ngoài, khớp `ng-if="form.type_supplier_transfer_foreign"` của ERP) ·
+mẫu `ncc_tm` (735/735 phiếu loại 1 tiền mặt không có số tài khoản nên khối ngân hàng không hiện —
+đúng như template 405 vốn không có placeholder ngân hàng) · file Excel (blade export không in khối ngân hàng).
+
+- [x] **Đồng bộ nhãn + thứ tự khối ngân hàng của MÀN IN theo template ERP** (user chốt 2026-08-20):
+      *Chủ tài khoản* → *Số tài khoản* → *Ngân hàng* → *Thành phố* → *Chi nhánh* (trước đó HRM để
+      *Số tài khoản* / *Tên tài khoản* / *Tên ngân hàng*). ⚠️ FORM vẫn giữ bộ nhãn riêng
+      (*Số tài khoản* / *Tài khoản* / *Tên ngân hàng*) — ERP cũng khác nhau giữa form và mẫu in,
+      **không đồng bộ 2 nơi**.
+
+### Checkpoint — 2026-08-20 (Task BF.2 — khối ngân hàng màn in)
+Vừa hoàn thành: sửa khối ngân hàng màn in về đúng luật ERP — 2 file:
+`hrm-api/Modules/Finance/Transformers/BillPaymentRequestResource/BillPaymentRequestPrintResource.php`
+(thêm `isForeignSupplier()` + `bank.is_foreign_supplier`, bỏ `bank_address` + 5 key `mid_*`) ·
+`hrm-client/pages/finance/bill-payment-requests/_id/print.vue` (`bankRows()` đổi điều kiện, thêm
+Thành phố + Chi nhánh cho mọi mẫu, bỏ Địa chỉ NH + khối NH trung gian).
+Gỡ thêm computed `template` ở FE vì sau khi sửa không còn nơi dùng — key `template` BE vẫn trả
+(mô tả mẫu ERP của phiếu, giữ để đối chiếu).
+Đợt sau trong cùng buổi: đổi nhãn + thứ tự 3 dòng đầu khối ngân hàng màn in cho khớp template ERP
+(*Chủ tài khoản* / *Số tài khoản* / *Ngân hàng*), FE compile lại sạch.
+
+Verify đã chạy: `php -l` sạch · `vue-template-compiler` + `@babel/parser` parse sạch, 0 tham chiếu
+sót tới `this.template` / `bank_address` / `mid_*` · chạy `BillPaymentRequestPrintResource` thật qua
+tinker trên 3 phiếu đại diện (customer_type 1 / 2 / 3): cờ `is_foreign_supplier` ra đúng
+false / false / true, phiếu NCC nước ngoài giữ swift `ICICINBBCTS` + phí, 2 phiếu còn lại có
+Chi nhánh + Thành phố thật.
+
+**Chưa kiểm chứng trên trình duyệt** (user tự mở): mở phiếu NCC trong nước loại 1 + CK xem đã hết 4
+dòng `—` và đã có Chi nhánh + Thành phố; mở phiếu NCC nước ngoài xem còn đủ Phí / IBAN / Swift.
+
+Ghi chú dữ liệu: 35 phiếu có NCC để `customer_type = 1` nhưng ngân hàng lại ở nước ngoài (vd id=1,
+IDFC FIRST BANK / Ấn Độ) → sẽ KHÔNG in Swift/IBAN. Đây là dữ liệu danh mục NCC phân loại thiếu,
+ERP cũng xử lý y hệt — muốn in thì sửa `customer_type` của NCC, không sửa màn in.
+
+Đang làm dở: không.
+Bước tiếp theo: user test trình duyệt rồi tự commit 2 repo (Claude không commit).
+Blocked: không.
+
 ## Checkpoint
 
 ### Checkpoint — 2026-08-15 (ĐỢT SỬA THEO PHẢN HỒI USER — 10 hạng mục, ĐÃ COMMIT)

@@ -3300,3 +3300,310 @@ Vừa hoàn thành: chốt design + viết spec đầy đủ + lên plan 17 task
 Đang làm dở: chưa bắt đầu code.
 Bước tiếp theo: Task 1 — dựng 3 entity `BillIncome` / `BillIncomeDetail` / `BillIncomeDetailProductExportRequest`.
 Blocked:
+
+---
+
+## Bugfix 2026-08-20 — Cột "Người/Ngày cập nhật" + đổi nhãn "lập" → "tạo"
+
+**Hiện tượng (user báo):** popup *Cấu hình cột tùy chỉnh* của màn `/finance/bill-incomes` thiếu
+2 trường **Người cập nhật** / **Ngày cập nhật**; 2 cột **Ngày lập** / **Người lập** phải đổi nhãn
+về **Ngày tạo** / **Người tạo**.
+
+**Nguyên nhân gốc:** màn được port 1:1 theo ERP (spec §6.4 chốt đúng 11 cột, dùng nguyên văn nhãn
+ERP "Ngày lập/Người lập") nên bỏ qua quy tắc chung màn danh sách HRM
+(`.claude/skills/list-page/SKILL.md` mục 6: cột **Người tạo/Ngày tạo** bắt buộc, ngày hiện
+**d/m/Y H:i** width 140px; màn anh em `bill-income-requests` đã có đủ 4 cột). Kéo theo BE:
+`BillIncomeListResource` không trả `updated_at`/`updated_by_name`, entity `BillIncome` chưa có
+quan hệ `employeeUpdate` (dù hook `saving` vẫn ghi `updated_by` → dữ liệu có sẵn, không cần migration).
+
+### Task
+
+- [x] B1. `BillIncome`: thêm quan hệ `employeeUpdate()` (belongsTo Employee, `updated_by`)
+- [x] B2. `BillIncomeService::searchByFilter`: eager load `employeeUpdate.info` (chặn N+1);
+      thêm `updated_at` vào whitelist sắp xếp của `applySort()`
+- [x] B3. `BillIncomeListResource`: trả thêm `updated_by_name`, `updated_at` (`d/m/Y H:i`);
+      đổi `created_at` sang `d/m/Y H:i` cho khớp quy tắc mục 6 skill list-page
+- [x] B4. `pages/finance/bill-incomes/index.vue`: đổi tiêu đề cột `Ngày lập`→`Ngày tạo`,
+      `Người lập`→`Người tạo`; xếp lại `Người tạo` → `Ngày tạo` (đúng thứ tự skill);
+      thêm 2 cột `updatedByName` / `updatedAt` + template ô; `SORT_FIELD_MAP` thêm `updatedAt`
+
+### Checkpoint — 2026-08-20
+
+**Vừa hoàn thành:** bugfix B1-B4 (cột Người/Ngày cập nhật + đổi nhãn "lập" → "tạo" ở màn danh sách
+Phiếu thu).
+
+Đã sửa 4 file:
+- `hrm-api/Modules/Finance/Entities/BillIncome/BillIncome.php` — thêm quan hệ `employeeUpdate()`
+- `hrm-api/Modules/Finance/Services/BillIncomeService.php` — eager load `employeeUpdate.info`,
+  whitelist sort thêm `updated_at`
+- `hrm-api/Modules/Finance/Transformers/BillIncomeResource/BillIncomeListResource.php` — trả thêm
+  `updated_by_name` + `updated_at`; `created_at` đổi sang `d/m/Y H:i`
+- `hrm-client/pages/finance/bill-incomes/index.vue` — 13 cột, nhãn Ngày tạo / Người tạo /
+  Người cập nhật / Ngày cập nhật, template ô + `SORT_FIELD_MAP.updatedAt`
+
+**Kiểm chứng:** `php -l` sạch 3 file BE · SFC parse sạch (vue-template-compiler + @babel/parser) ·
+tinker trên DB thật: 2347/2347 phiếu có `updated_by`, quan hệ trả đúng tên người + ngày giờ.
+Chưa mở trình duyệt (user tự test).
+
+**Đang làm dở:** không.
+
+**Bước tiếp theo:** user xác nhận có đổi luôn nhãn bộ lọc "Ngày lập từ/đến" (`index.vue:64,75`) và
+ô lọc "Người lập" (`:425`), cùng 2 nhãn trong `IncomeRequestSearchModal.vue` (`:36,:69` — cột này
+là người lập PHIẾU ĐỀ NGHỊ, có thể giữ nguyên) sang "tạo" hay không.
+
+**Blocked:** không.
+
+---
+
+## Bugfix 2026-08-20 (2) — Màn in `/finance/bill-incomes/{id}/print` chưa giống ERP
+
+**Hiện tượng (user báo):** font chữ, bảng, chữ in đậm của bản in khác bên ERP.
+
+**Nguyên nhân gốc:** BE trả đúng HTML mẫu in ERP (`report_templates` 203-206) nhưng **môi trường CSS
+khác hẳn**. ERP (`resources/views/print.blade.php` → `printPDF()`) chỉ nạp **`public/css/pdf.css`**;
+HRM lại nạp `/css/print-app.css` + `/ckeditor/css/editor.css` rồi tự "mô phỏng lại" pdf.css bằng
+`printContentStyles()`. Đối chiếu từng rule trên HTML thật của phiếu 2347:
+
+| Chỗ lệch | ERP (pdf.css) | HRM (print-app + editor.css) |
+| --- | --- | --- |
+| Giãn dòng | mặc định trình duyệt (~1.2) | `line-height: 1.6 !important` (editor.css `body.document-editor`) |
+| `<p>` ngoài bảng | margin mặc định 1em | `margin/padding: 0 !important` (editor.css) |
+| Ô bảng `.no-border` (letterhead, khối chữ ký) | `padding: 5px 8px !important` | `.table td { padding: .75rem !important }` |
+| Mọi `table.table` | không có rule | `margin-bottom: 1rem !important` → hở thêm 16px giữa các khối |
+| Bảng nhỏ *Liên số/Số/Nợ/Có* (`class="table table-bordered"` **lồng trong** `<table class="no-border">`) | `.no-border td { border: none!important }` thắng → **KHÔNG viền** | rule mô phỏng `#content table:not(.no-border) td` specificity cao hơn → **có viền đen** (sai) |
+
+**Cách sửa:** dựng lại **đúng môi trường CSS của ERP** thay vì mô phỏng — copy nguyên
+`erp/public/css/pdf.css` sang `hrm-client/static/css/pdf-erp.css`, iframe in chỉ nạp file này +
+đúng khối style inline của `printPDF()`. Không đặt tên `pdf.css` vì plugin dùng chung
+`plugins/print-content.js` tự nạp `/css/pdf.css` cho **mọi** màn in → đổi font/viền toàn hệ thống.
+
+### Task
+
+- [x] C1. Thêm `hrm-client/static/css/pdf-erp.css` (bản sao `erp/public/css/pdf.css`)
+- [x] C2. `print.vue` — iframe in: bỏ `print-app.css` + `editor.css` + `body.document-editor`,
+      chỉ nạp `pdf-erp.css`; `printBaseStyles()` rút về đúng khối inline ERP; xóa `printContentStyles()`
+- [x] C3. `print.vue` — preview: bỏ `print-app.css` khỏi `head()`, style scoped mô phỏng đúng
+      pdf.css (kể cả quirk bảng lồng `.no-border` mất viền) để xem trước khớp bản in
+
+### Checkpoint — 2026-08-20 (màn in)
+
+**Vừa hoàn thành:** C1-C3 — bản in `/finance/bill-incomes/{id}/print` chạy đúng môi trường CSS ERP.
+
+Đã sửa 2 file:
+- `hrm-client/static/css/pdf-erp.css` (MỚI) — bản sao nguyên văn `erp/public/css/pdf.css`,
+  kèm docblock giải thích vì sao KHÔNG đặt tên `pdf.css` (plugin `plugins/print-content.js:15`
+  nạp `/css/pdf.css` cho mọi màn in → đổi tên đó là đổi font/viền toàn hệ thống)
+- `hrm-client/pages/finance/bill-incomes/_id/print.vue` — iframe in chỉ nạp `pdf-erp.css` +
+  khối style inline của `printPDF()` (`@page`, `body{margin:0}`, `.MsoBodyTextIndent`,
+  `div.page-break.active`); bỏ `print-app.css`, `editor.css`, class `document-editor` và toàn bộ
+  `printContentStyles()`; `head()` không nạp stylesheet toàn cục nữa; `<style scoped>` của preview
+  chép lại đúng rule pdf.css để xem trước khớp bản in
+
+**Kiểm chứng:** dump HTML mẫu in thật của phiếu 2347 (`BillIncomePrintService::render`) rồi đối
+chiếu từng rule ERP ↔ HRM — 5 điểm lệch đã liệt kê ở bảng trên. SFC parse sạch
+(vue-template-compiler + @babel/parser). **Chưa mở trình duyệt** — cần user so bản in HRM với ERP.
+
+**Bước tiếp theo:** user in thử phiếu 2347 ở cả 2 cổng và so. Nếu khớp thì cân nhắc áp cùng cách
+cho các màn in v-html chị em (`bill-income-requests`, `bill-payments`, `bill-payment-requests`,
+`product-transfer-requests`) — hiện vẫn dùng lối mô phỏng pdf.css cũ.
+
+**Blocked:** không.
+
+- [x] C4. Preview mất chữ đậm: `assets/scss/custom/components/_reboot.scss:21` đặt
+      `b, strong { font-weight: 500 }` toàn hrm-client, Times New Roman không có nét 500 →
+      trình duyệt vẽ như chữ thường. Trả `font-weight: bold` trong `<style scoped>` của màn in
+      (KHÔNG sửa file reboot dùng chung). Bản in trong iframe không dính lỗi này vì không nạp CSS app.
+
+- [x] C5. **"Bằng chữ: … đồng đồng"** — `BillIncomePrintService:155` chép nguyên câu ERP
+      `ucfirst(convertNumberToWords($x)) . ' đồng'`. Bên ERP helper gọi `n2c($number, '')` (tham số
+      2 là đơn vị tiền, truyền rỗng) nên trả chữ số trần; trên HRM `n2c()` là của gói
+      `phpviet/laravel-number-to-words` và ĐÃ tự gắn "đồng" → thừa 1 chữ. Thêm
+      `moneyInWords()` (cắt hậu tố rồi gắn lại đúng 1 lần) y hệt `BillPaymentPrintService` —
+      KHÔNG sửa helper dùng chung. Kiểm chứng phiếu 2347: đếm "đồng" = 1.
+- [x] C6. **Hàng chữ ký lệch mép trang** — 2 bảng cuối của mẫu in 203-206 khai cứng
+      `style="width:827px"` trong khi vùng in chỉ 180mm (A4 210mm − lề 20mm + 10mm) ≈ 680px →
+      tràn phải, cột cuối bị cắt, không thẳng hàng với bảng chi tiết (`width:100%`). Thêm
+      `#content table { max-width: 100% !important }` vào `printBaseStyles()` + `<style scoped>`
+      của màn in. **Khác ERP có chủ ý** (ERP cũng tràn) vì mẫu in nằm trong `report_templates`
+      dùng chung 2 cổng, không tự sửa.
+
+**Còn tồn (nằm trong `report_templates`, dùng chung với ERP — cần user chốt mới đụng):**
+hàng chữ ký có **6 ô** `width:20%` (tổng 120%) trong đó ô thứ 6 là bản nhân đôi "THỦ QUỸ" cỡ chữ
+1px → 5 tiêu đề nhìn thấy chỉ chiếm 5/6 bề ngang, dôi khoảng trống bên phải; mẫu cũng đang gõ
+thiếu dấu "BAN GIAM ĐỐC".
+
+- [x] C7. **Hàng chữ ký dồn trái ở preview + so le cao thấp khi in** (user báo 2026-08-20, sau C6).
+      Đo bằng trình duyệt trên bản dựng tĩnh (pdf-erp.css + style in thật, khổ 180mm):
+      - *Dồn trái ở preview*: `#content` của màn preview giãn hết bề ngang màn hình, trong khi 2
+        bảng cuối mẫu in khai cứng `width:827px` → bảng nằm nép trái, chừa khoảng trắng lớn bên phải.
+        Fix: dựng `#content` thành TỜ A4 (`width: 210mm`, `box-sizing: border-box`, padding = ĐÚNG
+        lề in `15mm 10mm 15mm 20mm`, nền trắng + viền + đổ bóng như preview ERP) → bề ngang chỗ chữ
+        đúng 680px, khớp y hệt bản in.
+      - *So le cao thấp khi in*: ô rộng 20% (~132px) hẹp hơn nhãn nên "KẾ TOÁN TRƯỞNG",
+        "NGƯỜI NỘP TIỀN", "NGƯỜI LẬP PHIẾU" xuống 2 dòng; ô 1 dòng lại bị canh giữa theo chiều dọc
+        (`vertical-align` mặc định của `td` là `middle`) → chữ cao chữ thấp. Fix:
+        `#content table.block td { white-space: nowrap; vertical-align: top; padding: 2px 4px }`
+        (class `block no-border` chỉ có ở đúng 2 bảng này — đếm trên HTML thật: 4 lần = 2 bảng × 2 liên).
+      - Kiểm chứng sau fix (đo lại): bảng 679px/680px (tràn 0), 5 nhãn mỗi nhãn 1 dòng
+        (111 / 132 / 120 / 129 / 72 px), mọi nhãn bắt đầu cùng mức (textTop 2-3px).
+
+---
+
+## Rà nút theo `.claude/skills/button-convention` — màn chi tiết/duyệt phiếu thu (2026-08-20)
+
+Rà toàn bộ nút của `/finance/bill-incomes/{id}` (V2Footer + popup Duyệt + popup Hủy).
+
+**MÀU đã đúng chuẩn, không phải sửa** (đối chiếu mục 2b):
+Sửa `primary` (teal) · Duyệt `primary status="success"` · Hủy phiếu thu `primary status="danger"` ·
+In `secondary` (info) · Xuất Excel `secondary status="success"` · Xóa `primary status="danger"` ·
+Quay lại / Đóng `tertiary`. Mọi nút đều có icon `#prefix` + `size="sm"`, không nút nào dùng
+`type="primary"`, không dùng `light` trong modal.
+
+**Lệch chuẩn phát hiện được:**
+
+- [x] D1. **Thứ tự nút sai** (mục 5): "Hủy phiếu thu" (danger) đang đứng TRƯỚC nhóm phụ
+      (In, Xuất Excel). Chuẩn: chính → phụ → nguy hiểm → thoát. Xếp lại thành
+      Duyệt → In → Xuất Excel → Hủy phiếu thu → Xóa (Sửa do V2Footer render trước slot, Quay lại sau).
+- [x] D2. **Chữ "Duyệt phiếu thu"** ≠ bảng text chuẩn mục 4.2 (`Duyệt`) — popup duyệt cũng đang
+      dùng đúng chữ "Duyệt" nên 2 chỗ đang lệch nhau. Đổi về `Duyệt`.
+- [x] D3. **Icon nút "Xác nhận"** trong popup Hủy đang là `ri-close-circle-line`; bảng icon mục 3
+      quy định `Xác nhận / Duyệt → ri-check-line` (icon `ri-close-circle-line` dành cho "Từ chối").
+      Header popup vẫn giữ icon đỏ `ri-close-circle-line` nên vẫn đọc ra là thao tác hủy.
+
+**Không đụng:** `components/V2Footer.vue` (component dùng chung — nút Sửa/Quay lại render từ đây).
+
+### Checkpoint — 2026-08-20 (rà nút màn chi tiết)
+
+**Vừa hoàn thành:** D1-D3 trong `pages/finance/bill-incomes/_id/index.vue`. Thứ tự nút cuối cùng
+trên màn: Sửa (primary) → Duyệt (primary success) → In (secondary) → Xuất Excel (secondary success)
+→ Hủy phiếu thu (primary danger) → Xóa (primary danger) → Quay lại (tertiary).
+MÀU không đổi — đã đúng chuẩn từ trước; chỉ đổi thứ tự, chữ "Duyệt phiếu thu" → "Duyệt" và icon
+nút "Xác nhận" của popup Hủy → `ri-check-line`.
+
+**Kiểm chứng:** SFC parse sạch (vue-template-compiler + @babel/parser). Chưa mở trình duyệt.
+
+**Còn cân nhắc (chưa làm, chờ user):** chữ "Hủy phiếu thu" không có trong bảng text chuẩn mục 4.2;
+giữ nguyên vì rút thành "Hủy" sẽ lẫn với nút hủy thao tác. Nếu team muốn thống nhất thì đổi 1 lượt
+cho cả Phiếu chi / Đề nghị thu / Đề nghị chi.
+
+**Blocked:** không.
+
+### Đổi chuẩn màu nhóm Duyệt — 2026-08-20 (user chốt)
+
+Nhóm **Duyệt · Gửi duyệt · Hoàn thành · Kích hoạt** chuyển từ `primary status="success"` (#16A34A)
+sang **`primary` không kèm status (#1ABC9C teal)**; **Gửi duyệt** rời nhóm `warning` (cam) sang
+nhóm này. Lý do: teal vốn đã là màu nút Duyệt / Lưu và duyệt / Trưởng phòng duyệt / BGĐ duyệt mặc
+định của `components/V2Footer.vue` — component dùng chung của hầu hết màn chi tiết; thống kê thực tế
+43 nút liên quan tới duyệt trong `pages/` + `components/` thì đa số đang teal, chỉ 4 nút của
+Phiếu thu / Phiếu chi để `success`.
+
+- [x] E1. Sửa `.claude/skills/button-convention/SKILL.md` mục 2b (bảng "Các nhóm còn lại" + ghi chú
+      giải thích lựa chọn). ⚠️ Skill là **tài sản chung** — theo quy tắc team phải đưa qua PR, chưa commit.
+- [x] E2. Đồng bộ bảng tra nhanh `.plans/gop-db/list-page-action-column/quy-tac-mau-button.xlsx`
+      (2 dòng: nhóm Duyệt đổi màu ô XEM THỬ sang #1ABC9C; dòng cam còn lại "Khóa / Cảnh báo").
+- [x] E3. Áp chuẩn mới cho màn Phiếu thu: bỏ `status="success"` ở nút Duyệt tại
+      `pages/finance/bill-incomes/_id/index.vue` và `components/ApproveBillIncomeModal.vue`.
+
+**Chưa làm — chờ user chốt** (nằm ngoài feature Phiếu thu):
+`pages/finance/bill-payments/_id/index.vue` + `components/ApproveBillPaymentModal.vue` (2 nút Duyệt
+còn `success`) · `pages/assign/quotations/_id/index.vue` ("BGĐ duyệt" `success`) ·
+`components/V2Footer.vue` ("Hoàn thành" `success` — component dùng chung) ·
+`pages/finance/bill-payments/components/BillPaymentForm.vue` ("Lưu và gửi KT trưởng duyệt" `warning`) ·
+`components/assign/quotation/QuotationLowPriceWarningModal.vue` ("Tiếp tục gửi duyệt" `warning`).
+
+- [x] E4. Xếp **Duyệt phiếu thu** và **Hủy phiếu thu** đứng cạnh nhau (user yêu cầu 2026-08-20).
+      Thứ tự cuối: Sửa → Duyệt phiếu thu → Hủy phiếu thu → In → Xuất Excel → Xóa → Quay lại.
+      **Cố ý lệch** skill button-convention mục 5 (chính → phụ → nguy hiểm → thoát) — đã ghi chú
+      ngay trên khối nút trong `_id/index.vue` để lượt review sau không "sửa lại cho đúng skill".
+      Ghi nhận: file `_id/index.vue` có bản sửa ngoài phiên (nút Duyệt gộp 1 dòng, giữ chữ
+      "Duyệt phiếu thu" thay vì "Duyệt") — tôn trọng bản đó, không áp lại đề xuất đổi chữ ở D2.
+
+- [x] E5. Màn Thêm phiếu thu (`finance/bill-incomes/create`): luôn hiện **bảng Chi tiết** kể cả khi
+      chưa chọn phiếu đề nghị thu (user yêu cầu 2026-08-20). Trước đó section Chi tiết chỉ hiện dòng
+      chữ "Chưa chọn phiếu đề nghị thu". Nay bỏ nhánh `v-if/v-else`, bảng render luôn với cột mặc
+      định (chưa có phiếu → `typeNumber` = NaN nên partyLabel = "Khách hàng", có cột Số đơn hàng/Hợp
+      đồng, tiền VND 1 cột), tbody hiện 1 dòng trống với text từ computed mới `emptyDetailText`
+      ("Chưa chọn phiếu đề nghị thu" / "Không có dữ liệu"). File:
+      `pages/finance/bill-incomes/components/BillIncomeForm.vue`.
+
+- [x] E6. Bảng Chi tiết khi trống phải **ngắn gọn** như bảng ở `customer-care/warranty-repair-requests/create`
+      (user yêu cầu 2026-08-20). Nguyên nhân bảng cao lênh khênh: class `.table-responsive` dính rule
+      toàn cục `assets/scss/default.scss:85` (`min-height: 50vh`). Sửa: đổi wrapper sang
+      `V2BaseTableScroll` (đúng khuôn màn tham chiếu, lại có thêm thanh cuộn ngang phía trên);
+      dòng trống bỏ `py-3` và đổi `.text-muted` → class riêng `.v2-empty-row` (#6b7280) vì SCSS toàn
+      cục ép `.text-muted` thành ĐỎ như lỗi validate.
+
+### Checkpoint — 2026-08-20
+Vừa hoàn thành: E5 + E6 — bảng Chi tiết luôn hiện và gọn khi trống ở màn Thêm phiếu thu.
+Đang làm dở: không có.
+Bước tiếp theo: user mở trình duyệt kiểm tra hiển thị bảng khi chưa chọn phiếu đề nghị.
+Blocked:
+
+### Sửa lỗi file Excel xuất phiếu thu — 2026-08-20 (user báo)
+
+3 lỗi trên file `.xlsx` tải về từ nút "Xuất Excel" (cả màn danh sách lẫn chi tiết đều gọi
+`GET /finance/bill-incomes/{id}/export`):
+
+1. **Thiếu logo (letterhead) công ty ở đầu file** — `BillIncomePrintService::excelPlaceholders()`
+   đã dựng sẵn `HEADER` (URL tuyệt đối ảnh letterhead theo công ty người tạo phiếu) nhưng blade
+   `finance::exports.bill_income` không dùng tới. Bản IN có logo, bản Excel thì không.
+2. **Cột quá hẹp** — HTML reader của PhpSpreadsheet đọc `width: 10px/48px/20px` trong thẻ `<td>`
+   ra bề rộng 1.43 / 6.86 / 2.86 ký tự. Cùng nguyên nhân đã xử lý ở `BillPaymentRequestExport` /
+   `ProductTransferRequestExport`: phải dùng `WithColumnWidths`, không đặt `width` px trong HTML.
+3. **Cột số tiền báo "The number in this cell is formatted as text"** — service in tiền bằng
+   `number_format()` ("2,135,916") nên PhpSpreadsheet lưu kiểu chuỗi. Phải xuất SỐ THÔ + đặt
+   `NumberFormat` như `BillPaymentExport::registerEvents()` đang làm cho Phiếu chi.
+
+- [x] F1. `BillIncomePrintService`: 3 hàm dựng bảng bản EXCEL (`billIncomeExcelTable`,
+      `billIncomeExcelWithExchangeRateTable`, `excelProductExportRequestsTable`) + `SO_TIEN` xuất
+      SỐ THÔ thay cho `number_format()`. KHÔNG đụng 3 hàm bản IN (bản in là HTML cho trình duyệt,
+      vẫn cần chuỗi có dấu phân cách).
+- [x] F2. `BillIncomeExport` implement `WithColumnWidths` — bộ bề rộng riêng cho 2 bố cục
+      (1 chi tiết = khối nhãn/giá trị; nhiều chi tiết = bảng 8/9 cột).
+- [x] F3. `BillIncomeExport` implement `WithDrawings` — nhúng ảnh `HEADER` vào ô A1, nới chiều cao
+      dòng 1. Ảnh nằm trên server ERP → tải bằng HTTP, hỏng/timeout thì BỎ QUA (không chặn export).
+- [x] F4. `registerEvents()`: thêm `NumberFormat` cho vùng ô tiền (giữ nguyên phần kẻ viền cũ).
+- [x] F5. Kiểm chứng: dựng lại file cho 1 phiếu 1 chi tiết + 1 phiếu nhiều chi tiết, đọc lại bằng
+      PhpSpreadsheet xác nhận ô tiền kiểu `n`, bề rộng cột đúng, có drawing.
+
+**Kết quả kiểm chứng (dựng file thật ở local, đọc lại bằng PhpSpreadsheet):**
+
+| | Trước | Sau |
+| --- | --- | --- |
+| Ô tiền 1 chi tiết (C8) | `[s] "2,135,916"` | `[n] 2135916`, format `#,##0` → hiện `2,135,916` |
+| Cột tiền nhiều chi tiết (G10+) | `[s]` | `[n]`, kể cả dòng **Tổng cộng** (`100,277,000`) |
+| Bề rộng cột (phiếu nhiều dòng) | A=1.43 · B=6.86 · C=2.86 · G=2.86 | A=6 · B=36 · C=26 · G=18 · H=18 · I=18 |
+| Logo | không có | drawing `A1` 463×72 px, dòng 1 cao 58pt |
+
+Phiếu ngoại tệ: DB gộp **0 phiếu** (đếm 2026-08-20) → chạy thử bằng cách ép `type_money_id = 2`
+TRONG BỘ NHỚ (không `save()`), xác nhận cả cột G (nguyên tệ) và H (quy đổi VND) ra kiểu số.
+
+Bản IN không đụng tới: `placeholders()` + `render()` chạy lại vẫn ra `2,135,916` như cũ.
+
+**Chưa kiểm chứng:** ảnh letterhead thật — máy local không với tới `erp.test:8080/uploads/...`
+(404), nên logo test bằng ảnh PNG dựng tạm qua `file://`. Trên môi trường có ERP thật, nếu URL
+chết thì file vẫn xuất bình thường, chỉ không có logo (đã chủ ý nuốt lỗi).
+
+### Checkpoint — 2026-08-20 (F1-F5)
+Vừa hoàn thành: sửa 3 lỗi file Excel phiếu thu (logo · bề rộng cột · số tiền là text).
+Đang làm dở: không có.
+Bước tiếp theo: user tải lại file Excel trên môi trường dev để xác nhận logo công ty hiện đúng.
+Blocked: không.
+
+**Việc cùng loại chưa làm (ngoài phạm vi yêu cầu):** `BillPaymentExport` (Phiếu chi) đang cố ý bỏ
+logo và chưa có `WithColumnWidths`; số tiền bản Phiếu chi vẫn là chuỗi `number_format()` (chỉ có
+NumberFormat áp lên ô, không đổi được kiểu ô) → cùng 3 triệu chứng. Hỏi user có làm luôn không.
+
+### Sửa lại F4 — 2026-08-20 (khi làm Phiếu chi thì tìm ra cách tốt hơn)
+
+Bỏ cách đặt `NumberFormat` theo vùng ô trong `registerEvents()`, chuyển sang khai
+`data-format="#,##0"` trên TỪNG thẻ `<td>` tiền (HTML reader của PhpSpreadsheet có đọc thuộc tính
+này). Lý do: vùng ô phải tự tính theo số dòng, mà bảng chi tiết có thể nở thêm dòng do bảng phân bổ
+phiếu xuất hàng (rowspan) → trỏ trượt. Ô "Số tiền" của phiếu 1 chi tiết gắn `data-format` trong
+blade, có điều kiện `$typeMoneyId == 1` (ngoại tệ in kèm tên tiền tệ nên là chuỗi).
+
+Phần nhúng letterhead tách sang trait dùng chung `Exports/Concerns/EmbedsCompanyLetterhead.php`.
+Kiểm chứng lại sau khi đổi: C8 `[n] #,##0`, G10+ `[n] #,##0`, dòng Tổng cộng `100,277,000`,
+drawing A1 463×72 — y như trước.
+
+Quy tắc rút ra đã gói vào `.claude/skills/export-excel/SKILL.md`.
