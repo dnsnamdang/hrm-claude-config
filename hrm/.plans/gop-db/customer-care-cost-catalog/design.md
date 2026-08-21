@@ -30,6 +30,7 @@ Trường phụ thuộc `kind_of`:
 | Trường | kind_of = 1 (chi phí phải trả) | kind_of = 2 (dịch vụ SC & chi phí khác) |
 |---|---|---|
 | `type` | bắt buộc, 8 loại (Quốc tế / Nội địa / NCC quốc tế / Báo giá DV / Lắp đặt / Dự án / Bán hàng / Giá hàng hóa) | luôn `null` |
+| `en_name` (Tên tiếng Anh) | có nhập (ERP hiện field + cột + ô tìm) | **KHÔNG dùng** — ERP `ng-if="kind_of==1"`, màn này không hiện. Giữ `null`. |
 | `rate_value_capital` | `null` | **bắt buộc**, số ≥ 0 (tỷ lệ giá vốn %) |
 | `revenue_calculation` | `null` | 1 = Dịch vụ có tính doanh thu / 0 = Chi phí khác |
 | `vat_percent` | bắt buộc ≤ 100 | bắt buộc ≤ 100 |
@@ -90,8 +91,8 @@ bằng 2 connection khác nhau.
   không cho sửa/xóa. `canDelete()` còn đòi `status == 1`.
 - `delete()` thực chất là **"khóa hoặc xóa"**: nếu `cost_id` đã dùng ở `firm_quotation_costs`
   hoặc `firm_contract_costs` → chỉ set `status = 0` (Khóa); nếu chưa → xóa hẳn + dọn `company_costs`.
-- Bộ lọc: `name`, `en_name`, `updated_by` (gộp cả created_by khi updated_by null), `type`,
-  `kind_of`, `status`, `revenue_calculation`.
+- Bộ lọc: `name`, `updated_by` (gộp cả created_by khi updated_by null),
+  `status`, `revenue_calculation`. (KHÔNG lọc `en_name` — chỉ thuộc kind_of=1.)
 - Sắp xếp theo cột `discount` phải join động `company_costs` theo company của user (ERP làm bằng
   raw subquery + addBinding).
 

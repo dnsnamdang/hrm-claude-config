@@ -69,6 +69,28 @@
 - [x] DB nguyên trạng: `levels` 29, `note_maintenances` 11
 - [ ] ⏳ Chưa verify bằng mắt trên browser (chưa đăng nhập được phiên Playwright)
 
+## Phase 6 — Bugfix: ẩn/disable nút Xóa khi ghi chú đang được dùng (@junfoke)
+
+- [x] BE: `NoteMaintenanceResource` trả thêm `can_delete` (dùng `isCanDelete()` sẵn có của entity)
+- [x] FE: nút Xóa ở list disable + tooltip khi `item.can_delete === false` (thay vì luôn cho bấm rồi mới toast chặn)
+
+### Checkpoint — 2026-08-05
+Vừa hoàn thành: rà nguyên nhân — entity đã có `isCanDelete()`/`usedIn()`, controller đã chặn, nhưng Resource không trả cờ và FE luôn hiện nút Xóa
+Đang làm dở: sửa Resource + trash button trong index.vue
+Bước tiếp theo: verify trên browser (ghi chú id 1 đang dùng → nút Xóa xám/disable; ghi chú xóa được → bấm bình thường)
+Blocked:
+
+## Phase 7 — Bugfix: màn Levels trùng 2 bộ lọc tìm kiếm (@junfoke)
+
+- [x] Component chung `V2BaseFilterPanel`: thêm prop `showAdvancedToggle` (default true) để ẩn nút "Tìm kiếm nâng cao"
+- [x] `pages/customer-care/levels/index.vue`: bỏ trường "Tên cấp" ở nâng cao (trùng ô tìm nhanh — BE `LevelService::index` lọc cả `keyword` lẫn `name` trên cùng cột `name`), set `:showAdvancedToggle="false"`, dọn `name` khỏi filter + import `V2BaseLabel`/`V2BaseInput` không dùng
+
+### Checkpoint — 2026-08-05
+Vừa hoàn thành: gộp 2 bộ lọc tên cấp về 1 ô tìm nhanh, ẩn toggle nâng cao rỗng
+Đang làm dở: —
+Bước tiếp theo: verify browser (màn levels chỉ còn 1 ô tìm nhanh, không còn nút "Tìm kiếm nâng cao"; các màn khác dùng V2BaseFilterPanel vẫn còn toggle như cũ)
+Blocked:
+
 ## Việc còn lại
 
 - [ ] ⚠️ **Rà `ErpPermissionHelper` sau khi gộp bảng**: `app/Helpers/ErpPermissionHelper.php` vẫn

@@ -101,6 +101,53 @@
 - Generator (scratchpad, chạy lại được): `gen_tc_costs.py`, `gen_hdsd_costs.py` — dùng
   `openpyxl` / `python-docx`; HDSD strip body từ heading "TỔNG QUAN", clone proto Caption có SEQ
   field, purge media mồ côi, bật `updateFields`
+## Phase 6 — Sửa lỗi port: bỏ "Tên tiếng Anh" khỏi màn kind_of=2 (2026-08-04)
+
+> **Bug:** Bản port bê nhầm trường `en_name` ("Tên tiếng Anh") vào màn `customer-care/costs`.
+> ERP gốc (`accounting/costs/index.blade.php`) chỉ hiện `en_name` khi `kind_of == 1`
+> (`<th ng-if="editing.kind_of == 1">`, cột datatable `visible: (paramUrl == 1)`, field modal
+> `ng-if="editing.kind_of == 1"`). Màn này là `kind_of = 2` nên **không được có** trường đó.
+> Cột `en_name` trong bảng `costs` GIỮ NGUYÊN (dùng chung cho kind_of=1 ở module Assign) — chỉ gỡ
+> khỏi màn CSKH, KHÔNG đụng DB, KHÔNG đụng module Assign.
+
+- [x] FE `pages/customer-care/costs/index.vue` — bỏ ô lọc "Tên tiếng Anh", bỏ cụm trong placeholder
+      tìm nhanh, bỏ dòng phụ "Tên tiếng Anh" ở cột Tên, bỏ `en_name` khỏi `initialStateForm`
+- [x] FE `components/modal/customer-care/cost-modal.vue` — bỏ input, bỏ khỏi `emptyData` + `payload`
+- [x] BE `Http/Requests/Cost/CostRequest.php` — bỏ khỏi `prepareForValidation`/`rules`/`attributes`/`messages`
+- [x] BE `Transformers/CostResource/CostResource.php` — bỏ field `en_name`
+- [x] BE `Services/CostService.php` — bỏ khỏi keyword-search, filter loop, `$allowedSortFields`, `payload()`
+- [x] BE `resources/views/exports/costs.blade.php` — bỏ cột "Tên tiếng Anh" + sửa `colspan` (9→8, chân ký 8→7)
+- [x] Sửa `design.md`: bỏ `en_name` khỏi danh sách bộ lọc, ghi chú `en_name` chỉ thuộc kind_of=1
+- [x] `Cost.php` (`$fillable`) GIỮ NGUYÊN `en_name` — base model dùng chung (Assign `TpCost extends Cost`, kind_of=1)
+- [x] `php -l` 3 file BE sạch; grep xác nhận không còn `en_name` trong phạm vi CSKH (FE + BE)
+
+### Đổi tên cột cho khớp ERP kind_of=2 (user chốt 2026-08-04, kèm ảnh đối chiếu ERP/HRM)
+
+Đối chiếu source ERP `accounting/costs/index.blade.php`. User chọn:
+- [x] **Đổi tên 3 cột** (cả list + modal + export) — giữ nguyên cơ chế chiết khấu theo công ty:
+  - `Chiết khấu` → **`ĐM giảm giá`** (Định mức giảm giá) — list + export; modal label `ĐM giảm giá (%)`
+  - `Tỷ lệ giá vốn` → **`% Tính giá vốn`**
+  - `VAT` → **`% VAT`**
+  - Sửa cả ghi chú modal: "Chiết khấu áp riêng…" → "ĐM giảm giá áp riêng…"
+- [x] **Giữ cột `Phân loại`** (revenue_calculation) — user muốn giữ dù ERP kind_of=2 không có (ERP chỉ có cột "Kiểu" trùng nhau mọi dòng, vô nghĩa)
+- [x] **Giữ nguyên bộ lọc** (`name`, `Phân loại`, `status`, `Người cập nhật`) — user không cắt theo ERP
+
+### 🐛 Bug dropdown không chọn được option `id: 0` (user báo 2026-08-04, user chốt sửa gốc)
+
+- Triệu chứng: bộ lọc "Phân loại"/"Trạng thái" hiện đủ option nhưng không click chọn được
+  "Chi phí khác" / "Khóa" (đều `id: 0`).
+- Gốc: [`V2BaseSelect.vue`](../../../hrm-client/components/V2BaseSelect.vue) `select2Options` map
+  `id: opt.id || opt.value || opt.code` → `0 || ... = undefined` → Select2 bỏ giá trị.
+- [x] Sửa `V2BaseSelect` dùng kiểm tra `!== undefined && !== null` (đồng bộ `V2BaseSelectInModal`
+  vốn đã đúng) — component dùng chung, fix mọi màn có option `id=0`
+- [x] Sửa luôn `V2BaseSelectRemote` dòng text fallback (`String(o.id || ...)` → dùng `id` đã tính)
+- Ghi chú: `V2BaseSelectInModal` KHÔNG dính lỗi (đã xử lý đúng từ trước).
+
+### Checkpoint — 2026-08-04
+Vừa hoàn thành: (1) Gỡ sạch "Tên tiếng Anh" (`en_name`) khỏi màn kind_of=2 — FE + BE. (2) Đổi tên 3 cột theo ERP (ĐM giảm giá / % Tính giá vốn / % VAT) ở list + modal + export; giữ cột Phân loại + giữ bộ lọc. (3) Fix bug falsy-zero ở `V2BaseSelect`/`V2BaseSelectRemote` (option `id=0` không chọn được). Không đụng DB, không đụng module Assign (kind_of=1).
+Đang làm dở: (không)
+Bước tiếp theo: User verify browser (localhost:3000 `/customer-care/costs`): chọn được "Chi phí khác"/"Khóa" trong bộ lọc; tiêu đề cột = ĐM giảm giá / % Tính giá vốn / % VAT; không còn tiếng Anh; modal nhãn khớp; Xuất Excel 8 cột đúng tên.
+Blocked:
 
 ## Việc còn lại
 
