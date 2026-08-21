@@ -147,3 +147,16 @@ Blocked: không
 
 ### FE — placeholder ô tìm kiếm
 - [x] `QuotationProductSearchModal.vue` — đổi `quickSearchPlaceholder` "Nhập tên hoặc mã hàng hoá..." → "Nhập tên, mã hoặc model hàng hoá..." (phản ánh việc search đã hỗ trợ Model). Popup dùng chung BOM + Báo giá.
+
+### Đồng bộ hành vi chọn hàng với popup ERP (2026-08-07)
+
+- [x] FE `QuotationProductSearchModal.vue`: click DÒNG → thêm ngay hàng đó vào lưới (`addRowNow`);
+      checkbox + chọn-tất-cả chỉ tích chọn, thêm bằng nút "Thêm N hàng hoá"; bỏ `autoApply`/`autoAddedUids`.
+
+### Đồng bộ select "Hãng sản xuất" (2026-08-12)
+
+- [x] FE `V2BaseSelectInModal.vue`: thêm prop opt-in `searchInDropdown` — dựng lại `dropdownAdapter` (Dropdown + Search + CloseOnSelect + AttachBody) để select multiple có ô search trong dropdown như select chọn 1; ẩn ô search inline bằng class `v2-select--dropdown-search`. Mặc định `false` → không đổi hành vi màn cũ.
+- [x] FE `QuotationProductSearchModal.vue`: filter "Hãng sản xuất" thêm `searchInDropdown` (vẫn chọn nhiều, giữ nguyên `manufacture_ids`).
+- [x] FE `V2BaseSelectInModal.vue` (fix kèm): gán `id` duy nhất cho mỗi `<select>` (`v2-select-N`). `v-select2-component` render `<select id="">` → select2 sinh `container.id = 'select2-'` cho MỌI instance → handler đóng-select-khác đăng ký cùng namespace `mousedown.select2.select2-`, select này đóng gỡ luôn handler select kia ⇒ mở Xuất xứ rồi bấm Hãng sản xuất/Thương hiệu thì select cũ không đóng. Verify Playwright: 7 lần bấm liên tiếp giữa 5 select → luôn chỉ 1 dropdown mở (PASS).
+- [x] FE: đưa ô search-trong-dropdown thành mặc định cho MỌI select chọn nhiều — tách helper `utils/select2DropdownSearch.js`; `V2BaseSelectInModal` + `V2BaseSelect` cùng prop `searchInDropdown` (default `true`, tắt bằng `:searchInDropdown="false"`). Bỏ attr thừa ở QuotationProductSearchModal. CSS: KHÔNG ẩn ô search inline (select2 dùng chính input này hiện placeholder) mà `pointer-events:none` → click rơi xuống khung select, mousedown vẫn lan lên body.
+      Verify Playwright: popup báo giá 4 select multiple + Xuất xứ (search trong dropdown, chỉ 1 dropdown mở, placeholder "Tất cả" còn, gõ "3M" ra đúng, chọn ra tag) = PASS; màn shift-history (V2BaseSelect multiple) và modal Phân quyền hàng loạt (7 select multiple) hiển thị + search OK.

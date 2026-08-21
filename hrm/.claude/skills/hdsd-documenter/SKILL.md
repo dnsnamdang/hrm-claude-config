@@ -30,7 +30,22 @@ Mỗi màn hình đều gắn với **một tập quyền cụ thể** (khai bá
 
 → Không gộp chung "người dùng có thể tạo/sửa/xóa". Người đọc HDSD thường **chỉ có 1–2 quyền**, tài liệu phải cho họ biết chính xác phần nào áp dụng cho mình.
 
-Xem thêm memory: `feedback_hdsd_detail_level`, `reference_hdsd_format`, `reference_hdsd_luongchinh`, `reference_playwright_ui_test`.
+## ⚠️ NGUYÊN TẮC SỐ 3 — NGÔN NGỮ NGƯỜI DÙNG CUỐI, KHÔNG PHẢI NGÔN NGỮ CODE
+Người đọc HDSD là **người dùng nghiệp vụ**, không phải dev. (User chốt 2026-08-12 khi review tài liệu: *"tài liệu này dev có dùng đâu mà toàn id như code thế này"*.)
+
+**TUYỆT ĐỐI KHÔNG viết** vào tài liệu: tên bảng / tên cột DB · id permission, group, type, guard · tên hàm / class / file · đường dẫn API (`/api/v1/...`, `GET /{id}/lock`) · mã HTTP (400/403/404/422) · tên tham số kỹ thuật (`sort_by`, `per_page`, `meta.total`, `localStorage`, `filterCollapsed`).
+
+Thay bằng **đúng nhãn hiển thị trên màn hình** và câu chữ người dùng hiểu:
+- `status = 0` → "trạng thái Khóa" · `revenue_calculation = 1` → "Có tính doanh thu"
+- "BE trả 422, lỗi inline" → "hệ thống báo lỗi đỏ ngay dưới ô …, cửa sổ không đóng"
+- "BE trả 403" → "hệ thống từ chối, báo không có quyền"
+- tên bảng chứng từ → tên nghiệp vụ ("Báo giá hãng", "Hợp đồng hãng")
+
+**Vẫn giữ**: tên quyền nguyên văn tiếng Việt, và **đường dẫn màn hình** dạng `/customer-care/costs` (người dùng cần để gõ thẳng vào trình duyệt). Nếu cần nêu mã lỗi/endpoint cho tester, để trong tài liệu test case chứ không phải HDSD.
+
+⚠️ Bám form TRÌNH BÀY của file mẫu nhưng **không bắt chước cách viết kỹ thuật** nếu file mẫu có.
+
+Liên quan: `.claude/skills/testcase-documenter/SKILL.md` (cùng nguyên tắc ngôn ngữ) · `.claude/skills/srs-documenter/SKILL.md` (SRS thì NGƯỢC LẠI — được phép dùng thuật ngữ kỹ thuật).
 
 ## Quy trình (4 bước)
 
@@ -42,7 +57,8 @@ User đã chốt: **không chỉ đọc FE của màn** — phải đọc source
 - **Modal/form tái dùng từ module khác**: đọc tận file gốc (mode view/edit/approve khác nhau thế nào), không suy diễn.
 - **QUÉT QUYỀN CỦA MÀN (bắt buộc)** — gom từ 4 nguồn, đối chiếu cho khớp:
   1. `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` → grep nhóm quyền của màn, lấy **tên quyền nguyên văn**.
-  2. **Routes**: `->middleware('checkPermission:Tên quyền')` trên từng endpoint (index/store/update/destroy/approve/export…) → biết thao tác nào cần quyền nào. Lưu ý quyền có **dấu phẩy** không gắn qua middleware được → gate trong controller bằng `isCurrentEmployeeHasPermission` (memory `reference_checkpermission_comma`) — nhớ grep cả trong Controller/Service.
+  2. **Routes**: `->middleware('checkPermission:Tên quyền')` trên từng endpoint (index/store/update/destroy/approve/export…) → biết thao tác nào cần quyền nào.
+     ⚠️ Tên quyền **có dấu phẩy** KHÔNG gắn qua middleware được (Laravel dùng dấu phẩy để tách tham số middleware, tên quyền sẽ bị cắt làm đôi) → những quyền đó được gate thẳng trong Controller/Service bằng `isCurrentEmployeeHasPermission('<Tên quyền>')`. Vì vậy **phải grep cả trong Controller/Service**, chỉ đọc file routes là bỏ sót quyền.
   3. **FE**: grep `hasPermission` / `can(` / `v-if` quanh nút & tab trong page và component con → biết nút nào bị ẩn khi thiếu quyền.
   4. **Phân quyền theo cấp** (nếu có): scope lọc dữ liệu theo `company_id`/`department_id`/`part_id`/người tạo trong Service → mỗi cấp thấy dữ liệu của ai.
   → Kết quả: **bảng quyền** (Tên quyền · Cho phép làm gì · Nút/tab tương ứng trên UI · Endpoint). Hỏi user nếu tên quyền trong seeder không khớp thực tế hoặc màn chưa gắn quyền.
@@ -50,7 +66,7 @@ User đã chốt: **không chỉ đọc FE của màn** — phải đọc source
 - Hỏi user nếu cần: bỏ tab nào không, format (mặc định Word), ảnh chụp thật hay placeholder.
 
 ### Bước 2 — Chụp ảnh thật (Playwright MCP)
-- Dùng **Playwright MCP (Node)** — KHÔNG dùng Playwright Python (đó là cho pytest harness). Tham khảo `reference_playwright_ui_test`.
+- Dùng **Playwright MCP (Node)** — KHÔNG dùng Playwright Python (bản Python chỉ dành cho pytest harness, xem `.claude/skills/playwright-setup/SKILL.md`).
 - Login site (vd dev-hrm.eteksofts.com) bằng tài khoản user cung cấp → form `#emailaddress` (hoặc textbox "Địa chỉ email") + "Mật khẩu" + nút "Đăng nhập".
 - **Ưu tiên tài khoản có dữ liệu thật ở mọi tab** để ảnh sát thực tế.
 - Resize 1440x900. Mở từng tab, cuộn container nội dung lên đầu (`document.querySelector('.overflow-auto').scrollTop=0`) rồi chụp viewport; với form dài dùng `fullPage:true`.
@@ -65,16 +81,40 @@ User đã chốt: **không chỉ đọc FE của màn** — phải đọc source
   - Tiêu đề; các tab/section.
   - **Từng trường**: nhãn (nguyên văn tiếng Việt), control, bắt buộc + message lỗi, **giá trị mặc định/điền sẵn** (lấy từ `data()` init, `created/mounted`, prefill query, vd `created_by`=người dùng, ngày=hôm nay, phòng=phòng user, trạng thái mặc định), điều kiện ẩn/hiện/readonly, cascading, nguồn options (API).
   - Nút + hành động (API, toast, điều hướng); khác biệt giữa các mode.
-- Dùng Opus cho subagent (memory `feedback_subagent_model_opus`).
+- Chỉ định **model Opus** cho subagent đọc form (model nhỏ hơn hay bỏ sót trường và giá trị mặc định).
 
 ### Bước 4 — Dựng file Word (python-docx)
 
-> ⚠️ **STYLE CHUẨN — FILE MẪU NẰM NGAY TRONG SKILL:**
-> **`.claude/skills/hdsd-documenter/assets/HDSD_MAU.docx`** (bản gốc là `HDSD_KhachHang.docx` user đã duyệt).
-> Mọi HDSD mới phải nhìn **giống hệt** file này — mở nó ra xem trước khi dựng nếu chưa rõ.
-> Dùng sẵn `hdsd_p5_work/hdsd_clean.py` → `from hdsd_clean import HDSDClean` (subclass của
-> `hdsd_lib.HDSD`; tự lấy `assets/HDSD_MAU.docx` làm khung, fallback `HDSD_KhachHang.docx` ở gốc HRM/).
-> **KHÔNG dùng thẳng `hdsd_lib.HDSD`** — bản gốc ép direct formatting nên ra file trông khác hẳn mẫu.
+> ⚠️ **STYLE CHUẨN — FILE KHUNG ĐÓNG GÓI TRONG SKILL (không phụ thuộc máy cá nhân):**
+> **`.claude/skills/hdsd-documenter/assets/HDSD_MAU.docx`**
+> Mọi HDSD mới phải nhìn **giống hệt** file này — mở ra xem trước khi dựng nếu chưa rõ.
+>
+> **Dùng engine chung, KHÔNG nhân bản khung dựng cho mỗi màn:**
+> **`.claude/skills/hdsd-documenter/assets/hdsd_engine.py`** (Windows, `python` + `python-docx`).
+> Nó lo đủ: đổi dòng bìa → lưu proto Caption → strip body → helper style → purge media mồ côi →
+> cập nhật mục lục bằng Word → assert sạch. Bắt dòng bìa và điểm strip **theo VỊ TRÍ** chứ không
+> theo nội dung, nên dùng được với mọi file khung mà không phải sửa gì.
+>
+> Generator của từng màn chỉ còn phần nội dung:
+> ```python
+> import os, sys
+> sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+>                                 "..", "..", "..", ".claude", "skills",
+>                                 "hdsd-documenter", "assets"))
+> from hdsd_engine import HdsdBuilder
+>
+> b = HdsdBuilder(output=..., shots_dir=..., cover_title="(Màn hình: …)", doc_title="HDSD - …")
+> b.h1("TỔNG QUAN"); b.h2("1. Mục tiêu"); b.para("…")
+> b.table([["Cột A", "Cột B"], ["1", "2"]])
+> b.image("01-danh-sach.png", "Màn hình danh sách")
+> b.finish()          # lưu + purge + cập nhật mục lục bằng Word + assert + in thống kê
+> ```
+> `b.image()` assert ảnh tồn tại nên thiếu ảnh là gãy ngay, không lặng lẽ bỏ qua.
+> **Một feature nhiều màn** → mỗi màn một file `HDSD_<Tên màn>.docx`; một script có thể tạo nhiều
+> `HdsdBuilder` liên tiếp (xem `.plans/gop-db/customer-care-maintenance-catalogs/gen_hdsd.py`).
+>
+> *(`assets/gen_hdsd_mau.py` là bản đầy đủ một file, giữ lại để tham chiếu cách dựng.
+> Bản `hdsd_p5_work/hdsd_clean.py` / `HDSDClean` nêu ở tài liệu cũ KHÔNG còn tồn tại trong repo.)*
 >
 > **Luật vàng: KHÔNG áp direct formatting — để style của template quyết định tất cả.**
 > | Thành phần | Đúng (như file mẫu) | Sai (đừng làm) |
@@ -95,15 +135,59 @@ User đã chốt: **không chỉ đọc FE của màn** — phải đọc source
 > Muốn soi mắt thường: `soffice --headless --convert-to pdf` rồi render trang thân bài bằng PyMuPDF,
 > so cạnh trang tương ứng của `assets/HDSD_MAU.docx`.
 
-Theo `reference_hdsd_format` + `reference_hdsd_luongchinh`. Generator (python `/opt/homebrew/opt/python@3.14/bin/python3.14`, lib `python-docx` + `Pillow`):
-1. **Copy `assets/HDSD_MAU.docx` làm khung**: giữ Bìa (kèm logo) + MỤC LỤC (TOC field cả Heading 1–3) + DANH MỤC HÌNH ẢNH (TOF field) + styles + `updateFields=true`.
-2. Sửa bìa `(Danh mục X)` → `(Màn hình: …)` / `(Luồng nghiệp vụ: …)`.
-3. Lưu **proto Caption** (clone, có SEQ field auto-số): run0 "Hình " + SEQ + run2 ": <text>".
-4. **Strip body** từ heading "TỔNG QUAN PHẦN MỀM" tới hết, GIỮ `sectPr` (luôn là child cuối của body).
-5. Rebuild bằng helper của `HDSDClean`: `h1/h2/h3`, `para` (Normal justify), `bullet`, `table`, `image`, `caption` (ghép qua `sectPr.addprevious(clone)`) — xem bảng luật style ở trên.
-6. **Purge media mồ côi** sau khi strip (python-docx không xoá media khi xoá paragraph → file phình): quét `r:embed`/`r:link` trong document/header/footer → map qua `.rels` → bỏ media + Relationship không tham chiếu. (Bìa các file mẫu là text, purge an toàn.)
-7. Bật `updateFields=true` để Word tự cập nhật mục lục/danh mục hình khi mở.
-8. **Verify**: mở lại bằng python-docx, kiểm `inline_shapes`/`tables`/`captions`/`Heading 1` đúng số; quét mọi `r:embed` resolve được (broken=0).
+Generator chạy bằng `python` trên Windows, lib `python-docx` + `Pillow`. Các bước:
+
+1. **Copy file mẫu làm khung**: giữ Bìa (kèm logo) + MỤC LỤC (TOC field) + DANH MỤC HÌNH ẢNH (TOF field) + toàn bộ styles.
+2. **Sửa dòng tiêu đề trên bìa** `(Luồng nghiệp vụ: …)` → `(Màn hình: …)`.
+   > 🐛 **BẪY 1 — dòng bìa bị cắt thành nhiều run.** `for run in p.runs: run.text.replace(...)` sẽ
+   > **không khớp run nào và im lặng bỏ qua** (chuỗi nằm rải ở "Luồng nghiệp vụ", ": Tổng hợp",
+   > " Bomlist)"). Phải dọn hết text về run đầu:
+   > ```python
+   > for run in p.runs[1:]: run.text = ""
+   > p.runs[0].text = TIEU_DE_MOI
+   > ```
+   > Dùng `for…else: raise` để script gãy ngay nếu không tìm thấy dòng bìa.
+3. Lưu **proto Caption** (clone paragraph style `Caption`, có SEQ field nên Word tự đánh số):
+   run0 "Hình " + SEQ + run cuối ": <text>".
+4. **Strip body** từ **Heading 1 thứ 3 trở đi** tới hết, GIỮ `sectPr` (luôn là child cuối của body).
+   Heading 1 #1 = "MỤC LỤC", #2 = "DANH MỤC HÌNH ẢNH" → giữ; #3 trở đi là thân bài của tài liệu mẫu.
+   > 🐛 Bắt theo **VỊ TRÍ**, đừng bắt theo text: mỗi file khung đặt tên khác nhau
+   > ("TỔNG QUAN" ở `HDSD_Bomlist`, "TỔNG QUAN PHẦN MỀM" ở `HDSD_MAU`).
+   > Nếu vẫn cần đọc text heading thì dùng `Paragraph(child, doc).text`, **KHÔNG dùng
+   > `child.itertext()`** — hàm này gom cả text trong field/bookmark nên trả về
+   > "TỔNG QUANTỔNG QUANTỔNG QUAN". Style name trong XML là `Heading1` (không có dấu cách).
+   >
+   > 💡 Lưu lại danh sách tiêu đề thân bài của file khung ở bước này — bước 8 dùng để assert.
+5. Rebuild bằng helper tự viết: `h1/h2/h3`, `para` (Normal justify), `bullet`, `table`, `image`,
+   `caption` — mọi phần tử chèn qua `sectPr.addprevious(...)`. Xem bảng luật style ở trên.
+6. **Purge media mồ côi** (python-docx không xoá file ảnh khi xoá paragraph → file phình; thực đo
+   4.4 MB → 3.3 MB): quét `r:embed`/`r:link` trong document/header/footer → map qua `.rels` → bỏ
+   media + Relationship không còn ai tham chiếu.
+7. **CẬP NHẬT MỤC LỤC & DANH MỤC HÌNH ẢNH BẰNG WORD — BẮT BUỘC.**
+   > 🐛 **BẪY 2 — lỗi nghiêm trọng nhất, từng lọt ra file bàn giao.** `updateFields=true` CHỈ là
+   > *lời mời* Word cập nhật khi mở file; bản thân `document.xml` **vẫn giữ nguyên text cũ của
+   > template**. Ai mở bằng WPS / trình xem khác (hoặc bấm "No" khi Word hỏi) sẽ thấy nguyên mục lục
+   > của tài liệu mẫu — "PHẦN 2: TẠO BOM LIST" nằm trong HDSD màn danh mục chi phí.
+   >
+   > Máy team có Word (`C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE`) → gọi qua
+   > PowerShell COM từ generator (`subprocess.run(["powershell", "-NonInteractive", "-Command", …])`):
+   > ```powershell
+   > $doc = $word.Documents.Open($p, $false, $false)
+   > $doc.Fields.Update() | Out-Null
+   > foreach ($toc in $doc.TablesOfContents) { $toc.Update() }
+   > foreach ($tof in $doc.TablesOfFigures) { $tof.Update() }
+   > $doc.Repaginate(); $doc.Save(); $doc.Close(0); $word.Quit()
+   > ```
+   > (`$word.Visible = $false`, `$word.DisplayAlerts = 0`.) Sau bước này số trang trong mục lục mới
+   > là số trang thật. Tiện thể set `BuiltInDocumentProperties("Title")`.
+8. **Verify — assert trong generator, không kiểm bằng mắt:**
+   - **`assert` không còn tiêu đề thân bài nào của file khung trong `document.xml`** (dùng danh sách
+     đã lưu ở bước 4) — một dòng này chốt cả mục lục, danh mục hình ảnh lẫn bìa
+   - Số `inline_shapes` / `tables` / `Caption` / `Heading 1` đúng như dự kiến
+     (lưu ý `inline_shapes` = số ảnh nội dung **+ 1 logo bìa**)
+   - Mọi `r:embed` resolve được trong `.rels` (broken = 0)
+   - Dump lại toàn bộ paragraph style `toc 1`/`toc 2`/`table of figures` ra file UTF-8 và **đọc**
+     — đây là bước duy nhất phát hiện được mục lục sai nội dung
 
 ## Cấu trúc tài liệu (bắt buộc)
 Bìa → MỤC LỤC → DANH MỤC HÌNH ẢNH → **TỔNG QUAN PHẦN MỀM** (1. Thuật ngữ, 2. Cập nhật tài liệu, 3. Giới thiệu chung + đường dẫn, 4. Quyền & phạm vi) → **PHẦN 1: Truy cập & bố cục** → **mỗi tab/màn = 1 PHẦN**, trong đó:
@@ -130,16 +214,37 @@ Bìa → MỤC LỤC → DANH MỤC HÌNH ẢNH → **TỔNG QUAN PHẦN MỀM**
 - [ ] Mỗi thao tác thay đổi dữ liệu đều ghi rõ **quyền yêu cầu** + điều gì xảy ra khi thiếu quyền.
 - [ ] Bộ lọc nâng cao liệt kê đủ từng tiêu chí.
 - [ ] Ảnh chụp thật, rõ, đúng nội dung; caption đánh số tự động.
-- [ ] File mở được, mục lục/danh mục hình tự cập nhật, không lỗi ảnh (broken=0).
-- [ ] **Style giống hệt file mẫu `assets/HDSD_MAU.docx`**: dựng bằng `HDSDClean`, đếm override = 2 (Heading) / 10 (Normal+List Bullet) / 0 (run trong ô bảng), mọi ảnh 6.0" canh giữa (xem bảng luật style ở Bước 4).
+- [ ] **KHÔNG còn thuật ngữ code** (tên bảng/cột, id quyền, endpoint, mã HTTP) — xem NGUYÊN TẮC SỐ 3.
+- [ ] **Đã ĐỌC LẠI mục lục và danh mục hình ảnh trong file xuất ra** — đúng heading của màn này,
+      số trang thật, KHÔNG còn dòng nào của tài liệu mẫu. (Đừng tin `updateFields`; phải cho Word
+      cập nhật thật rồi dump ra kiểm.)
+- [ ] **Dòng tiêu đề trên bìa** đã đổi đúng tên màn hình (dễ sót vì lệnh replace không báo lỗi).
+- [ ] File mở được, không lỗi ảnh (broken=0), đã purge media mồ côi.
+- [ ] **Thư mục ảnh nguồn KHÔNG bị commit** — chạy `git status`, chỉ được thấy file `.docx` và
+      `gen_hdsd.py`, tuyệt đối không thấy file `.png` nào.
+- [ ] **Style giống file mẫu**: đếm paragraph có direct formatting → Heading = 2 (phần bìa/mục lục kế thừa template), run trong ô bảng = 0, mọi ảnh rộng 6.0" canh giữa (xem bảng luật style ở Bước 4). Đối chiếu bằng cách chạy cùng phép đếm trên chính file mẫu:
+      ```python
+      def over(p):
+          pf = p.paragraph_format
+          if p.alignment is not None or pf.line_spacing or pf.space_before or pf.space_after or pf.first_line_indent: return True
+          return any(r.font.name or r.font.size for r in p.runs)
+      ```
+      (Paragraph body đặt `alignment = JUSTIFY` nên nhóm Normal + List Bullet đếm cao là bình thường — file mẫu cũng vậy.)
 
 ## Output & lưu trữ
-- File Word: `HDSD_luongchinh/HDSD_<TênMàn>.docx` (luồng/màn lớn) — hoặc theo vị trí user chỉ định.
-- Ảnh nguồn: `hdsd_<feature>_shots/`.
-- Generator: lưu trong scratchpad (ephemeral) — ghi lại cách chạy vào `.plans/[feature]/design.md` để tái dựng.
+- File Word: `.plans/[feature]/HDSD_<TênMàn>.docx` (cùng chỗ design.md / plan.md / testcase.xlsx) — hoặc theo vị trí user chỉ định.
+- Ảnh nguồn: `.plans/[feature]/hdsd_<feature>_shots/` — **CHỈ ĐỂ LOCAL, KHÔNG commit**.
+  Ảnh đã nhúng sẵn trong .docx nên người khác không cần bản rời; đẩy lên chỉ làm nặng repo
+  (9 ảnh của 1 màn đã là ~3 MB). Giữ lại trên máy để còn sửa / xóa / chụp lại khi cập nhật tài liệu.
+  `.gitignore` của `hrm-claude-config` đã chặn sẵn `**/.plans/**/*_shots/` và `**/.plans/**/img/`
+  — kiểm tra bằng `git status` trước khi báo xong, nếu thấy ảnh hiện ra là rule chưa ăn.
+- Generator: lưu vào `.plans/[feature]/gen_hdsd.py` — cùng thư mục tài liệu nên **được version control**. KHÔNG để trong scratchpad (mất khi hết session), cũng KHÔNG để ở `hrm/scripts/` (thư mục đó nằm NGOÀI mọi git repo, người khác clone về sẽ không có).
 - Cập nhật `.plans/[feature]/plan.md` + `STATUS.md` theo convention.
 
 ## Lưu ý
-- Tài liệu + ngôn ngữ: **tiếng Việt**, văn phong cho người dùng cuối.
+- Tài liệu + ngôn ngữ: **tiếng Việt**, văn phong cho người dùng cuối (xem NGUYÊN TẮC SỐ 3).
+- 🐛 **Console Windows là cp1252** — `print()` chuỗi tiếng Việt trong script kiểm tra sẽ ném
+  `UnicodeEncodeError`. Ghi kết quả ra file bằng `io.open(..., encoding="utf-8")` rồi đọc file đó,
+  đừng in thẳng.
 - KHÔNG thực thi thao tác phá huỷ trên dữ liệu thật khi chụp (Duyệt/Xóa → bấm Hủy).
 - Nếu màn tái sử dụng form của phân hệ khác (vd "Tạo mới" mở màn module khác) → vẫn mô tả đầy đủ trong HDSD này (đừng chỉ trỏ "xem màn khác").

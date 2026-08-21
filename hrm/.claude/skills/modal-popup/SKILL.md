@@ -7,12 +7,63 @@ Chuẩn hoá UI cho tất cả modal/popup sử dụng V2Base components.
 
 ---
 
-## 1. Cấu trúc modal
+## 0. KHUÔN DÙNG CHUNG — `components/modal/V2BaseModal.vue` (chốt 2026-08-15)
+
+**Popup MỚI phải dựng trên `V2BaseModal`, KHÔNG tự khai `b-modal` + header + footer riêng.**
+Trước đây mỗi màn tự dựng nên ra 3 kiểu khác nhau: khoảng cách body lúc rộng lúc hẹp, footer lúc
+ghim lúc bị nội dung dài đẩy khuất, dòng mô tả bản ghi mỗi nơi một màu.
+
+```vue
+<V2BaseModal
+    modal-id="history-work"
+    title="Lịch sử thay đổi"
+    subtitle-label="Vụ việc"
+    subtitle="RRP - Rủi ro theo phòng"
+    icon="ri-history-line"
+    @hidden="onHidden"
+>
+    <!-- nội dung -->
+    <template #footer>
+        <V2BaseButton primary size="sm" @click="save">…</V2BaseButton>
+        <V2BaseButton tertiary size="sm" @click="close">…</V2BaseButton>
+    </template>
+</V2BaseModal>
+```
+
+Component chốt sẵn toàn bộ phần style, màn dùng CHỈ truyền text + nội dung:
+
+| Phần | Chuẩn (đã nằm sẵn trong component) |
+| --- | --- |
+| **Header** | icon tròn (đổi qua `icon`/`iconColor`/`iconBackground`) + tiêu đề 14px đậm (`title`) + dòng mô tả bản ghi (`subtitleLabel` + `subtitle`) + nút × |
+| **Body** | vùng cuộn riêng, `padding: 0.5rem` — **sát**, khuôn popup "Chọn trường xuất CSV" (`export-fields-modal.vue`). Popup thừa khoảng trắng (padding 1rem+ như popup Import cũ) là SAI. **Tự triệt `margin-top` của khối đầu và `margin-bottom` của khối cuối** — nội dung màn hay có `mt-3`/`mb-3`, cộng vào là body rơi tách khỏi header 32px |
+| **Footer** | nằm NGOÀI vùng cuộn + `position: sticky; bottom: 0` → **luôn nhìn thấy**, nội dung dài mấy cũng không nuốt mất nút. Không truyền slot `footer` thì mặc định là nút Đóng |
+
+⚠️ **Không tự khai lại các style trên trong màn dùng.** Muốn khác (popup có bảng cần cao hơn) thì
+chỉnh qua prop (`maxBodyHeight`, `size`, `dialogClass`), KHÔNG viết CSS đè trong màn — viết đè là
+quay lại đúng tình trạng mỗi popup một kiểu.
+
+**Dòng mô tả bản ghi** (`subtitleLabel` + `subtitle`): `Khách hàng: 19TPHPVI-262 - NGUYỄN HỮU HỌC`
+— nhãn `#6b7280`, giá trị `#374151`, **KHÔNG in đậm**, **KHÔNG màu đỏ** (đỏ chỉ dành cho lỗi
+validate — xem CLAUDE.md).
+
+Props: `modalId` (bắt buộc) · `title` · `subtitle` · `subtitleLabel` · `icon` · `iconColor` ·
+`iconBackground` · `size` · `dialogClass` · `maxBodyHeight`. Sự kiện: `show` · `shown` · `hide` ·
+`hidden`. Method: `show()` / `close()`.
+
+Popup CŨ tự dựng thì chuyển dần sang khuôn này khi có dịp đụng vào — ưu tiên popup nào đang bị
+mất nút footer hoặc thừa khoảng trắng.
+
+---
+
+## 1. Cấu trúc modal (popup cũ / trường hợp đặc biệt không dùng được `V2BaseModal`)
 
 - Dùng `b-modal` với `hide-footer`, tự viết `<div class="modal-footer">` bên trong body
 - Header: custom slot `#modal-header` gồm icon tròn + title + nút X đóng
 - Cho phép click backdrop đóng modal (KHÔNG dùng `no-close-on-backdrop`)
-- Tham khảo: `components/modal/application-modal.vue`
+- **Footer BẮT BUỘC ghim đáy** (`position: sticky; bottom: 0` + nằm ngoài vùng cuộn) — xem mục 3b.
+  Đây là lỗi lặp lại nhiều lần nhất: nội dung dài thì nút Lưu/Đóng bị đẩy khuất, user phải cuộn hết
+  mới bấm được.
+- Tham khảo: `components/modal/V2BaseModal.vue` (khuôn mới), `components/modal/application-modal.vue`
 
 ```vue
 <b-modal
@@ -159,6 +210,111 @@ Khi review modal: gặp `V2BaseSelect` nằm trong `b-modal` → đổi sang `V2
 
 ---
 
+## 3a. Popup XÁC NHẬN — chỉ dùng MỘT component duy nhất
+
+Mọi thao tác cần hỏi lại (Xóa · Khóa/Mở khóa · Duyệt/Từ chối · Hủy · Gửi duyệt · thoát khi chưa lưu…) đều dùng **`components/modal/base-confirm-modal.vue`**. **KHÔNG tạo confirm riêng cho từng màn**, **KHÔNG dùng `$bvModal.msgBoxConfirm()`** (popup mặc định của bootstrap-vue: nút không icon, khác kiểu với cả hệ thống).
+
+> Hiện `components/modal/` còn 26 component confirm cũ (`confirm-delete-selected`, `confirm-cancel-approve`, `confirm-modal`, `ConfirmLockSelected`…). Đó là NỢ KỸ THUẬT, không phải mẫu để copy. Màn cũ chuyển dần sang `base-confirm-modal` khi có dịp đụng vào.
+
+### Cách 1 — đặt trong template (phổ biến)
+
+```vue
+<BaseConfirmModal
+    id="confirm-lock-customer"
+    :title="lockConfirmTitle"
+    :message="lockConfirmMessage"
+    text-close="Hủy"
+    :text-accept="lockConfirmAccept"
+    danger
+    @event="handleConfirmLock"
+/>
+```
+Mở bằng `this.$bvModal.show('confirm-lock-customer')`, bắt kết quả ở `@event`.
+
+### Cách 2 — gọi từ code, ngoài template (route guard, mixin, helper)
+
+```js
+const ok = await this.$confirm({
+    title: 'Xác nhận xóa',
+    message: `Bạn có chắc muốn xóa "${name}"?`,
+    textAccept: 'Xóa',
+    danger: true,
+})
+if (!ok) return
+```
+`$confirm()` (plugin `plugins/confirm-dialog.js`) render chính `base-confirm-modal` rồi trả `Promise<boolean>` — nên popup gọi từ code trông y hệt popup đặt trong template.
+
+### Props
+
+| Prop | Ý nghĩa |
+| --- | --- |
+| `title` | Tiêu đề (bỏ trống → "Xác nhận") |
+| `message` | Nội dung, nhận HTML |
+| `textAccept` / `textClose` | Chữ 2 nút (mặc định "Xác nhận" / "Hủy" — theo bảng text chuẩn của `button-convention`) |
+| `danger` | Thao tác phá huỷ (Xóa/Khóa/Từ chối): nút xác nhận **đỏ** + icon cảnh báo đỏ ở header |
+| `acceptIcon` | Ghi đè icon nút xác nhận (vd `ri-lock-line` cho Khóa) |
+| `showInput` + `inputLabel`/`inputPlaceholder`/`inputType` | Kèm ô nhập lý do |
+
+Sự kiện: `@event` (đồng ý, kèm giá trị ô nhập nếu có) · `@close` (đóng/hủy).
+
+## 3b. Footer phải LUÔN nhìn thấy (popup có danh sách dài)
+
+`b-modal` render slot default vào `.modal-body` của nó — nên footer tự viết mà đặt thẳng trong slot sẽ **cuộn theo nội dung**, danh sách dài (20+ dòng) thì user phải kéo hết mới thấy nút Lưu.
+
+Cách làm đúng — vùng cuộn và footer TÁCH nhau:
+
+```vue
+<b-modal hide-footer body-class="xxx-modal-wrap" ...>
+    <template #modal-header>…</template>
+
+    <!-- CHỈ khối này cuộn. KHÔNG đặt class `modal-body` cho nó (xem bẫy dưới) -->
+    <div class="xxx-modal-body">…nội dung dài…</div>
+
+    <!-- nằm NGOÀI vùng cuộn -->
+    <div class="modal-footer">…nút…</div>
+</b-modal>
+```
+
+```scss
+/* Tắt cuộn ở `.modal-body` của chính b-modal */
+/deep/ .xxx-modal-wrap {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.xxx-modal-body {
+    max-height: 55vh;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+/* Chốt thêm: màn hình thấp mà b-modal tự cho phần thân cuộn thì footer vẫn dính đáy */
+.modal-footer {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    z-index: 2;
+}
+```
+
+⚠️ **Bẫy 2 thanh cuộn dọc**: `b-modal` render slot default vào `.modal-body` của nó, mà bootstrap cho khối đó `overflow-y: auto`. Thêm một vùng cuộn nữa bên trong → **2 thanh cuộn lồng nhau**. Phải tắt cuộn khối ngoài bằng `body-class`, và **đừng đặt lại class `modal-body`** cho div của mình (nó kế thừa luôn `overflow` + padding của bootstrap).
+
+Verify bằng số đo (Playwright), ở **cả 1920×1080 và 1366×768**, sau khi đã cuộn hết danh sách:
+
+```js
+// đếm số khối đang cuộn dọc trong modal — phải bằng ĐÚNG 1
+modal.querySelectorAll('*').forEach(el => { const cs = getComputedStyle(el)
+  if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && el.scrollHeight > el.clientHeight + 1) n++ })
+// và footer luôn trong tầm nhìn
+footer.getBoundingClientRect().bottom <= window.innerHeight
+```
+
+File mẫu: `components/modal/column-customization-modal.vue`.
+
+---
+
 ## 4. Popup chứa BẢNG dữ liệu — dồn diện tích cho bảng
 
 Áp dụng khi popup có **bảng dữ liệu để chọn/xem** (popup chọn hàng hoá, chọn NV, chọn thiết bị...).
@@ -195,7 +351,11 @@ File mẫu đang chạy: `pages/assign/quotations/components/QuotationProductSea
 
 ## 5. Checklist khi tạo/review modal
 
-- [ ] Dùng `hide-footer` + tự viết `<div class="modal-footer">`
+- [ ] **Dựng trên `V2BaseModal`** (mục 0) — popup mới KHÔNG tự khai `b-modal` + header + footer
+- [ ] **Footer ghim đáy, luôn nhìn thấy** kể cả khi nội dung dài (đo: `footer.getBoundingClientRect().bottom <= window.innerHeight`)
+- [ ] **Body padding `0.5rem`** — không để popup thừa khoảng trắng
+- [ ] Dòng mô tả bản ghi: chữ xám, KHÔNG in đậm, KHÔNG màu đỏ
+- [ ] Dùng `hide-footer` + tự viết `<div class="modal-footer">` (chỉ khi không dùng được `V2BaseModal`)
 - [ ] Header có icon tròn + title + nút X
 - [ ] Không dùng `no-close-on-backdrop`
 - [ ] Button tuân thủ skill `button-convention` (variant, icon, thứ tự, size)

@@ -25,6 +25,55 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Spec: docs/superpowers/specs/2026-08-14-lich-meeting-tab-design.md · Ledger SDD: .plans/lich-meeting-tab/sdd-ledger.md
   Bước tiếp: USER build client (node12+heap8192) + api (php7.4 artisan serve) → mở /assign/my-todo tab Lịch meeting, verify visual Tháng/Tuần/drawer/popover/filter + data thật + phân quyền. Ngoài scope (feature khác): tab báo cáo thị trường; tạo meeting từ ô lịch.
 
+- menu-style-hub → @dnsnamdang → .plans/menu-style-hub/plan.md
+  Trạng thái: **CODE DONE (2026-08-17), chờ build FE + rà giao diện**. Nhánh `feature/menu-style-hub` (checkout từ `tpe-develop-assign`, chỉ `hrm-client`).
+  Bê **style** menu của nhánh `gop_db` sang: (A) màn chọn phân hệ bố cục bông hoa nền navy,
+  (B) sidebar rail + panel kiểu MISA cho 2 phân hệ Dự án & giao việc / Đào tạo, (C) popup chuyển
+  phân hệ chia nhóm ở topbar. **Nội dung menu và danh sách phân hệ giữ nguyên 100%** —
+  registry mới `components/subsystems.js` chỉ trỏ vào mảng menu cũ, không chép lại.
+  `sale-theme.scss` port RÚT GỌN (chỉ rail + topbar + panel, bỏ phần đổi style bảng/card).
+  Biết trước: badge đỏ "Báo cáo tiến độ task" không có trên sidebar hub (bản gop_db cũng vậy).
+  Spec: docs/superpowers/specs/2026-08-17-menu-style-hub-design.md
+  Bước tiếp: user chạy `npm run dev` (Node 14.21.3) rà 3 màn, chốt bố cục bông hoa 2 cánh.
+
+- sync-assign-catalogs → @dnsnamdang → .plans/sync-assign-catalogs/plan.md
+  Trạng thái: **DONE — đã chạy thật trên `etek_power_hrm`, checksum 27/27 bảng khớp (2026-08-15)**. Nhánh `tpe`.
+  Command `php artisan assign:sync-catalogs` đẩy **28 bảng danh mục + cấu hình** của phân hệ Giao việc
+  (`/assign`: 14 màn nhóm menu "Danh mục" trừ Khách hàng, + nhóm "Cấu hình" gồm Cấu hình duyệt giá và
+  Cấu hình chung › tab Quản lý dự án — danh sách bảng chốt bằng cách trace menu → route →
+  controller → Entity → `getTable()`, không suy từ tên bảng) từ DB chính sang DB đích ở connection mới
+  `mysql_target` (biến `DB_*_TARGET` trong `.env`). Cách ghi: **mirror 1:1** — truncate rồi chèn lại,
+  giữ nguyên `id`, bản ghi chỉ có ở đích bị xoá. `created_by`/`updated_by` tra `employees.email =
+  SYNC_CATALOG_AUDIT_EMAIL` **trên DB đích**. Có `--dry-run` / `--tables` / `--force` / `--chunk`,
+  3 chốt an toàn (thiếu config, không kết nối được, đích trùng nguồn) và cảnh báo id sắp xoá đang bị
+  `quotation_discounts` / `form_question_options` tham chiếu. Không dùng `DB::transaction` quanh TRUNCATE.
+  **Ngoại lệ `general_regulations`**: Cấu hình hạn ghi ké vào bảng Quy định chung của Chấm công
+  (chứa cả `base_salary`), nên không mirror mà chỉ UPDATE 8 cột liên quan khớp theo `company_id`.
+  Không đẩy 3 bảng log/lịch sử cấu hình (trỏ `user_id` cổng nguồn).
+  Test sâu tìm ra 3 lỗi đã sửa: (1) email audit không tra được → ghi NULL vào cột NOT NULL làm chết
+  giữa chừng sau khi đã xoá dữ liệu đích; (2) không có đường lùi → đổi TRUNCATE sang DELETE + bọc cả
+  lượt trong 1 transaction, rollback sạch khi lỗi; (3) DELETE không reset id → thêm
+  `ALTER TABLE ... AUTO_INCREMENT = max(id)+1` chạy sau commit.
+  `.env` đang trỏ `DB_DATABASE_TARGET=etek_power_hrm`.
+  Spec: docs/superpowers/specs/2026-08-15-sync-assign-catalogs-design.md
+  Bước tiếp: user điền `DB_*_TARGET` trỏ cổng thật → `--dry-run` đối chiếu → chạy thật.
+
+- meeting-pl8-support → @dnsnamdang → .plans/meeting-pl8-support/plan.md
+  Trạng thái: **CODE DONE (2026-08-14), chờ user migrate + build FE + test**. Nhánh `tpe-develop-assign`.
+  Gộp 4 task hỗ trợ PL8 Quản lý Meeting (Redmine đã chuyển "Đang tiến hành"):
+  **#10884** đổi placeholder Tên meeting (FE 1 dòng) ·
+  **#11015** kéo thả sắp xếp thành phần tham gia — cột mới `meeting_employees.sort_order` + `orderBy` đặt ngay trong 2 relation `company_members`/`customer_members` nên tab Điểm danh và bản In biên bản kế thừa thứ tự mà không phải sửa; FE `vuedraggable` 2 group riêng (`pull/put=false` → chặn kéo chéo bảng), icon 6 chấm dựng SVG mới `components/common/DragIndicatorIcon.vue` (remixicon bundle KHÔNG có `ri-draggable`) ·
+  **#11045** icon Info + tooltip mô tả Loại meeting — component mới `components/MeetingTypeSelect.vue` (không sửa V2BaseSelect dùng chung) + tooltip singleton `utils/meetingTypeInfoTooltip.js` (dropdown select2 append ra body nên b-tooltip không dùng được); 6 màn filter đổi nguồn options sang `assign/meeting_types/getAll` vì `MasterDataSelectResource` dùng chung không trả `description` ·
+  **#11014** bắt buộc biên bản + auto hủy — 2 tham số cấu hình động ghép vào khối "Cấu hình hạn" có sẵn (`meeting_report_lock_days`=1, `meeting_report_warning_hours`=3 → có lịch sử thay đổi miễn phí), command mới `assign:meeting-report-deadline` chạy 15 phút/lần, guard 423 chặn cập nhật biên bản quá hạn, banner hạn ở tab Biên bản. KPI không phải sửa (`REPORT_STATUSES` đã loại trạng thái Hủy).
+  Lệch Redmine đã xử lý theo convention: nội dung thông báo bỏ emoji ⏰, dùng nhóm hành động chuẩn `Nhắc báo cáo` / `Hủy`, ≤120 ký tự.
+  Spec: docs/superpowers/specs/2026-08-14-meeting-pl8-support-design.md
+  Bước tiếp: `php artisan migrate` (3 migration) → build FE Node 14.21.3 → test theo AC từng task → kiểm tra cron `schedule:run` đang chạy.
+
+- pl8-thong-tin-he-thong → @dnsnamdang → .plans/pl8-thong-tin-he-thong/plan.md
+  Trạng thái: **DESIGN DONE, đang code Phase 1 (2026-08-06)**. Redmine #10814 — thống nhất 9 màn Xem chi tiết QLDA TKT: mã phiếu trên tiêu đề + phân vùng "Thông tin hệ thống" (lịch sử phiếu, mặc định thu gọn) + đủ action như màn danh sách. Chốt: UI timeline giống modal Lịch sử Task; 1 component FE chung `SystemInfoSection.vue` + 1 endpoint chuẩn hoá `GET assign/system-logs/{type}/{id}` với adapter đọc log sẵn có từng entity (không migrate data cũ); 3 entity chưa có log (Meeting, Hạng mục dự án, YCGP) dùng bảng mới `assign_entity_logs` ở Phase 2; không thêm quyền. Nhánh `tpe-develop-assign`.
+  Spec: docs/superpowers/specs/2026-08-06-pl8-thong-tin-he-thong-design.md
+  Bước tiếp: code Phase 1 (màn Báo giá) → user duyệt UI → nhân bản Phase 2/3.
+
 - erp-to-hrm-migration → @dnsnamdang → .plans/erp-to-hrm-migration/plan.md
   Trạng thái: **SIZING DONE — chờ DB production để đối chiếu bất đồng bộ T3 (2026-07-27)**. Umbrella hợp nhất ERP⊕HRM + chuyển 4 mảng (Báo giá · HĐ bán/firm · HĐ dịch vụ · Kế toán). **Mục tiêu lớn nhất = gộp chung 1 database** (không phải chỉ viết lại UI). ĐÃ CHỐT: chỉ gộp 1 pháp nhân `hrm_tpe`⊕`erp2326` (bỏ connection etek/tpe); đích = **1 schema HRM duy nhất** (HRM canonical); ERP repoint sang DB HRM + retire dần (Strangler); prefix legacy `tp_` phía ERP; KHÔNG ETL — colocate + dedupe dần theo domain. Phân tích: ERP 1.225 bảng / HRM 635 / **trùng tên 50** → phân tầng T0 auth(không merge)·T1 giả(rename, gồm `quotations`)·T2 danh mục·T3 lõi tổ chức(rủi ro CAO NHẤT)·T4 nghiệp vụ KH/HĐ. ~165 bảng 4 mảng phần lớn KHÔNG trùng → bê nguyên tên. T3 đã sync sẵn HRM→ERP (id lệch, map qua natural key: companies=tax_code, departments/employee_infos=code, employees=email, parts=name) → gộp 1 DB thì gỡ luôn sync. Lộ trình 2 phase: P1 hợp nhất hạ tầng (đạt "1 DB chung", data nguyên vẹn) → P2 viết lại UI + dedupe theo domain (T2→master/KH→báo giá→HĐ→kế toán).
   Blocker phụ: `Modules/Accounting/{Routes/api.php, module.json}` merge conflict → tinker không boot (dùng mysql CLI thay thế).
@@ -98,6 +147,39 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Scope: Đổi "Chiết khấu/CK" → "Giảm giá/GG" toàn hệ thống. P1: danh mục "Loại giảm giá" (menu/tiêu đề/nhãn/toast) + tiền tố mã `CK-`→`GG-`. P2: đổi tên QUYỀN `...loại chiết khấu` → `...loại giảm giá` (seeder id=1090 giữ nguyên → phân quyền cũ không mất) + 7 middleware + menu isShow. P3: đổi nhãn Chiết khấu→Giảm giá trên toàn màn Báo giá (edit/view/print/submit/history + Excel blade + BE controller/service/history) — CHỈ text hiển thị, giữ biến/khóa/công thức/alias import cũ. GIỮ nguyên: route `/assign/discount-types`, bảng `discount_types`, API, mã bản ghi cũ.
   File: BE `DiscountType`, `PermissionsTableSeeder`(id1090), `Assign/Routes/api.php`, `QuotationController`, `QuotationService`, `QuotationHistory`, `DiscountTypeRequest/Controller`, `exports/bom_list.blade.php`; FE `menu-sidebar.js`, `discount-types/index.vue`, `discount-type-modal.vue`, `quotations/_id/edit.vue`+`index.vue`, `QuotationPrintPreview/PrintConfigModal/SubmitModal/HistoryModal.vue`. Không migration.
   ⚠️ DEPLOY: phải reseed PermissionsTableSeeder cùng lúc deploy code (middleware check tên MỚI; DB chưa reseed → 403). Import Excel báo giá cũ (header "CK(%)") vẫn chạy nhờ alias.
+
+- app-phieu-nhap-kq-fix → @cuong61n → .plans/app-phieu-nhap-kq-fix/plan.md
+  Trạng thái: **CODE DONE + VERIFY END-TO-END, chưa commit** (2026-08-06).
+  Repo: `hrm-api` nhánh **`tpe`** (3 file) · `TPE_APP` nhánh **`develop`**.
+  Fix 3 lỗi màn Phiếu nhập KQ: (1) resource dùng nhầm bảng nhãn `TpWrAssignTask` → sinh "Đã thanh toán";
+  bổ sung trạng thái thứ 6 `KHONG_DUYET` hrm-api còn thiếu; (2) lọc `wr_assign_tasks.status` trong khi
+  hiển thị `wr_import_results.status` — sửa về đúng cột; (3) thêm bộ lọc 7 trường như ERP.
+  Chặn sửa/xoá sau duyệt: BE trả `can_edit` theo rule ERP (người tạo && Đang tạo/Không duyệt),
+  app ẩn menu theo cờ (entity default false — fail-closed). Nút Xoá chết (handler rỗng + BE không có
+  route DELETE) đã gỡ hẳn theo hướng A user chốt.
+  Sửa thêm UI badge: bỏ width cứng (hết xuống dòng) + lấy màu theo `type` BE trả (trước đây LUÔN xanh lá,
+  kể cả trạng thái từ chối).
+  Verify: API local đối chiếu count DB (status=6→58, status=1→4, created_by=6→1, tháng 8→154);
+  app flavor `erp` trỏ BE local, đã trả lại `build_config.dart` sau test.
+  CHƯA: commit; chưa chứng minh nhánh `can_edit = true` (tài khoản test không sở hữu phiếu ở trạng thái 1/6).
+  ⚠️ Deploy phải BE TRƯỚC app — app mới gặp BE cũ sẽ mất nút Sửa ở mọi dòng (fail-closed).
+
+- app-loc-phieu-giao-cong-tac → @cuong61n → .plans/app-loc-phieu-giao-cong-tac/plan.md
+  Trạng thái: **CODE DONE + VERIFY TRÊN EMULATOR** (2026-08-06, repo `TPE_APP` nhánh **`develop`**).
+  ⚠️ Bản làm trên `main` chỉ là nháp (user báo nhầm nhánh) — đã stash lại, code thật nằm trên `develop`.
+  Thêm bộ lọc 14 trường cho màn Danh sách phiếu giao công tác trên app Flutter, mirror web
+  `/assign/assign_business`. Không sửa BE (`AssignBusinessService::searchByFilter` đã nhận đủ 14 param).
+  Chốt: dùng `FilterView` end-drawer có sẵn · Công ty mặc định = công ty user · ẩn Công ty/Phòng ban/Bộ phận
+  theo quyền giống web · cascade PB theo CT, BP theo PB, Nhân viên không cascade.
+  Spec: docs/superpowers/specs/2026-08-06-app-loc-phieu-giao-cong-tac-design.md
+  Trên `develop`: bản port sạch hơn — KHÔNG sửa widget dùng chung (dùng `DateInput` sẵn có),
+  KHÔNG ghim dependency, dùng `FilterView.activeCount`. Verify Android bằng log request:
+  `business_type=2` trả đúng bộ phiếu "Phiếu công tác khác". Chưa build lại iOS trên develop.
+  Môi trường: `develop` pin Flutter 3.41.7 (phải qua `fvm`); emulator API 29 cần `--no-enable-impeller`.
+  iOS trên develop: BLOCKED — MapboxMaps 11.22.0 cần Swift 6.2 ⇒ Xcode 26 ⇒ macOS Sequoia 15.6
+  (máy đang 15.3.2). Đã thử Xcode 16.4 và ép SWIFT_VERSION=5.0 cho pod: đều KHÔNG khỏi. Không phải lỗi code.
+  Bước tiếp: user quyết việc nâng Xcode; review code; test nốt các trường còn lại.
+
 - du-an-cha-con (Redmine #10921 — 13 điểm feedback tester) → @cuong61n → .plans/du-an-cha-con/plan.md
   Trạng thái: **XONG 13/13 + ĐÃ VERIFY TRÊN DEV** (2026-08-03, nhánh `tpe-develop-assign`, cả 2 repo).
   BE 5 file (`Quotation` thêm SUMMARY_STATUS_DONG, `SummaryQuotationService` cộng dồn phí VC +
@@ -249,6 +331,10 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Scope: Sửa thông báo lỗi 4 file import Quyết định (`Modules/Payroll/ExcelImports/DecisionLaborContract{,NoManpower}Import.php`, `DecisionSalaryChange{,NoManpower}Import.php`). KH báo "import HĐLĐ khớp email mà lỗi hàng loạt": sheet phụ (`ThongTinHopDong`/`ThongTinChung`) chỉ nạp `infoByEmail` khi dòng sạch lỗi → 1 lỗi tra danh mục làm cả dòng bị loại → sheet chính đẻ ra 2 thông báo sai bản chất ("Không tìm thấy thông tin ... với email" + "Loại hợp đồng chưa có tỷ lệ hưởng lương hợp lệ"). Nay báo thẳng "Dòng N của sheet ThongTinHopDong bị lỗi", bỏ lỗi tỷ lệ hưởng lương giả, nhãn `[ThongTinHopDong]` chuyển lên cột "Dòng". KHÔNG đổi luật validate. Phase 2 (cùng ngày, sau khi KH chạy thử): lỗi sheet phụ đưa **lên đầu** danh sách (trước nằm cuối, phải kéo qua hàng trăm dòng) + FE `components/modal/import-excel-modal.vue` thêm class `.import-error` cho `<pre>` (`white-space: pre-wrap`) vì thông báo dài tràn ngang bảng.
   ⚠️ GOTCHA: (1) `WorkingPosition` + `Title` có global scope `FilterByCompanyManagerScope` lọc `company_id` theo user → danh mục `company_id = NULL` KHÔNG bao giờ match, báo "không tồn tại trên PM" dù màn danh mục vẫn thấy. (2) DB local là snapshot tenant khác → mọi tra danh mục của KH đều miss, đừng kết luận từ kết quả local. (3) Chạy import ở tinker phải dựng `App\Models\User` rỗng gán `id` của 1 employee có thật (guard JWT + bảng `users` local rỗng). (4) File KH còn 2 lỗi dữ liệu phải sửa trước khi import thật: cột email sheet chính lệch 1 dòng so với tên ở dòng 11→25 (15 người → tạo HĐLĐ gắn sai người) + "Tên mẫu in" điền sai tên loại HĐ ở 100/100 dòng.
   Spec: docs/superpowers/specs/2026-07-31-import-decision-excel-info-sheet-error-design.md | Tóm tắt: .plans/import-decision-excel-info-sheet-error/design.md
+- dong-bo-loai-dao-tao → @junfoke → .plans/dong-bo-loai-dao-tao/plan.md
+  Hoàn thành: 2026-07-28. Ràng buộc đồng bộ loại đào tạo: Khóa học chỉ chứa bài học cùng loại, Lộ trình chỉ chứa khóa học cùng loại. Popup ẩn item khác loại + guard chưa chọn loại; data cũ lẫn loại → cảnh báo (banner/dòng đỏ/badge) + chặn Lưu, không tự xóa; chốt chặn ở BE. 8 file, không migration.
+  ✅ Verified Playwright cả 2 màn. ⚠️ Phát sinh đã fix: picker bài học dùng `LessonService::getAllForSelect` thiếu `training_type_id` trong select() → filter FE ẩn sạch bài.
+  Tóm tắt: .plans/dong-bo-loai-dao-tao/design.md
 
 - import-baogia-v2 → @manhcuong → .plans/import-baogia-v2/plan.md
   Trạng thái: **CODE-COMPLETE 9 phase + verify (BE tinker toàn bộ, FE Phase 2 E2E browser). Còn: E2E UI Phase 6/copy + deploy.** Xong: Phase 1 cột ẩn ID (E2E round-trip) · Phase 2 routing+popup+gộp lưới (E2E: Update/cross-import/BOM/permission) · Phase 3 mã hàng tạm Rule1/2/3 (tinker: lệch→chặn, giống→ok) · Phase 4 BOM partial+khóa Model/ĐVT+SL dịch vụ=1 (tinker) · Phase 5 copy 3 loại+detach BOM (🔴 Ngừng KD hoãn — ERP không status) · Phase 6 popup lỗi 3 nút (compile-check) · Phase 7 tên file dmY · Phase 9 giới hạn ký tự (tinker) · fix bug dịch vụ round-trip · phân quyền creator-based. Round-trip 3 báo giá (q66/q91/q91-GG-tổng/q78-BOM) đều 0 lỗi. CÒN E2E UI: Phase 6 popup lỗi, Phase 3/4 trên browser, copy preview, thay-thế/file-trống. Tài khoản test 48/Test@12345. CHƯA COMMIT/DEPLOY.

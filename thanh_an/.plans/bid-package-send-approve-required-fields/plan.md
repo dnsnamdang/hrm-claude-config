@@ -26,3 +26,19 @@ Vừa hoàn thành: kiểm thử thủ công 4 case đều pass → feature hoà
 Đang làm dở: không
 Bước tiếp theo: không — đã chuyển sang "Hoàn thành" trong STATUS.md
 Blocked:
+
+## Phase 2 — Bổ sung 3 field khi gửi duyệt (2026-08-04)
+
+Yêu cầu: bắt buộc thêm 3 field khi gửi duyệt, giống nhóm thời điểm mời/đóng thầu:
+`posted_time` (Ngày đăng tải), `khlcnt_code` (Mã KHLCNT), `khlcnt_type` (Phân loại KHLCNT).
+
+- [x] BE: `posted_time` → có điều kiện `required` khi gửi duyệt
+- [x] BE: `khlcnt_code` → đổi từ `nullable|max:255` sang có điều kiện `required|max:255` khi gửi duyệt
+- [x] BE: `khlcnt_type` → thêm mới, có điều kiện `required` khi gửi duyệt
+- [ ] Test thủ công: Gửi duyệt thiếu 1 trong 3 field → 422; lưu nháp vẫn để trống được
+
+### Checkpoint — 2026-08-04
+Vừa hoàn thành: sửa `StoreBidPackageRequest` thêm điều kiện required cho 3 field (dùng chung cho store + update)
+Đang làm dở: không
+Bước tiếp theo: người dùng kiểm thử trên UI
+Blocked:

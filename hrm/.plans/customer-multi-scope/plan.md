@@ -67,3 +67,19 @@ Blocked: (không)
 ### Checkpoint — 2026-06-15 (fix data)
 Phát hiện khi test /assign/customers/41406/edit không hiện data: backfill pivot (lĩnh vực) ĐÚNG, nhưng dữ liệu cũ có `customers.customer_scope_group_id` lệch với nhóm THẬT của lĩnh vực (vd KH 41406 group=1 nhưng lĩnh vực 59 "Thực phẩm" thuộc group 14) → form lọc lĩnh vực theo nhóm nên không hiển thị được.
 Fix: thêm migration `Modules/Human/.../2026_06_15_000003_reconcile_customer_scope_group_from_scope.php` — set lại customer_scope_group_id = nhóm catalog của lĩnh vực đầu, cho CẢ customers HRM (SQL JOIN) lẫn ERP (mysql2, PHP loop). Đã chạy: KH 41406 group 1→14, resource trả group=14 scope_ids=[59]. (Lưu ý: lỗi lúc 15:53 là do test trước khi migrate pivot — pivot tạo lúc 15:54.)
+
+---
+
+## Phase 6 — Fix sau khi gộp chung DB (gop_db)
+
+- [x] `erp/app/Services/Hrm/CustomerScopeReader.php`: bỏ `DB::connection('hrm')` ở cả 5 method (groups, scopes, groupExists, scopeExists, scopeBelongsToGroup) → đọc connection mặc định vì ERP + HRM đã dùng chung `gop_db`
+- [x] Verify qua tinker: groups 23 / scopes 146, groupExists(14)=true, scopeExists(94)=true, scopeBelongsToGroup(94,14)=true, KH 43712 pivot [14] + cặp (14,94)
+- [ ] (chờ user quyết) 3 file còn dùng connection `hrm` cũng đang hỏng cùng lý do: `app/Services/CustomerOwnership.php` (3 chỗ), `app/Http/Controllers/Common/EmployeesController.php` (4 chỗ)
+
+### Checkpoint — 2026-08-10
+Vừa hoàn thành: Fix màn ERP `/admin/customers/{id}/edit` mất data 2 trường Loại hình hoạt động / Lĩnh vực kinh doanh.
+- Nguyên nhân: pivot `customer_activity_types`/`customer_business_fields` vẫn đủ data trong `gop_db`, nhưng danh mục options đọc qua connection `hrm` — biến `DB_*_HRM` bị comment trong `erp/.env` nên rơi về default hardcode `192.168.122.103/hrm_erp_test` (không kết nối được). Log `erp/storage/logs/laravel.log`: "Đọc nhóm lĩnh vực KH từ HRM lỗi: SQLSTATE[HY000] [2002]". Controller catch nuốt lỗi trả `data: []` → select2 trống.
+- Fix: `CustomerScopeReader` đọc thẳng DB mặc định, không dùng connection `hrm` nữa (không đụng `.env`).
+Đang làm dở: (không)
+Bước tiếp theo: User F5 lại màn edit KH 43712 xác nhận 2 trường hiện đúng. Cân nhắc fix nốt `CustomerOwnership` + `EmployeesController` (còn dùng connection `hrm`) và cho controller trả `success=false` thay vì nuốt lỗi.
+Blocked: (không)

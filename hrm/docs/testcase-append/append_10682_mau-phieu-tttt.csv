@@ -1,0 +1,182 @@
+﻿Update 04/08/2026,Chuyển liên kết sang Ứng dụng + In / Nhân bản / Import-Export,,,Task: http://quanly.dnsmedia.vn/issues/10682,,,,,,,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-190,Form Tạo mẫu phiếu — không còn Nhóm ngành / Nhóm giải pháp,P0,User có quyền 'Quản lý danh mục mẫu phiếu thu thập thông tin',"1. Vào Danh mục >> Phiếu thu thập thông tin
+2. Click 'Tạo mẫu phiếu'
+3. Quan sát khối thông tin chung",User: quyền quản lý mẫu phiếu,"- KHÔNG còn trường 'Nhóm ngành' và 'Nhóm giải pháp' (kể cả ẩn dưới dạng disabled)
+- Khối thông tin chung chỉ còn: Tên form (bắt buộc) + Ứng dụng (bắt buộc)",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-191,Form Tạo — dropdown Ứng dụng lấy đúng danh mục Ứng dụng,P0,Danh mục Ứng dụng đang có 5 bản ghi hoạt động,"1. Mở form Tạo mẫu phiếu
+2. Mở dropdown 'Ứng dụng'
+3. Đối chiếu với Danh mục >> Ứng dụng",5 ứng dụng đang hoạt động,"- Dropdown liệt kê đủ 5 ứng dụng, đúng tên như trong danh mục
+- Có ô tìm kiếm trong dropdown, gõ từ khoá lọc đúng",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-192,Validate bắt buộc chọn Ứng dụng,P0,Đang ở form Tạo mẫu phiếu,"1. Nhập Tên form, bỏ trống Ứng dụng
+2. Thêm 1 phần + 1 câu hỏi
+3. Bấm 'Lưu'",application_id = null,"- Không lưu; lỗi inline dưới ô Ứng dụng (viền đỏ + text bắt buộc)
+- BE trả 422 nếu bypass UI",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-193,Tạo mẫu phiếu thành công có Ứng dụng,P0,Danh mục Ứng dụng có 'Ứng dụng A',"1. Nhập Tên form 'Phiếu KS A'
+2. Chọn Ứng dụng = 'Ứng dụng A'
+3. Thêm phần + câu hỏi
+4. Lưu",name='Phiếu KS A'; application='Ứng dụng A',"- Toast lưu thành công, quay về danh sách
+- Bản ghi mới có cột Ứng dụng = 'Ứng dụng A'
+- Mã mẫu phiếu (code) được sinh tự động và hiển thị",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-194,Form Sửa — hiển thị đúng Ứng dụng đang gắn,P0,Mẫu phiếu 'Phiếu KS A' gắn Ứng dụng A,"1. Mở màn Sửa mẫu phiếu 'Phiếu KS A'
+2. Quan sát trường Ứng dụng",Mẫu phiếu 'Phiếu KS A',"- Trường Ứng dụng hiển thị sẵn 'Ứng dụng A'
+- Không còn Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-195,Đổi Ứng dụng của mẫu phiếu và lưu,P0,Mẫu phiếu 'Phiếu KS A' đang gắn Ứng dụng A; trạng thái chưa duyệt/chưa khoá,"1. Mở màn Sửa
+2. Đổi Ứng dụng sang 'Ứng dụng B'
+3. Lưu
+4. Về danh sách quan sát cột Ứng dụng",application: A → B,"- Lưu thành công
+- Cột Ứng dụng ở danh sách và màn chi tiết đều = 'Ứng dụng B'",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-196,Mẫu phiếu đã duyệt (status = 2) — khoá trường Ứng dụng,P1,Mẫu phiếu 'Phiếu KS B' đã ở trạng thái duyệt/hoạt động,"1. Mở màn Sửa 'Phiếu KS B'
+2. Thử mở dropdown Ứng dụng",status = 2,"- Dropdown Ứng dụng ở trạng thái disabled, không đổi được
+- Các trường khác theo đúng quy tắc trạng thái hiện hành",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-197,Màn Chi tiết mẫu phiếu hiển thị Ứng dụng,P0,Mẫu phiếu 'Phiếu KS A' gắn Ứng dụng A,"1. Từ danh sách bấm 'Xem' mẫu phiếu
+2. Quan sát phần thông tin chung",Mẫu phiếu 'Phiếu KS A',"- Hiển thị Tên form, Mã mẫu phiếu, Ứng dụng = 'Ứng dụng A'
+- Không hiển thị Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Trường Ứng dụng trên form,,TC-ROLE-198,Màn Xem trước (Preview) hiển thị Ứng dụng,P1,Đang ở form Tạo/Sửa có dữ liệu,"1. Bấm 'Xem trước'
+2. Quan sát phần header của bản xem trước",Mẫu phiếu 'Phiếu KS A',"- Header xem trước có Tên form + Mã mẫu phiếu + Ứng dụng
+- Không còn Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-199,Cột Ứng dụng trên bảng danh sách,P0,Có ≥ 5 mẫu phiếu thuộc các ứng dụng khác nhau,"1. Vào Danh mục >> Phiếu thu thập thông tin
+2. Quan sát các cột của bảng",5 mẫu phiếu,"- Có cột 'Ứng dụng' hiển thị đúng tên ứng dụng của từng mẫu
+- KHÔNG còn cột Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-200,Mẫu phiếu chưa gắn Ứng dụng (dữ liệu cũ),P1,Có 1 mẫu phiếu cũ chưa map ứng dụng (application_id = null),"1. Mở danh sách
+2. Tìm mẫu phiếu cũ, quan sát cột Ứng dụng",application_id = null,"- Ô Ứng dụng để trống hoặc '—', không hiển thị 'null'
+- Dòng vẫn render bình thường, không lỗi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-201,Bộ lọc nâng cao — không còn filter Nhóm ngành / Nhóm giải pháp,P0,Đang ở màn danh sách,"1. Bấm 'Tìm kiếm nâng cao'
+2. Liệt kê các trường lọc",—,"- Các filter gồm: Ứng dụng, Trạng thái, Người tạo, Người cập nhật, Cập nhật từ/đến
+- KHÔNG còn filter Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-202,Lọc theo Ứng dụng trả đúng dữ liệu,P0,"Ứng dụng A có 3 mẫu phiếu, Ứng dụng B có 2 mẫu phiếu","1. Mở tìm kiếm nâng cao
+2. Chọn Ứng dụng = 'Ứng dụng A'
+3. Quan sát grid",filter application = A,"- Grid hiển thị đúng 3 mẫu phiếu của Ứng dụng A
+- Không lẫn mẫu phiếu của Ứng dụng B
+- Tổng số bản ghi cập nhật đúng",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-203,Lọc Ứng dụng kết hợp Trạng thái / Người tạo,P1,"Ứng dụng A: 2 mẫu 'Hoạt động', 1 mẫu 'Khoá'","1. Chọn Ứng dụng = A và Trạng thái = 'Hoạt động'
+2. Quan sát grid",application = A; status = Hoạt động,- Chỉ hiển thị đúng 2 mẫu thoả CẢ 2 điều kiện,,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-204,Xoá filter Ứng dụng (allowClear) và Làm mới,P1,Đang lọc theo Ứng dụng A,"1. Bấm dấu X xoá chọn Ứng dụng
+2. Bấm 'Làm mới'",—,"- Grid trả về toàn bộ mẫu phiếu trong phạm vi quyền
+- Mọi ô filter về rỗng",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-205,Lọc Ứng dụng không có kết quả (empty state),P1,Ứng dụng C chưa có mẫu phiếu nào,1. Chọn Ứng dụng = 'Ứng dụng C',application = C,"- Grid hiển thị 'Không có dữ liệu phù hợp bộ lọc.'
+- Không lỗi, phân trang về 0 bản ghi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Danh sách & Bộ lọc,,TC-ROLE-206,Giữ filter Ứng dụng khi chuyển trang / quay lại,P2,Ứng dụng A có > 1 trang dữ liệu,"1. Lọc theo Ứng dụng A
+2. Sang trang 2
+3. Mở chi tiết 1 mẫu rồi bấm 'Quay lại'",application = A; page = 2,- Sau khi quay lại vẫn giữ filter Ứng dụng A và trang 2,,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhân bản mẫu phiếu,,TC-ROLE-207,Nút Nhân bản mở form sao chép kèm Ứng dụng,P0,"Mẫu phiếu gốc 'Phiếu KS A' (Ứng dụng A, 2 phần, 6 câu hỏi)","1. Ở danh sách, bấm icon 'Sao chép' của 'Phiếu KS A'
+2. Quan sát form sao chép",Mẫu gốc: Phiếu KS A,"- Mở form nhân bản với toàn bộ phần + câu hỏi của mẫu gốc
+- Trường 'Ứng dụng' hiển thị để chọn (KHÔNG còn Nhóm ngành / Nhóm giải pháp)",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhân bản mẫu phiếu,,TC-ROLE-208,Nhân bản sang Ứng dụng khác — lưu thành công,P0,Mẫu gốc 'Phiếu KS A' (Ứng dụng A); Ứng dụng B chưa có mẫu phiếu,"1. Bấm Sao chép 'Phiếu KS A'
+2. Đổi Tên form thành 'Phiếu KS A - bản sao'
+3. Chọn Ứng dụng = B
+4. Lưu",Ứng dụng đích = B,"- Tạo mẫu phiếu mới có mã mới, Ứng dụng = B
+- Cấu trúc phần/câu hỏi copy đủ 2 phần, 6 câu hỏi
+- Mẫu gốc không bị thay đổi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhân bản mẫu phiếu,,TC-ROLE-209,Thuộc tính câu hỏi được giữ nguyên khi nhân bản,P0,"Mẫu gốc có câu hỏi: bắt buộc, loại 'Chọn nhiều', có câu hỏi con, có gợi ý","1. Nhân bản mẫu gốc
+2. Đối chiếu từng câu hỏi của bản sao với mẫu gốc","Câu hỏi cha–con, loại chọn nhiều","- Giữ nguyên: nhãn, loại câu hỏi, cờ bắt buộc, đáp án, quan hệ cha–con, thứ tự
+- Không mất câu hỏi con",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhân bản mẫu phiếu,,TC-ROLE-210,Bản sao độc lập với mẫu gốc,P0,Đã nhân bản thành công 'Phiếu KS A - bản sao',"1. Sửa 1 câu hỏi ở bản sao, Lưu
+2. Mở lại mẫu gốc kiểm tra",Sửa nhãn câu hỏi ở bản sao,"- Mẫu gốc giữ nguyên nội dung cũ
+- 2 mẫu phiếu có mã khác nhau, không dùng chung câu hỏi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhân bản mẫu phiếu,,TC-ROLE-211,Validate bắt buộc chọn Ứng dụng khi nhân bản,P0,Đang ở form nhân bản,"1. Xoá chọn Ứng dụng
+2. Bấm Lưu",application_id = null,- Không lưu; lỗi inline tại trường Ứng dụng,,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhân bản mẫu phiếu,,TC-ROLE-212,Ràng buộc 1 Ứng dụng chỉ có 1 mẫu phiếu (nếu áp dụng),P0,Ứng dụng A đã có mẫu phiếu 'Phiếu KS A',"1. Nhân bản 'Phiếu KS A'
+2. Giữ nguyên Ứng dụng = A
+3. Bấm Lưu",Ứng dụng đích = A (đã có mẫu),"- Hệ thống chặn và báo lỗi rõ ràng (Ứng dụng đã có mẫu phiếu) HOẶC cho phép theo đúng nghiệp vụ đã chốt
+- Kết quả phải nhất quán với ràng buộc cũ theo Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhân bản mẫu phiếu,,TC-ROLE-213,Huỷ giữa chừng không tạo bản ghi,P1,"Đang mở form nhân bản, đã sửa vài trường","1. Bấm 'Quay lại' / đóng form
+2. Kiểm tra danh sách",—,"- Không tạo mẫu phiếu mới nào
+- Tổng số bản ghi không đổi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In mẫu phiếu trống,,TC-ROLE-214,In mẫu phiếu từ màn Danh sách,P0,"Mẫu phiếu 'Phiếu KS A' có 2 phần, 6 câu hỏi","1. Ở danh sách, bấm icon 'In' của 'Phiếu KS A'
+2. Quan sát bản xem trước in",Mẫu phiếu 'Phiếu KS A',"- Mở bản xem trước đúng mẫu in Mau_phieu_KS_240626
+- Header có: Tên form, Mã mẫu phiếu, Ứng dụng, Người in
+- Thân phiếu liệt kê đủ 2 phần, 6 câu hỏi, chừa chỗ trống điền tay",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In mẫu phiếu trống,,TC-ROLE-215,In mẫu phiếu từ màn Chi tiết,P0,Đang ở màn chi tiết 'Phiếu KS A',"1. Bấm nút 'In'
+2. Quan sát bản xem trước rồi bấm In",Mẫu phiếu 'Phiếu KS A',"- Nội dung bản in giống hệt bản in từ màn danh sách
+- Hộp thoại in của trình duyệt tự bật",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In mẫu phiếu trống,,TC-ROLE-216,Bản in hiển thị Mã mẫu phiếu (lỗi phản hồi #5),P0,Mẫu phiếu 'Phiếu KS A' có mã tự sinh (vd MP-2026-00012),"1. Mở bản in từ danh sách và từ chi tiết
+2. Kiểm tra dòng 'Mã mẫu phiếu' trên header",code = MP-2026-00012,"- Dòng Mã mẫu phiếu hiển thị đúng MP-2026-00012 ở CẢ 2 lối vào
+- Không còn để trống như lỗi báo ngày 14/07/2026",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In mẫu phiếu trống,,TC-ROLE-217,Bản in không còn Nhóm ngành / Nhóm giải pháp,P0,Mẫu phiếu bất kỳ,"1. Mở bản in
+2. Rà toàn bộ header + footer",—,"- Không xuất hiện dòng Nhóm ngành / Nhóm giải pháp
+- Có dòng Ứng dụng thay thế",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In mẫu phiếu trống,,TC-ROLE-218,Mẫu phiếu nhiều câu hỏi — ngắt trang đúng,P1,"Mẫu phiếu có ≥ 4 phần, ≥ 40 câu hỏi","1. Mở bản in
+2. Cuộn qua toàn bộ các trang, chú ý chỗ sang trang",40+ câu hỏi,"- Không mất viền/khung ở chỗ sang trang
+- Không cắt đôi câu hỏi giữa 2 trang
+- Mỗi trang có header/số trang theo mẫu",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In mẫu phiếu trống,,TC-ROLE-219,In mẫu phiếu đang ở trạng thái Khoá,P2,Mẫu phiếu 'Phiếu KS C' đang Khoá,1. Bấm In từ danh sách,status = Khoá,"- Vẫn in được nội dung (in là thao tác chỉ đọc)
+- Hoặc chặn có thông báo rõ ràng nếu nghiệp vụ quy định vậy",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-220,In phiếu TTTT đã điền từ màn dự án TKT,P0,Dự án TKT 'DA-001' đã điền và lưu phiếu TTTT (10/12 câu có đáp án),"1. Mở dự án TKT 'DA-001'
+2. Vào tab Phiếu thu thập thông tin
+3. Bấm 'In'",Dự án DA-001,"- Mở bản in theo mẫu KQ_DATKT_240626
+- Toàn bộ 10 câu đã trả lời hiển thị đúng đáp án đã lưu
+- 2 câu chưa trả lời để trống, không hiện 'null'",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-221,Bản in TKT hiển thị Ngày khảo sát (lỗi phản hồi #5),P0,"Phiếu TTTT của DA-001 đã lưu, ngày khảo sát = 20/07/2026","1. Mở bản in phiếu TTTT từ dự án DA-001
+2. Kiểm tra dòng 'Ngày khảo sát'",survey date = 20/07/2026,"- Hiển thị đúng 20/07/2026 định dạng dd/mm/yyyy
+- Không còn để trống như lỗi báo ngày 14/07/2026",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-222,Bản in TKT hiển thị Người khảo sát (lỗi phản hồi #5),P0,Phiếu TTTT của DA-001 do nhân viên 'Nguyễn Văn A' điền và lưu,"1. Mở bản in phiếu TTTT từ dự án DA-001
+2. Kiểm tra dòng 'Người khảo sát'",surveyor = Nguyễn Văn A,"- Hiển thị đúng họ tên 'Nguyễn Văn A'
+- Không còn để trống sau khi đã lưu phiếu",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-223,Bản in TKT hiển thị Mã mẫu phiếu + Ứng dụng,P0,"Phiếu TTTT của DA-001 dùng mẫu 'Phiếu KS A' (mã MP-2026-00012, Ứng dụng A)","1. Mở bản in
+2. Kiểm tra header",MP-2026-00012 / Ứng dụng A,"- Header có Mã mẫu phiếu = MP-2026-00012 và Ứng dụng = Ứng dụng A
+- Kèm thông tin dự án (mã/tên dự án, khách hàng) theo mẫu",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-224,Điền thêm câu trả lời rồi in lại,P0,Phiếu TTTT DA-001 còn 2 câu chưa trả lời,"1. Điền nốt 2 câu, bấm Lưu
+2. Bấm In lại
+3. Đối chiếu bản in",Trả lời thêm 2 câu,"- Bản in cập nhật đủ 12/12 câu
+- Ngày khảo sát/người khảo sát vẫn hiển thị đúng sau khi lưu lần 2",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-225,In khi phiếu TTTT chưa điền dữ liệu,P1,Dự án TKT 'DA-002' đã gán mẫu phiếu nhưng chưa trả lời câu nào,"1. Mở DA-002 >> tab Phiếu TTTT
+2. Bấm In",0 câu trả lời,"- In ra phiếu trống theo mẫu, không lỗi
+- Ngày khảo sát/người khảo sát để trống hoặc theo quy tắc đã chốt",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-226,Câu hỏi bổ sung tại dự án cũng lên bản in,P1,DA-001 có thêm 2 câu hỏi bổ sung ngoài mẫu gốc,"1. Mở bản in phiếu TTTT của DA-001
+2. Tìm 2 câu hỏi bổ sung",2 câu bổ sung,"- 2 câu bổ sung hiển thị đúng vị trí kèm câu trả lời
+- Không làm lệch đánh số các câu còn lại",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,In phiếu có dữ liệu từ dự án TKT,,TC-ROLE-227,Bản in dài nhiều trang từ dự án TKT,P1,"Phiếu TTTT có ≥ 40 câu đã trả lời, câu trả lời dài","1. Mở bản in
+2. Kiểm tra các trang",40+ câu trả lời dài,"- Không mất viền khi sang trang, không cắt chữ ở lề phải
+- Nội dung câu trả lời xuống dòng đầy đủ",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Xuất Excel,,TC-ROLE-228,Xuất Excel danh sách theo cấu trúc mới,P0,Danh sách có 5 mẫu phiếu thuộc các ứng dụng khác nhau,"1. Ở màn danh sách bấm 'Xuất Excel'
+2. Mở file tải về",5 mẫu phiếu,"- File tải về mở được, đúng cấu trúc sheet export_danhsach_24062026
+- Có cột 'Ứng dụng'; KHÔNG còn cột Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Xuất Excel,,TC-ROLE-229,Dữ liệu xuất khớp dữ liệu trên grid,P0,Đang lọc theo Ứng dụng A (3 bản ghi),"1. Lọc Ứng dụng = A
+2. Bấm Xuất Excel
+3. So sánh file với grid",filter application = A,"- File chứa đúng 3 dòng của Ứng dụng A
+- Từng cột (mã, tên form, ứng dụng, trạng thái, người/ngày cập nhật, số câu hỏi) khớp grid",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Xuất Excel,,TC-ROLE-230,Xuất Excel khi danh sách rỗng,P2,Lọc ra bộ dữ liệu 0 bản ghi,"1. Lọc điều kiện không có kết quả
+2. Bấm Xuất Excel",0 bản ghi,"- File vẫn tải về, chỉ có dòng tiêu đề
+- Không lỗi 500",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Xuất Excel,,TC-ROLE-231,Ký tự đặc biệt trong tên form khi xuất,P1,Có mẫu phiếu tên bắt đầu bằng '=' hoặc chứa ký tự đặc biệt,"1. Xuất Excel
+2. Mở file kiểm tra dòng đó",name = '=Test khảo sát',"- Ô hiển thị nguyên văn dạng text, không bị Excel hiểu là công thức
+- Không lỗi khi export (không HTTP 500)",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-232,Nút 'Nhập Excel' hiển thị trên màn danh sách (lỗi phản hồi #5),P0,User có quyền 'Quản lý danh mục mẫu phiếu thu thập thông tin',"1. Vào màn danh sách mẫu phiếu
+2. Quan sát khu vực nút bên phải tiêu đề bảng",User: quyền quản lý mẫu phiếu,"- Có nút 'Nhập Excel' bên cạnh 'Tạo mẫu phiếu' và 'Xuất Excel'
+- Bấm vào mở được popup/luồng import (đây là lỗi TPE báo thiếu ngày 14/07/2026)",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-233,Tải file mẫu import đúng template mới,P0,Đang ở popup Nhập Excel,"1. Bấm 'Tải file mẫu'
+2. Mở file",—,"- File mẫu đúng sheet import_noidung_maukhaosat_240626
+- Có cột Ứng dụng, KHÔNG còn cột Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-234,Import file hợp lệ tạo đúng mẫu phiếu,P0,"File import 1 mẫu phiếu: Ứng dụng A, 2 phần, 6 câu hỏi","1. Chọn file, bấm Nhập
+2. Xem kết quả và kiểm tra bản ghi tạo ra",file: import_maukhaosat_ok.xlsx,"- Báo import thành công, số dòng hợp lệ đúng
+- Mẫu phiếu tạo ra gắn đúng Ứng dụng A, đủ 2 phần + 6 câu hỏi đúng thứ tự",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-235,Import với Ứng dụng không tồn tại,P0,File import ghi Ứng dụng 'Ứng dụng ZZZ' không có trong danh mục,"1. Chọn file, bấm Nhập
+2. Quan sát thông báo lỗi",application = 'Ứng dụng ZZZ',"- Báo lỗi rõ dòng nào sai, lý do 'Ứng dụng không tồn tại'
+- KHÔNG tạo mẫu phiếu nào từ dòng lỗi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-236,Import thiếu cột Ứng dụng / sai template,P0,"File import theo template CŨ (còn Nhóm ngành, Nhóm giải pháp)","1. Chọn file cũ, bấm Nhập",file template cũ,"- Báo lỗi sai cấu trúc file, yêu cầu dùng template mới
+- Không ghi dữ liệu",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-237,Import file rỗng / sai định dạng,P1,File .xlsx không có dòng dữ liệu; file .txt,"1. Import lần lượt 2 file
+2. Quan sát thông báo",file rỗng; file .txt,"- Báo lỗi thân thiện cho từng trường hợp
+- Không tạo bản ghi, không lỗi 500",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-238,Import file nhiều dòng có dòng lỗi xen kẽ,P1,"File 5 mẫu phiếu: 3 hợp lệ, 2 sai Ứng dụng","1. Import file
+2. Đọc bảng kết quả
+3. Kiểm tra danh sách",5 dòng (3 ok / 2 lỗi),"- Kết quả nêu rõ 3 thành công, 2 lỗi kèm số dòng + lý do
+- Danh sách tăng đúng 3 mẫu phiếu (theo đúng quy tắc all-or-nothing nếu nghiệp vụ chốt vậy thì phải là 0)",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Nhập Excel,,TC-ROLE-239,Import khi không có quyền (bypass API),P0,User KHÔNG có quyền 'Quản lý danh mục mẫu phiếu thu thập thông tin',"1. Không thấy nút Nhập Excel trên UI
+2. Dùng Postman gọi thẳng API import",User: không quyền,"- UI không hiển thị nút Nhập Excel
+- API trả 403, không tạo bản ghi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Tương thích dữ liệu cũ & Edge case,,TC-ROLE-240,Dự án TKT cũ gắn mẫu phiếu theo Nhóm ngành/Nhóm giải pháp,P0,"Dự án TKT tạo trước khi đổi cấu trúc, phiếu TTTT đã có dữ liệu","1. Mở dự án cũ >> tab Phiếu TTTT
+2. Xem dữ liệu và bấm In",Dự án cũ,"- Vẫn xem và in được phiếu, dữ liệu trả lời cũ không mất
+- Không lỗi do thiếu Nhóm ngành / Nhóm giải pháp",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Tương thích dữ liệu cũ & Edge case,,TC-ROLE-241,Chọn mẫu phiếu cho dự án TKT mới theo Ứng dụng,P0,Dự án TKT mới gắn Ứng dụng A; Ứng dụng A có mẫu 'Phiếu KS A',"1. Tạo/mở dự án TKT gắn Ứng dụng A
+2. Vào tab Phiếu TTTT",Ứng dụng A,"- Hệ thống lấy đúng mẫu phiếu của Ứng dụng A (không còn dò theo Nhóm ngành + Nhóm giải pháp)
+- Hiển thị đúng danh sách câu hỏi của mẫu đó",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Tương thích dữ liệu cũ & Edge case,,TC-ROLE-242,Ứng dụng chưa có mẫu phiếu — dự án TKT ứng xử đúng,P1,Dự án TKT gắn Ứng dụng C (chưa có mẫu phiếu),1. Mở dự án >> tab Phiếu TTTT,Ứng dụng C,"- Hiển thị thông báo chưa có mẫu phiếu cho ứng dụng này
+- Không lỗi trắng trang, không cho in phiếu rỗng vô nghĩa",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Tương thích dữ liệu cũ & Edge case,,TC-ROLE-243,Xoá/khoá Ứng dụng đang được mẫu phiếu sử dụng,P1,Ứng dụng A đang gắn với 'Phiếu KS A',"1. Vào Danh mục Ứng dụng, thử Khoá/Xoá Ứng dụng A
+2. Quay lại danh sách mẫu phiếu",Ứng dụng A đang được dùng,"- Hệ thống chặn xoá (hoặc cảnh báo ràng buộc) theo đúng nghiệp vụ
+- Nếu chỉ khoá: mẫu phiếu vẫn hiển thị tên ứng dụng, không mất dữ liệu",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Tương thích dữ liệu cũ & Edge case,,TC-ROLE-244,Bypass API tạo/sửa mẫu phiếu với application_id sai,P1,User có quyền quản lý mẫu phiếu,1. Postman gọi POST/PUT /assign/form-templates với application_id = 999999 (không tồn tại),application_id = 999999,"- BE trả 422 báo Ứng dụng không hợp lệ
+- Không tạo/sửa bản ghi",,,,,,,,,,,,
+Mẫu phiếu thu thập thông tin,Tương thích dữ liệu cũ & Edge case,,TC-ROLE-245,Không còn tham chiếu Nhóm ngành / Nhóm giải pháp trên toàn luồng,P1,"Đã có mẫu phiếu, dự án TKT, bản in, file export/import mới","1. Rà lại: form tạo/sửa, chi tiết, xem trước, danh sách, filter, bản in, file export, file mẫu import",—,"- Không còn nhãn/cột/trường Nhóm ngành hay Nhóm giải pháp ở bất kỳ điểm nào
+- Mọi nơi trước đây dùng cặp này đã thay bằng Ứng dụng",,,,,,,,,,,,

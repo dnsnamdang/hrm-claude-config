@@ -77,3 +77,68 @@
       `app/Helper/CustomerOwnership.php`. Gộp bảng xong thì phần này nên bỏ luôn — ngoài phạm vi
       2 màn này
 - [ ] Chạy seeder quyền trên môi trường thật (local đã insert tay)
+
+## Phase — Tai lieu ban giao (2026-08-13)
+
+- [x] `testcase - Cap dich vu bao duong.xlsx` — 75 TC (P0 56%)
+- [x] `testcase - Danh muc ghi chu kiem tra bao duong.xlsx` — 75 TC (P0 55%)
+- [x] `HDSD_Cap dich vu bao duong.docx` — 11 trang
+- [x] `HDSD_Danh muc ghi chu kiem tra bao duong.docx` — 11 trang
+- [x] Generator chung: `gen_testcase.py`, `gen_hdsd.py`; anh nguon `hdsd_shots/` (CHI LOCAL)
+- [x] Da xoa `testcase.xlsx` cu (format 15 cot) — user chot 2026-08-13
+- [x] User cap quyen "Quan ly ghi chu kiem tra bao duong" -> da CHUP LAI anh danh sach
+      (co du nut Tao moi / Sua / Xoa) va bo sung anh cua so Them; sinh lai ca TC va HDSD.
+      Phat hien them: ca 2 man deu co nut "Luu & Tiep tuc" — truoc do tai lieu ghi thieu
+
+
+---
+
+## Làm lại 3 loại tài liệu theo form mới — 18/08/2026
+
+> @junfoke · Bản tài liệu cũ (12–13/08) làm theo **form SRS 6 chương đã bị thay**. User yêu cầu
+> dựng lại theo form 4 phần chốt ngày 17/08 và xoá các file không đạt chuẩn.
+
+### Đã xoá
+- `srs.docx` và `srs.html` — bản HTML/docx generic của đợt đầu, không theo form nào.
+- Các `HDSD_*.docx` / `testcase*.xlsx` bản 13/08 (tên không dấu) — đã có bản mới thay thế.
+- Thư mục `hdsd_shots/` cũ — ảnh mới nằm ở thư mục `*_shots/` riêng của từng nhóm.
+
+### Bộ sinh dùng chung
+Ba thư viện mới đặt ở `.plans/gop-db/_catalog_docs_lib/`, dùng chung cho cả 7 màn:
+
+| File | Vai trò |
+|---|---|
+| `catalog_srs.py` | Dựng SRS đủ 4 phần, sinh mục 2.x theo danh sách `funcs` của từng màn |
+| `catalog_tc.py` | Dựng testcase, tự sinh ca kiểm tra bắt buộc / trùng từ danh sách `truong` |
+| `catalog_hdsd.py` | Dựng HDSD click-by-click, bảng ô nhập + bảng lỗi + câu hỏi thường gặp |
+
+Mỗi feature chỉ còn 1 file cấu hình (`*_config.py`) và 3 driver mỏng gọi thư viện chung.
+
+⚠️ `tc_engine` dùng chung chỉ hỗ trợ **tối đa 10 mục La Mã**. Màn nào nhiều chức năng hơn
+(Danh mục tài khoản) thì `catalog_tc.py` tự **gộp nhóm cuối** — kết xuất, in ấn, tùy chỉnh hiển
+thị và trải nghiệm — vào một mục, thay vì sửa engine dùng chung.
+
+### Kết quả nhóm này
+
+- [x] Ảnh: **16** trong `mt_shots/`, chụp trên cổng dev `hrm-crm.eteksofts.com`
+- [x] `SRS - Cấp dịch vụ bảo dưỡng.docx` — 23 trang, 30 bảng, 14 ảnh, FR-01…FR-09, BR-01…BR-06
+- [x] `SRS - Danh mục ghi chú kiểm tra bảo dưỡng.docx` — 24 trang, 30 bảng, 14 ảnh
+- [x] `testcase - Cấp dịch vụ bảo dưỡng.xlsx` — **70 TC**, P0 53%
+- [x] `testcase - Danh mục ghi chú kiểm tra bảo dưỡng.xlsx` — **72 TC**, P0 54%
+- [x] `HDSD_Cấp dịch vụ bảo dưỡng.docx` — 15 trang · `HDSD_Danh mục ghi chú…docx` — 15 trang
+
+### Ghi nhận khi chụp ảnh
+
+**Tài khoản test chỉ có quyền XEM ở màn Ghi chú.** Tài khoản `namdangit@gmail.com` có
+`Xem ghi chú kiểm tra bảo dưỡng` nhưng **không có** `Quản lý ghi chú kiểm tra bảo dưỡng`.
+Hệ quả: nút Tạo mới / Sửa / Xóa bị ẩn — đúng thiết kế, và tình cờ là bằng chứng sống cho
+mục phân quyền của tài liệu.
+
+⚠️ **Còn thiếu 1 ảnh**: hộp thoại xác nhận Xóa của màn Ghi chú. Luồng xóa gọi kiểm tra tình
+trạng sử dụng trước khi mở hộp thoại, máy chủ trả về từ chối vì thiếu quyền nên hộp thoại
+không mở được. Cần cấp quyền `Quản lý ghi chú kiểm tra bảo dưỡng` cho tài khoản test rồi
+chụp bổ sung; SRS hiện dùng ảnh danh sách cho mục này.
+
+**Cần kiểm chứng trên dữ liệu**: 6 bản ghi test (`Trang test 002`…`007`, tạo 04/08/2026) đều
+trả về không xóa được, dù mới tạo và nhiều khả năng chưa gắn vào gói dịch vụ nào. Chưa đủ căn
+cứ kết luận là lỗi — cần soi dữ liệu bảng liên kết cấp bảo dưỡng để xác nhận.

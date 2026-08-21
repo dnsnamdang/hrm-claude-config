@@ -844,3 +844,38 @@ Kiểm tra:
 - [ ] ĐVT hiển thị là ĐVT chính
 - [ ] Sản phẩm dùng ĐVT khác ở BG/Thầu/HĐ → SL đã quy đổi đúng
 - [ ] Các popup khác (GT, HĐ) vẫn hoạt động bình thường
+
+---
+
+## UI tinh chỉnh — Đưa lọc ngày lập ra ngoài + button icon-only (@khoipv)
+
+Mục tiêu: đồng bộ UX với màn `contract/reports/sale-product`.
+
+- [x] Đưa 2 ô lọc "Ngày lập dự toán từ/đến" ra thanh header (date-filter-bar), gọi `searchAndSave` khi `@change`
+- [x] Bỏ 2 ô date-picker khỏi panel bộ lọc thu gọn (b-collapse)
+- [x] Thêm nút reset icon (`fa-sync-alt`) trong date bar → `reset()`
+- [x] Đổi các button (Xuất Excel, Xem chi tiết, Bộ lọc) sang dạng icon-only + tooltip, khớp style sale-product
+- [x] Fix bug `:variant="secondary"` → `variant="secondary"` ở nút toggle chi tiết
+- [x] Thêm CSS: `.date-filter-bar`, `.date-field`, `.filter-label`, `.btn-icon-only`; sửa `.header-action-row` sang `space-between`; xóa `.btn-export` min-width cũ
+- [ ] Verify browser: dropdown ngày cao 38px, đổi ngày tự lọc lại, các nút icon căn đều
+
+### Bổ sung — Lọc theo ngày tiếp nhận báo giá (@khoipv)
+
+- [x] BE `ProjectController@lifecycleReport`: thêm lọc `quotation_date_from/to` trên `first_q.created_at` (= ngày tiếp nhận BG, trùng cột "Ngày BG")
+- [x] FE: thêm `quotation_date_from/to` vào formFilter + reset()
+- [x] FE: thêm 2 ô date-picker "Ngày tiếp nhận BG" trong date-filter-bar, `@change=searchAndSave`
+- [ ] Verify browser: lọc ngày tiếp nhận BG lọc đúng, KPI cập nhật theo
+
+### Bổ sung — Lọc theo thời điểm mời thầu (@khoipv)
+
+- [x] BE: thêm lọc `bid_opening_from/to` trên `bid_packages.bid_opening_time` qua whereExists (link project qua `bid_packages.project_id` HOẶC `bid_package_quotations`)
+- [x] FE: thêm `bid_opening_from/to` vào formFilter + reset()
+- [x] FE: thêm 2 ô date-picker "Thời điểm mời thầu" trong date-filter-bar, `@change=searchAndSave`
+- [ ] Verify browser
+
+### Bổ sung — Lọc ngày ký/kết thúc HĐ (trong panel bộ lọc) (@khoipv)
+
+- [x] BE: thêm lọc `contract_sign_from/to` (first_c.contract_sign_time), `contract_end_from/to` (first_c.contract_end_time)
+- [x] FE: thêm 4 field vào formFilter + reset()
+- [x] FE: thêm 4 ô date-picker trong b-collapse (không phải header), class `.collapse-date` cao 38px
+- [ ] Verify browser

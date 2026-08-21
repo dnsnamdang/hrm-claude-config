@@ -107,7 +107,22 @@ nên không ai thấy. Rà rộng ra toàn bộ `erp-menu-inventory`.
       "Khởi tạo phiếu yêu cầu" (Quản lý sản xuất / Bán hàng) tách riêng đúng, màu cột Nguồn đúng
 - [x] Chạy lại toàn bộ kiểm thử — PASS, số cuối: **345 xám mờ + 10 link ERP = 355**
 
-## Phase 9 — CÒN LẠI (chưa làm)
+## Phase 9 — Mua hàng / Kho / Vận chuyển: hiện card, trỏ sang ERP
+
+User đổi yêu cầu: thay vì ẩn hẳn, 3 phân hệ này vẫn hiện ở màn chọn phân hệ, bấm vào thì sang ERP.
+
+- [x] `subsystems.js`: bỏ cờ `hidden`, thay bằng `external: true` + `erpPath` cho 3 phân hệ
+- [x] Resolve màn ERP đại diện cho từng phân hệ từ `TanPhatDev/routes/web.php`
+      (ERP không có landing riêng — topmenubar chỉ có Danh mục/Khởi tạo/Kinh doanh/Kế toán/CSKH/QTTT)
+- [x] `pages/index.vue` + `SubsystemSwitcher.vue`: `openERP()` nhận tham số subsystem để
+      ghép `ERP_URL + erpPath`; bỏ nhánh `hidden` trong `isShow()`; 4 chỗ gọi trong template
+- [x] `getPermissionSubsystemGroups()`: đổi `!s.hidden` -> `!s.external`
+- [x] Verify `check-external.js` — 17/17 PASS: 3 card hiện lại, nhóm SẢN XUẤT - CUNG ỨNG đủ
+      4 phân hệ, permissionType 20/21/22 giữ nguyên, màn Phân quyền còn 21 khối, card ERP tổng
+      vẫn về trang chủ, `resolveSubsystem` không đổi
+- [x] Compile 3 template (`index.vue`, `SubsystemSwitcher.vue`, `Sidebar.vue`) — 0 lỗi
+
+## Phase 10 — CÒN LẠI (chưa làm)
 
 - [ ] **Verify trên browser thật** — chưa chạy. Cần kiểm bằng mắt:
       - mục xám mờ hiển thị đúng độ mờ và không bấm được (kiểm cả hover)
@@ -120,12 +135,70 @@ nên không ai thấy. Rà rộng ra toàn bộ `erp-menu-inventory`.
       để ngoài phạm vi feature này — gộp vào đợt dọn dẹp sau)
 - [ ] Quyết định lại vụ `Danh mục ngân hàng` bị liệt kê ở 2 phân hệ trong sheet
       (hiện chỉ giữ ở Danh mục chung)
+- [ ] ⚠️ **Xung đột link `/assign/customers`** — sau commit `564125504 gop database khach hang`,
+      mục "Khách hàng" ở `master-data.js` đổi sang `/assign/customers`, trùng với mục
+      "Khách hàng" trong nhóm Danh mục của `sale.js`. Vi phạm bất biến *mỗi link chỉ thuộc
+      đúng 1 phân hệ*: mở `/assign/customers` giờ luôn hiện sidebar **Danh mục chung**
+      (đứng trước trong `SUBSYSTEMS`), không bao giờ ra Bán hàng. Cần bỏ 1 trong 2.
+
+## Phase 11 — Dọn nhãn menu phân hệ Danh mục chung (2026-08-12, @khoipv)
+
+Yêu cầu user: bỏ tiền tố "Danh mục" ở mọi nhãn, tách Ngân hàng ra menu riêng, bỏ "(KH - NCC)".
+Chỉ đụng đúng 1 file: `hrm-client/components/subsystem-menu/master-data.js`.
+
+- [x] Bỏ tiền tố `Danh mục` ở toàn bộ nhãn (2 nhóm cha + 13 sub item)
+- [x] Tách `Danh mục ngân hàng` khỏi nhóm địa lý → **item cấp 1 độc lập** `Ngân hàng`
+      (`icon: 'ri-bank-line'`, `link: '/human/banks'`, `isShow: true`) đặt ngay sau nhóm Địa lý
+- [x] Nhóm cũ `Danh mục địa lý - ngân hàng` → `Địa lý` (còn 6 mục), cập nhật lại comment
+      cũ ("thứ tự nằm sau Ngân hàng") vì mốc tham chiếu đã bị chuyển đi
+- [x] `Danh mục đối tác (KH - NCC)` → `Đối tác`
+- [x] Verify: parse file bằng Node → cấu trúc 4 item cấp 1 đúng như thiết kế;
+      `walkMenu()` trong `subsystems.js` đi cả item cấp 1 có `link` nên `/human/banks`
+      **vẫn nằm trong registry** → `resolveSubsystem('/human/banks')` không đổi
+- [x] Verify: `/human/banks` vẫn chỉ được khai **đúng 1 lần** trong toàn bộ `subsystem-menu/`
+      (finance.js chỉ nhắc trong comment, không khai link) → không tạo xung đột phân hệ mới
+- [x] Verify: class `.ri-bank-line` có thật trong `assets/scss/custom/plugins/icons/_remixicon.scss:521`
+
+**Không đụng tới:** các file `subsystem-menu/*.js` khác, sheet gộp, `Sidebar.vue`.
+**Chưa làm:** xem bằng mắt trên browser (gộp vào Phase 10).
+
+---
+
+## Phase 12 — Dọn nhãn menu phân hệ CSKH (2026-08-13, @khoipv)
+
+Yêu cầu user: nhóm `Danh mục - Dịch vụ` bỏ đuôi `- Dịch vụ`, bỏ tiền tố "Danh mục" ở các mục
+con, tách `Cập nhật nhanh giá dịch vụ` ra ngoài. Chỉ đụng đúng 1 file:
+`hrm-client/components/subsystem-menu/customer-care.js`.
+
+- [x] `Danh mục - Dịch vụ` → `Danh mục`
+- [x] Bỏ tiền tố `Danh mục` ở 4 nhãn con: `Công việc, lỗi thiết bị`, `Gói bảo dưỡng`,
+      `Ghi chú kiểm tra bảo dưỡng`, `Dịch vụ sửa chữa và chi phí khác`,
+      `Serial thiết bị làm dịch vụ` (`Cấp dịch vụ bảo dưỡng` vốn không có tiền tố)
+- [x] Tách `Cập nhật nhanh giá dịch vụ` khỏi nhóm → **item cấp 1 độc lập**
+      (`icon: 'ri-price-tag-3-line'`, `link: '/customer-care/service-price-config'`),
+      đặt ngay sau nhóm `Danh mục`. Nhóm `Danh mục` còn 6 mục
+- [x] Giữ `isShow` dạng **mảng quyền** `['Cập nhật nhanh giá dịch vụ']` (KHÔNG đổi thành `true`
+      như `Ngân hàng` ở Phase 11) vì màn này có gate quyền — mảng chạy đúng ở cả 2 kiểu sidebar:
+      hub (`hub.js::isScreenVisible`) và dọc (`Sidebar.vue::isShowMenuParent` nhánh `Array.isArray`)
+- [x] Verify: parse file bằng Node → 6 item cấp 1, nhóm `Danh mục` 6 con, không có link trùng
+- [x] Verify: `deriveHubNavLinks()` thu đúng `Cập nhật nhanh giá dịch vụ` thành nút rail đi thẳng
+      (`hubNavLinksFor()` loại link `/customer-care/dashboard` vì rail đã có nút Tổng quan)
+- [x] Verify: `walkMenu()` đi cả item cấp 1 có `link` → `/customer-care/service-price-config`
+      vẫn trong registry, `resolveSubsystem()` không đổi hành vi
+- [x] Verify: class `.ri-price-tag-3-line` có thật trong
+      `assets/scss/custom/plugins/icons/_remixicon.scss:4538`
+
+**Không đụng tới:** `sale-hub.js` (phân hệ Bán hàng, có khối nhãn viết tắt "DM ..." riêng cho
+CSKH — nằm ngoài yêu cầu), tiêu đề màn ở `pages/customer-care/**` (vd "Danh mục gói bảo dưỡng"
+trong `services/index.vue`), `subsystems.js`.
+**Chưa làm:** xem bằng mắt trên browser (gộp vào Phase 10). Nhãn phân hệ `CSKH` ở
+`subsystems.js:451` — user hỏi nhưng chưa chốt tên mới.
 
 ---
 
 ## Checkpoint — 2026-08-01
 
-**Vừa hoàn thành:** Phase 0-8. Toàn bộ code đã xong và **kiểm thử tự động PASS hết** bằng cách
+**Vừa hoàn thành:** Phase 0-9. Toàn bộ code đã xong và **kiểm thử tự động PASS hết** bằng cách
 render thật template `Sidebar.vue` qua `vue-server-renderer`.
 
 Số liệu chốt: **355 mục menu mới** (345 xám mờ + 10 link ERP) trên 14 phân hệ; 3 phân hệ
@@ -147,8 +220,30 @@ Phụ lục A của spec đã được sinh lại từ code.
 
 **Đang làm dở:** (không)
 
-**Bước tiếp theo:** Phase 9 — verify trên browser thật. Đây là phần **duy nhất** chưa được
+**Bước tiếp theo:** Phase 10 — verify trên browser thật. Đây là phần **duy nhất** chưa được
 kiểm chứng: mọi thứ hiện mới chỉ được xác nhận ở mức render HTML, chưa nhìn bằng mắt trên
 trình duyệt (đặc biệt là độ mờ của mục xám mờ và chiều dài sidebar của Bán hàng / Tài chính).
+
+**Blocked:** (không)
+
+---
+
+## Checkpoint — 2026-08-12
+
+**Vừa hoàn thành:** Phase 11 — dọn nhãn menu phân hệ **Danh mục chung**
+(`components/subsystem-menu/master-data.js`, đúng 1 file): bỏ tiền tố "Danh mục" ở 15 nhãn,
+tách `Ngân hàng` thành item cấp 1 riêng (`ri-bank-line` → `/human/banks`), nhóm địa lý còn
+6 mục và đổi tên thành `Địa lý`, nhóm đối tác đổi thành `Đối tác` (bỏ "(KH - NCC)").
+
+Đã kiểm bằng Node (parse file + đối chiếu registry): cấu trúc menu đúng, `/human/banks` vẫn
+được `walkMenu()` thu vào registry nên `resolveSubsystem()` không đổi hành vi, link vẫn chỉ khai
+1 lần trong toàn bộ `subsystem-menu/`, icon `ri-bank-line` có thật trong bộ Remix Icon của repo.
+
+**Đang làm dở:** (không)
+
+**Bước tiếp theo:** Phase 10 vẫn treo — verify bằng mắt trên browser (nay thêm mục cần nhìn:
+item cấp 1 `Ngân hàng` render đúng như `Tổng quan`, có active-state khi ở `/human/banks`).
+Ngoài ra 2 tồn đọng cũ chưa xử lý: xung đột link `/assign/customers` giữa `master-data.js` và
+`sale.js`, và nhãn `'Quyết định '` thừa dấu cách ở `default-menu/decision.js`.
 
 **Blocked:** (không)

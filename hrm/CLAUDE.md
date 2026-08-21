@@ -15,12 +15,61 @@
 - Không đọc file thư viện hệ thống — tốn token không cần thiết
 - Ưu tiên dùng helper có sẵn, tạo helper mới nếu logic dùng lại nhiều nơi
 - Khi cần sửa hàm dùng chung → hỏi ý kiến trước khi làm
+- **BẮT BUỘC rà project trước khi làm bất kỳ UI/logic nào — không tự phát minh kiểu mới.** Trước khi code 1 thành phần (icon, tooltip, popup, badge/chip, bảng, filter, upload, phân trang, xác nhận xoá, kéo thả, biểu đồ, export…) phải **grep xem trong project đã có chỗ nào làm chưa, kể cả ở phân hệ/chức năng khác**, rồi **copy đúng pattern đó** hoặc tách ra component dùng chung. Mỗi màn tự làm một kiểu là lỗi, không phải "tuỳ ý thiết kế".
+  - Cách rà: grep theo class/tên component đặc trưng (vd `custom-class="info-popover"`, `V2Base`, `draggable`, `BaseConfirmModal`), và quét `.claude/skills/` xem đã có SKILL.md quy định chưa.
+  - Đã có ≥1 màn làm đúng → **bám theo màn đó**, ghi rõ trong plan.md: "copy pattern từ `<file:dòng>`".
+  - Chưa có ở đâu → tự thiết kế, nhưng phải **tách thành component/util dùng chung** ngay từ lần đầu và bổ sung SKILL.md để lần sau không lệch.
+  - Phát hiện project đang có **nhiều kiểu khác nhau** cho cùng 1 thứ → nêu ra cho user chọn kiểu chuẩn, KHÔNG tự chọn rồi làm tiếp, cũng KHÔNG tự sửa đại trà các màn cũ.
+- **Icon Info (chữ "i") + tooltip mô tả**: dùng `ri-information-line` 14px màu `#94a3b8` + `b-popover` với `custom-class="info-popover"`. KHÔNG dùng `fa-info-circle`, không tự vẽ vòng tròn chữ `i`, không dùng `title=""` thuần, không dùng `v-b-tooltip`. Chi tiết + trường hợp icon nằm trong dropdown select2: `.claude/skills/info-icon-tooltip/SKILL.md`
 - FE: Tuân thủ style list của module đang triển khai (mỗi module có thể khác nhau)
 - FE: Select trong modal/popup BẮT BUỘC dùng `V2BaseSelectInModal` thay cho `V2BaseSelect` (chi tiết xem `.claude/skills/modal-popup/SKILL.md`)
 - Trước khi làm màn danh sách mới → hỏi có cần phân quyền theo cấp không
 - Trước khi viết accessor `is_can_delete` → hỏi điều kiện xóa cụ thể của màn đó
-- Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu
+- Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`), dùng flag `touched` để chỉ hiện sau lần submit đầu (áp dụng cho màn cũ)
+- **Màn MỚI: validate realtime bằng `vee-validate` gắn trên component `V2Base*`** — chỉ trường **Tên** mới gắn `required` ở FE (vì Lưu nháp không được chặn các trường khác), required còn lại do BE quyết theo `status` rồi trả 422 → FE map vào `formError`. Chi tiết: `.claude/skills/form-validate/SKILL.md`
 - **Cờ phân quyền phải fail-closed (KHÔNG BAO GIỜ hard-code `= true`)**: mọi cờ quyền FE (`canViewCostPrice`, `canEdit`, `canDelete`, `can_view_*`,…) BẮT BUỘC khởi tạo mặc định `false` và chỉ set từ `$store.state.permissions` (quyền thật) hoặc field BE trả về. TUYỆT ĐỐI không gán literal `true` cho cờ quyền (kể cả ở màn tạo mới / khi "chưa có data") — đây là lỗ hổng fail-open làm lộ dữ liệu nhạy cảm (vd giá vốn). Nếu màn tạo mới cần hiện dữ liệu do user tự nhập, dùng cờ nghiệp vụ riêng (vd `hasUserCreatedProducts`), KHÔNG bật cờ quyền. BE: mọi endpoint trả dữ liệu nhạy cảm (giá vốn/cost, lương…) phải gate bằng `isCurrentEmployeeHasPermission('<Tên quyền>')` trước khi trả, trả `null` nếu không quyền — không dựa vào FE ẩn (defense-in-depth). Khi review: chặn pattern `can[A-Za-z]*\s*=\s*true`.
+- **CHỮ MÀU ĐỎ CHỈ DÙNG CHO LỖI VALIDATE** (chốt 2026-08-15). Text mô tả, dòng phụ đề trong popup
+  (`Khách hàng: 19TPHPVI-262 - NGUYỄN HỮU HỌC`), ghi chú, hướng dẫn, nhãn thông tin… đều dùng chữ
+  XÁM (`#6b7280` cho nhãn, `#374151` cho giá trị), KHÔNG in đậm và **KHÔNG bao giờ tô đỏ**. Đỏ chỉ
+  dành cho: text lỗi validate dưới input (`invalid-feedback`), viền `is-invalid`, dấu `*` bắt buộc,
+  giá trị CŨ trong lịch sử thay đổi, và nút nhóm nguy hiểm (Xóa/Từ chối). Dùng đỏ cho chữ mô tả làm
+  user tưởng đang có lỗi.
+- **Mọi popup MỚI dựng trên `components/modal/V2BaseModal.vue`** — khuôn dùng chung đã chốt sẵn:
+  body cuộn riêng padding `0.5rem` (sát, không thừa khoảng trắng), **footer ghim đáy luôn nhìn thấy**
+  kể cả khi nội dung dài, header có icon tròn + tiêu đề + dòng mô tả bản ghi. KHÔNG tự khai
+  `b-modal` + header + footer riêng cho từng màn. Chi tiết: `.claude/skills/modal-popup/SKILL.md` mục 0
+- **Mọi popup XÁC NHẬN dùng đúng 1 component `components/modal/base-confirm-modal.vue`** (Xóa, Khóa/Mở khóa, Duyệt/Từ chối, Hủy, thoát khi chưa lưu…). Gọi từ code ngoài template thì dùng `await this.$confirm({...})` — plugin render chính component đó. TUYỆT ĐỐI không tạo confirm riêng cho từng màn và không dùng `$bvModal.msgBoxConfirm()`. Chi tiết: `.claude/skills/modal-popup/SKILL.md` mục 3a
+- **Mọi màn form (Tạo mới/Sửa) phải cảnh báo khi thoát lúc chưa lưu** — dùng mixin có sẵn `@/utils/mixins/unsavedChangesMixin`, gọi `markFormSaved()` sau khi lưu thành công; KHÔNG tự viết `beforeRouteLeave` riêng. Chi tiết: `.claude/skills/unsaved-changes/SKILL.md`
+- **Mọi thông báo nghiệp vụ (chuông/push/socket) theo template `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`** — tên đối tượng ≤ 50 ký tự và in đậm, tổng ≤ 120 ký tự, deep-link bắt buộc kèm ID. Chi tiết + bảng prefix/nhóm hành động: `.claude/skills/notification-convention/SKILL.md` (đọc trước khi code phần có thông báo)
+- **Bản ghi ĐÃ KHOÁ thì KHÔNG cho sửa/xoá nữa — chặn ở BE, không chỉ ẩn nút ở FE** (áp cho mọi màn, mọi module: danh mục, khách hàng, phiếu, dự án…). Muốn sửa thì phải Mở khoá trước.
+  - **BE (bắt buộc, là chốt chặn thật)**: mọi endpoint `update` / `destroy` / thao tác đổi dữ liệu phải kiểm tra trạng thái khoá NGAY ĐẦU HÀM, trước cả validate nghiệp vụ → trả `423 LOCKED` kèm message rõ ("Bản ghi đang bị khoá, vui lòng mở khoá trước khi cập nhật."). Đặt điều kiện trong 1 accessor/method của Entity (vd `isLocked()` / `isCanEdit()`) rồi dùng lại, KHÔNG rải `if ($x->status == ...)` khắp controller.
+    - ⚠️ **Controller nhận `FormRequest` thì `if` ở đầu hàm KHÔNG chạy trước validate** — Laravel validate ngay lúc resolve tham số, payload thiếu trường sẽ trả `422` và guard không bao giờ tới lượt. Trường hợp này phải đặt guard ở **middleware route** (khuôn `CheckCustomerNotLocked` / `CheckServiceNotLocked`, alias `customerNotLocked` / `serviceNotLocked`), KHÔNG gắn cho route mở khoá và route chỉ đọc.
+    - **Chặn update thì phải có lối MỞ KHOÁ** — màn nào chưa có thao tác mở khoá thì bổ sung endpoint + nút, nếu không bản ghi bị khoá sẽ kẹt vĩnh viễn.
+  - **FE**: ẩn (KHÔNG disable) nút Sửa, Xoá và mọi nút thao tác đổi dữ liệu khi `is_locked` / `is_can_edit = false`; vào màn Sửa bằng URL trực tiếp thì chuyển về màn Chi tiết. FE chỉ là lớp trải nghiệm — **không được coi là đã chặn**.
+  - **Ngoại lệ duy nhất là thao tác Mở khoá** (và các thao tác chỉ đọc: xem, in, export, xem lịch sử).
+  - **Ẩn nút phải làm ĐỦ CẢ 2 NƠI**: dòng ở màn danh sách VÀ footer màn chi tiết (xem gạch đầu dòng dưới).
+  - Thao tác Khoá/Mở khoá vẫn phải ghi lịch sử (nhóm "Thay đổi trạng thái" — xem `.claude/skills/entity-history/SKILL.md`).
+- **Placeholder ô lọc phải nói đúng trường đó lọc gì**: ô chọn dùng `Chọn <tên trường>`, ô gõ tay dùng `Nhập <tên trường>`, ô tìm nhanh dùng `Tìm theo <các trường BE thực sự lọc>`. CẤM `Tất cả`, `Chọn...`, để trống — bộ lọc ≤ 3 ô chạy chế độ gọn KHÔNG có nhãn, placeholder là thứ duy nhất cho user biết ô đó là gì. Chi tiết: `.claude/skills/list-page/SKILL.md`
+- **Chữ trong ô bảng để THƯỜNG, không in đậm — kể cả cột Mã.** Class dùng chung `.field-line` và `.v2-cell-link` đã để `font-weight: 400`; đừng thêm `font-weight-bold` / `titleBold` vào ô. Cần nhấn mạnh thì dùng badge/màu.
+- **Badge trạng thái dùng component chung `V2BaseBadge`**, KHÔNG tự khai `<span class="status-pill">` / class badge riêng cho từng màn (`variant`: `brand` = hoạt động, `required` = khoá/từ chối, `muted` = nháp). Text lấy từ `status_text` BE trả về, không tự map số → chữ ở FE. Khuôn: `pages/customer-care/device-errors/index.vue`. Chi tiết: `.claude/skills/list-page/SKILL.md` mục 3c
+- **Nút KHÔNG DÙNG ĐƯỢC thì ẨN HẲN — không hiện rồi disable.** Áp cho MỌI lý do: không có quyền, **và cả** chưa đủ điều kiện nghiệp vụ (đã phát sinh chứng từ, sai trạng thái, đã khoá…). Điều kiện phải nằm trong `visible` / `v-if`, KHÔNG dùng `interactable` + `disabledTitle` để hiện nút xám. Áp cho cả cột Hành động ở màn danh sách lẫn footer màn chi tiết (nút ẩn ở danh sách thì phải ẩn ở chi tiết). Cần cho user biết vì sao không thao tác được thì ghi ở chỗ khác (cột Trạng thái, ghi chú trong form), không giữ nút xám trên giao diện.
+- **Màn chi tiết/form: nút BẮT BUỘC đặt trong `V2Footer`**, không tự dựng khối `<div class="d-flex justify-content-end">` + loạt `V2BaseButton`. Hành động không có sẵn trong `V2Footer.menu`, hoặc cần variant/màu khác với mặc định của component, thì đưa vào slot `#custom-actions`. `V2Footer` tự render "Quay lại" ở cuối — đừng tự thêm. Chi tiết: `.claude/skills/list-page/SKILL.md` mục 7.2
+- **Tiêu đề màn chi tiết chỉ ghép mã khi bản ghi CÓ mã**: `Chi tiết <đối tượng>: <mã>`. Bảng không có cột mã → để tiêu đề TRẦN, **không lấy tên thay thế** (tên dài làm tiêu đề/tab lê thê mà không giúp định danh).
+- **Hành động ở màn CHI TIẾT phải khớp màn DANH SÁCH của đúng bản ghi đó** — giống cả danh sách hành động lẫn **điều kiện hiện/ẩn**. Với cùng 1 bản ghi, số nút ở 2 màn phải bằng nhau (chi tiết chỉ được thiếu "Xem" vì đang ở màn xem, và "Lịch sử" nếu đã có mục Lịch sử nhúng sẵn trong form). Nút ẩn ngoài danh sách mà chi tiết vẫn hiện là SAI. Sai hay gặp: danh sách gate `perm.edit && isActive`, chi tiết chỉ gate `perm.edit`. Điều kiện nên đọc từ cùng 1 nguồn (cờ BE `is_can_edit`/`is_can_delete` hoặc computed dùng chung). **Sửa điều kiện của 1 hành động thì phải kiểm cả 2 nơi trước khi báo xong.** Chi tiết + cách tự kiểm: `.claude/skills/list-page/SKILL.md` mục 7.2
+- **Danh mục bị khoá / ngừng hoạt động vẫn phải hiện ở bản ghi đang dùng nó** (nghiệp vụ xuyên suốt MỌI màn, mọi module): dropdown/select lấy từ danh mục (giai đoạn dự án, loại hình, lĩnh vực, nguồn khách hàng, phòng ban, chức danh…) mặc định chỉ liệt kê bản ghi còn hoạt động (`is_active = 1` / chưa khoá), NHƯNG khi mở màn Sửa/Chi tiết của đối tượng đã chọn giá trị nay bị khoá thì giá trị đó BẮT BUỘC vẫn là 1 option và hiển thị đúng tên — không được để select trống, không tự đổi sang giá trị khác, không mất dữ liệu khi lưu lại.
+  - **BE**: API danh mục nhận thêm id đang dùng (vd `include_ids` / `current_id`) → `where('is_active', 1)->orWhereIn('id', $includeIds)`. Nếu không sửa được API danh mục thì Resource của đối tượng phải trả kèm object danh mục đang chọn (id + name) để FE merge.
+  - **FE**: sau khi load options, nếu `form.xxx_id` có giá trị mà không có trong options → push object đang chọn (lấy từ data detail) vào mảng options. Hiển thị **đúng tên gốc**, KHÔNG thêm hậu tố kiểu `(đã khoá)` vào text.
+  - **Đánh dấu bằng 🔒 — TỰ ĐỘNG**: BE trả cờ `is_locked`, FE **không phải khai gì**: `utils/select2LockedOption.js` đã được `V2BaseSelect` + `V2BaseSelectInModal` gọi sẵn, tự gắn `🔒 ` trước tên option **chỉ trong danh sách chọn** (chip/giá trị đã chọn giữ tên gốc). KHÔNG nối chữ vào `name`, KHÔNG tự viết `templateResult` ở từng màn. ⚠️ Ngoại lệ: wrapper nào **tự khai `templateResult`** (vd `DescriptionInfoSelect.vue`) thì helper nhường quyền → wrapper đó phải tự gắn `LOCKED_OPTION_PREFIX`, nếu không 🔒 mất im lặng. Chi tiết: `.claude/skills/select-and-input-state/SKILL.md` mục 1.
+  - Áp dụng cả cho filter màn danh sách (giá trị đang lọc/đã lưu), cột hiển thị trong bảng và màn in/export.
+- **Code phải TỐI ƯU HIỆU NĂNG, không phải "chạy được là xong"** — mọi màn/API viết ra đều phải cân nhắc số request, số query, khối lượng dữ liệu trả về. Cụ thể:
+  - **FE: 1 màn = càng ít API càng tốt.** Không bắn hàng loạt API rời rạc lúc mở màn — gom danh mục dùng chung vào 1 endpoint tổng hợp (vd `GET .../form-options`) hoặc trả kèm trong API detail. TUYỆT ĐỐI không gọi API trong vòng lặp / trong `v-for` (mỗi dòng 1 request).
+  - **Lazy load**: danh mục chỉ dùng ở tab/modal/select chưa mở → chỉ gọi khi mở, không gọi ở `mounted`. Select danh mục lớn (khách hàng, nhân viên, hàng hoá…) dùng search server-side có `limit`, KHÔNG load toàn bộ danh sách.
+  - **Cache & huỷ request**: danh mục ít thay đổi (phòng ban, chức danh, đơn vị tính…) lưu Vuex/localStorage, không gọi lại mỗi lần vào màn. Ô tìm kiếm gõ liên tục → debounce ≥ 300ms + cancel request cũ.
+  - **BE: cấm N+1 query** — luôn `with()` / `load()` eager load quan hệ dùng trong Resource; đếm/tổng hợp bằng `withCount` / `selectRaw`, không loop `->count()` từng dòng.
+  - **Luôn phân trang**, không trả cả bảng. KHÔNG dùng `per_page` khổng lồ (5000…) — có endpoint `search?limit=` thì dùng. Chỉ `select` cột thực sự cần, không `SELECT *` rồi map.
+  - **Index DB**: cột dùng `where` / `join` / `order by` thường xuyên phải có index; thêm bảng mới hoặc filter mới → kiểm tra index trước khi bàn giao.
+  - Xử lý nặng (export, tính lương, tổng hợp báo cáo) → queue/job hoặc chunk, không chạy đồng bộ trong request.
+  - Khi review/bàn giao: 1 màn gọi > 5 API lúc load, hoặc 1 request > 2s → phải nêu ra và đề xuất phương án gộp/tối ưu, không im lặng cho qua.
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
 
 ---
@@ -74,6 +123,22 @@
 
 - **Cấp tổ chức**: luôn dùng `company_id`, `department_id`, `part_id` — tất cả `unsignedBigInteger nullable`. KHÔNG dùng `branch_id`.
 - **Audit**: dùng `$table->timestamps()` (tạo `created_at`, `updated_at`) + thêm thủ công `created_by`, `updated_by` (`unsignedBigInteger nullable`). KHÔNG dùng SoftDeletes cho entity chính (chỉ dùng cho bảng phụ như comment/log nếu thực sự cần).
+- **Model MỚI BẮT BUỘC `extends BaseModel`** (`use App\Models\BaseModel;`) — KHÔNG `extends Model` của Laravel. `BaseModel` có sẵn hook `creating`/`saving` tự gán `created_by` / `updated_by` và 2 quan hệ `employee_create()` / `employee_update()`. Thiếu nó thì cột **Người tạo / Người cập nhật** rỗng vĩnh viễn mà **không có lỗi nào báo ra** — code chạy bình thường, chỉ tới lúc QA soi bảng mới lộ (đã dính thật: `Nation` extends `Model` thuần → 100% bản ghi `nations.updated_by = NULL`).
+
+  ```php
+  use App\Models\BaseModel;
+
+  class Foo extends BaseModel   // KHÔNG: class Foo extends Model
+  {
+      protected $table = 'foos';
+      // created_by / updated_by PHẢI có trong $fillable, nếu không create() bỏ qua
+      protected $fillable = ['name', 'status', 'created_by', 'updated_by'];
+  }
+  ```
+
+  - Model **buộc** phải `extends Model` (kế thừa class khác, model bảng ERP có hook riêng…) → **service tự gán** `$obj->updated_by = auth()->id();` ở MỌI đường ghi: create, update **và cả khoá / mở khoá / đổi trạng thái** (đây cũng là một lần cập nhật, hay bị quên nhất). Ghi rõ lý do không dùng `BaseModel` ngay trên class.
+  - **Luôn lấy `auth()->id()`** (= `employees.id`). TUYỆT ĐỐI không dùng `auth()->user()->info->id` — đó là id bảng `employee_infos`, ghi vào `updated_by` sẽ trỏ tới nhân viên không tồn tại, join ra rỗng y như chưa ghi (bug thật ở hook đồng bộ ERP cũ của `Area` / `Province` / `Ward`).
+  - Xong một màn danh mục: **sửa thử 1 bản ghi rồi mở lại danh sách xem cột Người cập nhật có ra tên không.** Đây là cách DUY NHẤT phát hiện thiếu audit — không có exception, không có log.
 - **Version solution**: các entity gắn với solution phải có `solution_version_id` NOT NULL. Nếu áp dụng cả cấp module thì thêm `solution_module_id` + `solution_module_version_id` (nullable).
 - **File đính kèm**: KHÔNG tạo bảng pivot riêng. Dùng bảng `files` chung với `table='<table_name>'` + `table_id=<entity_id>`. Model khai báo:
   ```php
@@ -100,7 +165,7 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 .plans/[feature]/
 ├── design.md          ← design duy nhất
 ├── plan.md            ← plan duy nhất
-├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+├── SRS - <Tên màn hình>.docx ← SRS (tạo khi được yêu cầu, CHỈ 1 file .docx)
 └── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
 ```
 
@@ -111,7 +176,7 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 ├── design.md          ← tóm tắt tổng thể feature (scope, hiện trạng, quyết định chung)
 ├── design-phase{N}.md ← design chi tiết cho từng phase lớn
 ├── plan.md            ← TẤT CẢ tasks (append phase mới vào cuối, trước checkpoint)
-├── srs.html + srs.docx ← SRS (tạo khi được yêu cầu, cả 2 format)
+├── SRS - <Tên màn hình>.docx ← SRS (tạo khi được yêu cầu, CHỈ 1 file .docx)
 ├── testcase.xlsx      ← Test case Excel (tạo khi được yêu cầu)
 └── (các file phụ: testcase, script...)
 ```
@@ -121,7 +186,7 @@ Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG t
 - `design.md`: tóm tắt chung, KHÔNG chứa spec chi tiết từng phase
 - `design-phase{N}.md`: spec đầy đủ (DB, BE, FE, edge cases) — tạo khi phase có nhiều thay đổi
 - `plan.md`: 1 file duy nhất chứa tất cả phase, append liên tục
-- SRS: 2 file output (`srs.html` + `srs.docx`) — lưu cùng folder feature
+- SRS: **CHỈ 1 file `.docx`** đặt tên `SRS - <Tên màn hình>.docx`, lưu cùng folder feature. Bám **form chuẩn của team** (`.claude/skills/srs-documenter/assets/SRS_MAU.docx` — **bản mẫu đổi 2026-08-17, nay là "SRS - Danh mục khách hàng"**). Form mới gọn còn **4 chương**: Phần 1 Giới thiệu / Phần 2 Phân quyền / Phần 3 Đặc tả chi tiết theo từng chức năng / Phần 4 Quy tắc nghiệp vụ — đã **bỏ** chương Tổng quan, mục Phạm vi, mục Quy tắc truy cập bắt buộc, chương Danh mục chức năng (Function list), mục Tiêu chí nghiệm thu và bảng thông tin trang bìa. Biểu đồ Use Case phải là **ảnh thật**; mục Layout màn hình của **mỗi chức năng** chỉ ghi **URL đầy đủ** (bỏ dòng Menu/Route) **VÀ kèm ảnh chụp thật** của chức năng đó. Bắt buộc đọc `.claude/skills/srs-documenter/SKILL.md` trước khi viết. (`srs.html` là format CŨ, chỉ còn ở feature sinh trước 2026-08-07, không tạo mới)
 - Testcase: chỉ Excel (`testcase.xlsx`) — lưu cùng folder feature
 - KHÔNG tạo `plan-phase{N}.md` riêng (đã có convention cũ nhưng không tiếp tục)
 
@@ -266,6 +331,7 @@ Nếu có → đọc trước khi viết code.
 
 | Khi làm gì                                          | Đọc skill nào                                |
 | --------------------------------------------------- | -------------------------------------------- |
+| **Chuyển/port màn từ ERP sang HRM** (dựng lại màn theo mẫu ERP) | `.claude/skills/erp-to-hrm-screen/SKILL.md` |
 | Tạo/sửa button (nút bấm) trên FE hrm-client         | `.claude/skills/button-convention/SKILL.md`  |
 | Tạo/sửa modal, popup, dialog trên FE hrm-client     | `.claude/skills/modal-popup/SKILL.md`        |
 | Tạo màn danh sách mới ở hrm-client                  | `.claude/skills/list-page/SKILL.md` (nếu có) |
@@ -273,6 +339,16 @@ Nếu có → đọc trước khi viết code.
 | Validate, error, toast trong elearning              | `.claude/skills/elearning-validate/SKILL.md` |
 | Auth, SSO, profile, avatar trong elearning          | `.claude/skills/elearning-auth/SKILL.md`     |
 | Viết tài liệu HDSD / hướng dẫn sử dụng màn hình     | `.claude/skills/hdsd-documenter/SKILL.md`    |
+| Lịch sử thay đổi / audit log (BE ghi log + UI)      | `.claude/skills/entity-history/SKILL.md`     |
+| Viết tài liệu SRS / đặc tả yêu cầu màn hình         | `.claude/skills/srs-documenter/SKILL.md`     |
+| Viết tài liệu test case cho màn hình                | `.claude/skills/testcase-documenter/SKILL.md` |
+| Bắn/sửa thông báo nghiệp vụ (chuông, push, socket)  | `.claude/skills/notification-convention/SKILL.md` |
+| Tạo/sửa màn form (add/edit, modal nhập liệu)        | `.claude/skills/unsaved-changes/SKILL.md`    |
+| Validate form ở màn mới (realtime, required, lỗi)   | `.claude/skills/form-validate/SKILL.md`      |
+| Icon Info (chữ "i") + tooltip/popover mô tả         | `.claude/skills/info-icon-tooltip/SKILL.md`  |
+| Đụng tới **select / ô nhập** ở BẤT KỲ màn nào (form, modal, chi tiết, bộ lọc) | `.claude/skills/select-and-input-state/SKILL.md` |
+| Select danh mục **mất giá trị đã chọn**, danh mục bị khoá/ngừng hoạt động, icon 🔒 | `.claude/skills/select-and-input-state/SKILL.md` |
+| Ô nhập disabled/readonly sai màu hoặc vẫn bấm được; focus ra viền xanh/quầng sáng | `.claude/skills/select-and-input-state/SKILL.md` |
 
 → Gặp ngữ cảnh trên → **đọc SKILL.md trước khi viết code**, không cần user nhắc.
 
@@ -290,6 +366,18 @@ Lỗi BE → đọc log tại:
 ## Khi làm việc với git
 - Repo API nằm ở: /hrm-api
 - Repo Client nằm ở: /hrm-client
+
+---
+
+## ⚠️ Line ending — GIỮ NGUYÊN CRLF
+
+Nhiều file trong `hrm-client` (và một số file `hrm-api`) đang dùng **CRLF (`\r\n`)**. Khi sửa code **KHÔNG được đổi line ending của file** — đổi cả file sang LF làm diff phình lên hàng nghìn dòng giả, che mất thay đổi thật và gây conflict vô nghĩa khi merge.
+
+- **Kiểm tra trước khi sửa** file lạ: `file <path>` (thấy `with CRLF line terminators`) hoặc `grep -c $'\r' <path>`
+- File đang CRLF → dòng **mới thêm vào cũng phải kết thúc bằng `\r\n`**, KHÔNG trộn 2 kiểu trong 1 file
+- **Nguy hiểm nhất là sửa hàng loạt bằng script** (Python `open().write()`, `sed -i`, `awk`, prettier/eslint `--fix`): mặc định ghi ra LF → nuốt sạch `\r` toàn file. Dùng Python thì mở `newline=''` cho cả đọc lẫn ghi
+- Sau khi sửa bằng script, **luôn chạy `git diff --stat` kiểm tra**: số dòng thay đổi lớn bất thường (cả file bị đánh dấu đổi) = đã phá line ending → trả lại ngay, không commit đè
+- KHÔNG tự ý thêm `.gitattributes`, đổi `core.autocrlf`, hay "chuẩn hoá toàn bộ repo về LF" — muốn làm phải hỏi trước
 
 ## Không làm
 
