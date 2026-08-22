@@ -24,6 +24,40 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Deferred (polish, không block): label mode "Trực tuyến" vs "Online"; popover reposition khi resize.
   Spec: docs/superpowers/specs/2026-08-14-lich-meeting-tab-design.md · Ledger SDD: .plans/lich-meeting-tab/sdd-ledger.md
   Bước tiếp: USER build client (node12+heap8192) + api (php7.4 artisan serve) → mở /assign/my-todo tab Lịch meeting, verify visual Tháng/Tuần/drawer/popover/filter + data thật + phân quyền. Ngoài scope (feature khác): tab báo cáo thị trường; tạo meeting từ ô lịch.
+- redmine-batch-10tasks → @cuong61n → `.plans/redmine-batch-10tasks/plan.md`
+  Trạng thái: **Code xong 8/10 task (2026-08-18), CHƯA test, CHƯA commit**. Nhánh `tpe-develop-assign_fix`.
+  Xong: #10741+#10810 (Mô tả giải pháp), #10897 (icon Tạo yêu cầu làm GP), #10818 (báo cáo đổi 2 chiều
+  cơ cấu sang Loại hình hoạt động / Lĩnh vực KD khách hàng), #10948 (báo giá tổng trúng thầu → nguồn
+  trúng thầu), #10885 (sticky toolbar / Quick Add Bar / Thu gọn-Mở rộng cho BOM + Báo giá).
+  #10804 (Bảng giá ERP) và #10840 (tự sinh mã hàng tạm) rà ra ĐÃ CÓ SẴN, không phải code.
+  **User chốt BỎ #9752 và #10986** — lý do + hiện trạng đã khảo sát ghi trong plan.md.
+  Đã đổi 8 task sang "Đang tiến hành" trên Redmine kèm ghi chú.
+
+- port-confirm-infra-tu-gopdb → @dnsnamdang → (không có plan riêng, làm kèm #10797)
+  Trạng thái: **DONE (2026-08-17), đã test**. Nhánh `tpe-develop-assign`, chỉ `hrm-client`.
+  Port từ worktree `gop_db-client` sang: `components/modal/base-confirm-modal.vue` bản mới
+  (header icon tròn, footer `V2BaseButton` có icon, thêm prop `danger` + `acceptIcon`, đổi
+  text mặc định "Không/Đồng ý" → **"Hủy/Xác nhận"**) và `plugins/confirm-dialog.js` (`$confirm()`),
+  đăng ký trong `nuxt.config.js`. Props cũ giữ nguyên nên 49 file đang dùng không phải sửa —
+  đã verify popup `confirm-delete-priority` ở `/assign/settings` vẫn chạy.
+  **Đã đổi màn Làm giá báo giá** (`quotations/_id/edit.vue`): 12/12 `msgBoxConfirm` → `$confirm()`,
+  gồm popup "Đơn giá hàng hoá đã thay đổi" (#10791) nay có header icon tròn, danh sách gạch đầu
+  dòng, nút "Cập nhật giá" (`ri-refresh-line`) / "Giữ giá cũ"; các popup xoá dùng `danger`.
+  Chữ sửa theo bảng chuẩn: "Xoá/Huỷ" → **"Xóa/Hủy"**, "Đồng ý" → **"Xác nhận"**.
+  **Còn nợ**: 9 chỗ `msgBoxOk` (popup báo 1 nút) trong màn này và ~23 `msgBoxConfirm` ở các màn
+  assign khác — `base-confirm-modal` luôn 2 nút nên `msgBoxOk` cần hướng xử lý riêng (toast?).
+
+- bao-gia-quyen-giam-gia (#10789) → @dnsnamdang → .plans/bao-gia-quyen-giam-gia/plan.md
+  Trạng thái: **CODE DONE (2026-08-17), chờ test tay**. Nhánh `tpe-develop-assign` (cả API + Client).
+  Quyền mới `Cho phép thêm giảm giá trong báo giá` (permission id 1107). Không quyền → ô GG disable,
+  ô nhập GG dòng hàng/dịch vụ + section GG tổng readonly; BE chặn 403 khi payload LÀM ĐỔI giảm giá
+  (giữ nguyên GG cũ thì vẫn lưu được).
+
+- bao-gia-canh-bao-gia-thap-tu-duyet (#10797) → @dnsnamdang → .plans/bao-gia-canh-bao-gia-thap-tu-duyet/plan.md
+  Trạng thái: **CODE DONE (2026-08-17), chờ test tay**. Nhánh `tpe-develop-assign` (cả API + Client).
+  Trình duyệt: dòng hàng đơn giá bán ≤ 1.000 bị tô nền cam + popup cảnh báo (Quay lại chỉnh sửa /
+  Tiếp tục trình duyệt). Báo giá chỉ có hàng-DV ERP, đơn giá > 1.000, không giảm giá → **tự động
+  duyệt, ĐÈ cấp duyệt** (user chốt); còn lại giữ luồng duyệt phân cấp cũ.
 
 - menu-style-hub → @dnsnamdang → .plans/menu-style-hub/plan.md
   Trạng thái: **CODE DONE (2026-08-17), chờ build FE + rà giao diện**. Nhánh `feature/menu-style-hub` (checkout từ `tpe-develop-assign`, chỉ `hrm-client`).

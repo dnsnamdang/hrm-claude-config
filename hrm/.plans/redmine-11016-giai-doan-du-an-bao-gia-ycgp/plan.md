@@ -40,3 +40,7 @@ Vừa hoàn thành: toàn bộ BE + FE #11016 + test BE (35/35) và test UI end-
 Đang làm dở: —
 Bước tiếp theo: chờ user xác nhận có xoá dữ liệu test trên DB local (YCGP #12) không, rồi chuyển trạng thái Redmine sang "Code xong chờ test".
 Blocked:
+
+### Fix bổ sung — 2026-08-19
+- [x] `QuotationService::copy()` copy thiếu `project_phase_id` → bản sao mất Giai đoạn dự án (BG-2026-00111 → 00122). Copy y nguyên, KHÔNG gọi `syncProjectPhase()` (bản sao không phải chứng từ đổi giai đoạn).
+- [x] Rà cùng lượt: `copyGroups()` không copy `parent_id` → cây nhóm bị bẹt (22/24 nhóm mất cha ở BG 122); `copyServiceItems()` không remap `quotation_group_id`. Đã sửa cả 2.

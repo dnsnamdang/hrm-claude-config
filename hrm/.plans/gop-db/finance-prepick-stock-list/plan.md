@@ -500,6 +500,36 @@ CHƯA làm (user làm):
 
 ---
 
+## Phase 8 — Vá bug QA (redmine 11116, 2026-08-21)
+
+- [x] Bộ lọc bám lại ERP: thêm **"Lọc theo kho"** (`warehouse_id`) và ô **"Tên hàng hóa"**; bỏ
+      dropdown **Khách hàng**; ô tìm nhanh đổi thành **"Nhập tên, SĐT hoặc mã KH để tìm kiếm"**
+      (`customer_keyword`, LIKE trên `customers.fullname / code / mobile` — cột SĐT tên là
+      `mobile`); nhãn "Nhân viên giữ" → **"Nhân viên"**.
+- [x] "Lọc theo kho" đặt trong `applyProductFilters()` dưới dạng `whereExists` trên
+      `accounting_stocks` → tầng 1, Xuất Excel và Bản in dùng chung một điều kiện. Tồn GIỮ không
+      gắn kho nên lọc theo kho = "hàng hoá có tồn kho kế toán ở kho đã chọn", đúng cách ERP làm
+      (`checkData()` lọc `stocks.warehouse_id`). Dropdown kho lấy từ `accounting_warehouses`, lọc
+      theo công ty người dùng được xem.
+- [x] **Ngưỡng in 400 → 10.000 dòng** (`PrepickStockReportService::PRINT_LINE_LIMIT`). Ngưỡng 400
+      chép từ ERP, nhưng ERP vượt ngưỡng thì **gửi mail** (`PrepickIndexMailJob`) còn HRM không port
+      hạ tầng đó → bộ lọc mặc định ra 2.503 dòng là KHÔNG in được. Dữ liệu vốn đã nạp hết trong
+      `flatQuery()`, phần tốn thêm chỉ là render HTML.
+- [ ] User bấm tay lại trên dev rồi đóng issue.
+
+### Checkpoint — Phase 8
+
+```text
+Vừa hoàn thành: redmine 11116 (BE `PrepickStockReportService` + FE `pages/finance/prepick-stocks/index.vue`).
+Đang làm dở: không.
+Bước tiếp theo: user verify bộ lọc mới + in thử danh sách đầy đủ trên dev.
+Blocked: không.
+Verify: `php -l`, nạp class qua Laravel bootstrap, compile lại file .vue; các câu SQL mới chạy
+thẳng trên `gop_db` (lọc theo kho đầu tiên → 791 hàng hoá; tìm KH theo tên/mã/mobile → 75 dòng tồn giữ).
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 1. **Không đụng file ERP.** `PrepickDetail::searchByFilter()` và `getPrepickDetails()` đang phục

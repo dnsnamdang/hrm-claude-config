@@ -14,7 +14,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   - Ô gõ tay: **`Nhập <tên trường>`** — `Nhập tên hoặc mã hàng hoá`, `Nhập số tiền`.
   - Ô tìm nhanh: **`Tìm theo <các trường BE thực sự lọc>`** — phải liệt kê đúng, đừng ghi "Tìm kiếm..." chung chung.
   - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống, hay lặp lại nguyên si nhãn. Ở **chế độ gọn** (≤ 3 ô) panel KHÔNG render nhãn, placeholder là thứ DUY NHẤT cho user biết ô đó là gì — `Tất cả` lúc đó vô nghĩa.
-- **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleFields` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **không có nhãn** (dùng `placeholder`) để thẳng trục với ô tìm nhanh → `placeholder` của mỗi field phải tự nói rõ nó lọc gì ("Chọn trạng thái", không phải "Chọn..."). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
+- **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleInputCount` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; ⚠️ đếm theo **số Ô NHẬP thực tế**, KHÔNG phải số phần tử trong `visibleFields`: field gom nhóm render ra nhiều ô nên tính theo `resetKeys.length` (vd `org` = Công ty + Phòng ban + Bộ phận + Nhân viên = **4 ô**, `customer_scope_pairs` = 2 ô), cần khác thì khai `inputCount` trên field để đè. Đếm mỗi field là 1 thì bật đúng field gom nhóm thôi đã kín cả hàng mà panel vẫn tưởng "gọn" rồi bỏ mất nút "Tìm kiếm nâng cao"; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **không có nhãn** (dùng `placeholder`) để thẳng trục với ô tìm nhanh → `placeholder` của mỗi field phải tự nói rõ nó lọc gì ("Chọn trạng thái", không phải "Chọn..."). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
 - Style bắt buộc: luôn import `@import '@/assets/scss/v2-styles.scss';` trong thẻ `<style lang="scss">` của trang danh sách
 - Các khối bộ lọc theo logic Cascading filter: Công ty =>> Phòng ban =>> Bộ phận; Dự án TKT =>> Giải pháp =>> Hạng mục
 
@@ -319,6 +319,54 @@ Chỉ **ô chữ**, theo thứ tự ưu tiên lấy 1 ô làm từ khoá chấm 
 
 ⚠️ Hàm dùng cho popup chọn (select2) thường gọi `index()` rồi `->reorder()` — kiểm tra lại để popup vẫn giữ thứ tự A-Z của nó.
 
+## 3b-1. Bảng tràn ngang phải có thanh cuộn ở CẢ TRÊN VÀ DƯỚI
+
+Bảng rộng hơn khung mà chỉ có thanh cuộn ngang **ở đáy** thì user phải kéo xuống hết bảng (có khi
+vài chục dòng) mới với tới thanh cuộn để xem các cột bên phải. Mọi bảng cuộn ngang đều phải có
+**thanh cuộn ngang phía trên**, đồng bộ 2 chiều với vùng cuộn thật.
+
+- **Màn danh sách**: `V2BaseDataTable` đã làm sẵn (`enableScrollSync`) — không phải khai gì.
+- **Bảng viết tay trong form / modal**: bọc bằng **`components/V2BaseTableScroll.vue`**:
+
+```vue
+<V2BaseTableScroll>
+    <table class="table table-bordered table-sm mb-0">…</table>
+</V2BaseTableScroll>
+```
+
+Component tự: đo `table.scrollWidth` → đặt độ rộng thanh trên · đồng bộ `scrollLeft` 2 chiều ·
+`ResizeObserver` theo dõi bảng đổi số dòng/độ rộng · **ẩn thanh trên khi bảng không tràn** (không
+chiếm chỗ vô ích). Prop `max-height` nếu muốn giới hạn chiều cao vùng cuộn dọc.
+
+TUYỆT ĐỐI không tự chép lại cặp `topScroll` / `tableWrapper` cho từng màn — trước khi tách component
+này pattern đã bị copy-paste ở 4 nơi (`V2BaseDataTable`, `ChooseErpCustomerModal`,
+`SolutionVersionsTable`, `QuotationProductSearchModal`), mỗi nơi một tên class khác nhau.
+
+💡 Bọc `V2BaseTableScroll` cũng **bỏ luôn class `.table-responsive`** → thoát rule global
+`.table-responsive { min-height: 50vh }` của `assets/scss/default.scss` vốn kéo bảng vài dòng trong
+form lên hơn 400px.
+
+---
+
+## 3b-2. `.text-muted` trong hrm-client là màu ĐỎ — đừng dùng
+
+Bốn file SCSS toàn cục (`custom.scss`, `custom-theme.scss`, `custom-assign.scss`,
+`custom-timesheet.scss`) đều khai `.text-muted { color: #dc3545 !important }`. Class "chữ mờ" quen
+thuộc của Bootstrap vì thế ra **màu đỏ** trên toàn hệ thống.
+
+Hậu quả hay gặp: dòng *"Không có dữ liệu phù hợp"*, *"Chưa chọn thiết bị nào…"*, ghi chú phụ… đều
+đỏ lòm, user tưởng đang có lỗi — trong khi quy tắc là **đỏ CHỈ dành cho lỗi validate** (CLAUDE.md).
+
+Dùng màu xám chuẩn thay vì `.text-muted`:
+
+```scss
+.v2-empty-row { color: #6b7280; }   /* nhãn/ghi chú phụ: #6b7280 · giá trị: #374151 */
+```
+
+Tự kiểm: `getComputedStyle(el).color` phải KHÁC `rgb(220, 53, 69)`.
+
+---
+
 ## 3c. Badge TRẠNG THÁI — dùng `V2BaseBadge`, không tự dựng pill
 
 Ô Trạng thái (và mọi badge phân loại: loại phiếu, mức độ, kết quả duyệt…) render bằng component
@@ -342,6 +390,63 @@ Khuôn mẫu: `pages/customer-care/device-errors/index.vue`. Cột Trạng thái
 
 ⚠️ Text trạng thái ưu tiên lấy từ **`status_text` BE trả về**, không tự map `1 → 'Hoạt động'` ở FE:
 map ở FE thì thêm trạng thái mới phải sửa cả 2 nơi và dễ lệch chữ giữa danh sách / chi tiết / export.
+
+### 3c-1. CHỌN `variant` hay `:color` — hai kiểu, dùng đúng chỗ
+
+| Đối tượng | Cách khai | Vì sao |
+|---|---|---|
+| **Danh mục dùng chung** (2–3 trạng thái cố định vĩnh viễn: Hoạt động / Khoá / Nháp) | `variant="brand" \| "required" \| "muted"` | Cố định mãi mãi, không đáng phải cấu hình ở BE |
+| **Phiếu, dự án, công việc, hợp đồng… — MỌI đối tượng nghiệp vụ nhiều trạng thái** | **`:color="item.status_color"` — mã màu hex do BE trả về** | Thêm/đổi trạng thái chỉ sửa 1 nơi; danh sách, chi tiết, bản in, file xuất luôn giống nhau |
+
+```vue
+<!-- Đối tượng nghiệp vụ: BE trả CẢ chữ LẪN màu, FE chỉ hiển thị -->
+<template #cell-status="{ item }">
+    <V2BaseBadge :color="item.status_color" :title="item.status_text">
+        {{ item.status_text }}
+    </V2BaseBadge>
+</template>
+```
+
+Khuôn mẫu: `pages/assign/pricing-requests/index.vue`.
+
+**BE bắt buộc trả `status_color`** (mã hex) cạnh `status_text` trong Resource. Nguồn màu là hằng
+`STATUSES` trên Entity, KHÔNG rải mã màu trong controller/resource:
+
+```php
+const STATUSES = [
+    ['id' => self::STATUS_CREATING, 'name' => 'Đang tạo',  'color' => '#64748B'],
+    ['id' => self::STATUS_WAITING,  'name' => 'Chờ xử lý', 'color' => '#D97706'],
+];
+```
+
+### 3c-2. Bảng 9 MÃ MÀU CHUẨN — chỉ được dùng đúng 9 mã này
+
+Nguồn gốc: `.plans/status-color-convention/huong-dan-mau-trang-thai.xlsx` (bản chốt 15/08/2026).
+Cùng ý nghĩa thì **mọi phân hệ phải ra cùng một màu**. Trạng thái mới → gán vào 1 nhóm có sẵn,
+**KHÔNG nghĩ ra mã màu mới cho riêng màn của mình**.
+
+| Nhóm | Mã màu | Trạng thái thuộc nhóm |
+|---|---|---|
+| Hoàn thành – Đã duyệt | `#16A34A` | Hoàn thành, Hoàn tất, Đã duyệt, Đã duyệt giải pháp, Đã xử lý xong, Tiếp nhận, Đã duyệt giá |
+| Đang thực hiện | `#2563EB` | Đang thực hiện, Đang triển khai, Đang xử lý, Đã gửi, Đã tiếp nhận |
+| Chờ xử lý – Chờ duyệt | `#D97706` | Chờ duyệt, Chờ TP/PM/BGĐ/Leader duyệt, Chờ tiếp nhận, Chờ làm giá |
+| Cảnh báo – Sắp đến hạn | `#F59E0B` | Sắp tới hạn, Tạm dừng, Cần bổ sung thông tin |
+| Từ chối – Quá hạn – Khoá | `#DC2626` | Từ chối, Không duyệt, Dừng, Quá hạn, Khoá, Ngừng hoạt động |
+| Theo dõi – Mới tiếp nhận | `#0EA5E9` | Đã phân công, Chờ phê duyệt triển khai, Đã tạo hợp đồng, Đang khảo sát |
+| Chốt – Thương thảo | `#7C3AED` | Đã chốt, Chốt giải pháp, Thương thảo giá, Dự toán, Trúng thầu |
+| Nháp – Mới tạo | `#64748B` | Nháp, Đang tạo, Mới ghi nhận, Chờ bắt đầu |
+| Đã đóng – Không áp dụng | `#6B7280` | Đóng, Đã đóng, Hết hiệu lực, Đã huỷ, Chưa duyệt, Không áp dụng |
+
+Quy tắc kèm theo:
+
+- **Nền nhạt – chữ đậm**, không nền đậm chữ trắng (nền đậm là ngôn ngữ của NÚT BẤM).
+  `V2BaseBadge` tự làm nhạt nền còn 10% và viền 20% từ 1 mã màu — đừng tự tính.
+- **Luôn có chữ**, không bao giờ chỉ có chấm màu (người mù màu / in đen trắng vẫn phải đọc được).
+- **Đỏ chỉ dành cho trạng thái xấu** (từ chối, dừng, quá hạn, khoá) — không dùng đỏ để trang trí.
+- **Badge không bấm được** — đổi trạng thái phải qua nút thao tác có xác nhận (còn ghi lịch sử).
+- **Cùng 1 bản ghi phải ra cùng chữ + cùng màu** ở danh sách, chi tiết, bản in và file Excel.
+- **Mức độ ưu tiên là thang RIÊNG**, không trộn vào 9 nhóm này:
+  Thấp `#94A3B8` → Trung bình `#F59E0B` → Cao `#F97316` → Khẩn cấp `#DC2626`.
 
 ## 4. Thứ tự cột + cột ghim trái
 
@@ -576,6 +681,62 @@ Chốt kèm theo:
 - Màn tự dựng file bằng ExcelJS ở FE (dữ liệu quá lớn, vd `serials`) vẫn phải có popup — chỉ khác
   chỗ lọc cột làm ở FE thay vì BE.
 
+## 14c. Xuất file DANH SÁCH LỚN — chia nhỏ API, dựng file ở FE (chốt 2026-08-19)
+
+Mục 14b lo phần *chọn cột*. Mục này lo phần *dựng file*.
+
+**Mặc định của hệ thống là BE dựng file** (`DynamicExport` + `exports.dynamic`) — đúng và gọn cho
+danh mục vài trăm dòng. Nhưng `DynamicExport` chạy `FromView`: dựng cả HTML rồi mới convert, nên
+chi phí tăng theo **số ô**, không theo số dòng.
+
+**Ngưỡng phải đổi hướng: một lần xuất > 2s** (quy tắc hiệu năng CLAUDE.md). Số đo thật:
+
+| Màn | Khối lượng | BE dựng (`FromView`) | FE dựng, chia trang |
+| --- | --- | --- | --- |
+| Yêu cầu KT SC-BH | 5.365 dòng × 13 cột | **10,8s** (chuẩn bị dữ liệu chỉ 1,8s) | ~4s, 3 lượt × ~1,2s |
+| — cùng màn, có lọc | 106 dòng | 0,7s | — |
+
+Vượt ngưỡng thì chuyển sang **FE dựng file, dữ liệu tải theo từng trang**:
+
+| Lớp | Dùng cái gì |
+| --- | --- |
+| **BE** | thêm `GET <màn>/export-rows` trả `{ headings, widths, rows, total, page, limit }`; `rows` là **mảng ô ĐÃ MAP SẴN** theo đúng thứ tự cột (FE không phải biết nghiệp vụ). Cột lấy từ `ExportColumnRegistry::resolve()` — dùng chung whitelist với 14b. Trần `limit` 5.000. |
+| **FE** | `utils/export/listExportFile.js` → `exportListFile({ store, endpoint, filters, fields, docTitle, sheetName, fileName, onStage })`. Màn chỉ khai tham số, KHÔNG tự viết vòng lặp tải. |
+| **Khuôn đầy đủ** | `/assign/customers` (`utils/export/customerExportFile.js` — có thêm CSV/PDF + letterhead) · `/sale/warranty-repair-requests` (chỉ Excel) |
+
+```js
+const total = await exportListFile({
+    store: this.$store,
+    endpoint: 'sale/warranty-repair-requests/export-rows',
+    filters: this.filters,          // dùng CHUNG bộ lọc với bảng -> file khớp thứ đang hiện
+    fields,                         // thứ tự user tick ở popup 14b
+    docTitle: 'DANH SÁCH …', sheetName: '…', fileName: '….xlsx',
+    onStage: (stage, done, count) => { this.exportProgress = this.buildExportProgressText(stage, done, count) },
+})
+if (!total) this.$toasted?.global?.error?.({ message: 'Không có dữ liệu để xuất' })
+```
+
+**Bắt buộc kèm theo:**
+
+- **Dòng tiến độ cạnh nhóm nút** (`.export-progress`, chữ xám 13px) + khoá nút khi đang xuất
+  (`:disabled="exporting"`). Dựng file có thể mất vài chục giây, không báo thì user tưởng treo.
+  `onStage` gọi ở **cả 2 giai đoạn**: `fetch` → *"Đã tải 4.000/17.542 dòng…"*, `build` → *"Đang
+  dựng file …"*.
+- **Gọi TUẦN TỰ từng trang**, không bắn song song: các trang dùng chung một câu SQL, chạy song
+  song chỉ làm MySQL tranh tài nguyên mà còn dễ đụng giới hạn kết nối.
+- **Có trần số vòng lặp** (`Math.ceil(total / limit) + 1`) và **thoát khi trang rỗng**: bản ghi bị
+  thêm/xoá giữa chừng làm điều kiện dừng theo `total` không bao giờ đúng → vòng lặp chạy mãi.
+- **Xoá `page` / `limit` của bảng** khỏi params trước khi tải, nếu không chỉ xuất đúng 1 trang.
+- **`0 dòng` thì KHÔNG tạo file** — báo "Không có dữ liệu để xuất".
+- Giữ nguyên endpoint BE dựng file cũ, đừng xoá — còn để đối chiếu và quay lại được.
+
+⚠️ **Điểm yếu cố hữu, phải biết trước khi chọn hướng này**: toàn bộ dữ liệu nằm trong RAM tab
+trình duyệt; chi phí lớn nhất KHÔNG phải lúc tải mà là lúc kẻ viền + bọc chữ trong ExcelJS (làm
+trên TỪNG Ô — 17.5k dòng × 20 cột = 350k ô). Dữ liệu tăng vài lần nữa hoặc máy yếu sẽ chậm rõ rệt.
+Tới mức đó thì phải chuyển sang queue + gửi link tải, không cố nữa.
+
+---
+
 ## 15. Căn lề cột (header + dữ liệu)
 
 **Nguyên tắc gốc: header căn CÙNG lề với ô dữ liệu.** `V2BaseDataTable` đã tự lấy `column.align` cho cả `<th>` lẫn `<td>` → chỉ khai `align` MỘT chỗ trong `tableColumns`; không tự viết `text-center` / `text-right` riêng cho header.
@@ -656,7 +817,7 @@ Một mục trong popup = một đơn vị bật/tắt và kéo thả. Nhiều �
 1. **Cùng một component render ra** — vd `V2BaseCompanyDepartmentFilter` đẻ ra Công ty + Phòng ban + Bộ phận + Nhân viên; `CascadePairSelect` đẻ ra Loại hình hoạt động + Lĩnh vực kinh doanh.
 2. **Dữ liệu phụ thuộc lẫn nhau** (cascade cha → con).
 
-Tách ra thì user ẩn được ô cha mà vẫn giữ ô con (con mất nguồn options), hoặc kéo con lên trước cha. Field nhóm **bắt buộc** khai `resetKeys` để ẩn nhóm là xoá hết giá trị các ô con, tránh lọc ngầm.
+Tách ra thì user ẩn được ô cha mà vẫn giữ ô con (con mất nguồn options), hoặc kéo con lên trước cha. Field nhóm **bắt buộc** khai `resetKeys` để ẩn nhóm là xoá hết giá trị các ô con, tránh lọc ngầm. `resetKeys` còn là căn cứ **đếm số ô** của chế độ gọn (mục "Bộ lọc ≤ 3 ô" ở trên) — khai thiếu thì nhóm bị tính là 1 ô, panel nhận nhầm là bộ lọc gọn và bỏ mất nút "Tìm kiếm nâng cao". Số ô khác số `resetKeys` (vd 2 key nhưng chỉ 1 ô) thì khai thêm `inputCount`.
 
 Hai ô chỉ giống nhau về nghiệp vụ nhưng độc lập dữ liệu thì để riêng — vd Quốc gia và Tỉnh/TP ở màn khách hàng (API `provinces` không nhận `nation_id`).
 

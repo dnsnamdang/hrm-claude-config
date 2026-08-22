@@ -84,3 +84,24 @@ Blocked: (không)
 - [x] FE icon 🔒 (skill `list-page` mục 11): port `utils/select2LockedOption.js` từ nhánh `gop_db` sang `tpe-develop-assign`, gắn `withLockedOptionMarker` vào `V2BaseSelect` + `V2BaseSelectInModal`; `DescriptionInfoSelect.vue` tự khai `templateResult` nên helper nhường → tự gắn 🔒 (chỉ trong dropdown, chip giữ tên gốc); `GeneralInfo.meetingTypeOptions` map thêm `is_locked`
 - [x] Tổ chức lại tài liệu (nguyên nhân gốc: rule 🔒 nằm ở `list-page` mục 11 → người sửa màn form không có đường tìm ra): tách mục 9–13 sang skill mới `.claude/skills/select-and-input-state/SKILL.md` (trigger theo TRIỆU CHỨNG), `list-page` để lại con trỏ, CLAUDE.md thêm 3 dòng bảng skill + ghi rõ ngoại lệ wrapper tự khai `templateResult`
 - [x] Guard trong code: `withLockedOptionMarker` console.warn khi có option `is_locked` mà settings tự khai `templateResult` (kèm cách sửa + link skill); wrapper đã xử lý thì khai `lockedMarkerHandled: true` để tắt
+
+### Fix — Tab Dự án tiền khả thi lấy nhầm thông tin khách hàng thay vì dự án TKT (2026-08-18)
+- [x] FE `GeneralInfo.vue` `handleProjectChange()`: dự án gắn từ Dự án TKT lấy đúng dữ liệu của dự án (KH, người liên hệ, Loại hình/Lĩnh vực, mã số thuế, SĐT, địa chỉ) — bỏ fallback sang `form.customer_*`
+- [x] FE `GeneralInfo.vue` `autoSelectCustomerFromProject()` + `syncCustomerScopeToProjects()`: chỉ đồng bộ thông tin KH của meeting xuống dự án TỰ THÊM (không có `prospective_project_id`); dự án gắn từ TKT giữ nguyên dữ liệu gốc
+- [x] BE `ProspectiveProjectResource`: trả thêm `customer_contact_id` (thiếu id nên khối Người liên hệ ở tab không hiển thị)
+- [x] Test thật (Playwright, FE :3000 / BE :8000): chọn dự án 189 → tab giữ 14/94 + liên hệ "Trần Đức Thiện" (KH của meeting là 15/61 + "Lâm Trọng Hoàng"); stash fix để đối chứng thì tái hiện đúng bug cũ (bị đè thành 15/61 + "Lâm Trọng Hoàng")
+- [x] Test dự án 199 (KH không khai Loại hình/Lĩnh vực): trước fix scope bị xoá trắng → 422; sau fix giữ 14/145, Lưu nháp thành công, payload `projects[0]` gửi đúng scope 14/145 + contact 27350
+- [x] Ghi nhận tác động thật: `MeetingService::syncProjects()` gọi `$prospectiveProject->fill()` → lưu meeting GHI NGƯỢC vào bảng `prospective_projects`, nên bug cũ không chỉ hiển thị sai mà làm hỏng dữ liệu dự án TKT gốc
+- [x] Dọn dữ liệu test: xoá meeting id 56 + liên kết, xoá phòng ban hỗ trợ tạm (TEST-CLAUDE-TMP) đã thêm cho dự án 189/199
+
+### Fix — Người liên hệ ở tab Thông tin không được tự fill người ngoài quyền (2026-08-18)
+- [x] FE `GeneralInfo.vue`: thêm `applyDefaultContact(preferredId)` — chỉ điền Người liên hệ từ đúng danh sách của dropdown (`GET assign/customers/{id}/contacts`, BE đã lọc theo quyền) và bỏ bản ghi `locked`; ưu tiên liên hệ của dự án TKT nếu người đó nằm trong danh sách, không thì lấy người đầu tiên hợp lệ, danh sách rỗng thì để trống cho user tự chọn
+- [x] FE bỏ 2 chỗ auto-fill cũ lấy từ `assign/customers/{id}?all_business=1` (danh sách ĐẦY ĐỦ, không lọc quyền) ở `autoSelectCustomerFromProject()` và `handleCustomerEvent()` — đây là nguồn gây fill nhầm liên hệ của Sales khác
+- [x] Không đè lựa chọn của user: nhánh "KH không đổi, chỉ đổi dự án" chỉ điền khi ô liên hệ đang trống
+- [x] Test: KH 43235 (dropdown rỗng với tài khoản test) → trước fix fill "Lâm Trọng Hoàng" (contact do ERP employee 116 tạo, không nằm trong dropdown), sau fix để TRỐNG; KH 46 TOYOTA HÀ ĐÔNG (24 liên hệ, chỉ 2 của mình) → fill "Lan" (17048), đúng người đầu tiên trong option của mình
+- [x] Chốt lại: chọn Dự án TKT → fill NGUYÊN người liên hệ đã lưu trên dự án (kể cả người không nằm trong dropdown của tài khoản hiện tại); chọn khách hàng trực tiếp → chỉ lấy trong dropdown đã lọc quyền, bỏ bản ghi `locked`, không có ai thì để trống. Tách `setMeetingContact()` + `projectContactPayload()` dùng chung
+- [x] Test: dự án 189 (liên hệ 29539 "Trần Đức Thiện" KHÔNG có trong dropdown) → tab Thông tin fill đúng "Trần Đức Thiện — Quản lý", select hiển thị đủ tên; chọn KH TOYOTA HÀ ĐÔNG (24 liên hệ, 2 của mình) → fill "Lan" (17048)
+
+## Fix 423 khi lưu meeting đã lên lịch (19/08/2026)
+- [x] BE: `MeetingController::update` — bỏ chặn khi Loại meeting / Ứng dụng bị khoá sau khi meeting đã qua nháp; chỉ chặn khi meeting còn nháp hoặc người dùng vừa đổi sang danh mục đã khoá
+- [x] BE: message 423 nêu rõ trường sai (`Loại meeting "X" đã bị khoá` / `Ứng dụng "Y" đã bị khoá`) thay vì câu chung chung, áp cả `store()`
