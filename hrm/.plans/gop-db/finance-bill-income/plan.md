@@ -3748,3 +3748,147 @@ không còn việc gì làm ở đó (nút Duyệt/Hủy biến mất theo cờ 
 - [x] J5 — Verify: compile template + babel parse 0 lỗi; `markFormSaved()` có thật trong
       `unsavedChangesMixin` (dòng 137) và `ref="form"` đúng là `BillIncomeForm`.
 - [ ] J6 — User mở trình duyệt xác nhận.
+
+### Task K — Bản in phiếu thu không hiện "Người nộp tiền" (2026-08-22)
+User báo màn in phiếu thu (`finance/bill-incomes`) bỏ trống ô "Người nộp tiền". Không phải lỗi mẫu in:
+4 mẫu 203-206 đều có placeholder `NGUOI_NOP_TIEN`. Nguyên nhân là **nguồn dữ liệu sai** —
+`BillIncomePrintService` đọc `bill_income_requests.payer` (payer của phiếu ĐỀ NGHỊ) thay vì
+`bill_incomes.payer` (ô kế toán nhập trên form Phiếu thu). Đây là port nguyên si lỗi ERP
+(`BillIncome.php:619,683`): cột `bill_income_requests.payer` không có ô nhập nào ghi vào —
+0/2.414 phiếu đề nghị thật có dữ liệu — nên bản in ra trống; phiếu nào trùng dữ liệu seed thì
+in ra SAI tên người nộp.
+
+- [x] K1 — Thêm `payerName(BillIncome $bill, $request)`: `bill_incomes.payer` trước,
+      `bill_income_requests.payer` chỉ là fallback cho dữ liệu cũ, luôn trả `string` (không null).
+- [x] K2 — `placeholders()` (bản in) và `excelPlaceholders()` (file Excel) cùng gọi `payerName()`.
+- [x] K3 — Verify trên dữ liệu thật: `TPE.PT0826.00001` — trước in `'Người nộp 6'` (payer của phiếu
+      đề nghị, dữ liệu seed), sau in `'jklljh'` (đúng ô kế toán nhập). HTML thật:
+      `<td>Người nộp tiền: jklljh</td>`. 30 phiếu mới nhất: **30/30 có người nộp, 0 rỗng, 0 lỗi**
+      (trước đó phụ thuộc payer của phiếu đề nghị, gần như luôn trống).
+      2 nhánh fallback: phiếu thu trống → lấy phiếu đề nghị; cả hai trống → `''`, không nổ.
+      `php -l` sạch. `bill_incomes.payer` rỗng 0/2.348 nên đường chính luôn có dữ liệu.
+- [x] K4 — Rà phiếu chi: `BillPaymentPrintService.php:218` đã đọc `$bill->receiver` của chính phiếu
+      chi → **không dính lỗi cùng loại**, không cần sửa.
+- [ ] K5 — User mở trình duyệt xác nhận.
+
+### Task L — Preview màn in phiếu thu lệch bản in ở khối "Liên số" (2026-08-22)
+User báo `/finance/bill-incomes/2346/print`: khối **Liên số / Số / Nợ / Có** các dòng so le trên
+màn xem trước, nhưng bấm In ra thì bình thường. Đo tận nơi (Playwright, chặn tự bật hộp thoại in
+bằng cách nuốt `frame.onload`, ép iframe in về đúng bề ngang vùng in 180mm):
+
+| | Preview (trước) | Cửa sổ in |
+| --- | --- | --- |
+| Bề rộng bảng Liên số | 210px (bị bóp bằng ô cha) | 263px |
+| Chiều cao mỗi ô | 58px = **2 dòng** | 28px = 1 dòng |
+
+Nguyên nhân: rule preview `#content ::v-deep td, th` có thêm `word-break: break-word` +
+`overflow-wrap: break-word` — **pdf.css của ERP KHÔNG có 2 thuộc tính này**. Bảng Liên số cần 263px
+mới đủ 1 dòng nhưng nằm trong ô rộng 210px của bảng cha `table-layout: fixed`; cho ngắt từ thì
+`max-width: 100%` bóp được bảng lại → mã phiếu + số tiền rớt xuống 2 dòng → so le. Cửa sổ in không
+cho ngắt từ nên bảng giữ nguyên bề ngang, tràn nhẹ khỏi ô đúng như ERP.
+
+- [x] L1 — Bỏ `word-break`/`overflow-wrap` khỏi rule `td, th` của khối `<style scoped>` (giữ lại
+      chú thích cảnh báo tại chỗ để lần sau không ai thêm lại).
+- [x] L2 — Thêm `line-height: normal` cho `#content`: pdf.css không đặt line-height nên cửa sổ in
+      dùng `normal`, còn preview thừa hưởng `1.5` của Bootstrap → mỗi dòng cao thêm ~6px.
+- [x] L3 — Verify bằng số đo, preview vs iframe in ép đúng 180mm: bảng Liên số **263px ở cả hai**,
+      mọi ô **28px = 1 dòng ở cả hai**, nội dung 4 dòng khớp từng chữ. Compile template + babel
+      parse sạch.
+- [ ] L4 — User mở trình duyệt xác nhận.
+
+**Ghi nhận, CHƯA sửa (không phải lỗi mới):** bảng Liên số rộng 263px trong khi cột chứa nó chỉ
+226px → tràn ~45px sang phải, **giống hệt nhau ở cả preview lẫn bản in** vì mẫu 203-206 khai cứng
+như vậy. Sửa tận gốc phải đụng `report_templates` (dùng chung với cổng ERP) → chờ user quyết.
+
+### Task M — Mã phiếu đề nghị thu ở danh sách phiếu thu mở TAB MỚI (2026-08-22)
+User yêu cầu: ở `finance/bill-incomes`, bấm vào ô **Mã phiếu đề nghị thu tiền** thì mở tab mới.
+Khớp ERP — `BillIncomeController.php:60` render ô này với `target="_blank"`.
+
+- [x] M1 — `pages/finance/bill-incomes/index.vue`, slot `#cell-requestCode`: thêm `target="_blank"`
+      + `rel="noopener"` cho `<nuxt-link>`. vue-router (`guardEvent`) tự bỏ qua click khi thẻ có
+      `target="_blank"` nên trình duyệt điều hướng thật, không chuyển trang trong SPA.
+- [x] M2 — Ô **Mã phiếu thu** (`#cell-code`) GIỮ NGUYÊN điều hướng trong tab hiện tại: đó là phiếu
+      của chính màn này, ERP cũng không để `_blank`.
+- [x] M3 — Verify trên trình duyệt thật (localhost:3000): 10/10 link mã phiếu đề nghị render
+      `target="_blank" rel="noopener"`; bấm thử `TPV.DNTT0726.00054` → mở tab mới
+      `/finance/bill-income-requests/2436`, tab danh sách phiếu thu đứng yên (không mất bộ lọc).
+      Link mã phiếu thu vẫn `target = null` như cũ.
+- [ ] M4 — User xác nhận.
+
+
+### Checkpoint — 2026-08-22 (đợt sửa theo phản hồi user)
+Vừa hoàn thành: **Task K, L, M** (nhánh `gop_db`, chưa commit).
+· K — bản in/Excel phiếu thu bỏ trống "Người nộp tiền": đọc nhầm `bill_income_requests.payer`
+  (0/2.414 phiếu thật có dữ liệu) thay vì `bill_incomes.payer`. Thêm `payerName()` dùng chung cho
+  `placeholders()` + `excelPlaceholders()`. 30/30 phiếu mới nhất giờ có người nộp.
+· L — preview màn in lệch bản in ở khối "Liên số": bỏ `word-break/overflow-wrap` (pdf.css ERP không
+  có) + đặt `line-height: normal`. Đo lại: bảng 263px và ô 28px **giống hệt** ở cả preview lẫn bản in.
+· M — mã phiếu đề nghị ở danh sách phiếu thu mở **tab mới** (`target="_blank"`, khớp ERP).
+Đang làm dở: không có.
+Bước tiếp theo: user xác nhận trên trình duyệt (K5 · L4 · M4).
+Blocked: không. Ghi nhận chưa sửa: bảng "Liên số" tràn ~45px khỏi cột — giống nhau ở ERP, sửa tận
+gốc phải đụng `report_templates` dùng chung 2 cổng.
+
+## Phase N — Bản in tràn khỏi lề phải (2026-08-22)
+
+**User báo:** "màn phiếu thu phần in đang bị tràn ra lề".
+
+**Cách đo (không cần đăng nhập):** render HTML in thật của 1 phiếu mỗi mẫu bằng
+`BillIncomePrintService::render()` qua tinker, dựng lại đúng môi trường cửa sổ in
+(`static/css/pdf-erp.css` + `printBaseStyles()` lấy thẳng từ `print.vue`), ép body đúng bề ngang
+vùng in **180mm = 680px** (A4 210mm − lề trái 20mm − lề phải 10mm), chạy Chromium headless và so
+`getBoundingClientRect().right` của mọi phần tử với mép phải trang.
+
+**Kết quả đo TRƯỚC khi sửa:**
+
+| Mẫu | Phần tử tràn | Tràn |
+| --- | --- | --- |
+| 203 | bảng "Liên số / Số / Nợ / Có" (rộng 264px) | **44.8px ≈ 11.8mm** |
+| 204 | như trên (272px) | **52.8px ≈ 14mm** |
+| 205 | như trên (264px) + hàng chữ ký (688px) | **44.8px** / 7.2px |
+
+Tràn 12-14mm **vượt cả lề phải 10mm** → máy in cắt mất, đúng triệu chứng user thấy.
+
+**Root cause:** `{{LIEN}}` là bảng nằm trong **ô cuối** của bảng đầu trang (`table-layout: fixed`,
+3 cột đều nhau ⇒ ô 227px, trừ padding còn **211px**), nhưng nội dung cần 264-272px ở cỡ chữ 16px.
+Không nới cột được: muốn tiêu đề "PHIẾU THU" còn nằm **giữa trang** thì 2 cột hai bên phải bằng
+nhau, mà cột giữa cần ~225px cho dòng "Ngày … Tháng … Năm …" ⇒ 227px đã là mức tối đa.
+Đã đo và loại 3 phương án khác: `table-layout: auto` (hết tràn nhưng tiêu đề lệch trái 340px→173px),
+`word-break` (bảng bị bóp còn 211px, mọi hàng rớt 2 dòng — đúng cái user bác ngày 2026-08-22),
+giảm padding đơn thuần (vẫn tràn 14-23px).
+
+- [x] N1 — Khối Liên số: `font-size: 12px`, `padding: 0 2px`, `margin: 0 -8px` (lấy lại padding
+      của ô chứa), `white-space: nowrap` để mỗi hàng giữ 1 dòng
+- [x] N2 — Hàng chữ ký mẫu 205 (6 ô nowrap, rộng 688px): siết `table.block td` padding còn 2px
+- [x] N3 — Áp cả `printBaseStyles()` (bản in) lẫn `<style scoped>` (preview) để xem trước khớp in
+
+**Đo lại SAU khi sửa — tràn = 0px ở cả 3 mẫu**, mỗi hàng của khối Liên số vẫn 1 dòng (cao 60px).
+Kiểm thêm 2 ca biên dựng từ dữ liệu thật: mã phiếu dài nhất trong DB (**21 ký tự**,
+`DTTDETEK.PT0326.00001`, 13 phiếu) + số tiền lớn nhất (**877.651.200**) → **tràn 0px**.
+Ca giả định 1,2 tỷ (chưa từng có) tràn 9px ≈ 2,4mm — vẫn nằm trong lề 10mm, không bị cắt.
+
+### Checkpoint — 2026-08-22 (N1-N3)
+Vừa hoàn thành: bản in phiếu thu hết tràn lề phải (đo bằng Chromium headless, không cần đăng nhập).
+Đang làm dở: không.
+Bước tiếp theo: user mở bản in xác nhận cỡ chữ khối Liên số 12px có chấp nhận được không.
+Chưa kiểm chứng bằng mắt: chỉ đo hình học, chưa xem thẩm mỹ trên trình duyệt.
+Blocked: không.
+
+### Sửa lại Phase N — trả khối Liên số về cỡ chữ 16px của ERP (2026-08-22)
+
+**User phản hồi:** "sao lại cho font chữ ở chỗ liên số nhỏ vậy?" — đúng. Bản N1 thu nhỏ CẢ KHỐI
+xuống 12px chỉ để cover 13 phiếu mã 21 ký tự (0,55% dữ liệu), làm xấu 2.335 phiếu còn lại.
+
+**Đo lại từng ô mới thấy:** thứ duy nhất không vừa 211px là **MÃ PHIẾU** — nó nằm ở cột giữa
+vốn hẹp (cột này còn phải chứa số tài khoản). Các ô còn lại (Liên số / Nợ / Có / số tiền) vừa
+thoải mái ở 16px.
+
+- [x] N5 — Bỏ `font-size: 12px` trên cả khối → giữ nguyên 16px của ERP
+- [x] N6 — Chỉ ô mã phiếu: `font-size: 12px` + cho phép xuống dòng (`word-break: break-all`)
+
+Đã sweep cỡ chữ ô mã phiếu để chọn: **12px** là mức lớn nhất mà mã 16/17 ký tự vẫn nằm gọn
+1 dòng ở CẢ 6 mẫu. Từ 13px trở lên thì mẫu 204 (nhiều khách hàng, cột tài khoản dài hơn) đã bị
+xuống dòng. Chỉ 13 phiếu mã 21 ký tự (DTTDETEK) xuống 2 dòng — thay vì chạy ra khỏi trang.
+
+Đo lại toàn bộ: **tràn = 0px** ở 203/204/205/211/217/236 + 2 ca biên; khối Liên số `font=16px`,
+riêng ô mã phiếu `font=12px`.

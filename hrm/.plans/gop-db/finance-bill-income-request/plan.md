@@ -1104,6 +1104,113 @@ vee-validate không quản mảng này nên không ai xoá hộ (khác các ô c
       có `reason` + `details` → giữ nguyên.
 - [ ] User mở trình duyệt xác nhận.
 
+### Task 8.8 — Bổ sung cột "Người nộp" + đổi tiêu đề "Lý do nộp" + bộ lọc Người nộp (2026-08-22)
+User yêu cầu thêm thông tin **Người nộp** và **Lý do nộp** vào bảng danh sách (kèm popup Tùy chỉnh cột)
+và thêm ô lọc **Người nộp**. Đối chiếu ERP:
+`resources/views/income_expenditure/bill_income_requests/approved.blade.php:50-51` và
+`forAccounting.blade.php:51-52` — màn CHỜ DUYỆT có 2 cột `reason` ("Lý do nộp") + `payer` ("Người nộp"),
+thứ tự `Số tiền → Lý do nộp → Người nộp → Ngày lập`; `index.blade.php:49` chỉ có `reason`.
+Ô lọc `payer` `search_type: 'text'` có ở CẢ 3 màn (`index:64`, `approved:66`, `forAccounting:67`).
+HRM dùng chung 1 component cho danh sách + chờ duyệt (`pending.vue` → `<BillIncomeRequestList pending-mode />`,
+chung khoá cột `finance_bill_income_requests`) nên chỉ khai 1 chỗ là cả 2 màn cùng có.
+
+Nguồn dữ liệu: cột thô `bill_income_requests.payer` — ERP không `editColumn('payer')` nên yajra xuất
+thẳng cột này (kiểm chứng trên prod `erp-crm.eteksofts.com/.../for-accounting`: 20/20 phiếu chờ duyệt
+hiện "Người nộp 1…9", đúng dữ liệu seed `TEST.DNTT.*`). Form đề nghị (cả ERP lẫn HRM) KHÔNG có ô nhập
+`payer` → phiếu nghiệp vụ cũ để trống, đúng như ERP.
+
+- [x] BE `BillIncomeRequestListResource.php`: thêm `payer` vào payload (cột nằm sẵn trên bảng, không N+1).
+- [x] BE `BillIncomeRequest::searchByFilter()`: thêm nhánh lọc `payer` LIKE `%…%` (khớp `search_type: text` của ERP).
+- [x] FE `index.vue` — `allColumns`: đổi title cột `reason` "Lý do thu" → "Lý do nộp"; thêm cột `payer`
+      ("Người nộp") ngay sau `reason`, đúng thứ tự ERP.
+- [x] FE `index.vue` — `initialStateForm` thêm `payer: ''`; `filterFields` thêm field text "Người nộp"
+      đặt cạnh "Người tạo".
+- [x] Verify: `php -l` 2 file BE sạch · `vue-template-compiler` + babel parse `index.vue` sạch ·
+      chạy `searchByFilter` thật (tinker, đăng nhập id 13): SQL ra `and \`payer\` like ?` với
+      **binding** `%Người nộp 2%` (không nội suy chuỗi) — 11/2491 phiếu khớp; `BillIncomeRequestListResource`
+      trả khoá `payer` đúng giá trị (TEST.DNTT.00062/00004/00071).
+- [ ] User mở trình duyệt xác nhận.
+
+### Task 8.9 — Bảng chi tiết thiếu dòng "Tổng cộng" ở form tạo/sửa (2026-08-22)
+User báo màn `finance/bill-income-requests/create` không có dòng tổng dưới bảng chi tiết như ERP.
+ERP có dòng này ở CẢ form nhập (`form.blade.php:305-313`) lẫn màn xem (`formShow.blade.php:203`),
+cộng 3 cột: `total_dept_after_income_money` (ẩn khi `type == 3`) · `total_income_money_request` ·
+`total_income_money_request_exchange` (chỉ khi loại tiền ≠ VND). Tổng tính ở FE, không thêm API.
+
+- [x] `BillIncomeRequestForm.vue`: 3 computed `totalDeptAfterIncomeMoney` / `totalIncomeMoneyRequest` /
+      `totalIncomeMoneyRequestExchange` — `reduce` + `Number(x || 0)` để ô trống không ra `NaN`.
+- [x] Thêm dòng cuối `<tbody>` (`v-if="form.details.length"`): `colspan=3` nhãn "Tổng cộng" + 3 ô số
+      căn phải, ô Ghi chú và ô Xóa để trống; số ô tự khớp `isVnd` / `readonly`.
+- [x] Style `.detail-total-row td` — nền `#f5f6f8` + `font-weight: 600` (ERP dùng `<b>`).
+- [x] Màn chi tiết (readonly) dùng chung component nên có luôn dòng tổng, đúng như `formShow` của ERP.
+- [x] Verify: compile template + babel parse sạch · chạy thử hàm cộng với dữ liệu lẫn `null`/`''`/chuỗi
+      → không `NaN` (4.000.000 / 1.000.250,5 / 31.262.500) · đối chiếu số ô dòng tổng với số cột header
+      ở cả 4 tổ hợp `isVnd` × `readonly` → khớp 6/7/7/8, không lệch cột.
+- [ ] User mở trình duyệt xác nhận.
+
+### Task 8.10 — Mở 2 tab cùng 1 phiếu: báo nhầm "không có quyền" (2026-08-22)
+User báo: tab 1 mở Sửa phiếu A · tab 2 cũng mở A rồi bấm **Lưu và gửi phiếu** · tab 1 bấm Lưu →
+hiện "Bạn không có quyền". Sai bản chất: đây là **xung đột dữ liệu**, không phải thiếu quyền.
+
+Nguyên nhân: `canEdit()` gộp 2 điều kiện (`status ∈ {Đang tạo, Không duyệt}` **và**
+`created_by == mình`), Controller chỉ có 1 nhánh `if (!canEdit()) → 403`. Tab 2 gửi duyệt xong thì
+`status` đổi sang "Chờ KT duyệt" → tab 1 rớt vào đúng nhánh 403 đó.
+
+- [x] Entity: tách `isEditableStatus()` (chỉ xét trạng thái) khỏi `canEdit()`; `canEdit()` gọi lại
+      hàm mới nên hành vi cũ không đổi (`is_can_edit`/`is_can_delete` của Resource giữ nguyên).
+- [x] Controller `update()` + `destroy()`: xét **người lập trước** (403 "Bạn không có quyền…"),
+      **trạng thái sau** (409 + câu user yêu cầu). Đảo thứ tự là phiếu của người khác đã gửi duyệt
+      sẽ báo nhầm "dữ liệu đã thay đổi". Câu thông báo đặt ở hằng số `MSG_STATUS_CONFLICT`.
+      Bám tiền lệ `BillPaymentApprovalFlowService.php:175-178` (tách 409 khỏi 403).
+- [x] FE **không phải sửa**: `applyServerErrors()` chỉ nuốt lỗi có mảng `errors` (422), còn lại
+      rơi xuống toast `error.response.data.message` — cả nhánh Lưu (`:959`) lẫn Xóa (`:1032`).
+- [x] Verify qua **chính endpoint thật** (HTTP kernel + token JWT, chạy trong transaction rồi
+      `rollBack()` nên không đụng dữ liệu thật — đã đối chiếu `status`/`created_by` sau rollback
+      khớp ban đầu). Phiếu `TEST.DNTT.00089`:
+      · tab 2 gửi duyệt trước → tab 1 Lưu = **HTTP 409** + đúng câu
+      "Thao tác không thành công. Dữ liệu đã được thay đổi hoặc chuyển trạng thái bởi người dùng
+      khác. Vui lòng tải lại trang để cập nhật thông tin mới nhất."
+      · phiếu của người khác (còn sửa được) = **HTTP 403** "Bạn không có quyền sửa phiếu này" (giữ nguyên).
+      `php -l` 2 file sạch.
+- [ ] User mở trình duyệt xác nhận (mở 2 tab như kịch bản đã mô tả).
+
+- [x] **Không duyệt** (`changeStatus`) — user chốt 2026-08-22 thống nhất luôn: nhánh
+      "phiếu không còn ở Chờ KT duyệt" đổi **422 → 409** + dùng chung `MSG_STATUS_CONFLICT`
+      (422 là lỗi dữ liệu nhập, đây là xung đột trạng thái). Nhánh 403 "Bạn không có quyền duyệt"
+      và nhánh 422 của `note` (FormRequest) giữ nguyên.
+      Verify qua endpoint thật (transaction + rollback, `status` sau rollback = 2 như ban đầu):
+      phiếu `TPE.DNTT0826.00003`, kế toán id 13 → kế toán khác vừa xử lý xong = **HTTP 409** +
+      đúng câu thông báo. FE nhánh Không duyệt (`:1012`) cũng đi qua `applyServerErrors()` nên
+      hiện thẳng `message`, không phải sửa.
+
+### Task 8.11 — Bỏ nút "Xem chi tiết" ở danh sách phiếu đề nghị thu (2026-08-22)
+User chốt: cột **Mã phiếu** đã là link vào màn chi tiết nên nút con mắt là lối đi thứ 2 cho cùng
+một việc → bỏ.
+
+- [x] `pages/finance/bill-income-requests/index.vue` — `getRowActions()`: xoá action `view`.
+- [x] Xoá luôn nhánh `case 'view'` trong `handleRowAction()` (đã thành code chết) + sửa 2 docblock
+      còn ghi "màn chờ duyệt chỉ Xem + In".
+- [x] Màn **chờ duyệt** dùng chung component nên cũng mất nút này — vẫn vào chi tiết được qua link
+      Mã phiếu, bộ nút còn In / Tạo phiếu thu.
+- [x] Verify: parse template + script sạch; grep không còn `'view'` / `ri-eye-line` / "Xem chi tiết"
+      (chỉ còn trong chú thích). Gọi thẳng `getRowActions()` trên component đang chạy ở
+      localhost:3000 với item đủ cờ quyền → trả về đúng 4 nút
+      `edit | create_bill_income | print | delete`, `conKeyView = false`.
+- [ ] User mở trình duyệt xác nhận.
+
+### Task 8.12 — Bảng chi tiết: thanh cuộn ngang phía TRÊN (2026-08-22)
+User yêu cầu đồng bộ với màn Đề nghị thanh toán / `customer-care/warranty-repair-requests/create`.
+
+- [x] `BillIncomeRequestForm.vue`: bọc bảng chi tiết bằng component dùng chung **`V2BaseTableScroll`**
+      (thanh cuộn ngang ở CẢ trên và dưới, đồng bộ 2 chiều, tự ẩn khi bảng không tràn),
+      `body-class="table-responsive"` giữ khuôn cũ.
+- [x] Đổi `width` → `min-width` cho **8 cột nội dung** của header (giữ `width` cho STT + nút thêm dòng):
+      `width` chỉ là gợi ý nên màn hẹp là cột bị bóp, bảng không tràn và thanh cuộn không bao giờ hiện.
+- [x] Verify trên trình duyệt (khung 900px): bảng **1059** > khung **852** → thanh trên **hiện**, nằm
+      đúng phía trên bảng; kéo thanh trên 180 → bảng chạy 180; kéo bảng 45 → thanh trên về 45.
+      Dòng **Tổng cộng** (Task 8.9) vẫn nằm trong vùng cuộn, không bị lệch. Parse sạch.
+- [ ] User xác nhận.
+
 ### Checkpoint — 2026-08-18 (thêm cấu hình cột)
 Vừa hoàn thành: Task 8.2 — popup Cấu hình cột hiển thị + 2 cột Người/Ngày cập nhật (3 file BE, 1 file FE).
 Đang làm dở: không có.
@@ -1378,3 +1485,132 @@ Blocked: không. **Chờ user chọn cách chạy**: subagent-driven (khuyến n
 2 mặc định đã chốt khi user duyệt spec, ghi lại kẻo quên:
 - Popup hợp đồng HRM chỉ lấy `status ∈ {6, 8, 9, 10, 11, 12}` (Có hiệu lực trở lên).
 - Màn chờ duyệt đợt này chỉ có nút **Không duyệt**, không có nút Duyệt riêng.
+
+
+### Checkpoint — 2026-08-22 (đợt sửa theo phản hồi user)
+Vừa hoàn thành: **Task 8.8 → 8.11** (4 việc, nhánh `gop_db`, chưa commit).
+· 8.8 — cột **Người nộp** (`payer`) + đổi tiêu đề cột `reason` thành **"Lý do nộp"** (bám ERP
+  `approved.blade.php:50-51`) + ô lọc **Người nộp** (LIKE, dùng binding). 2 file BE, 1 file FE.
+· 8.9 — bảng chi tiết form thêm dòng **Tổng cộng** (3 computed + 1 dòng `<tbody>` + style),
+  số ô khớp header ở cả 4 tổ hợp `isVnd` × `readonly`.
+· 8.10 — mở 2 tab cùng 1 phiếu: tách `isEditableStatus()` khỏi `canEdit()`; `update()`/`destroy()`/
+  `changeStatus()` trả **409** + câu "Dữ liệu đã được thay đổi..." thay cho 403/422 khi phiếu vừa bị
+  người khác chuyển trạng thái; vẫn 403 khi thật sự thiếu quyền.
+· 8.11 — bỏ nút **Xem chi tiết** ở danh sách (cột Mã phiếu đã là link).
+Đang làm dở: không có.
+Bước tiếp theo: **user mở trình duyệt xác nhận 4 việc trên** (ô checkbox cuối mỗi task).
+Blocked: không.
+
+---
+
+## Phase 9 — Lịch sử thay đổi (skill `entity-history`) — 2026-08-22
+
+Yêu cầu user: màn **Đề nghị thu tiền** thêm chức năng **Xem lịch sử thay đổi**, "làm theo quy tắc
+chung, mẫu màn danh sách khách hàng".
+
+**2 quyết định đã chốt với user (skill §0):**
+1. Bảng chi tiết phiếu log theo kiểu **diff từng dòng** (`__key`, in `~` sửa / `-` bỏ / `+` thêm)
+   — đúng chuẩn màn Khách hàng, KHÔNG dùng tóm tắt 1 dòng như `bill_adjust_dept_requests`.
+   ⇒ phải **mở rộng service dùng chung `CatalogHistoryService`** (thuần thêm).
+2. **Không gắn permission riêng** — ai vào được màn thì xem được lịch sử (mặc định của skill).
+
+**Hạ tầng dùng lại (không viết mới):** bảng chung `catalog_histories` · trait `LogsCatalogHistory`
+· endpoint chung `GET /api/v1/catalog-histories/{table}/{id}` (+ `/filter-options`) ·
+FE `CatalogHistoryModal.vue` + `SystemInfoSection.vue`. Tiền lệ cùng module:
+`bill_adjust_dept_requests`.
+
+### BE
+
+- [x] **9.1** `app/Services/CatalogHistoryService.php` — hỗ trợ **khoá dạng BẢNG** (thuần thêm,
+      không đổi hành vi 20+ màn đang dùng):
+      · `logUpdate()`: giá trị là mảng bản ghi (`[['__key'=>…, 'Nhãn'=>'giá trị', …], …]`) thì so
+        bằng JSON chuẩn hoá và lưu nguyên mảng dưới `['__rows' => …]`, KHÔNG đi qua `normalize()`
+        (normalize json_encode cả mảng → log ra 1 chuỗi JSON dài).
+      · `changesOf()`: nhận diện `__rows` (và mảng bản ghi thô của log `delete`) → dựng
+        `removed` / `added` / `changed[].fields` đúng DTO §4; bản ghi bị sửa **chỉ liệt kê cột đã
+        đổi**; đổi thứ tự dòng (không đổi nội dung) thì bỏ qua, không sinh log rác.
+      · Ghép cặp bản ghi bằng `__key`; trùng khoá thì tự tách. Tên bản ghi trên dòng `~` lấy
+        `__name`.
+- [x] **9.2** `CatalogHistoryService::TABLES` — khai `bill_income_requests` + nhãn tiếng Việt:
+      Loại thu · Lý do thu · Người nộp tiền · Tiền tệ · Tỷ giá · Ghi chú · Trạng thái ·
+      Bảng chi tiết (khoá ảo `details_rows`).
+- [x] **9.3** `BillIncomeRequestService` — `use LogsCatalogHistory` + `catalogTable()` /
+      `catalogColumns()` / `catalogDisplay()` (id → chữ: Loại thu, Trạng thái, Tiền tệ; tỷ giá +
+      tiền format số) + `detailRows()` dựng bản ghi từng dòng chi tiết
+      (`__key` = customer|supplier|objectable_type|objectable_id vì `syncDetails()` xoá-tạo lại
+      nên id dòng KHÔNG bền).
+      Gắn log vào: `store()` → `create` · `update()` → `update` (snapshot TRƯỚC khi fill, log SAU
+      transaction) · `destroy()` → `delete` · `changeStatus()` → `change_status` **kèm lý do không
+      duyệt vào `note` của log** (skill §4.1).
+- [x] **9.4** 3 chỗ ĐỔI TRẠNG THÁI PHIẾU TỪ MÀN KHÁC cũng phải ghi log, nếu không timeline đứt
+      quãng ở "Chờ KT duyệt":
+      · `BillIncomeWriteService::markRequestCreatedAndNotify()` → **Đã tạo phiếu thu**
+      · `BillIncomeApprovalService::approve()` → **Đã hạch toán**
+      · `BillIncomeApprovalService::cancel()` → **Hủy** (kèm lý do hủy vào `note` của log)
+      Chỉ ghi khi trạng thái THỰC SỰ đổi (3 chỗ này dùng `update()` query builder, gọi lại nhiều
+      lần được).
+      Ngoài phạm vi: `syncIncomeMoneyReal()` ghi **số thực thu** ngược về dòng chi tiết — đó là số
+      của phiếu thu, không phải người dùng sửa phiếu đề nghị ⇒ KHÔNG track.
+
+### FE
+
+- [x] **9.5** `pages/finance/bill-income-requests/index.vue` — thêm hành động **Lịch sử**
+      (`ri-history-line`, không gắn quyền) vào menu ⋮ từng dòng + nhúng
+      `<CatalogHistoryModal ref="historyModal" modal-id="history-bill-income-request"
+      record-prefix="Phiếu" />`, mở bằng `open('bill_income_requests', item.id, item.code)`.
+      Màn **chờ duyệt** (`pending.vue`) dùng lại chính file này nên tự có.
+- [x] **9.6** `pages/finance/bill-income-requests/_id/index.vue` — khối **Lịch sử** trong THÂN
+      TRANG (không phải nút ở footer, skill §5.1): `<SystemInfoSection
+      entity-type="bill_income_requests" :entity-id="…" endpoint-base="catalog-histories" />`.
+
+### Verify
+
+- [x] **9.7** `php -l` toàn bộ file sửa · tinker: sửa 1 trường → 1 log đúng subset · không đổi gì →
+      không log · thêm 1 dòng chi tiết → đúng 1 dòng `+` · sửa số tiền 1 dòng → đúng 1 dòng `~` chỉ
+      cột đó · đổi trạng thái → log riêng kèm lý do · thứ tự mới → cũ · **log của 20+ màn danh mục
+      cũ đọc ra không đổi** (chống hồi quy khi mở rộng service chung).
+- [x] **9.8** FE: compile template 2 file sửa. Không tự test Playwright — user tự mở trình duyệt.
+
+### Checkpoint — 2026-08-22 (Phase 9 — Lịch sử thay đổi)
+Vừa hoàn thành: **Task 9.1 → 9.8** (nhánh `gop_db`, chưa commit).
+Files sửa BE (4): `app/Services/CatalogHistoryService.php` (whitelist `bill_income_requests` +
+hỗ trợ **khoá dạng BẢNG**: `isRowList` / `rowsOf` / `rowsFingerprint` / `rowListChange` / `indexRows`
+/ `rowText` / `rowName`, cắm vào `logUpdate()` + `changesOf()`) ·
+`Modules/Finance/Entities/BillIncomeRequest/BillIncomeRequest.php` (`statusName()` +
+`logStatusHistory()`) · `Modules/Finance/Services/BillIncomeRequestService.php` (trait
+`LogsCatalogHistory` + `catalogTable/catalogColumns/catalogDisplay/detailRows` + log ở
+store/update/destroy/changeStatus) · `BillIncomeWriteService.php` + `BillIncomeApprovalService.php`
+(3 chỗ đổi trạng thái từ màn Phiếu thu).
+Files sửa FE (3): `bill-income-requests/index.vue` (hành động **Lịch sử** + `CatalogHistoryModal`) ·
+`_id/index.vue` (khối `SystemInfoSection` qua slot mới) · `components/BillIncomeRequestForm.vue`
+(thêm slot `after-content` TRƯỚC `V2Footer` — đặt khối Lịch sử sau footer thì bị thanh nút
+`position: fixed` đè và hở 66px spacer).
+
+Bằng chứng verify (tinker, dữ liệu test đã dọn sạch — `catalog_histories` của
+`bill_income_requests` về lại 0 dòng):
+- Sửa 1 ô số tiền + thêm 1 dòng + bỏ 1 dòng → đúng `~` (chỉ cột đã đổi) / `+` / `-`.
+- Không đổi gì → không ghi · chỉ đổi THỨ TỰ dòng → không ghi · `"1"` vs `1` → không ghi log rác.
+- Đổi 2 trường phẳng → 1 dòng log 2 key. Xoá hết dòng chi tiết → 2 dòng `-`.
+- End-to-end `update()` trên phiếu thật (chạy trong transaction rồi **rollback**): 1 dòng log gộp
+  "Người nộp tiền" + "Bảng chi tiết ~ 1 dòng", `changed_by` + phòng ban resolve đúng.
+- `changeStatus()` (Không duyệt) và 3 chỗ đổi trạng thái từ màn Phiếu thu → 4 dòng
+  "Thay đổi trạng thái", **lý do không duyệt / lý do hủy hiện ở khối ghi chú**; trạng thái không
+  đổi → không ghi.
+- Chống hồi quy: log cột phẳng + mảng chuỗi thường của màn danh mục (`works`) đọc ra y như cũ,
+  không rẽ nhầm sang nhánh khoá bảng; log cũ `bill_adjust_dept_requests` đọc bình thường.
+- `filter-options`: đúng 3 nhóm cố định + 783 người thực hiện (không suy từ log).
+Đang làm dở: không có.
+Bước tiếp theo: **user mở trình duyệt xác nhận** popup Lịch sử ngoài danh sách + khối Lịch sử ở màn
+chi tiết (chưa tự test Playwright — theo thoả thuận).
+Blocked: không.
+
+### Bổ sung Phase 9 — 2026-08-22 (rà theo khi làm màn Đề nghị thanh toán)
+Làm lịch sử cho màn Đề nghị thanh toán thì lộ ra 1 bẫy chung, đã sửa luôn ở màn này:
+- `store()`: chuyển việc gán khoá ảo `details_rows` + `logCatalogCreate()` **ra NGOÀI**
+  `DB::transaction()`. Khoá ảo không có cột trong bảng — gán xong mà model còn `save()` nữa là
+  `SQLSTATE[42S22] Unknown column ... in field list`. Gán sau lần save cuối cùng là an toàn tuyệt
+  đối, không phụ thuộc vào việc hàm gửi thông báo có save model hay không.
+- `detailRows()`: tên bản ghi ghép bằng `array_filter` thay vì nối chuỗi — dòng không có đối tượng
+  trước đó ra tên bắt đầu bằng `" / "`.
+Đã verify lại `store()` + `destroy()` end-to-end (transaction rồi rollback): mỗi thao tác đúng 1
+dòng log `create` / `delete`.
