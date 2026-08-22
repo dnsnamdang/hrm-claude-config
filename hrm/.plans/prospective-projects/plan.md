@@ -57,3 +57,8 @@ Vừa hoàn thành: Dựng xong HDSD_DuAnTienKhaThi.docx (11 phần, 11 ảnh th
 Đang làm dở: (không)
 Bước tiếp theo: User mở file review nội dung + ảnh; chỉnh nếu cần bổ sung ảnh Chốt giải pháp (chưa có dự án đủ điều kiện để chụp).
 Blocked:
+
+- [x] Viết tài liệu "Mô tả nghiệp vụ - Luồng trạng thái Dự án tiền khả thi.docx" (ma trận trạng thái dự án thường + dự án cha) — 20/08/2026
+
+## 2026-08-20 — Ẩn mã dự án TKT trên toàn FE
+- [x] Ẩn mọi chỗ hiển thị mã dự án tiền khả thi ở FE (45 file: danh sách/chi tiết TKT, báo giá, yêu cầu giá, BOM, hàng hoá dự án, giải pháp/hạng mục, họp + phiếu khảo sát, my-job, các màn báo cáo & bản in, dropdown chọn dự án). BE giữ nguyên: vẫn sinh & lưu code, quick-search vẫn lọc theo mã.

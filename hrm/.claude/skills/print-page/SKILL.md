@@ -27,12 +27,170 @@ Nút In gọi `this.$printContent(options)` — plugin `hrm-client/plugins/print
 
 ## 2. Quy tắc vàng khi làm màn print.vue
 
+- [ ] **`layout: 'print'`** — BẮT BUỘC, xem mục 2b. Đây là lỗi hay gặp nhất khi copy màn in có sẵn.
 - [ ] Đặt `id="content"` trên div gốc nội dung in (để selector plugin khớp đúng, không rơi vào fallback `.container`).
 - [ ] Hiển thị dữ liệu bằng text `{{ }}`, **KHÔNG dùng `<input class="form-control" readonly>`** (in ra thành ô nhập liệu xấu).
 - [ ] Layout trường thông tin: dùng **inline style** (vd `style="display:grid; grid-template-columns:repeat(3,1fr)"`), KHÔNG dựa scoped CSS.
 - [ ] Ảnh letterhead: dùng **URL tuyệt đối** (xem mục 4), KHÔNG để `src="@/assets/..."` trực tiếp.
 - [ ] Toàn bộ CSS viền/độ rộng bảng: truyền qua `options.styles` (xem mục 3), scope bằng selector đủ mạnh (`table.table-bordered ...`).
 - [ ] Nút In gọi method riêng (vd `printPackage()`) để truyền `styles` + `pageMargin`, KHÔNG gọi trơn `$printContent()`.
+
+---
+
+## 2b. Layout của trang in — BẮT BUỘC `layout: 'print'` (chốt 2026-08-19)
+
+Trang in là **bản xem trước tờ giấy**: không topbar, không sidebar, **nền quanh giấy XÁM `#eee`**
+(xem mục 2c) — tờ giấy `#content` mới là màu trắng.
+
+```js
+export default {
+    layout: 'print',   // layouts/print.vue
+    // ...
+}
+```
+
+**Dùng `default` hay `default-sidebar` là SAI** — phía trên mặt giấy sẽ hở một dải xanh + khoảng
+trắng vô nghĩa, do lớp vỏ ứng dụng chứ không phải nội dung in:
+
+| Nguồn | Chiều cao thừa |
+| --- | --- |
+| `.navbar-custom` (topbar, chỉ hiện tên user trên nền gradient xanh) | 60px |
+| `.content-page { padding-top }` (chừa chỗ cho topbar cố định) | 60–70px |
+| `.container.mt-3` của chính trang | 16px |
+| **Tổng** | **~136px** đẩy tờ giấy xuống |
+
+Đừng bù trừ bằng `margin-top: -70px` ở từng màn — vỏ ứng dụng vẫn render, vẫn chiếm DOM và vẫn
+lộ ra khi cuộn. Bỏ hẳn layout mới đúng.
+
+### Bỏ topbar rồi VẪN còn một dải khác màu ở đầu trang?
+
+Đó là **margin collapsing**, không phải padding sót. Trang in mở đầu bằng `.container.mt-3`:
+`margin-top: 16px` của con **tràn ra ngoài** và đẩy cả layout xuống, để lộ nền `#f5f6f8`
+của `body`.
+
+`layouts/print.vue` chốt sẵn 2 lớp, màn dùng KHÔNG phải khai gì thêm:
+
+```scss
+.print-layout {
+    min-height: 100vh;
+    background: #eee;     /* nền quanh giấy, chuẩn chung mọi màn in - xem mục 2c */
+    display: flow-root;   /* tạo BFC -> margin của con nằm GỌN bên trong vùng xám */
+}
+
+/* Cuộn quá đáy (hiệu ứng nảy macOS) hoặc trang ngắn hơn màn hình thì nền body vẫn lộ */
+body:has(.print-layout) { background: #eee; }
+```
+
+⚠️ **KHÔNG dùng `overflow: auto`** để tạo BFC: trang in rất dài, nó đẻ ra thanh cuộn lồng nhau.
+⚠️ **KHÔNG đặt `background` lên `body` trần** trong style không scoped của layout — sẽ ăn sang
+mọi màn khác của ứng dụng.
+
+Tự kiểm: điểm `(giữa màn, y = 0)` phải là `.print-layout` (hoặc `.print-preview` của chính màn)
+và nền `rgb(238, 238, 238)` — ra `rgb(255, 255, 255)` là đang hở dải nền của lớp dưới.
+
+```js
+const el = document.elementFromPoint(innerWidth / 2, 0)
+el.className, getComputedStyle(el).backgroundColor   // 'print-layout', 'rgb(238, 238, 238)'
+```
+
+⚠️ **Cùng bẫy margin collapsing lặp lại ở CHÍNH màn in**: nếu `print.vue` bọc thêm một lớp
+(`.print-preview`) quanh `.container.mt-3` thì lớp đó cũng phải `display: flow-root`, không thì
+nó bị đẩy xuống 16px và hở một dải khác màu ngay đầu trang (đã dính thật ở 2 màn Kiểm tra bảo
+hành sửa chữa). Cũng KHÔNG dùng `overflow: auto` ở đây, vì lý do y hệt.
+
+⚠️ **Rà khi đụng vào màn in cũ**: phần lớn trang `print.vue` trong repo đang khai
+`default-sidebar` hoặc không khai layout (rơi về `default`) — **đều bị hở**. Sửa dần khi có dịp
+đụng vào màn đó, KHÔNG sửa đại trà (quy tắc chung của team).
+
+Cách tự kiểm nhanh trên trình duyệt:
+
+```js
+// đứng ở trang in, chạy trong console — cả 2 phải là false / 16
+!!document.querySelector('.navbar-custom')                              // false
+Math.round(document.querySelector('.print-preview').getBoundingClientRect().top)  // 16
+```
+
+---
+
+## 2c. KHUNG TỜ GIẤY ở màn xem trước — bắt buộc, ERP có sẵn (chốt 2026-08-19)
+
+Màn `print.vue` là bản **xem trước tờ giấy**, nên `#content` phải được vẽ thành một tờ A4 thật:
+đúng bề ngang khổ giấy, padding bằng lề `@page`, viền xám + bo góc + đổ bóng, căn giữa màn hình.
+Thiếu khung này thì nội dung trải hết bề ngang trình duyệt, người xem không biết chữ sẽ rơi vào
+đâu trên giấy — và trông lệch hẳn so với ERP.
+
+Thông số copy từ ERP (`resources/views/print.blade.php` và `print_landscape.blade.php`). Riêng
+**màu nền quanh giấy** thì ERP vênh nhau (bản dọc trắng, bản ngang `#eee`) — bên HRM thống nhất
+**nền XÁM `#eee` cho MỌI màn in, dọc lẫn ngang** (chốt 2026-08-20), lấy theo bản ngang của ERP:
+nền xám thì tờ giấy nổi hẳn lên, nền trắng thì giấy chỉ còn cái viền mờ, nhìn như trang web thường.
+
+**Màu nền đã nằm sẵn trong `layouts/print.vue` — màn in KHÔNG khai `background` riêng nữa.** Lớp
+bọc của màn (`.print-preview`) chỉ cần `min-height: 100vh` + `display: flow-root`.
+
+| | Khổ DỌC (1 phiếu) | Khổ NGANG (danh sách) |
+| --- | --- | --- |
+| `width` | `210mm` | `297mm` |
+| `padding` | `15mm 22mm 22mm 20mm` (bằng lề `@page`) | `15mm` |
+| Nền quanh giấy | `#eee` | `#eee` | ← do `layouts/print.vue` lo, **dùng CHUNG cho mọi màn in**
+| Viền / bo / bóng | `1px solid #d3d3d3` · `5px` · `0 0 5px rgba(0,0,0,.1)` | như bên cạnh |
+
+```scss
+/* Lớp bọc của màn: KHÔNG khai `background` (layout lo rồi), nhưng PHẢI có flow-root */
+.print-preview {
+    min-height: 100vh;
+    display: flow-root;
+}
+.print-preview #content {
+    width: 210mm;             /* 297mm nếu mẫu khổ ngang */
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;       /* căn giữa — KHÔNG dùng flex, xem bẫy dưới */
+    padding: 15mm 22mm 22mm 20mm;
+    border: 1px solid #d3d3d3;
+    border-radius: 5px;
+    background: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+/* Thanh công cụ rộng bằng tờ giấy để nút In thẳng MÉP PHẢI của giấy */
+.print-preview ::v-deep .print-toolbar {
+    width: 210mm;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+/* User tự Ctrl+P trên trang preview -> bỏ khung, giấy thật đã có lề của @page */
+@media print {
+    .print-preview #content {
+        width: 100%; padding: 0; border: 0; border-radius: 0; box-shadow: none;
+    }
+}
+```
+
+**Nút "In": `V2BaseButton primary size="sm"` như mọi nút chính khác, CĂN PHẢI thẳng mép phải tờ
+giấy.** Icon `ri-printer-line` 15px, hàng nút `d-flex align-items-center justify-content-end`;
+dòng trạng thái ("Đang tải…", lỗi) đặt `mr-auto` để bị đẩy sang trái, nút vẫn nằm sát mép phải.
+Đừng tự chế cỡ nút riêng cho màn in.
+
+```vue
+<div class="mb-1 no-print print-toolbar d-flex align-items-center justify-content-end" style="gap: 12px">
+    <span v-if="loading" class="mr-auto" style="color: #6b7280">Đang tải dữ liệu in...</span>
+    <V2BaseButton primary size="sm" class="no-print" :interactable="!loading && !!template" @click="printRequest">
+        <template #prefix><i class="ri-printer-line" style="font-size: 15px"></i></template>
+        In
+    </V2BaseButton>
+</div>
+```
+
+⚠️ **Đặt `width` cho thanh công cụ thì bám class RIÊNG (`.print-toolbar`), đừng bám `.no-print`** —
+class `no-print` nằm trên cả chính cái nút, nên `.no-print { width: 210mm }` kéo NÚT rộng bằng cả
+tờ giấy (đã dính thật: nút 794px).
+
+⚠️ **Đừng căn giữa bằng `display:flex; align-items:center` trên `.container`** — nó căn giữa
+**mọi** con, kể cả hàng nút "In", nút trôi ra giữa màn hình. Dùng `margin: 0 auto` cho từng khối.
+
+⚠️ Khung này **chỉ ở PREVIEW**. Cửa sổ in thật nhận style riêng qua `options.styles` của
+`$printContent` (scoped CSS không sang cửa sổ in) — đừng chép viền/bóng vào đó.
 
 ---
 
@@ -82,6 +240,45 @@ Kèm `<colgroup>` khai báo % độ rộng cột (tổng = 100%) ngay sau thẻ 
     </colgroup>
     ...
 </b-table-simple>
+```
+
+---
+
+## 3b. Khối KÝ TÊN — luôn ép rộng bằng thân phiếu
+
+Triệu chứng: `NGƯỜI YÊU CẦU · TRƯỞNG PHÒNG · PHÒNG NHẬN · BAN GIÁM ĐỐC` **dồn về bên trái**, ô
+cuối hụt hẳn so với mép phải của bảng dữ liệu phía trên.
+
+Nguyên nhân — 2 thứ cộng lại, đều nằm trong **mẫu in của ERP** (`report_templates`), không phải ở
+code màn:
+
+```html
+<table class="block no-border" style="width:827px">        <!-- (1) rộng CỨNG 827px -->
+  <tr><td style="width:20%">…</td> ×4                       <!-- (2) 4 × 20% = 80%, thiếu 20% -->
+```
+
+1. **`width:827px`** là khổ giấy của ERP. Thân phiếu để `width:100%` nên rộng theo khung
+   (đo thật: 1110px ở preview / 683px ở khổ in) → bảng ký ngắn hơn 283px, co về trái.
+2. Snippet ở mục 3 chỉ ép `table:not(.no-border) { width: 100% }`. Bảng ký **CÓ** `.no-border`
+   (để giấu viền) nên bị loại trừ — đây là chỗ dễ bỏ sót nhất.
+
+Fix, khai ở **CẢ 2 nơi** (`options.styles` cho cửa sổ in **và** `<style scoped>` cho bản xem trước
+— scoped CSS không sang cửa sổ in, xem mục 1):
+
+```css
+#content table.block { width: 100% !important; table-layout: fixed !important; }
+#content table.block > tbody > tr > td { width: auto !important; }
+```
+
+Dùng `width: auto` chứ **không** viết cứng `25%`: `table-layout: fixed` + `auto` cho các ô chia
+đều, đúng cả khi mẫu có 3 hay 5 cột ký.
+
+Tự kiểm bằng iframe khổ in (mục 7) — 3 con số phải khớp:
+
+```js
+sig.getBoundingClientRect().width === body.width        // bảng ký rộng bằng khung in
+data.every(w => w === body.width)                        // và bằng các bảng thân phiếu
+new Set(cells.map(c => Math.round(c.width))).size === 1  // các ô ký rộng bằng nhau
 ```
 
 ---
@@ -274,3 +471,4 @@ doc.close()
 | Mất logo letterhead (ảnh tĩnh vẫn OK) | `companies.header` là path tương đối / `ERP_URL` rỗng → `src` 404, bị `display:none` | Mục 4b — chuẩn hoá `companies.header` về URL tuyệt đối, không trả `''` |
 | Logo ra ĐÚNG ảnh nhưng SAI công ty | Lấy công ty người tạo / người đăng nhập thay vì `company_id` trên chứng từ | Mục 4b — `$bill->company_id` trước, người tạo chỉ là fallback |
 | Cột Ghi chú tự phình rộng | auto-layout ăn theo text dài | `table-layout: fixed` + `<colgroup>` % |
+| **Khối KÝ TÊN dồn về trái, hụt so với mép phải** | Mẫu ERP khai cứng `width:827px` cho bảng ký `class="block no-border"`; rule `table:not(.no-border)` KHÔNG với tới nó | `#content table.block { width:100% !important; table-layout:fixed !important }` + `td { width:auto !important }` (mục 3b) |
