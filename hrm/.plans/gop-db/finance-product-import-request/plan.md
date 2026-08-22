@@ -1043,3 +1043,40 @@ chọn được.
 làm dropdown bật lên → click vào ô ngay sau khi bấm × có thể chưa mở, click lần nữa là được.
 
 **Lợi ích ngoài màn này**: sửa cho MỌI màn có `allowClear` mà việc xoá làm ô select khác biến mất.
+
+---
+
+## Phase 15 — Bỏ tab preset + 2 nút mở sang ERP (2026-08-21)
+
+Yêu cầu user: 1 màn duy nhất ứng với `all` của ERP, nút duyệt hiện theo QUYỀN (mẫu: Phiếu thu /
+Phiếu chi của @khoipv); nút trỏ màn chưa port thì **vẫn hiện** và mở sang ERP, ẩn đi tester tưởng
+chưa làm.
+
+- [x] FE gỡ `V2BaseTabNavigation` + computed `presetTabs` + `handlePresetChange` + key `type`
+      trong bộ lọc; `handleReset` không phải giữ preset nữa; localStorage cũ còn `type` thì
+      `mergeKnownFilters()` tự bỏ (key không còn trong `initialStateForm`).
+- [x] BE **giữ nguyên** tham số `type` (link cũ / lối vào từ ERP vẫn chạy), chỉ đổi mặc định và
+      phạm vi nhánh mặc định.
+- [x] Không phải sửa phạm vi BE: `applyAllScope()` của màn này **đã** OR sẵn tập phiếu user có
+      quyền duyệt (`orWhereApprovable()`) từ đợt port — chỉ cập nhật docblock cho khỏi hiểu nhầm.
+- [x] Bật lại 2 nút ở màn Chi tiết: **Tạo đề nghị nhập kho** (`is_can_approve`) và **Tạo phiếu
+      nhập hàng** (`is_can_product_import`) — mở tab mới sang ERP kèm `?product_import_request_id=`,
+      icon `ri-external-link-line`, tooltip "Mở bên ERP (tab mới)".
+- [x] Helper dùng chung mới `utils/erp-link.js` — `erpUrl()` / `openErp()` + hằng `ERP_PATHS`
+      (`/admin/warehouse/warehouse_import_requests/create`, `/admin/warehouse/product_imports/create`,
+      tra từ `routes/web.php` của TanPhatDev). Chưa cấu hình `ERP_URL` thì báo lỗi, không mở nhầm
+      route HRM. Port xong 2 màn kia thì đổi `openErpScreen()` sang route HRM.
+- [ ] User verify trên dev: 4 vai duyệt (Kế toán kho / TP / BKS / BGĐ) đều thấy phiếu cần duyệt
+      trong danh sách chính khi lọc Trạng thái.
+
+### Checkpoint — Phase 15
+
+```text
+Vừa hoàn thành: bỏ tab ở màn danh sách; 2 nút trỏ ERP ở màn chi tiết + helper erp-link.
+Đang làm dở: không.
+Bước tiếp theo: user verify trên dev.
+Blocked: không.
+Verify: compile template + parse script 2 file .vue; đếm danh sách khi không gửi `type`
+(admin 12.113 phiếu). Ô lọc Trạng thái đã có đủ 4 mức chờ (Chờ duyệt / Chờ TP / Chờ BKS / Chờ BGĐ)
+nên thay được tab.
+```
