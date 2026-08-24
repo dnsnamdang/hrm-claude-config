@@ -392,6 +392,33 @@ nhắm vào bản ghi do chính mình tạo ra để test.
 
 ---
 
+## Phase 9 — Bỏ tab preset, gộp về 1 danh sách (2026-08-21)
+
+Cùng đợt với 2 màn hàng giữ / YC nhập hàng: 1 màn ứng với `all` của ERP, nút duyệt theo QUYỀN.
+
+- [x] FE gỡ `V2BaseTabNavigation` + computed `presetTabs` + `handlePresetChange` + key `type`
+      trong bộ lọc; `handleReset` không phải giữ preset nữa; localStorage cũ còn `type` thì
+      `mergeKnownFilters()` tự bỏ (key không còn trong `initialStateForm`).
+- [x] BE **giữ nguyên** tham số `type` (link cũ / lối vào từ ERP vẫn chạy), chỉ đổi mặc định và
+      phạm vi nhánh mặc định.
+- [x] `ProductImportDirectTransfer::searchByFilter()` — nhánh mặc định gọi `applyAllScope()`:
+      quyền xem theo cấp **HOẶC** phiếu Chờ duyệt cùng công ty khi là `Kế toán kho`.
+      `waiting_approve` giữ lại cho link cũ.
+- [ ] User verify trên dev bằng tài khoản Kế toán kho không phải Super admin.
+
+### Checkpoint — Phase 9
+
+```text
+Vừa hoàn thành: bỏ tab + vá phạm vi nhánh mặc định.
+Đang làm dở: không.
+Bước tiếp theo: user verify trên dev.
+Blocked: không.
+Verify: NV 256 (Kế toán kho, KHÔNG có quyền xem theo cấp) — trước đây nhánh `all` cho 0 phiếu,
+nay thấy đúng 1 phiếu Chờ duyệt của công ty ngay trên danh sách chính, không cần tab.
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 1. **Class cùng namespace thiếu `use`** — `php -l` không bắt, chỉ 500 lúc chạy. Quét cả 2 chiều.

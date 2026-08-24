@@ -9,6 +9,56 @@ Chuẩn hoá cách làm màn IN (`pages/**/print.vue`, `pages/**/_id/print.vue`)
 
 ---
 
+## 0. KHUÔN HIỂN THỊ CHUẨN của màn IN (chốt 2026-08-21) — copy nguyên, KHÔNG tự chế
+
+Màn mẫu: `pages/customer-care/warranty-repair-requests/_id/print.vue` (khổ DỌC) và
+`pages/customer-care/warranty-repair-handle-requests/print.vue` (khổ NGANG).
+Mọi màn in phải giống 3 điểm sau, không có ngoại lệ:
+
+1. **KHÔNG có menu / topbar** — khai `layout: 'print'` (`layouts/print.vue`). Dùng
+   `default-sidebar` thì mặt giấy bị đẩy xuống ~130px và hở dải xanh của topbar ở đầu trang.
+   Nền xám `#eee` quanh tờ giấy do layout lo — màn in **KHÔNG khai `background` riêng**.
+2. **Nút In nằm TRÊN tờ giấy, canh MÉP PHẢI của giấy** — thanh công cụ riêng `.print-toolbar`:
+   ```html
+   <div class="mb-1 no-print print-toolbar d-flex align-items-center justify-content-end" style="gap: 12px">
+       <V2BaseButton primary size="sm" class="no-print" :interactable="!loading && !!template" @click="printRequest">
+           <template #prefix><i class="ri-printer-line" style="font-size: 15px"></i></template>
+           In
+       </V2BaseButton>
+       <span v-if="loading" class="mr-auto" style="color: #6b7280">Đang tải dữ liệu in...</span>
+       <span v-if="loadError" class="mr-auto" style="color: #dc2626">{{ loadError }}</span>
+   </div>
+   ```
+   - Dùng `V2BaseButton` + icon Remix `ri-printer-line`. **CẤM** `<button class="btn btn-primary">`
+     và **CẤM** icon `fa fa-print` — hrm-client không nạp FontAwesome, ra ô vuông tofu.
+   - `V2BaseButton` không có prop `disabled` → dùng `:interactable`.
+   - Dòng trạng thái (Đang tải / lỗi) đặt `class="mr-auto"` để nằm bên TRÁI, nút vẫn sát mép phải.
+3. **Bản xem trước phải ra hình TỜ GIẤY** — `#content` nền trắng, rộng đúng khổ, viền xám + bo góc
+   + đổ bóng, canh giữa; `.print-toolbar` rộng bằng đúng tờ giấy để nút thẳng mép phải giấy:
+   ```scss
+   .print-preview { min-height: 100vh; display: flow-root; }   /* flow-root: chặn margin collapsing của .container.mt-3 */
+   .print-preview ::v-deep .container { max-width: 100%; }      /* .container-fluid nếu màn dùng fluid */
+   .print-preview ::v-deep .print-toolbar { width: 210mm; max-width: 100%; margin-left: auto; margin-right: auto; }
+   .print-preview #content {
+       width: 210mm; max-width: 100%; margin-left: auto; margin-right: auto;
+       padding: 15mm 22mm 22mm 20mm;   /* khổ NGANG: width 297mm, padding 15mm */
+       border: 1px solid #d3d3d3; border-radius: 5px; background: #fff;
+       box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); box-sizing: border-box;
+   }
+   @media print { .print-preview #content { width: 100%; padding: 0; border: 0; border-radius: 0; box-shadow: none; } }
+   ```
+   ⚠️ Bám class `.print-toolbar`, **KHÔNG** đặt `width` theo `.no-print` — class đó nằm trên cả cái
+   nút, nút sẽ bị kéo rộng bằng cả tờ giấy.
+   ⚠️ Màn nào đã có sẵn khối `#content` trong `::v-deep { ... }` thì rule `@media print` reset khung
+   phải đặt **SAU** khối đó (cùng độ ưu tiên id, rule đứng sau mới thắng).
+4. `head()` khai `link: [{ rel: 'stylesheet', href: '/css/print-app.css' }]` — **KHÔNG** khai
+   `/css/pdf.css` (hrm-client không có file này, khai vào là 404).
+
+> Đã áp cho 13 màn ERP→HRM ngày 2026-08-21 (lỗi thiết bị, DM dịch vụ SC, DM tài khoản, YC nhập
+> hàng, chuyển hàng nhập thẳng, nhóm hàng giữ). Màn in mới **bắt buộc** copy khuôn này.
+
+---
+
 ## 1. Cơ chế in — HIỂU cái này trước, mọi lỗi bắt nguồn từ đây
 
 Nút In gọi `this.$printContent(options)` — plugin `hrm-client/plugins/print-content.js`:
