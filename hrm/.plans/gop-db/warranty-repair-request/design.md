@@ -170,3 +170,10 @@ PHÒNG TIẾP NHẬN để họ xử lý — phòng đó chỉ có Từ chối /
 ("Xác nhận lưu và gửi / Bạn đồng ý lưu và gửi?") nên KHÔNG phải sửa component dùng chung.
 Cả 3 chứng từ của luồng dịch vụ nay dùng chung chữ này.
 `testcase.xlsx` và `Mô tả nghiệp vụ` đã sinh lại theo chữ mới; bản testcase ERP giữ nguyên.
+
+### Quyết định đã chốt — 2026-08-22
+**Ô "Số lượng cần thêm" (popup Thêm số lượng) chỉ nhận SỐ DƯƠNG.** ERP để rule `numeric|not_in:0`
+nên nhập `-2` là trừ bớt số lượng; HRM cố ý KHÔNG theo: nút tên "Thêm số lượng" mà trừ được là cửa
+hậu dễ làm lệch số lượng ngoài ý muốn, và ERP không có màn nào ghi nhận thao tác trừ đó. Muốn giảm
+thì sửa/xoá bản ghi thiết bị ở màn Khách hàng. Đây là điểm lệch ERP DUY NHẤT còn cố ý giữ ở khu vực
+"Thêm trang thiết bị của khách hàng".

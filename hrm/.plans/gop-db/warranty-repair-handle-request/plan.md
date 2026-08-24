@@ -312,3 +312,4 @@ KHÔNG phải sửa component dùng chung.
 (5 chỗ) theo chữ mới. Bản testcase ERP giữ nguyên vì ERP không đổi.
 Đã kiểm trên giao diện: nút và popup ra đúng chữ; bấm Hủy nên không đổi trạng thái phiếu thật.
 Blocked:
+- [x] Sửa focus ô tìm của select CHỌN NHIỀU (cột Nguyên nhân): trước đây focus rơi vào ô inline trong khung tag thay vì ô tìm trong dropdown — sửa ở `utils/select2-focus-search.js` (ưu tiên ô trong dropdown), quy ước ghi ở skill `select-and-input-state`

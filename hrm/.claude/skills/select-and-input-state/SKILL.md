@@ -212,3 +212,25 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Select đi qua wrapper tự khai `templateResult` → đã tự gắn `LOCKED_OPTION_PREFIX`
 - [ ] Ô disabled: nền `#f1f5f9`, chữ `#475569`, không `opacity`, không bấm được (kể cả ô dựng bằng `<div>`)
 - [ ] Focus ô nhập: không viền xanh, không quầng sáng
+
+## Select chọn NHIỀU có tới 2 ô tìm — phải focus ô TRONG DROPDOWN
+
+Select2 khi `multiple: true` vốn chỉ có ô gõ **inline** nằm lẫn trong khung tag. Dự án bật thêm ô
+tìm trong dropdown cho giống select chọn 1 (`utils/select2DropdownSearch.js` + class
+`v2-select--dropdown-search`), nên lúc mở dropdown trong DOM **tồn tại đồng thời 2 ô** cùng class
+`select2-search__field`.
+
+Ô inline đứng TRƯỚC trong DOM ⇒ `document.querySelector('.select2-container--open .select2-search__field')`
+luôn vớ phải nó. Hậu quả (Redmine #11170 mục 4, phát hiện lại 2026-08-22 ở cột "Nguyên nhân" màn
+Sửa phiếu xử lý yêu cầu): người dùng thấy con trỏ nhấp nháy ở ô tìm trong dropdown nhưng gõ thì chữ
+chạy vào ô inline — nhìn như "chưa sửa".
+
+`utils/select2-focus-search.js` đã xử lý: **tìm ô trong dropdown trước, không có mới lấy ô inline**.
+Nơi gọi (`v-select2-focus`, `V2BaseSelect`, `V2BaseSelectInModal`, `V2BaseSelectRemote`) KHÔNG cần
+truyền selector nữa.
+
+Tự kiểm — mở dropdown rồi chạy trong Console, phải ra `true`:
+
+```js
+document.activeElement === document.querySelector('.select2-dropdown .select2-search__field')
+```
