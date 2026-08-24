@@ -211,6 +211,8 @@ Hai hành động giống nhau ở 2 màn khác nhau PHẢI dùng **cùng một 
 
 - Dùng `V2BaseIconButton` (chỉ icon, không text) — chi tiết đầy đủ ở skill `list-page` mục "Cột Hành động"
 - **KHÔNG còn nút Xem**: tên bản ghi ở cột đầu là link vào màn chi tiết
+- **KHÔNG có "Hủy phiếu" / "Không duyệt"** ở danh sách — 2 hành động phủ quyết chỉ đặt ở màn chi
+  tiết (cần modal nhập lý do); riêng "Duyệt" vẫn giữ dạng điều hướng. Xem `list-page` mục 1
 - Thứ tự: **Sửa → Xoá (hoặc Khoá/Mở khoá nếu màn không có Xoá) → nút `⋮`** gom các hành động còn lại
 - Tối đa 3 nút/dòng; dựng bằng component dùng chung `V2BaseRowActions`, không tự xếp icon
 
@@ -284,3 +286,4 @@ Hai hành động giống nhau ở 2 màn khác nhau PHẢI dùng **cùng một 
 - [ ] Nút cùng variant đứng cạnh nhau đã phân biệt màu bằng `status` (mục 2b); nhóm nút CÙNG bản chất (3 nút Xuất) phải CÙNG màu
 - [ ] Chữ trên nút đúng bảng text chuẩn mục 4 (dấu kiểu mới: Xóa/Hủy/Khóa; nêu rõ đối tượng: Import Excel)
 - [ ] Table action dùng V2BaseIconButton qua `V2BaseRowActions`, thứ tự: Sửa → Xoá/Khoá → `⋮` (không còn nút Xem)
+- [ ] Cột hành động ở danh sách KHÔNG có "Hủy phiếu" / "Không duyệt" (chỉ có ở màn chi tiết)

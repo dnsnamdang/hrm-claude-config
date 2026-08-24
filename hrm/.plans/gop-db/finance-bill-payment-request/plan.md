@@ -4141,3 +4141,207 @@ gộp) trước đó ra tên bắt đầu bằng `" / "`.
 
 Chưa tự test trình duyệt (theo thoả thuận) — user tự xác nhận popup ⋮ → Lịch sử và khối Lịch sử ở
 màn chi tiết. Chưa commit.
+
+---
+
+## Phase — Bỏ "Không duyệt" khỏi màn danh sách (2026-08-24)
+
+Đồng bộ quy tắc mới ở `.claude/skills/list-page/SKILL.md` mục 1: "Hủy phiếu" / "Không duyệt" chỉ
+đặt ở màn CHI TIẾT (cần modal nhập lý do). Ở danh sách nó chỉ là link điều hướng.
+
+- [x] Xóa action `key: 'reject'` + `case 'reject'` trong
+      `pages/finance/bill-payment-requests/index.vue`, sửa comment. Giữ "Duyệt", không đụng chi tiết/BE.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: bỏ "Không duyệt" khỏi cột hành động màn danh sách Đề nghị thanh toán.
+Đang làm dở: không.
+Bước tiếp theo: user xác nhận trên trình duyệt; màn chi tiết vẫn có "Không duyệt" + modal lý do.
+Chưa kiểm chứng bằng mắt: chỉ parse template + script.
+Blocked: không.
+
+---
+
+## Phase — Bổ sung cột "Số tiền chi" ở bảng chi tiết màn xem (2026-08-24)
+
+**Bug:** Màn chi tiết phiếu đề nghị thanh toán thiếu cột **Số tiền chi** ở bảng Chi tiết — thấy rõ
+nhất khi phiếu đã sang trạng thái 8 "Duyệt phiếu chi" (số tiền thực chi đã có nhưng không hiện).
+Plan Task 7.1 Bước 2 có ghi cột này nhưng lúc code chỉ làm 3 cột duyệt.
+
+**Nguồn số liệu (port ERP `BillPaymentRequest::getDataForEdit()` :472-495):** lấy từ chứng từ chi
+gắn với phiếu — **giấy uỷ nhiệm chi trước, phiếu chi sau** — cột `payment_money_approve` /
+`payment_money_approve_exchange`. ERP ghép theo **thứ tự dòng**; HRM có sẵn khoá
+`bill_payment_request_detail_id` nên ghép theo id, **1.289/3.311** dòng `bill_payment_details` cũ
+để trống khoá này (đều là phiếu chi lập tay, không sinh từ đề nghị) nên vẫn giữ nhánh dự phòng
+ghép theo thứ tự cho khớp ERP.
+
+- [x] **BE-1** `Entities/BillPaymentRequest/BillPaymentRequest.php` — thêm quan hệ `billPayment()`
+      và `billPaymentAuthorization()` (`hasOne` theo `bill_payment_request_id`).
+- [x] **BE-2** `Services/BillPaymentRequestService::findForShow()` — eager-load 2 quan hệ + `details`.
+- [x] **BE-3** `Transformers/.../BillPaymentRequestDetailResource` — map `money_approve` /
+      `money_approve_exchange` cho từng dòng (`null` khi chưa có chứng từ chi) + `total_money_approve`.
+- [x] **FE-1** `components/BillPaymentRequestDetailTable.vue` — thêm cột thứ 4 "Số tiền chi" vào
+      `approvalColumns` (chỉ đọc, in `_` khi chưa có — đúng ERP), cộng vào dòng Tổng cộng.
+- [x] **FE-2** `components/BillPaymentRequestForm.vue` — `mapDetail()` mang theo 2 khoá mới.
+- [x] **Verify** đọc dữ liệu thật 3 phiếu status 8 (1 phiếu qua uỷ nhiệm chi, 2 phiếu qua phiếu chi)
+      + compile template/script FE.
+
+**Lỗi bắt được lúc verify (đã sửa):** bản đầu quên đưa `$approveByDetail` vào `use (...)` của
+closure `details->map()` → mọi dòng trả `money_approve = null` trong khi `total_money_approve` vẫn
+đúng. Đọc dữ liệu thật mới lộ; chỉ đọc code thì không thấy.
+
+- [x] **BE-4** Gom hàm ghép số thực chi thành `BillPaymentRequestService::moneyApproveByDetail()`
+      (dùng chung cho màn chi tiết / màn in / Excel — 3 đầu ra không được lệch số).
+- [x] **BE-5** `BillPaymentRequestPrintResource` — thêm `money_approve` từng dòng + `totals.money_approve`.
+      **Không** có cờ `show_*` như 3 cột duyệt: ERP luôn in cột này, chưa có chứng từ chi thì in `_`.
+- [x] **BE-6** `BillPaymentRequestService::exportData()` — bỏ giá trị `'_'` hard-code ("màn Phiếu chi
+      chưa port" — nay đã port), đổi tiêu đề cột `Số tiền duyệt` → **`Số tiền chi`** cho đúng ERP.
+- [x] **FE-3** `_id/print.vue` — thêm cột "Số tiền chi" (`dash: true`) + cộng vào dòng Tổng cộng.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: cột "Số tiền chi" ở bảng chi tiết màn xem — BE trả `money_approve` /
+`money_approve_exchange` / `total_money_approve`, FE thêm cột thứ 4 (chỉ đọc, in `_` khi chưa có)
++ cộng vào dòng Tổng cộng.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt xác nhận 1 phiếu trạng thái "Duyệt phiếu chi".
+Chưa kiểm chứng bằng mắt: chỉ verify qua Resource trên dữ liệu thật + compile template/script.
+Bổ sung cùng đợt (user chốt): **màn IN + file Excel** cũng đã có cột "Số tiền chi" — đối chiếu ERP
+thì cả 2 đầu ra bên đó đều có (`print()` và `export()` cùng gọi `getDataForEdit()` →
+`billPaymentRequestTable()` :1034), Excel ERP nhúng thẳng bảng HTML đó qua `$data['CHI_TIET']`.
+📌 Cột "Số tiền chi" của màn in KHÔNG theo cờ `show_*` như 3 cột duyệt — ERP luôn in, chưa có chứng
+từ chi thì `_`.
+📌 Bề rộng cột `<colgroup>` của màn in vốn đã > 100% trước đợt này (109% ở mẫu NCC tiền mặt), thêm
+cột thành 119%; `table-layout: fixed` co tỷ lệ nên không tràn mép phải, nhưng chưa đo bằng mắt.
+Blocked: không.
+
+---
+
+## Phase — Rà nút màn chi tiết theo skill button-convention (2026-08-24)
+
+User hỏi lại khi xem `/finance/bill-payment-requests/4075`. Đối chiếu
+`.claude/skills/button-convention/SKILL.md` — 5 chỗ lệch, đã sửa:
+
+| Chỗ | Trước | Sau | Luật |
+| --- | --- | --- | --- |
+| `ApproveActions.vue` | `TP Duyệt` · `KT Trưởng Duyệt` · `BGĐ Duyệt` | `Duyệt` (tên cấp xuống `title`) | mục 4.1 viết hoa chữ đầu; 4.2 text chuẩn `Duyệt` |
+| `ApproveActions.vue` | `KT công nợ duyệt` (4 từ) | `Duyệt` + `title` | mục 4.1 tối đa 3 từ |
+| Footer màn xem | `In phiếu` | `In` | 4.2 — in 1 bản ghi là `In` |
+| Footer màn xem | `Xuất Excel` (secondary info) | thêm `status="success"` | mục 2b — nhóm Xuất = xanh lá |
+| Footer + `RejectModal` | `Không duyệt` | `Từ chối` | 4.2 — `Không duyệt` nằm ở cột KHÔNG dùng |
+
+Kèm theo: tiêu đề modal `Không duyệt phiếu` → `Từ chối phiếu`, 2 toast của modal đổi theo;
+4 icon thiếu `style="font-size: 15px"` (In · Xuất Excel · Từ chối · Xóa) bổ sung cho khớp mục 6.
+
+- [x] Sửa `ApproveActions.vue` · `BillPaymentRequestForm.vue` · `RejectModal.vue`
+- [x] Verify compile template + script 3 file
+
+📌 GIỮ NGUYÊN (không phải lỗi nút): nhãn trường `Lý do không duyệt` ở khối Lịch sử duyệt, ô cùng
+tên trong modal và chữ trên bản in — đó là **tên trạng thái** `Không duyệt` (status 10) trong DB,
+không phải chữ trên nút.
+📌 Chưa rà: nút của các màn Tài chính khác. Màn Đề nghị **thu** tiền
+(`bill-income-requests`) đang còn nút `Không duyệt` y hệt — cùng lỗi, chưa đụng vì ngoài phạm vi.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: rà + sửa nút màn chi tiết Đề nghị thanh toán theo skill button-convention.
+Đang làm dở: không.
+Bước tiếp theo: user xác nhận trên trình duyệt (chữ nút + màu nút Xuất Excel).
+Chưa kiểm chứng bằng mắt: chỉ compile template/script.
+Blocked: không.
+
+---
+
+## Phase — Loại chi 12 + NCC nước ngoài không lấy được thông tin ngân hàng (2026-08-24)
+
+**Bug user báo:** màn tạo mới, loại chi **12** (CP vận chuyển NCC), chọn NCC **KORSOL**
+(`customers.id = 43163`) → khối "Thông tin ngân hàng" trắng trơn. Các loại chi khác vẫn lấy được.
+
+**Nguyên nhân gốc — nguồn dữ liệu, KHÔNG phải nhánh hiển thị.** `GET /party-banks` chỉ trả 2 nguồn
+cho khối trong nước: `customer_has_bank_accounts` (nguồn chính) rồi mấy cột cũ trên `customers`.
+NCC **nước ngoài** khai tài khoản ở bảng thứ 3 — **`supplier_banks`** — mà bảng này chỉ được nhánh
+hiển thị "NCC nước ngoài" của form dùng (2 select), nhánh đó lại chỉ bật ở **loại chi 1**.
+Đo trên KORSOL: `customer_has_bank_accounts` **0 dòng** · cột cũ **trống** · `supplier_banks`
+**1 dòng** (HANA BANK · `407 910 674 787 07` · swift `KOEXKRSE`) → loại 12 không nguồn nào có dữ liệu.
+
+**Hệ quả nặng hơn triệu chứng:** loại 12 + CK nằm trong `$needBankInland` → **Gửi duyệt** bắt buộc
+đủ 6 ô ngân hàng → phiếu vận chuyển cho NCC nước ngoài **không gửi duyệt được**, chỉ lưu nháp
+(kiểm chứng bằng Validator thật: chặn `bank_branch` + `bank_province_id` + `bank_province_name`).
+
+**Đối chiếu ERP:** ERP dính y hệt (`type_supplier` chỉ gồm loại 1 — `BillPaymentRequest.blade.php:103`;
+`addInfoSupplier()` nạp `supplier_banks` nhưng khối hiển thị nó lại `ng-if="type_supplier_transfer_foreign"`).
+Dữ liệu thật: 86 phiếu loại 12 đều là NCC trong nước (`customer_type` 1 và 2) nên chưa ai chạm tới.
+
+### Phương án — user chốt 2026-08-24
+
+Đã thử hướng "mở nhánh NCC nước ngoài cho loại 12" (2 select ngân hàng + swift/IBAN như loại 1) —
+**user bác**: giữ nguyên giao diện cũ (khối trong nước 5 ô), chỉ cần **lấy được thông tin ngân hàng
+của NCC ra**. Toàn bộ thay đổi hướng đó đã hoàn tác, FE hiện chỉ còn 2 khối comment ghi lại quyết
+định để người sau không "sửa nhầm lại".
+
+→ Sửa ở **nguồn dữ liệu (BE)**, FE không đổi hành vi.
+
+- [x] **BE-1** `BillPaymentRequestController::partyBanks()` — thêm **nguồn dự phòng thứ 3**:
+      khi `customer_has_bank_accounts` rỗng **và** 2 cột cũ trên `customers` cũng rỗng thì map
+      `supplier_banks` thành `accounts`. Chỉ chen vào khi cả 2 nguồn kia rỗng → **không đổi hành vi
+      của ca nào đang chạy**. Giữ nguyên id số của `supplier_banks` (FE so khớp bằng `Number(item.id)`),
+      không lẫn id vì nhánh này chỉ chạy khi bảng kia trống.
+      `bank_branch` / `bank_province_*` để `null`: `supplier_banks` không có 2 thông tin này
+      (`address` là địa chỉ ngân hàng, KHÔNG phải chi nhánh).
+- [x] **BE-2** `BillPaymentRequestStoreRequest` — nới **đúng ca này**: 3 ô Chi nhánh / Tỉnh-TP thôi
+      bắt buộc khi đối tượng nhận tiền chỉ có tài khoản ở `supplier_banks`
+      (helper `partyBankOnlyInSupplierBanks()`, điều kiện khớp TỪNG CHỮ với `partyBanks()`).
+      3 ô còn lại (số TK / tên TK / tên ngân hàng) **vẫn bắt buộc** vì nguồn nào cũng có.
+      `UpdateRequest` extends nên ăn theo.
+
+**Nhiều tài khoản thì sao (user hỏi):** dùng lại đúng cơ chế sẵn có của khối trong nước — BE map
+**toàn bộ** `supplier_banks` (không chỉ `is_main = 1`), FE hiện ô "Tài khoản ngân hàng" khi
+`accounts.length > 1` và điền sẵn dòng đầu (`orderByDesc('is_main')` nên ngân hàng chính đứng trước).
+Dữ liệu thật có **5 NCC** rơi vào nhánh dự phòng mà có >1 tài khoản: LUTIAN (3), GAOCHANG /
+SCHENCK-CN / MUTRA / SNAP-ON (2) — tất cả `customer_type = 3`.
+📌 Ghi chú dữ liệu: 2/3 dòng của LUTIAN là tài khoản "MẶT TRẬN TỔ QUỐC VIỆT NAM" (dữ liệu danh mục
+bẩn bên NCC) — dropdown sẽ hiện cả 2 dòng đó. Sửa thì sửa ở hồ sơ NCC, không phải ở màn này.
+
+### Verify đã chạy
+
+`php -l` sạch 2 file BE · FE không đổi hành vi (chỉ thêm comment), parse sạch bằng
+`vue-template-compiler` + `@babel/parser`.
+
+Gọi thẳng `partyBanks()` trên 4 hình dạng dữ liệu:
+
+| Đối tượng | accounts | 5 ô FE nhận được |
+| --- | --- | --- |
+| **KORSOL** (chỉ có `supplier_banks`) | **1** *(mới)* | `407 910 674 787 07` · KORSOL TRUE CARE · HANA BANK · — · — |
+| id 9122 (có `customer_has_bank_accounts`) | 1 | đủ 5 ô, có Chi nhánh + Thành phố *(không đổi)* |
+| id 60 (chỉ có cột cũ) | 0 → `info` | đủ 5 ô *(không đổi)* |
+| id 8 (không nguồn nào) | 0 | trống *(không đổi)* |
+
+Chạy Validator thật, 6 kịch bản:
+
+| Kịch bản | Kết quả |
+| --- | --- |
+| **Loại 12 + KORSOL, gửi duyệt** | **QUA** *(trước: chặn 3 ô)* |
+| Loại 12 + KORSOL nhưng trống cả 3 ô có sẵn | CHẶN `account_number` + `account_name` + `bank_name` |
+| Loại 12 + NCC trong nước, để trống | CHẶN 3 ô Chi nhánh/Tỉnh-TP *(không đổi)* |
+| Loại 2 + khách hàng, để trống | CHẶN 3 ô Chi nhánh/Tỉnh-TP *(không đổi)* |
+| Loại 1 + KORSOL (nhánh nước ngoài) | QUA *(không đổi)* |
+| Loại 12 + KORSOL, lưu nháp | QUA *(không đổi)* |
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: loại chi 12 chọn NCC nước ngoài đã đổ được tài khoản từ `supplier_banks` vào khối
+ngân hàng trong nước + nới đúng 3 ô mà nguồn đó không có, để Gửi duyệt không bị chặn chết.
+BE 2 file, FE 0 thay đổi hành vi, không migration.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt kiểm — (1) loại 12 + KORSOL: 3 ô Số TK / Tên TK / Ngân hàng tự
+điền, Chi nhánh + Thành phố trống · (2) gửi duyệt được · (3) NCC nhiều tài khoản (vd LUTIAN) hiện
+dropdown chọn · (4) loại 1/2/6 và loại 12 với NCC trong nước không đổi.
+Chưa kiểm chứng bằng mắt: toàn bộ phần UI — chỉ verify bằng gọi thẳng Controller + Validator thật.
+Blocked: không.
+
+📌 **Nợ ghi sổ (chưa làm, cần user quyết):**
+1. **Bản in** phiếu loại 12 + NCC nước ngoài sẽ thừa 3 dòng `Phí` / `IBAN Number` / `Swift Code`
+   toàn dấu `—`: `BillPaymentRequestPrintResource::isForeignSupplier()` xét theo `customers.customer_type`
+   **bất kể loại chi**, trong khi 3 giá trị đó chỉ được BE lưu ở nhánh loại 1. Sửa 1 dòng (thêm điều
+   kiện loại chi 1) là hết, chưa đụng vì ngoài phạm vi user yêu cầu. Hiện chưa có phiếu nào dính.
+2. **Mở lại phiếu NCC nước ngoài (loại 1) ở màn xem/sửa mất khối ngân hàng**: `loadPartyBanks()`
+   gọi `clearBankFields()` đầu hàm, nhánh nước ngoài KHÔNG tự điền lại (người dùng phải chọn dropdown)
+   → `bank_id` / swift / phí của phiếu bị xoá khỏi form. Lỗi có sẵn, chưa ai báo (chỉ 1 phiếu loại 1
+   NCC nước ngoài trên DB). Đã thử vá bằng tuỳ chọn `keepSavedBank` rồi **hoàn tác** cùng đợt bác
+   phương án A — cần user chốt có làm không.

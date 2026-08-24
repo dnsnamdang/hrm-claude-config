@@ -1080,3 +1080,52 @@ Verify: compile template + parse script 2 file .vue; đếm danh sách khi khôn
 (admin 12.113 phiếu). Ô lọc Trạng thái đã có đủ 4 mức chờ (Chờ duyệt / Chờ TP / Chờ BKS / Chờ BGĐ)
 nên thay được tab.
 ```
+
+---
+
+## Phase — Mặc định loại yêu cầu + Lưu nháp không bắt buộc trường (2026-08-24)
+
+User yêu cầu ở `/finance/product-import-requests/create` — **giống hệt đợt vừa làm cho màn Phiếu chi**
+(`.plans/gop-db/finance-bill-payment/plan.md`, cùng ngày):
+
+1. Vào màn là **chọn sẵn 1 loại yêu cầu**, ô đó **chỉ cho ĐỔI sang loại khác, không cho xóa trắng**.
+2. **Lưu nháp thì bỏ validate** — chỉ cần có loại yêu cầu.
+
+Màn này **không cần cờ `submit_after`** như màn Phiếu chi: FE đã gửi sẵn `status`
+(3 = Đang tạo · 2 = Chờ duyệt · 10 = Chờ ban kiểm soát duyệt), BE rẽ nhánh thẳng theo đó.
+
+- [x] **FE-1** `ProductImportRequestForm.vue` `mounted()` — nhánh TẠO đặt `form.type = 2`
+      ("Nhập hàng mua ngoài" — mục đầu `TYPE_DEFS`).
+- [x] **FE-2** Ô "Loại yêu cầu" đổi `:allowClear="true"` → `false` (đang bật tường minh).
+- [x] **BE-1** `ProductImportRequestRequest::rules()` — `status = 3` thì bỏ hết `required`, chỉ giữ
+      `type` + `status` (và các rule ĐỊNH DẠNG `in` / `exists` / `numeric` / `mimes`).
+- [x] **Verify** gọi thật qua HTTP kernel: lưu nháp chỉ có loại yêu cầu → 200; gửi duyệt thiếu
+      trường → 422; mở lại + lưu nháp lần 2 → 200. Bọc transaction rồi rollback.
+
+**Verify (HTTP kernel + JWT, bọc transaction rồi rollback — phiếu test `PYCNH-12231` không còn trong DB):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| Lưu nháp **chỉ có loại yêu cầu** (`type = 2`, `status = 3`) | **200**, sinh mã `PYCNH-12231` |
+| Mở lại phiếu nháp đó | 200 — `type = 2`, `status = 3` |
+| Lưu nháp **lần 2** trên chính phiếu đó | **200** |
+| Đổi sang **gửi duyệt** (`status = 2`) khi còn thiếu | **422** — `products` · `warehouse_id` · `source_id` · `transition_type`; phiếu **giữ nguyên status 3** |
+
+Không phải làm gì thêm ở tầng service như màn Phiếu chi:
+- Màn này **không có endpoint `submit` riêng** — đổi 3 → 2 chỉ qua `PUT` nên vẫn đi qua FormRequest,
+  không có đường lách. 4 route duyệt đều chặn theo trạng thái (`canApproveByManager()` đòi
+  `CHO_TP_DUYET`…) nên phiếu nháp không nhảy cóc sang duyệt được.
+- Các cột `NOT NULL` của `product_import_requests` (`code` · `status` · `type` · `created_by` ·
+  `department` · `employee_phone` · `employee_email` · `currency`) đều do **server** điền
+  (`fillCreatorInfo()` / `generateCode()`), không phải trường người dùng nhập → không dính lỗi
+  `Column cannot be null` như bảng `bill_payments`.
+
+FE: compile template + parse script — OK.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: mặc định loại yêu cầu "Nhập hàng mua ngoài" + bỏ nút xóa ở ô đó + lưu nháp chỉ cần
+loại yêu cầu.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/product-import-requests/create` xác nhận.
+Chưa kiểm chứng bằng mắt: chỉ compile FE; 4 luồng BE đã gọi thật.
+Blocked: không.

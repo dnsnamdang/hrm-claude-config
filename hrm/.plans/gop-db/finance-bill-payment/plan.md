@@ -2388,3 +2388,115 @@ Vừa hoàn thành: fix cột Khách hàng/NCC cho phiếu chi CHUYỂN KHOẢN 
 Đang làm dở: không.
 Bước tiếp theo: deploy `gop_db` lên hrm-crm rồi mở lại `/finance/bill-payments` xác nhận cột đã hiện.
 Blocked: không.
+
+---
+
+## Phase — Bỏ "Hủy phiếu" khỏi màn danh sách (2026-08-24)
+
+Đồng bộ quy tắc mới ở `.claude/skills/list-page/SKILL.md` mục 1 (chốt cùng ngày ở màn Phiếu thu):
+"Hủy phiếu" / "Không duyệt" chỉ đặt ở màn CHI TIẾT. Ở danh sách nó chỉ là link điều hướng.
+
+- [x] Xóa action `key: 'cancel'` + `case 'cancel'` trong `pages/finance/bill-payments/index.vue`,
+      sửa comment cho khớp. Giữ "Duyệt", không đụng màn chi tiết và BE.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: bỏ "Hủy phiếu" khỏi cột hành động màn danh sách Phiếu chi.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt xác nhận menu ⋮ không còn "Hủy phiếu"; màn chi tiết vẫn hủy được.
+Chưa kiểm chứng bằng mắt: chỉ parse template + script.
+Blocked: không.
+
+---
+
+## Phase — Mặc định loại chi + Lưu nháp không bắt buộc trường (2026-08-24)
+
+User yêu cầu ở `/finance/bill-payments/create`:
+1. Vào màn là **mặc định chọn sẵn "Chi trả nhà cung cấp"** (loại chi 1).
+2. **Lưu nháp thì không bắt validate gì cả** — hiện đang chặn ngay ở FE (`Người nhận` gắn
+   `required`) và ở BE (`BillPaymentStoreRequest` bắt buộc `type` · `account_has` · `receiver` ·
+   `details` + bộ trường theo nhánh, áp cho MỌI lần lưu).
+
+**Quyết định thiết kế:** phiếu chi luôn được tạo ở trạng thái NHÁP (`status` do server đặt, client
+không gửi), "Lưu và gửi duyệt" = 2 API tuần tự (`POST` rồi `POST /{id}/submit`). Nên FE gửi thêm cờ
+**`submit_after`** để BE biết lần lưu này có gửi duyệt ngay không:
+- `submit_after` falsy → **lưu nháp**: bỏ hết `required`, chỉ giữ rule ĐỊNH DẠNG (`in` / `exists` /
+  `numeric`) để không ghi rác xuống DB.
+- `submit_after = true` → giữ NGUYÊN bộ luật hiện tại, fail **trước khi** tạo phiếu (không đẻ ra
+  phiếu nháp rác rồi mới báo lỗi, cũng không tạo trùng khi bấm lại).
+
+Cờ này KHÔNG phải `status`: `status` vẫn do server đặt, và `BILL_COLUMNS_FROM_CLIENT` không có
+`submit_after` nên nó không thể lọt xuống DB.
+
+- [x] **FE-1** `BillPaymentForm.vue` `mounted()` — màn TẠO và chưa có phiếu đề nghị theo query thì
+      đặt `form.type = 1`. Đặt TRƯỚC `markFormPristine()` để không bị hỏi "chưa lưu" oan.
+- [x] **FE-2** `BillPaymentForm.vue` — bỏ `required` khỏi `v-validate` của `Người nhận` (giữ
+      `max:255`), đúng skill `form-validate` mục 1: FE chỉ gắn `required` cho ô Tên, required khác
+      do BE quyết theo trạng thái. Dấu `*` trên nhãn giữ nguyên (vẫn bắt buộc khi gửi duyệt).
+- [x] **FE-3** `buildPayload()` — gửi kèm `submit_after`.
+- [x] **BE-1** `BillPaymentStoreRequest` (Update kế thừa) — nhánh nháp bỏ hết `required`.
+- [x] **BE-2** `BillPaymentWriteService::submit()` — chốt chặn: phiếu nháp thiếu trường bắt buộc thì
+      **không cho gửi duyệt** (422). Không có bước này thì gọi thẳng `POST /{id}/submit` là lách được
+      toàn bộ luật vừa nới.
+- [x] **Verify** gọi thật 2 luồng bằng HTTP kernel: lưu nháp form gần như trống → 200; gửi duyệt
+      thiếu trường → 422 đúng câu lỗi; submit thẳng phiếu nháp thiếu trường → 422.
+
+**Verify (chạy thật qua HTTP kernel + JWT, bọc transaction rồi rollback — DB không còn dấu vết):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| `POST /bill-payments` với payload **rỗng** (`submit_after = 0`) | **200**, tạo phiếu nháp |
+| `POST /bill-payments` `submit_after = 1`, thiếu trường | **422** — `type` · `account_has` · `receiver` · `details` |
+| `POST /bill-payments/{id}/submit` gọi THẲNG trên phiếu nháp rỗng | **422** đủ 5 câu lỗi tiếng Việt, phiếu **giữ nguyên trạng thái 1** |
+
+FE: compile template + parse script `BillPaymentForm.vue` — OK.
+
+- [x] **FE-4** Ô "Loại chi" thêm `:allow-clear="false"` — bỏ nút × của select2, chỉ cho ĐỔI sang
+      loại khác chứ không xóa trắng (user yêu cầu 2026-08-24). Prop có sẵn trong `V2BaseSelect`
+      (mặc định `true`), không phải sửa component dùng chung.
+
+### Đợt 2 — nới `required` ở FormRequest vẫn CHƯA đủ (user báo lại 2026-08-24)
+
+Bấm Lưu nháp khi mới chỉ có loại chi vẫn hỏng. Bộ luật `required` chỉ là **lớp thứ nhất**; test
+đúng payload FE gửi mới lộ thêm 2 lớp chặn nữa nằm sâu hơn:
+
+| # | Chặn ở đâu | Triệu chứng | Cách xử lý |
+| --- | --- | --- | --- |
+| 1 | `BillPaymentWriteService::guardRequestLink()` — luật "nhánh A bắt buộc có đề nghị nguồn" | 422 `Bắt buộc chọn phiếu đề nghị thanh toán.` (dấu chấm cuối câu — khác câu của FormRequest, đó là dấu vết lần ra) | Thêm tham số `$requireRequest`; lưu nháp thì bỏ vế BẮT BUỘC NHẬP, **giữ nguyên** vế chống 2 phiếu cùng trỏ 1 đề nghị |
+| 2 | Chính bảng DB: `account_has` · `receiver` (và `account_dept` ở bảng chi tiết) là **NOT NULL không có mặc định** | 500 `Column 'account_has' cannot be null` | `draftSafeAttributes()` ghi **0 / chuỗi rỗng** khi lưu nháp |
+
+Chọn ghi 0 thay vì đổi cột sang nullable: `bill_payments` là **bảng dùng chung ERP+HRM**, đổi schema
+phải hỏi user trước. 0 không trùng id tài khoản nào (đo: 1.305/1.305 phiếu hiện có đều trỏ tài khoản
+thật), quan hệ `accountHas()` là `belongsTo` null-safe — không có JOIN nào ở cả HRM lẫn ERP nên màn
+danh sách không vỡ.
+
+Kèm 2 việc bắt buộc đi cùng số 0 đó, thiếu là đẻ bug mới:
+- `BillPaymentStoreRequest::prepareForValidation()` đưa `0` về `null` TRƯỚC khi validate — nếu không,
+  mở lại phiếu nháp rồi Lưu nháp lần nữa sẽ dính `exists:accounts,id` với đúng số 0
+  ("Tài khoản có không tồn tại"), tức không sửa nổi phiếu nháp của chính mình.
+- `BillPaymentDetailResource` trả `null` thay cho `0` để select ở FE hiện placeholder.
+
+- [x] **BE-3** `guardRequestLink()` nhận `$requireRequest`; `savingAsDraft()` chỉ nhận diện nháp khi
+      payload NÓI RÕ `submit_after = false` (đường gọi service nội bộ không gửi khóa này → vẫn chặt).
+- [x] **BE-4** `draftSafeAttributes()` + `account_dept ?? 0` trong `syncDetails()`.
+- [x] **BE-5** `prepareForValidation()` chuẩn hoá 0/'' → null.
+- [x] **BE-6** `BillPaymentDetailResource` trả null thay 0 cho `account_has` / `account_dept`.
+
+**Verify đợt 2 (HTTP kernel + JWT, transaction rồi rollback — DB vẫn 1.305 phiếu, 0 phiếu `account_has = 0`):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| Lưu nháp **chỉ có loại chi** | **200**, sinh mã `TPE.PC0826.00004` |
+| Mở lại phiếu nháp đó | 200, `account_has` trả `null` (không phải 0) |
+| Lưu nháp **lần 2** trên chính phiếu đó | **200** |
+| Lưu nháp có 1 dòng chi tiết **chưa chọn tài khoản nợ** | **200** |
+| Gửi duyệt phiếu nháp thiếu trường | **422** — `account_has` · `receiver` · `details` · `bill_payment_request_id` |
+| Lưu + gửi duyệt thiếu trường | **422** — cùng bộ lỗi |
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: mặc định loại chi "Chi trả nhà cung cấp" ở màn tạo + lưu nháp CHỈ CẦN loại chi
+(gỡ đủ 3 lớp chặn: FormRequest → guard service → cột NOT NULL) + bỏ nút xóa ở ô Loại chi.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payments/create` xác nhận loại chi chọn sẵn và bấm Lưu nháp
+với form trống.
+Chưa kiểm chứng bằng mắt: chỉ compile FE; 3 luồng BE đã gọi thật.
+Blocked: không.

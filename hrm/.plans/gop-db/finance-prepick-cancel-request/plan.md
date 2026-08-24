@@ -747,3 +747,24 @@ DROP TABLE bak_prepick_logs_20260815;
 | 8 | Bỏ 2 bộ lọc chết + 1 trường hiển thị chết ở màn phiếu hủy | Lỗi #10, #11 |
 | 9 | Không có nút "Thêm" rời ở danh sách phiếu hủy | Lỗi #9 (ERP trỏ nhầm sang màn Tạo yêu cầu nhập hàng) |
 | 10 | Nút Duyệt kèm hộp xác nhận nêu rõ "sẽ trừ tồn giữ, không hoàn tác được" | Thao tác không đảo ngược được |
+
+---
+
+## Phase — Bỏ "Không duyệt" khỏi màn danh sách (2026-08-24)
+
+Đồng bộ quy tắc mới ở `.claude/skills/list-page/SKILL.md` mục 1. ⚠️ Khác 2 màn phiếu thu/chi:
+ở đây "Không duyệt" mở `RejectModal` NGAY TẠI DANH SÁCH → bỏ nút thì gỡ luôn modal khỏi màn danh
+sách. Đã xác nhận màn chi tiết (`components/PrepickCancelRequestForm.vue` chế độ `show`) có sẵn
+nút "Không duyệt" ở `V2Footer` + `RejectModal` riêng nên không mất chức năng.
+
+- [x] Xóa action `key: 'reject'` + `case 'reject'` trong `pages/finance/prepick-cancel-requests/index.vue`
+- [x] Gỡ phần `RejectModal` chỉ còn phục vụ nút vừa bỏ: block template, import, khai `components`,
+      state `rejectItem`, handler `handleRejected`
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: bỏ "Không duyệt" + gỡ `RejectModal` khỏi màn danh sách Yêu cầu hủy hàng giữ
+(file `components/RejectModal.vue` GIỮ NGUYÊN — màn chi tiết vẫn import).
+Đang làm dở: không.
+Bước tiếp theo: user xác nhận trên trình duyệt, đặc biệt luồng Không duyệt ở màn chi tiết.
+Chưa kiểm chứng bằng mắt: chỉ parse template + script.
+Blocked: không.

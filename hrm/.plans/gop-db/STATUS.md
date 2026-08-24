@@ -329,6 +329,31 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-24). Cả 18 phase đã
+  nghiệm thu xong. Phase 18: màn tạo/sửa `finance/bill-adjust-dept-requests/create` khi bấm **Lưu nháp**
+  chỉ bắt buộc **Loại phiếu**; Diễn giải / bảng chi tiết / tỷ giá / khách hàng chỉ bắt khi **Gửi duyệt**.
+  15 phase gốc + Phase 16 sửa
+  6 điểm màn danh sách sau nghiệm thu (Tùy chỉnh cột · 2 cột Ngày/Người cập nhật · 3 cột ngày
+  `dd/mm/yyyy HH:mm` · mở sort Mã phiếu + 3 cột ngày · đổi nhãn Ngày tạo/Người tạo · nút Excel xanh lá)
+  + Phase 17 viết lại `_id/print.vue` bám nguyên mẫu ERP (report_template 209, khổ 297mm, Times New Roman,
+  6 ô chữ ký; bù `pdf.css` trong `options.styles` vì `hrm-client/static/css/` không có).
+  BE 3 file + 1 blade · FE 2 file · không migration.
+  📌 Còn nợ: file Excel phiếu vẫn lệch ERP (chờ user chốt có đồng bộ không) · nút "Chọn nhanh hợp đồng" ·
+  SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*`.
+  Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
+
+- finance-bill-income-report (Phiếu báo có ERP → HRM) → @khoipv → .plans/gop-db/finance-bill-income-report/plan.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-24).
+  Mục tiêu: port `admin/income-expenditure/bill_income_report` sang HRM phân hệ Tài chính,
+  route `/finance/bill-income-reports` + `/summarize-money`.
+  Phạm vi: danh sách · tạo/sửa/xóa nháp · duyệt **kèm ghi bút toán sổ cái** · chi tiết + cờ "Không báo
+  tiền về" · 3 loại thu · Tổng hợp tiền về ngân hàng + xuất Excel chọn trường · Import Excel sao kê ·
+  Lịch sử thay đổi. **KHÔNG có thay đổi schema** (lịch sử dùng bảng chung `catalog_histories`).
+  Điểm đáng chú ý: bút toán do HRM sinh **khớp 100%** với bút toán ERP đã ghi (7 phiếu thật / 38 bút
+  toán / 24 cột denormalize). 3 quyền mới id 1539-1541 (guard `api`, tên trùng ERP).
+  Spec: `docs/superpowers/specs/gop-db/2026-08-24-finance-bill-income-report-design.md`.
+
 - finance-3-man-sua-theo-phan-hoi (2026-08-22) → @khoipv → **HOÀN THÀNH — user xác nhận xong**.
   Plan: `finance-bill-income-request` (8.8-8.11) · `finance-bill-income` (K, L, M) ·
   `finance-bill-payment-request` (5 task phụ) — sửa theo phản hồi trên 3 màn đã nghiệm thu.
@@ -414,17 +439,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   📌 Nợ kỹ thuật cố ý: nhánh `use_erp` / model `Tp*` vẫn đọc-ghi qua connection thừa (đã xử ở cut-erp-sync).
   Spec: docs/superpowers/specs/gop-db/2026-08-19-employee-create-bank-null-design.md | Tóm tắt: .plans/gop-db/employee-create-bank-null/design.md
 
-- finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). 15 phase gốc + Phase 16 sửa
-  6 điểm màn danh sách sau nghiệm thu (Tùy chỉnh cột · 2 cột Ngày/Người cập nhật · 3 cột ngày
-  `dd/mm/yyyy HH:mm` · mở sort Mã phiếu + 3 cột ngày · đổi nhãn Ngày tạo/Người tạo · nút Excel xanh lá)
-  + Phase 17 viết lại `_id/print.vue` bám nguyên mẫu ERP (report_template 209, khổ 297mm, Times New Roman,
-  6 ô chữ ký; bù `pdf.css` trong `options.styles` vì `hrm-client/static/css/` không có).
-  BE 3 file + 1 blade · FE 2 file · không migration.
-  📌 Còn nợ: file Excel phiếu vẫn lệch ERP (chờ user chốt có đồng bộ không) · nút "Chọn nhanh hợp đồng" ·
-  SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*`.
-  Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
-
 - finance-bill-income → @khoipv → .plans/gop-db/finance-bill-income/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-20). Port màn ERP
   `admin/income-expenditure/bill_incomes` (Phiếu thu tiền) sang HRM phân hệ Tài chính, 18/18 task:
@@ -465,6 +479,22 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   📌 Chưa làm: SRS / testcase / HDSD · chưa đối chiếu trực tiếp giao diện ERP.
   📌 Nợ ghi sổ (KHÔNG tự làm): `bill_payment_request_details` thiếu index `bill_payment_request_id`
   — bảng dùng chung ERP+HRM, muốn thêm phải hỏi user.
+  🔧 **Đang sửa tiếp (2026-08-24)**: bổ sung cột **"Số tiền chi"** cho bảng chi tiết màn xem (thiếu
+  từ đợt port — Task 7.1 Bước 2 có ghi nhưng chưa làm). BE đọc `payment_money_approve` sang uỷ nhiệm
+  chi / phiếu chi gắn với phiếu. Code xong, **chờ user test trình duyệt, chưa commit**.
+  Đã làm luôn cho **màn IN + file Excel** (đối chiếu ERP: cả 2 đầu ra bên đó đều có cột này);
+  tiêu đề cột Excel đổi `Số tiền duyệt` → `Số tiền chi` cho khớp ERP.
+  🔧 **Đang sửa tiếp (2026-08-24, đợt 2)**: bug user báo — màn tạo mới, **loại chi 12** (CP vận chuyển
+  NCC) chọn NCC **nước ngoài** (`customer_type = 3`, ca `KORSOL`) thì khối ngân hàng trắng trơn và
+  **không gửi duyệt được**. Nguyên nhân ở **nguồn dữ liệu**: `party-banks` chỉ đọc
+  `customer_has_bank_accounts` + cột cũ trên `customers`, còn tài khoản NCC nước ngoài nằm ở
+  **`supplier_banks`** — bảng này chỉ nhánh hiển thị "NCC nước ngoài" (loại chi 1) mới dùng. ERP dính y hệt.
+  **User chốt giữ nguyên giao diện cũ** (khối trong nước 5 ô), chỉ sửa BE: `partyBanks()` thêm nguồn
+  dự phòng `supplier_banks` khi 2 nguồn kia rỗng (map cả danh sách → NCC nhiều tài khoản vẫn có
+  dropdown chọn), `StoreRequest` nới đúng 3 ô Chi nhánh/Tỉnh-TP mà bảng đó không có.
+  BE 2 file · FE 0 thay đổi hành vi · không migration. Code xong, **chờ user test trình duyệt, chưa commit**.
+  📌 Nợ ghi sổ (cần user quyết): bản in loại 12 + NCC nước ngoài thừa 3 dòng Phí/IBAN/Swift toàn `—` ·
+  mở lại phiếu NCC nước ngoài loại 1 ở màn xem/sửa bị mất khối ngân hàng (lỗi có sẵn).
   Spec: docs/superpowers/specs/gop-db/2026-08-14-finance-bill-payment-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment-request/design.md
 
 - finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
