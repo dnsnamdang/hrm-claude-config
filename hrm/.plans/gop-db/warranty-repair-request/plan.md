@@ -902,3 +902,33 @@ chữa - bảo hành.docx` (5 chỗ). Bản testcase ERP giữ nguyên vì ERP k
 Đã kiểm trên giao diện: nút và popup ra đúng chữ; bấm Hủy nên phiếu thật không đổi trạng thái.
 Cả 3 chứng từ của luồng dịch vụ nay dùng chung chữ "Lưu và gửi".
 Blocked:
+
+## Bổ sung — "Thêm trang thiết bị của khách hàng" bám đúng ERP (2026-08-22)
+Phát hiện: ERP đi 2 BƯỚC (popup chọn loại thiết bị → popup nhập), HRM đang mở thẳng 1 popup NCC khác.
+- [x] FE: popup `ChooseEquipmentTypeModal` — select Loại thiết bị (Thiết bị Tân Phát CC / Thiết bị mua NCC khác) + nút Chọn (ERP `#addProductCustomer`)
+- [x] FE: popup `AddOldEquipmentModal` — Trang thiết bị*, Ngày xuất hàng, Số lượng*, Địa điểm sử dụng* (ERP `#oldEquipment`), tiêu đề đổi theo chế độ Thêm mới / Cập nhật thông tin thiết bị
+- [x] FE: nút "Thêm số lượng" hiện cả ở dòng hàng Tân Phát (ERP không ẩn)
+- [x] BE: `addQuantity` với dòng Tân Phát chưa có bản ghi thiết bị cũ → trả "Cần cập nhật thông tin thiết bị!" kèm dữ liệu để FE mở popup cập nhật (ERP `updateProductCustomer`)
+- [x] BE: route `equipment/old` về quyền "Xem khách hàng" như ERP
+- [x] FE+BE: bảng danh mục thiết bị bổ sung cột "Số BBBGNT hoặc BBXNCV" (join biên bản bàn giao nghiệm thu, 2 nhánh phiếu xuất + mượn/bán như ERP)
+- [x] FE: hàng "công ty không bán" để TRỐNG Thương hiệu / Model / Số BBBGNT ở cả bảng lẫn popup Thêm số lượng (đúng `product_no_sale_name ? '' : ...` của ERP)
+- [x] Chốt: ô "Số lượng cần thêm" giữ chỉ-số-dương, KHÔNG theo ERP (xem design.md)
+
+## Test lại 9 task Redmine (2026-08-22)
+- [x] #11162 (9 mục): icon popup xác nhận · placeholder 3 trường · nút Xem trước file · phân trang · Xem thêm tên thiết bị · bỏ Trạng thái ở chi tiết · bỏ "I –"/"II –" · dấu × ô tìm · ẩn Chọn tệp khi phiếu Chờ xử lý
+- [x] #11163: sửa bảng I ghi lịch sử ("Thiết bị thêm mới" / "Thiết bị sửa thông tin" cũ→mới)
+- [x] #11164: Thêm số lượng + Thêm trang thiết bị (2 bước như ERP)
+- [x] #11165: user không quyền — danh sách rỗng, xem phiếu người khác 403, bản in 0 dòng, vẫn tự tạo được (đúng ERP)
+- [x] #11166: popup Chuyển phòng hiện "Phòng tiếp nhận hiện tại"
+- [x] #11168: "Lưu và gửi" không sinh dòng lịch sử trạng thái tự động
+- [x] #11170 (4 mục): Xem thêm/Thu gọn · dấu × ô tìm · logo Tân Phát trong Excel · con trỏ vào ô tìm của dropdown
+- [x] #11171: bỏ dấu — ở ô trống, rà 22 màn "Hoàn thành" (143 chỗ) — xem design.md
+- [x] #11172: tải tệp ở phiếu xử lý yêu cầu (hiện tên + Xem trước / Tải xuống / Xóa)
+
+Sửa thêm khi test: `V2BaseButton` không có prop `disabled` (phải dùng `interactable`) — 75 chỗ toàn repo còn sai, mới sửa trong màn này.
+
+## Bộ lọc + letterhead Excel (2026-08-22)
+- [x] Ô lọc GÕ TAY không tự tìm khi đang gõ — chờ Enter / nút Tìm kiếm; ô CHỌN giữ nếp đổi-là-tìm. Helper dùng chung `utils/filterAutoSearch.js`, áp cho 2 màn YCSCBH + Phiếu xử lý; quy ước ghi ở `list-page` mục 3b-4
+- [x] Letterhead file Excel kéo ngang đúng bề rộng bảng (suy từ `widths`), cao theo tỉ lệ ảnh gốc đọc từ PNG; quy ước ghi ở `export-excel` mục 4b
+- [x] #11168 (hiểu lại cho đúng): đổi trạng thái khi lưu phải ghi dòng RIÊNG nhóm "Thay đổi trạng thái", không gộp vào "Thay đổi thông tin" — sửa cả 2 service (YCSCBH + Phiếu xử lý), quy ước ghi ở skill `entity-history` mục 3a
+- [x] #11165 (sửa lại): BỎ việc ẩn nút Xuất Excel / In danh sách theo quyền xem theo cấp — ai cũng in/xuất được đúng phần dữ liệu mình xem được (áp cho 3 màn: YCSCBH, Phiếu xử lý, Phiếu CCTT); quy ước ghi ở `list-page` mục 3b-5

@@ -110,3 +110,55 @@ Super admin) · người lập Phiếu yêu cầu (235) · nhân viên KHÔNG qu
 
 Dữ liệu thử đã dọn sạch; 3 chứng từ trở lại đúng trạng thái ban đầu.
 Blocked:
+
+## Popup chọn hàng hoá — chế độ chọn một
+- [x] `ProductSearchModal` thêm prop `multiple` (mặc định `true`, giữ nguyên các màn cũ); `false` → ẩn cột checkbox + nút "Thêm N hàng hoá", bấm dòng là chọn xong
+- [x] Popup "Thêm mới trang thiết bị" (chứng từ 1) và ô hàng hoá tương đương (chứng từ 2) dùng `:multiple="false"`
+
+## Rà màn CCTT theo quy tắc mới + lỗi phát hiện khi rà (2026-08-22)
+- [x] Lịch sử: bỏ track cột `status`, thêm `logStatusChanged()` → đổi trạng thái ra dòng riêng "Thay đổi trạng thái" (entity-history §3a)
+- [x] Ô lọc gõ tay chờ Enter/nút Tìm kiếm (`ignoredFields` computed + `textFilterKeys`)
+- [x] `:disabled` trên V2BaseButton → `:interactable` (không có tác dụng)
+- [x] Thêm `$safeLoadingStart/Finish` cho mọi lệnh ghi (lưu, xoá ở cả list lẫn form, từ chối); đổi `$nuxt.$loading` → helper an toàn
+- [x] Nút Xuất Excel / In danh sách không ẩn theo quyền xem
+- [x] **Khối "Điều khoản báo giá" làm SAI ERP** — `quotation_term` là ID MẪU điều khoản (bảng `quotation_terms` type=3) chứ không phải số ngày hiệu lực; `footer` là HTML phải dùng CKEditor. Đã sửa: select mẫu ở `#actions` của khối + CKEditor + đổi mẫu đổ `content` (đúng `changeFooter()` của ERP); màn xem render HTML
+- [x] **Xuất Excel treo ~57s** — `canCreateQuotation()` bắn 4+ truy vấn/dòng và bị gọi 2 lần/dòng (N+1). Đã nhớ kết quả trong bản ghi + tắt tính cờ `is_can_*` khi xuất file → 2.000 dòng còn **0,41s**
+- [x] Điều khoản báo giá dùng `CompactReviewEditor` (CKEditor 4 dùng chung, `remove-buttons=""` → 43 nút / 10 nhóm như màn Báo giá), KHÔNG dùng CKEditor 5 lẻ
+- [x] Biến `{{VAT_NOTE}}` được thay bằng câu thật ở CẢ màn xem (computed `footerDisplay`) lẫn bản in (BE thêm biến `VAT_NOTE` cho `fillReport`)
+- [x] Popup "Chọn dịch vụ sửa chữa" nới 720px → 1100px
+- [x] `V2BasePagination` đồng bộ với phân trang màn danh sách (12px `#6b7280`, en dash) — quy ước ghi ở `list-page` mục 3b-6, 3b-7
+
+## Test trọn luồng 3 chứng từ trên 4 tài khoản (2026-08-22)
+Tài khoản dựng riêng: A không quyền · B phòng tiếp nhận (xử lý) · C lập CCTT · D xem tổng công ty.
+- [x] A tạo phiếu YCSCBH: danh sách rỗng lúc đầu → tạo được → chỉ mình thấy; B/C/D KHÔNG thấy phiếu nháp
+- [x] Gửi thiếu dữ liệu → 422 đúng 6 trường; gửi đủ → Chờ xử lý; lịch sử 2 dòng (thông tin + trạng thái)
+- [x] B/C thấy phiếu sau khi gửi (nhánh phòng tiếp nhận), D thấy theo tổng công ty; A không thao tác được
+- [x] A thử Từ chối → 403; B từ chối thiếu lý do → 422; có lý do → về Đang tạo, lịch sử ghi kèm lý do
+- [x] Chuyển phòng tiếp nhận sang phòng khác → B mất quyền xem luôn (403); D không có quyền xử lý → 403
+- [x] B lập Phiếu xử lý: A/C bị chặn prefill; gửi thiếu Nguyên nhân/Hành động → 422; gửi đủ → YCSCBH=Đã xử lý, PXL=Chờ CCTT
+- [x] C lập CCTT: A/B bị chặn; tạo → gửi → YCSCBH=Đã CCTT, PXL=5, CCTT=Chờ làm báo giá; lập lần 2 trên cùng PXL → 403
+- [x] A (người lập phiếu yêu cầu) Từ chối tiếp nhận CCTT → cả 3 phiếu lùi trạng thái, lịch sử ghi lý do
+- [x] Xoá CCTT → chuỗi phiếu quay lại Chờ CCTT, lập lại được; A xoá phiếu người khác → 403; xoá phiếu đã gửi → 400
+- [x] Bộ lọc CCTT (từ khoá / trạng thái / khách hàng / khoảng ngày) đúng số liệu; phiếu nháp người khác không lọt
+- [x] C không có quyền xem giá vốn → bảng KHÔNG hiện cột giá vốn (fail-closed)
+- [x] UI bằng chính tài khoản C: tạo/sửa/gửi/xem/in/xuất Excel/lịch sử — 0 lỗi console; Excel chỉ ra phiếu của mình + có letterhead
+- [x] Bản in khớp số tiền trên màn (135.082.747), biến `{{VAT_NOTE}}` đã thay, tiền bằng chữ đúng
+Dữ liệu test đã xoá sạch; 4 role test đã gỡ.
+
+## Thanh cuộn ngang trên+dưới — rà 3 luồng (2026-08-22)
+- [x] `V2BaseDataTable`: thanh trên có nhưng **bề rộng lạc hậu** (bảng 1320px / thanh 1140px) → thêm `ResizeObserver` (bảng + khung) và hook `updated()`. Áp cho MỌI màn danh sách toàn hệ thống
+- [x] Popup "Chọn hàng hóa áp dụng" (`ProductSearchModal`) và "Chọn dịch vụ sửa chữa" (`CostSearchModal`) chưa có thanh trên → bọc `V2BaseTableScroll`
+- [x] Đo lại: 3 màn danh sách + 6 bảng màn CCTT + form/chi tiết 2 màn kia + 2 popup — đều đủ 2 thanh, kéo thanh trên bảng chạy theo và ngược lại
+- [x] Quy ước bổ sung: `list-page` mục 3b-8 (thanh trên phải đồng bộ bề rộng, không chỉ "có mặt")
+
+## Bản in: popup + letterhead (2026-08-22)
+- [x] BE: 3 service in thiếu biến `{{HEADER}}` → bản in trống phần đầu. Thêm trait `PrintsCompanyLetterhead` (lấy theo `company_id` chứng từ; bản in danh sách lấy công ty người đăng nhập), áp cho cả 3 màn × (chi tiết + danh sách)
+- [x] FE: `components/print/ReportPrintPreviewModal.vue` + `utils/mixins/reportPrintPreviewMixin.js` — nút In mở POPUP thay vì tab `/print` mới; nút In nằm cạnh tiêu đề popup, in qua cửa sổ riêng, chờ ảnh letterhead tải xong
+- [x] Cỡ chữ bám bản in báo giá: văn bản 13px / bảng 10px; ép `font-size` inline của CKEditor (18px) về 13px
+- [x] Áp cho 6 đường in: 3 chứng từ + 3 danh sách; đo lại đều có letterhead, đúng 2 cỡ chữ, 0 lỗi console
+- [x] Quy ước: `print-page` mục 8 + 8a
+- [x] Gộp CSS xem trước + bản in về MỘT nguồn `utils/print/reportPrintStyle.js` (trước đó 2 khối riêng nên xem trước và in lệch nhau). Đo tự động: so `getComputedStyle` 17 thuộc tính từng phần tử giữa popup và trang in → **lệch 0**
+- [x] Tiêu đề phiếu 17px (trước bị rule ép cỡ chữ kéo xuống 10px), bảng bố cục 13px / bảng dữ liệu 10px
+- [x] Giảm khoảng trống: `line-height 1.25`, ẩn `p:empty`/`div:empty`/`br+br`, `p` margin 2px
+- [x] Chỗ ký: `markSignatureSpace()` gắn class cho dòng trống giữa chức danh và tên → cao 56px (trước 15px)
+- [x] Ẩn rác do tiện ích trình duyệt chèn (`chrome-extension://…`, `.ddict_btn`)

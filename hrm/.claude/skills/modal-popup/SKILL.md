@@ -371,3 +371,19 @@ File mẫu đang chạy: `pages/assign/quotations/components/QuotationProductSea
 - [ ] Nút phụ nằm trong slot `#header-actions`, không chiếm dòng riêng
 - [ ] Lọc nâng cao dùng grid `auto-fit`, không chia hàng cứng
 - [ ] **Đã ĐO số dòng bằng Playwright** ở cả 2 trạng thái nâng cao đóng/mở
+
+### Bẫy: slot trong modal bị RỖNG từ lần mở thứ hai
+
+`$slots` của Vue 2 **không phản ứng** khi bootstrap-vue dựng lại nội dung modal ở lần mở sau — nội
+dung modal bị huỷ lúc đóng, mở lại thì `this.$slots.x` rỗng dù template vẫn khai slot đó. Hậu quả
+thật đã gặp (2026-08-22): popup xác nhận dùng chung mở lần 2 trở đi thì nút **Xác nhận / Hủy mất
+icon** — vì `V2BaseButton` khai `v-if="$slots.prefix"`.
+
+Trong component đặt bên trong modal, luôn kiểm tra **cả hai**:
+
+```vue
+<div v-if="$slots.prefix || $scopedSlots.prefix">   <!-- ĐÚNG -->
+<div v-if="$slots.prefix">                          <!-- SAI: mất từ lần mở thứ 2 -->
+```
+
+Vue 2.6 gộp mọi slot vào `$scopedSlots`, và biến này được cập nhật đúng ở mỗi lần render.

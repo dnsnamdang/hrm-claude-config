@@ -522,3 +522,101 @@ doc.close()
 | Logo ra ĐÚNG ảnh nhưng SAI công ty | Lấy công ty người tạo / người đăng nhập thay vì `company_id` trên chứng từ | Mục 4b — `$bill->company_id` trước, người tạo chỉ là fallback |
 | Cột Ghi chú tự phình rộng | auto-layout ăn theo text dài | `table-layout: fixed` + `<colgroup>` % |
 | **Khối KÝ TÊN dồn về trái, hụt so với mép phải** | Mẫu ERP khai cứng `width:827px` cho bảng ký `class="block no-border"`; rule `table:not(.no-border)` KHÔNG với tới nó | `#content table.block { width:100% !important; table-layout:fixed !important }` + `td { width:auto !important }` (mục 3b) |
+
+## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22)
+
+Nút **In** ở màn danh sách / chi tiết mở **popup xem trước** ngay tại chỗ. KHÔNG `window.open()`
+sang trang `/print` nữa: mở tab mới làm mất ngữ cảnh đang xem, quay lại phải tải lại cả màn danh
+sách kèm bộ lọc. Khuôn gốc: popup xem trước của màn Báo giá (`/assign/quotations/{id}`).
+
+Bộ dùng chung — **chỉ cần khai báo, không viết lại**:
+
+| Lớp | Dùng cái gì |
+| --- | --- |
+| Popup + nút In + CSS khi in | `components/print/ReportPrintPreviewModal.vue` |
+| Nạp HTML từ BE, quản trạng thái | `utils/mixins/reportPrintPreviewMixin.js` |
+| Biến `{{HEADER}}` (letterhead) ở BE | trait `Modules/CustomerCare/Services/Concerns/PrintsCompanyLetterhead` |
+
+```js
+mixins: [reportPrintPreviewMixin],
+components: { ReportPrintPreviewModal },
+// khổ dọc (1 chứng từ):
+this.openPrintDetail('customer-care/wr-information-requests', item.id, 'Xem trước phiếu …')
+// khổ ngang (danh sách theo bộ lọc):
+this.openPrintList('customer-care/wr-information-requests', this.filters, 'Xem trước danh sách …')
+```
+
+```vue
+<ReportPrintPreviewModal
+    :show="printPreview.show" :html="printPreview.html" :loading="printPreview.loading"
+    :error="printPreview.error" :title="printPreview.title" :landscape="printPreview.landscape"
+    @close="printPreview.show = false" />
+```
+
+⚠️ Thẻ popup phải nằm **trong thẻ gốc của template**. Đặt sau `</div>` cuối là Vue báo
+"template should contain exactly one root element"; đặt nhầm xuống dưới `<style>` thì webpack ném
+`SassError: Invalid CSS after "}"` — cả 2 lỗi đều đã dính khi làm 3 màn CSKH.
+
+### 8a. MỘT nguồn CSS cho cả xem trước và bản in
+
+Xem trước và trang in **phải giống hệt nhau**. Muốn vậy chỉ được có MỘT nguồn CSS:
+`utils/print/reportPrintStyle.js` → `buildReportPrintCss(root)`, gọi với `.report-print-content`
+cho popup và `body` cho trang in. Component KHÔNG được có rule nội dung trong `<style>` của nó
+(chỉ style khung popup) — thêm vào đó là sinh nguồn thứ hai, sửa một bên quên bên kia là lệch
+(user đã bắt được: xem trước chữ thường mà in ra đậm).
+
+3 chỗ nhất định phải khai, nếu không 2 bên KHÔNG BAO GIỜ khớp:
+
+| Thuộc tính | Vì sao lệch |
+| --- | --- |
+| `text-align` | UA đặt `table { text-align: start }`, trang HRM đặt `left` → phải khai lại cho `table/tr/th/td` |
+| `line-height` | UA để `normal` cho bảng, trang HRM có sẵn giá trị khác → khai `line-height: inherit` |
+| mọi thuộc tính hình thức | trong popup còn cả bootstrap + CSS toàn cục → phải `!important` |
+
+⚠️ Khối CSS nằm trong **template literal** — TUYỆT ĐỐI không dùng dấu \` trong chú thích, một dấu
+là đứt chuỗi và hỏng cả file.
+
+**Cách tự kiểm (đã dùng để chốt)** — dựng iframe bằng đúng `printCss()` rồi so từng phần tử:
+
+```js
+const root = vm.$refs.printContent
+const f = document.createElement('iframe')
+f.style.cssText = `position:fixed;left:-9999px;width:${root.clientWidth}px;height:900px`
+document.body.appendChild(f)
+f.contentDocument.write('<html><head><style>'+vm.printCss()+'</style></head><body>'+root.innerHTML+'</body></html>')
+// so getComputedStyle từng phần tử của root vs iframe -> phải LỆCH 0
+```
+
+Bề rộng iframe phải bằng bề rộng vùng xem trước, nếu không `height` chênh và báo động giả.
+
+### 8b. Hình thức bản in — bám bản in báo giá
+
+- **Letterhead đầu trang**: mẫu in ERP nào cũng mở đầu bằng `<img src="{{HEADER}}">`. Service quên
+  truyền biến `HEADER` thì bản in **trống phần đầu, không có lỗi nào báo ra** — cả 3 màn CSKH đã
+  dính. Lấy ảnh theo `company_id` GHI TRÊN CHỨNG TỪ (bản in danh sách thì lấy công ty người đang
+  đăng nhập, xem mục 4b). Ảnh kéo ngang hết bề rộng giấy, giống dải đầu file Excel.
+- **Cỡ chữ**: văn bản `13px`, bảng `10px`, tiêu đề `h3 18px`, font `Times New Roman`.
+- **Nội dung soạn bằng CKEditor** (điều khoản báo giá) mang theo `font-size` inline, thường 18px,
+  in ra to gấp rưỡi phần còn lại → ép về 13px:
+  `div[style*="font-size"], span[style*="font-size"], p[style*="font-size"] { font-size: 13px !important }`
+- **In**: mở cửa sổ riêng rồi `print()`, KHÔNG `window.print()` trên trang HRM (dính sidebar/topbar).
+  Chờ ảnh letterhead `load` xong mới in, kèm lưới an toàn 3 giây.
+- `@page`: `A4 portrait` cho chứng từ, `A4 landscape` cho danh sách; lề `12mm 10mm`.
+- **Tiêu đề phiếu**: mẫu ERP không dùng `<h1>/<h3>` — tiêu đề là `<strong>` trong ô căn giữa của
+  bảng bố cục (`table.no-border`). Không khai riêng thì nó bị rule "ép cỡ chữ" kéo xuống 10px, đọc
+  rất bé. Cho `17px`.
+- **Bảng bố cục vs bảng dữ liệu**: `table.no-border` là bố cục (thông tin đầu phiếu, chữ ký) → chữ
+  13px, không viền; bảng còn lại là dữ liệu → 10px, có viền.
+- **Khoảng trắng**: mẫu ERP giãn dòng bằng `<p>` rỗng và `<br><br>` → ẩn `p:empty`, `div:empty`,
+  `br + br`; `p { margin: 0 0 2px }`; `line-height: 1.25`.
+- **Chỗ ký**: vùng ký của mẫu là 3 dòng *chức danh → dòng chỉ có `&nbsp;` → tên người*. Dòng giữa
+  chính là chỗ đặt bút nhưng chỉ cao 1 dòng chữ (~15px), in ra không đủ ký. CSS không chọn được
+  phần tử "chỉ chứa khoảng trắng" nên `markSignatureSpace(html)` gắn class `.signature-space` ngay
+  khi NHẬN HTML (không đợi Vue render — lúc html vừa về thì `loading` vẫn true, `$refs` chưa có),
+  rồi CSS nới lên `56px`. Popup và bản in dùng chung đúng chuỗi HTML đó.
+- **Rác của tiện ích trình duyệt**: ẩn `img[src^="chrome-extension"]`, `img[src^="moz-extension"]`,
+  `.ddict_btn` — chúng chèn vào DOM và lọt cả vào giấy.
+
+Tự kiểm: mở popup → thấy letterhead trải hết bề ngang, và chạy trong Console
+`new Set([...document.querySelectorAll('.report-print-content div,span,p,td,th')].map(e => getComputedStyle(e).fontSize))`
+chỉ ra **2 giá trị**: 13px và 10px.

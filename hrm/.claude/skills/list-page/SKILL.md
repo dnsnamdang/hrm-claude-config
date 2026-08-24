@@ -836,3 +836,113 @@ Hai ô chỉ giống nhau về nghiệp vụ nhưng độc lập dữ liệu th�
 Mặc định luôn là **5 / 10 / 20 / 50 / 100**. Đã đặt sẵn ở prop `pageSizeOptions` của `V2BaseDataTable` và `V2BasePagination` — màn danh sách **không cần truyền prop này**.
 
 Chỉ truyền `:page-size-options` khi thực sự cần khác, và phải có lý do rõ ràng — vd popup chọn hàng hoá / chọn KH dùng `[20, 50, 100]` vì popup cao cố định, chọn 5 dòng thì thừa chỗ trống.
+
+### 3b-3. Ô KHÔNG CÓ DỮ LIỆU thì để TRỐNG — không điền dấu gạch
+
+Ô rỗng trong bảng danh sách để **trống hẳn**. KHÔNG tự điền `—` / `–` / `-` / `N/A` / `(trống)`.
+
+```vue
+<span class="field-line">{{ item.name }}</span>              <!-- ĐÚNG -->
+<span class="field-line">{{ item.name || '—' }}</span>       <!-- SAI -->
+```
+
+Chốt 2026-08-22 (Redmine #11171) sau khi tester rà toàn hệ thống: dấu gạch làm bảng nhiễu và dễ bị
+đọc nhầm là một giá trị thật. Áp cho **mọi** cột, mọi màn — kể cả hàm định dạng (`formatPercent`,
+`formatMoney`, `formatNumberCell`…) đang trả `'—'` khi giá trị rỗng: sửa thành `''`.
+
+Đã rà và bỏ ở 22 màn danh sách (143 chỗ). Khi thêm màn mới, tự kiểm bằng:
+`grep -rn "|| '—'" pages/<màn>/` phải RỖNG.
+
+### 3b-4. Ô lọc GÕ TAY: chờ Enter / nút Tìm kiếm, KHÔNG tự tìm khi đang gõ
+
+Deep watcher trên `filters` (khuôn `TasksTab.vue`) làm màn tự tìm mỗi khi giá trị lọc đổi. Đúng
+với ô **CHỌN**, nhưng SAI với ô **GÕ TAY**: gõ "cầu nâng" là 8 lần đổi giá trị → 8 request, và
+danh sách nhảy loạn ngay từ ký tự đầu.
+
+Chốt 2026-08-22:
+
+| Loại ô | Hành vi |
+| --- | --- |
+| `select`, `date`, ô chọn do màn tự render (khách hàng, Công ty/Phòng ban…) | đổi là **tìm luôn** |
+| `text`, `number`, ô tìm nhanh | chờ **Enter** hoặc nút **Tìm kiếm** |
+
+Khai bằng helper dùng chung, KHÔNG liệt kê tay từng key (thêm ô lọc mới là quên ngay):
+
+```js
+import { textFilterKeys } from '@/utils/filterAutoSearch'
+
+computed: {
+    ignoredFields() {
+        return ['keyword', ...textFilterKeys(this.filterFields)]
+    },
+}
+```
+
+`ignoredFields` phải là **computed**, không phải `data` — schema ô lọc thường phụ thuộc quyền/danh
+mục nạp sau nên để `data` sẽ chốt sai danh sách ngay lúc khởi tạo.
+
+`V2BaseFilterFieldControl` đã bắn sẵn sự kiện `enter`, panel nối vào `handleSearch` — không phải
+làm gì thêm ở màn.
+
+Tự kiểm: mở tab Network, gõ vài ký tự vào ô lọc chữ → **0 request**; bấm Enter → **1 request**.
+
+### 3b-5. KHÔNG ẩn Xuất Excel / In danh sách theo quyền xem
+
+Hai nút này hiện với **mọi** người vào được màn. Phạm vi dữ liệu đã do máy chủ quyết (`applyScope()`
+— xem mục phân quyền theo cấp): ai xem được gì thì in / xuất đúng phần đó, người không có quyền xem
+theo cấp vẫn in / xuất được **các phiếu do chính mình tạo**.
+
+Ẩn nút theo cờ quyền xem (`is_all_company || is_company || is_department`) là **cắt mất chức năng
+chính đáng**: người dùng thường có phiếu của mình trên lưới nhưng không xuất được ra Excel.
+Chốt 2026-08-22 (Redmine #11165) sau khi đã làm sai một lần theo hướng ẩn nút.
+
+Vẫn giữ nguyên quy tắc chung "nút không dùng được thì ẩn" cho các nút **thao tác** (Sửa, Xóa,
+Duyệt…) — chỗ đó điều kiện là quyền/nghiệp vụ của từng bản ghi, khác với 2 nút đọc dữ liệu này.
+
+### 3b-6. Phân trang: MỘT kiểu duy nhất cho mọi bảng
+
+Bảng ở màn danh sách dùng phân trang có sẵn trong `V2BaseDataTable`; bảng trong **form / popup** dùng
+`components/V2BasePagination.vue`. Hai chỗ này phải trông **y hệt** nhau — người dùng nhìn thấy cạnh
+nhau, lệch cỡ chữ là lộ ngay (chốt 2026-08-22):
+
+- Dòng trái: `Hiển thị {từ}–{đến} / {tổng}` — dấu **en dash `–`**, không phải `-`.
+- Cỡ chữ cả 2 cụm (`Hiển thị …` và `Số dòng/trang:`): **12px, màu `#6b7280`** (class `tp-small-text`).
+- Ô chọn số dòng cỡ `sm`, đứng TRƯỚC dãy số trang.
+
+KHÔNG tự dựng phân trang riêng cho từng popup/màn.
+
+### 3b-7. Popup có bảng: rộng theo SỐ CỘT, đừng để mặc định 720px
+
+Popup chọn dữ liệu (hàng hoá, dịch vụ, khách hàng…) mà bảng có ≥ 5 cột thì đặt
+`style="width: 1100px; max-width: 96vw"` trở lên — khổ 720px làm cột tên bị bóp còn vài chữ. Popup
+bảng rất nhiều cột (hàng hoá: 11 cột) thì dùng `width: 98vw` như `ProductSearchModal`.
+Chi tiết cách dồn diện tích cho bảng: skill `modal-popup` mục 4.
+
+### 3b-8. Thanh cuộn TRÊN phải đồng bộ bề rộng — không chỉ "có mặt là xong"
+
+Quy tắc "cuộn cả trên và dưới" chưa đủ: thanh trên là một `div` rỗng có bề rộng đặt bằng
+`table.scrollWidth`, nên **bề rộng đó phải cập nhật lại mỗi khi bảng đổi kích thước**. Chỉ đồng bộ
+lúc `mounted` + `watch: data` + `resize` cửa sổ là thiếu — bảng còn giãn ra sau đó (ẩn/hiện cột,
+chữ dài, font tải xong), và khi ấy thanh trên **kéo hụt**: người dùng kéo hết cỡ mà bảng mới đi
+được 2/3, tưởng như không có thanh trên (đo thật 2026-08-22: bảng 1320px, thanh trên 1140px).
+
+Bắt buộc theo dõi bằng `ResizeObserver` trên **cả bảng lẫn khung cuộn**, cộng hook `updated()`:
+
+```js
+if (typeof ResizeObserver !== 'undefined') {
+    this.topScrollObserver = new ResizeObserver(() => this.syncTopScrollWidth())
+    this.topScrollObserver.observe(this.$refs.dataTable)
+    this.topScrollObserver.observe(this.$refs.tableWrapper)
+}
+```
+
+`V2BaseDataTable` và `V2BaseTableScroll` đã làm sẵn — dùng 2 component này là đủ, đừng tự dựng lại.
+
+Tự kiểm (Console, ở màn có bảng tràn ngang), cả 3 dòng phải đúng:
+
+```js
+const top = document.querySelector('.table-top-scroll-inner'), t = document.querySelector('.data-table')
+parseInt(top.style.width) === t.scrollWidth          // bề rộng khớp
+// kéo thanh trên -> .table-wrapper.scrollLeft đổi theo, và ngược lại
+```
+

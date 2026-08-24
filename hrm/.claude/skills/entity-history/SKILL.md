@@ -130,6 +130,48 @@ số → chuỗi số). Không chuẩn hoá = log rác `"5" → 5`.
 - Bảng con nhiều cấp (TK cá nhân của người liên hệ) → **tách thành khoá riêng** kèm cột nhận diện
   chủ sở hữu, KHÔNG nhét vào chuỗi của bản ghi cha. Nhét vào = thêm 1 TK là in lại nguyên dòng dài.
 
+## 3a. Đổi TRẠNG THÁI luôn là dòng log RIÊNG, nhóm "Thay đổi trạng thái"
+
+Thao tác lưu làm trạng thái tự chuyển (bấm **Lưu và gửi** → Đang tạo → Chờ xử lý) vẫn phải ghi
+lịch sử, nhưng ghi thành **dòng riêng** `action = 'change_status'` (nhãn *Thay đổi trạng thái*,
+màu `#d97706`) — KHÔNG nhét cột `status` vào `catalogColumns()`.
+
+Nhét vào thì dòng log mang nhãn **"Thay đổi thông tin"** trong khi nội dung là
+`Trạng thái: Đang tạo → Chờ xử lý`: đọc lịch sử không biết thao tác nào đã xảy ra, và bộ lọc
+"Loại hoạt động" (§0a) xếp nó nhầm sang nhóm `update`. Đây là Redmine #11168 — đã phải sửa 2 lần
+vì lần đầu hiểu nhầm thành "bỏ hẳn không ghi".
+
+```php
+protected function catalogColumns(): array
+{
+    return ['code', 'customer_name', 'note'];   // KHÔNG có 'status'
+}
+
+public function update($model, array $data)
+{
+    $before = $this->catalogSnapshot($model);
+    $statusBefore = (int) $model->status;      // chụp TRƯỚC khi fill
+    // ...fill + save + sync bảng con...
+    $this->logCatalogUpdate($model, $before);  // dòng "Thay đổi thông tin" (nếu có gì đổi)
+    $this->logStatusChanged($model, $statusBefore);   // dòng "Thay đổi trạng thái" (nếu status đổi)
+}
+
+private function logStatusChanged($model, int $statusBefore): void
+{
+    if ($statusBefore === (int) $model->status) return;
+
+    $this->logCatalogStatus($model, 'change_status',
+        $this->catalogDisplay('status', $statusBefore),
+        $this->catalogDisplay('status', $model->status));
+}
+```
+
+Kết quả đúng: một lần lưu vừa sửa ghi chú vừa gửi phiếu → **2 dòng** ("Thay đổi thông tin: Ghi chú
+cũ → mới" và "Thay đổi trạng thái: Đang tạo → Chờ xử lý"), không phải 1 dòng lẫn lộn.
+
+Thao tác có nút riêng (Từ chối, Chuyển phòng, Duyệt…) vẫn dùng `logCatalogStatus()` với action
+riêng của nó (`rejected`, `approved`…) — chúng đã thuộc nhóm `status` theo `ACTION_GROUP_MAP`.
+
 ## 4. BE — đọc log: DTO chuẩn (FE base ăn theo đúng hợp đồng này)
 
 Sắp xếp **MỚI → CŨ** (`orderByDesc('changed_at')->orderByDesc('id')` + usort giảm dần).
@@ -245,6 +287,8 @@ không màn nào tự nới rộng.
 
 ## 6. Bẫy thường gặp
 
+- **Track cột `status` trong `catalogColumns()`** → dòng log mang nhãn "Thay đổi thông tin" mà
+  nội dung lại là "Trạng thái: A → B" (§3a). Trạng thái LUÔN đi dòng riêng `change_status`.
 - Endpoint save dùng chung với màn khác → trường ngoài whitelist đổi thì KHÔNG được sinh log.
 - Đổi định dạng dòng snapshot (thêm nhãn, thêm cột) → **lần sửa đầu tiên sau deploy sẽ nhiễu 1 lần**
   (log cũ khác định dạng). Phải báo trước cho user, đừng tự sửa dữ liệu log cũ.
@@ -270,6 +314,7 @@ không màn nào tự nới rộng.
 - [ ] Bảng `<entity>_history` đúng cột mẫu, migration có PHPDoc
 - [ ] Snapshot lưu giá trị hiển thị; bảng con dùng bản ghi `[nhãn => giá trị] + __key`
 - [ ] DTO trả đủ `action_label/action_color/action_group/actor_*/department_name/created_at/created_at_raw`
+- [ ] **Đổi trạng thái ghi thành dòng RIÊNG `change_status`**, `catalogColumns()` KHÔNG có cột `status` (§3a)
 - [ ] **Bộ lọc "Loại hoạt động" đúng 3 nhóm cố định** (Tạo mới / Thay đổi thông tin / Thay đổi trạng thái) — giống hệt mọi màn khác, và nhãn chi tiết trên timeline vẫn giữ nguyên (§0a)
 - [ ] Sắp xếp mới → cũ
 - [ ] `changed[]` chỉ chứa trường đã đổi (không in lại cả bản ghi)
