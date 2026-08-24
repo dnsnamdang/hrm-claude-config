@@ -482,6 +482,188 @@ prepick_details 53.832 · prepick_logs 110.744). 2 lô tồn bị trừ khi test
 
 ---
 
+## Phase 10 — Vá bug QA (redmine 11094 / 11149 / 11150 / 11151 / 11152 / 11154, 2026-08-21)
+
+- [x] **11151** — dropdown Khách hàng: **GIỮ NGUYÊN** phạm vi "chỉ KH mà nhân viên đó đang giữ
+      hàng". Tester mở bằng tài khoản không giữ lô nào nên thấy rỗng và log là bug; user chốt đây là
+      đúng nghiệp vụ (chọn KH không có lô thì popup Thêm hàng hóa rỗng, lưu cũng bị
+      `assertEnoughStock()` chặn). Sửa phần **giải thích**: FE hiện dòng ⓘ ngay dưới ô khi danh
+      sách rỗng + đổi placeholder thành "Không có khách hàng đang giữ hàng".
+- [x] **11152** — Lưu nháp chỉ bắt buộc Khách hàng. `PrepickCancelRequestRequest::rules()` cho
+      `products` là `nullable` khi `status = DANG_TAO` (gửi duyệt vẫn `required|min:1`), và
+      `assertEnoughStock()` nhận thêm cờ `$requireLine` để bỏ luật "ít nhất 1 dòng tick" cho nháp —
+      số lượng của dòng ĐÃ nhập thì vẫn kiểm tồn như thường.
+- [x] **11150** — Ngày tạo / Ngày duyệt hiển thị kèm giờ `d/m/Y H:i` ở danh sách
+      (`PrepickCancelRequestListResource::formatDate()`), màn chi tiết (`detailData()`) và dữ liệu
+      Xuất Excel; 2 cột trên bảng nới `110px → 140px`.
+- [x] **11094** — đổi chữ "Người lập / Ngày lập" → **"Người tạo / Ngày tạo"** ở toàn bộ màn danh
+      sách (cột, bộ lọc, ô tìm nhanh, file Excel, mẫu in danh sách) + thêm 2 cột **Người cập nhật /
+      Ngày cập nhật** vào bảng, popup Tùy chỉnh cột và popup Chọn trường xuất Excel. Entity thêm
+      quan hệ `employee_update` + khoá sắp xếp `updatedAt`, eager load kèm `searchByFilter()`.
+- [x] **11149** — ẩn nút **In** cả danh sách ở đầu bảng (icon In từng phiếu ở cột Hành động giữ
+      nguyên). Trang `print-list.vue` + endpoint `print-list-data` **giữ nguyên**, chỉ gỡ lối vào.
+- [x] **11154** — khối Lịch sử màn chi tiết dùng đúng khuôn chung của 2 màn Tài chính port trước:
+      icon đồng hồ + badge số mốc + nút "Xem lịch sử"/"Thu gọn" + "Làm mới"; `PrepickHistoryPanel`
+      phát thêm sự kiện `loaded` (số mốc) — bổ sung, không đổi hành vi 2 nơi đang dùng.
+- [ ] User bấm tay lại 6 lỗi trên dev rồi đóng issue.
+
+### Checkpoint — Phase 10
+
+```text
+Vừa hoàn thành: 6 issue QA ở trên (BE 6 file + FE 4 file).
+Đang làm dở: không.
+Bước tiếp theo: user verify trên dev; riêng 11151 trả lời tester là "không phải lỗi", đã bổ sung
+chú thích trên màn để không hiểu nhầm nữa.
+Blocked: không.
+Verify: `php -l` + nạp 6 class qua Laravel bootstrap; compile template + parse script 4 file .vue;
+chạy thật `customerOptions()` (tài khoản không giữ lô nào → 0 option, đúng thiết kế) và `rules()`
+(nháp: products nullable · gửi duyệt: required|min:1).
+⚠️ DB local thiếu dải id `customers` nên nhóm KH đang giữ hàng không dựng được tại chỗ — đã kiểm
+riêng bằng SQL, trên dev có đủ dữ liệu.
+```
+
+---
+
+## Phase 11 — Bỏ tab preset, gộp về 1 danh sách (2026-08-21)
+
+Yêu cầu user: màn HRM tương ứng đúng tham số `all` của ERP; hiện nút duyệt theo QUYỀN chứ không
+bắt người dùng chuyển tab. Màn mẫu: Phiếu thu / Phiếu chi của @khoipv.
+
+- [x] FE gỡ `V2BaseTabNavigation` + computed `presetTabs` + `handlePresetChange` + key `type`
+      trong bộ lọc; `handleReset` không phải giữ preset nữa; localStorage cũ còn `type` thì
+      `mergeKnownFilters()` tự bỏ (key không còn trong `initialStateForm`).
+- [x] BE **giữ nguyên** tham số `type` (link cũ / lối vào từ ERP vẫn chạy), chỉ đổi mặc định và
+      phạm vi nhánh mặc định.
+- [x] `PrepickCancelRequest::searchByFilter()` — mặc định (không có `type`) nay là **`all`**
+      thay vì `mine`; `mine` / `waiting_approve` giữ lại cho link cũ.
+- [x] Thêm `applyAllScope()` + `orWhereApprovable()`: phạm vi = quyền xem theo cấp **HOẶC** phiếu
+      Chờ duyệt cùng công ty khi có quyền `Quản lý giữ hàng`. Thiếu vế OR này là người duyệt
+      không có quyền xem theo cấp mất hẳn phiếu cần duyệt (trước đây họ vào bằng tab riêng).
+- [x] ⚠️ Không bọc closure khi user xem được hết — `() OR (approvable)` sẽ thu hẹp danh sách
+      xuống đúng tập approvable.
+- [ ] User verify trên dev bằng tài khoản `Quản lý giữ hàng` không phải Super admin.
+
+### Checkpoint — Phase 11
+
+```text
+Vừa hoàn thành: bỏ tab ở màn danh sách + vá phạm vi nhánh mặc định ở BE.
+Đang làm dở: không.
+Bước tiếp theo: user verify trên dev.
+Blocked: không.
+Verify: dump SQL thật với NV 26 (có `Quản lý giữ hàng`, KHÔNG có quyền xem theo cấp) →
+`where ((created_by = ?) or (status = ? and company_id = ?)) and (status != ? or (...))` — đúng ý đồ.
+Đếm danh sách khi FE không gửi `type`: admin 3.478 · NV thường 58 · NV 26: 0 (DB local không có
+phiếu Chờ duyệt nào).
+```
+
+---
+
+## Phase 12 — Rà lại màn Phiếu hủy hàng giữ theo quy tắc chung (2026-08-22)
+
+Yêu cầu user: màn `Kế toán → HH-DV-Vận chuyển → Giữ hàng → Phiếu hủy hàng giữ` đã port rồi thì
+**bổ sung cho đúng quy tắc chung**. Chạy checklist skill `erp-to-hrm-screen` trên cả thư mục
+`pages/finance/prepick-cancels/`.
+
+Kết quả grep tự kiểm: SẠCH (`status-pill`, `interactable:`, `action.key ===`, `V2BaseFilterPanel`,
+`advanced-filters` đều không có). Phần lệch còn lại đã vá:
+
+- [x] **Ô "Duyệt hủy" tự kéo về trần** (`onQtyChange`) → bỏ hẳn việc sửa giá trị; thay bằng
+      `qtyErrorOf()` báo đỏ ngay dưới ô theo cấu trúc `Tên trường – Nội dung lỗi`, đang gõ dở
+      `12.` thì chưa báo. Vi phạm rule user chốt 17/08/2026.
+- [x] **`validateProducts()` chặn gọi API** khi còn dòng lỗi + toast QLDA_001 + cuộn về ô lỗi đầu.
+- [x] **Duyệt xong `$router.push` về DANH SÁCH** (trước đây đẩy sang màn chi tiết) — rule user
+      chốt 20/08/2026.
+- [x] **Nút In ở `V2Footer` màu teal** → dựng lại ở slot `#custom-actions` bằng `V2BaseButton
+      secondary` (In là action phụ). `footerMenu` màn Chi tiết nay trả `{}`.
+- [x] **4 ô khóa có chủ ý thêm icon ⓘ + tooltip** (Phiếu yêu cầu, Người yêu cầu, Phòng ban yêu cầu,
+      Khách hàng) — ô disabled bộ V2 nhìn y hệt ô trống.
+- [x] **Mã phiếu đưa lên ô ĐẦU TIÊN** của card Thông tin chung ở màn Chi tiết (SRS mục 3: số phiếu
+      hiển thị trên cùng, ngay sau tiêu đề màn).
+- [x] `emptyText` đổi về đúng nguyên văn QLDA_011 "Không có dữ liệu phù hợp."
+- [ ] User verify trên dev.
+
+### 2 điểm treo — user yêu cầu xử lý luôn (2026-08-22)
+
+**1. Mixin `CheckPermission` — KHÔNG thêm, đã khảo sát xong.** Cả họ Giữ hàng cố ý không dùng: điều
+kiện hiện/ẩn nút đọc từ **cờ BE** (`is_can_edit` mỗi dòng + `meta.is_big_boss/is_boss/is_manager/
+is_prepick_manager`), đúng nguyên tắc "đọc điều kiện từ CÙNG 1 nguồn" của skill. Thêm
+`hasAPermission()` ở FE là dựng nguồn thứ hai, sớm muộn lệch với BE. Đã dò lỗ hổng quyền thật:
+
+- `store()` → `PrepickCancelService::store()` gọi `$parent->canApprove()` **trong transaction đã
+  khoá lô** → không có quyền `Quản lý giữ hàng` là chặn, không trừ được tồn.
+- `waitingRequests()` → `if (!isPrepickManager()) return ['data' => [], 'total' => 0]`.
+- `show()` → `canView()`; danh sách → 3 cấp quyền xem.
+
+→ Không có lỗ hổng. Nhưng có **khoảng trống UX**: người không có quyền vẫn mở được
+`/finance/prepick-cancels/create`, popup chọn phiếu yêu cầu trả rỗng mà không nói lý do — đúng kiểu
+bug tester báo ở #11151. Đã vá:
+
+- [x] BE `waitingRequests()` trả thêm `is_prepick_manager` (thêm `use ...PrepickCancelRequest`).
+- [x] FE `RequestSearchModal.vue`: `emptyText` thành computed, tách 2 câu — chưa có quyền thì ghi
+      *"Bạn chưa có quyền \"Quản lý giữ hàng\" nên không duyệt được… Liên hệ Quản trị viên"*, có
+      quyền mà rỗng thì giữ câu cũ.
+
+**2. Checkbox "Cần hủy" → `V2BaseCheckbox`.** Đã đổi ở **cả 2 màn của feature** để không lệch nhau:
+
+- [x] `PrepickCancelForm.vue` — `:modelValue` + `@change="onNeedCancelChange(product, index, $event)"`
+      (handler tự gán `product.need_cancel` rồi validate lại dòng).
+- [x] `PrepickCancelRequestForm.vue` — `:modelValue` + `@change="product.need_cancel = !!$event"`.
+- ⚠️ Không truyền default slot, chỉ dùng prop `label` (bỏ trống vì cột đã có tiêu đề "Cần hủy"):
+      `singleMode = options.length === 0 && !$slots.default`, có slot là render ra khối RỖNG.
+
+**Ngoài phạm vi, CHƯA đụng** (2 chỗ còn dùng `<input type="checkbox">` trần trong bảng, khác feature):
+`finance/bill-payment-requests/components/BillPaymentRequestDetailTable.vue:25,83` và
+`finance/product-import-direct-transfers/components/StockSearchModal.vue:83`.
+
+### Test thật bằng Playwright (2026-08-22) — 3 lỗi NỮA lộ ra khi bấm
+
+Chạy trên local `127.0.0.1:3000` (Nuxt dev) + API `:8000`, DB `gop_db`, tài khoản DNS Admin.
+
+- [x] **`V2Footer` gói sẵn popup xác nhận cho `menu.approve`** — bấm Duyệt là hiện popup chung chung
+      *"Bạn xác nhận duyệt phiếu?"* RỒI mới emit, nên: (1) màn bị **2 popup chồng nhau**,
+      (2) validate chỉ chạy **sau** popup đầu → user bấm xác nhận xong mới biết mình nhập sai.
+      → Dựng lại nút Duyệt ở `#custom-actions` luôn (cùng chỗ với nút In), `footerMenu` trả `{}`.
+      Thứ tự ra đúng vì slot nằm ngay trước "Quay lại": **Duyệt → In → Quay lại**.
+      Màu giữ `primary` (teal) theo `button-convention` — user chốt 20/08 nhóm Duyệt dùng teal.
+- [x] **Selector cuộn-về-ô-lỗi sai**: `is-invalid` nằm ở `.v2-input__wrapper`, KHÔNG ở thẻ `input`.
+      Bắt `input.is-invalid` là con trỏ không nhảy mà cũng không báo gì.
+- [x] **Nút Duyệt dùng `:interactable`** (nút xám khi chưa chọn phiếu yêu cầu) → đổi sang `v-if`,
+      ẩn hẳn theo rule hiện hành.
+
+Kết quả đo trên trình duyệt sau khi vá:
+
+| Kiểm | Kết quả |
+|---|---|
+| Danh sách | 10 dòng/trang, cột đúng 7 cột, mã là `<nuxt-link>` `/finance/prepick-cancels/3483` |
+| Chi tiết | tiêu đề `Chi tiết phiếu hủy hàng giữ: PHHG-03483`, **Mã phiếu là ô đầu tiên**, **4 icon ⓘ** |
+| Nút In | nền `rgb(255,255,255)`, chữ `rgb(51,51,51)` — đúng nhóm "Action phụ" của SRS |
+| Gõ 99 (trần 4) | ô **vẫn giữ 99**, viền `rgb(220,53,69)`, lỗi *"Duyệt hủy – Không được vượt 4…"* |
+| Bấm Duyệt khi còn lỗi | **KHÔNG popup**, toast `Bạn chưa nhập đầy đủ thông tin.`, focus nhảy đúng ô lỗi |
+| Sửa về 3 rồi bấm Duyệt | lỗi tự mất, popup *"…sẽ TRỪ TỒN HÀNG GIỮ ngay lập tức…"* (đã bấm Hủy, KHÔNG gọi API) |
+| Nút Duyệt | chưa chọn phiếu YC: chỉ có `[Quay lại]`; chọn rồi: `[Duyệt, Quay lại]` |
+| Popup chọn phiếu YC | rỗng đúng câu "Không có phiếu yêu cầu nào đang chờ duyệt."; ép `isPrepickManager=false` → ra câu "Bạn chưa có quyền…" |
+| `V2BaseCheckbox` trong bảng | render 43×20, vùng bấm x=18–34 trong ô rộng 60, click toggle được |
+| Console | 0 error ở cả 4 màn |
+
+**Chưa test được:** luồng Duyệt CHẠY THẬT (trừ tồn + chuyển phiếu YC sang Đã duyệt) — DB local
+không có phiếu nào `status=2` (Chờ duyệt): 3.478 phiếu status 1 + 43 phiếu status 3. Cần user
+chuyển 1 phiếu sang Chờ duyệt trên dev rồi bấm thật.
+
+### Checkpoint — Phase 12
+
+```text
+Vừa hoàn thành: 7 điểm vá theo quy tắc chung ở PrepickCancelForm.vue + index.vue.
+Đang làm dở: không.
+Bước tiếp theo: user tạo 1 phiếu yêu cầu Chờ duyệt trên dev rồi bấm Duyệt thật để kiểm
+trừ tồn + điều hướng về danh sách (2 nhánh này Playwright chưa chạm tới được).
+Blocked: không.
+Verify: hrm-client KHÔNG cài eslint (không có script lint, không có devDependency) — node_modules
+vẫn đủ, `npm run dev` chạy bình thường. Đã verify bằng `vue-template-compiler` + `@babel/core`:
+3 file .vue template OK + script OK; `php -l` controller: no syntax errors.
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 1. **KHÔNG bắn POST/PUT/DELETE vào id thật** khi quét route. Chỉ dùng phiếu tự tạo.
@@ -565,3 +747,24 @@ DROP TABLE bak_prepick_logs_20260815;
 | 8 | Bỏ 2 bộ lọc chết + 1 trường hiển thị chết ở màn phiếu hủy | Lỗi #10, #11 |
 | 9 | Không có nút "Thêm" rời ở danh sách phiếu hủy | Lỗi #9 (ERP trỏ nhầm sang màn Tạo yêu cầu nhập hàng) |
 | 10 | Nút Duyệt kèm hộp xác nhận nêu rõ "sẽ trừ tồn giữ, không hoàn tác được" | Thao tác không đảo ngược được |
+
+---
+
+## Phase — Bỏ "Không duyệt" khỏi màn danh sách (2026-08-24)
+
+Đồng bộ quy tắc mới ở `.claude/skills/list-page/SKILL.md` mục 1. ⚠️ Khác 2 màn phiếu thu/chi:
+ở đây "Không duyệt" mở `RejectModal` NGAY TẠI DANH SÁCH → bỏ nút thì gỡ luôn modal khỏi màn danh
+sách. Đã xác nhận màn chi tiết (`components/PrepickCancelRequestForm.vue` chế độ `show`) có sẵn
+nút "Không duyệt" ở `V2Footer` + `RejectModal` riêng nên không mất chức năng.
+
+- [x] Xóa action `key: 'reject'` + `case 'reject'` trong `pages/finance/prepick-cancel-requests/index.vue`
+- [x] Gỡ phần `RejectModal` chỉ còn phục vụ nút vừa bỏ: block template, import, khai `components`,
+      state `rejectItem`, handler `handleRejected`
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: bỏ "Không duyệt" + gỡ `RejectModal` khỏi màn danh sách Yêu cầu hủy hàng giữ
+(file `components/RejectModal.vue` GIỮ NGUYÊN — màn chi tiết vẫn import).
+Đang làm dở: không.
+Bước tiếp theo: user xác nhận trên trình duyệt, đặc biệt luồng Không duyệt ở màn chi tiết.
+Chưa kiểm chứng bằng mắt: chỉ parse template + script.
+Blocked: không.

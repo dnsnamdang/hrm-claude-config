@@ -2040,3 +2040,463 @@ Blocked: không.
 
 ⚠️ `.claude/skills/export-excel/SKILL.md` và dòng mới trong bảng skill của `CLAUDE.md` là **tài sản
 chung** → theo quy tắc team phải đưa qua PR, chưa commit.
+
+
+---
+
+## Phase I - Logo (letterhead) dung chung cach cua man Bao gia (2026-08-21)
+
+Lam theo yeu cau user ngay sau khi xong ben Phieu thu (xem
+`.plans/gop-db/finance-bill-income/plan.md` Phase G + H cho ly do day du).
+
+- [x] I1 - `BillPaymentPrintService::headerUrl()`: lay cong ty theo `bill_payments.company_id`
+      truoc, fallback cong ty nguoi tao (ERP lay theo nguoi tao)
+- [x] I2 - Thieu `ERP_URL` -> tra nguyen path tuong doi thay vi `''` (dung nhanh
+      `return company.header_url || h` cua bao gia)
+- [x] I3 - Cap nhat docblock muc 5 cua class + docblock `headerUrl()`
+- [x] I4 - Verify ban IN (ca 5 loai phieu / 2 mau 211 + 236) va ban EXCEL
+
+**Chi sua 1 file**: `Modules/Finance/Services/BillPaymentPrintService.php` - 2 dong lenh, con lai
+la comment. `BillPaymentExport` da dung san trait `EmbedsCompanyLetterhead` nen khong phai sua.
+
+### Checkpoint - 2026-08-21 (I1-I4)
+Vua hoan thanh: logo ban in + Excel phieu chi.
+
+Do tren du lieu that (1.305 phieu chi): **0 phieu mat logo** truoc va sau (nguoi tao deu co
+`company_id`), nhung **162 phieu** truoc day in ra logo KHAC cong ty ghi tren phieu -> nay dung.
+
+Verify that:
+
+| | Ket qua |
+| --- | --- |
+| `TPHP.PC0726.00001` (phieu cty 2, nguoi tao cty 1) | ban in mau 211 -> `.../cn-hp.png` (truoc la `ts-hn.png`) |
+| `TPSG.PC0726.00011` (phieu cty 4, nguoi tao cty 5) | `.../tpsg.png` |
+| Ca 5 loai phieu (type 1/2/4/6/12, mau 211 + 236) | deu co `<img src="https://erp.eteksofts.com/uploads/...">` |
+| File Excel `BillPaymentExport::drawings()` | 1 drawing `letterhead 650x72 @A1` |
+
+**Chua kiem chung:** anh hien that tren trinh duyet - can user mo lai ban in tren dev.
+Blocked: khong.
+
+---
+
+## Phase J — Chỉnh nhãn cột màn danh sách (2026-08-22)
+
+- [x] J1 — Đổi tiêu đề cột `createdAt`: "Ngày lập" → **"Ngày tạo"**
+      (`hrm-client/pages/finance/bill-payments/index.vue:481`)
+- [x] J2 — Đổi tiêu đề cột `createdByName`: "Người lập" → **"Người tạo"**
+      (`hrm-client/pages/finance/bill-payments/index.vue:482`)
+
+Chỉ đổi **nhãn hiển thị**, không đụng `key` (`createdAt` / `createdByName`) nên sort, cấu hình
+ẩn/hiện cột và payload BE giữ nguyên.
+
+**Chưa đổi (chờ user chốt)** — vẫn đang dùng chữ "lập" trên cùng màn danh sách:
+bộ lọc `Ngày lập từ` / `Ngày lập đến` (dòng 53, 64), bộ lọc `Người lập` (dòng 423).
+Ngoài màn danh sách: form chi tiết/sửa `BillPaymentForm.vue` (dòng 185, 189) và
+popup chọn đề nghị thanh toán `PaymentRequestSearchModal.vue` (dòng 40, 74, 75).
+
+### Checkpoint — 2026-08-22 (J1-J2)
+Vừa hoàn thành: đổi nhãn 2 cột trên màn danh sách phiếu chi.
+Đang làm dở: không.
+Bước tiếp theo: chờ user chốt có đổi luôn nhãn bộ lọc + form chi tiết cho đồng bộ không.
+Blocked: không.
+
+## Phase K — Màn IN: chữ đậm không đậm ở PREVIEW (2026-08-22)
+
+**Triệu chứng:** user báo "các text in đậm đang chưa được in đậm" trên màn in phiếu chi,
+trong khi màn Phiếu thu hiển thị đúng.
+
+**Root cause (đã xác minh, không đoán):**
+- Mẫu in `report_templates` 211 / 217 / 236 đánh đậm HOÀN TOÀN bằng thẻ `<strong>`
+  (đếm thực tế: 8 / 11 / 8 thẻ), **không** có `<b>`, **không** có inline `font-weight`.
+- `assets/scss/bootstrap.scss:30` nạp `custom/components/_reboot.scss`, file này đặt
+  `b, strong { font-weight: $font-weight-medium }` = **500** cho toàn hrm-client.
+- Times New Roman không có nét 500 → trình duyệt vẽ ra như chữ thường → preview mất hết chỗ đậm.
+- **Chỉ lệch ở PREVIEW.** Cửa sổ in là iframe chỉ nạp `/ckeditor/css/editor.css` +
+  `/css/print-app.css`; đã grep, cả 2 file **không có** rule `b, strong` → giữ mặc định `bolder`.
+- Màn Phiếu thu đã vá đúng chỗ này từ trước (`bill-incomes/_id/print.vue`), phiếu chi thì chưa.
+
+- [x] K1 — Thêm `#content ::v-deep b, #content ::v-deep strong { font-weight: bold }` vào khối
+      `<style lang="scss" scoped>` của `hrm-client/pages/finance/bill-payments/_id/print.vue`,
+      kèm comment giải thích y như bản Phiếu thu.
+
+**KHÔNG làm** (có chủ ý): không sửa `_reboot.scss` (file dùng chung toàn hệ thống),
+không thêm rule vào `printContentStyles()` (iframe vốn đã đậm đúng, thêm là dư thừa).
+
+### Checkpoint — 2026-08-22 (K1)
+Vừa hoàn thành: fix chữ đậm màn in phiếu chi (preview).
+Đang làm dở: không.
+Bước tiếp theo: user mở lại `/finance/bill-payments/{id}/print` xác nhận preview đã đậm.
+Chưa kiểm chứng bằng mắt: hiển thị thật trên trình duyệt (verify bằng đọc CSS + đếm thẻ trong
+mẫu in + compile check, chưa mở browser).
+Blocked: không.
+
+## Phase L — Màn IN: khối "Liên số" bị vẽ thành bảng kẻ ô (2026-08-22)
+
+**User báo:** "chỗ liên số làm gì có table đâu" — bản in phiếu chi hiện một bảng kẻ ô ở khối
+Liên số, ERP/Phiếu thu không có.
+
+**Root cause (đối chiếu mẫu in thật + pdf.css của ERP):**
+- BE `BillPaymentPrintService::debitInfo()` đổ vào `{{LIEN}}` một `<table class="table table-bordered">`.
+- Trong cả 3 mẫu 211 / 217 / 236, `{{LIEN}}` nằm **trong ô của một bảng `class="no-border"`**.
+  ERP tắt viền bằng `.no-border td { border: none !important }` — selector **HẬU DUỆ** nên phủ
+  luôn bảng con ⇒ ERP in ra khối Liên số **không viền**.
+- `print.vue` phiếu chi lại dùng `#content table:not(.no-border) td { border: 1px solid black !important }`.
+  Specificity (1 id, 1 class, 2 element) **thắng** `#content .no-border td` (1 id, 1 class, 1 element)
+  ⇒ bảng Liên số bị kẻ viền đen.
+- Gốc sâu hơn: file này viết 2026-08-19, **trước** khi `static/css/pdf-erp.css` (bản sao nguyên văn
+  `pdf.css` của ERP) được thêm 2026-08-20 cho màn Phiếu thu. Phiếu chi vẫn đang tự bù CSS bằng
+  `print-app.css` + `editor.css` + `printContentStyles()` ⇒ lệch ERP ở nhiều chỗ, không chỉ Liên số.
+
+**Đối chiếu mẫu — bảng nào có viền, bảng nào không:**
+
+| Khối | Vị trí trong mẫu | ERP in ra |
+| --- | --- | --- |
+| Mọi `<table>` có sẵn trong mẫu (letterhead, thông tin, khối ký) | đều `class="no-border"` | không viền |
+| `{{LIEN}}` (BE đổ) | trong ô của bảng `.no-border` | **không viền** |
+| `{{CHI_TIET}}` (217), `{{BANG_KE_*}}` (236) | ngoài mọi bảng | có viền đen |
+
+- [x] L1 — Iframe in chỉ nạp `/css/pdf-erp.css` (bỏ `print-app.css` + `ckeditor/css/editor.css`),
+      body bỏ class `document-editor` — y hệt `bill-incomes/_id/print.vue`
+- [x] L2 — `printBaseStyles()` chép đúng khối `<style>` của ERP `print.blade.php::printPDF()`
+      (@page, `.MsoBodyTextIndent`, `page-break.active`, `.no-print`) + 2 deviation có chủ ý cho
+      bảng `width:827px` (`#content table { max-width:100% }`, `table.block td` nowrap)
+- [x] L3 — Xoá `printContentStyles()` (toàn bộ rule đã có sẵn trong pdf-erp.css)
+- [x] L4 — `head()` bỏ `link` `/css/print-app.css` (nạp toàn cục sẽ kéo cả sidebar sang font Times)
+- [x] L5 — Khối `<style scoped>` preview dựng lại theo đúng pdf.css: `td, th { border 1px black }`
+      cho MỌI ô + `.no-border td { border: none !important }` hậu duệ, `#content` khổ A4
+      210mm + padding đúng lề in, `line-height: normal`, giữ fix chữ đậm của Phase K
+
+**Có chủ ý bỏ đi so với bản cũ (vì ERP không có, giữ lại là lệch):**
+- `word-break / overflow-wrap: break-word` trên ô bảng (user đã bác ở màn Phiếu thu 2026-08-22)
+- `thead { display: table-header-group }` — ERP **không** lặp header bảng chi tiết ở trang sau.
+  Muốn giữ tính năng này thì thêm lại 1 dòng, nhưng khi đó phiếu chi khác phiếu thu/ERP.
+- `-webkit-print-color-adjust: exact` — mẫu in không có nền màu.
+
+### Checkpoint — 2026-08-22 (L1-L5)
+Vừa hoàn thành: đưa môi trường CSS bản in phiếu chi về đúng ERP, khối Liên số hết viền.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payments/{id}/print` cho cả 3 mẫu (loại 1/2/6/12 một chi
+tiết → 211, nhiều chi tiết → 217, loại 4 → 236) đối chiếu với bản in ERP.
+Chưa kiểm chứng bằng mắt: verify bằng đọc `pdf-erp.css` + dump mẫu 211/217/236 từ DB + tính
+specificity + compile check (template/script/scss đều pass), chưa mở trình duyệt.
+Blocked: không.
+
+## Phase M — Màn IN: giãn dòng "Ngày … Tháng … Năm …" khỏi hàng chữ ký (2026-08-22)
+
+**User báo:** dòng "Ngày 23 Tháng 07 Năm 2026" và phần bên dưới (hàng chữ ký) quá sát nhau.
+
+**Nguyên nhân:** `pdf.css` của ERP không đặt `margin` cho `table`, cộng thêm deviation
+`table.block td { padding: 2px 4px }` (thêm ở Phase L để 5 nhãn chữ ký nằm gọn 1 dòng) → 2 khối
+gần như dính. ERP thật cũng vậy → đây là **thay đổi có chủ ý, khác ERP**.
+
+**Mẫu để 2 khối đó ở 2 dạng khác nhau nên phải 2 rule** (đã dump mẫu từ DB để xác nhận):
+
+| Mẫu | Cấu trúc | Rule dùng |
+| --- | --- | --- |
+| 211, 236 | "Ngày …" và hàng chữ ký là **2 bảng `.block` liền kề** | `table.block + table.block { margin-top: 8mm }` |
+| 217 | cả hai nằm trong **1 bảng `.block`**, mỗi khối 1 hàng | `table.block tr + tr td { padding-top: 8mm }` |
+
+Hai rule không chồng nhau: 211/236 mỗi bảng chỉ 1 hàng nên `tr + tr` không khớp; 217 chỉ có 1
+bảng `.block` nên `table.block + table.block` không khớp.
+
+- [x] M1 — Thêm 2 rule vào `printBaseStyles()` (cửa sổ in)
+- [x] M2 — Thêm 2 rule tương ứng vào `<style scoped>` (preview) để xem trước khớp bản in
+
+Khoảng cách chọn **8mm** (~2 dòng chữ 16px) — muốn thưa/khít hơn thì đổi đúng 2 con số này.
+
+### Checkpoint — 2026-08-22 (M1-M2)
+Vừa hoàn thành: giãn khối ngày ↔ chữ ký trên bản in phiếu chi.
+Đang làm dở: không.
+Bước tiếp theo: user xem lại bản in 3 mẫu, chốt 8mm hay đổi số khác.
+Chưa kiểm chứng bằng mắt: verify bằng dump cấu trúc mẫu 211/217/236 từ DB + compile check.
+Blocked: không.
+
+## Phase N — Cột "Mã phiếu đề nghị chi" ở màn danh sách mở tab mới (2026-08-22)
+
+**User yêu cầu:** ở `/finance/bill-payments`, click mã phiếu đề nghị chi phải mở sang tab khác.
+
+Cột này link sang màn **khác** (`/finance/bill-payment-requests/{id}`) — mở tab mới để không mất
+bộ lọc/trang đang xem. Làm giống hệt cột "Mã phiếu đề nghị thu" ở màn Phiếu thu tiền
+(`pages/finance/bill-incomes/index.vue:144`), ERP cũng để `target="_blank"`.
+
+Cột "Mã phiếu" (chính) GIỮ NGUYÊN điều hướng trong tab hiện tại — nó là lối vào duy nhất của màn
+chi tiết cùng phân hệ (spec §11.1), chuột phải vẫn mở tab mới được.
+
+- [x] N1 — `pages/finance/bill-payments/index.vue` slot `#cell-requestCode`: thêm `target="_blank"`
+      + `rel="noopener"` vào `<nuxt-link>` (vue-router tự bỏ qua click khi có `target` → trình
+      duyệt điều hướng thật, không phải chuyển trang SPA)
+
+### Checkpoint — 2026-08-22 (N1)
+Vừa hoàn thành: cột Mã phiếu đề nghị chi ở màn danh sách phiếu chi mở tab mới.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payments` click thử 1 dòng có mã đề nghị.
+Chưa kiểm chứng bằng mắt: verify bằng compile check template (vue-template-compiler, 0 lỗi).
+Blocked: không.
+
+## Phase O — Rà nút màn chi tiết theo màn Phiếu thu tiền (2026-08-22)
+
+**User yêu cầu:** màn `/finance/bill-payments/{id}` các button dùng đúng quy tắc V2Base,
+**tham khảo màn Phiếu thu tiền** (`pages/finance/bill-incomes/_id/index.vue`).
+
+**Hiện trạng:** toàn bộ nút ĐÃ là `V2BaseButton` (có icon `#prefix`, có `size="sm"`, dùng prop
+`primary/secondary/tertiary` chứ không `type=`). Lệch màn phiếu thu ở 3 chỗ:
+
+| Lệch | Sửa |
+| --- | --- |
+| Nút **Duyệt** để `status="success"` (#16a34a) — cả footer lẫn popup duyệt | Bỏ `status` → `primary` trần = teal `#1abc9c`, đúng như phiếu thu + `V2Footer` (skill `button-convention` mục 2b, user chốt 2026-08-20) |
+| Chữ nút: `Duyệt` / `Hủy phiếu` | Đổi thành **`Duyệt phiếu chi` / `Hủy phiếu chi`** — song song `Duyệt phiếu thu` / `Hủy phiếu thu` |
+| Icon nút **Xác nhận** trong popup hủy dùng `ri-close-circle-line` | Đổi `ri-check-line` (mục 3: close-circle dành cho "Từ chối"); ngữ cảnh hủy đã có icon đỏ ở header + màu danger |
+
+⚠️ **Thứ tự nút GIỮ NGUYÊN `Duyệt → Hủy → In → Xuất Excel → Xóa`** — cố ý lệch skill mục 5
+(chính → phụ → nguy hiểm). Cặp Duyệt / Hủy phải đứng cạnh nhau, đúng quy ước user chốt ở màn phiếu
+thu 2026-08-20. Trong phiên này từng sắp lại cho "đúng skill" rồi **hoàn tác**; đã ghi comment cảnh
+báo ngay trong file, đừng sửa lại lần nữa.
+
+- [x] O1 — `_id/index.vue`: nút Duyệt bỏ `status="success"`, đổi chữ `Duyệt phiếu chi`
+- [x] O2 — `_id/index.vue`: nút Hủy đổi chữ `Hủy phiếu chi`, giữ vị trí ngay sau Duyệt
+- [x] O3 — `components/ApproveBillPaymentModal.vue`: nút Duyệt trong popup bỏ `status="success"`
+- [x] O4 — `_id/index.vue`: icon nút Xác nhận popup hủy → `ri-check-line`
+
+Giữ nguyên (đã khớp phiếu thu): In = `secondary`, Xuất Excel = `secondary status="success"`,
+Hủy / Xóa = `primary status="danger"`, footer popup = primary → tertiary "Đóng" đứng cuối.
+Khác biệt còn lại có chủ ý: `BaseConfirmModal` xóa của phiếu chi có prop `danger` (phiếu thu không)
+— giữ vì Xóa là thao tác phá huỷ.
+
+### Checkpoint — 2026-08-22 (O1-O4)
+Vừa hoàn thành: chuẩn hoá nút màn chi tiết phiếu chi theo khuôn màn Phiếu thu tiền.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payments/1320` đối chiếu với `/finance/bill-incomes/{id}`.
+Chưa kiểm chứng bằng mắt: verify bằng compile check 2 file (0 lỗi), chưa mở trình duyệt.
+Blocked: không.
+
+## Phase N — Bản in tràn khỏi lề phải (2026-08-22)
+
+Phát hiện khi đo màn Phiếu thu — đo luôn phiếu chi bằng cùng cách (render HTML thật qua
+`BillPaymentPrintService::render()`, dựng lại môi trường cửa sổ in, ép bề ngang 180mm = 680px,
+Chromium headless).
+
+**Đo TRƯỚC khi sửa — phiếu chi tràn NẶNG HƠN phiếu thu:**
+
+| Mẫu | Phần tử tràn | Tràn |
+| --- | --- | --- |
+| 211 | hàng chữ ký (rộng **772px**) | **91.4px ≈ 24mm** |
+| 236 | hàng chữ ký (rộng **863px**) | **182.3px ≈ 48mm** |
+| 217 | khối "Liên số / Quyển số / Nợ / Có" (232px) | 13.1px |
+
+**Root cause hàng chữ ký — do chính Phase L:** khi đưa CSS về giống ERP tôi copy nguyên
+`table.block td { white-space: nowrap }` từ màn Phiếu thu. Deviation đó chỉ đúng cho phiếu thu vì
+ô chữ ký bên đó chỉ có **1 dòng nhãn**. Ô chữ ký của mẫu 211/217/236 có **3 dòng** —
+nhãn + "(ký, họ tên đóng dấu)" + tên người ký — ép nowrap thì bảng phình tới 772-863px.
+
+**Root cause khối Liên số:** giống hệt phiếu thu — bảng nằm trong ô cuối của bảng đầu trang
+(`table-layout: fixed`, ô 227px, trừ padding còn 211px) nhưng cần 232-240px ở cỡ chữ 16px.
+
+- [x] N1 — Bỏ `nowrap` ở `table.block td` (giữ `vertical-align: top` để 5 ô vẫn bắt đầu cùng mức),
+      padding còn 2px
+- [x] N2 — Khối Liên số: `font-size: 12px`, `padding: 0 2px`, `margin: 0 -8px`, `nowrap` từng hàng
+- [x] N3 — Áp cả `printBaseStyles()` lẫn `<style scoped>`
+- [x] N4 — Sửa lỗi tự gây: comment trong `printBaseStyles()` lọt **dấu backtick** làm đứt template
+      literal (đúng cái bẫy đã ghi sẵn trong chính comment đó) — babel parse fail, đã bỏ
+
+**Đo lại SAU khi sửa: tràn = 0px ở cả 3 mẫu 211 / 217 / 236.**
+Thứ tự rule đã kiểm: `table.block td { padding: 2px 2px }` KHÔNG đè `tr + tr td { padding-top: 8mm }`
+của Phase M vì rule sau có specificity cao hơn.
+
+### Checkpoint — 2026-08-22 (N1-N4)
+Vừa hoàn thành: bản in phiếu chi hết tràn lề phải.
+Đang làm dở: không.
+Bước tiếp theo: user mở bản in 3 mẫu xác nhận hàng chữ ký (nay cho xuống dòng) và cỡ chữ khối
+Liên số 12px có chấp nhận được không.
+Chưa kiểm chứng bằng mắt: chỉ đo hình học.
+Blocked: không.
+
+### Sửa lại Phase N — trả khối Liên số về cỡ chữ 16px của ERP (2026-08-22)
+
+**User phản hồi:** "sao lại cho font chữ ở chỗ liên số nhỏ vậy?" — đúng. Bản N1 thu nhỏ CẢ KHỐI
+xuống 12px chỉ để cover 13 phiếu mã 21 ký tự (0,55% dữ liệu), làm xấu 2.335 phiếu còn lại.
+
+**Đo lại từng ô mới thấy:** thứ duy nhất không vừa 211px là **MÃ PHIẾU** — nó nằm ở cột giữa
+vốn hẹp (cột này còn phải chứa số tài khoản). Các ô còn lại (Liên số / Nợ / Có / số tiền) vừa
+thoải mái ở 16px.
+
+- [x] N5 — Bỏ `font-size: 12px` trên cả khối → giữ nguyên 16px của ERP
+- [x] N6 — Chỉ ô mã phiếu: `font-size: 12px` + cho phép xuống dòng (`word-break: break-all`)
+
+Đã sweep cỡ chữ ô mã phiếu để chọn: **12px** là mức lớn nhất mà mã 16/17 ký tự vẫn nằm gọn
+1 dòng ở CẢ 6 mẫu. Từ 13px trở lên thì mẫu 204 (nhiều khách hàng, cột tài khoản dài hơn) đã bị
+xuống dòng. Chỉ 13 phiếu mã 21 ký tự (DTTDETEK) xuống 2 dòng — thay vì chạy ra khỏi trang.
+
+Đo lại toàn bộ: **tràn = 0px** ở 203/204/205/211/217/236 + 2 ca biên; khối Liên số `font=16px`,
+riêng ô mã phiếu `font=12px`.
+
+### Điều tra — cột "Khách hàng / Nhà cung cấp" trống ở màn danh sách (2026-08-22)
+
+**User báo:** màn `finance/bill-payments` không hiện thông tin cột Khách hàng / Nhà cung cấp.
+
+- [x] Trace DB → API → FE: **không phải bug**. API trả đúng cho loại 1 (`supplier_code-supplier_name`)
+      và loại 2 (`customer_code-customer_name`); FE đọc đúng key `object_name`; không có bản ghi
+      `user_column_settings` cho `finance_bill_payments` nên cột không bị ẩn.
+- [x] Đếm lại dữ liệu thật (`bill_payment_details`): loại 1 = 1.318/1.318 có NCC; loại 2 = 163/163
+      có KH; loại 4 = 1.022 dòng, loại 6 = 359, loại 12 = 182 — **0 dòng** có KH/NCC.
+      Tra ngược bảng đề nghị: loại 6 chỉ có `contract_code` (537/537), loại 12 không có gì
+      (đối tượng nằm ở chuyến xe `delivery_trip_accounting_id`).
+- [x] **User chốt 2026-08-22: GIỮ NGUYÊN NHƯ ERP** — chỉ loại 1 và 2 có đối tác, loại 4/6/12 hiện
+      `—`. KHÔNG tra ngược hợp đồng/chuyến xe. Không sửa code.
+
+### Checkpoint — 2026-08-22
+Vừa hoàn thành: điều tra cột KH/NCC màn danh sách phiếu chi — kết luận không sửa (user chốt giữ như ERP).
+Đang làm dở: không.
+Bước tiếp theo: không có việc tồn từ mục này.
+Blocked: không.
+
+### Fix — cột "Khách hàng / Nhà cung cấp" trống trên server (2026-08-22, bổ sung)
+
+**Điều tra lại bằng Playwright trên `hrm-crm.eteksofts.com`** (mục trước kết luận "không phải bug"
+là do chỉ đo trên DB local — SAI):
+
+- 7/7 phiếu **loại 1** ở trang đầu server trả `object_name = null`, trong khi đề nghị nguồn vẫn ghi
+  đủ NCC (vd `TPE.PC0826.00010` ← `TPE.DNTT0726.00142`, header `supplier_name` =
+  "CÔNG TY CỔ PHẦN SẢN XUẤT XÂY DỰNG CKT").
+- **Nguyên nhân:** chỗ lưu đối tác đổi theo hình thức thanh toán của đề nghị —
+  TM (`type_payment=1`) lưu trên TỪNG DÒNG chi tiết, CK (`type_payment=2`) lưu ở HEADER đề nghị
+  (`bill_payment_requests.supplier_*` / `customer_*`), dòng chi tiết để NULL. Code chỉ đọc dòng
+  chi tiết → phiếu CK luôn trống. Local không lộ vì 1.318/1.318 phiếu đã lập đều từ đề nghị TM.
+- Màn Đề nghị thanh toán đã xử lý đúng luật này từ trước (`BillPaymentRequestListResource::objectName()`).
+  ERP gốc cũng chỉ đọc dòng chi tiết (`BillPaymentController::searchData()` :73-82) → HRM cố ý sửa.
+
+- [x] BE1 — `BillPaymentListResource::objectName()`: đọc snapshot dòng chi tiết trước, rỗng thì
+      lấy snapshot header đề nghị (0 query thêm, `billPaymentRequest` đã eager load). Tách helper
+      `joinCodeName()` giữ đúng khuôn "MÃ-TÊN" của ERP.
+- [x] BE2 — `BillPaymentPrintService`: bản in/Excel cũng trống ô **"Đơn vị" + "Địa chỉ"** với phiếu
+      CK (đo thật trên server: `TPE.PC0826.00010` ra "Đơn vị: " rỗng). Bù từ header đề nghị khi
+      2 nhánh cũ không ra gì — vá luôn ca phiếu CK NHIỀU dòng chi tiết (nhánh `count() === 1`
+      không chạy nên trước đây `KHACH_HANG` không hề được gán).
+- [x] BE3 — `BillPaymentDetailResource`: trả thêm `supplier_code/name`, `customer_code/name` trong
+      khối `bill_payment_request` để FE bù cột "Đối tượng". Chỉ để hiển thị.
+- [x] FE1 — `BillPaymentForm.buildPartyLabel(d, header)` + 2 chỗ gọi (nạp từ đề nghị → `data`,
+      nạp phiếu chi → `data.bill_payment_request`).
+- [x] FE2 — `ApproveBillPaymentModal.buildPartyLabel(d, this.bill?.bill_payment_request)`.
+
+**Kiểm chứng:** API local trước/sau fix ra kết quả Y HỆT (không hồi quy trên dữ liệu TM);
+giả lập trong bộ nhớ dạng CK (dòng chi tiết rỗng, header có NCC) → danh sách ra
+"MOCK-NCC-CONG TY MOCK CHUYEN KHOAN", bản in ra "Đơn vị: MOCK-NCC - CONG TY MOCK CHUYEN KHOAN".
+KHÔNG ghi gì vào DB. FE: compile template + parse script sạch.
+**Chưa kiểm chứng bằng mắt trên server** — cần deploy rồi mở lại màn.
+
+### Checkpoint — 2026-08-22
+Vừa hoàn thành: fix cột Khách hàng/NCC cho phiếu chi CHUYỂN KHOẢN (danh sách + bản in + màn chi tiết + modal duyệt).
+Đang làm dở: không.
+Bước tiếp theo: deploy `gop_db` lên hrm-crm rồi mở lại `/finance/bill-payments` xác nhận cột đã hiện.
+Blocked: không.
+
+---
+
+## Phase — Bỏ "Hủy phiếu" khỏi màn danh sách (2026-08-24)
+
+Đồng bộ quy tắc mới ở `.claude/skills/list-page/SKILL.md` mục 1 (chốt cùng ngày ở màn Phiếu thu):
+"Hủy phiếu" / "Không duyệt" chỉ đặt ở màn CHI TIẾT. Ở danh sách nó chỉ là link điều hướng.
+
+- [x] Xóa action `key: 'cancel'` + `case 'cancel'` trong `pages/finance/bill-payments/index.vue`,
+      sửa comment cho khớp. Giữ "Duyệt", không đụng màn chi tiết và BE.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: bỏ "Hủy phiếu" khỏi cột hành động màn danh sách Phiếu chi.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt xác nhận menu ⋮ không còn "Hủy phiếu"; màn chi tiết vẫn hủy được.
+Chưa kiểm chứng bằng mắt: chỉ parse template + script.
+Blocked: không.
+
+---
+
+## Phase — Mặc định loại chi + Lưu nháp không bắt buộc trường (2026-08-24)
+
+User yêu cầu ở `/finance/bill-payments/create`:
+1. Vào màn là **mặc định chọn sẵn "Chi trả nhà cung cấp"** (loại chi 1).
+2. **Lưu nháp thì không bắt validate gì cả** — hiện đang chặn ngay ở FE (`Người nhận` gắn
+   `required`) và ở BE (`BillPaymentStoreRequest` bắt buộc `type` · `account_has` · `receiver` ·
+   `details` + bộ trường theo nhánh, áp cho MỌI lần lưu).
+
+**Quyết định thiết kế:** phiếu chi luôn được tạo ở trạng thái NHÁP (`status` do server đặt, client
+không gửi), "Lưu và gửi duyệt" = 2 API tuần tự (`POST` rồi `POST /{id}/submit`). Nên FE gửi thêm cờ
+**`submit_after`** để BE biết lần lưu này có gửi duyệt ngay không:
+- `submit_after` falsy → **lưu nháp**: bỏ hết `required`, chỉ giữ rule ĐỊNH DẠNG (`in` / `exists` /
+  `numeric`) để không ghi rác xuống DB.
+- `submit_after = true` → giữ NGUYÊN bộ luật hiện tại, fail **trước khi** tạo phiếu (không đẻ ra
+  phiếu nháp rác rồi mới báo lỗi, cũng không tạo trùng khi bấm lại).
+
+Cờ này KHÔNG phải `status`: `status` vẫn do server đặt, và `BILL_COLUMNS_FROM_CLIENT` không có
+`submit_after` nên nó không thể lọt xuống DB.
+
+- [x] **FE-1** `BillPaymentForm.vue` `mounted()` — màn TẠO và chưa có phiếu đề nghị theo query thì
+      đặt `form.type = 1`. Đặt TRƯỚC `markFormPristine()` để không bị hỏi "chưa lưu" oan.
+- [x] **FE-2** `BillPaymentForm.vue` — bỏ `required` khỏi `v-validate` của `Người nhận` (giữ
+      `max:255`), đúng skill `form-validate` mục 1: FE chỉ gắn `required` cho ô Tên, required khác
+      do BE quyết theo trạng thái. Dấu `*` trên nhãn giữ nguyên (vẫn bắt buộc khi gửi duyệt).
+- [x] **FE-3** `buildPayload()` — gửi kèm `submit_after`.
+- [x] **BE-1** `BillPaymentStoreRequest` (Update kế thừa) — nhánh nháp bỏ hết `required`.
+- [x] **BE-2** `BillPaymentWriteService::submit()` — chốt chặn: phiếu nháp thiếu trường bắt buộc thì
+      **không cho gửi duyệt** (422). Không có bước này thì gọi thẳng `POST /{id}/submit` là lách được
+      toàn bộ luật vừa nới.
+- [x] **Verify** gọi thật 2 luồng bằng HTTP kernel: lưu nháp form gần như trống → 200; gửi duyệt
+      thiếu trường → 422 đúng câu lỗi; submit thẳng phiếu nháp thiếu trường → 422.
+
+**Verify (chạy thật qua HTTP kernel + JWT, bọc transaction rồi rollback — DB không còn dấu vết):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| `POST /bill-payments` với payload **rỗng** (`submit_after = 0`) | **200**, tạo phiếu nháp |
+| `POST /bill-payments` `submit_after = 1`, thiếu trường | **422** — `type` · `account_has` · `receiver` · `details` |
+| `POST /bill-payments/{id}/submit` gọi THẲNG trên phiếu nháp rỗng | **422** đủ 5 câu lỗi tiếng Việt, phiếu **giữ nguyên trạng thái 1** |
+
+FE: compile template + parse script `BillPaymentForm.vue` — OK.
+
+- [x] **FE-4** Ô "Loại chi" thêm `:allow-clear="false"` — bỏ nút × của select2, chỉ cho ĐỔI sang
+      loại khác chứ không xóa trắng (user yêu cầu 2026-08-24). Prop có sẵn trong `V2BaseSelect`
+      (mặc định `true`), không phải sửa component dùng chung.
+
+### Đợt 2 — nới `required` ở FormRequest vẫn CHƯA đủ (user báo lại 2026-08-24)
+
+Bấm Lưu nháp khi mới chỉ có loại chi vẫn hỏng. Bộ luật `required` chỉ là **lớp thứ nhất**; test
+đúng payload FE gửi mới lộ thêm 2 lớp chặn nữa nằm sâu hơn:
+
+| # | Chặn ở đâu | Triệu chứng | Cách xử lý |
+| --- | --- | --- | --- |
+| 1 | `BillPaymentWriteService::guardRequestLink()` — luật "nhánh A bắt buộc có đề nghị nguồn" | 422 `Bắt buộc chọn phiếu đề nghị thanh toán.` (dấu chấm cuối câu — khác câu của FormRequest, đó là dấu vết lần ra) | Thêm tham số `$requireRequest`; lưu nháp thì bỏ vế BẮT BUỘC NHẬP, **giữ nguyên** vế chống 2 phiếu cùng trỏ 1 đề nghị |
+| 2 | Chính bảng DB: `account_has` · `receiver` (và `account_dept` ở bảng chi tiết) là **NOT NULL không có mặc định** | 500 `Column 'account_has' cannot be null` | `draftSafeAttributes()` ghi **0 / chuỗi rỗng** khi lưu nháp |
+
+Chọn ghi 0 thay vì đổi cột sang nullable: `bill_payments` là **bảng dùng chung ERP+HRM**, đổi schema
+phải hỏi user trước. 0 không trùng id tài khoản nào (đo: 1.305/1.305 phiếu hiện có đều trỏ tài khoản
+thật), quan hệ `accountHas()` là `belongsTo` null-safe — không có JOIN nào ở cả HRM lẫn ERP nên màn
+danh sách không vỡ.
+
+Kèm 2 việc bắt buộc đi cùng số 0 đó, thiếu là đẻ bug mới:
+- `BillPaymentStoreRequest::prepareForValidation()` đưa `0` về `null` TRƯỚC khi validate — nếu không,
+  mở lại phiếu nháp rồi Lưu nháp lần nữa sẽ dính `exists:accounts,id` với đúng số 0
+  ("Tài khoản có không tồn tại"), tức không sửa nổi phiếu nháp của chính mình.
+- `BillPaymentDetailResource` trả `null` thay cho `0` để select ở FE hiện placeholder.
+
+- [x] **BE-3** `guardRequestLink()` nhận `$requireRequest`; `savingAsDraft()` chỉ nhận diện nháp khi
+      payload NÓI RÕ `submit_after = false` (đường gọi service nội bộ không gửi khóa này → vẫn chặt).
+- [x] **BE-4** `draftSafeAttributes()` + `account_dept ?? 0` trong `syncDetails()`.
+- [x] **BE-5** `prepareForValidation()` chuẩn hoá 0/'' → null.
+- [x] **BE-6** `BillPaymentDetailResource` trả null thay 0 cho `account_has` / `account_dept`.
+
+**Verify đợt 2 (HTTP kernel + JWT, transaction rồi rollback — DB vẫn 1.305 phiếu, 0 phiếu `account_has = 0`):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| Lưu nháp **chỉ có loại chi** | **200**, sinh mã `TPE.PC0826.00004` |
+| Mở lại phiếu nháp đó | 200, `account_has` trả `null` (không phải 0) |
+| Lưu nháp **lần 2** trên chính phiếu đó | **200** |
+| Lưu nháp có 1 dòng chi tiết **chưa chọn tài khoản nợ** | **200** |
+| Gửi duyệt phiếu nháp thiếu trường | **422** — `account_has` · `receiver` · `details` · `bill_payment_request_id` |
+| Lưu + gửi duyệt thiếu trường | **422** — cùng bộ lỗi |
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: mặc định loại chi "Chi trả nhà cung cấp" ở màn tạo + lưu nháp CHỈ CẦN loại chi
+(gỡ đủ 3 lớp chặn: FormRequest → guard service → cột NOT NULL) + bỏ nút xóa ở ô Loại chi.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payments/create` xác nhận loại chi chọn sẵn và bấm Lưu nháp
+với form trống.
+Chưa kiểm chứng bằng mắt: chỉ compile FE; 3 luồng BE đã gọi thật.
+Blocked: không.

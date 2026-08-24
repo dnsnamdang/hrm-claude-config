@@ -1043,3 +1043,89 @@ chọn được.
 làm dropdown bật lên → click vào ô ngay sau khi bấm × có thể chưa mở, click lần nữa là được.
 
 **Lợi ích ngoài màn này**: sửa cho MỌI màn có `allowClear` mà việc xoá làm ô select khác biến mất.
+
+---
+
+## Phase 15 — Bỏ tab preset + 2 nút mở sang ERP (2026-08-21)
+
+Yêu cầu user: 1 màn duy nhất ứng với `all` của ERP, nút duyệt hiện theo QUYỀN (mẫu: Phiếu thu /
+Phiếu chi của @khoipv); nút trỏ màn chưa port thì **vẫn hiện** và mở sang ERP, ẩn đi tester tưởng
+chưa làm.
+
+- [x] FE gỡ `V2BaseTabNavigation` + computed `presetTabs` + `handlePresetChange` + key `type`
+      trong bộ lọc; `handleReset` không phải giữ preset nữa; localStorage cũ còn `type` thì
+      `mergeKnownFilters()` tự bỏ (key không còn trong `initialStateForm`).
+- [x] BE **giữ nguyên** tham số `type` (link cũ / lối vào từ ERP vẫn chạy), chỉ đổi mặc định và
+      phạm vi nhánh mặc định.
+- [x] Không phải sửa phạm vi BE: `applyAllScope()` của màn này **đã** OR sẵn tập phiếu user có
+      quyền duyệt (`orWhereApprovable()`) từ đợt port — chỉ cập nhật docblock cho khỏi hiểu nhầm.
+- [x] Bật lại 2 nút ở màn Chi tiết: **Tạo đề nghị nhập kho** (`is_can_approve`) và **Tạo phiếu
+      nhập hàng** (`is_can_product_import`) — mở tab mới sang ERP kèm `?product_import_request_id=`,
+      icon `ri-external-link-line`, tooltip "Mở bên ERP (tab mới)".
+- [x] Helper dùng chung mới `utils/erp-link.js` — `erpUrl()` / `openErp()` + hằng `ERP_PATHS`
+      (`/admin/warehouse/warehouse_import_requests/create`, `/admin/warehouse/product_imports/create`,
+      tra từ `routes/web.php` của TanPhatDev). Chưa cấu hình `ERP_URL` thì báo lỗi, không mở nhầm
+      route HRM. Port xong 2 màn kia thì đổi `openErpScreen()` sang route HRM.
+- [ ] User verify trên dev: 4 vai duyệt (Kế toán kho / TP / BKS / BGĐ) đều thấy phiếu cần duyệt
+      trong danh sách chính khi lọc Trạng thái.
+
+### Checkpoint — Phase 15
+
+```text
+Vừa hoàn thành: bỏ tab ở màn danh sách; 2 nút trỏ ERP ở màn chi tiết + helper erp-link.
+Đang làm dở: không.
+Bước tiếp theo: user verify trên dev.
+Blocked: không.
+Verify: compile template + parse script 2 file .vue; đếm danh sách khi không gửi `type`
+(admin 12.113 phiếu). Ô lọc Trạng thái đã có đủ 4 mức chờ (Chờ duyệt / Chờ TP / Chờ BKS / Chờ BGĐ)
+nên thay được tab.
+```
+
+---
+
+## Phase — Mặc định loại yêu cầu + Lưu nháp không bắt buộc trường (2026-08-24)
+
+User yêu cầu ở `/finance/product-import-requests/create` — **giống hệt đợt vừa làm cho màn Phiếu chi**
+(`.plans/gop-db/finance-bill-payment/plan.md`, cùng ngày):
+
+1. Vào màn là **chọn sẵn 1 loại yêu cầu**, ô đó **chỉ cho ĐỔI sang loại khác, không cho xóa trắng**.
+2. **Lưu nháp thì bỏ validate** — chỉ cần có loại yêu cầu.
+
+Màn này **không cần cờ `submit_after`** như màn Phiếu chi: FE đã gửi sẵn `status`
+(3 = Đang tạo · 2 = Chờ duyệt · 10 = Chờ ban kiểm soát duyệt), BE rẽ nhánh thẳng theo đó.
+
+- [x] **FE-1** `ProductImportRequestForm.vue` `mounted()` — nhánh TẠO đặt `form.type = 2`
+      ("Nhập hàng mua ngoài" — mục đầu `TYPE_DEFS`).
+- [x] **FE-2** Ô "Loại yêu cầu" đổi `:allowClear="true"` → `false` (đang bật tường minh).
+- [x] **BE-1** `ProductImportRequestRequest::rules()` — `status = 3` thì bỏ hết `required`, chỉ giữ
+      `type` + `status` (và các rule ĐỊNH DẠNG `in` / `exists` / `numeric` / `mimes`).
+- [x] **Verify** gọi thật qua HTTP kernel: lưu nháp chỉ có loại yêu cầu → 200; gửi duyệt thiếu
+      trường → 422; mở lại + lưu nháp lần 2 → 200. Bọc transaction rồi rollback.
+
+**Verify (HTTP kernel + JWT, bọc transaction rồi rollback — phiếu test `PYCNH-12231` không còn trong DB):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| Lưu nháp **chỉ có loại yêu cầu** (`type = 2`, `status = 3`) | **200**, sinh mã `PYCNH-12231` |
+| Mở lại phiếu nháp đó | 200 — `type = 2`, `status = 3` |
+| Lưu nháp **lần 2** trên chính phiếu đó | **200** |
+| Đổi sang **gửi duyệt** (`status = 2`) khi còn thiếu | **422** — `products` · `warehouse_id` · `source_id` · `transition_type`; phiếu **giữ nguyên status 3** |
+
+Không phải làm gì thêm ở tầng service như màn Phiếu chi:
+- Màn này **không có endpoint `submit` riêng** — đổi 3 → 2 chỉ qua `PUT` nên vẫn đi qua FormRequest,
+  không có đường lách. 4 route duyệt đều chặn theo trạng thái (`canApproveByManager()` đòi
+  `CHO_TP_DUYET`…) nên phiếu nháp không nhảy cóc sang duyệt được.
+- Các cột `NOT NULL` của `product_import_requests` (`code` · `status` · `type` · `created_by` ·
+  `department` · `employee_phone` · `employee_email` · `currency`) đều do **server** điền
+  (`fillCreatorInfo()` / `generateCode()`), không phải trường người dùng nhập → không dính lỗi
+  `Column cannot be null` như bảng `bill_payments`.
+
+FE: compile template + parse script — OK.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: mặc định loại yêu cầu "Nhập hàng mua ngoài" + bỏ nút xóa ở ô đó + lưu nháp chỉ cần
+loại yêu cầu.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/product-import-requests/create` xác nhận.
+Chưa kiểm chứng bằng mắt: chỉ compile FE; 4 luồng BE đã gọi thật.
+Blocked: không.

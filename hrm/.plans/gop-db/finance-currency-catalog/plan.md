@@ -154,3 +154,24 @@ Sửa bằng `canManage && !isLocked` nhưng nút Xóa chỉ gate bằng `canMan
 thiếu `!isLocked`. Máy chủ đã chặn đúng nên không mất dữ liệu, nhưng nút vẫn hiện là trái quy
 tắc “nút không dùng được thì ẩn hẳn”.
 → Sửa đồng thời ở cả 3 màn Tài chính.
+## Phase X — Fix tỷ giá parse sai định dạng VN (user báo 2026-08-05)
+
+> **Bug:** Nhập `999.999,99` (VN: '.' nghìn, ',' thập phân) → lưu ra **1000.00**.
+> Nguyên nhân: FE `currency-modal.vue` strip dấu phẩy trước khi gửi (`.replace(/,/g,'')`)
+> → `999.999,99` thành `999.99999`; BE `(float)"999.99999"` = 999.999 → double(8,2) làm tròn 1000.00.
+> Cả FE lẫn BE đang xử lý số theo kiểu quốc tế (',' nghìn, '.' thập phân), ngược với VN.
+
+- [x] BE `CurrencyRequest::prepareForValidation` — đổi sang chuẩn hóa VN: bỏ '.', đổi ',' -> '.'
+      ("999.999,99" -> "999999.99"). Cập nhật cả doc comment.
+- [x] BE `CurrencyService` — bỏ `normalizeNumber` (strip ','), payload dùng thẳng `(float) $request->exchange_rate`
+      vì giá trị đã canonical sau prepareForValidation (tránh double-process).
+- [x] FE `currency-modal.vue` — (1) `saveItem` gửi NGUYÊN chuỗi VN thay vì strip ','; (2) `loadData`
+      format tỷ giá về VN "26.520,00" để sửa/xem khớp cột danh sách & round-trip; (3) thêm helper
+      `formatRateForInput`; (4) placeholder -> "VD: 26.520,00".
+- [x] `php -l` 2 file BE sạch. (Cảnh báo P1078 dòng 123 CurrencyService là pre-existing, PHP 7.4 không lỗi.)
+
+### Checkpoint — 2026-08-05
+Vừa hoàn thành: Sửa parse tỷ giá theo đúng định dạng VN ('.'=nghìn, ','=thập phân) đồng bộ FE↔BE; modal edit hiển thị VN để round-trip.
+Đang làm dở: (không)
+Bước tiếp theo: User verify browser — sửa tiền tệ nhập `999.999,99` → lưu ra đúng 999.999,99 (không còn 1000); mở sửa lại thấy đúng; nhập vượt trần báo "Tỷ giá tối đa 999.999,99".
+Blocked:

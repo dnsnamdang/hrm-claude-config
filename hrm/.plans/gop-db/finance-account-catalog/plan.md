@@ -395,3 +395,36 @@ Máy chủ đã chặn đúng (route xóa có gác bản ghi khóa) nên không 
 vào sẽ nhận lỗi — trái quy tắc “nút không dùng được thì ẩn hẳn”.
 → Thêm `&& !isLocked` vào điều kiện hiện nút Xóa. **Lỗi này lặp ở cả 3 màn Tài chính** (tài khoản,
 loại tài khoản, tiền tệ).
+## Phase 9 — Sửa 2 bug port loại tài khoản / tài khoản (user báo 2026-08-05)
+
+- [x] **Bug 1 — Trùng tên loại tài khoản:** `TypeAccountRequest` thêm rule `name` unique
+      (`Rule::unique('type_accounts','name')->ignore($ignoreId)`) + message `name.unique`.
+      FE `type-account-modal.vue` đã sẵn hiển thị inline `error.name` (viền đỏ + text) nên KHÔNG sửa FE.
+      ⚠️ Lưu ý: ERP gốc CHỈ unique `code`, KHÔNG unique `name` — đây là YÊU CẦU THÊM của user, không
+      phải khôi phục hành vi ERP. Dữ liệu cũ đang có bản trùng tên (VD "Trang test 002") → sửa 1 trong
+      2 bản đó sẽ báo trùng cho tới khi user dọn.
+- [x] **Bug 2 — Cột "Loại tài khoản" trống với loại tự tạo:** `AccountResource.type_name` đổi từ
+      hằng `Account::TYPES` (1-7) sang quan hệ `optional($this->typeAccount)->name` (bảng `type_accounts`)
+      — đúng như ERP `AccountController::searchData` `editColumn('type') -> type_account->name`.
+      `AccountService::index` eager-load thêm `typeAccount` (tránh N+1); `AccountController::show` load thêm.
+      Giữ nguyên bộ lọc / mẫu in / lịch sử dùng hằng `TYPES` (ERP cũng vậy — nợ kỹ thuật có chủ ý).
+- [x] `php -l` 4 file BE sạch.
+
+### Checkpoint — 2026-08-05
+Vừa hoàn thành: Fix bug trùng tên loại TK (BE validate name unique + inline) và bug cột Loại tài khoản trống với loại tự tạo (đổi nguồn type_name sang bảng type_accounts, bám ERP).
+Đang làm dở: (không)
+Bước tiếp theo: User verify browser — (1) tạo/sửa loại TK trùng tên → thấy lỗi đỏ inline dưới ô Tên; (2) tạo/sửa TK gán loại tự tạo → danh sách hiện đúng tên loại thay vì "—".
+Blocked:
+
+- [x] **Bug 3 — Màn In danh mục tài khoản vỡ logo/letterhead:** `AccountService::companyHeader()` cũ ghép
+      `companies.header` theo `ERP_URL=127.0.0.1:8001` (server ERP nội bộ) → client không tải được ảnh → logo vỡ.
+      Đổi sang trả **data URI base64** của ảnh cố định `public/images/info-tpe.jpg` (cùng letterhead màn in
+      `assign/payment_business_request`) → hiển thị đúng ở cả preview lẫn cửa sổ in `about:blank`.
+      Áp cùng fix cho bản song sinh `Modules/CustomerCare/Services/ServiceService::companyHeader()` (mẫu in
+      "Danh mục kiểm tra bảo dưỡng"). `php -l` cả 2 sạch.
+
+### Checkpoint — 2026-08-05 (2)
+Vừa hoàn thành: Fix logo vỡ màn In tài khoản — data URI letterhead thay vì URL ERP nội bộ; đồng bộ bản CustomerCare.
+Đang làm dở: (không)
+Bước tiếp theo: User verify browser — mở /finance/accounts → In → logo Tân Phát hiển thị đúng (cả preview lẫn khi bấm In). Còn nút "In" nếu icon fa vẫn vỡ thì báo (thuộc layout, không ảnh hưởng bản in).
+Blocked:

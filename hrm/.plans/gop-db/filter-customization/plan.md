@@ -143,3 +143,7 @@ Verify: bấm nhanh 3 lần × 6 vòng — trạng thái cuối luôn khớp nh�
 - [x] GIỮ watcher `currentPageValue`: `b-pagination` chỉ có `v-model`, không có handler nào khác để phát `page-change`
 
 Verify sau khi sửa: vào màn **1** request · đổi số dòng/trang **1** request (bảng đúng 20 dòng) · chuyển sang trang 2 **1** request (`page=2&per_page=20`, đúng 20 dòng).
+
+### Ngưỡng ẩn nút "Tìm kiếm nâng cao" — đếm theo TỔNG số trường (2026-08-17)
+
+- [x] `V2BaseSmartFilterPanel.isInlineMode` đếm SỐ Ô NHẬP thực tế của các trường đang hiện (computed `visibleInputCount`: field gom nhóm tính theo `resetKeys.length`, đè được bằng `inputCount`) ; ngưỡng giữ nguyên: số ô lọc + ô tìm nhanh ≤ 3 → chế độ gọn, ẩn nút "Tìm kiếm nâng cao". Bật field `org` (4 ô) → 5 ô → vẫn hiện nút

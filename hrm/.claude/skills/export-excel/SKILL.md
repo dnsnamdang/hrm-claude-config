@@ -99,9 +99,14 @@ class BillIncomeExport implements FromView, WithColumnWidths
 
 ## 4. Logo / letterhead công ty — `WithDrawings` + trait dùng chung
 
-Ảnh letterhead của HRM là **URL tuyệt đối trên server ERP** (`companies.header` + `ERP_URL`), trong
-khi HTML reader chỉ nhận ảnh có sẵn trên đĩa → `<img src="...">` trong blade **không bao giờ vào
-file**. Phải tải ảnh về rồi chèn bằng `WithDrawings`.
+Ảnh letterhead là **URL tuyệt đối** lấy từ `companies.header` (dữ liệu `gop_db` đã chuẩn hoá về
+tuyệt đối 2026-08-21; `ERP_URL` chỉ còn là lưới an toàn cho giá trị tương đối sót lại), trong khi
+HTML reader chỉ nhận ảnh có sẵn trên đĩa → `<img src="...">` trong blade **không bao giờ vào file**.
+Phải tải ảnh về rồi chèn bằng `WithDrawings`.
+
+⚠️ **Cách dựng URL đó nằm ở skill `print-page` mục 4b — đọc trước khi viết `HEADER`.** Tóm tắt: lấy
+công ty theo `company_id` GHI TRÊN CHỨNG TỪ (không phải người tạo, càng không phải người đăng nhập),
+dùng nguyên giá trị `companies.header`, thiếu `ERP_URL` thì trả nguyên path chứ không trả `''`.
 
 Dùng trait có sẵn `Modules\Finance\Exports\Concerns\EmbedsCompanyLetterhead`:
 
@@ -189,9 +194,11 @@ foreach (range('A','J') as $c) echo $c . '=' . $sheet->getColumnDimension($c)->g
 Mẹo tìm nhanh ô sai: quét ô kiểu `s` mà nội dung khớp `/^-?[\d.,]+$/` → đó chính là ô Excel sẽ
 cảnh báo "formatted as text".
 
-Ảnh letterhead trên máy local thường **không tải được** (`ERP_URL` trỏ server ERP) → thử nhánh có
-ảnh bằng một file PNG tạm qua `file:///`, và **nói rõ với user** phần logo chưa kiểm chứng trên
-môi trường thật.
+Ảnh letterhead trên máy local: sau khi `companies.header` đã chuẩn hoá về URL tuyệt đối
+(`https://erp.eteksofts.com/uploads/...`) thì **tải được ngay ở local** — kiểm bằng
+`$export->drawings()` phải trả 1 drawing `letterhead ...x72 @A1`, trả 0 là URL hỏng. Nếu môi trường
+chặn mạng ra ngoài, thử nhánh có ảnh bằng một file PNG tạm qua `file:///` và **nói rõ với user**
+phần logo chưa kiểm chứng trên môi trường thật.
 
 ---
 
@@ -219,3 +226,46 @@ môi trường thật.
 | Service tách nhánh in/Excel + `excelNumber()` | `Modules/Finance/Services/BillIncomePrintService.php` |
 | Nhúng ảnh theo dòng + tải song song | `Modules/Assign/Export/QuotationExcelExport.php` |
 | Helper tải file phía FE | `hrm-client/utils/download-excel.js` |
+
+## 4b. Letterhead ở file dựng bằng ExcelJS (FE) — TRẢI HẾT BỀ RỘNG BẢNG
+
+Áp cho `utils/export/listExportFile.js` (màn danh sách tự dựng file ở trình duyệt).
+
+Ảnh đầu file là **LETTERHEAD** — dải tiêu đề thư của công ty (tên, địa chỉ, điện thoại, website),
+KHÔNG phải cái logo vuông. Vì vậy nó phải **kéo ngang đúng bằng bề rộng của bảng**, y như bản in
+giấy. Chèn ảnh cỡ cố định kiểu `260 × 72` thì trên file 15 cột nó chỉ bé bằng 1/10 bảng, nhìn như
+ảnh bị lạc vào (Redmine #11170).
+
+```js
+const tableWidthPx = headings.reduce(
+    (total, _h, i) => total + charWidthToPx(widths[i] || DEFAULT_COLUMN_WIDTH), 0)
+const ratio = pngAspectRatio(logo) || DEFAULT_LETTERHEAD_RATIO   // đọc từ 32 byte đầu của PNG
+const imageHeightPx = Math.round(tableWidthPx / ratio)
+
+sheet.addImage(imageId, { tl: { col: 0, row: 0 }, ext: { width: tableWidthPx, height: imageHeightPx } })
+sheet.getRow(1).height = Math.round(imageHeightPx * 0.75)   // Excel tính dòng bằng POINT
+```
+
+Bắt buộc:
+- **Bề rộng suy từ chính bảng**, không hằng số: `px = số_ký_tự × 7 + 5` cho MỖI cột (7px/ký tự,
+  5px padding) rồi cộng lại. Chỉ cộng số cột có trong `headings` — BE có thể trả dư `widths`.
+- **Chiều cao suy từ tỉ lệ ảnh thật**, không đặt cứng: đọc `width`/`height` ở byte 16-23 của PNG
+  (khối IHDR) từ chính chuỗi base64, không cần nạp ảnh ra DOM. Đặt cứng chiều cao là ảnh bị bóp
+  méo, chữ trong letterhead nhoè.
+- **Dòng 1 phải cao bằng ảnh** (`height × 0.75` vì Excel tính bằng point), nếu không ảnh đè lên
+  dòng tiêu đề.
+- Ảnh hỏng / API letterhead lỗi → bỏ qua ảnh, **vẫn xuất file**.
+
+### Kiểm chứng (đừng tin mắt, cũng đừng tin openpyxl)
+
+`openpyxl` **không đọc được** ảnh do ExcelJS ghi (neo kiểu `oneCellAnchor`) — nó báo `0 ảnh` dù
+file có ảnh thật, và cộng thiếu bề rộng ở những dải cột gộp (`<col min="2" max="3">` chỉ tính 1
+lần). Đã suýt báo nhầm "mất logo" vì tin nó. Kiểm bằng cách đọc thẳng gói xlsx:
+
+```bash
+unzip -l file.xlsx | grep -E 'media|drawing'      # phải có xl/media/image1.png
+unzip -p file.xlsx xl/drawings/drawing1.xml | grep -o '<xdr:ext[^/]*/>'   # cx, cy (EMU, 1px = 9525)
+unzip -p file.xlsx xl/worksheets/sheet1.xml | grep -o '<col [^>]*>'       # bề rộng từng cột
+```
+
+`cx / 9525` phải **bằng** tổng `width × 7 + 5` của các cột.

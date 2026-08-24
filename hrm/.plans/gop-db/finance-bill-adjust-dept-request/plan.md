@@ -3,6 +3,7 @@
 > Phụ trách: @khoipv · Nhánh: `gop_db` (cả 2 repo, code thẳng trên nhánh này — không tách nhánh riêng)
 > Design: `.plans/gop-db/finance-bill-adjust-dept-request/design.md`
 > Spec: `docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md`
+> **Trạng thái: HOÀN THÀNH — user xác nhận xong (2026-08-24), cả 18 phase đã nghiệm thu.**
 
 ---
 
@@ -683,4 +684,132 @@ User báo *"số tiền nó đang bị ngắt xuống dòng"*. **Do mình tự t
 Vừa hoàn thành: viết lại `_id/print.vue` bám nguyên mẫu ERP id 209
 Đang làm dở: không
 Bước tiếp theo: user mở 1 phiếu → bấm In, đối chiếu cạnh bản in ERP; chốt 2 chỗ cố ý khác + Excel phiếu
+Blocked:
+
+---
+
+## Phase 18 — Lưu nháp chỉ bắt buộc "Loại phiếu" (2026-08-24)
+
+User báo: *"finance/bill-adjust-dept-requests/create màn này lưu nháp cũng chỉ bắt validate trường
+loại phiếu cho tôi thôi"*.
+
+**Hiện trạng (trước fix)** — bấm **Lưu nháp** vẫn bị chặn bởi 3 luật ở FE và 8 rule ở BE:
+
+| Nơi chặn | Luật |
+| --- | --- |
+| FE `validateBeforeSubmit()` | Diễn giải bắt buộc · phải có ≥1 dòng điều chỉnh · tỷ giá > 0 |
+| BE `BillAdjustDeptRequestStoreRequest` | `note` required · `details` required min:1 · `details.*.money_old` required gt:0 · `details.*.items` required min:1 · `items.*.money_new` required gt:0 · `customer_old_id` / `customer_new_id` (hoặc `supplier_new_id`) required · `currency_id` required (loại NCC) · `exchange_rate` required gt:0 (ngoại tệ) |
+
+⇒ Lệch quy ước chung của team (`.claude/skills/form-validate` mục 1: *"Lưu nháp mọi trường đều được
+bỏ trống"*, required khác do BE quyết **theo `status`*).
+
+**Chốt phạm vi:** chỉ nới cho `status = 1` (Lưu nháp). `status = 2` (Gửi duyệt) giữ nguyên đủ luật —
+kể cả luật khớp tổng tiền và luật trùng đối tượng.
+
+### Bẫy phải xử cùng lúc (nếu không sẽ đổi lỗi 422 thành lỗi 500)
+
+3 cột **NOT NULL không có default** sẽ nhận `null` khi lưu nháp dở dang:
+`bill_adjust_dept_request_details.customer_old_id` · `.customer_old_name` ·
+`bill_adjust_dept_request_detail_items.customer_new_id` · `.customer_new_name`
+(`money_old` NOT NULL nhưng `self::money()` đã trả 0). MySQL của máy dev **không bật
+`STRICT_TRANS_TABLES`**, nhưng INSERT 1 dòng ghi thẳng `NULL` vào cột NOT NULL vẫn nổ 1048 →
+phải tự ép `0` / `''` như nhánh NCC đang làm.
+
+Ép `0` lại sinh bẫy thứ 2: mở lại phiếu nháp rồi lưu tiếp → `sameTarget(0, 0) = true` →
+báo oan *"Khách hàng điều chỉnh đến trùng với khách hàng điều chỉnh từ"*.
+
+### BE
+- [x] `BillAdjustDeptRequestStoreRequest::rules()` — rẽ theo `status`: nháp thì `note` ·
+      `details` · `money_old` · `items` · `money_new` · `customer_old_id` · `customer_new_id` ·
+      `supplier_new_id` · `currency_id` · `exchange_rate` đều `nullable` (giữ nguyên rule ĐỊNH DẠNG:
+      `integer` / `numeric` / `array`). Gửi duyệt giữ y nguyên rule cũ
+- [x] `BillAdjustDeptRequestWriteService::syncDetails()` — nhánh khách hàng ép
+      `customer_old_id ?? 0`, `customer_old_name ?? ''`, `customer_new_id ?? 0`, `customer_new_name ?? ''`
+      (bám đúng cách nhánh NCC đang làm)
+- [x] `sameTarget()` — coi `0` / `''` là RỖNG, không phải "trùng nhau"
+- [x] `BillAdjustDeptRequestDetailResource` — trả `customer_old_id` / `customer_new_id` = `null`
+      khi giá trị là 0 để FE không hiện đối tượng ma và không gửi ngược 0 lên
+
+### FE (`BillAdjustDeptRequestForm.vue`)
+- [x] `validateBeforeSubmit(status)` — nháp chỉ kiểm **Loại phiếu**; 3 luật cũ (diễn giải · ≥1 dòng ·
+      tỷ giá) chuyển vào nhánh `status === 2`
+- [x] Cờ `touched` chỉ bật khi **Gửi duyệt** → bấm Lưu nháp không tô đỏ Diễn giải / tỷ giá / bảng
+
+### Verify
+- [x] `php -l` 4 file BE · parse template + script FE
+- [x] Gọi API thật: lưu nháp form TRỐNG (chỉ `request_type`) → 200, phiếu vào DB, không 500
+- [x] Lưu nháp có 1 dòng chi tiết chưa chọn khách → 200; mở lại sửa rồi lưu nháp tiếp → vẫn 200
+      (không dính bẫy `sameTarget(0,0)`)
+- [x] Gửi duyệt phiếu thiếu diễn giải → vẫn 422 đúng như trước
+- [ ] User mở trình duyệt bấm tay 2 nút
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: Phase 18 — Lưu nháp chỉ bắt buộc "Loại phiếu" (3 file BE + 1 file FE)
+Đang làm dở: không
+Bước tiếp theo: user mở `/finance/bill-adjust-dept-requests/create` → bấm **Lưu nháp** với form trống
+(chỉ chọn Loại phiếu) xem có lưu được không, rồi thử **Gửi duyệt** xem còn chặn đủ luật
+Blocked:
+
+**Đã tự kiểm bằng script (18/18 ca PASS, ghi trong transaction rồi rollback — DB không còn dòng nào):**
+`php -l` 3 file BE sạch · parse template + script FE sạch · nháp trống / nháp có dòng chi tiết trống /
+nháp NCC ngoại tệ thiếu tỷ giá đều KHÔNG lỗi · thiếu Loại phiếu vẫn lỗi · gửi duyệt vẫn bắt đủ
+`note` + `details` + khách hàng 2 vế + tiền > 0 + tỷ giá · ghi DB không dính 1048 · mở lại phiếu nháp
+lưu tiếp không báo oan "trùng khách hàng" · trùng khách hàng THẬT vẫn chặn · cổng gửi duyệt ngoài
+danh sách chặn phiếu nháp trống và cho qua phiếu đủ dữ liệu.
+
+**Lỗ hổng vá kèm (do nới nháp mà lộ ra):** trước Phase 18, nút **Gửi duyệt ở màn danh sách / chi tiết**
+(`changeStatus`) chỉ kiểm TỔNG TIỀN. Nháp nới ra rồi thì đó thành đường vòng qua mặt mọi luật còn lại
+⇒ `validateTotalsOfSavedModel()` nay kiểm thêm: diễn giải · tỷ giá (NCC ngoại tệ) · khách hàng "từ" ·
+đối tượng "đến" · số tiền 2 vế > 0.
+
+---
+
+## Phase 19 — 2 điểm nghiệm thu màn tạo/sửa (2026-08-24)
+
+### 19.1 Bỏ dòng "{Người tạo} - {ngày tạo}" ở góc card "Thông tin chung"
+User: *"DNS Admin bỏ text này trên card đi cho tôi"*.
+
+- [x] `BillAdjustDeptRequestForm.vue` — xoá `<span>{{ createdInfo }}</span>` ở `card-header`
+- [x] Xoá luôn computed `createdInfo` (không còn nơi dùng — đã grep cả thư mục màn)
+- [x] **GIỮ** badge trạng thái bên cạnh (user chỉ chỉ vào phần chữ "DNS Admin - …")
+- ℹ️ Thông tin người tạo vẫn còn nguyên ở ô **"Người tạo"** trong thân form, không mất dữ liệu gì
+
+### 19.2 Bảng chi tiết: dùng `V2BaseTableScroll` như màn Yêu cầu bảo hành sửa chữa
+User: *"bảng chi tiết chưa có scroll ngang bên trên à"* → sau đó chốt tiếp: *"dùng table như màn
+`/customer-care/warranty-repair-requests/create` này, khi chưa có dữ liệu thì bảng chiếm ít chiều
+cao như này thôi"*.
+
+**2 vấn đề cùng 1 gốc — class `.table-responsive`:**
+
+| Vấn đề | Gốc |
+| --- | --- |
+| Không có thanh cuộn ngang ở trên | `.table-responsive` chỉ có thanh cuộn dưới; bảng rộng 12 cột (KH) → 16 cột (NCC ngoại tệ) |
+| Bảng trống vẫn cao ~429px | `assets/scss/default.scss` ép `.table-responsive { min-height: 50vh }` — hợp với màn danh sách, sai với bảng trong form (skill `form-validate` mục 1c đã ghi nhận) |
+
+⇒ Thay `.table-responsive` bằng **`components/V2BaseTableScroll.vue`** — đúng thứ màn
+`warranty-repair-requests/create` đang dùng: thanh cuộn ngang ở CẢ TRÊN LẪN DƯỚI, tự ẩn khi bảng
+không tràn, và không dính rule `min-height: 50vh`.
+
+- [x] `AdjustDetailTable.vue` — bọc bảng bằng `<V2BaseTableScroll>`, bỏ `<div class="table-responsive">`
+- [x] Import + đăng ký `V2BaseTableScroll`
+- [x] Gỡ bản thanh cuộn TỰ CHẾ viết ở lượt trước (refs `topScroll`/`tableWrapper`, 3 hàm sync,
+      hook `mounted`/`updated`/`beforeDestroy`, `data.scrollSyncing`, 2 khối SCSS) — component dùng
+      chung làm tốt hơn: có `ResizeObserver`, tự ẩn thanh khi bảng vừa khung
+- [x] Sửa ghi chú SCSS còn nhắc `.table-responsive`
+- ℹ️ Bảng đã sẵn dòng trống *"Chưa có dòng điều chỉnh nào."* nên form mới vào chỉ còn cao bằng
+      header + 1 dòng, giống hệt màn bảo hành sửa chữa
+- ℹ️ Màn CHI TIẾT (`_id/index.vue`) dùng lại chính component này nên ăn theo, không phải sửa gì
+
+### Verify
+- [x] Parse sạch template + script cả 2 file `.vue`
+- [x] Biên dịch SCSS sạch; grep xác nhận không còn sót ref/hàm/CSS của bản thanh cuộn tự chế
+- [x] Grep toàn thư mục màn: không còn tham chiếu `createdInfo` nào
+- [ ] User mở trình duyệt: card không còn dòng tên người tạo · form mới vào bảng chỉ cao bằng
+      header + 1 dòng trống · kéo thanh cuộn trên thấy bảng chạy theo (và ngược lại), thử cả
+      loại NCC ngoại tệ (16 cột)
+
+### Checkpoint — 2026-08-24 (2)
+Vừa hoàn thành: Phase 19 — bỏ text người tạo trên card + thêm thanh cuộn ngang trên bảng chi tiết
+Đang làm dở: không
+Bước tiếp theo: user bấm tay trên trình duyệt cả Phase 18 lẫn Phase 19
 Blocked:

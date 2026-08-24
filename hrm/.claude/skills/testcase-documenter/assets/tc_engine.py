@@ -78,7 +78,10 @@ SUMMARY = [
          "Tổng số trường hợp TP kiểm thử", '=COUNTIF(C18:C1000,"TC*")'),
 ]
 
-ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"]
+# Danh so section La Ma. Man co nhieu nhom (vd them "Lich su thay doi") vuot qua X thi
+# engine se nem ValueError o `ROMAN.index()` -> khai san toi XV.
+ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+         "XI", "XII", "XIII", "XIV", "XV"]
 
 # Chan thuat ngu ky thuat lot vao tai lieu danh cho QA / nghiep vu.
 BANNED = [

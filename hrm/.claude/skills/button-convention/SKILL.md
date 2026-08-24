@@ -211,6 +211,8 @@ Hai hành động giống nhau ở 2 màn khác nhau PHẢI dùng **cùng một 
 
 - Dùng `V2BaseIconButton` (chỉ icon, không text) — chi tiết đầy đủ ở skill `list-page` mục "Cột Hành động"
 - **KHÔNG còn nút Xem**: tên bản ghi ở cột đầu là link vào màn chi tiết
+- **KHÔNG có "Hủy phiếu" / "Không duyệt"** ở danh sách — 2 hành động phủ quyết chỉ đặt ở màn chi
+  tiết (cần modal nhập lý do); riêng "Duyệt" vẫn giữ dạng điều hướng. Xem `list-page` mục 1
 - Thứ tự: **Sửa → Xoá (hoặc Khoá/Mở khoá nếu màn không có Xoá) → nút `⋮`** gom các hành động còn lại
 - Tối đa 3 nút/dòng; dựng bằng component dùng chung `V2BaseRowActions`, không tự xếp icon
 
@@ -272,6 +274,45 @@ Hai hành động giống nhau ở 2 màn khác nhau PHẢI dùng **cùng một 
 
 ---
 
+## 6b. Nút gọi API ghi dữ liệu — BẮT BUỘC có lớp tải
+
+Mọi nút gọi lệnh **ghi dữ liệu** (POST / PUT / DELETE — Lưu, Xóa, Duyệt, Khóa, Gửi duyệt, Thêm số
+lượng, Import…) phải bật lớp tải. Không có nó, người dùng bấm Lưu mà màn hình đứng im vài giây thì
+tưởng nút hỏng và bấm lại lần nữa (rất dễ tạo bản ghi trùng).
+
+Dùng **`$safeLoadingStart()` / `$safeLoadingFinish()`** (mixin toàn cục ở `plugins/safe-loading.js`),
+KHÔNG gọi thẳng `this.$nuxt.$loading.start()`: lúc tải lại trang `$nuxt.$loading` có thể chưa tồn
+tại → ném lỗi và nuốt luôn lệnh lưu. Helper này cập nhật store `loading` trước rồi mới đụng tới
+`$nuxt.$loading` nếu có.
+
+```js
+async submit() {
+    try {
+        this.submitting = true
+        this.$safeLoadingStart()             // NGAY TRƯỚC lệnh gọi
+        await this.$store.dispatch('apiPostMethod', { url: '...', payload: {...} })
+        this.$toasted.global.success({ message: 'Lưu thành công' })
+        this.$emit('submitted')
+    } catch (error) {
+        // ...map lỗi 422 vào formError / toast
+    } finally {
+        this.submitting = false
+        this.$safeLoadingFinish()            // LUÔN ở finally
+    }
+}
+```
+
+Bắt buộc:
+- `$safeLoadingFinish()` đặt trong **`finally`**, không đặt cuối `try` — gọi API lỗi mà lớp tải còn
+  che thì màn hình như treo.
+- Nút khoá bằng **`:interactable="!submitting"`**, KHÔNG phải `:disabled` — `V2BaseButton` chỉ nhận
+  prop `interactable`, `disabled` rơi vào `$attrs` rồi bị component ghi đè nên **nút vẫn bấm được**
+  (lỗi im lặng, đã dính thật). Lớp tải là tín hiệu cho mắt, `interactable` mới là chốt chặn.
+- Chỉ áp cho lệnh **ghi**. Lệnh đọc (GET danh sách, tải danh mục cho select) dùng skeleton/`loading`
+  của bảng, KHÔNG bật lớp tải toàn trang — nó nhấp nháy liên tục khi lọc.
+- Store `apiPostMethod` / `apiPutMethod` / `apiDeleteMethod` **KHÔNG** tự bật lớp tải (chốt
+  2026-08-22, giữ nguyên hành vi hàm dùng chung) → từng màn phải tự gọi.
+
 ## 7. Checklist khi tạo/review button
 
 - [ ] Mọi V2BaseButton đều có icon qua `#prefix`
@@ -284,3 +325,6 @@ Hai hành động giống nhau ở 2 màn khác nhau PHẢI dùng **cùng một 
 - [ ] Nút cùng variant đứng cạnh nhau đã phân biệt màu bằng `status` (mục 2b); nhóm nút CÙNG bản chất (3 nút Xuất) phải CÙNG màu
 - [ ] Chữ trên nút đúng bảng text chuẩn mục 4 (dấu kiểu mới: Xóa/Hủy/Khóa; nêu rõ đối tượng: Import Excel)
 - [ ] Table action dùng V2BaseIconButton qua `V2BaseRowActions`, thứ tự: Sửa → Xoá/Khoá → `⋮` (không còn nút Xem)
+- [ ] Cột hành động ở danh sách KHÔNG có "Hủy phiếu" / "Không duyệt" (chỉ có ở màn chi tiết)
+- [ ] Nút gọi API ghi dữ liệu (POST/PUT/DELETE) có `$safeLoadingStart()` trước lệnh gọi và `$safeLoadingFinish()` trong `finally` (mục 6b)
+- [ ] Khoá nút bằng `:interactable`, KHÔNG dùng `:disabled` trên V2BaseButton (không có tác dụng)

@@ -53,3 +53,25 @@ Vừa hoàn thành: nhánh `feature/menu-role-gate` gồm 2 commit (merge ghi nh
 Đang làm dở: chưa push (chờ user).
 Bước tiếp theo: `git push -u origin feature/menu-role-gate` rồi PR vào `gop_db`.
 Blocked: không.
+
+## Phase 5 — Mở tab mới từ menu hub (nhánh `tpe`)
+
+### FE
+- [x] `SaleHubSidebar.vue`: thêm `hrefOf(screen)` → gắn `href` thật cho dòng chức năng ở cả 3 khối Vue (Tìm kiếm / Yêu thích / Gần đây) và khối `v-html` (`rowsHtml`)
+- [x] `openScreen(screen, event)`: Ctrl/Cmd/Shift/Alt + click hoặc chuột giữa → để trình duyệt mở tab mới; click thường vẫn `preventDefault` + `$router.push` như cũ
+- [x] `onBodyClick` + nút ★: thêm `preventDefault` để bấm ghim yêu thích không bị điều hướng theo `href`
+- [ ] Chạy thật kiểm chuột phải "Mở trong tab mới" — chờ user xác nhận có test không
+- [x] `SubsystemSwitcher.vue` + `pages/index.vue`: mục **ERP** trước đây `linkOf()` trả `null` → thẻ `<a>` không có `href` nên chuột phải không hiện "Mở trong tab mới"; nay trả `ERP_URL` (fallback `ADMIN_URL` vì `ERP_URL` đang bị comment trong `.env`), thêm guard Ctrl/Cmd+click
+
+## Phase 6 — Menu hub tra màn theo tên → bấm nhầm màn trùng tên
+
+### FE
+- [x] `SaleHubSidebar.vue`: thêm `keyOf(screen)` (khoá = `link`, fallback `erp:<erpPath>` / `n:<tên>`); `findScreen()`, `isFav()`, `toggleFav()`, `addRecent()`, `data-k`/`data-fav` trong `rowsHtml` và 3 khối Vue (Tìm kiếm / Yêu thích / Gần đây) đổi sang dùng khoá thay vì tên màn
+- [x] `migrateKeys()` + quy đổi ở `mounted`: Yêu thích / Gần đây bản cũ lưu theo tên → tự đổi sang khoá link, không mất mục đã ghim
+- [x] Kiểm thật trên trình duyệt (tài khoản DNS Admin): Phê duyệt › Yêu cầu giải pháp → `/assign/request-solution/pending`, QLDA TKT › Yêu cầu giải pháp → `/assign/request-solution`, Danh mục › Hạng mục dự án → `/assign/project_items`, ghim ★ + migrate dữ liệu cũ đều đúng
+
+### Checkpoint — 2026-08-20
+Vừa hoàn thành: fix bấm menu hub vào nhầm màn khi 2 mục trùng tên (tên trùng là hợp lệ, chỉ khác link).
+Đang làm dở: không.
+Bước tiếp theo: user review + push.
+Blocked: không.

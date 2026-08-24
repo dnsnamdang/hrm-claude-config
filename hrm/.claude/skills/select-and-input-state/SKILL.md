@@ -15,6 +15,12 @@ description: Use when làm việc với select / ô nhập liệu ở BẤT KỲ
 
 Nghiệp vụ (CLAUDE.md): dropdown chỉ liệt kê danh mục **còn hoạt động**, NHƯNG giá trị mà bản ghi đang chọn thì **vẫn phải hiện** dù danh mục đó đã khoá — không thì mở màn Sửa thấy ô trống, lưu lại là **mất dữ liệu**.
 
+**3 điều chốt ngày 2026-08-20 (khác bản trước, đọc kỹ):**
+
+1. 🔒 hiện ở **CẢ ô đang hiển thị giá trị đã chọn** (và chip của select chọn nhiều), không chỉ trong dropdown. Mở màn Sửa là thấy ngay mình đang giữ danh mục đã khoá.
+2. Danh mục đã khoá **chỉ được hiện đúng ở bản ghi đang dùng nó**. Đổi sang giá trị khác → option khoá cũ **biến mất ngay**, không chờ F5. Kịch bản phải đúng: chọn A → khoá A → mở Sửa (A vẫn hiện, có 🔒) → đổi sang B, Lưu → mở Sửa lại → **A không còn trong danh sách chọn nữa**.
+3. Vì (2), **store dùng chung KHÔNG được cache danh mục đã khoá**. `optionsSelect` chỉ cache bản ghi còn hoạt động; danh mục khoá thuộc về đúng màn đang mở nên do màn tự giữ.
+
 ### BE — 2 việc
 
 ```php
@@ -56,15 +62,34 @@ Màn mà dữ liệu detail đổ vào `form` qua prop (không có `loadDetail` 
 }
 ```
 
-Phần hiển thị đã nằm trong `utils/select2LockedOption.js`, được **`V2BaseSelect` và `V2BaseSelectInModal` gọi sẵn**: options có cờ `is_locked` là tự gắn `🔒 ` trước tên **trong danh sách chọn**; chip/giá trị đã chọn giữ tên gốc. Không có option nào khoá thì không đổi gì.
+Phần hiển thị đã nằm trong `utils/select2LockedOption.js`, được **`V2BaseSelect` và `V2BaseSelectInModal` gọi sẵn**, gồm 2 việc — màn nghiệp vụ KHÔNG phải khai gì:
+
+- `withLockedOptionMarker` — gắn `🔒 ` trước tên ở **cả `templateResult` (danh sách chọn) lẫn `templateSelection` (giá trị đang hiển thị / chip)**.
+- `filterUnusedLockedOptions` — **loại khỏi danh sách những option khoá mà giá trị hiện tại không dùng**. Đây là chốt chặn của quy tắc (2) ở trên: dù mảng options còn sót danh mục khoá (do đã tải trước đó), đổi giá trị là nó biến mất.
+
+Không có option nào khoá thì không đổi gì.
+
+### Giai đoạn dự án — dùng `projectPhaseOptionsMixin`
+
+Màn nào có select/bộ lọc "Giai đoạn dự án" thì dùng `utils/mixins/projectPhaseOptionsMixin`, đừng đọc thẳng getter:
+
+```js
+mixins: [projectPhaseOptionsMixin],
+…
+await this.loadProjectPhaseOptions([this.form.project_phase_id])   // hoặc [this.filters.project_phase_id]
+// bind :options="projectPhaseOptions"
+```
+
+`optionsSelect/fetchProjectPhases` **trả về** danh sách đầy đủ (còn hoạt động + các id khoá được yêu cầu) nhưng **chỉ commit vào store phần còn hoạt động**. Đọc `getters['optionsSelect/getProjectPhases']` sau khi truyền `includeIds` là **mất** giai đoạn khoá — phải dùng giá trị trả về (hoặc mixin).
 
 ⚠️ Đừng làm 3 thứ sau:
 
 - **Nối `"(đã khoá)"` hay `"🔒 "` vào `name`** — chip cũng dính, và text lệch làm hỏng tìm kiếm/so sánh giá trị.
 - **Dựng thẻ `<i class="ri-lock-line">`** — select2 escape HTML nên phải render DOM qua template, dài dòng mà không đẹp hơn emoji.
 - **Viết `templateResult` riêng ở từng màn** — đã có sẵn trong component. Màn nào tự khai `templateResult` thì helper nhường, nên vẫn override được khi thật sự cần.
+- **Merge danh mục khoá vào cache dùng chung (Vuex)** — đã dính đúng lỗi này ở `fetchProjectPhases`: giai đoạn khoá nạp cho bản ghi này nằm lại trong store cả phiên, mở bản ghi khác vẫn thấy nó trong dropdown.
 
-⚠️ **Wrapper tự khai `templateResult` thì PHẢI tự gắn 🔒.** Helper cố ý nhường quyền, nên select nào đi qua một wrapper có `templateResult` riêng sẽ **im lặng mất dấu khoá**. Hiện có `DescriptionInfoSelect.vue` (ruột của `MeetingTypeSelect`, `ProjectPhaseSelect` — khai `templateResult` để render icon Info). Wrapper kiểu này dùng lại hằng chung, chỉ gắn ở dropdown:
+⚠️ **Wrapper tự khai `templateResult` thì PHẢI tự gắn 🔒.** Helper cố ý nhường quyền, nên select nào đi qua một wrapper có `templateResult` riêng sẽ **im lặng mất dấu khoá**. Hiện có `DescriptionInfoSelect.vue` (ruột của `MeetingTypeSelect`, `ProjectPhaseSelect` — khai `templateResult` để render icon Info). Wrapper kiểu này dùng lại hằng chung, gắn ở **cả `templateResult` lẫn `templateSelection`**:
 
 ```js
 import { LOCKED_OPTION_PREFIX } from '@/utils/select2LockedOption'
@@ -187,3 +212,25 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Select đi qua wrapper tự khai `templateResult` → đã tự gắn `LOCKED_OPTION_PREFIX`
 - [ ] Ô disabled: nền `#f1f5f9`, chữ `#475569`, không `opacity`, không bấm được (kể cả ô dựng bằng `<div>`)
 - [ ] Focus ô nhập: không viền xanh, không quầng sáng
+
+## Select chọn NHIỀU có tới 2 ô tìm — phải focus ô TRONG DROPDOWN
+
+Select2 khi `multiple: true` vốn chỉ có ô gõ **inline** nằm lẫn trong khung tag. Dự án bật thêm ô
+tìm trong dropdown cho giống select chọn 1 (`utils/select2DropdownSearch.js` + class
+`v2-select--dropdown-search`), nên lúc mở dropdown trong DOM **tồn tại đồng thời 2 ô** cùng class
+`select2-search__field`.
+
+Ô inline đứng TRƯỚC trong DOM ⇒ `document.querySelector('.select2-container--open .select2-search__field')`
+luôn vớ phải nó. Hậu quả (Redmine #11170 mục 4, phát hiện lại 2026-08-22 ở cột "Nguyên nhân" màn
+Sửa phiếu xử lý yêu cầu): người dùng thấy con trỏ nhấp nháy ở ô tìm trong dropdown nhưng gõ thì chữ
+chạy vào ô inline — nhìn như "chưa sửa".
+
+`utils/select2-focus-search.js` đã xử lý: **tìm ô trong dropdown trước, không có mới lấy ô inline**.
+Nơi gọi (`v-select2-focus`, `V2BaseSelect`, `V2BaseSelectInModal`, `V2BaseSelectRemote`) KHÔNG cần
+truyền selector nữa.
+
+Tự kiểm — mở dropdown rồi chạy trong Console, phải ra `true`:
+
+```js
+document.activeElement === document.querySelector('.select2-dropdown .select2-search__field')
+```

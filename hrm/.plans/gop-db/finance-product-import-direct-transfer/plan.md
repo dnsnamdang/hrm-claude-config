@@ -392,6 +392,33 @@ nhắm vào bản ghi do chính mình tạo ra để test.
 
 ---
 
+## Phase 9 — Bỏ tab preset, gộp về 1 danh sách (2026-08-21)
+
+Cùng đợt với 2 màn hàng giữ / YC nhập hàng: 1 màn ứng với `all` của ERP, nút duyệt theo QUYỀN.
+
+- [x] FE gỡ `V2BaseTabNavigation` + computed `presetTabs` + `handlePresetChange` + key `type`
+      trong bộ lọc; `handleReset` không phải giữ preset nữa; localStorage cũ còn `type` thì
+      `mergeKnownFilters()` tự bỏ (key không còn trong `initialStateForm`).
+- [x] BE **giữ nguyên** tham số `type` (link cũ / lối vào từ ERP vẫn chạy), chỉ đổi mặc định và
+      phạm vi nhánh mặc định.
+- [x] `ProductImportDirectTransfer::searchByFilter()` — nhánh mặc định gọi `applyAllScope()`:
+      quyền xem theo cấp **HOẶC** phiếu Chờ duyệt cùng công ty khi là `Kế toán kho`.
+      `waiting_approve` giữ lại cho link cũ.
+- [ ] User verify trên dev bằng tài khoản Kế toán kho không phải Super admin.
+
+### Checkpoint — Phase 9
+
+```text
+Vừa hoàn thành: bỏ tab + vá phạm vi nhánh mặc định.
+Đang làm dở: không.
+Bước tiếp theo: user verify trên dev.
+Blocked: không.
+Verify: NV 256 (Kế toán kho, KHÔNG có quyền xem theo cấp) — trước đây nhánh `all` cho 0 phiếu,
+nay thấy đúng 1 phiếu Chờ duyệt của công ty ngay trên danh sách chính, không cần tab.
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 1. **Class cùng namespace thiếu `use`** — `php -l` không bắt, chỉ 500 lúc chạy. Quét cả 2 chiều.
@@ -508,3 +535,56 @@ Tester: Lê Huyền Trang / Nguyễn Minh Hằng. 11 issue, trong đó 2 issue t
   `Duyệt #1abc9c → In #fff → Từ chối #dc2626 → Xóa #dc2626 → Quay lại #fff`.
   Không đổi skill, không đổi nút Xóa icon ở cột Hành động.
 - `V2Footer` gốc vẫn sai ở 5 màn khác (In xanh + chữ "Không duyệt"): user chốt tạm hoãn.
+
+---
+
+## Phase — Lưu nháp chỉ bắt buộc Người nhận (2026-08-24)
+
+User yêu cầu ở `/finance/product-import-direct-transfers/create`: **lưu nháp chỉ validate Người nhận**,
+mọi trường khác để trống vẫn lưu được. (Cùng đợt với màn Phiếu chi và Phiếu YC nhập hàng, xem
+`.plans/gop-db/finance-bill-payment/plan.md` · `.plans/gop-db/finance-product-import-request/plan.md`.)
+
+Màn này gọn nhất trong 3 màn: FE vốn KHÔNG gắn `required` nào (chỉ kiểm định dạng số lượng), BE
+`ProductImportDirectTransferRequest` là chỗ duy nhất cần sửa, và `status` đã có sẵn trong payload
+(1 = Đang tạo · 2 = Chờ duyệt) nên không phải thêm cờ như màn Phiếu chi.
+
+- [x] **BE-1** `ProductImportDirectTransferRequest::rules()` — `status = 1` thì `products` và 3 rule
+      con của nó chuyển `nullable`. **Giữ nguyên** `receiver_id` (`required` + `exists` +
+      `different` người lập) và `status` cho MỌI lần lưu — đúng yêu cầu user.
+- [x] **Verify** HTTP kernel: lưu nháp chỉ có người nhận → 200; lưu nháp thiếu người nhận → 422 đúng
+      1 lỗi; gửi duyệt thiếu hàng hoá → 422. Bọc transaction rồi rollback.
+
+**Verify (HTTP kernel + JWT, transaction rồi rollback — phiếu test `TPE_CHNT_871` không còn trong DB):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| Lưu nháp **chỉ có Người nhận** | **200**, sinh mã `TPE_CHNT_871` |
+| Lưu nháp **thiếu** Người nhận | **422** — đúng 1 lỗi `Bắt buộc phải nhập` |
+| Lưu nháp, Người nhận = người lập | **422** — `Người nhận phải khác người lập phiếu` |
+| Gửi duyệt (status 2) thiếu hàng hoá | **422** — `products` |
+| Lưu nháp **lần 2** trên chính phiếu đó | **200**, phiếu giữ status 1 |
+
+Không phải đụng FE: form này vốn không gắn `required` nào, chỉ kiểm định dạng số lượng
+(`hasQtyFormatError()`) — giữ nguyên.
+
+### Sửa kèm — câu toast khi lỗi nhập liệu (user báo 2026-08-24)
+
+Lưu thiếu Người nhận thì màn toast **"Lưu phiếu thất bại!"** — nghe như lỗi máy chủ, user không biết
+phải đi sửa ô nào. 422 là lỗi NHẬP LIỆU, câu chuẩn của hệ thống là **"Vui lòng kiểm tra lại dữ liệu
+nhập"** (`formValidateMixin.applyServerErrors()`, skill `form-validate` mục 3).
+
+- [x] `handleSaveError()` bỏ nhánh 422 tự viết, gọi thẳng `applyServerErrors(error)` — hàm này làm
+      đủ 3 việc: map lỗi vào từng ô · toast đúng câu · **cuộn tới ô lỗi đầu tiên** (bản cũ thiếu hẳn
+      bước cuộn, ô lỗi nằm ngoài màn hình thì user không thấy gì). Lỗi khác 422 giữ nguyên nhánh cũ.
+- [x] Bỏ hằng `STATUS_CHO_DUYET` — không còn chỗ dùng sau khi sửa.
+
+📌 **Cùng lỗi, chưa đụng**: `pages/finance/prepick-cancel-requests/components/PrepickCancelRequestForm.vue`
+(:659) có y hệt khối `handleSaveError` chép sang — chờ user quyết có sửa luôn không.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: lưu nháp chỉ bắt buộc Người nhận (bảng hàng hoá để trống vẫn lưu được) + sửa câu
+toast khi lỗi nhập liệu.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/product-import-direct-transfers/create` xác nhận.
+Chưa kiểm chứng bằng mắt: 5 luồng BE đã gọi thật, FE không sửa gì.
+Blocked: không.
