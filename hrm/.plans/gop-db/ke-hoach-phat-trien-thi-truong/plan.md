@@ -554,7 +554,7 @@ Trước: meeting dồn gần hết vào 1 phòng ở mỗi thị trường (Hà
 
 ## Phase 16 — File MỚI: "Báo cáo tổng hợp nhu cầu khách hàng" (2026-08-20)
 
-> File độc lập `bao-cao-tong-hop-nhu-cau-khach-hang.html` (cùng folder). **Layout** bám ảnh Excel user gửi (`Báo cáo tổng hợp nhu cầu khách hàng`), **style** tái dùng nguyên bộ token + component của `bao-cao-ket-qua-meeting-theo-thi-truong.html` (navy+teal, `.market-table` outline, `.market-toolbar`, `.rsum-*`, `.minutes-modal`). Self-contained, verify Playwright.
+> File độc lập `bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html` (cùng folder). **Layout** bám ảnh Excel user gửi (`Báo cáo tổng hợp nhu cầu khách hàng`), **style** tái dùng nguyên bộ token + component của `bao-cao-ket-qua-meeting-theo-thi-truong.html` (navy+teal, `.market-table` outline, `.market-toolbar`, `.rsum-*`, `.minutes-modal`). Self-contained, verify Playwright.
 >
 > **Chốt với user (2026-08-20):** cột Trạng thái = **trạng thái NHU CẦU KH** · ô "TẠO MỚI" = **nút bấm** mở popup tạo dự án TKT · có KPI + thu/bung outline + TỔNG CỘNG + Xuất Excel + In báo cáo · **KHÔNG** làm drawer chi tiết (tên meeting chỉ là link tĩnh).
 
@@ -601,6 +601,236 @@ Trước: meeting dồn gần hết vào 1 phòng ở mỗi thị trường (Hà
 - [x] Footer: nút **Tạo dự án TKT** (chỉ khi chưa có dự án & nhu cầu chưa dừng) mở popup đè lên drawer → tạo xong drawer tự làm mới; nút Đóng.
 - [x] Đóng bằng ✕ / click backdrop / ESC (ESC ưu tiên đóng popup trước); khoá cuộn trang nền khi drawer mở.
 - [x] Verify Playwright 1440: mở drawer từ tên meeting (4 khối/16 trường, header "Hoàn thành · MEET.2026.04") · tạo dự án từ drawer → ô Dự án TKT đổi thành `TKT.2026.FTX`, nút ẩn, drawer vẫn mở · nhu cầu "Không tiếp tục" (nc07) → badge "Huỷ", ẩn nút tạo dự án · ESC/backdrop đóng đúng, trả lại cuộn trang · **0 lỗi console**.
+
+## Phase 17 — Đổi định vị màn: "Báo cáo kết quả chăm sóc khách hàng tiềm năng" (2026-08-23) — **UI ĐÃ DUYỆT**
+
+> Cùng file `bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html`. User chốt: đổi tên báo cáo · thêm mục tiêu · đổi luật lấy dữ liệu theo kỳ · thay 4 ô KPI cũ bằng **3 nhóm I / II / III** theo ảnh spec Excel · **giữ nguyên 3 khối phân bổ** · hạn theo dõi để **ô chọn trên toolbar** giống ô chọn kỳ · Kỳ xem mặc định **Tháng này**, bỏ "Tất cả".
+
+### Task 67: Đổi tên + mục tiêu + luật lấy dữ liệu theo kỳ
+- [x] `<title>` / topbar / tiêu đề bản in / tên file Excel → **Báo cáo kết quả chăm sóc khách hàng tiềm năng** (`Bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.xls`).
+- [x] Dòng **Mục tiêu** đầu dải tổng hợp + trong bản in, kèm meta: kỳ đang xem · hạn theo dõi · tổng giá trị đầu tư dự kiến.
+- [x] `filteredDemands()`: lấy (1) nhu cầu PS trong kỳ (meeting họp trong kỳ, biên bản khách trả lời CÓ) + (2) nhu cầu kỳ trước tới đầu kỳ vẫn chưa lập dự án TKT và chưa hết hạn theo dõi. Dòng kỳ trước gắn nhãn `Kỳ trước`.
+- [x] Bộ lọc **Kỳ xem** bỏ "Tất cả", mặc định *Tháng này*; `periodRange()` luôn trả về kỳ (custom bỏ trống → tạm lấy tháng này). Nút Xoá lọc reset về Tháng này + 3 tháng.
+
+### Task 68: Hạn theo dõi (số tháng cấu hình)
+- [x] Toolbar thêm select **Hạn theo dõi** (+3 / +6 / +9 / +12, mặc định +3) — hạn = hết tháng (tháng dự kiến triển khai + N).
+- [x] Cột "Thời gian dự kiến triển khai" thêm dòng *Hạn TD dd/mm/yyyy* (tô cam khi hết hạn trong kỳ); drawer meeting thêm trường "Hạn theo dõi nhu cầu".
+- [x] Thêm trạng thái **Hết hạn theo dõi**; trạng thái hiển thị suy ra theo kỳ (`effStatus`) thay vì đọc cứng `d.status` — khối "Phân bổ theo trạng thái" khớp với mục II.
+
+### Task 69: Summary 3 nhóm I / II / III
+- [x] **I. Tổng nhu cầu trong kỳ** = I.1 còn hiệu lực theo dõi + I.2 PS trong kỳ này (mỗi thẻ có số nhu cầu · giá trị đầu tư · diễn giải).
+- [x] **II. Tổng nhu cầu bị đóng trong kỳ** = II.1 chuyển đổi thành dự án (xanh lá) + II.2 hết hạn không chuyển thành dự án (cam).
+- [x] **III. Kết quả KPI**: `II.1/I` · `II.1/II` · `II.2/II` — mỗi ô có % + thanh tiến độ + công thức kèm số thực.
+- [x] Giữ nguyên 3 khối phân bổ (trạng thái · lĩnh vực KD · thị trường) bên dưới.
+- [x] Data demo: thêm **11 nhu cầu kỳ trước** (meeting 04–07/2026) + `projectDate` cho nhu cầu đã có dự án; tạo dự án từ bảng/drawer ghi `projectDate = TODAY` → nhu cầu nhảy vào II.1 ngay.
+
+### Task 71: Summary → dạng BẢNG gọn tối đa + diễn giải vào icon info (2026-08-23, sau khi duyệt UI)
+- [x] Bỏ bố cục thẻ; dựng **3 bảng nhỏ I / II / III xếp cạnh nhau** (`.rsum-tb`, colgroup khoá bề rộng `26 / auto / 52 / 68`): cột STT · Nội dung · Số liệu · Giá trị đầu tư (bảng III: % · tỷ lệ thô `10/35`).
+- [x] **Mọi diễn giải chuyển vào icon `i`** (`.rsum-info`, tooltip CSS hover — nền `#0f2537`, rộng 246px, có mũi tên): 11 icon (mục tiêu báo cáo + 3 tiêu đề nhóm + 7 dòng chỉ tiêu/KPI). Không dùng `title` mặc định để tooltip hiện ngay và đọc được.
+- [x] Dòng meta rút còn 1 hàng: **Tổng hợp kỳ dd/mm – dd/mm** (mục tiêu báo cáo nằm trong icon `i`) · hạn theo dõi · tổng giá trị đầu tư dự kiến.
+- [x] Giữ nguyên 3 khối phân bổ; dọn CSS/JS chết của bố cục thẻ (`.rsum-kpi*`, `.rsum-group*`, `.rsum-item*`, `rateNum`).
+- [x] Verify Playwright 1512: chiều cao dải tổng hợp 348 → **307px** (riêng phần summary ~250 → ~110px), mọi dòng 1 hàng không wrap · tooltip hiện đúng vị trí · đổi Hạn theo dõi 3↔6 tháng số liệu đổi đúng · **0 lỗi console**.
+
+### Task 70: Fix lỗi hiển thị + verify
+- [x] **Fix**: dòng TỔNG CỘNG dính bị hở ~2px dưới hàng tiêu đề (nội dung cuộn lòi qua khe) → ghim `top: 34px` để luồn xuống dưới tiêu đề. `box-shadow` không dùng được vì bảng `border-collapse: collapse` (Chrome bỏ qua shadow của ô bảng) — đã ghi chú trong file.
+- [x] Verify Playwright 1512 + 1440: kỳ 08/2026 · N=3 → I 35 (9+26), II 13 (10+3), KPI 28,6/76,9/23,1 · N=6 → I 37 (11+26), II 11 (10+1) · Quý 3 → I 37 (7+30), II 12 (10+2) · legend trạng thái cộng đủ 35 · tạo dự án → II.1 10→11 · drawer/in/Excel/ẩn tổng hợp/ẩn chi tiết OK · **0 lỗi console**.
+
+### Task 72: Gộp summary vào 1 bảng chung I→IV + KPI dạng box (2026-08-23)
+- [x] **Bỏ khối "Phân bổ theo trạng thái nhu cầu"** (và toàn bộ CSS/JS của 3 panel cũ: `.rsum__panels`, `.rsum-stack*`, `.rsum-legend*`, `.rsum-bars/.rsum-bar*`, `bars()`, `byStatus`).
+- [x] **1 bảng chung 5 cột** `STT · Nội dung tổng hợp · Số nhu cầu · Giá trị đầu tư · Tỷ trọng giá trị`, 4 phần **I → II → III → IV** (I tổng nhu cầu trong kỳ · II nhu cầu bị đóng · III theo lĩnh vực KD · IV theo thị trường); dòng tiêu đề phần có màu riêng, cột tỷ trọng là thanh bar + % theo **giá trị đầu tư** (I/III/IV so tổng kỳ, II so tổng giá trị đã đóng).
+- [x] **KPI dạng summary box**: 3 hộp xếp dọc bên phải bảng (`.rsum-body` grid `1fr / 268px`), mỗi hộp = nhãn + % lớn + số thô + bar + công thức; viền trái teal / xanh lá / cam.
+- [x] Giữ nguyên cơ chế diễn giải trong icon `i` (11 tooltip); dòng meta 1 hàng giữ nguyên.
+- [x] Verify Playwright 1512: bảng 16 dòng khớp công thức · đổi Hạn theo dõi 3↔6 tháng và lọc Lĩnh vực KD = Gara (KPI 36,4% · 100,0% · 0,0%) đều re-render đúng · Ẩn/Hiện tổng hợp OK · **0 lỗi console**. Dải tổng hợp cao 487px (cao hơn bản 3 bảng 307px — đánh đổi của việc gộp về 1 bảng dọc).
+
+### Task 73: Bảng theo dõi thành màn chính + drill-down popup (2026-08-23)
+- [x] **Bỏ bảng chi tiết outline 3 cấp khỏi màn** + bỏ 2 nút "Ẩn tổng hợp" / "Ẩn chi tiết"; dọn state (`collapsed` / `detailHidden` / `summaryHidden`) và code chết (`caret`, `pickCells`, `COLUMNS_SUMMARY`, `COL_WIDTHS*`, `groupTail`, `renderTable` cũ).
+- [x] **Bảng theo dõi I→IV = bảng chính**, full width trong `.calendar-panel`, bỏ `max-height` (hết cuộn lồng); tách `summaryStats()` dùng chung cho bảng · KPI · Excel · bản in.
+- [x] **Khối KPI lên đầu màn**, 3 box trên 1 hàng, full width.
+- [x] **Popup drill-down** `#drill-modal` (1400px): bấm số nhu cầu / giá trị đầu tư ở bất kỳ dòng nào → danh sách nhu cầu chi tiết 13 cột (colgroup 1336px nên không cuộn ngang), header dính, có meta (số nhu cầu · tổng giá trị · kỳ).
+- [x] Trong popup: **Xuất Excel danh sách** riêng · bấm tên meeting → đóng popup + mở drawer · **+ TẠO MỚI** tạo dự án TKT (z-index popup dự án 1201 > popup danh sách 1101; tạo xong bảng chính + popup tự làm mới). ESC đóng theo thứ tự dự án → in → danh sách → drawer.
+- [x] **Xuất Excel** toolbar = bảng theo dõi (`trackingRows`); **In báo cáo** 2 chế độ: *In bảng theo dõi* (kèm dòng KPI) / *In danh sách chi tiết* (outline 3 cấp 10 cột).
+- [x] Verify Playwright 1512: drill `field:` = 9 dòng · `converted` = 10 dòng · tạo dự án trong popup → II.1 10 → 11 và popup vẫn mở · meeting → drawer · Excel `Chi-tiet-nhu-cau.xls` + `Bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.xls` · cả 2 bản in dựng đúng · **0 lỗi console**.
+
+### Task 74: Bỏ hạn theo dõi · KPI gọn · III thêm nhóm ngành · thêm phần V phòng ban (2026-08-23)
+- [x] **Bỏ bộ lọc "Hạn theo dõi"** + mọi hiển thị liên quan (meta, cột popup, trường drawer, mô tả bản in); `trackMonths()` → hằng `TRACK_MONTHS = 3` (cấu hình hệ thống), logic II.2 giữ nguyên.
+- [x] **Hộp KPI**: bỏ dòng công thức dưới thanh %, dồn công thức + số thô + diễn giải vào icon `i`.
+- [x] **Đổi tên "Lĩnh vực kinh doanh" → "Lĩnh vực kinh doanh nội bộ"** ở mọi nơi (mục III, nhãn bộ lọc, cột popup, trường drawer, mô tả bản in).
+- [x] **Data nhóm ngành**: `SECTORS` 11 nhóm (Gara 3 · Năng lượng 3 · Môi trường 3 · Đào tạo 2), gắn `sectorId` cho cả 37 nhu cầu.
+- [x] **III có cấp con nhóm ngành** · **thêm phần V "Theo phòng ban" 2 cấp (phòng ▸ nhân viên)**; cấp con mặc định ẩn, bung bằng caret trên dòng cha (`state.expanded`), STT `2.1`, tỷ trọng tính trong nhóm cha, số vẫn drill được (`sector:` / `dept:` / `emp:`).
+- [x] Popup chi tiết: bỏ cột *Hạn theo dõi*, thêm cột *Nhóm ngành* (13 cột, bề rộng 1366px = đúng khung, không cuộn ngang).
+- [x] Verify Playwright 1512: 7 caret (4 lĩnh vực + 3 phòng) · bung Gara ra 3 nhóm ngành (72/17/10%) · bung KD 01 ra 2 nhân viên (82/18%) · drill `sector:` = 6 dòng · drill `emp:` = 7 dòng · drawer có Nhóm ngành, không còn hạn theo dõi · **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in chưa cập nhật theo bố cục mới (thiếu phần V và nhóm ngành).
+
+### Task 75: Tách I & II thành 2 khối trên KPI · bảng đánh số lại I → III (2026-08-23)
+- [x] **2 khối I & II** (`.rsum-blk`) đặt TRÊN dải 3 hộp KPI: badge La Mã · tên + icon `i` · tổng số nhu cầu + giá trị · 2 ô chỉ tiêu con (ô II.1 xanh lá, II.2 cam).
+- [x] Giữ nguyên **logic bấm số → popup**: thêm listener drill cho `#summary-bar` (trước chỉ có `#table-wrap`) — bấm cả số nhu cầu lẫn giá trị đầu tư ở khối tổng và từng chỉ tiêu con.
+- [x] **Bảng theo dõi còn 3 phần, đánh số liên tục**: I. Theo lĩnh vực KD nội bộ / Nhóm ngành · II. Theo thị trường · III. Theo phòng ban / Nhân viên; đổi class màu dòng tiêu đề sang tên ngữ nghĩa (`--field` / `--market` / `--dept`).
+- [x] Tiêu đề popup bỏ số La Mã để không trùng số giữa khối trên và bảng.
+- [x] Verify Playwright 1512: bấm số ở khối I (35) · I.1 (9) · giá trị khối II (13) · II.2 (3) · dòng lĩnh vực trong bảng (9) đều mở đúng popup; bung nhóm ngành / nhân viên vẫn chạy; **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in vẫn theo bố cục cũ (I→IV, chưa có nhóm ngành / phòng ban).
+
+### Task 76: Bỏ số thứ tự khối tổng hợp · bộ lọc theo "Tiêu chí theo dõi" (2026-08-23)
+- [x] **Bỏ số thứ tự** ở 2 khối tổng hợp đầu màn (badge I/II và số 1/2 của các ô con) — tránh nhầm với số lượng; dọn CSS `.rsum-blk__no` và `<b>` trong nhãn.
+- [x] **Bộ lọc mới**: Kỳ · **Tiêu chí theo dõi** (`field` / `market` / `dept`, mặc định `field`) · khối lọc riêng theo tiêu chí · Công ty ▸ Phòng ban ▸ Bộ phận ▸ Kinh doanh chủ trì · Xoá lọc. **Bỏ bộ lọc Khách hàng**.
+- [x] Khối lọc riêng: `field` → cascade **Lĩnh vực KD nội bộ ▸ Nhóm ngành** (`populateSectors()` lọc nhóm ngành theo lĩnh vực) · `market` → select **Thị trường** · `dept` → dùng luôn cascade tổ chức sẵn có. `syncCriteriaFilters()` ẩn/hiện.
+- [x] **Bảng chỉ dựng tiêu chí đang chọn** (bỏ dòng tiêu đề phần + số La Mã), tên cột đầu = tên tiêu chí; đổi tiêu chí thì `state.expanded.clear()`.
+- [x] `buildTree()` (bản in chi tiết) chỉ bó theo lĩnh vực khi tiêu chí = `field`; `filterSummaryText` ghi tiêu chí + lọc riêng đang áp.
+- [x] Fix: nút Xoá lọc trước đó không reset `#f-sector` (tổng vẫn kẹt ở 3 nhu cầu) → đã reset đủ; nới `#f-criteria` lên 232px cho khỏi cụt chữ.
+- [x] Verify Playwright 1512: 3 tiêu chí ra đúng bảng (4 lĩnh vực / 3 thị trường / 3 phòng ban) và đúng khối lọc hiện–ẩn · cascade nhóm ngành theo Gara (3 nhóm) · lọc Gara → tổng 11, lọc thêm nhóm "Thiết bị kiểm định" → tổng 3 · Xoá lọc → về 35 · **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in chưa cập nhật theo bố cục mới.
+
+### Task 77: Tiêu chí "Tất cả" · khối lọc tách bạch theo tiêu chí · chuẩn hoá ghi chú công thức (2026-08-23)
+- [x] Select **Tiêu chí theo dõi thêm "Tất cả"** (mặc định): bảng dựng đủ 3 phần I/II/III; khối lọc kèm theo chỉ là **Công ty ▸ Phòng ban ▸ Nhân viên**.
+- [x] **Mỗi tiêu chí chỉ hiện khối lọc của riêng nó**: `field` → Lĩnh vực KD nội bộ ▸ Nhóm ngành (đã bỏ Công ty/Phòng ban/Bộ phận hiện kèm — lỗi user báo); `market` → Thị trường; `dept` + `all` → cascade tổ chức.
+- [x] **Bỏ hẳn bộ lọc "Bộ phận"** khỏi UI + `allowedHostIds()` + `populateCascade()` + mô tả bản in; cascade còn Công ty ▸ Phòng ban ▸ Nhân viên; `allowedHostIds()` không lọc khi khối tổ chức đang ẩn.
+- [x] Đổi tiêu chí → **xoá giá trị khối lọc không còn hiện** (tránh lọc ngầm) + thu gọn cấp con; nút Xoá lọc trả về tiêu chí "Tất cả".
+- [x] **Chuẩn hoá ghi chú trong icon `i`**: bỏ ký hiệu I / II.1 / II.2 (khối tổng hợp đã bỏ số thứ tự), viết bằng lời kèm số thực — vd "Tổng nhu cầu trong kỳ = Nhu cầu còn hiệu lực + Nhu cầu PS trong kỳ (9 + 26 = 35)", "Công thức: Nhu cầu chuyển đổi thành dự án ÷ Tổng nhu cầu bị đóng trong kỳ = 10 / 13 = 76,9%".
+- [x] Verify Playwright 1512: 4 lựa chọn tiêu chí ra đúng bảng (13 dòng / 4 / 3 / 3) và đúng khối lọc hiện–ẩn; `#f-part` đã biến mất khỏi DOM; 11 tooltip đọc đúng số thực; **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in chưa cập nhật theo bố cục mới.
+
+### Task 78: Thị trường 2 cấp (Phường/xã) · dày data · bold dòng tổng · tooltip gạch đầu dòng (2026-08-23)
+- [x] **Data mới**: `WARDS` 14 phường/xã (gắn `wardId` cho toàn bộ khách hàng); thêm 3 thị trường (Hải Phòng · Bình Dương · Cần Thơ), 8 khách hàng, 2 phòng ban (KD 03 · KD miền Tây), 6 nhân viên, 15 nhu cầu → **50 nhu cầu / 308,6 tỷ**.
+- [x] **Tiêu chí Thị trường thành 2 cấp** Tỉnh/TP ▸ Phường/xã (`groupRows2`, key drill `ward:<id>`); popup chi tiết + drawer hiện kèm phường/xã; cột popup đổi thành "Thị trường / Phường xã" (13 cột vẫn vừa khung 1366px).
+- [x] **Khối lọc tiêu chí Thị trường** đổi thành cascade **Tỉnh/TP ▸ Phường/xã** (`populateWards()` nạp theo tỉnh), thay select thị trường đơn.
+- [x] **Bold chỉ ở dòng có tính tổng**: dòng tiêu đề phần + dòng cha (`rsum-tb__row--parent`); dòng con và dòng lá để `font-weight: 500`. Bỏ hàm `groupRows` 1 cấp (không tiêu chí nào còn dùng).
+- [x] **Tooltip gạch đầu dòng**: `.rsum-info::after` dùng `white-space: pre-line`, nội dung dạng "TIÊU ĐỀ\n• …"; `kpiBox()` đổi chữ ký thành (numLabel, numVal, denLabel, denVal) để tooltip tách rõ tử số / mẫu số / kết quả.
+- [x] Verify Playwright 1512: tiêu chí Thị trường ra 6 dòng + bung Hà Nội ra 3 phường; cascade phường/xã lọc còn 6 nhu cầu; tiêu chí Phòng ban ra 5 dòng; "Tất cả" ra 18 dòng; drill `ward:` = 6 dòng; **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in chưa cập nhật theo bố cục mới.
+
+### Task 79: Bảng theo dõi thêm cột Thành công / Thất bại (2026-08-23)
+- [x] `summaryStats()` gom thêm `won` (nhu cầu lập được dự án TKT trong kỳ) và `lost` (nhu cầu hết hạn theo dõi trong kỳ) cho MỌI nhóm qua helper `agg()` — dùng chung cho lĩnh vực · nhóm ngành · thị trường · phường/xã · phòng ban · nhân viên.
+- [x] Bảng thêm 2 cột **Thành công** (xanh lá) và **Thất bại** (cam), có ở dòng tổng · dòng cha · dòng con; tiêu đề cột kèm icon `i` giải thích.
+- [x] Gộp `sumSubRow()` vào `sumRow(no, g, money, bar, tone, caret, subClass)` — nhận thẳng object nhóm nên không phải truyền rời từng số.
+- [x] **Drill theo kết quả**: key ghép `<nhóm>@won` / `<nhóm>@lost` (`drillDemands()` đệ quy lọc tiếp trên nhóm cha, `drillTitle()` nối hậu tố "— đã lập dự án TKT" / "— hết hạn theo dõi"); số 0 không render nút bấm.
+- [x] Verify Playwright 1512: tổng 50 · Thành công 13 · Thất bại 6; cộng theo lĩnh vực khớp (5+5+1+2 = 13 · 1+0+4+1 = 6); drill `all@won` = 13 dòng · `all@lost` = 6 · `field:nangluong@won` = 5; dòng con nhóm ngành hiện đủ 2 cột mới; **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in chưa cập nhật theo bố cục mới.
+
+### Task 80: Popup chi tiết — bộ lọc riêng · tóm tắt lên tiêu đề · cuộn ngang (2026-08-23)
+- [x] Thanh tiêu đề popup thêm **dòng tóm tắt** (`#drill-modal-sub`): số nhu cầu · tổng giá trị · kỳ (+ "đang lọc trong N nhu cầu"); bỏ đoạn `.drill-meta` trong thân popup.
+- [x] **Bộ lọc trong popup** dựng TĨNH trong markup (chỉ dựng lại phần bảng `#drill-table-host` → gõ tìm kiếm không mất con trỏ): tìm kiếm nhiều trường · Trạng thái nhu cầu · Dự án TKT (đã có / chưa có) · Xoá lọc · bộ đếm `x / y`.
+- [x] `drillFiltered()` dùng chung cho bảng + nút **Xuất Excel danh sách**; `openDrill()` reset bộ lọc mỗi lần mở.
+- [x] **Cuộn ngang + tiêu đề cột không wrap**: `white-space: nowrap` cho `thead th`, `DRILL_WIDTHS` nới lên tổng ~1774px, `min-width: 1740px`.
+- [x] Verify Playwright 1512: popup "Tổng nhu cầu trong kỳ" 50 dòng → tìm "toyota" còn 7 (tiêu đề + bộ đếm cập nhật) · trạng thái "Hết hạn theo dõi" còn 6 · "Chưa có dự án TKT" còn 37 · Xoá lọc về 50 · bảng rộng 1775px trong khung 1366px, 13 tiêu đề cột đều cao 31px (1 dòng) · **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in của MÀN CHÍNH chưa cập nhật theo bố cục mới.
+
+### Task 81: Popup đủ ô lọc theo cột · ẩn lọc bị cố định · thu gọn khối tổng hợp (2026-08-23)
+- [x] Bỏ dòng "Là tử số…" trong tooltip 2 ô chỉ tiêu; tooltip KPI bỏ "Tử số —"/"Mẫu số —", còn `A ÷ B` + dòng kết quả.
+- [x] **Popup thêm 6 ô lọc** (3 cascade: Lĩnh vực ▸ Nhóm ngành · Tỉnh/TP ▸ Phường xã · Phòng ban ▸ Nhân viên) — `fillDrill()` + `drillCascades()`.
+- [x] **`syncDrillFilters()`**: ẩn ô lọc đã bị cố định bởi chỉ tiêu đang mở (Thành công/Thất bại → ẩn Trạng thái + Dự án TKT; `field:`/`sector:`/`market:`/`ward:`/`dept:`/`emp:` → ẩn ô tương ứng); `drillFiltered()` chỉ áp dụng ô đang HIỆN.
+- [x] Fix **badge Trạng thái tràn cột** trong popup (cột 130 → 158px + `max-width: 100%` cho badge).
+- [x] **Nút Thu gọn / Mở rộng khối tổng hợp** ở góc trên bên phải (`#summary-toggle`, `state.summaryCollapsed`): thu gọn chỉ còn dòng meta; nới cột Thành công/Thất bại của bảng chính cho tiêu đề + icon `i` nằm gọn.
+- [x] Verify Playwright 1512: popup tổng hiện đủ 8 ô lọc · popup Thành công ẩn Trạng thái + Dự án TKT (13 dòng) · popup theo lĩnh vực ẩn ô Lĩnh vực · thu gọn khối tổng hợp 2 khối → 0 rồi mở lại được · **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in của màn chính chưa cập nhật theo bố cục mới.
+
+### Task 82: Cột Tỷ lệ thành công · tooltip tiêu đề bảng · icon xoá lọc trong popup (2026-08-23)
+- [x] **Fix tooltip 2 cột Thành công / Thất bại bị ẩn**: icon trong `thead` dùng biến thể `.rsum-info--down` (tooltip đổ xuống, mũi tên lật) vì đổ lên bị khung bảng có `overflow` cắt; `infoIcon(tip, down)` thêm tham số.
+- [x] **Thêm cột "Tỷ lệ thành công"** ngay sau cột Thành công (`rate(won, n)`) cho cả dòng tổng · dòng cha · dòng con; colgroup 8 cột, bold theo đúng quy tắc dòng tổng.
+- [x] **Nút xoá lọc trong popup** đổi sang **icon refresh** (`.calendar-filter-clear-btn`) giống nút trên toolbar báo cáo; bỏ CSS `.drill-reset` cũ.
+- [x] Verify Playwright 1512: tiêu đề 8 cột đúng thứ tự; tỷ lệ khớp (Năng lượng 5/12 = 41,7% · Gara 5/16 = 31,3% · dòng tổng 13/50 = 26,0%); tooltip header hiện đủ, không bị cắt; nút refresh trong popup xoá lọc 7 → 50 dòng; **0 lỗi console**.
+- [ ] **Chưa làm (user hoãn)**: Xuất Excel + Bản in của màn chính chưa cập nhật theo bố cục mới.
+
+### Task 83: Chữ thường cho 4 cột số liệu (2026-08-23)
+- [x] `Thành công · Tỷ lệ thành công · Thất bại · Giá trị đầu tư` để `font-weight` thường ở MỌI dòng (kể cả dòng tiêu đề phần và dòng cha); chỉ còn cột **Số nhu cầu** đậm ở dòng có tính tổng.
+- [x] Gỡ nốt rule cũ `.rsum-tb__money .rsum-drill { font-weight: 700 }` — nút bấm trong ô Giá trị đầu tư vẫn đậm dù ô đã đặt chữ thường.
+- [x] Verify Playwright 1512 (chụp lại bảng): 4 cột đã thường, cột Số nhu cầu vẫn đậm ở dòng tổng/dòng cha.
+
+### Task 84: Đổi tên cột · đồng bộ font-weight · hover rõ hơn (2026-08-23)
+- [x] Đổi tên cột: **Thành công → Chuyển đổi thành công** · **Thất bại → Hết hạn theo dõi** · **Giá trị đầu tư → Giá trị dự kiến** (kèm tooltip + title của nút drill).
+- [x] **Đồng bộ font-weight**: cột Số nhu cầu cũng để chữ thường như 4 cột còn lại (trước chỉ nó đậm ở dòng tổng).
+- [x] **Hover dòng nổi bật hơn**: nền `#d9eff7` (trước `#f7fbfd` gần như không thấy) + transition; áp cho cả dòng con và bảng trong popup (`#ddf0f7`).
+- [x] Nới cột theo bề rộng chữ đo bằng canvas (98 / 204 / 160 / 158 / 130 / 164) để tiêu đề mới không bị cắt khi `white-space: nowrap`.
+- [x] Verify Playwright 1512: 8 tiêu đề hiện đủ chữ trên 1 dòng (33px), mọi ô số `font-weight: 400`, hover dòng Gara nổi rõ; **0 lỗi console**.
+
+### Task 85: Nút Ẩn/Hiện chi tiết ở ô tiêu đề · làm nổi dòng cha đang bung (2026-08-23)
+- [x] Ô tiêu đề cột "Nội dung theo dõi" thành flex, thêm nút **Ẩn chi tiết / Hiện chi tiết** (`data-expand-all`, mũi tên xoay theo trạng thái) — bung/thu toàn bộ cấp con cuối của tiêu chí đang xem qua `parentKeys(st)`.
+- [x] Dòng cha đang bung nhận thêm class `rsum-tb__row--open`: nền `#e8f2f8` + `font-weight: 800` cho tên và 5 cột số (selector `.rsum-tb__row--parent.rsum-tb__row--open …` để thắng rule "chữ thường đồng bộ").
+- [x] Verify Playwright 1512: tiêu chí "Tất cả" 18 dòng → bấm nút ra 55 dòng (15 dòng cha mở · 37 dòng con), nhãn đổi "Hiện chi tiết" ↔ "Ẩn chi tiết", bấm lại về 18 dòng; ô dòng cha đang bung đo được `font-weight: 800` + nền `rgb(232,242,248)`; **0 lỗi console**.
+
+### Task 86: Đổi tên file mockup cho khớp tên báo cáo (2026-08-24)
+- [x] `bao-cao-tong-hop-nhu-cau-khach-hang.html` → **`bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html`** (khớp `<title>` / topbar / bản in / tên file Excel đã đổi từ Task 67).
+- [x] Cập nhật mọi tham chiếu tên file cũ trong `plan.md`, `design.md`, `gop-db/STATUS.md`; gỡ các ghi chú "giữ nguyên tên file" nay đã sai.
+- [x] Nội dung file KHÔNG đổi (không có self-reference tên file bên trong HTML); mở lại qua server tĩnh vẫn OK.
+
+### Task 87: Đổi vị trí cột Giá trị dự kiến · icon mục đích báo cáo trên topbar (2026-08-24)
+- [x] **Cột "Giá trị dự kiến" chuyển lên ngay sau "Số nhu cầu"** → thứ tự bảng theo dõi: `STT · Nội dung theo dõi · Số nhu cầu · Giá trị dự kiến · Chuyển đổi thành công · Tỷ lệ thành công · Hết hạn theo dõi · Tỷ trọng giá trị`. Sửa đồng bộ 4 chỗ: `colgroup` (46 / auto / 98 / 130 / 204 / 160 / 158 / 164), `thead`, `sumSection()`, `sumRow()` (dùng chung cho dòng cha + dòng con).
+- [x] **Topbar bỏ tên "Nguyễn Văn A"**, thay bằng **icon `i` mục đích báo cáo** (`.topbar__info`, dùng lại `.rsum-info` + biến thể `--down`): tooltip 420px, canh mép trái icon, nội dung 3 gạch đầu dòng (gạch 1 có 2 ý con: nhu cầu mới PS trong kỳ · nhu cầu kỳ trước chưa đóng; gạch 3 kèm dòng "→ Chi tiết theo thị trường / Lĩnh vực kinh doanh"). Thụt lề ý con dùng `&nbsp;` vì tooltip để `white-space: pre-line` (space thường bị gộp).
+- [x] Bỏ CSS `.topbar__subtitle` (hết dùng); `.topbar` thêm `position: relative; z-index: 30` để tooltip nổi trên nội dung `page-body`.
+- [x] Verify Playwright 1512: 8 tiêu đề đúng thứ tự mới, mọi dòng (kể cả 37 dòng con khi bung hết = 55 dòng) đều có ô thứ 4 là `rsum-tb__money` và ô thứ 5 là `rsum-tb__won`; số liệu khớp (Năng lượng 12 · 137,9 tỷ · 5 · 41,7% · 1 · 45%); tooltip topbar hiện đủ 7 dòng không bị cắt; **0 lỗi console** (chỉ 404 favicon của server tĩnh).
+- [ ] **Vẫn nợ**: Xuất Excel + Bản in chưa cập nhật theo bố cục mới (`TRACK_COLUMNS` còn 5 cột cũ).
+
+### Task 88: Chuẩn hoá popup báo cáo — khối thống kê chéo + thứ tự cột theo cơ cấu (2026-08-24)
+- [x] **Khái niệm "cơ cấu của popup"** (`drillDim(key)`): `field:` / `sector:` → Lĩnh vực · `market:` / `ward:` → Thị trường · `dept:` / `emp:` → Phòng ban · các key tổng (`all` `carried` `arisen` `closed` `converted` `expired`, kể cả hậu tố `@won` / `@lost`) → popup tổng. Bảng chéo `DRILL_CROSS`: Lĩnh vực → Thị trường + Phòng ban · Thị trường → Lĩnh vực + Phòng ban · Phòng ban → Thị trường + Lĩnh vực · popup tổng → đủ 3.
+- [x] **Khối summary `#drill-summary`** ngay dưới hàng bộ lọc: mỗi cơ cấu 1 hàng (nhãn nhỏ in hoa 104px + dải chip tự xuống dòng). Chip = tên · số nhu cầu · giá trị (`billion()`) · thanh tỷ trọng 2px theo **số nhu cầu** chạy mép dưới; chỉ hiện mục > 0, sắp giảm dần; tooltip ghi đủ `n nhu cầu · % · giá trị`.
+- [x] Summary tính trên **danh sách đang lọc trong popup** (`drillFiltered()`), dựng trong `renderDrillBody()` → gõ tìm kiếm / đổi ô lọc là số đổi theo; 0 dòng thì ẩn hẳn khối.
+- [x] **Bấm chip = lọc nhanh**: đổ giá trị vào đúng ô lọc (`#drill-field` / `#drill-market` / `#drill-dept`) + `drillCascades()`; bấm lại chip đang bật thì bỏ lọc; chip bật tô nền teal.
+- [x] **Gộp 4 chỗ khai báo cột popup thành 1**: `DRILL_COLDEFS` (13 cột, mỗi cột có `label · width · td() · val()`) thay cho `DRILL_COLUMNS` + `DRILL_WIDTHS` + `drillCells()` + đoạn dựng `<td>` viết tay. Bảng, tiêu đề và file Excel dùng chung định nghĩa nên luôn khớp.
+- [x] **`drillColumns(key)`**: cột của 2 cơ cấu thống kê chéo lên ngay sau *Khách hàng*, rồi tới cột của chính cơ cấu đang xem, phần còn lại giữ thứ tự mặc định. Lĩnh vực → `… Thị trường/Phường xã · Phòng · KD chủ trì · Lĩnh vực · Nhóm ngành …` · Thị trường → `… Lĩnh vực · Nhóm ngành · Phòng · KD chủ trì · Thị trường …` · Phòng ban → `… Thị trường · Lĩnh vực · Nhóm ngành · Phòng · KD chủ trì …` · popup tổng giữ nguyên.
+- [x] Verify Playwright 1512: 6 loại key + hậu tố `@won` đều ra đúng nhóm summary và đúng thứ tự cột (`field:nangluong` 12 dòng · `market:hn` 18 · `dept:d1` 15 · `emp:e2` 7 · `ward:w01` 6 · `sector:sc06` 5 · `all` 50); tổng chip mỗi nhóm luôn bằng số dòng; bấm chip Hà Nội trong popup Năng lượng → 5/12 dòng, chip sáng, tiêu đề phụ cập nhật, bấm lại về 12; Xoá lọc tắt chip; tìm chuỗi không có → khối summary ẩn, bảng báo rỗng; **Excel bắt từ blob khớp đúng thứ tự cột mới** (popup Thị trường: Lĩnh vực · Nhóm ngành · Phòng · KD chủ trì · Thị trường), giá trị khớp tiêu đề; **0 lỗi console**.
+- [ ] **Vẫn nợ**: Xuất Excel + Bản in của MÀN CHÍNH chưa cập nhật theo bố cục mới (`TRACK_COLUMNS` còn 5 cột cũ).
+
+### Task 89: Khối thống kê chéo đổi sang chip PHẲNG (2026-08-24)
+- [x] User duyệt lại phương án hiển thị: **giữ chip nhưng tinh gọn** (loại 3 phương án khác: ma trận chéo cross-tab · 2 bảng mini song song · thanh xếp chồng 100%).
+- [x] Bỏ khung nền + viền của khối (`.drill-sum` chỉ còn đường kẻ dưới), bỏ nền/viền chip, **bỏ thanh bar tỷ trọng** và **bỏ số tiền trên chip**; chip còn `Tên · số · %` (% chữ xám nhạt). Giá trị đầu tư đầy đủ nằm trong tooltip chip.
+- [x] Chip hover nền `#eef6fa`, chip đang bật viền teal + nền `#e2f5fa` (viền trong suốt sẵn nên bật/tắt không xê dịch chữ).
+- [x] Verify Playwright 1512: khối tổng hợp popup còn **72px** cho 3 cơ cấu (bản chip có khung ~150px); tooltip chip đủ `18 nhu cầu · 36% · 116.600.000.000`; bấm chip Hà Nội → 18 dòng + chip sáng 100%, bấm lại về 50; **0 lỗi console**.
+
+### Task 90: Chuẩn hoá LUẬT BỘ LỌC trong popup (2026-08-24)
+- [x] **Cơ cấu đang xem thì bỏ ô lọc của chính nó**, chỉ còn ô CẤP CON và con đó **giới hạn trong mục đang xem** — `drillCascades()` đọc thẳng id từ `state.drillKey` khi ô cha bị ẩn (popup Lĩnh vực Năng lượng → Nhóm ngành chỉ 3 nhóm của Năng lượng; popup Thị trường Hà Nội → Phường/xã chỉ 3 phường; popup Phòng KD 01 → Nhân viên chỉ 3 người).
+- [x] Popup mở ngay ở **cấp con** (`sector:` / `ward:` / `emp:`) thì bỏ luôn cả cặp ô lọc của cơ cấu đó.
+- [x] **2 cơ cấu chéo chỉ lọc tới cấp CHA** — bỏ cấp con: xem theo Lĩnh vực → chỉ Tỉnh/TP + Phòng ban (không Phường/xã, không Nhân viên); tương tự cho Thị trường và Phòng ban.
+- [x] **Popup tổng** (không theo cơ cấu nào) giữ đủ 2 cấp của cả 3 cơ cấu.
+- [x] **Bỏ hẳn ô lọc "Dự án TKT"** ở mọi popup (markup · `DRILL_SELECTS` · `drillFiltered()` · `syncDrillFilters()`).
+- [x] Gom luật vào `DRILL_PAIRS` + vòng lặp trong `syncDrillFilters()` (trước là 8 dòng `show()` viết tay theo prefix).
+- [x] Verify Playwright 1512 — 8 popup ra đúng bộ lọc: tổng `Lĩnh vực · Nhóm ngành · Tỉnh/TP · Phường/xã · Phòng ban · Nhân viên · Trạng thái` · `field:` `Nhóm ngành(3) · Tỉnh/TP · Phòng ban · Trạng thái` · `sector:` `Tỉnh/TP · Phòng ban · Trạng thái` · `market:` `Lĩnh vực · Phường/xã(3) · Phòng ban · Trạng thái` · `ward:` `Lĩnh vực · Phòng ban · Trạng thái` · `dept:` `Lĩnh vực · Tỉnh/TP · Nhân viên(3) · Trạng thái` · `emp:` `Lĩnh vực · Tỉnh/TP · Trạng thái` · `@won` bỏ thêm Trạng thái. Lọc chạy đúng (Năng lượng 12 → nhóm ngành 3 dòng; KD 01 15 → nhân viên e1 6 dòng; chip Hà Nội 14 dòng); ô lọc đang ẩn KHÔNG lọc ngầm (gán `#drill-ward` = w01 vẫn 15 dòng); **0 lỗi console**.
+
+### Task 91: Dày data demo — 20 thị trường · 10 phòng ban · 200 nhu cầu (2026-08-24)
+- [x] **Bộ tỉnh/TP sau sáp nhập 2025**: 20 đơn vị (Hà Nội · TP.HCM · Hải Phòng · Đà Nẵng · Cần Thơ · Huế · Quảng Ninh · Bắc Ninh · Hưng Yên · Ninh Bình · Thanh Hoá · Nghệ An · Hà Tĩnh · Quảng Trị · Quảng Ngãi · Gia Lai · Khánh Hoà · Lâm Đồng · Đồng Nai · Tây Ninh) — **bỏ Bình Dương** (nay thuộc TP.HCM). 45 phường/xã (2-3 mỗi tỉnh, mô hình 2 cấp không còn quận/huyện).
+- [x] **10 phòng ban** (KD 01–04 · KD DA · KD MB · KD MTR · KD MN · KD MT · KD ĐT) thuộc 2 công ty, **26 nhân viên** (2-3 mỗi phòng). Bỏ hẳn `PARTS` + `partId` (đã không dùng từ khi bỏ bộ lọc "Bộ phận").
+- [x] **60 khách hàng · 200 nhu cầu sinh CỐ ĐỊNH** bằng LCG có hạt giống (`DEMO_SEED = 20260824`, hàm `demoRnd/demoPick/demoInt`) thay cho literal viết tay — **không dùng Math.random** nên mở lại trang số liệu y hệt.
+  - Khách hàng: mỗi tỉnh 3 khách thuộc 3 lĩnh vực khác nhau, tên ghép mẫu + tên tỉnh (Toyota Hà Nội · Điện lực Huế · CĐ Nghề Cần Thơ…), có `fieldId` "ruột".
+  - Nhu cầu: 75% đúng lĩnh vực ruột của khách, 25% mua chéo; giá trị 0,8–20 tỷ; thị trường lớn trọng số 4/3/2 (bể chọn 165 mục, bước nhảy 13 nên phủ đều).
+  - Phân bổ chủ ý cho kỳ 08/2026: **22% chuyển đổi thành dự án TKT trong kỳ** · **8% hết hạn theo dõi trong kỳ** (ép `deployTime = 05/2026` → hạn 31/08/2026, và ép meeting về kỳ trước cho hợp lý) · 4% dừng theo dõi · còn lại đang theo dõi / mới ghi nhận. 65% meeting họp trong kỳ, 35% kỳ trước (04–07/2026).
+- [x] **Fix bug có sẵn**: nút Xoá lọc chỉ reset `#f-company`, bỏ sót `#f-department` / `#f-host` — `populateCascade()` giữ nguyên giá trị cũ nếu vẫn hợp lệ nên vẫn lọc ngầm (trước đây ít phòng nên không lộ).
+- [x] Verify Playwright 1512 — kỳ 08/2026: **200 nhu cầu · 2065,3 tỷ**; I = 82 còn hiệu lực + 118 PS trong kỳ; II = 40 chuyển đổi + 17 hết hạn; KPI 20,0% / 70,2% / 29,8%. Bảng "Tất cả" 37 dòng (4 lĩnh vực · 20 thị trường · 10 phòng); tiêu chí Thị trường 20 dòng → bung ra 65; tiêu chí Phòng ban 10 dòng. Thị trường trải 6–15 nhu cầu, phòng ban 15–24 — tỷ lệ thành công dao động 0–50%. Cascade Công ty c2 → 4 phòng / 10 nhân viên / 76 nhu cầu → chọn KD MT còn 15; Xoá lọc về đúng 200. Popup Hà Nội: 15 dòng, thống kê chéo Lĩnh vực(3) + Phòng ban(7), ô Phường/xã đúng 3 phường của Hà Nội. **0 lỗi console**.
+
+### Task 92: Summary popup 1 cơ cấu = 1 hàng cuộn ngang · thứ tự cột bám thứ tự summary (2026-08-24)
+- [x] **Mỗi cơ cấu gói trong 1 HÀNG** (`.drill-sum__chips` đổi sang `flex-wrap: nowrap`, chip `flex-shrink: 0` + `white-space: nowrap`); cả khối `#drill-summary` **cuộn ngang** (`overflow-x: auto`, thanh cuộn mảnh 7px). Nhãn cơ cấu **ghim trái** (`position: sticky; left: 0`, nền trắng) để cuộn xa vẫn biết đang xem hàng nào.
+- [x] **Fix khối bị bóp bẹp còn 13px**: thân popup là flex column, phần tử có `overflow` bị co → thêm `flex-shrink: 0` cho `.drill-sum` (giờ cao 75px cho 3 hàng).
+- [x] **Nguyên tắc thứ tự cột (user chốt)**: *cột xếp theo đúng thứ tự các hàng trong khối thống kê* — summary để cơ cấu nào trước thì cột của cơ cấu đó đứng trước. Áp cho **cả popup tổng** (trước đây popup tổng giữ thứ tự mặc định nên Phòng / KD chủ trì bị đẩy xuống cuối, lệch với summary xếp Lĩnh vực → Thị trường → Phòng ban). `drillColumns()` bỏ nhánh `if (!dim) return DRILL_ORDER`.
+- [x] Verify Playwright 1512 — cột khớp thứ tự summary ở cả 4 loại popup: tổng `Lĩnh vực · Nhóm ngành · Thị trường/Phường xã · Phòng · KD chủ trì` · Lĩnh vực `Thị trường/Phường xã · Phòng · KD chủ trì · Lĩnh vực · Nhóm ngành` · Thị trường `Lĩnh vực · Nhóm ngành · Phòng · KD chủ trì · Thị trường/Phường xã` · Phòng ban `Thị trường/Phường xã · Lĩnh vực · Nhóm ngành · Phòng · KD chủ trì`. Khối summary popup tổng: 3 hàng × 19px, `scrollWidth` 2331 > `clientWidth` 1368 (cuộn ngang thật), cuộn 700px nhãn vẫn đứng yên tại x=72. **0 lỗi console**.
+
+### Task 93: Popup — cột cơ cấu lên trước KH · tên KH là pháp nhân · tiêu đề · KPI · fullscreen · In (2026-08-24)
+- [x] **Cột cơ cấu đứng trước cột Khách hàng**: `drillColumns()` trả `['stt'] + cột cơ cấu + ['customer'] + phần còn lại` (trước KH đứng ngay sau STT — user báo sai).
+- [x] **Tên khách hàng thành tên pháp nhân**: `CUSTOMER_TEMPLATES` đổi sang "Công ty CP Ô tô Toyota …", "Công ty TNHH Ô tô Ford …", "Công ty Điện lực …", "Công ty CP Môi trường đô thị …", "Trường Cao đẳng nghề …" (16 mẫu); cột Khách hàng nới 150 → **244px** cho tên dài nằm 1-2 dòng.
+- [x] **Khối tổng hợp có tiêu đề "Phân bổ nhu cầu theo cơ cấu"** — bọc `.drill-sumbox` (giữ viền dưới + `flex-shrink: 0`), `.drill-sum` bên trong chỉ còn lo cuộn ngang.
+- [x] **Thêm hàng "Kết quả KPI"** cuối khối: 3 chip TĨNH (không bấm lọc) `Tỷ lệ chuyển đổi thành công` · `Thành công / tổng nhu cầu đóng` · `Thất bại / tổng nhu cầu đóng`, mỗi chip có `số/mẫu` + % (teal / xanh lá / cam), tính trên danh sách ĐANG LỌC trong popup.
+- [x] **Tiêu đề popup**: `drillHeading()` = *"Bạn đang xem kết quả CSKH tiềm năng theo: Lĩnh vực KD nội bộ — Năng lượng"* (popup tổng dùng *"… CSKH tiềm năng: Tổng nhu cầu trong kỳ"*); `drillTitle()` đổi dấu `: ` → ` — ` để không bị 2 dấu hai chấm.
+- [x] **Nút phóng to toàn màn hình** trên header popup (`#drill-modal-zoom`, class `.minutes-modal--full`): 100vw × 100vh, bỏ bo góc, **ghi đè `transform` `!important`** vì popup thường căn giữa bằng `translate(-50%, -50%)`; bảng bỏ `max-height: 56vh` và giãn hết chiều cao còn lại. Mở popup mới luôn trả về kích thước thường.
+- [x] **Nút "In danh sách"** ở footer popup: dựng `#print-area` theo ĐÚNG cột + bộ lọc của popup đang mở, kèm tiêu đề, dòng kỳ/số nhu cầu/tổng giá trị và dòng KPI; dùng lại `@media print` A4 ngang sẵn có (popup tự ẩn khi in).
+- [x] Verify Playwright 1512: popup Lĩnh vực → tiêu đề đúng, 4 hàng tổng hợp (Thị trường 18 chip · Phòng ban 10 chip · Kết quả KPI 3 chip) và cột `STT · Thị trường/Phường xã · Phòng · KD chủ trì · Lĩnh vực · Nhóm ngành · Khách hàng · …`; popup tổng KPI `40/200 20,0% · 40/57 70,2% · 17/57 29,8%`; phóng to ra đúng 1512×950 (x=0, y=0), bảng cao 511 → 574px, bấm lại thu về; In dựng 15 dòng đúng 13 cột theo thứ tự popup Thị trường + 3 dòng meta. **0 lỗi console**.
+
+### Task 94: Tách KPI popup thành khối riêng trên khối phân bổ (2026-08-24)
+- [x] Bỏ hàng "Kết quả KPI" khỏi khối phân bổ (và dọn CSS chip tĩnh `.drill-sum__chip--static` / `.drill-sum__grp--kpi`).
+- [x] **Khối KPI riêng `#drill-kpibox`** đặt NGAY TRÊN khối "Phân bổ nhu cầu theo cơ cấu": tiêu đề *Kết quả KPI* + 3 hộp dùng lại đúng component `kpiBox()` / `.rsum-kpi` của màn chính (viền trái teal / xanh lá / cam, % lớn, số thô, thanh bar, diễn giải trong icon `i`).
+- [x] **Bản thu nhỏ cho popup** (`.drill-kpibox` ghi đè): padding 9/13 → 6/10 · cỡ số 24 → 18px · thanh bar 5 → 4px · gap 10 → 8px → khối cao **88px**.
+- [x] KPI tính trên **danh sách đang lọc trong popup**; mẫu số đổi tên cho đúng ngữ cảnh ("Nhu cầu trong danh sách này" / "Nhu cầu bị đóng trong danh sách này"); 0 dòng thì ẩn khối.
+- [x] Verify Playwright 1512: popup Năng lượng → thứ tự thân popup `drill-filters → drill-kpibox → drill-sumbox → drill-table-host`; 3 hộp KPI đúng tone và số (19,6% 11/56 · 73,3% 11/15 · 26,7% 4/15); khối phân bổ còn 2 hàng cơ cấu. **0 lỗi console**.
+
+### Task 95: Tinh chỉnh khối KPI + khối phân bổ trong popup (2026-08-24)
+- [x] **Bỏ tiêu đề "Kết quả KPI"** của khối KPI trong popup (3 hộp đã tự nói lên nội dung) → khối cao 88 → **66px**.
+- [x] **Tên tỉnh / phòng ban / lĩnh vực trong chip để chữ thường** (`font-weight: 600` → `400`) — điểm nhấn dồn vào con số, đỡ rối khi 20 chip trên 1 hàng.
+- [x] **Thanh cuộn mảnh hơn**: 7 → **4px**, màu `#d7e0e8` (đậm lên `#b8c6d4` khi hover), thêm `scrollbar-width: thin` + `scrollbar-color` cho Firefox.
+- [x] Verify Playwright 1512: popup tổng → không còn `.drill-sumbox__title` trong khối KPI, khối cao 66px, KPI vẫn đúng (20,0% 40/200 · 70,2% 40/57 · 29,8% 17/57); `font-weight` tên chip = 400; khối phân bổ giữ 3 hàng và vẫn cuộn ngang. **0 lỗi console**.
+
+### Task 96: Popup nhu cầu hết hạn — bỏ khối KPI + khối phân bổ (2026-08-24)
+- [x] Thêm `isExpiredView(key)`: key `expired` hoặc hậu tố `@lost` → popup chỉ toàn nhu cầu hết hạn theo dõi, KPI luôn 0% / 0% / 100% nên **ẩn cả `#drill-kpibox` lẫn `#drill-sumbox`**, popup còn bộ lọc + bảng.
+- [x] Verify Playwright 1512: `expired` (17 dòng) · `all@lost` (17) · `field:gara@lost` (3) đều ẩn 2 khối; `converted` (40) · `all@won` (40) · `all` (200) · `field:gara` (49) vẫn hiện đủ. **0 lỗi console**.
+- [ ] **Chờ user chốt**: popup CHUYỂN ĐỔI THÀNH CÔNG (`converted` / `@won`) cũng có KPI suy biến (100% / 100% / 0%) — có áp cùng luật ẩn không?
+
+### Task 97: Đổi tên "Lĩnh vực KD nội bộ" → "Lĩnh vực công ty kinh doanh" (2026-08-24)
+- [x] Thay 15 chỗ trong file (bộ lọc · nhãn tiêu chí · dòng tiêu đề phần bảng · cột popup · tiêu đề popup · drawer meeting · tooltip · mô tả bản in · comment code) — không còn chuỗi "nội bộ".
+- [x] Nới chỗ cho tên dài hơn: cột popup 152 → **196px**, `#f-criteria` 232 → **300px** (option "Lĩnh vực công ty kinh doanh / Nhóm ngành").
+- [x] Verify Playwright 1512: 4 option tiêu chí đúng tên mới, nhãn khối lọc, dòng "Theo lĩnh vực công ty kinh doanh / Nhóm ngành", tiêu đề popup và cột popup đều đổi; **0 lỗi console**.
 
 ## Checkpoint
 
@@ -673,7 +903,7 @@ Bước tiếp theo: user review tổng thể file báo cáo (`http://127.0.0.1:
 Blocked: chờ user chốt tên 2 công ty demo (đang tạm Tân Phát ETEK / Tân Phát Sài Gòn) và quyết định xử lý bản copy lệch `quan_ly_cong_viec_ca_nhan.html`.
 
 ### Checkpoint — 2026-08-20 (wrap up — Phase 16: file BÁO CÁO TỔNG HỢP NHU CẦU KHÁCH HÀNG)
-Vừa hoàn thành: Task 60→66 — **file mockup ĐỘC LẬP mới** `bao-cao-tong-hop-nhu-cau-khach-hang.html`
+Vừa hoàn thành: Task 60→66 — **file mockup ĐỘC LẬP mới** `bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html`
 (layout bám ảnh Excel user gửi, style tái dùng nguyên bộ token + component của `bao-cao-ket-qua-meeting-theo-thi-truong.html`):
   - **Toolbar 7 bộ lọc**: Kỳ xem (Tất cả/Hôm nay/Tuần/Tháng/Quý/Năm/Tuỳ chọn — bám thời gian BẮT ĐẦU HỌP) · Lĩnh vực KD · Khách hàng · cascade **Công ty ▸ Phòng ban ▸ Bộ phận ▸ Kinh doanh chủ trì** · Xoá lọc. Cụm nút phải: Ẩn tổng hợp · Ẩn/Hiện chi tiết · In báo cáo · Xuất Excel.
   - **Dải KPI**: Tổng nhu cầu · Tổng giá trị đầu tư · Khách hàng · Chưa có dự án TKT (+%) + 3 khối phân bổ (thanh xếp chồng trạng thái · thanh ngang lĩnh vực KD · thanh ngang thị trường).
@@ -684,5 +914,63 @@ Vừa hoàn thành: Task 60→66 — **file mockup ĐỘC LẬP mới** `bao-cao
   - **Chỉnh theo phản hồi user (Task 65)**: select Lĩnh vực KD dùng `<select>` chuẩn giống file mẫu (bỏ dropdown checkbox) · "Đã chốt" → "Đã lập dự án TKT" · tiêu đề cột không xuống dòng · BỎ tô nền vàng dòng chưa có dự án · chế độ tổng hợp ẩn cột rỗng · data 16 → **26 nhu cầu / 18 KH** (Gara 8 · Năng lượng 7 · Môi trường 5 · Đào tạo 6).
 Đã verify Playwright 1440 sau mỗi nhóm thay đổi — **0 lỗi console**; Excel tải thật (chi tiết 25KB / tổng hợp 6.5KB); bản in tổng hợp 4 cột/16 dòng, chi tiết 10 cột/30 dòng.
 Đang làm dở: không có việc dở.
-Bước tiếp: user review tổng thể `http://127.0.0.1:8952/bao-cao-tong-hop-nhu-cau-khach-hang.html` → chỉnh tiếp nếu cần; sau đó mới bàn RESPONSIVE (vẫn hoãn) và port Vue thật.
+Bước tiếp: user review tổng thể `http://127.0.0.1:8952/bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html` → chỉnh tiếp nếu cần; sau đó mới bàn RESPONSIVE (vẫn hoãn) và port Vue thật.
 Blocked: chờ user chốt (a) Lĩnh vực KD có cần **chọn nhiều** không (hiện là select đơn theo yêu cầu "dùng đúng select như file mẫu", trong khi ảnh Excel ghi "select chọn nhiều"); (b) tên 2 công ty demo (tạm Tân Phát ETEK / Tân Phát Sài Gòn).
+
+### Checkpoint — 2026-08-23 (wrap up — Phase 17: đổi định vị màn, **user đã duyệt UI**)
+Vừa hoàn thành: Task 67→70 trên `bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html`:
+  - Đổi tên báo cáo → **Báo cáo kết quả chăm sóc khách hàng tiềm năng** (title · topbar · bản in · file Excel) + dòng **Mục tiêu** ở đầu dải tổng hợp và trong bản in.
+  - **Luật lấy dữ liệu mới**: nhu cầu PS trong kỳ (meeting trong kỳ, biên bản khách trả lời CÓ) + nhu cầu kỳ trước còn "mở" đầu kỳ (chưa lập dự án TKT, chưa hết hạn theo dõi — gắn nhãn `Kỳ trước`). Kỳ xem bỏ "Tất cả", mặc định Tháng này.
+  - **Hạn theo dõi** = hết tháng (tháng dự kiến triển khai + N), N chọn trên toolbar (+3/+6/+9/+12, mặc định +3); thêm trạng thái **Hết hạn theo dõi**, trạng thái hiển thị suy ra theo kỳ (`effStatus`).
+  - **Summary 3 nhóm I / II / III** đúng ảnh spec user (dạng thẻ KPI, giữ nguyên 3 khối phân bổ): I = I.1 + I.2 · II = II.1 + II.2 · III = 3 tỷ lệ KPI kèm công thức.
+  - **Fix lỗi hiển thị**: dòng TỔNG CỘNG dính hở ~2px dưới hàng tiêu đề → nội dung đang cuộn lòi qua khe (ghim `top: 34px`).
+Đã verify Playwright 1512 + 1440 — **0 lỗi console**; số liệu khớp công thức ở cả 3 tổ hợp kỳ/hạn đã test.
+Đang làm dở: không có việc dở. **User đã duyệt UI ngày 23/08/2026.**
+Bước tiếp: RESPONSIVE (vẫn hoãn) → port Vue thật (cần chốt nguồn dữ liệu thật: câu hỏi "có nhu cầu đầu tư không?" trong biên bản meeting, ngày lập dự án TKT, tham số N tháng cấu hình để ở đâu).
+Blocked / nợ UI: (a) bảng chi tiết rộng 1660px > vùng hiển thị ~1426px nên cuộn ngang, cột "Dự án TKT" bị khuất — muốn bỏ cuộn ngang phải rút ngắn tên tiêu đề cột (đã chốt tiêu đề KHÔNG xuống dòng); (b) Lĩnh vực KD có cần chọn nhiều không; (c) tên 2 công ty demo (tạm Tân Phát ETEK / Tân Phát Sài Gòn).
+
+### Checkpoint — 2026-08-23 (WRAP UP cuối phiên — Task 67 → 85, dựng lại toàn bộ bố cục màn)
+Vừa hoàn thành: Task 67 → 85 trên `bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html` (đổi tên báo cáo thành "Báo cáo kết quả chăm sóc khách hàng tiềm năng").
+
+**Màn giờ gồm 3 tầng:**
+1. **Bộ lọc**: `Kỳ` · `Tiêu chí theo dõi` (Tất cả / Lĩnh vực KD nội bộ - Nhóm ngành / Thị trường / Phòng ban - Nhân viên) · khối lọc RIÊNG của tiêu chí đang chọn (cascade Lĩnh vực ▸ Nhóm ngành · Tỉnh/TP ▸ Phường xã · Công ty ▸ Phòng ban ▸ Nhân viên) · nút xoá lọc. Đã bỏ hẳn: Khách hàng · Bộ phận · Hạn theo dõi.
+2. **Khối tổng hợp** (nút Thu gọn / Mở rộng ở góc trên phải): 2 khối *Tổng nhu cầu trong kỳ* / *Tổng nhu cầu bị đóng trong kỳ* (mỗi khối 2 chỉ tiêu con, KHÔNG đánh số thứ tự) + 3 hộp KPI trên 1 hàng. Mọi con số bấm ra popup.
+3. **Bảng theo dõi chính** (full width, đã bỏ bảng chi tiết dưới màn): 8 cột `STT · Nội dung theo dõi · Số nhu cầu · Chuyển đổi thành công · Tỷ lệ thành công · Hết hạn theo dõi · Giá trị dự kiến · Tỷ trọng giá trị`; 2 cấp cha–con, caret từng dòng + nút **Ẩn/Hiện chi tiết** trong ô tiêu đề; dòng cha đang bung tô nền + in đậm.
+
+**Popup drill-down** (bấm bất kỳ con số nào, kể cả cột Chuyển đổi thành công / Hết hạn theo dõi): tiêu đề kèm dòng tóm tắt · 9 ô lọc (tự ẩn ô đã bị cố định bởi chỉ tiêu đang mở) · bảng 13 cột cuộn ngang, tiêu đề không wrap · Xuất Excel danh sách riêng · bấm meeting → drawer · TẠO MỚI dự án TKT ngay trong popup.
+
+**Data demo**: 50 nhu cầu / 308,6 tỷ · 26 KH · 4 lĩnh vực × 11 nhóm ngành · 6 thị trường × 14 phường/xã · 5 phòng ban × 12 nhân viên; có đủ nhu cầu kỳ trước mang sang · đã chuyển thành dự án · hết hạn theo dõi.
+
+Đã verify Playwright 1512 sau MỖI thay đổi — **0 lỗi console** ở lần cuối. Mockup chạy tại `python3 -m http.server` trong thư mục này (phiên vừa rồi dùng cổng 9092).
+Đang làm dở: không có việc dở.
+Bước tiếp: **cập nhật Xuất Excel + Bản in theo bố cục mới** (user hoãn suốt phiên — hiện vẫn xuất theo bố cục cũ: thiếu 3 cột kết quả, thiếu nhóm ngành · phường-xã · phòng ban); sau đó RESPONSIVE (vẫn hoãn) → port Vue thật.
+Blocked / cần chốt khi port thật: (a) nguồn dữ liệu cho câu hỏi "có nhu cầu đầu tư không?" trong biên bản meeting; (b) ngày lập dự án TKT; (c) tham số số tháng cấu hình hạn theo dõi (hiện là hằng `TRACK_MONTHS = 3` trong code, đã bỏ khỏi UI); (d) tên 2 công ty demo (tạm Tân Phát ETEK / Tân Phát Sài Gòn).
+
+### Checkpoint — 2026-08-24 (WRAP UP — Task 86 → 97: đổi tên file, chuẩn hoá popup, dày data)
+
+Vừa hoàn thành 12 task trên **`bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html`** (đổi tên từ `bao-cao-tong-hop-nhu-cau-khach-hang.html` ở Task 86 cho khớp tên báo cáo):
+
+**Màn chính**
+- Cột **Giá trị dự kiến** chuyển lên ngay sau **Số nhu cầu** (8 cột: `STT · Nội dung theo dõi · Số nhu cầu · Giá trị dự kiến · Chuyển đổi thành công · Tỷ lệ thành công · Hết hạn theo dõi · Tỷ trọng giá trị`).
+- Topbar bỏ tên người dùng → **icon `i` mục đích báo cáo** (tooltip 420px, 3 gạch đầu dòng).
+- Đổi tên **"Lĩnh vực KD nội bộ" → "Lĩnh vực công ty kinh doanh"** ở mọi nơi.
+- Fix bug có sẵn: nút Xoá lọc bỏ sót `#f-department` / `#f-host` nên vẫn lọc ngầm.
+
+**Popup drill-down — đã chuẩn hoá thành 1 khuôn**
+`Bộ lọc → 3 hộp KPI (không tiêu đề) → "Phân bổ nhu cầu theo cơ cấu" → Bảng chi tiết`
+- **Thống kê chéo**: xem theo Lĩnh vực → thống kê Thị trường + Phòng ban · theo Thị trường → Lĩnh vực + Phòng ban · theo Phòng ban → Thị trường + Lĩnh vực · popup tổng → đủ 3. Mỗi cơ cấu **đúng 1 hàng chip** (`tên · số · %`, chữ thường), khối **cuộn ngang** (thanh 4px), nhãn cơ cấu ghim trái. Bấm chip = lọc nhanh (toggle).
+- **Thứ tự cột bám đúng thứ tự hàng trong khối thống kê**, đứng **ngay sau STT, trước cả cột Khách hàng**.
+- **Luật bộ lọc**: cơ cấu đang xem → bỏ ô cấp cha, ô cấp con giới hạn trong mục đang xem; 2 cơ cấu chéo chỉ tới cấp cha; bỏ hẳn ô "Dự án TKT".
+- **Popup nhu cầu hết hạn** (`expired` / `@lost`): bỏ cả khối KPI lẫn khối phân bổ.
+- Tiêu đề: *"Bạn đang xem kết quả CSKH tiềm năng theo: <cơ cấu> — <mục>"*. Header có **nút phóng to toàn màn hình**; footer có **In danh sách** (bản in bám đúng cột + bộ lọc của popup) + Xuất Excel.
+- Code: gộp 4 chỗ khai báo cột popup thành 1 `DRILL_COLDEFS` (`label · width · td() · val()`) → bảng · tiêu đề · Excel · bản in luôn khớp.
+
+**Data demo v2**: 20 tỉnh/TP (bộ sau sáp nhập 2025, mô hình 2 cấp) · 45 phường/xã · 10 phòng ban · 26 nhân viên · 60 khách hàng (tên pháp nhân đầy đủ) · **200 nhu cầu / 2.065,3 tỷ**; sinh **cố định bằng LCG có hạt giống** (không dùng `Math.random`) nên demo không nhảy số. Kỳ 08/2026: I = 82 + 118 · II = 40 + 17 · KPI 20,0% / 70,2% / 29,8%.
+
+Đã verify Playwright 1512 sau MỖI task — **0 lỗi console** ở lần cuối. Server mockup đang chạy: `http://127.0.0.1:9577/bao-cao-ket-qua-cham-soc-khach-hang-tiem-nang.html`.
+
+Đang làm dở: không có việc dở.
+Bước tiếp:
+1. **Xuất Excel + Bản in của MÀN CHÍNH** vẫn theo bố cục cũ (`TRACK_COLUMNS` 5 cột, thiếu 3 cột kết quả · nhóm ngành · phường-xã · phòng ban) — nợ từ Task 74, user hoãn nhiều phiên.
+2. RESPONSIVE (vẫn hoãn) → port Vue thật.
+Chờ user chốt: (a) popup **chuyển đổi thành công** (`converted` / `@won`) có ẩn KPI + phân bổ như popup hết hạn không (KPI cũng suy biến 100/100/0); (b) nguồn dữ liệu thật cho câu "có nhu cầu đầu tư không?" trong biên bản meeting; (c) ngày lập dự án TKT; (d) tham số `TRACK_MONTHS = 3`; (e) tên 2 công ty demo (tạm Tân Phát ETEK / Tân Phát Sài Gòn).
