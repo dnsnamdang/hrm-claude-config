@@ -4345,3 +4345,704 @@ Blocked: không.
    → `bank_id` / swift / phí của phiếu bị xoá khỏi form. Lỗi có sẵn, chưa ai báo (chỉ 1 phiếu loại 1
    NCC nước ngoài trên DB). Đã thử vá bằng tuỳ chọn `keepSavedBank` rồi **hoàn tác** cùng đợt bác
    phương án A — cần user chốt có làm không.
+
+---
+
+## Phase — Chỉnh xuất Excel phiếu đề nghị thanh toán (2026-08-24) @khoipv
+
+- [x] **BE-1** `BillPaymentRequestService::exportData()` — cột **"Số tiền chi"** chỉ dựng khi phiếu ở
+      trạng thái **Duyệt phiếu chi** (`STATUS_APPROVED_BILL_PAYMENT` = 8). Bỏ khỏi cả 3 chỗ:
+      `headings`, từng dòng chi tiết, dòng Tổng cộng. Trạng thái khác (kể cả 7 "Chờ duyệt phiếu chi")
+      thì bảng hụt 1 cột, `col_count` giảm theo nên khối thông tin chung + dòng tiêu đề tự co.
+- [x] **BE-2** `exportData()` trả thêm `label_span` = số cột mô tả đầu bảng
+      (STT + chuyến xe/hạch toán + đối tượng + số hợp đồng).
+- [x] **BE-3** `exports/bill_payment_request.blade.php` — dòng **Tổng cộng** gộp `label_span` cột đầu
+      thành 1 ô (`colspan`), nhãn "Tổng cộng" không còn kẹt trong ô STT rộng 6 ký tự. Các cột tiền
+      giữ nguyên chỉ số nên `money_columns[$i]` vẫn khớp, `data-format="#,##0"` không đổi.
+
+### Verify đã chạy
+
+`php -l` sạch 2 file. Dựng file .xlsx **thật** từ 3 phiếu trên DB rồi đọc lại bằng PhpSpreadsheet
+(skill `export-excel` mục 7):
+
+| Phiếu | Trạng thái | Bố cục | Kết quả đọc lại |
+| --- | --- | --- | --- |
+| 4197 `TPE.DNTT0826.00001` | 8 – Duyệt phiếu chi | loại 1 + TM (STT/NCC/HĐ) | 10 cột, **có** "Số tiền chi" (I) · Tổng cộng merge **A12:C12** |
+| 4150 `TPE.DNTT0726.00230` | 8 – Duyệt phiếu chi | loại 1 + CK (STT/HĐ) | 9 cột, **có** "Số tiền chi" (H) · Tổng cộng merge **A12:B12** ← đúng ca user nêu |
+| 4140 `TPE.DNTT0726.00220` | 7 – Chờ duyệt phiếu chi | loại 1 + TM | 9 cột, **KHÔNG** có "Số tiền chi" · Tổng cộng merge A12:C12 |
+
+Mọi ô tiền vẫn kiểu `n` + định dạng `#,##0` (không ô nào thành chuỗi). Bản in (`print.vue` +
+`BillPaymentRequestPrintResource`) **không đụng tới** — vẫn in đủ cột "Số tiền chi" như cũ.
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: 2 chỉnh sửa file Excel phiếu đề nghị thanh toán (ẩn cột "Số tiền chi" khi chưa
+duyệt phiếu chi · gộp cột nhãn ở dòng Tổng cộng). BE 2 file, FE 0 file, không migration.
+Đang làm dở: không.
+Bước tiếp theo: user tải file thật từ màn danh sách kiểm mắt.
+Chưa kiểm chứng bằng mắt: chỉ đọc lại file bằng PhpSpreadsheet, chưa mở bằng Excel.
+Blocked: không.
+
+📌 **Ghi chú (không phải lỗi mới):** khối 5 chữ ký luôn chiếm 10 cột (5 ô × `colspan=2`), nên phiếu
+có bảng chi tiết ≠ 10 cột thì hàng chữ ký thò/thụt so với bảng — vốn đã vậy với mọi bố cục khác 10
+cột, việc ẩn cột "Số tiền chi" làm nhiều phiếu rơi vào trạng thái này hơn. Muốn khớp thì phải rải
+`colspan` chữ ký theo `col_count` — chưa làm vì ngoài phạm vi user yêu cầu.
+
+- [x] **BE-4 (bug)** Cột "Nhà cung cấp" trống trên file Excel + bản in phiếu 4197 —
+      `BillPaymentRequestPrintResource::detailObjectName()` chỉ đọc cột snapshot
+      `supplier_code`/`supplier_name` của dòng chi tiết, nay **fallback sang quan hệ**
+      (`supplier`/`customer`/`employee->info`), khớp với 2 chỗ vốn đã có fallback.
+
+**Nguyên nhân gốc (đã truy, không phải lỗi của phiếu 4197):** FE `BillPaymentRequestForm.vue`
+:1436-1454 khi lưu phiếu chỉ gửi `supplier_id` / `customer_id` / `employee_id`, **không gửi kèm**
+`*_code` / `*_name`; BE `storeDetails()` :508-516 lấy thẳng từ payload (`$detail['supplier_code'] ?? null`)
+→ mọi dòng chi tiết tạo từ HRM đều có cột snapshot NULL. Dữ liệu cũ port từ ERP thì có sẵn nên
+1592/1593 dòng vẫn hiện đúng — chỉ phiếu 4197 (phiếu duy nhất tạo qua FE HRM có NCC theo dòng) lộ lỗi.
+Màn danh sách (`BillPaymentRequest` :615-616, SQL `coalesce(nullif(...), s.code)`) và màn chi tiết
+(`BillPaymentRequestDetailResource` :152-153) **đã có fallback từ trước** → hiện đúng tên; chỉ nhánh
+in/Excel là không → đó là chỗ lệch.
+
+### Verify đã chạy
+
+Script khẳng định (chạy trước khi sửa: FAIL, sau khi sửa: PASS):
+
+| Phiếu | Trước | Sau |
+| --- | --- | --- |
+| 4197 (snapshot NULL, `supplier_id = 21408`) | `''` | `50TPH9 - CÔNG TY TNHH HÓA DẦU ĐỆ NHẤT` |
+| 4140 (có snapshot) | `29TPHXMI-11 - …DHL VIỆT NAM` | không đổi |
+
+Smoke 12 phiếu đủ 4 loại chi (1 / 2 / 6 / 12) × TM/CK × nhiều trạng thái: `exportData()` + dựng
+.xlsx **0 lỗi**, cột đối tượng ra đúng ở loại 1 và 2.
+
+📌 **Nợ ghi sổ (chưa làm, cần user quyết):**
+3. **Snapshot `*_code` / `*_name` ở dòng chi tiết không bao giờ được ghi** khi lưu phiếu từ HRM
+   (nguyên nhân gốc ở trên). Fallback đã che được hiển thị, nhưng phiếu sẽ **không giữ được tên
+   đối tượng tại thời điểm lập** — sau này NCC đổi tên thì phiếu cũ in ra tên mới. Sửa 1 trong 2:
+   FE gửi thêm 6 trường, hoặc BE tự tra `customers`/`employee_infos` theo id lúc lưu (khuyên dùng
+   cách BE — không phụ thuộc FE). **Không** đụng dữ liệu phiếu đã lưu.
+4. **Loại chi 6 (Chi thưởng thực hiện hợp đồng): cột "Nhân viên" luôn trống** — `0/537` dòng chi
+   tiết có `employee_id` (đối tượng chọn ở CẤP PHIẾU), mà cả cấp phiếu cũng chỉ `67/430` phiếu có.
+   Lỗi có sẵn từ trước, fallback không cứu được vì không có nguồn nào. Muốn hiện thì phải cho cột
+   đối tượng của loại 6 đọc `bill_payment_requests.employee_id` — cần user chốt.
+
+---
+
+## Phase — Bảng chi tiết in/Excel bám đúng cấu trúc ERP (2026-08-24) @khoipv
+
+Nguồn ERP: `D:\laragon\www\erp\app\Model\IncomeExpenditure\BillPaymentRequest.php`
+(`billPaymentRequestTable()` :986 · `billPaymentRequestWithExchangeTable()` :854 · `getPrintData()` :798).
+
+- [x] **BE-1** `BillPaymentRequestPrintResource` — bổ sung dữ liệu ERP cần và đưa **toàn bộ cờ bố
+      cục vào `columns`** làm nguồn chân lý DUY NHẤT cho cả FE lẫn Excel:
+      `is_foreign` · `show_delivery` · `show_supplier` · `contract_label` · `show_money_approve`.
+      Thêm `payment_money_foreign`, `approved_money`, `approved_money_exchange` (port
+      `getPaymentMoneyApprove()`), `header.supplier_line`, `DEBT_LABEL[3]`.
+- [x] **BE-2** `exportData()` tách thành `exportVndTable()` / `exportForeignTable()` + hàm ráp chung
+      `exportTable()` trả `header_row1` / `header_row2` / `column_labels` / `label_span`.
+- [x] **BE-3** blade `exports/bill_payment_request.blade.php` — tiêu đề 2 dòng (`rowspan`/`colspan`),
+      dòng "Nhà cung cấp:" ở khối đầu phiếu.
+- [x] **BE-4** `money_columns` đổi từ boolean sang **mã định dạng**: `#,##0.##` (khớp
+      `formatCurrency($n, 2)` của ERP — có phần lẻ mới hiện) và `#,##0` cho 2 cột quy đổi VND của
+      bảng ngoại tệ (ERP gọi `formatCurrency($n)`).
+- [x] **FE-1** `_id/print.vue` — dựng lại bộ cột từ cờ BE (`labelColumns` / `debtColumn` /
+      `moneyGroups` / `headerUnits`), tiêu đề 2 dòng, bỏ suy đoán cục bộ (`isVnd` so tên tiền tệ
+      với chuỗi 'VNĐ', `hasContract` theo danh sách loại chi) — 2 chỗ này sai so với ERP.
+- [x] **FE-2** dấu `_` của cột "Số tiền chi" đổi từ `!Number(x)` sang so `null` (phiếu chi 0đ hợp lệ).
+
+### 5 điểm đã sửa cho khớp ERP
+
+| # | Trước | Sau |
+| --- | --- | --- |
+| 1 | Tiêu đề 1 dòng | 2 dòng, dòng dưới là ô đơn vị tiền |
+| 2 | Ngoại tệ dùng chung bảng VND + cột "Quy đổi VND" | Bảng riêng: `Số tiền đề nghị chi`(nguyên tệ+VND) · `Số tiền duyệt chi`(nguyên tệ+VND), bỏ 3 cột duyệt theo cấp |
+| 3 | `KT trưởng duyệt` · `Số hợp đồng` | `KT trưởng/BGD` · `Số hợp đồng nhập mua` (loại 1) / `Số đơn hàng/Hợp đồng` (loại 2,3,6) |
+| 4 | Cột đối tượng hiện ở loại 1, 2, 6 khi TM | Chỉ loại 1 + `has_contract=1` + TM (đúng nhánh ERP thực sự chạy) |
+| 5 | Không có dòng "Nhà cung cấp:" đầu phiếu | In cho loại 12 và loại 1 + HĐ + CK |
+
+📌 **Vì sao bỏ cột Khách hàng / Nhân viên:** 3 nhánh `type_customer_cash()` / `type_supplier_cash()` /
+`type_employee_cash()` của ERP xét `isset($data['type_customer'])`… — khoá này KHÔNG phải cột DB và
+không được gán ở bất kỳ đâu trong ERP, nên luôn `false`. Đó là **code chết**; port vào chỉ sinh cột
+rỗng (loại 6 có 0/537 dòng gắn `employee_id`). Cột đối tượng duy nhất ERP thực sự in là
+"Nhà cung cấp" trong nhánh `type_supplier_has_contract && type_payment == 1`.
+
+### Verify đã chạy
+
+`php -l` sạch 3 file BE · `print.vue` parse sạch bằng `vue-template-compiler` + `@babel/parser`.
+
+**Đối chiếu FE ↔ BE (script chép logic computed của `print.vue` sang PHP rồi so với `column_labels`
+của Excel): 15 phiếu, đủ loại 1/2/6/12 × TM/CK × VND/RUPEE/IDR × 7 trạng thái — LỆCH 0.**
+
+Dựng file .xlsx thật, đọc lại bằng PhpSpreadsheet:
+
+| Phiếu | Bố cục | Merge tiêu đề | Tổng cộng |
+| --- | --- | --- | --- |
+| 4197 (loại 1 TM, st 8) | 10 cột, 5 ô VND | `A10:A11 B10:B11 C10:C11 D10:D11 J10:J11` | `A13:C13` |
+| 4085 (loại 2 TM, st 8) | 9 cột | `A10:A11 … I10:I11` | `A13:B13` |
+| 4200 (loại 1 CK, RUPEE) | 8 cột, `D11:E11` + `F11:G11` gộp, dòng 2 `RUPEE\|VND\|RUPEE\|VND` | | `A14:B14` |
+| 4199 (loại 12) | 9 cột, có dòng "Nhà cung cấp:" ở `A9:B9`/`C9:I9` | | |
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: bảng chi tiết của file Excel + màn in đã bám đúng cấu trúc ERP (5 điểm ở trên).
+BE 3 file, FE 1 file, không migration.
+Đang làm dở: không.
+Bước tiếp theo: user mở màn in + tải Excel kiểm mắt, đặc biệt phiếu ngoại tệ (4200/4198/4179).
+Chưa kiểm chứng bằng mắt: (1) toàn bộ màn in FE — chỉ verify bằng parse + đối chiếu bộ cột;
+(2) `#,##0.##` mở bằng Excel thật — PhpSpreadsheet tự render vẫn đệm `.00`, mã lưu trong file đúng
+là `#,##0.##` (đã đọc `xl/styles.xml`) và Excel sẽ cắt số 0 thừa.
+Blocked: không.
+
+📌 **Nợ ghi sổ bổ sung:**
+5. **Nhánh loại 1 KHÔNG có hợp đồng và loại chi 3 chưa test được** — DB không có dòng nào
+   (`has_contract = 1` cho cả 3330 phiếu loại 1; 0 phiếu loại 3). Ở nhánh đó ERP **không in dòng
+   Tổng cộng** (`$total_title` rỗng vì không nhánh nào khớp) — HRM vẫn in với `label_span = 1`;
+   coi như sửa bug của ERP, không port theo.
+6. **Dòng Tổng cộng của loại 2/3 + tiền mặt: ERP để `colspan=3` trong khi chỉ có 2 cột mô tả**
+   (cột NCC không in vì nhánh code chết ở trên) → file ERP lệch 1 ô. HRM tính `label_span` theo số
+   cột thật nên **đúng**, chấp nhận khác ERP ở đúng ca này.
+7. **Khối 5 chữ ký vẫn chiếm cứng 10 cột** — chưa rải `colspan` theo `col_count` (mục đã ghi ở phase
+   trước, nay lộ rõ hơn vì bảng ngoại tệ chỉ 8 cột).
+
+---
+
+## Đợt sửa bug 2026-08-24 (bis) — Tên ngân hàng / Chi nhánh trống ở màn thêm mới
+
+User báo: màn `create`, loại chi 1 (Chi trả NCC) + CK, chọn NCC `43TPHPAN-58 — KHÁCH HÀNG TEST`
+→ khối "Thông tin ngân hàng" chỉ ra Số TK / Tên TK / Thành phố, còn **Tên ngân hàng + Chi nhánh trống**.
+
+**Nguyên nhân gốc (đã dựng bằng chứng trên cổng dev, không đoán):**
+`customer_has_bank_accounts` có CẢ khoá ngoại (`bank_id`, `bank_branch_id`) lẫn cột chữ
+(`bank_name`, `bank_branch`). Màn Khách hàng/NCC của HRM chỉ ghi khoá ngoại, để 2 cột chữ NULL:
+- `CustomerForm.vue::onBankChange()` so `b.id === bankId` bằng `===`, mà select2 emit **chuỗi**
+  (`"9"`) còn `listBanks[].id` là **số** (`9`) → `find()` không khớp → `bank_name = null`.
+  (Đo trực tiếp trên dev: sau khi đổi ngân hàng, `customer_accounts[0].bank_name` vẫn `null`.)
+- Ô **Chi nhánh** không có handler nào → `bank_branch` KHÔNG BAO GIỜ được ghi.
+Trong khi đó `BillPaymentRequestController::partyBanks()` chỉ `select` 2 cột chữ đó →
+API trả `bank_name: null, bank_branch: null` (đã xem response thật của `party_id=232389`).
+
+- [x] Task 9.1 — BE `partyBanks()`: leftJoin `banks` + `bank_branches`, lấy tên theo
+      `COALESCE(cột chữ, tên trong danh mục)` → mọi dòng dữ liệu CŨ hiện đủ ngay, không cần sửa data
+- [x] Task 9.2 — FE `CustomerForm.vue`: so khớp ngân hàng bằng `Number()` (hết lệch kiểu),
+      thêm handler ô Chi nhánh để ghi `bank_branch` → dữ liệu ghi MỚI đủ cả 2 cột chữ
+- [x] Task 9.3 — Verify: `php -l`, parse FE, gọi lại API `party-banks` trên cổng dev
+
+### Verify đợt 9
+
+`php -l` sạch `BillPaymentRequestController.php` · `CustomerForm.vue` parse sạch bằng
+`vue-template-compiler` + `@babel/parser`.
+
+Gọi thật endpoint qua HTTP kernel (DB local `gop_db`, KH 232396 — cùng 2 dòng TK id 671/672 như
+KH `43TPHPAN-58` trên dev, `bank_name` NULL + `bank_id` có giá trị):
+
+| TK | Trước | Sau |
+| --- | --- | --- |
+| 671 (`036698874`) | `bank_name: null` | `bank_name: "Ngân hàng 669"` |
+| 672 (`09012000`) | `bank_name: null` | `bank_name: "Ngân Hàng Thương Mại Cổ Phần Á Châu"` |
+| 669/670 (dữ liệu ERP có sẵn cột chữ) | có tên | **không đổi** (COALESCE ưu tiên cột chữ) |
+
+Trên DB dev 2 dòng đó còn có `bank_branch_id` = 87 / 77 → ô Chi nhánh sẽ ra
+"Phòng giao dịch số 5" / "CN Thăng Long" (DB local không có 2 id này nên chỉ verify được nhánh
+ngân hàng).
+
+### Checkpoint — 2026-08-24 (đợt 9)
+Vừa hoàn thành: 9.1 (BE COALESCE tên NH/chi nhánh theo khoá ngoại) + 9.2 (FE CustomerForm ghi đúng
+`bank_name`, thêm handler ghi `bank_branch`). BE 1 file, FE 1 file, không migration, chưa commit.
+Đang làm dở: không.
+Bước tiếp theo: user mở lại màn tạo phiếu trên cổng dev sau khi deploy → chọn `43TPHPAN-58`,
+xem đủ 5 ô; thử "Lưu và gửi duyệt" (trước đây chắc chắn chặn vì `bank_name`/`bank_branch` required
+mà 2 ô read-only rỗng).
+Chưa kiểm chứng bằng mắt: FE `CustomerForm.vue` (chỉ verify bằng parse + đo runtime trên dev để dựng
+nguyên nhân, chưa lưu lại KH nào để test vòng ghi).
+Blocked: không.
+
+📌 **Nợ ghi sổ:**
+8. **Dòng cũ vẫn trống 2 cột chữ trong DB** — chỉ chỗ đọc của màn phiếu được vá (COALESCE).
+   Chỗ đọc khác vẫn hiện trống: `CustomerHistoryService::bankAccountRecords()` (lịch sử sửa KH đọc
+   thẳng `bank_name`/`bank_branch`). Chưa backfill dữ liệu vì nguyên tắc không tự sửa data nghiệp vụ.
+9. **NCC có TK nhưng thiếu cả `bank_branch` lẫn `bank_branch_id`** → nút "Lưu và gửi duyệt" vẫn bị
+   chặn ở `bank_branch.required` trong khi ô read-only không gõ được (cùng loại bẫy đã nới cho
+   nhánh `supplier_banks` ở đợt trước). Chưa đụng vì user chưa gặp ca này.
+
+---
+
+## Đợt 10 — NCC chỉ có `supplier_banks`: thay 2 ô "Chi nhánh / Thành phố" bằng ô "Địa chỉ"
+
+User báo 2026-08-25: loại chi 12 (CP vận chuyển NCC) + CK + NCC `KORSOL` (id 43163) — khối ngân
+hàng hiện 5 ô nhưng "Chi nhánh" và "Thành phố" trống vĩnh viễn vì nguồn dữ liệu là
+`supplier_banks` (bảng này không có 2 cột đó, chỉ có `address`). Yêu cầu: với NCC như vậy thì
+BỎ 2 ô đó, thay bằng ô **Địa chỉ**.
+
+- [x] Task 10.1 — BE `partyBanks()`: nhánh dự phòng `supplier_banks` trả thêm `bank_address`
+      (= `supplier_banks.address`); nhánh `customer_has_bank_accounts` trả `bank_address = null`
+- [x] Task 10.2 — BE `BillPaymentRequestService::buildAttributes()`: lưu `bank_address` cho cả
+      nhánh TRONG NƯỚC (trước chỉ lưu khi NCC nước ngoài → ép `null`, mất địa chỉ vừa hiện)
+- [x] Task 10.3 — BE `BillPaymentRequestPrintResource`: trả thêm `bank_address` cho khối in
+- [x] Task 10.4 — FE `BillPaymentRequestForm.applyPartyAccount()`: đổ `bank_address` vào form
+- [x] Task 10.5 — FE `BankInfoSection`: `inlandFields` chuyển thành computed — không có
+      chi nhánh + thành phố mà có địa chỉ → 3 ô (Số TK / Tên TK / Tên NH) + ô **Địa chỉ**
+- [x] Task 10.6 — FE `_id/print.vue`: cùng luật đổi 2 dòng "Thành phố / Chi nhánh" → "Địa chỉ"
+- [x] Task 10.7 — FE `BillPaymentAuthorizationForm.receiverBankFields()`: cùng luật; đồng thời
+      SỬA điều kiện nhận diện NCC nước ngoài (đang xét cả `bank_address` → từ đợt này phiếu
+      trong nước cũng có `bank_address` nên sẽ hiện nhầm 3 ô Swift/IBAN rỗng)
+- [x] Task 10.8 — Verify: `php -l` + parse FE + gọi lại `party-banks` với NCC 43163
+
+### Verify đợt 10
+
+`php -l` sạch 3 file BE · 4 file FE parse sạch bằng `vue-template-compiler` + `@babel/parser`.
+
+Gọi thật `partyBanks()` qua HTTP kernel trên DB local `gop_db`:
+
+| Đối tượng | `bank_branch` / `bank_province_name` | `bank_address` | Khối ngân hàng hiện |
+| --- | --- | --- | --- |
+| NCC 43163 `KORSOL` (chỉ có `supplier_banks`) | null / null | `46 JukJeon-ro, Giheung - gu, Yongin-si, Gyeonggi-do, Korea` | 3 ô + **Địa chỉ** |
+| KH 232396 (có `customer_has_bank_accounts`) | "Chi nhánh Mẫu" / "TP Hồ Chí Minh" | null | 5 ô như cũ (**không đổi**) |
+
+Chưa kiểm chứng bằng mắt: toàn bộ phần FE (theo thoả thuận không tự test Playwright) — user mở
+`finance/bill-payment-requests/create`, loại chi 12 + CK + NCC `KORSOL` để xem ô Địa chỉ, lưu rồi
+mở lại + in để xem có giữ được không.
+
+**Ảnh hưởng lan sang màn khác (đã vá kèm):** phiếu TRONG NƯỚC từ nay có `bank_address` ->
+`BillPaymentAuthorizationForm.receiverBankFields()` trước đây nhận diện NCC nước ngoài bằng
+`swift_code || iban_number || bank_address` sẽ hiện thừa 3 ô Swift/IBAN rỗng; đã đổi điều kiện
+thành `swift_code || iban_number`.
+
+---
+
+## Phase 11 — Sửa xuất Excel phiếu đề nghị thanh toán (2026-08-25) @khoipv
+
+**User báo:** file Excel phiếu loại chi 12 "Thanh toán chi phí vận chuyển NCC" chưa đúng form ERP;
+định dạng số trong file phải giống hiển thị trên phần mềm (`.` ngăn nghìn, `,` ngăn thập phân).
+
+**Đối chiếu đã chạy trước khi sửa:** dựng bảng chi tiết của **cả 86 phiếu loại 12** ở 2 hệ thống
+(ERP `getPrintData()['CHI_TIET']` parse bằng DOM ↔ HRM `exportData()`), so từng ô. Kết quả:
+
+| Lệch | Số phiếu | Nguyên nhân |
+| --- | --- | --- |
+| Cột **"Số tiền còn lại"** ra nguyên số tiền trong khi ERP ra 0 | **70/86** | `paidMoneyForDetail()` luôn dò `billable_type = DeliveryTripAccounting`, dòng gắn **chuyến xe khác** không khớp bút toán nào → "đã thanh toán" = 0 |
+| Thiếu cột "Số tiền chi" khi phiếu chưa ở trạng thái 8 | 4/86 | **Đúng yêu cầu user 24/08** — user chốt lại 25/08: **giữ ẩn**, không sửa |
+
+- [x] **BE-1 (bug)** `Services/DeliveryTripPaymentService::paidMoneyForDetail()` — chọn
+      `billable_type` theo loại phiếu hạch toán của dòng: `delivery_trip_accounting_id` →
+      `DeliveryTripAccounting`, `other_delivery_trip_accounting_id` →
+      `OtherDeliveryTripAccounting`. ERP có **2 hàm riêng** cho 2 model
+      (`DeliveryTripAccounting::getPaymentMoney()` :209 và
+      `OtherDeliveryTripAccounting::getPaymentMoney()` :205), lúc port chỉ đọc 1 hàm nên bê nhầm.
+      Ăn sang cả màn chi tiết + màn in (dùng chung `detailPaymentMoney()`) — đó là **đúng**, 3 đầu
+      ra phải cùng số.
+- [x] **BE-2** `Services/BillPaymentRequestService::exportTable()` — mã định dạng tính **theo TỪNG Ô**
+      thay vì theo cột: ô số nguyên → `#,##0`, ô có phần lẻ → `#,##0.##`. Trả thêm `formats` /
+      `total_formats` (song song `rows` / `total_row`). Lý do: `#,##0.##` áp cho ô số nguyên làm
+      Excel hiện `3,720,816.` (thừa dấu thập phân) — chính chỗ user chê định dạng. Cột ERP dùng
+      precision 0 (`$plainColumns` của bảng ngoại tệ) vẫn giữ `#,##0`.
+- [x] **BE-3** `exportData()` — trả `HEADER` = `companies.header` theo **`company_id` ghi trên phiếu**
+      (khuôn `BillIncomePrintService::headerUrl()`, CLAUDE.md mục letterhead).
+- [x] **BE-4** `Exports/BillPaymentRequestExport` — implement `WithDrawings` + trait
+      `EmbedsCompanyLetterhead`, nới cao dòng 1 trong `AfterSheet`; blade bỏ `<img>` ảnh tĩnh
+      `info-tpe.jpg` (phiếu công ty TPV vẫn ra letterhead TPE), để dòng 1 trống làm ô neo ảnh.
+- [x] **Verify** dựng .xlsx thật + đọc lại bằng PhpSpreadsheet (skill `export-excel` mục 7);
+      chạy lại script đối chiếu 86 phiếu loại 12 với ERP.
+
+- [x] **BE-5 (user báo 25/08)** Letterhead **trải hết bề rộng bảng** thay vì cỡ cố định 72px cao:
+      `Exports/BillPaymentRequestExport::tableWidthPx()` cộng bề rộng thật của các cột
+      (`ký_tự × 7 + 5` — skill `export-excel` mục 4b) rồi truyền vào tham số `$widthPx` **MỚI THÊM**
+      của `EmbedsCompanyLetterhead::letterheadDrawings()` (mặc định `null` = giữ nguyên hành vi cũ,
+      các export khác không đổi). `fitLetterheadRow()` nay nới dòng theo **chiều cao thật của ảnh**
+      (`px × 0.75`) chứ không cắm cứng 58pt, vẫn lấy `max()` với mức cũ.
+      Ảnh letterhead rất ngang (2648×236) nên ép theo chiều cao thì chỉ chiếm ~nửa bảng.
+      Đo lại: phiếu 3966 ảnh **1527×136px = đúng bề rộng bảng 1527px**, dòng 1 cao 102pt;
+      phiếu 4137 (ảnh 2645×347) 1527×200px, dòng 1 cao 150pt; phiếu 4200 (8 cột) 1265×113px.
+- [x] **BE-6 (user chốt 25/08 — ĐẢO lại BE-2)** Ô tiền ghi thành **CHUỖI định dạng Việt Nam**
+      (`60.000` · `1.234.567,5` · `-3.240.324.324`) thay vì ô số + `data-format`:
+      `BillPaymentRequestService::money()` → **`moneyText()`**; bỏ `cellFormat()` / `formats` /
+      `total_formats` / tham số `$plainColumns`; blade bỏ `data-format`, **canh phải tay** theo
+      `money_columns` (chuỗi thì Excel canh trái mặc định).
+
+      **Vì sao đảo:** mã định dạng .xlsx KHÔNG chứa ký tự ngăn cách — Excel thay bằng ký tự của
+      Windows Regional Settings, nên ô kiểu SỐ ra `60,000` trên máy user. Đã dựng file thử 7 kiểu
+      định dạng (`#,##0`, `[$-42A]#,##0`, `[$-vi-VN]#,##0`, ép dấu chấm cứng…) và giải thích rõ
+      đánh đổi; **user chốt chọn ghi chữ để chắc chắn ra dấu chấm**.
+
+      ⚠️ **Đánh đổi đã được user chấp nhận:** Excel hiện tam giác xanh *"number formatted as text"*,
+      các ô tiền **KHÔNG SUM / lọc / pivot được** — trái skill `export-excel` mục 1. Muốn quay lại:
+      xem docblock `moneyText()` (trả `round((float) $value, 2)` + gắn lại `data-format` theo từng ô).
+- [x] **BE-7 (bug của chính BE-6)** `62.000` hiện ra **`62`** trên file (user báo ngay sau đó):
+      HTML reader của PhpSpreadsheet đi qua `DefaultValueBinder`, mà **`is_numeric('62.000')` là
+      `true`** trong PHP (dấu chấm = dấu thập phân) → ô thành số `62.0`. Chuỗi nhiều dấu chấm
+      (`3.720.816`) thoát được vì không còn là số hợp lệ → lỗi chỉ lộ ở số hàng nghìn tròn.
+      Reader bản này **không hỗ trợ `data-type`** trên `<td>` nên chặn ở tầng binder:
+      `BillPaymentRequestExport` nay `extends DefaultValueBinder implements WithCustomValueBinder`,
+      `bindValue()` ép `TYPE_STRING` cho chuỗi khớp `MONEY_TEXT`
+      (`/^-?(?:\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+,\d+)$/` — bắt buộc CÓ dấu ngăn cách, số trần
+      như `0`/`220` để nguyên kiểu số). `Sheet::open()` gắn binder trước khi đọc view, `Writer` trả
+      lại binder mặc định sau khi xuất — không rò sang export khác.
+
+      **Quét 40 phiếu** (mỗi tổ hợp loại chi × hình thức × tiền tệ × trạng thái), 115 chuỗi tiền:
+      **0 chuỗi bị bóp**, 0 chuỗi mất. Chỉ còn ô giá trị `0` lưu kiểu số — hiển thị y hệt, không sửa.
+
+### Verify đã chạy
+
+`php -l` sạch 3 file BE. Dựng file **.xlsx thật** rồi đọc lại bằng PhpSpreadsheet (skill
+`export-excel` mục 7) — 6 phiếu đủ bố cục:
+
+| Phiếu | Bố cục | Ô tiền | Letterhead |
+| --- | --- | --- | --- |
+| 3966 loại 12 TM, st 8 (TPE) | 10 cột | chuỗi `3.720.816`, canh phải | 1 drawing, ảnh `1751696586ts-hn.png` |
+| 4137 loại 12, st 8 (**TPV**) | 10 cột, "Số tiền còn lại" = **0** (trước sửa ra 62.000) | `n` + `#,##0` | 1 drawing, ảnh **khác** file TPE (md5 lệch) |
+| 4199 loại 12, st 1 | 9 cột (ẩn "Số tiền chi" — user chốt giữ) | `n` + `#,##0`, ô `_` vẫn là chuỗi không gắn định dạng | 1 drawing |
+| 4197 loại 1 TM, st 8 | 10 cột | `n` + `#,##0` | 1 drawing |
+| 4200 loại 1 CK, RUPEE | 8 cột, 2 cặp gộp | `n` + `#,##0` | 1 drawing |
+| 4166 loại 1 CK, **USD có phần lẻ** | 8 cột | `196,66` · `5.213.456,6` · Tỷ giá `USD 26.510` | 1 drawing |
+| 4197 loại 1 TM (**số âm**) | 10 cột | `-3.240.324.324` đúng dấu | 1 drawing |
+| 4137 loại 12 (**62 nghìn tròn**) | 10 cột | `62.000` giữ nguyên kiểu chuỗi (ca lỗi BE-7) | 1 drawing |
+
+**Đối chiếu lại 86 phiếu loại 12 với ERP:** lệch giá trị **0 ô** (trước sửa: 254 ô / 70 phiếu).
+Còn đúng 4 phiếu lệch **số cột** — do cột "Số tiền chi" ẩn khi chưa duyệt phiếu chi, **đúng ý user**
+(chốt lại 2026-08-25).
+
+📌 **Về dấu `.` / `,`:** xem BE-6 — chốt ghi CHUỖI để ép dấu chấm trên mọi máy, chấp nhận mất SUM.
+
+### Checkpoint — 2026-08-25
+Vừa hoàn thành: Phase 11 — sửa xuất Excel phiếu đề nghị thanh toán (bug "Số tiền còn lại" ở dòng
+chuyến xe khác · định dạng số theo từng ô · letterhead theo công ty trên phiếu). BE 3 file + 1 blade,
+không migration, không đụng FE.
+Đang làm dở: không.
+Bước tiếp theo: user tải file Excel thật (1 phiếu loại 12 status 8 + 1 phiếu chưa duyệt) kiểm mắt,
+đồng thời xem lại **màn chi tiết + màn in** phiếu loại 12 vì cột "Số tiền còn lại" nay đổi số theo
+ERP (dùng chung `detailPaymentMoney()`).
+Chưa kiểm chứng bằng mắt: chưa mở file bằng Excel thật (chỉ đọc lại bằng PhpSpreadsheet); chưa mở
+trình duyệt xem màn chi tiết/màn in sau khi số đổi.
+Blocked: không.
+
+---
+
+## Phase 12 — Đổi NCC ở cấp phiếu (hình thức CK) không xoá hợp đồng đã chọn (2026-08-25) @khoipv
+
+**Bug user báo:** hình thức **CK** → chọn **Nhà cung cấp** → chọn **Số hợp đồng nhập mua** ở dòng
+chi tiết → quay lại **chọn NCC khác** ⇒ hợp đồng của NCC CŨ vẫn nằm nguyên trong bảng chi tiết.
+
+**Nguyên nhân (đã trace):** `BillPaymentRequestForm.applyParty()` có 2 nhánh —
+- nhánh **theo dòng** (hình thức TM, `activeDetailIndex !== null`) đã xoá
+  `contractable_id` / `contractable_type` / `contract_code` / `payment_money` của dòng đó;
+- nhánh **cấp phiếu** (hình thức CK) chỉ ghi `form.supplier_id` / `customer_id` + nạp lại ngân hàng,
+  **không đụng tới `form.details`** — trong khi hợp đồng vẫn nằm ở TỪNG DÒNG và popup hợp đồng lọc
+  theo `activeContractObjectId` = `form.supplier_id`. Đổi đối tượng ⇒ dòng giữ hợp đồng không còn
+  thuộc đối tượng mới, lưu xuống là sai dữ liệu.
+
+### Task
+
+- [x] FE-1: Tách helper `clearDetailContract(detail)` — xoá `contractable_id` / `contractable_type` /
+      `contract_code` + trả `payment_money` **và `payment_money_foreign`** về 0 (2 cột này luôn được
+      `onContractChosen()` gán thành CẶP; nhánh theo dòng trước đây chỉ xoá 1 nên `capPaymentMoney()`
+      của loại chi 2 vẫn chặn theo công nợ hợp đồng cũ).
+- [x] FE-2: `applyParty()` nhánh cấp phiếu — so `Number(form[partyKey])` trước/sau, chỉ khi đối tượng
+      ĐỔI THẬT mới quét `form.details` gọi `clearDetailContract()` (chọn lại đúng NCC cũ không xoá gì).
+- [x] FE-3: Nhánh theo dòng dùng lại helper (giữ nguyên hành vi, thêm phần `payment_money_foreign`).
+- [ ] Verify: user mở trình duyệt kiểm luồng CK loại 1 (NCC) và loại 2 (KH hoàn tiền).
+
+**Không đổi:** `payment_money_request` (số tiền đề nghị chi user tự gõ) **giữ nguyên**, không tự xoá —
+đúng như nhánh theo dòng đang làm; dòng thiếu hợp đồng vẫn bị validate chặn khi lưu.
+**Không đụng BE.** Đổi *loại chi* / *hình thức thanh toán* vẫn theo luồng cũ (hỏi xác nhận rồi xoá
+sạch `form.details`) — không nằm trong phạm vi bug này.
+
+---
+
+## Phase 13 — ~~Màn duyệt: 4 cột tiền của các cấp duyệt chỉ hiển thị~~ ĐÃ HUỶ (2026-08-25) @khoipv
+
+**Yêu cầu ban đầu:** ở màn duyệt, các cột **TP duyệt / KT công nợ duyệt / KT trưởng · BGĐ duyệt**
+đang là ô nhập tiền → chuyển thành chỉ hiển thị.
+
+**❌ HUỶ — user báo nhầm ngay trong session (2026-08-25):** màn duyệt **VẪN cho cấp đang giữ phiếu
+sửa lại số tiền và lưu số đó**. Code đã sửa rồi hoàn tác, 2 file trả về đúng trạng thái commit
+`8277f178c` — `git status` sạch, không còn dấu vết.
+
+### Hành vi ĐÚNG (giữ nguyên như cũ, không đổi gì)
+
+- `BillPaymentRequestDetailTable` nhận prop `editableMoneyKey`; cột tiền của **đúng cấp đang giữ
+  phiếu** (`EDITABLE_MONEY_BY_STATUS[status]`) render `V2BaseCurrencyInput`, 3 cột còn lại chỉ đọc.
+- Fail-closed: `editableMoneyKey` chỉ khác `null` khi `readonly` **và** BE trả `is_can_approve`.
+- `applyApprovalDefaults()` điền sẵn số cấp LIỀN TRƯỚC đã duyệt (port `after()` ERP), người duyệt
+  sửa lại được; `approvePayloadDetails()` gửi số đã sửa lên BE khi bấm duyệt.
+
+📌 **Ghi lại để không sửa nhầm lần nữa:** đây là **đúng spec 4.3**, không phải bug.
+
+---
+
+## Phase 14 — Bỏ trần "cấp sau không vượt cấp trước" khi duyệt (2026-08-25) @khoipv
+
+**Bug user báo (phiếu 4191 — `TEST.DNTT-CHI.03`):** duyệt KT công nợ 50.000 / 1.500.000, sang KT
+trưởng gõ số khác, vào xem chi tiết thì 2 cột **giống hệt nhau**.
+
+**Nguyên nhân (đã trace bằng DB + `catalog_histories`):** `BillPaymentApprovalService::approve()` có
+trần `$money = min($row['money'], $detail->{$capColumn})` với `$capColumn` = cột tiền cấp LIỀN TRƯỚC.
+Ở status 4 trần = `payment_money_accountant_debt` ⇒ KT trưởng gõ số lớn hơn thì BE **âm thầm cắt về
+đúng số KT công nợ**, không lỗi, không cảnh báo → 2 cột hiện ra bằng nhau.
+
+**Đối chiếu ERP:** ERP **KHÔNG có luật này**. `BillPaymentRequestController::update()` chỉ gọi
+`syncDetails($request->details)` — lưu nguyên số gõ; `validateDetails()` chỉ chặn hợp đồng ĐÃ QUYẾT
+TOÁN chi vượt công nợ (luật khác). FE ERP (`formShow.blade.php` :572, :593) là `ng-model` trần, không
+có `max`/`ng-change` nào. Trần là do HRM tự thêm (design.md dòng 74) → **user chốt bỏ, "để như ERP"**.
+
+### Task
+
+- [x] BE-1: `MONEY_COLUMN_BY_STATUS` đổi từ `[cột ghi, cột trần]` → chỉ còn tên cột ghi.
+- [x] BE-2: `approve()` bỏ `min()`, ghi thẳng `(float) $row['money']` vào cột của cấp + cột
+      `_exchange` (× tỷ giá). Bỏ `$capColumn` khỏi `use` của closure.
+- [x] BE-3: Sửa docblock `approve()` + `BillPaymentRequestApproveRequest` (đang ghi "trần cắt ở
+      Service, không tin FE") — nêu rõ vì sao bỏ, để lần sau không ai thêm lại.
+- [x] Verify (chạy thật, xem bên dưới).
+
+### Verify đã chạy
+
+`php -l` sạch 2 file. Gọi **thẳng `BillPaymentApprovalService::approve()`** trên phiếu TEST 4194
+(status 4 — Chờ KT trưởng duyệt, `payment_money_accountant_debt` = 800.000 / 1.600.000), gõ số
+**vượt trần cũ**, bọc trong `DB::transaction` rồi `rollBack()`:
+
+| Dòng | Cấp trước (trần cũ) | Gõ vào | DB ghi | Kết luận |
+| --- | --- | --- | --- | --- |
+| 47357 | 800.000 | 950.000 | **950.000** | lưu đúng số gõ (trước sửa ra 800.000) |
+| 47358 | 1.600.000 | 1.900.000 | **1.900.000** | lưu đúng số gõ |
+
+Cột `payment_money_chief_accountant_exchange` = 950.000 / 1.900.000 (tỷ giá 1). Status chuyển
+4 → 6 đúng. Rollback sạch: 2 dòng trở về `0`, phiếu 4194 vẫn nguyên status 4.
+
+⚠️ **Không sửa dữ liệu cũ:** phiếu 4191 đã ở status 6, số đã bị cắt vẫn nằm nguyên trong DB —
+không đụng vào (nếu cần số đúng thì lập phiếu mới để duyệt lại).
+
+---
+
+## Phase 15 — Thông báo duyệt thành công nói rõ phiếu chuyển cho ai (2026-08-25) @khoipv
+
+**User yêu cầu:** thay vì "Duyệt phiếu đề nghị thanh toán thành công!", thông báo phải cho biết phiếu
+đã đi đâu — VD *"Phiếu đề nghị thanh toán đã được gửi đến kế toán công nợ!"*.
+
+### Task
+
+- [x] FE-1: `ApproveActions.vue` — thêm bảng `RECEIVER_BY_NEXT_STATUS` (khoá = trạng thái phiếu
+      chuyển SANG) và dựng câu `Phiếu đề nghị thanh toán đã được gửi đến {cấp nhận}!`.
+- [x] FE-2: Bộ chữ tên cấp lấy đúng theo `BillPaymentRequestNotifyService::levelName()` bên BE để
+      toast trên màn và thông báo chuông của cùng lần duyệt không gọi tên cấp khác nhau.
+- [x] FE-3: Giữ câu cũ làm dự phòng nếu trạng thái đích lạ (không có trong bảng) — không để toast rỗng.
+- [x] FE-4: Sửa docblock component còn ghi "trần = số cấp trước duyệt — BE cắt lại" (đã bỏ ở Phase 14).
+- [ ] Verify: user bấm duyệt thật ở 2 cấp bất kỳ.
+
+### Câu thông báo theo từng nút
+
+| Bấm ở trạng thái | Nút | Trạng thái sau | Toast |
+| --- | --- | --- | --- |
+| 2 Chờ TP duyệt | Duyệt | 3 | Phiếu đề nghị thanh toán đã được gửi đến **kế toán công nợ**! |
+| 3 Chờ KT công nợ | Duyệt | 4 | … đã được gửi đến **kế toán trưởng**! |
+| 4 Chờ KT trưởng | Duyệt | 6 | … đã được gửi đến **kế toán thanh toán**! |
+| 4 Chờ KT trưởng | Chuyển duyệt BGĐ | 5 | … đã được gửi đến **ban giám đốc**! |
+| 5 Chờ BGĐ | Duyệt | 6 | … đã được gửi đến **kế toán thanh toán**! |
+
+📌 Trạng thái 6 là "Chờ tạo phiếu chi" nên người nhận là **kế toán thanh toán** (người lập phiếu chi),
+không phải một cấp duyệt. Skill `notification-convention` KHÔNG áp dụng ở đây — mục 6 của skill loại
+trừ rõ toast kết quả thao tác (chỉ áp cho thông báo nghiệp vụ bắn qua chuông/push).
+
+---
+
+## Phase 16 — Thêm lớp tải (loading) cho thao tác duyệt (2026-08-25) @khoipv
+
+**User yêu cầu:** mỗi khi duyệt phải có loading.
+
+**Hiện trạng trước sửa:** `ApproveActions` / `RejectModal` chỉ có cờ `submitting` khoá nút
+(`:interactable="!submitting"`) — đúng chốt chặn nhưng KHÔNG có tín hiệu cho mắt, vi phạm skill
+`button-convention` mục 6b (mọi nút gọi lệnh ghi phải bật lớp tải).
+
+### Task
+
+- [x] FE-1: `ApproveActions.approve()` — `$safeLoadingStart?.()` ngay trước lệnh gọi,
+      `$safeLoadingFinish?.()` trong `finally` (đúng khuôn mục 6b, giống `BillPaymentRequestForm`).
+- [x] FE-2: `RejectModal.submit()` (nút **Không duyệt** cùng màn) — bổ sung y hệt. Cùng màn duyệt,
+      cùng luật, để 1 nút có 1 nút không thì lệch.
+- [x] FE-3: Lớp tải phủ **cả lượt nạp lại phiếu**, không tắt ngay sau khi API trả về — xem ghi chú
+      kỹ thuật bên dưới.
+- [ ] Verify: user bấm Duyệt / Không duyệt thật, xem lớp tải chạy liền mạch tới lúc phiếu hiện số mới.
+
+### Ghi chú kỹ thuật — vì sao phải chờ listener `@done`
+
+`store/loading.js` giữ `isLoading` là **cờ boolean**, KHÔNG đếm lồng nhau. `@done="reload"` bên form
+là hàm async nhưng `$emit` không chờ giá trị trả về ⇒ nếu cứ `$emit('done')` rồi tắt lớp tải ở
+`finally`, thứ tự chạy thực tế là:
+
+```
+start(duyệt) → POST → toast → emit done → reload() chạy tới await → finish(duyệt) ❌ tắt sớm
+                                          → loadDetail() vẫn đang chạy, màn hiện dữ liệu CŨ
+```
+
+Nên 2 component gọi thẳng listener qua `this.$listeners.done` và **await** nó (`runDoneListeners()`,
+Vue 2 gom nhiều handler cùng sự kiện thành mảng nên phải xử lý cả 2 dạng). Lỗi lúc nạp lại được nuốt
+tại chỗ, KHÔNG ném ra ngoài — thao tác ghi đã thành công, ném ra là rơi vào `catch` và báo nhầm
+"Duyệt phiếu thất bại".
+
+Lớp tải hiển thị bằng `components/LoadingBar.vue` (phủ trắng toàn màn + spinner, `z-index` 100001),
+nghe `$store.state.loading.isLoading`.
+
+---
+
+## Phase 17 — Bỏ card "Lịch sử duyệt" + lịch sử không hiện lý do từ chối (2026-08-25) @khoipv
+
+### 17a. Bỏ card "Lịch sử duyệt" ở màn xem
+
+Khối **"Lịch sử"** (`SystemInfoSection`, cắm qua slot `after-content` ở `_id/index.vue`) đã hiện đủ
+vết duyệt từng cấp — ai duyệt, lúc nào, số tiền mỗi cấp, lý do không duyệt. Card cũ chỉ là bản rút
+gọn trùng lặp (4 ô tên người duyệt + 1 ô lý do).
+
+- [x] FE-1: Bỏ khối `<div v-if="readonly" class="card">` SECTION 5 trong `BillPaymentRequestForm`.
+- [x] FE-2: Bỏ computed `approvalTrail` (không còn ai đọc).
+- [x] FE-3: Bỏ 5 khoá chỉ phục vụ card đó khỏi `emptyForm()` + `loadDetail()`: `reject_comment`,
+      `manage_approved_name`, `accounting_approved_name`, `chief_accounting_approved_name`,
+      `board_of_manager_approved_name` — chúng KHÔNG nằm trong payload lưu (`buildFormData()`), chỉ
+      để hiển thị, giữ lại là code chết.
+- Giữ nguyên ghi chú "KHÔNG có ô Ghi chú cấp phiếu" (chốt 2026-08-15) ngay tại chỗ cũ để không ai
+  tưởng đó là thiếu sót rồi thêm lại.
+
+### 17b. Lịch sử không hiện lý do từ chối (phiếu 4176)
+
+**Nguyên nhân:** popup "Từ chối phiếu" có **2 ô** —
+1. `Ghi chú của <cấp>` (**BẮT BUỘC**, mỗi cấp một cột riêng: `note` / `note_accountant_dept` /
+   `note_chief_accountant` / `note_board_of_manager`);
+2. `Lý do không duyệt` (`reject_comment`, **không bắt buộc**).
+
+`BillPaymentApprovalService::reject()` chỉ đẩy `reject_comment` vào `note` của dòng log. Người duyệt
+điền lý do vào ô BẮT BUỘC rồi bỏ trống ô kia ⇒ `note = null`, lịch sử chỉ còn "Trạng thái: Chờ ban
+giám đốc duyệt → Không duyệt", mất hẳn lý do. Đúng cái bẫy skill `entity-history` §4.1 cảnh báo.
+
+Kiểm chứng trên phiếu 4176: `note_board_of_manager` = "không dddd", `reject_comment` = NULL, dòng log
+id 192 có `note` = NULL.
+
+- [x] BE-1: Thêm `REJECT_NOTE_BY_STATUS` (khớp `NOTE_FIELD_BY_STATUS` bên `RejectModal.vue`).
+- [x] BE-2: `rejectNote()` gộp CẢ HAI ô, mỗi ô kèm nhãn, nối bằng `" · "`. Không dùng ký tự xuống
+      dòng: `.si-note` bên `SystemInfoSection` không đặt `white-space: pre-line` nên xuống dòng bị
+      gộp thành khoảng trắng — mà đó là component dùng chung, không sửa vì riêng màn này.
+- [x] Verify (chạy thật, bên dưới).
+
+### Verify đã chạy
+
+`php -l` sạch; compile template + babel parse FE sạch. Gọi thẳng `reject()` trên phiếu TEST 4194
+(status 4 ⇒ ô bắt buộc là `note_chief_accountant`), 3 ca, bọc `DB::transaction` rồi `rollBack()`:
+
+| Ca | `note` của dòng log |
+| --- | --- |
+| Chỉ điền ô bắt buộc (**đúng ca user gặp**) | `Ghi chú của Kế toán trưởng: khong hop le, thieu chung tu` |
+| Điền cả 2 ô | `Ghi chú của Kế toán trưởng: … · Lý do không duyệt: De nghi bo sung hoa don do` |
+| Cả 2 ô, ô bắt buộc ngắn | `Ghi chú của Kế toán trưởng: x · Lý do không duyệt: Sai nha cung cap` |
+
+Rollback sạch: phiếu 4194 vẫn status 4, 0 dòng log còn lại.
+
+⚠️ **Không sửa log cũ:** dòng log id 192 của phiếu 4176 vẫn `note = null` — chỉ phiếu từ chối SAU
+khi sửa mới có lý do. Nội dung không mất (vẫn nằm ở `bill_payment_requests.note_board_of_manager`),
+cần thì backfill riêng nhưng phải user chốt.
+
+---
+
+## Điều tra 2026-08-25 — Excel trên server ra "form khác" local: KHÔNG PHẢI LỖI @khoipv
+
+**User báo:** phiếu 4192 trên `hrm-crm.eteksofts.com` xuất Excel ra bảng chi tiết khác hẳn phiếu
+4199 dưới local (cùng loại chi 12), nghi server chạy code cũ / sai form.
+
+**Kết luận: 2 phiếu khác nhau ở LOẠI TIỀN, không phải khác phiên bản code.**
+
+| | Server 4192 | Local 4199 / 4192 |
+| --- | --- | --- |
+| Tỷ giá | **USD 25.000** (`type_money_id <> 1`) | **VNĐ 1** (`type_money_id = 1`) |
+| Nhánh dựng bảng | `exportForeignTable()` | `exportVndTable()` |
+| Cột | STT · Số đơn hàng/Hợp đồng · \<công nợ\> · Số tiền đề nghị chi (USD\|VND) · **Số tiền duyệt chi** (USD\|VND) · Ghi chú | STT · **Số chuyến xe · Hạch toán** · \<công nợ\> · Số tiền đề nghị chi · **TP duyệt · KT công nợ duyệt · KT trưởng/BGĐ** · Ghi chú |
+
+**Đối chiếu ERP —** `BillPaymentRequest::billPaymentRequestWithExchangeTable()` (`app/Model/
+IncomeExpenditure/BillPaymentRequest.php` :822 chọn nhánh, :913-930 dựng header): phiếu ngoại tệ
+LUÔN in *Số đơn hàng/Hợp đồng* + gộp 1 cặp *Số tiền duyệt chi*, **kể cả loại chi 12** — không có cột
+chuyến xe, không tách 3 cấp duyệt. HRM đang ra **đúng y ERP**.
+
+### Cách kiểm chứng đã dùng
+
+1. Tải file thật từ server: fetch `/api/v1/finance/bill-payment-requests/4192/export` ngay trong
+   phiên trình duyệt đang đăng nhập, lấy base64 → giải ra `.xlsx` → đọc lại bằng PhpSpreadsheet.
+2. Dựng file local cho 4192 + 4199 bằng `Excel::raw(BillPaymentRequestExport)` rồi đọc lại y hệt.
+3. **Phép thử quyết định:** dựng thêm local phiếu **4166 (USD)** → header ra **GIỐNG HỆT file
+   server**: `STT | Số đơn hàng/Hợp đồng | Số tiền còn nợ | Số tiền đề nghị chi (USD|VND) | Số tiền
+   duyệt chi (USD|VND) | Ghi chú` ⇒ loại trừ giả thuyết "server chạy code cũ".
+
+📌 Nếu sau này user muốn bảng ngoại tệ CŨNG có cột chuyến xe / tách 3 cấp duyệt cho loại chi 12 thì
+đó là **đổi khác ERP có chủ đích**, phải chốt riêng — đừng coi là bug rồi tự sửa.
+
+---
+
+## Phase 18 — Loại chi 12 + NGOẠI TỆ: bảng chi tiết bám bảng VNĐ (2026-08-25) @khoipv
+
+**User chốt** (sau điều tra ở mục trên): phiếu **loại chi 12 (vận chuyển)** dù là ngoại tệ vẫn phải
+có **Số chuyến xe · Hạch toán** và **tách 3 cấp duyệt** như bảng VNĐ. Đây là **LỆCH ERP CÓ CHỦ ĐÍCH**
+— ERP dồn mọi phiếu ngoại tệ vào 1 bảng (bỏ cột chuyến xe, gộp "Số tiền duyệt chi").
+
+**Phạm vi:** CHỈ loại chi 12. Loại chi 1/2/6 + ngoại tệ **giữ nguyên bảng ERP**.
+
+### Bố cục mới (loại 12 + ngoại tệ) — 13 cột
+
+`STT · Số chuyến xe · Hạch toán · <nhãn công nợ> · Số tiền đề nghị chi (NT|VND) · TP duyệt (NT|VND) ·
+KT công nợ duyệt (NT|VND) · KT trưởng/BGD (NT|VND) · [Số tiền chi (VND)] · Ghi chú`
+
+Mỗi cột tiền thành **CẶP nguyên tệ | VND** — đúng khuôn cặp "Số tiền đề nghị chi" vốn có của bảng
+ngoại tệ. Riêng "Số tiền chi" để 1 cột VND: số đó đọc sang phiếu chi / uỷ nhiệm chi, chứng từ ghi
+bằng VND, không có bản nguyên tệ nên KHÔNG bịa cặp.
+
+### Task
+
+- [x] BE-1: `BillPaymentRequestPrintResource` trả thêm `payment_money_manage_exchange`,
+      `payment_money_accountant_debt_exchange`, `payment_money_chief_accountant_exchange` (cả
+      `details` lẫn `totals`), qua helper `exchangeOf()`.
+- [x] BE-2: `exchangeOf()` ưu tiên cột `*_exchange` đã lưu, `null`/0 thì tự nhân tỷ giá phiếu — 3
+      cột đó `nullable`, dữ liệu cũ bỏ trống mà in theo cặp thì rỗng mất một nửa.
+- [x] BE-3: Thêm `BillPaymentRequestService::exportForeignDeliveryTable()`; `exportData()` tách
+      thành 3 nhánh: VNĐ · ngoại tệ loại 12 · ngoại tệ loại khác.
+- [x] FE-1: `_id/print.vue` — `labelColumns()` và `moneyGroups()` đổi điều kiện từ `isForeign` sang
+      `isForeign && !show_delivery` để loại 12 đi nhánh có cột chuyến xe; thêm helper `money()` dựng
+      1 ô "VND" (phiếu VNĐ) hoặc 1 cặp NT|VND (phiếu ngoại tệ).
+- [x] FE-2: Bóp bề rộng cột khi ngoại tệ + loại 12 (chuyến xe/hạch toán 13% → 9%, công nợ 12% → 8%,
+      cột tiền 10% → 7%) — 13 cột mà để bề rộng cũ là tràn lề.
+- [x] BE-4: Sửa lại ghi chú `is_foreign` trong resource (đang ghi "bỏ 3 cột duyệt theo cấp").
+- [ ] Verify: user mở **màn in** phiếu loại 12 ngoại tệ xem 13 cột có tràn lề không.
+
+### Verify đã chạy
+
+`php -l` sạch 2 file BE; compile template + babel parse `print.vue` sạch.
+
+Dựng file .xlsx thật: bọc `DB::transaction`, tạm đổi phiếu **4192** (loại 12, đã duyệt hết cấp) thành
+**USD tỷ giá 26.000**, xuất Excel rồi `rollBack()` (sau rollback `type_money_id` = 1, dữ liệu nguyên vẹn):
+
+| File | Header bảng chi tiết | Số cột |
+| --- | --- | --- |
+| **fx12-4192** (loại 12, USD — MỚI) | STT · Số chuyến xe · Hạch toán · Số tiền còn lại · Số tiền đề nghị chi · TP duyệt · KT công nợ duyệt · KT trưởng/BGD · Ghi chú, dòng đơn vị `USD\|VND` × 4 | 13 (A→M) |
+| local-4192 (loại 12, VNĐ) | y hệt, mỗi cột tiền 1 ô `VND` | 9 (A→I) |
+| local-4166 (loại 1, USD) | **KHÔNG đổi**: STT · Số đơn hàng/Hợp đồng · Số tiền còn nợ · Số tiền đề nghị chi · Số tiền duyệt chi · Ghi chú | 8 |
+
+📌 Trong file thử, cột NT và cột VND ra **cùng số** vì phiếu 4192 vốn là phiếu VNĐ (các cột
+`*_exchange` đã lưu = số gốc, tỷ giá 1) — chỉ là hệ quả của phép thử ép loại tiền. Phiếu ngoại tệ
+thật ghi `*_exchange` = số × tỷ giá ngay lúc duyệt (`BillPaymentApprovalService::approve()`).
+
+---
+
+## Phase 19 — Đổi đối tượng ở cấp phiếu: XOÁ SẠCH bảng chi tiết (2026-08-25) @khoipv
+
+**User báo lại (Phase 12 chưa đủ):** "mới đổi mã hợp đồng, các thông tin khác trong bảng vẫn thế".
+
+**Vì sao thiếu:** Phase 12 chỉ xoá `contractable_id` / `contractable_type` / `contract_code` +
+`payment_money*` của từng dòng, **cố ý giữ** `payment_money_request` (số user tự gõ) và không đụng
+`note`. Với loại chi 12 thì còn tệ hơn: cả dòng là **chuyến xe của NCC cũ** do nút "Lấy dữ liệu"
+sinh ra, xoá mỗi mã hợp đồng thì dòng vẫn nằm nguyên đó.
+
+**Sửa:** đổi đối tượng ở CẤP PHIẾU (CK loại 1/2, và loại 12 luôn chọn NCC ở đây) ⇒ **`form.details = []`**
++ reset `activeDetailIndex` + `clearAllDetailErrors()` — đúng khuôn đổi Loại chi / Hình thức thanh
+toán đang làm. Vẫn giữ chốt `partyChanged`: chọn lại ĐÚNG đối tượng cũ thì không xoá gì.
+
+### Task
+
+- [x] FE-1: Nhánh cấp phiếu của `applyParty()` — thay vòng lặp `clearDetailContract()` bằng xoá sạch
+      `form.details`, kèm `activeDetailIndex = null` và `clearAllDetailErrors()`.
+- [x] FE-2: Nhánh THEO DÒNG (hình thức TM) vẫn giữ dòng nhưng `clearDetailContract()` nay xoá thêm
+      `payment_money_request` + `payment_money_request_exchange` — cùng lý do: số đó gõ cho hợp đồng
+      cũ, giữ lại là dòng có tiền mà không có hợp đồng.
+- [x] FE-3: Sửa docblock helper (đang ghi "KHÔNG đụng `payment_money_request`" — quyết định cũ đã bỏ).
+- [ ] Verify: user mở trình duyệt thử CK loại 1 (đổi NCC), CK loại 2 (đổi KH), loại 12 (đổi NCC vận chuyển).
+
+**Không đụng:** `applyParty()` chỉ được gọi từ 2 handler chọn đối tượng (`onSupplierChosen` /
+`onCustomerEvent`), KHÔNG nằm trên đường nạp phiếu cũ — mở phiếu để sửa không bị xoá dòng.
+
+📌 Bảng xoá xong để **trống**, không tự thêm 1 dòng mới — giống hệt luồng đổi Loại chi hiện có.

@@ -76,6 +76,14 @@
 - [x] Compile FE (vue-template-compiler + babel) — 9/9 file sạch
 - [ ] **Bấm thật trên trình duyệt (user thực hiện)** — phần CHƯA kiểm chứng, xem checkpoint
 
+## Phase 7 — Chỉnh UI bảng Chi tiết (user yêu cầu 2026-08-24)
+
+- [x] Bảng Chi tiết trong `BillIncomeReportForm.vue`: đổi `<th style="width:">` → `min-width`
+      để bảng tràn ngang thật → `V2BaseTableScroll` hiện đủ thanh cuộn TRÊN + DƯỚI
+      (khuôn: `pages/customer-care/warranty-repair-requests/.../WarrantyRepairRequestForm.vue`)
+- [x] Giãn cột: Khách hàng 200→240 · Tên KH 180→220 · Số đơn hàng/HĐ 210→280 · Số tiền 160→190 · Diễn giải 220→320
+- [x] Compile lại file FE (vue-template-compiler + babel: sạch)
+
 ---
 
 ### Checkpoint — 2026-08-24 (2)

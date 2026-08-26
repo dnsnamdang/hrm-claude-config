@@ -329,6 +329,32 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-26).
+  Phase 11 sửa xuất Excel loại chi 12: `paidMoneyForDetail()` chọn `billable_type` theo dòng
+  (hết lệch 254 ô / 70 phiếu; ăn sang màn chi tiết + màn in — 3 đầu ra 1 số) · ô tiền ghi **CHUỖI**
+  kiểu VN qua `WithCustomValueBinder` (user chốt, đánh đổi: mất SUM/lọc/pivot) · letterhead nhúng
+  `companies.header` theo `company_id` của phiếu + trải hết bề rộng bảng.
+  BE 3 file + 1 blade · không migration · không đụng FE.
+
+- finance-addition-accounting-request → @khoipv → .plans/gop-db/finance-addition-accounting-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-26).
+  Port màn ERP "Phiếu yêu cầu hạch toán bổ sung" sang phân hệ Tài chính, route
+  `/finance/addition-accounting-requests` — 6 loại tạo mới + loại 7 chỉ xem/in, dừng ở *Chờ duyệt*.
+  BE 17 file mới · FE 10 file mới · 24 route · 4 quyền id **1177–1180** · **0 migration** (dùng chung
+  5 bảng ERP). Vá **10 lỗi/lỗ hổng của ERP** (nặng nhất: route xoá là **GET** không gate ·
+  `store()` gán thẳng `status`) + 7 lỗi FE chỉ Playwright bắt được.
+  Spec: docs/superpowers/specs/gop-db/2026-08-25-finance-addition-accounting-request-design.md
+
+- finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-26).
+  Port màn ERP "Phiếu đề nghị thu tiền" (7 phase, xong 2026-08-14) + 6 đợt sửa sau nghiệm thu:
+  cấu hình cột hiển thị + 2 cột Người/Ngày cập nhật · bỏ hẳn "Người nộp" (cột · ô lọc · bản in),
+  đổi nhãn "Lý do nộp" → "Lý do thu" · popup Chọn khách hàng: SĐT khớp từ **đầu số**, ẩn dòng bị che
+  SĐT (`hide_masked_mobile`), ô MST và ô SĐT lọc **độc lập** (`tax_code_only`, MST khớp đầu mã).
+  ⚠️ Đánh đổi user đã chốt: gõ mảnh giữa/đuôi SĐT-MST **không ra kết quả** — phải gõ đủ số.
+  Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md
+
 - finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
   Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-24). Cả 18 phase đã
   nghiệm thu xong. Phase 18: màn tạo/sửa `finance/bill-adjust-dept-requests/create` khi bấm **Lưu nháp**
@@ -495,29 +521,30 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   BE 2 file · FE 0 thay đổi hành vi · không migration. Code xong, **chờ user test trình duyệt, chưa commit**.
   📌 Nợ ghi sổ (cần user quyết): bản in loại 12 + NCC nước ngoài thừa 3 dòng Phí/IBAN/Swift toàn `—` ·
   mở lại phiếu NCC nước ngoài loại 1 ở màn xem/sửa bị mất khối ngân hàng (lỗi có sẵn).
+  🔧 **Đang sửa tiếp (2026-08-24, đợt 3)** — XUẤT EXCEL + MÀN IN, 3 việc:
+  · **Yêu cầu user:** cột "Số tiền chi" chỉ in khi phiếu ở trạng thái **Duyệt phiếu chi** (status 8);
+    dòng Tổng cộng **gộp** các cột mô tả đầu bảng (STT + [chuyến xe] + [NCC] + [hợp đồng]) thành 1 ô.
+  · **Bug user báo:** cột "Nhà cung cấp" trống trên Excel/bản in phiếu 4197. Gốc: FE lưu phiếu chỉ gửi
+    `supplier_id`, KHÔNG gửi `*_code`/`*_name` (`BillPaymentRequestForm.vue` :1436) → snapshot dòng chi
+    tiết luôn NULL với phiếu tạo từ HRM (1/1593 dòng, phần còn lại là dữ liệu port từ ERP).
+    Màn danh sách + màn chi tiết đã có fallback sẵn, chỉ nhánh in/Excel thì không → đã thêm fallback
+    sang quan hệ trong `detailObjectName()` + `objectName()`.
+  · **Bám lại cấu trúc ERP** (user chốt qua 4 câu hỏi): tiêu đề bảng **2 dòng** (ô đơn vị tiền ở dòng
+    dưới) · phiếu **ngoại tệ dùng bảng riêng** của ERP (2 cặp nguyên tệ/VND, bỏ 3 cột duyệt theo cấp,
+    lấy cấp duyệt cao nhất > 0) · đổi nhãn `KT trưởng/BGD` + `Số hợp đồng nhập mua` / `Số đơn hàng/Hợp đồng` ·
+    **bỏ cột Khách hàng/Nhân viên** (3 nhánh `type_*_cash()` của ERP xét khoá không tồn tại → luôn false,
+    là code chết) · thêm dòng "Nhà cung cấp:" đầu phiếu cho loại 12 và loại 1 + HĐ + CK ·
+    định dạng số `#,##0.##` khớp `formatCurrency($n, 2)`, riêng 2 cột quy đổi VND dùng `#,##0`.
+  Toàn bộ cờ bố cục gom vào `BillPaymentRequestPrintResource::columns` làm nguồn duy nhất cho cả FE lẫn Excel.
+  BE 3 file (`PrintResource`, `Service`, blade export) + `BillPaymentRequestExport` · FE 1 file (`_id/print.vue`) ·
+  không migration. Verify: đối chiếu bộ cột FE↔BE trên **15 phiếu** đủ loại 1/2/6/12 × TM/CK × VND/RUPEE/IDR
+  × 7 trạng thái — **lệch 0**; dựng file .xlsx thật đọc lại bằng PhpSpreadsheet (merge tiêu đề, dòng đơn vị,
+  kiểu ô số đều đúng). Code xong, **chờ user test trình duyệt, chưa commit**.
+  📌 Nợ ghi sổ đợt 3 (cần user quyết): (1) snapshot `*_code`/`*_name` dòng chi tiết vẫn không được ghi khi
+  lưu phiếu → phiếu không giữ tên đối tượng tại thời điểm lập, nên vá ở BE; (2) loại chi 6 có 0/537 dòng
+  gắn `employee_id` (đối tượng ở cấp phiếu); (3) nhánh loại 1 không hợp đồng + loại chi 3 chưa test được
+  (DB 0 dòng); (4) khối 5 chữ ký vẫn chiếm cứng 10 cột, chưa rải `colspan` theo số cột bảng.
   Spec: docs/superpowers/specs/gop-db/2026-08-14-finance-bill-payment-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment-request/design.md
-
-- finance-bill-income-request → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md
-  Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-18). Đã commit:
-  `hrm-api` `bb4863e0e` · `hrm-client` `dde97025c`. Feature gốc đã hoàn thành
-  2026-08-14 (7 phase, port màn ERP "Phiếu đề nghị thu tiền" — chi tiết ở design.md + plan.md);
-  đợt này là **sửa bug + bổ sung sau nghiệm thu**, nhánh `gop_db`:
-  · Task 8.1 — bộ lọc lặp nhãn "Nhà cung cấp" (slot tự render nhãn trong khi `V2BaseSmartFilterPanel`
-    đã render sẵn; thiếu `hideLabel`).
-  · Task 8.2 — thêm popup **Cấu hình cột hiển thị** (`columnCustomizationMixin`, khoá
-    `finance_bill_income_requests`, không cần migration) + 2 cột **Người/Ngày cập nhật** (có sort,
-    whitelist BE) + đồng bộ Ngày tạo sang `d/m/Y H:i` + nới 3 cột chữ dài bằng `minWidth`.
-  BE 4 file (`BillIncomeRequest`, service, list resource) · FE 1 file (`index.vue`).
-  Verify: `php -l` + compile template/script sạch · SQL sort đúng, khoá lạ bị chặn · DB 2.473 phiếu,
-  0 phiếu NULL `updated_by` · user test trình duyệt đạt.
-  · Task 8.3 (2026-08-19) — seeder dữ liệu test `BillIncomeRequestTestDataSeeder` sinh đủ **3 loại
-    hợp đồng bán** mà popup union (bán `hrm_contracts` · đầu kỳ `opening_contracts` · bảo dưỡng
-    `wr_service_contracts`), phủ hết trạng thái từng loại, và in danh sách khách hàng / NCC để chọn
-    khi test. Đã chạy thật trên `gop_db`.
-  Còn nợ từ đợt trước: chưa đối chiếu trực tiếp giao diện ERP, mới test 3/4 cấp quyền.
-  Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-income-request/design.md
-
-
 
 - form-validate-base → @khoipv → .plans/gop-db/form-validate-base/plan.md
   Trạng thái: **HOÀN THÀNH — user test đủ 23/23 màn** (2026-08-14).

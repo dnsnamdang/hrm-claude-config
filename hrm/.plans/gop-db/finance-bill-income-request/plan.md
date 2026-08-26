@@ -1614,3 +1614,296 @@ Làm lịch sử cho màn Đề nghị thanh toán thì lộ ra 1 bẫy chung, �
   trước đó ra tên bắt đầu bằng `" / "`.
 Đã verify lại `store()` + `destroy()` end-to-end (transaction rồi rollback): mỗi thao tác đúng 1
 dòng log `create` / `delete`.
+
+### Phase 10 — Fix: popup chọn KH tìm theo SĐT ra dòng có cột SĐT trống (2026-08-24) @khoipv
+Bug user báo: ở màn Đề nghị thu tiền, popup "Chọn khách hàng" gõ SĐT `0241` → ra danh sách
+công ty nhưng **cột SĐT trống trơn (`—`)**, trông như "ra cả KH không có SĐT đó".
+
+Điều tra (không phải lỗi lọc):
+- FE `ChooseErpCustomerModal.vue:285` gửi đúng `mobile=0241`; `buildQueryString` không nuốt param.
+- BE `CustomerService.php:140-142` áp đúng `where customers.mobile like '%0241%'`; các nhánh
+  `orWhere` phân quyền đều bọc trong `where(function(){})` nên không thoát bộ lọc.
+- Chạy lại nguyên câu query của popup qua tinker: `COUNT = 6`, **cả 6 dòng đều có SĐT chứa 0241**.
+- Thủ phạm: `CustomerListResource.php:36` trả `mobile = null` cho MỌI KH không phải "của mình",
+  không phân biệt loại KH.
+
+Rule đúng (đã ghi ở 2 chỗ khác trong chính codebase): mask CHỈ áp cho **KH CÁ NHÂN**
+- `CustomerService::applyB2cOwnershipVisibility` docblock: "KH tổ chức (type 2-5) không bị lớp
+  này giới hạn (rule B2B nằm ở người liên hệ)"
+- `CustomerExportFormatter::taxCodeOrMobile`: chỉ che khi `customer_type === 1`
+
+- [x] BE: `CustomerListResource` — chỉ che `mobile` khi KH CÁ NHÂN và không phải KH của mình
+- [x] BE: KH cá nhân — bỏ che khi user tìm KHỚP ĐÚNG full SĐT (escape hatch sẵn có ở
+      `applyVisibilityScope` / `applyB2cOwnershipVisibility`; số user tự gõ ra thì che vô nghĩa)
+- [x] Verify: chạy lại query popup + resource, đối chiếu SĐT thật trong DB
+
+### Checkpoint — 2026-08-24
+Vừa hoàn thành: fix mask SĐT ở `CustomerListResource` (thêm `shouldMaskMobile()` +
+`matchesExactSearchedPhone()`), chỉ sửa BE — FE không đụng gì.
+Bằng chứng verify (tinker, auth employee 13, chạy nguyên luồng service + resource):
+- Tìm `0241` ở popup: 6 KH tổ chức hiện ĐÚNG SĐT thật trong DB (02413714430, 02413863038,
+  02413865996, 02413867677, 02413883889, 02412345699); 1 KH cá nhân của người khác vẫn che `null`.
+- KH cá nhân gõ KHỚP ĐÚNG full `0902416240` → hiện số; gõ mảnh `090241` → vẫn che.
+- Không đổi bộ lọc: `where mobile like '%0241%'` giữ nguyên, số dòng trả về không đổi.
+Ảnh hưởng kèm theo (có chủ ý): màn danh sách `/assign/customers` và các popup chọn KH khác
+(AddCustomer, AddCustomerModal, AddRelatedUnitModal, QuickAddCustomerModal) nay cũng hiện SĐT của
+KH TỔ CHỨC — đồng bộ với bản xuất Excel vốn chưa từng che nhóm này.
+Đang làm dở: không có.
+Bước tiếp theo: **user mở trình duyệt** popup Chọn khách hàng ở màn Đề nghị thu tiền, tìm `0241`
+xác nhận cột SĐT đã có số (chưa tự test Playwright — theo thoả thuận).
+Blocked: không.
+
+### Phase 10b — Fix tiếp: ô SĐT khớp GIỮA chuỗi (2026-08-24) @khoipv
+User báo tiếp: sau khi bỏ mask vẫn thấy `79TKHPNH-30 - ANH THẠCH` trong kết quả tìm `0241`.
+SĐT thật của KH này là `0902417023` — chứa `0241` ở GIỮA (090**2417**023), lại là KH cá nhân của
+người khác nên cột SĐT bị che `—` → vừa lạc đề vừa không thấy số để đối chiếu.
+
+Nguyên nhân: `CustomerService.php:140` dùng `mobile LIKE '%0241%'`. Trong DB có 19 KH khớp kiểu
+này thì **11 KH không hề có số bắt đầu bằng 0241** (0902416240, 0942802412, 0375002417...).
+
+- [x] BE: ô SĐT riêng (`mobile`) đổi sang khớp từ ĐẦU SỐ —
+      `CONCAT(',', REPLACE(mobile,' ',''), ',') LIKE '%,<kw>%'` (bọc dấu phẩy để KH cá nhân có
+      nhiều số ghép chuỗi vẫn khớp đúng từng số)
+- [x] Verify: tìm `0241` → 6 dòng, không còn 79TKHPNH-30; tìm đủ `0902417023` → ra đúng KH đó
+
+Phạm vi ảnh hưởng: chỉ `ChooseErpCustomerModal` gửi tham số `mobile` (grep toàn hrm-client) →
+không đụng bộ lọc màn danh sách KH. Ô "MST/SĐT" gộp của màn danh sách (`tax_code`) GIỮ NGUYÊN
+khớp giữa chuỗi vì còn dùng để tra mã số thuế.
+
+⚠️ Đánh đổi: tìm theo ĐUÔI số (gõ `7023`) nay không ra kết quả. Nếu user cần thì mở lại thành
+"khớp đầu số HOẶC đuôi số" — chưa làm vì chưa có yêu cầu.
+
+### Checkpoint — 2026-08-24 (lần 2)
+Vừa hoàn thành: Phase 10 (bỏ mask SĐT KH tổ chức) + Phase 10b (ô SĐT khớp từ đầu số).
+Đang làm dở: không có.
+Bước tiếp theo: **user mở trình duyệt** popup Chọn khách hàng ở màn Đề nghị thu tiền, tìm `0241`
+xác nhận ra đúng 6 công ty kèm SĐT, không còn ANH THẠCH.
+Blocked: không.
+
+### Phase 10c — Đổi tiêu đề cột "Lý do nộp" -> "Lý do thu" (2026-08-24) @khoipv
+- [x] FE: `pages/finance/bill-income-requests/index.vue:480` — `title: 'Lý do nộp'` -> `'Lý do thu'`
+      (áp cho CẢ màn chờ duyệt vì `pending.vue` render lại chính `index.vue` qua prop `pendingMode`)
+
+Ghi chú: ERP đặt 2 tên cho cùng 1 trường — "Lý do nộp" ở `index.blade.php:49` /
+`approved.blade.php:50`, "Lý do thu" ở form + màn In. Nay thống nhất theo "Lý do thu".
+Chỉ đổi NHÃN hiển thị, `key: 'reason'` giữ nguyên nên không đụng API/sort/cấu hình cột.
+Grep toàn hrm-client + hrm-api: không còn chỗ nào khác dùng chuỗi "Lý do nộp".
+
+### Phase 10d — Bỏ cột "Người nộp" khỏi màn danh sách (2026-08-24) @khoipv
+- [x] FE: gỡ `{ key: 'payer', title: 'Người nộp', ... }` khỏi `allColumns()`
+      (`pages/finance/bill-income-requests/index.vue`)
+- [x] FE: gỡ luôn `<template #cell-payer>` — slot mồ côi không render nhưng để lại thì lần sau
+      bật cột lại sẽ tưởng đã có sẵn định dạng
+
+GIỮ NGUYÊN (không nằm trong yêu cầu):
+- Ô lọc "Người nộp" ở tìm kiếm nâng cao (`filter.payer`) — vẫn lọc được dù cột không hiện.
+- BE vẫn trả trường `payer`; form nhập, màn chi tiết và bản in không đổi.
+
+Cấu hình cột đã lưu: KHÔNG cần migration. `columnCustomizationMixin.mergedColumns()` (dòng 51)
+lọc `savedCol` không còn trong `allColumns` -> user nào từng lưu cấu hình có cột này thì cột tự
+biến mất, không lỗi. Màn "Chờ duyệt" dùng chung `columnScreenKey: finance_bill_income_requests`
+nên cũng mất cột theo, đúng chủ đích (2 màn cùng bộ cột).
+
+### Checkpoint — 2026-08-24 (wrap up đợt 4)
+Vừa hoàn thành: 4 việc trong 1 phiên, đều ở màn **Đề nghị thu tiền** (nhánh `gop_db`, CHƯA commit).
+1. Phase 10 — BE `CustomerListResource`: bỏ che SĐT của KH TỔ CHỨC (mask ownership vốn chỉ dành cho
+   lead CÁ NHÂN); KH cá nhân bỏ che thêm khi user gõ KHỚP ĐÚNG full SĐT.
+2. Phase 10b — BE `CustomerService`: ô SĐT của popup chọn KH đổi từ `LIKE '%kw%'` sang khớp từ
+   ĐẦU SỐ `CONCAT(',', REPLACE(mobile,' '), ',') LIKE '%,kw%'`.
+3. Phase 10c — FE `index.vue`: đổi tiêu đề cột `Lý do nộp` → `Lý do thu`.
+4. Phase 10d — FE `index.vue`: bỏ cột `Người nộp` (+ slot `#cell-payer`).
+
+File đụng: BE 2 (`Modules/Assign/Transformers/CustomerResource/CustomerListResource.php`,
+`Modules/Assign/Services/CustomerService.php`) · FE 1
+(`pages/finance/bill-income-requests/index.vue`).
+
+Verify đã chạy: `php -l` sạch 2 file BE; tinker chạy nguyên luồng service + resource với auth thật:
+tìm `0241` → 6 KH tổ chức kèm SĐT đúng như DB, không còn `79TKHPNH-30` (0902417023, khớp giữa
+chuỗi); gõ đủ `0902417023` → ra đúng KH đó kèm số; gõ mảnh `090241` → KH cá nhân vẫn bị che.
+Đang làm dở: không có.
+Bước tiếp theo: **user mở trình duyệt nghiệm thu** 3 điểm — (a) popup chọn KH tìm `0241`,
+(b) tiêu đề cột "Lý do thu", (c) cột "Người nộp" đã biến mất ở CẢ màn danh sách và màn chờ duyệt.
+Đạt thì mới commit (chưa commit theo quy tắc project).
+Blocked: không.
+
+📌 Còn treo (chưa làm vì ngoài yêu cầu, chờ user quyết):
+- Ô lọc "Người nộp" ở tìm kiếm nâng cao — vẫn giữ, có bỏ nốt không?
+- Tìm SĐT theo ĐUÔI số (gõ `7023`) nay không ra kết quả — có cần mở thành "khớp đầu HOẶC đuôi"?
+
+---
+
+## Phase 11 — Popup chọn KH: ẩn luôn dòng bị che SĐT khi tìm theo SĐT (2026-08-25)
+
+**User báo:** ở popup "Chọn khách hàng" (màn Đề nghị thu tiền), gõ `024` vào ô Số điện thoại
+vẫn ra khách hàng KHÔNG có SĐT (cột SĐT hiện `—`) → tưởng hệ thống lọc sai.
+
+**Root cause — 2 tầng dùng 2 luật khác nhau cho cùng 1 ô nhập:**
+
+| Tầng | Luật với từ khoá `024` | Kết quả |
+| --- | --- | --- |
+| WHERE lọc danh sách (`CustomerService`, Phase 10b) | `LIKE ',024%'` — khớp ĐẦU SỐ | KH cá nhân **lọt vào** danh sách |
+| Mask SĐT khi trả về (`CustomerListResource`, Phase 10) | `=== '024'` — khớp KHÍT | SĐT bị **che** → FE hiện `—` |
+
+Kiểm chứng trên DB `gop_db`: dòng user khoanh đỏ là `29TPHPTA-263` (id 41706, `customer_type=1`)
+**CÓ** `mobile = 02433660388` — bắt đầu bằng `024` nên lọt bộ lọc hợp lệ, chỉ là bị che số.
+Tức cả 2 tầng đều chạy đúng ý đồ riêng, mâu thuẫn nằm ở chỗ 2 ý đồ không khớp nhau.
+
+**Quyết định của user (2026-08-25):** khách nào bị che SĐT thì KHÔNG hiện ra nữa. Phạm vi:
+- **Chỉ khi đang tìm theo SĐT** — không gõ gì thì danh sách giữ nguyên như cũ (không siết);
+- **Chỉ ở popup chọn khách hàng** — màn danh sách KH `/assign/customers` không đổi.
+
+### BE
+- [x] `Modules/Assign/Services/CustomerService.php` — thêm `applyHideMaskedMobile($query, $request)`,
+      gọi ngay sau `applyB2cOwnershipVisibility()`. Điều kiện dựng **trùng khít 3 vế** của
+      `CustomerListResource::shouldMaskMobile()` — lệch 1 vế là ẩn nhầm dòng lẽ ra chọn được:
+      1. KH TỔ CHỨC (`customer_type != 1`) → không bao giờ bị che, luôn giữ;
+      2. KH cá nhân **của mình** (`created_by = myErpId` HOẶC id ∈ `myVisibleCustomerIds()`) → giữ;
+      3. Gõ **khớp khít** trọn 1 số (`LIKE '%,kw,%'`) → escape hatch cũ, giữ.
+- [x] Chỉ chạy khi có cờ `hide_masked_mobile` **VÀ** `mobile`/`tax_code` thực sự có giá trị
+      (bỏ qua `''`, `'null'`, `'undefined'` — `AddCustomer.vue` gửi chuỗi rỗng khi user không gõ).
+
+### FE — chỉ 2 popup CÓ ô tìm SĐT
+- [x] `components/modals/ChooseErpCustomerModal.vue` — thêm `hide_masked_mobile: 1` vào params
+      (đây là popup ở màn Đề nghị thu tiền user báo lỗi).
+- [x] `components/modals/AddCustomer.vue` — thêm `&hide_masked_mobile=1` vào query string.
+- [x] KHÔNG đụng `AddCustomerModal.vue` và `AddRelatedUnitModal.vue` — 2 popup này chỉ có ô
+      `keyword`, không có ô SĐT nên cờ vô nghĩa.
+
+### Verify đã chạy
+`php -l` sạch; FE compile sạch bằng `vue-template-compiler` + babel parse (không dùng eslint —
+hrm-client không có ESLint config chạy được trên Node 14).
+Chạy hàm thật trên DB `gop_db` qua tinker, 4 kịch bản:
+
+| Kịch bản | Trước | Sau |
+| --- | --- | --- |
+| Gõ `024` | 285 dòng (34 KH cá nhân cột SĐT trống) | **251 dòng, 0 dòng bị che** |
+| Gõ khít `02433660388` | — | **1 dòng, KH cá nhân vẫn ra** (escape hatch nguyên vẹn) |
+| Có cờ nhưng KHÔNG gõ SĐT | 43.078 | **43.078 — không siết gì** |
+| KH cá nhân do chính mình tạo (erp_id 61), gõ `024` | — | **253 dòng, KH 41706 VẪN hiện** |
+
+### Checkpoint — 2026-08-25
+Vừa hoàn thành: Phase 11 — popup chọn KH ẩn dòng bị che SĐT khi tìm theo SĐT (nhánh `gop_db`,
+CHƯA commit). File đụng: BE 1 (`Modules/Assign/Services/CustomerService.php`) · FE 2
+(`components/modals/ChooseErpCustomerModal.vue`, `components/modals/AddCustomer.vue`).
+Đang làm dở: không có.
+Bước tiếp theo: **user mở trình duyệt nghiệm thu** — mở popup chọn KH ở màn Đề nghị thu tiền,
+gõ `024` vào ô Số điện thoại → không còn dòng nào cột SĐT trống `—`; gõ đủ `02433660388` →
+KH cá nhân đó vẫn ra kèm số. Đạt thì mới commit (chưa commit theo quy tắc project).
+Blocked: không.
+
+⚠️ Đánh đổi đã biết (user chốt, ghi lại để sau khỏi tưởng bug): luật này ẩn **cả KH cá nhân vốn
+chọn được** (đã lọt lớp quyền vì từng phát sinh báo giá/meeting/dự án TKT). Nếu có người báo
+"tìm SĐT không thấy khách X mà trước thấy" → nguyên nhân ở đây, cách ra là gõ ĐỦ cả số điện thoại.
+
+📌 Còn treo (từ đợt 4, chưa làm — chờ user quyết):
+- Ô lọc "Người nộp" ở tìm kiếm nâng cao — vẫn giữ, có bỏ nốt không?
+- Tìm SĐT theo ĐUÔI số (gõ `7023`) nay không ra kết quả — có cần mở thành "khớp đầu HOẶC đuôi"?
+
+---
+
+## Phase 12 — Popup chọn KH: ô MST và ô SĐT phải lọc ĐỘC LẬP (2026-08-25)
+
+**User báo:** gõ `0` vào CẢ 2 ô "Mã số thuế" và "Số điện thoại" → ra 10.984 KH mà cột SĐT trống `—`.
+
+**Root cause — KHÁC hẳn Phase 11, không phải lỗi che SĐT:** các dòng đó là KH **TỔ CHỨC**
+(`customer_type` 2, 3) mà tổ chức thì không bao giờ bị mask. Tra DB: `15TPHPTA`, `67TANDKH-73`,
+`20TTHPPH-240` đều có `mobile = NULL` **thật** — khách thực sự không có SĐT.
+
+Lỗi nằm ở `elseif` trong `CustomerService::index()`:
+
+```php
+if ($request->filled('tax_code')) { ... }        // ô GỘP "MST/SĐT" của màn danh sách KH
+elseif ($request->filled('mobile')) { ... }      // ← chỉ chạy khi KHÔNG gõ MST
+```
+
+Gõ cả 2 ô → nhánh `tax_code` chạy, **ô SĐT bị bỏ qua hoàn toàn**. 10.984 dòng đó thực chất là
+"mọi KH có chữ số `0` trong MST **hoặc** trong SĐT", không liên quan gì tới ô Số điện thoại.
+
+Gốc sâu hơn: `tax_code` phục vụ **2 ngữ nghĩa đối nghịch** trên cùng 1 tham số —
+- màn danh sách KH: ô **GỘP** label "MST/SĐT" (`index.vue:553`), cố ý tìm lan sang `mobile`;
+- popup chọn KH: ô **RIÊNG** label "Mã số thuế", bên cạnh đã có ô SĐT riêng.
+
+### Quyết định user (2026-08-25)
+- Gõ cả 2 ô → áp **CẢ 2 điều kiện (AND)**;
+- Ô MST khớp từ **ĐẦU mã** (đồng bộ ô SĐT đã sửa Phase 10b), thay vì khớp giữa chuỗi.
+
+### BE
+- [x] `CustomerService::index()` — thêm nhánh cờ `tax_code_only` ĐỨNG TRƯỚC nhánh gộp:
+      `tax_code LIKE 'kw%'` (đầu mã) và `mobile LIKE ',kw%'` áp **song song, không `elseif`**.
+      Nhánh gộp cũ giữ NGUYÊN cho màn danh sách KH (đã verify SQL còn `or mobile like ?`).
+- [x] `CustomerService::applyHideMaskedMobile()` — khi có `tax_code_only` thì CHỈ đọc ô `mobile`
+      làm từ khoá SĐT (ô MST giờ là MST thuần, dùng làm escape hatch SĐT là sai).
+- [x] `CustomerService::index()` `$b2cExactPhone` — cùng lý do, bỏ `tax_code` khi có cờ.
+- [x] `CustomerListResource::matchesExactSearchedPhone()` — đồng bộ nốt, tránh mở khoá mask nhầm.
+
+### FE — 2 popup có ô MST riêng
+- [x] `ChooseErpCustomerModal.vue` — thêm `tax_code_only: 1`.
+- [x] `AddCustomer.vue` — thêm `&tax_code_only=1`.
+
+### Verify đã chạy
+`php -l` sạch 2 file BE · FE compile sạch (vue-template-compiler + babel).
+Chạy **nguyên luồng `index()` + `CustomerListResource`** với auth thật (`TpEmployee` id 61):
+
+| Kịch bản | Kết quả |
+| --- | --- |
+| POPUP — MST=`0` + SĐT=`0` (ca user báo) | **614 dòng**, trang 1 **0/10 dòng trống SĐT** |
+| POPUP — chỉ SĐT=`024` (ca Phase 11) | 176 dòng, 0/10 trống SĐT — không hồi quy |
+| POPUP — chỉ MST đầy đủ `0101234567` | 1 dòng |
+| POPUP — không gõ gì | 11.263 dòng — không siết |
+| SQL nhánh popup | 2 điều kiện nối **`and`**, binding `0101%` + `%,024%` — đúng AND + đầu mã/đầu số |
+| Hồi quy màn danh sách (KHÔNG cờ) | SQL vẫn `(tax_code like ? or mobile like ?)` — ô gộp NGUYÊN VẸN |
+
+### Checkpoint — 2026-08-25 (2)
+Vừa hoàn thành: Phase 12 — tách ngữ nghĩa ô MST giữa popup và màn danh sách (nhánh `gop_db`,
+CHƯA commit). File đụng: BE 2 (`CustomerService.php`, `CustomerListResource.php`) · FE 2
+(`ChooseErpCustomerModal.vue`, `AddCustomer.vue`).
+Đang làm dở: không có.
+Bước tiếp theo: **user mở trình duyệt nghiệm thu** — popup chọn KH, gõ `0` vào cả ô MST và ô SĐT
+→ không còn dòng nào cột SĐT trống; gõ riêng từng ô vẫn lọc đúng. Đạt thì mới commit.
+Blocked: không.
+
+⚠️ Ghi để sau khỏi tưởng bug: ô MST giờ khớp **đầu mã** ở popup. Ai quen gõ mảnh GIỮA mã số thuế
+để tìm sẽ thấy "không ra kết quả" — đó là chủ đích (user chốt), gõ từ đầu mã.
+
+---
+
+## Phase 13 — Bỏ hẳn "Người nộp" khỏi màn Đề nghị thu tiền (2026-08-25) @khoipv
+
+Chốt nốt câu hỏi treo từ Phase 10d ("ô lọc Người nộp có bỏ nốt không?") — **user chốt bỏ**.
+
+Phạm vi: **CHỈ màn Đề nghị thu tiền**. Màn Phiếu thu (`bill-incomes`) giữ nguyên "Người nộp tiền"
+ở cả bản in lẫn file Excel (user chốt 2026-08-25 khi được hỏi).
+
+📌 Màn Đề nghị thu tiền **không có chức năng xuất Excel** (đã rà: 17 màn Tài chính dùng
+`downloadExcel`, không có màn này) → phần "xuất Excel" của yêu cầu không có gì để sửa.
+
+- [x] **FE-1** `pages/finance/bill-income-requests/index.vue` — bỏ trường `payer` khỏi
+      `filterFields` (ô "Người nộp" ở tìm kiếm nâng cao) và khỏi `initialStateForm`.
+      Dùng chung cho cả màn CHỜ DUYỆT (`pending.vue` bọc chính file này).
+- [x] **FE-2** `pages/finance/bill-income-requests/_id/print.vue` — bỏ dòng "Người nộp tiền".
+- [x] **Verify** parse sạch bằng `vue-template-compiler` + `@babel/parser` (3 file: `index.vue`,
+      `print.vue`, `pending.vue`); grep lại màn này **không còn chỗ nào đọc `payer`** (chỉ còn
+      comment giải thích).
+
+### Ghi chú
+
+- Cấu hình bộ lọc đã lưu của user có chứa `payer` **không gây lỗi**: `V2BaseSmartFilterPanel`
+  `mergedFields()` bỏ qua key không còn trong schema (`return null` + `filter(Boolean)`).
+- **FE-3 (user báo ngay sau đó)** Khối thông tin bản in chia lệch **4 dòng trái / 2 dòng phải**:
+  "Lý do thu" để `grid-column: 1 / -1` nên chiếm trọn hàng cuối, cộng với ô trống do bỏ dòng
+  "Người nộp tiền". Bỏ span -> 6 ô chẵn, lưới 2 cột chia đều **3 dòng mỗi bên**:
+  trái (Người đề nghị · Loại thu · Trạng thái) — phải (Phòng ban · Loại tiền · Lý do thu).
+  📌 Thêm/bớt ô ở khối này phải giữ **tổng số ô CHẴN**, lẻ là lưới hụt 1 ô.
+- `filterStateMixin` giữ bộ lọc trong `localStorage` **10 phút** khi user bấm vào 1 phiếu rồi quay
+  lại; ai vừa gõ "Người nộp" trước đó có thể còn bị lọc ngầm tối đa 10 phút, sau đó tự hết.
+
+### Checkpoint — 2026-08-25 (3)
+Vừa hoàn thành: Phase 13 — bỏ hẳn "Người nộp" khỏi màn Đề nghị thu tiền (ô lọc + dòng trên bản in)
++ chia đều lại khối thông tin bản in (3 dòng mỗi cột). FE 2 file, BE 0 file, không migration.
+Đang làm dở: không.
+Bước tiếp theo: user mở màn danh sách + màn In 1 phiếu xem đã sạch chưa.
+Chưa kiểm chứng bằng mắt: chỉ parse template/script (theo thoả thuận không tự test Playwright).
+Blocked: không.
+
+📌 **Không đụng BE:** cột `bill_income_requests.payer` vẫn lưu (form ERP có ghi), Resource vẫn trả,
+criteria vẫn hiểu tham số `payer` — cần bật lại ô lọc thì chỉ thêm lại 1 khối trong `filterFields`.
