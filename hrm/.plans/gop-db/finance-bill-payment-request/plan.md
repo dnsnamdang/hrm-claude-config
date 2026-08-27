@@ -5046,3 +5046,52 @@ toán đang làm. Vẫn giữ chốt `partyChanged`: chọn lại ĐÚNG đối 
 `onCustomerEvent`), KHÔNG nằm trên đường nạp phiếu cũ — mở phiếu để sửa không bị xoá dòng.
 
 📌 Bảng xoá xong để **trống**, không tự thêm 1 dòng mới — giống hệt luồng đổi Loại chi hiện có.
+
+---
+
+## Phase 20 — Excel: ô tiền trở lại KIỂU SỐ, hết cảnh báo "formatted as text" (2026-08-26) @khoipv
+
+**User báo:** file Excel "nó bị lỗi is formatted as text" (tam giác xanh ở mọi ô tiền).
+
+**Nguồn cơn:** đúng cái giá đã đánh đổi ở quyết định **25/08** — `moneyText()` ghi ô tiền thành
+**chuỗi** kiểu Việt (`60.000`) để ép dấu chấm ngăn nghìn trên mọi máy. Excel thấy chuỗi trông như số
+nên gắn cảnh báo, và ô không SUM/lọc/pivot được.
+
+**User chốt 26/08 (đảo lại quyết định 25/08):** đổi về **ô SỐ thật** + `data-format`, chấp nhận dấu
+ngăn cách chạy theo Windows Regional Settings (máy đặt kiểu Anh sẽ hiện `60,000`).
+
+### Task
+
+- [x] BE-1: `BillPaymentRequestService::moneyText()` → `excelNumber()` trả **số thô** dấu chấm thập
+      phân (`60000`, `1234567.5`), khuôn `BillIncomePrintService::excelNumber()`.
+- [x] BE-2: Thêm `moneyFormat()` (mã cho 1 ô) + `moneyFormats()` (cả bảng); `exportTable()` trả thêm
+      `row_formats` + `total_formats` — mã định dạng **theo TỪNG Ô**: `#,##0` cho số nguyên,
+      `#,##0.##` cho số có phần lẻ, `''` cho ô `_`. Không dùng chung `#,##0.##` cho mọi ô vì số
+      nguyên bị hiện thừa dấu thập phân.
+- [x] BE-3: Blade `bill_payment_request.blade.php` — gắn `data-format` lên ô tiền (dòng chi tiết +
+      dòng Tổng cộng). **GIỮ** canh phải tay theo `money_columns`: ô `_` (cấp duyệt phiếu chưa đi
+      qua) vẫn là chuỗi, bỏ canh phải thì nó lệch hẳn khỏi cột số bên trên.
+- [x] BE-4: `BillPaymentRequestExport::bindValue()` — GIỮ binder (vẫn cần chặn `exchange_text` kiểu
+      `23.000` bị hiểu thành số 23), cập nhật docblock cho khớp quyết định mới. Số thô của ô tiền
+      không khớp `MONEY_TEXT` nên vẫn vào sheet đúng kiểu số.
+- [x] Verify: dựng file .xlsx thật + đọc lại bằng PhpSpreadsheet — mọi ô tiền là kiểu `n`, có mã
+      định dạng, và KHÔNG còn ô kiểu `s` mà nội dung khớp `/^-?[\d.,]+$/`.
+- [ ] Verify: user mở file Excel bằng Excel thật, xác nhận hết tam giác xanh + SUM cột tiền chạy.
+
+### Verify đã chạy
+
+`php -l` sạch 2 file BE. Dựng file thật 4 phiếu mới nhất (4197 · 4198 · 4199 · 4200 — đủ 3 nhánh
+bảng: VNĐ, ngoại tệ, ngoại tệ loại 12) rồi đọc lại bằng PhpSpreadsheet:
+
+| Phiếu | Cột | Kết quả đọc lại |
+| --- | --- | --- |
+| 4197 | 10 | mọi ô tiền `[n]` `#,##0` (`-3.240.324.324` … ) · drawings=1 |
+| 4198 | 8 | `[n]` `#,##0` (56546) và `[n]` `#,##0.##` (111961.08) · drawings=1 |
+| 4199 | 9 | 10 dòng chi tiết + Tổng cộng 16512112, tất cả `[n]` `#,##0` · drawings=1 |
+| 4200 | 8 | `[n]` `#,##0` (220, 0) và `#,##0.##` (62211.6) · drawings=1 |
+
+**Không phiếu nào còn ô kiểu `s` mà nội dung khớp `/^-?[\d.,]+$/`** → Excel hết cảnh báo
+"number formatted as text". Letterhead vẫn vào đủ (`drawings=1` cả 4 file).
+
+**Không đụng:** bản IN (`_id/print.vue` + `BillPaymentRequestPrintResource`) — vẫn `formatCurrency()`
+kiểu Việt như cũ. `detailRows()` (`number_format` ở lịch sử thay đổi) cũng giữ nguyên.
