@@ -163,6 +163,7 @@ Khối rỗng: `class="text-center py-5"` + `style="color: #9ca3af; font-style: 
                 {{ log.action_label || log.action || '—' }}
             </div>
             <div class="ho-timeline-actor">
+                <!-- actorText(log) = CHỈ TÊN, không ghép mã phòng — xem §7 -->
                 Người thực hiện: {{ actorText(log) }}
                 <span v-if="log.department_name"> — {{ log.department_name }}</span>
             </div>
@@ -191,29 +192,35 @@ Không có người thực hiện ghi `Hệ thống`; không có phòng ban thì
 ```vue
 <div v-if="log.changes && log.changes.length" class="mt-2">
     <div v-for="(c, ci) in log.changes" :key="ci" class="change-item">
-        <span class="change-field">{{ c.field }}:</span>
+        <!-- Khoá dạng bảng đã có nhãn riêng cho từng nhóm -> KHÔNG in thêm nhãn cột -->
+        <span v-if="!hasListChange(c)" class="change-field">{{ c.field }}:</span>
 
-        <!-- Khoá dạng danh sách/bảng: ~ sửa, - bỏ, + thêm -->
+        <!-- Khoá dạng danh sách/bảng: thêm mới -> đã xóa -> sửa thông tin -->
         <div v-if="hasListChange(c)" class="change-list">
-            <div v-for="(m, mi) in c.changed" :key="'m-' + mi" class="change-modified">
-                ~ {{ m.name }}:
-                <span v-for="(fc, fi) in m.fields" :key="'f-' + fi">
-                    {{ fc.field }}:
-                    <span class="change-old">{{ fc.old }}</span>
-                    <i class="ri-arrow-right-line mx-1 text-muted"></i>
-                    <span class="change-new">{{ fc.new }}</span>
-                    <template v-if="fi < m.fields.length - 1">; </template>
-                </span>
-            </div>
-            <div v-for="(v, vi) in c.removed" :key="'r-' + vi" class="change-old">- {{ v }}</div>
-            <div v-for="(v, vi) in c.added" :key="'a-' + vi" class="change-new">+ {{ v }}</div>
+            <template v-if="rowsOf(c, 'added').length">
+                <div class="group-label">{{ groupLabel(c, 'added') }}:</div>
+                <div v-for="(r, vi) in rowsOf(c, 'added')" :key="'a-' + vi" class="change-new"
+                >- <SiValue :text="r.name" @preview="openFilePreview" /><span v-if="r.detail" class="row-detail">— <SiValue :text="r.detail" @preview="openFilePreview" /></span></div>
+            </template>
+
+            <template v-if="rowsOf(c, 'removed').length">
+                <div class="group-label">{{ groupLabel(c, 'removed') }}:</div>
+                <div v-for="(r, vi) in rowsOf(c, 'removed')" :key="'r-' + vi" class="change-old"
+                >- <SiValue :text="r.name" @preview="openFilePreview" /><span v-if="r.detail" class="row-detail">— <SiValue :text="r.detail" @preview="openFilePreview" /></span></div>
+            </template>
+
+            <template v-if="c.changed && c.changed.length">
+                <div class="group-label">{{ groupLabel(c, 'changed') }}:</div>
+                <div v-for="(m, mi) in c.changed" :key="'m-' + mi" class="change-modified"
+                >- <SiValue :text="m.name" @preview="openFilePreview" />: <span v-for="(fc, fi) in m.fields" :key="'f-' + fi">{{ fc.field }}: <span class="change-old"><SiValue :text="fc.old" @preview="openFilePreview" /></span><i class="ri-arrow-right-line mx-1 text-muted"></i><span class="change-new"><SiValue :text="fc.new" @preview="openFilePreview" /></span><template v-if="fi < m.fields.length - 1">; </template></span></div>
+            </template>
         </div>
 
         <!-- Trường thường: cũ → mới -->
         <template v-else>
-            <span v-if="c.old" class="change-old">{{ c.old }}</span>
+            <span v-if="c.old" class="change-old"><SiValue :text="c.old" @preview="openFilePreview" /></span>
             <i v-if="c.old" class="ri-arrow-right-line mx-1 text-muted"></i>
-            <span class="change-new">{{ c.new || '(trống)' }}</span>
+            <span class="change-new"><SiValue :text="c.new" @preview="openFilePreview" /></span>
         </template>
     </div>
 </div>
@@ -225,7 +232,33 @@ hasListChange(change) {
 },
 ```
 
-Quy ước dấu và thứ tự in: **`~` (sửa) → `-` (bỏ) → `+` (thêm)`**.
+### 5a. Ba nhóm có NHÃN, không dùng dấu `~ - +`
+
+Khoá dạng bảng in theo thứ tự **thêm mới → đã xóa → sửa thông tin**, mỗi nhóm có một dòng nhãn xám
+lấy từ `added_label` / `removed_label` / `changed_label` do máy chủ trả (`CatalogHistoryService`
+quy tên cột số nhiều về số ít: "Danh sách thiết bị" → "Thiết bị thêm mới"). Dấu `~ - +` của bản cũ
+đã BỎ — người dùng nghiệp vụ không đọc được ký hiệu.
+
+### 5b. ⚠️ MỌI giá trị log phải đi qua `SiValue`, kể cả phần CHI TIẾT của dòng
+
+`components/assign/SystemInfoValue.vue` quét đường dẫn tệp bên trong chuỗi và đổi thành liên kết
+xem trước (chỉ hiện TÊN TỆP, không hiện cả URL). Có **6 vị trí** phải dùng: giá trị cũ/mới của
+trường thường · `r.name` và `r.detail` của dòng thêm · của dòng xóa · `m.name` và từng `fc.old` /
+`fc.new` của dòng sửa.
+
+Bỏ sót đúng một chỗ là ra lỗi đã dính thật: dòng "Thiết bị thêm mới" hiện nguyên
+`File đính kèm: https://tanphat.s3.cloud.cmctelecom.vn/...png` dài lê thê, trong khi dòng "Thiết bị
+sửa thông tin" ngay bên dưới lại hiện link gọn — cùng một tệp mà hai kiểu (2026-08-25). Nguyên
+nhân: `r.detail` in bằng `{{ }}` thô. Chuỗi chi tiết do máy chủ ghép từ NHIỀU cột
+(`rowParts()`: `"Serial: 12; File đính kèm: https://…"`) nên URL gần như luôn nằm ở `detail`, không
+phải `name`.
+
+### 5c. Xuống dòng trong mã = dòng trống thật
+
+`.change-old` / `.change-new` dùng `white-space: pre-line`, nên nội dung mỗi dòng phải viết
+**liền mạch trên một dòng mã** (xem cách đóng thẻ `>` ở đầu dòng trong khối trên). Ngắt dòng cho
+đẹp mã là màn hình mọc thêm dòng trống giữa các mục.
+
 Giá trị trống in `(trống)`. Nhiều trường trong 1 bản ghi sửa ngăn bằng `; `.
 
 ## 6. Bảng màu + kích thước (không đổi tuỳ hứng)
@@ -258,7 +291,7 @@ Màu chấm + màu tên hành động lấy từ `action_color` BE trả — **k
 | Placeholder lọc | `Tất cả loại hành động` · `Tất cả người thực hiện` · `Từ ngày` · `Đến ngày` |
 | Nút trong thanh lọc | `Tìm kiếm` (primary) · `Làm mới` (tertiary) |
 | Nút đóng | `Đóng` (tertiary, icon `fas fa-arrow-left`) |
-| Dòng người thực hiện | `Người thực hiện: <mã> - <tên> — <phòng ban>` |
+| Dòng người thực hiện | `Người thực hiện: <tên> — <phòng ban>` — **KHÔNG ghép mã phòng** vào trước tên (chốt 2026-08-25): phòng ban đã in ngay bên cạnh, ghép thêm mã là lặp lại chính thông tin đó. Ô lọc "Người thực hiện" thì VẪN giữ `MÃ PHÒNG - Tên` vì ở đó không có cột phòng ban nào khác |
 | Không xác định người | `Hệ thống` |
 | Giá trị trống | `(trống)` |
 
@@ -270,6 +303,8 @@ Màu chấm + màu tên hành động lấy từ `action_color` BE trả — **k
 | Thêm 1 tài khoản → in lại cả người liên hệ ở `-` và `+` | Tách bảng con thành khoá riêng, chỉ 1 dòng `+` |
 | Sắp xếp cũ → mới | Mới nhất lên đầu, cả popup lẫn màn chi tiết |
 | Thời gian để cuối mục | Thời gian ở ĐẦU mục |
-| Hardcode danh sách "Loại hành động" | Dựng từ chính log đang có |
+| Suy danh sách "Loại hành động" từ log đang tải | Đúng **3 nhóm cố định** ở mọi màn (SKILL.md §0a) |
+| In `r.detail` / `m.name` bằng `{{ }}` thô | Cho **mọi** giá trị qua `SiValue` — nếu không, tệp đính kèm ra URL thô (§5b) |
+| Dùng dấu `~ - +` | Ba nhóm có **nhãn chữ**: thêm mới / đã xóa / sửa thông tin (§5a) |
 | Lọc ngày theo `created_at` (`d/m/Y H:i`) | Lọc theo `created_at_raw` (`Y-m-d …`), cắt 10 ký tự |
 | `V2BaseSelect` trong popup | `V2BaseSelectInModal` (dùng được cả trong và ngoài modal) |

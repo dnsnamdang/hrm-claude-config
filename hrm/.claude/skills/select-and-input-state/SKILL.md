@@ -120,6 +120,49 @@ Giá trị đã chọn ở select `multiple` (`V2BaseSelect` / `V2BaseSelectInMo
 
 ---
 
+## 2b. Select chọn NHIỀU mất sạch lựa chọn khi tích cái thứ hai (chốt 2026-08-27)
+
+Triệu chứng: ô chọn-nhiều, tích lỗi/mục thứ nhất thì được, tích tiếp cái thứ hai là **trắng bảng** —
+cả chip lẫn giá trị trong `v-model` đều về rỗng. Không có lỗi nào trong bảng điều khiển.
+
+**Nguyên nhân:** `V2BaseSelect` / `V2BaseSelectInModal` mặc định lọc option đã khoá **dựa trên chính
+giá trị đang chọn**:
+
+```js
+visibleOptions() {
+    if (this.keepLockedOptions) return this.options || []
+    return filterUnusedLockedOptions(this.options, this.currentValue)   // <-- phụ thuộc currentValue
+}
+```
+
+Với ô chọn MỘT thì vô hại. Với ô chọn NHIỀU, mỗi lần tích thêm là `currentValue` đổi → `visibleOptions`
+tính ra **mảng mới** → `select2Options` mới → select2 dựng lại và **mất lựa chọn đang có**.
+
+**Cách xử lý:** truyền `keep-locked-options` khi danh mục **không thể chứa bản ghi đã khoá** — ví dụ
+máy chủ đã lọc `status = 1` trước khi trả về (chỗ chọn mới thì không được phép chọn bản ghi khoá,
+xem mục 1). Còn ô ở màn Sửa cần giữ giá trị khoá cũ thì **không** dùng cờ này; phải tìm cách khác.
+
+```vue
+<V2BaseSelectInModal
+    :key="`err-${row.id}-${(row.options || []).length}`"
+    v-model="row.ids"
+    :options="row.options || []"
+    :extraSettings="{ multiple: true }"
+    keep-locked-options
+/>
+```
+
+Hai điểm đi kèm, thiếu một là hỏng lại:
+
+- **`extraSettings`, KHÔNG phải thuộc tính `multiple` trần.** Component đọc cấu hình từ đây;
+  khai `multiple` như attribute thì ô vẫn ở chế độ chọn MỘT, im lặng không báo gì.
+- **Options gắn THẲNG vào dòng** (`row.options`), đừng gọi hàm tra cứu trong template: hàm trả mảng
+  mới mỗi lần render, y hệt hậu quả trên.
+
+⚠️ **Bẫy khi TEST bằng script:** select2 chọn-nhiều vẫn liệt kê cả option ĐÃ CHỌN, và click lại
+chính nó là **bỏ chọn**. Kịch bản click `nth=0` hai lần sẽ tự bỏ đúng thứ vừa chọn rồi báo "mất dữ
+liệu" — chọn theo **tên** khác nhau, đừng chọn theo vị trí.
+
 ## 3. Ô nhập liệu bị KHOÁ (disabled / readonly) — một kiểu duy nhất
 
 | Thuộc tính | Giá trị |
@@ -177,6 +220,42 @@ Khi viết component mới có ô nhập: **cấm** đặt `border-color: #16a34
 
 ---
 
+## 4b. Ô nhập CHỈ CHO SỐ — dùng rule chung, ĐỪNG tự lọc ký tự
+
+**Cách đúng là `v-validate` với rule có sẵn** (`positive_integer`, `integer`, `number_only`… trong
+`plugins/vee-validate.js`) + `V2BaseError`: người dùng gõ chữ thì thấy viền đỏ và câu báo chuẩn của
+hệ thống, giống mọi màn khác. Cách gắn cho ô nằm trong bảng, và cái bẫy khiến `validateAll()` bỏ
+qua ô đó: xem `form-validate` mục 3c.
+
+Rule ĐỊNH DẠNG phải chặn cả ở nút **Lưu nháp** và phải có **rule tương ứng ở BE** — `form-validate`
+mục 1.
+
+### Vì sao đừng tự lọc ký tự trong `@input`
+
+Cách hay bị viết đầu tiên là lọc rồi ghi ngược lại:
+
+```js
+// KHÔNG dùng: dữ liệu sạch nhưng MÀN HÌNH vẫn hiện chữ
+setDays(row, value) { this.$set(row, 'time_to_has', String(value).replace(/\D/g, '')) }
+```
+
+`V2BaseInput` render `:value="currentValue"`. Gõ `1` rồi `a` thì chuỗi lọc ra vẫn là `"1"` — **prop
+không đổi → Vue không render lại → ký tự `a` vẫn nằm nguyên trên ô**. Người dùng nhìn vào chỉ thấy
+"vẫn nhập được chữ, chưa validate gì cả" (Redmine #11240). `$forceUpdate()` ở cha cũng không cứu:
+con chỉ render lại khi prop đổi.
+
+Bẫy phụ khiến dễ báo nhầm "đã fix": **gán/dán cả chuỗi một lần thì lại đúng** (`abc123` → `123`, vì
+giá trị đổi từ `""` sang `"123"` nên Vue có patch). Chỉ **gõ tuần tự từng ký tự** mới lộ:
+
+```js
+await page.locator('input[...]').pressSequentially('1abc2')   // Playwright, slowly: true
+```
+
+Chặn cứng bằng `@keypress` + `@paste` thì dữ liệu sạch thật, nhưng ô im lặng không nhận phím —
+người dùng không hiểu vì sao. Chỉ dùng khi có lý do riêng, và vẫn phải kèm rule ở BE.
+
+---
+
 ## 5. FE mới + BE cũ — luôn có đường lùi
 
 Trên môi trường thật, FE và BE **không phải lúc nào cũng deploy cùng lúc**. Code FE dùng trường/endpoint mới phải chạy được cả khi BE chưa cập nhật, nếu không màn sẽ "trống trơn" mà không có lỗi nào hiện ra.
@@ -212,6 +291,8 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Select đi qua wrapper tự khai `templateResult` → đã tự gắn `LOCKED_OPTION_PREFIX`
 - [ ] Ô disabled: nền `#f1f5f9`, chữ `#475569`, không `opacity`, không bấm được (kể cả ô dựng bằng `<div>`)
 - [ ] Focus ô nhập: không viền xanh, không quầng sáng
+- [ ] Ô "chỉ cho số": gõ chữ → hiện lỗi đỏ chuẩn hệ thống; bấm **Lưu nháp** vẫn bị chặn; gọi thẳng
+      API với giá trị chữ thì BE trả 422 (mục 4b + `form-validate` mục 1, 3c)
 
 ## Select chọn NHIỀU có tới 2 ô tìm — phải focus ô TRONG DROPDOWN
 

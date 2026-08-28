@@ -150,7 +150,7 @@ Row 18+: Data — section "Phân quyền & truy cập" (nếu có), sau đó sec
 
 ### Sections nghiệp vụ — đánh số La mã
 ```
-I.   HIỂN THỊ TRANG & TRUY CẬP
+I.   HIỂN THỊ TRANG & TRUY CẬP   (gồm cả các LỐI VÀO khác nhau của màn — xem mục dưới)
 II.  BỘ LỌC & TÌM KIẾM
 III. DANH SÁCH, SẮP XẾP & PHÂN TRANG
 IV.  CHỨC NĂNG CHÍNH (TẠO / SỬA / XEM)
@@ -165,6 +165,33 @@ X.   E2E FLOW
 - Bỏ section không áp dụng; thứ tự giữ nguyên
 - ⚠️ Đặt tên section bằng ngôn ngữ nghiệp vụ: dùng "RÀNG BUỘC NHẬP LIỆU" thay cho
   "EDGE CASES & VALIDATION"
+
+### Bắt buộc: test ĐỦ CÁC LỐI VÀO của màn (chốt 2026-08-26)
+
+Nhiều màn có **một đường dẫn nhưng nhiều mục menu trỏ vào**, khác nhau ở query string, mỗi lối vào
+ra một danh sách khác hẳn: không kèm gì (chỉ phiếu của mình) · `?type=all` (theo phạm vi quyền) ·
+`?type=waiting_handle` / `?type=waiting_information` / `?type=waiting_create_quotation` (việc đang
+chờ chính mình hoặc phòng mình). ⚠️ Màn Báo giá dịch vụ đặt tên tham số là `permission`, không phải
+`type`.
+
+Chỉ test một lối vào là bỏ lọt cả một màn nghiệp vụ. Trong section **I. HIỂN THỊ TRANG & TRUY CẬP**
+phải có, cho MỖI lối vào:
+
+| TC | Nội dung |
+| --- | --- |
+| Mở đúng lối vào | Đếm số bản ghi đúng phạm vi lối vào đó; tiền điều kiện ghi rõ số liệu (vd "tài khoản A lập 6 phiếu, phòng A quản lý 12 phiếu") |
+| Đổi bộ lọc rồi mở lối vào khác | Đường link phải THẮNG bộ lọc lần trước, không được giữ phạm vi cũ |
+| Bấm "Làm mới" | Xoá điều kiện lọc nhưng **giữ nguyên phạm vi** đang xem |
+| Sửa tay tham số trên thanh địa chỉ thành giá trị lạ | Hệ thống bỏ qua, quay về phạm vi mặc định — KHÔNG lỗi, KHÔNG lộ thêm dữ liệu |
+| Tài khoản không có quyền xem theo cấp mở lối vào "xem tất cả" | Vẫn chỉ thấy phiếu của chính mình (đường link là cách xem, không phải cấp quyền) |
+
+**Lấy danh sách lối vào ở đâu**: đếm từ menu ERP (`topmenubar.blade.php`) và các nhánh
+`if ($request->type == ...)` trong `searchByFilter()` — đừng suy từ tên màn.
+
+**Ra số liệu mong đợi mà không đoán**: ERP và hệ thống mới chạy trên CÙNG một cơ sở dữ liệu ở máy
+phát triển, nên đếm được cả hai bên với cùng một người dùng rồi so từng lối vào. Lệch thì phải truy
+nguyên trước khi viết vào cột kết quả mong đợi — đã có lần lệch hoá ra do **quyền chưa được cấp**
+bên hệ thống mới chứ không phải logic sai.
 
 ### TC ID
 - Section La mã: `TC_{section:02d}.{tc:03d}` — `TC_01.001`, `TC_02.015`
@@ -280,6 +307,7 @@ except Exception: pass
 - [ ] **Expected Result kiểm chứng được**, bẫy có gắn `⚠️`
 - [ ] K/L/M default `Not Executed` + dropdown; O/P/Q để trống + dropdown
 - [ ] P0 ≥ 40% tổng TC
+- [ ] **Có TC cho ĐỦ mọi lối vào của màn** (mỗi `?type=` / `?permission=` một bộ TC), gồm cả giá trị lạ và tài khoản thiếu quyền
 - [ ] Mỗi business rule có ≥ 1 TC
 - [ ] **Không trùng TC ID** (assert trong generator)
 - [ ] **KHÔNG** dùng freeze_panes

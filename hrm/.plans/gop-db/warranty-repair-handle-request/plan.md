@@ -313,3 +313,27 @@ KHÔNG phải sửa component dùng chung.
 Đã kiểm trên giao diện: nút và popup ra đúng chữ; bấm Hủy nên không đổi trạng thái phiếu thật.
 Blocked:
 - [x] Sửa focus ô tìm của select CHỌN NHIỀU (cột Nguyên nhân): trước đây focus rơi vào ô inline trong khung tag thay vì ô tìm trong dropdown — sửa ở `utils/select2-focus-search.js` (ưu tiên ô trong dropdown), quy ước ghi ở skill `select-and-input-state`
+
+## Bản in danh sách: hiện phạm vi phòng ban đang lọc (user chốt 2026-08-25)
+Trước: cả 3 bản in danh sách của luồng đều để trống dòng phòng ban (`PHONG_YEU_CAU => ''`, y như ERP)
+-> người cầm tờ in không biết đây là danh sách của cả công ty hay của riêng một phòng.
+- [x] Cả 3 print service nhận thêm `$departmentId`: không lọc -> **"Tất cả"**, có lọc -> **tên phòng** (đồng nhất cách hiển thị với ô Thời gian đã có sẵn)
+- [x] 3 controller truyền `department_id` từ bộ lọc sang
+- [x] **Đổi nhãn mẫu in 276** (Danh sách phiếu xử lý): "Phòng yêu cầu" -> **"Phòng xử lý yêu cầu"**. Nhãn cũ sai nghĩa: ô lọc của màn này so với phòng của NGƯỜI LẬP PHIẾU XỬ LÝ, không phải phòng yêu cầu
+  - ⚠️ `report_templates` **dùng chung với ERP** (ERP đọc đúng bản ghi 276) -> bản in bên ERP cũng đổi chữ theo; giá trị bên đó vẫn để trống như cũ nên không sai lệch thêm
+  - Đã sao lưu bản cũ: `storage/app/backup_report_template_276.html`. Việc sửa nằm ở DỮ LIỆU, không có trong repo -> môi trường khác phải chạy lại tay
+- [x] Giữ nhãn "Phòng yêu cầu" ở mẫu 278 (chứng từ 1, lọc theo phòng người lập phiếu yêu cầu) và mẫu 275 (chứng từ 3, lọc theo phòng người yêu cầu) — 2 chỗ này nhãn vốn đã đúng
+
+Ngữ nghĩa ô lọc "Phòng ban" của 3 màn (dễ nhầm, ghi lại để khỏi tra lại):
+
+| Màn | Lọc theo phòng của |
+| --- | --- |
+| Yêu cầu kiểm tra SC–BH | người lập phiếu yêu cầu |
+| Phiếu xử lý yêu cầu | người lập phiếu xử lý |
+| Phiếu cung cấp thông tin | **người yêu cầu** (người lập phiếu ở bước 1) |
+
+- [x] Verify cả 3 màn × 2 trạng thái (không lọc / lọc phòng 5): nhãn và giá trị đều đúng
+
+### Fix lỗi validate bám sai dòng khi xoá/thêm dòng trong bảng (2026-08-25)
+- [x] Thêm `utils/rowFieldErrors.js` (`removeRowErrors` / `dropRowErrorsFrom` / `clearRowErrors`) — dọn khoá lỗi 422 gắn chỉ số dòng (`products.2.serial`) mỗi khi mảng dòng đổi
+- [x] Áp vào chỗ xoá / thêm / chuyển dòng của form màn này; đổi khách hàng (xoá cả bảng) thì xoá hết lỗi của bảng

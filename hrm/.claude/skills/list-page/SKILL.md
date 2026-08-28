@@ -342,6 +342,12 @@ TUYỆT ĐỐI không tự chép lại cặp `topScroll` / `tableWrapper` cho t�
 này pattern đã bị copy-paste ở 4 nơi (`V2BaseDataTable`, `ChooseErpCustomerModal`,
 `SolutionVersionsTable`, `QuotationProductSearchModal`), mỗi nơi một tên class khác nhau.
 
+⚠️ **Bẫy: thanh cuộn TRÊN bị bóp còn ~3px, rê chuột không trúng** (đã trả giá 2026-08-24). Khối
+thanh trên không có nội dung thật (ruột chỉ cao 1px để tạo bề ngang) nên **tự co**; nếu thẻ bọc
+lại được dựng thành cột flex (popup cho bảng co theo chiều cao) thì nó **còn bị co thêm** — đo được
+2.8px trong khi thanh dưới 6px. Component đã chốt sẵn `height: 8px` + `flex: 0 0 auto`; **đừng gỡ
+2 dòng đó**, và khi tự dựng thanh cuộn tương tự ở chỗ khác thì phải khai đủ cả 2.
+
 💡 Bọc `V2BaseTableScroll` cũng **bỏ luôn class `.table-responsive`** → thoát rule global
 `.table-responsive { min-height: 50vh }` của `assets/scss/default.scss` vốn kéo bảng vài dòng trong
 form lên hơn 400px.
@@ -364,6 +370,39 @@ Dùng màu xám chuẩn thay vì `.text-muted`:
 ```
 
 Tự kiểm: `getComputedStyle(el).color` phải KHÁC `rgb(220, 53, 69)`.
+
+---
+
+## 3b-3. Ô KHÔNG có dữ liệu thì để TRỐNG — cấm chèn dấu gạch ngang (chốt 2026-08-24)
+
+Ô rỗng để **trống hẳn**. KHÔNG chèn `—`, `-`, `N/A`, `(không có)`… — dấu gạch ngang trông như một
+giá trị thật, và mỗi màn chèn một kiểu thì bảng nhìn rất bẩn.
+
+```vue
+<!-- SAI -->  <div class="field-line">{{ item.reason || '—' }}</div>
+<!-- ĐÚNG --> <div class="field-line">{{ item.reason }}</div>
+```
+
+Rà **đủ 5 nơi**, không chỉ màn danh sách — đây là chỗ đã sót 2 lần (Redmine #11171):
+
+1. Màn danh sách
+2. **Màn chi tiết / form** (kể cả component dùng chung của màn đó — vd tab Trang thiết bị, tab Tài liệu)
+3. **Popup** (chọn hợp đồng, chi tiết dòng, đính kèm…)
+4. **Bản in / file xuất**
+5. **BE Resource** — có nơi máy chủ trả sẵn `'—'` (`'currency_text' => $item->currency_code ?: '—'`), FE có sạch cũng vô ích
+
+Hàm trả giá trị hiển thị thì trả **chuỗi rỗng**, đừng bỏ luôn toán tử:
+`return detail[column.key] || ''` (bỏ hẳn `|| …` có thể in ra `undefined`).
+
+**Tự kiểm** — phải RỖNG:
+
+```bash
+grep -rn "'—'\|\"—\"\|>—<" pages/<màn>/ components/<component-của-màn>/
+grep -rn "'—'" Modules/<Module>/Transformers/
+```
+
+Ngoại lệ đúng nghĩa: chữ **"(trống)"** trong popup Lịch sử thay đổi — ở đó nó mang nghĩa "trường
+này trước/sau khi sửa không có giá trị", không phải ô trống của bảng.
 
 ---
 
@@ -448,6 +487,174 @@ Quy tắc kèm theo:
 - **Mức độ ưu tiên là thang RIÊNG**, không trộn vào 9 nhóm này:
   Thấp `#94A3B8` → Trung bình `#F59E0B` → Cao `#F97316` → Khẩn cấp `#DC2626`.
 
+## 3d. MỘT màn vào được từ NHIỀU LINK — mỗi link một phạm vi dữ liệu (chốt 2026-08-26)
+
+Rất nhiều màn của ERP có **cùng một đường dẫn nhưng nhiều mục menu trỏ vào**, khác nhau ở query
+string, và mỗi mục xem một phạm vi dữ liệu khác hẳn:
+
+```
+/customer-care/warranty_repair_requests                     -> chỉ phiếu của mình
+/customer-care/warranty_repair_requests?type=all            -> gate 3 cấp quyền
+/customer-care/warranty_repair_requests?type=waiting_handle -> phiếu chờ CHÍNH PHÒNG mình xử lý
+/customer-care/service_quotations?permission=all            -> ⚠️ màn báo giá đặt tên tham số là `permission`
+```
+
+Port sang HRM phải giữ nguyên khả năng này, nếu không mọi lối vào đều ra cùng một danh sách và
+người dùng mất hẳn màn "việc của tôi".
+
+**Khuôn bắt buộc** (4 màn luồng dịch vụ + màn báo giá đang chạy theo đúng khuôn này):
+
+```js
+mounted() {
+    const savedState = this.loadFilterState()
+    if (savedState) { this.filters = mergeKnownFilters(initialStateForm, savedState.filter) }
+    // ⚠️ Áp query SAU khi nạp bộ lọc đã lưu -> đường link THẮNG bộ lọc lần trước
+    this.applyQueryType()
+    this.oldFilters = JSON.parse(JSON.stringify(this.filters))
+    this.loadData()
+},
+methods: {
+    /** Whitelist đúng những giá trị máy chủ hiểu; giá trị lạ thì bỏ qua và giữ mặc định. */
+    applyQueryType() {
+        const type = this.$route.query.type || this.$route.query.permission
+        if (['index', 'all', 'waiting_handle'].includes(type)) this.filters.type = type
+    },
+},
+async handleReset() {
+    // "Làm mới" là xoá điều kiện lọc, KHÔNG đổi phạm vi đang xem
+    const currentType = this.filters.type
+    this.filters = { ...initialStateForm, type: currentType }
+    ...
+},
+```
+
+4 điểm dễ sai:
+
+1. **Thứ tự**: nạp bộ lọc đã lưu TRƯỚC, áp query SAU. Ngược lại thì mở link `?type=all` vẫn ra
+   phạm vi của lần trước — lỗi rất khó thấy vì chỉ xảy ra với người đã từng đổi bộ lọc.
+2. **Whitelist, không truyền thẳng**: tham số này quyết định phạm vi dữ liệu, đừng đẩy nguyên thứ
+   người dùng gõ trên thanh địa chỉ xuống máy chủ. Giá trị lạ → giữ mặc định (đã thử `?type=xoa-het-du-lieu`
+   → vẫn gửi `all`).
+3. **"Làm mới" giữ phạm vi**: nút đó xoá điều kiện lọc, không phải đưa người dùng về màn khác.
+4. **Tên tham số theo ĐÚNG màn ERP tương ứng**: phần lớn màn dùng `type`, riêng màn Báo giá dịch vụ
+   dùng `permission`. Nhận cả hai làm bí danh cho người quen copy link ERP cũ.
+
+Máy chủ vẫn phải tự gate quyền theo phạm vi (`applyScope()`); query chỉ là *chọn cách xem*, không
+phải *cấp quyền* — người không có quyền xem theo cấp mà mở `?type=all` thì vẫn chỉ thấy phiếu của
+chính mình.
+
+### 3d-2. ⚠️ MẶC ĐỊNH khi vào route TRẦN thường là "chỉ bản ghi của mình", không phải "tất cả"
+
+Đây là chỗ dễ port sai nhất của mục 3d, và **sai thì không lộ ra ngay**: hai lối vào vẫn mở đúng
+màn, chỉ là cho ra cùng một danh sách trong khi ERP cho hai kết quả khác hẳn.
+
+Controller ERP thường gán mặc định ngay đầu hàm:
+
+```php
+$type = $request->type ?? 'index';        // WarrantyRepairRequestsController
+$permission = $request->permission ?? 'index';   // WarrantyRepairInformationRequestsController
+```
+
+và nhánh `index` trong `searchByFilter()` gần như luôn là `where('created_by', auth()->id())` —
+**chỉ bản ghi do chính mình lập**. Nhánh `all` mới là nhánh gate theo 3 cấp quyền.
+
+**Cách tra cho đúng, đừng đoán:**
+
+```bash
+# 1. ĐẾM ĐỦ mục menu trỏ vào màn — thường KHÔNG chỉ một
+grep -n "route('<tenRoute>.index')" resources/views/layouts/topmenubar.blade.php
+# 2. Mục nào có `?type=` / `?permission=`, mục nào vào ROUTE TRẦN
+# 3. Đọc mặc định ở controller (`?? 'index'`) và nhánh tương ứng trong searchByFilter()
+```
+
+Đã dính thật 2026-08-27: bản port đầu đọc thấy 2 mục có `?type=all` rồi kết luận "menu luôn trỏ
+`all`", bỏ sót 2 mục vào route trần ở nhóm menu khác. Hậu quả: cả 4 màn của luồng dịch vụ để mặc
+định `all`, vào từ Bán hàng vẫn thấy toàn bộ phiếu của công ty thay vì chỉ phiếu của mình.
+
+**Sửa phải làm ĐỦ BA nơi**, thiếu một là không đổi gì:
+1. **Máy chủ**: `$request->get('type', self::SCOPE_MINE)` — mặc định là `index`.
+2. **Giao diện — bộ lọc khởi tạo**: `const initialStateForm = { type: 'index', … }`. Để `'all'` ở
+   đây thì màn **luôn gửi `type=all`** lên, sửa máy chủ xong vẫn y nguyên.
+3. **Menu**: mục nào ERP có tham số thì HRM phải có đúng tham số đó.
+
+**Tên tham số không thống nhất giữa các màn** (`type` ở phiếu yêu cầu / phiếu xử lý / phiếu bảo
+hành, `permission` ở phiếu cung cấp thông tin và báo giá) → `applyQueryType()` nhận **cả hai**:
+
+```js
+const type = this.$route.query.type || this.$route.query.permission
+```
+
+**Tự kiểm bằng SỐ, không nhìn bằng mắt** — hai lối vào phải ra hai con số khác nhau, và số của
+nhánh mặc định phải bằng đúng `COUNT(*) WHERE created_by = <mình>`:
+
+```bash
+curl -s -H "Authorization: Bearer $TK" "<api>?limit=1"           # -> 6
+curl -s -H "Authorization: Bearer $TK" "<api>?limit=1&type=all"  # -> 5.371
+```
+
+### 3d-1. Màn nằm ở HAI phân hệ khác nhau — thanh bên phải giữ nguyên nơi người dùng đang đứng
+
+Không chỉ nhiều link, một màn còn có thể nằm trong menu của **hai phân hệ**: "Yêu cầu kiểm tra sửa
+chữa - bảo hành" và "Phiếu cung cấp thông tin" vừa thuộc CSKH, vừa thuộc nhóm Bán dịch vụ của Bán
+hàng (đúng như ERP).
+
+⚠️ **Bẫy:** `findSubsystemByLink()` chọn phân hệ có link khớp **dài nhất**. Hai phân hệ cùng khai
+một link thì độ dài **bằng nhau**, code cũ dùng `length > winnerLength` nên giữ phân hệ **đứng
+trước trong mảng `SUBSYSTEMS`** — thứ tự khai báo, hoàn toàn tình cờ. Hậu quả người dùng thấy: đang
+ở CSKH, bấm mục trong menu CSKH thì **thanh bên nhảy sang Bán hàng**, mất ngữ cảnh đang làm.
+
+Quy tắc đã chốt (2026-08-26) — **giữ menu người dùng đang dùng**. Khi hoà, ưu tiên theo thứ tự:
+
+1. **phân hệ đang làm việc**, nhớ trong `sessionStorage` (`active_subsystem_key`) — vào từ CSKH thì
+   ở lại CSKH, vào từ Bán hàng thì ở lại Bán hàng;
+2. **phân hệ có slug khớp đoạn đầu đường dẫn** — mở bằng link dán tay / tab mới thì về đúng nhà;
+3. thứ tự khai báo (giữ hành vi cũ).
+
+2 điều kiện bắt buộc của cách nhớ này:
+
+- **Chỉ ghi nhớ khi đường dẫn thuộc DUY NHẤT một phân hệ.** Để màn dùng chung tự ghi nhớ là mở nó
+  một lần rồi mọi màn dùng chung sau đó bị kéo theo phân hệ vừa đoán.
+- **`sessionStorage` chứ không phải `localStorage`**: nhớ qua F5 nhưng không lây sang tab khác — tab
+  mới mở bằng link dán tay phải suy lại từ chính đường dẫn đó.
+
+Thêm mục menu cho một màn đã có ở phân hệ khác thì **kiểm cả hai lối vào** trước khi báo xong:
+vào từ phân hệ A → thanh bên phải là A; vào từ B → là B; xoá `sessionStorage` rồi mở thẳng đường
+dẫn → về phân hệ theo slug.
+
+## 3e. Màn danh sách chậm — đo trước, và ngó INDEX trước tiên (chốt 2026-08-26)
+
+Màn danh sách treo 10-15 giây gần như luôn là **thiếu index**, không phải "dữ liệu nhiều".
+
+**Cách truy nguyên (đừng đoán):**
+
+```bash
+# 1. Đo API, so các lối vào với nhau — lệch nhau chục lần là biết ngay chỗ hỏng
+curl -s -o /dev/null -w "%{time_total}s\n" -H "Authorization: Bearer $TK" "<api>?type=all"
+curl -s -o /dev/null -w "%{time_total}s\n" -H "Authorization: Bearer $TK" "<api>?type=waiting_xxx"
+```
+
+```php
+// 2. Tách tầng: chậm ở truy vấn hay ở Resource?
+$t = microtime(true); $p = $svc->list($req);            printf("list  %.2fs\n", microtime(true)-$t);
+$t = microtime(true); XxxResource::collection($p)->response(); printf("res   %.2fs\n", microtime(true)-$t);
+
+// 3. Chậm ở truy vấn -> soi index của MỌI cột dùng trong where / whereColumn
+DB::select("SHOW INDEX FROM `$bang` WHERE Column_name = ? AND Seq_in_index = 1", [$cot]);
+```
+
+Đã bắt được theo đúng cách này: màn Phiếu cung cấp thông tin, lối vào "chờ làm báo giá" **14,7s →
+0,24s** sau khi thêm index cho cột nối của 2 bảng con dùng trong `EXISTS`.
+
+**Ba điều cần nhớ khi thêm index:**
+
+- Cột nối của **mọi bảng con** dùng trong `whereExists` / `whereHas` phải có index. Thiếu là mỗi
+  dòng cha quét trọn bảng con — càng nhiều dòng cha càng chậm theo cấp số nhân.
+- Cột lọc chỉ có vài giá trị (`type`, `status`) đánh index đơn gần như vô dụng → đánh **index ghép**
+  theo đúng thứ tự truy vấn lọc (`(type, status)`).
+- **Tên index phải tự đặt, rút gọn.** Tên mặc định `<bảng>_<cột>_index` vượt trần 64 ký tự của MySQL
+  với bảng tên dài (`wr_service_quotation_extend_products_wr_service_quotation_id_index` = 66 ký
+  tự) → "Identifier name is too long". Và migration DDL **không bọc `DB::transaction`**.
+
 ## 4. Thứ tự cột + cột ghim trái
 
 `[cột khoá: STT → Mã → Tên] → [các cột dữ liệu theo cấu hình user] → [Người tạo] → [Ngày tạo] → [Trạng thái] → [Hành động]`
@@ -521,6 +728,27 @@ Nếu màn có modal "Cấu hình cột hiển thị" và cột Người tạo t
    ⚠️ **Bảng KHÔNG có cột mã → để tiêu đề TRẦN, không lấy tên thay thế.** Tên bản ghi thường dài
    (`Chi tiết công việc / lỗi thiết bị: Hiệu chỉnh cảm biến cân trọng lượng bệ kiểm tra phanh xe tải`)
    → tiêu đề trang và tên tab lê thê mà chẳng giúp định danh nhanh hơn. Chỉ ghép `: <mã>` khi **có mã**.
+
+1b. **Trạng thái ĐANG TẢI + không có quyền xem** (chốt 2026-08-24):
+
+   - **Chỉ báo đang tải**: gọi `this.$safeLoadingStart()` / `this.$safeLoadingFinish()`
+     (`plugins/safe-loading.js`), **KHÔNG gọi thẳng `this.$nuxt.$loading`**. Hai lý do đều đã trả giá:
+     - `$nuxt.$loading` **chỉ chạy khi CHUYỂN ROUTE**. Vào thẳng đường dẫn chi tiết (F5, dán link,
+       mở tab mới) thì **không hiện gì**, user nhìn form rỗng tưởng phiếu không có dữ liệu.
+     - `loadDetail()` thường chạy từ `created` (watcher `id` có `immediate: true`), lúc đó
+       `$nuxt.$loading` chưa sẵn sàng → `start()` ném lỗi, **nhảy thẳng vào `catch`, API chi tiết
+       không bao giờ được gọi**, màn trắng mà không có lỗi nào trên giao diện.
+
+     Helper ghi vào Vuex `store/loading` trước rồi mới thử `$nuxt.$loading`, nên overlay
+     `components/LoadingBar.vue` mount sau vẫn đọc được. Đặt `finish` trong `finally`.
+
+     Cũng KHÔNG phủ thêm lớp chữ "Đang tải…" lên form — đã có chỉ báo dùng chung rồi thì thôi.
+
+   - **Không có quyền xem / bản ghi không tồn tại** (403 / 404): chuyển sang trang 404 dùng chung
+     `this.$router.replace({ path: '/pages/extras/404' })`, **KHÔNG** toast rồi đẩy ngược về màn
+     danh sách (thông báo thoáng qua rồi mất, user không hiểu vừa xảy ra chuyện gì). Dùng `replace`
+     chứ không `push`: với `push`, bấm Quay lại là về đúng bản ghi bị từ chối → lại bật sang 404,
+     thành vòng lặp không thoát được.
 
 2. **Footer phải có ĐỦ hành động như dòng ở màn danh sách**, TRỪ:
    - **"Xem"** — đang ở màn xem rồi;
@@ -669,12 +897,48 @@ methods: {
 
 ```vue
 <V2BaseButton secondary status="success" size="sm" @click="openExportModal('excel')">Xuất Excel</V2BaseButton>
-<ExportFieldsModal :modal-id="exportFieldsModalId" :columns="exportFields" :exporting="exporting" @export="handleExportFields" />
+<ExportFieldsModal
+    :modal-id="exportFieldsModalId"
+    :columns="exportFields"
+    :default-selected="visibleExportFields"
+    :exporting="exporting"
+    @export="handleExportFields"
+/>
 ```
+
+### Mở popup là tick sẵn ĐÚNG CÁC CỘT ĐANG HIỆN TRÊN MÀN (chốt 2026-08-25)
+
+**KHÔNG tick tất cả.** Người dùng đã cấu hình cột ở "Cấu hình cột hiển thị" thì file xuất ra phải
+giống thứ họ đang nhìn — tick sẵn cả 13 cột trong khi trên màn chỉ hiện 5 là bắt họ bỏ tick 8 lần,
+mỗi lần xuất.
+
+Vẫn **thêm / bớt tự do** như trước: tick thêm cột đang ẩn, bỏ bớt cột không cần, "Chọn tất cả",
+"Bỏ chọn hết" — không đổi gì.
+
+- `visibleExportFields` do `exportFieldsMixin` tính sẵn, màn **không phải viết gì**: nó lấy
+  `tableColumns` (cột đang hiện, đúng thứ tự trên màn) giao với `exportFields`.
+- Khoá cột bảng và khoá cột xuất phần lớn trùng nhau. Chỗ lệch thì mixin tự thử hậu tố `_text`
+  (bảng để `status` vì vẽ badge, file xuất cần chữ nên registry khai `status_text`).
+- Lệch nhiều hơn thế thì màn khai `exportFieldKeyMap: { <khoá cột bảng>: '<khoá cột xuất>' }`.
+- Cột `index` / `actions` luôn bị loại — không phải dữ liệu.
+- Màn **chưa dùng** `columnCustomizationMixin` thì `visibleExportFields` rỗng → popup tự quay về
+  tick tất cả, không vỡ gì.
+
+**Tự kiểm sau khi nối (đừng soi bằng mắt):** quét khoá cột bảng (`allColumns`) đối chiếu khoá cột
+xuất (`exportFields`) theo đúng 3 quy tắc trên, in ra cột nào không bắt được. Cột lệch mà file xuất
+**vốn không có** (Người/Ngày cập nhật ở màn danh mục…) thì bỏ qua; cột lệch mà file **có** thì phải
+khai vào `exportFieldKeyMap`. Đã bắt được 4 chỗ theo cách này: `warranty_status` ↔
+`status_warranty_text` (đảo thứ tự từ), `costStatus` / `serviceStatus` ↔ `status_text`,
+`serviceCode` ↔ `code` — mắt thường rất dễ bỏ sót vì trên màn nhìn vẫn "có cột đó".
+
+⚠️ Truyền `:default-selected` vào **đúng thẻ `<ExportFieldsModal>`**. Trên màn danh sách còn
+`<V2BaseDataTable :columns="tableColumns">` cũng có thuộc tính `:columns` và đứng TRƯỚC trong file —
+sửa hàng loạt bằng script rất dễ chèn nhầm vào đó (đã dính khi làm, phải sửa lại).
 
 Chốt kèm theo:
 
 - **Thứ tự cột trong file = thứ tự user tick** (popup tự nhớ thứ tự; BE lặp theo `fields`).
+  Với cột tick sẵn, thứ tự ban đầu = thứ tự cột trên màn.
 - Không truyền `fields` → xuất đủ cột theo thứ tự khai trong registry (giữ hành vi cũ, không vỡ).
 - `fields` đến từ query string → BE **phải lọc qua whitelist** của màn, bỏ key lạ.
 - Xuất theo **đúng bộ lọc đang áp dụng** nhưng lấy TẤT CẢ dòng, không theo trang.
@@ -684,6 +948,12 @@ Chốt kèm theo:
 ## 14c. Xuất file DANH SÁCH LỚN — chia nhỏ API, dựng file ở FE (chốt 2026-08-19)
 
 Mục 14b lo phần *chọn cột*. Mục này lo phần *dựng file*.
+
+> 🖨️ **Nút IN danh sách thì ngược lại: phải CHẶN TRẦN số dòng, không chia nhỏ.** Xuất file càng
+> nhiều dòng càng tốt (người dùng lọc tiếp trên Excel), còn bản in là để cầm tay đọc/ký — in
+> không giới hạn là nguyên nhân *"nhiều máy in không được"* (đo thật: 4.980 dòng → HTML 3,84 MB →
+> ~170 trang, trình duyệt treo). Trần hiện tại **2.000 dòng**, khuôn + 2 cái bẫy đã dính: xem
+> `print-page` mục 4d.
 
 **Mặc định của hệ thống là BE dựng file** (`DynamicExport` + `exports.dynamic`) — đúng và gọn cho
 danh mục vài trăm dòng. Nhưng `DynamicExport` chạy `FromView`: dựng cả HTML rồi mới convert, nên
@@ -728,6 +998,17 @@ if (!total) this.$toasted?.global?.error?.({ message: 'Không có dữ liệu đ
   thêm/xoá giữa chừng làm điều kiện dừng theo `total` không bao giờ đúng → vòng lặp chạy mãi.
 - **Xoá `page` / `limit` của bảng** khỏi params trước khi tải, nếu không chỉ xuất đúng 1 trang.
 - **`0 dòng` thì KHÔNG tạo file** — báo "Không có dữ liệu để xuất".
+- **Cột tiền/số phải trả kiểu `float` ở BE**, đừng để dòng gom chung `(string) $value` của
+  `exportRows()` ép hết sang chuỗi — Excel sẽ cảnh báo *"formatted as text"* và SUM ra 0. Khai
+  tường minh danh sách khoá số (`EXPORT_NUMERIC_COLUMNS`), KHÔNG dò bằng `is_numeric` (mã phiếu,
+  SĐT, MST toàn chữ số sẽ bị đổi thành số). FE tự gắn `#,##0` + canh phải cho ô kiểu number —
+  màn không phải khai gì. Chi tiết: `export-excel` mục 4c.
+- **KHÔNG đóng băng hàng tiêu đề** trong file xuất (chốt 2026-08-25) — file là để lọc/kéo vùng,
+  freeze gây vướng. `listExportFile.js` đã bỏ, đừng thêm lại cho riêng màn nào.
+- **Letterhead: neo 2 ô, căn giữa bảng, KHÔNG dùng `ext`.** Dùng `ext` (kích thước tuyệt đối) thì
+  ảnh đè tiêu đề trên một số máy còn máy khác không sao — kiểu lỗi tốn cả buổi mới lần ra
+  (Redmine #11230). `listExportFile.js` đã làm đúng, màn không phải khai gì; đụng vào phần chèn ảnh
+  thì đọc `export-excel` mục 4b trước (3 cái bẫy + cách kiểm chứng bằng `unzip`).
 - Giữ nguyên endpoint BE dựng file cũ, đừng xoá — còn để đối chiếu và quay lại được.
 
 ⚠️ **Điểm yếu cố hữu, phải biết trước khi chọn hướng này**: toàn bộ dữ liệu nằm trong RAM tab

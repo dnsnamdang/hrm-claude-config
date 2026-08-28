@@ -8,6 +8,15 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- meeting-ckeditor-tailieu-chuanbi → @cuong61n → .plans/meeting-ckeditor-tailieu-chuanbi/plan.md
+  Trạng thái: **Code xong BE + FE (2026-08-24), CHƯA test UI, CHƯA commit**. Nhánh `tpe` (cả api + client).
+  Redmine #11194: "Mục tiêu / Nội dung" (tab Thông tin) và "Kết luận cuộc họp" (tab Biên bản) đổi sang
+  CKEditor (`CompactReviewEditor`, khuôn màn Báo giá), bỏ giới hạn ký tự (BE bỏ `max:4000`/`max:1000`,
+  DB đổi 2 cột sang LONGTEXT); thêm vùng "Tài liệu chuẩn bị cho buổi họp" ở tab Thông tin bằng
+  `FileAttachmentTable`, lưu chung bảng `meeting_attachments` phân biệt bằng cột `type` (1 biên bản / 2 chuẩn bị).
+  Kèm: bản in lọc + xuất HTML kết luận; drawer Lịch meeting + popup biên bản báo cáo thị trường strip HTML.
+
+
 - meeting-by-market → @dnsnamdang → .plans/meeting-by-market/plan.md
   Trạng thái: **HOÀN CHỈNH Phase 0–12 + REVIEW CLEAN + PLAYWRIGHT VERIFY PASS (2026-08-16, data thật) — ĐÃ COMMIT + PUSH (branch meeting-schedule, cả api+client)**. Verify: fail-closed (0 khi chưa quyền, không lộ 18 meeting) → 18 meeting/8 tỉnh khi cấp quyền tổng cty; bảng 18 dòng+25 ô rowspan+badge, popup Biên bản data thật (subtitle mã meeting OK), filter status/thị trường đúng, pagination. **Phase 9 SUMMARY** render đủ (Hero 18 + Tổng hợp[9/17/22,2%] + Trạng thái[6/7/4/1] + Thị trường[∑18]) + BONUS fix Critical period=custom bị vô hiệu. **Phase 10** gộp filter Kỳ + border KH cyan. **Phase 11** click meeting mở tab mới + fallback tên KH khi snapshot NULL (meeting 35→Phương Anh). **Phase 12** fix Xuất Excel lỗi Safari (file UUID không đuôi) → 3 báo cáo meeting tải TRỰC TIẾP server `?token=` + Content-Disposition (đúng tên mọi browser); verify openpyxl mở OK. Chưa test UI: popup Chấm công + tier quyền cty/phòng ban. ⚠️ Đã chèn test `role_has_permissions(18,1113,1)` — user quyết giữ/revoke. Báo cáo **độc lập** "Kết quả meeting theo thị trường" (route `/assign/report/meeting-by-market`, tách khỏi Lịch meeting/Todo). Nhóm meeting **có KH** theo Thị trường (= Tỉnh của KH: `meeting.customer_id → ERP customers.province_id → provinces.name` qua mysql2, batch 2 connection) → Khách hàng → Meeting; bảng 13 cột (rowspan) + popup biên bản (reuse `assign/meeting/{id}` → MeetingReport) + popup chấm công GPS (timesheets, nhãn Vào/Ra theo ngày) + Xuất Excel + phân trang. Phân quyền fail-closed (quyền id 1113/1114/1115 tổng cty/cty/phòng ban; không quyền → chỉ meeting mình tạo/dự; FE cờ quyền no `||true`; menu ungated để user không quyền vẫn vào xem data của mình). Host = `meeting.created_by`.
   BE (hrm-api): migration `assign_requests.meeting_id` (nullable) + AssignBusinessService::create lưu meeting_id + PermissionsTableSeeder + Routes/api.php + MeetingByMarketReportController + MeetingByMarketService (getFilteredQuery/applyPermissionFilter/resolveCustomerProvinces/getData/getTotalMeetings/attachBusinessTrips/getAttendanceByMeeting/getFlatRowsForExport/attachHostAndReportInfo) + MeetingByMarketExport + view blade.

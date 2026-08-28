@@ -295,7 +295,24 @@ para("Số phiếu sinh tự động theo dạng <mã công ty>.YCSCBH.<năm>.<s
      "đầu tiên và không thay đổi trong suốt vòng đời phiếu, kể cả khi bị từ chối rồi gửi lại.")
 
 # ───────────────────────── 9 ─────────────────────────
-h("9. TRA CỨU, IN VÀ XUẤT DỮ LIỆU", 1)
+h("9. CÁC LỐI VÀO MÀN HÌNH", 1)
+para("Cùng một màn hình nhưng vào bằng những đường dẫn khác nhau thì danh sách hiện ra khác "
+       "nhau — đây là cách hệ thống cũ đang chạy và hệ thống mới giữ nguyên. Đường dẫn đầy đủ "
+       "là địa chỉ máy chủ ghép với phần dưới đây.")
+para("Màn hình: /customer-care/warranty-repair-requests")
+table([
+    ["Vào bằng", "Danh sách hiện ra", "Dùng khi nào"],
+    ["(không kèm gì)", "Chỉ phiếu do chính tôi lập", "Xem lại việc của mình, kể cả phiếu còn nháp"],
+    ["?type=all", "Toàn bộ phiếu trong phạm vi quyền của tôi, cộng thêm phiếu gửi về phòng tôi nếu tôi có quyền xử lý", "Lối vào chính từ menu"],
+    ["?type=waiting_handle", "Phiếu đang Chờ xử lý gửi về đúng phòng tôi", "Danh sách việc phòng tôi phải làm"],
+])
+para("Ba điều cần biết:")
+bullet("Đường dẫn quyết định PHẠM VI xem, không phải quyền: người không có quyền xem theo "
+         "cấp mà mở đường dẫn xem tất cả thì vẫn chỉ thấy phiếu của chính mình.")
+bullet("Bấm nút Làm mới chỉ xoá điều kiện lọc, không đưa người dùng sang phạm vi khác.")
+bullet("Đường dẫn kèm giá trị lạ thì hệ thống bỏ qua và giữ phạm vi mặc định.")
+
+h("10. TRA CỨU, IN VÀ XUẤT DỮ LIỆU", 1)
 bullet("Tìm nhanh: gõ một ô duy nhất, tìm được theo số phiếu, tên khách hàng hoặc tên người tạo.")
 bullet("Bộ lọc nâng cao: trạng thái, khách hàng, người yêu cầu, tên thiết bị, tỉnh/thành của khách, "
        "khoảng ngày tạo, công ty và phòng ban. Chọn xong hệ thống tự lọc, không phải bấm thêm nút.")
@@ -326,7 +343,7 @@ table([
 ])
 
 # ───────────────────────── 11 ─────────────────────────
-h("11. GIỚI HẠN HIỆN TẠI", 1)
+h("12. GIỚI HẠN HIỆN TẠI", 1)
 bullet("Màn “Phiếu xử lý yêu cầu” chưa có trên hệ thống mới. Bấm “Tạo phiếu xử lý yêu cầu” hiện "
        "báo hướng dẫn xử lý tạm bên phần mềm ERP; khi màn đó hoàn thành sẽ nối thẳng.")
 bullet("In danh sách khi không đặt bộ lọc sẽ in toàn bộ dữ liệu nên rất dài — nên lọc trước khi in.")

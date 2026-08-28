@@ -68,6 +68,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- org-filter-locked-options → @namdangit → .plans/gop-db/org-filter-locked-options/plan.md
+  Trạng thái: **XONG BE + FE, ĐÃ VERIFY PLAYWRIGHT trên :3002/:8003** (2026-08-24). Chưa commit.
+  Mục tiêu: bộ lọc chung `V2BaseCompanyDepartmentFilter` (Công ty/Phòng ban/Bộ phận/Nhân viên) có công tắc 🔒 theo TỪNG ô để hiện cả mục đã khoá; mặc định vẫn chỉ hiện mục đang hoạt động.
+  BE: `OrgOptionController` + route `GET /api/v1/org-options?type=company|department|part|employee` (trả full kèm `is_locked`); `Employee::getAll($onlyActive = false)` + `userProfile()` gọi `getAll(true)` → store.employees bỏ nhân sự đã nghỉ.
+  FE: prop `keepLockedOptions` cho `V2BaseSelect`/`V2BaseSelectInModal`; component lazy load khi bật công tắc, KHÔNG cache danh mục khoá vào Vuex; tắt công tắc vẫn giữ giá trị đang chọn.
+  Bước tiếp: commit lên `gop_db`.
+
 - thiet-ke-lai-phan-quyen → @namdangit → .plans/gop-db/thiet-ke-lai-phan-quyen/plan.md
   Trạng thái: **PHASE 0 XONG — MOCKUP CHỐT (verify Playwright), CHƯA PORT VÀO hrm-client THẬT** (2026-08-14).
   Mục tiêu: thiết kế lại màn phân quyền, đưa về phân hệ "Quản trị hệ thống"; gọn/khoa học + tìm kiếm + gom nhóm. Phase 1 = UI (không đụng DB), Phase 2 = BE restructure (sau).
@@ -175,6 +182,17 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Hàng hoá → Nhân viên → Khách hàng, không migration.
   Bước tiếp: user đối chiếu 2 cổng trên dev + test quyền `Xem phiếu hàng giữ theo phòng ban`.
   Chi tiết + gotcha: plan.md
+
+- wr-service-quotation (chứng từ 4 — BÁO GIÁ DỊCH VỤ) → @namdangit → .plans/gop-db/wr-service-quotation/
+  Trạng thái: **ĐANG LÀM — Bước 2 (Báo giá Phase A: nhánh lập từ phiếu CCTT)** (2026-08-25).
+  Xong trước đó: Bước 0 tách tầng chung theo `type` · Bước 1 Phiếu bảo hành (code + test giao diện
+  + mô tả nghiệp vụ), đã đẩy lên `gop_db`.
+  Phase A gồm: entity `WrServiceQuotationMerchandise` + khối C Loại hàng hoá · VAT · hiệu lực báo
+  giá (số ngày) · tệp đính kèm · 3 mẫu in + checklist · nối nút "Tạo báo giá dịch vụ" đang bắn toast.
+  Đã chốt 7 quyết định thiết kế ở `design-phase2.md` mục 11.
+  ⚠️ **Việc treo cần user quyết**: 3 quyền xem của luồng bên HRM mới gán cho vai trò quản trị cao
+  nhất; vai trò nghiệp vụ thật nằm ở nhóm quyền ERP → người dùng chỉ thấy phiếu của chính mình và
+  mất bộ lọc Công ty–Phòng ban. Kế hoạch: làm xong Phase A rồi cấp quyền MỘT LẦN cho cả 5 màn.
 
 - wr-service-quotation (chứng từ 3) → @namdangit → .plans/gop-db/wr-service-quotation/plan.md
   Trạng thái: **HOÀN THÀNH CODE + ĐÃ TEST BE VÀ GIAO DIỆN** (2026-08-21). Chưa sinh testcase /

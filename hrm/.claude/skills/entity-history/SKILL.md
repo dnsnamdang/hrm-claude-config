@@ -169,8 +169,116 @@ private function logStatusChanged($model, int $statusBefore): void
 Kết quả đúng: một lần lưu vừa sửa ghi chú vừa gửi phiếu → **2 dòng** ("Thay đổi thông tin: Ghi chú
 cũ → mới" và "Thay đổi trạng thái: Đang tạo → Chờ xử lý"), không phải 1 dòng lẫn lộn.
 
-Thao tác có nút riêng (Từ chối, Chuyển phòng, Duyệt…) vẫn dùng `logCatalogStatus()` với action
-riêng của nó (`rejected`, `approved`…) — chúng đã thuộc nhóm `status` theo `ACTION_GROUP_MAP`.
+Thao tác có nút riêng vẫn dùng `logCatalogStatus()` với action riêng của nó (`rejected`,
+`approved`…) — chúng đã thuộc nhóm `status` theo `ACTION_GROUP_MAP`.
+
+⚠️ **"Có nút riêng" KHÔNG có nghĩa là "đổi trạng thái"** (đã trả giá — Redmine #11166). Nút
+*Chuyển phòng tiếp nhận* đổi **cột `department_reception_id`**, trạng thái phiếu giữ nguyên trước
+và sau thao tác → phải ghi bằng `logCatalogUpdate()`, nhóm **"Thay đổi thông tin"**.
+
+Hỏi đúng 1 câu để phân loại: **sau thao tác, cột `status` có đổi không?**
+- Có → `logCatalogStatus()` (nhóm *Thay đổi trạng thái*)
+- Không → `catalogSnapshot()` trước + `logCatalogUpdate()` sau (nhóm *Thay đổi thông tin*)
+
+```php
+// ĐÚNG — chuyển phòng tiếp nhận
+$before = $this->catalogSnapshot($request);
+$request->department_reception_id = $departmentId;
+$request->save();
+$this->logCatalogUpdate($request, $before);
+// -> "Thay đổi thông tin — Phòng tiếp nhận xử lý: <cũ> → <mới>"
+```
+
+Tự dựng chuỗi rồi nhét vào `logCatalogStatus()` còn sinh lỗi lặp chữ:
+`Trạng thái: Phòng tiếp nhận: A → Phòng tiếp nhận: B`. Để bộ dùng chung tự in nhãn cột.
+
+## 3b. Sửa nhiều dòng trong 1 BẢNG con (bảng thiết bị, bảng hàng hoá…)
+
+Sửa 1 ô trong bảng con vẫn phải ghi lịch sử, nhưng **KHÔNG in lại cả bảng**. Dùng **khoá dạng
+BẢNG** của `CatalogHistoryService`: gán vào snapshot một **mảng bản ghi** (mỗi bản ghi là `array`
+có `__key` để ghép cặp trước/sau và `__name` để hiện tên trên dòng sửa), bộ diff dùng chung sẽ tự
+tách **thêm / xoá / sửa theo TỪNG dòng**, và dòng sửa chỉ liệt kê đúng trường đã đổi.
+
+TUYỆT ĐỐI không tự ghép chuỗi mô tả rồi nhét vào 1 "cột ảo" — đã làm và phải sửa lại (Redmine
+#11163): cả bảng dồn thành một đoạn văn dài, người xem không biết dòng nào đổi cái gì.
+
+```php
+// "Cột ảo" — KHÔNG có trong DB. Giữ ở SERVICE, TUYỆT ĐỐI không gán lên model:
+// Eloquent coi thuộc tính lạ như cột thật, save() sau đó ném "Unknown column".
+private $productRowsForLog = [];
+
+protected function catalogColumns(): array
+{
+    return ['code', 'note', self::PRODUCT_HISTORY_KEY];
+}
+
+protected function catalogDisplay(string $column, $value)
+{
+    // Trả NGUYÊN mảng bản ghi — ép (string) là log ra chữ "Array"
+    if ($column === self::PRODUCT_HISTORY_KEY) return $this->productRowsForLog;
+    …
+}
+```
+
+**Ngăn cách các trường trong 1 dòng: dấu `;`, KHÔNG dùng gạch ngang** (`rowText()` của
+`CatalogHistoryService`). Giá trị thật hay có sẵn gạch ngang (tên hàng hoá, khoảng thời gian) nên
+dùng `—` thì đọc lên không biết đâu là ranh giới giữa 2 trường:
+
+```
+ĐÚNG:  Thiết bị: Bàn nâng cắt kéo di động 1 tấn; Serial: 1244; Nội dung yêu cầu: sa
+SAI:   Thiết bị: Bàn nâng cắt kéo di động 1 tấn — Serial: 1244 — Nội dung yêu cầu: sa
+```
+
+**Ô FILE ĐÍNH KÈM: BE giữ NGUYÊN đường dẫn, đừng cắt còn tên tệp.** Cắt ở BE là mất đường dẫn,
+người xem không mở được file nữa. Giao diện (`SystemInfoValue.vue`) tự quét đường dẫn nằm trong
+dòng log rồi đổi thành **liên kết bấm được**: hiện TÊN TỆP, `title` là đường dẫn đầy đủ, bấm vào
+mở popup xem trước dùng chung (`FilePreviewModal`); định dạng không xem trước được thì tải về bằng
+thẻ `<a download>` — **không** fetch→blob vì kho tệp S3 chặn CORS.
+
+---
+
+## 3c. Bảng chứa NHIỀU LOẠI chứng từ (cột `type`) — 2 cái bẫy đóng dấu dữ liệu SAI vĩnh viễn
+
+Áp cho mọi bảng dùng chung phân biệt bằng `type`: `wr_service_quotations` (phiếu cung cấp thông tin
+`0` / báo giá dịch vụ `1`), `wr_service_contracts` (hợp đồng / bảo hành / phụ lục)… Nhãn được **đóng
+dấu vào log ngay lúc ghi**, nên ghi sai là sai vĩnh viễn — sửa code sau đó không chữa được log cũ.
+
+**Bẫy 1 — nhãn TRẠNG THÁI map qua hằng cứng.** Cùng một con số trên cột `status` mang tên khác nhau
+tuỳ loại chứng từ (số `2` = "Chờ làm báo giá" của phiếu cung cấp thông tin, nhưng = "Duyệt" của báo
+giá dịch vụ). Lấy nhãn từ **chính bản ghi**, đừng map qua hằng của một loại:
+
+```php
+// SAI — luôn ra nhãn của loại chứng từ mặc định
+$this->logCatalogStatus($model, 'change_status',
+    $this->catalogDisplay('status', $statusBefore),
+    $this->catalogDisplay('status', $statusAfter));
+
+// ĐÚNG — `statusTable()` trên Entity tự rẽ theo `type`
+$this->logCatalogStatus($model, 'change_status',
+    $this->statusLabelOf($model, $statusBefore),
+    $this->statusLabelOf($model, $statusAfter));
+```
+
+Không có exception, không có log lỗi — người dùng mở lịch sử mới thấy "Đang tạo → Chờ làm báo giá"
+trên một phiếu đang hiện badge "Duyệt" (dính thật 2026-08-25).
+
+**Bẫy 2 — nhãn CỘT trong `CatalogHistoryService::TABLES` viết theo một loại.** Whitelist khai theo
+TÊN BẢNG nên hai loại chứng từ dùng chung một bộ nhãn. Đặt `'code' => 'Số phiếu cung cấp thông tin'`
+là báo giá cũng mang nhãn đó. → Nhãn phải **trung tính** (`'Số phiếu'`), và khai đủ cột riêng của
+từng loại (`date_of_entering` — hiệu lực báo giá) vào cùng một bộ.
+
+Service của loại chứng từ con khai thêm cột theo dõi của riêng nó, đừng sửa bộ của lớp cha:
+
+```php
+protected function catalogColumns(): array
+{
+    return array_merge(parent::catalogColumns(), ['date_of_entering']);
+}
+```
+
+**Tự kiểm (bắt buộc, không nhìn code mà đoán):** với MỖI loại chứng từ, tạo 1 bản ghi → đổi trạng
+thái → sửa 1 trường riêng của loại đó → đọc `getLogs()` xem đủ 3 dòng và **tên trạng thái khớp badge
+trên lưới**. Rồi xoá bản ghi thử và xoá luôn log của nó.
 
 ## 4. BE — đọc log: DTO chuẩn (FE base ăn theo đúng hợp đồng này)
 
@@ -192,20 +300,71 @@ note, changes[], created_at ('d/m/Y H:i'), created_at_raw ('Y-m-d H:i:s')
 
 // b) Khoá dạng danh sách / bảng
 [
-  'field'   => 'Tài khoản công ty',
+  'field'   => 'Danh sách thiết bị',
   'old' => '...', 'new' => '...',            // chuỗi gộp, cho nơi hiển thị 1 dòng
-  'removed' => ['Số TK: 111 — Chủ TK: A'],   // bản ghi bị XÓA (in đủ)
-  'added'   => ['Số TK: 222 — Chủ TK: B'],   // bản ghi THÊM MỚI (in đủ)
+  'removed' => ['Thiết bị: A; Serial: 111'], // chuỗi — GIỮ cho log cũ, FE không dùng nữa
+  'added'   => ['Thiết bị: B; Serial: 222'],
   'changed' => [                             // bản ghi còn đó nhưng SỬA
-    ['name' => 'ffff', 'fields' => [
-      ['field' => 'Chủ TK', 'old' => 'gggg', 'new' => 'Nguyễn Văn C'],
+    ['name' => 'Máy nén khí X', 'fields' => [
+      ['field' => 'Serial', 'old' => 'SN-002', 'new' => 'SN-002-MOI'],
     ]],
   ],
+  // ── 3 khoá BẮT BUỘC của bản mới (chốt 2026-08-25) ──────────────────────────
+  'added_label'   => 'Thiết bị thêm mới',    // nhãn nhóm, FE in thành tiêu đề
+  'removed_label' => 'Thiết bị đã xóa',
+  'changed_label' => 'Thiết bị sửa thông tin',
+  'added_rows'    => [['name' => 'Bộ cờ lê 10 chi tiết', 'detail' => 'Serial: 222']],
+  'removed_rows'  => [['name' => 'Bơm dầu cầu, Model: OLP-12', 'detail' => 'Serial: 111']],
 ]
 ```
 
 **Quy tắc vàng:** bản ghi bị sửa CHỈ liệt kê trường đã đổi. In lại cả bản ghi ở `removed` + `added`
 là sai — user không nhìn ra đổi cái gì.
+
+### 4b. Khoá dạng BẢNG hiển thị theo NHÓM CÓ NHÃN (chốt 2026-08-25)
+
+❌ Cách cũ — một nhãn cột chung, phân biệt thêm/xoá bằng ký hiệu, mỗi dòng in cả bản ghi:
+
+```
+Danh sách thiết bị:
+~ Máy nén khí X: Serial: SN-002 → SN-002-MOI
+- Thiết bị: Bơm dầu cầu, Model: OLP-12; Serial: SN-001; Nội dung yêu cầu: Bơm yếu
++ Thiết bị: Bộ cờ lê 10 chi tiết; Serial: SN-003
+```
+
+✅ Cách chuẩn — **mỗi nhóm một nhãn riêng, dòng chính là TÊN bản ghi**, phần còn lại thành phụ chú
+xám nhạt sau dấu `—`:
+
+```
+Thiết bị thêm mới:
+- Bộ cờ lê 2 đầu 10 chi tiết (8x10 - 30x32 mm) có hộp — Serial: SN-003
+Thiết bị đã xóa:
+- Bơm dầu cầu, dầu hộp số, Model: OLP-12 — Serial: SN-001; Nội dung yêu cầu: Bơm yếu
+Thiết bị sửa thông tin:
+- Máy nén khí X: Serial: SN-002 → SN-002-MOI
+```
+
+Quy tắc:
+
+- **Thứ tự nhóm cố định**: thêm mới → đã xoá → sửa thông tin.
+- **KHÔNG in nhãn cột** (`Danh sách thiết bị:`) nữa khi đã có nhãn nhóm — in cả hai là thừa một cấp.
+- Mọi dòng đều mở đầu bằng `- `, kể cả dòng sửa. Ký hiệu `+` / `~` đã bỏ: màu chữ (xanh = thêm,
+  đỏ = xoá) đã nói đủ, thêm ký hiệu chỉ làm rối.
+- Nhãn nhóm để chữ **XÁM** `#6b7280`, không tô đỏ/xanh (CLAUDE.md: đỏ chỉ dành cho lỗi validate).
+- Cột nào TRÙNG giá trị với tên bản ghi thì bỏ khỏi phụ chú, nếu không tên bị lặp 2 lần trên
+  cùng một dòng.
+- Nhãn nhóm do **máy chủ** dựng (`rowItemLabel()` — quy nhãn cột số nhiều "Danh sách thiết bị" về
+  tên số ít "Thiết bị"). Khoá mới chưa khai thì tự cắt tiền tố "Danh sách ".
+- Log CŨ chỉ có mảng chuỗi (`added` / `removed`) vẫn đọc được: FE lấy nguyên chuỗi làm `name`,
+  `detail` rỗng — **không phải chạy lại dữ liệu cũ**.
+
+Chỗ sửa: `app/Services/CatalogHistoryService.php` (`rowListChange` · `rowParts` · `rowItemLabel`) và
+`components/assign/SystemInfoSection.vue` (`rowsOf` · `groupLabel` · `.si-group-label` ·
+`.si-row-detail`).
+
+⚠️ `.si-change-old` / `.si-change-new` dùng `white-space: pre-line` → **mọi lần xuống dòng trong mã
+template đều thành dòng trống thật trên màn hình**. Nội dung một dòng log phải viết liền mạch trên
+một dòng mã.
 
 `created_at_raw` là bắt buộc: bộ lọc ngày của FE cắt 10 ký tự đầu chuỗi này.
 
@@ -294,6 +453,10 @@ không màn nào tự nới rộng.
   (log cũ khác định dạng). Phải báo trước cho user, đừng tự sửa dữ liệu log cũ.
 - Đổi N trường trong 1 lần lưu → 1 dòng log N key (không tách dòng).
 - Sắp xếp: mới → cũ, ở CẢ 2 nơi hiển thị.
+- **Thao tác có nút riêng nhưng KHÔNG đổi `status`** (chuyển phòng, đổi người phụ trách…) mà ghi
+  bằng `logCatalogStatus()` → sai nhóm + lặp chữ "Trạng thái: …" (§3a).
+- **Tự ghép chuỗi cho bảng con** thay vì dùng khoá dạng BẢNG → log dồn thành một đoạn dài (§3b).
+- **Cắt URL file còn mỗi tên ở BE** → lịch sử không mở được file (§3b).
 
 ## 7. Verify bắt buộc trước khi báo xong
 
@@ -318,7 +481,9 @@ không màn nào tự nới rộng.
 - [ ] **Bộ lọc "Loại hoạt động" đúng 3 nhóm cố định** (Tạo mới / Thay đổi thông tin / Thay đổi trạng thái) — giống hệt mọi màn khác, và nhãn chi tiết trên timeline vẫn giữ nguyên (§0a)
 - [ ] Sắp xếp mới → cũ
 - [ ] `changed[]` chỉ chứa trường đã đổi (không in lại cả bản ghi)
+- [ ] Khoá dạng BẢNG trả đủ `added_label` / `removed_label` / `changed_label` + `added_rows` / `removed_rows`; giao diện in **theo nhóm có nhãn**, dòng chính là TÊN bản ghi (§4b)
 - [ ] **Mọi thao tác có lý do/ghi chú (từ chối, hủy, đóng, duyệt kèm ghi chú…) đều hiện đủ trên lịch sử** (§4.1)
 - [ ] **Đã làm ĐỦ 2 nơi**: popup ở màn danh sách (menu ⋮) + khối "Lịch sử" ở màn chi tiết (§5.1)
 - [ ] FE theo đúng `ui-base.md`: bố cục, text, màu, bộ lọc — cả popup lẫn mục màn chi tiết
+- [ ] Bảng dùng chung nhiều loại chứng từ (`type`): nhãn trạng thái lấy từ bản ghi, nhãn cột trung tính, cột riêng của từng loại đã khai (§3c)
 - [ ] Verify đủ mục 7

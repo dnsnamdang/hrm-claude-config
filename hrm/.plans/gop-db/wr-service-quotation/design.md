@@ -138,3 +138,29 @@ xác nhận nay là "Lưu và gửi", `testcase.xlsx` (87 TC) + `Mô tả nghi�
 
 ➡️ **Cả 3 chứng từ của luồng dịch vụ nay dùng chung nút "Lưu và gửi".** Các phân hệ khác (Đào tạo,
 Tài chính…) vẫn dùng "Lưu và gửi duyệt" — đúng nghiệp vụ của họ (có người duyệt thật), KHÔNG đổi.
+
+---
+
+## Chữ trên nút nhân bản báo giá — "Nhân bản", KHÔNG phải "Sao chép" (user chốt 2026-08-26)
+
+**Lệch giữa spec và skill:** menu ERP ghi *"Sao chép"* (`WarrantyRepairServiceQuotationsController`
+dòng 126), nhưng bảng text chuẩn của `.claude/skills/button-convention` §4.2 quy định hành động
+này dùng đúng chữ **"Nhân bản"** và liệt kê "Sao chép / Tạo bản sao / Copy" vào cột CẤM.
+
+**Chốt: theo skill.** Lý do: cùng một hành động mà mỗi phân hệ một chữ thì người dùng phải học lại
+ở từng màn. Icon vẫn là `ri-file-copy-line` (đúng cả hai bên), và **tham số trên đường dẫn giữ
+nguyên `?copy=` của ERP** — đó là hợp đồng kỹ thuật, không phải chữ người dùng đọc.
+
+Áp dụng ở **cả hai nơi**: hành động trên dòng ở màn danh sách và nút trong `V2Footer` màn chi tiết.
+
+## Hành động màn chi tiết Báo giá phải khớp màn danh sách (2026-08-26)
+
+Rà theo `list-page` §7 thì màn chi tiết thiếu nút **Nhân bản** vừa thêm. Đã bổ sung và sắp lại
+đúng thứ tự quy ước: **Sửa (primary) → In → Nhân bản (secondary) → Xóa (danger) → Quay lại**
+(V2Footer tự render). "Lịch sử" cố ý KHÔNG có trong footer vì mục Lịch sử đã nhúng sẵn trong thân
+trang — đúng ngoại lệ skill cho phép.
+
+Đối chiếu thực tế trên cùng phiếu `TPE.BGDV.2025000080` (phiếu nháp của chính người lập):
+danh sách có Sửa · Xóa · Nhân bản · In · Lịch sử — chi tiết có Sửa · In · Nhân bản · Xóa + mục
+Lịch sử. Khớp.
+
