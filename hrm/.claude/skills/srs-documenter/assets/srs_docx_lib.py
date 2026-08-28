@@ -320,6 +320,17 @@ class SrsDoc(object):
         uml.draw_overview(png, title, actors, usecases)
         self.figure(png, caption, width_in=6.3)
 
+    def overview_rel_figure(self, title, actor, nodes, relations=(), caption=None,
+                            actor_links=None):
+        """So do tong quan CO quan he «include»/«extend» giua cac use case.
+
+        Dung ham nay thay cho `overview_figure` khi so do can the hien quan he
+        (BA yeu cau 24/08/2026). Xem quy uoc dat ten / huong mui ten trong SKILL.md.
+        """
+        png = self._png('overview')
+        uml.draw_overview_rel(png, title, actor, nodes, relations, actor_links=actor_links)
+        self.figure(png, caption or title, width_in=6.3)
+
     def uc_figure(self, code, name, group, relations=(), actor=ACTOR_P1, caption=None):
         """5.2.x.1 Bieu do use case cua 1 chuc nang — anh PNG that."""
         png = self._png('uc_%s' % code.lower().replace('-', ''))

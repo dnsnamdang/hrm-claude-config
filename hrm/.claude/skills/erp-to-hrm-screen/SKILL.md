@@ -42,13 +42,44 @@ Skill này khoá 3 thứ lại:
 
 ⚠️ **Ghi cả điều kiện ẩn nút**, không chỉ tên nút. Lỗi hay gặp nhất là port nút nhưng bỏ điều kiện.
 
+| Vị trí trong menu ERP (tất cả các chỗ) | `grep "route('<TenRoute>.index'" resources/views/layouts/topmenubar.blade.php` |
+
 ### Bước 2 — Chốt phân hệ, route, quyền
 
 - Màn thuộc phân hệ nào (theo sơ đồ tách phân hệ) → route `/<phân-hệ>/<slug>`.
 - Quyền: dùng lại **đúng permission ERP** hay tạo mới? Nếu dùng lại thì migration `UPDATE permissions`
   **giữ nguyên `id`** và phải sửa cả `PermissionsTableSeeder`.
 - Có cần phân quyền theo cấp (công ty / phòng ban / bộ phận) không → **hỏi user**, đừng tự quyết.
-- Thêm mục menu vào `components/subsystem-menu/<slug>.js`.
+- Thêm mục menu — **TRA MENU ERP TRƯỚC, ĐỪNG SUY TỪ TÊN MÀN** (chốt 2026-08-26, xem mục dưới).
+
+#### Đặt mục menu: tra ERP, không suy đoán
+
+Tên màn KHÔNG nói lên nó thuộc phân hệ nào. Màn "Báo giá dịch vụ" nghe như thuộc CSKH nhưng menu
+ERP đặt nó ở **Kinh doanh → Báo giá → "Báo giá dịch vụ sửa chữa - bảo dưỡng - bảo trì" → "Danh sách
+báo giá"**. Đặt nhầm sang CSKH thì người làm báo giá tìm mãi không ra (đã dính thật, user phải chỉ).
+
+Cách làm đúng — quét mọi vị trí của route trong menu ERP rồi mới quyết:
+
+```bash
+grep -n "route('<TenRoute>.index'" resources/views/layouts/topmenubar.blade.php
+```
+
+Với mỗi kết quả, lần ngược lên tìm `ruby-list-heading` (tên nhóm) và `<a href="#">` (tên phân hệ).
+Ba điều rút ra từ lần rà 5 màn của luồng dịch vụ:
+
+1. **Một màn có thể nằm ở NHIỀU nhóm menu.** "Yêu cầu sửa chữa - bảo hành" xuất hiện ở 4 chỗ:
+   Hàng hóa → Lắp đặt-BH-SC · Lắp đặt-BH-SC · CSKH → Kiểm tra bảo hành sửa chữa · **và** Kinh doanh
+   → Báo giá. Bỏ bớt chỗ nào là một nhóm người dùng mất đường vào quen thuộc.
+2. **Giữ nguyên tham số trên link.** Cùng màn nhưng ERP trỏ `?permission=waiting_create_quotation`
+   ở nhóm Báo giá và `?permission=all` ở nhóm CSKH — hai phạm vi dữ liệu khác nhau (skill
+   `list-page` §3d). Copy link mà bỏ tham số là hỏng ý nghĩa mục menu.
+3. **Đừng khai trùng một màn ở hai nhóm HRM khi ERP chỉ đặt một chỗ** — người dùng không biết đường
+   nào mới đúng.
+
+Bên HRM, menu Bán hàng sinh từ **một nguồn duy nhất** `components/subsystem-menu/sale-hub.js`
+(dùng cho cả hub lẫn cây menu bên trái). Màn chưa port để nguyên chuỗi tên; port xong thì đổi thành
+`{ n: 'Tên màn', link: '/duong-dan?type=all' }`. Nhiều nhóm đã khai sẵn tên màn từ trước — **kiểm
+xem có sẵn chưa rồi hãy thêm mới**, đừng tạo mục trùng.
 
 ### Bước 3 — Dựng khung theo khuôn màn mẫu
 
@@ -58,6 +89,49 @@ Skill này khoá 3 thứ lại:
 **Trước khi tự viết bất kỳ thành phần UI nào** (badge, tooltip, popup, upload, kéo thả, phân trang,
 biểu đồ…) → grep xem project đã có chưa. Đã có ≥ 1 màn làm đúng thì bám theo màn đó và ghi vào
 `plan.md`: "copy pattern từ `<file:dòng>`".
+
+### Bước 3b — Hàm nghiệp vụ DÙNG CHUNG: tách ra để màn sau xài lại, y như ERP
+
+ERP tuy lộn xộn về UI nhưng phần **nghiệp vụ thì gom rất tốt**: `Product::getAccountingStockDetail()`,
+`Product::getStockByContract()`, `ProductStockService::getStockQty()`… được **hàng chục màn gọi
+chung**. Khi port sang HRM, nếu mỗi màn tự chép một bản thì vài tháng sau các bản lệch nhau và
+không ai biết bản nào đúng.
+
+**Nguyên tắc (user chốt 2026-08-22): port màn nào cũng phải hỏi "hàm này màn khác có xài lại không?"**
+
+Cách làm:
+
+1. **Trước khi viết** một phép tính nghiệp vụ (tồn kho, tồn giữ, công nợ, giá, quy đổi đơn vị,
+   phạm vi quyền…) → **grep xem HRM đã port hàm đó chưa**:
+   ```bash
+   grep -rn "in_stock\|getAccountingStockDetail" hrm-api/Modules/*/Services/
+   ```
+   Đã có rồi thì **gọi lại**, tuyệt đối không chép.
+
+2. **Nếu hàm đã có nhưng đang `private` / bị khoá trong service của màn khác** → **tách ra service
+   dùng chung**, đừng chép bản thứ hai. Đây là sửa file màn khác đang chạy nên **phải hỏi user
+   trước** (CLAUDE.md), và **test lại màn cũ** ngay sau khi tách.
+
+3. **Nếu là hàm mới**, đặt nó ở service theo *chủ đề nghiệp vụ*, KHÔNG theo tên màn:
+   - đúng: `AccountingStockService` (tồn kho), `PrepickStockService` (tồn hàng giữ)
+   - sai: `PrepickExtendRequestService::tinhTonKho()` — tên màn thì màn khác không ai dám gọi
+
+4. **Docblock của service dùng chung phải liệt kê "Nơi đang dùng"** — để lần sau sửa còn biết
+   phải thử lại những màn nào.
+
+5. Service dùng chung là **chỗ DUY NHẤT** được chạm bảng của nó. Ví dụ đã áp:
+   `PrepickStockService` là nơi duy nhất ghi `prepick_details` / `prepick_logs`.
+
+**Ví dụ thật (2026-08-22, màn Yêu cầu gia hạn hàng giữ):** cần cột "Có thể giữ" = `in_stock`. Grep
+ra `ProductTransferRequestService::accountingStockDetail()` đã port đúng hàm ERP nhưng để `private`.
+→ tách sang `AccountingStockService::detail()`, màn Chuyển hàng gọi qua constructor injection, màn
+gia hạn gọi lại. Nếu chép bản thứ hai thì đã có **2 bản 170 dòng** cùng tính tồn kho.
+
+⚠️ **Đừng nhầm 2 khái niệm tồn** — đặt tên service cho rõ ngay từ đầu:
+| Service | Là gì | Bảng |
+|---|---|---|
+| `AccountingStockService` | tồn **KHO** — hàng còn trong kho | `accounting_stocks` |
+| `PrepickStockService` | tồn **HÀNG GIỮ** — đang giữ cho khách | `prepick_details` |
 
 ### Bước 4 — Áp quy tắc chung SRS
 
@@ -177,6 +251,7 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 
 | Bẫy | Hậu quả | Cách tránh |
 |---|---|---|
+| **Chép lại phép tính nghiệp vụ đã có ở màn khác** | 2 bản cùng 1 công thức, vài tháng sau lệch nhau, không ai biết bản nào đúng | Grep trước khi viết; hàm đã có mà `private` thì **tách ra service dùng chung** (hỏi user trước) — xem Bước 3b |
 | **Copy màn HRM đã port trước đó làm khuôn** | Nhân bản y nguyên cái sai — 1 lỗi UI thành N màn lỗi | Khuôn chuẩn là **Danh mục khách hàng**, không phải màn gần nhất mình vừa làm. Muốn copy màn khác thì chạy checklist cho **màn nguồn** trước |
 | Dùng `V2BaseFilterPanel` + tự dựng `#advanced-filters` | Mất popup "Cài đặt bộ lọc", user không ẩn/sắp xếp được ô lọc | `V2BaseSmartFilterPanel` + schema `filterFields` cho MỌI màn > 3 ô lọc |
 | Bấm "Xuất Excel" là tải file luôn | Vi phạm quy tắc "user chọn trường xuất" | Mở `ExportFieldsModal` trước, truyền `selectedFields` xuống hàm dựng file |

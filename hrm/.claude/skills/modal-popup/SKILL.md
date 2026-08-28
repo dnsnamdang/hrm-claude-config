@@ -46,6 +46,27 @@ quay lại đúng tình trạng mỗi popup một kiểu.
 — nhãn `#6b7280`, giá trị `#374151`, **KHÔNG in đậm**, **KHÔNG màu đỏ** (đỏ chỉ dành cho lỗi
 validate — xem CLAUDE.md).
 
+Dòng này **gói gọn 1 dòng**, dài quá thì cắt bằng `…`, **rê chuột hiện đủ** (`title`). Đã nằm sẵn
+trong component — màn dùng cứ **truyền tên đầy đủ**, TUYỆT ĐỐI không tự cắt chuỗi bằng JS kiểu
+`name.slice(0, 60) + '…'`: cắt ở JS là mất hẳn phần đuôi, hover cũng không xem lại được, mà số ký
+tự cứng thì không khớp bề rộng thật của popup (Redmine #11164).
+
+⚠️ **Bẫy đã trả giá (2026-08-24) — nút × bị đẩy RA NGOÀI mép popup.** `.modal-header` là flex row
+chứa khối tiêu đề + nút ×. Khối tiêu đề để `w-100` là chiếm trọn bề rộng, nút × không còn chỗ và
+tràn ra ngoài (đo thật: **26px**). Đúng phải là:
+
+```scss
+.v2-modal-head-left,          /* khối bọc icon + tiêu đề */
+.v2-modal-heading {           /* khối tiêu đề + dòng mô tả */
+    flex: 1 1 auto;
+    min-width: 0;             /* PHẢI khai ở CẢ 2 CẤP — thiếu 1 cấp là cấp đó vẫn nở */
+}
+::v-deep .modal-header > .close { flex: 0 0 auto; }
+```
+
+`min-width: 0` không chỉ để cứu nút ×: mặc định flex item là `min-width: auto`, nó **nở theo nội
+dung dài nhất** nên `text-overflow: ellipsis` bên trong sẽ không bao giờ ăn.
+
 Props: `modalId` (bắt buộc) · `title` · `subtitle` · `subtitleLabel` · `icon` · `iconColor` ·
 `iconBackground` · `size` · `dialogClass` · `maxBodyHeight`. Sự kiện: `show` · `shown` · `hide` ·
 `hidden`. Method: `show()` / `close()`.
@@ -330,7 +351,7 @@ Popup mới có bảng **phải** có đủ 8 điểm sau (thiếu điểm nào 
 1. **Khung cao cố định**: `.modal-card { width: 98vw; height: 98vh; max-height: 98vh; display:flex; flex-direction:column }` — bắt buộc có `height`, không chỉ `max-height`. Backdrop `padding: 6px`.
 2. **Chuỗi flex không đứt**: `min-height: 0` ở **mọi** mắt xích từ `.modal-body` xuống bảng (b-tabs chèn `.tabs` → `.tab-content` → `.tab-pane.active` vào giữa).
 3. **`.modal-body { overflow: hidden }`** — KHÔNG `overflow-y: auto`. Chỉ khung bảng được cuộn dọc.
-4. **Khung bảng** `flex: 1 1 auto; min-height: 160px; overflow: auto` — KHÔNG đặt `max-height` cứng.
+4. **Khung bảng** `flex: 1 1 auto; min-height: 0; overflow: auto` — KHÔNG đặt `max-height` cứng, cũng **KHÔNG đặt sàn `min-height` cứng** (sàn 160px làm khung không co nổi ở màn hình thấp, lại đẩy phân trang ra ngoài). ⚠️ Bảng bọc trong `V2BaseTableScroll` thì xem bẫy 9 bên dưới — khai nhầm lớp là rule **không chạy** mà không báo lỗi.
 5. **Chiều cao dòng**: `td { padding: 3px 6px; font-size: 12px }`, ảnh thumbnail ≤ 26px, cột chữ dài bọc `.cell-clamp` (cắt 2 dòng) + `:title` tooltip, `thead` sticky.
 6. **Nút phụ** ("Thêm hàng tạm"...) → slot `#header-actions` của `V2BaseFilterPanel` (ngang hàng nút "Tìm kiếm nâng cao", không tốn dòng riêng). Nút Tìm kiếm/Làm mới → prop `inlineSearchButtons`.
 7. **Lọc nâng cao**: 1 grid PHẲNG `repeat(auto-fit, minmax(190px, 1fr))` — KHÔNG chia hàng cứng 5 ô + ô rỗng độn.
@@ -342,6 +363,84 @@ assert `modal-body.scrollHeight <= clientHeight` (bắt lỗi điểm 2+3 tái p
 
 > **Bẫy select2 multiple**: ép `width:100%; float:none` mọi lúc → ô search **đè lên chip**.
 > Chỉ ép ở trạng thái rỗng bằng `:only-child`. Xem `table-popup-layout.md`.
+
+### Bẫy 9 — bọc bảng bằng `V2BaseTableScroll`: khai flex SAI LỚP (đã trả giá 2026-08-24)
+
+`V2BaseTableScroll` render **2 lớp**: thẻ gốc `.v2-table-scroll` (chứa thanh cuộn trên) và
+lớp trong `.v2-table-scroll__body` (nơi prop `body-class` được gắn vào). Con trực tiếp của
+`.modal-body` là **lớp gốc**, không phải lớp trong.
+
+Hai lỗi luôn đi cùng nhau:
+
+- Khai `flex: 1 1 auto; min-height: 0` cho **lớp trong** → lớp gốc vẫn nở theo số dòng, đẩy
+  đáy bảng **và cả thanh phân trang** xuống dưới đáy popup; `.modal-body { overflow: hidden }`
+  nuốt luôn phần đó nên **user không thấy phân trang ở đâu**.
+- Rule cho lớp trong còn **không hề chạy**: `<style scoped>` chỉ chạm được **thẻ gốc** của
+  component con, muốn với tới lớp trong phải `::v-deep`. Sai âm thầm, không có cảnh báo nào.
+
+```scss
+/* ĐÚNG — flex ở lớp GỐC, ::v-deep cho lớp trong */
+.modal-body ::v-deep > .v2-table-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+.modal-body ::v-deep .erp-table-wrap {   /* = body-class, tức .v2-table-scroll__body */
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+```
+
+**Cách tự kiểm (1 dòng, không nhìn bằng mắt)** — mở popup rồi chạy trong console:
+
+```js
+const card = document.querySelector('.modal-card')
+const paging = card.querySelector('.row.paging')
+paging.getBoundingClientRect().bottom <= card.getBoundingClientRect().bottom   // phải là true
+```
+
+### Bẫy 10 — chip select2 bị cắt mất ĐẦU chữ
+
+Ô chọn nhiều có chip dài hơn ô: ô gõ tìm kiếm nằm **cuối** danh sách chip nên trình duyệt tự
+cuộn khối `.select2-selection__rendered` sang phải → hiện ra `g cụ và thiết bị chuyên dùng`
+thay vì `Dụng cụ và thiết bị chuyên dùng`. Nhìn như "mất text", thực ra là tràn ngang.
+
+```scss
+.filter-item ::v-deep .select2-selection--multiple .select2-selection__rendered {
+    white-space: normal;            /* cho chip XUỐNG DÒNG thay vì tràn ngang */
+}
+.filter-item ::v-deep .select2-selection__choice {
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+}
+```
+
+⚠️ **Vế sau bắt buộc đi kèm — nếu không sẽ đổi lỗi này lấy lỗi nặng hơn** (đã trả giá 2026-08-25):
+cho chip xuống dòng mà **không chặn trần chiều cao** thì ô nở vô hạn theo số chip và **ăn hết chỗ
+của bảng**. Đo thật ở popup chọn hàng hoá, màn 1200×813, chọn hết 17 "Tính chất hàng hoá":
+
+| | Không chặn trần | Chặn 86px |
+| --- | --- | --- |
+| Cao ô lọc | 536px | 88px (cuộn trong ô) |
+| Cao khối lọc | 722px | 274px |
+| Khung bảng còn lại | **2px** | 277px |
+| **Số dòng thấy được** | **0** | **6** |
+
+Trần này nay nằm sẵn ở **`components/V2BaseSelect.vue`** (`max-height: 86px; overflow-y: auto` trên
+`.select2-selection--multiple .select2-selection__rendered`) nên **mọi** select chọn nhiều — trong
+popup lẫn bộ lọc màn danh sách — đều được chặn. **Đừng khai lại ở từng màn.**
+
+Cách tự kiểm (mở popup, chọn thật nhiều rồi chạy trong console):
+
+```js
+const r = document.querySelector('.select2-selection--multiple .select2-selection__rendered')
+r.getBoundingClientRect().height <= 90 && r.scrollHeight > r.clientHeight   // phải là true
+```
+
+Khuôn chip (màu, cỡ chữ, padding) vẫn do `V2BaseSelect` lo — ở đây **chỉ** chặn tràn.
 
 📄 **CSS copy-paste đầy đủ + 7 bẫy đã trả giá + ngân sách chiều cao + snippet đo**:
 xem `table-popup-layout.md` cùng thư mục.

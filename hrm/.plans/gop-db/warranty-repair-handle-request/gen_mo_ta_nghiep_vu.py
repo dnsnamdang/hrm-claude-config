@@ -292,7 +292,24 @@ para("Giới hạn hiện tại: lịch sử theo dõi thông tin chung và tr�
      "thay đổi ở từng dòng thiết bị.")
 
 # ───────────────────────── 9 ─────────────────────────
-h("9. TRA CỨU, IN VÀ XUẤT DỮ LIỆU", 1)
+h("9. CÁC LỐI VÀO MÀN HÌNH", 1)
+para("Cùng một màn hình nhưng vào bằng những đường dẫn khác nhau thì danh sách hiện ra khác "
+       "nhau — đây là cách hệ thống cũ đang chạy và hệ thống mới giữ nguyên. Đường dẫn đầy đủ "
+       "là địa chỉ máy chủ ghép với phần dưới đây.")
+para("Màn hình: /customer-care/warranty-repair-handle-requests")
+table([
+    ["Vào bằng", "Danh sách hiện ra", "Dùng khi nào"],
+    ["(không kèm gì)", "Chỉ phiếu do chính tôi lập", "Xem lại việc của mình"],
+    ["?type=all", "Toàn bộ phiếu trong phạm vi quyền của tôi", "Lối vào chính từ menu"],
+    ["?type=waiting_information", "Phiếu đang chờ lập phiếu cung cấp thông tin làm báo giá", "Danh sách việc còn tồn"],
+])
+para("Ba điều cần biết:")
+bullet("Đường dẫn quyết định PHẠM VI xem, không phải quyền: người không có quyền xem theo "
+         "cấp mà mở đường dẫn xem tất cả thì vẫn chỉ thấy phiếu của chính mình.")
+bullet("Bấm nút Làm mới chỉ xoá điều kiện lọc, không đưa người dùng sang phạm vi khác.")
+bullet("Đường dẫn kèm giá trị lạ thì hệ thống bỏ qua và giữ phạm vi mặc định.")
+
+h("10. TRA CỨU, IN VÀ XUẤT DỮ LIỆU", 1)
 bullet("Tìm nhanh: một ô duy nhất, tìm được theo số phiếu xử lý, số phiếu yêu cầu, tên khách hàng "
        "và người xử lý.")
 bullet("Bộ lọc nâng cao: trạng thái, số phiếu yêu cầu, khách hàng, tên thiết bị, model, khoảng "
@@ -324,7 +341,7 @@ table([
 ])
 
 # ───────────────────────── 11 ─────────────────────────
-h("11. GIỚI HẠN HIỆN TẠI", 1)
+h("12. GIỚI HẠN HIỆN TẠI", 1)
 bullet("Màn “Phiếu cung cấp thông tin làm báo giá” chưa có trên hệ thống mới. Bấm “Tạo phiếu cung "
        "cấp thông tin” hiện báo hướng dẫn xử lý tạm bên phần mềm ERP; khi màn đó hoàn thành sẽ nối "
        "thẳng.")

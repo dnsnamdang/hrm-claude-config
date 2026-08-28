@@ -26,3 +26,9 @@ Files sửa: quotations/_id/edit.vue (loadCurrencies label→name), quotations/_
 Đang làm dở: không
 Bước tiếp theo: user verify browser + xác nhận lưu thực tế 1 lần cho chắc AC3
 Blocked:
+
+## Bổ sung — 2026-08-24: màn IN báo giá bị bỏ sót
+
+- [x] `components/assign/quotation/QuotationPrintPreview.vue` — `currencyDisplay` còn ghép `code + ' - ' + name` → in ra "Loại tiền tệ: VNĐ - VNĐ". Sửa chỉ hiện `name` (fallback `code` → `'VNĐ'`), khớp màn tạo/sửa/chi tiết
+- [x] Rà cả phân hệ Giao việc: không còn chỗ nào ghép "Mã - Tên" tiền tệ; `currencyCode` (ký hiệu cạnh số tiền, điều kiện tỷ giá) giữ nguyên
+- [x] Dữ liệu thật: 11 bản ghi `currencies` đều có `name` → không có case ra rỗng (VNĐ→"VNĐ", EUR→"EURO")

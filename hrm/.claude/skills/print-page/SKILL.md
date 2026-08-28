@@ -1,6 +1,6 @@
 ---
 name: print-page
-description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc khi gặp lỗi in — mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu.
+description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc khi gặp lỗi in — mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
@@ -84,6 +84,11 @@ Nút In gọi `this.$printContent(options)` — plugin `hrm-client/plugins/print
 - [ ] Ảnh letterhead: dùng **URL tuyệt đối** (xem mục 4), KHÔNG để `src="@/assets/..."` trực tiếp.
 - [ ] Toàn bộ CSS viền/độ rộng bảng: truyền qua `options.styles` (xem mục 3), scope bằng selector đủ mạnh (`table.table-bordered ...`).
 - [ ] Nút In gọi method riêng (vd `printPackage()`) để truyền `styles` + `pageMargin`, KHÔNG gọi trơn `$printContent()`.
+- [ ] **Field rich-text (Thông số kỹ thuật / ghi chú / điều khoản) — bản IN GIỮ HTML**: render
+      `v-html="$specHtml(value)"` (mixin `utils/mixins/SpecHtml.js` → `utils/specHtml.js`; đã sanitize
+      và tự đổi `\n` → `<br>` cho dữ liệu text thuần). KHÔNG `strip_tags`/`htmlToText` ở bản in (mất
+      đậm/nghiêng/xuống dòng), cũng KHÔNG in thẳng `{{ }}` (ra nguyên thẻ `<div>`, `<br />`).
+      Ngược lại, bản **EXCEL** phải hạ về text — xem `.claude/skills/export-excel/SKILL.md` mục 1b.
 
 ---
 
@@ -244,6 +249,31 @@ tờ giấy (đã dính thật: nút 794px).
 
 ---
 
+## 2d. ĐỊNH DẠNG SỐ TRÊN BẢN IN — CHUẨN QUỐC TẾ `1,234,567.89` (chốt 2026-08-26)
+
+Bản in là HTML hiển thị thẳng nên **phải tự format số** (khác bản Excel — xem
+`.claude/skills/export-excel/SKILL.md` mục 1). Định dạng bắt buộc: **`,` ngăn cách hàng nghìn,
+`.` phần thập phân**. Thay cho lần chốt kiểu Việt Nam ngày 2026-08-22.
+
+```js
+// ĐÚNG
+formatMoney(value)   { return Number(value || 0).toLocaleString('en-US') },
+formatNumber(value)  { return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 1 }) },
+
+// SAI — ra 1.234.567 kiểu VN
+Number(value || 0).toLocaleString('vi-VN')
+```
+
+- Áp cho **cả 3 nhánh** cùng lúc: `print.vue` ở FE · service dựng HTML in ở BE
+  (`number_format($x)` chứ KHÔNG `number_format($x, 0, ',', '.')`) · chuỗi `*_text` mà Resource trả
+  sẵn cho màn in dùng lại.
+- **Ngày tháng không dính rule này** — vẫn `dd/mm/yyyy`, `toLocaleDateString('vi-VN')` giữ nguyên.
+- Ô nhập tiền `V2BaseCurrencyInput` **cũng đã đồng bộ** chuẩn quốc tế (2026-08-26) → số trên bản
+  in và số trong form giờ khớp nhau, không còn lệch dấu như trước.
+- Tự kiểm: `grep -rnE "(toLocaleString|Intl\.NumberFormat)\(\s*'vi-VN'" pages/**/print*.vue` phải RỖNG.
+
+---
+
 ## 3. Snippet CSS chèn sẵn cho BẢNG có viền (copy dùng ngay)
 
 Truyền qua `this.$printContent({ styles, pageMargin: '12mm 10mm' })`. Selector `table.table-bordered ...` có specificity cao hơn `.table`/`.table-bordered` trong print-app.css nên ghi đè được (nhớ `!important`). Cửa sổ in chỉ chứa fragment trang này nên target thẳng `table.table-bordered` là an toàn.
@@ -355,6 +385,58 @@ methods: {
 
 ---
 
+## 4a. In từ popup xem trước: dùng IFRAME ẨN, **KHÔNG** `window.open` (chốt 2026-08-25)
+
+Popup xem trước bản in (`components/print/ReportPrintPreviewModal.vue`) trước đây in bằng:
+
+```js
+const win = window.open('', '_blank')   // ❌ SAI
+win.document.write(html)
+win.print()
+win.close()
+```
+
+**Lỗi này CHỈ HIỆN TRÊN WINDOWS — máy Mac không tái hiện được**, nên rất dễ nghiệm thu nhầm là đã
+xong (user báo 2026-08-25, đã dựng lại đúng luồng trên Chromium/Mac: hoàn toàn bình thường).
+
+Triệu chứng người dùng gặp: in một bản ghi hoặc in danh sách → bấm In → tắt cửa sổ in → quay lại
+màn danh sách thì **các ô lọc select2 (Công ty, Trạng thái…) bấm vào không mở ra nữa**, con trỏ
+cũng không vào được ô tìm trong dropdown. Nhìn như màn bị treo.
+
+Nguyên nhân: cửa sổ in con đóng lại nhưng cửa sổ HRM chưa lấy lại focus của hệ điều hành. Select2
+mở dropdown dựa vào focus và **tự đóng ngay khi mất focus**, nên mọi cú bấm đều "không ăn".
+
+**Cách đúng — in bằng iframe ẩn** (khuôn có sẵn ở `pages/finance/bill-incomes/_id/print.vue`):
+
+```js
+const frame = document.createElement('iframe')
+// KHÔNG display:none — một số trình duyệt bỏ qua print() của iframe bị ẩn hẳn
+frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden'
+frame.setAttribute('aria-hidden', 'true')
+document.body.appendChild(frame)
+
+const doc = frame.contentDocument || frame.contentWindow.document
+doc.open(); doc.write(`<!DOCTYPE html><html><head>…<style>${css}</style></head><body>${html}</body></html>`); doc.close()
+
+// chờ ảnh letterhead tải xong rồi mới bật hộp thoại in
+frame.contentWindow.focus()
+frame.contentWindow.print()
+```
+
+Không tạo cửa sổ nào nên trang chính không bao giờ mất focus, và **hết luôn cảnh báo "trình duyệt
+chặn pop-up"** (không cần dặn người dùng cho phép pop-up nữa).
+
+Ba điều bắt buộc kèm theo:
+- **Đừng gỡ iframe ngay sau `print()`** — hộp thoại in đọc nội dung từ chính nó, gỡ sớm là ra trang
+  trắng. Gỡ ở lần in kế tiếp, khi đóng popup, và ở `beforeDestroy`.
+- Trong hàm bật hộp thoại in phải kiểm `frame.parentNode && frame.contentWindow` — bấm In lần nữa
+  hoặc đóng popup lúc ảnh chưa tải xong sẽ làm hẹn giờ cũ chạy trên iframe đã gỡ (`contentWindow`
+  là `null`).
+- Vẫn giữ nguyên phần chờ ảnh: `img.complete` → đếm `load`/`error` → hẹn giờ chặn 3s.
+
+⚠️ Còn `components/assign/quotation/QuotationPrintPreview.vue` (màn Báo giá phân hệ Giao việc) đang
+dùng `window.open` y hệt — **cùng lỗi**, cần chuyển sang iframe khi có dịp đụng tới màn đó.
+
 ## 4b. LETTERHEAD CÔNG TY (logo đầu chứng từ) — BẮT BUỘC theo đúng khuôn này
 
 Áp dụng cho **mọi màn in chứng từ** (phiếu thu, phiếu chi, đề nghị, báo giá, hợp đồng…) — bản in HTML
@@ -459,6 +541,133 @@ picker → ai sửa lại ảnh công ty sẽ ghi đè về path tương đối 
 
 ---
 
+## 4c. Bản in dùng MẪU ERP: tên biến phải ĐỐI CHIẾU với mẫu thật, không suy từ tên trường
+
+Bản in của phân hệ port từ ERP điền dữ liệu vào mẫu HTML lưu trong bảng `report_templates`
+(`ErpReportTemplate`), khớp nhau bằng **tên biến `{{TÊN}}`**. Sai một chữ thì ô đó in ra **rỗng
+mà không có lỗi nào** — dễ bị báo là "mất dữ liệu".
+
+**Trước khi khai mảng biến, in ra danh sách biến có THẬT trong mẫu:**
+
+```bash
+mysql -h127.0.0.1 -uroot <db> -N --raw -e "SELECT template FROM report_templates WHERE id=<ID>;" \
+  | grep -o '{{[A-Z_]*}}' | sort | uniq -c
+```
+
+⚠️ **Mẫu ERP có chỗ đặt SAI TÊN BIẾN — đừng tin nhãn in ra** (đã trả giá 2026-08-24, Redmine
+#11170). Mẫu 277 "Phiếu yêu cầu kiểm tra sửa chữa bảo hành" in nhãn `Ghi chú:` nhưng chỗ điền lại
+là `{{DIA_CHI}}`; mẫu **không hề có** biến `GHI_CHU`. Service khai `'GHI_CHU' => $model->note` nên
+dòng Ghi chú luôn trắng.
+
+Cách xử lý khi gặp: **KHÔNG sửa mẫu** (mẫu dùng chung với ERP, sửa là ảnh hưởng cả 2 cổng) mà
+**điền cả 2 tên biến** — tên sai để bản in chạy đúng ngay, tên đúng để mẫu sửa lại sau vẫn chạy:
+
+```php
+'DIA_CHI'  => $model->note,   // mẫu ERP 277 đặt nhầm biến ở dòng "Ghi chú:"
+'GHI_CHU'  => $model->note,   // tên đúng, giữ sẵn cho khi mẫu được sửa
+```
+
+Nếu mẫu **không có chỗ nào** cho trường cần in (không nhãn, không biến) thì phải **hỏi lại**, vì
+thêm là phải sửa mẫu bên ERP — không tự quyết.
+
+---
+
+## 4d. IN DANH SÁCH: BẮT BUỘC chốt TRẦN số dòng (chốt 2026-08-24)
+
+Triệu chứng người dùng báo: *"nhiều máy tôi in không được"* — bấm In thì đơ, hoặc hộp thoại in
+không hiện. Đừng đi tìm lỗi CSS: gần như luôn là **bản in danh sách không giới hạn số dòng**.
+
+Số đo thật (Phiếu cung cấp thông tin, không lọc gì, tài khoản có quyền xem 4.980/10.150 phiếu):
+
+| | Không chặn | Chặn 2.000 dòng |
+| --- | --- | --- |
+| Số dòng | 4.980 | 2.000 |
+| HTML trả về | **3,84 MB** | 1,55 MB |
+| Thời gian BE | 0,95s | 0,43s |
+| Bộ nhớ đỉnh PHP | 116 MB | 90 MB |
+| Số trang A4 ngang | ~170 | ~70 |
+
+**Máy chủ KHÔNG phải thủ phạm** (0,95s là bình thường). Trình duyệt mới là: chuỗi 3,84 MB đó vừa
+đổ vào DOM popup xem trước, vừa bị `document.write` chép sang cửa sổ in (**nhân đôi**), rồi trình
+duyệt phải dàn ~170 trang. Máy yếu treo hoặc chết tab.
+
+### BE — dùng trait dùng chung, đừng chép `->limit()` từng chỗ
+
+`Modules/CustomerCare/Services/Concerns/LimitsPrintListRows` (trần hiện tại **2.000 dòng**):
+
+```php
+class FooController extends ApiController
+{
+    use \Modules\CustomerCare\Services\Concerns\LimitsPrintListRows;
+
+    public function printListData(Request $request, FooPrintService $printService)
+    {
+        [$rows, $total] = $this->limitedPrintRows(
+            $this->service->filteredQuery($request)->with([...])
+        );
+        // ...fill mẫu...
+        return $this->responseJson('success', Response::HTTP_OK, $this->printListPayload($html, $total));
+    }
+}
+```
+
+`printListPayload()` trả kèm `total` / `limit` / `truncated` cho giao diện.
+
+Từ 2026-08-26, `limitedPrintRows()` **trả sớm bộ rỗng khi vượt trần** và `printListPayload()` ép
+`template` về chuỗi rỗng — vì giao diện chặn in hẳn (xem phần FE), dựng HTML ra chỉ để vứt đi.
+
+⚠️ **2 cái bẫy đã dính khi làm:**
+
+- **Đếm tổng PHẢI trên bản `clone` của query, TRƯỚC khi gắn `limit`.** Dùng chính query rồi mới
+  `get()` thì Eloquent đã gắn `limit`, `count()` ra tối đa đúng bằng trần → `truncated` luôn `false`.
+- **PHP 7.4 KHÔNG cho khai `const` trong trait** (tính năng của PHP 8.2). Khai vào là fatal
+  *"Traits cannot have constants"* — để trần dưới dạng method `printListMaxRows()`.
+
+### FE — vượt trần thì CHẶN HẲN, không in phần đầu (chốt 2026-08-26)
+
+`reportPrintPreviewMixin` đọc `truncated` rồi dựng câu nhắc; `ReportPrintPreviewModal` nhận qua
+prop `notice`. Khi có `notice`:
+
+- **ẩn bản xem trước** (`v-if="!loading && !error && !notice"`)
+- **ẩn hẳn nút In** (`v-if="!notice"` — không để nút xám, CLAUDE.md)
+- máy chủ cũng **không dựng HTML** (xem `limitedPrintRows` trả sớm) — khỏi ghép ~1,6 MB rồi vứt
+
+> Danh sách có **4.980** dòng, vượt mức in tối đa **2.000** dòng nên chưa in được. Vui lòng thu hẹp
+> bộ lọc (khoảng thời gian, trạng thái…) rồi in lại, hoặc dùng Xuất Excel cho danh sách dài.
+
+⚠️ **Quy ước cũ "in 2.000 dòng đầu kèm lời nhắc" đã BỎ.** Lý do user chốt: thà không in còn hơn in
+ra bản thiếu dòng mà người cầm không để ý — bản in danh sách hay được ký / lưu hồ sơ.
+
+5 quy tắc cho câu nhắc + luồng này:
+
+1. **Đủ 3 ý: vì sao không in được · tổng bao nhiêu · làm gì tiếp.** Chỉ báo "vượt giới hạn" thì
+   người dùng không biết xử lý thế nào.
+2. **Câu chữ phải khớp thứ người dùng NHÌN THẤY.** Bản cũ ghi "bản in chỉ lấy 2.000 dòng đầu"
+   trong khi giao diện ẩn luôn bản xem trước — đọc lên mâu thuẫn.
+3. **KHÔNG dùng toast** — toast tắt sau vài giây, người dùng in ra mới phát hiện thiếu dòng.
+4. Đặt **ngoài** `.report-print-content` để không lọt vào giấy; nền vàng nhạt + chữ xám, **không
+   tô đỏ** (đỏ chỉ dành cho lỗi validate — CLAUDE.md).
+5. ⚠️ **Xét `truncated` TRƯỚC nhánh "không có dữ liệu để in".** Vượt trần cũng cho nội dung rỗng,
+   kiểm ngược thứ tự là màn báo *"Không có dữ liệu để in"* trong khi thực tế có mấy nghìn dòng —
+   người dùng tưởng mất dữ liệu. Đã dính thật 2026-08-26.
+
+**Cách test bắt được lỗi nhóm này:** luôn thử in ở trạng thái **KHÔNG lọc gì** trên dữ liệu thật
+(danh sách lớn nhất), rồi thử lại với bộ lọc cho vài dòng. Chỉ test một nhánh là lọt — nhánh vượt
+trần và nhánh bình thường đi qua hai đường khác hẳn nhau.
+
+### Tự kiểm
+
+```bash
+# Không được còn ->get() trần trụi trong endpoint in danh sách
+grep -n "function printListData" -A15 Modules/<Module>/Http/Controllers/V1/*.php | grep -n "get();"
+```
+
+Và hỏi lại nghiệp vụ trước khi nới trần: bản in là để **cầm tay đọc / ký / lưu**, không phải để
+tra cứu. Cần cả nghìn dòng thì đúng công cụ là **Xuất Excel** (đã chia trang sẵn — `list-page`
+mục 14c), không phải bản in.
+
+---
+
 ## 5. Bảng có Ô GỘP (rowspan) in qua NHIỀU TRANG — đánh đổi, KHÔNG có cách vẹn cả đôi đường
 
 Trình duyệt (`window.print`) **không thể lặp lại nội dung ô gộp ở đầu mỗi trang** — giới hạn cố hữu. Có 3 hướng, HỎI USER chọn:
@@ -521,6 +730,8 @@ doc.close()
 | Mất logo letterhead (ảnh tĩnh vẫn OK) | `companies.header` là path tương đối / `ERP_URL` rỗng → `src` 404, bị `display:none` | Mục 4b — chuẩn hoá `companies.header` về URL tuyệt đối, không trả `''` |
 | Logo ra ĐÚNG ảnh nhưng SAI công ty | Lấy công ty người tạo / người đăng nhập thay vì `company_id` trên chứng từ | Mục 4b — `$bill->company_id` trước, người tạo chỉ là fallback |
 | Cột Ghi chú tự phình rộng | auto-layout ăn theo text dài | `table-layout: fixed` + `<colgroup>` % |
+| **In danh sách: bấm In thì đơ / hộp thoại in không hiện, nhiều máy bị** | Endpoint in danh sách `->get()` không giới hạn dòng (đo thật 4.980 dòng → HTML 3,84 MB → ~170 trang, DOM lại bị nhân đôi khi chép sang cửa sổ in) | Mục 4d — chặn trần 2.000 dòng bằng trait `LimitsPrintListRows` + báo rõ trên bản xem trước |
+| **Bản in DANH SÁCH mất dòng mà không ai biết** | Chặn trần nhưng không nói gì / chỉ báo bằng toast | Mục 4d — dòng nhắc đặt trên bản xem trước, đủ 3 ý: in được bao nhiêu · tổng bao nhiêu · làm gì tiếp |
 | **Khối KÝ TÊN dồn về trái, hụt so với mép phải** | Mẫu ERP khai cứng `width:827px` cho bảng ký `class="block no-border"`; rule `table:not(.no-border)` KHÔNG với tới nó | `#content table.block { width:100% !important; table-layout:fixed !important }` + `td { width:auto !important }` (mục 3b) |
 
 ## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22)

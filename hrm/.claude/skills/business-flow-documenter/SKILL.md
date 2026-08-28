@@ -56,7 +56,7 @@ khi báo xong.
 
 ---
 
-## Cấu trúc bắt buộc — 11 chương
+## Cấu trúc bắt buộc — 12 chương
 
 Bám đúng thứ tự này; chương nào không áp dụng thì vẫn giữ tiêu đề + 1 dòng "Không áp dụng vì …".
 
@@ -70,9 +70,35 @@ Bám đúng thứ tự này; chương nào không áp dụng thì vẫn giữ ti
 | 6 | THÔNG BÁO — AI NHẬN, KHI NÀO, NỘI DUNG GÌ | **Bắt buộc có bảng 4 cột**: Sự kiện · Ai nhận · Nội dung · Bấm vào thì đi đâu. Xem mục "Chương 6" bên dưới |
 | 7 | PHÂN QUYỀN | 7.1 Bảng quyền → nhìn thấy dữ liệu nào (kể cả trường hợp KHÔNG có quyền nào) · 7.2 Bảng thao tác → điều kiện được phép |
 | 8 | QUY TẮC NGHIỆP VỤ BẮT BUỘC | Bắt buộc nhập (tách theo từng nút bấm) · ràng buộc dữ liệu · khóa chỉnh sửa · danh mục bị khóa · quy tắc sinh mã |
-| 9 | TRA CỨU, IN VÀ XUẤT DỮ LIỆU | Tìm nhanh tìm được theo gì · bộ lọc có gì · in cái gì · xuất được gì |
-| 10 | LIÊN THÔNG VỚI HỆ THỐNG KHÁC | Dùng chung dữ liệu với ERP/phân hệ nào; **bảng** các điểm cố ý làm khác: Điểm khác · Bên cũ · Bên mới · Lý do |
-| 11 | GIỚI HẠN HIỆN TẠI | Cái gì chưa có, workaround tạm, khi nào bỏ |
+| 9 | **CÁC LỐI VÀO MÀN HÌNH** | **Bảng 3 cột**: Vào bằng · Danh sách hiện ra · Dùng khi nào. Xem mục "Chương 9" bên dưới |
+| 10 | TRA CỨU, IN VÀ XUẤT DỮ LIỆU | Tìm nhanh tìm được theo gì · bộ lọc có gì · in cái gì · xuất được gì |
+| 11 | LIÊN THÔNG VỚI HỆ THỐNG KHÁC | Dùng chung dữ liệu với ERP/phân hệ nào; **bảng** các điểm cố ý làm khác: Điểm khác · Bên cũ · Bên mới · Lý do |
+| 12 | GIỚI HẠN HIỆN TẠI | Cái gì chưa có, workaround tạm, khi nào bỏ |
+
+## Chương 9 — CÁC LỐI VÀO MÀN HÌNH (chốt 2026-08-26)
+
+Rất nhiều màn của ERP có **một đường dẫn nhưng nhiều mục menu trỏ vào**, khác nhau ở query string,
+và mỗi lối vào cho ra một danh sách khác hẳn. Người nghiệm thu mở đúng một link rồi kết luận "màn
+này thiếu dữ liệu" là chuyện đã xảy ra — nên tài liệu PHẢI liệt kê đủ.
+
+Bảng bắt buộc 3 cột:
+
+| Vào bằng | Danh sách hiện ra | Dùng khi nào |
+| --- | --- | --- |
+| (không kèm gì) | Chỉ phiếu do chính tôi lập | Xem lại việc của mình, kể cả phiếu còn nháp |
+| `?type=all` | Toàn bộ phiếu trong phạm vi quyền của tôi | Lối vào chính từ menu |
+| `?type=waiting_handle` | Phiếu đang Chờ xử lý gửi về đúng phòng tôi | Danh sách việc phòng tôi phải làm |
+
+Kèm theo bảng, luôn ghi 3 câu này (người đọc hay hiểu nhầm đúng 3 chỗ đó):
+
+- Đường dẫn quyết định **phạm vi xem**, KHÔNG phải quyền — người không có quyền xem theo cấp mà mở
+  link "xem tất cả" thì vẫn chỉ thấy phiếu của chính mình.
+- Nút **Làm mới** chỉ xoá điều kiện lọc, không đưa người dùng sang phạm vi khác.
+- Link kèm giá trị lạ thì hệ thống bỏ qua, giữ phạm vi mặc định.
+
+Lấy danh sách lối vào ở đâu: các mục menu của ERP (`resources/views/layouts/topmenubar.blade.php`)
+và các nhánh `if ($request->type == ...)` trong `searchByFilter()` của model tương ứng. ⚠️ Tên tham
+số KHÔNG đồng nhất giữa các màn — phần lớn là `type`, riêng màn Báo giá dịch vụ là `permission`.
 
 ## Chương 6 — phần hay bị viết hời hợt nhất
 
@@ -153,11 +179,12 @@ except Exception: pass
 
 ## Checklist trước khi báo xong
 
-- [ ] Đủ **11 chương**, không bỏ chương nào
+- [ ] Đủ **12 chương**, không bỏ chương nào
 - [ ] Chương 4 nói rõ **ai** làm bản ghi chuyển sang từng trạng thái
 - [ ] Chương 5 chia theo **bước nghiệp vụ**, nhánh rẽ có bảng "hướng xử lý → kết quả"
 - [ ] Chương 6 có **bảng 4 cột** và nói rõ *toàn bộ nhân viên phòng* hay *một người*
 - [ ] Chương 6 có phần quy ước chung + nêu sự kiện **không** gửi thông báo
+- [ ] **Chương 9 liệt kê ĐỦ mọi lối vào** (đếm từ menu ERP + các nhánh `type`/`permission`), kèm 3 câu lưu ý
 - [ ] Chương 7 có cả trường hợp **không có quyền nào**
 - [ ] Chương 8 tách bắt buộc nhập **theo từng nút bấm** (lưu nháp vs gửi đi)
 - [ ] Chương 10 có bảng khác biệt kèm **lý do**, không chỉ liệt kê

@@ -1,6 +1,6 @@
 ---
 name: form-validate
-description: Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form) — validate realtime bằng vee-validate trên component V2Base*, và quy tắc chỉ trường Tên mới required ở FE (lưu nháp không bị chặn)
+description: Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form) — validate realtime bằng vee-validate trên component V2Base*, và quy tắc chỉ trường Tên mới required ở FE. Đọc cả khi: Lưu nháp lọt dữ liệu sai định dạng, ô nhập báo lỗi đỏ nhưng bấm Lưu vẫn đi, hoặc cần chốt rule nào chặn ở FE / rule nào phải chặn thêm ở BE
 ---
 
 # Skill: Validate Form ở màn mới (vee-validate + V2Base*)
@@ -25,6 +25,40 @@ Hệ quả:
 | Ràng buộc nghiệp vụ nhiều trường, trùng mã… | **BE** | Sau khi bấm Lưu |
 
 Tuyệt đối **không** tự bịa danh sách required ở FE cho nút Lưu chính thức — sẽ lệch với BE và chặn oan.
+
+### ⚠️ "Lưu nháp" chỉ nới `required` — MỌI rule khác vẫn chặn (chốt 2026-08-28)
+
+Đây là chỗ hay hiểu sai thành "nháp thì lưu bừa cũng được". Không phải:
+
+| | Lưu nháp | Lưu / Gửi chính thức |
+|---|---|---|
+| `required` | Nới — chỉ cần 1 trường đại diện (Tên/mã phiếu gốc) | BE quyết theo `status` |
+| **Định dạng** (số, số nguyên dương, ngày, email, độ dài, khoảng giá trị) | **CHẶN** | **CHẶN** |
+| Ràng buộc nghiệp vụ (trùng mã, ngày sau > ngày trước…) | **CHẶN** | **CHẶN** |
+
+Lý do: nháp là bản ghi CHƯA ĐỦ, không phải bản ghi SAI. `time_to_has = "xyzabc"` lưu được thì cái
+sai đó nằm trong DB vĩnh viễn, không ai dọn (Redmine #11240 — đã lọt thật, phải đi `UPDATE` tay).
+
+### ⚠️ Rule định dạng phải chặn ở CẢ BE, không chỉ FE
+
+FE chỉ là lớp trải nghiệm. Cùng một rule phải có ở 2 nơi:
+
+```php
+// FormRequest — KHÔNG đi theo biến $required (nháp/chính thức), luôn bật
+$key . '.*.choose_services.*.time_to_has' => 'nullable|integer|min:0',
+```
+
+Và **message BE viết y hệt message rule FE** ("Giá trị phải là số nguyên dương.") để người dùng
+không thấy 2 câu chữ khác nhau cho cùng một lỗi.
+
+Tự kiểm BE bằng cách gọi thẳng API, bỏ qua giao diện:
+
+```js
+const payload = form.buildPayload(1)                       // 1 = trạng thái NHÁP
+payload.product_repairs[0].choose_services[0].time_to_has = 'abc'
+await form.$store.dispatch('apiPutMethod', { url: '…/10321', payload })
+// PHẢI ra 422 kèm errors['product_repairs.0.choose_services.0.time_to_has']
+```
 
 ---
 
@@ -103,6 +137,40 @@ Vì sao bắt buộc: trước khi có component này, cùng một khối markup
 có/không `font-weight-bold` — và sửa 1 chỗ không lan sang chỗ khác.
 
 ⚠️ Màn cũ đang tự dựng thì **sửa dần khi có dịp đụng vào**, KHÔNG sửa đại trà.
+
+### ⚠️ Màn hình hẹp: tiêu đề khối và cụm nút chen nhau
+
+Hàng tiêu đề của `V2BaseFormSection` là flex `justify-content: between`, **không cho xuống dòng**.
+Dưới ~1400px (sidebar mở, laptop 13–14"), tiêu đề dài bị bóp thành 2–3 dòng còn cụm ô tìm + nút
+tự vỡ thành 2 hàng — nhìn như vỡ giao diện (Redmine #11170). Khai trong **màn đang làm** (đừng sửa
+thẳng component dùng chung, nó đang chạy ở 35+ màn):
+
+```scss
+@media (max-width: 1400px) {
+    ::v-deep .v2-form-section > .card-header { flex-wrap: wrap; gap: 6px 8px; }
+    ::v-deep .v2-form-section > .card-header > h6 { flex: 1 1 100%; }        /* tiêu đề 1 hàng riêng */
+    ::v-deep .v2-form-section > .card-header > .d-flex {
+        flex: 1 1 100%;
+        justify-content: flex-end;                                           /* cụm nút xuống hàng dưới */
+    }
+}
+```
+
+### ⚠️ Cột chứa TÊN TỆP / chuỗi dài kéo giãn cả bảng
+
+Bảng `table-layout: auto` tính bề rộng cột theo **nội dung dài nhất**. Ô đính kèm hiện tên tệp lấy
+từ URL S3 (đã nối thêm hậu tố, ~60–80 ký tự, không có dấu cách nên không xuống dòng) → cột đó
+chiếm gần hết bề rộng bảng ở màn hình nhỏ, các cột khác bị bóp (Redmine #11164).
+
+`text-overflow: ellipsis` **không cứu** được: nó chỉ đổi cách vẽ, không giảm bề rộng mong muốn của
+cột. Phải **chốt bề rộng ngay trên `<th>`**:
+
+```html
+<th style="width: 230px; min-width: 230px">File đính kèm</th>
+```
+
+(`.v2-file__name` đã có sẵn `ellipsis` + `min-width: 0` nên thu hẹp là an toàn, hover vẫn xem được
+tên đầy đủ.)
 
 ### ⚠️ Bảng trong form bị thừa khoảng trắng phía dưới
 
@@ -233,8 +301,202 @@ async submitForm(status = 1) {
 - Sau khi có lỗi → **scroll + focus vào trường lỗi đầu tiên** (quét trên → dưới, trái → phải).
 - Còn lỗi FE thì **không gọi API lưu**.
 - Câu lỗi tiếng Việt, không dùng thuật ngữ kỹ thuật. Mẫu: `Tên dự án không được để trống`, `Email không đúng định dạng`.
+- ⚠️ **TUYỆT ĐỐI KHÔNG TỰ SỬA GIÁ TRỊ USER VỪA NHẬP.** Nhập vượt trần / dưới sàn / sai định dạng
+  thì **báo đỏ ngay dưới ô**, giữ nguyên con số user gõ. Cấm mọi kiểu "chỉnh ngầm": kéo về max/min,
+  làm tròn, cắt bớt ký tự, tự xoá dòng trống trong bảng chi tiết. User gõ `2` mà ô nhảy về `1` là
+  mất dữ liệu không dấu vết — user tưởng hệ thống "báo sai" chứ không hiểu là bị chặn.
+  Toast thay cho lỗi dưới ô cũng SAI: bảng dài thì không biết dòng nào hỏng.
+
+  ```js
+  // SAI — tự kéo về trần rồi bắn toast
+  onQtyChange(product) {
+      if (qty > max) { product.qty = max; this.toast('error', `Chỉ còn ${max}`) }
+  }
+
+  // ĐÚNG — giữ nguyên số user gõ, gắn lỗi vào đúng ô, chặn ở lúc lưu
+  onQtyChange(product, index) {
+      const message = this.qtyErrorOf(product)   // '' = hợp lệ
+      if (message) this.$set(this.formErrors, `products.${index}.qty`, message)
+      else this.clearFieldError(`products.${index}.qty`)
+  }
+  ```
+
+  Câu lỗi theo mẫu `<Tên trường> – <Nội dung>`: `Yêu cầu hủy – Không được vượt 1 (số đang giữ)`.
+  Chốt 2026-08-17, nhắc lại ở Redmine #11192 (màn Yêu cầu hủy hàng giữ).
 
 > Ghi chú: màn mới dùng cách này thì **không cần cờ `touched`** (cờ đó là để màn cũ không hiện lỗi trước lần submit đầu). Lỗi realtime hiện theo tương tác của user là đúng chuẩn.
+
+### 3a. MỖI Ô MỘT KHOÁ LỖI RIÊNG — và xoá lỗi khi đổi ô hiện (chốt 2026-08-24)
+
+Form có ô **đổi theo điều kiện** (tick một ô checkbox là ẩn ô A, hiện ô B) thì A và B **KHÔNG được
+dùng chung một khoá trong `formError`**, dù cuối cùng cả hai cùng ghi vào một cột của DB.
+
+Lỗi đã gặp (Redmine #11164): popup Thêm trang thiết bị có 2 ô cùng ghi vào `product_id` — *Trang
+thiết bị* (khi không tick) và *Hàng công ty tương đương* (khi tick "Hàng công ty không bán"). Cả 2
+cùng đọc `fieldError('product_id')`, nên bấm Lưu ở ô trên rồi tick vào là **lỗi nhảy xuống ô kia**
+— người dùng chưa hề đụng vào ô đó.
+
+Ba việc phải làm đủ:
+
+1. **Khoá riêng cho từng ô**: `product_id` và `equivalent_product_id`.
+2. **Đổi điều kiện hiện ô thì xoá lỗi cũ** — `this.formError = {}` ngay trong handler của ô tick,
+   nếu không lỗi của lần bấm Lưu trước sẽ bám sang ô vừa hiện ra.
+3. **Lỗi 422 của BE phải map về đúng ô đang hiện.** BE chỉ biết một cột `product_id`; FE tự chuyển
+   sang khoá của ô đang hiển thị, tránh lỗi rơi vào ô đang bị `v-if` ẩn (user không thấy lỗi ở đâu
+   mà nút Lưu vẫn không ăn):
+
+```js
+if (error?.response?.status === 422) {
+    const errors = { ...(data?.errors || {}) }
+    if (this.form.product_no_sale && errors.product_id) {
+        errors.equivalent_product_id = errors.product_id
+        delete errors.product_id
+    }
+    this.formError = errors
+}
+```
+
+**Tự kiểm**: với mỗi ô bị `v-if`/`v-else`, bấm Lưu để sinh lỗi rồi bật/tắt điều kiện — không ô nào
+được hiện lỗi mà user chưa từng đụng tới.
+
+### 3b. BẢNG NHIỀU DÒNG — lỗi 422 gắn CHỈ SỐ dòng, đổi mảng là phải dọn (chốt 2026-08-25)
+
+Laravel trả lỗi mảng theo khoá có **chỉ số dòng**: `products.2.serial`,
+`extend_products.0.services.1.quantity`. FE lưu nguyên vào `formError` rồi đọc theo chỉ số đang
+render — mà chỉ số là **VỊ TRÍ**, không phải danh tính dòng:
+
+```
+trước:  dòng 0 (ok) · dòng 1 (ok) · dòng 2 thiếu Serial  -> lỗi ở khoá `products.2.serial`
+xoá dòng 1
+sau:    dòng cũ số 2 nay là dòng 1 — nhưng lỗi vẫn nằm ở khoá `.2`
+        -> dòng khác ăn oan lỗi, hoặc THÊM dòng mới vào là nó hiện lỗi ngay khi chưa ai đụng tới
+```
+
+Đã dính ở cả 3 màn luồng dịch vụ (Yêu cầu KT SC–BH · Phiếu xử lý · Phiếu CCTT).
+
+**Dùng helper chung `utils/rowFieldErrors.js`, gọi NGAY TẠI CHỖ đổi mảng:**
+
+| Thao tác | Gọi gì |
+| --- | --- |
+| Xoá 1 dòng (`splice(i, 1)`) | `removeRowErrors(formError, 'products', i)` — bỏ lỗi dòng đó, kéo lỗi dòng sau lên |
+| Thêm dòng vào cuối (`push`) | `dropRowErrorsFrom(formError, 'products', arr.length)` — bỏ khoá chỉ số ≥ độ dài mới |
+| Thay CẢ mảng (đổi khách hàng, tải lại phiếu gốc) | `clearRowErrors(formError, 'products')` |
+| Chuyển dòng sang bảng khác | `removeRowErrors` ở khối nguồn **+** `dropRowErrorsFrom` ở khối đích |
+
+```js
+removeProduct(index) {
+    this.form.products.splice(index, 1)
+    this.formError = removeRowErrors(this.formError, 'products', index)
+},
+```
+
+- `prefix` là đường dẫn tới **chính mảng** bị đổi, không kèm chỉ số — bảng lồng thì
+  `` `extend_products.${pi}.services` ``.
+- Có **lỗi cấp bảng** (`fieldError('products')` = "Chưa chọn thiết bị nào") thì thêm dòng xong phải
+  `delete errors.products` — nếu không dòng đã có mà vẫn báo bảng rỗng.
+- ⚠️ **KHÔNG chữa bằng `this.formError = {}`**: xoá sạch thì lỗi của những dòng KHÁC (user chưa sửa
+  gì) cũng biến mất, bấm Lưu lại mới hiện — bằng việc giấu lỗi.
+- ⚠️ Bảng con **splice thẳng trong template của component con** (`product.services.splice(si, 1)`)
+  thì cha không biết để dọn → phải `$emit` ra cha, đừng mutate mảng của cha từ template con.
+
+**Tự kiểm**: bấm Lưu cho ra lỗi ở dòng cuối → xoá dòng đầu → không dòng nào được hiện lỗi sai chỗ;
+thêm dòng mới → dòng mới phải sạch.
+
+---
+
+---
+
+## 3c. `validateAll()` KHÔNG thấy ô nằm trong component con (chốt 2026-08-28)
+
+Form lớn hay tách bảng ra component riêng (`WrDeviceLinesTable`, `WrCostTable`…). Gắn `v-validate`
+cho ô trong đó rồi bấm Lưu thì **lỗi hiện đỏ đúng, nhưng vẫn lưu được** — im lặng, không báo gì.
+
+**Vì sao:** vee-validate gắn cho mỗi field một `vmId` = `_uid` của component CHỨA nó, còn
+`this.$validator.validateAll()` lọc field theo `vmId` của chính component gọi. Ô trong bảng con có
+`vmId` khác → không nằm trong danh sách được validate → `validateAll()` trả `true`.
+
+`inject: ['$validator']` ở con **không cứu được**: nó làm hai bên dùng chung một validator, nhưng
+`vmId` của field vẫn là của component chứa ô.
+
+**Cách đúng — bỏ bộ lọc `vmId`:**
+
+```js
+// Cha, trước khi gọi API
+const valid = await this.$validator.validateAll(null, { vmId: null })
+if (!valid) {
+    this.$toasted?.global?.error?.({ message: 'Vui lòng kiểm tra lại thông tin đã nhập' })
+    return
+}
+```
+
+`Field.matches()` bỏ qua kiểm tra khi `vmId` là null/undefined → quét mọi field đang mounted.
+
+Ở component con, đặt `data-vv-name` **duy nhất theo dòng** (kèm cả biến thể bảng nếu một component
+dùng cho 2 bảng), nếu không lỗi của ô này hiện luôn ở ô kia:
+
+```js
+daysField(product, index, group, childIndex) {
+    return `days-${this.variant}-${group}-${this.rowKey(product, index)}-${childIndex}`
+},
+```
+
+**Rule chỉ gắn khi ô CÓ giá trị** — ô không bắt buộc mà gắn cứng `positive_integer` thì vừa mở màn
+đã đỏ lòm:
+
+```js
+daysRule(value) {
+    return value === '' || value === null || value === undefined ? '' : 'positive_integer'
+},
+```
+
+**Tự kiểm**: gõ chữ vào ô trong bảng con → bấm **Lưu nháp** → phải bị chặn, không được đi tiếp.
+
+---
+
+## 3d. BẢNG NHIỀU DÒNG: bấm Lưu là phải NHẢY TỚI ĐÚNG DÒNG LỖI
+
+Tình huống: form có bảng chi tiết, user thêm **hàng chục / hàng trăm dòng**, chỉ 1-2 dòng sai
+(thực tế đã gặp phiếu **116 dòng** ở màn Yêu cầu gia hạn hàng giữ). Bấm Lưu / Duyệt mà màn hình
+đứng im thì user phải cuộn dò từng dòng mới thấy ô đỏ.
+
+**Toast cứ để câu chung `"Bạn chưa nhập đầy đủ thông tin."`** — câu lỗi chi tiết đã có sẵn inline
+dưới ô (mục 3), nhồi thêm vào toast là thừa. Việc bắt buộc là **tự cuộn tới ô lỗi đầu tiên**:
+
+```js
+import { scrollToFirstError } from '@/utils/scrollToFirstError'
+
+if (this.validateForm()) {                       // còn lỗi -> KHÔNG gọi API
+    this.toast('error', 'Bạn chưa nhập đầy đủ thông tin.')
+    this.$nextTick(() => scrollToFirstError(this.$el))
+    return
+}
+```
+
+`scrollToFirstError(root)` làm 4 việc, dùng được cho mọi màn — **đừng chép lại đoạn cuộn tay**:
+
+1. Tìm ô lỗi đầu tiên: `.v2-input__wrapper.is-invalid` → `.is-invalid` → câu lỗi đang hiện.
+2. Cuộn **cả dòng `<tr>`** vào giữa màn hình (không chỉ cuộn ô) để user thấy ngữ cảnh.
+3. Bảng tràn ngang thì kéo luôn theo **chiều ngang** tới đúng ô.
+4. Nháy nền đỏ nhạt dòng đó ~1,5s + focus ô nhập (bỏ qua ô `disabled`).
+
+⚠️ 2 cái bẫy đã đo thật, đây là lý do phải dùng util chứ không tự viết selector:
+
+| Bẫy | Hậu quả |
+|---|---|
+| `V2BaseError` render class **`.v2-error`**, KHÔNG phải `.invalid-feedback` của bootstrap | Bắt `.invalid-feedback` là tìm không ra ô nào |
+| KHÔNG phải component nào cũng gắn `is-invalid` — `V2BaseDatePicker` có lỗi mà wrapper vẫn sạch | Chỉ bắt `is-invalid` thì con trỏ đứng im, user tưởng bấm nút không ăn |
+| Bảng render sẵn hàng trăm khối `V2BaseError` RỖNG | Phải lọc khối đang hiện + có chữ, nếu không nhảy vào dòng 1 dù lỗi ở dòng 90 |
+
+Đã bấm thật (25/08/2026): phiếu 116 dòng — đang ở cuối trang (scrollTop 7337) bấm Duyệt thì nhảy
+về dòng 1 (scrollTop 143, dòng nằm giữa khung nhìn); bảng 3 dòng chỉ **dòng 3** thiếu lô — đang ở
+đầu trang bấm Gửi duyệt thì tự cuộn xuống đúng dòng 3.
+Đang dùng ở 4 form nhóm Giữ hàng (gia hạn / điều chuyển / yêu cầu hủy / phiếu hủy).
+
+⚠️ **Trước khi có util này, mỗi màn tự viết một kiểu** — màn Hợp đồng bắt `.field-error`, màn Báo
+giá bắt `.cell-invalid, .text-small-error`, nhóm Giữ hàng bắt `.v2-input__wrapper.is-invalid`.
+Util đã gom hết selector đó vào hằng `ERROR_TEXT_SELECTOR` nên chạy được cho mọi màn; 2 màn cũ
+(`assign/contracts/_id/edit.vue`, `assign/quotations/_id/edit.vue`) VẪN đang dùng bản riêng —
+muốn gộp thì hỏi user trước (màn đang chạy).
 
 ---
 
@@ -253,7 +515,14 @@ Khai trong `plugins/vee-validate.js`, dùng ngay: `min`, `max`, `max_value`, `ph
 - [ ] KHÔNG có `required` ở FE cho trường khác (Lưu nháp phải lưu được với form gần như trống)
 - [ ] Các rule định dạng (số/ngày/email/độ dài) gắn ở FE, chạy realtime
 - [ ] Lỗi hiện inline qua `V2BaseError`, có `is-invalid`, không popup
-- [ ] `validateAll()` trước khi gọi API; còn lỗi thì không gọi API
+- [ ] `validateAll(null, { vmId: null })` trước khi gọi API; còn lỗi thì không gọi API
+      (thiếu `vmId: null` là bỏ sót mọi ô nằm trong component con — mục 3c)
+- [ ] Rule ĐỊNH DẠNG chặn cả ở nút **Lưu nháp**, và có rule tương ứng ở **FormRequest** của BE
+      với message viết y hệt FE (mục 1)
+- [ ] KHÔNG có đoạn code nào tự sửa giá trị user nhập (kéo về max/min, làm tròn, xoá dòng) — grep `= max`, `Math.min(`, `Math.max(` trong các hàm `onXxxChange` (mục 3)
 - [ ] Lỗi BE 422 map vào `formError` và hiển thị cùng chỗ với lỗi FE
 - [ ] Scroll/focus trường lỗi đầu tiên
+- [ ] Bảng nhiều dòng: mọi chỗ xoá/thêm/chuyển dòng đã dọn `formError` bằng `utils/rowFieldErrors.js` (mục 3b)
+- [ ] Form có BẢNG chi tiết: sau khi báo lỗi phải gọi `scrollToFirstError(this.$el)` để nhảy
+      tới đúng dòng sai (mục 3d) — KHÔNG tự viết đoạn cuộn tay bằng selector riêng
 - [ ] Test: bấm Lưu nháp với form chỉ có Tên → lưu thành công
