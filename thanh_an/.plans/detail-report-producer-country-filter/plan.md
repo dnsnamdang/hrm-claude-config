@@ -32,3 +32,11 @@ Vừa hoàn thành: đổi sang ô text LIKE — BE 2 chỗ + revert service + F
 Đang làm dở: không
 Bước tiếp theo: user verify trên UI (lọc + export)
 Blocked:
+
+## Bổ sung — 2026-08-28: fix lọc trượt do dữ liệu dính xuống dòng
+Cùng lỗi phát hiện ở màn `bid_package/detail-report`: `producer_country` nhập từ Excel
+có `\n` giữa tên hãng nên `LIKE` so nguyên văn bị trượt.
+- [x] Dùng `Modules\Category\Helpers\SearchHelper` (bỏ whitespace cả 2 vế) cho
+      `applyDetailReportFilters` + `applySummaryReportFilters`
+- [x] Test: lọc "LaCAR MDx" TRƯỚC 0 báo giá → SAU 3 báo giá
+Chi tiết: `.plans/bid-package-detail-report-producer-filter/plan.md`

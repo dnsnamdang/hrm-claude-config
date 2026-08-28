@@ -68,6 +68,30 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- **finance-bill-adjust-dept — Phiếu kế toán (ERP `bill_adjust_dept` → HRM)** → @khoipv →
+  `.plans/gop-db/finance-bill-adjust-dept/design.md` · `plan.md` ·
+  spec `docs/superpowers/specs/gop-db/2026-08-28-finance-bill-adjust-dept-design.md`
+  Trạng thái: **CODE XONG BE + FE (52/54 task) — CHỜ USER MỞ TRÌNH DUYỆT** (2026-08-28).
+  BE 20 file mới + 4 file sửa · FE 9 file mới + 1 file sửa (menu) · 0 bảng mới · 2 quyền mới
+  (id 1551-1552) · 4 morphMap bổ sung.
+  Kiểm chứng: **150 phiếu ERP / 403 dòng bút toán / 33 cột khớp tuyệt đối với sổ cái ERP**;
+  phạm vi quyền khớp SQL 6/6 NV; vòng đời đầy đủ chạy trong transaction rồi rollback;
+  4/5 luật validate chặn đúng; 10 endpoint smoke test 200; FE 9/9 compile sạch.
+  **ĐÃ TEST PLAYWRIGHT + ĐỐI CHIẾU TRỰC TIẾP VỚI ERP (2026-08-28)**: 20/20 bộ lọc khớp tuyệt đối;
+  bấm thật danh sách / sort / phân trang / ghi nhớ lọc / 3 popup / cửa vào từ Phiếu YCĐC /
+  duyệt-ghi-sổ / xoá / in / xuất Excel. **Tìm và sửa 7 lỗi** (ô lọc NVKD chết, Excel danh sách
+  mất 9/11 cột, cột Phòng ban sai nguồn, bản in lệch ERP 6 điểm, ô chỉ-đọc còn là input, popup
+  xuất không đóng, popup hợp đồng trả id thay vì tên). Chứng minh được ô lọc "STK ngân hàng"
+  của ERP nổ HTTP 500. Chi tiết ở `plan.md` Phase 10.
+  Còn lại: phần chưa kiểm chứng được (nhánh code chết + 2 cửa vào chưa có màn nguồn + phiếu ngoại tệ).
+  Mắt xích cuối của luồng đã port dở: Đề nghị điều chỉnh công nợ / Hạch toán bổ sung → **Phiếu kế
+  toán → ghi sổ cái `account_details`**. User chốt *"làm hệt ERP"*: đủ 5 cửa vào tạo phiếu, quyền
+  xem 2 cấp, sửa/xóa = Đang tạo + đúng người lập, ô chọn hợp đồng bán lấy **cả `hrm_contracts` lẫn
+  `firm_contracts`**.
+  ⚠️ Feature này **gỡ ràng buộc "HRM không ghi sổ cái"** mà `finance-bill-adjust-dept-request` từng
+  chốt (quyết định #3) — sổ cái dùng chung với cổng ERP, sai/trùng là lệch số kế toán thật.
+  Nền: 12.628 phiếu · 33.409 dòng chi tiết · 0 bảng mới · 2 quyền mới · 4 morphMap phải bổ sung.
+
 - thiet-ke-lai-phan-quyen → @namdangit → .plans/gop-db/thiet-ke-lai-phan-quyen/plan.md
   Trạng thái: **PHASE 0 XONG — MOCKUP CHỐT (verify Playwright), CHƯA PORT VÀO hrm-client THẬT** (2026-08-14).
   Mục tiêu: thiết kế lại màn phân quyền, đưa về phân hệ "Quản trị hệ thống"; gọn/khoa học + tìm kiếm + gom nhóm. Phase 1 = UI (không đụng DB), Phase 2 = BE restructure (sau).
@@ -329,6 +353,17 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance — sửa nhanh 3 màn Phiếu thu / Phiếu chi / Ủy nhiệm chi → @khoipv →
+  `.plans/gop-db/finance-bill-income/plan.md` · `.plans/gop-db/finance-bill-payment/plan.md` ·
+  `.plans/gop-db/finance-bill-payment-authorization/plan.md`
+  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-28). Commit `gop_db`: client `5e4d559` · api `d00a4c0`.
+  Icon nút Duyệt 2 màn danh sách về `ri-checkbox-circle-line` · Ủy nhiệm chi: mặc định Loại chi
+  "Chi trả nhà cung cấp", Lưu nháp chỉ bắt buộc Loại chi (nới RULING U-UNC-3) · Phiếu thu: bỏ popup
+  duyệt, "Số tiền thực thu" vào bảng chi tiết màn xem, duyệt không ghi đè `sum_money` (hết lệch cột
+  "Số tiền" so ERP, không nắn dữ liệu cũ) · Phiếu chi màn Tạo bám lại ERP: Số phiếu đề nghị lên đầu,
+  xếp lại 10 trường, Loại chi 5 → 7, thêm 3 khối chỉ đọc (Đối tượng nhận tiền / Tài khoản nhận tiền /
+  Ngân hàng trung gian). Không migration. Màn Đề nghị thanh toán: user chốt KHÔNG sửa.
+
 - finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
   Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-26).
   Phase 11 sửa xuất Excel loại chi 12: `paidMoneyForDetail()` chọn `billable_type` theo dòng
@@ -336,6 +371,10 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   kiểu VN qua `WithCustomValueBinder` (user chốt, đánh đổi: mất SUM/lọc/pivot) · letterhead nhúng
   `companies.header` theo `company_id` của phiếu + trải hết bề rộng bảng.
   BE 3 file + 1 blade · không migration · không đụng FE.
+  📄 Bộ tài liệu bàn giao (Phase 15 — 2026-08-28): `testcase - Phiếu đề nghị thanh toán.xlsx`
+  (191 TC) · `HDSD_Phiếu đề nghị thanh toán.docx` (54 trang, 30 ảnh thật) ·
+  `SRS - Phiếu đề nghị thanh toán.docx` (67 trang, FR-01…FR-15, BR-01…BR-18).
+  3 generator kèm theo; ảnh nguồn `dntt_chi_shots/` chỉ để local, không commit.
 
 - finance-addition-accounting-request → @khoipv → .plans/gop-db/finance-addition-accounting-request/plan.md
   Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-26).
@@ -354,6 +393,10 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   SĐT (`hide_masked_mobile`), ô MST và ô SĐT lọc **độc lập** (`tax_code_only`, MST khớp đầu mã).
   ⚠️ Đánh đổi user đã chốt: gõ mảnh giữa/đuôi SĐT-MST **không ra kết quả** — phải gõ đủ số.
   Spec: docs/superpowers/specs/gop-db/2026-08-13-finance-bill-income-request-design.md
+  📄 Bộ tài liệu bàn giao (Phase 14 — 2026-08-28): `testcase - Phiếu đề nghị thu tiền.xlsx`
+  (156 TC) · `HDSD_Phiếu đề nghị thu tiền.docx` (40 trang, 25 ảnh thật) ·
+  `SRS - Phiếu đề nghị thu tiền.docx` (50 trang, FR-01…FR-12, BR-01…BR-17).
+  3 generator kèm theo; ảnh nguồn `dntt_shots/` chỉ để local, không commit.
 
 - finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
   Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-24). Cả 18 phase đã

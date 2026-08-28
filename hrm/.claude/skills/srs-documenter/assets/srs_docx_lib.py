@@ -18,7 +18,13 @@ Quy uoc bat buoc (dung theo skill .claude/skills/srs-documenter/SKILL.md):
   - Muc "Layout man hinh" = URL day du + ANH CHUP THAT -> layout()
   - Bieu do Use Case phai la ANH PNG that -> overview_figure() / uc_figure()
 
-FORM MOI (user chot 2026-08-17, ban mau SRS_MAU.docx = SRS Danh muc khach hang):
+FORM 2026-08-28 (ban mau moi cua QA: "SRS - Danh muc quoc gia", link trong SKILL.md):
+  - Muc Layout ghi DUONG DAN MENU (`layout(menu=...)`), KHONG con dong "URL day du"
+  - Dau moi muc "Gioi thieu" co 1 doan tro sang tai lieu quy tac dung chung -> rule_ref()
+  - "Phan 4. Quy tac nghiep vu" la BANG 5 cot -> rule_table()
+  - So do UML tong quan co PHAN CAP «include»/«extend» -> overview_figure2()
+
+FORM 2026-08-17 (ban mau cu SRS_MAU.docx = SRS Danh muc khach hang):
   - Chi con 4 chuong: "Phan 1. Gioi thieu" / "Phan 2. Phan quyen" /
     "Phan 3. Dac ta chi tiet theo tung chuc nang" / "Phan 4. Quy tac nghiep vu"
   - DA BO: bang thong tin trang bia, muc "Pham vi", chuong "Tong quan",
@@ -31,6 +37,9 @@ import tempfile
 import sys
 
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -39,6 +48,46 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 import srs_uml_render as uml  # noqa: E402
+
+# Tai lieu quy tac dung chung — MOI chuc nang tro sang day thay vi chep lai quy tac.
+COMMON_DOC = ('https://docs.google.com/document/d/'
+              '1AiqvNZAg9K4qef45vdbo9oC6o9RS_hbDHCi-ZrKgD7s/edit?tab=t.0')
+COMMON_TITLE = 'SRS_Các quy tắc chung_VN_1.0'
+
+# Anchor lay NGUYEN tu ban mau "SRS - Danh muc quoc gia" — KHONG tu bia them anchor moi.
+ANCHOR = {
+    'list':    '',                            # Man Danh sach / Phan trang / Cau hinh cot
+    'search':  '#heading=h.uqrjgqo79fuq',     # Kich ban tim kiem, Bo loc, Dropdown
+    'create':  '#heading=h.pr587lqkad5b',     # Man Them moi, Validate du lieu
+    'notice':  '#heading=h.nij9n0nvzijj',     # Thong bao / Quy tac Xoa
+    'history': '#heading=h.thqm3w6a7nzr',     # Quy tac ghi lich su, Khoa / Mo khoa
+    'excel':   '#heading=h.x6yi3popnswy',     # Quy tac Excel va Cau hinh cot
+    'detail':  '#heading=h.e51mm7p7jit7',     # Man Xem chi tiet va Phan quyen
+    'delete':  '#heading=h.bmqrpa8bs35d',     # Quy tac Xoa (dung trong cot Xu ly event)
+}
+
+
+def add_hyperlink(paragraph, url, text):
+    """Chen 1 hyperlink that (xanh, gach chan) vao cuoi doan."""
+    r_id = paragraph.part.relate_to(url, RT.HYPERLINK, is_external=True)
+    link = OxmlElement('w:hyperlink')
+    link.set(qn('r:id'), r_id)
+    run = OxmlElement('w:r')
+    rpr = OxmlElement('w:rPr')
+    color = OxmlElement('w:color')
+    color.set(qn('w:val'), '1155CC')
+    rpr.append(color)
+    underline = OxmlElement('w:u')
+    underline.set(qn('w:val'), 'single')
+    rpr.append(underline)
+    run.append(rpr)
+    node = OxmlElement('w:t')
+    node.text = text
+    run.append(node)
+    link.append(run)
+    paragraph._p.append(link)
+    return link
+
 
 ACTOR_P1 = 'Người quản lý danh mục (P1)'
 ACTOR_P2 = 'Người xem danh mục (P2)'
@@ -246,8 +295,27 @@ class SrsDoc(object):
     def _png(self, name):
         return os.path.join(self.img_dir, '%s%s.png' % (self.img_prefix, name))
 
+    def overview_figure2(self, actors, mains, subs, caption):
+        """So do UML tong quan CO PHAN CAP — ban dung tu 2026-08-28.
+
+        Chi use case la MAN HINH that su moi noi thang toi actor. Thao tac lam ngay tren
+        man do (tim kiem/loc, tuy chinh cot, xoa, in, lich su, popup chon du lieu) phai noi
+        vao use case cha bang «include» / «extend» — ve tat ca ngang hang roi noi thang toi
+        actor la SAI nghiep vu (user tra tai lieu ve vi loi nay ngay 2026-08-28).
+
+        actors : [(ten_actor, [chi_so_main, ...]), ...]
+        mains  : [(ma, ten, nhom), ...]
+        subs   : [(ma, ten, nhom, 'include'|'extend', [chi_so_main, ...], ghi_chu|None), ...]
+        """
+        png = self._png('overview')
+        uml.draw_overview2(png, actors, mains, subs)
+        self.figure(png, caption, width_in=6.3)
+
     def overview_figure(self, title, actors, usecases, caption):
-        """5.1 So do UML tong quan — anh PNG that."""
+        """FORM CU — so do tong quan PHANG, moi use case noi thang toi actor.
+
+        Tai lieu moi dung `overview_figure2()`; giu ham nay cho cac gen_srs.py cu.
+        """
         png = self._png('overview')
         uml.draw_overview(png, title, actors, usecases)
         self.figure(png, caption, width_in=6.3)
@@ -259,26 +327,24 @@ class SrsDoc(object):
         self.figure(png, caption or ('Biểu đồ Use Case — %s %s' % (code, name)), width_in=6.2)
 
     # ------------------------------------------------------------ layout
-    def layout(self, note='', modal=None, route=None, shot=None, shot_caption=None,
-               url=None):
-        """Muc 'Layout man hinh' — URL day du + ANH CHUP THAT.
+    def layout(self, menu=None, modal=None, note='', shot=None, shot_caption=None,
+               **_ignored):
+        """Muc 'Layout man hinh' — DUONG DAN MENU + ANH CHUP THAT.
 
-        Form moi (2026-08-17): CHI ghi dong 'URL day du'. Da BO 2 dong
-        'Menu: ...' va 'Route (FE): ...' cua form cu.
+        Form 2026-08-28: ghi duong dan MENU, KHONG con dong "URL day du" (form 2026-08-17),
+        cang khong con "Route (FE)" (form cu hon nua):
 
+            Duong dan man hinh:
+            Menu: Phan he Tai chinh => Khoi tao phieu ... => De nghi thu tien => Them moi
+
+        menu         : duong dan menu day du cua DUNG chuc nang do; bo trong -> lay self.menu
+        modal        : ten modal -> them cau "Modal ... duoc mo ngay tren man hinh danh sach"
         shot         : duong dan file .png chup that cua DUNG chuc nang do (6.2 inch)
-        shot_caption : chu thich duoi anh; mac dinh lay theo ten chuc nang truyen vao
-        route        : ghi de route rieng cho chuc nang (vd man them moi /add)
-        url          : ghi de thang URL day du, uu tien hon `route`
+        shot_caption : chu thich duoi anh
+        _ignored     : nuot `route=` / `url=` cua form cu de cac gen_srs.py cu khong vo
         """
-        base = url
-        if base is None:
-            base = self.full_url
-            if route:
-                base = self.full_url.replace(self.route, route) \
-                    if self.route in self.full_url else self.full_url
         self.p('Đường dẫn màn hình:')
-        self.bullets(['URL đầy đủ: %s' % base])
+        self.p('Menu: %s' % (menu or self.menu))
         if modal:
             self.p('Modal %s được mở ngay trên màn hình danh sách theo đường dẫn ở trên.' % modal)
         if note:
@@ -287,6 +353,47 @@ class SrsDoc(object):
             if not os.path.exists(shot):
                 raise IOError('Thieu anh chup cho muc Layout: %s' % shot)
             self.figure(shot, shot_caption or 'Màn hình thực tế', width_in=6.2)
+
+    # ------------------------------------ doan "Quy tac chung: ..." (form 2026-08-28)
+    def rule_ref(self, tail, anchor='list', head='Quy tắc chung',
+                 lead='Áp dụng SRS Các quy tắc chung '):
+        """Doan tro sang tai lieu quy tac dung chung, dat NGAY DAU muc "Gioi thieu".
+
+        Muc dich: tai lieu tung man CHI ghi phan rieng cua man do, khong chep lai quy tac
+        dung chung (phan trang, validate, thong bao, ghi lich su...).
+
+            d.rule_ref('- Màn Danh sách, Sắp xếp dữ liệu bảng, Phân trang và Cấu hình cột. '
+                       'Chỉ bổ sung các quy tắc riêng của <màn>.', anchor='list')
+
+        tail   : phan viet tiep sau hyperlink
+        anchor : key trong ANCHOR — chi dung key co san, KHONG tu bia anchor moi
+        head   : nhan dau doan ('Quy tắc chung' o tung chuc nang / 'Quy tắc áp dụng' o Phan 4)
+        lead   : phan viet truoc hyperlink (Phan 4 dung cach dan khac)
+        """
+        par = self.p('%s: %s' % (head, lead))
+        add_hyperlink(par, COMMON_DOC + ANCHOR.get(anchor, ''), COMMON_TITLE)
+        par.add_run('%s%s' % ('' if tail[:1] in '.,;:' else ' ', tail))
+        for run in par.runs:
+            run.font.size = Pt(10.5)
+        return par
+
+    # ------------------------------- Phan 4: bang quy tac nghiep vu (form 2026-08-28)
+    def rule_table(self, rows):
+        """Bang "Quy tac nghiep vu" 5 cot (STT tu danh).
+
+        Thay cho dang "BR-0N — <ten>" + gach dau dong cua form cu.
+        rows: [(ma, ten, mo_ta, pham_vi_ap_dung), ...]
+              mo_ta / pham_vi co the la list -> tu noi bang xuong dong.
+        """
+        body = []
+        for i, (ma, ten, mota, pham_vi) in enumerate(rows):
+            if isinstance(mota, (list, tuple)):
+                mota = chr(10).join(mota)
+            if isinstance(pham_vi, (list, tuple)):
+                pham_vi = chr(10).join(pham_vi)
+            body.append((i + 1, ma, ten, mota, pham_vi))
+        return self.table(['STT', 'Mã quy tắc', 'Tên quy tắc', 'Mô tả', 'Phạm vi áp dụng'],
+                          body, widths=[0.35, 0.7, 1.25, 2.6, 1.1])
 
     # -------------------------------------------------------------- save
     def save(self, verbose=True, update_fields=True):

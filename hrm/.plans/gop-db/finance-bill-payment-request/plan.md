@@ -5095,3 +5095,160 @@ bảng: VNĐ, ngoại tệ, ngoại tệ loại 12) rồi đọc lại bằng Ph
 
 **Không đụng:** bản IN (`_id/print.vue` + `BillPaymentRequestPrintResource`) — vẫn `formatCurrency()`
 kiểu Việt như cũ. `detailRows()` (`number_format` ở lịch sử thay đổi) cũng giữ nguyên.
+
+---
+
+## Phase 21 — Excel: nới rộng các cột TIỀN (TP duyệt, Số tiền chi…) (2026-08-27) @khoipv
+
+**User báo:** "cột TP duyệt hơi nhỏ, không hiện được hết số tiền".
+
+**Nguồn cơn:** `BillPaymentRequestExport::columnWidths()` tính bề rộng theo **độ dài TIÊU ĐỀ**
+(`mb_strlen($heading) + 3`, sàn `MIN_WIDTH = 14`). Tiêu đề "TP duyệt" chỉ 8 ký tự → cột ra đúng 14,
+trong khi số tiền trong phiếu dài tới 14 ký tự (`-3.240.324.324`). Ô số **không xuống dòng** theo
+wrap text như ô chữ → thiếu chỗ là Excel vẽ `#####`. "Số tiền chi" (11 ký tự) dính y hệt.
+
+### Task
+
+- [x] BE-1: Thêm hằng `MONEY_MIN_WIDTH = 20` — bề rộng tối thiểu cho cột TIỀN, đủ số hàng chục tỷ
+      có dấu ngăn nghìn (`-12.345.678.900` = 15 ký tự) cộng đệm.
+- [x] BE-2: `columnWidths()` đọc thêm `money_columns` (service đã đánh dấu sẵn ở `exportTable()`,
+      khớp 1-1 với `column_labels`) → cột tiền lấy sàn `MONEY_MIN_WIDTH`, cột còn lại giữ
+      `MIN_WIDTH = 14` như cũ. Không cắm cứng theo tên cột nào.
+- [ ] Verify: user mở file Excel thật, xác nhận cột TP duyệt hiện đủ số.
+
+### Verify đã chạy
+
+`php -l` sạch. Dựng file .xlsx thật 4 phiếu (4197 · 4198 · 4199 · 4200 — đủ 3 nhánh bảng) rồi đọc
+lại bằng PhpSpreadsheet, so bề rộng cột với chuỗi hiển thị dài nhất trong chính cột đó:
+
+| Phiếu | Cột tiền | Bề rộng | Nội dung dài nhất |
+| --- | --- | --- | --- |
+| 4197 | D..I (có "TP duyệt", "Số tiền chi") | 20-22 | 14 ký tự (`-3,240,324,324`) |
+| 4198 | C..G | 20-22 | 10 ký tự (`111,961.08`) |
+| 4199 | D..H (có "TP duyệt") | 20-22 | 10 ký tự (`16,512,112`) |
+| 4200 | C..G | 20-22 | 9 ký tự (`62,211.60`) |
+
+Mọi cột tiền đều rộng hơn nội dung dài nhất → hết `#####`. `drawings=1` cả 4 file (letterhead vẫn
+vào, và tự trải rộng theo bảng vì `tableWidthPx()` suy từ chính `columnWidths()`).
+
+**Không đụng:** bản IN, blade, service — chỉ sửa 1 file `BillPaymentRequestExport.php`.
+
+## Đồng nhất icon nút Duyệt (2026-08-27)
+
+- [x] **FE** `pages/finance/bill-payment-requests/index.vue` — cột hành động: icon "Duyệt" đổi
+      `ri-check-line` → `ri-checkbox-circle-line` cho giống `prepick-cancel-requests`,
+      `bill-payments`, `bill-incomes`. Chỉ đổi icon; vị trí nút, chữ, cờ `is_can_approve` và các nút
+      duyệt theo cấp ở màn chi tiết giữ nguyên (màn chi tiết dùng `ri-check-line` đúng chuẩn `V2Footer`).
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: đồng nhất icon nút Duyệt ở cột hành động màn danh sách Đề nghị thanh toán.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payment-requests` xem lại icon trong cột hành động.
+Chưa kiểm chứng bằng mắt: chỉ compile template + script, chưa mở trình duyệt.
+Blocked: không.
+
+## Popup xác nhận cho nút Duyệt / Chuyển duyệt BGĐ (2026-08-27)
+
+User: màn chi tiết đề nghị thanh toán, các nút duyệt phải hỏi xác nhận trước khi chạy.
+
+Hiện trạng trước khi sửa — 6 nút ở `V2Footer` màn XEM:
+
+| Nút | Trước | Sau |
+| --- | --- | --- |
+| **Duyệt** (theo cấp: TP · KT công nợ · KT trưởng · BGĐ) | gọi API NGAY | **thêm popup xác nhận** |
+| **Chuyển duyệt BGĐ** | gọi API NGAY | **thêm popup xác nhận** (câu hỏi + chữ nút riêng) |
+| Từ chối | đã có `RejectModal` (bắt nhập lý do) | giữ nguyên |
+| Xóa | đã có `BaseConfirmModal` | giữ nguyên |
+| Tạo phiếu chi / Tạo ủy nhiệm chi | chỉ ĐIỀU HƯỚNG sang màn tạo, chưa ghi gì | giữ nguyên (chờ user chốt nếu muốn thêm) |
+| In / Xuất Excel | lệnh đọc | giữ nguyên |
+
+- [x] **FE** `components/ApproveActions.vue` — `approve()` nhận cả object nút (không chỉ `status`),
+      gọi `await this.$confirm(this.confirmOptions(button))` TRƯỚC khi bật lớp tải (hỏi xong bấm Hủy
+      mà lớp tải đã che thì màn như treo). Dùng `$confirm()` (plugin `confirm-dialog.js` render
+      `base-confirm-modal`) — KHÔNG tự khai `b-modal`, đúng skill `modal-popup`.
+      · Duyệt → "Xác nhận duyệt" · `Duyệt phiếu đề nghị thanh toán "MÃ"? Phiếu sẽ được gửi đến
+        <cấp nhận>.` (tên cấp lấy từ `RECEIVER_BY_NEXT_STATUS` — cùng bộ chữ với thông báo chuông BE)
+        · nút xác nhận **"Duyệt"**.
+      · Chuyển duyệt BGĐ (status 5) → "Xác nhận chuyển duyệt" · `Chuyển phiếu đề nghị thanh toán
+        "MÃ" lên ban giám đốc duyệt?` · nút xác nhận **"Chuyển duyệt"**.
+      · KHÔNG đặt `danger: true` — duyệt là bước tiến của luồng, đỏ chỉ dành cho thao tác phá huỷ
+        (skill `button-convention` 2b).
+- [x] **FE** `components/BillPaymentRequestForm.vue` — truyền `:code="form.code"` xuống
+      `ApproveActions` để câu hỏi gọi đúng tên phiếu.
+- [x] **BE** không đổi.
+
+Đã grep: `ApproveActions` chỉ dùng ở màn này → không ảnh hưởng màn khác.
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: thêm popup xác nhận cho nút Duyệt + Chuyển duyệt BGĐ ở màn chi tiết đề nghị thanh toán.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payment-requests/4194` bấm Duyệt xem popup; chốt luôn có cần
+hỏi xác nhận cho 2 nút "Tạo phiếu chi" / "Tạo ủy nhiệm chi" (hiện chỉ điều hướng) không.
+Chưa kiểm chứng bằng mắt: chỉ compile template + script, chưa mở trình duyệt.
+Blocked: không.
+
+---
+
+## Phase 22 — FE: giãn dòng form từ `mb-3` xuống `mb-2` (2026-08-27) @khoipv
+
+**User yêu cầu:** các dòng trong màn phiếu đề nghị thanh toán đang dùng `mb-3`, đổi hết sang `mb-2`
+cho gọn (`<div class="col-md-3 mb-3">`).
+
+### Task
+
+- [x] FE-1: `BillPaymentRequestForm.vue` — 11 ô cột (`col-md-3` / `col-md-6`) đổi `mb-3` → `mb-2`.
+- [x] FE-2: `BankInfoSection.vue` — 4 ô cột (`col-md-6`) đổi `mb-3` → `mb-2`.
+- [ ] Verify: user mở trình duyệt xem khoảng cách dòng đã vừa mắt chưa.
+
+**Không đụng:** `_id/print.vue` — 4 chỗ `mb-3` ở đó là khoảng cách của BẢN IN (tiêu đề, bảng, lý do
+từ chối), không phải dòng nhập liệu; sửa vào là lệch bản in giấy.
+
+### Verify đã chạy
+
+Không còn `mb-3` nào trong `pages/finance/bill-payment-requests/components/`. Compile template 2
+file bằng `vue-template-compiler`: `errors= none` cả 2.
+
+---
+
+## Phase 15 — Bộ tài liệu bàn giao: Testcase + HDSD + SRS (2026-08-28) @khoipv
+
+Cùng đợt với bộ tài liệu màn **Đề nghị thu tiền** (`.plans/gop-db/finance-bill-income-request/`
+Phase 14). Bám 3 skill `testcase-documenter` / `hdsd-documenter` / `srs-documenter`, khung mẫu là
+bộ tài liệu **Danh mục khách hàng** (`HDSD_MAU.docx` / `SRS_MAU.docx` trong skill assets).
+
+Phạm vi tài liệu: **cả 4 chế độ xem** của cùng một màn — Tất cả (`?mode=all`, mặc định) ·
+Của tôi (`?mode=mine`) · Chờ duyệt (`?mode=pending`) · Đã duyệt (`?mode=approved`) — cùng toàn bộ
+luồng duyệt 5 cấp, 4 loại chi, 2 hình thức thanh toán, file đính kèm, in và xuất Excel.
+
+- [x] **TL-1** Đọc lại nguồn: 15 route · Controller (14 action) · Entity (10 trạng thái, 10 quyền,
+      4 chế độ `searchByFilter`, `canView/canEdit/canApproveAtCurrentStatus/nextStatuses`,
+      `applyObjectNameSort`) · `BillPaymentApprovalService` (cột tiền theo cấp, không duyệt ở cấp TP
+      trả về *Đang tạo*) · `BillPaymentRequestNotifyService` (3 sự kiện, prefix `[DNTT-Chi]`) ·
+      3 FormRequest (ma trận rule theo loại chi × hình thức TT, nguyên văn thông báo lỗi) ·
+      3 Resource + `BillPaymentRequestExport` · seeder quyền **1153–1161** · FE 12 file.
+- [x] **TL-2** Chụp ảnh thật bằng Playwright trên `hrm-crm.eteksofts.com` — **31 ảnh**, lưu
+      `dntt_chi_shots/` (KHÔNG commit theo skill).
+- [x] **TL-3** `gen_testcase.py` → `testcase - Phiếu đề nghị thanh toán.xlsx`.
+- [x] **TL-4** `gen_hdsd.py` → `HDSD_Phiếu đề nghị thanh toán.docx`.
+- [x] **TL-5** `gen_srs.py` → `SRS - Phiếu đề nghị thanh toán.docx`.
+
+### Ghi chú khi làm
+
+- Tài khoản chụp ảnh đang để **Cài đặt bộ lọc** rút gọn → đã bấm *Khôi phục mặc định → Lưu* để ảnh
+  bộ lọc nâng cao hiện đủ **10 tiêu chí** như thiết kế. Là cấu hình hiển thị riêng của người dùng,
+  không phải dữ liệu nghiệp vụ.
+- Tài khoản **không có phiếu nào ở trạng thái *Đang tạo* / *Không duyệt*** nên không chụp được màn
+  Sửa và hộp Xác nhận xóa. Đã **tạo 1 phiếu nháp** (`TPE.DNTT0826.00017`, loại chi *Chi thưởng thực
+  hiện hợp đồng*, lý do ghi rõ là phiếu dựng ảnh tài liệu), chụp xong **xóa ngay** — đã kiểm tra lại
+  danh sách, phiếu không còn. Số thứ tự mã phiếu nhảy 1 nấc (không cấp lại số đã xóa — đúng thiết kế).
+- Ảnh popup **"Chi tiết chuyến xe"** (loại chi 12) KHÔNG chụp được: các phiếu loại 12 trên dev đều
+  có cột *Hạch toán* trống nên không có link mở popup. Tài liệu mô tả popup này theo code
+  (`DeliveryTripDetailModal.vue` + `DeliveryTripPaymentService::tripDetail()`), không có ảnh.
+- 1 lần bấm "Lưu và gửi duyệt" trên form thiếu dữ liệu để chụp thông báo lỗi — bị chặn ở bước kiểm
+  tra nên **không sinh phiếu**.
+
+### Checkpoint — 2026-08-28
+Vừa hoàn thành: Phase 15 — 3 tài liệu bàn giao + 3 generator, 31 ảnh chụp thật.
+Đang làm dở: không.
+Bước tiếp theo: user đọc soát nội dung, đặc biệt bảng 10 quyền và mô tả luồng duyệt 5 cấp.
+Blocked: không.

@@ -22,9 +22,21 @@ hoặc sắp triển khai, dựa trên code thực tế + design document + busi
 
 **File mẫu bắt buộc — đóng gói trong skill:** `.claude/skills/srs-documenter/assets/SRS_MAU.docx`
 
-> **Bản mẫu ĐÃ ĐỔI ngày 2026-08-17.** Bản mẫu hiện tại là **`SRS - Danh mục khách hàng.docx`**
-> (user tự chỉnh tay rồi chốt làm chuẩn). Bản mẫu cũ là `SRS - Lĩnh vực.docx` — **không dùng nữa**.
-> Form mới **gọn hơn hẳn**: bỏ 4 mục/chương và 1 mục con của mỗi chức năng, xem bảng "Đã bỏ" bên dưới.
+> **Bản mẫu ĐÃ ĐỔI lần 2 ngày 2026-08-28.** Bản mẫu hiện hành là **"SRS - Phiếu đề nghị thu tiền"**
+> (user chốt) — chính là file đã đóng gói ở `assets/SRS_MAU.docx`. Bản mẫu cũ là
+> "SRS - Danh mục khách hàng" (form 2026-08-17) — **không dùng nữa**, cần thì lấy lại bằng
+> `git show 4be4678:hrm/.claude/skills/srs-documenter/assets/SRS_MAU.docx`.
+> So với form 2026-08-17 có **4 điểm khác**, xem mục "4 điểm của form 2026-08-28" bên dưới.
+
+**Generator sinh ra bản mẫu này** (copy về sửa là nhanh nhất, đủ 12 chức năng đủ kiểu — danh sách,
+lọc, form thêm/sửa, popup chọn dữ liệu, chi tiết, hộp xác nhận, in, lịch sử):
+`.plans/gop-db/finance-bill-income-request/gen_srs.py`
+
+Form này bám theo bản QA gửi ("SRS - Danh mục quốc gia":
+https://docs.google.com/document/d/1tKvOQqJyK0bJC6BrZGM92974irpDAsFn/edit — đọc bằng MCP Google
+Drive `read_file_content`, **đừng** tải base64 về vì file 5MB), khác một điểm có chủ đích:
+bản QA để trống phân quyền vì màn đó chưa chốt quyền, còn form của team **giữ quyền thật**
+(Q1…Qn + V1…Vn + ma trận ✅/❌ theo `PermissionsTableSeeder`).
 
 Trước khi sinh SRS, **luôn đọc lại file mẫu** để bám đúng khung và cách hành văn:
 
@@ -50,15 +62,32 @@ for b in blocks(d):
 "
 ```
 
-⚠️ Bản mẫu đi qua Google Docs nên **chữ trong ô bảng bị bọc trong `<w:sdt>`** — dùng
-`cell.text` của python-docx sẽ đọc ra **rỗng** (mất hết ✅/❌ trong ma trận phân quyền).
-Phải duyệt `w:t` như đoạn script trên, đừng vội kết luận "bản mẫu bỏ trống ô".
+⚠️ Script trên duyệt `w:t` chứ không dùng `cell.text`, vì **file .docx tải từ Google Docs**
+(như bản QA gửi) bọc chữ trong ô bảng vào `<w:sdt>` — `cell.text` sẽ đọc ra **rỗng**, mất hết
+✅/❌ của ma trận phân quyền. `assets/SRS_MAU.docx` hiện tại do python-docx sinh nên không dính
+lỗi này, nhưng cứ dùng script trên cho an toàn với mọi file mẫu.
 
 **KHÔNG dùng template markdown/HTML tự chế.** Form của team là chuẩn duy nhất.
 
 ---
 
-## Cấu trúc SRS chuẩn — 4 CHƯƠNG (form mới 2026-08-17)
+## 4 điểm của form 2026-08-28 — thiếu 1 trong 4 là bị trả về
+
+| # | Điểm | Làm thế nào |
+|---|---|---|
+| 1 | Mục Layout ghi **đường dẫn MENU**, KHÔNG ghi URL | `d.layout(menu=MENU + ' => Tạo mới', shot=…)` |
+| 2 | Đầu **mỗi** mục "Giới thiệu" có đoạn trỏ sang SRS quy tắc chung | `d.rule_ref('- Màn Danh sách, …', anchor='list')` |
+| 3 | **Phần 4** là BẢNG 5 cột, chỉ ghi quy tắc đặc thù | `d.rule_table([...])` |
+| 4 | Sơ đồ tổng quan **có phân cấp** «include»/«extend» | `d.overview_figure2(actors, mains, subs, caption)` |
+
+Điểm 4 là lỗi user đã trả tài liệu về ngày 2026-08-28: sơ đồ cũ vẽ **mọi** chức năng thành
+ellipse ngang hàng rồi nối thẳng tới actor, trong khi "Tìm kiếm và lọc", "Tuỳ chỉnh cột", "Xóa"
+là thao tác **ngay trên màn danh sách**, "In / Lịch sử / Duyệt" là thao tác **trên màn chi tiết**,
+popup chọn dữ liệu là **«include» của form thêm/sửa**. Xem mục "Sơ đồ tổng quan" bên dưới.
+
+---
+
+## Cấu trúc SRS chuẩn — 4 CHƯƠNG
 
 ```
 SOFTWARE REQUIREMENTS SPECIFICATION (SRS)   ← đoạn thường, CĂN GIỮA, 24pt (KHÔNG phải Heading)
@@ -83,8 +112,15 @@ Phần 3. Đặc tả chi tiết theo từng chức năng  [Heading 1]
    2.1 <Chức năng 1>  …  2.N <Chức năng N>    [Heading 3]
 
 Phần 4. Quy tắc nghiệp vụ                    [Heading 1]
-   BR-01, BR-02… mỗi rule: 1 dòng tiêu đề "BR-0N — <tên>" + gạch đầu dòng
+   "Quy tắc áp dụng: …" + BẢNG 5 cột
+   (STT | Mã quy tắc | Tên quy tắc | Mô tả | Phạm vi áp dụng)
 ```
+
+> Mỗi mục "2.x Giới thiệu" mở đầu bằng 1 đoạn:
+> *"Quy tắc chung: Áp dụng SRS Các quy tắc chung [SRS_Các quy tắc chung_VN_1.0] – Màn Danh sách,
+> Phân trang… Chỉ bổ sung các quy tắc riêng của <màn> tại phần mô tả chi tiết."*
+> → dùng `d.rule_ref()`; anchor lấy **nguyên** từ `ANCHOR` trong `srs_docx_lib.py`,
+> **không tự bịa** anchor mới.
 
 ### ĐÃ BỎ so với form cũ — đừng viết lại
 
@@ -98,7 +134,9 @@ Phần 4. Quy tắc nghiệp vụ                    [Heading 1]
 | Cả chương `4. Danh mục chức năng (Function list)` — bảng ID / Mini-Spec | **Bỏ** |
 | Mục con `Tiêu chí nghiệm thu` của từng chức năng | **Bỏ** |
 | Dòng `Chức năng liên quan: FR-xx …` cuối mỗi BR | **Bỏ** |
-| 2 dòng `Menu: …` và `Route (FE): …` ở mục Layout | **Bỏ** — chỉ còn `URL đầy đủ:` |
+| Dòng `Route (FE): …` ở mục Layout | **Bỏ** |
+| Dòng `URL đầy đủ: …` ở mục Layout | **Bỏ từ 2026-08-28** — thay bằng `Menu: <đường dẫn menu>` |
+| Phần 4 dạng `BR-0N — <tên>` + gạch đầu dòng | **Bỏ từ 2026-08-28** — thay bằng bảng 5 cột |
 
 > **Đánh số phải liên tục** — chương chạy `Phần 1 → Phần 4`, mục con của mỗi chức năng chạy
 > `2.x.1 → 2.x.5` (hoặc `2.x.1 → 2.x.4` khi bỏ Biểu đồ Usecase). Bản mẫu từng sót lỗi đánh số
@@ -111,7 +149,7 @@ Phần 4. Quy tắc nghiệp vụ                    [Heading 1]
 |---|---|---|
 | 2.x.1 | Biểu đồ Usecase | **Ảnh PNG** (xem mục "Sinh ảnh biểu đồ Use Case") |
 | 2.x.2 | Giới thiệu | Bảng 2 cột × 7–8 dòng (xem dưới) |
-| 2.x.3 | Layout màn hình | **URL đầy đủ + ẢNH CHỤP THẬT** của chức năng |
+| 2.x.3 | Layout màn hình | **Đường dẫn MENU + ẢNH CHỤP THẬT** của chức năng |
 | 2.x.4 | Mô tả chi tiết giao diện | Bảng 6/7/8 cột (xem dưới) |
 | 2.x.5 | Danh sách event và xử lý event | Bảng 4 cột (xem dưới) |
 
@@ -180,20 +218,24 @@ After:
 
 ---
 
-## Layout màn hình — URL ĐẦY ĐỦ **+ ẢNH CHỤP THẬT**
+## Layout màn hình — ĐƯỜNG DẪN MENU **+ ẢNH CHỤP THẬT**
 
 Mục **`2.x.3 Layout màn hình` của MỖI chức năng** gồm 2 phần, theo thứ tự:
 
-**1. Đường dẫn — chỉ 1 dòng:**
+**1. Đường dẫn — 2 dòng:**
 ```
 Đường dẫn màn hình:
-• URL đầy đủ: https://<host-hrm>/duong-dan-man
+Menu: Phân hệ Tài chính => Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi => Đề nghị thu tiền
 ```
-Màn có route riêng thì ghi đúng route đó: `.../add`, `.../{id}`, `.../{id}/edit`, `.../{id}/manager`.
-Với modal/popup, giữ URL của màn danh sách rồi thêm 1 câu:
+Chức năng con thì nối thêm vào cuối: `… => Thêm mới`, `… => Sửa`, `… => Xóa`, `… => Lịch sử`,
+`… => Xem chi tiết => In phiếu`. Nhãn menu phải **lấy đúng chữ trên giao diện** — tra trong
+`components/subsystem-menu/*.js` của hrm-client, đừng tự đặt tên.
+Với modal/popup, giữ đường dẫn màn danh sách rồi thêm 1 câu:
 *"Modal <Tên> được mở ngay trên màn hình danh sách theo đường dẫn ở trên."*
 
-> Form cũ có thêm 2 dòng `Menu: …` và `Route (FE): …` — **đã bỏ**, đừng viết lại.
+> Form cũ ghi `Menu:` + `Route (FE):` (trước 2026-08-17) rồi chuyển sang chỉ `URL đầy đủ:`
+> (2026-08-17). Từ 2026-08-28 **quay lại ghi menu và bỏ hẳn URL** — `d.layout()` vẫn nuốt
+> tham số `route=` / `url=` của generator cũ nên không cần sửa các generator đã có.
 
 **2. Ảnh chụp thật của ĐÚNG chức năng đó**, canh giữa, rộng **6.2 inch**, kèm caption
 `Hình N: <mô tả>` (in nghiêng, 9.5pt, canh giữa).
@@ -227,7 +269,7 @@ Cả 3 file nằm ở `.claude/skills/srs-documenter/assets/` nên ai clone repo
 
 | File | Vai trò |
 |---|---|
-| `assets/srs_uml_render.py` | Module vẽ PNG bằng Pillow — `draw_overview()` và `draw_usecase()` |
+| `assets/srs_uml_render.py` | Module vẽ PNG bằng Pillow — `draw_overview2()` (dùng cho tài liệu mới), `draw_usecase()`, `draw_overview()` (bản phẳng cũ, chỉ để chạy lại generator cũ) |
 | `assets/srs_docx_lib.py` | Lớp `SrsDoc` dựng file .docx theo form chuẩn |
 | `assets/gen_srs_mau.py` | **Khung mẫu form mới**: đủ 4 chương + 1 chức năng chỉ đọc + 1 chức năng ghi. Copy file này rồi thay nội dung là nhanh nhất |
 
@@ -255,13 +297,13 @@ d.h2('Mục lục'); d.toc()
 
 d.h1('Phần 1. Giới thiệu')
 
-# 1 Sơ đồ UML tổng quan
-d.overview_figure(
-    'HỆ THỐNG HRM — <Tên màn hình>',
-    [('<Actor 1>', [0,1,2]), ('<Actor 2>', [0])],      # (tên actor, chỉ số use case nối tới)
-    [('FR-01','Xem danh sách','view',  None),          # (mã, tên, nhóm màu, ghi chú)
-     ('FR-05','Tạo mới',      'crud',  None),
-     ('FR-08','Khóa / Mở khóa','action','«extend» Khóa khi đã phát sinh chứng từ')],
+# 1 Sơ đồ UML tổng quan — CÓ PHÂN CẤP (bắt buộc từ 2026-08-28)
+d.overview_figure2(
+    [('<Actor 1>', [0, 1]), ('<Actor 2>', [0])],       # (actor, chỉ số trong `mains`)
+    [('FR-01', 'Xem danh sách', 'view'),               # mains = MÀN HÌNH thật, nối tới actor
+     ('FR-05', 'Tạo mới',      'crud')],
+    [('FR-02', 'Tìm kiếm và lọc', 'view', 'extend', [0], None),   # subs = thao tác trên màn đó
+     ('FR-09', 'Chọn dữ liệu từ popup', 'crud', 'include', [1], 'ghi chú (hiện KHÔNG vẽ)')],
     'Sơ đồ Use Case tổng quan màn <Tên màn hình>')
 
 # 2.x.1 Biểu đồ use case của 1 chức năng
@@ -273,8 +315,11 @@ d.uc_figure('FR-05', 'Tạo mới <đối tượng>', 'crud',
 # Bảng Giới thiệu — chức năng chỉ đọc thì dacbiet=None để BỎ HẲN dòng "Yêu cầu đặc biệt"
 d.intro_table(ten=…, mota=…, tacnhan=…, dieukien=…, chinh=…, phu=…, dacbiet=None)
 
-# Layout — chỉ in dòng "URL đầy đủ" + ảnh chụp thật
-d.layout(route='/duong-dan-man/add', shot=shot('02-tao-moi.png'),
+# Đoạn "Quy tắc chung" — đặt NGAY ĐẦU mục Giới thiệu của MỖI chức năng
+d.rule_ref('- Màn Thêm mới, Validate dữ liệu, Thông báo và UI/UX.', anchor='create')
+
+# Layout — in dòng "Menu: …" + ảnh chụp thật
+d.layout(menu=MENU + ' => Tạo mới', shot=shot('02-tao-moi.png'),
          shot_caption='Form Tạo mới <đối tượng>')
 
 # Bảng giao diện — mặc định 8 cột; chức năng chỉ đọc dùng required=False (7 cột);
@@ -284,8 +329,24 @@ d.ui_table(rows, required=False)
 d.ui_table(rows, required=False, scope=False)
 
 d.event_table(rows)
+
+# Phần 4 — bảng 5 cột; mô tả / phạm vi truyền list thì tự nối xuống dòng
+d.rule_table([
+    ('BR-01', '<Tên quy tắc>', ['– <phát biểu>', '– <ngoại lệ>'], ['Tạo mới', 'Chỉnh sửa']),
+])
 d.save()
 ```
+
+### Sơ đồ tổng quan — cái gì vào `mains`, cái gì vào `subs`
+
+| Vào `mains` (nối thẳng tới actor) | Vào `subs` (nối «include»/«extend» vào màn cha) |
+|---|---|
+| Màn danh sách · màn danh sách chờ duyệt | Tìm kiếm và lọc · Cài đặt bộ lọc · Tuỳ chỉnh cột · Xóa (nút trên dòng) → «extend» màn danh sách |
+| Màn thêm mới · màn chỉnh sửa | Popup chọn khách hàng / hợp đồng / sản phẩm → «include» màn thêm mới **và** màn sửa |
+| Màn chi tiết | In · Lịch sử · Duyệt / Không duyệt → «extend» màn chi tiết |
+
+Chiều mũi tên (module đã tự xử lý, nhưng phải hiểu để đặt đúng `kind`):
+**«include»** cha → con (cha luôn gọi con) · **«extend»** con → cha (con chỉ chạy trong vài tình huống).
 
 **Nhóm màu ellipse:** `view` (xanh dương — xem/lọc/tra cứu) · `crud` (xanh lá — thêm/sửa) ·
 `action` (cam — thao tác trạng thái) · `io` (tím — xuất/nhập/in) · `sub` (xám — include/extend).
@@ -345,7 +406,7 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(10)`, dòng tiêu đ
 1. Page component   → Cột bảng, nút, bộ lọc (nguồn của bảng "Mô tả chi tiết giao diện")
 2. Modal component  → Trường nhập, giá trị mặc định, trạng thái enable/disable
 3. API calls        → Endpoint + payload
-4. Router / menu    → URL đầy đủ (nguồn của mục "Layout màn hình")
+4. Menu (components/subsystem-menu/*.js) → đường dẫn MENU (nguồn của mục "Layout màn hình")
 ```
 
 ### Bước 2: Phân tích & tổng hợp
@@ -378,14 +439,26 @@ except Exception: pass
 ```python
 from docx import Document
 d = Document(OUT)
-print('tables', len(d.tables), 'paragraphs', len(d.paragraphs))
+paras = [x.text for x in d.paragraphs]
+print('tables', len(d.tables), 'paragraphs', len(paras))
 print('ảnh nhúng:', sum(1 for r in d.part.rels.values() if 'image' in r.reltype))
-bad = [x.text for x in d.paragraphs if '┌' in x.text or '○' in x.text]
+bad = [t for t in paras if '┌' in t or '○' in t]
 print('còn sơ đồ ký tự:', len(bad))    # PHẢI = 0
-# form mới: KHÔNG được còn các mục đã bỏ
+
+# form 2026-08-28: 4 điểm bắt buộc
+n_fn = sum(1 for t in paras if t.startswith('Menu: '))
+print('mục Layout ghi menu:', n_fn)                     # = số chức năng
+print('đoạn Quy tắc chung:', sum(1 for t in paras if t.startswith('Quy tắc chung: ')))
+print('câu dẫn Phần 4:', sum(1 for t in paras if t.startswith('Quy tắc áp dụng: ')))   # = 1
+print('hyperlink:', len([r for r in d.part.rels.values() if r.reltype.endswith('/hyperlink')]))
+last = d.tables[-1]                                     # bảng Quy tắc nghiệp vụ
+assert [c.text for c in last.rows[0].cells] ==     ['STT', 'Mã quy tắc', 'Tên quy tắc', 'Mô tả', 'Phạm vi áp dụng'], 'Phần 4 chưa là bảng 5 cột'
+assert not any('URL đầy đủ' in t for t in paras), 'Còn dòng URL đầy đủ (form cũ)'
+
+# KHÔNG được còn các mục đã bỏ
 for s in ['Tổng quan','Mini-Spec','Tiêu chí nghiệm thu','Ngoài phạm vi','Chức năng liên quan',
           'Route (FE)']:
-    assert not any(s in p.text for p in d.paragraphs), 'Còn mục đã bỏ: %s' % s
+    assert not any(s in t for t in paras), 'Còn mục đã bỏ: %s' % s
 ```
 
 ---
@@ -426,7 +499,7 @@ for s in ['Tổng quan','Mini-Spec','Tiêu chí nghiệm thu','Ngoài phạm vi'
 
 ### Không được
 - **Không vẽ sơ đồ bằng ký tự** — phải là ảnh PNG
-- **Không bỏ ảnh ở mục Layout** — mỗi chức năng BẮT BUỘC có ảnh chụp thật kèm URL đầy đủ
+- **Không bỏ ảnh ở mục Layout** — mỗi chức năng BẮT BUỘC có ảnh chụp thật kèm đường dẫn menu
 - **Không thêm lại các mục đã bỏ** ở bảng "ĐÃ BỎ" phía trên
 - Không dùng template markdown/HTML tự chế thay cho form chuẩn
 - Không đổi tên cột của 3 bảng bắt buộc (số cột chỉ được rút theo đúng bảng đã quy định)
@@ -442,5 +515,6 @@ for s in ['Tổng quan','Mini-Spec','Tiêu chí nghiệm thu','Ngoài phạm vi'
 
 | Màn hình | File |
 |---|---|
-| **Danh mục khách hàng (Giao việc)** — BẢN MẪU CHUẨN | `.plans/gop-db/customer-docs/SRS - Danh mục khách hàng.docx` |
+| **Phiếu đề nghị thu tiền (Tài chính)** — BẢN MẪU CHUẨN, = `assets/SRS_MAU.docx` | `.plans/gop-db/finance-bill-income-request/SRS - Phiếu đề nghị thu tiền.docx` |
+| Danh mục khách hàng (Giao việc) — form CŨ 2026-08-17 | `.plans/gop-db/customer-docs/SRS - Danh mục khách hàng.docx` |
 | Danh mục dịch vụ sửa chữa và chi phí khác (CSKH) — form CŨ | `.plans/gop-db/customer-care-cost-catalog/SRS - Danh mục dịch vụ sửa chữa và chi phí khác.docx` |

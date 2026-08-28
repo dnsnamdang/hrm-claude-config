@@ -3916,3 +3916,271 @@ Sửa, Xóa, Duyệt, In, Xuất Excel. Màn chi tiết + BE không đụng gì.
 Bước tiếp theo: user mở trình duyệt xác nhận menu "…" của dòng phiếu không còn "Hủy phiếu".
 Chưa kiểm chứng bằng mắt: chỉ parse template + script (vue-template-compiler / babel), chưa mở trình duyệt.
 Blocked: không.
+
+## Đồng nhất icon nút Duyệt (2026-08-27)
+
+- [x] **FE-x** `pages/finance/bill-incomes/index.vue` — cột hành động: icon "Duyệt" đổi
+      `ri-check-line` → `ri-checkbox-circle-line` cho giống `finance/prepick-cancel-requests` và
+      `finance/bill-payments`. Chỉ đổi icon; vị trí nút, chữ, cờ `is_can_approve` và nút
+      "Duyệt phiếu thu" ở màn chi tiết giữ nguyên (màn chi tiết dùng `ri-check-line` đúng chuẩn
+      V2Footer).
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: đồng nhất icon nút Duyệt ở cột hành động màn danh sách phiếu thu.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-incomes` xem lại icon trong menu ⋮.
+Chưa kiểm chứng bằng mắt: chỉ compile template + script, chưa mở trình duyệt.
+Blocked: không.
+
+## Bỏ popup duyệt — nhập số thực thu inline như ERP (2026-08-27)
+
+User hỏi lại vì sao HRM bấm Duyệt lại bật popup nhập "Số tiền thực thu" trong khi ERP không có.
+**Đối chiếu ERP (`D:\laragon\www\erp`)**: trường này ERP CÓ, nhưng không phải popup —
+
+| Nơi | Code ERP | Hành vi |
+| --- | --- | --- |
+| Cột "Số tiền thực thu" trong bảng chi tiết màn xem phiếu | `resources/views/income_expenditure/bill_incomes/formShow.blade.php:267-273` | Thành **ô nhập tại chỗ** khi có quyền `Thủ quỹ duyệt phiếu thu` **và** phiếu đang Chờ duyệt; ngoài ra chỉ hiện chữ |
+| Nút "Duyệt phiếu thu" | `show.blade.php:18-21` + `submitAndApprove()` :100-103 | Chỉ set `status = 3` rồi PUT cả form — không popup |
+| BE bắt buộc | `BillIncomeUpdateRequest.php:38` — `income_money_real` `requiredIf(status == 3)` | ERP không cho duyệt nếu bỏ trống thực thu |
+
+→ Nghiệp vụ 2 bên giống nhau, chỉ khác UX. User chốt **bỏ popup, chuyển sang nhập inline như ERP**.
+
+- [x] **FE-1** `components/BillIncomeForm.vue` — thêm nhóm cột `Số tiền thực thu` (+ cột quy đổi VND
+      khi ngoại tệ) vào bảng chi tiết, CHỈ hiện ở chế độ `readonly` (màn xem) đúng như ERP chỉ có ở
+      `formShow`. Ô nhập khi cờ BE `is_can_approve` (cờ `billCanApprove` fail-closed, mặc định
+      `false`), còn lại hiện chữ. `totalCols` + dòng Tổng cộng tính thêm cột mới.
+- [x] **FE-2** `BillIncomeForm.vue` — giữ `id` dòng chi tiết khi nạp (payload duyệt cần
+      `details.*.id`); điền sẵn thực thu `= income_money_approve` khi ô đang 0; `onRealChange()` /
+      `recalcReal()` (xóa trắng → 0, quy đổi VND theo tỷ giá, watch tỷ giá tính lại).
+- [x] **FE-3** `BillIncomeForm.vue` — 3 hàm cho màn chi tiết gọi qua ref: `approveDetails()`,
+      `validateApproveDetails()`, `applyApproveErrors()`. Lỗi hiện inline dưới ô sai.
+- [x] **FE-4** `_id/index.vue` — nút "Duyệt phiếu thu" gọi thẳng `approveBill()` (`$confirm` →
+      `POST /{id}/approve`), chống double-submit bằng `approving` + `interactable`, `$safeLoadingStart/Finish`;
+      giữ nguyên xử lý 409 (tải lại) / 403 (toast) / 422 (map inline).
+- [x] **FE-5** Xóa `components/ApproveBillIncomeModal.vue` (không còn nơi dùng — đã grep toàn `pages/`
+      + `components/`).
+- [x] **BE** KHÔNG đổi: endpoint `POST /{id}/approve` + `BillIncomeApproveRequest` giữ nguyên.
+
+**Verify (HTTP kernel + JWT, transaction rồi rollback — phiếu 2355 `TPE.PT0826.00004` về đúng
+status 2 / thực thu 0 / 972.042 bút toán như trước):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| GET phiếu 2355 | 200 · status 2 (Chờ duyệt) · `is_can_approve = true` · 1 dòng: duyệt thu 4.540, thực thu 0 |
+| POST `/2355/approve` payload y hệt FE mới gửi | **200** "Duyệt phiếu thu thành công!" · status → 3 · ghi `income_money_real = 4540` · sinh **2 bút toán** |
+| POST `/2355/approve` thiếu số thực thu | **422** `details.0.income_money_real: Bắt buộc nhập` — đúng key mà ô inline đang bắt |
+| Compile FE | `_id/index.vue` · `BillIncomeForm.vue` · `_id/edit.vue` · `create.vue` — template + script sạch 4/4 |
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: bỏ popup duyệt phiếu thu, chuyển ô "Số tiền thực thu" vào bảng chi tiết màn xem
+(đúng ERP); xóa `ApproveBillIncomeModal.vue`.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-incomes/2355` bấm Duyệt phiếu thu để xác nhận luồng mới.
+Chưa kiểm chứng bằng mắt: FE chỉ compile, chưa mở trình duyệt; BE đã gọi thật 3 luồng.
+Blocked: không.
+
+## 🐛 Cột "Số tiền" ở danh sách lệch ERP sau khi duyệt (2026-08-27)
+
+User báo: danh sách HRM hiện **số thực thu** cho phiếu đã duyệt, ERP hiện **số duyệt thu**
+(dẫn chứng `erp-crm.eteksofts.com/.../bill_incomes/2374/show` — danh sách 22.000.000).
+
+**Nguyên nhân — đọc công thức ERP mà không đọc THỨ TỰ GỌI:**
+`BillIncome::syncDetails()` :347-351 của ERP có 2 vế (`status 1/2` → duyệt thu · `status 3` → thực
+thu). Nhưng `BillIncomeController::update()` gọi `syncDetails()` ở **:199 — TRƯỚC**
+`$bill_income->update($data)` ở **:201**, nên lúc cộng tiền `$this->status` vẫn là trạng thái CŨ
+(2 = Chờ duyệt) → luôn rơi vào vế duyệt thu. Phiếu đã ở status 3 thì :195-197 chặn thẳng
+("Phiếu thu tiền đã được duyệt!"). ⇒ **nhánh status 3 là code chết, `sum_money` bên ERP LUÔN là
+tổng duyệt thu.**
+
+HRM `BillIncomeApprovalService::approve()` bước 7 lại chủ động tính lại
+`sum_money = SUM(income_money_real_exchange)` → lệch.
+
+**Đo dữ liệu thật** (5 phiếu đã duyệt có duyệt thu ≠ thực thu — số còn lại 2 vế bằng nhau nên không
+lộ được lỗi):
+
+| id | Mã phiếu | Lập lúc | sum_money | Duyệt thu | Thực thu | Đang theo vế |
+| --- | --- | --- | --- | --- | --- | --- |
+| 295 | TPE.PT0925.00039 | 2025-09-15 | 8.424.000 | 8.424.000 | 4.212.000 | DUYỆT THU ✔ |
+| 1008 | TPE.PT1225.00058 | 2025-12-23 | 19.882.800 | 19.882.800 | 1.988.280 | DUYỆT THU ✔ |
+| 1082 | TPE.PT1225.00096 | 2025-12-31 | 877.651.200 | 877.651.200 | 87.635.120 | DUYỆT THU ✔ |
+| 2354 | TPE.PT0826.00003 | 2026-08-27 | 300.600.000 | 470.820.000 | 300.600.000 | **THỰC THU ✘** |
+| 2356 | TPE.PT0826.00005 | 2026-08-27 | 41.000.000 | 50.000.000 | 41.000.000 | **THỰC THU ✘** |
+
+3 phiếu ERP lập năm 2025 giữ vế duyệt thu; đúng 2 phiếu duyệt bằng HRM hôm nay bị lệch.
+
+- [x] **BE-1** `BillIncomeApprovalService::approve()` — **bỏ bước 7** (không tính lại `sum_money`),
+      thay bằng khối comment ghi lại bằng chứng thứ tự gọi của ERP + số liệu đo, kèm cảnh báo đừng
+      "sửa lại cho đúng công thức".
+- [x] **BE-2** `BillIncomeWriteService::syncDetails()` — đính chính docblock: nhánh `status 3` là
+      code chết bên ERP, `sum_money` luôn = tổng duyệt thu; cột này còn là cột 2 ô lọc tiền + sort.
+- [x] **DATA** 2 phiếu 2354 · 2356 đang giữ `sum_money` = thực thu → **user chốt 2026-08-27: KHÔNG
+      sửa**, để nguyên số cũ, chỉ cần phiếu duyệt từ nay trở đi hiện đúng. Danh sách vẫn hiện
+      300.600.000 / 41.000.000 cho 2 phiếu này (đúng ra là 470.820.000 / 50.000.000) — đây là dữ
+      liệu cũ, KHÔNG phải lỗi code còn sót.
+
+**Verify (HTTP kernel + JWT, transaction rồi rollback — phiếu 2355 về đúng status 2 / sum_money 8.989,2):**
+
+| Luồng | Kết quả |
+| --- | --- |
+| Duyệt phiếu 2355 với thực thu = **một nửa** duyệt thu (2.270 vs 8.989,2) | 200 · status → 3 · `sum_money` **giữ nguyên 8.989,2 = DUYỆT THU** (trước khi sửa sẽ thành 2.270) |
+| API danh sách sau khi duyệt | `sum_money_text = 8,989` — đúng vế duyệt thu |
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: sửa lệch cột "Số tiền" ở danh sách phiếu thu — duyệt phiếu KHÔNG còn tính lại
+`sum_money` theo vế thực thu, giữ đúng hành vi ERP.
+Đang làm dở: không.
+Bước tiếp theo: user mở màn danh sách phiếu thu xác nhận phiếu duyệt MỚI hiện đúng tổng duyệt thu
+(2 phiếu 2354 · 2356 giữ số cũ theo quyết định của user).
+Chưa kiểm chứng bằng mắt: chưa mở trình duyệt; BE đã gọi thật.
+Blocked: không.
+
+## Bổ sung "Phân bổ nhanh" số tiền thực nhận (2026-08-27)
+
+User thấy bên ERP màn duyệt có ô *Số tiền phân bổ* + nút *Phân bổ* mà HRM không có, yêu cầu bổ sung.
+
+**Chức năng ERP** (`bill_incomes/formShow.blade.php:143-161`, logic ở
+`partials/classes/IncomeExpenditure/BillIncome.blade.php:107-119`): thủ quỹ gõ TỔNG số tiền thực tế
+nhận được rồi bấm Phân bổ → rải xuống cột "Số tiền thực nhận" theo thứ tự trên xuống, mỗi dòng lấy
+`min(số duyệt thu, số còn lại)`. Dùng khi khách trả THIẾU, khỏi bấm máy tính chia tay từng dòng.
+Thuần FE — không gọi API, số chỉ xuống DB khi bấm Duyệt. Hiện cùng điều kiện với ô nhập thực thu
+(quyền *Thủ quỹ duyệt phiếu thu* + phiếu Chờ duyệt).
+
+- [x] **FE-1** `BillIncomeForm.vue` — khối *Số tiền phân bổ* (`V2BaseCurrencyInput`) + nút *Phân bổ*
+      (`V2BaseButton secondary`, icon `ri-list-check-2`) ngay trên bảng chi tiết, `v-if="canApproveBill"`.
+- [x] **FE-2** `allocateRealMoney()` port `BillIncome.allocated()`; mỗi dòng gọi `recalcReal()` +
+      `clearFieldError()` để cột quy đổi VND và lỗi inline cập nhật theo.
+- [x] **FE-3** Import + đăng ký `V2BaseButton` (form này trước đó chưa dùng nút nào ngoài V2Footer).
+
+🔶 **LỆCH ERP 1 ĐIỂM CÓ CHỦ Ý:** ERP `if (allocate_money === 0) return` chỉ thoát khi còn ĐÚNG 0, nên
+các dòng phía sau **giữ nguyên số thực thu cũ**. Ở HRM số đó đã được điền sẵn = duyệt thu, nên phân
+bổ 10tr cho phiếu 35tr sẽ vẫn ra tổng 35tr — sai ý người dùng. HRM ghi `0` cho các dòng không còn
+tiền. (Bên ERP số cũ thường là 0 nên không lộ ra khác biệt.)
+
+**Verify — chạy chính vòng lặp đã port với 2 dòng của phiếu trong ảnh (16.750.000 + 19.100.000):**
+
+| Số tiền phân bổ | Dòng 1 | Dòng 2 | Tổng |
+| --- | --- | --- | --- |
+| 35.850.000 (thu đủ) | 16.750.000 | 19.100.000 | 35.850.000 |
+| 20.000.000 (thu thiếu) | 16.750.000 | 3.250.000 | 20.000.000 |
+| 10.000.000 | 10.000.000 | 0 | 10.000.000 |
+| 40.000.000 (gõ dư) | 16.750.000 | 19.100.000 | 35.850.000 — không vượt số duyệt thu |
+| 0 | 0 | 0 | 0 |
+
+Compile `BillIncomeForm.vue`: template + script sạch.
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: bổ sung ô "Số tiền phân bổ" + nút "Phân bổ" ở màn duyệt phiếu thu (port ERP).
+Đang làm dở: không.
+Bước tiếp theo: user mở màn chi tiết 1 phiếu Chờ duyệt, gõ số rồi bấm Phân bổ xem cột thực thu.
+Chưa kiểm chứng bằng mắt: chưa mở trình duyệt; logic phân bổ đã chạy thử bằng Node với số thật.
+Blocked: không.
+
+## Chặn thực thu vượt duyệt thu (2026-08-27)
+
+User: ô "Số tiền thực thu" gõ lớn hơn số duyệt thu thì kéo về bằng duyệt thu, giống ERP.
+Đối chiếu ERP `resources/views/partials/classes/IncomeExpenditure/BillIncomeDetail.blade.php:66-72`
+— setter `income_money_real` làm đúng vậy:
+`if (this._income_money_real > this._income_money_approve) this._income_money_real = this._income_money_approve;`
+(Cùng file :15-19 cũng xác nhận luật điền sẵn: màn xem + phiếu chưa duyệt → `income_money_real = income_money_approve`.)
+
+- [x] **FE** `BillIncomeForm.vue` — thêm `clampReal(detail)` gọi trong `onRealChange()`: `> duyệt thu`
+      → kéo về đúng bằng duyệt thu, `< 0` → 0 (khớp `min:0` của `BillIncomeApproveRequest`, cùng
+      khuôn `BillPaymentForm::clampApprove()`). So sánh trong cùng đơn vị NGOẠI TỆ; cột VND vẫn do
+      `recalcReal()` quy đổi.
+- [x] **BE** KHÔNG đổi — ERP cũng chỉ chặn ở FE (`BillIncomeStoreRequest` chỉ có `numeric|min:0`),
+      HRM giữ nguyên `BillIncomeApproveRequest`. Ai gọi thẳng API vẫn ghi được số lớn hơn duyệt thu,
+      **đúng bằng hành vi ERP** — muốn siết thì phải chốt riêng vì lệch ERP.
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: chặn ô "Số tiền thực thu" vượt số duyệt thu ở màn chi tiết phiếu thu.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-incomes/2344` (duyệt thu 10.000.000) gõ thử số lớn hơn.
+Chưa kiểm chứng bằng mắt: chỉ compile template + script, chưa mở trình duyệt.
+Blocked: không.
+
+### Sửa tiếp — ô vẫn hiện số to hơn trần (2026-08-27, cùng ngày)
+
+User báo: kẹp rồi mà **vẫn gõ được số to hơn**. Đúng — bản kẹp đầu tiên (`clampReal()` ở handler
+`@input` của màn) chỉ sửa được DỮ LIỆU, không sửa được Ô HIỂN THỊ:
+
+`V2BaseCurrencyInput` giữ chuỗi hiển thị riêng (`displayValue`) và chỉ vẽ lại khi **giá trị ngoài
+đổi** (watcher `currentValue` :58-64). Ô này mở ra đã điền sẵn ĐÚNG BẰNG số duyệt thu, nên khi gõ
+thêm, cha kẹp về đúng giá trị ô **đang giữ** → Vue coi là "không đổi" → watcher không chạy →
+`displayValue` vẫn là chuỗi vừa gõ. Rời ô thì `onBlur` mới vẽ lại đúng. Tức số gửi đi khi bấm Duyệt
+vẫn đúng, chỉ hiển thị sai — nhưng không đạt yêu cầu.
+
+**Cách sửa (user duyệt 2026-08-27 vì đụng component dùng chung):** kẹp NGAY TRONG ô nhập, giống ERP
+kẹp trong setter của model (`BillIncomeDetail.blade.php:66-72`).
+
+- [x] **FE-chung** `components/V2BaseCurrencyInput.vue` — thêm prop **`max`** (mặc định `null` =
+      không giới hạn, **thuần thêm**, màn không khai thì hành vi y nguyên) + hàm `clampToMax()`.
+      `onInput()` kẹp trước nhánh "gõ dở thập phân", tự đặt `displayValue` + `event.target.value` +
+      emit số đã kẹp ⇒ KHÔNG phụ thuộc watcher/re-render nữa.
+- [x] **FE** `BillIncomeForm.vue` — ô "Số tiền thực thu": `:max="Number(detail.income_money_approve || 0)"`.
+      Giữ `clampReal()` làm lớp phòng thủ cho giá trị đặt bằng code (không qua bàn phím).
+- [x] **FE** `BillPaymentForm.vue` + `BillPaymentAuthorizationForm.vue` — ô "Số tiền duyệt chi" khai
+      `:max="Number(detail.payment_money_request || 0)"`: 2 màn này dính **đúng cùng bệnh** (cũng kẹp
+      ở handler cha, cũng điền sẵn bằng trần), chỉ chưa ai báo.
+
+**Verify — chạy thẳng `onInput()` trên Node** (không cần trình duyệt; script:
+`scratchpad/test_max.js`, nạp SFC bằng `vue-template-compiler` rồi gọi method với event giả):
+
+| Ca | Gõ | Ô hiện | Emit |
+| --- | --- | --- | --- |
+| **Ô đang = đúng trần rồi gõ thêm số** (ca user báo) | `100000000` | `10,000,000` | 10000000 |
+| Ô đang nhỏ hơn trần, gõ vượt | `50000000` | `10,000,000` | 10000000 |
+| Gõ đúng bằng trần | `10000000` | `10,000,000` | 10000000 |
+| Gõ nhỏ hơn trần | `9000000` | `9,000,000` | 9000000 |
+| Xóa trắng ô | `` | `` (rỗng) | null |
+| Gõ dở phần thập phân dưới trần | `123.` | `123.` | 123 |
+| Vượt trần khi đang gõ thập phân | `50000000.` | `10,000,000` | 10000000 |
+| **KHÔNG khai `max`** → hành vi cũ | `999999999` | `999,999,999` | 999999999 |
+| `max = 0` (dòng chưa có số duyệt) | `5000` | `0` | 0 |
+
+9/9 ca đúng. Đã grep toàn `pages/` + `components/`: chỉ 3 chỗ vừa thêm là có truyền `max` cho
+`V2BaseCurrencyInput` → không đụng màn nào khác.
+
+### Checkpoint — 2026-08-27 (cuối phiên)
+Vừa hoàn thành: kẹp trần ô tiền ngay trong `V2BaseCurrencyInput` (prop `max`) — sửa tận gốc lỗi
+"gõ vẫn ra số to hơn"; áp cho 3 ô của Phiếu thu / Phiếu chi / Ủy nhiệm chi.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-incomes/2344` gõ quá 10.000.000 xem ô có bật về ngay không.
+Chưa kiểm chứng bằng mắt: chưa mở trình duyệt; đã chạy `onInput()` thật trên Node 9/9 ca.
+Blocked: không.
+
+### Màn in — dòng "Ngày …" đầu phiếu bị xuống 2 dòng (2026-08-27)
+
+Phát hiện ở màn Phiếu chi (user báo qua ảnh), rà sang Phiếu thu thì dính y hệt. Đo bằng Chromium
+headless ở đúng bề ngang vùng in (180mm = 680px), trên phiếu thật đại diện **cả 4 mẫu**
+203/204/205/206 (`BillIncomePrintService::render()` của các phiếu id 2343 / 2357 / 2355 / 2356):
+
+| Mẫu | span "Ngày … Tháng … Năm …" trước | sau |
+| --- | --- | --- |
+| 203 (bán hàng, 1 KH) | `lines=2` | `lines=1` |
+| 204 (bán hàng, nhiều KH) | `lines=2` | `lines=1` |
+| 205 (nhà cung cấp, 1 NCC) | `lines=2` | `lines=1` |
+| 206 (nhà cung cấp, nhiều NCC) | `lines=2` | `lines=1` |
+
+- [x] **FE** `pages/finance/bill-incomes/_id/print.vue` — thêm rule vào **CẢ 2 nơi**
+      (`printBaseStyles()` cho cửa sổ in **và** `<style scoped>` cho preview):
+      `table.no-border[style*="table-layout"] > tbody > tr > td:nth-child(2)` → `white-space: nowrap`
+      + bỏ padding ngang. Ô giữa 227px, trừ padding 8px×2 của pdf.css còn 211px, chuỗi ngày cỡ 18px
+      cần 214px → gãy dòng. Bỏ padding là vừa, **giữ nguyên cỡ 18px của ERP**.
+      Đã loại phương án `table-layout: auto` (đo ở màn Phiếu chi: cột trái co còn 32px, tiêu đề hết
+      nằm giữa trang).
+      Rule bám `td:nth-child(2)` nên **không đụng bảng "Liên số / Số / Nợ / Có"** — bảng đó ở ô thứ
+      ba; đo lại sau khi sửa: vẫn 211px, `overflowRight = -16` y như trước.
+      Đo ở 620 và 680px, cả 4 mẫu: `overflowRight = 0`.
+
+**KHÔNG dính lỗi nhãn hàng ký** (khác màn Phiếu chi): mẫu 203-206 chỉ có MỘT dòng nhãn nên
+`table.block td { white-space: nowrap }` đặt từ 2026-08-20 đã đủ — đo ra cả 5-6 nhãn `labelLines=1`.
+Bên Phiếu chi ô ký có 3 dòng nên phải nowrap riêng span nhãn 15px, xem
+`.plans/gop-db/finance-bill-payment/plan.md`.
+
+### Checkpoint — 2026-08-27
+Vừa hoàn thành: sửa dòng "Ngày …" đầu phiếu ở màn in phiếu thu (bản in + preview khớp nhau).
+Đang làm dở: không.
+Bước tiếp theo: user mở màn in 1 phiếu thu xem lại dòng ngày dưới chữ "PHIẾU THU".
+Chưa kiểm chứng bằng mắt: đo bằng Chromium headless trên cả 4 mẫu + compile
+(vue-template-compiler / babel / node-sass), chưa mở trình duyệt thật.
+Blocked: không.

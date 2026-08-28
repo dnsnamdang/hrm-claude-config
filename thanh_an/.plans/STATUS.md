@@ -5,7 +5,7 @@
 
 ## Đang làm
 
-_(chưa có)_
+- **Fix: Số ngày nghỉ dự kiến = 0 (đơn xin nghỉ)** — @khoipv — đã sửa xong code (FE: `add.vue` + `_id/index.vue` chống race; BE: `AttendanceRequest` tự tính lại `total_days`), chờ deploy dev để test lại. Tách riêng task lỗi bỏ qua `company_id` trong `GeneralRegulation`/`AttendanceWatchRegulation`. Xem [.plans/fix-so-ngay-nghi-du-kien-0/plan.md](fix-so-ngay-nghi-du-kien-0/plan.md)
 
 ## Tạm dừng
 

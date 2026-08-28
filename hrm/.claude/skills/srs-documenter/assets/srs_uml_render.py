@@ -128,7 +128,11 @@ def _finish(img, out_path, target_w):
 
 # ======================================================================
 def draw_overview(out_path, title, actors, usecases, target_w=2000):
-    """So do use case tong quan.
+    """FORM CU (truoc 2026-08-28) — so do use case tong quan PHANG.
+
+    Moi use case mot ellipse ngang hang, cai nao cung noi thang toi actor. Tai lieu moi
+    dung `draw_overview2()`: chi man hinh that moi noi toi actor, thao tac tren man do
+    noi bang «include»/«extend». Giu ham nay de cac gen_srs.py cu chay lai duoc.
 
     actors:   [(ten_actor, [chi_so_usecase, ...]), ...]
     usecases: [(ma, ten, nhom, ghi_chu_hoac_None), ...]
@@ -228,7 +232,13 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
             p1 = (mright + int(14 * S), cy)
             p2 = (sleft - int(12 * S), yy)
             _dashed_line(d, p1, p2, (100, 116, 139), max(2, int(1.6 * S)))
-            _arrow_head(d, p1, p2, (100, 116, 139), max(2, int(1.6 * S)))
+            # Chieu mui ten theo dung chuan UML:
+            #   «include» : use case CHINH -> use case duoc goi   (p1 -> p2)
+            #   «extend»  : use case MO RONG -> use case CO SO    (p2 -> p1)
+            if kind == 'extend':
+                _arrow_head(d, p2, p1, (100, 116, 139), max(2, int(1.6 * S)))
+            else:
+                _arrow_head(d, p1, p2, (100, 116, 139), max(2, int(1.6 * S)))
             # Nhan dat PHIA TREN duong noi de khong cat qua net dut
             lbl = '«%s»' % kind
             lw, lh = _tw(d, lbl, f_rel)
@@ -237,5 +247,117 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
             d.rectangle([mcx - lw / 2 - 5 * S, mcy - lh / 2 - 9 * S,
                          mcx + lw / 2 + 5 * S, mcy + lh / 2 + 7 * S], fill='white')
             d.text((mcx - lw / 2, mcy - lh / 2 - 3 * S), lbl, font=f_rel, fill=(71, 85, 105))
+
+    return _finish(img, out_path, target_w)
+
+
+def draw_overview2(out_path, actors, mains, subs, target_w=2000):
+    """So do use case tong quan CO PHAN CAP — ban dung tu 2026-08-28.
+
+    Chi use case la MAN HINH that su moi noi thang toi actor; cac thao tac lam ngay tren
+    man do (loc, tuy chinh cot, xoa, in, lich su, popup chon du lieu...) phai noi vao use
+    case cha bang «include» / «extend». Khung he thong KHONG co dong tieu de.
+
+    actors : [(ten_actor, [chi_so_main, ...]), ...]
+    mains  : [(ma, ten, nhom), ...]
+    subs   : [(ma, ten, nhom, kieu, [chi_so_main, ...], ghi_chu|None), ...]
+             kieu in {'include', 'extend'}; sub xep vao block cua main DAU TIEN no tro toi.
+             `ghi_chu` hien KHONG duoc ve (user chot bo cot ghi chu ben phai) — van giu
+             trong du lieu vi dieu kien do da noi o ma tran phan quyen / Phan 4.
+    """
+    # ---- gan moi sub vao block cua main dau tien no tro toi
+    blocks = []                       # [(main_idx, [sub_idx, ...])]
+    for i in range(len(mains)):
+        blocks.append((i, [k for k, s in enumerate(subs) if s[4][0] == i]))
+    rows_total = sum(max(1, len(b[1])) for b in blocks)
+
+    ry_m, ry_s = int(36 * S), int(33 * S)
+    row_h = int(102 * S)
+    top_pad, bot_pad = int(46 * S), int(40 * S)
+    W = int(1290 * S)
+    H = int(top_pad + rows_total * row_h + bot_pad)
+
+    img = Image.new('RGB', (W, H), 'white')
+    d = ImageDraw.Draw(img)
+
+    f_uc = _f(F_REG, 14)
+    f_sub = _f(F_REG, 13.5)
+    f_actor = _f(F_BOLD, 15)
+    f_rel = _f(F_ITAL, 12.5)
+
+    bx0, bx1 = int(372 * S), int(1262 * S)
+    by0, by1 = int(20 * S), H - int(16 * S)
+    line_w = max(3, int(2 * S))
+    _dashed_line(d, (bx0, by0), (bx1, by0), BOUND, line_w)
+    _dashed_line(d, (bx0, by1), (bx1, by1), BOUND, line_w)
+    _dashed_line(d, (bx0, by0), (bx0, by1), BOUND, line_w)
+    _dashed_line(d, (bx1, by0), (bx1, by1), BOUND, line_w)
+
+    rx_m, rx_s = int(190 * S), int(182 * S)
+    mx = bx0 + int(28 * S) + rx_m
+    sx = bx1 - int(24 * S) - rx_s
+
+    # ---- ve theo tung block
+    m_pos = [None] * len(mains)       # (x_trai, x_phai, y) cua use case chinh
+    s_pos = [None] * len(subs)
+    y = top_pad
+    for mi, sub_ids in blocks:
+        n = max(1, len(sub_ids))
+        block_top = y
+        for k, si in enumerate(sub_ids):
+            sy = block_top + row_h * k + row_h / 2
+            code, name, grp, kind, parents, note = subs[si]
+            left, right = _usecase(d, sx, sy, rx_s, ry_s,
+                                     '%s  %s' % (code, name), grp, f_sub)
+            s_pos[si] = (left, right, sy)
+        my = block_top + row_h * n / 2
+        code, name, grp = mains[mi]
+        left, right = _usecase(d, mx, my, rx_m, ry_m, '%s  %s' % (code, name), grp, f_uc)
+        m_pos[mi] = (left, right, my)
+        y = block_top + row_h * n
+
+    # ---- duong «include» / «extend» tu use case cha sang use case phu
+    grey = (100, 116, 139)
+    w_rel = max(2, int(1.6 * S))
+    # moi use case cha co the nhan nhieu duong -> tach diem neo theo hang cho khoi chong
+    fan = {}
+    for si, s in enumerate(subs):
+        for pi in s[4]:
+            fan.setdefault(pi, []).append(si)
+
+    for si, (code, name, grp, kind, parents, note) in enumerate(subs):
+        sleft, _sright, sy = s_pos[si]
+        for pi in parents:
+            _pl, pright, py = m_pos[pi]
+            sib = fan[pi]
+            off = (sib.index(si) - (len(sib) - 1) / 2.0) * int(13 * S)
+            p1 = (pright + int(12 * S), py + off)
+            p2 = (sleft - int(12 * S), sy)
+            _dashed_line(d, p1, p2, grey, w_rel)
+            # Chieu mui ten theo dung chuan UML:
+            #   «include» : use case CHA -> use case duoc goi   (p1 -> p2)
+            #   «extend»  : use case MO RONG -> use case CO SO  (p2 -> p1)
+            if kind == 'extend':
+                _arrow_head(d, p2, p1, grey, w_rel)
+            else:
+                _arrow_head(d, p1, p2, grey, w_rel)
+            lbl = '«%s»' % kind
+            lw, lh = _tw(d, lbl, f_rel)
+            cx = (p1[0] + p2[0]) / 2
+            cy = (p1[1] + p2[1]) / 2 - int(20 * S)
+            d.rectangle([cx - lw / 2 - 5 * S, cy - lh / 2 - 9 * S,
+                         cx + lw / 2 + 5 * S, cy + lh / 2 + 7 * S], fill='white')
+            d.text((cx - lw / 2, cy - lh / 2 - 3 * S), lbl, font=f_rel, fill=(71, 85, 105))
+
+    # ---- actor ben trai, chi noi toi use case CHINH
+    na = len(actors)
+    inner_h = rows_total * row_h
+    for i, (aname, idxs) in enumerate(actors):
+        ay_center = top_pad + inner_h * (i + 0.5) / na
+        ax, ay = _actor(d, int(180 * S), int(ay_center - 62 * S), aname, f_actor)
+        for j in idxs:
+            lx, _r, ly = m_pos[j]
+            d.line([(ax + int(6 * S), ay), (lx - int(4 * S), ly)],
+                   fill=(148, 163, 184), width=max(2, int(1.4 * S)))
 
     return _finish(img, out_path, target_w)

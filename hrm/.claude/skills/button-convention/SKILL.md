@@ -313,6 +313,86 @@ Bắt buộc:
 - Store `apiPostMethod` / `apiPutMethod` / `apiDeleteMethod` **KHÔNG** tự bật lớp tải (chốt
   2026-08-22, giữ nguyên hành vi hàm dùng chung) → từng màn phải tự gọi.
 
+## 6c. Nút ĐỔI TRẠNG THÁI PHIẾU — BẮT BUỘC hỏi xác nhận
+
+**Mọi bước duyệt đều phải có popup xác nhận** (user chốt 2026-08-27). Duyệt / chuyển duyệt là thao
+tác GHI, đẩy phiếu sang cấp khác và **không có nút hoàn tác** — bấm nhầm thì phải nhờ cấp trên trả
+phiếu về, có phiếu còn ghi thẳng sổ cái ngay lúc duyệt.
+
+Áp cho toàn bộ nhóm nút đổi trạng thái, không riêng chữ "Duyệt":
+
+| Nhóm | Ví dụ nhãn nút | Bắt buộc hỏi |
+| --- | --- | --- |
+| Duyệt theo cấp | Duyệt · Trưởng phòng duyệt · KT trưởng duyệt · BGĐ duyệt | ✅ |
+| Chuyển lên cấp trên | Chuyển duyệt BGĐ · Chuyển ban giám đốc duyệt | ✅ |
+| Gửi đi để duyệt | Gửi duyệt · Lưu và gửi duyệt · Lưu và duyệt | ✅ |
+| Phủ quyết / dừng phiếu | Không duyệt · Từ chối · Hủy phiếu | ✅ — popup **nhập lý do** (bắt buộc) đã tính là hỏi rồi, không hỏi thêm lần 2 |
+| Chốt / hoàn thành | Hoàn thành · Chốt sổ · Khóa | ✅ |
+| Xóa | Xóa | ✅ (`danger: true`) |
+| **Chỉ điều hướng** | Tạo phiếu chi · Duyệt (ở cột hành động danh sách, chỉ mở màn chi tiết) | ❌ KHÔNG hỏi — chưa ghi gì cả, hỏi là làm phiền |
+| Lệnh đọc | In · Xuất Excel · Làm mới | ❌ |
+
+### Cách làm
+
+Dùng **`$confirm()`** (`plugins/confirm-dialog.js`, render chính `base-confirm-modal`) hoặc thẻ
+`<BaseConfirmModal>` có sẵn trong template — **KHÔNG tự khai `b-modal`** và không dùng
+`$bvModal.msgBoxConfirm()` (popup mặc định bootstrap-vue, khác kiểu cả hệ thống).
+
+```js
+async approve(button) {
+    if (this.submitting) return
+
+    // 1. HỎI TRƯỚC — trước cả lớp tải.
+    const ok = await this.$confirm({
+        title: 'Xác nhận duyệt',
+        message: `Duyệt phiếu đề nghị thanh toán "${this.code}"? Phiếu sẽ được gửi đến ${receiver}.`,
+        textAccept: 'Duyệt',
+    })
+    if (!ok) return
+
+    try {
+        this.submitting = true
+        this.$safeLoadingStart()          // 2. rồi mới bật lớp tải (mục 6b)
+        await this.$store.dispatch('apiPostMethod', { url: '...', payload: {...} })
+        ...
+    } finally {
+        this.submitting = false
+        this.$safeLoadingFinish()
+    }
+}
+```
+
+Bắt buộc:
+- **Hỏi TRƯỚC khi bật lớp tải.** Bật lớp tải rồi mới hỏi thì người dùng bấm Hủy xong màn vẫn bị che,
+  nhìn như treo.
+- **Câu hỏi phải gọi tên phiếu + nói hệ quả**: `Duyệt phiếu đề nghị thanh toán "TPE.DNTT..."? Phiếu
+  sẽ được gửi đến kế toán trưởng.` Chỉ hỏi trống "Bạn có chắc không?" thì người duyệt 20 phiếu liên
+  tiếp không biết mình đang đứng ở phiếu nào.
+- Tên cấp nhận phiếu lấy **đúng bộ chữ BE dùng cho thông báo chuông** (vd
+  `BillPaymentRequestNotifyService::levelName()`), để popup và thông báo không gọi tên cấp khác nhau.
+- `textAccept` = **đúng chữ trên nút gốc** (Duyệt / Chuyển duyệt / Gửi duyệt / Xóa), không để mặc
+  định "Xác nhận" cho mọi nút — người dùng đọc lại nút để biết mình đang xác nhận việc gì.
+- **KHÔNG `danger: true`** cho nhóm duyệt/gửi duyệt (đó là bước tiến của luồng, xem mục 2b). `danger`
+  chỉ dành cho Từ chối · Hủy phiếu · Xóa.
+- Vẫn giữ đủ cờ chống double-submit + lớp tải của mục 6b: popup không thay thế được 2 thứ đó.
+
+### ⚠️ `V2Footer` đã hỏi sẵn — đừng hỏi 2 lần
+
+`components/V2Footer.vue` TỰ mở `base-confirm-modal` cho các cờ: `approve` ·
+`forward_director_approve` · `boardDirectorApprove` · `save_and_submit_approve` · `save_and_approve` ·
+`send_and_submit_form`. Màn dùng đúng các cờ này thì **không tự hỏi thêm** — sự kiện emit ra đã là
+"người dùng đã đồng ý".
+
+Ngược lại, các cờ `complete` · `delete` · `cancel` · `print` của `V2Footer` **emit thẳng, KHÔNG hỏi**
+→ màn phải tự hỏi.
+
+Nút tự dựng ở slot `#custom-actions` cũng **không** được `V2Footer` hỏi hộ — tự hỏi bằng `$confirm()`.
+
+⚠️ Câu hỏi của `V2Footer` dựng theo **cờ `menu`**, không theo nút vừa bấm: bật nhiều cờ duyệt cùng
+lúc thì mọi nút dùng chung một câu hỏi chung chung ("Bạn xác nhận duyệt phiếu?"). Cần câu hỏi nêu
+đúng tên phiếu / đúng cấp nhận → tự dựng nút ở `#custom-actions` + `$confirm()` như khuôn trên
+(khuôn tham chiếu: `pages/finance/bill-payment-requests/components/ApproveActions.vue`).
+
 ## 7. Checklist khi tạo/review button
 
 - [ ] Mọi V2BaseButton đều có icon qua `#prefix`
@@ -327,4 +407,6 @@ Bắt buộc:
 - [ ] Table action dùng V2BaseIconButton qua `V2BaseRowActions`, thứ tự: Sửa → Xoá/Khoá → `⋮` (không còn nút Xem)
 - [ ] Cột hành động ở danh sách KHÔNG có "Hủy phiếu" / "Không duyệt" (chỉ có ở màn chi tiết)
 - [ ] Nút gọi API ghi dữ liệu (POST/PUT/DELETE) có `$safeLoadingStart()` trước lệnh gọi và `$safeLoadingFinish()` trong `finally` (mục 6b)
+- [ ] Nút đổi trạng thái phiếu (Duyệt · Chuyển duyệt · Gửi duyệt · Hoàn thành · Từ chối · Hủy · Xóa) có popup xác nhận, hỏi TRƯỚC lớp tải, câu hỏi nêu tên phiếu + hệ quả, `textAccept` đúng chữ trên nút (mục 6c)
+- [ ] Không hỏi xác nhận 2 lần: nút đi qua cờ `approve` / `save_and_submit_approve` / `save_and_approve` / `send_and_submit_form` của `V2Footer` thì component đã hỏi sẵn (mục 6c)
 - [ ] Khoá nút bằng `:interactable`, KHÔNG dùng `:disabled` trên V2BaseButton (không có tác dụng)

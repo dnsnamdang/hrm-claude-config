@@ -1,22 +1,31 @@
 # -*- coding: utf-8 -*-
-"""KHUNG MAU sinh SRS theo FORM CHUAN MOI (user chot 2026-08-17).
+"""KHUNG MAU sinh SRS theo FORM CHUAN (cap nhat 2026-08-28).
 
-Ban mau doi chieu: .claude/skills/srs-documenter/assets/SRS_MAU.docx
-(= "SRS - Danh muc khach hang", ban da duoc user chinh tay va chot lam chuan).
+Ban mau doi chieu (QA chot): "SRS - Danh muc quoc gia"
+https://docs.google.com/document/d/1tKvOQqJyK0bJC6BrZGM92974irpDAsFn/edit
+Ban da lam dung theo chuan nay, mo ra doi chieu cho nhanh:
+.plans/gop-db/finance-bill-income-request/SRS - Phieu de nghi thu tien.docx
 
 Cach dung: COPY file nay sang .plans/[feature]/gen_srs.py roi thay noi dung.
 File nay co du 4 chuong + 2 chuc nang mau (1 chuc nang CHI DOC, 1 chuc nang
 GHI DU LIEU) de thay ro khac biet giua 2 kieu bang giao dien.
 
-Cau truc form moi — 4 chuong, KHONG hon:
+Cau truc — 4 chuong, KHONG hon:
     Phan 1. Gioi thieu            -> 1 Muc dich | 2 Thuat ngu va viet tat
     Phan 2. Phan quyen            -> 1 Danh sach quyen | 2 Ma tran phan quyen
     Phan 3. Dac ta chi tiet ...   -> 1 So do UML tong quan | 2 Dac ta tung chuc nang
-    Phan 4. Quy tac nghiep vu     -> BR-01, BR-02, ...
+    Phan 4. Quy tac nghiep vu     -> BANG 5 cot (rule_table)
+
+4 diem cua form 2026-08-28 — thieu 1 trong 4 la user tra tai lieu ve:
+  1. Layout ghi DUONG DAN MENU: d.layout(menu=MENU + ' => Tao moi', ...) — KHONG ghi URL
+  2. Dau moi muc "Gioi thieu" co doan d.rule_ref(...) tro sang SRS quy tac chung
+  3. Phan 4 la BANG 5 cot: d.rule_table([...])
+  4. So do tong quan dung d.overview_figure2(...) — CO PHAN CAP: chi man hinh that su moi
+     noi toi actor, thao tac tren man do noi bang «include» / «extend»
 
 DA BO so voi form cu: bang thong tin trang bia, muc "Pham vi", chuong "Tong quan",
 muc "Quy tac truy cap bat buoc", chuong "Danh muc chuc nang (Function list)",
-muc "Tieu chi nghiem thu", dong "Chuc nang lien quan: FR-xx".
+muc "Tieu chi nghiem thu", dong "Chuc nang lien quan: FR-xx", dong "URL day du".
 """
 import os
 import sys
@@ -41,11 +50,14 @@ def shot(name):
     return os.path.join(SHOTS, name)
 
 
+# Duong dan menu — muc Layout in dong nay (khong in URL nua).
+# Viet dung nhan menu tren giao dien, ngan cach bang "=>" nhu ban mau.
+MENU = 'Phân hệ <X> => <Nhóm menu> => <Tên màn>'
+
 d = SrsDoc(
     out=OUT,
-    # menu/route van truyen de tra cuu trong script, nhung muc Layout cua form moi
-    # CHI in ra dong "URL day du".
-    menu='Phân hệ <X> → <Nhóm menu> → <Tên màn>',
+    menu=MENU,
+    # route/full_url van truyen de tra cuu trong script (khong con in ra tai lieu).
     route='/duong-dan-man',
     full_url='https://<host-hrm>/duong-dan-man',
     img_prefix='mau_')
@@ -110,12 +122,17 @@ d.table(['Chức năng', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Không có quyền nào'
 d.h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
 
 d.h2('1 Sơ đồ UML tổng quan')
-d.overview_figure(
-    'HỆ THỐNG HRM — <Tên màn hình>',
-    [('<Tên actor 1>', [0, 1]),
+# CHI use case la MAN HINH that su moi cho vao `mains` (noi thang toi actor).
+# Thao tac lam ngay tren mot man do — tim kiem/loc, tuy chinh cot, xoa, in, lich su,
+# popup chon du lieu — phai cho vao `subs`, noi bang «include» / «extend».
+d.overview_figure2(
+    [('<Tên actor 1>', [0, 1]),          # chi so trong `mains`
      ('<Tên actor 2>', [0])],
-    [('FR-01', 'Xem danh sách', 'view', None),
-     ('FR-02', 'Tạo mới', 'crud', None)],
+    [('FR-01', 'Xem danh sách', 'view'),
+     ('FR-02', 'Tạo mới', 'crud')],
+    [('FR-03', 'Tìm kiếm và lọc', 'view', 'extend', [0], None),
+     ('FR-04', 'Tuỳ chỉnh cột hiển thị', 'view', 'extend', [0], None),
+     ('FR-05', 'Chọn <dữ liệu> từ popup', 'crud', 'include', [1], None)],
     'Sơ đồ Use Case tổng quan màn <Tên màn hình>')
 
 d.h2('2 Đặc tả chi tiết từng chức năng')
@@ -126,6 +143,10 @@ d.h2('2 Đặc tả chi tiết từng chức năng')
 d.h3('2.1 Xem danh sách <đối tượng>')
 
 d.p('2.1.1 Giới thiệu')
+# BAT BUOC: doan tro sang SRS quy tac chung, dat TRUOC bang Gioi thieu.
+d.rule_ref('- Màn Danh sách, Sắp xếp dữ liệu bảng, Phân trang và Cấu hình cột. '
+           'Chỉ bổ sung các quy tắc riêng của <Tên màn hình> tại phần mô tả chi tiết.',
+           anchor='list')
 d.intro_table(
     ten='Truy cập và xem danh sách <đối tượng>',
     mota='Hiển thị bảng <đối tượng> nằm trong phạm vi dữ liệu của người đăng nhập, '
@@ -141,7 +162,8 @@ d.intro_table(
     dacbiet=None)          # chuc nang chi doc: BO HAN dong "Yeu cau dac biet"
 
 d.p('2.1.2 Layout màn hình')
-d.layout(shot=shot('01-danh-sach.png'),
+d.layout(menu=MENU,
+         shot=shot('01-danh-sach.png'),
          shot_caption='Màn <Tên màn hình> lúc mới truy cập')
 
 d.p('2.1.3 Mô tả chi tiết giao diện')
@@ -185,6 +207,9 @@ d.uc_figure('FR-02', 'Tạo mới <đối tượng>', 'crud',
             caption='Biểu đồ Use Case — FR-02 Tạo mới <đối tượng>')
 
 d.p('2.2.2 Giới thiệu')
+d.rule_ref('- Màn Thêm mới, Validate dữ liệu, Thông báo và UI/UX. Logic ghi lịch sử áp dụng '
+           'theo SRS Các quy tắc chung - Quy tắc ghi lịch sử.',
+           anchor='create')
 d.intro_table(
     ten='Tạo mới <đối tượng>',
     mota='Thêm một <đối tượng> mới vào danh mục. Mã do hệ thống sinh tự động.',
@@ -202,7 +227,7 @@ d.intro_table(
     dacbiet='<Điều đặc biệt của màn này; để chuỗi rỗng nếu cần giữ dòng mà không có nội dung>')
 
 d.p('2.2.3 Layout màn hình')
-d.layout(route='/duong-dan-man/add',
+d.layout(menu=MENU + ' => Tạo mới',
          shot=shot('02-tao-moi.png'),
          shot_caption='Form Tạo mới <đối tượng>')
 
@@ -244,19 +269,20 @@ d.event_table([
 ])
 
 # ==================================================== PHAN 4. QUY TAC NGHIEP VU
-# Moi rule: 1 dong tieu de "BR-0N — <Ten rule>" + cac gach dau dong.
-# KHONG con dong "Chuc nang lien quan: FR-xx" o cuoi moi rule.
+# Form 2026-08-28: BANG 5 cot, chi ghi quy tac DAC THU cua man nay.
 d.h1('Phần 4. Quy tắc nghiệp vụ')
 
-d.p('BR-01 — <Tên quy tắc>')
-d.bullets([
-    '<Phát biểu quy tắc bằng ngôn ngữ nghiệp vụ, truy vết được tới code>.',
-    '<Trường hợp biên / ngoại lệ của quy tắc>.',
-])
+d.rule_ref('. Phần này chỉ ghi các quy tắc đặc thù của <Tên màn hình>; không lặp lại các '
+           'quy tắc đã có trong SRS quy tắc chung.',
+           anchor='list', head='Quy tắc áp dụng',
+           lead='Các quy tắc nghiệp vụ dùng chung được định nghĩa tại SRS Các quy tắc chung ')
 
-d.p('BR-02 — <Tên quy tắc>')
-d.bullets([
-    '<...>',
+d.rule_table([
+    ('BR-01', '<Tên quy tắc>', [
+        '– <Phát biểu quy tắc bằng ngôn ngữ nghiệp vụ, truy vết được tới code>.',
+        '– <Trường hợp biên / ngoại lệ của quy tắc>.',
+    ], ['Tạo mới', 'Chỉnh sửa']),
+    ('BR-02', '<Tên quy tắc>', '– <...>', 'Toàn màn hình'),
 ])
 
 d.save()

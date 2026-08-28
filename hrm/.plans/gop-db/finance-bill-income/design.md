@@ -59,6 +59,27 @@ lịch sử thay đổi · import Excel · xuất Excel cả danh sách (ERP kh�
 - Menu Tài chính: đúng 1 lối vào `{ label: 'Phiếu thu', link: '/finance/bill-incomes' }` ở nhóm
   *Thanh toán tiền mặt* (3 mục `?mode=` cũ đã xóa 2026-08-18 theo quyết định #2).
 
+## Cột `sum_money` — số hiện ở ô "Số tiền" của màn danh sách
+
+**LUÔN là tổng số tiền DUYỆT THU**, kể cả sau khi phiếu đã duyệt (chốt 2026-08-27 sau khi user báo
+lệch ERP). Cột này còn là cột 2 ô lọc "Số tiền từ – đến" và nút sort đang chạy.
+
+Đừng sửa theo công thức trong `BillIncome::syncDetails()` :347-351 của ERP (`status 3` → cộng
+`income_money_real_exchange`): nhánh đó là **code chết** vì `BillIncomeController::update()` gọi
+`syncDetails()` ở :199 — TRƯỚC `update($data)` ở :201 — nên `$this->status` lúc cộng tiền vẫn là
+trạng thái cũ; còn phiếu đã ở status 3 thì :195-197 chặn không cho lưu lại. Đo dữ liệu thật: 3 phiếu
+ERP đã duyệt có duyệt thu ≠ thực thu đều giữ vế duyệt thu.
+
+⇒ `BillIncomeApprovalService::approve()` **không** tính lại `sum_money`. Chi tiết + số đo:
+`plan.md` mục "Cột Số tiền ở danh sách lệch ERP".
+
+## Duyệt phiếu — nhập số thực thu INLINE, không popup
+
+Ô "Số tiền thực thu" nằm trong bảng chi tiết của màn xem phiếu (`BillIncomeForm.vue` chế độ
+`readonly`), thành ô nhập khi BE trả `is_can_approve`; nút *Duyệt phiếu thu* gom số rồi gọi thẳng
+`POST /{id}/approve`. Bám đúng ERP (`formShow.blade.php:267-273` + `show.blade.php:18-21`).
+Popup `ApproveBillIncomeModal.vue` của bản 2026-08-18 đã **xóa** (user chốt 2026-08-27).
+
 ## Đồng bộ ngược trạng thái sang Phiếu đề nghị thu tiền
 
 Đã rà soát 2026-08-19 — **đã có đủ, khớp 1:1 ERP** (`BillIncomeController::update()` :202-224 của repo ERP):
