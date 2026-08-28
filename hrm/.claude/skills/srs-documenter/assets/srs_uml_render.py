@@ -150,7 +150,12 @@ def draw_overview(out_path, title, actors, usecases, target_w=2000):
     f_actor = _f(F_BOLD, 15)
     f_note = _f(F_ITAL, 12.5)
 
-    bx0, bx1 = int(430 * S), int(1465 * S)
+    has_note = any(u[3] for u in usecases)
+    rx = int(255 * S) if has_note else int(295 * S)
+    bx0 = int(430 * S)
+    ucx = bx0 + int(40 * S) + rx
+    # Khong co cot ghi chu -> khung he thong om sat ellipse, tieu de moi can giua dung
+    bx1 = int(1465 * S) if has_note else ucx + rx + int(40 * S)
     by0, by1 = int(58 * S), H - int(18 * S)
     # khung he thong (net dut)
     for i in range(4):
@@ -163,9 +168,6 @@ def draw_overview(out_path, title, actors, usecases, target_w=2000):
     tw, _ = _tw(d, title, f_title)
     d.text(((bx0 + bx1) / 2 - tw / 2, by0 + int(16 * S)), title, font=f_title, fill=INK)
 
-    has_note = any(u[3] for u in usecases)
-    rx = int(255 * S) if has_note else int(295 * S)
-    ucx = bx0 + int(40 * S) + rx
     note_x = ucx + rx + int(20 * S)
     note_w = bx1 - int(20 * S) - note_x
     pos = []
@@ -196,8 +198,13 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
     """So do use case cho 1 chuc nang.
 
     relations: [(kieu, ten), ...] voi kieu in {'include','extend'}
+
+    CHIEU MUI TEN (chuan UML, sua 24/08/2026):
+      include : base ──▶ sub   (use case me tro sang use case duoc include)
+      extend  : sub  ──▶ base  (use case mo rong tro NGUOC ve use case me)
     """
-    W = 1350 * S
+    # Khong co include/extend -> thu hep khung, khong de khoang trang ben phai
+    W = (1350 if relations else 760) * S
     rows = max(1, len(relations))
     row_h = 128 * S
     H = int(max(240 * S, 46 * S + rows * row_h))
@@ -228,7 +235,11 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
             p1 = (mright + int(14 * S), cy)
             p2 = (sleft - int(12 * S), yy)
             _dashed_line(d, p1, p2, (100, 116, 139), max(2, int(1.6 * S)))
-            _arrow_head(d, p1, p2, (100, 116, 139), max(2, int(1.6 * S)))
+            # extend: mui ten tro NGUOC ve use case me (p1); include: tro sang sub (p2)
+            if kind == 'extend':
+                _arrow_head(d, p2, p1, (100, 116, 139), max(2, int(1.6 * S)))
+            else:
+                _arrow_head(d, p1, p2, (100, 116, 139), max(2, int(1.6 * S)))
             # Nhan dat PHIA TREN duong noi de khong cat qua net dut
             lbl = '«%s»' % kind
             lw, lh = _tw(d, lbl, f_rel)
@@ -237,5 +248,106 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
             d.rectangle([mcx - lw / 2 - 5 * S, mcy - lh / 2 - 9 * S,
                          mcx + lw / 2 + 5 * S, mcy + lh / 2 + 7 * S], fill='white')
             d.text((mcx - lw / 2, mcy - lh / 2 - 3 * S), lbl, font=f_rel, fill=(71, 85, 105))
+
+    return _finish(img, out_path, target_w)
+
+
+# ======================================================================
+def draw_overview_rel(out_path, title, actor_name, nodes, relations=(),
+                      actor_links=None, target_w=2200):
+    """So do Use Case tong quan CO quan he «include» / «extend» giua cac use case.
+
+    Khac `draw_overview` (chi 1 cot doc, khong ve quan he): ham nay bay 2 cot —
+    cot GIUA la use case chinh (actor noi vao), cot PHAI la use case phu
+    (use case duoc include, hoac use case mo rong).
+
+    nodes     : [(id, nhan, nhom, cot), ...] voi cot in {'main', 'side'}
+                `nhan` PHAI la cum dong tu (vd 'Xem danh sach quoc gia').
+    relations : [(id_nguon, id_dich, kieu), ...] voi kieu in {'include','extend'}
+                Huong theo dung chuan UML — nguon la dau mui ten di RA:
+                  include : (base, sub)  -> mui ten tro sang sub
+                  extend  : (sub,  base) -> mui ten tro nguoc ve base
+    actor_links: danh sach id duoc noi voi actor; None = moi node cot 'main'.
+    """
+    main = [n for n in nodes if n[3] == 'main']
+    side = [n for n in nodes if n[3] == 'side']
+    if actor_links is None:
+        actor_links = [n[0] for n in main]
+
+    ry = 34 * S
+    gap = 24 * S
+    top_pad = 132 * S
+    bot_pad = 52 * S
+    W = 1900 * S
+
+    def col_h(n):
+        return n * (2 * ry) + max(0, n - 1) * gap
+
+    inner_h = max(col_h(len(main)), col_h(len(side)))
+    H = int(top_pad + inner_h + bot_pad)
+
+    img = Image.new('RGB', (W, H), 'white')
+    d = ImageDraw.Draw(img)
+
+    f_title = _f(F_BOLD, 20)
+    f_uc = _f(F_REG, 15)
+    f_actor = _f(F_BOLD, 15)
+    f_rel = _f(F_ITAL, 13)
+
+    rx = int(250 * S)
+    cx_main = int(640 * S)
+    cx_side = int(1560 * S)
+    bx0, bx1 = int(330 * S), int(1870 * S)
+    by0, by1 = int(58 * S), H - int(18 * S)
+    _dashed_line(d, (bx0, by0), (bx1, by0), BOUND, max(3, int(2 * S)))
+    _dashed_line(d, (bx0, by1), (bx1, by1), BOUND, max(3, int(2 * S)))
+    _dashed_line(d, (bx0, by0), (bx0, by1), BOUND, max(3, int(2 * S)))
+    _dashed_line(d, (bx1, by0), (bx1, by1), BOUND, max(3, int(2 * S)))
+
+    tw, _ = _tw(d, title, f_title)
+    d.text(((bx0 + bx1) / 2 - tw / 2, by0 + int(16 * S)), title, font=f_title, fill=INK)
+
+    # moi cot tu can giua theo chieu doc trong vung `inner_h`
+    pos = {}
+    for col, cx in ((main, cx_main), (side, cx_side)):
+        y = top_pad + (inner_h - col_h(len(col))) / 2 + ry
+        for nid, label, grp, _c in col:
+            _usecase(d, cx, y, rx, ry, label, grp, f_uc)
+            pos[nid] = (cx, y)
+            y += 2 * ry + gap
+
+    # actor
+    ay_center = top_pad + inner_h / 2
+    ax, ay = _actor(d, int(150 * S), int(ay_center - 62 * S), actor_name, f_actor)
+    for nid in actor_links:
+        cx, cy = pos[nid]
+        d.line([(ax + int(6 * S), ay), (cx - rx - int(4 * S), cy)],
+               fill=(148, 163, 184), width=max(2, int(1.4 * S)))
+
+    # quan he include / extend — luon ve giua canh phai cot main va canh trai cot side
+    col_rel = (100, 116, 139)
+    wid = max(2, int(1.6 * S))
+    for src, dst, kind in relations:
+        (sx, sy), (dx, dy) = pos[src], pos[dst]
+        m, s = (src, dst) if sx == cx_main else (dst, src)
+        pm, ps = pos[m], pos[s]
+        p_main = (pm[0] + rx + int(14 * S), pm[1])
+        p_side = (ps[0] - rx - int(12 * S), ps[1])
+        _dashed_line(d, p_main, p_side, col_rel, wid)
+        # dau mui ten dat o DICH
+        if dst == m:
+            _arrow_head(d, p_side, p_main, col_rel, wid)
+        else:
+            _arrow_head(d, p_main, p_side, col_rel, wid)
+        # nhan dat gan DAU DUONG (phia use case nguon) de 8 duong khong de nhan len nhau
+        p_src = p_main if src == m else p_side
+        p_dst = p_side if src == m else p_main
+        lx = p_src[0] + (p_dst[0] - p_src[0]) * 0.26
+        ly = p_src[1] + (p_dst[1] - p_src[1]) * 0.26 - int(20 * S)
+        lbl = '«%s»' % kind
+        lw, lh = _tw(d, lbl, f_rel)
+        d.rectangle([lx - lw / 2 - 5 * S, ly - lh / 2 - 9 * S,
+                     lx + lw / 2 + 5 * S, ly + lh / 2 + 7 * S], fill='white')
+        d.text((lx - lw / 2, ly - lh / 2 - 3 * S), lbl, font=f_rel, fill=(71, 85, 105))
 
     return _finish(img, out_path, target_w)

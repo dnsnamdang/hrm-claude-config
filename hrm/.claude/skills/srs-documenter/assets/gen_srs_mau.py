@@ -110,13 +110,20 @@ d.table(['Chức năng', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Không có quyền nào'
 d.h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
 
 d.h2('1 Sơ đồ UML tổng quan')
-d.overview_figure(
-    'HỆ THỐNG HRM — <Tên màn hình>',
-    [('<Tên actor 1>', [0, 1]),
-     ('<Tên actor 2>', [0])],
-    [('FR-01', 'Xem danh sách', 'view', None),
-     ('FR-02', 'Tạo mới', 'crud', None)],
-    'Sơ đồ Use Case tổng quan màn <Tên màn hình>')
+# Ten UC PHAI la CUM DONG TU. So do tong quan the hien quan he «extend».
+# Xem day du quy uoc o SKILL.md muc "Quy uoc dat ten va quan he use case".
+d.overview_rel_figure(
+    'Use Case Diagram – Quản lý <đối tượng>',
+    '<Tên actor>',
+    # (id, nhãn, nhóm màu, cột) — 'main' nối actor, 'side' là use case mở rộng
+    [('fr01', 'FR-01  Xem danh sách <đối tượng>',  'view', 'main'),
+     ('fr02', 'FR-02  Tạo mới <đối tượng>',        'crud', 'main'),
+     ('fr03', 'FR-03  Tìm kiếm và lọc <đối tượng>', 'view', 'side'),
+     ('fr04', 'FR-04  Xem chi tiết <đối tượng>',   'view', 'side')],
+    # (nguồn, đích, kiểu) — nguồn là đầu mũi tên đi RA
+    [('fr03', 'fr01', 'extend'),
+     ('fr04', 'fr01', 'extend')],
+    caption='Use Case Diagram – Quản lý <đối tượng>')
 
 d.h2('2 Đặc tả chi tiết từng chức năng')
 
@@ -178,9 +185,10 @@ d.event_table([
 d.h3('2.2 Tạo mới <đối tượng>')
 
 d.p('2.2.1 Biểu đồ Usecase')
-d.uc_figure('FR-02', 'Tạo mới <đối tượng>', 'crud',
-            [('include', 'Kiểm tra quyền Thêm <đối tượng>'),
-             ('include', 'Sinh mã <đối tượng> tự động')],
+# So do RIENG cua tung chuc nang: KHONG ve include/extend (BA chot 24/08/2026).
+# Cac rang buoc kieu "kiem tra quyen", "sinh ma tu dong" la hanh vi ngam cua he thong
+# -> dua vao Phan 4 Quy tac nghiep vu, khong bien thanh use case.
+d.uc_figure('FR-02', 'Tạo mới <đối tượng>', 'crud', relations=(),
             actor=ACTOR_P1,
             caption='Biểu đồ Use Case — FR-02 Tạo mới <đối tượng>')
 

@@ -258,6 +258,42 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Chưa đo được thời gian DỰNG file ở trình duyệt với 17.5k dòng — nhất là PDF (~600 trang).
   3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
 
+- finance-prepick-transfer-request → @junfoke → .plans/gop-db/finance-prepick-transfer-request/plan.md
+  Trạng thái: **XONG PHASE 0-9b — ĐÃ MERGE vào `gop_db`** (2026-08-26, chưa push). Spec chi tiết:
+  docs/superpowers/specs/gop-db/2026-08-24-finance-prepick-transfer-request-design.md
+  Nhánh `feat/finance-prepick-transfer-request` (cả 2 repo).
+  Port màn `Yêu cầu điều chuyển hàng giữ` (`prepick_transfer2`, 1.295 phiếu) sang Tài chính /
+  nhóm Giữ hàng. Duyệt 3 cấp TP → (BGĐ) → KT; **KT duyệt mới ghi tồn** — điều chuyển = đổi
+  NGƯỜI GIỮ + KHÁCH, giữ nguyên hạn giữ của lô nguồn. Màn này KHÔNG có nháp.
+  17 route BE · 8 file FE · 13 lỗi ERP đã vá (xem spec mục 5).
+  Hàm dùng chung mới: `PrepickStockService::moveToOwner()` + `holdingLots()`,
+  `PrepickLotContractService` (tách từ màn Gia hạn — đã test lại màn đó),
+  `PrepickStockSearchModal` thêm 5 prop (mặc định giữ nguyên hành vi cũ).
+  Đã chạy thật: lập/sửa/xoá phiếu, 3 luồng duyệt (bước KT ghi tồn -> đã đo DB rồi hoàn nguyên),
+  in phiếu + in danh sách (khổ ngang), xuất Excel (file 103KB), upload đính kèm S3.
+  ⚠️ Dữ liệu: chỉ 79/1.295 phiếu có `to_customer_id` tồn tại trong `customers` (lỗi DB gộp cũ).
+  Giữ 4 bảng `bak_*_20260824` tới khi user test xong.
+  Phase 9b (25/08): rà lại toàn màn bằng Playwright — tìm & sửa 1 bug thật: form gọi
+  `markFormSaved()` lúc nạp dữ liệu làm cảnh báo "chưa lưu" không bao giờ hiện (đúng phải là
+  `markFormPristine()`). Đã vá luôn cho màn Gia hạn + Phiếu hủy hàng giữ, bỏ dấu `—` ở ô rỗng
+  3 màn cũ (43 chỗ + 7 placeholder) và sửa câu xác nhận "tp duyệt" -> "TP duyệt";
+  đã bấm thật lại 3 màn cũ, 0 lỗi console.
+  Chờ user chốt: nhãn nút "Từ chối" (theo skill) vs "Không duyệt" (theo ERP).
+  Merge 26/08: api `cfc7a4234`, client `882026cd7` — merge sạch, chưa push (user tự đẩy lên dev).
+  ⚠️ Nhớ chạy migration `2026_08_24_000001_create_prepick_transfer_request_history_table` trên dev.
+
+- finance-prepick-extend-request → @junfoke → .plans/gop-db/finance-prepick-extend-request/plan.md
+  Trạng thái: **XONG PHASE 0-9** (2026-08-24) — user test tay báo "tạm ổn".
+  Nhánh `feat/finance-prepick-extend-request` (cả 2 repo).
+  Port màn `Yêu cầu gia hạn hàng giữ` (`prepick_extend_requests`, 1.421 phiếu) sang Tài chính /
+  nhóm Giữ hàng. Duyệt 3 cấp TP → (BGĐ) → KT; **KT duyệt mới ghi tồn** — gia hạn = CHUYỂN LÔ
+  (trừ dòng `prepick_details` hạn cũ, cộng sang dòng hạn mới), không phải update `expire_date`.
+  10 lỗi ERP đã liệt kê trong design.md. Chờ user xác nhận khổ in ngang.
+  Đã chạy thật: lập/sửa/xoá phiếu, duyệt 3 cấp (bước KT ghi tồn -> chuyển lô, đã đo DB rồi hoàn
+  nguyên), in 1 phiếu + in danh sách (khổ ngang), xuất Excel. 13 lỗi ERP đã vá (10 ở design + 3
+  phát hiện khi port). Giữ 4 bảng `bak_*_20260822` tới khi user test xong.
+  Bước tiếp: sang màn `Yêu cầu điều chuyển hàng giữ` (nhánh riêng). Còn giữ 4 bảng bak_*_20260822.
+
 - finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
   Trạng thái: **XONG PHASE 0-12** (2026-08-22) — Phase 10 vá QA redmine 11094/11149/11150/11151/11152/11154,
   Phase 11 bỏ tab preset (1 màn = `all` của ERP, nút duyệt theo quyền), Phase 12 rà màn Phiếu hủy

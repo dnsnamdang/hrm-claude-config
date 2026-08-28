@@ -227,7 +227,7 @@ Cả 3 file nằm ở `.claude/skills/srs-documenter/assets/` nên ai clone repo
 
 | File | Vai trò |
 |---|---|
-| `assets/srs_uml_render.py` | Module vẽ PNG bằng Pillow — `draw_overview()` và `draw_usecase()` |
+| `assets/srs_uml_render.py` | Module vẽ PNG bằng Pillow — `draw_overview()`, `draw_overview_rel()`, `draw_usecase()` |
 | `assets/srs_docx_lib.py` | Lớp `SrsDoc` dựng file .docx theo form chuẩn |
 | `assets/gen_srs_mau.py` | **Khung mẫu form mới**: đủ 4 chương + 1 chức năng chỉ đọc + 1 chức năng ghi. Copy file này rồi thay nội dung là nhanh nhất |
 
@@ -255,20 +255,25 @@ d.h2('Mục lục'); d.toc()
 
 d.h1('Phần 1. Giới thiệu')
 
-# 1 Sơ đồ UML tổng quan
-d.overview_figure(
-    'HỆ THỐNG HRM — <Tên màn hình>',
-    [('<Actor 1>', [0,1,2]), ('<Actor 2>', [0])],      # (tên actor, chỉ số use case nối tới)
-    [('FR-01','Xem danh sách','view',  None),          # (mã, tên, nhóm màu, ghi chú)
-     ('FR-05','Tạo mới',      'crud',  None),
-     ('FR-08','Khóa / Mở khóa','action','«extend» Khóa khi đã phát sinh chứng từ')],
-    'Sơ đồ Use Case tổng quan màn <Tên màn hình>')
+# 1 Sơ đồ UML tổng quan — DÙNG overview_rel_figure (có quan hệ «extend»)
+d.overview_rel_figure(
+    'Use Case Diagram – Quản lý <đối tượng>',
+    '<Actor>',
+    # (id, nhãn CỤM ĐỘNG TỪ, nhóm màu, cột) — 'main' nối actor, 'side' là UC mở rộng
+    [('fr01', 'FR-01  Xem danh sách <đối tượng>',      'view',   'main'),
+     ('fr03', 'FR-03  Thêm mới <đối tượng>',           'crud',   'main'),
+     ('fr06', 'FR-06  Khóa / Mở khóa <đối tượng>',     'action', 'main'),
+     ('fr09', 'FR-09  Xuất danh sách ra Excel',        'io',     'main'),
+     ('fr02', 'FR-02  Tìm kiếm và lọc <đối tượng>',    'view',   'side'),
+     ('fr10', 'FR-10  Xem chi tiết <đối tượng>',       'view',   'side')],
+    # (nguồn, đích, kiểu) — nguồn là đầu mũi tên đi RA
+    [('fr02', 'fr01', 'extend'),
+     ('fr10', 'fr01', 'extend')],
+    caption='Use Case Diagram – Quản lý <đối tượng>')
 
-# 2.x.1 Biểu đồ use case của 1 chức năng
-d.uc_figure('FR-05', 'Tạo mới <đối tượng>', 'crud',
-            [('include', 'Kiểm tra quyền Thêm <đối tượng>'),
-             ('extend',  'Sinh mã tự động')],
-            caption='Biểu đồ Use Case — FR-05 Tạo mới <đối tượng>')
+# 2.x.1 Biểu đồ use case của 1 chức năng — KHÔNG vẽ include/extend (BA chốt)
+d.uc_figure('FR-03', 'Thêm mới <đối tượng>', 'crud', relations=(),
+            caption='Biểu đồ Use Case — FR-03 Thêm mới <đối tượng>')
 
 # Bảng Giới thiệu — chức năng chỉ đọc thì dacbiet=None để BỎ HẲN dòng "Yêu cầu đặc biệt"
 d.intro_table(ten=…, mota=…, tacnhan=…, dieukien=…, chinh=…, phu=…, dacbiet=None)
@@ -300,6 +305,55 @@ d.save()
 3. **Nhãn «include»/«extend» đặt PHÍA TRÊN đường nối** (offset y ≈ `-24*S`). Đặt giữa đường sẽ
    cắt nét đứt, trông như mũi tên lỗi.
 4. **Chừa `top_pad` đủ lớn** cho tiêu đề khung hệ thống, nếu không tiêu đề đè lên ellipse đầu tiên.
+5. **Chiều mũi tên `«extend»` NGƯỢC với `«include»`** — xem mục quy ước bên dưới. Lib đã xử lý
+   đúng từ 24/08/2026; trước đó vẽ sai và BA đã bắt lỗi.
+6. **`draw_usecase()` không có quan hệ thì khung tự thu hẹp** — không cần chỉnh gì, nhưng đừng
+   ngạc nhiên khi ảnh hẹp hơn ảnh có include/extend.
+
+### Quy ước đặt tên và quan hệ use case — BA CHỐT 24/08/2026
+
+Đây là các điểm BA đã trả tài liệu về bắt sửa. Làm sai là bị trả lại lần nữa.
+
+**1. Tên sơ đồ tổng quan:** `Use Case Diagram – Quản lý <đối tượng>`.
+KHÔNG dùng `HỆ THỐNG HRM — <TÊN MÀN>`.
+
+**2. Tên use case LUÔN là CỤM ĐỘNG TỪ** — phải thể hiện hành động:
+
+| ❌ Danh từ (bị trả lại) | ✅ Cụm động từ |
+|---|---|
+| Lịch sử thay đổi | Xem lịch sử thay đổi |
+| Xuất Excel | Xuất danh sách <đối tượng> ra Excel |
+| Import file | Import file danh sách <đối tượng> |
+| Chi tiết | Xem chi tiết <đối tượng> |
+
+**3. Danh sách UC tối thiểu của một màn danh mục** — thiếu là BA bắt bổ sung:
+Xem danh sách · Tìm kiếm và lọc · Xem chi tiết · Thêm mới · Chỉnh sửa · Xóa ·
+Khóa / Mở khóa (nếu màn có) · Xem lịch sử thay đổi · Tùy chỉnh cột hiển thị ·
+Import file · Xuất Excel.
+Nếu code chưa có Import / Xuất Excel thì **vẫn vẽ** (BA yêu cầu) nhưng phải **nói rõ với
+người đặt hàng rằng đó là yêu cầu mới, không phải hiện trạng**.
+
+**4. Sơ đồ TỔNG QUAN phải thể hiện quan hệ `«extend»`** giữa các use case — dùng
+`overview_rel_figure()`. Các thao tác phụ nằm trên màn danh sách nối `«extend»` về
+`FR-01 Xem danh sách`: Tìm kiếm và lọc, Xem chi tiết, Tùy chỉnh cột hiển thị,
+Xem lịch sử thay đổi.
+
+**5. Sơ đồ RIÊNG của từng chức năng thì BỎ HẾT include/extend** — chỉ còn actor nối use case
+(`relations=()`). Đừng thấy mục 4 rồi bê quan hệ vào sơ đồ riêng.
+
+**6. KHÔNG biến hành vi ngầm của hệ thống thành use case.** Không vẽ `«include»` cho
+"Kiểm tra trùng tên/mã", "Xác nhận trước khi thực hiện", "Kiểm tra quyền"… — đó là xử lý nội
+tại của phần mềm, không phải use case. Đưa các ràng buộc này vào **Phần 4 Quy tắc nghiệp vụ**.
+
+**7. CHIỀU MŨI TÊN — sai chỗ này bị bắt lỗi nhiều nhất:**
+
+```
+«include» :  use case mẹ (base)      ──▶  use case được include
+«extend»  :  use case mở rộng (sub)  ──▶  use case mẹ (base)      ← NGƯỢC LẠI
+```
+
+Trong `relations` của cả `draw_usecase()` lẫn `draw_overview_rel()`, phần tử đầu luôn là
+**nguồn — nơi mũi tên đi RA**. Lib tự đặt đầu mũi tên đúng phía, không phải tự xử lý.
 
 Font dùng `C:\Windows\Fonts\segoeui.ttf` / `segoeuib.ttf` / `segoeuii.ttf` — đủ dấu tiếng Việt.
 

@@ -814,6 +814,37 @@ hỗ trợ), thì đưa vào slot `#custom-actions`. `V2Footer` tự render "Qua
   📌 Quy ước này **đảo lại** cách làm cũ (hiện + disable + tooltip lý do) — chốt 2026-08-15.
 - Hành động đổi trạng thái (Khóa/Mở khóa) cập nhật state tại chỗ sau khi API thành công để nút đổi ngay, không nạp lại cả màn.
 
+## 7.3. THAO TÁC XONG → QUAY VỀ MÀN DANH SÁCH
+
+Mọi thao tác **ghi dữ liệu rồi kết thúc** đều điều hướng về **màn danh sách**, KHÔNG ở lại / KHÔNG
+đẩy sang màn chi tiết:
+
+| Thao tác | Sau khi API thành công |
+|---|---|
+| Lưu nháp · Lưu · Lưu và gửi duyệt | `$router.push('<đường dẫn danh sách>')` |
+| Duyệt · Không duyệt / Từ chối · Hủy phiếu | như trên |
+| Xóa (từ màn chi tiết) | như trên |
+| Khóa / Mở khóa **ngay trên dòng danh sách** | ở lại danh sách, cập nhật state tại chỗ (mục 7.2) |
+
+```js
+this.markFormSaved()                       // TRƯỚC push, nếu không sẽ bị hỏi "chưa lưu"
+this.toast('success', response?.message || 'Lưu phiếu thành công')
+this.$router.push('/finance/prepick-cancel-requests')
+```
+
+**Vì sao**: ở lại màn chi tiết thì user phải tự bấm "Quay lại" mới thấy kết quả (trạng thái mới,
+phiếu mới) trong danh sách — thừa 1 thao tác ở MỌI lần lưu. Chốt 2026-08-20, QA báo lại ở Redmine
+#11192 ("TẠI TẤT CẢ CÁC MÀN DUYỆT/HỦY DUYỆT ĐỀU RA MÀN DETAIL → PHẢI TRẢ VỀ MÀN LIST").
+
+**Ngoại lệ duy nhất**: thao tác **chưa kết thúc luồng** — nút "Duyệt" chỉ là lối sang màn lập chứng
+từ tiếp theo (vd Duyệt yêu cầu hủy hàng giữ → màn Lập phiếu hủy), hoặc lưu xong còn phải làm tiếp
+trên chính bản ghi đó. Khi đó vẫn điều hướng theo luồng, không ép về danh sách.
+
+⚠️ **Nút "Quay lại" (`url-back` của `V2Footer`) phải trỏ về nơi user ĐI VÀO**, không mặc định
+danh sách của chính màn đó. Màn mở từ màn khác qua query (`?request_id=…`) thì `url-back` là
+**computed động** trả về màn nguồn — bắn user sang một danh sách chưa hề chứa bản ghi họ đang xem
+là user tưởng "mất dữ liệu" (Redmine #11193).
+
 ## 8. Thứ tự request khi vào màn (tốc độ hiển thị)
 
 Request danh sách phải là request **đầu tiên**, không chờ bất kỳ request nào khác. Server dev chạy `php artisan serve` (1 worker) nên request xếp hàng — gọi trước là chiếm chỗ trước.

@@ -301,6 +301,28 @@ async submitForm(status = 1) {
 - Sau khi có lỗi → **scroll + focus vào trường lỗi đầu tiên** (quét trên → dưới, trái → phải).
 - Còn lỗi FE thì **không gọi API lưu**.
 - Câu lỗi tiếng Việt, không dùng thuật ngữ kỹ thuật. Mẫu: `Tên dự án không được để trống`, `Email không đúng định dạng`.
+- ⚠️ **TUYỆT ĐỐI KHÔNG TỰ SỬA GIÁ TRỊ USER VỪA NHẬP.** Nhập vượt trần / dưới sàn / sai định dạng
+  thì **báo đỏ ngay dưới ô**, giữ nguyên con số user gõ. Cấm mọi kiểu "chỉnh ngầm": kéo về max/min,
+  làm tròn, cắt bớt ký tự, tự xoá dòng trống trong bảng chi tiết. User gõ `2` mà ô nhảy về `1` là
+  mất dữ liệu không dấu vết — user tưởng hệ thống "báo sai" chứ không hiểu là bị chặn.
+  Toast thay cho lỗi dưới ô cũng SAI: bảng dài thì không biết dòng nào hỏng.
+
+  ```js
+  // SAI — tự kéo về trần rồi bắn toast
+  onQtyChange(product) {
+      if (qty > max) { product.qty = max; this.toast('error', `Chỉ còn ${max}`) }
+  }
+
+  // ĐÚNG — giữ nguyên số user gõ, gắn lỗi vào đúng ô, chặn ở lúc lưu
+  onQtyChange(product, index) {
+      const message = this.qtyErrorOf(product)   // '' = hợp lệ
+      if (message) this.$set(this.formErrors, `products.${index}.qty`, message)
+      else this.clearFieldError(`products.${index}.qty`)
+  }
+  ```
+
+  Câu lỗi theo mẫu `<Tên trường> – <Nội dung>`: `Yêu cầu hủy – Không được vượt 1 (số đang giữ)`.
+  Chốt 2026-08-17, nhắc lại ở Redmine #11192 (màn Yêu cầu hủy hàng giữ).
 
 > Ghi chú: màn mới dùng cách này thì **không cần cờ `touched`** (cờ đó là để màn cũ không hiện lỗi trước lần submit đầu). Lỗi realtime hiện theo tương tác của user là đúng chuẩn.
 
@@ -431,6 +453,53 @@ daysRule(value) {
 
 ---
 
+## 3d. BẢNG NHIỀU DÒNG: bấm Lưu là phải NHẢY TỚI ĐÚNG DÒNG LỖI
+
+Tình huống: form có bảng chi tiết, user thêm **hàng chục / hàng trăm dòng**, chỉ 1-2 dòng sai
+(thực tế đã gặp phiếu **116 dòng** ở màn Yêu cầu gia hạn hàng giữ). Bấm Lưu / Duyệt mà màn hình
+đứng im thì user phải cuộn dò từng dòng mới thấy ô đỏ.
+
+**Toast cứ để câu chung `"Bạn chưa nhập đầy đủ thông tin."`** — câu lỗi chi tiết đã có sẵn inline
+dưới ô (mục 3), nhồi thêm vào toast là thừa. Việc bắt buộc là **tự cuộn tới ô lỗi đầu tiên**:
+
+```js
+import { scrollToFirstError } from '@/utils/scrollToFirstError'
+
+if (this.validateForm()) {                       // còn lỗi -> KHÔNG gọi API
+    this.toast('error', 'Bạn chưa nhập đầy đủ thông tin.')
+    this.$nextTick(() => scrollToFirstError(this.$el))
+    return
+}
+```
+
+`scrollToFirstError(root)` làm 4 việc, dùng được cho mọi màn — **đừng chép lại đoạn cuộn tay**:
+
+1. Tìm ô lỗi đầu tiên: `.v2-input__wrapper.is-invalid` → `.is-invalid` → câu lỗi đang hiện.
+2. Cuộn **cả dòng `<tr>`** vào giữa màn hình (không chỉ cuộn ô) để user thấy ngữ cảnh.
+3. Bảng tràn ngang thì kéo luôn theo **chiều ngang** tới đúng ô.
+4. Nháy nền đỏ nhạt dòng đó ~1,5s + focus ô nhập (bỏ qua ô `disabled`).
+
+⚠️ 2 cái bẫy đã đo thật, đây là lý do phải dùng util chứ không tự viết selector:
+
+| Bẫy | Hậu quả |
+|---|---|
+| `V2BaseError` render class **`.v2-error`**, KHÔNG phải `.invalid-feedback` của bootstrap | Bắt `.invalid-feedback` là tìm không ra ô nào |
+| KHÔNG phải component nào cũng gắn `is-invalid` — `V2BaseDatePicker` có lỗi mà wrapper vẫn sạch | Chỉ bắt `is-invalid` thì con trỏ đứng im, user tưởng bấm nút không ăn |
+| Bảng render sẵn hàng trăm khối `V2BaseError` RỖNG | Phải lọc khối đang hiện + có chữ, nếu không nhảy vào dòng 1 dù lỗi ở dòng 90 |
+
+Đã bấm thật (25/08/2026): phiếu 116 dòng — đang ở cuối trang (scrollTop 7337) bấm Duyệt thì nhảy
+về dòng 1 (scrollTop 143, dòng nằm giữa khung nhìn); bảng 3 dòng chỉ **dòng 3** thiếu lô — đang ở
+đầu trang bấm Gửi duyệt thì tự cuộn xuống đúng dòng 3.
+Đang dùng ở 4 form nhóm Giữ hàng (gia hạn / điều chuyển / yêu cầu hủy / phiếu hủy).
+
+⚠️ **Trước khi có util này, mỗi màn tự viết một kiểu** — màn Hợp đồng bắt `.field-error`, màn Báo
+giá bắt `.cell-invalid, .text-small-error`, nhóm Giữ hàng bắt `.v2-input__wrapper.is-invalid`.
+Util đã gom hết selector đó vào hằng `ERROR_TEXT_SELECTOR` nên chạy được cho mọi màn; 2 màn cũ
+(`assign/contracts/_id/edit.vue`, `assign/quotations/_id/edit.vue`) VẪN đang dùng bản riêng —
+muốn gộp thì hỏi user trước (màn đang chạy).
+
+---
+
 ## 4. Rule custom có sẵn (đừng viết lại)
 
 Khai trong `plugins/vee-validate.js`, dùng ngay: `min`, `max`, `max_value`, `phone`,
@@ -450,7 +519,10 @@ Khai trong `plugins/vee-validate.js`, dùng ngay: `min`, `max`, `max_value`, `ph
       (thiếu `vmId: null` là bỏ sót mọi ô nằm trong component con — mục 3c)
 - [ ] Rule ĐỊNH DẠNG chặn cả ở nút **Lưu nháp**, và có rule tương ứng ở **FormRequest** của BE
       với message viết y hệt FE (mục 1)
+- [ ] KHÔNG có đoạn code nào tự sửa giá trị user nhập (kéo về max/min, làm tròn, xoá dòng) — grep `= max`, `Math.min(`, `Math.max(` trong các hàm `onXxxChange` (mục 3)
 - [ ] Lỗi BE 422 map vào `formError` và hiển thị cùng chỗ với lỗi FE
 - [ ] Scroll/focus trường lỗi đầu tiên
 - [ ] Bảng nhiều dòng: mọi chỗ xoá/thêm/chuyển dòng đã dọn `formError` bằng `utils/rowFieldErrors.js` (mục 3b)
+- [ ] Form có BẢNG chi tiết: sau khi báo lỗi phải gọi `scrollToFirstError(this.$el)` để nhảy
+      tới đúng dòng sai (mục 3d) — KHÔNG tự viết đoạn cuộn tay bằng selector riêng
 - [ ] Test: bấm Lưu nháp với form chỉ có Tên → lưu thành công

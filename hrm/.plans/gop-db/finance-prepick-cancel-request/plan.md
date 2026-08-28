@@ -768,3 +768,20 @@ Vừa hoàn thành: bỏ "Không duyệt" + gỡ `RejectModal` khỏi màn danh 
 Bước tiếp theo: user xác nhận trên trình duyệt, đặc biệt luồng Không duyệt ở màn chi tiết.
 Chưa kiểm chứng bằng mắt: chỉ parse template + script.
 Blocked: không.
+
+---
+
+
+## Đợt vá Redmine 24/08/2026 (#11192–#11197) — nhánh `gop_db`
+
+QA (Lê Huyền Trang) test màn Yêu cầu hủy hàng giữ trên `hrm-crm`, 5 issue:
+
+| Issue | Nội dung | Xử lý |
+|---|---|---|
+| #11192 | Lưu nháp / Lưu và gửi duyệt / Không duyệt đều ra màn Chi tiết | `save()` + `onRejected()` push về **danh sách** |
+| #11192 | Nhập quá "Có thể hủy" bị tự kéo về trần + toast | Bỏ tự sửa số; `qtyErrorOf()` + `validateProducts()` báo đỏ ngay dưới ô, chưa sạch lỗi thì không gọi API |
+| #11192 | "Thiếu bộ lọc so với ERP" | **Không phải lỗi code**: 8 ô lọc vẫn khai đủ, tài khoản test đã tắt `org` / `created_by` / `approver` / `startDate` trong popup "Cài đặt bộ lọc" (`filter_customizations` id 7, user 13) → bật lại trong popup là hiện |
+| #11193 | Bấm "Quay lại" ở màn Lập phiếu hủy → không thấy bản ghi | `url-back` động: vào từ `?request_id=` thì quay về **chi tiết phiếu yêu cầu**; ô tìm nhanh màn Phiếu hủy tìm thêm theo mã phiếu yêu cầu (`PYCHHG-…`) |
+| #11195 | Excel danh sách thiếu khối ký | `addSignatureBlock()` — "Ngày…Tháng…Năm…" + "Người lập (Ký, họ tên)", canh giữa 3 cột cuối, không kẻ khung |
+| #11196 | Nút In màu teal | Bỏ cờ `menu.print`, dựng lại nút In `secondary` ở slot `#custom-actions` (giống màn phiếu hủy) |
+| #11197 | Bỏ tick "Cần hủy" nhưng lưu vẫn ghi nhận hàng hóa | **Khác ERP có chủ ý**: bỏ tick = bỏ hàng hoá khỏi phiếu — FE lọc trước khi gửi, BE `normalizeProducts()` bỏ dòng `need_cancel = false`; màn Chi tiết chỉ hiện dòng `need_cancel` (phiếu cũ do ERP lập có dòng bỏ tick) |

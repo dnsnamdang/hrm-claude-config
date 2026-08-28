@@ -249,6 +249,31 @@ tờ giấy (đã dính thật: nút 794px).
 
 ---
 
+## 2d. ĐỊNH DẠNG SỐ TRÊN BẢN IN — CHUẨN QUỐC TẾ `1,234,567.89` (chốt 2026-08-26)
+
+Bản in là HTML hiển thị thẳng nên **phải tự format số** (khác bản Excel — xem
+`.claude/skills/export-excel/SKILL.md` mục 1). Định dạng bắt buộc: **`,` ngăn cách hàng nghìn,
+`.` phần thập phân**. Thay cho lần chốt kiểu Việt Nam ngày 2026-08-22.
+
+```js
+// ĐÚNG
+formatMoney(value)   { return Number(value || 0).toLocaleString('en-US') },
+formatNumber(value)  { return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 1 }) },
+
+// SAI — ra 1.234.567 kiểu VN
+Number(value || 0).toLocaleString('vi-VN')
+```
+
+- Áp cho **cả 3 nhánh** cùng lúc: `print.vue` ở FE · service dựng HTML in ở BE
+  (`number_format($x)` chứ KHÔNG `number_format($x, 0, ',', '.')`) · chuỗi `*_text` mà Resource trả
+  sẵn cho màn in dùng lại.
+- **Ngày tháng không dính rule này** — vẫn `dd/mm/yyyy`, `toLocaleDateString('vi-VN')` giữ nguyên.
+- Ô nhập tiền `V2BaseCurrencyInput` **cũng đã đồng bộ** chuẩn quốc tế (2026-08-26) → số trên bản
+  in và số trong form giờ khớp nhau, không còn lệch dấu như trước.
+- Tự kiểm: `grep -rnE "(toLocaleString|Intl\.NumberFormat)\(\s*'vi-VN'" pages/**/print*.vue` phải RỖNG.
+
+---
+
 ## 3. Snippet CSS chèn sẵn cho BẢNG có viền (copy dùng ngay)
 
 Truyền qua `this.$printContent({ styles, pageMargin: '12mm 10mm' })`. Selector `table.table-bordered ...` có specificity cao hơn `.table`/`.table-bordered` trong print-app.css nên ghi đè được (nhớ `!important`). Cửa sổ in chỉ chứa fragment trang này nên target thẳng `table.table-bordered` là an toàn.

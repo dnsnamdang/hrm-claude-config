@@ -203,6 +203,62 @@ bản Excel.
 
 ---
 
+### 1a. Dấu phân cách nghìn / thập phân — CHUẨN QUỐC TẾ `1,234,567.89`
+
+Chốt 2026-08-26, áp cho toàn hệ thống (xem `CLAUDE.md` mục *Nguyên tắc chung*): **`,` ngăn cách
+hàng nghìn, `.` phần thập phân**. Thay cho lần chốt kiểu Việt Nam ngày 2026-08-22.
+
+- Ô Excel là **số thật** thì đã tự đúng — `data-format="#,##0"` để Excel lo phần hiển thị, KHÔNG
+  cần và KHÔNG được tự nối dấu. Đây là lý do nữa để bám mục 1.
+- **CẤM tuyệt đối trong blade export và service dựng bảng Excel:**
+  ```php
+  number_format($x, 0, ',', '.')   // SAI — ra "1.234.567" kiểu VN, lại còn là CHUỖI
+  number_format($x, 0, '', '.')    // SAI — biến thể cũ trong accessor Training
+  ```
+  Dùng `number_format($x)` / `number_format($x, 2)` (mặc định PHP đã là `,` + `.`), hoặc tốt hơn là
+  `excelNumber()` + `data-format`.
+- **Ngoại lệ ô cố ý là chuỗi** (mục trên: `"169,374,000 đồng"`) vẫn phải theo chuẩn quốc tế.
+- Tự kiểm: `grep -rnE "number_format\([^)]+,\s*'.?',\s*'\.'\)" app Modules resources` phải RỖNG.
+
+---
+
+### 1b. HAI CÁI BẪY "DẤU NGĂN CÁCH THỪA Ở CUỐI SỐ" (đã trả giá thật 2026-08-26)
+
+**Bẫy 1 — đổi `number_format` sang chuẩn quốc tế nhưng QUÊN đổi mốc `rtrim`.**
+Hàm cắt số 0 thừa phải lấy dấu **THẬP PHÂN** làm mốc dừng. Chuẩn quốc tế thì mốc đó là `.`, không
+còn là `,`. Dùng nhầm `,` → `rtrim` ăn xuyên qua dấu phân cách NGHÌN rồi để lại dấu cụt đuôi:
+
+```php
+// SAI — ra "765,600." và "1,000."
+$text = number_format(round((float) $value, 2), 2);
+if (strpos($text, ',') !== false) { $text = rtrim(rtrim($text, '0'), ','); }
+
+// ĐÚNG — ra "765,600" · "196.6" · "1,000"
+$text = number_format(round((float) $value, 2), 2);
+if (strpos($text, '.') !== false) { $text = rtrim(rtrim($text, '0'), '.'); }
+```
+Đã dính ở `BillPaymentRequestService::moneyText()` (Phiếu ĐNTT) và
+`PrepickStockReportService::qtyText()`. Tự kiểm: `grep -rn "rtrim(rtrim(" app Modules resources` —
+tham số thứ 2 phải là `'.'`, KHÔNG bao giờ là `','`.
+
+**Bẫy 2 — mã định dạng `#,##0.##` KHÔNG cho số lẻ "tuỳ ý", nó ép CỐ ĐỊNH 2 số lẻ.**
+Đo thật bằng `NumberFormat::toFormattedString()`:
+
+| Giá trị | `#,##0.##` | `#,##0` | `General` |
+|---|---|---|---|
+| 5 | **`5.00`** | `5` | `5` |
+| 765600 | **`765,600.00`** | `765,600` | `765600` |
+| 2.5 | `2.50` | `3` ❗làm tròn | `2.5` |
+
+Số tròn ra `5.00`, trên máy đặt Regional VN thành `5,00` — user đọc là "thừa dấu phẩy sau số".
+Chọn mã theo nhu cầu thật, đừng mặc định `#,##0.##`:
+- Luôn số nguyên (tiền VND, giá ép) → `#,##0`
+- Luôn 2 số lẻ (tỷ giá, tiền tệ) → `#,##0.00`
+- **Số lẻ có thì hiện, tròn thì thôi** (số lượng, %, hệ số) → `General` (đánh đổi: mất phân cách
+  nghìn; bọc `ROUND(...,2)` nếu sợ số lẻ dài)
+
+---
+
 ## 2. Bản IN và bản EXCEL là 2 nhánh khác nhau — đừng dùng chung hàm dựng HTML
 
 Bản in là HTML hiển thị thẳng trên trình duyệt → **phải** `formatCurrency()` / `number_format()`.
