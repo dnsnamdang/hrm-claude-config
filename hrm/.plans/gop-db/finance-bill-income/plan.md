@@ -3892,3 +3892,27 @@ xuống dòng. Chỉ 13 phiếu mã 21 ký tự (DTTDETEK) xuống 2 dòng — t
 
 Đo lại toàn bộ: **tràn = 0px** ở 203/204/205/211/217/236 + 2 ca biên; khối Liên số `font=16px`,
 riêng ô mã phiếu `font=12px`.
+
+---
+
+## Phase O — Bỏ nút "Hủy phiếu" ở màn danh sách (2026-08-24)
+
+**Yêu cầu user:** ở danh sách, nút "Duyệt" và "Hủy phiếu" đều chỉ điều hướng sang màn chi tiết rồi
+mới thao tác thật → bỏ hẳn "Hủy phiếu" khỏi danh sách. Màn chi tiết giữ nguyên đầy đủ Duyệt/Hủy.
+
+Phạm vi: chỉ FE, 1 file `hrm-client/pages/finance/bill-incomes/index.vue`. Không đụng BE
+(API hủy + cờ `is_can_approve` giữ nguyên), không đụng màn chi tiết.
+
+- [x] O1 — Xóa mục `key: 'cancel'` ("Hủy phiếu") trong `getRowActions()`
+- [x] O2 — Bỏ `case 'cancel'` trong `handleRowAction()`, sửa 2 comment ghi "6 hành động" /
+      "Duyệt, Hủy phiếu" cho khớp thực tế
+- [x] O3 — Verify: parse lại file bằng `vue-template-compiler` + đọc lại diff
+
+### Checkpoint — 2026-08-24 (O1-O3)
+Vừa hoàn thành: bỏ nút "Hủy phiếu" khỏi cột thao tác màn danh sách Phiếu thu
+(`hrm-client/pages/finance/bill-incomes/index.vue`, -13/+6 dòng). Danh sách còn 5 thao tác:
+Sửa, Xóa, Duyệt, In, Xuất Excel. Màn chi tiết + BE không đụng gì.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt xác nhận menu "…" của dòng phiếu không còn "Hủy phiếu".
+Chưa kiểm chứng bằng mắt: chỉ parse template + script (vue-template-compiler / babel), chưa mở trình duyệt.
+Blocked: không.

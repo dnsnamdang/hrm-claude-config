@@ -120,6 +120,16 @@ async mounted() {
   - 2 hành động chính mặc định là **Sửa** và **Xóa**.
   - Màn không có Xóa (chỉ khóa/ngừng hoạt động) → slot thứ 2 dành cho **Khóa / Mở khóa**.
 - **BỎ hẳn hành động "Xem".** Tên (hoặc mã - tên) bản ghi ở cột đầu là **link vào màn chi tiết**.
+- **BỎ hẳn "Hủy phiếu" và "Không duyệt" khỏi danh sách** (chốt 2026-08-24) — 2 hành động phủ quyết
+  này **chỉ đặt ở màn CHI TIẾT**. Lý do: chúng luôn cần modal nhập lý do + người duyệt phải đọc nội
+  dung chứng từ trước khi từ chối, nên ở danh sách chúng chỉ là `nuxt-link` điều hướng sang chi tiết
+  — thêm 1 dòng menu mà không làm được gì tại chỗ.
+  - Vẫn **giữ "Duyệt"** ở danh sách (dạng điều hướng `to` sang chi tiết) — đây là lối tắt cho việc
+    duyệt hàng loạt, người duyệt vào chi tiết là thấy đủ cả Duyệt lẫn Hủy/Không duyệt.
+  - Áp cho mọi màn chứng từ có vòng đời duyệt (phiếu thu/chi, đề nghị, ủy nhiệm chi, yêu cầu…).
+  - Màn cũ còn sót thì bỏ dần khi có dịp đụng vào: `pages/finance/bill-payments/index.vue` ("Hủy
+    phiếu"), `pages/finance/bill-payment-requests/index.vue` và
+    `pages/finance/prepick-cancel-requests/index.vue` ("Không duyệt").
 - Nút **Khóa / Mở khóa KHÔNG để trong ô Trạng thái** — đưa về cột Hành động.
 - Cột Hành động KHÔNG đưa vào modal "Cấu hình cột hiển thị" (không cho ẩn / kéo đổi chỗ) → khai riêng, đừng bỏ vào `allColumns`.
 - **MỌI màn danh sách BẮT BUỘC có hành động "Lịch sử"** (chốt 2026-08-15) — `{ key: 'history',

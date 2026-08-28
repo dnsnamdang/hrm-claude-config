@@ -1,6 +1,6 @@
 ---
 name: export-excel
-description: Use when tạo mới hoặc sửa chức năng XUẤT EXCEL ở BE (class `*Export` + blade `exports/*.blade.php` dùng `maatwebsite/excel`), hoặc khi user báo lỗi file .xlsx tải về — thiếu logo công ty, logo quá to / đè mất tiêu đề (nhất là khi máy này bị máy kia không), cột quá hẹp/chữ bị cắt, số tiền bị Excel cảnh báo "The number in this cell is formatted as text", số không có dấu phân cách hàng nghìn, cộng SUM ra 0, ô hiện nguyên thẻ HTML (`<div>`, `<br />`, `&agrave;`) hoặc mô tả nhiều dòng bị dính liền.
+description: Use when tạo mới hoặc sửa chức năng XUẤT EXCEL ở BE (class `*Export` + blade `exports/*.blade.php` dùng `maatwebsite/excel`), hoặc khi user báo lỗi file .xlsx tải về — thiếu logo công ty, logo quá to / đè mất tiêu đề (nhất là khi máy này bị máy kia không), cột quá hẹp/chữ bị cắt, số tiền bị Excel cảnh báo "The number in this cell is formatted as text", số không có dấu phân cách hàng nghìn, dấu ngăn nghìn ra dấu phẩy thay vì dấu chấm, cộng SUM ra 0, ô hiện nguyên thẻ HTML (`<div>`, `<br />`, `&agrave;`) hoặc mô tả nhiều dòng bị dính liền.
 ---
 
 # Skill: Export Excel (BE)
@@ -51,11 +51,94 @@ private function excelNumber($value): string
 }
 ```
 
-**Mã định dạng hay dùng:** `#,##0` (tiền VND) · `#,##0.00` (2 số lẻ) · `0%` · `dd/mm/yyyy`.
+**Mã định dạng hay dùng:** `#,##0` (tiền VND) · `#,##0.##` (có thể có phần lẻ) · `#,##0.00`
+(luôn 2 số lẻ) · `0%` · `dd/mm/yyyy`.
 
 **Ngoại lệ — ô CỐ Ý là chuỗi:** giá trị in kèm đơn vị/tiền tệ (`"169,374,000 đồng"`,
 `"1,000,000 USD"`). Chuỗi này không thuần số nên Excel không cảnh báo → giữ `number_format`,
 **không** gắn `data-format`.
+
+### 1a. Mã định dạng gắn theo TỪNG Ô, không dùng chung 1 mã cho cả cột
+
+Cột tiền thường lẫn cả số nguyên (`56546`) lẫn số lẻ (`111961.08`). Gắn chung `#,##0` thì số lẻ bị
+làm tròn mất; gắn chung `#,##0.##` thì **số nguyên hiện thừa dấu thập phân**. Quyết định theo chính
+giá trị của ô:
+
+```php
+/** '' -> blade bỏ luôn thuộc tính `data-format` (ô `_`, ô gạch ngang, ô chữ). */
+private function moneyFormat($value): string
+{
+    if (!is_string($value) || !preg_match('/^-?\d+(\.\d+)?$/', $value)) {
+        return '';
+    }
+
+    return strpos($value, '.') === false ? '#,##0' : '#,##0.##';
+}
+```
+
+Bảng dữ liệu động thì sinh sẵn 1 mảng mã định dạng song song với mảng ô (`row_formats` /
+`total_formats`) rồi blade gắn thẳng — khuôn `BillPaymentRequestService::moneyFormats()`:
+
+```blade
+<td ... @if (!empty($data['row_formats'][$r][$i])) data-format="{{ $data['row_formats'][$r][$i] }}" @endif>{{ $cell }}</td>
+```
+
+**Vẫn canh phải tay** cho cột tiền dù ô số Excel tự canh phải: ô placeholder (`_`, `-`) là chuỗi,
+Excel canh trái, để nguyên là nó lệch hẳn khỏi cột số bên trên.
+
+### 1b. "Sao dấu ngăn nghìn ra dấu phẩy?" — TUYỆT ĐỐI không chữa bằng cách ghi ô thành chữ
+
+Mã định dạng của `.xlsx` (`#,##0`) **không chứa ký tự ngăn cách**: Excel vẽ bằng ký tự lấy từ
+**Windows Regional Settings của máy đang mở file**. Máy đặt kiểu Anh thì ô số luôn ra `60,000` dù
+file ghi hoàn toàn đúng chuẩn. Không có mã nào ép được dấu `.` mà vẫn giữ ô là số — `[$-42A]#,##0`,
+`#\.##0` đều đã thử và không dùng được cho tiền.
+
+⚠️ **Đã đi đường vòng này một lần rồi, đừng đi lại** (phiếu đề nghị thanh toán):
+
+| | |
+| --- | --- |
+| 25/08/2026 | Đổi ô tiền sang **CHUỖI** kiểu Việt (`60.000`) để mọi máy ra dấu chấm |
+| 26/08/2026 | User báo *"nó bị lỗi is formatted as text"* → **đảo lại về ô SỐ** + `data-format` |
+
+Đổi sang chuỗi là mua đúng 3 thứ: tam giác xanh ở **mọi** ô tiền, mất SUM/lọc/pivot, và cái bẫy ở
+mục 1c. Cách chữa đúng khi user chê dấu ngăn cách là **đổi Regional format của Windows sang
+Vietnam** (Settings → Time & language → Language & region → Regional format), không phải sửa code.
+
+Cũng đừng mất công tìm cách tắt tam giác xanh bằng `<ignoredErrors numberStoredAsText="1"/>`:
+PhpSpreadsheet của dự án là **1.25.2**, API `setIgnoredErrors()` mãi 1.29 mới có. Muốn dùng phải
+vá thẳng vào gói `.xlsx` sau khi ghi, và thẻ đó bắt buộc nằm **trước** `<drawing>` (letterhead) theo
+schema — sai thứ tự là Excel báo file hỏng.
+
+### 1c. Chuỗi kiểu Việt còn sót lại — phải chặn bằng `WithCustomValueBinder`
+
+`is_numeric('23.000')` là **true** trong PHP (dấu chấm = dấu thập phân), nên bất kỳ chuỗi định dạng
+sẵn kiểu Việt nào lọt vào `<td>` đều bị `DefaultValueBinder` biến thành số: ô **Tỷ giá** `23.000`
+ra đúng một chữ `23`. Chuỗi nhiều dấu chấm (`3.720.816`) thoát được vì không còn là số hợp lệ →
+**lỗi chỉ lộ ở số hàng nghìn tròn trĩnh**, rất dễ lọt review.
+
+Reader không hỗ trợ thuộc tính `data-type` trên `<td>`, phải chặn ở tầng binder:
+
+```php
+class XxxExport extends DefaultValueBinder implements FromView, WithCustomValueBinder
+{
+    /** Chuỗi số kiểu Việt ĐÃ định dạng sẵn: `62.000` · `5.213.456,6` · `196,66`. */
+    const MONEY_TEXT = '/^-?(?:\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+,\d+)$/';
+
+    public function bindValue(Cell $cell, $value): bool
+    {
+        if (is_string($value) && preg_match(self::MONEY_TEXT, $value)) {
+            $cell->setValueExplicit($value, DataType::TYPE_STRING);
+
+            return true;
+        }
+
+        return parent::bindValue($cell, $value);
+    }
+}
+```
+
+Regex cố tình **bắt buộc có dấu ngăn cách** để số thô của mục 1 (`60000`, `1234567.5`) đi lọt và vẫn
+vào sheet đúng kiểu số. Khuôn: `BillPaymentRequestExport::bindValue()`.
 
 ---
 
@@ -268,9 +351,15 @@ phần logo chưa kiểm chứng trên môi trường thật.
 ## 8. Checklist khi tạo/sửa export
 
 - [ ] Mọi ô số/tiền: in **số thô** (`excelNumber()`), có `data-format` đúng mã
+- [ ] Mã định dạng quyết định theo **từng ô** (`#,##0` số nguyên · `#,##0.##` số lẻ), không dùng
+      chung 1 mã cho cả cột (mục 1a)
 - [ ] Field rich-text (TSKT / ghi chú / điều khoản) đi qua `nl2br(e(htmlToText(...)))`, cột có width cố định + wrap (mục 1b)
 - [ ] File này có được **re-import** không? Nếu có: phép so "khớp bản gốc" đã hạ HTML ở CẢ 2 phía
 - [ ] Ô cố ý là chuỗi (kèm "đồng"/tên tiền tệ) thì **không** gắn `data-format`
+- [ ] User chê dấu ngăn cách ra dấu phẩy → hướng dẫn đổi Windows Regional Settings, **KHÔNG** đổi ô
+      tiền sang chuỗi
+- [ ] Còn chuỗi số kiểu Việt nào trong view (tỷ giá, ghi chú có số…) → đã có `WithCustomValueBinder`
+      chặn `is_numeric('23.000')`
 - [ ] Export dựng ở FE (`export-rows` + ExcelJS): BE trả cột tiền kiểu `float`, KHÔNG ép `(string)`; không đóng băng hàng tiêu đề (mục 4c)
 - [ ] Không còn `width: ..px` trong `<td>` của nhánh Excel; bề rộng đặt bằng `WithColumnWidths`
 - [ ] Có letterhead nếu chứng từ bản in có (dùng trait `EmbedsCompanyLetterhead`)
@@ -288,6 +377,7 @@ phần logo chưa kiểm chứng trên môi trường thật.
 | --- | --- |
 | Export chứng từ đủ 3 quy tắc (số, bề rộng, logo) | `Modules/Finance/Exports/BillIncomeExport.php` |
 | Export nhiều bố cục | `Modules/Finance/Exports/BillPaymentExport.php` |
+| Mã định dạng theo từng ô + binder chặn chuỗi Việt | `Modules/Finance/Exports/BillPaymentRequestExport.php` · `Modules/Finance/Services/BillPaymentRequestService.php` (`excelNumber()` · `moneyFormat()` · `moneyFormats()`) |
 | Trait nhúng letterhead | `Modules/Finance/Exports/Concerns/EmbedsCompanyLetterhead.php` |
 | Service tách nhánh in/Excel + `excelNumber()` | `Modules/Finance/Services/BillIncomePrintService.php` |
 | Nhúng ảnh theo dòng + tải song song | `Modules/Assign/Export/QuotationExcelExport.php` |
