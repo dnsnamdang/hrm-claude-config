@@ -3426,3 +3426,60 @@ Vừa hoàn thành: lịch sử thay đổi màn Phiếu chi tiền — nâng t�
 Đang làm dở: không.
 Bước tiếp theo: user nghiệm thu.
 Blocked: không.
+
+---
+
+## Phase N — Bộ tài liệu bàn giao: Testcase + HDSD + SRS (2026-09-03, @khoipv)
+
+**User yêu cầu:** "gen luôn tài liệu màn phiếu chi" — sau bộ tài liệu Phiếu yêu cầu chuyển hàng
+và Phiếu thu tiền.
+
+### N.1 Chuẩn bị
+- [x] Đọc lại code nguồn: `BillPayment` (5 trạng thái, 7 loại chi, TYPES_FROM_REQUEST /
+      TYPES_REQUIRE_REQUEST, generateCode có khoá dòng) · trait `BillPaymentAccess` (7 method
+      quyền, canApprove tự nhận cấp theo trạng thái) · 4 FormRequest (Store rẽ nhánh theo loại
+      chi + cờ `submit_after`, Update, Approve, Cancel — nguyên văn message) · Controller
+      (16 route) · `BillPaymentService` (applyScope + 9 ô lọc) · `BillPaymentWriteService` ·
+      `BillPaymentApprovalFlowService` (409 chặn duyệt lại, guard trần tiền, 2 cấp duyệt) ·
+      2 service sổ cái · 2 Resource · seeder quyền 1503-1506 + tái dùng 1152 ·
+      FE `index.vue` / `BillPaymentForm.vue` / `PaymentEmployeeTable.vue` /
+      `ApproveBillPaymentModal.vue` / `PaymentRequestSearchModal.vue` / `_id/*` · menu `finance.js:86`
+- [x] Chụp **25 ảnh thật** 1440x900 -> `pc_shots/` (chỉ để local)
+      - Cổng dev đã có sẵn phiếu **Đang tạo** (3 phiếu) và **Chờ chi tiền** -> KHÔNG phải tạo
+        phiếu mẫu, KHÔNG ghi gì vào DB dev lần này
+      - Riêng **màn IN** chụp trên cổng local: trang in tự bật hộp thoại in của trình duyệt và
+        khoá luôn phiên điều khiển; bản local chạy dev-mode chậm hơn nên kịp vô hiệu hoá lệnh in
+        trước khi nó bắn. Ảnh là phiếu loại **Chi thu nhập cho nhân viên** — bản in có thêm 2 bảng
+        kê (số tiền chi + theo vụ việc), đúng mẫu riêng của nhánh B
+- [x] TUYỆT ĐỐI không bấm **Duyệt phiếu chi**, **Hủy phiếu chi**, **Xóa** trên dữ liệu thật
+      (duyệt = ghi bút toán sổ cái dùng chung; hủy là ngõ cụt) — chỉ mở popup / hộp xác nhận,
+      chụp, rồi Đóng hoặc Hủy
+
+### N.2 Testcase
+- [x] `gen_testcase.py` dùng `tc_engine.py` -> `testcase.xlsx`: **152 TC** (P0 70%), 9 mục mô tả
+      đầy đủ, 16 TC-ROLE + 13 section La Mã, bộ kiểm tra thuật ngữ in **OK - sạch**.
+      Mọi TC đụng Duyệt/Hủy mở đầu bằng cảnh báo CHỈ LÀM TRÊN PHIẾU DO CHÍNH MÌNH TẠO
+
+### N.3 HDSD
+- [x] `gen_hdsd.py` dùng `hdsd_engine.py` -> `HDSD_Phiếu chi tiền.docx`: **47 trang**,
+      14 Heading 1 (Tổng quan + 11 phần), 21 bảng, **25 ảnh thật** + logo bìa
+- [x] Verify style HDSD: direct formatting = **2 / 10 / 0** — khớp đúng `HDSD_MAU.docx`
+
+### N.4 SRS
+- [x] `gen_srs.py` dùng `srs_docx_lib.py` -> `SRS - Phiếu chi tiền.docx`: **57 trang**, 4 chương,
+      **14 chức năng** FR-01->FR-14, 47 bảng, 32 ảnh (1 sơ đồ tổng quan phân cấp 3 tác nhân +
+      11 biểu đồ use case + 20 ảnh chụp thật), Phần 4 có **17 quy tắc** BR-01->BR-17
+- [x] Verify SRS đủ 4 điểm form 2026-08-28: 14 mục Layout ghi `Menu:` (0 dòng URL) · 14 đoạn
+      `Quy tắc chung:` · Phần 4 là bảng 5 cột · sơ đồ tổng quan `overview_figure2` phân cấp.
+      Đánh số mục con 2.x.y liên tục ở cả 14 chức năng (0 chỗ lệch)
+
+### Checkpoint — 2026-09-03 (Phase N)
+Vừa hoàn thành: bộ 3 tài liệu bàn giao màn Phiếu chi tiền (testcase 152 TC · HDSD 47 trang ·
+SRS 57 trang), ảnh chụp thật 100%.
+Đang làm dở: không có.
+Bước tiếp theo: user đọc soát nội dung nghiệp vụ; sửa gì thì chỉnh trong `gen_*.py` rồi chạy lại.
+Blocked: không.
+
+⚠️ **Ghi nhận thao tác trên dữ liệu**: KHÔNG ghi gì vào DB dev lần này — cổng dev đã có sẵn phiếu
+Đang tạo và Chờ chi tiền nên không phải tạo phiếu mẫu. Đã mở popup Duyệt / popup Hủy / hộp Xác nhận
+xóa để chụp rồi **Đóng / Hủy**, KHÔNG bấm nút thực thi nào.

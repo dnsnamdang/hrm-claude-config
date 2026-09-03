@@ -353,6 +353,9 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-adjust-dept-request — Phiếu yêu cầu điều chỉnh công nợ → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Hoàn thành: 2026-09-03 — user nghiệm thu đã xong (18 phase gốc xác nhận 2026-08-24; mở lại 2026-09-03 fix 4 việc, 2 FE + 2 BE, không migration). Phase 20: đổi khách hàng/NCC ở một dòng phải XOÁ hợp đồng cũ — ERP xoá ở 4 chỗ (`BillAdjustDeptRequestDetail`/`DetailItem` × `chooseCustomer`/`chooseSupplier`), HRM thiếu hẳn nên phiếu lưu xuống DB là cặp "KH A + hợp đồng của KH B", `contractable_id` trỏ sai, bước tạo phiếu kế toán ghi sổ nhầm công nợ (lỗi dữ liệu, không phải hiển thị). Phase 21: lệch tổng tiền báo inline ở cột Số tiền bên "Điều chỉnh đến" (dòng cuối của nhóm) kèm số thiếu/thừa, trước chỉ 1 toast chung nên bảng nhiều nhóm không biết nhóm nào. Phase 22 + 22b + 22c: lỗi 422 của BE đổ về đúng từng ô (`details.1.items.0.customer_new_id` → ô Khách hàng dòng "đến" nhóm 1, viền đỏ); dịch câu lỗi `gt`/`integer`/`array`/`string`/`boolean` ngay trong Request (user chốt KHÔNG sửa `lang/vi/validation.php` dùng chung); toast rút về "Vui lòng kiểm tra dữ liệu nhập", chỉ lỗi không có chỗ inline (vd `status`) mới đọc nguyên văn. Phase 22d: Từ chối xong về màn danh sách — `changeStatus()` (dùng chung Gửi duyệt + Từ chối) thêm cờ `backToList`, Gửi duyệt vẫn `$router.go(0)`; popup lý do chỉ đóng khi thành công (trước lỗi cũng đóng, mất lý do vừa gõ). Kiểm chứng Playwright bấm Gửi duyệt thật: 422 hiện đúng ô, 2 ô Số tiền báo "Phải lớn hơn 0", 4 ca toast ra câu chung, nhóm khớp tiền không báo gì. Chưa kiểm chứng: phiếu NCC ngoại tệ (16 cột) · màn sửa phiếu có dữ liệu thật. Còn nợ: Excel phiếu lệch ERP · nút "Chọn nhanh hợp đồng" · SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*` · `lang/vi/validation.php` còn ~52 khoá tiếng Anh. ⚠️ Bài học: lượt đầu user báo "vẫn chưa được" là do HMR Nuxt 2 giữ component cũ, code đã đúng — sửa FE mà trình duyệt không đổi thì Ctrl+Shift+R trước khi nghi code. Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md
+
 - finance-bill-income-report — sửa lỗi màn Phiếu báo có (Phase F) → @khoipv → .plans/gop-db/finance-bill-income-report/plan.md (mục "Phase F")
   Hoàn thành: 2026-09-03 — user xác nhận đã xong. 9 việc báo trong 1 phiên: tách cột Số tài khoản / Tên tài khoản ở bảng chi tiết (trước đó cả 2 cột đều in "số - tên"); nút Duyệt màn chi tiết về teal #1abc9c; nút thứ 2 của form đổi nhãn "Lưu và duyệt" (cờ `save_and_approve`, trước khai nhầm `save_and_submit_approve`); toast mở phiếu đã bị xóa ở tab khác → "Không tìm thấy dữ liệu" (chỉ với 404); dựng lại file mẫu import (viền, tiêu đề teal, ngày dd/mm/yyyy, ô tiền `#,##0`); nút Quay lại màn Điều chỉnh công nợ về đúng phiếu qua `?back_url=`. 3 lỗi validate: cột Số tiền chưa bao giờ báo bắt buộc (`min:0` + FE quy ô rỗng thành 0 → đổi `gt:0`, dữ liệu thật 10.207 dòng không có dòng nào money=0); ô Diễn giải đầu phiếu thiếu `:invalid` + `<V2BaseError>` nên chỉ ra toast chung → nối lỗi inline; nới trần Diễn giải 255 → 500 ký tự cả 2 ô. CÓ MIGRATION `2026_09_03_000001_widen_note_on_bill_income_reports_table` (đã chạy, 0 dòng ảnh hưởng); cột chi tiết là TEXT nên chỉ thêm rule. ⚠️ Bảng dùng chung 2 cổng — diễn giải > 255 ký tự hiện nguyên vẹn bên ERP, chưa rà bố cục màn/bản in ERP.
 
@@ -419,20 +422,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   `SRS - Phiếu đề nghị thu tiền.docx` (50 trang, FR-01…FR-12, BR-01…BR-17).
   3 generator kèm theo; ảnh nguồn `dntt_shots/` chỉ để local, không commit.
 
-- finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
-  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-24). Cả 18 phase đã
-  nghiệm thu xong. Phase 18: màn tạo/sửa `finance/bill-adjust-dept-requests/create` khi bấm **Lưu nháp**
-  chỉ bắt buộc **Loại phiếu**; Diễn giải / bảng chi tiết / tỷ giá / khách hàng chỉ bắt khi **Gửi duyệt**.
-  15 phase gốc + Phase 16 sửa
-  6 điểm màn danh sách sau nghiệm thu (Tùy chỉnh cột · 2 cột Ngày/Người cập nhật · 3 cột ngày
-  `dd/mm/yyyy HH:mm` · mở sort Mã phiếu + 3 cột ngày · đổi nhãn Ngày tạo/Người tạo · nút Excel xanh lá)
-  + Phase 17 viết lại `_id/print.vue` bám nguyên mẫu ERP (report_template 209, khổ 297mm, Times New Roman,
-  6 ô chữ ký; bù `pdf.css` trong `options.styles` vì `hrm-client/static/css/` không có).
-  BE 3 file + 1 blade · FE 2 file · không migration.
-  📌 Còn nợ: file Excel phiếu vẫn lệch ERP (chờ user chốt có đồng bộ không) · nút "Chọn nhanh hợp đồng" ·
-  SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*`.
-  Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
-
 - finance-3-man-sua-theo-phan-hoi (2026-08-22) → @khoipv → **HOÀN THÀNH — user xác nhận xong**.
   Plan: `finance-bill-income-request` (8.8-8.11) · `finance-bill-income` (K, L, M) ·
   `finance-bill-payment-request` (5 task phụ) — sửa theo phản hồi trên 3 màn đã nghiệm thu.
@@ -497,6 +486,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Sổ cái diff từng trường với ERP: nhánh A khớp 20/20 phiếu, nhánh B 5/5.
   📌 Còn treo: 5 điểm chờ user quyết + 1 lỗi feature CŨ (Phiếu thu in "đồng đồng",
   `BillIncomePrintService:155`) — xem design.md.
+  **Bộ tài liệu bàn giao (Phase N, 2026-09-03)**: `testcase.xlsx` **152 TC** (P0 70%, form 17 cột),
+  `HDSD_Phiếu chi tiền.docx` **47 trang**, `SRS - Phiếu chi tiền.docx` **57 trang** (form 2026-08-28,
+  14 chức năng FR-01→FR-14, 17 quy tắc BR). 25 ảnh chụp thật → `pc_shots/` (chỉ để local);
+  riêng màn IN chụp trên cổng LOCAL vì trang in tự bật hộp thoại in và khoá phiên điều khiển.
+  **KHÔNG ghi gì vào DB dev** — dev đã sẵn phiếu Đang tạo + Chờ chi tiền; các popup Duyệt/Hủy/Xóa
+  chỉ mở để chụp rồi Đóng.
   Spec: docs/superpowers/specs/gop-db/2026-08-19-finance-bill-payment-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment/design.md
 
 - cut-erp-sync → @khoipv → .plans/gop-db/cut-erp-sync/plan.md

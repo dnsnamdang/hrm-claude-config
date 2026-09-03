@@ -813,3 +813,246 @@ Vừa hoàn thành: Phase 19 — bỏ text người tạo trên card + thêm tha
 Đang làm dở: không
 Bước tiếp theo: user bấm tay trên trình duyệt cả Phase 18 lẫn Phase 19
 Blocked:
+
+---
+
+## Phase 20 — Fix: đổi đối tượng KHÔNG xoá hợp đồng đã chọn (2026-09-03)
+
+User báo: *"trong bảng chi tiết chỗ điều chỉnh đến, khi chọn khách hàng và hợp đồng rồi sau đó
+tôi chọn khách hàng khác thì thông tin hợp đồng,... chưa clear đi vẫn để thông tin của hợp đồng cũ"*.
+
+### Gốc lỗi
+`BillAdjustDeptRequestForm.vue :: applyParty()` chỉ gán `customer_*_id` / `customer_*_name`
+(hoặc `supplier_*`), **không đụng tới các khoá hợp đồng của cùng dòng**.
+
+ERP làm ngược lại — 4 chỗ đều có khối "đổi đối tượng thì reset hợp đồng":
+
+| File ERP | Hàm | Xoá gì |
+| --- | --- | --- |
+| `partials/classes/IncomeExpenditure/BillAdjustDeptRequestDetail.blade.php:258` | `chooseCustomer` | `contractable_id/type`, `contract_old_id/code/created_by/type` |
+| `…RequestDetailItem.blade.php:191` | `chooseCustomer` | `contractable_id/type`, `contract_new_id/code/created_by/type` |
+| `…RequestDetail.blade.php:368` | `chooseSupplier` | + `buy_contract_old_*`, `balance_old = 0` |
+| `…RequestDetailItem.blade.php:289` | `chooseSupplier` | + `buy_contract_new_*`, `balance_new/contract_value/remaining_debt = 0` |
+
+Hậu quả không chỉ là hiển thị: popup hợp đồng lọc theo đối tượng
+(`activeContractObjectId`), nên phiếu lưu xuống DB có cặp **khách hàng A + hợp đồng của khách
+hàng B**, kèm `contractable_id` trỏ sai → sang bước tạo phiếu kế toán là ghi sổ nhầm công nợ.
+
+### FE — `components/BillAdjustDeptRequestForm.vue`
+- [x] Thêm `clearContractOf(row, side)` — xoá `contractable_id/type` + bộ khoá hợp đồng của đúng
+      bên (`old`/`new`) và đúng loại phiếu (KH: `contract_*`; NCC: `buy_contract_*`), kèm các số
+      liệu ăn theo hợp đồng (`balance_old/new`, `contract_value`, `remaining_debt`, `remain_debt`)
+- [x] `applyParty()` gọi `clearContractOf()` **chỉ khi id đối tượng thực sự đổi** (chọn lại đúng
+      đối tượng cũ thì giữ nguyên hợp đồng — đúng như ERP so `!=` trước khi reset)
+- [x] Áp cho CẢ 2 bên "Điều chỉnh từ" và "Điều chỉnh đến" (cùng 1 hàm, ERP cũng làm cả 2 bên)
+
+### CỐ Ý KHÁC ERP — 1 chỗ
+ERP quên xoá `remain_debt` khi đổi khách hàng → cột **"Số dư cuối kỳ"** vẫn hiện số dư của hợp
+đồng cũ dù ô hợp đồng đã trống. HRM xoá luôn (`remain_debt = 0`) vì đây chính là phần *"thông
+tin hợp đồng,…"* user báo còn sót.
+
+### Verify
+- [x] Parse sạch template + script `BillAdjustDeptRequestForm.vue`
+- [ ] User mở trình duyệt `/finance/bill-adjust-dept-requests/create`: dòng "Điều chỉnh đến" chọn
+      KH → chọn HĐ → đổi sang KH khác ⇒ ô Hợp đồng, NVKD, Số dư cuối kỳ đều trống/0; chọn lại
+      đúng KH cũ thì hợp đồng KHÔNG bị xoá; thử tiếp bên "Điều chỉnh từ" và phiếu loại NCC
+      (ngoại tệ) xem Số dư / Giá trị HĐ / Công nợ còn lại có về 0 không
+
+---
+
+## Phase 21 — Lỗi lệch tổng tiền hiện INLINE ngay dưới đối tượng của nhóm (2026-09-03)
+
+User: *"chỗ validate tổng số tiền điều chỉnh đến phải bằng số tiền điều chỉnh từ phải thông báo
+validate ngay xuống dưới của khách hàng nào luôn"*.
+
+Hiện trạng: luật khớp tổng tiền chỉ bắn **1 toast chung**
+(`validateBeforeSubmit()` — "Tổng số tiền điều chỉnh đến phải bằng số tiền điều chỉnh từ"),
+bảng có 5-10 nhóm thì user không biết nhóm nào lệch, phải tự dò dòng "Số tiền còn lại".
+
+### FE — `components/AdjustDetailTable.vue`
+- [x] Thêm prop `touched` (mặc định `false`) — bảng chưa hề có cờ này, trước giờ không có lỗi inline nào
+- [x] Thêm `isGroupUnbalanced(detail)` = `touched && !readonly && |moneyRemaining(detail)| > 0.0001`
+      (dùng lại `moneyRemaining()` sẵn có, cùng ngưỡng `0.0001` với `validateBeforeSubmit()` và BE)
+- [x] Vị trí neo lỗi — **user chốt sau 2 lần đổi (2026-09-03)**: cột **Số tiền bên "Điều chỉnh đến"**,
+      đặt ở **dòng cuối của nhóm** (ngay dưới cột số vừa được cộng lại, trên dòng "Số tiền còn lại").
+      Hiện `invalid-feedback d-block` kèm số tiền còn thiếu/thừa. Chỉ 1 lần cho cả nhóm.
+      *(Đã thử rồi bỏ: dưới ô Khách hàng bên "từ" → dưới ô Số tiền bên "từ".)*
+- [x] SCSS: ô lỗi nằm trong `td.text-right` đang bị `white-space: nowrap` (rule cho số tiền) →
+      thêm `td.text-right .invalid-feedback { white-space: normal; text-align: left }`, nếu không
+      câu thông báo dài kéo cột tiền rộng ra và tràn bảng
+- [x] Chỉ hiện ở màn tạo/sửa, KHÔNG hiện ở màn Chi tiết (`readonly` dùng lại chính component này)
+
+### FE — `components/BillAdjustDeptRequestForm.vue`
+- [x] Truyền `:touched="touched"` xuống `AdjustDetailTable`
+- [x] Giữ nguyên toast tổng ở `validateBeforeSubmit()` — bảng dài, nhóm lệch có thể nằm ngoài
+      màn hình; toast cho biết vì sao bấm Gửi duyệt mà không đi, inline chỉ đúng nhóm nào
+
+### Quyết định
+- Chỉ hiện **1 thông báo cho cả nhóm** (dòng "đến" cuối cùng), không lặp ở từng dòng — tổng lệch
+  là của cả nhóm, từng dòng "đến" không tự chịu trách nhiệm được
+- Chỉ hiện sau lần bấm **Gửi duyệt** đầu tiên (`touched` chỉ bật khi `status === 2`) — Lưu nháp
+  cho phép lệch, đúng Phase 18
+
+### Verify
+- [x] Parse sạch template + script cả 2 file `.vue`
+- [x] **Playwright trên `localhost:3000` (user yêu cầu tự test, 2026-09-03)** — dựng 2 nhóm
+      (nhóm 1: từ 1.000.000, đến 250.000 + 150.000 → lệch 600.000; nhóm 2: khớp 500.000), bấm
+      **Gửi duyệt** thật: đúng **1** thông báo đỏ, nằm trong ô Số tiền của dòng "đến" cuối nhóm 1
+      ("còn thiếu 600,000"), nhóm khớp KHÔNG có; `white-space: normal`, `text-align: left`,
+      cột tiền vẫn đúng 200px (không phình), bảng không tràn thêm
+- [x] Xác minh bundle dev đang chạy có code mới (grep chunk `/_nuxt/…a657569d.js`): form cha truyền
+      `touched: _vm.touched`, bảng khai prop, render có nhánh `isGroupUnbalanced`
+- [ ] User bấm lại trên máy mình — **nhớ Ctrl+Shift+R** (HMR của Nuxt 2 hay không thay component
+      của route, đây là lý do lần trước chưa thấy); thử thêm phiếu NCC ngoại tệ
+
+---
+
+## Phase 22 — Lỗi 422 của BE đổ về ĐÚNG TỪNG Ô trong bảng (2026-09-03)
+
+User: *"hiển thị hết validate ở trường nào ra cho tôi, khách hàng, số tiền,... hiển thị xuống trường
+đó cho tôi"* — kèm ví dụ `{"details.1.items.0.customer_new_id": ["Bắt buộc phải nhập"]}`.
+
+Hiện trạng: `submit()` bắt 422 rồi chỉ **toast lỗi ĐẦU TIÊN**, vứt toàn bộ khoá field. Bảng 5-10
+nhóm thì không biết ô nào sai. ERP làm đúng từ đầu (blade in
+`errors['details.'+$parent.$index+'.items.'+$index+'.customer_new_id'][0]` dưới mỗi ô).
+
+### FE — `BillAdjustDeptRequestForm.vue`
+- [x] `data.serverErrors = {}` — giữ NGUYÊN khoá Laravel. **Không đặt tên `errors`**: vee-validate v2
+      chiếm sẵn `errors`/`fields` trên mọi component, prop/data trùng tên bị che
+- [x] `submit()`: xoá `serverErrors` ở đầu mỗi lần bấm; nhánh `catch` gán `data.errors || {}`
+- [x] Truyền `:server-errors="serverErrors"` xuống `AdjustDetailTable`
+- [x] Nối lỗi cho các ô NGOÀI bảng: `request_type`, `currency_id`, `exchange_rate`, `note`
+      (dùng `V2BaseError` — component chuẩn, nhận cả String lẫn Array của Laravel)
+- [x] Khoá `details` (không có chỉ số) — lỗi cấp cả bảng (khớp tổng tiền, trùng đối tượng
+      "đến"/"từ") → `V2BaseError` ngay dưới bảng
+- [x] Giữ toast: ô sai có thể nằm ngoài màn hình, toast là bản tóm tắt
+
+### FE — `AdjustDetailTable.vue`
+- [x] Prop `serverErrors` + `errorAt(fields, detailIndex, itemIndex)` — `itemIndex` bỏ trống là dòng
+      "từ" (`details.{i}.<field>`), có `itemIndex` là dòng "đến" (`details.{i}.items.{j}.<field>`)
+- [x] 3 hàm theo ô, mỗi hàm tra NHIỀU khoá vì tên cột đổi theo loại phiếu (KH `customer_*`/`contract_*`,
+      NCC `supplier_*`/`buy_contract_*`) — khỏi rẽ nhánh trong template:
+      `partyError()` · `contractError()` (kèm `contractable_id/type`) · `moneyError()`
+- [x] `itemsError(i)` cho khoá `details.{i}.items` (nhóm chưa có dòng "đến" nào) → đặt ở dòng nút
+      "Thêm điều chỉnh" của chính nhóm đó
+- [x] 6 ô trong bảng: `:invalid="!!xxxError(...)"` (viền đỏ qua `v2ValidateMixin`) + `<V2BaseError>`
+      ngay dưới — đối tượng/hợp đồng/số tiền, cả bên "từ" lẫn bên "đến"
+
+### Verify — Playwright trên `localhost:3000`, bấm Gửi duyệt thật (2026-09-03)
+- [x] **Đúng ca user đưa**: nhóm 1 thiếu KH bên "đến" → BE trả
+      `{"details.1.items.0.customer_new_id":["Bắt buộc phải nhập"]}` → chữ đỏ "Bắt buộc phải nhập"
+      hiện trong **ô Khách hàng của dòng "đến" nhóm 1**, ô viền đỏ; nhóm 0 (đủ dữ liệu) sạch
+- [x] Ca số tiền: nhóm 1 để `money_old = 0` và `money_new = 0` (FE thấy khớp nên không chặn) → BE trả
+      `details.1.money_old` + `details.1.items.0.money_new` → 2 chữ đỏ nằm đúng **2 ô Số tiền**
+      (một bên "từ", một bên "đến"), cả 2 viền đỏ
+- [x] Parse sạch template + script cả 2 file
+
+### Phase 22b — Câu lỗi nửa Anh nửa Việt (2026-09-03)
+
+User: *"The Số tiền điều chỉnh từ must be greater than 0. sao lại vừa tiếng anh vừa tiếng việt vậy"*.
+
+**Gốc:** Laravel ghép **khuôn câu** (lấy từ `resources/lang/vi/validation.php`) với **`:attribute`**
+(nhãn tiếng Việt khai ở `attributes()` của Request). File `lang/vi` là bản copy tiếng Anh **mới dịch
+lác đác** — còn **52 khoá nguyên văn tiếng Anh**, trong đó có `gt`/`integer`/`array`/`string`/`boolean`;
+`required`/`numeric`/`in`/`min`/`max` thì đã dịch. Nhãn Việt + khuôn Anh = câu lai.
+
+**User chốt: KHÔNG sửa file lang dùng chung**, chỉ khai đè trong Request của màn này.
+
+- [x] `BillAdjustDeptRequestStoreRequest::messages()` — thêm `gt`, `integer`, `array`, `string`,
+      `boolean` (khoá chỉ có TÊN RULE, không kèm tên field, nên áp cho mọi field của request:
+      `FormatsMessages::getInlineMessage()` tra `"{field}.{rule}"` rồi mới tới `"{rule}"`)
+- [x] `BillAdjustDeptRequestUpdateRequest` ăn theo — class này `extends` Store, không cần sửa
+- [x] `BillAdjustDeptRequestChangeStatusRequest::messages()` — thêm `string`
+- [x] `php -l` sạch cả 2 file
+- [x] **Playwright**: bấm Gửi duyệt lại đúng ca cũ → BE trả `{"details.1.money_old":["Phải lớn hơn 0"],
+      "details.1.items.0.money_new":["Phải lớn hơn 0"]}`, hiện đúng 2 ô Số tiền, **hết tiếng Anh**
+
+ℹ️ Còn tồn: `lang/vi/validation.php` vẫn còn ~52 khoá tiếng Anh — màn khác dùng rule chưa dịch sẽ
+gặp lại đúng hiện tượng này. Muốn dứt điểm toàn hệ thống thì phải dịch file lang chung (user đã
+cân nhắc và chọn không làm ở lần này).
+
+---
+
+## Phase 22c — Toast chỉ nói chung, chi tiết để inline (2026-09-03)
+
+User: *"trên toast vẫn phải hiện là vui lòng kiểm tra dữ liệu nhập chứ?"*.
+
+Đúng — sau Phase 22 mọi lỗi đều có chỗ hiện tại ô, nên nhắc lại nguyên văn ("Phải lớn hơn 0") ở góc
+màn hình vừa thừa vừa vô nghĩa: user không biết là của ô nào.
+
+### FE — `BillAdjustDeptRequestForm.vue`
+- [x] `saveErrorToast(data)` cho nhánh 422: lỗi nào **đã hiện inline** (`details*`, `request_type`,
+      `currency_id`, `exchange_rate`, `note`) → toast `"Vui lòng kiểm tra dữ liệu nhập"`.
+      Lỗi **không có chỗ inline** (vd `status`: *"Bạn không có quyền gửi duyệt phiếu này"*) thì vẫn
+      đọc nguyên văn ra toast — bỏ đi là mất hẳn thông tin. Không dùng `data.message` cho 422
+      (Laravel trả "The given data was invalid.", tiếng Anh)
+- [x] `failInline()` cho 5 luật validate FE (Loại phiếu / Diễn giải / bảng rỗng / Tỷ giá / lệch tiền)
+      → cùng một câu `"Vui lòng kiểm tra dữ liệu nhập"`
+- [x] Bổ sung inline còn thiếu cho **Loại phiếu** + cờ `submitted` (bật cả khi Lưu nháp) — `touched`
+      chỉ bật lúc Gửi duyệt nên không dùng được cho luật duy nhất áp cho cả bản nháp
+
+### Verify — Playwright, gọi `submit()` thật + bẫy `$toasted` để đọc nguyên văn
+| Ca | Toast | Inline |
+| --- | --- | --- |
+| Lưu nháp chưa chọn Loại phiếu | Vui lòng kiểm tra dữ liệu nhập | "Vui lòng chọn loại phiếu" dưới ô Loại phiếu |
+| Gửi duyệt thiếu Diễn giải | Vui lòng kiểm tra dữ liệu nhập | dưới ô Diễn giải |
+| Gửi duyệt lệch tổng tiền | Vui lòng kiểm tra dữ liệu nhập | ô Số tiền bên "đến" |
+| BE 422 tiền = 0 | Vui lòng kiểm tra dữ liệu nhập | 2 ô Số tiền ("Phải lớn hơn 0") |
+
+- [x] `saveErrorToast()` đơn lẻ: khoá `status` → giữ nguyên văn "Bạn không có quyền gửi duyệt phiếu
+      này"; trộn `status` + `details.0.money_old` → vẫn ưu tiên câu của `status`; lỗi 500 → `data.message`;
+      rỗng → "Lưu thất bại"
+- [x] Parse sạch template + script
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: Phase 20 (đổi đối tượng phải xoá hợp đồng) · Phase 21 (lỗi lệch tổng tiền hiện inline
+ở cột Số tiền bên "Điều chỉnh đến") · Phase 22 + 22b + 22c (lỗi 422 đổ về đúng từng ô · dịch câu lỗi
+`gt`/`integer`/`array`/`string`/`boolean` trong Request · toast rút về "Vui lòng kiểm tra dữ liệu nhập").
+Đang làm dở: không
+Bước tiếp theo: user tự bấm nghiệm thu trên trình duyệt — **nhớ Ctrl+Shift+R** (HMR Nuxt 2 hay giữ
+component cũ, chính là lý do lượt đầu user không thấy thay đổi). Chưa kiểm chứng: phiếu **NCC ngoại tệ**
+(16 cột) và màn **sửa** phiếu có dữ liệu thật — dùng chung component nên logic giống hệt.
+Blocked: không
+
+**File đã đụng lượt này (5)**
+| Repo | File |
+| --- | --- |
+| hrm-client | `pages/finance/bill-adjust-dept-requests/components/AdjustDetailTable.vue` |
+| hrm-client | `pages/finance/bill-adjust-dept-requests/components/BillAdjustDeptRequestForm.vue` |
+| hrm-api | `Modules/Finance/Http/Requests/BillAdjustDeptRequest/BillAdjustDeptRequestStoreRequest.php` |
+| hrm-api | `Modules/Finance/Http/Requests/BillAdjustDeptRequest/BillAdjustDeptRequestChangeStatusRequest.php` |
+| — | *(`BillAdjustDeptRequestUpdateRequest.php` ăn theo Store, không phải sửa)* |
+
+**Còn nợ (giữ nguyên từ 2026-08-24, chưa động tới lượt này):** Excel phiếu lệch ERP · nút "Chọn nhanh
+hợp đồng" · SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*`.
+Nợ mới: `hrm-api/resources/lang/vi/validation.php` còn ~52 khoá tiếng Anh — màn khác dùng rule chưa
+dịch sẽ lại ra câu nửa Anh nửa Việt (user đã cân nhắc, chọn không sửa file chung ở lượt này).
+
+---
+
+## Phase 22d — Từ chối xong thì về màn danh sách (2026-09-03)
+
+User: *"khi tôi từ chối phiếu yêu cầu điều chỉnh công nợ thì quay lại màn danh sách cho tôi,
+hiện tại vẫn ở lại màn chi tiết"*.
+
+**Gốc:** `changeStatus()` dùng chung cho cả *Gửi duyệt* lẫn *Từ chối*, kết thúc luôn bằng
+`this.$router.go(0)` (nạp lại chính màn chi tiết để form lấy dữ liệu mới và footer đổi nút theo
+trạng thái). Với *Gửi duyệt* thì đúng — user còn xem tiếp phiếu vừa gửi. Với *Từ chối* thì phiếu
+đã xong việc của người duyệt, ở lại chi tiết là thừa một bước bấm quay lại.
+
+### FE — `pages/finance/bill-adjust-dept-requests/_id/index.vue`
+- [x] `changeStatus(status, noteReject = null, backToList = false)` — thêm tham số thứ 3;
+      `backToList` → đóng popup rồi `$router.push('/finance/bill-adjust-dept-requests')`,
+      còn lại giữ nguyên `$router.go(0)` như cũ (Gửi duyệt không đổi hành vi)
+- [x] `changeStatus()` trả `true/false` theo thành công/lỗi (trước đây không trả gì)
+- [x] `doReject()` gọi `changeStatus(6, reason, true)`; **chỉ đóng popup khi thành công** —
+      trước đây `changeStatus` nuốt lỗi nên popup luôn đóng, user mất luôn lý do vừa gõ
+- [x] Parse sạch template + script (`vue-template-compiler` + `@babel/core`)
+
+⚠️ Chưa mở trình duyệt kiểm chứng — theo thoả thuận user tự test UI.
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: Phase 22d — từ chối phiếu xong thì điều hướng về màn danh sách thay vì reload màn chi tiết.
+Đang làm dở: không có.
+Bước tiếp theo: user mở trình duyệt bấm **Từ chối** trên 1 phiếu ở trạng thái *Chờ duyệt* → xác nhận nhảy về `/finance/bill-adjust-dept-requests`; thử ca lỗi (BE trả 422) → popup lý do phải ở lại, không mất nội dung.
+Blocked:
