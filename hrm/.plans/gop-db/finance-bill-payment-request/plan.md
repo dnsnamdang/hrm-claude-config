@@ -5252,3 +5252,69 @@ Vừa hoàn thành: Phase 15 — 3 tài liệu bàn giao + 3 generator, 31 ảnh
 Đang làm dở: không.
 Bước tiếp theo: user đọc soát nội dung, đặc biệt bảng 10 quyền và mô tả luồng duyệt 5 cấp.
 Blocked: không.
+
+---
+
+## Xuất lại SRS theo FORM MẪU MỚI (2026-08-28)
+
+Áp form 2026-08-28 (bản mẫu chuẩn = SRS Phiếu đề nghị thu tiền, đã đóng gói ở
+`.claude/skills/srs-documenter/assets/SRS_MAU.docx`).
+
+- [x] **TL-A** `gen_srs.py`: 15 mục Layout đổi từ "URL đầy đủ" sang đường dẫn MENU
+      (lấy nhãn thật từ `components/subsystem-menu/finance.js`); mục 2.1 ghi thêm lối vào riêng
+      của chế độ Chờ duyệt.
+- [x] **TL-B** Thêm 15 đoạn "Quy tắc chung: Áp dụng SRS Các quy tắc chung <hyperlink> …"
+      ở đầu mỗi mục Giới thiệu.
+- [x] **TL-C** Phần 4: 18 quy tắc BR-01…BR-18 chuyển sang BẢNG 5 cột
+      (STT / Mã quy tắc / Tên quy tắc / Mô tả / Phạm vi áp dụng) — nội dung đọc lại từ chính
+      file cũ nên không sai lệch một chữ.
+- [x] **TL-D** Sơ đồ Use Case tổng quan vẽ lại có phân cấp: 4 màn thật nối actor
+      (FR-01 danh sách · FR-04 lập · FR-09 sửa · FR-10 chi tiết); 11 thao tác còn lại nối
+      «include»/«extend». Bỏ chữ "HỆ THỐNG HRM" trong khung.
+      Lưu ý: 4 use case của form lập phiếu (FR-05→FR-08) chỉ nối vào FR-04 — nối cả FR-09 thì
+      8 đường nét đứt chồng nhãn lên nhau, không đọc được.
+- [x] **TL-E** Sinh lại `SRS - Phiếu đề nghị thanh toán.docx` — 50 bảng · 38 ảnh · 70 trang;
+      self-check của skill: 15 dòng Menu, 15 đoạn Quy tắc chung, 1 câu dẫn Phần 4, 16 hyperlink,
+      bảng cuối đúng 5 cột với 18 quy tắc, không còn dòng "URL đầy đủ".
+
+### Checkpoint — 2026-08-28
+Vừa hoàn thành: TL-A → TL-E.
+Đang làm dở: không.
+Bước tiếp theo: user mở file soát nội dung.
+Blocked: không.
+
+---
+
+## Nới validate LƯU NHÁP — chỉ bắt Loại chi (2026-09-03)
+
+User báo: màn `finance/bill-payment-requests/create` bấm **Lưu nháp** vẫn bị chặn ở **Lý do chi**.
+Chốt: lưu nháp CHỈ bắt buộc **Loại chi**, mọi ô nghiệp vụ khác để trống vẫn cất được phiếu.
+
+- [x] **NV-1** `BillPaymentRequestStoreRequest::rules()` (Update kế thừa nên ăn theo): bỏ `required`
+      khi `status = 1` cho `reason`, `type_payment`, `type_money_id`, `exchange_rate`, `to_date`,
+      `customer_id`, `supplier_id` và toàn bộ `details.*` (KH/NCC dòng, hợp đồng, số tiền).
+      Giữ nguyên rule ĐỊNH DẠNG (`numeric` / `gt:0` / `date` / `exists` / `Rule::in`) — nháp gõ chữ
+      vào tỷ giá hay nhét class lạ vào cột morph vẫn bị chặn. `status` vẫn `required` (cờ hệ thống).
+- [x] **NV-2** `BillPaymentRequestService::masterPayload()`: 4 cột `reason` / `type_payment` /
+      `type_money_id` / `exchange_rate` là **NOT NULL không default** → nháp bỏ trống phải tự đổ
+      mặc định (TM · VNĐ · tỷ giá 1 · lý do rỗng, khớp `emptyForm()` bên FE), nếu không insert nổ
+      500 thay vì lưu được. Thêm 3 hằng `DEFAULT_TYPE_PAYMENT` / `DEFAULT_CURRENCY_ID` /
+      `DEFAULT_EXCHANGE_RATE`.
+- [x] **NV-3** Kiểm chứng bằng script chạy thẳng `rules()` + `masterPayload()`: nháp chỉ có loại chi
+      → PASS · nháp loại 12 dòng chi tiết trống → PASS · nháp loại 1 CK dòng thiếu hợp đồng → PASS ·
+      nháp tỷ giá "abc" → FAIL đúng ("Phải là số") · nháp thiếu loại chi → FAIL đúng ·
+      gửi duyệt thiếu lý do → vẫn FAIL như cũ. Payload nháp trống: `type_payment=1`, `reason=''`,
+      `type_money_id=1`, `exchange_rate=1` (không có NULL).
+- [x] **NV-4** FE không phải sửa: `validateForm()` chỉ chạy rule vee-validate (định dạng tỷ giá),
+      mọi thông báo "Bắt buộc nhập" trên form đều do BE trả về `formErrors`.
+
+### Ghi chú
+- Quyết định này **thay** ràng buộc cũ ngày 2026-08-22 ("dòng chi tiết ĐÃ thêm vẫn phải đủ hợp đồng
+  + số tiền" khi lưu nháp). Nháp giờ cho phép dòng dở dang; nút **Lưu và gửi duyệt** (`status = 2`)
+  giữ nguyên toàn bộ ràng buộc cũ nên phiếu trình lên cấp duyệt vẫn không thể thiếu dữ liệu.
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: NV-1 → NV-4 (nới validate lưu nháp còn mỗi Loại chi).
+Đang làm dở: không.
+Bước tiếp theo: user mở màn Tạo, bấm Lưu nháp với form trống (chỉ chọn loại chi) để xác nhận.
+Blocked: không.

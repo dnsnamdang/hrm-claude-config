@@ -1183,3 +1183,87 @@ User: *"cảnh báo và chặn không cho lưu nhé"*.
 thiếu `payment_money_request` -> không lỗi (KHÔNG nổ 500) · **loại 6 vượt** -> có lỗi ·
 **lưu nháp mà vượt** -> có lỗi. `php -l` sạch · template + script parse sạch · grep xác nhận
 `.field-warning` đã xoá hết. ⚠️ Chưa mở trình duyệt.
+
+
+## Phase L — Lịch sử thay đổi phiếu Ủy nhiệm chi (user yêu cầu 2026-09-03)
+
+User: *"xem màn phiếu ủy nhiệm chi xem có lịch sử thay đổi chưa, chưa có thì bổ sung"*.
+
+**Kiểm tra hiện trạng: CHƯA CÓ GÌ.** `bill_payment_authorizations` không nằm trong whitelist
+`CatalogHistoryService::TABLES`; BE chỉ gọi `BillPaymentRequest::logStatusHistory()` — tức ghi lịch
+sử cho MÀN ĐỀ NGHỊ THANH TOÁN, không phải cho chính UNC; FE không có popup lẫn khối Lịch sử.
+
+Phạm vi: cùng mức đã chốt ở Phiếu thu / Phiếu chi (tạo · sửa · bảng chi tiết theo TỪNG DÒNG ·
+đổi trạng thái dòng riêng · xóa). Không migration — dùng bảng chung `catalog_histories`.
+
+### Khác 2 màn trước (đọc trước khi code)
+
+- **UNC KHÔNG có Gửi duyệt / Duyệt / Hủy** (RULING U-UNC-6): chỉ "Lưu" (status 1) và "Lưu và duyệt"
+  (status 3, ghi sổ cái ngay). Status 2/4 là TRẠNG THÁI CHẾT. ⇒ dòng `change_status` chỉ sinh ra ở
+  `update()` khi phiếu nháp được bấm "Lưu và duyệt"; `store()` với status 3 đã nằm trong log `create`.
+- Bảng **KHÔNG có 2 cột tổng** (`sum_payment_money_*`) như Phiếu chi ⇒ không theo dõi cột tổng.
+- Bảng **CÓ 6 cột riêng**: `account_dept`, `bank_from(_name)`, `account_from(_name/_number)`,
+  `source_money`, `note` → phải khai vào whitelist.
+- Dòng chi tiết **KHÔNG có** `customer_id` / `supplier_id` (khác Phiếu chi): đối tượng nhận diện là
+  `contract_code` (nhánh A) hoặc `employee_code/_name` (nhánh B), kèm số TK + ngân hàng nhận.
+- Nhánh B chỉ **5** khoản thu nhập (không có `other_cost` như Phiếu chi).
+
+### BE
+
+- [x] `CatalogHistoryService::TABLES` — khai `bill_payment_authorizations` + nhãn cột tiếng Việt
+      + 2 khoá ẢO dạng BẢNG (`details_rows`, `export_request_rows`). KHÔNG khai `status`
+      (đổi trạng thái là dòng riêng — skill §3a)
+- [x] `Modules/Finance/Services/BillPaymentAuthorizationHistoryService.php` — khuôn
+      `BillPaymentHistoryService`, có `forFullLog()` lọc khoá rỗng/null trước khi ghi log `delete`
+- [x] `BillPaymentAuthorizationWriteService::store()` → `logCreate()` (SAU `approveAndPostToLedger()`
+      vì bước đó còn ghi `approved_id` + tính lại số duyệt chi)
+- [x] `...::update()` → snapshot ở ĐẦU transaction; sau khi lưu ghi `logUpdate()` +
+      `logStatusChanged()` (2 dòng riêng khi bấm "Lưu và duyệt" trên phiếu nháp)
+- [x] `...::destroy()` → snapshot TRƯỚC `deleteDetails()`, `logDelete()`
+- [x] Mọi lời gọi bọc try/catch + `Log::error` — lỗi log không được làm rớt nghiệp vụ
+
+### FE — ĐỦ 2 NƠI (§5.1)
+
+- [x] `pages/finance/bill-payment-authorizations/index.vue` — mục `Lịch sử` + `CatalogHistoryModal`
+- [x] `pages/finance/bill-payment-authorizations/_id/index.vue` — khối `SystemInfoSection` trong thân trang
+
+### Verify
+
+- [x] tinker trong transaction rồi ROLLBACK: tạo nháp → sửa → "Lưu và duyệt" → xóa
+- [x] Compile FE + Playwright 2 màn, dọn sạch dữ liệu gieo
+
+### Kiểm chứng đã chạy
+
+**Luồng đầy đủ** (tinker, toàn bộ trong transaction rồi ROLLBACK — UNC không gửi notification nên
+không phải thay service nào): tạo nháp → 1 dòng `create` · sửa người nhận + ghi chú + số chi dòng 1
++ thêm dòng 2 → **1 dòng** `update` đúng 2 trường phẳng + 1 dòng thêm + 1 dòng sửa ĐÚNG CỘT · lưu
+lại y nguyên → **không sinh log rác** · "Lưu và duyệt" (1 → 3) → **2 dòng** (`update` nội dung +
+`change_status` "Đang tạo → Đã hạch toán"), đề nghị nguồn sang status 8 đúng ERP · xóa → snapshot
+đầy đủ + 2 dòng chi tiết đã xóa. Sau rollback: 0 dòng log, 0 phiếu thừa, đề nghị 4192 vẫn status 6.
+
+**Trình duyệt (Playwright)**: gieo 3 dòng log cho phiếu THẬT `TPE.UNC0826.00001` (id 2606) rồi xem
+giao diện, xong xoá đúng 3 dòng đó (id 290-292); phiếu 2606 giữ `updated_at = 2026-08-27 14:32:05`,
+3 dòng chi tiết.
+- Màn danh sách: phiếu đã hạch toán chỉ còn 1 hành động nên nút "Lịch sử" hiện thẳng ở cột Hành động.
+- Popup: timeline mới → cũ, cũ ĐỎ / mới XANH, nhóm "Bảng chi tiết thêm mới / sửa thông tin",
+  dòng "Thay đổi trạng thái: Đang tạo → Đã hạch toán".
+- Màn chi tiết: khối "Lịch sử" badge `3` trong THÂN TRANG; `V2Footer` chỉ có "Quay lại" (phiếu đã
+  hạch toán không sửa/xóa được — đúng RULING U-UNC-6). Form phía trên không vỡ vì thêm slot.
+- Console: **0 lỗi** ở cả 2 màn.
+
+`php -l` sạch 3 file BE · compile FE (vue-template-compiler + babel) sạch 3 file.
+
+### Sửa kèm — áp cho cả màn Phiếu chi
+
+`payment_department_id` là cột NOT NULL không có default nên luồng ghi điền **0** (dữ liệu thật ERP
+cũng 0 ở phần lớn phiếu) ⇒ log in ra `Phòng ban được chi: 0`. Nay 0 được coi là "chưa chọn" (trả
+null, bị `forFullLog()` lọc) ở CẢ `BillPaymentAuthorizationHistoryService` lẫn
+`BillPaymentHistoryService`.
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: lịch sử thay đổi màn Ủy nhiệm chi — từ CHƯA CÓ GÌ lên đầy đủ, BE (whitelist +
+service ghi log + 4 điểm nối) và FE (popup ở danh sách + khối Lịch sử ở chi tiết).
+Đang làm dở: không.
+Bước tiếp theo: user nghiệm thu. Còn tồn: bẫy mảng rỗng trong `CatalogHistoryService::changesOf()`
+(hàm DÙNG CHUNG) vẫn CHƯA sửa — đã trình bày phương án, chờ user chốt.
+Blocked: không.

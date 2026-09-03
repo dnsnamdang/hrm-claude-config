@@ -713,3 +713,55 @@ Vừa hoàn thành: Phase 8 — 2 màn form + chi tiết chuyển sang footer ch
 Đang làm dở: không có.
 Bước tiếp theo: user test trình duyệt 3 màn (create · edit · chi tiết).
 Blocked:
+
+---
+
+## Phase 9 — Bộ tài liệu bàn giao: Testcase + HDSD + SRS (2026-09-03, @khoipv)
+
+**User yêu cầu:** xuất 3 tài liệu cho màn Phiếu yêu cầu chuyển hàng. Chốt thêm:
+- Ảnh chụp THẬT trên cổng dev `hrm-crm.eteksofts.com` (tài khoản DNS Admin)
+- Bản `testcase.xlsx` cũ (07/08, form 15 cột) **xóa đi làm lại** theo form chuẩn 17 cột
+
+### 9.1 Chuẩn bị
+- [x] Xóa `testcase.xlsx` + `generate-testcase.py` bản cũ (form 15 cột)
+- [x] Đọc lại code nguồn: Entity (13 trạng thái, canView/canEdit/canDelete/canApprove,
+      searchByFilter 5 nhánh phạm vi), Request (rule + message), Controller (9 route),
+      Service (store/update/reject/notify/export/print/stock), 2 Resource, seeder quyền 1132-1136,
+      FE `index.vue` / `ProductTransferRequestForm.vue` / `_id/index.vue` / `_id/print.vue`
+- [x] Chụp **31 ảnh thật** 1440×900 → `pycch_shots/` (chỉ để local, `.gitignore` đã chặn `*_shots`)
+      ⚠️ Không có phiếu **Đang tạo** nào của tài khoản chụp (nháp người khác bị ẩn) → đã tạo 1 phiếu
+      nháp PYCCH-07366 để chụp Sửa/Xóa/menu ⋮/xác nhận xóa file, **xóa ngay sau khi chụp**
+      (danh sách trở lại đúng 2.972 phiếu như trước khi chụp; status=3 nên không bắn thông báo)
+
+### 9.2 Testcase
+- [x] `gen_testcase.py` dùng `tc_engine.py` → `testcase.xlsx`: **188 TC** (P0 50%), 9 mục mô tả
+      đầy đủ, 13 TC-ROLE + 14 section La Mã (I→XIV), bộ kiểm tra thuật ngữ in **OK - sạch**
+
+### 9.3 HDSD
+- [x] `gen_hdsd.py` dùng `hdsd_engine.py` → `HDSD_Phiếu yêu cầu chuyển hàng.docx`: **48 trang**,
+      16 Heading 1 (Tổng quan + 13 phần), 17 bảng, **30 ảnh thật** + logo bìa, 30 caption;
+      mục lục + danh mục hình đã cập nhật bằng Word (không còn tiêu đề của file khung)
+- [x] Verify style HDSD: đếm direct formatting = **2 / 10 / 0** — khớp đúng `HDSD_MAU.docx`
+
+### 9.4 SRS
+- [x] `gen_srs.py` dùng `srs_docx_lib.py` → `SRS - Phiếu yêu cầu chuyển hàng.docx`: **52 trang**,
+      4 chương, **14 chức năng** FR-01→FR-14, 47 bảng, 29 ảnh (1 sơ đồ tổng quan phân cấp +
+      10 biểu đồ use case + 18 ảnh chụp thật), Phần 4 có **16 quy tắc** BR-01→BR-16
+- [x] Verify SRS đủ 4 điểm form 2026-08-28: 14 mục Layout ghi `Menu:` (0 dòng URL) · 14 đoạn
+      `Quy tắc chung:` · Phần 4 là bảng 5 cột · sơ đồ tổng quan dùng `overview_figure2` phân cấp.
+      Đánh số mục con 2.x.y liên tục ở cả 14 chức năng (0 chỗ lệch); không còn mục đã bỏ
+- [x] `git status`: chỉ thấy `.docx`/`.xlsx`/`gen_*.py`, **không có `.png`** (`.gitignore` chặn
+      `**/.plans/**/*_shots/`)
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: Phase 9 — đủ 3 tài liệu bàn giao (testcase 188 TC · HDSD 52 trang · SRS 52 trang),
+ảnh chụp thật 100% trên cổng dev.
+Đang làm dở: không có.
+Bước tiếp theo: user mở 3 file đọc soát nội dung nghiệp vụ; sửa gì thì chỉnh trong `gen_*.py`
+rồi chạy lại (3 script đều tái sinh được file, đã commit kèm).
+Blocked: không.
+
+⚠️ **Lưu ý dữ liệu dev**: để chụp được màn Sửa / Xóa / menu ⋮ / xác nhận xóa file, đã tạo 1 phiếu
+nháp **PYCCH-07366** trên cổng dev rồi **xóa ngay sau khi chụp** — danh sách trở lại đúng 2.972
+phiếu như trước. Phiếu ở trạng thái *Đang tạo* nên không bắn thông báo cho ai. Mã 07366 đã tiêu,
+phiếu kế tiếp sẽ là 07367 trở đi.
