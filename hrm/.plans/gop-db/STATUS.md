@@ -68,6 +68,24 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- **finance-product-transfer — Phiếu điều chuyển hàng (ERP `product_transfers` → HRM)** → @junfoke →
+  `.plans/gop-db/finance-product-transfer/khao-sat.md` · `design.md` · `plan.md`
+  Trạng thái: **MỚI KHẢO SÁT XONG — chưa có dòng code nghiệp vụ nào** (2026-09-04).
+  Nhánh riêng `feat/finance-product-transfer` (hrm-api + hrm-client, tách từ `gop_db`).
+  Màn ERP `Warehouse\ProductTransfersController`, mã `PDCH-`, bảng đã có sẵn 309 phiếu trên DB gộp
+  (không cần migration bảng chính). Chuyển hàng giữa 2 **kho kế toán** trong cùng 1 kho vật lý;
+  2 trạng thái, "Duyệt" = hạch toán ngay (ghi `accounting_stocks` + `accounting_stock_logs` + bút toán
+  Nợ 156/Có 156), hạch toán rồi khoá vĩnh viễn.
+  ⚠️ GOTCHA: mục menu "Phiếu điều chuyển hàng" TRƯỚC ĐÂY bị gán nhầm link sang màn **Phiếu yêu cầu
+  chuyển hàng** (`product-transfer-requests`) — 2 màn KHÁC nhau, ERP để ở 2 nhóm menu khác nhau.
+  Đã trả về đúng chỗ 2026-09-04 (Task 0.2). Đừng gán link màn khác vào mục đó nữa.
+  ⚠️ GOTCHA: **KHÔNG** mở rộng `AccountingStockService` cho màn này — `in_acc_warehouse` chỉ là SUM
+  thô của kho kế toán đang chọn, không trừ pending; màn tự query. (Bản khảo sát đầu ghi sai.)
+  Chốt với user: sửa 13 lỗi ERP theo chuẩn HRM · tách 2 method FIFO khỏi
+  `WarehouseExportAccountingService` (chỉ 1 caller) · CÓ làm lịch sử thao tác (ERP không có) ·
+  KHÔNG làm huỷ phiếu/đảo bút toán.
+  Bước tiếp theo: viết spec → Phase 1 tách FIFO + test hồi quy màn Phiếu xuất hàng.
+
 - **finance-bill-adjust-dept — Phiếu kế toán (ERP `bill_adjust_dept` → HRM)** → @khoipv →
   `.plans/gop-db/finance-bill-adjust-dept/design.md` · `plan.md` ·
   spec `docs/superpowers/specs/gop-db/2026-08-28-finance-bill-adjust-dept-design.md`
@@ -91,6 +109,43 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Feature này **gỡ ràng buộc "HRM không ghi sổ cái"** mà `finance-bill-adjust-dept-request` từng
   chốt (quyết định #3) — sổ cái dùng chung với cổng ERP, sai/trùng là lệch số kế toán thật.
   Nền: 12.628 phiếu · 33.409 dòng chi tiết · 0 bảng mới · 2 quyền mới · 4 morphMap phải bổ sung.
+- finance-prepick-expiring → @junfoke → .plans/gop-db/finance-prepick-expiring/plan.md
+  Trạng thái: **XONG — ĐÃ MERGE VÀO `gop_db`** (2026-09-04), cả 2 repo ahead origin/gop_db 2 commit,
+  **chưa push** (user tự đẩy lên dev).
+  Nhánh `feat/finance-prepick-expiring` (cả 2 repo, tách từ `gop_db`), worktree
+  `.worktrees/finance-prepick-expiring` — tái sử dụng worktree cũ của finance-product-import-request.
+  Port màn "Hàng sắp hết hạn giữ" bản KẾ TOÁN (`warehouseInfo.accountingExpiringPrepick`) sang
+  Tài chính / nhóm Giữ hàng. Dùng lại ~90% `PrepickStockReportService` — chỉ thêm cờ `expiring_only`.
+  ⚠️ User chốt **GIỮ NGUYÊN điều kiện ngày ngược nghĩa của ERP** (lô đã quá hạn trong `warning_day`
+  ngày qua, KHÔNG phải sắp tới hạn) → cột Trạng thái không bao giờ ra "Trong hạn". Đừng sửa nhầm.
+  Không migration (dùng lại quyền 100427 + 100839/840/841). Đã nghiệm thu: bấm thật trên trình duyệt,
+  5 nhánh phân quyền qua HTTP, và đối chiếu bộ cột/bộ lọc + ngữ nghĩa cửa sổ ngày trên ERP dev.
+  ⚠️ Merge có 2 xung đột đều do nhánh export-request vào trước, đã gộp cả 2 phía:
+  `PrepickExtendRequestService` (thêm cả `PrepickApprovalRouteService` lẫn `PrepickConfigService`)
+  và `subsystem-menu/finance.js` (giữ cả link màn mới lẫn 2 link Yêu cầu/Phiếu xuất giữ).
+  ⚠️ `vendor` của worktree `.worktrees/gop-db` là SYMLINK sang checkout chính -> chạy PHP ở đó là
+  nạp code nhánh khác, số liệu sai. Test code sau merge phải làm ở worktree có vendor riêng.
+- finance-prepick-export-request → @junfoke → .plans/gop-db/finance-prepick-export-request/plan.md
+  Trạng thái: **XONG BE + FE, ĐÃ VERIFY PLAYWRIGHT LUỒNG ĐẦY ĐỦ** (lập YCXG → duyệt 3 cấp → lập
+  PXG → duyệt → sinh lô giữ hàng đúng). Nhánh `feat/finance-prepick-export-request` (cả 2 repo,
+  tách từ `gop_db`) — **chưa commit**.
+  Port CẶP màn "Yêu cầu xuất giữ" + "Phiếu xuất giữ" sang Tài chính / nhóm Giữ hàng, đủ 6 loại.
+  ⚠️ Hai màn phải đi CÙNG ĐỢT: PXG duyệt là nơi DUY NHẤT sinh lô `prepick_details` mà 4 màn giữ
+  hàng đã port đang tiêu thụ.
+  ⚠️ Có đụng 2 thứ dùng chung: `AccountingStockService` (thêm `in_promotion`) và tách
+  `PrepickApprovalRouteService` — đã test lại Gia hạn + Điều chuyển, lệch 0/300 phiếu.
+  ⛔ Chưa nghiệm thu được loại 1-4: local 0 phiếu (4 bản dump ERP đều vậy, nghi nhánh code chết).
+  Bước tiếp: chạy migration `2026_09_03_000001_...` trên dev · gỡ 3 quyền tạm của emp 781 ·
+  commit (chi tiết ở cuối Phase 13 của plan.md).
+  Chi tiết + gotcha: plan.md | Tóm tắt: .plans/gop-db/finance-prepick-export-request/design.md
+  Spec: docs/superpowers/specs/gop-db/2026-09-03-finance-prepick-export-request-design.md
+
+- org-filter-locked-options → @namdangit → .plans/gop-db/org-filter-locked-options/plan.md
+  Trạng thái: **XONG BE + FE, ĐÃ VERIFY PLAYWRIGHT trên :3002/:8003** (2026-08-24). Chưa commit.
+  Mục tiêu: bộ lọc chung `V2BaseCompanyDepartmentFilter` (Công ty/Phòng ban/Bộ phận/Nhân viên) có công tắc 🔒 theo TỪNG ô để hiện cả mục đã khoá; mặc định vẫn chỉ hiện mục đang hoạt động.
+  BE: `OrgOptionController` + route `GET /api/v1/org-options?type=company|department|part|employee` (trả full kèm `is_locked`); `Employee::getAll($onlyActive = false)` + `userProfile()` gọi `getAll(true)` → store.employees bỏ nhân sự đã nghỉ.
+  FE: prop `keepLockedOptions` cho `V2BaseSelect`/`V2BaseSelectInModal`; component lazy load khi bật công tắc, KHÔNG cache danh mục khoá vào Vuex; tắt công tắc vẫn giữ giá trị đang chọn.
+  Bước tiếp: commit lên `gop_db`.
 
 - thiet-ke-lai-phan-quyen → @namdangit → .plans/gop-db/thiet-ke-lai-phan-quyen/plan.md
   Trạng thái: **PHASE 0 XONG — MOCKUP CHỐT (verify Playwright), CHƯA PORT VÀO hrm-client THẬT** (2026-08-14).
@@ -265,9 +320,10 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
 
 - finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
-  Trạng thái: **XONG PHASE 0-12** (2026-08-22) — Phase 10 vá QA redmine 11094/11149/11150/11151/11152/11154,
+  Trạng thái: **XONG PHASE 0-13** (2026-09-04) — Phase 10 vá QA redmine 11094/11149/11150/11151/11152/11154,
   Phase 11 bỏ tab preset (1 màn = `all` của ERP, nút duyệt theo quyền), Phase 12 rà màn Phiếu hủy
-  theo quy tắc chung (bỏ tự kéo số về trần, duyệt xong về danh sách, nút In trắng, 4 icon ⓘ).
+  theo quy tắc chung (bỏ tự kéo số về trần, duyệt xong về danh sách, nút In trắng, 4 icon ⓘ),
+  Phase 13 vá QA redmine 11295/11296.
   Nhánh `feat/finance-prepick-cancel`. Port 2 màn `Yêu cầu hủy hàng giữ` + `Phiếu hủy hàng giữ` sang
   Tài chính / nhóm Giữ hàng — **màn đầu tiên của HRM ghi tồn kho thật** (duyệt = trừ FIFO
   `prepick_details` + ghi `prepick_logs`). 2 migration (2 bảng lịch sử).
@@ -276,8 +332,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Chi tiết + gotcha: plan.md
 
 - finance-product-import-direct-transfer → @junfoke → .plans/gop-db/finance-product-import-direct-transfer/plan.md
-  Trạng thái: **XONG PHASE 0-9** (2026-08-21) — Phase 8 vá 9 bug QA redmine 11092-11108, Phase 9 bỏ tab preset.
+  Trạng thái: **XONG PHASE 0-9 + ĐỦ 3 TÀI LIỆU BÀN GIAO** (2026-09-03) — Phase 8 vá 9 bug QA redmine 11092-11108,
+  Phase 9 bỏ tab preset; 28/08 sinh testcase 157 TC + HDSD 29 trang; 03/09 bổ sung SRS 45 trang và
+  sửa lại TC/HDSD mục ô Số lượng theo hành vi mới (lọc ký tự ngay khi gõ, không còn báo đỏ).
   Port màn "Phiếu chuyển hàng nhập thẳng" sang Tài chính / nhóm Điều chuyển; 1 migration (bảng lịch sử).
+  Tài liệu: `testcase - Phieu chuyen hang nhap thang.xlsx` | `HDSD_Phieu chuyen hang nhap thang.docx` |
+  `SRS - Phiếu chuyển hàng nhập thẳng.docx` (13 chức năng FR-01..FR-13, 17 quy tắc nghiệp vụ)
+  ⚠️ GOTCHA: bản in phiếu bị tràn khối ký ra ngoài khung giấy; ô rỗng danh sách còn hiện dấu `—`.
   Bước tiếp: user so cạnh nhau 2 cổng trên dev + test bằng tài khoản Kế toán kho không phải Super admin.
   Chi tiết + gotcha: plan.md
 
@@ -775,7 +836,8 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-08-03-finance-currency-catalog-design.md | Tóm tắt: .plans/gop-db/finance-currency-catalog/design.md
 
 - finance-account-catalog → @junfoke → .plans/gop-db/finance-account-catalog/plan.md
-  Trạng thái: **PHASE 1-6 + 8 CODE DONE + VERIFIED** (2026-08-01) — 2 màn "Danh mục tài khoản" +
+  Trạng thái: **PHASE 1-10 CODE DONE + VERIFIED** (2026-09-04; Phase 10 đưa form Tạo/Sửa về bố cục
+  ERP — redmine 11300) — 2 màn "Danh mục tài khoản" +
   "Danh mục loại tài khoản"; màn đầu tiên của phân hệ Tài chính nên dựng luôn khung `Modules/Finance`.
   Bước tiếp: Phase 7 đối chiếu 2 cổng (cần bật ERP local) + tạo 2 file mẫu Excel trong `hrm-client/static/`.
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-07-30-finance-account-catalog-design.md | Tóm tắt: .plans/gop-db/finance-account-catalog/design.md

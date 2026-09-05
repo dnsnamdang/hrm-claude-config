@@ -192,13 +192,13 @@ Cột **Tên KHÔNG khoá**: user được ẩn / đổi vị trí tuỳ ý, nê
 <!-- Mã: link vào chi tiết — nuxt-link để chuột phải mở tab mới được -->
 <template #cell-customerCode="{ item }">
     <nuxt-link :to="`/assign/customers/${item.id}`" class="v2-cell-link field-line">
-        {{ item.code || '—' }}
+        {{ item.code || '' }}
     </nuxt-link>
 </template>
 
 <!-- Tên: chữ thường, không link -->
 <template #cell-customerName="{ item }">
-    <div class="field-line text-dark font-weight-normal">{{ item.fullname || '—' }}</div>
+    <div class="field-line text-dark font-weight-normal">{{ item.fullname || '' }}</div>
 </template>
 ```
 

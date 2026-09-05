@@ -588,3 +588,51 @@ toast khi lỗi nhập liệu.
 Bước tiếp theo: user mở `/finance/product-import-direct-transfers/create` xác nhận.
 Chưa kiểm chứng bằng mắt: 5 luồng BE đã gọi thật, FE không sửa gì.
 Blocked: không.
+
+---
+
+## Phase — Tài liệu bàn giao: Test case + HDSD (2026-08-28)
+
+User yêu cầu "xuất tài liệu phần đã chuyển đổi ERP → HRM" cho màn này. Chốt: làm **cả TC lẫn
+HDSD**, TC viết **full màn bản HRM** (không chỉ phần khác ERP). Ảnh HDSD chụp thật trên
+`hrm-crm.eteksofts.com` bằng tài khoản DNS Admin.
+
+- [x] `gen_testcase.py` — engine chung `tc_engine.py`, form 17 cột.
+      Output `testcase - Phieu chuyen hang nhap thang.xlsx`: **157 TC**, P0 61%, bộ kiểm tra thuật
+      ngữ in "OK - sach". 12 TC phân quyền + 13 section La Mã (I Hiển thị/truy cập · II Bộ lọc ·
+      III Danh sách-sắp xếp-phân trang · IV Tạo · V Sửa · VI Chi tiết · VII Duyệt/Từ chối · VIII Xóa ·
+      IX In & Excel · X Lịch sử · XI Ràng buộc nhập liệu · XII Cô lập dữ liệu & đồng thời · XIII E2E).
+- [x] `gen_hdsd.py` — engine chung `hdsd_engine.py`.
+      Output `HDSD_Phieu chuyen hang nhap thang.docx`: **29 trang**, 13 Heading 1, 13 bảng,
+      16 ảnh thật. Mục lục + danh mục hình ảnh đã cho Word cập nhật thật rồi dump ra đọc lại.
+- [x] Ảnh nguồn `hdsd_product_import_direct_transfer_shots/` (16 file) — **chỉ để local**,
+      `git status` xác nhận không lộ `.png`.
+
+### Nhãn thật khác giả định từ code (đã sửa lại vào TC)
+
+| Chỗ | Ghi nhận khi chụp màn thật |
+| --- | --- |
+| Nút lưu | **"Lưu nháp"** và **"Lưu và gửi duyệt"** (không phải "Lưu & Gửi duyệt") |
+| Màn Tạo mới | **KHÔNG có** ô Số phiếu / Trạng thái / Người duyệt — 3 ô này chỉ có ở màn Chi tiết |
+| Popup cấu hình cột | Tiêu đề là **"Tuỳ chỉnh cột"**, "Cấu hình cột hiển thị" chỉ là tooltip của nút |
+| Popup xuất Excel | Nút xuất ghi **"Xuất file"**; có thêm "Chọn tất cả" / "Bỏ chọn hết" |
+| Popup chọn hàng | Tiêu đề "Tồn hàng nhập thẳng của nhân viên", nút **"Chọn (n)"** |
+| Mẫu in phiếu | Tiêu đề biểu mẫu là **"PHIẾU YÊU CẦU CHUYỂN HÀNG"** |
+| Cột Hành động | Các nút render **inline dạng icon**, chỉ In + Lịch sử bị gom vào menu ⋮ |
+
+### Chưa chụp được (mô tả bằng chữ trong HDSD)
+
+- Cửa sổ **"Từ chối phiếu"** và hộp **xác nhận Xóa**: thao tác trên dữ liệu thật nên không bấm.
+- Popup chọn hàng chụp ở trạng thái **rỗng** (tài khoản DNS Admin không còn tồn nhập thẳng).
+
+### Quan sát trên bản dev (chưa xử lý)
+
+- Bản in phiếu: **khối ký "Người lập phiếu" + tên người lập tràn ra NGOÀI khung tờ giấy**
+  (xem `hdsd_product_import_direct_transfer_shots/14-ban-in-phieu.png`). Cần user xác nhận có sửa không.
+- Ô rỗng trên danh sách vẫn hiện dấu `—`, chưa theo rule "ô rỗng để trống" chốt 22/08/2026.
+
+### Checkpoint — 2026-08-28
+Vừa hoàn thành: bộ tài liệu bàn giao (157 TC + HDSD 29 trang).
+Đang làm dở: không.
+Bước tiếp theo: user đọc lại 2 file, xác nhận 2 quan sát ở trên có cần sửa code không.
+Blocked: không.

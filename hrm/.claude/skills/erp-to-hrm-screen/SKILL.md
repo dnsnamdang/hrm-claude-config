@@ -201,8 +201,13 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       `danger` (đỏ), bê nguyên sang là sai
 - [ ] Căn lề đúng: STT/badge/hành động = giữa; số & tiền = phải; chữ & ngày = trái
 - [ ] Ngày `dd/mm/yyyy`, ngày+giờ `dd/mm/yyyy HH:mm` (BE trả sẵn, FE không format lại)
-- [ ] Tiền: `.` ngăn nghìn, `,` ngăn thập phân
-- [ ] Ô rỗng in `—`, không để trắng
+- [ ] Số & tiền theo **chuẩn quốc tế `1,234,567.89`** — `,` ngăn nghìn, `.` phần thập phân
+      (chốt 2026-08-26, thay cho kiểu Việt Nam chốt ngày 2026-08-22). Chi tiết:
+      `print-page/SKILL.md` §2d (bản in) · `export-excel/SKILL.md` §1a (file Excel)
+- [ ] Ô rỗng để **TRỐNG HẲN** (chốt 2026-08-22) — KHÔNG chèn `—`, `-`, `N/A`, `(không có)`.
+      Trong `.vue` viết `{{ x || '' }}` (giữ `|| ''` để số `0` vẫn ra trống như hành vi cũ).
+      ⚠️ Không đụng dấu `-` dùng làm **ký tự phân cách** (`name + '-' + position`). Xem
+      `list-page/SKILL.md` §3b-3
 - [ ] Chữ trong ô để **thường**, kể cả cột Mã — không `font-weight-bold`
 - [ ] Chữ đỏ **chỉ** dùng cho lỗi validate / nút nguy hiểm / giá trị cũ trong lịch sử
 
@@ -220,8 +225,35 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 ### E. Chi tiết
 - [ ] Số phiếu hiện ngay dưới/sau tiêu đề màn
 - [ ] Tiêu đề `Chi tiết <đối tượng>: <mã>` — không có mã thì để trần, không lấy tên thay
-- [ ] Lịch sử mặc định **ẩn**, click mới mở; có đủ 3 bộ lọc (Loại hành động / Người thực hiện /
-      Khoảng thời gian); sắp mới → cũ; dropdown người thực hiện dạng `Mã phòng – Tên NV`
+
+#### E1. Lịch sử thay đổi — ĐỌC `entity-history/ui-base.md` TRƯỚC KHI VIẾT MARKUP
+
+Đây là khối sinh lỗi lặp nhiều nhất khi port. **Không tự dựng UI**, dùng lại component có sẵn:
+`components/assign/SystemInfoSection.vue` (khối trong màn chi tiết) và
+`components/assign/customer/CustomerHistoryModal.vue` (popup ở màn danh sách).
+
+- [ ] Làm **ĐỦ 2 NƠI** như màn Khách hàng: popup mở từ menu ⋮ ở màn **danh sách** *và* khối
+      "Lịch sử" ở màn **chi tiết**. Làm 1 nơi rồi báo xong là thiếu
+- [ ] Hai nơi hiển thị **y hệt nhau** (bố cục, chữ, màu, bộ lọc, thứ tự)
+- [ ] Khối ở màn chi tiết mặc định **ẩn**, click mới mở (lazy load lần mở đầu)
+- [ ] Sắp **MỚI → CŨ** (BE `orderByDesc('changed_at')`)
+- [ ] 4 ô lọc: Loại hành động · Người thực hiện · Từ ngày · Đến ngày. **Bấm "Tìm kiếm" mới lọc**
+      (2 state `filters` / `appliedFilters`), "Làm mới" reset chứ không gọi lại API
+- [ ] "Loại hành động" = **đúng 3 nhóm cố định** `create` Tạo mới / `update` Thay đổi thông tin /
+      `status` Thay đổi trạng thái — giống nhau ở MỌI màn. Lọc bằng `log.action_group`
+- [ ] 2 ô lọc lấy từ API `filter-options`, **KHÔNG suy từ log đang tải**. `performers` = toàn bộ
+      nhân sự cùng công ty người tạo bản ghi, dạng `MÃ PHÒNG - Tên NV` (dòng log trên timeline thì
+      **chỉ in tên**, phòng ban in riêng bên cạnh)
+- [ ] Lọc ngày theo `created_at_raw` (`Y-m-d`), lọc người theo `actor_id`
+- [ ] Một mục log theo thứ tự cố định: thời gian → tên hành động → người thực hiện → thay đổi → ghi chú
+- [ ] Giá trị **cũ đỏ `#dc2626` → mới xanh `#16a34a`**, tên bản ghi bị sửa xám `#475569`;
+      giá trị trống in `(trống)`; không có người thực hiện in `Hệ thống`
+- [ ] Bảng con (danh sách thiết bị, người liên hệ…) in theo **3 nhóm có nhãn chữ**: thêm mới → đã
+      xóa → sửa thông tin. Không dùng ký hiệu `~ - +`. Dòng sửa chỉ liệt kê trường đã đổi
+- [ ] **Mọi** giá trị log đi qua `SiValue` (6 vị trí, kể cả `r.detail` và `m.name`) — bỏ sót là
+      đường dẫn tệp hiện nguyên URL dài
+- [ ] Đủ 4 trạng thái: đang tải / lỗi tải (+ nút Thử lại) / chưa có log / lọc không ra
+- [ ] Khóa – Mở khóa – Duyệt – Từ chối đều **ghi log**, action lạ tự rơi vào nhóm `status`
 
 ### F. Import / Xuất
 - [ ] Import dùng `V2BaseImportModal`; có file mẫu tải về được
@@ -271,6 +303,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 | Để ô "Bộ phận"/"Nhân viên" hiện mà BE không lọc theo | Ô lọc chết, user chọn mãi không ra | `:disable_part` / `:disable_employee` — đối chiếu `searchByFilter` của BE xem thật sự lọc theo cấp nào |
 | `$axios` tải file thiếu `Authorization` | Xuất Excel 401 | Tự gắn token cho request export |
 | Bê nguyên `title` cho panel lọc | Mỗi màn một tiêu đề khác nhau | Bỏ prop, dùng mặc định "Bộ lọc danh sách" |
+| Tự dựng khối "Lịch sử" ở màn chi tiết cho nhanh | Mỗi màn một kiểu timeline, dropdown "Loại hành động" mỗi màn một danh mục — user không đối chiếu được | Dùng lại `SystemInfoSection.vue`, đọc `entity-history/ui-base.md`. Xem mục E1 |
+| Chỉ làm lịch sử ở màn chi tiết, quên popup ở màn danh sách | Nghiệm thu xong user quay lại yêu cầu bổ sung | Chuẩn màn Khách hàng là **2 nơi** |
+| Suy 2 ô lọc lịch sử từ log đang tải | Dropdown chỉ có 1-2 dòng, user tưởng mất dữ liệu | Gọi `filter-options`, fallback 3 nhóm hard-code |
 | Đổi route mà quên dữ liệu đã lưu URL trong DB | Màn bị đá 404 | Grep xem đường dẫn có bị lưu DB / so khớp ở BE không; redirect FE **không** cứu được |
 
 ---
@@ -285,6 +320,8 @@ grep -rn "action\.key ==="                <thư-mục-feature>   # V2BaseRowActi
 grep -rn "V2BaseFilterPanel"              <thư-mục-feature>   # phải là V2BaseSmartFilterPanel
 grep -rn "advanced-filters"               <thư-mục-feature>   # bộ lọc dựng tay
 grep -rn "thành công'"                    <thư-mục-feature>   # câu toast tự chế, so với bảng QLDA
+grep -rn "log.action !=="                 <thư-mục-feature>   # lịch sử phải lọc theo action_group
+grep -rn "actionOptions"                  <thư-mục-feature>   # dựng từ log = sai, phải từ filter-options
 ```
 
 Nếu grep ra sạch mà mắt vẫn thấy lệch → mở màn **Danh mục khách hàng** đặt cạnh và so từng khối.

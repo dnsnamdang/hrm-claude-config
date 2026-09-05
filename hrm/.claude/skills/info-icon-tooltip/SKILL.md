@@ -121,7 +121,7 @@ Icon nằm sát nút xoá (×) của select2 → chừa khoảng trống, nếu 
 
 ```vue
 <template #cell-name="{ item }">
-    <span class="field-line text-dark font-weight-normal">{{ item.name || '—' }}</span>
+    <span class="field-line text-dark font-weight-normal">{{ item.name || '' }}</span>
     <template v-if="hasPriceByLevel(item)">
         <span :id="`service-price-info-${item.id}`" class="ml-1" style="cursor: pointer; color: #94a3b8">
             <i class="ri-information-line" style="font-size: 14px"></i>
