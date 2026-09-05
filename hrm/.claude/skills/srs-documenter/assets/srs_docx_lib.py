@@ -94,6 +94,33 @@ ACTOR_P2 = 'Người xem danh mục (P2)'
 ACTOR_BOTH = 'Người dùng có quyền P1 hoặc P2'
 
 
+# ------------------------------------------------------- quy dinh trinh bay
+FONT_NAME = 'Times New Roman'
+BODY_PT = 13      # van xuoi, bullet, Heading 2-3
+H1_PT = 18        # Heading 1
+TABLE_PT = 10     # chu trong bang (giu nho de bang 8 cot khong vo)
+CAPTION_PT = 13   # chu thich ten hinh anh (chot 05/09/2026: theo co chu than bai)
+
+
+def set_font_name(style_or_run, name=FONT_NAME):
+    """Ep font cho DU 4 slot rFonts — python-docx chi set ascii/hAnsi nen chu co dau
+    van co the roi ve font khac tuy may."""
+    style_or_run.font.name = name
+    rpr = style_or_run.element.get_or_add_rPr()
+    rfonts = rpr.find(qn('w:rFonts'))
+    if rfonts is None:
+        rfonts = OxmlElement('w:rFonts')
+        rpr.append(rfonts)
+    # Heading cua template mac dinh tro sang FONT THEME (asciiTheme="majorHAnsi" =
+    # Calibri Light). Con thuoc tinh Theme thi Word uu tien no va XOA w:ascii khi
+    # luu lai (buoc cap nhat muc luc) -> heading khong ra Times New Roman.
+    for slot in ('w:asciiTheme', 'w:hAnsiTheme', 'w:eastAsiaTheme', 'w:cstheme'):
+        if rfonts.get(qn(slot)) is not None:
+            del rfonts.attrib[qn(slot)]
+    for slot in ('w:ascii', 'w:hAnsi', 'w:eastAsia', 'w:cs'):
+        rfonts.set(qn(slot), name)
+
+
 class SrsDoc(object):
     """Mot tai lieu SRS theo form chuan."""
 
@@ -118,13 +145,23 @@ class SrsDoc(object):
         sec.left_margin = Inches(1.25)
         sec.right_margin = Inches(1.25)
 
+        # QUY DINH TRINH BAY (chot 2026-09-05, ap cho ca SRS lan HDSD):
+        #   - Toan bo tai lieu font Times New Roman
+        #   - Co chu 13 cho van xuoi / bullet / Heading 2-3 (tru trang bia va Heading 1)
+        #   - Heading 1: 18pt, CAN GIUA, bat dau tu DAU TRANG MOI
+        #   - Chu thich ten hinh anh: CAN GIUA
+        # Rieng chu trong BANG giu 10pt cho khoi vo bang 8 cot.
         st = doc.styles['Normal']
-        st.font.name = 'Calibri'
-        st.font.size = Pt(11)
-        for name, size in [('Heading 1', 20), ('Heading 2', 16), ('Heading 3', 14)]:
+        set_font_name(st, FONT_NAME)
+        st.font.size = Pt(BODY_PT)
+        for name, size in [('Heading 1', H1_PT), ('Heading 2', BODY_PT), ('Heading 3', BODY_PT)]:
             hs = doc.styles[name]
+            set_font_name(hs, FONT_NAME)
             hs.font.size = Pt(size)
             hs.font.color.rgb = RGBColor(0x2F, 0x54, 0x96)
+        h1 = doc.styles['Heading 1']
+        h1.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        h1.paragraph_format.page_break_before = True
         self.doc = doc
 
     # -------------------------------------------------------- trang dau
@@ -140,7 +177,7 @@ class SrsDoc(object):
             par.alignment = WD_ALIGN_PARAGRAPH.CENTER
             r = par.add_run(text)
             r.bold = True
-            r.font.size = Pt(24)
+            r.font.size = Pt(24)   # trang bia — KHONG ap quy tac 13pt
 
     # ------------------------------------------------------------- text
     def h1(self, t):
@@ -170,14 +207,14 @@ class SrsDoc(object):
             for para in c.paragraphs:
                 for r in para.runs:
                     r.bold = True
-                    r.font.size = Pt(10)
+                    r.font.size = Pt(TABLE_PT)
         for row in rows:
             cells = t.add_row().cells
             for i, v in enumerate(row):
                 cells[i].text = '' if v is None else str(v)
                 for para in cells[i].paragraphs:
                     for r in para.runs:
-                        r.font.size = Pt(10)
+                        r.font.size = Pt(TABLE_PT)
         if widths:
             for r in t.rows:
                 for i, w in enumerate(widths):
@@ -289,7 +326,7 @@ class SrsDoc(object):
         cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r = cap.add_run('Hình %d: %s' % (self._fig, caption))
         r.italic = True
-        r.font.size = Pt(9.5)
+        r.font.size = Pt(CAPTION_PT)
         r.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 
     def _png(self, name):
@@ -384,8 +421,6 @@ class SrsDoc(object):
         par = self.p('%s: %s' % (head, lead))
         add_hyperlink(par, COMMON_DOC + ANCHOR.get(anchor, ''), COMMON_TITLE)
         par.add_run('%s%s' % ('' if tail[:1] in '.,;:' else ' ', tail))
-        for run in par.runs:
-            run.font.size = Pt(10.5)
         return par
 
     # ------------------------------- Phan 4: bang quy tac nghiep vu (form 2026-08-28)
@@ -410,11 +445,36 @@ class SrsDoc(object):
     def save(self, verbose=True, update_fields=True):
         os.makedirs(os.path.dirname(self.out), exist_ok=True)
         self.doc.save(self.out)
+        self._force_times_new_roman()
         if update_fields:
             self._update_fields_by_word()
         if verbose:
             self.selfcheck()
         return self.out
+
+    def _force_times_new_roman(self):
+        """Ep FONT THEME cua file = Times New Roman.
+
+        Khung mac dinh cua python-docx co theme Calibri/Cambria; moi style khong khai bao
+        font ro rang (TOC, Caption, style bang...) deu roi ve theme -> tai lieu lan lon
+        2 font. Sua thang trong theme1.xml sau khi luu la chac an nhat.
+        """
+        import re
+        import shutil
+        import zipfile
+
+        with zipfile.ZipFile(self.out) as z:
+            entries = [(i, z.read(i.filename)) for i in z.infolist()]
+        tmp = self.out + '.tmp'
+        with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as z:
+            for info, data in entries:
+                if info.filename.startswith('word/theme/'):
+                    xml = data.decode('utf-8')
+                    xml = re.sub(r'(<a:(?:majorFont|minorFont)>\s*<a:latin typeface=")[^"]*"',
+                                 r'\g<1>%s"' % FONT_NAME, xml)
+                    data = xml.encode('utf-8')
+                z.writestr(info, data)
+        shutil.move(tmp, self.out)
 
     def _update_fields_by_word(self):
         """Ep Word cap nhat MUC LUC that su.

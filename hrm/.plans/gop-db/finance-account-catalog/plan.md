@@ -428,3 +428,30 @@ Vừa hoàn thành: Fix logo vỡ màn In tài khoản — data URI letterhead t
 Đang làm dở: (không)
 Bước tiếp theo: User verify browser — mở /finance/accounts → In → logo Tân Phát hiển thị đúng (cả preview lẫn khi bấm In). Còn nút "In" nếu icon fa vẫn vỡ thì báo (thuộc layout, không ảnh hưởng bản in).
 Blocked:
+
+---
+
+## Phase 10 — Đưa form Tạo/Sửa về bố cục ERP (redmine 11300, 2026-09-04)
+
+- [x] Gộp 2 thẻ "Vị trí trong hệ thống tài khoản" + "Thông tin tài khoản" thành **một khối
+      "Thông tin chung"**, 6 ô trên cùng một lưới theo đúng thứ tự ERP
+      (`accounting/accounts/form.blade.php`): Số tài khoản → Tên tài khoản → Loại tài khoản →
+      Theo dõi công nợ → Tài khoản mẹ → Bậc tài khoản.
+- [x] Bỏ ô **Trạng thái**: ERP không có, và HRM đã có nút Khóa / Mở khóa ở footer làm đúng việc
+      đó. `status` vẫn gửi nguyên giá trị cũ trong payload để lưu không vô tình mở khoá bản ghi.
+- [x] KHÔNG port ô "Ghi chú" của ERP — bảng `accounts` không có cột `note`, ô đó bên ERP gõ xong
+      là mất.
+- [x] Giữ nguyên phần HRM làm tốt hơn: dòng chú thích dưới mỗi ô, khoá ô khi tài khoản đã có con,
+      cảnh báo bản ghi chưa gán Loại tài khoản, validate.
+- [ ] User verify trên dev, so cạnh 2 cổng.
+
+### Checkpoint — Phase 10
+
+```text
+Vừa hoàn thành: gộp form về 1 khối theo ERP, bỏ ô Trạng thái.
+Đang làm dở: không.
+Bước tiếp theo: user so 2 cổng trên dev.
+Blocked: không.
+Verify: compile template + parse script `AccountFormComponent.vue`; đối chiếu từng ô với
+`accounting/accounts/form.blade.php` của ERP; `accounts` trên DB không có cột `note`.
+```

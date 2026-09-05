@@ -236,4 +236,4 @@ File tham chiếu thêm: [nếu có module tương tự]
 - BE service: `hrm-api/Modules/Assign/Services/ProjectPhaseService.php`
 - Import helper: `hrm-client/utils/import-helper.js`
 - Import error helper: `hrm-client/utils/import-error-helper.js`
-- BOM import: `hrm-client/pages/assign/bom-list/components/BomBuilderImportModal.vue`
+- BOM import: `hrm-client/pages/assign/bom-list/components/BomImportModal.vue`

@@ -116,10 +116,29 @@ User đã chốt: **không chỉ đọc FE của màn** — phải đọc source
 > *(`assets/gen_hdsd_mau.py` là bản đầy đủ một file, giữ lại để tham chiếu cách dựng.
 > Bản `hdsd_p5_work/hdsd_clean.py` / `HDSDClean` nêu ở tài liệu cũ KHÔNG còn tồn tại trong repo.)*
 >
+> **QUY ĐỊNH TRÌNH BÀY — chốt 05/09/2026, áp cho CẢ SRS lẫn HDSD.**
+> Đã nằm sẵn trong **style của `assets/HDSD_MAU.docx`** → generator **không phải làm gì thêm**,
+> và **tuyệt đối không được ép lại bằng direct formatting**:
+>
+> | Thành phần | Quy định | Nằm ở đâu |
+> |---|---|---|
+> | Toàn bộ tài liệu | Font **Times New Roman** | style `Normal` + `word/theme/theme1.xml` |
+> | Heading 1 | **18pt**, **căn giữa**, **bắt đầu từ đầu trang mới** | style `Heading 1` (`jc=center` + `pageBreakBefore`) |
+> | Trang bìa | giữ nguyên cỡ chữ lớn của mẫu — **miễn trừ** quy tắc 13pt | style `Title` |
+> | Văn xuôi, bullet, Heading 2/3 | **13pt** | `Normal` 13pt, Heading 2/3 không khai size → kế thừa |
+> | Chú thích tên hình ảnh | **căn giữa**, **13pt** | style `Caption` (`jc=center`, kế thừa cỡ chữ của `Normal`) |
+> | Chữ trong bảng | kế thừa `Normal` | style bảng |
+>
+> ⚠️ **Bẫy: Heading của file mẫu trỏ sang FONT THEME** (`w:asciiTheme="majorHAnsi"`). Còn thuộc
+> tính `*Theme` thì Word ưu tiên nó và **xoá `w:ascii`** khi lưu lại ở bước cập nhật mục lục →
+> heading không ra Times New Roman. Đã xử lý một lần trong `HDSD_MAU.docx`: bỏ hết `*Theme` trong
+> `styles.xml` + đổi `majorFont`/`minorFont` của `theme1.xml` sang Times New Roman.
+> **Đổi file mẫu sau này phải làm lại đúng 2 việc đó.**
+>
 > **Luật vàng: KHÔNG áp direct formatting — để style của template quyết định tất cả.**
 > | Thành phần | Đúng (như file mẫu) | Sai (đừng làm) |
 > |---|---|---|
-> | Heading 1/2/3 | `add_paragraph(text, style='Heading N')`, không set gì thêm → tự ra trái, xanh, font heading | Canh giữa, ép Times New Roman, ép size, ép line-spacing |
+> | Heading 1/2/3 | `add_paragraph(text, style='Heading N')`, không set gì thêm → tự ra đúng quy định trên | Ép canh giữa / ép font / ép size / ép line-spacing / tự chèn page break |
 > | Body | chỉ set `alignment = JUSTIFY` | Ép 12pt / giãn dòng 1.5 / space_before/after |
 > | List Bullet | `style='List Bullet'`, không set gì thêm | Ép font, ép alignment, ép spacing |
 > | Ô bảng | chỉ gán `cell.text`; đậm dòng tiêu đề do table style tự làm | Ép bold/font/size từng run |
@@ -132,6 +151,18 @@ User đã chốt: **không chỉ đọc FE của màn** — phải đọc source
 > → phải = **2**; đếm tương tự cho Normal + List Bullet → phải = **10**; đếm run trong ô bảng có
 > `font.name|font.size|bold` → phải = **0**. (2 và 10 là phần bìa + mục lục kế thừa từ template.)
 > Lệch số nghĩa là còn direct formatting sót → sửa rồi build lại.
+> **Kiểm định dạng theo quy định 05/09/2026** (chạy trên file ĐÃ finish, tức đã qua Word):
+> ```python
+> import re, zipfile
+> from docx import Document
+> d = Document(OUT); h1 = d.styles['Heading 1']
+> assert h1.font.size.pt == 18 and str(h1.paragraph_format.alignment).startswith('CENTER') >        and h1.paragraph_format.page_break_before is True, 'Heading 1 sai quy định'
+> assert d.styles['Normal'].font.size.pt == 13, 'Chữ thân bài phải 13pt'
+> assert str(d.styles['Caption'].paragraph_format.alignment).startswith('CENTER'), >        'Chú thích hình phải căn giữa'
+> with zipfile.ZipFile(OUT) as z:
+>     theme = z.read('word/theme/theme1.xml').decode('utf-8')
+> assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New Roman'}
+> ```
 > Muốn soi mắt thường: `soffice --headless --convert-to pdf` rồi render trang thân bài bằng PyMuPDF,
 > so cạnh trang tương ứng của `assets/HDSD_MAU.docx`.
 

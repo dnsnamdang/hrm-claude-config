@@ -664,6 +664,29 @@ vẫn đủ, `npm run dev` chạy bình thường. Đã verify bằng `vue-templ
 
 ---
 
+## Phase 13 — Vá QA redmine 11295 / 11296 (2026-09-04)
+
+- [x] **11295** — ô tìm nhanh bỏ chữ "hoặc người tạo" khỏi placeholder (đã có ô lọc Người tạo ở
+      tìm kiếm nâng cao). Chỉ đổi CHỮ, không đụng phạm vi tìm của BE.
+- [x] **11296** — dán URL id không tồn tại: trước hiện toast kỹ thuật **"Item Not Found!"** (câu
+      của `app/Exceptions/Handler.php` dùng chung) và để lại form rỗng trông như phiếu mới. Nay
+      báo **"Không tìm thấy dữ liệu"** rồi trả về danh sách; 403 cũng xử lý cùng kiểu. Áp cho cả
+      3 màn giữ hàng (hủy / gia hạn / điều chuyển) như QA yêu cầu.
+- [ ] User verify lại trên dev.
+
+### Checkpoint — Phase 13
+
+```text
+Vừa hoàn thành: 11295 + 11296 (phần màn Yêu cầu hủy hàng giữ).
+Đang làm dở: không.
+Bước tiếp theo: user bấm lại trên dev.
+Blocked: không.
+Verify: compile template + parse script các file .vue đã sửa.
+KHÔNG sửa `app/Exceptions/Handler.php` (tài sản dùng chung) — mỗi màn tự đổi câu thông báo.
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 1. **KHÔNG bắn POST/PUT/DELETE vào id thật** khi quét route. Chỉ dùng phiếu tự tạo.

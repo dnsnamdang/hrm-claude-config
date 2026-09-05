@@ -1,6 +1,6 @@
 # Hàng sắp hết hạn giữ (ERP → HRM) — KHẢO SÁT
 
-- **Trạng thái**: KHẢO SÁT XONG + ĐÃ CHỐT HƯỚNG (2026-08-27) — chưa code, chưa có `plan.md`
+- **Trạng thái**: KHẢO SÁT XONG + ĐÃ CHỐT HƯỚNG (2026-09-03) — các bước thực thi ở [plan.md](./plan.md), chưa code
 - **Phạm vi**: màn `Hàng sắp hết hạn giữ` — báo cáo tra cứu, CHỈ ĐỌC
 - **Phân hệ đích**: Tài chính, nhóm menu **Giữ hàng** — placeholder đã có sẵn ở
   `hrm-client/components/subsystem-menu/finance.js:178` (mục `{ label: 'Hàng sắp hết hạn giữ' }`, thiếu `link`)
@@ -90,9 +90,8 @@ Mọi chỗ khác trong hệ thống dùng chiều **ngược lại**:
 | `HomeController.php:2341` | `return_date <= hôm nay + warning_day` |
 | HRM `PrepickExtendRequestService::warningDate()` (đã port, user đã chốt) | `expire_date <= hôm nay + warning_day` |
 
-→ **Đề xuất**: bản HRM dùng `expire_date <= CURDATE() + configs.warning_day AND qty > 0`
-(đúng nghĩa "sắp hết hạn", đúng với màn Gia hạn hàng giữ đã port). **Cần user xác nhận** vì
-số dòng trên màn HRM sẽ khác hẳn ERP — QA đối chiếu 2 cổng sẽ thấy lệch.
+→ **User chốt (2026-09-03): GIỮ NGUYÊN hành vi ERP**, không đảo lại cho xuôi — để QA đối chiếu 2
+cổng ra cùng số. Ghi lại đây vì nhìn code sẽ tưởng là bug: đây là quyết định có chủ đích.
 
 ---
 
@@ -102,7 +101,7 @@ số dòng trên màn HRM sẽ khác hẳn ERP — QA đối chiếu 2 cổng s�
 |---:|---|---|---|
 | E1 | **Bung chi tiết luôn RỖNG.** Blade gửi `stock_id: product.stock_id` nhưng controller đọc `$request->product_id`; mà tầng 1 select `p.id`, **không có** cột `stock_id` → gửi lên `undefined` | `expiringPrepick.blade.php:257` vs `WarehouseInfosController.php:350`. Màn anh em `prepickIndex.blade.php:460` gửi đúng `product_id: product.id` | Gửi đúng `product_id` |
 | E2 | Điều kiện ngày ngược nghĩa (mục 3) | | Đảo lại theo `warning_day` xuôi |
-| E3 | Ô lọc **Kho** (bản kế toán) không có tác dụng — `searchByFilter` không đọc `$request->warehouse` | `PrepickDetail.php:50-145` | Bỏ ô lọc, hoặc lọc thật qua `accounting_stocks` (chờ chốt) |
+| E3 | Ô lọc **Kho** (bản kế toán) không có tác dụng — `searchByFilter` không đọc `$request->warehouse` | `PrepickDetail.php:50-145` | Màn anh em *Danh sách hàng giữ* của HRM **đã dựng lọc Kho hoạt động thật** (`PrepickStockReportService::applyProductFilters()` dòng 320-330 — "hàng hoá có tồn kho kế toán ở kho đã chọn"). User chốt **GIỮ ô lọc** cho đồng bộ 2 màn |
 | E4 | `GROUP BY pds.product_id` mà vẫn `SELECT pds.employee_id, pds.expire_date` → 2 cột là của **một lô bất kỳ**; bật `ONLY_FULL_GROUP_BY` là văng lỗi | `PrepickDetail.php:54-56` | Đã có cách vá ở `PrepickStockReportService` (lỗi #1) — dùng lại |
 | E5 | Tầng 1 lọc theo bộ lọc, tầng 2 lọc bằng bộ khác (không nhận `customer_id`, không nhận `brand/model/name/code`) → bung ra thấy lô không khớp bộ lọc | `getPrepickDetails` chỉ nhận company/department/employee/status | Dùng CHUNG `applyPrepickFilters()` cho cả 2 tầng |
 | E6 | Phạm vi dữ liệu dựa `isRole('Tổng giám đốc')` — trên DB gộp role ERP có `guard_name = web`, API spatie trả sai | `PrepickDetail.php:57` | Dùng trait `ChecksEmployeePermission` |
@@ -150,7 +149,7 @@ tầng 2 và bản xuất. Đúng tinh thần Bước 3b của skill (không ch�
 
 ---
 
-## 8. Quyết định đã chốt (user, 2026-08-27)
+## 8. Quyết định đã chốt (user, 2026-09-03)
 
 | Điểm | Chốt |
 |---|---|
@@ -159,8 +158,38 @@ tầng 2 và bản xuất. Đúng tinh thần Bước 3b của skill (không ch�
 | Cột Trạng thái + Hạn giữ | **CÓ** — `V2BaseBadge` + `utils/statusBadgeVariant.js` |
 | Xuất Excel | **CÓ** — popup chọn trường, xuất phẳng, dùng lại khuôn `prepick-stocks/components/export-excel.js` |
 | In danh sách | **CÓ** — gom Phòng ban → Nhân viên → Hàng hoá, dùng lại khuôn `prepick-stocks/print.vue` |
-| Ô lọc Kho | **BỎ HẲN** (giống màn Danh sách hàng giữ) → cột **Kho** ở tầng 1 cũng bỏ theo, vì `prepick_details` không gắn kho |
+| Ô lọc Kho | **GIỮ** (chốt 2026-09-03) — 2 màn anh em dùng chung bộ lọc. Cột **Kho** ở tầng 1 vẫn bỏ vì `prepick_details` không gắn kho |
+| Nguồn kho của dropdown | **GIỮ `accounting_warehouses`** (kho KẾ TOÁN), KHÔNG đổi sang `warehouses` (kho vật lý) như ERP — chốt 2026-09-04, xem mục 8b |
+| Kho đã khóa | **BỎ khỏi dropdown, CHỈ ở màn mới** — màn Danh sách hàng giữ giữ nguyên (chốt 2026-09-04) |
+| Popup Lịch sử giữ hàng | **GIỮ** (chốt 2026-09-03) — ERP không có, nhưng modal + truy vấn đã dùng chung sẵn nên chi phí ~0, và bỏ đi thì cột Hành động rỗng |
 | `config()` / `warningDate()` | **TÁCH ra dùng chung**, rồi test lại màn Yêu cầu gia hạn hàng giữ ngay sau khi tách |
+
+## 8b. Dropdown "Lọc theo kho" đổ KHÁC ERP — có chủ đích
+
+User phát hiện 2 màn ra 2 danh sách kho khác hẳn nhau. Khảo sát lại:
+
+| | ERP | HRM |
+|---|---|---|
+| Bảng | `warehouses` — kho **VẬT LÝ**, 23 dòng | `accounting_warehouses` — kho **KẾ TOÁN**, 55 dòng |
+| Ví dụ | `PTT - Phan Trọng Tuệ` · `LN - Liên Ninh` · `SG - Kho Sài Gòn` | `LN01 - Liên Ninh - Hàng bán` · `PTT01 - ...` · `SG03 - Chờ xóa` |
+| Phạm vi | kho user làm kế toán (`warehouse_accountants`); Super Admin thấy tất cả | mọi kho kế toán của công ty |
+| Nguồn | `Employee::getAccountingWarehousesAttribute()` — tên hàm gây hiểu nhầm, thực chất query bảng `warehouses` | `PrepickStockReportService::warehouseOptions()` |
+
+`accounting_warehouses.warehouse_id` trỏ về kho vật lý → 1 kho vật lý có nhiều kho kế toán con
+(Hàng bán / Hàng khuyến mại / Nhập xuất thẳng…).
+
+**Chốt: GIỮ kho kế toán.** Lý do:
+
+- Bộ lọc HRM chạy THẬT qua `accounting_stocks.accounting_warehouse_id` (đo thực tế: LN01 → 11 hàng
+  hoá, LN02 → 0, SG01 → 5). Đổ kho vật lý là id không khớp cột lọc.
+- Cột "Tổng SL trong kho" cũng tính từ `accounting_stocks` → cùng một đơn vị kho, nhất quán.
+- Ô lọc Kho bên ERP là **ô CHẾT** (`searchByFilter` không đọc `$request->warehouse`) nên KHÔNG có
+  hành vi gốc để bám theo. Thêm nữa `warehouse_accountants` trên DB local có **0 dòng** → ở ERP,
+  người không phải Super Admin mở ra dropdown **rỗng**.
+
+**Kho đã khóa:** `warehouseOptions()` không lọc `status` nên liệt kê cả 7 kho `status = 2` (Chờ xóa)
+và 3 kho `status = 0`. User chốt **chỉ sửa màn mới**: thêm tham số `$onlyActive` mặc định `false`,
+màn Danh sách hàng giữ giữ nguyên 55 kho, màn Hàng sắp hết hạn giữ còn 45 kho.
 
 ### Hệ quả cần biết của quyết định "giữ nguyên hành vi ERP"
 

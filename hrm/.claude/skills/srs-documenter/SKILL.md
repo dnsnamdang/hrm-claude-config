@@ -368,19 +368,45 @@ Font dùng `C:\Windows\Fonts\segoeui.ttf` / `segoeuib.ttf` / `segoeuii.ttf` — 
 
 ## Thiết lập file .docx
 
+**QUY ĐỊNH TRÌNH BÀY — chốt 05/09/2026, áp cho CẢ SRS lẫn HDSD.** `SrsDoc` đã làm sẵn hết,
+generator **không được** ép lại font/size/căn lề — cứ dùng `d.h1() / d.h2() / d.p() / d.table()`.
+
+| Thành phần | Quy định |
+|---|---|
+| Toàn bộ tài liệu | Font **Times New Roman** |
+| Heading 1 | **18pt**, **căn giữa**, **bắt đầu từ đầu trang mới** |
+| Trang bìa (2 dòng `title_block`) | 24pt đậm căn giữa — **miễn trừ** quy tắc 13pt |
+| Văn xuôi, bullet, Heading 2/3 | **13pt** |
+| Chữ trong bảng | 10pt (`TABLE_PT`) — giữ nhỏ để bảng 8 cột không vỡ trang |
+| Chú thích tên hình ảnh | **căn giữa**, **13pt** nghiêng (`CAPTION_PT`) |
+
 ```python
 sec = doc.sections[0]
 sec.page_width  = Inches(8.5);  sec.page_height = Inches(11)     # Letter, bám bản mẫu
 sec.left_margin = Inches(1.25); sec.right_margin = Inches(1.25)
 
-doc.styles['Normal'].font.name = 'Calibri'
-doc.styles['Normal'].font.size = Pt(11)
-for name, size in [('Heading 1',20), ('Heading 2',16), ('Heading 3',14)]:
+set_font_name(doc.styles['Normal'])                    # Times New Roman, đủ 4 slot rFonts
+doc.styles['Normal'].font.size = Pt(BODY_PT)           # 13
+for name, size in [('Heading 1', H1_PT), ('Heading 2', BODY_PT), ('Heading 3', BODY_PT)]:
+    set_font_name(doc.styles[name])
     doc.styles[name].font.size = Pt(size)
     doc.styles[name].font.color.rgb = RGBColor(0x2F,0x54,0x96)   # xanh navy như bản mẫu
+h1 = doc.styles['Heading 1'].paragraph_format
+h1.alignment = WD_ALIGN_PARAGRAPH.CENTER
+h1.page_break_before = True
 ```
 
-Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(10)`, dòng tiêu đề in đậm.
+Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)`, dòng tiêu đề in đậm.
+
+### 2 bẫy khi ép Times New Roman (đã trả giá)
+
+1. **Heading trỏ sang FONT THEME.** Style Heading của khung mặc định dùng
+   `w:asciiTheme="majorHAnsi"` (= Calibri Light). Còn thuộc tính `*Theme` thì Word **ưu tiên nó
+   và xoá `w:ascii`** khi lưu lại ở bước cập nhật mục lục → heading không ra Times New Roman.
+   → `set_font_name()` **xoá hết `*Theme`** rồi mới set `w:ascii/hAnsi/eastAsia/cs`.
+2. **Style không khai báo font (TOC, Caption, style bảng) rơi về theme.** Sửa style thôi chưa đủ.
+   → `save()` gọi `_force_times_new_roman()` ghi thẳng `word/theme/theme1.xml`
+   (`majorFont`/`minorFont` → Times New Roman) **sau khi lưu, trước khi cho Word cập nhật field**.
 
 ---
 
@@ -459,6 +485,17 @@ assert not any('URL đầy đủ' in t for t in paras), 'Còn dòng URL đầy �
 for s in ['Tổng quan','Mini-Spec','Tiêu chí nghiệm thu','Ngoài phạm vi','Chức năng liên quan',
           'Route (FE)']:
     assert not any(s in t for t in paras), 'Còn mục đã bỏ: %s' % s
+
+# ĐỊNH DẠNG (quy định 05/09/2026) — chạy trên file ĐÃ qua Word cập nhật mục lục
+import re, zipfile
+h1 = d.styles['Heading 1'].paragraph_format
+assert d.styles['Heading 1'].font.size.pt == 18,  'Heading 1 phải 18pt'
+assert str(h1.alignment).startswith('CENTER'),    'Heading 1 phải căn giữa'
+assert h1.page_break_before is True,              'Heading 1 phải sang trang mới'
+assert d.styles['Normal'].font.size.pt == 13,     'Chữ thân bài phải 13pt'
+with zipfile.ZipFile(OUT) as z:
+    theme = z.read('word/theme/theme1.xml').decode('utf-8')
+assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New Roman'},     'Font theme chưa phải Times New Roman'
 ```
 
 ---
