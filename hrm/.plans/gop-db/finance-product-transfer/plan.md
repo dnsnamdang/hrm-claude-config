@@ -321,7 +321,35 @@ sinh** (chỉ dùng nút *Lưu*, không bấm *Lưu và duyệt*), log lịch s�
 
 ---
 
-## Checkpoint — 2026-09-04
+## Checkpoint — 2026-09-04 (ĐÃ MERGE VÀO `gop_db`, CHƯA PUSH)
+
+**Vừa hoàn thành:** Phase 0-6 xong; Phase 7 xong 7.1-7.5. Đã commit 2 nhánh và **merge vào `gop_db`
+ở cả `hrm-api` và `hrm-client`** — mỗi repo đang **2 commit trước `origin/gop_db`**, CHƯA push.
+
+Cách merge (an toàn): commit nhánh feature → gộp `gop_db` (đã đi trước **39 commit** của người khác)
+vào nhánh feature trước → verify lại → mới merge ngược vào `gop_db` trong worktree `.worktrees/gop-db`.
+**KHÔNG xung đột** dù 3 file dùng chung (`CatalogHistoryService.php`, `Finance/Routes/api.php`,
+`finance.js`) đều bị người khác sửa trong 39 commit đó.
+
+Verify SAU merge: 8/8 endpoint 200 · test hồi quy FIFO **khớp tuyệt đối** baseline trước khi tách ·
+`php -l` sạch.
+
+**Đang làm dở / còn thiếu:**
+- Task 7.6 — tài liệu test case cho QA (chưa làm).
+- 4 phần chưa bấm thật trên trình duyệt: **màn chi tiết**, **Xuất Excel**, **In danh sách**,
+  **Cấu hình cột** (BE của cả 4 đã test bằng API, 200).
+- Nhánh **"Lưu và duyệt"** (hạch toán) chưa bấm trên UI — cố ý, để không ghi sổ thật vào DB dev.
+  BE đã đối chiếu code gốc ERP: khớp tuyệt đối.
+
+**Bước tiếp theo:** push `gop_db` lên remote (CHỜ USER DUYỆT) → bấm nốt 4 phần trên → viết test case.
+
+**Blocked:** 2 quyết định UI chờ user xác nhận —
+(1) nhãn nút hạch toán dùng "Lưu và duyệt" của `V2Footer` thay cho "Duyệt" của ERP;
+(2) nút "Thêm hàng hóa" ẩn hẳn khi chưa chọn đủ 3 kho (thay bằng dòng hướng dẫn).
+
+---
+
+## Checkpoint cũ — 2026-09-04
 
 **Vừa hoàn thành:** khảo sát ERP đầy đủ (`khao-sat.md`); phát hiện + sửa xong lỗi nhãn menu gán nhầm
 màn *Phiếu yêu cầu chuyển hàng* vào mục *Phiếu điều chuyển hàng* (Task 0.2); tách nhánh riêng
