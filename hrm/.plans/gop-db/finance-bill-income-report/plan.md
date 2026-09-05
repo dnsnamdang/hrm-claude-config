@@ -252,3 +252,34 @@ Bước tiếp theo: **user mở trình duyệt xác nhận** — 2 cột tài k
 popup (và kiểm vài màn khác: Khóa/Mở khóa/Duyệt phải KHÔNG đổi màu) · lỗi inline cột Số tiền và 2 ô
 Diễn giải · nhãn nút "Lưu và duyệt" · file mẫu import · luồng Quay lại từ màn Điều chỉnh công nợ.
 Blocked:
+
+## Phase T — Bộ tài liệu bàn giao (2026-09-05)
+
+- [x] Chụp 27 ảnh thật màn Phiếu báo có + Tổng hợp tiền về ngân hàng (Playwright MCP, 1440x900)
+      → `bir_shots/` (KHÔNG commit, `.gitignore` đã chặn `*_shots/`)
+- [x] `gen_srs.py` + `SRS - Phieu bao co.docx` — form chuẩn 2026-08-28: 4 phần, 16 chức năng
+      (FR-01…FR-16), sơ đồ tổng quan có phân cấp «include»/«extend», 14 quy tắc nghiệp vụ
+      dạng bảng 5 cột. 58 trang / 53 bảng / 34 ảnh.
+- [x] `gen_hdsd.py` + `HDSD_Phieu_bao_co.docx` — 8 phần + TỔNG QUAN, click-by-click theo từng
+      trường + giá trị điền sẵn, có mục "Hướng dẫn theo từng quyền" (4 nhóm) và FAQ.
+      44 trang / 16 bảng / 27 ảnh nội dung.
+- [x] `gen_testcase.py` + `testcase.xlsx` — 204 TC (P0 = 54%), 13 section La Mã + 13 TC phân
+      quyền (TC-ROLE-00…12, gồm 5 TC bỏ qua giao diện gọi thẳng chức năng ghi). Bộ kiểm tra
+      thuật ngữ in "OK - sach".
+- [x] Tự kiểm: SRS (16 mục Layout ghi menu, 16 đoạn quy tắc chung, Phần 4 đúng bảng 5 cột,
+      0 sơ đồ ký tự) · HDSD (mục lục đã cập nhật bằng Word, đúng heading màn này; direct
+      formatting Heading = 2, run trong ô bảng = 0 — khớp file mẫu) · Testcase (header 17 cột
+      ở dòng 17, 2 khối summary, dropdown DNS/TP, không freeze panes).
+
+> Ghi chú khi chụp ảnh: cổng dev `hrm-crm.eteksofts.com` thiếu 3 chunk giao diện nên KHÔNG mở
+> được màn Tạo/Sửa/Chi tiết (lỗi tải chunk) — ảnh danh sách/bộ lọc/cấu hình chụp trên cổng dev,
+> còn form + popup + chi tiết + màn tổng hợp chụp trên bản chạy local (cùng DB gộp).
+> Cấu hình cột của tài khoản DNS Admin đã được đưa về mặc định để ảnh đúng chuẩn tài liệu.
+
+### Checkpoint — 2026-09-05
+Vừa hoàn thành: **bộ 3 tài liệu bàn giao cho màn Phiếu báo có** (SRS .docx, HDSD .docx,
+testcase .xlsx) + 3 generator commit kèm.
+Đang làm dở: —
+Bước tiếp theo: user đọc lại 3 file, đặc biệt 2 nhánh chưa có dữ liệu thật (Thu nhà cung cấp,
+phiếu yêu cầu xuất hàng) xem mô tả đã khớp nghiệp vụ chưa.
+Blocked:

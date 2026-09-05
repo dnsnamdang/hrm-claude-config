@@ -179,3 +179,440 @@ Chạy thật trên trình duyệt: HRM `localhost:3000` ↔ ERP `127.0.0.1:8002
 Nhánh `exportable_*` và `is_begin` khi ghi sổ (0 dòng dữ liệu thật) · cửa vào Hoa hồng tháng
 (bảng nguồn 0 dòng) và Giao nhanh (màn nguồn chưa port) · nghiệp vụ số dư lẻ (chưa dựng được hợp
 đồng có dư lẻ trong ngưỡng) · phiếu **ngoại tệ** ở màn tạo/sửa (chưa có phiếu ngoại tệ nháp để bấm).
+
+---
+
+## Phase 11 — Rà chuẩn UI (soát lại 2026-09-05)
+
+Kết quả soát toàn màn theo skill `button-convention` / `modal-popup` / `list-page` +
+memory dùng chung. User chốt làm 2 việc trước: **màu nút footer** và **khối File đính kèm**.
+
+### 11.1 Màu nút ở footer (skill button-convention §2b)
+
+- [x] `BillAdjustDeptForm.vue:186` nút **Lưu**: `secondary` + icon `ri-draft-line`
+      → `primary` (teal `#1abc9c`) + icon `ri-save-3-line`
+- [x] `BillAdjustDeptForm.vue:194` nút **Lưu và duyệt**: bỏ `status="success"` (`#16a34a`)
+      → `primary` trần = teal `#1abc9c`, đúng nhóm Duyệt (chốt 2026-08-20, cùng màu `V2Footer`)
+- [x] `_id/index.vue` footer màn chi tiết: icon Xóa `ri-delete-bin-6-line` → `ri-delete-bin-line`,
+      text nút **"In phiếu"** → **"In"** (bảng text chuẩn §4.2)
+- [x] Thay `:disabled="saving"` → `:interactable="!saving"` trên cả 2 nút — `V2BaseButton`
+      KHÔNG có prop `disabled` (`components/V2BaseButton.vue:24-49`), nút vẫn bấm được
+- [x] Thêm `$safeLoadingStart()` / `$safeLoadingFinish()` (finally) + guard `if (this.saving) return`
+      vào `submit()` — hiện bấm Lưu 2 lần tạo 2 phiếu, bấm Lưu và duyệt 2 lần ghi 2 bộ bút toán
+
+### 11.2 File đính kèm — dùng lại khối của màn Đề nghị thanh toán
+
+Bỏ `<input type="file">` + `<ul><li>` tự chế (form dòng 106-131), dùng
+`pages/finance/bill-payment-requests/components/AttachmentSection.vue` qua prop `api-base`
+(đúng cách màn `borrow-export-requests` đã làm 2026-09-04).
+
+**BE** — khối này cần 3 endpoint theo khuôn `{apiBase}`:
+
+- [x] Thêm `BillAdjustDeptAttachmentService::sizes()` (copy `BillPaymentAttachmentService::sizes()` —
+      `Http::pool` HEAD lấy `Content-Length`)
+- [x] Thêm `BillAdjustDeptController::attachmentSizes()` + route `GET /{id}/attachment-sizes`
+- [x] Đổi route xoá file `POST /{id}/delete-file` → `DELETE /{id}/files` cho khớp 3 màn anh em
+      (`bill-payment-requests` :689, `addition-accounting-requests` :794). Controller `deleteFile()`
+      giữ nguyên — `$request->input('file_url')` đọc được cả query string của DELETE
+
+**FE**:
+
+- [x] `BillAdjustDeptForm.vue`: thay khối tự chế bằng `<AttachmentSection>` với
+      `:files` / `:pending-files` / `:request-id` / `api-base` / `:error-message` / `:readonly`
+- [x] Thêm 4 handler `onAddUploadedFile` / `onRemovePendingFile` / `onReplacePendingFile` /
+      `onRemoveSavedFile` + state `pendingFiles`; `attachment_urls` khi lưu = files đã lưu + pending
+- [x] Cập nhật `unsavedSnapshotSource()` cho khớp state mới
+- [x] Bỏ `onFilesChosen()` / `removeAttachment()` / `fileName()` cũ
+
+### 11.2b Bảng — thanh cuộn ngang ở CẢ TRÊN VÀ DƯỚI (skill list-page §3b-1)
+
+- [x] `AccountingDetailTable.vue`: bỏ `<div class="table-responsive">`, bọc `<V2BaseTableScroll>`
+      (trần, đúng như `bill-adjust-dept-requests/components/AdjustDetailTable.vue`)
+      · bảng 17 cột, tổng min-width ~2.580px (VNĐ) / ~2.860px (ngoại tệ) → LUÔN tràn ngang, mà
+        trước đó chỉ có thanh cuộn ĐÁY: phải kéo qua hết mọi dòng định khoản mới với tới nó
+      · bỏ `.table-responsive` còn thoát rule global `assets/scss/default.scss:85`
+        (`min-height: 50vh`) vốn kéo bảng 1-2 dòng lên hơn 400px
+
+**Đã rà, KHÔNG phải sửa:**
+
+- `index.vue` dùng `V2BaseDataTable`, prop `enableScrollSync` mặc định `true` → đã có thanh trên
+- 3 bảng trong popup (`ObjectSearchModal` 4 cột / `ContractPickerModal` 4 cột / `ExportRequestSearchModal`
+  3 cột, mỗi bảng chỉ 1 cột co giãn, modal `lg`/`xl`) → không tràn ngang, `V2BaseTableScroll` có bọc
+  cũng tự ẩn thanh trên
+- `_id/print.vue` dùng `<table>` trần — ĐÚNG: scoped CSS và component không sang được cửa sổ in
+  (skill print-page §1)
+
+### 11.3 Còn nợ (đã báo user, CHƯA làm)
+
+`text-muted` ra chữ ĐỎ ở 14 chỗ (layout `default-sidebar` bọc `.training-layout`, import
+`custom-assign.scss` ép `#dc3545 !important`) · 3 popup tự chế phân trang thay vì `V2BasePagination`
+· card thiếu `card-header section-header` (lệch 2 màn anh em) · `<span class="text-danger">*</span>`
+thay cho `<Required />` · 2 `BaseConfirmModal` xóa thiếu prop `danger` · popup duyệt thiếu mã phiếu ·
+2 hàm xóa thiếu lớp tải · 6 nút phân trang popup thiếu icon + `:disabled` chết ·
+ô Loại tiền chỉ báo lỗi bằng toast · `thead` bảng định khoản chưa sticky (17 cột, cuộn dọc là mất tiêu đề).
+
+### Checkpoint — 2026-09-05
+
+Vừa hoàn thành: Phase 11.1 (màu nút footer) + 11.2 (khối File đính kèm dùng chung) — BE 3 file sửa,
+FE 3 file sửa. Compile sạch 4/4 file `.vue`; 2 route mới đã đăng ký (`GET /{id}/attachment-sizes`,
+`DELETE /{id}/files`); `sizes()` / `attachmentSizes()` / `deleteFile()` đều resolve qua reflection.
+
+Đang làm dở: không có.
+
+Bước tiếp theo: user mở trình duyệt kiểm 4 việc chưa tự kiểm chứng được —
+(a) 2 nút footer ra cùng teal `#1abc9c`,
+(b) upload file ở màn Tạo → lưu → mở lại thấy file + đúng dung lượng,
+(c) màn Sửa bấm Xóa file (popup xác nhận) → file mất hẳn, không quay lại sau khi Lưu,
+(d) màn Chi tiết khối file ở chế độ chỉ đọc (không có nút Thêm tài liệu / Xóa).
+
+Blocked: không có.
+
+### ⚠️ Lỗi cũ mà việc thay khối đính kèm vừa sửa luôn
+
+Khối tự chế gửi `attachment_urls` = TOÀN BỘ danh sách, trong khi BE
+`BillAdjustDeptAttachmentService::uploadAttachments()` **NỐI** vào chuỗi cũ chứ không ghi đè
+(`mergeSourceAttachments()` cuối cùng còn `array_unique`). Hệ quả: ở màn Sửa, **gỡ file rồi bấm Lưu
+thì file quay trở lại** — chuỗi cũ trong DB vẫn còn URL đó. Khối dùng chung xoá file đã lưu bằng
+`DELETE {api-base}/{id}/files` ngay lúc bấm nên hết lỗi này; `attachment_urls` giờ chỉ gồm file
+chờ lưu.
+
+---
+
+## Phase 12 — Bố cục màn TẠO lệch ERP (user báo 2026-09-05)
+
+User: *"bố cục màn tạo phiếu kế toán khác với bên erp, ví dụ không có phiếu yêu cầu điều chỉnh
+công nợ"*. Đối chiếu `erp/resources/views/income_expenditure/bill_adjust_depts/form.blade.php`
+(:100-220) + `create.blade.php` + `formJs.blade.php`.
+
+### Bảng đối chiếu khối "Thông tin chung"
+
+| # | ERP | HRM trước | Kết luận |
+| --- | --- | --- | --- |
+| 1 | **Phiếu yêu cầu điều chỉnh công nợ** — ô chỉ đọc + **nút kính lúp mở popup chọn**, hiện khi KHÔNG đến từ 3 nguồn kia (`form.blade.php` :100-113) | chỉ `v-if="form.bill_adjust_dept_request_code"` → màn Tạo mới **không có ô này, cũng không có đường chọn** | ❌ THIẾU HẲN — đúng cái user chỉ ra |
+| 2 | **Tỷ giá** LUÔN hiện, khoá khi `type_money_id == 1`, kèm nút hiện tên tiền tệ (:153-166) | `v-if="isForeign"` → phiếu VNĐ không thấy tỷ giá | ❌ lệch |
+| 3 | **Loại tiền** khoá khi đã có phiếu YCĐC (`ng-disabled="form.bill_adjust_dept_request_id"`, :141) | không khoá | ❌ lệch |
+| 4 | Header card `Thông tin chung` + góc phải `<% form.creator %> - <% form.created_time %>` (:92-97) | card trần, không header; Trạng thái là 1 ô riêng trong lưới | ❌ lệch (cũng là mục 11.3 đã ghi) |
+| 5 | Header card `Chi tiết` + nút "Thêm chi tiết" ở góc phải (:233-238) | `.section-title` tự chế trong card-body | ❌ lệch |
+| 6 | Thứ tự hàng 1: nguồn → Ngày hạch toán → Loại tiền → Tỷ giá | Mã phiếu đứng đầu, đẩy lệch cả hàng | ❌ lệch |
+| 7 | Không có ô Mã phiếu / Phòng ban | có (thông tin hữu ích, đúng khuôn HRM) | ✅ GIỮ, dồn xuống hàng 2 |
+| 8 | Diễn giải `col-md-12`, File đính kèm `col-md-12` | giống | ✅ |
+
+### Popup "Yêu cầu điều chỉnh công nợ" (ERP `formJs.blade.php` :66-89)
+
+Nguồn `bill_adjust_dept_request.searchData` + ép `status = 2`
+(= `STATUS_AWAITING_APPROVE` — *"Chờ tạo phiếu kế toán"*).
+Cột: **STT · Mã phiếu · Ngày lập**. Ô tìm: **Mã phiếu** (text).
+Chọn xong → `getDataForBillAdjustDept` điền: `bill_adjust_dept_request_id/code` · `note` ·
+`details` · `date_accounting` · loại tiền + tỷ giá (**chỉ khi `request_type = 2` (NCC)**, YC khách
+hàng ép về VNĐ).
+
+→ HRM **KHÔNG cần BE mới**: `GET /finance/bill-adjust-dept-requests/pending` đã có sẵn và khớp
+tuyệt đối (gate `isAccountant()` như middleware ERP, ép `status = STATUS_AWAITING_APPROVE`, giới hạn
+theo công ty, hỗ trợ lọc `code`) — hiện chưa màn nào gọi. Nạp dữ liệu sau khi chọn dùng lại
+`GET /finance/bill-adjust-depts/source-data?bill_adjust_dept_request_id=`.
+
+### Task
+
+- [x] 12.1 Tạo `components/BillAdjustDeptRequestPickerModal.vue` — khuôn `ObjectSearchModal.vue`
+      (V2BaseModal), gọi `/finance/bill-adjust-dept-requests/pending`, 3 cột đúng ERP
+- [x] 12.2 Ô "Phiếu yêu cầu điều chỉnh công nợ" + nút kính lúp; hiện khi không đến từ 3 nguồn kia
+- [x] 12.3 Chọn xong → nạp `/source-data` (tách `loadSourceData` thành hàm nhận params dùng chung
+      cho cả cửa vào bằng query lẫn popup)
+- [x] 12.4 Tỷ giá LUÔN hiện, khoá khi VNĐ, hậu tố tên tiền tệ
+- [x] 12.5 Loại tiền khoá khi đã có phiếu YCĐC
+- [x] 12.6 Thêm `card-header section-header` cho 2 card ("Thông tin chung" + "Định khoản"),
+      góc phải card 1 = badge trạng thái + "{Người lập} - {Ngày lập}" (khuôn
+      `BillAdjustDeptRequestForm.vue` :17-37) — bỏ ô Trạng thái trong lưới
+- [x] 12.7 Xếp lại hàng 1 đúng ERP: nguồn → Ngày hạch toán → Loại tiền → Tỷ giá;
+      Mã phiếu / Người lập / Phòng ban xuống hàng 2
+
+- [x] 12.8 Màn XEM: ô nguồn chỉ hiện khi phiếu THỰC SỰ có YCĐC và hiện dạng **link** sang phiếu
+      yêu cầu (ERP `formShow.blade.php` :98-109) — không hiện ô rỗng kèm chữ "Chọn phiếu…"
+- [x] 12.9 Đổi phiếu nguồn NCC (ngoại tệ) → phiếu KH: đặt lại `exchange_rate = 1` khi BE không trả
+      trường này. `onCurrencyChange()` chỉ chạy khi user tự đổi ô, không chạy lúc gán bằng code →
+      giữ tỷ giá cũ là nhân sai toàn bộ cột quy đổi (ERP cũng dính, HRM sửa)
+
+### Checkpoint — 2026-09-05 (Phase 12)
+
+Vừa hoàn thành: dựng lại bố cục màn Tạo theo ERP. 1 file FE mới
+(`BillAdjustDeptRequestPickerModal.vue`) + 2 file sửa (`BillAdjustDeptForm.vue`,
+`AccountingDetailTable.vue`). **0 file BE** — `GET /finance/bill-adjust-dept-requests/pending`
+đã có sẵn và khớp đúng cái ERP làm.
+
+Kiểm chứng bằng HTTP kernel (nhân viên id 13, có quyền *Kế toán thanh toán*):
+`GET /bill-adjust-dept-requests/pending?per_page=3` → **HTTP 200, total 44 phiếu**, trả đủ
+`code` + `created_at`; `GET /bill-adjust-depts/source-data?bill_adjust_dept_request_id=6890` →
+**HTTP 200**, header 5 khoá + 2 dòng chi tiết. Compile sạch 3/3 file `.vue`.
+
+Đang làm dở: không có.
+
+Bước tiếp theo: user mở trình duyệt kiểm —
+(a) `/finance/bill-adjust-depts/create` có ô "Phiếu yêu cầu điều chỉnh công nợ" + nút kính lúp,
+(b) chọn 1 phiếu trong popup → điền mã phiếu + diễn giải + ngày hạch toán + bảng định khoản,
+(c) phiếu VNĐ vẫn thấy ô Tỷ giá (khoá, hậu tố "VNĐ"),
+(d) chọn phiếu YCĐC xong thì ô Loại tiền bị khoá,
+(e) 2 card có tiêu đề "Thông tin chung" / "Định khoản", góc phải card 1 có badge + "{Người lập} - {Ngày lập}".
+
+Blocked: không có.
+
+### Chưa làm (khác biệt ERP đã cân nhắc rồi GIỮ nguyên bản HRM)
+
+- Nút "Thêm dòng" — ERP ghi *"Thêm chi tiết"*; giữ chữ HRM theo bảng text chuẩn `button-convention` §4.2
+- Tiêu đề khối bảng — ERP ghi *"Chi tiết"*; HRM để *"Định khoản"* (nói rõ nội dung khối hơn)
+- Ô **Mã phiếu / Phòng ban** — ERP không có (ERP còn comment hẳn ô Mã phiếu ở `formShow`);
+  HRM giữ vì hữu ích, dồn xuống hàng 2 để hàng 1 khớp ERP
+- Popup chọn phiếu YCĐC dùng `V2BasePagination` (có cả chọn số dòng/trang) thay cặp nút
+  "Trang trước / Trang sau" của ERP — HRM là nguồn của giao diện (skill `erp-to-hrm-screen`)
+
+### 12.10 Đồng bộ ô chọn phiếu YCĐC theo khuôn màn Phiếu thu tiền (user chốt 2026-09-05)
+
+User: *"chỗ chọn phiếu yêu cầu điều chỉnh công nợ sử dụng giống như chọn phiếu đề nghị của màn
+finance/bill-incomes/create"*. Khuôn gốc: `bill-incomes/components/BillIncomeForm.vue` :14-30 +
+`IncomeRequestSearchModal.vue`.
+
+- [x] Ô nhập: **bỏ nút kính lúp riêng**, bấm THẲNG vào ô để mở popup; placeholder đổi thành
+      *"Nhấn vào đây để chọn phiếu yêu cầu điều chỉnh công nợ"*; thêm class `.picker-input`
+      (con trỏ bàn tay + nền TRẮNG dù `readonly`, copy :1295-1312 của màn kia)
+- [x] Popup: thêm ô lọc **Người lập** (`V2BaseSelectInModal` — bắt buộc trong modal),
+      dòng phụ ở header *"Chỉ phiếu đang Chờ tạo phiếu kế toán"*, `size="xl"`,
+      bảng 4 cột (STT · Mã phiếu yêu cầu · Người lập · Ngày lập), bấm CẢ DÒNG để chọn
+      (`.tr-hover` + `title`), `per_page` mặc định 10 như màn kia
+- [x] `modalId` đổi thành `choose-bill-adjust-dept-request` cho cùng lối đặt tên
+      (`choose-income-request`)
+
+**Khác 1 điểm CÓ CHỦ ĐÍCH**: popup mới dựng trên `V2BaseModal`, không tự khai `b-modal` + header +
+footer như `IncomeRequestSearchModal`. Skill `modal-popup` §0 chốt popup MỚI phải dùng khuôn chung;
+bản ở màn Phiếu thu tiền có TRƯỚC khuôn đó nên còn tự dựng — chép lại là nhân thêm nợ kỹ thuật.
+
+Kiểm chứng (HTTP kernel, nhân viên id 13 có quyền *Kế toán thanh toán*):
+`/bill-adjust-dept-requests/pending` → HTTP 200, `per_page=10` ra 44 phiếu ·
+`code=DNDCCN` ra 44 · `created_by=13` ra 4 — cả 3 ô lọc đều ăn, dòng trả về đủ
+`code` / `created_by_name` / `created_at`. Compile sạch 2/2 file.
+
+### 12.11 Bỏ ô KHÔNG có trong ERP (user chốt 2026-09-05 — *"bám sát erp cho tôi"*)
+
+Đếm lại nhãn trong `erp/.../bill_adjust_depts/form.blade.php` (file này dùng cho **cả create lẫn
+edit** — `edit.blade.php` không khai thêm nhãn nào): khối "Thông tin chung" có ĐÚNG **6 nhãn** —
+phiếu nguồn · Ngày hạch toán * · Loại tiền * · Tỷ giá * · Diễn giải * · File đính kèm.
+`formShow.blade.php` còn **comment hẳn** ô Mã phiếu (:92-96) và **không có trạng thái** ở bất kỳ đâu.
+
+- [x] Bỏ 3 ô HRM tự thêm: **Mã phiếu · Người lập · Phòng ban**
+- [x] Bỏ **badge trạng thái** ở góc phải đầu card — ERP không có trạng thái trong form lẫn màn xem.
+      Góc phải giữ đúng 1 thứ ERP có: dòng `{Người lập} - {Ngày lập}`
+      (`<% form.creator %> - <% form.created_time %>`)
+- [x] Bỏ lệnh gọi `GET /finance/bill-adjust-depts/generate-code` ở màn tạo — ERP không xem trước mã,
+      và mã thật do BE sinh lúc lưu (`BillAdjustDeptWriteService` :71), **không** nhận từ FE
+      (`BillAdjustDeptStoreRequest` không có rule `code` cấp phiếu). Route BE giữ nguyên, nay không
+      còn FE nào gọi
+- [x] Dọn import chết theo: `V2BaseBadge`, `statusBadgeVariant`
+
+⚠️ **Hệ quả cần user biết**: màn **Sửa / Chi tiết** giờ KHÔNG còn chỗ nào hiện trạng thái phiếu
+(trước đây có badge). Trạng thái vẫn xem được ở cột "Trạng thái" ngoài màn danh sách. Đúng như ERP,
+nhưng nếu muốn giữ badge riêng cho màn HRM thì báo để bật lại.
+
+📝 User tự sửa trong lúc làm: nhãn ô tỷ giá đổi thành **"Tỷ giá (VND)"** và bỏ hậu tố tên loại tiền
+(giữ nguyên, chỉ sửa lại comment cho khỏi mô tả sai).
+
+**Khối "Thông tin chung" sau khi sửa — khớp 1-1 với ERP:**
+
+| Vị trí | Ô | ERP |
+| --- | --- | --- |
+| đầu card | `Thông tin chung` + góc phải `{Người lập} - {Ngày lập}` | :92-97 |
+| 1 | Phiếu yêu cầu điều chỉnh công nợ (hoặc 1 trong 3 nguồn kia) | :100-127 |
+| 2 | Ngày hạch toán * | :131 |
+| 3 | Loại tiền * | :140 |
+| 4 | Tỷ giá * | :155 |
+| 5 | Diễn giải * (`col-12`) | :170 |
+| 6 | File đính kèm (`col-12`) | :180 |
+
+### 12.12 Bảng chi tiết — cột nào CHO SỬA, cột nào CHỈ HIỂN THỊ (user báo 2026-09-05)
+
+User: *"tiêu đề là chi tiết mà; cột mã khách hàng, phát sinh nợ, phát sinh có, đơn hàng/hợp đồng
+bên erp chỉ hiển thị thôi, có cho chọn đâu"*.
+
+Đọc `form.blade.php` :279-437. ERP gate từng ô bằng **điều kiện THEO DÒNG**, không phải theo phiếu:
+
+```
+rowLocked = form.bill_adjust_dept_request_id && !detail.fast_delivery_id
+```
+
+| Cột | `rowLocked` | không khoá | HRM trước |
+| --- | --- | --- | --- |
+| Số tài khoản | **select** (vẫn sửa) | select | ✅ đúng |
+| **Mã khách** (:296-307) | **text** | ô + nút chọn | ❌ luôn cho chọn |
+| **Phát sinh nợ / có** (:313-334) | **text** | input | ❌ luôn cho nhập |
+| Diễn giải (:336) | **input** (vẫn sửa) | input | ✅ đúng |
+| **Đơn hàng/Hợp đồng** (:343-357) | **text** | ô + nút — CHỈ khi `type` ∉ {1,5,7} | ❌ luôn cho chọn |
+| checkbox `is_begin` (:361) | **disabled** | bật | ❌ chỉ khoá theo `readonly` |
+| Phiếu YCXH (:369-378) | **text** | ô + nút khi `has_exportable && !is_begin` | ❌ chỉ gate `contract_type == 3` |
+| Mã phí · Mã vụ việc | **select** (vẫn sửa) | select | ✅ đúng |
+
+- [x] 12.12a Đổi tiêu đề khối bảng **"Định khoản" → "Chi tiết"** (ERP `<h4>Chi tiết</h4>` :235)
+- [x] 12.12b Thêm prop `requestLocked` + `sourceType`; dựng `isRowLocked(row)` rồi gate đúng 4 cột
+      user chỉ ra + checkbox `is_begin` + Phiếu YCXH
+- [x] 12.12c Dòng tổng ghi **"Tổng"** thay vì "Cộng" (ERP :440)
+
+### ⚠️ 2 khác biệt KHÁC phát hiện khi đọc, CHƯA làm — chờ user quyết
+
+1. **Thiếu hẳn cột "Mã khế ước"**: ERP có `<th rowspan="2">Mã khế ước</th>` (:264) nhưng ô dữ liệu
+   là `<td class="text-left v-align-middle"></td>` (:407) — **cột luôn RỖNG**. Thêm vào thì bảng 17
+   cột thành 18 cột mà không có dữ liệu gì.
+2. **Ngân hàng + STK ngân hàng: ERP cho CHỌN, HRM chỉ hiển thị chữ.** ERP là 2 `select`
+   (:409-428): chọn ngân hàng (`banks`) thì xoá trắng STK, rồi chọn STK trong
+   `detail.company_accounts`. HRM render `{{ row.bank_name }}` / `{{ row.bank_account_number }}`
+   dạng chữ. Đây là **thiếu chức năng thật**, không phải lệch giao diện — cần BE trả thêm danh mục
+   ngân hàng + tài khoản công ty theo dòng.
+
+### Checkpoint — 2026-09-05 (12.12)
+
+Vừa hoàn thành: gate 4 cột theo ĐIỀU KIỆN TỪNG DÒNG. Thêm 2 prop `requestLocked` / `sourceType`
+và 3 helper `isRowLocked()` / `canPickContract()` / `canPickExportable()` trong
+`AccountingDetailTable.vue`; thêm `fast_delivery_id: null` vào `normalizeRow()` để Vue 2 reactive
+được khoá đó. Tiêu đề khối → **"Chi tiết"**, dòng tổng → **"Tổng"**.
+
+Compile sạch 5/5 file. Chưa mở trình duyệt.
+
+Bước tiếp theo: user quyết 2 việc ở mục ⚠️ trên — cột "Mã khế ước" (ERP có header nhưng ô luôn
+rỗng) và Ngân hàng/STK (ERP cho CHỌN, HRM đang chỉ hiển thị chữ — thiếu chức năng thật, cần BE trả
+thêm danh mục ngân hàng + tài khoản công ty theo dòng).
+
+### 12.13 Khối "Số dư nợ đầu kì" hiện sai chỗ (user báo 2026-09-05)
+
+User: *"sao bên hrm lại hiển thị Số dư nợ đầu kì: 0 ở chỗ đơn hàng vậy, bên erp có hiện đâu"*.
+
+**Nguyên nhân:** HRM gate khối này bằng `v-if="row.contractable_id"` — tức **bất kỳ hợp đồng nào**
+được chọn cũng hiện. ERP gate bằng `ng-if="detail.has_exportable"` (`form.blade.php` :359), mà
+`has_exportable` là getter trong `partials/classes/IncomeExpenditure/BillAdjustDeptDetail.blade.php`
+:14-17:
+
+```js
+get has_exportable() {
+    if (this.contract_type == 3) return true;
+    return false;
+}
+```
+
+→ chỉ hợp đồng **loại 3** mới có khối này. Hợp đồng loại khác thì ERP không hiện gì, HRM hiện
+"Số dư nợ đầu kì: 0" (số 0 vì `debt_begin` mặc định 0).
+
+- [x] Thêm helper `hasExportable(row)` = `Number(row.contract_type) === 3` — mirror đúng tên getter
+      của ERP; dùng cho CẢ khối checkbox lẫn `canPickExportable()` (trước đó `canPickExportable`
+      đã đúng luật này rồi, chỉ khối checkbox lệch → 2 chỗ cùng 1 luật mà viết 2 kiểu)
+- [x] Nhân tiện bỏ `class="text-muted"` trên nhãn đó → đặt màu thẳng `#6b7280`
+      (style dùng chung ép `.text-muted { color: #dc3545 !important }` nên chữ đang ra ĐỎ)
+
+### 12.14 Popup YCĐC lệch số phiếu: ERP 53 · HRM 44 (user báo 2026-09-05)
+
+**Số liệu thật** (`bill_adjust_dept_requests`, `status = 2`): tổng **53** — công ty 1: **44**,
+công ty 4: **9**. Chia theo `company_id` của phiếu và theo công ty người tạo cho **cùng kết quả**.
+
+**Nguyên nhân:** ERP `BillAdjustDeptRequest::searchByFilter()` đặt TOÀN BỘ khối phân quyền trong
+`if ($request->_type === 'all')` (:156-196), còn lọc công ty nằm riêng ở
+`if ($request->_type == 'for-accounting')` (:200-204). Popup chỉ gửi `d.status = 2`,
+**không gửi `_type`** → không nhánh nào chạy → ERP trả cả 53 phiếu của mọi công ty.
+HRM gọi preset `pending` vốn lọc theo công ty người đăng nhập → 44.
+
+**User chốt: bỏ lọc công ty, y hệt ERP (53 phiếu).**
+
+- [x] Thêm `BillAdjustDeptPickerService::searchAdjustRequests()` + `searchRequests()` ở Controller
+      + route `GET /finance/bill-adjust-depts/search-requests` (đặt TRƯỚC `/{id}`), cùng chỗ với
+      3 popup còn lại của màn
+- [x] FE trỏ sang endpoint mới (shape `{ data: { data, meta } }` như 3 popup kia)
+
+**Vì sao KHÔNG sửa thẳng preset `pending`:** `pending` là quy ước chung toàn dự án cho **màn chờ
+duyệt** — `BillIncomeRequest` :296, `BillPaymentRequest` :349-355, `AdditionAccountingRequest` :318
+đều dùng nghĩa "cùng công ty + đúng quyền duyệt". Đổi nghĩa nó cho riêng màn này thì màn chờ duyệt
+của Yêu cầu điều chỉnh công nợ (chưa làm) sẽ sai phạm vi mà không ai biết.
+
+**VẪN gate `isAccountant()`**: ERP đặt `checkPermission:Kế toán thanh toán` trên chính route
+`bill_adjust_dept.create` chứa popup, nên bỏ luôn gate là mở rộng hơn cả ERP.
+
+Kiểm chứng (HTTP kernel, nhân viên id 13): `search-requests` → HTTP 200,
+`per_page=5` ra **total = 53** (đúng bằng ERP) · `code=DNDCCN` ra 53 · `created_by=13` ra 4.
+
+### ⚠️ RỦI RO ĐÃ BÁO USER, user chấp nhận
+
+`BillAdjustDeptWriteService` :75 đặt `company_id` của phiếu kế toán theo **NGƯỜI LẬP**, không theo
+phiếu YCĐC nguồn. Nên kế toán công ty 1 chọn 1 trong 9 phiếu của công ty 4 sẽ sinh phiếu kế toán
+mang `company_id = 1` cho nghiệp vụ công nợ của công ty 4 → **bản in ra letterhead sai công ty**
+(CLAUDE.md: letterhead lấy theo `company_id` ghi trên chứng từ) và **bút toán ghi thẳng vào sổ cái
+`account_details` dùng chung với cổng ERP**.
+
+Nếu về sau muốn vừa đủ 53 phiếu vừa không sai công ty → sửa `:75` lấy `company_id` từ phiếu nguồn.
+
+---
+
+## Phase 13 — Rà màn DANH SÁCH (user báo 2026-09-05)
+
+### Đã sửa (5/7)
+
+- [x] 13.1 **Đổi "Người lập"/"Ngày lập" → "Người tạo"/"Ngày tạo"** ở bộ lọc + bảng + popup chọn
+      trường xuất + nhãn cột trong `BillAdjustDeptListExport::FIELDS`
+- [x] 13.2 **Thêm cột Ngày cập nhật · Người cập nhật**
+      · BE: `BillAdjustDeptListResource` trả `updated_at` (`d/m/Y H:i`) + `updated_by` +
+        `updated_by_name`; thêm quan hệ `BillAdjustDept::employee_update()` (chưa hề có);
+        eager-load `employee_update.info` ở CẢ 2 truy vấn (`searchByFilter` phân trang và
+        `allForExport`) để không N+1
+      · FE: 2 cột đặt ngay sau cặp cột tạo, thêm vào popup chọn trường xuất
+- [x] 13.3 **Ô trống để TRỐNG**, bỏ hết dấu `—` (10 chỗ trong `index.vue`)
+- [x] 13.4 **Chưa có tiêu đề trang** — `index.vue` khai `mixins: [PageTitleMixin]` nhưng
+      **thiếu computed `pageTitle`**. Mixin theo dõi đúng computed đó rồi commit vào store để
+      layout dựng tiêu đề; chỉ khai `head()` là mới đổi được `<title>` của trình duyệt.
+      Khuôn: `bill-adjust-dept-requests/index.vue` :409-411
+- [x] 13.5 **Placeholder chữ to chữ bé** — `V2BaseCurrencyInput` ở `size="sm"` để **13px**
+      (`components/V2BaseCurrencyInput.vue` :252) trong khi `V2BaseInput` :126 /
+      `V2BaseSelect` :490 / `V2BaseDatePicker` :288 cùng `size="sm"` đều **12px** → 2 ô
+      "Số tiền từ/đến" to hơn hẳn. Sửa bằng style scoped ở màn (3 lớp selector để thắng rule
+      `[data-v-comp]` của component). **Chưa sửa component dùng chung** — CLAUDE.md bắt hỏi trước.
+
+### KHÔNG làm được / không phải lỗi (2/7)
+
+- [ ] 13.6 **Ngày hạch toán thêm giờ — KHÔNG LÀM ĐƯỢC.** Cột `bill_adjust_depts.date_accounting`
+      kiểu **`date`**, không phải `datetime`; đo thật: **0/12.632 dòng có giờ**. Thêm giờ vào chỉ
+      ra `00:00` cho mọi phiếu. Muốn có giờ thật phải đổi kiểu cột — mà cột này **dùng chung với
+      cổng ERP**, đổi là đụng cả 2 hệ thống. Chờ user quyết.
+- [ ] 13.7 **Bộ lọc Công ty — KHÔNG PHẢI LỖI CODE.**
+      `V2BaseCompanyDepartmentFilter.vue` :8 chỉ render ô Công ty khi `permissions['is_all_company']`.
+      Đo thật với tài khoản đang test (nhân viên id 13, DNS Admin):
+      `can_view_all_company = false`, `can_view_company = true` → đúng thiết kế, người chỉ xem được
+      1 công ty thì không cần ô chọn công ty (và cho chọn là fail-open).
+      Muốn thấy ô đó phải cấp quyền **"Xem tất cả phiếu kế toán của tổng công ty"** (id 1551, guard
+      `api`). Ô Phòng ban vẫn hiện vì nó chỉ cần `is_company`.
+
+Kiểm chứng: `GET /finance/bill-adjust-depts?per_page=2` → HTTP 200, mỗi dòng có đủ
+`created_at`/`created_by_name` và `updated_at`/`updated_by_name`. Compile sạch `index.vue`.
+
+### 13.6b Ngày hạch toán thêm giờ — ĐÃ LÀM theo yêu cầu user (2026-09-05, user nhắc lại)
+
+Đã báo trước rằng cột `bill_adjust_depts.date_accounting` kiểu **`date`** (0/12.632 dòng có giờ);
+user vẫn yêu cầu → `BillAdjustDeptListResource` đổi sang `d/m/Y H:i`, cột nới 140px → 150px.
+
+Kết quả thật đúng như đã cảnh báo: `hach toan: 28/08/2026 00:00` cho **mọi** phiếu, trong khi
+`tao: 28/08/2026 12:04` có giờ thật. Muốn giờ thật phải đổi kiểu cột sang `datetime` — cột dùng
+chung với cổng ERP nên đụng cả 2 hệ thống.
+
+### 13.1b Bỏ sót khi đổi tên (user chỉ ra)
+
+Lượt trước mới đổi ô lọc `created_by` và 2 cột bảng; còn sót 3 nhãn, nay đã đổi:
+`Ngày lập từ` → **Ngày tạo từ** · `Ngày lập đến` → **Ngày tạo đến** ·
+`Khoảng ngày lập` → **Khoảng ngày tạo**. Đã grep lại: `index.vue` không còn chuỗi
+"Ngày lập" / "Người lập".
+
+### 13.5b Placeholder datepicker — theo CSS thì KHÔNG to hơn
+
+Truy lại toàn bộ rule cỡ chữ ở `size="sm"`:
+
+| Component | Dòng | font-size |
+| --- | --- | --- |
+| `V2BaseDatePicker` (base `.mx-input`) | :181 | 12px `!important` |
+| `V2BaseDatePicker` (`--sm`) | :288 | 12px `!important` |
+| `V2BaseInput` | :126 | 12px |
+| `V2BaseSelect` | :490 | 12px `!important` |
+| `V2BaseCurrencyInput` | :252 | **13px** ← thủ phạm, ĐÃ sửa ở 13.5 |
+
+Không có rule toàn cục nào đè `.mx-input` (chỉ `custom-theme.scss` :230 và `v2-styles.scss` :47,
+đều là `:disabled`). `font-size: 15px` ở `V2BaseFilterFieldControl` :89 là của **nút × xoá nhanh**,
+không phải placeholder.
+
+→ Ô to hơn là cặp **"Số tiền từ / Số tiền đến"** (`V2BaseCurrencyInput`), không phải cặp ngày.
+Nếu sau khi Ctrl+Shift+R mà vẫn thấy lệch thì đo bằng snippet ở mục dưới rồi báo lại số đo.
