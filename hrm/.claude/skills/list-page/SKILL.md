@@ -1075,11 +1075,99 @@ Tới mức đó thì phải chuyển sang queue + gửi link tải, không cố
 Kèm theo:
 
 - Cột số/tiền: format qua helper (`toLocaleString`); ô trống hiển thị `—` và **vẫn căn phải**.
-- Cột chữ dài (địa chỉ, ghi chú): `cellClass: 'text-wrap'` + `minWidth` để bảng auto-layout không bóp hẹp.
+- Cột chữ dài (địa chỉ, ghi chú, tên dự án): `cellClass: 'text-wrap clamp-2'` + `width`/`minWidth` — xem **mục 15b**, `text-wrap` + `minWidth` một mình KHÔNG đủ.
 - Cột `center` phải khai `width` cố định — STT `60px`, Trạng thái `130px`, Hành động `140px`. Căn giữa trong ô co giãn trông lệch.
 - **KHÔNG** căn phải mã định danh (MST, SĐT, CCCD, số tài khoản, mã bản ghi): là chuỗi, không so sánh độ lớn.
 
 Bảng tra nhanh dạng Excel: `.plans/gop-db/list-page-action-column/quy-tac-can-le-cot.xlsx`
+---
+
+## 15b. Bề rộng cột — màn nhiều cột, có cả chữ dài lẫn chữ ngắn (chốt 2026-09-05)
+
+Triệu chứng user báo: *"cột chứa nội dung rất dài và nội dung ngắn đang phân bổ độ rộng chưa hợp lý"*
+— cột Dự án / Yêu cầu làm GP / Khách hàng cuối bị bóp còn 4-6 dòng, trong khi cột chỉ vài chữ
+(Giai đoạn dự án, Nhóm ngành…) lại chiếm cả khoảng rộng.
+
+### Vì sao — 4 nguyên nhân cộng lại, sửa thiếu 1 cái là vẫn lệch
+
+| Cơ chế mặc định của `V2BaseDataTable` | Hệ quả |
+| --- | --- |
+| `.data-table { width: 100% }` + `table-layout: auto` | Bảng luôn cố **ép vừa khung**, chỉ tràn khi tổng bề rộng tối thiểu vượt khung |
+| `thead th` **cũng** `white-space: nowrap` | Cột dữ liệu ngắn nhưng **nhãn dài** ("Loại hình hoạt động khách hàng", "Phòng KD phụ trách dự án") tự ghim cột rộng ~220px |
+| Chỉ vài cột khai `cellClass: 'text-wrap'` | Chúng là **cột duy nhất co được** → toàn bộ phần thiếu chỗ dồn hết vào đây, bóp sát `minWidth` |
+| Cột không khai `width` lẫn `minWidth` | Bề rộng do trình duyệt tự tính theo **nội dung của trang hiện tại** → mỗi lần phân trang bảng lại nhảy khác nhau |
+
+### Quy tắc bắt buộc cho màn từ ~10 cột trở lên
+
+1. **Bật `fixed-layout`** trên `V2BaseDataTable` (prop opt-in, mặc định `false`):
+
+```vue
+<V2BaseDataTable :data="tableData" :columns="tableColumns" fixed-layout ... >
+```
+
+Prop này bật `table-layout: fixed` + đặt `min-width` cho bảng **= tổng `width` khai báo của các cột
+đang hiện**, đồng thời cho **tiêu đề cột xuống dòng**. `table-layout: fixed` một mình là CHƯA ĐỦ:
+thiếu `min-width` thì bảng chật vẫn co cột lại như cũ.
+
+2. **Khai `width` + `minWidth` cho ĐỦ MỌI CỘT** — không bỏ sót cột nào — theo 4 bậc:
+
+| Bậc | Bề rộng | Dùng cho |
+| --- | --- | --- |
+| S | 130-150px | Badge/mức độ, giai đoạn, nhóm ngành, ứng dụng, ngày (140px) |
+| M | 170-190px | Tên phòng ban, tên nhân sự, người tạo, mã phiếu, ngày + giờ hoàn thành |
+| L | 220-260px | Ô ghép "mã - tên" (khách hàng, yêu cầu, đơn vị thụ hưởng), tên dự án |
+| XL | 300px | Tên đối tượng chính của màn (tên giải pháp, tên hợp đồng…) |
+
+3. **Cột chữ dài: `cellClass: 'text-wrap clamp-2'`** — cho xuống dòng nhưng **kẹp tối đa 2 dòng** rồi
+`…`, để mọi hàng cao bằng nhau. Kèm `:title` trên thẻ trong slot để hover xem đủ phần bị cắt:
+
+```vue
+<template #cell-prospectiveProjectInfo="{ item }">
+    <div class="field-line text-dark font-weight-normal" :title="item.prospective_project_name">
+        {{ item.prospective_project_name }}
+    </div>
+</template>
+```
+
+4. **Ô có CẢ MÃ VÀ TÊN của một đối tượng tham chiếu → ghép CÙNG 1 DÒNG** `MÃ - Tên` (user chốt
+2026-09-05), đừng xuống dòng thành 2 `div`: ô cao gấp đôi trong khi cột vẫn còn chỗ ngang, và
+`clamp-2` trở nên vô nghĩa vì bản thân nội dung đã ăn đủ 2 dòng.
+
+```js
+// Lọc rỗng TRƯỚC khi nối, nếu không bản ghi thiếu mã sẽ ra chuỗi treo dấu " - "
+joinCodeName(code, name) {
+    return [code, name].filter((part) => part !== null && part !== undefined && part !== '').join(' - ')
+},
+```
+
+⚠️ KHÔNG nhầm với **mục 3**: cột định danh của CHÍNH entity màn đang xem vẫn tách 2 cột riêng
+(`<đt>Code` là link + `<đt>Name`). Quy tắc ghép ở đây chỉ áp cho ô mô tả **đối tượng tham chiếu**
+(khách hàng, yêu cầu làm GP, khách hàng cuối, hợp đồng…).
+
+5. Nhãn cột dài **giữ nguyên chữ**, không viết tắt — ở chế độ `fixed-layout` tiêu đề đã tự xuống
+dòng nên không còn ghim cột rộng nữa.
+
+Khuôn mẫu đầy đủ: `pages/assign/solutions/index.vue` (24 cột) + `components/V2BaseDataTable.vue`
+(prop `fixedLayout`, class `clamp-2`).
+
+### 3 cái bẫy đã trả giá
+
+- **`overflow: hidden` chỉ được nhắm `.field-line` / `.project-sub`, KHÔNG nhắm mọi `<div>` trong ô.**
+  Nhắm hết là ô Hành động, popover, tooltip bị cắt mất phần tràn ra ngoài ô.
+- **Cột `sticky` và bề rộng thật.** `getStickyColumnStyle` tính `left` bằng cách **cộng dồn `width`
+  khai báo** của các cột sticky đứng trước. Ở chế độ fixed, khi bảng rộng hơn tổng width thì trình
+  duyệt kéo giãn các cột theo tỉ lệ → bề rộng thật ≠ width khai báo. Không vỡ layout vì 2 tình huống
+  loại trừ nhau (giãn thì bảng không tràn → không có gì để cuộn ngang → sticky chưa kích hoạt),
+  nhưng **đừng dựa vào `width` khai báo để tính toạ độ gì khác**.
+- **Kẹp 2 dòng là CẮT NỘI DUNG.** Luôn đi kèm `:title` (hover) và cột phải mở được màn chi tiết.
+  Màn nào user cần đọc trọn nội dung ngay trên danh sách thì bỏ `clamp-2`, chấp nhận hàng cao lệch.
+
+### Nhân rộng
+
+Prop `fixedLayout` để **opt-in** vì `V2BaseDataTable` đang dùng ở hơn 130 màn: màn nào chưa khai đủ
+`width` cho mọi cột mà bật lên sẽ bị **chia đều** bề rộng. Muốn chuyển một màn sang chế độ này thì
+làm đủ bước 1 → 4 ở trên trong cùng một lần, không bật prop rồi để đó.
+
 ---
 
 ## Cột nào được vào popup "Tuỳ chỉnh cột"
