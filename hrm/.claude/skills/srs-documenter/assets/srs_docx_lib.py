@@ -162,6 +162,12 @@ class SrsDoc(object):
         h1 = doc.styles['Heading 1']
         h1.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         h1.paragraph_format.page_break_before = True
+        # Style 'Caption' cua khung python-docx: tai lieu dung doan thuong cho chu thich anh
+        # (xem figure()), nhung van chinh style nay cho khop quy dinh de khong ai dung nham.
+        cap = doc.styles['Caption']
+        set_font_name(cap, FONT_NAME)
+        cap.font.size = Pt(CAPTION_PT)
+        cap.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         self.doc = doc
 
     # -------------------------------------------------------- trang dau
