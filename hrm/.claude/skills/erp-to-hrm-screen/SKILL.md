@@ -165,8 +165,16 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Sort bật cho cột mã / tên / tiền / ngày; sort cột mới hủy sort cột cũ
 - [ ] Phân trang mặc định 10, chọn được 5/10/20/50/100, đổi số dòng nhảy về trang 1
 - [ ] Ô lọc dạng chọn tự tìm ngay khi chọn; ô gõ tay chờ Enter/nút Tìm kiếm
-- [ ] Placeholder nói đúng trường lọc gì (`Chọn <X>` / `Nhập <X>` / `Tìm theo <các trường>`) —
-      không `Tất cả`, không `Chọn...`, không để trống
+- [ ] **Bật `floating`** trên `V2BaseSmartFilterPanel` — mọi ô lọc cao 36px, nhãn nằm giữa ô khi
+      rỗng và bay lên đè viền trên khi có dữ liệu (chuẩn chốt 07/09/2026, mẫu: màn Dự án TKT)
+- [ ] Field gom nhiều ô (khối tổ chức, cặp cha-con...) đã khai `resetKeys` — panel dựa vào đó để
+      biết nhãn có phải bay lên không
+- [ ] Placeholder **không lặp lại nhãn** (`Chọn <X>` / `Nhập <X>` là SAI khi bật floating — nhãn
+      đã nói rồi). Chỉ giữ khi nói thêm điều nhãn không nói: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`
+- [ ] Ô tìm nhanh: `Tìm theo <các trường BE thực sự lọc>` — không `Tất cả`, không `Chọn...`, không để trống
+- [ ] Ô lọc tìm-từ-server (Khách hàng / NCC / Sản phẩm) dùng **`V2BaseSelectRemote`** kèm
+      `height="36px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
+- [ ] Mọi ô trong khối lọc đo ra **đúng 36px** — lệch 32px là quên truyền `height`
 - [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách**
 - [ ] **Bấm thật TỪNG ô lọc** rồi xem bảng có đổi không — đối chiếu param trên tab Network với
       `searchByFilter` của BE. Ô lọc sai tên key **không báo lỗi gì**, nhìn giao diện y như đúng
@@ -303,6 +311,10 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 | Để ô "Bộ phận"/"Nhân viên" hiện mà BE không lọc theo | Ô lọc chết, user chọn mãi không ra | `:disable_part` / `:disable_employee` — đối chiếu `searchByFilter` của BE xem thật sự lọc theo cấp nào |
 | `$axios` tải file thiếu `Authorization` | Xuất Excel 401 | Tự gắn token cho request export |
 | Bê nguyên `title` cho panel lọc | Mỗi màn một tiêu đề khác nhau | Bỏ prop, dùng mặc định "Bộ lọc danh sách" |
+| Quên bật `floating` | Khối lọc trông như màn cũ (nhãn trên, ô dưới, 32px) trong khi các màn mới đều floating 36px | Thêm prop `floating` — panel lo hết phần còn lại |
+| Tự chế autocomplete "gõ để tìm" | Chưa gõ gì đã báo "Không tìm thấy…"; dropdown quên `position:absolute` đẩy vỡ layout | `V2BaseSelectRemote` + `minimumInputLength` — nó lo sẵn 3 trạng thái chưa-đủ-ký-tự / đang-tìm / không-có |
+| Đè CSS ô lọc bằng `!important` mà không tính specificity | **Local đúng, lên dev/prod sai** — thứ tự gộp CSS khi build khác dev nên rule bằng điểm đổi phe | Selector phải **nặng ký hơn** rule của `V2BaseSelect`; kiểm chứng bằng cách nhét vào đầu `<head>` rồi đo `getComputedStyle` |
+| Vỏ bọc field tự mở stacking context (`z-index` trên wrapper) | Dropdown của mọi control bên trong bị nhốt — header dính của bảng (z-index 6) vẽ đè lên | Không đặt `z-index` trên wrapper; hạ z-index của thứ cần đè thay vì nâng wrapper |
 | Tự dựng khối "Lịch sử" ở màn chi tiết cho nhanh | Mỗi màn một kiểu timeline, dropdown "Loại hành động" mỗi màn một danh mục — user không đối chiếu được | Dùng lại `SystemInfoSection.vue`, đọc `entity-history/ui-base.md`. Xem mục E1 |
 | Chỉ làm lịch sử ở màn chi tiết, quên popup ở màn danh sách | Nghiệm thu xong user quay lại yêu cầu bổ sung | Chuẩn màn Khách hàng là **2 nơi** |
 | Suy 2 ô lọc lịch sử từ log đang tải | Dropdown chỉ có 1-2 dòng, user tưởng mất dữ liệu | Gọi `filter-options`, fallback 3 nhóm hard-code |
@@ -319,6 +331,8 @@ grep -rn "interactable:\|disabledTitle"   <thư-mục-feature>   # nút phải �
 grep -rn "action\.key ==="                <thư-mục-feature>   # V2BaseRowActions emit CHUỖI -> nút chết
 grep -rn "V2BaseFilterPanel"              <thư-mục-feature>   # phải là V2BaseSmartFilterPanel
 grep -rn "advanced-filters"               <thư-mục-feature>   # bộ lọc dựng tay
+grep -rn "showCustomerList\|filtered.*= \[\]"  <thư-mục-feature>   # autocomplete tự chế -> V2BaseSelectRemote
+grep -rn "V2BaseSelectRemote" <thư-mục-feature> | grep -v 'height='   # thiếu height -> ô lùn 32px
 grep -rn "thành công'"                    <thư-mục-feature>   # câu toast tự chế, so với bảng QLDA
 grep -rn "log.action !=="                 <thư-mục-feature>   # lịch sử phải lọc theo action_group
 grep -rn "actionOptions"                  <thư-mục-feature>   # dựng từ log = sai, phải từ filter-options
