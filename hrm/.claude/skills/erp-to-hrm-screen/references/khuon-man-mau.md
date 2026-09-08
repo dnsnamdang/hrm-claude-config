@@ -56,6 +56,37 @@ trường. Tách 3 file riêng là nguồn gốc phổ biến nhất của lệc
 </template>
 ```
 
+### Khối `<style>` bắt buộc — dễ quên nhất
+
+Cuối `index.vue` **và** cuối component `XxxForm.vue` phải có (KHÔNG `scoped`):
+
+```vue
+<style lang="scss">
+@import '@/assets/scss/v2-styles.scss';
+</style>
+```
+
+`create.vue` / `_id/edit.vue` / `_id/index.vue` không cần — chúng render `XxxForm` nên CSS theo đó vào.
+
+⚠️ Thiếu khối này màn **vẫn nhìn gần như đúng**: bảng, nút, cột đều ổn nhờ Bootstrap và CSS của route
+khác còn trong bundle. Chỗ duy nhất vỡ là **bộ lọc nâng cao** — CSS của `v2-styles.scss` biên dịch kèm
+`data-v-<hash>` của component đã import nó, nên hash của màn khác không áp được
+`.v2-styles .d-contents { display: contents }`; wrapper `d-contents` của `V2BaseSmartFilterPanel` giữ
+`display: block`, các `col-md-3` bên trong (ô Công ty/Phòng ban/Bộ phận, các cặp ô khoảng ngày) thôi
+không còn là flex item của `.form-row` → bị bóp còn ~130px, nhãn vỡ dòng, select cụt chữ.
+
+Tự kiểm trước khi nghiệm thu:
+
+```bash
+grep -L "v2-styles.scss" pages/<phân-hệ>/<màn>/index.vue pages/<phân-hệ>/<màn>/components/*.vue
+```
+
+Kiểm trên trình duyệt (mở bộ lọc nâng cao rồi chạy) — phải ra `contents`, ra `block` là thiếu import:
+
+```js
+getComputedStyle(document.querySelector('.smart-advanced-filters .form-row > .d-contents')).display
+```
+
 ### Mixin bắt buộc
 
 ```js
