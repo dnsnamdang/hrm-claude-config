@@ -198,6 +198,22 @@ Bìa → MỤC LỤC → DANH MỤC HÌNH ẢNH → **TỔNG QUAN PHẦN MỀM**
 - Thao tác từng dòng (theo quyền & trạng thái).
 - **Tạo mới** (ảnh form + bảng từng trường + box mặc định + nút lưu).
 - **Sửa / Duyệt / Nhập kết quả / Xử lý / Lịch sử / Xóa** (mô tả khác biệt, ảnh nếu cần).
+- **Mục "Vào màn này bằng cách nào"** (bắt buộc, đặt NGAY ĐẦU mỗi phần, trước cả ảnh tổng quan):
+  đây là tài liệu click-by-click nên phải chỉ đúng đường bấm, không được ghi mỗi đường dẫn.
+  - Ghi **đường bấm đầy đủ**: *"Vào phân hệ **CSKH** → nhóm **Kiểm tra bảo hành sửa chữa** → bấm
+    **Yêu cầu kiểm tra sửa chữa - bảo hành**"*.
+  - ⚠️ **Màn vào được từ NHIỀU chỗ thì liệt kê ĐỦ, kèm khác biệt** — cùng một màn nhưng vào từ hai
+    phân hệ có thể cho **hai danh sách khác hẳn nhau**:
+
+    | Vào từ | Bấm theo đường | Danh sách hiện ra |
+    | --- | --- | --- |
+    | Bán hàng | Bán hàng → Lắp đặt - BH - SC → Yêu cầu kiểm tra sửa chữa - bảo hành | Chỉ phiếu do chính bạn lập |
+    | CSKH | CSKH → Kiểm tra bảo hành sửa chữa → Yêu cầu kiểm tra sửa chữa - bảo hành | Toàn bộ phiếu trong phạm vi quyền của bạn |
+
+  - Kèm câu trấn an, vì đây là chỗ người dùng hay tưởng hệ thống lỗi: *"Nếu mở màn mà danh sách
+    trống hoặc ít hơn mong đợi, hãy kiểm tra bạn đang vào từ menu nào — hai lối vào hiển thị phạm vi
+    khác nhau."*
+  - Cách đếm đủ lối vào: `.claude/skills/list-page/SKILL.md` §3d và §3d-2.
 - **Mục "Phân quyền & hướng dẫn theo quyền"** (bắt buộc, đặt ngay sau ảnh tổng quan tab):
   - **Bảng quyền của màn**: `Tên quyền | Cho phép làm gì | Nút/tab tương ứng | Ghi chú (điều kiện trạng thái, cấp dữ liệu)`.
   - **Mỗi quyền một tiểu mục** "Người dùng có quyền *<Tên quyền>*": thấy gì (tab/cột/nút), làm được thao tác nào, hướng dẫn từng bước cho đúng phạm vi quyền, và **thấy dữ liệu của ai** nếu có phân quyền theo cấp.
@@ -213,6 +229,8 @@ Bìa → MỤC LỤC → DANH MỤC HÌNH ẢNH → **TỔNG QUAN PHẦN MỀM**
 - [ ] **Mỗi quyền có tiểu mục hướng dẫn riêng**: thấy gì, làm được gì, các bước thao tác, phạm vi dữ liệu theo cấp (nếu có).
 - [ ] Mỗi thao tác thay đổi dữ liệu đều ghi rõ **quyền yêu cầu** + điều gì xảy ra khi thiếu quyền.
 - [ ] Bộ lọc nâng cao liệt kê đủ từng tiêu chí.
+- [ ] **Mỗi phần có mục "Vào màn này bằng cách nào"** với đường bấm đầy đủ (phân hệ → nhóm → mục);
+      màn vào được từ nhiều chỗ thì có bảng liệt kê đủ kèm khác biệt phạm vi dữ liệu.
 - [ ] Ảnh chụp thật, rõ, đúng nội dung; caption đánh số tự động.
 - [ ] **KHÔNG còn thuật ngữ code** (tên bảng/cột, id quyền, endpoint, mã HTTP) — xem NGUYÊN TẮC SỐ 3.
 - [ ] **Đã ĐỌC LẠI mục lục và danh mục hình ảnh trong file xuất ra** — đúng heading của màn này,

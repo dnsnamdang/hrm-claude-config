@@ -81,13 +81,21 @@ Rất nhiều màn của ERP có **một đường dẫn nhưng nhiều mục me
 và mỗi lối vào cho ra một danh sách khác hẳn. Người nghiệm thu mở đúng một link rồi kết luận "màn
 này thiếu dữ liệu" là chuyện đã xảy ra — nên tài liệu PHẢI liệt kê đủ.
 
-Bảng bắt buộc 3 cột:
+Bảng bắt buộc **4 cột — cột "Bấm vào đâu" là bắt buộc**, không được ghi chung chung "từ menu":
+người đọc phải lần được đúng đường bấm mà không cần hỏi ai.
 
-| Vào bằng | Danh sách hiện ra | Dùng khi nào |
-| --- | --- | --- |
-| (không kèm gì) | Chỉ phiếu do chính tôi lập | Xem lại việc của mình, kể cả phiếu còn nháp |
-| `?type=all` | Toàn bộ phiếu trong phạm vi quyền của tôi | Lối vào chính từ menu |
-| `?type=waiting_handle` | Phiếu đang Chờ xử lý gửi về đúng phòng tôi | Danh sách việc phòng tôi phải làm |
+| Bấm vào đâu (phân hệ → nhóm → mục) | Đường dẫn | Danh sách hiện ra | Dùng khi nào |
+| --- | --- | --- | --- |
+| Bán hàng → Lắp đặt - BH - SC → Yêu cầu kiểm tra sửa chữa - bảo hành | `/customer-care/warranty-repair-requests` | Chỉ phiếu do chính tôi lập | Xem lại việc của mình, kể cả phiếu còn nháp |
+| CSKH → Kiểm tra bảo hành sửa chữa → Yêu cầu kiểm tra sửa chữa - bảo hành | `…?type=all` | Toàn bộ phiếu trong phạm vi quyền của tôi | Lối vào chính của người phụ trách |
+| (không có mục menu — link từ màn phiếu) | `…?type=waiting_handle` | Phiếu Chờ xử lý gửi về đúng phòng tôi | Danh sách việc phòng tôi phải làm |
+
+⚠️ **Cùng một mục menu nhưng ở hai phân hệ khác nhau thì phải ghi thành HAI dòng** — đó chính là
+trường hợp hay bị bỏ sót: cùng màn Yêu cầu kiểm tra sửa chữa, vào từ Bán hàng chỉ thấy phiếu của
+mình, vào từ CSKH thấy theo phạm vi quyền.
+
+⚠️ **Lối vào KHÔNG có mục menu vẫn phải ghi** (kèm chú thích lấy từ đâu ra), vì người dùng vẫn tới
+được bằng link trong màn khác hoặc link đồng nghiệp gửi.
 
 Kèm theo bảng, luôn ghi 3 câu này (người đọc hay hiểu nhầm đúng 3 chỗ đó):
 
@@ -96,9 +104,22 @@ Kèm theo bảng, luôn ghi 3 câu này (người đọc hay hiểu nhầm đún
 - Nút **Làm mới** chỉ xoá điều kiện lọc, không đưa người dùng sang phạm vi khác.
 - Link kèm giá trị lạ thì hệ thống bỏ qua, giữ phạm vi mặc định.
 
-Lấy danh sách lối vào ở đâu: các mục menu của ERP (`resources/views/layouts/topmenubar.blade.php`)
-và các nhánh `if ($request->type == ...)` trong `searchByFilter()` của model tương ứng. ⚠️ Tên tham
-số KHÔNG đồng nhất giữa các màn — phần lớn là `type`, riêng màn Báo giá dịch vụ là `permission`.
+### Lấy danh sách lối vào ở đâu — làm đủ 3 bước, đừng đoán
+
+```bash
+# 1. ĐẾM ĐỦ mục menu ERP trỏ vào màn (thường KHÔNG chỉ một, và nằm ở nhiều phân hệ)
+grep -n "route('<tenRoute>.index')" TanPhatDev/resources/views/layouts/topmenubar.blade.php
+# 2. Với mỗi mục: đọc ngược lên tìm TÊN NHÓM MENU và TÊN PHÂN HỆ chứa nó
+# 3. Đọc mặc định ở controller (`$type = $request->type ?? 'index'`) rồi đối chiếu từng nhánh
+#    `if ($request->type == ...)` trong `searchByFilter()`
+```
+
+⚠️ **Mục menu vào ROUTE TRẦN (không kèm gì) vẫn là một lối vào riêng**, và mặc định của nó thường
+là `index` = *chỉ bản ghi của mình* chứ không phải "xem tất cả". Bỏ sót bước 3 là tài liệu mô tả
+sai phạm vi (đã dính thật 2026-08-27, xem `list-page` §3d-2).
+
+⚠️ Tên tham số KHÔNG đồng nhất giữa các màn — phần lớn là `type`, riêng Phiếu cung cấp thông tin và
+Báo giá dịch vụ dùng `permission`. Ghi đúng tên của từng màn, đừng suy từ màn bên cạnh.
 
 ## Chương 6 — phần hay bị viết hời hợt nhất
 
@@ -184,7 +205,7 @@ except Exception: pass
 - [ ] Chương 5 chia theo **bước nghiệp vụ**, nhánh rẽ có bảng "hướng xử lý → kết quả"
 - [ ] Chương 6 có **bảng 4 cột** và nói rõ *toàn bộ nhân viên phòng* hay *một người*
 - [ ] Chương 6 có phần quy ước chung + nêu sự kiện **không** gửi thông báo
-- [ ] **Chương 9 liệt kê ĐỦ mọi lối vào** (đếm từ menu ERP + các nhánh `type`/`permission`), kèm 3 câu lưu ý
+- [ ] **Chương 9 liệt kê ĐỦ mọi lối vào** (đếm từ menu ERP + các nhánh `type`/`permission`), mỗi dòng ghi rõ **bấm vào đâu: phân hệ → nhóm → mục**, kèm 3 câu lưu ý
 - [ ] Chương 7 có cả trường hợp **không có quyền nào**
 - [ ] Chương 8 tách bắt buộc nhập **theo từng nút bấm** (lưu nháp vs gửi đi)
 - [ ] Chương 10 có bảng khác biệt kèm **lý do**, không chỉ liệt kê

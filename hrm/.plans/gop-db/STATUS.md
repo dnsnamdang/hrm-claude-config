@@ -68,6 +68,31 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- **prod-cutover — Đưa `gop_db` lên PROD (1 nhánh, 2 môi trường)** → @namdangit →
+  `.plans/gop-db/prod-cutover/design.md` · `plan.md` ·
+  spec `docs/superpowers/specs/gop-db/2026-09-04-prod-cutover-design.md`
+  Trạng thái: **SPEC XONG (Phase 0), CHƯA CODE** (2026-09-04).
+  Kịch bản: ERP chạy code `master`, HRM chạy `gop_db`, **dùng chung 1 DB gộp**; PROD và dev
+  **chung 1 nhánh** — PROD chỉ mở 7 phân hệ HRM đã nghiệm thu, dev thấy đủ để port tiếp.
+  ⚠️ **Khảo sát phát hiện bản gộp `local_hrm_erp` đang có lỗi dữ liệu THẬT, âm thầm**:
+  FK của ERP **2.313 → 10** (556 bảng có FK còn 7); **736 dòng ERP trỏ NHẦM sang vai trò HRM**
+  + 1.820 mồ côi sau khi `ReconcileAuthSeeder` dời `roles.id +100000` mà chỉ remap 4/15 bảng —
+  gồm `companies.deputy_role` sai ở **8/8 công ty** (VD: đáng lẽ "Tổng giám đốc" → đang trỏ
+  "Quản lý Giải pháp DATKT SG"); `MergeProdSeeder` **DROP 14 bảng ERP** thay bằng bản HRM
+  (`majors` 156 dòng → **0**, `areas` → **1/20**, ERP `master` vẫn dùng cả hai);
+  `notifications` bị TRUNCATE (154k + 688k → **299**); nhóm `SHARE` ghi đè chéo theo id làm
+  **77 khách hàng** bị ghi dữ liệu của khách khác.
+  Nguồn lỗi nằm trong `Modules/Timesheet/Database/Seeders/GopDb/` → chạy pipeline đó lên PROD
+  sẽ tái hiện y hệt. **Phải vá pipeline + dựng cổng nghiệm thu trước khi cut-over.**
+  Đã chốt: cấu hình bật/tắt phân hệ **lưu trong DB (runtime)**, cắt **theo phân hệ** + chặn
+  link lẻ; nhánh PROD hiện tại là `tpe`; ranh giới = 17 thư mục `pages/` mới + 3 màn
+  (`/assign/contracts`, `/human/districts`, `/human/hamlets`); mức chặn BE **hoãn**.
+  **PROD CHƯA gộp DB** (user xác nhận 2026-09-04) → còn kịp vá pipeline trước khi chạy thật.
+  ✅ Đã có **cổng nghiệm thu**: `php artisan gopdb:health-check` (`app/Console/Commands/GopDb/HealthCheckCommand.php`)
+  — CHỈ SELECT, chạy trên PROD an toàn. `--mode=pre` cảnh báo cái gì sắp mất, `--mode=post` đo cái gì đã hỏng,
+  exit code 0/1/2 cắm được vào pipeline deploy. Danh sách nhóm bảng đọc từ `MergeProdSeeder` bằng Reflection.
+  Bước tiếp: Phase 1 (vá pipeline gộp) hoặc Phase 3 (ẩn menu PROD) — chờ chọn.
+
 - **finance-bill-adjust-dept — Phiếu kế toán (ERP `bill_adjust_dept` → HRM)** → @khoipv →
   `.plans/gop-db/finance-bill-adjust-dept/design.md` · `plan.md` ·
   spec `docs/superpowers/specs/gop-db/2026-08-28-finance-bill-adjust-dept-design.md`

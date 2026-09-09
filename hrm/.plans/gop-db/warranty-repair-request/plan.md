@@ -1016,3 +1016,41 @@ chặn trần chiều cao -> ô nở vô hạn theo số chip.
 ### Fix lỗi validate bám sai dòng khi xoá/thêm dòng trong bảng (2026-08-25)
 - [x] Thêm `utils/rowFieldErrors.js` (`removeRowErrors` / `dropRowErrorsFrom` / `clearRowErrors`) — dọn khoá lỗi 422 gắn chỉ số dòng (`products.2.serial`) mỗi khi mảng dòng đổi
 - [x] Áp vào chỗ xoá / thêm / chuyển dòng của form màn này; đổi khách hàng (xoá cả bảng) thì xoá hết lỗi của bảng
+
+### Bộ tài liệu bàn giao (2026-09-03)
+- [x] `testcase.xlsx` — cập nhật lại theo hành vi hiện tại: bản in là CỬA SỔ XEM TRƯỚC (không mở tab mới), thêm TC trần in 2.000 dòng, TC in ngay dưới trần, TC dòng tiến độ khi xuất Excel. Tổng **99 TC**, P0 52%, bộ kiểm thuật ngữ sạch. Sinh lại bằng `gen_testcase.py`
+- [x] `SRS - Yêu cầu kiểm tra sửa chữa - bảo hành.docx` — form chuẩn 4 chương, 13 chức năng FR-01…FR-13, 12 quy tắc nghiệp vụ BR-01…BR-12, 38 trang, 27 ảnh (sơ đồ use case + ảnh chụp thật). Sinh bằng `gen_srs.py`
+- [x] `HDSD_Yeu cau kiem tra sua chua - bao hanh.docx` — 13 chương, 9 bảng, 18 ảnh chụp thật; đủ mục "Vào màn này bằng cách nào" (2 lối vào), hướng dẫn theo từng quyền, bảng từng trường + giá trị điền sẵn cho form lập phiếu. Sinh bằng `gen_hdsd.py`
+- [x] Ảnh chụp thật để ở `wrr_shots/` (18 ảnh, Playwright 1440×900) — KHÔNG commit, đã nhúng sẵn trong .docx
+- [x] Thêm `.plans/gop-db/_mac_docx.py`: lớp tương thích macOS cho 2 engine tài liệu (font vẽ sơ đồ + cập nhật mục lục bằng Word qua AppleScript thay PowerShell). KHÔNG sửa file skill dùng chung của team
+
+### Sửa SRS theo phản hồi tester (2026-09-03)
+- [x] Tester báo SRS chưa đúng mẫu → lấy `SRS - Danh mục quốc gia.docx` trên Drive làm chuẩn, sửa 5 điểm: mỗi mục Giới thiệu mở đầu bằng dòng "Quy tắc chung: Áp dụng SRS Các quy tắc chung SRS_Các quy tắc chung_VN_1.0 - …"; mục Layout ghi đường bấm **Menu** thay cho URL; bảng mô tả giao diện **rút cột theo loại chức năng** (4/5/6/7/8 cột) thay vì cố định; Phần 4 mở đầu bằng dòng "Quy tắc áp dụng…"; bảng quyền bỏ cột Ký hiệu Q1/V1, ma trận dùng tên quyền làm tiêu đề cột
+- [x] Script chuyển đổi 1 lần: `.plans/gop-db/_upload/srs_theo_mau.py` (dùng `ast` để đổi lời gọi `ui_table`/`layout`, cắt chuỗi **theo byte** vì `col_offset` của ast tính bằng byte UTF-8 — cắt theo ký tự làm hỏng nguồn)
+- [x] Sinh lại + đẩy đè lên Drive (giữ nguyên file ID nên link cũ vẫn đúng)
+
+### Dựng lại SRS lần 2 theo mẫu tester (2026-09-03)
+- [x] Tester vẫn báo chưa đúng chuẩn sau lần vá đầu → **viết lại hẳn generator**, bám khung `SRS - Danh mục quốc gia.docx` (bản mẫu tester chỉ định): thứ tự chức năng theo mẫu (Xem danh sách → Tìm kiếm → Thêm/Lập → Chỉnh sửa → Xóa → thao tác trạng thái → Xem chi tiết → Lịch sử → In → Xuất Excel → Tuỳ chỉnh cột), mục Mục đích viết dạng dòng thường (mẫu không dùng gạch đầu dòng), mỗi mục Giới thiệu mở đầu bằng dòng "Quy tắc chung: Áp dụng SRS Các quy tắc chung…", Layout ghi "Đường dẫn màn hình → Menu → đường bấm" và bỏ hẳn URL, bảng giao diện rút cột theo loại chức năng, Phần 4 mở đầu bằng "Quy tắc áp dụng…"
+- [x] Đối chiếu bản mới với mẫu: 13 mục Giới thiệu / 14 dòng Quy tắc / 13 dòng Menu / 8 biểu đồ Use Case / 0 chỗ còn URL; khổ giấy, lề, style Heading trùng mẫu
+- [x] Đẩy đè lên Drive, giữ nguyên file ID nên link trong sheet theo dõi không phải sửa
+
+### Chốt lại file mẫu SRS (2026-09-03)
+- [x] **Phát hiện nguyên nhân tester chê 2 lần**: `SRS_MAU.docx` đóng gói trong skill ĐÃ ĐỔI thành “SRS - Phiếu đề nghị thu tiền” (chứng từ, cùng dạng 2 màn này), trong khi tôi đang bám “SRS - Danh mục quốc gia” lấy trên Drive — file danh mục đó chưa có phân quyền nên bỏ cột Ký hiệu và rút cột bảng giao diện, dẫn tôi đi sai. **Chuẩn là SRS_MAU trong skill.**
+- [x] Quay lại bản generator gốc (giữ 2 bảng quyền có cột Ký hiệu Q/V, ma trận dùng Q/V làm tiêu đề cột, bảng giao diện 7 cột cho chức năng chỉ đọc / 8 cột cho chức năng nhập liệu, Mục đích dạng gạch đầu dòng) rồi chỉ bổ sung 3 điểm còn thiếu so với mẫu: dòng “Quy tắc chung: Áp dụng SRS Các quy tắc chung…” ở mỗi mục Giới thiệu; mục Layout ghi “Đường dẫn màn hình → Menu: …” và bỏ URL; Phần 4 mở đầu bằng dòng “Quy tắc áp dụng…”
+- [x] **Phần 4 đổi sang BẢNG 5 cột** `STT | Mã quy tắc | Tên quy tắc | Mô tả | Phạm vi áp dụng` đúng như mẫu, thay cho các đoạn BR + gạch đầu dòng
+- [x] Đối chiếu số liệu với SRS_MAU: 2 bảng Ký hiệu · ma trận Q/V · bảng giao diện 7/8 cột · 14 dòng Quy tắc chung · 15 dòng Menu · 0 chỗ còn URL · Phần 4 là bảng 12 quy tắc
+- [x] Đẩy đè lên Drive, link cũ giữ nguyên
+
+### Dùng đúng API mới của skill (2026-09-03, lần cuối)
+- [x] **Nguyên nhân thật của 3 lần lệch**: đầu phiên tôi đọc `srs-documenter/SKILL.md` khi nó còn là bản cũ; skill được cập nhật lúc 11:16 cùng ngày (đổi bản mẫu sang “SRS - Phiếu đề nghị thu tiền”, thêm 4 điểm của form 2026-08-28 và các hàm mới). Skill KHÔNG sai — tôi gọi API cũ
+- [x] Chuyển 2 generator sang đúng hàm của lib: `d.rule_ref()` (đoạn Quy tắc chung có **hyperlink thật** sang SRS quy tắc chung, đúng anchor theo nhóm) · `d.layout(menu=…)` · `d.rule_table()` (Phần 4 bảng 5 cột) · **`d.overview_figure2()`** thay cho `overview_figure()` đã bỏ
+- [x] Sơ đồ tổng quan vẽ lại theo phân cấp: `mains` = 3 màn thật (danh sách, lập phiếu, chi tiết) nối thẳng tới actor; 10 thao tác còn lại là `subs` nối bằng «extend»/«include» vào đúng màn cha — trước đó vẽ phẳng 12 use case nối thẳng actor, sai nghiệp vụ
+- [x] Chạy đúng bộ tự kiểm trong SKILL.md: 15 dòng Menu · 13 đoạn Quy tắc chung · 1 câu dẫn Phần 4 · 14 hyperlink · Phần 4 là bảng 5 cột · không còn “URL đầy đủ” và các mục đã bỏ
+
+### Sửa sơ đồ UML tổng quan (2026-09-05)
+- [x] FR-05 Sửa và FR-10 Xóa đang «extend» của **FR-04 Lập phiếu yêu cầu** — sai hoàn toàn
+- [x] **Đối chiếu `SRS_MAU.docx` của skill** (Phiếu đề nghị thu tiền — cùng dạng chứng từ) để chốt khuôn, thay vì tự suy: mẫu cho **Sửa phiếu là use case CHÍNH nối thẳng actor** (không phải extend), **Xóa phiếu là «extend» của XEM DANH SÁCH** (không phải của chi tiết), còn In / Lịch sử / các thao tác duyệt–từ chối mới «extend» màn Chi tiết
+- [x] Vẽ lại đúng khuôn đó: mains = FR-01 Danh sách · FR-04 Lập phiếu · **FR-05 Sửa phiếu** · FR-06 Chi tiết (4 use case nối thẳng actor); «extend» FR-01 = FR-02 Lọc, FR-03 Cấu hình cột, **FR-10 Xóa**, FR-12 Xuất Excel; «extend» FR-06 = FR-07 Chuyển phòng, FR-08 Từ chối, FR-09 Tạo phiếu xử lý, FR-11 In, FR-13 Lịch sử
+- [x] Actor cập nhật theo: Người lập phiếu → [danh sách, lập, sửa, chi tiết]; Phòng tiếp nhận xử lý → [danh sách, chi tiết]
+- [x] Giữ lại 2 câu ở mục 1 Mục đích đã được rút gọn trên bản Drive (bản local trước đó còn câu dài) — đưa ngược vào `gen_srs.py` để lần chạy sau không mất
+- [x] Chạy lại `gen_srs.py`, đẩy đè lên Drive — file ID `1xdJN54n1dfcWDWYfjS0KWvd1nYT6eGAL` giữ nguyên, link cũ vẫn chạy

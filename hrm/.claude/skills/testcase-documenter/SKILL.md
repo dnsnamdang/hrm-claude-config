@@ -179,14 +179,21 @@ phải có, cho MỖI lối vào:
 
 | TC | Nội dung |
 | --- | --- |
-| Mở đúng lối vào | Đếm số bản ghi đúng phạm vi lối vào đó; tiền điều kiện ghi rõ số liệu (vd "tài khoản A lập 6 phiếu, phòng A quản lý 12 phiếu") |
+| Mở đúng lối vào | **Cột "Bước thực hiện" phải ghi ĐƯỜNG BẤM đầy đủ** — `Vào phân hệ CSKH → nhóm "Kiểm tra bảo hành sửa chữa" → bấm "Yêu cầu kiểm tra sửa chữa - bảo hành"` — chứ không phải "mở link ?type=all". QA bấm theo menu như người dùng thật, không gõ tay đường dẫn. Rồi đếm số bản ghi đúng phạm vi lối vào đó; tiền điều kiện ghi rõ số liệu (vd "tài khoản A lập 6 phiếu, phòng A quản lý 12 phiếu") |
+| Cùng màn, vào từ phân hệ KHÁC | Cùng một màn nhưng vào từ Bán hàng và từ CSKH cho ra **hai danh sách khác nhau** — phải có TC riêng cho từng phân hệ, so số bản ghi hai bên |
 | Đổi bộ lọc rồi mở lối vào khác | Đường link phải THẮNG bộ lọc lần trước, không được giữ phạm vi cũ |
 | Bấm "Làm mới" | Xoá điều kiện lọc nhưng **giữ nguyên phạm vi** đang xem |
 | Sửa tay tham số trên thanh địa chỉ thành giá trị lạ | Hệ thống bỏ qua, quay về phạm vi mặc định — KHÔNG lỗi, KHÔNG lộ thêm dữ liệu |
 | Tài khoản không có quyền xem theo cấp mở lối vào "xem tất cả" | Vẫn chỉ thấy phiếu của chính mình (đường link là cách xem, không phải cấp quyền) |
 
 **Lấy danh sách lối vào ở đâu**: đếm từ menu ERP (`topmenubar.blade.php`) và các nhánh
-`if ($request->type == ...)` trong `searchByFilter()` — đừng suy từ tên màn.
+`if ($request->type == ...)` trong `searchByFilter()` — đừng suy từ tên màn. Với **mỗi** mục menu
+tìm được, đọc ngược lên lấy **tên phân hệ và tên nhóm** chứa nó để ghi vào cột Bước thực hiện.
+
+⚠️ **Mục menu vào ROUTE TRẦN (không kèm tham số) cũng là một lối vào phải test**, và mặc định của
+nó thường là *chỉ bản ghi của mình* chứ không phải "xem tất cả" — controller ERP gán
+`$type = $request->type ?? 'index'`. Bỏ qua nó là bỏ lọt đúng lối vào mà phần lớn nhân viên dùng
+hằng ngày (đã dính thật 2026-08-27).
 
 **Ra số liệu mong đợi mà không đoán**: ERP và hệ thống mới chạy trên CÙNG một cơ sở dữ liệu ở máy
 phát triển, nên đếm được cả hai bên với cùng một người dùng rồi so từng lối vào. Lệch thì phải truy

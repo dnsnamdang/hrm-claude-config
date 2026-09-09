@@ -109,3 +109,24 @@ Vừa hoàn thành: Phase 1 (danh mục) + Phase 2 (Cấu hình) + Phase 3 (test
 Đang làm dở: không có.
 Bước tiếp theo: `.env` đang trỏ `DB_DATABASE_TARGET=etek_power_hrm` — đổi sang cổng khác khi cần.
 Blocked:
+
+## Phase 4 — Bổ sung bảng Lĩnh vực Công ty kinh doanh (2026-09-05)
+
+### BE
+- [x] Thêm `internal_business_scopes` vào `TABLES`, đặt TRƯỚC `scopes` (scopes.internal_business_scope_id trỏ sang)
+- [x] `warnOrphanRisk`: cảnh báo `meeting_investment_scopes.internal_business_scope_id` mồ côi khi lĩnh vực ở đích bị xoá
+- [ ] Chạy thật `--dry-run` rồi chạy đủ trên cổng đích (chưa test)
+
+### Checkpoint — 2026-09-05
+Vừa hoàn thành: sửa code, `php -l` sạch.
+Đang làm dở: chưa chạy thử lần nào.
+Bước tiếp theo: user chạy `--dry-run` trên cổng nguồn chuẩn.
+Blocked: cần chốt cổng nào là NGUỒN có danh mục đúng.
+
+## Phase 5 — Guard bảng rỗng ở nguồn (2026-09-05)
+
+### BE
+- [x] Nguồn rỗng + đích có dữ liệu → BỎ QUA bảng, in cảnh báo (tránh xoá trắng Khảo sát / Phiếu thu thập thông tin ở đích)
+- [x] Thêm option `--allow-empty` để cố ý dọn trắng bảng ở đích
+- [x] `printPlan` hiện ghi chú "BỎ QUA — nguồn rỗng, giữ nguyên đích"
+- [ ] Chạy thật trên cổng đích (chưa test)

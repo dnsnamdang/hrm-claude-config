@@ -1,0 +1,120 @@
+
+
+OK — dùng chung, không lỗi.
+OK — dùng chung, không lỗi.
+OK — dùng chung, không lỗi.
+OK — dùng chung, không lỗi.
+CÒN LỖI. Chỉ 5/12 ngân hàng EG map được sang TPE do hai bên viết khác nhau ("TMCP Quân đội" vs "Thương mại Cổ phần Quân đội") và mã khác quy ước (EG: VCB/ICB — TPE: VIETCOMBANK). Hệ quả đo được: 2/4 tài khoản ngân hàng của NV EG mất ngân hàng. DNS sẽ chuẩn hoá tên khi map + bổ sung 2 ngân hàng TPE chưa có (Phương Đông, Quốc tế VIB).
+
+Dữ liệu tổ chức sang đủ (14 phòng ban, 45 bộ phận, đúng công ty 9). Việc công ty thành viên có sơ đồ riêng là quyết định nghiệp vụ, chờ chốt.
+Chưa xử lý — chưa có chức năng nên chưa test được. Nằm ngoài phạm vi engine di trú.
+CÒN LỖI (lỗi app). Test thật: đăng nhập admin ETEK GREEN vẫn thấy đủ 9/9 công ty, gồm cả TPE và bản ETEK GREEN cũ (id=7). CompanyService::getCompanies() không lọc theo công ty người dùng quản lý. Sẽ sửa theo pattern đã đúng ở SalaryCompositionService.
+OK — sang đủ, gắn đúng công ty 9.
+OK — 14/14, không lệch công ty.
+OK — 45/45. Lưu ý: 7 bộ phận mất trưởng bộ phận vì người phụ trách cũ là tài khoản DNS Admin (bị loại theo skip_emails). TPE gán lại giúp.
+OK — 5 nhóm chức vụ + 10 chức vụ sang đủ.
+OK — 67 chức danh sang đủ (6 bản ghi bị thêm hậu tố "(ETEK GREEN)" do trùng tên với TPE — xem dòng 21 phần tên công ty).
+CÒN LỖI (đã đo lại kỹ). Dữ liệu 6 ngạch + 6 nhóm ngạch sang đủ, nhưng lỗi TPE báo là "sửa/xóa được dù đang dùng" — kiểm code thì hàm xoá chỉ set trạng thái, KHÔNG kiểm tra danh mục có đang được dùng hay không. Lỗi còn nguyên, sẽ bổ sung ràng buộc xoá.
+CÒN LỖI. 53 năng lực + 6 nhóm sang đủ, nhưng CompetencyService::delete() không có bất kỳ ràng buộc nào (chỉ set status=0) nên vẫn xoá được năng lực đang dùng. Sẽ bổ sung ràng buộc, cùng nhóm với dòng 27.
+OK — 50 nhiệm vụ sang đủ.
+CÒN LỖI — NẶNG NHẤT, lỗi của engine di trú. Mở màn Bảng định biên theo quy mô của EG: 26/29 dòng cột "Nhóm chức vụ" TRỐNG, 6 dòng hiện "LÃNH ĐẠO." là nhóm ngạch của TPE. Nguyên nhân: cột working_position_group_id thực chất trỏ bảng rank_groups (app join đúng vậy) nhưng catalog di trú khai map sang working_position_groups. DNS sẽ sửa cấu hình rồi chạy lại bổ sung cho công ty đã di trú.
+Dữ liệu sang đủ (50 nhiệm vụ + 54 nhiệm vụ theo phòng). Phần nhóm chức vụ hiển thị sai chung gốc với dòng 30.
+
+OK — 125/126 hồ sơ (thiếu đúng 1 là tài khoản DNS Admin, cố ý bỏ).
+CÒN LỖI PHẦN ẢNH (đã dựng lại được). Thân nhân sang đủ 11/11. Nhưng mở hồ sơ NV EG (Phan Thị Hoa) thì ảnh chân dung KHÔNG tải được: đường dẫn là /uploads/... trên server EG cũ, mở trên domain TPE sẽ 404. Toàn công ty có 22/125 NV bị vậy + 4 bản ghi ảnh CCCD (TPE thì 791/791 đều là URL đầy đủ). DNS sẽ ghép domain EG cũ hoặc copy ảnh sang S3 TPE. Việc 1 NV đổi phòng là thao tác sau gộp, không phải lỗi di trú.
+OK — 124/124 NV có mật khẩu, đăng nhập thật thành công; mã NV và email không trùng toàn hệ thống.
+OK — 54 NV nghỉ việc sang đủ.
+CÒN LỖI NHỎ. 5 loại HĐ ở nguồn có company_id = NULL nên bị filter company_id=1 bỏ qua. Không gãy nghiệp vụ vì TPE đã có 7 loại tương đương (chốt Dùng chung), nhưng DNS sẽ sửa filter thành "company_id=1 OR company_id IS NULL" để công ty sau không mất.
+KHÔNG PHẢI LỖI. Bảng phụ cấp ở nguồn EG rỗng (0 dòng) — không có gì để gộp, EG dùng chung của TPE.
+OK — đúng chốt dữ liệu cũ không gộp.
+
+CÒN LỖI (lỗi app, đã dựng lại). Đăng nhập admin ETEK GREEN vẫn đọc được 10 thông báo nội bộ của TPE (vd "Thông báo nghỉ lễ 02.09.2026"). SelfNotificationService::index() chỉ lọc công ty khi người dùng tự chọn filter, không gate mặc định. Sửa cùng nhóm dòng 21/65/66/81/103.
+ĐÚNG THIẾT KẾ. 4 thông báo của EG nằm trong danh sách không gộp, theo chốt "dữ liệu cũ không gộp".
+OK — ID phòng ban và NV đều cấp mới và dịch khoá ngoại, không dùng lại id nguồn.
+CÒN LỖI (đã dựng lại). Mở màn ra "Tổng số bản ghi: 0" kèm "Lỗi máy chủ. Vui lòng thử lại sau." Log lỗi: DepartmentManpowerService.php:228. Nguyên nhân: sau gộp cổng, báo cáo duyệt qua định biên của nhiều công ty, gặp định biên ngoài phạm vi quản lý thì quan hệ chức vụ trả rỗng → lỗi 500. Trước khi gộp DB chỉ 1 công ty nên không bao giờ lỗi. DNS sẽ lọc công ty + chặn lỗi khi quan hệ rỗng.
+KHÔNG PHẢI LỖI DI TRÚ (đã tìm ra nguyên nhân). Báo cáo ra 72 NV trong khi công ty có 71 NV: NV Nguyễn Đức Anh kiêm nhiệm 2 phòng nên bị đếm 2 lần. Đây là cách báo cáo vốn hoạt động, ở cổng EG cũ cũng vậy. Nếu TPE muốn đếm 1 lần thì đây là yêu cầu sửa báo cáo, không phải lỗi gộp cổng.
+OK — số liệu khớp nguồn.
+OK.
+OK.
+CÒN LỖI. Gọi thật API báo cáo cho công ty 9: trường nhóm chức vụ trả về rỗng (null) ở mọi dòng. Cùng một gốc với dòng 30 (map sai bảng rank_groups). Sửa 1 lần là hết cả 2 dòng.
+OK — dùng riêng theo công ty 9.
+Dữ liệu đã gộp: 1 khách hàng + 117 ngành + 19 lĩnh vực + 59 phạm vi KH. Việc ẩn mục Khách hàng trong HCNS là quyết định nghiệp vụ, chờ TPE chốt.
+
+
+Đã hạ toàn bộ quyền "tổng công ty" xuống "theo công ty" (14 dòng, chạy lại kiểm tra còn 0 dòng sót). NHƯNG test thật vẫn thấy rò chéo công ty ở nhiều màn vì bản thân màn không lọc company_id — xem dòng 21, 41, 65, 66, 81, 103. Phân quyền dùng riêng chỉ chặt khi các màn đó được sửa.
+OK — 124 tài khoản đăng nhập được.
+
+OK — 1/1 dòng sang đủ.
+ĐÃ HẾT LỖI (có bằng chứng giao diện). Mở màn Thiết lập > Quy định làm thêm bằng tài khoản EG: form hiện đủ dữ liệu riêng của EG (tối thiểu 60 phút, tối đa 100 giờ/tháng, làm liên tục 300 phút nghỉ 30). Không còn tình trạng "EG tự khai". Lưu ý phụ: phần "Thiết lập chức vụ không được làm thêm" đang liệt kê cả 4 công ty cho admin EG — thuộc nhóm lỗi không lọc công ty ở dòng 21.
+OK — 7 loại nghỉ + 18 ngày lễ + 5 ngày cắt phép sang đủ.
+Chuyển sang cổng admin — việc bàn giao cổng admin cho TPE, ngoài phạm vi engine di trú.
+
+ĐÚNG THIẾT KẾ — dữ liệu chấm công cũ không gộp.
+ĐÚNG THIẾT KẾ — không gộp.
+ĐÚNG THIẾT KẾ — không gộp.
+CÒN LỖI (đã dựng lại, khác với đánh giá sơ bộ trước đó). Dữ liệu đã có company_id riêng (79 địa điểm của EG) NHƯNG màn không lọc: đăng nhập admin ETEK GREEN vẫn thấy đủ 9/9 địa điểm, gồm "Văn phòng Sài Gòn", "VPSG", "Kho Liên Ninh" của TPE. Cần lọc theo công ty ở API danh sách.
+CÒN LỖI — giống dòng 65. Admin ETEK GREEN thấy cả máy chấm công của TPE ("Máy chấm công khuôn mặt bảo vệ", "Lắp đặt Liên Ninh"). Dữ liệu đã dùng riêng, màn chưa lọc.
+
+
+
+OK — 13 ca + chi tiết phân ca sang đủ, có lọc theo công ty.
+OK — không lệch công ty (0 dòng sai).
+OK — 13/13.
+
+CHƯA LÀM. Bảng đơn xin nghỉ nằm trong danh sách không gộp. Nguồn hiện còn 13 đơn chờ duyệt + 2 đơn nháp. Đề nghị TPE chốt: hoặc EG duyệt hết đơn trước cutover (phương án 1 của TPE), hoặc DNS bổ sung engine gộp đơn chờ duyệt — cần quyết vì ảnh hưởng khối lượng và thời gian.
+Phần cấu hình đã sang theo công ty; đơn cũ không gộp.
+CHƯA LÀM — cùng nhóm dòng 74.
+CHƯA LÀM — phiếu tương lai chưa gộp, cùng nhóm dòng 74.
+CHƯA LÀM — cùng nhóm dòng 74.
+CHƯA LÀM — cùng nhóm dòng 74.
+
+CÒN LỖI NGHIÊM TRỌNG (đã dựng lại). Đăng nhập admin ETEK GREEN vào màn "Danh sách đơn xin nghỉ cần duyệt" thấy 14 đơn — TOÀN BỘ là đơn của nhân viên TPE (Phòng dự án trọng điểm, Phòng quản trị thông tin...), 0 đơn của EG. Gốc: hàm duyệt đơn chỉ lọc theo trạng thái chờ NSHC duyệt, KHÔNG lọc công ty, nên nhân sự công ty A duyệt được đơn công ty B. Lỗ hổng này chỉ lộ ra sau khi gộp cổng. DNS ưu tiên sửa.
+CHƯA LÀM — cùng nhóm dòng 74.
+CHƯA LÀM — cùng nhóm dòng 74.
+CHƯA LÀM — cùng nhóm dòng 74.
+CHƯA LÀM — cùng nhóm dòng 74.
+CHƯA LÀM — cùng nhóm dòng 74.
+CHƯA LÀM — cùng nhóm dòng 74.
+Dữ liệu 241 thiết bị đã sang, gắn công ty 9. Nhưng màn hiển thị chưa lọc công ty — xem dòng 66.
+
+
+CHƯA LÀM — phiếu đã duyệt có ngày ở tương lai và phiếu gửi duyệt chưa gộp (cùng nhóm dòng 74).
+CHƯA LÀM — cùng nhóm dòng 91.
+CHƯA LÀM — cùng nhóm dòng 91.
+
+CHƯA KIỂM CHỨNG ĐƯỢC trên local. Mở màn ra 0 bản ghi vì dữ liệu chấm công cũ không gộp theo chốt, nên chưa dựng lại được lỗi "số ngày nghỉ không lý do". Đề nghị TPE test lại trên prod sau khi công ty gộp đã có chấm công mới.
+Phụ thuộc quyết định ở dòng 91 (có gộp phiếu công tác hay không).
+Phụ thuộc quyết định ở dòng 74/76.
+Phụ thuộc quyết định ở dòng 74/76.
+ĐÃ HẾT LỖI (có bằng chứng giao diện). Mở màn Báo cáo phép ra đủ 71 NV của EG với đầy đủ cột: số phép nghỉ ngoài PM, tổng phép được dùng, đã dùng, còn lại. Số phép đã dùng trước cutover được bù đúng (nguồn 310,5 ngày → đích 743,0 ngày, chênh đúng 432,5 ngày engine cộng vào). Đề nghị TPE đối chiếu vài NV với cổng cũ để chốt.
+
+
+OK — 49 thành phần sang đủ, service đã lọc đúng theo công ty (dùng riêng).
+CÒN LỖI QUYỀN (lỗi app). SalaryTemplateService::index() không lọc company_id → xem được mẫu bảng lương của công ty khác. Sửa cùng nhóm dòng 21/41/65/66/81. Dữ liệu mẫu bảng lương 1/1 đã sang đúng.
+ĐÚNG THIẾT KẾ — dữ liệu cũ không gộp, dùng riêng theo phân quyền.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Chưa gộp theo chốt hiện tại. Nếu TPE cần dữ liệu báo cáo chi trả thì phải gộp cả dữ liệu lương kỳ cũ — đề nghị chốt riêng vì khối lượng lớn.
+
+CHƯA KIỂM CHỨNG ĐỦ trên local (dữ liệu cơm local quá mỏng). Đo được: rice_menus, rice_menu_days, rice_settings, rice_setting_locations, rice_conn_infos vẫn mang company_id=1 và không được re-tag; EG chỉ được gán vào 1 ngày thực đơn. DNS sẽ bổ sung bước gán EG vào bảng thực đơn của TPE. Ngoài ra admin EG hiện chưa vào được phân hệ cơm (thiếu quyền) — cần rà quyền cơm cho công ty gộp.
+ĐÃ HẾT LỖI. Sau bước relink, công ty cơm EG về đúng tenant TPE (parent 1, công ty 9) và giữ nguyên 7.551 đăng ký, trong đó 58 bản ghi ngày tương lai. Nghi vấn vì sao lần trước TPE thấy chưa gộp: nhiều khả năng lần đó chạy bằng seeder theo runbook cũ nên chưa chạy 2 bước cơm (phải chạy tay), hoặc dùng lệnh gộp 1 lần company:migrate-full như DNS vừa chạy.
+ĐÃ HẾT LỖI — cùng kết quả dòng 122, dữ liệu đăng ký không mất. Lưu ý: 19 hồ sơ cơm trỏ tới NV không còn ở HR (đã nghỉ/xoá ở nguồn), TPE rà giúp.
+Giữ nguyên trong hệ thống (đã re-tag 40.005 dòng theo nhân sự mới).
+ĐÃ HẾT LỖI — dữ liệu cơm gồm cả bản ghi tương lai vẫn còn nguyên sau relink.
+
+
+Chưa dùng — các danh mục của phân hệ này để dùng riêng theo công ty.
+Danh mục đào tạo (loại đào tạo, môn, giảng viên, ngân hàng câu hỏi) đã gộp theo công ty 9 — dùng riêng.
+Chưa dùng — danh mục để dùng riêng.

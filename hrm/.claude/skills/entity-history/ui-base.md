@@ -308,3 +308,4 @@ Màu chấm + màu tên hành động lấy từ `action_color` BE trả — **k
 | Dùng dấu `~ - +` | Ba nhóm có **nhãn chữ**: thêm mới / đã xóa / sửa thông tin (§5a) |
 | Lọc ngày theo `created_at` (`d/m/Y H:i`) | Lọc theo `created_at_raw` (`Y-m-d …`), cắt 10 ký tự |
 | `V2BaseSelect` trong popup | `V2BaseSelectInModal` (dùng được cả trong và ngoài modal) |
+| Giá trị của ô soạn thảo in ra nguyên thẻ HTML (`<div><span style=…`) | `SiValue` tự bóc thẻ + giải mã ký tự đặc biệt, cắt 200 ký tự kèm "Xem thêm" — đừng render giá trị log ở nơi khác |

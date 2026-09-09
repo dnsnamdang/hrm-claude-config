@@ -150,3 +150,63 @@ php artisan db:seed --class=CompanyMigrationSeeder            # thật  -> ghi i
 php artisan company:finalize-rice --run=<run_id>             # cơm
 ```
 > Hoặc sau khi seed HẾT các công ty: `php artisan company:finalize-rice` (không --run) để chạy cơm tất cả 1 lượt.
+
+---
+
+## ⭐ CHẠY GỌN — 1 LỆNH DUY NHẤT (cập nhật 05/09/2026)
+
+Từ nay không cần sửa `.env` cho từng công ty nữa. Một lệnh làm đủ 6 bước:
+di trú HR → cơm (re-link + enroll) → **đưa ảnh lên S3** → đánh lại mã → đẩy ERP.
+
+### Bước 1 — backup (bắt buộc)
+```bash
+mysqldump -h<host> -u<user> -p hrm_production > /backup/hrm_production_$(date +%F_%H%M).sql
+```
+
+### Bước 2 — chạy THỬ (không ghi gì)
+```bash
+php artisan company:migrate-full \
+  --source-db=hrm_green \
+  --run=etekgreen \
+  --rice-parent=2 \
+  --asset-dir=/backup/etekgreen/public \
+  --timesheet-from=2026-01-01 \
+  --dry-run
+```
+
+### Bước 3 — chạy THẬT
+```bash
+php artisan company:migrate-full \
+  --source-db=hrm_green \
+  --run=etekgreen \
+  --rice-parent=2 \
+  --asset-dir=/backup/etekgreen/public \
+  --timesheet-from=2026-01-01 \
+  --confirm
+```
+→ Ghi lại **company_id MỚI** lệnh in ra, rồi thêm vào `config/company_migration.php`:
+`'leave_recompute_skip' => [ <id mới> => 2026 ]`
+
+### Giải thích tham số
+| Tham số | Ý nghĩa |
+|---|---|
+| `--source-db` | DB nhân sự của cổng thành viên |
+| `--run` | nhãn riêng mỗi công ty (etekgreen / etekpower / etek) |
+| `--rice-parent` | parent_id cơm cũ của cổng: GREEN=2, POWER=3, ETEK=4. Bỏ trống = không xử lý cơm |
+| `--timesheet-from` | MỐC lấy dữ liệu CHẤM CÔNG (vd `2026-01-01`) → Bảng chấm công chi tiết/tổng hợp, Báo cáo tổng hợp chấm công và Báo cáo phép hiển thị đúng như cổng cũ. Bỏ trống = không lấy chấm công (phép đã nghỉ dồn vào ô "nghỉ ngoài PM") |
+| `--cutover-date` | NGÀY chuyển cổng (yyyy-mm-dd). Đơn xin nghỉ ĐÃ DUYỆT có ngày nghỉ từ mốc này trở đi mới đưa sang. Mặc định = ngày chạy lệnh — khai khi chạy di trú TRƯỚC ngày cutover |
+| `--asset-dir` | thư mục sao lưu ảnh của cổng cũ (chứa `/uploads/...`) → bật bước đưa ảnh lên S3 |
+| `--asset-url` | dùng THAY `--asset-dir` khi cổng cũ CÒN CHẠY, vd `https://hrm-etekgreen...` |
+| `--no-assets` | bỏ qua bước ảnh |
+| `--no-erp` | không đẩy sang ERP |
+| `--no-recode` | không đánh lại mã nhân viên |
+
+### Nếu bước ảnh lỗi mạng / chưa có thư mục ảnh lúc chạy
+Chạy lại RIÊNG phần ảnh, không phải di trú lại (chạy nhiều lần không đẩy trùng):
+```bash
+php artisan company:upload-assets --run=etekgreen --dir=/backup/etekgreen/public --dry-run
+php artisan company:upload-assets --run=etekgreen --dir=/backup/etekgreen/public
+```
+
+⚠️ Ảnh của cổng thành viên lưu dạng đường dẫn nội bộ. **Phải lấy được file** (thư mục sao lưu,
+hoặc chạy khi cổng cũ chưa tắt), nếu không ảnh nhân sự sẽ hỏng sau khi cổng cũ ngừng hoạt động.

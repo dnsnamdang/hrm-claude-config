@@ -212,8 +212,8 @@ FE
 - [x] Nối nút "Tạo báo giá dịch vụ" ở màn CCTT (đang bắn toast)
 
 #### Bước 3 — Báo giá Phase B (lập độc lập)
-- [ ] Chọn khách hàng / người liên hệ / địa chỉ sửa chữa
-- [ ] Thêm thiết bị thủ công từ danh mục thiết bị của khách · thiết bị tương đương · tạo lỗi thiết bị ngay trong form
+- [x] Chọn khách hàng / người liên hệ / địa chỉ sửa chữa (xong 2026-08-26)
+- [x] Thêm thiết bị thủ công từ danh mục thiết bị của khách · thiết bị tương đương · tạo lỗi thiết bị ngay trong form (xong 2026-08-27, bước 3a)
 - [x] Sao chép báo giá
 
 #### Bước 4 — lệnh chạy nền hết hiệu lực báo giá (00:30 hằng ngày)
@@ -952,12 +952,12 @@ tự đổ dòng công việc.
       hoá) — không đúng ERP, và cho phép báo giá thiết bị khách không hề có
 
 ### Việc phải làm
-- [ ] Đổi nút thêm dòng ở khối A/B của form báo giá sang chọn từ **thiết bị của khách**, dùng lại
-      popup của màn Phiếu yêu cầu (tách dùng chung, KHÔNG copy sang thư mục mới)
-- [ ] Nối 2 popup khai báo thiết bị mới (Tân Phát / NCC khác + thiết bị tương đương)
-- [ ] Đổ dòng kèm **lỗi thiết bị mặc định** của hàng hoá
-- [ ] Tạo lỗi thiết bị nhanh ngay trong form (ERP: `CreateDeviceErrorModal`)
-- [ ] Kiểm thử nhiều tài khoản + dọn dữ liệu thử
+- [x] Đổi nút thêm dòng ở khối A/B của form báo giá sang chọn từ **thiết bị của khách**, dùng lại
+      popup của màn Phiếu yêu cầu (tách 5 popup sang `components/customer-care/`)
+- [x] Nối 2 popup khai báo thiết bị mới (Tân Phát / NCC khác + thiết bị tương đương)
+- [x] Đổ dòng kèm **lỗi thiết bị mặc định** của hàng hoá (chọn nhiều lỗi -> mỗi lỗi 1 dòng)
+- [x] Tạo lỗi thiết bị nhanh ngay trong form (dùng lại `QuickDeviceErrorModal` của chứng từ 2)
+- [x] Kiểm thử nhiều tài khoản + dọn dữ liệu thử (12/12 máy chủ · 7/7 hồi quy · giao diện đủ luồng)
 
 ### Bộ kiểm bước 3a (2026-08-27)
 
@@ -1112,3 +1112,866 @@ kiểm bằng số.
       trên phiếu** (5 mục con theo 4 khối A/B-I/B-II/C + khối D tổng hợp), viết bằng ngôn ngữ
       nghiệp vụ, nêu rõ ô nào NHẬP ô nào TỰ TÍNH và 3 cột bảo hành chỉ hiện khi phiếu có thiết bị
       bảo hành. Bộ kiểm thuật ngữ kỹ thuật: sạch.
+
+### Rà quy tắc số tiền toàn luồng dịch vụ — 28/08
+Quy tắc: **dấu phẩy ngăn nghìn, dấu chấm thập phân** (`1,234,567.89`).
+
+| Đường ra | Kết quả rà |
+| --- | --- |
+| Bản in 5 màn | ĐÚNG — 115 lần `number_format()` đều dùng mặc định, 0 lần truyền dấu ngăn cách tuỳ biến |
+| Xuất Excel (3 màn có tiền: CCTT · Báo giá · Phiếu bảo hành) | ĐÚNG — đo file thật: ô tiền kiểu SỐ (`n`), giá trị thô, định dạng `#,##0`; ký tự ngăn cách do Regional Settings của máy vẽ (skill export-excel mục 1b) |
+| Cột tiền khai đủ kiểu số | ĐÚNG — cả 3 màn chỉ có `total_before_vat` / `total_after_vat`, đều nằm trong `EXPORT_NUMERIC_COLUMNS` |
+| Số trên màn | ĐÚNG — `money()` dùng `en-US` |
+
+- [x] **Sửa 2 chỗ lệch**: dòng tiến độ xuất file ở màn Báo giá dịch vụ và Phiếu bảo hành dùng
+      `toLocaleString('vi-VN')` (đếm SỐ DÒNG, không phải tiền) → đưa về `en-US` cho khớp 3 màn kia.
+      Giờ `grep "toLocaleString('vi-VN')"` trong `pages/customer-care` = 0.
+- [x] Ghi quy tắc vào skill `export-excel` (mục 1b + checklist) và `print-page` (mục 4a-bis) —
+      trước đó skill còn coi dấu phẩy là triệu chứng lỗi cần chữa, ngược với quy tắc đã chốt.
+
+### Kiểm lại theo phản hồi 28/08 — "Excel vẫn ngăn nghìn bằng dấu chấm"
+Đo file thật xuất từ chính màn Phiếu cung cấp thông tin, có 2 cột tiền:
+
+- Máy chủ trả **số thật**: `123671618` và `133565347.44` (kiểu number, không phải chuỗi).
+- Ô trong file: **kiểu SỐ**, giá trị thô, định dạng `#,##0` → file ghi ĐÚNG chuẩn.
+- ⇒ Dấu chấm người dùng nhìn thấy là do **Regional Settings của máy mở file**, không phải do code:
+  mã `.xlsx` không chứa ký tự ngăn cách, Excel tự vẽ theo máy (skill `export-excel` mục 1b).
+
+- [x] **Lỗi THẬT phát hiện nhân tiện: số lẻ bị làm tròn khi hiển thị.** `listExportFile.js` gắn
+      cứng `#,##0` cho MỌI ô số, nên `133.565.347,44` hiện thành `133.565.347` — người đọc tưởng
+      tính sai tiền. Đã chọn mã theo TỪNG Ô (`#,##0` số nguyên · `#,##0.##` số lẻ) đúng như skill
+      `export-excel` mục 1a vẫn yêu cầu ở phía máy chủ. Đo lại: cột Tổng trước thuế `#,##0`, cột
+      Tổng sau thuế `#,##0.##`.
+- [x] **User chốt 28/08: GIỮ ô kiểu SỐ.** Chấp nhận dấu ngăn cách chạy theo Regional Settings của
+      máy mở file, đổi lấy SUM/lọc/pivot dùng được và không có tam giác xanh. Ai muốn thấy dấu phẩy
+      thì đổi định dạng vùng của máy sang English. Đã ghi quyết định + lý do vào skill
+      `export-excel` mục 1b để lần sau không mở lại tranh luận này.
+
+## Phase — Redmine #11270 (Phiếu bảo hành - Danh sách), 28/08
+
+- [x] **Công ty/Phòng ban bật ở "Cài đặt bộ lọc" mà không ra ngoài được.** Gốc: panel đếm số ô theo
+      `resetKeys` (4) trong khi màn ẩn Bộ phận + Nhân viên nên chỉ render 2 ô → một mình field này
+      đã 4 > 3, **vĩnh viễn** không vào được chế độ gọn dù user tắt sạch trường khác. Thêm
+      `inputCount: 2`. **Lỗi có ở CẢ 5 MÀN luồng dịch vụ — đã sửa hết**, không đợi báo từng cái.
+- [x] **Ô Công ty/Phòng ban nằm dọc (user báo ngay sau đó).** Component con dựng bằng lưới Bootstrap
+      `col-md-3`, thả vào hàng lọc gọn thì mỗi ô rơi một dòng. Sửa ở `V2BaseSmartFilterPanel`:
+      `.inline-field` thành flex + gỡ bề rộng lưới của `col-*`. File CRLF — đã giữ nguyên, diff 17
+      dòng thêm.
+- [x] **Ô gom nhóm tự dựng nhãn làm hàng lọc lệch trục (user báo tiếp).** Bộ lọc gọn vốn KHÔNG có
+      nhãn, riêng ô Công ty – Phòng ban tự dựng nhãn nên cao hơn các ô bên cạnh một dòng chữ. Ẩn
+      nhãn trong `.inline-field`. Đo lại: 3 ô (tìm nhanh + công ty + phòng ban) cùng `top = 139`.
+      ⚠️ Đánh đổi: mất icon ổ khoá ở chế độ gọn — muốn dùng thì bật thêm trường để về chế độ nâng cao.
+- [x] **Sort cột Khách hàng sai.** Cột hiện `<mã> - <tên>` nhưng máy chủ sắp theo mỗi tên. Nối bảng
+      khách hàng, sắp theo mã rồi tên. ⚠️ Kèm `select('wr_service_contracts.*')` vì `exportRows` và
+      in danh sách dùng chung câu truy vấn mà không giới hạn cột — thiếu là bảng khách hàng đè cột
+      `id`/`code` của phiếu. Đã đo: sắp xong số phiếu vẫn đúng, tổng vẫn 3.631 dòng.
+      4 màn còn lại KHÔNG bật sort cột này nên không dính.
+- [x] Đổi tiêu đề cột "Người liên hệ" → **"Người liên hệ - SĐT"** (ô vốn gộp tên + số điện thoại).
+- [x] Quy tắc dấu `.` `,`: cột tiền trên màn đã dùng `money()` (`en-US`); dòng tiến độ `vi-VN` đã
+      sửa ở lượt trước.
+
+### Bài học đã ghi vào skill `list-page`
+- mục **3f** — ô lọc gom nhóm phải khai `inputCount` đúng số ô THẬT, kèm cách tự kiểm bằng Console
+  và lệnh `grep` tìm màn còn dính; kèm bẫy layout `col-md-*` trong hàng lọc gọn và bẫy CRLF.
+- mục **3g** — ô gộp thì tiêu đề phải nói đủ, và sort phải theo đúng chuỗi hiển thị; nối bảng để
+  sort thì bắt buộc `select()` bảng chính.
+- mục **Bộ tự kiểm màn danh sách** ở cuối skill, chốt lại: *lỗi vừa sửa ở màn này thì grep ngay
+  sang các màn cùng luồng*, vì luồng thường dựng bằng cách copy màn đầu.
+
+### Trường link chứng từ phải nằm trong khung ô — rà cả luồng (28/08)
+- [x] Tách `.v2-linked-field` thành kiểu DÙNG CHUNG ở `assets/scss/v2-styles.scss`, bỏ bản copy
+      cục bộ trong `WrInformationRequestForm`.
+- [x] Áp cho 3 màn còn dùng link trần (`class="pt-1"`): Phiếu xử lý yêu cầu, Báo giá dịch vụ,
+      Phiếu bảo hành. Đo lại cả 4 màn: ô link cao 32px, khớp ô `V2BaseInput` bên cạnh.
+- [x] ⚠️ Class khai NGOÀI khối `.v2-styles`: `WrQuotationForm` không bọc lớp đó nên để bên trong
+      thì riêng màn Báo giá ô co còn 19px (đã đo và sửa).
+- [x] Ghi vào skill `list-page` mục 7b.
+
+## Phase — Redmine #11271 (Phiếu bảo hành - Xuất Excel), 28/08
+
+- [x] **Logo chèn text** — kiểm lại trên file xuất MỚI sau khi đã đổi nguyên tắc (neo 2 ô + căn
+      giữa + trần 900px): ảnh neo `twoCellAnchor` từ B đến H, biên dưới đúng bằng biên dưới dòng 1
+      (`ht=60`), tiêu đề dòng 2 hiện đủ, không đè chữ. Ảnh tester đính kèm là file dựng trước khi
+      sửa.
+- [x] **Ô chứa số báo lỗi** — chỉ cột "Điện thoại liên hệ" dính tam giác xanh (cột tiền đã đúng
+      kiểu số từ trước). SĐT BẮT BUỘC giữ kiểu chuỗi, đổi sang số là mất số 0 đầu (`0816348826` →
+      `816348826`), nên tắt cảnh báo bằng thẻ `<ignoredErrors numberStoredAsText>`. ExcelJS không
+      có API cho thẻ này → vá thẳng XML sau khi ghi bằng `jszip` (đã là phụ thuộc của ExcelJS).
+      Áp cho MỌI màn dùng `listExportFile.js`, màn không phải khai gì.
+- [x] Kiểm chứng: thẻ nằm ĐÚNG trước `<drawing>`; mở lại được bằng openpyxl và LibreOffice (file
+      không hỏng); `E4` vẫn là chuỗi `'0816348826'`; cột tiền vẫn kiểu số + `#,##0`.
+- [x] Ghi vào skill `export-excel` mục **4d**, và sửa mục 1b vốn đang nói "đừng mất công dùng
+      ignoredErrors" — đúng với máy chủ nhưng sai với file dựng ở trình duyệt.
+
+## Phase — Bản in Phiếu bảo hành, 28/08 (2 lỗi LẶP LẠI từ #11207)
+
+Đúng 2 lỗi đã sửa cho Phiếu cung cấp thông tin hồi #11207, lặp lại vì hồi đó **không ghi vào skill**
+và mỗi service in tự viết một bản công thức.
+
+- [x] Ô "Thời gian" trống khi không lọc ngày → ghi **"Tất cả"**
+- [x] Cột "Ngày tạo" trong bảng danh sách thêm GIỜ (`28/07/2026 09:15`)
+- [x] **Rà cả 5 service in của luồng thay vì sửa mỗi màn được báo**: lỗi "Thời gian" còn ở Báo giá
+      dịch vụ; lỗi "ngày thiếu giờ" còn ở Báo giá dịch vụ + Yêu cầu KT SC-BH. Đã sửa hết.
+- [x] **Gom về trait dùng chung** `Concerns/PrintsListPeriod.php` (`periodText()` + `listDateTime()`),
+      bỏ 2 bản `periodText` private trùng nhau. Giờ 4 service in danh sách dùng chung một nguồn —
+      `grep "THOI_GIAN' => trim"` toàn module = 0.
+- [x] Ngoại lệ đã giữ nguyên: `NGAY_LAP` của bản in MỘT phiếu chỉ ghi ngày, không giờ.
+- [x] Ghi vào skill `print-page` mục **4e** + mở rộng `description` để lần sau skill tự kích hoạt
+      đúng lúc; kèm lệnh grep tự kiểm (và ghi rõ lệnh thứ 2 có thể báo động giả với `NGAY_LAP`).
+
+### Checkpoint — 2026-08-28
+Vừa hoàn thành: **Bước 3a (thêm thiết bị thủ công)** + sửa **phạm vi 2 lối vào** cho cả 4 màn của
+luồng + bảng tra lối vào dạng Excel. Toàn bộ đã đẩy lên `gop_db`.
+Đang làm dở: không có.
+Bước tiếp theo: chốt hướng — (1) Hợp đồng dịch vụ (mắt xích cuối đoạn A, cần chốt trước việc 3 bảng
+dùng chung port nguyên trạng hay tách), (2) tài liệu cho Báo giá + Phiếu bảo hành, hay (3) hai việc
+treo (seeder 6 quyền, bỏ khối báo giá trong lệnh `update:quotations-expried` của ERP).
+Blocked: không.
+
+## Phase 3 — HỢP ĐỒNG DỊCH VỤ (bắt đầu 2026-08-28)
+
+Khảo sát + cắt phase: xem `design-phase3.md`. Chốt nền: **giữ nguyên bảng `wr_service_contracts`,
+tách nhánh bằng `type`** — không tách bảng vì cơ sở dữ liệu dùng chung với ERP đang chạy.
+
+### Phase 3A — BE
+- [x] `WrServiceContractService`: danh sách (2 lối vào `all` / `for-approve`, gate 4 quyền) · chi tiết · bộ lọc 9 ô · cờ `is_can_*` fail-closed
+- [x] Bộ trạng thái `STATUSES_CONTRACT` + `statusTable()` rẽ theo `type`
+- [x] `WrServiceContractController` + Resource danh sách + 3 route
+- [x] 4 quyền (id 1551–1554) vào `PermissionsTableSeeder`
+- [x] Lập hợp đồng TỪ BÁO GIÁ — **prefill** (`GET wr-service-contracts/prefill`) + `canCreateContract()` trên entity báo giá
+- [x] Lập hợp đồng TỪ BÁO GIÁ — **lưu** (`POST wr-service-contracts` + `WrServiceContractRequest`)
+  - `createFromQuotation()`: sinh mã → lưu đầu phiếu → dòng thiết bị (kèm vật tư / dịch vụ) → chi phí khác → **đóng dấu ngược** báo giá (Đã tạo hợp đồng) và phiếu CCTT (Đã lập hợp đồng)
+  - Tiền chiết khấu tính ở MÁY CHỦ thay vì nhận số từ trình duyệt như ERP — công thức giữ nguyên, đã đối chiếu khớp 2.766/2.767 dòng hợp đồng ERP thật
+  - Sửa 2 lỗi phát hiện khi đối chiếu: prefill bỏ sót **giá vốn công** (báo giá ẩn cột này nên phải đọc thẳng bảng), và `$fillable` của dòng thiết bị thiếu cả nhóm cột chiết khấu → mọi ô tiền lưu ra 0 mà không báo lỗi
+  - Sửa 1 lỗi của ERP: chưa có giá phân bổ thì `min(net, 0)` cho giá chuẩn = 0 → đổi thành lấy thẳng giá net
+- [x] **Sửa** hợp đồng (`PUT wr-service-contracts/{id}`) — chốt chặn `is_can_edit` ở máy chủ; mã hợp đồng, báo giá gốc và người lập KHÔNG cho đổi
+- [x] **Lịch sử thay đổi** cho bảng `wr_service_contracts` — dùng chung bộ `catalog_histories` (khai whitelist + nhãn cột tiếng Việt), gắn cho **cả hợp đồng lẫn phiếu bảo hành** vì chung một bảng
+  - Sửa lỗi phát hiện lúc kiểm: entity `extends Model` thuần nên **người tạo lưu ra 0, người cập nhật rỗng** — gán tay ở mọi đường ghi (lập, sửa, đóng dấu ngược) đúng cách màn Báo giá đang làm. Phiếu bảo hành dính cùng lỗi, đã sửa luôn
+  - Thêm `WrServiceContract::statusTableOf()` / `statusNameOf()` (bản tĩnh) để snapshot lưu TÊN trạng thái theo đúng loại chứng từ
+  - Đã kiểm: tạo mới / thay đổi thông tin (3 trường cùng lúc, 1 dòng log) / thay đổi trạng thái ra đúng 3 nhóm lọc, thứ tự mới → cũ
+- [x] **Bản in hợp đồng** (`GET wr-service-contracts/{id}/print-data` + `GET .../print-templates`)
+  - Khác 3 màn trước: mẫu in lưu HẲN vào `wr_service_contracts.template` lúc lập (người dùng chọn mẫu ở tab "Mẫu in" rồi sửa lời văn) → bản in đọc mẫu từ CHÍNH BẢN GHI, hợp đồng cũ in lại vẫn ra đúng lời văn đã ký
+  - `WrServiceContractPrintService`: ~40 biến + 3 khối bảng (A dịch vụ · B chi phí · C thông tin thanh toán), đánh chữ cái động như ERP
+  - Tách `isWithinPriceScope()` / `shouldHidePrice()` — người chỉ vào được nhờ quyền "Xem hợp đồng ẩn giá" thì đọc lời văn nhưng KHÔNG thấy bảng tiền
+  - Sửa 1 lỗi ERP: `TEN_CONG_TY`/`MST_CONG_TY`… lấy theo công ty NGƯỜI ĐANG ĐĂNG NHẬP → đổi sang `company_id` ghi trên hợp đồng (quy tắc `print-page` §4b). Thêm biến `DIA_CHI_GIAO_HANG` mà ERP quên sinh dù cả 4 mẫu đều có chỗ dành sẵn
+- [x] **Tính tổng tiền hợp đồng ở máy chủ** (`syncTotals`) — 3 cột JSON `total` / `repair_maintain` / `sum_merchandise` + 3 cột tiền; ERP để trình duyệt tính rồi gửi lên
+  - Phát hiện thêm: dòng con (vật tư / dịch vụ) cũng thiếu cả nhóm cột tiền trong `$fillable` → chiết khấu vật tư và dịch vụ mất trắng khỏi bảng tổng
+- [x] **Đối chiếu bản in với ERP trên cùng hợp đồng thật** (chạy lớp in ERP bằng PHP 7.4): 441/441 số tiền khớp tuyệt đối, 896/897 ô nội dung khớp, toàn bộ cụm số tổng khớp đến từng đồng
+  - Còn treo sang Phase B: `syncExtendProducts` (khối bảo dưỡng), `syncMerchandise` (khối hàng hoá), `syncPayments`, `syncImplement`, và **giá phân bổ** `allocated_price` (chờ đường cắm sang Kho)
+- [x] Sửa / Xoá gate bằng `canEdit()` (chỉ người lập, trạng thái Đang tạo hoặc Không duyệt) — chặn ở máy chủ, không chỉ ẩn nút (`DELETE wr-service-contracts/{id}` trả 423 khi không được xoá)
+
+### Phase 3A — FE (2026-09-07)
+- [x] Màn danh sách `pages/customer-care/wr-service-contracts/index.vue` — 2 lối vào (`?type=all` / `?type=for-approve`), 11 ô lọc, 12 cột, hành động Sửa · Xóa · In · Lịch sử
+  - KHÔNG có nút "Tạo mới": hợp đồng chỉ lập từ báo giá đã duyệt (100% dữ liệu thật)
+  - Chưa làm Xuất Excel / In danh sách: máy chủ chưa có `export-rows` và `print-list-data` cho hợp đồng (Phase B)
+- [x] 2 mục menu trong `components/subsystem-menu/sale-hub.js`: Kinh doanh → HĐ Sửa chữa - Bảo dưỡng - Bảo trì → "Danh sách hợp đồng"; nhóm duyệt → HĐ SC - BD - BT → "HĐ chờ duyệt"
+- [x] Màn chi tiết / sửa / lập: `_id/index.vue`, `_id/edit.vue`, `create.vue` + `components/WrServiceContractForm.vue` (kế thừa `WrQuotationForm`)
+- [x] 4 khối A(I+II) / B / C / D — tái dùng `WrDeviceLinesTable`, `WrMaintenanceTable`, `WrCostTable`, `WrMerchandiseTable`; thêm khối "Mẫu hợp đồng" (chọn mẫu → nạp lời văn vào ô soạn thảo, lưu hẳn vào bản ghi)
+- [x] Nối nút "Lập hợp đồng dịch vụ" ở màn Báo giá — **cả 2 nơi**: dòng ở danh sách và footer màn chi tiết, cùng cờ `is_can_create_contract` do máy chủ trả
+- [x] BE bổ sung để FE chạy được:
+  - 4 entity còn thiếu (`WrServiceContractExtendProduct` / `...Service` / `...ServiceItem` / `WrServiceContractMerchandise`) + 2 quan hệ trên entity hợp đồng
+  - `syncExtendProducts()` (3 cấp thiết bị → gói dịch vụ → vật tư, port `WrServiceContract::syncExtendProducts()` của ERP) và `syncMerchandises()`; `syncTotals()` nay cộng cả 2 khối này thay vì trả 0
+  - `WrServiceContractResource` (chi tiết) — trước đó màn xem dùng nhầm resource danh sách nên không có khối nào
+  - `WrServiceContractRequest` bổ sung rule cho `extend_products` / `merchandises` / nhóm thông tin thanh toán — **thiếu rule là `validated()` loại cả nhánh, dữ liệu mất trắng mà không có lỗi nào báo**
+  - `WrQuotationService::list()` thêm `withCount(productRepairs, merchandises)` + `withSum(costs.repair_price)`; `WrQuotationListResource` tính `is_can_create_contract` từ số đếm đó thay vì bắn 4 truy vấn con mỗi dòng
+- [x] Verify BE trên dữ liệu thật (báo giá 10263): prefill 4 thiết bị + 1 thiết bị bảo dưỡng + 7 hàng hoá → lưu ra đúng 1/1/6/7 dòng con, tổng có cộng hàng hoá (`sum_merchandise` 8.368.560), đọc lại resource đủ 4 khối, `destroy` dọn sạch dòng con
+- [x] 5 file `.vue` compile sạch
+- [ ] **Chưa chạy thử trên giao diện** — chờ user xác nhận có cần test không
+
+### Phase 3A — còn treo sang Phase B
+- Bảng tổng hợp `wr_service_contract_items` (phục vụ xuất kho / quyết toán) — dòng thiết bị sửa chữa hiện cũng chưa ghi, làm thì làm cả hai cùng lúc
+- Xuất Excel + In danh sách của màn hợp đồng
+- Khối D "Thông tin thanh toán", Ký / Duyệt / Đóng / Quyết toán, giá phân bổ `allocated_price`
+
+### Đã chốt (user 2026-08-28) — xem `design-phase3.md` mục 8
+- [x] Nút "Lập hợp đồng": **giữ nguyên ERP** (`canCreateContract()` — chỉ người lập báo giá, Super Admin miễn)
+- [x] 3 nhánh không có mục menu: **bỏ**, chỉ port `?type=all` và `?type=for-approve`
+- [x] Cột giá vốn: **không hiện** (ERP không có cột này ở màn hợp đồng), nhưng **vẫn chép + lưu**
+      `engineering_work` như ERP (8.194 dòng thật) để dành cho quyết toán ở Phase B
+
+### Tài liệu — mô tả nghiệp vụ TRỌN LUỒNG (28/08)
+- [x] `Mô tả nghiệp vụ - Luồng dịch vụ (5 chứng từ).docx` + `gen_mo_ta_nghiep_vu_luong.py` — 12 chương, 21 bảng, 19 trang. Khác 5 file mô tả nghiệp vụ đã có (mỗi file 1 màn): file này mô tả cả dây chuyền 1→2→3→4 + nhánh Phiếu bảo hành, gồm bảng "chứng từ nào đẩy trạng thái nào về đâu", 4 điều kiện của nút Tạo báo giá dịch vụ, bảng 13 lối vào kèm số đo thật, và chương giới hạn (hợp đồng chưa có · lịch sử Phiếu bảo hành chưa có · 6 quyền chưa seed · lệnh hết hiệu lực chưa chạy). Bộ kiểm thuật ngữ: sạch. Đã soát bố cục qua bản PDF.
+- [x] Cập nhật lại trang tóm tắt luồng dịch vụ (artifact) theo hiện trạng 28/08: thêm chứng từ 4 + bước 5, sửa 3 chỗ đã lỗi thời (báo giá "chưa có", thông báo khi sinh phiếu bảo hành — thực tế KHÔNG có, phạm vi mặc định của lối vào trần).
+
+### Đã giải cái bẫy "số 5 mang hai tên" (2026-08-28)
+
+ERP khai `DA_QUYET_TOAN = 5` **và** `DANG_THUC_HIEN = 5`, đưa cả hai vào mảng `STATUSES`. Truy đến
+cùng: hàm hiển thị `getStatus()` -> `array_find_el` -> `array_find_index` lấy phần tử **khớp đầu
+tiên**, mà "Đã quyết toán" đứng trước → trên ERP số 5 luôn hiện **"Đã quyết toán"**, nhãn "Đang
+thực hiện" không bao giờ ra. Rà toàn mã nguồn: chỗ ghi trạng thái chỉ dùng `DA_QUYET_TOAN`
+(`SettlementContractTrait`), `DANG_THUC_HIEN` là hằng thừa cho loại chứng từ này.
+→ HRM khai đúng một nhãn cho số 5. **1.208/2.321 hợp đồng mang số này** nên sai nhãn là sai trên
+hơn nửa danh sách.
+
+### Verify BE Phase A
+
+- Nhãn trạng thái trên dữ liệu thật: 1 Đang tạo · 2 Chờ duyệt · 3 Có hiệu lực · 4 Đang quyết toán ·
+  5 Đã quyết toán · 10 Đóng · 11 Không duyệt
+- **Cùng số 2, khác nghĩa theo loại**: hợp đồng → "Chờ duyệt", phiếu bảo hành → "Đã duyệt" ✔
+- 3 lối vào: mặc định 0 · `type=all` 1.762 · `type=for-approve` 0 — khớp chéo với SQL
+  (1.762 = số hợp đồng công ty 1, đúng phạm vi quyền của tài khoản thử; 2 hợp đồng Chờ duyệt thuộc
+  công ty 4 nên không hiện)
+- Chốt chặn qua HTTP: xem được 200 · ngoài phạm vi 403 · id lạ 404 · **id của PHIẾU BẢO HÀNH 404**
+  (điều kiện `type` chặn đúng) · chưa đăng nhập 401
+
+### Prefill lập hợp đồng từ báo giá (2026-08-28)
+
+Port `getForServiceContract()` của ERP — **7 việc**, giữ nguyên thứ tự và ý nghĩa:
+bồi VAT theo danh mục hiện tại · giữ `serial_old` để về sau đối chiếu thiết bị nhận về · chép thêm
+**mã số thuế + thông tin ngân hàng** của khách (hợp đồng cần, báo giá không có) · lấy phòng tiếp
+nhận từ **phiếu yêu cầu gốc** · **bỏ trống khối bảo hành** (phần còn bảo hành đi theo Phiếu bảo
+hành, hợp đồng chỉ ký phần có thu tiền) · đặt lại 3 cột nhánh bảo hành trên dòng chi phí về 0 ·
+khối bảo dưỡng chỉ giữ dịch vụ **số lượng khác 0** rồi bỏ luôn thiết bị không còn dịch vụ nào.
+
+`canCreateContract()` viết mới trên entity báo giá, **giữ nguyên logic ERP**: báo giá đã Duyệt ·
+có phần sửa chữa (thiết bị SC / bảo dưỡng / hàng hoá / `repair_price` > 0) · **chính người đăng
+nhập là người lập báo giá** (Super Admin miễn).
+
+**Verify 7/7 qua HTTP**: đúng người lập 200 · người khác 403 · thiếu tham số 400 · báo giá không
+tồn tại 404 · id của phiếu cung cấp thông tin 404 · báo giá chưa duyệt 403 · chưa đăng nhập 401.
+Dữ liệu trả về đúng cả 7 quy tắc (kiểm trên báo giá `TPE.BGDV.2026009443`: khối bảo hành rỗng,
+`serial_old` có, 3 cột bảo hành = 0, MST `0100237411`, phòng tiếp nhận 50).
+
+## Phase — Rà màn Báo giá dịch vụ theo skill, 28/08
+
+User chỉ ra màn Báo giá dịch vụ dính lại nhiều lỗi đã fix ở màn khác. Rà bằng bộ tự kiểm của skill
+thay vì sửa từng lỗi được báo.
+
+- [x] **Nhãn "Người lập / Ngày lập" → "Người tạo / Ngày tạo"** (skill list-page mục 6). Sửa ở ĐỦ 6
+      nơi người dùng nhìn thấy: cột bảng · trường xuất file (FE + `ExportColumnRegistry` ở BE) ·
+      nhãn ô lọc · nhãn màn chi tiết · cột popup chọn phiếu · tiêu đề cột BẢN IN.
+      Hồi #11240 tôi đã đổi dòng phụ đề màn chi tiết nhưng bỏ sót cột danh sách — nay quét grep hết.
+- [x] **Popup "Chọn hàng hoá": click dòng thêm ngay.** Popup vốn đã dùng chung nhưng hành vi để dạng
+      OPT-IN (`addOnRowClick` mặc định `false`) nên mỗi màn phải tự nhớ bật → quên là lặp lỗi.
+      **Đổi mặc định thành `true`**, bỏ 2 chỗ khai thừa. Màn cần kiểu cũ thì tắt tường minh.
+- [x] **Thiếu cột Người/Ngày cập nhật** ở Báo giá dịch vụ VÀ Phiếu bảo hành (3 màn kia đều có).
+      Bổ sung: FE 2 cột (ẩn mặc định) + 2 trường xuất; BE Resource trả 2 khoá, Phiếu bảo hành thêm
+      eager load `updater.info`; registry xuất file thêm 2 nhãn. Đo thật: cả 2 màn nay trả
+      `updater_name` + `updated_at` có dữ liệu.
+      ⚠️ Suýt sai: sửa nhầm `WrServiceContractListResource` trong khi màn dùng `WrWarrantyListResource`
+      — phải xem controller dùng Resource nào trước khi sửa.
+- [x] Chạy bảng so sánh 5 màn: mọi chỉ số đã đồng nhất.
+
+### Ghi vào skill
+- `list-page` mục 6 — bảng tra chữ ERP→HRM ("Người lập"→"Người tạo"…) + danh sách 6 nơi phải đổi +
+  lệnh grep tự kiểm cho cả 2 repo.
+- `list-page` bộ tự kiểm — thêm 2 mục (nhãn, cột cập nhật) và **kỹ thuật bảng so sánh cả luồng**:
+  đặt các màn cạnh nhau, màn nào lệch số là màn bị sót.
+- `modal-popup` mục 4b — nguyên tắc gốc: **hành vi chuẩn phải là MẶC ĐỊNH của component dùng chung**,
+  đừng để opt-in rồi bắt từng màn nhớ bật; sửa xong phải quét xem màn nào đang khai đè.
+
+### Fix bộ lọc Công ty / Phòng ban vỡ layout (2026-09-07)
+- [x] Triệu chứng: `/customer-care/wr-warranties?type=all` — khối "Tìm kiếm nâng cao" hiện thừa nhãn "Công ty – Phòng ban" và 2 ô Công ty / Phòng ban bị bóp nhỏ, xếp chồng lệch sang phải
+- [x] Nguyên nhân: commit `fbe30444` ("fix ui", thêm nhãn floating cho `V2BaseSmartFilterPanel`) đổi 2 chỗ trong khối lọc nâng cao — (1) điều kiện nhãn từ `!field.hideLabel` thành `!useFloating(field)` nên field khai `hideLabel` vẫn bị panel vẽ thêm nhãn khi `floating = false`; (2) bọc slot bằng một `<div>` trơn, làm các `col-md-3` do `V2BaseCompanyDepartmentFilter` dựng không còn là con trực tiếp của `.form-row` → `wrapperClass="d-contents"` mất tác dụng
+- [x] Sửa trong `components/V2BaseSmartFilterPanel.vue`: nhãn về `v-if="!field.hideLabel && !useFloating(field)"`; div bọc nhánh không-floating mang thêm class `d-contents` (trong suốt với layout, trả đúng hành vi trước commit)
+- [x] Kiểm chứng bằng Playwright: chụp màn hình trước/sau trên `http://127.0.0.1:3002/customer-care/wr-warranties?type=all` — sau khi sửa, 2 ô nằm đúng lưới 4 cột, không còn nhãn thừa
+- [x] **Rà toàn hệ thống**: lỗi KHÔNG chỉ ở màn này — 67 màn dùng `V2BaseSmartFilterPanel`, trong đó 28 màn khai `wrapperClass: 'd-contents'` và 30 màn khai `hideLabel` đều dính. Quét tự động 12 màn đại diện (CSKH · Giao việc · Tài chính): TRƯỚC khi sửa 14 khối vỡ (ô lọc co còn 32–58px, nhãn đôi ở serials / device-errors), SAU khi sửa còn 0
+- [x] Đổi từ mượn class `.d-contents` toàn cục sang class riêng của panel `filter-field-passthrough` — `.d-contents` chỉ có hiệu lực trong phạm vi `.v2-styles`, panel đặt trong modal (`device-errors/components/CostSearchModal.vue`) không có lớp bọc đó sẽ mất tác dụng im lặng
+- [x] Xác nhận nhánh `floating = true` KHÔNG bị đụng: hiện chưa màn nào truyền `:floating` cho `V2BaseSmartFilterPanel` (màn dự án tiềm năng dùng component KHÁC là `V2BaseFilterPanel`)
+- [ ] Đề xuất phòng tái phát: thêm test Playwright chốt bố cục bộ lọc (mỗi `col-*` trong `.smart-advanced-filters` phải rộng ≥ 200px, wrapper `d-contents` không được có nhãn con trực tiếp) — bộ lọc này đã vỡ nhiều lần
+
+### Redmine #11298 + #11299 — Rà màn Phiếu cung cấp thông tin theo ERP (2026-09-07)
+Hai task cùng danh sách lỗi (một cho màn Chỉnh sửa, một cho màn Xem chi tiết) — cùng dùng
+`WrInformationRequestForm.vue` nên sửa 1 lần cho cả 3 màn (Lập / Sửa / Xem).
+
+**BE**
+- [x] `WrServiceQuotationResource` trả thêm `customer_type_text` (tra `Customer::CUSTOMER_TYPES`)
+- [x] `WrServiceQuotationService::prefill()` trả `customer_type_text` để màn Lập mới không lệch màn Sửa
+- [x] Thêm 2 route `GET /wr-information-requests/warehouses` + `POST .../stock-of-products`, trỏ
+      thẳng 2 handler đã port ở màn Báo giá dịch vụ (`WrQuotationController`) — không viết lại
+      công thức tồn kho
+
+**FE**
+- [x] Thêm ô **Loại hình tổ chức** (chỉ đọc) vào khối Thông tin yêu cầu, đúng chỗ ERP đặt
+- [x] Ô **"Xem tồn"** ở tiêu đề khối A và khối B (dùng chung 1 biến như `form.stock_query` của ERP)
+      + 2 cột **Tồn dự kiến / Đang giữ** trong `WrDeviceLinesTable` (dòng thiết bị và dòng vật tư)
+- [x] `WrDeviceLinesTable` nhận thêm prop `stocks` + `showStock` — bảng nào không có ô "Xem tồn"
+      (màn Báo giá dịch vụ dùng chung bảng này) thì KHÔNG mọc 2 cột rỗng; `emptyColspan` tính lại
+- [x] **Lý do từ chối tiếp nhận** bọc vào khung ô (`V2BaseTextarea` disabled) thay cho chữ trần
+- [x] Bảng **III - Tổng hợp báo giá**: bỏ dòng VAT và dòng "Tổng thanh toán", còn đúng 1 dòng
+      "Tổng cộng" như ERP. VAT vẫn tính và lưu như cũ, chỉ bỏ khỏi giao diện
+- [x] **Số phiếu xử lý** thành link ở cả màn Sửa — mở **tab mới** để không mất số liệu đang nhập
+- [x] `WrQuotationForm` bỏ lời gọi `loadWarehouses()` trong `loadQuotationTerms()`: `mounted()` của
+      component cha nay đã gọi, giữ lại là nạp 2 lượt
+
+Chưa chạy thử trên giao diện (chờ user xác nhận có cần test không).
+
+**Fix 07/09/2026**
+- [x] Màn Lập báo giá: nút "Thêm thiết bị" ở khối **II - Danh mục thiết bị cần bảo dưỡng** báo
+      `Cannot read properties of undefined (reading 'open')` — template con ghi đè trọn template cha
+      nên thiếu popup `ref="equipmentPickerModal"`; đã khai lại trong `WrQuotationForm.vue`
+
+### Chuẩn hoá: link phiếu luôn nằm trong KHUNG Ô (2026-09-07)
+Khuôn chốt = trường "Phiếu yêu cầu" ở màn Phiếu xử lý (`v2-linked-field` + `v2-cell-link field-line`).
+Rà toàn bộ `pages/` (mọi nuxt-link trong form/chi tiết, bỏ qua link trong bảng):
+- [x] `wr-information-requests` — link Phiếu xử lý thêm class `field-line` cho khớp 3 màn kia
+- [x] `finance/warehouse-prepick-requests` — "Yêu cầu xuất giữ": `div.pt-1` → `div.v2-linked-field`
+- [x] `finance/prepick-cancel-requests` — "Phiếu hủy hàng giữ": `div.pt-1` → `div.v2-linked-field`
+- [x] `finance/borrow-exports/_id` — `.req-box-view` (chip phiếu) thêm viền + nền ô, khớp đúng
+      thông số màn anh em `borrow-export-requests` vốn đã có khung
+- [x] Không phải sửa: `bill-adjust-depts` (link bọc NGOÀI `V2BaseInput` disabled — link nằm trong ô
+      thật), `assign/payment_business_request` và 3 màn Đào tạo (dùng `.form-control` / `.input-choose`
+      vốn đã có viền), `borrow-export-requests` (đã có khung)
+
+### Redmine #11330–#11333 — Rà màn Báo giá dịch vụ theo ERP (2026-09-08)
+4 task fix bug QA báo trên `/customer-care/wr-quotations` (danh sách + lập mới). Đã sửa xong cả 4,
+Redmine chuyển **Đang tiến hành**.
+
+**#11330 — Danh sách**
+- [x] Bộ lọc Công ty / Phòng ban vỡ bố cục — **KHÔNG phải lỗi mới**: đã vá ở commit `1f93998aa`
+      (`V2BaseSmartFilterPanel`), chụp lại giao diện xác nhận 4 ô/hàng đúng lưới, không nhãn thừa
+- [x] Placeholder ô lọc "Người tạo": `Chọn người lập` → `Chọn người tạo`
+      ⚠️ Còn 13 màn khác (chủ yếu Tài chính) vẫn để chữ cũ — ngoài phạm vi 4 task này
+- [x] Cột "Trạng thái bảo hành" luôn trống: `WrQuotationService` KHÔNG hề gán `has_warranty` /
+      `status_warranty` khi lưu, trong khi lưới chỉ đọc `status_warranty`. Thêm
+      `stampWarrantyStatus()` mirror ERP (`store()`/`update()`): có dòng khối A → 1/1, không có → 0/0,
+      đã lập phiếu bảo hành (=2) thì giữ nguyên. Kiểm bằng tinker trong transaction rồi rollback:
+      có bảo hành `has=1 sw=1`, không có `has=0 sw=0`
+
+**#11331 — Popup "Danh sách phiếu cung cấp thông tin làm báo giá"**
+- [x] Cột "Người yêu cầu" trống: popup đọc `row.requester` còn Resource trả `requester_name`
+- [x] Hiển thị `tên - sđt` như ERP → Resource trả thêm `requester_phone`
+      (`employee_infos.telephone` của người lập phiếu yêu cầu, đi kèm quan hệ đã eager load)
+- [x] Sắp xếp cột Số phiếu + Ngày tạo (`sort_field` / `sort_type`, khớp `SORT_FIELDS` của BE)
+- [x] Phân trang: vốn đã có, xác nhận `meta.total` = 38 → hiện 4 trang; nằm dưới bảng, cuộn thân
+      popup là thấy
+
+**#11332 — Lập mới**
+- [x] Chọn xong phiếu không mở lại popup được: `canChooseCustomer` khoá luôn cả ô Số phiếu. Tách
+      `canChooseInformation` (= `!readonly`) đúng ERP — ERP chỉ khoá nút tìm của ô KHÁCH HÀNG
+      (`ng-disabled="mode"`), ô Số phiếu luôn bấm được ở màn Lập/Sửa
+- [x] Popup Số phiếu lọc theo khách hàng đang chọn (prop `customerId` → tham số `customer_id`)
+- [x] Bỏ trường thừa "Ngày hết hiệu lực" (ERP chỉ có "Hiệu lực báo giá")
+- [x] UI Tệp đính kèm theo khuôn `finance/addition-accounting-requests`
+
+**#11333 — Lập mới (khối thiết bị)**
+- [x] Bảng I: Serial nay SỬA ĐƯỢC đúng ERP — có serial thì CHỌN trong danh sách, không có thì gõ
+      tay, có danh sách mà cần serial lạ thì bấm "Nhập serial tạm". BE bồi `serials` cho từng dòng
+      (Resource, 1 truy vấn cho cả phiếu, bó theo `product_id` của phiếu) + dòng mới lấy `serials`
+      thẳng từ popup. Bỏ luôn việc nối sẵn mọi serial vào ô (ERP để trống, bắt chọn)
+- [x] Nút "Thêm trang thiết bị của khách hàng" không mở: 4 popup con dựng trên `b-modal`
+      (z-index 1050) nằm DƯỚI lớp phủ của popup chọn thiết bị (1060) → hạ lớp phủ xuống **1035**
+- [x] Nút "Thêm nhanh" nguyên nhân lỗi: cùng nguyên nhân z-index, hết theo
+- [x] Popup chọn thiết bị: placeholder còn "Nhập model hoặc tên thiết bị"; BE thêm MODEL vào điều
+      kiện tìm ở cả 4 nhánh dữ liệu (phiếu xuất · mượn/bán · thiết bị cũ · NCC khác)
+- [x] Popup chọn thiết bị: đổi nút icon "+" thành **checkbox** + **bấm dòng là thêm ngay**, footer
+      có nút "Thêm N thiết bị"; popup không tự đóng sau khi thêm (khuôn popup chọn hàng hoá chung)
+- [x] Bảng II "Thêm thiết bị" không hoạt động: popup dùng chung bắt buộc chọn nguyên nhân lỗi,
+      trong khi ERP dùng hẳn popup khác (`#searchExtendProduct`) KHÔNG có cột lỗi → thêm prop
+      `requireDeviceError` (mặc định `true`), khối bảo dưỡng truyền `false` và ẩn cột lỗi
+
+### Việc mới sinh ra
+- Component dùng chung mới `components/V2BaseAttachmentSection.vue` (lưới STT · Upload/File ·
+  Dung lượng · Xóa, nút "Thêm tài liệu" ở tiêu đề khối, mỗi dòng Xem trước / Tải xuống / Thay đổi).
+  Mô hình dữ liệu = MẢNG URL, ghi vào phiếu lúc bấm Lưu — không có "tệp đã lưu / chờ lưu", không
+  gọi API xoá tệp. **Chưa** chuyển 2 màn Tài chính đang chép tay khuôn này sang component
+  (`bill-payment-requests`, `addition-accounting-requests`) — 2 màn đó đang chạy thật, tách thành
+  task riêng.
+- Migration `2026_09_08_000001_add_customer_product_index_to_serials_table` — `serials` (21.632
+  dòng) trước đó chỉ có khoá chính, mà màn chi tiết nay lọc theo `(customer_id, product_id)`.
+  Đã chạy trên DB local.
+- ⚠️ **Phát hiện ngoài phạm vi, CHƯA sửa**: popup chọn thiết bị gọi
+  `GET assign/customers/{id}/equipment` — route gác `checkPermission:Xem khách hàng`. Người lập báo
+  giá không có quyền đó nhận 403 và popup hiện "Khách hàng chưa có trang thiết bị nào" (im lặng,
+  không phân biệt được với khách thật sự chưa khai thiết bị). Đã dựng lại bằng tài khoản
+  `duyck.kd1@tanphat.com`.
+
+### Kiểm chứng (Playwright, cổng 3002 / 8003)
+Danh sách + bộ lọc nâng cao · popup chọn phiếu (người yêu cầu `Chu Khương Duy - 0913086719`, sort
+Số phiếu đổi chiều, phân trang 4 trang / 38 phiếu) · mở lại popup lần 2 sau khi đã chọn phiếu ·
+popup chọn thiết bị (47 dòng, tìm model `SL-380` và `18M36-5.5T4` ra đúng 1 dòng, checkbox, nút
+"Thêm 1 thiết bị", popup "Thêm trang thiết bị khách hàng" và "Thêm nhanh" đều nổi lên trên) ·
+khối II thêm thiết bị không đòi nguyên nhân lỗi · màn Sửa báo giá 95 hiện ô Serial dạng CHỌN
+(`TPE 6448`) kèm link "Nhập serial tạm". 0 lỗi JavaScript.
+
+### Rà lại theo góp ý của user (2026-09-08, sau khi bàn giao lần 1)
+- [x] Nút "Thêm nhanh" trong popup chọn thiết bị đang là thẻ `<button>` thô → đổi sang
+      `V2BaseButton quaternary size="xs"` + icon `ri-add-line` ở slot `#prefix`, **copy nguyên khuôn
+      nút cùng chức năng đang chạy ở màn Phiếu xử lý yêu cầu**
+      (`WarrantyRepairHandleRequestForm.vue:209`) — skill `button-convention` mục 1 + 6
+- [x] Ô tích chọn thiết bị đang là `<input type="checkbox">` thô → đổi sang `V2BaseCheckbox`
+      (CLAUDE.md: màn mới mọi element form phải dùng `V2Base*`)
+      🐞 **Bẫy phải xử lý kèm**: ô tích KHÔNG có nhãn chữ. `b-form-checkbox` vẽ ô vuông bằng
+      `::before` của `<label>`, còn `<input>` thật bị Bootstrap đặt `opacity: 0; z-index: -1` nên
+      không bấm được — nhãn rỗng làm thẻ `<label>` rộng **0px**, kết quả là **nhìn thấy ô vuông
+      nhưng bấm không ăn**. Đã kéo nhãn phủ đúng ô vuông (`width/height: 1rem`, `margin-left: -1rem`)
+      và vẽ lại `::before`/`::after` tại chỗ. Đo lại bằng Playwright: nhãn 16×16, bấm vào tích được
+- [x] Kiểm lại ô "Nguyên nhân lỗi": **chọn được bình thường** — dropdown mở đúng (z-index 9999, nằm
+      trên lớp phủ popup), chọn xong hiện chip xanh trong ô. Trường hợp user gặp nhiều khả năng là
+      dòng thiết bị mà **hàng hoá chưa khai lỗi nào trong danh mục** — lúc đó ô mở ra danh sách rỗng,
+      dưới ô có dòng xám "Hàng hóa này chưa khai lỗi thiết bị nào trong danh mục." và phải dùng
+      "Thêm nhanh". Cần user xác nhận lại đúng thiết bị nào để chốt
+
+### #11330 — Bộ lọc Công ty/Phòng ban: TÌM RA NGUYÊN NHÂN THẬT (2026-09-09)
+
+Lần bàn giao trước tôi kết luận sai: "đã vá ở commit `1f93998aa`, không phải lỗi mới". Sai vì
+**đo trên máy chạy `nuxt dev` và bằng tài khoản không có ô Công ty/Phòng ban**. User dựng bản build
+thật lên `hrm-crm.eteksofts.com` thì vẫn vỡ.
+
+**Nguyên nhân**: `pages/customer-care/wr-quotations/index.vue` **không nạp `assets/scss/v2-styles.scss`**,
+trong khi thẻ gốc của màn vẫn khai class `v2-styles`. Trường gom nhóm Công ty/Phòng ban khai
+`wrapperClass: 'd-contents'`, mà luật `.v2-styles .d-contents { display: contents }` nằm CHÍNH trong
+file scss đó → không nạp thì thẻ bọc giữ `display: block`, các `col-md-*` do
+`V2BaseCompanyDepartmentFilter` dựng không còn là con trực tiếp của `.form-row` nên bị bóp lại và
+xếp chồng.
+
+🐞 **Vì sao chạy `nuxt dev` nhìn vẫn ĐÚNG**: style của màn khác có nạp file này
+(`wr-information-requests`) còn nằm lại trong trang sau khi chuyển màn, nên màn này "mượn" được.
+Bản build thật tách CSS theo từng màn nên lộ ngay. **Bài học: lỗi bố cục CSS phải đo trên bản build,
+đừng kết luận bằng `nuxt dev`.**
+
+🐞 **Bẫy thứ hai**: các component con (`V2BaseSelect`, `V2BaseDatePicker`, `V2BaseCompanyDepartmentFilter`…)
+CÓ `@import` file này nhưng đặt trong khối `<style scoped>` → luật bị gắn thêm `[data-v-xxx]` của
+chính chúng và **không với tới thẻ bọc**. Trên server đo được đúng một luật `.v2-styles
+.d-contents[data-v-542350fb]` — có mà vô dụng.
+
+Đo thật trên `hrm-crm.eteksofts.com` (bản build ngày 08/09):
+
+| Màn | Có nạp `v2-styles.scss` | Luật `.d-contents` | `display` thẻ bọc | Kết quả |
+| --- | --- | --- | --- | --- |
+| `wr-information-requests` | ✅ (khối KHÔNG scoped) | có bản không scope | `contents` | đúng |
+| `wr-quotations` | ❌ | chỉ bản `[data-v-...]` | `block` (rộng 129px) | **vỡ** |
+| `wr-warranties` | ❌ | chỉ bản `[data-v-...]` | `block` (rộng 129px) | **vỡ** |
+
+- [x] `wr-quotations/index.vue` — thêm khối `<style lang="scss">` KHÔNG scoped nạp `v2-styles.scss`,
+      đúng khuôn màn anh em `wr-information-requests/index.vue`
+- [x] `wr-warranties/index.vue` — cùng lỗi, cùng luồng dịch vụ → sửa luôn
+- [ ] ⚠️ **Còn 2 màn dính cùng lỗi, CHƯA đụng, chờ user chốt**:
+      · `pages/assign/quotations/index.vue` — có `@import` nhưng đặt NHẦM trong khối `scoped`
+        (phân hệ Bán hàng, ngoài phạm vi 4 task này)
+      · `pages/customer-care/wr-service-contracts/index.vue` — màn Hợp đồng dịch vụ đang do
+        session khác làm dở, không đụng vào file của họ
+- [ ] Đề xuất chặn tái phát (chưa làm, cần chốt vì đụng component dùng chung 67 màn):
+      cho `V2BaseSmartFilterPanel` tự đổi `wrapperClass: 'd-contents'` sang class riêng của panel
+      (`filter-field-passthrough`, đã có sẵn `display: contents` không phụ thuộc `.v2-styles`) —
+      sửa 1 chỗ là hết cho cả 28 màn đang khai `d-contents`, không cần từng màn nhớ nạp scss
+
+### #11331 — Phân trang popup chọn phiếu: sửa lại cho ĐÚNG (2026-09-09)
+
+User dựng bản build mới lên server, mở popup vẫn không thấy phân trang. Đo trên
+`hrm-crm.eteksofts.com`: bản build **đã có** phần sort + "tên - sđt" (request đi kèm
+`sort_field=created_at&sort_type=desc`, bảng có 2 tiêu đề sắp xếp) — nhưng khối phân trang không
+hiện. Hai nguyên nhân cộng lại:
+
+1. **Điều kiện `v-if="total > perPage"`** — tài khoản kiểm thử chỉ có **1 phiếu** chờ làm báo giá
+   nên khối phân trang bị ẩn hoàn toàn; nhìn y như chưa làm. (Đo thật trên server: `rows = 1`,
+   `coPagination = false`.)
+2. **Nằm dưới đáy vùng cuộn** — bảng cao tự do nên đẩy khối phân trang xuống quá tầm nhìn, phải
+   cuộn tới tận cùng thân popup mới gặp. Đo được `pagination.bottom = 853` trong khi thân popup kết
+   thúc ở `814`.
+
+- [x] Thay `b-pagination` tự khai bằng component DÙNG CHUNG **`V2BasePagination`** (giống popup chọn
+      thiết bị): có sẵn dòng "Hiển thị x–y / N" + ô "Số dòng/trang", và **luôn hiện khi có dữ liệu**
+- [x] Thêm `onPageSizeChange` — đổi số dòng/trang thì về trang 1 rồi nạp lại
+- [x] Giới hạn chiều cao vùng cuộn của bảng (`max-height="calc(100vh - 420px)"`) để khối phân trang
+      luôn nằm trong tầm nhìn, không phải cuộn (skill `modal-popup` mục 4)
+- [x] Kiểm chứng: `Hiển thị 1–10 / 38 phiếu` → bấm trang 2 ra `11–20 / 38` với dữ liệu khác →
+      đổi 20 dòng/trang ra `1–20 / 38`; khối phân trang nằm trọn trong tầm nhìn, 0 lỗi JavaScript
+- [x] **Kiểm lại đúng tình huống của server** (user chốt 2026-09-09: bỏ hẳn điều kiện, luôn hiện):
+      tài khoản `donghp.pt@tanphat.com` chỉ có **1 phiếu** → khối phân trang VẪN hiện,
+      `Hiển thị 1–1 / 1 phiếu`, nằm trong tầm nhìn
+- [ ] Còn đúng MỘT trường hợp khối phân trang tự ẩn: **danh sách rỗng (0 phiếu)** — do chính
+      `V2BasePagination` khai `v-if="totalRows > 0"`. Muốn hiện cả lúc rỗng thì phải sửa component
+      dùng chung (mọi màn danh sách sẽ hiện "Hiển thị 0–0 / 0 …" dưới bảng trống) → **chờ user chốt**
+
+### Phiếu cung cấp thông tin — 3 lỗi user báo trên server (2026-09-09)
+
+**1. Sửa bảng con (vật tư · chi phí · thời gian có vật tư) KHÔNG ghi lịch sử**
+`catalogColumns()` cố ý chỉ theo dõi cột bảng chính, có ghi hẳn chú thích *"không track bảng con:
+mỗi lần lưu là xoá ghi lại"* — sợ log nhiễu "xoá 3 thêm 3". Hậu quả: người dùng sửa cả buổi mà lịch
+sử trống trơn. Chứng từ 1 (Yêu cầu SC-BH) đã giải xong bài này từ #11163 bằng **khoá dạng BẢNG**,
+chỉ là chưa áp cho chứng từ 3/4.
+- [x] Trait mới `Modules/CustomerCare/Services/Concerns/LogsWrQuotationChildRows.php` — 7 "cột ảo"
+      cho 7 bảng con: thiết bị · dịch vụ của thiết bị · vật tư của thiết bị · thiết bị bảo dưỡng ·
+      gói bảo dưỡng · vật tư của gói · chi phí khác
+- [x] Ghép cặp trước/sau bằng **khoá tự nhiên** (hàng hoá + nhánh + thứ tự lặp), **không chứa ô có
+      thể bị sửa** — đưa `serial`/`quantity` vào khoá là đổi ô đó biến thành "xoá 1 + thêm 1"
+- [x] Chuẩn hoá số trước khi so (`5.00` và `5` phải bằng nhau), bỏ ô rỗng — nếu không mỗi lần lưu
+      lại sinh log rác
+- [x] Chụp bảng con **TRƯỚC `syncChildren()`** (hàm đó xoá sạch rồi ghi lại)
+- [x] Khai 7 nhãn cột vào `CatalogHistoryService::TABLES` (bắt đầu bằng "Danh sách " để
+      `rowItemLabel()` tự suy nhãn nhóm số ít)
+- [x] Áp cho CẢ Báo giá dịch vụ (`WrQuotationService` kế thừa service này)
+- [x] Verify bằng script bootstrap Laravel, chạy trong transaction rồi rollback — đổi
+      `time_to_has`, thêm 1 vật tư, đổi 1 khoản chi phí ra đúng 1 dòng log:
+      `Vật tư thêm mới: VAT TU TEST — … Thời gian có vật tư (ngày): 7` ·
+      `Vật tư sửa thông tin: Dây hơi khí nén phi 8: Thời gian có vật tư (ngày): → 99` ·
+      `Chi phí khác sửa thông tin: Phí CO: Giá trị: 0 → 12345`
+
+**2. Ghi chú trong lịch sử viết liền một mạch**
+`SystemInfoValue::htmlSangChu()` đổi `<br>` và thẻ khối thành **DẤU CÁCH** rồi `\s+` gom hết → khối
+ghi chú gạch đầu dòng dồn thành một đoạn dài.
+- [x] Đổi `<br>` / `</p>` / `</div>` / `</li>`… thành **xuống dòng thật**; chỉ gom khoảng trắng
+      NGANG (`[^\S\n]+`), gom ≥3 dòng trống còn 1
+- [x] Không phải sửa CSS: `.si-change-old` / `.si-change-new` vốn đã `white-space: pre-line`
+- [x] Sửa 1 chỗ ăn cho CẢ hai nơi (khối Lịch sử ở màn chi tiết và popup ở màn danh sách đều dùng
+      chung `SystemInfoSection` → `SystemInfoValue`)
+- [x] Verify: chèn tạm 1 dòng log, mở màn chi tiết — giá trị cũ hiện đúng 3 dòng
+      (`Ghi chú:` / `- Dòng 1 cũ.` / `- Dòng 2 cũ.`), giá trị mới xuống dòng theo từng gạch đầu
+      dòng, "Xem thêm" vẫn cắt ở 200 ký tự. Đã xoá dòng log tạm
+
+**3. Nút "Thêm vật tư" ở bảng II vỡ hình**
+`class="d-block mt-1"` ép `V2BaseButton` (vốn `inline-flex`) thành `display: block` → nút giãn hết
+bề ngang ô, icon `+` rơi xuống dòng riêng tách khỏi chữ, nhìn như 2 dòng chữ trần.
+- [x] Bọc `<div class="mt-1">` để nút xuống dòng riêng, bỏ `d-block` cho nút tự co theo nội dung —
+      đúng khuôn nút "Thêm nhanh" của màn Phiếu xử lý yêu cầu
+- [x] `v-if="!readonly"` chuyển lên thẻ bọc, tránh để lại `div` rỗng ở màn Xem
+- [x] Verify trên phiếu thật (`/customer-care/wr-quotations/215/edit`): nút rộng 100×24,
+      `display: inline-flex`, chữ nằm trọn 1 dòng
+
+### Rà lại lịch sử theo góp ý (2026-09-09, lượt 2)
+
+**4. Màn chi tiết MẤT TÊN vật tư của gói bảo dưỡng** — lỗi có sẵn, không phải do phần lịch sử.
+Bảng `wr_service_quotation_extend_product_service_items` **không có cột tên/mã hàng** (bảng gốc ERP
+chỉ lưu `product_id`), mà Resource lại trả thẳng các cột của bảng → mở lại phiếu là dòng vật tư
+trắng tên.
+- [x] `attachProductModelNames()` tra danh mục 1 lượt cho cả phiếu, gắn `product_name` /
+      `product_code` / `model_name` / `unit_name` vào từng dòng; gom id **trước** khi kiểm tra rỗng
+      (phiếu chỉ có phần bảo dưỡng thì thoát sớm là vật tư mãi không có tên)
+- [x] Resource trả thêm 4 khoá đó; log lịch sử cũng tra danh mục thay vì đọc cột không tồn tại
+
+**5. Dòng THÊM / XOÁ: TÊN + đúng cột "THUỘC VỀ"** — user chốt qua 2 vòng trong cùng ngày:
+in đủ mọi cột thì dòng log dài gấp mấy lần thông tin cần đọc; nhưng in mỗi tên thì *"thêm vật tư X"*
+không nói được thêm cho **dịch vụ / thiết bị nào**, vẫn phải mở phiếu ra dò.
+- [x] Khoá opt-in `__brief` (`CatalogHistoryService::ROW_BRIEF`): `true` = chỉ tên,
+      `['Thuộc thiết bị']` = giữ đúng cột đó. Dòng SỬA không đụng tới. Không khai thì giữ nguyên
+      hành vi cũ, các entity đang chạy không đổi gì
+- [x] Mỗi cấp trỏ về CHA GẦN NHẤT: thiết bị → `Nhóm` + `Lỗi thiết bị` · dịch vụ/vật tư của thiết bị
+      → `Thuộc thiết bị` · gói bảo dưỡng → `Thuộc thiết bị` · vật tư của gói → `Thuộc gói` ·
+      chi phí khác → chỉ tên (không có cấp cha)
+- [x] **Vòng 3 (user chỉ tiếp)**: bảng 3 cấp phải nói ĐỦ CẢ CHUỖI CHA, không chỉ cha gần nhất —
+      cùng một tên gói ("Bảo dưỡng … Cấp 2") gắn ở nhiều thiết bị khác nhau nên chỉ ghi tên gói thì
+      vẫn không biết của thiết bị nào → vật tư của gói đổi thành
+      `['Thuộc thiết bị', 'Thuộc gói']`
+- [x] Mẫu thật sau khi sửa:
+      `Vật tư thêm mới: VAT TU MOI — Thuộc thiết bị: Cầu nâng ô tô cắt kéo, Model: SL-568-SA…` ·
+      `Vật tư của gói bảo dưỡng thêm mới: Súng bơm lốp 10 bar — Thuộc thiết bị: Phòng sơn sấy xe con
+      gốc dầu…; Thuộc gói: Bảo dưỡng phòng sơn sấy xe du lịch (Cấp 1 (12T))`
+
+**5c. Dòng SỬA cũng phải nói "của cái gì"** (user chỉ ra vòng 4) — mới làm cho nhóm thêm/xoá, còn
+`Xy lanh khí: Số lượng: 1 → 9` vẫn không biết sửa vật tư của thiết bị nào.
+- [x] DTO `changed[]` trả thêm khoá `detail` = đúng những cột `__brief`; giao diện in trong ngoặc
+      xám sau tên: `- Lọc trần phòng sơn… (Thuộc thiết bị: Phòng sơn sấy…; Thuộc gói: Bảo dưỡng…):
+      Số lượng: 1 → 8`
+- [x] `briefDetail()` chỉ trả phụ chú khi bản ghi CÓ khai `__brief` — gọi thẳng `rowParts()` là mọi
+      entity đang chạy bỗng in đủ mọi cột ở dòng sửa
+- [x] Bảng không có cấp cha (Chi phí khác) → không in ngoặc, giữ nguyên `Phí CO: Giá trị: 0 → 24680`
+- [x] Kiểm trên giao diện thật (phiếu 10370): hiện đúng
+      `- 01 cảm biến hành trình… (Thuộc thiết bị: Bệ kiểm tra phanh ô tô tải; Thuộc gói: Bảo dưỡng
+      thiết bị kiểm tra phanh (Cấp 2 (12T))): Số lượng: 2 → 12`
+
+**5b. 🐞 Khoá điều khiển `__name_only` LỌT RA MÀN HÌNH lịch sử** (user hỏi "để `__name_only` là gì")
+Đổi tên khoá `__name_only` → `__brief` nhưng bộ lọc khoá điều khiển vẫn liệt kê từng hằng, nên
+những dòng log ĐÃ GHI trước lúc đổi tên hiện `__name_only: 1` như một cột thật. Log là dữ liệu bất
+biến — sửa code không chữa được log cũ.
+- [x] `isRowMetaColumn()` nhận diện bằng **tiền tố `__`** thay vì liệt kê từng hằng → khoá cũ lẫn
+      mới đều bị lọc, không phải chạy lại dữ liệu
+- [x] `rowParts()` đọc kèm tên khoá CŨ (`__brief` ?? `__name_only`) để log cũ vẫn rút gọn đúng kiểu
+- [x] Kiểm trên chính dòng log thật đã dính (id 324, phiếu 10370): nay hiện sạch, không còn
+      `__name_only`
+- [x] Chạy lại 57 ca: 0 lỗi, **0 chuỗi `__` lọt ra**
+- [x] Ghi bài học vào skill `entity-history` §6b
+
+**6. Test lịch sử TỪNG TRƯỜNG MỘT (user yêu cầu)** — script
+`.plans/gop-db/wr-service-quotation/test_lich_su_tung_truong.php`, **55 ca, mỗi ca đổi đúng 1 ô**,
+bọc transaction rồi rollback nên không để lại rác:
+- [x] 6 cột bảng chính (Số phiếu · Khách hàng · Người liên hệ · SĐT · Địa chỉ · Ghi chú · Điều
+      khoản · Ghi chú cuối phiếu)
+- [x] Thiết bị: Serial · Số BBBGNT · Số lượng công · Đơn giá công · Chiết khấu · % VAT
+- [x] Vật tư: ĐVT · Số lượng · Đơn giá bán · Chiết khấu · % VAT · **Thời gian có vật tư** · Ghi chú
+- [x] Dịch vụ: Số lượng · Đơn giá bán · **Thời gian có vật tư** · Ghi chú
+- [x] Thiết bị bảo dưỡng: Serial · gói bảo dưỡng (Số lượng · Đơn giá · Chiết khấu · Ghi chú) ·
+      vật tư của gói (Số lượng · Đơn giá · Ghi chú)
+- [x] Chi phí khác: Giá trị · Chi phí bảo hành · Được miễn phí · Không được miễn phí · Cho SC-BD ·
+      Khách hàng phải trả · Ghi chú
+- [x] Thêm / xoá 1 dòng cho **cả 7 bảng con** → đúng 1 dòng "thêm mới" / "đã xóa", chỉ có TÊN
+- [x] Đổi nhiều trường trong 1 lần lưu → 1 dòng log nhiều khoá
+- [x] Không đổi gì → **KHÔNG ghi log**; lưu lại lần 2 không sửa gì → vẫn KHÔNG ghi log (bắt log rác
+      do chuẩn hoá số `5.00` vs `5`, rỗng `''` vs `null`)
+- [x] **Kết quả: 55/55 đúng.**
+- [x] Đã ghi yêu cầu này vào skill `entity-history` §7a (test từng trường một, 7 nhóm ca bắt buộc)
+      + §6b (dòng thêm/xoá chỉ in tên) + 2 dòng checklist
+
+**7. Vật tư thêm cho gói 1.2 lại hiện ở dưới cùng bảng** (user báo 2026-09-09)
+`WrMaintenanceTable` chia làm **2 vòng lặp**: một vòng in hết các gói dịch vụ, một vòng in hết vật
+tư của mọi gói → vật tư của gói nào cũng rơi xuống cuối bảng, không nằm dưới gói của nó. Dữ liệu
+lưu vẫn ĐÚNG gói (`addMaintenanceItems` push vào đúng `services[serviceIndex].products`), chỉ sai
+chỗ hiển thị.
+- [x] Gộp về MỘT vòng lặp: `<template v-for="(service, si) in device.services">` bọc cả dòng gói
+      lẫn dòng vật tư của chính gói đó
+- [x] Kiểm trên phiếu thật `/customer-care/wr-information-requests/10370/edit`: bấm "Thêm vật tư"
+      ở gói **1.2** → dòng mới hiện ngay là **1.2.1** dưới 1.2; vật tư cũ của 1.4 vẫn nằm ở 1.4.1 /
+      1.4.2, không bị xáo
+- [x] Rà `WrDeviceLinesTable` (khối A / B-I): chỉ có MỘT vòng lặp theo thiết bị, dịch vụ và vật tư
+      đều nằm trong đó → không dính lỗi này
+- [x] Component dùng chung nên màn Báo giá dịch vụ được sửa theo
+
+⚠️ **Lưu ý khi nghiệm thu mục 1**: đổi định dạng snapshot nên **lần lưu ĐẦU TIÊN sau khi deploy sẽ
+nhiễu một lần** (log cũ không có 7 khoá bảng con, hệ thống thấy "thêm mới toàn bộ"). Từ lần thứ hai
+trở đi mới sạch. Đây là hệ quả bắt buộc, skill `entity-history` §6 đã ghi.
+
+### Checkpoint — 2026-09-08
+Vừa hoàn thành: Redmine #11330 · #11331 · #11332 · #11333 (đã đổi trạng thái Đang tiến hành)
+Đang làm dở: không
+Bước tiếp theo: chờ user xác nhận có gộp 2 màn Tài chính vào `V2BaseAttachmentSection` không;
+              chốt hướng xử lý quyền "Xem khách hàng" của popup chọn thiết bị
+Blocked:
+
+## Phase 3A — LÀM NỐT 2 PHẦN CÒN LỆCH ERP (2026-09-07, đợt 2)
+
+### 1. Bộ cột bảng đúng ERP + 2 nút phân bổ
+- [x] `components/WrContractLinesTable.vue` — bảng RIÊNG của hợp đồng, đủ 20 cột ERP: Đơn giá ·
+      Thành tiền · **Doanh số vượt trội** · Đơn giá sau điều chỉnh · Thành tiền sau điều chỉnh ·
+      % Chiết khấu · Tiền chiết khấu · Thành tiền sau chiết khấu · **Giảm giá** · Đơn giá sau giảm ·
+      Thành tiền sau giảm · VAT · Tiền VAT · Thành tiền sau VAT · % Định mức đàm phán giá · Ghi chú,
+      kèm dòng "Tổng cộng". Một component dùng cho cả 3 khối (`variant` repair / maintain / merchandise)
+  - KHÔNG sửa `WrDeviceLinesTable` của Báo giá: bảng đó đang dùng ở 3 màn khác (quy tắc "không tự
+    sửa hàm dùng chung")
+- [x] `utils/wrContractLineMoney.js` — chuỗi công thức của một dòng, port đúng ERP
+- [x] `utils/wrContractAllocation.js` — phân bổ **Doanh số vượt trội** (chia theo số lượng HOẶC giá
+      trị) và **Giảm giá** (luôn theo giá trị, mốc là Thành tiền sau chiết khấu); làm tròn 100đ,
+      phần lệch dồn vào dòng cuối để tổng khớp đúng số nhập
+- [x] Popup phân bổ dựng trên `V2BaseModal`, 2 nút ở tiêu đề mỗi khối (đúng chỗ ERP đặt)
+- [x] BE lưu + trả nhóm cột mới: `price_extra` / `price_after_extra` / `amount_discount` /
+      `discount_price` cho dòng thiết bị, dòng con, dòng bảo dưỡng và dòng hàng hoá; giá net trừ
+      thêm tiền giảm giá đã phân bổ
+- [x] Verify trên giao diện: phân bổ 10.000.000 DSVT → tổng "Thành tiền sau điều chỉnh" 69.031.000 →
+      **79.031.000** (đúng +10 triệu); phân bổ 5.000.000 giảm giá → "Thành tiền sau giảm" 66.127.900
+      (đúng −5 triệu); lưu xong máy chủ giữ đúng số (dòng công `price_extra` 86.200, tổng DSVT dòng
+      con 9.827.600 + 172.400 = 10.000.000)
+
+### 2. Ô đầu phiếu còn thiếu
+- [x] Địa chỉ · Loại hình tổ chức · CMND/CCCD + Ngày cấp + Nơi cấp · Thời gian bảo hành · Phòng QTC
+- [x] **Tệp đính kèm** — dùng `V2BaseAttachmentSection` dùng chung (Redmine #11332) + endpoint
+      `POST wr-service-contracts/upload-attachment`
+- [x] BE: bổ sung `$fillable`, rule và Resource cho cả nhóm; `customer_type_text` tra
+      `Customer::CUSTOMER_TYPES` như 3 chứng từ trước
+
+### 2 lỗi phát hiện tiếp khi test đợt 2 — đã sửa
+1. **Phân bổ không đổi số trên bảng**: `price_extra` / `discount_price` phần lớn chưa tồn tại trên
+   dòng, Vue 2 không theo dõi thuộc tính mới thêm → phải phân bổ trên BẢN SAO rồi `$set` lại cả mảng
+2. **Lưu hợp đồng lỗi 500** `Unknown column 'sale_max_percent'`: bảng dòng THIẾT BỊ không có cột này
+   (chỉ dòng con và dòng bảo dưỡng có) → bỏ khỏi `$fillable` + ẩn ô ở dòng "Công" trên giao diện
+
+### Còn lại của luồng dịch vụ (Phase B — cần chốt riêng)
+Khối D "Thông tin thanh toán" · Ký / Duyệt / Không duyệt / Đóng / Hủy duyệt · Quyết toán ·
+Phụ lục bổ sung, phụ lục giảm · các đường cắm sang Kho / Kế toán / Giao việc ·
+bảng tổng hợp `wr_service_contract_items` · giá phân bổ `allocated_price`.
+
+## Phase 3B — bước 1: 4 THAO TÁC DUYỆT HỢP ĐỒNG (2026-09-07)
+
+**BE**
+- [x] 3 accessor điều kiện trên entity, port đúng ERP:
+  - `is_can_approve` (`canTranferApprove`) — Chờ duyệt + (Super Admin · người được chọn duyệt · người quản lý phòng của hợp đồng)
+  - `is_can_un_approve` (`canUnApproveContract`) — Có hiệu lực + (Super Admin · quản lý phòng) + CHƯA phát sinh phiếu giao việc / xuất kho / nhập kho / yêu cầu hạch toán / phụ lục còn hiệu lực
+  - `is_can_close` (`canFinishContract`) — Có hiệu lực + (người lập · Super Admin · quản lý phòng) + chưa phát sinh chứng từ phía sau (không xét phụ lục)
+  - 4 bảng chứng từ phía sau (`wr_assign_tasks`, `product_export_requests`, `product_import_requests`, `wr_accounting_service_requests`) thuộc phân hệ chưa port nhưng ERP vẫn ghi vào → hỏi thẳng bảng, không bỏ qua
+- [x] `WrServiceContractService`: `approve()` · `reject()` · `unApprove()` · `close()` dùng chung khung `doiTrangThai()` — đổi trạng thái → ghi lịch sử kèm ghi chú → gửi thông báo SAU khi giao dịch ghi xong
+  - Huỷ duyệt đưa về **"Không duyệt"** (đúng ERP, không phải "Đang tạo") để người lập sửa rồi trình lại
+  - Đóng hợp đồng kéo theo mọi phụ lục cùng đóng
+- [x] `WrServiceContractNotifier` — 4 sự kiện, gửi ĐÍCH DANH người lập (bước gửi duyệt thì gửi người được chọn duyệt), tiền tố `[HĐDV]`, ≤ 120 ký tự theo skill `notification-convention`
+- [x] 4 route `POST {id}/approve|reject|un-approve|close`, gate bằng cờ ở máy chủ, trả 423 khi không đủ điều kiện; lý do BẮT BUỘC cho Không duyệt và Hủy duyệt (422 kèm lỗi theo trường)
+- [x] Resource danh sách + chi tiết trả 3 cờ mới
+
+**FE**
+- [x] 4 hành động ở màn danh sách và **cùng 4 nút** ở footer màn chi tiết, chung bộ cờ máy chủ
+- [x] Popup nhập lý do dùng `base-confirm-modal` (`showInput`) — không dựng popup riêng
+- [x] Sửa plugin dùng chung `plugins/confirm-dialog.js`: `$confirm` có `showInput` nay trả THẲNG nội dung đã gõ thay cho `true` (tương thích ngược: không có ô nhập vẫn trả `true`; toàn hệ thống chưa chỗ nào gọi `$confirm` kèm `showInput`)
+
+**Verify trên giao diện + máy chủ**
+- [x] Lối vào `?type=for-approve` hiện đúng hợp đồng Chờ duyệt, tiêu đề đổi thành "Duyệt hợp đồng dịch vụ"
+- [x] Duyệt hiệu lực → trạng thái "Có hiệu lực", ghi người duyệt + ngày duyệt, lịch sử ghi kèm ghi chú
+- [x] Hủy duyệt bỏ trống lý do → bị chặn ngay trên màn; nhập lý do → về "Không duyệt", người lập sửa lại được, lịch sử ghi lý do
+- [x] Đóng hợp đồng → "Đóng"; gọi lại lần 2 trả **423** đúng như mong đợi
+- [x] Dữ liệu thử đã dọn sạch, báo giá 10287 trả về "Duyệt"
+
+**Khác ERP có chủ ý:** ERP bắt người duyệt đi qua màn "Hỗ trợ hạch toán" và nhập ~40 chỉ tiêu tài
+chính trước khi hợp đồng có hiệu lực. Màn đó chưa port nên HRM duyệt thẳng; số liệu hạch toán vẫn
+nằm bên ERP cho tới khi port màn HTHT.
+
+## Phase 3B — bước 2: KHỐI D "THÔNG TIN THANH TOÁN" (2026-09-07)
+
+**BE**
+- [x] Entity `WrServiceContractPayment` + quan hệ `payments()` (sắp theo `index`, rồi `id`)
+- [x] `syncPayments()` — xoá hết rồi ghi lại, máy chủ tự đánh số thứ tự lần; `destroy()` dọn theo
+- [x] `loadDetail()` nạp thêm `payments`; Resource chi tiết trả khối D
+- [x] Rule đúng ERP, gồm 2 kiểm tra tổng:
+  - chia đủ 100% thì phải có **ít nhất một lần loại "Thanh toán"** (không thể toàn tạm ứng / đặt cọc)
+  - **tổng số tiền = tổng số tiền thanh toán** (cho lệch tối đa 1 đồng vì số chia theo % thường lẻ)
+  - thêm `percent` ≤ 100 cho từng dòng
+- [x] `options` trả `payment_types` (Tạm ứng · Đặt cọc · Thanh toán)
+
+**FE**
+- [x] `components/WrContractPaymentTable.vue` — bảng khối D đúng cột ERP: Lần · Thanh toán ·
+      % Thanh toán · Số tiền · Số tiền thanh toán · Nội dung bổ sung, kèm dòng Tổng cộng
+- [x] Gõ % là tự tính số tiền theo tổng giá trị hợp đồng; **không tự sửa số người dùng gõ** — vượt
+      100% thì tô đỏ ô tổng và nêu lỗi ngay dưới bảng (CLAUDE.md), máy chủ vẫn là chốt chặn
+- [x] "Thêm lần thanh toán" điền sẵn phần trăm CÒN LẠI (đúng ERP `checkPayment()`)
+- [x] Khối tổng hợp đổi tên thành "E - Tổng hợp hợp đồng" cho khớp thứ tự ERP (A · B · C · D · E)
+
+**Verify**
+- [x] Lần 1 điền sẵn 100% = 69.798.132 (đúng tổng sau VAT); sửa còn 30% → 20.939.440; thêm lần 2 tự
+      điền 70% → 48.858.692; tổng đúng 100%
+- [x] Lưu xong máy chủ giữ đúng 2 dòng, `index` 1 và 2
+- [x] **Bản in** dựng đúng đoạn "Điều khoản thanh toán" 2 đợt, có số tiền và số tiền bằng chữ
+- [x] 3 ràng buộc máy chủ đều chặn: đủ 100% mà toàn tạm ứng · tổng tiền lệch · phần trăm > 100
+- [x] Dữ liệu thử đã dọn sạch (không còn dòng thanh toán mồ côi)
+
+## Phase 3B — bước 3: KHỐI "KÝ HỢP ĐỒNG" (2026-09-07)
+
+Lý do làm ngay sau khối D: bản in hợp đồng ĐÃ đọc `signer_id` / `signer_role_id` /
+`company_account_number` từ trước, nhưng form chưa có ô nào để nhập → mọi hợp đồng lập từ HRM in ra
+đều **trống chỗ ký và trống số tài khoản nhận tiền**.
+
+- [x] `options` trả thêm `company_accounts` (tài khoản của công ty người lập, hiện "Số TK - Ngân
+      hàng - Chi nhánh") và `signer_roles`
+- [x] Lưu + trả 6 trường: `signer_id` · `signer_role_id` · `company_account_number` ·
+      `receiver_name` · `receiver_address` · `receiver_mobile`
+- [x] FE: khối "Ký hợp đồng" — Người ký · Chức vụ người ký · Tài khoản công ty nhận tiền ·
+      Người theo dõi hợp đồng · Điện thoại · Địa chỉ liên hệ
+- [x] Verify: chọn người ký + chức vụ + tài khoản → **bản in ra đủ** "Tài khoản số: 011915415491. -
+      Ngân hàng thương mại cổ phần quân đội - Long biên", "Đại diện: Ông/Bà DNS Admin", "Chức vụ:
+      Giám đốc" (trước đó cả 3 chỗ đều trống)
+
+### 2 lỗi dữ liệu phát hiện khi test — đã sửa
+1. `company_account_number` là cột **NOT NULL không có giá trị mặc định** → gửi `null` là `insert`
+   nổ ngay. Phải ép chuỗi rỗng.
+2. `guarantee_date` là cột **`int`** (số THÁNG bảo hành), không phải chuỗi ngày như tên gọi gợi ý →
+   rule đổi sang `integer`, nhãn trên form ghi rõ "Thời gian bảo hành (tháng)".
+
+## Phase 3B — bước 4: RÀ TOÀN BỘ BIẾN CỦA 4 MẪU IN HỢP ĐỒNG (2026-09-07)
+
+Đối chiếu MÁY MÓC: gom mọi `{{BIẾN}}` của 4 mẫu trong nhóm "Hợp đồng dịch vụ" (`print_templates`
+`type = 6`) rồi so với danh sách biến `WrServiceContractPrintService` sinh ra → **8 biến chưa có
+nguồn**, tức in ra là chỗ trống.
+
+- [x] `FAX_KHACH_HANG` — có ở **cả 2 mẫu hợp đồng chính** (216, 229). Hợp đồng không lưu fax, tra
+      từ hồ sơ khách hàng. Đã kiểm: đặt fax cho khách → bản in ra "Fax: 024.1234567"
+- [x] `FAX_CONG_TY` — lấy từ công ty ghi trên hợp đồng
+- [x] `CHUC_VU_NGUOI_THEO_DOI_BEN_A` — tra `customer_contacts.role` theo người liên hệ đã chốt trên
+      hợp đồng (hợp đồng chỉ lưu TÊN người liên hệ)
+- [x] `MST_KHACH_HANG_OPTION` / `SO_CCCD_OPTION` — biến in KÈM NHÃN của mẫu đào tạo nghề; không có
+      dữ liệu thì trả rỗng hẳn thay vì in "Mã số thuế:" cụt đuôi
+
+**3 biến CỐ Ý không sinh:** `DICH_VU_DI_KEM` · `CHI_PHI_DICH_VU_DI_KEM` ·
+`BANG_CHU_CHI_PHI_DICH_VU_DI_KEM` — chỉ có ở mẫu **"Hợp đồng đào tạo nghề"**, là nghiệp vụ đào tạo
+chứ không phải hợp đồng dịch vụ SC-BH. Mẫu đó (và cả mẫu "Báo giá dịch vụ sữa chữa bảo dưỡng"
+BGDV-02A) lọt vào danh sách chọn của màn hợp đồng vì **dữ liệu ERP gán nhầm `type = 6`** cho chúng.
+Giữ nguyên danh sách như ERP (logic bám ERP); nếu muốn lọc bớt thì phải sửa dữ liệu `print_templates`
+chứ không phải sửa code — cần chốt với nghiệp vụ.
+
+## Phase 3B — bước 5: TIẾP NHẬN XỬ LÝ (2026-09-07)
+
+Hai thao tác cuối cùng của ERP còn thuộc CHÍNH màn hợp đồng (không phụ thuộc phân hệ chưa port).
+
+- [x] **Đổi phòng tiếp nhận xử lý** (`canChoiceReceptionDepartment` + `reception()`): người lập,
+      hợp đồng "Có hiệu lực", CHƯA có phiếu giao việc nào → chọn lại phòng, báo người quản lý phòng
+      mới biết có việc cần lập phiếu giao việc
+- [x] **Từ chối tiếp nhận xử lý** (`backContract()`): phòng được giao trả hợp đồng lại — **xoá
+      trắng** phòng tiếp nhận, ghi lý do, báo người lập chọn phòng khác. Hợp đồng vẫn "Có hiệu lực"
+      (đây KHÔNG phải bước từ chối duyệt)
+- [x] 2 cờ `is_can_change_reception` / `is_can_reject_reception`, 2 route, 2 thông báo mới
+- [x] FE: 2 hành động ở **cả** danh sách và footer chi tiết; popup chọn phòng dựng trên `V2BaseModal`
+      + `V2BaseSelectInModal`
+- [x] Verify: đổi phòng 98 → 119 ghi log tên phòng; từ chối tiếp nhận xoá phòng, ghi lý do vào log,
+      và cờ tự tắt sau đó
+
+⚠️ **Giữ nguyên một điểm của ERP:** cả 2 thao tác đều đòi quyền **"Tạo phiếu giao việc"**, kể cả
+Super Admin (ERP `canAssignTask()` cũng vậy). Tài khoản quản trị chưa có quyền đó sẽ KHÔNG thấy nút
+"Từ chối tiếp nhận" — đúng ERP, không phải lỗi.
+
+⚠️ Điều kiện `canAssignTask()` của ERP còn đếm số công/dịch vụ **còn giao việc được** qua 6 bảng con
+của chứng từ 6 (chưa port). HRM đang gate phần kiểm soát được (trạng thái · quyền · đúng phòng ·
+chưa có phiếu giao việc); port chứng từ 6 xong phải bổ sung phần đếm này.
+
+## Hợp đồng dịch vụ — CÒN LẠI SAU ĐỢT NÀY
+
+| Việc | Vì sao chưa làm |
+| --- | --- |
+| Màn **Hỗ trợ hạch toán (HTHT)** — ERP bắt nhập ~40 chỉ tiêu tài chính trước khi hợp đồng có hiệu lực | Màn riêng, thuộc Kế toán; HRM đang duyệt thẳng (đã ghi rõ ở bước 1) |
+| **Quản lý hợp đồng** (`paymentManage`) — theo dõi thanh toán thực tế theo từng đợt | Cần chốt nghiệp vụ: đối chiếu với phân hệ Tài chính đã port của HRM |
+| **Quyết toán hợp đồng** | Kéo theo `SettlementContractTrait` của ERP + đọc kết quả giao việc (chứng từ 6–8) |
+| Nút tạo chứng từ sang phân hệ khác: Tạo phiếu giao việc · YC xuất hàng / xuất giữ / bán hàng mượn · YC hạch toán chi phí | Đích đến (Kho, Giao việc, Kế toán dịch vụ) chưa port. **Lưu ý:** phiếu giao việc thì HRM cũ đã chạm — xem mục "HRM cũ" trong bản đồ luồng |
+| **Phụ lục bổ sung / Phụ lục giảm** | Cùng bảng, dùng lại được bảng 20 cột + phân bổ + bản in; khác ở bộ trạng thái `STATUSES_ANNEX` và cây 3 tầng |
+
+## RÀ LẠI MÀN BÁO GIÁ DỊCH VỤ THEO ERP (2026-09-07, user phát hiện)
+
+User chỉ ra màn Báo giá của HRM có khối "A - Bảo hành thiết bị" mà ERP không có. Rà lại
+`service_quotations/form.blade.php` (file dùng cho CẢ Lập, Sửa, Xem) thì đúng — và còn 5 chỗ lệch
+nữa. Cách rà: liệt kê `<th>` và `<label>` của ERP rồi so từng cột với HRM.
+
+### 6 chỗ lệch — đã sửa
+1. **Thừa khối "A - Bảo hành thiết bị"**: ERP để nguyên 245 dòng của khối này nhưng **bọc trong
+   comment Blade** (dòng 161–405) → màn báo giá KHÔNG hiện. Khối này chỉ có ở Phiếu cung cấp thông
+   tin. Đã bỏ khỏi màn Báo giá; **dữ liệu `product_warrantys` vẫn chép và lưu như cũ** (phiếu bảo
+   hành sinh tự động từ chứng từ 3 đọc tới). Các khối còn lại giữ đúng chữ cái ERP: **A · C · D · E**
+   (không có B — ERP bỏ trống chữ B sau khi ẩn khối bảo hành)
+2. **Thiếu ô "Xem tồn" ở khối A**: ERP có ô này ở CẢ khối A và khối C (dòng 412 và 844); HRM chỉ có
+   ở khối C. Đã thêm, dùng chung một biến kho như ERP
+3. **Thiếu ô "Loại hình tổ chức"** ở đầu phiếu
+4. **Thiếu 3 cột VAT · Tiền VAT · Thành tiền sau VAT** ở bảng khối A-I (thiết bị sửa chữa) và
+   A-II (bảo dưỡng) — ERP có (dòng 437–439 và 691–693)
+5. **Thiếu 3 cột VAT** ở bảng khối D (chi phí khác) — ERP có (dòng 964–966)
+6. **Thiếu cột "Ảnh"** ở bảng khối C (hàng hoá) — ERP có (dòng 857). BE nay trả `product_avatar`
+   lấy từ `products.avatar`
+
+⚠️ **Ba bảng dùng chung với màn Phiếu cung cấp thông tin** (`WrDeviceLinesTable`,
+`WrMaintenanceTable`, `WrCostTable`) nên 3 cột VAT thêm dưới dạng **prop `showVat` mặc định TẮT** —
+màn CCTT giữ nguyên đúng như ERP (form CCTT KHÔNG có cột VAT). Chỉ màn Báo giá bật.
+
+### Giữ nguyên có chủ ý (KHÁC ERP)
+- **Cột "Giá vốn"**: ERP comment cột này ở màn Báo giá, HRM vẫn hiện nhưng khoá sau quyền
+  "Xem giá vốn hàng hoá" — user đã chốt 2026-08-21, giữ nguyên.
+- Cột "Chi phí cho bảo hành" ở khối D: ERP hiện có điều kiện `ng-if="form.product_warrantys.length"`;
+  HRM đã port đúng bằng prop `showWarranty`.
+
+### Rà khối II - Danh mục thiết bị cần bảo dưỡng theo ERP (2026-09-08)
+- [x] BE: popup chọn thiết bị chỉ liệt kê thiết bị CÓ gói bảo dưỡng (`has_maintenance_service`), join đủ `service_levels`+`levels` như `Product::getListService()` — 223 → 57 thiết bị
+- [x] FE: toast "Thêm thiết bị thành công" đúng chữ ERP
+- [x] FE: cho chọn TRÙNG thiết bị tối đa bằng số lượng khách đang có + 2 cảnh báo "Thêm số lượng cho thiết bị" / "Thiết bị đã chọn quá số lượng" (bỏ chặn trùng cứng)
+- [x] FE: thêm thiết bị là nạp SẴN toàn bộ gói bảo dưỡng (SL = 0) như ERP; ô "Chọn gói bảo dưỡng" tự ẩn khi đã đủ gói, chỉ hiện lại nếu người lập đã xoá bớt
+- [x] FE: bấm "Thêm gói bảo dưỡng" khi chưa chọn gói → toast "Vui lòng chọn gói bảo dưỡng"
+
+### Rà toàn màn Lập báo giá theo ERP bằng Playwright (2026-09-08, đợt 2)
+- [x] Khoá ô "Loại công việc" ở màn Báo giá (ERP khai `disabled` cứng, chỉ màn CCTT mới cho đổi) — prop `lockWorkType`
+- [x] Khối A-I: xếp lại 3 cột VAT ngay sau "Loại công việc", trước "Thời gian có vật tư" như ERP
+- [x] Khối A-I: bù 3 ô VAT còn thiếu ở dòng thiết bị + 2 dòng tiêu đề nhóm (trước đây bảng lệch cột khi bật VAT)
+- [x] Khối A-II: đổi nhãn cột 2 thành "Loại dịch vụ", thêm 2 cột Tồn dự kiến/Đang giữ, bỏ cột "Hành động" (nút xoá về cạnh tên, "Thêm vật tư" thành link dưới tên gói)
+- [x] Khối A-II: Đơn giá bán / VAT của gói và vật tư chuyển sang CHỈ ĐỌC (ERP lấy theo danh mục); vật tư thêm select ĐVT đổi giá theo đơn vị (`changeUnit`)
+- [x] Khối C: đổi nhãn "Tên hàng hóa" → "Tên dụng cụ, vật tư", "VAT (%)" → "VAT"
+- [x] Khối D: VAT mặc định 8% cho 5 dòng chi phí (BE `defaultCostRows`), thêm dấu * ở "Tên chi phí"/"Giá trị"
+- [x] Khối E: bổ sung bảng "I - Sửa chữa - Bảo dưỡng" 9 dòng + Tổng cộng (ERP có 2 bảng, HRM mới có bảng II)
+- [x] Test end-to-end trên :3002 + đối chiếu :8001: thêm thiết bị 2 khối, nhập SL gói → tiền chảy đúng bảng E, Lưu nháp OK, mở lại Sửa hiển thị đủ; đã xoá phiếu test TPE.BGDV.2026010369
+
+### Rà màn Hợp đồng dịch vụ theo ERP bằng Playwright (2026-09-08, đợt 3)
+- [x] Khối B: thay bảng chi phí của Báo giá bằng `WrContractCostTable` đúng bộ cột hợp đồng (Giá trị · [DSVT · Giá trị sau điều chỉnh — chỉ chi phí vận chuyển] · Giảm giá · Giá trị sau giảm giá · VAT · Tiền VAT · TT sau VAT · Ghi chú)
+- [x] BE: lưu + trả `repair_price_extra` / `discount_value_repair` / `repair_price_before_vat`; chặn giảm giá vượt giá trị sau điều chỉnh ở máy chủ; `cumChiPhi` cộng đúng DSVT
+- [x] Khối C: bỏ 3 cột chiết khấu (ERP không có ở hàng hoá), bỏ Ghi chú, thêm cột Ảnh + BE bồi `product_avatar`
+- [x] Khối A: đổi nhãn "SL" → "Số lượng" (ERP chỉ dùng "SL" ở bảng hàng hoá); bỏ cột Ghi chú ở bảng bảo dưỡng
+- [x] Dòng "Tổng cộng" của 3 bảng dựng động theo bộ cột → hết lệch ô (trước đó bảng sửa chữa thiếu 1 ô, bảng hàng hoá thừa 2)
+- [x] Khối E: thay bảng 5 cột bằng bảng tổng hợp 9 cột × 12 hạng mục + 4 dòng chốt (Thưởng NVKD · Tổng trước thuế · VAT · Thành tiền sau VAT); tiền tính bằng `tongHopHopDong()` của hợp đồng, không dùng công thức báo giá
+- [x] Thêm ô "Thưởng NVKD" (`market_cost`) nối đủ FE → validate → lưu → resource
+- [x] Thêm 2 ô còn thiếu so ERP: **Fax** (chỉ đọc, lấy từ hồ sơ khách) và **Hãng** (chọn trong hãng xe của khách, bảng `customer_has_vehicle_manufacts`)
+- [x] Đối chiếu số liệu hợp đồng HDDV_TPE_HN_KD2_26_0281 với ERP: khớp từng đồng (14,886,000 · 678,600 · 14,207,400 · 1,238,592 · 15,445,992) và mọi dòng con; 7/7 bảng cân cột
+
+### Sửa 2 lỗi user báo trên dev (2026-09-08)
+- [x] Lịch sử hiển thị lỗi với trường soạn thảo: log lưu HTML thô của CKEditor (1.327 ký tự, có cả `&agrave;`) và `SystemInfoValue` cố tình không dùng `v-html` nên in nguyên thẻ. Sửa: bóc thẻ + giải mã ký tự đặc biệt ngay trong `SystemInfoValue`, cắt 200 ký tự kèm nút "Xem thêm"/"Thu gọn" — áp cho MỌI màn có lịch sử, log cũ cũng hiện đẹp, không phải sửa dữ liệu
+- [x] Ghi bẫy này vào `.claude/skills/entity-history/SKILL.md` §6 + bảng "Sai lầm hay gặp" của `ui-base.md`
+- [x] Góc kéo giãn textarea bị thanh cuộn chiếm. **Cách đầu (bọc `<div class="v2-textarea-wrap">` mang `resize`) đã BỎ** vì user báo vỡ giao diện: class truyền từ ngoài (`is-invalid`, `mt-1`…) rơi vào div bọc thay vì ô nhập, và `min-height` của div làm ô trong bảng cao vống. Cách dùng chính thức: **giữ nguyên DOM**, chỉ nới `::-webkit-scrollbar` của `.v2-textarea` lên 18px — trong Chrome ô vuông kéo giãn luôn rộng bằng thanh cuộn nên vùng bắt chuột tăng 15px → **20px**; con trượt để viền trong suốt + `background-clip: content-box` nên nhìn vẫn mảnh 6px; thêm `::-webkit-resizer` vẽ vạch chéo cho dễ thấy. Kéo thử bằng chuột thật ở đúng góc: 53px → 123px
+- [x] Ghi chú bị cắt âm thầm ở 255 ký tự: cột `note` của 12 bảng luồng dịch vụ là `varchar(255)` mà `sql_mode` không có `STRICT_TRANS_TABLES` → MySQL cắt, người dùng vẫn thấy "Lưu thành công" rồi mất chữ. Theo yêu cầu user: **nới cột lên `TEXT`** (migration `2026_09_08_000002`, đã kiểm không có index nào trên `note`, đổi kiểu là nới rộng nên ERP dùng chung không ảnh hưởng) và bỏ trần ký tự ở FormRequest. Thử thật: ghi chú 819 ký tự lưu đủ, đọc lại DB không mất chữ
+
+### Rà màn Phiếu bảo hành theo ERP bằng Playwright (2026-09-09)
+- [x] **Màn tạo/sửa: KHÔNG dựng** — đúng ERP. `/create` cần `wr_service_quotation_id` và nút mở nó đã bị comment (`WarrantyRepairServiceQuotationsController.php:133`) nên trả 404; `/edit` chỉ mở khi `status = Đang tạo` mà ERP sinh phiếu với `status = 2` cứng (`WrServiceQuotation::createWrWarranty:1533`) → đo DB: 3.632/3.632 phiếu đều status 2
+- [x] Đầu phiếu: thêm 10 ô ERP có mà HRM thiếu (Địa chỉ · Loại hình tổ chức · CMND/MST · Ngày cấp · Nơi cấp · Fax · Người đại diện · Chức vụ · Thời gian bảo hành · Phòng tiếp nhận xử lý); đổi 2 nhãn cho khớp ERP
+- [x] Khối A: thêm 4 cột (ĐVT · Giá vốn gate quyền · Loại công việc · Thời gian có vật tư); tên thiết bị in "tên - model - mã hàng"; thêm dòng "Thiết bị:"; thêm 2 dòng tiêu đề nhóm 1.2/1.3 kèm tổng; đổi "Công" → "Công tháo lắp sửa chữa thiết bị"
+- [x] **Sai số tiền**: cột "Khách hàng phải trả" đọc thẳng cột `total_cost` (bằng 0 ở mọi dòng) nên màn hiện 0 trong khi ERP hiện 595,000 — ERP TÍNH `total_sell − discount_cost` (`ProductInformation.blade.php:173`). Đã tính lại ở FE cho cả 3 loại dòng
+- [x] Khối B: tách 2 bảng I/II như ERP, bóc "Chi phí cho bảo hành" thành 3 cột con + dòng Tổng cộng; **sửa tên 5 khoản chi phí** (đang dùng bộ tên sai: "Chi phí ăn ở, đi lại"… → đúng ERP "Chi phí đi lại (phương tiện đi lại + ăn uống, ...)"…)
+- [x] Khối C: gộp về đúng 3 hạng mục của ERP (Bảo hành · Chi phí khác phải trả · Chi phí vận chuyển) + 3 dòng chốt Tổng cộng · VAT (%) · Thành tiền sau VAT; đổi nhãn cột "Thành tiền" → "Giá trị"
+- [x] Thêm khối D - Điều khoản bảo hành, khối Tài khoản ngân hàng - Khách hàng, khối Liên hệ
+- [x] BE: resource trả thêm 18 trường + cờ `can_view_cost_price`; service bồi mã hàng/model bằng 1 truy vấn, nạp `departmentReception` và `customer.fax`
+- [x] Đối chiếu ERP: khối A khớp từng dòng (595,000 / 0 / 595,000 · giá vốn 350,000), khối C khớp từng số (123,671,618), 7/7 bảng cân cột
+- [ ] Khối "Người duyệt" — chờ user quyết (đã bỏ ở màn hợp đồng)
+- [x] Bố cục 2 khối phụ theo ERP: ERP dùng layout **2 cột** (`col-md-9` nội dung + `col-md-3` bên phải), "Tài khoản ngân hàng - Khách hàng" và "Liên hệ" nằm CẠNH khối đầu phiếu chứ không phải cuối trang. Đã dựng lại (đo toạ độ: HRM x=241 / x=1209 ↔ ERP x=35 / x=1158, cùng ngang hàng y đầu trang)
+- [x] **Khối Liên hệ ánh xạ sai nguồn**: đang đọc `receiver_*` (luôn rỗng ở phiếu bảo hành) trong khi ERP đọc `customer_contact_name` / `customer_address` / `customer_contact_phones`. Đã sửa; đối chiếu phiếu 6743 khớp ERP từng chữ (Nguyễn Xuân Trường · Số 2 Lê Đức Thọ… · 0915055976) và khối ngân hàng đủ 5 ô (0531100096008 · TMCP QUÂN ĐỘI · Long Biên)
+- [x] Khối đầu phiếu: bỏ 3 ô ERP không có (Trạng thái · Ngày tạo · Người liên hệ — trạng thái chuyển thành badge ở tiêu đề khối), sắp lại ĐÚNG 16 trường và đúng thứ tự ERP; ô Ghi chú đổi sang `V2BaseTextarea` 2 dòng chiếm hết hàng. Đối chiếu nhãn: 16/16 khớp, không thừa không thiếu
+- [x] Đối chiếu Redmine #11371 + #11372 (đọc qua trình duyệt — API Redmine không nhận Basic auth, mọi request đều bị coi là khách): 2 task đúng là màn phiếu bảo hành vừa sửa. Bổ sung nốt 2 ý còn thiếu: **tiêu đề khối "Chi tiết"** bọc A/B/C/D như ERP, và **bỏ dòng "Người tạo · ngày tạo"** ở khối đầu phiếu (task ghi "thừa Trạng thái và Ngày tạo")

@@ -298,3 +298,87 @@ Vừa hoàn thành: User chạy thật trên LOCAL thành công sau khi vòng te
 Bước tiếp theo: (khi user sẵn sàng) chạy PRODUCTION: backup + bật bảo trì + MIGRATION_RUN_ID mới mỗi công ty. Tái dùng cho công ty kế: sửa .env (DB_DATABASE_SOURCE + MIGRATION_RUN_ID + cờ MIGRATE_*).
 Lưu ý: super-admin thấy toàn bộ tài khoản mọi công ty ở màn "Danh sách tài khoản" là phân quyền sẵn có của app (KHÔNG phải lỗi di trú); muốn lọc theo công ty thì sửa logic app riêng.
 Blocked: (không).
+
+---
+
+## Phase 7 — Chạy lại & đánh giá theo bảng feedback TPE (2026-09-04)
+
+- [x] Đọc bảng feedback TPE (Google Sheet "Bảng xử lý và test dữ liệu gộp cổng", sheet `HRM_Test gộp cổng ETEK, EP, EG`)
+- [x] Backup `hrm_prod_6_6` trước khi chạy (1.1G)
+- [x] Chạy `company:migrate-full` dry-run + ghi thật cho ETEK GREEN (`local_hrm_green` → company_id mới = 9)
+- [x] Verify bằng SQL toàn bộ mục "Chờ sửa" trong bảng feedback
+- [x] Viết báo cáo `danh-gia-lai-2026-09-04.md` + bảng nhận xét cột L để dán lên Sheet
+
+### Checkpoint — 2026-09-04 (Phase 7 — test UI thật)
+Vừa hoàn thành: Test bằng Playwright với 2 tài khoản (admin EG uyendtt.hr@etekgreen.com — cty 9, admin tổng namdangit — cty 1). Phát hiện 14 mục CÒN LỖI, trong đó nặng nhất: (1) config map sai bảng `working_position_group_id` → OWNED:working_position_groups (phải là rank_groups) làm màn Định biên hiện nhầm nhóm "LÃNH ĐẠO." của TPE; (2) manpower_report lỗi 500 tại DepartmentManpowerService.php:228 do global scope; (3) AttendanceService::approve() không lọc company → admin EG duyệt được 14 đơn của TPE. Xác nhận ĐÃ HẾT LỖI có bằng chứng UI: dòng 58 (quy định làm thêm), 99 (báo cáo phép), 122/123/125 (cơm). Dòng 45 tìm ra nguyên nhân: NV kiêm nhiệm đếm 2 lần, không phải lỗi di trú.
+Bước tiếp theo: Sửa 7 việc engine + 4 việc app theo mục 5 của danh-gia-lai-2026-09-04.md; chờ TPE chốt việc gộp đơn/phiếu chờ duyệt (dòng 74-93).
+Blocked: (không).
+
+### Checkpoint — 2026-09-04 (Phase 7b — SỬA XONG các lỗi phát hiện)
+Vừa hoàn thành: Sửa 15 mục lỗi (7 engine + 8 app), chạy lại di trú 3 lần để kiểm chứng, 75 unit test xanh.
+- Engine (config/company_migration.php + CompanyMigrationService): (1) working_position_group_id -> OWNED:rank_groups + sắp lại thứ tự bảng (competency_groups > rank_groups > ranks trước working_positions/department_manpowers) → định biên 29/29 đúng nhóm; (2) normalizeBankName cho danh mục ngân hàng → bank_id NV 2/4 → 3/4; (3) absolutizeAssetPath + config source_asset_base_url → ảnh 124/125 URL đầy đủ; (4) stepFreeCompanyName (đổi tên bản ghi đích trùng, chỉ khi status=0) đặt TRƯỚC resolveCompanyName/detectUniqueGuards → công ty mới lấy tên gốc, bản cũ thành "(cũ)"; (5) labor_contracts filter thêm "OR company_id IS NULL" → 5 loại HĐ; (6) audit_fallback_employee_id → titles 67/67, industries 117/117 có Người tạo; (7) migrationConfig() an toàn ngoài container (fix 3 unit test).
+- App (lỗ hổng chỉ lộ sau gộp cổng): AttendanceService::approve lọc company (EG 14 đơn TPE → 0); LocationConnInfo + ConnInfo thêm FilterByCompanyManagerScope (9→5 địa điểm, máy CC chỉ còn 3); CompanyService::getCompanies + helper listManageCompanyIdsForCurrentEmployee (EG 9→1 công ty); SelfNotificationService::index (EG 10→0 thông báo TPE); SalaryTemplateService index+getAllList; DepartmentManpowerService guard quan hệ NULL (500 → 200); CompetencyService::isUsed + RankService::isRankGroupUsed (chặn xoá danh mục đang dùng, message rõ).
+- Excel bàn giao: thêm cột M "Hướng sửa & kiểm chứng", cột L cập nhật trạng thái.
+Bước tiếp theo: chờ TPE chốt 3 việc — gộp đơn/phiếu chờ duyệt (dòng 74-93), thực đơn cơm cho công ty gộp (dòng 121), có bỏ ràng buộc trùng tên danh mục toàn hệ thống không (31 danh mục còn hậu tố). TPE cần gán quyền công ty mới cho quản trị TPE + cấp quyền cơm cho công ty gộp.
+Blocked: (không).
+
+### Checkpoint — 2026-09-05 (bổ sung danh mục dùng chung còn thiếu ở đích)
+Vừa hoàn thành: Thêm cơ chế `insert_missing` cho danh mục SHARED (CompanyMigrationService::insertMissingSharedRows + config banks). Trước đây SHARED chỉ map theo khoá tự nhiên, ngân hàng nào chỉ cổng thành viên có (OCB, VIB) thì map ra NULL → NV mất tài khoản ngân hàng. Nay tự chèn vào danh mục đích (bỏ qua dòng đụng unique code) rồi map tiếp; buildSharedMap nhận thêm $dryRun để dry-run không ghi. Kiểm chứng: banks đích 19→21, UI hiện đủ 21 gồm OCB + VIB; tài khoản NV EG 3/4 có ngân hàng (dòng thứ 4 ở nguồn vốn bank_id=0).
+Đồng thời TRẢ LẠI filter labor_contracts về 'company_id=1' — chốt dùng chung, chèn thêm chỉ gây 4 cặp trùng tên và 0 bản ghi tham chiếu.
+Bước tiếp theo: cân nhắc bật insert_missing cho danh mục dùng chung khác (majors, areas) nếu công ty sau có tình huống tương tự.
+Blocked: (không).
+
+### Checkpoint — 2026-09-05 (dòng 21: lọc công ty ở NGUỒN CHUNG của mọi ô lọc)
+Vừa hoàn thành: TPE phát hiện màn /timesheet/timesheet_details vẫn xổ đủ công ty dù đã sửa dòng 21. Truy ra: mọi ô lọc trên FE lấy dữ liệu từ store.companies/departments/parts/groups, nạp 1 lần từ API `users/auth/user-profile` (app/Http/Controllers/Api/AuthNewController.php) — trước đây trả TOÀN BỘ không lọc. Đã lọc cả 4 danh sách theo listManageCompanyIdsForCurrentEmployee() + luôn kèm current_company_role. Kiểm chứng UI màn Bảng công chi tiết (EG): công ty 9→1, phòng ban 75→12, bộ phận 57→42, khối 3. TPE không đổi: 5 công ty / 55 phòng ban. 75 test xanh.
+Bài học: sửa gate công ty phải truy tới NGUỒN DỮ LIỆU CHUNG (user-profile), không chỉ sửa service của từng màn.
+Blocked: (không).
+
+### Checkpoint — 2026-09-05 (CHỐT với TPE: ô lọc giữ nguyên, chặn bằng phân quyền)
+Vừa hoàn thành: TPE chốt KHÔNG lọc danh sách đổ vào ô lọc (công ty/phòng ban/bộ phận/khối) — ai có quyền cấp tổng công ty phải chọn được mọi công ty. Đã REVERT phần lọc ở AuthNewController::userProfile (giữ lại chú thích giải thích để sau không sửa nhầm lần nữa). GIỮ fix ở màn Danh mục công ty (CompanyService::getCompanies) vì J21 chốt Dùng riêng.
+Cơ chế chặn xem chéo = hạ quyền "theo tổng công ty" -> "theo công ty" khi di trú (EG: 4 quyền). Kiểm chứng: ô lọc EG hiện đủ 6 công ty / 75 phòng ban NHƯNG Bảng công chi tiết chỉ trả 71 nhân sự, 100% company_id=9.
+Bước tiếp theo: quét 211 endpoint các phân hệ Assign/Training/Decision/Rice/Payroll tìm chỗ còn trả dữ liệu công ty khác (script đã viết: scratchpad/scan.py + paths.txt).
+Blocked: (không).
+
+### Checkpoint — 2026-09-05 (ảnh: đẩy lên S3 thay vì trỏ cổng cũ)
+Vừa hoàn thành: TPE yêu cầu không phụ thuộc cổng cũ (sẽ tắt). Thêm bước kéo ảnh lên S3 chung:
+- CmcS3Helper::putContents() — đẩy nội dung file (không cần UploadedFile)
+- CompanyMigrationService::uploadMigratedAssetsToS3() + rehostAssetValue/rehostOneAsset — duyệt image_columns_keep theo migration_id_map, bỏ qua ảnh đã ở kho chung, hỗ trợ cột JSON mảng ảnh; lấy file ưu tiên MIGRATION_SOURCE_ASSET_DIR rồi tới MIGRATION_SOURCE_ASSET_URL; lỗi thì giữ nguyên + liệt kê
+- Gọi post-commit trong runMigration khi MIGRATION_UPLOAD_ASSETS_TO_S3=true + lệnh riêng company:upload-assets --run=<id> [--dir=] [--base-url=] [--dry-run]
+Kiểm chứng: 162 ô ảnh EG → 147 đã ở kho chung, 5 có file nguồn đẩy lên S3 OK (tải lại HTTP 200), chạy lần 2 đẩy 0 (idempotent). Đã XOÁ toàn bộ file test khỏi bucket khách (xác nhận HTTP 403). 75 test xanh.
+Bước tiếp theo: khi chạy thật, TPE cấp thư mục sao lưu uploads của cổng cũ HOẶC chạy khi cổng cũ còn sống.
+Blocked: (không).
+
+### Checkpoint — 2026-09-05 (đưa ĐƠN XIN NGHỈ còn giá trị sang cổng mới)
+Vừa hoàn thành: TPE chốt đưa sang đơn đã duyệt có ngày nghỉ tương lai + đơn chờ duyệt.
+- Bỏ 'attendances' khỏi skip; thêm vào owned SAU 'employees' (để map created_by), filter mới `pending_or_future:<cột trạng thái>:<cột ngày>:<chờ>:<đã duyệt>`
+- FK: employee_id & substituter_id -> OWNED:employee_infos (KHÔNG phải employees — đối chiếu 962/962, 948/948), leave_type_id -> leave_types
+- Thêm config cutover_date + option --cutover-date (mặc định ngày chạy lệnh)
+Kiểm chứng: dựng 12 đơn giả phủ các nhánh -> ĐÚNG 12/12 (gồm 2 case biên: kết thúc đúng ngày cutover / trước 1 ngày; đơn của người bị loại; người thay thế bị loại). FK sạch 0 lệch công ty. UI: admin EG thấy 15 đơn toàn phòng ban EG. Đã xoá đơn giả khỏi DB nguồn, chạy lại sạch, xoá file ảnh test khỏi S3. 75 test xanh.
+Bước tiếp theo: các loại phiếu khác (làm thêm, công tác, tra soát công) dùng cùng cơ chế filter — làm khi TPE xác nhận cần.
+Blocked: (không).
+
+### Checkpoint — 2026-09-05 (hướng B: đưa dữ liệu chấm công 2026 sang)
+Vừa hoàn thành: TPE chốt hướng B. Đưa 4 bảng chấm công vào owned với mốc từ config timesheet_from_date:
+- timesheet_summaries (filter 'parent' + directive mới 'date_from'), timesheets (filter 'company_id=N AND from_date:verify_date', poly_fk job_id cho workshift), timesheet_month_summaries, timesheet_month_summary_detail
+- Thêm filter 'from_date:<col>' + directive 'date_from' + config timesheet_from_date + option --timesheet-from
+- foldPreCutoverUsedLeave TỰ THU HẸP khoảng bù khi đã gộp chấm công (gộp trọn năm -> bù 0), tránh trừ phép 2 lần
+Kiểm chứng đối chiếu nguồn: báo cáo phép khớp TỪNG THÁNG; chấm công chi tiết T3 (phép 72,5 / công 1.357,5) khớp; báo cáo tổng hợp chấm công T3 (2.130 phút, 129 lần muộn, 50,5 ngày nghỉ không lý do) khớp; 4 kỳ công khớp. Chênh lệch duy nhất = dữ liệu của DNS Admin bị loại có chủ đích (410 lần quẹt thẻ + 3 dòng kỳ công). 75 test xanh.
+Lưu ý: khối lượng 25.294 -> 60.596 dòng, lệnh chạy lâu hơn.
+Blocked: (không).
+
+### Checkpoint — 2026-09-05 (phân hệ cơm: 2 lỗi nghiêm trọng)
+Vừa hoàn thành: TPE báo /rice/personal-registration lỗi. Rà lại toàn bộ phân hệ cơm:
+1. Entity Rice dùng connection RIÊNG 'mysql_tpe'. Sau gộp, DB cơm PHẢI = DB nhân sự; local user để lệch (hrm_prod_local vs hrm_prod_6_6) -> relink ghi 1 nơi, app đọc nơi khác -> findRiceCompany() trả null -> "Trying to get property 'id' of non-object". Đã thêm GUARD chặn ở CompanyMigrateFull + CompanyRelinkRice (in rõ 2 DB + cách sửa) và sửa .env local (đã backup .env).
+2. NGHIÊM TRỌNG: translateCol trong relink giữ NGUYÊN id cũ khi không map được -> 19 hồ sơ cơm EG trỏ nhầm sang nhân sự TPE (id trùng nhau giữa 2 DB). Nay NGẮT LIÊN KẾT (cột nullable -> null, NOT NULL -> 0) + in danh sách để rà. TPE chốt "ngắt liên kết, giữ dòng".
+Kiểm chứng: 125 hồ sơ nối đúng, 19 đã ngắt, 0 trỏ nhầm công ty khác, 0 bản ghi công ty khác bị đụng, 7.551 đăng ký giữ nguyên; màn cơm mở OK cả 2 tài khoản. 75 test xanh.
+Còn chờ TPE: thực đơn/máy check-in cho công ty thành viên; xử lý 19 hồ sơ cơm mồ côi.
+Blocked: (không).
+
+### Checkpoint — 2026-09-07 (UAT chạy thật xong + bổ sung bảng lương/chi trả)
+Vừa hoàn thành:
+- Merge dong_bo_du_lieu -> tpe, push origin/tpe (4 lần: merge, fix preview bù phép, fix trùng mã ngân hàng, thêm bảng lương/chi trả)
+- Fix phát sinh trên UAT: (1) preview dry-run tính bù phép không xét timesheet_from_date -> báo 528 ngày trong khi chạy thật bù 0; (2) insertMissingSharedRows đọc SAI cấu trúc detectUniqueGuards (thiếu khoá 'single') -> không kiểm unique -> lỗi Duplicate entry 'SHB'; kèm chuẩn hoá dấu gạch (– vs -) trong tên ngân hàng
+- UAT chạy thật THÀNH CÔNG: 78.061 dòng, bù phép 0, company_id mới = 9, cơm 128 nối/16 ngắt, recode 128 NV, ERP đẩy đủ (16 phòng ban, 66 bộ phận, 128 hồ sơ, 127 tài khoản)
+- Thêm chuỗi 5 bảng lương/chi trả (salary, salary_employees, salary_employee_data, payments, payment_employees). salary_employees.employee_id trỏ employee_infos — bẫy thứ 3 cùng kiểu. Chạy bổ sung bằng company:migrate-tables (KHÔNG cần nạp lại DB). UAT: 21 dòng, fk_null=0.
+Bước tiếp theo: TPE kiểm trên giao diện UAT; xử lý ảnh bằng company:upload-assets khi có nguồn ảnh.
+Blocked: (không).
