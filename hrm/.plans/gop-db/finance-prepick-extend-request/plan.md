@@ -428,6 +428,53 @@ liệu đã biết (`customers` thiếu dải id ERP, NCC/KH rỗng ~87%). Đã 
 
 ---
 
+## Phase 10 — Vá QA redmine 11276 / 11277 / 11278 / 11296 (2026-09-04)
+
+- [x] **11276** — cột "Cần gia hạn" mặc định = số **ĐANG GIỮ**, không để 0/trống. Gốc: ERP làm
+      việc này trong class JS `PrepickExtendRequestDetail`
+      (`if (!this._extend_qty) this._extend_qty = this.qty / this.unit_coefficient`) nên nhìn vào
+      DB thấy 0 mà màn ERP vẫn hiện số. Áp ở cả `mapLot()` (màn Thêm) lẫn `loadDetail()` (Chi tiết
+      / Duyệt). Payload không đổi: dòng chưa tích vẫn gửi `extend_qty = 0`.
+- [x] **11277** — lịch chọn "Hạn giữ mới" bị **mất cột Chủ nhật**. Gốc ở component dùng chung
+      `V2BaseDatePicker`: `onOpen()` ghim `left` theo ô input mà không kẹp mép phải màn hình, nên
+      ô ở cột sát phải làm popup tràn khỏi viewport. Đã kẹp `left` trong
+      `[8px, innerWidth - popupWidth - 8px]`.
+- [x] **11278** (phần ghi chú trong ảnh) — màn Chi tiết thiếu nút **Sửa / Xóa** cho phiếu nháp
+      trong khi màn Điều chuyển hàng giữ cùng nhóm đã có. Bổ sung 2 nút, gate bằng cờ BE
+      `is_can_edit` / `is_can_delete` (BE đã trả sẵn), thao tác xong quay về danh sách.
+- [x] **11296** — 404 báo "Không tìm thấy dữ liệu" + trả về danh sách (xem plan màn Hủy hàng giữ).
+- [x] **11278** (phần "giá trị vượt ngưỡng") — **KHÔNG PHẢI LỖI, tester báo nhầm**. Đã đối chiếu
+      code ERP (xem Checkpoint): ERP không chặn tạo phiếu vượt ngưỡng, và ERP cũng KHÔNG cho
+      TP/BGĐ/KT sửa số lượng lúc duyệt. HRM đang khớp. Không sửa gì.
+
+### Checkpoint — Phase 10
+
+```text
+Vừa hoàn thành: 11276, 11277, phần nút Sửa/Xóa của 11278, 11296.
+Đang làm dở: không.
+Bước tiếp theo: user phản hồi lại tester về 11278 (báo nhầm).
+Blocked: không.
+Verify: compile các file .vue đã sửa.
+
+KẾT LUẬN 11278 — ĐỐI CHIẾU CODE ERP, KHÔNG PHẢI LỖI:
+1. "Không tạo được giá trị vượt ngưỡng": ERP `PrepickExtendRequestController::store()` chỉ validate
+   `extend_qty` numeric/min:0/max:999999 + `validateProducts()` (qty <= số đang giữ của LÔ) +
+   hạn không quá `max_prepick_date`. KHÔNG có ràng buộc nào theo GIÁ TRỊ TIỀN. HRM giống hệt
+   (`PrepickExtendRequestService`: qty <= `lot->qty`). Ngưỡng tiền chỉ dùng để RẼ NHÁNH DUYỆT.
+   Chạy thật `needBoardApproveByLines()` trên `gop_db`: công ty 1 (ngưỡng 20tr) — 1 x hàng
+   1.882.223đ -> không cần BGĐ; 1 x hàng 25.000.000đ -> CẦN BGĐ. Công ty 4 (ngưỡng 5tr), 1 x
+   7.500.000đ -> CẦN BGĐ. `basePrice()` đọc thẳng `product_units` + `product_unit_prices` nên
+   không dính lỗi accessor `Product->data` của ERP trên DB gộp.
+   => Tester không dựng được data đủ tiền (lô của tài khoản test toàn hàng giá 1đ), không phải HRM chặn.
+2. "TP/BGĐ/KT duyệt không sửa được giá trị vượt ngưỡng": ERP `prepick_extend_requests/show.blade.php`
+   render số lượng bằng `<td><% product.extend_qty %></td>` — CHỮ, không phải input; chỉ
+   `new_expire_date` và checkbox `need_extend` sửa được. Màn Điều chuyển (`prepick_transfer2/
+   show.blade.php`) còn chặt hơn: `<td><% product.qty %></td>` và checkbox đã bị comment.
+   HRM cũng chỉ cho sửa "Hạn giữ mới" -> KHỚP ERP.
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 | Bẫy | Cách tránh |

@@ -232,6 +232,31 @@ Blocked: không.
 
 ---
 
+## Phase 10 — Vá QA redmine 11279 / 11296 (2026-09-04)
+
+- [x] **11279** — một hàng hoá đang giữ cho **2 khách hàng / 2 hạn khác nhau** phải thêm được 2
+      dòng (ERP cho phép). Popup đang loại theo `product_id` nên dùng 1 lô là mất luôn các lô còn
+      lại. Chuyển sang loại theo **LÔ**: FE gửi `exclude_lot_ids[]` (`prepick_detail_id` của ô
+      "Từ xuất giữ"), BE `PrepickStockService::searchHoldingProducts()` lọc `pd.id NOT IN (...)`
+      — hàng chỉ rơi khỏi popup khi **hết sạch lô** chưa dùng, và `held_qty` chỉ còn cộng phần
+      lô còn lại. 2 màn Hủy / Gia hạn giữ nguyên cách loại theo hàng hoá (mỗi hàng 1 dòng).
+- [x] **11296** — 404 báo "Không tìm thấy dữ liệu" + trả về danh sách.
+- [ ] User verify trên dev với hàng có nhiều lô.
+
+### Checkpoint — Phase 10
+
+```text
+Vừa hoàn thành: 11279 (FE modal + FE màn + BE service/controller), 11296.
+Đang làm dở: không.
+Bước tiếp theo: user verify trên dev.
+Blocked: không.
+Verify: chạy thật `searchHoldingProducts()` trên `gop_db` với NV 1028 / hàng 22325 (4 lô, tổng 9):
+loại 1 lô -> hàng VẪN còn, held_qty 9 -> 7; loại hết 4 lô -> hàng biến mất; loại theo product ->
+biến mất (giữ nguyên hành vi cũ cho 2 màn kia).
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 | Bẫy | Cách tránh |

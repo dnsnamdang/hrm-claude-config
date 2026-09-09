@@ -15,6 +15,12 @@ thu gọn/mở rộng + lazy load lần mở đầu tiên.
 
 ## 1. Vỏ popup
 
+> ⚠️ **Màn/danh mục MỚI đừng chép khối `b-modal` dưới đây.** Cách hiện hành là
+> `V2BaseModal` bọc chính `SystemInfoSection` — xem `components/modal/CatalogHistoryModal.vue`
+> (76 dòng, không có markup timeline riêng). Nhờ dùng chung một ruột nên popup ở màn danh sách và
+> khối Lịch sử ở màn chi tiết **không thể lệch nhau**. Khối markup dưới đây giữ lại để đối chiếu
+> với `CustomerHistoryModal.vue` (bản viết tay có trước) và để dò lỗi hiển thị.
+
 ```vue
 <b-modal
     :visible="show"
@@ -107,29 +113,68 @@ Nút bật/tắt đặt góc phải trên danh sách, chỉ hiện khi đã tả
 </b-collapse>
 ```
 
-Logic (copy nguyên):
+Logic (copy nguyên — bản đang chạy trong `SystemInfoSection.vue` / `CustomerHistoryModal.vue`):
+
+> ⚠️ **Hai ô lọc lấy từ API `filter-options`, KHÔNG suy từ log đang tải.** Xem `SKILL.md` §0a.
+> Suy từ log thì mỗi bản ghi ra một dropdown khác nhau (log 1 bản ghi thường chỉ có 1-2 action,
+> 1-2 người) — user tưởng hệ thống thiếu dữ liệu. Đây là lỗi đã phải sửa thật.
 
 ```js
-// Options dựng TỪ CHÍNH log đang có, không hardcode danh sách action
+data() {
+    return { options: { actions: [], performers: [] } }   // nạp 1 lần khi mở popup / mở khối Lịch sử
+},
+
+// Danh mục CỐ ĐỊNH 3 nhóm, giống nhau ở MỌI màn. Fallback chỉ phòng BE cũ chưa trả danh mục.
 actionOptions() {
+    if (this.options.actions && this.options.actions.length) return this.options.actions
+    return [
+        { value: 'create', text: 'Tạo mới' },
+        { value: 'update', text: 'Thay đổi thông tin' },
+        { value: 'status', text: 'Thay đổi trạng thái' },
+    ]
+},
+performerOptions() {
+    if (this.options.performers && this.options.performers.length) return this.options.performers
+    // Lưới an toàn khi BE không trả danh sách nhân sự: dựng tạm từ log đang xem.
+    // Ở ĐÂY giữ "MÃ PHÒNG - Tên" cho khớp danh sách chuẩn của BE — khác dòng log trên
+    // timeline (chỉ in tên, xem `actorText` §4).
     const map = new Map()
     this.items.forEach((log) => {
-        if (log.action && !map.has(log.action)) map.set(log.action, log.action_label || log.action)
+        const key = log.actor_id
+        if (!key || map.has(key)) return
+        map.set(key, [log.actor_dept_code, log.actor_name].filter(Boolean).join(' - ') || 'Hệ thống')
     })
     return Array.from(map, ([value, text]) => ({ value, text }))
 },
-// DTO log KHÔNG trả id nhân viên → gom theo mã NV, không có mã thì theo họ tên
-performerKey(log) { return log.actor_code || log.actor_name || '' },
 filteredHistory() {
     const f = this.appliedFilters
     return this.items.filter((log) => {
-        if (f.action && log.action !== f.action) return false
-        if (f.performer && this.performerKey(log) !== f.performer) return false
+        // Lọc theo NHÓM hoạt động (action_group), KHÔNG theo action chi tiết: 1 nhóm gom nhiều
+        // action (Thay đổi trạng thái = khoá / mở khoá / duyệt / từ chối...).
+        // BE cũ chưa trả action_group -> fallback so với action để không vỡ màn.
+        if (f.action && (log.action_group || log.action) !== f.action) return false
+        if (f.performer && Number(log.actor_id) !== Number(f.performer)) return false
         const day = log.created_at_raw ? log.created_at_raw.slice(0, 10) : null   // 'YYYY-MM-DD'
         if (f.dateFrom && (!day || day < f.dateFrom)) return false
         if (f.dateTo && (!day || day > f.dateTo)) return false
         return true
     })
+},
+
+async fetchFilterOptions() {
+    if (!this.entityId) return
+    try {
+        const res = await this.$store.dispatch('apiGetMethod',
+            `${this.endpointBase}/${this.entityType}/${this.entityId}/filter-options`)
+        const data = (res && res.data) || {}
+        this.options = {
+            actions: Array.isArray(data.actions) ? data.actions : [],
+            performers: Array.isArray(data.performers) ? data.performers : [],
+        }
+    } catch (e) {
+        // Lỗi danh mục KHÔNG chặn phần lịch sử: vẫn xem được log, chỉ là 2 ô lọc rỗng
+        console.error('Lỗi tải danh mục bộ lọc lịch sử:', e)
+    }
 },
 ```
 
@@ -138,6 +183,9 @@ Quy tắc:
 - Có 2 bộ state: `filters` (đang nhập) và `appliedFilters` (đã áp) — **bấm Tìm kiếm mới lọc**.
 - `Làm mới` = reset cả 2 (không phải tải lại API).
 - Reset lọc + đóng thanh lọc khi: mở popup, đổi entity, tải lại danh sách.
+- `fetchFilterOptions()` gọi **cùng lúc** với `fetchLogs()` (popup: lúc mở; màn chi tiết: lần đầu
+  bung khối Lịch sử), và gọi lại khi đổi bản ghi.
+- Lọc người thực hiện so bằng **`actor_id`** (số), không so theo mã/tên — trùng tên là lọc sai.
 - Dùng `V2BaseSelectInModal` kể cả khi component nằm ngoài modal (nó tự bỏ qua `dropdownParent` nếu không có `.modal-content`).
 
 ## 3. Trạng thái rỗng / lỗi
@@ -158,9 +206,9 @@ Khối rỗng: `class="text-center py-5"` + `style="color: #9ca3af; font-style: 
     <li v-for="(log, i) in filteredHistory" :key="'ch-' + (log.id || i)" class="ho-timeline-item">
         <div class="ho-timeline-dot" :style="dotStyle(log.action_color)"></div>
         <div class="ho-timeline-content">
-            <div class="ho-timeline-time">{{ log.created_at || '—' }}</div>
+            <div class="ho-timeline-time">{{ log.created_at }}</div>
             <div class="ho-timeline-text font-weight-bold" :style="{ color: log.action_color }">
-                {{ log.action_label || log.action || '—' }}
+                {{ log.action_label || log.action }}
             </div>
             <div class="ho-timeline-actor">
                 <!-- actorText(log) = CHỈ TÊN, không ghép mã phòng — xem §7 -->
@@ -176,12 +224,8 @@ Khối rỗng: `class="text-center py-5"` + `style="color: #9ca3af; font-style: 
 
 ```js
 dotStyle(color) { const hex = color || '#9ca3af'; return { background: hex + '22', borderColor: hex } },
-actorText(log) {
-    const parts = []
-    if (log.actor_code) parts.push(log.actor_code)
-    if (log.actor_name) parts.push(log.actor_name)
-    return parts.length ? parts.join(' - ') : 'Hệ thống'   // KHÔNG dùng '—'
-},
+// CHỈ TÊN. Không ghép mã phòng/mã NV — phòng ban đã in ngay bên cạnh (§7).
+actorText(log) { return log.actor_name || 'Hệ thống' },   // KHÔNG dùng '—'
 ```
 
 Thứ tự trong 1 mục là **cố định**: thời gian → tên hành động → người thực hiện → thay đổi → ghi chú.

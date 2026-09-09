@@ -3284,3 +3284,202 @@ Bảng 4 phương án đã thử (giữ lại để khỏi quay vòng lần nữ
       mảnh dưới**, KHÔNG viền bao, KHÔNG nền — đúng ranh giới user chấp nhận.
 
 **Verify:** FE parse sạch. ⚠️ Chưa mở trình duyệt.
+
+
+## Đợt sửa — Số tiền chi vượt Số tiền đề nghị chi: báo lỗi + chặn lưu/duyệt (2026-08-28)
+
+User: *"cả màn duyệt phiếu chi tiền nữa"* (làm sau khi sửa y hệt cho màn Ủy nhiệm chi rồi Phiếu thu —
+xem `.plans/gop-db/finance-bill-payment-authorization/plan.md` và `.plans/gop-db/finance-bill-income/plan.md`).
+
+Cùng một lỗi ở **2 chỗ** của màn Phiếu chi, sửa cả hai cho khớp nhau:
+
+**A. Popup DUYỆT** (`components/ApproveBillPaymentModal.vue`) — ô "Số tiền thực chi" của thủ quỹ:
+- [x] `onAmountInput()` bỏ kẹp cận trên, chỉ còn chặn số ÂM.
+- [x] Thêm `isAmountOverRequest(row)` + `amountErrorText(row, index)` -> ô viền đỏ + chữ đỏ
+      *"Không được lớn hơn số tiền đề nghị chi (<số>)"* ngay lúc gõ (popup dùng `div.text-small-error`
+      chứ không phải `V2BaseError`).
+- [x] `validateRows()` thêm nhánh chặn -> `submit()` KHÔNG gọi API.
+
+**B. Màn TẠO / SỬA** (`components/BillPaymentForm.vue`) — ô "Số tiền chi" ở bảng chi tiết nhánh A:
+- [x] Bỏ prop `:max`; `clampApprove()` chỉ còn chặn số ÂM.
+- [x] Thêm `isApproveOverRequest` + `approveErrorText` (qua `V2BaseError`).
+- [x] `validateApproveAmounts()` chặn ngay đầu `save()` — cho CẢ "Lưu nháp" lẫn "Lưu và gửi duyệt",
+      toast nói rõ dòng số mấy. Đặt TRƯỚC `validateForm()`.
+- [x] **BE** `BillPaymentStoreRequest` (Update kế thừa) + closure `approveNotOverRequestRule()` cho
+      `details.*.payment_money_approve`, chỉ ở nhánh A. Viết bằng closure, KHÔNG dùng
+      `lte:details.*.payment_money_request` (luật đó ném `InvalidArgumentException` -> **500** khi
+      trường đem so vắng mặt; đây là ô CHỈ ĐỌC do FE kéo từ đề nghị). Vế so thiếu / <= 0 -> bỏ qua.
+
+🚨 **BE đường DUYỆT: CỐ Ý KHÔNG thêm luật** — đã có sẵn
+`BillPaymentApprovalFlowService::guardPaymentMoneyCeiling()` chặn bằng 422 *"Số tiền chi không được
+vượt quá số dư!"*, và guard đó so bằng **`abs()` cho nhánh B** vì `payment_money_request` của loại 4
+là SỐ DƯ CÓ DẤU (âm = nhân viên nợ lại công ty). Bản nháp của đợt này có thêm luật `>` đơn giản vào
+`BillPaymentApproveRequest` rồi **gỡ ra**: khai lại ở tầng FormRequest là chặn oan 48/1.021 dòng thật
+có số dư âm — đúng cái bẫy docblock của file đó đã ghi sẵn. File chỉ còn thêm 1 khối chú thích.
+
+**Verify (tinker, dựng `Validator` thật từ `BillPaymentStoreRequest`):**
+vượt 200>100 -> *"Không được lớn hơn số tiền đề nghị chi"* · bằng -> không lỗi · thiếu
+`payment_money_request` -> không lỗi (không nổ 500) · **lưu nháp mà vượt** -> có lỗi ·
+**loại 4 (nhánh B)** -> KHÔNG áp luật (đúng thiết kế, trần của nhánh đó nằm ở service).
+`php -l` sạch 2 file BE · template parse sạch 2 file FE, hàm mới nằm đúng trong `methods`, không
+trùng tên, hết `:max`. ⚠️ Chưa mở trình duyệt.
+
+📌 6 ô khoản chi nhánh B (`PaymentEmployeeTable::clampToLimit()` + `onEmployeeAmountInput()` trong
+popup duyệt) VẪN kẹp cứng — luật của chúng có thêm ràng buộc CÙNG DẤU, chưa đụng, chờ user yêu cầu.
+
+### Checkpoint — 2026-08-28
+Vừa hoàn thành: ô Số tiền chi (màn tạo/sửa) và Số tiền thực chi (popup duyệt) cho gõ vượt, báo đỏ
+dưới ô và chặn lưu/duyệt; BE chặn thêm ở đường lưu (đường duyệt vốn đã có guard).
+Đang làm dở: không.
+Bước tiếp theo: user gõ số vượt ở cả 2 chỗ, xác nhận thấy chữ đỏ và nút không gọi API.
+Blocked: không.
+
+
+## Phase L — Lịch sử thay đổi phiếu chi (user yêu cầu 2026-09-03)
+
+User: *"bổ sung lịch sử thay đổi màn phiếu chi luôn cho tôi"* — làm ngay sau màn Phiếu thu tiền,
+**cùng phạm vi đã chốt ở đó**: Tạo mới · Thay đổi thông tin · Bảng chi tiết theo TỪNG DÒNG · Duyệt
+(kèm số duyệt chi) · Hủy (kèm lý do) · Xóa. Trạng thái luôn đi DÒNG RIÊNG (skill §3a).
+
+### Hiện trạng trước khi làm
+
+`bill_payments` ĐÃ có trong whitelist `CatalogHistoryService::TABLES` nhưng **chỉ 1 cột `status`**:
+mới log đổi trạng thái (`BillPayment::logStatusHistory()` gọi từ `submit()` / `approve()` /
+`cancel()`). FE **chưa có gì** — không popup ở danh sách, không khối ở chi tiết.
+
+⚠️ **RÀNG BUỘC KHÔNG ĐƯỢC PHÁ**: `BillPaymentDetailResource` ĐỌC NGƯỢC `catalog_histories` để dựng
+`cancel_reason` / `cancel_note` / `approve_note` (bảng `bill_payments` KHÔNG có cột `note`). Nó lọc
+`action = 'change_status'` rồi so `new_value['Trạng thái']` với TÊN trạng thái. Vì vậy:
+- giữ nguyên cách `logStatusHistory()` ghi (khóa nhãn `'Trạng thái'` + khóa phụ `'Ghi chú'`);
+- log nội dung mới dùng action `update` nên KHÔNG lọt vào bộ lọc đó;
+- giữ `'status' => 'Trạng thái'` trong whitelist để 2 dòng log THẬT đang có (id 213, 216) vẫn đọc đúng.
+
+### BE
+
+- [x] `CatalogHistoryService::TABLES['bill_payments']` — mở rộng từ 1 cột lên đủ cột phẳng + 2 khoá
+      ẢO dạng BẢNG (`details_rows`, `export_request_rows`), GIỮ `status`
+- [x] `Modules/Finance/Services/BillPaymentHistoryService.php` — khuôn `BillIncomeHistoryService`:
+      · `catalogColumns()` KHÔNG chứa `status` (đã có dòng riêng từ `logStatusHistory()`)
+      · dòng chi tiết đọc cột DENORMALIZED (`customer_name` / `supplier_name` / `employee_name` /
+        `contract_code`) — không join, log tự chứa sẵn
+      · 6 khoản thu nhập nhân viên (nhánh B) chỉ ghi khi KHÁC 0, tránh phiếu nhánh A dài vô ích
+      · `__key` = khoá TỰ NHIÊN (TK nợ | KH | NCC | NV | hợp đồng) vì `syncDetails()` xoá-tạo-lại
+- [x] `BillPaymentWriteService::store()` → `logCreate()` (sau `syncDetails()`)
+- [x] `BillPaymentWriteService::update()` → snapshot ở ĐẦU transaction, `logUpdate()` sau `syncDetails()`
+- [x] `BillPaymentWriteService::destroy()` → snapshot TRƯỚC khi xoá dòng con, `logDelete()`
+- [x] `BillPaymentApprovalFlowService::approve()` nhánh Thủ quỹ → snapshot trước
+      `applyApprovedMoney()`, `logUpdate()` sau khi lưu (Số duyệt chi từng dòng + Ngày hạch toán +
+      2 cột tổng). Dòng trạng thái GIỮ NGUYÊN `logStatusHistory()` đang có — không ghi trùng.
+- [x] Nhánh Kế toán trưởng duyệt (5→2) và `submit()` / `cancel()`: KHÔNG thêm log nội dung,
+      chúng chỉ đổi trạng thái (+`accounting_approved_id` không theo dõi)
+
+### FE — ĐỦ 2 NƠI (§5.1)
+
+- [x] `pages/finance/bill-payments/index.vue` — mục `Lịch sử` + `CatalogHistoryModal`
+- [x] `pages/finance/bill-payments/_id/index.vue` — khối `SystemInfoSection` trong thân trang
+
+### Verify
+
+- [x] tinker trong transaction rồi ROLLBACK: tạo/sửa/gửi duyệt/duyệt/hủy/xóa → đúng số dòng, đúng nhóm
+- [x] Đọc lại `cancel_reason` / `approve_note` của `BillPaymentDetailResource` — KHÔNG được đổi giá trị
+- [x] 2 dòng log thật id 213/216 vẫn đọc ra đúng như trước khi sửa whitelist
+- [x] Compile FE + Playwright 2 màn
+
+### Kiểm chứng đã chạy
+
+**Không hồi quy** (điểm rủi ro số 1 của màn này): chụp baseline `getLogs()` + 3 khóa
+`cancel_reason` / `cancel_note` / `approve_note` của `BillPaymentDetailResource` cho 2 dòng log THẬT
+(id 213 phiếu 1360, id 216 phiếu 1357) TRƯỚC khi sửa whitelist, so lại SAU khi sửa → **diff rỗng**.
+
+**Luồng đầy đủ** (tinker, toàn bộ trong transaction rồi ROLLBACK; `BillPaymentNotifyService` được
+thay bằng bản no-op vì notify publish Redis NGOÀI transaction, rollback không gỡ được):
+tạo → 1 dòng `create` · sửa người nhận + lý do chi + số duyệt chi dòng 1 + thêm dòng 2 → **1 dòng**
+`update` đúng 4 trường phẳng + 1 dòng thêm + 1 dòng sửa ĐÚNG CỘT · lưu lại y nguyên → **không sinh
+log rác** · gửi duyệt → **đúng 1 dòng `change_status`, KHÔNG có dòng `update` thừa** · duyệt →
+**2 dòng** (`update`: Ngày hạch toán + 2 cột tổng + Số tiền chi từng dòng · `change_status` kèm ghi
+chú Thủ quỹ) · hủy → `change_status` mang cả lý do (`note`) lẫn khóa `Ghi chú` · xóa → snapshot +
+2 dòng chi tiết đã xóa. `approve_note` / `cancel_reason` đọc lại vẫn đúng sau mỗi bước.
+
+**Trình duyệt (Playwright)**: gieo 2 dòng log nội dung cho phiếu THẬT `TPE.PC0826.00006` (id 1358)
+rồi xem giao diện, xong xoá đúng 2 dòng đó (id 278/279) — 2 dòng log thật 213/216 GIỮ NGUYÊN, phiếu
+1358 giữ `updated_at = 2026-08-27 23:52:30`, 1 dòng chi tiết.
+- Màn danh sách: dòng còn nhiều hành động thì "Lịch sử" nằm trong menu ⋮ cạnh "Duyệt"; dòng ít hành
+  động thì hiện thẳng icon `ri-history-line`.
+- Popup: timeline mới → cũ, cũ ĐỎ / mới XANH, nhóm "Bảng chi tiết thêm mới / sửa thông tin".
+  Phiếu ngoại tệ (EURO) hiện thêm cột "(VND)" — đúng logic `exchangeText()`.
+- Màn chi tiết: khối "Lịch sử" badge `2` trong THÂN TRANG, `V2Footer` vẫn nguyên bộ nút
+  (Duyệt phiếu chi / Hủy phiếu chi / In / Xuất Excel / Quay lại). Form phía trên không vỡ vì thêm slot.
+- Console: **0 lỗi** ở cả 2 màn.
+
+`php -l` sạch 4 file BE · compile FE (vue-template-compiler + babel) sạch 3 file.
+
+### Sửa kèm — áp cho CẢ màn Phiếu thu
+
+Log "Xóa" in ra dòng vô nghĩa `<Nhãn>: (trống) → (trống)` cho mọi cột đang rỗng (phiếu chi nhánh A
+không có "Phòng ban được chi" nên dính ngay). `forFullLog()` của **cả 2** service
+(`BillIncomeHistoryService` + `BillPaymentHistoryService`) nay lọc bỏ cả `null` / `''` chứ không chỉ
+mảng rỗng.
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: lịch sử thay đổi màn Phiếu chi tiền — nâng từ "chỉ trạng thái" lên ĐẦY ĐỦ, BE
+(whitelist + service ghi log + 4 điểm nối) và FE (popup ở danh sách + khối Lịch sử ở chi tiết).
+Đang làm dở: không.
+Bước tiếp theo: user nghiệm thu.
+Blocked: không.
+
+---
+
+## Phase N — Bộ tài liệu bàn giao: Testcase + HDSD + SRS (2026-09-03, @khoipv)
+
+**User yêu cầu:** "gen luôn tài liệu màn phiếu chi" — sau bộ tài liệu Phiếu yêu cầu chuyển hàng
+và Phiếu thu tiền.
+
+### N.1 Chuẩn bị
+- [x] Đọc lại code nguồn: `BillPayment` (5 trạng thái, 7 loại chi, TYPES_FROM_REQUEST /
+      TYPES_REQUIRE_REQUEST, generateCode có khoá dòng) · trait `BillPaymentAccess` (7 method
+      quyền, canApprove tự nhận cấp theo trạng thái) · 4 FormRequest (Store rẽ nhánh theo loại
+      chi + cờ `submit_after`, Update, Approve, Cancel — nguyên văn message) · Controller
+      (16 route) · `BillPaymentService` (applyScope + 9 ô lọc) · `BillPaymentWriteService` ·
+      `BillPaymentApprovalFlowService` (409 chặn duyệt lại, guard trần tiền, 2 cấp duyệt) ·
+      2 service sổ cái · 2 Resource · seeder quyền 1503-1506 + tái dùng 1152 ·
+      FE `index.vue` / `BillPaymentForm.vue` / `PaymentEmployeeTable.vue` /
+      `ApproveBillPaymentModal.vue` / `PaymentRequestSearchModal.vue` / `_id/*` · menu `finance.js:86`
+- [x] Chụp **25 ảnh thật** 1440x900 -> `pc_shots/` (chỉ để local)
+      - Cổng dev đã có sẵn phiếu **Đang tạo** (3 phiếu) và **Chờ chi tiền** -> KHÔNG phải tạo
+        phiếu mẫu, KHÔNG ghi gì vào DB dev lần này
+      - Riêng **màn IN** chụp trên cổng local: trang in tự bật hộp thoại in của trình duyệt và
+        khoá luôn phiên điều khiển; bản local chạy dev-mode chậm hơn nên kịp vô hiệu hoá lệnh in
+        trước khi nó bắn. Ảnh là phiếu loại **Chi thu nhập cho nhân viên** — bản in có thêm 2 bảng
+        kê (số tiền chi + theo vụ việc), đúng mẫu riêng của nhánh B
+- [x] TUYỆT ĐỐI không bấm **Duyệt phiếu chi**, **Hủy phiếu chi**, **Xóa** trên dữ liệu thật
+      (duyệt = ghi bút toán sổ cái dùng chung; hủy là ngõ cụt) — chỉ mở popup / hộp xác nhận,
+      chụp, rồi Đóng hoặc Hủy
+
+### N.2 Testcase
+- [x] `gen_testcase.py` dùng `tc_engine.py` -> `testcase.xlsx`: **152 TC** (P0 70%), 9 mục mô tả
+      đầy đủ, 16 TC-ROLE + 13 section La Mã, bộ kiểm tra thuật ngữ in **OK - sạch**.
+      Mọi TC đụng Duyệt/Hủy mở đầu bằng cảnh báo CHỈ LÀM TRÊN PHIẾU DO CHÍNH MÌNH TẠO
+
+### N.3 HDSD
+- [x] `gen_hdsd.py` dùng `hdsd_engine.py` -> `HDSD_Phiếu chi tiền.docx`: **47 trang**,
+      14 Heading 1 (Tổng quan + 11 phần), 21 bảng, **25 ảnh thật** + logo bìa
+- [x] Verify style HDSD: direct formatting = **2 / 10 / 0** — khớp đúng `HDSD_MAU.docx`
+
+### N.4 SRS
+- [x] `gen_srs.py` dùng `srs_docx_lib.py` -> `SRS - Phiếu chi tiền.docx`: **57 trang**, 4 chương,
+      **14 chức năng** FR-01->FR-14, 47 bảng, 32 ảnh (1 sơ đồ tổng quan phân cấp 3 tác nhân +
+      11 biểu đồ use case + 20 ảnh chụp thật), Phần 4 có **17 quy tắc** BR-01->BR-17
+- [x] Verify SRS đủ 4 điểm form 2026-08-28: 14 mục Layout ghi `Menu:` (0 dòng URL) · 14 đoạn
+      `Quy tắc chung:` · Phần 4 là bảng 5 cột · sơ đồ tổng quan `overview_figure2` phân cấp.
+      Đánh số mục con 2.x.y liên tục ở cả 14 chức năng (0 chỗ lệch)
+
+### Checkpoint — 2026-09-03 (Phase N)
+Vừa hoàn thành: bộ 3 tài liệu bàn giao màn Phiếu chi tiền (testcase 152 TC · HDSD 47 trang ·
+SRS 57 trang), ảnh chụp thật 100%.
+Đang làm dở: không có.
+Bước tiếp theo: user đọc soát nội dung nghiệp vụ; sửa gì thì chỉnh trong `gen_*.py` rồi chạy lại.
+Blocked: không.
+
+⚠️ **Ghi nhận thao tác trên dữ liệu**: KHÔNG ghi gì vào DB dev lần này — cổng dev đã có sẵn phiếu
+Đang tạo và Chờ chi tiền nên không phải tạo phiếu mẫu. Đã mở popup Duyệt / popup Hủy / hộp Xác nhận
+xóa để chụp rồi **Đóng / Hủy**, KHÔNG bấm nút thực thi nào.

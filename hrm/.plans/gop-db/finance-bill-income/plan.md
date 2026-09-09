@@ -4184,3 +4184,246 @@ Bước tiếp theo: user mở màn in 1 phiếu thu xem lại dòng ngày dư�
 Chưa kiểm chứng bằng mắt: đo bằng Chromium headless trên cả 4 mẫu + compile
 (vue-template-compiler / babel / node-sass), chưa mở trình duyệt thật.
 Blocked: không.
+
+
+## Đợt sửa — Số tiền thực thu vượt Số tiền duyệt thu: báo lỗi + chặn duyệt (2026-08-28)
+
+User: *"tương tự sửa màn phiếu thu cũng bị lỗi đó, khi nhập số lớn hơn thì cảnh báo và không cho lưu"*
+(làm sau khi sửa y hệt cho ô "Số tiền duyệt chi" màn Ủy nhiệm chi — xem
+`.plans/gop-db/finance-bill-payment-authorization/plan.md`).
+
+Hiện trạng: ô **Số tiền thực thu** (thủ quỹ gõ ở màn Chi tiết khi duyệt) bị kẹp CỨNG ở 2 lớp —
+prop `:max` của `V2BaseCurrencyInput` (kẹp ngay lúc gõ, `:113-124`) và `clampReal()`. Giống hệt ERP:
+setter `income_money_real` của `BillIncomeDetail.blade.php` :66-72 gán thẳng
+`_income_money_real = _income_money_approve` khi vượt. Số người dùng gõ biến mất không lời giải thích.
+
+- [x] **FE** `bill-incomes/components/BillIncomeForm.vue` — bỏ prop `:max`; `clampReal()` chỉ còn
+      chặn số ÂM (giữ khớp luật `min:0` của `BillIncomeApproveRequest`).
+- [x] **FE** thêm `isRealOverApprove(detail)` + `realErrorText(detail, index)`: ô `:invalid` -> viền
+      đỏ, chữ đỏ dưới ô *"Không được lớn hơn số tiền duyệt thu (<số>)"*, hiện NGAY LÚC GÕ.
+      Chỉ so khi duyệt thu > 0 (duyệt thu 0 đồng thì không có mốc). So trong CÙNG đơn vị nguyên tệ —
+      cột VND là cột quy đổi, đừng đem ra so.
+- [x] **FE** `validateApproveDetails()` thêm nhánh chặn -> `_id/index.vue::approveBill()` KHÔNG gọi
+      API, mixin cuộn về ô sai (cùng khuôn 2 luật "Bắt buộc nhập" / "Không được âm" đã có).
+- [x] **BE** `BillIncomeApproveRequest` + luật closure `realNotOverApproveRule()`.
+      ⚠️ **Mốc so KHÔNG nằm trong payload**: lệnh duyệt chỉ gửi `id` + `income_money_real`, còn
+      `income_money_approve` là số đã chốt trong DB ⇒ không dùng được `lte:` (luật đó chỉ so field
+      trong CÙNG payload, và ném `InvalidArgumentException` -> **500** khi field vắng mặt). Phải tự
+      đọc `bill_income_details`, nạp MỘT lần cho cả mảng (`approveLimit()`), không truy vấn từng dòng.
+      Nới `+0.01` để không bắt lỗi vì sai số làm tròn của `double(16,2)`. `id` không có trong DB ->
+      bỏ qua luật (để service xử, câu `update` kèm `parent_id` sẽ không khớp dòng nào).
+
+**Verify (tinker, dựng `Validator` thật từ FormRequest, trên dòng chi tiết THẬT id=28,
+duyệt thu = 1.666.500):** vượt +1 -> *"Không được lớn hơn số tiền duyệt thu"* · bằng -> không lỗi ·
+thấp hơn -> không lỗi · âm -> *"Không được âm"* · id không tồn tại -> không lỗi (không nổ 500).
+`php -l` sạch · template parse sạch · 3 hàm mới đều nằm đúng trong `methods`, không trùng tên ·
+grep xác nhận đã hết `:max` trên ô thực thu. ⚠️ Chưa mở trình duyệt.
+
+📌 Ô **"Số tiền duyệt thu"** KHÔNG đụng tới: nó vốn không bị kẹp (ERP cũng không kẹp duyệt thu theo
+đề nghị thu), user chỉ nói về ô đang tự nhảy số.
+
+### Checkpoint — 2026-08-28
+Vừa hoàn thành: ô Số tiền thực thu cho gõ vượt, báo đỏ dưới ô và chặn duyệt ở cả FE lẫn BE.
+Đang làm dở: không.
+Bước tiếp theo: user mở 1 phiếu thu đang "Chờ duyệt" bằng tài khoản thủ quỹ, gõ số thực thu lớn hơn
+số duyệt thu -> phải thấy viền đỏ + chữ đỏ, bấm "Duyệt phiếu thu" phải KHÔNG gọi API.
+Blocked: không.
+
+
+## Phase L — Lịch sử thay đổi phiếu thu (user yêu cầu 2026-09-03)
+
+User: *"bổ sung chức năng lịch sử thay đổi màn phiếu thu, làm theo skill và màn danh sách khách hàng"*.
+
+Chốt với user trước khi code (skill `entity-history` §0):
+- **Phạm vi**: đầy đủ như màn Phiếu báo có — Tạo mới · Thay đổi thông tin · Bảng chi tiết theo
+  TỪNG DÒNG · Duyệt · Hủy (kèm lý do) · Xóa. (Không theo bản rút gọn của Phiếu chi tiền
+  `bill_payments` — màn đó chỉ log trạng thái.)
+- **Số thực thu lúc thủ quỹ Duyệt**: CÓ log, tách 2 dòng (`change_status` + `update`) theo §3a.
+- **Quyền xem**: không gắn quyền riêng — ai vào được màn thì xem được (mặc định của skill).
+
+Không có migration: dùng bảng CHUNG `catalog_histories` + trait `LogsCatalogHistory`, đúng cách 4
+phiếu tài chính chị em đã làm (`bill_income_requests`, `bill_income_reports`,
+`bill_payment_requests`, `bill_adjust_dept_requests`).
+
+### BE
+
+- [x] `app/Services/CatalogHistoryService::TABLES` — khai `bill_incomes` + nhãn cột tiếng Việt,
+      kèm 2 khoá ẢO dạng BẢNG: `details_rows` (dòng chi tiết) và `export_request_rows`
+      (phân bổ phiếu YCXH — bảng con CẤP 2, tách khoá riêng theo §3, không nhét vào dòng cha)
+- [x] `Modules/Finance/Services/BillIncomeHistoryService.php` — trait `LogsCatalogHistory`,
+      khuôn `BillIncomeReportHistoryService`:
+      · `catalogColumns()` KHÔNG chứa `status` (§3a — trạng thái luôn đi dòng riêng)
+      · `catalogDisplay()` đổi id → chữ (TK nợ, mã phiếu đề nghị, ngày, số tiền)
+      · `__key` của dòng chi tiết dùng khoá TỰ NHIÊN (TK có|KH|NCC|NV|đối tượng), KHÔNG dùng id —
+        `syncDetails()` xoá-tạo-lại mỗi lần lưu
+      · truy cập `objectable` phải qua guard try/catch (dữ liệu cũ có class ngoài morphMap)
+- [x] `BillIncomeWriteService::store()` — `logCreate()`
+- [x] `BillIncomeWriteService::update()` — snapshot TRƯỚC `syncDetails()`, sau lưu ghi
+      `logUpdate()` + `logStatusChanged()` (2 dòng riêng khi bấm "Lưu và gửi duyệt")
+- [x] `BillIncomeWriteService::destroy()` — `logDelete()` (snapshot trước khi xóa dòng con)
+- [x] `BillIncomeApprovalService::approve()` — snapshot trước khi ghi số thực thu →
+      1 dòng `change_status` (Chờ duyệt → Đã duyệt) + 1 dòng `update` (Thực thu từng dòng,
+      Ngày hạch toán)
+- [x] `BillIncomeApprovalService::cancel()` — 1 dòng `change_status` (Chờ duyệt → Hủy) kèm
+      `note` = LÝ DO HỦY (§4.1). Không ghi thêm dòng `update` cho cột Diễn giải vì chính lý do
+      hủy đang được ghi đè vào cột đó → 2 dòng sẽ trùng nội dung.
+- [x] Bọc mọi lời gọi ghi log trong try/catch + `Log::error`: lỗi lịch sử KHÔNG được làm rớt
+      giao dịch nghiệp vụ (khuôn `BillIncomeRequest::logStatusHistory()`)
+
+### FE — ĐỦ 2 NƠI (§5.1)
+
+- [x] `pages/finance/bill-incomes/index.vue` — thêm mục `Lịch sử` (icon `ri-history-line`,
+      KHÔNG gắn cờ quyền) vào `getRowActions()` + nhánh `handleRowAction` + đặt
+      `<CatalogHistoryModal ref="historyModal" modal-id="history-bill-income" record-prefix="Phiếu" />`
+- [x] `pages/finance/bill-incomes/_id/index.vue` — khối `<SystemInfoSection entity-type="bill_incomes"
+      endpoint-base="catalog-histories">` trong THÂN TRANG (không phải nút ở `V2Footer`)
+
+### Verify
+
+- [x] `php -l` + tinker: tạo/sửa/duyệt/hủy/xóa phiếu thật → đọc `getLogs()` kiểm đúng số dòng,
+      đúng nhóm, đúng subset; sửa 1 ô của 1 dòng chi tiết → chỉ 1 dòng "sửa thông tin"
+- [x] `getFilterOptions('bill_incomes', $id)` trả đúng 3 nhóm + danh sách người thực hiện không rỗng
+- [x] Compile FE (vue-template-compiler + babel)
+- [x] Dọn sạch log test, khôi phục dữ liệu đã đụng
+
+### Ghi chú kỹ thuật phát sinh khi verify
+
+**Lỗi đã bắt được và sửa** — log "Xóa" in ra rác. `CatalogHistoryService::changesOf()` đọc log
+`delete` bằng cách diff `old_value` với mảng rỗng; khoá dạng BẢNG **không có dòng nào** được lưu là
+`[]`, mà `isRowList()` CỐ Ý trả false cho mảng rỗng ⇒ nó rơi xuống nhánh trường thường và DTO trả
+`old` là một **MẢNG** thay vì chuỗi (giao diện in thẳng giá trị đó → rác). Phiếu thu hầu như không
+có phân bổ phiếu YCXH nên gần như MỌI log "Xóa" đều dính. Đã chặn tại
+`BillIncomeHistoryService::forFullLog()` (lọc khoá bảng rỗng TRƯỚC khi ghi log toàn bộ) — KHÔNG
+lọc trong `snapshot()` vì `logUpdate()` cần `[]` có mặt cả 2 phía mới phát hiện được "xoá sạch dòng
+chi tiết".
+
+⚠️ **Đây là bẫy CHUNG, không riêng màn này**: mọi màn dùng `catalog_histories` có khoá dạng BẢNG mà
+bảng con rỗng lúc xóa đều dính (`bill_income_reports`, `bill_payment_requests`,
+`addition_accounting_requests`…). Sửa gốc thì phải đụng `changesOf()` — hàm DÙNG CHUNG, chưa sửa,
+cần hỏi ý kiến trước (CLAUDE.md).
+
+**Đã CỐ Ý giữ nguyên, không phải thiếu sót:**
+- `action = 'delete'` rơi vào nhóm lọc "Thay đổi trạng thái" (`groupOfAction()` mặc định) — hành vi
+  dùng chung của mọi màn, skill §0a chấp nhận.
+- Log `create` không liệt kê từng trường (chỉ 1 dòng "Tạo mới") — `changesOf()` trả `[]` cho action
+  `create` ở MỌI màn.
+- Nhãn nhóm ra "Bảng chi tiết thêm mới / đã xóa / sửa thông tin": `rowItemLabel()` chỉ cắt tiền tố
+  "Danh sách ". Đổi cho xuôi tai phải sửa hàm dùng chung → lệch 4 màn phiếu chị em, không làm.
+
+### Kiểm chứng đã chạy (tinker, toàn bộ trong transaction rồi ROLLBACK — không đụng dữ liệu thật)
+
+Kịch bản 1 (phiếu dựng từ đề nghị thu thật TPE.DNTT0826.00003):
+tạo → 1 dòng `create` · sửa ghi chú + người nộp + số duyệt thu dòng 1 + thêm dòng 2 → **1 dòng**
+`update` liệt kê đúng 3 trường + 1 dòng thêm + 1 dòng sửa ĐÚNG CỘT · lưu lại y nguyên → **không sinh
+log rác** · gửi duyệt → **dòng `change_status` RIÊNG** (Đang tạo → Chờ duyệt) · duyệt → **2 dòng**
+(`update`: Ngày hạch toán + Thực thu từng dòng · `change_status`: Chờ duyệt → Đã duyệt kèm ghi chú) ·
+hủy → `change_status` kèm LÝ DO HỦY · xóa → snapshot đầy đủ + 2 dòng chi tiết đã xóa.
+Thứ tự trả về **mới → cũ** ở mọi bước.
+
+Kịch bản 2 (bảng con CẤP 2): sửa 1 ô "Giá trị phân bổ" + thêm 1 phiếu YCXH → đúng 1 dòng `+` và
+1 dòng `~` chỉ nêu cột đã đổi · xóa sạch dòng chi tiết → in đủ dòng đã xóa của CẢ 2 cấp · xóa phiếu
+khi không còn dòng con → không còn giá trị mảng lọt vào DTO.
+
+Bộ lọc: `getFilterOptions('bill_incomes', $id)` trả **đúng 3 nhóm cố định** (Tạo mới / Thay đổi
+thông tin / Thay đổi trạng thái) và **783 người thực hiện** (không rỗng, không suy từ log).
+
+Sau test: `catalog_histories` cho `bill_incomes` = 0 dòng, `bill_incomes` id ≥ 2358 = 0 bản ghi,
+phiếu đề nghị 2536 vẫn status 2 — sạch.
+
+`php -l` sạch 4 file BE · compile FE (vue-template-compiler + babel) sạch 3 file.
+
+### Kiểm chứng TRÊN TRÌNH DUYỆT bằng Playwright (2026-09-03, user yêu cầu)
+
+Cách làm: gieo 5 dòng log mẫu vào **bảng audit** `catalog_histories` cho phiếu THẬT
+`TPE.PT0826.00006` (id 2357) rồi xem giao diện — **không tạo/sửa phiếu qua UI**, nên không đụng dữ
+liệu nghiệp vụ. Test xong xoá đúng 5 dòng đã chèn (id 243-247); đối chiếu lại: `catalog_histories`
+cho `bill_incomes` = 0, phiếu 2357 giữ nguyên `updated_at = 2026-08-27 11:03:19`, `payer`, `note`,
+`status`, 3 dòng chi tiết.
+
+Kết quả:
+- **Màn danh sách**: nút "Lịch sử" (icon `ri-history-line`) hiện ở cột Hành động. Phiếu đã duyệt chỉ
+  còn 3 hành động (In / Xuất Excel / Lịch sử) nên `V2BaseRowActions` hiện thẳng cả 3, không gom vào ⋮.
+- **Popup**: tiêu đề "Lịch sử thay đổi" + dòng phụ "Phiếu: TPE.PT0826.00006"; timeline **mới → cũ**
+  (Tạo mới nằm cuối); giá trị cũ ĐỎ / mới XANH; nhóm "Bảng chi tiết thêm mới" và "Bảng chi tiết sửa
+  thông tin" có nhãn xám; ghi chú "Đã ghi bút toán vào sổ cái." nền vàng.
+- **Bộ lọc**: "Loại hành động" đúng **3 nhóm cố định**; "Người thực hiện" liệt kê **đủ nhân sự**
+  (không suy từ log); lọc `Thay đổi trạng thái` → còn đúng 2 dòng; lọc theo người không có log →
+  hiện "Không có lịch sử phù hợp bộ lọc."; "Làm mới" reset cả `filters` lẫn `appliedFilters`.
+- **Màn chi tiết**: khối "Lịch sử" kèm badge đếm `5` nằm TRONG thân trang (dưới khối Ghi chú), có nút
+  "Làm mới"/"Thu gọn"; `V2Footer` vẫn chỉ In / Xuất Excel / Quay lại — đúng §5.1. Nội dung timeline
+  **giống hệt popup**.
+- Console: **0 lỗi** ở cả 2 màn.
+
+📌 Thanh lọc **không có nút "Tìm kiếm"** — đúng như màn Khách hàng (`CustomerHistoryModal.vue`) và
+`SystemInfoSection.vue` đã chốt: chọn giá trị là lọc LUÔN qua deep watcher. `ui-base.md` §2/§7 còn mô
+tả nút "Tìm kiếm" là **tài liệu cũ chưa cập nhật**, không phải thiếu sót của màn này.
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: lịch sử thay đổi màn Phiếu thu tiền — BE (whitelist + service ghi log + 5 điểm nối)
+và FE (popup ở màn danh sách + khối Lịch sử ở màn chi tiết).
+Đang làm dở: không.
+Bước tiếp theo: không còn — đã kiểm chứng trên trình duyệt bằng Playwright (2 nơi hiện giống hệt
+nhau, bộ lọc chạy, 0 lỗi console). User nghiệm thu.
+Blocked: không.
+
+---
+
+## Phase M — Bộ tài liệu bàn giao: Testcase + HDSD + SRS (2026-09-03, @khoipv)
+
+**User yêu cầu:** "gen cả tài liệu phiếu thu" — sau khi xong bộ tài liệu màn Phiếu yêu cầu chuyển hàng.
+
+### M.1 Chuẩn bị
+- [x] Đọc lại code nguồn: `BillIncome` (4 trạng thái, generateCode, context) · `BillIncomeAccess`
+      (canView/canEdit/canDelete/canApprove thuần) · 4 FormRequest (Store/Update/Approve/Cancel,
+      nguyên văn message) · Controller (13 route) · `BillIncomeService` (applyScope 3 nhánh +
+      13 ô lọc + whitelist sort) · `BillIncomeWriteService` (guardOneBillPerRequest khoá dòng,
+      syncDetails, notifyTreasurers) · `BillIncomeApprovalService` (khoá dòng chặn duyệt lại,
+      8 bước duyệt, hủy) · `BillIncomeAccountingService` · 2 Resource · seeder quyền 1500-1502 ·
+      FE `index.vue` / `BillIncomeForm.vue` / `_id/index.vue` / `_id/print.vue` /
+      `IncomeRequestSearchModal.vue` · menu `finance.js:85`
+- [x] Chụp **26 ảnh thật** 1440x900 -> `pt_shots/` (chỉ để local)
+      2 vướng mắc + cách xử lý (user chốt):
+      1. Không có phiếu **Đang tạo** nào trên cổng dev -> đã tạo phiếu nháp `TPE.PT0926.00001`
+         (từ đề nghị TEST.DNTT.00051), chụp Sửa / Xác nhận xóa / hành động dòng, rồi **xóa ngay**
+         -> danh sách trở lại đúng **2.379** phiếu. Nháp KHÔNG ghi sổ cái, KHÔNG đổi trạng thái
+         phiếu đề nghị, KHÔNG bắn thông báo. Chỉ tiêu 1 số mã phiếu.
+      2. Cổng dev **chưa deploy Phase L** (Lịch sử thay đổi, làm cùng ngày) -> 3 ảnh mục Lịch sử
+         chụp trên **cổng local** (`localhost:3000`, DB dump riêng) theo chỉ định của user;
+         phiếu nháp dựng để lấy dòng lịch sử thật cũng đã xóa sau khi chụp.
+- [x] TUYỆT ĐỐI không bấm **Duyệt phiếu thu** và **Hủy phiếu thu** trên dữ liệu thật của cổng dev
+      (duyệt = ghi bút toán sổ cái dùng chung, không hoàn tác được) — chỉ chụp nút + ô nhập +
+      hộp xác nhận rồi thoát
+
+### M.2 Testcase
+- [x] `gen_testcase.py` dùng `tc_engine.py` -> `testcase.xlsx`: **169 TC** (P0 61%), 9 mục mô tả
+      đầy đủ, 13 TC-ROLE + 14 section La Mã (I->XIV), bộ kiểm tra thuật ngữ in **OK - sạch**.
+      Mọi TC đụng tới Duyệt/Hủy đều mở đầu bằng cảnh báo CHỈ LÀM TRÊN PHIẾU DO CHÍNH MÌNH TẠO
+
+### M.3 HDSD
+- [x] `gen_hdsd.py` dùng `hdsd_engine.py` -> `HDSD_Phiếu thu tiền.docx`: **44 trang**,
+      15 Heading 1 (Tổng quan + 12 phần), 18 bảng, **26 ảnh thật** + logo bìa;
+      mục lục + danh mục hình cập nhật bằng Word
+- [x] Verify style HDSD: direct formatting = **2 / 10 / 0** — khớp đúng `HDSD_MAU.docx`
+
+### M.4 SRS
+- [x] `gen_srs.py` dùng `srs_docx_lib.py` -> `SRS - Phiếu thu tiền.docx`: **52 trang**, 4 chương,
+      **13 chức năng** FR-01->FR-13, 44 bảng, 29 ảnh (1 sơ đồ tổng quan phân cấp + 10 biểu đồ use
+      case + 18 ảnh chụp thật), Phần 4 có **16 quy tắc** BR-01->BR-16
+- [x] Verify SRS đủ 4 điểm form 2026-08-28: 13 mục Layout ghi `Menu:` (0 dòng URL) · 13 đoạn
+      `Quy tắc chung:` · Phần 4 là bảng 5 cột · sơ đồ tổng quan dùng `overview_figure2` phân cấp.
+      Đánh số mục con 2.x.y liên tục ở cả 13 chức năng (0 chỗ lệch)
+- [x] `git status`: chỉ thấy `.docx`/`.xlsx`/`gen_*.py`, **không có `.png`**
+
+### Checkpoint — 2026-09-03 (Phase M)
+Vừa hoàn thành: bộ 3 tài liệu bàn giao màn Phiếu thu tiền (testcase 169 TC · HDSD 44 trang ·
+SRS 52 trang), ảnh chụp thật 100%.
+Đang làm dở: không có.
+Bước tiếp theo: user đọc soát nội dung nghiệp vụ; sửa gì thì chỉnh trong `gen_*.py` rồi chạy lại.
+Blocked: không.
+
+⚠️ **Ghi nhận thao tác trên dữ liệu**:
+- Cổng dev: tạo phiếu nháp `TPE.PT0926.00001` từ đề nghị TEST.DNTT.00051 để chụp Sửa/Xóa,
+  **đã xóa ngay** — danh sách trở lại 2.379 phiếu. Tiêu 1 số mã phiếu (phiếu kế tiếp từ 00002).
+- Cổng local: tạo + sửa + xóa 1 phiếu nháp để lấy dòng lịch sử thật cho 2 ảnh mục Lịch sử.
+- **KHÔNG bấm Duyệt và KHÔNG bấm Hủy** trên bất kỳ phiếu thật nào ở cả 2 cổng — 2 thao tác đó
+  ghi/khoá sổ cái, không hoàn tác được. Ảnh minh hoạ chỉ chụp nút, ô nhập và hộp xác nhận.

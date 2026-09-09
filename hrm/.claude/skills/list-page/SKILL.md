@@ -7,13 +7,14 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 - Áp dụng cho các bảng có các field: company_id, department_id, part_id (field này có thể có hoặc không) =>> Nếu có thì quyền sẽ theo bộ quyền như sau Xem [Tên màn danh sách] theo công ty, Xem [Tên màn danh sách] theo phòng ban, Xem [Tên màn danh sách] theo bộ phận, Xem tất cả [Tên màn danh sách]
 - Quyền xem tất cả =>> Lấy tất cả bản ghi trừ trạng thái Đang tạo / Nháp
 - Các quyền còn lại query theo các field tương ứng
-- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Tuân thủ theo V2BaseFilterPanel.vue
+- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Panel chuẩn là **`V2BaseSmartFilterPanel`** (`V2BaseFilterPanel` là bản cũ, không có popup "Cài đặt bộ lọc")
 - **Tiêu đề panel bộ lọc để mặc định `Bộ lọc danh sách`** — KHÔNG truyền prop `title`/`subtitle` để ghi riêng cho từng màn (`Bộ lọc danh sách khách hàng`, `Bộ lọc Issue`, `Bộ lọc hàng hoá`…). Tiêu đề bảng bên dưới đã nói rõ đang xem gì; `V2BaseFilterPanel` đã đặt sẵn default nên chỉ cần bỏ prop đi
+- **Nhãn floating là chuẩn của khối "Tìm kiếm nâng cao"** (user chốt 2026-09-07, mẫu: `pages/assign/prospective-projects/index.vue`). Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`: nhãn nằm giữa ô khi rỗng, bay lên đè viền trên khi ô có dữ liệu hoặc đang focus; ô cao **36px**. Panel tự bọc `V2BaseFloatingField`, tự tính `hasValue` (field gom nhiều ô thì dựa vào `resetKeys` — **phải khai**), tự truyền chiều cao xuống `V2BaseSelect`. Mặc định `false` để màn cũ không đổi. Chi tiết + biến thể `range`/`tags` + bẫy specificity: xem skill `erp-to-hrm-screen`, file `references/khuon-man-mau.md`.
 - **Placeholder của ô lọc phải NÓI ĐÚNG trường đó lọc gì** (user chốt 2026-08-15), theo công thức:
-  - Ô chọn (select/date): **`Chọn <tên trường>`** — `Chọn trạng thái`, `Chọn quốc gia`, `Chọn người tạo`, `Chọn ngày bắt đầu`.
-  - Ô gõ tay: **`Nhập <tên trường>`** — `Nhập tên hoặc mã hàng hoá`, `Nhập số tiền`.
   - Ô tìm nhanh: **`Tìm theo <các trường BE thực sự lọc>`** — phải liệt kê đúng, đừng ghi "Tìm kiếm..." chung chung.
-  - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống, hay lặp lại nguyên si nhãn. Ở **chế độ gọn** (≤ 3 ô) panel KHÔNG render nhãn, placeholder là thứ DUY NHẤT cho user biết ô đó là gì — `Tất cả` lúc đó vô nghĩa.
+  - **Khối nâng cao có `floating`** → **BỎ placeholder trùng nhãn**. Nhãn floating đã nói tên trường rồi; lúc nghỉ nhãn nằm đúng chỗ placeholder (component tự giấu placeholder), lúc float thì placeholder hiện ra lặp lại y hệt nhãn. Chỉ giữ placeholder khi nó nói THÊM: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`.
+  - **Chế độ gọn (≤ 3 ô) và màn chưa bật `floating`** → panel KHÔNG render nhãn, placeholder là thứ DUY NHẤT cho user biết ô đó là gì, nên vẫn giữ công thức cũ: ô chọn = **`Chọn <tên trường>`** (`Chọn trạng thái`, `Chọn quốc gia`), ô gõ tay = **`Nhập <tên trường>`** (`Nhập số tiền`).
+  - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống.
 - **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleInputCount` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; ⚠️ đếm theo **số Ô NHẬP thực tế**, KHÔNG phải số phần tử trong `visibleFields`: field gom nhóm render ra nhiều ô nên tính theo `resetKeys.length` (vd `org` = Công ty + Phòng ban + Bộ phận + Nhân viên = **4 ô**, `customer_scope_pairs` = 2 ô), cần khác thì khai `inputCount` trên field để đè. Đếm mỗi field là 1 thì bật đúng field gom nhóm thôi đã kín cả hàng mà panel vẫn tưởng "gọn" rồi bỏ mất nút "Tìm kiếm nâng cao"; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **không có nhãn** (dùng `placeholder`) để thẳng trục với ô tìm nhanh → `placeholder` của mỗi field phải tự nói rõ nó lọc gì ("Chọn trạng thái", không phải "Chọn..."). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
 - Style bắt buộc: luôn import `@import '@/assets/scss/v2-styles.scss';` trong thẻ `<style lang="scss">` của trang danh sách
 - Các khối bộ lọc theo logic Cascading filter: Công ty =>> Phòng ban =>> Bộ phận; Dự án TKT =>> Giải pháp =>> Hạng mục
@@ -192,13 +193,13 @@ Cột **Tên KHÔNG khoá**: user được ẩn / đổi vị trí tuỳ ý, nê
 <!-- Mã: link vào chi tiết — nuxt-link để chuột phải mở tab mới được -->
 <template #cell-customerCode="{ item }">
     <nuxt-link :to="`/assign/customers/${item.id}`" class="v2-cell-link field-line">
-        {{ item.code || '—' }}
+        {{ item.code || '' }}
     </nuxt-link>
 </template>
 
 <!-- Tên: chữ thường, không link -->
 <template #cell-customerName="{ item }">
-    <div class="field-line text-dark font-weight-normal">{{ item.fullname || '—' }}</div>
+    <div class="field-line text-dark font-weight-normal">{{ item.fullname || '' }}</div>
 </template>
 ```
 
@@ -1265,11 +1266,99 @@ Tới mức đó thì phải chuyển sang queue + gửi link tải, không cố
 Kèm theo:
 
 - Cột số/tiền: format qua helper (`toLocaleString`); ô trống hiển thị `—` và **vẫn căn phải**.
-- Cột chữ dài (địa chỉ, ghi chú): `cellClass: 'text-wrap'` + `minWidth` để bảng auto-layout không bóp hẹp.
+- Cột chữ dài (địa chỉ, ghi chú, tên dự án): `cellClass: 'text-wrap clamp-2'` + `width`/`minWidth` — xem **mục 15b**, `text-wrap` + `minWidth` một mình KHÔNG đủ.
 - Cột `center` phải khai `width` cố định — STT `60px`, Trạng thái `130px`, Hành động `140px`. Căn giữa trong ô co giãn trông lệch.
 - **KHÔNG** căn phải mã định danh (MST, SĐT, CCCD, số tài khoản, mã bản ghi): là chuỗi, không so sánh độ lớn.
 
 Bảng tra nhanh dạng Excel: `.plans/gop-db/list-page-action-column/quy-tac-can-le-cot.xlsx`
+---
+
+## 15b. Bề rộng cột — màn nhiều cột, có cả chữ dài lẫn chữ ngắn (chốt 2026-09-05)
+
+Triệu chứng user báo: *"cột chứa nội dung rất dài và nội dung ngắn đang phân bổ độ rộng chưa hợp lý"*
+— cột Dự án / Yêu cầu làm GP / Khách hàng cuối bị bóp còn 4-6 dòng, trong khi cột chỉ vài chữ
+(Giai đoạn dự án, Nhóm ngành…) lại chiếm cả khoảng rộng.
+
+### Vì sao — 4 nguyên nhân cộng lại, sửa thiếu 1 cái là vẫn lệch
+
+| Cơ chế mặc định của `V2BaseDataTable` | Hệ quả |
+| --- | --- |
+| `.data-table { width: 100% }` + `table-layout: auto` | Bảng luôn cố **ép vừa khung**, chỉ tràn khi tổng bề rộng tối thiểu vượt khung |
+| `thead th` **cũng** `white-space: nowrap` | Cột dữ liệu ngắn nhưng **nhãn dài** ("Loại hình hoạt động khách hàng", "Phòng KD phụ trách dự án") tự ghim cột rộng ~220px |
+| Chỉ vài cột khai `cellClass: 'text-wrap'` | Chúng là **cột duy nhất co được** → toàn bộ phần thiếu chỗ dồn hết vào đây, bóp sát `minWidth` |
+| Cột không khai `width` lẫn `minWidth` | Bề rộng do trình duyệt tự tính theo **nội dung của trang hiện tại** → mỗi lần phân trang bảng lại nhảy khác nhau |
+
+### Quy tắc bắt buộc cho màn từ ~10 cột trở lên
+
+1. **Bật `fixed-layout`** trên `V2BaseDataTable` (prop opt-in, mặc định `false`):
+
+```vue
+<V2BaseDataTable :data="tableData" :columns="tableColumns" fixed-layout ... >
+```
+
+Prop này bật `table-layout: fixed` + đặt `min-width` cho bảng **= tổng `width` khai báo của các cột
+đang hiện**, đồng thời cho **tiêu đề cột xuống dòng**. `table-layout: fixed` một mình là CHƯA ĐỦ:
+thiếu `min-width` thì bảng chật vẫn co cột lại như cũ.
+
+2. **Khai `width` + `minWidth` cho ĐỦ MỌI CỘT** — không bỏ sót cột nào — theo 4 bậc:
+
+| Bậc | Bề rộng | Dùng cho |
+| --- | --- | --- |
+| S | 130-150px | Badge/mức độ, giai đoạn, nhóm ngành, ứng dụng, ngày (140px) |
+| M | 170-190px | Tên phòng ban, tên nhân sự, người tạo, mã phiếu, ngày + giờ hoàn thành |
+| L | 220-260px | Ô ghép "mã - tên" (khách hàng, yêu cầu, đơn vị thụ hưởng), tên dự án |
+| XL | 300px | Tên đối tượng chính của màn (tên giải pháp, tên hợp đồng…) |
+
+3. **Cột chữ dài: `cellClass: 'text-wrap clamp-2'`** — cho xuống dòng nhưng **kẹp tối đa 2 dòng** rồi
+`…`, để mọi hàng cao bằng nhau. Kèm `:title` trên thẻ trong slot để hover xem đủ phần bị cắt:
+
+```vue
+<template #cell-prospectiveProjectInfo="{ item }">
+    <div class="field-line text-dark font-weight-normal" :title="item.prospective_project_name">
+        {{ item.prospective_project_name }}
+    </div>
+</template>
+```
+
+4. **Ô có CẢ MÃ VÀ TÊN của một đối tượng tham chiếu → ghép CÙNG 1 DÒNG** `MÃ - Tên` (user chốt
+2026-09-05), đừng xuống dòng thành 2 `div`: ô cao gấp đôi trong khi cột vẫn còn chỗ ngang, và
+`clamp-2` trở nên vô nghĩa vì bản thân nội dung đã ăn đủ 2 dòng.
+
+```js
+// Lọc rỗng TRƯỚC khi nối, nếu không bản ghi thiếu mã sẽ ra chuỗi treo dấu " - "
+joinCodeName(code, name) {
+    return [code, name].filter((part) => part !== null && part !== undefined && part !== '').join(' - ')
+},
+```
+
+⚠️ KHÔNG nhầm với **mục 3**: cột định danh của CHÍNH entity màn đang xem vẫn tách 2 cột riêng
+(`<đt>Code` là link + `<đt>Name`). Quy tắc ghép ở đây chỉ áp cho ô mô tả **đối tượng tham chiếu**
+(khách hàng, yêu cầu làm GP, khách hàng cuối, hợp đồng…).
+
+5. Nhãn cột dài **giữ nguyên chữ**, không viết tắt — ở chế độ `fixed-layout` tiêu đề đã tự xuống
+dòng nên không còn ghim cột rộng nữa.
+
+Khuôn mẫu đầy đủ: `pages/assign/solutions/index.vue` (24 cột) + `components/V2BaseDataTable.vue`
+(prop `fixedLayout`, class `clamp-2`).
+
+### 3 cái bẫy đã trả giá
+
+- **`overflow: hidden` chỉ được nhắm `.field-line` / `.project-sub`, KHÔNG nhắm mọi `<div>` trong ô.**
+  Nhắm hết là ô Hành động, popover, tooltip bị cắt mất phần tràn ra ngoài ô.
+- **Cột `sticky` và bề rộng thật.** `getStickyColumnStyle` tính `left` bằng cách **cộng dồn `width`
+  khai báo** của các cột sticky đứng trước. Ở chế độ fixed, khi bảng rộng hơn tổng width thì trình
+  duyệt kéo giãn các cột theo tỉ lệ → bề rộng thật ≠ width khai báo. Không vỡ layout vì 2 tình huống
+  loại trừ nhau (giãn thì bảng không tràn → không có gì để cuộn ngang → sticky chưa kích hoạt),
+  nhưng **đừng dựa vào `width` khai báo để tính toạ độ gì khác**.
+- **Kẹp 2 dòng là CẮT NỘI DUNG.** Luôn đi kèm `:title` (hover) và cột phải mở được màn chi tiết.
+  Màn nào user cần đọc trọn nội dung ngay trên danh sách thì bỏ `clamp-2`, chấp nhận hàng cao lệch.
+
+### Nhân rộng
+
+Prop `fixedLayout` để **opt-in** vì `V2BaseDataTable` đang dùng ở hơn 130 màn: màn nào chưa khai đủ
+`width` cho mọi cột mà bật lên sẽ bị **chia đều** bề rộng. Muốn chuyển một màn sang chế độ này thì
+làm đủ bước 1 → 4 ở trên trong cùng một lần, không bật prop rồi để đó.
+
 ---
 
 ## Cột nào được vào popup "Tuỳ chỉnh cột"

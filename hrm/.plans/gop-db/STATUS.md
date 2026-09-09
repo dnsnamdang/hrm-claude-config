@@ -92,6 +92,23 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   — CHỈ SELECT, chạy trên PROD an toàn. `--mode=pre` cảnh báo cái gì sắp mất, `--mode=post` đo cái gì đã hỏng,
   exit code 0/1/2 cắm được vào pipeline deploy. Danh sách nhóm bảng đọc từ `MergeProdSeeder` bằng Reflection.
   Bước tiếp: Phase 1 (vá pipeline gộp) hoặc Phase 3 (ẩn menu PROD) — chờ chọn.
+- **finance-product-transfer — Phiếu điều chuyển hàng (ERP `product_transfers` → HRM)** → @junfoke →
+  `.plans/gop-db/finance-product-transfer/khao-sat.md` · `design.md` · `plan.md`
+  Trạng thái: **MỚI KHẢO SÁT XONG — chưa có dòng code nghiệp vụ nào** (2026-09-04).
+  Nhánh riêng `feat/finance-product-transfer` (hrm-api + hrm-client, tách từ `gop_db`).
+  Màn ERP `Warehouse\ProductTransfersController`, mã `PDCH-`, bảng đã có sẵn 309 phiếu trên DB gộp
+  (không cần migration bảng chính). Chuyển hàng giữa 2 **kho kế toán** trong cùng 1 kho vật lý;
+  2 trạng thái, "Duyệt" = hạch toán ngay (ghi `accounting_stocks` + `accounting_stock_logs` + bút toán
+  Nợ 156/Có 156), hạch toán rồi khoá vĩnh viễn.
+  ⚠️ GOTCHA: mục menu "Phiếu điều chuyển hàng" TRƯỚC ĐÂY bị gán nhầm link sang màn **Phiếu yêu cầu
+  chuyển hàng** (`product-transfer-requests`) — 2 màn KHÁC nhau, ERP để ở 2 nhóm menu khác nhau.
+  Đã trả về đúng chỗ 2026-09-04 (Task 0.2). Đừng gán link màn khác vào mục đó nữa.
+  ⚠️ GOTCHA: **KHÔNG** mở rộng `AccountingStockService` cho màn này — `in_acc_warehouse` chỉ là SUM
+  thô của kho kế toán đang chọn, không trừ pending; màn tự query. (Bản khảo sát đầu ghi sai.)
+  Chốt với user: sửa 13 lỗi ERP theo chuẩn HRM · tách 2 method FIFO khỏi
+  `WarehouseExportAccountingService` (chỉ 1 caller) · CÓ làm lịch sử thao tác (ERP không có) ·
+  KHÔNG làm huỷ phiếu/đảo bút toán.
+  Bước tiếp theo: viết spec → Phase 1 tách FIFO + test hồi quy màn Phiếu xuất hàng.
 
 - **finance-bill-adjust-dept — Phiếu kế toán (ERP `bill_adjust_dept` → HRM)** → @khoipv →
   `.plans/gop-db/finance-bill-adjust-dept/design.md` · `plan.md` ·
@@ -116,6 +133,58 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Feature này **gỡ ràng buộc "HRM không ghi sổ cái"** mà `finance-bill-adjust-dept-request` từng
   chốt (quyết định #3) — sổ cái dùng chung với cổng ERP, sai/trùng là lệch số kế toán thật.
   Nền: 12.628 phiếu · 33.409 dòng chi tiết · 0 bảng mới · 2 quyền mới · 4 morphMap phải bổ sung.
+- finance-prepick-expiring → @junfoke → .plans/gop-db/finance-prepick-expiring/plan.md
+  Trạng thái: **XONG — ĐÃ MERGE VÀO `gop_db`** (2026-09-04), cả 2 repo ahead origin/gop_db 2 commit,
+  **chưa push** (user tự đẩy lên dev).
+  Nhánh `feat/finance-prepick-expiring` (cả 2 repo, tách từ `gop_db`), worktree
+  `.worktrees/finance-prepick-expiring` — tái sử dụng worktree cũ của finance-product-import-request.
+  Port màn "Hàng sắp hết hạn giữ" bản KẾ TOÁN (`warehouseInfo.accountingExpiringPrepick`) sang
+  Tài chính / nhóm Giữ hàng. Dùng lại ~90% `PrepickStockReportService` — chỉ thêm cờ `expiring_only`.
+  ⚠️ User chốt **GIỮ NGUYÊN điều kiện ngày ngược nghĩa của ERP** (lô đã quá hạn trong `warning_day`
+  ngày qua, KHÔNG phải sắp tới hạn) → cột Trạng thái không bao giờ ra "Trong hạn". Đừng sửa nhầm.
+  Không migration (dùng lại quyền 100427 + 100839/840/841). Đã nghiệm thu: bấm thật trên trình duyệt,
+  5 nhánh phân quyền qua HTTP, và đối chiếu bộ cột/bộ lọc + ngữ nghĩa cửa sổ ngày trên ERP dev.
+  ⚠️ Merge có 2 xung đột đều do nhánh export-request vào trước, đã gộp cả 2 phía:
+  `PrepickExtendRequestService` (thêm cả `PrepickApprovalRouteService` lẫn `PrepickConfigService`)
+  và `subsystem-menu/finance.js` (giữ cả link màn mới lẫn 2 link Yêu cầu/Phiếu xuất giữ).
+  ⚠️ `vendor` của worktree `.worktrees/gop-db` là SYMLINK sang checkout chính -> chạy PHP ở đó là
+  nạp code nhánh khác, số liệu sai. Test code sau merge phải làm ở worktree có vendor riêng.
+- finance-prepick-export-request → @junfoke → .plans/gop-db/finance-prepick-export-request/plan.md
+  Trạng thái: **XONG BE + FE, ĐÃ VERIFY PLAYWRIGHT LUỒNG ĐẦY ĐỦ** (lập YCXG → duyệt 3 cấp → lập
+  PXG → duyệt → sinh lô giữ hàng đúng). Nhánh `feat/finance-prepick-export-request` (cả 2 repo,
+  tách từ `gop_db`) — **chưa commit**.
+  Port CẶP màn "Yêu cầu xuất giữ" + "Phiếu xuất giữ" sang Tài chính / nhóm Giữ hàng, đủ 6 loại.
+  ⚠️ Hai màn phải đi CÙNG ĐỢT: PXG duyệt là nơi DUY NHẤT sinh lô `prepick_details` mà 4 màn giữ
+  hàng đã port đang tiêu thụ.
+  ⚠️ Có đụng 2 thứ dùng chung: `AccountingStockService` (thêm `in_promotion`) và tách
+  `PrepickApprovalRouteService` — đã test lại Gia hạn + Điều chuyển, lệch 0/300 phiếu.
+  ⛔ Chưa nghiệm thu được loại 1-4: local 0 phiếu (4 bản dump ERP đều vậy, nghi nhánh code chết).
+  **Vòng QA 04-05/09/2026 (#11302 · #11304 · #11308 · #11311 · #11312 · #11313)**: đã sửa 11 điểm —
+  link YCXG mở tab mới; lịch chặn ngày quá khứ/quá trần; mẫu in đổi width px sang %; khối Lịch sử
+  có Thu gọn/Xem lịch sử (cả 2 màn); gộp 2 tầng header "Số lượng"; bổ sung Mã KH/SĐT/Địa chỉ/ĐC
+  giao hàng/Phòng ban ở màn Thêm; cột "Có thể giữ" mất số (buildQueryString sinh `product_ids=`
+  không có `[]`); chặn SL đề nghị vượt tồn ngay lúc gửi duyệt; xoá lỗi cũ khi đổi hợp đồng; chặn
+  tệp > 13 MB ngay ở FE. **Chưa chạy thử trên trình duyệt** (code chưa deploy lên dev).
+  **Vòng QA 05/09 đợt 2 (#11314 · #11315)** — ô ĐVT: (a) select dùng `v-model` trên BẢN SAO dòng của
+  `visibleRows` nên ĐVT chọn xong không vào `form.products`, payload vẫn gửi đơn vị cũ; (b) BE trả
+  "Có thể giữ" theo ĐƠN VỊ GỐC, thiếu phép chia hệ số của ERP `updateInStock()`; (c) FE tự điền
+  ĐVT đầu danh sách nên "không chọn" vẫn lưu được. Đã sửa cả 3, thêm nhãn ĐVT kèm hệ số, nạp lại
+  danh sách ĐVT ở màn Sửa, và trừ tồn khuyến mại cho khớp bước Duyệt giữ hàng.
+  **Vòng QA 07/09 (#11321 · #11322)** — #11321 (2 thùng duyệt ra 2 lọ) đã hết nhờ bản 05/09, kiểm
+  trực tiếp trên dev. #11322 (bấm Sửa mất ĐVT) là lỗi MỚI do bản 05/09 lộ ra: select2 tự bắn
+  `change` rỗng lúc options chưa nạp xong -> handler xoá sạch ĐVT/đơn giá của phiếu dù màn vẫn
+  hiện "Lọ". Đã chặn ở `onUnitChange` (bỏ qua khi chưa có options + bỏ qua cú change lặp).
+  Bước tiếp: chạy migration `2026_09_03_000001_...` trên dev · gỡ 3 quyền tạm của emp 781 ·
+  commit (chi tiết ở cuối Phase 13 của plan.md).
+  Chi tiết + gotcha: plan.md | Tóm tắt: .plans/gop-db/finance-prepick-export-request/design.md
+  Spec: docs/superpowers/specs/gop-db/2026-09-03-finance-prepick-export-request-design.md
+
+- org-filter-locked-options → @namdangit → .plans/gop-db/org-filter-locked-options/plan.md
+  Trạng thái: **XONG BE + FE, ĐÃ VERIFY PLAYWRIGHT trên :3002/:8003** (2026-08-24). Chưa commit.
+  Mục tiêu: bộ lọc chung `V2BaseCompanyDepartmentFilter` (Công ty/Phòng ban/Bộ phận/Nhân viên) có công tắc 🔒 theo TỪNG ô để hiện cả mục đã khoá; mặc định vẫn chỉ hiện mục đang hoạt động.
+  BE: `OrgOptionController` + route `GET /api/v1/org-options?type=company|department|part|employee` (trả full kèm `is_locked`); `Employee::getAll($onlyActive = false)` + `userProfile()` gọi `getAll(true)` → store.employees bỏ nhân sự đã nghỉ.
+  FE: prop `keepLockedOptions` cho `V2BaseSelect`/`V2BaseSelectInModal`; component lazy load khi bật công tắc, KHÔNG cache danh mục khoá vào Vuex; tắt công tắc vẫn giữ giá trị đang chọn.
+  Bước tiếp: commit lên `gop_db`.
 
 - thiet-ke-lai-phan-quyen → @namdangit → .plans/gop-db/thiet-ke-lai-phan-quyen/plan.md
   Trạng thái: **PHASE 0 XONG — MOCKUP CHỐT (verify Playwright), CHƯA PORT VÀO hrm-client THẬT** (2026-08-14).
@@ -290,9 +359,10 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
 
 - finance-prepick-cancel → @junfoke → .plans/gop-db/finance-prepick-cancel-request/plan.md
-  Trạng thái: **XONG PHASE 0-12** (2026-08-22) — Phase 10 vá QA redmine 11094/11149/11150/11151/11152/11154,
+  Trạng thái: **XONG PHASE 0-13** (2026-09-04) — Phase 10 vá QA redmine 11094/11149/11150/11151/11152/11154,
   Phase 11 bỏ tab preset (1 màn = `all` của ERP, nút duyệt theo quyền), Phase 12 rà màn Phiếu hủy
-  theo quy tắc chung (bỏ tự kéo số về trần, duyệt xong về danh sách, nút In trắng, 4 icon ⓘ).
+  theo quy tắc chung (bỏ tự kéo số về trần, duyệt xong về danh sách, nút In trắng, 4 icon ⓘ),
+  Phase 13 vá QA redmine 11295/11296.
   Nhánh `feat/finance-prepick-cancel`. Port 2 màn `Yêu cầu hủy hàng giữ` + `Phiếu hủy hàng giữ` sang
   Tài chính / nhóm Giữ hàng — **màn đầu tiên của HRM ghi tồn kho thật** (duyệt = trừ FIFO
   `prepick_details` + ghi `prepick_logs`). 2 migration (2 bảng lịch sử).
@@ -301,8 +371,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Chi tiết + gotcha: plan.md
 
 - finance-product-import-direct-transfer → @junfoke → .plans/gop-db/finance-product-import-direct-transfer/plan.md
-  Trạng thái: **XONG PHASE 0-9** (2026-08-21) — Phase 8 vá 9 bug QA redmine 11092-11108, Phase 9 bỏ tab preset.
+  Trạng thái: **XONG PHASE 0-9 + ĐỦ 3 TÀI LIỆU BÀN GIAO** (2026-09-03) — Phase 8 vá 9 bug QA redmine 11092-11108,
+  Phase 9 bỏ tab preset; 28/08 sinh testcase 157 TC + HDSD 29 trang; 03/09 bổ sung SRS 45 trang và
+  sửa lại TC/HDSD mục ô Số lượng theo hành vi mới (lọc ký tự ngay khi gõ, không còn báo đỏ).
   Port màn "Phiếu chuyển hàng nhập thẳng" sang Tài chính / nhóm Điều chuyển; 1 migration (bảng lịch sử).
+  Tài liệu: `testcase - Phieu chuyen hang nhap thang.xlsx` | `HDSD_Phieu chuyen hang nhap thang.docx` |
+  `SRS - Phiếu chuyển hàng nhập thẳng.docx` (13 chức năng FR-01..FR-13, 17 quy tắc nghiệp vụ)
+  ⚠️ GOTCHA: bản in phiếu bị tràn khối ký ra ngoài khung giấy; ô rỗng danh sách còn hiện dấu `—`.
   Bước tiếp: user so cạnh nhau 2 cổng trên dev + test bằng tài khoản Kế toán kho không phải Super admin.
   Chi tiết + gotcha: plan.md
 
@@ -378,6 +453,45 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- assign-list-page-standard (loạt 15 màn) — chuẩn hoá danh sách `assign/*` theo skill `list-page` → @khoipv → .plans/gop-db/<màn>-list-page-standard/plan.md (solution, industry-group, application, customer-scope, meeting-type, survey-question, attachment-type, internal-business-scope, solution-group, customer-scope-group, project-item, project-role, form-template, reason-project-failure, discount-type)
+  Hoàn thành: 2026-09-05 — user xác nhận đã xong. FE theo skill đầy đủ + BE mức tối thiểu (whitelist sort, tên người tạo/cập nhật bằng subquery, popup chọn trường xuất file qua `ExportColumnRegistry` + `DynamicExport`); hành động dòng = Sửa + Xóa là 2 nút chính, còn lại vào `⋮`; cố ý KHÔNG làm "Lịch sử thay đổi" và cấu hình cột mặc định hiện HẾT cột (2 ngoại lệ user chốt so với skill); bề rộng cột theo mục 15b, bảng bật `fixed-layout`. Không migration, không quyền mới. Sửa luôn loạt lỗi CÓ SẴN gặp dọc đường: `scopes` vs `hrm_scopes` ở màn nhóm ngành (500 ở Create/Edit/lọc, cả local lẫn dev) và `InternalBusinessScope::isCanLockUpdate()` cùng họ; thiếu cờ `is_can_delete`/`is_can_edit`/`is_can_lock_update` ở vài Resource; `ignoredFields` khai cả trong `data` lẫn `computed` (Vue 2 che computed); cột chết "Dùng ở dự án" ở màn vai trò dự án; 2 lỗi N+1 ở `FormTemplatesResource` (`whenLoaded()` trả object nên LUÔN truthy → nạp lười cả cây section từng dòng; `questions_count` đếm bằng cách nạp hết câu hỏi) — 4 query/dòng về 0; `ReasonProjectFailureResource` 43 query về 7; `DiscountTypeResource` cùng lỗi đó, ảnh hưởng cả `getAll` của dropdown báo giá; màn Loại giảm giá chưa từng có Xuất Excel nên thêm mới route + controller export; `$refs...?.loadData?.()` và id modal sai tên ở 2 màn (popup không mở, im lặng). Kiểm chứng mỗi màn: compile SFC + AST đối chiếu định danh template, cột bảng ↔ trường xuất FE ↔ registry BE, mọi cột đủ `width` + `minWidth`, smoke test API (index/sort/keyword/export).
+
+- project-phase-list-page-standard — chuẩn hoá màn Danh sách giai đoạn dự án theo skill `list-page` → @khoipv → .plans/gop-db/project-phase-list-page-standard/plan.md
+  Hoàn thành: 2026-09-05 — user xác nhận đã xong; làm theo khuôn 2 màn user chỉ định (nhóm ngành + ứng dụng), BE 6 file sửa · FE 1 file viết lại, không migration. BE: whitelist sort 4 cột; subquery người tạo/cập nhật; tìm nhanh thêm người tạo (EXISTS); thêm lọc Mã/Tên/Mức độ ưu tiên; `status_text` + ngày `d/m/Y H:i`; `is_can_delete` tính từ subquery đếm (bỏ 1 query/dòng); export chuyển sang `DynamicExport` (`.xls` → `.xlsx`, cột động) và nới quyền route export cho người chỉ có quyền xem. FE: `V2BaseSmartFilterPanel` 8 ô; tách cột Mã (link mở modal Xem) / Tên; cột Hành động cuối bảng với `V2BaseRowActions` (bỏ "Xem", Khoá/Mở khoá rời khỏi ô Trạng thái); `V2BaseBadge`; 4 cột Người tạo/Ngày tạo/Người cập nhật/Ngày cập nhật; cấu hình cột + nhớ bộ lọc + popup chọn trường xuất file; `fixed-layout` đủ 12 cột; gỡ code chọn nhiều dòng. Cố ý bỏ hành động Lịch sử (module Assign chưa có `LogsCatalogHistory`, giống 2 màn mẫu). Kiểm chứng: compile + AST, smoke test API, đọc lại file xuất, đối chiếu cột bảng ↔ file ↔ registry 10 = 10.
+
+- borrow-export-request — Yêu cầu xuất hàng mượn, port ERP `borrow_export_requests` → HRM → @khoipv → .plans/gop-db/borrow-export-request/design.md · plan.md
+  Hoàn thành: 2026-09-05 — user xác nhận đã xong (code + test Playwright toàn luồng 2026-09-04). BE 12 file mới + 4 file sửa · FE 7 file mới + 2 file sửa (menu) · 0 bảng mới · KHÔNG migration · 3 QUYỀN MỚI guard `api` id 1565-1567 (trùng tên quyền ERP guard `web` 100890-100892). User chốt: port đầy đủ như ERP; nút "Tạo phiếu xuất hàng mượn" báo "chưa triển khai" (màn `borrow_exports` chưa port); chỉ 2 mục menu — bỏ mục `Chờ duyệt → Hàng mượn` của ERP, người duyệt lọc bằng ô Trạng thái (preset `for-approve` giữ chạy cho link cũ). Tách `BorrowStockService` dùng chung để tính "Đang mượn" cho 3 luồng tranh cùng lượng hàng (port `ProductExportRequestDetail::getReturningQty()` mà HRM chưa từng có). ⚠️ Sửa CÓ CHỦ Ý 3 chỗ so với ERP: màu trạng thái (nháp xám / chờ duyệt vàng thay vì đỏ hết); bỏ dòng ép cứng `company_id` cuối `searchByFilter()` (nó triệt tiêu quyền "tổng công ty"); `canView()` cộng 3 nhánh quyền cấp (ERP cho trưởng phòng thấy phiếu ở danh sách nhưng bấm vào ra `not_found`). ⚠️ Khối File đính kèm dùng LẠI `AttachmentSection.vue` của màn Đề nghị thanh toán — component chung được thêm 3 prop (`apiBase`/`allowedExtensions`/`maxSizeMb`) với mặc định đúng giá trị cũ nên màn Đề nghị thanh toán không đổi hành vi. Kiểm chứng trên dữ liệu thật: 11 endpoint (10× 200, 1× 422 đúng nghiệp vụ); phạm vi danh sách ↔ `canView()` khớp 100% trên 60 nhân viên; vòng đời ghi 7/7 chạy trong transaction rồi rollback sạch; bản in lấy letterhead theo `company_id` trên phiếu; `export-request-data` không lộ giá vốn. Playwright bấm thật tìm và sửa 4 lỗi: sort "Ngày duyệt" chết do FE gửi `approved_time` còn BE khai `approvedTime`; tiêu đề tab hiện nguyên thẻ HTML của badge; tên người lập trống ở màn Tạo (sai khoá store, đúng là `current_employee_info.fullname`); toast lỗi upload ra tiếng Anh (câu tiếng Việt nằm trong `errors`, không phải `message`). Vòng đời ghi chạy thật rồi dọn sạch, DB về đúng 292 phiếu / 686 dòng / 990 chi tiết. Chưa kiểm chứng được: đổi ĐVT khi hàng có nhiều đơn vị (dữ liệu thật chỉ 1 ĐVT/hàng) và bản in trên máy in thật. Còn nợ 2 việc chờ user quyết: `ProductExportRequest::dataForBorrowReturn()` của màn Yêu cầu nhập hàng thiếu phép trừ `returning_qty` so với ERP (đề xuất trả nhiều hơn số thực còn mượn); gộp 3 bản chép `manageableDepartmentIds()` ở nhóm Prepick về trait dùng chung (đã đưa lên trait, chưa gỡ bản cũ). Spec: docs/superpowers/specs/gop-db/2026-09-04-borrow-export-request-design.md
+
+- finance-bill-payment-authorization — bộ tài liệu bàn giao (SRS + testcase + HDSD) màn Phiếu ủy nhiệm chi → @khoipv → .plans/gop-db/finance-bill-payment-authorization/plan.md (mục "Phase T")
+  Hoàn thành: 2026-09-05 — sinh 3 tài liệu cùng thư mục feature, kèm 3 generator `gen_srs.py`/`gen_testcase.py`/`gen_hdsd.py` commit cùng chỗ để tái sinh: `SRS - Phiếu ủy nhiệm chi.docx` (form chuẩn 2026-08-28, 4 chương, 11 chức năng FR-01…FR-11, 38 bảng, 23 ảnh, 43 trang), `testcase.xlsx` (149 TC, P0 63%, 20 TC phân quyền + 10 section La Mã, bộ kiểm tra thuật ngữ sạch), `HDSD_Phiếu ủy nhiệm chi.docx` (13 Heading 1, 13 bảng, 23 ảnh, 38 trang, có mục hướng dẫn riêng cho từng quyền). 25 ảnh thật ở `unc_shots/` chỉ để local, KHÔNG commit; chụp bằng tài khoản DNS Admin trên cổng dev, chỉ mở form/hộp thoại rồi Hủy nên không ghi dữ liệu.
+
+- finance-bill-adjust-dept-request — Phiếu yêu cầu điều chỉnh công nợ → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Hoàn thành: 2026-09-03 — user nghiệm thu đã xong (18 phase gốc xác nhận 2026-08-24; mở lại 2026-09-03 fix 4 việc, 2 FE + 2 BE, không migration). Phase 20: đổi khách hàng/NCC ở một dòng phải XOÁ hợp đồng cũ — ERP xoá ở 4 chỗ (`BillAdjustDeptRequestDetail`/`DetailItem` × `chooseCustomer`/`chooseSupplier`), HRM thiếu hẳn nên phiếu lưu xuống DB là cặp "KH A + hợp đồng của KH B", `contractable_id` trỏ sai, bước tạo phiếu kế toán ghi sổ nhầm công nợ (lỗi dữ liệu, không phải hiển thị). Phase 21: lệch tổng tiền báo inline ở cột Số tiền bên "Điều chỉnh đến" (dòng cuối của nhóm) kèm số thiếu/thừa, trước chỉ 1 toast chung nên bảng nhiều nhóm không biết nhóm nào. Phase 22 + 22b + 22c: lỗi 422 của BE đổ về đúng từng ô (`details.1.items.0.customer_new_id` → ô Khách hàng dòng "đến" nhóm 1, viền đỏ); dịch câu lỗi `gt`/`integer`/`array`/`string`/`boolean` ngay trong Request (user chốt KHÔNG sửa `lang/vi/validation.php` dùng chung); toast rút về "Vui lòng kiểm tra dữ liệu nhập", chỉ lỗi không có chỗ inline (vd `status`) mới đọc nguyên văn. Phase 22d: Từ chối xong về màn danh sách — `changeStatus()` (dùng chung Gửi duyệt + Từ chối) thêm cờ `backToList`, Gửi duyệt vẫn `$router.go(0)`; popup lý do chỉ đóng khi thành công (trước lỗi cũng đóng, mất lý do vừa gõ). Kiểm chứng Playwright bấm Gửi duyệt thật: 422 hiện đúng ô, 2 ô Số tiền báo "Phải lớn hơn 0", 4 ca toast ra câu chung, nhóm khớp tiền không báo gì. Chưa kiểm chứng: phiếu NCC ngoại tệ (16 cột) · màn sửa phiếu có dữ liệu thật. Còn nợ: Excel phiếu lệch ERP · nút "Chọn nhanh hợp đồng" · SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*` · `lang/vi/validation.php` còn ~52 khoá tiếng Anh. ⚠️ Bài học: lượt đầu user báo "vẫn chưa được" là do HMR Nuxt 2 giữ component cũ, code đã đúng — sửa FE mà trình duyệt không đổi thì Ctrl+Shift+R trước khi nghi code. Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md
+
+- finance-bill-income-report — bộ tài liệu bàn giao (SRS + HDSD + testcase) → @khoipv → .plans/gop-db/finance-bill-income-report/plan.md (mục "Phase T")
+  Hoàn thành: 2026-09-05 — sinh 3 tài liệu cho màn Phiếu báo có + màn phụ Tổng hợp tiền về ngân hàng, kèm 3 generator commit cùng chỗ: `SRS - Phieu bao co.docx` (form 2026-08-28, 4 phần, 16 chức năng FR-01…FR-16, 14 quy tắc nghiệp vụ, 58 trang), `HDSD_Phieu_bao_co.docx` (8 phần + TỔNG QUAN, click-by-click từng trường + giá trị điền sẵn + mục hướng dẫn theo từng quyền, 44 trang), `testcase.xlsx` (204 TC, P0 54%, 13 section La Mã + 13 TC phân quyền gồm 5 TC gọi thẳng chức năng bỏ qua giao diện). Ảnh chụp thật 27 tấm trong `bir_shots/` — KHÔNG commit. ⚠️ Cổng dev hrm-crm thiếu 3 chunk giao diện nên không mở được màn Tạo/Sửa/Chi tiết; ảnh form + popup + chi tiết + màn tổng hợp phải chụp trên bản chạy local (cùng DB gộp). Cấu hình cột của tài khoản DNS Admin đã đưa về mặc định để ảnh đúng chuẩn.
+
+- finance-bill-income-report — sửa lỗi màn Phiếu báo có (Phase F) → @khoipv → .plans/gop-db/finance-bill-income-report/plan.md (mục "Phase F")
+  Hoàn thành: 2026-09-03 — user xác nhận đã xong. 9 việc báo trong 1 phiên: tách cột Số tài khoản / Tên tài khoản ở bảng chi tiết (trước đó cả 2 cột đều in "số - tên"); nút Duyệt màn chi tiết về teal #1abc9c; nút thứ 2 của form đổi nhãn "Lưu và duyệt" (cờ `save_and_approve`, trước khai nhầm `save_and_submit_approve`); toast mở phiếu đã bị xóa ở tab khác → "Không tìm thấy dữ liệu" (chỉ với 404); dựng lại file mẫu import (viền, tiêu đề teal, ngày dd/mm/yyyy, ô tiền `#,##0`); nút Quay lại màn Điều chỉnh công nợ về đúng phiếu qua `?back_url=`. 3 lỗi validate: cột Số tiền chưa bao giờ báo bắt buộc (`min:0` + FE quy ô rỗng thành 0 → đổi `gt:0`, dữ liệu thật 10.207 dòng không có dòng nào money=0); ô Diễn giải đầu phiếu thiếu `:invalid` + `<V2BaseError>` nên chỉ ra toast chung → nối lỗi inline; nới trần Diễn giải 255 → 500 ký tự cả 2 ô. CÓ MIGRATION `2026_09_03_000001_widen_note_on_bill_income_reports_table` (đã chạy, 0 dòng ảnh hưởng); cột chi tiết là TEXT nên chỉ thêm rule. ⚠️ Bảng dùng chung 2 cổng — diễn giải > 255 ký tự hiện nguyên vẹn bên ERP, chưa rà bố cục màn/bản in ERP.
+
+- ⚠️ base-confirm-modal — sửa COMPONENT DÙNG CHUNG, cả team cần biết → @khoipv → components/modal/base-confirm-modal.vue
+  Hoàn thành: 2026-09-03 — user chốt sửa ở component chung thay vì vá từng màn. Popup xác nhận tự bật `danger` (nút đỏ + icon cảnh báo) khi `text-accept` bắt đầu bằng "Xóa"/"Xoá", trừ "Xóa trắng"; prop `danger` đổi mặc định false → null (chưa chỉ định) nên màn nào truyền thẳng `:danger` vẫn được tôn trọng. Lý do: ~101 chỗ hỏi xóa qua popup này quên truyền `danger`. Đã chạy hàm suy luận trên toàn bộ `text-accept` đang có: chỉ nhóm "Xóa" đổi màu, Khóa/Mở khóa/Duyệt/Xác nhận/Xóa trắng giữ nguyên.
+
+- finance-bill-payment-request — nới validate Lưu nháp → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md (mục "Nới validate LƯU NHÁP")
+  Hoàn thành: 2026-09-03 — user xác nhận đã xong. Lưu nháp (`status = 1`) chỉ còn bắt buộc Loại chi; bỏ `required` của lý do chi, hình thức TT, tiền tệ, tỷ giá, ngày chốt, đối tượng nhận tiền và toàn bộ `details.*`, rule định dạng giữ nguyên. Sửa BE 2 file (`BillPaymentRequestStoreRequest` — Update kế thừa; `BillPaymentRequestService::masterPayload()`), FE không đụng vì mọi thông báo "Bắt buộc nhập" đều do BE trả. Không migration. Quyết định này THAY ràng buộc 2026-08-22 (dòng chi tiết đã thêm phải đủ hợp đồng + số tiền). Nút Lưu và gửi duyệt (`status = 2`) không đổi. ⚠️ 4 cột `reason`/`type_payment`/`type_money_id`/`exchange_rate` NOT NULL không default → service phải đổ mặc định (TM · VNĐ · tỷ giá 1 · lý do rỗng), thiếu là lưu nháp trả 500.
+
+- finance-bill-payment-authorization — lịch sử thay đổi màn Ủy nhiệm chi (Phase L) → @khoipv → .plans/gop-db/finance-bill-payment-authorization/plan.md (mục "Phase L")
+  Hoàn thành: 2026-09-03 — VERIFIED Playwright. Màn này trước đó CHƯA có gì (không nằm trong whitelist, BE chỉ ghi log cho màn Đề nghị, FE trống) → bổ sung đầy đủ như 2 màn phiếu trước, dùng bảng chung `catalog_histories` + trait `LogsCatalogHistory`, FE `CatalogHistoryModal` + `SystemInfoSection`. Không quyền riêng, không migration. Khác 2 màn kia: UNC không có Gửi duyệt / Duyệt / Hủy (RULING U-UNC-6) — chỉ Lưu (status 1) và Lưu và duyệt (status 3) nên dòng `change_status` chỉ sinh ở `update()`; bảng không có cột tổng; dòng chi tiết nhận diện bằng hợp đồng / nhân viên, không có khách hàng - NCC.
+
+- finance-bill-payment — lịch sử thay đổi màn Phiếu chi tiền (Phase L) → @khoipv → .plans/gop-db/finance-bill-payment/plan.md (mục "Phase L")
+  Hoàn thành: 2026-09-03 — VERIFIED Playwright. Trước đó chỉ log đổi trạng thái; nay đầy đủ: tạo / sửa / bảng chi tiết theo từng dòng / duyệt kèm số chi / hủy kèm lý do / xóa. Không migration. ⚠️ Điểm rủi ro đã kiểm: `BillPaymentDetailResource` ĐỌC NGƯỢC `catalog_histories` (bảng `bill_payments` không có cột `note`) để dựng `cancel_reason` / `cancel_note` / `approve_note` — đã chụp baseline 2 dòng log thật trước/sau khi sửa whitelist, diff rỗng.
+
+- finance-bill-income — lịch sử thay đổi màn Phiếu thu tiền (Phase L) → @khoipv → .plans/gop-db/finance-bill-income/plan.md (mục "Phase L")
+  Hoàn thành: 2026-09-03 — VERIFIED Playwright. Làm theo skill `entity-history` §5.1 + màn danh sách khách hàng, phạm vi ĐẦY ĐỦ như màn Phiếu báo có (không theo bản rút gọn của Phiếu chi tiền): tạo mới / thay đổi thông tin / bảng chi tiết theo từng dòng / duyệt kèm số thực thu (tách 2 dòng log) / hủy kèm lý do / xóa. Không quyền riêng, không migration — bảng chung `catalog_histories` + trait `LogsCatalogHistory`, FE `CatalogHistoryModal` (popup màn danh sách) + `SystemInfoSection` (khối trong màn chi tiết).
+
+- finance-bill-income-report — Phiếu báo có, port ERP `bill_income_report` → HRM → @khoipv → .plans/gop-db/finance-bill-income-report/design.md + plan.md
+  Hoàn thành: 2026-09-03 — user xác nhận đã xong (nghiệm thu 2026-08-24, Phase 8 xong code 2026-08-28). Port `admin/income-expenditure/bill_income_report` sang phân hệ Tài chính, route `/finance/bill-income-reports` + `/summarize-money`. Phạm vi: danh sách; tạo/sửa/xóa nháp; duyệt kèm ghi bút toán sổ cái; chi tiết + cờ "Không báo tiền về"; 3 loại thu; Tổng hợp tiền về ngân hàng + xuất Excel chọn trường; Import Excel sao kê; Lịch sử thay đổi. KHÔNG thay đổi schema (lịch sử dùng bảng chung `catalog_histories`); 3 quyền mới id 1539-1541 (guard `api`, tên trùng ERP). Bút toán HRM sinh khớp 100% bút toán ERP đã ghi (7 phiếu thật / 38 bút toán / 24 cột denormalize). Phase 8 sửa theo phản hồi, chỉ màn danh sách: "Ngày lập/Người lập" → "Ngày tạo/Người tạo"; "Diễn giải" → "Ghi chú" (cột + ô lọc, áp cả màn Tổng hợp tiền về ngân hàng); thêm cột Người cập nhật (BE trả `updated_by_name`) + Ngày cập nhật mặc định ẩn trong popup Cấu hình cột — 2 file BE + 2 file FE, không migration, không quyền mới. Spec: docs/superpowers/specs/gop-db/2026-08-24-finance-bill-income-report-design.md
+
 - finance — sửa nhanh 3 màn Phiếu thu / Phiếu chi / Ủy nhiệm chi → @khoipv →
   `.plans/gop-db/finance-bill-income/plan.md` · `.plans/gop-db/finance-bill-payment/plan.md` ·
   `.plans/gop-db/finance-bill-payment-authorization/plan.md`
@@ -422,31 +536,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   (156 TC) · `HDSD_Phiếu đề nghị thu tiền.docx` (40 trang, 25 ảnh thật) ·
   `SRS - Phiếu đề nghị thu tiền.docx` (50 trang, FR-01…FR-12, BR-01…BR-17).
   3 generator kèm theo; ảnh nguồn `dntt_shots/` chỉ để local, không commit.
-
-- finance-bill-adjust-dept-request → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
-  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-24). Cả 18 phase đã
-  nghiệm thu xong. Phase 18: màn tạo/sửa `finance/bill-adjust-dept-requests/create` khi bấm **Lưu nháp**
-  chỉ bắt buộc **Loại phiếu**; Diễn giải / bảng chi tiết / tỷ giá / khách hàng chỉ bắt khi **Gửi duyệt**.
-  15 phase gốc + Phase 16 sửa
-  6 điểm màn danh sách sau nghiệm thu (Tùy chỉnh cột · 2 cột Ngày/Người cập nhật · 3 cột ngày
-  `dd/mm/yyyy HH:mm` · mở sort Mã phiếu + 3 cột ngày · đổi nhãn Ngày tạo/Người tạo · nút Excel xanh lá)
-  + Phase 17 viết lại `_id/print.vue` bám nguyên mẫu ERP (report_template 209, khổ 297mm, Times New Roman,
-  6 ô chữ ký; bù `pdf.css` trong `options.styles` vì `hrm-client/static/css/` không có).
-  BE 3 file + 1 blade · FE 2 file · không migration.
-  📌 Còn nợ: file Excel phiếu vẫn lệch ERP (chờ user chốt có đồng bộ không) · nút "Chọn nhanh hợp đồng" ·
-  SRS/testcase/HDSD · dọn 6 phiếu `TEST.DNDCCN.*`.
-  Spec: docs/superpowers/specs/gop-db/2026-08-17-finance-bill-adjust-dept-request-design.md | Tóm tắt: .plans/gop-db/finance-bill-adjust-dept-request/design.md
-
-- finance-bill-income-report (Phiếu báo có ERP → HRM) → @khoipv → .plans/gop-db/finance-bill-income-report/plan.md
-  Trạng thái: **HOÀN THÀNH — user xác nhận xong** (2026-08-24).
-  Mục tiêu: port `admin/income-expenditure/bill_income_report` sang HRM phân hệ Tài chính,
-  route `/finance/bill-income-reports` + `/summarize-money`.
-  Phạm vi: danh sách · tạo/sửa/xóa nháp · duyệt **kèm ghi bút toán sổ cái** · chi tiết + cờ "Không báo
-  tiền về" · 3 loại thu · Tổng hợp tiền về ngân hàng + xuất Excel chọn trường · Import Excel sao kê ·
-  Lịch sử thay đổi. **KHÔNG có thay đổi schema** (lịch sử dùng bảng chung `catalog_histories`).
-  Điểm đáng chú ý: bút toán do HRM sinh **khớp 100%** với bút toán ERP đã ghi (7 phiếu thật / 38 bút
-  toán / 24 cột denormalize). 3 quyền mới id 1539-1541 (guard `api`, tên trùng ERP).
-  Spec: `docs/superpowers/specs/gop-db/2026-08-24-finance-bill-income-report-design.md`.
 
 - finance-3-man-sua-theo-phan-hoi (2026-08-22) → @khoipv → **HOÀN THÀNH — user xác nhận xong**.
   Plan: `finance-bill-income-request` (8.8-8.11) · `finance-bill-income` (K, L, M) ·
@@ -512,6 +601,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Sổ cái diff từng trường với ERP: nhánh A khớp 20/20 phiếu, nhánh B 5/5.
   📌 Còn treo: 5 điểm chờ user quyết + 1 lỗi feature CŨ (Phiếu thu in "đồng đồng",
   `BillIncomePrintService:155`) — xem design.md.
+  **Bộ tài liệu bàn giao (Phase N, 2026-09-03)**: `testcase.xlsx` **152 TC** (P0 70%, form 17 cột),
+  `HDSD_Phiếu chi tiền.docx` **47 trang**, `SRS - Phiếu chi tiền.docx` **57 trang** (form 2026-08-28,
+  14 chức năng FR-01→FR-14, 17 quy tắc BR). 25 ảnh chụp thật → `pc_shots/` (chỉ để local);
+  riêng màn IN chụp trên cổng LOCAL vì trang in tự bật hộp thoại in và khoá phiên điều khiển.
+  **KHÔNG ghi gì vào DB dev** — dev đã sẵn phiếu Đang tạo + Chờ chi tiền; các popup Duyệt/Hủy/Xóa
+  chỉ mở để chụp rồi Đóng.
   Spec: docs/superpowers/specs/gop-db/2026-08-19-finance-bill-payment-design.md | Tóm tắt: .plans/gop-db/finance-bill-payment/design.md
 
 - cut-erp-sync → @khoipv → .plans/gop-db/cut-erp-sync/plan.md
@@ -546,6 +641,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   KHÔNG phải bug, đừng sửa ở lượt review sau.
   📌 Còn lại: 1 lượt review tổng toàn nhánh + phân loại ~45 minor đã park · chưa kiểm chứng 2 nhánh phân bổ
   (DB 0 dòng) và in phiếu loại thu 3 · 4 file sửa ở Task 17 chưa commit.
+  **Bộ tài liệu bàn giao (Phase M, 2026-09-03)**: `testcase.xlsx` **169 TC** (P0 61%, form 17 cột),
+  `HDSD_Phiếu thu tiền.docx` **44 trang**, `SRS - Phiếu thu tiền.docx` **52 trang** (form 2026-08-28,
+  13 chức năng FR-01→FR-13, 16 quy tắc BR). 26 ảnh chụp thật → `pt_shots/` (chỉ để local); 3 ảnh mục
+  Lịch sử chụp trên cổng LOCAL vì cổng dev chưa deploy Phase L. Đã tạo + xóa 1 phiếu nháp
+  `TPE.PT0926.00001` trên dev để chụp Sửa/Xóa (dữ liệu trả nguyên trạng 2.379 phiếu);
+  **KHÔNG bấm Duyệt/Hủy trên phiếu thật** vì 2 thao tác đó không hoàn tác được.
   Spec: docs/superpowers/specs/gop-db/2026-08-18-finance-bill-income-design.md
 
 - customer-export-file (Phase 7) → @khoipv → .plans/gop-db/customer-export-file/plan.md
@@ -555,7 +656,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   (ExcelJS + jsPDF/autoTable + font DejaVu subset 78KB, import động).
   ⚠️ Team phải `npm install` sau khi kéo nhánh (thêm `jspdf` + `jspdf-autotable`).
   📌 3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
-
 
 - finance-bill-payment-request → @khoipv → .plans/gop-db/finance-bill-payment-request/plan.md
   Trạng thái: **HOÀN THÀNH — user test trình duyệt xong** (2026-08-18). Đã commit:
@@ -744,6 +844,11 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   gán từ ERP do `model_type` mismatch) → cần TASK RIÊNG rà mọi route đang gắn `checkPermission`.
   **Đợt chỉnh 2026-08-13 (Phase 8) — CHỜ USER TEST**: chuẩn hoá footer 2 màn sang `V2Footer`
   (nhãn "Lưu nháp"/"In"/"Quay lại", popup xác nhận khi Gửi duyệt; mất icon spinner ở 3 nút).
+  **Bộ tài liệu bàn giao (Phase 9, 2026-09-03)**: `testcase.xlsx` **188 TC** (P0 50%, form 17 cột —
+  đã XÓA bản 15 cột cũ ngày 07/08 theo yêu cầu user), `HDSD_Phiếu yêu cầu chuyển hàng.docx`
+  **48 trang**, `SRS - Phiếu yêu cầu chuyển hàng.docx` **52 trang** (form 2026-08-28, 14 chức năng
+  FR-01→FR-14, 16 quy tắc BR). 31 ảnh chụp thật trên `hrm-crm.eteksofts.com` → `pycch_shots/`
+  (chỉ để local). 3 generator `gen_testcase.py` / `gen_hdsd.py` / `gen_srs.py` commit kèm.
   Spec: docs/superpowers/specs/gop-db/2026-08-05-finance-product-transfer-request-design.md
 
 - customer-care-services-catalog → @khoipv → .plans/gop-db/customer-care-services-catalog/plan.md
@@ -785,7 +890,8 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-08-03-finance-currency-catalog-design.md | Tóm tắt: .plans/gop-db/finance-currency-catalog/design.md
 
 - finance-account-catalog → @junfoke → .plans/gop-db/finance-account-catalog/plan.md
-  Trạng thái: **PHASE 1-6 + 8 CODE DONE + VERIFIED** (2026-08-01) — 2 màn "Danh mục tài khoản" +
+  Trạng thái: **PHASE 1-10 CODE DONE + VERIFIED** (2026-09-04; Phase 10 đưa form Tạo/Sửa về bố cục
+  ERP — redmine 11300) — 2 màn "Danh mục tài khoản" +
   "Danh mục loại tài khoản"; màn đầu tiên của phân hệ Tài chính nên dựng luôn khung `Modules/Finance`.
   Bước tiếp: Phase 7 đối chiếu 2 cổng (cần bật ERP local) + tạo 2 file mẫu Excel trong `hrm-client/static/`.
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-07-30-finance-account-catalog-design.md | Tóm tắt: .plans/gop-db/finance-account-catalog/design.md

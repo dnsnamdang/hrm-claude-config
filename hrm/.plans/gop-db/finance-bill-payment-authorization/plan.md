@@ -1183,3 +1183,244 @@ User: *"cảnh báo và chặn không cho lưu nhé"*.
 thiếu `payment_money_request` -> không lỗi (KHÔNG nổ 500) · **loại 6 vượt** -> có lỗi ·
 **lưu nháp mà vượt** -> có lỗi. `php -l` sạch · template + script parse sạch · grep xác nhận
 `.field-warning` đã xoá hết. ⚠️ Chưa mở trình duyệt.
+
+
+## Phase L — Lịch sử thay đổi phiếu Ủy nhiệm chi (user yêu cầu 2026-09-03)
+
+User: *"xem màn phiếu ủy nhiệm chi xem có lịch sử thay đổi chưa, chưa có thì bổ sung"*.
+
+**Kiểm tra hiện trạng: CHƯA CÓ GÌ.** `bill_payment_authorizations` không nằm trong whitelist
+`CatalogHistoryService::TABLES`; BE chỉ gọi `BillPaymentRequest::logStatusHistory()` — tức ghi lịch
+sử cho MÀN ĐỀ NGHỊ THANH TOÁN, không phải cho chính UNC; FE không có popup lẫn khối Lịch sử.
+
+Phạm vi: cùng mức đã chốt ở Phiếu thu / Phiếu chi (tạo · sửa · bảng chi tiết theo TỪNG DÒNG ·
+đổi trạng thái dòng riêng · xóa). Không migration — dùng bảng chung `catalog_histories`.
+
+### Khác 2 màn trước (đọc trước khi code)
+
+- **UNC KHÔNG có Gửi duyệt / Duyệt / Hủy** (RULING U-UNC-6): chỉ "Lưu" (status 1) và "Lưu và duyệt"
+  (status 3, ghi sổ cái ngay). Status 2/4 là TRẠNG THÁI CHẾT. ⇒ dòng `change_status` chỉ sinh ra ở
+  `update()` khi phiếu nháp được bấm "Lưu và duyệt"; `store()` với status 3 đã nằm trong log `create`.
+- Bảng **KHÔNG có 2 cột tổng** (`sum_payment_money_*`) như Phiếu chi ⇒ không theo dõi cột tổng.
+- Bảng **CÓ 6 cột riêng**: `account_dept`, `bank_from(_name)`, `account_from(_name/_number)`,
+  `source_money`, `note` → phải khai vào whitelist.
+- Dòng chi tiết **KHÔNG có** `customer_id` / `supplier_id` (khác Phiếu chi): đối tượng nhận diện là
+  `contract_code` (nhánh A) hoặc `employee_code/_name` (nhánh B), kèm số TK + ngân hàng nhận.
+- Nhánh B chỉ **5** khoản thu nhập (không có `other_cost` như Phiếu chi).
+
+### BE
+
+- [x] `CatalogHistoryService::TABLES` — khai `bill_payment_authorizations` + nhãn cột tiếng Việt
+      + 2 khoá ẢO dạng BẢNG (`details_rows`, `export_request_rows`). KHÔNG khai `status`
+      (đổi trạng thái là dòng riêng — skill §3a)
+- [x] `Modules/Finance/Services/BillPaymentAuthorizationHistoryService.php` — khuôn
+      `BillPaymentHistoryService`, có `forFullLog()` lọc khoá rỗng/null trước khi ghi log `delete`
+- [x] `BillPaymentAuthorizationWriteService::store()` → `logCreate()` (SAU `approveAndPostToLedger()`
+      vì bước đó còn ghi `approved_id` + tính lại số duyệt chi)
+- [x] `...::update()` → snapshot ở ĐẦU transaction; sau khi lưu ghi `logUpdate()` +
+      `logStatusChanged()` (2 dòng riêng khi bấm "Lưu và duyệt" trên phiếu nháp)
+- [x] `...::destroy()` → snapshot TRƯỚC `deleteDetails()`, `logDelete()`
+- [x] Mọi lời gọi bọc try/catch + `Log::error` — lỗi log không được làm rớt nghiệp vụ
+
+### FE — ĐỦ 2 NƠI (§5.1)
+
+- [x] `pages/finance/bill-payment-authorizations/index.vue` — mục `Lịch sử` + `CatalogHistoryModal`
+- [x] `pages/finance/bill-payment-authorizations/_id/index.vue` — khối `SystemInfoSection` trong thân trang
+
+### Verify
+
+- [x] tinker trong transaction rồi ROLLBACK: tạo nháp → sửa → "Lưu và duyệt" → xóa
+- [x] Compile FE + Playwright 2 màn, dọn sạch dữ liệu gieo
+
+### Kiểm chứng đã chạy
+
+**Luồng đầy đủ** (tinker, toàn bộ trong transaction rồi ROLLBACK — UNC không gửi notification nên
+không phải thay service nào): tạo nháp → 1 dòng `create` · sửa người nhận + ghi chú + số chi dòng 1
++ thêm dòng 2 → **1 dòng** `update` đúng 2 trường phẳng + 1 dòng thêm + 1 dòng sửa ĐÚNG CỘT · lưu
+lại y nguyên → **không sinh log rác** · "Lưu và duyệt" (1 → 3) → **2 dòng** (`update` nội dung +
+`change_status` "Đang tạo → Đã hạch toán"), đề nghị nguồn sang status 8 đúng ERP · xóa → snapshot
+đầy đủ + 2 dòng chi tiết đã xóa. Sau rollback: 0 dòng log, 0 phiếu thừa, đề nghị 4192 vẫn status 6.
+
+**Trình duyệt (Playwright)**: gieo 3 dòng log cho phiếu THẬT `TPE.UNC0826.00001` (id 2606) rồi xem
+giao diện, xong xoá đúng 3 dòng đó (id 290-292); phiếu 2606 giữ `updated_at = 2026-08-27 14:32:05`,
+3 dòng chi tiết.
+- Màn danh sách: phiếu đã hạch toán chỉ còn 1 hành động nên nút "Lịch sử" hiện thẳng ở cột Hành động.
+- Popup: timeline mới → cũ, cũ ĐỎ / mới XANH, nhóm "Bảng chi tiết thêm mới / sửa thông tin",
+  dòng "Thay đổi trạng thái: Đang tạo → Đã hạch toán".
+- Màn chi tiết: khối "Lịch sử" badge `3` trong THÂN TRANG; `V2Footer` chỉ có "Quay lại" (phiếu đã
+  hạch toán không sửa/xóa được — đúng RULING U-UNC-6). Form phía trên không vỡ vì thêm slot.
+- Console: **0 lỗi** ở cả 2 màn.
+
+`php -l` sạch 3 file BE · compile FE (vue-template-compiler + babel) sạch 3 file.
+
+### Sửa kèm — áp cho cả màn Phiếu chi
+
+`payment_department_id` là cột NOT NULL không có default nên luồng ghi điền **0** (dữ liệu thật ERP
+cũng 0 ở phần lớn phiếu) ⇒ log in ra `Phòng ban được chi: 0`. Nay 0 được coi là "chưa chọn" (trả
+null, bị `forFullLog()` lọc) ở CẢ `BillPaymentAuthorizationHistoryService` lẫn
+`BillPaymentHistoryService`.
+
+### Checkpoint — 2026-09-03
+Vừa hoàn thành: lịch sử thay đổi màn Ủy nhiệm chi — từ CHƯA CÓ GÌ lên đầy đủ, BE (whitelist +
+service ghi log + 4 điểm nối) và FE (popup ở danh sách + khối Lịch sử ở chi tiết).
+Đang làm dở: không.
+Bước tiếp theo: user nghiệm thu. Còn tồn: bẫy mảng rỗng trong `CatalogHistoryService::changesOf()`
+(hàm DÙNG CHUNG) vẫn CHƯA sửa — đã trình bày phương án, chờ user chốt.
+Blocked: không.
+
+---
+
+## Phase T — Tài liệu SRS + Testcase + HDSD (user yêu cầu 2026-09-04)
+
+Phụ trách: @khoipv · Nhánh: `gop_db` · Theo 3 skill `srs-documenter`, `testcase-documenter`,
+`hdsd-documenter`.
+
+### Chuẩn bị
+
+- [x] T.1 Khảo sát lại BE (routes · controller · entity + trait quyền · 2 FormRequest · 4 service ·
+      2 resource · seeder quyền · schema 3 bảng) và FE (index / create / _id / form dùng chung /
+      popup chọn đề nghị / bảng nhân viên dùng chung / menu / cờ quyền) — 2 agent đọc song song.
+- [x] T.2 Chụp **25 ảnh thật** trên cổng dev `hrm-crm.eteksofts.com` (Playwright, 1440×900,
+      tài khoản `namdangit@gmail.com` — DNS Admin) → `unc_shots/`, KHÔNG commit (đã kiểm
+      `git status`: chỉ thấy `.docx` / `.xlsx` / `.py`).
+      Ảnh gồm: danh sách · cột phải · lọc nâng cao · cài đặt bộ lọc · tuỳ chỉnh cột · form tạo mới ·
+      dropdown loại chi · popup chọn đề nghị · form đã kéo dữ liệu · khối chuyển tiền (2 ảnh) ·
+      cảnh báo chưa lưu · xác nhận lưu và duyệt · lỗi validate · nhánh loại 4 (3 ảnh) · chi tiết
+      đã hạch toán · chi tiết nháp · xác nhận xóa · màn sửa · popup lịch sử · đường dẫn menu.
+      ⚠️ Chỉ MỞ form/hộp thoại rồi Hủy — **không ghi 1 bản ghi nào** lên dữ liệu thật.
+
+### Testcase
+
+- [x] T.3 `gen_testcase.py` + `testcase.xlsx` — **149 TC, P0 63%**, bộ kiểm tra thuật ngữ in
+      "OK - sach". 20 TC phân quyền (đủ 3 tên quyền + 6 TC vượt giao diện) + 10 section La Mã.
+- [x] T.4 Mục 9 "Ghi chú đọc bảng" ghi đủ **6 cái bẫy** để QA không chấm sai: bút toán Có = dòng
+      cuối · 1 đề nghị lập được nhiều UNC · loại "Chi khác" không sinh bút toán · ngày hạch toán
+      chặn lùi ngày ở đường duyệt · dấu ngăn nghìn lệch giữa form và lưới · nhãn cột "Ngày tạo" ≠
+      nhãn lọc "Khoảng ngày lập".
+
+### SRS
+
+- [x] T.5 `gen_srs.py` + `SRS - Phiếu ủy nhiệm chi.docx` — form chuẩn 2026-08-28, 4 chương,
+      **11 chức năng** FR-01…FR-11, 38 bảng, 23 ảnh (7 sơ đồ use case + 1 sơ đồ tổng quan phân cấp
+      + 15 ảnh chụp thật), 43 trang.
+- [x] T.6 Tự kiểm 4 điểm bắt buộc: 15 mục Layout ghi `Menu:` (không URL) · 11 đoạn "Quy tắc chung"
+      · Phần 4 là bảng 5 cột · sơ đồ tổng quan dùng `overview_figure2` có «include»/«extend».
+      Không còn mục đã bỏ, 0 sơ đồ ký tự.
+- [x] T.7 Phần 4 ghi **12 quy tắc BR-01…BR-12**, trong đó 4 ruling CỐ Ý giữ điểm hở của ERP được
+      ghi rõ kèm câu "KHÔNG được sửa nếu chưa có quyết định mới bằng văn bản".
+
+### HDSD
+
+- [x] T.8 `gen_hdsd.py` + `HDSD_Phiếu ủy nhiệm chi.docx` — 13 Heading 1, 13 bảng, 23 ảnh nội dung,
+      38 trang. Cấu trúc: TỔNG QUAN → 10 PHẦN (truy cập · **hướng dẫn theo từng quyền** · tra cứu ·
+      lập phiếu từ đề nghị · lập phiếu chi thu nhập NV · lưu và duyệt · sửa · chi tiết + lịch sử ·
+      xóa · tình huống thường gặp).
+- [x] T.9 Mục 2.x viết riêng cho **từng quyền** (3 tên quyền + trường hợp không quyền) và mục 2.5
+      nêu điều kiện Sửa/Xóa "đủ cả ba".
+- [x] T.10 Kiểm style theo skill: Heading có direct format = **2** (bằng file mẫu) · run trong ô
+      bảng = **0** · ảnh hỏng = **0** · mục lục + danh mục hình ảnh đã cho Word cập nhật thật, dump
+      ra đọc lại: **không còn dòng nào của tài liệu mẫu**, số trang thật.
+
+### Checkpoint — 2026-09-04
+Vừa hoàn thành: 3 tài liệu SRS + testcase + HDSD cho màn Phiếu ủy nhiệm chi, kèm 3 generator
+version control được và 25 ảnh thật (local).
+Đang làm dở: không.
+Bước tiếp theo: user đọc lại 3 file, phản hồi chỗ cần sửa → chỉnh generator rồi chạy lại.
+Blocked: không.
+
+---
+
+## Phase X — Fix bug Redmine #11301: loại chi 4 không lưu được (2026-09-04)
+
+> Bug: [#11301](http://quanly.dnsmedia.vn/issues/11301) — @Lê Huyền Trang báo 03/09/2026.
+> "Không lưu được khi chọn Loại chi là *Chi thu nhập cho nhân viên*" — bấm Lưu và duyệt ra toast
+> **"Tổng số tiền chi theo mã vụ việc và tổng số tiền đề nghị chi khác nhau!"**, không có cách nào
+> sửa được trên giao diện.
+
+### Root cause (đã kiểm chứng bằng dữ liệu thật, không đoán)
+
+Nhân viên trong ảnh chụp là **id 316 — Trần Văn Chung, PHÒNG LOGISTIC (LN) (id 54)**. Truy sổ cái:
+
+| TTHHD | TNST | TNSQ | TT | TVC | **CPK** | Tổng |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | 0 | 0 | 0 | 0 | **280.500** | 280.500 |
+
+Toàn bộ số dư nằm ở khoản **CPK "Chi phí khác"** — đúng cột mà màn UNC đang **ẩn**
+(`:exclude-fields="['other_cost']"`). Chuỗi nhân quả:
+
+1. BE `GET /payment-employees` (dùng chung `PaymentEmployeeLookupService` với màn Phiếu chi) trả
+   `payment_money_request` = `payment_money_approve` = **280.500** — tổng của **6** khoản, có CPK.
+2. FE ẩn cột CPK → tab "Chi tiết vụ việc" chỉ còn **5** khoản, tất cả = 0.
+3. `validateMoney()` cộng 5 khoản = 0 ≠ 280.500 → chặn.
+4. Không tự cứu được: 5 ô khoản bị `clampToLimit()` kẹp trần theo số dư từng khoản (= 0), gõ số nào
+   cũng bật về 0.
+
+→ **Tổng lấy theo 6 khoản, ô nhập chỉ có 5 khoản.** Mọi nhân viên có tiền nằm ở CPK đều không lập
+được phiếu UNC.
+
+### Quyết định của user (2026-09-04): **"làm như bên ERP"**
+
+Hiện lại cột "Chi phí khác" đúng như ERP (`bill_payment_authorizations/form.blade.php` :774-784
+include CÙNG 2 blade `table_payment_employee*` với màn Phiếu chi → ERP luôn hiện đủ 6 cột).
+
+⚠️ Hệ quả đã báo trước và user vẫn chốt — **giữ nguyên điểm hở của ERP**, ghi thành ruling:
+
+| Ruling | Nội dung |
+| --- | --- |
+| **U-UNC-7** | Tiền nhập ở khoản **CPK "Chi phí khác"** của phiếu UNC **KHÔNG được lưu và KHÔNG sinh bút toán**. `bill_payment_authorization_details` **không có cột** `other_cost` / `payment_other_cost` (đã `SHOW COLUMNS`), ERP cũng vậy: `BillPaymentAuthorizationDetail::$fillable` không khai 2 trường đó nên Laravel bỏ âm thầm; `saveAccountsDetailEmployee()` (:530) chỉ ghi **5** mã vụ việc `CLNVKD/TNST/TNSQ/HHTQ/TVC`. Hệ quả: phiếu ghi 280.500đ nhưng sổ cái ghi 0đ. **KHÔNG được sửa nếu chưa có quyết định mới bằng văn bản.** |
+
+### Tasks
+
+- [x] X.1 FE — bỏ `:exclude-fields="['other_cost']"` ở `BillPaymentAuthorizationForm.vue`, viết lại
+      khối comment cho đúng ruling U-UNC-7 (comment cũ đang nói ngược lại).
+- [x] X.2 FE — `fetchPaymentEmployees()` map thêm `other_cost` + `payment_other_cost` (đang bị bỏ
+      hẳn). Không map thì cột CPK hiện 0 và trần kẹp = 0 → vẫn kẹt y như cũ.
+- [x] X.3 FE — `mapDetails()` (màn Sửa/Xem) map `other_cost` / `payment_other_cost` về 0 (BE không
+      có cột nên phiếu đã lưu luôn trả về thiếu 2 trường này).
+- [x] X.4 FE — `validateMoney()` cộng thêm `payment_other_cost` cho khớp `sum_payment` của ERP
+      (`BillPaymentDetail.blade.php` :299).
+- [x] X.5 Verify: compile FE + đối chiếu lại số liệu NV 316; **user tự mở trình duyệt xác nhận**.
+
+### Không đụng tới (có chủ ý)
+
+- `PaymentEmployeeLookupService` — file dùng chung với màn Phiếu chi đã nghiệm thu (CLAUDE.md: sửa
+  hàm dùng chung phải hỏi trước). Bug này sửa được trọn ở FE màn UNC.
+- Lệch mã vụ việc **hút** (`TTHHD` / `TT`) so với mã **ghi sổ** (`CLNVKD` / `HHTQ`) — chi xong số dư
+  2 khoản đó không giảm, có thể chi trùng. Đây là lệch CÓ SẴN của ERP
+  (`AccountDetail::getDataAdPaymentEmployee()` :3933 vs ledger writer :530), HRM port đúng nguyên
+  trạng → cần quyết định riêng, đã báo user 2026-09-04.
+
+### Kiểm chứng đã chạy (2026-09-04)
+
+Gọi thẳng `PaymentEmployeeLookupService::forDepartment(54)` với user công ty 1 (đúng đường mà
+`GET /finance/bill-payment-authorizations/payment-employees` đi qua):
+
+```
+NV 316 | Trần Văn Chung
+  vế trái  payment_money_approve = 280.500
+  code CŨ  tổng 5 khoản = 0        => CHẶN LƯU   ← tái hiện đúng bug #11301
+  code MỚI tổng 6 khoản = 280.500  => OK
+  key payment_other_cost trong response: CÓ
+```
+
+Compile FE: `vue-template-compiler` + `@babel/parser` trên `BillPaymentAuthorizationForm.vue` —
+`OK - template + script parse sach`. (Không dùng eslint: repo không có config, Node 14 chạy fail.)
+
+**CHƯA kiểm chứng bằng trình duyệt** — user tự mở màn xác nhận (đúng thói quen đã chốt).
+
+### Checkpoint — 2026-09-04
+Vừa hoàn thành: fix bug Redmine #11301 — hiện lại cột "Chi phí khác" (CPK) ở bảng nhân viên loại
+chi 4 của màn Ủy nhiệm chi, map thêm `other_cost`/`payment_other_cost` ở cả 2 đường nạp dữ liệu,
+`validateMoney()` cộng đủ 6 khoản. Sửa gọn trong 1 file FE
+(`hrm-client/pages/finance/bill-payment-authorizations/components/BillPaymentAuthorizationForm.vue`),
+không đụng BE, không đụng file dùng chung `PaymentEmployeeTable.vue` /
+`PaymentEmployeeLookupService.php`.
+Đang làm dở: không.
+Bước tiếp theo: user mở `/finance/bill-payment-authorizations/create`, chọn loại chi "Chi thu nhập
+cho nhân viên" + phòng ban PHÒNG LOGISTIC (LN), xác nhận lưu được → phản hồi lại Redmine #11301.
+Blocked: không.
+
+- [x] X.6 Đã đăng ghi chú giải trình lên Redmine #11301 (note #1, 04/09/2026): nguyên nhân + đã sửa
+      gì + 4 bước test lại + cảnh báo U-UNC-7 cho QA (đừng chấm Failed ca có tiền ở cột "Chi phí
+      khác" khi đối chiếu sổ). CHỈ đăng ghi chú — không đổi Trạng thái (vẫn "Mới"), không đổi người
+      được phân công.

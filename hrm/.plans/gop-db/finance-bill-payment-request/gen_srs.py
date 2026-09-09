@@ -25,6 +25,13 @@ OUT = os.path.join(HERE, 'SRS - Phiếu đề nghị thanh toán.docx')
 HOST = 'http://hrm-crm.eteksofts.com'
 ROUTE = '/finance/bill-payment-requests'
 
+# Form 2026-08-28: muc Layout ghi DUONG DAN MENU (khong con "URL day du").
+# Nhan menu lay tu hrm-client/components/subsystem-menu/finance.js.
+MENU = ('Phân hệ Tài chính => Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi '
+        '=> Đề nghị thanh toán')
+MENU_PENDING = ('Phân hệ Tài chính => Phê duyệt - Công nợ - Thu - Chi '
+                '=> Phiếu đề nghị thanh toán chờ duyệt')
+
 ACTOR_LAP = 'Người lập phiếu (kinh doanh)'
 ACTOR_DUYET = 'Cấp duyệt (TP / KT công nợ / KT trưởng / BGĐ)'
 ACTOR_KTTT = 'Kế toán thanh toán'
@@ -35,8 +42,7 @@ def shot(name):
 
 
 d = SrsDoc(out=OUT,
-           menu='Phân hệ Tài chính → Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi → '
-                'Đề nghị thanh toán',
+           menu=MENU,
            route=ROUTE,
            full_url=HOST + ROUTE,
            img_prefix='dnttchi_')
@@ -178,26 +184,31 @@ d.p('Ghi chú: dấu ✅ ở FR-11 và FR-12 chỉ có hiệu lực với phiế
 d.h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
 
 d.h2('1 Sơ đồ UML tổng quan')
-d.overview_figure(
-    'HỆ THỐNG HRM — PHIẾU ĐỀ NGHỊ THANH TOÁN',
-    [(ACTOR_LAP, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 14]),
-     (ACTOR_DUYET, [0, 1, 2, 9, 10, 11, 13, 14]),
-     (ACTOR_KTTT, [0, 1, 2, 9, 13, 14])],
-    [('FR-01', 'Xem danh sách phiếu', 'view', '4 chế độ xem'),
-     ('FR-02', 'Tìm kiếm và lọc danh sách', 'view', None),
-     ('FR-03', 'Cài đặt bộ lọc và tuỳ chỉnh cột', 'view', None),
-     ('FR-04', 'Lập phiếu đề nghị thanh toán', 'crud', '«include» Sinh mã phiếu tự động'),
-     ('FR-05', 'Chọn đối tượng và hợp đồng', 'crud', '«include» của FR-04 và FR-09'),
-     ('FR-06', 'Lấy dữ liệu chuyến xe', 'crud', 'Chỉ loại chi vận chuyển'),
-     ('FR-07', 'Nạp khối thông tin ngân hàng', 'crud', 'Chỉ hình thức chuyển khoản'),
-     ('FR-08', 'Quản lý file đính kèm', 'io', None),
-     ('FR-09', 'Sửa phiếu', 'crud', '«extend» Gửi duyệt lại phiếu bị từ chối'),
-     ('FR-10', 'Xem chi tiết phiếu', 'view', None),
-     ('FR-11', 'Duyệt phiếu theo cấp', 'action', '«include» Ghi số tiền duyệt từng dòng'),
-     ('FR-12', 'Từ chối phiếu', 'action', '«include» Ghi chú bắt buộc theo cấp'),
-     ('FR-13', 'Xóa phiếu', 'action', None),
-     ('FR-14', 'In phiếu và xuất Excel', 'io', None),
-     ('FR-15', 'Xem lịch sử thay đổi', 'view', None)],
+# Chi 4 use case duoi day la "man hinh" that su -> noi thang toi actor. Cac thao tac con lai
+# deu lam NGAY TREN mot trong 4 man do (loc / tuy chinh cot / xoa o man danh sach; chon doi
+# tuong, lay chuyen xe, khoi ngan hang, file dinh kem trong form lap-sua; duyet, tu choi, in,
+# lich su o man chi tiet) -> phai la use case phu, noi bang «include» / «extend».
+d.overview_figure2(
+    [(ACTOR_LAP, [0, 1, 2, 3]),
+     (ACTOR_DUYET, [0, 3]),
+     (ACTOR_KTTT, [0, 3])],
+    [('FR-01', 'Xem danh sách phiếu', 'view'),
+     ('FR-04', 'Lập phiếu đề nghị thanh toán', 'crud'),
+     ('FR-09', 'Sửa phiếu', 'crud'),
+     ('FR-10', 'Xem chi tiết phiếu', 'view')],
+    [('FR-02', 'Tìm kiếm và lọc danh sách', 'view', 'extend', [0], None),
+     ('FR-03', 'Cài đặt bộ lọc và tuỳ chỉnh cột', 'view', 'extend', [0], None),
+     ('FR-13', 'Xóa phiếu', 'action', 'extend', [0], None),
+     # 4 use case cua form lap phieu — man Sua (FR-09) dung CHUNG form nay, chi noi vao
+     # FR-04 cho so do de doc (noi ca 2 cha thi 8 duong net dut chong len nhau).
+     ('FR-05', 'Chọn đối tượng và hợp đồng', 'crud', 'include', [1], None),
+     ('FR-06', 'Lấy dữ liệu chuyến xe', 'crud', 'extend', [1], None),
+     ('FR-07', 'Nạp khối thông tin ngân hàng', 'crud', 'extend', [1], None),
+     ('FR-08', 'Quản lý file đính kèm', 'io', 'include', [1], None),
+     ('FR-11', 'Duyệt phiếu theo cấp', 'action', 'extend', [3], None),
+     ('FR-12', 'Từ chối phiếu', 'action', 'extend', [3], None),
+     ('FR-14', 'In phiếu và xuất Excel', 'io', 'extend', [3], None),
+     ('FR-15', 'Xem lịch sử thay đổi', 'view', 'extend', [3], None)],
     'Sơ đồ Use Case tổng quan màn Phiếu đề nghị thanh toán')
 
 d.h2('2 Đặc tả chi tiết từng chức năng')
@@ -206,6 +217,9 @@ d.h2('2 Đặc tả chi tiết từng chức năng')
 d.h3('2.1 Xem danh sách phiếu đề nghị thanh toán')
 
 d.p('2.1.1 Giới thiệu')
+d.rule_ref('- Màn Danh sách, Sắp xếp dữ liệu bảng, Phân trang và Cấu hình cột. Chỉ bổ sung điều '
+           'kiện dữ liệu riêng của bốn chế độ xem trên màn Phiếu đề nghị thanh toán.',
+           anchor='list')
 d.intro_table(
     ten='Xem danh sách phiếu đề nghị thanh toán',
     mota='Hiển thị bảng phiếu đề nghị thanh toán theo một trong bốn chế độ xem, kèm phân trang, '
@@ -230,7 +244,10 @@ d.intro_table(
     dacbiet=None)
 
 d.p('2.1.2 Layout màn hình')
-d.layout(shot=shot('01-danh-sach.png'),
+d.layout(menu=MENU,
+         note='Chế độ Chờ duyệt có lối vào riêng: %s. Hai chế độ Của tôi và Đã duyệt '
+              'chuyển ngay trên màn hình.' % MENU_PENDING,
+         shot=shot('01-danh-sach.png'),
          shot_caption='Màn danh sách ở chế độ Tất cả lúc mới truy cập')
 d.figure(shot('06-cho-duyet.png'), 'Chế độ Chờ duyệt — không có nút Tạo mới', width_in=6.2)
 d.figure(shot('26-cua-toi.png'), 'Chế độ Của tôi', width_in=6.2)
@@ -307,6 +324,9 @@ d.event_table([
 d.h3('2.2 Tìm kiếm và lọc danh sách')
 
 d.p('2.2.1 Giới thiệu')
+d.rule_ref('- Kịch bản tìm kiếm, Bộ lọc, Dropdown, Phân trang và quy tắc bộ lọc chọn nhiều giá '
+           'trị. Chỉ bổ sung các tiêu chí tìm kiếm/lọc riêng của Phiếu đề nghị thanh toán.',
+           anchor='search')
 d.intro_table(
     ten='Tìm kiếm và lọc danh sách phiếu',
     mota='Thu hẹp danh sách theo mã phiếu, cấp tổ chức, loại chi, hình thức thanh toán, trạng '
@@ -328,7 +348,8 @@ d.intro_table(
     dacbiet=None)
 
 d.p('2.2.2 Layout màn hình')
-d.layout(shot=shot('02-bo-loc.png'),
+d.layout(menu=MENU,
+         shot=shot('02-bo-loc.png'),
          shot_caption='Khối Tìm kiếm nâng cao ở trạng thái mở với đủ 10 tiêu chí')
 
 d.p('2.2.3 Mô tả chi tiết giao diện')
@@ -394,6 +415,9 @@ d.uc_figure('FR-03', 'Cài đặt bộ lọc và tuỳ chỉnh cột', 'view',
             caption='Biểu đồ Use Case — FR-03 Cài đặt bộ lọc và tuỳ chỉnh cột')
 
 d.p('2.3.2 Giới thiệu')
+d.rule_ref('- Cấu hình bộ lọc và Tùy chỉnh cột. Chỉ bổ sung danh sách tiêu chí lọc và bộ cột '
+           'riêng của Phiếu đề nghị thanh toán.',
+           anchor='list')
 d.intro_table(
     ten='Cài đặt bộ lọc và tuỳ chỉnh cột hiển thị',
     mota='Cho phép mỗi người dùng tự chọn tiêu chí lọc và cột muốn thấy, đồng thời sắp xếp lại '
@@ -414,7 +438,8 @@ d.intro_table(
             'chế độ vì bốn chế độ có cùng bộ cột.')
 
 d.p('2.3.3 Layout màn hình')
-d.layout(modal='Cài đặt bộ lọc và Tuỳ chỉnh cột',
+d.layout(menu=MENU + ' => Cài đặt bộ lọc / Tuỳ chỉnh cột',
+         modal='Cài đặt bộ lọc và Tuỳ chỉnh cột',
          shot=shot('03-cai-dat-bo-loc.png'),
          shot_caption='Cửa sổ Cài đặt bộ lọc với đủ 10 tiêu chí')
 d.figure(shot('04-cau-hinh-cot.png'), 'Cửa sổ Tuỳ chỉnh cột', width_in=6.2)
@@ -464,6 +489,9 @@ d.uc_figure('FR-04', 'Lập phiếu đề nghị thanh toán', 'crud',
             caption='Biểu đồ Use Case — FR-04 Lập phiếu đề nghị thanh toán')
 
 d.p('2.4.2 Giới thiệu')
+d.rule_ref('- Màn Thêm mới, Validate dữ liệu, Thông báo và UI/UX. Logic ghi lịch sử áp dụng theo '
+           'SRS Các quy tắc chung - Quy tắc ghi lịch sử.',
+           anchor='create')
 d.intro_table(
     ten='Lập phiếu đề nghị thanh toán',
     mota='Tạo một phiếu đề nghị thanh toán mới. Người dùng chọn loại chi, hình thức thanh toán, '
@@ -495,8 +523,8 @@ d.intro_table(
             'khoản) và file đính kèm (nếu loại Chi trả nhà cung cấp).')
 
 d.p('2.4.3 Layout màn hình')
-d.layout(route=ROUTE + '/create',
-         url=HOST + ROUTE + '/create',
+d.layout(menu=MENU + ' => Thêm mới',
+         route=ROUTE + '/create',
          shot=shot('14-tao-moi.png'),
          shot_caption='Màn Thêm phiếu đề nghị thanh toán lúc vừa mở')
 d.figure(shot('15-tao-moi-ck.png'),
@@ -620,6 +648,9 @@ d.uc_figure('FR-05', 'Chọn đối tượng và hợp đồng', 'crud',
             caption='Biểu đồ Use Case — FR-05 Chọn đối tượng và hợp đồng cho dòng chi tiết')
 
 d.p('2.5.2 Giới thiệu')
+d.rule_ref('- Dropdown, Popup chọn dữ liệu và Validate dữ liệu. Chỉ bổ sung nguồn hợp đồng và '
+           'điều kiện lọc riêng theo từng loại chi.',
+           anchor='create')
 d.intro_table(
     ten='Chọn đối tượng và hợp đồng cho dòng chi tiết',
     mota='Gắn đối tượng nhận tiền và hợp đồng cho từng dòng của bảng Chi tiết. Hệ thống tự điền '
@@ -644,8 +675,9 @@ d.intro_table(
             'chứ không theo đối tượng, nên cửa sổ có thêm ô lọc Khách hàng.')
 
 d.p('2.5.3 Layout màn hình')
-d.layout(route=ROUTE + '/create',
-         url=HOST + ROUTE + '/create',
+d.layout(menu=MENU + ' => Thêm mới => Chọn khách hàng / Chọn nhà cung cấp / '
+              'Chọn hợp đồng',
+         route=ROUTE + '/create',
          modal='Chọn khách hàng, Chọn nhà cung cấp và Chọn hợp đồng',
          shot=shot('16-popup-ncc.png'),
          shot_caption='Cửa sổ Chọn nhà cung cấp')
@@ -719,6 +751,9 @@ d.uc_figure('FR-06', 'Lấy dữ liệu chuyến xe', 'crud',
             caption='Biểu đồ Use Case — FR-06 Lấy dữ liệu chuyến xe')
 
 d.p('2.6.2 Giới thiệu')
+d.rule_ref('- Validate dữ liệu và Thông báo. Chỉ bổ sung cách lấy dữ liệu chuyến xe của loại chi '
+           'vận chuyển.',
+           anchor='create')
 d.intro_table(
     ten='Lấy dữ liệu chuyến xe cho loại chi vận chuyển',
     mota='Với loại chi Thanh toán chi phí vận chuyển NCC, bảng Chi tiết không nhập tay mà do hệ '
@@ -737,8 +772,8 @@ d.intro_table(
             'không có nút xóa dòng. Chỉ những dòng ĐƯỢC TÍCH mới bắt buộc nhập số tiền.')
 
 d.p('2.6.3 Layout màn hình')
-d.layout(route=ROUTE + '/create',
-         url=HOST + ROUTE + '/create',
+d.layout(menu=MENU + ' => Thêm mới => Lấy dữ liệu chuyến xe',
+         route=ROUTE + '/create',
          shot=shot('23-xac-nhan-doi-loai-chi.png'),
          shot_caption='Bố cục bảng Chi tiết của loại chi vận chuyển (ô Đến ngày và nút Lấy dữ liệu)')
 d.figure(shot('25-chi-tiet-loai12.png'),
@@ -784,6 +819,9 @@ d.event_table([
 d.h3('2.7 Nạp khối thông tin ngân hàng')
 
 d.p('2.7.1 Giới thiệu')
+d.rule_ref('- Validate dữ liệu, Dropdown và Thông báo. Chỉ bổ sung quy tắc nạp khối thông tin '
+           'ngân hàng của Phiếu đề nghị thanh toán.',
+           anchor='create')
 d.intro_table(
     ten='Nạp khối thông tin ngân hàng của đối tượng nhận tiền',
     mota='Khi hình thức thanh toán là chuyển khoản, hệ thống tự nạp thông tin tài khoản ngân '
@@ -804,8 +842,8 @@ d.intro_table(
     dacbiet=None)
 
 d.p('2.7.2 Layout màn hình')
-d.layout(route=ROUTE + '/create',
-         url=HOST + ROUTE + '/create',
+d.layout(menu=MENU + ' => Thêm mới => Thông tin ngân hàng',
+         route=ROUTE + '/create',
          shot=shot('17-ngan-hang.png'),
          shot_caption='Khối Thông tin ngân hàng tự điền sau khi chọn nhà cung cấp trong nước')
 d.figure(shot('08-chi-tiet.png'),
@@ -868,6 +906,9 @@ d.uc_figure('FR-08', 'Quản lý file đính kèm', 'io',
             caption='Biểu đồ Use Case — FR-08 Quản lý file đính kèm')
 
 d.p('2.8.2 Giới thiệu')
+d.rule_ref('- Validate dữ liệu và Thông báo. Chỉ bổ sung định dạng, dung lượng và ràng buộc bắt '
+           'buộc đính kèm theo loại chi.',
+           anchor='create')
 d.intro_table(
     ten='Quản lý file đính kèm của phiếu',
     mota='Thêm, xem trước, tải xuống, thay đổi và xóa các file tài liệu kèm theo phiếu. File '
@@ -891,8 +932,8 @@ d.intro_table(
             'thì phải xóa rồi thêm lại.')
 
 d.p('2.8.3 Layout màn hình')
-d.layout(route=ROUTE + '/create',
-         url=HOST + ROUTE + '/create',
+d.layout(menu=MENU + ' => Thêm mới => File đính kèm',
+         route=ROUTE + '/create',
          shot=shot('19-file-dinh-kem.png'),
          shot_caption='Khối File đính kèm với một dòng chờ chọn tệp')
 d.figure(shot('22-loi-file.png'),
@@ -953,6 +994,8 @@ d.uc_figure('FR-09', 'Sửa phiếu đề nghị thanh toán', 'crud',
             caption='Biểu đồ Use Case — FR-09 Sửa phiếu đề nghị thanh toán')
 
 d.p('2.9.2 Giới thiệu')
+d.rule_ref('- Màn Chỉnh sửa, Validate dữ liệu, Thông báo và Quy tắc ghi lịch sử.',
+           anchor='notice')
 d.intro_table(
     ten='Sửa phiếu đề nghị thanh toán',
     mota='Chỉnh sửa nội dung phiếu do chính người dùng lập, khi phiếu còn ở trạng thái Đang tạo '
@@ -975,8 +1018,8 @@ d.intro_table(
             'nguyên như lúc lập, không đổi theo người sửa.')
 
 d.p('2.9.3 Layout màn hình')
-d.layout(route=ROUTE + '/{id}/edit',
-         url=HOST + ROUTE + '/{số hiệu phiếu}/edit',
+d.layout(menu=MENU + ' => Sửa',
+         route=ROUTE + '/{id}/edit',
          shot=shot('29-sua.png'),
          shot_caption='Màn Sửa phiếu đề nghị thanh toán')
 
@@ -1032,6 +1075,9 @@ d.event_table([
 d.h3('2.10 Xem chi tiết phiếu')
 
 d.p('2.10.1 Giới thiệu')
+d.rule_ref('- Màn Xem chi tiết và Phân quyền. Chỉ bổ sung các khối thông tin riêng của phiếu đề '
+           'nghị thanh toán.',
+           anchor='detail')
 d.intro_table(
     ten='Xem chi tiết phiếu đề nghị thanh toán',
     mota='Hiển thị toàn bộ nội dung một phiếu ở chế độ chỉ đọc, kèm bốn cột tiền của các cấp '
@@ -1053,8 +1099,8 @@ d.intro_table(
     dacbiet=None)
 
 d.p('2.10.2 Layout màn hình')
-d.layout(route=ROUTE + '/{id}',
-         url=HOST + ROUTE + '/{số hiệu phiếu}',
+d.layout(menu=MENU + ' => Xem chi tiết',
+         route=ROUTE + '/{id}',
          shot=shot('09-chi-tiet-cot-duyet.png'),
          shot_caption='Bảng Chi tiết ở màn xem với bốn cột tiền của các cấp duyệt')
 
@@ -1126,6 +1172,9 @@ d.uc_figure('FR-11', 'Duyệt phiếu theo cấp', 'action',
             caption='Biểu đồ Use Case — FR-11 Duyệt phiếu theo cấp')
 
 d.p('2.11.2 Giới thiệu')
+d.rule_ref('- Quy tắc đổi trạng thái, Thông báo và Quy tắc ghi lịch sử. Chỉ bổ sung luồng duyệt '
+           'theo cấp của Phiếu đề nghị thanh toán.',
+           anchor='history')
 d.intro_table(
     ten='Duyệt phiếu đề nghị thanh toán theo cấp',
     mota='Người giữ vai duyệt xem phiếu, nhập số tiền chấp thuận cho từng dòng chi tiết rồi đẩy '
@@ -1155,8 +1204,8 @@ d.intro_table(
             'chỉ cột tiền của cấp đang giữ phiếu là ô nhập được; các cột khác chỉ đọc.')
 
 d.p('2.11.3 Layout màn hình')
-d.layout(route=ROUTE + '/{id}',
-         url=HOST + ROUTE + '/{số hiệu phiếu}',
+d.layout(menu=MENU_PENDING + ' => Xem chi tiết => Duyệt',
+         route=ROUTE + '/{id}',
          shot=shot('08-chi-tiet.png'),
          shot_caption='Màn chi tiết ở cấp Kế toán trưởng: có nút Duyệt và Chuyển duyệt BGĐ')
 d.figure(shot('12-xac-nhan-duyet.png'),
@@ -1211,6 +1260,8 @@ d.uc_figure('FR-12', 'Từ chối phiếu', 'action',
             caption='Biểu đồ Use Case — FR-12 Từ chối phiếu')
 
 d.p('2.12.2 Giới thiệu')
+d.rule_ref('- Quy tắc đổi trạng thái, Thông báo và Quy tắc ghi lịch sử.',
+           anchor='history')
 d.intro_table(
     ten='Từ chối phiếu đề nghị thanh toán',
     mota='Người giữ vai duyệt từ chối phiếu kèm ghi chú bắt buộc của cấp mình, đưa phiếu quay '
@@ -1234,8 +1285,8 @@ d.intro_table(
             'duyệt. Đây là quy tắc nghiệp vụ cố ý giữ nguyên.')
 
 d.p('2.12.3 Layout màn hình')
-d.layout(route=ROUTE + '/{id}',
-         url=HOST + ROUTE + '/{số hiệu phiếu}',
+d.layout(menu=MENU_PENDING + ' => Xem chi tiết => Từ chối',
+         route=ROUTE + '/{id}',
          modal='Từ chối phiếu',
          shot=shot('11-tu-choi.png'),
          shot_caption='Cửa sổ Từ chối phiếu ở cấp Kế toán trưởng')
@@ -1285,6 +1336,8 @@ d.uc_figure('FR-13', 'Xóa phiếu', 'action',
             caption='Biểu đồ Use Case — FR-13 Xóa phiếu')
 
 d.p('2.13.2 Giới thiệu')
+d.rule_ref('- Quy tắc Xóa, Thông báo và Quy tắc ghi lịch sử.',
+           anchor='notice')
 d.intro_table(
     ten='Xóa phiếu đề nghị thanh toán',
     mota='Xóa hẳn một phiếu cùng toàn bộ dòng chi tiết. Dữ liệu không khôi phục được.',
@@ -1302,7 +1355,8 @@ d.intro_table(
     dacbiet='Mã phiếu đã dùng không được cấp lại cho phiếu mới sau khi xóa.')
 
 d.p('2.13.3 Layout màn hình')
-d.layout(modal='Xác nhận xóa',
+d.layout(menu=MENU + ' => Xóa',
+         modal='Xác nhận xóa',
          shot=shot('30-xac-nhan-xoa.png'),
          shot_caption='Hộp thoại Xác nhận xóa phiếu')
 
@@ -1343,6 +1397,9 @@ d.uc_figure('FR-14', 'In phiếu và xuất Excel', 'io',
             caption='Biểu đồ Use Case — FR-14 In phiếu và xuất Excel')
 
 d.p('2.14.2 Giới thiệu')
+d.rule_ref('- Quy tắc Excel và Cấu hình cột. Chỉ bổ sung bố cục bản in và các trường xuất riêng '
+           'của Phiếu đề nghị thanh toán.',
+           anchor='excel')
 d.intro_table(
     ten='In phiếu và xuất Excel',
     mota='Mở bản in Phiếu đề nghị thanh toán ở tab mới, hoặc tải file Excel của phiếu. Hai đầu '
@@ -1364,8 +1421,8 @@ d.intro_table(
             'file Excel — hai đầu ra không tự suy lại để tránh lệch cột.')
 
 d.p('2.14.3 Layout màn hình')
-d.layout(route=ROUTE + '/{id}/print',
-         url=HOST + ROUTE + '/{số hiệu phiếu}/print',
+d.layout(menu=MENU + ' => Xem chi tiết => In phiếu / Xuất Excel',
+         route=ROUTE + '/{id}/print',
          shot=shot('13-in-phieu.png'),
          shot_caption='Bản in Phiếu đề nghị thanh toán')
 
@@ -1417,6 +1474,9 @@ d.event_table([
 d.h3('2.15 Xem lịch sử thay đổi')
 
 d.p('2.15.1 Giới thiệu')
+d.rule_ref('- Quy tắc ghi lịch sử và hiển thị lịch sử. Chỉ bổ sung các trường được ghi lịch sử '
+           'riêng của Phiếu đề nghị thanh toán.',
+           anchor='history')
 d.intro_table(
     ten='Xem lịch sử thay đổi của phiếu',
     mota='Hiển thị toàn bộ thao tác đã tác động lên phiếu theo dòng thời gian: tạo mới, thay đổi '
@@ -1436,7 +1496,8 @@ d.intro_table(
     dacbiet=None)
 
 d.p('2.15.2 Layout màn hình')
-d.layout(modal='Lịch sử thay đổi',
+d.layout(menu=MENU + ' => Xem chi tiết => Lịch sử',
+         modal='Lịch sử thay đổi',
          shot=shot('10-lich-su.png'),
          shot_caption='Khối Lịch sử ở cuối màn chi tiết')
 
@@ -1473,187 +1534,173 @@ d.event_table([
 # ==================================================== PHẦN 4. QUY TẮC NGHIỆP VỤ
 d.h1('Phần 4. Quy tắc nghiệp vụ')
 
-d.p('BR-01 — Mã phiếu sinh tự động và duy nhất')
-d.bullets([
-    'Mã phiếu do hệ thống sinh khi lưu lần đầu, theo dạng '
-    '<mã công ty>.DNTT<tháng năm>.<5 chữ số>, số chạy tăng dần trong cùng công ty và cùng tháng.',
-    'Người dùng không nhập và không sửa được mã phiếu.',
-    'Hai người lưu phiếu cùng lúc vẫn nhận hai mã khác nhau; mã đã dùng không được cấp lại kể '
-    'cả khi phiếu bị xóa.',
-])
+d.rule_ref('. Phần này chỉ ghi các quy tắc đặc thù của Phiếu đề nghị thanh toán; không lặp '
+           'lại các quy tắc đã có trong SRS quy tắc chung.',
+           anchor='list', head='Quy tắc áp dụng',
+           lead='Các quy tắc nghiệp vụ dùng chung được định nghĩa tại SRS Các quy tắc chung ')
 
-d.p('BR-02 — Bốn chế độ xem, bốn điều kiện dữ liệu khác nhau')
-d.bullets([
-    'Chế độ Tất cả: áp phạm vi quyền xem theo thứ tự V1 → V2 → V3 → V4; không có cấp nào thì '
-    'chỉ thấy phiếu do chính mình lập.',
-    'Chế độ Của tôi: mọi phiếu do chính mình lập, kể cả phiếu nháp.',
-    'Chế độ Chờ duyệt: phiếu cùng công ty với người đăng nhập VÀ đang ở đúng trạng thái mà người '
-    'đó có quyền duyệt; không giữ vai nào thì danh sách rỗng.',
-    'Chế độ Đã duyệt: phiếu mà chính mình đã duyệt ở bất kỳ cấp nào.',
-    'Nhóm quyền phạm vi KHÔNG áp cho chế độ Chờ duyệt và Đã duyệt — người duyệt thường không giữ '
-    'quyền xem theo cấp nào.',
-])
-
-d.p('BR-03 — Phiếu nháp của người khác luôn bị ẩn')
-d.bullets([
-    'Ở chế độ Tất cả, phiếu ở trạng thái Đang tạo chỉ người lập nhìn thấy, kể cả người giữ V1.',
-    'Quy tắc này áp cả khi mở chi tiết bằng đường dẫn trực tiếp.',
-])
-
-d.p('BR-04 — Phạm vi duyệt của từng cấp')
-d.bullets([
-    'Cấp Trưởng phòng chỉ duyệt được phiếu ở trạng thái Chờ TP duyệt, cùng công ty VÀ thuộc '
-    'phòng ban mà người đó được giao quản lý.',
-    'Cấp Kế toán công nợ, Kế toán trưởng, Ban giám đốc và Kế toán thanh toán chỉ giới hạn theo '
-    'công ty, không giới hạn theo phòng ban.',
-    'Người giữ nhiều vai duyệt thấy phiếu của tất cả các vai đó trong cùng danh sách Chờ duyệt.',
-])
-
-d.p('BR-05 — Thứ tự luồng duyệt và chặn nhảy cóc')
-d.bullets([
-    'Thứ tự: Chờ TP duyệt → Chờ kế toán công nợ duyệt → Chờ kế toán trưởng duyệt → '
-    '(tuỳ chọn) Chờ ban giám đốc duyệt → Chờ tạo phiếu chi.',
-    'Cấp Kế toán trưởng có hai lựa chọn: duyệt thẳng sang Chờ tạo phiếu chi, hoặc chuyển sang '
-    'Chờ ban giám đốc duyệt.',
-    'Hệ thống chỉ chấp nhận các trạng thái đích hợp lệ tính từ trạng thái hiện tại; mọi bước '
-    'nhảy cóc đều bị từ chối với thông báo “Không thể chuyển phiếu sang trạng thái này”.',
-    'Người dùng không thể tự đặt phiếu sang các trạng thái do màn Phiếu chi quản lý (Chờ duyệt '
-    'phiếu chi, Duyệt phiếu chi, Đã hủy).',
-])
-
-d.p('BR-06 — Số tiền duyệt của từng cấp ghi vào cột riêng')
-d.bullets([
-    'Mỗi cấp duyệt ghi số tiền chấp thuận vào cột riêng của cấp mình; cấp Kế toán trưởng và Ban '
-    'giám đốc dùng CHUNG một cột.',
-    'Ở màn chi tiết, chỉ cột tiền của cấp đang giữ phiếu là ô nhập được; các cột khác chỉ đọc.',
-    'Cột Số tiền chi luôn chỉ đọc, lấy từ phiếu chi hoặc giấy ủy nhiệm chi; chưa có chứng từ chi '
-    'thì hiển thị dấu gạch dưới chứ không hiển thị 0.',
-    'Số tiền hiển thị trên cột Số tiền của danh sách là số của cấp duyệt gần nhất đã ghi.',
-])
-
-d.p('BR-07 — Quy tắc từ chối theo cấp')
-d.bullets([
-    'Từ chối ở cấp Trưởng phòng đưa phiếu về trạng thái Đang tạo (dạng nháp của người lập).',
-    'Từ chối ở cấp Kế toán công nợ, Kế toán trưởng hoặc Ban giám đốc đưa phiếu sang trạng thái '
-    'Không duyệt.',
-    'Ghi chú bắt buộc của đúng cấp đang giữ phiếu; trạng thái dùng để xác định ô bắt buộc được '
-    'đọc từ dữ liệu phiếu, không lấy theo khai báo của người gửi.',
-    'Ô Lý do không duyệt không bắt buộc; nội dung của nó hiển thị trên thông báo gửi người lập.',
-    'Phiếu bị từ chối được người lập sửa lại và gửi lại; phiếu quay về Chờ TP duyệt và đi lại '
-    'luồng duyệt từ cấp đầu tiên.',
-])
-
-d.p('BR-08 — Điều kiện sửa và xóa phiếu')
-d.bullets([
-    'Chỉ người lập phiếu mới sửa và xóa được phiếu của mình.',
-    'Chỉ sửa và xóa được khi phiếu đang ở trạng thái Đang tạo hoặc Không duyệt.',
-    'Người duyệt không sửa được nội dung phiếu — thao tác duyệt đi qua đường riêng, không dùng '
-    'chung với chức năng sửa.',
-])
-
-d.p('BR-09 — Ràng buộc dữ liệu theo loại chi và hình thức thanh toán')
-d.bullets([
-    'Hình thức chuyển khoản: chọn đối tượng nhận tiền một lần ở cấp phiếu và bắt buộc khối '
-    'Thông tin ngân hàng khi gửi duyệt.',
-    'Hình thức tiền mặt: chọn đối tượng theo từng dòng chi tiết, không có khối ngân hàng.',
-    'Loại Chi trả nhà cung cấp: bắt buộc ít nhất một file đính kèm khi gửi duyệt; ba loại còn '
-    'lại không bắt buộc.',
-    'Loại Thanh toán chi phí vận chuyển NCC: bắt buộc Nhà cung cấp và Đến ngày; dòng chi tiết do '
-    'hệ thống sinh, không thêm / xóa bằng tay; chỉ dòng được tích mới bắt buộc số tiền.',
-    'Loại Chi thưởng thực hiện hợp đồng: không chọn đối tượng; hợp đồng lọc theo quyền hưởng '
-    'thưởng của người lập; với hình thức chuyển khoản thì khối ngân hàng lấy theo hồ sơ của '
-    'chính người lập.',
-    'Nhà cung cấp nước ngoài: bắt buộc thêm Ngân hàng, Swift Code và Phí.',
-])
-
-d.p('BR-10 — Ràng buộc khác nhau giữa Lưu nháp và Lưu và gửi duyệt')
-d.bullets([
-    'Lưu nháp: bắt buộc Lý do chi và tỷ giá lớn hơn 0; không bắt buộc bảng chi tiết, khối ngân '
-    'hàng và file đính kèm.',
-    'Lưu và gửi duyệt: bắt buộc thêm ít nhất một dòng chi tiết hợp lệ, khối ngân hàng (nếu '
-    'chuyển khoản) và file đính kèm (nếu loại Chi trả nhà cung cấp).',
-    'Trong cả hai trường hợp, dòng chi tiết đã thêm đều phải có đủ đối tượng, hợp đồng và số '
-    'tiền từ 1 trở lên.',
-])
-
-d.p('BR-11 — Nguồn hợp đồng theo loại chi')
-d.bullets([
-    'Loại Chi trả nhà cung cấp lấy từ năm nguồn hợp đồng MUA của nhà cung cấp.',
-    'Loại Chi trả lại khách hàng và Chi thưởng thực hiện hợp đồng lấy từ các nguồn hợp đồng BÁN.',
-    'Loại Thanh toán chi phí vận chuyển NCC không gắn hợp đồng mà gắn chuyến xe.',
-    'Hệ thống kiểm tra loại hợp đồng gửi lên phải đúng nhóm của loại chi; sai nhóm thì không lưu '
-    'được.',
-    'Một hợp đồng chỉ được chọn một lần trong cùng một phiếu.',
-])
-
-d.p('BR-12 — Công nợ tính theo sổ kế toán, không lưu trong phiếu')
-d.bullets([
-    'Công nợ được tính lại mỗi lần mở phiếu hoặc mở cửa sổ chọn hợp đồng, dựa trên sổ kế toán.',
-    'Hợp đồng chưa phát sinh bút toán kế toán thì giá trị hiển thị bằng 0 — đây là hiện trạng đã '
-    'được chấp nhận, không phải lỗi dữ liệu.',
-    'Trần số tiền đề nghị chỉ áp khi công nợ lớn hơn 0.',
-])
-
-d.p('BR-13 — Tỷ giá và quy đổi VND')
-d.bullets([
-    'Loại tiền VNĐ: tỷ giá luôn bằng 1, ô bị khóa, bảng chi tiết chỉ có một cột số tiền.',
-    'Loại tiền khác VNĐ: hệ thống tự điền tỷ giá của loại tiền đó khi người dùng đổi loại tiền; '
-    'người dùng vẫn sửa tay được.',
-    'Số tiền quy đổi VND của một dòng bằng số tiền nhập nhân với tỷ giá.',
-    'Tỷ giá bằng 0 hoặc để trống thì hệ thống báo “Phải lớn hơn 0” và không cho lưu.',
-])
-
-d.p('BR-14 — Thông báo theo sự kiện')
-d.bullets([
-    'Gửi duyệt: báo cho nhóm Trưởng phòng duyệt cùng công ty với phiếu.',
-    'Duyệt xong một cấp: báo cho nhóm của cấp kế tiếp (việc cần làm), đồng thời báo cho người '
-    'lập và cấp vừa duyệt trước đó (việc đã xong).',
-    'Từ chối: báo cho người lập và cho tất cả các cấp mà phiếu đã đi qua; các cấp chưa đi qua '
-    'không nhận thông báo.',
-    'Mọi thông báo đều mở đúng phiếu khi bấm vào, và luôn giới hạn trong công ty của phiếu.',
-    'Lỗi gửi thông báo không làm hỏng thao tác nghiệp vụ đang thực hiện.',
-])
-
-d.p('BR-15 — File đính kèm')
-d.bullets([
-    'File được tải lên ngay lúc người dùng chọn, không chờ tới lúc lưu phiếu, để xem trước được '
-    'nội dung.',
-    'Chỉ nhận các định dạng pdf, png, jpg, jpeg, doc, docx, xls, xlsx, zip và dung lượng tối đa '
-    '20MB mỗi file.',
-    'Chỉ nhận file do chính chức năng tải lên của màn này sinh ra; không nhận đường dẫn tuỳ ý.',
-    'Xóa một file đã lưu sẽ xóa hẳn file khỏi kho lưu trữ, không hoàn tác được.',
-    'Chọn file rồi bỏ form giữa chừng thì file đã tải lên vẫn nằm trên kho lưu trữ — đây là đánh '
-    'đổi đã được chấp nhận.',
-])
-
-d.p('BR-16 — Ghi lịch sử thay đổi')
-d.bullets([
-    'Mọi thao tác tạo mới, sửa, xóa, duyệt và từ chối đều được ghi một dòng lịch sử kèm người '
-    'thực hiện và thời điểm.',
-    'Giá trị trong lịch sử lưu theo tên hiển thị tiếng Việt nên đổi tên danh mục về sau không '
-    'làm sai lịch sử cũ.',
-    'Thao tác duyệt ghi kèm số tiền cấp đó vừa ghi cho TỪNG DÒNG chi tiết, dạng giá trị cũ → '
-    'giá trị mới.',
-    'Thao tác từ chối ghi kèm ghi chú mà người từ chối đã nhập.',
-    'Lỗi ghi lịch sử không làm hỏng thao tác nghiệp vụ đang thực hiện.',
-])
-
-d.p('BR-17 — Ghi nhớ bộ lọc và cấu hình hiển thị')
-d.bullets([
-    'Bộ lọc đang áp dụng được ghi nhớ trong 10 phút và lưu RIÊNG cho từng chế độ xem.',
-    'Cấu hình tiêu chí lọc lưu riêng theo người dùng và theo chế độ; cấu hình cột lưu riêng theo '
-    'người dùng nhưng dùng CHUNG cho cả bốn chế độ.',
-    'Ba cột STT, Mã phiếu và Hành động luôn hiển thị và không đổi vị trí được.',
-])
-
-d.p('BR-18 — Ranh giới với màn Phiếu chi và Ủy nhiệm chi')
-d.bullets([
-    'Màn Phiếu đề nghị thanh toán dừng ở trạng thái Chờ tạo phiếu chi.',
-    'Kế toán thanh toán chuyển tiếp bằng nút Tạo phiếu chi (hình thức tiền mặt) hoặc Tạo ủy '
-    'nhiệm chi (hình thức chuyển khoản); hai nút loại trừ nhau và chỉ hiện khi phiếu chưa có '
-    'chứng từ chi.',
-    'Ba trạng thái Chờ duyệt phiếu chi, Duyệt phiếu chi và Đã hủy do màn Phiếu chi / Ủy nhiệm '
-    'chi đặt; màn này chỉ hiển thị.',
+d.rule_table([
+    ('BR-01', 'Mã phiếu sinh tự động và duy nhất', [
+        '– Mã phiếu do hệ thống sinh khi lưu lần đầu, theo dạng <mã công ty>.DNTT<tháng '
+        'năm>.<5 chữ số>, số chạy tăng dần trong cùng công ty và cùng tháng.',
+        '– Người dùng không nhập và không sửa được mã phiếu.',
+        '– Hai người lưu phiếu cùng lúc vẫn nhận hai mã khác nhau; mã đã dùng không được '
+        'cấp lại kể cả khi phiếu bị xóa.',
+    ], 'Lập phiếu'),
+    ('BR-02', 'Bốn chế độ xem, bốn điều kiện dữ liệu khác nhau', [
+        '– Chế độ Tất cả: áp phạm vi quyền xem theo thứ tự V1 → V2 → V3 → V4; không có cấp '
+        'nào thì chỉ thấy phiếu do chính mình lập.',
+        '– Chế độ Của tôi: mọi phiếu do chính mình lập, kể cả phiếu nháp.',
+        '– Chế độ Chờ duyệt: phiếu cùng công ty với người đăng nhập VÀ đang ở đúng trạng '
+        'thái mà người đó có quyền duyệt; không giữ vai nào thì danh sách rỗng.',
+        '– Chế độ Đã duyệt: phiếu mà chính mình đã duyệt ở bất kỳ cấp nào.',
+        '– Nhóm quyền phạm vi KHÔNG áp cho chế độ Chờ duyệt và Đã duyệt — người duyệt '
+        'thường không giữ quyền xem theo cấp nào.',
+    ], 'Xem danh sách'),
+    ('BR-03', 'Phiếu nháp của người khác luôn bị ẩn', [
+        '– Ở chế độ Tất cả, phiếu ở trạng thái Đang tạo chỉ người lập nhìn thấy, kể cả '
+        'người giữ V1.',
+        '– Quy tắc này áp cả khi mở chi tiết bằng đường dẫn trực tiếp.',
+    ], ['Xem danh sách', 'Xem chi tiết']),
+    ('BR-04', 'Phạm vi duyệt của từng cấp', [
+        '– Cấp Trưởng phòng chỉ duyệt được phiếu ở trạng thái Chờ TP duyệt, cùng công ty VÀ '
+        'thuộc phòng ban mà người đó được giao quản lý.',
+        '– Cấp Kế toán công nợ, Kế toán trưởng, Ban giám đốc và Kế toán thanh toán chỉ giới '
+        'hạn theo công ty, không giới hạn theo phòng ban.',
+        '– Người giữ nhiều vai duyệt thấy phiếu của tất cả các vai đó trong cùng danh sách '
+        'Chờ duyệt.',
+    ], ['Xem danh sách (chế độ Chờ duyệt)', 'Duyệt phiếu', 'Từ chối phiếu']),
+    ('BR-05', 'Thứ tự luồng duyệt và chặn nhảy cóc', [
+        '– Thứ tự: Chờ TP duyệt → Chờ kế toán công nợ duyệt → Chờ kế toán trưởng duyệt → '
+        '(tuỳ chọn) Chờ ban giám đốc duyệt → Chờ tạo phiếu chi.',
+        '– Cấp Kế toán trưởng có hai lựa chọn: duyệt thẳng sang Chờ tạo phiếu chi, hoặc '
+        'chuyển sang Chờ ban giám đốc duyệt.',
+        '– Hệ thống chỉ chấp nhận các trạng thái đích hợp lệ tính từ trạng thái hiện tại; '
+        'mọi bước nhảy cóc đều bị từ chối với thông báo “Không thể chuyển phiếu sang trạng '
+        'thái này”.',
+        '– Người dùng không thể tự đặt phiếu sang các trạng thái do màn Phiếu chi quản lý '
+        '(Chờ duyệt phiếu chi, Duyệt phiếu chi, Đã hủy).',
+    ], ['Duyệt phiếu', 'Từ chối phiếu']),
+    ('BR-06', 'Số tiền duyệt của từng cấp ghi vào cột riêng', [
+        '– Mỗi cấp duyệt ghi số tiền chấp thuận vào cột riêng của cấp mình; cấp Kế toán '
+        'trưởng và Ban giám đốc dùng CHUNG một cột.',
+        '– Ở màn chi tiết, chỉ cột tiền của cấp đang giữ phiếu là ô nhập được; các cột khác '
+        'chỉ đọc.',
+        '– Cột Số tiền chi luôn chỉ đọc, lấy từ phiếu chi hoặc giấy ủy nhiệm chi; chưa có '
+        'chứng từ chi thì hiển thị dấu gạch dưới chứ không hiển thị 0.',
+        '– Số tiền hiển thị trên cột Số tiền của danh sách là số của cấp duyệt gần nhất đã '
+        'ghi.',
+    ], ['Duyệt phiếu', 'Xem chi tiết']),
+    ('BR-07', 'Quy tắc từ chối theo cấp', [
+        '– Từ chối ở cấp Trưởng phòng đưa phiếu về trạng thái Đang tạo (dạng nháp của người '
+        'lập).',
+        '– Từ chối ở cấp Kế toán công nợ, Kế toán trưởng hoặc Ban giám đốc đưa phiếu sang '
+        'trạng thái Không duyệt.',
+        '– Ghi chú bắt buộc của đúng cấp đang giữ phiếu; trạng thái dùng để xác định ô bắt '
+        'buộc được đọc từ dữ liệu phiếu, không lấy theo khai báo của người gửi.',
+        '– Ô Lý do không duyệt không bắt buộc; nội dung của nó hiển thị trên thông báo gửi '
+        'người lập.',
+        '– Phiếu bị từ chối được người lập sửa lại và gửi lại; phiếu quay về Chờ TP duyệt '
+        'và đi lại luồng duyệt từ cấp đầu tiên.',
+    ], ['Từ chối phiếu', 'Sửa phiếu']),
+    ('BR-08', 'Điều kiện sửa và xóa phiếu', [
+        '– Chỉ người lập phiếu mới sửa và xóa được phiếu của mình.',
+        '– Chỉ sửa và xóa được khi phiếu đang ở trạng thái Đang tạo hoặc Không duyệt.',
+        '– Người duyệt không sửa được nội dung phiếu — thao tác duyệt đi qua đường riêng, '
+        'không dùng chung với chức năng sửa.',
+    ], ['Sửa phiếu', 'Xóa phiếu']),
+    ('BR-09', 'Ràng buộc dữ liệu theo loại chi và hình thức thanh toán', [
+        '– Hình thức chuyển khoản: chọn đối tượng nhận tiền một lần ở cấp phiếu và bắt buộc '
+        'khối Thông tin ngân hàng khi gửi duyệt.',
+        '– Hình thức tiền mặt: chọn đối tượng theo từng dòng chi tiết, không có khối ngân '
+        'hàng.',
+        '– Loại Chi trả nhà cung cấp: bắt buộc ít nhất một file đính kèm khi gửi duyệt; ba '
+        'loại còn lại không bắt buộc.',
+        '– Loại Thanh toán chi phí vận chuyển NCC: bắt buộc Nhà cung cấp và Đến ngày; dòng '
+        'chi tiết do hệ thống sinh, không thêm / xóa bằng tay; chỉ dòng được tích mới bắt '
+        'buộc số tiền.',
+        '– Loại Chi thưởng thực hiện hợp đồng: không chọn đối tượng; hợp đồng lọc theo '
+        'quyền hưởng thưởng của người lập; với hình thức chuyển khoản thì khối ngân hàng '
+        'lấy theo hồ sơ của chính người lập.',
+        '– Nhà cung cấp nước ngoài: bắt buộc thêm Ngân hàng, Swift Code và Phí.',
+    ], ['Lập phiếu', 'Sửa phiếu']),
+    ('BR-10', 'Ràng buộc khác nhau giữa Lưu nháp và Lưu và gửi duyệt', [
+        '– Lưu nháp: bắt buộc Lý do chi và tỷ giá lớn hơn 0; không bắt buộc bảng chi tiết, '
+        'khối ngân hàng và file đính kèm.',
+        '– Lưu và gửi duyệt: bắt buộc thêm ít nhất một dòng chi tiết hợp lệ, khối ngân hàng '
+        '(nếu chuyển khoản) và file đính kèm (nếu loại Chi trả nhà cung cấp).',
+        '– Trong cả hai trường hợp, dòng chi tiết đã thêm đều phải có đủ đối tượng, hợp '
+        'đồng và số tiền từ 1 trở lên.',
+    ], ['Lập phiếu', 'Sửa phiếu']),
+    ('BR-11', 'Nguồn hợp đồng theo loại chi', [
+        '– Loại Chi trả nhà cung cấp lấy từ năm nguồn hợp đồng MUA của nhà cung cấp.',
+        '– Loại Chi trả lại khách hàng và Chi thưởng thực hiện hợp đồng lấy từ các nguồn '
+        'hợp đồng BÁN.',
+        '– Loại Thanh toán chi phí vận chuyển NCC không gắn hợp đồng mà gắn chuyến xe.',
+        '– Hệ thống kiểm tra loại hợp đồng gửi lên phải đúng nhóm của loại chi; sai nhóm '
+        'thì không lưu được.',
+        '– Một hợp đồng chỉ được chọn một lần trong cùng một phiếu.',
+    ], ['Chọn đối tượng và hợp đồng', 'Lập phiếu']),
+    ('BR-12', 'Công nợ tính theo sổ kế toán, không lưu trong phiếu', [
+        '– Công nợ được tính lại mỗi lần mở phiếu hoặc mở cửa sổ chọn hợp đồng, dựa trên sổ '
+        'kế toán.',
+        '– Hợp đồng chưa phát sinh bút toán kế toán thì giá trị hiển thị bằng 0 — đây là '
+        'hiện trạng đã được chấp nhận, không phải lỗi dữ liệu.',
+        '– Trần số tiền đề nghị chỉ áp khi công nợ lớn hơn 0.',
+    ], ['Chọn đối tượng và hợp đồng', 'Lập phiếu', 'Xem chi tiết']),
+    ('BR-13', 'Tỷ giá và quy đổi VND', [
+        '– Loại tiền VNĐ: tỷ giá luôn bằng 1, ô bị khóa, bảng chi tiết chỉ có một cột số '
+        'tiền.',
+        '– Loại tiền khác VNĐ: hệ thống tự điền tỷ giá của loại tiền đó khi người dùng đổi '
+        'loại tiền; người dùng vẫn sửa tay được.',
+        '– Số tiền quy đổi VND của một dòng bằng số tiền nhập nhân với tỷ giá.',
+        '– Tỷ giá bằng 0 hoặc để trống thì hệ thống báo “Phải lớn hơn 0” và không cho lưu.',
+    ], ['Lập phiếu', 'Sửa phiếu']),
+    ('BR-14', 'Thông báo theo sự kiện', [
+        '– Gửi duyệt: báo cho nhóm Trưởng phòng duyệt cùng công ty với phiếu.',
+        '– Duyệt xong một cấp: báo cho nhóm của cấp kế tiếp (việc cần làm), đồng thời báo '
+        'cho người lập và cấp vừa duyệt trước đó (việc đã xong).',
+        '– Từ chối: báo cho người lập và cho tất cả các cấp mà phiếu đã đi qua; các cấp '
+        'chưa đi qua không nhận thông báo.',
+        '– Mọi thông báo đều mở đúng phiếu khi bấm vào, và luôn giới hạn trong công ty của '
+        'phiếu.',
+        '– Lỗi gửi thông báo không làm hỏng thao tác nghiệp vụ đang thực hiện.',
+    ], ['Lập phiếu', 'Duyệt phiếu', 'Từ chối phiếu']),
+    ('BR-15', 'File đính kèm', [
+        '– File được tải lên ngay lúc người dùng chọn, không chờ tới lúc lưu phiếu, để xem '
+        'trước được nội dung.',
+        '– Chỉ nhận các định dạng pdf, png, jpg, jpeg, doc, docx, xls, xlsx, zip và dung '
+        'lượng tối đa 20MB mỗi file.',
+        '– Chỉ nhận file do chính chức năng tải lên của màn này sinh ra; không nhận đường '
+        'dẫn tuỳ ý.',
+        '– Xóa một file đã lưu sẽ xóa hẳn file khỏi kho lưu trữ, không hoàn tác được.',
+        '– Chọn file rồi bỏ form giữa chừng thì file đã tải lên vẫn nằm trên kho lưu trữ — '
+        'đây là đánh đổi đã được chấp nhận.',
+    ], 'Quản lý file đính kèm'),
+    ('BR-16', 'Ghi lịch sử thay đổi', [
+        '– Mọi thao tác tạo mới, sửa, xóa, duyệt và từ chối đều được ghi một dòng lịch sử '
+        'kèm người thực hiện và thời điểm.',
+        '– Giá trị trong lịch sử lưu theo tên hiển thị tiếng Việt nên đổi tên danh mục về '
+        'sau không làm sai lịch sử cũ.',
+        '– Thao tác duyệt ghi kèm số tiền cấp đó vừa ghi cho TỪNG DÒNG chi tiết, dạng giá '
+        'trị cũ → giá trị mới.',
+        '– Thao tác từ chối ghi kèm ghi chú mà người từ chối đã nhập.',
+        '– Lỗi ghi lịch sử không làm hỏng thao tác nghiệp vụ đang thực hiện.',
+    ], 'Toàn màn hình'),
+    ('BR-17', 'Ghi nhớ bộ lọc và cấu hình hiển thị', [
+        '– Bộ lọc đang áp dụng được ghi nhớ trong 10 phút và lưu RIÊNG cho từng chế độ xem.',
+        '– Cấu hình tiêu chí lọc lưu riêng theo người dùng và theo chế độ; cấu hình cột lưu '
+        'riêng theo người dùng nhưng dùng CHUNG cho cả bốn chế độ.',
+        '– Ba cột STT, Mã phiếu và Hành động luôn hiển thị và không đổi vị trí được.',
+    ], ['Xem danh sách', 'Tìm kiếm và lọc', 'Cài đặt bộ lọc']),
+    ('BR-18', 'Ranh giới với màn Phiếu chi và Ủy nhiệm chi', [
+        '– Màn Phiếu đề nghị thanh toán dừng ở trạng thái Chờ tạo phiếu chi.',
+        '– Kế toán thanh toán chuyển tiếp bằng nút Tạo phiếu chi (hình thức tiền mặt) hoặc '
+        'Tạo ủy nhiệm chi (hình thức chuyển khoản); hai nút loại trừ nhau và chỉ hiện khi '
+        'phiếu chưa có chứng từ chi.',
+        '– Ba trạng thái Chờ duyệt phiếu chi, Duyệt phiếu chi và Đã hủy do màn Phiếu chi / '
+        'Ủy nhiệm chi đặt; màn này chỉ hiển thị.',
+    ], 'Toàn màn hình'),
 ])
 
 d.save()

@@ -26,7 +26,13 @@ về" · 3 loại thu (bán hàng / nhà cung cấp / khác) · màn **Tổng h�
 **Import Excel sao kê** · cửa sang màn Điều chỉnh công nợ · **Lịch sử thay đổi** (ERP không có).
 
 **Ngoài**: 2 màn rác `forAccounting` / `approved` bên ERP (trỏ nhầm sang API Phiếu đề nghị thu tiền,
-không có mục menu) · không đụng repo ERP · không migration cấu trúc bảng chính · không `mysql2`.
+không có mục menu) · không đụng repo ERP · không `mysql2`.
+
+> Cập nhật 2026-09-03: ban đầu feature chốt "không migration cấu trúc bảng chính", nay đã có
+> **1 migration** `2026_09_03_000001_widen_note_on_bill_income_reports_table` nới
+> `bill_income_reports.note` từ `varchar(255)` lên `varchar(500)` (user chốt). Nới cột là thao tác
+> tương thích ngược nên cổng ERP không ảnh hưởng — nhưng lưu ý diễn giải dài hơn 255 ký tự sẽ hiện
+> nguyên vẹn ở màn/bản in bên ERP, chưa rà bố cục bên đó.
 
 ## Quyết định lớn (user chốt 2026-08-24)
 

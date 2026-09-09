@@ -11,8 +11,13 @@ Chuẩn hoá cách làm màn IN (`pages/**/print.vue`, `pages/**/_id/print.vue`)
 
 ## 0. KHUÔN HIỂN THỊ CHUẨN của màn IN (chốt 2026-08-21) — copy nguyên, KHÔNG tự chế
 
-Màn mẫu: `pages/customer-care/warranty-repair-requests/_id/print.vue` (khổ DỌC) và
-`pages/customer-care/warranty-repair-handle-requests/print.vue` (khổ NGANG).
+Màn mẫu: `pages/customer-care/device-errors/_id/print.vue` (khổ DỌC) và
+`pages/customer-care/device-errors/print.vue` (khổ NGANG).
+
+> ⚠️ 2 màn mẫu cũ (`warranty-repair-requests/_id/print.vue` · `warranty-repair-handle-requests/print.vue`)
+> **đã bị xóa** ngày 2026-08-22 (commit `ed1c24e53`): 3 màn luồng bảo hành chuyển hẳn sang popup
+> xem trước `ReportPrintPreviewModal` (mục 12), bỏ trang `/print` để không có 2 nguồn CSS in.
+> Màn mới nếu chỉ cần xem trước + in thì **cân nhắc dùng popup trước**, đừng mặc định dựng trang `/print`.
 Mọi màn in phải giống 3 điểm sau, không có ngoại lệ:
 
 1. **KHÔNG có menu / topbar** — khai `layout: 'print'` (`layouts/print.vue`). Dùng
