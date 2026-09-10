@@ -352,6 +352,20 @@ SEC_III = [
      "3. Lưu lại, thoát ra rồi vào lại màn hình",
      "—",
      "- Bảng hiện thêm đúng 3 cột vừa bật\n- Vào lại vẫn giữ nguyên lựa chọn"),
+
+    ("005", "Bật cột Người cập nhật / Ngày cập nhật", "P1",
+     "Có 1 phiếu vừa được sửa lại sau khi lập.",
+     "1. Bấm Cấu hình cột hiển thị\n2. Bật Người cập nhật và Ngày cập nhật\n3. Lưu lại",
+     "Bật: Người cập nhật, Ngày cập nhật",
+     "- Hai cột hiện ở cuối bảng, đúng người sửa gần nhất và đúng thời điểm\n"
+     "- Phiếu chưa ai sửa lại thì 2 ô này để trống, không hiện ký tự lạ"),
+
+    ("006", "Cột Ngày xử lý chỉ có khi đã lập phiếu cung cấp thông tin", "P1",
+     "Có 1 phiếu ở “Chờ CCTT” và 1 phiếu ở “Đã CCTT”.",
+     "1. Bật cột Ngày xử lý\n2. So 2 phiếu",
+     "—",
+     "- Phiếu “Đã CCTT” có Ngày xử lý\n- ⚠️ Phiếu “Chờ CCTT” để trống — mốc này do màn Phiếu cung "
+     "cấp thông tin ghi, không phải màn này"),
 ]
 
 SEC_IV = [
@@ -580,7 +594,8 @@ SEC_VII = [
      "Phiếu đã điền đủ nguyên nhân và hành động.",
      "1. Bấm In ở dòng phiếu\n2. Xem trang xem trước",
      "—",
-     "- Mở tab mới, thấy khung tờ giấy dọc, nền quanh giấy màu trắng\n"
+     "- Mở cửa sổ “Xem trước phiếu xử lý yêu cầu” ngay trên màn hình, không mở tab mới\n"
+     "- Đầu bản in có tiêu đề công ty (logo, địa chỉ, điện thoại)\n"
      "- Bảng chi tiết có đủ 9 cột, trong đó có Nguyên nhân và Hành động\n"
      "- Có số phiếu xử lý, số phiếu yêu cầu, người yêu cầu, ngày nhận yêu cầu\n"
      "- Không còn chỗ nào bỏ trống dạng ký hiệu chờ điền"),
@@ -589,14 +604,39 @@ SEC_VII = [
      "Đang lọc trạng thái “Đã tư vấn điện thoại”.",
      "1. Bấm In danh sách\n2. Xem trang xem trước",
      "—",
-     "- Mở tab mới với mẫu danh sách khổ ngang, có khung tờ giấy\n- Bảng chứa đúng các phiếu đang lọc"),
+     "- Mở cửa sổ “Xem trước danh sách phiếu xử lý yêu cầu”\n- Bảng chứa đúng các phiếu đang lọc, "
+     "đủ 10 cột (có Người xử lý và Ngày xử lý)\n"
+     "- Có 2 dòng “Thời gian” và “Phòng xử lý yêu cầu”; không lọc thì ghi “Tất cả”"),
 
     ("005", "Nút In trên trang xem trước", "P1",
      "Đang ở trang xem trước bản in.",
      "1. Quan sát vị trí nút In\n2. Bấm nút In",
      "—",
-     "- Nút In nằm bên phải, thẳng mép phải tờ giấy\n- Mở hộp thoại in của trình duyệt, bản xem "
+     "- Nút In nằm ở góc trái trên cửa sổ xem trước\n- Mở hộp thoại in của trình duyệt, bản xem "
      "không có nút In và không có khung viền"),
+
+    ("006", "In danh sách khi chưa lọc gì — vượt trần in", "P0",
+     "Không áp bộ lọc nào, tổng hơn 5.000 phiếu.",
+     "1. Bấm In danh sách\n2. Đọc nội dung cửa sổ xem trước",
+     "—",
+     "- ⚠️ KHÔNG dựng bản in; cửa sổ chỉ hiện lời nhắc nền vàng: danh sách vượt mức in tối đa "
+     "2.000 dòng, đề nghị thu hẹp bộ lọc hoặc dùng Xuất Excel\n"
+     "- Lời nhắc ghi rõ số dòng thực tế\n- Trình duyệt không treo, không mở hộp thoại in"),
+
+    ("007", "Dòng tiến độ khi xuất Excel danh sách lớn", "P1",
+     "Bộ lọc ra hơn 4.000 phiếu.",
+     "1. Bấm Xuất Excel rồi Xuất file\n2. Quan sát dòng chữ cạnh nút trong lúc chờ",
+     "—",
+     "- Hiện dòng “Đã tải …/… dòng”, sau đó “Đang dựng file …/… dòng”\n"
+     "- Nút Xuất Excel khoá trong lúc chạy, xong thì mở lại\n- Tệp đủ số dòng, không thiếu trang"),
+
+    ("008", "Danh sách trường xuất file", "P1",
+     "Cửa sổ chọn trường xuất đang mở.",
+     "1. Bấm Chọn tất cả\n2. Đếm số trường",
+     "—",
+     "- Có 14 trường: Số phiếu xử lý, Số phiếu yêu cầu, Khách hàng, Tên thiết bị liên quan, Người "
+     "yêu cầu, Ngày nhận yêu cầu, Người xử lý, Ngày xử lý, Trạng thái, Địa chỉ sửa chữa, Ghi chú, "
+     "Ngày tạo, Người cập nhật, Ngày cập nhật\n- Bỏ chọn hết thì nút Xuất file không dùng được"),
 ]
 
 SEC_VIII = [
@@ -740,7 +780,7 @@ SECTIONS = [
 
 build(output_file=OUTPUT_FILE,
       sheet_name="Trang tính1",
-      feature_name="Phiếu xử lý yêu cầu - Cập nhật ngày 21/08/2026",
+      feature_name="Phiếu xử lý yêu cầu - Cập nhật ngày 03/09/2026",
       module_name=MODULE,
       description_block=DESCRIPTION_BLOCK,
       role_tcs=ROLE_TCS,

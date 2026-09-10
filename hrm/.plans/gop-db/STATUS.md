@@ -68,6 +68,30 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- **prod-cutover — Đưa `gop_db` lên PROD (1 nhánh, 2 môi trường)** → @namdangit →
+  `.plans/gop-db/prod-cutover/design.md` · `plan.md` ·
+  spec `docs/superpowers/specs/gop-db/2026-09-04-prod-cutover-design.md`
+  Trạng thái: **SPEC XONG (Phase 0), CHƯA CODE** (2026-09-04).
+  Kịch bản: ERP chạy code `master`, HRM chạy `gop_db`, **dùng chung 1 DB gộp**; PROD và dev
+  **chung 1 nhánh** — PROD chỉ mở 7 phân hệ HRM đã nghiệm thu, dev thấy đủ để port tiếp.
+  ⚠️ **Khảo sát phát hiện bản gộp `local_hrm_erp` đang có lỗi dữ liệu THẬT, âm thầm**:
+  FK của ERP **2.313 → 10** (556 bảng có FK còn 7); **736 dòng ERP trỏ NHẦM sang vai trò HRM**
+  + 1.820 mồ côi sau khi `ReconcileAuthSeeder` dời `roles.id +100000` mà chỉ remap 4/15 bảng —
+  gồm `companies.deputy_role` sai ở **8/8 công ty** (VD: đáng lẽ "Tổng giám đốc" → đang trỏ
+  "Quản lý Giải pháp DATKT SG"); `MergeProdSeeder` **DROP 14 bảng ERP** thay bằng bản HRM
+  (`majors` 156 dòng → **0**, `areas` → **1/20**, ERP `master` vẫn dùng cả hai);
+  `notifications` bị TRUNCATE (154k + 688k → **299**); nhóm `SHARE` ghi đè chéo theo id làm
+  **77 khách hàng** bị ghi dữ liệu của khách khác.
+  Nguồn lỗi nằm trong `Modules/Timesheet/Database/Seeders/GopDb/` → chạy pipeline đó lên PROD
+  sẽ tái hiện y hệt. **Phải vá pipeline + dựng cổng nghiệm thu trước khi cut-over.**
+  Đã chốt: cấu hình bật/tắt phân hệ **lưu trong DB (runtime)**, cắt **theo phân hệ** + chặn
+  link lẻ; nhánh PROD hiện tại là `tpe`; ranh giới = 17 thư mục `pages/` mới + 3 màn
+  (`/assign/contracts`, `/human/districts`, `/human/hamlets`); mức chặn BE **hoãn**.
+  **PROD CHƯA gộp DB** (user xác nhận 2026-09-04) → còn kịp vá pipeline trước khi chạy thật.
+  ✅ Đã có **cổng nghiệm thu**: `php artisan gopdb:health-check` (`app/Console/Commands/GopDb/HealthCheckCommand.php`)
+  — CHỈ SELECT, chạy trên PROD an toàn. `--mode=pre` cảnh báo cái gì sắp mất, `--mode=post` đo cái gì đã hỏng,
+  exit code 0/1/2 cắm được vào pipeline deploy. Danh sách nhóm bảng đọc từ `MergeProdSeeder` bằng Reflection.
+  Bước tiếp: Phase 1 (vá pipeline gộp) hoặc Phase 3 (ẩn menu PROD) — chờ chọn.
 - **finance-product-transfer — Phiếu điều chuyển hàng (ERP `product_transfers` → HRM)** → @junfoke →
   `.plans/gop-db/finance-product-transfer/khao-sat.md` · `design.md` · `plan.md`
   Trạng thái: **MỚI KHẢO SÁT XONG — chưa có dòng code nghiệp vụ nào** (2026-09-04).
@@ -135,6 +159,21 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Có đụng 2 thứ dùng chung: `AccountingStockService` (thêm `in_promotion`) và tách
   `PrepickApprovalRouteService` — đã test lại Gia hạn + Điều chuyển, lệch 0/300 phiếu.
   ⛔ Chưa nghiệm thu được loại 1-4: local 0 phiếu (4 bản dump ERP đều vậy, nghi nhánh code chết).
+  **Vòng QA 04-05/09/2026 (#11302 · #11304 · #11308 · #11311 · #11312 · #11313)**: đã sửa 11 điểm —
+  link YCXG mở tab mới; lịch chặn ngày quá khứ/quá trần; mẫu in đổi width px sang %; khối Lịch sử
+  có Thu gọn/Xem lịch sử (cả 2 màn); gộp 2 tầng header "Số lượng"; bổ sung Mã KH/SĐT/Địa chỉ/ĐC
+  giao hàng/Phòng ban ở màn Thêm; cột "Có thể giữ" mất số (buildQueryString sinh `product_ids=`
+  không có `[]`); chặn SL đề nghị vượt tồn ngay lúc gửi duyệt; xoá lỗi cũ khi đổi hợp đồng; chặn
+  tệp > 13 MB ngay ở FE. **Chưa chạy thử trên trình duyệt** (code chưa deploy lên dev).
+  **Vòng QA 05/09 đợt 2 (#11314 · #11315)** — ô ĐVT: (a) select dùng `v-model` trên BẢN SAO dòng của
+  `visibleRows` nên ĐVT chọn xong không vào `form.products`, payload vẫn gửi đơn vị cũ; (b) BE trả
+  "Có thể giữ" theo ĐƠN VỊ GỐC, thiếu phép chia hệ số của ERP `updateInStock()`; (c) FE tự điền
+  ĐVT đầu danh sách nên "không chọn" vẫn lưu được. Đã sửa cả 3, thêm nhãn ĐVT kèm hệ số, nạp lại
+  danh sách ĐVT ở màn Sửa, và trừ tồn khuyến mại cho khớp bước Duyệt giữ hàng.
+  **Vòng QA 07/09 (#11321 · #11322)** — #11321 (2 thùng duyệt ra 2 lọ) đã hết nhờ bản 05/09, kiểm
+  trực tiếp trên dev. #11322 (bấm Sửa mất ĐVT) là lỗi MỚI do bản 05/09 lộ ra: select2 tự bắn
+  `change` rỗng lúc options chưa nạp xong -> handler xoá sạch ĐVT/đơn giá của phiếu dù màn vẫn
+  hiện "Lọ". Đã chặn ở `onUnitChange` (bỏ qua khi chưa có options + bỏ qua cú change lặp).
   Bước tiếp: chạy migration `2026_09_03_000001_...` trên dev · gỡ 3 quyền tạm của emp 781 ·
   commit (chi tiết ở cuối Phase 13 của plan.md).
   Chi tiết + gotcha: plan.md | Tóm tắt: .plans/gop-db/finance-prepick-export-request/design.md

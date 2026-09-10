@@ -1,6 +1,6 @@
 ---
 name: export-excel
-description: Use when tạo mới hoặc sửa chức năng XUẤT EXCEL ở BE (class `*Export` + blade `exports/*.blade.php` dùng `maatwebsite/excel`), hoặc khi user báo lỗi file .xlsx tải về — thiếu logo công ty, logo quá to / đè mất tiêu đề (nhất là khi máy này bị máy kia không), cột quá hẹp/chữ bị cắt, số tiền bị Excel cảnh báo "The number in this cell is formatted as text", số không có dấu phân cách hàng nghìn, dấu ngăn nghìn ra dấu phẩy thay vì dấu chấm, cộng SUM ra 0, ô hiện nguyên thẻ HTML (`<div>`, `<br />`, `&agrave;`) hoặc mô tả nhiều dòng bị dính liền.
+description: Use when tạo mới hoặc sửa chức năng XUẤT EXCEL ở BE (class `*Export` + blade `exports/*.blade.php` dùng `maatwebsite/excel`), hoặc khi user báo lỗi file .xlsx tải về — thiếu logo công ty, logo quá to / đè mất tiêu đề (nhất là khi máy này bị máy kia không), cột quá hẹp/chữ bị cắt, số tiền bị Excel cảnh báo "The number in this cell is formatted as text", số không có dấu phân cách hàng nghìn, cần chốt dấu ngăn nghìn là phẩy hay chấm, cộng SUM ra 0, ô hiện nguyên thẻ HTML (`<div>`, `<br />`, `&agrave;`) hoặc mô tả nhiều dòng bị dính liền.
 ---
 
 # Skill: Export Excel (BE)
@@ -88,6 +88,21 @@ Excel canh trái, để nguyên là nó lệch hẳn khỏi cột số bên trê
 
 ### 1b. "Sao dấu ngăn nghìn ra dấu phẩy?" — TUYỆT ĐỐI không chữa bằng cách ghi ô thành chữ
 
+> **QUY TẮC SỐ CỦA DỰ ÁN (chốt 2026-08-27, nhắc lại 28/08): dấu PHẨY ngăn nghìn, dấu CHẤM thập
+> phân** — `1,234,567.89`. Tức dấu phẩy là **ĐÚNG**, không phải lỗi cần chữa. Áp cho cả bản in,
+> file xuất và số hiển thị trên màn. Bên máy chủ cứ `number_format($x)` mặc định; bên giao diện
+> dùng `toLocaleString('en-US')`, **không** `'vi-VN'`.
+>
+> ⚠️ **Riêng file Excel thì quy tắc này KHÔNG ép được, và đó là chuyện bình thường.** Bản in và màn
+> hình do ta tự vẽ chữ nên ra đúng dấu phẩy; còn `.xlsx` chỉ lưu SỐ + mã `#,##0`, Excel vẽ dấu ngăn
+> cách theo Regional Settings của máy mở file. Người dùng để định dạng vùng Việt Nam sẽ thấy dấu
+> chấm — **file vẫn đúng**.
+>
+> **User chốt 2026-08-28: giữ ô kiểu SỐ**, chấp nhận dấu ngăn cách chạy theo máy, đổi lấy SUM/lọc/
+> pivot dùng được và không có tam giác xanh. Ai muốn thấy dấu phẩy thì đổi Regional Settings của
+> máy mình sang English (Settings → Time & language → Language & region → Regional format).
+> **Đừng mở lại cuộc tranh luận này bằng cách ghi ô thành chuỗi.**
+
 Mã định dạng của `.xlsx` (`#,##0`) **không chứa ký tự ngăn cách**: Excel vẽ bằng ký tự lấy từ
 **Windows Regional Settings của máy đang mở file**. Máy đặt kiểu Anh thì ô số luôn ra `60,000` dù
 file ghi hoàn toàn đúng chuẩn. Không có mã nào ép được dấu `.` mà vẫn giữ ô là số — `[$-42A]#,##0`,
@@ -104,10 +119,11 @@ file ghi hoàn toàn đúng chuẩn. Không có mã nào ép được dấu `.` 
 mục 1c. Cách chữa đúng khi user chê dấu ngăn cách là **đổi Regional format của Windows sang
 Vietnam** (Settings → Time & language → Language & region → Regional format), không phải sửa code.
 
-Cũng đừng mất công tìm cách tắt tam giác xanh bằng `<ignoredErrors numberStoredAsText="1"/>`:
-PhpSpreadsheet của dự án là **1.25.2**, API `setIgnoredErrors()` mãi 1.29 mới có. Muốn dùng phải
-vá thẳng vào gói `.xlsx` sau khi ghi, và thẻ đó bắt buộc nằm **trước** `<drawing>` (letterhead) theo
-schema — sai thứ tự là Excel báo file hỏng.
+Cũng đừng mất công tắt tam giác xanh bằng `<ignoredErrors numberStoredAsText="1"/>` **ở phía máy
+chủ**: PhpSpreadsheet của dự án là **1.25.2**, API `setIgnoredErrors()` mãi 1.29 mới có.
+
+> 📌 Nhưng ở **file dựng bằng ExcelJS (FE)** thì thẻ đó lại là cách đúng — và đã làm rồi: xem mục
+> **4d**. Chỉ áp cho cột CHUỖI toàn chữ số (SĐT, mã số thuế), KHÔNG phải cho ô tiền.
 
 ### 1c. Chuỗi kiểu Việt còn sót lại — phải chặn bằng `WithCustomValueBinder`
 
@@ -412,8 +428,9 @@ phần logo chưa kiểm chứng trên môi trường thật.
 - [ ] Field rich-text (TSKT / ghi chú / điều khoản) đi qua `nl2br(e(htmlToText(...)))`, cột có width cố định + wrap (mục 1b)
 - [ ] File này có được **re-import** không? Nếu có: phép so "khớp bản gốc" đã hạ HTML ở CẢ 2 phía
 - [ ] Ô cố ý là chuỗi (kèm "đồng"/tên tiền tệ) thì **không** gắn `data-format`
-- [ ] User chê dấu ngăn cách ra dấu phẩy → hướng dẫn đổi Windows Regional Settings, **KHÔNG** đổi ô
-      tiền sang chuỗi
+- [ ] Dấu ngăn cách: quy tắc dự án là **dấu phẩy** (mục 1b) nên ô số + `#,##0` là ĐÚNG rồi. Ai muốn
+      dấu chấm thì đó là Windows Regional Settings của máy họ, **KHÔNG** đổi ô tiền sang chuỗi
+- [ ] Số hiển thị trên màn dùng `toLocaleString('en-US')` — grep `'vi-VN'` trong màn phải rỗng
 - [ ] Còn chuỗi số kiểu Việt nào trong view (tỷ giá, ghi chú có số…) → đã có `WithCustomValueBinder`
       chặn `is_numeric('23.000')`
 - [ ] Export dựng ở FE (`export-rows` + ExcelJS): BE trả cột tiền kiểu `float`, KHÔNG ép `(string)`; không đóng băng hàng tiêu đề (mục 4c)
@@ -525,6 +542,44 @@ Nhìn bằng mắt thì convert ra ảnh, KHÔNG mở từng trang in (trang in 
 soffice --headless --convert-to pdf:'calc_pdf_Export:{"SinglePageSheets":{"type":"boolean","value":true}}' file.xlsx --outdir .
 sips -s format png --out out.png file.pdf
 ```
+
+---
+
+## 4d. Cột CHUỖI toàn chữ số (SĐT, mã số thuế) — tắt cảnh báo bằng `ignoredErrors`
+
+**Triệu chứng:** cột Điện thoại liên hệ hiện tam giác xanh ở từng ô, hover ra *"The number in this
+cell is stored as text"* — nhìn như cả cột đang lỗi (Redmine #11271).
+
+**Đừng chữa bằng cách đổi sang ô SỐ.** Số điện thoại `0816348826` thành số là mất số 0 đứng đầu →
+`816348826`. Mã số thuế, số tài khoản cũng vậy. Những giá trị này KHÔNG phải để tính toán, chuỗi
+mới là kiểu đúng.
+
+**Cách đúng: giữ chuỗi, tắt cảnh báo bằng thẻ `<ignoredErrors>`.** ExcelJS không có API cho thẻ
+này nên phải mở gói `.xlsx` vá thẳng vào XML — `jszip` đã nằm sẵn trong phụ thuộc của chính
+ExcelJS nên không kéo thêm thư viện. `listExportFile.js` đã làm sẵn (`ignoreNumberStoredAsText`),
+màn không phải khai gì: ô nào là chuỗi khớp `/^\d{2,}$/` thì cột đó tự được gom vào.
+
+```xml
+<ignoredErrors><ignoredError sqref="E4:E3634" numberStoredAsText="1"/></ignoredErrors>
+```
+
+⚠️ **Thứ tự trong XML là bắt buộc**: `<ignoredErrors>` phải đứng **TRƯỚC `<drawing>`** (letterhead)
+theo lược đồ OOXML — sai thứ tự thì Excel báo file hỏng, mất trắng cả file thay vì chỉ còn cái tam
+giác xanh. Vì vậy hàm vá bọc `try/catch`: vá lỗi thì trả lại buffer gốc, thà còn cảnh báo chứ không
+giao file hỏng.
+
+**Tự kiểm** (3 dòng, đừng tin mắt):
+
+```bash
+unzip -p file.xlsx xl/worksheets/sheet1.xml | grep -o '<ignoredErrors>.*</ignoredErrors>'
+# và kiểm vị trí: chỉ số của <ignoredErrors phải NHỎ HƠN chỉ số của <drawing
+```
+```python
+openpyxl.load_workbook(f)          # mở lại được = file không hỏng
+ws['E4'].data_type == 's'          # SĐT vẫn là chuỗi, còn nguyên số 0 đầu
+```
+Và mở thử bằng LibreOffice (`soffice --headless --convert-to pdf`) — chạy trót lọt nghĩa là gói
+`.xlsx` vẫn hợp lệ sau khi vá.
 
 ---
 

@@ -1,0 +1,93 @@
+"UPDATE NỘI DUNG 03/09/2026","","","Task http://quanly.dnsmedia.vn/issues/10789","","","","",""
+"Dự án tiền KT","Giảm giá báo giá","TC-ROLE-340","Quyền mới xuất hiện trong màn phân quyền","P0","Đăng nhập bằng tài khoản Quản trị.","1. Vào Cấu hình hệ thống → Phân quyền người dùng → mở một vai trò
+2. Tìm nhóm quyền của phân hệ Quản lý báo giá","Vai trò: Nhân viên kinh doanh","- Có quyền mới tên đúng “Cho phép thêm giảm giá trong báo giá”
+- Tích chọn và lưu vai trò thành công"
+"","","TC-ROLE-341","Gán quyền cho một người và bỏ quyền của người khác","P0","Có 2 tài khoản kinh doanh: User A và User B, cùng lập được báo giá.","1. Gán quyền “Cho phép thêm giảm giá trong báo giá” cho User A
+2. Bỏ quyền đó của User B
+3. Lưu lại","User A: có quyền · User B: không có quyền","- Lưu thành công, danh sách quyền của từng người hiển thị đúng như vừa gán"
+"","","TC-ROLE-342","Người CÓ quyền: ô GG mở và chọn được loại giảm giá","P0","Đăng nhập User A, mở màn Tạo mới báo giá.","1. Quan sát trường GG
+2. Mở danh sách chọn loại giảm giá","User A","- Trường GG bật, chọn được
+- Danh sách có đủ các loại giảm giá theo cấu hình"
+"","","TC-ROLE-343","Người CÓ quyền: nhập giảm giá theo tổng hóa đơn","P0","User A đang ở màn Tạo mới báo giá, đã có ít nhất 2 dòng hàng.","1. Chọn loại giảm giá theo tổng hóa đơn
+2. Nhập mức giảm
+3. Bấm Lưu","Giảm giá tổng: 5%","- Hiện đúng ô nhập tương ứng loại vừa chọn
+- Lưu thành công
+- Tổng tiền sau giảm giá tính đúng theo mức vừa nhập"
+"","","TC-ROLE-344","Người CÓ quyền: nhập giảm giá trên từng dòng hàng","P0","Như trên.","1. Chọn loại giảm giá theo mặt hàng
+2. Nhập mức giảm cho dòng thứ nhất
+3. Bấm Lưu","Dòng 1: giảm 10%","- Cột giảm giá của dòng cho nhập
+- Lưu thành công
+- Thành tiền của đúng dòng đó giảm theo, các dòng khác giữ nguyên"
+"","","TC-ROLE-345","Người CÓ quyền: sửa lại mức giảm giá đã lưu","P1","Có báo giá do User A lập, đã có giảm giá tổng 5%.","1. Mở màn Cập nhật báo giá
+2. Đổi mức giảm thành 8%
+3. Lưu","Giảm giá tổng: 5% → 8%","- Lưu thành công, tổng tiền tính lại theo mức mới"
+"","","TC-ROLE-346","Người KHÔNG có quyền: ô GG bị khóa và mặc định Không giảm giá","P0","Đăng nhập User B, mở màn Tạo mới báo giá.","1. Quan sát trường GG
+2. Thử bấm vào ô","User B","- Trường GG bị khóa, không chọn được
+- Giá trị hiển thị là “Không giảm giá”
+- Không có ô nhập giảm giá tổng và không nhập được giảm giá trên dòng hàng"
+"","","TC-ROLE-347","Người KHÔNG có quyền: mở báo giá cũ đang có giảm giá","P0","Có báo giá do User A lập, đang có giảm giá tổng 5%. Đăng nhập User B.","1. Mở màn Cập nhật báo giá đó
+2. Quan sát phần giảm giá","Báo giá có giảm giá tổng 5%","- Vẫn nhìn thấy mức giảm giá đang có để biết số tiền
+- Nhưng ô giảm giá bị khóa, không sửa được"
+"","","TC-ROLE-348","Người KHÔNG có quyền: gọi thẳng chức năng lưu kèm giảm giá","P0","Đăng nhập User B; dùng công cụ kiểm thử để gọi thẳng chức năng lưu báo giá, bỏ qua giao diện.","1. Gửi yêu cầu lưu báo giá có mức giảm giá lớn hơn 0","Giảm giá tổng: 5%","- Hệ thống từ chối lưu
+- Báo đúng thông báo “Bạn không có quyền áp dụng giảm giá trong báo giá”
+- ⚠️ Báo giá KHÔNG được ghi vào hệ thống"
+"","","TC-ROLE-349","Người KHÔNG có quyền: lưu báo giá không giảm giá","P0","Đăng nhập User B.","1. Lập báo giá bình thường, để GG là Không giảm giá
+2. Bấm Lưu","Không giảm giá","- Lưu thành công như bình thường — ⚠️ quyền này chỉ chặn phần giảm giá, không chặn việc lập báo giá"
+"","","TC-ROLE-350","Thu hồi quyền khi người dùng đang mở form","P1","User A đang mở màn Cập nhật báo giá và đã nhập giảm giá 5%.","1. Quản trị bỏ quyền của User A
+2. User A bấm Lưu","Giảm giá tổng: 5%","- Hệ thống từ chối lưu và báo không có quyền áp dụng giảm giá
+- Dữ liệu đã nhập vẫn còn trên màn hình, không bị mất"
+"","","TC-ROLE-351","Quyền không ảnh hưởng các thao tác khác của báo giá","P1","Đăng nhập User B.","1. Mở báo giá của mình, sửa số lượng và đơn giá một dòng hàng
+2. Lưu","Số lượng: 2 → 3","- Lưu thành công, chỉ riêng phần giảm giá là bị khóa"
+"UPDATE NỘI DUNG 03/09/2026","","","Task http://quanly.dnsmedia.vn/issues/10797","","","","",""
+"Dự án tiền KT","Cảnh báo giá bán thấp & duyệt","TC-ROLE-352","Cảnh báo khi có hàng bán đơn giá dưới mức 1.000đ","P0","Báo giá có 3 dòng hàng bán, trong đó 1 dòng đơn giá 500đ.","1. Mở báo giá
+2. Bấm Trình duyệt","Dòng 2: đơn giá 500đ","- Dòng vi phạm được tô màu cam trên lưới
+- Hiện popup tiêu đề “Cảnh báo: Tồn tại mặt hàng có đơn giá <= 1.000 vnđ đồng”"
+"","","TC-ROLE-353","Nội dung popup ghi đúng số lượng mặt hàng vi phạm","P0","Báo giá có 3 dòng đơn giá lần lượt 500đ, 800đ và 50.000đ.","1. Bấm Trình duyệt
+2. Đọc nội dung popup","2 dòng vi phạm","- Câu thông báo ghi đúng số 2
+- Bảng trong popup liệt kê đủ 2 dòng, mỗi dòng có mã hàng hóa và tên hàng hóa"
+"","","TC-ROLE-354","Nút Quay lại chỉnh sửa","P0","Đang hiện popup cảnh báo.","1. Bấm “Quay lại chỉnh sửa”","—","- Popup đóng
+- Màn hình giữ nguyên như trước khi bấm Trình duyệt, dữ liệu đã nhập còn nguyên
+- Báo giá KHÔNG được gửi duyệt"
+"","","TC-ROLE-355","Nút Tiếp tục trình duyệt","P0","Đang hiện popup cảnh báo.","1. Bấm “Tiếp tục trình duyệt”","—","- Popup đóng và báo giá đi tiếp sang bước xét duyệt
+- Trạng thái báo giá đổi đúng theo luồng ở các trường hợp bên dưới"
+"","","TC-ROLE-356","Giá đúng 1.000đ vẫn bị cảnh báo","P0","Báo giá có 1 dòng hàng bán đơn giá đúng 1.000đ.","1. Bấm Trình duyệt","Đơn giá: 1.000đ","- ⚠️ Vẫn hiện cảnh báo — điều kiện là nhỏ hơn HOẶC BẰNG 1.000đ"
+"","","TC-ROLE-357","Giá 1.001đ không bị cảnh báo","P0","Báo giá có 1 dòng hàng bán đơn giá 1.001đ, các dòng còn lại đều trên 1.000đ.","1. Bấm Trình duyệt","Đơn giá: 1.001đ","- Không hiện popup cảnh báo, không dòng nào bị tô cam"
+"","","TC-ROLE-358","Hàng khuyến mại không bị tính là vi phạm","P0","Báo giá có 1 dòng hàng khuyến mại đơn giá 0đ và các dòng hàng bán đều trên 1.000đ.","1. Bấm Trình duyệt","Dòng khuyến mại: 0đ","- ⚠️ Không cảnh báo — điều kiện chỉ xét hàng hóa BÁN, bỏ qua hàng khuyến mại"
+"","","TC-ROLE-359","Nhiều dòng vi phạm cùng lúc","P1","Báo giá có 5 dòng hàng bán, trong đó 4 dòng đơn giá dưới 1.000đ.","1. Bấm Trình duyệt
+2. Đối chiếu popup với lưới","4 dòng vi phạm","- Cả 4 dòng đều tô cam
+- Popup ghi số 4 và liệt kê đủ 4 dòng"
+"","","TC-ROLE-360","Tự động duyệt khi báo giá sạch","P0","Báo giá chỉ gồm hàng hóa và dịch vụ đã khai trên ERP, đơn giá đều trên 1.000đ, không có hàng tạm, không có dịch vụ tạm, không giảm giá dòng, không giảm giá tổng.","1. Bấm Trình duyệt","—","- Không hiện cảnh báo
+- Báo giá được duyệt ngay, trạng thái ghi nhận là nhân viên kinh doanh tự phê duyệt
+- Không xuất hiện trong danh sách chờ duyệt của cấp trên"
+"","","TC-ROLE-361","Có hàng tạm thì đi luồng duyệt phân cấp","P0","Báo giá có 1 dòng hàng tạm, các điều kiện khác đều sạch.","1. Bấm Trình duyệt","1 dòng hàng tạm","- ⚠️ KHÔNG tự động duyệt
+- Báo giá chuyển sang chờ duyệt theo đúng luồng phân cấp hiện hành"
+"","","TC-ROLE-362","Có dịch vụ tạm thì đi luồng duyệt phân cấp","P0","Báo giá có 1 dòng dịch vụ tạm, các điều kiện khác đều sạch.","1. Bấm Trình duyệt","1 dòng dịch vụ tạm","- Không tự động duyệt, chuyển sang chờ duyệt theo luồng phân cấp"
+"","","TC-ROLE-363","Có giảm giá theo mặt hàng thì đi luồng duyệt phân cấp","P0","Báo giá có 1 dòng được giảm giá 10%, các điều kiện khác đều sạch.","1. Bấm Trình duyệt","Dòng 1 giảm 10%","- Không tự động duyệt, chuyển sang chờ duyệt theo luồng phân cấp"
+"","","TC-ROLE-364","Có giảm giá theo tổng đơn thì đi luồng duyệt phân cấp","P0","Báo giá có giảm giá tổng 5%, các điều kiện khác đều sạch.","1. Bấm Trình duyệt","Giảm giá tổng 5%","- Không tự động duyệt, chuyển sang chờ duyệt theo luồng phân cấp"
+"","","TC-ROLE-365","Vừa có cảnh báo giá thấp vừa có hàng tạm","P1","Báo giá có 1 dòng đơn giá 500đ và 1 dòng hàng tạm.","1. Bấm Trình duyệt
+2. Bấm “Tiếp tục trình duyệt”","—","- Hiện cảnh báo trước
+- Sau khi tiếp tục, báo giá đi luồng duyệt phân cấp chứ không tự động duyệt"
+"UPDATE NỘI DUNG 03/09/2026","","","Task http://quanly.dnsmedia.vn/issues/10898","","","","",""
+"Dự án tiền KT","Tỷ suất LN hàng/dịch vụ tạm","TC-ROLE-366","Cấu hình duyệt giá có thêm điều kiện mới","P0","Đăng nhập tài khoản quản trị cấu hình duyệt giá.","1. Mở màn cấu hình hạn mức phê duyệt báo giá
+2. Quan sát danh sách điều kiện","—","- Có điều kiện mới “Theo tỷ suất LN dòng hàng tạm (%)” bên cạnh 2 điều kiện cũ
+- Khai được mức và lưu thành công"
+"","","TC-ROLE-367","Gửi duyệt: hệ thống quét đủ cả 3 điều kiện","P0","Đã cấu hình đủ 3 điều kiện: giá trị đơn hàng, tỷ suất LN tổng, tỷ suất LN dòng hàng tạm.","1. Lập báo giá có hàng tạm thỏa cả 3 điều kiện ở các cấp khác nhau
+2. Bấm Trình duyệt","Giá trị: cấp 1 · LN tổng: cấp 2 · LN hàng tạm: cấp 3","- ⚠️ Báo giá đi theo cấp duyệt CAO NHẤT trong 3 điều kiện (cấp 3), không phải cấp đầu tiên khớp"
+"","","TC-ROLE-368","Chỉ điều kiện tỷ suất LN dòng hàng tạm bị vi phạm","P0","Báo giá có giá trị nhỏ và tỷ suất LN tổng đạt, riêng một dòng hàng tạm có tỷ suất LN thấp hơn mức cấu hình.","1. Bấm Trình duyệt","LN dòng hàng tạm: 3% (mức yêu cầu 10%)","- Báo giá vẫn phải đi duyệt theo cấp mà điều kiện tỷ suất LN dòng hàng tạm quy định"
+"","","TC-ROLE-369","Báo giá không có hàng tạm","P0","Báo giá chỉ gồm hàng hóa ERP, không có dòng hàng tạm nào.","1. Bấm Trình duyệt","—","- Điều kiện tỷ suất LN dòng hàng tạm không áp dụng
+- Cấp duyệt xác định theo 2 điều kiện còn lại"
+"","","TC-ROLE-370","Nhiều dòng hàng tạm, lấy dòng xấu nhất","P1","Báo giá có 3 dòng hàng tạm, tỷ suất LN lần lượt 25%, 12% và 4%.","1. Bấm Trình duyệt","LN thấp nhất: 4%","- Cấp duyệt xác định theo dòng có tỷ suất thấp nhất (4%)"
+"","","TC-ROLE-371","Người lập báo giá xem được giá vốn hàng tạm","P0","User A là người lập báo giá, KHÔNG được phân quyền xem giá vốn hàng hóa.","1. Đăng nhập User A
+2. Mở màn Xem chi tiết báo giá có hàng tạm
+3. Quan sát dòng hàng tạm","User A: không có quyền xem giá vốn","- ⚠️ Vẫn thấy đủ Giá nhập hàng tạm, Giá bán hàng tạm và Tỷ suất lợi nhuận dòng hàng tạm"
+"","","TC-ROLE-372","Người phê duyệt xem được giá vốn hàng tạm","P0","User C là người phê duyệt báo giá đó, KHÔNG có quyền xem giá vốn.","1. Đăng nhập User C
+2. Mở màn Phê duyệt báo giá
+3. Quan sát dòng hàng tạm","User C: không có quyền xem giá vốn","- Vẫn thấy đủ 3 thông tin như trên"
+"","","TC-ROLE-373","Người ngoài không xem được giá vốn hàng tạm","P0","User D không phải người lập, không phải người duyệt, không có quyền xem giá vốn.","1. Đăng nhập User D
+2. Mở báo giá có hàng tạm","User D","- ⚠️ KHÔNG thấy Giá nhập hàng tạm và Tỷ suất lợi nhuận dòng hàng tạm"
+"","","TC-ROLE-374","Hiển thị ở màn Tạo mới","P1","User A đang lập báo giá và vừa thêm một dòng hàng tạm.","1. Nhập giá nhập và giá bán cho dòng hàng tạm
+2. Quan sát","Giá nhập 100.000 · Giá bán 130.000","- Hiện tỷ suất lợi nhuận của dòng, tính đúng theo giá vừa nhập"
+"","","TC-ROLE-375","Hiển thị ở màn Cập nhật","P1","Báo giá có hàng tạm, User A mở màn Cập nhật.","1. Sửa giá bán dòng hàng tạm
+2. Quan sát tỷ suất","Giá bán: 130.000 → 110.000","- Tỷ suất lợi nhuận tính lại ngay theo giá mới"
+"","","TC-ROLE-376","Người có quyền xem giá vốn thì không đổi gì","P2","User E có quyền xem giá vốn hàng hóa.","1. Mở báo giá có hàng tạm","User E","- Vẫn xem được như trước, tính năng mới không làm mất quyền cũ"
+"","","TC-ROLE-377","Đối chiếu tỷ suất với tài liệu mô phỏng","P1","Có báo giá hàng tạm với số liệu đúng như file mô phỏng đính kèm task.","1. So từng dòng giữa màn hình và file mô phỏng","Theo file mô phỏng của task","- Tỷ suất lợi nhuận từng dòng và cấp duyệt xác định được khớp với file mô phỏng"

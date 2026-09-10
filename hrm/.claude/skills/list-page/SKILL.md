@@ -7,13 +7,14 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 - Áp dụng cho các bảng có các field: company_id, department_id, part_id (field này có thể có hoặc không) =>> Nếu có thì quyền sẽ theo bộ quyền như sau Xem [Tên màn danh sách] theo công ty, Xem [Tên màn danh sách] theo phòng ban, Xem [Tên màn danh sách] theo bộ phận, Xem tất cả [Tên màn danh sách]
 - Quyền xem tất cả =>> Lấy tất cả bản ghi trừ trạng thái Đang tạo / Nháp
 - Các quyền còn lại query theo các field tương ứng
-- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Tuân thủ theo V2BaseFilterPanel.vue
+- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Panel chuẩn là **`V2BaseSmartFilterPanel`** (`V2BaseFilterPanel` là bản cũ, không có popup "Cài đặt bộ lọc")
 - **Tiêu đề panel bộ lọc để mặc định `Bộ lọc danh sách`** — KHÔNG truyền prop `title`/`subtitle` để ghi riêng cho từng màn (`Bộ lọc danh sách khách hàng`, `Bộ lọc Issue`, `Bộ lọc hàng hoá`…). Tiêu đề bảng bên dưới đã nói rõ đang xem gì; `V2BaseFilterPanel` đã đặt sẵn default nên chỉ cần bỏ prop đi
+- **Nhãn floating là chuẩn của khối "Tìm kiếm nâng cao"** (user chốt 2026-09-07, mẫu: `pages/assign/prospective-projects/index.vue`). Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`: nhãn nằm giữa ô khi rỗng, bay lên đè viền trên khi ô có dữ liệu hoặc đang focus; ô cao **36px**. Panel tự bọc `V2BaseFloatingField`, tự tính `hasValue` (field gom nhiều ô thì dựa vào `resetKeys` — **phải khai**), tự truyền chiều cao xuống `V2BaseSelect`. Mặc định `false` để màn cũ không đổi. Chi tiết + biến thể `range`/`tags` + bẫy specificity: xem skill `erp-to-hrm-screen`, file `references/khuon-man-mau.md`.
 - **Placeholder của ô lọc phải NÓI ĐÚNG trường đó lọc gì** (user chốt 2026-08-15), theo công thức:
-  - Ô chọn (select/date): **`Chọn <tên trường>`** — `Chọn trạng thái`, `Chọn quốc gia`, `Chọn người tạo`, `Chọn ngày bắt đầu`.
-  - Ô gõ tay: **`Nhập <tên trường>`** — `Nhập tên hoặc mã hàng hoá`, `Nhập số tiền`.
   - Ô tìm nhanh: **`Tìm theo <các trường BE thực sự lọc>`** — phải liệt kê đúng, đừng ghi "Tìm kiếm..." chung chung.
-  - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống, hay lặp lại nguyên si nhãn. Ở **chế độ gọn** (≤ 3 ô) panel KHÔNG render nhãn, placeholder là thứ DUY NHẤT cho user biết ô đó là gì — `Tất cả` lúc đó vô nghĩa.
+  - **Khối nâng cao có `floating`** → **BỎ placeholder trùng nhãn**. Nhãn floating đã nói tên trường rồi; lúc nghỉ nhãn nằm đúng chỗ placeholder (component tự giấu placeholder), lúc float thì placeholder hiện ra lặp lại y hệt nhãn. Chỉ giữ placeholder khi nó nói THÊM: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`.
+  - **Chế độ gọn (≤ 3 ô) và màn chưa bật `floating`** → panel KHÔNG render nhãn, placeholder là thứ DUY NHẤT cho user biết ô đó là gì, nên vẫn giữ công thức cũ: ô chọn = **`Chọn <tên trường>`** (`Chọn trạng thái`, `Chọn quốc gia`), ô gõ tay = **`Nhập <tên trường>`** (`Nhập số tiền`).
+  - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống.
 - **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleInputCount` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; ⚠️ đếm theo **số Ô NHẬP thực tế**, KHÔNG phải số phần tử trong `visibleFields`: field gom nhóm render ra nhiều ô nên tính theo `resetKeys.length` (vd `org` = Công ty + Phòng ban + Bộ phận + Nhân viên = **4 ô**, `customer_scope_pairs` = 2 ô), cần khác thì khai `inputCount` trên field để đè. Đếm mỗi field là 1 thì bật đúng field gom nhóm thôi đã kín cả hàng mà panel vẫn tưởng "gọn" rồi bỏ mất nút "Tìm kiếm nâng cao"; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **không có nhãn** (dùng `placeholder`) để thẳng trục với ô tìm nhanh → `placeholder` của mỗi field phải tự nói rõ nó lọc gì ("Chọn trạng thái", không phải "Chọn..."). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
 - Style bắt buộc: luôn import `@import '@/assets/scss/v2-styles.scss';` trong thẻ `<style lang="scss">` của trang danh sách
 - Các khối bộ lọc theo logic Cascading filter: Công ty =>> Phòng ban =>> Bộ phận; Dự án TKT =>> Giải pháp =>> Hạng mục
@@ -673,6 +674,87 @@ Thêm mục menu cho một màn đã có ở phân hệ khác thì **kiểm cả
 vào từ phân hệ A → thanh bên phải là A; vào từ B → là B; xoá `sessionStorage` rồi mở thẳng đường
 dẫn → về phân hệ theo slug.
 
+## 3f. Ô lọc GOM NHÓM (Công ty – Phòng ban…) — phải khai `inputCount` đúng số ô THẬT
+
+**Triệu chứng:** popup "Cài đặt bộ lọc" có mục *Công ty – Phòng ban*, tick rồi mà ngoài bộ lọc
+không thấy đâu; tắt hết trường khác cũng không ra. Nó chỉ hiện khi bấm "Tìm kiếm nâng cao".
+Đã lặp ở **cả 5 màn** luồng dịch vụ trước khi phát hiện (Redmine #11270).
+
+**Nguyên nhân:** `V2BaseSmartFilterPanel` chuyển sang bộ lọc gọn (bày hết ra một hàng, bỏ nút
+"Tìm kiếm nâng cao") khi **tổng số Ô NHẬP ≤ 3**, đếm bằng:
+
+```js
+field.inputCount || (field.resetKeys && field.resetKeys.length) || 1
+```
+
+Field `org` khai `resetKeys: ['company_id','department_id','part_id','employee_id']` → **đếm 4**.
+Nhưng màn truyền `:disable_part="true" :disable_employee="true"` nên thực tế chỉ render **2 ô**.
+Một mình nó đã 4 > 3 ⇒ panel **không bao giờ** vào được chế độ gọn, dù user tắt sạch trường khác.
+
+**Cách đúng — ẩn ô con nào thì khai lại `inputCount`:**
+
+```js
+{
+    key: 'org',
+    label: 'Công ty – Phòng ban',
+    resetKeys: ['company_id', 'department_id', 'part_id', 'employee_id'], // GIỮ đủ để reset đúng
+    inputCount: 2,   // nhưng chỉ render 2 ô vì disable_part + disable_employee
+}
+```
+
+`resetKeys` và `inputCount` phục vụ 2 việc khác nhau — đừng gộp:
+
+| | Dùng để | Khai theo |
+| --- | --- | --- |
+| `resetKeys` | reset các ô con khi đổi công ty/phòng ban | **mọi** khoá mà field đụng tới |
+| `inputCount` | đếm ô để quyết định bộ lọc gọn | số ô **thực sự render ra màn** |
+
+**Tự kiểm** (chạy trong console ở màn danh sách):
+
+```js
+// panel = component V2BaseSmartFilterPanel
+panel.visibleInputCount   // phải bằng số ô ĐANG ĐẾM ĐƯỢC bằng mắt trên màn
+panel.isInlineMode        // tắt bớt trường tới khi còn ≤ 3 ô -> phải thành true
+```
+
+Hoặc thử tay: mở "Cài đặt bộ lọc", tắt hết trường trừ ô gom nhóm → nó **phải** nhảy ra hàng ngang
+và nút "Tìm kiếm nâng cao" biến mất. Không ra là `inputCount` đang sai.
+
+### Ra được rồi thì NHÌN LẠI: các ô con có nằm ngang hàng không?
+
+Sửa xong `inputCount` mà dừng ở đó là dính lỗi thứ hai ngay sau đó: `V2BaseCompanyDepartmentFilter`
+dựng các ô con bằng **lưới Bootstrap** (`col-md-3`), vốn để nằm trong `.form-row` của khối "Tìm
+kiếm nâng cao". Thả nguyên vào hàng lọc gọn thì mỗi ô con **rơi xuống một dòng**, hàng lọc cao
+vống lên trông như vỡ giao diện.
+
+`V2BaseSmartFilterPanel` đã xử lý sẵn (`.inline-field` là flex + gỡ bề rộng lưới của `col-*`), nên
+màn không phải khai gì. Nhưng **tự dựng ô lọc gom nhóm mới** thì phải nhớ: component con nằm trong
+hàng ngang, đừng dựng bằng `col-md-*` rồi tin là xong.
+
+### Và lỗi thứ ba: ô gom nhóm tự dựng NHÃN, làm cả hàng lệch trục
+
+Bộ lọc gọn **không có nhãn** — placeholder là thứ duy nhất cho user biết ô đó là gì. Ô lọc gom
+nhóm lại tự dựng nhãn riêng ("Công ty", "Phòng ban"), nên nó cao hơn các ô bên cạnh đúng một dòng
+chữ và cả hàng lệch nhau. `V2BaseSmartFilterPanel` đã ẩn nhãn trong `.inline-field`.
+
+⚠️ **Đánh đổi phải biết**: nhãn của ô Công ty – Phòng ban mang theo **icon ổ khoá** (bật xem danh
+mục đã khoá) — ẩn nhãn là mất luôn nút đó ở chế độ gọn. Cần dùng thì bật thêm trường lọc cho panel
+quay về "Tìm kiếm nâng cao", ở đó nhãn và icon vẫn đủ.
+
+**Tự kiểm bằng SỐ, đừng nhìn bằng mắt** — mọi ô trên hàng phải cùng một mốc trên:
+
+```js
+[...document.querySelectorAll('.quick-search-row input.form-control, .quick-search-row .select2-selection')]
+    .map(e => Math.round(e.getBoundingClientRect().top))
+// -> phải ra cùng MỘT con số, vd [139, 139, 139]
+```
+
+**Bẫy khi sửa**: `V2BaseSmartFilterPanel.vue` là file **CRLF**. Sửa bằng script Python phải mở
+`newline=''` cho cả đọc lẫn ghi, xong chạy `git diff --stat` — thấy vài trăm dòng đổi là đã phá
+line ending, trả lại ngay (CLAUDE.md).
+
+---
+
 ## 3e. Màn danh sách chậm — đo trước, và ngó INDEX trước tiên (chốt 2026-08-26)
 
 Màn danh sách treo 10-15 giây gần như luôn là **thiếu index**, không phải "dữ liệu nhiều".
@@ -707,6 +789,47 @@ DB::select("SHOW INDEX FROM `$bang` WHERE Column_name = ? AND Seq_in_index = 1",
   với bảng tên dài (`wr_service_quotation_extend_products_wr_service_quotation_id_index` = 66 ký
   tự) → "Identifier name is too long". Và migration DDL **không bọc `DB::transaction`**.
 
+## 3g. Ô GỘP nhiều giá trị — tiêu đề phải nói đủ, và SORT phải theo đúng cái nhìn thấy
+
+Hai lỗi anh em, cùng một gốc: **ô hiển thị một đằng, hệ thống hiểu một nẻo** (Redmine #11270).
+
+### Tiêu đề cột phải mô tả ĐỦ nội dung ô
+
+Ô gộp `tên - số điện thoại` mà tiêu đề chỉ ghi "Người liên hệ" thì người đọc tưởng cột chỉ có tên.
+Gộp gì thì ghi nấy: **"Người liên hệ - SĐT"**. Tương tự: `mã - tên` → tiêu đề nêu cả hai, hoặc
+tách hẳn 2 cột (mục 3).
+
+### Sort phải chạy theo chuỗi ĐANG HIỂN THỊ
+
+Cột "Khách hàng" hiện `<mã> - <tên>` nhưng máy chủ sắp theo mỗi `customer_name` → nhìn vào bảng
+thấy thứ tự lộn xộn, người dùng báo *"sort sai"* mà code thì "vẫn chạy đúng như khai".
+
+Hai lối ra, chọn một:
+
+| Cách | Khi nào | Làm gì |
+| --- | --- | --- |
+| Sắp theo đúng thứ hiển thị | Cột người dùng hay tra cứu | Nối bảng lấy khoá hiển thị rồi `orderBy` theo đúng thứ tự ghép: mã trước, tên sau |
+| Bỏ `sortable` | Ô ghép phức tạp, không sắp cho khớp được | Đừng bày mũi tên sắp xếp ra rồi cho kết quả khó hiểu |
+
+⚠️ **Nối bảng để sắp xếp thì PHẢI chốt cột lấy về ngay tại đó:**
+
+```php
+$query->leftJoin('customers', 'customers.id', '=', 'wr_service_contracts.customer_id')
+    ->select('wr_service_contracts.*')   // BẮT BUỘC
+    ->orderBy('customers.code', $direction)
+    ->orderBy('wr_service_contracts.customer_name', $direction);
+```
+
+Màn danh sách thường tự giới hạn cột lúc phân trang nên nhìn vẫn đúng, **nhưng luồng XUẤT FILE và
+IN DANH SÁCH dùng chung câu truy vấn đó mà không giới hạn** — thiếu `select()` là bảng vừa nối đè
+cột trùng tên (`id`, `code`) của bảng chính, file xuất ra sai mà **không có lỗi nào báo**. Dùng
+`leftJoin` (không phải `join`) để bản ghi có khoá ngoại rỗng/đã xoá không biến mất khỏi danh sách.
+
+**Tự kiểm**: sắp theo cột đó rồi gọi luôn `…/export-rows?sort_field=<cột>` — số phiếu và tổng số
+dòng phải y như khi không sắp.
+
+---
+
 ## 4. Thứ tự cột + cột ghim trái
 
 `[cột khoá: STT → Mã → Tên] → [các cột dữ liệu theo cấu hình user] → [Người tạo] → [Ngày tạo] → [Trạng thái] → [Hành động]`
@@ -736,6 +859,40 @@ Màn danh sách mặc định **chỉ hiện 7 cột**:
 - Bảng mặc định gọn giúp màn không phải cuộn ngang; ai cần thêm thì tự bật, cấu hình lưu theo user (`column_customizations`).
 
 Cột `Người tạo` + `Ngày tạo` là **bắt buộc** ở mọi màn, đứng cuối nhóm cột dữ liệu (ngay trước Trạng thái → Hành động).
+
+### ⚠️ CHỮ trên nhãn: luôn là "Người tạo" / "Ngày tạo" — CẤM "Người lập" / "Ngày lập"
+
+Đây là lỗi **lặp đi lặp lại** khi port màn từ ERP: ERP ghi *"Người lập"*, *"Ngày lập"*, *"Người lập
+phiếu"*, *"Ngày lập phiếu"* nên chép sang HRM là dính. HRM dùng **một** cặp chữ cho toàn hệ thống,
+bất kể chứng từ hay danh mục — người dùng đi qua nhiều màn phải thấy cùng một chữ.
+
+| ERP viết | HRM phải viết |
+| --- | --- |
+| Người lập · Người lập phiếu · Người tạo phiếu | **Người tạo** |
+| Ngày lập · Ngày lập phiếu · Ngày tạo phiếu | **Ngày tạo** |
+| Ngày lập từ / đến (bộ lọc) | **Ngày tạo từ / đến** |
+
+Áp cho **mọi nơi người dùng nhìn thấy**, không riêng cột bảng — sửa một chỗ rồi bỏ sót chỗ khác là
+chuyện đã xảy ra (đổi dòng phụ đề màn chi tiết ở #11240 nhưng quên cột danh sách, tới #11271 mới bị
+bắt):
+
+- tiêu đề cột bảng (`allColumns` → `title`)
+- danh sách trường xuất file ở FE (`exportFields` → `name`) **và** nhãn ở BE
+  (`ExcelExport\ExportColumnRegistry`)
+- nhãn ô lọc (`filterFields` → `label`)
+- nhãn trường ở màn chi tiết / form (`V2BaseLabel`)
+- tiêu đề cột trong popup tìm kiếm/chọn bản ghi
+- tiêu đề cột của BẢN IN (service in ở máy chủ)
+
+**Tự kiểm — phải RỖNG ở cả 2 repo:**
+
+```bash
+grep -rn "Người lập\|Ngày lập" hrm-client/pages/<phân hệ>/ | grep -v "^\s*//\|/\*\*\|\* "
+grep -rn "'Người lập'\|'Ngày lập'" hrm-api/Modules/<Module>/ hrm-api/app/ExcelExport/
+```
+
+(Chữ "người lập" trong *câu văn* của comment/thông báo nghiệp vụ thì để nguyên — quy tắc này chỉ
+nói về NHÃN trường và tiêu đề cột.)
 
 - **Người tạo**: chỉ **TÊN** người tạo, KHÔNG kèm mã nhân viên.
 - ⚠️ **Cột Người cập nhật hay ra rỗng vì BE KHÔNG GHI `updated_by`, không phải vì thiếu cột FE.** Trước khi khai cột, kiểm 3 thứ: (1) Entity có `extends BaseModel` không — `extends Model` thuần thì không có hook audit, `updated_by` sẽ NULL vĩnh viễn (xem CLAUDE.md mục *Model MỚI BẮT BUỘC extends BaseModel*); (2) service có gán `updated_by` ở **cả đường khoá/mở khoá** không; (3) query danh sách có eager load / join quan hệ người cập nhật chưa. Cách kiểm nhanh: sửa 1 bản ghi rồi `select updated_by from <bang> where id = <id>` — ra NULL hoặc ra id không có trong `employees` là hỏng.
@@ -886,6 +1043,40 @@ trên chính bản ghi đó. Khi đó vẫn điều hướng theo luồng, khôn
 danh sách của chính màn đó. Màn mở từ màn khác qua query (`?request_id=…`) thì `url-back` là
 **computed động** trả về màn nguồn — bắn user sang một danh sách chưa hề chứa bản ghi họ đang xem
 là user tưởng "mất dữ liệu" (Redmine #11193).
+
+---
+
+## 7b. Trường LINK sang chứng từ khác ở màn chi tiết — phải nằm trong KHUNG Ô
+
+Màn chi tiết hay có trường trỏ sang chứng từ khác: *Phiếu xử lý yêu cầu*, *Phiếu cung cấp thông
+tin*, *Phiếu yêu cầu*… Nội dung là link bấm được, nhưng **vẫn phải là một ô** như mọi trường bên
+cạnh. Để link trần (`<div class="pt-1"><nuxt-link …>`) thì hàng đó trông thủng một lỗ và chữ không
+thẳng trục với các ô khác — lỗi này đã lặp ở **4 màn** luồng dịch vụ.
+
+```vue
+<!-- ĐÚNG -->
+<div v-if="readonly && form.xxx_id" class="v2-linked-field">
+    <nuxt-link :to="`/…/${form.xxx_id}`" class="v2-cell-link">{{ form.xxx_code }}</nuxt-link>
+</div>
+<V2BaseInput v-else :value="form.xxx_code" disabled />
+
+<!-- SAI: link trần, hàng bị hụt một ô -->
+<div v-if="readonly" class="pt-1"><nuxt-link …>…</nuxt-link></div>
+```
+
+`.v2-linked-field` khai sẵn ở `assets/scss/v2-styles.scss` (nền + viền copy đúng ô bị khoá,
+`min-height: 32px` bằng `V2BaseInput` cỡ md) — **đừng chép CSS đó vào từng màn**.
+
+⚠️ Class này cố ý khai **NGOÀI** khối `.v2-styles`: không phải form nào cũng bọc trong lớp đó
+(`WrQuotationForm` chẳng hạn), để bên trong thì đúng những màn ấy ô co lại còn 19px.
+
+**Tự kiểm** — ô link và ô thường cùng chiều cao:
+
+```js
+document.querySelector('.v2-linked-field').offsetHeight === document.querySelector('.v2-input').offsetHeight
+```
+
+---
 
 ## 8. Thứ tự request khi vào màn (tốc độ hiển thị)
 
@@ -1388,3 +1579,62 @@ parseInt(top.style.width) === t.scrollWidth          // bề rộng khớp
 // kéo thanh trên -> .table-wrapper.scrollLeft đổi theo, và ngược lại
 ```
 
+
+---
+
+## Bộ tự kiểm màn danh sách trước khi báo xong (chốt 2026-08-28)
+
+Danh sách này sinh ra từ những lỗi đã **lặp lại ở nhiều màn** rồi mới bị tester bắt. Chạy hết trước
+khi giao, đừng chờ người khác phát hiện hộ.
+
+**Chạy bằng lệnh — mở màn thật ra rồi soi Console:**
+
+```js
+// 1. Ô lọc gom nhóm có ra ngoài được không (mục 3f)
+//    panel = component V2BaseSmartFilterPanel của màn
+panel.visibleInputCount   // phải bằng số ô ĐẾM ĐƯỢC BẰNG MẮT trên panel
+panel.visibleFields.map(f => [f.key, f.inputCount || (f.resetKeys||[]).length || 1])
+```
+
+```bash
+# 2. Field gom nhóm nào bị ẩn bớt ô con mà QUÊN khai inputCount -> luôn kẹt trong "nâng cao"
+grep -l 'disable_part="true"\|disable_employee="true"' pages/<phân hệ>/*/index.vue \
+  | xargs grep -L 'inputCount'
+# -> in ra file nào là file đó đang dính lỗi
+```
+
+**Kiểm bằng tay, mỗi thứ 10 giây:**
+
+- [ ] Mở "Cài đặt bộ lọc", **tắt hết trường trừ ô gom nhóm** → nó phải nhảy ra hàng ngang và nút
+      "Tìm kiếm nâng cao" biến mất (mục 3f)
+- [ ] Bấm sắp xếp **từng cột có mũi tên** → thứ tự phải khớp đúng chuỗi đang hiển thị trong ô;
+      cột ghép `mã - tên` mà sắp theo mỗi tên là SAI (mục 3g)
+- [ ] Cột nào là **ô gộp** → tiêu đề có nói đủ các phần được gộp không (mục 3g)
+- [ ] Sắp theo cột có nối bảng → gọi `…/export-rows?sort_field=<cột>`, số phiếu và tổng số dòng
+      phải y như khi không sắp (mục 3g)
+- [ ] Số tiền trên màn: `toLocaleString('en-US')` — grep `'vi-VN'` trong màn phải rỗng
+      (quy tắc số: dấu phẩy ngăn nghìn, xem `export-excel` mục 1b)
+- [ ] Nhãn dùng **"Người tạo" / "Ngày tạo"**, KHÔNG phải "Người lập" / "Ngày lập" (mục 6)
+- [ ] Có đủ cột **Người cập nhật / Ngày cập nhật** (ẩn mặc định) — và máy chủ có eager load
+      `updater.info` + Resource có trả 2 khoá đó, nếu không cột bật lên vẫn rỗng
+
+**Cách rà NHANH cả một luồng bằng bảng so sánh** — đừng kiểm từng màn rời rạc, hãy đặt các màn cạnh
+nhau: màn nào lệch số với phần còn lại gần như chắc chắn là màn bị sót.
+
+```bash
+for f in <màn-1> <màn-2> <màn-3>; do
+    p=pages/<phân hệ>/$f/index.vue
+    printf "%-34s Ng.lập=%s muted=%s vi-VN=%s inputCount=%s cập-nhật=%s\n" "$f" \
+        "$(grep -c "title: 'Người lập'\|title: 'Ngày lập'" $p)" \
+        "$(grep -c 'text-muted' $p)" \
+        "$(grep -c 'vi-VN' $p)" \
+        "$(grep -c 'inputCount' $p)" \
+        "$(grep -c "key: 'updater_name'" $p)"
+done
+# 3 số đầu phải 0, 2 số cuối phải ≥1 — dòng nào lệch là màn đó sót
+```
+
+**Và quan trọng nhất — lỗi vừa sửa ở màn này, 4 màn kia có dính không?** Luồng nghiệp vụ thường
+được dựng bằng cách copy màn đầu tiên, nên một lỗi khai báo gần như chắc chắn nằm ở **tất cả** các
+màn cùng luồng. Sửa xong một màn thì grep ngay sang những màn còn lại thay vì đợi tester báo lần
+lượt từng cái.

@@ -457,8 +457,121 @@ không màn nào tự nới rộng.
   bằng `logCatalogStatus()` → sai nhóm + lặp chữ "Trạng thái: …" (§3a).
 - **Tự ghép chuỗi cho bảng con** thay vì dùng khoá dạng BẢNG → log dồn thành một đoạn dài (§3b).
 - **Cắt URL file còn mỗi tên ở BE** → lịch sử không mở được file (§3b).
+- **Trường soạn thảo (CKEditor / rich text): log lưu HTML THÔ.** Snapshot lấy nguyên
+  `<div><span style="font-size:18px">- {{VAT_NOTE}} v&agrave;…` — mở lịch sử ra thấy một đoạn thẻ
+  HTML lẫn ký tự `&agrave;` dài cả nghìn ký tự, user báo "lỗi hiển thị". **KHÔNG sửa bằng cách bỏ
+  cột đó khỏi `catalogColumns()`** (mất dấu vết sửa điều khoản) và **KHÔNG đổi sang `v-html`**
+  (mở đường chèn mã — xem docblock `SystemInfoValue`).
+  → Đã xử lý sẵn Ở MỘT CHỖ: `components/assign/SystemInfoValue.vue` tự bóc thẻ + giải mã ký tự
+  đặc biệt, rồi cắt còn 200 ký tự kèm nút "Xem thêm". Màn mới **không phải làm gì**, chỉ cần dùng
+  đúng `SystemInfoSection` / `CatalogHistoryModal` như §5. Tự render giá trị log bằng `{{ }}` ở
+  component riêng là tái phạm lỗi này.
+
+## 6b. Dòng bảng con: TÊN + đúng cột "THUỘC VỀ" — áp cho CẢ 3 nhóm (chốt 2026-09-09)
+
+> ⚠️ Áp cho **thêm mới · đã xoá · SỬA THÔNG TIN**. Làm mỗi nhóm thêm/xoá là thiếu: dòng sửa
+> `Xy lanh khí: Số lượng: 1 → 9` cũng không cho biết sửa vật tư CỦA thiết bị nào (user chỉ ra
+> 2026-09-09, sau khi đã sửa xong nhóm thêm/xoá).
+> · thêm / xoá → `TÊN — Thuộc thiết bị: …`
+> · sửa       → `TÊN (Thuộc thiết bị: …): Số lượng: 1 → 9`
+> DTO: `changed[]` trả thêm khoá `detail` (chỉ khi bản ghi có khai `__brief`; bảng không khai thì
+> `detail` rỗng, giao diện không in gì → entity đang chạy giữ nguyên hiển thị cũ).
+
+
+Hai thái cực đều sai, user đã bác cả hai trong cùng một ngày:
+
+```
+SAI (quá dài):  Vật tư thêm mới: Xy lanh khí — Thuộc thiết bị: Cầu nâng…; ĐVT: Cái; Số lượng: 1; Đơn giá bán: 1500000; Chiết khấu: 150000; % VAT: 8; Thời gian có vật tư: 5
+SAI (thiếu):    Vật tư thêm mới: Xy lanh khí
+ĐÚNG:           Vật tư thêm mới: Xy lanh khí — Thuộc thiết bị: Cầu nâng ô tô cắt kéo SL-568-SA
+```
+
+Quy tắc: bỏ hết cột **số liệu** (số lượng, đơn giá, chiết khấu, VAT, thời gian…), **GIỮ** cột chỉ
+**chỗ đứng** của dòng — thêm vật tư thì phải nói thêm cho **dịch vụ / thiết bị / gói NÀO**, nếu
+không người xem vẫn phải mở phiếu ra dò. Dòng **SỬA** không đụng tới — vẫn liệt kê đủ trường đã đổi
+(`Số lượng: 1 → 9`).
+
+Khai bằng khoá `__brief` trên từng bản ghi snapshot (`CatalogHistoryService::ROW_BRIEF`):
+
+```php
+// mảng = giữ đúng những cột này ở dòng thêm/xoá, theo thứ tự đó
+$row['__brief'] = ['Thuộc thiết bị'];
+// true = chỉ in tên (dùng cho bảng KHÔNG có cấp cha, vd "Chi phí khác")
+$row['__brief'] = true;
+```
+
+Không khai thì giữ nguyên hành vi cũ (in hết phụ chú) — các entity đang chạy không đổi gì.
+
+Bảng lồng nhiều cấp thì phải nói **ĐỦ CẢ CHUỖI CHA**, không chỉ cha gần nhất:
+
+```
+THIẾU:  Vật tư của gói bảo dưỡng thêm mới: Súng bơm lốp — Thuộc gói: Bảo dưỡng … (Cấp 2 (12T))
+ĐÚNG:   Vật tư của gói bảo dưỡng thêm mới: Súng bơm lốp — Thuộc thiết bị: Bệ kiểm tra phanh SL-580; Thuộc gói: Bảo dưỡng … (Cấp 2 (12T))
+```
+
+Lý do: **tên cấp giữa thường TRÙNG NHAU giữa các cấp gốc** — cùng một gói "Bảo dưỡng … Cấp 2" gắn ở
+nhiều thiết bị khác nhau, chỉ ghi tên gói thì vẫn không biết là của thiết bị nào (user chỉ ra
+2026-09-09). Bảng 3 cấp: thiết bị → `['Nhóm', 'Lỗi thiết bị']` · dịch vụ/vật tư của thiết bị →
+`['Thuộc thiết bị']` · gói bảo dưỡng → `['Thuộc thiết bị']` · vật tư của gói →
+`['Thuộc thiết bị', 'Thuộc gói']`.
+
+### ⚠️ Khoá điều khiển phải nhận diện bằng TIỀN TỐ `__`, đừng liệt kê từng hằng
+
+Log đã ghi xuống DB là **bất biến**. Đổi tên một khoá điều khiển (`__name_only` → `__brief`) mà chỉ
+sửa danh sách liệt kê trong bộ lọc thì mọi dòng log CŨ mang khoá tên cũ **lập tức hiện ra màn hình
+như một cột thật** — người dùng mở lịch sử thấy `__name_only: 1` nằm giữa các thay đổi và hỏi "cái
+này là gì" (đã dính thật 2026-09-09, chỉ sau vài giờ đổi tên).
+
+```php
+// ĐÚNG — khoá cũ lẫn mới đều bị lọc, không phải chạy lại dữ liệu
+private function isRowMetaColumn(string $column): bool { return strpos($column, '__') === 0; }
+```
+
+Kèm theo: đọc **cả tên khoá CŨ** khi lấy giá trị (`__brief` ?? `__name_only`) để log cũ vẫn hiển thị
+đúng kiểu. Hệ quả của quy ước này: tên CỘT THẬT tuyệt đối không được bắt đầu bằng `__`.
+
+⚠️ Bảng con có cột `product_id` **nhưng KHÔNG có cột tên** (`wr_service_quotation_extend_product_service_items`)
+thì phải TRA DANH MỤC để lấy tên, đọc thẳng `$item->product_name` là ra dòng log **trắng tên**.
+Cùng lỗi đó cũng làm màn chi tiết mất tên dòng — kiểm luôn cả Resource, đừng chỉ sửa mỗi log.
+
+---
 
 ## 7. Verify bắt buộc trước khi báo xong
+
+### 7a. ⚠️ PHẢI TEST TỪNG TRƯỜNG MỘT, KHÔNG BỎ SÓT TRƯỜNG NÀO (user chốt 2026-09-09)
+
+Test kiểu "đổi vài trường tiêu biểu rồi kết luận chạy được" là **KHÔNG ĐẠT**. Lịch sử sai một
+trường thì không có exception, không có log lỗi — chỉ tới lúc người dùng đi tìm dấu vết mới lộ, mà
+lúc đó dữ liệu đã mất.
+
+**Cách làm: viết một script chạy tự động, mỗi ca đổi ĐÚNG MỘT ô rồi đọc lại log.** Liệt kê ca theo
+danh sách trường thật của từng bảng (lấy từ `describe <bảng>`, không nhớ theo trí nhớ), gồm:
+
+| Nhóm ca | Phải có |
+| --- | --- |
+| Mỗi cột của bảng CHÍNH | 1 ca / cột |
+| Mỗi cột của MỖI bảng con | 1 ca / cột — kể cả ô ít dùng (`Ghi chú`, `ĐVT`, `Thời gian có vật tư`) |
+| Thêm 1 dòng | 1 ca / bảng con → chỉ 1 dòng "thêm mới", đúng TÊN |
+| Xoá 1 dòng | 1 ca / bảng con → chỉ 1 dòng "đã xóa", đúng TÊN |
+| Đổi nhiều trường trong 1 lần lưu | 1 dòng log, nhiều khoá |
+| Không đổi gì | **KHÔNG ghi log** |
+| Lưu lại lần 2 không sửa gì | **KHÔNG ghi log** (bắt log rác do chuẩn hoá số/rỗng thiếu) |
+
+Khuôn script đã chạy thật (55 ca cho Phiếu cung cấp thông tin / Báo giá dịch vụ): bootstrap Laravel
+bằng file PHP riêng (`require vendor/autoload.php` + `bootstrap/app.php`), mỗi ca bọc
+`DB::beginTransaction()` … `DB::rollBack()` nên **không để lại rác trong dữ liệu thật**, in ra
+`tên ca | số dòng log | nội dung log` rồi đọc bằng mắt từng dòng.
+
+⚠️ `php artisan tinker <file>` **không chạy file** (nó in lại nội dung file) — dùng file bootstrap
+riêng, đừng mất thời gian như lần đầu.
+
+Bẫy mà chỉ cách test này mới bắt được:
+- Khoá ghép cặp lỡ chứa ô bị sửa → đổi ô đó ra "xoá 1 + thêm 1" thay vì "sửa 1 ô"
+- Số `5.00` vs `5`, rỗng `''` vs `null` → mỗi lần lưu lại đẻ một dòng log rác
+- Bảng con không có cột tên → dòng log trắng tên
+- Cột chỉ đổi ở nhánh ít dùng (bảo hành vs sửa chữa) → chỉ test nhánh chính là bỏ sót
+
+### 7b. Các kiểm tra còn lại
 
 1. `php -l` + tinker: đổi 1 trường → 1 log đúng subset; không đổi → không log; trường ngoài whitelist → không log;
    boolean `true` vs `"1"` → không log rác; đổi 2 trường → 1 dòng 2 key; thứ tự trả về mới → cũ;
@@ -486,4 +599,6 @@ không màn nào tự nới rộng.
 - [ ] **Đã làm ĐỦ 2 nơi**: popup ở màn danh sách (menu ⋮) + khối "Lịch sử" ở màn chi tiết (§5.1)
 - [ ] FE theo đúng `ui-base.md`: bố cục, text, màu, bộ lọc — cả popup lẫn mục màn chi tiết
 - [ ] Bảng dùng chung nhiều loại chứng từ (`type`): nhãn trạng thái lấy từ bản ghi, nhãn cột trung tính, cột riêng của từng loại đã khai (§3c)
+- [ ] Dòng THÊM / XOÁ của bảng con: TÊN + đúng cột "thuộc về" (`__brief`), bỏ cột số liệu; dòng SỬA vẫn liệt kê đủ trường đã đổi (§6b)
+- [ ] **Đã chạy script test TỪNG TRƯỜNG MỘT, không bỏ sót trường nào** — đủ 7 nhóm ca ở §7a
 - [ ] Verify đủ mục 7

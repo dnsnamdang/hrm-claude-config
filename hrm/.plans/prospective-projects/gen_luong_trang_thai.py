@@ -59,7 +59,7 @@ r = p.add_run("MÔ TẢ NGHIỆP VỤ"); r.bold = True; r.font.size = Pt(20)
 p = doc.add_paragraph(); p.alignment = CENTER
 r = p.add_run("Luồng trạng thái Dự án tiền khả thi"); r.bold = True; r.font.size = Pt(16)
 p = doc.add_paragraph(); p.alignment = CENTER
-r = p.add_run("Phân hệ Giao việc · Màn Dự án tiền khả thi · Cập nhật ngày 20/08/2026")
+r = p.add_run("Phân hệ Giao việc · Màn Dự án tiền khả thi · Cập nhật ngày 07/09/2026")
 r.font.size = Pt(11)
 doc.add_page_break()
 
@@ -93,9 +93,9 @@ table([
     ["3", "Chờ tiếp nhận làm giải pháp", "Đã gửi Yêu cầu làm giải pháp sang phòng giải pháp, đang chờ tiếp nhận."],
     ["4", "Đang làm giải pháp", "Phòng giải pháp (hoặc chính đơn vị kinh doanh nếu tự triển khai) đang xây dựng giải pháp."],
     ["5", "Đã duyệt giải pháp", "Hồ sơ giải pháp đã được duyệt."],
-    ["6", "Dự toán", "Đã phát sinh Yêu cầu xây dựng giá hoặc đã có báo giá — đang làm giá."],
+    ["6", "Dự toán", "Đã chốt giải pháp, hoặc đã phát sinh Yêu cầu xây dựng giá / đã có báo giá — đang làm giá."],
     ["7", "Thương thảo giá", "Báo giá đã được duyệt, đang thương thảo giá với khách hàng."],
-    ["8", "Thương thảo dự án hợp đồng", "Đã chốt giải pháp, chuyển sang thương thảo dự án/hợp đồng."],
+    ["8", "Thương thảo hợp đồng", "Đã chốt báo giá cuối cùng (báo giá Trúng thầu) — đang thương thảo dự án/hợp đồng với khách hàng."],
     ["9", "Thực hiện hợp đồng", "Hợp đồng đang triển khai."],
     ["10", "Nghiệm thu và thanh lý hợp đồng", "Đang nghiệm thu, thanh lý hợp đồng."],
     ["11", "Đóng/Không thực hiện dự án", "Dự án dừng, không theo tiếp. Có lưu nguyên nhân thất bại, ghi chú, người đóng và thời điểm đóng."],
@@ -108,7 +108,7 @@ table([
     ["1", "Đang tạo", "Bản nháp của gói thầu tổng."],
     ["2", "Đang thực hiện", "Đã có ít nhất một dự án con trực thuộc; các con đang chạy luồng riêng."],
     ["7", "Trình duyệt hợp đồng", "Báo giá tổng của gói thầu đã được tạo hợp đồng bên hệ thống ERP."],
-    ["8", "Thương thảo DA/Hợp đồng", "Đang thương thảo dự án/hợp đồng cho cả gói."],
+    ["8", "Thương thảo hợp đồng", "Đang thương thảo dự án/hợp đồng cho cả gói."],
     ["9", "HĐ đủ điều kiện thực hiện", "Hợp đồng đã đủ điều kiện triển khai."],
     ["10", "Nghiệm thu & Thanh lý", "Đang nghiệm thu, thanh lý cả gói."],
     ["11", "Đóng/Không thực hiện dự án", "Đóng cả gói thầu — kéo theo đóng toàn bộ dự án con chưa đóng."],
@@ -135,7 +135,9 @@ table([
     ["Đã duyệt giải pháp (hoặc bất kỳ bước nào trước Dự toán)", "Dự toán", "Gửi Yêu cầu xây dựng giá", "Nhân viên kinh doanh", "Màn Yêu cầu xây dựng giá"],
     ["Bất kỳ bước nào trước Dự toán", "Dự toán", "Tạo báo giá cho dự án (kể cả tạo từ BOM)", "Nhân viên xây dựng giá / kinh doanh", "Màn Báo giá"],
     ["Dự toán", "Thương thảo giá", "Báo giá của dự án được DUYỆT (duyệt cuối)", "Trưởng phòng / Ban giám đốc theo phân cấp duyệt giá", "Màn Báo giá"],
-    ["Đã duyệt giải pháp / Thương thảo giá", "Thương thảo dự án hợp đồng", "Bấm Chốt giải pháp trên hồ sơ đã duyệt (hoặc hết hiệu lực)", "Chỉ nhân viên kinh doanh phụ trách dự án", "Màn chi tiết dự án — nút Chốt giải pháp"],
+    ["Bất kỳ bước nào trước Dự toán", "Dự toán", "Bấm Chốt giải pháp trên hồ sơ đã duyệt (hoặc hết hiệu lực). Dự án đã ở Dự toán trở đi thì giữ nguyên trạng thái", "Chỉ nhân viên kinh doanh phụ trách dự án", "Màn chi tiết dự án — nút Chốt giải pháp"],
+    ["Bất kỳ bước nào trước Thương thảo hợp đồng", "Thương thảo hợp đồng", "Bấm Chốt báo giá (Trúng thầu) trên một báo giá đã duyệt. Mỗi dự án chỉ có một báo giá trúng thầu", "Chỉ nhân viên kinh doanh phụ trách dự án", "Màn chi tiết dự án — tab Báo giá"],
+    ["Thương thảo hợp đồng", "Thương thảo giá", "Bấm Hủy chốt báo giá (bắt buộc nhập lý do) — báo giá quay lại Đã duyệt. Chỉ lùi khi dự án đang đứng đúng ở bước 8", "Chỉ nhân viên kinh doanh phụ trách dự án", "Màn chi tiết dự án — tab Báo giá"],
     ["Mọi trạng thái trừ Đóng", "Đóng/Không thực hiện dự án", "Bấm Đóng dự án, chọn nguyên nhân thất bại", "Chỉ nhân viên kinh doanh phụ trách dự án", "Màn chi tiết dự án — nút Đóng dự án"],
     ["Mọi trạng thái trừ Đóng", "Đóng/Không thực hiện dự án", "Dự án CHA bị đóng — toàn bộ dự án con chưa đóng bị đóng theo", "Nhân viên kinh doanh phụ trách dự án cha", "Màn chi tiết dự án cha — nút Đóng dự án"],
 ])
@@ -164,16 +166,17 @@ para("Khi đóng dự án cha, hệ thống làm liên hoàn: đóng dự án ch
 h("5. SƠ ĐỒ LUỒNG RÚT GỌN", 1)
 para("Dự án thường (đường đi thuận lợi):", bold=True)
 para("Đang tạo → Thu thập thông tin dự án → Chờ tiếp nhận làm giải pháp → Đang làm giải pháp → "
-     "Đã duyệt giải pháp → Dự toán → Thương thảo giá → Thương thảo dự án hợp đồng → "
+     "Đã duyệt giải pháp → Dự toán → Thương thảo giá → Thương thảo hợp đồng → "
      "Thực hiện hợp đồng → Nghiệm thu và thanh lý hợp đồng → Kết thúc và lưu trữ")
 para("Các đường quay lui:", bold=True)
 bullet("Chờ tiếp nhận làm giải pháp → Thu thập thông tin dự án (từ chối hoặc huỷ yêu cầu làm giải pháp).")
 bullet("Đã duyệt giải pháp → Đang làm giải pháp (hồ sơ bị từ chối hoặc mở phiên bản giải pháp mới).")
+bullet("Thương thảo hợp đồng → Thương thảo giá (hủy chốt báo giá trúng thầu).")
 para("Đường thoát:", bold=True)
 bullet("Bất kỳ trạng thái nào (trừ khi đã đóng) → Đóng/Không thực hiện dự án. Đây là trạng thái "
        "cuối, không có đường quay lại.")
 para("Dự án cha:", bold=True)
-para("Đang tạo → Đang thực hiện → Trình duyệt hợp đồng → Thương thảo DA/Hợp đồng → "
+para("Đang tạo → Đang thực hiện → Trình duyệt hợp đồng → Thương thảo hợp đồng → "
      "HĐ đủ điều kiện thực hiện → Nghiệm thu & Thanh lý → Kết thúc & lưu trữ, "
      "và nhánh thoát Đóng/Không thực hiện dự án.")
 
@@ -189,7 +192,9 @@ table([
     ["Tạo cuộc họp", "Mọi trạng thái trừ Đang tạo và Đóng/Không thực hiện dự án", "—"],
     ["Tạo giải pháp trực tiếp", "Chỉ Thu thập thông tin dự án", "Dự án Tự triển khai, có làm giải pháp, chưa có giải pháp, phiếu thu thập thông tin đã nhập đủ trường bắt buộc"],
     ["Tạo yêu cầu làm giải pháp", "Thu thập thông tin dự án", "Dự án chưa có yêu cầu làm giải pháp, do chính người đang đăng nhập tạo, không phải dự án cha và không phải dự án Tự triển khai"],
-    ["Chốt giải pháp", "Khi đã có hồ sơ trình duyệt ở trạng thái Đã duyệt hoặc Hết hiệu lực", "Chỉ nhân viên kinh doanh phụ trách; dự án chưa đóng"],
+    ["Chốt giải pháp", "Khi đã có hồ sơ trình duyệt ở trạng thái Đã duyệt hoặc Hết hiệu lực", "Chỉ nhân viên kinh doanh phụ trách; dự án chưa đóng. Kết quả: hồ sơ sang Đã chốt, giải pháp sang Chốt giải pháp, dự án sang Dự toán"],
+    ["Chốt báo giá (Trúng thầu)", "Báo giá của dự án đang ở trạng thái Đã duyệt", "Chỉ nhân viên kinh doanh phụ trách; mỗi dự án chỉ được một báo giá trúng thầu (muốn chốt cái khác phải Hủy chốt trước). Kết quả: dự án sang Thương thảo hợp đồng"],
+    ["Hủy chốt báo giá", "Báo giá đang ở trạng thái Trúng thầu", "Chỉ nhân viên kinh doanh phụ trách; bắt buộc nhập lý do. Kết quả: báo giá về Đã duyệt, dự án lùi về Thương thảo giá nếu đang ở bước 8"],
     ["Đóng dự án", "Mọi trạng thái trừ Đóng/Không thực hiện dự án", "Chỉ nhân viên kinh doanh phụ trách dự án"],
 ])
 
@@ -207,8 +212,12 @@ h("7. QUY TẮC ĐI KÈM TRẠNG THÁI", 1)
 bullet("Sinh mã dự án: dự án chỉ được cấp mã khi rời khỏi trạng thái Đang tạo. Bản nháp không có mã.")
 bullet("Lưu nháp bỏ qua kiểm tra bắt buộc nhập, trừ Tên dự án. Lưu chính thức mới kiểm đủ các "
        "trường bắt buộc.")
-bullet("Mọi lần đổi trạng thái đều được ghi lại nhật ký (trạng thái cũ, trạng thái mới, thời "
-       "điểm) để phục vụ báo cáo tiến độ theo mốc thời gian.")
+bullet("Màn Sửa dự án KHÔNG đổi được trạng thái. Từ bước Thu thập thông tin dự án trở đi, hệ "
+       "thống bỏ qua trạng thái do màn Sửa gửi lên và giữ nguyên trạng thái hiện tại; trạng "
+       "thái chỉ đổi theo luồng nghiệp vụ (giải pháp, yêu cầu, báo giá). Dự án còn ở Đang tạo "
+       "thì chỉ được giữ nháp hoặc chuyển sang Thu thập thông tin dự án.")
+bullet("Phần lớn các lần đổi trạng thái được ghi nhật ký (trạng thái cũ, trạng thái mới, thời "
+       "điểm, người thực hiện) để phục vụ báo cáo tiến độ theo mốc thời gian — xem giới hạn ở chương 8.")
 bullet("Dự án ở trạng thái Đang tạo bị loại khỏi các báo cáo và một số danh sách chọn — bản nháp "
        "không được coi là dự án thật.")
 bullet("Đóng dự án bắt buộc chọn nguyên nhân thất bại; hệ thống lưu nguyên nhân, ghi chú, người "
@@ -225,10 +234,14 @@ bullet("Ba trạng thái cuối của dự án thường — Thực hiện hợp
        "Chúng mới được dùng để hiển thị và để lọc/báo cáo; phần hợp đồng nằm bên hệ thống ERP.")
 bullet("Tương tự ở dự án cha: các bước Thương thảo DA/Hợp đồng, HĐ đủ điều kiện thực hiện, "
        "Nghiệm thu & Thanh lý, Kết thúc & lưu trữ hiện chưa có thao tác nào tự chuyển tới.")
-bullet("Màn Sửa dự án luôn gửi lên trạng thái Thu thập thông tin dự án khi bấm Lưu. Với dự án đã "
-       "đi xa hơn (ví dụ đang ở Dự toán hay Thương thảo giá), thao tác sửa và lưu lại sẽ kéo "
-       "trạng thái dự án về Thu thập thông tin dự án. Cần thống nhất mong muốn nghiệp vụ ở điểm "
-       "này: hoặc khoá nút Sửa từ một bước nào đó trở đi, hoặc giữ nguyên trạng thái cũ khi lưu.")
+bullet("Gửi Yêu cầu xây dựng giá đặt trạng thái dự án về Dự toán mà không kiểm tra bước hiện "
+       "tại. Dự án đang ở Thương thảo giá hoặc Thương thảo hợp đồng, nếu phát sinh thêm một "
+       "yêu cầu xây dựng giá, sẽ bị kéo ngược về Dự toán.")
+bullet("Nhật ký trạng thái không ghi đủ mọi lần chuyển. Các đường chuyển do báo giá gây ra "
+       "— báo giá được duyệt (sang Thương thảo giá), chốt báo giá trúng thầu (sang Thương "
+       "thảo hợp đồng), hủy chốt (lùi về Thương thảo giá) — và đường Gửi yêu cầu xây dựng "
+       "giá hiện cập nhật thẳng vào cơ sở dữ liệu nên không sinh bản ghi nhật ký. Báo cáo "
+       "tiến độ theo mốc thời gian vì thế có thể thiếu các mốc này.")
 bullet("Hai bộ trạng thái dùng chung số thứ tự nhưng khác tên. Khi làm báo cáo hoặc lọc danh "
        "sách theo trạng thái, phải tách riêng dự án cha và dự án thường, nếu không số liệu sẽ bị "
        "gộp nhầm giữa hai nghĩa khác nhau.")

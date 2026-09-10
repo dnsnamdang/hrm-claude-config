@@ -1,6 +1,6 @@
 ---
 name: print-page
-description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc khi gặp lỗi in — mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
+description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
@@ -442,6 +442,17 @@ Ba điều bắt buộc kèm theo:
 ⚠️ Còn `components/assign/quotation/QuotationPrintPreview.vue` (màn Báo giá phân hệ Giao việc) đang
 dùng `window.open` y hệt — **cùng lỗi**, cần chuyển sang iframe khi có dịp đụng tới màn đó.
 
+## 4a-bis. Số tiền trên bản in — dấu PHẨY ngăn nghìn
+
+Quy tắc số của dự án (chốt 2026-08-27): **dấu phẩy ngăn nghìn, dấu chấm thập phân** — `1,234,567.89`.
+Bên máy chủ cứ `number_format($x)` **mặc định** là ra đúng; đừng truyền tham số dấu ngăn cách
+(`number_format($x, 0, ',', '.')` cho ra kiểu Việt `1.234.567` — SAI quy tắc). Bản in, file xuất và
+số trên màn phải cùng một kiểu, nếu không người dùng đối chiếu 3 chỗ ra 3 dạng.
+
+Tự kiểm: `grep -rn "number_format([^)]*,[^)]*,[^)]*)"` trong module phải RỖNG.
+
+---
+
 ## 4b. LETTERHEAD CÔNG TY (logo đầu chứng từ) — BẮT BUỘC theo đúng khuôn này
 
 Áp dụng cho **mọi màn in chứng từ** (phiếu thu, phiếu chi, đề nghị, báo giá, hợp đồng…) — bản in HTML
@@ -574,6 +585,60 @@ Cách xử lý khi gặp: **KHÔNG sửa mẫu** (mẫu dùng chung với ERP, s
 
 Nếu mẫu **không có chỗ nào** cho trường cần in (không nhãn, không biến) thì phải **hỏi lại**, vì
 thêm là phải sửa mẫu bên ERP — không tự quyết.
+
+---
+
+## 4e. IN DANH SÁCH: ô "Thời gian" và cột ngày — 2 lỗi đã lặp qua 3 màn
+
+Hai lỗi này bị bắt ở Phiếu cung cấp thông tin (Redmine #11207), rồi **lặp nguyên xi** ở Phiếu bảo
+hành (#11271) và còn nằm sẵn ở Báo giá dịch vụ — vì mỗi service in tự viết lấy một bản.
+
+### 1. Không lọc ngày thì ô "Thời gian" ghi **"Tất cả"**, KHÔNG để trống
+
+```php
+// SAI — không lọc ngày thì ra chuỗi rỗng, người nhận bản in không biết lấy khoảng nào
+$time = ($startDate ? … : '') . ' - ' . ($endDate ? … : '');
+'THOI_GIAN' => trim($time) === '-' ? '' : $time,
+
+// ĐÚNG
+'THOI_GIAN' => $this->periodText($startDate, $endDate),
+```
+
+Ô trống đọc như **thiếu dữ liệu**, không đọc thành "không lọc". Cùng cách hiển thị với ô "Phòng
+ban" ngay cạnh — ô đó đã ghi "Tất cả" từ đầu, để hai ô cạnh nhau mà một ô trống là lộ ngay.
+
+### 2. Cột ngày trong BẢNG danh sách phải kèm GIỜ
+
+```php
+'…' . $this->td($this->listDateTime($row->created_at), 'left')   // 28/07/2026 09:15
+```
+
+Bản in danh sách phải khớp cột cùng tên **trên màn hình**, mà màn hình hiện `d/m/Y H:i`. In mỗi
+ngày thì hai phiếu lập cùng ngày trông y hệt nhau, không biết cái nào trước.
+
+⚠️ **Chỉ áp cho bản in DANH SÁCH.** Bản in MỘT phiếu (`NGAY_LAP` trên chứng từ) vẫn chỉ ghi ngày —
+chứng từ giấy không ghi giờ lập.
+
+### Dùng trait, đừng chép công thức
+
+Cả hai quy tắc nằm ở `Modules/CustomerCare/Services/Concerns/PrintsListPeriod.php`
+(`periodText()` + `listDateTime()`). Service in danh sách `use` trait đó là xong. Chép công thức ra
+ngoài chính là lý do lỗi lặp qua 3 màn.
+
+**Tự kiểm** — mở bản in danh sách khi KHÔNG lọc ngày:
+
+- dòng đầu phải là `Thời gian: Tất cả` (không phải `Thời gian:` trống, cũng không phải ` - `)
+- cột ngày trong bảng phải có giờ: `28/07/2026 09:15`
+
+```bash
+# quét cả module xem còn service nào tự viết:
+grep -rn "THOI_GIAN' => trim" Modules/<Module>/Services/                              # phải RỖNG
+grep -rn "created_at)->format('d/m/Y')" Modules/<Module>/Services/*PrintService.php
+```
+
+Lệnh thứ hai **không nhất thiết phải rỗng**: nó bắt cả `NGAY_LAP` của bản in MỘT phiếu — chỗ đó chỉ
+ghi ngày là ĐÚNG. Soi từng kết quả, chỉ sửa những dòng nằm trong hàm dựng BẢNG danh sách
+(`listTable` / `getTableList…`).
 
 ---
 

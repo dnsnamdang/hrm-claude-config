@@ -448,6 +448,34 @@ File mẫu đang chạy: `pages/assign/quotations/components/QuotationProductSea
 
 ---
 
+## 4b. Popup CHỌN BẢN GHI: click vào DÒNG là thêm ngay — và phải là MẶC ĐỊNH
+
+Popup chọn hàng hoá / dịch vụ / thiết bị: **bấm vào dòng là thêm ngay bản ghi đó**, không bắt người
+dùng tích checkbox rồi bấm nút. Checkbox vẫn giữ (có `@click.stop`) để thêm hàng loạt — click dòng
+chỉ là lối tắt, không mất gì.
+
+### Bài học đắt hơn: hành vi chuẩn thì phải là MẶC ĐỊNH của component dùng chung
+
+`ProductSearchModal` vốn đã dùng chung cho hơn 15 màn, nhưng hành vi này khai dạng **opt-in**
+(`addOnRowClick`, mặc định `false`) "cho an toàn". Hậu quả: mỗi màn phải tự nhớ bật, màn nào quên
+thì người dùng báo lại **đúng một lỗi ấy** — sửa ở Phiếu cung cấp thông tin (#11240) rồi lặp
+nguyên xi ở Báo giá dịch vụ. Đổi mặc định thành `true` ngày 2026-08-28.
+
+**Quy tắc rút ra, áp cho MỌI component dùng chung:**
+
+- Hành vi đã chốt là chuẩn → đặt làm **giá trị mặc định**. Màn nào cần khác thì **tắt tường minh**
+  và ghi lý do ngay tại chỗ.
+- Đừng để mặc định "an toàn" rồi bắt từng màn bật: dùng chung mà vẫn phải nhớ cấu hình từng nơi thì
+  chẳng khác gì copy code — vẫn sót, chỉ khác là sót ở chỗ khó thấy hơn.
+- Sửa một hành vi trong component dùng chung xong, **quét ngay xem màn nào đang khai đè**:
+
+```bash
+grep -rn "add-on-row-click\|addOnRowClick" pages/ components/ | grep -v "<component>.vue"
+# ra rỗng = mọi màn đang ăn theo mặc định, đúng ý đồ
+```
+
+---
+
 ## 5. Checklist khi tạo/review modal
 
 - [ ] **Dựng trên `V2BaseModal`** (mục 0) — popup mới KHÔNG tự khai `b-modal` + header + footer

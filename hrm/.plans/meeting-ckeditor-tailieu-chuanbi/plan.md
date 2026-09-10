@@ -50,3 +50,10 @@ Tồn tại: "chuyển vị trí trường Mục tiêu" ở tiêu đề task ch�
 user hỏi lại TPE Lệ. Dữ liệu test giữ lại: meeting id=58 trên DB local.
 Bước tiếp theo: chờ TPE Lệ trả lời về vị trí trường Mục tiêu.
 Blocked: không.
+
+---
+
+## Fix lẻ 2026-09-08 — Drawer chi tiết meeting hiện `&aacute;` `&atilde;` (nhánh `tpe`)
+
+- [x] `utils/helpers.js`: `htmlToPlainText` giải mã MỌI entity qua `decodeHtmlEntities()` (textarea của trình duyệt; SSR fallback entity hay gặp) thay vì liệt kê tay 4 entity — áp cho ô Kết luận/Biên bản + Ghi chú ở `MeetingDetailDrawer` (dùng ở Lịch làm việc của tôi + Báo cáo CSKH tiềm năng)
+- [x] Verify Playwright với meeting id 88 (`TPSG.MET.KH.26.0003`): chữ ra đúng tiếng Việt

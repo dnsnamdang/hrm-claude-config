@@ -18,6 +18,57 @@ hoặc sắp triển khai, dựa trên code thực tế + design document + busi
 
 ---
 
+## 🚫 3 BƯỚC BẮT BUỘC TRƯỚC KHI VIẾT — bỏ bước nào cũng bị trả tài liệu về
+
+Ngày 2026-09-03 một bộ SRS bị tester trả về **3 lần liên tiếp**. Nguyên nhân không phải do
+không biết form, mà do 3 sai lầm về quy trình dưới đây. Làm đủ 3 bước này thì không tái phạm.
+
+**Bước 1 — Đọc lại SKILL.md NGAY TRƯỚC KHI viết, dù đã đọc đầu phiên.**
+Skill được cập nhật liên tục; phiên làm việc dài thì bản đã đọc lúc đầu có thể đã cũ. Lần đó
+skill được đổi lúc 11:16 còn tài liệu thì sinh lúc 13:00 bằng API của bản 09:00. Kiểm tra nhanh:
+
+```bash
+ls -l .claude/skills/srs-documenter/SKILL.md .claude/skills/srs-documenter/assets/SRS_MAU.docx
+git -C hrm-claude-config log --oneline -3 -- hrm/.claude/skills/srs-documenter
+```
+
+**Bước 2 — MỞ ẢNH trong bản mẫu ra XEM, không chỉ đọc chữ.**
+Sơ đồ Use Case là thứ khác nhau nhiều nhất giữa các form mà đọc text không thấy. Lần đó sơ đồ
+tổng quan bị vẽ phẳng (mọi use case nối thẳng actor) suốt 3 vòng sửa mà không ai nhận ra vì
+chỉ đối chiếu phần chữ:
+
+```bash
+mkdir -p /tmp/mau && cd /tmp/mau
+unzip -o -q .claude/skills/srs-documenter/assets/SRS_MAU.docx "word/media/*"
+# anh1 = so do tong quan, anh4 = bieu do use case cua 1 chuc nang → MỞ RA XEM
+```
+
+**Bước 3 — Chỉ `assets/SRS_MAU.docx` là chuẩn. File SRS khác trên Drive KHÔNG phải chuẩn.**
+Folder SRS trên Drive chứa cả tài liệu sinh theo form cũ. Lần đó lấy nhầm
+"SRS - Danh mục quốc gia" (màn danh mục **chưa phân quyền**) làm mẫu → bỏ mất cột Ký hiệu Q/V
+và rút bảng giao diện xuống 4–5 cột, càng sửa càng lệch. Người khác đưa file mẫu khác thì
+hỏi lại, đừng tự đổi chuẩn.
+
+### Bộ kiểm tự động — `assets/srs_selfcheck.py`
+
+`SrsDoc.save()` tự chạy bộ kiểm này và **ném lỗi** nếu tài liệu chưa khớp bản mẫu, nên không
+còn phải nhớ bằng mắt. Chạy tay trên file bất kỳ (kể cả file người khác gửi):
+
+```bash
+python3 .claude/skills/srs-documenter/assets/srs_selfcheck.py "<đường dẫn>/SRS - <Tên màn>.docx"
+```
+
+Nó đọc thẳng `SRS_MAU.docx` mỗi lần chạy, nên bản mẫu đổi thì phép kiểm đổi theo. Bắt được:
+mục Layout thiếu dòng `Menu:` hoặc còn `URL đầy đủ` · thiếu đoạn `Quy tắc chung:` hoặc đoạn đó
+không phải hyperlink thật · Phần 4 chưa là bảng 5 cột · **sơ đồ tổng quan vẽ phẳng** (đọc dấu
+`srs-uml` mà `srs_uml_render` đóng vào metadata PNG) · bảng giao diện dùng bộ cột lạ · còn mục
+đã bỏ của form cũ.
+
+Ngoài ra `overview_figure()` (API form cũ) nay **ném RuntimeError** kèm hướng dẫn chuyển sang
+`overview_figure2()`; muốn dựng lại tài liệu cũ để đối chiếu thì truyền `allow_legacy=True`.
+
+---
+
 ## ⚠️ FORM CHUẨN — ĐỌC TRƯỚC KHI VIẾT
 
 **File mẫu bắt buộc — đóng gói trong skill:** `.claude/skills/srs-documenter/assets/SRS_MAU.docx`
@@ -232,6 +283,20 @@ Chức năng con thì nối thêm vào cuối: `… => Thêm mới`, `… => S�
 `components/subsystem-menu/*.js` của hrm-client, đừng tự đặt tên.
 Với modal/popup, giữ đường dẫn màn danh sách rồi thêm 1 câu:
 *"Modal <Tên> được mở ngay trên màn hình danh sách theo đường dẫn ở trên."*
+
+⚠️ **MÀN CÓ NHIỀU LỐI VÀO thì phải liệt kê ĐỦ, mỗi lối vào một dòng** — cùng một màn nhưng vào
+từ menu khác (kèm tham số khác) là **khác phạm vi dữ liệu**, người nghiệm thu mở nhầm lối vào rồi
+kết luận "màn thiếu dữ liệu". Ghi kèm phạm vi hiển thị của từng lối vào:
+
+```
+Đường dẫn màn hình:
+• Menu: Phân hệ Bán hàng => Lắp đặt - BH - SC => Yêu cầu kiểm tra sửa chữa - bảo hành
+  Hiển thị: chỉ phiếu do người đang đăng nhập lập — đây là phạm vi MẶC ĐỊNH.
+• Menu: Phân hệ CSKH => Kiểm tra bảo hành sửa chữa => Yêu cầu kiểm tra sửa chữa - bảo hành
+  Hiển thị: toàn bộ phiếu trong phạm vi quyền của người đang đăng nhập.
+```
+
+Cách đếm đủ lối vào: xem `.claude/skills/list-page/SKILL.md` §3d và §3d-2.
 
 > Form cũ ghi `Menu:` + `Route (FE):` (trước 2026-08-17) rồi chuyển sang chỉ `URL đầy đủ:`
 > (2026-08-17). Từ 2026-08-28 **quay lại ghi menu và bỏ hẳn URL** — `d.layout()` vẫn nuốt

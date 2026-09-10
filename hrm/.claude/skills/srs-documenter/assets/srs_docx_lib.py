@@ -162,6 +162,12 @@ class SrsDoc(object):
         h1 = doc.styles['Heading 1']
         h1.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         h1.paragraph_format.page_break_before = True
+        # Style 'Caption' cua khung python-docx: tai lieu dung doan thuong cho chu thich anh
+        # (xem figure()), nhung van chinh style nay cho khop quy dinh de khong ai dung nham.
+        cap = doc.styles['Caption']
+        set_font_name(cap, FONT_NAME)
+        cap.font.size = Pt(CAPTION_PT)
+        cap.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         self.doc = doc
 
     # -------------------------------------------------------- trang dau
@@ -348,11 +354,18 @@ class SrsDoc(object):
         uml.draw_overview2(png, actors, mains, subs)
         self.figure(png, caption, width_in=6.3)
 
-    def overview_figure(self, title, actors, usecases, caption):
+    def overview_figure(self, title, actors, usecases, caption, allow_legacy=False):
         """FORM CU — so do tong quan PHANG, moi use case noi thang toi actor.
 
         Tai lieu moi dung `overview_figure2()`; giu ham nay cho cac gen_srs.py cu.
         """
+        if not allow_legacy:
+            raise RuntimeError(
+                'overview_figure() la API cua form CU (so do phang, moi use case noi thang toi '
+                'actor) — form 2026-08-28 da bo. Dung overview_figure2(actors, mains, subs, '
+                'caption): mains = MAN HINH that (danh sach / them moi / chi tiet) noi toi actor, '
+                'subs = thao tac tren man do noi bang «include»/«extend». Chi truyen '
+                'allow_legacy=True khi co y sinh lai tai lieu cu de doi chieu.')
         png = self._png('overview')
         uml.draw_overview(png, title, actors, usecases)
         self.figure(png, caption, width_in=6.3)
@@ -530,3 +543,16 @@ $word.Quit()
             print(out.encode('ascii', 'replace').decode())
         assert imgs > 0, 'Thieu anh bieu do use case'
         assert not bad, 'Con so do ve bang ky tu: %s' % bad[:3]
+
+        # Doi chieu THANG voi ban mau `assets/SRS_MAU.docx` — bat 4 diem cua form 2026-08-28
+        # (menu / rule_ref co hyperlink / Phan 4 la bang 5 cot / so do co phan cap) va bo cot
+        # bang giao dien. Doc ban mau moi lan chay nen skill doi thi kiem tra doi theo.
+        # Ly do co buoc nay: 2026-09-03 tai lieu bi tra ve 3 lan vi sinh bang API cu ma khong
+        # ai phat hien — nguoi viet doc SKILL.md tu dau phien roi khong doc lai.
+        try:
+            from srs_selfcheck import check as _check
+        except Exception as exc:                      # noqa: BLE001
+            print('!!! Khong chay duoc srs_selfcheck:', exc)
+            return
+        errs = _check(self.out)
+        assert not errs, ('File chua dung ban mau, xem %d dong loi o tren.' % len(errs))

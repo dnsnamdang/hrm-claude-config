@@ -120,9 +120,20 @@ def _usecase(d, cx, cy, rx, ry, text, group, font, sub=None):
     return cx - rx, cx + rx
 
 
-def _finish(img, out_path, target_w):
+def _finish(img, out_path, target_w, kind=''):
+    """Luu PNG, dong dau `kind` vao metadata de bo kiem doi chieu duoc.
+
+    `srs_selfcheck.py` doc khoa "srs-uml" nay de biet so do tong quan duoc ve bang ham nao:
+    `overview-flat` (form cu, moi use case noi thang actor) hay `overview-hierarchy`
+    (form 2026-08-28). Nhin bang mat thuong rat de bo qua — da tra gia ngay 2026-09-03.
+    """
+    from PIL.PngImagePlugin import PngInfo
+
     img = img.resize((target_w, int(img.height * target_w / img.width)), Image.LANCZOS)
-    img.save(out_path, 'PNG')
+    meta = PngInfo()
+    if kind:
+        meta.add_text('srs-uml', kind)
+    img.save(out_path, 'PNG', pnginfo=meta)
     return out_path
 
 
@@ -192,7 +203,7 @@ def draw_overview(out_path, title, actors, usecases, target_w=2000):
             lx, ly = pos[j]
             d.line([(ax + int(6 * S), ay), (lx - int(4 * S), ly)], fill=(148, 163, 184), width=max(2, int(1.4 * S)))
 
-    return _finish(img, out_path, target_w)
+    return _finish(img, out_path, target_w, kind='overview-flat')
 
 
 def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
@@ -248,7 +259,7 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
                          mcx + lw / 2 + 5 * S, mcy + lh / 2 + 7 * S], fill='white')
             d.text((mcx - lw / 2, mcy - lh / 2 - 3 * S), lbl, font=f_rel, fill=(71, 85, 105))
 
-    return _finish(img, out_path, target_w)
+    return _finish(img, out_path, target_w, kind='overview-hierarchy')
 
 
 def draw_overview2(out_path, actors, mains, subs, target_w=2000):
@@ -360,4 +371,4 @@ def draw_overview2(out_path, actors, mains, subs, target_w=2000):
             d.line([(ax + int(6 * S), ay), (lx - int(4 * S), ly)],
                    fill=(148, 163, 184), width=max(2, int(1.4 * S)))
 
-    return _finish(img, out_path, target_w)
+    return _finish(img, out_path, target_w, kind='usecase')
