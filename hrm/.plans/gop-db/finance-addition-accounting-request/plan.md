@@ -568,3 +568,88 @@ Bước tiếp theo: **user bấm tay trên trình duyệt** — đối chiếu 
 skill), test bằng tài khoản không phải Super admin ở đủ 4 mức quyền, in thử 3 loại phiếu.
 Blocked: chờ user chốt 1 điểm ở Phase 8 (bản in dùng trang `/print` như nhóm Tài chính, hay đổi
 sang popup xem trước theo skill print-page §8 — nếu đổi thì nên làm cho cả 4 màn Tài chính).
+
+---
+
+## Phase 11 — Sửa theo yêu cầu user (2026-09-07)
+
+Yêu cầu: (1) màn **Tạo** bỏ 2 ô "Người tạo" / "Phòng ban" — làm **như bên ERP**;
+(2) dropdown **Loại yêu cầu** để **đủ 7 loại chọn được y hệt ERP**.
+
+### Đối chiếu ERP (đã kiểm chứng bằng code ERP `D:\laragon\www\erp`)
+
+- `form.blade.php` :36-40 — ERP **không có** 2 ô "Người tạo"/"Phòng ban"; người lập nằm ở
+  **góc phải header card "Thông tin chung"**: `<% form.creator %> - <% form.created_time %>`.
+  Getter ở `partials/AdditionAccountingRequest.blade.php` :14-21 — màn Tạo lấy
+  `DEFAULT_USER.fullname` + ngày hôm nay, màn Sửa/Xem lấy `employee_create.info.fullname` +
+  `created_at`.
+- `formJs.blade.php` :1 — `$scope.types = type_for_select()` **không ignore gì** → select của ERP
+  liệt kê **đủ 7 loại**, gồm "Phối hợp kinh doanh". `form.blade.php` không có nhánh
+  `ng-if="form.type == 7"` nên form ra phần chung (số tiền + diễn giải). User đã chốt: **làm y hệt**.
+- `show()` Controller :149-155 — phiếu loại 7 luôn rẽ sang layout `show_accouting`
+  (HRM: `CoordinationDetail.vue`), kể cả phiếu nhập tay không có dữ liệu 3 bảng riêng.
+
+### Task
+
+- [x] **BE-1** `AdditionAccountingRequest::EDITABLE_TYPES` thêm `TYPE_COORDINATION` (7) →
+      dropdown `meta.types` đủ 7 loại, `Rule::in` cho phép lưu, `canEdit()` mở cho phiếu nháp loại 7
+- [x] **BE-2** Cập nhật docblock entity / Service::meta() / StoreRequest cho khớp hành vi mới
+- [x] **BE-3 (bug phát hiện khi rà)** `AdditionAccountingRequestStoreRequest` :52-58 và
+      `AdditionAccountingRequestChangeStatusRequest` :30 dùng `$this->get()` — **không đọc được JSON
+      body** (FE gửi `application/json` qua `apiPostMethod`), nên `type` / `status` / `object_type`
+      luôn ra `null`: rule rẽ theo loại KHÔNG BAO GIỜ chạy, loại 2/6 bị đòi `money` + `note` (2
+      trường màn hình không có) → **không lưu nổi phiếu loại 2/6**, và từ chối không cần lý do.
+      Đổi sang `$this->input()`
+- [x] **FE-1** `AdditionAccountingRequestForm.vue` bỏ 2 ô "Người tạo" / "Phòng ban", thêm dòng
+      "Người lập - Ngày lập" ở góc phải header card như ERP (Tạo: người đang đăng nhập + hôm nay;
+      Sửa/Chi tiết: người lập thật + ngày tạo phiếu — trước đây 2 ô này luôn hiện người ĐANG ĐĂNG
+      NHẬP kể cả khi xem phiếu người khác)
+- [x] **FE-2** Cập nhật docblock "6 loại" → 7 loại
+- [x] **KT** Smoke test API (lưu nháp/gửi duyệt loại 2 và loại 7, từ chối thiếu lý do) + compile FE
+
+- [x] **BE-4 (lỗi lòi ra sau khi vá BE-3)** `exchange_rate` là cột **NOT NULL** mà nhánh "lưu nháp"
+      cho phép bỏ trống → insert null nổ **500**. Nhánh nháp trước giờ chưa từng chạy (vì `get()`
+      luôn ra null nên rule luôn đi nhánh chặt), sửa xong mới lộ. `WriteService::headerAttributes()`
+      ép `exchange_rate` qua `self::money()`
+
+### Kiểm chứng (2026-09-07)
+
+Script `aar_smoke.php` gọi thẳng HTTP kernel bằng JWT của Super admin (id 13), chạy trong
+transaction rồi **rollback** — **18/18 pass**, DB không còn dòng test nào:
+
+- `GET /meta` trả **đủ 7 loại**, đúng thứ tự ERP `2-6-1-5-3-4-7`
+- Loại 7: lưu nháp · gửi duyệt (tiền + diễn giải) · ghi đúng `type=7` · mở chi tiết không lỗi ·
+  nháp của chính mình `is_can_edit = true`
+- Loại 2 **gửi duyệt được** (trước khi vá `get()` thì bị đòi `money` + `note` — 2 trường màn hình
+  không có, tức là **không lập nổi phiếu loại 2/6**, nhóm chiếm 1.894/1.937 phiếu trên DB)
+- Rule rẽ theo loại đã thật sự chạy: loại 4/Nhân viên thiếu `employee_id` → 422 đúng ô; loại 6 gửi
+  duyệt với bảng chi tiết rỗng → 422
+- Lưu nháp chỉ bắt buộc Loại yêu cầu; thiếu Loại yêu cầu → 422
+- Từ chối không nhập lý do → **422 đúng ô `comment`** (trước đây lọt)
+
+FE: 6 file compile sạch (`vue-template-compiler` + babel). BE: 5 file `php -l` sạch.
+
+### Checkpoint — 2026-09-07
+Vừa hoàn thành: Phase 11 — bỏ 2 ô "Người tạo"/"Phòng ban" ở form (chuyển thành dòng
+"Người lập - Ngày lập" ở header card như ERP), mở **đủ 7 loại yêu cầu** như ERP, và vá 2 lỗi nặng
+lòi ra khi rà (`$this->get()` không đọc JSON body · `exchange_rate` NOT NULL khi lưu nháp).
+Đang làm dở: không.
+Bước tiếp theo: **user mở trình duyệt nghiệm thu** — màn Tạo (dropdown 7 loại, dòng người lập ở
+header), lưu nháp loại 2 rồi gửi duyệt, tạo thử 1 phiếu loại 7, từ chối không lý do.
+Blocked: không.
+
+- [x] **FE-3 (user phản hồi 2026-09-07)** Sau khi bỏ 2 ô, hàng đầu chỉ còn mỗi "Loại yêu cầu" đứng
+      lẻ loi. Gộp 2 `form-row` đầu phiếu thành **MỘT hàng duy nhất** — các ô hiện/ẩn theo loại nên
+      chia sẵn nhiều hàng là sai, Bootstrap tự xuống dòng theo `col-md-3`. Hàng textarea
+      (Diễn giải / Ghi chú duyệt, `col-md-6`) giữ riêng.
+
+### Checkpoint — 2026-09-07 (cuối phiên)
+Vừa hoàn thành: Phase 11 trọn vẹn — BE-1→BE-4, FE-1→FE-3. Kiểm chứng API 18/18 pass (transaction +
+rollback, DB sạch), FE compile sạch, BE `php -l` sạch. Chưa commit ở cả 2 repo (nhánh `gop_db`).
+Đang làm dở: không.
+Bước tiếp theo (phiên sau): **user mở trình duyệt nghiệm thu** màn `/finance/addition-accounting-requests/create`
+— (1) bố cục 1 hàng liên tục, (2) dòng "Người lập - Ngày lập" ở góc phải header, (3) dropdown đủ
+7 loại, (4) lưu nháp loại 2 rồi gửi duyệt, (5) tạo thử 1 phiếu loại 7, (6) từ chối không nhập lý do.
+Nếu OK thì cân nhắc rà nốt **18 FormRequest khác còn dùng `$this->get()`** (Finance 7 · CustomerCare 7
+· Payroll 4) — cùng loại lỗi với BE-3, xem memory [[formrequest-get-ignores-json-body]].
+Blocked: không.

@@ -2278,3 +2278,113 @@ dữ liệu.
       `E4..E6 wrap=true vert=top`, hàng tiêu đề `E3 wrap=true vert=center` (không đổi),
       cột tiền vẫn `[n] fmt=#,##0`, `width E=34`, `row height=-1` (auto)
 - [ ] **Mở bằng Excel — user tự xem**
+
+---
+
+## Phase 41 — Popup "Chọn nhanh hợp đồng": tự tìm khi chọn đối tượng + nút chuẩn (2026-09-07)
+
+User: *"trong popup thêm nhanh hợp đồng khi tôi chọn khách hàng thì phải tìm kiếm được luôn không
+cần bấm lọc, chỗ button lọc đó thay bằng tìm kiếm và làm mới như các popup khác"*.
+
+`FastContractModal.vue` là popup duy nhất của cụm Tài chính còn dùng **1 nút "Lọc"** (`ri-filter-3-line`,
+`secondary`) và bắt user bấm mới nạp danh sách. 2 popup cùng module (`ObjectSearchModal`,
+`ContractPickerModal` ở `bill-adjust-depts`) đều dùng cặp **Tìm kiếm** (`primary` + `ri-search-line`)
++ **Làm mới** (`tertiary` + `ri-refresh-line`) — đúng bảng icon/variant của skill `button-convention`.
+
+- [x] `onPartyChange()`: chọn/đổi khách hàng (NCC) → xoá danh sách cũ rồi **tự gọi `search()`**;
+      bỏ chọn (allowClear) → chỉ xoá danh sách, không gọi API
+- [x] Thay nút "Lọc" bằng **Tìm kiếm + Làm mới** theo khuôn 2 popup trên (`d-flex` + `gap: 8px`)
+- [x] `resetSearch()`: xoá đối tượng + mã hợp đồng + danh sách, KHÔNG gọi API (không có đối tượng
+      thì endpoint bắt buộc `customer_id`/`supplier_id`)
+- [x] Sửa câu placeholder trong bảng: bỏ vế "rồi bấm Lọc"
+
+### Verify
+- [x] Parse template + script bằng vue-template-compiler + babel (hrm-client không có ESLint chạy được trên Node 14)
+- [ ] User mở trình duyệt nghiệm thu
+
+### 41.1 — Nút × xoá nhanh ở ô mã hợp đồng (2026-09-07)
+
+User: *"chỗ search hợp đồng cũng thêm nút x để clear đi cho tôi"*.
+
+- [x] Bọc `V2BaseInput` bằng `.fast-contract-field` + `has-suffix`, thêm `<button>` × (`ri-close-line`)
+      chỉ hiện khi ô có chữ — sao y `BillAdjustDeptRequestPickerModal.vue` :19-42, KHÔNG tự chế ô nhập
+- [x] `clearContractCode()`: xoá chữ rồi tìm lại luôn nếu đã chọn đối tượng; chưa chọn thì chỉ xoá
+      (gọi `search()` lúc đó chỉ ra toast "Chưa chọn khách hàng")
+- [x] CSS nút × bám `V2BaseFilterFieldControl` :30-37 (xám #9ca3af, hover #6b7280)
+- [x] Parse lại template + script — sạch
+- [ ] User mở trình duyệt nghiệm thu
+
+### Checkpoint — 2026-09-07
+Vừa hoàn thành: Phase 41 + 41.1 — popup Chọn nhanh hợp đồng: tự tìm khi chọn đối tượng, cặp nút Tìm kiếm / Làm mới, nút × xoá nhanh ở ô mã hợp đồng.
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt (Ctrl+Shift+R vì Nuxt 2 HMR hay giữ component cũ) mở phiếu nháp → bảng chi tiết → Chọn nhanh hợp đồng → chọn khách hàng, kiểm tra danh sách ra ngay.
+Blocked:
+
+---
+
+## Phase 42 — Popup hợp đồng ra sai tập dữ liệu so với ERP (2026-09-07)
+
+User: *"tại sao tôi cùng tìm kiếm khách hàng Vinfast automobile indonesia mà bên hrm ra 2 hợp đồng,
+bên erp không có hợp đồng nào vậy, giờ dùng chung db rồi mà?"*
+
+DB đúng là dùng chung (`hrm-api/.env` và `erp/.env` cùng `DB_DATABASE=gop_db`) — lệch là do **câu
+WHERE**. KH `PT VINFAST AUTOMOBILE INDONESIA` = `customers.id = 35431`:
+
+| Bảng | Dòng của KH này | HRM đọc (trước) | ERP đọc |
+| --- | --- | --- | --- |
+| `firm_contracts` | 64 (63 của NV 215 · 1 của NV 575) | ❌ | ✅ |
+| `opening_contracts` | 2 (cả 2 của NV 215) | ✅ | ✅ |
+| `hrm_contracts` · `service_contracts` · `wr_service_contracts` | 0 | | |
+
+**2 nguyên nhân:**
+
+1. ERP lọc `created_by = người đang đăng nhập` ở **mọi nguồn** của popup này
+   (`BillAdjustDeptRequest::getDataFirmContract/getDataOpeningContract/getDataContract`,
+   `WrServiceContract::getDataOpeningContract`) → user không phải NV 215 nên ERP ra rỗng.
+   `BillAdjustDeptFastPickService::customerContracts()` của HRM **không lọc** (chỉ select `created_by`
+   để hiện tên) → ra 2 hợp đồng đầu kỳ của người khác. Lệch NGAY TRONG HRM: popup **chọn tay**
+   (`searchSellContracts()` nhánh `usage=bill_adjust_dept_request`) đã lọc `created_by` từ đầu.
+2. Nguồn hợp đồng khác nhau — quyết định #4 (`firm_contracts` → `hrm_contracts`) làm KH gốc ERP
+   không điều chỉnh được công nợ, vì hợp đồng của họ nằm hết ở bảng cũ.
+
+**User chốt 2026-09-07:** (a) thêm lọc `created_by` cho popup chọn nhanh · (b) **bổ sung
+`firm_contracts`** vào popup HRM — chỉ ở màn này, các màn khác giữ nguyên quyết định #4.
+
+### BE (3 file, không migration, không quyền mới)
+- [x] `Entities/Contract/FirmContract.php`: thêm `SELECTABLE_STATUSES = [3,9,10]` +
+      `SELECTABLE_TYPES = [1,4,8]` (sao y ERP `getDataFirmContract()` :1363-1364), sửa docblock
+      "entity này KHÔNG xuất hiện trong popup" — nay CÓ, riêng màn này
+- [x] `BillIncomeRequestService::searchSellContracts()`: thêm nguồn `firm_contracts` **chỉ trong
+      nhánh `usage=bill_adjust_dept_request`**; gộp union động theo `$sources` thay vì chuỗi
+      `unionAll` cứng. Endpoint này còn phục vụ Đề nghị thu tiền + Đề nghị thanh toán — bật mặc
+      định là kéo hợp đồng hãng vào 2 màn đã nghiệm thu
+- [x] `BillAdjustDeptFastPickService::customerContracts()`: thêm nguồn `firm_contracts`, thêm lọc
+      `created_by` (fail-closed: chưa đăng nhập → `1=0`, KHÔNG rơi về `created_by is null`), thêm
+      lọc trạng thái/loại cho `wr_service_contracts` cho khớp popup chọn tay
+- [x] Nhánh **NCC giữ nguyên không lọc `created_by`** — ERP
+      `collectSupplierBuyContractsForAdjustRows()` :594 khai `$createdBy` rồi không dùng
+- [x] 🐞 **Lỗi có sẵn phát hiện khi rà**: `creatorNames()` tra `employee_infos.id = created_by`,
+      tức coi `employees.id ≡ employee_infos.id`. Dữ liệu thật **1.083/1.085** nhân viên có
+      `id ≠ employee_info_id` → gần như MỌI dòng hiện tên người khác (`created_by=215`
+      nhanntt.datd → in ra *Võ Bằng Khoa*). Sửa sang `employees.employee_info_id` theo khuôn
+      `BillAdjustDeptAccountingService` :169
+- [x] Không đụng validate: `contractable_type` là `nullable|string|max:255`, morphMap đã có
+      `App\Model\Sale\Firm\Contract\FirmContract` (`FinanceServiceProvider` :63)
+
+### Verify (chạy thật trên DB gộp, mỗi danh tính 1 tiến trình vì auth guard cache theo tiến trình)
+- [x] `php -l` sạch 3 file
+- [x] NV 215: chọn nhanh **14 dòng** (12 FirmContract + 2 OpeningContract) = chọn tay **14 dòng**
+      → 2 popup khớp nhau
+- [x] NV 575: chọn nhanh **1** = chọn tay **1**
+- [x] Công nợ TK 1311 của hợp đồng hãng ra số thật (194 tỷ / 166 tỷ / 163 tỷ…), sắp xếp nợ giảm dần
+- [x] Lọc `contract_code=PAINT` → 1 dòng
+- [x] **Regression**: chọn tay KHÔNG truyền `usage` (màn Đề nghị thu tiền) = **2 dòng như trước**;
+      `only_mine=1` (Đề nghị thanh toán) = **2 dòng như trước**; popup NCC = 0 dòng, không lọc người tạo
+- [x] Tên người tạo sau khi sửa: *Nguyễn Thị Thanh Nhàn* (đúng chủ email nhanntt.datd)
+- [ ] User mở trình duyệt nghiệm thu
+
+### Checkpoint — 2026-09-07 (Phase 42)
+Vừa hoàn thành: Phase 42 — thêm lọc created_by + nguồn firm_contracts cho popup hợp đồng, sửa lỗi tên người tạo.
+Đang làm dở: không
+Bước tiếp theo: user đăng nhập bằng tài khoản có tạo hợp đồng (vd nhanntt.datd) rồi đối chiếu số dòng HRM ↔ ERP.
+Blocked:

@@ -103,3 +103,14 @@ cùng ngày) sau khi tôi đọc skill lần đầu → lần chỉnh bề rộn
 - [x] Ô đối tượng THAM CHIẾU (Khách hàng · Yêu cầu làm GP · Khách hàng cuối) ghép **"MÃ - Tên" cùng 1 dòng**
       qua helper `joinCodeName()` thay vì 2 `<div>` — ô cao gấp đôi mà cột vẫn còn chỗ ngang, và `clamp-2`
       thành vô nghĩa vì nội dung đã ăn đủ 2 dòng (mục 15b bước 4)
+
+## Cập nhật 2026-09-07 — Bề rộng cột Mã (user yêu cầu)
+
+- [x] Cột `solutionCode` `190px` → **`250px`** để hiện ĐỦ mã, không cắt bằng "…": mã giải pháp dài
+      tới **31 ký tự** (`HN_NSHC.UD.EHS1.2026.DA001_GP02`, đo trên dữ liệu thật) và là chuỗi liền
+      không có chỗ ngắt dòng. Vượt bậc M (170-190px) của skill mục 15b là **có chủ ý** — bậc đó
+      tính cho mã phiếu ngắn.
+- [x] ~~Ghim cột Tên giải pháp~~ — đã thử rồi **bỏ** theo yêu cầu user cùng ngày; cột Tên trở lại
+      đúng skill mục 3: không `sticky`, không `locked`, user tự ẩn / đổi vị trí được.
+      Nhóm ghim trái còn `STT(48) → Mã giải pháp(250)` = **298px**.
+- [x] Kiểm chứng: compile SFC OK; nhóm ghim liền nhau ở đầu bảng, cột Tên hết sticky/locked.

@@ -164,3 +164,147 @@ User chốt: áp dụng cho **Phiếu xử lý cung ứng (nội bộ)**; Dư n�
 ## Chỉnh UI nhỏ (2026-08-03, @khoipv)
 
 - [x] FE `supply/supply_proposals/add.vue` — ô "Ghi chú" thiếu placeholder → thêm `placeholder="Nhập ghi chú"`.
+
+## Thu hồi đề xuất khi chờ xử lý (2026-09-08, @khoipv)
+
+> Chủ phiếu được thu hồi phiếu đã gửi khi phòng tiếp nhận CHƯA lập phiếu xử lý.
+> Chốt: về Nháp (sửa & gửi lại) · áp dụng cả status 2 (Chờ BGĐ duyệt) và 3 (Chờ xử lý) · không nhập lý do.
+
+- [x] BE migration: thêm `recalled_at`, `recalled_by` vào `supply_proposals` (index, không khóa ngoại)
+- [x] BE `SupplyProposal`: accessor `is_can_recall` (chủ phiếu + status ∈ {2,3} + chưa có PXL nào)
+- [x] BE `SupplyProposalService::recall()`: check lại trong transaction, về status 1 + `sent_at=null` + ghi recalled_*
+- [x] BE `SupplyProposalService::notifyRecall()`: status 3 → nhóm PERM_HANDLE; status 2 → nhóm PERM_APPROVE_INTERNAL
+- [x] BE `SupplyProposalController::recall()` + route `PUT /{id}/recall` (middleware Lập phiếu đề xuất cung ứng)
+- [x] BE `SupplyProposalResource` + `DetailSupplyProposalResource`: thêm `can_recall`
+- [x] FE `supply_proposals/index.vue`: nút Thu hồi + confirm
+- [x] FE `supply_proposals/add.vue`: nút Thu hồi màn chi tiết
+- [x] Verify tinker (DB thanh_an_stag): 5 ca — status 3 chưa PXL → về Nháp + `sent_at=null` + ghi `recalled_by/at` (OK); status 2 → về Nháp (OK); có PXL (kể cả PXL bị từ chối duyệt) → chặn, status giữ nguyên 3 (OK); status 9 → chặn (OK); không phải chủ phiếu → chặn (OK). Dữ liệu test đã forceDelete, route `PUT .../recall` đã đăng ký.
+- [ ] CHƯA verify click-through UI (không có tài khoản đăng nhập trong session) — mới xác nhận Nuxt compile 2 trang không lỗi
+- Lưu ý (đã chốt lại 2026-09-08): nút Thu hồi **chỉ hiện với chủ phiếu**. Vd DXCU-2026-0015 ở "Chờ xử lý", chưa có PXL, nhưng `created_by=156` nên user 13 không thấy nút — đúng thiết kế, không phải bug. Phiếu test được của user 13: DXCU-2026-0005/0008/0009 (status 3) và 0019 (status 2).
+
+## Popup chọn hàng — chỉ HĐ còn hiệu lực (2026-09-08, @khoipv)
+
+- [x] BE `SupplyProposalService::goodsPool()` — thêm điều kiện HĐ còn hiệu lực: `contract_end_time IS NULL OR contract_end_time >= hôm nay` (giữ nguyên `approvedStatuses()` = 3 Đã duyệt + 9 Đã kết xuất, `record_type = HỢP ĐỒNG`, đúng customer). Ngày KT đã gồm gia hạn phụ lục đã duyệt nên so trực tiếp trên cột.
+- [x] Verify tinker KH 1478 (9 HĐ: 3 hết hạn + 6 còn hạn) → pool chỉ còn contract_id [120,121,122,123,126,134] = đúng 6 HĐ còn hiệu lực; 146 dòng trong HĐ + danh mục ngoài HĐ giữ nguyên.
+- Ghi chú: endpoint `supply/supply-proposals/goods-pool` DÙNG CHUNG với popup chọn hàng màn **phiếu xử lý cung ứng** (`supply_handlings/add.vue:782`) → điều kiện này áp dụng cho cả 2 màn.
+- Ghi chú: ô tick "Chỉ hiện hàng còn SL theo HĐ" lọc theo `sl_con_lai_hd = contract_products.qty - exported_qty`; `exported_qty` chỉ cập nhật qua import Excel (type `exported-qty` → `ExpectedQtyImport`), KHÔNG tự trừ theo phiếu đề xuất/xử lý. Trên DB stag hiện 0/4704 dòng có exported_qty > 0.
+
+## Cảnh báo SL đề xuất / SL đặt đơn vượt SL còn lại (2026-09-08, @khoipv)
+
+> Yêu cầu: SL đề xuất (màn đề xuất) và SL đặt đơn (màn xử lý) vượt SL còn lại theo HĐ → bôi đỏ + note bên dưới.
+> Chốt: cảnh báo mềm (KHÔNG chặn gửi/lưu) · chỉ áp dụng cho dòng `in_contract` và loại phiếu có cột "SL còn lại HĐ" (KH) · dòng ngoài HĐ không có mốc so sánh nên bỏ qua.
+
+- [x] FE `supply_proposals/components/GoodsTable.vue` — `isOverContract(p)` = `in_contract && quantity > sl_con_lai_hd`; ô SL đề xuất + ô SL còn lại HĐ nền đỏ nhạt (`cell-over`), input viền đỏ (`is-over`), số ở chế độ xem đỏ đậm (`over-val`), note đỏ dưới ô: "Vượt SL còn lại (x)".
+- [x] FE `GoodsTable.vue` — note tổng hợp dưới bảng: "Có N mặt hàng có SL đề xuất vượt SL còn lại theo hợp đồng (tên 3 mặt hàng đầu...)." — bỏ câu giải thích thêm phía sau theo yêu cầu.
+- [x] FE `supply_handlings/components/HandlingGoodsTable.vue` — cùng logic cho cột `dat_don` (SL đặt đơn), style + note giống hệt màn đề xuất.
+- [x] FE cả 2 bảng — bôi đỏ **cả hàng**, **1 màu duy nhất** (`tr.row-over` nền `#fdecea !important`, đè sọc ngựa vằn + hover). Đã bỏ: tô đậm riêng 2 ô SL đề xuất/đặt đơn + SL còn lại HĐ, viền đỏ input, số đỏ đậm ở chế độ xem (theo yêu cầu "để cùng 1 màu thôi").
+- [x] Verify: Nuxt compile OK cả `/supply/supply_proposals/add` và `/supply/supply_handlings/add` (HTTP 200, không có marker lỗi compile).
+- [ ] CHƯA verify click-through UI (không có tài khoản đăng nhập trong session)
+- Ghi chú: banner cũ ở `supply_handlings/add.vue` (`overOrderRows` / `overContractRows`) giữ nguyên — kiểm tra phần **phân bổ xử lý** vượt đặt đơn / vượt HĐ, khác với cảnh báo mới (kiểm tra chính cột SL đặt đơn).
+- Ghi chú: `sl_con_lai_hd` = `contract_products.qty - exported_qty`, lấy từ `DetailSupplyProposalResource` / popup chọn hàng; dòng ngoài HĐ có `sl_con_lai_hd = 0` nhưng `in_contract = false` nên không bị cảnh báo nhầm.
+
+## Điều hướng bàn phím trong bảng hàng hóa (2026-09-08, @khoipv)
+
+> Yêu cầu: thao tác bàn phím lên/xuống/trái/phải + Enter giữa các ô nhập số. Chốt: **giữ nguyên `input type="number"`**.
+
+- [x] FE mixin dùng chung `pages/supply/gridKeyboardNav.js` — `onGridKeydown` + `focusGridCell/focusGridSibling/focusGridEl`; ô nhập gắn `data-grid-cell` + `:data-r` (dòng) + `:data-c` (cột nhập).
+- [x] FE `supply_proposals/components/GoodsTable.vue` — gắn mixin, cột SL đề xuất = `data-c=0`.
+- [x] FE `supply_handlings/components/HandlingGoodsTable.vue` — gắn mixin, SL đặt đơn = `data-c=0`, các cột phân bổ = `data-c=ci+1`.
+- [x] Verify: Nuxt compile OK cả 2 trang (HTTP 200, không lỗi module/compile).
+- [ ] CHƯA verify click-through UI (không có tài khoản đăng nhập trong session)
+
+Hành vi phím:
+- ↑ / ↓ — lên/xuống cùng cột (đã `preventDefault` để input number không tự tăng/giảm)
+- Enter / Shift+Enter — xuống/lên cùng cột (đồng thời chặn submit form)
+- ← / → — sang ô trái/phải cùng dòng; hết dòng thì nhảy sang dòng kế (kiểu Excel)
+- Tab / Shift+Tab — giữ mặc định trình duyệt
+- Ô được focus tự bôi đen giá trị để gõ đè
+
+Đánh đổi đã biết: giữ `type="number"` nên trình duyệt (Chrome) chặn đọc `selectionStart` → không phân biệt được "con trỏ đang giữa số" hay "ở cuối số", vì vậy ←/→ LUÔN chuyển ô. Muốn sửa 1 ký tự giữa số thì click vào đúng vị trí trong ô.
+
+## Ô nhập số để trống thay vì 0 (2026-09-08, @khoipv)
+
+- [x] FE `GoodsTable.vue` + `HandlingGoodsTable.vue` — thêm method `inputVal(v)` = `Number(v) > 0 ? v : ''`, dùng cho `:value` của SL đề xuất / SL đặt đơn / các cột phân bổ. Giá trị thật trong `formSubmit.products` vẫn là số 0 (handler `onFieldInput`/`toNum` ép `'' → 0`) nên payload gửi BE không đổi.
+- [x] Verify: Nuxt compile OK cả 2 trang (HTTP 200).
+- Ghi chú: chỉ áp dụng cho 2 bảng hàng hóa của Cung ứng (đề xuất + xử lý). Các màn HĐ mua / đơn mua (`purchase_contracts`, `purchase_orders`) vẫn giữ `|| 0` như cũ — chưa có yêu cầu.
+
+## Lưu nháp phiếu xử lý cung ứng (2026-09-08, @khoipv)
+
+> Chốt: Nháp KHÔNG tính vào SL đã xử lý của đề xuất · Nháp VẪN chặn người đề xuất thu hồi · PXL nháp chỉ người tạo thấy trong danh sách · chỉ người tạo sửa/xóa nháp.
+> Không cần migration (dùng lại cột `status`).
+
+- [x] BE `SupplyHandling`: `STATUS_NHAP = 1` + vào `STATUSES` (Nháp, #6B7280); `is_can_edit` / `is_can_delete` cộng thêm trạng thái Nháp
+- [x] BE `SupplyHandlingService::store()`: cờ `is_draft` → status 1 (giữ guard đề xuất phải đang Chờ xử lý)
+- [x] BE `SupplyHandlingService::update()`: nháp + `is_draft=0` = gửi chính thức → check lại đề xuất, chuyển 5 (KH) / 3 (Nội bộ) + syncHandledStatus
+- [x] BE loại nháp khỏi "đã xử lý": `SupplyProposal::hasActiveHandling()`, vòng tính handledQty trong entity, `SupplyProposalService::handledQtyByProduct()`
+- [x] BE `SupplyHandlingService::index()`: phiếu Nháp chỉ hiện với người tạo
+- [x] BE `StoreSupplyHandlingRequest`: thêm `is_draft` nullable boolean
+- [x] FE `supply_handlings/constants.js`: `STATUS.NHAP` + option "Nháp" trong bộ lọc
+- [x] FE `supply_handlings/add.vue`: nút "Lưu nháp" (bỏ qua validate bắt buộc hàng hóa/phân bổ), nút Lưu cũ = gửi chính thức
+- [x] Verify tinker + compile FE
+
+## Đưa cụm nút hành động vào trong card (2026-09-08, @khoipv)
+
+> Yêu cầu: nút Lưu / Quay lại... đang nằm trần trên nền xám, đưa vào trong card giống màn Hợp đồng mua.
+
+- [x] FE `supply_proposals/add.vue`: đưa cụm nút vào CUỐI `card-body` của card "Danh mục hàng hóa đề xuất" (`div.form-actions.text-right`); gộp luôn khối "Phản hồi xử lý" (trước là card riêng) vào cùng card đó để nút luôn ở dưới cùng
+- [x] FE `supply_handlings/add.vue`: đưa cụm nút + 2 alert duyệt/từ chối vào cuối `card-body` của card tổng hợp
+- [x] FE: scoped style `.form-actions { border-top: 1px solid #eee; padding-top: 10px }`
+- [x] Verify compile FE (2 trang HTTP 200)
+
+## Tab tham chiếu HĐ bán: đổi tiêu đề cột + link chi tiết HĐ (2026-09-09, @khoipv)
+
+> Yêu cầu: cột "Số hợp đồng" → đổi tiêu đề thành "Mã hợp đồng"; giá trị gán link mở chi tiết hợp đồng bán.
+
+- [x] FE `supply_proposals/components/ContractRefTab.vue` — đổi `<th>Số hợp đồng</th>` → `Mã hợp đồng`
+- [x] FE `ContractRefTab.vue` — bọc `p.contract_code` bằng `<nuxt-link :to="/contract/contract/{contract_id}" target="_blank">` (pattern giống `reports/purchase-demand/index.vue`), giữ `—` khi không có mã
+- [x] Verify compile Nuxt trang `/supply/supply_proposals/add` (HTTP 200, không marker lỗi compile)
+- [ ] CHƯA verify click-through UI
+- Ghi chú: `supply_handlings/components/HandlingSummaryTabs.vue:20` cũng có cột "Số hợp đồng" tương tự — chưa sửa vì ngoài phạm vi yêu cầu
+
+## Bug: HĐ có nhiều dòng cùng mã nội bộ → SL không cộng dồn (2026-09-09, @khoipv)
+
+> Ca thật: HĐ `HD-101/2026` (id 120, KH 1478 BVĐK Vân Đình) có 3 dòng `contract_products` (3802/3803/3804)
+> cùng `product_id=86` + cùng mã nội bộ `HC-HH-084`, tên riêng thấp/trung bình/cao, mỗi dòng qty=20.
+> Popup ra 3 dòng × 20; FE dedupe theo product_id giữ dòng ĐẦU, bỏ im lặng 2 dòng → phiếu ra 20 thay vì 60.
+> `contractRefMap()` key `contractId_productId` bị ghi đè, giữ dòng CUỐI → tab tham chiếu cũng 20.
+> Phạm vi: 12 cặp (HĐ, hàng hóa) trùng dòng trên 11 HĐ; cả 12 đều cùng mã nội bộ; 0 ca cùng mã nội bộ khác mã hàng hóa.
+> Chốt với @khoipv: gộp thành 1 dòng, SL cộng dồn = 60 · CHỈ gộp khi cùng mã nội bộ · sửa cả màn HĐ kết xuất.
+
+- [x] BE `SupplyProposalService::contractProductRows()` — gộp theo (product_id + internal_code) trong cùng HĐ, cộng dồn root_qty/qty/exported_qty (hàm dùng chung: goodsPool + RenderedContractService::prefill — @khoipv đã duyệt sửa cả 2)
+- [x] BE `SupplyProposalService::contractRefMap()` — cộng dồn thay vì ghi đè key `contractId_productId`
+- [x] Verify tinker: goodsPool(1, 1478) ra ĐÚNG 1 dòng HC-HH-084, sl_hd=60 / sl_con_lai_hd=60
+- [x] Verify tinker: contractRefMap['120_86'] ra sl_hd=60 / sl_con_lai_hd=60
+- [x] Regression: quét 193 HĐ đã duyệt (4597 dòng) — số dòng sau gộp khớp số nhóm (product_id, internal_code) trong DB, 0 lệch; đối chiếu số liệu 11 HĐ có dòng trùng, 0 lỗi
+- [x] Smoke test `RenderedContractService::prefill()` (HĐ 179) — chạy OK, không HĐ nào đã kết xuất đang có dòng trùng
+- [x] Verify compile FE `/supply/supply_proposals/add` HTTP 200 (không đổi file FE nào)
+- [ ] CHƯA verify click-through UI
+- Ghi chú: tên dòng gộp giữ theo dòng HĐ đầu tiên để popup còn tìm được bằng tiếng Việt; bảng hàng hóa vẫn hiện cột "Tên thương mại" từ `products.trade_name` nên không mất thông tin
+- Phát hiện kèm (CHƯA sửa, ngoài phạm vi): `excludeIds`/`onPickConfirm` dedupe chỉ theo `product_id`, bỏ qua `contract_id` → không thể đề xuất cùng 1 mã hàng từ 2 HĐ khác nhau trong 1 phiếu, và bị bỏ im lặng không cảnh báo
+
+## Bug: gộp dòng HĐ khác ĐVT phải quy đổi về ĐVT chính (2026-09-09, @khoipv)
+
+> Lỗ hổng của bản gộp ở mục trên: cộng thẳng số lượng mà không kiểm tra `unit_id`.
+> Ca thật: HĐ `HD-002/2025` (id 2), mã nội bộ `HC-HH-024` (product_id 26) có 2 dòng —
+> id 86 = 12 **Hộp** (unit 3), id 136 = 250 **mL** (unit 4). Cộng thô ra 262 (sai).
+> ĐVT chính = `products.unit_id` = Hộp; hệ số quy đổi từ ĐV cơ bản (`product_package_informations.conversion_factor`):
+> mL = 1, Hộp = 50 → 1 Hộp = 50 mL. Đúng phải là 12 + 250/50 = **17 Hộp**.
+> Quy tắc chốt: cùng ĐVT → cộng thẳng giữ nguyên ĐVT · khác ĐVT → quy đổi `qty_M = qty_A × f(A) / f(M)`
+> rồi mới cộng, ĐVT dòng gộp thành ĐVT chính · thiếu hệ số → KHÔNG gộp (trả từng dòng như cũ).
+
+- [x] BE `SupplyProposalService::unitConversionMap()` (mới) — 2 query dựng map `product_id => [main_unit_id, main_unit_name, main_factor, factors, names]`; ưu tiên `products.unit_id`, fallback `is_usually` (12 hàng hóa có nhiều dòng `is_usually=1` mâu thuẫn)
+- [x] BE `SupplyProposalService::aggregateContractLines()` (mới) — cộng dồn + quy đổi 1 nhóm, trả `ok=false` khi thiếu hệ số
+- [x] BE `SupplyProposalService::contractRow()` (mới) — tách khuôn 1 dòng hàng, dùng chung cho nhánh gộp và nhánh không gộp
+- [x] BE `contractProductRows()` — nhận thêm tham số `$unitMap`, gom nhóm trước rồi mới cộng qua `aggregateContractLines()`
+- [x] BE `goodsPool()` — tính `unitConversionMap()` 1 lần cho toàn bộ HĐ (tránh N+1), truyền xuống `contractProductRows()`
+- [x] BE `contractRefMap()` — gộp theo product_id + quy đổi ĐVT y hệt goodsPool, fallback cộng thô khi thiếu hệ số (không load quan hệ `unit` → không N+1)
+- [x] Verify tinker: HĐ 2 / HC-HH-024 ra **17 Hộp** (12 + 250/50), HĐ 120 / HC-HH-084 vẫn **60 Lọ**
+- [x] Verify tinker: `goodsPool(1, 2)` và `goodsPool(1, 1478)` ra đúng 1 dòng, số liệu khớp
+- [x] Verify tinker: `contractRefMap['2_26']` = 17, `contractRefMap['120_86']` = 60
+- [x] Regression 193 HĐ / 4597 dòng: 0 HĐ rơi vào nhánh không gộp được, 0 lệch giữa `contractProductRows()` và `contractRefMap()` trên cả 4 cột SL
+- [x] Kiểm tra dữ liệu: 0 ca cùng `product_id` nhưng khác `internal_code` trong cùng HĐ → key `contractId_productId` của refMap vẫn tương đương key gộp
+- [x] Smoke test `prefill()` HĐ 179 OK; 11 HĐ có dòng trùng đều chưa kết xuất nên không có ca prefill thật
+- [x] `php -l` sạch
+- [ ] CHƯA verify click-through UI
+- Ghi chú: chỉ 1/12 nhóm trùng trong toàn DB thực sự khác ĐVT (HĐ 2) — 11 nhóm còn lại cùng ĐVT, hành vi không đổi
+- Ghi chú: 5 cặp (hàng hóa, ĐVT) trong DB thiếu hệ số quy đổi (pid 5/20/205/23 ở HĐ 2, pid 2783 ở HĐ 87) nhưng không cặp nào nằm trong nhóm cần gộp

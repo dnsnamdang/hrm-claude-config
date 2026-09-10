@@ -17,7 +17,7 @@ và vá các lỗi ERP đã liệt kê.
 
 ## Scope
 
-**Trong**: 6 loại tạo mới (1–6) · loại 7 chỉ xem/in · 2 chế độ danh sách · tạo/sửa/xoá nháp ·
+**Trong**: **7 loại tạo mới (1–7)** — loại 7 mở từ 2026-09-07, xem quyết định #3 · 2 chế độ danh sách · tạo/sửa/xoá nháp ·
 gửi duyệt · từ chối · file đính kèm S3 · in · xuất Excel phiếu + danh sách · thông báo chuông ·
 lịch sử thay đổi.
 
@@ -31,7 +31,7 @@ lý hàng thiếu / Quyết toán HĐ bán (chỉ đọc bảng).
 | --- | --- |
 | 1 | Dùng chung **5 bảng ERP**, **0 migration** |
 | 2 | Port **đủ 6 loại tạo mới như ERP** (kể cả loại 1 và 5 hiện 0 phiếu, phải dựng 2 popup chọn chứng từ nguồn) |
-| 3 | **Loại 7 "Phối hợp kinh doanh" làm như ERP**: hiện trong danh sách, chỉ xem + in, không tạo/sửa |
+| 3 | **Loại 7 "Phối hợp kinh doanh" làm như ERP** — cập nhật 2026-09-07: ERP đổ **đủ 7 loại** vào select của form nên HRM cũng cho **chọn/tạo/sửa loại 7**. Form không có trường riêng nào cho loại này (chỉ tiền + diễn giải), 3 bảng dữ liệu riêng vẫn do màn Quyết toán HĐ bán sinh, màn Chi tiết/In vẫn rẽ sang layout Phối hợp kinh doanh |
 | 4 | **Dừng ở "Chờ duyệt"** + nút *Lập phiếu kế toán* **mở sang cổng ERP** qua `utils/erp-link.js` |
 | 5 | **Hợp đồng bán `firm_contracts` → `hrm_contracts`** (đồng bộ màn Điều chỉnh công nợ 17/08) |
 | 6 | **Lịch sử thay đổi dùng `catalog_histories`** + trait `LogsCatalogHistory` — không thêm bảng |

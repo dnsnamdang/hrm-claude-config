@@ -301,3 +301,48 @@ Vừa hoàn thành: Phase 14 — phân công người lập phiếu đề xuất
 Đang làm dở: không.
 Bước tiếp theo: gán quyền **"Phân công đề xuất cung ứng"** cho vai trò ở màn Phân quyền, khai báo người phụ trách nhóm **Cung ứng** cho khách hàng ở màn Khách hàng → test tay trên `localhost:3001`.
 Blocked:
+
+---
+
+## Phase 15 — Bug: không báo ai khi kết xuất mà chưa dò ra người phụ trách cung ứng
+
+**Triệu chứng (@khoipv báo 2026-09-09):** Kết xuất HĐ sang cung ứng, nếu không tự động
+phân công được nhân viên phụ trách cung ứng thì **không có thông báo nào** gửi tới người
+có quyền `Phân công đề xuất cung ứng` → không ai biết HĐ đang chờ phân công tay.
+
+**Root cause:** `ContractService::autoAssignSupplyManager()` — nhánh `if (!$employee_id) return null;`
+kết thúc im lặng. Luồng tương đương của gói thầu (`BidPackageController::approveResult`,
+nhánh `else` khi `contract_manager_id` rỗng) đã có sẵn khuôn xử lý: `listEmployeeInfoHasPermission()`
++ `EmployeeInfoService::sendToAllNotification()`. Luồng cung ứng thiếu đúng nhánh này.
+
+**Quyết định:** theo đúng khuôn gói thầu — gửi cho **tất cả** người có quyền
+`Phân công đề xuất cung ứng` (không lọc thêm theo nhóm/cấp), url về `/supply/contract_render`.
+
+### BE
+- [x] `ContractService::notifySupplyAssignNeeded()` — helper mới, gửi thông báo cho người có quyền `Phân công đề xuất cung ứng`
+- [x] `ContractService::autoAssignSupplyManager()` — gọi helper ở nhánh không dò ra người
+- [x] `php -l` sạch
+
+### Kiểm chứng
+- [x] Chạy thật: HĐ không dò ra người phụ trách → sinh notification cho đúng tập người có quyền
+- [x] Hồi quy: HĐ dò ra đúng 1 người → vẫn chỉ báo cho người đó, không báo nhóm phân công
+
+**Kết quả kiểm chứng (chạy thật trên DB, bọc transaction + rollback):**
+- Nhánh KHÔNG dò ra người — HD-159/2026: `autoAssignSupplyManager()` trả `null`, sinh **10 notification**
+  đúng bằng tập `listEmployeeInfoHasPermission('Phân công đề xuất cung ứng')`
+  (employee_info_ids `1,2,10,17,24,32,45,64,77,90`), url `/supply/contract_render` — **PASS**
+- Nhánh DÒ RA đúng 1 người (tạm khai người phụ trách nhóm Cung ứng trong transaction):
+  trả về id NV, sinh **đúng 1 notification** cho người được giao, **không** báo nhóm phân công — **PASS**
+- DB khôi phục nguyên trạng sau test (notifications 995 → 995, `supply_manager_id` HĐ 179 giữ nguyên 36)
+
+**Tồn đọng cần @khoipv quyết:**
+- HĐ đã kết xuất **trước** bản vá mà chưa phân công (hiện có HD-159/2026) sẽ không có thông báo hồi tố
+  → cần chạy backfill gửi thông báo một lần hay bỏ qua?
+- Cùng lỗ hổng này còn ở `QuotationService::store()` (báo giá không dò ra người lập HĐ → cũng im lặng).
+  Chưa sửa vì ngoài phạm vi yêu cầu.
+
+### Checkpoint — 2026-09-09
+Vừa hoàn thành: Phase 15 — bổ sung thông báo cho người có quyền `Phân công đề xuất cung ứng` khi kết xuất mà không tự phân công được.
+Đang làm dở: không.
+Bước tiếp theo: @khoipv test tay trên UI (kết xuất 1 HĐ của khách hàng chưa khai người phụ trách nhóm Cung ứng → kiểm chuông thông báo của tài khoản có quyền `Phân công đề xuất cung ứng`); chốt 2 tồn đọng ở trên.
+Blocked:
