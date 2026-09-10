@@ -98,7 +98,7 @@ ACTOR_BOTH = 'Người dùng có quyền P1 hoặc P2'
 FONT_NAME = 'Times New Roman'
 BODY_PT = 13      # van xuoi, bullet, Heading 2-3
 H1_PT = 18        # Heading 1
-TABLE_PT = 10     # chu trong bang (giu nho de bang 8 cot khong vo)
+TABLE_PT = 13     # chu trong bang — user chot 09/09/2026: bang cung 13pt nhu than bai
 CAPTION_PT = 13   # chu thich ten hinh anh (chot 05/09/2026: theo co chu than bai)
 
 
@@ -150,7 +150,8 @@ class SrsDoc(object):
         #   - Co chu 13 cho van xuoi / bullet / Heading 2-3 (tru trang bia va Heading 1)
         #   - Heading 1: 18pt, CAN GIUA, bat dau tu DAU TRANG MOI
         #   - Chu thich ten hinh anh: CAN GIUA
-        # Rieng chu trong BANG giu 10pt cho khoi vo bang 8 cot.
+        # Tu 09/09/2026: BANG cung 13pt (user chot) — khong con ngoai le co chu nao
+        # ngoai trang bia va Heading 1.
         st = doc.styles['Normal']
         set_font_name(st, FONT_NAME)
         st.font.size = Pt(BODY_PT)

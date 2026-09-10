@@ -808,3 +808,37 @@ QA (Lê Huyền Trang) test màn Yêu cầu hủy hàng giữ trên `hrm-crm`, 5
 | #11195 | Excel danh sách thiếu khối ký | `addSignatureBlock()` — "Ngày…Tháng…Năm…" + "Người lập (Ký, họ tên)", canh giữa 3 cột cuối, không kẻ khung |
 | #11196 | Nút In màu teal | Bỏ cờ `menu.print`, dựng lại nút In `secondary` ở slot `#custom-actions` (giống màn phiếu hủy) |
 | #11197 | Bỏ tick "Cần hủy" nhưng lưu vẫn ghi nhận hàng hóa | **Khác ERP có chủ ý**: bỏ tick = bỏ hàng hoá khỏi phiếu — FE lọc trước khi gửi, BE `normalizeProducts()` bỏ dòng `need_cancel = false`; màn Chi tiết chỉ hiện dòng `need_cancel` (phiếu cũ do ERP lập có dòng bỏ tick) |
+
+---
+
+## Đợt tài liệu 09/09/2026 — bộ 3 tài liệu cho màn **Phiếu hủy hàng giữ**
+
+Màn *Yêu cầu hủy hàng giữ* đã có đủ SRS / HDSD / testcase từ 05/09; màn anh em
+*Phiếu hủy hàng giữ* (`/finance/prepick-cancels`) chưa có gì → bổ sung nốt.
+Mỗi màn **một bộ file riêng**, không gộp chung (đúng quy ước 2 skill).
+
+- [x] Khảo sát code: `PrepickCancel.php`, `PrepickCancelService.php`, `PrepickCancelController.php`,
+      `PrepickCancelStoreRequest.php`, routes; FE `pages/finance/prepick-cancels/*`
+- [x] Chụp **12 ảnh thật** trên `hrm-crm` (Playwright, 1440×900) → `phieu_huy_shots/`
+      (ảnh KHÔNG commit, `.gitignore` đã chặn `*_shots/`)
+- [x] `gen_srs_phieu_huy.py` → `SRS - Phieu huy hang giu.docx` (form 2026-08-28, 33 trang,
+      10 chức năng FR-01…FR-10, 18 ảnh, 10 quy tắc nghiệp vụ BR-01…BR-10)
+- [x] `gen_testcase_phieu_huy.py` → `testcase - Phieu huy hang giu.xlsx`
+      (111 TC, P0 = 54%, 8 TC phân quyền + 12 section La Mã, bộ kiểm thuật ngữ sạch)
+- [x] `gen_hdsd_phieu_huy.py` → `HDSD_Phieu huy hang giu.docx` (26 trang, 12 ảnh, 13 bảng)
+- [x] Chạy đủ bộ tự kiểm của 3 skill (SRS: 4 điểm form + định dạng Word + đánh số liên tục;
+      TC: thuật ngữ + tỉ lệ P0 + trùng mã; HDSD: engine tự verify)
+
+**3 khác biệt so với màn Yêu cầu — đã ghi rõ trong cả 3 tài liệu:**
+1. Màn này chỉ có **2 cấp phạm vi** (tổng công ty / công ty). Quyền *Xem phiếu hàng giữ theo
+   phòng ban* KHÔNG có tác dụng ở đây (`PrepickCancel::applyViewScope()` không đọc quyền đó).
+2. **Không có Sửa / Xóa** ở cả danh sách lẫn chi tiết — phiếu lập xong chốt vĩnh viễn.
+3. Có **2 lối vào** màn lập phiếu: nút *Tạo mới* (tự chọn phiếu yêu cầu, có nút "Duyệt và tiếp
+   tục") và nút *Tạo phiếu hủy hàng giữ* từ chi tiết phiếu yêu cầu (điền sẵn, không có nút đó).
+   Testcase có TC riêng cho từng lối vào.
+
+### Checkpoint — 2026-09-09
+Vừa hoàn thành: 3 tài liệu + 3 generator cho màn Phiếu hủy hàng giữ.
+Đang làm dở: không.
+Bước tiếp theo: user/BA đọc duyệt 3 file; có sửa thì sửa trong generator rồi chạy lại, đừng sửa tay file .docx/.xlsx.
+Blocked: không.

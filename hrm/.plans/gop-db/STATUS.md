@@ -174,6 +174,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   trực tiếp trên dev. #11322 (bấm Sửa mất ĐVT) là lỗi MỚI do bản 05/09 lộ ra: select2 tự bắn
   `change` rỗng lúc options chưa nạp xong -> handler xoá sạch ĐVT/đơn giá của phiếu dù màn vẫn
   hiện "Lọ". Đã chặn ở `onUnitChange` (bỏ qua khi chưa có options + bỏ qua cú change lặp).
+  **Vòng QA 09/09 (#11365 · #11368 · #11370)** — #11368: cấp duyệt của dòng từ chối nay đọc từ
+  bảng lịch sử (trạng thái ngay trước hành động) thay vì gán vào dòng cuối có dấu duyệt.
+  #11365: URL id sai -> toast tiếng Việt + đưa về danh sách (câu "Item Not Found!" nằm ở
+  `Handler` dùng chung, chưa đụng). #11370: ẩn ô khoá rỗng (Hợp đồng/Địa chỉ), bỏ toast trùng với
+  dòng trống của bảng; nút "Không duyệt" của ERP là bản sao nút Lưu (cùng `submit(3)`) nên KHÔNG
+  port — chờ user trả lời QA.
   Bước tiếp: chạy migration `2026_09_03_000001_...` trên dev · gỡ 3 quyền tạm của emp 781 ·
   commit (chi tiết ở cuối Phase 13 của plan.md).
   Chi tiết + gotcha: plan.md | Tóm tắt: .plans/gop-db/finance-prepick-export-request/design.md
@@ -366,8 +372,14 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Nhánh `feat/finance-prepick-cancel`. Port 2 màn `Yêu cầu hủy hàng giữ` + `Phiếu hủy hàng giữ` sang
   Tài chính / nhóm Giữ hàng — **màn đầu tiên của HRM ghi tồn kho thật** (duyệt = trừ FIFO
   `prepick_details` + ghi `prepick_logs`). 2 migration (2 bảng lịch sử).
+  **Tài liệu bàn giao ĐỦ CẢ 2 MÀN** — mỗi màn 1 bộ 3 file: màn Yêu cầu hủy hàng giữ (05/09)
+  `SRS - Yeu cau huy hang giu.docx` + `HDSD_Yeu cau huy hang giu.docx` + `testcase.xlsx`;
+  màn Phiếu hủy hàng giữ (09/09) `SRS - Phieu huy hang giu.docx` (33 trang) +
+  `HDSD_Phieu huy hang giu.docx` (26 trang) + `testcase - Phieu huy hang giu.xlsx` (111 TC).
+  ⚠️ GOTCHA màn Phiếu hủy khác màn Yêu cầu: chỉ 2 cấp phạm vi (không có cấp phòng ban),
+  không có Sửa/Xóa, và có 2 lối vào màn lập phiếu.
   Bước tiếp: user bấm tay trên dev + test bằng tài khoản `Quản lý giữ hàng` không phải Super admin;
-  giữ 6 bảng `bak_*_20260815` tới lúc đó.
+  giữ 6 bảng `bak_*_20260815` tới lúc đó. BA đọc duyệt 3 tài liệu màn Phiếu hủy.
   Chi tiết + gotcha: plan.md
 
 - finance-product-import-direct-transfer → @junfoke → .plans/gop-db/finance-product-import-direct-transfer/plan.md
