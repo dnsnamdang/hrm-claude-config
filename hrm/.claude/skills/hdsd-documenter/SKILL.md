@@ -127,7 +127,7 @@ User đã chốt: **không chỉ đọc FE của màn** — phải đọc source
 > | Trang bìa | giữ nguyên cỡ chữ lớn của mẫu — **miễn trừ** quy tắc 13pt | style `Title` |
 > | Văn xuôi, bullet, Heading 2/3 | **13pt** | `Normal` 13pt, Heading 2/3 không khai size → kế thừa |
 > | Chú thích tên hình ảnh | **căn giữa**, **13pt** | style `Caption` (`jc=center`, kế thừa cỡ chữ của `Normal`) |
-> | Chữ trong bảng | kế thừa `Normal` | style bảng |
+> | Chữ trong bảng | kế thừa `Normal` = **13pt** | style bảng |
 >
 > ⚠️ **Bẫy: Heading của file mẫu trỏ sang FONT THEME** (`w:asciiTheme="majorHAnsi"`). Còn thuộc
 > tính `*Theme` thì Word ưu tiên nó và **xoá `w:ascii`** khi lưu lại ở bước cập nhật mục lục →

@@ -110,6 +110,137 @@ Vừa hoàn thành: **toàn bộ BE + FE của màn Phiếu kế toán** (Phase 
 - **FE**: 9/9 file compile sạch (`vue-template-compiler` + babel); 5 lệnh grep tự kiểm của skill
   `erp-to-hrm-screen` sạch tuyệt đối.
 
+- [x] Ô **Tỷ giá** ở khối thông tin ép `text-align: left` (user chốt 2026-09-07): ô kiểu số nên
+      Excel tự canh phải, lệch khỏi cột giá trị của các dòng thông tin bên trên. GIỮ ô kiểu số +
+      `data-format`, chỉ đổi canh lề — đừng đổi sang chuỗi để canh trái.
+
+- [x] Header "Thông tin chung" nền xám trên server, trắng ở local (user báo 2026-09-07):
+      `BillAdjustDeptForm.vue` dùng class `card-header section-header` nhưng KHÔNG khai rule.
+      Rule chỉ nằm ở `V2BaseFormSection.vue` / `CustomerForm.vue` (style non-scoped = toàn cục
+      nhưng chỉ nạp khi component đó được load) — kiểm 4 bundle nền của server: 0/4 có rule.
+      Đi từ màn khác sang thì rule đã nằm sẵn trong DOM (local), mở thẳng URL thì không (server).
+      Sửa: khai rule trong scoped style của chính màn, y như `AccountingDetailTable.vue` :508.
+      ⚠️ CÒN 5 FILE cùng lỗi, chưa sửa (chờ user quyết): 3 file màn Đề nghị hạch toán bổ sung
+      (`AdditionAccountingRequestForm` · `AdditionDetailTable` · `CoordinationDetail`) và 2 file
+      màn Báo cáo phiếu thu (`BillIncomeReportForm` · `bill-income-reports/_id/index.vue`).
+
+- [x] Nút **"Lưu" → "Lưu nháp"**; lưu nháp chỉ bắt buộc **Ngày hạch toán** (user chốt 2026-09-07).
+      Chỗ chặn thật nằm ở `BillAdjustDeptWriteService::store()/update()` gọi `validateDetails()`
+      cho MỌI trạng thái → nháp chưa thêm dòng nào cũng 422 *"phải có ít nhất một dòng định
+      khoản"*. Sửa: tách `validateDetailsWhenApproving()`, 5 luật cân bút toán chỉ chạy khi
+      `status = 2`. Kèm: `type_money_id` + `exchange_rate` chỉ bắt buộc khi duyệt;
+      `headerAttributes()` đổi sang `?:` để `null` FE gửi lên không thành `0` ở 2 cột NOT NULL
+      (mặc định VNĐ + tỷ giá 1). FE bỏ chặn Loại tiền ở nhánh nháp.
+      Kiểm bằng API: nháp chỉ có ngày → 200 (DB ra VNĐ/1/note rỗng/0 dòng) · nháp gửi null → 200 ·
+      thiếu ngày → 422 · duyệt phiếu rỗng → 422 · duyệt lệch nợ/có → 422.
+      ⚠️ GIỮ NGUYÊN `details.*.account_id` required: cột NOT NULL trên bảng dùng chung ERP, bỏ rule
+      là nổ SQL 500 thay vì 422. Muốn nháp lưu được dòng chưa chọn TK thì phải migration.
+
+- [x] Bảng Chi tiết ở màn Thêm mới (`AccountingDetailTable.vue`) — user yêu cầu 2026-09-07:
+      · thêm cột **Mã khế ước** giữa *Mã vụ việc* và *Ngân hàng* (đúng vị trí ERP `form.blade.php`
+        :266). Ô ĐỂ TRỐNG vì ERP cũng để trống cứng (:407 `<td></td>`, không input, không dữ liệu)
+        — khớp luôn với file Excel chi tiết. `columnCount` 16 → 17.
+      · **ghim 3 cột đầu** (STT · Số tài khoản · Tên tài khoản) theo khuôn `BomBuilderTableCard.vue`
+        :1356: bề rộng chốt cứng 50/170/200px (left cộng dồn — để min-width là 2 cột ghim chồng
+        nhau), nền đục + `background-clip: padding-box`, vạch ngăn 2px ở cột Tên tài khoản.
+      Đã đếm lại ô: thead hàng 1 và mỗi dòng body khớp 18 cột (VNĐ) / 20 cột (ngoại tệ).
+      Bản in KHÔNG đổi — mẫu in ERP (report_templates 208) chỉ 9 cột, không có Mã khế ước.
+
+- [x] Tải file đính kèm luôn 422 `{"files":["Bắt buộc phải nhập"]}` (user báo 2026-09-07):
+      `BillAdjustDeptController::uploadFiles()` validate khoá **`files`**, trong khi khối đính kèm
+      là component DÙNG CHUNG `bill-payment-requests/components/AttachmentSection.vue` gửi
+      **`attachments[]`**. Kèm lỗi thứ 2 ngay sau đó (chưa lộ vì bị chặn trước): BE trả
+      `data.urls[]` còn component đọc `response.data[0]` → "Upload không trả về đường dẫn file".
+      Sửa cả 2 theo khuôn `BillPaymentRequestController::uploadFiles()`: nhận `attachments[]`,
+      message tiếng Việt, trả THẲNG mảng URL vào `data`.
+      Kiểm bằng multipart thật: `attachments[]` → 200 kèm URL S3 · `files[]` → 422. File test đã
+      xoá khỏi S3. CHỈ sửa BE, FE không phải build lại.
+
+- [x] Hiển thị lỗi dùng BASE CHUNG + validate Diễn giải dòng (user yêu cầu 2026-09-07):
+      · thay 5 khối tự chế `<div class="invalid-feedback d-block">` bằng **`V2BaseError`**
+        (3 ở `BillAdjustDeptForm`, 2 ở `AccountingDetailTable`). Quan trọng ngoài thẩm mỹ:
+        `utils/scrollToFirstError` tìm ô lỗi theo class `.v2-error`, khối tự chế nó KHÔNG thấy.
+      · ô **Diễn giải** trong bảng chi tiết: header có dấu `*` từ đầu nhưng KHÔNG chỗ nào kiểm.
+        Nay FE tô đỏ + `V2BaseError` theo dòng khi `touched`, chặn sớm ở `validateBeforeSubmit`;
+        BE `details.*.note` bắt buộc KHI DUYỆT (ERP bắt buộc luôn), nháp vẫn trống được.
+
+- [x] ⚠️ LỖI NẶNG lộ ra khi kiểm chứng: **"Lưu và duyệt" bỏ qua TOÀN BỘ rule `required`**.
+      `BillAdjustDeptStoreRequest::rules()` đọc trạng thái bằng `$this->get('status')` — `get()`
+      của Symfony KHÔNG đọc JSON body (FE gửi JSON) → luôn null → rơi về mặc định "Đang tạo" →
+      `$isDraft = true` → `note` / `type_money_id` / `details` min:1 / `details.*.note` / tỷ giá
+      ngoại tệ đều bị nới. Đo thật: duyệt phiếu có dòng trống diễn giải → HTTP 200 + GHI SỔ CÁI.
+      Sửa: `$this->input(...)`. Kiểm lại: duyệt thiếu diễn giải → 422 `details.0.note`; nháp → 200.
+      Cùng bẫy đã ghi ở `ProductTransferFormRequest` :33.
+      ⚠️ CÒN **18 FormRequest** khác toàn dự án vẫn dùng `$this->get()` (Finance 7 · CustomerCare 7
+      · Payroll 4), ít nhất 5 file dùng để tính `$isDraft` — KHÔNG sửa (màn của người khác), cần
+      báo team.
+      Dọn dẹp: phiếu duyệt lọt `TPE.PKT0926.00002` đã xoá kèm 2 dòng `account_details`
+      (id 1001586-1001587, lọc theo `invoiceable_code`). Còn phiếu nháp `TPE.PKT0926.00001`
+      (id 12862) — KHÔNG xoá, nghi là phiếu user tự bấm thử trên trình duyệt.
+
+- [x] Popup "Chọn phiếu YCĐC": lọc theo Người lập rồi XOÁ lọc → lăn chuột **giật giật / không
+      cuộn được**, F5 mới hết (user báo + quay video 2026-09-07). Sửa ở **component DÙNG CHUNG**
+      `components/V2BaseSelectInModal.vue` (user đồng ý).
+      **Nguyên nhân gốc** — select2 4.0.13 `dropdown/attachBody` (:4441-4451): khi MỞ dropdown nó
+      ghi lại vị trí cuộn của mọi cha có thanh cuộn rồi gắn `scroll.select2.<id>` để **kéo về vị
+      trí đó mỗi lần cuộn** (cho dropdown khỏi trôi), chỉ gỡ ở sự kiện `close` (:4348). Mà
+      `_detachPositioningHandler` lọc lại cha bằng `Utils.hasScroll` (:712-735) — hàm này tính theo
+      NỘI DUNG TẠI THỜI ĐIỂM GỌI. Chuỗi gây lỗi:
+        1. mở dropdown lúc danh sách còn dài → `.v2-modal-body` có cuộn → GẮN handler ghim
+        2. chọn 1 người lập → còn 1 dòng → `.v2-modal-body` HẾT cuộn
+        3. select2 đóng dropdown → `hasScroll` không thấy `.v2-modal-body` → **KHÔNG gỡ**
+        4. bỏ lọc → danh sách dài lại → handler cũ ghim `scrollTop` → giật giật
+      `b-modal` giữ DOM popup nên mở lại popup vẫn dính, chỉ F5 mới sạch.
+      **Cách sửa**: thêm `releaseScrollLock()` — đóng dropdown nếu còn mở, rồi
+      `$(this.$el).parents().off('scroll.select2')` (quét MỌI cha, KHÔNG lọc theo `hasScroll` —
+      lọc là dính đúng cái bẫy trên), có guard bỏ qua khi còn dropdown khác đang mở. Gọi ở
+      `onClose` (hoãn 1 nhịp), `beforeDestroy`, và trước `renderKey++`.
+      **Đo trên trình duyệt** (local, viewport ép 1280×560 cho popup phải cuộn):
+        · trước sửa: đặt `scrollTop = 50` → đọc 43 → 700ms sau về **0**; lăn 8 nấc × 60px vẫn 0
+        · sau sửa: đặt 50 → 700ms sau vẫn **50**; lăn chuột thật `scrollTop = 200`; lặp 3 vòng
+          chọn-xoá vẫn sạch
+        · hồi quy: dropdown ĐANG MỞ vẫn ghim cuộn (đúng hành vi gốc select2), chọn option bình thường
+      ⚠️ `V2BaseSelect.vue` / `V2BaseSelectRemote.vue` (select NGOÀI modal) dùng cùng select2 nên
+      về lý thuyết dính y hệt khi đặt trong vùng cuộn co giãn — CHƯA sửa, chờ user quyết.
+
+- [x] Popup "Chọn phiếu YCĐC" — 3 yêu cầu nhỏ của user (2026-09-07):
+      · đổi nhãn **Người lập → Người tạo**, **Ngày lập → Ngày tạo** (ô lọc + 2 cột + placeholder)
+      · thêm **nút ×** ở ô "Mã phiếu yêu cầu", chỉ hiện khi có chữ; dựng bằng slot `suffix` +
+        `has-suffix` sẵn có của `V2BaseInput`, kiểu dáng bám `V2BaseFilterFieldControl` :30-37.
+        Bấm × là xoá + TÌM LẠI luôn (đồng nhất với ô Người tạo). Kiểm: ô trống→không nút ·
+        gõ "PYC"→hiện · bấm ×→ô rỗng, nút biến mất, danh sách về đủ 10 dòng.
+      · thêm **sort cột Mã phiếu + Ngày tạo**. BE `BillAdjustDeptPickerService::searchAdjustRequests()`
+        whitelist `code` / `createdAt`, nhận `sort_by` + `sort_desc`, GIỮ chốt `r.id DESC` cuối
+        (3 phiếu cùng `17/08/2026 16:45` — thiếu chốt là lật trang thấy lặp/mất). FE dựng tiêu đề
+        bấm được sao y `V2BaseDataTable` :90-99 + :746-757; mở popup / Làm mới thì xoá sắp xếp.
+        Kiểm thật: mã ↑ `TEST...00002→00004→00005`, mã ↓ `TPSG...176→175→174`,
+        ngày ↑ `04/04→16/04 16:39→16/04 18:00`, ngày ↓ `24/08→17/08→17/08`.
+      Cột Người tạo CHƯA có sort (user chỉ yêu cầu 2 cột) — thêm 1 dòng whitelist là xong.
+
+- [x] Màn CHI TIẾT — hàng "phiếu nguồn" (user 2026-09-07, chốt qua 2 lượt):
+      Ô **Phiếu yêu cầu điều chỉnh công nợ** trước đây render `nuxt-link` chữ trần, đứng cạnh 3 ô
+      `V2BaseInput` cùng hàng nên chỏi hẳn. Bản CUỐI theo user: **ô `disabled`** (nền `#f1f5f9`
+      chuẩn ô khoá) + **chữ mang kiểu link của màn danh sách** (navy `#28539d` + gạch chân nét đứt,
+      hover teal — khuôn `a.v2-cell-link`), bọc `nuxt-link` ra ngoài ô.
+      Cùng lượt: ô **Phiếu yêu cầu hạch toán bổ sung** cũng gắn link
+      (`/finance/addition-accounting-requests/{id}`, lấy theo `SOURCE_ROUTES` của màn danh sách
+      `index.vue` :304-307 để 2 màn không trỏ 2 nơi); 3 ô luôn-chỉ-đọc (bổ sung / hoa hồng tháng /
+      vận chuyển nhanh) đổi `readonly` → **`disabled`** cho đồng bộ cả hàng.
+      Ô **hoa hồng tháng KHÔNG có link** — HRM chưa port màn đó (`SOURCE_ROUTES` cũng bỏ trống);
+      có màn rồi thì thêm y hệt, đã ghi chú tại chỗ.
+      ⚠️ 3 điểm kỹ thuật bắt buộc, đừng gỡ:
+        · `pointer-events: none` cho `input:disabled` — thẻ input bị disable KHÔNG phát sự kiện
+          chuột, thiếu dòng này thì bấm giữa ô không đi đâu, chỉ mép ngoài mới ăn link;
+        · `color: #28539d !important` — rule ô khoá dùng chung (`v2-styles.scss` :41-56) khai
+          `color: #475569 !important`, không `!important` thì chữ ra xám, nhìn không ra là link
+          (lần đo đầu đã dính đúng chỗ này);
+        · gạch chân bằng `text-decoration: underline dashed`, KHÔNG `border-bottom` — `border-bottom`
+          kẻ hết bề ngang ô, trông như ô bị gạch chứ không phải link.
+      Kiểm thật: `/finance/bill-adjust-depts/12851` → href `/finance/bill-adjust-dept-requests/10217`,
+      bấm giữa ô mở đúng tab mới; `/finance/bill-adjust-depts/12852` → href
+      `/finance/addition-accounting-requests/1994`, ô `disabled`, nền `#f1f5f9`, chữ `#28539d`,
+      gạch `underline/dashed`, bấm giữa ô mở đúng tab mới.
+
 Đang làm dở: không có.
 
 Bước tiếp theo: **9.5** user mở trình duyệt bấm thật. Seeder đã chạy: 5 phiếu `TEST.PKT.0000x`
@@ -616,3 +747,173 @@ không phải placeholder.
 
 → Ô to hơn là cặp **"Số tiền từ / Số tiền đến"** (`V2BaseCurrencyInput`), không phải cặp ngày.
 Nếu sau khi Ctrl+Shift+R mà vẫn thấy lệch thì đo bằng snippet ở mục dưới rồi báo lại số đo.
+
+---
+
+## Phase 14 — Redmine #11306 [ERP => HRM] Phiếu kế toán - Xuất Excel (@khoipv, 2026-09-07)
+
+Nguồn: `http://quanly.dnsmedia.vn/issues/11306` (Nguyễn Minh Hằng, 04/09/2026). 3 lỗi.
+
+**Đo thật trước khi sửa** (DB local 12.632 phiếu, CLI bỏ giới hạn thời gian) — chứng minh lỗi #1
+là do BE dựng cả file trong 1 request đồng bộ, KHÔNG phải lỗi query:
+
+| Bước | Thời gian | Đỉnh RAM |
+| --- | --- | --- |
+| `allForExport()` (get toàn bộ + eager load) | 9,4s | 96 MB |
+| `BillAdjustDeptListResource::toArray()` | 24,0s | 120 MB |
+| Blade `FromView` render (HTML 22,7 MB) | 25,4s | 168 MB |
+| PhpSpreadsheet ghi file | **157,9s** | 230 MB |
+
+`max_execution_time` của dự án là 60s → request chết trước khi trả file ⇒ "lỗi máy chủ".
+
+**Quyết định của user (2026-09-07):**
+1. Excel CHI TIẾT: làm **giống ERP**, chỉ khác là HRM **có thêm logo/letterhead** theo skill
+   `export-excel` mục 4. Ô tiền vẫn giữ **số thật + `data-format`** (không bê lỗi "formatted as
+   text" của ERP).
+2. Trường lệch: **cứ làm như ERP** — Mã khách/Tên khách, có cột *Mã khế ước* (ERP luôn để trống),
+   BỎ cột *Số phiếu YC xuất hàng*, BỎ Ngày lập / Trạng thái / Số tiền bằng chữ, dòng tổng ghi
+   **Tổng**, thêm dòng *- Tỷ giá ngoại tệ*, 5 ô chữ ký.
+3. Xuất DANH SÁCH: theo khuôn **màn Khách hàng** — tải theo trang + dựng file ở trình duyệt.
+
+### 14.1 BE — endpoint khuôn mới cho danh sách
+
+- [x] `BillAdjustDeptService::exportColumns()` — danh mục cột (key/label/width), nguồn DUY NHẤT cho
+      popup chọn trường; khoá khớp `BillAdjustDeptListResource`
+- [x] `BillAdjustDeptService::exportRows(Request, array $fields, int $page, int $limit)` — trả
+      `{headings, widths, rows, total}`; STT chạy tiếp qua trang; **đếm `total` chỉ ở trang 1**
+      (khuôn `CustomerService::exportRows`, COUNT có scope quyền khá nặng)
+- [x] Thứ tự cột bám **đúng thứ tự `fields` user gửi** (không bám thứ tự khai) — popup ghi rõ
+      "thứ tự cột chạy theo thứ tự bạn chọn"
+- [x] Cột `total_amount` trả **`float`**, KHÔNG ép `(string)` (skill export-excel mục 4c), ô rỗng
+      trả `null`
+- [x] Controller `exportColumns()` + `exportRows()` (trần `limit` 5.000) + 2 route GET
+- [x] GIỮ `export-list` + `BillAdjustDeptListExport` cũ (chưa xoá, để quay lại được — giống màn KH)
+
+### 14.2 FE — index.vue dùng khuôn mới
+
+- [x] Thay `downloadExcel(...export-list)` bằng `exportListFile` (`utils/export/listExportFile.js`)
+- [x] Nạp cột xuất từ `export-columns`, bỏ mảng `exportFieldOptions` cứng
+- [x] Truyền `:default-selected="visibleExportFields"` → **mở popup là tick sẵn đúng cột đang hiện
+      trên màn** (yêu cầu chính của lỗi #2), user vẫn thêm/bớt được
+- [x] Dùng `exportFieldsMixin`; nút Xuất Excel hiện tiến độ "Đang tải 4.000/12.630…" → "Đang dựng
+      file…" (thông báo đợi + loading như issue yêu cầu)
+- [x] Khai `exportFieldKeyMap` cho các khoá lệch giữa bảng và file (`billStatus` → `status_name`,
+      `sourceCode` → `source_code`, …)
+
+### 14.3 BE — Excel CHI TIẾT dựng lại theo ERP
+
+- [x] `bill_adjust_dept.blade.php`: tiêu đề + *Ngày {d} Tháng {m} Năm {Y}* (theo **ngày tạo**, như
+      ERP), khối thông tin **2 cột** (Mã phiếu | Mã phiếu YCĐC · Người tạo | Phòng ban ·
+      Loại tiền | Tỷ giá · Diễn giải) — Loại tiền/Tỷ giá hiện CẢ khi VNĐ
+- [x] Bảng: `Mã khách` / `Tên khách`, bỏ `Số phiếu YC xuất hàng`, thêm `Mã khế ước` (để trống như
+      ERP), dòng tổng ghi **Tổng** căn giữa
+- [x] Dưới bảng: dòng *- Tỷ giá ngoại tệ: N* (chỉ phiếu ngoại tệ) + **5 ô chữ ký** (Ban giám đốc /
+      Kế toán trưởng / Người nộp tiền / Người lập phiếu / Thủ quỹ), bỏ "Số tiền bằng chữ"
+- [x] `BillAdjustDeptExport::columnWidths()` trả **2 bộ** theo loại tiền (16 cột VNĐ / 18 cột ngoại
+      tệ) đúng bề rộng ERP — hiện đang trả cứng 18 cột nên phiếu VNĐ bị lệch bề rộng
+- [x] GIỮ letterhead (`WithDrawings`) + ô tiền số thô `data-format` (khác ERP có chủ ý, user chốt)
+- [x] ⚠️ Lệch ERP có chủ ý: dòng *- Tỷ giá ngoại tệ* lấy **tỷ giá ghi trên phiếu**, không lấy tỷ
+      giá hiện hành của danh mục tiền tệ như ERP (ERP in 2 số khác nhau cho cùng 1 phiếu cũ)
+
+### 14.4 Kiểm chứng
+
+- [x] Dựng file thật 3 ca: phiếu VNĐ · phiếu ngoại tệ · phiếu không có phiếu nguồn; đọc lại bằng
+      PhpSpreadsheet: kiểu ô (`n` cho tiền), `data-format`, bề rộng cột, `drawings` = 1
+- [x] So từng ô với ảnh ERP trong issue (phiếu `TPE.PKT0726.00565`)
+- [x] Đo `export-rows` 1 trang 2.000 dòng < 2s — **1,33s** (trang 1, có COUNT) / **0,49s** (trang 7)
+- [ ] Xuất đủ 12.630 dòng trên TRÌNH DUYỆT — chờ user mở màn thử (phần dựng file chạy ở FE)
+- [x] Bản IN `print.vue` KHÔNG đổi (2 nhánh dùng chung `printService->data()`)
+- [x] FE compile sạch
+
+---
+
+## 15. Redmine #11307 — Bản IN: chuyển sang POPUP + bám đúng mẫu ERP 208 (@khoipv)
+
+Issue: `http://quanly.dnsmedia.vn/issues/11307` — "[ERP => HRM] Phiếu kế toán - In".
+Đối chiếu bản in thật cùng phiếu `TPE.PKT0826.00003` (id 12855) trên 2 cổng dev:
+`screenshots/redmine-11307-erp-mau-dung.png` vs `screenshots/redmine-11307-hrm-hien-tai.png`.
+
+Nguyên nhân chung: màn này dựng bản in **bằng tay trong Vue** (`_id/print.vue`, 447 dòng) từ trước
+khi chuẩn popup được chốt (skill `print-page` §8, 22/08), nên vừa không phải popup vừa trôi dần
+khỏi mẫu ERP `report_templates` id 208. Cách sửa: copy nguyên khuôn màn anh em
+**Đề nghị điều chỉnh công nợ** (`bill-adjust-dept-requests`) — BE trả HTML đã fill, FE dùng popup
+dùng chung, bỏ hẳn trang `/print` để không còn 2 nguồn CSS cho cùng một bản in (§8a).
+
+### 15.1 BE — dựng HTML bản in ở server
+
+- [x] `Modules/Finance/Resources/views/prints/bill-adjust-dept.blade.php` bám mẫu ERP 208:
+      nhãn `<strong>` (Mã phiếu / Mã phiếu yêu cầu điều chỉnh công nợ / Người tạo / Phòng ban /
+      Loại tiền / **Diễn giải nằm CÙNG HÀNG với Loại tiền, cột phải**), tiêu đề + dòng
+      *Ngày … Tháng … Năm …* theo **ngày tạo**, dòng *- Tỷ giá ngoại tệ* (chỉ phiếu ngoại tệ),
+      khối ký 3 ô Ban giám đốc / Kế toán trưởng / Người lập phiếu
+- [x] Bảng chi tiết theo `getBillAdjustDeptTableAttribute()` (9 cột) và
+      `getBillAdjustDeptWithExchangeRateTableAttribute()` (11 cột, mỗi bên tách ngoại tệ + VND)
+- [x] Bảng chi tiết để **AUTO-LAYOUT như ERP** (không `table-layout: fixed`, không `<colgroup>` %).
+      Đây chính là "text bị chèn": trang cũ khai `fixed` + cột tiền **9%** + `white-space: nowrap`
+      → `1,800,000,000,000` không xuống dòng được nên tràn ra và ĐÈ LÊN ô bên cạnh.
+      `nowrap` giữ nguyên (không được cắt đôi con số) — nó chỉ hại khi đi kèm `fixed`
+- [x] `BillAdjustDeptPrintService::render()` trả chuỗi HTML (dùng lại `data()` sẵn có)
+- [x] `BillAdjustDeptController::printData()` trả `['template' => …]`
+- [x] GIỮ NGUYÊN `BillAdjustDeptPrintService::data()` — `BillAdjustDeptExport` (Excel 1 phiếu)
+      đang dùng chung, đụng vào là lệch số Excel
+- [x] Dòng *- Tỷ giá ngoại tệ* in **2 số lẻ** (282.64), KHÔNG làm tròn kiểu ERP (in ra "283"):
+      khớp với file Excel 1 phiếu của HRM (`exports/bill_adjust_dept.blade.php` :200)
+- [x] Dòng *- Tỷ giá ngoại tệ* **căn TRÁI** (user chốt 07/09) — khai `text-align: left !important`
+      cho `.bkt-rate`, không dựa vào kế thừa (nền chung đặt `text-align: left` ở gốc không `!important`)
+- [x] Bỏ tên người duyệt / người lập dưới khối ký (trang `/print.vue` cũ tự thêm, mẫu ERP không có)
+
+### 15.2 FE — popup xem trước, bỏ trang /print
+
+- [x] `index.vue` + `_id/index.vue`: `reportPrintPreviewMixin` + `ReportPrintPreviewModal`,
+      thay `window.open('/finance/bill-adjust-depts/{id}/print')`
+- [x] Gọi thẳng `loadPrintPreview(url, title, true)` — **khổ NGANG**; `openPrintDetail()` của mixin
+      cứng khổ dọc (đúng cách màn Đề nghị đang làm)
+- [x] Xoá `pages/finance/bill-adjust-depts/_id/print.vue`
+
+### 15.3 Kiểm chứng
+
+- [x] BE render thật 2 ca trên `gop_db`: phiếu VNĐ id 12855 (9 cột) + phiếu ngoại tệ id 12852
+      RUPEE (11 cột, tách RUPEE/VND mỗi bên) — HTML đúng cấu trúc mẫu ERP
+- [x] Nhãn đầu mục ra `<strong>`, "Diễn giải" cùng hàng "Loại tiền"
+- [x] FE compile sạch (vue-template-compiler + babel), không còn tham chiếu nào tới trang `/print`
+- [ ] **Xem bằng mắt trên trình duyệt** (user tự mở): popup mở đúng khổ ngang, không còn số tiền
+      đè lên ô bên cạnh, letterhead hiện đúng công ty trên phiếu, nút In trong popup chạy
+- [ ] Excel 1 phiếu mở lại 1 file để chắc không đổi (dùng chung `data()`, chỉ đọc)
+
+### Checkpoint — 2026-09-07
+Vừa hoàn thành: toàn bộ 15.1 + 15.2, kiểm chứng BE/compile ở 15.3.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt nghiệm thu bản in (mục còn `[ ]` ở 15.3) rồi phản hồi Redmine #11307.
+Blocked:
+
+### Checkpoint — 2026-09-07 (cuối phiên)
+
+Vừa hoàn thành: Redmine #11306 (3 lỗi xuất Excel) + 8 việc phát sinh trong phiên.
+
+**Đụng vào những file nào**
+
+| Repo | File |
+| --- | --- |
+| hrm-api | `Exports/BillAdjustDeptExport.php` · `Resources/views/exports/bill_adjust_dept.blade.php` · `Services/BillAdjustDeptPrintService.php` · `Services/BillAdjustDeptService.php` · `Services/BillAdjustDeptWriteService.php` · `Services/BillAdjustDeptPickerService.php` · `Http/Controllers/V1/BillAdjustDeptController.php` · `Http/Requests/BillAdjustDept/BillAdjustDeptStoreRequest.php` · `Routes/api.php` |
+| hrm-client | `pages/finance/bill-adjust-depts/index.vue` · `components/BillAdjustDeptForm.vue` · `components/AccountingDetailTable.vue` · `components/BillAdjustDeptRequestPickerModal.vue` · **`components/V2BaseSelectInModal.vue` (DÙNG CHUNG — user đồng ý sửa)** |
+
+**2 lỗi NẶNG lộ ra khi kiểm chứng, không nằm trong issue gốc**
+1. `$this->get('status')` không đọc JSON body ⇒ **"Lưu và duyệt" bỏ qua TOÀN BỘ rule `required`**,
+   duyệt lọt phiếu thiếu dữ liệu và GHI THẲNG SỔ CÁI. Đã sửa; còn **18 FormRequest** khác toàn dự
+   án dùng `$this->get()` — chưa đụng, cần báo team.
+2. select2 ghim cuộn của vùng cuộn cha và **gỡ hụt khi danh sách bị lọc ngắn lại** ⇒ popup cuộn
+   giật giật tới khi F5. Đã vá ở `V2BaseSelectInModal`.
+
+Đang làm dở: không có.
+
+Bước tiếp theo:
+1. User rà lại trên local (Ctrl+Shift+R) — nhất là 2 việc chỉ trình duyệt mới chốt được: xuất Excel
+   danh sách >12.000 dòng (tiến độ + file đủ cột) và popup tick sẵn đúng cột đang hiện.
+2. Deploy 1 lượt cả 2 repo. ⚠️ Bản vá `V2BaseSelectInModal` là component dùng chung — sau khi lên
+   nên bấm thử vài popup có ô select ở màn khác.
+3. Quyết 3 việc đang treo: ô "Số phiếu YC xuất hàng" có đổi sang kiểu bấm-thẳng-vào-ô không ·
+   có vá `$this->get()` cho 18 FormRequest còn lại không · có rà `V2BaseSelect` /
+   `V2BaseSelectRemote` cùng lỗi ghim cuộn không.
+
+Blocked: không.
+

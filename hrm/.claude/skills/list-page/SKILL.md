@@ -390,6 +390,48 @@ Tự kiểm: `getComputedStyle(el).color` phải KHÁC `rgb(220, 53, 69)`.
 
 ---
 
+## 3b-2b. Màu chữ trong ô bảng — 3 mức, khai bằng ĐÚNG bộ class (chốt 2026-09-07)
+
+Ô bảng chỉ có **3 mức chữ**, mỗi mức một bộ class cố định. Màn mẫu: `pages/assign/customers/index.vue`.
+
+| Mức | Class | Màu | Dùng cho |
+| --- | --- | --- | --- |
+| Cột định danh (link) | `v2-cell-link field-line` | navy `#28539d` + gạch chân đứt | Mã bản ghi — link vào chi tiết |
+| **Nội dung chính** | **`field-line text-dark font-weight-normal`** | `#343a40` | MỌI ô dữ liệu còn lại |
+| Dòng phụ / ghi chú | `project-sub v2-hint` | `#6b7280` | "Người liên hệ: …", "SĐT: …", ngày phụ trong ô |
+
+```vue
+<!-- ĐÚNG -->
+<div class="field-line text-dark font-weight-normal" :title="item.name">{{ item.name }}</div>
+<div class="project-sub v2-hint">Người liên hệ: {{ item.contact_name }}</div>
+
+<!-- SAI — chữ ra XÁM NHẠT hơn mọi màn khác -->
+<div class="field-line">{{ item.name }}</div>
+```
+
+⚠️ **`.field-line` TRẦN là bẫy**: nó khai sẵn `color: #475569` trong `assets/scss/v2-styles.scss`,
+tức là một màu xám nhạt hơn hẳn `text-dark`. Nhìn một mình thì không thấy gì, nhưng đặt cạnh màn
+khác (hoặc cạnh cột dùng đúng class trong cùng bảng) là lộ ngay chữ bị "mờ". Đã dính thật ở 2 màn
+port đợt 2026-09-07 (`prospective-projects`, `product-project`) — 23 ô.
+
+⚠️ **`v2-hint` khai trong `<style scoped>` của từng màn** (`.v2-hint { color: #6b7280 }`), chưa nằm
+ở file chung. Copy 3 dòng đó sang màn mới, ĐỪNG đè màu thẳng vào `.project-sub`: class đó ở
+`v2-styles.scss` chỉ khai cỡ chữ + line-height và còn được dùng cho cả ô nội dung chính ở vài màn cũ,
+đè màu là làm nhạt luôn những ô đó.
+
+Nhắc lại 2 luật đi kèm đã có ở trên: **không `font-weight` đậm** trong ô (mục 3) và **không
+`.text-muted`** vì class đó ra màu đỏ (mục 3b-2).
+
+**Tự kiểm** — số ô dùng đúng bộ class phải bằng số ô dữ liệu của bảng, và `field-line` trần phải
+bằng 0 (trừ trường hợp có chủ ý: cột định danh của user KHÔNG có quyền xem chi tiết thì để chữ
+thường thay cho link):
+
+```bash
+grep -o 'class="field-line[^"]*"' pages/<màn>/index.vue | sort | uniq -c
+```
+
+---
+
 ## 3b-3. Ô KHÔNG có dữ liệu thì để TRỐNG — cấm chèn dấu gạch ngang (chốt 2026-08-24)
 
 Ô rỗng để **trống hẳn**. KHÔNG chèn `—`, `-`, `N/A`, `(không có)`… — dấu gạch ngang trông như một
