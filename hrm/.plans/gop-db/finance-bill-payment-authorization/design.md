@@ -129,3 +129,26 @@ repo ERP · không migration · không `mysql2`.
 4. Nhánh loại 4 và bảng phân bổ phiếu xuất hàng **không có dữ liệu thật** để kiểm chứng.
 5. Bảng con "phân bổ theo phiếu xuất hàng" trong form CỐ Ý chưa dựng (bảng 0 dòng toàn hệ thống).
 6. Chưa có SRS / testcase / HDSD.
+
+
+## Lưu nháp — chỉ bắt buộc Loại chi (chốt 2026-08-27)
+
+Màn Tạo vào thẳng đã chọn sẵn **Loại chi = "Chi trả nhà cung cấp" (1)**; ô đó `allow-clear="false"`
+nên chỉ đổi được sang loại khác, không xóa trắng.
+
+Bấm **Lưu nháp** (`status = 1`) chỉ bắt buộc **`type`**; mọi `required` khác thành `nullable`, luật
+ĐỊNH DẠNG (`in` / `exists` / `date` / `numeric`) giữ nguyên. Đường **"Lưu và duyệt"** (`status = 3`)
+vẫn đủ luật như cũ. 3 lớp phải gỡ mới lưu nháp trống được — thiếu 1 lớp là vẫn 422/500:
+
+1. `validateForm()` của vee-validate ở FE (ô "Người nhận" của loại chi 4) → chỉ chạy khi bấm
+   "Lưu và duyệt";
+2. `BillPaymentAuthorizationStoreRequest` → `savingAsDraft()` (`status !== 3`) đổi `required` →
+   `nullable`, kèm `normalizeEmptyIds()` đưa `0`/`''` về null trước validate;
+3. cột `bill_payment_authorizations.account_has` **NOT NULL không default** →
+   `billAttributesFromClient()` ghi `0` khi chưa chọn, `BillPaymentAuthorizationDetailResource` trả
+   `null` thay `0` để select hiện placeholder.
+
+🔶 **RULING U-UNC-3 được NỚI cho đường nháp**: `date_accounting` bỏ `required|after_or_equal:today`
+khi lưu nháp (chỉ còn `date`) — nháp chưa ghi sổ cái nên ngày chưa có ý nghĩa kế toán, giữ luật thì
+phiếu nháp để qua đêm mở ra bấm Lưu nháp là 422. Đường "Lưu và duyệt" **giữ nguyên** ràng buộc
+không cho hạch toán lùi ngày.

@@ -56,6 +56,75 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   ⚠️ Panel chi tiết meeting trông rỗng là do **dữ liệu seed mỏng**, không phải thiếu khối: meeting tạo bằng UI có 19–27 `company_members` + `reports`, còn `DEMO-CSKH-*` / `E2E-CARE-*` đều bằng 0. Muốn demo đẹp trên VPS thì phải làm giàu `assign:seed-care-demo` (CHƯA làm, chờ user quyết).
   Design: .plans/bao-cao-cskh-tiem-nang/design.md · Plan: .plans/bao-cao-cskh-tiem-nang/plan.md · E2E: e2e/tests/assign/{meeting-host,customer-demand-link,potential-customer-care,potential-customer-care-export}.{api.spec,spec}.ts · Fixture: hrm-api/database/{e2e_customer_demand_seed,e2e_care_report_seed}.php
 
+- meeting-by-projects (bỏ cấp Công ty/Phòng ban/Bộ phận) → @cuong61n → .plans/meeting-by-projects/plan.md
+  Trạng thái: **CODE XONG (2026-09-07)** — chưa kiểm thử, chưa commit. Nhánh `tpe`
+  (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005).
+  Báo cáo `/assign/report/meeting-by-projects` bỏ 2 cấp Công ty / Phòng ban, chỉ còn **Dự án → Meeting**
+  (bảng, bản in, file Excel). Phân quyền còn 2 mức: theo tổng công ty (1060) / theo công ty (1061),
+  đã xoá quyền 1062 "theo phòng ban" khỏi `PermissionsTableSeeder` (bản ghi cũ trong DB dev chưa xoá).
+  Bộ lọc giữ ô Công ty, bỏ Phòng ban + Bộ phận; cờ quyền FE chuyển sang fail-closed (bỏ `|| true`).
+
+- masterdata-pl8-chuan-hoa-danh-muc → @cuong61n → .plans/masterdata-pl8-chuan-hoa-danh-muc/plan.md
+  Trạng thái: **CODE XONG + KIỂM THỬ 53/53 PASS (2026-09-04)** — chưa commit. Nhánh `tpe`
+  (worktree `HRM/worktrees/tpe-api` + `tpe-client`), DB kiểm thử `hrm_prod_6_6`.
+  Redmine #11303 — chuẩn hoá Master Data 4 danh mục theo file khách gửi: đổi tiền tố mã Lĩnh vực
+  Công ty kinh doanh `LVKDNB.` → `LVCTKD.` (7 bản ghi), gán lại lĩnh vực 21 Nhóm ngành + thêm 13
+  nhóm mới + khoá NN.0012, remap 62 Nhóm giải pháp + khoá NGP.0167, dựng lại 2 pivot cho 145 Ứng
+  dụng + đổi tên 2 ứng dụng.
+  Cách đẩy dữ liệu: **Seeder chạy tay** `Modules\Assign\Database\Seeders\MasterDataPl8Seeder`
+  (6 bước, idempotent, tất định). Dữ liệu sinh tự động từ Excel vào `Seeders/data/masterdata_pl8.php`.
+  🐞 **Bẫy đắt nhất**: các cột "(Cập nhật)" trong file chỉ điền cho phần dòng có thay đổi
+  (`ung_dung` 19/145, `nhom_giai_phap` 87/401) — đọc thẳng cột đó làm **126 ứng dụng bị xoá trắng
+  nhóm ngành**. Phải "lấy cột cập nhật, trống thì lấy cột hiện tại".
+  🐞 **Bẫy 2**: `hrm_prod_6_6` còn bộ danh mục CŨ trùng mã (19 scopes + 117 industries) → phải tra
+  bản ghi theo cặp (code, name), không theo mã đơn.
+  ➕ **Phát sinh ngoài spec, user đã chốt**: bước 6 đồng bộ `scope_id` của 3 bảng nghiệp vụ
+  (245 dòng do seeder gây lệch được vá, 13 dòng lệch sẵn giữ nguyên).
+  ⏳ Chờ khách xác nhận 2 điểm: sheet lĩnh vực bỏ trống `LVCTKD.0003`; NN.0012 vẫn gắn lĩnh vực "Khác".
+
+- ca-ghi-nhan-cham-cong → @cuong61n → .plans/ca-ghi-nhan-cham-cong/plan.md
+  Trạng thái: **CODE XONG 6/6 PHASE + KIỂM THỬ 345 PASS (gồm E2E toàn trình qua UI 47/47) (2026-08-29)** — chưa commit. Nhánh `tpe` (api + client).
+  Ca làm việc **chỉ ghi nhận lịch sử chấm công** cho ngày lễ / Chủ nhật: vẫn chấm công được trên app và máy,
+  nhưng KHÔNG ảnh hưởng công định mức / lương / đơn phép / tiền cơm / tăng ca. Ký hiệu **`CC`** trên
+  `/timesheet/timesheet_details` (dùng chung màn hình + Excel).
+  Cách làm: cờ `working_shifts.is_attendance_only`, phân ca vẫn ghi vào `shift_detail_employee_dates` ⇒
+  **dùng nguyên `/shift-detail/general` và `/shift-detail/add`, không màn mới, không quyền mới, không menu mới**.
+  18 điểm loại trừ khỏi phép tính (gói trong 1 helper `WorkShift::applyExcludeAttendanceOnly` + 1 scope) ·
+  4 điểm mở cổng chấm công (`getAttendanceOnlyShift` / `getWorkshiftForAttendance`, KHÔNG đụng `getWorkshift`) ·
+  1 điểm dựng ký hiệu CC.
+  **Nghiệm thu thật**: phòng 52 (21 NV, tháng 08/2026, 504 bản ghi phân ca thật) — phân thêm 21 NV × 5 CN,
+  **21 NV × 16 chỉ tiêu = 336 phép so, 0 lệch**; tổng công định mức 508.0 không đổi; đối chứng ngược
+  (tắt cờ) tăng trên cả 21/21 NV. Chạy lệnh tiền cơm thật: 0 suất phát sinh. Excel tải thật có `<t>CC</t>`.
+  🐞 **Đã vá (user chốt hướng a)**: cảnh báo trùng ca 424 không hoạt động khi ca cũ được phân qua **lưới
+  Tổng hợp** (`shift_detail_id = NULL`) — `WorkShiftDetailService:393` dùng `where('shift_detail_id','!=',$id)`,
+  SQL cho `NULL != x` = NULL nên dòng không lọt vào kiểm tra, phân ca cũ bị **xoá âm thầm**. Bug CÓ SẴN,
+  ảnh hưởng mọi ca. Đã bọc `whereNull()->orWhere(...)`. Bán kính đo thật: chỉ 1.616/428.354 dòng NULL (0,38%),
+  và **0 dòng NULL ở ngày ≥ hôm nay** ⇒ không sinh cảnh báo mới trên dữ liệu đang có. Hồi quy 22/22 PASS
+  (phân lần đầu, sửa chính nó, phân lại cùng ca, is_replace, cả phòng 21 NV).
+  🐞 **3 lỗi phát hiện khi user dùng thật (2026-08-29), đã vá**: (a) app KHÔNG chọn được ca để chấm —
+  `TimekeeperController::listTimesheetTypes:148` vẫn dùng `getWorkshift()`, là **điểm thứ 5** của luồng
+  chấm công mà Phase 4 bỏ sót vì test gọi thẳng API thay vì đi qua đường app dựng danh sách chọn;
+  (b) app gọi nhầm "Ca hành chính: …" → đổi thành "Ca ghi nhận chấm công: …"; (c) popup bảng công để
+  trống mục "Ca làm việc" → tra thẳng bảng phân ca + thêm ghi chú xám. Đã rà lại đủ 6 nơi gọi `getWorkshift`.
+  🐞 Đã vá kèm (user duyệt): `POST/DELETE/PUT timesheet/timeworking` thiếu `checkPermission` → ai cũng
+  tạo/sửa/xoá ca được qua API. 🐞 Đã vá: `TimeSheetDetailModal.vue` khối "Làm thêm" thiếu `v-if` → popup vỡ
+  ở mọi ngày không có bảng công. 🐞 Ghi nhận chưa vá: `TimekeeperController:427` `Undefined index` khi
+  thiếu `timesheet_type`; `WorkShift::isCanDelete()` `return true` vô điều kiện.
+  ⓘ Bẫy nhớ: `timesheets.employee_info_id` chứa **ssn** không phải id · `employee_infos.status` ≠ `employees.status`
+  (2 chốt chặn lọc theo cột đầu) · `working_shift_id` là NOT NULL (cảnh báo "bẫy NULL" ban đầu là báo động giả).
+  📄 **HDSD đã xuất**: `.plans/ca-ghi-nhan-cham-cong/HDSD_Ca ghi nhan lich su cham cong.docx` (25 trang,
+  19 ảnh chụp thật qua Playwright MCP, 10 bảng) + generator `gen_hdsd.py`. Engine team chạy Windows nên
+  generator kế thừa `HdsdBuilder` và ghi đè bước cập nhật mục lục bằng AppleScript cho macOS (KHÔNG sửa skill chung).
+  ⚠️ **Dữ liệu demo giữ lại cho user test app**: ca `CC.LE` (id 119) phân cho NV 1466 + 1599 ngày 29/08/2026.
+  Spec: docs/superpowers/specs/2026-08-29-ca-ghi-nhan-cham-cong-design.md · Design: .plans/ca-ghi-nhan-cham-cong/design.md
+
+- meeting-ckeditor-tailieu-chuanbi → @cuong61n → .plans/meeting-ckeditor-tailieu-chuanbi/plan.md
+  Trạng thái: **Code xong BE + FE (2026-08-24), CHƯA test UI, CHƯA commit**. Nhánh `tpe` (cả api + client).
+  Redmine #11194: "Mục tiêu / Nội dung" (tab Thông tin) và "Kết luận cuộc họp" (tab Biên bản) đổi sang
+  CKEditor (`CompactReviewEditor`, khuôn màn Báo giá), bỏ giới hạn ký tự (BE bỏ `max:4000`/`max:1000`,
+  DB đổi 2 cột sang LONGTEXT); thêm vùng "Tài liệu chuẩn bị cho buổi họp" ở tab Thông tin bằng
+  `FileAttachmentTable`, lưu chung bảng `meeting_attachments` phân biệt bằng cột `type` (1 biên bản / 2 chuẩn bị).
+  Kèm: bản in lọc + xuất HTML kết luận; drawer Lịch meeting + popup biên bản báo cáo thị trường strip HTML.
 
 - danh-muc-nhom-nganh → @dnsnamdang → .plans/danh-muc-nhom-nganh/plan.md
   Trạng thái: **HOÀN THÀNH 8/8 TASK + E2E 24/24 PASS + TESTCASE 56 TC (wrap up 2026-08-23)** — chưa commit. Nhánh `linh-vuc-noi-bo`. Form Thêm/Sửa đã bố trí lại 2 hàng cân đối: Mã(4)+Tên(8) · Lĩnh vực(8)+Trạng thái(4) · Mô tả(12).
@@ -106,7 +175,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Nội dung Phase 6: đổi nguồn Lĩnh vực từ ERP `scopes` (mysql2) sang danh mục **Lĩnh vực kinh doanh nội bộ** (`internal_business_scopes`), và Mức đầu tư / Thời gian dự kiến chuyển xuống **cấp Nhóm ngành** (`scopes` HRM). Bảng khảo sát thành 1 bảng phẳng 5 cột (Lĩnh vực gom dòng kiểu rowspan). Khối khảo sát **bỏ hẳn phụ thuộc `mysql2`**, xoá `Entities/TpScope.php`. Migration `2026_08_23_000001` **XOÁ SẠCH** dữ liệu khảo sát cũ rồi đổi tên cột (`scope_id`→`internal_business_scope_id`, thêm `scope_id`/`scope_name` mang nghĩa nhóm ngành). Nhánh `tpe` (đã có sẵn cả feature khảo sát lẫn 2 danh mục mới). 8 task: migration+Entity · endpoint cây 2 tầng · service+validate · store · component FE · bản in rowspan · Excel biên bản · E2E.
   Design Phase 6: .plans/meeting-tim-hieu-gioi-thieu-sp/design-phase2.md · Plan Phase 6: .plans/meeting-tim-hieu-gioi-thieu-sp/plan.md (mục "PHASE 6")
   Spec: docs/superpowers/specs/2026-08-21-meeting-tim-hieu-gioi-thieu-sp-design.md · Ledger SDD (đầy đủ 31 ruling): .plans/meeting-tim-hieu-gioi-thieu-sp/sdd-ledger.md
-
 - meeting-by-market → @dnsnamdang → .plans/meeting-by-market/plan.md
   Trạng thái: 🟡 **PHASE 13 XONG — ĐÃ COMMIT + MERGE VÀO `tpe` LOCAL, CHƯA PUSH (2026-09-06).** `hrm-api` `320b5ab2e` + merge `33cca598e` · `hrm-client` `f1e5701e2` + merge `80c8bd053`; 2 worktree đứng ở `tpe`, cây sạch. Nhánh `bao_cao_meeting_thi_truong` tách từ `origin/tpe` (worktree riêng ở cả 2 repo).
   Phase 13 = cải tổ bảng theo **DÒNG**: Thị trường / Khách hàng từ 2 CỘT rowspan → **2 cấp dòng cha** trải hết bề ngang, đánh số `I` / `1` / `1.1` ở cột STT riêng (không dấu `/`), dòng cha có số đếm + thu gọn/mở rộng + nút "Mở hết/Thu gọn", nhãn nhóm ghim trái khi cuộn ngang. Port style `.rsum-tb` của báo cáo CSKH tiềm năng (thead teal, 2 thanh cuộn trên+dưới, caret SVG). Thêm cột **Phòng chủ trì** + khối summary **Theo phòng chủ trì**. Cột thành phần còn 1 người + chip `+N` → popup `MeetingMembersModal`. Bấm tên meeting → **panel `MeetingDetailDrawer`** (bỏ mở tab mới của Phase 11); "Xem biên bản" → **popup bản in dùng chung** (`reportPrintPreviewMixin` + `ReportPrintPreviewModal`), xoá `MeetingMinutesModal.vue`. Summary 4 khối trên 1 hàng, tràn thì cuộn ngang, item trong khối vẫn chia cột.

@@ -1,19 +1,60 @@
 ---
 name: print-page
-description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc khi gặp lỗi in — mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu.
+description: Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước ReportPrintPreviewModal — chuẩn hiện hành, xem mục 0), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
 
-Chuẩn hoá cách làm màn IN (`pages/**/print.vue`, `pages/**/_id/print.vue`) trong `hrm-client` (Nuxt/Vue2) để tránh lặp lại loạt lỗi in kinh điển. **Mọi mục dưới đây đã được kiểm chứng thực tế** (kể cả đo đạc bằng iframe).
+Chuẩn hoá cách làm chức năng IN trong `hrm-client` (Nuxt/Vue2) để tránh lặp lại loạt lỗi in kinh điển. **Mọi mục dưới đây đã được kiểm chứng thực tế** (kể cả đo đạc bằng iframe).
 
 ---
 
-## 0. KHUÔN HIỂN THỊ CHUẨN của màn IN (chốt 2026-08-21) — copy nguyên, KHÔNG tự chế
+## 0. LUẬT GỐC: nút In mở POPUP XEM TRƯỚC, KHÔNG mở trang riêng (chốt 2026-08-22)
 
-Màn mẫu: `pages/customer-care/warranty-repair-requests/_id/print.vue` (khổ DỌC) và
-`pages/customer-care/warranty-repair-handle-requests/print.vue` (khổ NGANG).
-Mọi màn in phải giống 3 điểm sau, không có ngoại lệ:
+**Đọc mục này trước, và đọc hết, rồi mới viết dòng code đầu tiên.** Bấm In ở một dòng trên màn
+danh sách (hoặc ở màn chi tiết) phải bung **popup xem trước ngay tại chỗ**. KHÔNG
+`window.open('/…/print')`, KHÔNG `$router.push`/`$router.resolve` sang trang `/print`: mở tab mới
+làm mất ngữ cảnh, quay lại phải tải lại cả màn danh sách kèm bộ lọc.
+
+Cách dựng popup — bộ dùng chung, chỉ khai báo chứ không viết lại — **xem mục 8** (đủ khuôn code,
+CSS, letterhead, bẫy đã dính).
+
+### Cây quyết định — 3 câu, hỏi theo thứ tự
+
+1. **BE đã có `print-data` / `print-list-data` chưa?** (`grep -n "printData\|printListData"` ở
+   controller tương ứng trong `hrm-api/Modules/*/Http/Controllers`)
+   → **Có** thì làm popup (mục 8). Hết chuyện, không dựng file `print.vue` nào.
+2. **Chưa có?** → **bổ sung endpoint BE** trả `{ data: { template: '<html>' } }` từ mẫu in ERP
+   (trait `PrintsCompanyLetterhead` cho `{{HEADER}}`), rồi quay lại bước 1.
+   **Thiếu BE KHÔNG phải lý do để dựng trang `/print`.**
+3. Chỉ khi rơi đúng một trong **3 ngoại lệ** dưới đây mới được dựng trang `/print` riêng — và
+   lúc đó theo khuôn mục 0b:
+   - Màn **HRM gốc** (`pages/decision/**`, `pages/training/**`, `pages/human/**`,
+     `pages/regulations/**`, `pages/timesheet/**`) — không có mẫu in ERP ở BE.
+   - **Báo cáo tự dựng bằng Vue** từ dữ liệu API, không có template HTML ở BE
+     (`pages/assign/report/**`).
+   - Bản in cần **thao tác trên chính trang in** (nhập liệu, chọn phiếu, khảo sát) chứ không
+     chỉ xem rồi in.
+
+> Nhóm màn **port từ ERP** (`pages/finance/**`, `pages/customer-care/**`) KHÔNG có ngoại lệ nào:
+> mọi màn đều phải là popup. Màn nào còn `window.open('/…/print')` là **nợ kỹ thuật cần chuyển**,
+> đừng lấy nó ra làm mẫu để copy.
+
+⚠️ 2 màn mẫu cũ (`warranty-repair-requests/_id/print.vue` · `warranty-repair-handle-requests/print.vue`)
+**đã bị xóa** ngày 2026-08-22 (commit `ed1c24e53`): 3 màn luồng bảo hành chuyển hẳn sang popup, bỏ
+trang `/print` để không có 2 nguồn CSS in. Đó là hướng đi chuẩn cho mọi màn ERP→HRM còn lại.
+
+---
+
+## 0b. KHUÔN TRANG `/print` RIÊNG (chốt 2026-08-21) — CHỈ dùng cho 3 ngoại lệ ở mục 0
+
+> ⛔ Trước khi đọc tiếp: đã chạy cây quyết định ở mục 0 chưa? Màn port từ ERP thì **quay lại mục 8**.
+> Mục này chỉ áp cho màn HRM gốc / báo cáo tự dựng bằng Vue / trang in có thao tác.
+
+Màn mẫu: `pages/customer-care/device-errors/_id/print.vue` (khổ DỌC) và
+`pages/customer-care/device-errors/print.vue` (khổ NGANG).
+
+Trang `/print` phải giống 3 điểm sau, không có ngoại lệ:
 
 1. **KHÔNG có menu / topbar** — khai `layout: 'print'` (`layouts/print.vue`). Dùng
    `default-sidebar` thì mặt giấy bị đẩy xuống ~130px và hở dải xanh của topbar ở đầu trang.
@@ -55,7 +96,10 @@ Mọi màn in phải giống 3 điểm sau, không có ngoại lệ:
    `/css/pdf.css` (hrm-client không có file này, khai vào là 404).
 
 > Đã áp cho 13 màn ERP→HRM ngày 2026-08-21 (lỗi thiết bị, DM dịch vụ SC, DM tài khoản, YC nhập
-> hàng, chuyển hàng nhập thẳng, nhóm hàng giữ). Màn in mới **bắt buộc** copy khuôn này.
+> hàng, chuyển hàng nhập thẳng, nhóm hàng giữ) — **đó là hiện trạng cũ, không phải đích đến**:
+> 13 màn này nằm trong danh sách nợ kỹ thuật phải chuyển sang popup (mục 0). Sửa lỗi hiển thị trên
+> các trang `/print` đó thì theo khuôn ở đây; còn **dựng màn in MỚI cho phân hệ ERP→HRM thì dùng
+> popup (mục 8)**, không đẻ thêm trang `/print`.
 
 ---
 
@@ -75,7 +119,7 @@ Nút In gọi `this.$printContent(options)` — plugin `hrm-client/plugins/print
 
 ---
 
-## 2. Quy tắc vàng khi làm màn print.vue
+## 2. Quy tắc vàng khi làm trang `/print` riêng (chỉ 3 ngoại lệ ở mục 0 — màn ERP→HRM dùng popup)
 
 - [ ] **`layout: 'print'`** — BẮT BUỘC, xem mục 2b. Đây là lỗi hay gặp nhất khi copy màn in có sẵn.
 - [ ] Đặt `id="content"` trên div gốc nội dung in (để selector plugin khớp đúng, không rơi vào fallback `.container`).
@@ -84,6 +128,11 @@ Nút In gọi `this.$printContent(options)` — plugin `hrm-client/plugins/print
 - [ ] Ảnh letterhead: dùng **URL tuyệt đối** (xem mục 4), KHÔNG để `src="@/assets/..."` trực tiếp.
 - [ ] Toàn bộ CSS viền/độ rộng bảng: truyền qua `options.styles` (xem mục 3), scope bằng selector đủ mạnh (`table.table-bordered ...`).
 - [ ] Nút In gọi method riêng (vd `printPackage()`) để truyền `styles` + `pageMargin`, KHÔNG gọi trơn `$printContent()`.
+- [ ] **Field rich-text (Thông số kỹ thuật / ghi chú / điều khoản) — bản IN GIỮ HTML**: render
+      `v-html="$specHtml(value)"` (mixin `utils/mixins/SpecHtml.js` → `utils/specHtml.js`; đã sanitize
+      và tự đổi `\n` → `<br>` cho dữ liệu text thuần). KHÔNG `strip_tags`/`htmlToText` ở bản in (mất
+      đậm/nghiêng/xuống dòng), cũng KHÔNG in thẳng `{{ }}` (ra nguyên thẻ `<div>`, `<br />`).
+      Ngược lại, bản **EXCEL** phải hạ về text — xem `.claude/skills/export-excel/SKILL.md` mục 1b.
 
 ---
 
@@ -244,6 +293,31 @@ tờ giấy (đã dính thật: nút 794px).
 
 ---
 
+## 2d. ĐỊNH DẠNG SỐ TRÊN BẢN IN — CHUẨN QUỐC TẾ `1,234,567.89` (chốt 2026-08-26)
+
+Bản in là HTML hiển thị thẳng nên **phải tự format số** (khác bản Excel — xem
+`.claude/skills/export-excel/SKILL.md` mục 1). Định dạng bắt buộc: **`,` ngăn cách hàng nghìn,
+`.` phần thập phân**. Thay cho lần chốt kiểu Việt Nam ngày 2026-08-22.
+
+```js
+// ĐÚNG
+formatMoney(value)   { return Number(value || 0).toLocaleString('en-US') },
+formatNumber(value)  { return Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 1 }) },
+
+// SAI — ra 1.234.567 kiểu VN
+Number(value || 0).toLocaleString('vi-VN')
+```
+
+- Áp cho **cả 3 nhánh** cùng lúc: `print.vue` ở FE · service dựng HTML in ở BE
+  (`number_format($x)` chứ KHÔNG `number_format($x, 0, ',', '.')`) · chuỗi `*_text` mà Resource trả
+  sẵn cho màn in dùng lại.
+- **Ngày tháng không dính rule này** — vẫn `dd/mm/yyyy`, `toLocaleDateString('vi-VN')` giữ nguyên.
+- Ô nhập tiền `V2BaseCurrencyInput` **cũng đã đồng bộ** chuẩn quốc tế (2026-08-26) → số trên bản
+  in và số trong form giờ khớp nhau, không còn lệch dấu như trước.
+- Tự kiểm: `grep -rnE "(toLocaleString|Intl\.NumberFormat)\(\s*'vi-VN'" pages/**/print*.vue` phải RỖNG.
+
+---
+
 ## 3. Snippet CSS chèn sẵn cho BẢNG có viền (copy dùng ngay)
 
 Truyền qua `this.$printContent({ styles, pageMargin: '12mm 10mm' })`. Selector `table.table-bordered ...` có specificity cao hơn `.table`/`.table-bordered` trong print-app.css nên ghi đè được (nhớ `!important`). Cửa sổ in chỉ chứa fragment trang này nên target thẳng `table.table-bordered` là an toàn.
@@ -355,6 +429,69 @@ methods: {
 
 ---
 
+## 4a. In từ popup xem trước: dùng IFRAME ẨN, **KHÔNG** `window.open` (chốt 2026-08-25)
+
+Popup xem trước bản in (`components/print/ReportPrintPreviewModal.vue`) trước đây in bằng:
+
+```js
+const win = window.open('', '_blank')   // ❌ SAI
+win.document.write(html)
+win.print()
+win.close()
+```
+
+**Lỗi này CHỈ HIỆN TRÊN WINDOWS — máy Mac không tái hiện được**, nên rất dễ nghiệm thu nhầm là đã
+xong (user báo 2026-08-25, đã dựng lại đúng luồng trên Chromium/Mac: hoàn toàn bình thường).
+
+Triệu chứng người dùng gặp: in một bản ghi hoặc in danh sách → bấm In → tắt cửa sổ in → quay lại
+màn danh sách thì **các ô lọc select2 (Công ty, Trạng thái…) bấm vào không mở ra nữa**, con trỏ
+cũng không vào được ô tìm trong dropdown. Nhìn như màn bị treo.
+
+Nguyên nhân: cửa sổ in con đóng lại nhưng cửa sổ HRM chưa lấy lại focus của hệ điều hành. Select2
+mở dropdown dựa vào focus và **tự đóng ngay khi mất focus**, nên mọi cú bấm đều "không ăn".
+
+**Cách đúng — in bằng iframe ẩn** (khuôn có sẵn ở `pages/finance/bill-incomes/_id/print.vue`):
+
+```js
+const frame = document.createElement('iframe')
+// KHÔNG display:none — một số trình duyệt bỏ qua print() của iframe bị ẩn hẳn
+frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden'
+frame.setAttribute('aria-hidden', 'true')
+document.body.appendChild(frame)
+
+const doc = frame.contentDocument || frame.contentWindow.document
+doc.open(); doc.write(`<!DOCTYPE html><html><head>…<style>${css}</style></head><body>${html}</body></html>`); doc.close()
+
+// chờ ảnh letterhead tải xong rồi mới bật hộp thoại in
+frame.contentWindow.focus()
+frame.contentWindow.print()
+```
+
+Không tạo cửa sổ nào nên trang chính không bao giờ mất focus, và **hết luôn cảnh báo "trình duyệt
+chặn pop-up"** (không cần dặn người dùng cho phép pop-up nữa).
+
+Ba điều bắt buộc kèm theo:
+- **Đừng gỡ iframe ngay sau `print()`** — hộp thoại in đọc nội dung từ chính nó, gỡ sớm là ra trang
+  trắng. Gỡ ở lần in kế tiếp, khi đóng popup, và ở `beforeDestroy`.
+- Trong hàm bật hộp thoại in phải kiểm `frame.parentNode && frame.contentWindow` — bấm In lần nữa
+  hoặc đóng popup lúc ảnh chưa tải xong sẽ làm hẹn giờ cũ chạy trên iframe đã gỡ (`contentWindow`
+  là `null`).
+- Vẫn giữ nguyên phần chờ ảnh: `img.complete` → đếm `load`/`error` → hẹn giờ chặn 3s.
+
+⚠️ Còn `components/assign/quotation/QuotationPrintPreview.vue` (màn Báo giá phân hệ Giao việc) đang
+dùng `window.open` y hệt — **cùng lỗi**, cần chuyển sang iframe khi có dịp đụng tới màn đó.
+
+## 4a-bis. Số tiền trên bản in — dấu PHẨY ngăn nghìn
+
+Quy tắc số của dự án (chốt 2026-08-27): **dấu phẩy ngăn nghìn, dấu chấm thập phân** — `1,234,567.89`.
+Bên máy chủ cứ `number_format($x)` **mặc định** là ra đúng; đừng truyền tham số dấu ngăn cách
+(`number_format($x, 0, ',', '.')` cho ra kiểu Việt `1.234.567` — SAI quy tắc). Bản in, file xuất và
+số trên màn phải cùng một kiểu, nếu không người dùng đối chiếu 3 chỗ ra 3 dạng.
+
+Tự kiểm: `grep -rn "number_format([^)]*,[^)]*,[^)]*)"` trong module phải RỖNG.
+
+---
+
 ## 4b. LETTERHEAD CÔNG TY (logo đầu chứng từ) — BẮT BUỘC theo đúng khuôn này
 
 Áp dụng cho **mọi màn in chứng từ** (phiếu thu, phiếu chi, đề nghị, báo giá, hợp đồng…) — bản in HTML
@@ -459,6 +596,187 @@ picker → ai sửa lại ảnh công ty sẽ ghi đè về path tương đối 
 
 ---
 
+## 4c. Bản in dùng MẪU ERP: tên biến phải ĐỐI CHIẾU với mẫu thật, không suy từ tên trường
+
+Bản in của phân hệ port từ ERP điền dữ liệu vào mẫu HTML lưu trong bảng `report_templates`
+(`ErpReportTemplate`), khớp nhau bằng **tên biến `{{TÊN}}`**. Sai một chữ thì ô đó in ra **rỗng
+mà không có lỗi nào** — dễ bị báo là "mất dữ liệu".
+
+**Trước khi khai mảng biến, in ra danh sách biến có THẬT trong mẫu:**
+
+```bash
+mysql -h127.0.0.1 -uroot <db> -N --raw -e "SELECT template FROM report_templates WHERE id=<ID>;" \
+  | grep -o '{{[A-Z_]*}}' | sort | uniq -c
+```
+
+⚠️ **Mẫu ERP có chỗ đặt SAI TÊN BIẾN — đừng tin nhãn in ra** (đã trả giá 2026-08-24, Redmine
+#11170). Mẫu 277 "Phiếu yêu cầu kiểm tra sửa chữa bảo hành" in nhãn `Ghi chú:` nhưng chỗ điền lại
+là `{{DIA_CHI}}`; mẫu **không hề có** biến `GHI_CHU`. Service khai `'GHI_CHU' => $model->note` nên
+dòng Ghi chú luôn trắng.
+
+Cách xử lý khi gặp: **KHÔNG sửa mẫu** (mẫu dùng chung với ERP, sửa là ảnh hưởng cả 2 cổng) mà
+**điền cả 2 tên biến** — tên sai để bản in chạy đúng ngay, tên đúng để mẫu sửa lại sau vẫn chạy:
+
+```php
+'DIA_CHI'  => $model->note,   // mẫu ERP 277 đặt nhầm biến ở dòng "Ghi chú:"
+'GHI_CHU'  => $model->note,   // tên đúng, giữ sẵn cho khi mẫu được sửa
+```
+
+Nếu mẫu **không có chỗ nào** cho trường cần in (không nhãn, không biến) thì phải **hỏi lại**, vì
+thêm là phải sửa mẫu bên ERP — không tự quyết.
+
+---
+
+## 4e. IN DANH SÁCH: ô "Thời gian" và cột ngày — 2 lỗi đã lặp qua 3 màn
+
+Hai lỗi này bị bắt ở Phiếu cung cấp thông tin (Redmine #11207), rồi **lặp nguyên xi** ở Phiếu bảo
+hành (#11271) và còn nằm sẵn ở Báo giá dịch vụ — vì mỗi service in tự viết lấy một bản.
+
+### 1. Không lọc ngày thì ô "Thời gian" ghi **"Tất cả"**, KHÔNG để trống
+
+```php
+// SAI — không lọc ngày thì ra chuỗi rỗng, người nhận bản in không biết lấy khoảng nào
+$time = ($startDate ? … : '') . ' - ' . ($endDate ? … : '');
+'THOI_GIAN' => trim($time) === '-' ? '' : $time,
+
+// ĐÚNG
+'THOI_GIAN' => $this->periodText($startDate, $endDate),
+```
+
+Ô trống đọc như **thiếu dữ liệu**, không đọc thành "không lọc". Cùng cách hiển thị với ô "Phòng
+ban" ngay cạnh — ô đó đã ghi "Tất cả" từ đầu, để hai ô cạnh nhau mà một ô trống là lộ ngay.
+
+### 2. Cột ngày trong BẢNG danh sách phải kèm GIỜ
+
+```php
+'…' . $this->td($this->listDateTime($row->created_at), 'left')   // 28/07/2026 09:15
+```
+
+Bản in danh sách phải khớp cột cùng tên **trên màn hình**, mà màn hình hiện `d/m/Y H:i`. In mỗi
+ngày thì hai phiếu lập cùng ngày trông y hệt nhau, không biết cái nào trước.
+
+⚠️ **Chỉ áp cho bản in DANH SÁCH.** Bản in MỘT phiếu (`NGAY_LAP` trên chứng từ) vẫn chỉ ghi ngày —
+chứng từ giấy không ghi giờ lập.
+
+### Dùng trait, đừng chép công thức
+
+Cả hai quy tắc nằm ở `Modules/CustomerCare/Services/Concerns/PrintsListPeriod.php`
+(`periodText()` + `listDateTime()`). Service in danh sách `use` trait đó là xong. Chép công thức ra
+ngoài chính là lý do lỗi lặp qua 3 màn.
+
+**Tự kiểm** — mở bản in danh sách khi KHÔNG lọc ngày:
+
+- dòng đầu phải là `Thời gian: Tất cả` (không phải `Thời gian:` trống, cũng không phải ` - `)
+- cột ngày trong bảng phải có giờ: `28/07/2026 09:15`
+
+```bash
+# quét cả module xem còn service nào tự viết:
+grep -rn "THOI_GIAN' => trim" Modules/<Module>/Services/                              # phải RỖNG
+grep -rn "created_at)->format('d/m/Y')" Modules/<Module>/Services/*PrintService.php
+```
+
+Lệnh thứ hai **không nhất thiết phải rỗng**: nó bắt cả `NGAY_LAP` của bản in MỘT phiếu — chỗ đó chỉ
+ghi ngày là ĐÚNG. Soi từng kết quả, chỉ sửa những dòng nằm trong hàm dựng BẢNG danh sách
+(`listTable` / `getTableList…`).
+
+---
+
+## 4d. IN DANH SÁCH: BẮT BUỘC chốt TRẦN số dòng (chốt 2026-08-24)
+
+Triệu chứng người dùng báo: *"nhiều máy tôi in không được"* — bấm In thì đơ, hoặc hộp thoại in
+không hiện. Đừng đi tìm lỗi CSS: gần như luôn là **bản in danh sách không giới hạn số dòng**.
+
+Số đo thật (Phiếu cung cấp thông tin, không lọc gì, tài khoản có quyền xem 4.980/10.150 phiếu):
+
+| | Không chặn | Chặn 2.000 dòng |
+| --- | --- | --- |
+| Số dòng | 4.980 | 2.000 |
+| HTML trả về | **3,84 MB** | 1,55 MB |
+| Thời gian BE | 0,95s | 0,43s |
+| Bộ nhớ đỉnh PHP | 116 MB | 90 MB |
+| Số trang A4 ngang | ~170 | ~70 |
+
+**Máy chủ KHÔNG phải thủ phạm** (0,95s là bình thường). Trình duyệt mới là: chuỗi 3,84 MB đó vừa
+đổ vào DOM popup xem trước, vừa bị `document.write` chép sang cửa sổ in (**nhân đôi**), rồi trình
+duyệt phải dàn ~170 trang. Máy yếu treo hoặc chết tab.
+
+### BE — dùng trait dùng chung, đừng chép `->limit()` từng chỗ
+
+`Modules/CustomerCare/Services/Concerns/LimitsPrintListRows` (trần hiện tại **2.000 dòng**):
+
+```php
+class FooController extends ApiController
+{
+    use \Modules\CustomerCare\Services\Concerns\LimitsPrintListRows;
+
+    public function printListData(Request $request, FooPrintService $printService)
+    {
+        [$rows, $total] = $this->limitedPrintRows(
+            $this->service->filteredQuery($request)->with([...])
+        );
+        // ...fill mẫu...
+        return $this->responseJson('success', Response::HTTP_OK, $this->printListPayload($html, $total));
+    }
+}
+```
+
+`printListPayload()` trả kèm `total` / `limit` / `truncated` cho giao diện.
+
+Từ 2026-08-26, `limitedPrintRows()` **trả sớm bộ rỗng khi vượt trần** và `printListPayload()` ép
+`template` về chuỗi rỗng — vì giao diện chặn in hẳn (xem phần FE), dựng HTML ra chỉ để vứt đi.
+
+⚠️ **2 cái bẫy đã dính khi làm:**
+
+- **Đếm tổng PHẢI trên bản `clone` của query, TRƯỚC khi gắn `limit`.** Dùng chính query rồi mới
+  `get()` thì Eloquent đã gắn `limit`, `count()` ra tối đa đúng bằng trần → `truncated` luôn `false`.
+- **PHP 7.4 KHÔNG cho khai `const` trong trait** (tính năng của PHP 8.2). Khai vào là fatal
+  *"Traits cannot have constants"* — để trần dưới dạng method `printListMaxRows()`.
+
+### FE — vượt trần thì CHẶN HẲN, không in phần đầu (chốt 2026-08-26)
+
+`reportPrintPreviewMixin` đọc `truncated` rồi dựng câu nhắc; `ReportPrintPreviewModal` nhận qua
+prop `notice`. Khi có `notice`:
+
+- **ẩn bản xem trước** (`v-if="!loading && !error && !notice"`)
+- **ẩn hẳn nút In** (`v-if="!notice"` — không để nút xám, CLAUDE.md)
+- máy chủ cũng **không dựng HTML** (xem `limitedPrintRows` trả sớm) — khỏi ghép ~1,6 MB rồi vứt
+
+> Danh sách có **4.980** dòng, vượt mức in tối đa **2.000** dòng nên chưa in được. Vui lòng thu hẹp
+> bộ lọc (khoảng thời gian, trạng thái…) rồi in lại, hoặc dùng Xuất Excel cho danh sách dài.
+
+⚠️ **Quy ước cũ "in 2.000 dòng đầu kèm lời nhắc" đã BỎ.** Lý do user chốt: thà không in còn hơn in
+ra bản thiếu dòng mà người cầm không để ý — bản in danh sách hay được ký / lưu hồ sơ.
+
+5 quy tắc cho câu nhắc + luồng này:
+
+1. **Đủ 3 ý: vì sao không in được · tổng bao nhiêu · làm gì tiếp.** Chỉ báo "vượt giới hạn" thì
+   người dùng không biết xử lý thế nào.
+2. **Câu chữ phải khớp thứ người dùng NHÌN THẤY.** Bản cũ ghi "bản in chỉ lấy 2.000 dòng đầu"
+   trong khi giao diện ẩn luôn bản xem trước — đọc lên mâu thuẫn.
+3. **KHÔNG dùng toast** — toast tắt sau vài giây, người dùng in ra mới phát hiện thiếu dòng.
+4. Đặt **ngoài** `.report-print-content` để không lọt vào giấy; nền vàng nhạt + chữ xám, **không
+   tô đỏ** (đỏ chỉ dành cho lỗi validate — CLAUDE.md).
+5. ⚠️ **Xét `truncated` TRƯỚC nhánh "không có dữ liệu để in".** Vượt trần cũng cho nội dung rỗng,
+   kiểm ngược thứ tự là màn báo *"Không có dữ liệu để in"* trong khi thực tế có mấy nghìn dòng —
+   người dùng tưởng mất dữ liệu. Đã dính thật 2026-08-26.
+
+**Cách test bắt được lỗi nhóm này:** luôn thử in ở trạng thái **KHÔNG lọc gì** trên dữ liệu thật
+(danh sách lớn nhất), rồi thử lại với bộ lọc cho vài dòng. Chỉ test một nhánh là lọt — nhánh vượt
+trần và nhánh bình thường đi qua hai đường khác hẳn nhau.
+
+### Tự kiểm
+
+```bash
+# Không được còn ->get() trần trụi trong endpoint in danh sách
+grep -n "function printListData" -A15 Modules/<Module>/Http/Controllers/V1/*.php | grep -n "get();"
+```
+
+Và hỏi lại nghiệp vụ trước khi nới trần: bản in là để **cầm tay đọc / ký / lưu**, không phải để
+tra cứu. Cần cả nghìn dòng thì đúng công cụ là **Xuất Excel** (đã chia trang sẵn — `list-page`
+mục 14c), không phải bản in.
+
+---
+
 ## 5. Bảng có Ô GỘP (rowspan) in qua NHIỀU TRANG — đánh đổi, KHÔNG có cách vẹn cả đôi đường
 
 Trình duyệt (`window.print`) **không thể lặp lại nội dung ô gộp ở đầu mỗi trang** — giới hạn cố hữu. Có 3 hướng, HỎI USER chọn:
@@ -480,6 +798,10 @@ Với bảng KHÔNG có rowspan nhưng dòng cao (dễ bị cắt ngang trang l�
 ---
 
 ## 6. Màn mẫu IN TỐT NHẤT project (tham khảo khi cần)
+
+> Cả 3 màn dưới đây đều là **trang `/print` riêng** — thuộc nhóm ngoại lệ ở mục 0 (báo cáo tự dựng
+> bằng Vue, màn HRM gốc). Làm chức năng In cho màn ERP→HRM thì mẫu để copy là **popup ở mục 8**
+> (`pages/customer-care/wr-quotations/index.vue`), KHÔNG phải mấy màn này.
 
 - `pages/assign/report/task-manager-by-employees/print.vue` — báo cáo bảng dài nhiều trang **không lỗi**: làm phẳng dữ liệu phân cấp (indent + class, KHÔNG rowspan ở tbody), truyền toàn bộ CSS qua `styles`, `table-layout: fixed` + cột cố định + viền 1px mọi ô.
 - `pages/assign/assign_business/_id/print.vue` — `<colgroup>` + `generatePrintStyles()` tự nhân bản CSS vào cửa sổ in + ngắt trang mỗi phiếu bằng `page-break-after`.
@@ -521,9 +843,13 @@ doc.close()
 | Mất logo letterhead (ảnh tĩnh vẫn OK) | `companies.header` là path tương đối / `ERP_URL` rỗng → `src` 404, bị `display:none` | Mục 4b — chuẩn hoá `companies.header` về URL tuyệt đối, không trả `''` |
 | Logo ra ĐÚNG ảnh nhưng SAI công ty | Lấy công ty người tạo / người đăng nhập thay vì `company_id` trên chứng từ | Mục 4b — `$bill->company_id` trước, người tạo chỉ là fallback |
 | Cột Ghi chú tự phình rộng | auto-layout ăn theo text dài | `table-layout: fixed` + `<colgroup>` % |
+| **In danh sách: bấm In thì đơ / hộp thoại in không hiện, nhiều máy bị** | Endpoint in danh sách `->get()` không giới hạn dòng (đo thật 4.980 dòng → HTML 3,84 MB → ~170 trang, DOM lại bị nhân đôi khi chép sang cửa sổ in) | Mục 4d — chặn trần 2.000 dòng bằng trait `LimitsPrintListRows` + báo rõ trên bản xem trước |
+| **Bản in DANH SÁCH mất dòng mà không ai biết** | Chặn trần nhưng không nói gì / chỉ báo bằng toast | Mục 4d — dòng nhắc đặt trên bản xem trước, đủ 3 ý: in được bao nhiêu · tổng bao nhiêu · làm gì tiếp |
 | **Khối KÝ TÊN dồn về trái, hụt so với mép phải** | Mẫu ERP khai cứng `width:827px` cho bảng ký `class="block no-border"`; rule `table:not(.no-border)` KHÔNG với tới nó | `#content table.block { width:100% !important; table-layout:fixed !important }` + `td { width:auto !important }` (mục 3b) |
 
-## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22)
+## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22) — CÁCH LÀM CHI TIẾT
+
+*(Luật nằm ở mục 0; mục này là khuôn code để thi hành.)*
 
 Nút **In** ở màn danh sách / chi tiết mở **popup xem trước** ngay tại chỗ. KHÔNG `window.open()`
 sang trang `/print` nữa: mở tab mới làm mất ngữ cảnh đang xem, quay lại phải tải lại cả màn danh

@@ -87,6 +87,20 @@ dùng subquery tương quan (14,2s vì `bill_payment_request_details` thiếu in
 5. `POST /{id}/approve` tách riêng khỏi `PUT /{id}` — gộp thì buộc phải nới `canEdit()` cho người
    duyệt, đúng lỗ hổng mà spec 8.3 yêu cầu bịt.
 6. Trần số tiền của từng cấp **cắt ở BE** (ERP chỉ cắt ở FE nên gọi thẳng API là lách được).
+7. **Bảng chi tiết in/Excel (chốt 2026-08-24)** — bám cấu trúc ERP (tiêu đề 2 dòng · bảng riêng cho
+   phiếu ngoại tệ · nhãn `KT trưởng/BGD`, `Số hợp đồng nhập mua` / `Số đơn hàng/Hợp đồng` · dòng
+   "Nhà cung cấp:" đầu phiếu), trừ 3 chỗ cố ý lệch:
+   - Cột **"Số tiền chi"** chỉ in khi phiếu ở trạng thái **Duyệt phiếu chi** (ERP in luôn, toàn dấu `_`).
+   - **Không port 3 nhánh cột đối tượng "code chết" của ERP** (`type_customer_cash()` /
+     `type_supplier_cash()` / `type_employee_cash()` xét `isset($data['type_customer'])`… — khoá không
+     tồn tại nên luôn `false`). Port vào chỉ sinh cột rỗng. Cột đối tượng duy nhất giữ lại là
+     "Nhà cung cấp" ở nhánh loại 1 + `has_contract = 1` + tiền mặt.
+   - Dòng **Tổng cộng** gộp theo **số cột mô tả thật**; ERP cắm cứng `colspan = 3` nên lệch 1 ô ở
+     loại 2/3 + tiền mặt, và **không in dòng tổng** ở nhánh loại 1 không hợp đồng.
+
+   Toàn bộ cờ bố cục (`is_foreign` · `show_delivery` · `show_supplier` · `contract_label` ·
+   `show_money_approve`) do BE tính trong `BillPaymentRequestPrintResource::columns` — màn in FE và
+   file Excel **không được tự suy lại**, nếu không 2 đầu ra sẽ lệch cột.
 
 ## Rủi ro đã biết
 
@@ -123,3 +137,28 @@ thật trên S3 · phạm vi quyền khớp SQL tuyệt đối ở 3 mức quy�
 
 **Còn lại (không chặn):** toàn bộ FE chưa mở trình duyệt — cần user test tay 6 nhóm việc ghi ở
 checkpoint cuối `plan.md`. Dữ liệu sẵn: 8 phiếu `TEST.DNTT-CHI.*`.
+
+---
+
+## Bổ sung 2026-09-03 — Lưu nháp chỉ bắt buộc Loại chi
+
+User báo màn Tạo vẫn chặn ở **Lý do chi** khi bấm *Lưu nháp*. Chốt lại luật của 2 nút:
+
+| Nút | Bắt buộc |
+| --- | --- |
+| **Lưu nháp** (`status = 1`) | **Chỉ `type` (Loại chi)** |
+| **Lưu và gửi duyệt** (`status = 2`) | Nguyên bộ rule cũ theo ma trận loại chi × hình thức TT |
+
+- Thay quyết định 2026-08-22 (khi đó mới nới khối ngân hàng + bảng chi tiết, lý do chi vẫn bắt).
+  Nháp giờ chấp nhận cả dòng chi tiết thiếu hợp đồng / số tiền.
+- Rule **định dạng** vẫn chạy ở nháp (`numeric` · `gt:0` · `date` · `exists` · `Rule::in` cho
+  `contractable_type`) — nới required không mở cửa cho dữ liệu rác vào cột morph / khoá ngoại.
+- ⚠️ Bẫy đã xử: `reason` · `type_payment` · `type_money_id` · `exchange_rate` là cột **NOT NULL,
+  không default**. Chỉ nới validate mà không đổ mặc định ở
+  `BillPaymentRequestService::masterPayload()` (TM · VNĐ · tỷ giá 1 · lý do rỗng) thì lưu nháp trả
+  **500** chứ không lưu được.
+- Phạm vi sửa: **BE 2 file** (`BillPaymentRequestStoreRequest` — `UpdateRequest` kế thừa nên ăn theo ·
+  `BillPaymentRequestService`). **FE không đụng**: `validateForm()` chỉ chạy rule vee-validate về
+  định dạng, mọi câu "Bắt buộc nhập" trên form đều là lỗi 422 do BE trả về.
+- Chi tiết + bảng kiểm chứng 6 ca: `plan.md` mục "Nới validate LƯU NHÁP" ·
+  spec mục 4.5 (khối chú ý đầu mục).

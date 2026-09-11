@@ -42,13 +42,44 @@ Skill này khoá 3 thứ lại:
 
 ⚠️ **Ghi cả điều kiện ẩn nút**, không chỉ tên nút. Lỗi hay gặp nhất là port nút nhưng bỏ điều kiện.
 
+| Vị trí trong menu ERP (tất cả các chỗ) | `grep "route('<TenRoute>.index'" resources/views/layouts/topmenubar.blade.php` |
+
 ### Bước 2 — Chốt phân hệ, route, quyền
 
 - Màn thuộc phân hệ nào (theo sơ đồ tách phân hệ) → route `/<phân-hệ>/<slug>`.
 - Quyền: dùng lại **đúng permission ERP** hay tạo mới? Nếu dùng lại thì migration `UPDATE permissions`
   **giữ nguyên `id`** và phải sửa cả `PermissionsTableSeeder`.
 - Có cần phân quyền theo cấp (công ty / phòng ban / bộ phận) không → **hỏi user**, đừng tự quyết.
-- Thêm mục menu vào `components/subsystem-menu/<slug>.js`.
+- Thêm mục menu — **TRA MENU ERP TRƯỚC, ĐỪNG SUY TỪ TÊN MÀN** (chốt 2026-08-26, xem mục dưới).
+
+#### Đặt mục menu: tra ERP, không suy đoán
+
+Tên màn KHÔNG nói lên nó thuộc phân hệ nào. Màn "Báo giá dịch vụ" nghe như thuộc CSKH nhưng menu
+ERP đặt nó ở **Kinh doanh → Báo giá → "Báo giá dịch vụ sửa chữa - bảo dưỡng - bảo trì" → "Danh sách
+báo giá"**. Đặt nhầm sang CSKH thì người làm báo giá tìm mãi không ra (đã dính thật, user phải chỉ).
+
+Cách làm đúng — quét mọi vị trí của route trong menu ERP rồi mới quyết:
+
+```bash
+grep -n "route('<TenRoute>.index'" resources/views/layouts/topmenubar.blade.php
+```
+
+Với mỗi kết quả, lần ngược lên tìm `ruby-list-heading` (tên nhóm) và `<a href="#">` (tên phân hệ).
+Ba điều rút ra từ lần rà 5 màn của luồng dịch vụ:
+
+1. **Một màn có thể nằm ở NHIỀU nhóm menu.** "Yêu cầu sửa chữa - bảo hành" xuất hiện ở 4 chỗ:
+   Hàng hóa → Lắp đặt-BH-SC · Lắp đặt-BH-SC · CSKH → Kiểm tra bảo hành sửa chữa · **và** Kinh doanh
+   → Báo giá. Bỏ bớt chỗ nào là một nhóm người dùng mất đường vào quen thuộc.
+2. **Giữ nguyên tham số trên link.** Cùng màn nhưng ERP trỏ `?permission=waiting_create_quotation`
+   ở nhóm Báo giá và `?permission=all` ở nhóm CSKH — hai phạm vi dữ liệu khác nhau (skill
+   `list-page` §3d). Copy link mà bỏ tham số là hỏng ý nghĩa mục menu.
+3. **Đừng khai trùng một màn ở hai nhóm HRM khi ERP chỉ đặt một chỗ** — người dùng không biết đường
+   nào mới đúng.
+
+Bên HRM, menu Bán hàng sinh từ **một nguồn duy nhất** `components/subsystem-menu/sale-hub.js`
+(dùng cho cả hub lẫn cây menu bên trái). Màn chưa port để nguyên chuỗi tên; port xong thì đổi thành
+`{ n: 'Tên màn', link: '/duong-dan?type=all' }`. Nhiều nhóm đã khai sẵn tên màn từ trước — **kiểm
+xem có sẵn chưa rồi hãy thêm mới**, đừng tạo mục trùng.
 
 ### Bước 3 — Dựng khung theo khuôn màn mẫu
 
@@ -58,6 +89,49 @@ Skill này khoá 3 thứ lại:
 **Trước khi tự viết bất kỳ thành phần UI nào** (badge, tooltip, popup, upload, kéo thả, phân trang,
 biểu đồ…) → grep xem project đã có chưa. Đã có ≥ 1 màn làm đúng thì bám theo màn đó và ghi vào
 `plan.md`: "copy pattern từ `<file:dòng>`".
+
+### Bước 3b — Hàm nghiệp vụ DÙNG CHUNG: tách ra để màn sau xài lại, y như ERP
+
+ERP tuy lộn xộn về UI nhưng phần **nghiệp vụ thì gom rất tốt**: `Product::getAccountingStockDetail()`,
+`Product::getStockByContract()`, `ProductStockService::getStockQty()`… được **hàng chục màn gọi
+chung**. Khi port sang HRM, nếu mỗi màn tự chép một bản thì vài tháng sau các bản lệch nhau và
+không ai biết bản nào đúng.
+
+**Nguyên tắc (user chốt 2026-08-22): port màn nào cũng phải hỏi "hàm này màn khác có xài lại không?"**
+
+Cách làm:
+
+1. **Trước khi viết** một phép tính nghiệp vụ (tồn kho, tồn giữ, công nợ, giá, quy đổi đơn vị,
+   phạm vi quyền…) → **grep xem HRM đã port hàm đó chưa**:
+   ```bash
+   grep -rn "in_stock\|getAccountingStockDetail" hrm-api/Modules/*/Services/
+   ```
+   Đã có rồi thì **gọi lại**, tuyệt đối không chép.
+
+2. **Nếu hàm đã có nhưng đang `private` / bị khoá trong service của màn khác** → **tách ra service
+   dùng chung**, đừng chép bản thứ hai. Đây là sửa file màn khác đang chạy nên **phải hỏi user
+   trước** (CLAUDE.md), và **test lại màn cũ** ngay sau khi tách.
+
+3. **Nếu là hàm mới**, đặt nó ở service theo *chủ đề nghiệp vụ*, KHÔNG theo tên màn:
+   - đúng: `AccountingStockService` (tồn kho), `PrepickStockService` (tồn hàng giữ)
+   - sai: `PrepickExtendRequestService::tinhTonKho()` — tên màn thì màn khác không ai dám gọi
+
+4. **Docblock của service dùng chung phải liệt kê "Nơi đang dùng"** — để lần sau sửa còn biết
+   phải thử lại những màn nào.
+
+5. Service dùng chung là **chỗ DUY NHẤT** được chạm bảng của nó. Ví dụ đã áp:
+   `PrepickStockService` là nơi duy nhất ghi `prepick_details` / `prepick_logs`.
+
+**Ví dụ thật (2026-08-22, màn Yêu cầu gia hạn hàng giữ):** cần cột "Có thể giữ" = `in_stock`. Grep
+ra `ProductTransferRequestService::accountingStockDetail()` đã port đúng hàm ERP nhưng để `private`.
+→ tách sang `AccountingStockService::detail()`, màn Chuyển hàng gọi qua constructor injection, màn
+gia hạn gọi lại. Nếu chép bản thứ hai thì đã có **2 bản 170 dòng** cùng tính tồn kho.
+
+⚠️ **Đừng nhầm 2 khái niệm tồn** — đặt tên service cho rõ ngay từ đầu:
+| Service | Là gì | Bảng |
+|---|---|---|
+| `AccountingStockService` | tồn **KHO** — hàng còn trong kho | `accounting_stocks` |
+| `PrepickStockService` | tồn **HÀNG GIỮ** — đang giữ cho khách | `prepick_details` |
 
 ### Bước 4 — Áp quy tắc chung SRS
 
@@ -91,8 +165,16 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Sort bật cho cột mã / tên / tiền / ngày; sort cột mới hủy sort cột cũ
 - [ ] Phân trang mặc định 10, chọn được 5/10/20/50/100, đổi số dòng nhảy về trang 1
 - [ ] Ô lọc dạng chọn tự tìm ngay khi chọn; ô gõ tay chờ Enter/nút Tìm kiếm
-- [ ] Placeholder nói đúng trường lọc gì (`Chọn <X>` / `Nhập <X>` / `Tìm theo <các trường>`) —
-      không `Tất cả`, không `Chọn...`, không để trống
+- [ ] **Bật `floating`** trên `V2BaseSmartFilterPanel` — mọi ô lọc cao 36px, nhãn nằm giữa ô khi
+      rỗng và bay lên đè viền trên khi có dữ liệu (chuẩn chốt 07/09/2026, mẫu: màn Dự án TKT)
+- [ ] Field gom nhiều ô (khối tổ chức, cặp cha-con...) đã khai `resetKeys` — panel dựa vào đó để
+      biết nhãn có phải bay lên không
+- [ ] Placeholder **không lặp lại nhãn** (`Chọn <X>` / `Nhập <X>` là SAI khi bật floating — nhãn
+      đã nói rồi). Chỉ giữ khi nói thêm điều nhãn không nói: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`
+- [ ] Ô tìm nhanh: `Tìm theo <các trường BE thực sự lọc>` — không `Tất cả`, không `Chọn...`, không để trống
+- [ ] Ô lọc tìm-từ-server (Khách hàng / NCC / Sản phẩm) dùng **`V2BaseSelectRemote`** kèm
+      `height="36px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
+- [ ] Mọi ô trong khối lọc đo ra **đúng 36px** — lệch 32px là quên truyền `height`
 - [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách**
 - [ ] **Bấm thật TỪNG ô lọc** rồi xem bảng có đổi không — đối chiếu param trên tab Network với
       `searchByFilter` của BE. Ô lọc sai tên key **không báo lỗi gì**, nhìn giao diện y như đúng
@@ -127,8 +209,13 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       `danger` (đỏ), bê nguyên sang là sai
 - [ ] Căn lề đúng: STT/badge/hành động = giữa; số & tiền = phải; chữ & ngày = trái
 - [ ] Ngày `dd/mm/yyyy`, ngày+giờ `dd/mm/yyyy HH:mm` (BE trả sẵn, FE không format lại)
-- [ ] Tiền: `.` ngăn nghìn, `,` ngăn thập phân
-- [ ] Ô rỗng in `—`, không để trắng
+- [ ] Số & tiền theo **chuẩn quốc tế `1,234,567.89`** — `,` ngăn nghìn, `.` phần thập phân
+      (chốt 2026-08-26, thay cho kiểu Việt Nam chốt ngày 2026-08-22). Chi tiết:
+      `print-page/SKILL.md` §2d (bản in) · `export-excel/SKILL.md` §1a (file Excel)
+- [ ] Ô rỗng để **TRỐNG HẲN** (chốt 2026-08-22) — KHÔNG chèn `—`, `-`, `N/A`, `(không có)`.
+      Trong `.vue` viết `{{ x || '' }}` (giữ `|| ''` để số `0` vẫn ra trống như hành vi cũ).
+      ⚠️ Không đụng dấu `-` dùng làm **ký tự phân cách** (`name + '-' + position`). Xem
+      `list-page/SKILL.md` §3b-3
 - [ ] Chữ trong ô để **thường**, kể cả cột Mã — không `font-weight-bold`
 - [ ] Chữ đỏ **chỉ** dùng cho lỗi validate / nút nguy hiểm / giá trị cũ trong lịch sử
 
@@ -146,8 +233,35 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 ### E. Chi tiết
 - [ ] Số phiếu hiện ngay dưới/sau tiêu đề màn
 - [ ] Tiêu đề `Chi tiết <đối tượng>: <mã>` — không có mã thì để trần, không lấy tên thay
-- [ ] Lịch sử mặc định **ẩn**, click mới mở; có đủ 3 bộ lọc (Loại hành động / Người thực hiện /
-      Khoảng thời gian); sắp mới → cũ; dropdown người thực hiện dạng `Mã phòng – Tên NV`
+
+#### E1. Lịch sử thay đổi — ĐỌC `entity-history/ui-base.md` TRƯỚC KHI VIẾT MARKUP
+
+Đây là khối sinh lỗi lặp nhiều nhất khi port. **Không tự dựng UI**, dùng lại component có sẵn:
+`components/assign/SystemInfoSection.vue` (khối trong màn chi tiết) và
+`components/assign/customer/CustomerHistoryModal.vue` (popup ở màn danh sách).
+
+- [ ] Làm **ĐỦ 2 NƠI** như màn Khách hàng: popup mở từ menu ⋮ ở màn **danh sách** *và* khối
+      "Lịch sử" ở màn **chi tiết**. Làm 1 nơi rồi báo xong là thiếu
+- [ ] Hai nơi hiển thị **y hệt nhau** (bố cục, chữ, màu, bộ lọc, thứ tự)
+- [ ] Khối ở màn chi tiết mặc định **ẩn**, click mới mở (lazy load lần mở đầu)
+- [ ] Sắp **MỚI → CŨ** (BE `orderByDesc('changed_at')`)
+- [ ] 4 ô lọc: Loại hành động · Người thực hiện · Từ ngày · Đến ngày. **Bấm "Tìm kiếm" mới lọc**
+      (2 state `filters` / `appliedFilters`), "Làm mới" reset chứ không gọi lại API
+- [ ] "Loại hành động" = **đúng 3 nhóm cố định** `create` Tạo mới / `update` Thay đổi thông tin /
+      `status` Thay đổi trạng thái — giống nhau ở MỌI màn. Lọc bằng `log.action_group`
+- [ ] 2 ô lọc lấy từ API `filter-options`, **KHÔNG suy từ log đang tải**. `performers` = toàn bộ
+      nhân sự cùng công ty người tạo bản ghi, dạng `MÃ PHÒNG - Tên NV` (dòng log trên timeline thì
+      **chỉ in tên**, phòng ban in riêng bên cạnh)
+- [ ] Lọc ngày theo `created_at_raw` (`Y-m-d`), lọc người theo `actor_id`
+- [ ] Một mục log theo thứ tự cố định: thời gian → tên hành động → người thực hiện → thay đổi → ghi chú
+- [ ] Giá trị **cũ đỏ `#dc2626` → mới xanh `#16a34a`**, tên bản ghi bị sửa xám `#475569`;
+      giá trị trống in `(trống)`; không có người thực hiện in `Hệ thống`
+- [ ] Bảng con (danh sách thiết bị, người liên hệ…) in theo **3 nhóm có nhãn chữ**: thêm mới → đã
+      xóa → sửa thông tin. Không dùng ký hiệu `~ - +`. Dòng sửa chỉ liệt kê trường đã đổi
+- [ ] **Mọi** giá trị log đi qua `SiValue` (6 vị trí, kể cả `r.detail` và `m.name`) — bỏ sót là
+      đường dẫn tệp hiện nguyên URL dài
+- [ ] Đủ 4 trạng thái: đang tải / lỗi tải (+ nút Thử lại) / chưa có log / lọc không ra
+- [ ] Khóa – Mở khóa – Duyệt – Từ chối đều **ghi log**, action lạ tự rơi vào nhóm `status`
 
 ### F. Import / Xuất
 - [ ] Import dùng `V2BaseImportModal`; có file mẫu tải về được
@@ -177,6 +291,7 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 
 | Bẫy | Hậu quả | Cách tránh |
 |---|---|---|
+| **Chép lại phép tính nghiệp vụ đã có ở màn khác** | 2 bản cùng 1 công thức, vài tháng sau lệch nhau, không ai biết bản nào đúng | Grep trước khi viết; hàm đã có mà `private` thì **tách ra service dùng chung** (hỏi user trước) — xem Bước 3b |
 | **Copy màn HRM đã port trước đó làm khuôn** | Nhân bản y nguyên cái sai — 1 lỗi UI thành N màn lỗi | Khuôn chuẩn là **Danh mục khách hàng**, không phải màn gần nhất mình vừa làm. Muốn copy màn khác thì chạy checklist cho **màn nguồn** trước |
 | Dùng `V2BaseFilterPanel` + tự dựng `#advanced-filters` | Mất popup "Cài đặt bộ lọc", user không ẩn/sắp xếp được ô lọc | `V2BaseSmartFilterPanel` + schema `filterFields` cho MỌI màn > 3 ô lọc |
 | Bấm "Xuất Excel" là tải file luôn | Vi phạm quy tắc "user chọn trường xuất" | Mở `ExportFieldsModal` trước, truyền `selectedFields` xuống hàm dựng file |
@@ -196,6 +311,13 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 | Để ô "Bộ phận"/"Nhân viên" hiện mà BE không lọc theo | Ô lọc chết, user chọn mãi không ra | `:disable_part` / `:disable_employee` — đối chiếu `searchByFilter` của BE xem thật sự lọc theo cấp nào |
 | `$axios` tải file thiếu `Authorization` | Xuất Excel 401 | Tự gắn token cho request export |
 | Bê nguyên `title` cho panel lọc | Mỗi màn một tiêu đề khác nhau | Bỏ prop, dùng mặc định "Bộ lọc danh sách" |
+| Quên bật `floating` | Khối lọc trông như màn cũ (nhãn trên, ô dưới, 32px) trong khi các màn mới đều floating 36px | Thêm prop `floating` — panel lo hết phần còn lại |
+| Tự chế autocomplete "gõ để tìm" | Chưa gõ gì đã báo "Không tìm thấy…"; dropdown quên `position:absolute` đẩy vỡ layout | `V2BaseSelectRemote` + `minimumInputLength` — nó lo sẵn 3 trạng thái chưa-đủ-ký-tự / đang-tìm / không-có |
+| Đè CSS ô lọc bằng `!important` mà không tính specificity | **Local đúng, lên dev/prod sai** — thứ tự gộp CSS khi build khác dev nên rule bằng điểm đổi phe | Selector phải **nặng ký hơn** rule của `V2BaseSelect`; kiểm chứng bằng cách nhét vào đầu `<head>` rồi đo `getComputedStyle` |
+| Vỏ bọc field tự mở stacking context (`z-index` trên wrapper) | Dropdown của mọi control bên trong bị nhốt — header dính của bảng (z-index 6) vẽ đè lên | Không đặt `z-index` trên wrapper; hạ z-index của thứ cần đè thay vì nâng wrapper |
+| Tự dựng khối "Lịch sử" ở màn chi tiết cho nhanh | Mỗi màn một kiểu timeline, dropdown "Loại hành động" mỗi màn một danh mục — user không đối chiếu được | Dùng lại `SystemInfoSection.vue`, đọc `entity-history/ui-base.md`. Xem mục E1 |
+| Chỉ làm lịch sử ở màn chi tiết, quên popup ở màn danh sách | Nghiệm thu xong user quay lại yêu cầu bổ sung | Chuẩn màn Khách hàng là **2 nơi** |
+| Suy 2 ô lọc lịch sử từ log đang tải | Dropdown chỉ có 1-2 dòng, user tưởng mất dữ liệu | Gọi `filter-options`, fallback 3 nhóm hard-code |
 | Đổi route mà quên dữ liệu đã lưu URL trong DB | Màn bị đá 404 | Grep xem đường dẫn có bị lưu DB / so khớp ở BE không; redirect FE **không** cứu được |
 
 ---
@@ -209,7 +331,11 @@ grep -rn "interactable:\|disabledTitle"   <thư-mục-feature>   # nút phải �
 grep -rn "action\.key ==="                <thư-mục-feature>   # V2BaseRowActions emit CHUỖI -> nút chết
 grep -rn "V2BaseFilterPanel"              <thư-mục-feature>   # phải là V2BaseSmartFilterPanel
 grep -rn "advanced-filters"               <thư-mục-feature>   # bộ lọc dựng tay
+grep -rn "showCustomerList\|filtered.*= \[\]"  <thư-mục-feature>   # autocomplete tự chế -> V2BaseSelectRemote
+grep -rn "V2BaseSelectRemote" <thư-mục-feature> | grep -v 'height='   # thiếu height -> ô lùn 32px
 grep -rn "thành công'"                    <thư-mục-feature>   # câu toast tự chế, so với bảng QLDA
+grep -rn "log.action !=="                 <thư-mục-feature>   # lịch sử phải lọc theo action_group
+grep -rn "actionOptions"                  <thư-mục-feature>   # dựng từ log = sai, phải từ filter-options
 ```
 
 Nếu grep ra sạch mà mắt vẫn thấy lệch → mở màn **Danh mục khách hàng** đặt cạnh và so từng khối.

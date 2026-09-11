@@ -933,3 +933,20 @@ Quy ước thống nhất 2 màn: ref component = `printSheet`, method in = `han
 Đang làm dở: không.
 Bước tiếp theo: Task 4 — user verify browser (npm run dev). Lưu ý kiểm tra: dòng câu hỏi con hiển thị số "1.1" 2 lần (STT + đầu cột Nội dung) — đây là giữ đúng layout SurveyPrintSheet; nếu muốn bỏ thì gỡ 2 dòng interpolation số trong cột Nội dung của child.
 Blocked: không.
+
+---
+
+## Fix #11367 — Cột "Giá trị lựa chọn đi kèm" trên bản in xuống dòng từng đáp án (2026-09-08, nhánh `tpe`)
+
+- [x] `utils/survey-print-rows.js`: `questionOptionsList()` trả mảng (thay `questionOptionsText` nối bằng `; `), `row.options` là mảng cho mọi dòng
+- [x] `components/FormTemplatePrintSheet.vue` + `components/SurveyPrintSheet.vue`: ô đáp án render `- <đáp án>` mỗi dòng (cả xem trước lẫn CSS in `getPrintStyles`) — áp cho Dropdown / Radio / Checkbox
+- [x] Popup "Xem trước mẫu phiếu in" (2 màn) chuyển sang khuôn `V2BaseModal` — nút In/Đóng ghim đáy (trước đây footer nằm trong body cuộn 80vh, không thấy nút). Port `components/modal/V2BaseModal.vue` từ `gop_db` sang `tpe` nguyên bản, không sửa base. Popup này KHÔNG có dòng mô tả bản ghi (user chốt 2026-09-08)
+- [x] Verify Playwright (FE 3005/BE 8005): Dropdown/Radio/Checkbox/câu hỏi con xuống dòng; HTML cửa sổ in có CSS `.option-line`; nút Đóng đóng modal
+- [ ] Đồng bộ sang nhánh `gop_db` (component in giống hệt; `V2BaseModal` đã có sẵn bên đó) — chờ user chốt
+- [ ] Xoá dữ liệu test `form_templates` id=1 (`PTT-2026-TEST1`) trong DB `hrm_prod_6_6` khi không cần nữa
+
+### Checkpoint — 2026-09-08
+Vừa hoàn thành: fix #11367 + chuyển popup in sang `V2BaseModal`, đã verify Playwright, trên worktree `HRM/worktrees/tpe-client` (chưa commit).
+Đang làm dở: không.
+Bước tiếp theo: user verify bản in mẫu phiếu (list + chi tiết) và bản in phiếu từ dự án TKT; quyết định có port sang `gop_db`.
+Blocked: không.

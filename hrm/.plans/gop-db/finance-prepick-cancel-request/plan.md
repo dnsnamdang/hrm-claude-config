@@ -664,6 +664,29 @@ vẫn đủ, `npm run dev` chạy bình thường. Đã verify bằng `vue-templ
 
 ---
 
+## Phase 13 — Vá QA redmine 11295 / 11296 (2026-09-04)
+
+- [x] **11295** — ô tìm nhanh bỏ chữ "hoặc người tạo" khỏi placeholder (đã có ô lọc Người tạo ở
+      tìm kiếm nâng cao). Chỉ đổi CHỮ, không đụng phạm vi tìm của BE.
+- [x] **11296** — dán URL id không tồn tại: trước hiện toast kỹ thuật **"Item Not Found!"** (câu
+      của `app/Exceptions/Handler.php` dùng chung) và để lại form rỗng trông như phiếu mới. Nay
+      báo **"Không tìm thấy dữ liệu"** rồi trả về danh sách; 403 cũng xử lý cùng kiểu. Áp cho cả
+      3 màn giữ hàng (hủy / gia hạn / điều chuyển) như QA yêu cầu.
+- [ ] User verify lại trên dev.
+
+### Checkpoint — Phase 13
+
+```text
+Vừa hoàn thành: 11295 + 11296 (phần màn Yêu cầu hủy hàng giữ).
+Đang làm dở: không.
+Bước tiếp theo: user bấm lại trên dev.
+Blocked: không.
+Verify: compile template + parse script các file .vue đã sửa.
+KHÔNG sửa `app/Exceptions/Handler.php` (tài sản dùng chung) — mỗi màn tự đổi câu thông báo.
+```
+
+---
+
 ## Bẫy đã biết — đọc lại trước mỗi phase
 
 1. **KHÔNG bắn POST/PUT/DELETE vào id thật** khi quét route. Chỉ dùng phiếu tự tạo.
@@ -767,4 +790,55 @@ Vừa hoàn thành: bỏ "Không duyệt" + gỡ `RejectModal` khỏi màn danh 
 Đang làm dở: không.
 Bước tiếp theo: user xác nhận trên trình duyệt, đặc biệt luồng Không duyệt ở màn chi tiết.
 Chưa kiểm chứng bằng mắt: chỉ parse template + script.
+Blocked: không.
+
+---
+
+
+## Đợt vá Redmine 24/08/2026 (#11192–#11197) — nhánh `gop_db`
+
+QA (Lê Huyền Trang) test màn Yêu cầu hủy hàng giữ trên `hrm-crm`, 5 issue:
+
+| Issue | Nội dung | Xử lý |
+|---|---|---|
+| #11192 | Lưu nháp / Lưu và gửi duyệt / Không duyệt đều ra màn Chi tiết | `save()` + `onRejected()` push về **danh sách** |
+| #11192 | Nhập quá "Có thể hủy" bị tự kéo về trần + toast | Bỏ tự sửa số; `qtyErrorOf()` + `validateProducts()` báo đỏ ngay dưới ô, chưa sạch lỗi thì không gọi API |
+| #11192 | "Thiếu bộ lọc so với ERP" | **Không phải lỗi code**: 8 ô lọc vẫn khai đủ, tài khoản test đã tắt `org` / `created_by` / `approver` / `startDate` trong popup "Cài đặt bộ lọc" (`filter_customizations` id 7, user 13) → bật lại trong popup là hiện |
+| #11193 | Bấm "Quay lại" ở màn Lập phiếu hủy → không thấy bản ghi | `url-back` động: vào từ `?request_id=` thì quay về **chi tiết phiếu yêu cầu**; ô tìm nhanh màn Phiếu hủy tìm thêm theo mã phiếu yêu cầu (`PYCHHG-…`) |
+| #11195 | Excel danh sách thiếu khối ký | `addSignatureBlock()` — "Ngày…Tháng…Năm…" + "Người lập (Ký, họ tên)", canh giữa 3 cột cuối, không kẻ khung |
+| #11196 | Nút In màu teal | Bỏ cờ `menu.print`, dựng lại nút In `secondary` ở slot `#custom-actions` (giống màn phiếu hủy) |
+| #11197 | Bỏ tick "Cần hủy" nhưng lưu vẫn ghi nhận hàng hóa | **Khác ERP có chủ ý**: bỏ tick = bỏ hàng hoá khỏi phiếu — FE lọc trước khi gửi, BE `normalizeProducts()` bỏ dòng `need_cancel = false`; màn Chi tiết chỉ hiện dòng `need_cancel` (phiếu cũ do ERP lập có dòng bỏ tick) |
+
+---
+
+## Đợt tài liệu 09/09/2026 — bộ 3 tài liệu cho màn **Phiếu hủy hàng giữ**
+
+Màn *Yêu cầu hủy hàng giữ* đã có đủ SRS / HDSD / testcase từ 05/09; màn anh em
+*Phiếu hủy hàng giữ* (`/finance/prepick-cancels`) chưa có gì → bổ sung nốt.
+Mỗi màn **một bộ file riêng**, không gộp chung (đúng quy ước 2 skill).
+
+- [x] Khảo sát code: `PrepickCancel.php`, `PrepickCancelService.php`, `PrepickCancelController.php`,
+      `PrepickCancelStoreRequest.php`, routes; FE `pages/finance/prepick-cancels/*`
+- [x] Chụp **12 ảnh thật** trên `hrm-crm` (Playwright, 1440×900) → `phieu_huy_shots/`
+      (ảnh KHÔNG commit, `.gitignore` đã chặn `*_shots/`)
+- [x] `gen_srs_phieu_huy.py` → `SRS - Phieu huy hang giu.docx` (form 2026-08-28, 33 trang,
+      10 chức năng FR-01…FR-10, 18 ảnh, 10 quy tắc nghiệp vụ BR-01…BR-10)
+- [x] `gen_testcase_phieu_huy.py` → `testcase - Phieu huy hang giu.xlsx`
+      (111 TC, P0 = 54%, 8 TC phân quyền + 12 section La Mã, bộ kiểm thuật ngữ sạch)
+- [x] `gen_hdsd_phieu_huy.py` → `HDSD_Phieu huy hang giu.docx` (26 trang, 12 ảnh, 13 bảng)
+- [x] Chạy đủ bộ tự kiểm của 3 skill (SRS: 4 điểm form + định dạng Word + đánh số liên tục;
+      TC: thuật ngữ + tỉ lệ P0 + trùng mã; HDSD: engine tự verify)
+
+**3 khác biệt so với màn Yêu cầu — đã ghi rõ trong cả 3 tài liệu:**
+1. Màn này chỉ có **2 cấp phạm vi** (tổng công ty / công ty). Quyền *Xem phiếu hàng giữ theo
+   phòng ban* KHÔNG có tác dụng ở đây (`PrepickCancel::applyViewScope()` không đọc quyền đó).
+2. **Không có Sửa / Xóa** ở cả danh sách lẫn chi tiết — phiếu lập xong chốt vĩnh viễn.
+3. Có **2 lối vào** màn lập phiếu: nút *Tạo mới* (tự chọn phiếu yêu cầu, có nút "Duyệt và tiếp
+   tục") và nút *Tạo phiếu hủy hàng giữ* từ chi tiết phiếu yêu cầu (điền sẵn, không có nút đó).
+   Testcase có TC riêng cho từng lối vào.
+
+### Checkpoint — 2026-09-09
+Vừa hoàn thành: 3 tài liệu + 3 generator cho màn Phiếu hủy hàng giữ.
+Đang làm dở: không.
+Bước tiếp theo: user/BA đọc duyệt 3 file; có sửa thì sửa trong generator rồi chạy lại, đừng sửa tay file .docx/.xlsx.
 Blocked: không.

@@ -18,7 +18,13 @@ Quy uoc bat buoc (dung theo skill .claude/skills/srs-documenter/SKILL.md):
   - Muc "Layout man hinh" = URL day du + ANH CHUP THAT -> layout()
   - Bieu do Use Case phai la ANH PNG that -> overview_figure() / uc_figure()
 
-FORM MOI (user chot 2026-08-17, ban mau SRS_MAU.docx = SRS Danh muc khach hang):
+FORM 2026-08-28 (ban mau moi cua QA: "SRS - Danh muc quoc gia", link trong SKILL.md):
+  - Muc Layout ghi DUONG DAN MENU (`layout(menu=...)`), KHONG con dong "URL day du"
+  - Dau moi muc "Gioi thieu" co 1 doan tro sang tai lieu quy tac dung chung -> rule_ref()
+  - "Phan 4. Quy tac nghiep vu" la BANG 5 cot -> rule_table()
+  - So do UML tong quan co PHAN CAP «include»/«extend» -> overview_figure2()
+
+FORM 2026-08-17 (ban mau cu SRS_MAU.docx = SRS Danh muc khach hang):
   - Chi con 4 chuong: "Phan 1. Gioi thieu" / "Phan 2. Phan quyen" /
     "Phan 3. Dac ta chi tiet theo tung chuc nang" / "Phan 4. Quy tac nghiep vu"
   - DA BO: bang thong tin trang bia, muc "Pham vi", chuong "Tong quan",
@@ -31,6 +37,9 @@ import tempfile
 import sys
 
 from docx import Document
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -40,9 +49,76 @@ if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 import srs_uml_render as uml  # noqa: E402
 
+# Tai lieu quy tac dung chung — MOI chuc nang tro sang day thay vi chep lai quy tac.
+COMMON_DOC = ('https://docs.google.com/document/d/'
+              '1AiqvNZAg9K4qef45vdbo9oC6o9RS_hbDHCi-ZrKgD7s/edit?tab=t.0')
+COMMON_TITLE = 'SRS_Các quy tắc chung_VN_1.0'
+
+# Anchor lay NGUYEN tu ban mau "SRS - Danh muc quoc gia" — KHONG tu bia them anchor moi.
+ANCHOR = {
+    'list':    '',                            # Man Danh sach / Phan trang / Cau hinh cot
+    'search':  '#heading=h.uqrjgqo79fuq',     # Kich ban tim kiem, Bo loc, Dropdown
+    'create':  '#heading=h.pr587lqkad5b',     # Man Them moi, Validate du lieu
+    'notice':  '#heading=h.nij9n0nvzijj',     # Thong bao / Quy tac Xoa
+    'history': '#heading=h.thqm3w6a7nzr',     # Quy tac ghi lich su, Khoa / Mo khoa
+    'excel':   '#heading=h.x6yi3popnswy',     # Quy tac Excel va Cau hinh cot
+    'detail':  '#heading=h.e51mm7p7jit7',     # Man Xem chi tiet va Phan quyen
+    'delete':  '#heading=h.bmqrpa8bs35d',     # Quy tac Xoa (dung trong cot Xu ly event)
+}
+
+
+def add_hyperlink(paragraph, url, text):
+    """Chen 1 hyperlink that (xanh, gach chan) vao cuoi doan."""
+    r_id = paragraph.part.relate_to(url, RT.HYPERLINK, is_external=True)
+    link = OxmlElement('w:hyperlink')
+    link.set(qn('r:id'), r_id)
+    run = OxmlElement('w:r')
+    rpr = OxmlElement('w:rPr')
+    color = OxmlElement('w:color')
+    color.set(qn('w:val'), '1155CC')
+    rpr.append(color)
+    underline = OxmlElement('w:u')
+    underline.set(qn('w:val'), 'single')
+    rpr.append(underline)
+    run.append(rpr)
+    node = OxmlElement('w:t')
+    node.text = text
+    run.append(node)
+    link.append(run)
+    paragraph._p.append(link)
+    return link
+
+
 ACTOR_P1 = 'Người quản lý danh mục (P1)'
 ACTOR_P2 = 'Người xem danh mục (P2)'
 ACTOR_BOTH = 'Người dùng có quyền P1 hoặc P2'
+
+
+# ------------------------------------------------------- quy dinh trinh bay
+FONT_NAME = 'Times New Roman'
+BODY_PT = 13      # van xuoi, bullet, Heading 2-3
+H1_PT = 18        # Heading 1
+TABLE_PT = 13     # chu trong bang — user chot 09/09/2026: bang cung 13pt nhu than bai
+CAPTION_PT = 13   # chu thich ten hinh anh (chot 05/09/2026: theo co chu than bai)
+
+
+def set_font_name(style_or_run, name=FONT_NAME):
+    """Ep font cho DU 4 slot rFonts — python-docx chi set ascii/hAnsi nen chu co dau
+    van co the roi ve font khac tuy may."""
+    style_or_run.font.name = name
+    rpr = style_or_run.element.get_or_add_rPr()
+    rfonts = rpr.find(qn('w:rFonts'))
+    if rfonts is None:
+        rfonts = OxmlElement('w:rFonts')
+        rpr.append(rfonts)
+    # Heading cua template mac dinh tro sang FONT THEME (asciiTheme="majorHAnsi" =
+    # Calibri Light). Con thuoc tinh Theme thi Word uu tien no va XOA w:ascii khi
+    # luu lai (buoc cap nhat muc luc) -> heading khong ra Times New Roman.
+    for slot in ('w:asciiTheme', 'w:hAnsiTheme', 'w:eastAsiaTheme', 'w:cstheme'):
+        if rfonts.get(qn(slot)) is not None:
+            del rfonts.attrib[qn(slot)]
+    for slot in ('w:ascii', 'w:hAnsi', 'w:eastAsia', 'w:cs'):
+        rfonts.set(qn(slot), name)
 
 
 class SrsDoc(object):
@@ -69,13 +145,30 @@ class SrsDoc(object):
         sec.left_margin = Inches(1.25)
         sec.right_margin = Inches(1.25)
 
+        # QUY DINH TRINH BAY (chot 2026-09-05, ap cho ca SRS lan HDSD):
+        #   - Toan bo tai lieu font Times New Roman
+        #   - Co chu 13 cho van xuoi / bullet / Heading 2-3 (tru trang bia va Heading 1)
+        #   - Heading 1: 18pt, CAN GIUA, bat dau tu DAU TRANG MOI
+        #   - Chu thich ten hinh anh: CAN GIUA
+        # Tu 09/09/2026: BANG cung 13pt (user chot) — khong con ngoai le co chu nao
+        # ngoai trang bia va Heading 1.
         st = doc.styles['Normal']
-        st.font.name = 'Calibri'
-        st.font.size = Pt(11)
-        for name, size in [('Heading 1', 20), ('Heading 2', 16), ('Heading 3', 14)]:
+        set_font_name(st, FONT_NAME)
+        st.font.size = Pt(BODY_PT)
+        for name, size in [('Heading 1', H1_PT), ('Heading 2', BODY_PT), ('Heading 3', BODY_PT)]:
             hs = doc.styles[name]
+            set_font_name(hs, FONT_NAME)
             hs.font.size = Pt(size)
             hs.font.color.rgb = RGBColor(0x2F, 0x54, 0x96)
+        h1 = doc.styles['Heading 1']
+        h1.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        h1.paragraph_format.page_break_before = True
+        # Style 'Caption' cua khung python-docx: tai lieu dung doan thuong cho chu thich anh
+        # (xem figure()), nhung van chinh style nay cho khop quy dinh de khong ai dung nham.
+        cap = doc.styles['Caption']
+        set_font_name(cap, FONT_NAME)
+        cap.font.size = Pt(CAPTION_PT)
+        cap.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
         self.doc = doc
 
     # -------------------------------------------------------- trang dau
@@ -91,7 +184,7 @@ class SrsDoc(object):
             par.alignment = WD_ALIGN_PARAGRAPH.CENTER
             r = par.add_run(text)
             r.bold = True
-            r.font.size = Pt(24)
+            r.font.size = Pt(24)   # trang bia — KHONG ap quy tac 13pt
 
     # ------------------------------------------------------------- text
     def h1(self, t):
@@ -121,14 +214,14 @@ class SrsDoc(object):
             for para in c.paragraphs:
                 for r in para.runs:
                     r.bold = True
-                    r.font.size = Pt(10)
+                    r.font.size = Pt(TABLE_PT)
         for row in rows:
             cells = t.add_row().cells
             for i, v in enumerate(row):
                 cells[i].text = '' if v is None else str(v)
                 for para in cells[i].paragraphs:
                     for r in para.runs:
-                        r.font.size = Pt(10)
+                        r.font.size = Pt(TABLE_PT)
         if widths:
             for r in t.rows:
                 for i, w in enumerate(widths):
@@ -240,17 +333,54 @@ class SrsDoc(object):
         cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r = cap.add_run('Hình %d: %s' % (self._fig, caption))
         r.italic = True
-        r.font.size = Pt(9.5)
+        r.font.size = Pt(CAPTION_PT)
         r.font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 
     def _png(self, name):
         return os.path.join(self.img_dir, '%s%s.png' % (self.img_prefix, name))
 
-    def overview_figure(self, title, actors, usecases, caption):
-        """5.1 So do UML tong quan — anh PNG that."""
+    def overview_figure2(self, actors, mains, subs, caption):
+        """So do UML tong quan CO PHAN CAP — ban dung tu 2026-08-28.
+
+        Chi use case la MAN HINH that su moi noi thang toi actor. Thao tac lam ngay tren
+        man do (tim kiem/loc, tuy chinh cot, xoa, in, lich su, popup chon du lieu) phai noi
+        vao use case cha bang «include» / «extend» — ve tat ca ngang hang roi noi thang toi
+        actor la SAI nghiep vu (user tra tai lieu ve vi loi nay ngay 2026-08-28).
+
+        actors : [(ten_actor, [chi_so_main, ...]), ...]
+        mains  : [(ma, ten, nhom), ...]
+        subs   : [(ma, ten, nhom, 'include'|'extend', [chi_so_main, ...], ghi_chu|None), ...]
+        """
+        png = self._png('overview')
+        uml.draw_overview2(png, actors, mains, subs)
+        self.figure(png, caption, width_in=6.3)
+
+    def overview_figure(self, title, actors, usecases, caption, allow_legacy=False):
+        """FORM CU — so do tong quan PHANG, moi use case noi thang toi actor.
+
+        Tai lieu moi dung `overview_figure2()`; giu ham nay cho cac gen_srs.py cu.
+        """
+        if not allow_legacy:
+            raise RuntimeError(
+                'overview_figure() la API cua form CU (so do phang, moi use case noi thang toi '
+                'actor) — form 2026-08-28 da bo. Dung overview_figure2(actors, mains, subs, '
+                'caption): mains = MAN HINH that (danh sach / them moi / chi tiet) noi toi actor, '
+                'subs = thao tac tren man do noi bang «include»/«extend». Chi truyen '
+                'allow_legacy=True khi co y sinh lai tai lieu cu de doi chieu.')
         png = self._png('overview')
         uml.draw_overview(png, title, actors, usecases)
         self.figure(png, caption, width_in=6.3)
+
+    def overview_rel_figure(self, title, actor, nodes, relations=(), caption=None,
+                            actor_links=None):
+        """So do tong quan CO quan he «include»/«extend» giua cac use case.
+
+        Dung ham nay thay cho `overview_figure` khi so do can the hien quan he
+        (BA yeu cau 24/08/2026). Xem quy uoc dat ten / huong mui ten trong SKILL.md.
+        """
+        png = self._png('overview')
+        uml.draw_overview_rel(png, title, actor, nodes, relations, actor_links=actor_links)
+        self.figure(png, caption or title, width_in=6.3)
 
     def uc_figure(self, code, name, group, relations=(), actor=ACTOR_P1, caption=None):
         """5.2.x.1 Bieu do use case cua 1 chuc nang — anh PNG that."""
@@ -259,26 +389,24 @@ class SrsDoc(object):
         self.figure(png, caption or ('Biểu đồ Use Case — %s %s' % (code, name)), width_in=6.2)
 
     # ------------------------------------------------------------ layout
-    def layout(self, note='', modal=None, route=None, shot=None, shot_caption=None,
-               url=None):
-        """Muc 'Layout man hinh' — URL day du + ANH CHUP THAT.
+    def layout(self, menu=None, modal=None, note='', shot=None, shot_caption=None,
+               **_ignored):
+        """Muc 'Layout man hinh' — DUONG DAN MENU + ANH CHUP THAT.
 
-        Form moi (2026-08-17): CHI ghi dong 'URL day du'. Da BO 2 dong
-        'Menu: ...' va 'Route (FE): ...' cua form cu.
+        Form 2026-08-28: ghi duong dan MENU, KHONG con dong "URL day du" (form 2026-08-17),
+        cang khong con "Route (FE)" (form cu hon nua):
 
+            Duong dan man hinh:
+            Menu: Phan he Tai chinh => Khoi tao phieu ... => De nghi thu tien => Them moi
+
+        menu         : duong dan menu day du cua DUNG chuc nang do; bo trong -> lay self.menu
+        modal        : ten modal -> them cau "Modal ... duoc mo ngay tren man hinh danh sach"
         shot         : duong dan file .png chup that cua DUNG chuc nang do (6.2 inch)
-        shot_caption : chu thich duoi anh; mac dinh lay theo ten chuc nang truyen vao
-        route        : ghi de route rieng cho chuc nang (vd man them moi /add)
-        url          : ghi de thang URL day du, uu tien hon `route`
+        shot_caption : chu thich duoi anh
+        _ignored     : nuot `route=` / `url=` cua form cu de cac gen_srs.py cu khong vo
         """
-        base = url
-        if base is None:
-            base = self.full_url
-            if route:
-                base = self.full_url.replace(self.route, route) \
-                    if self.route in self.full_url else self.full_url
         self.p('Đường dẫn màn hình:')
-        self.bullets(['URL đầy đủ: %s' % base])
+        self.p('Menu: %s' % (menu or self.menu))
         if modal:
             self.p('Modal %s được mở ngay trên màn hình danh sách theo đường dẫn ở trên.' % modal)
         if note:
@@ -288,15 +416,79 @@ class SrsDoc(object):
                 raise IOError('Thieu anh chup cho muc Layout: %s' % shot)
             self.figure(shot, shot_caption or 'Màn hình thực tế', width_in=6.2)
 
+    # ------------------------------------ doan "Quy tac chung: ..." (form 2026-08-28)
+    def rule_ref(self, tail, anchor='list', head='Quy tắc chung',
+                 lead='Áp dụng SRS Các quy tắc chung '):
+        """Doan tro sang tai lieu quy tac dung chung, dat NGAY DAU muc "Gioi thieu".
+
+        Muc dich: tai lieu tung man CHI ghi phan rieng cua man do, khong chep lai quy tac
+        dung chung (phan trang, validate, thong bao, ghi lich su...).
+
+            d.rule_ref('- Màn Danh sách, Sắp xếp dữ liệu bảng, Phân trang và Cấu hình cột. '
+                       'Chỉ bổ sung các quy tắc riêng của <màn>.', anchor='list')
+
+        tail   : phan viet tiep sau hyperlink
+        anchor : key trong ANCHOR — chi dung key co san, KHONG tu bia anchor moi
+        head   : nhan dau doan ('Quy tắc chung' o tung chuc nang / 'Quy tắc áp dụng' o Phan 4)
+        lead   : phan viet truoc hyperlink (Phan 4 dung cach dan khac)
+        """
+        par = self.p('%s: %s' % (head, lead))
+        add_hyperlink(par, COMMON_DOC + ANCHOR.get(anchor, ''), COMMON_TITLE)
+        par.add_run('%s%s' % ('' if tail[:1] in '.,;:' else ' ', tail))
+        return par
+
+    # ------------------------------- Phan 4: bang quy tac nghiep vu (form 2026-08-28)
+    def rule_table(self, rows):
+        """Bang "Quy tac nghiep vu" 5 cot (STT tu danh).
+
+        Thay cho dang "BR-0N — <ten>" + gach dau dong cua form cu.
+        rows: [(ma, ten, mo_ta, pham_vi_ap_dung), ...]
+              mo_ta / pham_vi co the la list -> tu noi bang xuong dong.
+        """
+        body = []
+        for i, (ma, ten, mota, pham_vi) in enumerate(rows):
+            if isinstance(mota, (list, tuple)):
+                mota = chr(10).join(mota)
+            if isinstance(pham_vi, (list, tuple)):
+                pham_vi = chr(10).join(pham_vi)
+            body.append((i + 1, ma, ten, mota, pham_vi))
+        return self.table(['STT', 'Mã quy tắc', 'Tên quy tắc', 'Mô tả', 'Phạm vi áp dụng'],
+                          body, widths=[0.35, 0.7, 1.25, 2.6, 1.1])
+
     # -------------------------------------------------------------- save
     def save(self, verbose=True, update_fields=True):
         os.makedirs(os.path.dirname(self.out), exist_ok=True)
         self.doc.save(self.out)
+        self._force_times_new_roman()
         if update_fields:
             self._update_fields_by_word()
         if verbose:
             self.selfcheck()
         return self.out
+
+    def _force_times_new_roman(self):
+        """Ep FONT THEME cua file = Times New Roman.
+
+        Khung mac dinh cua python-docx co theme Calibri/Cambria; moi style khong khai bao
+        font ro rang (TOC, Caption, style bang...) deu roi ve theme -> tai lieu lan lon
+        2 font. Sua thang trong theme1.xml sau khi luu la chac an nhat.
+        """
+        import re
+        import shutil
+        import zipfile
+
+        with zipfile.ZipFile(self.out) as z:
+            entries = [(i, z.read(i.filename)) for i in z.infolist()]
+        tmp = self.out + '.tmp'
+        with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as z:
+            for info, data in entries:
+                if info.filename.startswith('word/theme/'):
+                    xml = data.decode('utf-8')
+                    xml = re.sub(r'(<a:(?:majorFont|minorFont)>\s*<a:latin typeface=")[^"]*"',
+                                 r'\g<1>%s"' % FONT_NAME, xml)
+                    data = xml.encode('utf-8')
+                z.writestr(info, data)
+        shutil.move(tmp, self.out)
 
     def _update_fields_by_word(self):
         """Ep Word cap nhat MUC LUC that su.
@@ -352,3 +544,16 @@ $word.Quit()
             print(out.encode('ascii', 'replace').decode())
         assert imgs > 0, 'Thieu anh bieu do use case'
         assert not bad, 'Con so do ve bang ky tu: %s' % bad[:3]
+
+        # Doi chieu THANG voi ban mau `assets/SRS_MAU.docx` — bat 4 diem cua form 2026-08-28
+        # (menu / rule_ref co hyperlink / Phan 4 la bang 5 cot / so do co phan cap) va bo cot
+        # bang giao dien. Doc ban mau moi lan chay nen skill doi thi kiem tra doi theo.
+        # Ly do co buoc nay: 2026-09-03 tai lieu bi tra ve 3 lan vi sinh bang API cu ma khong
+        # ai phat hien — nguoi viet doc SKILL.md tu dau phien roi khong doc lai.
+        try:
+            from srs_selfcheck import check as _check
+        except Exception as exc:                      # noqa: BLE001
+            print('!!! Khong chay duoc srs_selfcheck:', exc)
+            return
+        errs = _check(self.out)
+        assert not errs, ('File chua dung ban mau, xem %d dong loi o tren.' % len(errs))

@@ -62,3 +62,6 @@ Blocked:
 
 ## 2026-08-20 — Ẩn mã dự án TKT trên toàn FE
 - [x] Ẩn mọi chỗ hiển thị mã dự án tiền khả thi ở FE (45 file: danh sách/chi tiết TKT, báo giá, yêu cầu giá, BOM, hàng hoá dự án, giải pháp/hạng mục, họp + phiếu khảo sát, my-job, các màn báo cáo & bản in, dropdown chọn dự án). BE giữ nguyên: vẫn sinh & lưu code, quick-search vẫn lọc theo mã.
+
+## 2026-09-07 — Cập nhật lại tài liệu Luồng trạng thái theo code nhánh tpe
+- [x] Rà lại toàn bộ đường chuyển trạng thái trong code tpe hiện tại, sinh lại "Mô tả nghiệp vụ - Luồng trạng thái Dự án tiền khả thi.docx" (Chốt giải pháp → Dự toán; thêm Chốt/Hủy chốt báo giá; đổi tên bước 8 "Thương thảo hợp đồng"; bỏ giới hạn màn Sửa kéo lùi trạng thái; thêm 2 giới hạn mới)

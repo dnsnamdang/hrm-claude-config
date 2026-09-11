@@ -7,12 +7,12 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 - Áp dụng cho các bảng có các field: company_id, department_id, part_id (field này có thể có hoặc không) =>> Nếu có thì quyền sẽ theo bộ quyền như sau Xem [Tên màn danh sách] theo công ty, Xem [Tên màn danh sách] theo phòng ban, Xem [Tên màn danh sách] theo bộ phận, Xem tất cả [Tên màn danh sách]
 - Quyền xem tất cả =>> Lấy tất cả bản ghi trừ trạng thái Đang tạo / Nháp
 - Các quyền còn lại query theo các field tương ứng
-- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Tuân thủ theo V2BaseFilterPanel.vue
+- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Panel chuẩn là **`V2BaseSmartFilterPanel`** (`V2BaseFilterPanel` là bản cũ, không có popup "Cài đặt bộ lọc")
 - **Tiêu đề panel bộ lọc để mặc định `Bộ lọc danh sách`** — KHÔNG truyền prop `title`/`subtitle` để ghi riêng cho từng màn (`Bộ lọc danh sách khách hàng`, `Bộ lọc Issue`, `Bộ lọc hàng hoá`…). Tiêu đề bảng bên dưới đã nói rõ đang xem gì; `V2BaseFilterPanel` đã đặt sẵn default nên chỉ cần bỏ prop đi
+- **Nhãn floating là chuẩn của khối "Tìm kiếm nâng cao"** (user chốt 2026-09-07, mẫu: `pages/assign/prospective-projects/index.vue`). Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`: nhãn nằm giữa ô khi rỗng, bay lên đè viền trên khi ô có dữ liệu hoặc đang focus; ô cao **36px**. Panel tự bọc `V2BaseFloatingField`, tự tính `hasValue` (field gom nhiều ô thì dựa vào `resetKeys` — **phải khai**), tự truyền chiều cao xuống `V2BaseSelect`. Mặc định `false` để màn cũ không đổi. Chi tiết + biến thể `range`/`tags` + bẫy specificity: xem skill `erp-to-hrm-screen`, file `references/khuon-man-mau.md`.
 - **Placeholder của ô lọc phải NÓI ĐÚNG trường đó lọc gì** (user chốt 2026-08-15), theo công thức:
-  - Ô chọn (select/date): **`Chọn <tên trường>`** — `Chọn trạng thái`, `Chọn quốc gia`, `Chọn người tạo`, `Chọn ngày bắt đầu`.
-  - Ô gõ tay: **`Nhập <tên trường>`** — `Nhập tên hoặc mã hàng hoá`, `Nhập số tiền`.
   - Ô tìm nhanh: **`Tìm theo <các trường BE thực sự lọc>`** — phải liệt kê đúng, đừng ghi "Tìm kiếm..." chung chung.
+  - **Ô chọn (select)**: `Chọn <tên trường>` (`Chọn trạng thái`, `Chọn quốc gia`) · **ô gõ tay**: `Nhập <tên trường>` (`Nhập số tiền`).
   - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống, hay lặp lại nguyên si nhãn. Ở **chế độ gọn** (≤ 3 ô) panel KHÔNG render nhãn, placeholder là thứ DUY NHẤT cho user biết ô đó là gì — `Tất cả` lúc đó vô nghĩa.
   - ⚠️ **NGOẠI LỆ — ô lọc dùng FLOATING LABEL thì BỎ HẲN placeholder trùng nhãn** (user chốt 2026-09-01). Kiểu này nhãn luôn hiển thị ở một trong hai trạng thái (giữa ô khi rỗng, đè viền trên khi có giá trị / đang focus) nên placeholder chỉ lặp y hệt, mà nó lại chỉ hiện SAU khi nhãn bay lên → gần như không ai thấy. Chỉ giữ placeholder khi nó nói **thông tin mới**: `Gõ tối thiểu 2 ký tự`, `VD: Công ty CP Giải pháp ETEK`. Lý do của luật cấm ở trên (chế độ gọn không có nhãn) không áp dụng cho panel floating label.
 - **Ô lọc phân hệ Quản lý công việc (assign) dùng FLOATING LABEL** (chốt 2026-09-01): bọc `components/V2BaseFloatingField.vue` thay cho cặp `V2BaseLabel` + control. Khuôn mẫu: `pages/assign/prospective-projects/index.vue`, e2e đối chiếu: `e2e/tests/assign/prospective-projects-filter.spec.ts`.
@@ -205,13 +205,13 @@ Cột **Tên KHÔNG khoá**: user được ẩn / đổi vị trí tuỳ ý, nê
 <!-- Mã: link vào chi tiết — nuxt-link để chuột phải mở tab mới được -->
 <template #cell-customerCode="{ item }">
     <nuxt-link :to="`/assign/customers/${item.id}`" class="v2-cell-link field-line">
-        {{ item.code || '—' }}
+        {{ item.code || '' }}
     </nuxt-link>
 </template>
 
 <!-- Tên: chữ thường, không link -->
 <template #cell-customerName="{ item }">
-    <div class="field-line text-dark font-weight-normal">{{ item.fullname || '—' }}</div>
+    <div class="field-line text-dark font-weight-normal">{{ item.fullname || '' }}</div>
 </template>
 ```
 
@@ -365,6 +365,12 @@ TUYỆT ĐỐI không tự chép lại cặp `topScroll` / `tableWrapper` cho t�
 này pattern đã bị copy-paste ở 4 nơi (`V2BaseDataTable`, `ChooseErpCustomerModal`,
 `SolutionVersionsTable`, `QuotationProductSearchModal`), mỗi nơi một tên class khác nhau.
 
+⚠️ **Bẫy: thanh cuộn TRÊN bị bóp còn ~3px, rê chuột không trúng** (đã trả giá 2026-08-24). Khối
+thanh trên không có nội dung thật (ruột chỉ cao 1px để tạo bề ngang) nên **tự co**; nếu thẻ bọc
+lại được dựng thành cột flex (popup cho bảng co theo chiều cao) thì nó **còn bị co thêm** — đo được
+2.8px trong khi thanh dưới 6px. Component đã chốt sẵn `height: 8px` + `flex: 0 0 auto`; **đừng gỡ
+2 dòng đó**, và khi tự dựng thanh cuộn tương tự ở chỗ khác thì phải khai đủ cả 2.
+
 💡 Bọc `V2BaseTableScroll` cũng **bỏ luôn class `.table-responsive`** → thoát rule global
 `.table-responsive { min-height: 50vh }` của `assets/scss/default.scss` vốn kéo bảng vài dòng trong
 form lên hơn 400px.
@@ -387,6 +393,81 @@ Dùng màu xám chuẩn thay vì `.text-muted`:
 ```
 
 Tự kiểm: `getComputedStyle(el).color` phải KHÁC `rgb(220, 53, 69)`.
+
+---
+
+## 3b-2b. Màu chữ trong ô bảng — 3 mức, khai bằng ĐÚNG bộ class (chốt 2026-09-07)
+
+Ô bảng chỉ có **3 mức chữ**, mỗi mức một bộ class cố định. Màn mẫu: `pages/assign/customers/index.vue`.
+
+| Mức | Class | Màu | Dùng cho |
+| --- | --- | --- | --- |
+| Cột định danh (link) | `v2-cell-link field-line` | navy `#28539d` + gạch chân đứt | Mã bản ghi — link vào chi tiết |
+| **Nội dung chính** | **`field-line text-dark font-weight-normal`** | `#343a40` | MỌI ô dữ liệu còn lại |
+| Dòng phụ / ghi chú | `project-sub v2-hint` | `#6b7280` | "Người liên hệ: …", "SĐT: …", ngày phụ trong ô |
+
+```vue
+<!-- ĐÚNG -->
+<div class="field-line text-dark font-weight-normal" :title="item.name">{{ item.name }}</div>
+<div class="project-sub v2-hint">Người liên hệ: {{ item.contact_name }}</div>
+
+<!-- SAI — chữ ra XÁM NHẠT hơn mọi màn khác -->
+<div class="field-line">{{ item.name }}</div>
+```
+
+⚠️ **`.field-line` TRẦN là bẫy**: nó khai sẵn `color: #475569` trong `assets/scss/v2-styles.scss`,
+tức là một màu xám nhạt hơn hẳn `text-dark`. Nhìn một mình thì không thấy gì, nhưng đặt cạnh màn
+khác (hoặc cạnh cột dùng đúng class trong cùng bảng) là lộ ngay chữ bị "mờ". Đã dính thật ở 2 màn
+port đợt 2026-09-07 (`prospective-projects`, `product-project`) — 23 ô.
+
+⚠️ **`v2-hint` khai trong `<style scoped>` của từng màn** (`.v2-hint { color: #6b7280 }`), chưa nằm
+ở file chung. Copy 3 dòng đó sang màn mới, ĐỪNG đè màu thẳng vào `.project-sub`: class đó ở
+`v2-styles.scss` chỉ khai cỡ chữ + line-height và còn được dùng cho cả ô nội dung chính ở vài màn cũ,
+đè màu là làm nhạt luôn những ô đó.
+
+Nhắc lại 2 luật đi kèm đã có ở trên: **không `font-weight` đậm** trong ô (mục 3) và **không
+`.text-muted`** vì class đó ra màu đỏ (mục 3b-2).
+
+**Tự kiểm** — số ô dùng đúng bộ class phải bằng số ô dữ liệu của bảng, và `field-line` trần phải
+bằng 0 (trừ trường hợp có chủ ý: cột định danh của user KHÔNG có quyền xem chi tiết thì để chữ
+thường thay cho link):
+
+```bash
+grep -o 'class="field-line[^"]*"' pages/<màn>/index.vue | sort | uniq -c
+```
+
+---
+
+## 3b-3. Ô KHÔNG có dữ liệu thì để TRỐNG — cấm chèn dấu gạch ngang (chốt 2026-08-24)
+
+Ô rỗng để **trống hẳn**. KHÔNG chèn `—`, `-`, `N/A`, `(không có)`… — dấu gạch ngang trông như một
+giá trị thật, và mỗi màn chèn một kiểu thì bảng nhìn rất bẩn.
+
+```vue
+<!-- SAI -->  <div class="field-line">{{ item.reason || '—' }}</div>
+<!-- ĐÚNG --> <div class="field-line">{{ item.reason }}</div>
+```
+
+Rà **đủ 5 nơi**, không chỉ màn danh sách — đây là chỗ đã sót 2 lần (Redmine #11171):
+
+1. Màn danh sách
+2. **Màn chi tiết / form** (kể cả component dùng chung của màn đó — vd tab Trang thiết bị, tab Tài liệu)
+3. **Popup** (chọn hợp đồng, chi tiết dòng, đính kèm…)
+4. **Bản in / file xuất**
+5. **BE Resource** — có nơi máy chủ trả sẵn `'—'` (`'currency_text' => $item->currency_code ?: '—'`), FE có sạch cũng vô ích
+
+Hàm trả giá trị hiển thị thì trả **chuỗi rỗng**, đừng bỏ luôn toán tử:
+`return detail[column.key] || ''` (bỏ hẳn `|| …` có thể in ra `undefined`).
+
+**Tự kiểm** — phải RỖNG:
+
+```bash
+grep -rn "'—'\|\"—\"\|>—<" pages/<màn>/ components/<component-của-màn>/
+grep -rn "'—'" Modules/<Module>/Transformers/
+```
+
+Ngoại lệ đúng nghĩa: chữ **"(trống)"** trong popup Lịch sử thay đổi — ở đó nó mang nghĩa "trường
+này trước/sau khi sửa không có giá trị", không phải ô trống của bảng.
 
 ---
 
@@ -471,6 +552,296 @@ Quy tắc kèm theo:
 - **Mức độ ưu tiên là thang RIÊNG**, không trộn vào 9 nhóm này:
   Thấp `#94A3B8` → Trung bình `#F59E0B` → Cao `#F97316` → Khẩn cấp `#DC2626`.
 
+## 3d. MỘT màn vào được từ NHIỀU LINK — mỗi link một phạm vi dữ liệu (chốt 2026-08-26)
+
+Rất nhiều màn của ERP có **cùng một đường dẫn nhưng nhiều mục menu trỏ vào**, khác nhau ở query
+string, và mỗi mục xem một phạm vi dữ liệu khác hẳn:
+
+```
+/customer-care/warranty_repair_requests                     -> chỉ phiếu của mình
+/customer-care/warranty_repair_requests?type=all            -> gate 3 cấp quyền
+/customer-care/warranty_repair_requests?type=waiting_handle -> phiếu chờ CHÍNH PHÒNG mình xử lý
+/customer-care/service_quotations?permission=all            -> ⚠️ màn báo giá đặt tên tham số là `permission`
+```
+
+Port sang HRM phải giữ nguyên khả năng này, nếu không mọi lối vào đều ra cùng một danh sách và
+người dùng mất hẳn màn "việc của tôi".
+
+**Khuôn bắt buộc** (4 màn luồng dịch vụ + màn báo giá đang chạy theo đúng khuôn này):
+
+```js
+mounted() {
+    const savedState = this.loadFilterState()
+    if (savedState) { this.filters = mergeKnownFilters(initialStateForm, savedState.filter) }
+    // ⚠️ Áp query SAU khi nạp bộ lọc đã lưu -> đường link THẮNG bộ lọc lần trước
+    this.applyQueryType()
+    this.oldFilters = JSON.parse(JSON.stringify(this.filters))
+    this.loadData()
+},
+methods: {
+    /** Whitelist đúng những giá trị máy chủ hiểu; giá trị lạ thì bỏ qua và giữ mặc định. */
+    applyQueryType() {
+        const type = this.$route.query.type || this.$route.query.permission
+        if (['index', 'all', 'waiting_handle'].includes(type)) this.filters.type = type
+    },
+},
+async handleReset() {
+    // "Làm mới" là xoá điều kiện lọc, KHÔNG đổi phạm vi đang xem
+    const currentType = this.filters.type
+    this.filters = { ...initialStateForm, type: currentType }
+    ...
+},
+```
+
+4 điểm dễ sai:
+
+1. **Thứ tự**: nạp bộ lọc đã lưu TRƯỚC, áp query SAU. Ngược lại thì mở link `?type=all` vẫn ra
+   phạm vi của lần trước — lỗi rất khó thấy vì chỉ xảy ra với người đã từng đổi bộ lọc.
+2. **Whitelist, không truyền thẳng**: tham số này quyết định phạm vi dữ liệu, đừng đẩy nguyên thứ
+   người dùng gõ trên thanh địa chỉ xuống máy chủ. Giá trị lạ → giữ mặc định (đã thử `?type=xoa-het-du-lieu`
+   → vẫn gửi `all`).
+3. **"Làm mới" giữ phạm vi**: nút đó xoá điều kiện lọc, không phải đưa người dùng về màn khác.
+4. **Tên tham số theo ĐÚNG màn ERP tương ứng**: phần lớn màn dùng `type`, riêng màn Báo giá dịch vụ
+   dùng `permission`. Nhận cả hai làm bí danh cho người quen copy link ERP cũ.
+
+Máy chủ vẫn phải tự gate quyền theo phạm vi (`applyScope()`); query chỉ là *chọn cách xem*, không
+phải *cấp quyền* — người không có quyền xem theo cấp mà mở `?type=all` thì vẫn chỉ thấy phiếu của
+chính mình.
+
+### 3d-2. ⚠️ MẶC ĐỊNH khi vào route TRẦN thường là "chỉ bản ghi của mình", không phải "tất cả"
+
+Đây là chỗ dễ port sai nhất của mục 3d, và **sai thì không lộ ra ngay**: hai lối vào vẫn mở đúng
+màn, chỉ là cho ra cùng một danh sách trong khi ERP cho hai kết quả khác hẳn.
+
+Controller ERP thường gán mặc định ngay đầu hàm:
+
+```php
+$type = $request->type ?? 'index';        // WarrantyRepairRequestsController
+$permission = $request->permission ?? 'index';   // WarrantyRepairInformationRequestsController
+```
+
+và nhánh `index` trong `searchByFilter()` gần như luôn là `where('created_by', auth()->id())` —
+**chỉ bản ghi do chính mình lập**. Nhánh `all` mới là nhánh gate theo 3 cấp quyền.
+
+**Cách tra cho đúng, đừng đoán:**
+
+```bash
+# 1. ĐẾM ĐỦ mục menu trỏ vào màn — thường KHÔNG chỉ một
+grep -n "route('<tenRoute>.index')" resources/views/layouts/topmenubar.blade.php
+# 2. Mục nào có `?type=` / `?permission=`, mục nào vào ROUTE TRẦN
+# 3. Đọc mặc định ở controller (`?? 'index'`) và nhánh tương ứng trong searchByFilter()
+```
+
+Đã dính thật 2026-08-27: bản port đầu đọc thấy 2 mục có `?type=all` rồi kết luận "menu luôn trỏ
+`all`", bỏ sót 2 mục vào route trần ở nhóm menu khác. Hậu quả: cả 4 màn của luồng dịch vụ để mặc
+định `all`, vào từ Bán hàng vẫn thấy toàn bộ phiếu của công ty thay vì chỉ phiếu của mình.
+
+**Sửa phải làm ĐỦ BA nơi**, thiếu một là không đổi gì:
+1. **Máy chủ**: `$request->get('type', self::SCOPE_MINE)` — mặc định là `index`.
+2. **Giao diện — bộ lọc khởi tạo**: `const initialStateForm = { type: 'index', … }`. Để `'all'` ở
+   đây thì màn **luôn gửi `type=all`** lên, sửa máy chủ xong vẫn y nguyên.
+3. **Menu**: mục nào ERP có tham số thì HRM phải có đúng tham số đó.
+
+**Tên tham số không thống nhất giữa các màn** (`type` ở phiếu yêu cầu / phiếu xử lý / phiếu bảo
+hành, `permission` ở phiếu cung cấp thông tin và báo giá) → `applyQueryType()` nhận **cả hai**:
+
+```js
+const type = this.$route.query.type || this.$route.query.permission
+```
+
+**Tự kiểm bằng SỐ, không nhìn bằng mắt** — hai lối vào phải ra hai con số khác nhau, và số của
+nhánh mặc định phải bằng đúng `COUNT(*) WHERE created_by = <mình>`:
+
+```bash
+curl -s -H "Authorization: Bearer $TK" "<api>?limit=1"           # -> 6
+curl -s -H "Authorization: Bearer $TK" "<api>?limit=1&type=all"  # -> 5.371
+```
+
+### 3d-1. Màn nằm ở HAI phân hệ khác nhau — thanh bên phải giữ nguyên nơi người dùng đang đứng
+
+Không chỉ nhiều link, một màn còn có thể nằm trong menu của **hai phân hệ**: "Yêu cầu kiểm tra sửa
+chữa - bảo hành" và "Phiếu cung cấp thông tin" vừa thuộc CSKH, vừa thuộc nhóm Bán dịch vụ của Bán
+hàng (đúng như ERP).
+
+⚠️ **Bẫy:** `findSubsystemByLink()` chọn phân hệ có link khớp **dài nhất**. Hai phân hệ cùng khai
+một link thì độ dài **bằng nhau**, code cũ dùng `length > winnerLength` nên giữ phân hệ **đứng
+trước trong mảng `SUBSYSTEMS`** — thứ tự khai báo, hoàn toàn tình cờ. Hậu quả người dùng thấy: đang
+ở CSKH, bấm mục trong menu CSKH thì **thanh bên nhảy sang Bán hàng**, mất ngữ cảnh đang làm.
+
+Quy tắc đã chốt (2026-08-26) — **giữ menu người dùng đang dùng**. Khi hoà, ưu tiên theo thứ tự:
+
+1. **phân hệ đang làm việc**, nhớ trong `sessionStorage` (`active_subsystem_key`) — vào từ CSKH thì
+   ở lại CSKH, vào từ Bán hàng thì ở lại Bán hàng;
+2. **phân hệ có slug khớp đoạn đầu đường dẫn** — mở bằng link dán tay / tab mới thì về đúng nhà;
+3. thứ tự khai báo (giữ hành vi cũ).
+
+2 điều kiện bắt buộc của cách nhớ này:
+
+- **Chỉ ghi nhớ khi đường dẫn thuộc DUY NHẤT một phân hệ.** Để màn dùng chung tự ghi nhớ là mở nó
+  một lần rồi mọi màn dùng chung sau đó bị kéo theo phân hệ vừa đoán.
+- **`sessionStorage` chứ không phải `localStorage`**: nhớ qua F5 nhưng không lây sang tab khác — tab
+  mới mở bằng link dán tay phải suy lại từ chính đường dẫn đó.
+
+Thêm mục menu cho một màn đã có ở phân hệ khác thì **kiểm cả hai lối vào** trước khi báo xong:
+vào từ phân hệ A → thanh bên phải là A; vào từ B → là B; xoá `sessionStorage` rồi mở thẳng đường
+dẫn → về phân hệ theo slug.
+
+## 3f. Ô lọc GOM NHÓM (Công ty – Phòng ban…) — phải khai `inputCount` đúng số ô THẬT
+
+**Triệu chứng:** popup "Cài đặt bộ lọc" có mục *Công ty – Phòng ban*, tick rồi mà ngoài bộ lọc
+không thấy đâu; tắt hết trường khác cũng không ra. Nó chỉ hiện khi bấm "Tìm kiếm nâng cao".
+Đã lặp ở **cả 5 màn** luồng dịch vụ trước khi phát hiện (Redmine #11270).
+
+**Nguyên nhân:** `V2BaseSmartFilterPanel` chuyển sang bộ lọc gọn (bày hết ra một hàng, bỏ nút
+"Tìm kiếm nâng cao") khi **tổng số Ô NHẬP ≤ 3**, đếm bằng:
+
+```js
+field.inputCount || (field.resetKeys && field.resetKeys.length) || 1
+```
+
+Field `org` khai `resetKeys: ['company_id','department_id','part_id','employee_id']` → **đếm 4**.
+Nhưng màn truyền `:disable_part="true" :disable_employee="true"` nên thực tế chỉ render **2 ô**.
+Một mình nó đã 4 > 3 ⇒ panel **không bao giờ** vào được chế độ gọn, dù user tắt sạch trường khác.
+
+**Cách đúng — ẩn ô con nào thì khai lại `inputCount`:**
+
+```js
+{
+    key: 'org',
+    label: 'Công ty – Phòng ban',
+    resetKeys: ['company_id', 'department_id', 'part_id', 'employee_id'], // GIỮ đủ để reset đúng
+    inputCount: 2,   // nhưng chỉ render 2 ô vì disable_part + disable_employee
+}
+```
+
+`resetKeys` và `inputCount` phục vụ 2 việc khác nhau — đừng gộp:
+
+| | Dùng để | Khai theo |
+| --- | --- | --- |
+| `resetKeys` | reset các ô con khi đổi công ty/phòng ban | **mọi** khoá mà field đụng tới |
+| `inputCount` | đếm ô để quyết định bộ lọc gọn | số ô **thực sự render ra màn** |
+
+**Tự kiểm** (chạy trong console ở màn danh sách):
+
+```js
+// panel = component V2BaseSmartFilterPanel
+panel.visibleInputCount   // phải bằng số ô ĐANG ĐẾM ĐƯỢC bằng mắt trên màn
+panel.isInlineMode        // tắt bớt trường tới khi còn ≤ 3 ô -> phải thành true
+```
+
+Hoặc thử tay: mở "Cài đặt bộ lọc", tắt hết trường trừ ô gom nhóm → nó **phải** nhảy ra hàng ngang
+và nút "Tìm kiếm nâng cao" biến mất. Không ra là `inputCount` đang sai.
+
+### Ra được rồi thì NHÌN LẠI: các ô con có nằm ngang hàng không?
+
+Sửa xong `inputCount` mà dừng ở đó là dính lỗi thứ hai ngay sau đó: `V2BaseCompanyDepartmentFilter`
+dựng các ô con bằng **lưới Bootstrap** (`col-md-3`), vốn để nằm trong `.form-row` của khối "Tìm
+kiếm nâng cao". Thả nguyên vào hàng lọc gọn thì mỗi ô con **rơi xuống một dòng**, hàng lọc cao
+vống lên trông như vỡ giao diện.
+
+`V2BaseSmartFilterPanel` đã xử lý sẵn (`.inline-field` là flex + gỡ bề rộng lưới của `col-*`), nên
+màn không phải khai gì. Nhưng **tự dựng ô lọc gom nhóm mới** thì phải nhớ: component con nằm trong
+hàng ngang, đừng dựng bằng `col-md-*` rồi tin là xong.
+
+### Và lỗi thứ ba: ô gom nhóm tự dựng NHÃN, làm cả hàng lệch trục
+
+Bộ lọc gọn **không có nhãn** — placeholder là thứ duy nhất cho user biết ô đó là gì. Ô lọc gom
+nhóm lại tự dựng nhãn riêng ("Công ty", "Phòng ban"), nên nó cao hơn các ô bên cạnh đúng một dòng
+chữ và cả hàng lệch nhau. `V2BaseSmartFilterPanel` đã ẩn nhãn trong `.inline-field`.
+
+⚠️ **Đánh đổi phải biết**: nhãn của ô Công ty – Phòng ban mang theo **icon ổ khoá** (bật xem danh
+mục đã khoá) — ẩn nhãn là mất luôn nút đó ở chế độ gọn. Cần dùng thì bật thêm trường lọc cho panel
+quay về "Tìm kiếm nâng cao", ở đó nhãn và icon vẫn đủ.
+
+**Tự kiểm bằng SỐ, đừng nhìn bằng mắt** — mọi ô trên hàng phải cùng một mốc trên:
+
+```js
+[...document.querySelectorAll('.quick-search-row input.form-control, .quick-search-row .select2-selection')]
+    .map(e => Math.round(e.getBoundingClientRect().top))
+// -> phải ra cùng MỘT con số, vd [139, 139, 139]
+```
+
+**Bẫy khi sửa**: `V2BaseSmartFilterPanel.vue` là file **CRLF**. Sửa bằng script Python phải mở
+`newline=''` cho cả đọc lẫn ghi, xong chạy `git diff --stat` — thấy vài trăm dòng đổi là đã phá
+line ending, trả lại ngay (CLAUDE.md).
+
+---
+
+## 3e. Màn danh sách chậm — đo trước, và ngó INDEX trước tiên (chốt 2026-08-26)
+
+Màn danh sách treo 10-15 giây gần như luôn là **thiếu index**, không phải "dữ liệu nhiều".
+
+**Cách truy nguyên (đừng đoán):**
+
+```bash
+# 1. Đo API, so các lối vào với nhau — lệch nhau chục lần là biết ngay chỗ hỏng
+curl -s -o /dev/null -w "%{time_total}s\n" -H "Authorization: Bearer $TK" "<api>?type=all"
+curl -s -o /dev/null -w "%{time_total}s\n" -H "Authorization: Bearer $TK" "<api>?type=waiting_xxx"
+```
+
+```php
+// 2. Tách tầng: chậm ở truy vấn hay ở Resource?
+$t = microtime(true); $p = $svc->list($req);            printf("list  %.2fs\n", microtime(true)-$t);
+$t = microtime(true); XxxResource::collection($p)->response(); printf("res   %.2fs\n", microtime(true)-$t);
+
+// 3. Chậm ở truy vấn -> soi index của MỌI cột dùng trong where / whereColumn
+DB::select("SHOW INDEX FROM `$bang` WHERE Column_name = ? AND Seq_in_index = 1", [$cot]);
+```
+
+Đã bắt được theo đúng cách này: màn Phiếu cung cấp thông tin, lối vào "chờ làm báo giá" **14,7s →
+0,24s** sau khi thêm index cho cột nối của 2 bảng con dùng trong `EXISTS`.
+
+**Ba điều cần nhớ khi thêm index:**
+
+- Cột nối của **mọi bảng con** dùng trong `whereExists` / `whereHas` phải có index. Thiếu là mỗi
+  dòng cha quét trọn bảng con — càng nhiều dòng cha càng chậm theo cấp số nhân.
+- Cột lọc chỉ có vài giá trị (`type`, `status`) đánh index đơn gần như vô dụng → đánh **index ghép**
+  theo đúng thứ tự truy vấn lọc (`(type, status)`).
+- **Tên index phải tự đặt, rút gọn.** Tên mặc định `<bảng>_<cột>_index` vượt trần 64 ký tự của MySQL
+  với bảng tên dài (`wr_service_quotation_extend_products_wr_service_quotation_id_index` = 66 ký
+  tự) → "Identifier name is too long". Và migration DDL **không bọc `DB::transaction`**.
+
+## 3g. Ô GỘP nhiều giá trị — tiêu đề phải nói đủ, và SORT phải theo đúng cái nhìn thấy
+
+Hai lỗi anh em, cùng một gốc: **ô hiển thị một đằng, hệ thống hiểu một nẻo** (Redmine #11270).
+
+### Tiêu đề cột phải mô tả ĐỦ nội dung ô
+
+Ô gộp `tên - số điện thoại` mà tiêu đề chỉ ghi "Người liên hệ" thì người đọc tưởng cột chỉ có tên.
+Gộp gì thì ghi nấy: **"Người liên hệ - SĐT"**. Tương tự: `mã - tên` → tiêu đề nêu cả hai, hoặc
+tách hẳn 2 cột (mục 3).
+
+### Sort phải chạy theo chuỗi ĐANG HIỂN THỊ
+
+Cột "Khách hàng" hiện `<mã> - <tên>` nhưng máy chủ sắp theo mỗi `customer_name` → nhìn vào bảng
+thấy thứ tự lộn xộn, người dùng báo *"sort sai"* mà code thì "vẫn chạy đúng như khai".
+
+Hai lối ra, chọn một:
+
+| Cách | Khi nào | Làm gì |
+| --- | --- | --- |
+| Sắp theo đúng thứ hiển thị | Cột người dùng hay tra cứu | Nối bảng lấy khoá hiển thị rồi `orderBy` theo đúng thứ tự ghép: mã trước, tên sau |
+| Bỏ `sortable` | Ô ghép phức tạp, không sắp cho khớp được | Đừng bày mũi tên sắp xếp ra rồi cho kết quả khó hiểu |
+
+⚠️ **Nối bảng để sắp xếp thì PHẢI chốt cột lấy về ngay tại đó:**
+
+```php
+$query->leftJoin('customers', 'customers.id', '=', 'wr_service_contracts.customer_id')
+    ->select('wr_service_contracts.*')   // BẮT BUỘC
+    ->orderBy('customers.code', $direction)
+    ->orderBy('wr_service_contracts.customer_name', $direction);
+```
+
+Màn danh sách thường tự giới hạn cột lúc phân trang nên nhìn vẫn đúng, **nhưng luồng XUẤT FILE và
+IN DANH SÁCH dùng chung câu truy vấn đó mà không giới hạn** — thiếu `select()` là bảng vừa nối đè
+cột trùng tên (`id`, `code`) của bảng chính, file xuất ra sai mà **không có lỗi nào báo**. Dùng
+`leftJoin` (không phải `join`) để bản ghi có khoá ngoại rỗng/đã xoá không biến mất khỏi danh sách.
+
+**Tự kiểm**: sắp theo cột đó rồi gọi luôn `…/export-rows?sort_field=<cột>` — số phiếu và tổng số
+dòng phải y như khi không sắp.
+
+---
+
 ## 4. Thứ tự cột + cột ghim trái
 
 `[cột khoá: STT → Mã → Tên] → [các cột dữ liệu theo cấu hình user] → [Người tạo] → [Ngày tạo] → [Trạng thái] → [Hành động]`
@@ -500,6 +871,40 @@ Màn danh sách mặc định **chỉ hiện 7 cột**:
 - Bảng mặc định gọn giúp màn không phải cuộn ngang; ai cần thêm thì tự bật, cấu hình lưu theo user (`column_customizations`).
 
 Cột `Người tạo` + `Ngày tạo` là **bắt buộc** ở mọi màn, đứng cuối nhóm cột dữ liệu (ngay trước Trạng thái → Hành động).
+
+### ⚠️ CHỮ trên nhãn: luôn là "Người tạo" / "Ngày tạo" — CẤM "Người lập" / "Ngày lập"
+
+Đây là lỗi **lặp đi lặp lại** khi port màn từ ERP: ERP ghi *"Người lập"*, *"Ngày lập"*, *"Người lập
+phiếu"*, *"Ngày lập phiếu"* nên chép sang HRM là dính. HRM dùng **một** cặp chữ cho toàn hệ thống,
+bất kể chứng từ hay danh mục — người dùng đi qua nhiều màn phải thấy cùng một chữ.
+
+| ERP viết | HRM phải viết |
+| --- | --- |
+| Người lập · Người lập phiếu · Người tạo phiếu | **Người tạo** |
+| Ngày lập · Ngày lập phiếu · Ngày tạo phiếu | **Ngày tạo** |
+| Ngày lập từ / đến (bộ lọc) | **Ngày tạo từ / đến** |
+
+Áp cho **mọi nơi người dùng nhìn thấy**, không riêng cột bảng — sửa một chỗ rồi bỏ sót chỗ khác là
+chuyện đã xảy ra (đổi dòng phụ đề màn chi tiết ở #11240 nhưng quên cột danh sách, tới #11271 mới bị
+bắt):
+
+- tiêu đề cột bảng (`allColumns` → `title`)
+- danh sách trường xuất file ở FE (`exportFields` → `name`) **và** nhãn ở BE
+  (`ExcelExport\ExportColumnRegistry`)
+- nhãn ô lọc (`filterFields` → `label`)
+- nhãn trường ở màn chi tiết / form (`V2BaseLabel`)
+- tiêu đề cột trong popup tìm kiếm/chọn bản ghi
+- tiêu đề cột của BẢN IN (service in ở máy chủ)
+
+**Tự kiểm — phải RỖNG ở cả 2 repo:**
+
+```bash
+grep -rn "Người lập\|Ngày lập" hrm-client/pages/<phân hệ>/ | grep -v "^\s*//\|/\*\*\|\* "
+grep -rn "'Người lập'\|'Ngày lập'" hrm-api/Modules/<Module>/ hrm-api/app/ExcelExport/
+```
+
+(Chữ "người lập" trong *câu văn* của comment/thông báo nghiệp vụ thì để nguyên — quy tắc này chỉ
+nói về NHÃN trường và tiêu đề cột.)
 
 - **Người tạo**: chỉ **TÊN** người tạo, KHÔNG kèm mã nhân viên.
 - ⚠️ **Cột Người cập nhật hay ra rỗng vì BE KHÔNG GHI `updated_by`, không phải vì thiếu cột FE.** Trước khi khai cột, kiểm 3 thứ: (1) Entity có `extends BaseModel` không — `extends Model` thuần thì không có hook audit, `updated_by` sẽ NULL vĩnh viễn (xem CLAUDE.md mục *Model MỚI BẮT BUỘC extends BaseModel*); (2) service có gán `updated_by` ở **cả đường khoá/mở khoá** không; (3) query danh sách có eager load / join quan hệ người cập nhật chưa. Cách kiểm nhanh: sửa 1 bản ghi rồi `select updated_by from <bang> where id = <id>` — ra NULL hoặc ra id không có trong `employees` là hỏng.
@@ -544,6 +949,27 @@ Nếu màn có modal "Cấu hình cột hiển thị" và cột Người tạo t
    ⚠️ **Bảng KHÔNG có cột mã → để tiêu đề TRẦN, không lấy tên thay thế.** Tên bản ghi thường dài
    (`Chi tiết công việc / lỗi thiết bị: Hiệu chỉnh cảm biến cân trọng lượng bệ kiểm tra phanh xe tải`)
    → tiêu đề trang và tên tab lê thê mà chẳng giúp định danh nhanh hơn. Chỉ ghép `: <mã>` khi **có mã**.
+
+1b. **Trạng thái ĐANG TẢI + không có quyền xem** (chốt 2026-08-24):
+
+   - **Chỉ báo đang tải**: gọi `this.$safeLoadingStart()` / `this.$safeLoadingFinish()`
+     (`plugins/safe-loading.js`), **KHÔNG gọi thẳng `this.$nuxt.$loading`**. Hai lý do đều đã trả giá:
+     - `$nuxt.$loading` **chỉ chạy khi CHUYỂN ROUTE**. Vào thẳng đường dẫn chi tiết (F5, dán link,
+       mở tab mới) thì **không hiện gì**, user nhìn form rỗng tưởng phiếu không có dữ liệu.
+     - `loadDetail()` thường chạy từ `created` (watcher `id` có `immediate: true`), lúc đó
+       `$nuxt.$loading` chưa sẵn sàng → `start()` ném lỗi, **nhảy thẳng vào `catch`, API chi tiết
+       không bao giờ được gọi**, màn trắng mà không có lỗi nào trên giao diện.
+
+     Helper ghi vào Vuex `store/loading` trước rồi mới thử `$nuxt.$loading`, nên overlay
+     `components/LoadingBar.vue` mount sau vẫn đọc được. Đặt `finish` trong `finally`.
+
+     Cũng KHÔNG phủ thêm lớp chữ "Đang tải…" lên form — đã có chỉ báo dùng chung rồi thì thôi.
+
+   - **Không có quyền xem / bản ghi không tồn tại** (403 / 404): chuyển sang trang 404 dùng chung
+     `this.$router.replace({ path: '/pages/extras/404' })`, **KHÔNG** toast rồi đẩy ngược về màn
+     danh sách (thông báo thoáng qua rồi mất, user không hiểu vừa xảy ra chuyện gì). Dùng `replace`
+     chứ không `push`: với `push`, bấm Quay lại là về đúng bản ghi bị từ chối → lại bật sang 404,
+     thành vòng lặp không thoát được.
 
 2. **Footer phải có ĐỦ hành động như dòng ở màn danh sách**, TRỪ:
    - **"Xem"** — đang ở màn xem rồi;
@@ -598,6 +1024,71 @@ hỗ trợ), thì đưa vào slot `#custom-actions`. `V2Footer` tự render "Qua
 
   📌 Quy ước này **đảo lại** cách làm cũ (hiện + disable + tooltip lý do) — chốt 2026-08-15.
 - Hành động đổi trạng thái (Khóa/Mở khóa) cập nhật state tại chỗ sau khi API thành công để nút đổi ngay, không nạp lại cả màn.
+
+## 7.3. THAO TÁC XONG → QUAY VỀ MÀN DANH SÁCH
+
+Mọi thao tác **ghi dữ liệu rồi kết thúc** đều điều hướng về **màn danh sách**, KHÔNG ở lại / KHÔNG
+đẩy sang màn chi tiết:
+
+| Thao tác | Sau khi API thành công |
+|---|---|
+| Lưu nháp · Lưu · Lưu và gửi duyệt | `$router.push('<đường dẫn danh sách>')` |
+| Duyệt · Không duyệt / Từ chối · Hủy phiếu | như trên |
+| Xóa (từ màn chi tiết) | như trên |
+| Khóa / Mở khóa **ngay trên dòng danh sách** | ở lại danh sách, cập nhật state tại chỗ (mục 7.2) |
+
+```js
+this.markFormSaved()                       // TRƯỚC push, nếu không sẽ bị hỏi "chưa lưu"
+this.toast('success', response?.message || 'Lưu phiếu thành công')
+this.$router.push('/finance/prepick-cancel-requests')
+```
+
+**Vì sao**: ở lại màn chi tiết thì user phải tự bấm "Quay lại" mới thấy kết quả (trạng thái mới,
+phiếu mới) trong danh sách — thừa 1 thao tác ở MỌI lần lưu. Chốt 2026-08-20, QA báo lại ở Redmine
+#11192 ("TẠI TẤT CẢ CÁC MÀN DUYỆT/HỦY DUYỆT ĐỀU RA MÀN DETAIL → PHẢI TRẢ VỀ MÀN LIST").
+
+**Ngoại lệ duy nhất**: thao tác **chưa kết thúc luồng** — nút "Duyệt" chỉ là lối sang màn lập chứng
+từ tiếp theo (vd Duyệt yêu cầu hủy hàng giữ → màn Lập phiếu hủy), hoặc lưu xong còn phải làm tiếp
+trên chính bản ghi đó. Khi đó vẫn điều hướng theo luồng, không ép về danh sách.
+
+⚠️ **Nút "Quay lại" (`url-back` của `V2Footer`) phải trỏ về nơi user ĐI VÀO**, không mặc định
+danh sách của chính màn đó. Màn mở từ màn khác qua query (`?request_id=…`) thì `url-back` là
+**computed động** trả về màn nguồn — bắn user sang một danh sách chưa hề chứa bản ghi họ đang xem
+là user tưởng "mất dữ liệu" (Redmine #11193).
+
+---
+
+## 7b. Trường LINK sang chứng từ khác ở màn chi tiết — phải nằm trong KHUNG Ô
+
+Màn chi tiết hay có trường trỏ sang chứng từ khác: *Phiếu xử lý yêu cầu*, *Phiếu cung cấp thông
+tin*, *Phiếu yêu cầu*… Nội dung là link bấm được, nhưng **vẫn phải là một ô** như mọi trường bên
+cạnh. Để link trần (`<div class="pt-1"><nuxt-link …>`) thì hàng đó trông thủng một lỗ và chữ không
+thẳng trục với các ô khác — lỗi này đã lặp ở **4 màn** luồng dịch vụ.
+
+```vue
+<!-- ĐÚNG -->
+<div v-if="readonly && form.xxx_id" class="v2-linked-field">
+    <nuxt-link :to="`/…/${form.xxx_id}`" class="v2-cell-link">{{ form.xxx_code }}</nuxt-link>
+</div>
+<V2BaseInput v-else :value="form.xxx_code" disabled />
+
+<!-- SAI: link trần, hàng bị hụt một ô -->
+<div v-if="readonly" class="pt-1"><nuxt-link …>…</nuxt-link></div>
+```
+
+`.v2-linked-field` khai sẵn ở `assets/scss/v2-styles.scss` (nền + viền copy đúng ô bị khoá,
+`min-height: 32px` bằng `V2BaseInput` cỡ md) — **đừng chép CSS đó vào từng màn**.
+
+⚠️ Class này cố ý khai **NGOÀI** khối `.v2-styles`: không phải form nào cũng bọc trong lớp đó
+(`WrQuotationForm` chẳng hạn), để bên trong thì đúng những màn ấy ô co lại còn 19px.
+
+**Tự kiểm** — ô link và ô thường cùng chiều cao:
+
+```js
+document.querySelector('.v2-linked-field').offsetHeight === document.querySelector('.v2-input').offsetHeight
+```
+
+---
 
 ## 8. Thứ tự request khi vào màn (tốc độ hiển thị)
 
@@ -692,12 +1183,48 @@ methods: {
 
 ```vue
 <V2BaseButton secondary status="success" size="sm" @click="openExportModal('excel')">Xuất Excel</V2BaseButton>
-<ExportFieldsModal :modal-id="exportFieldsModalId" :columns="exportFields" :exporting="exporting" @export="handleExportFields" />
+<ExportFieldsModal
+    :modal-id="exportFieldsModalId"
+    :columns="exportFields"
+    :default-selected="visibleExportFields"
+    :exporting="exporting"
+    @export="handleExportFields"
+/>
 ```
+
+### Mở popup là tick sẵn ĐÚNG CÁC CỘT ĐANG HIỆN TRÊN MÀN (chốt 2026-08-25)
+
+**KHÔNG tick tất cả.** Người dùng đã cấu hình cột ở "Cấu hình cột hiển thị" thì file xuất ra phải
+giống thứ họ đang nhìn — tick sẵn cả 13 cột trong khi trên màn chỉ hiện 5 là bắt họ bỏ tick 8 lần,
+mỗi lần xuất.
+
+Vẫn **thêm / bớt tự do** như trước: tick thêm cột đang ẩn, bỏ bớt cột không cần, "Chọn tất cả",
+"Bỏ chọn hết" — không đổi gì.
+
+- `visibleExportFields` do `exportFieldsMixin` tính sẵn, màn **không phải viết gì**: nó lấy
+  `tableColumns` (cột đang hiện, đúng thứ tự trên màn) giao với `exportFields`.
+- Khoá cột bảng và khoá cột xuất phần lớn trùng nhau. Chỗ lệch thì mixin tự thử hậu tố `_text`
+  (bảng để `status` vì vẽ badge, file xuất cần chữ nên registry khai `status_text`).
+- Lệch nhiều hơn thế thì màn khai `exportFieldKeyMap: { <khoá cột bảng>: '<khoá cột xuất>' }`.
+- Cột `index` / `actions` luôn bị loại — không phải dữ liệu.
+- Màn **chưa dùng** `columnCustomizationMixin` thì `visibleExportFields` rỗng → popup tự quay về
+  tick tất cả, không vỡ gì.
+
+**Tự kiểm sau khi nối (đừng soi bằng mắt):** quét khoá cột bảng (`allColumns`) đối chiếu khoá cột
+xuất (`exportFields`) theo đúng 3 quy tắc trên, in ra cột nào không bắt được. Cột lệch mà file xuất
+**vốn không có** (Người/Ngày cập nhật ở màn danh mục…) thì bỏ qua; cột lệch mà file **có** thì phải
+khai vào `exportFieldKeyMap`. Đã bắt được 4 chỗ theo cách này: `warranty_status` ↔
+`status_warranty_text` (đảo thứ tự từ), `costStatus` / `serviceStatus` ↔ `status_text`,
+`serviceCode` ↔ `code` — mắt thường rất dễ bỏ sót vì trên màn nhìn vẫn "có cột đó".
+
+⚠️ Truyền `:default-selected` vào **đúng thẻ `<ExportFieldsModal>`**. Trên màn danh sách còn
+`<V2BaseDataTable :columns="tableColumns">` cũng có thuộc tính `:columns` và đứng TRƯỚC trong file —
+sửa hàng loạt bằng script rất dễ chèn nhầm vào đó (đã dính khi làm, phải sửa lại).
 
 Chốt kèm theo:
 
 - **Thứ tự cột trong file = thứ tự user tick** (popup tự nhớ thứ tự; BE lặp theo `fields`).
+  Với cột tick sẵn, thứ tự ban đầu = thứ tự cột trên màn.
 - Không truyền `fields` → xuất đủ cột theo thứ tự khai trong registry (giữ hành vi cũ, không vỡ).
 - `fields` đến từ query string → BE **phải lọc qua whitelist** của màn, bỏ key lạ.
 - Xuất theo **đúng bộ lọc đang áp dụng** nhưng lấy TẤT CẢ dòng, không theo trang.
@@ -707,6 +1234,12 @@ Chốt kèm theo:
 ## 14c. Xuất file DANH SÁCH LỚN — chia nhỏ API, dựng file ở FE (chốt 2026-08-19)
 
 Mục 14b lo phần *chọn cột*. Mục này lo phần *dựng file*.
+
+> 🖨️ **Nút IN danh sách thì ngược lại: phải CHẶN TRẦN số dòng, không chia nhỏ.** Xuất file càng
+> nhiều dòng càng tốt (người dùng lọc tiếp trên Excel), còn bản in là để cầm tay đọc/ký — in
+> không giới hạn là nguyên nhân *"nhiều máy in không được"* (đo thật: 4.980 dòng → HTML 3,84 MB →
+> ~170 trang, trình duyệt treo). Trần hiện tại **2.000 dòng**, khuôn + 2 cái bẫy đã dính: xem
+> `print-page` mục 4d.
 
 **Mặc định của hệ thống là BE dựng file** (`DynamicExport` + `exports.dynamic`) — đúng và gọn cho
 danh mục vài trăm dòng. Nhưng `DynamicExport` chạy `FromView`: dựng cả HTML rồi mới convert, nên
@@ -751,6 +1284,17 @@ if (!total) this.$toasted?.global?.error?.({ message: 'Không có dữ liệu đ
   thêm/xoá giữa chừng làm điều kiện dừng theo `total` không bao giờ đúng → vòng lặp chạy mãi.
 - **Xoá `page` / `limit` của bảng** khỏi params trước khi tải, nếu không chỉ xuất đúng 1 trang.
 - **`0 dòng` thì KHÔNG tạo file** — báo "Không có dữ liệu để xuất".
+- **Cột tiền/số phải trả kiểu `float` ở BE**, đừng để dòng gom chung `(string) $value` của
+  `exportRows()` ép hết sang chuỗi — Excel sẽ cảnh báo *"formatted as text"* và SUM ra 0. Khai
+  tường minh danh sách khoá số (`EXPORT_NUMERIC_COLUMNS`), KHÔNG dò bằng `is_numeric` (mã phiếu,
+  SĐT, MST toàn chữ số sẽ bị đổi thành số). FE tự gắn `#,##0` + canh phải cho ô kiểu number —
+  màn không phải khai gì. Chi tiết: `export-excel` mục 4c.
+- **KHÔNG đóng băng hàng tiêu đề** trong file xuất (chốt 2026-08-25) — file là để lọc/kéo vùng,
+  freeze gây vướng. `listExportFile.js` đã bỏ, đừng thêm lại cho riêng màn nào.
+- **Letterhead: neo 2 ô, căn giữa bảng, KHÔNG dùng `ext`.** Dùng `ext` (kích thước tuyệt đối) thì
+  ảnh đè tiêu đề trên một số máy còn máy khác không sao — kiểu lỗi tốn cả buổi mới lần ra
+  (Redmine #11230). `listExportFile.js` đã làm đúng, màn không phải khai gì; đụng vào phần chèn ảnh
+  thì đọc `export-excel` mục 4b trước (3 cái bẫy + cách kiểm chứng bằng `unzip`).
 - Giữ nguyên endpoint BE dựng file cũ, đừng xoá — còn để đối chiếu và quay lại được.
 
 ⚠️ **Điểm yếu cố hữu, phải biết trước khi chọn hướng này**: toàn bộ dữ liệu nằm trong RAM tab
@@ -776,11 +1320,99 @@ Tới mức đó thì phải chuyển sang queue + gửi link tải, không cố
 Kèm theo:
 
 - Cột số/tiền: format qua helper (`toLocaleString`); ô trống hiển thị `—` và **vẫn căn phải**.
-- Cột chữ dài (địa chỉ, ghi chú): `cellClass: 'text-wrap'` + `minWidth` để bảng auto-layout không bóp hẹp.
+- Cột chữ dài (địa chỉ, ghi chú, tên dự án): `cellClass: 'text-wrap clamp-2'` + `width`/`minWidth` — xem **mục 15b**, `text-wrap` + `minWidth` một mình KHÔNG đủ.
 - Cột `center` phải khai `width` cố định — STT `60px`, Trạng thái `130px`, Hành động `140px`. Căn giữa trong ô co giãn trông lệch.
 - **KHÔNG** căn phải mã định danh (MST, SĐT, CCCD, số tài khoản, mã bản ghi): là chuỗi, không so sánh độ lớn.
 
 Bảng tra nhanh dạng Excel: `.plans/gop-db/list-page-action-column/quy-tac-can-le-cot.xlsx`
+---
+
+## 15b. Bề rộng cột — màn nhiều cột, có cả chữ dài lẫn chữ ngắn (chốt 2026-09-05)
+
+Triệu chứng user báo: *"cột chứa nội dung rất dài và nội dung ngắn đang phân bổ độ rộng chưa hợp lý"*
+— cột Dự án / Yêu cầu làm GP / Khách hàng cuối bị bóp còn 4-6 dòng, trong khi cột chỉ vài chữ
+(Giai đoạn dự án, Nhóm ngành…) lại chiếm cả khoảng rộng.
+
+### Vì sao — 4 nguyên nhân cộng lại, sửa thiếu 1 cái là vẫn lệch
+
+| Cơ chế mặc định của `V2BaseDataTable` | Hệ quả |
+| --- | --- |
+| `.data-table { width: 100% }` + `table-layout: auto` | Bảng luôn cố **ép vừa khung**, chỉ tràn khi tổng bề rộng tối thiểu vượt khung |
+| `thead th` **cũng** `white-space: nowrap` | Cột dữ liệu ngắn nhưng **nhãn dài** ("Loại hình hoạt động khách hàng", "Phòng KD phụ trách dự án") tự ghim cột rộng ~220px |
+| Chỉ vài cột khai `cellClass: 'text-wrap'` | Chúng là **cột duy nhất co được** → toàn bộ phần thiếu chỗ dồn hết vào đây, bóp sát `minWidth` |
+| Cột không khai `width` lẫn `minWidth` | Bề rộng do trình duyệt tự tính theo **nội dung của trang hiện tại** → mỗi lần phân trang bảng lại nhảy khác nhau |
+
+### Quy tắc bắt buộc cho màn từ ~10 cột trở lên
+
+1. **Bật `fixed-layout`** trên `V2BaseDataTable` (prop opt-in, mặc định `false`):
+
+```vue
+<V2BaseDataTable :data="tableData" :columns="tableColumns" fixed-layout ... >
+```
+
+Prop này bật `table-layout: fixed` + đặt `min-width` cho bảng **= tổng `width` khai báo của các cột
+đang hiện**, đồng thời cho **tiêu đề cột xuống dòng**. `table-layout: fixed` một mình là CHƯA ĐỦ:
+thiếu `min-width` thì bảng chật vẫn co cột lại như cũ.
+
+2. **Khai `width` + `minWidth` cho ĐỦ MỌI CỘT** — không bỏ sót cột nào — theo 4 bậc:
+
+| Bậc | Bề rộng | Dùng cho |
+| --- | --- | --- |
+| S | 130-150px | Badge/mức độ, giai đoạn, nhóm ngành, ứng dụng, ngày (140px) |
+| M | 170-190px | Tên phòng ban, tên nhân sự, người tạo, mã phiếu, ngày + giờ hoàn thành |
+| L | 220-260px | Ô ghép "mã - tên" (khách hàng, yêu cầu, đơn vị thụ hưởng), tên dự án |
+| XL | 300px | Tên đối tượng chính của màn (tên giải pháp, tên hợp đồng…) |
+
+3. **Cột chữ dài: `cellClass: 'text-wrap clamp-2'`** — cho xuống dòng nhưng **kẹp tối đa 2 dòng** rồi
+`…`, để mọi hàng cao bằng nhau. Kèm `:title` trên thẻ trong slot để hover xem đủ phần bị cắt:
+
+```vue
+<template #cell-prospectiveProjectInfo="{ item }">
+    <div class="field-line text-dark font-weight-normal" :title="item.prospective_project_name">
+        {{ item.prospective_project_name }}
+    </div>
+</template>
+```
+
+4. **Ô có CẢ MÃ VÀ TÊN của một đối tượng tham chiếu → ghép CÙNG 1 DÒNG** `MÃ - Tên` (user chốt
+2026-09-05), đừng xuống dòng thành 2 `div`: ô cao gấp đôi trong khi cột vẫn còn chỗ ngang, và
+`clamp-2` trở nên vô nghĩa vì bản thân nội dung đã ăn đủ 2 dòng.
+
+```js
+// Lọc rỗng TRƯỚC khi nối, nếu không bản ghi thiếu mã sẽ ra chuỗi treo dấu " - "
+joinCodeName(code, name) {
+    return [code, name].filter((part) => part !== null && part !== undefined && part !== '').join(' - ')
+},
+```
+
+⚠️ KHÔNG nhầm với **mục 3**: cột định danh của CHÍNH entity màn đang xem vẫn tách 2 cột riêng
+(`<đt>Code` là link + `<đt>Name`). Quy tắc ghép ở đây chỉ áp cho ô mô tả **đối tượng tham chiếu**
+(khách hàng, yêu cầu làm GP, khách hàng cuối, hợp đồng…).
+
+5. Nhãn cột dài **giữ nguyên chữ**, không viết tắt — ở chế độ `fixed-layout` tiêu đề đã tự xuống
+dòng nên không còn ghim cột rộng nữa.
+
+Khuôn mẫu đầy đủ: `pages/assign/solutions/index.vue` (24 cột) + `components/V2BaseDataTable.vue`
+(prop `fixedLayout`, class `clamp-2`).
+
+### 3 cái bẫy đã trả giá
+
+- **`overflow: hidden` chỉ được nhắm `.field-line` / `.project-sub`, KHÔNG nhắm mọi `<div>` trong ô.**
+  Nhắm hết là ô Hành động, popover, tooltip bị cắt mất phần tràn ra ngoài ô.
+- **Cột `sticky` và bề rộng thật.** `getStickyColumnStyle` tính `left` bằng cách **cộng dồn `width`
+  khai báo** của các cột sticky đứng trước. Ở chế độ fixed, khi bảng rộng hơn tổng width thì trình
+  duyệt kéo giãn các cột theo tỉ lệ → bề rộng thật ≠ width khai báo. Không vỡ layout vì 2 tình huống
+  loại trừ nhau (giãn thì bảng không tràn → không có gì để cuộn ngang → sticky chưa kích hoạt),
+  nhưng **đừng dựa vào `width` khai báo để tính toạ độ gì khác**.
+- **Kẹp 2 dòng là CẮT NỘI DUNG.** Luôn đi kèm `:title` (hover) và cột phải mở được màn chi tiết.
+  Màn nào user cần đọc trọn nội dung ngay trên danh sách thì bỏ `clamp-2`, chấp nhận hàng cao lệch.
+
+### Nhân rộng
+
+Prop `fixedLayout` để **opt-in** vì `V2BaseDataTable` đang dùng ở hơn 130 màn: màn nào chưa khai đủ
+`width` cho mọi cột mà bật lên sẽ bị **chia đều** bề rộng. Muốn chuyển một màn sang chế độ này thì
+làm đủ bước 1 → 4 ở trên trong cùng một lần, không bật prop rồi để đó.
+
 ---
 
 ## Cột nào được vào popup "Tuỳ chỉnh cột"
@@ -959,3 +1591,62 @@ parseInt(top.style.width) === t.scrollWidth          // bề rộng khớp
 // kéo thanh trên -> .table-wrapper.scrollLeft đổi theo, và ngược lại
 ```
 
+
+---
+
+## Bộ tự kiểm màn danh sách trước khi báo xong (chốt 2026-08-28)
+
+Danh sách này sinh ra từ những lỗi đã **lặp lại ở nhiều màn** rồi mới bị tester bắt. Chạy hết trước
+khi giao, đừng chờ người khác phát hiện hộ.
+
+**Chạy bằng lệnh — mở màn thật ra rồi soi Console:**
+
+```js
+// 1. Ô lọc gom nhóm có ra ngoài được không (mục 3f)
+//    panel = component V2BaseSmartFilterPanel của màn
+panel.visibleInputCount   // phải bằng số ô ĐẾM ĐƯỢC BẰNG MẮT trên panel
+panel.visibleFields.map(f => [f.key, f.inputCount || (f.resetKeys||[]).length || 1])
+```
+
+```bash
+# 2. Field gom nhóm nào bị ẩn bớt ô con mà QUÊN khai inputCount -> luôn kẹt trong "nâng cao"
+grep -l 'disable_part="true"\|disable_employee="true"' pages/<phân hệ>/*/index.vue \
+  | xargs grep -L 'inputCount'
+# -> in ra file nào là file đó đang dính lỗi
+```
+
+**Kiểm bằng tay, mỗi thứ 10 giây:**
+
+- [ ] Mở "Cài đặt bộ lọc", **tắt hết trường trừ ô gom nhóm** → nó phải nhảy ra hàng ngang và nút
+      "Tìm kiếm nâng cao" biến mất (mục 3f)
+- [ ] Bấm sắp xếp **từng cột có mũi tên** → thứ tự phải khớp đúng chuỗi đang hiển thị trong ô;
+      cột ghép `mã - tên` mà sắp theo mỗi tên là SAI (mục 3g)
+- [ ] Cột nào là **ô gộp** → tiêu đề có nói đủ các phần được gộp không (mục 3g)
+- [ ] Sắp theo cột có nối bảng → gọi `…/export-rows?sort_field=<cột>`, số phiếu và tổng số dòng
+      phải y như khi không sắp (mục 3g)
+- [ ] Số tiền trên màn: `toLocaleString('en-US')` — grep `'vi-VN'` trong màn phải rỗng
+      (quy tắc số: dấu phẩy ngăn nghìn, xem `export-excel` mục 1b)
+- [ ] Nhãn dùng **"Người tạo" / "Ngày tạo"**, KHÔNG phải "Người lập" / "Ngày lập" (mục 6)
+- [ ] Có đủ cột **Người cập nhật / Ngày cập nhật** (ẩn mặc định) — và máy chủ có eager load
+      `updater.info` + Resource có trả 2 khoá đó, nếu không cột bật lên vẫn rỗng
+
+**Cách rà NHANH cả một luồng bằng bảng so sánh** — đừng kiểm từng màn rời rạc, hãy đặt các màn cạnh
+nhau: màn nào lệch số với phần còn lại gần như chắc chắn là màn bị sót.
+
+```bash
+for f in <màn-1> <màn-2> <màn-3>; do
+    p=pages/<phân hệ>/$f/index.vue
+    printf "%-34s Ng.lập=%s muted=%s vi-VN=%s inputCount=%s cập-nhật=%s\n" "$f" \
+        "$(grep -c "title: 'Người lập'\|title: 'Ngày lập'" $p)" \
+        "$(grep -c 'text-muted' $p)" \
+        "$(grep -c 'vi-VN' $p)" \
+        "$(grep -c 'inputCount' $p)" \
+        "$(grep -c "key: 'updater_name'" $p)"
+done
+# 3 số đầu phải 0, 2 số cuối phải ≥1 — dòng nào lệch là màn đó sót
+```
+
+**Và quan trọng nhất — lỗi vừa sửa ở màn này, 4 màn kia có dính không?** Luồng nghiệp vụ thường
+được dựng bằng cách copy màn đầu tiên, nên một lỗi khai báo gần như chắc chắn nằm ở **tất cả** các
+màn cùng luồng. Sửa xong một màn thì grep ngay sang những màn còn lại thay vì đợi tester báo lần
+lượt từng cái.

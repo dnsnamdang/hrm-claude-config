@@ -932,3 +932,125 @@ Sửa thêm khi test: `V2BaseButton` không có prop `disabled` (phải dùng `i
 - [x] Letterhead file Excel kéo ngang đúng bề rộng bảng (suy từ `widths`), cao theo tỉ lệ ảnh gốc đọc từ PNG; quy ước ghi ở `export-excel` mục 4b
 - [x] #11168 (hiểu lại cho đúng): đổi trạng thái khi lưu phải ghi dòng RIÊNG nhóm "Thay đổi trạng thái", không gộp vào "Thay đổi thông tin" — sửa cả 2 service (YCSCBH + Phiếu xử lý), quy ước ghi ở skill `entity-history` mục 3a
 - [x] #11165 (sửa lại): BỎ việc ẩn nút Xuất Excel / In danh sách theo quyền xem theo cấp — ai cũng in/xuất được đúng phần dữ liệu mình xem được (áp cho 3 màn: YCSCBH, Phiếu xử lý, Phiếu CCTT); quy ước ghi ở `list-page` mục 3b-5
+- [x] Bản in phiếu: viền NGOÀI của bảng (nhất là viền phải) in ra nhạt gần mất — do `border-collapse` để nửa viền ngoài nằm ngoài hộp bảng, bảng `width:100%` nên nửa đó rơi ra ngoài vùng in và bị cắt. Fix ở `utils/print/reportPrintStyle.js`: chừa `padding: 1px` cho gốc bản in (áp cho MỌI mẫu in dùng popup xem trước)
+
+## Phản hồi Redmine đợt 2 (2026-08-24)
+- [x] #11162: thêm trạng thái ĐANG TẢI cho màn Xem chi tiết/Sửa (lớp phủ "Đang tải dữ liệu phiếu..." + thanh tiến trình Nuxt + bảng thiết bị không nhấp nháy câu "Chưa chọn thiết bị nào")
+- [x] #11162: nút "Thay đổi" của ô đính kèm thiếu KHUNG — `V2BaseFile` nay render nút đó bằng `V2BaseIconButton tag="label"` (dùng chung khung/cỡ/hover, bỏ bộ style riêng). Áp cho mọi màn dùng `V2BaseFile`
+- [x] #11163: lịch sử bảng thiết bị TÁCH DÒNG theo từng thiết bị — bỏ 3 "cột ảo" chuỗi gộp, chuyển sang khoá dạng BẢNG (`history_products` = mảng bản ghi) để bộ diff dùng chung tự in thêm/xoá/sửa từng dòng; giữ 3 khoá cũ trong bản đồ nhãn cho log CŨ
+- [x] #11163: cột "File đính kèm" trong lịch sử hiện TÊN TỆP thay vì URL S3 (`attachmentFileName()`); FE thêm `white-space: pre-line` để log CŨ nhiều dòng cũng đọc được
+- [x] #11164: validate nhảy sang ô "Hàng công ty tương đương" — 2 ô dùng chung khoá lỗi `product_id`; tách khoá riêng `equivalent_product_id`, đổi tick thì xoá `formError`, lỗi 422 map về đúng ô đang hiện
+- [x] #11164: popup "Chọn hàng hóa áp dụng" — chip select2 bị cắt ĐẦU chữ (ô search inline làm `__rendered` cuộn ngang) → cho chip xuống dòng
+- [x] #11164 (hiểu lại cho đúng): "không có scroll" là **cuộn NGANG + mất phân trang**, không phải cuộn dọc khối lọc. Nguyên nhân: `V2BaseTableScroll` chèn thêm 1 lớp div NGOÀI (`.v2-table-scroll`), CSS flex lại đặt ở lớp TRONG (`.erp-table-wrap` = `.v2-table-scroll__body`) — mà lớp trong nằm trong component con nên rule scoped còn **không hề áp dụng**. Lớp ngoài nở tự do, đẩy đáy bảng + phân trang ra ngoài popup (`overflow: hidden` nuốt mất). Fix: đặt `flex: 1 1 auto; min-height: 0` cho lớp NGOÀI + `::v-deep` cho lớp trong. Đo thật ở 1180×720: phân trang nằm trong popup, bảng 1346px > khung 1128px nên có thanh cuộn ngang ở CẢ trên và dưới. Đã BỎ `max-height: 55vh` của khối lọc (làm bộ lọc bị cắt)
+- [x] #11164: thiết bị vừa thêm đẩy LÊN ĐẦU danh sách (2 popup Thêm mới đều emit bản ghi vừa tạo, form `onEquipmentAdded` reorder + về trang 1)
+- [x] #11164: bảng I cũng để TRỐNG Thương hiệu/Model với hàng công ty không bán (khớp bảng II + đúng ERP `product_no_sale_name ? '' : ...`)
+- [x] #11164: ẨN link "Thêm số lượng" ở dòng hàng Tân Phát đã xuất/giao — số lượng dòng đó suy từ phiếu xuất kho, ERP cộng sang bản ghi "Thiết bị cũ" cùng hàng hoá nên nhìn như cộng nhầm dòng. **Cố ý lệch ERP**, đã nêu trong ghi chú Redmine để bên test xác nhận
+- [x] #11164: rút gọn tên thiết bị trên tiêu đề popup "Thêm số lượng" — làm ở `V2BaseModal` (dòng mô tả gói 1 dòng + `text-overflow: ellipsis`, rê chuột hiện `title` đầy đủ) thay vì cắt chuỗi bằng JS ở từng popup; áp cho MỌI popup dùng khuôn chung
+- [x] #11164: chốt bề rộng cột "File đính kèm" 230px ở cả 2 màn phiếu — tên tệp dài kéo cột rộng gần hết màn hình
+- [x] #11165: 403/404 → chuyển route sang trang 404 dùng chung `/pages/extras/404` (khuôn đang dùng ở phân hệ Đào tạo/Quyết định), dùng `replace` để nút Quay lại không kẹt vòng; bỏ toast + bỏ `router.replace` về danh sách. Áp cho cả 3 màn phiếu
+- [x] #11166: Chuyển phòng tiếp nhận ghi log nhóm "Thay đổi thông tin" (`logCatalogUpdate` + snapshot) thay vì `logCatalogStatus`; dòng log bỏ chữ "Trạng thái:" thừa
+- [x] #11170: bản in Phiếu YCSCBH mất Ghi chú — mẫu ERP 277 đặt biến `{{DIA_CHI}}` dưới nhãn "Ghi chú:" (mẫu KHÔNG có `GHI_CHU`); điền cả 2 tên biến, không sửa mẫu dùng chung. Mẫu 273 (Phiếu xử lý) không có chỗ cho Ghi chú → đã hỏi lại trong Redmine
+- [x] #11170: responsive khối `V2BaseFormSection` dưới 1400px — tiêu đề 1 hàng, cụm nút xuống hàng dưới căn phải (khai cục bộ trong màn, không sửa component dùng chung)
+- [x] #11171 (rà lại lần 2 theo yêu cầu): còn sót ở màn CHI TIẾT/tab — `assign-components/customer` (EquipmentTab, DocumentTable, CustomerForm: 23 chỗ), `CompanyAccountListResource` BE trả sẵn "—" cho Loại tiền, `SystemInfoSection` (popup Lịch sử dùng chung: 2 chỗ). Giữ "(trống)" trong lịch sử vì mang nghĩa khác
+- [x] #11162 (chỉnh theo góp ý): bỏ lớp phủ chữ "Đang tải dữ liệu phiếu...", chỉ dùng chỉ báo dùng chung. Đổi `$nuxt.$loading` → `$safeLoadingStart/Finish` (`plugins/safe-loading.js`) vì `$nuxt.$loading` chỉ chạy khi CHUYỂN ROUTE, vào thẳng URL chi tiết thì không hiện gì; bổ sung luôn cho 2 màn Phiếu xử lý yêu cầu + Phiếu cung cấp thông tin (2 màn này trước đó không có chỉ báo nào)
+- [x] #11164: thanh cuộn ngang PHÍA TRÊN của `V2BaseTableScroll` chỉ cao 3px (thanh dưới 6px) nên khó rê — khối không có nội dung thật nên tự co, lại bị co thêm khi nằm trong cột flex. Chốt `height: 8px` + `flex: 0 0 auto` ở component dùng chung
+- [x] #11164: nút × của `V2BaseModal` bị đẩy RA NGOÀI mép popup khi dòng mô tả dài (đo: tràn 26px) — do khối tiêu đề để `w-100`; đổi sang `flex: 1 1 auto; min-width: 0` ở cả 2 cấp + `flex: 0 0 auto` cho nút ×
+- [x] #11163 (phản hồi tiếp): các trường trong 1 dòng lịch sử dạng bảng ngăn nhau bằng `;` thay vì ` — ` (giá trị thật hay có sẵn gạch ngang nên không phân biệt được ranh giới) — sửa `CatalogHistoryService::rowText`
+- [x] #11163 (phản hồi tiếp): file đính kèm trong lịch sử là LIÊN KẾT bấm được — BE giữ nguyên URL (bỏ `attachmentFileName`), FE thêm `components/assign/SystemInfoValue.vue` quét URL trong chuỗi rồi render `<a>` hiện TÊN TỆP, bấm mở `FilePreviewModal` dùng chung; định dạng không xem trước được thì TẢI VỀ bằng thẻ `<a download>` (không fetch→blob vì S3 chặn CORS). Áp ở `SystemInfoSection` nên MỌI popup lịch sử đều có
+
+## In danh sách lớn — chốt trần 2.000 dòng (2026-08-24)
+Triệu chứng user báo: "nhiều máy in không được". Đo thật (Phiếu CCTT, không lọc, tài khoản id 13):
+4.980 dòng → HTML **3,84 MB**, BE 0,95s. BE không phải thủ phạm — trình duyệt mới là: chuỗi đó vừa
+đổ vào DOM popup xem trước, vừa bị `document.write` chép sang cửa sổ in (nhân đôi), rồi phải dàn
+~170 trang A4 ngang.
+- [x] BE: trait dùng chung `Modules/CustomerCare/Services/Concerns/LimitsPrintListRows` — `limitedPrintRows()` (đếm tổng trên bản `clone` rồi mới `limit`) + `printListPayload()` trả `total/limit/truncated`. ⚠️ PHP 7.4 KHÔNG cho `const` trong trait → để trần là method `printListMaxRows()`
+- [x] BE: áp cho cả 3 endpoint `printListData` (YCSCBH · Phiếu xử lý · Phiếu CCTT) — trước đó cả 3 đều `->get()` không giới hạn
+- [x] FE: `reportPrintPreviewMixin` đọc `truncated` → dựng câu nhắc đủ 3 ý (in được bao nhiêu / tổng bao nhiêu / làm gì tiếp); `ReportPrintPreviewModal` thêm prop `notice`, hiện dải vàng nhạt TRÊN bản xem trước (không dùng toast — toast tắt mất, in xong mới biết thiếu dòng), và KHÔNG lọt vào bản in
+- [x] Đo lại sau khi chặn: 2.000/4.980 dòng · HTML 3,84 → **1,55 MB** · BE 0,95 → **0,43s** · bộ nhớ 116 → **90 MB**
+
+## Lịch sử: khoá dạng BẢNG hiển thị theo nhóm có nhãn (user chốt 2026-08-25)
+Trước: một nhãn cột chung `Danh sách thiết bị:` rồi phân biệt bằng ký hiệu `+ / - / ~`, mỗi dòng in
+cả bản ghi (`Thiết bị: X; Serial: Y; Nội dung yêu cầu: Z`) — đọc rất khó.
+Sau: **mỗi nhóm một nhãn riêng, dòng chính là TÊN bản ghi**, phần còn lại thành phụ chú xám sau `—`.
+- [x] BE `app/Services/CatalogHistoryService.php`: `rowListChange()` trả thêm `added_label` / `removed_label` / `changed_label` + `added_rows` / `removed_rows` (mỗi bản ghi tách `name` + `detail`); thêm `rowParts()` và `rowItemLabel()` (quy nhãn cột số nhiều "Danh sách thiết bị" về tên số ít "Thiết bị")
+- [x] FE `components/assign/SystemInfoSection.vue`: render 3 nhóm theo thứ tự **thêm mới → đã xoá → sửa thông tin**; bỏ nhãn cột khi đã có nhãn nhóm; mọi dòng mở đầu bằng `- `; thêm `rowsOf()` + `groupLabel()` có fallback cho log cũ; CSS `.si-group-label` (xám #6b7280) + `.si-row-detail`
+- [x] Sửa lỗi **dòng trống thừa**: `.si-change-old/.si-change-new` dùng `white-space: pre-line` nên mọi lần xuống dòng trong mã template thành dòng trống thật → viết nội dung mỗi dòng liền mạch trên một dòng mã
+- [x] Cập nhật skill `entity-history` mục 4 + **mục 4b mới** + 1 dòng checklist
+- [x] Verify trên dữ liệu thật (tạo log test rồi xoá): khối Lịch sử ở màn chi tiết và popup ở màn danh sách ra **giống hệt nhau**, 0 lỗi console
+- [x] Regression màn Khách hàng (dùng `SystemLogService`, log CŨ chỉ có mảng chuỗi): vẫn chạy, nhãn suy từ tên cột — "Nhóm khách hàng đã xóa: - Gara sửa chữa ô tô", "Hãng xe đã xóa: - Toyota". Không phải chạy lại dữ liệu cũ
+
+Kết quả hiển thị:
+```
+Thiết bị thêm mới:
+- Bộ cờ lê 2 đầu 10 chi tiết (8x10 - 30x32 mm) có hộp — Serial: SN-003
+Thiết bị đã xóa:
+- Bơm dầu cầu, dầu hộp số, Model: OLP-12 — Serial: SN-001; Nội dung yêu cầu: Bơm yếu
+Thiết bị sửa thông tin:
+- Máy nén khí X: Serial: SN-002 → SN-002-MOI
+```
+
+## Ô chọn nhiều nuốt hết chỗ của bảng trong popup (user báo 2026-08-25)
+Triệu chứng: popup chọn hàng hoá, chọn nhiều "Tính chất hàng hoá" thì không còn thấy bảng hàng hoá.
+Nguyên nhân: quy ước cũ (skill modal-popup bẫy 10) cho chip xuống dòng để chống cắt chữ nhưng KHÔNG
+chặn trần chiều cao -> ô nở vô hạn theo số chip.
+Đo thật (màn 1200x813, chọn hết 17 tính chất):
+
+| | Trước | Sau |
+| --- | --- | --- |
+| Cao ô lọc | 536px | 88px (cuộn trong ô) |
+| Cao khối lọc | 722px | 274px |
+| Khung bảng còn lại | 2px | 277px |
+| Số dòng thấy được | **0** | **6** |
+
+- [x] Sửa ở **component dùng chung `components/V2BaseSelect.vue`** (user chốt phạm vi rộng nhất): `max-height: 86px; overflow-y: auto` cho vùng chip — áp cho MỌI select chọn nhiều, popup lẫn bộ lọc màn danh sách. File này dùng **CRLF**, đã giữ nguyên (diff đúng 8 dòng thêm)
+- [x] Bỏ rule trùng vừa thêm ở `ProductSearchModal.vue`, để một nguồn duy nhất
+- [x] Cập nhật skill `modal-popup` bẫy 10: thêm vế "phải chặn trần" + bảng số đo + cách tự kiểm 1 dòng
+- [x] Verify: luật ăn từ component chung (`max-height` tính ra 86px), popup giữ 6 dòng khi có 17 chip, 0 lỗi console
+
+### Sửa lỗi lịch sử — tệp đính kèm ở dòng thêm/xoá (2026-08-25)
+- [x] Dòng "Thiết bị thêm mới" / "Thiết bị đã xóa" hiện nguyên URL dài của tệp, trong khi dòng "Thiết bị sửa thông tin" lại ra link gọn. Nguyên nhân: phần CHI TIẾT của dòng (`r.detail`) in bằng `{{ }}` thô, không qua `SiValue` — mà chuỗi chi tiết do máy chủ ghép từ nhiều cột nên URL gần như luôn nằm ở đó
+- [x] Cho `r.detail` (cả nhóm thêm và nhóm xoá) và `m.name` của nhóm sửa đi qua `SiValue` → hiện "File đính kèm: <tên tệp>" dạng link mở popup xem trước, giống hệt nhóm sửa
+- [x] Cập nhật `.claude/skills/entity-history/ui-base.md`: mục 5 thay bằng markup thật đang chạy, thêm §5a (ba nhóm có nhãn, bỏ dấu `~ - +`), §5b (**6 vị trí** bắt buộc dùng `SiValue`), §5c (bẫy `white-space: pre-line`); mục 8 bỏ dòng dạy sai "dựng Loại hành động từ log"
+- [x] Verify: render thật dòng log của phiếu `5705` → ra thẻ liên kết, trên màn chỉ còn tên tệp, không còn URL thô
+
+### Fix lỗi validate bám sai dòng khi xoá/thêm dòng trong bảng (2026-08-25)
+- [x] Thêm `utils/rowFieldErrors.js` (`removeRowErrors` / `dropRowErrorsFrom` / `clearRowErrors`) — dọn khoá lỗi 422 gắn chỉ số dòng (`products.2.serial`) mỗi khi mảng dòng đổi
+- [x] Áp vào chỗ xoá / thêm / chuyển dòng của form màn này; đổi khách hàng (xoá cả bảng) thì xoá hết lỗi của bảng
+
+### Bộ tài liệu bàn giao (2026-09-03)
+- [x] `testcase.xlsx` — cập nhật lại theo hành vi hiện tại: bản in là CỬA SỔ XEM TRƯỚC (không mở tab mới), thêm TC trần in 2.000 dòng, TC in ngay dưới trần, TC dòng tiến độ khi xuất Excel. Tổng **99 TC**, P0 52%, bộ kiểm thuật ngữ sạch. Sinh lại bằng `gen_testcase.py`
+- [x] `SRS - Yêu cầu kiểm tra sửa chữa - bảo hành.docx` — form chuẩn 4 chương, 13 chức năng FR-01…FR-13, 12 quy tắc nghiệp vụ BR-01…BR-12, 38 trang, 27 ảnh (sơ đồ use case + ảnh chụp thật). Sinh bằng `gen_srs.py`
+- [x] `HDSD_Yeu cau kiem tra sua chua - bao hanh.docx` — 13 chương, 9 bảng, 18 ảnh chụp thật; đủ mục "Vào màn này bằng cách nào" (2 lối vào), hướng dẫn theo từng quyền, bảng từng trường + giá trị điền sẵn cho form lập phiếu. Sinh bằng `gen_hdsd.py`
+- [x] Ảnh chụp thật để ở `wrr_shots/` (18 ảnh, Playwright 1440×900) — KHÔNG commit, đã nhúng sẵn trong .docx
+- [x] Thêm `.plans/gop-db/_mac_docx.py`: lớp tương thích macOS cho 2 engine tài liệu (font vẽ sơ đồ + cập nhật mục lục bằng Word qua AppleScript thay PowerShell). KHÔNG sửa file skill dùng chung của team
+
+### Sửa SRS theo phản hồi tester (2026-09-03)
+- [x] Tester báo SRS chưa đúng mẫu → lấy `SRS - Danh mục quốc gia.docx` trên Drive làm chuẩn, sửa 5 điểm: mỗi mục Giới thiệu mở đầu bằng dòng "Quy tắc chung: Áp dụng SRS Các quy tắc chung SRS_Các quy tắc chung_VN_1.0 - …"; mục Layout ghi đường bấm **Menu** thay cho URL; bảng mô tả giao diện **rút cột theo loại chức năng** (4/5/6/7/8 cột) thay vì cố định; Phần 4 mở đầu bằng dòng "Quy tắc áp dụng…"; bảng quyền bỏ cột Ký hiệu Q1/V1, ma trận dùng tên quyền làm tiêu đề cột
+- [x] Script chuyển đổi 1 lần: `.plans/gop-db/_upload/srs_theo_mau.py` (dùng `ast` để đổi lời gọi `ui_table`/`layout`, cắt chuỗi **theo byte** vì `col_offset` của ast tính bằng byte UTF-8 — cắt theo ký tự làm hỏng nguồn)
+- [x] Sinh lại + đẩy đè lên Drive (giữ nguyên file ID nên link cũ vẫn đúng)
+
+### Dựng lại SRS lần 2 theo mẫu tester (2026-09-03)
+- [x] Tester vẫn báo chưa đúng chuẩn sau lần vá đầu → **viết lại hẳn generator**, bám khung `SRS - Danh mục quốc gia.docx` (bản mẫu tester chỉ định): thứ tự chức năng theo mẫu (Xem danh sách → Tìm kiếm → Thêm/Lập → Chỉnh sửa → Xóa → thao tác trạng thái → Xem chi tiết → Lịch sử → In → Xuất Excel → Tuỳ chỉnh cột), mục Mục đích viết dạng dòng thường (mẫu không dùng gạch đầu dòng), mỗi mục Giới thiệu mở đầu bằng dòng "Quy tắc chung: Áp dụng SRS Các quy tắc chung…", Layout ghi "Đường dẫn màn hình → Menu → đường bấm" và bỏ hẳn URL, bảng giao diện rút cột theo loại chức năng, Phần 4 mở đầu bằng "Quy tắc áp dụng…"
+- [x] Đối chiếu bản mới với mẫu: 13 mục Giới thiệu / 14 dòng Quy tắc / 13 dòng Menu / 8 biểu đồ Use Case / 0 chỗ còn URL; khổ giấy, lề, style Heading trùng mẫu
+- [x] Đẩy đè lên Drive, giữ nguyên file ID nên link trong sheet theo dõi không phải sửa
+
+### Chốt lại file mẫu SRS (2026-09-03)
+- [x] **Phát hiện nguyên nhân tester chê 2 lần**: `SRS_MAU.docx` đóng gói trong skill ĐÃ ĐỔI thành “SRS - Phiếu đề nghị thu tiền” (chứng từ, cùng dạng 2 màn này), trong khi tôi đang bám “SRS - Danh mục quốc gia” lấy trên Drive — file danh mục đó chưa có phân quyền nên bỏ cột Ký hiệu và rút cột bảng giao diện, dẫn tôi đi sai. **Chuẩn là SRS_MAU trong skill.**
+- [x] Quay lại bản generator gốc (giữ 2 bảng quyền có cột Ký hiệu Q/V, ma trận dùng Q/V làm tiêu đề cột, bảng giao diện 7 cột cho chức năng chỉ đọc / 8 cột cho chức năng nhập liệu, Mục đích dạng gạch đầu dòng) rồi chỉ bổ sung 3 điểm còn thiếu so với mẫu: dòng “Quy tắc chung: Áp dụng SRS Các quy tắc chung…” ở mỗi mục Giới thiệu; mục Layout ghi “Đường dẫn màn hình → Menu: …” và bỏ URL; Phần 4 mở đầu bằng dòng “Quy tắc áp dụng…”
+- [x] **Phần 4 đổi sang BẢNG 5 cột** `STT | Mã quy tắc | Tên quy tắc | Mô tả | Phạm vi áp dụng` đúng như mẫu, thay cho các đoạn BR + gạch đầu dòng
+- [x] Đối chiếu số liệu với SRS_MAU: 2 bảng Ký hiệu · ma trận Q/V · bảng giao diện 7/8 cột · 14 dòng Quy tắc chung · 15 dòng Menu · 0 chỗ còn URL · Phần 4 là bảng 12 quy tắc
+- [x] Đẩy đè lên Drive, link cũ giữ nguyên
+
+### Dùng đúng API mới của skill (2026-09-03, lần cuối)
+- [x] **Nguyên nhân thật của 3 lần lệch**: đầu phiên tôi đọc `srs-documenter/SKILL.md` khi nó còn là bản cũ; skill được cập nhật lúc 11:16 cùng ngày (đổi bản mẫu sang “SRS - Phiếu đề nghị thu tiền”, thêm 4 điểm của form 2026-08-28 và các hàm mới). Skill KHÔNG sai — tôi gọi API cũ
+- [x] Chuyển 2 generator sang đúng hàm của lib: `d.rule_ref()` (đoạn Quy tắc chung có **hyperlink thật** sang SRS quy tắc chung, đúng anchor theo nhóm) · `d.layout(menu=…)` · `d.rule_table()` (Phần 4 bảng 5 cột) · **`d.overview_figure2()`** thay cho `overview_figure()` đã bỏ
+- [x] Sơ đồ tổng quan vẽ lại theo phân cấp: `mains` = 3 màn thật (danh sách, lập phiếu, chi tiết) nối thẳng tới actor; 10 thao tác còn lại là `subs` nối bằng «extend»/«include» vào đúng màn cha — trước đó vẽ phẳng 12 use case nối thẳng actor, sai nghiệp vụ
+- [x] Chạy đúng bộ tự kiểm trong SKILL.md: 15 dòng Menu · 13 đoạn Quy tắc chung · 1 câu dẫn Phần 4 · 14 hyperlink · Phần 4 là bảng 5 cột · không còn “URL đầy đủ” và các mục đã bỏ
+
+### Sửa sơ đồ UML tổng quan (2026-09-05)
+- [x] FR-05 Sửa và FR-10 Xóa đang «extend» của **FR-04 Lập phiếu yêu cầu** — sai hoàn toàn
+- [x] **Đối chiếu `SRS_MAU.docx` của skill** (Phiếu đề nghị thu tiền — cùng dạng chứng từ) để chốt khuôn, thay vì tự suy: mẫu cho **Sửa phiếu là use case CHÍNH nối thẳng actor** (không phải extend), **Xóa phiếu là «extend» của XEM DANH SÁCH** (không phải của chi tiết), còn In / Lịch sử / các thao tác duyệt–từ chối mới «extend» màn Chi tiết
+- [x] Vẽ lại đúng khuôn đó: mains = FR-01 Danh sách · FR-04 Lập phiếu · **FR-05 Sửa phiếu** · FR-06 Chi tiết (4 use case nối thẳng actor); «extend» FR-01 = FR-02 Lọc, FR-03 Cấu hình cột, **FR-10 Xóa**, FR-12 Xuất Excel; «extend» FR-06 = FR-07 Chuyển phòng, FR-08 Từ chối, FR-09 Tạo phiếu xử lý, FR-11 In, FR-13 Lịch sử
+- [x] Actor cập nhật theo: Người lập phiếu → [danh sách, lập, sửa, chi tiết]; Phòng tiếp nhận xử lý → [danh sách, chi tiết]
+- [x] Giữ lại 2 câu ở mục 1 Mục đích đã được rút gọn trên bản Drive (bản local trước đó còn câu dài) — đưa ngược vào `gen_srs.py` để lần chạy sau không mất
+- [x] Chạy lại `gen_srs.py`, đẩy đè lên Drive — file ID `1xdJN54n1dfcWDWYfjS0KWvd1nYT6eGAL` giữ nguyên, link cũ vẫn chạy

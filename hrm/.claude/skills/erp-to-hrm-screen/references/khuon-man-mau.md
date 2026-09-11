@@ -56,6 +56,37 @@ trường. Tách 3 file riêng là nguồn gốc phổ biến nhất của lệc
 </template>
 ```
 
+### Khối `<style>` bắt buộc — dễ quên nhất
+
+Cuối `index.vue` **và** cuối component `XxxForm.vue` phải có (KHÔNG `scoped`):
+
+```vue
+<style lang="scss">
+@import '@/assets/scss/v2-styles.scss';
+</style>
+```
+
+`create.vue` / `_id/edit.vue` / `_id/index.vue` không cần — chúng render `XxxForm` nên CSS theo đó vào.
+
+⚠️ Thiếu khối này màn **vẫn nhìn gần như đúng**: bảng, nút, cột đều ổn nhờ Bootstrap và CSS của route
+khác còn trong bundle. Chỗ duy nhất vỡ là **bộ lọc nâng cao** — CSS của `v2-styles.scss` biên dịch kèm
+`data-v-<hash>` của component đã import nó, nên hash của màn khác không áp được
+`.v2-styles .d-contents { display: contents }`; wrapper `d-contents` của `V2BaseSmartFilterPanel` giữ
+`display: block`, các `col-md-3` bên trong (ô Công ty/Phòng ban/Bộ phận, các cặp ô khoảng ngày) thôi
+không còn là flex item của `.form-row` → bị bóp còn ~130px, nhãn vỡ dòng, select cụt chữ.
+
+Tự kiểm trước khi nghiệm thu:
+
+```bash
+grep -L "v2-styles.scss" pages/<phân-hệ>/<màn>/index.vue pages/<phân-hệ>/<màn>/components/*.vue
+```
+
+Kiểm trên trình duyệt (mở bộ lọc nâng cao rồi chạy) — phải ra `contents`, ra `block` là thiếu import:
+
+```js
+getComputedStyle(document.querySelector('.smart-advanced-filters .form-row > .d-contents')).display
+```
+
 ### Mixin bắt buộc
 
 ```js
@@ -77,11 +108,25 @@ localStorageKey: '<phân_hệ>_<slug>',   // PHẢI duy nhất giữa các màn
 `columnCustomizationMixin` cần: `columnScreenKey: '<slug>'` — **duy nhất giữa các màn**, trùng key
 sẽ làm 2 màn ghi đè cấu hình cột của nhau.
 
-### Bộ lọc — khai bằng schema `filterFields`
+### Bộ lọc — khai bằng schema `filterFields`, BẬT nhãn floating
 
 ⚠️ Dùng **`V2BaseSmartFilterPanel`**, KHÔNG dùng `V2BaseFilterPanel`. `V2BaseFilterPanel` là bản cũ,
 màn phải tự dựng khối `#advanced-filters` bằng tay và **không có popup "Cài đặt bộ lọc"** — dựng
 xong là thiếu quy tắc chung mà nhìn ngoài giao diện không phát hiện ra.
+
+```vue
+<V2BaseSmartFilterPanel
+    table="<slug>"
+    floating                          <!-- BẮT BUỘC với màn port mới -->
+    :filter-fields="filterFields"
+    :filters="filters"
+    :collapsed="filterCollapsed"
+    :quick-search-value="filters.keyword"
+    quick-search-placeholder="Tìm theo <các trường BE thực sự lọc>"
+    @toggle-panel="filterCollapsed = !filterCollapsed"
+    @quick-search-change="..." @filter-change="..." @search="..." @reset="..."
+/>
+```
 
 Không dựng tay từng `<input>`. Khai mảng schema để user tự bật/tắt + kéo sắp xếp trong popup
 "Cài đặt bộ lọc" (cấu hình lưu ở bảng `filter_customizations` theo `table=<slug>`):
@@ -91,9 +136,10 @@ filterFields() {
   return [
     { key: 'org', label: '...', wrapperClass: 'd-contents', hideLabel: true,
       resetKeys: ['company_id', 'department_id', 'part_id', 'employee_id'] },   // dùng slot
-    { key: 'code',    label: 'Mã khách hàng', type: 'text',   placeholder: 'Nhập mã khách hàng' },
-    { key: 'status',  label: 'Trạng thái',    type: 'select', options: this.statusOptions,
-      placeholder: 'Chọn trạng thái' },
+    { key: 'code',    label: 'Mã khách hàng', type: 'text',   placeholder: '' },
+    { key: 'status',  label: 'Trạng thái',    type: 'select', options: this.statusOptions },
+    { key: 'created_at', label: 'Ngày tạo',   variant: 'range' },   // khoảng ngày trong 1 ô
+    { key: 'application_id', label: 'Ứng dụng', variant: 'tags' },  // ô chip nhiều lựa chọn
   ]
 }
 ```
@@ -102,8 +148,96 @@ filterFields() {
   `V2BaseCompanyDepartmentFilter` và `CascadePairSelect`.
 - **Thứ tự khối tổ chức luôn là**: Công ty → Phòng ban → Bộ phận → Nhân viên.
 - **Không truyền prop `title`** cho panel — dùng mặc định "Bộ lọc danh sách".
-- Placeholder: ô chọn = `Chọn <tên trường>`, ô gõ = `Nhập <tên trường>`,
-  ô tìm nhanh = `Tìm theo <các trường BE thực sự lọc>`. Cấm `Tất cả`, `Chọn...`, để trống.
+
+#### Nhãn floating — CHUẨN GIAO DIỆN ô lọc (chốt 07/09/2026)
+
+Màn mẫu: **`pages/assign/prospective-projects/index.vue`**. Nhãn nằm giữa ô khi rỗng, **bay lên đè
+viền trên** khi ô có dữ liệu hoặc đang focus. Ô cao **36px**, nhãn không chiếm thêm dòng riêng nên
+khối lọc gọn hơn hẳn kiểu nhãn-trên-ô-dưới.
+
+Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`. Panel tự bọc mỗi ô bằng
+`V2BaseFloatingField`, tự tính `hasValue`, tự truyền chiều cao 36px xuống `V2BaseSelect`.
+
+| Việc | Ai lo | Bạn phải làm gì |
+|---|---|---|
+| Nhãn + hiệu ứng bay lên | Panel | chỉ bật `floating` |
+| `hasValue` (nhãn bay lên khi có dữ liệu) | Panel | field gom nhiều ô thì **phải khai `resetKeys`**, panel dựa vào đó |
+| Chiều cao 36px | Panel (`control-height`) | không đụng |
+| Icon ⓘ chú thích | `V2BaseFloatingField` tra từ điển `utils/constants/field-hints` theo `label` | thêm `hint: '...'` nếu muốn đè, `noHint: true` nếu muốn tắt |
+
+**Khai `variant` cho ô đặc biệt:**
+
+| `variant` | Dùng khi | Ghi chú |
+|---|---|---|
+| (bỏ trống) | ô chữ / select / 1 datepicker | |
+| `'range'` | khoảng ngày **trong 1 ô** (Từ → Đến) | dùng `<template #field-...>` đặt 2 datepicker + `<span class="ff__sep">→</span>` |
+| `'tags'` | ô chip nhiều lựa chọn | control bên trong phải bỏ viền riêng, không thì viền đôi |
+
+**Placeholder khi bật floating — KHÁC quy tắc cũ:**
+- Nhãn floating đã nói đủ tên trường → **BỎ placeholder trùng nhãn**. Không viết
+  `placeholder: 'Chọn trạng thái'` cho ô nhãn "Trạng thái" nữa: lúc nghỉ nhãn nằm đúng chỗ
+  placeholder (component tự giấu placeholder đi), lúc float thì placeholder hiện ra lặp lại nhãn.
+- Chỉ giữ placeholder khi nó nói thêm điều nhãn không nói: `Gõ để tìm khách hàng...`,
+  `dd/mm/yyyy`.
+- Ô tìm nhanh vẫn giữ nguyên: `Tìm theo <các trường BE thực sự lọc>`. Cấm `Tất cả`, `Chọn...`.
+
+**Bộ lọc ≤ 3 trường** chạy `isInlineMode` — dàn ngang cạnh ô tìm nhanh, **không có nhãn** theo
+thiết kế, nên `floating` không áp vào đó. Cứ bật, panel tự bỏ qua.
+
+#### Ô "gõ để tìm từ server" — DÙNG `V2BaseSelectRemote`, cấm tự chế autocomplete
+
+Lọc theo Khách hàng / NCC / Sản phẩm... (danh sách quá lớn không nạp hết được):
+
+```vue
+<template #field-customer_id>
+  <V2BaseSelectRemote
+      v-model="filters.customer_id"
+      :fetchFn="fetchCustomers"
+      :initialOption="customerInitialOption"
+      :minimumInputLength="2"
+      placeholder="Gõ để tìm khách hàng..."
+      size="sm"
+      height="36px"
+      @select="onCustomerSelected"
+  />
+</template>
+```
+
+| Bắt buộc | Vì sao |
+|---|---|
+| `height="36px"` khi nằm trong ô floating | `updateHeight()` ghi inline `!important`, CSS ngoài KHÔNG đè nổi → thiếu là ô lùn 32px lệch hàng |
+| `minimumInputLength` (thường 2) | select2 hiện "Vui lòng nhập thêm N ký tự" thay vì báo "không có dữ liệu" khi user chưa gõ gì |
+| `initialOption` | localStorage chỉ lưu được `id`; thiếu cái này thì F5 xong ô hiện **rỗng** dù bộ lọc vẫn đang chạy |
+| `@select` lưu lại `text` | để dựng `initialOption` cho lần sau. Trả `null` khi user bấm × |
+
+❌ **Cấm** tự viết khối `v-if="showList"` + `@focus="showList = true"` + mảng `filteredXxx`.
+Đã dính thật ở màn Dự án TKT: chưa gõ gì đã hiện "Không tìm thấy khách hàng", và dropdown thứ 2
+quên `position: absolute` nên đẩy vỡ layout.
+
+#### ⚠️ Sửa CSS cho ô lọc: thắng bằng SPECIFICITY, `!important` KHÔNG đủ
+
+`V2BaseSelect` / `V2BaseDatePicker` đặt sẵn nhiều rule `!important` cho ô 32px. Rule của
+`V2BaseFloatingField` mà chỉ **bằng điểm** thì thắng thua do **thứ tự nguồn** — mà thứ tự nguồn
+giữa dev (Nuxt nhét CSS theo từng component) và bản **build** (gộp CSS) **KHÁC NHAU**.
+
+→ Triệu chứng kinh điển: **local đúng, lên dev/prod sai**. Đã dính 3 lần liên tiếp:
+
+| Triệu chứng | Rule thua | Kẻ thắng |
+|---|---|---|
+| Placeholder lòi ra đè lên nhãn nghỉ (chỉ trên bản build) | `.ff:not(.is-float) .ff__control .select2-selection__placeholder` (4) | `.v2-select ... .select2-selection__placeholder` (4) |
+| Chữ trong select lệch lên 3.4px | `.ff .ff__control .select2-selection__rendered` (3) | `div.v2-select.v2-select--sm ... __rendered` (4+1) |
+| Ô select lùn 32px | CSS thường | **inline** `!important` của `updateHeight()` → phải dùng prop `height` |
+
+**Cách kiểm chứng bắt buộc** trước khi báo xong: nhét rule mới vào **đầu `<head>`** — vị trí bất lợi
+nhất về thứ tự nguồn — rồi đo `getComputedStyle`. Vẫn thắng thì mới chắc không vỡ trên bản build.
+
+```js
+// chạy trong console / browser_evaluate
+const s = document.createElement('style')
+s.textContent = '<rule mới>'
+document.head.insertBefore(s, document.head.firstChild)
+getComputedStyle(document.querySelector('.ff .select2-selection__rendered')).lineHeight
+```
 
 ### Toolbar nút (`#actions`) — đúng thứ tự SRS
 

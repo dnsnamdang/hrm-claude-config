@@ -30,7 +30,7 @@ kế toán sang ERP tạo và duyệt · màn Phiếu báo có (chỉ đọc đ�
 | 1 | Dùng chung 3 bảng ERP (`bill_adjust_dept_requests` + `_details` + `_detail_items`), **không migration** cho bảng chính |
 | 2 | Port **cả 2 loại**: KH (`request_type=1`) và NCC (`request_type=2`, kèm ngoại tệ + tỷ giá + hợp đồng mua) |
 | 3 | **Dừng ở "Chờ tạo phiếu kế toán"** — không port màn phiếu kế toán, HRM không ghi sổ cái |
-| 4 | **Hợp đồng bán `firm_contracts` → `hrm_contracts`** ở luồng tạo mới; 3 nguồn ERP còn lại (`ServiceContract`, `OpeningContract`, `WrServiceContract`) giữ nguyên |
+| 4 | ~~**Hợp đồng bán `firm_contracts` → `hrm_contracts`** ở luồng tạo mới~~; 3 nguồn ERP còn lại (`ServiceContract`, `OpeningContract`, `WrServiceContract`) giữ nguyên. ⚠️ **SỬA 2026-09-07**: popup hợp đồng của MÀN NÀY đọc **cả `firm_contracts`** (lọc `status ∈ {3,9,10}`, `type ∈ {1,4,8}` như ERP) — KH gốc ERP có hợp đồng nằm hết ở bảng cũ, không có nguồn này thì không điều chỉnh được công nợ (VD KH 35431 có 64 `firm_contracts` / 0 `hrm_contracts`). Các màn khác vẫn theo quyết định gốc |
 | 5 | Giữ `FirmContract` trong `morphMap` để 11.037 dòng phiếu cũ mở được |
 | 6 | **2 mục menu** như ERP: *Phiếu yêu cầu điều chỉnh công nợ* + *Chờ duyệt* (gate quyền Kế toán thanh toán) |
 | 7 | **Cửa vào "Phiếu báo có" giống hệt ERP**: nhận `?bill_income_report_detail_ids=` (danh sách DÒNG người dùng đã tích ở màn Chi tiết phiếu báo có). ~~Popup tự chọn phiếu~~ đã bỏ 2026-08-17 vì làm mất 3 ràng buộc của ERP (chỉ phiếu loại KH · chỉ dòng còn tiền — **968/10.199** dòng · tích từng dòng) |

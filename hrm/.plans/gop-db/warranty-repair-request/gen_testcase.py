@@ -680,7 +680,8 @@ SEC_VII = [
      "Phiếu có 2 dòng thiết bị, đã điền đủ thông tin.",
      "1. Bấm nút In ở dòng phiếu\n2. Xem trang xem trước vừa mở",
      "—",
-     "- Mở tab mới hiển thị mẫu phiếu\n- Thấy khung tờ giấy dọc có viền, giấy nền trắng\n"
+     "- Mở cửa sổ “Xem trước phiếu yêu cầu” ngay trên màn hình, không mở tab mới\n"
+     "- Thấy đầy đủ tiêu đề công ty (logo, địa chỉ, điện thoại) ở đầu bản in\n"
      "- Trên phiếu có số phiếu, tên khách hàng, đủ 2 dòng thiết bị và khối ký tên (Người yêu cầu, "
      "Trưởng phòng yêu cầu, Phòng nhận yêu cầu, Ban giám đốc)\n"
      "- ⚠️ Không còn chỗ nào bỏ trống dạng ký hiệu chờ điền"),
@@ -689,16 +690,18 @@ SEC_VII = [
      "Đang ở trang xem trước bản in 1 phiếu.",
      "1. Quan sát đầu trang và vị trí nút In",
      "—",
-     "- Không có thanh menu xanh phía trên, không hở dải màu lạ ở đầu trang\n- Nút In nằm bên "
-     "phải, thẳng mép phải tờ giấy\n- 4 ô ký tên nằm ngang hàng, chia đều bề ngang"),
+     "- Cửa sổ xem trước có tiêu đề “Xem trước phiếu yêu cầu” và nút In màu xanh ở góc trái trên\n"
+     "- 4 ô ký tên nằm ngang hàng, chia đều bề ngang\n- Bấm dấu × hoặc phím Esc thì đóng cửa sổ, "
+     "danh sách phía sau giữ nguyên bộ lọc"),
 
     ("006", "In danh sách theo bộ lọc", "P0",
      "Đang lọc trạng thái “Đang tạo”, còn 4 phiếu.",
      "1. Bấm nút In danh sách\n2. Xem trang xem trước",
      "—",
-     "- Mở tab mới với mẫu danh sách khổ ngang, có khung tờ giấy\n- Tiêu đề “DANH SÁCH PHIẾU YÊU "
-     "CẦU KIỂM TRA SỬA CHỮA BẢO HÀNH”\n- Bảng có đúng 4 phiếu đang lọc\n"
-     "- Nền quanh tờ giấy cùng màu với trang in 1 phiếu"),
+     "- Mở cửa sổ “Xem trước danh sách yêu cầu kiểm tra sửa chữa – bảo hành”\n"
+     "- Tiêu đề bản in “DANH SÁCH PHIẾU YÊU CẦU KIỂM TRA SỬA CHỮA BẢO HÀNH”\n"
+     "- Có 2 dòng “Thời gian” và “Phòng yêu cầu”; không lọc thì ghi “Tất cả”\n"
+     "- Bảng có đúng 4 phiếu đang lọc, mỗi phiếu MỘT dòng dù có nhiều thiết bị"),
 
     ("007", "Bấm nút In trên trang xem trước", "P1",
      "Đang ở trang xem trước.",
@@ -720,11 +723,28 @@ SEC_VII = [
      "—",
      "- Ô chứa cả 2 tên thiết bị, mỗi tên một dòng trong cùng ô"),
 
-    ("010", "In danh sách khi chưa lọc gì", "P2",
-     "Không áp dụng bộ lọc nào, tổng 5.368 phiếu.",
-     "1. Bấm In danh sách\n2. Chờ trang xem trước tải xong",
+    ("010", "In danh sách khi chưa lọc gì — vượt trần in", "P0",
+     "Không áp dụng bộ lọc nào, tổng hơn 5.000 phiếu.",
+     "1. Bấm In danh sách\n2. Đọc nội dung cửa sổ xem trước",
      "—",
-     "- Trang hiện đủ số dòng tương ứng, không báo lỗi\n- ⚠️ Bản in rất dài, nên lọc trước khi in"),
+     "- ⚠️ KHÔNG dựng bản in; cửa sổ chỉ hiện lời nhắc nền vàng: danh sách vượt mức in tối đa "
+     "2.000 dòng, đề nghị thu hẹp bộ lọc hoặc dùng Xuất Excel\n"
+     "- Câu nhắc có ghi rõ số dòng thực tế của bộ lọc hiện tại\n"
+     "- Trình duyệt KHÔNG bị treo, không mở hộp thoại in"),
+
+    ("011", "In danh sách ngay dưới trần in", "P1",
+     "Lọc còn khoảng 1.900 phiếu (dưới 2.000).",
+     "1. Bấm In danh sách\n2. Chờ cửa sổ xem trước tải xong",
+     "—",
+     "- Bản in dựng bình thường, đủ số dòng, không hiện lời nhắc vượt trần"),
+
+    ("012", "Dòng tiến độ khi xuất Excel danh sách lớn", "P1",
+     "Bộ lọc ra hơn 4.000 phiếu.",
+     "1. Bấm Xuất Excel rồi Xuất file\n2. Quan sát dòng chữ cạnh nút trong lúc chờ",
+     "—",
+     "- Hiện dòng “Đã tải …/… dòng”, sau đó “Đang dựng file …/… dòng”\n"
+     "- Nút Xuất Excel bị khoá trong lúc chạy, xong thì mở lại\n"
+     "- Tệp tải về đủ số dòng, không thiếu trang nào"),
 ]
 
 SEC_VIII = [
@@ -851,7 +871,7 @@ SECTIONS = [
 
 build(output_file=OUTPUT_FILE,
       sheet_name="Trang tính1",
-      feature_name="Yêu cầu kiểm tra sửa chữa – bảo hành - Cập nhật ngày 20/08/2026",
+      feature_name="Yêu cầu kiểm tra sửa chữa – bảo hành - Cập nhật ngày 03/09/2026",
       module_name=MODULE,
       description_block=DESCRIPTION_BLOCK,
       role_tcs=ROLE_TCS,

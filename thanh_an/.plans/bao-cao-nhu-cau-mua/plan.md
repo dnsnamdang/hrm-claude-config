@@ -59,3 +59,12 @@ Vừa hoàn thành: code xong toàn bộ 9 task (BE: quyền 517 + service + con
 Đang làm dở: —
 Bước tiếp theo: user chạy verify runtime — `php artisan db:seed --class="Modules\Timesheet\Database\Seeders\PermissionsTableSeeder"`, gán quyền 517 cho role, `php artisan route:list --path=supply/reports`, rồi mở `/supply/reports/purchase-demand` verify UI E2E (cần có Phiếu xử lý cung ứng status=5 có dòng Mua hàng).
 Blocked: —
+
+## Cố định cột khi cuộn ngang (2026-09-08, @khoipv)
+
+- [x] FE `index.vue`: gắn class cho cột STT + 4 cột "Thông tin hàng hóa" (`th-stt/td-stt`, `th-code1/td-code1`, `th-code2/td-code2`, `th-name/td-name`, `th-unit/td-unit`; header nhóm `th-goods` colspan 4)
+- [x] FE: `position: sticky` + bề rộng cố định + mốc `left` lũy tiến cho vùng cột đóng băng (kể cả cột tick chọn khi bật lọc "Chỉ mã chưa có HĐ mua" — table thêm class `has-pick`)
+- [x] FE: vẽ lại border của ô sticky bằng `box-shadow` inset (vì `border-collapse: collapse` làm mất border ô sticky khi cuộn) — mép phải vùng cố định để border mảnh như các cột khác, KHÔNG dùng vạch đậm/đổ bóng (user yêu cầu 2026-09-08)
+- [x] Verify compile FE (`/supply/reports/purchase-demand` HTTP 200)
+- [x] (2026-09-08) User đổi ý 2 lần: bỏ ĐVT ra rồi đưa lại vào vùng cố định → chốt **cố định cả ĐVT**, giữ nguyên header gộp `Thông tin hàng hóa` colspan 4 (biên vùng cố định trùng khít mép phải ô gộp)
+- [x] FE: fix hover chỉ sáng dòng đầu của mã hàng — `tr:hover` không phủ được ô `rowspan` (ô rowspan thuộc dòng đầu). Gom mỗi mã hàng thành 1 `<tbody class="grp">` riêng, đổi rule thành `tbody.grp:hover td`

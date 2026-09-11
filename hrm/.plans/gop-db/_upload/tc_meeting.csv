@@ -1,0 +1,30 @@
+"UPDATE NỘI DUNG 03/09/2026","","","","","","Task http://quanly.dnsmedia.vn/issues/11014","","",""
+"Meeting","Biên bản & tự hủy cuộc họp","","TC_17.001","Màn cấu hình có 2 tham số mới","P0","Đăng nhập tài khoản quản trị cấu hình hệ thống.","1. Mở màn cấu hình hệ thống, phần Meeting
+2. Quan sát","—","- Có ô “Số giờ gửi cảnh báo trước thời điểm hủy tự động”, mặc định 3
+- Có ô “Số ngày chặn cập nhật biên bản sau khi cuộc họp kết thúc”, mặc định 1
+- Sửa và lưu được"
+"","","","TC_17.002","Nhập biên bản trước hạn thì lưu bình thường","P0","Cuộc họp kết thúc lúc 10:00 hôm nay, hạn nhập biên bản là 10:00 ngày mai.","1. Người chủ trì mở cuộc họp
+2. Nhập biên bản và bấm hoàn thành","Thời điểm thao tác: trước 10:00 ngày mai","- Lưu biên bản thành công
+- Cuộc họp chuyển sang trạng thái hoàn thành, không bị hủy"
+"","","","TC_17.003","Cảnh báo trước thời điểm hủy","P0","Cuộc họp kết thúc 10:00 hôm nay, hạn 10:00 ngày mai, cấu hình cảnh báo trước 3 giờ.","1. Chờ tới 07:00 ngày mai
+2. Kiểm tra chuông thông báo của người tạo cuộc họp","Cấu hình cảnh báo: 3 giờ","- Người tạo cuộc họp nhận được thông báo
+- Nội dung đúng khuôn: ⏰ [MET] Nhắc nhở: {Tên cuộc họp}. Sẽ bị HỦY nếu không HOÀN THÀNH cuộc họp. Vui lòng cập nhật biên bản và HOÀN THÀNH trước lúc {Thời điểm}"
+"","","","TC_17.004","Đổi số giờ cảnh báo thì mốc nhắc đổi theo","P1","Đổi cấu hình cảnh báo thành 5 giờ, cuộc họp có hạn 10:00 ngày mai.","1. Chờ tới 05:00 ngày mai
+2. Kiểm tra thông báo","Cấu hình cảnh báo: 5 giờ","- Thông báo nhắc nhở gửi lúc 05:00, không phải 07:00"
+"","","","TC_17.005","Quá hạn chưa hoàn thành thì tự hủy","P0","Cuộc họp kết thúc 10:00 hôm qua, người chủ trì chưa hoàn thành biên bản.","1. Chờ qua 10:00 hôm nay
+2. Mở danh sách meeting","—","- Trạng thái cuộc họp tự chuyển thành “Hủy”
+- Người tạo và các thành viên nội bộ tham gia đều nhận được thông báo"
+"","","","TC_17.006","Sau khi bị hủy thì không cập nhật biên bản được nữa","P0","Cuộc họp vừa bị hệ thống tự hủy.","1. Người chủ trì mở cuộc họp
+2. Thử nhập và lưu biên bản","—","- ⚠️ Hệ thống chặn, không cho lưu biên bản
+- Nêu rõ lý do cuộc họp đã bị hủy do quá hạn"
+"","","","TC_17.007","Cuộc họp bị hủy không tính vào KPI","P0","Nhân viên X có 1 cuộc họp bị hệ thống tự hủy trong kỳ.","1. Mở báo cáo KPI / báo cáo meeting theo nhân viên của kỳ đó","Nhân viên X","- ⚠️ Cuộc họp bị hủy KHÔNG được cộng vào số liệu KPI của nhân viên"
+"","","","TC_17.008","Hoàn thành đúng lúc sát hạn","P1","Cuộc họp có hạn 10:00, người chủ trì hoàn thành biên bản lúc 09:59.","1. Lưu và hoàn thành biên bản lúc 09:59
+2. Chờ qua 10:00","Thời điểm hoàn thành: 09:59","- Cuộc họp giữ trạng thái hoàn thành, không bị hủy"
+"","","","TC_17.009","Chỉ lưu nháp biên bản mà chưa hoàn thành","P0","Người chủ trì có nhập nội dung biên bản nhưng chưa bấm hoàn thành, đã quá hạn.","1. Chờ qua hạn
+2. Kiểm tra trạng thái cuộc họp","—","- ⚠️ Vẫn bị tự hủy — điều kiện là HOÀN THÀNH biên bản, không phải chỉ nhập nội dung"
+"","","","TC_17.010","Đổi số ngày chốt biên bản","P1","Đổi cấu hình số ngày chặn cập nhật thành 2 ngày.","1. Tạo cuộc họp kết thúc 10:00 hôm nay
+2. Kiểm tra hạn nhập biên bản","Cấu hình: 2 ngày","- Hạn nhập biên bản là 10:00 sau 2 ngày, thông báo nhắc và mốc tự hủy dịch theo"
+"","","","TC_17.011","Cuộc họp bị hủy tay trước hạn","P2","Người tạo chủ động hủy cuộc họp trước khi tới hạn.","1. Hủy cuộc họp
+2. Chờ qua hạn nhập biên bản","—","- Không phát sinh thêm thông báo nhắc nhở và không bị hủy lần hai"
+"","","","TC_17.012","Nhiều cuộc họp cùng tới hạn","P1","Có 3 cuộc họp cùng kết thúc 10:00 hôm qua, đều chưa hoàn thành biên bản.","1. Chờ qua 10:00 hôm nay
+2. Kiểm tra cả 3","3 cuộc họp","- Cả 3 đều chuyển sang “Hủy” và đều gửi thông báo, không sót cuộc nào"

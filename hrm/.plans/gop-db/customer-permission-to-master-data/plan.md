@@ -191,3 +191,20 @@ của `customers` không.
 **Còn tồn đọng, CHƯA sửa (chờ user quyết):** hành động **Sửa** mới chỉ gate bằng `Sửa khách hàng`.
 Tài khoản có `Sửa` mà không có `Xem` sẽ vào được `/edit` rồi form trắng (vì `show` 403). Trên thực
 tế đây là cấu hình quyền sai, nhưng muốn chắc thì đổi thành `canEdit && canView`.
+
+## Phase 8 — Tài liệu giải thích phân quyền (Excel)
+
+- [x] P8.1 Rà lại toàn bộ nguồn phân quyền của màn: `PermissionsTableSeeder` (dòng 1271-1281),
+      `Modules/Assign/Routes/api.php` (nhóm `/assign/customers`), `CustomerPermissionHelper`,
+      `CustomerService::applyVisibilityScope()` / `isVisible()`, `pages/assign/customers/*`,
+      `components/assign-components/customer/CustomerForm.vue`, `middleware/checkCustomerPermission.js`
+- [x] P8.2 Xuất `phan-quyen-quan-ly-khach-hang.xlsx` (6 sheet: Tổng quan · Quyền mở được gì ·
+      Chức năng → Quyền · Phạm vi dữ liệu · API & middleware · Lưu ý khi cấu hình)
+
+### Checkpoint — 2026-08-27 (Phase 8)
+Vừa hoàn thành: P8.1-P8.2. File tạo mới:
+`.plans/gop-db/customer-permission-to-master-data/phan-quyen-quan-ly-khach-hang.xlsx`.
+Đang làm dở: không có.
+Bước tiếp theo: user đọc file, xác nhận 3 điểm được ghi ở sheet 6 có đúng ý nghiệp vụ không
+(khối Lịch sử màn chi tiết chưa gác quyền · quyền 1526 chưa dùng · thao tác thiết bị dùng quyền Xem).
+Blocked: (giữ nguyên) cấp lại quyền cho role sau khi chạy seeder.
