@@ -163,6 +163,60 @@ Hai điểm đi kèm, thiếu một là hỏng lại:
 chính nó là **bỏ chọn**. Kịch bản click `nth=0` hai lần sẽ tự bỏ đúng thứ vừa chọn rồi báo "mất dữ
 liệu" — chọn theo **tên** khác nhau, đừng chọn theo vị trí.
 
+## 2c. Nhãn option NHÂN VIÊN — một khuôn duy nhất (chốt 2026-09-11)
+
+**BẮT BUỘC.** Mọi select chọn nhân viên — form, modal, **bộ lọc**, mọi phân hệ, `V2BaseSelect` /
+`V2BaseSelectInModal` lẫn `Select2` cũ — hiển thị đúng một khuôn:
+
+```
+Tên nhân viên - Mã phòng - Mã nhân viên
+Nguyễn Thị Cần - HN_KD1 - 11010057
+```
+
+Thiếu phần nào thì **bỏ phần đó**, không để dấu `-` thừa (`Trần A - NV01`).
+
+### Làm màn mới — 3 quy tắc, không có ngoại lệ
+
+1. **KHÔNG tự ghép chuỗi.** Nhãn luôn sinh bằng `employeeOptionText(employee)` từ
+   `utils/employeeOptionText.js`. Cấm mọi biến thể `code + ' - ' + fullname`,
+   `fullname + '-' + code`, `code + '_' + fullname`, `text: val.name`, `label: e.fullname`.
+2. **Ưu tiên lấy option từ store** — 6 key này đã áp helper sẵn, đọc thẳng là xong, không map lại:
+   `allEmployeesOptions` · `employeeOptions` · `employeeInfoOptions` ·
+   `activeCompanyEmployeeOptions` · `currentEmployeeCompany` · `allEmployeesData`.
+   Luồng Giải pháp thì dùng `utils/assign/employee-options.js`.
+3. **Viết API mới trả nhân viên thì PHẢI trả `department_code`** (kèm `fullname` + `code`), để FE
+   ghép được. Endpoint nào BE tự dựng sẵn chuỗi label thì gọi helper PHP `employeeOptionLabel($info)`
+   (`app/Helper/FormatHelper.php`) — đừng ghép tay trong service/resource.
+
+### Bẫy đã trả giá thật
+
+- **`state.employees[].name` là chuỗi BE ghép sẵn `"MÃ_PHÒNG - Tên"`** — bind thẳng `val.name` ra sai
+  khuôn. Helper tự cắt tiền tố này, cứ truyền cả object vào là đúng. (Chính lỗi ở `/assign/meeting`:
+  ô "Nhân viên" hiện `HN_KD1 - Nguyễn Thị Cần`, ô "Người cập nhật gần nhất" hiện `11010057 - Nguyễn Thị Cần`.)
+- **Đổi `name` mà BE trả cho BẢNG là hỏng bảng** — bảng nhân sự có cột Mã/Phòng riêng. Chỉ đổi phần
+  **option của select**; cần nhãn ghép thì thêm field mới (`department_code`, `employee_code`), đừng
+  sửa `name`.
+- **Ghép nhãn từ dữ liệu nghiệp vụ rời rạc** (PM/Leader/thành viên trong popup duyệt giải pháp) thì
+  tra `state.employeeOptions` theo id để lấy nhãn chuẩn, tên BE trả chỉ dùng làm dự phòng.
+- Người đã nghỉ việc / không còn trong danh sách: giữ fallback tên cũ do BE trả (`host_name`), đúng
+  quy tắc mục 1 — hiện giá trị đang chọn còn hơn để select trống.
+
+### Tự kiểm trước khi bàn giao (cả 2 lệnh phải RỖNG)
+
+```bash
+# hrm-client — không còn chỗ nào tự ghép nhãn nhân viên
+grep -rnE "(text|label|name): *[a-zA-Z_]+\.(fullname|name)\b|\.code \+ '[-_ ]+' \+|\.fullname \+ '[-_ ]+' \+" \
+  --include='*.vue' --include='*.js' pages components utils store | grep -v '{{'
+
+# hrm-api — API trả nhân viên mà thiếu mã phòng
+grep -rn "fullname" Modules --include='*.php' | grep -i "select\|=>" | grep -v department_code
+```
+
+Lệnh 1 còn dòng nào thì hoặc đổi sang `employeeOptionText`, hoặc xác nhận đó **không phải option
+nhân viên** (phòng ban, ngân hàng, dòng bảng) rồi bỏ qua.
+
+---
+
 ## 3. Ô nhập liệu bị KHOÁ (disabled / readonly) — một kiểu duy nhất
 
 | Thuộc tính | Giá trị |
@@ -291,6 +345,8 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Select đi qua wrapper tự khai `templateResult` → đã tự gắn `LOCKED_OPTION_PREFIX`
 - [ ] Ô disabled: nền `#f1f5f9`, chữ `#475569`, không `opacity`, không bấm được (kể cả ô dựng bằng `<div>`)
 - [ ] Focus ô nhập: không viền xanh, không quầng sáng
+- [ ] **Select chọn nhân viên: nhãn đúng khuôn `Tên - Mã phòng - Mã NV`** (mục 2c) — không màn nào tự
+      ghép chuỗi, API mới trả nhân viên có `department_code`
 - [ ] Ô "chỉ cho số": gõ chữ → hiện lỗi đỏ chuẩn hệ thống; bấm **Lưu nháp** vẫn bị chặn; gọi thẳng
       API với giá trị chữ thì BE trả 422 (mục 4b + `form-validate` mục 1, 3c)
 

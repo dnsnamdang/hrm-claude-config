@@ -1975,3 +1975,24 @@ màn CCTT giữ nguyên đúng như ERP (form CCTT KHÔNG có cột VAT). Chỉ 
 - [x] **Khối Liên hệ ánh xạ sai nguồn**: đang đọc `receiver_*` (luôn rỗng ở phiếu bảo hành) trong khi ERP đọc `customer_contact_name` / `customer_address` / `customer_contact_phones`. Đã sửa; đối chiếu phiếu 6743 khớp ERP từng chữ (Nguyễn Xuân Trường · Số 2 Lê Đức Thọ… · 0915055976) và khối ngân hàng đủ 5 ô (0531100096008 · TMCP QUÂN ĐỘI · Long Biên)
 - [x] Khối đầu phiếu: bỏ 3 ô ERP không có (Trạng thái · Ngày tạo · Người liên hệ — trạng thái chuyển thành badge ở tiêu đề khối), sắp lại ĐÚNG 16 trường và đúng thứ tự ERP; ô Ghi chú đổi sang `V2BaseTextarea` 2 dòng chiếm hết hàng. Đối chiếu nhãn: 16/16 khớp, không thừa không thiếu
 - [x] Đối chiếu Redmine #11371 + #11372 (đọc qua trình duyệt — API Redmine không nhận Basic auth, mọi request đều bị coi là khách): 2 task đúng là màn phiếu bảo hành vừa sửa. Bổ sung nốt 2 ý còn thiếu: **tiêu đề khối "Chi tiết"** bọc A/B/C/D như ERP, và **bỏ dòng "Người tạo · ngày tạo"** ở khối đầu phiếu (task ghi "thừa Trạng thái và Ngày tạo")
+
+### Bộ lọc màn Phiếu cung cấp thông tin — bật nhãn floating (2026-09-09)
+- [x] Bật prop `floating` trên `V2BaseSmartFilterPanel` — chuẩn của khối "Tìm kiếm nâng cao" (skill list-page, chốt 2026-09-07, màn mẫu `assign/prospective-projects`). Panel tự bọc `V2BaseFloatingField`, ô cao 36px, nhãn bay lên đè viền khi có giá trị
+- [x] `V2BaseCompanyDepartmentFilter` truyền `:floating="true"` để ô Phòng ban không lệch trục
+- [x] `V2BaseSelectRemote` (Khách hàng) thêm `height="36px"` (bắt buộc trong ô floating vì `updateHeight()` ghi inline `!important`), `minimumInputLength=2`, placeholder đổi thành "Gõ để tìm khách hàng..." (nói THÊM, không lặp nhãn)
+- [x] Bỏ 7 placeholder trùng nhãn theo quy tắc mới của skill
+- [x] `inputCount` của ô gom nhóm tính theo quyền thật (`is_all_company ? 2 : 1`) — ô "Công ty" chỉ render cho người có phạm vi toàn tổng công ty nên khai cứng 2 là đếm thừa
+- [x] Nút ổ khoá "xem cả danh mục đã khoá" bị MẤT khi bật floating (nhánh floating của `V2BaseCompanyDepartmentFilter` không có) → thêm slot `label-suffix` cho `V2BaseFloatingField` và gắn nút cho cả 3 ô Công ty / Phòng ban / Bộ phận; vùng bấm nới bằng `::after { inset: -9px }` vì icon co còn 14px khi nhãn bay lên viền (kiểm: bấm lệch 6px ngoài icon vẫn ăn)
+- [x] Popover giải thích ổ khoá bị danh sách option che: `.popover` của bootstrap là `z-index 1060` còn dropdown select2 là `9999` → ghim `.info-popover` lên `10000`. Ghi bẫy vào skill `info-icon-tooltip` mục 3
+- [x] Quy tắc chung: mọi khoảng "từ – đến" gộp về MỘT ô. Đưa hẳn `type: 'date-range'` vào `V2BaseFilterFieldControl` (tự render 2 datepicker + dấu →) nên 16 màn còn lại chỉ cần khai schema, không phải tự dựng slot. Hai key gửi BE giữ nguyên → `loadData()` và BE không đổi; cấu hình "Cài đặt bộ lọc" đã lưu không hỏng vì `mergedFields()` bỏ qua key cũ và tự thêm key mới
+- [x] Ô khoảng ngày chạy ở CẢ HAI chế độ: nâng cao (vỏ floating vẽ viền, cụm `display: contents`) và **bộ lọc gọn** (cụm tự vẽ viền qua `range-boxed`, placeholder ghép tên trường "Ngày tạo từ/đến" vì chế độ này không có nhãn)
+- [x] Nhãn floating áp cho CẢ chế độ bộ lọc gọn (user chốt 2026-09-09): nhánh inline của panel nay cũng bọc `V2BaseFloatingField`; CSS chỉ ẩn nhãn do control tự dựng (`label:not(.ff__label)`), nâng ô tìm nhanh + ô lọc lên 36px cho thẳng trục, và cho vỏ `.ff` giãn hết ô (thiếu là select co lại còn mỗi mũi tên)
+- [x] Khối bộ lọc thừa khoảng trắng trên/dưới: `V2BaseSmartFilterPanel` dùng class `p-3` của bootstrap, nhưng theme dự án ghi đè `.p-3` thành **1.5rem (24px)** nên khối chỉ chứa một hàng ô cao 36px mà cao tới 138px. Thay bằng class riêng `smart-filter-card` (padding 10px/16px) + `smart-filter-head` (8px thay cho `mb-2` = 12px) → **138px xuống 106px**, chế độ nâng cao cũng gọn theo mà không bị chật
+
+### Áp chuẩn bộ lọc mới cho CẢ luồng dịch vụ (2026-09-09)
+5 màn còn lại: Yêu cầu kiểm tra sửa chữa · Phiếu xử lý yêu cầu · Báo giá dịch vụ · Hợp đồng dịch vụ · Phiếu bảo hành
+- [x] Bật `floating` trên `V2BaseSmartFilterPanel` + `:floating="true"` cho `V2BaseCompanyDepartmentFilter` (thiếu cái sau là ô Phòng ban giữ nhãn tĩnh, cao hơn hàng đúng một dòng chữ)
+- [x] Gộp "từ ngày – đến ngày" về MỘT ô `type: 'date-range'` (5/5 màn), hai key gửi BE giữ nguyên
+- [x] Bỏ **14 placeholder trùng nhãn**; ô Khách hàng đổi sang "Gõ để tìm khách hàng..." + `minimumInputLength: 2` + `height="36px"`
+- [x] `inputCount` của ô gom nhóm tính theo quyền thật (`is_all_company ? 2 : 1`)
+- [x] Kiểm bằng Playwright cả 5 màn: mọi ô cao 36px, **0 hàng lệch chiều cao**, không còn nhãn tĩnh sót lại, padding khối lọc 10px

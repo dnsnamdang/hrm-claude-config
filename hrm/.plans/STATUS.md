@@ -56,6 +56,15 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   ⚠️ Panel chi tiết meeting trông rỗng là do **dữ liệu seed mỏng**, không phải thiếu khối: meeting tạo bằng UI có 19–27 `company_members` + `reports`, còn `DEMO-CSKH-*` / `E2E-CARE-*` đều bằng 0. Muốn demo đẹp trên VPS thì phải làm giàu `assign:seed-care-demo` (CHƯA làm, chờ user quyết).
   Design: .plans/bao-cao-cskh-tiem-nang/design.md · Plan: .plans/bao-cao-cskh-tiem-nang/plan.md · E2E: e2e/tests/assign/{meeting-host,customer-demand-link,potential-customer-care,potential-customer-care-export}.{api.spec,spec}.ts · Fixture: hrm-api/database/{e2e_customer_demand_seed,e2e_care_report_seed}.php
 
+- prospective-project-status-12-steps (Tiến trình nội bộ dự án TKT 12 bước) → @cuong61n → .plans/prospective-project-status-12-steps/plan.md
+  Trạng thái: **CODE XONG 5 PHASE + KIỂM THỬ PASS (2026-09-11)** — chưa commit. Nhánh `tpe`
+  (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11426.
+  Đã làm: đổi tên bước 5/6/7 + gom tên/màu về BE (`status_name`/`status_color`, endpoint `status-options`,
+  FE bỏ 6 chỗ hard-code, export/2 báo cáo theo) · "Yêu cầu bổ sung thông tin" lùi dự án về bước 2 ·
+  bắt buộc file khi Chốt giải pháp / Chốt báo giá cuối cùng (bảng `files`, hiện ở chi tiết, popup V2BaseModal) ·
+  vá 4 chỗ đổi bước bằng query builder không ghi log (`ProspectiveProject::changeStatusById`).
+  Ngoài phạm vi (chờ khách): bước 9/10/12, HĐ hủy → tự đóng dự án. Bảng log giữ nguyên (user chốt không thêm cột text).
+
 - meeting-by-projects (bỏ cấp Công ty/Phòng ban/Bộ phận) → @cuong61n → .plans/meeting-by-projects/plan.md
   Trạng thái: **CODE XONG (2026-09-07)** — chưa kiểm thử, chưa commit. Nhánh `tpe`
   (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005).

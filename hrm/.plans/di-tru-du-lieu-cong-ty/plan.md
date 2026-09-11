@@ -382,3 +382,52 @@ Vừa hoàn thành:
 - Thêm chuỗi 5 bảng lương/chi trả (salary, salary_employees, salary_employee_data, payments, payment_employees). salary_employees.employee_id trỏ employee_infos — bẫy thứ 3 cùng kiểu. Chạy bổ sung bằng company:migrate-tables (KHÔNG cần nạp lại DB). UAT: 21 dòng, fk_null=0.
 Bước tiếp theo: TPE kiểm trên giao diện UAT; xử lý ảnh bằng company:upload-assets khi có nguồn ảnh.
 Blocked: (không).
+
+### Checkpoint — 2026-09-10 (lỗi đăng nhập ERP sau gộp cổng)
+Vừa hoàn thành: TPE báo tài khoản ETEK GREEN vào ERP UAT bị "lỗi đỏ, load lại là out". Chẩn đoán qua SSH (hrm.eteksofts.com:2230, erp.eteksofts.com:2231 — user erp_tpe, có sẵn SSH key):
+- Loại trừ: tài khoản CÓ bên uat_erp (id 1121), JWT_SECRET 2 bên KHỚP, SSO redirect đúng, đăng nhập HRM OK
+- Tái hiện bằng Playwright: vào được lần đầu, navigate lại → bị đá về HRM login
+- Nguyên nhân: UserLogIn::checkTokenVersion so token_version trong JWT (HRM cấp) với employees.token_version bên ERP. HRM uyendtt=2 / namdangit=10, ERP đều =1 → lệch → logout
+- Gốc: SyncEmployeeToErpJob chỉ chép email/status/password, BỎ SÓT token_version (2 luồng đổi mật khẩu EmployeeService:257 + AuthNewController:103 thì đã có sync). Lỗi có sẵn, không do gộp cổng — TPE cũng dính
+- Xử lý: (A) đồng bộ tay 127 tài khoản trên UAT (backup /tmp/tv_erp_backup.csv trên server HRM) → hết văng; (B) sửa gốc: thêm token_version vào SyncEmployeeToErpJob (guard Schema::hasColumn)
+- Kiểm chứng local: làm lệch 124 tài khoản → chạy company:sync-erp → 0 lệch. 75 test xanh
+Bước tiếp theo: CHƯA COMMIT/PUSH — chờ user duyệt.
+Blocked: (không).
+
+### Checkpoint — 2026-09-10 (đồng bộ token_version TOÀN BỘ UAT)
+Vừa hoàn thành: rà token_version trên UAT theo email cho TẤT CẢ nhân sự (không chỉ công ty 9).
+- Đo trước: HRM 1.220 tài khoản / ERP 1.157, trùng email 1.147 → LỆCH 45 (toàn bộ là @tanphat.com, dạng HRM=2/3 vs ERP=1). Đây là tồn đọng cũ của lỗi SyncEmployeeToErpJob thiếu token_version, không do gộp cổng.
+- Backup ERP trước khi sửa: /tmp/tv_erp_backup_all_20260910.csv (1.157 dòng) trên server hrm.eteksofts.com:2230; câu lệnh đã dùng: /tmp/fix_tv.sql (45 UPDATE, chỉ ghi đúng tài khoản lệch).
+- Sau khi chạy: CÒN LỆCH = 0. Kiểm mẫu: namdangit=10, chinhnv.ptgd=3, uyendtt.hr=2 (khớp HRM).
+- Chênh danh sách còn lại (KHÔNG phải lỗi): 73 tài khoản chỉ có ở HRM (cty 1:48, 4:14, 8:5, 3:4, 2:2 — KHÔNG có công ty 9, tức 124 tài khoản ETEK GREEN đã sang ERP đủ) và 10 tài khoản chỉ có ở ERP. Đều là dữ liệu cũ của Tân Phát, ngoài phạm vi gộp cổng.
+- Lưu ý dữ liệu bẩn phát hiện được: HRM có 1 email bắt đầu bằng dấu nháy đơn: 'huongttt.kddau@tanphat.com — nên rà lại.
+Bước tiếp theo: bản sửa gốc SyncEmployeeToErpJob.php VẪN CHƯA COMMIT/PUSH — chờ user duyệt.
+Blocked: (không).
+
+### Checkpoint — 2026-09-10 (bù dữ liệu công ty + cơ cấu tổ chức sang ERP)
+Vừa hoàn thành: TPE phát hiện màn ERP /admin/companies/9/edit trống dữ liệu so với cổng nguồn erp.etekgreen.com.
+Rà bằng script so từng cột chung hrm_uat <-> uat_erp cho công ty 9 (/tmp/gap.py trên server HRM UAT).
+- companies: company:sync-erp chỉ mirror 12 cột, sót 9 (tax_code, website, fax, logo, header, district_id, apartment_number, deputy_name, deputy_role). Nguy hiểm nhất là logo/header -> bản in ERP mất letterhead.
+- module_mappings bên ERP trống hoàn toàn cho công ty 9 (hook created() ghi bảng này nhưng engine di trú INSERT thẳng). Thêm helper mapErp() cho 5 loại, dùng updateOrInsert.
+- Cơ cấu tổ chức còn 6 cột HRM CÓ mà ERP trống: departments.position, parts.part_lead_id, employee_infos.academic_level / vacation_start_date_type / created_by / bank_branch.
+- deputy_name: HRM lưu bằng deputy_id (FK employee_infos), ERP lưu bằng TÊN -> tra tên. Ra "Ngô Cao Vinh", khớp cổng nguồn.
+- KHÔNG chép deputy_role: id ERP trỏ danh mục khác working_positions của HRM (ERP cty 1 = 43 = "Chuyên viên Kinh doanh", sai nghĩa).
+- Sửa nhánh ngân hàng của SyncEmployeeInfoToErpJob: có dòng employee_bank_accounts nhưng bank_branch_id NULL thì đừng ghi null đè cột cũ (gặp thật: hồ sơ 1737 Phạm Vũ Bích Liên).
+3 commit đã đẩy origin/tpe: 224f46c48, fc58fbc33, bacfe4fbd. Đã pull + chạy company:sync-erp --company=9 trên /var/www/uat/hrm-api.
+Kiểm chứng UAT: 20/20 cột companies khớp; mapping 1/16/66/128/127; so từng dòng phòng ban / bộ phận / nhân viên = KHỚP; tài khoản khớp email+status+employee_info_id (chỉ khác employees.id vì ERP tự sinh, khớp qua employee_info_id — đúng thiết kế sẵn có).
+NGOÀI PHẠM VI, chờ TPE chốt: (1) điện thoại/email/địa chỉ HRM và ERP nguồn lệch nhau từ trước; (2) ~18 trường cấu hình nghiệp vụ ERP (đơn giá công, hệ số giá, hạn mức công nợ, % hoa hồng/đặt cọc, số ngày quá hạn...) chỉ có ở ERP nguồn; (3) kho hàng ETEK GREEN chưa di trú nên "Kho hàng khuyến mại" để trống.
+Bước tiếp theo: TPE kiểm giao diện ERP UAT.
+Blocked: (không).
+
+### Checkpoint — 2026-09-10 (rà toàn bộ cột id khi đẩy sang ERP)
+Vừa hoàn thành: TPE báo màn ERP /admin/departments trống cột Trưởng phòng. Rà bằng script so tỷ lệ "tra ra được" của công ty 1 (chuẩn) với công ty 9 cho MỌI cột *_id được đẩy sang ERP (/tmp/idaudit.py trên server HRM UAT). Tìm 3 cột hỏng + 1 do chính mình gây ra:
+1. departments.department_lead_id & parts.part_lead_id — HRM lưu theo employee_infos.id, ERP hiểu là employees.id (Department::departmentLead(), Part::part_lead() đều belongsTo Employee). Cty1 31/31 và 9/9 tra được, cty9 0/15 và 0/61. Nguy hiểm: dải id chồng nhau là TRỎ NHẦM NGƯỜI im lặng. Đã dịch employee_infos.id -> employees.id của ERP, chạy SAU bước đẩy tài khoản, không tra được thì ghi 0 (không giữ id cũ).
+2. departments.group_id trỏ bảng `groups` (Khối) — lệnh chưa từng đẩy sang ERP.department_groups. Thêm bước 2a. Lưu ý `groups` là từ khoá MySQL, phải bọc backtick.
+3. employee_infos.created_by — mình từng ghi $model->created_by của HRM sang (cột này bên ERP là id người BÊN ERP) -> 125/128 hồ sơ trỏ id 1913 của HRM. Trả về $by + thêm bước vá dữ liệu đã ghi sai.
+4. employees.created_by/updated_by bên ERP để trống -> bù $by.
+5 commit đã đẩy origin/tpe (đến 5df93f070), đã pull + chạy lại trên /var/www/uat/hrm-api sau mỗi commit.
+Kiểm chứng UAT (so THEO TÊN, không chỉ theo id): công ty 1/1, khối 6/6, phòng ban 16/16 (kèm thứ tự + khối + trưởng phòng), bộ phận 66/66 (kèm trưởng bộ phận), hồ sơ 128/128 (kèm ảnh, học vấn, ngày vào, CCCD), tài khoản 127/127 (kèm token_version) — TẤT CẢ KHỚP. Rà lại cột id: không còn cột nào lệch.
+Lỗi có sẵn KHÔNG sửa: ERP có bảng working_positions cục bộ RỖNG (0 dòng) — công ty 1 cũng 0/579; ERP lấy chức danh qua connection 'hrm'.
+CÒN TỒN: (1) hrm-client trên UAT chưa pull, thiếu 17 commit gồm e554e0e2f (ẩn nút Sửa dự án TKT) -> UAT đang lệch FE/BE; (2) chưa xem được màn /admin/departments bằng mắt vì tài khoản ETEK GREEN chưa có quyền admin bên ERP UAT.
+Bước tiếp theo: TPE tải lại màn ERP kiểm tra.
+Blocked: (không).
