@@ -219,3 +219,4 @@ Mọi popup drill-down đều theo cùng 1 khuôn: **bộ lọc → khối thố
 - **Tên khách hàng demo là tên pháp nhân đầy đủ** (Công ty CP / TNHH / Trường Cao đẳng nghề …), không dùng tên thương hiệu trần.
 - **Popup nhu cầu HẾT HẠN THEO DÕI** (`expired` · hậu tố `@lost`): bỏ cả khối KPI lẫn khối phân bổ theo cơ cấu — chỉ còn bộ lọc + bảng chi tiết (KPI của nhóm này luôn 0% / 0% / 100%).
 - **Đổi tên (24/08)**: *Lĩnh vực KD nội bộ* → **Lĩnh vực công ty kinh doanh** (áp ở mọi nơi: bộ lọc · tiêu chí theo dõi · bảng theo dõi · popup · drawer · bản in).
+

@@ -4156,3 +4156,91 @@ Vừa hoàn thành: user đã **push code lên `origin/tpe`** (cả `hrm-api` l�
 Đang làm dở: không có.
 Bước tiếp theo: **feature coi như đóng**. Việc duy nhất còn nợ đã được user chốt HOÃN: sửa tận gốc rule CSS toàn cục `input:not(:placeholder-shown) + label` ở `assets/scss/custom-theme.scss` (thiếu tiền tố `.mate-field`) — hiện đang hoá giải cục bộ trong `.q-item`, chạy đúng, để dành làm sau vì blast radius toàn app.
 Blocked: không có.
+
+## Bugfix — Validate khối Khảo sát nhảy về câu ĐÃ trả lời (2026-08-28)
+
+### Triệu chứng (user báo)
+Loại meeting "Họp tìm hiểu & Giới thiệu sản phẩm" → tab Biên bản → đã trả lời Câu 1 + Câu 4 →
+bấm Hoàn thành vẫn bị chặn, màn hình cuộn/focus về **Câu 1** (câu đã trả lời), làm user tưởng
+"đã trả lời rồi mà vẫn bắt trả lời". Yêu cầu: thiếu câu nào chỉ báo ở câu đó.
+
+### Nguyên nhân gốc (đã reproduce trên FE :3000 / BE :8000, meeting 44)
+BE trả lỗi ĐÚNG (`investment_scopes`, `investment_demands`, `conclusion` — không đụng
+`has_investment_demand`/`has_maintenance_demand` đã trả lời). Lỗi nằm ở cơ chế nhảy tới ô lỗi của FE:
+1. `MeetingForm.focusFirstError()` chỉ quét `.v2-error`, trong khi `CascadePairSelect` (2 ô select
+   của Câu 2) render lỗi bằng `.text-small-error.invalid-feedback.d-block` → **lỗi Câu 2 bị bỏ sót
+   hoàn toàn**, không bao giờ được chọn làm "lỗi đầu tiên".
+2. `.v2-error` đầu tiên tìm được là lỗi **Kết luận**, nhưng element này KHÔNG có tổ tiên
+   `.form-group / .v2-form-group / [class*="col-"]` → `group` fallback về **nguyên panel Biên bản**.
+3. Quét input đầu tiên của cả panel → trúng radio `q1-yes` của **Câu 1** → focus + cuộn về Câu 1.
+`recomputeTabErrors()` cũng chỉ quét `.v2-error` nên cờ đỏ trên tab sót nguồn lỗi thứ 2.
+
+### FE (hrm-client) — pages/assign/meeting/components/MeetingForm.vue
+- [x] Thêm `errorEls(panel)` / `firstErrorEl(panel)`: nhận diện CẢ `.v2-error` lẫn
+      `.invalid-feedback.d-block` (lỗi của CascadePairSelect), bỏ element rỗng chữ
+- [x] `focusFirstError()` dùng `firstErrorEl()`; **bỏ fallback `group = panel`** → đổi thành
+      `errEl.parentElement`, KHÔNG bao giờ quét input đầu tiên của cả tab nữa; vẫn không có nhóm
+      thì cuộn thẳng tới chính ô lỗi
+- [x] Thêm `.cps-control` (control của CascadePairSelect) vào danh sách ứng viên focus — trước đó
+      chỉ có `.select2-selection` và `.csp-control` (CspSingleSelect, component KHÁC, dễ nhìn nhầm)
+- [x] `recomputeTabErrors()` dùng `errorEls()` thay `querySelector('.v2-error')`
+
+### Verify (chạy thật trên FE :3000 / BE :8000, meeting 44)
+- [x] Câu 1 = Có + Câu 4 = Có, bỏ trống Câu 2 + Kết luận → Hoàn thành: focus vào
+      `.cps-control.is-invalid` của ô "Lĩnh vực Công ty kinh doanh" (Câu 2), đang nhìn thấy trong
+      khung nhìn. TRƯỚC fix: focus vào radio `q1-yes` của Câu 1
+- [x] Chưa trả lời gì → Hoàn thành: lỗi `has_investment_demand` + `has_maintenance_demand`, focus
+      vào Câu 1 (câu thiếu đầu tiên) — đúng
+- [x] Trả lời Câu 1 → lỗi Câu 1 tự mất, chỉ còn Câu 4; trả lời nốt Câu 4 → hết lỗi khảo sát
+- [x] Câu 3: 2 nhóm ngành, chỉ nhập dòng 1 → lỗi chỉ ở `investment_demands.1.*`, focus đúng ô tiền
+      TRỐNG của dòng 2 (ô 2/2)
+- [x] Hồi quy tab Thông tin: xoá Tên meeting → tự chuyển sang tab Thông tin, focus ô Tên, cờ đỏ
+      đúng 2 tab (info + reports)
+- [x] E2E: thêm ca 19 vào `e2e/tests/assign/meeting-investment-survey.spec.ts`.
+      **Đã chứng minh ca 19 ĐỎ khi stash fix ra** (`.cps-control` = "inactive"), XANH khi có fix
+- [x] Bộ meeting **22/22 + 12/12 xanh** (survey + meeting-host UI + meeting-host API)
+- [x] Chạy cả `tests/assign/`: 91 passed. 2 ca đỏ `internal-business-scope` ("Xoá bản ghi vừa tạo")
+      và `quotation-unit-select` là **lỗi CÓ SẴN** đã ghi trong STATUS.md từ 2026-08-24
+- [x] Ca 13 (phân quyền, login 2 tài khoản) đỏ ở phép chờ toast `.toasted.error` timeout 5s —
+      **KHÔNG do đợt này**: stash fix ra chạy lại 4 lần thì **đỏ 4/4**. Toast tự tắt nên ca này
+      flaky sẵn; không liên quan `focusFirstError` (user trong ca đó bị đá khỏi màn Sửa).
+      Chạy bộ survey bỏ ca 13, có fix: **21/21 xanh**
+- [x] ⚠️ Một lần chạy tốn 21,5 phút + ca 12 đỏ là do **Nuxt dev server :3000 bị tắt giữa chừng**
+      (task nền bị kill), không phải lỗi code — khởi động lại server rồi chạy lại thì xanh
+
+### Không sửa (user chốt 2026-08-28)
+- Select "Lĩnh vực Công ty kinh doanh" chỉ hiện 2/6 lĩnh vực đang Hoạt động: **GIỮ NGUYÊN** bộ lọc
+  `MeetingController::investmentScopes()` (`industry_groups->isNotEmpty()`) — đúng **quyết định #9**
+  ở `design-phase2.md:33`. Lĩnh vực chưa có nhóm ngành con thì không lấy. Muốn thấy đủ thì bổ sung
+  nhóm ngành cho lĩnh vực đó ở Danh mục › Nhóm ngành (hiện 22/24 nhóm ngành đang gắn hết vào
+  "Công nghiệp", 3 lĩnh vực Giáo dục & Đào tạo / Môi trường / Năng lượng chưa có nhóm ngành nào)
+
+
+### Checkpoint — 2026-08-28
+Vừa hoàn thành: fix bug "validate khối Khảo sát nhảy về câu ĐÃ trả lời" — 1 file
+`hrm-client/pages/assign/meeting/components/MeetingForm.vue` (+36/−7) + ca E2E 19 mới. Đã truy
+nguyên nhân gốc bằng cách reproduce thật trên trình duyệt (không đoán): BE trả lỗi ĐÚNG câu trong
+mọi tổ hợp, sai nằm ở `focusFirstError()` chỉ quét `.v2-error` nên bỏ sót lỗi của CascadePairSelect
+rồi fallback `group = panel` → focus vào radio câu 1. Ca 19 đã chứng minh ĐỎ khi gỡ fix.
+Đang làm dở: không có việc code nào đang dở.
+Bước tiếp theo: **việc duy nhất còn lại là user nghiệm thu bằng mắt** — mở Sửa meeting loại
+"Họp tìm hiểu & Giới thiệu sản phẩm" → tab Biên bản → trả lời câu 1 = Có + câu 4, BỎ TRỐNG câu 2
+→ bấm Hoàn thành → màn hình phải nhảy vào ô "Lĩnh vực Công ty kinh doanh", KHÔNG quay về câu 1.
+(Commit + push: user đã tự làm xong, xem khối ✅ bên dưới.)
+Blocked: không có.
+
+✅ **Trạng thái git đã KIỂM CHỨNG 2026-08-28**: **ĐÃ COMMIT + PUSH**.
+  - `hrm-client` commit **`d716ff10c`** — 1 file `pages/assign/meeting/components/MeetingForm.vue`
+    (+36/−7), đã xác minh chứa đủ `errorEls` / `firstErrorEl` / `errEl.parentElement` / `.cps-control`
+  - `git rev-list --left-right --count origin/tpe...HEAD` → **`0  0`** (khớp hẳn remote)
+  - `git branch -r --contains d716ff10c` → có **`origin/tpe`**
+  - `hrm-api`: KHÔNG đổi file nào trong đợt này
+  - ⚠️ Thư mục `e2e` KHÔNG phải git repo → **ca E2E 19 không nằm trong commit nào**, chỉ tồn tại
+    trên máy này tại `e2e/tests/assign/meeting-investment-survey.spec.ts`. Sang máy khác phải copy tay.
+
+### Nợ ghi nhận (không thuộc phạm vi đợt này)
+- Ca E2E 13 (phân quyền) chờ toast `.toasted.error` 5s → flaky sẵn, đỏ 4/4 khi chạy riêng kể cả
+  khi KHÔNG có fix. Toast tự tắt nên phép chờ này không đáng tin — nên đổi sang assert khác
+  (vd chỉ dựa vào redirect URL) hoặc bắt toast ngay lúc nó xuất hiện.
+- `.csp-control` (CspSingleSelect) và `.cps-control` (CascadePairSelect) chỉ khác nhau 1 ký tự đảo
+  chỗ — đã gây bỏ sót đúng 1 lần trong chính đợt này. Cân nhắc đổi tên 1 trong 2 cho đỡ nhìn nhầm.
