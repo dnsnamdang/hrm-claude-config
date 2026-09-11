@@ -95,6 +95,11 @@ tái dùng nguyên `meetingTypeInfoTooltip.js`, không viết tooltip thứ hai.
 1. **z-index**: `.popover` bootstrap là `1060`, dropdown select2 trong project là `9999`.
    Không ép cao hơn (đang dùng `10050`) thì khi popover lật sang trái nó đè lên dropdown
    nhưng bị vẽ phía sau → **tooltip mất hẳn**, rất khó đoán nguyên nhân.
+   ⚠️ Lỗi này KHÔNG chỉ xảy ra với icon nằm trong dropdown: bất kỳ popover nào đặt cạnh một ô
+   select đều bị danh sách option che khi ô đó đang mở (dính thật ở công tắc ổ khoá của ô lọc
+   Công ty – Phòng ban, 09/09/2026). Vì thế `.info-popover` **đã được ghim `z-index: 10000`**
+   ngay trong `assets/scss/custom/components/_popover.scss` — dùng `custom-class="info-popover"`
+   như mục 2 là có sẵn, không phải xử lý gì thêm.
 2. **margin của popover**: `.bs-popover-right` có sẵn `margin-left` = chiều cao arrow. Element
    `position: absolute` định vị theo `left` nên margin-left **dịch cả hộp** → phải trừ ra, không thì
    khoảng hở cộng đôi (16px thay vì 8px). Ngược lại `margin-right` của `.bs-popover-left`

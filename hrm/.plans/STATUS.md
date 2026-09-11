@@ -8,6 +8,15 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- prospective-project-status-12-steps (Tiến trình nội bộ dự án TKT 12 bước) → @cuong61n → .plans/prospective-project-status-12-steps/plan.md
+  Trạng thái: **CODE XONG 5 PHASE + KIỂM THỬ PASS (2026-09-11)** — chưa commit. Nhánh `tpe`
+  (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11426.
+  Đã làm: đổi tên bước 5/6/7 + gom tên/màu về BE (`status_name`/`status_color`, endpoint `status-options`,
+  FE bỏ 6 chỗ hard-code, export/2 báo cáo theo) · "Yêu cầu bổ sung thông tin" lùi dự án về bước 2 ·
+  bắt buộc file khi Chốt giải pháp / Chốt báo giá cuối cùng (bảng `files`, hiện ở chi tiết, popup V2BaseModal) ·
+  vá 4 chỗ đổi bước bằng query builder không ghi log (`ProspectiveProject::changeStatusById`).
+  Ngoài phạm vi (chờ khách): bước 9/10/12, HĐ hủy → tự đóng dự án. Bảng log giữ nguyên (user chốt không thêm cột text).
+
 - meeting-by-projects (bỏ cấp Công ty/Phòng ban/Bộ phận) → @cuong61n → .plans/meeting-by-projects/plan.md
   Trạng thái: **CODE XONG (2026-09-07)** — chưa kiểm thử, chưa commit. Nhánh `tpe`
   (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005).
