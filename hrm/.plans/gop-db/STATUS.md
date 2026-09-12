@@ -451,6 +451,22 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Test: 52/52 endpoint HTTP + 12 màn browser + luồng ghi (tạo/sửa/thêm liên hệ, có rollback). **7 lỗi thật đã sửa** (xem plan.md Phase 11-12).
   ⚠️ Đọc trước khi làm tiếp trên nhánh này: `.plans/gop-db/design.md`.
 
+- **finance-addition-accounting-request — Chỉnh hiển thị màn danh sách (Phase 12)** → @khoipv →
+  `.plans/gop-db/finance-addition-accounting-request/plan.md` (mục Phase 12)
+  Trạng thái: **CODE XONG — CHỜ USER MỞ TRÌNH DUYỆT NGHIỆM THU** (2026-09-10). Yêu cầu user: (1) ô trống thì để trống, bỏ dấu `—`;
+  (2) cột *Ngày gửi* / *Ngày duyệt* hiện thêm giờ (2 cột DB vốn là `datetime`, resource cắt mất giờ);
+  (3) cột *Số tiền* in kèm đơn vị tiền như màn Phiếu đề nghị thanh toán; (4) **bỏ ô *Bộ phận*** khỏi
+  bộ lọc tổ chức, chỉ còn Công ty – Phòng ban.
+  **Phase 13 (2026-09-10)**: popup chọn hợp đồng ở màn Tạo thiếu nguồn `firm_contracts` → KH gốc ERP
+  gần như không chọn nổi hợp đồng (firm 19.936 HĐ/4.102 KH so với `hrm_contracts` 34 HĐ/29 KH), lại
+  còn hiện nhầm phiếu bảo hành và hợp đồng của người khác. Thêm nhánh `usage=addition_accounting_request`
+  vào `BillIncomeRequestService::searchSellContracts()` port đúng nhánh ERP
+  `addition_accounting_request_sell_contract`. Đối chiếu tay đôi với service ERP: 3/4 cặp KH-NV trùng
+  khớp tuyệt đối, cặp còn lại lệch có chủ đích (hợp đồng HRM tự sinh).
+  Phạm vi: 2 file (BE `AdditionAccountingRequestListResource` · FE `pages/finance/addition-accounting-requests/index.vue`),
+  không migration, không quyền mới. File Excel danh sách hiện giờ luôn (user đồng ý), ô Số tiền trong
+  Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
+
 ## Hoàn thành
 
 - bom-list-list-page-standard — chuẩn hoá màn Danh sách BOM List (`/assign/bom-list`) theo skill `list-page` → @khoipv → .plans/gop-db/bom-list-list-page-standard/plan.md

@@ -653,3 +653,143 @@ Bước tiếp theo (phiên sau): **user mở trình duyệt nghiệm thu** màn
 Nếu OK thì cân nhắc rà nốt **18 FormRequest khác còn dùng `$this->get()`** (Finance 7 · CustomerCare 7
 · Payroll 4) — cùng loại lỗi với BE-3, xem memory [[formrequest-get-ignores-json-body]].
 Blocked: không.
+
+---
+
+## Phase 12 — Chỉnh hiển thị màn danh sách (user yêu cầu 2026-09-10)
+
+3 yêu cầu của user, đều ở màn danh sách `/finance/addition-accounting-requests`
+(dùng chung cho cả chế độ *Chờ duyệt* `?mode=pending`):
+
+- [x] **BE-1** `AdditionAccountingRequestListResource`: `send_date` và `approver_time` format
+      `d/m/Y` → **`d/m/Y H:i`**. Hai cột DB đều là `datetime` nên giờ có sẵn, chỉ do resource cắt
+      mất. Đồng bộ với `created_at` / `updated_at` đã có giờ từ đầu.
+- [x] **BE-2** Thêm khoá `currency_code` = `optional($item->typeMoney)->code` (bảng `currencies`:
+      `VNĐ` / `USD` / `EUR`…). Giữ nguyên `currency_name` để FE có đường lùi khi BE chưa deploy.
+- [x] **FE-1** `index.vue`: bỏ toàn bộ fallback `|| '—'` trong các `#cell-*` — **ô trống để trống**,
+      giống màn Phiếu đề nghị thanh toán.
+- [x] **FE-2** Cột *Số tiền*: in kèm đơn vị tiền `{{ formatMoney(money) }} <span class="text-muted">{{ currency_code || currency_name }}</span>`
+      — user chốt **dùng đúng class `text-muted` như màn Phiếu đề nghị thanh toán** để 2 màn đồng
+      nhất, dù `text-muted` bị 3 file scss chung ép thành màu đỏ #dc3545 (memory [[text-muted-is-red]]).
+      Xoá comment cũ "KHÔNG gắn hậu tố loại tiền" — đã đổi chủ trương.
+- [x] **FE-3** Nới bề rộng cột cho khớp nội dung mới: `sendDate` / `approverTime` 110px → 140px
+      (bằng *Ngày tạo*), `money` 160px → 180px.
+
+- [x] **FE-4 (user yêu cầu 2026-09-10, đợt 2)** Bỏ hẳn ô **Bộ phận** khỏi bộ lọc tổ chức: truyền
+      `:disable_part="true"` cho `V2BaseCompanyDepartmentFilter` (component dùng chung đã có sẵn prop
+      này — KHÔNG sửa file chung), đổi nhãn nhóm lọc thành `Công ty – Phòng ban`, và **xoá `part_id`
+      còn sót trong bộ lọc đã lưu ở localStorage** khi khôi phục — nếu không, người từng lọc theo bộ
+      phận sẽ dính bộ lọc vô hình không có ô nào tắt được. Giữ nguyên khoá `part_id` trong
+      `initialStateForm` + `resetKeys` (component vẫn ghi vào khoá này; bỏ khoá thì Vue 2 mất reactive).
+
+**Chốt với user 2026-09-10:** file Excel xuất danh sách dùng chung nguồn dữ liệu nên **cũng hiện
+giờ** ở 2 cột Ngày gửi / Ngày duyệt — user đồng ý, không tách code riêng. Ô *Số tiền* trong Excel
+vẫn là **số thuần** (đã có cột *Loại tiền* riêng) — không ghép mã tiền vào, tránh Excel hiểu thành
+chữ (skill export-excel).
+
+**Ngoài phạm vi:** màn Chi tiết, bản In, form Tạo/Sửa — không đụng.
+
+### Kiểm chứng Phase 12 (2026-09-10)
+
+- BE `php -l` sạch. Dựng thẳng `AdditionAccountingRequestListResource` trên **dữ liệu thật** (3 phiếu
+  đã duyệt): `send_date` = `27/07/2026 15:44`, `approver_time` = `27/07/2026 16:07` — có giờ;
+  `currency_code` ra `VNĐ` / `INR` đúng theo `type_money_id`.
+- FE `index.vue` compile sạch (`vue-template-compiler` + babel).
+- Excel danh sách dùng CHUNG resource này (`exportList()` :334) nên 2 cột ngày tự có giờ — đúng ý
+  user. `currency_code` KHÔNG lọt vào file vì không nằm trong `FIELDS` của `AdditionAccountingRequestListExport`,
+  ô *Số tiền* vẫn là số thuần, đã có cột *Loại tiền* riêng.
+- Badge trạng thái thêm `v-if="item.status_name"`: `statusInfo()` trả `name = ''` cho status lạ, bỏ
+  dấu `—` mà không chặn thì lòi ra viên badge rỗng.
+
+### Checkpoint — 2026-09-10
+Vừa hoàn thành: Phase 12 — BE-1, BE-2, FE-1, FE-2, FE-3 (2 file, không migration, không quyền mới).
+Đang làm dở: không.
+Bước tiếp theo: **user mở trình duyệt nghiệm thu** `/finance/addition-accounting-requests` và
+`?mode=pending` — (1) ô trống để trắng, không còn dấu `—`, (2) cột Ngày gửi / Ngày duyệt hiện
+`dd/mm/yyyy HH:mm` không bị xuống dòng, (3) cột Số tiền hiện mã tiền (thử lọc phiếu ngoại tệ INR),
+(4) xuất Excel xem 2 cột ngày có giờ.
+Blocked: không.
+
+### Checkpoint — 2026-09-10 (đợt 2)
+Vừa hoàn thành: FE-4 — bỏ ô **Bộ phận** khỏi bộ lọc tổ chức của màn danh sách
+(`:disable_part="true"`, nhãn nhóm còn `Công ty – Phòng ban`, xoá `part_id` tồn trong localStorage
+khi khôi phục bộ lọc). Chỉ 1 file FE, không đụng `V2BaseCompanyDepartmentFilter` dùng chung.
+FE compile sạch.
+Đang làm dở: không.
+Bước tiếp theo: user nghiệm thu cùng lượt với Phase 12 — mở bộ lọc xem chỉ còn 2 ô Công ty / Phòng ban.
+⚠️ Hệ quả đã biết: người CHỈ có phạm vi cấp bộ phận (`can_view_part`, không có công ty/phòng ban)
+nay không thấy ô lọc tổ chức nào — trước đó họ chỉ thấy mỗi ô Bộ phận. Phạm vi dữ liệu vẫn do BE
+chặn nên không lộ dữ liệu, chỉ là mất ô lọc.
+Blocked: không.
+
+---
+
+## Phase 13 — Popup chọn hợp đồng thiếu nguồn `firm_contracts` (user báo 2026-09-10)
+
+**Triệu chứng user báo:** cùng chọn KH `35TNIHBA-2 - CÔNG TY CP VIN HN`, popup chọn hợp đồng bên ERP
+ra 3 dòng, HRM chỉ ra 2.
+
+**Root cause (đã truy, không đoán):** popup gọi `BillIncomeRequestService::searchSellContracts()`
+(dùng chung với màn Đề nghị thu tiền / thanh toán) nên chạy bộ lọc MẶC ĐỊNH, trong khi ERP có nhánh
+riêng `addition_accounting_request_sell_contract`
+(`erp/app/Services/Contracts/SearchContractService.php:187` + `:440`). 3 chỗ lệch:
+
+| | ERP màn này | HRM đang chạy |
+| --- | --- | --- |
+| Hợp đồng bán | `firm_contracts`, status ∉ (1,2,4,5), type ∈ (1,4,7,8) | `hrm_contracts` (quyết định #5) |
+| HĐ bảo dưỡng | status ∉ (0,1,2), type ∈ (1,2) | KHÔNG lọc |
+| Người tạo | chỉ hợp đồng của chính người lập (firm + wr) | KHÔNG lọc |
+| HĐ đầu kỳ | không lọc | không lọc ✓ |
+
+Đo trên DB gộp: `firm_contracts` đủ điều kiện ERP có **19.936 hợp đồng / 4.102 KH**, còn
+`hrm_contracts` chọn được chỉ **34 hợp đồng / 29 KH** → gần như mọi KH gốc ERP không chọn nổi hợp
+đồng. Cùng lỗi đã vá cho màn Điều chỉnh công nợ ngày 2026-09-07 (nguồn thứ 4 `firm_contracts`, bật
+bằng `usage=bill_adjust_dept_request`); màn này không truyền `usage` nên không được hưởng.
+`wr_service_contracts` thì ngược chiều: HRM cho chọn 6.690 dòng, ERP chỉ 2.295.
+
+- [x] **BE-1** Thêm `USAGE_ADDITION_ACCOUNTING_REQUEST` + nhánh riêng trong `searchSellContracts()`:
+      union thêm `firm_contracts` (status ∉ 1,2,4,5 · type ∈ 1,4,7,8 — hằng số riêng, KHÁC bộ
+      `FirmContract::SELECTABLE_STATUSES` [3,9,10] của màn Điều chỉnh công nợ vì ERP dùng 2 nhánh khác nhau).
+- [x] **BE-2** Cùng nhánh đó: `wr_service_contracts` lọc status ∉ (0,1,2) + type ∈ (1,2 = Hợp đồng,
+      Bảo hành); áp `created_by = người đang đăng nhập` cho **hrm_contracts + wr + firm**, KHÔNG áp cho
+      `opening_contracts` (ERP cũng không). Fail-closed khi chưa đăng nhập.
+- [x] **FE-1** `AdditionAccountingRequestForm.vue`: truyền `:extra-params` `{ usage: 'addition_accounting_request' }`
+      cho `ContractSearchModal`.
+
+**Thuần THÊM nhánh** — không truyền `usage` thì 2 màn Đề nghị thu tiền / thanh toán chạy y hệt cũ.
+⚠️ Đổi hành vi có chủ đích: sau bản vá, người lập chỉ còn thấy hợp đồng **do chính mình tạo** (đúng ERP)
+— trước đây thấy cả hợp đồng của người khác.
+
+### Kiểm chứng Phase 13 (2026-09-10)
+
+Chạy **song song service của ERP và của HRM trên cùng DB `gop_db`**, cùng khách hàng cùng nhân viên
+(mỗi lượt một tiến trình riêng để không dính auth cache — memory [[auth-guard-cached-per-process]]):
+
+| KH | NV | ERP | HRM trước vá | HRM sau vá |
+| --- | --- | --- | --- | --- |
+| 2592 | 75 | 2 (`HĐ_TPE_HN_KD3_25_0004/0006`) | 1 — **sai hẳn dòng** (1 phiếu bảo hành) | **2, trùng khớp mã** ✓ |
+| 6215 | 75 | 2 (`..._0005`, `..._0009`) | 2 — **sai cả 2 dòng** (`TPE.PBH.2025.001880`, `TPE.PBH.2026.004227`) | **2, trùng khớp mã** ✓ |
+| 38144 | 755 | 3 (2 firm + 1 đầu kỳ) | 1 (chỉ đầu kỳ) | **3, trùng khớp mã** ✓ |
+| 3021 | 13 | 2 | 3 | 3 — lệch **có chủ đích** (xem dưới) |
+
+KH 3021 (`35TNIHBA-2 - CÔNG TY CP VIN HN`) trên DB local: HRM hơn ERP đúng 1 dòng
+`HĐ-TEST-DNTT-03` nằm ở `hrm_contracts` — hợp đồng do HRM tự sinh, ERP không có bảng đó nên không
+thấy. Đây là điều MONG MUỐN (quyết định #5), không phải lỗi.
+
+Đã soát nguy cơ hiện 2 lần cùng 1 hợp đồng khi union 2 bảng: **0 mã trùng** giữa `hrm_contracts`
+(42 dòng) và `firm_contracts` theo cặp `code + customer_id`.
+
+⚠️ Không tái hiện được đúng con số user báo (ERP 3 / HRM 2 cho KH 35TNIHBA-2) trên DB local: ở đây
+hợp đồng `firm_contracts` duy nhất của KH này là `HĐ_TPE_HN_KD3_26_0594_Q27-07` **status = 1 (Đang
+tạo)** nên chính ERP cũng loại. Số của user nhiều khả năng từ môi trường khác (cổng dev) — bản vá
+xử đúng lớp nguyên nhân, cần user nghiệm thu lại trên môi trường đó.
+
+### Checkpoint — 2026-09-10 (đợt 3)
+Vừa hoàn thành: Phase 13 — BE-1, BE-2, FE-1. BE 1 file (`BillIncomeRequestService`), FE 1 file
+(`AdditionAccountingRequestForm.vue`). `php -l` + compile FE sạch, đối chiếu ERP 3/4 cặp trùng khớp
+tuyệt đối.
+Đang làm dở: không.
+Bước tiếp theo: user mở màn Tạo, chọn KH `35TNIHBA-2` rồi bấm chọn hợp đồng — đối chiếu lại với ERP.
+⚠️ Đổi hành vi: từ nay chỉ thấy hợp đồng **do chính mình tạo** (đúng ERP) — trước đây thấy của cả
+người khác, nên số dòng ở một số KH sẽ GIẢM so với hôm qua dù đã thêm nguồn mới.
+Blocked: không.

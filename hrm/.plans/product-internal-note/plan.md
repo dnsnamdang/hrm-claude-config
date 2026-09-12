@@ -1,6 +1,6 @@
 # Plan — Ghi chú nội bộ hàng hoá (Báo giá + BOM)
 
-Redmine: bổ sung "Ghi chú nội bộ" của hàng hoá, hiển thị ghép trong cột Tên hàng ở màn
+Redmine #11281 (http://quanly.dnsmedia.vn/issues/11281) — phụ trách @khoipv: bổ sung "Ghi chú nội bộ" của hàng hoá, hiển thị ghép trong cột Tên hàng ở màn
 tạo/sửa/chi tiết Báo giá và BOM. Chỉ đọc, chữ đỏ. Không hiển thị khi IN và khi xuất Excel.
 
 Quyết định đã chốt (2026-08-28, user):
