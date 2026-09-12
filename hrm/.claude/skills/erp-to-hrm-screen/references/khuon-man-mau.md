@@ -164,6 +164,13 @@ Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`. Panel tự bọc m�
 | `hasValue` (nhãn bay lên khi có dữ liệu) | Panel | field gom nhiều ô thì **phải khai `resetKeys`**, panel dựa vào đó |
 | Chiều cao 36px | Panel (`control-height`) | không đụng |
 | Icon ⓘ chú thích | `V2BaseFloatingField` tra từ điển `utils/constants/field-hints` theo `label` | thêm `hint: '...'` nếu muốn đè, `noHint: true` nếu muốn tắt |
+| Nút phụ trong nhãn (công tắc ổ khoá…) | slot `label-suffix` của `V2BaseFloatingField`; `V2BaseCompanyDepartmentFilter` đã gắn sẵn cho Công ty / Phòng ban / Bộ phận | tự dựng nút mới thì cho class `ff-label-action` để có vùng bấm nới rộng |
+
+⚠️ **Nút phụ đặt trong NHÃN, không đặt trong ô.** Trong ô đã có mũi tên select + nút ×, chen thêm
+là ba thứ giành nhau 30px cuối. Nhưng nhãn float lên viền thì chữ chỉ còn cao ~11px và icon ~14px,
+nên nút bắt buộc mang class `ff-label-action` — component nới vùng bấm bằng `::after { inset: -9px }`
+để vùng bắt chuột đạt ~32px. Kiểm bằng cách bấm LỆCH 6px ra ngoài icon lúc nhãn đang float: vẫn
+phải ăn.
 
 **Khai `variant` cho ô đặc biệt:**
 
@@ -181,8 +188,10 @@ Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`. Panel tự bọc m�
   `dd/mm/yyyy`.
 - Ô tìm nhanh vẫn giữ nguyên: `Tìm theo <các trường BE thực sự lọc>`. Cấm `Tất cả`, `Chọn...`.
 
-**Bộ lọc ≤ 3 trường** chạy `isInlineMode` — dàn ngang cạnh ô tìm nhanh, **không có nhãn** theo
-thiết kế, nên `floating` không áp vào đó. Cứ bật, panel tự bỏ qua.
+**Bộ lọc ≤ 3 trường** chạy `isInlineMode` — dàn ngang cạnh ô tìm nhanh và **vẫn dùng nhãn
+floating** như khối nâng cao (chốt 09/09/2026): nhãn lúc nghỉ nằm giữa ô nên không chiếm thêm dòng,
+hàng vẫn thẳng trục; panel tự nâng ô tìm nhanh + ô lọc lên 36px. Hai chế độ vì thế nhìn giống hệt
+nhau — trước đây chế độ gọn bỏ nhãn, cùng một màn mà bộ lọc gọn xấu hơn hẳn.
 
 #### Ô "gõ để tìm từ server" — DÙNG `V2BaseSelectRemote`, cấm tự chế autocomplete
 

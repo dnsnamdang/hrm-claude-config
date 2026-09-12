@@ -374,3 +374,319 @@ Bước tiếp theo: (1) user quyết fix 2 deferred minor (label "Trực tuyế
 Blocked:
 
 Môi trường đang chạy (dọn khi cần): Nuxt dev `:3000` (đã restart bản mới), API `:8000`, HTTP server mockup `:8899` (python http.server — kill khi so xong).
+
+---
+
+## Phase 9 — Sửa phạm vi lấy meeting vào lịch (2026-09-08)
+
+**Bối cảnh:** User báo lịch hiện cả meeting mình không tham gia. Đo trên DB thật: user
+`E2E Assign` (1170, có quyền "Xem danh sách meeting theo tổng công ty") thấy **49 meeting,
+trong đó 37 cái không liên quan gì tới mình**. Ngược lại người chủ trì (1171, 1172) thấy
+**0 meeting** dù đang chủ trì 2 và 3 cuộc họp.
+
+**Nguyên nhân gốc:** `MeetingController::calendar()` dùng lại nguyên `MeetingCriteria` của màn
+danh sách `/assign/meeting` — phạm vi là `scope theo quyền cấp OR created_by OR company_members`.
+Đây là phạm vi "được phép xem", không phải "có liên quan tới tôi". Ngoài ra mệnh đề OR không
+có `host_employee_id` nên người chủ trì rơi ra ngoài.
+
+**Quyết định đã chốt (user, 2026-09-08):**
+- Lịch chỉ lấy meeting **user có trong Thành phần tham gia (`company_members`, type=1) HOẶC là
+  Người chủ trì (`host_employee_id`)**. KHÔNG tính người tạo (người tạo chỉ là người nhập liệu).
+- Bỏ hẳn scope theo quyền cấp ra khỏi endpoint lịch.
+- Trạng thái **giữ nguyên**: nháp (status=0) chỉ người tạo thấy; meeting Hủy vẫn lên lịch
+  (khối thống kê có ô "Hủy" riêng nên là cố ý).
+
+### Task 9.1: BE — criteria riêng cho lịch
+- [x] Thêm `Modules/Assign/Repositories/Criteria/MeetingCalendarCriteria.php`: luật nháp +
+      phạm vi "liên quan tới tôi" (`company_members` HOẶC `host_employee_id`) + lọc
+      `meeting_type_id` / `status`.
+- [x] `MeetingController::calendar()` dùng `MeetingCalendarCriteria` thay `MeetingCriteria`.
+- [x] KHÔNG đụng `MeetingCriteria` — màn danh sách `/assign/meeting` phải giữ nguyên phạm vi
+      theo quyền cấp.
+
+**Verify:** chạy đúng truy vấn lịch cho 1170 → chỉ còn meeting liên quan; cho 1171/1172 →
+hiện meeting mình chủ trì.
+
+### Task 9.2: BE — `Meeting::canView()` nhận người chủ trì
+- [x] Thêm nhánh `host_employee_id == $userId` vào `Meeting::canView()`.
+
+**Lý do bắt buộc:** `MeetingDetailDrawer` bấm vào thẻ sẽ gọi `GET assign/meeting/{id}` →
+`show()` → `canView()`. Không sửa thì lịch hiện thẻ nhưng bấm vào trả 403 "Bạn không có
+quyền xem meeting này!".
+
+**Verify:** 1171 gọi `canView()` trên meeting mình chủ trì → `true`.
+
+### Task 9.3: E2E
+- [x] Bổ sung spec cho tab Lịch meeting: user chủ trì thấy meeting mình chủ trì; user không
+      tham gia (kể cả có quyền cấp cao) KHÔNG thấy meeting đó.
+- [x] Chạy lại toàn bộ spec liên quan my-todo + meeting, đọc dòng tổng kết (bộ test chạy
+      `serial`, 1 ca fail là các ca sau in "did not run").
+
+### Kết quả đo sau khi sửa (chạy đúng truy vấn của lịch, DB `hrm_erp`)
+
+| Nhân viên | Trước | Sau | Không liên quan | Meeting mình chủ trì bị thiếu |
+|---|---|---|---|---|
+| 1170 E2E Assign (quyền tổng công ty) | 49 | 7 | 37 → **0** | 0 |
+| 1171 E2E CSKH Chu tri A (không quyền cấp nào) | 0 | 2 | 0 | 2 → **0** |
+| 1172 E2E CSKH Chu tri B (không quyền cấp nào) | 0 | 3 | 0 | 3 → **0** |
+| 224 Ngô Thị Lý (quyền tổng công ty) | 49 | 8 | 41 → **0** | 0 |
+
+Màn danh sách `/assign/meeting` giữ nguyên 49 cho 1170 và 224 — không bị siết nhầm.
+
+Playwright trên app thật (user E2E Assign, tháng 9/2026): lưới từ **4 thẻ → 1 thẻ**; 3 thẻ
+"E2E CSKH" (do mình tạo nhưng chủ trì là người khác, mình không có trong Thành phần) đã biến
+mất đúng như quyết định "không tính người tạo". Bấm vào thẻ còn lại mở được panel chi tiết,
+không 403.
+
+### File đụng tới
+- `hrm-api/Modules/Assign/Repositories/Criteria/MeetingCalendarCriteria.php` (mới)
+- `hrm-api/Modules/Assign/Http/Controllers/Api/V1/MeetingController.php` (`calendar()` + import)
+- `hrm-api/Modules/Assign/Entities/Meeting/Meeting.php` (`canView()`)
+- `e2e/tests/assign/my-todo-calendar-scope.api.spec.ts` (mới, 5 ca)
+
+### Kiểm ngược (mutation) — chứng minh bộ ca không rỗng
+- Trả `calendar()` về `MeetingCriteria` → 3/5 ca đỏ, chỉ đúng 42 meeting rò lên lịch.
+- Bỏ nhánh `host_employee_id` khỏi `MeetingCalendarCriteria` → ca "meeting mình CHỈ chủ trì" đỏ.
+- Bỏ nhánh `host_employee_id` khỏi `canView()` → ca "không bị 403" **vẫn xanh** (giới hạn đã
+  biết, ghi rõ trong spec): 2 user test đều có quyền tổng công ty nên `canView()` true qua nhánh
+  quyền. Muốn phủ thật cần user chủ trì không quyền, mà fixture `E2E CSKH Chu tri A/B` hiện
+  KHÔNG đăng nhập được — `e2e_care_report_seed.php` không tạo bản ghi `company_employees` →
+  `AuthNewController:75` nổ 500 "Trying to get property 'company_id' of non-object". **Việc còn
+  lại: vá fixture đó rồi mở rộng ca.**
+
+### Bộ e2e UI (chromium) — 4 ca ĐỎ SẴN, không liên quan thay đổi này
+
+Chạy `meeting-by-market-grouping` + `meeting-investment-survey` hai lượt cùng `--retries=0`,
+một lượt trên code gốc (`git checkout` 2 file + gỡ criteria mới), một lượt có fix — **kết quả
+giống hệt nhau**: 18 passed · 4 failed · 17 did not run, đúng cùng 4 tên ca:
+
+- `meeting-by-market-grouping` — cột thành phần chip "+N", bấm chip mở popup đủ danh sách
+- `meeting-by-market-grouping` — bấm tên meeting mở PANEL chi tiết bên phải
+- `meeting-by-market-grouping` — "Xem biên bản" mở popup XEM TRƯỚC BẢN IN
+- `meeting-investment-survey` — 2. Khối khảo sát chỉ hiện với đúng loại meeting
+
+→ Lỗi có sẵn trên nhánh `tpe`, thuộc feature khác. 17 ca "did not run" là do bộ chạy `serial`.
+Toàn bộ spec `my-todo*` xanh.
+
+## Checkpoint — 2026-09-08
+Vừa hoàn thành: Phase 9 (Task 9.1–9.3). API suite `my-todo` + `meeting` 17/17 xanh, không flaky.
+UI suite: spec `my-todo*` xanh hết; 4 ca đỏ ở 2 spec meeting đã đối chứng là ĐỎ SẴN trên code gốc.
+Đang làm dở: —
+Bước tiếp theo: user quyết có vá fixture `E2E CSKH Chu tri A/B` (thiếu `company_employees`) để
+phủ nốt ca canView của người chủ trì không quyền hay không. Chưa commit git.
+Blocked:
+
+---
+
+## Phase 9b — Chốt lại điều kiện: CHỈ theo Thành phần tham gia (2026-09-08)
+
+**Quyết định của user (thay cho Phase 9):** lịch lấy meeting theo **đúng một điều kiện** — user
+có tên trong Thành phần — Phía Công ty (`meeting_employees.type = 1`). KHÔNG xét
+`host_employee_id` nữa, vì người chủ trì đã được `ensureHostIsCompanyMember()` tự đưa vào Thành
+phần ở mọi lượt lưu; xét thêm là thừa và tạo 2 nguồn sự thật cho cùng câu hỏi "ai dự họp".
+KHÔNG xét `created_by` (người tạo chỉ là người nhập liệu).
+
+- [x] `MeetingCalendarCriteria`: bỏ `orWhere('meetings.host_employee_id', …)`, còn `whereHas('company_members')`.
+- [x] E2E: bỏ ca "meeting mình CHỈ chủ trì vẫn lên lịch"; thay bằng ca canh MẮT XÍCH —
+      **"lưu meeting thì người chủ trì tự được thêm vào Thành phần rồi lên lịch"** (lưu meeting
+      với Thành phần cố tình không có mình trong khi mình là chủ trì → sau lưu phải có mình +
+      meeting lên lịch, rồi trả lại nguyên trạng).
+- [x] Kiểm ngược: gỡ 2 lời gọi `ensureHostIsCompanyMember()` → ca trên ĐỎ đúng thông điệp
+      "lưu xong mà người chủ trì KHÔNG được thêm vào Thành phần". Đã khôi phục.
+
+### ⚠️ CÒN NỢ: 10 meeting CŨ chưa được vá — cần user duyệt
+
+`ensureHostIsCompanyMember()` chỉ chạy lúc LƯU, nên bản ghi cũ vẫn có chủ trì nằm ngoài Thành
+phần → dưới luật mới, người chủ trì KHÔNG thấy chính cuộc họp của mình cho tới khi có ai đó mở
+ra lưu lại. Đo trên `hrm_erp` 2026-09-08: **10 meeting**.
+
+| Meeting | Chủ trì | Số thành phần |
+|---|---|---|
+| 1 `TPE.MET.NB.26.0001` | 224 Ngô Thị Lý | 19 |
+| 43 `TPE.MET.KH.26.0041` | 1170 E2E Assign | 1 |
+| 46 `E2E-SURVEY-SYS-01` | 1170 | 2 |
+| 47 `E2E-SURVEY-INT-01` | 1170 | 2 |
+| 48 `E2E-CARE-PREV` | 1171 | 0 |
+| 49 `E2E-CARE-CUR` | 1172 | 0 |
+| 50 `E2E-CARE-OLD` | 1171 | 0 |
+| 51 `E2E-CARE-BULK-1` | 1172 | 0 |
+| 52 `E2E-CARE-BULK-2` | 1172 | 0 |
+| 59 `E2E-MEETONLY-1175` | 1170 | 0 |
+
+Số meeting bị thiếu trên lịch: 1170 mất 4 · 1171 mất 2 · 1172 mất 3 · 224 mất 1.
+
+Script vá đã soạn, **CHƯA CHẠY** (chờ user duyệt vì ghi dữ liệu thật):
+`hrm-api/database/backfill_meeting_host_as_member.php` — idempotent, chỉ THÊM khi thiếu, thêm
+vào cuối danh sách (giữ thứ tự kéo thả), không gửi thông báo, dùng lại chính
+`ensureHostIsCompanyMember()`.
+
+```
+php artisan tinker --execute="require base_path('database/backfill_meeting_host_as_member.php');"
+```
+
+### Kết quả test (đúng phạm vi feature, KHÔNG chạy cả bộ)
+- `my-todo-calendar-scope.api.spec.ts` — 6/6
+- `my-todo-grouping` 8/8 · `my-todo-subitems` (+api) · `my-todo-list-modal` · `my-todo-toggle-smooth` · `meeting-host` (api) — xanh
+- ⚠️ 2 ca my-todo từng đỏ khi chạy chung: đều timeout 30s ở `page.goto`, chạy riêng thì xanh —
+  nghẽn Nuxt dev server, không phải lỗi logic. Đã loại trừ nghi ngờ `prospective-projects/getAll`
+  chậm sau khi vá null: đo thật 0,6–0,8s.
+
+### Backfill dữ liệu cũ — ĐÃ CHẠY trên local (2026-09-08)
+
+- [x] Siết `ensureHostIsCompanyMember()`: chủ trì không tra được trong `employees` thì **không
+      chèn** dòng thành phần (tránh dòng trắng tên ở tab Thông tin / Điểm danh / bản in).
+- [x] Script chạy theo lô `chunkById(200)`, thêm cờ `BACKFILL_DRY_RUN=1` để đếm trước khi ghi.
+- [x] Chạy thật: **10/10 meeting đã vá, 0 còn lại, 0 bỏ qua**. `meeting_employees` type=1:
+      365 → 375 (đúng +10). Chạy lại lần 2: "Meeting can va: 0", tổng vẫn 375 ⇒ idempotent.
+      Truy vấn nhóm trùng `(meeting_id, employee_id)` trả rỗng ⇒ không sinh dòng trùng.
+- [x] Lịch sau khi vá: 1170 → 11/11 · 1171 → 2/2 · 1172 → 3/3 · 224 → 8 (6 chủ trì + 2 thành
+      phần). Tất cả đều **0 meeting không liên quan**.
+- [x] Trình duyệt thật: tab Lịch meeting hiện 3 thẻ + "+2 khác" = 5, thống kê 5, không toast lỗi.
+- [x] Test phạm vi feature (`my-todo*` + `meeting-host`, workers=1): **43/43 xanh**.
+
+### ⚠️ RỦI RO KHI ĐẨY LÊN PRODUCTION — `ApplicationService` / `IndustriesService`
+
+2 file này bỏ `code` khỏi `with('scopes:id,code,name')` vì DB local **không có** cột
+`scopes.code`. NHƯNG:
+
+- Migration gốc `2025_11_21_143517_create_scopes_table.php` **CÓ** tạo cột `code` (và
+  `company_id`, `department_id`, `part_id`), và **không có migration nào bỏ chúng** ⇒ DB local đã
+  bị sửa ngoài migration, production nhiều khả năng VẪN CÒN `scopes.code`.
+- `ScopeService.php:48,64,121` vẫn dùng `scopes.code` để lọc/tạo ⇒ codebase vẫn giả định cột này tồn tại.
+
+**Kiểm trên production trước khi đẩy:**
+
+```sql
+SHOW COLUMNS FROM scopes LIKE 'code';
+```
+
+- Còn cột `code` → **KHÔNG đẩy 2 file này** (production không lỗi 500; đẩy vào là âm thầm bỏ
+  `scope.code` khỏi payload `applications/getAll` + `industries/getAll`).
+- Không còn cột → đẩy, vì đúng là đang 500.
+
+Đã grep `hrm-client`: không màn nào đọc `scopes[].code` lồng trong applications/industries
+(chỗ duy nhất dùng `scope.code` là `pages/assign/solution-groups/index.vue:545`, lấy từ endpoint
+KHÁC `assign/scopes/getAll`, và có `|| ''` nên không vỡ).
+
+### Backfill — bổ sung BƯỚC 1: meeting chưa có chủ trì (2026-09-08, chốt với user)
+
+Meeting tạo TRƯỚC khi có tính năng "Người chủ trì" có `host_employee_id = NULL` → bước 2 không
+đụng tới, người tạo vẫn không thấy cuộc họp trên lịch. Chốt: **lấy `created_by` làm chủ trì**,
+đúng với cách hệ thống hiển thị trước khi có tính năng (xem docblock
+`e2e/tests/assign/meeting-host.api.spec.ts`: "Trước feature này mọi chỗ hiển thị Người chủ trì
+đều suy từ `created_by`").
+
+`database/backfill_meeting_host_as_member.php` nay chạy 2 bước trong 1 lượt:
+
+1. `host_employee_id` NULL → gán `created_by` (chỉ khi `created_by` còn tra được trong
+   `employees`; không thì BỎ QUA và liệt kê ra).
+2. Đưa chủ trì vào Thành phần (như cũ).
+
+⚠️ **Ghi bằng query builder, KHÔNG dùng Eloquent `save()`** — `MeetingCriteria` sắp mặc định
+`orderByDesc('updated_at')`, nếu đội `updated_at` thì toàn bộ meeting cũ nhảy lên đầu màn danh
+sách và cột "Người cập nhật" sai. Đã đo: `updated_at` và `updated_by` GIỮ NGUYÊN sau khi chạy.
+
+**Kiểm chứng (local không còn meeting nào thiếu chủ trì nên phải tự dựng ca kiểm):**
+- Dựng: meeting 53 + 54 → `host_employee_id = NULL`, xoá dòng thành phần của 1170.
+- Dry-run: đúng 2 bản ghi ở bước 1, 0 ở bước 2 (kèm cảnh báo bước 2 sẽ tăng sau khi bước 1 chạy).
+- Chạy thật: bước 1 gán 2, bước 2 vá 2 — cả 2 bước trong 1 lượt.
+- `updated_at` vẫn `2026-09-08 16:17:48`, `updated_by` không đổi ⇒ không đội timestamp.
+- Dòng thêm vào có đủ `name` / `role` / `phone`, `sort_order` đúng, `attendance_status = 0`.
+- Chạy lại: `0 / 0` ⇒ idempotent. Toàn bảng: 0 meeting thiếu chủ trì, 0 chủ trì ngoài Thành phần,
+  `meeting_employees` type=1 = 375 (bằng đúng số trước khi dựng ca kiểm).
+
+### Gỡ toàn bộ chỉnh sửa liên quan bảng `scopes` (2026-09-08, user tự xử lý lại DB)
+
+User chốt: lệch schema `scopes` là do DB local khác production, user tự dựng lại DB → **gỡ hết**
+phần tôi sửa vì cột `scopes.code` / `scopes.company_id` không tồn tại ở local.
+
+⚠️ Lúc gỡ thì các thay đổi ĐÃ NẰM TRONG commit `d89ad4375 "Fix meeting"` (có người commit trong
+lúc đang làm), nên không `git checkout --` được — phải lấy lại từ `d89ad4375^`:
+
+```
+git checkout d89ad4375^ -- Modules/Assign/Services/ApplicationService.php \
+                            Modules/Assign/Services/IndustriesService.php \
+                            database/e2e_meeting_survey_seed.php
+```
+
+Đã trả về nguyên trạng: `with('scopes:id,code,name')` ở 4 chỗ, seed đọc lại
+`scopes.company_id`/`department_id` và khoá idempotent theo `code`. **Chưa commit** — cần commit
+bản gỡ này vì bản sửa đã vào lịch sử git.
+
+Hệ quả trên DB local hiện tại (cho tới khi user dựng lại DB): `applications/getAll` +
+`industries/getAll` lại 500 `Unknown column 'scopes.code'` → màn Sửa meeting kẹt ở lớp loading,
+spec `meeting-investment-survey` đỏ. Không ảnh hưởng tab Lịch meeting.
+
+**GIỮ LẠI** (không đụng bảng `scopes`):
+- Toàn bộ phần Lịch meeting + `MeetingService::ensureHostIsCompanyMember()` + script backfill
+- `ProspectiveProjectResource.php` (null-check, lỗi độc lập)
+- `e2e_internal_scope_fixture.php` + `e2e_meeting_survey_fixture.php` — vá `employee_infos.email`
+  trùng chuỗi rỗng, thuộc bảng `employee_infos` chứ không phải `scopes`
+
+### Chạy lại toàn bộ trên DB CHUẨN (2026-09-08, user dựng lại DB)
+
+DB đổi: `DB_DATABASE` từ `hrm_erp` → **`hrm_tpe`**. Bảng `scopes` trên DB chuẩn CÓ ĐỦ
+`code` / `company_id` / `department_id` / `part_id` đúng như migration gốc ⇒ **việc gỡ phần
+`scopes` là chính xác**, và seed bản gốc `e2e_meeting_survey_seed.php` chạy lại được bình thường.
+
+- [x] 4 endpoint từng 500 nay **200 hết**: `applications/getAll`, `industries/getAll`,
+      `prospective-projects/getAll`, `scopes/getAll`.
+- [x] Backfill trên DB chuẩn: **0 meeting thiếu chủ trì** (bước 1 không có việc),
+      **45 meeting** cần đưa chủ trì vào Thành phần (bước 2). Chạy xong:
+      `meeting_employees` type=1 **364 → 409** (đúng +45), còn thiếu 0, không dòng trùng,
+      tên/chức danh lấy đúng từ nhân viên thật. Chạy lại: 0/0 ⇒ idempotent.
+      Backup trước khi chạy: `/tmp/backup_hrm_tpe_meeting_2026-09-08_1950.sql`.
+- [x] Dựng lại fixture + `e2e/.env` từ output seed: SYSTEM=44 · INTERNAL=45 · SCOPE_ROW=24 ·
+      SCOPE_PARENT=**8** (giá trị cũ 2 đã sai) · MEETING_ONLY=46 · LOCKED_MEETING=47 · LOCKED_SCOPE=31.
+- [x] **Sửa spec hết phụ thuộc id cứng**: `my-todo-calendar-scope.api.spec.ts` trước viết cứng
+      meeting 55 / nhân viên 26 (id của DB cũ). Nay tự dò lúc chạy: meeting mình CHỦ TRÌ +
+      trạng thái Lên lịch/Chốt lịch + **còn hạn nhập biên bản** + không thuộc nhóm fixture bị spec
+      khác ghi đè; nhân viên lấy từ `getListEmployee`.
+      ⚠️ KHÔNG lọc bằng cờ `canEdit`: nó đang `false` cho cả meeting còn hạn (siết theo tiêu chí
+      khác), lọc theo nó thì không tìm được meeting nào. Thứ thật sự chặn lưu là hạn biên bản —
+      quá hạn thì `POST` trả **423** "Đã quá hạn nhập biên bản cuộc họp".
+- [x] `my-todo-calendar-scope.api.spec.ts`: **6/6**. Kiểm ngược trên DB mới: gỡ 2 lời gọi
+      `ensureHostIsCompanyMember()` → ca mắt xích đỏ đúng thông điệp. Đã khôi phục.
+- [x] Phạm vi feature (`my-todo*` + `meeting-host`): 39 passed / 1 timeout `beforeEach`
+      (`my-todo-toggle-smooth`) — chạy riêng spec đó **7/7 xanh**, là nghẽn Nuxt dev server.
+- [x] Trình duyệt thật: 5 thẻ, thống kê 5 (Chốt lịch 4 + Hoàn thành 1), không toast lỗi.
+
+**Trạng thái git**: bản gỡ `scopes` (3 file) đang ở working tree, ĐÃ `git add` nhưng CHƯA COMMIT.
+Cần commit vì bản sửa đã nằm trong `d89ad4375`.
+
+## Checkpoint — 2026-09-08 (wrap up)
+
+**Vừa hoàn thành:** Phase 9 + 9b — sửa nguồn dữ liệu tab Lịch meeting.
+
+- Điều kiện lấy meeting vào lịch: **CHỈ** `user có tên trong Thành phần — Phía Công ty`
+  (`MeetingCalendarCriteria`, mới). Bỏ scope theo quyền cấp, bỏ nhánh chủ trì, bỏ người tạo.
+- `MeetingService::ensureHostIsCompanyMember()` — chủ trì tự vào Thành phần ở mọi lượt lưu
+  (tạo mới + sửa), bỏ qua khi chủ trì không tra được trong `employees`.
+- `Meeting::canView()` nhận thêm người chủ trì (lớp chắn cho dữ liệu chưa vá).
+- `ProspectiveProjectResource` — vá null-check gây 500 (lỗi độc lập, có sẵn).
+- Backfill `database/backfill_meeting_host_as_member.php` (2 bước, dry-run, chunkById,
+  không đội `updated_at`) — ĐÃ CHẠY trên DB chuẩn local: 45/91 meeting, 364 → 409 dòng.
+- E2E `my-todo-calendar-scope.api.spec.ts` (mới, 5 ca, phủ cả 2 chiều phân quyền, không phụ
+  thuộc id cứng). Kiểm ngược bằng mutation ở cả 3 điểm: criteria, nhánh host, ensureHost.
+
+**Số đo cuối (DB chuẩn `hrm_tpe`):** 91 meeting · 0 thiếu chủ trì · 0 chủ trì ngoài Thành phần ·
+`my-todo-calendar-scope` 6/6 · phạm vi feature (`my-todo*` + `meeting-host`) xanh (1 timeout
+`beforeEach` do nghẽn dev server, chạy riêng 7/7).
+
+**Git:** `hrm-api` — `d89ad4375 "Fix meeting"` (code feature) + `8f512c8c1 "remove fix scopes"`
+(gỡ phần đụng bảng `scopes` sau khi user dựng lại DB chuẩn).
+
+**Đang làm dở:** `database/backfill_meeting_host_as_member.php` ở working tree đang là bản **2
+bước** (thêm bước "gán chủ trì = người tạo"); bản trong commit mới chỉ có bước 2 → cần commit nốt.
+
+**Bước tiếp theo:**
+1. Commit bản script 2 bước.
+2. Deploy lên VPS rồi chạy backfill NGAY (khoảng trống giữa deploy và backfill là lúc người chủ
+   trì tạm không thấy cuộc họp của mình). Quy trình 10 bước đã bàn giao trong chat.
+3. Trên VPS chạy dry-run trước để biết số thật: `BUOC 1` = bao nhiêu meeting chưa có chủ trì,
+   `BUOC 2` = bao nhiêu meeting cần đưa chủ trì vào Thành phần.
+
+**Blocked:** —
+
+**Lưu ý nghiệp vụ khi vá production:** dòng chủ trì thêm vào có `attendance_status = 0`, nên
+meeting đang **Lên lịch / Chốt lịch** sẽ cần điểm danh thêm cho chủ trì trước khi Hoàn thành.

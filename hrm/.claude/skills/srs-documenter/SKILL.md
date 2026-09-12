@@ -442,7 +442,7 @@ generator **không được** ép lại font/size/căn lề — cứ dùng `d.h1
 | Heading 1 | **18pt**, **căn giữa**, **bắt đầu từ đầu trang mới** |
 | Trang bìa (2 dòng `title_block`) | 24pt đậm căn giữa — **miễn trừ** quy tắc 13pt |
 | Văn xuôi, bullet, Heading 2/3 | **13pt** |
-| Chữ trong bảng | 10pt (`TABLE_PT`) — giữ nhỏ để bảng 8 cột không vỡ trang |
+| Chữ trong bảng | **13pt** (`TABLE_PT`) — chốt 09/09/2026, bảng KHÔNG còn là ngoại lệ |
 | Chú thích tên hình ảnh | **căn giữa**, **13pt** nghiêng (`CAPTION_PT`) |
 
 ```python
@@ -461,7 +461,9 @@ h1.alignment = WD_ALIGN_PARAGRAPH.CENTER
 h1.page_break_before = True
 ```
 
-Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)`, dòng tiêu đề in đậm.
+Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)` = **13pt**, dòng tiêu đề in đậm.
+
+> ⚠️ Bảng 8 cột “Mô tả chi tiết giao diện” ở 13pt rất chật: vùng in chỉ 6 inch nên cột hẹp nhất còn ~0,5 inch và tài liệu dài thêm khoảng 30% số trang (một SRS 13 chức năng: 42 → 55 trang). Đây là hệ quả đã được user chấp nhận khi chốt 13pt — **đừng tự hạ cỡ chữ bảng xuống để tiết kiệm trang**. Muốn dễ đọc hơn thì đề xuất user cho xoay ngang trang riêng cho bảng đó, không đổi cỡ chữ.
 
 ### 2 bẫy khi ép Times New Roman (đã trả giá)
 

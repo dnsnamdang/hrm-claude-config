@@ -37,3 +37,7 @@ Vừa hoàn thành: T1–T5 (toàn bộ code BE + FE). PHP lint sạch 4 file. `
 Đang làm dở: (không)
 Bước tiếp theo: User chạy seeder để insert 4 permission mới (id 1095-1098), gán quyền cho role qua màn phân quyền, rồi verify browser (T6).
 Blocked:
+
+## Phase 5 — Người chủ trì được Sửa meeting (2026-09-10)
+- [x] BE: `Meeting::isHost()` + `canEdit()` = người tạo HOẶC chủ trì; `update()` gate bằng `canEdit()`; Resource/Transformer trả `can_edit`; `canView()` + `MeetingCriteria` cho chủ trì thấy meeting (kể cả nháp). Hoàn thành/Huỷ/Xoá vẫn chỉ người tạo (`canManage()`).
+- [x] FE: `index.vue` nút Sửa dùng `can_edit`; `_id/edit.vue` guard URL dùng `can_edit`; `MeetingForm.vue` tách `canEditMeeting` (lưu/lên lịch/chốt/hoàn thành) và `canManageMeeting` (Huỷ/Xoá) — chủ trì không phải người tạo bị bỏ nút Huỷ/Xoá.

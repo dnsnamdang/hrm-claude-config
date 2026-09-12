@@ -1,24 +1,60 @@
 ---
 name: print-page
-description: Use when tạo mới hoặc sửa màn IN (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
+description: Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước ReportPrintPreviewModal — chuẩn hiện hành, xem mục 0), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
 
-Chuẩn hoá cách làm màn IN (`pages/**/print.vue`, `pages/**/_id/print.vue`) trong `hrm-client` (Nuxt/Vue2) để tránh lặp lại loạt lỗi in kinh điển. **Mọi mục dưới đây đã được kiểm chứng thực tế** (kể cả đo đạc bằng iframe).
+Chuẩn hoá cách làm chức năng IN trong `hrm-client` (Nuxt/Vue2) để tránh lặp lại loạt lỗi in kinh điển. **Mọi mục dưới đây đã được kiểm chứng thực tế** (kể cả đo đạc bằng iframe).
 
 ---
 
-## 0. KHUÔN HIỂN THỊ CHUẨN của màn IN (chốt 2026-08-21) — copy nguyên, KHÔNG tự chế
+## 0. LUẬT GỐC: nút In mở POPUP XEM TRƯỚC, KHÔNG mở trang riêng (chốt 2026-08-22)
+
+**Đọc mục này trước, và đọc hết, rồi mới viết dòng code đầu tiên.** Bấm In ở một dòng trên màn
+danh sách (hoặc ở màn chi tiết) phải bung **popup xem trước ngay tại chỗ**. KHÔNG
+`window.open('/…/print')`, KHÔNG `$router.push`/`$router.resolve` sang trang `/print`: mở tab mới
+làm mất ngữ cảnh, quay lại phải tải lại cả màn danh sách kèm bộ lọc.
+
+Cách dựng popup — bộ dùng chung, chỉ khai báo chứ không viết lại — **xem mục 8** (đủ khuôn code,
+CSS, letterhead, bẫy đã dính).
+
+### Cây quyết định — 3 câu, hỏi theo thứ tự
+
+1. **BE đã có `print-data` / `print-list-data` chưa?** (`grep -n "printData\|printListData"` ở
+   controller tương ứng trong `hrm-api/Modules/*/Http/Controllers`)
+   → **Có** thì làm popup (mục 8). Hết chuyện, không dựng file `print.vue` nào.
+2. **Chưa có?** → **bổ sung endpoint BE** trả `{ data: { template: '<html>' } }` từ mẫu in ERP
+   (trait `PrintsCompanyLetterhead` cho `{{HEADER}}`), rồi quay lại bước 1.
+   **Thiếu BE KHÔNG phải lý do để dựng trang `/print`.**
+3. Chỉ khi rơi đúng một trong **3 ngoại lệ** dưới đây mới được dựng trang `/print` riêng — và
+   lúc đó theo khuôn mục 0b:
+   - Màn **HRM gốc** (`pages/decision/**`, `pages/training/**`, `pages/human/**`,
+     `pages/regulations/**`, `pages/timesheet/**`) — không có mẫu in ERP ở BE.
+   - **Báo cáo tự dựng bằng Vue** từ dữ liệu API, không có template HTML ở BE
+     (`pages/assign/report/**`).
+   - Bản in cần **thao tác trên chính trang in** (nhập liệu, chọn phiếu, khảo sát) chứ không
+     chỉ xem rồi in.
+
+> Nhóm màn **port từ ERP** (`pages/finance/**`, `pages/customer-care/**`) KHÔNG có ngoại lệ nào:
+> mọi màn đều phải là popup. Màn nào còn `window.open('/…/print')` là **nợ kỹ thuật cần chuyển**,
+> đừng lấy nó ra làm mẫu để copy.
+
+⚠️ 2 màn mẫu cũ (`warranty-repair-requests/_id/print.vue` · `warranty-repair-handle-requests/print.vue`)
+**đã bị xóa** ngày 2026-08-22 (commit `ed1c24e53`): 3 màn luồng bảo hành chuyển hẳn sang popup, bỏ
+trang `/print` để không có 2 nguồn CSS in. Đó là hướng đi chuẩn cho mọi màn ERP→HRM còn lại.
+
+---
+
+## 0b. KHUÔN TRANG `/print` RIÊNG (chốt 2026-08-21) — CHỈ dùng cho 3 ngoại lệ ở mục 0
+
+> ⛔ Trước khi đọc tiếp: đã chạy cây quyết định ở mục 0 chưa? Màn port từ ERP thì **quay lại mục 8**.
+> Mục này chỉ áp cho màn HRM gốc / báo cáo tự dựng bằng Vue / trang in có thao tác.
 
 Màn mẫu: `pages/customer-care/device-errors/_id/print.vue` (khổ DỌC) và
 `pages/customer-care/device-errors/print.vue` (khổ NGANG).
 
-> ⚠️ 2 màn mẫu cũ (`warranty-repair-requests/_id/print.vue` · `warranty-repair-handle-requests/print.vue`)
-> **đã bị xóa** ngày 2026-08-22 (commit `ed1c24e53`): 3 màn luồng bảo hành chuyển hẳn sang popup
-> xem trước `ReportPrintPreviewModal` (mục 12), bỏ trang `/print` để không có 2 nguồn CSS in.
-> Màn mới nếu chỉ cần xem trước + in thì **cân nhắc dùng popup trước**, đừng mặc định dựng trang `/print`.
-Mọi màn in phải giống 3 điểm sau, không có ngoại lệ:
+Trang `/print` phải giống 3 điểm sau, không có ngoại lệ:
 
 1. **KHÔNG có menu / topbar** — khai `layout: 'print'` (`layouts/print.vue`). Dùng
    `default-sidebar` thì mặt giấy bị đẩy xuống ~130px và hở dải xanh của topbar ở đầu trang.
@@ -60,7 +96,10 @@ Mọi màn in phải giống 3 điểm sau, không có ngoại lệ:
    `/css/pdf.css` (hrm-client không có file này, khai vào là 404).
 
 > Đã áp cho 13 màn ERP→HRM ngày 2026-08-21 (lỗi thiết bị, DM dịch vụ SC, DM tài khoản, YC nhập
-> hàng, chuyển hàng nhập thẳng, nhóm hàng giữ). Màn in mới **bắt buộc** copy khuôn này.
+> hàng, chuyển hàng nhập thẳng, nhóm hàng giữ) — **đó là hiện trạng cũ, không phải đích đến**:
+> 13 màn này nằm trong danh sách nợ kỹ thuật phải chuyển sang popup (mục 0). Sửa lỗi hiển thị trên
+> các trang `/print` đó thì theo khuôn ở đây; còn **dựng màn in MỚI cho phân hệ ERP→HRM thì dùng
+> popup (mục 8)**, không đẻ thêm trang `/print`.
 
 ---
 
@@ -80,7 +119,7 @@ Nút In gọi `this.$printContent(options)` — plugin `hrm-client/plugins/print
 
 ---
 
-## 2. Quy tắc vàng khi làm màn print.vue
+## 2. Quy tắc vàng khi làm trang `/print` riêng (chỉ 3 ngoại lệ ở mục 0 — màn ERP→HRM dùng popup)
 
 - [ ] **`layout: 'print'`** — BẮT BUỘC, xem mục 2b. Đây là lỗi hay gặp nhất khi copy màn in có sẵn.
 - [ ] Đặt `id="content"` trên div gốc nội dung in (để selector plugin khớp đúng, không rơi vào fallback `.container`).
@@ -760,6 +799,10 @@ Với bảng KHÔNG có rowspan nhưng dòng cao (dễ bị cắt ngang trang l�
 
 ## 6. Màn mẫu IN TỐT NHẤT project (tham khảo khi cần)
 
+> Cả 3 màn dưới đây đều là **trang `/print` riêng** — thuộc nhóm ngoại lệ ở mục 0 (báo cáo tự dựng
+> bằng Vue, màn HRM gốc). Làm chức năng In cho màn ERP→HRM thì mẫu để copy là **popup ở mục 8**
+> (`pages/customer-care/wr-quotations/index.vue`), KHÔNG phải mấy màn này.
+
 - `pages/assign/report/task-manager-by-employees/print.vue` — báo cáo bảng dài nhiều trang **không lỗi**: làm phẳng dữ liệu phân cấp (indent + class, KHÔNG rowspan ở tbody), truyền toàn bộ CSS qua `styles`, `table-layout: fixed` + cột cố định + viền 1px mọi ô.
 - `pages/assign/assign_business/_id/print.vue` — `<colgroup>` + `generatePrintStyles()` tự nhân bản CSS vào cửa sổ in + ngắt trang mỗi phiếu bằng `page-break-after`.
 - Màn tham chiếu đã sửa đầy đủ theo skill này: `pages/decision/category/insurance-packages/_id/print.vue`.
@@ -804,7 +847,9 @@ doc.close()
 | **Bản in DANH SÁCH mất dòng mà không ai biết** | Chặn trần nhưng không nói gì / chỉ báo bằng toast | Mục 4d — dòng nhắc đặt trên bản xem trước, đủ 3 ý: in được bao nhiêu · tổng bao nhiêu · làm gì tiếp |
 | **Khối KÝ TÊN dồn về trái, hụt so với mép phải** | Mẫu ERP khai cứng `width:827px` cho bảng ký `class="block no-border"`; rule `table:not(.no-border)` KHÔNG với tới nó | `#content table.block { width:100% !important; table-layout:fixed !important }` + `td { width:auto !important }` (mục 3b) |
 
-## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22)
+## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22) — CÁCH LÀM CHI TIẾT
+
+*(Luật nằm ở mục 0; mục này là khuôn code để thi hành.)*
 
 Nút **In** ở màn danh sách / chi tiết mở **popup xem trước** ngay tại chỗ. KHÔNG `window.open()`
 sang trang `/print` nữa: mở tab mới làm mất ngữ cảnh đang xem, quay lại phải tải lại cả màn danh

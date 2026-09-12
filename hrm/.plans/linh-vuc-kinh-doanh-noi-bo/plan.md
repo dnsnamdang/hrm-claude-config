@@ -237,3 +237,76 @@ Blocked: không.
 - 5 quy tắc `list-page` còn nợ (SmartFilterPanel · popup Cấu hình cột · popup Chọn trường xuất file ·
   hành động Lịch sử · `V2BaseModal`) — làm sau khi gộp DB, theo quyết định của user.
 - SRS `.docx` và `testcase.xlsx`: chưa tạo (chỉ tạo khi được yêu cầu).
+
+---
+
+## Phase 5 — Đổi tên hiển thị (2026-08-27)
+
+Danh mục đổi tên **"Lĩnh vực kinh doanh nội bộ" → "Lĩnh vực Công ty kinh doanh"**.
+GIỮ NGUYÊN: URL `/assign/internal-business-scopes`, bảng `internal_business_scopes`, cột
+`internal_business_scope_id`, tiền tố mã `LVKDNB.`, id quyền 1177/1178, tên file mẫu Import.
+
+- [x] **B1.** Đổi mọi chuỗi hiển thị FE (menu, tiêu đề bảng/modal, nhãn, placeholder, confirm, toast,
+      nhãn cột Import) — 6 file `hrm-client`.
+- [x] **B2.** Đổi câu lỗi validate + thông báo import + header Excel BE — 9 file `hrm-api`.
+      Tên file xuất: `danh_sach_linh_vuc_kinh_doanh_noi_bo.xls` → `danh_sach_linh_vuc_cong_ty_kinh_doanh.xls`.
+- [x] **B3.** Đổi header trong `static/Mau_import_LinhVucKinhDoanhNoiBo.xlsx` và
+      `Mau_import_NhomNganh.xlsx`; **giữ tên cũ trong `aliases`** để file mẫu cũ vẫn nạp được.
+- [x] **B4.** Đổi **tên quyền** 1177/1178 → `Quản lý / Xem danh mục lĩnh vực Công ty kinh doanh`
+      ở `Routes/api.php`, `PermissionsTableSeeder.php`, `e2e_internal_scope_fixture.php`,
+      `menu-sidebar.js` (`isShow`), `index.vue` (`hasAPermission`).
+- [x] **B5.** Cập nhật DB local `hrm_tpe`: `UPDATE permissions SET name/display_name` cho id 1177,1178
+      + `php artisan cache:clear` (xoá cache quyền của spatie). Đã quét toàn DB: không còn chuỗi cũ.
+- [x] **B6.** Cập nhật text mong đợi trong 4 spec E2E + `InternalBusinessScopePage.ts`.
+
+### ⚠️ Bắt buộc khi lên môi trường khác (staging/production)
+
+Tên quyền lưu trong DB, KHÔNG tự đổi theo code. Chạy trước/cùng lúc với deploy, nếu không sẽ
+**mất menu + 403 toàn bộ màn**:
+
+```sql
+UPDATE permissions SET name='Quản lý danh mục lĩnh vực Công ty kinh doanh',
+       display_name='Quản lý danh mục lĩnh vực Công ty kinh doanh' WHERE id=1177;
+UPDATE permissions SET name='Xem danh mục lĩnh vực Công ty kinh doanh',
+       display_name='Xem danh mục lĩnh vực Công ty kinh doanh' WHERE id=1178;
+```
+
+Sau đó `php artisan cache:clear`. KHÔNG chạy `PermissionsTableSeeder` (seeder `truncate` cả bảng
+`permissions`).
+
+## Phase 6 — Tài liệu (2026-08-27)
+
+- [x] **B1.** SRS: `docs/srs/linh-vuc-cong-ty-kinh-doanh.md` (13 mục — use case, business rule,
+      data model, API spec, UI spec, edge case, deploy, nợ kỹ thuật).
+- [x] **B2.** Testcase: `docs/srs/linh-vuc-cong-ty-kinh-doanh-testcases.xlsx` (**201 ca**, 16 nhóm)
+      + bản markdown để review trong git + script sinh `docs/srs/generate_testcase_lvctkd.py`.
+
+### Checkpoint — 2026-08-27 (đổi tên + tài liệu)
+
+Vừa hoàn thành:
+- **Phase 5 — Đổi tên hiển thị** "Lĩnh vực kinh doanh nội bộ" → "Lĩnh vực Công ty kinh doanh", gồm cả
+  **tên quyền** 1177/1178. Sửa 6 file `hrm-client` + 9 file `hrm-api` + 5 file `e2e`, header 2 file
+  xlsx mẫu, tên file xuất Excel. Giữ nguyên URL / bảng / cột / tiền tố `LVKDNB.` / tên file mẫu.
+  Giữ tên cũ trong `aliases` của cột Import → file mẫu cũ vẫn nạp được.
+  DB local `hrm_tpe` đã `UPDATE permissions` + `artisan cache:clear`.
+- **Phase 6 — Tài liệu**: SRS `.md` + `.docx` (pandoc, 23 bảng, có TOC) và 201 testcase (16 nhóm)
+  ở `docs/srs/`, kèm script sinh lại.
+
+Kiểm chứng đã chạy: PHP 7.4 `-l` sạch toàn bộ file BE sửa · `node --check` cho `menu-sidebar.js`
+(CRLF nguyên vẹn, diff đúng 3 dòng) · so khớp byte-for-byte tên quyền trong DB với 5 chỗ dùng trong
+code · quét toàn bộ cột varchar/text của `hrm_tpe` → không còn chuỗi tên cũ.
+
+Đang làm dở: không. Code đã được user commit và gộp vào `tpe`.
+
+Bước tiếp theo:
+- Chạy lại Playwright sau đổi tên (máy hiện tại chưa cài `e2e/node_modules`) — 19 ca đã sửa text
+  mong đợi nhưng CHƯA chạy thật.
+- Khi deploy: chạy 2 câu `UPDATE permissions` ở Phase 5 cùng lúc với deploy code.
+
+Blocked: không.
+
+### Việc chưa làm (cập nhật 2026-08-27)
+
+- Chạy lại bộ E2E sau khi đổi tên (chưa verify bằng test thật).
+- 5 quy tắc `list-page` còn nợ + file mẫu Import sinh bằng endpoint API — chờ gộp DB.
+- Bản `.pdf` / `.html` của SRS (nếu cần gửi ngoài) — một lệnh pandoc.

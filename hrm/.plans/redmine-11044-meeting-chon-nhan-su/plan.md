@@ -48,3 +48,9 @@ Blocked:
   - Gõ chữ chỉ cập nhật keyword (Enter/nút mới tìm), bấm X xoá trắng thì tìm lại ngay — đúng khuôn `onQuickSearchChange` của popup Báo giá
 - [x] Chạy lại bộ UI test: 35/35 PASS (thêm 3 case: mặc định thu gọn · ô tìm nhanh luôn hiện · bấm "Tìm kiếm nâng cao" mở panel)
 - [x] Sửa lệch lề bộ lọc: 3 ô Công ty/Phòng ban/Bộ phận do `V2BaseCompanyDepartmentFilter` render (component con, bọc `.d-contents`) nên rule padding scoped không chạm tới → dòng 1 lệch 8px so với dòng 2 và ô tìm nhanh. Đổi sang `.pick-filter-row ::v-deep [class*='col-']`. Đo lại bằng Playwright: mọi hàng đều `left=271`, ô lọc `x=275` = mép ô tìm nhanh. Thêm 2 case chống tái phát (37/37 PASS)
+
+## Bổ sung 2026-09-11 — thêm cột trong popup chọn nhân sự
+- [x] BE `getListEmployee`: join `parts` + `titles`, trả `part_name`, `title_name`
+- [x] FE `PopupStaff.vue`: thêm cột Bộ phận / Chức vụ / Chức danh vào bảng nhân sự công ty (bỏ dòng phụ chức vụ dưới tên)
+- [x] Popup rộng hơn (`dialog-class="pick-staff-dialog"`, max-width 1500px/96vw) + min-width cho cột Bộ phận/Chức vụ/Chức danh
+- [x] Giảm padding popup: `body-class="p-0"` + `.pick-body` 0.5rem, tab bar margin 8px

@@ -57,3 +57,8 @@ Blocked: không.
 
 - [x] `utils/helpers.js`: `htmlToPlainText` giải mã MỌI entity qua `decodeHtmlEntities()` (textarea của trình duyệt; SSR fallback entity hay gặp) thay vì liệt kê tay 4 entity — áp cho ô Kết luận/Biên bản + Ghi chú ở `MeetingDetailDrawer` (dùng ở Lịch làm việc của tôi + Báo cáo CSKH tiềm năng)
 - [x] Verify Playwright với meeting id 88 (`TPSG.MET.KH.26.0003`): chữ ra đúng tiếng Việt
+
+## Bổ sung 2026-09-11 — In biên bản kèm Tài liệu chuẩn bị
+- [x] `MeetingPrintPreview.vue` + `meeting_record.blade.php`: mục I/ thêm bảng "Tài liệu chuẩn bị cho buổi họp" sau Mục tiêu (gate phần `info`)
+- [x] Popup Cấu hình in: thêm ô tick `prepare_attachment` "Tài liệu chuẩn bị cho buổi họp" (index.vue + MeetingReport.vue), preview gate theo ô này
+- [x] Tạo meeting test id=150 (TPE.MET.KH.26.0137) nhân bản từ 132, có 1 tài liệu chuẩn bị + 2 tài liệu đính kèm

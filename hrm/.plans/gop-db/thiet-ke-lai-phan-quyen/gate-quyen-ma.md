@@ -1,0 +1,258 @@
+# Gate trỏ vào quyền KHÔNG tồn tại trong seeder (luôn trả false)
+
+Sinh tự động 2026-08-28. ĐÃ loại trừ `.worktrees/`, `vendor/`, `node_modules/`, chính seeder.
+Kiểm lại từng ca trước khi sửa — có thể là quyền đã bỏ, hoặc gate gõ sai tên.
+
+## HRM — 28 quyền ma / 44 chỗ gọi
+
+- `Xem hồ sơ` — 6 chỗ
+    - HRM/hrm-api/Modules/Human/Routes/api.php:148
+    - HRM/hrm-api/Modules/Human/Routes/api.php:153
+    - HRM/hrm-api/Modules/Human/Routes/api.php:155
+    - HRM/hrm-api/Modules/Human/Routes/api.php:157
+    - … +2 chỗ
+- `Xem báo cáo tổng hợp kết quả khảo sát theo theo công ty` — 5 chỗ
+    - HRM/hrm-api/Modules/Training/Entities/DepartmentTrainingSurveyProposal.php:70
+    - HRM/hrm-api/Modules/Training/Entities/TrainingSurvey.php:111
+    - HRM/hrm-api/Modules/Training/Entities/TrainingSurvey.php:120
+    - HRM/hrm-api/Modules/Training/Entities/Subject.php:348
+    - … +1 chỗ
+- `Quản lý thân nhân` — 4 chỗ
+    - HRM/hrm-api/Modules/Human/Http/Controllers/Api/V1/EmployeeController.php:426
+    - HRM/hrm-api/Modules/Human/Http/Controllers/Api/V1/EmployeeController.php:434
+    - HRM/hrm-api/Modules/Human/Services/EmployeeService.php:567
+    - HRM/hrm-api/Modules/Human/Services/EmployeeService.php:969
+- `Thêm hồ sơ` — 3 chỗ
+    - HRM/hrm-api/Modules/Human/Routes/api.php:146
+    - HRM/hrm-api/Modules/Human/Routes/api.php:147
+    - HRM/hrm-api/Modules/Human/Routes/api.php:154
+- `Bảng chấm công chi tiết` — 2 chỗ
+    - HRM/hrm-api/Modules/Timesheet/Http/Controllers/Api/V1/TimesheetSummaryController.php:44
+    - HRM/hrm-api/Modules/Timesheet/Services/TimesheetMonthSummaryService.php:366
+- `Sửa hồ sơ` — 2 chỗ
+    - HRM/hrm-api/Modules/Human/Routes/api.php:150
+    - HRM/hrm-api/Modules/Human/Routes/api.php:151
+- `Xem danh sách theo tổng công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Training/Http/Controllers/V1/TrainingSurveyController.php:374
+- `Xem danh sách theo công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Training/Http/Controllers/V1/TrainingSurveyController.php:377
+- `Xem danh sách theo phòng ban` — 1 chỗ
+    - HRM/hrm-api/Modules/Training/Http/Controllers/V1/TrainingSurveyController.php:381
+- `Xem danh sách đăng kí khóa học` — 1 chỗ
+    - HRM/hrm-api/Modules/Training/Services/CourseRegister/CourseRegisterService.php:18
+- `Xem phiếu nhập kết quả của nhân viên theo phòng ban` — 1 chỗ
+    - HRM/hrm-api/Modules/Training/Services/TrainingSurveyDepartmentPersonal/TrainingSurveyDepartmentPersonalService.php:20
+- `Quản lý danh mục khách hàng` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Http/Controllers/Api/V1/CustomerController.php:34
+- `Xem danh sách hạng mục dự án theo tổng công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Services/SolutionModuleService.php:93
+- `Xem danh sách hạng mục dự án theo công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Services/SolutionModuleService.php:95
+- `Xem danh sách hạng mục dự án theo phòng ban` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Services/SolutionModuleService.php:101
+- `Xem danh sách hạng mục dự án theo bộ phận` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Services/SolutionModuleService.php:108
+- `Xem báo cáo giải pháp theo phòng KD theo tổng công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Services/Report/SolutionRequestsByDepartmentReportService.php:201
+- `Xem báo cáo giải pháp theo phòng KD theo công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Services/Report/SolutionRequestsByDepartmentReportService.php:205
+- `Xem báo cáo giải pháp theo phòng KD theo phòng ban` — 1 chỗ
+    - HRM/hrm-api/Modules/Assign/Services/Report/SolutionRequestsByDepartmentReportService.php:214
+- `Xem phân ca chi tiết theo tổng công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Timesheet/Http/Controllers/Api/V1/ShiftDetailController.php:44
+- `Bảng chấm công chi tiết theo công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Timesheet/Http/Controllers/Api/V1/TimesheetSummaryController.php:42
+- `Lập bảng lương theo tổng công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Timesheet/Services/EmployeeInfoService.php:85
+- `Lập bảng lương theo công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Timesheet/Services/EmployeeInfoService.php:86
+- `Xem danh sách loại HĐLĐ theo tổng công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Decision/Http/Controllers/V1/LaborContractTypeController.php:31
+- `Xem danh sách loại HĐLĐ theo công ty` — 1 chỗ
+    - HRM/hrm-api/Modules/Decision/Http/Controllers/V1/LaborContractTypeController.php:32
+- `Quản lý tài khoản` — 1 chỗ
+    - HRM/hrm-api/Modules/Human/Routes/api.php:149
+- `Xóa hồ sơ` — 1 chỗ
+    - HRM/hrm-api/Modules/Human/Routes/api.php:152
+- `Duyệt thông báo nội bộ` — 1 chỗ
+    - HRM/hrm-api/Modules/Human/Entities/SelfNotifications.php:87
+
+## ERP — 61 quyền ma / 120 chỗ gọi
+
+- `Duyệt đơn hỏi hàng - PO` — 9 chỗ
+    - ERP/TanPhatDev/resources/views/layouts/topmenubar_old.blade.php:2166
+    - ERP/TanPhatDev/resources/views/layouts/topmenubar_old.blade.php:2181
+    - ERP/TanPhatDev/resources/views/layouts/topmenubar_old.blade.php:2443
+    - ERP/TanPhatDev/resources/views/layouts/topmenubar_old.blade.php:2458
+    - … +5 chỗ
+- `Xem báo cáo hàng tồn kho theo tổng công ty` — 5 chỗ
+    - ERP/TanPhatDev/app/ProductTemplate.php:3116
+    - ERP/TanPhatDev/app/Product.php:3436
+    - ERP/TanPhatDev/app/Http/Controllers/Warehouse/WarehouseReportsController.php:1315
+    - ERP/TanPhatDev/app/Http/Controllers/Warehouse/WarehouseReportsController.php:1319
+    - … +1 chỗ
+- `Duyệt PL giảm HDDV` — 3 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/HomeController.php:2088
+    - ERP/TanPhatDev/app/Model/Customers/WrServiceContract.php:717
+    - ERP/TanPhatDev/app/Model/Customers/WrServiceContract.php:732
+- `Xem báo doanh thu tính hoa hồng của tổng công ty` — 3 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:5397
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:5411
+    - ERP/TanPhatDev/app/Services/PrintTemplate/RevenueCommissionPrint.php:176
+- `Xem báo cáo doanh thu tính hoa hồng của công ty` — 3 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:5398
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:5412
+    - ERP/TanPhatDev/app/Services/PrintTemplate/RevenueCommissionPrint.php:177
+- `Xem báo cáo giao chỉ tiêu phát triển sản phẩm - tổng công ty` — 3 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:26
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:36
+    - ERP/TanPhatDev/app/Services/PrintTemplate/TargetReportPrintService.php:172
+- `Xem báo cáo giao chỉ tiêu phát triển sản phẩm - công ty` — 3 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:27
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:37
+    - ERP/TanPhatDev/app/Services/PrintTemplate/TargetReportPrintService.php:173
+- `Xem báo cáo giao chỉ tiêu phát triển sản phẩm - phòng ban` — 3 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:28
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:38
+    - ERP/TanPhatDev/app/Services/PrintTemplate/TargetReportPrintService.php:174
+- `Xem báo cáo chi phí bán hàng theo nhân viên của tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:2059
+    - ERP/TanPhatDev/app/Services/Reports/BonusBusinessEmployeeReportService.php:28
+- `Xem báo cáo chi phí bán hàng theo nhân viên của công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:2060
+    - ERP/TanPhatDev/app/Services/Reports/BonusBusinessEmployeeReportService.php:29
+- `Xem báo cáo chi phí bán hàng theo nhân viên của phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:2061
+    - ERP/TanPhatDev/app/Services/Reports/BonusBusinessEmployeeReportService.php:30
+- `Xem báo cáo chi phí bán hàng theo nhân viên của bộ phận` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:2062
+    - ERP/TanPhatDev/app/Services/Reports/BonusBusinessEmployeeReportService.php:31
+- `Xem báo cáo doanh số tiêu chuẩn theo nhân viên - theo công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:5980
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:6027
+- `Xem báo cáo doanh số tiêu chuẩn theo nhân viên - theo phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:5981
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:6028
+- `Xem báo cáo doanh số tiêu chuẩn theo nhân viên - theo bộ phận` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:5982
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:6029
+- `Xem báo cáo đặt hàng theo hàng hóa của tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:55
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:66
+- `Xem báo cáo đặt hàng theo hàng hóa của công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:56
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:67
+- `Xem báo cáo đặt hàng theo hàng hóa của phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:57
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:68
+- `Xem báo cáo đặt hàng theo hàng hóa của bộ phận` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:58
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:69
+- `Xem báo cáo đặt hàng theo nhà cung cấp của tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:93
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:104
+- `Xem báo cáo đặt hàng theo nhà cung cấp của công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:94
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:105
+- `Xem báo cáo đặt hàng theo nhà cung cấp của phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:95
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:106
+- `Xem báo cáo đặt hàng theo nhà cung cấp của bộ phận` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:96
+    - ERP/TanPhatDev/app/Http/Controllers/Order/OrderReportController.php:107
+- `Xem báo cáo thực hiện chỉ tiêu phát triển sản phẩm - tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:55
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:65
+- `Xem báo cáo thực hiện chỉ tiêu phát triển sản phẩm - công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:56
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:66
+- `Xem báo cáo thực hiện chỉ tiêu phát triển sản phẩm - phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:57
+    - ERP/TanPhatDev/app/Http/Controllers/Target/TargetReportController.php:67
+- `Xem phụ lục đặt hàng ngoài theo tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractAnnex2.php:420
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractNewAnnex.php:407
+- `Xem phụ lục đặt hàng ngoài theo công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractAnnex2.php:420
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractNewAnnex.php:407
+- `Xem phụ lục đặt hàng ngoài theo phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractAnnex2.php:420
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractNewAnnex.php:407
+- `Xem phụ lục đặt hàng ngoài theo bộ phận` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractAnnex2.php:420
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractNewAnnex.php:407
+- `Duyệt phụ lục đặt hàng ngoài` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractNewAnnex.php:406
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractNewAnnex.php:412
+- `Xem Invoice theo tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/Invoice2.php:206
+    - ERP/TanPhatDev/resources/views/orders/invoice2/index.blade.php:72
+- `Xem Invoice theo công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/Invoice2.php:208
+    - ERP/TanPhatDev/resources/views/orders/invoice2/index.blade.php:73
+- `Xem Invoice theo phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Order/Invoice2.php:210
+    - ERP/TanPhatDev/resources/views/orders/invoice2/index.blade.php:74
+- `Xem tất cả phiếu yêu cầu vận chuyển của tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Warehouse/DeliveryRequest.php:278
+    - ERP/TanPhatDev/resources/views/delivery_requests/index.blade.php:71
+- `Xem tất cả phiếu yêu cầu vận chuyển của công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Warehouse/DeliveryRequest.php:281
+    - ERP/TanPhatDev/resources/views/delivery_requests/index.blade.php:72
+- `Xem tất cả phiếu yêu cầu vận chuyển của phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Model/Warehouse/DeliveryRequest.php:284
+    - ERP/TanPhatDev/resources/views/delivery_requests/index.blade.php:73
+- `Xem báo cáo tổng hợp quyết toán hoa hồng quý của tổng công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuaterDetailPrint.php:163
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuarterPrint.php:183
+- `Xem báo cáo tổng hợp quyết toán hoa hồng quý của công ty` — 2 chỗ
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuaterDetailPrint.php:164
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuarterPrint.php:184
+- `Xem báo cáo tổng hợp quyết toán hoa hồng quý của phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuaterDetailPrint.php:165
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuarterPrint.php:185
+- `Xem báo cáo tổng hợp quyết toán hoa hồng quý của bộ phận` — 2 chỗ
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuaterDetailPrint.php:166
+    - ERP/TanPhatDev/app/Services/PrintTemplate/CommissionSettlementQuarterPrint.php:186
+- `Duyệt kế hoạch bán hàng phòng ban` — 2 chỗ
+    - ERP/TanPhatDev/resources/views/layouts/topmenubar.blade.php:2208
+    - ERP/TanPhatDev/resources/views/layouts/topmenubar.blade.php:2215
+- `Nhóm khách hàng` — 2 chỗ
+    - ERP/TanPhatDev/resources/views/partials/customers/customerForm.blade.php:118
+    - ERP/TanPhatDev/resources/views/partials/suppliers/supplierForm.blade.php:85
+- `Duyệt PI` — 1 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/HomeController.php:1347
+- `Xem báo cáo làm dịch vụ bảo hành - sửa chữa -bảo dưỡng theo tổng công ty` — 1 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:7036
+- `Xem báo cáo làm dịch vụ bảo hành - sửa chữa -bảo dưỡng theo công ty` — 1 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/ReportController.php:7037
+- `Tạo hồ sơ nhập khẩu` — 1 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Order/ImportRecordController.php:97
+- `Xem báo cáo hàng tồn kho theo công ty` — 1 chỗ
+    - ERP/TanPhatDev/app/Http/Controllers/Warehouse/WarehouseReportsController.php:1315
+- `Xem tất cả phiếu chi của phòng ban` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Customers/WarrantyPayment.php:177
+- `Xem tất cả phiếu chi của bộ phận` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Customers/WarrantyPayment.php:180
+- `Xem  phiếu báo hàng về mua trong nước theo công ty` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandProductArrivedNew.php:123
+- `Xem  phiếu báo hàng về mua trong nước theo phòng ban` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandProductArrivedNew.php:125
+- `Xem hợp đồng mua ngoài theo bộ phận` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Order/InlandBuyContractAnnex.php:754
+- `Xem Invoice theo bộ phận` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Order/Invoice2.php:212
+- `Xem tất cả phiếu yêu cầu vận chuyển của bộ phận` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Warehouse/DeliveryRequest.php:294
+- `Duyệt hạch toán chuyến xe` — 1 chỗ
+    - ERP/TanPhatDev/app/Model/Warehouse/DeliveryTrip.php:124
+- `view-posts` — 1 chỗ
+    - ERP/TanPhatDev/config/permission.php:119
+- `Duyệt kế hoạch phát triển thị trường phòng ban` — 1 chỗ
+    - ERP/TanPhatDev/resources/views/layouts/topmenubar.blade.php:2224
+- `Xem yêu cầu hạch toán mua dịch vụ - theo tổng công ty` — 1 chỗ
+    - ERP/TanPhatDev/resources/views/orders/buy_service_accounting_requests/index.blade.php:80
+- `Xem yêu cầu hạch toán mua dịch vụ - theo công ty` — 1 chỗ
+    - ERP/TanPhatDev/resources/views/orders/buy_service_accounting_requests/index.blade.php:81
+- `Xem yêu cầu hạch toán mua dịch vụ - theo phòng ban` — 1 chỗ
+    - ERP/TanPhatDev/resources/views/orders/buy_service_accounting_requests/index.blade.php:82

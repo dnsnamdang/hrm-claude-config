@@ -403,3 +403,46 @@ Bước tiếp theo (phiên sau, theo ý user):
   2. Refactor filter báo cáo thành element dùng chung phân hệ (brainstorm dở).
   3. Treo nhỏ: revoke/giữ test `role_has_permissions(18,1113,1)`; verify UI popup chấm công + tier quyền cty/phòng ban; nút "Xem biên bản" đang gate quyền DS meeting (khác quyền báo cáo).
 Blocked:
+
+---
+
+## Phase 13 — Cải tổ bảng theo DÒNG + style CSKH + phòng chủ trì (2026-09-05 → 06)
+
+Nhánh: `bao_cao_meeting_thi_truong` tách từ `origin/tpe` ở CẢ 2 repo (worktree riêng), đã merge về `tpe` local, **chưa push**.
+
+- [x] **13.1 — Thị trường / Khách hàng: 2 CỘT rowspan → 2 cấp DÒNG CHA** trải hết bề ngang.
+  Lý do (đo được trước khi sửa): ô "Thành phố Hà Nội" có `rowspan=10` nên 9 dòng meeting phía dưới không có ô thị trường nào → cuộn xuống là mất dấu. Sau khi sửa: `maxRowspan=1`, 18 dòng → 43 dòng (8 thị trường + 17 KH + 18 meeting).
+- [x] **13.2 — Đánh số 3 cấp ở cột STT riêng**: `I` / `1` / `1.1` (KHÔNG có dấu `/` — user chốt ngày 06/09). Số KH đếm lại từ 1 trong mỗi thị trường. Số tính theo dữ liệu **trang đang xem** (API phân trang theo meeting).
+- [x] **13.3 — Dòng cha hiện số đếm** (`N khách hàng · N meeting`) + **thu gọn/mở rộng** 2 cấp + nút **"Mở hết / Thu gọn"** ở ô tiêu đề. Đổi trang/lọc → mở lại hết (watch `data`).
+- [x] **13.4 — Nhãn nhóm ghim trái** (`position: sticky; left: 10px`): bảng rộng hơn khung nên cuộn sang phải là nhãn trôi mất — đúng cái bệnh ban đầu. Đo: `scrollLeft=635`, nhãn vẫn ở 58px trong khung.
+- [x] **13.5 — Port style `.rsum-tb` của báo cáo CSKH tiềm năng** (`potential-customer-care/components/CareTrackingTable.vue`): thead teal 11.5px/800/uppercase, viền `#e2eaf1`, bo 10px, hover `#d9eff7`, **2 thanh cuộn mảnh trên+dưới** (đồng bộ `scrollLeft` 2 chiều + `ResizeObserver`), caret là **nút SVG 18×18** (không dùng icon Remix). Dòng cha dùng tông `--market` (tím) của bảng CSKH.
+  ⚠️ Lượt đầu tôi tự ý bỏ `white-space: nowrap` → cột "Địa điểm" bị bóp còn ~70px, ô cao 90px. Port đúng bản gốc (có `nowrap`) thì ô cao 54px, bảng rộng 2669px. `nowrap` là CHỦ Ý của bản gốc, đừng lược.
+- [x] **13.6 — Cột thành phần: chỉ hiện 1 người + chip `+N` bấm được** → popup `MeetingMembersModal.vue` (mới) liệt kê đủ danh sách kèm chức danh. **Không gọi thêm API** (đọc lại từ `company_members`/`customer_members` đã có trong response).
+- [x] **13.7 — Bấm tên meeting → panel `MeetingDetailDrawer`** (dùng lại của màn "Lịch của tôi", đúng như CSKH đang dùng) thay vì `window.open` tab mới (bỏ hành vi Phase 11). Đo: panel x=1140 w=460 bám mép phải, 0 tab mới.
+- [x] **13.8 — "Xem biên bản" → popup XEM TRƯỚC BẢN IN** dùng chung `reportPrintPreviewMixin` + `ReportPrintPreviewModal` (`loadPrintPreview('assign/meeting/'+id+'/print', 'Xem biên bản cuộc họp', false)`), **xoá `MeetingMinutesModal.vue`** tự chế của màn này.
+- [x] **13.9 — Thêm cột "Phòng chủ trì"** ngay sau "Người chủ trì" (bảng = STT + 12 cột). BE: `attachHostDepartments()` batch 1 query qua `employee_infos.department_id`.
+- [x] **13.10 — Summary thêm khối "Theo phòng chủ trì"** (`by_host_department`, sort A→Z, nhóm `—` xuống cuối).
+  ⚠️ Bug tự tạo rồi tự bắt: `attachHostAndReportInfo()` chỉ chạy cho meeting của TRANG hiện tại, còn `getSummary()` group trên TOÀN BỘ tập → 13/18 dòng đếm nhầm vào nhóm `—`. Đã tách hàm riêng gọi cho cả tập. Verify: cộng đúng 18/18 và không đổi theo `per_page` (thử 5 và 20).
+- [x] **13.11 — Summary để 1 HÀNG, tràn thì cuộn ngang**; item bên trong từng khối **vẫn chia cột như cũ** (user chốt sau 1 vòng thử bản phẳng hết). Đo: cao 200px → **94px**, tràn 288px, cuộn chạy đủ.
+- [x] **13.12 — Commit + merge vào `tpe` local** (chưa push): `hrm-api` `320b5ab2e` + merge `33cca598e` · `hrm-client` `f1e5701e2` + merge `80c8bd053`. Cả 2 worktree đang đứng ở `tpe`, cây sạch.
+
+### Checkpoint — 2026-09-06 (wrap up)
+Vừa hoàn thành: Phase 13 (13.1–13.12) — bảng phân cấp theo dòng, style CSKH, cột Phòng chủ trì, summary 1 hàng + khối theo phòng, panel chi tiết + popup bản in dùng chung. Đã commit + merge vào `tpe` **local**, chưa push.
+Đang làm dở: (không).
+Bước tiếp theo:
+  1. `git push origin tpe` ở cả 2 repo — CHỜ user xác nhận.
+  2. Chạy lại 2 ca e2e chưa xác minh được (xem cảnh báo dưới) khi DB đứng yên.
+  3. 3 việc user chưa chốt: (a) thêm cột "Phòng chủ trì" vào `MeetingByMarketExport.php` (file Excel hiện vẫn dạng cột phẳng cũ, thiếu cột này); (b) bảng rộng 2873px do `nowrap` — có bỏ nowrap riêng cột Địa điểm/Tên meeting không; (c) có thêm lại media query mobile ép khối summary về 1 cột không.
+Blocked:
+
+### ⚠️ Cảnh báo Phase 13 (đọc trước khi làm tiếp)
+
+1. **KHÔNG symlink `vendor/` khi lập worktree `hrm-api`.** `vendor/composer/autoload_*.php` tính `$baseDir` từ `__DIR__`; qua symlink nó resolve về **checkout chính** → Laravel nạp `Modules/...` của checkout chính, sửa BE trong worktree **không có tác dụng mà không báo lỗi gì** (server vẫn 200, chỉ thiếu field mới). Phải `cp -Rc <main>/vendor ./vendor` (APFS clonefile, ~8s, 139MB). Kiểm 10 giây:
+   `php -r 'require "vendor/autoload.php"; echo (new ReflectionClass("Modules\\Assign\\Services\\Report\\MeetingByMarketService"))->getFileName();'`
+   → phải ra đường dẫn có `.worktrees/`. Hệ quả đã trả giá: mọi thứ verify qua API trước khi phát hiện đều chạy code nhánh `permiss_manager`, và assertion e2e cho bản in bị viết theo template nhánh sai.
+2. **`HRM/e2e/` KHÔNG nằm trong repo nào** → 17 ca `tests/assign/meeting-by-market-grouping.spec.ts` chỉ có trên máy này, không theo commit lên git.
+3. **2/17 ca chưa xác minh ở thời điểm merge** (`chip "+N" → popup` và `"Xem biên bản" → popup bản in`). Cả 2 fail ở cùng chỗ: `gotoReport` không thấy `.rsum-tb` vì **API trả rỗng** — DB local đang bị session khác sửa liên tục (số meeting của báo cáo tụt 18 → 20 → 5 trong ít phút, do nhánh `dong_bo_du_lieu` vừa merge vào tpe có `assign:sync-catalogs` + di trú dữ liệu công ty). Không phải lỗi logic của 2 tính năng đó; 15 ca còn lại xanh, và cả 17 ca đã xanh 3 lần liên tiếp khi DB đứng yên.
+4. **Spec này phải chạy `--workers=1`** trên Nuxt dev: mặc định `workers: 2` của `playwright.config.ts` làm dev server (1 tiến trình) quá tải → fail/flaky giả.
+5. **Token `.auth/user.json` hết hạn sau ~1 ngày** → toàn bộ ca fail với `element(s) not found` ở `.rsum-tb`. Làm mới: `npx playwright test --project=setup --no-deps`.
+6. **Bộ e2e `assign` không chạy full được**: project `api-setup` fail (`Table 'hrm_erp.hrm_employees' doesn't exist`) vì nó chạy `e2e_provision.php` trên **checkout chính** `hrm-api` đang dirty ở nhánh `permiss_manager`. Phải dùng `--no-deps`.
+7. **Quyền của màn**: chỉ `Xem báo cáo kết quả meeting theo thị trường theo tổng công ty` được gán (role 100002, company_id=1). 2 quyền còn lại (theo công ty / theo phòng ban) **chưa gán cho role nào** → chưa test được 2 tier đó.
