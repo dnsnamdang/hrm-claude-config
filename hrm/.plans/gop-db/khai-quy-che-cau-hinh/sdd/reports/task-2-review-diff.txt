@@ -1,0 +1,97 @@
+diff --color -ruN /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-2/api-MasterData/Entities/CompanyRegulationHistory.php /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-2/api-MasterData/Entities/CompanyRegulationHistory.php
+--- /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-2/api-MasterData/Entities/CompanyRegulationHistory.php	1970-01-01 08:00:00
++++ /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-2/api-MasterData/Entities/CompanyRegulationHistory.php	2026-09-12 09:41:44
+@@ -0,0 +1,16 @@
++<?php
++
++namespace Modules\MasterData\Entities;
++
++use Illuminate\Database\Eloquent\Model;
++
++class CompanyRegulationHistory extends Model
++{
++    protected $table = 'company_regulation_histories';
++
++    protected $fillable = [
++        'company_id', 'created_by', 'field_name', 'name', 'value_before', 'value_after',
++    ];
++
++    public $timestamps = true;
++}
+diff --color -ruN /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-2/api-MasterData/Entities/RegulationScheduledVersion.php /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-2/api-MasterData/Entities/RegulationScheduledVersion.php
+--- /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-2/api-MasterData/Entities/RegulationScheduledVersion.php	1970-01-01 08:00:00
++++ /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-2/api-MasterData/Entities/RegulationScheduledVersion.php	2026-09-12 09:41:44
+@@ -0,0 +1,36 @@
++<?php
++
++namespace Modules\MasterData\Entities;
++
++use App\Models\BaseModel;
++
++class RegulationScheduledVersion extends BaseModel
++{
++    protected $table = 'regulation_scheduled_versions';
++
++    protected $fillable = [
++        'scope_type', 'scope_id', 'tab_key', 'effective_date',
++        'status', 'payload', 'diff_snapshot', 'note', 'applied_at',
++    ];
++
++    protected $casts = [
++        'payload' => 'array',
++        'diff_snapshot' => 'array',
++        'effective_date' => 'date',
++        'applied_at' => 'datetime',
++    ];
++
++    const STATUS_PENDING = 'pending';
++    const STATUS_APPLIED = 'applied';
++    const STATUS_CANCELED = 'canceled';
++
++    public function scopePending($q) { return $q->where('status', self::STATUS_PENDING); }
++    public function scopeApplied($q) { return $q->where('status', self::STATUS_APPLIED); }
++
++    public function scopeFor($q, $scopeType, $scopeId, $tabKey)
++    {
++        return $q->where('scope_type', $scopeType)
++                 ->where('scope_id', $scopeId)
++                 ->where('tab_key', $tabKey);
++    }
++}
+diff --color -ruN /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-2/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-2/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php
+--- /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-2/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	1970-01-01 08:00:00
++++ /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-2/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 09:41:44
+@@ -0,0 +1,33 @@
++<?php
++
++namespace Modules\MasterData\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Modules\MasterData\Entities\RegulationScheduledVersion;
++
++class RegulationCongnoVersioningTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    /** @test */
++    public function it_casts_payload_and_diff_to_array()
++    {
++        $v = RegulationScheduledVersion::create([
++            'scope_type' => 'company',
++            'scope_id' => 999999,          // company giả, không áp trong test này
++            'tab_key' => 'congno',
++            'effective_date' => '2099-01-01',
++            'status' => 'pending',
++            'payload' => ['interest_rate' => 1.6],
++            'diff_snapshot' => [['key' => 'interest_rate', 'label' => 'Lãi suất', 'old' => '1.5', 'new' => '1.6', 'unit' => '%']],
++            'note' => 'test',
++        ]);
++
++        $fresh = RegulationScheduledVersion::find($v->id);
++        $this->assertIsArray($fresh->payload);
++        $this->assertSame(1.6, (float) $fresh->payload['interest_rate']);
++        $this->assertIsArray($fresh->diff_snapshot);
++        $this->assertSame('pending', $fresh->status);
++    }
++}

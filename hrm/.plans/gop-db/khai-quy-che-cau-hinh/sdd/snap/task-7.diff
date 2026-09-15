@@ -1,0 +1,69 @@
+diff -ruN --color=never /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-7/app-Console/Commands/MasterData/ApplyScheduledRegulationsCommand.php /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-7/app-Console/Commands/MasterData/ApplyScheduledRegulationsCommand.php
+--- /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-7/app-Console/Commands/MasterData/ApplyScheduledRegulationsCommand.php	1970-01-01 08:00:00
++++ /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-7/app-Console/Commands/MasterData/ApplyScheduledRegulationsCommand.php	2026-09-12 10:16:47
+@@ -0,0 +1,19 @@
++<?php
++
++namespace App\Console\Commands\MasterData;
++
++use Illuminate\Console\Command;
++use Modules\MasterData\Services\RegulationConfigService;
++
++class ApplyScheduledRegulationsCommand extends Command
++{
++    protected $signature = 'regulation-config:apply-scheduled';
++    protected $description = 'Áp dụng các phiên bản quy chế/cấu hình đã hẹn tới hạn (effective_date <= hôm nay)';
++
++    public function handle(RegulationConfigService $service): int
++    {
++        $applied = $service->applyDueCongnoVersions();
++        $this->info("Đã áp dụng {$applied} phiên bản Công nợ tới hạn.");
++        return 0;
++    }
++}
+diff -ruN --color=never /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-7/app-Console/Kernel.php /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-7/app-Console/Kernel.php
+--- /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-7/app-Console/Kernel.php	2026-09-12 10:14:23
++++ /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-7/app-Console/Kernel.php	2026-09-12 10:16:47
+@@ -102,6 +102,12 @@
+             ->timezone('Asia/Ho_Chi_Minh')
+             ->withoutOverlapping()
+             ->emailOutputTo(env('ADMIN_EMAIL', 'namdangit@gmail.com'));
++
++        // Áp dụng các phiên bản quy chế/cấu hình (Công nợ) đã hẹn tới hạn — chạy lúc 00:00 hằng ngày
++        $schedule->command('regulation-config:apply-scheduled')
++            ->dailyAt('00:00')
++            ->timezone('Asia/Ho_Chi_Minh')
++            ->withoutOverlapping();
+     }
+ 
+     /**
+diff -ruN --color=never /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-7/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-7/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php
+--- /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/base-7/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 10:14:23
++++ /Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/gop-db/khai-quy-che-cau-hinh/sdd/snap/after-7/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 10:16:47
+@@ -158,6 +158,26 @@
+         $this->assertSame(1.7, (float) \App\Models\Company::find($companyId)->interest_rate);
+     }
+ 
++    /** @test */
++    public function command_applies_due_versions()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $base = $svc->getCurrentCongnoValues($companyId);
++        $v = $svc->createCongnoVersion($companyId, now()->addYear()->toDateString(),
++            array_merge($base, ['interest_rate' => 1.9]), 'future', 1);
++        $v->effective_date = now()->toDateString();   // kéo về hôm nay, vẫn pending
++        $v->saveQuietly();
++
++        $this->artisan('regulation-config:apply-scheduled')->assertExitCode(0);
++        $this->assertSame(1.9, (float) \App\Models\Company::find($companyId)->interest_rate);
++        $this->assertSame('applied', $v->fresh()->status);
++    }
++
+     /**
+      * XANH THẬT #1 — API tạo pending version + trả config, với 1 nhân viên có quyền
+      * "Cài đặt cấu hình" ĐĂNG NHẬP THẬT (không mock quyền/gate). Dựng context: 1 dòng bảng
