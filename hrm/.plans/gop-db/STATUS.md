@@ -80,10 +80,126 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   phân hệ thứ 9, menu ngang tràn. Bước tiếp: verify từng màn con.
   Spec: docs/superpowers/specs/gop-db/2026-09-16-quy-hoach-lai-menu-phan-he-design.md | Tóm tắt: .plans/gop-db/quy-hoach-lai-menu-phan-he/design.md
 
+- bao-cao-ket-qua-du-an-tkt → @namdangit → .plans/gop-db/bao-cao-ket-qua-du-an-tkt/plan.md
+  Trạng thái: **CODE XONG + REVIEW TỔNG XONG, CHỜ MERGE (14/09/2026)**. BE + FE + fixture e2e xong,
+  bộ e2e **22 ca xanh** (11 API + 11 UI). **21 commit** (10 hrm-client + 11 hrm-api) trên nhánh
+  **`tpe-bao-cao-ket-qua-du-an-tkt`**, tách từ **đỉnh `tpe`** ở **cả 2 repo**
+  (`hrm-api` `f36a89ae` · `hrm-client` `c07c4a2a`). `merge-tree` với `tpe`: **0 conflict**.
+  ✅ **ĐÃ MERGE VÀO `tpe` (14/09/2026), KHÔNG CONFLICT** — user tự merge:
+  `hrm-api` `769061693` (kèm `8ca563f93` merge `tpe-develop-assign` vào trước)
+  · `hrm-client` `12b6f4f6e`.
+  ⛔ **CHƯA PUSH** — `tpe` đang đi trước `origin/tpe` **86 commit** (hrm-api) / **80 commit**
+  (hrm-client). Cây làm việc 2 repo sạch.
+
+  ⭐ **REVIEW TỔNG BẮT ĐƯỢC 1 LỖI MÀ CẢ 21 CA E2E ĐỀU KHÔNG THẤY** (bài học lớn nhất của feature):
+  `buildLevel()` nhánh không-có-bộ-phận truyền `parentKey` TRẦN, không ghi dấu đã bỏ qua cấp Bộ phận;
+  `applyDrillKey()` chỉ lọc AND trên chiều CÓ MẶT trong key ⇒ `dept:5+emp:88` khớp cả dự án có lẫn
+  không có bộ phận. Bấm số `1` trên bảng, popup ra `3` dự án — 2 cái thừa đã đếm ở node `part:9` bên
+  trên nên **bị liệt kê ở 2 popup khác nhau**; Excel + bản in sai theo.
+  **Vì sao lọt lưới:** bảng theo dõi VẪN ĐÚNG (2 đẳng thức bất biến + cha = tổng con đều xanh) — lỗi
+  nằm ở ĐƯỜNG TỪ BẢNG SANG POPUP, mà không ca nào so *"số vừa bấm = total của popup"*. Hệ tự kiểm
+  canh BẢNG, không canh CẦU NỐI. Đã sửa (gắn `part:0`) + thêm **ca 10** chặn cả lớp lỗi này.
+  ⚠️ DB local có **0 cặp (phòng ban, nhân viên)** kích hoạt được lỗi ⇒ ca 10 tự nó xanh cả trước lẫn
+  sau khi sửa; giá trị thật đã chứng minh bằng dữ liệu giả rồi xoá sạch. **Kiểm trên production:**
+  `SELECT COUNT(*) FROM (SELECT main_sale_department_id d, main_sale_employee_id e,
+  SUM(main_sale_part_id IS NULL OR main_sale_part_id=0) n, SUM(main_sale_part_id>0) h
+  FROM prospective_projects WHERE IFNULL(is_parent_project,0)=0 GROUP BY 1,2 HAVING n>0 AND h>0) t;`
+
+  **Thay đổi 14/09 theo yêu cầu user:** ô Công ty vẫn BẮT BUỘC chọn, KHÔNG có mục "Tất cả công ty",
+  nhưng **mặc định đổi từ `companies[0]` sang CÔNG TY CỦA USER ĐĂNG NHẬP**. Trước đó user mở màn ra
+  số của pháp nhân khác công ty mình, "Xoá lọc" cũng nhảy sang pháp nhân đó. BE trả `default_company_id`
+  clamp qua `clampCompanyId()`; công ty hồ sơ không nằm trong danh sách được phép thì rơi về công ty
+  đầu danh mục (ô bắt buộc, để rỗng là màn chết).
+  Màn báo cáo **MỚI** `/assign/report/prospective-project-results` — theo dõi kết quả thực hiện Dự án TKT
+  trong kỳ (Thành công / Thất bại / Đang triển khai) trên 3 trục: Phòng ban · Thị trường · Lĩnh vực Công ty KD.
+  Màn `report/prospective-projects` cũ **GIỮ NGUYÊN**, không đụng.
+  ℹ️ Tài liệu để trong `.plans/gop-db/` để nằm cạnh cụm mockup báo cáo anh em, **nhưng code làm trên
+  nhánh con tách từ `tpe`** (user chốt 13/09) — không phải nhánh `gop_db`.
+  **5 quyết định đã chốt (13/09/2026):**
+  (1) Cột `Giá trị`: Thành công → giá trị HĐ · Đang triển khai → kỳ vọng · Thất bại → **không hiển thị**, kèm icon ⓘ giải thích.
+  (2) ⚠️ **Giá trị hợp đồng TREO** — user đang phát triển **hợp đồng HRM lập từ báo giá HRM**, sẽ KHÔNG dùng HĐ ERP
+  ⇒ phase 1 dự án Thành công **chưa có số**: giữ cột `Giá trị HĐ`, mọi ô hiện `—` (không hiện 0), BE tách
+  `contractAmountFor()` trả `null` để sau nối đúng 1 chỗ. Hướng cũ `.plans/hrm-quotation-to-erp-contract/` **bị thay thế**.
+  (3) `expected_contract_amount` khuyết **42%** (ô "Giá trị HĐ kỳ vọng" không bắt buộc, đo 78/134) → **để trống**,
+  KHÔNG lấy `estimated_budget` thay thế.
+  (4) Phân quyền: **3 quyền MỚI 1184–1186** (tổng công ty / công ty / phòng ban), tách khỏi 1054–1056 của màn cũ.
+  (5) Migration **vá log** cho dự án Thất bại lập trước 18/05/2026 (user chốt "vá luôn").
+  **3 phát hiện rút ngắn plan:** 12 bước tiến trình + 3 tên mới **đã có sẵn** trong `ProspectiveProject::STATUS` ·
+  bảng `prospective_project_status_logs` + hook ghi log **đã có và đáng tin** (Redmine #11426 vá 4 chỗ đổi bước bằng
+  query builder) · `ProspectiveProject::statusAt()` **đã có** ở dòng 686 nhưng chưa ai dùng — và **N+1**, service
+  phải tự tính hàng loạt bằng 1 query gom.
+  ⚠️ **Bẫy đã đo:** migration backfill `2026_05_18_000002` chỉ sinh **1 dòng log/dự án** (`changed_at = created_at`,
+  `status_to` = trạng thái HIỆN TẠI) ⇒ dự án lập trước 18/05/2026 bị khai "đã đóng ngay từ ngày lập" →
+  **biến mất khỏi báo cáo, im lặng, không lỗi**. DB local không dính (dự án sớm nhất 03/07/2026), production có.
+  Chỉ vá được nhóm **Thất bại** (`closed_at` phủ 11/11 = 100%); nhóm Thành công 9/10/12 **không có mốc nào để suy ngược**
+  ⇒ báo cáo chỉ chính xác tuyệt đối với dự án lập từ 18/05/2026 trở đi.
+  ⚠️ HĐ ERP `buy_contract2` (923 dòng) **không có cột nào trỏ về dự án TKT**; `prospective_project_id` chỉ có ở 8 bảng.
+  Mockup đã duyệt: `bao-cao-ket-qua-du-an-tkt.html` — `__TKT_CHECK__()` trả `ok: true`, 0 dòng sai.
+  Spec: docs/superpowers/specs/gop-db/2026-09-13-bao-cao-ket-qua-du-an-tkt-design.md (13 chương) ·
+  Design: .plans/gop-db/bao-cao-ket-qua-du-an-tkt/design.md + logic-bao-cao.md ·
+  Plan: .plans/gop-db/bao-cao-ket-qua-du-an-tkt/plan.md (20 task / 92 bước, tất cả đã đánh `[x]`).
+  **Tự kiểm cuối (Task 18) — 5 lệnh bắt buộc:** 3 lệnh grep (số kiểu `vi-VN` ở FE, `number_format`
+  kiểu VN ở BE, cờ quyền hard-code `= true`) đều **RỖNG** trong phạm vi feature · `git diff --stat`
+  2 repo toàn **file mới**, không CRLF nào bị phá · hiệu năng lúc mở màn **2 request** (đúng giới hạn
+  ≤2), endpoint chính đáp trong **152ms** (< 2s).
+  **Đối chiếu Vue thật vs mockup (Task 17):** 6/8 khớp tuyệt đối, 2 chỗ lệch đã sửa và verify lại —
+  thứ tự ô lọc (cặp Từ ngày/Đến ngày dời lên ngay sau ô Kỳ) và bề rộng ô Công ty (292px demo → 340px
+  theo tên công ty thật dài hơn). Chi tiết đo ở `design.md` mục *Đối chiếu Vue thật với mockup*.
+  ⚠️ **Blocker môi trường phát hiện khi kiểm Lịch sử (không phải bug của feature này):** trang chi
+  tiết dự án TKT trên **DB local** trả 500 vì bảng `prospective_project_extension_requests`
+  (migration `2026_09_11_000003`, tính năng "gia hạn thời gian triển khai" #11153) chưa được chạy —
+  chặn cả việc mở mục Lịch sử qua trình duyệt. Đã verify logic log qua tinker thay thế (đọc đúng,
+  không trùng mốc); cần verify lại qua trình duyệt trên môi trường đã chạy đủ migration.
+  **Còn nợ:** giá trị hợp đồng vẫn `—` mọi dòng (chờ hợp đồng HRM từ báo giá HRM, sửa `contractAmountFor()`
+  khi có) · dự án Thành công lập trước 18/05/2026 không suy được mốc đóng · `expected_contract_amount`
+  khuyết 42% · `V2BaseTableScroll.vue` port trùng `gop_db`/`permiss_manager` → merge sẽ conflict
+  add/add (nội dung giống hệt, lấy bản nào cũng được) · SRS + testcase chưa làm.
+  **Deploy môi trường khác — đúng 3 bước:** (1) `php artisan migrate` (1 migration vá log) · (2)
+  insert thủ công 3 quyền 1184–1186 + gán role (`role_has_permissions` cần `company_id`), **KHÔNG**
+  chạy `PermissionsTableSeeder` (truncate cả bảng `permissions`) · (3) deploy code BE+FE, không có
+  cron mới.
+  **Bước tiếp theo:** người điều phối review sạch → commit Task 18 → merge nhánh con vào `tpe` ở cả
+  2 repo → deploy theo checklist trên.
+
+- bao-cao-theo-doi-giu-hang → @namdangit → .plans/gop-db/bao-cao-theo-doi-giu-hang/plan.md
+  Trạng thái: **MOCKUP + SPEC CHI TIẾT XONG — CHỜ USER DUYỆT MOCKUP (15/09/2026)**. Chưa động vào code thật.
+  Tài liệu: `.plans/gop-db/bao-cao-theo-doi-giu-hang/` (design.md 49 mục quyết định · plan.md · mockup HTML) + spec đầy đủ 13 chương ở `docs/superpowers/specs/gop-db/2026-09-12-bao-cao-theo-doi-giu-hang-design.md`. Mockup qua 15 vòng chỉnh, verify Playwright mỗi vòng (ĐO DOM bằng số, không nhìn ảnh), console 0 lỗi.
+  **Bổ sung vòng 10 (14/09):** ô lọc **Bộ phận** (cascade sau Phòng ban, 3 trạng thái, mục "Chưa phân bộ phận") · popup đưa 3 cột Ngày bắt đầu giữ / Hạn giữ hiện tại / Số lần gia hạn lên ngay sau "SL đang giữ" · **ghim 3 cột đầu popup** khi cuộn ngang · **In / Xuất Excel** thật (4 đường: 2 nút thanh tiêu đề + 2 nút popup, đều lấy TOÀN BỘ theo bộ lọc, không theo trang).
+  ⚠️ **Dữ liệu BỘ PHẬN gần như TRỐNG trên DB thật** — đo `hrm_erp`: chỉ **5/74 nhân viên** đang giữ hàng có bộ phận, **63/2.412 dòng (2,6%)**, **1/17 phòng** đang giữ hàng có chia bộ phận (25 bộ phận / 84 phòng toàn hệ thống). Vì vậy bộ phận chỉ là **Ô LỌC**, KHÔNG thành cấp của cây (thêm cấp thì 16/17 nhánh đẻ "Chưa phân bộ phận" ôm gần hết bảng). Ô lọc phải xử 3 trạng thái, không bao giờ để rỗng im lặng. **Cần hỏi nghiệp vụ** có kế hoạch gán bộ phận cho NV kinh doanh không.
+  ⚠️ **Bẫy GHIM CỘT — mất 3 lần đo mới ra:** popup mở kèm `transform: scale(.96)`, mà `getBoundingClientRect` trả toạ độ SAU transform → mọi khoảng cách bị nhân 0,96 (đo 301.44px thay vì 314px), ghim lệch 13px, 3 cột đè nhau, **màn hình không báo lỗi gì**. `ResizeObserver` KHÔNG cứu được (transform không đổi kích thước layout). Phải dùng **`offsetLeft`** — số đo layout, miễn nhiễm transform. 2 bẫy phụ: `border-collapse: collapse` làm ô ghim mất viền (vẽ lại bằng `box-shadow inset`) · nền ô ghim phải ĐẶC, đổi đúng theo hover.
+  ⚠️ **Bẫy đổ HTML ra text phẳng (bản in / Excel):** các mẩu `<span>` dính liền — `"VT.00611-Ống thủy lực"`, `"Công ty CP Đóng tàu Hạ Long21TPHP-176"` → chèn khoảng trắng **2 phía** mỗi span, mã phụ `.code-sub` tách bằng `" · "`. Thụt lề cây phải dùng **khoảng trắng CỨNG ` `** (HTML gộp dấu cách thường, Excel cắt khoảng trắng đầu ô).
+  **Bổ sung vòng 11 (14/09):** 2 nút **Gia hạn** / **Huỷ giữ** (icon + chữ, dạng viền) nằm TRONG ô "Hạn giữ hiện tại" — KHÔNG tách cột riêng (bảng vẫn 15 cột). Chỉ hiện ở chế độ **"Hàng giữ của tôi"**: ngoài chế độ đó là hàng người khác đứng tên. Cả 2 là ĐIỀU HƯỚNG sang màn lập phiếu → không hỏi xác nhận (`button-convention` 6c).
+  ⚠️ **Nút "Gia hạn" ở dòng TRONG HẠN là nút chết** — màn lập phiếu gia hạn (`getDataToCreate()`) chỉ nhận lô `expire_date <= hôm nay + configs.warning_day`, nên dòng còn xa hạn bấm sang đó **không thấy dòng nào**. Đã nêu rủi ro, user vẫn chọn hiện ở mọi dòng ⇒ **lúc code BE BẮT BUỘC** xử 1 trong 2: màn gia hạn báo rõ lý do khi dòng chưa tới ngưỡng, hoặc hỏi khách để nới điều kiện.
+  ⚠️ **Huỷ giữ trừ tồn FIFO theo `expire_date` tăng dần** trên bộ 4 (hàng hoá × NV × khách × công ty) — bấm ở một dòng **không đảm bảo huỷ đúng dòng đó**. Thực tế 2.300/2.355 nhóm (97,7%) chỉ còn 1 dòng nên đa số trùng khớp, nhưng màn lập phiếu hủy phải cho thấy rõ đang hủy lô nào, đừng hứa "hủy đúng dòng vừa bấm".
+  ⚠️ **Bẫy nhét nút vào ô dữ liệu:** bản in/Excel lấy chữ từ chính ô HTML nên ô hạn giữ đổ ra `"03/08/2026 quá hạn 40 ngày Gia hạn Huỷ giữ"` — phải **gỡ hẳn `.row-acts`** trước khi lấy text.
+  **Rà nút theo `button-convention` (15/09):** phát hiện & sửa **5 lỗi ở nút CŨ** — "In báo cáo" là chữ bị cấm (→ "In danh sách") · "Xuất Excel danh sách" 4 từ vượt trần 3 từ (→ "Xuất Excel") · Thoát/Huỷ không đứng cuối footer · 4 nút Đóng/Hủy thiếu icon · nút Xuất Excel trong popup tô teal trong khi nút cùng việc ở thanh tiêu đề xanh lá (→ `#16a34a`). **3 điểm vẫn lệch skill do USER CHỐT:** nhãn "Huỷ giữ" (thay "Hủy") · nút trong bảng icon+chữ (thay `V2BaseIconButton`) · nút Huỷ giữ dạng viền (thay `primary status="danger"` nền đỏ đặc).
+  ℹ️ **`button-convention` tự mâu thuẫn về nút In**: mục 2 xếp `primary`, mục 2b xếp `secondary/tertiary`. Mockup xử theo ngữ cảnh (In = action chính của popup chọn chế độ in → primary; In danh sách ở footer popup chi tiết = bổ trợ → secondary). Nên làm rõ trong skill.
+  Thiết kế lại màn **`/finance/prepick-stocks`** (giữ nguyên URL) thành báo cáo theo dõi, style port nguyên khối từ `../bao-cao-ket-qua-du-an-tkt/`.
+  **5 quyết định đã chốt:** tồn giữ **HIỆN TẠI**, không có bộ lọc Kỳ · 2 tiêu chí **Theo nhân viên** (Phòng ban ▸ NV ▸ Hàng hoá) và **Theo hàng hoá** (Hàng hoá ▸ NV) · chỉ tiêu **Tổng / Trong hạn / Đến hạn / Hết hạn** · **KHÔNG** đụng màn `/finance/prepick-expiring` · cấp tổng đo bằng **SỐ LÔ GIỮ**, số lượng + đơn vị chỉ hiện ở dòng hàng hoá.
+  ⚠️ **Lý do đo bằng số lô:** `prepick_details.qty` là đơn vị cơ bản của từng mặt hàng (cái/kg/mét/bộ) — cộng số lượng ở cấp Phòng ban/Nhân viên ra con số vô nghĩa. Màn cũ né được vì tầng 1 luôn là 1 mặt hàng.
+  **Bổ sung vòng 2:** ngưỡng "Đến hạn" (chỉ đúng hôm nay) đổi thành **"Sắp hết hạn" có ô cấu hình số ngày** ngay trên thanh lọc (mặc định `configs.warning_day` = 7) · thêm cột **Tồn hiện tại** + **SL đang giữ** (chỉ có số ở dòng hàng hoá, tự ẩn khi bảng không render dòng hàng hoá) · thêm cột **Số lần gia hạn** bấm ra popup lịch sử xếp CŨ → MỚI · bỏ cột Tỷ trọng quá hạn · popup danh sách lô đổi "Hạn giữ" → **"Hạn giữ hiện tại"**.
+  **Bổ sung vòng 3:** cột chính đo **KÉP theo cấp** — dòng Phòng ban/NV = **số mã hàng** (`14 Mã`), dòng Hàng hoá = **số lượng** theo ĐVT đang chọn (`157 Cái`); 3 cột hạn đi theo cùng đơn vị đó (⚠️ ở dòng tổng **đếm chồng lấn**, cộng 3 cột > cột chính: đo thật 14 Mã vs 25) · bộ cột hàng hoá **bám đúng ERP `prepickIndex.blade.php`** (Mã · Đơn vị có select đổi ĐVT · Model · Thương hiệu · Tồn hiện tại · SL giữ), **bỏ cột Kho** vì `prepick_details` không có kho · 5 cột thuộc tính hàng hoá tự ẩn khi bảng chưa render dòng hàng hoá.
+  ⚠️ **Gotcha BE nặng nhất — "Số lần gia hạn" KHÔNG cộng lên dòng tổng, cũng KHÔNG đếm gộp theo nhân viên:** gia hạn phát sinh trên **từng lần yêu cầu giữ**, `moveToExpireDate()` lại **trừ lô cũ, cộng sang lô MỚI** chứ không sửa `expire_date`. Đo trên 2.412 lô đang tồn: đếm log trên chính lô → tối đa **3 lần** (SAI, chỉ thấy lần cuối) · đếm theo **CHUỖI lần ngược của từng lô** → tối đa **10 lần** (ĐÚNG, TB 1,31 · 206 lô ≥ 5 lần) · gộp theo bộ 4 NV×KH×hàng hoá → **15 lần** (SAI, gộp nhiều lần giữ). Cột này **chỉ nằm trong popup danh sách lô**. Chứng từ gốc cuối chuỗi: Phiếu xuất giữ 1.794 · Nhập hàng cho khách 341 · Điều chuyển giữ 93 · không xác định 184.
+  **Bổ sung vòng 4:** ô "Hạn giữ hiện tại" tô màu theo ngưỡng cảnh báo (xanh/vàng/đỏ, cùng bảng màu 3 cột hạn) · bảng có hàng hoá **luôn có cột ĐVT riêng**, các ô số **bỏ hậu tố đơn vị** (dòng tổng vẫn giữ nhãn "Mã") · popup **luôn giữ 2 cột Mã hàng + Tên hàng** kể cả khi mở từ đúng 1 hàng hoá · **mã hàng là cột riêng đứng TRƯỚC tên hàng** ở cả bảng chính lẫn popup · mọi tiêu đề popup dùng khuôn **"Mã hàng - Tên hàng"**.
+  **Bổ sung vòng 5:** "Số lượng" → **"Số lượng giữ"** · **bỏ cột Mã hàng riêng** (làm vỡ cấu trúc cây), gộp lại thành **"Mã hàng - Tên hàng"** trong 1 ô với style mã riêng (`.prd-code`) — áp toàn báo cáo · **sort** 4 cột Mã-Tên hàng / Nhân viên / Hạn giữ / Ngày bắt đầu giữ (chu kỳ A→Z → Z→A → về mặc định) · popup hiện nhân viên dạng **"Tên - Phòng ban"** · bảng chi tiết thêm **Số hợp đồng** + **Tổng thanh toán** (bấm ra popup phiếu thu) — giữ hàng có 2 kiểu theo/không theo hợp đồng, đều có khách hàng (thật: 501/1.673 phiếu), tiền lấy `bill_income_details` lọc `objectable_type = FirmContract`, cộng `income_money_real` (thật: 6.734 dòng / 26.349 tỷ) · **thứ tự mặc định toàn báo cáo**: chứng từ MỚI → CŨ, riêng hàng giữ **quá hạn nhiều nhất → trong hạn**.
+  **Bổ sung vòng 6:** cột **Tồn hiện tại** chỉ còn ở tiêu chí **Hàng hoá** (bỏ khỏi popup chi tiết và khỏi tiêu chí Nhân viên — tồn là số của cả công ty, so với số giữ của từng lô/từng người là so 2 đại lượng không so được) · thêm bộ lọc **Hình thức giữ** (Tất cả / Giữ theo hợp đồng / Không theo hợp đồng) · **sửa định nghĩa đo**: quyết định theo DÒNG chứ không theo cấp — dòng gom đúng 1 mã hàng thì đo bằng **số lượng**, gom nhiều mã mới đo bằng **số mã** (định nghĩa cũ "cấp Nhân viên = số mã" sai ở tiêu chí Hàng hoá vì ở đó số mã luôn = 1).
+  **Bổ sung vòng 7:** **bỏ chế độ đổi đơn vị** trên báo cáo, luôn quy về ĐVT cơ bản (đổi được thì mỗi người xem một kiểu, số trên màn lệch số xuất Excel) · khối tổng hợp 1 đổi thành **"Tình trạng theo yêu cầu giữ"** — đếm theo CHỨNG TỪ GỐC: Tổng yêu cầu đang giữ hàng · Yêu cầu sắp hết hạn · Yêu cầu đã hết hạn (⚠️ 2 nhóm sau **chồng lấn**: 1 yêu cầu đẻ nhiều lô hạn khác nhau) · popup sort được **7 cột** (thêm Phòng ban, SL đang giữ, Khách hàng).
+  **Bổ sung vòng 8:** tiêu đề cột có sort **không đổi màu nền khi hover** (nền header sáng + chữ teal, tô nền teal đậm là mất chữ — phải ghi đè cả rule hover sẵn có trong style gốc) · khối hạn giữ thêm ô **"NV có hàng giữ quá hạn"** (đếm distinct nhân viên có ≥ 1 lô quá hạn, khác "Yêu cầu đã hết hạn" vì 1 người ôm nhiều yêu cầu).
+  **PHÂN TRANG (chốt 13/09/2026, đã làm vào mockup):** bảng chính phân trang theo **NODE CẤP 1** (mỗi trang N node + toàn bộ cấp con), mặc định 25, chọn 10/25/50/100 — KHÔNG phân trang theo dòng render vì bảng là cây, bung/thu sẽ đẩy nội dung chạy sang trang khác. ⚠️ **Dòng TỔNG + dải tổng hợp luôn tính trên TOÀN BỘ dữ liệu đã lọc**, khi làm BE là 2 truy vấn tách bạch. STT chạy tiếp theo toàn bộ (trang 2 bắt đầu từ 11). Popup phân trang theo dòng, mặc định 20; popup gia hạn/phiếu thu không phân trang. Sort chạy trên toàn bộ rồi mới cắt trang → đổi sort phải về trang 1. BE: sort ở server, cấp sâu nhất lazy load (1 NV có tới 151 mã), In/Excel lấy toàn bộ.
+  **PHÂN QUYỀN (chốt 13/09/2026):** báo cáo dùng **ĐÚNG 1 quyền** `Xem báo cáo giữ hàng theo tổng công ty` — có quyền thì ô Công ty hiện kèm mục "Tất cả công ty", không quyền thì **ẩn hẳn ô** và khoá theo công ty trong hồ sơ nhân sự. ⚠️ **Quyền này CHƯA TỒN TẠI trong bảng `permissions`** (gần nhất là `Xem phiếu hàng giữ theo tổng công ty` id 100839 — của màn PHIẾU, đừng dùng nhầm), phải thêm vào `PermissionsTableSeeder`. KHÔNG dùng bộ 3 quyền phạm vi mà `PrepickStockReportService` đang áp cho màn cũ. BE phải tự ép `company_id` theo hồ sơ, không đọc giá trị FE gửi lên; nút "Xoá lọc" KHÔNG được reset `company` (mở rộng quyền xem bằng 1 cú bấm). Mockup demo trạng thái không quyền bằng `?noPerm=1`. **KHÔNG gate vào màn** — màn mới KHÔNG dùng quyền `Quản lý giữ hàng` (id 100427) của màn cũ; mọi user đăng nhập đều vào được. **Không giới hạn phòng ban**: không có quyền thì vẫn xem toàn bộ hàng giữ của công ty mình. Tức quyền duy nhất đó chỉ quyết định PHẠM VI CÔNG TY, không quyết định được vào màn hay không.
+  **Lối tắt "Hàng giữ của tôi"**: nút bật/tắt đầu thanh lọc, ép tiêu chí Theo nhân viên + công ty/phòng ban/nhân viên của người đăng nhập + bung tới cấp Hàng hoá; tắt bằng chính nút đó thì khôi phục bộ lọc trước khi bật, còn đổi tay ô khác thì tắt cờ nhưng giữ lựa chọn mới. BE lấy `auth()->id()`, KHÔNG dùng `auth()->user()->info->id`.
+  ⚠️ **KHÔNG gọi dòng `prepick_details` là "LÔ"** — hệ thống đã có lô hàng THẬT ở `warehouse_import_lots` (36.613 bản ghi, `lot_number` UNIQUE, `remain_qty`), còn hàng giữ không gắn lô nhập / không gắn kho / không có số lô. 1 dòng `prepick_details` = tổ hợp duy nhất (NV × KH × hàng hoá × công ty × HẠN GIỮ), đã kiểm 2.412 dòng / 0 nhóm trùng. Giao diện chỉ đếm theo **YÊU CẦU GIỮ** (chứng từ gốc) và **MÃ HÀNG**.
+  ⚠️ **ĐỊNH NGHĨA CHỐT 13/09/2026 — "1 yêu cầu giữ = PHIẾU + MÃ HÀNG + NHÂN VIÊN"** (1 phiếu xin giữ 5 mã = 5 yêu cầu). Đây là đơn vị đếm CHI TIẾT, không phải đếm chứng từ: thật là **2.412 dòng / 2.410 yêu cầu / chỉ 593 phiếu** — gần như mỗi dòng là một yêu cầu, chỉ 2 trường hợp một yêu cầu còn nhiều dòng (gia hạn tách một phần số lượng). Khoá đếm `source|product_id|employee_id` phải dùng CHUNG ở tổng hợp và ở bộ lọc popup, nếu không con số 2 nơi lệch nhau. Cột popup đổi thành **"Phiếu giữ gốc"** vì nó hiện mã chứng từ.
+  ⚠️ **BE BẮT BUỘC lần ngược chuỗi gia hạn về CHỨNG TỪ GỐC trước khi đếm** — gia hạn đẻ bản ghi `prepick_details` MỚI. Đếm thô theo `objectable` của chính bản ghi ra 2.411 vs đếm đúng 2.410 (chồng ít vì gia hạn thường rút HẾT bản ghi cũ), NHƯNG **1.111/2.412 bản ghi còn hàng (46%) mang `objectable_type = PrepickExtendRequestDetail`** → đếm thô làm cột "Phiếu giữ gốc" hiện mã phiếu GIA HẠN ở 46% số dòng, sai chứng từ. Nếu recursive CTE nặng thì cân nhắc denormalize `root_objectable_id/type` ghi trong `moveToExpireDate()` — nhưng `prepick_details` là bảng DÙNG CHUNG với ERP, phải hỏi trước khi thêm cột.
+  ⚠️ **Popup phiếu thu KHÔNG hiện "Còn phải thu"** — nó chỉ gom phiếu thu, chưa phải công nợ; `giá trị HĐ − đã thu` không bằng công nợ (còn giảm giá, thuế, bù trừ). Công nợ phải đọc từ nghiệp vụ công nợ.
+  ⚠️ **Bẫy đã trả giá khi port style:** `.rsum-tb { min-width: 1280px }` là số cứng của bảng **10 cột** màn TKT — bảng 7 cột giữ nguyên số đó thì màn 1200px sinh cuộn ngang và **cắt mất 2 cột cuối**; 3 cột hạn giữ tô màu xanh/vàng/đỏ phải **trả lại màu teal ở ô TIÊU ĐỀ**, không thì chữ trắng trên nền header sáng, tàng hình; `.minutes-modal__body` là **flex column** nên nhiều `.drill-wrap` xếp chồng bị co sập còn **2px** (bảng bên trong cao 297px) — phải bọc mỗi nhóm trong 1 flex item `flex: 0 0 auto`; và `.drill-table { min-width: 1740px }` (số cứng bảng 14 cột màn mẫu) làm bảng 7 cột tràn ngang, mọi chỉnh `colgroup` vô tác dụng — **đúng cái bẫy đã ghi ở feature `bao-cao-ke-hoach-lam-viec-nhan-vien`**; đổi thứ tự cột trong `colgroup` mà quên đổi thứ tự render ô làm **toàn bảng lệch 1 nhịp** (cột Mã hiện ra tên hàng, cột tên bị bóp còn 1 chữ/dòng); và `.drill-table { min-width: 1740px }` **dính lần 2** ở popup phiếu thu thêm sau — mỗi popup mới đều phải thêm selector override, nếu không bảng bị cắt cột cuối im lặng.
+  **Bước tiếp theo:** user duyệt mockup → plan code (Phase 1 BE · Phase 2 FE).
+  **Blocked — 4 việc phải xử/hỏi ngay đầu Phase 1:** (1) quyền `Xem báo cáo giữ hàng theo tổng công ty` CHƯA tồn tại, phải thêm `PermissionsTableSeeder` · (2) cách lấy chứng từ gốc: recursive CTE mỗi lần chạy hay denormalize `root_objectable_id/type` — cột mới trên bảng DÙNG CHUNG với ERP nên phải hỏi trước · (3) chốt cỡ trang + ngưỡng lazy load sau khi đo thời gian phản hồi trên dữ liệu thật · (4) hỏi nghiệp vụ về kế hoạch gán **bộ phận** cho NV kinh doanh (hiện 2,6% dòng có bộ phận → ô lọc gần như luôn ở trạng thái khoá).
+
 - bao-cao-ke-hoach-lam-viec-nhan-vien → @namdangit → .plans/gop-db/bao-cao-ke-hoach-lam-viec-nhan-vien/plan.md
   Trạng thái: **MOCKUP HTML XONG — VERIFY PLAYWRIGHT 1600×900, CONSOLE 0 LỖI (08/09/2026)**. Chưa động vào code thật.
   Màn báo cáo **MỚI**, không thay `meeting-by-employees` hay `task-manager-by-employees`. Theo dõi **khối lượng công việc** của Phòng ban ▸ Bộ phận ▸ Nhân viên, gom **5 nguồn** đang nằm rải rác: `meetings` · `tasks` · `issues` · `assign_business` · `assign_jobs`. Định nghĩa chỉ tiêu bám đúng hằng số trạng thái trong `hrm-api/Modules/Assign` (có bảng tra trong `design.md`).
-  Style port nguyên khối từ `../bao-cao-phat-trien-thi-truong-khach-hang/`; danh mục tổ chức dùng chung bộ **2 công ty · 10 phòng ban · 2 bộ phận · 43 nhân viên** của màn đó.
+  Style port nguyên khối từ `../../bao-cao-phat-trien-thi-truong-khach-hang/`; danh mục tổ chức dùng chung bộ **2 công ty · 10 phòng ban · 2 bộ phận · 43 nhân viên** của màn đó.
   **5 quyết định lõi:** 10 cột (5 loại + Tổng · Đã HT · Tỷ lệ HT) · tính vào kỳ theo **GIAO NHAU (overlap)**, không theo ngày tạo · 1 đầu việc tính cho **MỌI người tham gia** (đếm cặp chứng từ × người nên dòng cha luôn = tổng dòng con) · nháp + huỷ/từ chối **vẫn nằm trong Tổng** ⇒ tách **4 nhóm trạng thái chia hết tổng** · **bỏ mọi chỉ số bình quân**.
   Kỳ mặc định 09/2026: **1.040 đầu việc · 37/43 NV có việc · hoàn thành 51,0%**.
   ⚠️ **Nợ backend:** `tasks` có `due_time` nhưng **KHÔNG có `start_time`** → muốn giờ bắt đầu của Task đúng như mockup thì phải bổ sung cột, nếu không BE chỉ trả `00:00`.

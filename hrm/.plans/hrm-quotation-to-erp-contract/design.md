@@ -14,3 +14,20 @@ Lập hợp đồng bên ERP trực tiếp từ báo giá Assign (HRM) khi: `sta
 ## Lưu ý
 - Việc ghi `quotations.erp_firm_contract_id` do **ERP** thực hiện (qua connection `hrm`), HRM chỉ cần migration cột + đọc.
 - Resolve KH, đọc sản phẩm, tạo HĐ: toàn bộ ở ERP (xem spec ERP).
+
+## ⚠️ ĐÃ BỊ THAY THẾ (quyết định 13/09/2026)
+
+Hướng **lập HĐ ERP từ báo giá HRM** ở tài liệu này **KHÔNG còn được dùng**. User đã chốt hướng khác:
+làm **hợp đồng HRM lập thẳng từ báo giá HRM** (hợp đồng bán nằm trong chính hệ thống HRM, không đẩy
+sang lập HĐ ERP nữa). Quyết định này phát sinh trong khi làm feature
+`.plans/gop-db/bao-cao-ket-qua-du-an-tkt/` (báo cáo kết quả Dự án TKT) — báo cáo đó cần nguồn "giá
+trị hợp đồng" của dự án Thành công nhưng khảo sát cho thấy chưa có entity hợp đồng bán nào trong
+`Modules/Assign/Entities/` và HĐ ERP `buy_contract2` không có cột nào trỏ về dự án TKT, nên user chốt
+luôn hướng nguồn tiền tương lai là hợp đồng HRM, không phải HĐ ERP theo tài liệu này.
+
+Hệ quả:
+- Cột `quotations.erp_firm_contract_id` (nếu đã có migration) coi như không dùng tới nữa.
+- Nút "Lập hợp đồng ERP" ở `ProspectiveProjectQuotationsTab.vue` (nếu đã làm) nên gỡ/không phát triển tiếp.
+- Báo cáo kết quả Dự án TKT tạm để cột `Giá trị HĐ` trống (`—`) ở phase 1, chờ hợp đồng HRM xong thì
+  nối vào đúng 1 điểm (`contractAmountFor()` trong `ProspectiveProjectResultReportService.php`).
+- Tài liệu này **giữ lại để tham khảo lịch sử**, không triển khai tiếp trừ khi user đảo quyết định lần nữa.
