@@ -1,0 +1,318 @@
+diff -ruN --color=never snap/base-6/api-MasterData/Http/Controllers/V1/RegulationConfigController.php snap/after-6/api-MasterData/Http/Controllers/V1/RegulationConfigController.php
+--- snap/base-6/api-MasterData/Http/Controllers/V1/RegulationConfigController.php	1970-01-01 08:00:00
++++ snap/after-6/api-MasterData/Http/Controllers/V1/RegulationConfigController.php	2026-09-12 10:10:58
+@@ -0,0 +1,77 @@
++<?php
++
++namespace Modules\MasterData\Http\Controllers\V1;
++
++use App\Http\Controllers\Api\Traits\ResponseTrait;
++use Illuminate\Routing\Controller;
++use Illuminate\Http\Request;
++use Modules\MasterData\Http\Requests\ScheduleRegulationVersionRequest;
++use Modules\MasterData\Services\RegulationConfigService;
++
++class RegulationConfigController extends Controller
++{
++    use ResponseTrait;
++
++    // Quyền đã xác định ở Task 6 Step 1 — quyền sẵn có "Cài đặt cấu hình" (seeder id 149, group "Cấu hình").
++    const PERM_EDIT = 'Cài đặt cấu hình';
++
++    private $service;
++
++    public function __construct(RegulationConfigService $service)
++    {
++        $this->service = $service;
++    }
++
++    private function guard()
++    {
++        if (!$this->isCurrentEmployeeHasPermission(self::PERM_EDIT)) {
++            abort(403, 'Bạn không có quyền thao tác cấu hình quy chế');
++        }
++    }
++
++    public function showCongno(Request $request)
++    {
++        $this->guard();
++        $companyId = (int) $request->query('company_id');
++        $config = $this->service->getCongnoConfig($companyId);
++        return $this->responseSuccessJson('OK', 200, $config);
++    }
++
++    public function store(ScheduleRegulationVersionRequest $request)
++    {
++        $this->guard();
++        $data = $request->validated();
++        $version = $this->service->createCongnoVersion(
++            (int) $data['company_id'], $data['effective_date'], $data['values'],
++            $data['note'] ?? null, auth()->id()
++        );
++        return $this->responseSuccessJson('Đã lưu phiên bản', 200, [
++            'version' => $version,
++            'config' => $this->service->getCongnoConfig((int) $data['company_id']),
++        ]);
++    }
++
++    public function update(ScheduleRegulationVersionRequest $request, $id)
++    {
++        $this->guard();
++        $data = $request->validated();
++        $version = $this->service->updateCongnoVersion(
++            (int) $id, $data['effective_date'], $data['values'], $data['note'] ?? null
++        );
++        return $this->responseSuccessJson('Đã cập nhật phiên bản', 200, [
++            'version' => $version,
++            'config' => $this->service->getCongnoConfig((int) $version->scope_id),
++        ]);
++    }
++
++    public function cancel($id)
++    {
++        $this->guard();
++        $version = \Modules\MasterData\Entities\RegulationScheduledVersion::findOrFail($id);
++        $companyId = (int) $version->scope_id;
++        $this->service->cancelCongnoVersion((int) $id);
++        return $this->responseSuccessJson('Đã huỷ phiên bản', 200, [
++            'config' => $this->service->getCongnoConfig($companyId),
++        ]);
++    }
++}
+diff -ruN --color=never snap/base-6/api-MasterData/Http/Requests/ScheduleRegulationVersionRequest.php snap/after-6/api-MasterData/Http/Requests/ScheduleRegulationVersionRequest.php
+--- snap/base-6/api-MasterData/Http/Requests/ScheduleRegulationVersionRequest.php	1970-01-01 08:00:00
++++ snap/after-6/api-MasterData/Http/Requests/ScheduleRegulationVersionRequest.php	2026-09-12 10:10:58
+@@ -0,0 +1,41 @@
++<?php
++
++namespace Modules\MasterData\Http\Requests;
++
++use Illuminate\Foundation\Http\FormRequest;
++
++class ScheduleRegulationVersionRequest extends FormRequest
++{
++    public function authorize()
++    {
++        return true; // gate ở controller bằng isCurrentEmployeeHasPermission
++    }
++
++    public function rules()
++    {
++        return [
++            'company_id' => 'required|integer',
++            'effective_date' => 'required|date',
++            'note' => 'nullable|string|max:500',
++            'values' => 'required|array',
++            'values.limit_export_debt_employee' => 'required|integer|min:0',
++            'values.adjust_odd_balance' => 'required|integer|min:0',
++            'values.overdue_date_max_customer' => 'required|integer|min:0',
++            'values.overdue_date_max_agency' => 'required|integer|min:0',
++            'values.overdue_date_max_service' => 'required|integer|min:0',
++            'values.warning_due_date' => 'nullable|integer|min:0',
++            'values.interest_rate' => 'required|numeric|min:0',
++        ];
++    }
++
++    public function messages()
++    {
++        return [
++            'required' => 'Bắt buộc phải nhập',
++            'integer' => 'Chỉ cho phép nhập số nguyên',
++            'numeric' => 'Chỉ cho phép nhập số',
++            'min' => 'Giá trị không được nhỏ hơn :min',
++            'date' => 'Ngày không hợp lệ',
++        ];
++    }
++}
+diff -ruN --color=never snap/base-6/api-MasterData/Routes/api.php snap/after-6/api-MasterData/Routes/api.php
+--- snap/base-6/api-MasterData/Routes/api.php	2026-09-12 09:57:53
++++ snap/after-6/api-MasterData/Routes/api.php	2026-09-12 10:10:58
+@@ -12,6 +12,9 @@
+ |
+ */
+ 
+-Route::group(['prefix' => '/v1/master-data'], function () {
+-    //
++Route::group(['prefix' => '/v1/master-data', 'middleware' => 'auth:api'], function () {
++    Route::get('regulation-config/congno', 'V1\RegulationConfigController@showCongno');
++    Route::post('regulation-config/congno/versions', 'V1\RegulationConfigController@store');
++    Route::put('regulation-config/congno/versions/{id}', 'V1\RegulationConfigController@update');
++    Route::delete('regulation-config/congno/versions/{id}', 'V1\RegulationConfigController@cancel');
+ });
+diff -ruN --color=never snap/base-6/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php snap/after-6/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php
+--- snap/base-6/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 09:57:53
++++ snap/after-6/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 10:10:58
+@@ -5,6 +5,7 @@
+ use Tests\TestCase;
+ use Illuminate\Foundation\Testing\DatabaseTransactions;
+ use Modules\MasterData\Entities\RegulationScheduledVersion;
++use Modules\MasterData\Http\Controllers\V1\RegulationConfigController;
+ 
+ class RegulationCongnoVersioningTest extends TestCase
+ {
+@@ -155,6 +156,165 @@
+         $applied = $svc->applyDueCongnoVersions();
+         $this->assertGreaterThanOrEqual(2, $applied);
+         $this->assertSame(1.7, (float) \App\Models\Company::find($companyId)->interest_rate);
++    }
++
++    /**
++     * XANH THẬT #1 — API tạo pending version + trả config, với 1 nhân viên có quyền
++     * "Cài đặt cấu hình" ĐĂNG NHẬP THẬT (không mock quyền/gate). Dựng context: 1 dòng bảng
++     * `employees` dùng đồng thời qua 2 model (App\Models\TpEmployee để actingAs guard 'api',
++     * Modules\Timesheet\Entities\Employee để gán quyền qua spatie giveDirectPermissionTo — cùng
++     * 1 bảng vật lý). teams-feature của spatie đang tắt (`config('permission.teams') === false`)
++     * nên gán trực tiếp không cần set permissionsTeamId.
++     */
++    public function test_api_creates_pending_version_and_returns_config()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $this->actingAsSeededUserWithPermission();
++
++        $payload = [
++            'company_id' => $companyId,
++            'effective_date' => '2099-01-01',
++            'note' => 'Tăng lãi suất',
++            'values' => [
++                'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++                'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++                'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.6,
++            ],
++        ];
++        $res = $this->postJson('/api/v1/master-data/regulation-config/congno/versions', $payload);
++        $res->assertStatus(200);
++        $res->assertJsonPath('data.config.pending.0.diff_snapshot.0.key', 'interest_rate');
++
++        $get = $this->getJson('/api/v1/master-data/regulation-config/congno?company_id=' . $companyId);
++        $get->assertStatus(200);
++        $get->assertJsonCount(7, 'data.fields');
++    }
++
++    /**
++     * XANH THẬT #2 — Route HTTP đăng ký đúng dưới prefix /api/v1/master-data và guard quyền
++     * ("Cài đặt cấu hình") fail-closed cho 1 nhân viên ĐÃ ĐĂNG NHẬP nhưng KHÔNG có quyền này
++     * → 403 ở cả 4 endpoint, không phải 404/500.
++     *
++     * Group route đã bọc middleware auth:api (khớp mọi module khác) → nhân viên đã đăng nhập
++     * nhưng thiếu quyền lọt qua middleware rồi bị guard() chặn 403. Guest thật (chưa auth) bị
++     * middleware chặn 401 trước khi vào controller — xem test riêng bên dưới.
++     */
++    public function test_api_routes_registered_and_permission_guard_fails_closed_without_auth()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $version = $svc->createCongnoVersion($companyId, '2099-01-01',
++            array_merge($svc->getCurrentCongnoValues($companyId), ['interest_rate' => 1.6]), 'x', 1);
++
++        // Nhân viên đăng nhập thật nhưng KHÔNG được cấp quyền "Cài đặt cấu hình".
++        $email = 'regulation-config-noperm-' . uniqid() . '@example.com';
++        $employeeId = \Illuminate\Support\Facades\DB::table('employees')->insertGetId([
++            'email' => $email,
++            'password' => bcrypt('secret'),
++            'token_version' => 1,
++            'employee_info_id' => 999999998,
++            'status' => 1,
++            'login_count' => 0,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++        $user = \App\Models\TpEmployee::find($employeeId);
++        // Custom Authenticate middleware buộc parseToken() → phải gửi JWT thật, actingAs không đủ.
++        $this->withToken(\Tymon\JWTAuth\Facades\JWTAuth::fromUser($user));
++
++        $this->getJson('/api/v1/master-data/regulation-config/congno?company_id=' . $companyId)
++            ->assertStatus(403);
++
++        $this->postJson('/api/v1/master-data/regulation-config/congno/versions', [
++            'company_id' => $companyId,
++            'effective_date' => '2099-01-01',
++            'values' => [
++                'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++                'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++                'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.6,
++            ],
++        ])->assertStatus(403);
++
++        $this->putJson('/api/v1/master-data/regulation-config/congno/versions/' . $version->id, [
++            'company_id' => $companyId,
++            'effective_date' => '2099-01-02',
++            'values' => [
++                'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++                'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++                'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.7,
++            ],
++        ])->assertStatus(403);
++
++        $this->deleteJson('/api/v1/master-data/regulation-config/congno/versions/' . $version->id)
++            ->assertStatus(403);
++    }
++
++    /**
++     * XANH THẬT #3 — guest (chưa đăng nhập) bị middleware auth:api chặn 401 ở CẢ 4 endpoint,
++     * không lọt vào controller (tránh 500 do ResponseTrait deref auth()->user() null).
++     */
++    public function test_api_rejects_guest_with_401_on_all_endpoints()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++
++        $this->getJson('/api/v1/master-data/regulation-config/congno?company_id=' . $companyId)
++            ->assertStatus(401);
++
++        $this->postJson('/api/v1/master-data/regulation-config/congno/versions', [])
++            ->assertStatus(401);
++
++        $this->putJson('/api/v1/master-data/regulation-config/congno/versions/1', [])
++            ->assertStatus(401);
++
++        $this->deleteJson('/api/v1/master-data/regulation-config/congno/versions/1')
++            ->assertStatus(401);
++    }
++
++    private function actingAsSeededUserWithPermission()
++    {
++        $email = 'regulation-config-test-' . uniqid() . '@example.com';
++        $employeeId = \Illuminate\Support\Facades\DB::table('employees')->insertGetId([
++            'email' => $email,
++            'password' => bcrypt('secret'),
++            'token_version' => 1,
++            'employee_info_id' => 999999999,
++            'status' => 1,
++            'login_count' => 0,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++
++        // Gán quyền trực tiếp qua bảng pivot spatie (employee_has_permissions): Employee entity
++        // (Modules\Timesheet\Entities\Employee) không khớp model provider của guard 'api'
++        // (App\Models\TpEmployee) nên gọi HasPermissions::givePermissionTo() thẳng sẽ bị spatie từ
++        // chối (GuardDoesNotMatch, guard suy ra rỗng) — insert thẳng vào pivot để bỏ qua check này,
++        // đúng với cách isCurrentEmployeeHasPermission() đọc lại (chỉ join qua getAllPermissions(),
++        // không validate guard).
++        $permission = \Spatie\Permission\Models\Permission::where('name', RegulationConfigController::PERM_EDIT)
++            ->where('guard_name', 'api')->firstOrFail();
++        \Illuminate\Support\Facades\DB::table('employee_has_permissions')->insert([
++            'permission_id' => $permission->id,
++            'model_type' => \Modules\Timesheet\Entities\Employee::class,
++            'employee_id' => $employeeId,
++        ]);
++
++        $user = \App\Models\TpEmployee::find($employeeId);
++        // Custom Authenticate middleware buộc parseToken() → phải gửi JWT thật, actingAs không đủ.
++        $this->withToken(\Tymon\JWTAuth\Facades\JWTAuth::fromUser($user));
++
++        return $user;
+     }
+ 
+     private function makeCompanyWithCongno(array $congno): int

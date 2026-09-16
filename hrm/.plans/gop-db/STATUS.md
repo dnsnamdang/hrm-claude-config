@@ -222,6 +222,32 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   **[06/09 wrap up]** Mockup chốt ở **vòng 17**. Mở bằng `file://` (file tự chứa, 0 tham chiếu ngoài) hoặc HTTP **cổng cố định 8700**. Thư mục có thêm `QLHD_mockup.html` = bản sao user tự đặt tên.
   **CÒN:** (a) user duyệt UI mockup vòng 17; (a2) nối ngày đặt cọc thật từ phiếu thu ở tab Tài chính (đang hard-code) + chốt có bỏ ô *NV kinh doanh* trong nhóm HĐ không (đã có ở tiêu đề); (b) mockup nhóm A (trường + luồng 7 trạng thái trong form HĐ) và nhóm C (3 báo cáo) — user chốt làm sau; (c) màn danh sách HĐ đang thực hiện — làm sau.
 
+- **catalog-import-export — Import + Export cho các màn Danh mục đã chuyển ERP → HRM** → @junfoke →
+  `.plans/gop-db/catalog-import-export/design.md` · `plan.md` ·
+  spec `docs/superpowers/specs/gop-db/2026-09-10-catalog-import-export-design.md`
+  Trạng thái: **XONG TOÀN BỘ 20/20 TASK, CHỜ NGHIỆM THU** (2026-09-11). Nhánh
+  `feat/catalog-import-export` (tách từ `gop_db`), **chưa commit**.
+  Kết quả: **13 màn có Import**, **9 màn có thêm Export**. Mỗi màn đã chạy thật: validate ra đúng
+  số dòng hợp lệ/lỗi với đúng thông báo, import ghi đúng DB + Lịch sử thay đổi, không đẻ danh mục
+  cha, export khớp `total` của danh sách; dữ liệu thử đều đã xoá.
+  Không dựng framework mới: mixin `FinanceImportMixin` đổi tên thành `CatalogImportMixin` dùng chung,
+  file mẫu **sinh động tại FE** từ chính `importColumns` qua hàm mới `buildImportTemplate()`.
+  Có 19 unit test PHPUnit (`CurrencyImportValidationTest` 10, `ProvinceImportValidationTest` 9).
+  ⚠️ **GOTCHA phải biết khi sửa tiếp** (chi tiết trong `plan.md`):
+  · 3 lớp `ApiController` khác nhau — **9/13 controller KHÔNG có `responseBadRequest()`**;
+  · `nations` không có cột `code`, mã nằm ở `country_code`;
+  · khoá chống trùng thật: Tiền tệ/Quốc gia/Ngân hàng/Ghi chú BD trùng **2 khoá**, Tỉnh/TP theo
+    (quốc gia+khu vực), Phường/xã theo (tỉnh+tên), Costs theo nhóm `type IS NULL`;
+  · cột trạng thái trên bảng đặt key riêng (`workStatus`, `nationStatus`…) nên phải khai
+    `exportFieldKeyMap`, không thì popup rớt cột Trạng thái.
+  🐞 **Đã sửa 3 lỗi CÓ SẴN gặp dọc đường** (ngoài phạm vi feature, user duyệt sửa):
+  · `NationService` sort `nations.code` → cột thật `country_code`, bấm sắp xếp cột Mã quốc gia trả
+    500 (nay 200);
+  · màn Phường/xã **chưa bao giờ ghi được Lịch sử thay đổi** — `wards.id` không AUTO_INCREMENT
+    nhưng model khai `incrementing = true` nên `getKey()` = 0 làm `logCatalogCreate()` thoát sớm;
+  · N+1 `Ward::canDelete()` (1 query/dòng) khiến API danh sách Phường/xã mất 23s/5.000 dòng →
+    gom 1 query còn **3s**; đã đối chiếu 200 bản ghi, 0 sai lệch kết quả `can_delete`.
+
 - **prod-cutover — Đưa `gop_db` lên PROD (1 nhánh, 2 môi trường)** → @namdangit →
   `.plans/gop-db/prod-cutover/design.md` · `plan.md` ·
   spec `docs/superpowers/specs/gop-db/2026-09-04-prod-cutover-design.md`
@@ -632,6 +658,190 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Trạng thái: **CODE DONE — CHỜ USER VERIFY UI** (2026-08-12). Chuẩn hoá cột "Hành động" màn danh sách
   (mẫu `/assign/customers`) + component dùng chung `V2BaseRowActions.vue`.
   Chi tiết + gotcha: plan.md
+
+- khai-quy-che-cau-hinh → @namdangit → .plans/gop-db/khai-quy-che-cau-hinh/plan.md
+  Trạng thái: **Slice 1 (Công nợ versioning) + Slice 2 (tổng quát hoá + 2 tab scalar chietkhau/kythuat)
+  + Slice 3a (hạ tầng scope `global` → bảng `configs` singleton, chứng minh qua tab baogia ở tầng service/cron)
+  ĐỀU ĐÃ CODE + test XONG. Final whole-branch review (opus) từng slice CLEAN/SẠCH, không finding chặn** (2026-09-14).
+  Chờ USER QA trình duyệt + quyết định commit (git chưa được uỷ quyền).
+  Test Slice 3a: 4 suite xanh — GlobalScope 4/4 · Congno 14/14 byte-identical · Scalar 5/5 · Registry 6/6 (CR=0 cả 8 file).
+  Slice 3a thực thi bằng SDD, ledger: `hrm-api/.superpowers/sdd/2026-09-14-khai-quy-che-slice3a-global-scope-infra/progress.md`.
+  Kiến trúc: `RegulationTabRegistry` (registry-driven, per-field store config/company) + `RegulationConfigService` generic
+  theo `tab_key` + scope (company→`companies`/`company_regulation_histories`; global→`configs`/`regulation_config_histories` MỚI)
+  + controller/route generic `regulation-config/{tabKey}` (mới cho scope company) + FormRequest rule động.
+  Slice 3a thêm: 2 migration (3 cột `companies` cho hanghoa/dieukhoan 3b + bảng `regulation_config_histories`).
+  Backlog Slice sau (từ review, non-blocking): [Slice 3b] snapshot-wipe — global version ghi TRỌN 10 field config,
+  field thiếu = null xoá cột → controller/FE 3b PHẢI round-trip đủ 10 field config; getTabConfig trả kèm `payload`
+  cho modal hẹn; field non-API bị drop âm thầm ở modal hẹn; congnoLoading race.
+  Data-hygiene ĐÃ XONG (user chốt "làm như ERP có"): đã `UPDATE configs SET customer_register_expiry=30`
+  (khớp ERP ConfigSeeder); 5 cột nullable vốn đã NULL đúng ERP-fresh, is_equipment=1 giữ nguyên.
+  Đã fix test (backup đủ 10 cột store=config) nên không làm bẩn DB thêm.
+  Spec hoàn thiện 13 tab: `docs/superpowers/specs/gop-db/2026-09-14-khai-quy-che-hoan-thien-cac-tab-design.md`.
+  Plan Slice 2: `docs/superpowers/plans/gop-db/2026-09-14-khai-quy-che-slice2-generalize-scalar-tabs.md`.
+  Plan Slice 3a: `docs/superpowers/plans/gop-db/2026-09-14-khai-quy-che-slice3a-global-scope-infra.md`.
+  **Slice 3d — tab `khac` (scope PHÒNG BAN) XONG BE + FE** (2026-09-14): thêm scope `department` (ghi thẳng 3 cột
+  `departments` risk_fund/profit_percent/max_value_contract của 1 phòng ban; lịch sử → `regulation_config_histories`
+  scope_type='department' scope_id=department_id, KHÔNG dùng company_regulation_histories vì cột buộc company_id).
+  BE: `RegulationConfigService` (SCOPE_DEPARTMENT + storeForScopeType + applyVersion/applyDueVersions/updateVersion/
+  recomputeDiffChain nhánh department) · controller (`departments()` endpoint + resolveScopeId/refreshScopeId/
+  assertDepartmentInCompany, tab scope=department đọc/ghi theo department_id, gate PB thuộc công ty hiện tại) ·
+  route `regulation-config-departments` · FormRequest thêm `department_id`. Test: RegulationKhacDepartmentTest 3/3 +
+  registry unit (khac=department scalar) — full MasterData suite 61 passed. FE: `index.vue` fetchTab/applyTabToModel/
+  onSave/curTabIsApi/watch curGroup scope-aware (DEPT_API_TABS=['khac'], gửi department_id GET+POST, đổ vào
+  model.department.groups); picker phạm vi thay mock SCOPE_UNITS bằng phòng ban THẬT (endpoint mới, selectedDeptId int,
+  re-fetch khi đổi phòng); `data.js` nhãn khac khớp registry BE. CR=0 index.vue+data.js.
+  **Slice 3d — tab `themquy` (ladder, scope PHÒNG BAN) XONG BE + FE** (2026-09-14): `departments.conditions_quarter_bonus`
+  (json bậc thang GIỮ ĐÚNG khoá ERP money_from/money_to/percent + comparator) + `rate_reward_progressive_tp/tbp/nv`.
+  **Ruling B**: lịch sử → `RegulationConfigHistory` scope=department (KHÔNG dual-write bảng audit ERP
+  `department_condition_quarter_bonus_histories` — test assert count=0). BE: registry themquy (type=json input='ladder',
+  item_rules percent 0-100, 3 decimal) + FormRequest `validateQuarterBonusLadder` (per-row from<to + ∑tp/tbp/nv=100).
+  FE `index.vue`: DEPT_API_TABS=['khac','themquy']; verbar inline "Ngày áp dụng" + pending-queue cancel-only (ẩn nút sửa
+  vì ladder không dùng modal hẹn); bảng bậc thang V2BaseSelect(ladderFromOps/ToOps)+V2BaseCurrencyInput(money rỗng=INF)+
+  V2BaseInput%; addLadderRow/removeLadderRow; applyTabToModel/collectTabValuesFromModel nhánh themquy (ladder+progressive);
+  ladderRateValid tô đỏ #dc2626 + chặn onSave; cancelPending nhận cả DEPT_API_TABS. `data.js` mock ladder → object khoá ERP.
+  Test: RegulationThemquyDepartmentTest 3/3 + registry unit `registers_themquy_as_department_ladder_tab` — MasterData suite
+  65 passed. CR=0 index.vue+data.js.
+  **Slice 3d — tab `hoahong` (GRID per-dòng, scope PHÒNG BAN) XONG BE + FE (2026-09-15) → Slice 3d ĐÓNG**:
+  tab phức tạp nhất, mỗi dòng lưới = 1 bản ghi `regulations` (objectable_type App\Model\Common\Department,
+  objectable_id=department_id), KHÔNG staging version — 2 cột nullable effective_date/status ghi THẲNG `regulations`.
+  BE: migration đã chạy; registry SHAPE_GRID 18 field metadata (loại khỏi mọi helper scalar); controller show() rẽ
+  getGridConfig + storeGridRow/updateGridRow/destroyGridRow (gate currentCompanyId + assertDepartmentInCompany, ownership
+  403, actorId=auth()->id()), route version rẽ 404 cho tab grid; RegulationCommissionRowRequest (condition_sale_type
+  required_if type=1; value_end gt start; ∑department/part/employee=100 VÀ ∑*_bonus_contract=100; conditions_commissions
+  [from_day<to_day, receive_percent 0..100]); ScheduleRegulationVersionRequest guard isGridTab; service statusForEffective/
+  fillGridRow (sale_type=0 khi type≠1, after_commission_type ép=1)/presentGridRow (is_applied/is_pending/status_text)/
+  getGridConfig/CRUD/applyDueGridRows (cron flip pending→applied theo dòng); history buildGridHistoryDiff numeric-aware
+  TRƯỚC save (đã FIX bug false-diff decimal Laravel-8). Routes POST/PUT/DELETE `regulation-config/{tabKey}/grid[/{rowId}]`.
+  Test: RegulationHoahongGridTest 10/10 + registry unit `registers_hoahong_as_department_grid_tab` — full MasterData suite
+  **76/76**. CR=0 (4 file BE LF nguyên trạng). NOT committed (rule gop_db).
+  **FE grid wiring hoahong XONG (2026-09-15)** — đủ 6 bước bàn giao: GRID_DEPT_TABS=['hoahong'] (ngoài DEPT_API_TABS);
+  fetchGridTab GET `.../hoahong?department_id=` → applyGridConfig {fields→gridFieldOptions, rows OBJECT}; tbody row-object
+  (gridOptLabel/gridNetText/fmtPercent/fmtDate + pill is_pending/is_applied, cột Thao tác gate canEditRegulation); modal reg
+  bind 18 key BE + effective_date (condition_sale_type chỉ khi Number(condition_type)===1, condition_compare_type disabled
+  'Giá net', conditions_commissions sub-table); openReg/saveReg (guard 2 nhóm ∑=100, POST/PUT `.../grid[/{id}]`, map 422
+  inline)/deleteReg ($confirm→apiDelete `.../grid/{id}?department_id=`); import V2BaseCheckbox. **Ruling**: KHÔNG gọi
+  markFormSaved (trang KHÔNG dùng unsavedChangesMixin — sibling scalar-tab onSave cũng không). CR=0 index.vue+data.js (LF).
+  Chưa QA trình duyệt (code chưa deploy dev).
+  **Slice 3f — Lịch sử quy chế THẬT (①A) + Dirty-guard rời trang (②A) XONG (2026-09-15) → Slice 3f ĐÓNG**:
+  ①A thay mock `HIST` ở FE bằng endpoint BE thật `GET /v1/master-data/regulation-config-history?scope=company|department[&department_id=]`
+  (gate `checkPermission:Cài đặt cấu hình` + `guard()` 403 + `currentCompanyId()`; scope ∉ {company,department}→422;
+  department bắt buộc department_id + assertDepartmentInCompany). `RegulationConfigService::getHistory()` GỘP 4 nguồn/scope,
+  sort created_at desc (tie-break `_seq` ổn định vì PHP 7.4 usort không stable), cắt 50 SAU sort, trả MẢNG VỊ TRÍ 6 phần tử
+  `[timeStr, whoName, contentStr, scopeAppliedName, noteStr, isScheduledBool]`. Nguồn: company =
+  `regulation_config_histories`(company scope_id + global 0) + `company_regulation_histories`(company_id) +
+  `regulation_scheduled_versions` pending(company+global); department = `regulation_config_histories`(department) +
+  `regulation_histories`(department_id, logs json) + scheduled pending(department). Format: time `d/m/Y H:i`,
+  who="code - fullname" (join employees↔employee_infos 1 query, KHÔNG N+1), content "{label}: {old} → {new}" nối "; ",
+  number_format QUỐC TẾ, bool→Có/Không, null/''→"—", >3 field → 3 + " …(+N)", scheduled prefix "Hẹn phiên bản mới — ".
+  ②A: `index.vue` dùng `unsavedChangesMixin` (unsavedSnapshotSource→this.model), `guardLeaveDirty()` $confirm khi đổi
+  tab/scope/phòng ban lúc đang sửa → xác nhận thì `revertCurrentTab()` re-fetch bỏ edit dở RỒI `markFormPristine()`
+  (KHÔNG markFormSaved — cảnh báo vẫn bật cho lần sửa sau); reset baseline sau onSave/onCancel/saveVer/cancelPending/
+  saveReg/deleteReg; beforeRouteLeave built-in. `data.js` gỡ export HIST + SCOPE_UNITS (CURRENT_COMPANY giữ, còn dùng).
+  Review độc lập (opus) APPROVED không blocker (2 MEDIUM + 3 LOW + 2 NIT) → fix round 1 xử M1(sort stable)/M2(revert thật)/
+  L1($type company field)/L2(null-safe created_at)/L3(3 test HTTP 403/422). Test: RegulationHistoryTest 6 (3 service + 3 HTTP)
+  → full MasterData suite **82/82 PASS**. CR=0 cả 6 file (4 BE + 2 FE). NOT committed (rule gop_db).
+  **FEATURE KHÉP VỀ MẶT CODE**: đủ 14 tab đều BE (registry 14 key) + FE (API_TABS 11 company + DEPT_API_TABS khac/themquy +
+  GRID_DEPT_TABS hoahong) + test — KHÔNG còn tab mock. Slice 3b/3c (mixed/json/subtable) đã gộp vào wiring registry chung
+  (đóng cùng 3d), Slice 3e (rà quyền + số quốc tế + line-ending + review cuối whole-branch) đã `[x]` hết. Lịch sử thật (①A)
+  + dirty-guard (②A) có đủ.
+  Chưa làm (đều NGOÀI PHẠM VI theo spec mục 11 — YAGNI): bước duyệt phiên bản (change_approver), diff JSON per-dòng,
+  lưu version_id trên chứng từ, version-hoá 2 field fixed (Thuế vận tải/Ngày khai báo công nợ đầu kỳ), due_configs matrix.
+  Backlog nhỏ non-blocking (LOW/NIT): comment double-limit-50, test HTTP cap-50/join>3 ở tầng service.
+  Bước tiếp: user QA trình duyệt toàn màn (chưa deploy dev) → quyết định commit/merge về gop_db.
+  --- (lịch sử) ---
+  **UI mock XONG · MAPPING ERP XONG · đang brainstorm cơ chế "hẹn ngày áp dụng"** (2026-09-09).
+  Gộp 1 màn HRM `/master-data/regulation-config` 3 miền cấu hình/quy chế ERP: (1) Cấu hình chung công ty
+  (11 nhóm form), (2) Quy chế kinh doanh theo phòng ban (hoa hồng/lũy tiến/khác), (3) MỚI: "hẹn ngày áp dụng".
+  Hướng A (port bảng ERP có sẵn). UI đã xong (mock): `pages/master-data/regulation-config/index.vue` + `data.js`
+  + menu master-data. **Mapping ERP (đã dò 2026-09-09)**: Miền 1 = `configs` (singleton toàn hệ thống) +
+  `companies`/`company_rule_commissions` (company_id) + `due_configs`/`company_due_configs` (công nợ); Miền 2 =
+  `regulations` (polymorphic objectable_type Department/Part) + cột trực tiếp trên `departments`.
+  ⚠️ **Phát hiện then chốt**: ERP KHÔNG có versioning theo ngày hiệu lực — chỉ overwrite + audit-log diff
+  (`company_regulation_histories`, `regulation_histories`, `due_config_histories`). → "Hẹn ngày áp dụng" là phần
+  HRM thiết kế mới hoàn toàn. Bước tiếp: chốt schema versioning → viết spec đầy đủ → duyệt → code (slice đầu:
+  Cấu hình chung). Spec: docs/superpowers/specs/gop-db/2026-09-09-khai-quy-che-cau-hinh-design.md
+
+- xuat-ban-hang-muon → @namdangit → .plans/gop-db/xuat-ban-hang-muon/plan.md
+  Trạng thái: **CODE DONE Phase 1 (SDD) — FINAL REVIEW CLEAN, chờ USER QA + quyết định commit** (2026-09-04). Review tổng nhánh ra 1 defect D1 (escalation vượt hạn mức không kích hoạt) → đã fix (BE tự tính giá trị phiếu server-side `computeAmounts()` + persist cột `sum_amount_*`) → scoped re-review PASS. Port luồng "xuất bán
+  hàng mượn" ERP → HRM (Module Finance) cho cả 3 loại HĐ (Firm/WrService/HĐ mới `hrm_quotation_id` — HĐ mới đi
+  chung nhánh Firm). **Phase 1** = phiếu YC xuất bán hàng mượn (`BorrowSellRequest`, `PYCXBHM`), KHÔNG hạch toán/tồn.
+  Execute qua subagent-driven (ledger `.plans/gop-db/xuat-ban-hang-muon/sdd/progress.md`). **XONG toàn bộ 13 task**:
+  T1–T8 BE, T9 api.js, T10 list, T11a BE 2 endpoint nguồn + siết canBorrowSell (fix R-T11a-FIX-1), T11b FE create
+  page (create.vue + 2 picker modal + BorrowSellRequestForm), T12 FE detail/print/deny/history, T13 unit test
+  Calculator PASS + doc. Mọi task review SPEC PASS / QUALITY APPROVED, KHÔNG load-bearing defect. **CHƯA commit** (chờ user).
+  Còn lại: (1) review tổng nhánh (broad whole-branch, model mạnh) — đang chạy; (2) **USER QA trên browser**:
+  đăng nhập từng cấp quyền tạo Firm/WrService/HĐ mới, vượt/không vượt hạn mức (TP→BGD), duyệt/từ chối, in,
+  xác nhận `account_details`/tồn KHÔNG đổi + regression type-9 (Nhập bán mượn trả lại); (3) hỏi user commit.
+  Footprint chưa commit — hrm-api: `Modules/Finance/{Entities/BorrowSellRequest,Services/BorrowSellRequest,
+  Http/Controllers/V1/BorrowSellRequestController,Http/Requests/BorrowSellRequest,Transformers/BorrowSellRequestResource,
+  Tests/Unit/BorrowSellRequestCalculatorTest}` + `Routes/api.php` + hợp nhất type-9 (xoá
+  `Entities/ProductImportRequest/BorrowSellRequest.php`, sửa `ProductImportRequestService.php`,
+  `Entities/Concerns/ChecksEmployeePermission.php`); hrm-client: `pages/finance/borrow-sell-requests/*` +
+  `components/subsystem-menu/finance.js`.
+  **Phase 2** = `BorrowSell` (phiếu BÁN thực tế, `PXBHM-`) + hạch toán bán: **CODE DONE 14/14 task (SDD) + final whole-branch review XONG (SHIP-with-nits) đã adjudicate** (2026-09-07). Ledger `sdd/progress-phase2.md`, report `sdd/final-review-report.md`. BE đã commit 10 commit (c562527e0^..8b9e77bd6). Final review: 0 Blocker/0 High/1 Medium(F1)/3 Low. **F1 FIXED** (updateWarehouse nhánh WrService bổ sung cộng `exported_qty` cấp-2 lồng — map 3 FQN→bảng + increment atomic + unit test 4/4; Firm sub-claim = false-positive nhánh tabs/KM đã bỏ) — **CHƯA commit** (2 file: BorrowSellService.php + BorrowSellStoreTest.php). F2 park (FU-6 comment sai vị trí gate), F3/F4 đóng by-design. Delta additive objectable_id/type (uncommitted). FE uncommitted (quy ước Phase 1 FE): `pages/finance/borrow-sells/**` + nút "Lập phiếu bán" + menu link. QA V1-V8 PASS. Bước tiếp: **chờ user cho phép commit BE fix F1 + QA browser** (FE giữ uncommitted; Phase 1 BE staged không đụng).
+
+- product-import-list → @namdangit → .plans/gop-db/product-import-list/plan.md
+  Trạng thái: **CODE DONE Phase 1-4 — chờ user QA** (2026-08-28). Bổ sung cho màn **Phiếu nhập hàng**
+  (`/finance/product-imports`, `Modules/Finance`): (1) **bộ quyền 4 cấp** hiện trong màn Phân quyền —
+  id **1543-1546** guard `api` group "Phiếu nhập hàng" (tổng công ty / công ty / phòng ban / bộ phận),
+  đã thêm id 1546 vào `PermissionsTableSeeder` + chèn thẳng 4 dòng vào DB gộp (trước đó 1543-1545 có trong
+  seeder nhưng CHƯA có trong DB nên nhóm quyền không hiện); (2) **bộ lọc** viết lại mirror màn Phiếu xuất
+  hàng — `V2BaseCompanyDepartmentFilter` (công ty/phòng ban/bộ phận/người lập) + loại + trạng thái + khoảng
+  ngày lập + keyword; (3) **tuỳ chỉnh cột** (`ColumnCustomizationModal` table `finance_product_imports`) +
+  cột **Người lập** (`creator_name`).
+  BE: `ProductImport` thêm nhánh **bộ phận** vào `applyViewScope()`/`canView()` (`isPartManager`/`managePartIds`
+  mirror `ProductImportRequest`); `searchByFilter()` nhận thêm company/department/part/employee/start_date/end_date
+  + `->with('creator.info')`; route mới `GET finance/product-imports/filter-options`. `php -l` sạch.
+  **Phase 5 (2026-08-28)**: BỎ role-18 bypass — trước đó `canView()` + `isBigBoss/isBoss/isManager/isPartManager`
+  có vế `currentEmployeeIsSuperAdmin()` khiến role 18 (DNS admin) tự thấy hết, song song với 4 quyền → user
+  chốt bỏ, để 4 quyền điều khiển hoàn toàn. Vẫn GIỮ trait `ChecksEmployeePermission` làm hàm đọc quyền (query
+  theo TÊN quyền mọi guard — ĐÚNG cho gop_db, khớp với FE `hasAPermission`; KHÔNG đổi sang helper global
+  `isCurrentEmployeeHasPermission` vì nó bị bug model_type='App\Employee' trên DB gộp).
+  ⚠️ Hệ quả: **role 18 KHÔNG còn tự thấy hết** — phải gán "Xem phiếu nhập hàng theo tổng công ty" qua màn
+  Phân quyền (nhóm "Phiếu nhập hàng" nay đã hiện). Còn giữ 2 nhánh nghiệp vụ hợp lệ ngoài 4 quyền: kế toán
+  kho cùng công ty (chi tiết) + người tạo phiếu (`created_by`).
+  Bước tiếp: user QA trên UI (lọc theo cấp tổ chức, tuỳ chỉnh cột, cột Người lập) + gán 4 quyền cho các role
+  qua màn Phân quyền.
+
+- de-nghi-nhap-kho → @namdangit → .plans/gop-db/de-nghi-nhap-kho/plan.md
+  Trạng thái: **P1 (Backend) XONG · P2 (Frontend) XONG — chờ user QA** (2026-08-25). Port màn **Đề nghị nhập kho** (ERP
+  `WarehouseImportRequest`, mã `PDNNK`) — tầng 2 luồng nhập kho 3 tầng (cha `ProductImportRequest`/PYCNH đã port).
+  Scope A: chỉ chứng từ (Lập từ YCNH + list + chi tiết + Thủ kho duyệt + Từ chối + Hủy + In); KHÔNG đụng tồn/hạch toán (tầng 3 tách sau).
+  Mirror sibling **Đề nghị xuất kho** (Module Assign) sang **Module Finance**. Bộ status WIR riêng (1..7),
+  đổi status cha YCNH inline theo ERP: lập→7, gửi→1, thủ kho duyệt→4, từ chối→7, hủy→6 (giết YCNH — đúng ERP nhập).
+  GÁC tầng 3: tabs cha-con, `warehouse_exported_qty` type 4/9, `WarehouseImportRequestDetailAccounting`, tồn/sổ.
+  Spec: `docs/superpowers/specs/gop-db/2026-08-25-de-nghi-nhap-kho-design.md`.
+  Bước tiếp: **user QA trên trình duyệt** (login Kế toán kho lập/sửa/hủy; thủ kho duyệt/từ chối) rồi đóng feature (tầng 3 tách sau). FE đã xong: 4 trang `pages/finance/warehouse-import-requests/` + rewire nút ở màn YCNH.
+
+- nhap-ban-tra-lai-hd21 → @namdangit → .plans/gop-db/nhap-ban-tra-lai-hd21/plan.md
+  Trạng thái: **Phase 1 CODE DONE · Phase 2 SPEC XONG — chờ user review spec** (2026-08-27). Phase 2 = màn **Phiếu nhập hàng
+  (ProductImport)** HRM (chưa từng có bên HRM), khung generic mở rộng mọi loại nhập, đợt này xử lý type 4 loại 21.
+  Spec Phase 2: `docs/superpowers/specs/gop-db/2026-08-27-product-import-hrm-design.md` (2 đường vào: A qua kho ERP redirect / B nhập thẳng).
+  Phase 1 BE+FE xong: migration `emplement_contract_*`,
+  `searchForImportType`/`dataForSaleReturn`/`guardBusinessRules`/`fillFromExportRequest` nhánh loại 21, modal +cột "Số HĐ".
+  Verify bằng DB smoke test dữ liệu thật (phiếu 35676/HĐ13). CHỜ: chưa có phiếu xuất loại-21 status=5 để E2E store()→duyệt TP.
+  Mở luồng **Nhập hàng bán trả lại** (import type 4 `BAN_TRA_LAI`) cho hàng bán theo **HĐ HRM loại 21** (`XUAT_BAN_HOP_DONG`),
+  bắt chước nguyên quy tắc loại **xuất bán hãng 14 ERP**, chỉ đổi nguồn HĐ ERP (`firm_contract`) → HĐ HRM (`Contract` polymorphic).
+  Đã xác nhận: HĐ 21 có đủ tương đương type 14 (`support_accounting` chung bảng `firm_support_accountings`,
+  quyết toán qua `Contract.status` 11/12, dòng `product_export_request_tab_products` có `qty/exported_qty/returned_qty`);
+  khác: HRM PER không có status 13 (loại 21 hoàn tất = status **5**), query quyết toán dùng khóa thường.
+  **Phase 1** = nửa trước (lập+validate+duyệt giá), tận dụng code type-4 đã port. **Phase 2** = màn ProductImport (nhập kho thực+returned_qty+hạch toán) — SPEC XONG.
+  **PENDING**: type 9 (bán mượn trả) loại 21 — chờ phiếu xuất bán hàng mượn loại 21.
+  Bước tiếp: user review spec Phase 2 → writing-plans → code (Entities → Service → hạch toán → Controller/FE → nút entry → E2E).
+
+- hop-dong-xuat-hang → @namdangit → .plans/gop-db/hop-dong-xuat-hang/plan.md
+  Trạng thái: **HẠCH TOÁN XUẤT HÀNG (task 9.15) — BE DONE + TEST E2E PASS** (2026-08-20, nhánh `hop-dong` con của `gop_db`).
+  Phiếu xuất hàng HĐ HRM loại **20** (xuất sản xuất) + **21** (xuất bán) khi Hoàn tất (status=1): trừ tồn kế toán+vật lý,
+  tính giá vốn FIFO (ghi đè export_price), ghi sổ `account_details` bám sát ERP "bán hàng theo hãng".
+  - Loại 21: đủ 8 cụm (doanh thu 1311/5111/33311, giảm trừ 5213/33311/1311, giá vốn **Nợ632/Có155** — dùng 155 thay 1561,
+    thưởng 5211/35241, TNCN 35241/3335, hoa hồng tháng/quý 6411/35241, quỹ rủi ro 6411/35241).
+  - Loại 20: chỉ giá vốn **Nợ1541/Có1561**; auto sinh phiếu nhập cha **Nợ155/Có1541** (khép vòng WIP→thành phẩm).
+  - **Accuracy gate**: đối chiếu phiếu bán-hãng ERP thật (PXH id=4) → khớp TỪNG ĐỒNG. Cost engine khớp 6 ca thật (P2).
+  - **E2E**: dựng data mới (kho+tồn+BOM), chạy trọn `ProductExportService::createFromWarehouseExport(status=1)` → cả 2 loại cân đối ΣNợ=ΣCó lệch 0.
+  Files: `Modules/Assign/Services/{ProductExportPostingService,WarehouseExportAccountingService,ProductExportService,ContractParentImportService}.php`,
+  `Modules/Finance/Entities/Account/{AccountDetail,AccountDetailRef}.php`.
+  **HOÃN** (tách feature): DebtRemindersJob (cần model `ContractStateDelivery` HRM chưa có), hạch toán bốc xếp (arrange_delivery).
+  Bước tiếp: FE màn tạo/hoàn tất phiếu xuất hàng (2 nút Lưu nháp status=3 / Hoàn tất status=1 → `POST /assign/warehouse-exports/{id}/product-exports`) — CHƯA có.
 
 - fix-employee-fk-remap → @junfoke → .plans/gop-db/fix-employee-fk-remap/plan.md
   Trạng thái: **CODE DONE, DRY PASS — CHƯA CHẠY THẬT** (2026-08-04). Vá 42 cột / 20.231 dòng FK

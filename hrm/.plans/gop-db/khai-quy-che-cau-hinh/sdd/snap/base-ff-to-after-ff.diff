@@ -1,0 +1,431 @@
+diff -ruN --color=never base-ff/Http/Controllers/V1/RegulationConfigController.php after-ff/Http/Controllers/V1/RegulationConfigController.php
+--- base-ff/Http/Controllers/V1/RegulationConfigController.php	2026-09-12 10:40:20
++++ after-ff/Http/Controllers/V1/RegulationConfigController.php	2026-09-12 10:58:59
+@@ -5,6 +5,7 @@
+ use App\Http\Controllers\Api\Traits\ResponseTrait;
+ use Illuminate\Routing\Controller;
+ use Illuminate\Http\Request;
++use Modules\MasterData\Entities\RegulationScheduledVersion;
+ use Modules\MasterData\Http\Requests\ScheduleRegulationVersionRequest;
+ use Modules\MasterData\Services\RegulationConfigService;
+ 
+@@ -29,10 +30,23 @@
+         }
+     }
+ 
++    private function currentCompanyId(): int
++    {
++        // Suy công ty từ nhân viên đăng nhập (fail-closed) — KHÔNG tin company_id client gửi lên,
++        // tránh đọc/sửa/huỷ cấu hình + version của công ty khác. current_company_role = công ty NV
++        // đang thao tác (employee_infos.company_role, fallback company_id).
++        $companyId = (int) optional(auth()->user())->current_company_role;
++        // Fail-closed: NV thiếu công ty trong hồ sơ → chặn ngay, không cho rơi về công ty id=0
++        // (tránh ghi bản ghi mồ côi scope_id=0 ở store).
++        abort_unless($companyId > 0, 422, 'Tài khoản chưa gắn công ty, không thể thao tác cấu hình quy chế');
++
++        return $companyId;
++    }
++
+     public function showCongno(Request $request)
+     {
+         $this->guard();
+-        $companyId = (int) $request->query('company_id');
++        $companyId = $this->currentCompanyId();
+         $config = $this->service->getCongnoConfig($companyId);
+         return $this->responseSuccessJson('OK', 200, $config);
+     }
+@@ -40,35 +54,42 @@
+     public function store(ScheduleRegulationVersionRequest $request)
+     {
+         $this->guard();
++        $companyId = $this->currentCompanyId();
+         $data = $request->validated();
+         $version = $this->service->createCongnoVersion(
+-            (int) $data['company_id'], $data['effective_date'], $data['values'],
++            $companyId, $data['effective_date'], $data['values'],
+             $data['note'] ?? null, auth()->id()
+         );
+         return $this->responseSuccessJson('Đã lưu phiên bản', 200, [
+             'version' => $version,
+-            'config' => $this->service->getCongnoConfig((int) $data['company_id']),
++            'config' => $this->service->getCongnoConfig($companyId),
+         ]);
+     }
+ 
+     public function update(ScheduleRegulationVersionRequest $request, $id)
+     {
+         $this->guard();
++        $companyId = $this->currentCompanyId();
++        $version = RegulationScheduledVersion::findOrFail($id);
++        abort_unless((int) $version->scope_id === $companyId, 403, 'Không thể thao tác phiên bản của công ty khác');
++
+         $data = $request->validated();
+         $version = $this->service->updateCongnoVersion(
+             (int) $id, $data['effective_date'], $data['values'], $data['note'] ?? null
+         );
+         return $this->responseSuccessJson('Đã cập nhật phiên bản', 200, [
+             'version' => $version,
+-            'config' => $this->service->getCongnoConfig((int) $version->scope_id),
++            'config' => $this->service->getCongnoConfig($companyId),
+         ]);
+     }
+ 
+     public function cancel($id)
+     {
+         $this->guard();
+-        $version = \Modules\MasterData\Entities\RegulationScheduledVersion::findOrFail($id);
+-        $companyId = (int) $version->scope_id;
++        $companyId = $this->currentCompanyId();
++        $version = RegulationScheduledVersion::findOrFail($id);
++        abort_unless((int) $version->scope_id === $companyId, 403, 'Không thể thao tác phiên bản của công ty khác');
++
+         $this->service->cancelCongnoVersion((int) $id);
+         return $this->responseSuccessJson('Đã huỷ phiên bản', 200, [
+             'config' => $this->service->getCongnoConfig($companyId),
+diff -ruN --color=never base-ff/Http/Requests/ScheduleRegulationVersionRequest.php after-ff/Http/Requests/ScheduleRegulationVersionRequest.php
+--- base-ff/Http/Requests/ScheduleRegulationVersionRequest.php	2026-09-12 10:40:20
++++ after-ff/Http/Requests/ScheduleRegulationVersionRequest.php	2026-09-12 10:53:00
+@@ -14,7 +14,7 @@
+     public function rules()
+     {
+         return [
+-            'company_id' => 'required|integer',
++            'company_id' => 'nullable|integer', // server suy từ auth (current_company_role); giữ nhận để tương thích FE cũ, KHÔNG dùng
+             'effective_date' => 'required|date',
+             'note' => 'nullable|string|max:500',
+             'values' => 'required|array',
+diff -ruN --color=never base-ff/Services/RegulationConfigService.php after-ff/Services/RegulationConfigService.php
+--- base-ff/Services/RegulationConfigService.php	2026-09-12 10:40:20
++++ after-ff/Services/RegulationConfigService.php	2026-09-12 10:53:00
+@@ -119,22 +119,6 @@
+         return $diffs;
+     }
+ 
+-    public function baselineForDate(int $companyId, string $effectiveDate, ?int $excludeVersionId = null): array
+-    {
+-        $query = RegulationScheduledVersion::for(self::SCOPE_COMPANY, $companyId, self::TAB_CONGNO)
+-            ->pending()
+-            ->where('effective_date', '<', $effectiveDate)
+-            ->orderByDesc('effective_date')->orderByDesc('id');
+-
+-        if ($excludeVersionId !== null) {
+-            $query->where('id', '!=', $excludeVersionId);
+-        }
+-
+-        $prev = $query->first();
+-
+-        return $prev ? $this->normalizeValues($prev->payload ?? []) : $this->getCurrentCongnoValues($companyId);
+-    }
+-
+     public function createCongnoVersion(int $companyId, string $effectiveDate, array $values, ?string $note, int $actorId): RegulationScheduledVersion
+     {
+         $payload = $this->normalizeValues($values);
+@@ -156,7 +140,8 @@
+ 
+         $version = $version->fresh();
+         if ($version->effective_date && $version->effective_date->lte(now()->startOfDay())) {
+-            $this->applyVersion($version);              // áp-ngay khi ngày <= hôm nay
++            // áp-ngay: áp TẤT CẢ bản đến hạn của công ty theo đúng thứ tự ngày (khớp cron)
++            $this->applyDueCongnoVersions(null, $companyId);
+             $version = $version->fresh();
+         }
+         return $version;
+@@ -165,25 +150,31 @@
+     public function applyVersion(RegulationScheduledVersion $version): void
+     {
+         if ($version->status !== RegulationScheduledVersion::STATUS_PENDING) {
+-            return; // idempotent
++            return; // idempotent fast-path
+         }
+-        $companyId = (int) $version->scope_id;
+ 
+-        DB::transaction(function () use ($version, $companyId) {
++        DB::transaction(function () use ($version) {
++            // Khoá bản ghi để chống áp trùng khi apply-ngay (request) chạy song song với cron.
++            $locked = RegulationScheduledVersion::whereKey($version->getKey())->lockForUpdate()->first();
++            if (!$locked || $locked->status !== RegulationScheduledVersion::STATUS_PENDING) {
++                return; // đã bị tiến trình khác áp
++            }
++            $companyId = (int) $locked->scope_id;
++
+             $old = $this->getCurrentCongnoValues($companyId);
+-            $new = $this->normalizeValues($version->payload ?? []);
++            $new = $this->normalizeValues($locked->payload ?? []);
+ 
+             $company = Company::findOrFail($companyId);
+             foreach (self::CONGNO_FIELDS as $key => $meta) {
+                 $company->{$key} = $new[$key];
+             }
+-            $company->updated_by = $version->created_by; // cron không có auth
++            $company->updated_by = $locked->created_by; // cron không có auth
+             $company->save();
+ 
+             foreach ($this->buildDiffSnapshot($old, $new) as $diff) {
+                 CompanyRegulationHistory::create([
+                     'company_id' => $companyId,
+-                    'created_by' => $version->created_by,
++                    'created_by' => $locked->created_by,
+                     'field_name' => $diff['key'],
+                     'name' => $diff['label'],
+                     'value_before' => $diff['old'],
+@@ -191,24 +182,30 @@
+                 ]);
+             }
+ 
+-            $version->status = RegulationScheduledVersion::STATUS_APPLIED;
+-            $version->applied_at = now();
+-            $version->saveQuietly();
++            $locked->status = RegulationScheduledVersion::STATUS_APPLIED;
++            $locked->applied_at = now();
++            $locked->saveQuietly();
+         });
++
++        $version->refresh(); // đồng bộ trạng thái cho caller
+     }
+ 
+-    public function applyDueCongnoVersions(?Carbon $today = null): int
++    public function applyDueCongnoVersions(?Carbon $today = null, ?int $companyId = null): int
+     {
+         $today = $today ?: now();
+         $count = 0;
+ 
+-        $due = RegulationScheduledVersion::where('tab_key', self::TAB_CONGNO)
++        $query = RegulationScheduledVersion::where('tab_key', self::TAB_CONGNO)
+             ->where('scope_type', self::SCOPE_COMPANY)
+             ->pending()
+-            ->whereDate('effective_date', '<=', $today->toDateString())
+-            ->orderBy('scope_id')->orderBy('effective_date')->orderBy('id')
+-            ->get();
++            ->whereDate('effective_date', '<=', $today->toDateString());
+ 
++        if ($companyId !== null) {
++            $query->where('scope_id', $companyId);
++        }
++
++        $due = $query->orderBy('scope_id')->orderBy('effective_date')->orderBy('id')->get();
++
+         foreach ($due as $version) {
+             $this->applyVersion($version);
+             $count++;
+@@ -221,13 +218,21 @@
+         $version = RegulationScheduledVersion::findOrFail($versionId);
+         abort_unless($version->status === RegulationScheduledVersion::STATUS_PENDING, 422, 'Chỉ sửa được phiên bản đang chờ áp dụng');
+ 
++        $companyId = (int) $version->scope_id;
+         $version->effective_date = $effectiveDate;
+         $version->payload = $this->normalizeValues($values);
+         $version->note = $note;
+         $version->save();
+ 
+-        $this->recomputeDiffChain((int) $version->scope_id);
+-        return $version->fresh();
++        $this->recomputeDiffChain($companyId);
++
++        $version = $version->fresh();
++        if ($version->effective_date && $version->effective_date->lte(now()->startOfDay())) {
++            // áp-ngay khi sửa ngày hiệu lực về hôm nay/quá khứ (spec §9), cùng cơ chế create
++            $this->applyDueCongnoVersions(null, $companyId);
++            $version = $version->fresh();
++        }
++        return $version;
+     }
+ 
+     public function cancelCongnoVersion(int $versionId): void
+diff -ruN --color=never base-ff/Tests/Feature/RegulationCongnoVersioningTest.php after-ff/Tests/Feature/RegulationCongnoVersioningTest.php
+--- base-ff/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 10:40:20
++++ after-ff/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 10:53:00
+@@ -159,6 +159,56 @@
+     }
+ 
+     /** @test */
++    public function it_applies_now_when_update_moves_effective_date_to_today()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $base = $svc->getCurrentCongnoValues($companyId);
++
++        $v = $svc->createCongnoVersion($companyId, now()->addDays(5)->toDateString(),
++            array_merge($base, ['interest_rate' => 1.6]), 'future', 1);
++        $this->assertSame('pending', $v->status);
++        $this->assertSame(1.5, (float) \App\Models\Company::find($companyId)->interest_rate);
++
++        $updated = $svc->updateCongnoVersion($v->id, now()->toDateString(),
++            array_merge($base, ['interest_rate' => 1.8]), 'update to today');
++
++        $this->assertSame('applied', $updated->status);
++        $this->assertSame(1.8, (float) \App\Models\Company::find($companyId)->interest_rate);
++        $this->assertCount(1, \Modules\MasterData\Entities\CompanyRegulationHistory::where('company_id', $companyId)->get());
++    }
++
++    /** @test */
++    public function it_applies_multiple_due_versions_in_date_order_on_apply_now()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $base = $svc->getCurrentCongnoValues($companyId);
++
++        // v1: tạo ở tương lai để tránh áp-ngay lúc tạo, rồi kéo về hôm qua, giữ pending
++        $v1 = $svc->createCongnoVersion($companyId, now()->addYear()->toDateString(),
++            array_merge($base, ['interest_rate' => 1.6]), 'a', 1);
++        $v1->effective_date = now()->subDay()->toDateString();
++        $v1->saveQuietly();
++
++        // v2: hiệu lực hôm nay -> đuôi áp-ngay của create sẽ gọi applyDueCongnoVersions, áp cả v1 lẫn v2
++        $v2 = $svc->createCongnoVersion($companyId, now()->toDateString(),
++            array_merge($base, ['interest_rate' => 1.7]), 'b', 1);
++
++        $this->assertSame('applied', $v1->fresh()->status);
++        $this->assertSame('applied', $v2->fresh()->status);
++        $this->assertSame(1.7, (float) \App\Models\Company::find($companyId)->interest_rate);
++    }
++
++    /** @test */
+     public function command_applies_due_versions()
+     {
+         $companyId = $this->makeCompanyWithCongno([
+@@ -193,7 +243,7 @@
+             'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
+             'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
+         ]);
+-        $this->actingAsSeededUserWithPermission();
++        $this->actingAsSeededUserWithPermission($companyId);
+ 
+         $payload = [
+             'company_id' => $companyId,
+@@ -215,6 +265,93 @@
+     }
+ 
+     /**
++     * XANH THẬT — IDOR fail-closed: user công ty A KHÔNG được sửa version của công ty B, dù id
++     * truyền trên URL hợp lệ và payload company_id có gửi gì cũng bị server bỏ qua.
++     */
++    public function test_update_version_of_other_company_returns_403()
++    {
++        $myCompany = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $otherCompany = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $version = $svc->createCongnoVersion($otherCompany, '2099-01-01',
++            array_merge($svc->getCurrentCongnoValues($otherCompany), ['interest_rate' => 1.6]), 'x', 1);
++
++        $this->actingAsSeededUserWithPermission($myCompany);
++
++        $this->putJson('/api/v1/master-data/regulation-config/congno/versions/' . $version->id, [
++            'effective_date' => '2099-01-02',
++            'values' => [
++                'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++                'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++                'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.7,
++            ],
++        ])->assertStatus(403);
++    }
++
++    /**
++     * XANH THẬT — IDOR fail-closed: user công ty A KHÔNG được huỷ version của công ty B.
++     */
++    public function test_cancel_version_of_other_company_returns_403()
++    {
++        $myCompany = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $otherCompany = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $version = $svc->createCongnoVersion($otherCompany, '2099-01-01',
++            array_merge($svc->getCurrentCongnoValues($otherCompany), ['interest_rate' => 1.6]), 'x', 1);
++
++        $this->actingAsSeededUserWithPermission($myCompany);
++
++        $this->deleteJson('/api/v1/master-data/regulation-config/congno/versions/' . $version->id)
++            ->assertStatus(403);
++    }
++
++    /**
++     * XANH THẬT — happy path same-company: guard công ty không được chặn nhầm khi user thao tác
++     * đúng version thuộc công ty của chính mình.
++     */
++    public function test_update_and_cancel_version_of_own_company_returns_200()
++    {
++        $myCompany = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $version = $svc->createCongnoVersion($myCompany, '2099-01-01',
++            array_merge($svc->getCurrentCongnoValues($myCompany), ['interest_rate' => 1.6]), 'x', 1);
++
++        $this->actingAsSeededUserWithPermission($myCompany);
++
++        $this->putJson('/api/v1/master-data/regulation-config/congno/versions/' . $version->id, [
++            'effective_date' => '2099-01-03',
++            'values' => [
++                'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++                'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++                'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.7,
++            ],
++        ])->assertStatus(200);
++
++        $this->deleteJson('/api/v1/master-data/regulation-config/congno/versions/' . $version->id)
++            ->assertStatus(200);
++    }
++
++    /**
+      * XANH THẬT #2 — Route HTTP đăng ký đúng dưới prefix /api/v1/master-data và guard quyền
+      * ("Cài đặt cấu hình") fail-closed cho 1 nhân viên ĐÃ ĐĂNG NHẬP nhưng KHÔNG có quyền này
+      * → 403 ở cả 4 endpoint, không phải 404/500.
+@@ -302,14 +439,32 @@
+             ->assertStatus(401);
+     }
+ 
+-    private function actingAsSeededUserWithPermission()
++    private function actingAsSeededUserWithPermission(int $companyId)
+     {
++        $infoId = \Illuminate\Support\Facades\DB::table('employee_infos')->insertGetId([
++            'company_role' => $companyId, // → current_company_role = công ty này
++            'code' => 'RC' . uniqid(),
++            'fullname' => 'Regulation Tester',
++            'telephone' => '0900000000',
++            'department_id' => 0,
++            'birthday' => '2000-01-01',
++            'id_card' => '000000000000',
++            'grant_date' => '2020-01-01',
++            'grant_location' => 'HN',
++            'gender' => 1,
++            'marital_status' => 1,
++            'enter_date' => '2020-01-01',
++            'email' => 'rc-info-' . uniqid() . '@example.com',
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++
+         $email = 'regulation-config-test-' . uniqid() . '@example.com';
+         $employeeId = \Illuminate\Support\Facades\DB::table('employees')->insertGetId([
+             'email' => $email,
+             'password' => bcrypt('secret'),
+             'token_version' => 1,
+-            'employee_info_id' => 999999999,
++            'employee_info_id' => $infoId,
+             'status' => 1,
+             'login_count' => 0,
+             'created_at' => now(),
