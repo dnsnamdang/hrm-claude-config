@@ -68,6 +68,18 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- quy-hoach-lai-menu-phan-he → @junfoke → .plans/gop-db/quy-hoach-lai-menu-phan-he/plan.md
+  Trạng thái: **CODE DONE CẢ 5 NHÓM + VERIFY BROWSER khung menu** (16/09/2026).
+  Sắp xếp lại nhóm/phân hệ/menu `hrm-client` theo 5 sheet của sơ đồ chốt 04/09/2026 —
+  tách 3 phân hệ mới (Meeting, CSKH trước bán, An toàn 5S), đổi tên hàng loạt, dời chức năng.
+  ⚠️ Đọc sheet phải xem **màu nền + gạch ngang** (CSV không mang): gạch = bỏ/chuyển đi, vàng = làm sau.
+  Đã tách `/human/settings` thành 3 màn mới (Tính lương / Quản trị hệ thống / Bảo hiểm) và cho
+  menu ngang hiện xám mờ mục chưa có màn (sửa `Topbar.vue`).
+  Thêm 4 phân hệ: Meeting · An toàn 5S · CSKH trước khi bán · Tra cứu - thông báo.
+  ⚠️ 3 lỗi do menu mới đã sửa: màn chọn phân hệ vỡ khi phân hệ thiếu `image`, cánh hoa cắt mất
+  phân hệ thứ 9, menu ngang tràn. Bước tiếp: verify từng màn con.
+  Spec: docs/superpowers/specs/gop-db/2026-09-16-quy-hoach-lai-menu-phan-he-design.md | Tóm tắt: .plans/gop-db/quy-hoach-lai-menu-phan-he/design.md
+
 - bao-cao-ke-hoach-lam-viec-nhan-vien → @namdangit → .plans/gop-db/bao-cao-ke-hoach-lam-viec-nhan-vien/plan.md
   Trạng thái: **MOCKUP HTML XONG — VERIFY PLAYWRIGHT 1600×900, CONSOLE 0 LỖI (08/09/2026)**. Chưa động vào code thật.
   Màn báo cáo **MỚI**, không thay `meeting-by-employees` hay `task-manager-by-employees`. Theo dõi **khối lượng công việc** của Phòng ban ▸ Bộ phận ▸ Nhân viên, gom **5 nguồn** đang nằm rải rác: `meetings` · `tasks` · `issues` · `assign_business` · `assign_jobs`. Định nghĩa chỉ tiêu bám đúng hằng số trạng thái trong `hrm-api/Modules/Assign` (có bảng tra trong `design.md`).
