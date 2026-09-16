@@ -8,6 +8,20 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- app-meeting-mobile (Thiết kế app Meeting trên di động — TPE_APP/Flutter) → @dnsnamdang → .plans/app-meeting-mobile/plan.md
+  Trạng thái: 🟢 **BÀN GIAO v11 (16/09/2026)** — 50 artboard, chờ khách duyệt. **Đây là việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
+  File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao: `exports/` (4 PDF + 50 PNG 3x + file tóm tắt thay đổi).
+  Bản gửi khách: `Meeting-Mobile-App_BAN-DO-THEO-BUOC_v11_2026-09-16_BAN-KHACH-HANG.pdf` (8 trang, mỗi bước 1 trang, 4 màn/hàng đúng bố cục canvas).
+  Nhánh đối chiếu code: `tpe-develop-assign` (cả 2 repo).
+  Vòng 15–16/09 thêm **8 màn**: 41 Chọn KH · 41b Không tìm thấy · 42 Thêm nhanh KH · 43 Chọn người liên hệ · 44 Thêm nhanh liên hệ · 45 Cảnh báo chưa lưu · 46 Hub chặn Hoàn thành · 47 Thêm nhanh dự án TKT.
+  Chuẩn hoá: nhãn thành phần **Nội bộ → Công ty** · thông báo gom còn **3 loại dải** (bỏ toast đè) · dấu `*` trên Hub **theo trạng thái từng màn** · bỏ field Trạng thái meeting khỏi 4 màn · bản đồ xếp lại **4 màn/hàng** (khung 5685 → 2825px ngang).
+  ⚠️ **BE lọc sai phạm vi** `customerMeetingHistory()`: so `me.employee_id` với `m.created_by` (người TẠO) thay vì user đang đăng nhập → mọi user thấy danh sách giống nhau. Port khuôn `PotentialCustomerCareService::applyPermissionFilter()`.
+  ⚠️ **Danh sách meeting của app phải dùng `MeetingCalendarCriteria`**, KHÔNG dùng `MeetingCriteria` (lọc theo quyền tổ chức, người chủ trì ngoài phạm vi quyền bị mất do `false AND true = false`).
+  ⚠️ BE cần trả thêm: `host_name` + `end_date` cho `customer-history`; `company_code` cho API nhân viên. Vá rule `projects.*.scope_id` / `implementation_type` / `project_address` (nullable nhưng FE bắt buộc — cùng loại lỗi #10874).
+  ⏸ **Blocked**: user báo "biên bản đã có logic tạo task giao cho người xử lý" nhưng KHÔNG tìm thấy trên `tpe`, `tpe-develop-assign`, `gop_db` (`Task` entity không có FK sang meeting; mọi `create_task` trong repo là "Tạo phiếu công tác khác"). Chờ số Redmine / tên nhánh.
+  Còn 6 câu cần chốt với khách + 4 hạng mục chưa vẽ — xem mục cuối `plan.md`.
+  Design: .plans/app-meeting-mobile/design.md · Spec: docs/superpowers/specs/2026-09-16-app-meeting-mobile-design.md · Chi tiết từng vòng sửa: .plans/app-meeting-mobile/chon-khach-hang-va-lien-he.md
+
 - bao-cao-cskh-tiem-nang → @dnsnamdang → .plans/bao-cao-cskh-tiem-nang/plan.md
   Trạng thái: 🟢 **Phase 14 XONG 20/20 TASK + TEST, ĐÃ COMMIT (2026-09-07) — chưa push, chưa merge về `tpe`.** `hrm-api` `7bddb9fb1` (11 file, +536/−149) · `hrm-client` `f29eaaf35` "update kq cskh" (6 file, +421/−164). Cả 2 nhánh `tpe-cskh-tieu-chi-khach-hang`, cây sạch, mỗi repo đúng 1 commit so với `tpe`, **chưa có upstream**. **84/84 e2e xanh**, kiểm chứng bằng Playwright ở từng bước. Deploy chỉ cần code: KHÔNG migration, KHÔNG quyền mới, KHÔNG cron.
   ⚠️ `HRM/e2e/` không thuộc repo nào → 4 file spec chỉ có trên máy này; 2 fixture (`e2e_care_report_seed.php`, `e2e_provision.php`) thì ĐÃ nằm trong commit `hrm-api`.
@@ -200,7 +214,10 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Bước tiếp (phiên sau, theo ý user): (1) Fix lỗi tải file toàn app ~151 màn còn lại — helper `downloadFromServer` + migrate (chi tiết "TODO phiên sau" đầu plan.md). (2) Refactor filter báo cáo thành element dùng chung phân hệ (brainstorm dở). (3) Treo nhỏ: revoke/giữ test permission; verify UI popup chấm công + tier quyền cty/phòng ban; nút "Xem biên bản" gate quyền DS meeting. Commit khi user yêu cầu.
 
 - lich-lam-viec → @dnsnamdang → .plans/lich-lam-viec/plan.md
-  Trạng thái: **CODE XONG + TEST XANH (2026-09-11), CHƯA COMMIT**. Làm THẲNG trên nhánh `tpe` (cả hrm-api + hrm-client), user chốt không tạo nhánh.
+  Trạng thái: **ĐÃ COMMIT (2026-09-11) — ĐANG CHỜ TESTER**. Nhánh `tpe` cả 2 repo (user chốt không tạo nhánh), working tree sạch.
+  Commit: `hrm-api` **97b21c233** "update Lịch meeting =>> Lich công việc" (+ merge 7be0eaa2c) · `hrm-client` **6504d81c5** cùng tên (+ merge bbff22ed5).
+  Đã kiểm sau merge: toàn bộ file/thay đổi của feature còn nguyên (4 lớp BE mới, work-item-types.js, CalendarCreateMenu, 3 thân drawer, data-id trên thẻ, TodoItem dùng chung bảng màu, null-check AssignJobService, route endpoint lịch).
+  **Tài liệu đã gửi tester** (SRS + testcase), chờ phản hồi.
   Đổi tab "📅 Lịch meeting" của màn /assign/my-todo thành "📅 Lịch làm việc", hiện đủ **6 loại**: Task · Issue · Phiếu công tác · Phiếu giao việc · Meeting · Nhắc việc cá nhân.
   Spec: `.plans/lich-lam-viec/design.md` · Plan: `.plans/lich-lam-viec/plan.md` (17 task / 6 phase).
   **BE**: `GET /api/v1/assign/my-todo/calendar` (overlap range ở tầng DB, KHÔNG phân trang) + 4 lớp mới trong `Modules/Assign/Services/MyTodo/`: `WorkCalendarService`, `WorkItemStatusGroup` (gộp 6 bộ trạng thái → 4 nhóm), `WorkItemPeriod` (quy start/end/all_day), `MyTodoOwnershipScope` (điều kiện "việc của tôi" dùng chung với tab danh sách — đã chứng minh SQL giống tuyệt đối trước/sau refactor). Meeting đi qua `MeetingCalendarCriteria` + `MeetingCalendarRangeCriteria` sẵn có, KHÔNG chép tay. Thời gian phản hồi 0.084s/kỳ 6 tuần.
@@ -265,7 +282,22 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Lý do: 6 loại có 6 bộ trạng thái khác nhau, mã `1` là "Nháp" với Task nhưng "Đang tạo" với phiếu giao việc —
   chưa chọn loại thì không có danh sách nào hợp lệ. BE cũng chỉ áp `status` khi `types[]` có đúng 1 phần tử.
   Đã cân nhắc phương án gộp về 4 nhóm chung (`status_group` BE có sẵn) — user chọn giữ nguyên.
-  Bước tiếp: (1) user rà giao diện thật; (2) commit khi user yêu cầu; (3) cân nhắc bổ sung fixture `assign_business` để phủ nốt loại thứ 6.
+  ✅ **Tab danh sách cũng mở drawer (2026-09-11, user yêu cầu)**: bấm meeting/phiếu công tác/phiếu giao việc ở tab
+  "Công việc của tôi" nay mở **panel trượt phải** thay vì mở tab trình duyệt mới — giống hệt tab lịch.
+  Drawer đưa lên `index.vue` làm **1 thể hiện dùng chung cho cả 2 tab** (sửa 1 chỗ, cả 2 tab cùng đổi).
+  Task/Issue/Nhắc việc giữ nguyên popup. Đo thật: panel x=980 rộng 460 trên màn 1440, số tab trình duyệt 1→1.
+  ✅ **TÀI LIỆU (2026-09-11)**: `SRS - Lịch làm việc của tôi.docx` (4 chương · 15 chức năng FR-01…FR-15 ·
+  10 quy tắc BR-01…BR-10 · 49 bảng · 24 ảnh gồm 17 ảnh chụp thật) và `testcase.xlsx` (133 ca · 15 section ·
+  17 cột · P0 47%). Hai tài liệu ánh xạ chéo nhau qua mã FR/BR nên không lệch.
+  ⚠️ SRS: mở bằng Word → chuột phải Mục lục → **Update Field** để cập nhật số trang (máy Mac không tự làm được).
+  ⚠️ Form SRS đã đổi sang bản **2026-08-28 (ghi `Menu:`, KHÔNG ghi "URL đầy đủ")** — mô tả form 2026-08-17 trong
+  CLAUDE.md đã lỗi thời; `srs_selfcheck.py` sẽ báo lỗi nếu còn dòng "URL đầy đủ".
+  ⚠️ `srs_uml_render.py` (tài sản chung) hard-code font Windows → không chạy trên Mac; generator riêng ghi đè
+  font Arial, KHÔNG sửa file dùng chung.
+  ⚠️ Tab 1 KHÔNG có bộ lọc "Vai trò" (chỉ Loại + Trạng thái); vai trò chỉ là nhãn trên dòng.
+  **TEST CUỐI CÙNG**: chromium **61 passed / 1 skipped / 0 failed** · api **21 passed / 0 failed** ·
+  phpunit **OK (100 tests, 294 assertions)**.
+  Bước tiếp: (1) chờ tester phản hồi trên SRS + testcase đã gửi; (2) user rà giao diện thật; (3) cân nhắc bổ sung fixture `assign_business` để phủ nốt loại thứ 6.
 
 - lich-meeting-tab → @dnsnamdang → .plans/lich-meeting-tab/plan.md
   Trạng thái: **VERIFY PASS (2026-08-15, Playwright, data thật) — chờ quyết fix 2 deferred minor + commit khi cần**. Branch `meeting-schedule` (api + client), KHÔNG commit git. Thêm tab "📅 Lịch meeting" vào màn Todo cá nhân, chia 2 tab (giữ nguyên "Công việc của tôi"). Thực thi qua Subagent-Driven: 7 phase code + final whole-branch review đều clean (mọi fix ADDRESSED). Playwright PASS: Tháng/Tuần/summary/filter/nav/drawer + fail-closed (nút Sửa ẩn khi canEdit=false). So mockup: khác biệt đều do scope đã chốt.
@@ -610,6 +642,51 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- bao-cao-phat-trien-thi-truong-khach-hang → @namdangit → .plans/bao-cao-phat-trien-thi-truong-khach-hang/plan.md
+  Trạng thái: ✅ **HOÀN THÀNH toàn bộ Phase 1→7 (wrap up 16/09/2026).** Đã merge vào `tpe`.
+  Bộ test của màn: **35/35 XANH** (lần chạy cuối, `--workers=1`) — 27 ca của Phase 4 + 8 ca thêm ở Phase 5→7.
+  Tổng: `hrm-api` **13 commit** (12 của Phase 1→4 `a3a454326`…`151b42a4e` + `a8e5a4cc2` phân trang BE) ·
+  `hrm-client` **9 commit** (6 của Phase 1→4 `ef3369ec3`…`9c474bf9b` + `26130f5b1` · `656cfd5bc` · `3dfd28d5b`).
+  ✅ **ĐÃ PUSH phần Phase 1→5 lên VPS (14/09/2026).**
+  ⚠️ **CÒN 2 COMMIT CHƯA PUSH ở MỖI repo** (nằm trên nhánh `tpe`, cả 2 repo hiện đang checkout `gop_db`):
+  `hrm-api` `a8e5a4cc2` + merge `b536c343f` · `hrm-client` `3dfd28d5b` + merge `723362788`.
+  Muốn chạy lại test phải `git checkout tpe` ở cả 2 repo trước.
+  ⚠️ Lần deploy tới **BE CÓ ĐỔI** (service + controller + route + 1 export class + 1 blade) — không migration mới.
+  Nhánh `tpe-bao-cao-phat-trien-thi-truong-kh` vẫn còn ở cả 2 repo, xoá được.
+  ✅ **Phase 6+7 (14/09): PHÂN TRANG Ở BACKEND** (đúng nguyên tắc "luôn phân trang phía BE") — bảng
+  theo dõi 50 dòng cấp 1/trang (cắt ngay trong `buildTree()`, dòng TỔNG luôn hiện, STT giữ số thật,
+  nhánh con không bị cắt lìa cha) + popup 20 dòng/trang (lọc `p_*`/`q`, sắp xếp, phân trang đều ở BE;
+  BE trả kèm KPI + chip + tuỳ chọn ô lọc vì popup không còn cả tập). Thêm endpoint `drill/export`.
+  Đo *Năm nay · Khách hàng*: **payload 4,3 MB → 67 KB**, **46,3s → 0,87s**. **35/35 e2e xanh.**
+  📄 **`deploy.md`** — việc phải làm khi lên production, kèm 4 cảnh báo đo được:
+  (1) ~~🔴 tiêu chí *Khách hàng* + kỳ Quý/Năm dựng 46s~~ → **đã xử lý bằng phân trang**; còn lại: bản in
+  *Tổng hợp* của kỳ Năm nay vẫn 6,5 MB HTML (bản in phải in đủ dòng) và payload API 4,3 MB ·
+  (2) 🔴 cấp quyền phải đủ **5 `company_id`** (1,2,3,4,8), không gõ cứng `1`; nhân bản grant của 1179-1181 ·
+  (3) 🟠 menu KHÔNG ẩn theo quyền ⇒ cấp quyền trước khi thông báo, nếu không người dùng thấy báo cáo trống ·
+  (4) 🟠 **cấm `config:cache`** trên VPS (115 file gọi `env()` ngoài config ⇒ chết kết nối ERP).
+  ⛔ **Cấm chạy `PermissionsTableSeeder` trên prod** — nó `truncate` cả bảng `permissions`.
+  Màn: `/assign/report/customer-market-development` · quyền mới **1187-1189**.
+  **Deploy cần 3 bước**: (1) `php artisan migrate` (2 cột `meetings.province_id` + `province_name`) ·
+  (2) `php artisan db:seed --class="Modules\Assign\Database\Seeders\BackfillMeetingProvinceSeeder"`
+  (vá cả thị trường LẪN `customer_name`/`customer_code` còn trống) · (3) cấp quyền 1187-1189 cho role cần xem.
+  ⚠️ `HRM/e2e/` không thuộc repo git nào → 2 spec (`customer-market-development.api.spec.ts`,
+  `customer-market-development.spec.ts`) + `utils/cmdFixture.ts` **chỉ có trên máy này**; fixture PHP
+  (`database/e2e_customer_market_dev_seed.php`) thì đã nằm trong commit `hrm-api`.
+  **Phase 5 (14/09/2026) — ĐỦ MOCKUP, hết mục còn treo.** Thêm **khối tổng hợp thu gọn trong popup**
+  (3 hộp KPI + dải chip phân bổ Thị trường/Phòng ban bấm được để lọc, mặc định thu gọn) và sửa 5 chỗ
+  định dạng số về **chuẩn quốc tế** `14.3%` / `1.3 tỷ`. Chỉ 4 file FE, **commit `26130f5b1` trên `tpe`**
+  (không đụng backend, không migration, không quyền mới). Bộ test của màn: **29/29 xanh**.
+  Đo được khi làm: thân popup tràn 9px/21px → 2 thanh cuộn dọc lồng nhau; nay trần bảng **đo thật**
+  bằng `syncTableHeight()`, tràn 0px ở cả 2 trạng thái, đúng 1 khối cuộn dọc.
+  3 quyết định user chốt: code thẳng trên `tpe` · bộ lọc màn chính **giữ thu gọn** (lệch mockup có chủ ý,
+  mở sẵn làm số dòng thấy được rơi 18 → 10) · nhóm **"Chưa xác định thị trường" giữ nguyên tên**
+  (31/3208 khách nước ngoài thật sự không có tỉnh/TP bên ERP).
+  Ảnh: `screenshots/2026-09-14-popup-kpi-va-chip.png` · `screenshots/2026-09-14-popup-khoi-tong-hop.png`
+  🔔 **NHẮC KHI MERGE SANG NHÁNH GỘP DB**: khách hàng lúc đó nằm cùng 1 database ⇒ phải đổi cách query
+  (join thẳng, bỏ `mysql2` / `TpCustomer`), không đổi thì số liệu **sai âm thầm** vì `mysql2` trỏ DB ERP CŨ.
+  Tìm bằng `grep -rn "@TODO-GOPDB" hrm-api/Modules/Assign`; chi tiết ở cuối `plan.md`.
+  Mockup đã duyệt: `bao-cao-phat-trien-thi-truong-khach-hang.html` · Design: `.plans/bao-cao-phat-trien-thi-truong-khach-hang/design.md`
 
 - du-an-cha-con → @cuong61n → .plans/du-an-cha-con/plan.md
   Trạng thái: ✅ HOÀN THÀNH (2026-08-01). Phase 1 XONG. Phase 2 (Báo giá tổng): BE XONG (E2E API 31/31 PASS) + FE LUỒNG CỐT LÕI XONG 30/07 (tab Khu vực 1+2, popup gộp nguồn, màn xem/sửa BGT, luồng duyệt 1 cấp — verify Playwright). Còn lại: kéo-thả Section, In/Excel, filter màn Quản lý báo giá, khoá GG/tiền tệ/bảng giá ở báo giá dự án con. Branch `tpe-develop-assign` (cả 2 repo).
