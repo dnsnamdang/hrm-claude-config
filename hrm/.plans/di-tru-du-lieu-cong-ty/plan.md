@@ -431,3 +431,35 @@ Lỗi có sẵn KHÔNG sửa: ERP có bảng working_positions cục bộ RỖNG
 CÒN TỒN: (1) hrm-client trên UAT chưa pull, thiếu 17 commit gồm e554e0e2f (ẩn nút Sửa dự án TKT) -> UAT đang lệch FE/BE; (2) chưa xem được màn /admin/departments bằng mắt vì tài khoản ETEK GREEN chưa có quyền admin bên ERP UAT.
 Bước tiếp theo: TPE tải lại màn ERP kiểm tra.
 Blocked: (không).
+
+### Checkpoint — 2026-09-14 (màn Phân quyền chỉ hiện vai trò của công ty đang ở)
+Yêu cầu: /timesheet/setting/roles đang liệt kê vai trò của MỌI công ty; chỉ được thấy vai trò của công ty đang ở.
+- RoleService::index() — bỏ comment bộ lọc `company_roles.company_id = current_company_role` (code cũ đã comment sẵn 2 chỗ). groupBy('roles.id') lo việc vai trò gán nhiều công ty không bị nhân đôi dòng.
+- RoleService::show() — thêm whereExists theo company_roles: chặn xem/sửa vai trò công ty khác bằng URL trực tiếp. delete() và save() đều đi qua show() nên được chặn theo.
+- RoleController::delete() — trả 404 khi show() trả null (trước gọi canDelete() trên null -> fatal 500).
+- RoleController::store() — save() trả null thì rollback + 404, trước vẫn trả 'sucesss'.
+- FE add/_id.vue — bắt lỗi 404 thì toast + chuyển về danh sách, đừng để form trắng.
+Test (8005/3005, 4 công ty): cty1 23, cty4 19, cty8 3, cty9 4 vai trò — khớp DB. Nghịch: xem/sửa/xoá vai trò công ty khác đều 404, tên vai trò không bị đổi. Vai trò dùng chung (10/18/19) vẫn hiện ở cả 2 công ty, không trùng dòng. Export theo đúng bộ lọc. Màn 3005 của uyendtt.hr hiện đúng 4 dòng; vào thẳng /roles/add/3 bị đá về danh sách, /roles/add/54 mở bình thường. 84 test xanh.
+LƯU Ý: tài khoản có quyền "Quản lý phân quyền" cấp ở CÔNG TY KHÁC với công ty đang ở thì vẫn thấy danh sách rỗng — hành vi CÓ SẴN từ trước (nhánh whereNull), không do thay đổi này. VD huongtt.ksnb: đang ở cty 4, quyền cấp ở cty 8.
+Bước tiếp theo: chờ duyệt commit/push.
+Blocked: (không).
+
+### Checkpoint — 2026-09-14 (mã năng lực: màn chi tiết hiện sai + không lưu được)
+TPE hỏi: /human/competencies/68 hiện "NLQL 1" còn /human/ranks/56 hiện "NLQL 1_ETEKGREEN".
+Nguyên nhân 1 — HIỂN THỊ: CompetencyDetail.vue / CompetencyForm.vue hàm listCompetencies() KHÔNG đọc mã đã lưu mà tự sinh `NL${form.code} ${i+1}` từ mã nhóm. Nhóm 68 code=QL -> ra "NLQL 1". Màn ranks đọc DB thật nên ra đúng "NLQL 1_ETEKGREEN" (hậu tố do di trú, vì competencies.code UNIQUE toàn hệ thống).
+  -> Sửa (hướng A user chọn): giữ nguyên mã/tên đã lưu khi user KHÔNG đổi mã/tên nhóm (so với originalGroupCode/Name lưu lúc mở màn); đổi mã nhóm thì vẫn sinh lại như cũ. Thêm helper savedCompetency(orderNumber) đọc form.competencies (API đã trả sẵn).
+Nguyên nhân 2 — KHÔNG LƯU ĐƯỢC (phát hiện khi test, KHÁC với chẩn đoán ban đầu): 422 "Đã tồn tại trên hệ thống" là do luật validate MÃ NHÓM, không phải mã năng lực. SaveCompetencyRequest dùng `unique:competency_groups,code,{id}` — duy nhất TOÀN HỆ THỐNG, chặt hơn cả DB (competency_groups chỉ UNIQUE trên name, KHÔNG có trên code). Nhóm 68 (cty 9) code QL đụng nhóm 3 (cty 1) code QL -> mở màn bấm Lưu là 422 dù chỉ sửa tỷ lệ tăng lương.
+  -> Sửa: khi USE_COMMON_CATALOG=false (đang là false) thì scope unique theo company_id.
+Kiểm chứng: màn 68 hiện đúng NLQL 1_ETEKGREEN; gọi đúng payload component sinh ra -> HTTP 200, mã năng lực giữ nguyên hậu tố, danh mục công ty 1 không bị đụng. Luật validate: cty1 đổi nhóm 55 sang mã QL -> CHẶN; cty9 giữ nhóm 68 mã QL -> CHO; cty9 tạo mới mã NV1 (trùng nhóm 63 cùng cty) -> CHẶN; mã mới -> CHO. 100 test xanh. Đã backup + khôi phục nguyên trạng 2 bảng (/tmp/bk_competency.sql), diff = rỗng.
+PHÁT HIỆN THÊM, CHƯA SỬA: CompetencyController::store() gán company_id = current_company_role của NGƯỜI LƯU. Người công ty 4 mở nhóm của công ty 1 rồi bấm Lưu là nhóm đó BỊ CHUYỂN sang công ty 4 (gặp thật khi test, đã khôi phục). Cần TPE chốt hướng.
+LƯU Ý: namdangit@gmail.com có employee_infos.company_role = 4 -> "công ty đang ở" là 4 chứ không phải 1.
+Bước tiếp theo: chờ duyệt commit/push (gồm cả phần màn Phân quyền theo công ty).
+Blocked: (không).
+
+### Phase — Mở rộng phạm vi 10 nhóm phiếu từ 01/01/2026 (TPE chốt 2026-09-15)
+- [ ] Engine: thêm filter `from_date_or_pending:` (đơn nghỉ — giữ cả đơn chờ duyệt cũ)
+- [ ] Engine: thêm filter `from_date_child:` (phiếu giao việc — ngày nằm ở bảng con)
+- [ ] Config: đổi `attendances` sang mốc 01/01/2026, bỏ ghi chú "trừ phép 2 lần" đã lỗi thời
+- [ ] Config: đưa 12 bảng ra khỏi `skip`, thêm vào OWNED trước `timesheets`
+- [ ] Config: mở rộng `timesheets.poly_fk.job_id` cho overtime / jobassignment / business_trip
+- [ ] Dry-run + đối chiếu số lượng
