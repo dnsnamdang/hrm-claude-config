@@ -666,3 +666,15 @@ Blocked: —
 - Dòng con HĐ còn input `total_extra_cost`/`discount` (vô hại, bị loại khỏi tổng).
 - ZTFirmContractPrint + Excel export HĐ chưa lọc con (ZT ngoài scope).
 - Task 5.5: FE phiếu xuất kho payload `firm_contract_tab_product_id` — đã có sẵn (xác nhận khi test #5).
+
+## Fix #19 — TẠM ĐÓNG luồng tạo cha-con ở FE (2026-07-14)
+- [x] Comment nút "+ con" trong `resources/views/sale/firm/quotations/form.blade.php` (~L445, Blade comment `{{-- --}}`) → không tạo được hàng cấp cha-con mới. Blade compile OK.
+- [x] Xác nhận đây là điểm tạo con DUY NHẤT: HĐ (contracts/form) không có nút +con (chỉ carryover từ báo giá qua BE).
+- [x] Logic BE cha-con (syncTabsFromQuotation/syncProducts, calcChildAwareRemaining, print skip con) GIỮ NGUYÊN — chỉ ẩn điểm tạo ở FE.
+- Bật lại: bỏ Blade comment quanh nút "+ con".
+
+### Checkpoint — 2026-07-14
+Vừa hoàn thành: Đóng tạm luồng tạo cha-con cả 2 phía — HRM (erpEligibleQuery loại báo giá có parent_id + VND, xem plan `hrm-quotation-to-erp-contract`) và ERP (comment nút "+ con" ở quotations/form.blade.php).
+Đang làm dở: (không)
+Bước tiếp theo: khi làm cha-con + ngoại tệ giai đoạn sau → gỡ comment nút, hoàn thiện syncTabsFromHrm, gỡ chặn HRM.
+Blocked: (không)

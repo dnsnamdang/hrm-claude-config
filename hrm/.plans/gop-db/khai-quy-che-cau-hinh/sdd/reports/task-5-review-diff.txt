@@ -1,0 +1,157 @@
+diff --color -ruN snap/base-5/api-MasterData/Services/RegulationConfigService.php snap/after-5/api-MasterData/Services/RegulationConfigService.php
+--- snap/base-5/api-MasterData/Services/RegulationConfigService.php	2026-09-12 09:52:26
++++ snap/after-5/api-MasterData/Services/RegulationConfigService.php	2026-09-12 09:55:08
+@@ -4,6 +4,9 @@
+ 
+ use App\Models\Company;
+ use Modules\MasterData\Entities\RegulationScheduledVersion;
++use Illuminate\Support\Facades\DB;
++use Modules\MasterData\Entities\CompanyRegulationHistory;
++use Carbon\Carbon;
+ 
+ class RegulationConfigService
+ {
+@@ -150,7 +153,67 @@
+         $version->save();
+ 
+         $this->recomputeDiffChain($companyId);
+-        return $version->fresh();
++
++        $version = $version->fresh();
++        if ($version->effective_date && $version->effective_date->lte(now()->startOfDay())) {
++            $this->applyVersion($version);              // áp-ngay khi ngày <= hôm nay
++            $version = $version->fresh();
++        }
++        return $version;
++    }
++
++    public function applyVersion(RegulationScheduledVersion $version): void
++    {
++        if ($version->status !== RegulationScheduledVersion::STATUS_PENDING) {
++            return; // idempotent
++        }
++        $companyId = (int) $version->scope_id;
++
++        DB::transaction(function () use ($version, $companyId) {
++            $old = $this->getCurrentCongnoValues($companyId);
++            $new = $this->normalizeValues($version->payload ?? []);
++
++            $company = Company::findOrFail($companyId);
++            foreach (self::CONGNO_FIELDS as $key => $meta) {
++                $company->{$key} = $new[$key];
++            }
++            $company->updated_by = $version->created_by; // cron không có auth
++            $company->save();
++
++            foreach ($this->buildDiffSnapshot($old, $new) as $diff) {
++                CompanyRegulationHistory::create([
++                    'company_id' => $companyId,
++                    'created_by' => $version->created_by,
++                    'field_name' => $diff['key'],
++                    'name' => $diff['label'],
++                    'value_before' => $diff['old'],
++                    'value_after' => $diff['new'],
++                ]);
++            }
++
++            $version->status = RegulationScheduledVersion::STATUS_APPLIED;
++            $version->applied_at = now();
++            $version->saveQuietly();
++        });
++    }
++
++    public function applyDueCongnoVersions(?Carbon $today = null): int
++    {
++        $today = $today ?: now();
++        $count = 0;
++
++        $due = RegulationScheduledVersion::where('tab_key', self::TAB_CONGNO)
++            ->where('scope_type', self::SCOPE_COMPANY)
++            ->pending()
++            ->whereDate('effective_date', '<=', $today->toDateString())
++            ->orderBy('scope_id')->orderBy('effective_date')->orderBy('id')
++            ->get();
++
++        foreach ($due as $version) {
++            $this->applyVersion($version);
++            $count++;
++        }
++        return $count;
+     }
+ 
+     public function updateCongnoVersion(int $versionId, string $effectiveDate, array $values, ?string $note): RegulationScheduledVersion
+diff --color -ruN snap/base-5/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php snap/after-5/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php
+--- snap/base-5/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 09:52:26
++++ snap/after-5/api-MasterData/Tests/Feature/RegulationCongnoVersioningTest.php	2026-09-12 09:55:08
+@@ -92,6 +92,71 @@
+         $this->assertSame('1.5', (string) $diff2b['old']);
+     }
+ 
++    /** @test */
++    public function it_applies_now_when_date_is_today_and_writes_history()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $base = $svc->getCurrentCongnoValues($companyId);
++
++        $today = now()->toDateString();
++        $v = $svc->createCongnoVersion($companyId,
++            $today, array_merge($base, ['interest_rate' => 1.6, 'warning_due_date' => 10]),
++            'Áp ngay', 1);
++
++        // đã áp: companies cập nhật + status applied
++        $this->assertSame('applied', $v->fresh()->status);
++        $this->assertSame(1.6, (float) \App\Models\Company::find($companyId)->interest_rate);
++        $this->assertSame(10, (int) \App\Models\Company::find($companyId)->warning_due_date);
++
++        // history: đúng 2 dòng (interest_rate, warning_due_date), created_by = actor
++        $rows = \Modules\MasterData\Entities\CompanyRegulationHistory::where('company_id', $companyId)->get();
++        $this->assertCount(2, $rows);
++        $this->assertEqualsCanonicalizing(
++            ['interest_rate', 'warning_due_date'],
++            $rows->pluck('field_name')->all()
++        );
++        $ir = $rows->firstWhere('field_name', 'interest_rate');
++        $this->assertSame('1.5', rtrim(rtrim((string) $ir->value_before, '0'), '.'));
++        $this->assertSame('1.6', rtrim(rtrim((string) $ir->value_after, '0'), '.'));
++        $this->assertSame(1, (int) $ir->created_by);
++
++        // idempotent: áp lại no-op
++        $svc->applyVersion($v->fresh());
++        $this->assertCount(2, \Modules\MasterData\Entities\CompanyRegulationHistory::where('company_id', $companyId)->get());
++    }
++
++    /** @test */
++    public function cron_applies_due_pending_in_date_order()
++    {
++        $companyId = $this->makeCompanyWithCongno([
++            'limit_export_debt_employee' => 200000000, 'adjust_odd_balance' => 50000,
++            'overdue_date_max_customer' => 30, 'overdue_date_max_agency' => 45,
++            'overdue_date_max_service' => 60, 'warning_due_date' => 7, 'interest_rate' => 1.5,
++        ]);
++        $svc = app(\Modules\MasterData\Services\RegulationConfigService::class);
++        $base = $svc->getCurrentCongnoValues($companyId);
++
++        // Tạo cả 2 bản ở TƯƠNG LAI để tránh áp-ngay lúc tạo, rồi kéo về ngày quá hạn -> giữ pending
++        $v1 = $svc->createCongnoVersion($companyId, now()->addYear()->toDateString(),
++            array_merge($base, ['interest_rate' => 1.6]), 'a', 1);
++        $v1->effective_date = now()->subDay()->toDateString(); // hôm qua
++        $v1->saveQuietly();
++
++        $v2 = $svc->createCongnoVersion($companyId, now()->addYear()->addDay()->toDateString(),
++            array_merge($base, ['interest_rate' => 1.7]), 'b', 1);
++        $v2->effective_date = now()->toDateString(); // hôm nay
++        $v2->saveQuietly();
++
++        $applied = $svc->applyDueCongnoVersions();
++        $this->assertGreaterThanOrEqual(2, $applied);
++        $this->assertSame(1.7, (float) \App\Models\Company::find($companyId)->interest_rate);
++    }
++
+     private function makeCompanyWithCongno(array $congno): int
+     {
+         // Tạo company tối thiểu; 7 cột congno có sẵn trên DB gộp.

@@ -18,7 +18,7 @@ là thấy), câu hỏi 3 bằng **4 cột kết quả** (`Đang triển khai ·
 
 ## Bối cảnh
 
-- **Style + cách triển khai bám nguyên** mockup `../bao-cao-phat-trien-thi-truong-khach-hang/bao-cao-phat-trien-thi-truong-khach-hang.html`:
+- **Style + cách triển khai bám nguyên** mockup `../../bao-cao-phat-trien-thi-truong-khach-hang/bao-cao-phat-trien-thi-truong-khach-hang.html`:
   port NGUYÊN KHỐI `<style>` của màn đó (design tokens navy + teal, `.rsum-*`, `.drill-*`, `#print-area`),
   phần riêng của màn này nằm ở CUỐI khối style dưới nhãn *"BỔ SUNG RIÊNG MÀN DỰ ÁN TKT"*.
 - Đã có sẵn trong repo màn `Báo cáo tổng hợp dự án TKT theo Phòng ban - Nhân viên KD`
@@ -399,13 +399,193 @@ sai; dùng nó thay vì cộng tay từng dòng bảng.
 - **Nguồn 2 cột tiền chưa chốt** — mockup dùng số demo. Khi làm plan implement phải chỉ rõ: `Giá trị HĐ`
   lấy tổng giá trị hợp đồng ERP hay lấy `expected_contract_amount` của phiếu TKT, và `Giá trị dự kiến`
   lấy `expected_contract_amount` hay `estimated_budget`. User sẽ chỉ định ở bước đó.
+  → **Đã chốt** ở mục *Quyết định đã chốt khi lên plan implement* bên dưới; xem thêm "Còn treo sau khi
+  code xong" cuối file — giá trị HĐ vẫn `—` ở phase 1 vì chưa có hợp đồng HRM.
 - **Trạng thái tại thời điểm `S` cần bảng log chuyển tiến trình — đã có hướng, chưa làm ở mockup.**
   Điều kiện TH1 hỏi *"tại đầu kỳ trạng thái ≠ Đóng"*, tức cần trạng thái **quá khứ**, trong khi cột
   `status` chỉ giữ trạng thái **hiện tại**. User đã chốt hướng: **xây bảng logs lưu thời điểm chuyển
   tiến trình của dự án TKT**, khi đó báo cáo mới chấm đúng kỳ quá khứ. Việc này thuộc bước implement,
   **mockup không giải quyết** — mockup gắn thẳng vào mỗi dự án demo một mốc `statusAt(S)` sinh sẵn để
   luật TH1 chạy đúng và kiểm chứng được, chứ không suy từ `closed_at`.
+  → **Đã làm ở Task 4**: `statusAtBulk()` đọc `prospective_project_status_logs` (bảng + hook ghi log
+  đã có sẵn từ trước, không phải xây mới) — 1 query gộp, không N+1.
 - **3 tiến trình đổi tên 07/09/2026 chưa vào code** (id 5 · 6 · 7) — mockup dùng tên mới, code nhánh
   `tpe` còn tên cũ. Phải sửa `ProspectiveProject::STATUS` + `prospective-projects/constants.js` khi
   làm thật, nếu không nhãn báo cáo lệch nhãn màn danh sách.
 - Chưa port Vue thật; chưa responsive.
+
+## Đối chiếu Vue thật với mockup (nghiệm thu Task 17 — 13/09/2026)
+
+Đo bằng số lấy từ DOM ở cả 2 bên (`http://127.0.0.1:3000/assign/report/prospective-project-results`
+vs mockup mở qua `http://127.0.0.1:8732`, sau đó re-verify lại ở Task 18 qua cổng `8731`).
+
+**6/8 điểm khớp tuyệt đối:** số cột bảng theo dõi (10 = 10) · nhãn cột · nhãn select chọn cấp ở cả
+3 tiêu chí · thụt lề + vạch cấp (2/24/46/68px) · nền dòng cha 3 cấp (`#dceaf4/#e9f3f9/#f2f8fb`) ·
+không cuộn ngang trang.
+
+**2 chỗ lệch — đã xử lý trong Task 17, verify lại ở Task 18:**
+
+1. **Thứ tự ô lọc** — bản Vue đầu tiên đặt cặp ô `Từ ngày`/`Đến ngày` (con của ô *Kỳ theo dõi*, chỉ
+   hiện khi chọn *Tuỳ chọn*) sau cụm `Công ty`/`Tiêu chí theo dõi`; mockup + màn gốc
+   `potential-customer-care` đặt cặp ô ngày **ngay sau** ô Kỳ sinh ra nó. Đã sửa `index.vue` đưa cặp
+   ô ngày lên ngay sau Kỳ theo dõi (trước Công ty/Tiêu chí) + cập nhật kỳ vọng `FIELD_ORDER` của ca
+   e2e #4 cho khớp. Verify lại ở Task 18 bằng `document.querySelectorAll('[data-dim]')` (đọc thuộc
+   tính `dataset.dim` theo đúng thứ tự DOM) ở cả 3 tiêu chí — khớp mockup **tuyệt đối** cả 3:
+   - Theo Phòng ban: `period · company · criteria · department · part · employee · province ·
+     customer · status · result`
+   - Theo Thị trường: `period · company · criteria · province · department · part · employee ·
+     customer · status · result`
+   - Theo Lĩnh vực: `period · company · criteria · scope · industry · department · part · employee ·
+     customer · result`
+2. **Bề rộng ô Công ty** — mockup demo chốt **292px** (đo trên tên công ty demo dài nhất). Dữ liệu
+   thật có tên công ty dài hơn (`CN HẢI PHÒNG - CÔNG TY CP CÔNG NGHỆ THIẾT BỊ TÂN PHÁT`) nên đo lại
+   và cố định **340px** (`getBoundingClientRect().width` đo tại Task 18 = đúng 340px). Đây là điều
+   chỉnh **có chủ đích theo dữ liệu thật**, không phải lệch ngoài ý muốn — nguyên tắc "đo bằng Range
+   trên tên dài nhất, không ước lượng" ở mục *Ô Công ty* phía trên vẫn giữ nguyên, chỉ đổi input đo
+   từ demo sang thật.
+
+Không phát sinh lệch mới nào khác khi re-verify ở Task 18.
+
+## Ghi chú deploy (bắt buộc cho môi trường khác)
+
+Đúng 3 bước, theo thứ tự:
+
+1. `php artisan migrate` — chỉ 1 migration mới của feature này:
+   `2026_09_13_000001_fix_backfill_prospective_project_status_logs` (vá log tiến trình cho dự án
+   Thất bại lập trước 18/05/2026, idempotent — chạy lại không đẻ thêm dòng).
+2. **Insert thủ công 3 quyền `1184`/`1185`/`1186`** (theo cấp Tổng công ty / Công ty / Phòng ban) rồi
+   gán vào `role_has_permissions` — bảng này cần thêm cột `company_id` khi insert.
+   ⚠️ **TUYỆT ĐỐI KHÔNG chạy `PermissionsTableSeeder`** để nạp 3 quyền này — seeder đó **truncate cả
+   bảng `permissions`**, sẽ xoá sạch toàn bộ quyền hiện có của hệ thống.
+3. Deploy code BE (`hrm-api`) + FE (`hrm-client`) như bình thường. **Không có cron job mới**, không
+   có queue/job nền nào phải bật thêm.
+
+## Còn treo sau khi code xong (13/09/2026 — Task 18)
+
+1. **Giá trị hợp đồng vẫn treo** — cột `Giá trị HĐ` hiện `—` ở **mọi dòng** vì chưa có nguồn hợp đồng
+   HRM lập từ báo giá HRM (xem mục *Giá trị hợp đồng — TREO LẠI* phía trên). Khi nguồn đó có, sửa
+   đúng **1 hàm** `contractAmountFor()` trong `ProspectiveProjectResultReportService.php`, không phải
+   rà lại service/print/Excel.
+2. **Dự án nhóm Thành công lập trước 18/05/2026 bị khai SAI kỳ, không chỉ "kém chính xác"**:
+   backfill gốc sinh đúng 1 dòng log `changed_at = created_at, status_to = trạng thái hiện tại`. Với
+   nhóm Thành công (9/10/12), báo cáo vì thế hiểu là *"thắng ngay ngày lập"* ⇒ (a) bị tính vào
+   *Thành công* của **kỳ chứa ngày lập**, và (b) `status_at(S)` đã đóng nên dự án **biến mất khỏi mọi
+   kỳ** nằm giữa ngày lập và ngày đóng thật. Migration chỉ vá được nhóm Thất bại vì chỉ nhóm đó có
+   `closed_at`; báo cáo chỉ chính xác tuyệt đối với dự án lập từ 18/05/2026 trở đi.
+   ⚠️ Trước khi bàn giao production, chạy
+   `SELECT COUNT(*) FROM prospective_projects WHERE created_at < '2026-05-18' AND status IN (9,10,12);`
+   để biết số dự án bị ảnh hưởng.
+3. **`expected_contract_amount` khuyết 42%** — ô "Giá trị HĐ kỳ vọng" trên phiếu TKT không bắt buộc
+   nhập, nên cột `Giá trị dự kiến` của nhóm Đang triển khai để trống ở gần nửa số dự án. Không có
+   cách suy bù (đã chốt không dùng `estimated_budget` thay thế).
+4. **`components/V2BaseTableScroll.vue` port trùng nhánh** — component này cũng đã được port sẵn vào
+   `gop_db` và `permiss_manager`. Merge nhánh này vào `tpe` (rồi `tpe` vào các nhánh kia, hoặc ngược
+   lại) sẽ gặp **conflict add/add** đúng tại file này. Nội dung 2 bên giống hệt nhau (cùng port từ 1
+   nguồn) nên lấy bản nào cũng được, không cần merge thủ công từng dòng.
+5. **SRS + testcase chưa làm** — tạo khi được yêu cầu, dùng skill `srs-documenter` +
+   `testcase-documenter`.
+
+---
+
+## Quyết định đã chốt khi lên plan implement
+
+### 1. Cột `Giá trị` — nguồn tiền (chốt 13/09/2026)
+
+Thay cho mục *Còn treo → Nguồn 2 cột tiền*. Giá trị của một dự án chấm theo **nhóm kết quả**:
+
+| Nhóm kết quả | Tiến trình | Giá trị lấy từ |
+|---|---|---|
+| **Thành công** | 9 · 10 · 12 | **Giá trị HỢP ĐỒNG** |
+| **Đang triển khai** | 2 → 8 | **Giá trị kỳ vọng** — `prospective_projects.expected_contract_amount` |
+| **Thất bại** | 11 | **Không hiển thị** (giữ nguyên luật đã chốt 09/09/2026) |
+
+**Bắt buộc có icon ⓘ cạnh tiêu đề cột `Giá trị`** (và 2 cột tiền của bảng theo dõi) nêu đúng 3 dòng
+trên — nếu không, người đọc không hiểu vì sao cùng một cột mà 3 dòng lấy 3 nguồn khác nhau.
+Dùng khuôn `.claude/skills/info-icon-tooltip/SKILL.md` (`ri-information-line` 14px `#94a3b8` +
+`b-popover custom-class="info-popover"`).
+
+### 2. ⚠️ Giá trị hợp đồng — TREO LẠI, phase 1 chưa có số
+
+**KHÔNG dùng hợp đồng ERP.** User đang phát triển **hợp đồng HRM lập từ báo giá HRM**; báo cáo này sẽ
+đọc nguồn đó khi nó xong.
+
+Hiện trạng đã khảo sát (13/09/2026):
+
+- Chưa có entity hợp đồng bán nào trong `Modules/Assign/Entities/` (`SettlementContract` là thanh lý,
+  `TpWrServiceContract` là HĐ dịch vụ bảo hành) — **nguồn chưa tồn tại**.
+- HĐ ERP `buy_contract2` (923 dòng) **không có cột nào trỏ về dự án TKT**; cột
+  `prospective_project_id` chỉ có ở 8 bảng, không bảng hợp đồng nào. Hướng cũ
+  `.plans/hrm-quotation-to-erp-contract/` (lập HĐ ERP từ báo giá HRM, đã thêm
+  `quotations.erp_firm_contract_id`) **bị thay thế bởi quyết định này**.
+
+**Hệ quả phải thiết kế theo:**
+
+- Dự án nhóm *Thành công* **chưa có giá trị** ở phase 1 → ô `Giá trị` hiện `—`, ô Excel rỗng.
+- Cột `Giá trị HĐ` của bảng theo dõi vì thế **tạm luôn bằng 0** ở mọi dòng.
+- BE **bắt buộc tách riêng 1 điểm nối** (vd `contractAmountFor(ProspectiveProject $p): ?float`) trả
+  `null` ở phase 1. Khi hợp đồng HRM xong thì chỉ sửa đúng hàm đó, không phải rà lại cả service,
+  bản in và Excel.
+
+---
+
+## Bổ sung sau review tổng (14/09/2026)
+
+### Lỗi drill key — bài học về giới hạn của phép tự kiểm
+
+`buildLevel()` ở nhánh **phòng ban không chia bộ phận** trước đây truyền `parentKey` **trần** xuống
+cấp sau, không ghi dấu việc đã bỏ qua cấp Bộ phận. `applyDrillKey()` chỉ lọc AND trên các chiều **có
+mặt** trong key ⇒ key `dept:5+emp:88` khớp **cả** dự án có bộ phận lẫn không có bộ phận của nhân viên
+đó. Người dùng bấm số `1` trên bảng, popup mở ra `3` dự án; 2 dự án thừa đã được đếm ở node `part:9`
+bên trên nên **bị liệt kê ở 2 popup khác nhau**. Excel và bản in chi tiết sai theo.
+
+**Sửa:** gắn `part:0` vào key khi đẩy xuống cấp sau (`applyDrillKey()` quy `(int) null === 0` nên
+`part:0` đúng nghĩa *"không thuộc bộ phận nào"*).
+
+⚠️ **Điều đáng ghi nhớ nhất:** bảng theo dõi **vẫn đúng** trong suốt thời gian có lỗi — cả 2 đẳng
+thức bất biến lẫn phép *cha = tổng con* đều xanh. Lỗi nằm ở **đường từ bảng sang popup**, mà toàn bộ
+hệ tự kiểm chỉ canh **bảng**, không canh **cầu nối**. 21 ca e2e không ca nào bắt được.
+
+Đã bổ sung **ca 10**: duyệt nhiều dòng ở nhiều cấp × 2 tiêu chí, mỗi dòng so **số vừa bấm trên bảng =
+`total` của popup**. Ca này chặn cả **lớp** lỗi, không chỉ một ca cụ thể — nguyên tắc nên áp cho mọi
+màn báo cáo có drill-down.
+
+### Ô Công ty — mặc định là công ty của user (chốt 14/09/2026)
+
+Giữ nguyên **bắt buộc chọn**, **không** có mục *Tất cả công ty*. Chỉ đổi **giá trị mặc định**:
+`companies[0]` (công ty đầu danh mục theo tên) → **công ty của user đang đăng nhập**.
+
+Lý do: `companies[0]` không liên quan gì tới người đang xem, nên user mở màn ra số của **một pháp
+nhân khác công ty mình**, và bấm *Xoá lọc* cũng nhảy sang pháp nhân đó.
+
+BE trả `default_company_id` trong `filter-options`, clamp qua `clampCompanyId()` có sẵn. Ca biên:
+công ty trong hồ sơ user không nằm trong danh sách được phép (hồ sơ lệch / công ty đã ngừng hoạt
+động) thì **rơi về công ty đầu danh mục** — ô này bắt buộc nên để rỗng là màn chết. FE giữ
+`companies[0]` làm phương án dự phòng phòng khi chạy với BE chưa có trường mới.
+
+### Nhãn cột popup — về đúng mockup
+
+`Tỉnh/TP` → **`Thị trường`** (nhãn cũ còn bất nhất **ngay trong cùng popup**: ô lọc và nhóm chip phân
+bổ đều gọi là *Thị trường*), `Tên dự án` → **`Tên dự án TKT`**, `Ngày lập` → **`Ngày lập dự án`**,
+`Nhân viên` → **`Nhân viên phụ trách`**.
+⚠️ Phải sửa **đồng thời** `COLUMN_LABELS` (BE) và `COLUMN_DEFS` (FE) — bản in và Excel lấy nhãn từ BE,
+sửa lệch 1 bên là 2 nơi hiển thị khác nhau.
+
+### Lỗi CSS toàn cục phát hiện được (ngoài phạm vi feature)
+
+`hrm-client/assets/scss/custom-theme.scss` dòng 166:
+`input:not(:placeholder-shown) + label { top: 0; transform: translateY(-50%) scale(1) }` **thiếu tiền
+tố `.mate-field`**, trong khi rule ngay trên nó (dòng 161) có scope đúng. Radio/checkbox không có
+placeholder nên `:not(:placeholder-shown)` **luôn đúng** ⇒ rule áp nhầm lên **mọi**
+`.custom-control-label` toàn app (~28 file), kéo nhãn lệch ~10px so với nút tròn.
+
+Đây chính là lý do màn CSKH né bằng cách viết markup thô (comment đầu
+`potential-customer-care/components/PrintOptionsModal.vue` dòng 11-12) — **không phải nợ kỹ thuật mà
+là workaround có chủ đích**.
+
+Màn này **không né bằng markup thô** (vi phạm luật *"màn mới phải dùng `V2Base*`"* và mất phần nâng
+cấp về sau của component dùng chung) mà **giữ `V2BaseRadio` + hoá giải cục bộ bằng CSS `scoped`**:
+`::v-deep .custom-control-label { top: auto; transform: none }`. Đo sau khi sửa: `input.top ==
+label.top`, tâm dấu tròn vs tâm dòng chữ lệch **0,525px**.
+
+⚠️ Sửa rule toàn cục nằm **ngoài phạm vi** feature này (cần hồi quy ~28 màn) và **user đã chốt hoãn
+từ 24/08/2026**. Ghi lại để xử lý riêng.

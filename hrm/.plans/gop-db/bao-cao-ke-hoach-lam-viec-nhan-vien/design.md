@@ -12,7 +12,7 @@ Câu hỏi màn này trả lời: *ai đang ôm nhiều việc, ai đang rảnh,
 
 ## Bối cảnh
 
-- **Style tham khảo**: `../bao-cao-phat-trien-thi-truong-khach-hang/bao-cao-phat-trien-thi-truong-khach-hang.html`.
+- **Style tham khảo**: `../../bao-cao-phat-trien-thi-truong-khach-hang/bao-cao-phat-trien-thi-truong-khach-hang.html`.
   Port **NGUYÊN KHỐI** `<style>` của màn đó (design tokens navy + teal, `.market-toolbar`, `.rsum-*`,
   `.minutes-modal`, `.ticket-drawer`, `#print-area`); phần riêng của màn này nằm ở **CUỐI** khối style
   dưới nhãn *"BỔ SUNG RIÊNG MÀN KẾ HOẠCH LÀM VIỆC"*.
