@@ -405,15 +405,17 @@ Lỗi BE → đọc log tại:
 
 ---
 
-## ⚠️ Line ending — GIỮ NGUYÊN CRLF
+## ⚠️ Line ending — TOÀN BỘ LÀ LF
 
-Nhiều file trong `hrm-client` (và một số file `hrm-api`) đang dùng **CRLF (`\r\n`)**. Khi sửa code **KHÔNG được đổi line ending của file** — đổi cả file sang LF làm diff phình lên hàng nghìn dòng giả, che mất thay đổi thật và gây conflict vô nghĩa khi merge.
+Cả 2 repo đã chuẩn hoá về **LF** (PR `chore/normalize-eol`, 18/09/2026) và có `.gitattributes` khai `* text=auto eol=lf`, nên Git tự ép LF ở cả lúc commit lẫn lúc checkout. `hrm-client` lúc đó renormalize **1.441/2.956 file**; `hrm-api` vốn đã sạch nên chỉ thêm `.gitattributes`.
 
-- **Kiểm tra trước khi sửa** file lạ: `file <path>` (thấy `with CRLF line terminators`) hoặc `grep -c $'\r' <path>`
-- File đang CRLF → dòng **mới thêm vào cũng phải kết thúc bằng `\r\n`**, KHÔNG trộn 2 kiểu trong 1 file
-- **Nguy hiểm nhất là sửa hàng loạt bằng script** (Python `open().write()`, `sed -i`, `awk`, prettier/eslint `--fix`): mặc định ghi ra LF → nuốt sạch `\r` toàn file. Dùng Python thì mở `newline=''` cho cả đọc lẫn ghi
-- Sau khi sửa bằng script, **luôn chạy `git diff --stat` kiểm tra**: số dòng thay đổi lớn bất thường (cả file bị đánh dấu đổi) = đã phá line ending → trả lại ngay, không commit đè
-- KHÔNG tự ý thêm `.gitattributes`, đổi `core.autocrlf`, hay "chuẩn hoá toàn bộ repo về LF" — muốn làm phải hỏi trước
+- **Không phải làm gì thêm**: cứ sửa file bình thường, kể cả bằng script (Python, `sed`, prettier/eslint `--fix`). Không còn phải dò `file <path>` hay cố ghi `\r\n` cho khớp file cũ.
+- **KHÔNG sửa `.gitattributes`** để quay lại CRLF, và **KHÔNG set `core.autocrlf`** trên máy cá nhân — `true` (mặc định của Git for Windows) sẽ khiến mọi file checkout ra thành CRLF trở lại, hỏng đúng thứ vừa dọn.
+- File chỉ chạy trên Windows (`.bat`, `.cmd`, `.ps1`) vẫn giữ CRLF — đã khai sẵn trong `.gitattributes`, đừng sửa.
+- **Nhánh tạo TRƯỚC 18/09/2026** khi merge lên có thể conflict toàn file: chạy `git add --renormalize .` trên nhánh đó rồi merge tiếp.
+- Nghi diff phình do line ending thì kiểm bằng `git diff --ignore-cr-at-eol --stat` — bỏ CR mà diff về gần trống nghĩa là nhiễu EOL, không phải thay đổi thật.
+
+> Vì sao phải dọn: repo trước đây không có `.gitattributes`, `core.autocrlf` không set nên Git lưu nguyên xi byte lúc commit — file commit từ máy Windows vào repo là CRLF, từ macOS/Linux là LF. Sửa 1 dòng bằng script là cả file bị ghi lại thành LF, `git diff` phình lên hàng nghìn dòng giả, che mất thay đổi thật và gây conflict vô nghĩa khi merge.
 
 ## Không làm
 
