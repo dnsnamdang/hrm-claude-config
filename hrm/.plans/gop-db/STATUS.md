@@ -68,6 +68,22 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- product-classification-catalogs (Redmine #11421) → @junfoke → .plans/gop-db/product-classification-catalogs/plan.md
+  Trạng thái: 🟢 **XONG CẢ 5 PHASE (29/29 task), đã verify trên trình duyệt** (18/09/2026).
+  **Chưa commit, chưa push.**
+  ⚠️ 1 điểm lệch checklist chờ user quyết: `V2BaseImportToolbar` (component DÙNG CHUNG) chỉ cho
+  Import khi hết dòng lỗi, khác rule "vẫn import được, chỉ lấy dòng hợp lệ".
+  Import/Xuất Excel: 18 route mới, payload import dùng khoá chung `rows`.
+  BE: 7 bảng + 12 quyền (id 1574-1585, group 'Danh mục hàng hóa', type 9) + 36 route + 11/11 test xanh.
+  FE: menu nhóm "Hàng hóa" + 6 màn `pages/master-data/*` (index + modal) theo khuôn customer-scopes.
+  6 danh mục mới phân hệ Danh mục chung: Tính chất hàng hóa · Nhóm chức năng · Nhóm sản phẩm ·
+  Loại sản phẩm · Chính sách kinh doanh · Đặc tính sản phẩm. 7 bảng mới, **không đụng cây cũ**
+  `scopes/chapters/job_groups/job_clusters/groups`. Danh mục để trống, dùng chung toàn hệ thống,
+  giao diện danh sách + modal theo khuôn `pages/assign/customer-scopes/`.
+  ⚠️ `product_families` (mới, Nhóm sản phẩm) KHÁC `groups` (nhóm hàng hóa cũ của ERP, 886 dòng).
+  Nhánh: `feat/11421-danh-muc-quy-hoach-hang-hoa` từ `gop_db` ở cả 2 repo.
+  Spec: docs/superpowers/specs/gop-db/2026-09-18-product-classification-catalogs-design.md
+
 - quy-hoach-lai-menu-phan-he → @junfoke → .plans/gop-db/quy-hoach-lai-menu-phan-he/plan.md
   Trạng thái: **CODE DONE CẢ 5 NHÓM + VERIFY BROWSER khung menu** (16/09/2026).
   Sắp xếp lại nhóm/phân hệ/menu `hrm-client` theo 5 sheet của sơ đồ chốt 04/09/2026 —
