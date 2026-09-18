@@ -60,3 +60,46 @@ Vừa hoàn thành: chuyển checkbox "Thành phần tham dự có mặt" vào c
 Bước tiếp theo: user Ctrl+Shift+R rồi mở popup **In biên bản** (không phải Xuất Excel) để xem vị trí mới,
 sau đó chạy tiếp 6 test case ở mục Kiểm thử.
 Blocked:
+
+## FE — Thụt lề tuỳ chọn con cho rõ quan hệ cha - con (user yêu cầu 2026-09-14)
+- [x] Thêm class `only-present-option` cho checkbox "Thành phần tham dự có mặt"
+      + rule `.part-list .only-present-option { margin-left: 1.5rem }` trong `<style scoped>`
+      → chữ của tuỳ chọn con thẳng hàng dưới chữ của phần cha "Thành phần tham dự"
+      (lần chỉnh 11/09 chỉ đưa checkbox vào chung khối, CHƯA hề có CSS thụt lề nên nhìn vẫn cùng cấp)
+- [x] Sửa comment trong template (đang ghi "đứng CÙNG CẤP với các phần trong danh sách") cho khớp thực tế
+- [x] Biên dịch lại `MeetingPartsConfigModal.vue` — vue-template-compiler: 0 lỗi, style vẫn `scoped`
+
+### Checkpoint — 2026-09-14
+Vừa hoàn thành: thụt lề 24px (1.5rem) cho checkbox "Thành phần tham dự có mặt" trong popup **Cấu hình in biên bản**.
+Đang làm dở: không có.
+Bước tiếp theo: user Ctrl+Shift+R rồi mở popup In biên bản xem mức thụt đã vừa mắt chưa (chưa kiểm bằng trình duyệt).
+Blocked:
+
+## FE — "Chọn tất cả" bao gồm cả tuỳ chọn con (user yêu cầu 2026-09-14)
+- [x] `toggleCheckAll()` bật/tắt luôn `onlyPresent` (chỉ khi `showOnlyPresentOption` — luồng Excel không đổi)
+- [x] `selectDefault()` đổi `onlyPresent = showOnlyPresentOption` → **mở popup IN là tuỳ chọn con BẬT sẵn**
+      (user chốt phương án "mở popup là bật luôn" để khớp với ô "Chọn tất cả" đang tick)
+- [x] Thêm `syncCheckAll()` + watcher `onlyPresent`: bỏ tick mục con thì "Chọn tất cả" tự nhả ra;
+      meeting không có thành viên (`attendees` không nằm trong `parts`) thì mục con không tính vào
+- [x] Kiểm thử logic bằng Vue instance thật (stub render, script qua babel): **12/12 PASS** —
+      mở popup IN (3 ca), bỏ tick con → nhả "Chọn tất cả", bấm/bỏ "Chọn tất cả", payload `confirm`,
+      luồng EXCEL không đổi (3 ca), meeting không có thành viên
+
+⚠️ **ĐỔI HÀNH VI MẶC ĐỊNH so với chốt ban đầu của #11292**: trước đây mở popup In thì "Thành phần
+tham dự có mặt" TẮT (bản in ra đủ người vắng kèm cột trạng thái); từ nay **BẬT sẵn** → bản in mặc
+định CHỈ có người có mặt, không còn cột trạng thái. Muốn in cả người vắng thì bỏ tick mục đó.
+
+### Checkpoint — 2026-09-14 (lần 2)
+Vừa hoàn thành: "Chọn tất cả" gộp cả tuỳ chọn con + đổi mặc định mục con thành BẬT.
+Đang làm dở: không có.
+Bước tiếp theo: user Ctrl+Shift+R, mở popup **In biên bản** kiểm 4 điểm: mở ra tick đủ (cả mục con),
+bỏ tick mục con thì "Chọn tất cả" nhả, bấm lại "Chọn tất cả" thì tick đủ, và popup **Xuất Excel** không đổi.
+Blocked:
+
+## FE — Đổi nhãn checkbox (user yêu cầu 2026-09-14)
+- [x] Nhãn hiển thị: "Thành phần tham dự có mặt" → **"Chỉ in người điểm danh có mặt"**
+      (`MeetingPartsConfigModal.vue`, 1 chỗ người dùng nhìn thấy)
+- [x] Cập nhật 5 comment tham chiếu nhãn cũ ở 3 file (`MeetingPartsConfigModal.vue`,
+      `MeetingPrintPreview.vue`, `hrm-api/resources/views/exports/meeting_record.blade.php`)
+      để grep theo nhãn mới vẫn ra đủ
+- [x] E2E/testid KHÔNG đổi (bám `*-only-present-checkbox`, không bám text) — compile 2 file .vue OK

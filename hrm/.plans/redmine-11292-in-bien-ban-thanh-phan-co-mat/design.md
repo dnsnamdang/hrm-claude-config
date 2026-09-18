@@ -4,9 +4,12 @@
 **Spec chi tiết:** `docs/superpowers/specs/2026-09-11-redmine-11292-in-bien-ban-thanh-phan-co-mat-design.md`
 
 ## Mục tiêu
-Popup cấu hình in biên bản cuộc họp có thêm checkbox **"Thành phần tham dự có mặt"** (mặc định tắt):
-- **Tắt (mặc định)** — in đủ mọi người được mời, kèm **trạng thái tham dự** và **lý do vắng**.
-- **Bật** — chỉ in người điểm danh **"Có mặt"**, ẩn "Vắng mặt" và "Chưa điểm danh".
+Popup cấu hình in biên bản cuộc họp có thêm checkbox **"Chỉ in người điểm danh có mặt"**
+(là tuỳ chọn CON của phần "Thành phần tham dự", thụt vào 1 bậc; **mặc định BẬT** — xem mục "Điều chỉnh sau nghiệm thu"):
+- **Bật (mặc định)** — chỉ in người điểm danh **"Có mặt"**, ẩn "Vắng mặt" và "Chưa điểm danh", ẩn luôn cột trạng thái.
+- **Tắt** — in đủ mọi người được mời, kèm **trạng thái tham dự** và **lý do vắng**.
+
+> Nhãn cũ "Thành phần tham dự có mặt" và mặc định TẮT là bản chốt ban đầu, đã thay ngày 2026-09-14.
 
 ## Hiện trạng
 - Luồng in: nút **In** → `MeetingPartsConfigModal` (chọn phần) → `MeetingPrintPreview.vue` (render Vue, tự mở cửa sổ in). Dùng ở `pages/assign/meeting/index.vue` và `MeetingReport.vue`.
@@ -21,3 +24,17 @@ Popup cấu hình in biên bản cuộc họp có thêm checkbox **"Thành phầ
 4. **Không đụng Xuất Excel** — issue chỉ nói bản in. `MeetingPartsConfigModal` dùng chung cho cả Excel nên checkbox bật/tắt qua prop `showOnlyPresentOption`, mặc định `false`.
 5. **Có cập nhật blade BE** để 2 nguồn in không lệch; blade nhận thêm `$onlyPresent` từ query `only_present` của `MeetingController@print`.
 6. Checkbox chỉ hiện khi phần **"Thành phần tham dự"** có trong danh sách phần khả dụng (meeting không có thành viên nào thì checkbox vô nghĩa).
+
+
+## Điều chỉnh sau nghiệm thu (2026-09-14, theo yêu cầu user)
+1. **Thụt lề**: checkbox là tuỳ chọn CON của "Thành phần tham dự" → thụt vào `1.5rem`
+   (class `only-present-option` trong `MeetingPartsConfigModal.vue`) cho người dùng thấy quan hệ cha - con.
+2. **"Chọn tất cả" bao gồm cả tuỳ chọn con**: bấm "Chọn tất cả" tick luôn mục này; bỏ tick mục này
+   thì "Chọn tất cả" tự nhả ra (`syncCheckAll()` + watcher `onlyPresent`).
+3. **Đổi mặc định: TẮT → BẬT** (hệ quả bắt buộc của điểm 2 — mở popup mà "Chọn tất cả" đang tick thì
+   mọi ô trong danh sách phải tick). ⚠️ **Bản in mặc định từ nay BỎ người vắng và không có cột
+   "Trạng thái tham dự"**; muốn in đủ thì bỏ tick mục này.
+4. **Đổi nhãn**: "Thành phần tham dự có mặt" → **"Chỉ in người điểm danh có mặt"**.
+
+Cả 4 điểm chỉ đụng luồng IN. Popup **Xuất Excel** không truyền `showOnlyPresentOption` nên giữ nguyên
+hành vi cũ (đã kiểm bằng test logic 12/12 PASS, xem plan.md).

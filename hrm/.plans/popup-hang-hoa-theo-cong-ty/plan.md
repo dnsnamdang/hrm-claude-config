@@ -246,3 +246,32 @@ Blocked: (không)
 | API popup BOM | 3 cột mới có dữ liệu; lọc cty 4 chỉ còn hàng TPSG |
 | API popup Báo giá qua HRM | lọc công ty đúng, nguồn hàng đúng |
 | 2 file `.vue` | template + script parse OK |
+
+---
+
+## Phase 5 — Tài liệu test case (15/09/2026)
+
+- [x] Đọc sheet gốc "Testcase _Quản lý dự án" (tab Quản lý báo giá, 461 TC) — xác nhận **chưa có** TC nào
+      cho #11286 (tìm "11286" và "Nguồn hàng" đều 0 kết quả) → viết bổ sung, không trùng lặp
+- [x] Viết generator `.plans/popup-hang-hoa-theo-cong-ty/gen_testcase.py` dùng engine chung
+      `.claude/skills/testcase-documenter/assets/tc_engine.py`
+- [x] Xuất `.plans/popup-hang-hoa-theo-cong-ty/testcase-11286.xlsx` — **94 TC**, P0 53%, 9 mục mô tả,
+      6 TC phân quyền + 9 section nghiệp vụ (Báo giá HRM / Bomlist HRM / Báo giá ERP / giá vốn /
+      biên / regression / đầu cuối). Bộ kiểm tra thuật ngữ in "OK - sach"
+- [x] KHÔNG sửa trực tiếp Google Sheet của khách (yêu cầu của user) — file Excel riêng để dán sang sau
+
+### Checkpoint — 2026-09-15
+
+Vừa hoàn thành: Phase 5 — file test case bổ sung cho #11286 (94 TC).
+Đang làm dở: (không)
+Bước tiếp theo: user rà file `testcase-11286.xlsx`, chốt rồi dán sang tab "Quản lý báo giá" của sheet chung
+dưới dạng section "UPDATE TESTCASE 15/09/2026 - Task: http://quanly.dnsmedia.vn/issues/11286".
+Blocked: (không)
+
+### Điểm cần chú ý khi chạy test (phát hiện lúc soạn TC)
+
+Màn Sửa báo giá: cửa sổ chọn hàng và chức năng tính lại giá **không gửi kèm mã báo giá đang mở**, nên
+công ty áp giá rơi về công ty người đăng nhập. Máy chủ đã sẵn sàng nhận mã báo giá (quy tắc Q6 chốt giá
+theo công ty ghi trên chứng từ). → TC_03.010 và TC_03.011 là hai case chốt: người công ty khác mở báo giá
+cũ ra sửa rồi lưu thì đơn giá phải GIỮ NGUYÊN. Nếu fail thì sửa ở phần gọi của màn báo giá (gửi kèm mã
+báo giá), không phải sửa công thức giá.

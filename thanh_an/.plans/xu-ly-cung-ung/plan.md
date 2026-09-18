@@ -127,3 +127,26 @@ User chốt: export/import Excel để sau; tab "Thông tin hàng hóa" chỉ xe
 
 - [x] `SupplyHandlingResource` (list) sẵn có `supply_proposal_id` → dùng để link đề xuất gốc.
 - [x] FE `supply_handlings/index.vue`: thêm cell template `code` (link `<a>` → `onViewClick` mở chi tiết PXL) và `proposal_code` (link → `onViewProposalClick` → `/supply/supply_proposals/add?mode=show&id={supply_proposal_id}`, guard theo `supply_proposal_id`, không có thì hiện text/'—'). Style `text-primary` mirror màn đề xuất.
+
+## Bỏ cột "Đã XL trước" — màn lập phiếu xử lý (2026-09-16)
+
+> Màn: `supply/supply_handlings/add`, nhóm cột "Số liệu nguồn" của bảng hàng hóa.
+
+- [x] FE `supply_handlings/constants.js` — `buildHandlingSrcCols()`: xóa cột `sl_da_xl_truoc` ở cả 2 nhánh (loại **Nội bộ**: bỏ `base.push(...)`; loại **Khách hàng**: bỏ item trong mảng return). Hàm này dùng chung cho cả bảng hiển thị lẫn export Excel → cả 2 cùng mất cột, không lệch cột.
+- [x] GIỮ nguyên field `sl_da_xl_truoc` trong data row (`add.vue:705,735,772`) và `DetailSupplyHandlingResource` — vì `daXlTruoc` vẫn dùng để prefill `dat_don = quantity − đã xử lý trước`. Chỉ ẩn cột, không gỡ logic tính.
+
+## "Mua hàng" tính vào Đã xử lý — nhóm cột Kết quả (2026-09-16)
+
+> Bug user báo: nhập SL ở cột **Mua hàng** thì nhóm **Kết quả** (Đã xử lý / Còn lại) không đổi.
+> Nguyên nhân gốc: KHÔNG phải lỗi code — luật cũ cố tình loại `alloc_mua` khỏi "Đã xử lý" (*"mua là hàng chưa có sẵn"*), áp nhất quán ở 6 chỗ (FE + BE).
+> User chốt: **tính cả Mua hàng vào Đã xử lý** → Đặt đơn 100 · Mua 40 · Xuất kho 60 ⇒ Đã xử lý 100, Còn lại 0.
+
+- [x] FE `HandlingGoodsTable.vue:264` — `rowDaXuLy()` cộng TẤT CẢ `ALLOC_TYPES` (bỏ `if (a.key === 'mua') return s`). `rowConLai` ăn theo.
+- [x] FE `HandlingGoodsTable.vue:190` — `countHandled` bỏ điều kiện thừa `|| alloc_mua > 0` (giờ đã nằm trong `rowDaXuLy`).
+- [x] FE `add.vue:463` — `doneOf()` của export Excel cộng cả `mua` (giữ khớp bảng ↔ file Excel).
+- [x] FE `add.vue:372` — cảnh báo "vượt đặt đơn" `overOrderRows` dùng thẳng `totalAlloc(p)` (đã gồm mua).
+- [x] BE `SupplyProposalService::handledQtyByProduct():1322` — bỏ `->reject(key === 'mua')` → cột **Đã XL trước** của phiếu sau gồm cả SL phiếu trước chuyển đi mua.
+- [x] BE `SupplyProposal::totalHandledQty():111` — bỏ `continue` khi key = 'mua'.
+- [x] FE `reports/purchase-demand/index.vue:686` — `handlingDone()` cộng `alloc_mua`; sửa ghi chú footer popup PXL.
+- [x] Verify: `php -l` 2 file PHP OK · parse `acorn` 3 file .vue + constants.js OK.
+- ⚠️ **Downstream cần user test**: `totalHandledQty()` chạy vào `isFullyHandled()` → `handle_status` của đề xuất. Đề xuất được xử lý hết bằng **Mua hàng** giờ sẽ chuyển sang "Đã xử lý xong" và **rời inbox** `supply_proposals/inbox`, trước đây vẫn nằm lại. Nếu muốn giữ đề xuất trong inbox tới khi hàng thực về thì phải tách 2 định nghĩa (bảng PXL tính mua / vòng đời đề xuất không tính).

@@ -207,3 +207,26 @@ bằng tài khoản quản trị (`adminEmployeeId()`: email `namdangit@gmail.co
 DB local đã chạy lại `up()` (idempotent) — 3 bản ghi hiện `Người tạo: DNS01 - DNS Admin`.
 Bước tiếp theo: vẫn chờ user kiểm thử trình duyệt.
 Blocked:
+
+---
+
+## Phase bổ sung — Sửa file mẫu import (2026-09-15)
+
+- [x] Đổi tên sheet trong `hrm-client/static/Mau_import_LyDoHuyCuocHop.xlsx`
+      từ `DM_NNthatbai` (copy nhầm từ mẫu Nguyên nhân thất bại dự án) thành `DM_lydohuycuochop`
+      — sửa ở cả `xl/workbook.xml` và `docProps/app.xml`
+
+### Checkpoint — 2026-09-15
+
+Vừa hoàn thành: file mẫu import `Mau_import_LyDoHuyCuocHop.xlsx` đã đúng tên sheet
+`DM_lydohuycuochop` (theo convention `DM_` + tên không dấu viết liền của các mẫu khác trong
+`hrm-client/static/`). Nội dung file giữ nguyên: header `STT / Lý do hủy cuộc họp * / Trạng thái * /
+Mô tả` + 3 dòng ví dụ; 11 file trong gói xlsx còn nguyên, `<definedNames/>` rỗng nên không có
+công thức nào trỏ tên sheet cũ. `hrm-client/utils/import-helper.js:43` đọc sheet tên `Data`
+nếu có, không thì lấy sheet đầu tiên → đổi tên không ảnh hưởng luồng import.
+Không đụng code BE/FE.
+
+Đang làm dở: không có.
+Bước tiếp theo: user bấm "Tải file mẫu" ở màn `/assign/meeting_cancel_reason`, mở bằng Excel
+xác nhận tên tab, rồi thử import lại file vừa tải.
+Blocked:
