@@ -1429,6 +1429,51 @@ làm đủ bước 1 → 4 ở trên trong cùng một lần, không bật prop 
 
 ---
 
+## 15c. Màn danh mục ít cột — cột Mô tả bị bóp khi thu nhỏ cửa sổ (chốt 2026-09-18)
+
+Triệu chứng user báo: *"cột Mô tả để dài tí, lúc co màn hình đang bị bé quá"* — màn danh mục
+(6-9 cột: STT · Tên · Mô tả · Người tạo · Ngày tạo · Cập nhật · Trạng thái · Hành động) xem ở
+màn hình rộng thì bình thường, thu nhỏ cửa sổ (hoặc mở sidebar) là cột **Mô tả** co lại còn
+2-3 ký tự một dòng, cao lêu nghêu, trong khi Ngày tạo / Trạng thái vẫn giữ nguyên bề rộng.
+
+**Vì sao**: `.data-table` là `width: 100%` + `table-layout: auto`, mọi ô đều `white-space: nowrap`
+trừ cột khai `cellClass: 'text-wrap'`. Bảng thiếu chỗ thì **chỉ 2 cột `text-wrap` là co được** →
+gánh toàn bộ phần thiếu. `maxWidth: '500px'` KHÔNG cứu được: nó chỉ chặn trần, không đặt sàn.
+
+**Cách sửa (không cần `fixed-layout`, không đụng component dùng chung)** — khai `width` + `minWidth`
+cho **đủ mọi cột**, lấy bậc ở mục 15b:
+
+| Cột | `width` / `minWidth` |
+| --- | --- |
+| STT | `60px` / `60px` |
+| Tên đối tượng chính (`text-wrap`) | `220px` / `180px` |
+| **Mô tả** (`text-wrap`) | `300px` / `240px` — rộng nhất bảng, **bỏ `maxWidth`** |
+| Người tạo | `150px` / `140px` |
+| Ngày tạo · Cập nhật · Trạng thái · Hành động | `120px` / `110px` |
+
+Tổng `width` ~1090px, tổng `minWidth` ~910px — **vừa khung ở màn hình thường, không sinh cuộn ngang
+vô cớ**; chỉ khi cửa sổ hẹp hơn 910px mới tràn và cuộn ngang (thanh cuộn trên + dưới có sẵn trong
+`V2BaseDataTable`) thay vì bóp cột.
+
+⚠️ **Đừng khai rộng tay** (user bác 18/09: bậc 300/420/170/140px cho màn 8 cột là "dài quá không cần
+thiết"). Bậc L/XL ở mục 15b dành cho màn ~20 cột vốn đã phải cuộn ngang; màn danh mục 6-9 cột thì
+mục tiêu ngược lại — **vừa đúng khung, không phát sinh cuộn ngang**. Chọn số nhỏ nhất mà nội dung
+thật vẫn đọc được, đừng lấy trần cho chắc.
+
+⚠️ **Sửa cột nào thì khai cho CẢ 8 cột**, đừng chỉ thêm `minWidth` cho mỗi cột Mô tả: cột không khai
+gì sẽ được trình duyệt tự tính theo nội dung **của trang hiện tại**, lật trang là bảng nhảy bề rộng.
+
+⚠️ Prop `fixed-layout` (mục 15b) **chưa có trên mọi nhánh** — nó được thêm ở nhánh `gop_db`. Nhánh
+khác chưa có thì dùng cách trên, KHÔNG tự port `V2BaseDataTable` sang (component dùng chung > 130 màn,
+phải hỏi trước).
+
+Khuôn mẫu: `pages/assign/meeting_cancel_reason/index.vue`. Các màn danh mục cùng khuôn còn đang
+thiếu `width`/`minWidth` (sửa dần khi đụng tới, không sửa hàng loạt): `reason_project_failure`,
+`meeting_type`, `project_phase`, `attachment-type`, `solution-groups`, `customer-scopes`,
+`customer-scope-groups`, `industry-groups`, `project_items`.
+
+---
+
 ## Cột nào được vào popup "Tuỳ chỉnh cột"
 
 **STT và Mã - Tên KHÔNG đưa vào popup Tuỳ chỉnh cột.** Hai cột này là cột sticky, **luôn nằm ở vị trí đầu tiên**, không cho ẩn cũng không cho kéo đổi chỗ:

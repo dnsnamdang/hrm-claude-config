@@ -24,3 +24,22 @@
 
 ### Khác
 - [x] Cập nhật `.claude/skills/select-and-input-state/SKILL.md` mục 1 + `CLAUDE.md` (quy tắc 🔒 và cấm cache danh mục khoá vào store)
+
+## Phase 3 — Phản hồi QA Redmine #11063 (2026-09-16, nhánh tpe)
+### Kiểm chứng lại 4 điểm QA nêu
+- [x] Điểm 2 (Xem chi tiết có 🔒) — đã đúng, không phải sửa
+- [x] Điểm 3 (dropdown Giai đoạn dự án có 🔒) — đã đúng, không phải sửa
+- [x] Điểm 4 (đổi giai đoạn xong vẫn thấy giai đoạn khoá cũ) — không tái hiện, option biến mất ngay
+- Cả 3 điểm do commit `d1dc896c5` (2026-08-20) xử lý, đúng ngày QA phản hồi → QA test bản chưa có
+
+### Điểm 1 — message lỗi khi Lưu (CÓ THẬT, đã sửa)
+- [x] `utils/helpers.js`: thêm `SAVE_CONFLICT_MESSAGE`, `saveErrorMessage()`, `hasVisibleFieldError()`
+- [x] `prospective-projects/_id/edit.vue`: bỏ message cứng, phân loại lỗi + cuộn tới ô lỗi
+- [x] `prospective-projects/_id/index.vue`: như trên
+- [x] Test: 422 có ô đỏ → "Bạn chưa nhập đầy đủ thông tin" + cuộn; 422 lỗi trường ẩn → "Dữ liệu đã thay đổi, vui lòng tải lại"; 404 → như trên; 403 → "Bạn không có quyền..."; 423 → message BE
+- [ ] `prospective-projects/add.vue` chưa đồng bộ (đã xử lý riêng, thiếu nhánh 404 + 422-không-ô-đỏ) — chờ user chốt
+
+### Checkpoint — 2026-09-16
+Vừa hoàn thành: fix điểm 1 + kiểm chứng 3 điểm còn lại
+Bước tiếp theo: user chốt có đồng bộ add.vue không; phản hồi lại QA về 3 điểm không tái hiện
+Blocked:

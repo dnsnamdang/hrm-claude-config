@@ -828,3 +828,8 @@ CHƯA test: build production FE (chỉ chạy dev server), bảng "Dự án con"
       để đảm bảo giá bán cuối cùng bằng với báo giá mỏ neo trước khi Trình duyệt."
 - [x] FE `quotations/_id/edit.vue`: fix banner Mỏ neo "dính" ở màn tạo mới — reset `createAnchorInfo = null`
       khi chọn dự án không có cha (`selectProject`) và khi bỏ chọn dự án (`onProjectSelect`).
+
+### Checkpoint — 2026-09-16 (phản hồi tester #10948)
+- [x] Điều tra phản hồi "dự án cha 322 có con đã duyệt/trúng thầu nhưng không tạo được báo giá tổng": KHÔNG phải lỗi logic — 2 báo giá của con #326 (BG-2026-00289 Đã duyệt, BG-2026-00291 Trúng thầu) đều đã lập hợp đồng ERP (#1190/#1191) nên bị loại theo Rule 2; 3 dự án con còn lại không có báo giá nào.
+- [x] Sửa thông báo gây hiểu nhầm ở popup chọn nguồn: `SummaryQuotationController@selectableQuotations` đổi payload thành `{ groups, excluded }`, trả kèm báo giá đúng trạng thái nhưng đã lập hợp đồng; `SummaryQuotationSourceModal.vue` liệt kê lý do thật (FE vẫn nhận được mảng thuần nếu BE chưa deploy).
+- Dữ liệu dev test được luồng này: dự án cha #284, #457 (KD chính = namdangit@gmail.com), #301/#310/#313 (KD chính #1172).

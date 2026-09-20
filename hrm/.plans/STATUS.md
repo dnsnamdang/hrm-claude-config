@@ -70,6 +70,39 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   ⚠️ Panel chi tiết meeting trông rỗng là do **dữ liệu seed mỏng**, không phải thiếu khối: meeting tạo bằng UI có 19–27 `company_members` + `reports`, còn `DEMO-CSKH-*` / `E2E-CARE-*` đều bằng 0. Muốn demo đẹp trên VPS thì phải làm giàu `assign:seed-care-demo` (CHƯA làm, chờ user quyết).
   Design: .plans/bao-cao-cskh-tiem-nang/design.md · Plan: .plans/bao-cao-cskh-tiem-nang/plan.md · E2E: e2e/tests/assign/{meeting-host,customer-demand-link,potential-customer-care,potential-customer-care-export}.{api.spec,spec}.ts · Fixture: hrm-api/database/{e2e_customer_demand_seed,e2e_care_report_seed}.php
 
+- task-lien-ket-nhiem-vu (Liên kết Nhiệm vụ với Dự án, Meeting, Phòng ban) → @cuong61n → .plans/task-lien-ket-nhiem-vu/plan.md
+  Trạng thái: **CODE XONG + KIỂM THỬ UI PASS (2026-09-18)** — 4 tài khoản khác quyền, 5 lỗi đã sửa; chưa commit — Redmine #11456, nhánh `tpe-develop-assign` (cả 2 repo).
+  Phạm vi: tab Nhiệm vụ ở chi tiết Dự án (ẩn tab Nhiệm vụ giải pháp) · tab Nhiệm vụ + icon Giao nhiệm vụ
+  trên biên bản Meeting · nhiệm vụ phòng ban (bỏ bắt buộc dự án/giải pháp/hạng mục/meeting) + link động
+  theo thành viên. Phần gắn với Vấn đề TẠM PENDING theo Mr Nam 17/09.
+  Phụ thuộc #11453 (.plans/task-nhiem-vu). Spec: docs/superpowers/specs/2026-09-18-task-lien-ket-nhiem-vu-design.md
+
+- task-nhiem-vu (Nhiệm vụ: đổi tên Task → Nhiệm vụ, phân loại Nhiệm vụ chung/cụ thể) → @cuong61n → .plans/task-nhiem-vu/plan.md
+  Trạng thái: **CODE XONG + KIỂM THỬ UI PASS (2026-09-12)** — 8 case trên :3005, chưa commit.
+  Nhánh `tpe` (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11453.
+  Gồm: 2 cột mới `tasks.task_type` + `tasks.batch_id` (migration đã chạy, 18/18 bản ghi cũ = Nhiệm vụ cụ thể) ·
+  Nhiệm vụ chung chọn nhiều người → sinh N bản ghi độc lập cùng `batch_id`, copy nguyên checklist/tệp/
+  theo dõi/thẻ/nhiệm vụ con/lặp lại/báo cáo tiến độ · ô "Loại nhiệm vụ *" đầu form (khoá khi Sửa) ·
+  cột + bộ lọc Loại nhiệm vụ ở danh sách · đổi nhãn Task → Nhiệm vụ ở 47 file FE + 12 thông báo BE +
+  4 message lỗi + 5 blade export. Spec: docs/superpowers/specs/2026-09-12-task-nhiem-vu-design.md
+  Chờ user quyết: có đổi tên quyền (id 1020, 1103-1106) cho đồng bộ với feature `issue-van-de` không.
+
+- issue-van-de (Vấn đề: đổi tên Issue, quy trình 3 bước, gắn Dự án/Meeting/Phòng ban) → @cuong61n → .plans/issue-van-de/plan.md
+  Trạng thái: **PHASE 1 CODE XONG (2026-09-12)** — chưa kiểm thử UI, chưa commit. Nhánh `tpe` (worktree `HRM/worktrees/tpe-api` :8005 +
+  `tpe-client` :3005). Redmine #11290. Chia 5 phase — Phase 1 = đổi nhãn `Issue` → `Vấn đề` toàn hệ thống
+  + Bước 1 "Bộ phận xử lý" (chỉ chọn bộ phận thì để trống người xử lý, bắn thông báo cho Trưởng bộ phận)
+  + cho tạo Vấn đề phòng ban (project_id/solution_id nullable). Spec: docs/superpowers/specs/2026-09-12-issue-van-de-design.md
+
+- prospective-project-extension (Gia hạn dự án TKT + tự đóng theo giai đoạn) → @cuong61n → .plans/prospective-project-extension/plan.md
+  Trạng thái: **CODE XONG 5 PHASE + KIỂM THỬ PASS (2026-09-11)** — chưa commit. Nhánh `tpe`
+  (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11153 đã chuyển "Đang tiến hành".
+  Gồm: nút + popup Gia hạn ở chi tiết dự án · phê duyệt 2 cấp TP/BGĐ theo ngưỡng ngày ·
+  cổng phê duyệt + menu · màn cấu hình "Đóng dự án tự động" (4 tham số + 9 giai đoạn) ·
+  cron `assign:auto-close-prospective-projects` nhắc trước N ngày và tự đóng sau M ngày ·
+  lịch sử dự án thêm dòng Gia hạn. 5 migration + 2 quyền mới (1182, 1183).
+  Chờ khách chốt: prefix thông báo `[DATKT]`, mặc định S=3 tháng / N=7 ngày / M=0 / X=30 ngày.
+  Đã chốt 2026-09-12: mọi giai đoạn tính hạn từ ngày duyệt báo giá gần nhất, không thêm cột ngày nộp thầu.
+
 - prospective-project-status-12-steps (Tiến trình nội bộ dự án TKT 12 bước) → @cuong61n → .plans/prospective-project-status-12-steps/plan.md
   Trạng thái: **CODE XONG 5 PHASE + KIỂM THỬ PASS (2026-09-11)** — chưa commit. Nhánh `tpe`
   (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11426.
@@ -694,6 +727,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Hoàn thành
 
+- reason-project-failure-permission-gate → @khoipv → .plans/reason-project-failure-permission-gate/plan.md
+  Hoàn thành: 2026-09-18. Siết quyền 2 màn danh mục **Nguyên nhân thất bại dự án** + **Lý do hủy cuộc họp**; đã commit trên nhánh `fix-bug-11092026` ở cả 2 repo (hrm-api `6c76378aa`, hrm-client `53dee118d`), cây sạch. BE vốn KHÔNG fail-open (POST/DELETE/lock/export với tài khoản chỉ có quyền Xem đều trả 403, dữ liệu không đổi); nguyên nhân "vẫn sửa/xoá/khoá được" là FE không ẩn nút và route `show` không gắn `checkPermission` nên modal Sửa vẫn mở đủ dữ liệu, còn lỗi 403 bị nuốt tại chỗ (`if (status === 403) return`) nên nhìn như thao tác thành công. Đã sửa: FE gate các nút Sửa/Xoá/Khoá + Xuất Excel bằng `v-if="canManage"` ở cả 2 màn, BE gắn `checkPermission:Quản lý…|Xem…` cho route `show`. ⚠️ Cố ý KHÔNG gate `GET /getAll` của cả 2 danh mục — đó là dropdown của `CloseProjectModal.vue` (đóng dự án tiềm năng) và của popup hủy cuộc họp; gate vào sẽ chặn người không có quyền danh mục làm nghiệp vụ chính. Giữ BE `/export` ở mức chỉ quyền Quản lý theo convention 14/15 màn danh mục trong `api.php` (muốn nới thì sửa đồng loạt). KHÔNG migration, KHÔNG quyền mới. Đo được: không quyền → `show` 403 (trước đó 200); chỉ quyền Xem → index/show 200, export/POST/lock/DELETE 403 và bản ghi không đổi; Super admin/Admin_TPE → 200 hết; bản ghi + quyền tạm dùng để test đã dọn sạch. ⚠️ Khi test màn Lý do hủy cuộc họp: role Super admin có sẵn CẢ quyền Quản lý (1182) — phải bỏ tick mới thử được vai "chỉ xem". Design: .plans/reason-project-failure-permission-gate/design.md
+
 - bao-cao-phat-trien-thi-truong-khach-hang → @namdangit → .plans/bao-cao-phat-trien-thi-truong-khach-hang/plan.md
   Trạng thái: ✅ **HOÀN THÀNH toàn bộ Phase 1→7 (wrap up 16/09/2026).** Đã merge vào `tpe`.
   Bộ test của màn: **35/35 XANH** (lần chạy cuối, `--workers=1`) — 27 ca của Phase 4 + 8 ca thêm ở Phase 5→7.
@@ -738,6 +774,34 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   (join thẳng, bỏ `mysql2` / `TpCustomer`), không đổi thì số liệu **sai âm thầm** vì `mysql2` trỏ DB ERP CŨ.
   Tìm bằng `grep -rn "@TODO-GOPDB" hrm-api/Modules/Assign`; chi tiết ở cuối `plan.md`.
   Mockup đã duyệt: `bao-cao-phat-trien-thi-truong-khach-hang.html` · Design: `.plans/bao-cao-phat-trien-thi-truong-khach-hang/design.md`
+
+- redmine-11357-ly-do-huy-cuoc-hop → @khoipv → .plans/redmine-11357-ly-do-huy-cuoc-hop/plan.md
+  Hoàn thành: 2026-09-12. Code xong + kiểm thử Playwright đạt, chưa commit. Nhánh `fix-bug-11092026` (cả hrm-api + hrm-client). BE 8/8 ca qua tinker + 6/6 guard qua HTTP thật, UI 14/14 ca qua Playwright (trừ màn danh mục — user yêu cầu bỏ qua); rác kiểm thử đã dọn sạch. Redmine #11357 — thêm **Danh mục Lý do hủy cuộc họp** (khuôn danh mục Nguyên nhân thất bại dự án, seed 3 bản ghi, có Import/Export, chặn xóa khi đã có cuộc họp dùng) + ràng buộc thời gian: nút [Hoàn thành] chỉ bật khi now >= giờ bắt đầu, nút [Hủy] chỉ bật khi now < giờ bắt đầu (chặn cứng, không ngoại lệ); popup hủy bắt buộc chọn lý do + ghi chú tùy chọn, lưu `cancel_reason_id` / `cancelled_at` / `cancelled_by`. Job auto hủy #11014 KHÔNG đụng. ⚠️ Có sửa file dùng chung `components/V2Footer.vue` (thêm 4 khóa optional disabled/tooltip, mặc định tắt) — user đã duyệt trước khi làm. Spec: `docs/superpowers/specs/2026-09-12-redmine-11357-ly-do-huy-cuoc-hop-design.md`
+
+- redmine-11374-lich-lam-viec-cua-toi → @khoipv → .plans/redmine-11374-lich-lam-viec-cua-toi/plan.md
+  Hoàn thành: 2026-09-12 (user chốt đóng mục; thực tế mới dừng ở brainstorming, chưa code). Nhánh `fix-bug-11092026`. Redmine #11374 — màn `/assign/my-todo`: đổi tên tab "Lịch meeting", mở rộng lịch hiển thị 7 nhóm đối tượng (Task/Issue/Phiếu giao việc/Phiếu giao công tác/Meeting/Cá nhân/Nhu cầu khách hàng), thêm cụm icon "Thêm nhanh" trên cả 2 tab theo phân quyền tạo mới. Spec: `docs/superpowers/specs/2026-09-12-redmine-11374-lich-lam-viec-cua-toi-design.md`
+
+- fix-luu-nhap-du-an-tkt-scope-closure → @khoipv → .plans/fix-luu-nhap-du-an-tkt-scope-closure/plan.md
+  Hoàn thành: 2026-09-12. Code xong, chưa commit, chưa kiểm thử trình duyệt. Nhánh `tpe-develop-assign` (chỉ hrm-api). Lỗi 500 `strpos() expects parameter 1 to be string, object given` khi bấm **Lưu nháp** ở màn dự án TKT. Nguyên nhân: `ProspectiveProjectRequest::relaxRequiredRules()` (chạy khi status = Đang tạo) `explode`/`strpos` từng phần tử của luật, nhưng `scope_id` và `scope_ids.*` (tính năng #11142 chống trùng nhóm ngành) là MẢNG có chứa **Closure** → `strpos(Closure)` nổ (và nếu lọt qua thì `implode('|')` cũng nổ). Fix: giữ nguyên phần tử không phải string, và trả luật về dạng MẢNG khi có Closure/Rule object. Đã verify `rules()` chạy sạch cho 4 ca: nháp độc lập / nháp con / nháp cha / lưu chính thức.
+
+- redmine-11289-nhiem-vu → @khoipv → .plans/redmine-11289-nhiem-vu/plan.md
+  Hoàn thành: 2026-09-12 (user chốt đóng mục; thực tế mới dừng ở brainstorming, chưa code). Nhánh `fix-bug-11092026`. Redmine #11289 — đổi nhãn "Task" → "Nhiệm vụ" toàn hệ thống; thêm phân loại Nhiệm vụ chung (1 form → nhiều bản ghi độc lập theo từng người) / Nhiệm vụ cụ thể; liên kết Nhiệm vụ với Dự án TKT (tab riêng, ẩn tab task giải pháp), Meeting (tab + icon "Giao nhiệm vụ" ở bảng Nội dung công việc khác), Phòng ban (không gắn gì) và Vấn đề (tạo nhiệm vụ con từ issue). Spec: `docs/superpowers/specs/2026-09-12-redmine-11289-nhiem-vu-design.md`
+
+- redmine-11291-meeting-lien-don-vi → @khoipv → .plans/redmine-11291-meeting-lien-don-vi/plan.md
+  Hoàn thành: 2026-09-11. Code xong + kiểm thử trình duyệt đạt, chưa commit. Nhánh `fix-bug-11092026` (**chỉ hrm-api**, không đụng FE). Redmine #11291 — rà lại thì **3/4 yêu cầu của issue đã có sẵn** (popup chọn nhân sự vốn không lọc theo công ty; ô "Người thực hiện" dùng chung popup đó; `MeetingCriteria` + `Meeting::canView()` đã cho thành viên được mời xem bất kể đơn vị). Phần thiếu duy nhất và là toàn bộ phạm vi đã làm: **thông báo chuông cho người MỚI được giao nhiệm vụ** khi lưu biên bản (`[BBH] Tạo mới: <b>{tên họp}</b>. Bạn được giao N nhiệm vụ.` → `?active_tab=reports`). User chốt: không làm Email/chat; **không thêm cột Công ty/Đơn vị** vì issue không yêu cầu. ⚠️ Bẫy: `syncReports()` xoá sạch rồi ghi lại → phải chụp `$oldExecutorIds` TRƯỚC mọi `sync*()`, và gọi `notifyReportExecutors()` NGOÀI khối `if/elseif` theo status (lưu kèm đổi trạng thái sẽ nuốt mất thông báo). Đã test 6 ca qua tinker (`Notification::fake()` + `Queue::fake()`) + kiểm thử Playwright end-to-end trên meeting thật #29. ⚠️ DB local thiếu bảng `meeting_history` làm mọi lượt lưu meeting trả 500 — đã chạy riêng migration `2026_08_17_000001_create_meeting_history_table`. Rác kiểm thử: meeting #29 trên DB local. Spec: `docs/superpowers/specs/2026-09-11-redmine-11291-meeting-lien-don-vi-design.md`
+
+- redmine-11134-bao-cao-vong-doi-du-an-tkt → @khoipv → .plans/redmine-11134-bao-cao-vong-doi-du-an-tkt/plan.md
+  Hoàn thành: 2026-09-11. Code xong, chưa commit, chưa kiểm thử trình duyệt. Nhánh `fix-bug-11092026` (hrm-api + hrm-client). Redmine #11134 — màn Báo cáo `/assign/report/prospective-projects`: đổi tên báo cáo thành **"Báo cáo vòng đời dự án TKT"** (tiêu đề trang, tab, sidebar, bản in, Excel, display_name 3 quyền 1054–1056), đổi nhãn "Giai đoạn dự án" → "Giai đoạn dự án khách hàng" và "Tiến trình nội bộ" → "Tiến trình dự án", thêm cột **"Cơ cấu giai đoạn dự án"** (BE trả `project_phase_counts` ở 4 cấp, FE mở popup cơ cấu). ⚠️ Chỉ đổi `display_name` của quyền, GIỮ NGUYÊN `name` (name là khoá check quyền) → DB đã seed cần chạy UPDATE `display_name` thủ công.
+
+- redmine-11292-in-bien-ban-thanh-phan-co-mat → @khoipv → .plans/redmine-11292-in-bien-ban-thanh-phan-co-mat/plan.md
+  Hoàn thành: 2026-09-11. Code xong, chưa commit, chưa kiểm thử trình duyệt. Nhánh `fix-bug-11092026` (hrm-api + hrm-client). Redmine #11292 — popup cấu hình IN biên bản meeting thêm checkbox **"Thành phần tham dự có mặt"** (mặc định tắt): tắt thì in đủ mọi thành viên kèm cột **Trạng thái tham dự** (lý do vắng để trong ngoặc), bật thì chỉ in người điểm danh "Có mặt" và ẩn luôn cột đó. Chạm 4 file FE (`MeetingPartsConfigModal`, `MeetingPrintPreview`, `MeetingReport.vue`, `meeting/index.vue`) + 2 file BE (`meeting_record.blade.php`, `MeetingController@print` nhận query `only_present`). Xuất Excel **không đổi** — checkbox bật qua prop `showOnlyPresentOption`, popup Excel không truyền.
+
+- du-an-tkt-truong-ngay (Redmine #11310) → @khoipv → .plans/du-an-tkt-truong-ngay/plan.md
+  Hoàn thành: 2026-09-11. Code xong T1–T9, chưa kiểm thử trình duyệt, chưa commit. Nhánh `fix-bug-11092026` (hrm-client + hrm-api). Màn **Quản lý dự án TKT → Dự án**: đổi nhãn 2 trường ngày thành "… dự án TKT", khoá `Ngày bắt đầu dự án TKT` (tạo mới = ngày hiện tại), thêm icon (i) + tooltip định nghĩa cho `Ngày kết thúc dự án TKT`. Sửa đúng 3 file (1 component FE dùng chung cho 4 màn + add.vue + 1 FormRequest). ⚠️ Phát sinh đã xử lý: khoá trường làm dự án **nháp tạo từ hôm trước** không lưu lại được (rule `after_or_equal:today`) → đã bỏ rule quá khứ cho riêng `start_date` ở cả FE lẫn BE. ⏳ Còn treo chờ BA: dự án con có cha bắt đầu ở tương lai sẽ luôn lỗi (T10 trong plan.md).
+
+- popup-hang-hoa-theo-cong-ty (Redmine #11286) → @khoipv → .plans/popup-hang-hoa-theo-cong-ty/plan.md
+  Hoàn thành: 2026-09-11. Code xong 9/9 task, chờ kiểm thử trình duyệt, chưa commit. Nhánh `fix-bug-11092026` (hrm-api + hrm-client + repo ERP `D:\laragon\www\erp`). Popup chọn hàng hoá ở 3 nơi: thêm cột Nguồn hàng / Lĩnh vực / Chương, bộ lọc Công ty, giá bán theo công ty ghi trên chứng từ. 9 task chia 3 phase + 12 test case. Phát hiện kèm theo: giá popup (có nhân hệ số công ty) đang LỆCH giá BE chốt lúc lưu (không nhân) — ví dụ ENEO.700-V5029 lệch 51.000đ; đã đưa vào phạm vi sửa.
+  Cập nhật 2026-09-15: bổ sung tài liệu test case — `.plans/popup-hang-hoa-theo-cong-ty/testcase-11286.xlsx` (94 TC, P0 53%), generator `gen_testcase.py`. Sheet chung của khách (tab "Quản lý báo giá") CHƯA có TC nào cho #11286 → file này để dán bổ sung, không sửa trực tiếp sheet.
 
 - du-an-cha-con → @cuong61n → .plans/du-an-cha-con/plan.md
   Trạng thái: ✅ HOÀN THÀNH (2026-08-01). Phase 1 XONG. Phase 2 (Báo giá tổng): BE XONG (E2E API 31/31 PASS) + FE LUỒNG CỐT LÕI XONG 30/07 (tab Khu vực 1+2, popup gộp nguồn, màn xem/sửa BGT, luồng duyệt 1 cấp — verify Playwright). Còn lại: kéo-thả Section, In/Excel, filter màn Quản lý báo giá, khoá GG/tiền tệ/bảng giá ở báo giá dự án con. Branch `tpe-develop-assign` (cả 2 repo).

@@ -103,6 +103,42 @@ Viết wrapper mới có `templateResult` → thêm luôn 2 dòng này, đừng 
 
 ---
 
+## 1b. Nút × xoá nhanh giá trị đã chọn — MẶC ĐỊNH BẬT (chốt 2026-09-16)
+
+`V2BaseSelect` và `V2BaseSelectInModal` đã để `allowClear: true` **mặc định**. Select chọn 1 nào
+cũng có dấu `×` để user xoá giá trị rồi chọn lại, **không phải khai gì**:
+
+```vue
+<!-- ĐÚNG: có × sẵn -->
+<V2BaseSelectInModal v-model="data.scope_id" :options="options" placeholder="Chọn lĩnh vực" />
+```
+
+⚠️ **Đừng khai `:allowClear="false"` cho trường nghiệp vụ bình thường** — kể cả trường bắt buộc
+(`*`). Bắt buộc là việc của validate (báo lỗi đỏ khi để trống), không phải lý do để chặn xoá:
+user đang chọn sai mà không xoá được thì phải thoát popup mở lại. Lỗi thật đã gặp: ô "Lĩnh vực
+Công ty kinh doanh" ở popup Sửa nhóm ngành (`assign/industry-groups`) tắt × nên không xoá được.
+
+**`allowClear` cần `placeholder`** — select2 chỉ vẽ × khi select có placeholder. Đặt theo chuẩn
+CLAUDE.md: ô chọn dùng `Chọn <tên trường>`. Component để sẵn placeholder mặc định `Chọn`.
+
+### Ngoại lệ — 2 nhóm ô được phép `:allowClear="false"`
+
+| Nhóm ô | Vì sao tắt × |
+| --- | --- |
+| **Trạng thái** của modal danh mục (`data.status`, Hoạt động/Khoá) | Ô chỉ có 2 giá trị cố định, luôn phải có giá trị. Để trống không mang nghĩa gì, mà code submit thường viết `status \|\| 1` → xoá rỗng lại **âm thầm lưu về "Hoạt động"**. |
+| **Ô lọc bắt buộc của màn báo cáo** (Chế độ thời gian, Kỳ báo cáo, Tiêu chí theo dõi, Loại dự án, Công ty…) | Báo cáo không chạy được khi thiếu — xoá rỗng thì bảng trắng mà không có lỗi nào hiện ra. |
+
+Tắt × ở chỗ khác thì **ghi lý do ngay cạnh dòng code**, nếu không lần review sau sẽ bị gỡ.
+
+### Ô bị KHOÁ thì không hiện ×
+
+select2 4.0.13 vẫn render `.select2-selection__clear` kể cả khi `disabled` → màn Xem chi tiết có
+một nút × chết trên ô chỉ-đọc. Đã ẩn sẵn bằng rule chung trong `V2BaseSelect.vue`
+(`div.v2-select .select2-container--disabled .select2-selection__clear { display: none }`),
+đồng bộ với nút × trên chip của select chọn nhiều. Màn nghiệp vụ không phải khai gì.
+
+---
+
 ## 2. Chip của select chọn nhiều
 
 Giá trị đã chọn ở select `multiple` (`V2BaseSelect` / `V2BaseSelectInModal`) hiển thị **một khuôn chip duy nhất** trong toàn dự án — trùng với chip tự dựng `.csp-chip` (ô "Loại hình hoạt động khách hàng" ở `CustomerForm`):
@@ -345,6 +381,7 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Select đi qua wrapper tự khai `templateResult` → đã tự gắn `LOCKED_OPTION_PREFIX`
 - [ ] Ô disabled: nền `#f1f5f9`, chữ `#475569`, không `opacity`, không bấm được (kể cả ô dựng bằng `<div>`)
 - [ ] Focus ô nhập: không viền xanh, không quầng sáng
+- [ ] Select chọn 1: có dấu `×` xoá nhanh (mục 1b) — chỉ ô Trạng thái / ô lọc bắt buộc của báo cáo mới được tắt, và phải ghi lý do cạnh dòng code
 - [ ] **Select chọn nhân viên: nhãn đúng khuôn `Tên - Mã phòng - Mã NV`** (mục 2c) — không màn nào tự
       ghép chuỗi, API mới trả nhân viên có `department_code`
 - [ ] Ô "chỉ cho số": gõ chữ → hiện lỗi đỏ chuẩn hệ thống; bấm **Lưu nháp** vẫn bị chặn; gọi thẳng

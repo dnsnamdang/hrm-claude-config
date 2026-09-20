@@ -93,3 +93,7 @@ Vừa hoàn thành: TOÀN BỘ 5 phase code + test (Phase 4 regression 15/16 API
 Đang làm dở: —
 Bước tiếp theo: user review trên :3005 → commit (chưa commit, chưa push). Ngoài scope chờ khách: bước 9/10/12, HĐ hủy → tự đóng dự án; nhãn "Tiến trình nội bộ" ở chi tiết Giải pháp đang hiện trạng thái giải pháp
 Blocked:
+
+## Testcase (2026-09-15)
+- [x] Bổ sung 31 testcase (TC-TKT-23 → TC-TKT-53) vào Google Sheet `Testcase _Quản lý dự án` → sheet `12.Dự án TKT`, từ dòng 478 (gid=739303646)
+- [x] Sửa lại trình bày theo góp ý 15/09: bỏ icon ⚠️, xuống dòng thật trong ô (bước 1./2./3. và gạch đầu dòng); đã bổ sung quy ước vào `.claude/skills/testcase-documenter/SKILL.md` + `tc_engine.py`

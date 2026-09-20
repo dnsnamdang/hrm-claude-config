@@ -68,6 +68,7 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+<<<<<<< HEAD
 - quan-ly-phong-hop → @namdangit → .plans/gop-db/quan-ly-phong-hop/plan.md
   Trạng thái: **PHASE 1→4 CODE DONE + XONG ĐỢT TASK 65-86** (20/09/2026) — chờ user review.
   Phase 5 (check-in QR + job nền + đặt lặp định kỳ) và Phase 6 (báo cáo) chưa mở.
@@ -124,6 +125,23 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Phase 4-6 (nối Meeting, check-in + job nền, báo cáo) chưa làm.
   Còn nợ: màn **Tiện nghi phòng họp** chưa rà theo `list-page` (thiếu STT, Người tạo/Ngày tạo,
   popup Cấu hình cột, sort) — chờ user quyết.
+=======
+- product-classification-catalogs (Redmine #11421) → @junfoke → .plans/gop-db/product-classification-catalogs/plan.md
+  Trạng thái: 🟢 **XONG CẢ 5 PHASE (29/29 task), đã verify trên trình duyệt** (18/09/2026).
+  **Chưa commit, chưa push.**
+  ⚠️ 1 điểm lệch checklist chờ user quyết: `V2BaseImportToolbar` (component DÙNG CHUNG) chỉ cho
+  Import khi hết dòng lỗi, khác rule "vẫn import được, chỉ lấy dòng hợp lệ".
+  Import/Xuất Excel: 18 route mới, payload import dùng khoá chung `rows`.
+  BE: 7 bảng + 12 quyền (id 1574-1585, group 'Danh mục hàng hóa', type 9) + 36 route + 11/11 test xanh.
+  FE: menu nhóm "Hàng hóa" + 6 màn `pages/master-data/*` (index + modal) theo khuôn customer-scopes.
+  6 danh mục mới phân hệ Danh mục chung: Tính chất hàng hóa · Nhóm chức năng · Nhóm sản phẩm ·
+  Loại sản phẩm · Chính sách kinh doanh · Đặc tính sản phẩm. 7 bảng mới, **không đụng cây cũ**
+  `scopes/chapters/job_groups/job_clusters/groups`. Danh mục để trống, dùng chung toàn hệ thống,
+  giao diện danh sách + modal theo khuôn `pages/assign/customer-scopes/`.
+  ⚠️ `product_families` (mới, Nhóm sản phẩm) KHÁC `groups` (nhóm hàng hóa cũ của ERP, 886 dòng).
+  Nhánh: `feat/11421-danh-muc-quy-hoach-hang-hoa` từ `gop_db` ở cả 2 repo.
+  Spec: docs/superpowers/specs/gop-db/2026-09-18-product-classification-catalogs-design.md
+>>>>>>> f43a3cc1cddb4a0c0e0f32bf42df8564ae42310f
 
 - quy-hoach-lai-menu-phan-he → @junfoke → .plans/gop-db/quy-hoach-lai-menu-phan-he/plan.md
   Trạng thái: **CODE DONE CẢ 5 NHÓM + VERIFY BROWSER khung menu** (16/09/2026).
@@ -331,6 +349,21 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
     nhưng model khai `incrementing = true` nên `getKey()` = 0 làm `logCatalogCreate()` thoát sớm;
   · N+1 `Ward::canDelete()` (1 query/dòng) khiến API danh sách Phường/xã mất 23s/5.000 dòng →
     gom 1 query còn **3s**; đã đối chiếu 200 bản ghi, 0 sai lệch kết quả `can_delete`.
+
+- **cai-dat-phan-he — Cài đặt phân hệ (ẩn/hiện phân hệ + từng mục menu)** → @namdangit →
+  `.plans/gop-db/cai-dat-phan-he/design.md` · `plan.md` ·
+  spec `docs/superpowers/specs/gop-db/2026-09-14-cai-dat-phan-he-design.md`
+  Trạng thái: **XONG TOÀN BỘ, ĐÃ TEST TAY** (2026-09-14) — chưa commit.
+  Màn mới `/timesheet/setting/subsystems` liệt kê đủ 24 phân hệ + ~600 mục menu để tick ẩn/hiện,
+  mặc định có tick. Bảng mới `menu_settings` chỉ lưu mục BỊ TẮT; key = đường dẫn nhãn
+  (`finance::Thu chi::Phiếu thu`) vì ~345 mục placeholder không có link.
+  Màn đọc thẳng registry `components/subsystems.js` → **menu thêm mới sau này tự có mặt**, không phải sửa gì.
+  Lọc cắm vào 6 bề mặt sẵn có (topbar · sidebar cây · sidebar hub · lưới Tổng quan hub · màn chọn phân hệ ·
+  dropdown chuyển phân hệ) + middleware FE chặn gõ thẳng URL → `/feature-unavailable`.
+  3 checkbox ERP/Quyết định/Cơm rời khỏi màn Cài đặt (vẫn ghi song song key cũ `use_erp`/`use_decision`/`use_rice`);
+  **"Sử dụng CRM" ở lại** vì `use_crm` là cờ đồng bộ CRM Mate, không phải phân hệ.
+  ⚠️ **Trùng mục đích với `prod-cutover` Phần B** (allowlist fail-closed cho PROD, chưa code) —
+  cut-over PROD phải seed sẵn danh sách ẩn, không dựng cơ chế thứ hai. Xem mục 6 của spec.
 
 - **prod-cutover — Đưa `gop_db` lên PROD (1 nhánh, 2 môi trường)** → @namdangit →
   `.plans/gop-db/prod-cutover/design.md` · `plan.md` ·
@@ -941,7 +974,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   gỡ toàn bộ tầng sync 2 chiều · xoá màn `/human/customers` + `/timesheet/setting/customers` · chuyển 10 picker sang luồng mới · thêm `GET assign/customers/search`.
   Test: 52/52 endpoint HTTP + 12 màn browser + luồng ghi (tạo/sửa/thêm liên hệ, có rollback). **7 lỗi thật đã sửa** (xem plan.md Phase 11-12).
   ⚠️ Đọc trước khi làm tiếp trên nhánh này: `.plans/gop-db/design.md`.
-
 - base-popup-bao-cao → @namdangit → .plans/gop-db/base-popup-bao-cao/plan.md
   Trạng thái: **XONG PHASE 1 + PHASE 2, ĐÃ CHẠY E2E THẬT** (18/09/2026), chờ user quyết 1 file chưa commit.
   Tách vỏ dùng chung cho popup báo cáo: `components/report/V2BaseReportModal.vue` (481 dòng) +
@@ -963,6 +995,21 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   từng ca trong `.sdd/progress.md`.
   Nhật ký thực thi + toàn bộ quyết định (21 ruling) + 8 lỗi tìm thấy trong chính các bài test:
   `.plans/gop-db/base-popup-bao-cao/.sdd/progress.md`.
+- **finance-addition-accounting-request — Chỉnh hiển thị màn danh sách (Phase 12)** → @khoipv →
+  `.plans/gop-db/finance-addition-accounting-request/plan.md` (mục Phase 12)
+  Trạng thái: **CODE XONG — CHỜ USER MỞ TRÌNH DUYỆT NGHIỆM THU** (2026-09-10). Yêu cầu user: (1) ô trống thì để trống, bỏ dấu `—`;
+  (2) cột *Ngày gửi* / *Ngày duyệt* hiện thêm giờ (2 cột DB vốn là `datetime`, resource cắt mất giờ);
+  (3) cột *Số tiền* in kèm đơn vị tiền như màn Phiếu đề nghị thanh toán; (4) **bỏ ô *Bộ phận*** khỏi
+  bộ lọc tổ chức, chỉ còn Công ty – Phòng ban.
+  **Phase 13 (2026-09-10)**: popup chọn hợp đồng ở màn Tạo thiếu nguồn `firm_contracts` → KH gốc ERP
+  gần như không chọn nổi hợp đồng (firm 19.936 HĐ/4.102 KH so với `hrm_contracts` 34 HĐ/29 KH), lại
+  còn hiện nhầm phiếu bảo hành và hợp đồng của người khác. Thêm nhánh `usage=addition_accounting_request`
+  vào `BillIncomeRequestService::searchSellContracts()` port đúng nhánh ERP
+  `addition_accounting_request_sell_contract`. Đối chiếu tay đôi với service ERP: 3/4 cặp KH-NV trùng
+  khớp tuyệt đối, cặp còn lại lệch có chủ đích (hợp đồng HRM tự sinh).
+  Phạm vi: 2 file (BE `AdditionAccountingRequestListResource` · FE `pages/finance/addition-accounting-requests/index.vue`),
+  không migration, không quyền mới. File Excel danh sách hiện giờ luôn (user đồng ý), ô Số tiền trong
+  Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
 
