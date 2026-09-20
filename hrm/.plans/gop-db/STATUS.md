@@ -68,6 +68,63 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- quan-ly-phong-hop → @namdangit → .plans/gop-db/quan-ly-phong-hop/plan.md
+  Trạng thái: **PHASE 1→4 CODE DONE + XONG ĐỢT TASK 65-86** (20/09/2026) — chờ user review.
+  Phase 5 (check-in QR + job nền + đặt lặp định kỳ) và Phase 6 (báo cáo) chưa mở.
+
+  **Đợt 20/09/2026 (Task 65-86, xem checkpoint cuối `plan.md`)** — 22 task theo yêu cầu user:
+  màn **Cấu hình phân hệ** `/meeting/settings` theo khuôn hub "Phê duyệt" (cấu hình giờ mở cửa,
+  2 mốc nhắc nhận/trả phòng, cờ cho đặt ngoài giờ, lịch sử theo từng hub) + lệnh nền
+  `meeting:send-booking-reminders`; **chọn phòng biết trống/bận**: API
+  `GET meeting/rooms/availability` (trống · chờ duyệt · bận + gợi ý khung giờ trống gần nhất),
+  chống tranh phòng khi 2 người đặt cùng lúc; **quy hết việc đặt phòng về form Đặt phòng** —
+  form meeting và màn danh sách meeting chỉ còn nút "Đăng ký phòng" mở popup đó, gate bằng cờ
+  `can_book_room` (chỉ người tạo hoặc người chủ trì); "Danh sách phòng họp" chuyển về nhóm
+  **Danh mục**; form phòng họp **thêm nhanh tiện nghi** bằng popup lồng.
+  ✅ **ĐÃ COMMIT + PUSH** (20/09/2026): `hrm-api` `296aeab93` + `0833f1a41`, `hrm-client` `1791c98ac`
+  + `bee1c02d3` — cả 2 repo sạch, ngang `origin/gop_db`; Task 65-86 nằm trong 2 commit 20:15.
+  ⚠️ **Bộ e2e đợt này CHƯA CHẠY** (user chốt chỉ chạy khi yêu cầu) và thư mục `HRM/e2e` **không nằm
+  trong repo git nào** → spec sửa/bổ sung chỉ có trên máy, chưa theo commit nào.
+
+  **Đợt review 1 (Phase 3.5, task 25-36 trong plan.md)** — 4 quyết định user chốt + 6 lỗi phát sinh:
+  1. Bộ 4 quyền danh mục gộp còn **1 quyền "Khai báo phòng họp"** (id 1574; xoá 1575-1577).
+  2. **Công ty nào tạo thì phòng thuộc công ty đó** — bỏ select Công ty ở form; sửa/khoá/mở khoá/xoá
+     chỉ với phòng công ty mình (chặn ở BE, 403); danh sách vẫn xem mọi công ty + lọc theo công ty.
+     DROP `department_id`/`part_id` khỏi `meeting_rooms` (để lại thì `BaseModel` tự điền theo NGƯỜI TẠO).
+  3. **Lịch sử thay đổi cho 2 màn danh mục** — bảng chung `catalog_histories`, mục Lịch sử ở menu ⋮,
+     khối Lịch sử thu gọn cuối popup Xem.
+  4. Chuẩn hoá theo skill: chữ nút Khoá/Mở khoá, popup Xem (footer 1 nút + dòng mô tả bản ghi),
+     khoảng cách ô `mb-2`, và **màn danh sách phòng họp theo `list-page`** (STT sticky, bộ cột mặc
+     định 7 cột, popup Cấu hình cột, sort có whitelist BE, Người tạo chỉ hiện TÊN, bỏ giây ở cột ngày).
+
+  Lỗi phát sinh đã sửa: component dùng chung `V2BaseRowActions` đóng menu ⋮ ngay khi vừa mở (scroll
+  listener) — user duyệt sửa; e2e cấp quyền bằng SQL phải xoá cache spatie (24h) mới có tác dụng;
+  2 ca e2e chờ sai mốc / đỏ theo đồng hồ.
+  Quản lý phòng họp (phân hệ Meeting). Phase 1 = nền tảng + 2 màn danh mục: module BE mới `Modules/Meeting`,
+  9 migration (6 bảng + `meetings.meeting_room_id` + 5 cột cấu hình `general_regulations` + FK/unique),
+  2 bộ API (phòng họp, tiện nghi), 2 màn FE `/meeting/rooms` + `/meeting/room-amenities`, đăng ký menu,
+  5 quyền mới (id 1574-1578).
+  ✅ **ĐÃ MERGE VỀ `gop_db`** (19/09/2026): API `da27321d1`, Client `616df00b9` — worktree
+  `hrm-worktrees/phong-hop-{api,client}` đã xoá, code nay nằm ở checkout chính. Chưa push.
+  ⚠️ Khi merge phát hiện **trùng id quyền** (git không báo xung đột vì khác dòng): `gop_db` đã cấp
+  1574-1585 cho "Danh mục hàng hóa" → quyền phòng họp đánh số lại **1586-1589**. Bài học: lấy id
+  quyền NỐI TIẾP id lớn nhất ĐANG CÓ ngay trước khi commit, đừng lấy theo lần đọc trước đó.
+  Test: `e2e/tests/meeting` — 14 ca API + 14 ca UI, xanh, đã chạy lại nhiều lần, không flaky.
+  Đọc `.plans/gop-db/quan-ly-phong-hop/plan.md` mục "LƯU Ý KHI DEPLOY" trước khi đưa lên môi trường khác
+  (kiểm mã trùng trước migration unique; migration có bước xoá dòng pivot mồ côi; cân nhắc trước khi chạy
+  `PermissionsTableSeeder`). Nhật ký thực thi + mọi quyết định: `.plans/gop-db/quan-ly-phong-hop/.sdd/progress.md`.
+  **Phase 2 (đặt phòng + duyệt) ĐÃ XONG**: bảng phiếu + luật chống trùng có khóa (mutex phòng, có test 2
+  kết nối DB chứng minh), duyệt/từ chối/hủy + tự từ chối phiếu trùng, 5 loại thông báo `[DPH]`, màn
+  `/meeting/bookings` + modal đặt phòng, 2 quyền mới (1579-1580).
+  Test chốt 19/09/2026: chạy 1 lượt CẢ thư mục `e2e/tests/meeting` → **124 passed / 0 failed /
+  0 "did not run"** (trước đợt này chạy cả thư mục chỉ ra 44 passed + 29 "did not run"),
+  PHPUnit **39 tests / 80 assertions**, rác `E2E%` sau khi chạy = 0.
+  ⚠️ Chạy e2e phải truyền `API_BASE=http://127.0.0.1:8001 BASE_URL=http://127.0.0.1:3001`
+  (file `e2e/.env` trỏ cổng của checkout chính) + `--no-deps --workers=1`.
+  Phase 4-6 (nối Meeting, check-in + job nền, báo cáo) chưa làm.
+  Còn nợ: màn **Tiện nghi phòng họp** chưa rà theo `list-page` (thiếu STT, Người tạo/Ngày tạo,
+  popup Cấu hình cột, sort) — chờ user quyết.
+
 - quy-hoach-lai-menu-phan-he → @junfoke → .plans/gop-db/quy-hoach-lai-menu-phan-he/plan.md
   Trạng thái: **CODE DONE CẢ 5 NHÓM + VERIFY BROWSER khung menu** (16/09/2026).
   Sắp xếp lại nhóm/phân hệ/menu `hrm-client` theo 5 sheet của sơ đồ chốt 04/09/2026 —
@@ -77,7 +134,22 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   menu ngang hiện xám mờ mục chưa có màn (sửa `Topbar.vue`).
   Thêm 4 phân hệ: Meeting · An toàn 5S · CSKH trước khi bán · Tra cứu - thông báo.
   ⚠️ 3 lỗi do menu mới đã sửa: màn chọn phân hệ vỡ khi phân hệ thiếu `image`, cánh hoa cắt mất
-  phân hệ thứ 9, menu ngang tràn. Bước tiếp: verify từng màn con.
+  phân hệ thứ 9, menu ngang tràn.
+  **Cập nhật 16/09 (chiều) — Phase 11:** đã GỘP phân hệ `decision` vào `operation`, đổi tên
+  **"Văn bản nội bộ"** (subtext "Quyết định, Quy chế công ty") — đảo quyết định #5 của design.md.
+  36 link dời sang `operation-hub.js`, xoá `default-menu/decision.js`, 143 page `/decision/*`
+  chuyển `layout: 'default-sidebar'` (Topbar chỉ dựng 2 cấp, menu hub 3 cấp). Verify DOM +
+  `doi-chieu-menu.py` 0 lệch/22 phân hệ + test ca không quyền.
+  **Cập nhật 17/09 (Phase 16-21):** user duyệt lại TỪNG PHÂN HỆ. Xong 3 phân hệ — CSKH trước bán ·
+  Bán hàng · Công việc (dời màn giữa phân hệ, dựng menu Báo cáo/Phê duyệt theo kiểu hub, tách mục
+  lên cấp 1, gom nhóm Bàn giao công việc). Thêm: popup topbar đổi tên nhóm lõi thành **QUẢN TRỊ** +
+  đổi thứ tự 5 nhóm; Kho/Mua hàng/Vận chuyển gắn `erpPath` đi thẳng ERP.
+  Chốt phiên: **28 phân hệ · 357 link · 3 link trùng** (ngoại lệ có sẵn), `doi-chieu-menu.py`
+  **0 mục thiếu / 22 phân hệ**. Spec đầy đủ đã viết:
+  `docs/superpowers/specs/gop-db/2026-09-16-quy-hoach-lai-menu-phan-he-design.md`.
+  **Bước tiếp:** duyệt nốt các phân hệ còn lại (Meeting · Văn bản - Hồ sơ pháp lý · Tài chính ·
+  CSKH sau bán · nhóm NHÂN SỰ), rồi làm nhóm A của "DANH SÁCH TREO" cuối `plan.md`
+  (verify từng màn con + chạy e2e).
   Spec: docs/superpowers/specs/gop-db/2026-09-16-quy-hoach-lai-menu-phan-he-design.md | Tóm tắt: .plans/gop-db/quy-hoach-lai-menu-phan-he/design.md
 
 - bao-cao-ket-qua-du-an-tkt → @namdangit → .plans/gop-db/bao-cao-ket-qua-du-an-tkt/plan.md
@@ -869,6 +941,28 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   gỡ toàn bộ tầng sync 2 chiều · xoá màn `/human/customers` + `/timesheet/setting/customers` · chuyển 10 picker sang luồng mới · thêm `GET assign/customers/search`.
   Test: 52/52 endpoint HTTP + 12 màn browser + luồng ghi (tạo/sửa/thêm liên hệ, có rollback). **7 lỗi thật đã sửa** (xem plan.md Phase 11-12).
   ⚠️ Đọc trước khi làm tiếp trên nhánh này: `.plans/gop-db/design.md`.
+
+- base-popup-bao-cao → @namdangit → .plans/gop-db/base-popup-bao-cao/plan.md
+  Trạng thái: **XONG PHASE 1 + PHASE 2, ĐÃ CHẠY E2E THẬT** (18/09/2026), chờ user quyết 1 file chưa commit.
+  Tách vỏ dùng chung cho popup báo cáo: `components/report/V2BaseReportModal.vue` (481 dòng) +
+  `utils/mixins/reportDrillListMixin.js` (146 dòng); thêm slot `header` + prop `noEnforceFocus` vào
+  `components/modal/V2BaseModal.vue` (dùng chung 30 màn, mặc định giữ nguyên hành vi cũ).
+  Chuyển 3 popup: CSKH tiềm năng (1307→871), phát triển thị trường (1204→1050), kết quả dự án TKT
+  (888→916 — có bổ sung nút "Xoá lọc" + chip lọc nhanh vốn bị thiếu). 3 popup GIỮ NGUYÊN 3 chiến
+  lược dữ liệu khác nhau: lọc server / lọc client / BE lo hết (popup TKT KHÔNG dùng mixin).
+  17 commit trên `gop_db` của `hrm-client`, **chưa push**.
+  ⚠️ **`hrm-api/database/e2e_provision.php` đã sửa nhưng CHƯA COMMIT**: nó trỏ 5 bảng `hrm_*` đã bị
+  `ReconcileEmployeesSeeder` gộp và xoá, khiến `api-setup` đổ và **mọi spec UI của HRM không chạy được**.
+  Sửa về tên thật (`employees`, `roles`, `company_employees`, `employee_has_roles`,
+  `role_has_permissions`) là gỡ tắc cho cả team — cần user duyệt diff.
+  ⚠️ Đã đụng DB local: gán quyền 1187 cho role 18 (báo cáo phát triển thị trường vốn gán cho 0 role
+  → không ai xem được ở cấp trên "self"); lệnh gỡ nằm trong `.sdd/progress.md`.
+  Test: `tkt-result-report` 22/22 xanh; `customer-market-development` 7 xanh + 2 đỏ sẵn;
+  `potential-customer-care` 25+ xanh khi loại ca đỏ sẵn, 3 ca của đợt này đều xanh. 5 ca đỏ còn lại
+  đều là ĐỎ SẴN (2 ca API, 1 ca màn tạo dự án TKT, 2 ca test bám giả định dữ liệu cũ) — có bằng chứng
+  từng ca trong `.sdd/progress.md`.
+  Nhật ký thực thi + toàn bộ quyết định (21 ruling) + 8 lỗi tìm thấy trong chính các bài test:
+  `.plans/gop-db/base-popup-bao-cao/.sdd/progress.md`.
 
 ## Hoàn thành
 
