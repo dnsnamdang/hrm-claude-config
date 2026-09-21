@@ -74,3 +74,10 @@ Verify: Task2 param price_type (PT1 retail=1/PT2=23.9M, cost giữ, no-param=1);
 FINDING (không chặn, giống pattern currency user đã chọn): 🟡 thiếu guard server-side khoá đổi price_type sau gửi duyệt (currency_id cũng vậy — pattern sẵn); 🔵 dropdown desync khi huỷ confirm; 🔵 khoá ở !isCreateMode (khoá sớm như currency).
 Bước tiếp theo: user nghiệm thu browser (tạo báo giá direct → chọn/đổi bảng giá + thêm hàng ERP + mở Sửa) → commit + chạy migration production.
 Blocked: (không có)
+
+### Checkpoint — 2026-09-16
+Vừa hoàn thành: Viết testcase cho task Redmine #10804, chèn vào **tab "12.Dự án TKT"** (gid=739303646) của Google Sheet "Testcase _Quản lý dự án" — dòng 547 là dải "UPDATE testcase 16/09/2026 + link task", dòng 548-597 là 50 TC mã **TC-ROLE-473 → TC-ROLE-522**, bám đúng khuôn các block update trước (module cột A, nhóm chức năng cột B, cột J-S để trống cho QA).
+Nhóm TC: Trường Bảng giá (7) · Đổi bảng giá & đơn giá (20) · Đồng bộ giá ERP khi sửa (13) · Xem chi tiết & bản in (4) · Ràng buộc & đặc biệt (6). P0 = 50%.
+Đang làm dở: (không có)
+Bước tiếp theo: QA chạy test từ TC-ROLE-473.
+Blocked: (không có)

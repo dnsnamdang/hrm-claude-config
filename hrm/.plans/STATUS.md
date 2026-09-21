@@ -70,6 +70,39 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   ⚠️ Panel chi tiết meeting trông rỗng là do **dữ liệu seed mỏng**, không phải thiếu khối: meeting tạo bằng UI có 19–27 `company_members` + `reports`, còn `DEMO-CSKH-*` / `E2E-CARE-*` đều bằng 0. Muốn demo đẹp trên VPS thì phải làm giàu `assign:seed-care-demo` (CHƯA làm, chờ user quyết).
   Design: .plans/bao-cao-cskh-tiem-nang/design.md · Plan: .plans/bao-cao-cskh-tiem-nang/plan.md · E2E: e2e/tests/assign/{meeting-host,customer-demand-link,potential-customer-care,potential-customer-care-export}.{api.spec,spec}.ts · Fixture: hrm-api/database/{e2e_customer_demand_seed,e2e_care_report_seed}.php
 
+- task-lien-ket-nhiem-vu (Liên kết Nhiệm vụ với Dự án, Meeting, Phòng ban) → @cuong61n → .plans/task-lien-ket-nhiem-vu/plan.md
+  Trạng thái: **CODE XONG + KIỂM THỬ UI PASS (2026-09-18)** — 4 tài khoản khác quyền, 5 lỗi đã sửa; chưa commit — Redmine #11456, nhánh `tpe-develop-assign` (cả 2 repo).
+  Phạm vi: tab Nhiệm vụ ở chi tiết Dự án (ẩn tab Nhiệm vụ giải pháp) · tab Nhiệm vụ + icon Giao nhiệm vụ
+  trên biên bản Meeting · nhiệm vụ phòng ban (bỏ bắt buộc dự án/giải pháp/hạng mục/meeting) + link động
+  theo thành viên. Phần gắn với Vấn đề TẠM PENDING theo Mr Nam 17/09.
+  Phụ thuộc #11453 (.plans/task-nhiem-vu). Spec: docs/superpowers/specs/2026-09-18-task-lien-ket-nhiem-vu-design.md
+
+- task-nhiem-vu (Nhiệm vụ: đổi tên Task → Nhiệm vụ, phân loại Nhiệm vụ chung/cụ thể) → @cuong61n → .plans/task-nhiem-vu/plan.md
+  Trạng thái: **CODE XONG + KIỂM THỬ UI PASS (2026-09-12)** — 8 case trên :3005, chưa commit.
+  Nhánh `tpe` (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11453.
+  Gồm: 2 cột mới `tasks.task_type` + `tasks.batch_id` (migration đã chạy, 18/18 bản ghi cũ = Nhiệm vụ cụ thể) ·
+  Nhiệm vụ chung chọn nhiều người → sinh N bản ghi độc lập cùng `batch_id`, copy nguyên checklist/tệp/
+  theo dõi/thẻ/nhiệm vụ con/lặp lại/báo cáo tiến độ · ô "Loại nhiệm vụ *" đầu form (khoá khi Sửa) ·
+  cột + bộ lọc Loại nhiệm vụ ở danh sách · đổi nhãn Task → Nhiệm vụ ở 47 file FE + 12 thông báo BE +
+  4 message lỗi + 5 blade export. Spec: docs/superpowers/specs/2026-09-12-task-nhiem-vu-design.md
+  Chờ user quyết: có đổi tên quyền (id 1020, 1103-1106) cho đồng bộ với feature `issue-van-de` không.
+
+- issue-van-de (Vấn đề: đổi tên Issue, quy trình 3 bước, gắn Dự án/Meeting/Phòng ban) → @cuong61n → .plans/issue-van-de/plan.md
+  Trạng thái: **PHASE 1 CODE XONG (2026-09-12)** — chưa kiểm thử UI, chưa commit. Nhánh `tpe` (worktree `HRM/worktrees/tpe-api` :8005 +
+  `tpe-client` :3005). Redmine #11290. Chia 5 phase — Phase 1 = đổi nhãn `Issue` → `Vấn đề` toàn hệ thống
+  + Bước 1 "Bộ phận xử lý" (chỉ chọn bộ phận thì để trống người xử lý, bắn thông báo cho Trưởng bộ phận)
+  + cho tạo Vấn đề phòng ban (project_id/solution_id nullable). Spec: docs/superpowers/specs/2026-09-12-issue-van-de-design.md
+
+- prospective-project-extension (Gia hạn dự án TKT + tự đóng theo giai đoạn) → @cuong61n → .plans/prospective-project-extension/plan.md
+  Trạng thái: **CODE XONG 5 PHASE + KIỂM THỬ PASS (2026-09-11)** — chưa commit. Nhánh `tpe`
+  (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11153 đã chuyển "Đang tiến hành".
+  Gồm: nút + popup Gia hạn ở chi tiết dự án · phê duyệt 2 cấp TP/BGĐ theo ngưỡng ngày ·
+  cổng phê duyệt + menu · màn cấu hình "Đóng dự án tự động" (4 tham số + 9 giai đoạn) ·
+  cron `assign:auto-close-prospective-projects` nhắc trước N ngày và tự đóng sau M ngày ·
+  lịch sử dự án thêm dòng Gia hạn. 5 migration + 2 quyền mới (1182, 1183).
+  Chờ khách chốt: prefix thông báo `[DATKT]`, mặc định S=3 tháng / N=7 ngày / M=0 / X=30 ngày.
+  Đã chốt 2026-09-12: mọi giai đoạn tính hạn từ ngày duyệt báo giá gần nhất, không thêm cột ngày nộp thầu.
+
 - prospective-project-status-12-steps (Tiến trình nội bộ dự án TKT 12 bước) → @cuong61n → .plans/prospective-project-status-12-steps/plan.md
   Trạng thái: **CODE XONG 5 PHASE + KIỂM THỬ PASS (2026-09-11)** — chưa commit. Nhánh `tpe`
   (worktree `HRM/worktrees/tpe-api` :8005 + `tpe-client` :3005). Redmine #11426.

@@ -216,17 +216,48 @@ bên hệ thống mới chứ không phải logic sai.
 | **TC ID (C)** | `TC_NN.NNN` hoặc `TC-ROLE-NN` |
 | **Chức năng (D)** | 1 câu mô tả mục tiêu test, không lặp tên section |
 | **Priority (E)** | P0/P1/P2 |
-| **Tiền điều kiện (F)** | **CỤ THỂ, có số liệu**. ❌ "User có vài dịch vụ". ✅ "Dịch vụ X: công ty 1 là 5%, công ty 4 là 12%; tài khoản C thuộc công ty 1" |
-| **Bước thực hiện (G)** | Đánh số `1. … 2. …`, mỗi bước 1 dòng (`\n`). Mô tả thao tác người dùng thấy được: "Bấm nút Sửa (biểu tượng bút chì)" |
-| **Test Data (H)** | Giá trị thật, viết bằng nhãn màn hình: `% Tính giá vốn: 12,5`, `Trạng thái: Khóa`. `—` nếu không cần |
-| **Expected Result (I)** | **Kiểm chứng được**, bullet `-`, ghi rõ tên cột/nhãn/chữ trên nút/nội dung thông báo. Chỗ nào là bẫy thì mở đầu bằng `⚠️` |
+| **Tiền điều kiện (F)** | **CỤ THỂ, có số liệu**. ❌ "User có vài dịch vụ". ✅ "Dịch vụ X: công ty 1 là 5%, công ty 4 là 12%; tài khoản C thuộc công ty 1". Nhiều ý → **mỗi ý một dòng** |
+| **Bước thực hiện (G)** | Đánh số `1. … 2. …`, **mỗi bước một DÒNG RIÊNG trong ô** (xuống dòng thật). Mô tả thao tác người dùng thấy được: "Bấm nút Sửa (biểu tượng bút chì)" |
+| **Test Data (H)** | Giá trị thật, viết bằng nhãn màn hình: `% Tính giá vốn: 12,5`, `Trạng thái: Khóa`. Nhiều giá trị → **mỗi giá trị một dòng**. `—` nếu không cần |
+| **Expected Result (I)** | **Kiểm chứng được**, gạch đầu dòng `-`, **mỗi ý một DÒNG RIÊNG trong ô**, ghi rõ tên cột/nhãn/chữ trên nút/nội dung thông báo |
 | **KQ thực tế (J)** | Để trống (QA điền) |
 | **K/L/M** | DNS check 3 lần. Default `"Not Executed"`. Dropdown: Passed, Failed, Pending, Not Executed |
 | **Ghi chú (N)** | Để trống hoặc note đặc biệt |
 | **O/P/Q** | TP check 3 lần. Để TRỐNG. Dropdown: P, F, PE |
 
 **Không có cột "Giải thích nghiệp vụ" riêng** (bản 15 cột cũ có cột J này). Business rule viết
-thẳng vào Expected Result dưới dạng câu cảnh báo `⚠️` — QA đọc một chỗ, không phải liếc 2 cột.
+thẳng vào Expected Result thành **một gạch đầu dòng riêng** — QA đọc một chỗ, không phải liếc 2 cột.
+
+### ⛔ 2 lỗi trình bày bị cấm (user chốt 2026-09-15)
+
+**1. KHÔNG dùng emoji/icon trong nội dung ô** — không `⚠️`, không `✅`, không `❌`, không `🔒`.
+Cần nhấn mạnh một cái bẫy thì viết bằng CHỮ: mở đầu gạch đầu dòng bằng `Lưu ý:` hoặc viết hoa
+cụm từ khoá (`KHÔNG được…`, `PHẢI…`). Lý do: file là tài liệu bàn giao cho QA và khách, icon
+làm bảng rối và hiển thị lệch font trên máy khác.
+*(Emoji trong chính file SKILL.md này là để cho người đọc skill, KHÔNG được bê vào ô testcase.)*
+
+**2. Ô nhiều ý thì PHẢI xuống dòng thật trong ô, không nhồi một dòng dài.**
+Áp cho cả 4 cột Tiền điều kiện · Bước thực hiện · Test Data · Expected Result.
+
+```
+❌ SAI (nhồi 1 dòng)
+G: 1. Đăng nhập. 2. Mở phân hệ Giao việc. 3. Quan sát menu trái.
+I: - Menu ghi 'Nhiệm vụ'. - Không còn chữ 'Task'.
+
+✅ ĐÚNG (mỗi ý 1 dòng trong cùng 1 ô)
+G: 1. Đăng nhập.
+   2. Mở phân hệ Giao việc.
+   3. Quan sát menu trái.
+I: - Menu ghi 'Nhiệm vụ'.
+   - Không còn chữ 'Task'.
+```
+
+- **File .xlsx** (`tc_engine.py`): đưa `\n` vào chuỗi + ô đã bật `wrap_text=True`.
+- **Dán thẳng lên Google Sheet**: dựng TSV thì ô có xuống dòng **phải bọc trong dấu nháy kép**
+  (`"1. …\n2. …"`), nháy kép bên trong nhân đôi (`""`). Không bọc thì Sheets cắt thành nhiều DÒNG
+  bảng, lệch toàn bộ khối bên dưới.
+- Tự kiểm trước khi bàn giao: mở ngẫu nhiên 3 ô cột G và 3 ô cột I — phải thấy nhiều dòng; và
+  `grep -P '[\x{2190}-\x{2BFF}\x{1F300}-\x{1FAFF}]'` trên nội dung sinh ra phải RỖNG.
 
 ## Style + format
 
@@ -311,7 +342,9 @@ except Exception: pass
 - [ ] Section nghiệp vụ đánh **La mã**, tên section bằng ngôn ngữ nghiệp vụ
 - [ ] **Tiền điều kiện có số liệu cụ thể**
 - [ ] **Test Data viết bằng nhãn màn hình**, không phải tên field
-- [ ] **Expected Result kiểm chứng được**, bẫy có gắn `⚠️`
+- [ ] **Expected Result kiểm chứng được**, bẫy ghi bằng chữ (`Lưu ý:` / viết hoa từ khoá)
+- [ ] **KHÔNG có emoji/icon trong bất kỳ ô nào** (`⚠️ ✅ ❌ 🔒` …)
+- [ ] **Ô nhiều ý đã xuống dòng thật** ở cả 4 cột Tiền điều kiện / Bước thực hiện / Test Data / Expected Result
 - [ ] K/L/M default `Not Executed` + dropdown; O/P/Q để trống + dropdown
 - [ ] P0 ≥ 40% tổng TC
 - [ ] **Có TC cho ĐỦ mọi lối vào của màn** (mỗi `?type=` / `?permission=` một bộ TC), gồm cả giá trị lạ và tài khoản thiếu quyền
@@ -336,6 +369,8 @@ except Exception: pass
 - Không tự chế tên quyền — copy đúng từ `PermissionsTableSeeder`
 - Không thay các cột check bằng 1 cột (QA chạy nhiều round, có 2 bên DNS và TP)
 - Không đoán validation — đọc Request class thực tế rồi DIỄN GIẢI ra ngôn ngữ người dùng
+- **Không chèn emoji/icon vào ô** (`⚠️ ✅ ❌ 🔒` …) — nhấn mạnh bằng chữ
+- **Không nhồi nhiều ý vào một dòng** — bước `1. 2. 3.` và gạch đầu dòng `-` phải xuống dòng thật trong ô
 
 ## File tham chiếu
 

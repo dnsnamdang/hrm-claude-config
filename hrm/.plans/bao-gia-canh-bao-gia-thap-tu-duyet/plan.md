@@ -55,3 +55,76 @@ Vừa hoàn thành: BE + FE #10797, rà lại theo `button-convention` / `modal-
 Đang làm dở: không.
 Bước tiếp theo: chưa test AC1 (báo giá sạch → tự duyệt) trên UI vì chưa có báo giá nào đủ điều kiện — cần 1 báo giá toàn hàng ERP có giá > 1.000.
 Blocked:
+
+## Test lại toàn diện (2026-09-14) — nhánh `tpe`/`tpe-develop-assign`, cổng 3005/8005, DB `hrm_prod_6_6`
+
+Ảnh chụp: `anh-test-2026-09-14/`. BE 2 nhánh trùng nhau (`git diff` rỗng) nên kết quả áp cho cả hai.
+
+### 4 tài khoản, 4 mức quyền
+
+| TK | Vai trò | Quyền 1081 TP | 1082 BGĐ | 1092 Giá vốn |
+| --- | --- | --- | --- | --- |
+| sontv.da (1845) | NVKD phòng Dự án | – | – | – |
+| Luyentq.kd1 (428) | NVKD phòng 42 | – | – | – |
+| hieudd.da (148) | TP **quản lý phòng 55** | ✓ | – | – |
+| tuannd.kd1 (24) | TP **quản lý phòng 42** | ✓ | – | – |
+| cob@ (36) | BGĐ công ty 1 | – | ✓ | ✓ |
+
+### A. Luồng AC theo Redmine
+
+| AC | Ca | Kết quả |
+| --- | --- | --- |
+| AC1 | BG-2026-00182 sạch (1 hàng ERP, 75tr) | Không popup cảnh báo · popup ghi **"Tự động duyệt"** · nút **"Xác nhận duyệt"** · status 1→**4**, level=1, `approved_by=428` (chính NVKD), `tp_approved_by=NULL`, lịch sử `self_approve`, **`erp_sync_status=success`** ✅ |
+| AC2 | BG-2026-00202 có 3 dòng ≤1.000 | Popup đúng tiêu đề, đúng số "**3 mặt hàng**", bảng Mã/Tên/Đơn giá khớp SQL · 3 dòng nền cam `rgb(255,237,213)`, dòng thường trong suốt ✅ |
+| AC3 | Bấm "Quay lại" | Popup đóng, ở nguyên màn edit, 3 dòng **vẫn** nền cam ✅ |
+| AC4 | Bấm "Tiếp tục gửi duyệt" | Sang popup phê duyệt, ra **Cấp 3** + sơ đồ 2 bước ✅ |
+| AC5 | Luồng phân cấp đầy đủ | 1→2 (`submit`, actor 1845) → TP duyệt 2→3 (`tp_approve_forward`, actor 148) → BGĐ duyệt 3→4 (`bgd_approve`, actor 36) ✅ |
+| – | Từ chối | Bỏ trống lý do → chặn "Vui lòng nhập lý do từ chối"; nhập rồi xác nhận → 2→**1**, lưu `rejected_reason`, level reset NULL, lịch sử `reject` ✅ |
+
+### B. 11 ca biên `isAutoApprovable()` (qua API `calculate-level`)
+
+| # | Ca | auto_approve | Cấp |
+| --- | --- | --- | --- |
+| 1 | 1 hàng ERP, 75.000.000, không GG | **true** | 1 |
+| 2 | Đơn giá = **1.000** (biên dưới) | false | 3 |
+| 3 | Đơn giá = **1.001** | **true** | 1 |
+| 4 | Giá 75tr nhưng `erp_product_id=NULL` (hàng tạm) | false | 3 |
+| 5 | Hàng ERP + **GG theo mặt hàng** (`discount_method=1`) | false | 1 |
+| 6 | Hàng ERP + **GG tổng đơn** (`discount_method=2` + `quotation_discounts`) | false | 1 |
+| 7 | Thêm **dịch vụ tạm** (`cost_id=NULL`) giá 5tr | false | 1 |
+| 8 | Dịch vụ ERP nhưng đơn giá **800** | false | 1 |
+| 9 | Hàng ERP + dịch vụ ERP đều > 1.000 | **true** | 1 |
+| 10 | Báo giá **rỗng** | false | 3 |
+| 11 | Cha 75tr (ERP) + **dòng con giá 0** (ERP) | false | 1 |
+
+Ca 11 xác nhận quyết định đã chốt 2026-08-17: dòng con giá 0 **cố ý** chặn auto-approve. Hệ quả cần nhớ: mọi báo giá dùng combo có dòng con để giá 0 sẽ không bao giờ tự duyệt.
+Ca 5/6/7/8/11 cho thấy `auto_approve=false` **không** đồng nghĩa phải qua TP — cấp vẫn có thể là 1 (NVKD tự duyệt) khi giá trị/tỷ suất thuộc cấp 1. Đúng spec TH2 ("theo luồng phân cấp hiện hành").
+
+### C. Phân quyền
+
+| Ca | Kết quả |
+| --- | --- |
+| NVKD mở `/quotations/pending-approval` | Bị đá về **404** ✅ |
+| NVKD: popup gửi duyệt | **Ẩn** "Tổng giá nhập" + "Tỷ suất LN" (không có quyền 1092) ✅ |
+| NVKD gọi thẳng API báo giá đang chờ duyệt | `submit` **422**, `self-approve` **422**, `tp-approve` **403**, `bgd-approve` **403** ✅ |
+| NVKD mở màn sửa báo giá đang chờ duyệt | Chỉ còn nút "Quay lại", mọi ô nhập `disabled` ✅ |
+| TP **không** quản lý phòng của báo giá (Tuân ↔ phòng 55) | Hàng đợi **rỗng** — đúng lọc `department_id ∈ getManagedDepartmentIds()` ✅ |
+| TP **đúng** phòng (Hiếu ↔ phòng 55) | Thấy BG-2026-00202 badge "Cấp 3" ✅ |
+| Sau khi TP chuyển BGĐ | Báo giá **rời** hàng đợi TP (6→5 mục) ✅ |
+| TP gọi lại `tp-approve` | **422** "không ở trạng thái Chờ TP duyệt"; `bgd-approve` **403** ✅ |
+
+### D. Lỗi UI phát hiện (KHÔNG thuộc #10797, chưa sửa)
+
+1. `pages/assign/quotations/_id/index.vue:139,190` (và :135) dùng `.text-muted` → hiện **chữ ĐỎ** ("Bảng giá: Bán lẻ", "Không có", dòng tỷ giá) vì theme `custom-assign.scss` ép `color:#dc3545!important`. Trái quy tắc "đỏ chỉ dành cho lỗi validate" → đổi sang `#6b7280`.
+2. Cùng file, dòng **1266 / 1448 / 1467** dùng `$bvModal.msgBoxConfirm()` cho Xoá / TP duyệt / BGĐ duyệt — CLAUDE.md cấm, phải chuyển sang `this.$confirm({...})` (`base-confirm-modal`). Biểu hiện: popup không có icon tròn header, nút "Huỷ" là text trần, không đúng khuôn nút chuẩn.
+3. Màn danh sách chờ duyệt: cột "Dự án TKT" render bằng font monospace, lệch với các cột còn lại.
+
+ERP sync: AC5 (BG-2026-00202) `failed` — "Không tìm thấy khách hàng ERP: code=29TPHXTR-66" (khách chưa có trong DB `dev_erp` local, lỗi môi trường). AC1 (BG-2026-00182) `success`.
+
+**Dữ liệu đã khôi phục nguyên trạng**: BG-2026-00182 + BG-2026-00202 về `status=1`, level NULL, không `rejected_reason`, đủ 1/62 dòng hàng, lịch sử về đúng 1 bản ghi gốc; mật khẩu 5 tài khoản test trả lại hash cũ.
+
+### Checkpoint — 2026-09-14
+Vừa hoàn thành: test lại toàn bộ #10797 — 6 AC + 11 ca biên + 8 ca phân quyền trên 5 tài khoản. Không có lỗi thuộc phạm vi #10797.
+Đang làm dở: không.
+Bước tiếp theo: chờ user quyết 3 lỗi UI mục D (đều nằm ngoài #10797).
+Blocked:
