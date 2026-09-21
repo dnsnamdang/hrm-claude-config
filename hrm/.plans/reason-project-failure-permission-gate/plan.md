@@ -3,6 +3,10 @@
 Phụ trách: @khoipv
 Nhánh: `fix-bug-11092026` (cả `hrm-api` và `hrm-client`)
 Ngày tạo: 14/09/2026
+Màn: `/assign/reason_project_failure` · Quyền 990 (Quản lý) / 1005 (Xem)
+
+Màn **Lý do hủy cuộc họp** cùng khuôn, cùng kiểu lỗi, theo dõi ở thư mục riêng:
+`.plans/danh-muc-ly-do-huy-cuoc-hop/` (1 danh mục = 1 thư mục).
 
 ## Phase 1 — Điều tra (đã xong trước khi code)
 
@@ -71,51 +75,29 @@ Bước tiếp theo: user mở `/assign/reason_project_failure` bằng tài kho�
 xác nhận 3 nút đã biến mất.
 Blocked:
 
-## Phase 5 — Màn Lý do hủy cuộc họp (`/assign/meeting_cancel_reason`) — 14/09/2026
+## Phase 5 — Bổ sung: gate nút Xuất Excel (14/09/2026)
 
-Cùng hệ thống nút, cùng kiểu lỗi. Check kỹ thì thấy **thêm 1 chỗ hở so với màn trước**: nút
-**Xuất Excel** không gate trong khi BE `/export` đòi quyền Quản lý.
+Phát hiện khi làm màn Lý do hủy cuộc họp: nút **Xuất Excel** của màn này cũng không gate, trong khi
+BE `GET /export` đòi quyền Quản lý → người chỉ có quyền Xem bấm là 403.
 
-- [x] 5.1 FE `pages/assign/meeting_cancel_reason/index.vue`: `v-if="canManage"` cho nút
-      **Khoá/Mở khoá**, **Sửa**, **Xoá**
-- [x] 5.2 FE cùng file: `v-if="canManage"` cho nút **Xuất Excel** (BE `/export` chỉ nhận quyền
-      Quản lý — giữ BE nguyên, 14/15 màn danh mục trong `api.php` đều theo convention này)
-- [x] 5.3 FE `pages/assign/reason_project_failure/index.vue`: gate nốt nút **Xuất Excel** cho
-      đồng bộ (sót ở Phase 2)
-- [x] 5.4 BE `Modules/Assign/Routes/api.php`: gắn `checkPermission:Quản lý…|Xem…` cho
-      `GET /assign/meeting_cancel_reasons/{meetingCancelReason}` (show)
-- [~] 5.5 ~~Gate `GET /meeting_cancel_reasons/getAll`~~ — **HUỶ, cố ý không làm**: dropdown của
-      `pages/assign/meeting/components/CancelMeetingModal.vue`. File route đã có sẵn comment giải
-      thích đúng lý do này, giữ nguyên.
-- [x] 5.6 Kiểm: nút **Xem** giữ nguyên không gate (ai vào được màn cũng có 1 trong 2 quyền, route
-      `show` nay nhận cả 2); modal chế độ Xem (`isShow=true`) vốn đã ẩn nút Lưu + disable input
-- [ ] 5.7 User mở trình duyệt xác nhận
+- [x] 5.1 FE `pages/assign/reason_project_failure/index.vue`: `v-if="canManage"` cho nút
+      **Xuất Excel** (sót ở Phase 2)
+- [~] 5.2 ~~Nới BE `/export` thành `Quản lý|Xem`~~ — **HUỶ**: 14/15 màn danh mục trong
+      `Modules/Assign/Routes/api.php` đều theo convention "export chỉ quyền Quản lý"; muốn nới thì
+      sửa đồng loạt cả 15 màn, không sửa lẻ.
 
-### Kiểm chứng Phase 5
-
-Bản ghi tạm id 999002 + quyền 1183 cấp tạm cho emp 25 (`employee_has_permissions`) — **đã xoá cả
-hai sau khi test**, `meeting_cancel_reasons` và `employee_has_permissions` trở lại nguyên trạng.
-
-| Tài khoản | `GET /` | `GET /{id}` | `getAll` | `export` | `POST /` | `lock` | `DELETE` |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| emp 62 — không quyền nào của màn | 403 | **403** (trước: 200) | 200 (cố ý) | — | — | — | — |
-| emp 25 — chỉ quyền Xem | 200 | 200 | 200 | **403** | **403** | **403** | **403** |
-| emp 13 — Super admin (có cả 1182+1183) | 200 | 200 | 200 | 200 | — | — | — |
-
-Bản ghi test sau 3 lệnh ghi: `status` không đổi, không bị xoá → BE fail-closed.
-
-Parse lại 2 file FE bằng `vue-template-compiler` + `@babel/parser`: sạch, mỗi file 6 chỗ
-`v-if="canManage"`. (Grep `can[A-Za-z]*=true` có khớp `let canShow = true` — đó là cờ điều khiển
-mở modal, không phải cờ quyền.)
-
-⚠️ **Lưu ý khi test màn này**: role **Super admin có CẢ quyền 1182 (Quản lý)** — khác màn nguyên
-nhân thất bại (chỉ có 1005/Xem). Muốn thử vai "chỉ xem" phải bỏ tick quyền Quản lý danh mục lý do
-hủy cuộc họp khỏi role đang dùng, nếu không nút vẫn hiện là đúng.
+Parse lại `index.vue` sau khi sửa: sạch, 6 chỗ `v-if="canManage"` (Tạo mới, Import, Xuất Excel,
+Khoá/Mở khoá, Sửa, Xoá).
 
 ### Checkpoint — 14/09/2026 (lần 2)
 
-Vừa hoàn thành: Phase 5 — màn Lý do hủy cuộc họp (4 nút + route show) + gate nốt nút Xuất Excel
-của màn nguyên nhân thất bại.
+Vừa hoàn thành: Phase 5 — gate nốt nút Xuất Excel.
 Đang làm dở: không có.
-Bước tiếp theo: user mở cả 2 màn bằng tài khoản chỉ có quyền Xem để xác nhận.
+Bước tiếp theo: user mở màn bằng tài khoản chỉ có quyền Xem để xác nhận.
 Blocked:
+
+### Checkpoint — 18/09/2026
+
+Đã commit trên nhánh `fix-bug-11092026`: `hrm-api` `6c76378aa`, `hrm-client` `53dee118d`, cây sạch.
+Mục STATUS chuyển sang **Hoàn thành**. Phần màn Lý do hủy cuộc họp (Phase 5 cũ) đã tách sang
+`.plans/danh-muc-ly-do-huy-cuoc-hop/`.

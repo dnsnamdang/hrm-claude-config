@@ -7,8 +7,9 @@ hrm-thanhan-client/
 ~$*
 Thumbs.db
 
-# Claude Code local config
-.claude/
+# Claude Code local config (skill dùng chung ở .claude/skills/ VẪN track — giống bên hrm)
+.claude/settings.local.json
+.claude/settings.json
 
 # Plans - file PDF/HTML không cần track
 .plans/**/*.pdf

@@ -477,6 +477,7 @@ export default {
 - Watch `formFilter` với `deep: true` để trigger reload khi filter thay đổi
 - Action Vuex: `apiGet` / `apiGetMethod` để đọc, `apiPostMethod` / `apiPutMethod` để ghi, `apiDelete` để xóa (không có `apiDeleteMethod`)
 - Tuân thủ style list của module đang triển khai (xem thêm `assets/scss/custom-*.scss`)
+- **Cột "Thao tác": <= 3 nút hiện hết, > 3 nút thì hiện 2 nút đầu, phần còn lại vào dropdown bánh răng (`fa fa-cog`)** — đếm theo số nút thực sự hiển thị của TỪNG DÒNG. Chuẩn lấy từ màn `pages/contract/contract/index.vue`; code mẫu đầy đủ ở `.claude/skills/button-convention/SKILL.md`
 - Dùng `async/await` cho mọi API dispatch
 - **Label field bắt buộc: LUÔN dùng component `<Required />`** (`@/components/common/Required.vue` — render dấu `*` màu đỏ). KHÔNG viết `*` trần trong text label (vd `label="Lý do *"` là SAI vì dấu sao không đỏ). Với `<b-form-group>` phải dùng slot label:
 

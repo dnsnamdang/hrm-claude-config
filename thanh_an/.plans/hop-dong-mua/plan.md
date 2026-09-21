@@ -69,3 +69,75 @@ Blocked: (không)
 - [x] Fix 8: Điều khoản thanh toán (Theo đợt) sửa giống Đơn mua hàng — nhập 2 chiều tỉ lệ↔số tiền (2026-08-05, @khoipv)
     - FE `purchase_contracts/components/PaymentTab.vue`: cột Số tiền dùng `currency-input` (sửa được), cột Tỷ lệ `base-input-field` + `onRowInput`; port logic calcAmount/calcPercent/maxAmount/rebalancePercents + watch totalAmount + created; nút "Thêm đợt" → `base-add-button` (ml-auto); thêm banner cảnh báo `.pay-warning` khi tổng ≠ 100%. GIỮ nhánh Nguyên tắc, disabledBeforeSign, base-helper-error (progress.N.time + progress_total).
     - FE `PurchaseContractForm.vue`: thêm `amount:null` vào progressRows mặc định + applyInitial. buildPayload vẫn gửi pct (BE không đổi).
+
+## Fix 9: Cột Tên hàng hóa hiện danh sách NCC đã từng mua hàng này (2026-09-19, @khoipv)
+Yêu cầu: ở bảng hàng hóa màn lập HĐ mua, dưới tên hàng hóa hiện tên NCC đã mua hàng này (tính cả **HĐ mua** lẫn **đơn mua hàng**), sắp theo lần mua gần nhất; nhiều NCC → hiện 1 NCC + link "Xem thêm (N)" mở popup liệt kê phần còn lại.
+
+Chốt với user: trạng thái tính = **Chờ duyệt (2) + Đã duyệt (3)** · ngoài tên NCC **không** hiện thêm gì ở cột · popup **đầy đủ cột + link chi tiết** · **gộp theo NCC** (mỗi NCC 1 dòng, lấy lần mua gần nhất, kèm số lần mua).
+
+- [x] BE-1: `PurchaseContractService::productSupplierMap(array $productIds, ?int $excludeContractId)` — union 2 nguồn, gộp theo NCC, sort ngày mua DESC
+- [x] BE-2: Action `productSuppliers()` ở `PurchaseContractController` + route `POST /purchase-contracts/product-suppliers` (đặt TRƯỚC wildcard `/{purchaseContract}`)
+- [x] FE-1: Component mới `purchase_contracts/components/SupplierHistoryModal.vue` (bảng: STT · Tên NCC · Loại · Mã chứng từ (nuxt-link target=_blank) · Ngày mua · Số lần mua · SL · Đơn giá gồm VAT)
+- [x] FE-2: `ProductsTab.vue` — fetch map theo `product_id`, render dòng "Đã mua của: <NCC> — Xem thêm (N)" dưới tên hàng hóa, mở popup
+- [x] FE-3: Nạp lại map khi thêm hàng từ `GoodsPickerModal` (watch danh sách product_id)
+
+### Fix 14: Cột VAT + Chiết khấu trước cột Thành tiền (2026-09-19, @khoipv)
+User: "thêm cho tôi cột VAT và cột Chiết khấu trước cột thành tiền cho tôi, chỗ này tự lấy và tự tính nhé"
+→ 2 cột CHỈ XEM, không cho nhập tay.
+**Quy ước đã chốt (tự quyết vì hệ thống chưa có dữ liệu chiết khấu bên mua — user xác nhận lại giúp):**
+- VAT (%) = **tự lấy** theo cặp (hàng hóa × HĐ bán): `contract_products.vat_percent`, thiếu thì lùi
+  về `bid_package_products.vat_percent` của gói thầu gốc. Dòng nhỏ bên dưới là **tiền thuế tự tính**
+  (đơn giá đã gồm VAT → tách ngược: tiền × vat / (100 + vat)).
+- Chiết khấu (VNĐ) = **tự tính** = Σ theo từng phiếu: SL mua × (đơn giá báo giá − đơn giá mua),
+  chỉ tính phần mua RẺ HƠN báo giá; mua đắt hơn → 0.
+- **KHÔNG trừ chiết khấu vào Thành tiền** (đơn giá nhập đã là giá sau chiết khấu → trừ nữa là trừ 2 lần).
+- [x] BE-9: Migration `2026_09_19_000002_add_discount_amount_to_purchase_contract_products_table.php`
+      (cột `discount_amount` bigint nullable, không khóa ngoại) — đã chạy migrate
+- [x] BE-10: `ResolvesProductReferences` trả thêm `vat_percent` theo cặp (thêm `vatPercentMapByPair()`,
+      không đụng `SupplyHandlingService::productInfoMap` dùng chung)
+- [x] BE-11: `PurchaseContractService::syncProducts` lưu `vat_percent` + `discount_amount`
+      (Nguyên tắc → discount null); `DetailPurchaseContractResource` trả 2 cột này về FE
+- [x] FE-10: `ProductsTab` thêm 2 cột trước Thành tiền (`refVat`/`fmtVat`/`vatOf`/`vatAmountOfSub`,
+      `discountOfPurpose`/`discountOf`/`totalDiscount`/`discountTip`), colspan 14→15 / 17→19,
+      dòng TỔNG CỘNG thêm ô tổng chiết khấu
+- [x] FE-11: `syncDerived()`/`syncAllDerived()` ghi `vat_percent` + `discount_amount` xuống dòng hàng
+      (gọi sau khi nạp tham chiếu + mỗi lần đổi giá/SL/ĐVT) để payload mang đi lưu
+- Ghi chú: đổi ĐVT thì đơn giá mua quy đổi theo hệ số nhưng đơn giá báo giá tham chiếu vẫn là
+  theo ĐVT của HĐ bán → số chiết khấu chỉ chuẩn khi 2 bên cùng ĐVT (giống hạn chế sẵn có của
+  cột "Đơn giá báo giá")
+
+### Fix 14b: Đơn giá báo giá quy đổi theo ĐVT đang chọn (2026-09-19, @khoipv)
+User: "đơn giá báo giá cũng phải tính lại theo đơn vị cho tôi chứ"
+`contract_products.price_quotation` là giá theo ĐVT của HĐ BÁN → phải quy về ĐVT đang chọn
+của dòng hàng mới so sánh được với Đơn giá có VAT và mới tính đúng Chiết khấu.
+- [x] BE-12: `ResolvesProductReferences` — gộp `vatPercentMapByPair` thành `saleContractMetaByPair`,
+      trả thêm `price_unit_id` + `price_unit_name` (tên ĐVT lấy từ bảng `units`)
+- [x] FE-12: `refPriceRaw` / `refPriceUnitId` / `refPriceValue` / `refPriceConverted` / `refPriceTip`
+      — quy đổi qua mốc ĐVT cơ bản: giá(B) = giá(A)/f(A) × f(B); tooltip ghi rõ giá gốc + ĐVT gốc
+- [x] FE-13: `discountOfPurpose` dùng giá ĐÃ quy đổi; `loadProductUnits` gọi `syncAllDerived()`
+      sau khi có hệ số (map hệ số về sau map tham chiếu)
+- [x] FE-14: Thiếu hệ số của ĐVT gốc → giữ số gốc, tô class `.ref-warn` + tooltip cảnh báo
+      (không bịa số quy đổi)
+
+### Fix 15: Chốt bề rộng cột bảng hàng hóa (2026-09-19, @khoipv)
+User: "các cột nó đang bị giãn ra nhiều quá nếu nội dung dài, cố định lại, dài quá thì xuống dòng"
+Nguyên nhân: `td { white-space: nowrap }` + `table width: auto` → nội dung dài kéo giãn cả bảng.
+- [x] FE-15: Gắn class `cell-spec` (Quy cách) / `cell-origin` (Hãng, nước SX) / `cell-purpose-h`
+      cho th + td để bám được CSS
+- [x] FE-16: Các cột chữ (`cell-name`, `cell-spec`, `cell-origin`, `cell-purpose`) chuyển
+      `white-space: normal` + `word-break: break-word` + chốt min/max-width
+      (200-280 / 100-150 / 110-160 / 240-320 px)
+- [x] FE-17: `.pp-line` (Mục đích mua) đổi `flex-wrap: nowrap` → `wrap`; `.sup-line` bỏ max-width
+      cứng 280px về 100%; th tiêu đề dài cho xuống dòng
+
+### Fix 14c: Bề rộng cột bảng hàng hóa (2026-09-19, @khoipv)
+User: "cột tên hàng hóa cho rộng ra chút nữa, cột mục đích mua để như cũ"
+- [x] FE-15: `.cell-name` min 200→260px, max 280→380px
+- [x] FE-16: Trả cột Mục đích mua về đúng như trước: bỏ class `cell-purpose-h` ở `<th>`,
+      bỏ chốt min/max-width 240/320px, `td.cell-purpose` quay lại `white-space: nowrap`
+
+### Checkpoint — 2026-09-19
+Vừa hoàn thành: Fix 13 + Fix 13b + Fix 14 (cột VAT & Chiết khấu) — đã `php -l`, chạy migrate, compile template Vue + parse script OK
+Đang làm dở: không
+Bước tiếp theo: user build lại client rồi click-test màn lập/sửa HĐ mua — đổi ĐVT, 4 cột tham chiếu, ghi chú theo từng HĐ bán (kiểm tra `quotation_tab_products.note_supply`), và xác nhận quy ước 2 cột VAT / Chiết khấu ở Fix 14
+Blocked: chờ user duyệt việc tách 3 trait dùng chung (đụng file màn đơn mua hàng) + chốt lại công thức Chiết khấu
