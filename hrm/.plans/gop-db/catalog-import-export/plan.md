@@ -4253,6 +4253,121 @@ khỏi mục "Đang làm", chèn lên đầu mục "Hoàn thành".
 
 ---
 
+## Phase 5 — Sửa lỗi phản hồi task Redmine #11160 (21/09/2026)
+
+Nguồn: http://quanly.dnsmedia.vn/issues/11160 — ghi chú #4…#12 của QA.
+
+### FE — khung dùng chung
+- [x] `utils/import-helper.js` — `parseExcelFile` chỉ bỏ dòng 2 khi ĐÚNG là dòng gợi ý (`isHintRow`),
+      hết lỗi nuốt dòng dữ liệu đầu tiên ở mọi màn để `skip-rows=1` (#7, #8, #12)
+- [x] `utils/import-helper.js` — `buildHintRow()` tách riêng làm nguồn chung cho file mẫu + trình đọc
+- [x] `utils/import-helper.js` — `buildImportTemplate()` chuyển sang **ExcelJS**, cột `type: 'select'`
+      có **ô chọn giá trị thật** (data validation kiểu list, danh sách dài đẩy sang sheet ẩn `DanhMuc`)
+- [x] 19 màn gọi `buildImportTemplate` đổi sang `await` (hàm nay bất đồng bộ)
+- [x] `CatalogImportMixin` — import xong gọi `onMutated()` nếu màn có, để xoá cache dropdown địa danh
+
+### FE/BE — sửa 5 màn đã có
+- [x] Quốc gia: mã bưu chính chỉ nhận chữ số, tối đa 50 (`NationService` validate + import) (#4)
+- [x] Khu vực: cột "Mã quốc gia" → **"Tên quốc gia"** dạng ô chọn; BE tra theo tên, vẫn đọc được
+      file cũ ghi mã (#6)
+- [x] Tỉnh/TP: như trên + cột "Tên khu vực" thành ô chọn (#5)
+- [x] Phường/xã: cột Tỉnh/TP thành ô chọn
+- [x] Ngân hàng: cột Trạng thái tự có ô chọn Hoạt động/Khóa nhờ khung mới (#12)
+
+### BE+FE — 2 màn địa lý còn thiếu (#9)
+- [x] Quận/Huyện: `DistrictService` thêm `exportRows/validateRows/import`, controller + 3 route,
+      `ExportColumnRegistry['districts']`, FE thêm nút Xuất/Import + modal
+- [x] Đường/Phố: `HamletService` tương tự (phường/xã tra theo cặp Tỉnh/TP + Phường/xã),
+      `ExportColumnRegistry['hamlets']`, FE thêm nút Xuất/Import + modal
+
+### Gọn giao diện popup import
+- [x] `components/V2BaseImportToolbar.vue` — ẩn HẲN cả nhóm "Hiển thị" (nhãn + nút "Chỉ dòng lỗi"
+      + chip "Dòng hợp lệ đang bị khoá") cho popup đỡ tốn diện tích. **Comment lại, KHÔNG xoá** —
+      markup nhóm nằm trong 1 khối comment, CSS `.lock-pill` comment riêng ở khối style; bật lại
+      thì bỏ comment ở 2 chỗ. Sự kiện `toggle-errors` / state `onlyErrors` bên `V2BaseImportModal`
+      giữ nguyên nên không phải sửa gì thêm
+
+- [x] Thu khoảng cách trong popup import (đo bằng Playwright, trước → sau):
+      dải thông báo cách khối trên **24px → 12px**, cao **44px → 32px** (thêm `.import-inline-alert`
+      padding `7px 12px` thay padding mặc định `.75rem 1.25rem` của Bootstrap) ·
+      bảng preview `mt-3 → mt-2` (24px → 12px) · dòng thống kê trong toolbar `mt-2 → mt-1`
+      (12px → 6px). Thân popup gọn bớt ~36px.
+
+### Đồng bộ STYLE file mẫu import (21/09/2026)
+Chuẩn lấy theo màn **Nhóm ngành** (`static/Mau_import_NhomNganh.xlsx`, dev-hrm/assign/industry-groups):
+cột A = STT · hàng 1 header nền `#B8CCE4` đậm 12pt căn giữa wrap · hàng 2 dòng mô tả yêu cầu nhập
+(cao 46,5) · hàng 3+ dòng ví dụ · toàn bộ ô viền mảnh.
+- [x] `buildImportTemplate` (ExcelJS) dựng đúng khuôn trên -> **mọi màn dùng `V2BaseImportModal`
+      đồng bộ theo, không phải sửa từng màn**
+- [x] `buildHintRow()` sinh câu mô tả tự động: `(Bắt buộc, không được trùng)` · `Bắt buộc (chọn 01
+      trong Hoạt động/ Khóa)` · `Text`; màn muốn câu riêng thì khai `col.hint`
+- [x] Dòng ví dụ suy từ `col.sample` (mảng = nhiều dòng), không có thì lấy `placeholder` / option
+      đầu; màn chưa khai `sample` chỉ sinh **1 dòng** (2 dòng suy tự động sẽ trùng mã nhau)
+- [x] `isHintRow()` nhận dạng dòng mô tả theo ĐẶC TRƯNG (ngoặc đơn / "Bắt buộc" / "chọn 01 trong" /
+      "Text" / "VD:") thay vì so khớp nguyên văn -> file mẫu cũ lẫn mới đều bỏ đúng 1 dòng
+- [x] Màn **Phường/xã** khai `hint` + `sample` cụ thể làm mẫu đối chiếu cho user
+- [x] Soi lại file chuẩn bằng openpyxl rồi khớp ĐÚNG từng thuộc tính (vòng sửa 2):
+      font **Calibri 12** · hàng tiêu đề cao **15,5** (trước để 30 nên nhìn to hơn) và KHÔNG wrap,
+      bù lại nới độ rộng cột theo độ dài tiêu đề · hàng mô tả **IN NGHIÊNG**, cao 46,5, wrap, căn
+      giữa · viền **đen `FF000000`** (trước dùng xám xanh) · kẻ sẵn khung trống **tới hàng 17** ·
+      tên sheet kiểu **`DM_phuongxa`** (bỏ dấu, bỏ khoảng trắng, tiền tố `DM_`)
+- [x] Vòng sửa 3 — căn lề + độ rộng:
+      · ⚠️ ExcelJS chỉ hiểu `vertical: 'middle'`, ghi `'center'` là thuộc tính **rơi mất im lặng**
+        -> file ra không căn giữa theo chiều dọc như file chuẩn. Đã đổi.
+      · độ rộng cột bám dải chuẩn **20 - 34 ký tự** (trước để theo `width` px nên ra 40/24/37 —
+        thừa một khoảng trắng bên phải), lấy `max(độ dài tiêu đề, độ dài dòng ví dụ)` rồi kẹp lại.
+      · chiều cao hàng mô tả **tính theo số dòng chữ thực tế** thay vì cứng 46,5.
+      · cột STT ở hàng mô tả bỏ `wrapText` cho khớp file chuẩn.
+
+📌 Giống hệt màn Nhóm ngành: **dòng ví dụ nằm trong vùng dữ liệu**, người dùng phải xoá trước khi
+nhập thật (tải mẫu lên nguyên trạng thì 2 dòng ví dụ được đọc thành dữ liệu).
+
+### Đồng bộ XUẤT Excel màn Phường/xã (22/09/2026)
+Màn này trước đây bấm Xuất là tải thẳng file cột cứng do trang tự dựng bằng ExcelJS — không có
+popup chọn trường, không letterhead, không tiêu đề báo cáo, không khối ký tên.
+- [x] BE: `ExportColumnRegistry['wards']` + `WardService::exportRows()` + `WardController::exportRows()`
+      + route `GET human/wards/export-rows` (khuôn 14c, trần `limit` 5.000)
+- [x] FE: thêm `exportFieldsMixin` + `ExportFieldsModal`, `runExport(type, fields)` gọi
+      `exportListFile()`; gỡ `fetchAllWards()` + đoạn dựng file tự chế
+- [x] Đồng bộ `utils/export/listExportFile.js` theo bản BE `DynamicExport`: tiêu đề **25pt**
+      (trước 14), hàng tiêu đề cột **bỏ nền xám**, **cột STT căn giữa**, thêm **khối ký tên** cuối
+      file → ảnh hưởng cả 9 màn đang dùng helper, nay giống hệt ~20 màn dùng DynamicExport
+- [x] Đo thật: 13.465 dòng, tải theo lô 2.000 + dựng file ở trình duyệt ~15s, có dòng tiến độ
+
+### Kiểm thử trên trình duyệt (Playwright MCP, 21/09/2026 — stack gop_db: client :3002, API :8003)
+- [x] Khu vực · file 3 dòng KHÔNG có dòng gợi ý → bảng xem trước ra **đủ 3 dòng** (trước đây nuốt
+      dòng 1), validate 3/3 hợp lệ, import xong cả 3 nằm trong danh sách
+- [x] Khu vực · file CÓ dòng gợi ý + 2 dòng thật → ra đúng **2 dòng** (bỏ đúng dòng gợi ý)
+- [x] Quốc gia · mã bưu chính `ABC-123` → báo "Mã bưu chính chỉ được nhập chữ số"; `100000` hợp lệ
+- [x] Quận/Huyện · Xuất Excel ra 738 dòng đúng cột; import 2 dòng → 1 hợp lệ, 1 báo
+      "Không tìm thấy tỉnh/TP: Tỉnh Không Có Thật"; import xong có Người tạo / Ngày tạo
+- [x] File mẫu Khu vực / Tỉnh-TP / Đường-Phố / Ngân hàng đều mở được bằng openpyxl và có **ô chọn
+      giá trị thật**; danh sách dài (45 tỉnh) nằm ở sheet ẩn `DanhMuc`
+- [x] Đã xoá sạch dữ liệu thử (3 khu vực, 1 quận/huyện + lịch sử tương ứng)
+
+**2 lỗi phát hiện nhờ lượt test này, đã sửa:**
+1. `errorStyle: 'error'` sai chuẩn OOXML (chỉ nhận `stop`/`warning`/`information`) → file mẫu bị
+   openpyxl từ chối, Excel đòi "repair". Đổi thành `'stop'`.
+2. Gán data validation từng ô làm ExcelJS sinh 2 vùng CHỒNG NHAU (`F3:F502` + `F10:F502`) → chuyển
+   sang `sheet.dataValidations.add(range, …)`, còn đúng 1 vùng.
+
+### Kiểm thử
+- [x] `Modules/Human/Tests/Unit/CatalogImportFixesTest.php` — 5 test: mã bưu chính chỉ chữ số ·
+      khu vực/tỉnh tra quốc gia theo tên (và vẫn đọc file cũ ghi mã) · quận huyện · đường phố
+- [x] `ProvinceImportValidationTest` cũ vẫn xanh (9/9) — đường tra theo MÃ không vỡ
+
+### ⏸ HOÃN — 2 màn CSKH có bảng con (#11)
+**Chốt với user 21/09/2026: để sau, lần này chỉ xử lý danh mục PHẲNG.**
+- [ ] Gói bảo dưỡng (`customer-care/services`) — vướng: bắt buộc file PDF đính kèm (Excel không
+      chở được) + bảng hạng mục bảo dưỡng theo cấp dịch vụ
+- [ ] Công việc, lỗi thiết bị (`customer-care/device-errors`) — vướng: bắt buộc danh sách hàng hoá,
+      hàng thay thế, bảng dịch vụ sửa chữa kèm giá vốn/giá dịch vụ
+
+Làm 2 màn này cần: trình đọc Excel nhiều sheet + `V2BaseImportModal` nhận sheet con (đã dựng thử
+rồi gỡ bỏ trong session 21/09 để giữ diff sạch).
+
+---
+
 ## Self-review của plan (đã chạy khi viết)
 
 | Mục kiểm | Kết quả |

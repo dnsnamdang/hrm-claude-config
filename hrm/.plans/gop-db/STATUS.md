@@ -68,6 +68,29 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- user-profile-performance → @namdangit → .plans/gop-db/user-profile-performance/plan.md
+  Trạng thái: 🟡 **Mới lên plan (22/09/2026), chưa code.** Chờ user chốt phạm vi Phase 2–3.
+  Giảm tải API `user-profile` (1,45 MB · 0,5–0,7 s CPU · 37 query, chạy ở mọi lần tải trang).
+  Đã đo: departments 442 KB (86% là 2 quan hệ lồng) · permissions trả TRÙNG 2 lần 199 KB ·
+  employees 258 KB. Không tách endpoint lazy vì `state.departments` dùng ở 119 file.
+  Hạ tầng đã sửa cùng ngày (ngoài repo): bật `gzip_types` cho nginx server dev → payload −91%;
+  `pm.max_children` 5 → 12. Chi tiết: `.plans/gop-db/user-profile-performance/design.md`.
+
+- smart-filter-panel-migration → @namdangit → .plans/gop-db/smart-filter-panel-migration/plan.md
+  Trạng thái: 🟢 **XONG Phase 0–6, đã verify trên trình duyệt** (21/09/2026). **Chưa commit, chưa push.**
+  Gom toàn bộ bộ lọc về **một** panel: 56 file chuyển `V2BaseFilterPanel` → `V2BaseSmartFilterPanel`,
+  51 file đã dùng Smart nhưng thiếu `floating` được bật + dọn placeholder trùng nhãn.
+  `components/V2BaseFilterPanel.vue` **đã xoá**.
+  4 component dùng chung được bổ sung (user duyệt từng cái): panel truyền `required`;
+  panel + `V2BaseFilterFieldControl` nhận `in-modal` (→ `V2BaseSelectInModal`);
+  control nhận `field.multiple`; `V2BaseFieldCategoryApplicationFilter` nhận `floating`.
+  Skill `list-page` đã chốt: panel duy nhất · `floating` bắt buộc · khoảng cách trên/dưới khối lọc `pb-2` (12px).
+  **Đã verify Playwright** (20 màn): sửa thêm 6 lỗi UI — nhãn float đè chip, viền đôi ô chọn nhiều,
+  ô chọn nhiều 42px, 62 ô ngày 32px, 9 ô tìm-từ-xa thiếu `height`, ô Tag 32px (gốc chung:
+  CSS `.ff` thua specificity CSS riêng của control). Gộp nốt 31 cặp "từ ngày – đến ngày" ở 30 màn.
+  Kết quả: 0 màn thiếu `floating`, 0 màn tách ô ngày, mọi ô lọc cao đúng 36px. Tổng 113 file.
+  Bước tiếp: user duyệt rồi commit/push.
+
 - product-classification-catalogs (Redmine #11421) → @junfoke → .plans/gop-db/product-classification-catalogs/plan.md
   Trạng thái: 🟢 **XONG CẢ 5 PHASE (29/29 task), đã verify trên trình duyệt** (18/09/2026).
   **Chưa commit, chưa push.**
