@@ -427,6 +427,8 @@ Quay lại). Đặt nút "Lịch sử" ở footer là sai: nội dung lịch s�
 
 ⚠️ **Danh mục Thêm/Sửa/Xem bằng modal cũng phải có khối Lịch sử trong popup Xem** (chốt 2026-08-15).
 Quy ước cũ "chi tiết mở dạng modal thì ẩn khối Lịch sử" đã BỎ.
+Khuôn đặt khối này trong popup (vị trí, prop, và quy tắc **bỏ dòng `Người tạo / Ngày tạo`** ở đáy body):
+skill `modal-popup` **mục 3c**.
 
 **Padding vùng nội dung của khối Lịch sử = `5px`** — dùng đúng một trị số này ở mọi màn (`.si-body`),
 không màn nào tự nới rộng.

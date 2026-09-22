@@ -93,6 +93,109 @@ Request → Resource → Entity) đặt trong `Modules/MasterData`; FE nhân khu
 
 ---
 
+## Phase 6 — Lịch sử thay đổi cho popup danh mục (skill modal-popup §3c)
+
+- [x] Task 6.1 — BE: whitelist `product_natures` trong `CatalogHistoryService::TABLES`
+- [x] Task 6.2 — BE: `ProductNatureService` dùng trait `LogsCatalogHistory` (create / update / delete,
+      đổi trạng thái tách dòng riêng); `ProductNatureController::lock|unlock` gọi `logLockToggle()`
+- [x] Task 6.3 — FE: popup Xem nhúng `SystemInfoSection` ở cuối body, bỏ khối `Người tạo / Ngày tạo`
+- [x] Task 6.4 — FE: menu ⋮ màn danh sách thêm mục `Lịch sử` + `CatalogHistoryModal`
+- [x] Task 6.5 — FE: chuyển vỏ popup `b-modal` thô → khuôn dùng chung `V2BaseModal` (mục 0): bỏ
+      header/footer/CSS tự khai, footer ghim đáy, dòng mô tả bản ghi thay chip `V2BaseMetaInfo`,
+      tooltip giải thích danh mục chuyển xuống nhãn trường qua `V2BaseLabel :hint`
+- [ ] Task 6.6 — Nghiệm thu thật trên trình duyệt (tạo / sửa / khóa / mở khóa → soi timeline)
+- [x] Task 6.7 — Áp cho 5 danh mục còn lại của nhóm hàng hóa (vỏ V2BaseModal + Lịch sử + bỏ meta),
+      BE gom logic ghi log lên `BaseCatalogService` + `BaseCatalogController` nên cả 6 dùng chung
+- [x] Task 6.8 — Chuẩn hoá tiếp 14 popup danh mục khác (Finance, Customer-care, Assign, Human/banks)
+      về khuôn `V2BaseModal`; Lịch sử đã có sẵn ở Finance/Customer-care/banks/project_items
+- [x] Task 6.9 — Rà lại phạm vi THEO MENU (bộ lọc `isShow`+`b-modal` ban đầu sót 12 màn): chuyển
+      nốt vỏ cho 6 danh mục Địa lý (`*Model.vue`, thụt lề 2 space) + 4 danh mục Finance
+      (tài khoản ngân hàng, vụ việc, mã phí, nguồn vốn) + chi nhánh ngân hàng.
+      `$refs.modal.hide()` → `.close()` (V2BaseModal không có `hide`), gán icon riêng từng màn.
+      Popup `AddInsuranceTypeModal` (loại bảo hiểm) BỎ QUA — màn cũ chưa dùng V2Base (user chốt).
+- [x] Task 6.11 — Lịch sử cho 14 danh mục Assign: whitelist 14 bảng trong `CatalogHistoryService`,
+      chèn ghi log vào 14 service (create / update / delete) + 13 controller (lock / unlock).
+      Gom 2 helper dùng chung vào trait `LogsCatalogHistory`: `logCatalogSave()` (tự tách dòng
+      "đổi trạng thái") và `logLockToggle()`. FE: 13 popup nhúng `SystemInfoSection`,
+      12 màn danh sách thêm mục ⋮ `Lịch sử` + `CatalogHistoryModal`.
+      ⚠️ Nhóm ngành ghi vào `hrm_scopes` (đã test đúng bảng, không đụng `scopes` của ERP).
+- [x] Task 6.13 — Rà 35 màn DANH SÁCH của các danh mục đã sửa popup theo skill `list-page`:
+      `/human/banks` bỏ `.text-muted` (ra màu đỏ), `/assign/customer-scope-groups` xoá 24 dòng code
+      chết tự dựng `status-pill`, `/assign/meeting_cancel_reason` dựng lại đúng chuẩn (cột Tên thành
+      link mở popup Xem, `V2BaseBadge` thay pill tự chế, `V2BaseRowActions` thay 4 nút `<button>` thô,
+      bỏ disable → ẩn, thêm mục ⋮ Lịch sử); BE thêm `status_text` vào `MeetingCancelReasonResource`.
+      Kết quả: 35/35 màn danh sách đạt chuẩn theo bộ kiểm tự động.
+- [x] Task 6.14 — Nghiệm thu bằng Playwright + rà theo TỪNG PHẦN TỬ trên màn danh sách (mỗi phần tử
+      đối chiếu skill của nó: button-convention, modal-popup, entity-history, select-and-input-state):
+      `/assign/meeting_cancel_reason` dựng lại từ khuôn màn chuẩn (`V2BaseSmartFilterPanel` + schema
+      `filterFields`, `ColumnCustomizationModal`, `ExportFieldsModal`, filterStateMixin /
+      columnCustomizationMixin / exportFieldsMixin), tách cột Người/Ngày cập nhật; BE bỏ giây
+      (`d/m/Y H:i`), tên người tạo chỉ còn TÊN (subquery), mở rộng whitelist `sort_field`.
+      29 màn còn lại: bật `floating` + gộp ô ngày từ/đến thành 1 field `date-range`.
+      Đã test thật: Sửa → log "Thay đổi thông tin"; Khoá → log riêng + nút Sửa ẩn, badge đổi;
+      lọc tự tìm khi chọn; "Cài đặt bộ lọc" còn đúng 1 dòng "Ngày cập nhật". Dữ liệu test đã hoàn nguyên.
+- [x] Task 6.15 — Nghiệm thu Playwright DIỆN RỘNG (14 màn) — phát hiện & sửa 3 lỗi mà kiểm tĩnh
+      không thấy: (1) **13 popup không đóng được** — converter giữ `@cancel/@close/@hide="closeModal"`
+      trong khi `closeModal()` gọi `$refs.modal.close()` → V2BaseModal phát `hide` → gọi lại
+      `closeModal` (vòng lặp); popup kẹt, backdrop + `body.modal-open` còn lại che cả màn.
+      Sửa: chỉ còn `@hidden="onHidden"` để dọn dữ liệu, `closeModal()` chỉ đóng.
+      (2) `project_phase_modal` thiếu `import Required` → Vue warn "Unknown custom element" (lỗi có sẵn).
+      (3) `meeting-type-modal` khai `@show="onModalShow"` nhưng method không tồn tại (lỗi có sẵn) →
+      trỏ sang `resetModal`. Ngoài ra: dọn format `components: {` 36 file, đổi tiêu đề màn vai trò
+      dự án về khuôn "Danh sách …", cấp 2 quyền còn thiếu của màn Lĩnh vực Công ty kinh doanh.
+- [x] Task 6.16 — Test THẬT Import/Export bằng Playwright (màn Lý do hủy cuộc họp) — 4 lỗi:
+      (1) Export trả **400**: FE gửi `fields=` nhưng endpoint cũ bỏ qua → chuyển sang `DynamicExport`
+      + thêm `meeting_cancel_reasons` vào `ExportColumnRegistry`.
+      (2) Tên file xuất là `danh_sach_nguyen_nhan_that_bai_du_an.xlsx` (sót khi copy khuôn).
+      (3) File mẫu import trỏ nhầm `Mau_import_NNthatbai.xlsx`; `importColumns` thừa cột STT →
+      popup báo "File không đúng mẫu" và chặn Load lên bảng.
+      (4) **Import KHÔNG ghi Lịch sử** — luồng import gọi thẳng `::create()`; đã thêm
+      `logCatalogCreate()` cho 8 service (meeting_cancel_reasons + 7 service Assign khác).
+      Verify: validate 2 dòng → 1 hợp lệ / 1 lỗi ("không được để trống"), nút Import khoá khi còn
+      lỗi; file sạch → import 1 dòng, bảng lên 4 dòng, `catalog_histories` có dòng `create`.
+      Dữ liệu + file test đã dọn.
+- [x] Task 6.17 — Test Import/Export THẬT thêm 6 màn (loại meeting, giai đoạn dự án, nhóm ngành,
+      hạng mục dự án, loại hình hoạt động KH, nguyên nhân thất bại): xuất file đúng tên, import
+      validate → ghi DB → **có dòng `create` trong `catalog_histories`** (6/6 màn).
+      Nhóm ngành ghi đúng `hrm_scopes`, bảng `scopes` của ERP KHÔNG bị đụng.
+      Phát hiện lỗi có sẵn: `/assign/customer-scope-groups` gọi `hasAPermission('Quản lý danh mục
+      loại hình hoạt động khách hàng')` nhưng quyền thật tên "…nhóm lĩnh vực khách hàng" (id 1093/1094)
+      → `canManage` luôn false, MẤT nút Tạo mới/Sửa/Xóa/Import với mọi user kể cả Super admin.
+      Đã sửa FE dùng đúng tên quyền (route BE + menu + seeder đều dùng tên cũ).
+      Quét chéo 28 chuỗi quyền FE với 1.723 quyền trong DB: chỉ 1 chỗ lệch này.
+      Dữ liệu + file test đã dọn sạch.
+- [x] Task 6.18 — Test Import/Export THẬT 6 màn master-data (chính sách kinh doanh, đặc tính SP,
+      tính chất hàng hóa, nhóm chức năng, nhóm sản phẩm, loại sản phẩm — gồm 3 cấp cha–con).
+      Xuất: 6/6 tải được file đúng tên. Import: 6/6 validate → ghi DB.
+      **Lỗi tìm ra**: import của master-data KHÔNG ghi Lịch sử — trait dùng chung
+      `ImportsCatalogRows` gọi thẳng `$model::create()`. Đã thêm `logCatalogCreate()` vào trait
+      (1 chỗ, áp cho cả 6 danh mục). Import lại: 6/6 có dòng `create` trong `catalog_histories`.
+      ⚠️ Đây là sửa TRAIT DÙNG CHUNG của nhóm 6 danh mục — cần user xác nhận lại.
+      Dữ liệu + file test đã dọn (xoá theo thứ tự con → cha).
+- [x] Task 6.19 — Quét nốt 11 màn chưa mở trình duyệt (finance: loại tài khoản, TK ngân hàng, mã phí,
+      nguồn vốn · customer-care: dịch vụ/chi phí, cấp dịch vụ, ghi chú bảo dưỡng · địa lý: khu vực,
+      quận/huyện, phường/xã, đường/phố): 11/11 KHÔNG lỗi — ngày không giây, cột định danh là link,
+      không nút disable, không pill tự chế, popup Xem có khối Lịch sử, đóng sạch (body + backdrop),
+      console 0 lỗi. Ghi nhận: `/finance/source-capitals` khai `filterFields: []` nên chỉ có ô tìm
+      nhanh (các màn danh mục khác đều có Trạng thái / Người tạo / Ngày tạo) — chưa đụng, cần user chốt.
+- [x] Task 6.20 — Kéo–thả: "Cài đặt bộ lọc" kéo trường thứ 1 xuống vị trí 4 → Lưu → thứ tự ô lọc
+      trên màn đổi đúng; "Khôi phục mặc định" chỉ dựng lại danh sách trong popup, **phải bấm Lưu**
+      mới ghi (đúng thiết kế, không phải lỗi) — đã khôi phục về thứ tự gốc.
+      "Tuỳ chỉnh cột": bỏ tick "Diễn giải" → Lưu → bảng mất đúng cột đó; tick lại → cột trở về.
+      Popup này KHÔNG có tay kéo sắp xếp (chỉ tick ẩn/hiện) — khác popup Cài đặt bộ lọc.
+- [x] Task 6.21 — Bổ sung skill `list-page` mục 1: "Tuỳ chỉnh cột" + "Xuất Excel" là BẮT BUỘC ở mọi
+      màn danh sách, kèm bảng 4 mắt xích khi thêm nút Xuất (runExport vs handleExportFields, URL
+      `/export`, thứ tự route trước `/{id}`, ExportColumnRegistry + `status_text`).
+      Rà 35 màn danh mục: chỉ `/human/districts` và `/human/hamlets` thiếu nút Xuất Excel — user chốt
+      CHƯA sửa code, để các màn sau làm theo skill.
+- [ ] Task 6.12 — 2 màn còn lại: `/decision/category/insurance-types` (popup cũ, chưa dùng V2Base —
+      user chốt bỏ qua) và `/assign/meeting_cancel_reason` (cột Hành động còn là `<button>` thô,
+      cần chuyển sang `V2BaseRowActions` trước khi thêm mục Lịch sử)
+- [ ] Task 6.10 — Luồng Import chưa ghi log (`ImportsCatalogRows` gọi thẳng `$model::create()`) —
+      chờ user chốt có thêm hook vào trait dùng chung không
+
+---
+
 ## Checkpoint
 
 ### Checkpoint — 18/09/2026 (rà soát trước khi user đẩy code)

@@ -57,3 +57,10 @@ Dữ liệu test đã trả về nguyên trạng (#274 scope_id=2, #234 xoá nh�
 ## Phase 4 — Rút gọn câu chữ khi ô Nhóm ngành trống (2026-09-17)
 - [x] Giữ NGUYÊN luật chống trùng nhóm ngành (#11142) — user cân nhắc lại, không gỡ
 - [x] FE `ProjectInfoSection.vue`: dòng cảnh báo dưới ô Nhóm ngành + message popup đổi Ứng dụng rút còn đúng "Chưa khai báo nhóm ngành hoặc nhóm ngành đang thuộc dự án khác."
+
+## Phase 5 — Gỡ bế tắc dự án con (2026-09-19, nhánh `tpe`, worktree tpe-api/tpe-client)
+- [x] BE `ScopeService::occupiedScopeIds()` nhận `parent_project_id`: dự án CHA + các con cùng cha không tính là "đang chiếm" nhóm ngành
+- [x] BE `ProspectiveProjectRequest::scopeConflictRule()` bỏ qua cha + anh em cùng cha khi payload có `parent_id`
+- [x] FE `ProjectInfoSection.fillScopeFromParent()`: cha chỉ có 1 nhóm ngành → tự điền cho con; cha nhiều nhóm → để user chọn
+- [x] Kiểm thử trình duyệt tại `127.0.0.1:3005` — 6 ca (cha 1 nhóm tự điền / cha 3 nhóm để chọn / lưu nháp con / con thứ 2 trùng nhóm / màn Sửa giữ giá trị / dự án độc lập vẫn bị chặn). Dữ liệu test #359 #360 đã xoá
+- Ghi chú: luật "con nằm trong nhóm ngành của cha" là quyết định nội bộ 16/09, KHÔNG có trong Redmine #11142; #11142 chỉ quy định cha chọn nhiều / con chọn 1 + chống trùng theo khách hàng

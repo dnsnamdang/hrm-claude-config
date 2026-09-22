@@ -7,20 +7,32 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 - Áp dụng cho các bảng có các field: company_id, department_id, part_id (field này có thể có hoặc không) =>> Nếu có thì quyền sẽ theo bộ quyền như sau Xem [Tên màn danh sách] theo công ty, Xem [Tên màn danh sách] theo phòng ban, Xem [Tên màn danh sách] theo bộ phận, Xem tất cả [Tên màn danh sách]
 - Quyền xem tất cả =>> Lấy tất cả bản ghi trừ trạng thái Đang tạo / Nháp
 - Các quyền còn lại query theo các field tương ứng
-- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận ==>> Panel chuẩn là **`V2BaseSmartFilterPanel`** (`V2BaseFilterPanel` là bản cũ, không có popup "Cài đặt bộ lọc")
+- Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận
+- **PANEL DUY NHẤT LÀ `V2BaseSmartFilterPanel`, VÀ LUÔN BẬT `floating`** (user chốt 2026-09-21). `V2BaseFilterPanel` **ĐÃ BỊ XOÁ** khỏi repo ngày 2026-09-21 — 56 màn cuối cùng đã chuyển hết sang panel mới; đừng tạo lại, đừng copy pattern slot `#advanced-filters` từ git history.
+  - Khuôn tham chiếu chuẩn: **`pages/master-data/product-natures/index.vue`** (`http://127.0.0.1:3002/master-data/product-natures`).
+  - Khai tối thiểu: `table` (khoá lưu cấu hình theo user) · `floating` · `:filter-fields` · `:filters` · `:collapsed` · `:quickSearchValue` + `quickSearchPlaceholder` · 5 sự kiện `@toggle-panel @quick-search-change @filter-change @search @reset`.
+  - Ô lọc khai bằng **schema `filterFields`** (computed), KHÔNG dựng markup tay. Chỉ ô cần logic riêng (tìm từ xa, chip, cascade, khoá theo ô khác) mới dùng slot `#field-<key>`.
+  - **Bộ lọc nằm trong MODAL → thêm prop `in-modal`**: panel truyền xuống `V2BaseFilterFieldControl` để ô chọn render `V2BaseSelectInModal` (dropdown neo vào `.modal-content`). Thiếu là danh sách select2 xổ ra NGOÀI modal và bị lớp phủ che. Xem skill `modal-popup`.
+  - **Ô chọn NHIỀU**: khai `multiple: true` trên field — control tự truyền `extraSettings: { multiple: true }`, panel tự dùng vỏ `variant: 'tags'`. KHÔNG viết slot riêng chỉ để bật multiple.
+  - **Ô lọc BẮT BUỘC chọn** (kỳ báo cáo, năm, tháng…): khai `required: true` trên field → nhãn floating kèm dấu `*`.
+- **KHOẢNG CÁCH TRÊN / DƯỚI KHỐI LỌC = `pb-2` (0.5 × `$spacer 1.5rem` = 12px)** — chốt 2026-09-21, **đo thật trên trình duyệt** ở màn mẫu `/master-data/product-natures`:
+  - Vỏ trang: `<div class="v2-styles min-vh-100 d-flex justify-content-center pt-2"><div class="container-fluid">`. ⚠️ `pt-2` ở đây **ra 0px**, không phải 12px — `assets/scss/v2-styles.scss` có rule `&.min-vh-100.pt-2 { padding-top: 0 !important }` để khớp khoảng cách của `/assign/dashboard`. Khối lọc nằm **sát** mép trên vùng nội dung; đừng "sửa" cho nó thành 12px.
+  - Xuống bảng: **12px**, do chính component `V2BaseSmartFilterPanel` mang `mb-2` (`$spacer * .5` = 0.75rem = 12px, đúng bằng `pb-2`).
+  - Đệm trong card: `.smart-filter-card { padding: 10px 16px }` — của component.
+  - **Màn KHÔNG tự khai padding/margin riêng cho khối lọc** (không `p-3`, không `mt-*`, không `mb-*` chèn thêm) — mỗi màn một khoảng cách là lỗi, không phải tuỳ biến. Cần đổi thì sửa trong component để cả 107 màn đổi cùng lúc.
 - **Tiêu đề panel bộ lọc để mặc định `Bộ lọc danh sách`** — KHÔNG truyền prop `title`/`subtitle` để ghi riêng cho từng màn (`Bộ lọc danh sách khách hàng`, `Bộ lọc Issue`, `Bộ lọc hàng hoá`…). Tiêu đề bảng bên dưới đã nói rõ đang xem gì; `V2BaseFilterPanel` đã đặt sẵn default nên chỉ cần bỏ prop đi
 - **Khoảng "từ ngày – đến ngày" LUÔN gộp về MỘT ô lọc** (user chốt 2026-09-09). Khai đúng một field `type: 'date-range'` + `resetKeys: ['<key từ>', '<key đến>']`; `V2BaseFilterFieldControl` tự render 2 datepicker ngăn bởi dấu `→`, panel tự chọn vỏ `variant="range"`. **Hai key gửi lên máy chủ giữ nguyên** nên `loadData()` và BE không phải sửa gì. Áp cho MỌI cặp khoảng, không riêng ngày (số tiền từ–đến, số lượng từ–đến… cũng một ô).
   - Vì sao: tách hai trường thì hàng lọc dài thêm một ô cho cùng một điều kiện, và trong "Cài đặt bộ lọc" user phải bật/tắt **hai lần** mới ẩn nổi một điều kiện — ẩn nhầm một nửa là lọc ngầm bằng ô không nhìn thấy.
   - `resetKeys` là bắt buộc: nó vừa để xoá đủ 2 key khi user ẩn trường, vừa để nhãn floating biết "có giá trị" (một trong hai ô có ngày là nhãn phải bay lên). Thêm `inputCount: 1` vì đây là **một** ô nhập, không khai thì panel đếm 2 và mất ngưỡng bộ lọc gọn.
   - **Đổi 2 field cũ thành 1 field mới KHÔNG làm hỏng cấu hình user đã lưu**: `mergedFields()` bỏ qua key không còn trong schema và tự thêm key mới với `isVisible: true`. Nhưng nhớ kiểm popup "Cài đặt bộ lọc" một lần sau khi đổi — phải thấy đúng MỘT dòng ("Ngày tạo"), không còn 2 dòng cũ.
   - **Ô này phải chạy ở CẢ HAI chế độ.** Trong khối nâng cao có floating thì viền do vỏ `.ff--range .ff__control` vẽ, nên cụm để `display: contents`; còn ở **bộ lọc gọn** (dàn ngang, không có vỏ nào) thì cụm phải TỰ vẽ viền — panel truyền `range-boxed`, thiếu là hai datepicker rời ra với dấu `→` trần ở giữa, nhìn như hai trường khác nhau. Màn chưa bật `floating` thì chế độ gọn không có nhãn, nên placeholder tự ghép tên trường: "Ngày tạo từ" / "Ngày tạo đến" thay vì "Từ ngày" / "Đến ngày". Sửa xong nhớ thử cả hai: mở "Cài đặt bộ lọc" tắt bớt trường cho còn ≤ 3 ô để panel nhảy sang chế độ gọn.
-  - Màn dùng `V2BaseFilterPanel` (bản cũ, tự dựng slot) thì làm tay theo mẫu `pages/assign/prospective-projects/index.vue`: `V2BaseFloatingField variant="range"` bọc 2 `V2BaseDatePicker` + `<span class="ff__sep">→</span>`.
-- **Nhãn floating là chuẩn của khối "Tìm kiếm nâng cao"** (user chốt 2026-09-07, mẫu: `pages/assign/prospective-projects/index.vue`). Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`: nhãn nằm giữa ô khi rỗng, bay lên đè viền trên khi ô có dữ liệu hoặc đang focus; ô cao **36px**. Panel tự bọc `V2BaseFloatingField`, tự tính `hasValue` (field gom nhiều ô thì dựa vào `resetKeys` — **phải khai**), tự truyền chiều cao xuống `V2BaseSelect`. Mặc định `false` để màn cũ không đổi. **Nút phụ đi kèm nhãn** (công tắc ổ khoá "xem cả danh mục đã khoá" của ô Công ty – Phòng ban – Bộ phận) gắn qua slot **`label-suffix`** của `V2BaseFloatingField`, KHÔNG nhét vào trong ô (tranh chỗ với mũi tên select và nút ×) — `V2BaseCompanyDepartmentFilter` đã làm sẵn cho cả 3 ô, màn không phải khai gì. ⚠️ Nhãn float lên viền thì icon co còn ~14px, nên nút bắt buộc mang class `ff-label-action` (component nới vùng bấm bằng `::after { inset: -9px }` → vùng bắt chuột ~32px). Tự dựng nút phụ mới cũng phải theo đúng khuôn đó, nếu không user phải rê chuột cực khéo mới trúng. Chi tiết + biến thể `range`/`tags` + bẫy specificity: xem skill `erp-to-hrm-screen`, file `references/khuon-man-mau.md`.
+- **Nhãn floating là chuẩn của khối "Tìm kiếm nâng cao"** (user chốt 2026-09-07, mẫu: `pages/assign/prospective-projects/index.vue`). Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`: nhãn nằm giữa ô khi rỗng, bay lên đè viền trên khi ô có dữ liệu hoặc đang focus; ô cao **36px**. Panel tự bọc `V2BaseFloatingField`, tự tính `hasValue` (field gom nhiều ô thì dựa vào `resetKeys` — **phải khai**), tự truyền chiều cao xuống `V2BaseSelect`. Prop mặc định `false` **chỉ vì lý do kỹ thuật** — **mọi màn đều phải khai `floating`**, không có ngoại lệ (2026-09-21: 51 màn còn thiếu đã được bật hết). **Nút phụ đi kèm nhãn** (công tắc ổ khoá "xem cả danh mục đã khoá" của ô Công ty – Phòng ban – Bộ phận) gắn qua slot **`label-suffix`** của `V2BaseFloatingField`, KHÔNG nhét vào trong ô (tranh chỗ với mũi tên select và nút ×) — `V2BaseCompanyDepartmentFilter` đã làm sẵn cho cả 3 ô, màn không phải khai gì. ⚠️ Nhãn float lên viền thì icon co còn ~14px, nên nút bắt buộc mang class `ff-label-action` (component nới vùng bấm bằng `::after { inset: -9px }` → vùng bắt chuột ~32px). Tự dựng nút phụ mới cũng phải theo đúng khuôn đó, nếu không user phải rê chuột cực khéo mới trúng. Chi tiết + biến thể `range`/`tags` + bẫy specificity: xem skill `erp-to-hrm-screen`, file `references/khuon-man-mau.md`.
 - **Placeholder của ô lọc phải NÓI ĐÚNG trường đó lọc gì** (user chốt 2026-08-15), theo công thức:
   - Ô tìm nhanh: **`Tìm theo <các trường BE thực sự lọc>`** — phải liệt kê đúng, đừng ghi "Tìm kiếm..." chung chung.
   - **Khối nâng cao có `floating`** → **BỎ placeholder trùng nhãn**. Nhãn floating đã nói tên trường rồi; lúc nghỉ nhãn nằm đúng chỗ placeholder (component tự giấu placeholder), lúc float thì placeholder hiện ra lặp lại y hệt nhãn. Chỉ giữ placeholder khi nó nói THÊM: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`.
-  - **Màn CHƯA bật `floating`** (cả hai chế độ) → không có nhãn floating, placeholder là thứ DUY NHẤT cho user biết ô đó là gì, nên giữ công thức cũ: ô chọn = **`Chọn <tên trường>`** (`Chọn trạng thái`, `Chọn quốc gia`), ô gõ tay = **`Nhập <tên trường>`** (`Nhập số tiền`). Không phải khai tay: ở chế độ gọn panel truyền `labelless` xuống `V2BaseFilterFieldControl`, control **tự sinh** placeholder từ `label` theo đúng công thức trên.
-  - **CẤM** `Tất cả`, `Chọn...`, `--Chọn--`, để trống.
+  - **Màn CHƯA bật `floating`** — từ 2026-09-21 KHÔNG còn màn nào như vậy; phần dưới chỉ để đọc hiểu code cũ. Không có nhãn floating thì placeholder là thứ DUY NHẤT cho user biết ô đó là gì, nên giữ công thức cũ: ô chọn = **`Chọn <tên trường>`** (`Chọn trạng thái`, `Chọn quốc gia`), ô gõ tay = **`Nhập <tên trường>`** (`Nhập số tiền`). Không phải khai tay: ở chế độ gọn panel truyền `labelless` xuống `V2BaseFilterFieldControl`, control **tự sinh** placeholder từ `label` theo đúng công thức trên.
+  - **CẤM** `Tất cả`, `-- Tất cả --`, `Chọn...`, `--Chọn--`, để trống.
+  - Quy tắc này áp cho CẢ placeholder viết trong slot `#field-*`, không riêng `filterFields`.
 - **Ô lọc phân hệ Quản lý công việc (assign) dùng FLOATING LABEL** (chốt 2026-09-01): bọc `components/V2BaseFloatingField.vue` thay cho cặp `V2BaseLabel` + control. Khuôn mẫu: `pages/assign/prospective-projects/index.vue`, e2e đối chiếu: `e2e/tests/assign/prospective-projects-filter.spec.ts`.
   - `<V2BaseFloatingField label="Nguồn vốn" :has-value="!!filters.funding_source_id">` — `has-value` do page truyền **tường minh**; `:placeholder-shown` vô dụng với Select2. Ô autocomplete bám biến hiển thị (`customerQuery`), KHÔNG bám `id` — chọn xong mới có id thì nhãn bay lên trễ.
   - **Mọi `V2BaseSelect` / `V2BaseSelectInModal` trong ô floating phải truyền `height="36px"`** — `updateHeight()` ghi inline `!important` nên CSS ngoài không đè nổi. Prop mặc định `null` nên màn khác không đổi.
@@ -33,11 +45,46 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   - Panel cha BẮT BUỘC khai `--panel-bg` khớp nền thật, quên là nhãn hiện vệt trắng lệch màu trên viền.
   - Khoảng cách hàng **18px**, không dưới 16px: nhãn float nhô lên ~5.5px, gap hẹp hơn là nhãn dính vào ô hàng trên.
   - ⚠️ Chỉ áp cho **panel bộ lọc**. Form Tạo/Sửa, modal, màn chi tiết vẫn giữ nhãn-trên-ô-dưới.
+- ⚠️ **CSS cho phần tử do COMPONENT DÙNG CHUNG render thì phải nằm TRONG component đó, KHÔNG để ở `v2-styles.scss`** (chốt 2026-09-21, sau bug thật trên bản deploy).
+  - 226 file import `@/assets/scss/v2-styles.scss` bên trong `<style lang="scss" scoped>`. `scoped` khiến Vue gắn `data-v-<hash CỦA TRANG>` vào **mọi** selector của file đó. Phần tử do component con render mang `data-v` của COMPONENT nên **không selector nào khớp** → rule im lặng không áp dụng.
+  - Trên dev server nó chỉ chạy khi TÌNH CỜ có component nào đó trên trang import `v2-styles.scss` **không** scoped → cùng một bản build, màn này đúng màn kia vỡ, rất khó lần.
+  - Ca đã trả giá: `.d-contents { display: contents }`. Cột gộp nhóm (Công ty–Phòng ban, Nhóm ngành–Ứng dụng) do `V2BaseSmartFilterPanel` render; thiếu rule thì 2 `col-md-3` bên trong bị gói vào một cột block hẹp → **ô lọc co sập còn 7px** (`hrm-crm.eteksofts.com/finance/warehouse-export-requests`), trong khi `/assign/customers` cùng bản build lại đúng 323px. Đã chuyển 4 rule `.d-contents` vào khối `<style>` **không scoped** của chính panel.
+  - Quy tắc: viết CSS cho phần tử của component X → đặt trong `<style>` của X. Cần dùng chung nhiều component → đặt ở CSS toàn cục nạp qua `nuxt.config`, **đừng** dựa vào `v2-styles.scss` được ai đó import không scoped.
+  - **Đo trên trình duyệt phải đo CẢ CHIỀU RỘNG**, không chỉ chiều cao — lỗi này cao vẫn đúng 36px nên audit chỉ đo cao sẽ báo "đạt".
+- **SLOT `#field-*` KHÔNG ĐƯỢC TỰ VẼ `V2BaseLabel`** (chốt 2026-09-21). Field khai `hideLabel: true` là panel KHÔNG bọc vỏ floating -> slot phải tự lo nhãn, và kết quả là **ô đó lạc loài: nhãn tĩnh nằm trên ô, cao hơn các ô bên cạnh nguyên một dòng**. Đã dính **24 slot ở 13 file** trước khi bị phát hiện.
+  - Chỉ dùng `hideLabel: true` cho component **tự vẽ nhãn cho NHIỀU ô** (`V2BaseCompanyDepartmentFilter`, `V2BaseFieldCategoryApplicationFilter`) — và component đó phải nhận `:floating="true"`.
+  - Ô đơn trong slot: **bỏ `hideLabel`**, slot chỉ render control, để panel bọc floating.
+  - Cặp "từ – đến" mà panel chưa có `type` sẵn (tiền, số lượng): khai `variant: 'range'` + `resetKeys` + `inputCount: 1`, slot render 2 control + `<span class="ff__sep">→</span>`. **Control bên trong phải bỏ viền riêng**, nếu không thành viền lồng nhau (vỏ `.ff--range` đã vẽ viền) — `V2BaseFloatingField` đã xử sẵn cho `.mx-input`, `.v2-input`, `.v2-currency-input`.
+  - Tự kiểm: `grep -n "#field-" -A 6 <file> | grep V2BaseLabel` phải RỖNG.
+- **MỌI Ô LỌC TRONG PANEL PHẢI CAO ĐÚNG 36px** — verify 21/09/2026 phát hiện 4 lỗi cùng một gốc: CSS của `.ff` **thua specificity** CSS riêng của từng control. Đã vá trong `V2BaseFloatingField`, nhưng nhớ nguyên tắc khi thêm control mới:
+  - Control nào cũng tự khai chiều cao bằng selector nặng + `!important` (`div.v2-select.v2-select--sm …` 7 class, `div.v2-datepicker__wrapper div.v2-datepicker--sm … input.mx-input` 5 class + 3 thẻ). Muốn đè phải viết selector **nặng hơn**, `!important` thôi KHÔNG đủ.
+  - `V2BaseSelectRemote` / `V2BaseSelect` đặt trong slot `#field-*` **bắt buộc `height="36px"`**, thiếu là 32px lệch hàng (đã dính ở 9 slot của 7 màn).
+  - Ô **chọn nhiều** (`multiple: true`) có 3 bẫy: select2 tự vẽ **viền riêng** → viền đôi với vỏ `.ff--tags`; khung trong cao 32px → ô ra 42px; khối chip có `line-height: 34px` thừa. Cả 3 đã xử lý sẵn trong `V2BaseFloatingField`.
+  - Ô chip lúc nhãn đã float cần `padding-top: 9px` — nội dung ô chip neo mép trên nên nhãn float (thò xuống ~7px dưới viền) sẽ **đè lên chip hàng đầu**.
+  - **Tự kiểm bằng trình duyệt** (dán vào console, phải trả về mảng rỗng):
+    ```js
+    (() => { const r = {}; document.querySelectorAll('.smart-filter-card .ff .ff__control')
+      .forEach(c => { const b = c.getBoundingClientRect(); (r[Math.round(b.top)] ??= []).push(Math.round(b.height)) })
+      return Object.entries(r).filter(([, h]) => new Set(h).size > 1) })()
+    ```
 - **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleInputCount` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; ⚠️ đếm theo **số Ô NHẬP thực tế**, KHÔNG phải số phần tử trong `visibleFields`: field gom nhóm render ra nhiều ô nên tính theo `resetKeys.length` (vd `org` = Công ty + Phòng ban + Bộ phận + Nhân viên = **4 ô**, `customer_scope_pairs` = 2 ô), cần khác thì khai `inputCount` trên field để đè. Đếm mỗi field là 1 thì bật đúng field gom nhóm thôi đã kín cả hàng mà panel vẫn tưởng "gọn" rồi bỏ mất nút "Tìm kiếm nâng cao"; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **vẫn dùng nhãn floating y như khối nâng cao** (user chốt 2026-09-09) — nhãn lúc nghỉ nằm giữa ô nên không chiếm thêm dòng, hàng lọc vẫn thẳng trục với ô tìm nhanh; ô tìm nhanh và ô lọc cùng cao **36px**. Trước đây chế độ này bỏ nhãn và chỉ dùng placeholder, kết quả là **cùng một màn mà bộ lọc gọn nhìn xấu hơn hẳn khối nâng cao**, và placeholder biến mất ngay khi chọn giá trị nên không còn gì cho biết ô đó lọc gì. Màn CHƯA bật `floating` thì vẫn chạy theo lối cũ (không nhãn, placeholder tự sinh từ `label`). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
 - Style bắt buộc: luôn import `@import '@/assets/scss/v2-styles.scss';` trong thẻ `<style lang="scss">` của trang danh sách
 - Các khối bộ lọc theo logic Cascading filter: Công ty =>> Phòng ban =>> Bộ phận; Dự án TKT =>> Giải pháp =>> Hạng mục
 
 ## Filter auto-search (chọn filter → search luôn)
+
+> **LUẬT CHUNG CHO MỌI Ô LỌC** (user chốt 2026-09-21) — chia theo **cách người dùng nhập**:
+>
+> | Kiểu ô | Hành vi bắt buộc |
+> | --- | --- |
+> | **Ô CHỌN bằng chuột** (select, select2, chọn nhiều, datepicker, chip, ô Công ty–Phòng ban…) | **Chọn xong là TÌM LUÔN**, không bắt bấm nút |
+> | **Ô GÕ TAY** (text, number, tiền, ô tìm nhanh) | **Nhấn Enter là TÌM**; không tự bắn API theo từng ký tự |
+>
+> - Ô chọn: do deep watcher trên `filters` lo (pattern bên dưới) — khoá của ô gõ tay phải nằm trong `ignoredFields` để không bắn API khi đang gõ; dùng `textFilterKeys(this.filterFields)` sinh tự động.
+> - Ô gõ tay do **panel** render (`type: 'text' | 'number'`): `V2BaseFilterFieldControl` đã bắn `@enter`, panel nối vào `handleSearch` — **màn không phải khai gì**.
+> - Ô gõ tay do **màn tự render trong slot `#field-*`** (ô tiền, ô autocomplete khách hàng…): panel KHÔNG với tới được, **màn phải tự gắn `@keyup.enter.native="<hàm search của màn>"`** — thiếu là Enter không ăn (đã dính 19 slot ở 13 màn, sửa 21/09/2026).
+> - **Ngoại lệ duy nhất — màn BÁO CÁO** (`pages/assign/report/**`): truy vấn nặng, giữ nếp chờ bấm "Tìm kiếm". Riêng ô đổi hẳn cấu trúc bảng (Kỳ báo cáo, Tiêu chí theo dõi, Xem theo thời gian) thì vẫn tải lại ngay vì nó đổi luôn bộ ô lọc hiển thị.
+> - Tự kiểm: chọn 1 giá trị ở mỗi select → phải thấy request mới; gõ vào từng ô chữ rồi Enter → phải thấy request mới.
 
 Tất cả màn danh sách PHẢI dùng deep watcher trên `filters` để khi chọn bất kỳ filter nào (trừ keyword) thì tự động gọi `loadData()`, không cần nhấn nút tìm kiếm. Tham chiếu: `pages/assign/solutions/components/manager/TasksTab.vue`.
 
@@ -133,6 +180,43 @@ async mounted() {
 **Màn mẫu: `pages/assign/customers/index.vue`.** Màn mới copy theo màn này; màn cũ sửa dần khi có dịp đụng vào.
 
 ## 1. Vị trí và số lượng nút
+
+### ⚠️ Thanh công cụ: "Tuỳ chỉnh cột" và "Xuất Excel" là BẮT BUỘC (chốt 2026-09-19)
+
+**MỌI màn danh sách phải có đủ 2 nút này**, kể cả danh mục nhỏ nhất (quốc gia, phường/xã, cấp dịch
+vụ, nguồn vốn…). Không có = thiếu chức năng, không phải "màn đơn giản nên bỏ bớt".
+
+| Nút | Khai báo | Kéo theo |
+| --- | --- | --- |
+| **Tuỳ chỉnh cột** | `V2BaseButton secondary size="sm" title="Cấu hình cột hiển thị"` chỉ có icon `ri-layout-column-line`, đặt CUỐI nhóm nút | mixin `columnCustomizationMixin` + `ColumnCustomizationModal` + computed `allColumns` (xem mục 5) |
+| **Xuất Excel** | `V2BaseButton secondary status="success" size="sm"` + icon `ri-file-excel-2-line` | mixin `exportFieldsMixin` + `ExportFieldsModal` + khai cột ở `ExportColumnRegistry` BE (xem mục 14b) |
+
+- Vì sao bắt buộc: bảng mặc định chỉ hiện 7 cột (mục 6) — **không có "Tuỳ chỉnh cột" thì user không
+  có cách nào xem các cột còn lại**. Và mọi màn danh sách đều có nhu cầu mang dữ liệu ra ngoài để
+  đối chiếu; thiếu nút Xuất là user phải copy tay từng dòng.
+- Thứ tự nhóm nút: **Tạo mới → Import Excel → Xuất Excel → Tuỳ chỉnh cột** (màu theo
+  `button-convention` mục 2b: Tạo mới `primary`, Import cam, Xuất xanh lá).
+- Nút **Tạo mới / Import** gate theo quyền quản lý; **Xuất Excel và Tuỳ chỉnh cột KHÔNG gate** —
+  ai vào được màn thì dùng được (giống mục ⋮ "Lịch sử").
+#### Thêm nút Xuất Excel cho màn đang thiếu — 4 mắt xích, thiếu 1 là file ra SAI
+
+| Lớp | Phải làm gì | Bẫy đã trả giá |
+| --- | --- | --- |
+| **FE — logic** | Khai **`runExport(type, fields)`** trong màn | ⚠️ `exportFieldsMixin` **đã có sẵn** `handleExportFields(fields)`; nó đóng popup rồi gọi `this.runExport(...)`. Khai đè `handleExportFields` ở màn là **cắt mất mắt xích**, và tham số nó truyền là **MẢNG key** — destructure `{ fields }` sẽ ra `undefined`, query thiếu `fields` nên BE xuất sai cột |
+| **FE — URL** | Gọi `downloadExcel(this.$axios, 'human/<màn>/export' + buildQueryString(params), '<tên file>.xlsx')` | Quên `/export` là axios gọi trúng endpoint **danh sách**; file `.xlsx` tải về thật ra là **JSON** — mở bằng Excel báo hỏng, `openpyxl` báo "not a zip file" |
+| **BE — route** | `Route::get('/export', [XController::class, 'export']);` khai **TRƯỚC** `Route::get('/{id}')` | Khai sau thì `/export` bị `/{id}` nuốt, controller chạy `show('export')` |
+| **BE — cột + dữ liệu** | Khai `ExportColumnRegistry::COLUMNS['<bảng>']`, controller dùng `DynamicExport` + `ExportColumnRegistry::resolve()`, service thêm `exportRows($request)` **dùng lại đúng query của màn danh sách** | `id` trong `exportFields` của FE phải khớp **key** ở registry, lệch là cột ra rỗng. Resource phải trả `status_text` (chữ trạng thái), không đẩy số ra file |
+
+Kiểm sau khi làm: mở file tải về bằng Excel, **dòng 1 phải là tiêu đề cột tiếng Việt** — thấy `{"data":[…` là gọi nhầm endpoint danh sách.
+
+- Tự kiểm (chạy ở thư mục client), cả 2 lệnh phải RỖNG:
+
+```bash
+# màn danh sách nào thiếu popup cấu hình cột
+grep -rLn "ColumnCustomizationModal" --include=index.vue pages/<phân hệ> | xargs grep -l "V2BaseDataTable"
+# màn danh sách nào thiếu nút Xuất Excel
+grep -rLn "Xuất Excel" --include=index.vue pages/<phân hệ> | xargs grep -l "V2BaseDataTable"
+```
 
 - Cột **"Hành động" luôn nằm CUỐI bảng**. KHÔNG nhét nút thao tác vào ô đầu (dưới tên bản ghi) như kiểu cũ.
 - **Tối đa 3 nút / dòng.** Nhiều hơn 3 → giữ **2 hành động chính** + **1 nút `⋮`** mở menu dọc chứa phần còn lại.
@@ -868,6 +952,9 @@ Cột **Trạng thái mặc định đứng ngay trước cột Hành động**.
 
 ## 5. Popup "Cấu hình cột hiển thị"
 
+**BẮT BUỘC có ở mọi màn danh sách** (mục 1) — bảng mặc định chỉ hiện 7 cột, thiếu popup này là user
+không mở được các cột còn lại.
+
 Dùng mixin chung `utils/mixins/columnCustomizationMixin.js` (khai `columnScreenKey` + đổi computed cột của màn thành `allColumns`), KHÔNG tự viết lại logic merge/lưu.
 
 - **Cột bắt buộc khai `locked: true`** — chỉ STT, cột Mã (định danh) và Hành động. Cột Tên và mọi cột nghiệp vụ khác để user tự ẩn/hiện + kéo thả. Cột `locked` **vẫn liệt kê trong popup** để user thấy đủ bộ cột của bảng, nhưng bị **xám + tick sẵn**, không bỏ tích và không kéo thả được (modal tự xử lý qua `column-row--locked` + `draggable=".column-row--free"`).
@@ -1169,6 +1256,9 @@ Tiêu đề bảng đã nói rõ đang xem gì nên lặp lại tên đối tư�
 
 ## 14b. Xuất file — BẮT BUỘC hỏi user chọn trường trước (chốt 2026-08-15)
 
+**Nút "Xuất Excel" BẮT BUỘC có ở mọi màn danh sách** (mục 1). Mục này nói về CÁCH xuất, không phải
+"có xuất hay không".
+
 **Mọi nút Xuất (Excel / CSV / PDF) phải mở popup "Chọn trường xuất file" trước, KHÔNG tải file
 ngay khi bấm.** Khuôn: màn Khách hàng `/assign/customers`. Xuất thẳng cả bảng là sai — file ra
 hàng chục cột thừa, user phải tự xoá cột trong Excel.
@@ -1303,6 +1393,14 @@ if (!total) this.$toasted?.global?.error?.({ message: 'Không có dữ liệu đ
   tường minh danh sách khoá số (`EXPORT_NUMERIC_COLUMNS`), KHÔNG dò bằng `is_numeric` (mã phiếu,
   SĐT, MST toàn chữ số sẽ bị đổi thành số). FE tự gắn `#,##0` + canh phải cho ô kiểu number —
   màn không phải khai gì. Chi tiết: `export-excel` mục 4c.
+- **HAI đường dựng file phải ra CÙNG MỘT hình thức** (chốt 22/09/2026). Hệ thống có 2 đường:
+  BE `DynamicExport` (đa số màn) và FE `listExportFile.js` (màn > vài nghìn dòng). File ra phải
+  giống nhau: hàng 1 letterhead · hàng 2 **tiêu đề đậm cỡ 25**, merge hết bề ngang · hàng 3 tiêu đề
+  cột đậm + viền, **KHÔNG tô nền** · dữ liệu viền mảnh, wrap, **cột STT căn giữa** · cuối file có
+  khối ký tên `Ngày ..., tháng ..., năm ...` / `Người lập` / `(Ký, họ tên)`. Sửa 1 bên thì phải
+  đối chiếu bên kia, đừng để mỗi đường một kiểu.
+- **Màn nào cũng phải có popup "Chọn trường xuất file"** (mục 14b) — kể cả màn dựng file ở FE.
+  Từng có màn (Phường/xã) bấm Xuất là tải luôn file cột cứng, lệch hẳn các màn khác.
 - **KHÔNG đóng băng hàng tiêu đề** trong file xuất (chốt 2026-08-25) — file là để lọc/kéo vùng,
   freeze gây vướng. `listExportFile.js` đã bỏ, đừng thêm lại cho riêng màn nào.
 - **Letterhead: neo 2 ô, căn giữa bảng, KHÔNG dùng `ext`.** Dùng `ext` (kích thước tuyệt đối) thì
