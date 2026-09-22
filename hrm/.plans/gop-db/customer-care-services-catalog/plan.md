@@ -1298,3 +1298,119 @@ cho màn Danh mục gói bảo dưỡng, sinh bằng 3 script `gen_*.py` chạy 
 Đang làm dở: không có.
 Bước tiếp theo: user đọc lại 3 file và chốt 2 câu hỏi nghiệp vụ ở mục "Ghi nhận nghiệp vụ cần user chốt".
 Blocked:
+
+---
+
+## Phase 13 — Màn CHI TIẾT thiếu khối "Lịch sử" (2026-09-21)
+
+**Triệu chứng (user báo):** màn chi tiết gói bảo dưỡng không có mục Lịch sử, trong khi skill
+`entity-history` §5.1 bắt buộc ĐỦ 2 nơi: popup ở màn danh sách (đã có) + khối "Lịch sử" trong
+thân màn chi tiết (thiếu).
+
+### FE
+- [x] `pages/customer-care/services/components/ServiceFormComponent.vue` — thêm
+      `<SystemInfoSection v-if="isShow" entity-type="services" :entity-id="serviceId"
+      endpoint-base="catalog-histories" />` đặt TRONG thân trang, ngay trước `V2Footer`
+      (khuôn `DeviceErrorFormComponent.vue`); import + đăng ký component
+- [x] Chỉ hiện ở `mode="show"` (màn chi tiết), không hiện ở Thêm / Sửa / Sao chép
+
+### BE — fix log rác lộ ra khi bật khối Lịch sử
+- [x] `Modules/CustomerCare/Services/ServiceService::catalogDisplay()` — chuẩn hoá cột số
+      (`sale_max_percent` decimal(5,2) trả "1.00" còn FE gửi "1" → mỗi lần lưu đẻ 1 dòng log rác
+      "1.00 → 1"). Chuẩn hoá tại service, KHÔNG đụng `CatalogHistoryService::normalize()` (hàm
+      dùng chung 14 màn danh mục)
+
+### Verify
+- [x] Script test từng trường (transaction + rollback, không để lại rác): 8/8 cột của bảng chính
+      ra đúng 1 dòng log/cột; đổi 2 trường → 1 dòng 2 khoá; đổi trạng thái → dòng riêng `lock`;
+      không đổi gì → KHÔNG ghi log; lưu lại lần 2 → KHÔNG ghi log
+- [x] `filter-options`: đúng 3 nhóm cố định (Tạo mới / Thay đổi thông tin / Thay đổi trạng thái)
+      + 783 người thực hiện
+- [x] `php -l` BE, compile template Vue (vue-template-compiler) — không lỗi
+- [ ] User mở trình duyệt xác nhận khối Lịch sử hiển thị đúng ở `/customer-care/services/{id}`
+
+### BE — ghi lịch sử cho 4 BẢNG CON (user chốt 2026-09-21: làm đủ cả 4)
+Dùng "khoá dạng BẢNG" của bộ dùng chung (skill §3b/§6b) — 5 "cột ảo" khai trong `catalogColumns()`,
+dữ liệu nạp từ DB bằng `loadRowsForLog()` ngay trước mỗi lần chụp snapshot:
+- [x] `maintain_rows` — ma trận nội dung kiểm tra: mỗi DÒNG 1 nội dung; ĐVT / Số lượng và MỖI CẤP
+      là một cột "Ghi chú kiểm tra · <tên cấp>" → sửa 1 ô chỉ ra 1 dòng log đúng ô đó.
+      `__key` = TÊN nội dung (bảng xóa-rồi-tạo-lại nên không dùng id được)
+- [x] `service_level_rows` — Định mức công / Hệ số công nghệ / Giá bán cơ sở / Gợi ý hàng hoá
+      (ô `key_word` lưu JSON `b-form-tags` → log in ra CHỮ, không in JSON thô)
+- [x] `company_rows` — Hệ số giá bán theo từng công ty
+- [x] `product_rows` — hàng hoá gợi ý; dòng thêm/xoá kèm "Nhóm hàng" (`__brief`). CHỈ theo dõi
+      nhóm hàng, không theo dõi tên/mã hàng (sửa ở danh mục hàng hoá không được đẻ log ở đây)
+- [x] `attachment_rows` — file đính kèm, GIỮ NGUYÊN đường dẫn đầy đủ để FE mở xem được
+- [x] `dropNotesOfChangedLevels()` — thêm/bỏ hẳn 1 CỘT CẤP chỉ ghi 1 dòng "Cấp dịch vụ thêm mới /
+      đã xóa", không đẻ thêm 18 dòng "ghi chú của cấp đó → rỗng"
+- [x] Nạp bảng con TRƯỚC khi xoá ở `destroy()` (nếu không snapshot log "Xóa" trống trơn)
+- [x] Khai 5 nhãn cột ảo vào whitelist `CatalogHistoryService::TABLES['services']`
+- [x] Bảng rỗng trả `null` (không trả `[]`) — tránh `[]` lọt vào log create/delete rồi FE in rác
+
+### Verify bảng con (script riêng, transaction + rollback, DB không còn dòng test nào)
+- [x] Sửa 1 ô của từng bảng con: tên / ĐVT / Số lượng / ghi chú 1 ô / Định mức công / Hệ số công
+      nghệ / Giá bán cơ sở / Gợi ý hàng hoá / Hệ số giá bán công ty / Nhóm hàng → mỗi ca ĐÚNG 1
+      dòng log, chỉ liệt kê ô đã đổi
+- [x] Thêm / xoá: nội dung kiểm tra, cột cấp dịch vụ, công ty, hàng hoá gợi ý, file đính kèm
+- [x] Tạo mới + Xóa: snapshot có đủ bảng con; Khóa (gói đang dùng) ra dòng "Thay đổi trạng thái"
+- [x] Lưu lại không đổi gì → KHÔNG ghi log; khoá + sửa 1 ô cùng lúc → đúng 2 dòng log
+
+### Còn treo
+- [ ] Đổi TÊN một nội dung kiểm tra hiện log thành "xoá dòng cũ + thêm dòng mới" (vì bảng con lưu
+      kiểu xóa-rồi-tạo-lại nên khoá ghép cặp buộc phải là tên). Chấp nhận được, nêu ra để user biết.
+
+### Checkpoint — 2026-09-21
+Vừa hoàn thành: khối Lịch sử ở màn chi tiết + fix log rác cột số + ghi lịch sử đủ 4 bảng con.
+Đang làm dở: không có.
+Bước tiếp theo: user mở trình duyệt xác nhận khối Lịch sử ở `/customer-care/services/{id}`.
+Blocked:
+
+## Phase — Đồng bộ giao diện header khối (2026-09-22)
+- [x] Bỏ icon ở header 5 khối của `ServiceFormComponent.vue` (Thông tin chung / Danh mục kiểm tra /
+      Giá vốn theo công ty / Áp dụng cho hàng hóa / File đính kèm)
+- [x] Đổi tiêu đề khối sang `<h6 class="mb-0 font-weight-bold">` + đổi style `.form-card-head`
+      (nền trắng, kẻ mảnh #e5e7eb, chữ 14px #1f2937, bỏ UPPERCASE) cho giống
+      `.card-header.section-header` của `finance/bill-income-requests`
+- [x] Rule CSS khai ngay trong file màn (không dựa vào style không-scoped của màn khác)
+
+### Checkpoint — 2026-09-22
+Vừa hoàn thành: đồng bộ header khối màn Tạo/Sửa/Xem gói bảo dưỡng theo mẫu Phiếu đề nghị thu.
+Đang làm dở: không có.
+Bước tiếp theo: user mở `/customer-care/services/create` xác nhận giao diện (Ctrl+Shift+R).
+Blocked:
+
+## Phase — Khối File đính kèm dùng chung (2026-09-22)
+**BE (`Modules/CustomerCare`)**
+- [x] `ServiceController::uploadAttachment()` — tải 1 file PDF lên S3 thư mục `services`, trả `{url}`
+      (khuôn `WrQuotationController`); `mimes:pdf` đọc nội dung thật nên bắt được file đổi đuôi
+- [x] Route `POST /services/upload-attachment` đặt TRƯỚC `POST /{service}`, gắn
+      `checkPermission:Thêm danh mục gói bảo dưỡng|Sửa danh mục gói bảo dưỡng`
+- [x] `ServiceService::attachmentsFromUrls()` — nhận `attachment_urls[]` (mảng URL đầy đủ sau khi
+      user thêm/bỏ); chỉ nhận URL của chính gói hoặc URL trong thư mục `services` trên đúng host S3
+      (`isOwnAttachmentUrl()`) → chặn URL lạ; KHÔNG xoá object S3 (gói sao chép dùng chung URL)
+- [x] Nhánh cũ `attachments` (upload lúc lưu) + `existing_attachments` giữ nguyên cho cổng ERP
+- [x] `ServiceRequest`: `required_without_all:existing_attachments,attachment_urls` + rule/thông báo
+      cho `attachment_urls`
+
+**FE (`hrm-client`)**
+- [x] Thay lưới thẻ PDF tự dựng bằng `V2BaseAttachmentSection` (lưới STT · Upload/File · Dung lượng
+      · Xóa, nút "Thêm tài liệu" ở tiêu đề khối, Xem trước / Tải xuống / Thay đổi từng dòng)
+- [x] Thêm prop `required` cho `V2BaseAttachmentSection` (mặc định false → 3 màn đang dùng không
+      đổi) để hiện dấu (*) đỏ — user duyệt 2026-09-22
+- [x] `attachmentsList` + `newFiles` → 1 mảng URL `attachments`; submit gửi `attachment_urls[]`
+- [x] Gom lỗi BE 2 key (`attachments*`, `attachment_urls*`) thành `attachmentsErrorText`
+- [x] Bỏ `pickFiles/onFilesPicked/isRealPdf/removeNewFile/removeSavedFile/getFileName` + style
+      `.document-item/.doc-name/.doc-remove`
+
+**Đã kiểm chứng (script, không đụng dữ liệu thật)**
+- [x] Thứ tự route: `upload-attachment` không bị `{service}` nuốt
+- [x] `isOwnAttachmentUrl`: nhận URL S3 thư mục `services`; chặn thư mục khác / host lạ / đuôi khác
+- [x] Rule: không gửi gì → 422 "Bắt buộc phải đính kèm ít nhất 1 file PDF"; gửi `attachment_urls` →
+      qua; URL sai định dạng → lỗi `attachment_urls.0`
+- [x] `attachmentsFromUrls`: tạo mới / sao chép / sửa giữ file cũ + thêm mới / bỏ hết / trùng lặp
+
+### Checkpoint — 2026-09-22
+Vừa hoàn thành: đồng bộ header 5 khối + thay khối File đính kèm bằng khối dùng chung.
+Đang làm dở: không có.
+Bước tiếp theo: user mở `/customer-care/services/create` thử tải PDF lên, lưu, sửa, sao chép.
+Blocked:

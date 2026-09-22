@@ -901,8 +901,32 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Test: 52/52 endpoint HTTP + 12 màn browser + luồng ghi (tạo/sửa/thêm liên hệ, có rollback). **7 lỗi thật đã sửa** (xem plan.md Phase 11-12).
   ⚠️ Đọc trước khi làm tiếp trên nhánh này: `.plans/gop-db/design.md`.
 
-- **finance-addition-accounting-request — Chỉnh hiển thị màn danh sách (Phase 12)** → @khoipv →
-  `.plans/gop-db/finance-addition-accounting-request/plan.md` (mục Phase 12)
+- **finance-addition-accounting-request — Sửa lỗi + chuẩn hoá màn (Phase 12-20)** → @khoipv →
+  `.plans/gop-db/finance-addition-accounting-request/plan.md`
+
+  **Đợt 2026-09-21 (Phase 14-20) — CODE XONG, CHỜ USER NGHIỆM THU. Chưa commit, chưa push (cả 2 repo).**
+
+  | Phase | Nội dung | Phạm vi |
+  | --- | --- | --- |
+  | 14 | **Nền header xám trên cổng dev, local nhìn đúng.** Class `section-header` chỉ nằm trong `<style>` **non-scoped** của `V2BaseFormSection.vue`/`CustomerForm.vue` → bản `nuxt dev` nạp sẵn nên "ăn ké", build production tách chunk theo route thì rule biến mất. **Local KHÔNG tái hiện được**, đừng dùng local nghiệm thu nhóm lỗi này | FE 3 file |
+  | 15 | Màn **Chi tiết** bỏ badge trạng thái ở header card (cả 2 nhánh: loại 7 và form readonly); giãn dòng `mb-3` → `mb-2` (15 chỗ) | FE 2 file |
+  | 16 | Ô **Diễn giải** lên cùng hàng với **Tỷ giá** (chuyển sang `form-row` thứ nhất — Bootstrap tự lấp chỗ trống, không cần `v-if` riêng cho loại 1) | FE 1 file |
+  | 17 | **Vá ERP**: `getInformationDiscrepancy()` nổ 500 khi chọn Phiếu xử lý hàng thiếu — `groupBy` trên truy vấn `SUM` làm `first()` trả null rồi `->toArray()` fatal. Bỏ `groupBy` + chặn null. Đối chiếu dữ liệu thật: có dòng khớp thì SUM **y hệt bản cũ** | **repo `erp`** 1 file |
+  | 18 | **Lưu nháp chỉ bắt buộc Loại yêu cầu.** BE đã rẽ `required` theo `status` từ trước nhưng **sót `gt:0`**, mà form khởi tạo `money: 0` → nháp luôn 422. Nháp dùng `min:0` | BE 1 · FE 1 |
+  | 19 | Lỗi hiện qua **`V2BaseError`** thay `<div class="invalid-feedback">` thô (14 khối); bỏ `focusFirstError()` tự viết → util chung `utils/scrollToFirstError.js` (`V2BaseError` render `.v2-error`, giữ hàm cũ là mất luôn tính năng cuộn) | FE 3 file |
+  | 20 | Câu lỗi `required` thống nhất **"Bắt buộc phải nhập"** đúng như BE trả về; ô vừa bắt buộc vừa phải > 0 tách 2 câu theo trạng thái ô | FE 3 file |
+
+  Không migration, không quyền mới. Bản ghi test sinh ra khi nghiệm thu lưu nháp: **`PYCHTBS-002065`** (phiếu nháp, user xoá được ở màn danh sách).
+
+  **⚠️ 6 việc chờ user quyết:**
+  1. Bỏ badge trạng thái ở **màn Sửa** nữa không (Phase 15 chỉ bỏ ở màn Chi tiết)
+  2. Vá 2 màn **Bán hàng mượn** (`borrow-sell-requests`, `borrow-sells`) dính đúng lỗi nền header xám của Phase 14
+  3. Hằng **`insurance_plan_id = 1`** nghi lọc sai → loại 5 luôn ra Số tiền 0 ở cả ERP lẫn HRM (xem `design.md` mục Rủi ro)
+  4. Bên ERP: chặn null cho truy vấn đầu của `getInformationDiscrepancy()` + `supplier[0]` trong blade (cùng loại lỗi, chưa sửa vì đổi hợp đồng trả về)
+  5. Việt hoá message rule `gt` — sửa `resources/lang/vi/validation.php` là đụng **lang dùng chung toàn hệ thống**, hay khai `messages()` cục bộ trong FormRequest?
+  6. Có chuyển màn sang **vee-validate realtime** (bỏ cờ `touched`) theo skill `form-validate` không — đụng ~20 ô ở 3 file
+
+  **Đợt trước (Phase 12-13, 2026-09-10) — vẫn chờ user nghiệm thu trình duyệt:**
   Trạng thái: **CODE XONG — CHỜ USER MỞ TRÌNH DUYỆT NGHIỆM THU** (2026-09-10). Yêu cầu user: (1) ô trống thì để trống, bỏ dấu `—`;
   (2) cột *Ngày gửi* / *Ngày duyệt* hiện thêm giờ (2 cột DB vốn là `datetime`, resource cắt mất giờ);
   (3) cột *Số tiền* in kèm đơn vị tiền như màn Phiếu đề nghị thanh toán; (4) **bỏ ô *Bộ phận*** khỏi
@@ -918,6 +942,9 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
+
+- customer-care-service-import — import Excel nhiều sheet cho màn Danh mục gói bảo dưỡng (`/customer-care/services`) → @khoipv → .plans/gop-db/customer-care-service-import/plan.md
+  Hoàn thành: 2026-09-22 — user xác nhận đã xong (code + chạy thật trên trình duyệt, import 4 gói test `ZZTEST-GBD-A/B/C/D` id 244/245/247/248). Nhánh `gop_db` cả 2 repo, đã commit + push (`hrm-api` 7450ca1e2 · `hrm-client` 54a584c68, cùng ngày 2026-09-22), không migration, không quyền mới — gate bằng quyền sẵn có `Thêm danh mục gói bảo dưỡng`. Màn này từng bị loại khỏi scope `catalog-import-export` vì có bảng chi tiết; file mẫu 5 sheet (gói · cấp bảo dưỡng · nội dung kiểm tra · hệ số công ty · hàng hoá) nối nhau bằng khoá Mã gói, sinh động ở FE từ chính cấu hình cột của modal. BE: `ServiceImportService.php` mới + 2 route `import/validate` / `import`, ghi bằng cách gọi lại `ServiceService::store()` nên `logCatalogCreate()` vẫn chạy, mỗi gói 1 transaction riêng. FE: `ServiceImportModal.vue` riêng nhưng dùng lại `V2BaseImportToolbar` + `V2BaseImportTable` — **không sửa component dùng chung của 15 màn kia** — thêm `utils/import-multi-sheet-helper.js`; file mẫu dựng bằng ExcelJS (SheetJS bản cộng đồng không ghi được định dạng ô): header nền `D9E1F2` đậm + viền, dòng gợi ý nền `FFF2CC`, đóng băng 2 dòng đầu + cột Mã gói, bộ lọc trên tiêu đề, bám file mẫu tĩnh của màn `finance/type-accounts`. Không đính kèm PDF trong luồng import (user chốt 22/09): gói import xong để trống hồ sơ, bổ sung file ở màn Sửa. 🐞 Chạy thật bắt được `service_levels.benefit_coefficient` NOT NULL không default → ô "Hệ số công nghệ" để trống truyền null làm SQL nổ 1048, đã sửa thành trống quy về 1. ⚠️ Tồn: chưa xoá 4 gói test id 244/245/247/248; cột "Dung lượng" khối đính kèm luôn `—` là nợ có sẵn của `V2BaseAttachmentSection`, không phải do import. Spec: docs/superpowers/specs/gop-db/2026-09-22-customer-care-service-import-design.md
 
 - bom-list-list-page-standard — chuẩn hoá màn Danh sách BOM List (`/assign/bom-list`) theo skill `list-page` → @khoipv → .plans/gop-db/bom-list-list-page-standard/plan.md
   Hoàn thành: 2026-09-10 — user xác nhận đã xong (code + kiểm chứng API/compile 2026-09-07). Nhánh `gop_db` cả 2 repo, chưa commit, không migration, không quyền mới. BE: 6/6 mã màu trạng thái nằm ngoài bảng 9 mã chuẩn quy về đúng nhóm; thêm `isCanEdit()`/`isCanDelete()` khớp guard của service; whitelist `SORTABLE_COLUMNS` + chốt `id desc` (trước `orderBy($request->sort_field)` trần); ngày bỏ giây; registry `bom_lists` 23 cột + `exportList()` chuyển sang `DynamicExport` — bỏ blade phải tự map từng khoá cột (đổi tên cột trên lưới là file ra rỗng đúng cột đó). FE: `V2BaseSmartFilterPanel`, tách cột gộp `code_name` và gỡ tối đa 6 icon thao tác khỏi ô mã, cột Hành động cuối bảng (Sửa · Xóa + `⋮` Sao chép · In · Lịch sử), thêm 3 cột Phòng của người tạo · Người/Ngày cập nhật, `fixed-layout` 17 cột đủ `width` = `minWidth`, `columnCustomizationMixin`, lần đầu có popup chọn trường xuất file, 2 request `per_page=10000` hoãn tới khi mở panel lọc, `loadSeq`, `handleSort`/`handleReset` hết bắn 2 request. Kiểm chứng trên 11 BOM thật: index 200 (32 query/10 dòng), 2 khoá sort đúng + key lạ về mặc định, export .xlsx 18 dòng = 11 dữ liệu + 7 dòng khung, `exportFields` ↔ registry 23 = 23. Màn đã có sẵn hành động Lịch sử (`BomListLogModal`) nên không nợ như các màn khác. Spec: docs/superpowers/specs/gop-db/2026-09-07-bom-list-list-page-standard-design.md

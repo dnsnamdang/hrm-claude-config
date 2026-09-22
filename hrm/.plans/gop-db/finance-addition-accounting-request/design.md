@@ -39,6 +39,8 @@ lý hàng thiếu / Quyết toán HĐ bán (chỉ đọc bảng).
 | 8 | **4 quyền mới guard `api` id 1177–1180**, trùng tên ERP; duyệt dùng lại `Kế toán thanh toán` (1152) / `Kế toán` (100079) / `Kế toán kho` (1136) |
 | 9 | **3 mục menu** đã chờ sẵn trong `finance.js`: nối dòng 58 (danh sách) và 464 (chờ duyệt); dòng 360 **để trống** cho khớp màn Điều chỉnh công nợ |
 | 10 | `objectable_type` (KH/NCC) **KHÔNG thêm vào morphMap toàn cục** — resolve thủ công theo chuỗi, tránh đổi hành vi morph của `TpCustomer` toàn hệ thống |
+| 11 | **Lưu nháp chỉ bắt buộc "Loại yêu cầu"** (user chốt 2026-09-21). BE rẽ rule theo `status`, kể cả `gt:0` (nháp dùng `min:0` — vẫn chặn số âm); FE không bật cờ `touched` khi lưu nháp. Gửi duyệt giữ nguyên toàn bộ luật ERP |
+| 12 | **Câu lỗi `required` ở FE viết y hệt BE: "Bắt buộc phải nhập"** (user chốt 2026-09-21). Ô vừa bắt buộc vừa phải > 0 thì tách 2 câu: trống → "Bắt buộc phải nhập", có số → "Số tiền/Tỷ giá phải lớn hơn 0". Lỗi hiện qua `V2BaseError`, cuộn bằng util chung `utils/scrollToFirstError.js` |
 
 ## Khác biệt có chủ đích so với ERP — vá 9 lỗi
 
@@ -63,6 +65,11 @@ Dòng chi tiết 2.849 (Supplier 2.292 · Customer 557), gắn 8 loại hợp đ
 ## Rủi ro đã biết
 
 - **Loại 1 và 5 chưa từng chạy thật** (0 phiếu, 2 màn nguồn chưa port) → chỉ kiểm chứng bằng seeder.
+- **Loại 5 luôn ra Số tiền = 0** trên DB hiện tại (phát hiện 2026-09-21): công thức ERP lọc
+  `insurance_plan_id = 1`, mà 18 dòng trong `inventory_discrepancy_handling_import_product_plans`
+  đều là `insurance_plan_id` 2 và 3 — **không dòng nào** bằng 1. HRM port y nguyên hằng này nên cả 2
+  hệ đều ra 0, người lập phải tự nhập. **Cần user xác nhận ý nghĩa `insurance_plan_id`** — nếu
+  production cũng vậy thì hằng `1` của ERP đang lọc sai.
 - Phiếu HRM gắn `hrm_contracts` sẽ lỗi *Class not found* khi mở bên ERP — hệ quả đã biết, đã chấp nhận.
 - `objectable_type = App\Model\Sale\Supplier` trong khi bảng `suppliers` **rỗng**, NCC nằm ở
   `customers.is_supplier` → resolve sai là tên NCC ra trống.

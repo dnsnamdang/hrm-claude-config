@@ -793,3 +793,460 @@ Bước tiếp theo: user mở màn Tạo, chọn KH `35TNIHBA-2` rồi bấm ch
 ⚠️ Đổi hành vi: từ nay chỉ thấy hợp đồng **do chính mình tạo** (đúng ERP) — trước đây thấy của cả
 người khác, nên số dòng ở một số KH sẽ GIẢM so với hôm qua dù đã thêm nguồn mới.
 Blocked: không.
+
+---
+
+## Phase 14 — Fix nền header "Thông tin chung" khác nhau giữa local và cổng dev (2026-09-21)
+
+**Triệu chứng (user báo):** mở `http://hrm-crm.eteksofts.com/finance/addition-accounting-requests/create`,
+nền header các khối ("Thông tin chung"…) **xám**, khác hẳn local.
+
+**Nguyên nhân gốc — đo computed style thật ở cả 2 môi trường:**
+
+| | Local `:3000` (nuxt dev) | Cổng dev (build production) |
+| --- | --- | --- |
+| Nền header "Thông tin chung" | `#fff`, padding-left `10px` | `rgb(237,239,241)`, padding-left `24px` |
+| Nền header "File đính kèm" | `#fff`, `10px` | `#fff`, `10px` ✓ |
+| Rule **toàn cục** `.card-header.section-header` | **có 2 bản** | **không có bản nào** |
+
+Class `section-header` **KHÔNG có trong `v2-styles.scss`** hay bất kỳ scss toàn cục nào — nó chỉ nằm
+trong `<style>` **non-scoped** của `components/V2BaseFormSection.vue:58` và `CustomerForm.vue:3295`,
+mà Nuxt chỉ nhét vào trang khi 2 component đó được load. Bản dev nạp sẵn nên header "ăn ké" được;
+build production tách chunk theo route nên rule biến mất → header rơi về `.card-header` mặc định.
+`AttachmentSection.vue` không dính vì tự khai lại rule ở dòng 563.
+Đúng cái bẫy đã ghi sẵn ở `BillAdjustDeptForm.vue:1000` và `AccountingDetailTable.vue:508`.
+
+⚠️ **Local KHÔNG tái hiện được lỗi này** — chạy `nuxt dev` luôn thấy đúng. Chỉ build production
+(hoặc cổng dev) mới lộ. Đừng dựa vào local để nghiệm thu nhóm lỗi này.
+
+### Tasks
+
+- [x] **FE-1** `AdditionAccountingRequestForm.vue` — thêm `.card-header.section-header` vào `<style scoped>`
+- [x] **FE-2** `AdditionDetailTable.vue` — thêm rule tương tự vào `<style scoped>` sẵn có
+- [x] **FE-3** `CoordinationDetail.vue` — file CHƯA có `<style>` nào, tạo mới `<style lang="scss" scoped>` (3 header)
+- [x] **FE-4** Quét toàn repo: liệt kê mọi file dùng class `section-header` mà không tự khai rule → báo cáo user quyết (chưa sửa)
+
+### Kết quả FE-4 — quét toàn repo (2026-09-21)
+
+Tiêu chí: file có `class="… section-header …"` nhưng trong `<style>` của CHÍNH nó không khai `.section-header`.
+
+| File | Số header | Kết luận |
+| --- | --- | --- |
+| `pages/finance/borrow-sell-requests/components/BorrowSellRequestForm.vue` | 4 | **DÍNH** — cùng lỗi, chờ user quyết |
+| `pages/finance/borrow-sells/components/BorrowSellForm.vue` | 2 | **DÍNH** — cùng lỗi, chờ user quyết |
+| `pages/assign/form-templates/components/QuestionItem.vue` | 0 | Dương tính giả — dùng `fb-section-header` (class khác) |
+| `pages/assign/form-templates/components/SectionBuilder.vue` | 0 | Dương tính giả — dùng `fb-section-header` |
+
+2 file borrow-sell có `<style lang="scss">` chỉ `@import v2-styles.scss` — mà `v2-styles.scss`
+KHÔNG chứa `.section-header`, nên vẫn dính. **Chưa sửa** (ngoài phạm vi user giao).
+
+### Kiểm chứng Phase 14
+
+Đo `getComputedStyle` thật bằng Playwright ở cả 2 môi trường.
+
+| | Trước vá — local | Trước vá — cổng dev | Sau vá — local |
+| --- | --- | --- | --- |
+| Nền header "Thông tin chung" | `#fff` (ăn ké rule toàn cục) | `rgb(237,239,241)` ❌ | `#fff` ✓ |
+| padding-left | `10px` | `24px` ❌ | `10px` ✓ |
+| Có rule scoped của chính nó | **không** | **không** | **có** ✓ |
+
+Trên màn `/create` và `/2036`: xuất hiện đúng **3 hash scoped mới** `data-v-760ea2e4`, `data-v-80032222`,
+`data-v-21999f6f` — khớp 3 component vừa sửa → CSS đi kèm component, không còn phụ thuộc chunk khác.
+
+### Checkpoint — 2026-09-21
+Vừa hoàn thành: Phase 14 — FE-1, FE-2, FE-3, FE-4. Sửa 3 file FE (+60 dòng, không xoá dòng nào).
+Đang làm dở: không.
+Bước tiếp theo: user nghiệm thu lại **trên cổng dev sau khi deploy** (local không tái hiện được lỗi
+này nên không nghiệm thu ở local được); và quyết có vá luôn 2 màn Bán hàng mượn hay không.
+Blocked: không. Chưa commit, chưa push.
+
+---
+
+## Phase 15 — Bỏ badge trạng thái ở màn Chi tiết + giãn dòng về `mb-2` (2026-09-21)
+
+Yêu cầu user: (1) màn XEM CHI TIẾT bỏ badge trạng thái ở header card; (2) khoảng cách giữa các dòng
+đổi hết về `mb-2`.
+
+### Tasks
+
+- [x] **FE-1** `CoordinationDetail.vue` (màn chi tiết loại 7 — Phối hợp kinh doanh): gỡ `V2BaseBadge`
+      khỏi header "Thông tin chung"; dọn luôn import `V2BaseBadge` + `statusBadgeVariant` và khai báo
+      trong `components` / `methods` (không còn nơi dùng)
+- [x] **FE-2** `AdditionAccountingRequestForm.vue` (dùng chung Tạo / Sửa / Chi tiết-readonly): badge đổi
+      `v-if="statusName"` → `v-if="!readonly && statusName"`. `readonly=true` CHỈ được truyền ở
+      `_id/index.vue` nên đúng bằng "màn chi tiết"; màn Sửa vẫn giữ badge
+- [x] **FE-3** Đổi `mb-3` → `mb-2` cho toàn bộ cột trường: `AdditionAccountingRequestForm.vue` (12 chỗ)
+      + `CoordinationDetail.vue` (3 chỗ). Cả 15 chỗ đều là `col-md-* mb-3` (dòng trường), không đụng
+      `mb-0` của tiêu đề. Sau khi đổi, trong feature **không còn `mb-3`** nào
+
+### Kiểm chứng Phase 15
+
+Màn chi tiết `/finance/addition-accounting-requests/1992` (loại 7 → nhánh `CoordinationDetail`):
+
+| Mục | Kết quả đo |
+| --- | --- |
+| Số header | 3 — "Thông tin chung", "Nội dung quyết toán", "Đối tượng hạch toán" |
+| Badge trong header | **0** ✓ |
+| Nền header | `#fff`, padding-left `10px`, có rule scoped của chính nó ✓ (Phase 14 vẫn giữ) |
+| `margin-bottom` cột trường | `12px` (class `col-md-3 mb-2`) ✓ |
+
+`vue-template-compiler` + `@babel/parser`: 0 lỗi template, script OK ở cả 2 file.
+
+⚠️ Chưa kiểm chứng được trên trình duyệt: badge ở màn **Sửa** (bản ghi 2036 status=2 bị guard đẩy về
+màn Chi tiết, các bản ghi thử đều có `status_name` rỗng). Thay đổi chỉ là thêm điều kiện `!readonly`
+nên hành vi màn Sửa giữ nguyên, nhưng user nên xem lại nếu muốn bỏ badge ở cả màn Sửa.
+
+### Checkpoint — 2026-09-21 (đợt 2)
+Vừa hoàn thành: Phase 15 — FE-1, FE-2, FE-3. Sửa 2 file FE.
+Đang làm dở: không.
+Bước tiếp theo: user xác nhận có bỏ badge ở màn Sửa nữa không; và quyết việc vá 2 màn Bán hàng mượn
+ở Phase 14 (FE-4).
+Blocked: không. Chưa commit, chưa push.
+
+---
+
+## Phase 16 — Ô "Diễn giải" lên cùng hàng với "Tỷ giá" (2026-09-21)
+
+Yêu cầu user: chọn loại **Hạch toán công nợ NCC bảo hành** (`TYPE_WARRANTY` = 1) thì ô Diễn giải
+phải nằm cùng hàng với ô Tỷ giá, không rơi xuống hàng riêng.
+
+### Tasks
+
+- [x] **FE-1** `AdditionAccountingRequestForm.vue`: chuyển khối "Diễn giải" (`col-md-6`) từ `form-row`
+      thứ hai sang **cuối `form-row` thứ nhất**, ngay sau ô Tỷ giá. `form-row` thứ hai chỉ còn
+      "Ghi chú duyệt". Không đổi `v-if`, không đổi độ rộng cột, không đụng validate
+
+Cách làm: Bootstrap tự xuống dòng theo số cột nên chỉ cần đưa ô vào cùng `form-row` — loại nào hàng
+thứ hai còn ≥ 6 cột trống thì Diễn giải lấp vào, loại nào đã đầy thì vẫn tự xuống dòng như cũ.
+**Không cần thêm `v-if` riêng cho loại 1.**
+
+### Kiểm chứng Phase 16 — đo `getBoundingClientRect().top` ở màn Tạo cho từng loại
+
+| Loại | Hàng 1 | Hàng 2 |
+| --- | --- | --- |
+| **1 — Hạch toán công nợ NCC bảo hành** | Loại yêu cầu · Phiếu xác nhận bảo hành · Nhà cung cấp · Số tiền | Loại tiền · Tỷ giá · **Diễn giải** ✓ |
+| 3 — NCC hỗ trợ phát triển thị trường | Loại yêu cầu · Nhà cung cấp · Số tiền · Loại tiền | Tỷ giá · **Diễn giải** ✓ |
+| 4 — Khác | Loại yêu cầu · Đối tượng · Số tiền · Loại tiền | Tỷ giá · **Diễn giải** ✓ |
+| 5 — Hạch toán công nợ NCC thiếu hàng | Loại yêu cầu · Phiếu xử lý hàng thiếu · Nhà cung cấp · Số tiền | Loại tiền · Tỷ giá · **Diễn giải** ✓ |
+| 2 / 6 — Điều chỉnh công nợ (có bảng chi tiết) | Loại yêu cầu · Loại tiền · Tỷ giá | — (loại này không có ô Diễn giải ở đầu phiếu) |
+
+Trước khi sửa, loại 1 là: hàng 2 chỉ có `Loại tiền · Tỷ giá` (6/12 cột), Diễn giải nằm riêng hàng 3.
+`vue-template-compiler` + `@babel/parser`: 0 lỗi.
+
+⚠️ Màn **Sửa** có thêm ô "Số phiếu" (`v-if="isEdit"`) nên hàng 2 chiếm 9/12 cột → Diễn giải vẫn tự
+xuống dòng riêng. Giống hệt hành vi cũ, không phải hồi quy; nếu user muốn cùng hàng cả ở màn Sửa thì
+phải thu ô Diễn giải xuống `col-md-3` cho nhánh đó.
+
+### Checkpoint — 2026-09-21 (đợt 3)
+Vừa hoàn thành: Phase 16 — FE-1.
+Đang làm dở: không.
+Bước tiếp theo: user xem lại màn Tạo loại 1; còn 2 việc treo — bỏ badge ở màn Sửa (Phase 15) và vá
+2 màn Bán hàng mượn (Phase 14 FE-4).
+Blocked: không. Chưa commit, chưa push.
+
+---
+
+## Ghi nhận 2026-09-21 — ERP lỗi 500 khi chọn "Phiếu xử lý hàng thiếu", HRM thì không
+
+User hỏi vì sao cùng thao tác (loại 5 → chọn phiếu xử lý hàng thiếu) mà HRM chạy được còn ERP lỗi.
+**Không phải lỗi của HRM** — là bug có sẵn của ERP, lộ ra sau khi gộp DB.
+
+**Lỗi thật trong `erp/storage/logs/laravel.log`** (16:19:03, 16:20:05, 16:20:16 ngày 21/09/2026):
+
+```
+local.ERROR: Call to a member function toArray() on null
+  at app/Model/Warehouse/InventoryDiscrepancyHandlingImport.php:466
+```
+
+Dòng 466 là `->first()->toArray()` của truy vấn kế hoạch xử lý trong `getInformationDiscrepancy()`:
+
+```php
+->whereIn('s.type', [3, 4])->where('s.process', 2)->where('s.insurance_plan_id', 1)
+->groupBy(['s.insurance_plan_id'])      // ← thủ phạm
+->first()
+->toArray();                            // null->toArray() = fatal
+```
+
+`groupBy` biến truy vấn tổng hợp (luôn trả 1 dòng) thành truy vấn trả **0 dòng** khi không có dòng
+kế hoạch nào khớp → `first()` = `null` → gọi `toArray()` là nổ. ERP không có bước kiểm tra null.
+
+Bản port HRM (`AdditionAccountingLookupService::discrepancyImportData()`) **bỏ `groupBy`** và bọc
+`optional($plan)->amount` / `optional($plan)->currency` nên an toàn.
+
+**Đo trên DB `gop_db`:** popup liệt kê 2 phiếu (`status = 5`, `accounting = 1`) là `TPE_XLNKT-00001`
+và `TPE_XLNKT-00002` — **cả 2 đều có 0 dòng kế hoạch** thoả `type IN (3,4) AND process = 2 AND
+insurance_plan_id = 1`. Nên trên DB này, ERP nổ với **mọi** phiếu chọn được, không phải xui 1 phiếu.
+
+Gọi thẳng hàm HRM với cùng phiếu id=2:
+`{"id":2,"code":"TPE_XLNKT-00002","suppliers":[{"id":11595,"code":"BETA",…}],"money":0,"currency":null}`
+
+⚠️ Hệ quả nghiệp vụ cần user quyết: HRM điền **Số tiền = 0**, người lập phải tự nhập lại (ô không bị
+khoá). Nếu muốn HRM chặn luôn / cảnh báo "phiếu chưa có kế hoạch xử lý đã chốt" thì phải bổ sung —
+hiện chưa làm. Việc vá ERP (thêm null check, bỏ `groupBy`) nằm ở repo `D:\laragon\www\erp`,
+**chưa động vào**.
+
+---
+
+## Phase 17 — Vá ERP: 500 khi chọn "Phiếu xử lý hàng thiếu" (2026-09-21)
+
+User chốt: sửa luôn bên ERP. Repo `D:\laragon\www\erp`, nhánh `gop_db`.
+
+### Tasks
+
+- [x] **ERP-1** `app/Model/Warehouse/InventoryDiscrepancyHandlingImport.php` ·
+      `getInformationDiscrepancy()`: bỏ `->groupBy(['s.insurance_plan_id'])` khỏi truy vấn tổng hợp,
+      đổi `->first()->toArray()` → `->first()` và chặn null khi gán `amount` / `currency`
+- [x] **ERP-2** Chuẩn hoá `amount` rỗng về `0` (SUM trên tập rỗng trả NULL, không phải 0) cho khớp
+      bản HRM trả `money: 0`
+
+Hàm chỉ có **1 nơi gọi** (`InventoryDiscrepancyHandlingImportController@getInformationDiscrepancy`,
+route `inventory.discrepancy.getInformationDiscrepancy`) nên không phải hàm dùng chung.
+`WarehouseImport::getInformationDiscrepancy()` là hàm khác, KHÔNG có pattern lỗi này — không đụng.
+
+### Kiểm chứng Phase 17
+
+`php -l` sạch. Gọi thẳng hàm với 2 phiếu popup liệt kê (trước đó cả 2 đều nổ 500):
+
+```
+id=1 -> {"id":1,"code":"TPE_XLNKT-00001",...,"amount":0,"currency":null}
+id=2 -> {"id":2,"code":"TPE_XLNKT-00002",...,"amount":0,"currency":null}
+```
+
+**Chứng minh không hồi quy** — chạy cùng hình dạng truy vấn trên dữ liệu THẬT (đổi
+`insurance_plan_id` 1 → 2 vì trên DB này chỉ nhóm 2 mới có dòng):
+
+| Phiếu | Có `groupBy` (bản cũ) | Bỏ `groupBy` (bản mới) | |
+| --- | --- | --- | --- |
+| id=1 | `221.5` | `221.5` | KHỚP |
+| id=2 | `28.8` | `28.8` | KHỚP |
+| id=3 | `null` (0 dòng → ERP nổ) | `NULL` → chặn về `0` | Đã hết nổ |
+
+⚠️ **Phát hiện kèm, cần user xác nhận:** trên DB `gop_db`, bảng
+`inventory_discrepancy_handling_import_product_plans` có 18 dòng nhưng **không dòng nào**
+`insurance_plan_id = 1` — dữ liệu đang là `insurance_plan_id = 2` (và 3). Hằng `1` là của ERP gốc,
+HRM port y nguyên. Nên trên môi trường này **số tiền luôn ra 0 ở cả 2 hệ**, người lập phải tự nhập.
+Nếu production cũng vậy thì hằng `1` có thể sai — cần user kiểm tra ý nghĩa `insurance_plan_id`.
+
+⚠️ **Chưa sửa (chờ user quyết):** truy vấn ĐẦU của chính hàm này (`self::where('w.id',$id)->...
+->first()->toArray()`) cũng nổ y hệt nếu `$id` không tồn tại. Thêm chặn null ở đó sẽ đổi hợp đồng
+trả về (thành `null`) mà controller hiện không xử lý → cần quyết cách trả lỗi trước khi sửa.
+
+### Checkpoint — 2026-09-21 (đợt 4)
+Vừa hoàn thành: Phase 17 — ERP-1, ERP-2. Sửa 1 file bên repo ERP.
+Đang làm dở: không.
+Bước tiếp theo: user mở lại màn ERP, chọn loại "Hạch toán công nợ NCC thiếu hàng" → chọn phiếu để
+nghiệm thu. Còn treo: badge màn Sửa (Phase 15), 2 màn Bán hàng mượn (Phase 14 FE-4), và 2 điểm ⚠️ ở trên.
+Blocked: không. Chưa commit, chưa push (cả 2 repo).
+
+---
+
+## Phase 18 — Lưu nháp chỉ bắt buộc "Loại yêu cầu" (2026-09-21)
+
+Yêu cầu user: lưu nháp chỉ bắt buộc chọn Loại yêu cầu, mọi trường khác để trống được.
+
+**Hiện trạng:** BE đã rẽ rule theo `status` từ trước (`$need()` trong `StoreRequest`) nên phần
+`required` đã đúng. Nhưng **rule `gt:0` không được rẽ** — mà form FE khởi tạo `money: 0`, nên bấm
+"Lưu nháp" ngay sau khi chọn loại là 422.
+
+Chạy thẳng bộ rule với payload nháp tối thiểu (`type=1, status=1, money=0`):
+
+```
+LUU NHAP type=1, money=0 -> FAIL
+{"money":["The Số tiền must be greater than 0."]}
+```
+
+DB an toàn: 5 cột `NOT NULL` không default (`code`, `created_by`, `company_id`, `department_id`,
+`part_id`) đều do server tự điền, không phải người dùng nhập.
+
+### Tasks
+
+- [x] **BE-1** `AdditionAccountingRequestStoreRequest`: rẽ luôn `gt:0` theo `status` — nháp dùng
+      `min:0` (vẫn chặn số âm), gửi duyệt giữ `gt:0`. Áp cho `money`, `details.*.money`,
+      `exchange_rate`
+- [x] **FE-1** `AdditionAccountingRequestForm.vue` · `save()`: bấm "Lưu nháp" KHÔNG bật cờ `touched`
+      (đang bật nên cả form đỏ dù phiếu nháp được phép trống); chỉ chặn khi thiếu Loại yêu cầu
+- [x] **FE-2** Thêm cờ `draftTouched` riêng cho ô Loại yêu cầu để vẫn báo đỏ đúng 1 ô đó khi bấm
+      "Lưu nháp" mà chưa chọn loại
+- [x] **BE-2** Chạy lại bộ rule cho cả 7 loại ở trạng thái nháp + đối chiếu trạng thái gửi duyệt
+      không bị nới lỏng
+
+### Kiểm chứng Phase 18
+
+**BE — chạy bộ rule thật với payload đúng giá trị mặc định của form FE** (`money: 0`,
+`exchange_rate: 1`, còn lại rỗng):
+
+| Trạng thái | Kết quả |
+| --- | --- |
+| Lưu nháp (`status=1`), cả **7/7 loại** | **PASS** |
+| Lưu nháp loại 2, có 1 dòng chi tiết bỏ trống hết | **PASS** |
+| Gửi duyệt (`status=2`) loại 1 | Vẫn chặn: `type_money_id`, `attachment_urls`, `money`, `note`, `firm_warranty_confirm_id`… |
+| Gửi duyệt loại 2 | Vẫn chặn: `type_money_id`, `attachment_urls`, `details` |
+| Gửi duyệt loại 4 | Vẫn chặn: `type_money_id`, `attachment_urls`, `money`, `note`, `object_type`… |
+
+**FE — bấm thật trên trình duyệt ở màn Tạo:**
+
+1. Chưa chọn loại → bấm "Lưu nháp": hiện **đúng 1 lỗi** "Vui lòng chọn loại yêu cầu"
+   (`draftTouched = true`, `touched = false` → không đỏ cả form). Không gọi API
+2. Chọn mỗi Loại yêu cầu = 1, không nhập gì thêm → bấm "Lưu nháp": **lưu thành công**,
+   0 lỗi hiện ra, chuyển về màn danh sách
+
+Bản ghi thật sinh ra khi test: **`PYCHTBS-002065`** (`type=1`, `status=1`, `money=0`,
+`type_money_id`/`note`/`attachments` = NULL). Là phiếu nháp nên user xoá được ở màn danh sách.
+
+ℹ️ Lỗi sẵn có, KHÔNG thuộc phạm vi lần này: thông báo của rule `gt:0` còn tiếng Anh
+("The Số tiền must be greater than 0.") trong khi các rule khác đã Việt hoá ("Bắt buộc phải nhập").
+Chỉ thấy khi bấm Gửi duyệt.
+
+### Checkpoint — 2026-09-21 (đợt 5)
+Vừa hoàn thành: Phase 18 — BE-1, BE-2, FE-1, FE-2. Sửa 2 file (1 BE, 1 FE).
+Đang làm dở: không.
+Bước tiếp theo: user nghiệm thu màn Tạo + màn Sửa với nút "Lưu nháp"; xoá phiếu test PYCHTBS-002065.
+Còn treo: badge màn Sửa (Phase 15), 2 màn Bán hàng mượn (Phase 14 FE-4), 2 điểm ⚠️ của Phase 17,
+và việc Việt hoá thông báo `gt:0`.
+Blocked: không. Chưa commit, chưa push (cả 2 repo).
+
+---
+
+## Phase 19 — Chuẩn hoá cách hiện lỗi: dùng `V2BaseError` + util `scrollToFirstError` (2026-09-21)
+
+User soát ra: màn đang hiện lỗi bằng `<div class="invalid-feedback d-block">` thô, không dùng
+component dùng chung. Sai skill `form-validate` mục 3 ("Lỗi hiện inline qua `V2BaseError`") và
+mục 3d ("KHÔNG tự viết đoạn cuộn tay bằng selector riêng").
+
+**Hiện trạng đếm được — chính feature này đang KHÔNG NHẤT QUÁN:**
+
+| File | `invalid-feedback` thô | `V2BaseError` |
+| --- | --- | --- |
+| `AdditionAccountingRequestForm.vue` | **9** | 0 |
+| `AdditionDetailTable.vue` | **4** | 3 (lẫn lộn cả 2 kiểu trong 1 file) |
+| `RejectModal.vue` | **1** | 0 |
+| `AttachmentSection.vue` | 0 | 3 ✓ (đang đúng) |
+
+Thêm 1 lỗi ngầm: `focusFirstError()` tự viết, quét `.is-invalid, .invalid-feedback.d-block`.
+`V2BaseError` render class **`.v2-error`** chứ không phải `.invalid-feedback` → chuyển sang
+`V2BaseError` mà giữ hàm cũ là **mất luôn tính năng cuộn tới ô lỗi** mà không có lỗi nào báo ra.
+
+### Tasks
+
+- [x] **FE-1** `AdditionAccountingRequestForm.vue`: 9 khối lỗi thô → `<V2BaseError v-if=… :message=… />`
+      (khuôn sẵn có trong `AttachmentSection.vue` :124), khai import + `components`
+- [x] **FE-2** `AdditionDetailTable.vue`: 4 khối còn lại → `V2BaseError` cho đồng bộ với 3 khối đã đúng
+- [x] **FE-3** `RejectModal.vue`: 1 khối → `V2BaseError`
+- [x] **FE-4** Bỏ `focusFirstError()` tự viết, thay bằng `scrollToFirstError(this.$el)` của
+      `utils/scrollToFirstError.js` (util đã gom đủ selector + cuộn ngang + nháy nền dòng lỗi)
+- [x] **FE-5** Đo lại trên trình duyệt: lỗi vẫn hiện đúng chỗ, vẫn cuộn tới ô lỗi đầu tiên
+
+### Kiểm chứng Phase 19
+
+Sau khi chuyển: **0 khối `invalid-feedback`** còn lại trong feature (chỉ còn 1 lần nhắc trong comment).
+`V2BaseError` dùng ở: Form 12 · DetailTable 7 · AttachmentSection 3 · RejectModal 3.
+Compile 5 file: 0 lỗi template, script OK.
+
+**Đo thật trên trình duyệt (màn Tạo, bấm "Gửi duyệt" với form trống):**
+
+| Mục | Trước | Sau |
+| --- | --- | --- |
+| Khối lỗi hiện qua `.v2-error` (V2BaseError) | 0 | **4** (loại 1) / **60** (loại 2, 15 dòng chi tiết) |
+| Khối `.invalid-feedback.d-block` | 4 | **0** |
+| Ô viền đỏ `.is-invalid` | 2 | 2 (loại 1) / 60 (loại 2) — giữ nguyên |
+| Cuộn tới ô lỗi đầu | hàm tự viết | util chung, ô lỗi đầu nằm **trong khung nhìn** (top 43 / cao 738) |
+
+Console: không có `Unknown custom element` / `TypeError` / lỗi nào liên quan `V2BaseError` hay
+`scrollToFirstError`. 2 dòng `Error saving: 422` là do chính lần bấm test "Gửi duyệt" form trống —
+đúng như thiết kế.
+
+⚠️ **Còn lệch skill, CHƯA làm (cần user quyết vì là refactor lớn trên màn đang chạy):**
+màn này vẫn validate bằng cờ `touched` thủ công, chưa dùng `vee-validate` realtime như
+`form-validate` mục 1-2 (skill ghi "màn mới dùng cách này thì không cần cờ `touched`", nhưng cũng
+ghi "màn cũ đang chạy ổn thì không sửa đại trà"). Chuyển hẳn sang `v-validate` + `data-vv-name` +
+`validateAll(null, { vmId: null })` sẽ đụng ~20 ô ở 3 file.
+
+### Checkpoint — 2026-09-21 (đợt 6)
+Vừa hoàn thành: Phase 19 — FE-1 đến FE-5. Sửa 3 file FE (14 khối lỗi + 1 hàm + 2 import).
+Đang làm dở: không.
+Bước tiếp theo: user quyết có chuyển tiếp sang vee-validate realtime không.
+Còn treo: badge màn Sửa (P15), 2 màn Bán hàng mượn (P14), 2 điểm ⚠️ của P17, Việt hoá `gt:0` (P18).
+Blocked: không. Chưa commit, chưa push (cả 2 repo).
+
+---
+
+## Phase 20 — Thống nhất câu lỗi `required` = "Bắt buộc phải nhập" (2026-09-21)
+
+User soát ra: FE đang tự chế câu lỗi ("Vui lòng chọn loại tiền"…) trong khi BE trả
+"Bắt buộc phải nhập" (`resources/lang/vi/validation.php` :99). Cùng một lỗi mà 2 nơi 2 câu — sai
+skill `form-validate` mục 1 ("message BE viết y hệt message rule FE"). Các màn Finance khác
+(`borrow-export-requests`, `product-export-requests`…) cũng đang dùng đúng câu này.
+
+### Tasks
+
+- [x] **FE-1** 9 câu `required` tự chế → `Bắt buộc phải nhập`:
+      `AdditionAccountingRequestForm.vue` (7: loại yêu cầu · phiếu XNBH · phiếu XLHT · đối tượng ·
+      ô đối tượng động · loại tiền · diễn giải), `AdditionDetailTable.vue` (3: đối tượng · hợp đồng ·
+      ghi chú), `RejectModal.vue` (1: lý do từ chối)
+- [x] **FE-2** 3 ô **vừa bắt buộc vừa phải > 0** (Số tiền phiếu · Tỷ giá · Số tiền từng dòng):
+      tách 2 tình huống — bỏ trống thì "Bắt buộc phải nhập" (trùng BE), có nhập số mới báo luật giá
+      trị ("Số tiền phải lớn hơn 0" / "Tỷ giá phải lớn hơn 0"). Thêm `moneyError`/`exchangeRateError`
+      (computed) + `moneyErrorOf(detail)` (method) + helper `isBlank()` — **`0` KHÔNG tính là rỗng**
+- [x] **FE-3** Đo lại trên trình duyệt
+
+### Kiểm chứng Phase 20
+
+Kiểm kê toàn bộ câu lỗi còn lại trong feature: **11 chỗ** `message="Bắt buộc phải nhập"` +
+3 chỗ dùng computed tự chọn câu. Không còn câu `required` tự chế nào.
+
+| Tình huống | Câu lỗi hiện ra |
+| --- | --- |
+| Gửi duyệt form trống | `Bắt buộc phải nhập` ×3 + `Số tiền phải lớn hơn 0` (ô đang có số **0**, không phải trống) |
+| Loại 1, `money = 0` mặc định | y như trên |
+| Xoá trắng ô Số tiền + Tỷ giá | `Bắt buộc phải nhập` ×**5** — 2 ô số đổi câu đúng như thiết kế |
+
+Compile 3 file: 0 lỗi.
+
+ℹ️ Còn 1 câu "Vui lòng chọn đối tượng trước" ở `AdditionAccountingRequestForm.vue` :808 — đó là
+**toast hướng dẫn thao tác** (bấm chọn hợp đồng khi chưa chọn đối tượng), không phải lỗi required
+của ô nhập → giữ nguyên.
+
+⚠️ **Lệch cần user quyết:** 3 màn anh em (`borrow-export-requests`, `prepick-cancel-requests`,
+`prepick-extend-requests`) dùng câu DÀI hơn cho popup từ chối — "Bắt buộc phải nhập lý do từ chối".
+Ở đây tôi để đúng câu chuẩn "Bắt buộc phải nhập" theo yêu cầu; muốn bám 3 màn kia thì đổi lại.
+
+⚠️ **Chưa làm (đã nêu ở Phase 18, chờ user):** message rule `gt` bên BE còn tiếng Anh
+("The Số tiền must be greater than 0.") vì `resources/lang/vi/validation.php` :47-52 để nguyên bản
+tiếng Anh. Sửa file đó là **đụng lang dùng chung toàn hệ thống** → theo CLAUDE.md phải hỏi trước.
+Cách an toàn hơn: khai `messages()` cục bộ trong `AdditionAccountingRequestStoreRequest`.
+
+### Checkpoint — 2026-09-21 (đợt 7)
+Vừa hoàn thành: Phase 20 — FE-1, FE-2, FE-3. Sửa 3 file FE.
+Đang làm dở: không.
+Bước tiếp theo: user quyết 2 điểm ⚠️ ở trên.
+Còn treo: badge màn Sửa (P15), 2 màn Bán hàng mượn (P14), 2 điểm ⚠️ của P17, vee-validate (P19).
+Blocked: không. Chưa commit, chưa push (cả 2 repo).
+
+---
+
+### Checkpoint TỔNG — wrap up 2026-09-21
+
+Vừa hoàn thành: **Phase 14 → 20** (7 phase trong 1 phiên). Không migration, không quyền mới.
+
+**File đã sửa — ĐÚNG 6 file:**
+
+| Repo | File | Phase |
+| --- | --- | --- |
+| `hrm-client` | `pages/finance/addition-accounting-requests/components/AdditionAccountingRequestForm.vue` | 14·15·16·18·19·20 |
+| `hrm-client` | `…/components/AdditionDetailTable.vue` | 14·19·20 |
+| `hrm-client` | `…/components/CoordinationDetail.vue` | 14·15 |
+| `hrm-client` | `…/components/RejectModal.vue` | 19·20 |
+| `hrm-api` | `Modules/Finance/Http/Requests/AdditionAccountingRequest/AdditionAccountingRequestStoreRequest.php` | 18 |
+| `erp` | `app/Model/Warehouse/InventoryDiscrepancyHandlingImport.php` | 17 |
+
+⚠️ **Working tree còn 4 file KHÔNG thuộc phiên này** (đầu phiên `git status` sạch, nên là thay đổi
+làm song song ở chỗ khác) — **đừng commit gộp**:
+`hrm-client`: `…/services/components/ServiceFormComponent.vue` · `pages/finance/bill-incomes/index.vue`
+`hrm-api`: `Modules/CustomerCare/Services/ServiceService.php` (+346 dòng) · `app/Services/CatalogHistoryService.php`
+
+Đang làm dở: không.
+
+Bước tiếp theo: user nghiệm thu. **Phase 14 BẮT BUỘC nghiệm thu trên cổng dev sau khi deploy** —
+local chạy `nuxt dev` không bao giờ tái hiện được lỗi nền header.
+
+Blocked: 6 việc chờ user quyết, đã liệt kê ở `.plans/gop-db/STATUS.md`.
