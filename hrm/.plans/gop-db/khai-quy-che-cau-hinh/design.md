@@ -119,3 +119,76 @@ khác `company_id` gốc nếu NV multi-company), rớt về `current_employee.c
 ⚠️ **Chưa gắn quyền ở FE cho Task 8** (đúng scope brief chỉ yêu cầu nối API, không
 yêu cầu ẩn/hiện nút theo quyền) — mục "FE lưu ý" phía trên vẫn còn treo, cần làm ở
 task riêng trước khi lên production.
+
+## Bổ sung 3 trường DSTC vào tab "Báo giá – Hợp đồng" (22/09/2026)
+
+Yêu cầu user: thiếu 3 trường (đã có bên ERP) → bổ sung, viết THẲNG 3 bảng ERP có sẵn
+(`company_price_types`, `company_product_types`, `company_rule_commissions`), đặt ở tab
+`baogia`, có HẸN NGÀY ÁP DỤNG (user uỷ quyền tự thiết kế cơ chế), hành vi GIỐNG ERP.
+
+### 3 trường (label khớp 1-1 registry ⇄ data.js)
+| # | Label | Bảng ERP | fk | Cột sửa được | Preset |
+|---|---|---|---|---|---|
+| ① | Hệ số quy đổi loại giá tính DSTC | company_price_types | company_id | coefficient | price_types (order) + dòng ảo id=99 "Giá dịch vụ" |
+| ② | Hệ số quy đổi theo tính chất hàng hóa tính DSTC | company_product_types | company_id | coefficient | PRODUCT_TYPES lọc theo configs.product_types + dòng ảo 'service' "Dịch vụ" |
+| ③ | Tỷ lệ chia DS theo quy chế phối hợp thực hiện | company_rule_commissions | company_id | 3 % (main/sup1/sup2) | 5 dòng RULE_COMMISSIONS ERP: (2,1,1)(2,1,2)(2,3,3)(3,1,1)(3,1,2) |
+
+### Cơ chế (quyết định đã chốt — user uỷ quyền thiết kế "hẹn ngày")
+- **KHÔNG bảng/pipeline mới.** Dùng lại NGUYÊN cơ chế `type=subtable` (như "Bảng tính công khoán"/
+  contract_rows) nhưng **store=company, fk=company_id** thay vì config. 3 trường đi CHUNG version công ty
+  của tab baogia (SCOPE_MIXED, no_hen=false → hỗ trợ hẹn qua `regulation_scheduled_versions`; cron
+  `regulation-config:apply-scheduled` → applyDueVersions() tự quét vì baogia có field scalar company).
+- **Áp = REPLACE-ALL** (xoá theo company_id + insert lại) trong transaction applyVersion — khớp ERP
+  `Company::syncPriceTypes/syncProductTypes/syncRuleCommissions` (đều delete+insert).
+- **Preset (giống ERP)**: dòng CỐ ĐỊNH, user chỉ sửa hệ số/%. `loadSubtable` merge preset (base rows từ
+  nguồn ERP) với giá trị đã lưu theo cột định danh (price_type_id / product_type_id / room+deliv+cust).
+- **Diff/lịch sử**: subtable so ở mức toàn bảng (json_encode), không phải field số → vào
+  `RegulationConfigHistory` (json diff), scope=company. Không đụng company_regulation_histories.
+
+### Thay đổi generalize (dùng chung, không phá contract_rows)
+- `loadSubtable($meta,$scopeId)`: fk=company_id → dùng $scopeId; fk=config_id → configs singleton (như cũ).
+  Cast theo cột (`cast`: int/decimal/string/json; mặc định number→int, else→json = tương thích contract_rows).
+  Có `preset` tag → merge preset.
+- `applySubtable($meta,$fkValue,$rows)`: cast theo cột khi insert (thêm decimal/string ngoài int/json).
+- `applyVersion` nhánh store=company: TÁCH field subtable (applySubtable company_id) khỏi cột companies
+  (giống nhánh global đã làm cho contract_rows) — nếu không sẽ gán mảng vào cột không tồn tại.
+- `getTabConfig` cột subtable: thêm passthrough `unit` (suffix % / hệ số cho FE).
+- `resolveOptions`: thêm `inline:coordination_address` (1 Thuộc phòng thực hiện / 2 Thuộc phòng hỗ trợ /
+  3 Thuộc cả 2 phòng) cho 2 cột địa chỉ của ③.
+- `ScheduleRegulationVersionRequest`: item_rules per-cột (coefficient required|numeric|min:0|max:99.99;
+  3 % required|numeric|min:0|max:100) + withValidator branch `preset_rule_commissions` chặn tổng %≠100/dòng
+  (room=2 ẩn sup2=0 → main+sup1 phải=100, giống ERP CompanyRegulationRequest).
+
+### FE
+- `data.js`: helper `subPreset(label,rowHeader)` (t=subtable, preset:true) + 3 field vào group baogia.
+- `RegulationConfigScreen.vue`: editor mới `f.t==='subtable' && f.preset` — cột đầu = nhãn dòng (r.name cho
+  ①②; ③ ghép "N phòng · Giao: X · KH: Y" từ options địa chỉ) READ-ONLY, các cột số (input==='number')
+  render V2BaseInput; ③ ẩn ô sup2 khi room_qty==2 (hiện "—", giữ 0) — khớp ng-if ERP. applyTabToModel/
+  collect subtable branch dùng lại NGUYÊN (map theo f.cols): cột number→Number, còn lại (định danh)→raw.
+
+## #13 — Quy chế thưởng năm (port ERP "Cấu hình thưởng cuối năm công ty")
+
+Bổ sung khâu KHAI thưởng cuối năm mà HRM thiếu; port màn ERP `admin/companies/{id}/config-bonus-end-year`
+thành nhóm MỚI **"Quy chế thưởng năm"** ở phạm vi **Theo công ty**. Spec đầy đủ:
+`docs/superpowers/specs/gop-db/2026-09-24-khai-quy-che-thuong-nam-design.md`.
+
+- **SHAPE mới `SHAPE_DEPT_GRID`** (khác hoahong=grid per-row scope phòng ban, khác subtable=preset dòng cố
+  định): lưới ĐỘNG theo phòng ban, scope công ty, lưu **replace-all cả form** theo `company_id` (delete →
+  reinsert trong transaction) — khớp ERP `storeConfigBonusEndYear`. KHÔNG qua version pipeline.
+- Ghi thẳng bảng ERP **`company_bonus_end_year_configs`** (đã có trong DB gộp, 0 dòng — gop_db convention:
+  không migration/bảng mới). Entity mới `extends Model` (bảng ERP) → service tự gán created_by/updated_by.
+- 6 cột/dòng: department_id · bonus_rate · settlement_type (1 DSTC quyết toán/2 Lợi nhuận phòng/3 Lợi nhuận
+  công ty) · reserve_fund_percent **XOR** reserve_fund_value · max_risk_reserve_fund. Validate: department
+  bắt buộc + không trùng; bonus_rate số; settlement_type ∈{1,2,3}; %/value không cùng >0.
+- BE: registry const+tab · Entity mới · service getDeptGridConfig/saveDeptGrid · controller show() nhánh
+  DEPT_GRID + endpoint saveDeptGrid + route `regulation-config/{tabKey}/dept-grid` · FormRequest
+  RegulationDeptGridRequest. FE: data.js group + renderer `dept-grid` trong RegulationConfigScreen.vue.
+
+### Quyết định đã chốt (#13)
+- **A** Approach A (SHAPE_DEPT_GRID + nhánh replace-all riêng) — user "ok".
+- **B** Khai theo công ty · **không hẹn ngày** (`no_hen=true`) — user: "nó khai theo công ty", "ko hẹn".
+- **C** Ghi thẳng `company_bonus_end_year_configs` có sẵn (không migration/bảng mới).
+- **H** **KHÔNG ghi lịch sử** cho tab này (ERP cũng không; formatter lịch sử dựng cho field scalar → ép
+  vào rủi ro cao). Rows vẫn có created_by/updated_by. Tab Lịch sử màn sẽ không hiển thị thưởng năm — chấp
+  nhận, khớp ERP; đảo được sau nếu user yêu cầu.
+- **G** GIỮ gate quyền `Cài đặt cấu hình` (KHÁC ERP ungated) — đúng thiết kế màn HRM, không thêm quyền mới.
