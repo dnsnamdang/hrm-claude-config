@@ -68,6 +68,14 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- dong-bo-luu-va-tiep-tuc → @junfoke → .plans/gop-db/dong-bo-luu-va-tiep-tuc/plan.md
+  Trạng thái: **CODE XONG (FE), đang verify tay** (2026-09-05). Redmine #11177.
+  Mục tiêu: mọi màn Tạo mới đều có nút "Lưu và tiếp tục" — lưu xong ở lại màn, form về trắng.
+  Phạm vi: 3 popup danh mục (vụ việc, mã phí, nguồn vốn) + 26 trang Tạo mới của Tài chính & CSKH.
+  Hạ tầng mới: `utils/mixins/saveAndContinueMixin.js` (form) + `saveAndContinuePageMixin.js` (trang vỏ, remount bằng `:key`).
+  Không áp dụng: màn không có Tạo mới (Cập nhật nhanh giá dịch vụ, Danh sách hàng giữ, Danh mục serial) và màn Tạo bắt buộc đi từ yêu cầu nguồn trên URL (Phiếu xuất hàng, Nhập/Xuất kho, Phiếu giữ hàng kho).
+  Spec: docs/superpowers/specs/gop-db/2026-09-05-dong-bo-luu-va-tiep-tuc-design.md | Tóm tắt: .plans/gop-db/dong-bo-luu-va-tiep-tuc/design.md
+
 - bao-cao-ke-hoach-lam-viec-nhan-vien → @namdangit → .plans/gop-db/bao-cao-ke-hoach-lam-viec-nhan-vien/plan.md
   Trạng thái: **MOCKUP HTML XONG — VERIFY PLAYWRIGHT 1600×900, CONSOLE 0 LỖI (08/09/2026)**. Chưa động vào code thật.
   Màn báo cáo **MỚI**, không thay `meeting-by-employees` hay `task-manager-by-employees`. Theo dõi **khối lượng công việc** của Phòng ban ▸ Bộ phận ▸ Nhân viên, gom **5 nguồn** đang nằm rải rác: `meetings` · `tasks` · `issues` · `assign_business` · `assign_jobs`. Định nghĩa chỉ tiêu bám đúng hằng số trạng thái trong `hrm-api/Modules/Assign` (có bảng tra trong `design.md`).

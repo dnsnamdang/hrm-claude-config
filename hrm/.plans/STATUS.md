@@ -8,6 +8,126 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- customer-demand-list → @junfoke → .plans/customer-demand-list/plan.md
+  Trạng thái: **ĐANG LÀM PHẦN 1 (14/09/2026)**. Nhánh `task_11386` (tách từ `tpe` bản mới) ở cả 2 repo.
+  Redmine #11386 — Màn Danh sách Nhu cầu khách hàng: 13 cột, phân quyền 5 cấp, hạn + cảnh báo, đóng thủ công, bàn giao (đơn lẻ + hàng loạt).
+  Chia 4 phần, commit dần. User chốt: giữ nhãn trạng thái hiện tại; được phép chạy migration + seed demo trên DB local.
+  ⏸ **Phần 2 (hạn xử lý) DỪNG CHỜ KHÁCH**: hệ thống đang đóng nhu cầu theo `expected_start_date` (cron `assign:close-expired-customer-demands` đang chạy), spec lại bắt tính theo `meeting + N ngày`. Đổi là báo cáo CSKH đổi số.
+  DB local đã chạy hết migration tồn (18 cái) + `assign:seed-care-demo` → 47 nhu cầu mẫu đủ 3 trạng thái.
+
+- meeting-by-employees-report-rework → @junfoke → .plans/meeting-by-employees-report-rework/plan.md
+  Trạng thái: **XONG, ĐÃ VERIFY AC1-AC5, ĐÃ COMMIT (12/09/2026)**. Nhánh `task_11145` — `hrm-api` a679222d2, `hrm-client` f83024f3f + 48d1e4cee. CHƯA merge, CHƯA push.
+  Redmine #11145 — Báo cáo meeting nhân viên theo thời gian: đổi tên hiển thị, lọc trạng thái theo mốc thời gian của TỪNG meeting, thêm ô lọc Phòng ban/Bộ phận, 2 cột Nội dung + Kết luận, chọn cột khi In.
+  User chốt: xét mốc theo từng meeting; meeting Hủy đếm số lượng nhưng KHÔNG cộng thời lượng; chọn cột chỉ áp màn In; đổi tên CHỈ ở chữ hiển thị (giữ nguyên tên quyền id 1057-1060 và URL route).
+  ⚠️ Đưa trạng thái Hủy vào báo cáo làm ĐỔI SỐ LIỆU so với hiện tại — phải báo khách trước khi bàn giao.
+  Đo thử trên DB local: tháng 7/2026 từ 37 meeting (cũ) xuống 26 (mới) — 15 meeting "Chốt lịch" đã quá giờ bị loại, 4 meeting Hủy được thêm vào.
+  Phần bộ lọc Phòng ban/Bộ phận/Nhân viên spec yêu cầu hoá ra ĐÃ CÓ SẴN (V2BaseCompanyDepartmentFilter) — không phải làm.
+  Popup chọn cột khi In dùng ĐÚNG khuôn cấu hình in của hệ thống (QuotationPrintConfigModal / BomPrintConfigModal), KHÔNG dùng column-customization-modal (popup tuỳ chỉnh cột hiển thị của màn danh sách).
+  ⚠️ Lỗi CÓ SẴN phát hiện khi verify, chưa sửa (ngoài phạm vi): `getData()` trả TRÙNG nhóm công ty (company_id 3 xuất hiện 2 lần) -> bảng hiện 2 dòng công ty giống hệt nhau, kéo theo cảnh báo Vue "Duplicate keys" c-/d-/e-. Nghi do logic phân trang tách 1 công ty thành 2 entry.
+  ⚠️ Lỗi CÓ SẴN khác: index.vue (created) đặt CẢ 4 cờ quyền `hasAPermission(...) || true` — fail-open, CLAUDE.md cấm.
+
+- attendance-duplicate-time-check → @junfoke → .plans/attendance-duplicate-time-check/plan.md
+  Trạng thái: **XONG, ĐÃ VERIFY, ĐÃ COMMIT (2026-09-11)**. Nhánh `tpe` — `hrm-api` b6c25c730, `hrm-client` 21a7b95d4. CHƯA push.
+  QA báo: nộp được 2 đơn xin nghỉ trùng thời gian khác loại nghỉ; và khi bị chặn thì chỉ hiện "Tạo đơn xin nghỉ thất bại" không nói lý do.
+  Nguyên nhân 1: bộ dò trùng trong `AttendanceRequest` thiếu trạng thái `CHO_NSHC_DUYET` (4) → đơn đã duyệt cấp 1 vô hình với bộ dò. KHÔNG phải do app — app và web dùng chung 1 endpoint `POST /timesheet/attendance`.
+  Nguyên nhân 2: `add.vue` import + đăng ký `ConfirmAttendance` nhưng không đặt thẻ vào template → `modal-warning` không có trong DOM, `$bvModal.show` im lặng.
+  Không migration, không đổi contract API (chỉ làm giàu `message_mobile` — app mobile hưởng lợi luôn).
+
+- meeting-attendance-confirm → @junfoke → .plans/meeting-attendance-confirm/plan.md
+  Trạng thái: **XONG + đã sửa QA vòng 1 (2026-09-12, commit `d003f860e` hrm-client)**. Nhánh `task_11369` (tách từ `tpe`) ở cả 2 repo.
+  Redmine #11369 — Khách mời NỘI BỘ tự xác nhận tham dự trước giờ họp: 2 nút [Có mặt] / [Vắng có lý do] ở màn Chi tiết meeting VÀ ngay trên dòng thông báo chuông; popup lý do bắt buộc; phản hồi ghi thẳng vào bảng Điểm danh, người chủ trì vẫn sửa đè được.
+  Không thêm cột DB, không thêm quyền, không migration — dùng lại `meeting_employees.attendance_status` / `attendance_note` có sẵn.
+  ⚠️ Đụng 3 file dùng chung (user duyệt trước khi làm): `components/BasicSubsystem.vue` (chuông toàn hệ thống), `components/modal/base-confirm-modal.vue` (thêm prop `required-input`, mặc định tắt), `Modules/Timesheet/Services/EmployeeInfoService.php` (payload thông báo lọc trắng danh sách khoá).
+
+- meeting-type-result-form → @junfoke → .plans/meeting-type-result-form/plan.md
+  Trạng thái: **XONG, ĐÃ COMMIT (2026-09-11)**. Nhánh `task_11130` — `hrm-client` 87dbf7ed3 + 78330aa5b, `hrm-api` 00d46339b. CHƯA merge, CHƯA push.
+  Redmine #11130 — Loại meeting gán "Phiếu tổng hợp kết quả meeting" (chọn MẪU PHIẾU có sẵn, không soạn câu hỏi riêng); biên bản render động theo mẫu, lưu đáp án qua FormAnswerService (type = `meeting`), chặn Hoàn thành khi thiếu câu bắt buộc (câu ẩn theo rẽ nhánh không tính).
+  Mục "người chủ trì meeting" của issue đã có sẵn trên `tpe` từ trước; phiếu khảo sát nhu cầu đầu tư cứng GIỮ NGUYÊN chạy song song (user chốt) nên báo cáo CSKH tiềm năng không bị ảnh hưởng.
+  ⚠️ Cần chạy migration `2026_09_11_000002_add_result_form_to_meeting_types_table.php` ở mọi môi trường.
+  Ẩn/hiện câu hỏi động theo rẽ nhánh: đã làm ở commit 78330aa5b (lọc câu trước khi truyền cho FormPreview, không sửa component dùng chung).
+
+- tkt-project-labels-and-industry → @junfoke → .plans/tkt-project-labels-and-industry/plan.md
+  Trạng thái: **XONG CẢ 4 MỤC, ĐÃ COMMIT (2026-09-11)**. Nhánh `task_11142` — `hrm-client` 026bd3556, `hrm-api` 724afc7d5. CHƯA merge, CHƯA push.
+  Redmine #11142 — Dự án TKT: (1) đổi nhãn Ngày bắt đầu/kết thúc dự án TKT + Giai đoạn dự án KH; (2) thêm trường Nhóm ngành (con/độc lập chọn 1, cha chọn nhiều); (3) ràng buộc 1 KH + 1 nhóm ngành = 1 dự án đang mở; (4) ô Meeting liên quan lấy thêm meeting thời khách còn là cá nhân (khớp SĐT người liên hệ), chỉ meeting do người tạo dự án chủ trì — endpoint mới `meeting-options`.
+  ⚠️ 3 giả định ở mục 4 cần khách xác nhận (đối chiếu bằng SĐT không dùng tên; điều kiện người chủ trì áp cho CẢ meeting của KH doanh nghiệp; kéo meeting = gắn liên kết chứ không đổi chủ sở hữu) — chi tiết trong plan.md.
+  User chốt: nhãn chỉ đổi ở màn Dự án TKT; "đang mở" = trạng thái 1-7 (từ Thương thảo dự án/hợp đồng trở đi nhả nhóm ngành); chỉ chặn từ nay, không đụng dữ liệu cũ; Nhóm ngành do user chọn (bỏ cơ chế server tự suy từ Ứng dụng).
+  ⚠️ Đã chạy migration `2026_09_11_000001_create_prospective_project_scopes_table.php` trên DB local `hrm_prod_30_3_26`; môi trường khác chưa chạy.
+
+- quotation-clear-discount → @junfoke → .plans/quotation-clear-discount/plan.md
+  Trạng thái: **XONG, ĐÃ COMMIT (2026-09-11)**. Nhánh `task_10900` (tách từ `tpe`) ở cả 2 repo — `hrm-client` f9d584dfc, `hrm-api` 705acbfc7. CHƯA merge, CHƯA push.
+  Redmine #10900 — Báo giá: nút xóa dữ liệu giảm giá hàng loạt trên toolbar bảng Chi tiết sản phẩm (GG mặt hàng → "Xóa giảm giá"; GG tổng → "Xóa phân bổ").
+  Chỉ FE, 1 file `pages/assign/quotations/_id/edit.vue` (create.vue extends file này). Không đụng BE/DB.
+  User chốt: nút hiện + disable khi GG = 0 (theo spec khách); "Xóa phân bổ" GIỮ nguyên bảng khoản GG tổng; reset thêm phân bổ dòng Chi phí vận chuyển.
+  Phát sinh (user duyệt): quyền `Cho phép thêm giảm giá trong báo giá` mà FE #10789 gate từ trước **chưa bao giờ có trong seeder/DB** → không ai bật được GG. Đã thêm vào `PermissionsTableSeeder.php` id 1182 (đặt CUỐI file), chạy lại seeder trên DB `hrm_prod_30_3_26`, gán cho role Super admin qua giao diện.
+  Verify: FE :3005 (hrm-cursor) → API :8002 (hrm-cursor) → DB `hrm_prod_30_3_26`; KHÔNG đụng `gop_db`. Đã chạy lại seeder nên DB này mất ~120 quyền cũ đã bị comment trong seeder (731 dòng role_has_permissions thành mồ côi).
+
+- dntt-amount-theo-so-ngay-duyet → @junfoke → .plans/dntt-amount-theo-so-ngay-duyet/plan.md
+  Trạng thái: **CODE XONG, CHỜ VERIFY + CHỜ SQL DỮ LIỆU PROD (2026-09-10)**. Nhánh `tpe-develop-assign`, chỉ repo `hrm-client`. CHƯA commit git.
+  QA báo DNTT-01022 / DNTT-01021: TP/KT duyệt = 0 nhưng Thành tiền vẫn = 0,5 ngày × đơn giá.
+  Gốc lỗi: 3 hàm tính tiền phân nhánh theo cờ QUYỀN `canTpApprove`/`canKtApprove` — phiếu đã duyệt xong (status 3/4) cả 2 cờ false → rơi vào `else` tính theo số ngày ĐỀ XUẤT. Commit 22c907f83 thêm `watch: form.id` gọi lại mỗi lần load → luôn ghi đè sai.
+  Fix: thêm computed `approveStage` xét cả `status` (như `PrintTab.vue` đã làm) cho `BusinessTravelExpensesTab.vue`, `StayTab.vue`, `MovingCostTabEmployeeDetail.vue`.
+
+- teacher-optional-birthday-phone → @junfoke → .plans/teacher-optional-birthday-phone/plan.md
+  Trạng thái: **CODE XONG, CHỜ CHẠY MIGRATION + VERIFY (2026-09-10)**. Nhánh `tpe` (hrm-api + hrm-client). CHƯA commit git.
+  Redmine #11409 — Danh mục giảng viên: bỏ bắt buộc **Ngày sinh** + **Số điện thoại** với hình thức *Giảng viên thuê ngoài* (`type = 2`).
+  BE: `TeacherController` store/update đổi 2 rule sang `required_if:type,1|nullable` (+ đổi key message sang `.required_if`, closure check trùng SĐT thoát sớm khi rỗng, gán `?? null`).
+  Chống `Carbon::parse(null)` (sẽ ra ngày hôm nay): `TeacherResource` + blade `exports/teacher_report`.
+  FE: `TeacherForm.vue` — `<Required v-if="form.type == 1" />` cho 2 trường, theo pattern sẵn có của Số CCCD/Email/Trình độ.
+  ⚠️ Cần chạy migration `2026_09_10_000000_update_teachers_table_v3.php` (teachers.birthday/telephone → nullable) trước khi test, chưa tự chạy.
+
+- dntt-print-round-effort → @junfoke → .plans/dntt-print-round-effort/plan.md
+  Trạng thái: **CODE XONG, CHỜ USER VERIFY (2026-09-09)**. Nhánh `tpe`, chỉ repo `hrm-client`. CHƯA commit git.
+  QA báo mẫu in ĐNTT hiện `10.129999999999999` công khoán phụ trong khi màn duyệt hiện `10.13` (PGV `TPSG.PGV.2026016101`).
+  Nguyên nhân: KHÔNG lệch dữ liệu — DB ERP `wr_assign_tasks.summary` (`rate_effort.work_p3_approve`) lưu sẵn đuôi float do ERP cộng float rồi ghi thẳng; màn duyệt có `| formatNumber` nên làm tròn, mẫu in `_id/print.vue` thiếu filter nên phơi nguyên chuỗi.
+  Fix: thêm `| formatNumber` cho 8 dòng ở `pages/assign/payment_business_request/_id/print.vue` (3 dòng công + 5 cột số ngày/đêm cùng rủi ro). Không đụng dữ liệu, không sửa cách ERP ghi `summary`.
+  Đã rà toàn `pages/assign`: sửa thêm 3 dòng số ngày ở tab In (`components/PrintTab.vue`). Còn `assign_tasks/_id/show.vue` (~19 chỗ `rate_effort` thô) + `assign_tasks/index.vue:147` (`.toFixed(2)`) cùng rủi ro nhưng NGOÀI phạm vi, chờ user quyết.
+  ⚠️ File CRLF — `sed -i` đã nuốt ký tự CR toàn file, phải khôi phục; diff cuối đúng 8+/8-.
+  Bước tiếp: user mở mẫu in ĐNTT của PGV TPSG.PGV.2026016101 xác nhận ra 10.13.
+
+- address-district-by-nation → @junfoke → .plans/address-district-by-nation/plan.md
+  Trạng thái: **ĐÃ MIGRATE (DB local) + VERIFY PASS Playwright (2026-09-09)**. Nhánh `tpe` (hrm-api + hrm-client). CHƯA commit git.
+  Khôi phục cấp Quận/Huyện cho địa chỉ NƯỚC NGOÀI theo đúng cách ERP xử lý: không gỡ mà ẩn theo quốc gia (`nation_id = 1` là VN). VN: Tỉnh → Xã. Nước khác: Tỉnh → Quận/Huyện → Xã.
+  Gồm: (1) dựng lại **Danh mục Quận/Huyện** (`/human/districts`, BE Entity/Service/Request/Resource/Controller/route + FE index + modal + menu) copy pattern màn Phường/xã; (2) `utils/address.js` dùng chung; (3) `AddressController` khôi phục `level = 2`, `level = 3` nhận `district_id`, `level = 1` trả kèm `nation_id`; (4) 2 màn Khách hàng (Giao việc bản V2 + Nhân sự bản cũ, gồm cả Địa điểm giao hàng); (5) 7 file Hồ sơ nhân sự (Hộ khẩu + Nơi ở hiện tại).
+  Hồ sơ nhân sự KHÔNG thêm cột `nation_id` — quốc gia suy ra từ tỉnh đang chọn (API tỉnh trả kèm `nation_id`).
+  BE module Assign đã có sẵn đủ endpoint districts/provinces/wards (đọc DB ERP `mysql2`), không phải sửa.
+  ⚠️ **Migration phải chạy trên mọi môi trường trước khi đẩy code**: thêm `created_by`/`updated_by` (và `status` nếu chưa có) vào bảng `districts`. DB local đã chạy; DB dev/prod chưa.
+  Verify PASS: danh mục Quận/Huyện (Tạo/Sửa/Khoá/Mở khoá/Xoá + đồng bộ ERP 2 chiều, cột Người cập nhật ra tên), KH Nhân sự (VN ẩn ô Quận/Huyện — nước ngoài hiện, mở bản ghi cũ giữ nguyên giá trị), Hồ sơ nhân sự (2 khối địa chỉ độc lập). Data test đã dọn.
+  KH (Giao việc bản V2) verify PASS phần giao diện + cascade (cá nhân & tổ chức, tỉnh lọc theo quốc gia, đổi về VN reset đúng).
+  ⚠️ **BLOCKER dữ liệu**: bảng `nations` HRM chỉ có 3 bản ghi / ERP có 30 → FE lấy quốc gia từ ERP nhưng BE validate `exists:nations,id` trên HRM ⇒ KHÔNG lưu được khách hàng nước ngoài ở CẢ 2 màn. Provinces (44) + districts (735) khớp 100%, chỉ `nations` lệch. Phải kiểm DB dev trước khi deploy.
+  CHƯA verify: vòng LƯU khách nước ngoài (chặn bởi blocker trên), khối Địa điểm giao hàng (cần quyền ERP "Xem tất cả khách hàng"), và 6 file employee_info nhánh my-info-request/request-update.
+  ⚠️ Nhánh `gop_db` đã có sẵn màn danh mục Quận/Huyện bản V2 cùng đường dẫn — khi merge phải chọn 1 bản.
+  Spec: docs/superpowers/specs/2026-09-08-address-district-by-nation-design.md · **Bàn giao QA: .plans/address-district-by-nation/pham-vi-anh-huong-QA.md** (12 màn nhóm B phải test kỹ + 4 màn nhóm C test hồi quy)
+  Bước tiếp: chạy migrate ở dev trước khi deploy; verify màn KH (Giao việc) bằng tài khoản có quyền ERP Thêm/Sửa khách hàng.
+
+- salary-composition-name-match-timesheet → @junfoke → .plans/salary-composition-name-match-timesheet/plan.md
+  Trạng thái: **CODE XONG, CHƯA CHẠY MIGRATE (2026-09-08)**. Redmine #11328. Nhánh `tpe-develop-assign`, chỉ repo `hrm-api`. CHƯA commit git.
+  Đồng bộ tên thành phần lương với tiêu đề cột trên Bảng công chi tiết: đổi 10 `name`, viết lại 5 `description` nêu rõ cách tính, bổ sung 3 thành phần mới (`NGHI_THAI_SAN`, `TONG_CONG_DI_LAM`, `TONG_NGHI_HUONG_LUONG`). Khách đã duyệt bảng đối chiếu 08/09/2026.
+  Chỉ đổi `name`/`description`, KHÔNG đổi `code` nên công thức lương giữ nguyên (công thức thay biến theo code). Bảng lương + mẫu bảng lương ĐÃ TẠO giữ tên cũ (snapshot `display_name`), cái tạo mới lấy tên mới.
+  2 migration data-only (bám khuôn `2026_08_04_000001_rename_tong_vdm_quy_doi...`: update theo `code`, chỉ đổi bản copy công ty khi user chưa tự sửa, không lọc `status`) + `calcData()` của **CẢ HAI** `CreateEmployeePayroll` **và** `SalaryService` (thiếu 1 chỗ thì "tính lại bảng lương" ra 0) + seeder.
+  Treo chờ khách: (1) `CONG_DI_DUONG` lệch NGUỒN dữ liệu so với cột (2) trên bảng công (bảng tổng hợp công vs đề nghị thanh toán KT duyệt) — lệch SỐ chứ không phải lệch tên, chưa ghi mô tả; (2) tách VĐM theo từng hệ số — hệ số khai ở `/timesheet/setting/overtime` tab "Khung giờ làm thêm", số lượng ĐỘNG nên không tạo cố định được.
+  Phát hiện 4 lỗi CÓ SẴN khi rà (KHÔNG sửa đợt này, chi tiết ở design.md): 3 thành phần luôn trả 0 (`BU_TRU_CONG_HANH_CHINH_SAU_QUYET_TOAN` thiếu trong `$cham_congs`; `NGHi_KHONG_LY_DO`/`NGHi_HUONG_BHXH` viết sai hoa thường); `SalaryService::calcData` thiếu 9 mã so với job chính; `TONG_VDM_QUY_DOI` lệch cột (3) do cách làm tròn; `OvertimeHour::getAllRatio()` không lọc hệ số rỗng (sinh cột rác `VĐM 1(x-)`) và không lọc `company_id`.
+  Tài liệu gửi khách: `Doi chieu ten thanh phan luong - Loi 11328.xlsx` (thư mục gốc dự án).
+  Bước tiếp: user chạy `php artisan migrate` rồi verify theo 4 bước cuối design.md; hỏi khách nốt 2 mục treo.
+
+- meeting-nguoi-tham-gia-diem-danh → @junfoke → .plans/meeting-nguoi-tham-gia-diem-danh/plan.md
+  Trạng thái: **XONG TESTCASE (2026-09-04)** — Redmine #10534 (TPE Lệ: "Nhờ DND update testcase"). Nhánh `tpe-develop-assign`. Chỉ tài liệu, không đụng code.
+  Sinh 2 file testcase theo chuẩn team (`tc_engine`, 17 cột, 2 khối summary DNS/TP, ngôn ngữ nghiệp vụ, bộ kiểm tra thuật ngữ "OK - sach"):
+  (1) `testcase - Quản lý danh sách người tham gia.xlsx` — 38 TC (P0 53%): hiển thị khối Thành phần Công ty/Khách hàng, thêm nhân sự qua popup "Chọn nhân viên phía công ty" (lọc/phân trang/chọn tất cả theo bộ lọc/chống trùng), nhập tay khách mời, xoá, kéo-thả đổi thứ tự (không chéo bảng), ràng buộc (bắt buộc ≥1 thành viên công ty, họ tên khách mời bắt buộc, SĐT 0+10–12 số), readonly màn Xem, bypass giao diện.
+  (2) `testcase - Điểm danh thành viên meeting.xlsx` — 35 TC (P0 49%), làm lại từ bản cũ `meeting-diem-danh/testcase-diem-danh.xlsx` (format 15 cột + thuật ngữ code): điều kiện chỉ điểm danh khi Sửa + "Đã chốt lịch", chip trạng thái, điểm danh nhanh, điều kiện Hoàn thành (thiếu biên bản/thiếu điểm danh), readonly, lưu trữ.
+  Nguồn: GeneralInfo.vue / PopupStaff.vue / MeetingAttendance.vue / MeetingForm.vue + validate MeetingCreate/UpdateApiRequest + nhãn thật xác nhận Playwright.
+  Generator: .plans/meeting-nguoi-tham-gia-diem-danh/gen_nguoi_tham_gia.py + gen_diem_danh.py
+  Bước tiếp: Gửi QA / đính kèm Redmine #10534.
+
+- form-template-import → @junfoke → .plans/form-template-import/plan.md
+  Trạng thái: **CODE XONG + VERIFY PASS Playwright/DB/API (2026-08-27, data thật)**. Nhánh `tpe` (hrm-api + hrm-client). Redmine #10548. CHƯA commit git.
+  Verify: tải template (xlsx hợp lệ), import file 2 section/4 câu → preview → validate 4/4 → nạp builder → Lưu (PTT-2026-00001) → DB đúng: 3 survey_questions + 4 form_questions link survey_question_id + code=cau_hoi_{id}. Dedup: câu "Tất cả" trùng 2 lần → 1 sq tái dùng; app khác → tạo mới (willReuse=false); validate lỗi kèm số dòng. Đã dọn data test (DB về trống). Đã sửa lệch nút Import (thêm nhãn spacer).
+  Thêm nút **Import Excel** vào màn Tạo mẫu phiếu thu thập thông tin (`/assign/form-templates/add`): nạp Section + câu hỏi khảo sát từ Excel, validate theo dòng, chống trùng câu hỏi ngân hàng theo 4 yếu tố [title]+[data_type]+[đáp án]+[application_scope].
+  Chốt: (1) ghi câu hỏi vào ngân hàng KHI BẤM LƯU form (modal chỉ parse+validate+nạp builder); (2) APPEND section vào cuối; (3) chỉ màn Tạo mới; (4) validate chuẩn skill import-excel (có API validate BE + dedup preview).
+  Đối chiếu thuật ngữ: "Nhóm giải pháp"=Ứng dụng (application_id); "Nhóm ngành" đã bỏ khỏi schema (không thêm); Phạm vi=application_scope (1 Tất cả / 2 Theo ứng dụng).
+  BE: SurveyQuestionService::resolveOrCreate (dedup→tái dùng/tạo mới) + FormTemplateService::store pre-pass resolveImportedQuestions (additive, không đụng update/schema) + FormTemplateController validateImport/importTemplate + 2 route trước /{formTemplate}. FE: nút ở FormMeta (disable khi chưa chọn Ứng dụng) + V2BaseImportModal group theo Section trong FormBuilder + transform dòng→câu hỏi _import + append.
+  Spec: docs/superpowers/specs/2026-08-27-form-template-import-design.md · Plan: .plans/form-template-import/plan.md
+  Bước tiếp: code Phase 1 (BE resolveOrCreate + store pre-pass).
+
 - bao-cao-cskh-tiem-nang → @dnsnamdang → .plans/bao-cao-cskh-tiem-nang/plan.md
   Trạng thái: 🟢 **Phase 14 XONG 20/20 TASK + TEST, ĐÃ COMMIT (2026-09-07) — chưa push, chưa merge về `tpe`.** `hrm-api` `7bddb9fb1` (11 file, +536/−149) · `hrm-client` `f29eaaf35` "update kq cskh" (6 file, +421/−164). Cả 2 nhánh `tpe-cskh-tieu-chi-khach-hang`, cây sạch, mỗi repo đúng 1 commit so với `tpe`, **chưa có upstream**. **84/84 e2e xanh**, kiểm chứng bằng Playwright ở từng bước. Deploy chỉ cần code: KHÔNG migration, KHÔNG quyền mới, KHÔNG cron.
   ⚠️ `HRM/e2e/` không thuộc repo nào → 4 file spec chỉ có trên máy này; 2 fixture (`e2e_care_report_seed.php`, `e2e_provision.php`) thì ĐÃ nằm trong commit `hrm-api`.
@@ -184,6 +304,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Nội dung Phase 6: đổi nguồn Lĩnh vực từ ERP `scopes` (mysql2) sang danh mục **Lĩnh vực kinh doanh nội bộ** (`internal_business_scopes`), và Mức đầu tư / Thời gian dự kiến chuyển xuống **cấp Nhóm ngành** (`scopes` HRM). Bảng khảo sát thành 1 bảng phẳng 5 cột (Lĩnh vực gom dòng kiểu rowspan). Khối khảo sát **bỏ hẳn phụ thuộc `mysql2`**, xoá `Entities/TpScope.php`. Migration `2026_08_23_000001` **XOÁ SẠCH** dữ liệu khảo sát cũ rồi đổi tên cột (`scope_id`→`internal_business_scope_id`, thêm `scope_id`/`scope_name` mang nghĩa nhóm ngành). Nhánh `tpe` (đã có sẵn cả feature khảo sát lẫn 2 danh mục mới). 8 task: migration+Entity · endpoint cây 2 tầng · service+validate · store · component FE · bản in rowspan · Excel biên bản · E2E.
   Design Phase 6: .plans/meeting-tim-hieu-gioi-thieu-sp/design-phase2.md · Plan Phase 6: .plans/meeting-tim-hieu-gioi-thieu-sp/plan.md (mục "PHASE 6")
   Spec: docs/superpowers/specs/2026-08-21-meeting-tim-hieu-gioi-thieu-sp-design.md · Ledger SDD (đầy đủ 31 ruling): .plans/meeting-tim-hieu-gioi-thieu-sp/sdd-ledger.md
+
 - meeting-by-market → @dnsnamdang → .plans/meeting-by-market/plan.md
   Trạng thái: 🟡 **PHASE 13 XONG — ĐÃ COMMIT + MERGE VÀO `tpe` LOCAL, CHƯA PUSH (2026-09-06).** `hrm-api` `320b5ab2e` + merge `33cca598e` · `hrm-client` `f1e5701e2` + merge `80c8bd053`; 2 worktree đứng ở `tpe`, cây sạch. Nhánh `bao_cao_meeting_thi_truong` tách từ `origin/tpe` (worktree riêng ở cả 2 repo).
   Phase 13 = cải tổ bảng theo **DÒNG**: Thị trường / Khách hàng từ 2 CỘT rowspan → **2 cấp dòng cha** trải hết bề ngang, đánh số `I` / `1` / `1.1` ở cột STT riêng (không dấu `/`), dòng cha có số đếm + thu gọn/mở rộng + nút "Mở hết/Thu gọn", nhãn nhóm ghim trái khi cuộn ngang. Port style `.rsum-tb` của báo cáo CSKH tiềm năng (thead teal, 2 thanh cuộn trên+dưới, caret SVG). Thêm cột **Phòng chủ trì** + khối summary **Theo phòng chủ trì**. Cột thành phần còn 1 người + chip `+N` → popup `MeetingMembersModal`. Bấm tên meeting → **panel `MeetingDetailDrawer`** (bỏ mở tab mới của Phase 11); "Xem biên bản" → **popup bản in dùng chung** (`reportPrintPreviewMixin` + `ReportPrintPreviewModal`), xoá `MeetingMinutesModal.vue`. Summary 4 khối trên 1 hàng, tràn thì cuộn ngang, item trong khối vẫn chia cột.
