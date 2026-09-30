@@ -311,6 +311,81 @@ Blocked: không.
 - 5 quy tắc `list-page` còn nợ + file mẫu Import sinh bằng endpoint API — chờ gộp DB.
 - Bản `.pdf` / `.html` của SRS (nếu cần gửi ngoài) — một lệnh pandoc.
 
+## Phase 7 — Dọn mã cũ `LVKDNB.` + testcase chuẩn (2026-09-15, Redmine #11184)
+
+Nhánh: **`tpe-develop-assign`** (cả `hrm-api` + `hrm-client`), đã fast-forward lên origin trước khi sửa.
+
+- [x] **B1.** Rà toàn bộ dấu vết tiền tố cũ `LVKDNB.` trên nhánh (code + file mẫu + seeder + migration).
+- [x] **B2.** `hrm-client/static/Mau_import_LinhVucKinhDoanhNoiBo.xlsx`: dòng hướng dẫn + 2 dòng ví dụ
+      đổi `LVKDNB.` → `LVCTKD.` (sửa thẳng XML trong xlsx, giữ nguyên style/định dạng).
+- [x] **B3.** `hrm-client/static/Mau_import_NhomNganh.xlsx`: ví dụ mã lĩnh vực + 2 dòng mẫu
+      `LVKDNB.KHAC` → `LVCTKD.KHAC`.
+- [x] **B4.** `hrm-api/app/Console/Commands/Assign/SeedCareReportDemoCommand.php`: mã lĩnh vực tự sinh
+      dùng tiền tố mới.
+- [x] **B5.** `hrm-api/database/e2e_meeting_survey_seed.php`: `LVKDNB.E2E1` → `LVCTKD.E2E1`.
+- [x] **B6.** `hrm-api/database/migrations/2026_08_22_000001` + `..._000002`: chú thích cột và bản ghi
+      mặc định "Khác" dùng `LVCTKD.KHAC`; hàm `ensureDefaultScope()` tra **cả 2 mã** cũ/mới để DB đã
+      chạy migration trước đây không bị tạo thêm bản ghi "Khác" thứ hai.
+- [x] **B7.** Migration mới `2026_09_15_000001_rename_internal_business_scope_code_prefix.php`: đổi mã
+      dữ liệu đang có `LVKDNB.*` → `LVCTKD.*` (hậu tố ≤ 4 ký tự giữ nguyên, hậu tố dài cấp số thứ tự
+      `LVCTKD.0001…`). Không đụng `id`, không đụng `updated_at`/`updated_by`. Idempotent.
+- [x] **B8.** Testcase chuẩn team: `.plans/linh-vuc-kinh-doanh-noi-bo/{gen_testcase.py, testcase.xlsx}`
+      — **135 ca / 10 nhóm + nhóm phân quyền**, P0 53%, form 17 cột + 2 khối summary DNS/TP.
+      (Bản cũ `docs/srs/linh-vuc-cong-ty-kinh-doanh-testcases.xlsx` 201 ca dùng form 13 cột không
+      chuẩn và còn lẫn mã `LVKDNB.` — coi như thay thế.)
+
+### Checkpoint — 2026-09-15
+
+Vừa hoàn thành: Phase 7 (B1–B8).
+
+Đang làm dở: không. **Chưa commit** — thay đổi đang nằm trong working tree của 2 repo.
+
+Bước tiếp theo:
+- Chạy `php artisan migrate` để migration B7 đổi mã dữ liệu (local đang có 8 bản ghi mã cũ:
+  `LVKDNB.KHAC` → `LVCTKD.KHAC`, 7 bản ghi hậu tố dài → `LVCTKD.0001…0007`).
+- Kiểm lại trên trình duyệt sau khi migrate: màn danh sách, Xuất Excel, tải file mẫu Import.
+- 2 điểm QA phản hồi ở #11184 ngày 15/09 **chưa xử lý**: (a) đổi màu nút Khóa / Xóa / Xuất Excel /
+  Import Excel theo quy định chung; (b) QA vẫn ghi mã chuẩn là `LVKDNB` — user đã chốt giữ `LVCTKD`,
+  cần phản hồi lại QA trên Redmine.
+
+Blocked: không.
+
+## Phase 8 — Sửa lệch giao diện popup Thêm/Sửa (2026-09-15, Redmine #11377)
+
+User báo: ô "Thời gian hiệu lực nhu cầu (ngày)" tụt thấp hơn 2 ô cùng hàng.
+
+- [x] **B1.** Nguyên nhân: nhãn dài nằm trong cột `col-md-3` (~190px) nên xuống 2 dòng, đẩy ô nhập
+      thấp hơn ô Mã / Tên; đồng thời ô Trạng thái bị đẩy trơ trọi xuống hàng 2.
+- [x] **B2.** Bố cục lại theo ý user — 2 hàng, mỗi hàng nhãn đều gọn 1 dòng:
+      hàng 1 `Mã (col-md-3)` + `Tên (col-md-9)`; hàng 2 `Thời gian hiệu lực nhu cầu (col-md-6)` +
+      `Trạng thái (col-md-6)`.
+- [x] **B3.** Icon ⓘ mang `line-height` mặc định làm nhãn cao hơn nhãn thường 3px → ô nhập vẫn lệch
+      1px so với ô Trạng thái. Thêm `::v-deep .v2-label .ri-information-line { line-height: 1 }`
+      trong style scoped của modal.
+- [x] **B4.** User xem bản 6-6 thấy 2 ô rộng 365px là quá to → **bố cục chốt**: hàng 1 gom 3 trường
+      ngắn `Mã (col-md-3)` + `Tên (col-md-6)` + `Trạng thái (col-md-3)`; hàng 2 riêng
+      `Thời gian hiệu lực nhu cầu`. Tôi đặt `col-md-5` (ô rộng 294px) và verify ở bề rộng đó;
+      sau đó user tự chỉnh lên `col-md-6` — giữ theo user, chưa chụp lại ảnh ở bề rộng mới.
+- [x] **B5.** Verify bằng Playwright trên client dev (Nuxt tự nhảy cổng vì 3000 bị chiếm): 3 ô hàng 1
+      cùng mốc trên 171px, nhãn đều 1 dòng (14–15px). Ảnh: `screenshots/lvctkd-modal-bo-cuc-3-1.png`.
+
+### Checkpoint — 2026-09-15 (lần 2)
+
+Vừa hoàn thành: Phase 8. 1 file FE `pages/assign/internal-business-scopes/AddScopeModal.vue`
+(+15/−3), CHƯA commit.
+
+✅ **Migration đổi mã dữ liệu ĐÃ CHẠY** — lần verify sau cùng ô Mã hiện `LVCTKD.0007`, không còn
+cảnh ghép đôi tiền tố. Ghi chú cũ giữ lại bên dưới để tra ngược.
+
+⚠️ **Lỗi khác lộ ra khi verify (đã hết sau khi chạy migration)**: bản ghi còn mã cũ mở form Sửa thì ô Mã hiện
+`LVCTKD.LVKDNB.GIAODUCDAOTAO` — component ô mã tự ghép tiền tố `LVCTKD.` vào mã đã có sẵn tiền tố cũ,
+và hậu tố cũ dài hơn 4 ký tự nên bấm Lưu cũng không qua validate. Hết ngay sau khi chạy
+`php artisan migrate` (migration `2026_09_15_000001_rename_internal_business_scope_code_prefix`
+đã commit ở Phase 7). Nếu muốn phòng thủ cho dữ liệu lệch thì phải xử lý ở ô nhập mã — CHƯA làm,
+chờ user quyết.
+
+Bước tiếp theo: user chạy `php artisan migrate` rồi ngó lại màn danh sách + popup Sửa.
+
 ## Phase 7 — Gỡ conflict merge `tpe` → `tpe-develop-assign` (2026-09-18)
 
 File: `hrm-client/pages/assign/internal-business-scopes/AddScopeModal.vue` (4 vùng conflict).

@@ -1503,9 +1503,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 - bo-sung-menu-phan-he → @junfoke (Phase 11: @khoipv) → .plans/gop-db/bo-sung-menu-phan-he/plan.md
   Trạng thái: **CODE DONE + KIỂM THỬ TỰ ĐỘNG PASS** (Phase 0-9: 2026-08-03; Phase 11 dọn nhãn menu
-  Danh mục chung: 2026-08-12). Khai 355 mục menu trên 14 phân hệ, chỉ đụng `hrm-client`.
+  Danh mục chung: 2026-08-12; Phase 13 gán link nhóm `Yêu cầu` phân hệ Bán hàng: 2026-09-22).
+  Khai 355 mục menu trên 14 phân hệ, chỉ đụng `hrm-client`.
   ⚠️ Bug đã phát hiện, CHƯA SỬA (không thuộc feature): mục "Khách hàng" khai TRÙNG ở `master-data.js`
   và `sale.js` → `/assign/customers` luôn ra sidebar Danh mục chung.
+  ➕ **Redmine #11408 (22/09/2026)**: mục cấp 1 ĐI THẲNG ("Ngân hàng", "Ngân hàng câu hỏi khảo sát") không vào được
+  Gần đây / Yêu thích — `allScreens` của rail và màn Tổng quan chỉ dựng từ `groups`, bỏ qua `navLinks`.
+  Đã sửa + verify: `hrm-client` **4e972236c** (chưa push).
   Bước tiếp: Phase 10 — verify trình duyệt thật.
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-08-01-bo-sung-menu-phan-he-design.md | Tóm tắt: .plans/gop-db/bo-sung-menu-phan-he/design.md
 

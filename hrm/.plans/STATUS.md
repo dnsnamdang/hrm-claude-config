@@ -8,8 +8,69 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- hsns-delete-attachment → @junfoke → .plans/hsns-delete-attachment/plan.md
+  Trạng thái: **CODE XONG + VERIFY PLAYWRIGHT (23/09/2026)**, đã commit, CHƯA push.
+  Commit `hrm-client`: `327c1a5fa` trên `tpe-develop-assign` · cherry-pick `3d23c724c` trên `tpe`.
+  Màn HSNS `/human/employee_info/{id}` upload đính kèm nhưng không xóa được — `AttachmentGallery` chỉ để xem.
+  Đã thêm prop `deletable` + emit `remove` cho gallery dùng chung, nối nút ✕ cho Đính kèm CCCD / Hộ chiếu / Bằng cấp.
+
+- solution-member-management → @junfoke → .plans/solution-member-management/plan.md
+  Trạng thái: **CODE XONG TOÀN BỘ + VERIFY TAY (16/09/2026)**, chưa merge. Nhánh `task_11354` cả 2 repo, rẽ từ `tpe`.
+  Commit — `hrm-api`: fc70dcef5 · 31cde31c1 · bbe24b77a · 76296d6f1 | `hrm-client`: 2a6b1ae93 · 9f1f3ebee.
+  Redmine #11354 — tab Nhân sự của Quản lý giải pháp hiện mới chỉ THÊM được thành viên; bổ sung **Cập nhật / Khóa / Xóa**.
+  Chốt với user 15/09: (1) nút chỉ hiện ở dòng THÀNH VIÊN, dòng PM và Leader hạng mục ẩn hết — chúng không phải bản ghi trong bảng thành viên;
+  (2) **KHÔNG lập phiếu bàn giao hộ** — người khóa chỉ XEM việc tồn đọng rồi nhắc thành viên tự vào `/assign/handover`, nhờ vậy KHÔNG phải sửa
+  `HandoverService` (màn Bàn giao đang có bug chưa fix, tránh giẫm chân); (3) "đang mở" lấy đúng tập màn Bàn giao cho bàn giao, chấp nhận 2 chỗ lệch.
+  ⚠️ 3 lỗi nền phải sửa trước: `getHumanResources()` trả `id` = id NHÂN VIÊN (FE không có khóa gọi API), 1 người có thể ra 2 dòng
+  (Leader kiêm thành viên), `status` hard-code `'Active'` + `end_date` lấy nhầm từ giải pháp.
+
+- canh-bao-tu-dong-dong-nhu-cau → @junfoke → .plans/canh-bao-tu-dong-dong-nhu-cau/plan.md
+  Trạng thái: **ĐANG LÀM — sửa bug QA (17/09/2026).** Code + tài liệu + testcase xong 15/09; QA trả về 7 bug,
+  đã sửa 6, verify trên local và **đã merge vào `tpe-develop-assign`** (`hrm-api` 51ca5d7d5 · `hrm-client` ad0182600, chưa push). Chi tiết từng bug ở
+  `.plans/demand-expiry-config/plan.md` mục "Phase QA". BUG 7 (dropdown Lĩnh vực ở form Meeting thiếu lĩnh vực chưa có
+  Nhóm ngành con) **không sửa — đúng thiết kế**, cần phản hồi lại QA trên Redmine.
+  Redmine #11377 — cảnh báo trước hạn + tự động đóng nhu cầu khách hàng theo Lĩnh vực Công ty kinh doanh, kèm chặn tạo Dự án TKT từ nhu cầu đã đóng.
+  Công thức: T (cuộc họp Hoàn thành, cột `meetings.completed_at` mới) + N (khai ở từng Lĩnh vực) — cảnh báo tại T+N−M (chỉ khi N > M), tự đóng tại T+N. M = "Cảnh báo trước khi đóng nhu cầu" ở Cấu hình chung, mặc định 3.
+  📄 Testcase `.plans/canh-bao-tu-dong-dong-nhu-cau/testcase.xlsx` — **88 TC / 10 nhóm + phân quyền, P0 62%** (sinh bằng `gen_testcase.py`). Nhóm cảnh báo/tự đóng cần chạy tay cron `assign:close-expired-customer-demands` (có `--dry-run`).
+  ⏳ CẦN CHỐT với người viết yêu cầu 3 điểm lệch (ghi cuối `design.md`): badge hiện "Đóng" trong khi yêu cầu ghi "Đã đóng" · nút Tạo Dự án TKT ẩn hẳn thay vì làm mờ · M lưu theo công ty thay vì toàn cục.
+
+- demand-failure-reason-catalog → @junfoke → .plans/demand-failure-reason-catalog/plan.md
+  Trạng thái: **TẠM DỪNG (14/09/2026)**. Nhánh `task_11465` — `hrm-api` 6e0215865, `hrm-client` 5469c5c49 (WIP đã cất, chưa verify xong).
+  ⚠️ Dừng vì cân nhắc chuyển sang cho Sales **NHẬP TAY** lý do thất bại thay vì chọn từ danh mục (lý do có thể rất nhiều loại).
+  Redmine #11465 — Danh mục "Lý do thất bại nhu cầu Khách hàng": danh sách + form tạo/sửa + API lý do đang hoạt động.
+  Là PHỤ THUỘC của #11386 Phần 3 (đóng nhu cầu thủ công) — khách mở task riêng nên KHÔNG chốt cứng lý do trong code.
+
+- hdld-export-word-margin → @junfoke → .plans/hdld-export-word-margin/plan.md
+  Trạng thái: **XONG, ĐÃ VERIFY BẰNG FILE THẬT, ĐÃ COMMIT + MERGE VÀO `tpe` (14/09/2026)**. CHƯA push.
+  `hrm-api` 689dcc70a (merge f7d97dabd) + 22cc200dc · `hrm-client` 1c607de16 (merge 15b95ba05). Nhánh `fix_hdld_export_word`, worktree `wt-hdld-api` / `wt-hdld-client`.
+  Đợt 2 (22cc200dc): bullet ra ô vuông (PhpWord ghép U+2022 với font Symbol) + file .docx HỎNG khi nội dung có dấu `&` (PhpWord mặc định ghi text không escape).
+  Verify: mở file Word bằng Word trên máy + Chrome in thật A4 qua CDP — mốc chữ 2 bên lệch tối đa 0.1mm.
+  User báo: file Word của HĐLĐ không căn lề chuẩn; thêm lỗi bản in thật (Ctrl+P) xuống dòng tiêu đề "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM" trong khi preview thì không.
+  Chốt chuẩn lề DUY NHẤT cho cả 3 nơi (preview · cửa sổ in · file Word): **20/15/20/25mm**, lấy theo `padding` của `#content` trong `print.vue`.
+  ⚠ PhpWord `Html::addHtml` đọc HTML bằng `loadXML` (XML nghiêm ngặt) và KHÔNG hiểu `margin-left` — 2 cái bẫy đã dính khi làm.
+  Chỉ động tới HĐLĐ: `WordHelper::cleanHtmlForWord()` giữ nguyên nên 2 màn Tiếp nhận / Điều chuyển nhân sự không đổi.
+
+- demand-expiry-config → @junfoke → .plans/demand-expiry-config/plan.md
+  Trạng thái: **BE + FE XONG, ĐÃ VERIFY, ĐÃ COMMIT (14/09/2026)**. Nhánh `task_11377` (tách từ `task_11386`) — `hrm-api` c0f3974d2 + 672b59f0b, `hrm-client` 0497dc242 + a5a1943a4. Đã soi bằng mắt trên trình duyệt. CHƯA merge, CHƯA push.
+  Redmine #11377 — Cảnh báo + tự đóng nhu cầu theo N ngày cấu hình ở Lĩnh vực công ty kinh doanh; chặn tạo Dự án TKT từ nhu cầu đã đóng.
+  User chốt: nhu cầu ĐANG MỞ áp mốc hạn mới, nhu cầu ĐÃ ĐÓNG để nguyên. N mặc định 0 = không thời hạn.
+  ⚠️ Hệ thống trước nay KHÔNG lưu mốc cuộc họp Hoàn thành → đã thêm `meetings.completed_at`, backfill bằng `end_date`.
+  Đo trên prod `hrm_prod_09_26`: N ≥ 15 ngày thì bật lên 0 nhu cầu bị đóng; N = 7 thì 25 nhu cầu đóng ngay + 62 cảnh báo.
+
 - customer-demand-list → @junfoke → .plans/customer-demand-list/plan.md
-  Trạng thái: **ĐANG LÀM PHẦN 1 (14/09/2026)**. Nhánh `task_11386` (tách từ `tpe` bản mới) ở cả 2 repo.
+  📄 **Testcase #11390 (22/09/2026)**: 24 TC `TC-ROLE-45→68` cho tab "Nhu cầu của khách hàng" đã được **dán thẳng vào Google Sheet của QA** ("Testcase _Quản lý dự án", tab `25.CV của tôi`, vùng A76:R100) — dòng 1-75 giữ nguyên. Bản lưu repo: `.plans/customer-demand-list/testcase-11390-tab-cv-cua-toi.csv`.
+  📄 **Testcase QA (17/09/2026)**: `.plans/customer-demand-list/testcase.xlsx` — **109 TC / 10 nhóm + phân quyền, P0 71%** (sinh bằng `gen_testcase.py`), phủ cả 4 phần + tab "Nhu cầu của khách hàng" (#11390).
+  ✅ **6 bug QA của #11386 ĐÃ FIX và verify (17/09/2026)** trên `tpe-develop-assign`: `hrm-api` c1accb67d · `hrm-client` 1b89b8c47 (chưa push).
+  Tạo Dự án TKT xong về danh sách đúng nơi đi vào · thêm cột DB `assign_customer_demands` cho Tùy chỉnh cột · bỏ trần 640px làm bảng có cuộn dọc lồng · lỗi người liên hệ hiện đúng ô + chặn khi khối thêm nhanh còn dở · popup chọn người nhận tự đóng · cột hạn đã hết nhờ fix #11377.
+  ⚠️ **Deploy phải chạy `php artisan migrate`** (BUG 2 cần cột DB mới). Chi tiết: `.plans/customer-demand-list/plan.md` mục "Phase QA".
+  ➕ **Đợt QA #11390 đã sửa 24/09** — 5 bug: lịch sử nhu cầu thiếu mốc Tạo mới/Cập nhật · màn tạo Dự án TKT không kế thừa (thiếu `customer_id` trên URL) · bộ lọc reset khi chuyển tab (tab dùng `v-if` nên bị huỷ) · còn 0 ngày → "(hết hạn)" · đồng bộ chữ "Không giới hạn thời gian hiệu lực". `hrm-api` 0f98ea8ec · `hrm-client` 07aa4fc66.
+  ➕ **Đợt QA 2 (#11386) đã sửa 22/09** — 4 bug: cấu hình cột thất bại + cột vỡ (cùng gốc: thiếu `$casts`) · vạch lỗi ở cột dính khi cuộn ngang (repaint Chrome với border-collapse) · sắp xếp theo ngày họp thay vì ngày tạo · tích kẹt ở bản ghi bị người khác đóng. `hrm-api` 851a6a4c3 · `hrm-client` 1b12c2e09.
+  ➕ **BUG 7 + 9 (#11377) đã sửa 22/09**: dropdown Lĩnh vực ở form Meeting không đổi sau khi thêm Nhóm ngành (cache store, phải F5) · file Excel màn Lĩnh vực thiếu cột Thời gian hiệu lực. `hrm-api` 937a8d2ca · `hrm-client` 0882db57b.
+  ➕ **Đợt QA 3 (#11377) đã sửa 24/09**: bấm Lưu form trống chỉ ô N báo đỏ (bỏ `return` sớm chặn API) · N=0 đổi chữ thành "Không giới hạn thời gian hiệu lực" · ô M chặn số âm · lịch sử "Đóng dự án tự động" xếp cũ→mới. `hrm-api` 4edf957c4 · `hrm-client` ccb432cc7.
+  ➖ **BUG 8 (#11377) KHÔNG sửa code** — user chốt giữ spec: `N > M` mới cảnh báo, mà dev để N = M = 3 nên không ai được báo. Cần trả lời QA đặt N > 3.
+  ➕ **Lệch hiển thị (#11377) đã sửa 22/09**: màn danh sách bôi cam "sắp hết hạn" cho nhu cầu có N ≤ M — loại mà spec cấm gửi cảnh báo, nên chạy cron tay ra 0 thông báo, tưởng cron hỏng. `hrm-api` e2f61d6eb trên `tpe-develop-assign`.
+  Trạng thái: **PHẦN 1 + PHẦN 4 XONG, ĐÃ VERIFY (14/09/2026)**. Phần 1 trên `task_11386` (`hrm-api` 4bbdfa45e, `hrm-client` 183ceeca4); Phần 4 trên `task_11377` (`hrm-api` 4488a82b1, `hrm-client` 5c9af4cc3). CHƯA merge, CHƯA push.
+  ⏸ Phần 3 (đóng nhu cầu thủ công) chờ chốt: lý do đóng NHẬP TAY hay chọn từ danh mục (#11465 đang tạm dừng).
   Redmine #11386 — Màn Danh sách Nhu cầu khách hàng: 13 cột, phân quyền 5 cấp, hạn + cảnh báo, đóng thủ công, bàn giao (đơn lẻ + hàng loạt).
   Chia 4 phần, commit dần. User chốt: giữ nhãn trạng thái hiện tại; được phép chạy migration + seed demo trên DB local.
   ⏸ **Phần 2 (hạn xử lý) DỪNG CHỜ KHÁCH**: hệ thống đang đóng nhu cầu theo `expected_start_date` (cron `assign:close-expired-customer-demands` đang chạy), spec lại bắt tính theo `meeting + N ngày`. Đổi là báo cáo CSKH đổi số.
@@ -310,6 +371,10 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   E2E: `e2e/tests/assign/industry-group-internal-scope.api.spec.ts` (6 ca). **Testcase QA: `.plans/danh-muc-nhom-nganh/testcase.xlsx` — 56 TC (P0 55%), sinh bằng `gen_testcase.py`.** Design/Plan: .plans/danh-muc-nhom-nganh/ · Ảnh: .plans/danh-muc-nhom-nganh/screenshots/
 
 - linh-vuc-kinh-doanh-noi-bo → @dnsnamdang → .plans/linh-vuc-kinh-doanh-noi-bo/plan.md
+  🧹 **Phase 7 — 15/09/2026 (Redmine #11184), nhánh `tpe-develop-assign`, CHƯA COMMIT**: dọn nốt tiền tố mã CŨ `LVKDNB.` còn sót — 2 file mẫu Import (`Mau_import_LinhVucKinhDoanhNoiBo.xlsx`, `Mau_import_NhomNganh.xlsx`, sửa thẳng XML nên giữ nguyên style), `SeedCareReportDemoCommand`, `e2e_meeting_survey_seed.php`, 2 migration cũ (bản ghi mặc định "Khác" nay là `LVCTKD.KHAC`; `ensureDefaultScope()` tra CẢ 2 mã để không đẻ bản ghi thứ hai).
+  ➕ Migration mới `2026_09_15_000001_rename_internal_business_scope_code_prefix.php` đổi **dữ liệu** `LVKDNB.*` → `LVCTKD.*` (hậu tố ≤4 ký tự giữ nguyên, hậu tố dài cấp `LVCTKD.0001…`), không đụng `id`/`updated_at`, idempotent — **chưa chạy**, sẽ chạy khi `php artisan migrate`.
+  📄 Testcase chuẩn team MỚI: `.plans/linh-vuc-kinh-doanh-noi-bo/testcase.xlsx` — **135 TC / 10 nhóm + nhóm phân quyền, P0 53%**, form 17 cột + 2 khối summary DNS/TP (sinh bằng `gen_testcase.py`). Thay cho bản 201 TC ở `docs/srs/` (form 13 cột cũ, còn lẫn mã `LVKDNB.`).
+  ⏳ CÒN: 2 phản hồi QA ngày 15/09 ở #11184 — (a) màu nút Khóa/Xóa/Xuất Excel/Import Excel theo quy định chung; (b) QA ghi mã chuẩn là `LVKDNB`, user đã chốt giữ `LVCTKD` → cần phản hồi lại QA.
   🔀 **GỠ CONFLICT MERGE `tpe` → `tpe-develop-assign` (2026-09-18, @khoipv)** — 2 file. User đã commit merge: `hrm-client` `54dbb54de` · `hrm-api` `4225a9eed`. Gốc conflict: nhánh `tpe` chốt **bỏ validate FE cho Mã/Tên** (bám khuôn danh mục Nhóm ngành, để BE chốt rule), còn `tpe-develop-assign` đang thêm ô "Thời gian hiệu lực nhu cầu" (#11377) có validate FE. Nguyên tắc gỡ: hướng chung lấy `tpe`, phần riêng của #11377 giữ nguyên.
   • FE `AddScopeModal.vue` (4 vùng): bỏ rule `lvctkd_code` (`import { Validator }` đã bị `tpe` gỡ — giữ lại là `Validator is not defined`) · giữ `maxlength="4"` · **giữ CẢ HAI computed** `isCannotLock` (`tpe`, disable ô Trạng thái) và `isLocked` (#11377, bám `savedStatus`, disable ô số ngày) vì phục vụ 2 ô khác nhau · `submitForm` chỉ còn validate riêng `demand_due_days` (auto-merge đã lấy bản `tpe` bỏ `validateAll`).
   • BE `InternalBusinessScopeRequest.php` (1 vùng): lấy bản `tpe` cho rule `code` — `required` → `size` → `regex`, **bỏ closure kiểm tiền tố** đúng khuôn `Scope\ScopeRequest:61-64`. Closure thành thừa vì gõ mỗi tiền tố `LVCTKD.` cũng rơi vào `size` → vẫn báo "Vui lòng nhập 4 ký tự". Rule + message `demand_due_days` của #11377 nằm ngoài vùng conflict, giữ nguyên.
