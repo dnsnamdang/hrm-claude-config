@@ -310,3 +310,60 @@ Blocked: không.
 - Chạy lại bộ E2E sau khi đổi tên (chưa verify bằng test thật).
 - 5 quy tắc `list-page` còn nợ + file mẫu Import sinh bằng endpoint API — chờ gộp DB.
 - Bản `.pdf` / `.html` của SRS (nếu cần gửi ngoài) — một lệnh pandoc.
+
+## Phase 7 — Gỡ conflict merge `tpe` → `tpe-develop-assign` (2026-09-18)
+
+File: `hrm-client/pages/assign/internal-business-scopes/AddScopeModal.vue` (4 vùng conflict).
+Hai phía lệch nhau về hướng validate: `tpe` bỏ hẳn validate FE theo khuôn Nhóm ngành, còn nhánh
+`tpe-develop-assign` đang thêm ô "Thời gian hiệu lực nhu cầu" (#11377) có validate FE.
+
+- [x] **B1.** Ô Mã: giữ `maxlength="4"` của nhánh dev, bỏ `v-validate` theo `tpe`.
+- [x] **B2.** Bỏ rule FE `lvctkd_code` (`Validator.extend`) — `import { Validator }` đã bị `tpe` gỡ,
+      giữ lại là `Validator is not defined`. Mã/Tên để BE chốt như khuôn Nhóm ngành.
+- [x] **B3.** Giữ CẢ HAI computed vì khác mục đích: `isCannotLock` (`tpe`, disable ô Trạng thái khi
+      còn Nhóm ngành đang dùng) và `isLocked` (#11377, bám `savedStatus`, disable ô số ngày khi bản
+      ghi đã Khóa).
+- [x] **B4.** Giữ watch `data.demand_due_days` để xóa lỗi 422 cũ khi user sửa ô.
+- [x] **B5.** `submitForm` chỉ còn validate riêng `demand_due_days` — auto-merge đã lấy bản `tpe`
+      (bỏ `validateAll`) nên không còn gì chặn ô này ở FE.
+      *Đính chính:* lúc kiểm tra, `hrm-api` local còn đứng ở `fix-bug-11092026` và chưa pull nên
+      tưởng BE thiếu rule. Thực tế BE ĐÃ có `demand_due_days => required|integer|min:0|max:3650`
+      (commit `c0f3974d2` / `ace1f47ec`). Rule FE khớp đúng rule BE, giữ lại làm lớp chặn sớm.
+
+- [x] **B6.** BE — gỡ conflict `Modules/Assign/Http/Requests/InternalBusinessScope/InternalBusinessScopeRequest.php`:
+      lấy bản `tpe` cho rule `code` (`required` → `size` → `regex`, bỏ closure kiểm tiền tố), đúng
+      khuôn `Scope\ScopeRequest` của Nhóm ngành. Closure thành thừa vì gõ mỗi tiền tố cũng rơi vào
+      `size` → vẫn báo "Vui lòng nhập 4 ký tự". Giữ nguyên rule + message `demand_due_days` của #11377
+      (nằm ngoài vùng conflict).
+
+Kiểm chứng: `vue-template-compiler` + `@babel/parser` parse sạch `AddScopeModal.vue` và `index.vue`;
+không còn conflict marker trong repo. CHƯA mở trình duyệt chạy thử.
+
+### Checkpoint — 2026-09-18
+
+Vừa hoàn thành: gỡ conflict merge `tpe` → `tpe-develop-assign` ở CẢ 2 repo.
+- `hrm-client/pages/assign/internal-business-scopes/AddScopeModal.vue` — 4 vùng conflict (B1–B5).
+- `hrm-api/Modules/Assign/Http/Requests/InternalBusinessScope/InternalBusinessScopeRequest.php` —
+  1 vùng conflict (B6).
+
+Nguyên nhân gốc của conflict: `tpe` chốt hướng **bỏ validate FE cho Mã/Tên** (bám khuôn danh mục
+Nhóm ngành, để BE chốt rule), trong khi `tpe-develop-assign` đang thêm ô "Thời gian hiệu lực nhu
+cầu" (#11377) có validate FE. Nguyên tắc gỡ: **hướng chung lấy `tpe`, phần riêng của #11377 giữ
+nguyên**, và giữ cả 2 computed `isCannotLock` / `isLocked` vì chúng phục vụ 2 ô khác nhau.
+
+Kiểm chứng đã chạy:
+- `vue-template-compiler` + `@babel/parser` parse sạch `AddScopeModal.vue` và `index.vue`.
+- `php -l` sạch 3 file BE đang thay đổi (Request / Entity / Service).
+- Không còn conflict marker nào ở `hrm-client/{pages,components,store}` và `hrm-api/Modules`.
+
+Đang làm dở: không.
+
+Bước tiếp theo:
+1. Mở trình duyệt chạy thử màn Lĩnh vực Công ty kinh doanh — trọng tâm: ô Trạng thái khi bản ghi
+   còn Nhóm ngành đang dùng (`isCannotLock`), ô số ngày khi bản ghi đã Khóa (`isLocked`), lỗi
+   422 của Mã (gõ thiếu ký tự / sai ký tự / trùng mã).
+2. ✅ Đã xong — user tự `git add` + commit merge: `hrm-client` `54dbb54de` · `hrm-api` `4225a9eed`.
+3. Cân nhắc: có gỡ nốt `v-validate` của `demand_due_days` ở FE để bám tuyệt đối khuôn "FE không
+   validate" không — BE đã có rule khớp y hệt. Mặc định đang GIỮ làm lớp chặn sớm.
+
+Blocked: không.

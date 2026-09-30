@@ -1129,3 +1129,71 @@ loại yêu cầu.
 Bước tiếp theo: user mở `/finance/product-import-requests/create` xác nhận.
 Chưa kiểm chứng bằng mắt: chỉ compile FE; 4 luồng BE đã gọi thật.
 Blocked: không.
+
+## Fix UI In: dùng popup xem trước chuẩn chung (2026-09-11)
+**Yêu cầu:** nút "In" đang mở trang in ở tab mới (`window.open('.../print', '_blank')`) rồi bắt bấm
+In lần 2. Đổi sang **popup xem trước tại chỗ dùng chung**, giống màn mẫu
+`customer-care/warranty-repair-requests` — mục 8 skill `print-page`. FE-only (BE endpoint
+`GET finance/product-import-requests/{id}/print-data` đã trả sẵn `{ data: { template } }`).
+
+- [x] **FE-1** `pages/finance/product-import-requests/index.vue` (danh sách) — import + đăng ký
+      `ReportPrintPreviewModal` + mixin `reportPrintPreviewMixin`; thêm `<ReportPrintPreviewModal>`
+      vào template; nhánh `action === 'print'` trong `handleRowAction` gọi
+      `openPrintDetail('finance/product-import-requests', item.id, 'Xem trước phiếu yêu cầu nhập hàng')`.
+- [x] **FE-2** `pages/finance/product-import-requests/_id/index.vue` (chi tiết) — import + đăng ký
+      như trên; thêm `<ReportPrintPreviewModal>` sau `<FilePreviewModal>`; đổi `printRequest()` từ
+      `window.open('.../print')` → `openPrintDetail(API_BASE, this.requestId, 'Xem trước phiếu yêu cầu nhập hàng')`.
+- [x] **FE-3** Xoá `pages/finance/product-import-requests/_id/print.vue` (không còn ai trỏ tới route `/print`).
+- [x] **Verify** grep route `/print` trong `pages/` = RỖNG; line ending 2 file vẫn LF (0 CR).
+
+### Checkpoint — 2026-09-11 (Fix UI In)
+Vừa hoàn thành: chuyển nút In (cả danh sách + chi tiết) sang popup xem trước chuẩn chung, xoá print.vue.
+Đang làm dở: không.
+Bước tiếp theo: user chạy thử — bấm In ở danh sách và chi tiết, kiểm popup hiện đúng mẫu ERP 44,
+nút In trong popup in ra đúng. CSS lấy từ `reportPrintStyle.js` dùng chung (khác print.vue cũ) — soi
+thử bố cục template 44, tinh chỉnh nếu lệch.
+Blocked: không.
+
+## Fix bộ lọc nhanh: chỉ tìm theo mã phiếu (2026-09-11)
+**Yêu cầu (ảnh):** ô tìm nhanh đang tìm theo "mã phiếu HOẶC người tạo" → đổi thành **chỉ theo mã phiếu**.
+
+- [x] **FE** `index.vue` — placeholder `"Tìm theo mã phiếu hoặc người tạo..."` → `"Tìm theo mã phiếu..."`.
+- [x] **BE** `ProductImportRequest::applyRequestFilters()` — nhánh `keyword` bỏ
+      `orWhereHas('employee_create.info' … fullname)`, chỉ còn `where('code','like',...)`; sửa comment.
+      (`applyRelevanceOrder()` vốn đã chỉ chấm điểm theo `code` — không phải sửa.)
+- [x] **Verify** PHP lint OK; grep nhánh fullname = rỗng; line ending 2 file vẫn LF (0 CR).
+
+## Fix UI form Tạo phiếu (2026-09-11, theo ảnh)
+- [x] **FE-A** "Loại yêu cầu" bật lại nút × xoá nhanh: `:allowClear="false"` → `"true"`
+      (**đảo quyết định 2026-08-24**). Vẫn mặc định "Nhập hàng mua ngoài" khi mở Tạo; xoá trắng thì
+      chứng từ nguồn khoá + BE chặn lưu (type required). Cập nhật comment.
+- [x] **FE-B** Placeholder ô "Phiếu yêu cầu xuất hàng" (`.source-select--placeholder .__text`) đổi
+      `#9ca3af` → `#adb5bd` cho nhạt đồng bộ với placeholder của V2BaseSelect các ô khác.
+- [x] **FE-B2 (BUG GỐC — đã fix thật)** Cả FE-B (#9ca3af) lẫn lần siết `!important` đều KHÔNG ăn,
+      chữ luôn giữ màu base `#374151`. Nguyên nhân: selector `&--placeholder &__text` — style block bọc
+      trong `.pir-form`, mà SCSS thay MỖI `&` bằng cả `.pir-form .source-select` → biên dịch ra
+      `.pir-form .source-select--placeholder .pir-form .source-select__text` (đòi `.pir-form` lồng 2
+      lần) → không khớp DOM, rule chết câm. Fix: đổi vế con sang class thật
+      `&--placeholder .source-select__text { color:#adb5bd !important; font-weight:400 }`. (Không phải
+      lỗi cache — user đã restart dev server vẫn thế.)
+- [x] **Verify** line ending LF (0 CR); các edit đúng vị trí.
+
+## Nút "Duyệt nhanh" ở cột Hành động màn danh sách (2026-09-11, theo ảnh)
+**Yêu cầu (ảnh):** thêm nút duyệt nhanh ở cột Hành động cho tài khoản có quyền duyệt/từ chối.
+Tham chiếu màn `/finance/prepick-cancel-requests` (nút "Duyệt" của nó là ĐIỀU HƯỚNG, không duyệt inline).
+
+**Quyết định đã chốt (hướng A):** luồng duyệt YCNH nhiều cấp, không phải cấp nào cũng 1-click được:
+- **Trưởng phòng duyệt** (`is_can_approve_by_manager`): payload chỉ `{status:2}`, KHÔNG nhập gì → **duyệt-nhanh 1-click** ngay tại danh sách.
+- **Ban kiểm soát / BGĐ** (`is_can_control_board_approve` / `is_can_board_of_manager_approve`): BẮT BUỘC nhập "giá mua duyệt" từng dòng (`validateApprovedPrices` ở `_id/index.vue`) → KHÔNG 1-click; nút **"Duyệt"** điều hướng vào màn chi tiết.
+- **Từ chối** cần lý do → cũng ở màn chi tiết, không làm nút riêng ở danh sách.
+- Cờ `is_can_approve` KHÔNG phải quyền duyệt (là gate "Tạo đề nghị nhập kho") → không dùng.
+
+- [x] **FE-1** `index.vue` `getRowActions(item)` — thêm 2 phần tử ĐẦU mảng (loại trừ nhau theo trạng thái):
+      `{ key:'quick-approve', title:'Duyệt nhanh', icon:'ri-checkbox-circle-line', visible: !!item.is_can_approve_by_manager }`
+      và `{ key:'approve', title:'Duyệt', icon:'ri-checkbox-circle-line', to:'/finance/product-import-requests/${item.id}', visible: !!item.is_can_control_board_approve || !!item.is_can_board_of_manager_approve }`.
+      Cờ do BE trả sẵn ở `ProductImportRequestListResource`, fail-closed.
+- [x] **FE-2** `handleRowAction` — thêm nhánh `action === 'quick-approve'` → gọi `quickApprove(item)`.
+- [x] **FE-3** Method `quickApprove(item)` — `$confirm` → `apiPostMethod` URL
+      `finance/product-import-requests/${id}/department-manager-approve` payload `{status:2}` (mirror `tp-approve`);
+      toast + `resetLoadDedupe()` + `loadData()`; nuốt 403 như `exportExcel`.
+- [x] **Verify** line ending LF (0 CR); grep các mảnh vừa thêm đúng vị trí; `resetLoadDedupe` sẵn có (mixin đã dùng ở export). Còn lại user chạy thử UI.

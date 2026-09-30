@@ -113,6 +113,26 @@ def check_terms(description_block, role_tcs, sections):
         print("!!! CON THUAT NGU KY THUAT:", found)
     else:
         print("OK - khong con thuat ngu ky thuat trong noi dung")
+
+    # Cam emoji/icon trong noi dung o (user chot 2026-09-15) - nhan manh bang CHU
+    emoji = re.findall(u"[←-⯿☀-➿️\U0001F300-\U0001FAFF]", text_all)
+    if emoji:
+        print("!!! CON EMOJI TRONG O:", sorted(set(emoji)))
+        found["emoji"] = len(emoji)
+    else:
+        print("OK - khong co emoji trong noi dung")
+
+    # Canh bao o nhieu y ma khong xuong dong that
+    one_line = 0
+    for b in blob:
+        if "\n" in b:
+            continue
+        if re.search(r"\s2\.\s", b) or len(re.findall(r"(?:^|\s)- ", b)) > 1:
+            one_line += 1
+    if one_line:
+        print("!!! %d O nhieu y nhung viet 1 dong - phai tach bang '\\n'" % one_line)
+    else:
+        print("OK - o nhieu y da xuong dong")
     return found
 
 

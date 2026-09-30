@@ -266,3 +266,12 @@ Cả 2 trên nhánh `sync_quotation` (ERP + HRM), working tree còn uncommitted.
 Đang làm dở: —
 Bước tiếp theo: **User chạy Task 3 (E2E browser)** — `.env` ERP trỏ DB dev + HRM API chạy. Sau khi pass → commit 2 repo (khi user yêu cầu).
 Blocked: (trống)
+
+## Checkpoint — 2026-07-15 (Task 3 E2E — fix phát sinh khi test)
+Môi trường: dev-erp.dnsmedia.vn ↔ dev-hrm.eteksofts.com, báo giá BG-2026-00188.
+
+**Fix 1 — Kết nối ERP→HRM:** ERP dev thiếu `HRM_API_BASE_URL` → `contractData()` null → message gộp "không đủ điều kiện lập HĐ" (thực chất mất kết nối). **Sửa .env ERP dev:** `HRM_API_BASE_URL=https://dev-hrm.eteksofts.com` + `php artisan config:clear`. (Đã thêm vào .env local; server dev tự sửa.) Xem [[erp-hrm-api-base-url-per-env]].
+
+**Fix 2 — JS crash prefill cha-con:** `FirmContractTabProduct` có getter-only `is_child`, nhưng payload `getDataForContract` gửi kèm field `is_child` → `BaseChildClass` constructor `this.is_child = form.is_child` ném "Cannot set property is_child ... only a getter". **Sửa:** thêm `'is_child'` vào mảng `no_set` trong `FirmContractTabProduct.before()` (getter suy ra từ `child_parent_tmp_id`, không cần set từ data). File: `resources/views/partials/classes/sale/firm/contract/FirmContractTabProduct.blade.php`.
+
+Bước tiếp theo: user reload create?hrm_quotation_id=188 → verify form prefill cha-con hiện đúng, không còn JS error. Lưu ý BG-188 có 4 mã `quantity=0` (cần xem lại SL báo giá HRM).

@@ -17,3 +17,9 @@ Vừa hoàn thành: Sửa lỗ hổng `checkDiffPrice` (BorrowSellRequestsContro
 Đang làm dở: không.
 Bước tiếp theo: USER test browser (tạo YC xuất bán hàng mượn status Đã duyệt với mã đã đổi giá → phải bị chặn) → rồi commit.
 Blocked:
+
+### Checkpoint — 2026-07-01 (fix false-positive)
+Vừa hoàn thành: Sửa root cause thật của false-positive — payload borrow-sell KHÔNG gửi `price` → checkDiffPrice so catalog vs 0 → chặn nhầm mọi SP (lộ ra sau khi nới status). Fix: bỏ `$product['price']`, lấy giá SP trên đơn NT (FirmContractTabProduct theo firm_contract_id) + so bằng floatValue. Ca: đơn 23376 (DHNT_TPV_MT_KD_26_1182_0107).
+Verify: prod reproduce — 23376 không chặn, case đổi giá vẫn chặn; php -l sạch.
+Bước tiếp theo: user test tạo YC xuất bán hàng mượn từ 23376 → commit.
+Blocked:

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo — Nhóm nghiệp vụ áp dụng theo nghiệp vụ</title>
+<style>
+    :root {
+        --bg: #f1f5f9; --card: #ffffff; --line: #dfe3e8; --text: #34495e; --muted: #7b8a9a;
+        --primary: #3b7ddd; --green: #22b07d; --red: #e05c5c; --amber: #e8a33d; --new: #f6b93b;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0 16px 60px; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 14px; color: var(--text); background: var(--bg); }
+    .wrap { max-width: 1280px; margin: 0 auto; }
+    .page-title { display: flex; align-items: baseline; gap: 12px; padding: 20px 0 14px; }
+    .page-title h1 { font-size: 20px; margin: 0; font-weight: 600; }
+    .crumb { color: var(--muted); font-size: 13px; }
+    .demo-note { background: #fff8e6; border: 1px solid #f3dca0; border-left: 4px solid var(--new); padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; line-height: 1.6; }
+    .demo-note b { color: #9a6b00; }
+
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 18px; flex-wrap: wrap; }
+    .tabs button { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 16px; font-size: 14px; color: var(--muted); cursor: pointer; font-family: inherit; }
+    .tabs button.on { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+    .pane { display: none; } .pane.on { display: block; }
+
+    .card { background: var(--card); border-radius: 10px; padding: 22px; margin-bottom: 18px; }
+    .row { display: flex; flex-wrap: wrap; margin: 0 -10px; }
+    .col { padding: 0 10px; margin-bottom: 16px; }
+    .c3 { width: 25%; } .c6 { width: 50%; } .c12 { width: 100%; }
+    @media (max-width: 900px) { .c3, .c6 { width: 100%; } }
+
+    label.fl { display: block; margin-bottom: 6px; font-weight: 500; }
+    .req { color: var(--red); }
+    input[type=text], select { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 14px; font-family: inherit; color: var(--text); background: #fff; }
+    input[readonly] { background: #f7f9fb; color: var(--muted); }
+    .chips { border: 1px solid var(--line); border-radius: 4px; padding: 5px 8px; min-height: 36px; background: #f7f9fb; }
+    .chip { display: inline-block; background: #e8f0fd; color: #2c5fa8; border: 1px solid #c6dbf8; border-radius: 3px; padding: 2px 9px; margin: 2px 4px 2px 0; font-size: 13px; }
+
+    .newbox { border: 1px solid #f3dca0; background: #fffdf6; border-radius: 8px; padding: 16px 18px; margin-top: 4px; }
+    .newbox .hd { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .badge-new { background: var(--new); color: #4a3200; font-size: 11px; font-weight: 700; border-radius: 3px; padding: 2px 7px; letter-spacing: .4px; }
+    .hint { color: var(--muted); font-size: 12.5px; line-height: 1.6; margin: 4px 0 12px; }
+    .mods { display: flex; flex-wrap: wrap; gap: 8px; }
+    .mod { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; user-select: none; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px 14px 8px 11px; font-size: 13.5px; min-width: 240px; }
+    .mod:hover { border-color: #b9c6d4; }
+    .mod.on { border-color: var(--primary); background: #eaf2fe; color: #24528f; }
+    .mod.dead { opacity: .6; cursor: not-allowed; background: #f6f7f9; border-style: dashed; }
+    .mod input { margin: 3px 0 0; }
+    .mod b { font-weight: 600; }
+    .mod small { display: block; color: var(--muted); font-weight: 400; margin-top: 3px; }
+    .mod.on small { color: #4a7ab5; }
+    .tag-part { display: inline-block; background: #fdeeee; color: #a93b3b; border: 1px solid #f0c4c4; border-radius: 3px; padding: 0 5px; font-size: 10.5px; font-weight: 700; margin-left: 5px; vertical-align: 1px; white-space: nowrap; }
+    .tag-full { display: inline-block; background: #eaf7f1; color: #1c7a57; border: 1px solid #bfe6d5; border-radius: 3px; padding: 0 5px; font-size: 10.5px; font-weight: 700; margin-left: 5px; vertical-align: 1px; white-space: nowrap; }
+    .allbtn { border: 1px dashed #b9c6d4; background: #fff; border-radius: 20px; padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--muted); font-family: inherit; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top; }
+    thead th { background: #f4f7fa; font-weight: 600; text-align: center; }
+    td.c { text-align: center; }
+    tbody tr:hover td { background: #fafcfe; }
+    .muted { color: var(--muted); }
+    td ul { margin: 0; padding-left: 17px; } td li { line-height: 1.7; margin-bottom: 3px; }
+
+    .switcher { display: flex; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; width: fit-content; }
+    .switcher button { border: none; background: #fff; padding: 9px 20px; cursor: pointer; font-size: 13.5px; font-family: inherit; color: var(--muted); border-right: 1px solid var(--line); }
+    .switcher button:last-child { border-right: none; }
+    .switcher button.on { background: var(--primary); color: #fff; font-weight: 600; }
+
+    .mx th.rot { font-size: 12px; font-weight: 600; line-height: 1.3; padding: 8px 4px; width: 84px; }
+    .mx td.grp { background: #f7f9fb; font-weight: 600; }
+    .cell { display: inline-block; width: 100%; text-align: center; font-size: 15px; font-weight: 700; }
+    .ok { color: var(--green); } .noperm { color: #c8d0d8; } .nomod { color: var(--red); } .noscope { color: var(--amber); } .na { color: #9aa6b2; font-size: 11px; font-weight: 600; }
+    td.hl-nomod { background: #fdeeee; } td.hl-noscope { background: #fdf5e6; } td.hl-na { background: #f4f5f7; }
+    .legend { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+    .legend span b { font-size: 15px; margin-right: 4px; }
+    .diffbox { margin-top: 18px; padding: 14px 16px; border-radius: 8px; background: #f0f9f5; border: 1px solid #bfe6d5; line-height: 1.7; }
+    .diffbox.warn { background: #fdeeee; border-color: #f2c4c4; }
+    .diffbox h4 { margin: 0 0 8px; font-size: 14px; }
+    .warnbox { padding: 14px 16px; border-radius: 8px; background: #fdeeee; border: 1px solid #f2c4c4; line-height: 1.75; margin-bottom: 18px; }
+    .warnbox h4 { margin: 0 0 8px; font-size: 14px; color: #a93b3b; }
+
+    pre { background: #1f2937; color: #e5e7eb; padding: 14px 16px; border-radius: 8px; overflow-x: auto; font-size: 12.5px; line-height: 1.65; margin: 10px 0 18px; }
+    pre .k { color: #f0a868; } pre .c2 { color: #7f8c9b; } pre .s { color: #8fd18f; }
+    code.inl { background: #eef1f5; border-radius: 3px; padding: 1px 6px; font-size: 12.5px; }
+    h3.sec { font-size: 15px; margin: 26px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+    h3.sec:first-child { margin-top: 0; }
+    ul.tight { margin: 8px 0 16px; padding-left: 20px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+    <div class="page-title">
+        <h1>Nhóm nghiệp vụ &mdash; áp dụng theo nghiệp vụ</h1>
+        <span class="crumb">Chấm công / Nhóm nghiệp vụ / Sửa nhóm nghiệp vụ</span>
+    </div>
+
+    <div class="demo-note">
+        <b>Bản demo prototype</b> &mdash; mô phỏng màn <code class="inl">timesheet/setting/group-permission</code> <b>NẾU</b> bổ sung khái niệm
+        &ldquo;nhóm này áp dụng cho <b>phân hệ</b> nào&rdquo;. Chưa sửa dòng code thật nào.
+        <br><b>Cập nhật 17/09/2026 (bản 2):</b> danh sách ô tích đã đổi sang <b>đúng 9 phân hệ của màn
+        <code class="inl">timesheet/setting/roles</code></b> (cột <code class="inl">permissions.type</code>), theo yêu cầu
+        &ldquo;chọn phân hệ nào thì áp dụng cho tất cả quyền trong phân hệ đó&rdquo;.
+        Độ phủ vẫn được rà theo <b>91 call site thật</b> của
+        <code class="inl">listManageEmployeeIdsByGroup()</code> / <code class="inl">listManageEmployeeInfoIdsByGroup()</code>.
+        Xem tab <b>&ldquo;Độ phủ quyền&rdquo;</b>: <b>5/9 phân hệ hoàn toàn không dùng</b> nhóm nghiệp vụ,
+        4 phân hệ còn lại thì <b>chỉ một phần quyền</b> bị chi phối.
+    </div>
+
+    <div class="tabs">
+        <button class="on" data-tab="cfg">1. Màn cấu hình nhóm</button>
+        <button data-tab="sim">2. Mô phỏng phạm vi duyệt</button>
+        <button data-tab="cov">3. Độ phủ quyền &mdash; rà theo call site</button>
+        <button data-tab="tech">4. Ghi chú kỹ thuật</button>
+    </div>
+
+    <!-- ================= TAB 1 ================= -->
+    <div class="pane on" id="pane-cfg">
+        <div class="card">
+            <div class="row">
+                <div class="col c3">
+                    <label class="fl">Đang xem nhóm</label>
+                    <select id="gsel"></select>
+                </div>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--line);margin:4px 0 20px" />
+
+            <div class="row">
+                <div class="col c3">
+                    <label class="fl">Tên nhóm <span class="req">*</span></label>
+                    <input type="text" id="f-name" readonly />
+                </div>
+                <div class="col c3">
+                    <label class="fl">Thứ tự hiển thị <span class="req">*</span></label>
+                    <input type="text" id="f-order" readonly />
+                </div>
+                <div class="col c6">
+                    <label class="fl">Người có quyền duyệt <span class="req">*</span></label>
+                    <div class="chips" id="f-managers"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col c6">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:default">
+                        <input type="checkbox" id="f-dept" disabled /> Là 1 phòng ban của công ty
+                    </label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col c12">
+                    <div class="newbox">
+                        <div class="hd">
+                            <label class="fl" style="margin:0">Áp dụng cho phân hệ <span class="req">*</span></label>
+                            <span class="badge-new">MỚI</span>
+                        </div>
+                        <div class="hint">
+                            Danh sách phân hệ lấy đúng cột <code class="inl">permissions.type</code> &mdash; y hệt màn <code class="inl">timesheet/setting/roles</code>. Tích phân hệ nào thì <b>mọi quyền trong phân hệ đó</b> chỉ &ldquo;với tới&rdquo; thành viên của nhóm này.
+                            Nhóm cũ sau khi nâng cấp mặc định tích đủ &rarr; <b>hành vi không đổi</b>.
+                            <br>Nhãn <span class="tag-full">ĐỦ</span> = mọi quyền duyệt của nghiệp vụ đó đều bị chi phối &middot;
+                            <span class="tag-part">MỘT PHẦN</span> = vẫn còn quyền duyệt <b>không</b> đi qua nhóm nghiệp vụ (chi tiết ở tab 3).
+                        </div>
+                        <div class="mods" id="f-mods"></div>
+                        <div style="margin-top:12px">
+                            <button class="allbtn" id="btn-all">Chọn tất cả</button>
+                            <button class="allbtn" id="btn-none" style="margin-left:6px">Bỏ chọn tất cả</button>
+                        </div>
+                        <div class="hint" id="mod-warn" style="margin:12px 0 0;color:var(--red);display:none">
+                            Chưa tích phân hệ nào &rarr; nhóm này sẽ <b>không cho duyệt bất cứ phiếu gì</b>. Phải chọn ít nhất 1.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:6px">
+                <div class="col c12">
+                    <label class="fl">Thành viên</label>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:50px">STT</th>
+                                <th style="text-align:left">Thành viên</th>
+                                <th style="width:150px">Công ty</th>
+                                <th style="width:180px">Phòng ban</th>
+                                <th style="width:120px">Số điện thoại</th>
+                                <th style="width:190px">Không gửi duyệt theo nhóm này</th>
+                            </tr>
+                        </thead>
+                        <tbody id="f-emps"></tbody>
+                    </table>
+                    <div class="hint" style="margin-top:8px">
+                        Cột &ldquo;Không gửi duyệt theo nhóm này&rdquo; (cột <code class="inl">is_leader</code>) <b>giữ nguyên như hiện tại</b> &mdash;
+                        tick là gỡ người đó khỏi phạm vi của nhóm, áp dụng cho mọi nghiệp vụ mà nhóm đang bật.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TAB 2 ================= -->
+    <div class="pane" id="pane-sim">
+        <div class="card">
+            <div class="row">
+                <div class="col c3">
+                    <label class="fl">Người có quyền duyệt đang xét</label>
+                    <input type="text" value="Nguyễn Thị Thu Hằng (emp 36)" readonly />
+                </div>
+                <div class="col c6">
+                    <label class="fl">Quyền duyệt chị đang được cấp</label>
+                    <div class="chips" id="sim-perms"></div>
+                </div>
+            </div>
+
+            <div class="switcher">
+                <button class="on" data-mode="now">Hiện tại (chưa sửa)</button>
+                <button data-mode="after">Sau khi sửa &mdash; theo cấu hình ở Tab 1</button>
+            </div>
+
+            <table class="mx">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;width:210px">Nhân viên</th>
+                        <th style="width:180px">Thuộc nhóm</th>
+                        <th colspan="9" style="background:#eef3f8">Chị Hằng có duyệt được các loại phiếu này không?</th>
+                    </tr>
+                    <tr id="mx-head"><th></th><th></th></tr>
+                </thead>
+                <tbody id="mx-body"></tbody>
+            </table>
+
+            <div class="legend">
+                <span><b class="ok">&#10003;</b> Duyệt được</span>
+                <span><b class="noperm">&times;</b> Không có quyền loại phiếu này</span>
+                <span><b class="nomod">&times;</b> Nhóm không bật nghiệp vụ này <i>(cơ chế mới)</i></span>
+                <span><b class="noscope">&times;</b> Thành viên bị tick &ldquo;Không gửi duyệt theo nhóm này&rdquo;</span>
+                <span><b class="na">n/a</b> Nghiệp vụ nằm ngoài cơ chế nhóm nghiệp vụ</span>
+            </div>
+
+            <div id="sim-verdict"></div>
+        </div>
+    </div>
+
+    <!-- ================= TAB 3 ================= -->
+    <div class="pane" id="pane-cov">
+        <div class="card">
+            <div class="warnbox">
+                <h4>Trả lời thẳng: ô tích nghiệp vụ KHÔNG bao quát hết quyền của phân hệ</h4>
+                Bảng dưới rà theo <b>call site thật</b> của 2 helper (<b>91 chỗ / 37 file</b>). Ba dạng lệch:
+                <ul class="tight" style="margin-bottom:0">
+                    <li><b>Phân hệ không hề dùng nhóm nghiệp vụ</b> &rarr; tích hay không cũng vô nghĩa.
+                        <code class="inl">Modules/Supply</code> (13 quyền Cung ứng) và <code class="inl">Modules/Assign</code> đều <b>0 call site</b>.</li>
+                    <li><b>Có dùng nhưng dễ bỏ sót</b> &rarr; <code class="inl">Modules/Training</code> (Đào tạo) lọc qua
+                        <code class="inl">BaseService.php:33</code>, dùng chung cho ~40 service con; &ldquo;Phiếu giao việc&rdquo; thực ra nằm trong
+                        <b>Timesheet</b> (<code class="inl">JobAssignmentNote</code>) chứ không phải phân hệ Giao việc.</li>
+                    <li><b>Phân hệ có dùng thì cũng chỉ một phần quyền bị chi phối</b> &rarr; các quyền cấp Ban giám đốc và mấy biên bản
+                        đều <b>bỏ qua</b> nhóm nghiệp vụ, duyệt được toàn hệ thống.</li>
+                </ul>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="text-align:left;width:185px">Ô tích nghiệp vụ</th>
+                        <th style="width:70px">Call site</th>
+                        <th style="text-align:left">Quyền/màn BỊ chi phối (tích &middot; bỏ tích có tác dụng)</th>
+                        <th style="text-align:left">Quyền KHÔNG bị chi phối (tích &middot; bỏ tích vô tác dụng)</th>
+                    </tr>
+                </thead>
+                <tbody id="cov-body"></tbody>
+            </table>
+
+            <h3 class="sec">Hệ quả với thiết kế</h3>
+            <ul class="tight">
+                <li>Không nên đặt tên ô tích theo <b>phân hệ</b>, phải đặt theo <b>nhóm phiếu thật sự có scope nhóm nghiệp vụ</b> &mdash;
+                    nếu không người dùng sẽ tưởng bỏ tích &ldquo;Báo giá&rdquo; là chặn hết, trong khi
+                    <code class="inl">BGĐ duyệt báo giá</code> vẫn duyệt bình thường.</li>
+                <li>Cần <b>ghi chú ngay trên màn</b> (nhãn <span class="tag-part">MỘT PHẦN</span>) để tránh hiểu nhầm về phạm vi.</li>
+                <li>Muốn ô tích thật sự &ldquo;bao hết&rdquo; một phân hệ thì phải <b>bổ sung scope nhóm</b> vào các hàm đang bỏ trống
+                    (<code class="inl">canBGDApprove()</code> của báo giá / gói thầu / đơn nghỉ, biên bản nghiệm thu, biên bản thanh lý,
+                    hợp đồng kết xuất cung ứng). Đó là <b>đổi luật nghiệp vụ</b>, không còn là đổi cấu hình &rarr; phải hỏi ý kiến riêng.</li>
+                <li>Muốn phân hệ <b>Cung ứng</b> chia được theo nhóm thì phải <b>thêm mới</b> scope cho 13 quyền của nó &mdash; hiện chưa có gì.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ================= TAB 4 ================= -->
+    <div class="pane" id="pane-tech">
+        <div class="card">
+            <h3 class="sec">Vì sao hiện tại không tách được</h3>
+            <p style="line-height:1.8;margin:8px 0 0">Mọi nghiệp vụ có scope đều theo cùng một công thức:</p>
+<pre><span class="c2">// Modules/Category/Entities/Contract/Contract.php:342</span>
+isCurrentEmployeeHasPermission(<span class="s">'Duyệt hợp đồng'</span>)
+    && in_array($this-&gt;created_by, listManageEmployeeIdsByGroup())
+
+<span class="c2">// Modules/Timesheet/Entities/Attendance.php:149</span>
+isCurrentEmployeeHasPermission(<span class="s">'PD-Đơn xin nghỉ'</span>)
+    && in_array($this-&gt;employee_id, listManageEmployeeInfoIdsByGroup())</pre>
+            <ul class="tight">
+                <li><b>Quyền</b> chọn <b>LOẠI phiếu</b> &mdash; <b>nhóm nghiệp vụ</b> chọn <b>NGƯỜI</b>. Hai vế nhân chéo, không cắt chéo được.</li>
+                <li><code class="inl">group_permissions</code> chỉ có <code class="inl">code, name, order, description, status, created_by, is_department</code> &mdash; không có cột module.</li>
+                <li><code class="inl">group_permission_managers</code> chỉ có <code class="inl">group_permission_id</code> + <code class="inl">employee_id</code>.</li>
+                <li><b>91 call site</b> / <b>37 file</b>, tất cả gọi trần &mdash; helper không nhận tham số nào.</li>
+            </ul>
+
+            <h3 class="sec">Phân bố 91 call site</h3>
+            <table style="margin-bottom:18px">
+                <thead><tr><th style="text-align:left">File</th><th style="width:80px">Số chỗ</th><th style="text-align:left">Ghi chú</th></tr></thead>
+                <tbody>
+                    <tr><td><code class="inl">Category/Services/CategoryDashboardService.php</code></td><td class="c">26</td><td>Dashboard <b>cắt ngang</b>: cùng 1 hàm scope quotations + contracts + bid_packages + attendances + job_assignment &rarr; phải gán module <b>theo từng dòng</b>, không dùng chung 1 tham số cho cả hàm</td></tr>
+                    <tr><td><code class="inl">Timesheet/Services/DashboadService.php</code></td><td class="c">10</td><td>như trên</td></tr>
+                    <tr><td>17 Entity + Service của <b>Timesheet</b></td><td class="c">~27</td><td>đơn nghỉ, gia hạn nghỉ, đi muộn về sớm, tăng ca, tra soát công, bảng chấm công, báo cáo, phiếu công tác, công tác phí, phiếu giao việc</td></tr>
+                    <tr><td>14 Entity + Service + Controller của <b>Category</b></td><td class="c">~26</td><td>hợp đồng, báo giá, gói thầu, dự toán, file kết quả, báo cáo</td></tr>
+                    <tr><td><code class="inl">Training/Services/BaseService.php:33</code></td><td class="c">1</td><td><b>1 dòng nhưng chi phối ~40 service con</b> của phân hệ Đào tạo</td></tr>
+                    <tr><td><code class="inl">Human/Services/EmploymentContractService.php:45</code></td><td class="c">1</td><td>đang <b>bị comment</b> &mdash; không có tác dụng</td></tr>
+                    <tr><td><code class="inl">app/Helper/PermissionHelper.php</code></td><td class="c">2</td><td>chính 2 hàm; cạnh đó là <code class="inl">listEmployeeInfoHasPermission()</code> dùng để <b>định tuyến thông báo</b></td></tr>
+                </tbody>
+            </table>
+
+            <h3 class="sec">Thay đổi đề xuất</h3>
+            <p style="margin:8px 0 0;line-height:1.8"><b>1. DB</b> &mdash; 1 bảng nối, không khóa ngoại, chỉ index:</p>
+<pre><span class="k">Schema</span>::create(<span class="s">'group_permission_types'</span>, <span class="k">function</span> (Blueprint $t) {
+    $t-&gt;id();
+    $t-&gt;unsignedBigInteger(<span class="s">'group_permission_id'</span>);
+    $t-&gt;unsignedTinyInteger(<span class="s">'permission_type'</span>);   <span class="c2">// = permissions.type
+       // 1 ch&#7845;m c&#244;ng | 2 t&#237;nh l&#432;&#417;ng | 3 HCNS | 4 k&#7871; ho&#7841;ch | 5 qu&#7843;n l&#253; th&#7847;u
+       // 7 cung &#7913;ng | 8 h&#7907;p &#273;&#7891;ng | 14 kinh doanh | 15 danh m&#7909;c</span>
+    $t-&gt;timestamps();
+    $t-&gt;index([<span class="s">'group_permission_id'</span>, <span class="s">'permission_type'</span>]);
+});</pre>
+<p style="margin:6px 0 0;line-height:1.8" class="muted">Không cần bịa danh sách module mới &mdash; dùng luôn
+<code class="inl">permissions.type</code> mà màn phân quyền chức vụ đang hiển thị.</p>
+            <p style="margin:0;line-height:1.8"><b>2. Helper</b> &mdash; thêm tham số, mặc định <code class="inl">null</code> để 91 call site cũ chạy y nguyên:</p>
+<pre><span class="c2">// $permission = T&#202;N QUY&#7872;N &#273;ang check ngay c&#7841;nh &#273;&#243; &mdash; helper t&#7921; tra ra permissions.type</span>
+<span class="k">function</span> listManageEmployeeIdsByGroup($permission = <span class="k">null</span>)
+{
+    $q = GroupPermissionManager::query()
+        -&gt;where(<span class="s">'employee_id'</span>, auth()-&gt;user()-&gt;id);
+
+    <span class="k">if</span> ($permission) {                          <span class="c2">// &lt;-- phần thêm</span>
+        $type = Permission::where(<span class="s">'name'</span>, $permission)-&gt;value(<span class="s">'type'</span>);
+        $q-&gt;whereIn(<span class="s">'group_permission_id'</span>,
+            GroupPermissionType::where(<span class="s">'permission_type'</span>, $type)
+                -&gt;pluck(<span class="s">'group_permission_id'</span>));
+    }
+
+    $ids = $q-&gt;pluck(<span class="s">'group_permission_id'</span>)-&gt;toArray();
+    <span class="k">return</span> GroupPermissionEmployee::whereIn(<span class="s">'group_permission_id'</span>, $ids)
+        -&gt;where(<span class="s">'is_leader'</span>, 0)-&gt;pluck(<span class="s">'employee_id'</span>)-&gt;toArray();
+}</pre>
+            <p style="margin:0;line-height:1.8"><b>3. Call site</b> &mdash; chỉ sửa nghiệp vụ nào cần tách:</p>
+<pre><span class="c2">// Contract.php:342 &mdash; c&#7841;nh n&#243; &#273;&#227; c&#243; s&#7861;n t&#234;n quy&#7873;n, ch&#7881; vi&#7879;c truy&#7873;n sang</span>
+isCurrentEmployeeHasPermission(<span class="s">'Duyệt hợp đồng'</span>)
+    &amp;&amp; in_array($id, listManageEmployeeIdsByGroup(<span class="s">'Duyệt hợp đồng'</span>))
+
+<span class="c2">// Attendance.php:149</span>   listManageEmployeeInfoIdsByGroup(<span class="s">'PD-Đơn xin nghỉ'</span>)
+<span class="c2">// PermissionHelper.php:120 - để thông báo đi cùng luật với nút duyệt</span>
+listEmployeeInfoHasPermission(<span class="s">'PD-Đơn xin nghỉ'</span>, $infoId, <span class="k">true</span>)</pre>
+<p style="margin:6px 0 0;line-height:1.8" class="muted">Ưu điểm: call site <b>không phải biết module là gì</b> &mdash;
+chỉ lặp lại đúng tên quyền đang check ở dòng bên cạnh. Nhớ <b>cache</b> bảng <code class="inl">permissions</code>
+(name &rarr; type) để không sinh thêm query trong vòng lặp.</p>
+
+            <h3 class="sec">Điểm phải cẩn thận</h3>
+            <ul class="tight">
+                <li><b>Migration dữ liệu:</b> mọi nhóm đang có phải được insert đủ mọi module &rarr; hành vi giữ nguyên 100%, không ai mất quyền sau khi deploy.</li>
+                <li><b>Thông báo phải đi cùng luật với nút duyệt.</b> Chỉ sửa <code class="inl">canApprove()</code> mà quên
+                    <code class="inl">listEmployeeInfoHasPermission()</code> thì sẽ có cảnh nhận thông báo &ldquo;cần duyệt&rdquo; nhưng mở ra không thấy nút.</li>
+                <li><b>Nguy cơ phiếu kẹt.</b> Đơn xin nghỉ <b>không có</b> nhánh &ldquo;tự duyệt phiếu của chính mình&rdquo;
+                    (khác Báo giá / Hợp đồng / Gói thầu vốn có <code class="inl">|| created_by == auth()-&gt;user()-&gt;id</code>).
+                    Bỏ tích nghiệp vụ Chấm công&ndash;Nhân sự mà không nhóm nào khác phủ &rarr; đơn nghỉ của họ không ai duyệt được.
+                    Cần <b>validate cảnh báo khi lưu</b> + màn tra cứu &ldquo;nhân viên chưa được phủ nghiệp vụ nào&rdquo;.</li>
+                <li><b>Dashboard</b> chiếm 36/91 call site và cắt ngang nhiều bảng &rarr; phải soi từng dòng, dễ sót nhất.</li>
+                <li>Đây là sửa <b>hàm dùng chung</b> &rarr; theo quy ước dự án phải được xác nhận trước khi code.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ============ DỮ LIỆU — rà theo call site thật, 17/09/2026 ============ */
+var MODULES = [
+    {
+        key: 't1', name: 'Phân hệ chấm công', type: 1, perms: 75, sites: 47, coverage: 'part',
+        sub: 'permissions.type = 1 · 75 quyền · Modules/Timesheet',
+        covered: [
+            'PD-Đơn xin nghỉ <code class="inl">Attendance.php:149,154,161</code>',
+            'PD-Đăng ký đi muộn về sớm <code class="inl">LateEarlyOut.php:277,282</code>',
+            'PD-Đăng ký tăng ca <code class="inl">OvertimeAssignment.php:223,229</code>',
+            'PD-Đề nghị tra soát công <code class="inl">RequestUpdateTimeSheet.php:165,172</code>',
+            'Duyệt phiếu công tác + kết quả <code class="inl">BusinessTripAssign.php:279,294</code>',
+            'Duyệt đề nghị thanh toán công tác phí <code class="inl">RequestPaymentWorkingFee.php:63</code>',
+            'Quản lý phiếu giao việc <code class="inl">JobAssignmentNote.php:176</code>',
+            'Bảng chấm công, báo cáo chấm công / phép'
+        ],
+        uncovered: [
+            '<b>BGD duyệt đơn xin nghỉ</b> (quyền id 310) — <code class="inl">Attendance.php:215</code> chỉ xét trạng thái + quyền &rarr; duyệt được <b>toàn hệ thống</b>',
+            'Các nhóm quyền chỉ để <b>mở menu</b> (Ca làm việc, Thiết bị chấm công, Thiết lập, Dashboad…) — không có khái niệm phạm vi người, tích hay không cũng như nhau'
+        ]
+    },
+    {
+        key: 't4', name: 'Phân hệ kế hoạch', type: 4, perms: 12, sites: 4, coverage: 'part',
+        sub: 'type = 4 · Báo giá · Dự toán · Báo cáo báo giá',
+        covered: [
+            'TP duyệt báo giá <code class="inl">Quotation.php:219</code>',
+            'Duyệt bàn giao báo giá <code class="inl">Quotation.php:251</code>',
+            'Lọc danh sách báo giá <code class="inl">QuotationService:174</code>'
+        ],
+        uncovered: [
+            '<b>BGĐ duyệt báo giá</b> — <code class="inl">Quotation::canBGDApprove()</code> chỉ xét trạng thái + quyền',
+            '<b>BGĐ duyệt dự toán chuyển hợp đồng</b> — không có scope nhóm',
+            'Phân công báo giá — nhánh có scope ở <code class="inl">Project.php:148</code> đang <b>bị comment</b>'
+        ]
+    },
+    {
+        key: 't5', name: 'Phân hệ quản lý thầu', type: 5, perms: 10, sites: 8, coverage: 'part',
+        sub: 'type = 5 · Gói thầu · Báo cáo gói thầu',
+        covered: [
+            'TP duyệt kết quả thầu <code class="inl">BidPackage.php:340</code>',
+            'Duyệt bàn giao gói thầu <code class="inl">BidPackage.php:332</code>',
+            'Lọc danh sách <code class="inl">BidPackageService:184</code>',
+            'Bàn giao <code class="inl">BidPackageService:1021</code>'
+        ],
+        uncovered: [
+            '<b>BGD duyệt kết quả thầu</b> — <code class="inl">BidPackage.php:270</code> chỉ xét trạng thái + quyền'
+        ]
+    },
+    {
+        key: 't8', name: 'Phân hệ hợp đồng', type: 8, perms: 22, sites: 8, coverage: 'part',
+        sub: 'type = 8 · Hợp đồng · Báo cáo hợp đồng · Báo cáo file dữ liệu',
+        covered: [
+            'Duyệt hợp đồng <code class="inl">Contract.php:342</code>',
+            'Duyệt bàn giao hợp đồng <code class="inl">Contract.php:435</code>',
+            'Lọc danh sách HĐ <code class="inl">ContractService:184</code>',
+            'Báo cáo HĐ <code class="inl">Category/ReportService:91</code>',
+            'File kết quả <code class="inl">ResultFileService:58</code>'
+        ],
+        uncovered: [
+            '<b>Duyệt biên bản nghiệm thu</b> — <code class="inl">AcceptanceReport.php:119</code> chỉ xét quyền',
+            '<b>Duyệt biên bản thanh lý</b> — <code class="inl">ContractLiquidation.php:108</code> chỉ xét quyền',
+            '<b>Duyệt hợp đồng kết xuất cung ứng</b> — <code class="inl">Contract.php:370</code> chỉ xét quyền'
+        ]
+    },
+    {
+        key: 't14', name: 'Phân hệ kinh doanh', type: 14, perms: 7, sites: 4, coverage: 'part',
+        sub: 'type = 14 · Dự toán · KPI · Báo cáo dự toán',
+        covered: [
+            'Lọc danh sách dự toán <code class="inl">ProjectService:181</code>',
+            '<code class="inl">ProjectController:504,705</code>'
+        ],
+        uncovered: [
+            'Nhóm quyền <b>KPI</b> — không có call site nào'
+        ]
+    },
+    {
+        key: 't2', name: 'Phân hệ tính lương', type: 2, perms: 13, sites: 0, coverage: 'none', dead: true,
+        sub: 'type = 2 · 0 call site',
+        covered: [],
+        uncovered: [
+            '<code class="inl">Modules/Payroll</code> <b>0 call site</b> của helper nhóm. 4 chỗ trong <code class="inl">SalaryService</code> dùng <code class="inl">listManageEmployeeInfoIds()</code> — đó là <b>cây quản lý trực tiếp</b>, cơ chế khác hẳn nhóm nghiệp vụ.'
+        ]
+    },
+    {
+        key: 't3', name: 'Phân hệ hành chính nhân sự', type: 3, perms: 46, sites: 0, coverage: 'none', dead: true,
+        sub: 'type = 3 · 0 call site còn hiệu lực',
+        covered: [],
+        uncovered: [
+            'Chỗ duy nhất <code class="inl">Human/Services/EmploymentContractService.php:45</code> đang <b>bị comment</b> &rarr; toàn bộ 46 quyền HCNS không đi qua nhóm nghiệp vụ.'
+        ]
+    },
+    {
+        key: 't7', name: 'Phân hệ cung ứng', type: 7, perms: 14, sites: 0, coverage: 'none', dead: true,
+        sub: 'type = 7 · 0 call site',
+        covered: [],
+        uncovered: [
+            '<code class="inl">Modules/Supply</code> không gọi helper lần nào. Phạm vi dựa vào <code class="inl">created_by</code> / phân công / công ty. Muốn chia theo nhóm phải <b>thêm mới scope</b>, không phải bật ô tích.'
+        ]
+    },
+    {
+        key: 't15', name: 'Phân hệ danh mục', type: 15, perms: 12, sites: 0, coverage: 'none', dead: true,
+        sub: 'type = 15 · Quản lý hàng hóa / khách hàng / chi phí / bảo lãnh',
+        covered: [],
+        uncovered: [
+            'Không có call site nào — danh mục dùng chung toàn hệ thống.'
+        ]
+    },
+    {
+        key: 'training', name: '⚠ Đào tạo — KHÔNG có phân hệ', type: null, perms: 0, sites: 1, coverage: 'none', dead: true,
+        sub: 'có scope nhóm nhưng không có quyền nào trong bảng permissions',
+        covered: [],
+        uncovered: [
+            '<code class="inl">Training/Services/BaseService.php:33</code> lọc theo nhóm nghiệp vụ và <b>chi phối ~40 service con</b>, nhưng bảng <code class="inl">permissions</code> <b>không có quyền nào</b> thuộc phân hệ Đào tạo &rarr; màn phân quyền không có ô nào đại diện. Nếu chọn theo phân hệ thì <b>không cấu hình được</b> phần này.'
+        ]
+    }
+];
+var LIVE = MODULES.filter(function (m) { return !m.dead; }).map(function (m) { return m.key; });
+
+/* Quyền duyệt chị Hằng (emp 36) đang có — theo role 5 + role 22 trên DB staging */
+var HANG_PERMS = {
+    t1: 'PD-Đơn xin nghỉ',
+    t4: 'TP duyệt báo giá',
+    t5: null,
+    t8: 'Duyệt hợp đồng',
+    t14: null,
+    t2: null,
+    t3: null,
+    t7: 'Duyệt đề xuất cung ứng',
+    t15: null,
+    training: null
+};
+
+var GROUPS = [
+    {
+        id: 6, code: 'GP-6', name: 'Hợp đồng', order: 6, is_department: true,
+        managers: ['Nguyễn Thị Thu Hằng'],
+        modules: LIVE.slice(),
+        employees: [
+            { id: 33,  name: 'Nguyễn Thị Thanh Thuỳ', com: 'Thành An', dept: 'Phòng Hợp đồng', tel: '0901 234 561', skip: false },
+            { id: 34,  name: 'Lã Thị Thu Hiền',       com: 'Thành An', dept: 'Phòng Hợp đồng', tel: '0901 234 562', skip: false },
+            { id: 38,  name: 'Bùi Thị Duyên',         com: 'Thành An', dept: 'Phòng Hợp đồng', tel: '0901 234 563', skip: false },
+            { id: 36,  name: 'Nguyễn Thị Thu Hằng',   com: 'Thành An', dept: 'Phòng Hợp đồng', tel: '0901 234 564', skip: true  },
+            { id: 99,  name: 'Nguyễn Ngọc Quỳnh',     com: 'Thành An', dept: 'Phòng Hợp đồng', tel: '0901 234 565', skip: false },
+            { id: 153, name: 'Phạm Thị Minh Thúy',    com: 'Thành An', dept: 'Phòng Hợp đồng', tel: '0901 234 566', skip: false }
+        ]
+    },
+    {
+        id: 46, code: 'GP-46', name: 'Nhóm Hợp đồng mở rộng', order: 12, is_department: false,
+        managers: ['Nguyễn Thị Thu Hằng'],
+        modules: ['t8'],
+        employees: [
+            { id: 78,  name: 'Tăng Đỗ Dũng',        com: 'Thành An', dept: 'Phòng Kinh doanh', tel: '0902 111 222', skip: false },
+            { id: 123, name: 'Nhữ Văn Thảo',        com: 'Thành An', dept: 'Phòng Kế hoạch',   tel: '0902 111 333', skip: false },
+            { id: 201, name: 'Phạm Thị Thu Thương', com: 'Thành An', dept: 'Phòng Kế hoạch',   tel: '0902 111 444', skip: false }
+        ]
+    }
+];
+
+/* ============ TAB 1 ============ */
+var cur = 0;
+function el(id) { return document.getElementById(id); }
+function each(list, fn) { Array.prototype.forEach.call(list, fn); }
+
+function renderGroupSelect() {
+    var s = el('gsel');
+    s.innerHTML = GROUPS.map(function (g, i) {
+        return '<option value="' + i + '">' + g.code + ' — ' + g.name + '</option>';
+    }).join('');
+    s.onchange = function () { cur = +this.value; renderForm(); renderMatrix(); };
+}
+
+function renderForm() {
+    var g = GROUPS[cur];
+    el('f-name').value = g.name;
+    el('f-order').value = g.order;
+    el('f-dept').checked = g.is_department;
+    el('f-managers').innerHTML = g.managers.map(function (m) { return '<span class="chip">' + m + '</span>'; }).join('');
+
+    el('f-mods').innerHTML = MODULES.map(function (m) {
+        if (m.dead) {
+            return '<label class="mod dead" title="Phân hệ này không dùng nhóm nghiệp vụ — xem tab Độ phủ quyền">' +
+                   '<input type="checkbox" disabled /> <span><b>' + m.name + '</b>' +
+                   '<span class="tag-part">KHÔNG DÙNG</span><small>' + m.sub + '</small></span></label>';
+        }
+        var on = g.modules.indexOf(m.key) > -1;
+        var tag = m.coverage === 'full' ? '<span class="tag-full">ĐỦ</span>' : '<span class="tag-part">MỘT PHẦN</span>';
+        return '<label class="mod' + (on ? ' on' : '') + '" data-k="' + m.key + '">' +
+               '<input type="checkbox"' + (on ? ' checked' : '') + ' /> ' +
+               '<span><b>' + m.name + '</b>' + tag +
+               '<small>' + m.sub + ' &middot; ' + m.sites + ' call site</small></span></label>';
+    }).join('');
+
+    each(el('f-mods').querySelectorAll('.mod[data-k]'), function (lb) {
+        lb.querySelector('input').onchange = function () {
+            var k = lb.getAttribute('data-k'), i = g.modules.indexOf(k);
+            if (this.checked) { if (i < 0) { g.modules.push(k); } }
+            else if (i > -1) { g.modules.splice(i, 1); }
+            lb.classList.toggle('on', this.checked);
+            el('mod-warn').style.display = g.modules.length ? 'none' : 'block';
+            renderMatrix();
+        };
+    });
+    el('mod-warn').style.display = g.modules.length ? 'none' : 'block';
+
+    el('f-emps').innerHTML = g.employees.map(function (e, i) {
+        return '<tr><td class="c">' + (i + 1) + '</td><td>' + e.name + '</td><td>' + e.com +
+               '</td><td>' + e.dept + '</td><td class="c">' + e.tel +
+               '</td><td class="c"><input type="checkbox" data-i="' + i + '"' + (e.skip ? ' checked' : '') + ' /></td></tr>';
+    }).join('');
+
+    each(el('f-emps').querySelectorAll('input'), function (cb) {
+        cb.onchange = function () { g.employees[+this.getAttribute('data-i')].skip = this.checked; renderMatrix(); };
+    });
+}
+
+el('btn-all').onclick = function () { GROUPS[cur].modules = LIVE.slice(); renderForm(); renderMatrix(); };
+el('btn-none').onclick = function () { GROUPS[cur].modules = []; renderForm(); renderMatrix(); };
+
+/* ============ TAB 2 ============ */
+var mode = 'now';
+
+function renderPerms() {
+    var html = MODULES.map(function (m) {
+        return HANG_PERMS[m.key] ? '<span class="chip">' + HANG_PERMS[m.key] + '</span>' : '';
+    }).join('');
+    el('sim-perms').innerHTML = html || '<span class="muted">(không có)</span>';
+}
+
+function renderMatrix() {
+    el('mx-head').innerHTML = '<th></th><th></th>' + MODULES.map(function (m) {
+        return '<th class="rot">' + m.name + (m.dead ? '<br><span class="na">ngoài cơ chế</span>' : '') + '</th>';
+    }).join('');
+
+    var rows = '', blockedByModule = 0, allowed = 0;
+
+    GROUPS.forEach(function (g) {
+        g.employees.forEach(function (e) {
+            var cells = MODULES.map(function (m) {
+                if (m.dead) {
+                    return '<td class="c hl-na"><span class="cell na" title="Phân hệ không dùng nhóm nghiệp vụ — cơ chế mới không chạm tới">n/a</span></td>';
+                }
+                var hasPerm = !!HANG_PERMS[m.key];
+                var modOn = (mode === 'now') ? true : (g.modules.indexOf(m.key) > -1);
+
+                if (e.skip) {
+                    return '<td class="c hl-noscope"><span class="cell noscope" title="Thành viên bị tick Không gửi duyệt theo nhóm này">&times;</span></td>';
+                }
+                if (!hasPerm) {
+                    return '<td class="c"><span class="cell noperm" title="Chị Hằng không được cấp quyền duyệt loại phiếu này">&times;</span></td>';
+                }
+                if (!modOn) {
+                    blockedByModule++;
+                    return '<td class="c hl-nomod"><span class="cell nomod" title="Nhóm ' + g.code + ' không bật nghiệp vụ &quot;' + m.name + '&quot;">&times;</span></td>';
+                }
+                allowed++;
+                return '<td class="c"><span class="cell ok">&#10003;</span></td>';
+            }).join('');
+
+            rows += '<tr><td>' + e.name + (e.skip ? ' <small class="muted">(miễn duyệt)</small>' : '') +
+                    '</td><td class="grp">' + g.code + ' — ' + g.name + '</td>' + cells + '</tr>';
+        });
+    });
+    el('mx-body').innerHTML = rows;
+
+    var v = el('sim-verdict');
+    if (mode === 'now') {
+        v.innerHTML = '<div class="diffbox warn"><h4>Hiện tại &mdash; không tách được</h4>' +
+            'Chị Hằng là Người duyệt của <b>cả GP-6 và GP-46</b>. Phạm vi là <b>hợp của hai nhóm</b>, dùng chung cho mọi loại phiếu &rarr; ' +
+            'duyệt được <b>' + allowed + '</b> ô, tức mọi loại phiếu chị có quyền, của <b>cả 9 người</b>. ' +
+            'Muốn chặn đơn xin nghỉ của 3 người GP-46 thì chỉ còn cách gỡ quyền <code class="inl">PD-Đơn xin nghỉ</code> &mdash; ' +
+            'nhưng khi đó đơn nghỉ của 5 người GP-6 cũng <b>không ai duyệt được</b> (chị là Người duyệt duy nhất của GP-6, ' +
+            'và đơn nghỉ không có nhánh tự duyệt).' +
+            '<br><br><b>Lưu ý cột <span class="na">n/a</span>:</b> phân hệ Cung ứng nằm ngoài cơ chế nhóm nghiệp vụ &mdash; ' +
+            'sửa kiểu gì cũng không chặn được quyền <code class="inl">Duyệt đề xuất cung ứng</code> bằng ô tích.</div>';
+    } else {
+        var g46 = GROUPS.filter(function (x) { return x.id === 46; })[0];
+        var names = MODULES.filter(function (m) { return !m.dead && g46.modules.indexOf(m.key) > -1; })
+                           .map(function (m) { return m.name; });
+        v.innerHTML = '<div class="diffbox"><h4>Sau khi sửa &mdash; tách được theo nghiệp vụ</h4>' +
+            'GP-46 đang bật: <b>' + (names.length ? names.join(', ') : '(chưa bật nghiệp vụ nào)') + '</b>. ' +
+            'Có <b>' + blockedByModule + '</b> ô bị chặn thêm nhờ cơ chế mới (ô đỏ) &mdash; đúng các phiếu mà trước đây chị Hằng duyệt được ' +
+            'nhưng nghiệp vụ không muốn. GP-6 vẫn bật đủ nên quyền duyệt với 5 người phòng Hợp đồng <b>không đổi</b>. ' +
+            '<br><i>Vào Tab 1, đổi nhóm sang GP-46 rồi tích/bỏ tích nghiệp vụ để xem ma trận đổi theo.</i>' +
+            '<br><br><b>Nhưng</b> ô tích chỉ chặn được các quyền có nhãn <span class="tag-full">ĐỦ</span>; ' +
+            'với <span class="tag-part">MỘT PHẦN</span> thì quyền cấp BGĐ và mấy biên bản vẫn lọt &mdash; xem tab 3.</div>';
+    }
+}
+
+each(document.querySelectorAll('.switcher button'), function (b) {
+    b.onclick = function () {
+        each(document.querySelectorAll('.switcher button'), function (x) { x.classList.remove('on'); });
+        this.classList.add('on');
+        mode = this.getAttribute('data-mode');
+        renderMatrix();
+    };
+});
+
+/* ============ TAB 3 ============ */
+function renderCoverage() {
+    el('cov-body').innerHTML = MODULES.map(function (m) {
+        var tag = m.dead ? '<span class="tag-part">KHÔNG DÙNG</span>'
+                : (m.coverage === 'full' ? '<span class="tag-full">ĐỦ</span>' : '<span class="tag-part">MỘT PHẦN</span>');
+        var cov = m.covered.length
+            ? '<ul>' + m.covered.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'
+            : '<span class="muted">&mdash; không có &mdash;</span>';
+        var unc = m.uncovered.length
+            ? '<ul>' + m.uncovered.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>'
+            : '<span class="muted">&mdash; không còn quyền nào lọt &mdash;</span>';
+        return '<tr><td><b>' + m.name + '</b>' + tag + '</td><td class="c">' + m.sites + '</td><td>' + cov + '</td><td>' + unc + '</td></tr>';
+    }).join('');
+}
+
+/* ============ TABS ============ */
+each(document.querySelectorAll('.tabs button'), function (b) {
+    b.onclick = function () {
+        each(document.querySelectorAll('.tabs button'), function (x) { x.classList.remove('on'); });
+        each(document.querySelectorAll('.pane'), function (x) { x.classList.remove('on'); });
+        this.classList.add('on');
+        el('pane-' + this.getAttribute('data-tab')).classList.add('on');
+    };
+});
+
+/* ============ INIT ============ */
+renderGroupSelect();
+renderForm();
+renderPerms();
+renderMatrix();
+renderCoverage();
+</script>
+</body>
+</html>

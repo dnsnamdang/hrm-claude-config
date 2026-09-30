@@ -346,3 +346,38 @@ Vừa hoàn thành: Phase 15 — bổ sung thông báo cho người có quyền 
 Đang làm dở: không.
 Bước tiếp theo: @khoipv test tay trên UI (kết xuất 1 HĐ của khách hàng chưa khai người phụ trách nhóm Cung ứng → kiểm chuông thông báo của tài khoản có quyền `Phân công đề xuất cung ứng`); chốt 2 tồn đọng ở trên.
 Blocked:
+
+---
+
+## Phase 16 — HĐ ngoài thầu: bỏ bắt buộc tab Bảo lãnh khi kết xuất (@khoipv chốt 23/09/2026)
+
+**Yêu cầu:** Phase 13 bắt buộc tab "Bảo lãnh thực hiện hợp đồng" cho cả `type` = 1 và 2.
+Nay chốt lại: **chỉ HĐ trong thầu (type = 1) mới bắt buộc**, HĐ ngoài thầu (type = 2)
+nhập hay không tuỳ người dùng, không chặn kết xuất.
+
+**Nguồn nhầm lẫn của Phase 13:** comment cũ gọi `type` = 2 là "nhảy thầu" trong khi
+`Contract::TYPE_NAME[2]` = **Ngoài thầu** → `bidTypes()` gom cả 2 loại vào diện bắt buộc.
+
+- [x] BE: `RenderSupplyContractRequest::assertTabHasData()` — đổi `!in_array($type, Contract::bidTypes())`
+      thành `$type !== Contract::TRONG_THAU`; cập nhật docblock đầu file
+- [x] BE: `Contract::bidTypes()` — sửa comment sai ("nhảy thầu" → "ngoài thầu") và ghi rõ hàm này
+      chỉ là điều kiện HIỂN THỊ tab trên FE, không còn quyết định việc bắt buộc nhập bảo lãnh.
+      **Giữ nguyên giá trị `[1, 2]`, không xoá hàm** (hàm dùng chung — chờ @khoipv chốt)
+- [x] Không đụng FE: tab "Bảo lãnh thực hiện hợp đồng" vẫn hiện với HĐ ngoài thầu
+      (`GeneralComponent.vue:726` — `type != 3 && type != 4 && type != 5`), chỉ là không còn bắt buộc.
+      FE không có validate bảo lãnh riêng nên không phát sinh sửa
+- [x] `php -l` sạch 2 file
+
+### Kiểm chứng (tinker trên `thanhan_stag_07052026`, bọc transaction + rollback) — 4/4 PASS
+- Trong thầu **có** bảo lãnh (HD-004/2025) → CHO QUA
+- Trong thầu **xoá hết** bảo lãnh → **CHẶN** đúng message bảo lãnh (nhánh cũ giữ nguyên)
+- Cùng HĐ đó đổi sang **Ngoài thầu**, không bảo lãnh → **CHO QUA** (chính là thay đổi lần này)
+- Ngoài thầu, xoá luôn tab Kết quả HĐ → **CHẶN** vì `results` (ràng buộc mọi loại vẫn còn)
+- DB nguyên trạng sau rollback (HD-004/2025: type=1, guarantees=1, results=2)
+- Dữ liệu stag: 23 HĐ ngoài thầu, **22 HĐ chưa nhập bảo lãnh** → trước bản vá đều bị chặn kết xuất
+
+### Checkpoint — 2026-09-23
+Vừa hoàn thành: Phase 16 — bỏ ràng buộc bảo lãnh với HĐ ngoài thầu khi kết xuất sang cung ứng.
+Đang làm dở: không.
+Bước tiếp theo: @khoipv test tay — mở 1 HĐ ngoài thầu chưa nhập bảo lãnh (vd HD-088/2026) → bấm Kết xuất → phải đi qua.
+Blocked:

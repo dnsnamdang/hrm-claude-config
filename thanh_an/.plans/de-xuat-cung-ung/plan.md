@@ -308,3 +308,32 @@ Hành vi phím:
 - [ ] CHƯA verify click-through UI
 - Ghi chú: chỉ 1/12 nhóm trùng trong toàn DB thực sự khác ĐVT (HĐ 2) — 11 nhóm còn lại cùng ĐVT, hành vi không đổi
 - Ghi chú: 5 cặp (hàng hóa, ĐVT) trong DB thiếu hệ số quy đổi (pid 5/20/205/23 ở HĐ 2, pid 2783 ở HĐ 87) nhưng không cặp nào nằm trong nhóm cần gộp
+
+## Popup chọn hàng: tách lại từng dòng HĐ, phiếu vẫn gộp (2026-09-10, @khoipv)
+
+> Nối tiếp 2 mục bug ngày 2026-09-09. Gộp ở BE chữa được số (60) nhưng popup mất 3 tên riêng
+> (thấp / trung bình / cao của `HC-HH-084`, HĐ 120) → không biết đang chọn cái gì.
+> Chốt với @khoipv: **popup hiện từng dòng `contract_products`**, còn **bảng hàng hóa của phiếu vẫn gộp**
+> (DB `supply_proposal_products` chỉ lưu `(contract_id, product_id)`, không có chỗ ghi dòng HĐ).
+> Tick 1 dòng → 20 · tick 2 → 40 · tick cả 3 → 60. Không migration, không đụng phiếu xử lý cung ứng.
+
+- [x] BE `groupUnitTarget()` (mới) — tách phần "chọn ĐVT đích + hệ số quy đổi từng dòng" ra khỏi `aggregateContractLines()`, dùng chung cho cả 2 nhánh gộp/không gộp
+- [x] BE `aggregateContractLines()` — refactor dùng `groupUnitTarget()`, kết quả không đổi
+- [x] BE `contractProductRows()` — thêm tham số `$merge = true`; `false` = trả từng dòng HĐ kèm `contract_product_id`, `merge_key`, `can_merge`, `main_unit_id/_name`, `sl_*_main` (số của dòng đã quy đổi về ĐVT chính)
+- [x] BE `goodsPool()` — gọi với `$merge = false`
+- [x] BE `RenderedContractService::prefill()` — giữ mặc định `true`, hành vi không đổi (@khoipv đã duyệt sửa hàm dùng chung theo cách thêm tham số mặc định)
+- [x] BE `contractRefMap()` — giữ nguyên gộp (phiếu vẫn lưu 1 dòng)
+- [x] FE `GoodsPickerModal.vue` — định danh dòng theo `contract_product_id` thay vì `product_id`
+- [x] FE `add.vue onPickConfirm()` — gom dòng đã tick theo `merge_key`: 1 dòng giữ số + ĐVT dòng đó, nhiều dòng cộng bằng `sl_*_main` + ĐVT chính; `can_merge = false` mà tick >1 → toast chặn
+- [x] FE `add.vue excludeIds` — loại theo `contract_product_id` khi biết dòng nguồn, fallback `(contract_id, product_id)` cho phiếu load từ DB
+- [x] FE tick thêm dòng của mã đã có trong phiếu → cộng dồn vào dòng sẵn có (hiện đang bỏ im lặng)
+- [x] Verify tinker: `goodsPool(1, 1478)` ra 3 dòng × 20 (HĐ 120); `goodsPool(1, 2)` ra 2 dòng 12 Hộp / 250 mL kèm số quy đổi 12 và 5
+- [x] Verify tinker: `prefill()` HĐ 179 + regression 193 HĐ không đổi
+- [x] Verify compile FE: template 2 component compile 0 lỗi; harness Node chạy thẳng `GoodsPickerModal.confirm()` → `add.onPickConfirm()` với data BE thật → 20 / 40 / 60 Lọ, 12 Hộp + 250 mL → 17 Hộp, dòng cùng mã khác HĐ bị khóa ngay ở popup — 8/8 assertion đạt
+- [ ] @khoipv click-through UI trên trình duyệt (hard refresh sau khi FE build lại)
+
+### Checkpoint — 2026-09-10
+Vừa hoàn thành: tách dòng HĐ trong popup chọn hàng — BE `groupUnitTarget()` / `contractProductRows($merge)` / `goodsPool()`, FE `excludeKeys` / `rowMergeKey` / `buildProductRow` / `onPickConfirm`; verify tinker + regression 193 HĐ 0 sai lệch + harness FE 8/8 đạt
+Đang làm dở: không có — code-complete
+Bước tiếp theo: @khoipv click-through trên trình duyệt (Phiếu đề xuất cung ứng → thêm mới → chọn hàng HĐ HD-101/2026, mã HC-HH-084)
+Blocked:

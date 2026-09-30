@@ -7,7 +7,7 @@ File duy nhất: `bao-cao-ke-hoach-lam-viec-nhan-vien.html` (standalone) + `scre
 ## Global Constraints (áp cho MỌI task)
 
 - Mockup HTML tĩnh 1 file, KHÔNG thư viện ngoài; toàn bộ tiếng Việt.
-- Port nguyên khối `<style>` của `../bao-cao-phat-trien-thi-truong-khach-hang/`; phần riêng để CUỐI khối style dưới nhãn *"BỔ SUNG RIÊNG MÀN KẾ HOẠCH LÀM VIỆC"*.
+- Port nguyên khối `<style>` của `../../bao-cao-phat-trien-thi-truong-khach-hang/`; phần riêng để CUỐI khối style dưới nhãn *"BỔ SUNG RIÊNG MÀN KẾ HOẠCH LÀM VIỆC"*.
 - Data demo sinh bằng **LCG có hạt giống** (không `Math.random`) — demo không nhảy số. Thêm trường mới phải tính bằng công thức theo số thứ tự, KHÔNG gọi `demoRnd()`, nếu không lệch toàn bộ số liệu đã chốt.
 - Định nghĩa chỉ tiêu **bám Entity thật** trong `hrm-api/Modules/Assign` — không bịa trạng thái.
 - Mọi diễn giải / công thức nằm trong tooltip icon `i`, không viết chữ ra màn.

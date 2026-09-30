@@ -1,6 +1,6 @@
 ---
 name: import-excel
-description: Xây dựng chức năng import Excel trong module Giao việc
+description: Xây dựng chức năng import Excel (V2BaseImportModal) + KHUÔN CHUẨN của file Excel mẫu dùng chung toàn hệ thống
 ---
 
 # Skill: Import Excel trong module Giao việc
@@ -50,6 +50,17 @@ importColumns() {
             width: '280px',           // Độ rộng cột preview
             mono: false,              // Font monospace
             rows: 2,                  // Chỉ dùng cho type: 'textarea'
+
+            // --- 3 key dưới đây chỉ dùng cho FILE MẪU (xem mục "File Excel mẫu") ---
+            hint: '(Bắt buộc, không được trùng)',   // Dòng mô tả (hàng 2). Không khai -> tự suy
+            sample: ['Giá trị 1', 'Giá trị 2'],     // Dòng ví dụ (hàng 3, 4). Mảng = nhiều dòng
+            unique: true,                           // Chỉ ảnh hưởng câu mô tả tự suy
+        },
+        {
+            key: 'Status',
+            label: 'Trạng thái',
+            type: 'select',           // -> file mẫu có Ô CHỌN GIÁ TRỊ thật (data validation)
+            options: [{ id: 'active', name: 'Hoạt động' }, { id: 'inactive', name: 'Khóa' }],
         },
     ]
 }
@@ -178,10 +189,81 @@ Route::post('/{model}/import', [Controller::class, 'import']);
 ```
 **Lưu ý**: Route static (`/import-template`) phải đặt TRƯỚC route wildcard (`/{model}`) để tránh bị match sai.
 
-## Template Excel mẫu
-- Tạo qua API endpoint (PhpSpreadsheet Writer → response()->download()) thay vì static file
-- Lý do: file static từ tinker/artisan có thể bị lỗi format
-- Font: Times New Roman, có header style, có dòng mẫu cha + con
+## File Excel mẫu — KHUÔN CHUẨN TOÀN HỆ THỐNG (chốt 21/09/2026)
+
+> **Bản gốc của khuôn: `hrm-client/static/Mau_import_NhomNganh.xlsx`** (màn Nhóm ngành —
+> `/assign/industry-groups`). Mọi file mẫu import phải ra ĐÚNG hình thức này, không mỗi màn một kiểu.
+
+**KHÔNG tự dựng file mẫu, KHÔNG đặt file tĩnh mới trong `static/`.** Gọi hàm dùng chung:
+
+```javascript
+import { buildImportTemplate } from '@/utils/import-helper'
+
+// ⚠️ HÀM BẤT ĐỒNG BỘ (nạp ExcelJS theo chunk) — thiếu `await` là không bắt được lỗi
+async handleDownloadImportTemplate() {
+    try {
+        await buildImportTemplate(this.importColumns, {
+            requiredFields: this.importRequiredFields,
+            fileName: 'Mau_import_phuong_xa.xlsx',
+            sheetName: 'Phuong xa',   // helper tự chuẩn hoá thành `DM_phuongxa`
+        })
+    } catch (error) {
+        console.error('Error building import template:', error)
+        this.$toasted?.global?.error?.({ message: 'Lỗi khi tạo file mẫu' })
+    }
+}
+```
+
+### Hình thức file sinh ra (đã đối chiếu từng ô với bản gốc)
+
+| Thành phần | Quy cách |
+| --- | --- |
+| Tên sheet | `DM_<tên bỏ dấu, bỏ khoảng trắng>` — vd `DM_phuongxa` |
+| Font toàn file | **Calibri 12** |
+| Cột A | **STT**, rộng 8.4; dòng ví dụ đánh số 1, 2 |
+| Hàng 1 — tiêu đề | in đậm, nền **`#B8CCE4`**, căn giữa cả 2 chiều, **KHÔNG wrap**, cao **15.5**; cột bắt buộc có hậu tố ` *` |
+| Hàng 2 — mô tả | **IN NGHIÊNG**, căn giữa cả 2 chiều, **wrap**, cao = số dòng chữ thực tế × 15.5 |
+| Hàng 3+ — ví dụ | chữ thường, không căn, cao 15.5 |
+| Viền | `thin` màu **đen `FF000000`**, kẻ sẵn khung trống **tới hàng 17** |
+| Độ rộng cột dữ liệu | `max(độ dài tiêu đề, độ dài dòng ví dụ)` kẹp trong **20 – 34** ký tự |
+| Cột `type: 'select'` | có **ô chọn giá trị thật**; danh sách > 255 ký tự hoặc có dấu phẩy thì đẩy sang sheet ẩn `DanhMuc` rồi tham chiếu |
+
+### Câu mô tả ở hàng 2
+Không khai gì thì helper tự suy: `(Bắt buộc, không được trùng)` · `Bắt buộc (chọn 01 trong Hoạt
+động/ Khóa)` · `Text`. Danh mục dài (> 6 lựa chọn) ghi `chọn 01 trong danh sách sổ xuống của ô`.
+**Nên khai `hint` sát nghiệp vụ** cho màn quan trọng — xem `pages/human/wards/index.vue` làm mẫu.
+
+### 5 cái bẫy đã trả giá — đừng dẫm lại
+
+1. **`errorStyle` của data validation phải là `'stop'`.** Chuẩn OOXML chỉ nhận `stop | warning |
+   information`; ExcelJS ghi thẳng giá trị vào XML nên để `'error'` là file sai chuẩn — openpyxl
+   không mở được, Excel đòi "repair".
+2. **Căn giữa dọc phải là `vertical: 'middle'`.** ExcelJS KHÔNG hiểu `'center'`, thuộc tính rơi mất
+   im lặng, file ra nhìn lệch hẳn file chuẩn mà không báo lỗi gì.
+3. **Gán data validation theo VÙNG** (`sheet.dataValidations.add(range, …)`). Gán từng ô thì
+   ExcelJS gom thành nhiều vùng chồng nhau (`F3:F502` + `F10:F502`) → Excel coi là file cần sửa.
+4. **Độ rộng cột KHÔNG lấy từ `width` px của bảng preview** (280px → 40 ký tự, thừa một mảng trắng).
+   Tính theo nội dung rồi kẹp 20 – 34.
+5. **Chiều cao hàng tiêu đề là 15.5, không phải 30.** Để cao hơn là nhìn "to" hơn file chuẩn ngay.
+
+### Dòng mô tả và trình đọc
+`parseExcelFile()` tự nhận ra hàng 2 là dòng mô tả và bỏ qua — nhận dạng theo ĐẶC TRƯNG (bọc ngoặc
+đơn / chứa "Bắt buộc" / "chọn 01 trong" / "Text" / "VD:"), KHÔNG so khớp nguyên văn. Vì vậy:
+- `:skip-rows="1"` nghĩa là **"được phép bỏ tối đa 1 dòng"**, chỉ bỏ khi đúng là dòng mô tả.
+- File người dùng tự gõ (không có dòng mô tả) **không bị nuốt mất dòng đầu tiên** — lỗi Redmine
+  #11160 mục 7, 8, 12 chính là chỗ này.
+
+### Dòng ví dụ
+Nằm TRONG vùng dữ liệu, giống hệt file mẫu gốc → người dùng phải xoá trước khi nhập thật. Màn nào
+không khai `sample` thì helper chỉ sinh **1 dòng** (nhiều dòng suy tự động sẽ trùng mã nhau).
+
+### Tự kiểm trước khi bàn giao
+```bash
+# Trong hrm-client: KHÔNG được còn màn nào tự dựng file mẫu bằng SheetJS hay tự tạo file tĩnh mới
+grep -rn "XLSX.writeFile\|aoa_to_sheet" pages/ | grep -i "mau\|template"   # phải RỖNG
+```
+Mở file tải về bằng Excel thật: không có cảnh báo "repair", hàng 2 in nghiêng, cột `select` bấm ra
+danh sách chọn.
 
 ## Checklist khi tạo import mới
 1. [ ] Tạo import columns config (key, label, aliases, type, width)
@@ -189,7 +271,8 @@ Route::post('/{model}/import', [Controller::class, 'import']);
 3. [ ] Viết FE validation rules (client-side)
 4. [ ] Tạo BE validate endpoint + service method
 5. [ ] Tạo BE import endpoint + service method
-6. [ ] Tạo template download endpoint
+6. [ ] File mẫu: gọi `buildImportTemplate()` (KHÔNG tự dựng, KHÔNG thêm file tĩnh) — xem mục
+       "File Excel mẫu — KHUÔN CHUẨN TOÀN HỆ THỐNG"; khai `hint` / `sample` cho cột nghiệp vụ
 7. [ ] Thêm routes (static trước wildcard)
 8. [ ] Tích hợp V2BaseImportModal vào page/component
 9. [ ] Test: upload → preview → validate → import → verify DB
