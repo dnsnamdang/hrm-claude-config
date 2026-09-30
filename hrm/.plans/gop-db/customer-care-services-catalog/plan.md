@@ -1414,3 +1414,15 @@ Vừa hoàn thành: đồng bộ header 5 khối + thay khối File đính kèm 
 Đang làm dở: không có.
 Bước tiếp theo: user mở `/customer-care/services/create` thử tải PDF lên, lưu, sửa, sao chép.
 Blocked:
+
+## Fix — Popup Lịch sử ở màn danh sách bỏ mã gói (2026-09-28) @khoipv
+- [x] `pages/customer-care/services/index.vue` `openHistory()`: nhãn bản ghi chỉ còn tên gói
+      (bỏ `code - `), không sửa `CatalogHistoryModal` dùng chung
+- [x] Rà toàn hrm-client, bỏ mã khỏi nhãn bản ghi trên popup Lịch sử (32 file): 25 màn danh mục
+      `mã - tên` → `tên`; chấm công (ca làm việc, NV cài đặt chấm công + chi tiết, vai trò `id - tên`);
+      Holiday/TruncatedLeave HistoryModal (`tên · mã`); CustomerMeetingHistoryModal báo cáo CSKH tiềm năng
+- [x] GIỮ nguyên: màn chứng từ chỉ có số phiếu (không có tên), bàn giao (`số phiếu - NV`), TK ngân hàng
+      (`số TK - tên TK`), Task/Issue (chỉ hiện mã)
+- [x] Parse-check script 33 file thay đổi: 0 lỗi
+- [x] Bổ sung 2 màn sót (lần rà đầu chỉ bắt `code`, bỏ qua `?.open(` + `identify_number` + biến
+      `historyCustomerName`): `finance/accounts` (`số hiệu - tên` → `tên`), `assign/customers` (`mã - tên` → `tên`)

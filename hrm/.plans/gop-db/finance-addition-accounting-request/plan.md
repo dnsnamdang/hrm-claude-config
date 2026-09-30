@@ -1250,3 +1250,92 @@ Bước tiếp theo: user nghiệm thu. **Phase 14 BẮT BUỘC nghiệm thu tr�
 local chạy `nuxt dev` không bao giờ tái hiện được lỗi nền header.
 
 Blocked: 6 việc chờ user quyết, đã liệt kê ở `.plans/gop-db/STATUS.md`.
+
+---
+
+## Phase 21 — Popup "Chọn trường xuất file": tick sẵn theo cột đang hiện + đóng popup khi xuất (2026-09-29)
+
+Nguyên nhân: template truyền `:default-selected="visibleExportFields"` nhưng màn KHÔNG gắn
+`exportFieldsMixin` → prop `undefined` → popup quay về tick tất cả. Nút "Xuất file" chỉ emit, không đóng popup.
+
+### FE
+- [x] `pages/finance/addition-accounting-requests/index.vue`: gắn `exportFieldsMixin` (lấy computed `visibleExportFields`, khoá bảng camelCase tự đổi sang khoá BE snake_case; `requestStatus` → `status_name`)
+- [x] `handleExportList`: đóng popup `exportFieldsModalId` ngay khi bấm "Xuất file"
+
+## Phase 22 — File Excel danh sách: logo nhỏ + ô nhiều chữ bị cắt (2026-09-29)
+
+Nguyên nhân: `drawings()` không truyền bề rộng bảng → trait ép ảnh cao 72px (letterhead rất ngang nên chỉ chiếm một góc);
+blade không bật wrap text, cột có bề rộng cố định → chữ dài bị cắt.
+
+### BE
+- [x] `Modules/Finance/Exports/AdditionAccountingRequestListExport.php`: `drawings()` truyền `tableWidthPx()` (khuôn `BillAdjustDeptRequestListExport`)
+- [x] `AfterSheet`: wrap text + canh trên cho cả bảng (từ hàng tên cột dò bằng ô `STT` tới hết sheet), không set chiều cao dòng cứng
+- [x] Kiểm file thật: drawing 2502x223 @A1, dòng 1 = 167pt, hàng tên cột ở dòng 5 dò đúng, ô tiền kiểu `n` + `#,##0`
+
+## Phase 23 — Bản in: ô ký "Người lập" → "Người tạo" (2026-09-29)
+
+- [x] `Modules/Finance/Services/AdditionAccountingRequestPrintService::renderTemplate()`: thay `>Người lập<` → `>Người tạo<` lúc render. KHÔNG sửa mẫu `report_templates` id 463 (dùng chung cổng ERP)
+- [x] Kiểm phiếu 2067: HTML còn 0 "Người lập", 1 "Người tạo", "Ngày lập" giữ nguyên
+
+## Phase 24 — Màn Chi tiết: bỏ "Số phiếu" + link hợp đồng bán (2026-09-29)
+
+### BE
+- [x] `AdditionAccountingRequestDetailResource::coordinationBlock()`: trả thêm `contract_id` + `contract_type` (loại 7)
+
+### FE
+- [x] `utils/contract-link.js` (mới): morph class → link. HĐ HRM `Modules\Assign\...\Contract` → `/assign/contracts/{id}`, `WrServiceContract` → `/customer-care/wr-service-contracts/{id}`; `FirmContract` / `OpeningContract` → ERP (`erpUrl`), bám bảng route ERP `AdditionAccountingRequestDetail::getContractableLinkAttribute()`
+- [x] `AdditionAccountingRequestForm.vue`: ô "Số phiếu" ẩn khi `readonly` (tiêu đề trang đã có mã)
+- [x] `AdditionDetailTable.vue`: cột Hợp đồng bán ở chế độ xem = link, mở tab mới
+- [x] `CoordinationDetail.vue` (loại 7): bỏ "Số phiếu", "Số hợp đồng" thành link
+- [x] (bổ sung) Link hợp đồng CHỈ trỏ màn HRM (user chốt): bỏ link ERP cho `FirmContract` / `OpeningContract` — không có bản tương ứng trong `hrm_contracts` (vd firm_contracts #383) → hiện chữ trơn
+- [x] (đảo lại, user chốt sau khi xem phiếu 2067 — HĐ đầu kỳ `opening_contracts` #2656) `FirmContract` + `OpeningContract` mở sang ERP; HĐ HRM mới + bảo dưỡng mở màn HRM
+
+## Phase 25 — Khối File đính kèm không hiện dung lượng (2026-09-29)
+
+Nguyên nhân: `attachmentSizes()` bọc kết quả `['sizes' => map]`, còn `AttachmentSection.vue` (và 3 màn anh em) đọc thẳng `response.data[url]` → luôn `undefined`.
+
+### BE
+- [x] `AdditionAccountingRequestController::attachmentSizes()` trả thẳng map `{url: byte}` (khớp BillPayment/BillAdjustDept/BorrowExport)
+
+## Phase 25 — Icon nút "Lập phiếu kế toán" (2026-09-29)
+
+- [x] `index.vue` (menu hành động) + `_id/index.vue` (footer): `ri-external-link-line` → `ri-file-add-line` (user chỉ định qua ảnh — cùng icon "Tạo phiếu thu" / "Lập phiếu xuất giữ")
+
+## Phase 26 — Khoảng trống thừa ở đáy màn Chi tiết (2026-09-29)
+
+Nguyên nhân: `V2Footer` đã chừa đáy trang bằng `body.has-v2-footer { padding-bottom: 66px }`, nhưng form còn tự
+`padding-bottom: 70px` (khoảng trống dưới "File đính kèm") và trang chi tiết thêm `padding-bottom: 70px` (dưới "Lịch sử").
+
+- [x] `components/AdditionAccountingRequestForm.vue`: bỏ `padding-bottom: 70px` của container
+- [x] `_id/index.vue`: bỏ `padding-bottom: 70px` của container
+
+## Phase 26 — Màn Sửa: bỏ ô "Số phiếu" + badge "Trạng thái" (2026-09-29)
+
+- [x] `AdditionAccountingRequestForm.vue`: bỏ hẳn ô Số phiếu (cả Chi tiết lẫn Sửa — tiêu đề trang đã có mã) và badge trạng thái ở header "Thông tin chung"; dọn `V2BaseBadge`, `statusBadgeVariant`, `statusName/statusType` không còn dùng
+
+## Phase 27 — Toast "The given data was invalid." khi Lưu thiếu dữ liệu (2026-09-29)
+
+- [x] `AdditionAccountingRequestForm.vue::save()` catch: 422 + câu mặc định Laravel → toast câu dùng chung "Vui lòng kiểm tra lại dữ liệu nhập" (user chốt); câu nghiệp vụ riêng của BE vẫn hiện nguyên văn; lỗi chi tiết vẫn inline dưới ô
+
+## Phase 28 — Lịch sử: dòng bảng Chi tiết hạch toán in mỗi trường một dòng (2026-09-29)
+
+User chốt: CHỈ màn này (không đổi hiển thị các màn khác).
+
+- [x] `components/assign/SystemInfoSection.vue` (dùng chung): thêm prop `multilineRows` (mặc định `false`) — thêm/xoá: tên + từng trường (tách `; ` của `rowText()`) mỗi dòng; sửa: tên + mỗi trường `cũ → mới` một dòng. Tắt = y như cũ
+- [x] `components/modal/CatalogHistoryModal.vue` (dùng chung): prop `multilineRows` chuyển xuống section
+- [x] `addition-accounting-requests/index.vue` (popup) + `_id/index.vue` (khối Lịch sử): bật `multiline-rows`
+
+## Phase 29 — Popup "Chọn phiếu xác nhận bảo hành": lọc Người tạo + sort (2026-09-29)
+
+Khuôn bám `bill-adjust-depts/components/BillAdjustDeptRequestPickerModal.vue` (select Người tạo + tiêu đề sort).
+
+- [x] FE `components/RecordSearchModal.vue`: ô lọc hỗ trợ `type: 'select'` (V2BaseSelectInModal, chọn là lọc lại); cột hỗ trợ `sortable` (gửi `sort_by`/`sort_desc`)
+- [x] FE `AdditionAccountingRequestForm.vue`: thêm ô lọc Người tạo (`created_by`, nguồn `$store.state.employeeOptions`); đổi tiêu đề cột "Người lập" → "Người tạo"; bật sort Mã phiếu + Người tạo
+- [x] BE `AdditionAccountingLookupService::warrantyConfirms()`: whitelist sort `code` → `f.code`, `created_by_name` → `ei.fullname`; mặc định giữ `f.id desc`
+
+## Phase 30 — Màn Chi tiết: ô chọn còn nền trắng dù đã khoá (2026-09-29)
+
+Nguyên nhân: ô Nhà cung cấp loại 3 (và 2 ô chọn chứng từ nguồn loại 1/5) luôn gắn `picker-input` (ép nền trắng) và không `disabled` ở màn XEM.
+
+- [x] `AdditionAccountingRequestForm.vue`: computed `objectFieldPickable` (`!readonly && !objectFieldAutoFilled`) — không chọn được thì `disabled` + bỏ `picker-input`
+- [x] Ô Phiếu xác nhận bảo hành / Phiếu xử lý hàng thiếu: `:disabled="readonly"`, `picker-input` chỉ khi sửa được

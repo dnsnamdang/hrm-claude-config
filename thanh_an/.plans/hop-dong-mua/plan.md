@@ -141,3 +141,7 @@ Vừa hoàn thành: Fix 13 + Fix 13b + Fix 14 (cột VAT & Chiết khấu) — �
 Đang làm dở: không
 Bước tiếp theo: user build lại client rồi click-test màn lập/sửa HĐ mua — đổi ĐVT, 4 cột tham chiếu, ghi chú theo từng HĐ bán (kiểm tra `quotation_tab_products.note_supply`), và xác nhận quy ước 2 cột VAT / Chiết khấu ở Fix 14
 Blocked: chờ user duyệt việc tách 3 trait dùng chung (đụng file màn đơn mua hàng) + chốt lại công thức Chiết khấu
+
+### Fix 15b: Thu nhỏ cột "Hãng, nước sản xuất" (2026-09-23, @khoipv)
+User: "cột hãng, nước sx bạn cho nhỏ vào giúp tôi tí nữa"
+- [x] FE-18: `ProductsTab.vue` — `.cell-origin` / `th.cell-origin` min-width 110→80px, max-width 160→110px

@@ -407,8 +407,14 @@ Nhóm danh mục (tiền tệ, vụ việc, mã phí, quốc gia, tỉnh/huyện
 | **DB** | bảng chung `catalog_histories` (`table_name` + `table_id`) — KHÔNG tạo `<entity>_history` mới |
 | **BE ghi log** | `use App\Services\Concerns\LogsCatalogHistory` trong service: khai `catalogTable()`, `catalogColumns()`, (tuỳ chọn) `catalogDisplay()`; gọi `logCatalogCreate` / `logCatalogUpdate` / `logCatalogStatus` / `logCatalogDelete` |
 | **BE đọc** | `App\Services\CatalogHistoryService` + endpoint chung `GET /api/v1/catalog-histories/{table}/{id}` — nhớ khai bảng + nhãn cột tiếng Việt vào `CatalogHistoryService::TABLES` (whitelist) |
-| **FE popup ở danh sách** | `<CatalogHistoryModal ref="historyModal" modal-id="history-<màn>" record-prefix="Vụ việc" />` rồi `this.$refs.historyModal.open('<table>', item.id, '<mã> - <tên>')` |
+| **FE popup ở danh sách** | `<CatalogHistoryModal ref="historyModal" modal-id="history-<màn>" record-prefix="Vụ việc" />` rồi `this.$refs.historyModal.open('<table>', item.id, item.name || '')` — nhãn bản ghi **CHỈ TÊN, KHÔNG kèm mã** (xem ghi chú dưới bảng) |
 | **FE khối ở chi tiết / popup Xem** | `<SystemInfoSection entity-type="<table>" :entity-id="id" endpoint-base="catalog-histories" />` |
+
+⚠️ **Tiêu đề popup Lịch sử KHÔNG hiện mã bản ghi** (chốt 2026-09-28, màn `customer-care/services`):
+tham số thứ 3 của `open()` chỉ truyền **tên** → tiêu đề ra `Lịch sử … Gói bảo dưỡng: <Tên>`.
+❌ `` `${item.code || ''} - ${item.name || ''}` `` — mã vô nghĩa với người xem, lại dài tiêu đề.
+Bản ghi không có cột tên thì truyền trường nhận diện dễ đọc nhất (vd số phiếu), đừng ghép `mã - tên`.
+Sửa ở từng màn gọi `open()`, KHÔNG sửa `CatalogHistoryModal` dùng chung.
 
 Entity lớn đã có bảng log riêng (khách hàng, báo giá, phiếu…) thì GIỮ nguyên `SystemLogService`.
 Entity từng có log kiểu version (`<x>_versions` + `<x>_histories`, vd `accounts`) đọc qua
