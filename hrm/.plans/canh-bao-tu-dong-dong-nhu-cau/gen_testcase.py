@@ -104,6 +104,10 @@ DESCRIPTION_BLOCK = [
      "- N = 0 nghĩa là KHÔNG đặt thời hạn, không phải 'hết hạn ngay'. Mặc định sau khi lên bản mới, mọi lĩnh vực "
      "đều là 0, tức chưa nhu cầu nào bị đóng cho tới khi người quản trị khai N.\n"
      "- N <= M thì KHÔNG có bước cảnh báo, nhu cầu vẫn bị đóng đúng hạn. Đừng báo lỗi 'thiếu thông báo'.\n"
+     "- MỌI testcase kỳ vọng CÓ cảnh báo đều đã chốt sẵn N > M trong cột Điều kiện. Khi test trên dữ liệu "
+     "thật, phải kiểm N của lĩnh vực trước: N <= M mà không thấy cảnh báo là ĐÚNG, không phải lỗi.\n"
+     "- Nâng M lên KHÔNG phải lúc nào cũng làm nhiều nhu cầu được cảnh báo hơn: M vượt quá N của lĩnh vực "
+     "nào thì nhu cầu của lĩnh vực đó MẤT cảnh báo.\n"
      "- Nhu cầu quá hạn vẫn nằm trong danh sách cho tới lần quét kế tiếp (01:20 hôm sau) mới chuyển sang Đóng — "
      "trong khoảng đó cột hạn hiện '(quá hạn X ngày)' là đúng.\n"
      "- Ngày đóng là ngày HẾT HẠN chứ không phải ngày chạy quét.\n"
@@ -294,7 +298,7 @@ S2 = [
      "- Báo lưu thành công\n- Sau khi tải lại, ô vẫn hiện 5"),
 
     (4, "M = 0 nghĩa là không cảnh báo", "P0",
-     "M đang là 3. Có nhu cầu #101 hết hạn sau 2 ngày nữa.",
+     "M đang là 3. Có nhu cầu #101 thuộc lĩnh vực N = 30, hết hạn sau 2 ngày nữa.",
      "1. Đổi M = 0 và lưu\n2. Sang màn Nhu cầu khách hàng xem nhu cầu #101\n3. Nhờ kỹ thuật chạy lệnh quét hạn "
      "nhu cầu (assign:close-expired-customer-demands) ở chế độ liệt kê",
      "Cảnh báo trước khi đóng nhu cầu: 0",
@@ -378,20 +382,20 @@ S4 = [
      "- Hiện '30/10/2026' màu chữ bình thường, không có biểu tượng cảnh báo, không có ghi chú số ngày"),
 
     (3, "Nhu cầu vào vùng cảnh báo tô cam kèm số ngày còn lại", "P0",
-     "M = 3. Nhu cầu #102 hết hạn 17/09/2026, hôm nay 15/09/2026.",
+     "M = 3, lĩnh vực của nhu cầu #102 có N = 30. Nhu cầu #102 hết hạn 17/09/2026, hôm nay 15/09/2026.",
      "1. Xem dòng #102, cột Thời gian hết hạn nhu cầu",
      "—",
      "- Hiện '17/09/2026 (còn 2 ngày)' màu CAM, đậm, có biểu tượng chuông báo\n"
      "- LƯU Ý: Màu cam chứ không phải đỏ (đỏ chỉ dành cho lỗi nhập liệu)"),
 
     (4, "Đúng ngày hết hạn ghi 'hết hạn hôm nay'", "P0",
-     "M = 3. Nhu cầu #103 hết hạn đúng hôm nay.",
+     "M = 3, lĩnh vực của nhu cầu #103 có N = 30. Nhu cầu #103 hết hạn đúng hôm nay.",
      "1. Xem dòng #103",
      "—",
      "- Hiện ngày hôm nay kèm ghi chú '(hết hạn hôm nay)', tô cam"),
 
     (5, "Nhu cầu đã quá hạn nhưng chưa tới lượt quét", "P0",
-     "Nhu cầu #104 hết hạn 12/09/2026, hôm nay 15/09/2026, lần quét gần nhất chưa chạy.",
+     "M = 3, lĩnh vực của nhu cầu #104 có N = 30. Nhu cầu #104 hết hạn 12/09/2026, hôm nay 15/09/2026, lần quét gần nhất chưa chạy.",
      "1. Xem dòng #104",
      "—",
      "- Hiện '12/09/2026 (quá hạn 3 ngày)' tô cam\n"
@@ -416,7 +420,7 @@ S4 = [
      "- Cột hạn ghi 'Không giới hạn thời gian hiệu lực'\n- Badge trạng thái hiện 'Đóng' màu xám"),
 
     (9, "Cột hạn hiện cả ở thẻ Nhu cầu của khách hàng trong Công việc của tôi", "P1",
-     "Tài khoản đang phụ trách ít nhất 1 nhu cầu sắp hết hạn.",
+     "Tài khoản đang phụ trách ít nhất 1 nhu cầu sắp hết hạn, thuộc lĩnh vực có N = 30 (M = 3).",
      "1. Vào Công việc của tôi\n2. Mở thẻ 'Nhu cầu của khách hàng'\n3. Quan sát cột Thời gian hết hạn nhu cầu",
      "—",
      "- Cột hiển thị giống hệt màn Nhu cầu khách hàng, cùng cách tô cam và ghi chú"),
@@ -428,10 +432,21 @@ S4 = [
      "- Cột ẩn / hiện theo lựa chọn, các cột khác giữ nguyên vị trí"),
 
     (11, "Đổi M làm vùng cảnh báo rộng ra", "P1",
-     "M = 3, nhu cầu #108 hết hạn sau 5 ngày nữa (chưa tô cam).",
+     "M = 3, nhu cầu #108 thuộc lĩnh vực có N = 30, hết hạn sau 5 ngày nữa (chưa tô cam).",
      "1. Đổi M thành 7 ở Cấu hình chung, lưu\n2. Quay lại màn Nhu cầu khách hàng, tải lại",
      "Cảnh báo trước khi đóng nhu cầu: 7",
-     "- Dòng #108 chuyển sang tô cam kèm '(còn 5 ngày)'"),
+     "- Dòng #108 chuyển sang tô cam kèm '(còn 5 ngày)'\n"
+     "- LƯU Ý: kết quả này chỉ đúng vì N = 30 vẫn LỚN HƠN M = 7. Nâng M vượt quá N thì cảnh báo "
+     "TẮT đi chứ không bật thêm — xem TC ngay dưới"),
+
+    (12, "Nâng M vượt quá N thì cảnh báo TẮT đi", "P0",
+     "M = 3, nhu cầu #109 thuộc lĩnh vực có N = 5, đang tô cam vì còn 2 ngày.",
+     "1. Đổi M thành 7 ở Cấu hình chung, lưu\n2. Quay lại màn Nhu cầu khách hàng, tải lại",
+     "Cảnh báo trước khi đóng nhu cầu: 3 -> 7",
+     "- Dòng #109 HẾT tô cam, hết ghi chú số ngày, chỉ còn ngày hết hạn\n"
+     "- LƯU Ý: đây là ĐÚNG yêu cầu, không phải lỗi. N = 5 nay nhỏ hơn M = 7 nên rơi vào ngoại lệ "
+     "'N <= M thì bỏ qua cảnh báo'\n"
+     "- Nhu cầu vẫn bị đóng đúng hạn như thường"),
 ]
 
 S5 = [
@@ -446,13 +461,13 @@ S5 = [
      "lại trước khi tự đóng\n- Bấm vào thông báo mở đúng màn Nhu cầu khách hàng"),
 
     (2, "Chưa tới mốc cảnh báo thì im lặng", "P0",
-     "Như trên nhưng hôm nay là 10/09/2026 (còn 5 ngày, vùng cảnh báo là 3 ngày).",
+     "Như trên (M = 3, lĩnh vực N = 30) nhưng hôm nay là 10/09/2026 — còn 5 ngày, vùng cảnh báo là 3 ngày.",
      "1. Chạy lệnh quét hạn nhu cầu\n2. Đọc kết quả",
      "—",
      "- Không có dòng cảnh báo nào cho nhu cầu #201\n- Không ai nhận được thông báo"),
 
     (3, "Không cảnh báo lại mỗi ngày", "P0",
-     "Nhu cầu #201 đã được cảnh báo hôm 12/09/2026.",
+     "Nhu cầu #201 (lĩnh vực N = 30, M = 3) đã được cảnh báo hôm 12/09/2026.",
      "1. Ngày 13/09/2026 chạy lại lệnh quét hạn nhu cầu\n2. Đọc kết quả và kiểm tra chuông thông báo",
      "—",
      "- Không có dòng cảnh báo lặp lại cho #201\n- Người chủ trì không nhận thêm thông báo thứ hai"),
@@ -694,7 +709,7 @@ S9 = [
      "- LƯU Ý: Cột hạn KHÔNG đổi, vẫn tính theo N = 60 nên còn 20 ngày\n- Nhu cầu KHÔNG bị đóng"),
 
     (3, "Đổi M khi nhu cầu đã được cảnh báo", "P1",
-     "Nhu cầu #433 đã nhận cảnh báo khi M = 3.",
+     "Nhu cầu #433 thuộc lĩnh vực có N = 30, đã nhận cảnh báo khi M = 3.",
      "1. Đổi M thành 10\n2. Chạy lại lệnh quét hạn nhu cầu",
      "Cảnh báo trước khi đóng nhu cầu: 3 -> 10",
      "- Không gửi lại thông báo cho #433 (mỗi nhu cầu chỉ cảnh báo một lần)\n- Trên bảng, dòng vẫn tô cam"),
@@ -736,7 +751,7 @@ S10 = [
      "- Bước 6: không còn nút Tạo Dự án TKT; gọi thẳng chức năng thì bị chặn đúng câu thông báo"),
 
     (2, "Luồng lập dự án kịp hạn", "P0",
-     "Nhu cầu #501 còn 2 ngày tới hạn, đã nhận cảnh báo.",
+     "Nhu cầu #501 thuộc lĩnh vực có N = 30 (M = 3), còn 2 ngày tới hạn, đã nhận cảnh báo.",
      "1. Bấm nút Tạo Dự án TKT từ nhu cầu #501\n2. Lập dự án và lưu\n3. Quay lại màn Nhu cầu khách hàng\n"
      "4. Chạy lệnh quét hạn nhu cầu sau ngày hết hạn",
      "—",
