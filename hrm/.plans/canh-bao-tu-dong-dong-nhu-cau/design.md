@@ -62,3 +62,54 @@ Tự đóng tại   T + N
 | Badge trạng thái "Đã đóng" | Hiển thị **"Đóng"** | Nhãn có sẵn của màn Nhu cầu khách hàng (#11386) |
 | Nút Tạo Dự án TKT "làm mờ kèm tooltip" | **Ẩn hẳn** | Quy ước dự án: nút không dùng được thì ẩn, không hiện mờ |
 | M là "tham số toàn cục" | Lưu **theo công ty** trong Cấu hình chung | Bảng cấu hình vốn theo công ty; công ty chưa khai thì dùng mặc định 3 |
+| Cảnh báo khi N <= M | Bỏ qua cảnh báo, **đúng spec** | Đã bỏ nhầm 30/09 rồi phục hồi cùng ngày - xem mục dưới |
+| Đổi N ở danh mục | Nhu cầu đã có **giữ hạn cũ** (N chụp lúc tạo) | **Lệch spec, khách chốt lại** - xem mục dưới |
+| Người nhận cảnh báo | Phụ trách nhu cầu **+ người tạo + người chủ trì** cuộc họp | Spec ghi 2 vai đầu; thêm người chủ trì vì cuộc họp có thể do người khác tạo hộ |
+| Nội dung thông báo | Theo khuôn `notification-convention` | Skill thắng spec về hình thức trình bày |
+
+## Quyết định đã chốt (30/09/2026)
+
+### 1. SPEC LÀ NGUỒN - phản hồi QA KHÔNG phải căn cứ đổi nghiệp vụ
+
+Bài học đắt nhất của feature này. QA báo "N = M không hiện cảnh báo" **3 lần** (18/09, 28/09,
+30/09). Hai lần đầu trả lời đúng spec; lần thứ ba đã bỏ điều kiện `N > M` theo QA, rồi **phải
+phục hồi ngay trong ngày** khi đọc lại spec:
+
+> "Xử lý ngoại lệ (Logic Rule): Nếu N <= M ... Hệ thống tự động bỏ qua bước gửi thông báo cảnh
+> báo này **để tránh xung đột mốc thời gian**." (mô tả Redmine #11377)
+
+Spec quy định ngoại lệ này **có nêu lý do**, không phải sót. Và QA test theo bộ `testcase.xlsx`
+- tài liệu do chính bên phát triển viết lại từ code - nên phản hồi của QA không thể dùng làm căn
+cứ đổi nghiệp vụ. Muốn đổi nghiệp vụ phải qua người viết yêu cầu.
+
+Điều kiện `N > M` nằm ở **2 nơi, phải luôn giống nhau**:
+`CustomerDemandService::attachDueDate()` (màn danh sách) và
+`CloseExpiredCustomerDemandsCommand::warningDays()` (cron). Sửa một bên là giao diện báo một
+đàng, thông báo gửi một nẻo.
+
+**Vấn đề còn tồn tại, chưa xử lý:** M mặc định = 3 mà rất nhiều lĩnh vực cũng đặt N = 3, nên
+cấu hình mặc định không bao giờ sinh cảnh báo và không có gì trên giao diện cho người quản trị
+biết. Đề xuất **validate chặn lưu khi N <= M** ở form cấu hình - thực thi đúng ý spec ngay tại
+chỗ nhập thay vì để mất cảnh báo trong im lặng. Đây là **rule mới ngoài spec**, chờ người viết
+yêu cầu đồng ý.
+
+### 2. Hạn nhu cầu theo N CHỤP LÚC TẠO - lệch spec, khách đã chốt lại
+
+Spec không nói gì về việc N thay đổi; đọc theo nghĩa chữ thì hạn tính tại chỗ theo N hiện tại
+của lĩnh vực (thiết kế ban đầu). Khách chốt lại theo hướng chụp snapshot, đúng TC 004 của QA:
+đổi N thì **nhu cầu đã có giữ nguyên hạn**, chỉ nhu cầu tạo sau mới theo N mới.
+
+Cột `meeting_investment_demands.due_days_snapshot`, một cửa duy nhất là
+`MeetingInvestmentDemand::effectiveDueDays()`. `NULL` = bản ghi cũ chưa backfill, rơi về N hiện
+tại; **phân biệt với snapshot = 0** (cố ý không đặt thời hạn) nên cột phải nullable.
+
+**Đánh đổi:** không còn gia hạn được nhu cầu đang chạy bằng cách sửa N. Cần gia hạn thì phải làm
+chức năng riêng - chưa có trong spec.
+
+### 3. Người nhận cảnh báo - gửi đủ 3 vai
+
+Spec ghi "Nhân sự phụ trách Nhu cầu / Người tạo cuộc họp" nhưng cron chỉ gửi cho người chủ trì
+cuộc họp, bỏ hẳn người phụ trách nhu cầu. Nay gửi cho cả 3, loại trùng:
+`currentOwnerId()` (phụ trách nhu cầu, đã tính cả trường hợp bàn giao #11386) ·
+`meeting.created_by` · `meeting.host_employee_id`. Gửi thêm người chủ trì vì cuộc họp có thể do
+người khác tạo hộ (user chốt).

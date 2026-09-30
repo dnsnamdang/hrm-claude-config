@@ -39,7 +39,7 @@ DESCRIPTION_BLOCK = [
      "nhu cầu' (ngày), dùng chung, mặc định 3.\n"
      "- Nhu cầu khách hàng (và thẻ 'Nhu cầu của khách hàng' ở màn Công việc của tôi): cột 'Thời gian hết hạn "
      "nhu cầu' + nút Tạo Dự án TKT.\n"
-     "Công thức: T = thời điểm cuộc họp phát sinh nhu cầu chuyển sang Hoàn thành · cảnh báo tại T + N − M "
+     "Công thức: T = thời điểm cuộc họp phát sinh nhu cầu chuyển sang Hoàn thành · cảnh báo tại T + N - M "
      "(chỉ khi N > M) · tự đóng tại T + N."),
 
     ("2. Đối tượng được tính / hiển thị",
@@ -52,12 +52,12 @@ DESCRIPTION_BLOCK = [
      "vùng cảnh báo M ngày."),
 
     ("3. Đối tượng bị ẩn / không tính",
-     "Không bao giờ tự cảnh báo và không bao giờ tự đóng (cột hạn ghi 'Không thời hạn'):\n"
+     "Không bao giờ tự cảnh báo và không bao giờ tự đóng (cột hạn ghi 'Không giới hạn thời gian hiệu lực'):\n"
      "- Nhu cầu của lĩnh vực đang để N = 0 (đây là giá trị mặc định sau khi bổ sung trường này);\n"
      "- Nhu cầu mà cuộc họp chưa Hoàn thành (chưa có mốc T);\n"
      "- Nhu cầu đã lập Dự án TKT;\n"
      "- Nhu cầu đã ở trạng thái Đóng (do người dùng đóng tay hoặc hệ thống đã đóng trước đó).\n"
-     "Riêng luồng CẢNH BÁO còn bị bỏ qua khi N ≤ M, hoặc khi M = 0, hoặc khi nhu cầu đó đã được cảnh báo một lần "
+     "Riêng luồng CẢNH BÁO còn bị bỏ qua khi N <= M, hoặc khi M = 0, hoặc khi nhu cầu đó đã được cảnh báo một lần "
      "rồi (không nhắc lại mỗi ngày)."),
 
     ("4. Bộ lọc thời gian áp dụng cho",
@@ -69,11 +69,12 @@ DESCRIPTION_BLOCK = [
      "- Việc quét chạy tự động mỗi ngày một lần lúc 01:20 (giờ Việt Nam)."),
 
     ("5. Cấu trúc dữ liệu / cây phân cấp",
-     "Cuộc họp (có khảo sát nhu cầu) → nhiều Nhu cầu khách hàng → mỗi nhu cầu thuộc 1 Lĩnh vực Công ty kinh doanh "
-     "và 1 Nhóm ngành → nhu cầu có thể được chuyển thành 1 Dự án TKT.\n"
+     "Cuộc họp (có khảo sát nhu cầu) -> nhiều Nhu cầu khách hàng -> mỗi nhu cầu thuộc 1 Lĩnh vực Công ty kinh doanh "
+     "và 1 Nhóm ngành -> nhu cầu có thể được chuyển thành 1 Dự án TKT.\n"
      "N nằm ở bản ghi Lĩnh vực; M nằm ở Cấu hình chung theo công ty (công ty chưa khai thì hiểu là 3).\n"
-     "Ngày hết hạn KHÔNG được lưu sẵn mà tính lại mỗi lần đọc: sửa N ở danh mục là hạn của mọi nhu cầu thuộc lĩnh "
-     "vực đó đổi theo ngay."),
+     "Ngày hết hạn tính theo N ĐƯỢC CHỤP LẠI LÚC TẠO nhu cầu, không phải N hiện tại của lĩnh vực: sửa N ở danh "
+     "mục thì nhu cầu đã có GIỮ NGUYÊN hạn cũ, chỉ nhu cầu tạo sau mới theo N mới. Vì vậy KHÔNG gia hạn được "
+     "nhu cầu đang chạy bằng cách sửa N."),
 
     ("6. Quy tắc cộng dồn / deduplicate",
      "- Mỗi nhu cầu chỉ được cảnh báo MỘT lần: hệ thống ghi nhớ đã cảnh báo, những ngày sau không nhắc lại nữa.\n"
@@ -102,12 +103,12 @@ DESCRIPTION_BLOCK = [
      "Bẫy dễ sai nhất của đợt này:\n"
      "- N = 0 nghĩa là KHÔNG đặt thời hạn, không phải 'hết hạn ngay'. Mặc định sau khi lên bản mới, mọi lĩnh vực "
      "đều là 0, tức chưa nhu cầu nào bị đóng cho tới khi người quản trị khai N.\n"
-     "- N ≤ M thì KHÔNG có bước cảnh báo, nhu cầu vẫn bị đóng đúng hạn. Đừng báo lỗi 'thiếu thông báo'.\n"
+     "- N <= M thì KHÔNG có bước cảnh báo, nhu cầu vẫn bị đóng đúng hạn. Đừng báo lỗi 'thiếu thông báo'.\n"
      "- Nhu cầu quá hạn vẫn nằm trong danh sách cho tới lần quét kế tiếp (01:20 hôm sau) mới chuyển sang Đóng — "
      "trong khoảng đó cột hạn hiện '(quá hạn X ngày)' là đúng.\n"
      "- Ngày đóng là ngày HẾT HẠN chứ không phải ngày chạy quét.\n"
      "- Sửa N ở danh mục làm hạn của mọi nhu cầu thuộc lĩnh vực đó đổi ngay, kể cả nhu cầu cũ.\n"
-     "- ⚠️ Yêu cầu gốc viết badge là 'Đã đóng', hệ thống đang hiển thị 'Đóng' (nhãn có sẵn của màn nhu cầu). "
+     "- LƯU Ý: Yêu cầu gốc viết badge là 'Đã đóng', hệ thống đang hiển thị 'Đóng' (nhãn có sẵn của màn nhu cầu). "
      "Ghi nhận là điểm cần chốt lại với người viết yêu cầu, không tự sửa.\n"
      "- Nút Tạo Dự án TKT với nhu cầu đã đóng bị ẩn hẳn (quy ước dự án: không hiện nút mờ), khác với câu chữ "
      "'làm mờ kèm tooltip' trong yêu cầu gốc."),
@@ -133,7 +134,7 @@ ROLE_TCS = [
      "Tài khoản B chỉ có quyền xem danh mục. Lĩnh vực LVCTKD.0001 đang để N = 0.",
      "1. Dùng công cụ kiểm thử gọi thẳng chức năng Sửa lĩnh vực với số ngày hiệu lực = 30\n2. Mở lại màn danh mục",
      "Thời gian hiệu lực nhu cầu: 30",
-     "- Hệ thống từ chối vì không có quyền\n- Cột 'Thời gian hiệu lực (ngày)' vẫn là 'Không thời hạn'"),
+     "- Hệ thống từ chối vì không có quyền\n- Cột 'Thời gian hiệu lực (ngày)' vẫn là 'Không giới hạn thời gian hiệu lực'"),
 
     ("03", "Người có quyền cấu hình khai được M", "P0",
      "Tài khoản C có quyền \"%s\"." % P_SETTING,
@@ -176,8 +177,8 @@ S1 = [
      "1. Vào Danh mục › Lĩnh vực Công ty kinh doanh\n2. Quan sát bảng",
      "—",
      "- Có cột 'Thời gian hiệu lực (ngày)' nằm ngay sau cột Tên, căn phải\n"
-     "- Dòng LVCTKD.0001 hiện số 30\n- Dòng LVCTKD.KHAC hiện chữ 'Không thời hạn' màu xám\n"
-     "- ⚠️ Không để số 0 trơ ra"),
+     "- Dòng LVCTKD.0001 hiện số 30\n- Dòng LVCTKD.KHAC hiện chữ 'Không giới hạn thời gian hiệu lực' màu xám\n"
+     "- LƯU Ý: Không để số 0 trơ ra"),
 
     (2, "Ô N trong cửa sổ Tạo mới", "P0",
      "Tài khoản có quyền quản lý danh mục.",
@@ -196,23 +197,24 @@ S1 = [
 
     (4, "Sửa N của lĩnh vực đang có nhu cầu", "P0",
      "Lĩnh vực LVCTKD.0001 đang N = 30, có 5 nhu cầu đang theo dõi thuộc lĩnh vực này.",
-     "1. Bấm Sửa dòng LVCTKD.0001\n2. Đổi N thành 60\n3. Bấm Lưu\n4. Sang màn Nhu cầu khách hàng, xem 5 nhu cầu đó",
-     "Thời gian hiệu lực nhu cầu: 30 → 60",
-     "- Lưu thành công\n- ⚠️ Hạn của cả 5 nhu cầu tự lùi thêm 30 ngày ngay lập tức (hạn được tính lại, không lưu "
-     "cứng theo giá trị cũ)"),
+     "1. Bấm Sửa dòng LVCTKD.0001\n2. Đổi N thành 60\n3. Bấm Lưu\n4. Sang màn Nhu cầu khách hàng, xem 5 nhu "
+     "cầu cũ\n5. Tạo 1 nhu cầu mới thuộc lĩnh vực này rồi xem hạn của nó",
+     "Thời gian hiệu lực nhu cầu: 30 -> 60",
+     "- Lưu thành công\n- LƯU Ý: Hạn của cả 5 nhu cầu cũ GIỮ NGUYÊN, không lùi ngày nào (N được chụp lại lúc tạo "
+     "nhu cầu)\n- Riêng nhu cầu tạo MỚI ở bước 5 mới tính theo N = 60"),
 
     (5, "Đặt N về 0 thì nhu cầu hết hạn treo", "P0",
      "Lĩnh vực LVCTKD.0001 đang N = 30, có nhu cầu #101 hết hạn ngày 20/09/2026.",
      "1. Sửa LVCTKD.0001, đặt N = 0, bấm Lưu\n2. Sang màn Nhu cầu khách hàng xem nhu cầu #101",
      "Thời gian hiệu lực nhu cầu: 0",
-     "- Cột hạn của nhu cầu #101 chuyển thành 'Không thời hạn'\n- Nhu cầu không còn bị quét đóng nữa"),
+     "- Cột hạn của nhu cầu #101 chuyển thành 'Không giới hạn thời gian hiệu lực'\n- Nhu cầu không còn bị quét đóng nữa"),
 
     (6, "Ô N để trống báo lỗi bắt buộc", "P0",
      "Đang mở cửa sổ Tạo mới với Mã và Tên hợp lệ.",
      "1. Xoá trắng ô Thời gian hiệu lực nhu cầu\n2. Bấm Lưu",
      "Thời gian hiệu lực nhu cầu: (trống)",
      "- Ô viền đỏ kèm dòng chữ 'Bắt buộc phải nhập' ngay dưới ô\n- Cửa sổ không đóng, không tạo bản ghi\n"
-     "- ⚠️ Ô để trống KHÔNG được ngầm hiểu thành 0"),
+     "- LƯU Ý: Ô để trống KHÔNG được ngầm hiểu thành 0"),
 
     (7, "Lỗi của cả 3 ô hiện cùng lúc", "P0",
      "Đang mở cửa sổ Tạo mới.",
@@ -224,7 +226,7 @@ S1 = [
      "Đang mở cửa sổ Tạo mới, Mã và Tên hợp lệ.",
      "1. Nhập -5 vào ô Thời gian hiệu lực nhu cầu\n2. Bấm Lưu",
      "Thời gian hiệu lực nhu cầu: -5",
-     "- Báo lỗi ngay dưới ô, không lưu\n- ⚠️ Hệ thống không được tự đổi thành 0 hay 5"),
+     "- Báo lỗi ngay dưới ô, không lưu\n- LƯU Ý: Hệ thống không được tự đổi thành 0 hay 5"),
 
     (9, "N là số lẻ", "P1",
      "Đang mở cửa sổ Tạo mới, Mã và Tên hợp lệ.",
@@ -303,13 +305,13 @@ S2 = [
      "Đang mở màn Cấu hình chung.",
      "1. Nhập -2 vào ô Cảnh báo trước khi đóng nhu cầu\n2. Bấm lưu\n3. Tải lại trang",
      "Cảnh báo trước khi đóng nhu cầu: -2",
-     "- Hệ thống không nhận số âm: ô báo lỗi, hoặc sau khi lưu giá trị về 0\n- ⚠️ Không được lưu ra số âm rồi dùng "
+     "- Hệ thống không nhận số âm: ô báo lỗi, hoặc sau khi lưu giá trị về 0\n- LƯU Ý: Không được lưu ra số âm rồi dùng "
      "để tính mốc cảnh báo"),
 
     (6, "M ghi vào lịch sử cấu hình hạn", "P0",
      "M đang là 3.",
      "1. Đổi M thành 7 và lưu\n2. Mở popup Lịch sử cấu hình hạn",
-     "Cảnh báo trước khi đóng nhu cầu: 3 → 7",
+     "Cảnh báo trước khi đóng nhu cầu: 3 -> 7",
      "- Popup có dòng 'Cảnh báo trước khi đóng nhu cầu (ngày)' với giá trị cũ 3 và giá trị mới 7\n"
      "- Có tên người sửa và thời điểm sửa"),
 
@@ -332,14 +334,14 @@ S3 = [
      "1. Mở cuộc họp M-01, chuyển trạng thái sang Hoàn thành\n2. Sang màn Nhu cầu khách hàng, tìm nhu cầu của cuộc "
      "họp này\n3. Xem cột Thời gian hết hạn nhu cầu",
      "—",
-     "- Trước bước 1, cột hạn ghi 'Không thời hạn'\n- Sau bước 1, cột hạn hiện đúng ngày = ngày hoàn thành + 30 ngày"),
+     "- Trước bước 1, cột hạn ghi 'Không giới hạn thời gian hiệu lực'\n- Sau bước 1, cột hạn hiện đúng ngày = ngày hoàn thành + 30 ngày"),
 
     (2, "Sửa lại biên bản sau khi Hoàn thành không đẩy lùi hạn", "P0",
      "Cuộc họp M-01 Hoàn thành ngày 01/09/2026, nhu cầu hết hạn 01/10/2026 (N = 30).",
      "1. Mở lại cuộc họp M-01, sửa nội dung biên bản rồi lưu (vẫn trạng thái Hoàn thành)\n2. Xem lại cột hạn của "
      "nhu cầu",
      "—",
-     "- Hạn vẫn là 01/10/2026\n- ⚠️ Không được nhảy thành ngày sửa + 30"),
+     "- Hạn vẫn là 01/10/2026\n- LƯU Ý: Không được nhảy thành ngày sửa + 30"),
 
     (3, "Cuộc họp bị chuyển khỏi Hoàn thành rồi Hoàn thành lại", "P1",
      "Cuộc họp M-01 đã Hoàn thành ngày 01/09/2026.",
@@ -352,13 +354,13 @@ S3 = [
      "1. Đặt N = 30 cho lĩnh vực của nhu cầu thuộc M-99\n2. Mở màn Nhu cầu khách hàng, xem nhu cầu của M-99",
      "—",
      "- Hạn hiện 19/09/2026 (tính từ ngày kết thúc cuộc họp + 30 ngày)\n"
-     "- ⚠️ Không lấy ngày sửa gần nhất của biên bản làm mốc"),
+     "- LƯU Ý: Không lấy ngày sửa gần nhất của biên bản làm mốc"),
 
     (5, "Cuộc họp chưa Hoàn thành thì không có hạn", "P0",
      "Cuộc họp M-02 đang ở trạng thái Đang diễn ra, nhu cầu thuộc lĩnh vực có N = 30.",
      "1. Mở màn Nhu cầu khách hàng, tìm nhu cầu của M-02",
      "—",
-     "- Cột hạn ghi 'Không thời hạn'\n- Nhu cầu không bao giờ bị hệ thống tự đóng khi cuộc họp chưa Hoàn thành"),
+     "- Cột hạn ghi 'Không giới hạn thời gian hiệu lực'\n- Nhu cầu không bao giờ bị hệ thống tự đóng khi cuộc họp chưa Hoàn thành"),
 ]
 
 S4 = [
@@ -367,7 +369,7 @@ S4 = [
      "1. Vào Nhu cầu khách hàng\n2. Quan sát dòng tiêu đề bảng",
      "—",
      "- Có cột 'Thời gian hết hạn nhu cầu', nằm sau cột 'Thời gian khánh thành dự án'\n"
-     "- ⚠️ Không nhầm với cột 'Thời gian khánh thành dự án' (hai cột khác nhau)"),
+     "- LƯU Ý: Không nhầm với cột 'Thời gian khánh thành dự án' (hai cột khác nhau)"),
 
     (2, "Nhu cầu còn xa hạn hiện ngày bình thường", "P0",
      "Nhu cầu #101 hết hạn 30/10/2026, hôm nay 15/09/2026, M = 3.",
@@ -380,7 +382,7 @@ S4 = [
      "1. Xem dòng #102, cột Thời gian hết hạn nhu cầu",
      "—",
      "- Hiện '17/09/2026 (còn 2 ngày)' màu CAM, đậm, có biểu tượng chuông báo\n"
-     "- ⚠️ Màu cam chứ không phải đỏ (đỏ chỉ dành cho lỗi nhập liệu)"),
+     "- LƯU Ý: Màu cam chứ không phải đỏ (đỏ chỉ dành cho lỗi nhập liệu)"),
 
     (4, "Đúng ngày hết hạn ghi 'hết hạn hôm nay'", "P0",
      "M = 3. Nhu cầu #103 hết hạn đúng hôm nay.",
@@ -393,25 +395,25 @@ S4 = [
      "1. Xem dòng #104",
      "—",
      "- Hiện '12/09/2026 (quá hạn 3 ngày)' tô cam\n"
-     "- ⚠️ TUYỆT ĐỐI không được hiện '(còn -3 ngày)'"),
+     "- LƯU Ý: TUYỆT ĐỐI không được hiện '(còn -3 ngày)'"),
 
     (6, "Nhu cầu không có hạn", "P0",
      "Nhu cầu #105 thuộc lĩnh vực đang để N = 0.",
      "1. Xem dòng #105",
      "—",
-     "- Cột hạn ghi 'Không thời hạn' màu xám nhạt"),
+     "- Cột hạn ghi 'Không giới hạn thời gian hiệu lực' màu xám nhạt"),
 
     (7, "Nhu cầu đã lập Dự án TKT không còn hạn", "P0",
      "Nhu cầu #106 đã gắn Dự án TKT, lĩnh vực có N = 30.",
      "1. Xem dòng #106",
      "—",
-     "- Cột hạn ghi 'Không thời hạn'\n- Cột Trạng thái là 'Đã lập dự án TKT'"),
+     "- Cột hạn ghi 'Không giới hạn thời gian hiệu lực'\n- Cột Trạng thái là 'Đã lập dự án TKT'"),
 
     (8, "Nhu cầu đã đóng không còn hạn", "P1",
      "Nhu cầu #107 đang ở trạng thái Đóng.",
      "1. Xem dòng #107",
      "—",
-     "- Cột hạn ghi 'Không thời hạn'\n- Badge trạng thái hiện 'Đóng' màu xám"),
+     "- Cột hạn ghi 'Không giới hạn thời gian hiệu lực'\n- Badge trạng thái hiện 'Đóng' màu xám"),
 
     (9, "Cột hạn hiện cả ở thẻ Nhu cầu của khách hàng trong Công việc của tôi", "P1",
      "Tài khoản đang phụ trách ít nhất 1 nhu cầu sắp hết hạn.",
@@ -433,8 +435,8 @@ S4 = [
 ]
 
 S5 = [
-    (1, "Cảnh báo đúng mốc T + N − M", "P0",
-     "M = 3, lĩnh vực N = 30. Cuộc họp Hoàn thành 16/08/2026 → nhu cầu #201 hết hạn 15/09/2026. Hôm nay 12/09/2026. "
+    (1, "Cảnh báo đúng mốc T + N - M", "P0",
+     "M = 3, lĩnh vực N = 30. Cuộc họp Hoàn thành 16/08/2026 -> nhu cầu #201 hết hạn 15/09/2026. Hôm nay 12/09/2026. "
      "Nhu cầu chưa từng được cảnh báo, chưa lập dự án.",
      "1. Nhờ kỹ thuật chạy lệnh quét hạn nhu cầu (assign:close-expired-customer-demands)\n2. Đọc kết quả in ra\n"
      "3. Đăng nhập tài khoản chủ trì cuộc họp, mở chuông thông báo",
@@ -455,11 +457,11 @@ S5 = [
      "—",
      "- Không có dòng cảnh báo lặp lại cho #201\n- Người chủ trì không nhận thêm thông báo thứ hai"),
 
-    (4, "N ≤ M thì bỏ qua cảnh báo", "P0",
-     "M = 3, lĩnh vực đặt N = 2. Cuộc họp Hoàn thành hôm qua → nhu cầu #202 hết hạn ngày mai.",
+    (4, "N <= M thì bỏ qua cảnh báo", "P0",
+     "M = 3, lĩnh vực đặt N = 2. Cuộc họp Hoàn thành hôm qua -> nhu cầu #202 hết hạn ngày mai.",
      "1. Chạy lệnh quét hạn nhu cầu\n2. Đọc kết quả",
      "Thời gian hiệu lực nhu cầu: 2 · Cảnh báo trước khi đóng: 3",
-     "- Không có dòng cảnh báo cho #202\n- ⚠️ Đây là đúng yêu cầu (thời gian hiệu lực ngắn hơn thời gian cảnh báo "
+     "- Không có dòng cảnh báo cho #202\n- LƯU Ý: Đây là đúng yêu cầu (thời gian hiệu lực ngắn hơn thời gian cảnh báo "
      "thì bỏ cảnh báo), không phải lỗi thiếu thông báo\n- Nhu cầu vẫn sẽ bị đóng đúng ngày hết hạn"),
 
     (5, "N bằng đúng M", "P1",
@@ -468,12 +470,14 @@ S5 = [
      "Thời gian hiệu lực: 3 · Cảnh báo trước: 3",
      "- Không cảnh báo (điều kiện là thời gian hiệu lực phải LỚN HƠN thời gian cảnh báo)"),
 
-    (6, "Người nhận cảnh báo là người chủ trì cuộc họp", "P0",
-     "Cuộc họp M-01 do Nguyễn Thị Cần chủ trì, do Trần Văn B tạo. Nhu cầu #201 vào vùng cảnh báo.",
-     "1. Chạy lệnh quét hạn nhu cầu\n2. Kiểm tra chuông thông báo của cả 2 tài khoản",
+    (6, "Người nhận cảnh báo gồm cả 3 vai", "P0",
+     "Cuộc họp M-01 do Nguyễn Thị Cần chủ trì, do Trần Văn B tạo hộ. Nhu cầu #201 đã bàn giao cho Lê Thị C phụ "
+     "trách, đang trong vùng cảnh báo.",
+     "1. Chạy lệnh quét hạn nhu cầu\n2. Kiểm tra chuông thông báo của cả 3 tài khoản",
      "—",
-     "- Nguyễn Thị Cần nhận thông báo\n- Trần Văn B không nhận (chỉ nhận khi cuộc họp không xác định được người "
-     "chủ trì)"),
+     "- CẢ 3 đều nhận thông báo: Lê Thị C (nhân sự phụ trách nhu cầu), Trần Văn B (người tạo cuộc họp), "
+     "Nguyễn Thị Cần (người chủ trì)\n- Mỗi người nhận ĐÚNG 1 thông báo; nếu một người giữ nhiều vai thì cũng "
+     "chỉ nhận 1, không nhận trùng\n- Nhu cầu CHƯA bàn giao lần nào thì người phụ trách hiểu là người chủ trì"),
 
     (7, "Nội dung thông báo đúng khuôn", "P1",
      "Nhu cầu #201 của khách 'Công ty ABC', nhu cầu 'Dây chuyền sơn', còn 3 ngày.",
@@ -504,17 +508,17 @@ S5 = [
 
 S6 = [
     (1, "Tự đóng đúng ngày hết hạn", "P0",
-     "M = 3, N = 30, cuộc họp Hoàn thành 16/08/2026 → nhu cầu #301 hết hạn 15/09/2026. Hôm nay 15/09/2026.",
+     "M = 3, N = 30, cuộc họp Hoàn thành 16/08/2026 -> nhu cầu #301 hết hạn 15/09/2026. Hôm nay 15/09/2026.",
      "1. Chạy lệnh quét hạn nhu cầu\n2. Mở màn Nhu cầu khách hàng xem #301",
      "—",
      "- Kết quả in ra có dòng ĐÓNG cho #301 — hết hạn 15/09/2026\n"
-     "- Trạng thái #301 chuyển sang 'Đóng', badge màu xám\n- Cột hạn chuyển thành 'Không thời hạn'"),
+     "- Trạng thái #301 chuyển sang 'Đóng', badge màu xám\n- Cột hạn chuyển thành 'Không giới hạn thời gian hiệu lực'"),
 
     (2, "Ngày đóng ghi đúng ngày hết hạn dù chạy muộn", "P0",
      "Nhu cầu #302 hết hạn 10/09/2026 nhưng việc quét không chạy mấy ngày; hôm nay 15/09/2026.",
      "1. Chạy lệnh quét hạn nhu cầu\n2. Mở chi tiết / lịch sử của nhu cầu #302 xem ngày đóng",
      "—",
-     "- Nhu cầu chuyển sang Đóng\n- ⚠️ Ngày đóng ghi 10/09/2026 (ngày hết hạn thật), KHÔNG phải 15/09/2026"),
+     "- Nhu cầu chuyển sang Đóng\n- LƯU Ý: Ngày đóng ghi 10/09/2026 (ngày hết hạn thật), KHÔNG phải 15/09/2026"),
 
     (3, "Chưa tới hạn thì chưa đóng", "P0",
      "Nhu cầu #303 hết hạn 20/09/2026, hôm nay 15/09/2026.",
@@ -552,7 +556,7 @@ S6 = [
      "1. Sửa lĩnh vực đặt N = 30\n2. Chạy lệnh quét hạn nhu cầu ở chế độ liệt kê\n3. Đọc kết quả",
      "Thời gian hiệu lực nhu cầu: 30",
      "- Kết quả liệt kê toàn bộ nhu cầu cũ sẽ bị đóng, mỗi dòng kèm đúng ngày hết hạn riêng\n"
-     "- ⚠️ Kiểm kỹ trước khi chạy thật: đặt N nhỏ là đóng hàng loạt nhu cầu cũ ngay lần quét kế tiếp"),
+     "- LƯU Ý: Kiểm kỹ trước khi chạy thật: đặt N nhỏ là đóng hàng loạt nhu cầu cũ ngay lần quét kế tiếp"),
 
     (9, "Nhu cầu bị đóng vẫn xem được trong danh sách", "P1",
      "Nhu cầu #301 vừa bị hệ thống đóng.",
@@ -568,7 +572,7 @@ S7 = [
      "1. Vào màn Nhu cầu khách hàng, tìm dòng #301\n2. Quan sát cột Dự án TKT",
      "—",
      "- Ô chỉ hiện dấu '—', KHÔNG còn nút Tạo Dự án TKT\n"
-     "- ⚠️ Yêu cầu gốc ghi 'làm mờ kèm tooltip' nhưng quy ước dự án là ẩn hẳn — ghi nhận, không tính là lỗi"),
+     "- LƯU Ý: Yêu cầu gốc ghi 'làm mờ kèm tooltip' nhưng quy ước dự án là ẩn hẳn — ghi nhận, không tính là lỗi"),
 
     (2, "Nút Tạo Dự án TKT còn nguyên với nhu cầu đang theo dõi", "P0",
      "Nhu cầu #303 đang theo dõi, chưa có dự án.",
@@ -609,7 +613,7 @@ S8 = [
      "của tôi, và trong biên bản cuộc họp phát sinh nhu cầu",
      "—",
      "- Cả 3 nơi đều hiện cùng một nhãn trạng thái màu xám\n"
-     "- ⚠️ Hệ thống đang ghi 'Đóng' trong khi yêu cầu gốc ghi 'Đã đóng' — ghi nhận để chốt lại, không tự sửa"),
+     "- LƯU Ý: Hệ thống đang ghi 'Đóng' trong khi yêu cầu gốc ghi 'Đã đóng' — ghi nhận để chốt lại, không tự sửa"),
 
     (2, "Ô N chỉ nhận số nguyên không âm ở mọi đường ghi", "P0",
      "Tài khoản có quyền quản lý danh mục.",
@@ -623,7 +627,7 @@ S8 = [
      "Lĩnh vực LVCTKD.0001 đang N = 30.",
      "1. Gọi thẳng chức năng Sửa lĩnh vực, không gửi số ngày hiệu lực",
      "—",
-     "- Bị từ chối với thông báo bắt buộc phải nhập\n- ⚠️ Không được ngầm hiểu thành 0 rồi tắt hạn của cả lĩnh vực"),
+     "- Bị từ chối với thông báo bắt buộc phải nhập\n- LƯU Ý: Không được ngầm hiểu thành 0 rồi tắt hạn của cả lĩnh vực"),
 
     (4, "Lĩnh vực đang khoá không sửa được N", "P1",
      "Lĩnh vực LVCTKD.T1 đang Khoá, N = 30.",
@@ -635,28 +639,64 @@ S8 = [
      "Danh mục có lĩnh vực N = 30 và lĩnh vực N = 0.",
      "1. Bấm Xuất Excel ở màn danh mục\n2. Mở file",
      "—",
-     "- Nếu file có cột thời gian hiệu lực thì giá trị phải khớp bảng (30 và 'Không thời hạn'/0)\n"
+     "- Nếu file có cột thời gian hiệu lực thì giá trị phải khớp bảng (30 và 'Không giới hạn thời gian hiệu lực'/0)\n"
      "- Nếu file không có cột này thì ghi nhận là điểm cần bổ sung, không phải lỗi chặn"),
+
+    (6, "Bỏ trống cả Mã, Tên và N thì cả 3 ô đều báo lỗi", "P0",
+     "Đang mở form Thêm mới lĩnh vực, chưa nhập gì.",
+     "1. Bấm Lưu ngay khi form còn trống",
+     "—",
+     "- CẢ 3 ô Mã, Tên, Thời gian hiệu lực đều viền đỏ kèm text lỗi\n"
+     "- LƯU Ý: Không được chỉ mỗi ô Thời gian hiệu lực báo đỏ"),
+
+    (7, "Câu báo lỗi khi bỏ trống N và M", "P0",
+     "Form lĩnh vực và màn Cấu hình chung › Cấu hình hạn.",
+     "1. Xoá trắng ô Thời gian hiệu lực nhu cầu rồi bấm Lưu\n"
+     "2. Xoá trắng ô Cảnh báo trước khi đóng nhu cầu rồi bấm Lưu",
+     "—",
+     "- Cả 2 ô báo đúng câu: 'Bắt buộc nhập, kiểu số nguyên dương >= 0'\n"
+     "- Không báo tiếng Anh, không báo câu chung chung"),
+
+    (8, "Ô M không nhận số âm", "P0",
+     "Màn Cấu hình chung › thẻ Quản lý dự án › thẻ con Cấu hình hạn.",
+     "1. Gõ dấu trừ vào ô Cảnh báo trước khi đóng nhu cầu\n2. Thử dán giá trị -5 vào ô đó\n3. Bấm Lưu",
+     "Cảnh báo trước khi đóng nhu cầu: -5",
+     "- Bước 1: bàn phím KHÔNG gõ được dấu trừ\n- Bước 2: dán không vào\n"
+     "- LƯU Ý: Hệ thống KHÔNG được tự kéo giá trị về 0, phải báo đỏ và chặn lưu"),
+
+    (9, "Ô N và M không nhận ký tự e, E, dấu cộng", "P1",
+     "Form lĩnh vực và màn Cấu hình hạn.",
+     "1. Gõ 1e3333 vào ô Thời gian hiệu lực nhu cầu\n2. Làm tương tự với ô Cảnh báo trước khi đóng",
+     "—",
+     "- Không gõ được e, E, dấu cộng\n- Ô không bị rỗng trắng sau khi gõ, giá trị giữ đúng phần số đã nhập"),
+
+    (10, "Cột hạn hiện đủ chữ, không bị cắt", "P1",
+     "Danh mục có lĩnh vực để N = 0; màn Nhu cầu khách hàng có nhu cầu thuộc lĩnh vực đó.",
+     "1. Mở màn Danh mục › Lĩnh vực Công ty kinh doanh, xem cột Thời gian hiệu lực\n"
+     "2. Mở màn Nhu cầu khách hàng, xem cột Thời gian hết hạn nhu cầu",
+     "—",
+     "- Cả 2 màn hiện ĐỦ cụm 'Không giới hạn thời gian hiệu lực'\n"
+     "- LƯU Ý: Không bị cắt thành '...thời gian hiệu' kèm dấu ba chấm"),
 ]
 
 S9 = [
     (1, "Đổi N trong lúc nhu cầu đang chờ đóng", "P0",
-     "Nhu cầu #431 hết hạn hôm nay theo N = 30.",
+     "Nhu cầu #431 hết hạn hôm nay, N chụp lúc tạo là 30.",
      "1. Trước khi chạy quét, đổi N của lĩnh vực thành 60\n2. Chạy lệnh quét hạn nhu cầu",
-     "Thời gian hiệu lực nhu cầu: 30 → 60",
-     "- Nhu cầu #431 KHÔNG bị đóng\n- Cột hạn lùi thêm 30 ngày"),
+     "Thời gian hiệu lực nhu cầu: 30 -> 60",
+     "- LƯU Ý: Nhu cầu #431 VẪN BỊ ĐÓNG hôm nay — sửa N ở danh mục KHÔNG gia hạn được nhu cầu đang chạy\n"
+     "- Cột hạn không đổi, vẫn là hạn tính theo N = 30"),
 
-    (2, "Đổi N nhỏ hơn làm nhu cầu quá hạn ngay", "P0",
-     "Nhu cầu #432 có cuộc họp Hoàn thành cách đây 40 ngày, lĩnh vực đang N = 60.",
+    (2, "Đổi N nhỏ hơn KHÔNG làm nhu cầu quá hạn", "P0",
+     "Nhu cầu #432 có cuộc họp Hoàn thành cách đây 40 ngày, N chụp lúc tạo là 60.",
      "1. Đổi N của lĩnh vực xuống 30\n2. Xem cột hạn của #432\n3. Chạy lệnh quét hạn nhu cầu",
-     "Thời gian hiệu lực nhu cầu: 60 → 30",
-     "- Cột hạn chuyển sang '(quá hạn 10 ngày)' tô cam\n- Lần quét kế tiếp đóng nhu cầu với ngày đóng là ngày hết "
-     "hạn mới"),
+     "Thời gian hiệu lực nhu cầu: 60 -> 30",
+     "- LƯU Ý: Cột hạn KHÔNG đổi, vẫn tính theo N = 60 nên còn 20 ngày\n- Nhu cầu KHÔNG bị đóng"),
 
     (3, "Đổi M khi nhu cầu đã được cảnh báo", "P1",
      "Nhu cầu #433 đã nhận cảnh báo khi M = 3.",
      "1. Đổi M thành 10\n2. Chạy lại lệnh quét hạn nhu cầu",
-     "Cảnh báo trước khi đóng nhu cầu: 3 → 10",
+     "Cảnh báo trước khi đóng nhu cầu: 3 -> 10",
      "- Không gửi lại thông báo cho #433 (mỗi nhu cầu chỉ cảnh báo một lần)\n- Trên bảng, dòng vẫn tô cam"),
 
     (4, "Người dùng lập dự án ngay trước giờ quét", "P0",
@@ -685,7 +725,7 @@ S9 = [
 ]
 
 S10 = [
-    (1, "Luồng đầy đủ: khai N và M → cảnh báo → tự đóng → chặn lập dự án", "P0",
+    (1, "Luồng đầy đủ: khai N và M -> cảnh báo -> tự đóng -> chặn lập dự án", "P0",
      "Lĩnh vực LVCTKD.E2E đang N = 0; cuộc họp M-E2E có 1 nhu cầu, chưa Hoàn thành; M = 3.",
      "1. Khai N = 5 cho lĩnh vực LVCTKD.E2E\n2. Chuyển cuộc họp M-E2E sang Hoàn thành\n3. Xem cột hạn của nhu cầu\n"
      "4. Chỉnh dữ liệu để nhu cầu còn 3 ngày tới hạn rồi chạy lệnh quét\n5. Chỉnh tiếp để nhu cầu tới hạn rồi chạy "
@@ -700,14 +740,14 @@ S10 = [
      "1. Bấm nút Tạo Dự án TKT từ nhu cầu #501\n2. Lập dự án và lưu\n3. Quay lại màn Nhu cầu khách hàng\n"
      "4. Chạy lệnh quét hạn nhu cầu sau ngày hết hạn",
      "—",
-     "- Sau bước 2: nhu cầu chuyển 'Đã lập dự án TKT', cột hạn thành 'Không thời hạn'\n"
+     "- Sau bước 2: nhu cầu chuyển 'Đã lập dự án TKT', cột hạn thành 'Không giới hạn thời gian hiệu lực'\n"
      "- Sau bước 4: nhu cầu KHÔNG bị đóng"),
 
     (3, "Luồng lĩnh vực không đặt thời hạn", "P1",
      "Lĩnh vực LVCTKD.KHAC để N = 0, có 10 nhu cầu cũ từ nhiều tháng trước.",
      "1. Chạy lệnh quét hạn nhu cầu\n2. Xem 10 nhu cầu đó trên màn danh sách",
      "—",
-     "- Không nhu cầu nào bị đóng, không thông báo nào được gửi\n- Cả 10 dòng đều ghi 'Không thời hạn'"),
+     "- Không nhu cầu nào bị đóng, không thông báo nào được gửi\n- Cả 10 dòng đều ghi 'Không giới hạn thời gian hiệu lực'"),
 
     (4, "Luồng hai lĩnh vực hạn khác nhau trong cùng cuộc họp", "P1",
      "Cuộc họp M-E2E2 Hoàn thành 01/09/2026, phát sinh 2 nhu cầu: một thuộc lĩnh vực N = 10, một thuộc lĩnh vực "
