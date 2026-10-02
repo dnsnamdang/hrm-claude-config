@@ -68,6 +68,14 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- dong-bo-luu-va-tiep-tuc → @junfoke → .plans/gop-db/dong-bo-luu-va-tiep-tuc/plan.md
+  Trạng thái: **CODE XONG (FE), đang verify tay** (2026-09-05). Redmine #11177.
+  Mục tiêu: mọi màn Tạo mới đều có nút "Lưu và tiếp tục" — lưu xong ở lại màn, form về trắng.
+  Phạm vi: 3 popup danh mục (vụ việc, mã phí, nguồn vốn) + 26 trang Tạo mới của Tài chính & CSKH.
+  Hạ tầng mới: `utils/mixins/saveAndContinueMixin.js` (form) + `saveAndContinuePageMixin.js` (trang vỏ, remount bằng `:key`).
+  Không áp dụng: màn không có Tạo mới (Cập nhật nhanh giá dịch vụ, Danh sách hàng giữ, Danh mục serial) và màn Tạo bắt buộc đi từ yêu cầu nguồn trên URL (Phiếu xuất hàng, Nhập/Xuất kho, Phiếu giữ hàng kho).
+  Spec: docs/superpowers/specs/gop-db/2026-09-05-dong-bo-luu-va-tiep-tuc-design.md | Tóm tắt: .plans/gop-db/dong-bo-luu-va-tiep-tuc/design.md
+
 - user-profile-performance → @namdangit → .plans/gop-db/user-profile-performance/plan.md
   Trạng thái: 🟡 **Mới lên plan (22/09/2026), chưa code.** Chờ user chốt phạm vi Phase 2–3.
   Giảm tải API `user-profile` (1,45 MB · 0,5–0,7 s CPU · 37 query, chạy ở mọi lần tải trang).
@@ -1516,9 +1524,13 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 - bo-sung-menu-phan-he → @junfoke (Phase 11: @khoipv) → .plans/gop-db/bo-sung-menu-phan-he/plan.md
   Trạng thái: **CODE DONE + KIỂM THỬ TỰ ĐỘNG PASS** (Phase 0-9: 2026-08-03; Phase 11 dọn nhãn menu
-  Danh mục chung: 2026-08-12). Khai 355 mục menu trên 14 phân hệ, chỉ đụng `hrm-client`.
+  Danh mục chung: 2026-08-12; Phase 13 gán link nhóm `Yêu cầu` phân hệ Bán hàng: 2026-09-22).
+  Khai 355 mục menu trên 14 phân hệ, chỉ đụng `hrm-client`.
   ⚠️ Bug đã phát hiện, CHƯA SỬA (không thuộc feature): mục "Khách hàng" khai TRÙNG ở `master-data.js`
   và `sale.js` → `/assign/customers` luôn ra sidebar Danh mục chung.
+  ➕ **Redmine #11408 (22/09/2026)**: mục cấp 1 ĐI THẲNG ("Ngân hàng", "Ngân hàng câu hỏi khảo sát") không vào được
+  Gần đây / Yêu thích — `allScreens` của rail và màn Tổng quan chỉ dựng từ `groups`, bỏ qua `navLinks`.
+  Đã sửa + verify: `hrm-client` **4e972236c** (chưa push).
   Bước tiếp: Phase 10 — verify trình duyệt thật.
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-08-01-bo-sung-menu-phan-he-design.md | Tóm tắt: .plans/gop-db/bo-sung-menu-phan-he/design.md
 

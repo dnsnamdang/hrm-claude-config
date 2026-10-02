@@ -137,11 +137,69 @@ Vừa hoàn thành: Điều tra lib DATATABLE (partials/classes/base/Datatable.b
 Bước tiếp theo: user verify nhóm action (10851/10852) + nhóm bộ lọc (10867/10846/10853/10850); sau đó sang nhóm B (10868/10854/10855/10857).
 Blocked: không.
 
-## 10831 vòng 2 (2026-08-20) — Hãng: auto-fill + multi (CHỜ USER CHỐT)
-- [ ] 10831b — "Hãng" của KH sau chuyển giao chưa auto-fill + KH có nhiều hãng nhưng form chỉ chọn 1
-      Data: Customer.customer_vehicle_manufacts = belongsToMany (nhiều hãng, pivot CustomerHasVehicleManufact). HỢP ĐỒNG (contractable) chỉ có 1 cột vehicle_manufact_id — applyCustomerToContract ghi 1 hãng khi duyệt.
-      Form hiện: single-select list TẤT CẢ vehicleManufacts, ng-model vehicle_manufact_id, KHÔNG auto-fill khi chọn KH; getCustomerData không eager-load customer_vehicle_manufacts.
-      → CHỜ USER quyết cách xử lý multi vs contract single (xem câu hỏi). Sau khi chốt sẽ sửa getCustomerData + applyNewCustomer + form.blade (+ store/show/approve nếu chọn lưu nhiều).
+## 10831 vòng 8 (2026-09-03) — 2 phản hồi (modal Thêm KH nhanh) — XONG cả 2 nhánh
+- [x] K1. Modal #createCustomer/#searchCustomer không scroll → v1 thêm CSS max-height + overflow-y auto cho .modal-body (create/edit.blade). develop_01 `540e194ffe` (develop_01-only — task_10696 modal KH đơn giản).
+- [x] K1(v2) — vòng 9 (2026-09-03). QA re-test dev-erp: đã pull + view:clear vẫn không scroll (loại Cá nhân). Soi Playwright LIVE dev-erp (login SSO): CSS v1 deploy ĐÚNG (max-height 1040, overflow-y auto) nhưng đẻ bug mới trên MÀN CAO (~1250px): `.modal-dialog-full{height:90%}=1125` < content 1173 → body chỉ cuộn ~4px, phần dôi đẩy dialog top=-261 → đỉnh form (Khách hàng/Loại hình) chui khỏi mép trên. Màn thấp 850px (local trước) không lộ nên v1 tưởng xong. FIX v2: bỏ cap max-height, `.modal-dialog{height:calc(100vh-20px);margin:10px auto}` + `.modal-content{max-height:100%;display:flex;flex-direction:column}` + header/footer `flex-shrink:0` + body `overflow-y:auto` → body là phần cuộn duy nhất, header ghim đỉnh, footer ghim đáy. develop_01 `bc646115f9` (develop_01-only). Verify Playwright dev-erp(inject) + local(file) @700px & 1250px: dialog_top=10, header/footer luôn hiện, body cuộn hết (498px @700), dialog đứng yên. **dev-erp cần pull `bc646115f9` + view:clear.**
+- [x] K2. Tạo KH xong không lấy được CCCD/Ngày cấp/Địa chỉ. ROOT: form tạo KH gửi Ngày cấp/Sinh nhật d/m/Y ("28/08/2026") → CustomersController@store `Carbon::parse` THROW (verify tinker: "Could not parse '28/08/2026'") → store() fail (try/catch) → KH KHÔNG được tạo → không có gì load. FIX: helper parseFlexibleDate (d/m/Y ưu tiên, fallback Y-m-d, rỗng→null) thay Carbon::parse ở grant_date + date_of_birth. Backward-compatible. develop_01 `540e194ffe`, task_10696 `cf890d8dc5`. Verify: 28/08/2026→2026-08-28; 2026-08-28→2026-08-28; rỗng→null.
+      Ghi chú: (a) applyNewCustomer đã verify CHẠY ĐÚNG với KH cũ 1730 (CCCD/grant/address load đủ) → không phải lỗi mapping. (b) Địa chỉ trống ở ảnh QA do user CHƯA chọn Tỉnh/Quận/Phường (ảnh: đều "Chọn...") — không phải bug. (c) CustomersController@store là code dùng chung — fix là chống throw, tương thích ngược. (d) Divergence: git handover page local từng thiếu searchCustomerJs/render form tạo KH; đã thêm searchCustomerJs (vòng 7) — dev-erp cần sync git để repro sạch.
+
+## 10831 vòng 7 (2026-08-25) — 4 phản hồi — XONG J1/J3/J4 cả 2 nhánh; J2 chờ deploy
+- [x] J1 + J4-tỉnh (dropdown Tỉnh/TP rỗng ở popup KH: bộ lọc + form tạo KH nhanh) — 2 nguyên nhân:
+      (a) I3 khai `$scope.provinces=[mảng phẳng]` TRÙNG biến `provinces[nation_id]` của modal chung → đổi tên `contactProvinces`. develop_01 `b9a8c05d7d`, task_10696 `5a733a4b2a`.
+      (b) create/edit.blade develop_01 THIẾU include `searchCustomerJs` → submitSearchCustomer/addCustomers/getProvinces/createCustomer không tồn tại → getProvinces không chạy. FIX: thêm include + openSearchCustomer gọi addCustomers() chung. develop_01 `bdd989cf46` (develop_01-only; task_10696 dùng modal KH riêng đơn giản, không có filter tỉnh). Verify :8001: getProvinces nạp 34 tỉnh, dropdown = 35 option. #createCustomer modal nằm trong searchCustomer.blade nên form tạo KH nhanh cũng có getProvinces.
+- [x] J3 (Sinh nhật báo "Không hợp lệ" chặn tạo liên hệ): `<input type=date>` AngularJS bind Date object → jQuery serialize chuỗi locale → Laravel `date` fail. FIX toYmd() format Date→'YYYY-MM-DD'. develop_01 `ac8b9ecba4`, task_10696 `e13b61b4c0`.
+- [x] J4-sort (sort cột bảng KH không chạy): orderBy('id','desc') hardcode đè request sort → CHỈ default khi request KHÔNG có order (chưa bấm cột); có order → Yajra sắp theo cột. Cùng commit J3.
+- [x] J2 (File KH cũ vẫn "Chưa có tệp" dù đã deploy) — XONG. ROOT: đọc SAI cột. Class JS FirmContract getter `documents` (nguồn hiển thị file màn HĐ) = `this.attachments.split(', ')` → file ở cột **`firm_contracts.attachments`**, KHÔNG phải valid_approve_document (vòng 5 đọc sai). Fix parseContractFiles gộp attachments + add_addition_attachments + valid_approve_document. Verify tinker HĐ 6: snapshot files = [S3 url từ attachments]. develop_01 `c8d2be857a`, task_10696 `c9a214ec3f`.
+      ⚠️ Divergence: create.blade develop_01 LOCAL không include searchCustomerJs (chỉ modal HTML + Customer class), nhưng dev-erp CÓ (QA thấy modal chạy) → local sau bản deploy. J1/J4-tỉnh sửa theo logic (rename biến) đúng dù local không repro đủ.
+
+## 10831 vòng 6 (2026-08-25) — popup Tìm kiếm KH: sort + tab Cá nhân (làm RIÊNG) — XONG cả 2 nhánh
+- [x] Popup Tìm kiếm KH 2 lỗi: (1) không sort KH mới nhất; (2) tab Cá nhân phải nhập SĐT mới hiện.
+      Backend chung `Common\SearchController@searchCustomer` dùng 12 màn → LÀM RIÊNG, không đụng chung.
+      **develop_01** (dùng modal CHUNG): endpoint riêng `customerHandover.searchCustomerList` (copy logic + orderBy id desc + cá nhân không bắt SĐT) + openSearchCustomer override `ajax.url` của 2 DataTable (#search-customer-table[-personal]) sang endpoint riêng (giữ modal/JS/luồng tạo KH chung). Commit `1d861ecc57`.
+      **task_10696** (đã có picker RIÊNG sẵn = endpoint `customerHandover.searchCustomer`): sửa THẲNG method đó — bỏ where('id',-1) khi cá nhân rỗng SĐT + orderBy id desc. Commit `b1a8be3c00`. (không cần searchCustomerList/override)
+      Verify :8001 cả 2: Tổ chức sort id desc (38311→); Cá nhân không SĐT ra 27132 bản ghi.
+
+## 10831 vòng 5 (2026-08-25) — 3 fix tiếp — XONG cả 2 nhánh
+- [x] File KH-trước rỗng dù HĐ có file: đọc SAI cột. form.documents = valid_approve_document (không phải add_addition_attachments). Fix snapshot GỘP cả 2 cột (helper parseContractFiles). develop_01 `39dd952c09`, task_10696 `64ba21e2e0`. ⚠️ Local không có file để verify → cần check dev-erp.
+- [x] Đè chữ "Chưa có tệp": field File (form sectioned develop_01) dùng div trong custom-group (label nổi absolute) → cho container class form-control + min-height. develop_01 `39dd952c09`. (task_10696 File ở cell bảng, không đè.)
+- [x] Form Thêm mới liên hệ quá ít field: bổ sung Họ tên/Chức vụ/Sinh nhật/Email/CCCD + SĐT nhiều số (+/-) + TK cá nhân; submitNewContact gửi đủ; thêm $scope.provinces. develop_01 `39dd952c09`, task_10696 `64ba21e2e0`.
+- [x] Form Thêm mới "nhỏ chi chít" (user muốn giống form chung): USER chốt giữ modal riêng, bố cục lại. Sắp xếp đúng layout form liên hệ chung: Họ tên(*)/CMT · Email/Chức vụ(*)/Sinh nhật · SĐT(*) nhiều số · Số TK cá nhân/Chủ TK/Ngân hàng · Tỉnh-TP(select)/Chi nhánh. Đổi TK bảng nhiều dòng → 1 TK phẳng (submitNewContact build accounts khi có số TK). develop_01 `f1a3357a6d`, task_10696 `4b7bccb53e`. Verify: 11 field đúng thứ tự, field rộng 353px (col-6). LƯU Ý: KHÔNG dùng lại modal chung searchContact vì backend chung customerSearchContact validate phone required (gốc 10838) — sửa backend chung = đụng nhiều màn, user chọn không đụng.
+
+## 10831 vòng 4 (2026-08-25) — 3 phản hồi tiếp — XONG develop_01 (chờ port task_10696)
+- [x] I1 (=H). KH TRƯỚC thêm File đính kèm — commit `aa612c3979`. Snapshot 'files' từ `firm_contracts.add_addition_attachments` (split ", "); before-panel ① thêm mục File đính kèm link (helper getFileName), rỗng="Chưa có tệp". WrService không có cột file → []. Verify HĐ 21 (files=[], getFileName OK).
+- [x] I2. KH TRƯỚC Tỉnh/TP tài khoản NH — commit `aa612c3979`. Snapshot account thêm bank_province_name (Province::find từ bank_province_id), cả FirmContract + WrServiceContract. Verify HĐ 21: "Tỉnh Bắc Ninh".
+- [x] I3. Popup liên hệ + Thêm mới + cột — commit `f4fcc621b0`. searchContactModal: thanh Tìm (textbox+nút) + nút Thêm mới + form thêm inline (Tên/SĐT/Chức vụ); bảng STT/Tên/SĐT/Chức vụ/Thao tác. formJs: loadContacts/searchContactSubmit (server-side)/toggleAddContact/submitNewContact (POST customerAddContact → reload + tự chọn). Verify KH 100: cột đúng (Chức vụ=Thủ Kho), Tìm "Thăng"→1, form Thêm mới hiện.
+  → ĐÃ PORT task_10696 (commit `13c4bbaa2a`): I1/I2 backend snapshot; I1 before-panel table thêm dòng File đính kèm; I2 dòng TK thêm chi nhánh + Tỉnh/TP; I3 modal (copy) + formJs functions. Verify :8001 HĐ 21/KH 100 OK. (F sectioned-specific — không áp form 2 cột task_10696; G task_10696 hiện sẵn 2 dòng MST+CMND.)
+
+## 10831 vòng 3 (2026-08-25) — QA phản hồi 8 điểm (Nguyễn Minh Hằng) trên dev-erp
+> ⚠️ dev-erp đang chạy develop_01 CŨ (ảnh QA: "tối đa 10 MB" + "Hãng: Chọn hãng" select) → nhiều điểm ĐÃ fix trong develop_01 chưa deploy. Cần deploy develop_01 mới trước, rồi re-test.
+> Test data QA: KH "etek green"/"vesta"/"Toyota Hà Đông"; HĐ HĐDA_TPE_HN_NSHC_26_0006_123 và _0007_123456765432; KH HRM 38336.
+
+- [x] A. Địa chỉ giao hàng KH TRƯỚC không hiện — XONG develop_01 (commit `422ed159f8`). Là panel KH-trước (snapshot). Accessor FirmContract::delivery_place lấy từ firm_quotation/parent → rỗng với HĐ từ báo giá HRM. Snapshot fallback customer_address (khớp màn chi tiết HĐ). (chờ port task_10696)
+- [x] B. TK ngân hàng "ngân hàng null chi nhánh hoàn kiếm" — XONG develop_01 (commit `0b282a4514`). CustomerHasBankAccount thêm relation bank()+branch(); getCustomerData eager-load; helper accountBankName/accountBranchName ưu tiên relation fallback cột string; onAccountChange + accountOptionLabel dùng helper. Verify KH 360. (chờ port task_10696)
+- [ ] C. Popup Tìm kiếm liên hệ chưa đúng: cần show sẵn data người đó tạo / đã phát sinh báo giá (logic cũ phải nhập SĐT). ĐÃ fix ở 10838 (develop_01 chưa deploy) → verify sau deploy; bổ sung nếu thiếu.
+- [ ] D. KH cá nhân: show sẵn data người tạo/đã phát sinh báo giá (không cần tìm SĐT). Liên quan 10836/10838 → verify sau deploy.
+- [ ] E. Địa chỉ ngân hàng KH chỉ đúng STK, còn lại sai (= B). Dùng HĐ _0006_123. (NEW — gộp với B)
+- [x] F. KH cá nhân chỉ 2 mục — XONG develop_01 (commit `61bb97718a`). Panel KH-sau ẩn section ③ Liên hệ khi isIndividualNew. Verify DN=3 mục/CN=2 mục. (chờ port task_10696)
+- [x] G. Mất CMND KH vesta — XONG develop_01 (commit `61bb97718a`). Là panel KH-TRƯỚC (snapshot). FirmContract snapshot customer_tax_code=null → DN bind rỗng. Fix: DN fallback customer_tax_code||customer_identity. (chờ port task_10696)
+- [ ] H. KH TRƯỚC: thiếu file đính kèm. User làm rõ: là file ở mục "File đính kèm" trong "Thông tin Báo giá - KH" của chi tiết HĐ. Nguồn = cột `firm_contracts.add_addition_attachments` (chuỗi path S3 nối ", ", parse thành mảng URL, href trực tiếp). CHƯA làm: (1) snapshot thêm 'files' => explode(', ', add_addition_attachments); (2) before-panel thêm mục File đính kèm hiện link. ⚠️ Local không có data để verify; WrServiceContract chưa rõ cột file. CHỜ: xác nhận + verify trên dev-erp.
+      ⚠️ DIVERGENCE: panel KH-trước bản deploy dev-erp CÓ sẵn field "File đính kèm: Chưa có tệp" nhưng develop_01 (git) KHÔNG có → xem ghi chú divergence cuối mục.
+
+> ⚠️ DIVERGENCE dev-erp vs git (2026-08-25): bản form YCCGKH trên dev-erp chứa "tối đa 10 MB" + panel KH-trước "File đính kèm" — grep `--all` KHÔNG có ở bản A, bản B, hay github origin/develop_01 (đã fetch). Nghĩa dev-erp CHƯA sync với develop_01 git (deploy bản cũ/ngoài git). User xác nhận mô hình: dev-erp=develop_01, code YCCGKH ở task_10696 merge vào develop_01. → cần deploy develop_01 git mới nhất lên dev-erp để QA thấy fix.
+
+## 10831 vòng 2 (2026-08-20) — Hãng: hiển thị đủ hãng của KH (USER CHỐT: theo logic multi mới)
+- [x] 10831b — "Hãng" của KH sau chuyển giao hiển thị ĐỦ hãng của KH (KH nhiều hãng) — XONG cả 2 nhánh
+      Đã làm: (a) eager-load customer_vehicle_manufacts (searchCustomer @task_10696 / getCustomerData @develop_01); (b) setNewCustomer/applyNewCustomer set vehicle_manufact_names = join tên hãng + vehicle_manufact_id = hãng ĐẦU (áp HĐ khi duyệt); (c) form.blade đổi single-select (list toàn hệ thống) → input readonly hiện tên các hãng KH; (d) thêm vehicle_manufact_names vào form model init + edit-prefill + store flatKeys.
+      Commit: develop_01 `7cc534f7bb`; task_10696 `935d7f9f06`.
+      Verify :8001 (develop_01, KH 823 có 4 hãng): ô Hãng = "Hyundai, MG, Nissan, Toyota" readonly, vehicle_manufact_id=121 (hãng đầu). task_10696 cùng logic mapping (verify by parity).
+      Ghi chú: cột KH-TRƯỚC vẫn hiện 1 hãng (oldVehicleManufactName) vì lấy từ snapshot HĐ — HĐ chỉ 1 cột, đúng.
+
+  > (Lịch sử phân tích — mô tả gốc trước khi làm)
+      Issue 10831 (đọc Redmine): "Không hiển thị Ngày cấp, Nơi cấp, Hãng sau khi chọn KH → Expected: hiển thị đủ TẤT CẢ thông tin KH". = yêu cầu HIỂN THỊ. Ngày/Nơi cấp đã xong (readonly auto-fill). Hãng còn thiếu.
+      USER chốt: KH giờ chọn nhiều hãng (Customer.customer_vehicle_manufacts belongsToMany), single cũ là SAI → hiển thị TẤT CẢ hãng của KH, readonly auto-fill (giống Ngày/Nơi cấp), bỏ select thủ công.
+      Downstream: HĐ (FirmContract+WrServiceContract) chỉ 1 cột vehicle_manufact_id (migration 2026_02_02) → khi duyệt applyCustomerToContract lấy HÃNG ĐẦU của KH.
+      2 nhánh khác cơ chế nạp KH: task_10696 = searchCustomer+setNewCustomer; develop_01 = getCustomerData+applyNewCustomer → sửa riêng từng nhánh.
+      Việc: (a) eager-load customer_vehicle_manufacts; (b) set list names + vehicle_manufact_id=hãng đầu khi chọn KH; (c) form.blade đổi select→ô readonly hiện tên các hãng (join ", "); (d) lưu vehicle_manufact_names cho show/print/edit-fallback.
 
 ## Đợt QA phản hồi (2026-08-20) — 5 task bị trả lại + xử lý trên develop_01
 
@@ -185,3 +243,59 @@ Commit develop_01: 83de93521a → a56935c94c → 2db914dd8f → 3d7dd20ea9. task
 Bước tiếp theo: user push develop_01 → dev-erp cho QA re-test 5 task này; rà thêm task QA còn phản hồi (nếu có).
 Blocked: không.
 Lưu ý kiến trúc: form develop_01 (sectioned) ≠ form task_10696 (2 cột) → fix cấp form phải maintain cả 2 nhánh; fix cấp list/combobox dùng chung, merge được.
+
+### Checkpoint — 2026-09-03 — K1(v2) SCROLL MODAL THÊM KH (soi live dev-erp)
+Vừa hoàn thành: K1(v2) — root thật của "không scroll" KHÔNG phải deploy. CSS v1 (max-height cap) đã deploy đúng nhưng gây lỗi mới trên màn cao: dialog height:90% < content → đỉnh form chui khỏi mép trên. Sửa sang flex column (body cuộn duy nhất, header/footer ghim). develop_01 `bc646115f9`.
+Cách phát hiện: đăng nhập SSO dev-erp bằng Playwright, đo getBoundingClientRect thật (dialog_top=-261) — đây là lần đầu soi trực tiếp dev-erp thay vì đoán "chưa deploy".
+Verify: Playwright dev-erp(inject flex) + local(render từ file) ở 700px & 1250px — header ghim đỉnh, footer ghim đáy luôn hiện, body cuộn hết, dialog đứng yên.
+Đang làm dở: chưa push. task_10696 KHÔNG cần (modal KH riêng đơn giản, không có #createCustomer/K1).
+Bước tiếp theo: user pull `bc646115f9` lên dev-erp + `php artisan view:clear` → QA re-test loại Cá nhân màn cao.
+Blocked: không.
+
+- [x] K1(v3) — vòng 10 (2026-09-03). ROOT THẬT, không phải CSS. QA/user: "đổi Loại hình tổ chức xong kéo bị kẹt / tự nhảy lên đầu". v1 (cap max-height) + v2 (flex column) đều KHÔNG trị được.
+      Chẩn đoán: trap `scrollTop` setter trên `.modal-body` → stack `select2.min.js:48290` → `jQuery.scrollTop` ép scrollTop về giá trị cũ. `jQuery._data(body,'events')` lộ handler `scroll.select2.select2-<id>` còn sống dù KHÔNG có dropdown nào đang mở → handler MỒ CÔI.
+      Cơ chế: select2 mở dropdown → gắn `scroll.select2-<id>` lên scroll-parent (.modal-body) để ghim vị trí dropdown. AngularJS đổi Loại hình tổ chức → huỷ & dựng lại block DOM → select2 mất theo DOM, `close` không chạy → handler ở lại ghim cứng scrollTop. Đổi càng nhiều lần càng nhiều handler.
+      Vì sao test tự động không ra (bài học): select2 chỉ gắn handler khi có thao tác CHUỘT THẬT (mở dropdown); synthetic event không kích hoạt → mọi vòng test tự động đều "pass" sai. Phải nhờ user thao tác tay + gắn bẫy (wrap focus/scrollIntoView, trap scrollTop setter, log jQuery._data events) mới bắt được.
+      FIX: dọn handler select2 mồ côi trên .modal-body khi không còn `.select2-container--open` — trigger lúc user chạm vùng cuộn (wheel/touchmove/mousedown) + sau mỗi lần đổi select (setTimeout 300ms). Đặt trong create/edit.blade của màn, KHÔNG đụng file dùng chung `searchCustomerJs`. Giữ CSS flex v2.
+      develop_01 `5e73b06eec` (develop_01-only). Verify dev-erp + local: tạo handler mồ côi thật → sau fix `jQuery._data` trả `none`, scrollTop hết bị ép về giá trị cũ.
+
+### Checkpoint — 2026-09-03 (2) — K1(v3) ROOT THẬT: select2 orphan handler
+Vừa hoàn thành: tìm ra root thật sau 3 vòng (v1 CSS cap → v2 CSS flex → v3 JS orphan handler). Nguyên nhân là handler `scroll.select2-<id>` mồ côi do Angular re-render huỷ select2 giữa chừng, KHÔNG phải layout. develop_01 `5e73b06eec`.
+Bài học quy trình (ghi để không lặp): (a) đo `body.scrollTop` nhúc nhích ≠ hết bug — triệu chứng thật là scroll bị GHIM/đỉnh form bị đẩy; (b) synthetic event không kích hoạt select2 → test tự động pass sai, phải nhờ user thao tác tay; (c) khi user báo "vẫn lỗi" 2-3 lần thì dừng vá tiếp, chuyển sang gắn bẫy đo (trap setter/log events) để tìm thủ phạm.
+Đang làm dở: chưa push. task_10696 KHÔNG cần (modal KH riêng, không có #createCustomer + select2 trong modal).
+Bước tiếp theo: user pull `bc646115f9` (CSS flex) + `5e73b06eec` (orphan fix) lên dev-erp + `php artisan view:clear` → QA test tay: cuộn giữa, đổi Loại hình tổ chức nhiều lần.
+Blocked: không.
+
+- [x] K1(v4) — chuyển fix orphan select2 vào FILE DÙNG CHUNG (user duyệt phương án 2, 2026-09-03).
+      Lý do: modal `#createCustomer` / `#searchCustomer` (`partials/modals/searchCustomer`) được **57 màn** dùng (opening_contracts, payment_profile, buyDebtBeginning, assembly_requests, service_quotations, warranty_repair_requests, buy_contract2…) → bug ghim scroll tồn tại ở TẤT CẢ, không riêng YCCGKH. Đặt fix ở blade 1 màn chỉ trị 1/57.
+      Thay đổi: thêm khối dọn handler `.k1orphan` vào `resources/views/partials/modals/js/searchCustomerJs.blade.php` (cạnh chỗ init select2); gỡ bản đặt riêng trong create/edit.blade YCCGKH để không gắn trùng. `$(document).off('.k1orphan')` trước khi gắn → idempotent khi file include nhiều lần.
+      Nhánh: task_10696 `ec511fc7cc` (file dùng chung); develop_01 `2ed8a65613` (cherry-pick) + `2fc4c22219` (gỡ bản riêng). File dùng chung 2 nhánh giống hệt nhau trước khi sửa → không conflict.
+      Verify :8001 (develop_01, script load từ file dùng chung): (a) tạo handler mồ côi thật → lăn chuột → `jQuery._data` trả `none`, scroll hết bị ghim ✓; (b) AN TOÀN: khi dropdown ĐANG mở, lăn chuột → handler `scroll.select2` giữ nguyên, dropdown vẫn mở → không phá select2 đang dùng ✓.
+      ⚠️ Lưu ý khi bàn giao: đây là sửa FILE DÙNG CHUNG → nên QA thêm vài màn đại diện ngoài YCCGKH (vd service_quotations, warranty_requests, buy_contract2) xem modal Tìm/Thêm KH còn chạy bình thường.
+      Ghi chú task_10696: màn YCCGKH của nhánh này dùng modal RIÊNG `#searchHandoverCustomerModal` (chỉ 1 ô tìm + 1 bảng, không select2, không cuộn dài) → không dính bug; commit ở đây là để các màn KHÁC của nhánh cũng được fix. Modal Người liên hệ `#searchHandoverContactModal` (cả 2 nhánh) dùng `<select>` thuần, không select2 → cũng không dính.
+
+### Checkpoint — 2026-09-03 (3) — K1 hoàn tất, fix nằm ở file dùng chung
+Vừa hoàn thành: chuyển fix orphan select2 từ blade YCCGKH sang `searchCustomerJs.blade.php` (dùng chung 57 màn) theo quyết định của user. Verify cả tác dụng lẫn tính an toàn trên :8001.
+Trạng thái commit: task_10696 `ec511fc7cc`; develop_01 `2ed8a65613` + `2fc4c22219` (+ CSS flex `bc646115f9`).
+Đang làm dở: chưa push (theo quy tắc không tự push).
+Bước tiếp theo: user pull lên dev-erp + `php artisan view:clear` → QA test tay YCCGKH (cuộn giữa, đổi Loại hình tổ chức nhiều lần) + spot-check vài màn khác dùng modal chung.
+Blocked: không.
+Việc còn treo (user hỏi, chưa quyết): modal Thêm nhanh KH KHÔNG có khối "Địa chỉ giao hàng" (form KH đầy đủ có — `customerForm.blade.php:1332` + modal `deliveryPlace` + class `DeliveryPlace`). Chưa rõ có phải yêu cầu QA hay không → chờ user quyết có bổ sung vào modal dùng chung không.
+
+## Testcase (2026-09-03)
+- [x] Sinh testcase luồng YCCGKH → `testcase.xlsx` (96 TC, P0 58%), generator `gen_testcase.py` dùng `tc_engine.py` của skill.
+      Nguồn dữ liệu: đọc code thật (5 quyền trong blade/controller, 5 trạng thái phiếu, guard sửa/xóa theo trạng thái + người lập,
+      rule validate trong CustomerHandoverStoreRequest, cột & bộ lọc trong index.blade, nhãn nút Lưu nháp / Lưu & Gửi duyệt / Duyệt / Không duyệt).
+      Cấu trúc: 11 TC phân quyền (đủ 5 quyền + không quyền + 4 TC gọi thẳng chức năng bỏ qua giao diện) + 10 section La Mã.
+      Bao phủ toàn bộ bug đã fix đợt này: file đính kèm KH cũ, Tỉnh/TP, hãng xe nhiều giá trị, Ngày cấp/Nơi cấp readonly,
+      sort KH mới nhất, tab Cá nhân, ngày d/m/Y khi thêm nhanh KH, sinh nhật người liên hệ, cuộn cửa sổ Thêm KH (K1).
+- [x] ⚠️ PHÁT HIỆN KHI VIẾT TC — LỆCH GIỚI HẠN DUNG LƯỢNG TỆP → ĐÃ FIX (user chốt: nâng lên 60MB):
+      Màn hình ghi "tối đa 60 MB" và chặn tại chỗ khi > 60MB (formJs: MAX_FILE_SIZE = 60*1024*1024),
+      nhưng hệ thống phía sau chỉ nhận tối đa 50MB (CustomerHandoverStoreRequest: `files.*` max 51200 KB,
+      thông báo "File vượt quá 50MB"). → Tệp 50–60MB qua được kiểm tra trên màn nhưng bị từ chối khi lưu.
+      Đã đưa vào TC_08.008 (P0) + ghi ở mục 9 phần mô tả. Hướng xử lý: nâng giới hạn phía sau lên 60MB
+      (đúng với yêu cầu 10832/10837) HOẶC hạ ghi chú trên màn xuống 50MB — cần user chốt.
+
+      **Đã xử lý 03/09/2026**: develop_01 `c05ccf25be` — `files.*` max 51200 → 61440 KB, thông báo đổi thành "File vượt quá 60MB". Verify ngưỡng: nhận 40/55/59MB, từ chối 61/70MB — khớp mức chặn của giao diện; máy chủ cho tải lên tới 2G nên không vướng.
+      ⚠️ **task_10696 KHÔNG cần sửa — đã để sẵn 61440 từ trước**; chỉ develop_01 bị tụt lại (lệch nhánh).
+      Testcase đã cập nhật theo: TC_08.008 đổi kỳ vọng thành tệp 55MB PHẢI lưu được; bổ sung TC_08.009 (P1) kiểm mốc biên 59MB nhận / 61MB chặn; mục 9 BẪY 1 viết lại. Tổng TC: 96 → **97**, P0 58%.
