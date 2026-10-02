@@ -557,3 +557,81 @@ Tài chính chị em, KHÔNG tạo `<entity>_history` riêng.
 
 ⚠️ **292 phiếu cũ không có lịch sử** — không dựng lại được quá khứ. Lịch sử chỉ có từ phiếu tạo
 sau khi deploy bản này.
+
+---
+
+## Fix — Ô tìm nhanh chỉ tìm theo mã phiếu (2026-09-30) @khoipv
+
+User yêu cầu: ô tìm nhanh màn danh sách **chỉ tìm theo mã phiếu**, bỏ tìm theo người tạo
+(lọc người tạo đã có ô riêng trong bộ lọc nâng cao).
+
+- [x] BE `BorrowExportRequest::applyFilters()` — `keyword` chỉ `code LIKE`, bỏ `orWhereHas('employee_create.info')`
+- [x] FE `borrow-export-requests/index.vue` — placeholder "Tìm kiếm theo mã phiếu" (không dấu "...", user chốt)
+
+## Fix — Validate "Chưa nhập số lượng xuất" báo theo TỪNG hàng (2026-09-30) @khoipv
+
+Trước: 1 câu chung dưới bảng "Chưa nhập số lượng xuất cho hàng hoá nào." chỉ khi TỔNG = 0 —
+nhập 1 hàng, bỏ trống hàng khác vẫn lưu được, và không biết hàng nào thiếu.
+
+- [x] FE `BorrowExportRequestForm.vue` — `rowError(row)`: dòng hàng có phiếu mượn (không khoá) mà
+      tổng SL xuất = 0 -> viền đỏ + chữ "Chưa nhập số lượng xuất" NGAY DƯỚI từng ô "Xuất" của dòng
+      (user chốt: báo tại ô nhập, `qtyInputError`); chặn lưu. Câu chung dưới bảng chỉ còn cho trường hợp chưa thêm hàng nào
+- [x] BE `BorrowExportRequestService::storeProducts()` — gom lỗi từng hàng (key
+      `products.{i}.qty`, câu có tên hàng), ném 1 lần sau vòng lặp (transaction rollback)
+
+## Fix — Từ chối xong quay về màn danh sách (2026-09-30) @khoipv
+
+- [x] FE `_id/index.vue` — `onRejected()` điều hướng về danh sách thay vì nạp lại chi tiết. Quay về
+      ĐÚNG link danh sách đã mở trước đó (giữ `?type=accounting|all` + query lọc, ghi lại ở
+      `beforeRouteEnter`); vào thẳng bằng URL/thông báo -> mặc định `?type=all`
+
+## Fix — Mở chi tiết với id không tồn tại báo "Item Not Found!" (2026-09-30) @khoipv
+
+- [x] FE `_id/index.vue` `fetchData()` — 404 -> toast "Không tìm thấy dữ liệu"; 403 -> "Bạn không có
+      quyền xem phiếu này"; rồi về danh sách (`listUrl`). Không hiện câu kỹ thuật của Handler chung
+      (khuôn `addition-accounting-requests/_id/index.vue`)
+
+## Fix — Bỏ "Đang tạo" khỏi ô lọc Trạng thái (2026-09-30) @khoipv
+
+Không luồng nào (ERP lẫn HRM) đặt status 3 — màn Tạo chỉ có Gửi duyệt. Trên DB chỉ có 2 phiếu
+seeder test (id 332, 333).
+
+- [x] BE `BorrowExportRequestService::meta()` — `statuses` (chỉ dùng cho ô lọc) loại `DANG_TAO`.
+      GIỮ nguyên `BorrowExportRequest::STATUSES` để badge/lịch sử vẫn hiện đúng nhãn cho phiếu cũ
+
+### Checkpoint — 2026-09-30
+Vừa hoàn thành: đợt fix 5 việc (user báo trực tiếp, @khoipv):
+  1. Ô tìm nhanh chỉ theo mã phiếu — BE `BorrowExportRequest::applyFilters()` bỏ `orWhereHas` người tạo; placeholder "Tìm kiếm theo mã"
+  2. Validate SL xuất theo TỪNG hàng, báo ngay dưới ô "Xuất" (`rowError` + `qtyInputError`); BE `storeProducts()` gom lỗi `products.{i}.qty` có tên hàng
+  3. Từ chối xong quay về danh sách đã mở (`listUrl` ghi ở `beforeRouteEnter`, mặc định `?type=all`)
+  4. Mở chi tiết id không tồn tại: 404 -> "Không tìm thấy dữ liệu", 403 -> "Bạn không có quyền xem phiếu này", về danh sách
+  5. Bỏ "Đang tạo" khỏi ô lọc Trạng thái (`meta()`), giữ hằng `STATUSES` cho badge/lịch sử
+  Kiểm chứng: compile FE (vue-template-compiler + babel) 2 file OK · `php -l` 3 file BE sạch ·
+  tinker: keyword chỉ còn `code like` · store 3 hàng (1 có SL, 2 trống) trả đúng 2 lỗi, rollback sạch (max id 337 → 337) · meta trả 3 trạng thái
+Đang làm dở: không
+Bước tiếp theo: user test trên trình duyệt (Ctrl+Shift+R) — CHƯA mở trình duyệt kiểm chứng. Chờ user trả lời: có sửa nút "Quay lại" ở chân màn chi tiết về đúng danh sách đã mở không (hiện luôn `?type=all`)
+Blocked:
+Dữ liệu test màn Tạo (tài khoản DNS Admin id 13): PYCXH-TEST-022/023/024/025 — vd TEST-023 có 4 hàng ENEO còn mượn
+Chưa commit, chưa push (2 repo `gop_db`)
+
+## Fix — Nút "Quay lại" màn chi tiết về màn trước đó (2026-09-30) @khoipv
+
+- [x] FE `_id/index.vue` — `V2Footer @goBack="goBack"` (bỏ `url-back` cứng `?type=all`): có màn đứng
+      trước trong app -> `$router.back()`; vào thẳng bằng URL / tab mới -> `listUrl` (mặc định `?type=all`)
+
+## Fix — Đính kèm báo "không được quá 13 MB" trong khi tooltip ghi tối đa 20MB (2026-09-30) @khoipv
+
+FE `AttachmentSection` mặc định 20MB (tooltip + chặn phía trình duyệt), BE `uploadFiles()` lại
+chặn `max:13048` -> file 13–20MB qua FE nhưng bị BE trả 422. ERP gốc không giới hạn dung lượng.
+
+- [x] BE `BorrowExportRequestController::uploadFiles()` — `max:20480` (đúng 20MB = FE `20*1024*1024`),
+      câu lỗi "File đính kèm không được quá 20 MB"
+
+## Fix — Bảng "Chi tiết" thừa khoảng trống lớn phía dưới (2026-09-30) @khoipv
+
+`.table-responsive` global (`assets/scss/default.scss:88`) ép `min-height: 50vh`. Class huỷ
+`table-auto-height` chỉ khai trong `<style>` của `CustomerForm.vue` -> chỉ ăn khi component đó đã được
+nạp (không có ở build production / vào thẳng màn).
+
+- [x] FE `_id/index.vue` + `BorrowExportRequestForm.vue` — tự khai `::v-deep .table-responsive.table-auto-height { min-height: 0 }`
+      trong style scoped của màn (class nằm ở div con của `V2BaseTableScroll` nên phải `::v-deep`)

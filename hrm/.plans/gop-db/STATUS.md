@@ -394,6 +394,9 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   xuất không đóng, popup hợp đồng trả id thay vì tên). Chứng minh được ô lọc "STK ngân hàng"
   của ERP nổ HTTP 500. Chi tiết ở `plan.md` Phase 10.
   Còn lại: phần chưa kiểm chứng được (nhánh code chết + 2 cửa vào chưa có màn nguồn + phiếu ngoại tệ).
+  **Checkpoint 2026-09-30**: fix validate bắt buộc theo skill form-validate — kiểm hết 1 lượt, toast
+  chung + tự cuộn tới ô lỗi đầu, câu lỗi bỏ trống đổi thành "Bắt buộc phải nhập" (5 ô), thêm lỗi
+  inline Loại tiền + bảng định khoản rỗng. FE only, compile sạch, CHƯA mở trình duyệt.
   Mắt xích cuối của luồng đã port dở: Đề nghị điều chỉnh công nợ / Hạch toán bổ sung → **Phiếu kế
   toán → ghi sổ cái `account_details`**. User chốt *"làm hệt ERP"*: đủ 5 cửa vào tạo phiếu, quyền
   xem 2 cấp, sửa/xóa = Đang tạo + đúng người lập, ô chọn hợp đồng bán lấy **cả `hrm_contracts` lẫn
@@ -953,6 +956,18 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 - **finance-addition-accounting-request — Sửa lỗi + chuẩn hoá màn (Phase 12-20)** → @khoipv →
   `.plans/gop-db/finance-addition-accounting-request/plan.md`
 
+  **Đợt 2026-09-30 (Phase 31) — CODE XONG, CHỜ USER MỞ TRÌNH DUYỆT. Chưa commit.** Loại Khác: popup
+  **Chọn nhân viên** có sort Mã/Tên + gộp 2 ô tìm thành 1 ô "Mã / Tên nhân viên"; popup **Chọn nhà cung cấp**
+  có sort Mã/Tên — ⚠️ popup này DÙNG CHUNG, user chốt bật cho mọi màn (Đề nghị thu/chi tiền, Báo có, Điều chỉnh
+  công nợ…). BE 2 file (whitelist sort) · FE 3 file. Đã kiểm hàm tìm kiếm với dữ liệu thật + compile FE.
+  **Phase 32**: ô Loại yêu cầu có nút × xoá nhanh (bỏ `:allowClear="false"`, xoá đi qua `onChangeType`).
+  **Phase 33**: URL phiếu không tồn tại (vd `/31658`) báo lỗi 2 lần — trang Chi tiết + form con cùng nạp phiếu;
+  nay trang Chi tiết chỉ dựng form sau khi nạp thành công, 404 → "Không tìm thấy dữ liệu" + về danh sách
+  (cả màn Sửa). FE 2 file, chỉ compile — chưa mở trình duyệt.
+  **Phase 34**: 3 popup tra cứu (Phiếu xác nhận bảo hành / Phiếu xử lý hàng thiếu / Nhân viên — `RecordSearchModal`)
+  + popup **Chọn nhà cung cấp** (⚠️ DÙNG CHUNG các màn Tài chính) chuyển sang `V2BaseDataTable` — phân trang theo base
+  như popup "Hàng đang giữ" (20/50/100 dòng). FE 3 file, chỉ compile — chưa mở trình duyệt.
+
   **Đợt 2026-09-21 (Phase 14-20) — CODE XONG, CHỜ USER NGHIỆM THU. Chưa commit, chưa push (cả 2 repo).**
 
   | Phase | Nội dung | Phạm vi |
@@ -991,6 +1006,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
+
+- finance-bill-adjust-dept-request (đợt fix 30/09, Phase 43-46) → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Hoàn thành: 2026-10-02 — xong đợt fix 30/09. Lỗi "Phải lớn hơn 0" ở ô Số tiền tự ẩn realtime; câu lệch tổng tiền dùng V2BaseError; link mã HĐ trong popup Chọn nhanh + Chọn hợp đồng (ContractSearchModal dùng chung 5 màn); link Số phiếu báo có ở danh sách; Excel chi tiết phiếu sửa bề rộng cột, dòng ký và logo. Không migration.
+
+- borrow-export-request (đợt fix 30/09) → @khoipv → .plans/gop-db/borrow-export-request/plan.md
+  Hoàn thành: 2026-10-02 — xong đợt 6 fix 30/09. Ô tìm nhanh chỉ theo mã; validate SL xuất từng hàng tại ô nhập (FE + BE); từ chối xong về danh sách đã mở; id không tồn tại báo "Không tìm thấy dữ liệu"; bỏ "Đang tạo" khỏi ô lọc; nút "Quay lại" về màn trước đó.
 
 - customer-care-service-import — import Excel nhiều sheet cho màn Danh mục gói bảo dưỡng (`/customer-care/services`) → @khoipv → .plans/gop-db/customer-care-service-import/plan.md
   Hoàn thành: 2026-09-22 — user xác nhận đã xong (code + chạy thật trên trình duyệt, import 4 gói test `ZZTEST-GBD-A/B/C/D` id 244/245/247/248). Nhánh `gop_db` cả 2 repo, đã commit + push (`hrm-api` 7450ca1e2 · `hrm-client` 54a584c68, cùng ngày 2026-09-22), không migration, không quyền mới — gate bằng quyền sẵn có `Thêm danh mục gói bảo dưỡng`. Màn này từng bị loại khỏi scope `catalog-import-export` vì có bảng chi tiết; file mẫu 5 sheet (gói · cấp bảo dưỡng · nội dung kiểm tra · hệ số công ty · hàng hoá) nối nhau bằng khoá Mã gói, sinh động ở FE từ chính cấu hình cột của modal. BE: `ServiceImportService.php` mới + 2 route `import/validate` / `import`, ghi bằng cách gọi lại `ServiceService::store()` nên `logCatalogCreate()` vẫn chạy, mỗi gói 1 transaction riêng. FE: `ServiceImportModal.vue` riêng nhưng dùng lại `V2BaseImportToolbar` + `V2BaseImportTable` — **không sửa component dùng chung của 15 màn kia** — thêm `utils/import-multi-sheet-helper.js`; file mẫu dựng bằng ExcelJS (SheetJS bản cộng đồng không ghi được định dạng ô): header nền `D9E1F2` đậm + viền, dòng gợi ý nền `FFF2CC`, đóng băng 2 dòng đầu + cột Mã gói, bộ lọc trên tiêu đề, bám file mẫu tĩnh của màn `finance/type-accounts`. Không đính kèm PDF trong luồng import (user chốt 22/09): gói import xong để trống hồ sơ, bổ sung file ở màn Sửa. 🐞 Chạy thật bắt được `service_levels.benefit_coefficient` NOT NULL không default → ô "Hệ số công nghệ" để trống truyền null làm SQL nổ 1048, đã sửa thành trống quy về 1. ⚠️ Tồn: chưa xoá 4 gói test id 244/245/247/248; cột "Dung lượng" khối đính kèm luôn `—` là nợ có sẵn của `V2BaseAttachmentSection`, không phải do import. Spec: docs/superpowers/specs/gop-db/2026-09-22-customer-care-service-import-design.md
