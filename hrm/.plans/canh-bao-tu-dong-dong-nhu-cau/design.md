@@ -62,7 +62,7 @@ Tự đóng tại   T + N
 | Badge trạng thái "Đã đóng" | Hiển thị **"Đóng"** | Nhãn có sẵn của màn Nhu cầu khách hàng (#11386) |
 | Nút Tạo Dự án TKT "làm mờ kèm tooltip" | **Ẩn hẳn** | Quy ước dự án: nút không dùng được thì ẩn, không hiện mờ |
 | M là "tham số toàn cục" | Lưu **theo công ty** trong Cấu hình chung | Bảng cấu hình vốn theo công ty; công ty chưa khai thì dùng mặc định 3 |
-| Cảnh báo khi N <= M | Bỏ qua cảnh báo, **đúng spec** | Đã bỏ nhầm 30/09 rồi phục hồi cùng ngày - xem mục dưới |
+| Cảnh báo khi N <= M | **Thông báo**: bỏ qua (đúng spec) · **Màn danh sách**: vẫn tô cam | 2 luồng khác nhau - xem mục dưới |
 | Đổi N ở danh mục | Nhu cầu đã có **giữ hạn cũ** (N chụp lúc tạo) | **Lệch spec, khách chốt lại** - xem mục dưới |
 | Người nhận cảnh báo | Phụ trách nhu cầu **+ người tạo + người chủ trì** cuộc họp | Spec ghi 2 vai đầu; thêm người chủ trì vì cuộc họp có thể do người khác tạo hộ |
 | Nội dung thông báo | Theo khuôn `notification-convention` | Skill thắng spec về hình thức trình bày |
@@ -82,16 +82,39 @@ Spec quy định ngoại lệ này **có nêu lý do**, không phải sót. Và 
 - tài liệu do chính bên phát triển viết lại từ code - nên phản hồi của QA không thể dùng làm căn
 cứ đổi nghiệp vụ. Muốn đổi nghiệp vụ phải qua người viết yêu cầu.
 
-Điều kiện `N > M` nằm ở **2 nơi, phải luôn giống nhau**:
-`CustomerDemandService::attachDueDate()` (màn danh sách) và
-`CloseExpiredCustomerDemandsCommand::warningDays()` (cron). Sửa một bên là giao diện báo một
-đàng, thông báo gửi một nẻo.
+### 1b. ⚠️ NGOẠI LỆ `N <= M` CHỈ ÁP CHO THÔNG BÁO, KHÔNG ÁP CHO MÀN DANH SÁCH
 
-**Vấn đề còn tồn tại, chưa xử lý:** M mặc định = 3 mà rất nhiều lĩnh vực cũng đặt N = 3, nên
-cấu hình mặc định không bao giờ sinh cảnh báo và không có gì trên giao diện cho người quản trị
-biết. Đề xuất **validate chặn lưu khi N <= M** ở form cấu hình - thực thi đúng ý spec ngay tại
-chỗ nhập thay vì để mất cảnh báo trong im lặng. Đây là **rule mới ngoài spec**, chờ người viết
-yêu cầu đồng ý.
+Sai lầm tốn nhiều công nhất của feature này. Trong mô tả Redmine, ngoại lệ `N <= M` là **gạch
+con của "Luồng 1 - Gửi thông báo nghiệp vụ"**, câu chữ là *"bỏ qua bước **gửi thông báo**
+cảnh báo này"*. Mục "Ràng buộc tại Giao diện" của spec **không** đặt điều kiện nào cho cột hạn.
+
+Ngày 22/09 khi sửa BUG 8, tôi bê điều kiện của cron sang màn danh sách. Hậu quả kéo dài 10 ngày:
+
+- Nhu cầu có N nhỏ sắp tự đóng mà trên màn hình **không có dấu hiệu gì**.
+- Mỗi dòng một N khác nhau, nên người test thấy *"chỉ hiện đúng một mốc ngày"* - đặt M = 2 thì
+  dòng còn 2 ngày hiện, dòng còn 1 ngày lại ẩn (vì N của nó <= M). Nhìn như vùng cảnh báo không
+  tích luỹ, trong khi thực ra nó vẫn tích luỹ đúng.
+- QA báo đi báo lại; hai lần tôi trả lời "đúng spec" và một lần bỏ nhầm cả điều kiện ở cron.
+
+**Luật đúng, mỗi nơi một kiểu - CỐ Ý:**
+
+| | Điều kiện |
+| --- | --- |
+| Cột hạn màn danh sách (`attachDueDate`) | `M > 0 && today >= dueDate - M` - **không** có `N > M` |
+| Thông báo chuông (`warningDays` của cron) | `N > M` - đúng ngoại lệ spec |
+
+Cột hạn trả lời câu "nhu cầu còn mấy ngày nữa tự đóng" - đúng với mọi nhu cầu. Thông báo chuông
+là một hành động riêng, có ngoại lệ riêng. **Đánh đổi phải chấp nhận**: nhu cầu `N <= M` được tô
+cam trên màn hình nhưng không ai nhận chuông.
+
+**Cách kiểm nhanh khi nghi ngờ** (chỉ đọc, không ghi DB): gọi thẳng `attachDueDate()` qua
+Reflection với nhu cầu dựng trong bộ nhớ, nhiều N và nhiều mốc ngày - đừng chép lại công thức
+bằng tay rồi mô phỏng, lần đầu tôi làm vậy và kết luận sai.
+
+**Vấn đề còn tồn tại, chưa xử lý:** M mặc định = 3 mà nhiều lĩnh vực cũng đặt N = 3 - những nhu
+cầu đó không bao giờ có thông báo chuông, và không có gì trên giao diện cho người quản trị biết.
+Đề xuất **validate chặn lưu khi N <= M** ở form cấu hình. Đây là **rule mới ngoài spec**, chờ
+người viết yêu cầu đồng ý.
 
 ### 2. Hạn nhu cầu theo N CHỤP LÚC TẠO - lệch spec, khách đã chốt lại
 

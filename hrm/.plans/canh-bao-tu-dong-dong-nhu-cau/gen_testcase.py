@@ -57,7 +57,7 @@ DESCRIPTION_BLOCK = [
      "- Nhu cầu mà cuộc họp chưa Hoàn thành (chưa có mốc T);\n"
      "- Nhu cầu đã lập Dự án TKT;\n"
      "- Nhu cầu đã ở trạng thái Đóng (do người dùng đóng tay hoặc hệ thống đã đóng trước đó).\n"
-     "Riêng luồng CẢNH BÁO còn bị bỏ qua khi N <= M, hoặc khi M = 0, hoặc khi nhu cầu đó đã được cảnh báo một lần "
+     "Riêng luồng GỬI THÔNG BÁO còn bị bỏ qua khi N <= M, hoặc khi M = 0, hoặc khi nhu cầu đó đã được thông báo một lần "
      "rồi (không nhắc lại mỗi ngày)."),
 
     ("4. Bộ lọc thời gian áp dụng cho",
@@ -104,10 +104,12 @@ DESCRIPTION_BLOCK = [
      "- N = 0 nghĩa là KHÔNG đặt thời hạn, không phải 'hết hạn ngay'. Mặc định sau khi lên bản mới, mọi lĩnh vực "
      "đều là 0, tức chưa nhu cầu nào bị đóng cho tới khi người quản trị khai N.\n"
      "- N <= M thì KHÔNG có bước cảnh báo, nhu cầu vẫn bị đóng đúng hạn. Đừng báo lỗi 'thiếu thông báo'.\n"
-     "- MỌI testcase kỳ vọng CÓ cảnh báo đều đã chốt sẵn N > M trong cột Điều kiện. Khi test trên dữ liệu "
-     "thật, phải kiểm N của lĩnh vực trước: N <= M mà không thấy cảnh báo là ĐÚNG, không phải lỗi.\n"
-     "- Nâng M lên KHÔNG phải lúc nào cũng làm nhiều nhu cầu được cảnh báo hơn: M vượt quá N của lĩnh vực "
-     "nào thì nhu cầu của lĩnh vực đó MẤT cảnh báo.\n"
+     "- PHÂN BIỆT 2 LUỒNG, đây là chỗ dễ báo nhầm nhất:\n"
+     "   (a) TÔ CAM + '(còn X ngày)' ở cột hạn màn danh sách: hiện cho MỌI nhu cầu còn dưới M ngày là hết "
+     "hạn, KHÔNG phụ thuộc N lớn hay nhỏ hơn M. Vùng cảnh báo TÍCH LUỸ — đặt M = 3 thì còn 3, 2, 1 ngày và "
+     "quá hạn đều tô cam, không phải chỉ đúng mốc 3 ngày.\n"
+     "   (b) THÔNG BÁO CHUÔNG do lệnh quét gửi: có ngoại lệ, N <= M thì KHÔNG gửi.\n"
+     "   => Nhu cầu N <= M sẽ tô cam trên màn hình nhưng không ai nhận chuông. Đúng yêu cầu, không phải lỗi.\n"
      "- Nhu cầu quá hạn vẫn nằm trong danh sách cho tới lần quét kế tiếp (01:20 hôm sau) mới chuyển sang Đóng — "
      "trong khoảng đó cột hạn hiện '(quá hạn X ngày)' là đúng.\n"
      "- Ngày đóng là ngày HẾT HẠN chứ không phải ngày chạy quét.\n"
@@ -436,16 +438,19 @@ S4 = [
      "1. Đổi M thành 7 ở Cấu hình chung, lưu\n2. Quay lại màn Nhu cầu khách hàng, tải lại",
      "Cảnh báo trước khi đóng nhu cầu: 7",
      "- Dòng #108 chuyển sang tô cam kèm '(còn 5 ngày)'\n"
-     "- LƯU Ý: kết quả này chỉ đúng vì N = 30 vẫn LỚN HƠN M = 7. Nâng M vượt quá N thì cảnh báo "
-     "TẮT đi chứ không bật thêm — xem TC ngay dưới"),
+     "- Mọi dòng còn DƯỚI 7 ngày đều phải tô cam, không phải chỉ dòng đúng 7 ngày"),
 
-    (12, "Nâng M vượt quá N thì cảnh báo TẮT đi", "P0",
-     "M = 3, nhu cầu #109 thuộc lĩnh vực có N = 5, đang tô cam vì còn 2 ngày.",
-     "1. Đổi M thành 7 ở Cấu hình chung, lưu\n2. Quay lại màn Nhu cầu khách hàng, tải lại",
-     "Cảnh báo trước khi đóng nhu cầu: 3 -> 7",
-     "- Dòng #109 HẾT tô cam, hết ghi chú số ngày, chỉ còn ngày hết hạn\n"
-     "- LƯU Ý: đây là ĐÚNG yêu cầu, không phải lỗi. N = 5 nay nhỏ hơn M = 7 nên rơi vào ngoại lệ "
-     "'N <= M thì bỏ qua cảnh báo'\n"
+    (12, "Nhu cầu có N nhỏ hơn M vẫn tô cam trên màn hình", "P0",
+     "M = 7, nhu cầu #109 thuộc lĩnh vực có N = 5 (tức N nhỏ hơn M), còn 2 ngày là hết hạn.",
+     "1. Mở màn Nhu cầu khách hàng, xem dòng #109\n2. Chạy lệnh quét hạn nhu cầu, xem chuông "
+     "thông báo",
+     "Thời gian hiệu lực nhu cầu: 5 · Cảnh báo trước khi đóng: 7",
+     "- Bước 1: dòng #109 CÓ tô cam kèm '(còn 2 ngày)' — cột hạn luôn cho biết nhu cầu còn mấy "
+     "ngày nữa tự đóng, không phụ thuộc N lớn hay nhỏ hơn M\n"
+     "- Bước 2: KHÔNG ai nhận thông báo chuông cho #109 — đúng ngoại lệ 'N <= M thì bỏ qua bước "
+     "gửi thông báo' của yêu cầu, không phải lỗi\n"
+     "- LƯU Ý: đây là 2 luồng khác nhau. Tô cam trên màn hình nói 'sắp tự đóng'; thông báo "
+     "chuông là một hành động riêng và có ngoại lệ riêng\n"
      "- Nhu cầu vẫn bị đóng đúng hạn như thường"),
 ]
 
