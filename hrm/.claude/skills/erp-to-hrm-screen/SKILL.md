@@ -165,16 +165,20 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Sort bật cho cột mã / tên / tiền / ngày; sort cột mới hủy sort cột cũ
 - [ ] Phân trang mặc định 10, chọn được 5/10/20/50/100, đổi số dòng nhảy về trang 1
 - [ ] Ô lọc dạng chọn tự tìm ngay khi chọn; ô gõ tay chờ Enter/nút Tìm kiếm
-- [ ] **Bật `floating`** trên `V2BaseSmartFilterPanel` — mọi ô lọc cao 36px, nhãn nằm giữa ô khi
+- [ ] **Bật `floating`** trên `V2BaseSmartFilterPanel` — mọi ô lọc cao 32px, nhãn nằm giữa ô khi
       rỗng và bay lên đè viền trên khi có dữ liệu (chuẩn chốt 07/09/2026, mẫu: màn Dự án TKT)
 - [ ] Field gom nhiều ô (khối tổ chức, cặp cha-con...) đã khai `resetKeys` — panel dựa vào đó để
       biết nhãn có phải bay lên không
 - [ ] Placeholder **không lặp lại nhãn** (`Chọn <X>` / `Nhập <X>` là SAI khi bật floating — nhãn
       đã nói rồi). Chỉ giữ khi nói thêm điều nhãn không nói: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`
 - [ ] Ô tìm nhanh: `Tìm theo <các trường BE thực sự lọc>` — không `Tất cả`, không `Chọn...`, không để trống
+- [ ] **Có ô tìm nhanh + 2 nút Tìm kiếm / Làm mới nằm ngay hàng trên cùng** khi vừa vào màn (chưa bấm
+      "Tìm kiếm nâng cao"). Grep `show-quick-search="false"` trong feature phải ra RỖNG — ERP không có ô
+      này thì thêm param `keyword` ở BE (skill `list-page` mục ô tìm nhanh)
 - [ ] Ô lọc tìm-từ-server (Khách hàng / NCC / Sản phẩm) dùng **`V2BaseSelectRemote`** kèm
-      `height="36px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
-- [ ] Mọi ô trong khối lọc đo ra **đúng 36px** — lệch 32px là quên truyền `height`
+      `height="32px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
+- [ ] Mọi ô trong khối lọc đo ra **bằng nhau, chuẩn hiện hành `32px`** (biến `--ff-h`; hạ từ 36px
+      ngày 22/09/2026 — xem skill `list-page`). Lệch hàng là quên truyền `height`
 - [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách**
 - [ ] **Bấm thật TỪNG ô lọc** rồi xem bảng có đổi không — đối chiếu param trên tab Network với
       `searchByFilter` của BE. Ô lọc sai tên key **không báo lỗi gì**, nhìn giao diện y như đúng
@@ -311,7 +315,8 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 | Để ô "Bộ phận"/"Nhân viên" hiện mà BE không lọc theo | Ô lọc chết, user chọn mãi không ra | `:disable_part` / `:disable_employee` — đối chiếu `searchByFilter` của BE xem thật sự lọc theo cấp nào |
 | `$axios` tải file thiếu `Authorization` | Xuất Excel 401 | Tự gắn token cho request export |
 | Bê nguyên `title` cho panel lọc | Mỗi màn một tiêu đề khác nhau | Bỏ prop, dùng mặc định "Bộ lọc danh sách" |
-| Quên bật `floating` | Khối lọc trông như màn cũ (nhãn trên, ô dưới, 32px) trong khi các màn mới đều floating 36px | Thêm prop `floating` — panel lo hết phần còn lại |
+| Tắt ô tìm nhanh vì "ERP không có" (`:show-quick-search="false"`) | Panel chuyển sang kiểu màn báo cáo: mất ô tìm nhanh VÀ nút Tìm kiếm / Làm mới chỉ hiện sau khi bấm "Tìm kiếm nâng cao" (dính thật: Danh sách hàng mượn + Hàng sắp hết hạn mượn, 24/09/2026) | Không bao giờ tắt ở màn danh sách. BE thiếu `keyword` thì thêm vào BE — xem `list-page` |
+| Quên bật `floating` | Khối lọc trông như màn cũ: nhãn nằm TRÊN ô, chiếm thêm một dòng, trong khi các màn mới nhãn nằm trong ô và bay lên viền | Thêm prop `floating` — panel lo hết phần còn lại |
 | Tự chế autocomplete "gõ để tìm" | Chưa gõ gì đã báo "Không tìm thấy…"; dropdown quên `position:absolute` đẩy vỡ layout | `V2BaseSelectRemote` + `minimumInputLength` — nó lo sẵn 3 trạng thái chưa-đủ-ký-tự / đang-tìm / không-có |
 | Đè CSS ô lọc bằng `!important` mà không tính specificity | **Local đúng, lên dev/prod sai** — thứ tự gộp CSS khi build khác dev nên rule bằng điểm đổi phe | Selector phải **nặng ký hơn** rule của `V2BaseSelect`; kiểm chứng bằng cách nhét vào đầu `<head>` rồi đo `getComputedStyle` |
 | Vỏ bọc field tự mở stacking context (`z-index` trên wrapper) | Dropdown của mọi control bên trong bị nhốt — header dính của bảng (z-index 6) vẽ đè lên | Không đặt `z-index` trên wrapper; hạ z-index của thứ cần đè thay vì nâng wrapper |
@@ -330,6 +335,7 @@ grep -rn "status-pill\|statusPillClass"   <thư-mục-feature>   # phải dùng 
 grep -rn "interactable:\|disabledTitle"   <thư-mục-feature>   # nút phải ẩn bằng visible
 grep -rn "action\.key ==="                <thư-mục-feature>   # V2BaseRowActions emit CHUỖI -> nút chết
 grep -rn "V2BaseFilterPanel"              <thư-mục-feature>   # phải là V2BaseSmartFilterPanel
+grep -rn 'show-quick-search="false"\|:showQuickSearch="false"' <thư-mục-feature>   # cấm ở màn danh sách
 grep -rn "advanced-filters"               <thư-mục-feature>   # bộ lọc dựng tay
 grep -rn "showCustomerList\|filtered.*= \[\]"  <thư-mục-feature>   # autocomplete tự chế -> V2BaseSelectRemote
 grep -rn "V2BaseSelectRemote" <thư-mục-feature> | grep -v 'height='   # thiếu height -> ô lùn 32px

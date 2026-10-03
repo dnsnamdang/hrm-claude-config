@@ -152,17 +152,18 @@ filterFields() {
 #### Nhãn floating — CHUẨN GIAO DIỆN ô lọc (chốt 07/09/2026)
 
 Màn mẫu: **`pages/assign/prospective-projects/index.vue`**. Nhãn nằm giữa ô khi rỗng, **bay lên đè
-viền trên** khi ô có dữ liệu hoặc đang focus. Ô cao **36px**, nhãn không chiếm thêm dòng riêng nên
+viền trên** khi ô có dữ liệu hoặc đang focus. Ô cao **32px** (hạ từ 36px ngày 22/09/2026, commit
+`2a6e59432`), nhãn không chiếm thêm dòng riêng nên
 khối lọc gọn hơn hẳn kiểu nhãn-trên-ô-dưới.
 
 Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`. Panel tự bọc mỗi ô bằng
-`V2BaseFloatingField`, tự tính `hasValue`, tự truyền chiều cao 36px xuống `V2BaseSelect`.
+`V2BaseFloatingField`, tự tính `hasValue`, tự truyền chiều cao `--ff-h` (32px) xuống `V2BaseSelect`.
 
 | Việc | Ai lo | Bạn phải làm gì |
 |---|---|---|
 | Nhãn + hiệu ứng bay lên | Panel | chỉ bật `floating` |
 | `hasValue` (nhãn bay lên khi có dữ liệu) | Panel | field gom nhiều ô thì **phải khai `resetKeys`**, panel dựa vào đó |
-| Chiều cao 36px | Panel (`control-height`) | không đụng |
+| Chiều cao 32px (`--ff-h`) | Panel (`control-height`) | không đụng |
 | Icon ⓘ chú thích | `V2BaseFloatingField` tra từ điển `utils/constants/field-hints` theo `label` | thêm `hint: '...'` nếu muốn đè, `noHint: true` nếu muốn tắt |
 | Nút phụ trong nhãn (công tắc ổ khoá…) | slot `label-suffix` của `V2BaseFloatingField`; `V2BaseCompanyDepartmentFilter` đã gắn sẵn cho Công ty / Phòng ban / Bộ phận | tự dựng nút mới thì cho class `ff-label-action` để có vùng bấm nới rộng |
 
@@ -190,7 +191,7 @@ phải ăn.
 
 **Bộ lọc ≤ 3 trường** chạy `isInlineMode` — dàn ngang cạnh ô tìm nhanh và **vẫn dùng nhãn
 floating** như khối nâng cao (chốt 09/09/2026): nhãn lúc nghỉ nằm giữa ô nên không chiếm thêm dòng,
-hàng vẫn thẳng trục; panel tự nâng ô tìm nhanh + ô lọc lên 36px. Hai chế độ vì thế nhìn giống hệt
+hàng vẫn thẳng trục; panel tự đưa ô tìm nhanh + ô lọc về cùng 32px. Hai chế độ vì thế nhìn giống hệt
 nhau — trước đây chế độ gọn bỏ nhãn, cùng một màn mà bộ lọc gọn xấu hơn hẳn.
 
 #### Ô "gõ để tìm từ server" — DÙNG `V2BaseSelectRemote`, cấm tự chế autocomplete
@@ -206,7 +207,7 @@ Lọc theo Khách hàng / NCC / Sản phẩm... (danh sách quá lớn không n�
       :minimumInputLength="2"
       placeholder="Gõ để tìm khách hàng..."
       size="sm"
-      height="36px"
+      height="32px"
       @select="onCustomerSelected"
   />
 </template>
@@ -214,7 +215,7 @@ Lọc theo Khách hàng / NCC / Sản phẩm... (danh sách quá lớn không n�
 
 | Bắt buộc | Vì sao |
 |---|---|
-| `height="36px"` khi nằm trong ô floating | `updateHeight()` ghi inline `!important`, CSS ngoài KHÔNG đè nổi → thiếu là ô lùn 32px lệch hàng |
+| `height` đúng bằng `--ff-h` (nay `32px`) khi nằm trong ô floating | `updateHeight()` ghi inline `!important`, CSS ngoài KHÔNG đè nổi. Hiện trùng mặc định `--sm` nên không lệch, nhưng khai sẵn để ô không trôi nếu một bên đổi số |
 | `minimumInputLength` (thường 2) | select2 hiện "Vui lòng nhập thêm N ký tự" thay vì báo "không có dữ liệu" khi user chưa gõ gì |
 | `initialOption` | localStorage chỉ lưu được `id`; thiếu cái này thì F5 xong ô hiện **rỗng** dù bộ lọc vẫn đang chạy |
 | `@select` lưu lại `text` | để dựng `initialOption` cho lần sau. Trả `null` khi user bấm × |

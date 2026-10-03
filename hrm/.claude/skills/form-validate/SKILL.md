@@ -208,9 +208,44 @@ bị cắt, ô nhập trong bảng (`V2BaseInput` 32px, `textarea` 53px) không 
 
 ---
 
-## 1d. CHỌN FILE — luôn dùng `V2BaseFile`
+## 1d. CHỌN FILE
 
-Mọi chỗ cho người dùng chọn/đính kèm file đều dùng **`components/V2BaseFile.vue`**.
+### Cả một KHỐI "File đính kèm" của phiếu → `V2BaseAttachmentSection`
+
+Phiếu/chứng từ có mục **File đính kèm** đứng riêng thành một khối thì dùng thẳng
+**`components/V2BaseAttachmentSection.vue`**, **KHÔNG tự ghép `V2BaseFile` + card**. Khối này lo
+trọn gói: tự đẩy tệp lên máy chủ, lưới STT · Upload/File · Dung lượng · nút xoá, nút *Thêm tài
+liệu*, xem trước, chặn sai đuôi / quá nặng. `v-model` là **mảng ĐƯỜNG DẪN** — lưu phiếu chỉ việc
+gửi mảng đó.
+
+```vue
+<V2BaseAttachmentSection
+    v-if="!readonly || attachments.length"
+    v-model="attachments"
+    class="mb-2"
+    title="File đính kèm"
+    :required="!readonly"          <!-- chỉ là dấu (*), chặn thật vẫn do BE -->
+    :readonly="readonly"
+    upload-url="finance/buy-service-requests/upload-files"
+    upload-field="attachments[]"   <!-- endpoint nhận MẢNG thì khai kèm [] -->
+    :max-size-mb="10"
+    :error-message="errorOf('attachments')"
+/>
+```
+
+- ⚠️ Prop lỗi tên là **`errorMessage`**, KHÔNG phải `errors` — `errors` là computed toàn cục của
+  vee-validate, trùng tên thì Vue cảnh báo và ô lỗi chết câm.
+- `extensions` + `maxSizeMb` phải khớp rule `mimes` / `max` của endpoint, lệch thì FE cho chọn
+  rồi máy chủ mới trả 422.
+- Màn Chi tiết mà phiếu **không có tệp**: khối chỉ in mỗi dòng tiêu đề lưới trống, nhìn như hỏng
+  → bọc `v-if` như trên rồi in một câu "Không có file đính kèm." trong `V2BaseFormSection`.
+- Đang dùng ở Yêu cầu chi hộ, Yêu cầu hạch toán bổ sung, Yêu cầu xuất/mượn hàng, Báo giá &
+  Hợp đồng dịch vụ, Yêu cầu mua dịch vụ.
+
+### Một Ô chọn file lẻ → `V2BaseFile`
+
+Ô chọn file **lẻ** (một ô trong dòng bảng, một trường trong form) dùng
+**`components/V2BaseFile.vue`**.
 Khuôn hiển thị lấy theo mục **"Import tài liệu kèm biên bản"** của màn Meeting
 (`/assign/meeting/create` → tab Biên bản):
 
