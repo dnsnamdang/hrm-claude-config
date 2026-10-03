@@ -68,17 +68,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
-- lookup-stock-companies → @junfoke → .plans/gop-db/lookup-stock-companies/plan.md
-  Trạng thái: 🟢 **CODE XONG BE + FE, đã đối chiếu ERP + Playwright (02/10/2026)**, nhánh `develop`. **Chưa commit.**
-  Port màn ERP "Báo cáo hàng có thể bán theo công ty" → `/lookup/stock-companies` (phân hệ Thông báo) + popup Hàng đang về.
-  Còn lại: đối chiếu popup trên dev (local `order_stock_progress` = 0 dòng) · chốt quyền xuất Excel (ERP id 507 không có trên DB gộp).
-  Spec: docs/superpowers/specs/gop-db/2026-10-02-lookup-stock-companies-design.md | Tóm tắt: .plans/gop-db/lookup-stock-companies/design.md
-
-- finance-declare-debt-beginning → @junfoke → .plans/gop-db/finance-declare-debt-beginning/plan.md
-  Trạng thái: 🟢 **CODE XONG BE + FE, đã kiểm API + Playwright (01/10/2026)**, nhánh `develop`. **Chưa commit.** Port 2 màn Khai báo đầu kỳ công nợ KH + NCC.
-  Còn lại: chạy SQL quyền 1615-1622 trên server · bấm thử Import + tải Excel trên giao diện.
-  Spec: docs/superpowers/specs/gop-db/2026-10-01-finance-declare-debt-beginning-design.md | Tóm tắt: .plans/gop-db/finance-declare-debt-beginning/design.md
-
 - finance-borrow-extend-request → @namdangit → .plans/gop-db/finance-borrow-extend-request/plan.md
   Trạng thái: 🟢 **XONG 9/9 phase + nghiệm thu trình duyệt (24/09). CHƯA commit — chờ user chốt.**
   Nhánh `feat/finance-borrow-extend-request` ở CẢ 2 repo (tách từ `origin/gop_db`).
@@ -144,34 +133,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   CSS `.ff` thua specificity CSS riêng của control). Gộp nốt 31 cặp "từ ngày – đến ngày" ở 30 màn.
   Kết quả: 0 màn thiếu `floating`, 0 màn tách ô ngày, mọi ô lọc cao đúng 36px. Tổng 113 file.
   Bước tiếp: user duyệt rồi commit/push.
-- buy-service-request → @junfoke → .plans/gop-db/buy-service-request/plan.md
-  Trạng thái: 📄 **Xong Phase 0 (design + plan + spec), đã tạo nhánh, bắt đầu code** (22/09/2026).
-  Scope: port màn **Yêu cầu mua dịch vụ** (ERP `buy_service_requests`) — đầu chuỗi 4 màn Mua dịch vụ.
-  BE `Modules/Finance`, FE `/finance/buy-service-requests`, menu phân hệ **Bán hàng** (`sale-hub.js:153`).
-  3 màn sau (HĐ mua dịch vụ · YC hạch toán · Hạch toán) **giữ ở ERP**; nút "Lập hợp đồng" trỏ `ERP_URL`.
-  ⚠️ GOTCHA: `syncDetails()` xóa-rồi-insert dòng chi tiết → phải GIỮ `contracted_qty` (cột do ERP ghi),
-  không thì phiếu đã lập hợp đồng bị reset tiến độ. Trạng thái 6/7 cũng chỉ đọc.
-  Có làm **Lịch sử thay đổi** đủ 2 nơi → thêm bảng MỚI `buy_service_request_history` (không đụng bảng ERP).
-  ⚠️ Dump `gop_db` ở local THIẾU `customers` (user xác nhận) → cột NCC trống ở local là bình thường,
-  phải nghiệm thu trên cổng dev. Phase 1 xong: migration history + 5 quyền (1586-1590) + 3 entity.
-  Phase 1-3 XONG: 5 quyền (1586-1590) · bảng history · 3 entity · 14 route · service đọc+ghi ·
-  history + notify. Test end-to-end 2 kịch bản đã chạy, DB dọn sạch về 81 phiếu / 98 dòng.
-  Phase 1-4 XONG (BE đủ: đọc · ghi · 2 nấc duyệt · lịch sử · thông báo · in 417/416 · xuất Excel).
-  Đã rà tài liệu pull 22/09: bỏ `messages()` khỏi FormRequest (dùng lang file), xuất Excel theo
-  4 mắt xích `ExportColumnRegistry` + `DynamicExport`; plan Phase 5/6 cập nhật theo skill mới.
-  Phase 1-5 XONG. Màn danh sách đã verify trên trình duyệt (lọc, badge, xuất Excel, menu Bán hàng).
-  ⚠️ Ô lọc đo ra 32px trong khi skill list-page ghi 36px — màn khuôn `product-natures` cũng 32px
-  trên cùng bản `gop_db`, chờ user quyết có sửa component dùng chung không.
-  Phase 6 + 6b XONG, đã verify TRỌN LUỒNG trên trình duyệt (lưu, 2 nấc duyệt, in, lịch sử 2 nơi,
-  xóa) — console 0 lỗi, dọn sạch dữ liệu test. 5 lỗi thật tự phát hiện đã sửa (chi tiết ở plan.md).
-  ⚠️ Lịch sử dùng bảng CHUNG `catalog_histories` + trait `LogsCatalogHistory` ⇒ KHÔNG còn migration.
-  Phase 8 XONG: đối chiếu HRM vs ERP trên 149 nhân viên x 2 preset → 292/298 khớp; 6 chỗ lệch đều
-  do cơ chế dùng chung (5 Super admin - chủ ý; 1 do trait cộng phòng của chính mình - chờ quyết).
-  Tìm ra + sửa 1 lỗi: preset 'chờ tôi duyệt' không lọc phòng ban cho TP. Checklist grep sạch 8/8.
-  2/3 điểm treo đã chốt (23/09): ô lọc 32px là TÀI LIỆU sai → đã sửa 3 file skill theo code;
-  trait cộng phòng của chính mình → GIỮ NGUYÊN (quy ước chung phân hệ Tài chính), đã ghi docblock+spec.
-  Còn lại: cột NCC trống ở local do dump thiếu `customers` → nghiệm thu trên cổng dev rồi merge gop_db.
-  Spec: docs/superpowers/specs/gop-db/2026-09-22-buy-service-request-design.md | Tóm tắt: .plans/gop-db/buy-service-request/design.md
 
 - quy-hoach-lai-menu-phan-he → @junfoke → .plans/gop-db/quy-hoach-lai-menu-phan-he/plan.md
   Trạng thái: **CODE DONE CẢ 5 NHÓM + VERIFY BROWSER khung menu** (16/09/2026).
@@ -631,14 +592,6 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Chưa đo được thời gian DỰNG file ở trình duyệt với 17.5k dòng — nhất là PDF (~600 trang).
   3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
 
-- finance-product-import-request → @junfoke → .plans/gop-db/finance-product-import-request/plan.md
-  Trạng thái: **XONG PHASE 1-15** (2026-08-21) — gồm 16 bug tester redmine 11074-11089, các đợt phản hồi bổ sung,
-  Phase 15 bỏ tab preset + 2 nút mở sang ERP (màn Kho chưa port).
-  Port màn "Phiếu Yêu cầu nhập hàng" sang Tài chính; 8 loại phiếu + 4 luồng duyệt, 0 migration.
-  Còn nợ: `V2Footer` dùng chung vẫn để nút In xanh + chữ "Không duyệt" (lệch chuẩn, ảnh hưởng mọi màn).
-  Bước tiếp: user review trên dev rồi đóng 16 issue Redmine.
-  Chi tiết + gotcha: plan.md
-
 - history-action-groups → @dnsnamdang → .plans/gop-db/history-action-groups/plan.md
   Trạng thái: **CODE DONE + ĐÃ TEST (2026-08-15)**. Chuẩn hoá bộ lọc "Loại hoạt động" của khối/popup
   Lịch sử về **đúng 3 nhóm cố định dùng chung cho cả 10 màn**: `create` Tạo mới · `update` Thay đổi
@@ -916,6 +869,64 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
+
+- finance-declare-debt-beginning → @junfoke → .plans/gop-db/finance-declare-debt-beginning/plan.md
+  Chuyển Hoàn thành: 2026-10-03 — đã push `develop` cả 2 repo. Còn: chạy SQL quyền 1615-1622 trên server · bấm thử Import + tải Excel.
+  Trạng thái: 🟢 **CODE XONG BE + FE, đã kiểm API + Playwright (01/10/2026)**, nhánh `develop`. **Đã commit vào `develop`** (soát git 03/10). Port 2 màn Khai báo đầu kỳ công nợ KH + NCC.
+  Còn lại: chạy SQL quyền 1615-1622 trên server · bấm thử Import + tải Excel trên giao diện.
+  Spec: docs/superpowers/specs/gop-db/2026-10-01-finance-declare-debt-beginning-design.md | Tóm tắt: .plans/gop-db/finance-declare-debt-beginning/design.md
+
+- catalog-usage-check → @junfoke → .plans/gop-db/catalog-usage-check/plan.md
+  Chuyển Hoàn thành: 2026-10-03 — đã merge + push `develop` cả 2 repo. Còn: QA test theo file Excel.
+  Trạng thái: 🟢 **CODE XONG BE + FE, đã kiểm tinker + API + Playwright (03/10/2026)**, nhánh `feat/catalog-usage-check` → **ĐÃ MERGE vào `develop` (03/10/2026), chưa push.** Commit `hrm-api` e84617c28 (merge 06f166850) · `hrm-client` 0c39eb2e9 (merge c6ae8dc30).
+  Check Xóa/Khóa cho 20 danh mục chuyển ERP→HRM theo khảo sát màn đang dùng (Excel ở thư mục gốc). Xóa: chặn khi đã dùng; Khóa: chỉ chặn khi còn danh mục con Hoạt động.
+  Spec: docs/superpowers/specs/gop-db/2026-10-03-catalog-usage-check-design.md | Tóm tắt: .plans/gop-db/catalog-usage-check/design.md
+
+- lookup-stock-companies → @junfoke → .plans/gop-db/lookup-stock-companies/plan.md
+  Chuyển Hoàn thành: 2026-10-03 — đã push `develop` cả 2 repo. Còn: đối chiếu popup trên dev · chốt quyền xuất Excel.
+  Trạng thái: 🟢 **CODE XONG BE + FE, đã đối chiếu ERP + Playwright (02/10/2026)**, nhánh `develop`. **Đã commit vào `develop`** (soát git 03/10).
+  Port màn ERP "Báo cáo hàng có thể bán theo công ty" → `/lookup/stock-companies` (phân hệ Thông báo) + popup Hàng đang về.
+  Còn lại: đối chiếu popup trên dev (local `order_stock_progress` = 0 dòng) · chốt quyền xuất Excel (ERP id 507 không có trên DB gộp).
+  Spec: docs/superpowers/specs/gop-db/2026-10-02-lookup-stock-companies-design.md | Tóm tắt: .plans/gop-db/lookup-stock-companies/design.md
+
+- buy-service-request → @junfoke → .plans/gop-db/buy-service-request/plan.md
+  Chuyển Hoàn thành: 2026-10-03 — code đã vào `develop` + `gop_db` (verify trọn luồng + đối chiếu ERP 292/298 từ 23/09); dòng "bắt đầu code" bên dưới là cũ. Còn: nghiệm thu cột NCC trên cổng dev.
+  Trạng thái: 📄 **Xong Phase 0 (design + plan + spec), đã tạo nhánh, bắt đầu code** (22/09/2026).
+  Scope: port màn **Yêu cầu mua dịch vụ** (ERP `buy_service_requests`) — đầu chuỗi 4 màn Mua dịch vụ.
+  BE `Modules/Finance`, FE `/finance/buy-service-requests`, menu phân hệ **Bán hàng** (`sale-hub.js:153`).
+  3 màn sau (HĐ mua dịch vụ · YC hạch toán · Hạch toán) **giữ ở ERP**; nút "Lập hợp đồng" trỏ `ERP_URL`.
+  ⚠️ GOTCHA: `syncDetails()` xóa-rồi-insert dòng chi tiết → phải GIỮ `contracted_qty` (cột do ERP ghi),
+  không thì phiếu đã lập hợp đồng bị reset tiến độ. Trạng thái 6/7 cũng chỉ đọc.
+  Có làm **Lịch sử thay đổi** đủ 2 nơi → thêm bảng MỚI `buy_service_request_history` (không đụng bảng ERP).
+  ⚠️ Dump `gop_db` ở local THIẾU `customers` (user xác nhận) → cột NCC trống ở local là bình thường,
+  phải nghiệm thu trên cổng dev. Phase 1 xong: migration history + 5 quyền (1586-1590) + 3 entity.
+  Phase 1-3 XONG: 5 quyền (1586-1590) · bảng history · 3 entity · 14 route · service đọc+ghi ·
+  history + notify. Test end-to-end 2 kịch bản đã chạy, DB dọn sạch về 81 phiếu / 98 dòng.
+  Phase 1-4 XONG (BE đủ: đọc · ghi · 2 nấc duyệt · lịch sử · thông báo · in 417/416 · xuất Excel).
+  Đã rà tài liệu pull 22/09: bỏ `messages()` khỏi FormRequest (dùng lang file), xuất Excel theo
+  4 mắt xích `ExportColumnRegistry` + `DynamicExport`; plan Phase 5/6 cập nhật theo skill mới.
+  Phase 1-5 XONG. Màn danh sách đã verify trên trình duyệt (lọc, badge, xuất Excel, menu Bán hàng).
+  ⚠️ Ô lọc đo ra 32px trong khi skill list-page ghi 36px — màn khuôn `product-natures` cũng 32px
+  trên cùng bản `gop_db`, chờ user quyết có sửa component dùng chung không.
+  Phase 6 + 6b XONG, đã verify TRỌN LUỒNG trên trình duyệt (lưu, 2 nấc duyệt, in, lịch sử 2 nơi,
+  xóa) — console 0 lỗi, dọn sạch dữ liệu test. 5 lỗi thật tự phát hiện đã sửa (chi tiết ở plan.md).
+  ⚠️ Lịch sử dùng bảng CHUNG `catalog_histories` + trait `LogsCatalogHistory` ⇒ KHÔNG còn migration.
+  Phase 8 XONG: đối chiếu HRM vs ERP trên 149 nhân viên x 2 preset → 292/298 khớp; 6 chỗ lệch đều
+  do cơ chế dùng chung (5 Super admin - chủ ý; 1 do trait cộng phòng của chính mình - chờ quyết).
+  Tìm ra + sửa 1 lỗi: preset 'chờ tôi duyệt' không lọc phòng ban cho TP. Checklist grep sạch 8/8.
+  2/3 điểm treo đã chốt (23/09): ô lọc 32px là TÀI LIỆU sai → đã sửa 3 file skill theo code;
+  trait cộng phòng của chính mình → GIỮ NGUYÊN (quy ước chung phân hệ Tài chính), đã ghi docblock+spec.
+  Còn lại: cột NCC trống ở local do dump thiếu `customers` → nghiệm thu trên cổng dev rồi merge gop_db.
+  Spec: docs/superpowers/specs/gop-db/2026-09-22-buy-service-request-design.md | Tóm tắt: .plans/gop-db/buy-service-request/design.md
+
+- finance-product-import-request → @junfoke → .plans/gop-db/finance-product-import-request/plan.md
+  Chuyển Hoàn thành: 2026-10-03 — xong Phase 1-16 (lần cuối 22/09). Còn: user review trên dev + đóng 16 issue Redmine; mục [ ] lẻ xem plan.md.
+  Trạng thái: **XONG PHASE 1-15** (2026-08-21) — gồm 16 bug tester redmine 11074-11089, các đợt phản hồi bổ sung,
+  Phase 15 bỏ tab preset + 2 nút mở sang ERP (màn Kho chưa port).
+  Port màn "Phiếu Yêu cầu nhập hàng" sang Tài chính; 8 loại phiếu + 4 luồng duyệt, 0 migration.
+  Còn nợ: `V2Footer` dùng chung vẫn để nút In xanh + chữ "Không duyệt" (lệch chuẩn, ảnh hưởng mọi màn).
+  Bước tiếp: user review trên dev rồi đóng 16 issue Redmine.
+  Chi tiết + gotcha: plan.md
 
 - finance-accounting-prepick-cancel → @junfoke → .plans/gop-db/finance-accounting-prepick-cancel/plan.md
   Chuyển Hoàn thành: 2026-10-02 (dọn mục Đang làm) — code đã vào nhánh chung; mục [ ] lẻ còn lại xem plan.md.
