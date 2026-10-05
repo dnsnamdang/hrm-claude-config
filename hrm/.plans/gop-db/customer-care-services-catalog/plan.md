@@ -1426,3 +1426,12 @@ Blocked:
 - [x] Parse-check script 33 file thay đổi: 0 lỗi
 - [x] Bổ sung 2 màn sót (lần rà đầu chỉ bắt `code`, bỏ qua `?.open(` + `identify_number` + biến
       `historyCustomerName`): `finance/accounts` (`số hiệu - tên` → `tên`), `assign/customers` (`mã - tên` → `tên`)
+
+## Fix — Màn chi tiết không hiện dung lượng file đính kèm (2026-10-02) @khoipv
+Nguyên nhân: `services.attachments` chỉ lưu URL; `V2BaseAttachmentSection` chỉ biết dung lượng file
+vừa upload trong phiên (`sizeByUrl`) → file đã lưu hiện `—`. Fix theo khuôn Finance (`/{id}/attachment-sizes`).
+- [x] BE: `GET customer-care/services/{service}/attachment-sizes` → `BillPaymentAttachmentService::sizes()`
+- [x] FE: `V2BaseAttachmentSection` thêm prop tuỳ chọn `sizesUrl` (rỗng = như cũ) → tự gọi lấy dung lượng
+- [x] FE: `ServiceFormComponent` truyền `sizes-url` khi có `serviceId` (xem + sửa)
+- [x] Verify: compile 2 file .vue 0 lỗi; gọi thử endpoint gói 247 qua HTTP kernel → 200 `{url: 613}`
+- [ ] User mở màn chi tiết/sửa gói trên trình duyệt kiểm tra cột Dung lượng (chưa tự test UI)

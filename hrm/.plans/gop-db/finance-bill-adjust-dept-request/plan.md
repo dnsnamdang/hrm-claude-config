@@ -2482,3 +2482,61 @@ bút toán TK 3311 với NCC; cột Ngày lập = `created_at`. HRM đang lấy 
 - [x] Verify: tinker đếm NCC 29TPHPTH-1 theo logic ERP = logic mới, `00000271` ra ngày 08/08/2025
   → Kết quả tinker DB local: 43 NCC, logic mới khớp vòng lặp ERP 43/43 (NCC 34 ETEK GREEN: 364 = 364, bản cũ 365);
     `00000271` ra Ngày lập 08/08/2025. Màn Đề nghị thu tiền NCC (không gửi `usage`) giữ nguyên số cũ.
+
+## Phase 47 — Popup chọn hợp đồng hiện HĐ của khách bên kia (2026-10-03) @khoipv
+Triệu chứng: chọn HĐ cho KH "điều chỉnh đến" xong, bấm mở popup HĐ của KH "điều chỉnh từ" → popup hiện
+HĐ của KH "đến"; đóng mở lại mới đúng.
+Nguyên nhân: `openContractModal()` gán `pickContext` rồi `$bvModal.show()` NGAY trong cùng tick. Prop
+`objectId` của `ContractSearchModal` chỉ cập nhật ở lượt render sau, nên `@show → loadData()` gọi API
+với id CŨ (KH bên kia). Watcher `objectId` có xoá `rows` nhưng response cũ về sau lại ghi đè.
+- [x] FE: `BillAdjustDeptRequestForm::openContractModal()` mở popup trong `$nextTick` (sửa tại màn, không đụng popup dùng chung)
+- [ ] Verify: user mở trình duyệt thử lại luồng từ → đến → từ (KH và NCC)
+
+## Phase 48 — Đổi trạng thái do phiếu kế toán không vào lịch sử (2026-10-03) @khoipv
+Triệu chứng: phiếu chuyển sang "Đã tạo phiếu kế toán" / "Đã duyệt phiếu kế toán" nhưng tab Lịch sử không có dòng nào.
+Nguyên nhân: `BillAdjustDeptSourceService::onBillCreated/onBillApproved/onBillDeleted` đổi `status` phiếu nguồn
+thẳng (query builder / save) — không đi qua `LogsCatalogHistory` như `changeStatus()` của màn này.
+- [x] BE: `BillAdjustDeptRequestWriteService::logStatusFromAccounting()` — ghi "Thay đổi trạng thái" (bỏ qua nếu trạng thái không đổi), ghi chú số phiếu kế toán
+- [x] BE: gọi ở 3 chỗ — lưu phiếu KT (→ Đã tạo), duyệt (→ Đã duyệt), xoá phiếu KT (→ Chờ tạo phiếu kế toán)
+- [ ] Verify: user tạo / duyệt / xoá phiếu kế toán từ 1 phiếu yêu cầu, xem tab Lịch sử
+Ghi chú: thay đổi trạng thái cũ (trước bản sửa) và thay đổi làm từ cổng ERP vẫn không có lịch sử — không bù dữ liệu.
+
+## Phase 49 — Ô Diễn giải full bề ngang (2026-10-03) @khoipv
+- [x] FE: `BillAdjustDeptRequestForm.vue` ô Diễn giải `col-md-6` → `col-md-12` (áp dụng cả tạo / sửa / chi tiết vì dùng chung form)
+
+## Phase 50 — Phân trang popup Chọn đơn hàng/hợp đồng giống popup Chọn phiếu xác nhận bảo hành (2026-10-03) @khoipv
+User chốt áp dụng cho CẢ 5 màn dùng chung `ContractSearchModal` (Đề nghị thu tiền, Phiếu báo có, Đề nghị thanh toán, YC hạch toán bổ sung, YC điều chỉnh công nợ).
+- [x] FE: thay `V2BasePagination` bằng khối phân trang khuôn `V2BaseDataTable` (RecordSearchModal): "Hiển thị x–y / n" · "Số dòng/trang" 20/50/100 · `b-pagination`; mặc định 20 dòng
+
+## Phase 51 — Thu nhỏ popup Từ chối (2026-10-03) @khoipv
+- [x] FE: `RejectModal.vue` thêm `size="md"` (V2BaseModal mặc định `lg`) — đồng bộ các popup Từ chối khác của Finance
+
+## Phase 52 — Lịch sử: định dạng tiền/tỷ giá khớp màn hình (2026-10-03) @khoipv
+Triệu chứng (phiếu NCC USD): Tỷ giá log "1.0000 → 26180.0000" (màn: 26,180); Số tiền "9,001 / 999" (màn: 9,001.10 / 998.90).
+Nguyên nhân: `exchange_rate` không qua `catalogDisplay`; `detailRows/detailItemRows` dùng `number_format()` 0 số lẻ.
+- [x] BE: helper `moneyText()` — ngoại tệ 2 số lẻ cố định, VNĐ 0–2 số lẻ (khớp `formatMoney` của AdjustDetailTable); áp cho Số tiền 2 vế; Số dư DB lưu VNĐ nên giữ kiểu VNĐ
+- [x] BE: `catalogDisplay('exchange_rate')` → có dấu ngăn nghìn, bỏ số 0 thừa (26,180); `total_amount` dùng cùng helper (VNĐ)
+Ghi chú: log cũ đã lưu giữ nguyên định dạng cũ (không sửa dữ liệu log).
+
+## Phase 52 — Màn sửa: bỏ khối "Lý do từ chối" + badge trạng thái góc phải (2026-10-03) @khoipv
+- [x] FE: `BillAdjustDeptRequestForm.vue` bỏ khối alert "Lý do từ chối" (chỉ hiện ở tạo/sửa) và `V2BaseBadge` trạng thái ở header; dọn import + computed `statusName`/`statusVariant`
+- Màn Chi tiết giữ nguyên ô "Ghi chú không duyệt" (không đụng); dữ liệu `note_reject` không đổi
+
+## Phase 53 — Excel danh sách: xuống dòng mọi ô + "nghệ" ra "nghẽ" (2026-10-03) @khoipv
+- [x] BE: `BillAdjustDeptRequestListExport` bật wrap + canh trên ở STYLE MẶC ĐỊNH workbook (O(1), không style từng ô) → mọi cột chữ dài tự xuống dòng; 5.000 dòng dựng file 2,7s
+- [x] Verify bằng Excel thật (COM → PDF): Phòng ban / Người tạo / Người duyệt xuống dòng, dòng tự giãn cao; số tiền vẫn ô số `#,##0`
+- [ ] "Phòng kỹ thuật công nghệ" ra "nghẽ": DB (`departments` 51, 90) + file xlsx đều đúng byte `Ệ` (e1bb86, NFC), Excel máy dev đọc ra "NGHỆ" → chưa tái hiện, chờ user gửi ảnh chụp + phần mềm mở file
+
+## Phase 53 — Excel: dấu tiếng Việt tách rời chữ (cột Phòng ban…) (2026-10-03) @khoipv
+Nguyên nhân: một phần tên trong DB lưu Unicode TỔ HỢP (NFD, vd departments 106-110); trình duyệt tự ghép dấu, Excel vẽ dấu rời.
+- [x] BE: trait mới `Modules/Finance/Exports/Concerns/NormalizesUnicodeText` — đưa mọi chuỗi về NFC (không sửa DB)
+- [x] BE: gắn vào `BillAdjustDeptRequestListExport` + `BillAdjustDeptRequestExport` (`forData()`)
+- [ ] Đề xuất (chờ user): áp cho các export khác — lỗi cùng gốc dữ liệu
+- [x] Lần 2 (user báo vẫn lỗi): dữ liệu "PHÒNG KỸ THUẬT CÔNG NGHỆ" ĐÃ đúng NFC (Ệ = U+1EC6) — thủ phạm là font Calibri vẽ chữ hoa 2 dấu chồng bị méo.
+  Thêm `applyVietnameseFont()` vào trait, gọi ở `BeforeSheet` của 2 export → font mặc định workbook = Times New Roman (như các export khác của dự án).
+  Kiểm: sinh thử 2 file, styles.xml 100% Times New Roman.
+
+## Phase 54 — Popup Chọn hợp đồng mua: sort Số HĐ + Ngày lập (2026-10-03) @khoipv
+- [x] BE: `BillIncomeRequestService::paginateContractUnion()` nhận `sort_by` (`code` | `createdAt`) + `sort_desc`, whitelist; Ngày lập sắp theo `COALESCE(sign_date, created_at)` = giá trị đang hiện; không gửi thì giữ mới nhất lên đầu; thêm `object_id` làm tiêu chí phụ
+- [x] FE: `ContractSearchModal` 2 tiêu đề bấm được (khuôn `BorrowPickerModal`), CHỈ ở popup hợp đồng mua (NCC, không phải chế độ thưởng); mở lại / Làm mới thì xoá sort
+- [x] Verify: NCC 34 — 2 nhánh (màn này 364 HĐ, Đề nghị thu tiền 365 HĐ) × 4 kiểu sort đúng thứ tự; `sort_by` lạ bị bỏ qua

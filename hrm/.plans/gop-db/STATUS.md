@@ -1015,6 +1015,9 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-adjust-dept-request (fix 03/10, Phase 47) → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Hoàn thành: 2026-10-05 — đã fix lỗi popup chọn hợp đồng hiện HĐ của khách bên kia (popup mở trước khi prop objectId kịp cập nhật).
+
 - finance-bill-adjust-dept-request (đợt fix 30/09, Phase 43-46) → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
   Hoàn thành: 2026-10-02 — xong đợt fix 30/09. Lỗi "Phải lớn hơn 0" ở ô Số tiền tự ẩn realtime; câu lệch tổng tiền dùng V2BaseError; link mã HĐ trong popup Chọn nhanh + Chọn hợp đồng (ContractSearchModal dùng chung 5 màn); link Số phiếu báo có ở danh sách; Excel chi tiết phiếu sửa bề rộng cột, dòng ký và logo. Không migration.
 
