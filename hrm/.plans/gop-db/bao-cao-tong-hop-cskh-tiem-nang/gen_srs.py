@@ -10,9 +10,12 @@ docs/superpowers/specs/gop-db/2026-10-04-bao-cao-tong-hop-cskh-tiem-nang-design.
 pages/assign/report/potential-customer-tracking/**). Nội dung icon ⓘ chép NGUYÊN VĂN từ code FE.
 Ảnh chụp thật ở `bao-cao-tong-hop-cskh_shots/` (1440×900, script chụp: scratchpad shoot.js).
 
-Bổ sung theo yêu cầu user 05/10/2026: với các màn SỐ LIỆU (báo cáo chính, popup danh sách chi tiết) thêm mục
-2.x.6 "Cách lấy dữ liệu và giải thích chỉ tiêu" — bảng 4 cột STT | Chỉ tiêu / Cột | Cách lấy dữ liệu |
-Nội dung icon ⓘ. Đặt SAU 5 mục con cố định của form để không xáo thứ tự chuẩn.
+Form 2026-09-24 (sơ đồ tổng quan đơn giản, sơ đồ từng chức năng chỉ actor + 1 use case, icon trên dòng
+Menu:) + 2 quy định màn báo cáo (user 05/10/2026):
+  - "Cách lấy dữ liệu và giải thích chỉ tiêu" (d.data_table) cho mọi chức năng hiện số liệu;
+  - số liệu bấm mở popup: "Danh sách popup mở từ số liệu" (d.popup_table) ở báo cáo chính + mỗi loại popup
+    có "Mục đích thiết kế popup" và "Các biến thể theo con số bấm" (d.popup_variant_table).
+Icon menu cắt từ giao diện thật: `bao-cao-tong-hop-cskh_shots/icon_*.png` (script scratchpad shoot_icons.js).
 """
 import os
 import sys
@@ -55,6 +58,11 @@ def shot(name):
 
 d = SrsDoc(out=OUT, menu=MENU, route="/assign/report/potential-customer-tracking",
            full_url="https://<host-hrm>/assign/report/potential-customer-tracking", img_prefix="pct_")
+d.set_menu_icons({k: shot("icon_%s.png" % v) for k, v in {
+    "Phân hệ CSKH trước bán": "phanhe", "Báo cáo": "baocao", "Báo cáo thị trường": "nhom",
+    "Báo cáo tổng hợp CSKH tiềm năng": "man", "Cài đặt bộ lọc": "caidat", "In danh sách": "in",
+    "Xuất Excel": "xuat",
+}.items()})
 
 # ================================================================= TRANG ĐẦU
 d.title_block(SCREEN)
@@ -73,7 +81,9 @@ d.bullets([
     "(TKT) nào, với khách hàng nào, lần chăm sóc gần nhất là khi nào, nhu cầu nào sắp hết hạn theo dõi.",
     "Là căn cứ nghiệm thu chức năng, phạm vi dữ liệu theo 3 cấp quyền và cách tính từng con số.",
     "Mô tả rõ cách lấy dữ liệu của từng chỉ tiêu, từng cột số liệu và nội dung icon ⓘ giải thích trên giao "
-    "diện (mục 2.1.6 và 2.5.6), để người dùng và người kiểm thử đối chiếu được số liệu.",
+    "diện (mục 2.1.6 và 2.5.7), để người dùng và người kiểm thử đối chiếu được số liệu.",
+    "Đặc tả mọi popup mở ra khi bấm vào số liệu: bấm ở đâu ra popup nào (mục 2.1.7), mục đích thiết kế và các "
+    "biến thể của từng loại popup (mục 2.5, 2.6, 2.7).",
 ])
 
 d.h2("2 Thuật ngữ và viết tắt")
@@ -132,12 +142,11 @@ d.table(["Chức năng", "V1", "V2", "V3", "Không có quyền nào"], [
     ("FR-03 Cài đặt bộ lọc", "✅", "✅", "✅", "✅"),
     ("FR-04 Chọn cấp xem và bung / thu gọn dòng", "✅", "✅", "✅", "✅"),
     ("FR-05 Xem danh sách chi tiết", "✅", "✅", "✅", "✅ (việc của mình)"),
-    ("FR-06 Lọc và sắp xếp trong danh sách chi tiết", "✅", "✅", "✅", "✅"),
-    ("FR-07 Xem chi tiết meeting", "✅", "✅ (Sales ở công ty hiện tại)", "✅ (Sales thuộc phòng được quản lý)",
+    ("FR-06 Xem chi tiết meeting", "✅", "✅ (Sales ở công ty hiện tại)", "✅ (Sales thuộc phòng được quản lý)",
      "✅ (meeting mình chủ trì / tham dự)"),
-    ("FR-08 Xem lịch sử meeting với khách hàng", "✅", "✅", "✅", "✅"),
-    ("FR-09 In danh sách", "✅", "✅", "✅", "✅ (việc của mình)"),
-    ("FR-10 Xuất Excel", "✅", "✅", "✅", "✅ (việc của mình)"),
+    ("FR-07 Xem lịch sử meeting với khách hàng", "✅", "✅", "✅", "✅"),
+    ("FR-08 In danh sách", "✅", "✅", "✅", "✅ (việc của mình)"),
+    ("FR-09 Xuất Excel", "✅", "✅", "✅", "✅ (việc của mình)"),
 ], widths=[2.2, 0.9, 1.0, 1.0, 0.9])
 
 # ================================================================= PHẦN 3
@@ -145,17 +154,16 @@ d.h1("Phần 3. Đặc tả chi tiết theo từng chức năng")
 
 d.h2("1 Sơ đồ UML tổng quan")
 d.overview_figure2(
-    [(ACT_QL, [0, 1]), (ACT_SALES, [0, 1])],
+    [(ACT_QL, [0, 1, 2]), (ACT_SALES, [0, 1, 2])],
     [("FR-01", "Xem báo cáo tổng hợp CSKH tiềm năng", "view"),
-     ("FR-05", "Xem danh sách chi tiết", "view")],
+     ("FR-08", "In danh sách", "io"),
+     ("FR-09", "Xuất Excel", "io")],
     [("FR-02", "Tìm kiếm và lọc báo cáo", "view", "extend", [0], None),
      ("FR-03", "Cài đặt bộ lọc", "view", "extend", [0], None),
      ("FR-04", "Chọn cấp xem và bung / thu gọn dòng", "view", "extend", [0], None),
-     ("FR-08", "Xem lịch sử meeting với khách hàng", "view", "extend", [0], None),
-     ("FR-06", "Lọc và sắp xếp trong danh sách chi tiết", "view", "extend", [1], None),
-     ("FR-07", "Xem chi tiết meeting", "view", "extend", [0, 1], None),
-     ("FR-09", "In danh sách", "io", "extend", [0, 1], None),
-     ("FR-10", "Xuất Excel", "io", "extend", [0, 1], None)],
+     ("FR-05", "Xem danh sách chi tiết (popup)", "view", "extend", [0], None),
+     ("FR-06", "Xem chi tiết meeting (panel)", "view", "extend", [0], None),
+     ("FR-07", "Xem lịch sử meeting với khách hàng (popup)", "view", "extend", [0], None)],
     "Sơ đồ Use Case tổng quan màn Báo cáo tổng hợp CSKH tiềm năng")
 
 d.h2("2 Đặc tả chi tiết từng chức năng")
@@ -213,7 +221,7 @@ d.ui_table([
      "Hạn theo dõi · Lần chăm sóc gần nhất · Nguồn. Cột Loại, Giá trị, Mốc thời gian, Hạn, Lần chăm sóc, Nguồn "
      "có icon ⓘ ở tiêu đề."),
     ("Ô chọn cấp xem (trong tiêu đề cột Nội dung theo dõi)", "Dropdown", "Enable", "Danh sách 4 giá trị",
-     "Đến Sales", "Chỉ Phòng ban / Đến Sales / Đến Khách hàng / Tất cả cấp (đến Nhu cầu / Dự án) — FR-04."),
+     "Đến Sales", "Chỉ Phòng ban / Đến Sales / Đến Khách hàng / Tất cả cấp (đến Nhu cầu / Dự án) — mục 2.4."),
     ("Dòng TỔNG", "Label", "Read-only", "≥ 0", "Theo dữ liệu",
      "Nền cam, tính trên toàn bộ dữ liệu đã lọc (không theo trang); có icon ⓘ."),
     ("Dòng Phòng (I, II…) / Sales (1, 2…) / Khách hàng (1.1…)", "Table/Grid", "Read-only", "–", "Theo dữ liệu",
@@ -228,8 +236,8 @@ d.ui_table([
     ("Ô Hạn theo dõi", "Text", "Read-only", "dd/mm/yyyy", "Theo dữ liệu",
      "Ngày hạn + “còn N ngày”; vào vùng cảnh báo thì chữ màu cam; không có hạn ghi “Không có hạn”."),
     ("Ô Lần chăm sóc gần nhất (dòng khách hàng)", "Text", "Read-only", "dd/mm/yyyy", "Theo dữ liệu",
-     "Ngày bấm được (mở FR-08) + “N ngày”; chưa có meeting ghi “Chưa có meeting”."),
-    ("Ô Nguồn", "Text", "Read-only", "–", "Theo dữ liệu", "Mã meeting, bấm mở panel chi tiết meeting (FR-07)."),
+     "Ngày bấm được (mở popup lịch sử — mục 2.7) + “N ngày”; chưa có meeting ghi “Chưa có meeting”."),
+    ("Ô Nguồn", "Text", "Read-only", "–", "Theo dữ liệu", "Mã meeting, bấm mở panel chi tiết meeting (mục 2.6)."),
     ("Thanh cuộn ngang trên / dưới", "Scrollbar", "Hiển thị", "–", "Theo độ rộng",
      "Chỉ hiện khi bảng rộng hơn khung; hai thanh cuộn đồng bộ."),
     ("Phân trang", "Pagination", "Enable", "10 / 20 / 50 / 100", "20 phòng / trang",
@@ -245,10 +253,10 @@ d.event_table([
      "During:\n– Nạp danh mục ô lọc (chỉ giá trị có trong phạm vi) và dữ liệu báo cáo, cấp xem Đến Sales.\n"
      "After:\n– Hiển thị dòng tóm tắt, hai khối tổng hợp, dòng TỔNG và trang 1 của bảng."),
     ("Bấm một con số khác 0 (khối tổng hợp / ô Loại)", "Click",
-     "After:\n– Mở popup danh sách chi tiết đúng phạm vi dòng và đúng chỉ tiêu vừa bấm (FR-05)."),
+     "After:\n– Mở popup danh sách chi tiết đúng phạm vi dòng và đúng chỉ tiêu vừa bấm (mục 2.5; bảng vị trí bấm: 2.1.7)."),
     ("Bấm mã dự án", "Click", "After:\n– Mở màn chi tiết dự án TKT ở tab mới."),
-    ("Bấm mã meeting ở cột Nguồn", "Click", "After:\n– Mở panel chi tiết meeting (FR-07)."),
-    ("Bấm ngày ở cột Lần chăm sóc gần nhất", "Click", "After:\n– Mở popup lịch sử meeting với khách hàng (FR-08)."),
+    ("Bấm mã meeting ở cột Nguồn", "Click", "After:\n– Mở panel chi tiết meeting (mục 2.6)."),
+    ("Bấm ngày ở cột Lần chăm sóc gần nhất", "Click", "After:\n– Mở popup lịch sử meeting với khách hàng (mục 2.7)."),
     ("Bấm số trang / đổi số dòng mỗi trang", "Click",
      "After:\n– Tải trang mới; dòng tóm tắt, khối tổng hợp và dòng TỔNG giữ nguyên. Đổi số dòng → về trang 1."),
     ("Bấm Thu gọn / Mở rộng", "Click", "After:\n– Ẩn hoặc hiện hai khối tổng hợp, đổi chữ trên nút."),
@@ -335,6 +343,32 @@ d.data_table([
      "NGUỒN • Meeting thu thập nhu cầu • Với dự án TKT: meeting của nhu cầu gốc (nếu dự án lập từ nhu cầu)"),
 ])
 
+d.p("2.1.7 Danh sách popup mở từ số liệu")
+d.p("Mọi vị trí bấm được trên báo cáo và cửa sổ mở ra. Đặc tả chi tiết từng loại popup ở mục được trỏ tới.")
+d.popup_table([
+    ("Số ở ô Nhu cầu đang theo dõi / ô Sắp hết hạn theo dõi (khối tổng hợp)", "Danh sách chi tiết (mục 2.5)",
+     "Những nhu cầu nào đang theo dõi / sắp tự đóng, của khách nào, Sales nào — để nhắc chăm sóc hoặc lập dự án kịp",
+     "Nhu cầu của tập dữ liệu (ô Sắp hết hạn: chỉ nhu cầu sắp hết hạn); số dòng = số trên ô"),
+    ("Số ở ô Dự án đang triển khai / ô của một tiến trình (khối tổng hợp)", "Danh sách chi tiết (mục 2.5)",
+     "Những dự án nào đang ở giai đoạn nào, giá trị bao nhiêu, ai phụ trách",
+     "Dự án của tập dữ liệu (ô tiến trình: chỉ dự án ở tiến trình đó); số dòng = số trên ô"),
+    ("Số NC / số DA ở dòng TỔNG", "Danh sách chi tiết (mục 2.5)",
+     "Toàn bộ nhu cầu hoặc toàn bộ dự án đứng sau dòng TỔNG, dạng phẳng để lọc / in / xuất",
+     "Nhu cầu hoặc dự án của tập dữ liệu; số dòng = số đã bấm"),
+    ("Số NC / số DA ở dòng Phòng / Sales / Khách hàng", "Danh sách chi tiết (mục 2.5)",
+     "Phòng / Sales / khách hàng đó đang theo dõi những việc nào",
+     "Thu hẹp theo phạm vi dòng (biến thể ở mục 2.5.6); số dòng = số đã bấm"),
+    ("Số 0 ở bất kỳ ô nào", "Không mở gì — số 0 hiện xám, không bấm được", "Tránh mở popup rỗng", "–"),
+    ("Ngày ở cột Lần chăm sóc gần nhất (dòng khách hàng)", "Lịch sử meeting với khách hàng (mục 2.7)",
+     "Khách được chăm sóc đều đặn không, những lần nào, ai chủ trì",
+     "Meeting Hoàn thành của khách, cũ → mới"),
+    ("Mã meeting ở cột Nguồn (bảng báo cáo hoặc popup danh sách chi tiết)", "Chi tiết meeting — panel bên phải "
+     "(mục 2.6)", "Nhu cầu / dự án bắt nguồn từ buổi họp nào, kết luận gì",
+     "Nội dung meeting + khối thông tin của chính dòng đã bấm"),
+    ("Mã dự án (dòng dự án ở bảng hoặc popup)", "Không phải popup — mở màn chi tiết dự án TKT ở tab mới",
+     "Xem đầy đủ hồ sơ dự án mà không mất báo cáo đang xem", "Màn chi tiết dự án TKT"),
+])
+
 # ----------------------------------------------------------------- 2.2
 d.h3("2.2 Tìm kiếm và lọc báo cáo")
 d.p("2.2.1 Giới thiệu")
@@ -413,9 +447,8 @@ d.data_table([
 # ----------------------------------------------------------------- 2.3
 d.h3("2.3 Cài đặt bộ lọc")
 d.p("2.3.1 Biểu đồ Usecase")
-d.uc_figure("FR-03", "Cài đặt bộ lọc", "view",
-            [("include", "Lưu cấu hình theo từng người dùng"), ("extend", "Khôi phục cấu hình mặc định")],
-            actor="Người dùng đã đăng nhập", caption="Biểu đồ Use Case — FR-03 Cài đặt bộ lọc")
+d.uc_figure("FR-03", "Cài đặt bộ lọc", "view", actor="Người dùng đã đăng nhập",
+            caption="Biểu đồ Use Case — FR-03 Cài đặt bộ lọc")
 d.p("2.3.2 Giới thiệu")
 d.rule_ref("- Cấu hình bộ lọc. Chỉ bổ sung danh sách tiêu chí lọc riêng của Báo cáo tổng hợp CSKH tiềm năng.",
            anchor="excel")
@@ -494,61 +527,107 @@ d.event_table([
 # ----------------------------------------------------------------- 2.5
 d.h3("2.5 Xem danh sách chi tiết")
 d.p("2.5.1 Giới thiệu")
-d.rule_ref("- Màn Danh sách, Sắp xếp dữ liệu bảng và Phân trang. Chỉ bổ sung các quy tắc riêng của popup danh "
-           "sách chi tiết.", anchor="list")
+d.rule_ref("- Màn Danh sách, Kịch bản tìm kiếm, Bộ lọc, Sắp xếp dữ liệu bảng và Phân trang. Chỉ bổ sung các quy "
+           "tắc riêng của popup danh sách chi tiết.", anchor="list")
 d.intro_table(
     ten="Xem danh sách chi tiết",
     mota="Popup liệt kê phẳng từng nhu cầu / dự án đứng sau con số vừa bấm, cùng phạm vi quyền và bộ lọc của báo "
-         "cáo đang hiển thị.",
+         "cáo đang hiển thị; tìm, lọc, sắp xếp ngay trong popup trên tập dòng đã tải.",
     tacnhan=TACNHAN,
-    dieukien="Báo cáo đã tải xong; người dùng bấm một con số khác 0.",
-    chinh="1. Người dùng bấm một con số (khối tổng hợp, dòng TỔNG, dòng Phòng / Sales / Khách hàng).\n"
-          "2. Hệ thống mở popup, tải toàn bộ dòng của con số đó.\n"
-          "3. Popup hiển thị danh sách, mặc định 20 dòng / trang.",
-    phu="• Bấm số của một tiến trình → popup chỉ gồm dự án ở tiến trình đó, ẩn ô lọc Tiến trình.\n"
-        "• Bấm số nhu cầu → ẩn ô lọc Loại và Tiến trình dự án.\n"
-        "• Bấm số ở dòng Phòng / Sales → ẩn ô lọc Sales; nhóm “Chưa xác định” vẫn mở đúng tập của nhóm đó.\n"
-        "• Mỗi lần mở là trạng thái sạch (không giữ lọc / sắp / trang của lần trước).",
+    dieukien="Báo cáo đã tải xong; người dùng bấm một con số khác 0 (danh sách vị trí bấm: mục 2.1.7).",
+    chinh="1. Người dùng bấm một con số ở khối tổng hợp, dòng TỔNG hoặc dòng Phòng / Sales / Khách hàng.\n"
+          "2. Hệ thống mở popup, tải TOÀN BỘ dòng của con số đó.\n"
+          "3. Popup hiển thị danh sách, mặc định 20 dòng / trang.\n"
+          "4. Người dùng gõ ô tìm / chọn ô lọc → danh sách lọc ngay, về trang 1; bấm tiêu đề cột → sắp tăng / giảm.",
+    phu="• Ô lọc đã bị con số cố định thì ẩn — từng trường hợp ở mục 2.5.6.\n"
+        "• Nhóm “Chưa xác định phòng / Sales” vẫn mở đúng tập của nhóm đó (không rơi thành toàn bộ dữ liệu).\n"
+        "• Ô tìm không phân biệt hoa thường và dấu, tìm trong: khách hàng (tên, mã), mã / tên dự án, mã meeting, "
+        "Sales, nội dung.\n"
+        "• Có ô lọc đang áp → hiện nút Xoá lọc (icon làm mới). Ô trống luôn xếp cuối khi sắp xếp.\n"
+        "• Mỗi lần mở là trạng thái sạch (không giữ tìm / lọc / sắp / trang của lần trước).",
     dacbiet=None)
 d.p("2.5.2 Layout màn hình")
 d.layout(menu=MENU, modal="Danh sách chi tiết", shot=shot("05-popup-chi-tiet.png"),
          shot_caption="Popup danh sách chi tiết mở từ số nhu cầu của dòng TỔNG")
 d.p("2.5.3 Mô tả chi tiết giao diện")
 d.ui_table([
-    ("Đầu popup", "Label", "Hiển thị", "–", "Theo con số đã bấm",
-     "“Bạn đang xem: <phạm vi> · <loại>” + dòng “a nhu cầu · b dự án TKT · Đang theo dõi tại <ngày giờ>”."),
-    ("Nút Phóng to / ×", "Icon Button", "Enable", "–", "Hiển thị", "Phóng toàn màn hình / đóng popup."),
-    ("Ô tìm", "Textbox", "Enable", "0–255 ký tự", "Trống", "Tìm theo khách hàng / dự án / meeting / Sales (FR-06)."),
-    ("Ô lọc Loại · Sales phụ trách · Tiến trình dự án", "Dropdown", "Enable / Ẩn", "Danh sách", "Trống",
-     "Danh mục lấy từ chính các dòng đang xem; ô đã bị con số cố định thì ẩn (FR-06)."),
-    ("Dòng đếm “x / y dòng”", "Label", "Hiển thị", "≥ 0", "Theo dữ liệu", "x = sau lọc trong popup, y = tổng của con số."),
-    ("Bảng danh sách", "Table/Grid", "Read-only", "–", "Theo dữ liệu",
+    ("Đầu popup", "Label", "Hiển thị", "–", "–", "Theo con số đã bấm",
+     "“Bạn đang xem: <tiêu đề theo biến thể>” (mục 2.5.6) + dòng “a nhu cầu · b dự án TKT · Đang theo dõi tại "
+     "<ngày giờ>”."),
+    ("Nút Phóng to / ×", "Icon Button", "Enable", "–", "–", "Hiển thị", "Phóng toàn màn hình / đóng popup."),
+    ("Ô tìm", "Textbox", "Enable", "0–255 ký tự", "Không", "Trống",
+     "Placeholder “Tìm khách hàng / dự án / meeting / Sales…”."),
+    ("Ô Loại", "Dropdown", "Enable / Ẩn", "Danh sách", "Không", "Trống",
+     "Nhu cầu / Dự án TKT. Mọi con số trên báo cáo đều cố định loại nên ô này luôn ẩn khi mở từ báo cáo."),
+    ("Ô Sales phụ trách", "Dropdown", "Enable / Ẩn", "Danh sách", "Không", "Trống",
+     "Danh sách Sales có trong popup; ẩn khi bấm số ở dòng Sales / Khách hàng."),
+    ("Ô Tiến trình dự án", "Dropdown", "Enable / Ẩn", "Danh sách", "Không", "Trống",
+     "Ẩn khi con số là nhu cầu hoặc là một tiến trình."),
+    ("Nút Xoá lọc", "Icon Button", "Enable / Ẩn", "–", "–", "Ẩn", "Chỉ hiện khi có ô lọc đang áp."),
+    ("Dòng đếm “x / y dòng”", "Label", "Hiển thị", "≥ 0", "–", "Theo dữ liệu",
+     "x = sau tìm / lọc trong popup, y = tổng dòng của con số đã bấm."),
+    ("Bảng danh sách", "Table/Grid", "Read-only", "–", "–", "Theo dữ liệu",
      "STT · Loại · Nội dung · Khách hàng · Sales phụ trách · Trạng thái · Giá trị dự kiến · Mốc thời gian · "
-     "Hạn theo dõi · Nguồn. Cột có mũi tên sắp xếp."),
-    ("Phân trang", "Pagination", "Enable", "Theo lựa chọn", "20 dòng / trang", "“Hiển thị a–b / N dòng”."),
-    ("Nút In danh sách · Xuất Excel danh sách · Đóng", "Button", "Enable", "–", "Hiển thị", "FR-09, FR-10; Đóng tắt popup."),
-], required=False)
+     "Hạn theo dõi · Nguồn. Mã dự án là liên kết mở tab mới; mã meeting mở panel (mục 2.6)."),
+    ("Tiêu đề cột sắp xếp", "Icon Button", "Enable", "–", "–", "Chưa sắp", "Bấm lần lượt: tăng → giảm dần."),
+    ("Phân trang", "Pagination", "Enable", "Theo lựa chọn", "–", "20 dòng / trang", "“Hiển thị a–b / N dòng”."),
+    ("Nút In danh sách · Xuất Excel danh sách · Đóng", "Button", "Enable", "–", "–", "Hiển thị",
+     "In / Xuất Excel theo phạm vi + bộ lọc của popup (mục 2.8, 2.9); Đóng tắt popup."),
+])
 d.p("2.5.4 Danh sách event và xử lý event")
 d.event_table([
     ("Mở popup", "System",
-     "During:\n– Tải toàn bộ dòng của con số đã bấm theo bộ lọc của báo cáo đang hiển thị (tải lặp từng lượt 500 dòng).\n"
-     "After:\n– Hiển thị trang 1."),
+     "During:\n– Tải toàn bộ dòng của con số đã bấm theo bộ lọc của báo cáo đang hiển thị (tải lặp từng lượt 500 "
+     "dòng cho tới hết).\n"
+     "After:\n– Ẩn các ô lọc đã bị con số cố định, hiển thị trang 1."),
+    ("Gõ ô tìm / chọn ô lọc", "Change", "After:\n– Lọc tại chỗ, về trang 1, cập nhật dòng đếm x / y."),
+    ("Bấm tiêu đề cột", "Click", "After:\n– Sắp xếp trên toàn bộ dòng đã lọc rồi mới cắt trang."),
+    ("Bấm Xoá lọc", "Click", "After:\n– Bỏ mọi ô lọc của popup."),
     ("Bấm mã dự án", "Click", "After:\n– Mở chi tiết dự án ở tab mới."),
-    ("Bấm mã meeting ở cột Nguồn", "Click", "After:\n– Mở panel chi tiết meeting NỔI TRÊN popup (FR-07)."),
-    ("Bấm Đóng / ×", "Click", "After:\n– Đóng popup, giữ nguyên báo cáo."),
+    ("Bấm mã meeting ở cột Nguồn", "Click", "After:\n– Mở panel chi tiết meeting NỔI TRÊN popup (mục 2.6)."),
+    ("Bấm Đóng / ×", "Click", "After:\n– Đóng popup, giữ nguyên báo cáo (bộ lọc, trang, cấp đang bung)."),
 ])
-d.p("2.5.5 Quy tắc hiển thị")
+d.p("2.5.5 Mục đích thiết kế popup")
 d.bullets([
-    "Số dòng của popup luôn bằng con số đã bấm (trước khi lọc trong popup).",
-    "Ô chữ dài (Nội dung, Khách hàng, Sales) được xuống dòng trong ô; các cột còn lại một dòng.",
+    "Trả lời câu hỏi “con số này gồm những nhu cầu / dự án nào”: của khách hàng nào, Sales nào phụ trách, giá trị "
+    "bao nhiêu, mốc thời gian và hạn theo dõi ra sao — để quản lý nhắc Sales chăm sóc đúng việc, đúng hạn.",
+    "Là POPUP để giữ nguyên ngữ cảnh báo cáo: bộ lọc, trang và cấp đang bung không đổi, đóng popup là về đúng chỗ "
+    "đang xem. Danh sách phẳng (không phải cây) để tìm, lọc, sắp xếp, in và xuất đúng tập dòng đó.",
+    "Khớp số: popup tải TRỌN tập dòng của con số (không cắt trang phía máy chủ) nên số dòng = con số đã bấm, trước "
+    "khi người dùng lọc thêm trong popup; dùng cùng phạm vi quyền + bộ lọc của báo cáo đang hiển thị.",
+    "Từ popup người dùng làm tiếp: lọc theo Sales / tiến trình, mở dự án ở tab mới, mở chi tiết meeting nguồn, in "
+    "hoặc xuất Excel đúng danh sách. Mỗi lần mở là trạng thái sạch.",
 ])
-d.p("2.5.6 Cách lấy dữ liệu và giải thích chỉ tiêu")
+d.p("2.5.6 Các biến thể theo con số bấm")
+d.p("Cùng một popup, bộ cột giống nhau; con số bấm vào quyết định tập dòng, tiêu đề và ô lọc nào bị ẩn:")
+d.popup_variant_table([
+    ("Ô Nhu cầu đang theo dõi (khối tổng hợp)", "Mọi nhu cầu của tập dữ liệu",
+     "Nhu cầu đang theo dõi", "Ẩn Loại, Tiến trình dự án"),
+    ("Ô Sắp hết hạn theo dõi (khối tổng hợp)", "Nhu cầu sắp hết hạn (cùng luật ô tổng hợp — BR-07)",
+     "Nhu cầu sắp hết hạn theo dõi", "Ẩn Loại, Tiến trình dự án"),
+    ("Ô Dự án đang triển khai (khối tổng hợp)", "Mọi dự án của tập dữ liệu",
+     "Dự án TKT đang triển khai", "Ẩn Loại; Tiến trình dự án lọc được"),
+    ("Ô của một tiến trình (khối tổng hợp)", "Dự án đang ở đúng tiến trình đó",
+     "Dự án TKT: <tên tiến trình>", "Ẩn Loại, Tiến trình dự án"),
+    ("Số NC ở dòng TỔNG", "Mọi nhu cầu của tập dữ liệu", "toàn bộ báo cáo · nhu cầu",
+     "Ẩn Loại, Tiến trình dự án"),
+    ("Số DA ở dòng TỔNG", "Mọi dự án của tập dữ liệu", "toàn bộ báo cáo · dự án TKT", "Ẩn Loại"),
+    ("Số NC / DA ở dòng Phòng (I, II…)", "Nhu cầu / dự án của các Sales đang làm việc ở phòng đó; nhóm “Chưa xác "
+     "định phòng” = việc chưa có Sales", "<Tên phòng> · nhu cầu | dự án TKT",
+     "Ẩn Loại (+ Tiến trình nếu là NC); Sales lọc được"),
+    ("Số NC / DA ở dòng Sales (1, 2…)", "Nhu cầu / dự án Sales đó phụ trách (trong phòng của dòng cha)",
+     "<Tên Sales> · nhu cầu | dự án TKT", "Ẩn Loại, Sales (+ Tiến trình nếu là NC)"),
+    ("Số NC / DA ở dòng Khách hàng (1.1…)", "Nhu cầu / dự án của khách đó do Sales của dòng cha phụ trách",
+     "<Tên khách hàng> · nhu cầu | dự án TKT", "Ẩn Loại, Sales (+ Tiến trình nếu là NC)"),
+])
+d.p("2.5.7 Cách lấy dữ liệu và giải thích chỉ tiêu")
 d.p("Popup không có icon ⓘ riêng; các cột dùng đúng cách tính của báo cáo (2.1.6). Bảng dưới mô tả cách lấy "
     "dữ liệu của từng cột trong popup.")
 d.data_table([
     ("Tập dòng của popup", "Các nhu cầu / dự án của tập dữ liệu báo cáo, thu hẹp theo phạm vi dòng đã bấm (Phòng, "
-     "Sales, Khách hàng) và theo chỉ tiêu đã bấm (Loại, Sắp hết hạn, một Tiến trình).", "—"),
+     "Sales, Khách hàng) và theo chỉ tiêu đã bấm (Loại, Sắp hết hạn, một Tiến trình) — mục 2.5.6.", "—"),
     ("Đầu popup — a nhu cầu · b dự án TKT", "Đếm số dòng nhu cầu và số dòng dự án trong tập dòng của popup.", "—"),
+    ("Dòng đếm x / y dòng", "y = số dòng của tập; x = số dòng còn lại sau khi tìm / lọc trong popup.", "—"),
     ("Cột Loại", "Nhu cầu / Dự án TKT.", "—"),
     ("Cột Nội dung", "Nhu cầu: Lĩnh vực ▸ Nhóm ngành. Dự án: mã dự án + tên dự án.", "—"),
     ("Cột Khách hàng", "Tên + mã khách hàng của nhu cầu (khách của meeting) / của dự án.", "—"),
@@ -563,46 +642,8 @@ d.data_table([
 ])
 
 # ----------------------------------------------------------------- 2.6
-d.h3("2.6 Lọc và sắp xếp trong danh sách chi tiết")
+d.h3("2.6 Xem chi tiết meeting")
 d.p("2.6.1 Giới thiệu")
-d.rule_ref("- Kịch bản tìm kiếm, Bộ lọc và Sắp xếp dữ liệu bảng. Chỉ bổ sung các ô lọc riêng của popup danh sách "
-           "chi tiết.", anchor="search")
-d.intro_table(
-    ten="Lọc và sắp xếp trong danh sách chi tiết",
-    mota="Lọc và sắp xếp NGAY TRONG popup trên tập dòng đã tải, không tải lại dữ liệu.",
-    tacnhan=TACNHAN,
-    dieukien="Popup danh sách chi tiết đang mở.",
-    chinh="1. Người dùng gõ ô tìm hoặc chọn ô lọc → danh sách lọc ngay, về trang 1.\n"
-          "2. Người dùng bấm tiêu đề cột có mũi tên → sắp tăng / giảm dần.",
-    phu="• Ô tìm không phân biệt hoa thường và dấu, tìm trong: khách hàng (tên, mã), mã / tên dự án, mã meeting, "
-        "Sales, nội dung.\n"
-        "• Có ô lọc đang áp → hiện nút Xoá lọc (icon làm mới).\n"
-        "• Ô trống luôn xếp cuối khi sắp xếp.",
-    dacbiet=None)
-d.p("2.6.2 Layout màn hình")
-d.layout(menu=MENU, modal="Danh sách chi tiết", shot=shot("05-popup-chi-tiet.png"),
-         shot_caption="Ô tìm, ô lọc và tiêu đề cột sắp xếp của popup danh sách chi tiết")
-d.p("2.6.3 Mô tả chi tiết giao diện")
-d.ui_table([
-    ("Ô tìm", "Textbox", "Enable", "0–255 ký tự", "Không", "Trống", "Placeholder “Tìm khách hàng / dự án / meeting / Sales…”."),
-    ("Ô Loại", "Dropdown", "Enable / Ẩn", "Danh sách", "Không", "Trống", "Ẩn khi con số đã cố định loại."),
-    ("Ô Sales phụ trách", "Dropdown", "Enable / Ẩn", "Danh sách", "Không", "Trống",
-     "Danh sách Sales có trong popup; ẩn khi con số đã cố định Sales."),
-    ("Ô Tiến trình dự án", "Dropdown", "Enable / Ẩn", "Danh sách", "Không", "Trống",
-     "Ẩn khi con số là nhu cầu hoặc là một tiến trình."),
-    ("Nút Xoá lọc", "Icon Button", "Enable / Ẩn", "–", "–", "Ẩn", "Chỉ hiện khi có ô lọc đang áp."),
-    ("Tiêu đề cột sắp xếp", "Icon Button", "Enable", "–", "–", "Chưa sắp", "Bấm lần lượt: tăng → giảm dần."),
-])
-d.p("2.6.4 Danh sách event và xử lý event")
-d.event_table([
-    ("Gõ ô tìm / chọn ô lọc", "Change", "After:\n– Lọc tại chỗ, về trang 1, cập nhật dòng đếm x / y."),
-    ("Bấm tiêu đề cột", "Click", "After:\n– Sắp xếp trên toàn bộ dòng đã lọc rồi mới cắt trang."),
-    ("Bấm Xoá lọc", "Click", "After:\n– Bỏ mọi ô lọc của popup."),
-])
-
-# ----------------------------------------------------------------- 2.7
-d.h3("2.7 Xem chi tiết meeting")
-d.p("2.7.1 Giới thiệu")
 d.rule_ref("- Màn Xem chi tiết và Phân quyền. Chỉ bổ sung khối thông tin riêng khi mở từ Báo cáo tổng hợp CSKH "
            "tiềm năng.", anchor="detail")
 d.intro_table(
@@ -618,10 +659,10 @@ d.intro_table(
         "• Không đủ quyền → hệ thống báo không có quyền, panel không hiện nội dung.\n"
         "• Bấm ra ngoài panel / nút đóng → đóng panel, popup bên dưới giữ nguyên.",
     dacbiet=None)
-d.p("2.7.2 Layout màn hình")
+d.p("2.6.2 Layout màn hình")
 d.layout(menu=MENU, modal="Chi tiết meeting", shot=shot("06-panel-meeting.png"),
          shot_caption="Panel chi tiết meeting mở từ popup, có khối “Nhu cầu làm dự án”")
-d.p("2.7.3 Mô tả chi tiết giao diện")
+d.p("2.6.3 Mô tả chi tiết giao diện")
 d.ui_table([
     ("Đầu panel", "Label", "Hiển thị", "–", "Theo dữ liệu", "Tên meeting, nền gradient của báo cáo."),
     ("Khối Thông tin cuộc họp / Kết luận & ghi chú / Thông tin khác", "Text", "Read-only", "–", "Theo dữ liệu",
@@ -633,7 +674,7 @@ d.ui_table([
     ("Nút Xem biên bản / Sửa", "Button", "Enable / Ẩn", "–", "Theo quyền meeting",
      "Theo quy tắc của màn meeting."),
 ], required=False)
-d.p("2.7.4 Danh sách event và xử lý event")
+d.p("2.6.4 Danh sách event và xử lý event")
 d.event_table([
     ("Bấm mã meeting", "Click",
      "Before:\n– Kiểm quyền xem meeting: người tạo / chủ trì / thành viên / quyền xem meeting theo cấp; hoặc quyền "
@@ -641,11 +682,33 @@ d.event_table([
      "quản lý).\n– Không đủ quyền → báo không có quyền và dừng.\n"
      "After:\n– Mở panel với nội dung meeting và khối thông tin của dòng."),
     ("Bấm Xem biên bản", "Click", "After:\n– Mở popup xem trước biên bản cuộc họp."),
+    ("Bấm ra ngoài panel / nút đóng", "Click", "After:\n– Đóng panel; bảng hoặc popup bên dưới giữ nguyên."),
+])
+d.p("2.6.5 Mục đích thiết kế popup")
+d.bullets([
+    "Trả lời câu hỏi “nhu cầu / dự án này từ đâu ra”: meeting nào thu thập, họp với ai, ai chủ trì, kết luận gì — "
+    "để người quản lý đánh giá chất lượng nhu cầu mà không phải rời báo cáo đi tìm meeting.",
+    "Là PANEL trượt bên phải để bảng báo cáo / popup danh sách bên dưới vẫn còn; mở từ popup thì panel nổi trên "
+    "popup, đóng panel là về đúng danh sách đang xem.",
+    "Đối chiếu số: panel kèm khối thông tin của CHÍNH dòng đã bấm (giá trị, mốc thời gian, hạn theo dõi / tiến "
+    "trình) để so với số trên báo cáo; không tính lại số nào.",
+    "Người xem báo cáo (V1/V2/V3) mở được meeting có nhu cầu trong phạm vi quyền báo cáo dù không chủ trì / tham dự "
+    "(BR-12); xem biên bản từ panel.",
+])
+d.p("2.6.6 Các biến thể theo con số bấm")
+d.popup_variant_table([
+    ("Mã meeting ở dòng nhu cầu (bảng báo cáo)", "Meeting ghi nhận nhu cầu", "Tên meeting",
+     "Không có ô lọc; kèm khối Nhu cầu làm dự án"),
+    ("Mã meeting ở dòng dự án (bảng báo cáo)", "Meeting của nhu cầu gốc của dự án", "Tên meeting",
+     "Không có ô lọc; kèm khối Dự án TKT"),
+    ("Mã meeting ở dòng nhu cầu / dự án (popup danh sách chi tiết)", "Như 2 dòng trên", "Tên meeting",
+     "Panel nổi TRÊN popup; đóng panel giữ popup"),
+    ("Dự án lập trực tiếp (không từ nhu cầu)", "Không mở được — cột Nguồn để trống", "–", "–"),
 ])
 
-# ----------------------------------------------------------------- 2.8
-d.h3("2.8 Xem lịch sử meeting với khách hàng")
-d.p("2.8.1 Giới thiệu")
+# ----------------------------------------------------------------- 2.7
+d.h3("2.7 Xem lịch sử meeting với khách hàng")
+d.p("2.7.1 Giới thiệu")
 d.rule_ref("- Màn Danh sách và Phân trang. Popup dùng lại nguyên của Báo cáo kết quả chăm sóc khách hàng tiềm "
            "năng.", anchor="list")
 d.intro_table(
@@ -658,12 +721,13 @@ d.intro_table(
           "3. Người dùng bấm tên meeting để mở chi tiết ở tab mới, hoặc icon Xem biên bản.",
     phu="• Phạm vi meeting trong popup theo quyền của Báo cáo kết quả chăm sóc khách hàng tiềm năng (dùng lại "
         "popup), nên có thể ít hơn số meeting tính vào “Lần chăm sóc gần nhất”.\n"
-        "• Meeting chưa lập biên bản → không hiện icon Xem biên bản.",
+        "• Meeting chưa lập biên bản → không hiện icon Xem biên bản.\n"
+        "• Khách chưa có meeting nào (“Chưa có meeting”) → không có ngày để bấm.",
     dacbiet=None)
-d.p("2.8.2 Layout màn hình")
+d.p("2.7.2 Layout màn hình")
 d.layout(menu=MENU, modal="Lịch sử meeting với khách hàng", shot=shot("07-lich-su-meeting.png"),
          shot_caption="Popup lịch sử meeting với khách hàng")
-d.p("2.8.3 Mô tả chi tiết giao diện")
+d.p("2.7.3 Mô tả chi tiết giao diện")
 d.ui_table([
     ("Tiêu đề popup", "Label", "Hiển thị", "–", "Theo dữ liệu", "“Lịch sử meeting với khách hàng” + “Khách hàng: <tên>”."),
     ("Bảng meeting", "Table/Grid", "Read-only", "–", "Theo dữ liệu",
@@ -672,22 +736,34 @@ d.ui_table([
     ("Phân trang", "Pagination", "Enable", "Theo lựa chọn", "20 dòng / trang", "–"),
     ("Nút đóng ×", "Icon Button", "Enable", "–", "Hiển thị", "Đóng popup."),
 ], required=False)
-d.p("2.8.4 Danh sách event và xử lý event")
+d.p("2.7.4 Danh sách event và xử lý event")
 d.event_table([
     ("Bấm ngày Lần chăm sóc gần nhất", "Click", "After:\n– Mở popup, tải meeting Hoàn thành của khách, cũ → mới."),
     ("Bấm tên meeting", "Click", "After:\n– Mở chi tiết meeting ở tab mới."),
     ("Bấm icon Xem biên bản", "Click", "After:\n– Mở popup xem trước biên bản."),
+    ("Bấm × / Esc", "Click", "After:\n– Đóng popup, giữ nguyên báo cáo."),
+])
+d.p("2.7.5 Mục đích thiết kế popup")
+d.bullets([
+    "Trả lời câu hỏi “khách hàng này được chăm sóc đều đặn không”: mọi lần gặp đã hoàn thành theo thời gian, ai "
+    "chủ trì, gặp ai bên khách, lần nào thu được nhu cầu — bổ sung cho con số “N ngày” ở cột Lần chăm sóc gần nhất.",
+    "Là POPUP dùng lại nguyên của Báo cáo kết quả CSKH tiềm năng để 2 báo cáo hiển thị lịch sử chăm sóc giống "
+    "nhau; đóng popup là về đúng dòng khách hàng đang xem.",
+    "Khớp số: meeting mới nhất trong popup thường trùng ngày ở cột Lần chăm sóc gần nhất; popup lọc theo quyền của "
+    "báo cáo kia nên có thể ít hơn (BR-08) — đây là chủ đích, không phải lệch số.",
+    "Từ popup người dùng mở chi tiết meeting ở tab mới hoặc xem biên bản. Mỗi lần mở tải lại theo khách vừa bấm.",
+])
+d.p("2.7.6 Các biến thể theo con số bấm")
+d.popup_variant_table([
+    ("Ngày ở cột Lần chăm sóc gần nhất (dòng khách hàng)", "Meeting Hoàn thành của khách hàng, cũ → mới",
+     "Lịch sử meeting với khách hàng · Khách hàng: <tên>", "Không có ô lọc"),
 ])
 
-# ----------------------------------------------------------------- 2.9
-d.h3("2.9 In danh sách")
-d.p("2.9.1 Biểu đồ Usecase")
-d.uc_figure("FR-09", "In danh sách", "io",
-            [("include", "Chọn chế độ in: bảng tổng hợp / danh sách chi tiết"),
-             ("include", "Lấy toàn bộ dữ liệu theo bộ lọc đang hiển thị"),
-             ("extend", "In danh sách từ popup chi tiết")],
-            actor=ACT_QL, caption="Biểu đồ Use Case — FR-09 In danh sách")
-d.p("2.9.2 Giới thiệu")
+# ----------------------------------------------------------------- 2.8
+d.h3("2.8 In danh sách")
+d.p("2.8.1 Biểu đồ Usecase")
+d.uc_figure("FR-08", "In danh sách", "io", actor=ACT_QL, caption="Biểu đồ Use Case — FR-08 In danh sách")
+d.p("2.8.2 Giới thiệu")
 d.rule_ref("- Thông báo và UI/UX. Chỉ bổ sung bố cục và dữ liệu riêng của bản in Báo cáo tổng hợp CSKH tiềm năng.",
            anchor="notice")
 d.intro_table(
@@ -708,12 +784,12 @@ d.intro_table(
         "• Bấm Hủy hoặc × ở cửa sổ chọn chế độ → đóng, không in.",
     dacbiet="Bản in có letterhead công ty, tiêu đề, dòng “Đang theo dõi tại <ngày giờ>”, dòng Tổng cộng và Ngày "
             "in. Số dùng dấu phẩy ngăn cách hàng nghìn.")
-d.p("2.9.3 Layout màn hình")
+d.p("2.8.3 Layout màn hình")
 d.layout(menu=MENU + " => In danh sách", modal="In danh sách", shot=shot("08-in-chon-che-do.png"),
          shot_caption="Cửa sổ chọn chế độ In danh sách")
 d.figure(shot("09-ban-in-bang.png"), "Bản xem trước In bảng tổng hợp", width_in=6.2)
 d.figure(shot("10-ban-in-chi-tiet.png"), "Bản xem trước In danh sách chi tiết", width_in=6.2)
-d.p("2.9.4 Mô tả chi tiết giao diện")
+d.p("2.8.4 Mô tả chi tiết giao diện")
 d.ui_table([
     ("Nút In danh sách (thanh tiêu đề)", "Button", "Enable", "–", "–", "Hiển thị", "Mở cửa sổ chọn chế độ."),
     ("Dòng ghi chú cửa sổ", "Label", "Hiển thị", "–", "–", "Hiển thị",
@@ -730,7 +806,7 @@ d.ui_table([
     ("Thông báo vượt trần in", "Toast / Alert", "Hiển thị", "> 2,000 dòng", "–", "Ẩn",
      "Nhắc thu hẹp bộ lọc hoặc dùng Xuất Excel."),
 ])
-d.p("2.9.5 Danh sách event và xử lý event")
+d.p("2.8.5 Danh sách event và xử lý event")
 d.event_table([
     ("Bấm In danh sách (thanh tiêu đề)", "Click",
      "Before:\n– Báo cáo chưa tải xong → báo “Báo cáo chưa tải xong, vui lòng thử lại.”\n"
@@ -742,14 +818,11 @@ d.event_table([
      "After:\n– Mở xem trước danh sách chi tiết theo phạm vi + bộ lọc của popup."),
 ])
 
-# ----------------------------------------------------------------- 2.10
-d.h3("2.10 Xuất Excel")
-d.p("2.10.1 Biểu đồ Usecase")
-d.uc_figure("FR-10", "Xuất Excel", "io",
-            [("include", "Lấy toàn bộ dữ liệu theo bộ lọc đang hiển thị"),
-             ("extend", "Xuất danh sách chi tiết từ popup")],
-            actor=ACT_QL, caption="Biểu đồ Use Case — FR-10 Xuất Excel")
-d.p("2.10.2 Giới thiệu")
+# ----------------------------------------------------------------- 2.9
+d.h3("2.9 Xuất Excel")
+d.p("2.9.1 Biểu đồ Usecase")
+d.uc_figure("FR-09", "Xuất Excel", "io", actor=ACT_QL, caption="Biểu đồ Use Case — FR-09 Xuất Excel")
+d.p("2.9.2 Giới thiệu")
 d.rule_ref("- Quy tắc Excel. Chỉ bổ sung bộ cột và cách trình bày cây của file Excel Báo cáo tổng hợp CSKH tiềm "
            "năng.", anchor="excel")
 d.intro_table(
@@ -765,10 +838,10 @@ d.intro_table(
         "phạm vi).\n• Lỗi khi tạo đường tải → báo “Lỗi khi xuất Excel”.",
     dacbiet="File Excel không giới hạn số dòng. Ô tiền là số thật (cộng / lọc được trong Excel), hiển thị dấu phẩy "
             "ngăn cách hàng nghìn. Đầu file có logo công ty, tiêu đề và dòng “Đang theo dõi tại <ngày giờ>”.")
-d.p("2.10.3 Layout màn hình")
+d.p("2.9.3 Layout màn hình")
 d.layout(menu=MENU + " => Xuất Excel", shot=shot("11-xuat-excel.png"),
          shot_caption="Nút Xuất Excel trên thanh tiêu đề khối lọc")
-d.p("2.10.4 Mô tả chi tiết giao diện")
+d.p("2.9.4 Mô tả chi tiết giao diện")
 d.ui_table([
     ("Nút Xuất Excel (thanh tiêu đề)", "Button", "Enable", "–", "–", "Hiển thị", "Tải file bảng tổng hợp."),
     ("Nút Xuất Excel danh sách (chân popup)", "Button", "Enable", "–", "–", "Hiển thị", "Tải file danh sách chi tiết."),
@@ -778,7 +851,7 @@ d.ui_table([
      "STT · Loại · Nội dung · Khách hàng · Sales phụ trách · Trạng thái · Giá trị dự kiến · Mốc thời gian · Hạn "
      "theo dõi · Nguồn."),
 ])
-d.p("2.10.5 Danh sách event và xử lý event")
+d.p("2.9.5 Danh sách event và xử lý event")
 d.event_table([
     ("Bấm Xuất Excel", "Click",
      "Before:\n– Báo cáo chưa tải xong → báo “Báo cáo chưa tải xong, vui lòng thử lại.”\n"

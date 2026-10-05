@@ -71,6 +71,8 @@ def _profile(path):
     ui_cols = {}                    # bang "Mo ta chi tiet giao dien" -> so cot
     rule_tbl = None
     data_tbls = []                  # bang "Cach lay du lieu" -> bo tieu de
+    popup_tbls = []                 # bang "Danh sach popup mo tu so lieu"
+    variant_tbls = []               # bang "Cac bien the theo con so bam"
     for b in _blocks(d):
         if not isinstance(b, Table):
             continue
@@ -83,6 +85,10 @@ def _profile(path):
             rule_tbl = h
         if h[:2] == ['STT', 'Chỉ tiêu / Cột']:
             data_tbls.append(h)
+        if h[:2] == ['STT', 'Bấm vào']:
+            popup_tbls.append(h)
+        if h[:2] == ['STT', 'Con số / vị trí bấm']:
+            variant_tbls.append(h)
     with zipfile.ZipFile(path) as z:
         media = [n for n in z.namelist() if n.startswith('word/media/')]
     return {
@@ -91,6 +97,10 @@ def _profile(path):
         'ui_cols': ui_cols,
         'rule_tbl': rule_tbl,
         'data_tbls': data_tbls,
+        'popup_tbls': popup_tbls,
+        'variant_tbls': variant_tbls,
+        'popup_purpose': sum(1 for t in paras if re.match(r'^\d+\.\d+\.\d+ Mục đích thiết kế popup', t)),
+        'mentions_popup': any('popup' in t.lower() for t in paras),
         'report': any(t.startswith('Màn hình: Báo cáo') for t in paras[:6]),
         'menu': sum(1 for t in paras if t.startswith('Menu: ')),
         # dong "Menu:" co it nhat 1 icon inline (form 2026-09-24)
@@ -180,6 +190,23 @@ def check(path, verbose=True):
             errs.append('Bảng cách lấy dữ liệu phải đúng 4 cột %s, đang là %s — dùng d.data_table().'
                         % (data_head, h))
 
+    # --- man BAO CAO co popup mo tu so lieu (quy dinh 2026-10-05) ---
+    popup_head = ['STT', 'Bấm vào', 'Popup mở ra', 'Mục đích thiết kế', 'Dữ liệu hiển thị']
+    variant_head = ['STT', 'Con số / vị trí bấm', 'Tập dòng hiển thị', 'Tiêu đề popup', 'Ô lọc ẩn / cố định']
+    if me['report'] and me['mentions_popup']:
+        if not me['popup_tbls']:
+            errs.append('Báo cáo có popup nhưng thiếu bảng "Danh sách popup mở từ số liệu" ở chức năng báo '
+                        'cáo chính — dùng d.popup_table([(bấm vào, popup mở ra, mục đích thiết kế, dữ liệu), ...]).')
+        if not me['popup_purpose']:
+            errs.append('Báo cáo có popup nhưng không có mục "2.y.n Mục đích thiết kế popup" nào — mỗi LOẠI '
+                        'popup là 1 chức năng riêng, có mục này + bảng biến thể (d.popup_variant_table).')
+    for h in me['popup_tbls']:
+        if h != popup_head:
+            errs.append('Bảng popup phải đúng 5 cột %s, đang là %s.' % (popup_head, h))
+    for h in me['variant_tbls']:
+        if h != variant_head:
+            errs.append('Bảng biến thể popup phải đúng 5 cột %s, đang là %s.' % (variant_head, h))
+
     # --- muc da bo cua form cu ---
     for s in ('Tổng quan', 'Mini-Spec', 'Tiêu chí nghiệm thu', 'Ngoài phạm vi',
               'Chức năng liên quan', 'Route (FE)'):
@@ -194,7 +221,9 @@ def check(path, verbose=True):
               % (name, me['fn'], me['menu'], me['rule_ref'], me['links'],
                  dict(sorted(me['ui_cols'].items())),
                  'bảng 5 cột' if me['rule_tbl'] == mau['rule_tbl'] else 'SAI',
-                 (' | bảng cách lấy dữ liệu %d' % len(me['data_tbls'])) if me['report'] else ''))
+                 (' | bảng cách lấy dữ liệu %d | bảng popup %d | mục đích popup %d'
+                  % (len(me['data_tbls']), len(me['popup_tbls']), me['popup_purpose']))
+                 if me['report'] else ''))
         if errs:
             print('!!! %d điểm chưa đúng bản mẫu:' % len(errs))
             for e in errs:

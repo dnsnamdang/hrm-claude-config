@@ -241,8 +241,10 @@ Phần 4. Quy tắc nghiệp vụ                    [Heading 1]
 > Chức năng KHÔNG có tương tác riêng (Xem danh sách, Tìm kiếm & lọc, Xem chi tiết, Lịch sử)
 > thì **bỏ mục "Biểu đồ Usecase"** và **lùi số các mục con lại 1 bậc** — bản mẫu làm vậy.
 >
-> **Màn BÁO CÁO** thêm mục **2.x.6 Cách lấy dữ liệu và giải thích chỉ tiêu** (đặt SAU các mục cố
-> định) cho mỗi chức năng hiện số liệu — xem mục "Màn BÁO CÁO" bên dưới.
+> **Màn BÁO CÁO** thêm mục **Cách lấy dữ liệu và giải thích chỉ tiêu** (đặt SAU các mục cố định)
+> cho mỗi chức năng hiện số liệu; số liệu bấm được mở popup thì thêm **Danh sách popup mở từ số
+> liệu** ở báo cáo chính và **Mục đích thiết kế popup** + **Các biến thể** ở từng loại popup — xem
+> mục "Màn BÁO CÁO" bên dưới.
 >
 > Tiêu đề mục 2.x là **tên chức năng thuần**, KHÔNG gắn mã: `2.5 Tạo mới khách hàng`
 > (form cũ ghi `5.2.5 FR-05 — Tạo mới khách hàng`). Mã `FR-xx` chỉ còn dùng ở ma trận phân quyền.
@@ -369,7 +371,70 @@ d.data_table([
 ])
 ```
 
-Bản tham khảo: `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/gen_srs.py` (mục 2.1.6, 2.2.5, 2.5.6).
+### Số liệu bấm được → POPUP: đặc tả mục đích thiết kế + TỪNG LOẠI popup (từ 2026-10-05)
+
+User yêu cầu 05/10/2026: chức năng nào **bấm vào số liệu mở popup** thì SRS phải nói rõ **vì sao có
+popup đó** (mục đích thiết kế) và **đặc tả riêng từng loại popup**. Chỉ ghi "bấm số mở danh sách chi
+tiết" trong bảng event là THIẾU: người đọc không biết bấm ô nào ra tập dòng nào, popup nào khác popup
+nào, và số trong popup phải khớp số đã bấm ra sao.
+
+**1. Ở chức năng báo cáo CHÍNH — mục `Danh sách popup mở từ số liệu`** (sau mục cách lấy dữ liệu),
+`d.popup_table(rows)` 5 cột:
+
+| STT | Bấm vào | Popup mở ra | Mục đích thiết kế | Dữ liệu hiển thị |
+|---|---|---|---|---|
+| tự đánh | Vị trí + loại số: "Số ở ô Sắp hết hạn theo dõi", "Ngày ở cột Lần chăm sóc gần nhất (dòng KH)" | Tên popup + **mục đặc tả** (vd "Danh sách chi tiết (mục 2.5)") | Câu hỏi nghiệp vụ người xem con số đó muốn trả lời | Tập dòng + phạm vi + khớp số với ô đã bấm |
+
+- Liệt kê **ĐỦ mọi vị trí bấm được**: từng ô khối tổng hợp, dòng TỔNG, từng cấp dòng, ô ngày, mã chứng
+  từ / mã meeting... Rà bằng code: mọi `@click` / `DrillNum` / `rsum-drill` / `v-cell-link` trong page.
+- Liên kết **mở tab mới / chuyển màn** cũng ghi vào bảng (cột Popup ghi "Không phải popup — mở … ở tab
+  mới") để người đọc phân biệt.
+- Số 0 không bấm được → ghi rõ ở cột Bấm vào.
+
+**2. Mỗi LOẠI popup = 1 chức năng 2.y riêng** (khác bộ cột hoặc khác nguồn dữ liệu là khác loại; cùng
+bộ cột, chỉ khác tập dòng là BIẾN THỂ của cùng loại). Đủ các mục cố định (Giới thiệu, Layout có ảnh
+chụp popup thật, Mô tả giao diện, Event) **và thêm sau đó**:
+
+- **`2.y.n Mục đích thiết kế popup`** — gạch đầu dòng, trả lời đủ 4 ý:
+  1. Popup trả lời câu hỏi nghiệp vụ gì (vd "con số 12 nhu cầu sắp hết hạn này là những nhu cầu nào,
+     của khách nào, Sales nào, hạn ngày nào").
+  2. Vì sao là popup (giữ nguyên ngữ cảnh bảng báo cáo, bộ lọc, trang đang xem) mà không chuyển màn /
+     không bung trong bảng.
+  3. Ràng buộc khớp số: số dòng popup = con số đã bấm (trước khi lọc trong popup); cùng phạm vi quyền
+     + bộ lọc của báo cáo.
+  4. Người dùng làm tiếp gì từ popup (lọc, sắp, mở chứng từ, in, xuất Excel) và mỗi lần mở có giữ trạng
+     thái cũ không.
+- **`2.y.n Các biến thể theo con số bấm`** — `d.popup_variant_table(rows)` 5 cột
+  `STT | Con số / vị trí bấm | Tập dòng hiển thị | Tiêu đề popup | Ô lọc ẩn / cố định`, mỗi biến thể 1
+  dòng (đọc code: tham số truyền vào popup, ô lọc nào bị ẩn khi đã cố định).
+- **`2.y.n Cách lấy dữ liệu và giải thích chỉ tiêu`** — nếu popup hiện số liệu (quy định ở trên).
+
+**3. Sơ đồ tổng quan:** mỗi loại popup là chức năng phụ có mục riêng → vào `subs`, «extend» báo cáo
+chính (đúng điểm (a) form 2026-09-24). Popup mở được từ popup khác (vd panel meeting mở từ popup danh
+sách) thì «extend» cả 2.
+
+`srs_selfcheck` chặn: màn "Báo cáo …" có nhắc tới popup mà thiếu bảng `Danh sách popup mở từ số liệu`
+hoặc không có mục `Mục đích thiết kế popup` nào; bảng popup / bảng biến thể sai bộ cột.
+
+```python
+d.p("2.1.7 Danh sách popup mở từ số liệu")
+d.popup_table([
+    ("Số ở ô Sắp hết hạn theo dõi", "Danh sách chi tiết (mục 2.5)",
+     "Nhu cầu nào sắp tự đóng để Sales chăm sóc / lập dự án kịp",
+     "Đúng các nhu cầu sắp hết hạn trong tập dữ liệu; số dòng = số trên ô"),
+    ("Ngày ở cột Lần chăm sóc gần nhất (dòng khách hàng)", "Lịch sử meeting với khách hàng (mục 2.8)",
+     "Khách được chăm sóc đều đặn không, lần nào, ai chủ trì", "Meeting Hoàn thành của khách, cũ → mới"),
+])
+# ... trong mục 2.5:
+d.p("2.5.6 Mục đích thiết kế popup"); d.bullets([...4 ý...])
+d.p("2.5.7 Các biến thể theo con số bấm")
+d.popup_variant_table([
+    ("Số nhu cầu ở dòng TỔNG", "Mọi nhu cầu của tập dữ liệu", "Bạn đang xem: Tổng · nhu cầu", "Ẩn Loại, Tiến trình"),
+])
+```
+
+Bản tham khảo: `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/gen_srs.py` (mục 2.1.6, 2.1.7, 2.2.5,
+mục popup 2.5 / 2.7 / 2.8).
 
 ---
 
@@ -419,6 +484,18 @@ Menu: Phân hệ Dự án & Giao việc [ô phân hệ] => Danh mục [mục men
       clip: { x: b.x - 4, y: b.y - 4, width: b.width + 8, height: b.height + 8 } });
   ```
   Mục menu nằm trong panel rộng thì cắt bớt phần trắng thừa bên phải (PIL `crop`).
+- **Phân hệ dạng hub 3 cấp** (rail → nhóm → mục, vd CSKH trước bán › Báo cáo › Báo cáo thị trường ›
+  Báo cáo tổng hợp CSKH tiềm năng) — cắt 4 icon theo đúng thứ tự thao tác (đã làm 05/10/2026):
+  1. Ô phân hệ: bấm nút lưới ở header (≈ `page.mouse.click(1160, 30)`) → `.switcher-item` có chữ tên phân hệ.
+  2. Nút rail: `.left-side-menu .cats-list a.cat` lọc chữ ĐÚNG `^\s*Báo cáo\s*$` (không thì khớp nhầm
+     mục khác có chữ "Báo cáo"); nút rộng 220px → crop còn ~120px.
+  3. Nhóm trong panel: BẤM nhóm trước rồi mới cắt `a.scat` (trạng thái đang chọn, có icon + số đếm);
+     cắt bằng `getByText` chỉ ra chữ trơn, thiếu icon.
+  4. Mục báo cáo: ⚠️ **tiêu đề trang trên header TRÙNG CHỮ với mục menu** → `getByText(..., exact)` lấy
+     nhầm tiêu đề header. Lọc phần tử có `boundingBox().x > 440` (vùng danh sách của panel) rồi cắt
+     phần tử CHA (`xpath=..`) để có icon tài liệu; crop bớt khoảng trắng bên phải.
+  Mở ảnh ghép các icon ra XEM trước khi sinh tài liệu — đo kích thước không bắt được lỗi cắt nhầm phần tử.
+  Mẫu: `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/` (script chụp ghi ở docstring `gen_srs.py`).
   Cần icon trạng thái chưa có trên dữ liệu (vd nút Mở khóa khi không có bản ghi nào bị khóa)
   thì **chỉ đổi class icon trên trình duyệt** rồi chụp — KHÔNG đổi dữ liệu thật.
 - Lưu cùng thư mục ảnh chụp: `<feature>_shots/icon_<tên>.png`.
@@ -644,7 +721,9 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)` = **13pt*
 3. API calls        → Endpoint + payload
 4. Menu (components/subsystem-menu/*.js) → đường dẫn MENU (nguồn của mục "Layout màn hình")
 5. Màn BÁO CÁO: chữ trong mọi icon ⓘ (InfoTip / title-suffix / hint / tooltip) → chép nguyên văn
-   vào cột "Nội dung icon ⓘ"; service tính số (summary, đếm, cộng) → cột "Cách lấy dữ liệu"
+   vào cột "Nội dung icon ⓘ"; service tính số (summary, đếm, cộng) → cột "Cách lấy dữ liệu";
+   mọi chỗ bấm được (`@click`, `DrillNum`, link mã chứng từ) + tham số truyền vào popup → bảng popup
+   và bảng biến thể
 ```
 
 ### Bước 2: Phân tích & tổng hợp
@@ -728,10 +807,22 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 - **Script sinh:** `.plans/[feature]/gen_srs.py` — đặt cùng thư mục tài liệu để **commit kèm được**,
   nhờ đó tái sinh lại file .docx bất cứ lúc nào.
   ⚠️ KHÔNG để ở `hrm/scripts/` — thư mục đó nằm ngoài mọi git repo nên "commit kèm" là bất khả thi.
-- **Ảnh PNG: CHỈ ĐỂ LOCAL, KHÔNG commit.** Ảnh đã nhúng sẵn trong .docx nên người khác không cần
-  bản rời; đẩy lên chỉ làm nặng repo. Thư mục ảnh đặt tên `img/` hoặc `*_shots/` — `.gitignore`
-  đã chặn sẵn 2 dạng này.
-- Trước khi báo xong, chạy `git status`: chỉ được thấy `.docx` và `gen_srs.py`, không được thấy `.png`.
+- **Từ 05/10/2026 `.docx`, `.png`, `.xlsx` trong `hrm/.plans/` KHÔNG commit** — `.gitignore` của
+  hrm-claude-config chặn sẵn (repo từng phình ~470 MB). Chỉ commit `gen_srs.py`; ai cần file .docx thì
+  chạy lại script hoặc lấy bản trên Drive.
+- Trước khi báo xong, chạy `git -c core.quotepath=false status --short`: chỉ được thấy `gen_srs.py`
+  (+ design/plan nếu có sửa).
+- ⚠️ **Bẫy tên file tiếng Việt khi lọc bằng git** (05/10/2026): `git status / diff-tree / ls-files` in tên
+  có dấu thành `"…B\303\241o c\303\241o…"` (ngoặc kép + mã octal) → `grep '^hrm/…\.docx$'` BỎ SÓT im lặng.
+  Lần đó gỡ được 91 file tên ASCII, lọt 6 file SRS (~22 MB) lên remote. Luôn thêm `-c core.quotepath=false`
+  và đếm lại sau khi gỡ.
+- **Không sinh lại khi file đang mở trong Word.** Word đọc ảnh dần từ file trên đĩa; ghi đè lúc đang mở →
+  cửa sổ Word mất hết ảnh (file mới vẫn tốt) và người dùng bấm Lưu là ghi đè bản tốt bằng bản thiếu ảnh.
+  `SrsDoc.save()` tự chặn khi thấy file khoá `~$<tên>` cạnh file đích mà file vẫn đang mở (kiểm bằng
+  `lsof`). Người dùng báo "ảnh trong Word không hiển thị" sau khi sinh lại → bảo **đóng file KHÔNG lưu
+  rồi mở lại**, đừng đi sửa cấu trúc ảnh. Kiểm file thật bằng cách giải nén `word/media/` + soát
+  `r:embed` ↔ `document.xml.rels`, KHÔNG điều khiển Word qua AppleScript (Word sandbox bật hộp thoại
+  xin quyền thư mục, treo lệnh và làm phiền cửa sổ người dùng đang mở).
 
 ### Đẩy lên Drive (ghi đè giữ link) — 3 bẫy đã dính 28/09/2026
 Áp chung cho SRS, HDSD (và file Word tài liệu nói chung):
@@ -787,6 +878,8 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 - **Không bỏ ảnh ở mục Layout** — mỗi chức năng BẮT BUỘC có ảnh chụp thật kèm đường dẫn menu
 - **Không bỏ bảng "Cách lấy dữ liệu và giải thích chỉ tiêu"** ở màn báo cáo, không tự diễn giải lại
   chữ trong icon ⓘ
+- **Không gộp popup vào một dòng event** "bấm số mở danh sách" — báo cáo có popup phải có bảng popup ở
+  báo cáo chính + mỗi loại popup 1 chức năng có "Mục đích thiết kế popup" và "Các biến thể"
 - **Không thêm lại các mục đã bỏ** ở bảng "ĐÃ BỎ" phía trên
 - Không dùng template markdown/HTML tự chế thay cho form chuẩn
 - Không đổi tên cột của 3 bảng bắt buộc (số cột chỉ được rút theo đúng bảng đã quy định)
@@ -804,6 +897,6 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 |---|---|
 | **Danh mục nhóm ngành (Giao việc)** — form 2026-09-24, màn danh mục gọn (9 chức năng) | `.plans/danh-muc-nhom-nganh/SRS - Danh mục nhóm ngành.docx` |
 | **Phiếu đề nghị thu tiền (Tài chính)** — BẢN MẪU CHUẨN, = `assets/SRS_MAU.docx` (sinh lại theo form 2026-09-24) | `.plans/gop-db/finance-bill-income-request/SRS - Phiếu đề nghị thu tiền.docx` |
-| **Báo cáo tổng hợp CSKH tiềm năng** — tham khảo RIÊNG bảng "Cách lấy dữ liệu và giải thích chỉ tiêu" (mục 2.1.6, 2.2.5, 2.5.6). ⚠️ Sinh theo form 2026-08-28: sơ đồ include/extend + Menu chưa có icon — đừng chép phần đó | `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/SRS - Báo cáo tổng hợp chăm sóc khách hàng tiềm năng.docx` |
+| **Báo cáo tổng hợp CSKH tiềm năng** — BẢN MẪU CHO MÀN BÁO CÁO (form 2026-09-24 + bảng cách lấy dữ liệu + popup: 2.1.6, 2.1.7, 2.5–2.7) | `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/SRS - Báo cáo tổng hợp chăm sóc khách hàng tiềm năng.docx` |
 | Danh mục khách hàng (Giao việc) — form CŨ 2026-08-17 | `.plans/gop-db/customer-docs/SRS - Danh mục khách hàng.docx` |
 | Danh mục dịch vụ sửa chữa và chi phí khác (CSKH) — form CŨ | `.plans/gop-db/customer-care-cost-catalog/SRS - Danh mục dịch vụ sửa chữa và chi phí khác.docx` |
