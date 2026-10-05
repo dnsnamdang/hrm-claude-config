@@ -298,6 +298,59 @@ Phần 4. Quy tắc nghiệp vụ                    [Heading 1]
   `Theo cấu hình đã lưu`, giá trị mặc định cụ thể
 - Liệt kê **đủ mọi phần tử** trên màn: cả nút, cột bảng, phân trang, thông báo lỗi, trạng thái rỗng
 
+### Viết bảng giao diện cho người đọc — 7 quy tắc (góp ý BA 05/10/2026)
+
+Chị Thuỷ (BA) trả SRS *Báo cáo tổng hợp CSKH tiềm năng* với 11 comment, đều ở bảng "Mô tả chi tiết
+giao diện" của màn báo cáo chính. Gốc chung: **bảng giao diện phải tự đọc được** — người đọc không
+phải nhảy sang mục 2.x.6 / bảng event / BR mới hiểu một phần tử hiển thị gì, bấm vào ra gì.
+`srs_selfcheck` chặn tự động quy tắc 1, 2, 7; các quy tắc còn lại tự soát ở Bước 4.
+
+1. **Mỗi ý 1 dòng.** Ô Mô tả có từ 2 ý trở lên → truyền **list** (`ui_table` / `table` tự xuống
+   dòng), mỗi phần tử mở đầu `- `. Cấm nối liền bằng `.` `;` `·`. Selfcheck chặn ô > 220 ký tự mà
+   không xuống dòng.
+2. **Icon ⓘ phải ghi NGUYÊN VĂN nội dung ngay trong ô Mô tả**, dạng `Icon ⓘ: “<chép nguyên văn>”`.
+   Cấm chỉ ghi "có icon ⓘ", "kèm icon ⓘ", "Cột … có icon ⓘ ở tiêu đề". Bảng 2.x.6 vẫn giữ (bảng đó
+   giải thích cách tính), bảng giao diện chép lại chữ ⓘ — trùng là chủ đích.
+3. **Phần tử bấm được ghi hành vi bấm NGAY Ở DÒNG CỦA NÓ**: `- Bấm số → mở popup <tên popup> (mục 2.y)`,
+   `- Số 0: hiện xám, không bấm được`. Khối tổng hợp, từng ô số, ô ngày, mã chứng từ / mã meeting đều
+   phải có. Chỉ ghi ở bảng event / bảng popup 2.x.7 là bị trả về ("Thiếu mô tả việc click vào mở
+   popup xem chi tiết").
+4. **Mỗi cột của bảng chính là 1 dòng riêng** trong bảng giao diện (`Cột Giá trị nhu cầu`,
+   `Cột Mốc thời gian`…): hiển thị gì ở từng cấp dòng, định dạng, để trống khi nào, ⓘ (quy tắc 2).
+   Dòng "Bảng chi tiết báo cáo" chỉ liệt kê tên cột, **mỗi cột 1 dòng**. Đừng chỉ mô tả vài cột "đặc
+   biệt" rồi bỏ các cột số (bị comment "Thiếu mô tả cho các cột: giá trị nhu cầu, giá trị dự án,
+   mốc thời gian").
+5. **Ô chọn / dropdown ghi giá trị mặc định cả trong Mô tả**: `- Mặc định: Đến Sales` + liệt kê lựa
+   chọn mỗi cái 1 dòng. Chỉ điền cột "Giá trị ban đầu" là người đọc vẫn bỏ sót.
+6. **Ký hiệu nào cũng định nghĩa tại chỗ.** `N ngày`, `a NC · b DA`, `M`… phải kèm câu giải thích
+   ngay trong ô: `- “còn N ngày”: N = ngày hạn − hôm nay`, `- a = số nhu cầu, b = số dự án TKT của các
+   dòng con`. Không để người đọc tự đoán hoặc phải tra BR.
+7. **Tên đối tượng là tên nghiệp vụ.** "Bảng cây" → **"Bảng chi tiết báo cáo"**; tránh "dòng lá",
+   "dòng cha", "drill" trong tên — viết "dòng nhu cầu / dự án", "dòng Phòng / Sales / Khách hàng".
+
+Ví dụ (trước → sau, lấy đúng dòng bị comment):
+
+```python
+# TRƯỚC — bị trả về: liền 1 đoạn, ⓘ không có nội dung, không nói bấm vào ra gì
+('Khối Nhu cầu đang theo dõi', 'Text', 'Hiển thị', '≥ 0', 'Theo dữ liệu',
+ 'Tiêu đề kèm “Giá trị dự kiến <tổng>” và icon ⓘ. Ô Nhu cầu đang theo dõi (luôn hiện); ô Sắp hết hạn …')
+
+# SAU
+('Khối Nhu cầu đang theo dõi', 'Text', 'Hiển thị', '≥ 0', 'Theo dữ liệu', [
+    '- Tiêu đề kèm “Giá trị dự kiến <tổng>”: tổng giá trị dự kiến của mọi nhu cầu đang theo dõi',
+    '- Icon ⓘ: “NHU CẦU ĐANG THEO DÕI • Nhu cầu làm dự án còn trạng thái Đang theo dõi, … ”',
+    '- Ô Nhu cầu đang theo dõi: luôn hiện. Bấm số → mở popup Danh sách chi tiết (mục 2.5), toàn bộ nhu cầu',
+    '- Ô Sắp hết hạn theo dõi: nền cam, chỉ hiện khi > 0. Bấm số → popup chỉ các nhu cầu sắp hết hạn',
+]),
+('Ô Hạn theo dõi', 'Text', 'Read-only', 'dd/mm/yyyy', 'Theo dữ liệu', [
+    '- Ngày hạn = ngày hoàn thành meeting + thời gian hiệu lực của Lĩnh vực',
+    '- “còn N ngày”: N = ngày hạn − hôm nay',
+    '- Chữ cam khi đã vào số ngày cảnh báo trước khi đóng nhu cầu',
+    '- Lĩnh vực không đặt thời gian hiệu lực → “Không có hạn”',
+    '- Icon ⓘ: “HẠN THEO DÕI • Hạn tự đóng nhu cầu = … ”',
+]),
+```
+
 ### Bảng "Danh sách event và xử lý event" — 4 cột
 
 `STT | Event | Loại event | Xử lý event`
@@ -344,7 +397,7 @@ gắn icon ⓘ thì thêm mục tương tự `2.x.5 Cách lấy dữ liệu củ
 Phải liệt kê **đủ**:
 - Dòng tóm tắt / thời điểm số liệu (báo cáo theo kỳ thì ghi kỳ lấy theo ngày nào).
 - Từng ô của khối tổng hợp (kể cả ô chỉ hiện khi > 0 — ghi rõ điều kiện ẩn).
-- Dòng TỔNG và mỗi cấp dòng của bảng cây (Phòng / Sales / Khách hàng / dòng lá) nếu cách tính khác nhau.
+- Dòng TỔNG và mỗi cấp dòng của bảng chi tiết báo cáo (Phòng / Sales / Khách hàng / dòng lá) nếu cách tính khác nhau.
 - **Từng cột số liệu** của bảng: dòng lá lấy gì, dòng cha cộng gì, loại dòng nào để trống.
 - Các con số trên đầu popup drill + từng cột của popup.
 - Mọi ràng buộc khớp số: "tổng các ô tiến trình = ô Dự án", "khối tổng hợp = dòng TỔNG = số dòng popup".
@@ -878,6 +931,9 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 - **Không bỏ ảnh ở mục Layout** — mỗi chức năng BẮT BUỘC có ảnh chụp thật kèm đường dẫn menu
 - **Không bỏ bảng "Cách lấy dữ liệu và giải thích chỉ tiêu"** ở màn báo cáo, không tự diễn giải lại
   chữ trong icon ⓘ
+- **Không viết bảng giao diện kiểu "ghi chú cho dev"**: ô Mô tả liền 1 đoạn, "có icon ⓘ" mà không chép
+  nội dung, phần tử bấm được không nói mở ra gì, cột số không có dòng riêng (7 quy tắc ở mục
+  "Viết bảng giao diện cho người đọc")
 - **Không gộp popup vào một dòng event** "bấm số mở danh sách" — báo cáo có popup phải có bảng popup ở
   báo cáo chính + mỗi loại popup 1 chức năng có "Mục đích thiết kế popup" và "Các biến thể"
 - **Không thêm lại các mục đã bỏ** ở bảng "ĐÃ BỎ" phía trên
@@ -897,6 +953,6 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 |---|---|
 | **Danh mục nhóm ngành (Giao việc)** — form 2026-09-24, màn danh mục gọn (9 chức năng) | `.plans/danh-muc-nhom-nganh/SRS - Danh mục nhóm ngành.docx` |
 | **Phiếu đề nghị thu tiền (Tài chính)** — BẢN MẪU CHUẨN, = `assets/SRS_MAU.docx` (sinh lại theo form 2026-09-24) | `.plans/gop-db/finance-bill-income-request/SRS - Phiếu đề nghị thu tiền.docx` |
-| **Báo cáo tổng hợp CSKH tiềm năng** — BẢN MẪU CHO MÀN BÁO CÁO (form 2026-09-24 + bảng cách lấy dữ liệu + popup: 2.1.6, 2.1.7, 2.5–2.7) | `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/SRS - Báo cáo tổng hợp chăm sóc khách hàng tiềm năng.docx` |
+| **Báo cáo tổng hợp CSKH tiềm năng** — BẢN MẪU CHO MÀN BÁO CÁO (form 2026-09-24 + bảng cách lấy dữ liệu + popup: 2.1.6, 2.1.7, 2.5–2.7). ⚠️ Bảng giao diện 2.1.3 của bản này là bản BA đã comment 05/10/2026 (`…_THUYSUA.docx`) — **đừng chép cách viết 2.1.3**, theo 7 quy tắc "Viết bảng giao diện cho người đọc"; chỉ chép 2.1.6, 2.1.7, popup | `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/SRS - Báo cáo tổng hợp chăm sóc khách hàng tiềm năng.docx` |
 | Danh mục khách hàng (Giao việc) — form CŨ 2026-08-17 | `.plans/gop-db/customer-docs/SRS - Danh mục khách hàng.docx` |
 | Danh mục dịch vụ sửa chữa và chi phí khác (CSKH) — form CŨ | `.plans/gop-db/customer-care-cost-catalog/SRS - Danh mục dịch vụ sửa chữa và chi phí khác.docx` |
