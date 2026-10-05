@@ -1,0 +1,171 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục dịch vụ sửa chữa và chi phí khác) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] DANH MỤC HÌNH ẢNH 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Mục tiêu 
+[normal] Màn hình “Danh mục dịch vụ sửa chữa và chi phí khác” dùng để khai báo và quản lý danh sách các dịch vụ sửa chữa cùng các khoản chi phí khác phát sinh trong hoạt động dịch vụ. Mỗi dòng danh mục khai báo 3 thông số dùng cho các nghiệp vụ phía sau: % Tính giá vốn, % VAT và ĐM giảm giá (định mức giảm giá). Danh mục này là nguồn dữ liệu cho Báo giá hãng và Hợp đồng hãng, vì vậy dòng đã phát sinh chứng từ sẽ không được xóa mà chỉ được chuyển sang trạng thái Khóa. 
+[Heading 2] 2. Đường dẫn truy cập 
+[normal] Trên menu trái của phân hệ CSKH, vào nhóm “Danh mục - Dịch vụ” rồi chọn: 
+[normal] “Danh mục dịch vụ sửa chữa và chi phí khác” (đường dẫn: /customer-care/costs). 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/costs 
+[normal]  [IMG]
+[normal] Hình 1: Đường dẫn vào màn hình từ nhóm menu “Danh mục - Dịch vụ” 
+[normal] Mục menu này chỉ hiển thị khi tài khoản có ít nhất một trong hai quyền “Quản lý dịch vụ sửa chữa và chi phí khác” hoặc “Xem dịch vụ sửa chữa và chi phí khác”. Nếu không có quyền nào, mục menu bị ẩn; trường hợp gõ thẳng đường dẫn thì hệ thống chặn và không trả về dữ liệu. 
+[Heading 2] 3. Vai trò tham gia 
+<<TABLE 1>>
+  | Vai trò | Thao tác chính
+  | Người quản lý danh mục dịch vụ | Tạo mới, Sửa, Xóa, Khóa / Mở khóa dịch vụ và chi phí; khai báo ĐM giảm giá cho công ty của mình.
+  | Người dùng chỉ xem | Xem danh sách, xem chi tiết, tìm kiếm và Xuất Excel.
+  | Bộ phận Báo giá / Hợp đồng hãng | Là bên sử dụng danh mục này ở khâu lập Báo giá hãng và Hợp đồng hãng.
+[Heading 2] 4. Các trạng thái 
+<<TABLE 2>>
+  | Trạng thái | Ý nghĩa
+  | Hoạt động | Dòng danh mục đang dùng được; sửa / khóa / xóa được (nếu không phải dòng hệ thống).
+  | Khóa | Ngừng sử dụng. Không sửa và không xóa được; muốn dùng lại phải Mở khóa trước.
+[Heading 2] 5. Phân loại dịch vụ / chi phí 
+<<TABLE 3>>
+  | Phân loại | Ý nghĩa
+  | Có tính doanh thu | Dịch vụ được tính vào doanh thu. Tương ứng ô “Dịch vụ có tính doanh thu” được tích trên form.
+  | Chi phí khác | Khoản chi phí không tính doanh thu. Tương ứng ô “Dịch vụ có tính doanh thu” KHÔNG được tích.
+[Heading 1] PHẦN 1: DANH SÁCH & TÌM KIẾM 
+[Heading 2] 1.1 Danh sách 
+[normal]  [IMG]
+[normal] Hình 2: Màn hình danh sách Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] Màn hình gồm 2 khối: panel bộ lọc ở trên (mặc định thu gọn) và bảng danh sách ở dưới. Bảng gồm 9 cột: 
+<<TABLE 4>>
+  | Cột | Nội dung hiển thị
+  | STT | Số thứ tự, đánh liên tục theo trang (trang 2 bắt đầu từ 11).
+  | Tên dịch vụ / chi phí | Tên khai báo, in đậm. Sắp xếp được.
+  | Phân loại | Nhãn màu “Có tính doanh thu” (xanh) hoặc “Chi phí khác” (đỏ).
+  | ĐM giảm giá | Định mức giảm giá theo % của CÔNG TY ĐANG CHỌN. Chưa khai báo thì hiển thị “—”. Sắp xếp được.
+  | % Tính giá vốn | Tỷ lệ tính giá vốn, in đậm. Sắp xếp được.
+  | % VAT | Thuế suất VAT. Sắp xếp được.
+  | Trạng thái | Nhãn “Hoạt động” / “Khóa”, kèm nút ổ khóa để Khóa hoặc Mở khóa (chỉ hiện khi có quyền quản lý).
+  | Cập nhật | Thời điểm sửa gần nhất và người sửa (dạng MÃ NV - Họ tên). Bản ghi chưa từng sửa thì hiển thị người tạo. Sắp xếp được.
+  | Hành động | Các nút Xem, Sửa, Xóa.
+[normal] Cột ĐM giảm giá là điểm cần lưu ý: giá trị này khai báo riêng cho từng công ty. Cùng một dịch vụ, người dùng của công ty A và công ty B có thể nhìn thấy hai mức khác nhau — đó là hành vi đúng, không phải lỗi dữ liệu. 
+[Heading 2] 1.2 Tìm kiếm và bộ lọc 
+[normal]  [IMG]
+[normal] Hình 3: Bộ lọc nâng cao của Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] Ô tìm nhanh nằm ngay dưới tiêu đề panel, tìm theo tên dịch vụ / chi phí. Lưu ý ô này KHÔNG tự lọc khi đang gõ — phải bấm nút “Tìm kiếm” (hoặc nhấn Enter) thì danh sách mới được lọc lại. 
+[normal] Bấm “Tìm kiếm nâng cao” để mở thêm 4 tiêu chí: 
+[normal] Tên dịch vụ / chi phí — tìm gần đúng theo tên. 
+[normal] Phân loại — “Dịch vụ có tính doanh thu” hoặc “Chi phí khác”. 
+[normal] Trạng thái — “Hoạt động” hoặc “Khóa”. 
+[normal] Người cập nhật — chọn nhân viên. Tiêu chí này bắt cả những bản ghi chưa từng được sửa mà do chính nhân viên đó tạo ra. 
+[normal] Bốn ô lọc nâng cao có hiệu lực NGAY khi chọn, không cần bấm “Tìm kiếm”. Các tiêu chí kết hợp với nhau theo quan hệ VÀ. Bấm “Làm mới” để xóa toàn bộ tiêu chí và nạp lại danh sách đầy đủ. 
+[normal] Bộ lọc đang áp dụng được ghi nhớ trong 10 phút: rời màn rồi quay lại trong khoảng thời gian này thì các tiêu chí cũ vẫn còn; quá 10 phút bộ lọc tự trở về mặc định. 
+[normal] Nút trên thanh công cụ của bảng: “Tạo mới” (chỉ hiện khi có quyền quản lý) và “Xuất Excel”. Trên từng dòng: Xem (luôn hiện); Sửa và Xóa (chỉ hiện khi có quyền quản lý); nút ổ khóa nằm trong cột Trạng thái. 
+[Heading 1] PHẦN 2: PHÂN QUYỀN 
+[normal] Màn hình gắn với 2 quyền. Tài khoản có thể có một trong hai, hoặc cả hai. 
+<<TABLE 5>>
+  | Tên quyền | Cho phép làm gì | Nút / khu vực tương ứng | Ghi chú
+  | Quản lý dịch vụ sửa chữa và chi phí khác | Xem danh sách, xem chi tiết, Tạo mới, Sửa, Xóa, Khóa, Mở khóa. | Nút “Tạo mới”; nút Sửa và Xóa trên từng dòng; nút ổ khóa trong cột Trạng thái. | Nút vẫn có thể bị mờ theo trạng thái dòng hoặc do là dòng hệ thống.
+  | Xem dịch vụ sửa chữa và chi phí khác | Chỉ xem danh sách, xem chi tiết, tìm kiếm và Xuất Excel. | Nút “Xem” trên từng dòng; nút “Xuất Excel”. | Không thấy nút Tạo mới / Sửa / Xóa / ổ khóa.
+[normal] Màn hình KHÔNG phân quyền theo cấp công ty / phòng ban / bộ phận: mọi tài khoản có quyền đều nhìn thấy toàn bộ danh mục. Công ty đang chọn chỉ ảnh hưởng tới giá trị cột “ĐM giảm giá”. 
+[Heading 2] 2.1 Người dùng có quyền “Xem dịch vụ sửa chữa và chi phí khác” 
+[normal] Thấy: mục menu, panel bộ lọc, toàn bộ 9 cột của bảng, nút “Xuất Excel”, nút “Xem” trên từng dòng. 
+[normal] Không thấy: nút “Tạo mới”, nút Sửa, nút Xóa và nút ổ khóa trong cột Trạng thái. 
+[normal] Làm được: tìm kiếm, lọc, sắp xếp, chuyển trang, mở modal xem chi tiết (mọi ô ở chế độ chỉ đọc), xuất file Excel theo bộ lọc đang áp dụng. 
+[normal] Nếu không có quyền này, mục menu sẽ không hiển thị; trường hợp truy cập trực tiếp bằng đường dẫn, hệ thống báo lỗi không có quyền và bảng không có dữ liệu. 
+[Heading 2] 2.2 Người dùng có quyền “Quản lý dịch vụ sửa chữa và chi phí khác” 
+[normal] Thấy thêm: nút “Tạo mới” trên thanh công cụ, nút Sửa và Xóa ở cột Hành động, nút ổ khóa ở cột Trạng thái. 
+[normal] Làm được: toàn bộ thao tác Tạo mới / Sửa / Xóa / Khóa / Mở khóa mô tả ở các phần sau. 
+[normal] Mỗi thao tác thay đổi dữ liệu (Tạo mới, Sửa, Xóa, Khóa, Mở khóa) đều yêu cầu quyền này. Nếu quyền bị thu hồi trong lúc form đang mở, thao tác Lưu sẽ bị hệ thống từ chối và dữ liệu không bị ghi. 
+[Heading 1] PHẦN 3: TẠO MỚI DỊCH VỤ / CHI PHÍ 
+[normal] Tại thanh công cụ của bảng, bấm nút “Tạo mới”. Hệ thống mở cửa sổ “Thêm dịch vụ / chi phí” ngay trên trang, không chuyển sang màn khác. 
+[normal]  [IMG]
+[normal] Hình 4: Cửa sổ Thêm dịch vụ / chi phí 
+[Heading 2] 3.1 Các trường nhập liệu 
+<<TABLE 6>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị điền sẵn khi tạo mới | Ghi chú
+  | Tên dịch vụ / chi phí | Ô nhập chữ | Có | Để trống | Tối đa 255 ký tự. Không được trùng tên với dịch vụ đã có (kể cả dịch vụ đang bị Khóa).
+  | % Tính giá vốn | Ô nhập số | Có | Để trống | 
+  | % VAT | Ô nhập số | Có | Để trống | Từ 0 đến 100. Nhập lớn hơn 100 sẽ bị báo lỗi.
+  | ĐM giảm giá (%) | Ô nhập số | Không | Để trống | Từ 0 đến 100. Bỏ trống hoặc nhập 0 nghĩa là không có định mức giảm giá. Giá trị này được lưu riêng cho công ty đang chọn.
+  | Dịch vụ có tính doanh thu | Ô tích chọn | Không | ĐÃ TÍCH SẴN | 
+[Heading 2] 3.2 Lưu dữ liệu 
+[normal] Nút “Lưu”: lưu bản ghi, đóng cửa sổ, hiện thông báo “Thêm mới thành công” và nạp lại danh sách. Bản ghi mới nằm ở đầu danh sách. 
+[normal] Nút “Lưu & Tiếp tục”: lưu bản ghi nhưng GIỮ cửa sổ mở và xóa trắng toàn bộ ô nhập, để khai báo tiếp bản ghi kế theo. Nút này chỉ có ở cửa sổ Tạo mới. 
+[normal] Nút “Đóng” hoặc dấu × ở góc: thoát mà không lưu; dữ liệu đang nhập dở bị bỏ. 
+[Heading 2] 3.3 Thông báo lỗi khi nhập thiếu 
+[normal] Nếu bấm “Lưu” khi chưa nhập đủ, hệ thống hiện thông báo đỏ “Bạn chưa nhập đầy đủ thông tin” và báo lỗi ngay dưới từng ô sai. Cửa sổ không bị đóng, dữ liệu đã nhập vẫn còn. 
+[normal]  [IMG]
+[normal] Hình 5: Thông báo lỗi khi bỏ trống các trường bắt buộc 
+<<TABLE 7>>
+  | Tình huống nhập sai | Thông báo hiển thị
+  | Bỏ trống Tên / % Tính giá vốn / % VAT | Bắt buộc phải nhập
+  | Tên trùng với dịch vụ đã có | Đã tồn tại trên hệ thống
+  | Tên dài quá 255 ký tự | Tối đa 255 ký tự
+  | Nhập chữ vào ô số | Phải là số
+  | % Tính giá vốn nhỏ hơn 0 | Không được nhỏ hơn 0
+  | % VAT hoặc ĐM giảm giá lớn hơn 100 | Tối đa 100
+[Heading 1] PHẦN 4: SỬA VÀ XEM CHI TIẾT 
+[Heading 2] 4.1 Sửa 
+[normal] Yêu cầu quyền “Quản lý dịch vụ sửa chữa và chi phí khác”. Tại cột Hành động, bấm nút hình bút chì ở dòng cần sửa. Cửa sổ “Sửa dịch vụ / chi phí” mở ra với dữ liệu đã điền sẵn. 
+[normal]  [IMG]
+[normal] Hình 6: Cửa sổ Sửa dịch vụ / chi phí 
+[normal] Cửa sổ Sửa khác cửa sổ Tạo mới ở ba điểm: 
+[normal] Trên tiêu đề có thêm dòng thông tin “Cập nhật: …” và “Bởi: …” cho biết lần sửa gần nhất do ai thực hiện. 
+[normal] Có thêm ô “Trạng thái” để chuyển giữa “Hoạt động” và “Khóa”. 
+[normal] Không có nút “Lưu & Tiếp tục”, chỉ có “Lưu” và “Đóng”. 
+[normal] Sau khi bấm “Lưu”, hệ thống hiện thông báo “Cập nhật thành công”, đóng cửa sổ và nạp lại danh sách. Cột “Cập nhật” của dòng vừa sửa đổi sang thời điểm hiện tại và tên người đang đăng nhập. 
+[normal] Về ô “ĐM giảm giá”: nếu xóa trắng ô này hoặc nhập 0 rồi Lưu, hệ thống sẽ gỡ định mức giảm giá của CÔNG TY ĐANG CHỌN (cột trên danh sách chuyển thành “—”). Định mức của các công ty khác không bị ảnh hưởng. 
+[normal] Nút Sửa bị làm mờ trong 2 trường hợp: dòng đang ở trạng thái Khóa (chú thích khi rê chuột: “Chi phí đang bị khóa, hãy mở khóa trước khi sửa”) hoặc dòng là chi phí hệ thống — cụ thể là “Chi phí đi lại” và “Chi phí vận chuyển” (chú thích: “Chi phí này không được phép sửa”). 
+[Heading 2] 4.2 Xem chi tiết 
+[normal] Không cần quyền quản lý — chỉ cần quyền xem. Bấm nút hình con mắt ở cột Hành động. 
+[normal]  [IMG]
+[normal] Hình 7: Cửa sổ Xem dịch vụ / chi phí (chế độ chỉ đọc) 
+[normal] Cửa sổ “Xem dịch vụ / chi phí” hiển thị đầy đủ thông tin nhưng mọi ô đều bị khóa, không nhập được và không có nút Lưu — chỉ có nút “Đóng”. Chức năng này dùng được với cả dòng đang Hoạt động lẫn dòng đang Khóa. 
+[Heading 1] PHẦN 5: KHÓA VÀ MỞ KHÓA. 
+[normal] Nút Khóa / Mở khóa nằm NGAY TRONG cột “Trạng thái”, bên phải nhãn trạng thái (không nằm ở cột Hành động). Dòng đang Hoạt động hiển thị biểu tượng ổ khóa đóng; dòng đang Khóa hiển thị biểu tượng ổ khóa mở. 
+[normal]  [IMG]
+[normal] Hình 8: Hộp thoại xác nhận khóa dịch vụ 
+[normal] Khóa: bấm biểu tượng ổ khóa ở dòng đang Hoạt động → hộp thoại “Xác nhận khóa” hiện ra với nội dung “Bạn có chắc muốn khóa '<tên dịch vụ>'?”. Bấm “Khóa” để xác nhận, hoặc “Hủy” để bỏ qua. Sau khi khóa, hệ thống báo “Khóa thành công”, nhãn trạng thái chuyển thành “Khóa”, đồng thời nút Sửa và nút Xóa của dòng đó bị làm mờ. 
+[normal] Mở khóa: bấm biểu tượng ổ khóa ở dòng đang Khóa → hộp thoại “Xác nhận mở khóa”. Bấm “Mở khóa” để xác nhận. Hệ thống báo “Mở khóa thành công”, nhãn trạng thái trở lại “Hoạt động” và nút Sửa / Xóa sáng lại. 
+[normal] Thao tác Khóa / Mở khóa CHỈ đổi trạng thái, không đụng tới các thông số khác. Đặc biệt, định mức giảm giá đã khai báo vẫn được giữ nguyên, nên khi mở khóa lại thì dữ liệu cũ còn đầy đủ. 
+[normal] Hai chi phí hệ thống “Chi phí đi lại” và “Chi phí vận chuyển” không khóa và không mở khóa được — nút ổ khóa của hai dòng này luôn bị làm mờ. 
+[Heading 1] PHẦN 6: XÓA 
+[normal] Trước khi mở hộp thoại, hệ thống tự kiểm tra xem dịch vụ đã được sử dụng ở chứng từ nào chưa. Kết quả kiểm tra quyết định nội dung hộp thoại và thao tác thực sự xảy ra: 
+[normal]  [IMG]
+[normal] Hình 9: Hộp thoại xác nhận xóa dịch vụ chưa phát sinh chứng từ 
+<<TABLE 8>>
+  | Tình huống | Hộp thoại hiển thị | Kết quả sau khi xác nhận
+  | Dịch vụ CHƯA được dùng ở Báo giá hãng và Hợp đồng hãng | Tiêu đề “Xác nhận xóa”; nội dung “Bạn có chắc muốn xóa '<tên>'?”; nút xác nhận ghi “Xóa”. | Xóa hẳn khỏi danh mục, đồng thời xóa cả định mức giảm giá của mọi công ty. Thông báo “Xóa thành công”.
+  | Dịch vụ ĐÃ được dùng ở Báo giá hãng và/hoặc Hợp đồng hãng | Tiêu đề đổi thành “Xác nhận khóa”; nội dung nêu rõ dịch vụ đang được dùng ở đâu và cho biết hệ thống sẽ chuyển sang trạng thái Khóa thay vì xóa; nút xác nhận ghi “Khóa”. | Bản ghi VẪN CÒN trong danh mục nhưng chuyển sang trạng thái Khóa; định mức giảm giá được giữ nguyên. Thông báo “Khóa thành công”.
+[normal] Đây là cơ chế bảo vệ dữ liệu: chứng từ đã lập trước đó vẫn tham chiếu được tới dịch vụ, không bị mất tên và mất thông số. 
+[normal] Nút Xóa bị làm mờ khi dòng đang ở trạng thái Khóa (chú thích “Chi phí đã bị khóa”) hoặc khi dòng là chi phí hệ thống “Chi phí đi lại” / “Chi phí vận chuyển” (chú thích “Chi phí này không được phép xóa”). 
+[Heading 1] PHẦN 7: XUẤT EXCEL 
+[normal] Nút “Xuất Excel” nằm cạnh nút “Tạo mới”, dùng được với cả tài khoản chỉ có quyền xem. 
+[normal] Bấm nút, hệ thống tải về file tên danh_muc_dich_vu_sua_chua_va_chi_phi_khac.xlsx và hiện thông báo “Xuất Excel thành công”. File xuất theo ĐÚNG bộ lọc và thứ tự sắp xếp đang áp dụng trên màn hình, nhưng lấy TẤT CẢ dòng khớp bộ lọc chứ không chỉ trang đang xem. 
+[normal] File Excel gồm 8 cột: STT, Tên dịch vụ / chi phí, Phân loại, ĐM giảm giá (%), % Tính giá vốn, % VAT, Trạng thái, Người tạo. Lưu ý hai điểm khác với màn hình: 
+[normal] Các cột phần trăm trong file luôn được ghi với 2 chữ số thập phân (ví dụ 80,00) trong khi trên màn hình hiển thị rút gọn (80%). 
+[normal] Cột cuối là “Người tạo” chứ không phải người cập nhật gần nhất như cột “Cập nhật” trên màn hình. 
+[Heading 1] PHẦN CHI TIẾT: THAO TÁC TỪNG BƯỚC 
+[normal] Phần này tóm tắt lại trình tự thao tác để người dùng làm theo. 
+[Heading 2] A. Khai báo một dịch vụ mới 
+[normal] Bước A2: Bấm nút “Tạo mới” ở góc phải trên bảng. 
+[normal] Bước A3: Nhập “Tên dịch vụ / chi phí” (bắt buộc, không trùng tên đã có). 
+[normal] Bước A5: Nhập “ĐM giảm giá (%)” nếu công ty có áp dụng định mức giảm giá; bỏ trống nếu không có. 
+[normal] Bước A6: Giữ tích ô “Dịch vụ có tính doanh thu” nếu đây là dịch vụ tính doanh thu; bỏ tích nếu là khoản chi phí khác. 
+[normal] Bước A7: Bấm “Lưu” để kết thúc, hoặc “Lưu & Tiếp tục” nếu còn khai báo tiếp dòng khác. 
+[Heading 2] B. Điều chỉnh một dịch vụ đã có 
+[normal] Bước B1: Tìm dòng cần sửa bằng ô tìm nhanh hoặc bộ lọc nâng cao. 
+[normal] Bước B2: Bấm nút hình bút chì ở cột Hành động. Nếu nút bị mờ, kiểm tra chú thích khi rê chuột: dòng đang Khóa thì phải Mở khóa trước; dòng là chi phí hệ thống thì không sửa được. 
+[normal] Bước B3: Chỉnh các thông số cần thiết, có thể đổi cả ô “Trạng thái”. 
+[normal] Bước B4: Bấm “Lưu”. Kiểm tra lại giá trị trên lưới và cột “Cập nhật”. 
+[Heading 2] C. Ngừng sử dụng một dịch vụ 
+[normal] Bước C1: Nếu chỉ muốn tạm ngừng, bấm biểu tượng ổ khóa trong cột “Trạng thái” rồi xác nhận “Khóa”. Dữ liệu được giữ nguyên và mở lại được bất cứ lúc nào. 
+[normal] Bước C2: Nếu muốn bỏ hẳn, bấm nút thùng rác ở cột Hành động rồi đọc kỹ hộp thoại: hộp thoại ghi “Xác nhận xóa” nghĩa là dịch vụ sẽ bị xóa hẳn; ghi “Xác nhận khóa” nghĩa là dịch vụ đã phát sinh chứng từ và chỉ bị chuyển sang trạng thái Khóa. 
+[normal] Bước C3: Xác nhận, sau đó kiểm tra lại danh sách. 
+[Heading 2] D. Kết xuất danh mục ra Excel 
+[normal] Bước D1: Đặt bộ lọc và thứ tự sắp xếp mong muốn trên màn hình. 
+[normal] Bước D2: Bấm “Xuất Excel” và mở file tải về để kiểm tra. 

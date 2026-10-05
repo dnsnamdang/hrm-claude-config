@@ -1,0 +1,50 @@
+[
+ {
+  "key": "new",
+  "id": 3,
+  "code": "ISS-202610-0003",
+  "title": "Sai đơn giá vật tư cáp điều khiển trong BOM tủ điện tổng"
+ },
+ {
+  "key": "assigned",
+  "id": 4,
+  "code": "ISS-202610-0004",
+  "title": "Thiếu bản vẽ mặt bằng bố trí cầu nâng khoang 2"
+ },
+ {
+  "key": "in_progress",
+  "id": 5,
+  "code": "ISS-202610-0005",
+  "title": "Chậm phản hồi thông số máy nén khí từ nhà cung cấp"
+ },
+ {
+  "key": "resolved",
+  "id": 6,
+  "code": "ISS-202610-0006",
+  "title": "Báo giá thiếu chi phí nhân công lắp đặt hệ thống khí nén"
+ },
+ {
+  "key": "completed",
+  "id": 7,
+  "code": "ISS-202610-0007",
+  "title": "Khách hàng đổi yêu cầu số lượng máy ra vào lốp"
+ },
+ {
+  "key": "rejected",
+  "id": 8,
+  "code": "ISS-202610-0008",
+  "title": "Sai mã hàng thiết bị cân chỉnh độ chụm trong BOM"
+ },
+ {
+  "key": "closed",
+  "id": 9,
+  "code": "ISS-202610-0009",
+  "title": "Trùng dòng thiết bị rửa xe trong hạng mục 1"
+ },
+ {
+  "key": "reopened",
+  "id": 10,
+  "code": "ISS-202610-0010",
+  "title": "Thiếu thông số nguồn điện 3 pha cho máy chẩn đoán"
+ }
+]

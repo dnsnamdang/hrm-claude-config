@@ -1,0 +1,44 @@
+{
+ "job_assignment_notes": [
+  29272,
+  29273
+ ],
+ "job_assignment_note_details": [
+  29383,
+  29384
+ ],
+ "job_assignment_employees": [
+  29463,
+  29464,
+  29465
+ ],
+ "business_trip_assigns": [
+  10392
+ ],
+ "business_trip_employees": [
+  448403,
+  448404
+ ],
+ "overtime_assignments": [
+  5532
+ ],
+ "overtime_assignment_employees": [
+  3601,
+  3602
+ ],
+ "assign_requests": [
+  13328,
+  13329
+ ],
+ "assign_request_employees": [
+  22795,
+  22796,
+  22797,
+  22798,
+  22799
+ ],
+ "assign_business_tasks": [
+  17929,
+  17930
+ ]
+}

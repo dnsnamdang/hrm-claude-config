@@ -47,6 +47,14 @@
 [x] Task 25: BE+FE — Thêm trường `submitted_at` cho handovers: migration (backfill từ updated_at cho status>=2), entity fillable+cast, HandoverResource trả submitted_at, HandoverService.submit() set submitted_at, pending.vue dùng submitted_at thay updated_at
 [x] Task 24: Test thủ công — filter cả 2 màn receiving + pending + submitted_at hiển thị đúng
 
+### SRS (2026-10-01)
+[x] Task 26: Sinh `SRS - Phê duyệt bàn giao công việc.docx` (màn Phê duyệt → Bàn giao công việc + chi tiết duyệt/từ chối, 9 chức năng) — generator `gen_srs.py`, ảnh `handover_pending_shots/` (DB local chưa có phiếu → dữ liệu phiếu giả lập ở tầng mạng khi chụp)
+[x] Task 27: Fix Tiến độ % không chặn ngoài 0–100 — FE báo đỏ dưới ô (utils/handoverProgress.js + HandoverItemsTable), chặn gọi API ở màn duyệt + màn tạo/sửa; BE rule `nullable|integer|min:0|max:100` (HandoverRequest + HandoverApproveRequest mới)
+[x] Task 28: Fix select Người nhận hiện "Mã - Tên" → "Tên - Mã phòng - Mã NV": BE getReceiverOptions* dùng employeeOptionLabel + trả department_code, FE mapOptions dùng employeeOptionText (bộ lọc màn pending đã đúng khuôn, không sửa)
+[x] Task 29: Fix Duyệt phải qua 2 hộp xác nhận → còn 1 hộp có mã phiếu (chi tiết phiếu dùng slot #custom-actions của V2Footer, không sửa V2Footer); Không duyệt vốn chỉ 1 hộp. Cập nhật + sinh lại SRS
+[x] Task 30: Test Playwright dữ liệu thật 3 fix (17 case đạt); rút câu lỗi Tiến độ còn "Chỉ nhập số nguyên 0–100" + không xuống dòng (cột hẹp gãy 6 dòng); dọn dữ liệu test, khôi phục task 5/14 + mk huongnt.kd3
+[x] Task 31: SRS tách "Cài đặt bộ lọc" / "Tùy chỉnh cột" thành 2 chức năng (10 chức năng, FR/2.x đánh lại), gộp bản sửa tay của tester trên Drive 02/10 10:29 (Tùy/Xóa, Layout Xem chi tiết 2 cách vào)
+
 ## Checkpoint
 - 2026-03-31: 2 bug fix done, merge fix_handover → tpe-develop-assign, pushed GitHub
 

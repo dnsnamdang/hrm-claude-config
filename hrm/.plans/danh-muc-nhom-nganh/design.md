@@ -72,3 +72,13 @@ Hai trường quan trọng nhất (Tên, Lĩnh vực) cùng độ rộng 8/12; k
 - `screenshots/` — ảnh chụp thật màn hình.
 
 **Spec chi tiết** của danh mục nguồn: `docs/superpowers/specs/2026-08-22-linh-vuc-kinh-doanh-noi-bo-design.md`
+
+## Quyết định đã chốt — SRS (2026-09-24)
+
+Bám bản QA "SRS - Danh mục quốc gia" (https://docs.google.com/document/d/1tKvOQqJyK0bJC6BrZGM92974irpDAsFn/edit), lệch với `srs-documenter/SKILL.md` ở 2 điểm — user chốt theo bản QA:
+
+| # | Điểm | Chốt |
+| --- | --- | --- |
+| 1 | Sơ đồ UML tổng quan | Mọi chức năng thao tác (Tạo mới, Sửa, Xóa, Khóa, Import, Xuất) nối THẲNG tới actor. «extend» chỉ dùng cho chức năng PHỤ của màn danh sách (Tìm kiếm và lọc, Xem chi tiết). |
+| 2 | Sơ đồ từng chức năng | Chỉ actor + 1 use case, KHÔNG vẽ include/extend chi tiết (kiểm quyền, xác nhận…). |
+| 3 | Dòng `Menu:` ở mục Layout | Mỗi chặng kèm icon cắt từ chính phần tử trên giao diện (ô phân hệ, mục menu, nút thao tác), cao 0,3 inch. Icon ở `nhom-nganh_shots/icon_*.png`. |

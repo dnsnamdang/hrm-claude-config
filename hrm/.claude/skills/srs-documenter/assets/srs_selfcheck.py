@@ -88,10 +88,17 @@ def _profile(path):
         'ui_cols': ui_cols,
         'rule_tbl': rule_tbl,
         'menu': sum(1 for t in paras if t.startswith('Menu: ')),
+        # dong "Menu:" co it nhat 1 icon inline (form 2026-09-24)
+        'menu_icon': sum(1 for p in d.paragraphs if p.text.strip().startswith('Menu: ')
+                         and p._p.xpath('.//a:blip')),
         'rule_ref': sum(1 for t in paras if t.startswith('Quy tắc chung: ')),
         'rule_lead': sum(1 for t in paras if t.startswith('Quy tắc áp dụng: ')),
-        'links': len([r for r in Document(path).part.rels.values()
-                      if r.reltype.endswith('/hyperlink')]),
+        # Đếm PHẦN TỬ <w:hyperlink> có r:id trong văn bản, KHÔNG đếm quan hệ (rels): python-docx
+        # gộp các link trùng URL vào 1 quan hệ, nên file chưa qua Word (save(update_fields=False))
+        # bị đếm thiếu và báo lỗi oan (2026-09-24, cả 6 agent sinh song song đều dính).
+        'links': len([h for h in d.element.body.iter(
+            '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hyperlink')
+            if h.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')]),
         'media': len(media),
         'fn': sum(1 for p in Document(path).paragraphs
                   if p.style.name == 'Heading 3' and re.match(r'^2\.\d+\s', p.text.strip())),
@@ -108,6 +115,10 @@ def check(path, verbose=True):
     if me['menu'] < me['fn']:
         errs.append('Mục Layout: chỉ có %d dòng "Menu: " cho %d chức năng. '
                     'Dùng d.layout(menu=MENU + " => Tạo mới", shot=...)' % (me['menu'], me['fn']))
+    if me['menu_icon'] < me['menu']:
+        errs.append('Chỉ %d/%d dòng "Menu: " có icon. Form 2026-09-24: mỗi chặng kèm icon cắt từ '
+                    'giao diện thật — khai d.set_menu_icons({...}) trước khi gọi d.layout().'
+                    % (me['menu_icon'], me['menu']))
     if any('URL đầy đủ' in t for t in me['paras']):
         errs.append('Còn dòng "URL đầy đủ" của form 2026-08-17 — form hiện hành ghi đường dẫn '
                     'MENU, bỏ hẳn URL.')
@@ -134,13 +145,16 @@ def check(path, verbose=True):
     # Doc dau nay chac chan hon doan theo ty le anh — ban phang cung co the rat rong.
     kinds = _uml_kinds(path)
     if 'overview-flat' in kinds:
-        errs.append('Sơ đồ tổng quan đang vẽ PHẲNG (mọi use case nối thẳng tới actor) — form '
-                    'hiện hành vẽ có phân cấp: chỉ MÀN HÌNH thật nối actor, thao tác trên màn đó '
-                    'nối «include»/«extend» vào màn cha. Dùng '
-                    'd.overview_figure2(actors, mains, subs, caption).')
+        errs.append('Sơ đồ tổng quan đang vẽ bằng hàm cũ draw_overview (không có «extend») — '
+                    'dùng d.overview_figure2(actors, mains, subs, caption): chức năng thao tác '
+                    'nối actor, chức năng PHỤ (tìm kiếm, xem chi tiết…) «extend» vào màn danh sách.')
     elif 'overview-hierarchy' not in kinds:
         errs.append('Không tìm thấy sơ đồ Use Case tổng quan sinh bằng d.overview_figure2() — '
                     'ảnh chèn tay hoặc dùng hàm cũ đều không đạt.')
+
+    if 'usecase-rel' in kinds:
+        errs.append('Sơ đồ Use Case của từng chức năng còn vẽ «include»/«extend» — form '
+                    '2026-09-24 chỉ vẽ actor + 1 use case: d.uc_figure(code, tên, nhóm, actor=...).')
 
     # --- bo cot bang giao dien: chi nhan bo cot co trong ban mau ---
     lech = sorted(set(me['ui_cols']) - set(mau['ui_cols']))

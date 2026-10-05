@@ -1,0 +1,265 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục Đường/Phố 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Danh mục Đường/Phố, nhằm: 
+[normal] Là căn cứ nghiệm thu chức năng. 
+[normal] Làm rõ quy tắc riêng: ô Quận/Huyện chỉ hiện khi Quốc gia khác Việt Nam. 
+[normal] Ghi nhận hiện trạng màn hình chưa được gắn quyền. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Đường/Phố | Cấp địa chỉ nhỏ nhất trong hệ thống, trực thuộc một Phường/Xã.
+  | Quy tắc Việt Nam | Khi Quốc gia là Việt Nam, ô Quận/Huyện/Thị xã bị ẩn và không phải nhập; địa chỉ đi thẳng từ Tỉnh/TP xuống Phường/Xã.
+  | Xóa | Trên màn này, xóa là chuyển bản ghi sang trạng thái ngừng sử dụng ở phía máy chủ. Bản ghi biến mất khỏi danh sách nhưng dữ liệu không mất hẳn.
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+[normal] Màn hình này KHÔNG gắn quyền ở bất kỳ chức năng nào. Mọi người dùng đã đăng nhập đều mở được màn hình và thực hiện được đầy đủ Thêm mới, Chỉnh sửa, Xóa, Khóa / Mở khóa. 
+<<TABLE 2>>
+  | Tên quyền | Tác dụng trên màn hình
+  | (chưa khai báo quyền nào) | Toàn bộ chức năng của màn hình đều mở cho mọi người dùng đã đăng nhập.
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 3>>
+  | Chức năng | Người dùng đã đăng nhập
+  | FR-01 Xem danh sách đường/phố | 
+  | FR-02 Tìm kiếm và lọc | 
+  | FR-03 Thêm mới đường/phố | 
+  | FR-04 Chỉnh sửa đường/phố | 
+  | FR-05 Xóa đường/phố | 
+  | FR-06 Xem lịch sử thay đổi | 
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Danh mục Đường/Phố 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem danh sách đường/phố 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 4>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem danh sách đường/phố
+  | Mô tả | Hiển thị toàn bộ đường/phố trong danh mục, có phân trang và sắp xếp.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Người dùng đã đăng nhập vào hệ thống.
+  | Dòng sự kiện chính | 1. Người dùng vào menu Danh mục chung → Địa lý → Danh mục Đường/Phố. / 2. Hệ thống nạp trang đầu tiên của danh sách. / 3. Bảng hiển thị dữ liệu kèm tổng số bản ghi.
+  | Dòng sự kiện phụ | • Danh mục chưa có bản ghi nào → bảng hiện thông báo không có dữ liệu. / • Phiên đăng nhập hết hạn → điều hướng về màn đăng nhập.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Đường/Phố 
+[normal]  [IMG]
+[normal] Hình 2: Màn Danh mục Đường/Phố lúc mới truy cập 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 5>>
+  | STT | Tên đối tượng | Mô tả
+  | 1 | STT | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | 2 | Tên đường/phố | Tên đầy đủ. Luôn hiển thị, sắp xếp được.
+  | 3 | Phường/xã | Phường/xã mà đường/phố trực thuộc.
+  | 4 | Quận/Huyện/Thị xã | Mặc định không có với quốc gia Việt Nam.
+  | 5 | Tỉnh/TP | Tỉnh/TP tương ứng.
+  | 6 | Quốc gia | Tên quốc gia tương ứng
+  | 7 | Ngày cập nhật | Sắp xếp được theo thời gian cập nhất mới nhất -> cũ nhất và ngược lại.
+  | 8 | Người tạo | Người đã thêm bản ghi.
+  | 9 | Ngày tạo | Thời điểm thêm, sắp xếp được.
+  | 10 | Hành động | Sửa, Xóa và Lịch sử.
+  | 11 | Nút Tạo mới | Mở cửa sổ thêm mới đường/phố.
+  | 12 | Phân trang | Nút về đầu / lùi / số trang / tiến / về cuối và ô chọn số dòng mỗi trang.
+  | 13 | Trạng thái rỗng | Hiện thông báo không có dữ liệu khi danh sách trống.
+[normal] 2.1.4 Danh sách event và xử lý event 
+<<TABLE 6>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở màn hình | System | After: / – Nạp trang đầu tiên của danh sách và hiển thị tổng số bản ghi.
+  | 2 | Bấm tiêu đề cột sắp xếp được | Click | After: / – Đổi chiều sắp xếp và nạp lại danh sách từ trang 1.
+  | 3 | Chuyển trang | Click | Before: / – Giữ nguyên bộ lọc và thứ tự sắp xếp đang áp dụng. / After: / – Nạp dữ liệu trang mới, số thứ tự tiếp tục liên tục.
+  | 4 | Đổi số dòng mỗi trang | Change | After: / – Quay về trang 1 và nạp lại theo số dòng mới.
+[Heading 3] 2.2 Tìm kiếm và lọc 
+[normal] 2.2.1 Giới thiệu 
+<<TABLE 7>>
+  | Mục | Nội dung
+  | Tên chức năng | Tìm kiếm và lọc danh sách
+  | Mô tả | Thu hẹp danh sách bằng ô tìm kiếm nhanh và các tiêu chí lọc của màn hình.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục Đường/Phố.
+  | Dòng sự kiện chính | 1. Người dùng nhập từ khóa hoặc chọn tiêu chí lọc. / 2. Người dùng bấm Tìm kiếm. / 3. Hệ thống áp đồng thời mọi tiêu chí và nạp lại danh sách từ trang 1.
+  | Dòng sự kiện phụ | • Không có kết quả → bảng hiện thông báo không có dữ liệu. / • Bấm Làm mới → xóa hết tiêu chí VÀ nạp lại danh sách đầy đủ ngay.
+[normal] 2.2.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Đường/Phố 
+[normal]  [IMG]
+[normal] Hình 3: Khu vực tìm kiếm và lọc của màn Danh mục Đường/Phố 
+[normal] 2.2.3 Mô tả chi tiết giao diện 
+<<TABLE 8>>
+  | STT | Tên đối tượng | Loại | Phạm vi | Mô tả
+  | 1 | Ô tìm kiếm nhanh | Textbox | 0–255 ký tự | Tìm theo tên đường/phố.
+  | 2 | Tỉnh/TP | Dropdown | Danh sách | Chọn Tỉnh/TP lọc lại danh sách của ô Phường/xã.
+  | 3 | Phường/xã | Dropdown | Danh sách | Bị xóa trắng khi đổi Tỉnh/TP.
+  | 4 | Nút Tìm kiếm | Button | – | Áp dụng các tiêu chí.
+  | 5 | Nút Làm mới | Button | – | Xóa hết tiêu chí VÀ nạp lại danh sách ngay.
+[normal] 2.2.4 Danh sách event và xử lý event 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Tìm kiếm | Click | Before: / – Thu thập giá trị của mọi tiêu chí đang có. / During: / – Áp đồng thời các tiêu chí theo kiểu “và”. / After: / – Nạp lại bảng từ trang 1 và cập nhật tổng số bản ghi.
+  | 2 | Bấm Làm mới | Click | After: / – Xóa trắng mọi tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+  | 3 | Đổi Tỉnh/TP ở bộ lọc | Change | After: / – Xóa trắng ô Phường/xã và nạp lại danh sách theo Tỉnh/TP mới.
+[Heading 3] 2.3 Thêm mới đường/phố 
+[normal] 2.3.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 4: Biểu đồ Use Case — FR-03 Thêm mới đường/phố 
+[normal] 2.3.2 Giới thiệu 
+<<TABLE 10>>
+  | Mục | Nội dung
+  | Tên chức năng | Thêm mới đường/phố
+  | Mô tả | Thêm một đường/phố mới vào danh mục thông qua cửa sổ nhập liệu.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục Đường/Phố.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Tạo mới. / 2. Hệ thống mở cửa sổ nhập liệu với các ô để trống. / 3. Người dùng nhập thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu và ghi bản ghi mới. / 5. Cửa sổ đóng lại, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc hoặc trùng tên → báo lỗi đỏ ngay dưới ô tương ứng, cửa sổ KHÔNG đóng, dữ liệu đã nhập vẫn còn. / • Bấm “Lưu và tiếp tục” → ghi bản ghi rồi giữ cửa sổ mở với các ô đã xóa trắng, để nhập tiếp bản ghi kế theo. / • Bấm Đóng → hủy bỏ, không ghi gì.
+  | Yêu cầu đặc biệt | Cửa sổ có ba nút: Lưu, Lưu và tiếp tục, Đóng.
+[normal] 2.3.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Đường/Phố => Tạo mới 
+[normal] Modal Tạo đường/phố được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Tạo đường/phố 
+[normal]  [IMG]
+[normal] Hình 6: Cùng cửa sổ khi chọn Quốc gia khác Việt Nam — hiện thêm ô Quận/Huyện/Thị xã 
+[normal] 2.3.4 Mô tả chi tiết giao diện 
+<<TABLE 11>>
+  | STT | Tên đối tượng | Loại | Phạm vi | Bắt buộc | Mô tả
+  | 1 | Tên đường/phố | Textbox | 0–255 ký tự | Có | Không được trùng trong cùng một Phường/Xã. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Tên đường/phố này đã tồn tại trong phường/xã”.
+  | 2 | Quốc gia | Dropdown | Danh sách | Có | Quyết định ô Quận/Huyện/Thị xã có hiện hay không.
+  | 3 | Tỉnh/TP | Dropdown | Danh sách | Có | Chỉ hiện Tỉnh/TP thuộc quốc gia đã chọn.
+  | 4 | Quận/Huyện/Thị xã | Dropdown | Danh sách | Có khi Quốc gia khác Việt Nam | ẨN HẲN khi Quốc gia là Việt Nam; hiện và bắt buộc với mọi quốc gia khác.
+  | 5 | Phường/xã | Dropdown | Danh sách | Có | Bỏ trống báo “Bắt buộc phải nhập”.
+  | 6 | Nút Lưu | Button | – | – | Ghi bản ghi rồi đóng cửa sổ.
+  | 7 | Nút Lưu và tiếp tục | Button | – | – | Ghi bản ghi rồi giữ cửa sổ mở để nhập tiếp.
+  | 8 | Nút Đóng | Button | – | – | Hủy bỏ, không ghi gì.
+  | 9 | Thông báo lỗi | Toast / Alert | – | – | Chữ đỏ ngay dưới ô bị lỗi.
+[normal] 2.3.5 Danh sách event và xử lý event 
+<<TABLE 12>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Tạo mới | Click | After: / – Mở cửa sổ nhập liệu với các ô để trống.
+  | 2 | Đổi ô Quốc gia | Change | After: / – Quốc gia là Việt Nam → ẨN ô Quận/Huyện/Thị xã và bỏ yêu cầu nhập ô này. / – Quốc gia khác → HIỆN ô Quận/Huyện/Thị xã và bắt buộc nhập. / – Xóa trắng và nạp lại các cấp địa chỉ bên dưới.
+  | 3 | Bấm Lưu | Click | During: / – Tên đường/phố để trống → hiển thị “Bắt buộc phải nhập”. / – Quốc gia để trống → hiển thị “Bắt buộc phải nhập”. / – Tỉnh/TP để trống → hiển thị “Bắt buộc phải nhập”. / – Quận/Huyện/Thị xã để trống → hiển thị “Bắt buộc phải nhập”. / – Phường/xã để trống → hiển thị “Bắt buộc phải nhập”. / – Tên đã tồn tại trong cùng một Phường/Xã → hiển thị “Tên đường/phố này đã tồn tại trong phường/xã”. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi bản ghi mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo thêm mới thành công.
+  | 4 | Bấm Lưu và tiếp tục | Click | During: / – Áp dụng đúng các quy tắc kiểm tra như nút Lưu. / After: / – Ghi bản ghi mới, xóa trắng các ô và GIỮ cửa sổ mở để nhập tiếp.
+  | 5 | Bấm Đóng | Click | After: / – Đóng cửa sổ, không ghi dữ liệu.
+[Heading 3] 2.4 Chỉnh sửa đường/phố 
+[normal] 2.4.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 7: Biểu đồ Use Case — FR-04 Chỉnh sửa đường/phố 
+[normal] 2.4.2 Giới thiệu 
+<<TABLE 13>>
+  | Mục | Nội dung
+  | Tên chức năng | Chỉnh sửa đường/phố
+  | Mô tả | Sửa thông tin của một đường/phố đã có. Dùng chung cửa sổ với chức năng Thêm mới.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Bản ghi cần sửa đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng bút chì ở dòng cần sửa. / 2. Hệ thống mở cửa sổ với dữ liệu hiện tại đã điền sẵn. / 3. Người dùng sửa thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu, ghi nhận thay đổi và ghi một dòng lịch sử. / 5. Cửa sổ đóng lại, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Trùng tên với bản ghi khác → báo lỗi, cửa sổ không đóng. / • Giữ nguyên tên của chính bản ghi đang sửa → lưu bình thường, không báo trùng.
+[normal] 2.4.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Đường/Phố => Chỉnh sửa 
+[normal] Modal Sửa đường/phố được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 8: Cửa sổ nhập liệu dùng chung cho Thêm mới và Chỉnh sửa đường/phố 
+[normal] 2.4.4 Mô tả chi tiết giao diện 
+<<TABLE 14>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Tên đường/phố | Textbox | Enable | 0–255 ký tự | Có | Dữ liệu hiện tại | Không được trùng trong cùng một Phường/Xã. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Tên đường/phố này đã tồn tại trong phường/xã”.
+  | 2 | Quốc gia | Dropdown | Enable | Danh sách | Có | Dữ liệu hiện tại | Quyết định ô Quận/Huyện/Thị xã có hiện hay không.
+  | 3 | Tỉnh/TP | Dropdown | Enable | Danh sách | Có | Dữ liệu hiện tại | Chỉ hiện Tỉnh/TP thuộc quốc gia đã chọn.
+  | 4 | Quận/Huyện/Thị xã | Dropdown | Enable | Danh sách | Có khi Quốc gia khác Việt Nam | Dữ liệu hiện tại | ẨN HẲN khi Quốc gia là Việt Nam; hiện và bắt buộc với mọi quốc gia khác.
+  | 5 | Phường/xã | Dropdown | Enable | Danh sách | Có | Dữ liệu hiện tại | Bỏ trống báo “Bắt buộc phải nhập”.
+  | 6 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi thay đổi rồi đóng cửa sổ.
+  | 7 | Nút Đóng | Button | Enable | – | – | Hiển thị | Hủy bỏ, không ghi gì.
+[normal] 2.4.5 Danh sách event và xử lý event 
+<<TABLE 15>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng bút chì | Click | After: / – Mở cửa sổ với dữ liệu hiện tại đã điền sẵn.
+  | 2 | Bấm Lưu | Click | During: / – Tên đường/phố để trống → hiển thị “Bắt buộc phải nhập”. / – Quốc gia để trống → hiển thị “Bắt buộc phải nhập”. / – Tỉnh/TP để trống → hiển thị “Bắt buộc phải nhập”. / – Quận/Huyện/Thị xã để trống → hiển thị “Bắt buộc phải nhập”. / – Phường/xã để trống → hiển thị “Bắt buộc phải nhập”. / – Tên đã tồn tại trong cùng một Phường/Xã → hiển thị “Tên đường/phố này đã tồn tại trong phường/xã”. / – Bỏ qua kiểm tra trùng đối với chính bản ghi đang sửa. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi nhận thay đổi và ghi một dòng lịch sử nêu giá trị cũ và giá trị mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo cập nhật thành công.
+[Heading 3] 2.5 Xóa đường/phố 
+[normal] 2.5.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 9: Biểu đồ Use Case — FR-05 Xóa đường/phố 
+[normal] 2.5.2 Giới thiệu 
+<<TABLE 16>>
+  | Mục | Nội dung
+  | Tên chức năng | Xóa đường/phố
+  | Mô tả | Loại một đường/phố khỏi danh mục. Trên màn này, xóa được xử lý thành ngừng sử dụng ở phía máy chủ: bản ghi biến mất khỏi danh sách nhưng dữ liệu không bị mất hẳn.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Bản ghi cần xóa đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng thùng rác ở dòng cần xóa. / 2. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. / 3. Người dùng bấm Xóa để xác nhận. / 4. Hệ thống loại bản ghi khỏi danh sách và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Bấm Hủy → đóng hộp, không thay đổi gì. / • Bản ghi đang được dùng ở cấp địa chỉ bên dưới hoặc ở dữ liệu nghiệp vụ khác → hệ thống từ chối và nêu lý do.
+[normal] 2.5.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Đường/Phố => Xóa 
+[normal] Modal Xóa đường/phố được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 10: Hộp xác nhận xóa đường/phố 
+[normal] 2.5.4 Mô tả chi tiết giao diện 
+<<TABLE 17>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Biểu tượng thùng rác | Icon Button | Enable | Hiển thị | Nằm trên cột Hành động của từng dòng.
+  | 2 | Tiêu đề hộp xác nhận | Label | Hiển thị | Xóa đường/phố | Nêu rõ loại đối tượng đang xóa.
+  | 3 | Nội dung hộp xác nhận | Label | Hiển thị | Bạn có chắc muốn xóa đường/phố “<tên>”? | Nêu rõ tên bản ghi để tránh thao tác nhầm dòng.
+  | 4 | Nút Xóa | Button | Enable | Hiển thị | Xác nhận thực hiện.
+  | 5 | Nút Hủy | Button | Enable | Hiển thị | Đóng hộp, không làm gì.
+[normal] 2.5.5 Danh sách event và xử lý event 
+<<TABLE 18>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng thùng rác | Click | After: / – Hiện hộp xác nhận kèm tên bản ghi.
+  | 2 | Bấm Xóa trong hộp xác nhận | Click | During: / – Bản ghi đang được dùng ở nơi khác → hiển thị thông báo từ chối và dừng xử lý. / After: / – Loại bản ghi khỏi danh sách (chuyển sang trạng thái ngừng sử dụng). / – Nạp lại danh sách và hiển thị thông báo xóa thành công.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp xác nhận, không thay đổi gì.
+[Heading 3] 2.6 Xem lịch sử thay đổi 
+[normal] 2.6.1 Giới thiệu 
+<<TABLE 19>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem lịch sử thay đổi
+  | Mô tả | Liệt kê các lần thay đổi của một đường/phố, kèm giá trị cũ, giá trị mới, người thực hiện và thời điểm.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Bản ghi cần xem đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng mở lịch sử của bản ghi từ cột Hành động. / 2. Hệ thống mở cửa sổ Lịch sử thay đổi. / 3. Danh sách các lần thay đổi hiển thị theo thứ tự mới nhất ở trên cùng.
+  | Dòng sự kiện phụ | • Bản ghi chưa từng sửa → cửa sổ hiện “Chưa có lịch sử thao tác nào.” / • Cửa sổ có bộ lọc riêng để thu hẹp theo loại thay đổi.
+[normal] 2.6.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Đường/Phố => Lịch sử 
+[normal] Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 11: Cửa sổ Lịch sử thay đổi của đường/phố 
+[normal] 2.6.3 Mô tả chi tiết giao diện 
+<<TABLE 20>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Mô tả
+  | 1 | Tiêu đề cửa sổ | Label | Hiển thị | Kèm dòng phụ ghi loại đối tượng và tên bản ghi.
+  | 2 | Bộ lọc | Dropdown | Enable | Thu hẹp theo loại thay đổi.
+  | 3 | Danh sách thay đổi | Table/Grid | Read-only | Sắp xếp mới nhất ở trên cùng.
+  | 4 | Thời điểm | Text | Read-only | Định dạng dd/mm/yyyy hh:mm.
+  | 5 | Loại thay đổi | Badge | Read-only | Ví dụ: Thay đổi thông tin, Khóa, Mở khóa.
+  | 6 | Người thực hiện | Text | Read-only | Kèm mã nhân viên và phòng ban.
+  | 7 | Giá trị cũ và giá trị mới | Text | Read-only | Hiển thị hai vế cho từng trường đã đổi.
+  | 8 | Trạng thái rỗng | Label | Hiển thị | Hiện “Chưa có lịch sử thao tác nào.” khi bản ghi chưa từng sửa.
+  | 9 | Nút Đóng | Button | Enable | Đóng cửa sổ.
+[normal] 2.6.4 Danh sách event và xử lý event 
+<<TABLE 21>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở lịch sử của một bản ghi | Click | After: / – Mở cửa sổ và nạp danh sách thay đổi theo thứ tự mới nhất trước.
+  | 2 | Đổi bộ lọc trong cửa sổ | Change | After: / – Nạp lại danh sách theo tiêu chí đã chọn.
+  | 3 | Bấm Đóng | Click | After: / – Đóng cửa sổ; danh sách phía sau giữ nguyên bộ lọc và trang.
+[Heading 1] Phần 4. Quy tắc nghiệp vụ 
+[normal] BR-01 — Ràng buộc trùng tên 
+[normal] Tên đường/phố không được trùng trong cùng một Phường/Xã. 
+[normal] Thông báo khi trùng: “Tên đường/phố này đã tồn tại trong phường/xã”. 
+[normal] BR-02 — Quan hệ với các cấp địa chỉ khác 
+[normal] Mỗi đường/phố bắt buộc trực thuộc Phường/Xã. 
+[normal] Đổi cấp trên thì các ô cấp dưới bị xóa trắng và nạp lại theo giá trị mới. 
+[normal] Danh mục này là nguồn dữ liệu cho ô địa chỉ ở các màn nghiệp vụ khác, nên sửa hoặc khóa một bản ghi sẽ ảnh hưởng tới mọi màn đang dùng nó. 
+[normal] BR-03 — Xóa 
+[normal] Màn hình này không có cột Trạng thái và không có thao tác Khóa / Mở khóa. 
+[normal] Danh sách chỉ hiển thị bản ghi còn hiệu lực; phép lọc này nằm ở phía máy chủ nên người dùng không đổi được. 
+[normal] Thao tác Xóa chuyển bản ghi sang trạng thái ngừng sử dụng. 
+[normal] BR-04 — Quy tắc riêng với Việt Nam 
+[normal] Khi Quốc gia là Việt Nam, ô Quận/Huyện/Thị xã bị ẨN HẲN và không phải nhập; địa chỉ đi thẳng từ Tỉnh/TP xuống Phường/Xã. 
+[normal] Với mọi quốc gia khác, ô Quận/Huyện/Thị xã hiện ra và bắt buộc nhập. 
+[normal] Quy tắc này chỉ áp cho màn Đường/Phố. 
+[normal] BR-05 — Lịch sử thay đổi sắp xếp mới nhất trước 
+[normal] Mọi thao tác sửa đều sinh dòng lịch sử. 
+[normal] Danh sách lịch sử luôn sắp xếp mới nhất ở trên cùng. 
+[normal] Mỗi dòng nêu trường đã đổi, giá trị cũ, giá trị mới, người thực hiện và thời điểm. 

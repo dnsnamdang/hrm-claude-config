@@ -189,6 +189,14 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Spec: docs/superpowers/specs/2026-08-27-form-template-import-design.md · Plan: .plans/form-template-import/plan.md
   Bước tiếp: code Phase 1 (BE resolveOrCreate + store pre-pass).
 
+- cong-tinh-luong-khong-vdm (Redmine #11457 — cột "Công tính lương" không VĐM/đi đường + TPL CONG_TINH_LUONG) → @dnsnamdang → .plans/cong-tinh-luong-khong-vdm/plan.md
+  Trạng thái: 🟢 **ĐÃ push nhánh `task_11457` + merge vào `develop` (02/10/2026, cả 2 repo).** Redmine: **Code xong chờ test**. Đã build lên dev (dev-hrm.eteksofts.com, api e41a1553a / client 9ead17acd) + insert riêng id 41 `CONG_TINH_LUONG` vào `hrm_erp_test` (KHÔNG chạy seeder vì seeder truncate bảng). Prod chưa có.
+  Đã kiểm bằng Playwright trên DB `hrm_prod_local` kỳ 06/2026: 3 màn + 2 file Excel đều khớp công thức. Ảnh: `.plans/cong-tinh-luong-khong-vdm/screenshots/`.
+  Nhánh: `tpe-develop-assign` (cả 2 repo). Phạm vi: Bảng công chi tiết + Bảng công tổng hợp (2 kiểu xem) + TPL hệ thống + 2 file export Excel.
+  Chốt: TPL là bản ghi MỚI mã `CONG_TINH_LUONG` · **KHÔNG cap công định mức** · cột mới lấy số (13), (13) cũ dồn thành (14) tới (18)→(19).
+  ⚠️ Switch-case chấm công nhân bản ở `CreateEmployeePayroll.php` + `SalaryService.php` — phải sửa CẢ HAI.
+  Design: .plans/cong-tinh-luong-khong-vdm/design.md · Spec: docs/superpowers/specs/2026-09-22-cong-tinh-luong-khong-vdm-design.md
+
 - app-meeting-mobile (Thiết kế app Meeting trên di động — TPE_APP/Flutter) → @dnsnamdang → .plans/app-meeting-mobile/plan.md
   Trạng thái: 🟢 **BÀN GIAO v11 (16/09/2026)** — 50 artboard, chờ khách duyệt. **Đây là việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
   File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao: `exports/` (4 PDF + 50 PNG 3x + file tóm tắt thay đổi).

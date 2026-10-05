@@ -1,0 +1,13 @@
+- Bỏ dòng "Đường dẫn truy cập: https://…" (tài liệu không ghi URL).
+- Vị trí menu: "Dự án & Giao việc → Phê duyệt → Yêu cầu giải pháp" → "Công việc → Phê duyệt → Giải pháp - Dự án → Yêu cầu làm giải pháp".
+- Bảng quyền: thêm "Từ chối" vào quyền Tiếp nhận; thêm dòng quyền cho Tạo mới/Sửa/Xóa.
+- Bảng vòng đời: "Từ chối" đã dùng thật (nút ở màn chi tiết); thêm trạng thái "Đã hủy".
+- Đoạn "màn hình này KHÔNG có nút Từ chối" → đã có nút Từ chối ở màn chi tiết.
+- PHẦN 2.1: các bước truy cập theo menu mới.
+- PHẦN 2.2: thêm nút Cài đặt bộ lọc, Cấu hình cột; bảng 19 cột; cột ghim "Mã yêu cầu".
+- PHẦN 3: bộ lọc nâng cao 4 ô (Công ty/Phòng ban/Bộ phận, Nhân viên gửi yêu cầu, Giai đoạn dự án, Ngày tạo); cột sắp xếp; số dòng/trang có 100.
+- PHẦN 4: bảng cột theo 19 cột hiện tại (tách Mã/Tên, thêm Người tạo/Ngày tạo/Người cập nhật/Ngày cập nhật/Hành động, bỏ "Trạng thái YC", "Người tiếp nhận YC", "Mã GP", "PM làm GP"); thao tác dòng còn 2 nút, bỏ nút "con mắt" — mở chi tiết bằng cách bấm Mã yêu cầu.
+- PHẦN Xem chi tiết: mở bằng Mã yêu cầu; thanh nút cuối màn có thêm Từ chối/Sửa/Xóa/Hủy yêu cầu + mục Lịch sử.
+- PHẦN Tiếp nhận: ô "Mã - Tên dự án" trên cửa sổ nay là "Tên dự án".
+- PHẦN Xuất Excel: nay mở cửa sổ "Chọn trường xuất file", tệp .xlsx, tối đa 18 trường; bỏ mô tả cột gộp/cột "Cập nhật" cũ.
+- Thay toàn bộ 12 ảnh màn hình cũ bằng ảnh chụp giao diện hiện tại (cùng nội dung, cùng vị trí).

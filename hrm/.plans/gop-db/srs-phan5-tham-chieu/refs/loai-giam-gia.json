@@ -1,0 +1,25 @@
+{
+  "catalog": "Danh mục loại giảm giá",
+  "srs_file": "SRS - Danh mục loại giảm giá.docx",
+  "rows": [
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Hợp đồng (dự án TKT) (lưu Giảm giá chép từ báo giá khi tạo hợp đồng)",
+      "duong_dan": "Bán hàng -> Bán hàng -> Hợp đồng bán hàng",
+      "evidence": "BE Services/ContractService.php:229-236 chép quotation_discounts → hrm_contract_discounts.discount_type_id (FK NO ACTION); Transformers/DetailContractResource.php:224 · FE pages/assign/contracts không hiển thị loại GG"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo giá (Sửa báo giá – mục Giảm giá; Import báo giá)",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/quotations/_id/edit.vue:953, 2842 (assign/discount_types/getAll) · BE Requests/Quotation/QuotationStoreRequest.php:77, QuotationUpdateRequest.php:82, Services/QuotationService.php:232, QuotationImportService.php:541 (quotation_discounts.discount_type_id). Cũng có ở Bán hàng -> Bán hàng -> Báo giá -> Danh sách báo giá"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT – tab Báo giá (Báo giá tổng hợp – mục Giảm giá tổng, chỉ đọc)",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/summary-quotations/components/SummaryQuotationForm.vue:516 · BE Services/SummaryQuotationService.php:350 (gộp theo discount_type_id từ báo giá con)"
+    }
+  ],
+  "notes": "Kiểm tra xoá THIẾU: DiscountType::isCanDelete() (Entities/DiscountType.php:50) chỉ xét quotation_discounts, không xét hrm_contract_discounts → xoá loại GG chỉ còn dùng ở hợp đồng sẽ vấp khoá ngoại, API trả lỗi SQL thô thay vì câu nghiệp vụ. Ngoài ra isCanDelete() trả TRUE vô điều kiện khi trạng thái Chờ duyệt (loại GG tạo nhanh từ báo giá, quotation_id) dù báo giá đó đã dùng nó → xoá được, quotation_discounts để lại id mồ côi (bảng không có FK). Route POST assign/discount_types/quick-create không có màn FE nào gọi (chỉ còn API). Báo giá tổng hợp chỉ hiển thị (không chọn/lưu) — giữ dòng để QA biết chỗ hiện tên loại GG; bỏ nếu chỉ tính màn chọn/lưu."
+}

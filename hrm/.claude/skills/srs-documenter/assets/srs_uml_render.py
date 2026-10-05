@@ -13,6 +13,13 @@ F_REG = os.path.join(FONT_DIR, 'segoeui.ttf')
 F_BOLD = os.path.join(FONT_DIR, 'segoeuib.ttf')
 F_ITAL = os.path.join(FONT_DIR, 'segoeuii.ttf')
 
+# macOS khong co Segoe UI -> bo Arial he thong (du dau tieng Viet)
+_MAC_FONTS = '/System/Library/Fonts/Supplemental'
+if not os.path.exists(F_REG) and os.path.exists(os.path.join(_MAC_FONTS, 'Arial.ttf')):
+    F_REG = os.path.join(_MAC_FONTS, 'Arial.ttf')
+    F_BOLD = os.path.join(_MAC_FONTS, 'Arial Bold.ttf')
+    F_ITAL = os.path.join(_MAC_FONTS, 'Arial Italic.ttf')
+
 INK = (15, 23, 42)
 MUTED = (100, 116, 139)
 BOUND = (100, 116, 139)
@@ -210,7 +217,10 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
                  relations=(), target_w=1700):
     """So do use case cho 1 chuc nang.
 
-    relations: [(kieu, ten), ...] voi kieu in {'include','extend'}
+    Form 2026-09-24 (bam ban QA "SRS - Danh muc quoc gia"): CHI ve actor + 1 use case,
+    KHONG ve include/extend (kiem tra quyen, xac nhan, sinh ma...) — de `relations` rong.
+    relations: [(kieu, ten), ...] voi kieu in {'include','extend'} — chi con de sinh lai
+    tai lieu cu.
     """
     W = 1350 * S
     rows = max(1, len(relations))
@@ -226,10 +236,15 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
     f_sub = _f(F_REG, 14)
 
     cy = H / 2
-    ax, ay = _actor(d, int(120 * S), int(cy - 62 * S), actor_name, f_actor)
+    if relations:
+        actor_x, mx, mrx = int(120 * S), int(500 * S), int(190 * S)
+    else:
+        # Chi actor + 1 use case (form 2026-09-24): dan cum actor–ellipse ra GIUA khung,
+        # neu giu toa do cua ban co nhanh include/extend thi nua phai bo trong -> hinh lech trai.
+        actor_x, mx, mrx = int(W * 0.20), int(W * 0.64), int(W * 0.22)
+    ax, ay = _actor(d, actor_x, int(cy - 62 * S), actor_name, f_actor)
 
-    mx = int(500 * S)
-    mrx, mry = int(190 * S), int(48 * S)
+    mry = int(48 * S)
     mleft, mright = _usecase(d, mx, cy, mrx, mry, '%s  %s' % (main_code, main_name), main_group, f_uc)
     d.line([(ax + int(6 * S), ay), (mleft - int(4 * S), cy)], fill=(148, 163, 184), width=max(2, int(1.4 * S)))
 
@@ -259,15 +274,19 @@ def draw_usecase(out_path, actor_name, main_code, main_name, main_group,
                          mcx + lw / 2 + 5 * S, mcy + lh / 2 + 7 * S], fill='white')
             d.text((mcx - lw / 2, mcy - lh / 2 - 3 * S), lbl, font=f_rel, fill=(71, 85, 105))
 
-    return _finish(img, out_path, target_w, kind='overview-hierarchy')
+    # Dau metadata: 'usecase' = chi actor + 1 use case (form 2026-09-24);
+    # 'usecase-rel' = con ve include/extend -> srs_selfcheck bao loi.
+    return _finish(img, out_path, target_w, kind='usecase-rel' if relations else 'usecase')
 
 
 def draw_overview2(out_path, actors, mains, subs, target_w=2000):
-    """So do use case tong quan CO PHAN CAP — ban dung tu 2026-08-28.
+    """So do use case tong quan — form 2026-09-24 (bam ban QA "SRS - Danh muc quoc gia").
 
-    Chi use case la MAN HINH that su moi noi thang toi actor; cac thao tac lam ngay tren
-    man do (loc, tuy chinh cot, xoa, in, lich su, popup chon du lieu...) phai noi vao use
-    case cha bang «include» / «extend». Khung he thong KHONG co dong tieu de.
+    `mains` = moi CHUC NANG THAO TAC noi thang toi actor: xem danh sach, them moi, sua,
+    xoa, khoa/mo khoa, import, xuat, in, duyet...
+    `subs`  = CHI chuc nang PHU that su, gan «extend» vao man cha: tim kiem va loc, xem chi
+    tiet, tuy chinh cot, lich su. KHONG ve «include» cho kiem tra quyen / xac nhan / popup.
+    Khung he thong KHONG co dong tieu de.
 
     actors : [(ten_actor, [chi_so_main, ...]), ...]
     mains  : [(ma, ten, nhom), ...]
@@ -371,4 +390,4 @@ def draw_overview2(out_path, actors, mains, subs, target_w=2000):
             d.line([(ax + int(6 * S), ay), (lx - int(4 * S), ly)],
                    fill=(148, 163, 184), width=max(2, int(1.4 * S)))
 
-    return _finish(img, out_path, target_w, kind='usecase')
+    return _finish(img, out_path, target_w, kind='overview-hierarchy')

@@ -208,3 +208,46 @@ Vừa hoàn thành: P8.1-P8.2. File tạo mới:
 Bước tiếp theo: user đọc file, xác nhận 3 điểm được ghi ở sheet 6 có đúng ý nghiệp vụ không
 (khối Lịch sử màn chi tiết chưa gác quyền · quyền 1526 chưa dùng · thao tác thiết bị dùng quyền Xem).
 Blocked: (giữ nguyên) cấp lại quyền cho role sau khi chạy seeder.
+
+## Phase 9 — TẠM THỜI quay về quyền phân trên ERP (như nhánh tpe) — 2026-09-24
+
+User chốt: màn Khách hàng trên gop_db dùng DB gộp nhưng tra **quyền phân trên ERP** (giống tpe và giống
+tab Báo giá/Hợp đồng của màn Quản lý KH đang dùng `ErpPermissionHelper`), KHÔNG dùng bộ quyền HRM type 9.
+Seeder 11 quyền type 9 + `PermissionService::getLists()` giữ nguyên (không đụng).
+
+- [x] P9.1 BE: `CustomerPermissionHelper::userCan()` tra qua `ErpPermissionHelper::userCan()` thay cho `isCurrentEmployeeHasPermission()`
+- [x] P9.2 BE: `CustomerService::applyVisibilityScope()` trả lại phạm vi kiểu ERP (KH có báo giá thuộc công ty/phòng/bộ phận của mình), bỏ `checkPermissionList()`
+- [x] P9.3 BE: nhóm route `/assign/customers` đổi `checkPermission:` → `erpPermission:` (giữ nguyên tên quyền từng route)
+- [x] P9.4 FE: sửa comment `pages/assign/customers/index.vue` + `middleware/checkCustomerPermission.js` cho đúng nguồn quyền
+
+### Checkpoint — 2026-09-24 (Phase 9)
+Vừa hoàn thành: P9.1-P9.4. hrm-api: `app/Helpers/CustomerPermissionHelper.php`,
+`Modules/Assign/Services/CustomerService.php`, `Modules/Assign/Routes/api.php` (30 route),
+`CustomerController.php` (docblock). hrm-client: chỉ sửa comment (index.vue, CustomerForm.vue, middleware).
+Kiểm tinker NV id 38 (vai trò ERP có "Xem KH của phòng ban"): my-permissions ra view/create/is_department = true
+(bản HRM trả toàn false); danh sách 1.362 KH; route lock gắn `erpPermission:Xóa khách hàng`.
+Đang làm dở: không có.
+Bước tiếp theo: user test trên trình duyệt; quyết có lọc `model_type = App\Employee` trong `ErpPermissionHelper` không.
+Blocked:
+- [x] P9.5 BE: `ErpPermissionHelper` chỉ tính gán ERP (`model_type = App\Employee`) + quyền `guard_name = web` — giống hệt tpe (user chốt 2026-09-24)
+
+### Checkpoint — 2026-09-24 (Phase 9, P9.5)
+Vừa hoàn thành: P9.5 — `app/Helpers/ErpPermissionHelper.php` thêm hằng `ERP_MODEL_TYPE` / `ERP_GUARD`, lọc ở 6 query
+(permissions ×2, employee_has_permissions ×2, employee_has_roles ×2). Ảnh hưởng thêm: tab Báo giá/Hợp đồng màn Quản lý KH,
+route CustomerCare "Cập nhật nhanh giá dịch vụ" — mọi tên quyền đều có bản `guard=web` nên không chặn nhầm.
+Kiểm tinker: NV 38 (vai trò ERP) giữ nguyên view/create/is_department, 1.362 KH; NV 522 (chỉ có quyền HRM id 167)
+trước thấy toàn bộ → nay không quyền, 0 KH (đúng như tpe).
+Đang làm dở: không có.
+Bước tiếp theo: user test trên trình duyệt.
+Blocked:
+- [x] P9.6 Test kỹ (DB local, 9 tài khoản: toàn bộ / công ty / phòng / bộ phận / chỉ Xem / Sửa-Xóa không cấp xem / Sửa mà không Xem / không quyền / chỉ quyền HRM)
+
+### Checkpoint — 2026-09-24 (Phase 9, P9.6 test)
+Vừa hoàn thành: helper khớp SQL chỉ-ERP 1.209/1.209 NV; so code tpe (dev_erp) 1.193 khớp, 15 lệch do DỮ LIỆU 2 DB khác nhau;
+oracle SQL độc lập khớp số KH danh sách + popup 18/18; API 144/150 (6 fail = lỗi có sẵn: POST equipment/old payload rỗng → 500,
+thiếu validate product_id, có cả ở tpe); popup/select2/SĐT/người liên hệ 38/38; helper dùng chung 11/11; UI danh sách + URL 109/109
+(sau khi sửa selector); UI popup chọn KH + người liên hệ 30/30. Đã dọn quyền gán thêm + 8 người liên hệ test.
+Mật khẩu 8 TK test local đổi thành Test@12345 (backup hash: scratchpad pw_backup.tsv).
+Đang làm dở: không có.
+Bước tiếp theo: user xem kết quả; quyết có sửa lỗi 500 equipment/old và nút Sửa khi thiếu Xem không.
+Blocked:

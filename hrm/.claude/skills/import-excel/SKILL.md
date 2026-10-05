@@ -223,7 +223,7 @@ async handleDownloadImportTemplate() {
 | Cột A | **STT**, rộng 8.4; dòng ví dụ đánh số 1, 2 |
 | Hàng 1 — tiêu đề | in đậm, nền **`#B8CCE4`**, căn giữa cả 2 chiều, **KHÔNG wrap**, cao **15.5**; cột bắt buộc có hậu tố ` *` |
 | Hàng 2 — mô tả | **IN NGHIÊNG**, căn giữa cả 2 chiều, **wrap**, cao = số dòng chữ thực tế × 15.5 |
-| Hàng 3+ — ví dụ | chữ thường, không căn, cao 15.5 |
+| Hàng 3+ — ví dụ và khung trống | chữ thường, **căn giữa theo chiều dọc** (cột STT căn giữa cả 2 chiều), cao 15.5 |
 | Viền | `thin` màu **đen `FF000000`**, kẻ sẵn khung trống **tới hàng 17** |
 | Độ rộng cột dữ liệu | `max(độ dài tiêu đề, độ dài dòng ví dụ)` kẹp trong **20 – 34** ký tự |
 | Cột `type: 'select'` | có **ô chọn giá trị thật**; danh sách > 255 ký tự hoặc có dấu phẩy thì đẩy sang sheet ẩn `DanhMuc` rồi tham chiếu |

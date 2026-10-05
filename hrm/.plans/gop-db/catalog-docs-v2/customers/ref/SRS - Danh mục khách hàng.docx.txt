@@ -1,0 +1,574 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục khách hàng 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Danh mục khách hàng, nhằm: 
+[normal] Là căn cứ nghiệm thu chức năng và phân quyền. 
+[normal] Làm rõ cơ chế phạm vi dữ liệu bốn cấp và lớp bảo vệ riêng cho khách hàng cá nhân 
+[normal] Làm rõ các trường bắt buộc rẽ nhánh theo loại hình tổ chức, đặc biệt quy tắc Mã số thuế chỉ bắt buộc khi khách hàng không trực thuộc công ty mẹ. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Khách hàng cá nhân | Khách hàng có Loại hình tổ chức là “Cá nhân”.
+  | Khách hàng tổ chức | Khách hàng thuộc một trong bốn loại: Doanh nghiệp tư nhân, Doanh nghiệp nước ngoài, Tổ chức phi chính phủ, Cơ quan nhà nước.
+  | Khách hàng tự do | Khách hàng cá nhân chưa ai đăng ký, chưa phát sinh báo giá / cuộc họp / dự án tiềm năng và không do người đang đăng nhập tạo ra.
+  | Loại hình hoạt động | Vế trái của cặp phân loại ngành nghề khách hàng.
+  | Lĩnh vực kinh doanh | Vế phải của cặp phân loại, phải thuộc đúng Loại hình hoạt động đã chọn.
+  | Người đại diện | Người đại diện pháp luật của khách hàng tổ chức.
+  | Người liên hệ | Đầu mối làm việc thực tế của khách hàng tổ chức; một khách hàng có nhiều người liên hệ.
+  | Khóa khách hàng | Đổi trạng thái sang “Khóa”. KHÔNG xóa dữ liệu; khách hàng vẫn nằm trong danh sách nhưng không chọn được ở các màn nghiệp vụ khác.
+  | Phạm vi dữ liệu | Tập khách hàng mà người đăng nhập được nhìn thấy, quyết định bởi bốn cấp quyền xem, xem BR-01.
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+[normal] Nhóm quyền thao tác: 
+<<TABLE 2>>
+  | Ký hiệu | Tên quyền | Tác dụng trên màn hình
+  | Q1 | Xem khách hàng | Mở màn Quản lý khách hàng (thẻ Báo giá, Hợp đồng, Danh sách trang thiết bị).
+  | Q2 | Thêm khách hàng | Nút Tạo mới và chức năng Import Excel.
+  | Q3 | Sửa khách hàng | Nút Sửa; sửa trang thiết bị; tải ảnh / tài liệu ở thẻ Thông tin khác.
+  | Q4 | Xóa khách hàng | Thao tác Khóa và Mở khóa.
+  | Q5 | Xuất dữ liệu khách hàng | Ba nút Xuất CSV, Xuất Excel, Xuất PDF.
+[normal] Nhóm quyền quyết định phạm vi dữ liệu (xét theo thứ tự ưu tiên từ trên xuống, cấp nào có trước thì áp cấp đó): 
+<<TABLE 3>>
+  | Ký hiệu | Tên quyền | Phạm vi dữ liệu
+  | V1 | Xem tất cả khách hàng | Toàn bộ khách hàng của hệ thống.
+  | V2 | Xem tất cả khách hàng của công ty | Khách hàng đã phát sinh báo giá thuộc công ty của người đăng nhập.
+  | V3 | Xem tất cả khách hàng của phòng ban | Giới hạn theo phòng ban của người đăng nhập.
+  | V4 | Xem tất cả khách hàng của bộ phận | Giới hạn theo bộ phận của người đăng nhập.
+  | — | (không có cấp nào) | Chỉ khách hàng do chính mình tạo, cộng khách hàng mình đang đăng ký còn hạn hoặc đã từng tương tác.
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 4>>
+  | Chức năng | Q1 | Q2 | Q3 | Q4 | Q5 | Không có quyền nào
+  | FR-01 Truy cập & xem danh sách |  |  |  |  |  | 
+  | FR-02 Tìm kiếm & lọc nâng cao |  |  |  |  |  | 
+  | FR-03 Cài đặt bộ lọc |  |  |  |  |  | 
+  | FR-04 Tuỳ chỉnh cột |  |  |  |  |  | 
+  | FR-05 Tạo mới khách hàng |  |  |  |  |  | 
+  | FR-06 Chỉnh sửa khách hàng |  |  |  |  |  | 
+  | FR-07 Xem chi tiết khách hàng |  |  |  |  |  | 
+  | FR-08 Khóa / Mở khóa |  |  |  |  |  | 
+  | FR-09 Lịch sử thay đổi |  |  |  |  |  | 
+  | FR-10 Nhập từ file Excel |  |  |  |  |  | 
+  | FR-11 Xuất CSV / Excel / PDF |  |  |  |  |  | 
+  | FR-12 Màn Quản lý khách hàng |  |  |  |  |  | 
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Danh mục khách hàng 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem danh sách khách hàng 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 5>>
+  | Mục | Nội dung
+  | Tên chức năng | Truy cập và xem danh sách khách hàng
+  | Mô tả | Hiển thị bảng khách hàng nằm trong phạm vi dữ liệu của người đăng nhập, kèm phân trang và ô thống kê tổng số bản ghi khớp bộ lọc.
+  | Tác nhân | Nhân viên quản lý khách hàng; Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Người dùng đã đăng nhập vào hệ thống.
+  | Dòng sự kiện chính | 1. Người dùng vào menu Giao việc → Danh mục chung → Danh mục khách hàng. / 2. Hệ thống xác định phạm vi dữ liệu theo cấp quyền xem của người dùng. / 3. Hệ thống áp thêm lớp bảo vệ khách hàng cá nhân. / 4. Hệ thống trả về trang đầu tiên của danh sách và tổng số bản ghi. /  Bảng hiển thị dữ liệu, ô “Hiển thị a–b / N” hiển thị đúng khoảng và tổng.
+  | Dòng sự kiện phụ | • Không có bản ghi nào trong phạm vi → bảng hiện thông báo không có dữ liệu / • Người dùng không có cấp quyền xem nào → chỉ thấy khách hàng do chính mình tạo. / • Phiên đăng nhập hết hạn → điều hướng về màn đăng nhập.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Đối tác 
+[normal]  [IMG]
+[normal] Hình 2: Màn Danh mục khách hàng lúc mới truy cập 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 6>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Giá trị ban đầu | Mô tả
+  | 1 | Tiêu đề trang | Label | Hiển thị | – | Danh sách khách hàng | Tiêu đề cố định phía trên bảng.
+  | 2 | Nút Tạo mới | Button | Enable / Ẩn | – | Ẩn khi thiếu quyền | Chỉ hiện khi có quyền Thêm khách hàng.
+  | 3 | Nút Import Excel | Button | Enable / Ẩn | – | Ẩn khi thiếu quyền | Chỉ hiện khi có quyền Thêm khách hàng.
+  | 4 | Nút Xuất CSV / Xuất Excel / Xuất PDF | Button | Enable / Ẩn | – | Ẩn khi thiếu quyền | Chỉ hiện khi có quyền Xuất dữ liệu khách hàng.
+  | 5 | Biểu tượng Tuỳ chỉnh cột | Icon Button | Enable | – | Hiển thị | Mở cửa sổ bật / tắt và sắp xếp cột.
+  | 6 | Cột STT | Table/Grid | Read-only |  | Số thứ tự liên tục | Luôn hiển thị, không tắt được. Tiếp tục tăng qua các trang.
+  | 7 | Cột Mã KH | Table/Grid | Read-only | – | Mã sinh tự động | Luôn hiển thị, không tắt được. Bấm vào mở màn chi tiết.
+  | 8 | Cột Tên khách hàng | Table/Grid | Read-only | 0–255 ký tự | Trống | –
+  | 9 | Cột Tên viết tắt | Table/Grid | Read-only | 0–255 ký tự | Trống | –
+  | 10 | Cột Loại | Table/Grid | Read-only | Danh sách 5 giá trị | Trống | Cá nhân / Doanh nghiệp tư nhân / Doanh nghiệp nước ngoài / Tổ chức phi chính phủ / Cơ quan nhà nước.
+  | 11 | Cột MST | Table/Grid | Read-only | 1–14 ký tự số và gạch ngang | Trống | –
+  | 12 | Cột SĐT | Table/Grid | Read-only | Danh sách | Trống | Nhiều số ngăn nhau bằng dấu phẩy.
+  | 13 | Cột Email | Table/Grid | Read-only | 0–255 ký tự | Trống | –
+  | 14 | Cột Nhóm KH | Table/Grid | Read-only | Danh sách | Trống | Nhiều nhóm ngăn nhau bằng dấu phẩy.
+  | 15 | Cột Địa chỉ / Tỉnh–TP / Tên đơn vị / Địa chỉ xuất hóa đơn | Table/Grid | Read-only | – | Trống | –
+  | 16 | Cột Công ty mẹ / Hãng xe / Người tạo / Người sửa (gần nhất) | Table/Grid | Read-only | – | Ẩn | Bốn cột này MẶC ĐỊNH ẨN vì làm chậm truy vấn đếm; bật lên ở cửa sổ Tuỳ chỉnh cột.
+  | 17 | Cột Trạng thái | Badge | Read-only | Hoạt động / Khóa | Hoạt động | Hai trạng thái khác màu rõ ràng.
+  | 18 | Cột Hành động | Icon Button | Enable / Disable | – | Hiển thị | Gồm biểu tượng bút chì (Sửa), ổ khóa (Khóa / Mở khóa) và menu ba chấm (Quản lý, Lịch sử). Thiếu quyền thì làm mờ chứ không ẩn.
+  | 19 | Ô “Hiển thị a–b / N” | Label | Read-only | – | Theo kết quả | N là tổng số khách hàng khớp bộ lọc, không phải tổng toàn hệ thống.
+  | 20 | Phân trang | Pagination | Enable | – | Trang 1 | Có nút về đầu / lùi / số trang / tiến / về cuối và ô chọn số dòng mỗi trang.
+  | 21 | Trạng thái rỗng | Label | Hiển thị | – | Ẩn | Hiện thông báo không có dữ liệu kèm hình minh họa khi N = 0.
+  | 22 | Vòng quay chờ | Loading | Hiển thị | – | Ẩn | Hiện trong lúc nạp dữ liệu.
+[normal] 2.1.5 Danh sách event và xử lý event 
+<<TABLE 7>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở màn hình | System | Before: / – Xác định cấp quyền xem của người dùng theo thứ tự ưu tiên. / During: / – Áp phạm vi dữ liệu; áp thêm lớp bảo vệ khách hàng cá nhân. / After: / – Trả về trang 1 và tổng số bản ghi; hiển thị bảng.
+  | 2 | Bấm số trang / nút tiến lùi | Click | Before: / – Giữ nguyên bộ lọc và thứ tự sắp xếp đang áp dụng. / After: / – Nạp lại dữ liệu trang mới, số thứ tự tiếp tục liên tục.
+  | 3 | Đổi số dòng mỗi trang | Change | After: / – Quay về trang 1 và nạp lại theo số dòng mới.
+  | 4 | Bấm mã khách hàng | Click | After: / – Mở màn chi tiết khách hàng ở chế độ chỉ đọc.
+[Heading 3] 2.2 Tìm kiếm và bộ lọc nâng cao 
+[normal] 2.2.1 Giới thiệu 
+<<TABLE 8>>
+  | Mục | Nội dung
+  | Tên chức năng | Tìm kiếm và bộ lọc nâng cao
+  | Mô tả | Thu hẹp danh sách bằng ô tìm nhanh và 19 tiêu chí lọc nâng cao.
+  | Tác nhân | Nhân viên quản lý khách hàng; Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục khách hàng.
+  | Dòng sự kiện chính | 1. Người dùng gõ từ khóa vào ô tìm nhanh hoặc bấm nút Bộ lọc nâng cao. / 2. Người dùng chọn / nhập các tiêu chí cần lọc. / 3. Người dùng bấm Tìm kiếm. / 4. Hệ thống áp đồng thời mọi tiêu chí theo kiểu “và”, trong phạm vi dữ liệu của người dùng. /  Bảng nạp lại từ trang 1, tổng số bản ghi cập nhật theo kết quả.
+  | Dòng sự kiện phụ | • Không có kết quả → bảng hiện thông báo không có dữ liệu, tổng bằng 0. / • Bấm Làm mới → xóa toàn bộ tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức. / • Đóng cửa sổ bộ lọc mà không bấm Tìm kiếm → kết quả trên bảng không đổi. / • Gõ đúng trọn vẹn số điện thoại → hiện được cả khách hàng cá nhân tự do ngoài phạm vi.
+[normal] 2.2.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng 
+[normal]  [IMG]
+[normal] Hình 3: Panel Bộ lọc nâng cao đang mở với đầy đủ tiêu chí 
+[normal] 2.2.3 Mô tả chi tiết giao diện 
+<<TABLE 9>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Ô tìm kiếm nhanh | Textbox | Enable | 0–255 ký tự | Không | Trống | Tìm theo tên, mã khách hàng, mã số thuế hoặc số điện thoại.
+  | 2 | Nút Bộ lọc nâng cao | Button | Enable | – | – | Hiển thị | Mở panel bộ lọc; hiện kèm SỐ TIÊU CHÍ đang có giá trị.
+  | 3 | Công ty – Phòng ban – Bộ phận – Nhân viên | Dropdown | Enable | Danh sách | Không | Trống | Chọn theo cây đơn vị tới cấp nhân viên.
+  | 4 | Quốc gia | Dropdown | Enable | Danh sách | Không | Trống | Quyết định danh sách của ô Tỉnh/Thành phố.
+  | 5 | Tỉnh/Thành phố | Dropdown | Enable | Danh sách | Không | Trống | Xóa trắng và nạp lại khi đổi Quốc gia.
+  | 6 | Mã khách hàng | Textbox | Enable | 0–255 ký tự | Không | Trống | Khớp một phần.
+  | 7 | MST/SĐT | Textbox | Enable | 0–255 ký tự | Không | Trống | Tìm trên cả mã số thuế và từng số điện thoại.
+  | 8 | Tên khách hàng | Textbox | Enable | 0–255 ký tự | Không | Trống | Khớp một phần.
+  | 9 | Số CCCD | Textbox | Enable | 0–255 ký tự | Không | Trống | –
+  | 10 | Tên đơn vị | Textbox | Enable | 0–255 ký tự | Không | Trống | –
+  | 11 | Loại hình tổ chức | Dropdown | Enable | Danh sách 5 giá trị | Không | Trống | –
+  | 12 | Trạng thái | Dropdown | Enable | Hoạt động / Khóa | Không | Trống | Bỏ trống thì hiện cả hai trạng thái.
+  | 13 | Loại hình hoạt động – Lĩnh vực kinh doanh | Dropdown | Enable | Danh sách cặp | Không | Trống | Chọn theo CẶP, không chọn rời từng vế.
+  | 14 | Người sửa gần nhất | Dropdown | Enable | Danh sách | Không | Trống | –
+  | 15 | Khách hàng hãng | Dropdown | Enable | Có / Không | Không | Trống | –
+  | 16 | Hãng xe | Dropdown | Enable | Danh sách | Không | Trống | –
+  | 17 | Cấp đại lý | Dropdown | Enable | Danh sách | Không | Trống | –
+  | 18 | Nút Tìm kiếm | Button | Enable | – | – | Hiển thị | Áp dụng bộ lọc.
+  | 19 | Nút Làm mới | Button | Enable | – | – | Hiển thị | Xóa hết tiêu chí VÀ nạp lại danh sách ngay.
+[normal] 2.2.4 Danh sách event và xử lý event 
+<<TABLE 10>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Gõ vào ô tìm nhanh | Keypress | During: / – Chờ người dùng ngừng gõ rồi mới gọi tìm kiếm. / After: / – Nạp lại bảng từ trang 1; giữ nguyên bộ lọc nâng cao đang áp dụng.
+  | 2 | Bấm Tìm kiếm | Click | Before: / – Thu thập giá trị của mọi tiêu chí đang có. / During: / – Áp đồng thời các tiêu chí theo kiểu “và” trong phạm vi dữ liệu. / After: / – Nạp lại bảng từ trang 1; cập nhật ô “Hiển thị a–b / N”; cập nhật số trên nút Bộ lọc nâng cao.
+  | 3 | Bấm Làm mới | Click | After: / – Xóa trắng mọi tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+  | 4 | Đổi Quốc gia | Change | After: / – Xóa trắng ô Tỉnh/Thành phố và nạp lại danh sách theo quốc gia mới.
+[Heading 3] 2.3 Cài đặt bộ lọc 
+[normal] 2.3.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 4: Biểu đồ Use Case — FR-03 Cài đặt bộ lọc 
+[normal] 2.3.2 Giới thiệu 
+<<TABLE 11>>
+  | Mục | Nội dung
+  | Tên chức năng | Cài đặt bộ lọc
+  | Mô tả | Cho phép người dùng chọn những ô lọc nào hiển thị trên panel bộ lọc nâng cao và sắp xếp thứ tự của chúng. Cấu hình được ghi nhớ riêng cho từng người dùng.
+  | Tác nhân | Nhân viên quản lý khách hàng; Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang mở panel Bộ lọc nâng cao.
+  | Dòng sự kiện chính | 1. Người dùng bấm Cài đặt bộ lọc. / 2. Hệ thống hiển thị danh sách 15 ô lọc có thể cấu hình, kèm ô tích và tay nắm kéo. / 3. Người dùng tích / bỏ tích, kéo đổi thứ tự. / 4. Người dùng bấm Lưu. /  Hệ thống ghi nhớ cấu hình và cập nhật lại panel bộ lọc.
+  | Dòng sự kiện phụ | • Bỏ tích ô lọc đang có giá trị → ô biến mất khỏi giao diện nhưng GIÁ TRỊ LỌC VẪN CÒN tác dụng cho tới khi bấm Làm mới. / • Đóng cửa sổ không bấm Lưu → cấu hình không đổi.
+  | Yêu cầu đặc biệt | Cấu hình lưu theo từng người dùng và từng màn hình; người dùng khác không bị ảnh hưởng.
+[normal] 2.3.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng 
+[normal] Modal Cài đặt bộ lọc được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Cài đặt bộ lọc với danh sách ô lọc cấu hình được 
+[normal] 2.3.4 Mô tả chi tiết giao diện 
+<<TABLE 12>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Nút Cài đặt bộ lọc | Button | Enable | – | – | Hiển thị | Nằm trong panel Bộ lọc nâng cao.
+  | 2 | Danh sách ô lọc | Table/Grid | Enable | 15 mục | – | Theo cấu hình đã lưu | Mỗi dòng có ô tích và tay nắm kéo.
+  | 3 | Ô tích chọn | Icon Button | Enable | – | Không | Theo cấu hình đã lưu | Bật / tắt hiển thị của ô lọc tương ứng.
+  | 4 | Tay nắm kéo | Icon Button | Enable | – | – | Hiển thị | Kéo để đổi thứ tự.
+  | 5 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi nhận cấu hình.
+  | 6 | Nút Đóng | Button | Enable | – | – | Hiển thị | Đóng, bỏ qua thay đổi.
+[normal] 2.3.5 Danh sách event và xử lý event 
+<<TABLE 13>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Cài đặt bộ lọc | Click | After: / – Mở cửa sổ, nạp danh sách ô lọc theo cấu hình đã lưu của người dùng.
+  | 2 | Tích / bỏ tích ô lọc | Change | During: / – Cập nhật trạng thái tạm trong cửa sổ, chưa ghi nhận.
+  | 3 | Kéo đổi thứ tự | Change | During: / – Cập nhật thứ tự tạm trong cửa sổ.
+  | 4 | Bấm Lưu | Click | After: / – Ghi nhận cấu hình cho người dùng hiện tại; đóng cửa sổ; cập nhật lại panel bộ lọc. / – Hiển thị thông báo “Lưu cấu hình thành công”.
+[Heading 3] 2.4 Tuỳ chỉnh cột hiển thị 
+[normal] 2.4.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 6: Biểu đồ Use Case — FR-04 Tuỳ chỉnh cột hiển thị 
+[normal] 2.4.2 Giới thiệu 
+<<TABLE 14>>
+  | Mục | Nội dung
+  | Tên chức năng | Tuỳ chỉnh cột hiển thị
+  | Mô tả | Cho phép bật / tắt và sắp xếp các cột của bảng danh sách. Cấu hình ghi nhớ theo từng người dùng.
+  | Tác nhân | Nhân viên quản lý khách hàng; Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục khách hàng.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng Tuỳ chỉnh cột. / 2. Hệ thống hiển thị danh sách 20 cột kèm ô tích và tay nắm kéo. / 3. Người dùng tích / bỏ tích, kéo đổi thứ tự. / 4. Người dùng bấm Lưu. /  Bảng vẽ lại theo cấu hình mới.
+  | Dòng sự kiện phụ | • Cột STT và Mã KH bị khóa, không bỏ tích được. / • Bật một trong bốn cột Công ty mẹ / Hãng xe / Người tạo / Người sửa → truy vấn nặng hơn, thời gian nạp bảng tăng. / • Bấm khôi phục mặc định → bảng trở về cấu hình gốc.
+  | Yêu cầu đặc biệt | Bốn cột nặng mặc định ẩn để không phải trả giá hiệu năng khi người dùng không cần.
+[normal] 2.4.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng 
+[normal] Modal Tùy chỉnh cột được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 7: Cửa sổ Tuỳ chỉnh cột — STT và Mã KH bị khóa luôn hiển thị 
+[normal] 2.4.4 Mô tả chi tiết giao diện 
+<<TABLE 15>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Biểu tượng Tuỳ chỉnh cột | Icon Button | Enable | – | – | Hiển thị | Nằm ở góc phải thanh công cụ.
+  | 2 | Danh sách cột | Table/Grid | Enable | 20 mục | – | Theo cấu hình đã lưu | –
+  | 3 | Ô tích cột STT | Icon Button | Disable | – | – | Đã tích | Bị khóa, không bỏ tích được.
+  | 4 | Ô tích cột Mã KH | Icon Button | Disable | – | – | Đã tích | Bị khóa, không bỏ tích được.
+  | 5 | Ô tích các cột còn lại | Icon Button | Enable | – | Không | Theo cấu hình đã lưu | –
+  | 6 | Nút khôi phục mặc định | Button | Enable | – | – | Hiển thị | Trả bảng về cấu hình gốc.
+  | 7 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi nhận cấu hình.
+[normal] 2.4.5 Danh sách event và xử lý event 
+<<TABLE 16>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng Tuỳ chỉnh cột | Click | After: / – Mở cửa sổ, nạp cấu hình cột đã lưu.
+  | 2 | Tích / bỏ tích cột | Change | During: / – Cột STT và Mã KH không cho đổi trạng thái. / – Các cột khác cập nhật trạng thái tạm.
+  | 3 | Bấm Lưu | Click | After: / – Ghi nhận cấu hình; vẽ lại bảng; nếu có bật cột nặng thì gọi lại dữ liệu kèm các cột đó.
+  | 4 | Bấm khôi phục mặc định | Click | After: / – Đặt lại cấu hình gốc và vẽ lại bảng.
+[Heading 3] 2.5 Tạo mới khách hàng 
+[normal] 2.5.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 8: Biểu đồ Use Case — FR-05 Tạo mới khách hàng 
+[normal] 2.5.2 Giới thiệu 
+<<TABLE 17>>
+  | Mục | Nội dung
+  | Tên chức năng | Tạo mới khách hàng
+  | Mô tả | Thêm một khách hàng mới vào danh mục. Form gồm nhiều khối, các khối hiện ra tuỳ theo Loại hình tổ chức được chọn. Mã khách hàng do hệ thống sinh tự động.
+  | Tác nhân | Nhân viên quản lý khách hàng
+  | Điều kiện ban đầu | Người dùng có quyền Thêm khách hàng.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Tạo mới. / 2. Hệ thống mở màn thêm mới, ban đầu chỉ hiện khối Thông tin khách hàng. / 3. Người dùng chọn Loại hình tổ chức; hệ thống hiện thêm các khối tương ứng. / 4. Người dùng nhập thông tin và bấm Lưu. /  Hệ thống kiểm tra dữ liệu, sinh mã khách hàng và ghi bản ghi mới. / 6. Hệ thống hiển thị thông báo thành công và quay về danh sách.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc → báo lỗi đỏ ngay dưới ô tương ứng, không đóng màn, giữ nguyên dữ liệu đã nhập. / • Trùng mã số thuế / email / số CMND-CCCD → báo lỗi tương ứng, không tạo bản ghi. / • Chọn lĩnh vực không thuộc loại hình đã chọn → báo lỗi và yêu cầu chọn lại. / • Thoát màn khi đã sửa mà chưa lưu → hệ thống hỏi xác nhận rời trang.
+  | Yêu cầu đặc biệt | Khối “Địa chỉ giao hàng” KHÔNG hiện ở màn tạo mới; chỉ hiện ở màn chỉnh sửa.
+[normal] 2.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Tạo mới 
+[normal]  [IMG]
+[normal] Hình 9: Form Tạo mới khách hàng khi chọn loại hình tổ chức 
+[normal]  [IMG]
+[normal] Hình 10: Form Tạo mới khách hàng khi chọn Loại hình tổ chức là Cá nhân 
+[normal] 2.4 Mô tả chi tiết giao diện 
+<<TABLE 18>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Tên khách hàng | Textbox | Enable | 0–255 ký tự | Có | Trống | Thiếu thì báo “Bắt buộc phải nhập”.
+  | 2 | Loại hình tổ chức | Dropdown | Enable | 5 giá trị | Có | Trống | Cá nhân / Doanh nghiệp tư nhân / Doanh nghiệp nước ngoài / Tổ chức phi chính phủ / Cơ quan nhà nước. Quyết định các khối hiển thị bên dưới.
+  | 3 | Tên viết tắt | Textbox | Enable | 0–255 ký tự | Không | Trống | –
+  | 4 | Là nhà cung cấp | Icon Button | Enable | Có / Không | Không | Không tích | Đánh dấu đối tác đồng thời là nhà cung cấp; vẫn chỉ một bản ghi duy nhất.
+  | 5 | Là khách hãng | Icon Button | Enable | Có / Không | Không | Không tích | Tích thì bắt buộc phải chọn Hãng xe.
+  | 6 | Hãng xe | Dropdown | Enable | Danh sách | Có khi tích “Là khách hãng” | Trống | Thiếu thì báo “Bắt buộc khi là khách hãng”.
+  | 7 | Nhóm khách hàng | Dropdown | Enable | Danh sách | Không | Trống | Chọn nhiều.
+  | 8 | Loại hình hoạt động – Lĩnh vực kinh doanh | Dropdown | Enable | Danh sách cặp | Không | Trống | Khai theo cặp; lĩnh vực phải thuộc loại hình đã chọn, sai thì báo “Lĩnh vực không thuộc loại hình đã chọn, vui lòng chọn lại”. Thêm được nhiều cặp.
+  | 9 | Email | Textbox | Enable | 0–255 ký tự, đúng định dạng email | Không | Trống | Duy nhất toàn hệ thống; trùng thì báo “Email đã tồn tại”.
+  | 10 | Website / Ghi chú | Textbox / Textarea | Enable | 0–255 ký tự | Không | Trống | –
+  | 11 | Quốc gia | Dropdown | Enable | Danh sách | Có | Trống | Thiếu thì báo “Bắt buộc chọn quốc gia”.
+  | 12 | Tỉnh/Thành phố | Dropdown | Enable | Danh sách | Có | Trống | Phụ thuộc Quốc gia; thiếu thì báo “Bắt buộc chọn tỉnh/thành phố”.
+  | 13 | Quận/Huyện | Dropdown | Enable | Danh sách | Không | Trống | Phụ thuộc Tỉnh/TP.
+  | 14 | Phường/Xã | Dropdown | Enable | Danh sách | Có | Trống | Thiếu thì báo “Bắt buộc chọn phường/xã”.
+  | 15 | Thôn/Xóm, Số nhà – đường | Dropdown / Textbox | Enable | 0–255 ký tự | Không | Trống | –
+  | 16 | Số điện thoại (khối Thông tin cá nhân) | Textbox | Enable | Bắt đầu bằng 0, dài 10–12 chữ số | Có với khách hàng Cá nhân | Trống | Thêm được nhiều số. Sai định dạng thì báo “Số điện thoại không đúng định dạng”.
+  | 17 | Số CMND/CCCD | Textbox | Enable | 0–255 ký tự | Không | Trống | Duy nhất; trùng thì báo “Số CMND/CCCD đã tồn tại”.
+  | 18 | Ngày sinh / Ngày cấp | Datepicker | Enable |  | Không | Trống | Chọn ngày tương lai thì báo “Không được lớn hơn ngày hiện tại”.
+  | 19 | Nơi cấp / Tên đơn vị | Textbox | Enable | 0–255 ký tự | Không | Trống | –
+  | 20 | Mã số thuế (khối Thông tin tổ chức) | Textbox | Enable | 1–14 ký tự, chỉ chữ số và dấu gạch ngang | Có khi KHÔNG chọn Công ty mẹ | Trống | Duy nhất. Sai định dạng thì báo “Mã số thuế không đúng định dạng”; trùng thì báo “Mã số thuế đã tồn tại”.
+  | 21 | Công ty mẹ | Dropdown | Enable | Danh sách khách hàng | Không | Trống | Chọn công ty mẹ thì Mã số thuế trở thành không bắt buộc.
+  | 22 | Người đại diện + Chức vụ người đại diện | Textbox | Enable | 0–255 ký tự | Có với khách hàng tổ chức | Trống | Ít nhất một người, phải đủ cả tên và chức vụ.
+  | 23 | Địa chỉ xuất hoá đơn | Textarea | Enable | – | Có với khách hàng tổ chức | Trống | Thiếu thì báo “Bắt buộc nhập”.
+  | 24 | Fax / Số điện thoại bàn | Textbox | Enable | 0–20 ký tự | Không | Trống | –
+  | 25 | Người liên hệ: Họ tên, Chức vụ, SĐT | Textbox | Enable | 0–255 ký tự | Có với khách hàng tổ chức | Trống | Ít nhất một người liên hệ, mỗi người phải có tên, chức vụ và ít nhất một số điện thoại.
+  | 26 | Tài khoản ngân hàng: Số TK, Chủ TK, Ngân hàng, Tỉnh/TP ngân hàng, Chi nhánh | Textbox / Dropdown | Enable | 0–255 ký tự | Không | Trống | Chi nhánh phụ thuộc Ngân hàng và Tỉnh/TP ngân hàng.
+  | 27 | Nút Lưu | Button | Enable | – | – | Hiển thị | Bị khóa trong lúc đang xử lý để tránh tạo trùng bản ghi.
+  | 28 | Nút Quay lại | Button | Enable | – | – | Hiển thị | Hỏi xác nhận nếu có thay đổi chưa lưu.
+  | 29 | Thông báo lỗi inline | Toast / Alert | Hiển thị | – | – | Ẩn | Chữ đỏ ngay dưới ô bị lỗi.
+[normal] 2.5 Danh sách event và xử lý event 
+<<TABLE 19>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Tạo mới | Click | Before: / – Kiểm tra quyền Thêm khách hàng. / – Nếu không có quyền → không hiển thị nút; gọi thẳng chức năng thì từ chối với thông báo “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Mở màn thêm mới với các ô để trống.
+  | 2 | Đổi Loại hình tổ chức | Change | After: / – Hiện / ẩn các khối nhập liệu tương ứng; dữ liệu ở khối bị ẩn không được mang sang khối mới.
+  | 3 | Đổi Quốc gia / Tỉnh/Thành phố / Quận/Huyện | Change | After: / – Xóa trắng và nạp lại các cấp địa chỉ bên dưới.
+  | 4 | Tích “Là khách hãng” | Change | After: / – Ô Hãng xe chuyển thành bắt buộc.
+  | 5 | Bấm Lưu | Click | Before: / – Kiểm tra quyền Thêm khách hàng. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Tên khách hàng trống → hiển thị “Bắt buộc phải nhập”. / – Loại hình tổ chức trống → hiển thị “Bắt buộc nhập”. / – Khách hàng cá nhân không có số điện thoại → hiển thị “Bắt buộc phải nhập số điện thoại”. / – Số điện thoại sai định dạng → hiển thị “Số điện thoại không đúng định dạng”. / – Khách hàng tổ chức thiếu người đại diện → hiển thị “Phải có ít nhất 1 người đại diện”. / – Khách hàng tổ chức thiếu người liên hệ → hiển thị “Phải có ít nhất 1 liên hệ”. / – Thiếu địa chỉ xuất hoá đơn → hiển thị “Bắt buộc nhập”. / – Không chọn công ty mẹ mà thiếu mã số thuế → hiển thị “Bắt buộc nhập”. / – Mã số thuế sai định dạng → hiển thị “Mã số thuế không đúng định dạng”. / – Mã số thuế / email / số CMND-CCCD đã tồn tại → hiển thị thông báo “… đã tồn tại” tương ứng. / – Thiếu quốc gia / tỉnh–thành phố / phường–xã → hiển thị thông báo bắt buộc chọn tương ứng. / – Lĩnh vực không thuộc loại hình đã chọn → hiển thị “Lĩnh vực không thuộc loại hình đã chọn, vui lòng chọn lại”. / – Nếu có lỗi validate → không thực hiện bước After. / After: / – Sinh mã khách hàng và ghi bản ghi mới với trạng thái Hoạt động. / – Ghi một dòng lịch sử “Thêm mới”. / – Hiển thị thông báo “Thêm mới khách hàng thành công” và quay về danh sách.
+  | 6 | Bấm Quay lại khi đã sửa mà chưa lưu | Click | During: / – Hiển thị hộp hỏi xác nhận rời khỏi trang. / After: / – Chọn ở lại thì giữ nguyên dữ liệu; chọn rời đi thì bỏ mọi thay đổi.
+[Heading 3] 2.6 Chỉnh sửa khách hàng 
+[normal] 2.6.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 11: Biểu đồ Use Case — FR-06 Chỉnh sửa khách hàng 
+[normal] 2.6.2 Giới thiệu 
+<<TABLE 20>>
+  | Mục | Nội dung
+  | Tên chức năng | Chỉnh sửa khách hàng
+  | Mô tả | Sửa thông tin của một khách hàng đã có. Dùng chung form với chức năng Tạo mới, khác ở chỗ có thêm khối Địa chỉ giao hàng và mã khách hàng không thay đổi.
+  | Tác nhân | Nhân viên quản lý khách hàng
+  | Điều kiện ban đầu | Người dùng có quyền Sửa khách hàng; khách hàng cần sửa nằm trong phạm vi dữ liệu của người dùng.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng bút chì ở dòng khách hàng cần sửa. / 2. Hệ thống mở màn chỉnh sửa với đầy đủ dữ liệu hiện tại. / 3. Người dùng sửa thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu và ghi nhận thay đổi. /  Hệ thống ghi lịch sử thay đổi, hiển thị thông báo thành công và quay về danh sách.
+  | Dòng sự kiện phụ | • Không có quyền Sửa → biểu tượng bút chì bị làm mờ. / • Giữ nguyên mã số thuế của chính khách hàng đó → KHÔNG báo trùng. / • Đổi sang mã số thuế của khách hàng khác → báo “Mã số thuế đã tồn tại”. / • Khách hàng vừa bị người khác khóa → hệ thống báo dữ liệu đã thay đổi, không treo trang.
+  | Yêu cầu đặc biệt | Mã khách hàng là bất biến, không đổi qua thao tác sửa.
+[normal] 2.6.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Chỉnh sửa 
+[normal]  [IMG]
+[normal] Hình 12: Màn Chỉnh sửa khách hàng — có thêm khối Địa chỉ giao hàng 
+[normal] 2.6.4 Mô tả chi tiết giao diện 
+<<TABLE 21>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Toàn bộ các ô của form Tạo mới | Textbox / Dropdown / Datepicker | Enable | Như FR-05 | Như FR-05 | Điền sẵn dữ liệu hiện tại | Quy tắc bắt buộc và thông báo lỗi giống hệt FR-0
+  | 2 | Mã khách hàng | Label | Read-only | – | – | Mã hiện tại | Không sửa được, không đổi sau khi lưu.
+  | 3 | Khối Địa chỉ giao hàng | Textbox / Dropdown | Enable | 0–255 ký tự | Không | Điền sẵn nếu đã có | CHỈ hiện ở màn chỉnh sửa, không hiện ở màn tạo mới.
+  | 4 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi nhận thay đổi.
+  | 5 | Nút Quay lại | Button | Enable | – | – | Hiển thị | Hỏi xác nhận nếu có thay đổi chưa lưu; không hỏi nếu chưa sửa gì.
+[normal] 2.6.5 Danh sách event và xử lý event 
+<<TABLE 22>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng bút chì | Click | Before: / – Kiểm tra quyền Sửa khách hàng. / – Nếu không có quyền → nút bị làm mờ, không mở màn; gọi thẳng chức năng thì từ chối với thông báo “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Mở màn chỉnh sửa với dữ liệu hiện tại của khách hàng.
+  | 2 | Bấm Lưu | Click | Before: / – Kiểm tra quyền Sửa khách hàng. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Áp toàn bộ quy tắc kiểm tra như FR-0 / – Bỏ qua kiểm tra trùng đối với chính bản ghi đang sửa. / – Nếu có lỗi validate → không thực hiện bước After. / After: / – Ghi nhận thay đổi, giữ nguyên mã khách hàng. / – Ghi một dòng lịch sử với giá trị cũ và giá trị mới của từng trường đã đổi. / – Hiển thị thông báo “Cập nhật khách hàng thành công” và quay về danh sách.
+  | 3 | Bấm Quay lại khi chưa sửa gì | Click | After: / – Quay thẳng về danh sách, không hỏi xác nhận.
+[Heading 3] 2.7 Xem chi tiết khách hàng 
+[normal] 2.7.1 Giới thiệu 
+<<TABLE 23>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem chi tiết khách hàng
+  | Mô tả | Hiển thị toàn bộ thông tin của một khách hàng ở chế độ chỉ đọc.
+  | Tác nhân | Nhân viên quản lý khách hàng; Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Khách hàng nằm trong phạm vi dữ liệu của người dùng.
+  | Dòng sự kiện chính | 1. Người dùng bấm vào mã khách hàng trên bảng danh sách. / 2. Hệ thống mở màn chi tiết. / 3. Mọi thông tin hiển thị ở chế độ chỉ đọc.
+  | Dòng sự kiện phụ | • Khách hàng ngoài phạm vi dữ liệu → không mở được, hệ thống báo không tìm thấy. / • Khách hàng đã Khóa → vẫn xem được, có nhãn Khóa.
+  | Yêu cầu đặc biệt | 
+[normal] 2.7.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Xem chi tiết 
+[normal]  [IMG]
+[normal] Hình 13: Màn Chi tiết khách hàng ở chế độ chỉ đọc 
+[normal] 2.7.3 Mô tả chi tiết giao diện 
+<<TABLE 24>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Giá trị ban đầu | Mô tả
+  | 1 | Toàn bộ trường thông tin | Text | Read-only | – | Dữ liệu hiện tại | Không gõ được, không có nút Lưu.
+  | 2 | Nhãn trạng thái | Badge | Read-only | Hoạt động / Khóa | Theo dữ liệu | –
+  | 3 | Nút Quay lại | Button | Enable | – | Hiển thị | Về màn danh sách.
+[normal] 2.7.4 Danh sách event và xử lý event 
+<<TABLE 25>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm mã khách hàng | Click | Before: / – Kiểm tra khách hàng có nằm trong phạm vi dữ liệu của người dùng. / After: / – Mở màn chi tiết ở chế độ chỉ đọc.
+  | 2 | Bấm Quay lại | Click | After: / – Về màn danh sách, giữ nguyên bộ lọc và trang trước đó.
+[Heading 3] 2.8 Khóa / Mở khóa khách hàng 
+[normal] 2.8.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 14: Biểu đồ Use Case — FR-08 Khóa / Mở khóa khách hàng 
+[normal] 2.8.2 Giới thiệu 
+<<TABLE 26>>
+  | Mục | Nội dung
+  | Tên chức năng | Khóa / Mở khóa khách hàng
+  | Mô tả | Đổi trạng thái khách hàng qua lại giữa Hoạt động và Khóa. Khách hàng đã Khóa vẫn nằm trong danh mục nhưng không chọn được ở các màn nghiệp vụ khác.
+  | Tác nhân | Nhân viên quản lý khách hàng
+  | Điều kiện ban đầu | Người dùng có quyền Xóa khách hàng.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng ổ khóa ở dòng khách hàng. / 2. Hệ thống hiện hộp xác nhận nêu rõ mã và tên khách hàng. / 3. Người dùng bấm Khóa (hoặc Mở khóa) để xác nhận. / 4. Hệ thống đổi trạng thái và ghi lịch sử. /  Bảng cập nhật nhãn trạng thái, hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Bấm Hủy → đóng hộp, trạng thái không đổi, không có thông báo thành công. / • Khách hàng đã bị người khác khóa trước đó → hệ thống báo dữ liệu đã thay đổi, không treo trang. / • Không có quyền Xóa khách hàng → biểu tượng ổ khóa bị làm mờ.
+  | Yêu cầu đặc biệt | Hệ thống KHÔNG có chức năng xóa vĩnh viễn khách hàng. Khóa và Mở khóa dùng chung quyền “Xóa khách hàng”.
+[normal] 2.8.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Khóa/Mở khóa 
+[normal] Modal Xác nhận khóa được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 15: Hộp xác nhận Khóa khách hàng, nêu rõ mã và tên 
+[normal] 2.8.4 Mô tả chi tiết giao diện 
+<<TABLE 27>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Biểu tượng ổ khóa | Icon Button | Enable / Disable | Hiển thị | Nằm thẳng trên cột Hành động. Làm mờ khi thiếu quyền Xóa khách hàng.
+  | 2 | Tiêu đề hộp xác nhận | Label | Hiển thị | Xác nhận khóa | Đổi thành “Xác nhận mở khóa” khi khách hàng đang ở trạng thái Khóa.
+  | 3 | Nội dung hộp xác nhận | Label | Hiển thị | Bạn có chắc muốn khóa khách hàng ‘<mã> - <tên>’? | Phải nêu rõ mã và tên khách hàng để tránh thao tác nhầm dòng.
+  | 4 | Nút Khóa / Mở khóa | Button | Enable | Hiển thị | Xác nhận thực hiện.
+  | 5 | Nút Hủy | Button | Enable | Hiển thị | Đóng hộp, không làm gì.
+[normal] 2.8.5 Danh sách event và xử lý event 
+<<TABLE 28>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng ổ khóa | Click | 
+  | 2 | Bấm Khóa / Mở khóa trong hộp xác nhận | Click | Before: / – Kiểm tra quyền Xóa khách hàng. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Khách hàng không còn tồn tại hoặc đã ở trạng thái đích → hiển thị thông báo dữ liệu đã thay đổi, đề nghị tải lại danh sách. / – Nếu có lỗi → không thực hiện bước After. / After: / – Đổi trạng thái khách hàng; KHÔNG xóa bất kỳ dữ liệu nào. / – Ghi một dòng lịch sử đổi trạng thái kèm người thực hiện và thời điểm. / – Cập nhật nhãn trạng thái trên bảng; hiển thị thông báo “Khóa khách hàng thành công” (hoặc “Mở khóa khách hàng thành công”).
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp xác nhận, không thay đổi gì.
+[Heading 3] 2.9 Lịch sử thay đổi 
+[normal] 2.9.1 Giới thiệu 
+<<TABLE 29>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem lịch sử thay đổi của khách hàng
+  | Mô tả | Liệt kê các lần Thêm mới, Sửa và đổi trạng thái của một khách hàng, kèm giá trị cũ, giá trị mới, người thực hiện và thời điểm.
+  | Tác nhân | Nhân viên quản lý khách hàng; Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Khách hàng nằm trong phạm vi dữ liệu của người dùng.
+  | Dòng sự kiện chính | 1. Người dùng mở menu ba chấm ở dòng khách hàng. / 2. Người dùng chọn Lịch sử. / 3. Hệ thống hiển thị danh sách các lần thay đổi, MỚI NHẤT ở trên cùng.
+  | Dòng sự kiện phụ | • Khách hàng chưa từng sửa → chỉ có dòng Thêm mới, không báo lỗi. / • Thay đổi ở người liên hệ cũng được ghi nhận thành dòng riêng.
+  | Yêu cầu đặc biệt | Thứ tự luôn là mới nhất trước, thống nhất với các màn lịch sử khác của hệ thống.
+[normal] 2.9.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Lịch sử 
+[normal] Modal Lịch sử khách hàng được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 16: Cửa sổ Lịch sử khách hàng 
+[normal] 2.9.3 Mô tả chi tiết giao diện 
+<<TABLE 30>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Giá trị ban đầu | Mô tả
+  | 1 |  | Button | Enable | – | Hiển thị | Mở cửa sổ lịch sử.
+  | 2 | Danh sách thay đổi | Table/Grid | Read-only | – | Theo dữ liệu | Sắp xếp mới nhất ở trên cùng.
+  | 3 | Loại thay đổi | Badge | Read-only | Thêm mới / Sửa / Đổi trạng thái | Theo dữ liệu | –
+  | 4 | Giá trị cũ → Giá trị mới | Text | Read-only | – | Theo dữ liệu | Hiển thị rõ hai vế cho từng trường đã đổi.
+  | 5 | Người thực hiện, thời điểm | Text | Read-only | dd/mm/yyyy hh:mm | Theo dữ liệu | –
+  | 6 | Nút Đóng | Button | Enable | – | Hiển thị | Đóng cửa sổ, giữ nguyên bộ lọc và trang của danh sách.
+[normal] 2.9.4 Danh sách event và xử lý event 
+<<TABLE 31>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Chọn Lịch sử trong menu ba chấm | Click | After: / – Mở cửa sổ, nạp danh sách thay đổi theo thứ tự mới nhất trước.
+  | 2 | Bấm Đóng | Click | After: / – Đóng cửa sổ; danh sách phía sau giữ nguyên bộ lọc và trang.
+[Heading 3] 2.10 Nhập khách hàng từ file Excel 
+[normal] 2.10.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 17: Biểu đồ Use Case — Nhập khách hàng từ file Excel 
+[normal] 2.10.2 Giới thiệu 
+<<TABLE 32>>
+  | Mục | Nội dung
+  | Tên chức năng | Nhập khách hàng từ file Excel
+  | Mô tả | Thêm nhiều khách hàng cùng lúc từ file Excel theo mẫu. Có bước kiểm tra dữ liệu trước khi ghi để người dùng sửa lỗi mà không tạo ra bản ghi rác.
+  | Tác nhân | Nhân viên quản lý khách hàng
+  | Điều kiện ban đầu | Người dùng có quyền Thêm khách hàng và đã chuẩn bị file theo mẫu.
+  | Dòng sự kiện chính | 1. Người dùng bấm Import Excel. / 2. Người dùng bấm Tải file mẫu và điền dữ liệu (dữ liệu bắt đầu từ dòng 3). / 3. Người dùng chọn file rồi bấm Load lên bảng. / 4. Người dùng bấm Validate; hệ thống kiểm tra từng dòng và báo lỗi theo số dòng. /  Người dùng sửa lỗi rồi bấm Import. / 6. Hệ thống ghi các dòng hợp lệ và báo tổng số dòng, số dòng thành công, số dòng lỗi.
+  | Dòng sự kiện phụ | • File vượt quá 1.000 dòng → hệ thống từ chối xử lý, nêu rõ giới hạn. / • Toàn bộ dòng lỗi → không ghi bản ghi nào. / • Một phần dòng lỗi → các dòng hợp lệ vẫn được ghi, dòng lỗi thì không. / • Thiếu cột bắt buộc trong file → báo lỗi thiếu cột, dừng xử lý. / • Trùng mã số thuế ngay trong file → báo lỗi ở dòng thứ hai.
+  | Yêu cầu đặc biệt | File mẫu gồm 3 trang: trang nhập liệu và các trang danh mục tra cứu sinh từ dữ liệu thật của hệ thống. Tiêu đề ở dòng 1, DỮ LIỆU BẮT ĐẦU TỪ DÒNG 3.
+[normal] 2.10.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Import file 
+[normal] Modal Import khách hàng được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 18: Cửa sổ Import khách hàng với các bước Load lên bảng – Validate – Import 
+[normal] 2.10.4 Mô tả chi tiết giao diện 
+<<TABLE 33>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Nút Import Excel | Button | Enable / Ẩn | – | – | Ẩn khi thiếu quyền | Chỉ hiện khi có quyền Thêm khách hàng.
+  | 2 | Nút Tải file mẫu | Button | Enable | – | – | Hiển thị | Tải file mẫu 3 trang, 26 cột, các cột bắt buộc có dấu sao đỏ.
+  | 3 | Ô Chọn file Excel | Button | Enable | Định dạng bảng tính | Có | Trống | –
+  | 4 | Nút Load lên bảng | Button | Enable | – | – | Hiển thị | Đọc file và hiển thị dữ liệu lên bảng xem trước.
+  | 5 | Nút Validate | Button | Enable | – | – | Hiển thị | Kiểm tra từng dòng; dòng hợp lệ sẽ bị khóa lại không cho sửa tiếp.
+  | 6 | Nút Import | Button | Enable | – | – | Hiển thị | Ghi các dòng hợp lệ.
+  | 7 | Ô Chỉ dòng lỗi | Icon Button | Enable | Có / Không | Không | Không tích | Lọc bảng xem trước để chỉ hiện các dòng đang lỗi.
+  | 8 | Bảng xem trước | Table/Grid | Enable |  | – | Trống | Sửa trực tiếp được trước khi Validate.
+  | 9 | Ô Tổng | Label | Read-only |  | – | 0 | Tổng số dòng đọc được từ file.
+  | 10 | Thông báo lỗi theo dòng | Toast / Alert | Hiển thị | – | – | Ẩn | Nêu rõ số dòng và lý do lỗi.
+  | 11 | Nút Làm mới / Đóng | Button | Enable | – | – | Hiển thị | Xóa trạng thái hiện tại / đóng cửa sổ.
+[normal] 2.10.6 Danh sách event và xử lý event 
+<<TABLE 34>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Import Excel | Click | Before: / – Kiểm tra quyền Thêm khách hàng. / – Nếu không có quyền → không hiển thị nút; gọi thẳng chức năng thì từ chối với thông báo “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Mở cửa sổ Import ở trạng thái sạch.
+  | 2 | Bấm Tải file mẫu | Click | After: / – Sinh file mẫu 3 trang kèm danh mục thật của hệ thống và tải về.
+  | 3 | Bấm Load lên bảng | Click | During: / – File không đọc được hoặc sai định dạng → hiển thị thông báo file không hợp lệ. / – File không có dòng dữ liệu → hiển thị thông báo file không có dữ liệu. / – Số dòng vượt quá 1.000 → hiển thị thông báo vượt quá giới hạn mỗi lần nhập. / – Thiếu cột bắt buộc → hiển thị thông báo thiếu cột, nêu rõ tên cột. / After: / – Hiển thị dữ liệu lên bảng xem trước và cập nhật ô Tổng.
+  | 4 | Bấm Validate | Click | During: / – Kiểm tra từng dòng theo đúng quy tắc của chức năng Tạo mới. / – Kiểm tra trùng mã số thuế / email / số CMND-CCCD với dữ liệu đã có VÀ với các dòng khác trong cùng file. / – Kiểm tra mã danh mục có tồn tại; cặp loại hình – lĩnh vực có khớp nhau. / After: / – Đánh dấu dòng lỗi kèm lý do theo số dòng; khóa các dòng hợp lệ. / – KHÔNG ghi bất kỳ bản ghi nào ở bước này.
+  | 5 | Bấm Import | Click | Before: / – Kiểm tra quyền Thêm khách hàng. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Bỏ qua các dòng đang lỗi. / After: / – Ghi các dòng hợp lệ thành khách hàng mới, người tạo là người đang thực hiện. / – Hiển thị kết quả: tổng số dòng, số dòng thành công, số dòng lỗi. / – Vào hết → “Import thành công”; vào một phần → “Import một phần thành công”; trượt hết → thông báo thất bại kèm danh sách lỗi.
+[Heading 3] 2.11 Xuất danh sách ra CSV / Excel / PDF 
+[normal] 2.11.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 19: Biểu đồ Use Case — Xuất danh sách ra CSV / Excel / PDF 
+[normal] 2.11.2 Giới thiệu 
+<<TABLE 35>>
+  | Mục | Nội dung
+  | Tên chức năng | Xuất danh sách khách hàng
+  | Mô tả | Xuất kết quả đang lọc ra file CSV, Excel hoặc PDF, cho phép chọn trường và thứ tự cột.
+  | Tác nhân | Nhân viên quản lý khách hàng
+  | Điều kiện ban đầu | Người dùng có quyền Xuất dữ liệu khách hàng.
+  | Dòng sự kiện chính | 1. Người dùng bấm Xuất CSV / Xuất Excel / Xuất PDF. / 2. Hệ thống mở cửa sổ Chọn trường xuất. / 3. Người dùng chọn các trường và thứ tự mong muốn. / 4. Người dùng bấm Xuất. /  Hệ thống sinh file theo đúng bộ lọc, phạm vi dữ liệu và thứ tự trường đã chọn.
+  | Dòng sự kiện phụ | • Không chọn trường nào → hệ thống chặn, yêu cầu chọn ít nhất một trường. / • Bộ lọc không có kết quả → hệ thống báo không có dữ liệu hoặc sinh file chỉ có dòng tiêu đề. / • Không có quyền → ba nút bị vô hiệu hóa; gọi thẳng chức năng vẫn bị từ chối.
+  | Yêu cầu đặc biệt | File xuất chứa TOÀN BỘ kết quả lọc, không giới hạn ở trang đang xem.
+[normal] 2.11.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Xuất CSV/Xuất Excel/Xuất PDF 
+[normal] Modal Chọn trường xuất Excel được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 20: Cửa sổ Chọn trường xuất Excel — thứ tự cột theo thứ tự chọn 
+[normal] 2.11.4 Mô tả chi tiết giao diện 
+<<TABLE 36>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Nút Xuất CSV / Xuất Excel / Xuất PDF | Button | Enable / Disable | – | – | Vô hiệu khi thiếu quyền | Chỉ dùng được khi có quyền Xuất dữ liệu khách hàng.
+  | 2 | Ô Trường xuất | Dropdown | Enable | 20 trường | Có | Chọn sẵn toàn bộ | Mã KH, Tên KH, MST/SĐT, Đối tượng, Nhóm khách, Địa chỉ, Tỉnh/TP, Tên đơn vị, Tên viết tắt, Địa chỉ xuất hóa đơn, Hãng xe, Công ty mẹ, Cấp đại lý, Người đại diện, Tên liên hệ, SĐT liên hệ, Chức vụ liên hệ, Người tạo, Người sửa (gần nhất), Trạng thái.
+  | 3 | Dòng hướng dẫn thứ tự cột | Label | Hiển thị | – | – | Thứ tự cột chạy theo thứ tự bạn chọn | Muốn đổi vị trí thì bỏ chọn rồi chọn lại theo trình tự mong muốn.
+  | 4 | Nút Xuất | Button | Enable | – | – | Hiển thị | Sinh file và tải về.
+  | 5 | Nút Đóng | Button | Enable | – | – | Hiển thị | Đóng cửa sổ, không xuất.
+[normal] 2.11.5 Danh sách event và xử lý event 
+<<TABLE 37>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút xuất file | Click | Before: / – Kiểm tra quyền Xuất dữ liệu khách hàng. / – Nếu không có quyền → nút bị vô hiệu hóa; gọi thẳng chức năng thì từ chối với thông báo “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Mở cửa sổ Chọn trường xuất với toàn bộ trường được chọn sẵn.
+  | 2 | Chọn / bỏ chọn trường | Change | During: / – Ghi nhận thứ tự chọn để quyết định thứ tự cột trong file.
+  | 3 | Bấm Xuất | Click | During: / – Không chọn trường nào → hiển thị thông báo yêu cầu chọn ít nhất một trường và dừng xử lý. / After: / – Sinh file theo đúng bộ lọc đang áp dụng, đúng phạm vi dữ liệu và đúng thứ tự trường đã chọn. / – Tải file về máy người dùng.
+[Heading 3] 2.12 Màn Quản lý khách hàng 
+[normal] 2.12.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 21: Biểu đồ Use Case — FR-12 Màn Quản lý khách hàng 
+[normal] 2.12.2 Giới thiệu 
+<<TABLE 38>>
+  | Mục | Nội dung
+  | Tên chức năng | Màn Quản lý khách hàng
+  | Mô tả | Màn tổng hợp mọi thông tin nghiệp vụ của một khách hàng, gồm 6 thẻ: Thông tin chung, Thông tin liên hệ, Báo giá, Hợp đồng, Danh sách trang thiết bị, Thông tin khác.
+  | Tác nhân | Nhân viên quản lý khách hàng
+  | Điều kiện ban đầu | Người dùng có quyền Xem khách hàng; khách hàng nằm trong phạm vi dữ liệu của người dùng.
+  | Dòng sự kiện chính | 1. Người dùng mở menu ba chấm ở dòng khách hàng và chọn Quản lý. / 2. Hệ thống mở màn Quản lý khách hàng, chọn sẵn thẻ Thông tin chung. / 3. Người dùng chuyển sang các thẻ khác để xem báo giá, hợp đồng, trang thiết bị. / 4. Ở thẻ Danh sách trang thiết bị, người dùng có quyền Sửa khách hàng có thể thêm / sửa / xóa thiết bị khai ngoài hệ thống và bổ sung số máy.
+  | Dòng sự kiện phụ | • Không có quyền Xem khách hàng → các thẻ nghiệp vụ bị từ chối, báo không có quyền, không treo trang. / • Không có quyền Sửa khách hàng → các nút thao tác thiết bị bị vô hiệu hóa nhưng vẫn xem được danh sách. / • Thêm số máy đã tồn tại → cảnh báo và cho biết số máy đang thuộc thiết bị nào.
+  | Yêu cầu đặc biệt | Số lượng thiết bị là tổng cộng dồn theo từng mã thiết bị, không đếm theo số dòng chứng từ.
+[normal] 2.12.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục → Đối tác → Khách hàng → Quản lý 
+[normal]  [IMG]
+[normal] Hình 22: Màn Quản lý khách hàng 
+[normal]  [IMG]
+[normal] Hình 23: Thẻ Danh sách trang thiết bị của màn Quản lý khách hàng 
+[normal] 2.12.4 Mô tả chi tiết giao diện 
+<<TABLE 39>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Thẻ Thông tin chung | Table/Grid | Read-only | – | – | Được chọn sẵn | Hiển thị thông tin cơ bản, người đại diện, địa chỉ.
+  | 2 | Thẻ Thông tin liên hệ | Table/Grid | Read-only | – | – | Ẩn nội dung | Danh sách người liên hệ của khách hàng.
+  | 3 | Thẻ Báo giá | Table/Grid | Read-only | – | – | Ẩn nội dung | Chỉ hiện báo giá của đúng khách hàng đang xem. Cần quyền Xem khách hàng.
+  | 4 | Thẻ Hợp đồng | Table/Grid | Read-only | – | – | Ẩn nội dung | Cần quyền Xem khách hàng.
+  | 5 | Thẻ Danh sách trang thiết bị | Table/Grid | Enable | – | – | Ẩn nội dung | Gồm thiết bị đã bán qua hệ thống và thiết bị khai thêm từ ngoài, phân biệt rõ hai nhóm.
+  | 6 | Thẻ Thông tin khác | Table/Grid | Enable | – | – | Ẩn nội dung | Ảnh, tài liệu, video đính kèm.
+  | 7 | Nút thêm / sửa / xóa thiết bị | Button | Enable / Disable | – | – | Vô hiệu khi thiếu quyền | Cần quyền Sửa khách hàng.
+  | 8 | Chức năng tăng số lượng thiết bị | Button | Enable / Disable |  | Có | – | Số nhập vào được CỘNG DỒN vào số lượng hiện có, không thay thế.
+  | 9 | Chức năng thêm số máy | Button | Enable / Disable | 0–255 ký tự | Có | Trống | Số máy phải chưa tồn tại trong hệ thống.
+  | 10 | Nút xuất file / In trên thẻ Báo giá – Hợp đồng | Button | Enable | – | – | Hiển thị | Bản in có tiêu đề đầu trang của công ty.
+  | 11 | Nút tải ảnh / tài liệu (thẻ Thông tin khác) | Button | Enable / Disable | – | Không | Vô hiệu khi thiếu quyền | Cần quyền Sửa khách hàng.
+[normal] 2.12.6 Danh sách event và xử lý event 
+<<TABLE 40>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Chọn Quản lý trong menu ba chấm | Click | Before: / – Kiểm tra khách hàng nằm trong phạm vi dữ liệu. / After: / – Mở màn Quản lý khách hàng, chọn sẵn thẻ Thông tin chung.
+  | 2 | Bấm sang thẻ Báo giá / Hợp đồng / Danh sách trang thiết bị | Click | Before: / – Kiểm tra quyền Xem khách hàng. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý, không hiện dữ liệu. / After: / – Nạp và hiển thị dữ liệu của đúng khách hàng đang xem.
+  | 3 | Thêm / sửa / xóa thiết bị khai ngoài | Click | Before: / – Kiểm tra quyền Sửa khách hàng. / – Nếu không có quyền → nút bị vô hiệu hóa; gọi thẳng chức năng thì từ chối và dừng xử lý. / During: / – Thiếu tên thiết bị hoặc số lượng không hợp lệ → hiển thị lỗi tương ứng. / – Nếu có lỗi validate → không thực hiện bước After. / After: / – Ghi nhận thay đổi và cập nhật lại danh sách thiết bị.
+  | 4 | Thêm số máy | Click | During: / – Số máy đã tồn tại → hiển thị cảnh báo kèm thiết bị đang giữ số máy đó và dừng xử lý. / After: / – Gắn số máy vào thiết bị và cập nhật chi tiết.
+  | 5 | Tăng số lượng thiết bị | Click | During: / – Số nhập vào phải lớn hơn 0. / After: / – CỘNG DỒN vào số lượng hiện có và cập nhật danh sách.
+[Heading 1] Phần 6. Quy tắc nghiệp vụ 
+[normal] BR-01 — Phạm vi dữ liệu 
+[normal] cao nhất. 
+[normal] Khách hàng “thuộc” một cấp khi đã phát sinh báo giá gắn với công ty / phòng ban / bộ phận tương ứng. 
+[normal] Người dùng không có cấp nào chỉ thấy khách hàng do chính mình tạo. 
+[normal] Bất kể cấp nào, người dùng LUÔN thấy thêm khách hàng do chính mình tạo và khách hàng mình đang đăng ký còn hạn hoặc đã từng tương tác. Đây là phần bổ sung có chủ đích so với phần mềm cũ — chỉ thêm chứ không bớt. 
+[normal] BR-02 — Lớp bảo vệ khách hàng cá nhân 
+[normal] Khách hàng cá nhân chỉ hiển thị khi thỏa ít nhất một trong các điều kiện: do chính mình tạo; mình đang đăng ký còn hạn; đang có người khác đăng ký còn hạn; đã phát sinh báo giá, cuộc họp hoặc dự án tiềm năng của bất kỳ ai. 
+[normal] Khách hàng cá nhân “tự do” — không thỏa điều kiện nào ở trên — không hiển thị trong danh sách. Người dùng chỉ tìm được khi gõ đúng toàn bộ số điện thoại. 
+[normal] Khách hàng tổ chức không chịu lớp bảo vệ này. 
+[normal] BR-03 — Trường bắt buộc rẽ nhánh theo Loại hình tổ chức 
+[normal] Chung cho mọi loại: Tên khách hàng, Loại hình tổ chức, Quốc gia, Tỉnh/Thành phố, Phường/Xã. Quận/Huyện và Thôn/Xóm KHÔNG bắt buộc. 
+[normal] Khách hàng Cá nhân: bắt buộc ít nhất một số điện thoại, bắt đầu bằng chữ số 0 và dài từ 10 đến 12 chữ số. 
+[normal] Khách hàng tổ chức: bắt buộc ít nhất một Người đại diện (đủ tên và chức vụ), Địa chỉ xuất hoá đơn, và ít nhất một Người liên hệ (đủ tên, chức vụ và ít nhất một số điện thoại). 
+[normal] Đổi Loại hình tổ chức làm đổi hẳn các khối nhập liệu; dữ liệu ở khối bị ẩn không được mang sang khối mới. 
+[normal] BR-04 — Mã số thuế phụ thuộc Công ty mẹ 
+[normal] Khách hàng tổ chức không chọn Công ty mẹ: Mã số thuế bắt buộc. 
+[normal] Khách hàng tổ chức đã chọn Công ty mẹ: Mã số thuế không bắt buộc, vì chi nhánh dùng chung mã số thuế của công ty mẹ. 
+[normal] Dù bắt buộc hay không, khi đã nhập thì mã số thuế phải đúng định dạng (chỉ chữ số và dấu gạch ngang, tối đa 14 ký tự) và phải duy nhất toàn hệ thống. 
+[normal] BR-05 — Các trường duy nhất toàn hệ thống 
+[normal] Email, Mã số thuế và Số CMND/CCCD là duy nhất trên toàn hệ thống. 
+[normal] Khi sửa, bản ghi đang sửa được loại khỏi phép kiểm tra trùng — giữ nguyên giá trị của chính mình thì lưu được bình thường. 
+[normal] Khi nhập từ file Excel, phải kiểm tra trùng cả với dữ liệu đã có VÀ giữa các dòng trong cùng một file. 
+[normal] BR-06 — Cặp Loại hình hoạt động – Lĩnh vực kinh doanh 
+[normal] Ngành nghề khai theo cặp, không chọn rời từng vế. 
+[normal] Lĩnh vực kinh doanh phải thuộc đúng Loại hình hoạt động đã chọn ở vế trái; sai thì hệ thống sẽ xóa Lĩnh vực đã chọn. 
+[normal] Một khách hàng khai được nhiều cặp. 
+[normal] BR-07 — Khóa không phải Xóa 
+[normal] Hệ thống không có chức năng xóa vĩnh viễn khách hàng. 
+[normal] Khách hàng đã Khóa vẫn nằm trong danh mục với nhãn Khóa, vẫn xuất ra file, vẫn xem được chi tiết và lịch sử. 
+[normal] Tác dụng duy nhất của Khóa là chặn khách hàng đó khỏi các ô chọn khách hàng ở màn nghiệp vụ khác. 
+[normal] BR-08 — Cây địa chỉ phụ thuộc 
+[normal] Đổi một cấp thì mọi cấp bên dưới bị xóa trắng và nạp lại theo giá trị mới. 
+[normal] BR-09 — Cấu trúc file nhập liệu 
+[normal] Dòng 1 là tiêu đề cột; dữ liệu đọc từ dòng 3. 
+[normal] Dòng bỏ trống ô Tên khách hàng được hiểu là thêm người liên hệ cho khách hàng ở dòng ngay trên. Dòng như vậy đứng đầu file là lỗi. 
+[normal] Mỗi lần nhập tối đa 1.000 dòng dữ liệu. 
+[normal] Tiêu đề cột chấp nhận một số cách viết thay thế; đổi thành tên hoàn toàn khác thì hệ thống báo thiếu cột. 
+[normal] BR-10 — Một đối tác chỉ có một bản ghi 
+[normal] Sau khi gộp dữ liệu hai phần mềm cũ, mỗi đối tác chỉ tồn tại một bản ghi duy nhất. 
+[normal] Đối tác vừa là khách hàng vừa là nhà cung cấp được đánh dấu bằng ô “Là nhà cung cấp”, xuất hiện ở cả hai màn nhưng vẫn là MỘT bản ghi — sửa ở màn này thì màn kia đổi theo. 
+[normal] Người tạo và ngày tạo giữ đúng dữ liệu gốc từ phần mềm nguồn. 
+[normal] BR-11 — Lịch sử thay đổi 
+[normal] Mọi thao tác Thêm mới, Sửa và đổi trạng thái đều sinh dòng lịch sử. 
+[normal] Danh sách lịch sử luôn sắp xếp mới nhất trên cùng. Mỗi dòng nêu rõ trường đã đổi, giá trị cũ, giá trị mới, người thực hiện và thời điểm. 

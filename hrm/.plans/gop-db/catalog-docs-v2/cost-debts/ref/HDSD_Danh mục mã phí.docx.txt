@@ -1,0 +1,121 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục mã phí) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Thuật ngữ sử dụng trong tài liệu 
+<<TABLE 1>>
+  | Thuật ngữ | Giải thích
+  | Mã phí | Mã phân loại khoản phí trong kế toán, dùng để tập hợp và đối chiếu chi phí theo từng loại.
+  | Trạng thái Hoạt động | Mã phí còn chọn được khi lập bút toán mới.
+  | Trạng thái Khóa | Mã phí không còn chọn được ở nghiệp vụ mới nhưng vẫn nằm trong danh mục và các bút toán cũ vẫn giữ nguyên.
+  | Bút toán kế toán | Dòng hạch toán trong sổ kế toán có gắn mã phí này.
+[Heading 2] 2. Cập nhật tài liệu 
+<<TABLE 2>>
+  | Phiên bản | Ngày | Người cập nhật | Nội dung
+  | 1.0 | 17/08/2026 | DNS Media | Lập mới cho màn Danh mục mã phí.
+[Heading 2] 3. Giới thiệu chung 
+[normal] Danh mục mã phí là nơi khai báo danh sách mã phí dùng cho nghiệp vụ kế toán. Dữ liệu của màn này được chọn khi lập bút toán, nên mỗi thay đổi ở đây đều ảnh hưởng tới sổ sách. 
+[Heading 2] 4. Quyền sử dụng 
+<<TABLE 3>>
+  | Tên quyền | Cho phép làm gì | Ghi chú
+  | Quản lý danh mục mã phí | Mở màn hình và thực hiện đầy đủ: Thêm mới, Chỉnh sửa, Xóa, Xem lịch sử. | Màn hình chỉ có MỘT quyền cho cả xem lẫn sửa, không tách quyền xem riêng.
+[normal] Nếu không có quyền này, mục menu Danh mục mã phí sẽ không hiển thị; trường hợp truy cập trực tiếp bằng đường dẫn, hệ thống báo lỗi không có quyền. 
+[Heading 1] PHẦN 1: TRUY CẬP VÀ BỐ CỤC MÀN HÌNH 
+[Heading 2] 1. Truy cập màn hình 
+[normal] Đăng nhập hệ thống, vào menu Tài chính → Danh mục → Danh mục mã phí. 
+[normal]  [IMG]
+[normal] Hình 1: Màn hình Danh mục mã phí khi mới truy cập 
+[Heading 2] 2. Các cột của bảng danh sách 
+<<TABLE 4>>
+  | Cột | Nội dung
+  | STT | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | Mã phí | Mã do người dùng đặt. Luôn hiển thị, sắp xếp được.
+  | Tên mã phí | Tên đầy đủ, sắp xếp được.
+  | Ghi chú | Mặc định ẩn.
+  | Người sửa | Mặc định ẩn.
+  | Ngày cập nhật | Mặc định ẩn, sắp xếp được.
+  | Người tạo | Người đã thêm bản ghi.
+  | Ngày tạo | Thời điểm thêm, sắp xếp được.
+  | Trạng thái | Hoạt động hoặc Khóa.
+  | Hành động | Sửa, Xóa và Lịch sử — hiện thẳng trên cột, không có nút ba chấm.
+[Heading 2] 3. Cột Hành động 
+[normal] Trên mỗi dòng, cột Hành động có ba nút: bút chì để sửa, thùng rác để xóa, và biểu tượng đồng hồ để xem Lịch sử thay đổi. 
+[normal] Lưu ý quan trọng: nút thùng rác CHỈ hiện với mã phí chưa phát sinh ở bút toán kế toán nào. Nếu mã phí đã được dùng trong bút toán kế toán, nút này biến mất. 
+[normal] Muốn ngừng sử dụng một mã phí đã phát sinh bút toán, Người dùng mở cửa sổ Sửa rồi chuyển ô Trạng thái sang Khóa. 
+[Heading 2] 4. Phân trang và sắp xếp 
+[normal] Cuối bảng có ô hiển thị tổng số bản ghi khớp bộ lọc đang áp dụng. Bấm vào tiêu đề cột có mũi tên để sắp xếp, bấm lần thứ hai để đảo chiều. Thứ tự sắp xếp giữ nguyên khi chuyển trang. 
+[Heading 1] PHẦN 2: TÌM KIẾM VÀ LỌC DANH SÁCH 
+[Heading 2] 1. Các ô tìm kiếm và lọc 
+<<TABLE 5>>
+  | Ô | Cách dùng
+  | Ô tìm kiếm nhanh | Tìm theo mã phí và tên mã phí.
+  | Trạng thái | Bỏ trống thì hiện cả hai trạng thái.
+  | Người lập | Lọc theo người đã tạo bản ghi.
+  | Người cập nhật | Lọc theo người sửa gần nhất.
+[normal]  [IMG]
+[normal] Hình 2: Khu vực Tìm kiếm nâng cao của màn Danh mục mã phí 
+[normal] Bấm nút Tìm kiếm nâng cao để mở panel chứa các ô lọc. Chọn xong bấm Tìm kiếm. Các tiêu chí kết hợp với nhau theo kiểu VÀ. 
+[normal] Bấm Làm mới để xóa toàn bộ tiêu chí; danh sách nạp lại đầy đủ ngay lập tức. 
+[Heading 1] PHẦN 3: THÊM MỚI MÃ PHÍ 
+[normal] Yêu cầu quyền: Quản lý danh mục mã phí. 
+[Heading 2] 1. Mở cửa sổ thêm mới 
+[normal] Bấm nút Tạo mới trên thanh công cụ. 
+[normal]  [IMG]
+[normal] Hình 3: Cửa sổ Tạo mã phí 
+[Heading 2] 2. Các trường cần nhập 
+<<TABLE 6>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị ban đầu | Ghi chú
+  | Mã phí | Textbox | Có | Trống | Duy nhất toàn hệ thống. Gợi ý nhập dạng MP001. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Mã phí đã tồn tại”.
+  | Tên mã phí | Textbox | Có | Trống | Bỏ trống báo “Bắt buộc phải nhập”.
+  | Trạng thái | Dropdown | Không | Hoạt động | Chọn Khóa để ngừng sử dụng mã phí ở nghiệp vụ mới.
+  | Ghi chú | Textarea | Không | Trống | Ghi chú tự do, 3 dòng.
+[normal] Giá trị điền sẵn khi thêm mới: các ô nhập đều để trống, riêng ô Trạng thái đặt sẵn là Hoạt động. Người dùng đổi sang Khóa nếu muốn khai trước nhưng chưa dùng ngay. 
+[Heading 2] 3. Hai nút lưu và đóng 
+<<TABLE 7>>
+  | Nút | Tác dụng
+  | Lưu | Ghi bản ghi rồi đóng cửa sổ, quay về danh sách.
+  | Đóng | Hủy bỏ, không ghi gì.
+[Heading 2] 4. Các lỗi thường gặp 
+[normal] Nếu còn thiếu sót, hệ thống báo lỗi đỏ ngay dưới ô tương ứng. Cửa sổ KHÔNG đóng và dữ liệu đã nhập vẫn còn nguyên. 
+<<TABLE 8>>
+  | Thông báo | Nguyên nhân và cách xử lý
+  | Bắt buộc phải nhập | Chưa nhập một trong các ô bắt buộc: Mã phí, Tên mã phí.
+  | Mã phí đã tồn tại | Đã có mã phí khác dùng mã này. Hãy tra lại danh sách trước khi thêm.
+[Heading 1] PHẦN 4: CHỈNH SỬA VÀ XÓA 
+[normal] Yêu cầu quyền: Quản lý danh mục mã phí. 
+[Heading 2] 1. Chỉnh sửa 
+[normal] Bấm biểu tượng bút chì ở dòng cần sửa. Cửa sổ mở ra giống hệt cửa sổ thêm mới, nhưng mọi ô đã điền sẵn dữ liệu hiện tại. 
+[normal]  [IMG]
+[normal] Hình 4: Hộp thoại Chỉnh sửa mã phí 
+[normal] Các quy tắc bắt buộc và thông báo lỗi giống hệt phần thêm mới. 
+[normal] Sửa xong bấm Lưu. Mọi thay đổi đều được ghi vào Lịch sử kèm tên Người dùng và thời điểm. 
+[Heading 2] 2. Ngừng sử dụng bằng cách chuyển Trạng thái sang Khóa 
+[normal] Khi một mã phí không còn dùng nữa nhưng đã phát sinh bút toán (nên không xóa được), Người dùng mở cửa sổ Sửa rồi đổi ô Trạng thái sang Khóa. 
+[normal] Bản ghi VẪN nằm trong danh mục với trạng thái Khóa. 
+[normal] Các bút toán cũ đã dùng bản ghi này giữ nguyên, không bị ảnh hưởng. 
+[normal] Bản ghi không còn xuất hiện khi lập bút toán mới. 
+[normal] Màn hình này KHÔNG có nút Khóa riêng trên cột Hành động — mọi thay đổi trạng thái đều làm trong cửa sổ Sửa. 
+[Heading 2] 3. Xóa 
+[normal] Bấm biểu tượng thùng rác ở dòng cần xóa. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. 
+[normal]  [IMG]
+[normal] Hình 5: Hộp xác nhận xóa mã phí 
+[normal] Bấm Xóa để xác nhận. Bản ghi biến mất khỏi danh sách. 
+[normal] Bấm Hủy nếu bấm nhầm. Không có gì thay đổi. 
+[normal] Nhắc lại: nút thùng rác chỉ hiện với mã phí chưa phát sinh ở bút toán kế toán nào. Không thấy nút này nghĩa là bản ghi đã được dùng trong bút toán kế toán 
+[Heading 1] PHẦN 5: XEM LỊCH SỬ THAY ĐỔI 
+[normal] Bấm biểu tượng đồng hồ ở dòng cần xem. 
+[normal]  [IMG]
+[normal] Hình 6: Cửa sổ Lịch sử thay đổi của mã phí 
+[normal] Cửa sổ liệt kê mọi lần thay đổi của bản ghi đó, mới nhất trên cùng. Mỗi dòng cho biết: 
+[normal] Thời điểm thay đổi. 
+[normal] Loại thay đổi. 
+[normal] Người thực hiện, kèm mã nhân viên và phòng ban. 
+[normal] Trường nào đã đổi, giá trị cũ và giá trị mới. 
+[normal] Bản ghi vừa được tạo, chưa sửa lần nào thì cửa sổ hiện “Chưa có lịch sử thao tác nào.”. 

@@ -289,6 +289,32 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] FE **ẩn** nút Sửa/Xóa khi khóa; vào màn Sửa bằng URL trực tiếp → đá về Chi tiết
 - [ ] Có lối **Mở khóa**, và Khóa/Mở khóa đều **ghi lịch sử**
 
+### H2. Màn DANH MỤC — Xóa / Khóa / Trạng thái (user chốt 26/09/2026, khuôn Quận/Huyện)
+Đã phải sửa lại cả loạt màn (Nguồn vốn, Đường/Phố, Cấp DV BD, Ghi chú KT, Chi nhánh NH, Vụ việc, Mã
+phí, Chi phí, Gói BD) vì làm sai những điểm dưới — màn mới phải đúng ngay từ đầu.
+- [ ] **KHÔNG xoá mềm** (đổi status / `deleted_at` / "đã dùng thì Xóa thành Khóa"). Xóa = **xoá hẳn**,
+      chỉ khi bản ghi đang Hoạt động VÀ **chưa được dùng**; đã dùng → ẩn nút Xóa (`is_can_delete`) +
+      BE chặn 400 `"<Đối tượng> đang được sử dụng, không thể xóa."`
+- [ ] "Đã dùng" = có dòng ở **MỌI bảng có cột id trỏ tới** (không tính cột lưu tên bằng chữ). Khai 1
+      hằng `USAGE_REFERENCES` trên Entity + `usedIds(array $ids)` (1 query/bảng/trang, cấm N+1).
+      ⚠️ Tên cột lừa: `wr_accounting_service_items.service_id` thực ra trỏ `costs` — kiểm bằng dữ liệu
+      (giá trị có khớp bảng đích không) trước khi xếp. Bảng "dữ liệu của chính bản ghi" (vd hàng hoá
+      gắn gói) không tính là đã dùng — liệt kê cho user chốt.
+- [ ] Có **Khóa / Mở khóa**, và **cho Khóa cả khi đang được dùng** (không cấm khoá vì đã hạch toán).
+      Route `PUT /{id}/lock|unlock` (KHÔNG dùng GET); service kiểm trạng thái hiện tại → đã ở trạng thái
+      đích thì 400 `"Trạng thái đã bị thay đổi. Vui lòng load lại trang"` (đừng báo thành công lần 2).
+- [ ] Popup/form Tạo–Sửa có **ô Trạng thái** (mặc định Hoạt động); danh sách hiện **cả bản ghi Khóa**
+      + cột badge + bộ lọc Trạng thái. Bản ghi Khóa chỉ còn Mở khóa + Lịch sử.
+- [ ] Middleware route theo thứ tự **`checkPermission` TRƯỚC `recordNotLocked`** — ngược lại thì user
+      thiếu quyền nhận 423 thay vì 403 (dính ở Cấp DV, Ghi chú KT, Chi phí).
+- [ ] Route model binding không tìm thấy bản ghi (người khác vừa xoá) đang trả toast tiếng Anh
+      `"Item Not Found!"` / `"not found bank"` → phải ra câu tiếng Việt
+      `"Trạng thái đã bị thay đổi. Vui lòng load lại trang"`.
+- [ ] Danh mục bị Khóa: select ở màn khác ẩn đi nhưng bản ghi cũ đang dùng vẫn hiện đúng tên + 🔒
+      (CLAUDE.md mục danh mục khoá) — kiểm cả **Import** của màn tiêu thụ (hay quên, vẫn nhận giá trị Khóa)
+      và API select dùng chung (vd `AddressController`, `CustomerService::hamlets`).
+- [ ] Sửa code xong → cập nhật luôn HDSD/SRS/testcase (xoá mềm → xoá cứng, thêm Khóa, ô Trạng thái).
+
 ---
 
 ## Bẫy hay dính khi port

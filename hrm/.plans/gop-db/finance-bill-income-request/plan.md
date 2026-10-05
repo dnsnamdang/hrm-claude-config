@@ -2050,3 +2050,6 @@ Blocked: không.
       và nêu 1 điểm cố ý khác bản QA: form của team GIỮ quyền thật thay vì để "chờ cập nhật".
       Bản mẫu cũ (Danh mục khách hàng) lấy lại được bằng
       `git show 4be4678:hrm/.claude/skills/srs-documenter/assets/SRS_MAU.docx`.
+
+## Phase 16 — Sinh lại SRS theo form 2026-09-24 (2026-09-24)
+- [x] **B1.** Sơ đồ tổng quan đơn giản (thao tác nối thẳng actor, «extend» chỉ cho chức năng phụ) + sơ đồ từng chức năng chỉ actor + 1 use case + icon trên dòng Menu (cắt từ bản gop_db cổng 3002, `dntt_shots/icon_*.png`); ảnh chụp màn tách lại từ file .docx cũ. File mới cũng thay `assets/SRS_MAU.docx` của skill.

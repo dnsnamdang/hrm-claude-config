@@ -105,3 +105,6 @@ Blocked: (không)
 ## Fix 423 khi lưu meeting đã lên lịch (19/08/2026)
 - [x] BE: `MeetingController::update` — bỏ chặn khi Loại meeting / Ứng dụng bị khoá sau khi meeting đã qua nháp; chỉ chặn khi meeting còn nháp hoặc người dùng vừa đổi sang danh mục đã khoá
 - [x] BE: message 423 nêu rõ trường sai (`Loại meeting "X" đã bị khoá` / `Ứng dụng "Y" đã bị khoá`) thay vì câu chung chung, áp cả `store()`
+
+- [x] Chọn Người chủ trì → tự thêm vào Thành phần Phía Công ty, ẩn nút xoá dòng của người đang chủ trì (GeneralInfo.vue, 2026-09-24)
+- [x] Đổi Người chủ trì → bỏ chủ trì cũ khỏi Phía Công ty (trừ người tạo meeting); BE MeetingTransformer trả thêm `created_by` (2026-09-24)

@@ -1,0 +1,341 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục khách hàng) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Thuật ngữ sử dụng trong tài liệu 
+<<TABLE 1>>
+  | Thuật ngữ | Giải thích
+  | Khách hàng cá nhân | Khách hàng có Loại hình tổ chức là “Cá nhân”. Nhóm này có quy tắc hiển thị riêng, xem mục 4.3.
+  | Khách hàng tổ chức | Khách hàng thuộc một trong bốn loại: Doanh nghiệp tư nhân, Doanh nghiệp nước ngoài, Tổ chức phi chính phủ, Cơ quan nhà nước.
+  | Công ty mẹ | Một khách hàng khác được chọn làm đơn vị chủ quản, dùng cho chi nhánh hoặc đơn vị trực thuộc.
+  | Người đại diện | Người đại diện pháp luật của khách hàng tổ chức.
+  | Người liên hệ | Đầu mối làm việc thực tế. Một khách hàng tổ chức có thể có nhiều người liên hệ.
+  | Khóa khách hàng | Chuyển khách hàng sang trạng thái Khóa. Khách hàng KHÔNG bị xóa, vẫn nằm trong danh sách, chỉ không chọn được ở các màn nghiệp vụ khác.
+  | Loại hình hoạt động – Lĩnh vực kinh doanh | Cặp phân loại ngành nghề của khách hàng. Luôn khai theo cặp, lĩnh vực phải thuộc đúng loại hình đã chọn.
+[Heading 2] 2. Cập nhật tài liệu 
+<<TABLE 2>>
+  | Phiên bản | Ngày | Người cập nhật | Nội dung
+  | 1.0 | 15/08/2026 | DNS Media | Lập mới cho màn Danh mục khách hàng sau khi gộp dữ liệu khách hàng của hai phần mềm cũ.
+[Heading 2] 3. Giới thiệu chung 
+[normal] Danh mục khách hàng quản lý tập trung thông tin khách hàng, hỗ trợ: tra cứu, thêm mới, cập nhật, khóa/mở khóa, nhập Excel, xuất file và xem lịch sử giao dịch của khách hàng. 
+[Heading 2] 4. Quyền và phạm vi dữ liệu 
+[Heading 3] 4.1 Quyền của màn hình 
+<<TABLE 3>>
+  | Tên quyền | Cho phép làm gì | Nút / thẻ tương ứng | Ghi chú
+  | Xem khách hàng | Mở màn Quản lý khách hàng và xem các thẻ nghiệp vụ | Menu ba chấm → Quản lý; các thẻ Báo giá, Hợp đồng, Danh sách trang thiết bị | Thiếu quyền thì các thẻ này báo không có quyền.
+  | Thêm khách hàng | Thêm khách hàng mới và nhập hàng loạt từ file Excel | Nút Tạo mới, nút Import Excel | Thiếu quyền thì hai nút này không hiển thị.
+  | Sửa khách hàng | Cập nhật thông tin khách hàng; thêm / sửa / xóa trang thiết bị; tải ảnh và tài liệu | Biểu tượng bút chì trên cột Hành động; các nút thao tác ở thẻ Danh sách trang thiết bị và thẻ Thông tin khác | Thiếu quyền thì nút bị làm mờ chứ không bị ẩn.
+  | Xóa khách hàng | Khóa và Mở khóa khách hàng | Biểu tượng ổ khóa trên cột Hành động | Không có quyền riêng mang tên Khóa; hai thao tác này dùng chung quyền Xóa khách hàng.
+  | Xuất dữ liệu khách hàng | Xuất danh sách ra file | Nút Xuất CSV, Xuất Excel, Xuất PDF | Thiếu quyền thì ba nút này không dùng được.
+[Heading 3] 4.2 Bốn cấp phạm vi dữ liệu 
+<<TABLE 4>>
+  | Tên quyền | Nhìn thấy
+  | Xem tất cả khách hàng | Toàn bộ khách hàng của hệ thống.
+  | Xem tất cả khách hàng của công ty | Khách hàng đã phát sinh báo giá thuộc công ty của mình.
+  | Xem tất cả khách hàng của phòng ban | Giới hạn theo phòng ban của mình.
+  | Xem tất cả khách hàng của bộ phận | Giới hạn theo bộ phận của mình.
+  | (không có quyền nào ở trên) | Chỉ khách hàng do chính mình tạo, cộng khách hàng mình đang đăng ký còn hạn hoặc đã từng làm việc.
+[Heading 3] 4.3 Quy tắc riêng với khách hàng cá nhân 
+[normal] Một khách hàng cá nhân chỉ hiện trong danh sách khi thỏa ít nhất một điều kiện sau: 
+[normal] Do chính mình tạo ra 
+[normal] Mình đang đăng ký khách hàng đó và còn trong thời hạn 
+[normal] Đang có người khác đăng ký khách hàng đó và còn trong thời hạn 
+[normal] Khách hàng đó đã phát sinh báo giá, cuộc họp hoặc dự án tiềm năng — của bất kỳ ai 
+[normal] Khách hàng cá nhân không thỏa điều kiện nào ở trên được gọi là khách hàng tự do và không hiện trong danh sách. Muốn tìm khách hàng tự do, người dùng phải gõ đúng toàn bộ số điện thoại của họ vào ô tìm kiếm. 
+[Heading 1] PHẦN 1: TRUY CẬP VÀ BỐ CỤC MÀN HÌNH 
+[Heading 2] 1. Truy cập màn hình 
+[normal] Đăng nhập hệ thống, vào menu Phân hệ Danh mục → Đối tác → Khách hàng. Hệ thống hiển thị danh sách khách hàng nằm trong phạm vi dữ liệu của người dùng. 
+[normal]  [IMG]
+[normal] Hình 1: Màn hình Danh mục khách hàng khi mới truy cập 
+[Heading 2] 2. Bố cục màn hình 
+[normal] Màn hình chia làm ba khu vực từ trên xuống: 
+[normal] Khu vực tìm kiếm và bộ lọc — ô tìm kiếm nhanh, nút Tìm kiếm nâng cao, nút Làm mới và nút Cài đặt bộ lọc. 
+[normal] Thanh công cụ — các nút Tạo mới, Import Excel, Xuất CSV, Xuất Excel, Xuất PDF và biểu tượng tuỳ chỉnh cột ở góc phải. 
+[normal] Bảng danh sách — các cột thông tin khách hàng, cột Hành động ở cuối, phân trang và ô hiển thị tổng số bản ghi ở dưới cùng. 
+[Heading 2] 3. Các cột của bảng danh sách 
+<<TABLE 5>>
+  | Cột | Nội dung
+  | STT | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị, không tắt được.
+  | Mã KH | Mã khách hàng do hệ thống sinh tự động. Bấm vào mở màn chi tiết. Luôn hiển thị.
+  | Tên khách hàng | Tên đầy đủ của khách hàng.
+  | Tên viết tắt | Tên gọi tắt, dùng cho các mẫu in ngắn gọn.
+  | Loại | Một trong năm loại hình tổ chức.
+  | MST | Mã số thuế.
+  | SĐT | Các số điện thoại, ngăn nhau bằng dấu phẩy.
+  | Email | Địa chỉ thư điện tử.
+  | Nhóm KH | Các nhóm khách hàng, ngăn nhau bằng dấu phẩy.
+  | Địa chỉ, Tỉnh/TP | Địa chỉ liên hệ chính.
+  | Tên đơn vị | Tên gara hoặc đơn vị công tác, thường dùng với khách hàng cá nhân.
+  | Địa chỉ xuất hóa đơn | Địa chỉ ghi trên hóa đơn.
+  | Công ty mẹ, Hãng xe, Người tạo, Người sửa (gần nhất) | Bốn cột này MẶC ĐỊNH ẨN. Bật lên ở cửa sổ tuỳ chỉnh cột. Lưu ý: bật bốn cột này làm bảng nạp chậm hơn.
+  | Trạng thái | Hoạt động hoặc Khóa.
+  | Hành động | Biểu tượng bút chì (Sửa), ổ khóa (Khóa / Mở khóa) và menu ba chấm.
+[Heading 2] 4. Cột Hành động 
+[normal] Trên mỗi dòng, cột Hành động có ba phần: 
+[normal] Biểu tượng bút chì — mở màn Chỉnh sửa. Yêu cầu quyền Sửa khách hàng. 
+[normal] Biểu tượng ổ khóa — Khóa hoặc Mở khóa khách hàng. Yêu cầu quyền Xóa khách hàng. 
+[normal] Menu ba chấm — chứa hai mục Quản lý và Lịch sử. 
+[normal]  [IMG]
+[normal] Hình 2: Menu ba chấm trên cột Hành động 
+[normal] Nếu thiếu quyền, nút tương ứng bị làm mờ chứ không bị ẩn đi, để người dùng biết chức năng có tồn tại và cần đề nghị cấp quyền. 
+[Heading 1] PHẦN 2: TÌM KIẾM VÀ LỌC DANH SÁCH 
+[Heading 2] 1. Tìm kiếm nhanh 
+[normal] Gõ từ khóa vào ô tìm kiếm ở đầu màn hình. Hệ thống tìm đồng thời trên tên khách hàng, mã khách hàng, mã số thuế và số điện thoại. Không phân biệt chữ hoa chữ thường. 
+[normal] Xóa hết từ khóa thì danh sách quay về đầy đủ và về trang 1. 
+[Heading 2] 2. Bộ lọc nâng cao 
+[normal] Bấm nút Tìm kiếm nâng cao để mở panel bộ lọc. Con số hiển thị trên nút là SỐ TIÊU CHÍ đang có giá trị, không phải số bản ghi. 
+[normal]  [IMG]
+[normal] Hình 3: Panel Bộ lọc nâng cao với đầy đủ tiêu chí 
+[Heading 3] 2.1 Danh sách tiêu chí lọc 
+<<TABLE 6>>
+  | Tiêu chí | Cách dùng
+  | Công ty – Phòng ban – Bộ phận – Nhân viên | Chọn theo cây đơn vị, chọn được tới cấp nhân viên.
+  | Quốc gia | Chọn quốc gia. Quyết định danh sách của ô Tỉnh/Thành phố bên dưới.
+  | Tỉnh/Thành phố | Chỉ hiện tỉnh thành thuộc quốc gia đã chọn. Đổi quốc gia thì ô này bị xóa trắng.
+  | Mã khách hàng | Nhập một phần mã, hệ thống tìm mọi mã có chứa đoạn đó.
+  | MST/SĐT | Nhập mã số thuế hoặc số điện thoại. Tìm được cả khi số cần tìm nằm ở vị trí thứ hai, thứ ba trong danh sách nhiều số.
+  | Tên khách hàng | Nhập một phần tên.
+  | Số CCCD | Dùng cho khách hàng cá nhân.
+  | Tên đơn vị | Tên gara hoặc đơn vị công tác.
+  | Loại hình tổ chức | Chọn một trong năm loại.
+  | Trạng thái | Hoạt động hoặc Khóa. Bỏ trống thì hiện cả hai.
+  | Loại hình hoạt động – Lĩnh vực kinh doanh | Chọn theo CẶP, không chọn rời từng vế.
+  | Người sửa gần nhất | Chọn nhân viên đã sửa khách hàng gần nhất.
+  | Khách hàng hãng | Có hoặc Không.
+  | Hãng xe | Chọn hãng xe cụ thể.
+  | Cấp đại lý | Chọn cấp đại lý.
+[Heading 3] 2.2 Cách áp dụng và xóa bộ lọc 
+[normal] Chọn xong các tiêu chí, bấm Tìm kiếm. Các tiêu chí kết hợp với nhau theo kiểu VÀ — chỉ khách hàng thỏa đồng thời tất cả các tiêu chí mới hiện ra. 
+[normal] Bấm Làm mới để xóa toàn bộ tiêu chí. Danh sách nạp lại ngay lập tức, tổng số bản ghi quay về đầy đủ. 
+[normal] Nếu đóng panel bộ lọc mà chưa bấm Tìm kiếm thì kết quả trên bảng không thay đổi. 
+[Heading 2] 3. Cài đặt bộ lọc 
+[normal] Nếu người dùng chỉ dùng vài tiêu chí quen thuộc, có thể ẩn bớt các ô lọc không cần. Bấm nút Cài đặt bộ lọc trong panel bộ lọc. 
+[normal]  [IMG]
+[normal] Hình 4: Cửa sổ Cài đặt bộ lọc 
+[normal] Trong cửa sổ này: 
+[normal] Bỏ tích một ô lọc để ẩn nó khỏi panel bộ lọc. 
+[normal] Dùng tay nắm bên trái để kéo đổi thứ tự các ô lọc. 
+[normal] Bấm Lưu để ghi nhận. Cấu hình này lưu riêng cho tài khoản của người dùng, không ảnh hưởng người khác, và còn nguyên sau khi đăng nhập lại. 
+[normal] Lưu ý: ẩn một ô lọc chỉ ẩn trên giao diện. Nếu ô lọc đó đang có giá trị thì giá trị vẫn còn tác dụng lên kết quả cho tới khi người dùng bấm Làm mới. 
+[Heading 2] 4. Tuỳ chỉnh cột hiển thị 
+[normal] Bấm biểu tượng tuỳ chỉnh cột ở góc phải thanh công cụ. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ tuỳ chỉnh cột hiển thị 
+[normal] Tích hoặc bỏ tích để hiện / ẩn từng cột. 
+[normal] Kéo để đổi thứ tự cột. 
+[normal] Cột STT và Mã KH bị khóa, luôn hiển thị, không bỏ tích được. 
+[normal] Bấm Lưu để ghi nhận. Cấu hình lưu riêng theo tài khoản. 
+[normal] Bốn cột Công ty mẹ, Hãng xe, Người tạo và Người sửa (gần nhất) mặc định ẩn vì làm bảng nạp chậm hơn. Chỉ nên bật khi thực sự cần. 
+[Heading 1] PHẦN 3: THÊM MỚI KHÁCH HÀNG 
+[Heading 2] 1. Mở màn thêm mới 
+[normal] Bấm nút Tạo mới trên thanh công cụ. Hệ thống mở màn Tạo khách hàng mới. Ban đầu chỉ hiện khối Thông tin khách hàng; các khối còn lại hiện ra sau khi người dùng chọn Loại hình tổ chức. 
+[Heading 2] 2. Chọn Loại hình tổ chức trước tiên 
+[normal] Ô Loại hình tổ chức quyết định các khối nhập liệu bên dưới: 
+<<TABLE 7>>
+  | Chọn | Các khối hiện ra
+  | Cá nhân | Thông tin khách hàng + Thông tin cá nhân
+  | Doanh nghiệp tư nhân / Doanh nghiệp nước ngoài / Tổ chức phi chính phủ / Cơ quan nhà nước | Thông tin khách hàng + Thông tin tổ chức + Người liên hệ
+[normal] Lưu ý: nếu đổi Loại hình tổ chức sau khi đã nhập, các khối cũ sẽ biến mất và dữ liệu đã gõ ở đó không được mang sang khối mới. Nên chọn loại hình trước rồi mới nhập. 
+[normal] Khối Địa chỉ giao hàng KHÔNG hiện ở màn thêm mới. Khối này chỉ xuất hiện khi người dùng sửa một khách hàng đã có. 
+[Heading 2] 3. Thêm mới khách hàng cá nhân 
+[normal]  [IMG]
+[normal] Hình 6: Màn thêm mới khi chọn Loại hình tổ chức là Cá nhân 
+<<TABLE 8>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị ban đầu | Ghi chú
+  | Tên khách hàng | Ô nhập chữ | Có | Trống | Bỏ trống sẽ báo “Bắt buộc phải nhập”.
+  | Loại hình tổ chức | Danh sách chọn | Có | Trống | Chọn Cá nhân.
+  | Tên viết tắt | Ô nhập chữ | Không | Trống | 
+  | Là nhà cung cấp | Ô tích | Không | Không tích | Tích khi đối tác vừa là khách hàng vừa là nhà cung cấp.
+  | Là khách hãng | Ô tích | Không | Không tích | Tích thì bắt buộc phải chọn Hãng xe.
+  | Hãng xe | Danh sách chọn | Có khi tích Là khách hãng | Trống | Bỏ trống sẽ báo “Bắt buộc khi là khách hãng”.
+  | Nhóm khách hàng | Danh sách chọn nhiều | Không | Trống | 
+  | Loại hình hoạt động – Lĩnh vực kinh doanh | Danh sách chọn | Không | Trống | Khai theo cặp; thêm được nhiều cặp.
+  | Email | Ô nhập chữ | Không | Trống | Phải đúng định dạng thư điện tử và chưa ai dùng. Trùng sẽ báo “Email đã tồn tại”.
+  | Số điện thoại | Ô nhập chữ | Có | Trống | Ít nhất một số. Phải bắt đầu bằng chữ số 0 và dài từ 10 đến 12 chữ số. Thêm được nhiều số.
+  | Số CMND/CCCD | Ô nhập chữ | Không | Trống | Không được trùng với khách hàng khác.
+  | Ngày sinh | Chọn ngày | Không | Trống | Không được chọn ngày ở tương lai.
+  | Ngày cấp, Nơi cấp | Chọn ngày / Ô nhập chữ | Không | Trống | Ngày cấp không được ở tương lai.
+  | Tên đơn vị | Ô nhập chữ | Không | Trống | Tên gara hoặc nơi công tác.
+  | Quốc gia | Danh sách chọn | Có | Trống | 
+  | Tỉnh/Thành phố | Danh sách chọn | Có | Trống | Phụ thuộc Quốc gia.
+  | Quận/Huyện | Danh sách chọn | Không | Trống | Phụ thuộc Tỉnh/Thành phố.
+  | Phường/Xã | Danh sách chọn | Có | Trống | Phụ thuộc Quận/Huyện.
+  | Thôn/Xóm, Số nhà – đường | Danh sách chọn / Ô nhập chữ | Không | Trống | 
+  | Số tài khoản, Chủ tài khoản, Ngân hàng, Tỉnh/TP ngân hàng, Chi nhánh | Ô nhập chữ / Danh sách chọn | Không | Trống | Ô Chi nhánh chỉ hiện chi nhánh của ngân hàng và tỉnh thành đã chọn.
+[normal] Giá trị điền sẵn khi thêm mới: mọi ô đều để trống. Mã khách hàng do hệ thống sinh tự động sau khi lưu, người dùng không phải nhập. Trạng thái của khách hàng mới luôn là Hoạt động. 
+[Heading 2] 4. Thêm mới khách hàng tổ chức 
+[normal]  [IMG]
+[normal] Hình 7: Màn thêm mới khi chọn loại hình tổ chức 
+[normal] Khách hàng tổ chức dùng chung khối Thông tin khách hàng và khối địa chỉ như khách hàng cá nhân. Khác biệt nằm ở hai khối sau: 
+[Heading 3] 4.1 Khối Thông tin tổ chức 
+<<TABLE 9>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị ban đầu | Ghi chú
+  | Mã số thuế | Ô nhập chữ | Có khi KHÔNG chọn Công ty mẹ | Trống | Chỉ gồm chữ số và dấu gạch ngang, tối đa 14 ký tự. Không được trùng.
+  | Công ty mẹ | Danh sách chọn | Không | Trống | Chọn khách hàng khác làm đơn vị chủ quản. CHỌN CÔNG TY MẸ THÌ MÃ SỐ THUẾ KHÔNG CÒN BẮT BUỘC, vì chi nhánh dùng chung mã số thuế của công ty mẹ.
+  | Người đại diện | Ô nhập chữ | Có | Trống | Ít nhất một người. Phải có đủ cả tên và chức vụ.
+  | Chức vụ người đại diện | Ô nhập chữ | Có | Trống | 
+  | Địa chỉ xuất hoá đơn | Ô nhập nhiều dòng | Có | Trống | Bỏ trống sẽ báo “Bắt buộc nhập”.
+  | Fax, Số điện thoại bàn | Ô nhập chữ | Không | Trống | 
+[Heading 3] 4.2 Khối Người liên hệ 
+<<TABLE 10>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị ban đầu | Ghi chú
+  | Người liên hệ | Ô nhập chữ | Có | Trống | Phải có ít nhất một người liên hệ.
+  | Chức vụ người liên hệ | Ô nhập chữ | Có | Trống | 
+  | SĐT người liên hệ | Ô nhập chữ | Có | Trống | Mỗi người liên hệ phải có ít nhất một số điện thoại.
+  | Số CMND/CCCD, Ngày sinh, Email của người liên hệ | Ô nhập chữ / Chọn ngày | Không | Trống | Ngày sinh không được ở tương lai.
+  | Tài khoản ngân hàng của người liên hệ | Ô nhập chữ | Không | Trống | 
+[normal] Bấm nút Thêm người liên hệ để khai thêm người liên hệ thứ hai, thứ ba. 
+[Heading 2] 5. Lưu và các lỗi thường gặp 
+[normal] Nhập xong bấm nút Lưu ở cuối màn hình. Nếu dữ liệu hợp lệ, hệ thống báo thêm mới thành công và quay về danh sách; khách hàng mới nằm trong danh sách với mã tự sinh và trạng thái Hoạt động. 
+[normal] Nếu còn thiếu sót, hệ thống báo lỗi đỏ ngay dưới ô tương ứng. Màn hình không đóng và dữ liệu đã nhập vẫn còn nguyên — người dùng chỉ cần sửa chỗ báo đỏ rồi bấm Lưu lại. 
+<<TABLE 11>>
+  | Thông báo | Nguyên nhân và cách xử lý
+  | Bắt buộc phải nhập | Chưa nhập Tên khách hàng.
+  | Bắt buộc nhập | Chưa chọn Loại hình tổ chức, hoặc chưa nhập Địa chỉ xuất hoá đơn, hoặc chưa nhập Mã số thuế khi không chọn Công ty mẹ.
+  | Bắt buộc phải nhập số điện thoại | Khách hàng cá nhân chưa có số điện thoại nào.
+  | Số điện thoại không đúng định dạng | Số phải bắt đầu bằng chữ số 0 và dài từ 10 đến 12 chữ số.
+  | Phải có ít nhất 1 người đại diện | Khách hàng tổ chức chưa khai người đại diện.
+  | Phải có ít nhất 1 liên hệ | Khách hàng tổ chức chưa khai người liên hệ.
+  | Mã số thuế không đúng định dạng | Mã số thuế chỉ được gồm chữ số và dấu gạch ngang, tối đa 14 ký tự.
+  | Mã số thuế đã tồn tại | Đã có khách hàng khác dùng mã số thuế này.
+  | Email đã tồn tại | Đã có khách hàng khác dùng địa chỉ thư điện tử này.
+  | Số CMND/CCCD đã tồn tại | Đã có khách hàng khác dùng số giấy tờ này.
+  | Không được lớn hơn ngày hiện tại | Ngày sinh hoặc ngày cấp đang là ngày ở tương lai.
+  | Lĩnh vực không thuộc loại hình đã chọn, vui lòng chọn lại | Cặp Loại hình hoạt động – Lĩnh vực kinh doanh không khớp nhau.
+  | Bắt buộc chọn quốc gia / tỉnh–thành phố / phường–xã | Ba ô địa chỉ này bắt buộc. Riêng Quận/Huyện và Thôn/Xóm thì không bắt buộc.
+  | Bắt buộc khi là khách hãng | Đã tích Là khách hãng nhưng chưa chọn Hãng xe.
+[normal] Nếu người dùng bấm Quay lại khi đã nhập dở, hệ thống hỏi xác nhận rời khỏi trang. Chọn ở lại thì dữ liệu còn nguyên; chọn rời đi thì mọi thứ vừa nhập sẽ mất. 
+[Heading 1] PHẦN 4: CHỈNH SỬA VÀ XEM CHI TIẾT 
+[Heading 2] 1. Chỉnh sửa khách hàng 
+[normal] Yêu cầu quyền: Sửa khách hàng. Nếu không có quyền này, biểu tượng bút chì sẽ bị làm mờ; trường hợp truy cập trực tiếp bằng đường dẫn, hệ thống báo lỗi không có quyền. 
+[normal] Bấm biểu tượng bút chì trên cột Hành động của dòng cần sửa. Hệ thống mở màn Chỉnh sửa khách hàng với đầy đủ dữ liệu hiện tại. 
+[normal]  [IMG]
+[normal] Hình 9: Màn Chỉnh sửa khách hàng 
+[normal] Các trường và quy tắc bắt buộc giống hệt màn thêm mới. Có ba điểm khác cần lưu ý: 
+[normal] Màn sửa có thêm khối Địa chỉ giao hàng — khối này không có ở màn thêm mới. 
+[normal] Mã khách hàng không sửa được và không thay đổi sau khi lưu. 
+[normal] Giữ nguyên mã số thuế của chính khách hàng đó thì lưu bình thường, hệ thống không báo trùng. Chỉ khi đổi sang mã số thuế của khách hàng khác mới bị chặn. 
+[normal] Sửa xong bấm Lưu. Hệ thống báo cập nhật thành công và quay về danh sách. Mọi thay đổi đều được ghi vào Lịch sử. 
+[Heading 2] 2. Xem chi tiết khách hàng 
+[normal] Bấm vào Mã KH trên bảng danh sách để mở màn chi tiết. Mọi thông tin ở chế độ chỉ đọc, không sửa được và không có nút Lưu. 
+[normal]  [IMG]
+[normal] Hình 10: Màn Chi tiết khách hàng ở chế độ chỉ đọc 
+[Heading 1] PHẦN 5: KHÓA VÀ MỞ KHÓA KHÁCH HÀNG 
+[normal] Yêu cầu quyền: Xóa khách hàng. Nếu không có quyền này, biểu tượng ổ khóa sẽ bị làm mờ; trường hợp truy cập trực tiếp bằng đường dẫn, hệ thống báo lỗi không có quyền. 
+[Heading 2] 1. Ý nghĩa 
+[normal] Sau khi khóa: 
+[normal] Khách hàng VẪN nằm trong danh sách, cột Trạng thái hiện chữ Khóa. 
+[normal] Vẫn xem được chi tiết, lịch sử và vẫn xuất ra file bình thường. 
+[normal] Mọi báo giá, hợp đồng, trang thiết bị của khách hàng đó vẫn còn nguyên. 
+[normal] Điểm khác biệt duy nhất: khách hàng đó không còn xuất hiện ở ô chọn khách hàng của các màn nghiệp vụ khác (lập báo giá, hợp đồng…). 
+[Heading 2] 2. Các bước khóa khách hàng 
+[normal] Bấm biểu tượng ổ khóa trên cột Hành động của dòng cần khóa. Hệ thống hiện hộp xác nhận nêu rõ mã và tên khách hàng — hãy đọc kỹ để chắc chắn không bấm nhầm dòng. 
+[normal]  [IMG]
+[normal] Hình 11: Hộp xác nhận khóa khách hàng 
+[normal] Bấm Khóa để xác nhận. Hệ thống báo thành công, cột Trạng thái đổi ngay thành Khóa. 
+[normal] Bấm Hủy nếu bấm nhầm. Hộp đóng lại, trạng thái không đổi. 
+[Heading 2] 3. Mở khóa khách hàng 
+[normal] Với khách hàng đang ở trạng thái Khóa, bấm lại biểu tượng ổ khóa trên dòng đó rồi xác nhận. Khách hàng trở về trạng thái Hoạt động và chọn lại được ở các màn nghiệp vụ. 
+[normal] Nếu khách hàng vừa bị người khác thao tác trước đó, hệ thống báo dữ liệu đã thay đổi. người dùng chỉ cần tải lại danh sách rồi thử lại. 
+[Heading 1] PHẦN 6: XEM LỊCH SỬ THAY ĐỔI 
+[normal] Bấm menu ba chấm trên cột Hành động rồi chọn Lịch sử. 
+[normal]  [IMG]
+[normal] Hình 12: Cửa sổ Lịch sử khách hàng 
+[normal] Cửa sổ liệt kê mọi lần thay đổi của khách hàng đó, mới nhất ở trên cùng. Mỗi dòng cho biết: 
+[normal] Loại thay đổi: Thêm mới, Sửa hoặc đổi trạng thái. 
+[normal] Trường nào đã đổi, giá trị cũ và giá trị mới. 
+[normal] Ai thực hiện và vào lúc nào. 
+[Heading 1] PHẦN 7: NHẬP KHÁCH HÀNG TỪ FILE EXCEL 
+[normal] Yêu cầu quyền: Thêm khách hàng. Nếu không có quyền này, nút Import Excel sẽ không hiển thị; trường hợp truy cập trực tiếp bằng đường dẫn, hệ thống báo lỗi không có quyền. 
+[Heading 2] 1. Mở cửa sổ nhập dữ liệu 
+[normal] Bấm nút Import Excel trên thanh công cụ. 
+[normal]  [IMG]
+[normal] Hình 13: Cửa sổ Import khách hàng 
+[Heading 2] 2. Chuẩn bị file 
+[normal] Bấm nút Tải file mẫu để tải file về máy. File mẫu gồm ba trang: một trang để nhập liệu và các trang danh mục tra cứu (nhóm khách hàng, lĩnh vực, địa chỉ…) được sinh từ dữ liệu thật của hệ thống — người dùng tra ở đây để điền cho đúng. 
+[normal] Ba điều lưu ý khi điền file: 
+[normal] Dòng 1 là tiêu đề cột. Dữ liệu đọc từ cột 3. 
+[normal] Không đổi tên và không xóa các cột tiêu đề. Xóa cột bắt buộc thì hệ thống báo lỗi thiếu cột và không xử lý được. 
+[normal] Mỗi lần nhập tối đa 1.000 dòng. Danh sách dài hơn thì chia thành nhiều file. 
+[normal] Mẹo khai nhiều người liên hệ cho cùng một khách hàng: điền khách hàng ở dòng đầu, sau đó ở các dòng tiếp theo BỎ TRỐNG ô Tên khách hàng và chỉ điền thông tin người liên hệ. Hệ thống hiểu các dòng đó là người liên hệ của khách hàng ở dòng ngay trên. Lưu ý dòng bỏ trống Tên khách hàng KHÔNG được đứng đầu file. 
+[Heading 2] 3. Ba bước nhập dữ liệu 
+<<TABLE 12>>
+  | Bước | Nút bấm | Hệ thống phản hồi
+  | 1 | Chọn file Excel rồi bấm Load lên bảng | Đọc file và hiển thị dữ liệu lên bảng xem trước. người dùng sửa trực tiếp trên bảng được.
+  | 2 | Validate | Kiểm tra từng dòng và báo lỗi kèm số dòng. CHƯA có khách hàng nào được ghi vào hệ thống ở bước này. Các dòng hợp lệ sẽ bị khóa lại không cho sửa tiếp.
+  | 3 | Import | Ghi các dòng hợp lệ thành khách hàng mới và báo kết quả.
+[normal] Tích ô Chỉ dòng lỗi để bảng chỉ hiện những dòng đang có lỗi, tiện cho việc sửa nhanh. 
+[Heading 2] 4. Đọc kết quả nhập 
+[normal] Sau khi bấm Import, hệ thống báo: tổng số dòng đọc được, số dòng thêm thành công và số dòng lỗi. Có ba tình huống: 
+[normal] Tất cả dòng hợp lệ — hệ thống báo nhập thành công, toàn bộ khách hàng được thêm. 
+[normal] Một phần dòng lỗi — hệ thống báo nhập một phần thành công. Các dòng hợp lệ ĐÃ được thêm; các dòng lỗi thì không. người dùng sửa các dòng lỗi rồi nhập lại riêng chúng. 
+[normal] Toàn bộ dòng lỗi — hệ thống báo thất bại, không có khách hàng nào được thêm. 
+[Heading 1] PHẦN 8: XUẤT DANH SÁCH RA FILE 
+[normal] Yêu cầu quyền: Xuất dữ liệu khách hàng. Nếu không có quyền này, ba nút xuất file sẽ không dùng được; trường hợp truy cập trực tiếp bằng đường dẫn, hệ thống báo lỗi không có quyền. 
+[Heading 2] 1. Ba định dạng xuất 
+[normal] Thanh công cụ có ba nút: Xuất CSV, Xuất Excel và Xuất PDF. Cả ba đều xuất theo ĐÚNG bộ lọc đang áp dụng. 
+[normal] Khách hàng nằm ngoài phạm vi dữ liệu của người dùng sẽ không có trong file. Khách hàng đã Khóa vẫn được xuất, cột Trạng thái ghi rõ là Khóa. 
+[Heading 2] 2. Chọn trường và thứ tự cột 
+[normal] Bấm nút xuất, hệ thống mở cửa sổ chọn trường. 
+[normal]  [IMG]
+[normal] Hình 14: Cửa sổ Chọn trường xuất Excel 
+[normal] Mặc định toàn bộ 20 trường đều được chọn: Mã KH, Tên KH, MST/SĐT, Đối tượng, Nhóm khách, Địa chỉ, Tỉnh/TP, Tên đơn vị, Tên viết tắt, Địa chỉ xuất hóa đơn, Hãng xe, Công ty mẹ, Cấp đại lý, Người đại diện, Tên liên hệ, SĐT liên hệ, Chức vụ liên hệ, Người tạo, Người sửa (gần nhất), Trạng thái. 
+[normal] Bấm dấu x bên cạnh một trường để bỏ trường đó khỏi file. Phải giữ lại ít nhất một trường mới xuất được. 
+[normal] Điểm cần nhớ: thứ tự cột trong file hiển thị theo thứ tự người dùng chọn. Muốn đổi vị trí một cột, hãy bỏ chọn rồi chọn lại theo trình tự mong muốn. 
+[normal] Chọn xong bấm Xuất, file sẽ được tải về máy. 
+[Heading 1] PHẦN 9: MÀN QUẢN LÝ KHÁCH HÀNG 
+[normal] Yêu cầu quyền: Xem khách hàng để mở các thẻ nghiệp vụ; thêm quyền Sửa khách hàng nếu muốn cập nhật trang thiết bị và tài liệu đính kèm. Nếu không có quyền Xem khách hàng, các thẻ Báo giá, Hợp đồng và Danh sách trang thiết bị sẽ báo lỗi không có quyền. 
+[Heading 2] 1. Mở màn Quản lý khách hàng 
+[normal] Bấm menu ba chấm trên cột Hành động rồi chọn Quản lý. 
+[normal]  [IMG]
+[normal] Hình 15: Màn Quản lý khách hàng với sáu thẻ nghiệp vụ 
+[normal] Màn hình có sáu thẻ, thẻ Thông tin chung được chọn sẵn: 
+<<TABLE 13>>
+  | Thẻ | Nội dung
+  | Thông tin chung | Thông tin cơ bản, người đại diện, địa chỉ của khách hàng.
+  | Thông tin liên hệ | Danh sách người liên hệ.
+  | Báo giá | Các báo giá đã lập cho khách hàng này.
+  | Hợp đồng | Các hợp đồng đã ký với khách hàng này.
+  | Danh sách trang thiết bị | Thiết bị đã bán qua hệ thống và thiết bị khai thêm từ ngoài.
+  | Thông tin khác | Ảnh, tài liệu, video đính kèm.
+[Heading 2] 2. Thẻ Báo giá và Hợp đồng 
+[normal] Hai thẻ này chỉ hiển thị chứng từ của đúng khách hàng đang xem. người dùng xuất file hoặc in danh sách trực tiếp từ đây; bản in có sẵn tiêu đề đầu trang của công ty. 
+[Heading 2] 3. Thẻ Danh sách trang thiết bị 
+[normal]  [IMG]
+[normal] Hình 16: Thẻ Danh sách trang thiết bị 
+[normal] Thẻ này gộp hai nhóm thiết bị: thiết bị khách hàng đã mua qua hệ thống, và thiết bị khách hàng đang dùng nhưng mua từ nơi khác. 
+[normal] Với nhóm khai thêm, người có quyền Sửa khách hàng thực hiện được các thao tác sau: 
+<<TABLE 14>>
+  | Thao tác | Cách làm | Lưu ý
+  | Thêm thiết bị | Bấm nút thêm thiết bị, nhập tên thiết bị, số lượng và thông tin kèm theo rồi bấm Lưu. | 
+  | Sửa thiết bị | Bấm nút sửa ở dòng thiết bị, chỉnh thông tin rồi bấm Lưu. | 
+  | Xóa thiết bị | Bấm nút xóa ở dòng thiết bị rồi xác nhận. | 
+  | Tăng số lượng | Bấm chức năng tăng số lượng, nhập số cần thêm. | Số nhập vào được cộng dồn vào số lượng hiện có, không thay thế. Thiết bị đang có 5, nhập thêm 3 thì kết quả là 8.
+  | Thêm số máy | Bấm thêm số máy, nhập số máy rồi bấm Lưu. | Số máy phải chưa tồn tại trong hệ thống. Nếu trùng, hệ thống cảnh báo và cho biết số máy đó đang thuộc thiết bị nào.
+[normal] Nếu không có quyền Sửa khách hàng, người dùng vẫn xem được danh sách thiết bị nhưng các nút thao tác sẽ bị làm mờ. 
+[Heading 2] 4. Thẻ Thông tin khác 
+[normal] Nơi lưu ảnh, tài liệu và video liên quan tới khách hàng. Người có quyền Sửa khách hàng tải file lên hoặc xóa file đã tải. Bấm vào ảnh để xem ảnh phóng to. 
+[Heading 1] PHẦN 10: PHÂN QUYỀN 
+[normal] Người dùng không có quyền khách hàng nào 
+[normal] người dùng VẪN mở được màn Danh mục khách hàng. Danh sách chỉ hiện những khách hàng do chính người dùng tạo ra, cộng những khách hàng người dùng đang đăng ký còn hạn hoặc đã từng làm việc. 
+[normal] Thanh công cụ không có nút Tạo mới, Import Excel và ba nút xuất file. Trên cột Hành động, biểu tượng bút chì và ổ khóa bị làm mờ. người dùng tra cứu và xem chi tiết bình thường, chỉ không thay đổi được dữ liệu. 
+[normal] Người dùng có quyền Xem khách hàng 
+[normal] Ngoài việc tra cứu danh sách, người dùng mở được màn Quản lý khách hàng qua menu ba chấm và xem đầy đủ các thẻ Báo giá, Hợp đồng, Danh sách trang thiết bị của từng khách hàng. Các nút thao tác trên các thẻ này vẫn bị làm mờ nếu chưa có quyền Sửa khách hàng. 
+[normal] Người dùng có quyền Thêm khách hàng 
+[normal] Thanh công cụ hiện thêm hai nút Tạo mới và Import Excel. người dùng thêm được khách hàng lẻ theo Phần 3, hoặc nhập hàng loạt theo Phần 7. 
+[normal] Lưu ý: có quyền Thêm không đồng nghĩa với quyền Sửa. Sau khi tạo xong, nếu chưa được cấp quyền Sửa khách hàng thì người dùng không chỉnh lại được. 
+[normal] Người dùng có quyền Sửa khách hàng 
+[normal] Biểu tượng bút chì trên cột Hành động sáng lên và bấm được. người dùng cập nhật được mọi thông tin của khách hàng theo Phần 4, kể cả khối Địa chỉ giao hàng. 
+[normal] Quyền này cũng cho phép thêm / sửa / xóa trang thiết bị khai ngoài và tải ảnh, tài liệu ở màn Quản lý khách hàng. 
+[normal] Mọi thay đổi đều được ghi lại trong Lịch sử kèm tên người dùng và thời điểm thực hiện. 
+[normal] Người dùng có quyền Xóa khách hàng 
+[normal] Biểu tượng ổ khóa trên cột Hành động sáng lên. người dùng khóa và mở khóa khách hàng theo Phần 5. 
+[normal] Người dùng có quyền Xuất dữ liệu khách hàng 
+[normal] Ba nút Xuất CSV, Xuất Excel và Xuất PDF dùng được. người dùng lọc danh sách cần lấy rồi xuất theo Phần 8. File chỉ chứa những khách hàng người dùng nhìn thấy được trên màn hình. 

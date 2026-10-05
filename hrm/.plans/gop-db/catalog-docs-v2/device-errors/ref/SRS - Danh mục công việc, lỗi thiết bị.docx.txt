@@ -1,0 +1,407 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục công việc, lỗi thiết bị 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Danh mục công việc, lỗi thiết bị, nhằm: 
+[normal] Thống nhất yêu cầu giữa BA / PO / Dev / Test cho màn danh mục nền của nghiệp vụ sửa chữa. 
+[normal] Là căn cứ nghiệm thu chức năng và phân quyền. 
+[normal] Làm rõ quy tắc trùng tên theo TỪNG LOẠI — hai loại khác nhau được phép trùng tên, đây là điểm dễ hiểu sai nhất của màn hình. 
+[normal] Làm rõ điều kiện hiển thị của từng nút trên cột Hành động: nút Sửa và Xóa biến mất khi bản ghi đã Khóa hoặc đã phát sinh chứng từ. 
+[normal] Làm rõ các trường để trống thì hệ thống tự tính hoặc lấy theo cấu hình công ty. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Công việc / lỗi thiết bị | Một hạng mục công việc sửa chữa hoặc một tình trạng lỗi của thiết bị, dùng làm cơ sở lập báo giá và phiếu sửa chữa.
+  | Loại công việc / lỗi | Sáu nhóm phân loại: Lỗi đã xác định, Lỗi chưa xác định, Lắp đặt bàn giao, Thiết kế nền móng, Tư vấn, khảo sát, Giám sát thi công.
+  | Định mức công | Số công chuẩn để hoàn thành hạng mục này, là căn cứ tính Công kỹ thuật.
+  | Công kỹ thuật | Giá trị công tính tự động từ Định mức công. Để trống thì hệ thống tự tính.
+  | Hệ số giá bán dịch vụ | Hệ số nhân dùng khi tính giá bán. Để trống thì lấy theo cấu hình của công ty.
+  | Hệ số công nghệ | Hệ số phản ánh mức độ phức tạp công nghệ, bắt buộc lớn hơn 0.
+  | Định mức giảm giá (%) | Tỷ lệ giảm giá tối đa được phép áp cho hạng mục này.
+  | VAT (%) | Thuế suất giá trị gia tăng áp cho hạng mục, tối đa 100.
+  | Đơn giá bán | Giá bán của hạng mục. Để trống thì hệ thống tự tính theo công thức.
+  | Áp dụng cho thiết bị | Danh sách hàng hóa / thiết bị mà hạng mục này áp dụng. Bắt buộc khai ít nhất một.
+  | Vật tư thay thế | Danh sách hàng hóa dùng để thay thế khi thực hiện hạng mục.
+  | Dịch vụ sửa chữa kèm theo | Các dịch vụ đi kèm, mỗi dòng phải khai đủ Giá vốn và Giá dịch vụ.
+  | Trạng thái Hoạt động | Hạng mục còn chọn được khi lập báo giá và phiếu sửa chữa mới.
+  | Trạng thái Khóa | Hạng mục không còn chọn được ở nghiệp vụ mới nhưng vẫn nằm trong danh mục.
+  | SRS | Software Requirements Specification
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+<<TABLE 2>>
+  | Ký hiệu | Tên quyền | Tác dụng trên màn hình
+  | P1 | Quản lý danh mục công việc - lỗi thiết bị | Mở màn hình, xem danh sách, thêm mới, chỉnh sửa, xóa, khóa / mở khóa, xuất Excel và in danh sách. Thiếu quyền này thì mục menu không hiển thị và truy cập thẳng đường dẫn bị chặn.
+[normal] Màn hình chỉ có MỘT quyền duy nhất cho cả xem lẫn thao tác. Riêng chức năng Xem lịch sử thay đổi không gắn quyền, theo quy ước chung của mọi màn danh sách. 
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 3>>
+  | Chức năng | P1 | Không có quyền
+  | FR-01 Xem danh sách |  | 
+  | FR-02 Tìm kiếm và lọc |  | 
+  | FR-03 Tuỳ chỉnh cột hiển thị |  | 
+  | FR-04 Thêm mới |  | 
+  | FR-05 Chỉnh sửa |  | 
+  | FR-06 Xóa |  | 
+  | FR-07 Khóa / Mở khóa |  | 
+  | FR-08 In và Xuất Excel |  | 
+  | FR-09 Xem lịch sử thay đổi |  | 
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Danh mục công việc, lỗi thiết bị 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem danh sách 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 4>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem danh sách công việc / lỗi thiết bị
+  | Mô tả | Hiển thị toàn bộ hạng mục trong danh mục, có phân trang, sắp xếp và tuỳ chỉnh cột.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục công việc - lỗi thiết bị”.
+  | Dòng sự kiện chính | 1. Người dùng vào menu Chăm sóc khách hàng → Danh mục → Công việc, lỗi thiết bị. / 2. Hệ thống kiểm tra quyền rồi nạp trang đầu tiên của danh sách. / 3. Bảng hiển thị dữ liệu theo cấu hình cột của riêng người dùng.
+  | Dòng sự kiện phụ | • Không có quyền → mục menu không hiển thị; truy cập thẳng đường dẫn thì hệ thống từ chối. / • Danh mục chưa có bản ghi nào → bảng hiện thông báo không có dữ liệu.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors 
+[normal]  [IMG]
+[normal] Hình 2: Màn Danh mục công việc, lỗi thiết bị lúc mới truy cập 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 5>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Giá trị ban đầu | Mô tả
+  | 1 | STT | Table/Grid | Read-only | – | – | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | 2 | Tên công việc / Tình trạng lỗi | Table/Grid | Read-only | – | – | Tên đầy đủ của hạng mục. Luôn hiển thị, sắp xếp được.
+  | 3 | Loại công việc / lỗi thiết bị | Table/Grid | Read-only | – | – | Một trong sáu loại. Mặc định ẩn.
+  | 4 | Áp dụng cho thiết bị | Table/Grid | Read-only | – | – | Danh sách thiết bị áp dụng. Mặc định ẩn.
+  | 5 | Định mức công | Table/Grid | Read-only | – | – | Số công chuẩn. Mặc định ẩn.
+  | 6 | Công kỹ thuật | Table/Grid | Read-only | – | – | Giá trị công tính được. Mặc định ẩn.
+  | 7 | Đơn giá bán | Table/Grid | Read-only | – | – | Giá bán của hạng mục. Mặc định ẩn, sắp xếp được.
+  | 8 | Người cập nhật | Table/Grid | Read-only | – | – | Người sửa gần nhất. Mặc định ẩn.
+  | 9 | Ngày cập nhật | Table/Grid | Read-only | – | – | Thời điểm sửa gần nhất. Mặc định ẩn, sắp xếp được.
+  | 10 | Người tạo | Table/Grid | Read-only | – | – | Người đã thêm bản ghi.
+  | 11 | Ngày tạo | Table/Grid | Read-only | – | – | Thời điểm thêm, sắp xếp được.
+  | 12 | Trạng thái | Table/Grid | Read-only | – | – | Hoạt động hoặc Khóa.
+  | 13 | Hành động | Table/Grid | Read-only | – | – | Sửa, Xóa, Khóa/Mở khóa, In và Lịch sử — hai nút đầu hiện thẳng, còn lại nằm trong nút ba chấm.
+  | 14 | Nút Tạo mới | Button | Enable / Ẩn | – | Ẩn khi thiếu quyền | Mở trang thêm mới. Chỉ hiện với người có quyền.
+  | 15 | Nút Xuất Excel | Button | Enable / Ẩn | – | Ẩn khi thiếu quyền | Xuất danh sách đang lọc ra tệp bảng tính.
+  | 16 | Nút In danh sách | Button | Enable / Ẩn | – | Ẩn khi thiếu quyền | Mở bản in toàn bộ danh sách đang lọc.
+  | 17 | Biểu tượng Cấu hình cột hiển thị | Icon Button | Enable | – | Hiển thị | Mở cửa sổ bật / tắt cột.
+  | 18 | Phân trang | Pagination | Enable | – | Trang 1 | Nút về đầu / lùi / số trang / tiến / về cuối và ô chọn số dòng mỗi trang.
+  | 19 | Trạng thái rỗng | Label | Hiển thị | – | Ẩn | Hiện thông báo không có dữ liệu khi danh sách trống.
+[normal] 2.1.4 Danh sách event và xử lý event 
+<<TABLE 6>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở màn hình | System | Before: / – Kiểm tra quyền “Quản lý danh mục công việc - lỗi thiết bị”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Nạp trang đầu tiên theo cấu hình cột đã lưu của người dùng.
+  | 2 | Bấm tiêu đề cột sắp xếp được | Click | After: / – Đổi chiều sắp xếp và nạp lại danh sách từ trang 1.
+  | 3 | Chuyển trang | Click | Before: / – Giữ nguyên bộ lọc và thứ tự sắp xếp. / After: / – Nạp dữ liệu trang mới, số thứ tự tiếp tục liên tục.
+[Heading 3] 2.2 Tìm kiếm và lọc 
+[normal] 2.2.1 Giới thiệu 
+<<TABLE 7>>
+  | Mục | Nội dung
+  | Tên chức năng | Tìm kiếm và lọc danh sách
+  | Mô tả | Thu hẹp danh sách bằng ô tìm kiếm nhanh và 8 tiêu chí lọc nâng cao.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Đang ở màn Danh mục công việc, lỗi thiết bị.
+  | Dòng sự kiện chính | 1. Người dùng bấm Tìm kiếm nâng cao để mở panel lọc. / 2. Người dùng nhập hoặc chọn các tiêu chí. / 3. Người dùng bấm Tìm kiếm. / 4. Hệ thống áp đồng thời mọi tiêu chí và nạp lại danh sách từ trang 1.
+  | Dòng sự kiện phụ | • Không có kết quả → bảng hiện thông báo không có dữ liệu. / • Bấm Làm mới → xóa hết tiêu chí VÀ nạp lại danh sách đầy đủ ngay. / • Lọc theo tên hoặc mã hàng hóa sẽ trả về hạng mục CÓ ÁP DỤNG cho hàng hóa đó, không phải hạng mục trùng tên với hàng hóa.
+[normal] 2.2.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors 
+[normal]  [IMG]
+[normal] Hình 3: Panel Tìm kiếm nâng cao đang mở 
+[normal] 2.2.3 Mô tả chi tiết giao diện 
+<<TABLE 8>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Ô tìm kiếm nhanh | Textbox | Enable | 0–255 ký tự | Không | Trống | Tìm theo tên công việc / tình trạng lỗi.
+  | 2 | Loại | Dropdown | Enable | Sáu loại | Không | Trống | Lọc theo nhóm phân loại của hạng mục.
+  | 3 | Trạng thái | Dropdown | Enable | Hoạt động / Khóa | Không | Trống | Bỏ trống thì hiện cả hai trạng thái.
+  | 4 | Nhóm hàng hóa | Dropdown | Enable | Danh sách nhóm | Không | Trống | Lọc theo nhóm của thiết bị được áp dụng.
+  | 5 | Tên hoặc mã hàng hóa | Textbox | Enable | 0–255 ký tự | Không | Trống | Tìm hạng mục có áp dụng cho hàng hóa khớp tên hoặc mã đã nhập.
+  | 6 | Người tạo | Dropdown | Enable | Danh sách nhân viên | Không | Trống | Lọc theo người đã thêm bản ghi.
+  | 7 | Người sửa | Dropdown | Enable | Danh sách nhân viên | Không | Trống | Lọc theo người sửa gần nhất.
+  | 8 | Đơn giá bán: từ – đến | Number | Enable |  | Không | Trống | Lọc theo khoảng đơn giá bán. Nhập một đầu hoặc cả hai đầu.
+  | 9 | Định mức công | Number | Enable |  | Không | Trống | Lọc theo số công chuẩn.
+  | 10 | Nút Tìm kiếm | Button | Enable | – | – | Hiển thị | Áp dụng các tiêu chí.
+  | 11 | Nút Làm mới | Button | Enable | – | – | Hiển thị | Xóa hết tiêu chí VÀ nạp lại danh sách ngay.
+[normal] 2.2.4 Danh sách event và xử lý event 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Tìm kiếm nâng cao | Click | After: / – Mở panel chứa 8 tiêu chí lọc.
+  | 2 | Bấm Tìm kiếm | Click | Before: / – Thu thập giá trị của mọi tiêu chí đang có. / During: / – Áp đồng thời các tiêu chí theo kiểu “và”. / After: / – Nạp lại bảng từ trang 1 và cập nhật tổng số bản ghi.
+  | 3 | Bấm Làm mới | Click | After: / – Xóa trắng mọi tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+[Heading 3] 2.3 Tuỳ chỉnh cột hiển thị 
+[normal] 2.3.1 Giới thiệu 
+<<TABLE 10>>
+  | Mục | Nội dung
+  | Tên chức năng | Tùy chỉnh cột hiển thị
+  | Mô tả | Cho phép bật / tắt các cột của bảng. Cấu hình ghi nhớ riêng cho từng người dùng.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Đang ở màn Danh mục công việc, lỗi thiết bị.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng Cấu hình cột hiển thị. / 2. Hệ thống mở cửa sổ liệt kê toàn bộ cột kèm ô tích. / 3. Người dùng tích hoặc bỏ tích rồi bấm Lưu. / 4. Bảng vẽ lại theo cấu hình mới.
+  | Dòng sự kiện phụ | • Cột STT và cột Tên bị khóa, luôn hiển thị. / • Đóng cửa sổ mà không bấm Lưu → cấu hình không đổi.
+  | Yêu cầu đặc biệt | Bảy cột mặc định ẩn: Loại, Áp dụng cho thiết bị, Định mức công, Công kỹ thuật, Đơn giá bán, Người cập nhật, Ngày cập nhật.
+[normal] 2.3.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors 
+[normal] Modal Tùy chỉnh cột được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 4: Cửa sổ Tuỳ chỉnh cột hiển thị 
+[normal] 2.3.3 Mô tả chi tiết giao diện 
+<<TABLE 11>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Biểu tượng Cấu hình cột hiển thị | Icon Button | Enable | Hiển thị | Nằm ở góc phải thanh công cụ.
+  | 2 | Danh sách cột | Table/Grid | Enable | Theo cấu hình đã lưu | Mỗi dòng là một cột kèm ô tích.
+  | 3 | Ô tích cột STT và cột Tên | Icon Button | Disable | Đã tích | Bị khóa, không bỏ tích được.
+  | 4 | Nút Lưu | Button | Enable | Hiển thị | Ghi nhận cấu hình.
+  | 5 | Nút Đóng | Button | Enable | Hiển thị | Đóng, bỏ qua thay đổi.
+[normal] 2.3.4 Danh sách event và xử lý event 
+<<TABLE 12>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng Cấu hình cột hiển thị | Click | After: / – Mở cửa sổ, nạp cấu hình cột đã lưu của người dùng.
+  | 2 | Bấm Lưu | Click | After: / – Ghi nhận cấu hình cho riêng người dùng hiện tại và vẽ lại bảng.
+[Heading 3] 2.4 Thêm mới công việc / lỗi thiết bị 
+[normal] 2.4.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 5: Biểu đồ Use Case — FR-04 Thêm mới công việc / lỗi thiết bị 
+[normal] 2.4.2 Giới thiệu 
+<<TABLE 13>>
+  | Mục | Nội dung
+  | Tên chức năng | Thêm mới công việc / lỗi thiết bị
+  | Mô tả | Thêm một hạng mục công việc hoặc tình trạng lỗi mới. Khác các màn danh mục khác, chức năng này mở một TRANG RIÊNG chứ không phải cửa sổ, vì form có nhiều bảng con.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục công việc - lỗi thiết bị”.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Tạo mới; hệ thống mở trang thêm mới. / 2. Người dùng chọn Loại công việc / lỗi và nhập các trường thông tin. / 3. Người dùng thêm ít nhất một thiết bị vào bảng Áp dụng cho thiết bị. / 4. Người dùng khai thêm Vật tư thay thế và Dịch vụ sửa chữa kèm theo nếu có. / 5. Người dùng bấm Lưu. / 6. Hệ thống kiểm tra dữ liệu, ghi bản ghi mới và quay về danh sách.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc → báo lỗi đỏ ngay dưới ô tương ứng, trang không chuyển. / • Trùng tên trong cùng loại → bị chặn; trùng tên ở loại khác thì lưu được. / • Chưa thêm thiết bị nào → bị chặn. / • Đã thêm dòng dịch vụ nhưng bỏ trống Giá vốn hoặc Giá dịch vụ → bị chặn tại đúng ô đó.
+  | Yêu cầu đặc biệt | Để trống Công kỹ thuật và Đơn giá bán thì hệ thống tự tính; để trống Hệ số giá bán dịch vụ và Đơn giá công kỹ thuật thì lấy theo cấu hình của công ty.
+[normal] 2.4.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors/create 
+[normal]  [IMG]
+[normal] Hình 6: Trang Thêm công việc / lỗi thiết bị 
+[normal]  [IMG]
+[normal] Hình 7: Trang thêm mới báo lỗi đỏ ngay dưới ô còn thiếu 
+[normal] 2.4.4 Mô tả chi tiết giao diện 
+<<TABLE 14>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Loại công việc / lỗi | Dropdown | Enable | Sáu loại | Có | Trống | Quyết định nhóm phân loại. Bỏ trống thì bị chặn khi lưu.
+  | 2 | Tên công việc / tình trạng lỗi | Textbox | Enable | 0–255 ký tự | Có | Trống | KHÔNG được trùng tên TRONG CÙNG MỘT LOẠI. Hai loại khác nhau được phép trùng tên. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 3 | Định mức công | Number | Enable |  | Có | Trống | Là căn cứ tính Công kỹ thuật.
+  | 4 | Hệ số giá bán dịch vụ | Number | Enable |  | Không | Trống | Để trống thì lấy theo cấu hình của công ty.
+  | 5 | Định mức giảm giá (%) | Number | Enable | 0 – 100 | Có | Trống | Tỷ lệ giảm giá tối đa được phép.
+  | 6 | VAT (%) | Number | Enable | 0 – 100 | Có | Trống | Vượt 100 báo “Tối đa 100”; nhập chữ báo “Phải là số”.
+  | 7 | Công kỹ thuật | Number | Enable |  | Không | Trống | Để trống thì hệ thống tự tính theo Định mức công.
+  | 8 | Đơn giá công kỹ thuật | Number | Enable |  | Không | Trống | Để trống thì lấy theo cấu hình của công ty.
+  | 9 | Đơn giá bán | Number | Enable |  | Không | Trống | Để trống thì hệ thống tự tính. Nhập số âm báo “Không được nhỏ hơn 0”.
+  | 10 | Hệ số công nghệ | Number | Enable | > 0 | Có | Trống | Nhập 0 báo “Nhập hệ số lớn hơn 0”.
+  | 11 | Ghi chú | Textarea | Enable | – | Không | Trống | Ghi chú tự do.
+  | 12 | Áp dụng cho thiết bị | Table/Grid | Enable | Danh sách hàng hóa | Có | Trống | Bắt buộc chọn ít nhất một thiết bị, chọn qua cửa sổ tìm kiếm hàng hóa.
+  | 13 | Vật tư thay thế | Table/Grid | Enable | Danh sách hàng hóa | Không | Trống | Khai thêm nếu hạng mục có vật tư thay thế.
+  | 14 | Dịch vụ sửa chữa kèm theo | Table/Grid | Enable | Danh sách dịch vụ | Không | Trống | Mỗi dòng đã thêm thì BẮT BUỘC nhập đủ Giá vốn và Giá dịch vụ.
+  | 15 | Nút thêm dòng ở các bảng con | Button | Enable | – | – | Hiển thị | Mở cửa sổ tìm kiếm hàng hóa hoặc dịch vụ để chọn.
+  | 16 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi bản ghi rồi quay về danh sách.
+  | 17 | Nút Quay lại | Button | Enable | – | – | Hiển thị | Hỏi xác nhận nếu có thay đổi chưa lưu.
+  | 18 | Thông báo lỗi | Toast / Alert | Hiển thị | – | – | Ẩn | Chữ đỏ ngay dưới ô bị lỗi, kể cả ô nằm trong bảng con.
+[normal] 2.4.5 Danh sách event và xử lý event 
+<<TABLE 15>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Tạo mới | Click | Before: / – Kiểm tra quyền “Quản lý danh mục công việc - lỗi thiết bị”; thiếu quyền thì nút không hiển thị. / After: / – Mở trang thêm mới với các ô để trống.
+  | 2 | Nhập Định mức công | Change / Blur | After: / – Hệ thống tính lại Công kỹ thuật nếu ô đó đang để trống.
+  | 3 | Bấm thêm thiết bị / vật tư / dịch vụ | Click | After: / – Mở cửa sổ tìm kiếm; chọn xong thì thêm dòng vào bảng con tương ứng.
+  | 4 | Bấm Lưu | Click | Before: / – Kiểm tra quyền “Quản lý danh mục công việc - lỗi thiết bị”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Loại công việc / lỗi để trống → hiển thị “Bắt buộc phải nhập”. / – Tên công việc / tình trạng lỗi để trống → hiển thị “Bắt buộc phải nhập”. / – Tên đã tồn tại TRONG CÙNG LOẠI → hiển thị thông báo trùng tên. / – Định mức công, Định mức giảm giá, VAT, Hệ số công nghệ để trống → hiển thị “Bắt buộc phải nhập”. / – Hệ số công nghệ bằng 0 → hiển thị “Nhập hệ số lớn hơn 0”. / – VAT lớn hơn 100 → hiển thị “Tối đa 100”. / – Ô số nhập chữ → hiển thị “Phải là số”; nhập số âm → hiển thị “Không được nhỏ hơn 0”. / – Chưa thêm thiết bị nào → hiển thị thông báo bắt buộc chọn thiết bị. / – Dòng dịch vụ thiếu Giá vốn hoặc Giá dịch vụ → hiển thị “Bắt buộc phải nhập” tại đúng ô đó trong bảng. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Tự tính Công kỹ thuật và Đơn giá bán cho các ô để trống. / – Ghi bản ghi mới với trạng thái Hoạt động. / – Quay về danh sách và hiển thị thông báo thêm mới thành công.
+[Heading 3] 2.5 Chỉnh sửa công việc / lỗi thiết bị 
+[normal] 2.5.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 8: Biểu đồ Use Case — FR-05 Chỉnh sửa công việc / lỗi thiết bị 
+[normal] 2.5.2 Giới thiệu 
+<<TABLE 16>>
+  | Mục | Nội dung
+  | Tên chức năng | Chỉnh sửa công việc / lỗi thiết bị
+  | Mô tả | Sửa thông tin của một hạng mục đã có. Dùng chung trang với chức năng Thêm mới.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục công việc - lỗi thiết bị”; bản ghi đang ở trạng thái Hoạt động.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng bút chì ở dòng cần sửa. / 2. Hệ thống mở trang chỉnh sửa với dữ liệu hiện tại đã điền sẵn. / 3. Người dùng sửa thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu, ghi nhận thay đổi và quay về danh sách.
+  | Dòng sự kiện phụ | • ⚠️ Bản ghi đã Khóa KHÔNG có nút bút chì — phải Mở khóa trước. / • Giữ nguyên tên cũ của chính bản ghi đó → lưu bình thường, không báo trùng. / • Đổi Loại sang loại đang có hạng mục trùng tên → bị chặn.
+[normal] 2.5.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors/{id}/edit 
+[normal]  [IMG]
+[normal] Hình 9: Trang nhập liệu dùng chung cho Thêm mới và Chỉnh sửa 
+[normal] 2.5.4 Mô tả chi tiết giao diện 
+<<TABLE 17>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Loại công việc / lỗi | Dropdown | Enable | Sáu loại | Có | Dữ liệu hiện tại | Quyết định nhóm phân loại. Bỏ trống thì bị chặn khi lưu.
+  | 2 | Tên công việc / tình trạng lỗi | Textbox | Enable | 0–255 ký tự | Có | Dữ liệu hiện tại | KHÔNG được trùng tên TRONG CÙNG MỘT LOẠI. Hai loại khác nhau được phép trùng tên. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 3 | Định mức công | Number | Enable |  | Có | Dữ liệu hiện tại | Là căn cứ tính Công kỹ thuật.
+  | 4 | Hệ số giá bán dịch vụ | Number | Enable |  | Không | Dữ liệu hiện tại | Để trống thì lấy theo cấu hình của công ty.
+  | 5 | Định mức giảm giá (%) | Number | Enable | 0 – 100 | Có | Dữ liệu hiện tại | Tỷ lệ giảm giá tối đa được phép.
+  | 6 | VAT (%) | Number | Enable | 0 – 100 | Có | Dữ liệu hiện tại | Vượt 100 báo “Tối đa 100”; nhập chữ báo “Phải là số”.
+  | 7 | Công kỹ thuật | Number | Enable |  | Không | Dữ liệu hiện tại | Để trống thì hệ thống tự tính theo Định mức công.
+  | 8 | Đơn giá công kỹ thuật | Number | Enable |  | Không | Dữ liệu hiện tại | Để trống thì lấy theo cấu hình của công ty.
+  | 9 | Đơn giá bán | Number | Enable |  | Không | Dữ liệu hiện tại | Để trống thì hệ thống tự tính. Nhập số âm báo “Không được nhỏ hơn 0”.
+  | 10 | Hệ số công nghệ | Number | Enable | > 0 | Có | Dữ liệu hiện tại | Nhập 0 báo “Nhập hệ số lớn hơn 0”.
+  | 11 | Ghi chú | Textarea | Enable | – | Không | Dữ liệu hiện tại | Ghi chú tự do.
+  | 12 | Áp dụng cho thiết bị | Table/Grid | Enable | Danh sách hàng hóa | Có | Dữ liệu hiện tại | Bắt buộc chọn ít nhất một thiết bị, chọn qua cửa sổ tìm kiếm hàng hóa.
+  | 13 | Vật tư thay thế | Table/Grid | Enable | Danh sách hàng hóa | Không | Dữ liệu hiện tại | Khai thêm nếu hạng mục có vật tư thay thế.
+  | 14 | Dịch vụ sửa chữa kèm theo | Table/Grid | Enable | Danh sách dịch vụ | Không | Dữ liệu hiện tại | Mỗi dòng đã thêm thì BẮT BUỘC nhập đủ Giá vốn và Giá dịch vụ.
+  | 15 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi thay đổi rồi quay về danh sách.
+  | 16 | Nút Quay lại | Button | Enable | – | – | Hiển thị | Hỏi xác nhận nếu có thay đổi chưa lưu.
+[normal] 2.5.5 Danh sách event và xử lý event 
+<<TABLE 18>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng bút chì | Click | Before: / – Kiểm tra quyền “Quản lý danh mục công việc - lỗi thiết bị”; thiếu quyền thì nút không hiển thị. / – Bản ghi đã Khóa thì nút này cũng không hiển thị. / After: / – Mở trang chỉnh sửa với dữ liệu hiện tại.
+  | 2 | Bấm Lưu | Click | During: / – Áp toàn bộ quy tắc kiểm tra như chức năng Thêm mới. / – Bỏ qua kiểm tra trùng đối với chính bản ghi đang sửa. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi nhận thay đổi và ghi một dòng lịch sử. / – Quay về danh sách và hiển thị thông báo cập nhật thành công.
+[Heading 3] 2.6 Xóa công việc / lỗi thiết bị 
+[normal] 2.6.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 10: Biểu đồ Use Case — FR-06 Xóa công việc / lỗi thiết bị 
+[normal] 2.6.2 Giới thiệu 
+<<TABLE 19>>
+  | Mục | Nội dung
+  | Tên chức năng | Xóa công việc / lỗi thiết bị
+  | Mô tả | Loại một hạng mục khỏi danh mục.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục công việc - lỗi thiết bị”; bản ghi đang Hoạt động VÀ chưa phát sinh chứng từ nào.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng thùng rác ở dòng cần xóa. / 2. Hệ thống hiện hộp xác nhận nêu rõ tên hạng mục. / 3. Người dùng bấm Xóa để xác nhận. / 4. Hệ thống loại bản ghi khỏi danh sách và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • ⚠️ Nút Xóa CHỈ hiển thị khi bản ghi đang Hoạt động VÀ chưa phát sinh chứng từ. Thiếu một trong hai điều kiện thì nút biến mất hẳn. / • Bấm Hủy → đóng hộp, không thay đổi gì.
+  | Yêu cầu đặc biệt | Hạng mục đã phát sinh chứng từ thì dùng thao tác Khóa thay cho Xóa.
+[normal] 2.6.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors 
+[normal] Modal Xác nhận xóa được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 11: Cột Hành động — Sửa và Xóa hiện thẳng, các thao tác còn lại nằm trong nút ba chấm 
+[normal] 2.6.4 Mô tả chi tiết giao diện 
+<<TABLE 20>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Biểu tượng thùng rác | Icon Button | Enable / Ẩn | Ẩn khi không xóa được | Chỉ hiện khi bản ghi đang Hoạt động và chưa phát sinh chứng từ.
+  | 2 | Nội dung hộp xác nhận | Label | Hiển thị | Nêu rõ tên hạng mục | Giúp tránh thao tác nhầm dòng.
+  | 3 | Nút Xóa | Button | Enable | Hiển thị | Xác nhận thực hiện.
+  | 4 | Nút Hủy | Button | Enable | Hiển thị | Đóng hộp, không làm gì.
+[normal] 2.6.5 Danh sách event và xử lý event 
+<<TABLE 21>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng thùng rác | Click | Before: / – Bản ghi đã Khóa hoặc đã phát sinh chứng từ thì nút này KHÔNG hiển thị. / After: / – Hiện hộp xác nhận kèm tên hạng mục.
+  | 2 | Bấm Xóa trong hộp xác nhận | Click | Before: / – Kiểm tra quyền “Quản lý danh mục công việc - lỗi thiết bị”; thiếu quyền thì từ chối và dừng xử lý. / After: / – Loại bản ghi khỏi danh sách, nạp lại và hiển thị thông báo xóa thành công.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp xác nhận, không thay đổi gì.
+[Heading 3] 2.7 Khóa / Mở khóa công việc / lỗi thiết bị 
+[normal] 2.7.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 12: Biểu đồ Use Case — FR-07 Khóa / Mở khóa công việc / lỗi thiết bị 
+[normal] 2.7.2 Giới thiệu 
+<<TABLE 22>>
+  | Mục | Nội dung
+  | Tên chức năng | Khóa / Mở khóa công việc / lỗi thiết bị
+  | Mô tả | Đổi trạng thái hạng mục qua lại giữa Hoạt động và Khóa. Hạng mục đã Khóa vẫn nằm trong danh mục nhưng không chọn được khi lập báo giá hoặc phiếu sửa chữa mới.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục công việc - lỗi thiết bị”.
+  | Dòng sự kiện chính | 1. Người dùng mở nút ba chấm ở dòng cần thao tác và chọn Khóa (hoặc Mở khóa). / 2. Hệ thống hiện hộp xác nhận nêu rõ tên hạng mục. / 3. Người dùng xác nhận. / 4. Hệ thống đổi trạng thái và cập nhật lại danh sách.
+  | Dòng sự kiện phụ | • Sau khi Khóa, hai nút Sửa và Xóa của dòng đó biến mất; chỉ còn Mở khóa, In và Lịch sử. / • Bấm Hủy → đóng hộp, trạng thái không đổi.
+[normal] 2.7.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors 
+[normal] Modal Xác nhận khóa được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 13: Hộp xác nhận khóa hạng mục 
+[normal] 2.7.4 Mô tả chi tiết giao diện 
+<<TABLE 23>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Mục Khóa / Mở khóa trong nút ba chấm | Button | Enable / Ẩn | Ẩn khi thiếu quyền | Nhãn đổi theo trạng thái hiện tại của dòng.
+  | 2 | Tiêu đề hộp xác nhận | Label | Hiển thị | Xác nhận khóa | Đổi thành Xác nhận mở khóa khi bản ghi đang Khóa.
+  | 3 | Nội dung hộp xác nhận | Label | Hiển thị | Nêu rõ tên hạng mục | –
+  | 4 | Nút Khóa / Mở khóa | Button | Enable | Hiển thị | Xác nhận thực hiện.
+  | 5 | Nút Hủy | Button | Enable | Hiển thị | Đóng hộp, không làm gì.
+[normal] 2.7.5 Danh sách event và xử lý event 
+<<TABLE 24>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Chọn Khóa trong nút ba chấm | Click | Before: / – Kiểm tra quyền “Quản lý danh mục công việc - lỗi thiết bị”; thiếu quyền thì mục này không hiển thị. / After: / – Hiện hộp xác nhận kèm tên hạng mục.
+  | 2 | Xác nhận Khóa / Mở khóa | Click | During: / – Bản ghi không còn tồn tại hoặc đã ở trạng thái đích → hiển thị thông báo dữ liệu đã thay đổi. / After: / – Đổi trạng thái; KHÔNG xóa bất kỳ dữ liệu nào. / – Cập nhật lại cột Trạng thái và tập nút trên cột Hành động của dòng đó.
+[Heading 3] 2.8 In và Xuất Excel 
+[normal] 2.8.1 Giới thiệu 
+<<TABLE 25>>
+  | Mục | Nội dung
+  | Tên chức năng | In danh sách và Xuất Excel
+  | Mô tả | Xuất kết quả đang lọc ra tệp bảng tính, hoặc mở bản in danh sách. Ngoài ra mỗi dòng có thao tác In riêng để in chi tiết một hạng mục.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục công việc - lỗi thiết bị”.
+  | Dòng sự kiện chính | 1. Người dùng lọc danh sách theo nhu cầu. / 2. Người dùng bấm Xuất Excel hoặc In danh sách. / 3. Hệ thống sinh tệp hoặc mở bản in theo đúng bộ lọc đang áp dụng.
+  | Dòng sự kiện phụ | • In một dòng: chọn In trong nút ba chấm của dòng đó, hệ thống mở bản in chi tiết hạng mục. / • Bộ lọc không có kết quả → tệp chỉ có dòng tiêu đề, hoặc hệ thống báo không có dữ liệu.
+  | Yêu cầu đặc biệt | Tệp xuất chứa TOÀN BỘ kết quả lọc, không giới hạn ở trang đang xem. Cột thuế suất được xuất kèm để đối chiếu.
+[normal] 2.8.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors 
+[normal]  [IMG]
+[normal] Hình 14: Thanh công cụ với các nút Tạo mới, Xuất Excel và In danh sách 
+[normal] 2.8.3 Mô tả chi tiết giao diện 
+<<TABLE 26>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Nút Xuất Excel | Button | Enable / Ẩn | Ẩn khi thiếu quyền | Xuất toàn bộ kết quả lọc ra tệp bảng tính.
+  | 2 | Nút In danh sách | Button | Enable / Ẩn | Ẩn khi thiếu quyền | Mở bản in toàn bộ danh sách đang lọc theo mẫu in của hệ thống.
+  | 3 | Mục In trong nút ba chấm của dòng | Button | Enable | Hiển thị | Mở bản in chi tiết của riêng hạng mục đó.
+[normal] 2.8.4 Danh sách event và xử lý event 
+<<TABLE 27>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Xuất Excel | Click | Before: / – Kiểm tra quyền “Quản lý danh mục công việc - lỗi thiết bị”; thiếu quyền thì nút không hiển thị. / After: / – Sinh tệp bảng tính theo đúng bộ lọc đang áp dụng và tải về.
+  | 2 | Bấm In danh sách | Click | After: / – Mở bản in toàn bộ danh sách đang lọc, có tiêu đề đầu trang của công ty.
+  | 3 | Chọn In ở một dòng | Click | After: / – Mở bản in chi tiết của riêng hạng mục đó.
+[Heading 3] 2.9 Xem lịch sử thay đổi 
+[normal] 2.9.1 Giới thiệu 
+<<TABLE 28>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem lịch sử thay đổi
+  | Mô tả | Liệt kê các lần thay đổi của một hạng mục, kèm giá trị cũ, giá trị mới, người thực hiện và thời điểm.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục công việc - lỗi thiết bị”)
+  | Điều kiện ban đầu | Bản ghi cần xem đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng chọn Lịch sử trong nút ba chấm của dòng. / 2. Hệ thống mở cửa sổ Lịch sử thay đổi. / 3. Danh sách hiển thị theo thứ tự mới nhất ở trên cùng.
+  | Dòng sự kiện phụ | • Bản ghi chưa từng sửa → cửa sổ hiện “Chưa có lịch sử thao tác nào.” / • Chức năng này không gắn quyền, theo quy ước chung của mọi màn danh sách.
+[normal] 2.9.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/device-errors 
+[normal] Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 15: Cửa sổ Lịch sử thay đổi của một hạng mục 
+[normal] 2.9.3 Mô tả chi tiết giao diện 
+<<TABLE 29>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Tiêu đề cửa sổ | Label | Hiển thị | Lịch sử thay đổi | Kèm dòng phụ ghi loại đối tượng và tên hạng mục.
+  | 2 | Danh sách thay đổi | Table/Grid | Read-only | Theo dữ liệu | Sắp xếp mới nhất ở trên cùng.
+  | 3 | Giá trị cũ và giá trị mới | Text | Read-only | Theo dữ liệu | Hiển thị hai vế cho từng trường đã đổi.
+  | 4 | Trạng thái rỗng | Label | Hiển thị | Ẩn | Hiện “Chưa có lịch sử thao tác nào.” khi bản ghi chưa từng sửa.
+  | 5 | Nút Đóng | Button | Enable | Hiển thị | Đóng cửa sổ.
+[normal] 2.9.4 Danh sách event và xử lý event 
+<<TABLE 30>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Chọn Lịch sử trong nút ba chấm | Click | After: / – Mở cửa sổ và nạp danh sách thay đổi theo thứ tự mới nhất trước.
+  | 2 | Bấm Đóng | Click | After: / – Đóng cửa sổ; danh sách phía sau giữ nguyên bộ lọc và trang.
+[Heading 1] Phần 4. Quy tắc nghiệp vụ 
+[normal] BR-01 — Một quyền duy nhất cho cả xem và thao tác 
+[normal] Màn hình dùng đúng một quyền “Quản lý danh mục công việc - lỗi thiết bị”, không tách quyền xem riêng. 
+[normal] Người không có quyền này không thấy mục menu và không truy cập được bằng đường dẫn. 
+[normal] Riêng chức năng Xem lịch sử thay đổi không gắn quyền, theo quy ước chung của mọi màn danh sách. 
+[normal] BR-02 — Trùng tên xét theo TỪNG LOẠI 
+[normal] Tên hạng mục không được trùng TRONG CÙNG MỘT LOẠI công việc / lỗi. 
+[normal] Hai loại khác nhau ĐƯỢC PHÉP có hạng mục trùng tên — ví dụ “Kiểm tra cầu nâng” tồn tại đồng thời ở loại Lỗi đã xác định và loại Tư vấn, khảo sát. 
+[normal] Vì vậy khi đổi Loại của một hạng mục, hệ thống kiểm tra lại trùng tên trong loại mới. 
+[normal] Khi sửa, bản ghi đang sửa được loại khỏi phép kiểm tra trùng. 
+[normal] BR-03 — Điều kiện hiển thị của từng nút trên cột Hành động 
+[normal] Nút Sửa: chỉ hiện khi có quyền VÀ bản ghi đang Hoạt động. 
+[normal] Nút Xóa: chỉ hiện khi có quyền VÀ bản ghi đang Hoạt động VÀ chưa phát sinh chứng từ. 
+[normal] Nút Khóa / Mở khóa: chỉ hiện khi có quyền; nhãn đổi theo trạng thái hiện tại. 
+[normal] Nút In và Lịch sử: luôn hiện, không phụ thuộc trạng thái hay quyền. 
+[normal] Bản ghi đã Khóa vì thế chỉ còn ba thao tác: Mở khóa, In, Lịch sử. 
+[normal] Quy ước chung của dự án: nút không dùng được thì ẩn hẳn, không hiện rồi làm mờ. Điều kiện hiện/ẩn ở màn danh sách phải khớp với màn chi tiết. 
+[normal] BR-04 — Trường để trống thì hệ thống tự tính 
+[normal] Công kỹ thuật để trống → tính tự động từ Định mức công. 
+[normal] Đơn giá bán để trống → tính tự động theo công thức của hệ thống. 
+[normal] Hệ số giá bán dịch vụ và Đơn giá công kỹ thuật để trống → lấy theo cấu hình của công ty người dùng đang đăng nhập. 
+[normal] Người dùng nhập tay thì giá trị nhập tay được ưu tiên. 
+[normal] BR-05 — Ràng buộc của các bảng con 
+[normal] Bảng “Áp dụng cho thiết bị” BẮT BUỘC có ít nhất một dòng. 
+[normal] Bảng “Vật tư thay thế” không bắt buộc. 
+[normal] Bảng “Dịch vụ sửa chữa kèm theo” không bắt buộc, NHƯNG mỗi dòng đã thêm thì phải nhập đủ cả Giá vốn và Giá dịch vụ; bỏ trống sẽ bị chặn tại đúng ô đó. 
+[normal] BR-06 — Khóa không phải Xóa 
+[normal] Khóa chỉ đổi trạng thái, không xóa dữ liệu; hạng mục vẫn nằm trong danh mục. 
+[normal] Hạng mục đã Khóa không chọn được khi lập báo giá hoặc phiếu sửa chữa mới. 
+[normal] Hạng mục đã phát sinh chứng từ không xóa được — dùng Khóa thay thế. 
+[normal] BR-07 — Lịch sử thay đổi sắp xếp mới nhất trước 
+[normal] Mọi thao tác sửa và đổi trạng thái đều sinh dòng lịch sử. 
+[normal] Danh sách lịch sử luôn sắp xếp MỚI NHẤT Ở TRÊN CÙNG. 
+[normal] Mỗi dòng nêu trường đã đổi, giá trị cũ, giá trị mới, người thực hiện và thời điểm. 

@@ -1,0 +1,56 @@
+from _form import *
+def go(page):
+    page.goto(BASE + '/assign/prospective-projects/add', wait_until='domcontentloaded')
+    page.wait_for_selector('text=Thông tin khách hàng', timeout=180000); page.wait_for_timeout(4000)
+with browser_page(height=1480) as page:
+    go(page)
+    page.screenshot(path=S + '05-tao-moi.png')
+    clip(page, page.get_by_text('Thêm nhanh khách hàng').first, S + 'icon_themnhanhkh.png')
+    try:
+        page.get_by_role('button', name='Lưu', exact=True).click(); page.wait_for_timeout(3500)
+        page.evaluate('window.scrollTo(0,0)'); page.wait_for_timeout(800)
+        page.screenshot(path=S + '05f-loi.png')
+    except Exception as e: print('loi', e)
+    go(page)
+    page.get_by_placeholder('Nhấn vào đây để chọn thông tin khách hàng').first.click(); page.wait_for_timeout(4000)
+    page.screenshot(path=S + '06-chon-kh.png')
+    page.get_by_placeholder('Nhập tên / mã khách hàng').fill('29TPHXHO-1'); page.keyboard.press('Enter'); page.wait_for_timeout(3500)
+    page.locator('#choose-erp-customer tbody tr', has_text='29TPHXHO-1').first.click(); page.wait_for_timeout(5000)
+    page.screenshot(path=S + '05a-da-chon-kh.png')
+    try:
+        page.get_by_text('Thêm nhanh liên hệ').first.click(); page.wait_for_timeout(1200)
+        clip(page, page.get_by_text('Thêm nhanh liên hệ').first, S + 'icon_themlienhe.png')
+        page.screenshot(path=S + '08-them-lien-he.png')
+        page.get_by_role('button', name='Hủy').first.click(); page.wait_for_timeout(800)
+    except Exception as e: print('lh', e)
+    try:
+        page.get_by_text('KH thương mại dịch vụ').first.click(); page.wait_for_timeout(2500)
+        page.screenshot(path=S + '05b-kh-tmdv.png')
+        page.get_by_text('KH thương mại dịch vụ').first.click(); page.wait_for_timeout(1500)
+    except Exception as e: print('tmdv', e)
+    try:
+        f = field(page, 'Ứng dụng'); f.locator('.select2-selection').first.click(); page.wait_for_timeout(1000)
+        page.locator('.select2-container--open .select2-results__option').nth(0).click(); page.wait_for_timeout(2500)
+        page.screenshot(path=S + '05g-ung-dung.png')
+        page.get_by_role('button', name='Xem giải pháp').click(); page.wait_for_timeout(5000)
+        page.screenshot(path=S + '09-ds-giai-phap.png')
+        page.keyboard.press('Escape'); page.wait_for_timeout(1000)
+    except Exception as e: print('app', e)
+    try:
+        page.get_by_role('button', name='Thêm phòng').click(); page.wait_for_timeout(1500)
+        page.screenshot(path=S + '05e-them-phong.png')
+    except Exception as e: print('phong', e)
+    go(page)
+    try:
+        choose(page, 'Loại dự án', 'Dự án cha'); page.wait_for_timeout(2000)
+        page.screenshot(path=S + '05c-du-an-cha.png')
+    except Exception as e: print('cha', e)
+    go(page)
+    try:
+        choose(page, 'Loại dự án', 'Dự án con'); page.wait_for_timeout(2000)
+        page.screenshot(path=S + '05d-du-an-con.png')
+    except Exception as e: print('con', e)
+    go(page)
+    page.get_by_text('Thêm nhanh khách hàng').first.click(); page.wait_for_timeout(4000)
+    page.screenshot(path=S + '07-them-nhanh-kh.png')
+    print('done')

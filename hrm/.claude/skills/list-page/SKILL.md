@@ -70,6 +70,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   Verify 21/09/2026 (khi chuẩn còn là 36px) phát hiện 4 lỗi cùng một gốc: CSS của `.ff` **thua specificity** CSS riêng của từng control. Đã vá trong `V2BaseFloatingField`, nhưng nhớ nguyên tắc khi thêm control mới:
   - Control nào cũng tự khai chiều cao bằng selector nặng + `!important` (`div.v2-select.v2-select--sm …` 7 class, `div.v2-datepicker__wrapper div.v2-datepicker--sm … input.mx-input` 5 class + 3 thẻ). Muốn đè phải viết selector **nặng hơn**, `!important` thôi KHÔNG đủ.
   - `V2BaseSelectRemote` / `V2BaseSelect` đặt trong slot `#field-*` **bắt buộc truyền `height` đúng bằng `--ff-h` (nay là `32px`)** — cùng giá trị với mặc định `--sm` của control nên hiện tại không lệch, nhưng vẫn khai để ô không trôi theo nếu một trong hai bên đổi số (đã dính lệch hàng ở 9 slot của 7 màn hồi chuẩn còn 36px).
+  - ⚠️ Ô **chip / chọn nhiều** (`.ff--tags`) phải kiểm ở CẢ 3 trạng thái: rỗng, có 1 chip (nhãn đã float), chip tràn dòng. Chỉ đo lúc rỗng là bỏ sót — bản 22/09/2026 từng ra 32px lúc rỗng nhưng 38px khi có chip, vì `padding-top: 7px` lúc float cộng với chip select2 cao 22px. Đã vá bằng 3 rule trong `V2BaseFloatingField` (chip 18px, ô tìm inline 20px, `.select2-container` `display: block` để bỏ 0.56px baseline).
   - Ô **chọn nhiều** (`multiple: true`) có 3 bẫy: select2 tự vẽ **viền riêng** → viền đôi với vỏ `.ff--tags`; khung trong cao 32px → ô ra 42px; khối chip có `line-height: 34px` thừa. Cả 3 đã xử lý sẵn trong `V2BaseFloatingField`.
   - Ô chip lúc nhãn đã float cần `padding-top: 9px` — nội dung ô chip neo mép trên nên nhãn float (thò xuống ~7px dưới viền) sẽ **đè lên chip hàng đầu**.
   - **Tự kiểm bằng trình duyệt** (dán vào console, phải trả về mảng rỗng):
@@ -245,7 +246,7 @@ grep -rLn "Xuất Excel" --include=index.vue pages/<phân hệ> | xargs grep -l 
     phiếu"), `pages/finance/bill-payment-requests/index.vue` và
     `pages/finance/prepick-cancel-requests/index.vue` ("Không duyệt").
 - Nút **Khóa / Mở khóa KHÔNG để trong ô Trạng thái** — đưa về cột Hành động.
-- Cột Hành động KHÔNG đưa vào modal "Cấu hình cột hiển thị" (không cho ẩn / kéo đổi chỗ) → khai riêng, đừng bỏ vào `allColumns`.
+- Cột Hành động: **mặc định đứng cuối**, khai trong `allColumns` với `locked: true`. Trong popup "Cấu hình cột hiển thị" user **KÉO ĐỔI VỊ TRÍ được nhưng KHÔNG ẨN được** (chốt 2026-10-02) — `columnCustomizationMixin` tự đổi `locked` của cột `actions` thành `required`, màn không phải khai gì thêm.
 - **MỌI màn danh sách BẮT BUỘC có hành động "Lịch sử"** (chốt 2026-08-15) — `{ key: 'history',
   title: 'Lịch sử', icon: 'ri-history-line' }`, nằm trong menu `⋮`, **KHÔNG gắn permission riêng**
   (ai vào được màn thì xem được). Áp cho cả màn danh mục nhỏ nhất (tiền tệ, quốc gia, phường/xã…).
@@ -289,6 +290,35 @@ Thuộc tính mỗi action: `key`, `title`, `icon`, `to?`, `danger?`, `interacta
 **Cờ quyền** đi qua `visible` và phải fail-closed (mặc định `false`, xem CLAUDE.md) — không hard-code `true`.
 
 **Gotcha đã xử lý sẵn trong component:** bảng có `overflow` nên menu để trong ô sẽ bị cắt → component tự `appendChild` menu ra `document.body` và định vị `position: fixed` theo toạ độ nút `⋮`. Đừng bọc menu vào thẻ có `transform`.
+
+## 2b. Màn danh sách V2 trong layout MENU NGANG — xử lý RIÊNG, không sửa base (chốt 2026-09-26)
+
+hrm-client có **2 kiểu khung** màn, cách lo khoảng cách đầu trang khác nhau:
+
+| Khung | Nhận biết | Tiêu đề trang do ai vẽ |
+|---|---|---|
+| **Sidebar** (phân hệ mới: assign, finance, customer-care…) | `layout: 'assign'`/`'subsystem'`… — menu dọc bên trái | Layout tự vẽ từ `PageTitleMixin` (`pageTitle` trong store) |
+| **Menu ngang** (chấm công, ca làm việc, quản lý đơn… — `layouts/default.vue`, `Topbar` phía trên) | Không khai `layout`, route `/timesheet/...` | **Màn tự vẽ** bằng `<PageHeader :title>` (`components/Page-header.vue`) — layout KHÔNG vẽ, `PageTitleMixin` ở layout này không hiện gì |
+
+Màn V2 (`V2BaseSmartFilterPanel` / `V2BaseFilterPanel` + `V2BaseDataTable`) viết theo khuôn sidebar mà đặt vào layout menu ngang thì **thiếu dòng tiêu đề → khối "Bộ lọc danh sách" dính sát thanh menu**, lệch hẳn các màn chấm công bên cạnh (vd `/timesheet/attendance`, `/timesheet/timeworking/working-shift`).
+
+**Cách làm (chỉ trong màn đó):**
+```vue
+<template>
+    <div class="topmenu-v2-list">
+        <PageHeader title="Lịch sử phân ca" />   <!-- tiêu đề + khoảng cách đầu trang y như màn menu ngang khác -->
+        <div class="v2-styles">
+            <V2BaseSmartFilterPanel ... />
+            <V2BaseDataTable ... />
+        </div>
+    </div>
+</template>
+```
+- KHÔNG bọc thêm `container-fluid` (layout đã có) và bỏ `min-vh-100 d-flex justify-content-center pt-2` của khuôn sidebar — thừa padding làm lệch mép trái so với tiêu đề.
+- **CẤM sửa `V2BaseFilterPanel` / `V2BaseSmartFilterPanel` / `v2-styles.scss` để thêm margin-top** — base đang dùng cho ~70 màn sidebar, thêm khoảng ở base là đẩy lệch toàn bộ màn sidebar. Khoảng cách của layout menu ngang do `PageHeader` lo.
+- Vẫn giữ `PageTitleMixin` nếu màn còn được mở ở layout sidebar (không hại gì); tiêu đề `head()` giữ nguyên.
+- Tự kiểm: chụp màn mới cạnh 1 màn chấm công cùng menu — tiêu đề cùng toạ độ, mép trái card thẳng mép trái tiêu đề.
+- Màn mẫu: `pages/timesheet/timeworking/shift-history/index.vue`.
 
 ## 3. Cột Mã + Tên: tách 2 cột, MÃ là link
 
@@ -968,8 +998,8 @@ không mở được các cột còn lại.
 
 Dùng mixin chung `utils/mixins/columnCustomizationMixin.js` (khai `columnScreenKey` + đổi computed cột của màn thành `allColumns`), KHÔNG tự viết lại logic merge/lưu.
 
-- **Cột bắt buộc khai `locked: true`** — chỉ STT, cột Mã (định danh) và Hành động. Cột Tên và mọi cột nghiệp vụ khác để user tự ẩn/hiện + kéo thả. Cột `locked` **vẫn liệt kê trong popup** để user thấy đủ bộ cột của bảng, nhưng bị **xám + tick sẵn**, không bỏ tích và không kéo thả được (modal tự xử lý qua `column-row--locked` + `draggable=".column-row--free"`).
-- **Thứ tự trong popup phải khớp thứ tự trên bảng**: STT / Mã ở đầu, **Hành động ở CUỐI**. Mixin lo việc này bằng computed `pinnedColumns` — ghim cột `locked` về đúng vị trí gốc trong `allColumns` rồi mới đổ ra cả popup lẫn bảng.
+- **Cột bắt buộc khai `locked: true`** — chỉ STT, cột Mã (định danh) và Hành động. Riêng Hành động được mixin hạ thành `required`: tick sẵn, không bỏ tích, nhưng **kéo đổi vị trí được** (chốt 2026-10-02). Cột Tên và mọi cột nghiệp vụ khác để user tự ẩn/hiện + kéo thả. Cột `locked` **vẫn liệt kê trong popup** để user thấy đủ bộ cột của bảng, nhưng bị **xám + tick sẵn**, không bỏ tích và không kéo thả được (modal tự xử lý qua `column-row--locked` + `draggable=".column-row--free"`).
+- **Thứ tự trong popup phải khớp thứ tự trên bảng**: STT / Mã ở đầu, **Hành động mặc định ở CUỐI** (user kéo đi đâu thì bảng theo đó; cấu hình cũ chưa có cột này thì mixin đặt nó ở cuối). Mixin lo việc này bằng computed `pinnedColumns` — ghim cột `locked` về đúng vị trí gốc trong `allColumns` rồi mới đổ ra cả popup lẫn bảng.
   ⚠️ Không đổ thẳng `mergedColumns` ra popup: nó giữ **thứ tự đã lưu của user**, nên cột mới thêm (vd `actions` lần đầu vào popup) bị chèn cạnh hàng xóm gần nhất và hiện ở **giữa** danh sách.
 
 ## 6. Bộ cột hiện MẶC ĐỊNH
@@ -1276,7 +1306,7 @@ hàng chục cột thừa, user phải tự xoá cột trong Excel.
 
 | Lớp | Dùng cái gì |
 | --- | --- |
-| **FE popup** | `components/modal/export-fields-modal.vue` (đã có, KHÔNG viết popup mới) |
+| **FE popup** | `components/modal/export-fields-modal.vue` (đã có, KHÔNG viết popup mới) — danh sách checkbox + kéo thả `vuedraggable` như popup "Tuỳ chỉnh cột", **thứ tự dòng = thứ tự cột trong file** (đổi 2026-09-22, trước đó là select2 multiple phải bỏ tick rồi tick lại mới đổi được thứ tự) |
 | **FE logic** | mixin `utils/mixins/exportFieldsMixin.js` — lo mở popup, nhớ loại file, nhận cột user tick |
 | **BE cột** | `App\ExcelExport\ExportColumnRegistry::COLUMNS['<màn>']` = `[key => nhãn]` — nguồn DUY NHẤT cho cả popup lẫn header file |
 | **BE xuất** | `App\ExcelExport\DynamicExport` + view chung `resources/views/exports/dynamic.blade.php` — cột động, KHÔNG viết `XxxExport` + blade cứng cột cho từng màn |
@@ -1291,7 +1321,7 @@ computed: {
     exportFields() { return [{ id: 'name', name: 'Tên cấp' }, /* … */] },
 },
 methods: {
-    // mixin gọi lại sau khi user chọn; `fields` theo ĐÚNG thứ tự tick
+    // mixin gọi lại sau khi user chọn; `fields` theo ĐÚNG thứ tự dòng user sắp trong popup
     async runExport(type, fields) { /* thêm `params.fields = fields.join(',')` rồi gọi API */ },
 },
 ```
@@ -1609,7 +1639,7 @@ tableColumns() {
 
 Lọc ở page chứ KHÔNG thêm khái niệm "cột khoá" vào `column-customization-modal.vue` — component đó đang phục vụ 20+ màn.
 
-Cột **Hành động** cũng không vào popup, và luôn chốt ở cuối bảng.
+> ⚠️ Đoạn code trên là cách CŨ — màn mới dùng `columnCustomizationMixin` (mục 5): cột Hành động có trong popup, kéo đổi vị trí được nhưng không ẩn được.
 
 ## Cột nào được sort
 

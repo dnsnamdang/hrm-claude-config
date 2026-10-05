@@ -1,0 +1,164 @@
+[
+ {
+  "slug": "device-errors",
+  "ten": "Danh mục công việc, lỗi thiết bị",
+  "drive_name": "HDSD_Danh mục công việc, lỗi thiết bị.docx",
+  "drive_id": "1-4RrKe0vTOApF3ho6mXEW_vDWO7GB6p8",
+  "drive_modtime": "2026-09-28T02:31:52.434Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "levels",
+  "ten": "Cấp dịch vụ bảo dưỡng",
+  "drive_name": "HDSD_Cấp dịch vụ bảo dưỡng.docx",
+  "drive_id": "1JtmnGa0M32KlosD9to4xP72B3IzLcONp",
+  "drive_modtime": "2026-09-28T02:22:51.845Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "note-maintenances",
+  "ten": "Danh mục ghi chú kiểm tra bảo dưỡng",
+  "drive_name": "HDSD_Danh mục ghi chú kiểm tra bảo dưỡng.docx",
+  "drive_id": "1jOQZ8kyZqaNSUNqWOjIk9rbmrsGkqMx8",
+  "drive_modtime": "2026-09-28T03:06:15.492Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "costs",
+  "ten": "Danh mục dịch vụ sửa chữa và chi phí khác",
+  "drive_name": "HDSD_Danh mục dịch vụ sửa chữa và chi phí khác.docx",
+  "drive_id": "1U9IDBvUNkrz_2dudqA6syne8FTGGfbR1",
+  "drive_modtime": "2026-09-28T03:22:46.663Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "service-price-config",
+  "ten": "Cập nhật nhanh giá dịch vụ",
+  "drive_name": "HDSD_Cap nhat nhanh gia dich vu.docx",
+  "drive_id": "1Tpu0KzJ8DmdHU7uVYaaOCjPBrwMNrrO6",
+  "drive_modtime": "2026-09-26T04:30:28.223Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "serials",
+  "ten": "Danh mục serial thiết bị làm dịch vụ",
+  "drive_name": "HDSD_Danh mục serial thiết bị làm dịch vụ.docx",
+  "drive_id": "13VcG9vrLW_UpXTC_E74Wl0UOtAVb8d3D",
+  "drive_modtime": "2026-09-28T04:21:43.218Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "districts",
+  "ten": "Danh mục Quận/Huyện",
+  "drive_name": "HDSD_Danh mục Quận-Huyện.docx",
+  "drive_id": "1RkHdRaaa6Ro2bjcjA37t44j7zEBMxho2",
+  "drive_modtime": "2026-09-28T08:06:26.651Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "wards",
+  "ten": "Danh mục Phường/Xã",
+  "drive_name": "HDSD_Danh mục Phường-Xã.docx",
+  "drive_id": "1uBFg7iRhhiX4itJgi6lb9EkbBuU4TwIi",
+  "drive_modtime": "2026-09-26T04:58:49.627Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "hamlets",
+  "ten": "Danh mục Đường/Phố",
+  "drive_name": "HDSD_Danh mục Đường-Phố.docx",
+  "drive_id": "1QybR1Rp-HMGNSK86cz3SHYKxSxGqkGQF",
+  "drive_modtime": "2026-09-28T02:45:26.956Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "customers",
+  "ten": "Danh mục khách hàng",
+  "drive_name": "HDSD_Danh muc khach hang.docx",
+  "drive_id": "1kHrQtyUWDS01S8SaGmpXnBJdxtjfFZGD",
+  "drive_modtime": "2026-09-28T08:43:28.446Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "accounts",
+  "ten": "Danh mục  tài khoản",
+  "drive_name": "HDSD_Danh muc tai khoan.docx",
+  "drive_id": "1rzFUw1JdG7QDlCA8R28CM1NbdgSv3Aq1",
+  "drive_modtime": "2026-09-28T08:09:00.227Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "currencies",
+  "ten": "Danh mục tiền tệ",
+  "drive_name": "HDSD_Danh mục tiền tệ.docx",
+  "drive_id": "1AXQqcyCYDEN8oFeXHUzMGKLhXQuy1eOV",
+  "drive_modtime": "2026-09-28T04:52:50.770Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "banks",
+  "ten": "Danh mục ngân hàng",
+  "drive_name": "HDSD_Danh mục ngân hàng.docx",
+  "drive_id": "1Pc5jTtdhaPt0dst6zIILVV4rXINl5S7z",
+  "drive_modtime": "2026-09-28T05:03:43.953Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "account-banks",
+  "ten": "Danh mục tài khoản ngân hàng",
+  "drive_name": "HDSD_Danh mục tài khoản ngân hàng.docx",
+  "drive_id": "1R38aOBPQsmDPmjjrRzx-KiMthn35BB4m",
+  "drive_modtime": "2026-09-28T05:04:25.370Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "works",
+  "ten": "Danh mục vụ việc",
+  "drive_name": "HDSD_Danh mục vụ việc.docx",
+  "drive_id": "1PLi7ECfSyRXfsdkAsIQcs1tt_CSIwRIV",
+  "drive_modtime": "2026-09-28T02:44:54.486Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "cost-debts",
+  "ten": "Danh mục mã phí",
+  "drive_name": "HDSD_Danh mục mã phí.docx",
+  "drive_id": "13oF-BNgXF4KL_5dc-7Wt95HJG3Ves3Q5",
+  "drive_modtime": "2026-09-28T02:45:05.347Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "source-capitals",
+  "ten": "Danh mục nguồn vốn",
+  "drive_name": "HDSD_Danh mục nguồn vốn.docx",
+  "drive_id": "1pJDCWTAaF8HPhmgo9O_T3K3GoVSp5Quk",
+  "drive_modtime": "2026-09-28T02:45:16.128Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ },
+ {
+  "slug": "services-package",
+  "ten": "Danh mục gói bảo dưỡng",
+  "drive_name": "HDSD_Danh mục gói bảo dưỡng.docx",
+  "drive_id": "1_fYx-BuCywlGcU0B9K6bqweNWSwjDazN",
+  "drive_modtime": "2026-09-26T03:15:17.292Z",
+  "dup_ids": [],
+  "dup_modtime": []
+ }
+]

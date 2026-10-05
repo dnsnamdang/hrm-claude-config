@@ -371,3 +371,5 @@ chưa đụng vì user yêu cầu ưu tiên khách hàng trước.
 Vừa hoàn thành: chứng minh bằng thực nghiệm luồng KH chạy được khi KHÔNG có `DB_CONNECTION_SECOND`.
 Bước tiếp theo: chuyển nốt 18 file raw `DB::connection('mysql2')` (báo giá/BOM/hàng hoá) để bỏ hẳn connection.
 Blocked:
+
+- [x] Fix prod 25/09: sửa KH 232404 lỗi FK `customer_has_groups.created_by` — `TpCustomer::syncGroups()` nhận employees.id, chỉ thêm/xoá nhóm thay đổi (giữ người tạo gốc)

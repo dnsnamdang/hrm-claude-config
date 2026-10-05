@@ -27,6 +27,19 @@ Tài khoản chụp: namdangit@gmail.com — https://dev-hrm.eteksofts.com/assig
 - [x] P8 thông báo tự động | P9 FAQ
 - [x] Build + verify: 12 Heading 1, 11 hình + 11 caption, 13 bảng, updateFields=true, broken=0, ~1.4MB
 
+## Phase 4: SRS
+- [x] SRS form chuẩn 2026-09-24 — `SRS - Báo giá chờ duyệt.docx` + `gen_srs.py` (10 chức năng, ảnh `bg_choduyet_shots/`)
+
+## Phase 5: Sửa 4 lỗi phát hiện khi viết SRS (develop)
+- [x] BE: thông báo "Duyệt & chuyển BGĐ" chỉ gửi BGĐ duyệt giá thuộc đúng công ty báo giá (`QuotationService::bgdApproverInfoIds`, không sửa helper chung)
+- [x] BE: người duyệt mở được chi tiết / xuất file báo giá đang chờ mình duyệt dù thiếu V1–V4 (`QuotationService::applyPendingApprovalScope` dùng chung + `QuotationController::findViewableQuotation`)
+- [x] FE: Duyệt / Duyệt & chuyển BGĐ / BGĐ duyệt / Từ chối xong quay về danh sách nơi đi vào (`?from=pending-approval` → hàng chờ; lối khác → trang trước)
+- [x] FE: cột Tổng giá trị sau VAT ở màn chờ duyệt đổi `toLocaleString('vi-VN')` → `en-US`
+- [x] Test Playwright 8 case (4 tài khoản: namdangit, TP chỉ Q1, BGĐ chỉ Q2, không Q1/Q2) trên báo giá clone BG-TEST-* — đã dọn + khôi phục
+- [x] FE: nút Quay lại / quay về sau duyệt ở TAB MỚI ra trang trắng (`history.length` > 1 do about:blank) → đổi sang `beforeRouteEnter` + `hasPrevRoute` (copy pattern borrow-export-requests)
+- [x] SRS: tách 2.3 thành 2 chức năng Cài đặt bộ lọc / Tùy chỉnh cột (11 chức năng), chính tả Tùy/Xóa toàn tài liệu
+- [x] SRS: cập nhật gen_srs.py (BR-05, FR-05, thông báo BGĐ theo công ty, quay về danh sách, định dạng số) + sinh lại docx
+
 ### Checkpoint — 27/07/2026
 Vừa hoàn thành: HDSD_PheDuyet_BaoGiaChoDuyet.docx (9 phần + tổng quan).
 Đang làm dở: không
