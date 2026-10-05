@@ -34,3 +34,4 @@ Blocked:
 
 ## Testcase
 - [x] Viết 16 testcase (TC_15.001→016) cho task #10564 → `.plans/bom-aggregate-sort-by-created/testcase-issue-10564.csv` (+ script `.py`), đã chèn vào Google Sheet `Testcase _Quản lý dự án` tab `22.1 BOM list update` mục "XV. TỔNG HỢP BOM — SẮP XẾP..." (dòng 167–183)
+- [x] 24/09/2026: Viết lại 19 testcase (TC-BOM-SORT-01→19) theo khuôn khối UPDATE, chèn vào Google Sheet `Testcase _Quản lý dự án` tab `Update_3107_BomList` (gid 1896896388) dòng 231–250 "UPDATE TESTCASE 24/09- Task: …/issues/10564" — script `gen_testcase_update_3107.py`. (Bộ TC_15 cũ không thấy trong tab 22.1 nên thay bằng bộ này.)

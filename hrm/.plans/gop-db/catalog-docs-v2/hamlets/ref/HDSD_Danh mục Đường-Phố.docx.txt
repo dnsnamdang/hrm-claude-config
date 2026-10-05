@@ -1,0 +1,120 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục Đường/Phố) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Thuật ngữ sử dụng trong tài liệu 
+<<TABLE 1>>
+  | Thuật ngữ | Giải thích
+  | Đường/Phố | Cấp địa chỉ nhỏ nhất trong hệ thống, trực thuộc một Phường/Xã.
+  | Quy tắc Việt Nam | Khi Quốc gia là Việt Nam, ô Quận/Huyện/Thị xã bị ẩn và không phải nhập; địa chỉ đi thẳng từ Tỉnh/TP xuống Phường/Xã.
+  | Xóa | Trên màn này, xóa là chuyển bản ghi sang trạng thái ngừng sử dụng ở phía máy chủ. Bản ghi biến mất khỏi danh sách nhưng dữ liệu không mất hẳn.
+[Heading 2] 2. Cập nhật tài liệu 
+<<TABLE 2>>
+  | Phiên bản | Ngày | Người cập nhật | Nội dung
+  | 1.0 | 17/08/2026 | DNS Media | Lập mới cho màn Danh mục Đường/Phố.
+[Heading 2] 3. Giới thiệu chung 
+[normal] Danh mục Đường/Phố là nơi khai báo và quản lý danh sách đường/phố dùng chung cho toàn hệ thống. Dữ liệu của màn này là nguồn cho các ô địa chỉ ở mọi màn nghiệp vụ khác, nên mỗi thay đổi ở đây đều ảnh hưởng tới nhiều nơi. 
+[Heading 2] 4. Quyền sử dụng 
+[normal] Màn hình này hiện KHÔNG yêu cầu quyền riêng. Mọi người dùng đã đăng nhập đều mở được màn hình và thực hiện được đầy đủ các thao tác: Thêm mới, Chỉnh sửa, Xóa và Xem lịch sử. 
+[Heading 1] PHẦN 1: TRUY CẬP VÀ BỐ CỤC MÀN HÌNH 
+[Heading 2] 1. Truy cập màn hình 
+[normal] Đăng nhập hệ thống, vào menu Danh mục → Địa lý → Đường/Phố. Hệ thống hiển thị danh sách đường/phố hiện có. 
+[normal]  [IMG]
+[normal] Hình 1: Màn hình Danh mục Đường/Phố khi mới truy cập 
+[Heading 2] 2. Bố cục màn hình 
+[normal] Màn hình chia làm ba khu vực từ trên xuống: 
+[normal] Khu vực tìm kiếm và lọc — ô tìm kiếm nhanh, các ô lọc, nút Tìm kiếm và Làm mới. 
+[normal] Thanh công cụ — nút Tạo mới. 
+[normal] Bảng danh sách — các cột thông tin, cột Hành động ở cuối, và phân trang bên dưới. 
+[Heading 2] 3. Các cột của bảng danh sách 
+<<TABLE 3>>
+  | Cột | Nội dung
+  | STT | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | Tên đường/phố | Tên đầy đủ. Luôn hiển thị, sắp xếp được.
+  | Phường/xã | Phường/xã mà đường/phố trực thuộc.
+  | Quận/Huyện/Thị xã | Mặc định ẩn.
+  | Tỉnh/TP | Tỉnh/TP tương ứng.
+  | Quốc gia | Mặc định ẩn.
+  | Ngày cập nhật | Mặc định ẩn, sắp xếp được.
+  | Người tạo | Người đã thêm bản ghi.
+  | Ngày tạo | Thời điểm thêm, sắp xếp được.
+  | Hành động | Sửa, Xóa và Lịch sử.
+[Heading 2] 4. Cột Hành động 
+[normal] Trên mỗi dòng, cột Hành động có ba nút: biểu tượng bút chì để sửa, biểu tượng thùng rác để xóa, và biểu tượng đồng hồ để xem Lịch sử thay đổi. 
+[normal] Màn hình này không có thao tác Khóa / Mở khóa. 
+[Heading 2] 5. Phân trang và sắp xếp 
+[normal] Cuối bảng có ô hiển thị tổng số bản ghi. Con số này là tổng số đường/phố khớp bộ lọc đang áp dụng, không phải tổng toàn danh mục. 
+[normal] Bấm vào tiêu đề cột có mũi tên để sắp xếp. Bấm lần thứ hai để đảo chiều. Thứ tự sắp xếp được giữ nguyên khi chuyển trang. 
+[normal] Người dùng đổi được số dòng mỗi trang. Sau khi đổi, hệ thống tự quay về trang 1. 
+[Heading 1] PHẦN 2: TÌM KIẾM VÀ LỌC DANH SÁCH 
+[Heading 2] 1. Các ô tìm kiếm và lọc 
+<<TABLE 4>>
+  | Ô | Cách dùng
+  | Ô tìm kiếm nhanh | Tìm theo tên đường/phố.
+  | Tỉnh/TP | Chọn Tỉnh/TP sẽ lọc lại danh sách của ô Phường/xã.
+  | Phường/xã | Bị xóa trắng khi đổi Tỉnh/TP.
+[Heading 2] 2. Cách áp dụng 
+[normal] Nhập hoặc chọn xong các tiêu chí, bấm Tìm kiếm. Các tiêu chí kết hợp với nhau theo kiểu VÀ — chỉ bản ghi thỏa đồng thời tất cả các tiêu chí mới hiện ra. 
+[normal] Bấm Làm mới để xóa toàn bộ tiêu chí; danh sách nạp lại đầy đủ ngay lập tức. 
+[normal] Lưu ý: ô Tỉnh/TP và ô Phường/xã phụ thuộc nhau. Đổi Tỉnh/TP thì ô Phường/xã bị xóa trắng và nạp lại theo tỉnh mới. 
+[Heading 1] PHẦN 3: THÊM MỚI ĐƯỜNG/PHỐ 
+[Heading 2] 1. Mở cửa sổ thêm mới 
+[normal] Bấm nút Tạo mới trên thanh công cụ. Hệ thống mở cửa sổ nhập liệu với mọi ô để trống. 
+[normal]  [IMG]
+[normal] Hình 2: Cửa sổ Tạo đường/phố 
+[Heading 2] 2. Các trường cần nhập 
+<<TABLE 5>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị ban đầu | Ghi chú
+  | Tên đường/phố | Textbox | Có | Trống | Không được trùng trong cùng một Phường/Xã. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Tên đường/phố này đã tồn tại trong phường/xã”.
+  | Quốc gia | Dropdown | Có | Việt Nam | Quyết định ô Quận/Huyện/Thị xã có hiện hay không.
+  | Tỉnh/TP | Dropdown | Có | Trống | Chỉ hiện Tỉnh/TP thuộc quốc gia đã chọn.
+  | Quận/Huyện/Thị xã | Dropdown | Có khi Quốc gia khác Việt Nam | Ẩn | ẨN HẲN khi Quốc gia là Việt Nam; hiện và bắt buộc với mọi quốc gia khác.
+  | Phường/xã | Dropdown | Có | Trống | Bỏ trống báo “Bắt buộc phải nhập”.
+[Heading 2] 3. Quy tắc riêng khi chọn Quốc gia 
+[normal] Ô Quốc gia quyết định form có mấy ô: 
+[normal] Chọn Việt Nam — ô Quận/Huyện/Thị xã bị ẩn, không phải nhập. Địa chỉ đi thẳng từ Tỉnh/TP xuống Phường/xã. 
+[normal] Chọn quốc gia khác — ô Quận/Huyện/Thị xã hiện ra và bắt buộc phải chọn. 
+[normal]  [IMG]
+[normal] Hình 3: Cửa sổ Tạo đường/phố khi chọn quốc gia khác Việt Nam 
+[Heading 2] 4. Ba nút lưu và đóng 
+<<TABLE 6>>
+  | Nút | Tác dụng
+  | Lưu | Ghi bản ghi rồi đóng cửa sổ, quay về danh sách.
+  | Lưu và tiếp tục | Ghi bản ghi nhưng GIỮ cửa sổ mở và xóa trắng các ô, để anh/chị nhập tiếp bản ghi kế theo. Rất tiện khi cần thêm nhiều bản ghi liên tiếp.
+  | Đóng | Hủy bỏ, không ghi gì.
+[Heading 2] 5. Các lỗi thường gặp 
+[normal] Nếu còn thiếu sót, hệ thống báo lỗi đỏ ngay dưới ô tương ứng. Cửa sổ không đóng và dữ liệu đã nhập vẫn còn nguyên 
+<<TABLE 7>>
+  | Thông báo | Nguyên nhân và cách xử lý
+  | Bắt buộc phải nhập | Chưa nhập một trong các ô bắt buộc: Tên đường/phố, Quốc gia, Tỉnh/TP, Quận/Huyện/Thị xã, Phường/xã.
+  | Tên đường/phố này đã tồn tại trong phường/xã | Đã có đường/phố khác cùng tên trong cùng một Phường/Xã. Hãy kiểm tra lại danh sách trước khi thêm.
+[Heading 1] PHẦN 4: CHỈNH SỬA VÀ XÓA 
+[Heading 2] 1. Chỉnh sửa 
+[normal] Bấm biểu tượng bút chì ở dòng cần sửa. Cửa sổ mở ra giống hệt cửa sổ thêm mới, nhưng mọi ô đã điền sẵn dữ liệu hiện tại. 
+[normal] Các quy tắc bắt buộc và thông báo lỗi giống hệt phần thêm mới. 
+[normal] Sửa xong bấm Lưu. Mọi thay đổi đều được ghi vào Lịch sử kèm tên người dùng và thời điểm. 
+[Heading 2] 2. Xóa 
+[normal] Bấm biểu tượng thùng rác ở dòng cần xóa. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. 
+[normal]  [IMG]
+[normal] Hình 4: Hộp xác nhận xóa đường/phố 
+[normal] Bấm Xóa để xác nhận. Bản ghi biến mất khỏi danh sách. 
+[normal] Bấm Hủy nếu bấm nhầm. Không có gì thay đổi. 
+[normal] Nếu bản ghi đang được cấp địa chỉ bên dưới hoặc dữ liệu nghiệp vụ khác sử dụng, hệ thống sẽ từ chối xóa và nêu lý do. Khi đó người dùng cần xử lý dữ liệu liên quan trước. 
+[Heading 1] PHẦN 5: XEM LỊCH SỬ THAY ĐỔI 
+[normal] Mở lịch sử của một bản ghi từ cột Hành động. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Lịch sử thay đổi của đường/phố 
+[normal] Cửa sổ liệt kê mọi lần thay đổi của bản ghi đó, mới nhất ở trên cùng. Mỗi dòng cho biết: 
+[normal] Thời điểm thay đổi. 
+[normal] Loại thay đổi. 
+[normal] Người thực hiện, kèm mã nhân viên và phòng ban. 
+[normal] Trường nào đã đổi, giá trị cũ và giá trị mới. 
+[normal] Cửa sổ có bộ lọc riêng để thu hẹp danh sách khi bản ghi có nhiều lần thay đổi. 
+[normal] Bản ghi vừa được tạo, chưa sửa lần nào thì cửa sổ hiện “Chưa có lịch sử thao tác nào.”. 

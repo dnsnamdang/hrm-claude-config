@@ -2388,3 +2388,97 @@ Vừa hoàn thành: Phase 42 — thêm lọc created_by + nguồn firm_contracts
 Đang làm dở: không
 Bước tiếp theo: user đăng nhập bằng tài khoản có tạo hợp đồng (vd nhanntt.datd) rồi đối chiếu số dòng HRM ↔ ERP.
 Blocked:
+
+---
+
+## Phase 43 — Lỗi "Phải lớn hơn 0" không tự mất + font câu lệch tổng tiền (2026-09-30) @khoipv
+
+- [x] `AdjustDetailTable.vue` `moneyError()`: lỗi 422 của ô Số tiền (từ/đến) tự ẩn ngay khi giá trị
+      hiện tại > 0 (lỗi BE chỉ được xoá ở lần Lưu sau → trước đây gõ số đúng vẫn đỏ)
+- [x] Câu "Tổng số tiền điều chỉnh đến phải bằng số tiền điều chỉnh từ (thừa/còn thiếu …)" đổi từ
+      `div.invalid-feedback` sang `V2BaseError` cho cùng font/cỡ/màu/icon với "Phải lớn hơn 0"
+- [x] Verify: parse template (vue-template-compiler) + script (babel) sạch
+- [ ] User mở trình duyệt nghiệm thu (Ctrl+Shift+R)
+
+### Checkpoint — 2026-09-30 (Phase 43)
+Vừa hoàn thành: lỗi ô Số tiền tự ẩn realtime khi > 0; câu lệch tổng tiền dùng V2BaseError.
+Đang làm dở: không
+Bước tiếp theo: user nghiệm thu trên trình duyệt.
+Blocked:
+
+---
+
+## Phase 44 — Link xem hợp đồng trong 2 popup hợp đồng (2026-09-30) @khoipv
+
+- [x] `FastContractModal.vue` (Chọn nhanh): mã hợp đồng thành link qua `utils/contract-link.js`
+- [x] `ContractSearchModal.vue` (Chọn hợp đồng — DÙNG CHUNG 5 màn, user đồng ý đổi cả): mã hợp đồng
+      thành link, `@click.stop` để bấm link không chọn dòng
+- [x] HĐ mua NCC (5 bảng ERP, HRM chưa có màn chi tiết) + loại không nhận ra → giữ chữ trơn, KHÔNG sửa helper chung
+- [x] Verify: morph class thật của 4 loại HĐ bán (HRM Contract / OpeningContract / WrServiceContract /
+      FirmContract) khớp khoá của helper; parse template + script 2 file sạch
+- [ ] User mở trình duyệt nghiệm thu
+
+### Checkpoint — 2026-09-30 (Phase 44)
+Vừa hoàn thành: link mã hợp đồng trong popup Chọn nhanh + popup Chọn hợp đồng (dùng chung).
+Đang làm dở: không
+Bước tiếp theo: user nghiệm thu; nếu cần link HĐ mua → bổ sung ERP_ROUTES trong utils/contract-link.js (hàm chung, hỏi trước).
+Blocked:
+
+---
+
+## Phase 45 — Link cột "Số phiếu báo có" ở màn danh sách (2026-09-30) @khoipv
+
+- [x] `index.vue` slot `cell-billIncomeReportCode`: `nuxt-link` sang `/finance/bill-income-reports/{bill_income_report_id}`,
+      class `v2-cell-link` như cột Mã phiếu; thiếu id → chữ trơn. BE list resource đã trả sẵn id, không sửa BE
+- [x] Mở phiếu báo có ở TAB MỚI (`target="_blank"`) theo yêu cầu user
+- [x] Verify: đối chiếu DB — 0 phiếu có `bill_income_report_id` lệch mã với `bill_income_reports.code`; template parse sạch
+- [ ] User mở trình duyệt nghiệm thu
+
+### Checkpoint — 2026-09-30 (Phase 45)
+Vừa hoàn thành: link Số phiếu báo có ở danh sách.
+Đang làm dở: không
+Bước tiếp theo: user nghiệm thu.
+Blocked:
+
+---
+
+## Phase 46 — Excel chi tiết phiếu: logo quá to, cột hẹp, chữ ký sát nhau (2026-09-30) @khoipv
+
+- [x] Logo: `tableWidthPx()` cộng CẢ 14 cột (A→N) dù phiếu KH chỉ 8 cột → ảnh ~2.000px thò ra ngoài phiếu.
+      Chỉ cộng cột THẬT của layout (bản cuối: không trần, xem dòng dưới)
+- [x] Bề rộng cột theo layout (customer/supplier/supplier_fx) thay cho bộ cố định A..N — Khách hàng/NCC
+      40, Đơn hàng/Hợp đồng 30 ở CẢ 2 bên
+- [x] Chữ ký: chia 5 chức vụ trải hết bề ngang bảng theo bề rộng cột (trước: mỗi chức vụ 1 cột, dồn A→E)
+- [x] Verify: dựng file thật 3 layout (phiếu 8500 KH · 10306 NCC · 10307 NCC ngoại tệ) rồi đọc lại bằng
+      PhpSpreadsheet — logo 720x64px căn giữa (neo B1/C1/E1), cột KH/NCC 40 + HĐ 32 ở cả 2 bên,
+      5 chức vụ trải hết A→H / A→J / A→N; `php -l` sạch. Chỉ sửa nhánh Excel, bản in không đụng
+- [x] User báo logo 720px bé quá → trần về đúng 900px của skill export-excel mục 4b. Đo lại: 900x80px,
+      dòng 1 cao 60pt, căn giữa (neo B1/B1/D1, offset nằm trong bề rộng ô)
+- [ ] User mở file tải về nghiệm thu
+- [x] User: "bình thường logo rộng bằng phiếu" → BỎ trần 900px + căn giữa (trần đó là của file danh sách
+      ExcelJS, áp nhầm). Logo = đúng bề rộng phiếu, neo A1 như quy ước trait (user chốt 2026-08-25).
+      Đo lại: KH 1608px (= 8 cột) · NCC 1870px (= 10 cột) · NCC ngoại tệ 2338px (= 14 cột)
+
+### Checkpoint — 2026-09-30 (Phase 46)
+Vừa hoàn thành: Excel chi tiết phiếu — logo, bề rộng cột theo layout, dàn chữ ký.
+Đang làm dở: không
+Bước tiếp theo: user xuất thử 1 phiếu KH + 1 phiếu NCC để nghiệm thu.
+Blocked:
+
+### Checkpoint — 2026-09-30 (wrap up đợt fix Phase 43-46)
+Vừa hoàn thành: Phase 43 (validate Số tiền realtime + font câu lệch tổng) · Phase 44 (link hợp đồng 2 popup) · Phase 45 (link Số phiếu báo có, tab mới) · Phase 46 (Excel chi tiết: cột, chữ ký, logo rộng bằng phiếu).
+Đang làm dở: không — toàn bộ code xong, chưa commit/push.
+Bước tiếp theo: user nghiệm thu trên trình duyệt (Ctrl+Shift+R) + xuất Excel 1 phiếu KH / NCC / NCC ngoại tệ; màn Đề nghị thu tiền / Đề nghị thanh toán / Báo có / YC hạch toán bổ sung cũng có link hợp đồng mới trong popup Chọn hợp đồng — soi nhanh không vỡ luồng chọn dòng.
+Blocked:
+
+
+## Fix — Popup hợp đồng mua NCC lệch ERP (421 vs 418, ngày lập sai) (2026-10-01)
+ERP `SearchController::collectSupplierBuyContractRows()` (dùng chung cho popup chọn tay + chọn nhanh):
+4 nguồn (KHÔNG có `buy_service_contracts`), lọc trạng thái/loại từng nguồn, OR thêm hợp đồng đã có
+bút toán TK 3311 với NCC; cột Ngày lập = `created_at`. HRM đang lấy 5 nguồn không lọc + ưu tiên `sign_date`.
+- [x] BE: class mới `BillAdjustDeptBuyContractSource::union()` — builder UNION 4 nguồn sao y ERP
+- [x] BE: `BillIncomeRequestService::searchBuyContracts()` rẽ nhánh `usage = bill_adjust_dept_request` dùng nguồn mới (màn Đề nghị thu tiền NCC giữ nguyên)
+- [x] BE: `BillAdjustDeptFastPickService::supplierBuyContracts()` (Chọn nhanh) dùng nguồn mới
+- [x] Verify: tinker đếm NCC 29TPHPTH-1 theo logic ERP = logic mới, `00000271` ra ngày 08/08/2025
+  → Kết quả tinker DB local: 43 NCC, logic mới khớp vòng lặp ERP 43/43 (NCC 34 ETEK GREEN: 364 = 364, bản cũ 365);
+    `00000271` ra Ngày lập 08/08/2025. Màn Đề nghị thu tiền NCC (không gửi `usage`) giữ nguyên số cũ.

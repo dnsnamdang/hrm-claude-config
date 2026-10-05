@@ -1,6 +1,11 @@
-# Design — Siết quyền 2 màn danh mục (Nguyên nhân thất bại dự án · Lý do hủy cuộc họp)
+# Design — Siết quyền màn Danh mục nguyên nhân thất bại dự án
 
 Phụ trách: @khoipv · Nhánh: `fix-bug-11092026` (cả 2 repo) · Ngày: 14/09/2026
+
+Màn: `/assign/reason_project_failure` · Quyền 990 (Quản lý) / 1005 (Xem).
+
+> Màn **Lý do hủy cuộc họp** (`/assign/meeting_cancel_reason`) dựng cùng khuôn và dính đúng các lỗi
+> dưới đây; việc siết quyền màn đó theo dõi riêng ở `.plans/danh-muc-ly-do-huy-cuoc-hop/`.
 
 ## Vấn đề
 
@@ -43,21 +48,16 @@ Không migration, không quyền mới, không đụng hàm dùng chung.
 
 Chi tiết kiểm chứng: `plan.md` cùng thư mục.
 
-## Bổ sung 14/09/2026 — màn Lý do hủy cuộc họp
+## Bổ sung 14/09/2026 — nút Xuất Excel
 
-`/assign/meeting_cancel_reason` (quyền 1182 Quản lý / 1183 Xem) dựng cùng khuôn, dính đúng 2 lỗi
-trên, **cộng thêm** nút **Xuất Excel** không gate trong khi BE `/export` đòi quyền Quản lý — lỗi
-này màn nguyên nhân thất bại cũng có, đã sửa nốt.
+Rà sang màn Lý do hủy cuộc họp thì lộ thêm một chỗ hở mà màn này cũng có: nút **Xuất Excel** không
+gate, trong khi BE `GET /export` đòi quyền Quản lý.
 
-Quyết định thêm: **giữ BE `/export` chỉ nhận quyền Quản lý**, FE ẩn nút cho khớp. Lý do: 14/15 màn
-danh mục trong `Modules/Assign/Routes/api.php` đều gắn export bằng đúng quyền "Quản lý danh mục …";
-nới thành `Quản lý|Xem` là mở rộng quyền truy cập và lệch convention. Nếu nghiệp vụ muốn người chỉ
-Xem cũng xuất được thì sửa 1 dòng middleware — nhưng nên sửa đồng loạt cả 15 màn, không sửa lẻ.
+Quyết định: **giữ BE `/export` chỉ nhận quyền Quản lý**, FE ẩn nút cho khớp. Lý do: 14/15 màn danh
+mục trong `Modules/Assign/Routes/api.php` đều gắn export bằng đúng quyền "Quản lý danh mục …"; nới
+thành `Quản lý|Xem` là mở rộng quyền truy cập và lệch convention. Nếu nghiệp vụ muốn người chỉ Xem
+cũng xuất được thì sửa 1 dòng middleware — nhưng nên sửa đồng loạt cả 15 màn, không sửa lẻ.
 
 | Repo | File | Thay đổi |
 | --- | --- | --- |
-| `hrm-client` | `pages/assign/meeting_cancel_reason/index.vue` | 4 chỗ `v-if="canManage"` (Khoá, Sửa, Xoá, Xuất Excel) |
 | `hrm-client` | `pages/assign/reason_project_failure/index.vue` | thêm 1 chỗ `v-if="canManage"` (Xuất Excel) |
-| `hrm-api` | `Modules/Assign/Routes/api.php` | route `show` của `meeting_cancel_reasons` |
-
-`GET /meeting_cancel_reasons/getAll` giữ nguyên không gate — dropdown của `CancelMeetingModal.vue`.

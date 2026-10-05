@@ -38,3 +38,5 @@ Vừa hoàn thành: Code Phase 1-3 + verify Playwright AC1/2/3/5/6 PASS
 Đang làm dở: không
 Bước tiếp theo: User kiểm chứng AC4 bằng tài khoản low-priv (nếu cần). Chưa commit/push (theo quy tắc).
 Blocked:
+
+- [x] Fix bảng giật khi cuộn ngang (24/09/2026): V2BaseDataTable + V2BaseTableScroll — thanh cuộn trên/dưới gán scrollLeft ngược nhau huỷ animation cuộn mượt; đổi sang "chỉ thanh user đang thao tác mới dẫn" (worktree tpe-client, nhánh tpe, CHƯA commit)

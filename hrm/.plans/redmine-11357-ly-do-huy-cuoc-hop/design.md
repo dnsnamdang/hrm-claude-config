@@ -4,6 +4,9 @@
 - **Người phụ trách**: @khoipv — **Nhánh**: `fix-bug-11092026` (cả hrm-api + hrm-client)
 - **Spec đầy đủ**: `docs/superpowers/specs/2026-09-12-redmine-11357-ly-do-huy-cuoc-hop-design.md`
 
+> Phần **màn danh mục** của issue này có hồ sơ riêng: `.plans/danh-muc-ly-do-huy-cuoc-hop/design.md`
+> (gồm cả siết quyền + tài liệu testcase). File này giữ thiết kế gốc của cả issue.
+
 ## Mục tiêu
 
 1. Danh mục **Lý do hủy cuộc họp** (CRUD + khóa/mở khóa + import/export Excel), seed 3 bản ghi.

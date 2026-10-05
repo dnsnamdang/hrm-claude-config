@@ -1,0 +1,26 @@
+from common import *
+with browser_page() as page:
+    go(page,'/assign/request-solution',30000)
+    row=page.locator('tbody tr').filter(has_text='TPE.YCP.TC.26.0912').first
+    acts=row.locator('td').last
+    print([ (acts.locator('[title]').nth(k).get_attribute('title')) for k in range(acts.locator('[title]').count())])
+    cut(page, acts.locator('[title="Sửa"]').first, 'btn_sua_row.png')
+    cut(page, acts.locator('[title="Xóa"]').first, 'btn_xoa_row.png')
+    cut(page, acts.locator('[title="Hủy yêu cầu"]').first, 'btn_huyyc_row.png')
+    cut(page, row.locator('a').filter(has_text='TPE.YCP.TC.26.0912').first, 'link_ma_yc.png')
+    page.screenshot(path='explore/d_list.png')
+    acts.locator('[title="Xóa"]').first.click(); page.wait_for_timeout(2500); page.mouse.move(5,5)
+    page.screenshot(path=S+'n12_delete.png')
+    m=page.locator('#confirm-delete-request')
+    cut(page, m.get_by_role('button', name='Xóa'), 'btn_confirm_xoa.png')
+    cut(page, m.get_by_role('button', name='Hủy'), 'btn_confirm_huy.png')
+    m.get_by_role('button', name='Hủy').click(); page.wait_for_timeout(1500)
+    go(page,'/assign/request-solution/34/edit',40000)
+    page.evaluate('window.scrollTo(0,0)'); page.mouse.move(5,5)
+    page.screenshot(path=S+'n11_edit.png')
+    page.locator('.footer').get_by_role('button', name='Lưu và gửi').click(); page.wait_for_timeout(2500); page.mouse.move(5,5)
+    page.screenshot(path='explore/d_confirm_send.png')
+    m=page.locator('#confirm')
+    cut(page, m.get_by_role('button', name='Xác nhận'), 'btn_xacnhan.png')
+    m.get_by_role('button', name='Xác nhận').click(); page.wait_for_timeout(20000); page.mouse.move(5,5)
+    page.screenshot(path='explore/d_after_send.png'); print(page.url)

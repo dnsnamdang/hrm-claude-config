@@ -196,6 +196,54 @@ trong `services/index.vue`), `subsystems.js`.
 
 ---
 
+## Phase 13 — Gán link cho nhóm `Yêu cầu` (= menu `Khởi tạo` của ERP) ở phân hệ Bán hàng (2026-09-22, @junfoke)
+
+Yêu cầu user: các màn thuộc menu **Khởi tạo** của ERP đã được port sang HRM nhưng chỉ khai link
+ở phân hệ **Tài chính** (`finance.js`); bên **Bán hàng** vẫn để chuỗi trần nên hub báo "Tính năng
+đang phát triển" dù màn chạy tốt. Bổ sung link. Chỉ đụng đúng 1 file:
+`hrm-client/components/subsystem-menu/sale-hub.js` (nguồn sinh cả hub lẫn tree sidebar).
+
+- [x] Đối chiếu từng mục của nhóm `Yêu cầu` với ERP `topmenubar.blade.php` dòng 280-460 và với
+      `finance.js` / `customer-care.js` để tìm route HRM tương ứng
+- [x] Nhóm `Hàng hóa` — gán 10 link `/finance/*`: `product-import-requests`,
+      `product-export-requests`, `product-transfer-requests`, `product-import-direct-transfers`,
+      `product-prepick-requests`, `prepick-extend-requests`, `prepick-cancel-requests`,
+      `prepick-transfer-requests`, `borrow-sell-requests` (`borrow-export-requests?type=all` đã có)
+- [x] Nhóm `Hàng hóa` — 2 mục Tách/Ghép chưa port → khai `erpPath`
+      (`/admin/warehouse/split_export_requests/all`, `join_export_requests/all`), giống `finance.js`
+- [x] Nhóm `Hàng hóa` — `YC kiểm tra sửa chữa - bảo hành` → `/customer-care/warranty-repair-requests`
+      **route trần**, đúng ERP dòng 371 (lối vào từ Khởi tạo chỉ thấy phiếu của chính mình)
+- [x] Nhóm `Lắp đặt - BH - SC` — `YC sửa chữa - bảo hành` → cùng màn nhưng **`?type=all`**,
+      đúng ERP dòng 439. Hai lối vào khác phạm vi dữ liệu, không được gộp tham số
+- [x] Nhóm `Công nợ - Thu - Chi` — gán 4 link `/finance/bill-income-requests`,
+      `bill-payment-requests`, `bill-adjust-dept-requests`, `addition-accounting-requests`
+- [x] Nhóm `Công nợ - Thu - Chi` — bổ sung mục `Đề nghị xuất hóa đơn` (ERP dòng 415 có, sale-hub
+      thiếu hẳn). HRM chưa port → để chuỗi trần, render xám mờ (user chốt 2026-09-22)
+- [x] **KHÔNG** gắn `?type=all` cho các màn `/finance/*` còn lại: đã grep từng `index.vue`, chỉ
+      `borrow-export-requests` đọc `$route.query.type`, các màn khác bỏ qua query
+- [x] **KHÔNG** đổi nhãn mục nào — nhãn là thành phần của `menuKey`, đổi là mất cấu hình bật/tắt
+      menu đã lưu (`utils/menuVisibility.js`)
+- [x] **KHÔNG** khai `isShow`: bám đúng `finance.js` / `customer-care.js`, các màn phiếu này BE
+      không gate hành vi xem/tạo, phạm vi dữ liệu do `searchByFilter` quyết
+- [x] Verify: `node --check` cú pháp file; dựng `saleItems` bằng Node (stub `menuVisibility`) →
+      in ra 15 leaf có `link` + 2 leaf `erpPath`, đúng như thiết kế
+- [x] Verify: trùng link với `finance.js` là **có chủ ý** — `findSubsystemByLink()` khi hoà ưu
+      tiên phân hệ đang làm việc, rồi tới slug đầu path (`/finance/...` → về Tài chính), nên bấm
+      từ Bán hàng ở lại Bán hàng, dán link tay vẫn về đúng Tài chính
+- [x] Verify: `erpPath` được cả 2 bề mặt hub xử lý (`SaleHubSidebar.vue:555,607`,
+      `SubsystemHubOverview.vue:135`) chứ không chỉ tree sidebar
+- [x] Verify: `git diff --numstat` = 54/6, không phá line ending (file vốn LF)
+
+**Chưa làm:** xem bằng mắt trên browser (gộp vào Phase 10 — cần chạy client + API trên `gop_db`).
+
+**Còn trống có chủ ý** (HRM chưa có màn, giữ chuỗi trần): YC gia hạn hàng mượn, YC duyệt hàng tạm,
+YC hỏi giá, YC hỏi giá vận chuyển, YC đặt hàng mua ngoài, YC đặt hàng, YC hãng bảo hành,
+YC vận chuyển - bốc xếp, YC thiết kế, YC sản xuất, Yêu cầu tài liệu, cả nhóm `Dịch vụ` (4 mục),
+Đề nghị xuất hóa đơn, Đề nghị cấp bảo lãnh, YC lắp đặt - bàn giao, YC giao việc khác,
+BB xác nhận BH - SC, cả nhóm `Mua dịch vụ` (2 mục).
+
+---
+
 ## Checkpoint — 2026-08-01
 
 **Vừa hoàn thành:** Phase 0-9. Toàn bộ code đã xong và **kiểm thử tự động PASS hết** bằng cách
@@ -245,5 +293,64 @@ tách `Ngân hàng` thành item cấp 1 riêng (`ri-bank-line` → `/human/banks
 item cấp 1 `Ngân hàng` render đúng như `Tổng quan`, có active-state khi ở `/human/banks`).
 Ngoài ra 2 tồn đọng cũ chưa xử lý: xung đột link `/assign/customers` giữa `master-data.js` và
 `sale.js`, và nhãn `'Quyết định '` thừa dấu cách ở `default-menu/decision.js`.
+
+**Blocked:** (không)
+
+---
+
+## Checkpoint — 2026-09-22
+
+**Vừa hoàn thành:** Phase 13 — gán link cho nhóm `Yêu cầu` (menu `Khởi tạo` của ERP) ở phân hệ
+Bán hàng: 15 mục có `link` HRM + 2 mục `erpPath`, thêm mục `Đề nghị xuất hóa đơn`. Đúng 1 file
+`hrm-client/components/subsystem-menu/sale-hub.js`, diff 54/6.
+
+**Đang làm dở:** (không)
+
+**Bước tiếp theo:** Phase 10 vẫn treo — verify bằng mắt trên browser (nay thêm: mở
+`/sale/dashboard` xem nhóm `Yêu cầu`, bấm thử 1 mục `/finance/*` xem sidebar có ở lại Bán hàng
+không, và 2 mục Tách/Ghép có mở tab ERP không).
+
+**Blocked:** (không)
+
+---
+
+## Phase QA — Redmine #11408: màn cấp 1 đi thẳng không vào được Gần đây / Yêu thích (22/09/2026)
+
+QA (Nguyễn Minh Hằng) báo: mở "Ngân hàng câu hỏi khảo sát" bao nhiêu lần cũng không thấy ở mục
+**Gần đây**; màn **Tổng quan** phân hệ cũng luôn rỗng cả Gần đây lẫn Yêu thích.
+
+**Nguyên nhân — cây menu có 2 loại mục cấp 1, đi 2 đường TÁCH RỜI:**
+
+| Loại mục cấp 1 | Hàm suy ra | Ví dụ |
+| --- | --- | --- |
+| Có `subItems` | `deriveHubGroups()` → `groups` | Địa lý, Đối tác, Hàng hóa |
+| **Đi thẳng** (chỉ có `link`) | `deriveHubNavLinks()` → `navLinks` | **Ngân hàng** (`/human/banks`), **Ngân hàng câu hỏi khảo sát** (`/assign/questions`) |
+
+Mà `allScreens` ở **cả hai** nơi chỉ dựng từ `groups`:
+
+- `SaleHubSidebar` (rail): `screenByPath()` tra không ra → `trackRecent()` bỏ qua, không ghi gì.
+- `SubsystemHubOverview` (Tổng quan): `findScreen()` tra không ra → thẻ hiện rỗng **dù localStorage có khoá**.
+
+- [x] `SaleHubSidebar.allScreens` gộp thêm `this.navLinks`
+- [x] `SubsystemHubOverview`: thêm computed `navLinks` (dùng chung `hubNavLinksFor` với rail để lọc
+      quyền + khoá ẩn/hiện giống hệt), rồi gộp vào `allScreens`
+
+**Đã verify trên local** (phân hệ Danh mục): mở `/assign/questions` rồi `/human/banks` →
+`master-data_hub_recent = ["/human/banks","/assign/questions"]`; màn Tổng quan hiện đủ 2 mục ở cả
+Gần đây lẫn Yêu thích (trước đó là "Chưa có chức năng nào được mở gần đây"). Dữ liệu thử đã xoá.
+
+⚠️ **Bẫy cho người sau**: thêm bất kỳ thứ gì đọc "danh sách màn của phân hệ" thì phải lấy **CẢ**
+`groups` **VÀ** `navLinks`. Chỉ lấy `groups` là mất sạch mục cấp 1 đi thẳng — lỗi im lặng, không
+báo gì, chỉ lộ khi user hỏi "sao mở rồi mà không thấy".
+
+### Checkpoint — 2026-09-22
+
+**Vừa hoàn thành:** #11408 — `hrm-client` **4e972236c** trên `gop_db` (chưa push). 2 file, diff 19/1.
+
+**Đang làm dở:** (không)
+
+**Bước tiếp theo:** push lên dev, báo QA retest. Còn 2 ý trong mô tả gốc #11408 chưa đụng tới:
+tìm kiếm ở menu bị lặp tên, và phân hệ Tài chính / Bán hàng cũng cần soát lại — cần QA xác nhận
+còn lỗi không sau bản này.
 
 **Blocked:** (không)

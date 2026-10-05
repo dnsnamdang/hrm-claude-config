@@ -76,3 +76,5 @@ Vừa hoàn thành: Phase 1 (7 việc BE) + Phase 2 (12 việc FE) + 3.1→3.3.
 Đang làm dở: không có.
 Bước tiếp theo: user mở trình duyệt kiểm tra `/assign/meeting` (task 3.4).
 Blocked: không.
+
+- [x] Fix: popup Chọn người đề xuất (PopupStaff) vỡ 3 ô Công ty/Phòng ban/Bộ phận ~7px — V2BaseCompanyDepartmentFilter tự khai `.odf-root { display: contents }` + V2BaseSmartFilterPanel tự khai `.form-row > .d-contents { display: contents }` (03/10/2026)

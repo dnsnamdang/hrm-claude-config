@@ -310,3 +310,135 @@ Blocked: không.
 - Chạy lại bộ E2E sau khi đổi tên (chưa verify bằng test thật).
 - 5 quy tắc `list-page` còn nợ + file mẫu Import sinh bằng endpoint API — chờ gộp DB.
 - Bản `.pdf` / `.html` của SRS (nếu cần gửi ngoài) — một lệnh pandoc.
+
+## Phase 7 — Dọn mã cũ `LVKDNB.` + testcase chuẩn (2026-09-15, Redmine #11184)
+
+Nhánh: **`tpe-develop-assign`** (cả `hrm-api` + `hrm-client`), đã fast-forward lên origin trước khi sửa.
+
+- [x] **B1.** Rà toàn bộ dấu vết tiền tố cũ `LVKDNB.` trên nhánh (code + file mẫu + seeder + migration).
+- [x] **B2.** `hrm-client/static/Mau_import_LinhVucKinhDoanhNoiBo.xlsx`: dòng hướng dẫn + 2 dòng ví dụ
+      đổi `LVKDNB.` → `LVCTKD.` (sửa thẳng XML trong xlsx, giữ nguyên style/định dạng).
+- [x] **B3.** `hrm-client/static/Mau_import_NhomNganh.xlsx`: ví dụ mã lĩnh vực + 2 dòng mẫu
+      `LVKDNB.KHAC` → `LVCTKD.KHAC`.
+- [x] **B4.** `hrm-api/app/Console/Commands/Assign/SeedCareReportDemoCommand.php`: mã lĩnh vực tự sinh
+      dùng tiền tố mới.
+- [x] **B5.** `hrm-api/database/e2e_meeting_survey_seed.php`: `LVKDNB.E2E1` → `LVCTKD.E2E1`.
+- [x] **B6.** `hrm-api/database/migrations/2026_08_22_000001` + `..._000002`: chú thích cột và bản ghi
+      mặc định "Khác" dùng `LVCTKD.KHAC`; hàm `ensureDefaultScope()` tra **cả 2 mã** cũ/mới để DB đã
+      chạy migration trước đây không bị tạo thêm bản ghi "Khác" thứ hai.
+- [x] **B7.** Migration mới `2026_09_15_000001_rename_internal_business_scope_code_prefix.php`: đổi mã
+      dữ liệu đang có `LVKDNB.*` → `LVCTKD.*` (hậu tố ≤ 4 ký tự giữ nguyên, hậu tố dài cấp số thứ tự
+      `LVCTKD.0001…`). Không đụng `id`, không đụng `updated_at`/`updated_by`. Idempotent.
+- [x] **B8.** Testcase chuẩn team: `.plans/linh-vuc-kinh-doanh-noi-bo/{gen_testcase.py, testcase.xlsx}`
+      — **135 ca / 10 nhóm + nhóm phân quyền**, P0 53%, form 17 cột + 2 khối summary DNS/TP.
+      (Bản cũ `docs/srs/linh-vuc-cong-ty-kinh-doanh-testcases.xlsx` 201 ca dùng form 13 cột không
+      chuẩn và còn lẫn mã `LVKDNB.` — coi như thay thế.)
+
+### Checkpoint — 2026-09-15
+
+Vừa hoàn thành: Phase 7 (B1–B8).
+
+Đang làm dở: không. **Chưa commit** — thay đổi đang nằm trong working tree của 2 repo.
+
+Bước tiếp theo:
+- Chạy `php artisan migrate` để migration B7 đổi mã dữ liệu (local đang có 8 bản ghi mã cũ:
+  `LVKDNB.KHAC` → `LVCTKD.KHAC`, 7 bản ghi hậu tố dài → `LVCTKD.0001…0007`).
+- Kiểm lại trên trình duyệt sau khi migrate: màn danh sách, Xuất Excel, tải file mẫu Import.
+- 2 điểm QA phản hồi ở #11184 ngày 15/09 **chưa xử lý**: (a) đổi màu nút Khóa / Xóa / Xuất Excel /
+  Import Excel theo quy định chung; (b) QA vẫn ghi mã chuẩn là `LVKDNB` — user đã chốt giữ `LVCTKD`,
+  cần phản hồi lại QA trên Redmine.
+
+Blocked: không.
+
+## Phase 8 — Sửa lệch giao diện popup Thêm/Sửa (2026-09-15, Redmine #11377)
+
+User báo: ô "Thời gian hiệu lực nhu cầu (ngày)" tụt thấp hơn 2 ô cùng hàng.
+
+- [x] **B1.** Nguyên nhân: nhãn dài nằm trong cột `col-md-3` (~190px) nên xuống 2 dòng, đẩy ô nhập
+      thấp hơn ô Mã / Tên; đồng thời ô Trạng thái bị đẩy trơ trọi xuống hàng 2.
+- [x] **B2.** Bố cục lại theo ý user — 2 hàng, mỗi hàng nhãn đều gọn 1 dòng:
+      hàng 1 `Mã (col-md-3)` + `Tên (col-md-9)`; hàng 2 `Thời gian hiệu lực nhu cầu (col-md-6)` +
+      `Trạng thái (col-md-6)`.
+- [x] **B3.** Icon ⓘ mang `line-height` mặc định làm nhãn cao hơn nhãn thường 3px → ô nhập vẫn lệch
+      1px so với ô Trạng thái. Thêm `::v-deep .v2-label .ri-information-line { line-height: 1 }`
+      trong style scoped của modal.
+- [x] **B4.** User xem bản 6-6 thấy 2 ô rộng 365px là quá to → **bố cục chốt**: hàng 1 gom 3 trường
+      ngắn `Mã (col-md-3)` + `Tên (col-md-6)` + `Trạng thái (col-md-3)`; hàng 2 riêng
+      `Thời gian hiệu lực nhu cầu`. Tôi đặt `col-md-5` (ô rộng 294px) và verify ở bề rộng đó;
+      sau đó user tự chỉnh lên `col-md-6` — giữ theo user, chưa chụp lại ảnh ở bề rộng mới.
+- [x] **B5.** Verify bằng Playwright trên client dev (Nuxt tự nhảy cổng vì 3000 bị chiếm): 3 ô hàng 1
+      cùng mốc trên 171px, nhãn đều 1 dòng (14–15px). Ảnh: `screenshots/lvctkd-modal-bo-cuc-3-1.png`.
+
+### Checkpoint — 2026-09-15 (lần 2)
+
+Vừa hoàn thành: Phase 8. 1 file FE `pages/assign/internal-business-scopes/AddScopeModal.vue`
+(+15/−3), CHƯA commit.
+
+✅ **Migration đổi mã dữ liệu ĐÃ CHẠY** — lần verify sau cùng ô Mã hiện `LVCTKD.0007`, không còn
+cảnh ghép đôi tiền tố. Ghi chú cũ giữ lại bên dưới để tra ngược.
+
+⚠️ **Lỗi khác lộ ra khi verify (đã hết sau khi chạy migration)**: bản ghi còn mã cũ mở form Sửa thì ô Mã hiện
+`LVCTKD.LVKDNB.GIAODUCDAOTAO` — component ô mã tự ghép tiền tố `LVCTKD.` vào mã đã có sẵn tiền tố cũ,
+và hậu tố cũ dài hơn 4 ký tự nên bấm Lưu cũng không qua validate. Hết ngay sau khi chạy
+`php artisan migrate` (migration `2026_09_15_000001_rename_internal_business_scope_code_prefix`
+đã commit ở Phase 7). Nếu muốn phòng thủ cho dữ liệu lệch thì phải xử lý ở ô nhập mã — CHƯA làm,
+chờ user quyết.
+
+Bước tiếp theo: user chạy `php artisan migrate` rồi ngó lại màn danh sách + popup Sửa.
+
+## Phase 7 — Gỡ conflict merge `tpe` → `tpe-develop-assign` (2026-09-18)
+
+File: `hrm-client/pages/assign/internal-business-scopes/AddScopeModal.vue` (4 vùng conflict).
+Hai phía lệch nhau về hướng validate: `tpe` bỏ hẳn validate FE theo khuôn Nhóm ngành, còn nhánh
+`tpe-develop-assign` đang thêm ô "Thời gian hiệu lực nhu cầu" (#11377) có validate FE.
+
+- [x] **B1.** Ô Mã: giữ `maxlength="4"` của nhánh dev, bỏ `v-validate` theo `tpe`.
+- [x] **B2.** Bỏ rule FE `lvctkd_code` (`Validator.extend`) — `import { Validator }` đã bị `tpe` gỡ,
+      giữ lại là `Validator is not defined`. Mã/Tên để BE chốt như khuôn Nhóm ngành.
+- [x] **B3.** Giữ CẢ HAI computed vì khác mục đích: `isCannotLock` (`tpe`, disable ô Trạng thái khi
+      còn Nhóm ngành đang dùng) và `isLocked` (#11377, bám `savedStatus`, disable ô số ngày khi bản
+      ghi đã Khóa).
+- [x] **B4.** Giữ watch `data.demand_due_days` để xóa lỗi 422 cũ khi user sửa ô.
+- [x] **B5.** `submitForm` chỉ còn validate riêng `demand_due_days` — auto-merge đã lấy bản `tpe`
+      (bỏ `validateAll`) nên không còn gì chặn ô này ở FE.
+      *Đính chính:* lúc kiểm tra, `hrm-api` local còn đứng ở `fix-bug-11092026` và chưa pull nên
+      tưởng BE thiếu rule. Thực tế BE ĐÃ có `demand_due_days => required|integer|min:0|max:3650`
+      (commit `c0f3974d2` / `ace1f47ec`). Rule FE khớp đúng rule BE, giữ lại làm lớp chặn sớm.
+
+- [x] **B6.** BE — gỡ conflict `Modules/Assign/Http/Requests/InternalBusinessScope/InternalBusinessScopeRequest.php`:
+      lấy bản `tpe` cho rule `code` (`required` → `size` → `regex`, bỏ closure kiểm tiền tố), đúng
+      khuôn `Scope\ScopeRequest` của Nhóm ngành. Closure thành thừa vì gõ mỗi tiền tố cũng rơi vào
+      `size` → vẫn báo "Vui lòng nhập 4 ký tự". Giữ nguyên rule + message `demand_due_days` của #11377
+      (nằm ngoài vùng conflict).
+
+Kiểm chứng: `vue-template-compiler` + `@babel/parser` parse sạch `AddScopeModal.vue` và `index.vue`;
+không còn conflict marker trong repo. CHƯA mở trình duyệt chạy thử.
+
+### Checkpoint — 2026-09-18
+
+Vừa hoàn thành: gỡ conflict merge `tpe` → `tpe-develop-assign` ở CẢ 2 repo.
+- `hrm-client/pages/assign/internal-business-scopes/AddScopeModal.vue` — 4 vùng conflict (B1–B5).
+- `hrm-api/Modules/Assign/Http/Requests/InternalBusinessScope/InternalBusinessScopeRequest.php` —
+  1 vùng conflict (B6).
+
+Nguyên nhân gốc của conflict: `tpe` chốt hướng **bỏ validate FE cho Mã/Tên** (bám khuôn danh mục
+Nhóm ngành, để BE chốt rule), trong khi `tpe-develop-assign` đang thêm ô "Thời gian hiệu lực nhu
+cầu" (#11377) có validate FE. Nguyên tắc gỡ: **hướng chung lấy `tpe`, phần riêng của #11377 giữ
+nguyên**, và giữ cả 2 computed `isCannotLock` / `isLocked` vì chúng phục vụ 2 ô khác nhau.
+
+Kiểm chứng đã chạy:
+- `vue-template-compiler` + `@babel/parser` parse sạch `AddScopeModal.vue` và `index.vue`.
+- `php -l` sạch 3 file BE đang thay đổi (Request / Entity / Service).
+- Không còn conflict marker nào ở `hrm-client/{pages,components,store}` và `hrm-api/Modules`.
+
+Đang làm dở: không.
+
+Bước tiếp theo:
+1. Mở trình duyệt chạy thử màn Lĩnh vực Công ty kinh doanh — trọng tâm: ô Trạng thái khi bản ghi
+   còn Nhóm ngành đang dùng (`isCannotLock`), ô số ngày khi bản ghi đã Khóa (`isLocked`), lỗi
+   422 của Mã (gõ thiếu ký tự / sai ký tự / trùng mã).
+2. ✅ Đã xong — user tự `git add` + commit merge: `hrm-client` `54dbb54de` · `hrm-api` `4225a9eed`.
+3. Cân nhắc: có gỡ nốt `v-validate` của `demand_due_days` ở FE để bám tuyệt đối khuôn "FE không
+   validate" không — BE đã có rule khớp y hệt. Mặc định đang GIỮ làm lớp chặn sớm.
+
+Blocked: không.

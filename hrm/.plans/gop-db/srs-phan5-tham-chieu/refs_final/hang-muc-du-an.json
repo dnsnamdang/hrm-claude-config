@@ -1,0 +1,14 @@
+{
+  "catalog": "Danh mục hạng mục dự án",
+  "srs_file": "SRS - Danh mục hạng mục dự án.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/components/ModulesTab.vue:148-168 (chọn), 800 (addProjectItem thêm nhanh), 919 (optionsSelect/fetchProjectItems); BE SolutionRequest.php:55 (modules.*.project_item_id required), SolutionService.php:746, Entities/SolutionModule.php:105 (bảng solution_modules.project_item_id) · Lối vào: menu-sidebar.js:31"
+    }
+  ],
+  "notes": "KIỂM TRA XOÁ THIẾU HOÀN TOÀN: ProjectItem::isCanDelete() (Entities/ProjectItem/ProjectItem.php:36-39) luôn return true; ProjectItemController::delete/deleteByIds không kiểm tra gì → hạng mục đang dùng ở solution_modules.project_item_id (Hạng mục giải pháp) vẫn xoá được. Hệ quả: SolutionModule hiển thị tên fallback cột project_item_name lưu sẵn (SolutionModule.php:109-177) nên chưa vỡ màn, nhưng FK mồ côi. Màn chỉ HIỂN THỊ tên hạng mục (không đưa vào bảng): Hạng mục giải pháp (solution-modules/index.vue:92, cột Tên hạng mục — không có ô lọc theo danh mục), Nhiệm vụ/Vấn đề (chọn 'hạng mục giải pháp' = solution_modules, không phải danh mục này: tasks/components/CreateTaskModal.vue:2556), Dự án TKT – tab Giải pháp (readonly).",
+  "changes": "Trước 1 dòng -> sau 1 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Chỉ rút nhãn \"Quản lý giải pháp (Tạo mới/Sửa – tab Quản lý hạng mục…)\" về nhãn menu; màn chỉ có 1 lối vào."
+}

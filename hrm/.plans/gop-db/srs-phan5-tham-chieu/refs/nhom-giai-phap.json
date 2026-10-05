@@ -1,0 +1,61 @@
+{
+  "catalog": "Danh mục nhóm giải pháp",
+  "srs_file": "SRS - Danh mục nhóm giải pháp.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/components/InfoTab.vue:230-232 (chọn Nhóm giải pháp) + index.vue:598 (lọc) · BE solutions.industry_id (SolutionService.php:677,721)"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo kết quả thực hiện dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/prospective-project-results/index.vue:296 · BE ProspectiveProjectResultReportService.php:1026"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo phát triển khách hàng theo NVKD",
+      "duong_dan": "CSKH trước bán -> Báo cáo thị trường",
+      "evidence": "FE pages/assign/report/customer-development/index.vue:143 · BE CustomerDevelopmentReportService.php:98,276"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo tổng hợp giải pháp theo phòng ban",
+      "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/solutions-work-summary-by-department/index.vue:748"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "BE ProspectiveProjectService.php:869-941 (tự suy prospective_projects.industry_id từ Ứng dụng, dùng chọn Phiếu thu thập thông tin) · FE prospective-projects/index.vue:1262"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Theo dõi YCLGP theo phòng KD",
+      "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/solution-requests-by-department/index.vue:44,257 (V2BaseFieldCategoryApplicationFilter)"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Yêu cầu giải pháp",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/request-solution/components/RequestTab.vue:84 + RequestSolutionForm.vue:351 · BE request_solutions.industry_id (RequestSolutionService.php:304,392)"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Ứng dụng",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE components/modal/application-modal.vue:340 + pages/assign/application/index.vue:466 · BE Entities/Applications.php (application_industries)"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting (tab Dự án tiền khả thi)",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingProject.vue:252-295,483 · BE MeetingService.php:982-983"
+    }
+  ],
+  "notes": "Bảng thật là industries. Ứng dụng cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp (cùng màn). Phiếu thu thập thông tin chỉ chụp industry_id vào form_template_snapshots khi lập dự án (không chọn trên màn danh mục) -> không đưa vào. Code chết: ProjectPhaseForm.vue (Giai đoạn dự án) có ô Nhóm giải pháp nhưng màn thật dùng popup, BE không lưu. NGHI LỖI KIỂM TRA XOÁ: Industries::isCanDelete (Entities/Industries.php:73) chỉ xét application_industries; KHÔNG xét prospective_projects.industry_id (Dự án TKT/Meeting), request_solutions.industry_id (Yêu cầu giải pháp), solutions.industry_id (Quản lý giải pháp), form_template_snapshots.industry_id -> xoá được dù đang dùng."
+}

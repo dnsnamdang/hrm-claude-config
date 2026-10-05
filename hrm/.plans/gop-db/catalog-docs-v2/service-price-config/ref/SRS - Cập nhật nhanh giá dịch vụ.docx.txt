@@ -1,0 +1,120 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Cập nhật nhanh giá dịch vụ 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Cập nhật nhanh giá dịch vụ, nhằm: 
+[normal] Thống nhất yêu cầu giữa BA / PO / Dev / Test cho màn Cập nhật nhanh giá dịch vụ. 
+[normal] Là căn cứ nghiệm thu chức năng và phân quyền của màn hình. 
+[normal] Làm rõ phạm vi ảnh hưởng của thao tác Lưu: một lần lưu ghi đè hệ số và định mức cho TOÀN BỘ gói bảo dưỡng, kể cả gói đã được chỉnh riêng. 
+[normal] Ghi nhận khác biệt có chủ đích so với màn cũ: bản này thêm hộp thoại xác nhận nêu rõ số gói bị ảnh hưởng trước khi ghi, còn bản cũ bấm Lưu là chạy ngay. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Hệ số giá bán dịch vụ | Hệ số nhân dùng khi tính giá bán của gói bảo dưỡng từ giá vốn. Giá trị phải lớn hơn hoặc bằng 0,01 và không vượt quá 999,99.
+  | Định mức đàm phán giá (%) | Tỷ lệ phần trăm tối đa được phép giảm khi thương lượng giá với khách hàng. Nhận giá trị từ 0 đến 99.
+  | Gói bảo dưỡng | Gói dịch vụ bán cho khách hàng. Mọi gói đều bị áp lại hệ số và định mức khi lưu.
+  | Cấp dịch vụ | Mức độ của một lần bảo dưỡng trong gói. Giá gốc của cấp dịch vụ được tính lại khi hệ số thay đổi.
+  | Ghi đè hàng loạt | Một lần lưu áp giá trị mới cho toàn bộ gói bảo dưỡng, kể cả gói trước đó đã được chỉnh riêng. Thao tác này không có chức năng hoàn tác.
+  | SRS | Software Requirements Specification — tài liệu đặc tả yêu cầu phần mềm.
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+<<TABLE 2>>
+  | Ký hiệu | Tên quyền | Tác dụng trên màn hình
+  | P1 | Cập nhật nhanh giá dịch vụ | Mở màn hình và lưu cấu hình. Đây là quyền duy nhất của màn: có quyền thì xem và sửa được, không có quyền thì không vào được màn hình.
+[normal] Màn hình chỉ có MỘT quyền, không tách riêng quyền xem và quyền sửa. Người không có quyền thì mục menu không hiển thị và truy cập thẳng đường dẫn cũng bị chặn. 
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 3>>
+  | Chức năng | P1 | Không có quyền nào
+  | FR-01 Xem cấu hình giá dịch vụ hiện tại |  | 
+  | FR-02 Lưu cấu hình |  | 
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Cập nhật nhanh giá dịch vụ 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem cấu hình giá dịch vụ hiện tại 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 4>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem cấu hình giá dịch vụ hiện tại
+  | Mô tả | Xem đầy đủ thông tin của một cấu hình giá dịch vụ ở chế độ chỉ đọc, không sửa được.
+  | Tác nhân | Người quản lý danh mục (có quyền “Cập nhật nhanh giá dịch vụ”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Người dùng có quyền “Cập nhật nhanh giá dịch vụ”.
+  | Dòng sự kiện chính | 1. Người dùng bấm vào mục menu Cập nhật nhanh giá dịch vụ ở cột đầu của dòng cần xem. / 2. Hệ thống mở màn hình chi tiết và đổ dữ liệu ở chế độ chỉ đọc.
+  | Dòng sự kiện phụ | • Bản ghi đã bị người khác xóa → hệ thống báo không tìm thấy dữ liệu.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/service-price-config 
+[normal]  [IMG]
+[normal] Hình 2: Màn hình Chi tiết cấu hình giá dịch vụ 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 5>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Giá trị ban đầu | Mô tả
+  | 1 | Hệ số giá bán dịch vụ | Number | Read-only | 0,01 – 999,99 | Theo cấu hình đã lưu | Hệ số nhân dùng khi tính giá bán. Bỏ trống báo “Bắt buộc phải nhập”; nhập chữ báo “Phải là số”; vượt trần báo “Tối đa 999.99”.
+  | 2 | Định mức đàm phán giá (%) | Number | Read-only | 0 – 99 | Theo cấu hình đã lưu | Tỷ lệ giảm giá tối đa khi thương lượng. Được phép nhập 0; vượt 99 báo “Tối đa 99”.
+  | 3 | Dòng cảnh báo phạm vi | Label | Read-only | – | Theo dữ liệu | Nêu rõ số gói bảo dưỡng sẽ bị ghi đè khi lưu.
+  | 4 | Dòng cập nhật gần nhất | Label | Read-only | – | Theo dữ liệu | Ngày giờ và người thực hiện lần lưu gần nhất.
+  | 5 | Nút Quay lại | Button | Enable | – | Hiển thị | Trở về màn danh sách.
+[normal] 2.1.4 Danh sách event và xử lý event 
+<<TABLE 6>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm mục menu Cập nhật nhanh giá dịch vụ trên dòng | Click | Before: / – Kiểm tra quyền “Cập nhật nhanh giá dịch vụ”. / After: / – Nạp dữ liệu bản ghi và hiển thị ở chế độ chỉ đọc.
+  | 2 | Bấm Quay lại | Click | After: / – Trở về màn danh sách, không ghi gì.
+[Heading 3] 2.2 Lưu cấu hình 
+[normal] 2.2.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 3: Biểu đồ Use Case — FR-02 Lưu cấu hình 
+[normal] 2.2.2 Giới thiệu 
+<<TABLE 7>>
+  | Mục | Nội dung
+  | Tên chức năng | Lưu cấu hình giá dịch vụ
+  | Mô tả | Ghi lại hệ số giá bán và định mức đàm phán, đồng thời áp giá trị mới cho TOÀN BỘ gói bảo dưỡng đang có, ghi đè cả những gói đã được chỉnh riêng.
+  | Tác nhân | Người quản lý danh mục (có quyền “Cập nhật nhanh giá dịch vụ”)
+  | Điều kiện ban đầu | Người dùng có quyền “Cập nhật nhanh giá dịch vụ”.
+  | Dòng sự kiện chính | 1. Người dùng sửa Hệ số giá bán dịch vụ và / hoặc Định mức đàm phán giá. / 2. Người dùng bấm Lưu. / 3. Hệ thống mở hộp thoại xác nhận, nêu rõ số gói bảo dưỡng và số cấp dịch vụ bị ảnh hưởng. / 4. Người dùng bấm Xác nhận. / 5. Hệ thống ghi cấu hình, áp lại cho toàn bộ gói và báo kết quả.
+  | Dòng sự kiện phụ | • Bấm Hủy ở hộp thoại → không ghi gì, giá trị đang nhập vẫn giữ nguyên. / • Gói không xác định được đơn giá công của công ty → hệ thống bỏ qua gói đó và báo lại số gói bị bỏ qua. / • Giá gốc của cấp dịch vụ chỉ được tính lại khi hệ số thực sự thay đổi.
+  | Yêu cầu đặc biệt | Đây là thao tác ghi đè hàng loạt, không có chức năng hoàn tác.
+[normal] 2.2.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/service-price-config 
+[normal] Modal Xác nhận cập nhật giá dịch vụ được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 4: Hộp thoại Xác nhận cập nhật giá dịch vụ 
+[normal] 2.2.4 Mô tả chi tiết giao diện 
+<<TABLE 8>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Câu cảnh báo phạm vi | Label | Hiển thị | – | – | Theo dữ liệu | Nêu rõ số gói bảo dưỡng sẽ bị ghi đè.
+  | 2 | Câu cảnh báo tính lại | Label | Hiển thị | – | – | Theo dữ liệu | Nêu số cấp dịch vụ sẽ được tính lại giá gốc nếu hệ số đổi.
+  | 3 | Nút Xác nhận | Button | Enable | – | – | Hiển thị | Thực hiện ghi đè.
+  | 4 | Nút Hủy | Button | Enable | – | – | Hiển thị | Đóng, không ghi gì.
+[normal] 2.2.5 Danh sách event và xử lý event 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Lưu | Click | Before: / – Kiểm tra quyền “Cập nhật nhanh giá dịch vụ”. / During: / – Hệ số giá bán dịch vụ để trống → hiển thị “Bắt buộc phải nhập”. / – Hệ số giá bán dịch vụ nhập chữ → hiển thị “Phải là số”. / – Hệ số giá bán dịch vụ nhỏ hơn 0,01 → hiển thị “Không được nhỏ hơn 0.01”. / – Hệ số giá bán dịch vụ lớn hơn 999,99 → hiển thị “Tối đa 999.99”. / – Định mức đàm phán giá nhập chữ → hiển thị “Phải là số”. / – Định mức đàm phán giá nhỏ hơn 0 → hiển thị “Không được nhỏ hơn 0”. / – Định mức đàm phán giá lớn hơn 99 → hiển thị “Tối đa 99”. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Mở hộp thoại xác nhận kèm số gói và số cấp dịch vụ bị ảnh hưởng.
+  | 2 | Bấm Xác nhận | Click | Before: / – Kiểm tra lại quyền ở phía máy chủ. / After: / – Ghi hệ số và định mức vào cấu hình chung. / – Áp hệ số và định mức mới cho toàn bộ gói bảo dưỡng. / – Tính lại giá gốc của các cấp dịch vụ nếu hệ số thay đổi. / – Hiển thị thông báo thành công kèm số gói đã cập nhật và số gói bị bỏ qua.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp thoại, không ghi gì.
+[Heading 1] Phần 4. Quy tắc nghiệp vụ 
+[normal] BR-01 — Một quyền duy nhất cho cả xem và sửa 
+[normal] Màn hình dùng đúng một quyền “Cập nhật nhanh giá dịch vụ”. 
+[normal] Không tách quyền xem riêng: có quyền thì vừa xem vừa sửa được, không có quyền thì không vào được màn hình. 
+[normal] Quyền này được kiểm tra theo TÊN quyền nên tài khoản đã được cấp ở hệ thống cũ vẫn dùng được màn này mà không cần cấp lại. 
+[normal] BR-02 — Cấu hình chỉ có duy nhất một bản ghi 
+[normal] Toàn hệ thống chỉ có một bộ hệ số và định mức dùng chung, không tách theo công ty hay theo nhóm. 
+[normal] Lần lưu sau ghi đè lên lần lưu trước. 
+[normal] Nếu chưa có bản ghi nào, hệ thống tự tạo mới khi lưu lần đầu. 
+[normal] BR-03 — Lưu là ghi đè hàng loạt, không có hoàn tác 
+[normal] Một lần lưu áp hệ số và định mức mới cho TOÀN BỘ gói bảo dưỡng đang có. 
+[normal] Gói đã được chỉnh riêng trước đó cũng bị ghi đè, không có ngoại lệ. 
+[normal] Hệ thống bắt buộc hiển thị hộp thoại xác nhận nêu rõ số gói bảo dưỡng và số cấp dịch vụ bị ảnh hưởng trước khi thực hiện. 
+[normal] Đây là điểm khác có chủ đích so với màn cũ: bản cũ bấm Lưu là chạy ngay, không hỏi. 
+[normal] BR-04 — Giá gốc chỉ tính lại khi hệ số thực sự thay đổi 
+[normal] Nếu hệ số giá bán dịch vụ giữ nguyên, hệ thống không tính lại giá gốc của cấp dịch vụ để tránh thay đổi thừa. 
+[normal] Ngược lại, định mức đàm phán giá LUÔN được ghi đè cho mọi gói, kể cả khi giá trị không đổi. 
+[normal] BR-05 — Gói thiếu đơn giá công của công ty thì bị bỏ qua 
+[normal] Gói bảo dưỡng không xác định được đơn giá công của công ty sẽ bị bỏ qua, giữ nguyên giá cũ. 
+[normal] Hệ thống báo lại số gói bị bỏ qua để người dùng biết mà xử lý riêng. 
+[normal] Đây là điểm khác có chủ đích so với màn cũ: bản cũ ghi giá gốc của gói đó về 0, làm hỏng dữ liệu giá. 
+[normal] BR-06 — Cần sao lưu trước lần lưu đầu tiên 
+[normal] Vì thao tác ghi đè toàn bộ gói và không hoàn tác được, phải sao lưu dữ liệu giá TRƯỚC khi bấm Lưu lần đầu. 
+[normal] Sao lưu sau khi đã lưu là không còn giá trị gốc để đối chiếu. 

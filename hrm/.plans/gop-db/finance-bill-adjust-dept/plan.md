@@ -917,3 +917,24 @@ Bước tiếp theo:
 
 Blocked: không.
 
+
+## Fix — Validate bắt buộc Số tài khoản / Diễn giải theo skill form-validate (2026-09-30) @khoipv
+
+User yêu cầu: sửa chỗ validate "Số tài khoản – Không được để trống", "Diễn giải – Không được để trống"
+theo skill thông báo lỗi bắt buộc (form-validate §3, §3d + srs-quy-tac-chung §2).
+
+Hiện trạng lệch skill: `validateBeforeSubmit()` dừng ở lỗi ĐẦU TIÊN, mỗi lỗi bắn 1 toast riêng
+("Vui lòng chọn số tài khoản cho mọi dòng"…), không cuộn tới ô lỗi — bảng dài phải dò tay.
+
+- [x] FE `BillAdjustDeptForm.vue`: kiểm HẾT các trường một lượt, toast chung "Bạn chưa nhập đầy đủ thông tin." + `scrollToFirstError(this.$el)`
+- [x] FE: lưu nháp thiếu Ngày hạch toán cũng hiện lỗi inline (trước chỉ toast vì `touched` = false khi nháp)
+- [x] FE: thêm lỗi inline cho 2 chỗ trước chỉ có toast — "Loại tiền – Không được để trống", "Định khoản – Phải có ít nhất một dòng"
+- [x] Verify compile template + script (vue-template-compiler + babel: 0 lỗi) — CHƯA mở trình duyệt
+- [x] Đổi câu lỗi bỏ trống "<Trường> – Không được để trống" → "Bắt buộc phải nhập" (chuẩn đang dùng toàn hệ thống) cho Số tài khoản, Diễn giải dòng, Diễn giải phiếu, Ngày hạch toán, Loại tiền
+
+### Checkpoint — 2026-09-30
+Vừa hoàn thành: fix validate bắt buộc màn Phiếu kế toán theo skill form-validate (mục "Fix — Validate bắt buộc…" ở trên) — `BillAdjustDeptForm.vue` + `AccountingDetailTable.vue`, compile 0 lỗi.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt (Ctrl+Shift+R) kiểm — phiếu nhiều dòng bỏ trống Số tài khoản/Diễn giải dòng dưới cùng → Lưu và duyệt phải cuộn đúng dòng, lỗi tự tắt khi sửa; lưu nháp thiếu Ngày hạch toán hiện đỏ dưới ô.
+Treo chờ user quyết: (1) lỗi 422 từ BE vẫn chỉ toast câu đầu, chưa gắn inline từng ô; (2) có đổi "Tỷ giá (VND) – Phải lớn hơn 0" / "Định khoản – Phải có ít nhất một dòng" không; (3) skill form-validate ghi mẫu "Tên dự án không được để trống" lệch chuẩn "Bắt buộc phải nhập" — cần PR sửa skill.
+Blocked:

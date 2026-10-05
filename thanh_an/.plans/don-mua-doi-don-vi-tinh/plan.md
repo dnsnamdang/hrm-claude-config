@@ -105,6 +105,18 @@ Cột DB là `decimal(15,3)` nên đơn cũ có thể mang sẵn 3 chữ số. C
 
 - [x] `.table-responsive`: `max-height` `calc(100vh - 320px)` → **`calc(100vh - 210px)`**, `min-height` 240px → **360px**. Chỉ CSS, `node-sass` compile sạch.
 
+### 4d. Nới chiều cao vùng cuộn lần 2 (28/09/2026)
+*"bảng hàng hóa ở màn đơn mua hàng cho tăng height ra giúp tôi, hiện tại xem được ít hàng hóa quá"*
+
+- [x] `.table-responsive`: `max-height` `calc(100vh - 210px)` → **`calc(100vh - 110px)`** (chỉ chừa topbar cố định ~70px + lề), `min-height` 360px → **520px**. Trang cuộn nhẹ để thấy nút Lưu ở dưới. Chỉ CSS, verify_vue sạch.
+
+### 4e. Mất viền ngoài cùng bên trái của bảng (28/09/2026)
+*"border ngoài cùng bên trái của bảng hiện đang bị mất"*
+
+Nguyên nhân: cột STT sticky `left: 0` trong bảng `border-collapse` — viền ngoài của bảng collapse nằm một nửa ra ngoài hộp bảng, bị mép khối cuộn `.table-responsive` cắt; ô sticky nền đục cũng đè lên. Cùng lý do các vạch ngăn cột đông cứng đã phải vẽ bằng inset shadow.
+
+- [x] Vẽ lại viền trái bằng `inset 1px 0 0 0` cho `th.col-stt`, `td.col-stt`, `.col-freeze-total` (giữ các lớp shadow sẵn có). Dòng đổi hàng giữ vạch hổ phách 3px. Chỉ CSS, verify_vue sạch.
+
 ---
 
 ## Bug 1 — Đổi ĐVT ngược không trả lại đúng SL gốc (16/09/2026)

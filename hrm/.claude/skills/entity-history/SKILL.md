@@ -25,7 +25,7 @@ còn **thứ tự danh sách luôn MỚI → CŨ** (mới nhất lên đầu, §
 | Đọc log + chuẩn hoá DTO | `hrm-api/Modules/Assign/Services/SystemLogService.php` (`getLogs`, `finalize`, `customerChanges`, `recordListChange`) |
 | Ghi log (subset-diff + khoá dạng bảng) | `hrm-api/Modules/Assign/Services/CustomerHistoryService.php` |
 | Migration | `hrm-api/Modules/Timesheet/Database/Migrations/2026_07_10_000001_create_general_regulation_history_table.php` |
-| Biến thể đơn giản (1 màn, 1 action) | `GeneralRegulationService` + `hrm-client/components/setting/general/GeneralHistoryModal.vue` |
+| Màn THIẾT LẬP / cấu hình có bảng log riêng (`<x>_history`) | Bộ đọc chung `app/Services/SettingHistory/` (1 adapter/loại, tự tìm theo tên) + route `setting-histories/{type}/{id}` + popup `components/modal/SettingHistoryModal.vue` — hướng dẫn `.plans/gop-db/lich-su-thiet-lap-10455/SETTING_HISTORY_ADAPTER.md` (#10455, 30/09/2026). KHÔNG tự dựng popup timeline riêng như 17 popup cũ đã phải làm lại |
 
 ---
 
@@ -53,8 +53,17 @@ luôn có **đúng 3 lựa chọn này, không hơn không kém, không đổi c
 "Cập nhật ảnh / tài liệu / video", "Khóa khách hàng", "Gửi duyệt", "Nghiệm thu hạng mục"…
 → mỗi màn ra một dropdown khác nhau, user không đối chiếu được giữa các màn.
 
-**Nhóm chỉ dùng cho BỘ LỌC. Nhãn chi tiết của từng dòng vẫn giữ nguyên trên timeline**
-(vẫn hiện "Khóa khách hàng", "Duyệt", "Từ chối"…) → lọc thì đồng nhất, xem thì không mất thông tin.
+**Nhãn DÒNG trên timeline:**
+- **Màn dùng khung chung** (`CatalogHistoryModal` cho danh mục, `SettingHistoryModal` cho màn thiết
+  lập/cấu hình) → nhãn dòng theo **bộ chuẩn** `CatalogHistoryService::ACTION_LABELS`: **Tạo mới ·
+  Thay đổi thông tin · Khóa · Mở khóa · Xóa · Thay đổi trạng thái** (+ Duyệt/Từ chối khi có). KHÔNG
+  gắn tên đối tượng vào nhãn ("Cập nhật quy định chung", "Thêm nhân viên", "Cập nhật mức độ ưu tiên:
+  Cao" là SAI — user chốt 30/09/2026, #10455). Action riêng của màn (thêm/bớt phần tử danh sách, đổi
+  thứ tự…) quy về nhãn của NHÓM nó. Thông tin định danh (tên mức, công ty của danh sách…) đưa vào
+  NỘI DUNG dòng: khoá dạng bảng §4b ("Mức độ ưu tiên sửa thông tin: - Cao: …") hoặc nhãn nhóm
+  ("Chức vụ (Công ty A) thêm mới"). Đã làm tập trung ở `SettingHistoryService::standardLabel()`.
+- Entity lớn có log riêng qua `SystemLogService` (khách hàng, báo giá, phiếu…) vẫn giữ nhãn chi
+  tiết ("Duyệt", "Từ chối", "Gửi duyệt"…) vì đó là bước nghiệp vụ, không phải tên đối tượng.
 
 ### Cách ánh xạ (BE)
 `SystemLogService` khai sẵn, **không tự khai lại ở từng entity**:
@@ -407,8 +416,14 @@ Nhóm danh mục (tiền tệ, vụ việc, mã phí, quốc gia, tỉnh/huyện
 | **DB** | bảng chung `catalog_histories` (`table_name` + `table_id`) — KHÔNG tạo `<entity>_history` mới |
 | **BE ghi log** | `use App\Services\Concerns\LogsCatalogHistory` trong service: khai `catalogTable()`, `catalogColumns()`, (tuỳ chọn) `catalogDisplay()`; gọi `logCatalogCreate` / `logCatalogUpdate` / `logCatalogStatus` / `logCatalogDelete` |
 | **BE đọc** | `App\Services\CatalogHistoryService` + endpoint chung `GET /api/v1/catalog-histories/{table}/{id}` — nhớ khai bảng + nhãn cột tiếng Việt vào `CatalogHistoryService::TABLES` (whitelist) |
-| **FE popup ở danh sách** | `<CatalogHistoryModal ref="historyModal" modal-id="history-<màn>" record-prefix="Vụ việc" />` rồi `this.$refs.historyModal.open('<table>', item.id, '<mã> - <tên>')` |
+| **FE popup ở danh sách** | `<CatalogHistoryModal ref="historyModal" modal-id="history-<màn>" record-prefix="Vụ việc" />` rồi `this.$refs.historyModal.open('<table>', item.id, item.name || '')` — nhãn bản ghi **CHỈ TÊN, KHÔNG kèm mã** (xem ghi chú dưới bảng) |
 | **FE khối ở chi tiết / popup Xem** | `<SystemInfoSection entity-type="<table>" :entity-id="id" endpoint-base="catalog-histories" />` |
+
+⚠️ **Tiêu đề popup Lịch sử KHÔNG hiện mã bản ghi** (chốt 2026-09-28, màn `customer-care/services`):
+tham số thứ 3 của `open()` chỉ truyền **tên** → tiêu đề ra `Lịch sử … Gói bảo dưỡng: <Tên>`.
+❌ `` `${item.code || ''} - ${item.name || ''}` `` — mã vô nghĩa với người xem, lại dài tiêu đề.
+Bản ghi không có cột tên thì truyền trường nhận diện dễ đọc nhất (vd số phiếu), đừng ghép `mã - tên`.
+Sửa ở từng màn gọi `open()`, KHÔNG sửa `CatalogHistoryModal` dùng chung.
 
 Entity lớn đã có bảng log riêng (khách hàng, báo giá, phiếu…) thì GIỮ nguyên `SystemLogService`.
 Entity từng có log kiểu version (`<x>_versions` + `<x>_histories`, vd `accounts`) đọc qua
@@ -427,6 +442,8 @@ Quay lại). Đặt nút "Lịch sử" ở footer là sai: nội dung lịch s�
 
 ⚠️ **Danh mục Thêm/Sửa/Xem bằng modal cũng phải có khối Lịch sử trong popup Xem** (chốt 2026-08-15).
 Quy ước cũ "chi tiết mở dạng modal thì ẩn khối Lịch sử" đã BỎ.
+Khuôn đặt khối này trong popup (vị trí, prop, và quy tắc **bỏ dòng `Người tạo / Ngày tạo`** ở đáy body):
+skill `modal-popup` **mục 3c**.
 
 **Padding vùng nội dung của khối Lịch sử = `5px`** — dùng đúng một trị số này ở mọi màn (`.si-body`),
 không màn nào tự nới rộng.
@@ -440,7 +457,7 @@ không màn nào tự nới rộng.
 - 2 nơi hiển thị dùng **cùng một bố cục**: popup (mở từ menu ⋮ màn danh sách) và mục "Lịch sử" trong màn chi tiết.
 - Timeline chấm tròn màu theo `action_color`; mỗi mục: **thời gian → tên hành động → "Người thực hiện: ..." → khối thay đổi**.
 - Màu: cũ **#dc2626 (đỏ)**, mới **#16a34a (xanh)**, nhãn/tên bản ghi **#475569**. Dòng sửa `~` phải tô cũ đỏ / mới xanh BÊN TRONG, không để một màu.
-- Bộ lọc client-side 4 ô: **Loại hành động / Người thực hiện / Từ ngày / Đến ngày** + nút Tìm kiếm, Làm mới.
+- Bộ lọc client-side 4 ô: **Loại hành động / Người thực hiện / Từ ngày / Đến ngày** — chọn là lọc LUÔN, chỉ có nút **Làm mới** (theo `SystemInfoSection` hiện hành; bản cũ có nút Tìm kiếm đã bỏ).
 - Gọi API bằng `$store.dispatch('apiGetMethod', ...)`, KHÔNG thêm Vuex action riêng.
 - Component tự giữ state (loading/items/filters) — không đụng state màn cha (màn auto-save sẽ bắn POST oan).
 

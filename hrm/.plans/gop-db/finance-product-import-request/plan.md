@@ -1197,3 +1197,95 @@ Tham chiếu màn `/finance/prepick-cancel-requests` (nút "Duyệt" của nó l
       `finance/product-import-requests/${id}/department-manager-approve` payload `{status:2}` (mirror `tp-approve`);
       toast + `resetLoadDedupe()` + `loadData()`; nuốt 403 như `exportExcel`.
 - [x] **Verify** line ending LF (0 CR); grep các mảnh vừa thêm đúng vị trí; `resetLoadDedupe` sẵn có (mixin đã dùng ở export). Còn lại user chạy thử UI.
+
+---
+
+## Phase 16 — Xuất Excel danh sách chết 500 khi không lọc (2026-09-22, @junfoke)
+
+**Triệu chứng user báo:** `GET /api/v1/finance/product-import-requests/export?sort_desc=true`
+trả **500, body rỗng** trên `hrm-crm.eteksofts.com`.
+
+**Đã tái hiện + khoanh vùng trên chính server đó (đăng nhập bằng tài khoản dev, gọi API trực tiếp):**
+
+| Phạm vi | Số dòng | Kết quả |
+| --- | --- | --- |
+| `keyword=PYCNH-14046` | 1 | 200 — 0,56s |
+| `import_type=14` | 944 | 200 — 2,65s |
+| `import_type=3` | 2.379 | 200 — 6,46s |
+| `keyword=PYCNH-1` | 3.956 | 200 — 10,9s |
+| **không lọc** | **13.872** | **500, body rỗng — 0,42s** (lặp lại 3 lần đều vậy) |
+
+**Root cause:** `ProductImportRequestService::exportData()` gọi `->get()` **không phân trang** —
+nạp nguyên 13.872 bản ghi + 6 quan hệ eager load vào RAM 1 request. Chết **0,42s** (không phải
+30s) ⇒ không phải `max_execution_time` mà là **fatal cạn memory**, loại fatal `try/catch (\Throwable)`
+trong Controller KHÔNG bắt được → PHP-FPM tắt tiến trình, nginx trả 500 rỗng.
+Ghi chú sẵn trong docblock `ProductImportRequestExport` đã nói: ERP có nhánh >2000 dòng thì gửi
+mail (`ProductImportRequestMailJob`), HRM **cố ý không port** → mất luôn van an toàn.
+Đối chiếu 21 endpoint `/export` của phân hệ Tài chính trên server: **chỉ màn này hỏng**, màn lớn
+thứ nhì (`prepick-cancel-requests`, 4.026 dòng) vẫn 200.
+
+**KHÔNG liên quan tới việc gán link menu** (Phase 13 của `bo-sung-menu-phan-he`): link chỉ là
+đường vào màn, `exportExcel()` không đọc `$route.query`; gọi thẳng API không qua FE vẫn 500 y hệt.
+
+Hướng xử lý theo đúng `list-page` mục 14c (ngưỡng 1 lần xuất > 2s — màn này 10,9s ở 3.956 dòng đã
+vượt xa): BE thêm `export-rows` trả theo trang, FE dựng file bằng `exportListFile` dùng chung.
+
+- [x] BE `Modules/Finance/Services/ProductImportRequestService.php`: thêm `exportRows($request, $fields, $page, $limit)`
+      — `forPage()` + `getCountForPagination()`, STT chạy tiếp qua trang, trả `headings/widths/rows/total`
+- [x] BE Controller: thêm `exportRows()` (trần `limit` 5.000, mặc định 2.000) theo khuôn `ProductTransferController`
+- [x] BE Route: `GET /export-rows` khai **TRƯỚC** `/{id}`
+- [x] FE `pages/finance/product-import-requests/index.vue`: đổi `exportExcel()` sang `exportListFile`,
+      thêm `exporting` / `exportProgress` / `exportButtonText`, khoá nút khi đang xuất
+- [x] Giữ nguyên endpoint `/export` cũ (skill 14c yêu cầu giữ để đối chiếu) — FE không gọi nữa
+- [x] Verify: **chạy thật trên DB `gop_db` LOCAL** (12.207 bản ghi, trong phạm vi quyền còn 12.113)
+      bằng `DB_DATABASE=gop_db php artisan tinker --execute` gọi thẳng `ProductImportRequestService::exportRows()`
+      theo đúng vòng lặp của `listExportFile.js` (7 lượt × 2.000):
+
+      | Lượt | Dòng | Thời gian | Peak RAM (cộng dồn cả tiến trình) |
+      | --- | --- | --- | --- |
+      | 1 | 2.000 | 806ms | 82MB |
+      | 2-6 | 2.000 mỗi lượt | 530-595ms | 86-90MB |
+      | 7 | 113 | 98ms | 90MB |
+      | 8 | 0 → thoát vòng lặp | 55ms | 90MB |
+
+      - Tổng tải về **12.113 / 12.113** — khớp `total`, **12.113 mã duy nhất** (0 trùng, 0 sót);
+        mép trang liền mạch (`PYCNH-10199` → `PYCNH-10198`, `08194` → `08193`, …)
+      - **STT liên tục 1..12.113**, không reset về 1 ở trang 2
+      - `headings` / `widths` / mỗi `row` đều **11 phần tử**, khớp thứ tự blade cũ
+      - `exportData()` cũ sau refactor vẫn trả đúng 10 khoá như trước (không vỡ đường cũ)
+- [x] **Đo đối chứng đường CŨ, chốt hẳn root cause** — chạy nguyên `Controller::export()` (2 bước)
+      trên cùng DB local, ép `php -d memory_limit=256M` (mức phổ biến của PHP-FPM):
+
+      | Bước | Kết quả |
+      | --- | --- |
+      | 1. `exportData()` chuẩn bị dữ liệu | 12.113 dòng, 2,1s, **peak 204MB** |
+      | 2. `Excel::raw()` dựng file (`FromView`) | 753KB, 21,6s, **peak 250MB / trần 256MB** |
+
+      ⇒ Ở 12.113 dòng đã ăn **250/256MB, chỉ còn 6MB dư**. Server thật có **13.872 dòng (+14,5%)**
+      → vượt trần → **fatal cạn memory**, đúng triệu chứng 500 body rỗng. Con số này giải thích
+      luôn vì sao lọc hẹp thì vẫn chạy được: 3.956 dòng chỉ tốn khoảng 1/3 mức đó.
+      Đường MỚI: **peak 90MB cho cả 7 lượt cộng dồn**, mỗi lượt ~0,6s.
+- [ ] Chạy lại trên `hrm-crm.eteksofts.com` sau khi deploy (server vẫn đang chạy bản cũ, `export-rows` trả 404)
+- [ ] Bấm nút thật trên trình duyệt: kiểm dòng tiến độ + file tải về (chưa làm)
+
+**Đo thêm — vì sao chọn `limit` 2.000 là an toàn.** Dò trần bằng chính endpoint `index` trên server
+(`per_page` tăng dần) thấy một **vách rất gọn**, đúng dấu hiệu cạn memory chứ không phải dữ liệu bẩn:
+
+| `per_page` | Kết quả |
+| --- | --- |
+| 500 · 1.000 · 1.200 · 1.500 · 1.800 | 200 ở mọi trang thử |
+| **2.000** | **500 ở trang 1,2,3,4,7 — 200 ở trang 5,6** (đúng mép, tuỳ nội dung trang) |
+
+Nhưng đường EXPORT nhẹ hơn đường INDEX nhiều (không dựng Resource, không tính 9 cờ `is_can_*`
+cho từng dòng): endpoint `/export` cũ vẫn chạy 200 với **3.956 dòng trong MỘT request** (10,9s).
+Vậy `export-rows` mỗi lượt 2.000 dòng — ít việc hơn hẳn — nằm dưới trần với biên rộng.
+
+⚠️ **KHÔNG được hạ `limit` ở BE xuống dưới 2.000**: FE `listExportFile.js` gửi cứng
+`EXPORT_PAGE_LIMIT = 2000` và tự tính `maxPages = ceil(total / 2000) + 1`. BE cắt nhỏ hơn thì vòng
+lặp dừng sớm → **mất dòng trong file mà không báo lỗi**. Cần đổi thì phải sửa ở `listExportFile.js`
+(file dùng chung — hỏi trước).
+
+**Tồn đọng phát hiện kèm, CHƯA sửa (ngoài phạm vi):** endpoint `index` chết 500 khi
+`per_page >= 2000`. UI không bao giờ gửi mức đó (10/20/50…) nên không ai gặp, nhưng ai gọi API
+tay thì dính. Muốn chặn hẳn thì kẹp trần `per_page` ở BE — cần chốt mức trước khi làm.
+

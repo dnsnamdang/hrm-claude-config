@@ -1,0 +1,19 @@
+{
+  "catalog": "Ngân hàng câu hỏi khảo sát",
+  "srs_file": "SRS - Ngân hàng câu hỏi khảo sát.docx",
+  "rows": [
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Phiếu thu thập thông tin (Thêm/Sửa mẫu – Thư viện câu hỏi; Thêm nhanh câu hỏi; Import mẫu phiếu)",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE pages/assign/form-templates/components/QuestionLibrary.vue, SectionBuilder.vue, AddQuestionQuickModal.vue:364 · BE Services/FormTemplateService.php:154,222,326 (form_questions.survey_question_id, form_groups.survey_question_id); FormTemplateController.php:516,531. Cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp"
+    },
+    {
+      "nhom": "Danh mục dùng chung",
+      "man_hinh": "Ngân hàng câu hỏi khảo sát (Thêm/Sửa câu hỏi – popup chọn Câu hỏi con)",
+      "duong_dan": "Danh mục dùng chung",
+      "evidence": "FE pages/assign/questions/components/QuestionForm.vue → components/modals/AddSurveyQuestionModal.vue:280 · BE Services/SurveyQuestionService.php:284-288 (survey_question_relations.parent/child_survey_question_id)"
+    }
+  ],
+  "notes": "Kiểm tra xoá THIẾU: SurveyQuestion::isCanDelete() (Entities/SurveyQuestion.php:127) xét questionRelations (câu hỏi đang là CHA), formQuestions, formGroups nhưng KHÔNG xét parentQuestionRelations (câu hỏi đang là CON của câu khác) → xoá được câu hỏi con đang gắn, SurveyQuestionService::destroy() (Service:141) không dọn survey_question_relations → còn dòng quan hệ trỏ tới câu đã xoá. Không đưa Meeting/Dự án TKT vào: 2 màn đó dùng PHIẾU (form_template_snapshots), không đọc trực tiếp ngân hàng câu hỏi; phần 'thêm câu hỏi bổ sung' (FormPreview → snapshot/{id}/additional-questions) tạo câu hỏi tự do trong snapshot, không lấy từ ngân hàng. Code chết: action Vuex optionsSelect/fetchQuestionHierarchies (store/optionsSelect.js:431) không màn nào gọi. Đào tạo -> Danh mục -> Ngân hàng câu hỏi là danh mục KHÁC (training), không tính."
+}

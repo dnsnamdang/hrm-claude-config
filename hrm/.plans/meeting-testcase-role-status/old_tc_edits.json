@@ -1,0 +1,956 @@
+[
+ {
+  "row": 8,
+  "id": "TC-ROLE-01.",
+  "col": "E",
+  "text": "Vào danh sách Meeting với quyền xem theo tổng công ty"
+ },
+ {
+  "row": 8,
+  "id": "TC-ROLE-01.",
+  "col": "G",
+  "text": "Tài khoản có quyền 'Xem danh sách meeting theo tổng công ty'; đã đăng nhập."
+ },
+ {
+  "row": 8,
+  "id": "TC-ROLE-01.",
+  "col": "H",
+  "text": "1. Mở menu Meetings > Lịch Meeting.\n2. Quan sát màn hình, bộ lọc nâng cao và nút trên từng dòng."
+ },
+ {
+  "row": 8,
+  "id": "TC-ROLE-01.",
+  "col": "I",
+  "text": "Quyền: Xem danh sách meeting theo tổng công ty"
+ },
+ {
+  "row": 8,
+  "id": "TC-ROLE-01.",
+  "col": "J",
+  "text": "- Mở được màn 'Danh sách meetings liên quan đến dự án tiền khả thi'.\n- Thấy meeting của mọi công ty (trừ bản Lưu nháp của người khác).\n- Có nút Tạo mới, Xuất Excel, Cấu hình cột.\n- Bộ lọc nâng cao có đủ ô Công ty, Phòng ban, Bộ phận.\n- Nút trên dòng: Xem, In biên bản, Lịch sử luôn có; Sửa chỉ khi mình là người tạo/chủ trì và meeting chưa Hoàn thành/Huỷ; Xoá chỉ khi mình là người tạo và meeting đang Lưu nháp."
+ },
+ {
+  "row": 9,
+  "id": "TC-ROLE-03",
+  "col": "E",
+  "text": "Không có quyền xem nào vẫn vào được và chỉ thấy meeting liên quan tới mình"
+ },
+ {
+  "row": 9,
+  "id": "TC-ROLE-03",
+  "col": "G",
+  "text": "Tài khoản E không được gán quyền nào trong 4 quyền 'Xem danh sách meeting theo ...'.\nE là thành viên MT-01 (Lên lịch hẹn), chủ trì MT-08 (Lưu nháp, người khác tạo), tự tạo MT-09."
+ },
+ {
+  "row": 9,
+  "id": "TC-ROLE-03",
+  "col": "H",
+  "text": "1. Đăng nhập E.\n2. Mở menu Meetings > Lịch Meeting.\n3. Quan sát danh sách và bộ lọc nâng cao."
+ },
+ {
+  "row": 9,
+  "id": "TC-ROLE-03",
+  "col": "I",
+  "text": "Tài khoản: E (không có quyền xem nào)"
+ },
+ {
+  "row": 9,
+  "id": "TC-ROLE-03",
+  "col": "J",
+  "text": "- Menu Meetings > Lịch Meeting vẫn hiển thị và vào được.\n- Danh sách chỉ có MT-01, MT-08, MT-09 (meeting mình là thành viên / chủ trì / tự tạo).\n- Không thấy meeting nào khác.\n- Bộ lọc nâng cao không có ô Công ty, Phòng ban, Bộ phận."
+ },
+ {
+  "row": 10,
+  "id": "TC-ROLE-04",
+  "col": "E",
+  "text": "Mở thẳng đường dẫn chi tiết meeting không liên quan tới mình"
+ },
+ {
+  "row": 10,
+  "id": "TC-ROLE-04",
+  "col": "G",
+  "text": "Tài khoản E không có quyền xem nào, không phải người tạo/chủ trì/thành viên của MT-10."
+ },
+ {
+  "row": 10,
+  "id": "TC-ROLE-04",
+  "col": "H",
+  "text": "1. Đăng nhập E.\n2. Dán đường dẫn màn chi tiết MT-10 lên trình duyệt."
+ },
+ {
+  "row": 10,
+  "id": "TC-ROLE-04",
+  "col": "I",
+  "text": "Đường dẫn chi tiết MT-10"
+ },
+ {
+  "row": 10,
+  "id": "TC-ROLE-04",
+  "col": "J",
+  "text": "- Hiện thông báo 'Bạn không có quyền thực hiện chức năng này'.\n- Chuyển sang trang không tìm thấy (404).\n- Không lộ bất kỳ nội dung nào của MT-10."
+ },
+ {
+  "row": 11,
+  "id": "TC-ROLE-05",
+  "col": "E",
+  "text": "Bị đổi người chủ trì trong lúc đang mở màn Sửa"
+ },
+ {
+  "row": 11,
+  "id": "TC-ROLE-05",
+  "col": "G",
+  "text": "B là chủ trì (không phải người tạo) đang mở màn Sửa MT-01.\nCùng lúc đó A (người tạo) đổi chủ trì MT-01 sang B2 và lưu."
+ },
+ {
+  "row": 11,
+  "id": "TC-ROLE-05",
+  "col": "H",
+  "text": "1. B sửa Nội dung cuộc họp.\n2. B bấm Lưu.\n3. B mở lại chi tiết MT-01."
+ },
+ {
+  "row": 11,
+  "id": "TC-ROLE-05",
+  "col": "I",
+  "text": "Chủ trì mới: B2"
+ },
+ {
+  "row": 11,
+  "id": "TC-ROLE-05",
+  "col": "J",
+  "text": "- Hiện thông báo 'Bạn không có quyền thực hiện chức năng này', dữ liệu B vừa sửa không được lưu.\n- Mở lại MT-01: B không còn nút Sửa."
+ },
+ {
+  "row": 11,
+  "id": "TC-ROLE-05",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\nCode hiện báo 2 lần cùng một câu. Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 39,
+  "id": "TC-ROLE-30",
+  "col": "G",
+  "text": "Tài khoản đã đăng nhập (mọi tài khoản đều tạo được meeting, không cần quyền riêng)."
+ },
+ {
+  "row": 39,
+  "id": "TC-ROLE-30",
+  "col": "J",
+  "text": "- Kiểm tra đầy đủ bắt buộc  → pass \n- Kiểm tra định dạng → pass \n- Kiểm tra logic thời gian: Bắt đầu ≥ hiện tại, Bắt đầu < Kết thúc → pass \n-> Hệ thống Ghi nhận toàn bộ dữ liệu-> Lưu thành công dữ liệu nhập + cập nhật trạng thái “Lên lịch hẹn\"\n\n=> Đối với màn thêm mới dự án TKT trường thông tin \"Chọn meeting khởi tạo (có thể nhiều)\" có thể chọn được meeting theo khách hàng tương ứng ( VD: CÔNG TY TNHH TOYOTA HÀ ĐÔNG)\n\n=> Sau khi tạo xong màn xem chi tiết dự án Tab \"Meeting\" cũng hiển thị thông tin meeting theo khách hàng tương ứng ( VD: CÔNG TY TNHH TOYOTA HÀ ĐÔNG)\n\nMàn xem chi tiết dự án ở tab Meeting cũng hiển thị chi tiết thông tin của meeting đã chọn ( Bao gồm các thông tin (Tên meeting, thời gian, thời lượng họp, loại hình thức, Khách hàng, thành phần tham dự, Trạng thái, biên bản)"
+ },
+ {
+  "row": 39,
+  "id": "TC-ROLE-30",
+  "col": "O",
+  "text": "testcase bổ sung\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 40,
+  "id": "TC-ROLE-31.",
+  "col": "G",
+  "text": "Tài khoản đã đăng nhập (mọi tài khoản đều tạo được meeting, không cần quyền riêng)."
+ },
+ {
+  "row": 40,
+  "id": "TC-ROLE-31.",
+  "col": "J",
+  "text": "- Kiểm tra đầy đủ bắt buộc  → pass \n- Kiểm tra định dạng → pass \n- Kiểm tra logic thời gian: Bắt đầu ≥ hiện tại, Bắt đầu < Kết thúc → pass \n-> Hệ thống Ghi nhận toàn bộ dữ liệu-> Lưu thành công dữ liệu nhập + cập nhật trạng thái “Lên lịch hẹn\"\n\n\n=> Sau khi tạo xong màn xem chi tiết dự án Tab \"Meeting\" cũng hiển thị thông tin meeting theo khách hàng tương ứng ( VD: CÔNG TY TNHH TOYOTA HÀ ĐÔNG)\n\nMàn xem chi tiết dự án ở tab Meeting cũng hiển thị chi tiết thông tin của meeting đã chọn ( Bao gồm các thông tin (Tên meeting, thời gian, thời lượng họp, loại hình thức, Khách hàng, thành phần tham dự, Trạng thái, biên bản)"
+ },
+ {
+  "row": 40,
+  "id": "TC-ROLE-31.",
+  "col": "O",
+  "text": "testcase bổ sung\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 83,
+  "id": "TC-ROLE-74",
+  "col": "G",
+  "text": "Tài khoản đã đăng nhập (mọi tài khoản đều tạo được meeting, không cần quyền riêng)."
+ },
+ {
+  "row": 83,
+  "id": "TC-ROLE-74",
+  "col": "J",
+  "text": "- Kiểm tra trường bắt buộc không trống → pass \n- Ghi nhận toàn bộ dữ liệu nhập \n- Lưu thành công toàn bộ dữ liệu nhập với trạng thái “Lưu nháp” \n- Hiển thị thông báo \" Thêm mới thành công\""
+ },
+ {
+  "row": 83,
+  "id": "TC-ROLE-74",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 84,
+  "id": "TC-ROLE-75",
+  "col": "E",
+  "text": "Tài khoản không có quyền nào vẫn tạo được meeting"
+ },
+ {
+  "row": 84,
+  "id": "TC-ROLE-75",
+  "col": "G",
+  "text": "Tài khoản E không có quyền nào trong nhóm meeting."
+ },
+ {
+  "row": 84,
+  "id": "TC-ROLE-75",
+  "col": "H",
+  "text": "1. Đăng nhập E, bấm Tạo mới.\n2. Nhập đủ trường bắt buộc.\n3. Bấm Lưu nháp."
+ },
+ {
+  "row": 84,
+  "id": "TC-ROLE-75",
+  "col": "I",
+  "text": "Tài khoản: E"
+ },
+ {
+  "row": 84,
+  "id": "TC-ROLE-75",
+  "col": "J",
+  "text": "- Lưu thành công, meeting ở trạng thái 'Lưu nháp'.\n- E là người tạo, có đủ nút Sửa / Xóa với meeting này."
+ },
+ {
+  "row": 84,
+  "id": "TC-ROLE-75",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 86,
+  "id": "TC-ROLE-77",
+  "col": "G",
+  "text": "Tài khoản đã đăng nhập (mọi tài khoản đều tạo được meeting, không cần quyền riêng)."
+ },
+ {
+  "row": 86,
+  "id": "TC-ROLE-77",
+  "col": "J",
+  "text": "- Kiểm tra đầy đủ bắt buộc  → pass \n- Kiểm tra định dạng → pass \n- Kiểm tra logic thời gian: Bắt đầu ≥ hiện tại, Bắt đầu < Kết thúc → pass \n-> Hệ thống Ghi nhận toàn bộ dữ liệu-> Lưu thành công dữ liệu nhập + cập nhật trạng thái “Lên lịch hẹn\""
+ },
+ {
+  "row": 86,
+  "id": "TC-ROLE-77",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 87,
+  "id": "TC-ROLE-78",
+  "col": "E",
+  "text": "Thành viên không lên lịch được meeting của người khác"
+ },
+ {
+  "row": 87,
+  "id": "TC-ROLE-78",
+  "col": "G",
+  "text": "D là thành viên (không phải người tạo/chủ trì) của MT-01 trạng thái Lên lịch hẹn."
+ },
+ {
+  "row": 87,
+  "id": "TC-ROLE-78",
+  "col": "H",
+  "text": "1. Đăng nhập D, mở chi tiết MT-01.\n2. Dán đường dẫn màn Sửa MT-01."
+ },
+ {
+  "row": 87,
+  "id": "TC-ROLE-78",
+  "col": "I",
+  "text": "Tài khoản: D"
+ },
+ {
+  "row": 87,
+  "id": "TC-ROLE-78",
+  "col": "J",
+  "text": "- Màn chi tiết không có nút Sửa nên không có Lưu và Lên lịch.\n- Mở đường dẫn Sửa thì tự chuyển về màn chi tiết."
+ },
+ {
+  "row": 87,
+  "id": "TC-ROLE-78",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 89,
+  "id": "TC-ROLE-80",
+  "col": "E",
+  "text": "Tài khoản không có quyền xem nào vẫn Lên lịch được meeting mới"
+ },
+ {
+  "row": 89,
+  "id": "TC-ROLE-80",
+  "col": "G",
+  "text": "Tài khoản E không có quyền nào trong nhóm meeting."
+ },
+ {
+  "row": 89,
+  "id": "TC-ROLE-80",
+  "col": "H",
+  "text": "1. Đăng nhập E, bấm Tạo mới.\n2. Nhập đủ trường bắt buộc.\n3. Bấm Lưu và Lên lịch."
+ },
+ {
+  "row": 89,
+  "id": "TC-ROLE-80",
+  "col": "I",
+  "text": "Tài khoản: E"
+ },
+ {
+  "row": 89,
+  "id": "TC-ROLE-80",
+  "col": "J",
+  "text": "- Lưu thành công, meeting chuyển 'Lên lịch hẹn'."
+ },
+ {
+  "row": 89,
+  "id": "TC-ROLE-80",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 92,
+  "id": "TC-ROLE-83",
+  "col": "E",
+  "text": "Người không phải người tạo/chủ trì không Hoàn thành được"
+ },
+ {
+  "row": 92,
+  "id": "TC-ROLE-83",
+  "col": "G",
+  "text": "MT-05 Đã chốt lịch, đã tới giờ họp. D là thành viên, E chỉ có quyền xem theo công ty."
+ },
+ {
+  "row": 92,
+  "id": "TC-ROLE-83",
+  "col": "H",
+  "text": "1. Lần lượt đăng nhập D, E mở chi tiết MT-05.\n2. Dán đường dẫn màn Sửa MT-05."
+ },
+ {
+  "row": 92,
+  "id": "TC-ROLE-83",
+  "col": "I",
+  "text": "Tài khoản: D, E"
+ },
+ {
+  "row": 92,
+  "id": "TC-ROLE-83",
+  "col": "J",
+  "text": "- Không có nút Hoàn thành.\n- Mở đường dẫn Sửa thì tự chuyển về màn chi tiết."
+ },
+ {
+  "row": 92,
+  "id": "TC-ROLE-83",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 96,
+  "id": "TC-ROLE-86",
+  "col": "G",
+  "text": "Tài khoản không phải người tạo, không phải chủ trì của meeting (vd thành viên D)."
+ },
+ {
+  "row": 96,
+  "id": "TC-ROLE-86",
+  "col": "J",
+  "text": "- Tự chuyển sang màn Chi tiết, không mở được màn Sửa."
+ },
+ {
+  "row": 96,
+  "id": "TC-ROLE-86",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 97,
+  "id": "TC-ROLE-87",
+  "col": "G",
+  "text": "Người tạo hoặc người chủ trì mở màn Sửa; meeting chưa Hoàn thành/Huỷ."
+ },
+ {
+  "row": 103,
+  "id": "TC-ROLE-93",
+  "col": "E",
+  "text": "Người không phải người tạo/chủ trì không bấm được 'Lưu nháp'"
+ },
+ {
+  "row": 103,
+  "id": "TC-ROLE-93",
+  "col": "G",
+  "text": "D là thành viên (không phải người tạo/chủ trì) của meeting."
+ },
+ {
+  "row": 103,
+  "id": "TC-ROLE-93",
+  "col": "H",
+  "text": "1. Đăng nhập D, mở chi tiết meeting.\n2. Dán đường dẫn màn Sửa.\n3. Dùng công cụ kiểm thử API gọi thẳng chức năng Sửa meeting."
+ },
+ {
+  "row": 103,
+  "id": "TC-ROLE-93",
+  "col": "I",
+  "text": "Tài khoản: D"
+ },
+ {
+  "row": 103,
+  "id": "TC-ROLE-93",
+  "col": "J",
+  "text": "- Không có nút Sửa nên không có 'Lưu nháp'.\n- Đường dẫn Sửa tự chuyển về màn chi tiết.\n- Gọi thẳng chức năng Sửa: hệ thống từ chối, báo 'Bạn không có quyền thực hiện chức năng này', dữ liệu không đổi."
+ },
+ {
+  "row": 103,
+  "id": "TC-ROLE-93",
+  "col": "O",
+  "text": "Màn sửa hiện tại vẫn có Lưu nháp, trừ khi \"Lên lịch/Chốt lịch/Hoàn thành/Huỷ\" thì mới k có Lưu nháp nữa\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 105,
+  "id": "TC-ROLE-95",
+  "col": "E",
+  "text": "Người không phải người tạo/chủ trì không bấm được 'Lưu và Lên lịch'"
+ },
+ {
+  "row": 105,
+  "id": "TC-ROLE-95",
+  "col": "G",
+  "text": "D là thành viên (không phải người tạo/chủ trì) của meeting."
+ },
+ {
+  "row": 105,
+  "id": "TC-ROLE-95",
+  "col": "H",
+  "text": "1. Đăng nhập D, mở chi tiết meeting.\n2. Dán đường dẫn màn Sửa.\n3. Dùng công cụ kiểm thử API gọi thẳng chức năng Sửa meeting."
+ },
+ {
+  "row": 105,
+  "id": "TC-ROLE-95",
+  "col": "I",
+  "text": "Tài khoản: D"
+ },
+ {
+  "row": 105,
+  "id": "TC-ROLE-95",
+  "col": "J",
+  "text": "- Không có nút Sửa nên không có 'Lưu và Lên lịch'.\n- Đường dẫn Sửa tự chuyển về màn chi tiết.\n- Gọi thẳng chức năng Sửa: hệ thống từ chối, báo 'Bạn không có quyền thực hiện chức năng này', dữ liệu không đổi."
+ },
+ {
+  "row": 105,
+  "id": "TC-ROLE-95",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 107,
+  "id": "TC-ROLE-97",
+  "col": "E",
+  "text": "Người không phải người tạo/chủ trì không bấm được 'Lưu và Chốt lịch'"
+ },
+ {
+  "row": 107,
+  "id": "TC-ROLE-97",
+  "col": "G",
+  "text": "D là thành viên (không phải người tạo/chủ trì) của meeting."
+ },
+ {
+  "row": 107,
+  "id": "TC-ROLE-97",
+  "col": "H",
+  "text": "1. Đăng nhập D, mở chi tiết meeting.\n2. Dán đường dẫn màn Sửa.\n3. Dùng công cụ kiểm thử API gọi thẳng chức năng Sửa meeting."
+ },
+ {
+  "row": 107,
+  "id": "TC-ROLE-97",
+  "col": "I",
+  "text": "Tài khoản: D"
+ },
+ {
+  "row": 107,
+  "id": "TC-ROLE-97",
+  "col": "J",
+  "text": "- Không có nút Sửa nên không có 'Lưu và Chốt lịch'.\n- Đường dẫn Sửa tự chuyển về màn chi tiết.\n- Gọi thẳng chức năng Sửa: hệ thống từ chối, báo 'Bạn không có quyền thực hiện chức năng này', dữ liệu không đổi."
+ },
+ {
+  "row": 107,
+  "id": "TC-ROLE-97",
+  "col": "O",
+  "text": "Tại sao lại Fail ạ?\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 109,
+  "id": "TC-ROLE-99",
+  "col": "E",
+  "text": "Người không phải người tạo/chủ trì không bấm được 'Hoàn thành'"
+ },
+ {
+  "row": 109,
+  "id": "TC-ROLE-99",
+  "col": "G",
+  "text": "D là thành viên (không phải người tạo/chủ trì) của meeting."
+ },
+ {
+  "row": 109,
+  "id": "TC-ROLE-99",
+  "col": "H",
+  "text": "1. Đăng nhập D, mở chi tiết meeting.\n2. Dán đường dẫn màn Sửa.\n3. Dùng công cụ kiểm thử API gọi thẳng chức năng Sửa meeting."
+ },
+ {
+  "row": 109,
+  "id": "TC-ROLE-99",
+  "col": "I",
+  "text": "Tài khoản: D"
+ },
+ {
+  "row": 109,
+  "id": "TC-ROLE-99",
+  "col": "J",
+  "text": "- Không có nút Sửa nên không có 'Hoàn thành'.\n- Đường dẫn Sửa tự chuyển về màn chi tiết.\n- Gọi thẳng chức năng Sửa: hệ thống từ chối, báo 'Bạn không có quyền thực hiện chức năng này', dữ liệu không đổi."
+ },
+ {
+  "row": 109,
+  "id": "TC-ROLE-99",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 115,
+  "id": "TC-ROLE-1.04",
+  "col": "G",
+  "text": "Meeting ở trạng thái Lưu nháp; tài khoản đăng nhập là người tạo meeting."
+ },
+ {
+  "row": 116,
+  "id": "TC-ROLE-1.05",
+  "col": "G",
+  "text": "Meeting ở trạng thái Lên lịch hẹn / Đã chốt lịch / Đã hoàn thành / Huỷ; tài khoản là người tạo."
+ },
+ {
+  "row": 118,
+  "id": "TC-ROLE-1.07",
+  "col": "E",
+  "text": "Người chủ trì / thành viên không xoá được meeting"
+ },
+ {
+  "row": 118,
+  "id": "TC-ROLE-1.07",
+  "col": "G",
+  "text": "MT-02 trạng thái Lưu nháp do A tạo, B là chủ trì."
+ },
+ {
+  "row": 118,
+  "id": "TC-ROLE-1.07",
+  "col": "H",
+  "text": "1. Đăng nhập B, xem dòng MT-02 ở danh sách và màn chi tiết.\n2. Dùng công cụ kiểm thử API gọi thẳng chức năng Xoá MT-02."
+ },
+ {
+  "row": 118,
+  "id": "TC-ROLE-1.07",
+  "col": "I",
+  "text": "Tài khoản: B"
+ },
+ {
+  "row": 118,
+  "id": "TC-ROLE-1.07",
+  "col": "J",
+  "text": "- Không có nút Xoá ở cả danh sách lẫn màn chi tiết.\n- Gọi thẳng chức năng Xoá: hệ thống từ chối, báo 'Bạn không có quyền thực hiện chức năng này', MT-02 vẫn còn."
+ },
+ {
+  "row": 118,
+  "id": "TC-ROLE-1.07",
+  "col": "O",
+  "text": "C check lại nhé\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 121,
+  "id": "TC-ROLE-1.09",
+  "col": "E",
+  "text": "Mở chi tiết meeting ngoài phạm vi được xem"
+ },
+ {
+  "row": 121,
+  "id": "TC-ROLE-1.09",
+  "col": "G",
+  "text": "Tài khoản E không liên quan MT-10 và không có quyền xem theo phạm vi chứa MT-10."
+ },
+ {
+  "row": 121,
+  "id": "TC-ROLE-1.09",
+  "col": "J",
+  "text": "- Hiện thông báo 'Bạn không có quyền thực hiện chức năng này'.\n- Chuyển sang trang không tìm thấy (404), không hiển thị thông tin meeting."
+ },
+ {
+  "row": 121,
+  "id": "TC-ROLE-1.09",
+  "col": "O",
+  "text": "HIện tại màn này chỉ có 1. quyền quản lý, nếu tk P2 P3 chưa dc phân quyền thì sẽ không xem đc menu cũng như là danh sách meeting là đúng rồi\n->> Còn case của e đang viết là nhập link URL, kiểm tra quyền-> Fail thì sẽ báo lỗi Ko có quyền\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 125,
+  "id": "TC-ROLE-51.",
+  "col": "G",
+  "text": "Tài khoản bất kỳ (nút Xuất Excel không cần quyền riêng); có dữ liệu."
+ },
+ {
+  "row": 125,
+  "id": "TC-ROLE-51.",
+  "col": "J",
+  "text": "File .xlsx tải về; cột đúng theo Grid; dữ liệu và số lượng bản ghi khớp; tiếng Việt không lỗi.\n- File chỉ gồm meeting nằm trong phạm vi tài khoản đang xem được (giống danh sách trên màn hình)."
+ },
+ {
+  "row": 126,
+  "id": "TC-ROLE-52",
+  "col": "G",
+  "text": "Tài khoản bất kỳ (nút Xuất Excel không cần quyền riêng); có dữ liệu."
+ },
+ {
+  "row": 126,
+  "id": "TC-ROLE-52",
+  "col": "J",
+  "text": "File chỉ chứa dữ liệu sau filter; số lượng khớp.\n- File chỉ gồm meeting nằm trong phạm vi tài khoản đang xem được (giống danh sách trên màn hình)."
+ },
+ {
+  "row": 129,
+  "id": "TC-ROLE-1.1.2",
+  "col": "G",
+  "text": "tài khoản xem được meeting"
+ },
+ {
+  "row": 129,
+  "id": "TC-ROLE-1.1.2",
+  "col": "J",
+  "text": "- Kiểm tra biên bản tồn tại → pass \n- Tải dữ liệu Biên bản từ CSDL \n- Mở cửa sổ in hoặc preview in\n- Không cập nhật/ghi dữ liệu CSDL \n- Không thay đổi trạng thái "
+ },
+ {
+  "row": 130,
+  "id": "TC-ROLE-1.1.3",
+  "col": "G",
+  "text": "Mở Tạo/Sửa Meeting, tab Biên bản, tài khoản xem được meeting"
+ },
+ {
+  "row": 130,
+  "id": "TC-ROLE-1.1.3",
+  "col": "J",
+  "text": "- Kiểm tra biên bản tồn tại → pass \n- Tải dữ liệu Biên bản từ CSDL \n- Sinh bản in theo mẫu hệ thống (giao diện in trình duyệt) \n- Mở cửa sổ in hoặc preview in"
+ },
+ {
+  "row": 131,
+  "id": "TC-ROLE-1.1.4",
+  "col": "G",
+  "text": "Mở Xem chi tiết Meeting, tài khoản xem được meeting, biên bản tồn tại"
+ },
+ {
+  "row": 131,
+  "id": "TC-ROLE-1.1.4",
+  "col": "J",
+  "text": "- Tải dữ liệu Biên bản- Mở giao diện in (preview hoặc trực tiếp in) "
+ },
+ {
+  "row": 132,
+  "id": "TC-ROLE-1.1.5",
+  "col": "E",
+  "text": "In biên bản meeting ngoài phạm vi được xem"
+ },
+ {
+  "row": 132,
+  "id": "TC-ROLE-1.1.5",
+  "col": "G",
+  "text": "Tài khoản E không liên quan MT-10 và không có quyền xem theo phạm vi chứa MT-10."
+ },
+ {
+  "row": 132,
+  "id": "TC-ROLE-1.1.5",
+  "col": "H",
+  "text": "1. Đăng nhập E, tìm MT-10 ở danh sách.\n2. Dán đường dẫn trang in biên bản của MT-10."
+ },
+ {
+  "row": 132,
+  "id": "TC-ROLE-1.1.5",
+  "col": "I",
+  "text": "Tài khoản: E"
+ },
+ {
+  "row": 132,
+  "id": "TC-ROLE-1.1.5",
+  "col": "J",
+  "text": "- Không thấy MT-10 nên không có nút In.\n- Mở đường dẫn in: bị chặn, báo 'Bạn không có quyền thực hiện chức năng này', không hiện nội dung biên bản."
+ },
+ {
+  "row": 132,
+  "id": "TC-ROLE-1.1.5",
+  "col": "O",
+  "text": "Rà code thấy trang in chưa kiểm quyền xem - dễ Failed. Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 141,
+  "id": "TC-ROLE-1.22",
+  "col": "G",
+  "text": "Tài khoản đã đăng nhập (mọi tài khoản đều tạo được meeting, không cần quyền riêng)."
+ },
+ {
+  "row": 142,
+  "id": "TC-ROLE-1.23",
+  "col": "G",
+  "text": "Tài khoản đã đăng nhập (mọi tài khoản đều tạo được meeting, không cần quyền riêng)."
+ },
+ {
+  "row": 143,
+  "id": "TC-ROLE-1.24",
+  "col": "G",
+  "text": "Tài khoản đã đăng nhập (mọi tài khoản đều tạo được meeting, không cần quyền riêng)."
+ },
+ {
+  "row": 144,
+  "id": "TC-ROLE-1.25",
+  "col": "G",
+  "text": "Người tạo hoặc người chủ trì mở màn Sửa meeting 'Đã chốt lịch', đã tới giờ họp."
+ },
+ {
+  "row": 145,
+  "id": "TC-ROLE-1.26",
+  "col": "G",
+  "text": "Người tạo mở chi tiết meeting 'Lên lịch hẹn' hoặc 'Đã chốt lịch', chưa tới giờ họp (chỉ người tạo được Hủy)."
+ },
+ {
+  "row": 146,
+  "id": "TC-ROLE-1.27",
+  "col": "G",
+  "text": "Người tạo hoặc người chủ trì mở màn Sửa meeting chưa Hoàn thành/Huỷ."
+ },
+ {
+  "row": 148,
+  "id": "TC-ROLE-1.29",
+  "col": "G",
+  "text": "Tài khoản xem được meeting; meeting chưa Hoàn thành/Huỷ."
+ },
+ {
+  "row": 188,
+  "id": "TC-ROLE-1.33",
+  "col": "E",
+  "text": "Quyền 'Xem danh sách meeting theo tổng công ty' thấy meeting mọi nhóm tham gia"
+ },
+ {
+  "row": 188,
+  "id": "TC-ROLE-1.33",
+  "col": "G",
+  "text": "Hệ thống có 10 meeting của nhiều nhóm người tham gia khác nhau (không có bản Lưu nháp); tài khoản có quyền 'Xem danh sách meeting theo tổng công ty'."
+ },
+ {
+  "row": 188,
+  "id": "TC-ROLE-1.33",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 190,
+  "id": "TC-ROLE-1.35",
+  "col": "J",
+  "text": "- Hiện thông báo 'Bạn không có quyền thực hiện chức năng này', chuyển sang trang không tìm thấy (404).\n- Không hiển thị bất kỳ nội dung nào của cuộc họp (tên, thời gian, biên bản)."
+ },
+ {
+  "row": 190,
+  "id": "TC-ROLE-1.35",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 200,
+  "id": "TC-ROLE-1.45",
+  "col": "J",
+  "text": "- Tải lại chi tiết: báo 'Bạn không có quyền thực hiện chức năng này' và chuyển sang trang không tìm thấy.\n- Meeting biến mất khỏi danh sách của NV B.\n- Lưu ý: nếu NV B có quyền xem theo phạm vi chứa meeting đó thì vẫn xem được."
+ },
+ {
+  "row": 200,
+  "id": "TC-ROLE-1.45",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 201,
+  "id": "TC-ROLE-1.46",
+  "col": "J",
+  "text": "- Bị chặn, báo 'Bạn không có quyền thực hiện chức năng này', không tải được nội dung biên bản."
+ },
+ {
+  "row": 201,
+  "id": "TC-ROLE-1.46",
+  "col": "O",
+  "text": "Rà code thấy trang in chưa kiểm quyền xem - dễ Failed. Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 217,
+  "id": "TC_08.002",
+  "col": "G",
+  "text": "Tài khoản không phải người tạo/chủ trì/thành viên của meeting và không có quyền xem theo phạm vi chứa meeting đó."
+ },
+ {
+  "row": 217,
+  "id": "TC_08.002",
+  "col": "J",
+  "text": "- Không mở được màn Chi tiết Meeting.\n- Hiển thị thông báo 'Bạn không có quyền thực hiện chức năng này' rồi chuyển sang trang không tìm thấy (404).\n- Không hiển thị bất kỳ thông tin nào của meeting."
+ },
+ {
+  "row": 217,
+  "id": "TC_08.002",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 218,
+  "id": "TC_08.003",
+  "col": "G",
+  "text": "Tài khoản không phải người tạo/chủ trì/thành viên của meeting và không có quyền xem theo phạm vi chứa meeting đó."
+ },
+ {
+  "row": 218,
+  "id": "TC_08.003",
+  "col": "J",
+  "text": "- Không mở được màn Chi tiết Meeting.\n- Hiển thị thông báo 'Bạn không có quyền thực hiện chức năng này' rồi chuyển sang trang không tìm thấy (404).\n- Không hiển thị bất kỳ thông tin nào của meeting."
+ },
+ {
+  "row": 218,
+  "id": "TC_08.003",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 226,
+  "id": "TC_09.003",
+  "col": "J",
+  "text": "- Tự chuyển sang màn Xem chi tiết, không sửa được.\n- Không hiện nút Lưu, Hoàn thành, Hủy."
+ },
+ {
+  "row": 226,
+  "id": "TC_09.003",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 307,
+  "id": "TC_1.8001.",
+  "col": "G",
+  "text": "Người tạo hoặc người chủ trì mở màn Sửa cuộc họp 'Đã chốt lịch'."
+ },
+ {
+  "row": 309,
+  "id": "TC_1.8003",
+  "col": "E",
+  "text": "Ai được điểm danh cuộc họp (không phụ thuộc quyền trong nhóm meeting)"
+ },
+ {
+  "row": 309,
+  "id": "TC_1.8003",
+  "col": "G",
+  "text": "MT-05 trạng thái 'Đã chốt lịch'. A: người tạo; B: người chủ trì; D: thành viên nội bộ; E: chỉ có quyền 'Xem danh sách meeting theo công ty'.\nA, B, D không được gán quyền nào trong nhóm meeting."
+ },
+ {
+  "row": 309,
+  "id": "TC_1.8003",
+  "col": "H",
+  "text": "1. A và B lần lượt mở màn Sửa MT-05 > tab Điểm danh.\n2. D và E mở chi tiết MT-05 > tab Điểm danh.\n3. D dán đường dẫn màn Sửa MT-05."
+ },
+ {
+  "row": 309,
+  "id": "TC_1.8003",
+  "col": "I",
+  "text": "Tài khoản: A, B, D, E"
+ },
+ {
+  "row": 309,
+  "id": "TC_1.8003",
+  "col": "J",
+  "text": "- A và B điểm danh được: chọn Có mặt / Vắng có lý do / Vắng không lý do, nhập Ghi chú, có nút 'Điểm danh nhanh: Tất cả có mặt'.\n- D và E chỉ xem kết quả điểm danh, không chọn được.\n- D chỉ tự xác nhận cho CHÍNH MÌNH bằng 'Có mặt' / 'Vắng có lý do' khi chưa tới giờ họp.\n- D mở đường dẫn Sửa thì tự chuyển về màn chi tiết.\n- Không có quyền nào trong nhóm meeting vẫn xem được meeting mình tạo / chủ trì / tham gia."
+ },
+ {
+  "row": 309,
+  "id": "TC_1.8003",
+  "col": "O",
+  "text": "Phần này cần làm rõ lại:\n- Hiện tại không được tích quyền nào trong nhóm \"Quản lý meeting\", User vẫn được xem tất cả các meeting mà mình tạo ra/ mình là thành viên tham dự\n\n=> Case này cần nói rõ những đối tượng nào được quyền điểm danh cuộc họp\nCập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 338,
+  "id": "TC-ROLE-01.",
+  "col": "E",
+  "text": "Quyền xem theo tổng công ty chỉ mở rộng phạm vi XEM, không cho sửa thành phần tham gia"
+ },
+ {
+  "row": 338,
+  "id": "TC-ROLE-01.",
+  "col": "G",
+  "text": "Tài khoản chỉ có quyền 'Xem danh sách meeting theo tổng công ty'; MT-11 do người khác tạo và chủ trì."
+ },
+ {
+  "row": 338,
+  "id": "TC-ROLE-01.",
+  "col": "H",
+  "text": "1. Mở Meetings > Lịch Meeting.\n2. Mở MT-11.\n3. Tìm nút Sửa / thêm người tham gia."
+ },
+ {
+  "row": 338,
+  "id": "TC-ROLE-01.",
+  "col": "J",
+  "text": "- Thấy meeting của mọi công ty.\n- Với MT-11: không có nút Sửa, không thêm/xoá được người tham gia (chỉ xem).\n- Với meeting mình tạo/chủ trì: màn Sửa có nút thêm (+) ở Thành phần - Phía Công ty, thêm/xoá được."
+ },
+ {
+  "row": 338,
+  "id": "TC-ROLE-01.",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 339,
+  "id": "TC-ROLE-02",
+  "col": "E",
+  "text": "Quyền xem theo phòng ban: phạm vi xem theo phòng ban của người tạo meeting"
+ },
+ {
+  "row": 339,
+  "id": "TC-ROLE-02",
+  "col": "G",
+  "text": "Tài khoản chỉ có quyền 'Xem danh sách meeting theo phòng ban', quản lý phòng Kinh doanh 1.\nMT-12 do nhân viên phòng Kinh doanh 1 tạo; MT-13 do nhân viên phòng Kinh doanh 2 tạo."
+ },
+ {
+  "row": 339,
+  "id": "TC-ROLE-02",
+  "col": "H",
+  "text": "1. Mở Meetings > Lịch Meeting.\n2. Quan sát danh sách.\n3. Mở MT-12, tìm nút Sửa."
+ },
+ {
+  "row": 339,
+  "id": "TC-ROLE-02",
+  "col": "J",
+  "text": "- Thấy MT-12, không thấy MT-13 (trừ khi mình tạo/chủ trì/tham gia MT-13).\n- Phạm vi xét theo phòng ban của người tạo tại thời điểm tạo meeting.\n- MT-12 chỉ xem, không có nút Sửa (mình không phải người tạo/chủ trì)."
+ },
+ {
+  "row": 339,
+  "id": "TC-ROLE-02",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ },
+ {
+  "row": 340,
+  "id": "TC-ROLE-03",
+  "col": "E",
+  "text": "Không có quyền nào trong nhóm meeting vẫn vào được menu, chỉ thấy meeting liên quan"
+ },
+ {
+  "row": 340,
+  "id": "TC-ROLE-03",
+  "col": "G",
+  "text": "Tài khoản không được gán quyền 'Xem danh sách meeting ...' nào; là chủ trì MT-01."
+ },
+ {
+  "row": 340,
+  "id": "TC-ROLE-03",
+  "col": "H",
+  "text": "1. Mở Meetings > Lịch Meeting.\n2. Mở Sửa MT-01, thêm/xoá người tham gia."
+ },
+ {
+  "row": 340,
+  "id": "TC-ROLE-03",
+  "col": "J",
+  "text": "- Menu vẫn hiện và vào được; chỉ thấy meeting mình tạo / chủ trì / tham gia.\n- Với MT-01 (mình chủ trì): thêm/xoá người tham gia bình thường."
+ },
+ {
+  "row": 340,
+  "id": "TC-ROLE-03",
+  "col": "O",
+  "text": "Cập nhật 24/09/2026: viết lại theo phân quyền hiện tại - cần test lại."
+ }
+]

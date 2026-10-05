@@ -150,3 +150,12 @@ User chốt: export/import Excel để sau; tab "Thông tin hàng hóa" chỉ xe
 - [x] FE `reports/purchase-demand/index.vue:686` — `handlingDone()` cộng `alloc_mua`; sửa ghi chú footer popup PXL.
 - [x] Verify: `php -l` 2 file PHP OK · parse `acorn` 3 file .vue + constants.js OK.
 - ⚠️ **Downstream cần user test**: `totalHandledQty()` chạy vào `isFullyHandled()` → `handle_status` của đề xuất. Đề xuất được xử lý hết bằng **Mua hàng** giờ sẽ chuyển sang "Đã xử lý xong" và **rời inbox** `supply_proposals/inbox`, trước đây vẫn nằm lại. Nếu muốn giữ đề xuất trong inbox tới khi hàng thực về thì phải tách 2 định nghĩa (bảng PXL tính mua / vòng đời đề xuất không tính).
+
+## Inbox: thêm nút Xem, bỏ cột "Phiếu xử lý đã lập" (2026-09-18)
+
+> Màn: `supply/supply_proposals/inbox` — @namdangit
+
+- [x] FE `inbox.vue` fields — bỏ cột `responses` ("Phiếu xử lý đã lập")
+- [x] FE `inbox.vue` template — xóa block `v-slot:cell(responses)`
+- [x] FE `inbox.vue` cột Thao tác — thêm nút **Xem** (icon `eyes.svg`, tooltip "Xem") đứng đầu, gọi `onViewClick()` sẵn có, không gate quyền — đồng bộ style với `supply_proposals/index.vue:132`
+- [x] Verify compile template — `vue-template-compiler` 0 lỗi

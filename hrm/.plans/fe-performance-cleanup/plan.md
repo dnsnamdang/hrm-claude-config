@@ -104,6 +104,13 @@ Khi gỡ thư viện/icon phải tra đúng **tiền tố class thực tế**, k
 - [ ] BE: `hrm-api/.env` đang `APP_DEBUG=true` + `LOG_LEVEL=debug` với 2.212 route API
 - [ ] Bug rời (không thuộc hiệu năng): 8 tên icon không tồn tại ở cả 2 bản remixicon — `ri-check-circle-line`, `ri-handshake-line`, `ri-list-check-2-line`, `ri-sigma-line`, `ri-spin`, `ri-spin-fill`, `ri-table-2-line`, `ri-user-check-line`
 
+## Phase 9 — Rút thời gian build trên server dev (03/10/2026)
+
+### FE
+- [x] Đo hrm-dev: build 279s, webpack compile 266s, máy rảnh 98% CPU → CPU-bound 4 core; cache-loader JS/CSS đang ăn
+- [x] Xoá cache terser chết 1,1GB trên hrm-dev (đã dùng esbuild minify)
+- [x] ~~Bật cache template vue-loader (`cacheDirectory` + `cacheIdentifier`)~~ → ĐÃ THỬ VÀ BỎ: đo local (10 core, cache ấm, touch 1 file) compile 2,59m → 2,66m, không nhanh hơn; đã hoàn tác
+
 ---
 
 ## Checkpoint — 2026-08-12

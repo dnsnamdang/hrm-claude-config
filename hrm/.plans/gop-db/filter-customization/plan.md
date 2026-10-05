@@ -147,3 +147,19 @@ Verify sau khi sửa: vào màn **1** request · đổi số dòng/trang **1** r
 ### Ngưỡng ẩn nút "Tìm kiếm nâng cao" — đếm theo TỔNG số trường (2026-08-17)
 
 - [x] `V2BaseSmartFilterPanel.isInlineMode` đếm SỐ Ô NHẬP thực tế của các trường đang hiện (computed `visibleInputCount`: field gom nhóm tính theo `resetKeys.length`, đè được bằng `inputCount`) ; ngưỡng giữ nguyên: số ô lọc + ô tìm nhanh ≤ 3 → chế độ gọn, ẩn nút "Tìm kiếm nâng cao". Bật field `org` (4 ô) → 5 ô → vẫn hiện nút
+
+### Ô lọc gõ tay ở chế độ gọn không giãn đầy ô (2026-09-18) — @khoipv
+
+Màn `/human/banks`: ô "Tên giao dịch quốc tế" và ô "Trạng thái" nhìn như cách xa nhau, chữ gợi ý bị cắt cụt.
+
+**Không phải lỗi của màn.** Đo thực tế: 3 ô lọc đã chia đều **344px** mỗi ô. Nhưng `.inline-field` là flex còn
+lớp bọc `.filter-field-passthrough` là `display: contents`, nên chính vỏ `.filter-text-field` mới là flex item và
+nhận mặc định `flex: 0 1 auto` → ô nhập giữ nguyên bề rộng mặc định của `<input>` (**168px**), chừa 176px trắng
+bên phải. select2/datepicker không lộ lỗi vì đã có rule `width: 100% !important` riêng. → **Mọi màn danh sách có
+ô lọc `type: 'text'`/`'number'` ở chế độ lọc gọn đều dính**, không riêng màn ngân hàng.
+
+- [x] `V2BaseSmartFilterPanel.vue`: thêm rule `.quick-search-row .inline-field ::v-deep .filter-field-passthrough > *:not([class*='col-']) { flex: 1 1 auto; min-width: 0 }` (sửa component dùng chung — user đã đồng ý)
+- [x] Loại trừ `col-*` của ô lọc gom nhóm (đã có rule `flex: 1 1 0` riêng); không đụng khối "Tìm kiếm nâng cao" vì selector nằm trong `.quick-search-row`
+
+Verify trên trình duyệt: `/human/banks` → 3 ô đều **344px**, ô gõ tay giãn đầy ô, hết khoảng trống, chữ gợi ý
+hiện đủ "Nhập tên giao dịch quốc tế". `/human/districts` (2 ô select) → không đổi, không hồi quy.

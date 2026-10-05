@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Sinh SRS (.docx) cho man "Phieu de nghi thu tien" (phan he Tai chinh) theo FORM CHUAN
-(ban mau: .claude/skills/srs-documenter/assets/SRS_MAU.docx = SRS Danh muc khach hang).
+(form 2026-09-24 — day cung la file dong goi thanh assets/SRS_MAU.docx cua skill).
 
 Anh chup that dung CHUNG voi HDSD: dntt_shots/ (khong commit).
 
@@ -44,6 +44,22 @@ d = SrsDoc(out=OUT,
            route=ROUTE,
            full_url=HOST + ROUTE,
            img_prefix='dntt_')
+
+# Icon cho từng chặng của dòng "Menu:" — ảnh cắt từ chính phần tử trên giao diện (form
+# 2026-09-24). "Phiếu đề nghị thu tiền chờ duyệt" chỉ hiện với quyền Kế toán thanh toán nên
+# icon dựng từ mục cùng khuôn ngay trên nó (chỉ đổi chữ trên trình duyệt, không đổi dữ liệu).
+d.set_menu_icons({k: shot('icon_%s.png' % v) for k, v in {
+    'Phân hệ Tài chính': 'phanhe',
+    'Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi': 'khoitao',
+    'Đề nghị thu tiền': 'dntt',
+    'Phê duyệt - Công nợ - Thu - Chi': 'choduyet',
+    'Phiếu đề nghị thu tiền chờ duyệt': 'dntt_choduyet',
+    'Cài đặt bộ lọc': 'caidatboloc', 'Tuỳ chỉnh cột': 'tuychinhcot',
+    'Tạo mới': 'taomoi', 'Sửa': 'sua', 'Xóa': 'xoa', 'Lịch sử': 'lichsu',
+    'Xem chi tiết': 'xemchitiet', 'In phiếu': 'inphieu', 'Không duyệt': 'khongduyet',
+    'Chọn khách hàng': 'chonkh', 'Chọn nhà cung cấp': 'chonncc',
+    'Chọn đơn hàng - hợp đồng': 'chonhd',
+}.items()})
 
 # ============================================================== TRANG ĐẦU
 d.title_block('Phiếu đề nghị thu tiền')
@@ -150,28 +166,24 @@ d.table(['Chức năng', 'Q1', 'V1', 'V2', 'V3', 'V4', 'Không có quyền nào'
 d.h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
 
 d.h2('1 Sơ đồ UML tổng quan')
-# Chi 5 use case duoi day la "man hinh" that su -> noi thang toi actor.
-# Cac thao tac con lai deu nam NGAY TREN mot trong 5 man do (loc/tuy chinh cot/xoa o man
-# danh sach; chon doi tuong & hop dong trong form lap-sua; in, lich su, khong duyet o man
-# chi tiet) -> phai la use case phu, noi bang «include» / «extend».
+# Form 2026-09-24: moi chuc nang THAO TAC noi thang toi actor; «extend» CHI cho chuc nang
+# PHU that su (tim kiem, cai dat bo loc, xem chi tiet, lich su -> man danh sach; popup chon
+# doi tuong & hop dong -> man lap / sua phieu). Khong ve «include».
 d.overview_figure2(
-    [(ACTOR_LAP, [0, 1, 2, 3]),
-     (ACTOR_KT, [0, 3, 4])],
+    [(ACTOR_LAP, [0, 1, 2, 5, 6]),
+     (ACTOR_KT, [0, 3, 4, 6])],
     [('FR-01', 'Xem danh sách phiếu', 'view'),
      ('FR-04', 'Lập phiếu đề nghị thu tiền', 'crud'),
      ('FR-06', 'Sửa phiếu', 'crud'),
-     ('FR-07', 'Xem chi tiết phiếu', 'view'),
-     ('FR-08', 'Xem danh sách phiếu chờ duyệt', 'view')],
-    [('FR-02', 'Tìm kiếm và lọc danh sách', 'view', 'extend', [0],
-      'Dùng chung cho cả màn chờ duyệt'),
+     ('FR-08', 'Xem danh sách phiếu chờ duyệt', 'view'),
+     ('FR-09', 'Không duyệt phiếu', 'action'),
+     ('FR-10', 'Xóa phiếu', 'action'),
+     ('FR-11', 'In phiếu', 'io')],
+    [('FR-02', 'Tìm kiếm và lọc danh sách', 'view', 'extend', [0], None),
      ('FR-03', 'Cài đặt bộ lọc và tuỳ chỉnh cột', 'view', 'extend', [0], None),
-     ('FR-10', 'Xóa phiếu', 'action', 'extend', [0],
-      'Phiếu của mình, đang Đang tạo hoặc Không duyệt'),
-     ('FR-05', 'Chọn đối tượng và hợp đồng', 'crud', 'include', [1, 2], None),
-     ('FR-09', 'Không duyệt phiếu', 'action', 'extend', [3], 'Chỉ Kế toán thanh toán'),
-     ('FR-11', 'In phiếu', 'io', 'extend', [3], None),
-     ('FR-12', 'Xem lịch sử thay đổi', 'view', 'extend', [3],
-      'Mở từ danh sách hoặc màn chi tiết')],
+     ('FR-07', 'Xem chi tiết phiếu', 'view', 'extend', [0], None),
+     ('FR-12', 'Xem lịch sử thay đổi', 'view', 'extend', [0], None),
+     ('FR-05', 'Chọn đối tượng và hợp đồng', 'crud', 'extend', [1, 2], None)],
     'Sơ đồ Use Case tổng quan màn Phiếu đề nghị thu tiền')
 
 d.h2('2 Đặc tả chi tiết từng chức năng')
@@ -359,8 +371,6 @@ d.h3('2.3 Cài đặt bộ lọc và tuỳ chỉnh cột hiển thị')
 
 d.p('2.3.1 Biểu đồ Usecase')
 d.uc_figure('FR-03', 'Cài đặt bộ lọc và tuỳ chỉnh cột', 'view',
-            [('include', 'Lưu cấu hình theo từng người dùng'),
-             ('extend', 'Khôi phục cấu hình mặc định')],
             actor='Người dùng đã đăng nhập',
             caption='Biểu đồ Use Case — FR-03 Cài đặt bộ lọc và tuỳ chỉnh cột')
 
@@ -432,9 +442,6 @@ d.h3('2.4 Lập phiếu đề nghị thu tiền')
 
 d.p('2.4.1 Biểu đồ Usecase')
 d.uc_figure('FR-04', 'Lập phiếu đề nghị thu tiền', 'crud',
-            [('include', 'Sinh mã phiếu tự động'),
-             ('include', 'Chọn đối tượng và hợp đồng cho dòng chi tiết'),
-             ('extend', 'Gửi thông báo cho kế toán khi gửi duyệt')],
             actor=ACTOR_LAP,
             caption='Biểu đồ Use Case — FR-04 Lập phiếu đề nghị thu tiền')
 
@@ -468,7 +475,7 @@ d.intro_table(
             'thêm thì trong cả hai trường hợp đều phải đủ đối tượng, hợp đồng và số tiền.')
 
 d.p('2.4.3 Layout màn hình')
-d.layout(menu=MENU + ' => Thêm mới',
+d.layout(menu=MENU + ' => Tạo mới',
          shot=shot('06-tao-moi.png'),
          shot_caption='Màn Thêm phiếu đề nghị thu tiền lúc vừa mở')
 d.figure(shot('11-tao-moi-ghi-chu.png'),
@@ -577,9 +584,6 @@ d.h3('2.5 Chọn đối tượng và hợp đồng cho dòng chi tiết')
 
 d.p('2.5.1 Biểu đồ Usecase')
 d.uc_figure('FR-05', 'Chọn đối tượng và hợp đồng', 'crud',
-            [('include', 'Lọc hợp đồng theo đối tượng của dòng'),
-             ('include', 'Tính số tiền còn nợ theo sổ kế toán'),
-             ('extend', 'Chặn chọn trùng hợp đồng trong cùng phiếu')],
             actor=ACTOR_LAP,
             caption='Biểu đồ Use Case — FR-05 Chọn đối tượng và hợp đồng cho dòng chi tiết')
 
@@ -614,7 +618,7 @@ d.intro_table(
             'năm nguồn hợp đồng mua của nhà cung cấp.')
 
 d.p('2.5.3 Layout màn hình')
-d.layout(menu=MENU + ' => Thêm mới => Chọn khách hàng / Chọn nhà cung cấp / '
+d.layout(menu=MENU + ' => Tạo mới => Chọn khách hàng / Chọn nhà cung cấp / '
                      'Chọn đơn hàng - hợp đồng',
          modal='Chọn khách hàng, Chọn nhà cung cấp và Chọn đơn hàng/hợp đồng',
          shot=shot('08-popup-khach-hang.png'),
@@ -677,9 +681,6 @@ d.h3('2.6 Sửa phiếu đề nghị thu tiền')
 
 d.p('2.6.1 Biểu đồ Usecase')
 d.uc_figure('FR-06', 'Sửa phiếu đề nghị thu tiền', 'crud',
-            [('include', 'Kiểm tra phiếu do chính người dùng lập'),
-             ('include', 'Kiểm tra trạng thái Đang tạo hoặc Không duyệt'),
-             ('extend', 'Gửi duyệt lại phiếu bị từ chối')],
             actor=ACTOR_LAP,
             caption='Biểu đồ Use Case — FR-06 Sửa phiếu đề nghị thu tiền')
 
@@ -888,9 +889,6 @@ d.h3('2.9 Không duyệt phiếu')
 
 d.p('2.9.1 Biểu đồ Usecase')
 d.uc_figure('FR-09', 'Không duyệt phiếu', 'action',
-            [('include', 'Kiểm tra quyền Kế toán thanh toán'),
-             ('include', 'Kiểm tra phiếu đang ở trạng thái Chờ KT duyệt'),
-             ('include', 'Ghi lý do từ chối bắt buộc')],
             actor=ACTOR_KT,
             caption='Biểu đồ Use Case — FR-09 Không duyệt phiếu')
 
@@ -971,8 +969,6 @@ d.h3('2.10 Xóa phiếu')
 
 d.p('2.10.1 Biểu đồ Usecase')
 d.uc_figure('FR-10', 'Xóa phiếu', 'action',
-            [('include', 'Kiểm tra phiếu do chính người dùng lập'),
-             ('include', 'Kiểm tra trạng thái Đang tạo hoặc Không duyệt')],
             actor=ACTOR_LAP,
             caption='Biểu đồ Use Case — FR-10 Xóa phiếu')
 
@@ -1037,8 +1033,6 @@ d.h3('2.11 In phiếu')
 
 d.p('2.11.1 Biểu đồ Usecase')
 d.uc_figure('FR-11', 'In phiếu', 'io',
-            [('include', 'Nạp lại dữ liệu phiếu và số tiền còn nợ'),
-             ('extend', 'Đổi nhãn ghi chú thành lý do không duyệt')],
             actor='Người dùng xem được phiếu',
             caption='Biểu đồ Use Case — FR-11 In phiếu')
 

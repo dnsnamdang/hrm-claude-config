@@ -463,3 +463,63 @@ Blocked: (không).
 - [ ] Config: đưa 12 bảng ra khỏi `skip`, thêm vào OWNED trước `timesheets`
 - [ ] Config: mở rộng `timesheets.poly_fk.job_id` cho overtime / jobassignment / business_trip
 - [ ] Dry-run + đối chiếu số lượng
+
+
+---
+
+## Phase — Xử lý sau gộp ETEK GREEN + đúc bài học cho cổng kế tiếp (25/09/2026)
+
+### BE / vận hành
+- [x] Vá 50 khoá ngoại liên-database trên 19 bảng (migration `2026_09_25_000001_fix_cross_database_foreign_keys`); dựng lại tay 13 khoá nhóm Lương bị drop-mà-không-add-được
+- [x] Sửa engine xử lý khoá ngoại **theo từng bảng** (ADD CONSTRAINT kiểm lại mọi khoá của bảng)
+- [x] Đổi mã chấm công trên 2 máy Hikvision của ETEK GREEN: 91 mã mới / 0 mã cũ trên cả 2 máy
+- [x] Vá `hikvision:recode` nhận mã có số 0 ở đầu (092 vs 92) + dọn mã cũ còn sót
+- [x] Vá `attendance:fetch` tra `employee_code_mappings` khi mã cũ không ra người (lọc theo công ty của máy); lấy bù lượt quẹt 24-25/09
+- [x] `DeviceService::store()` tự duyệt mọi thiết bị mới, không chỉ thiết bị đầu tiên
+- [x] Bỏ domain cổng đã hạ khỏi `RICE_REGISTER_DOMAINS` ở 3 cổng (tpe/etek/etekpower)
+- [x] Hạ cổng etekgreen: 11 dòng cron + 3 supervisor worker (autostart=false)
+- [x] Lệnh mới `company:backfill-shift-roster`; bù 17.669 dòng roster phân ca ETEK GREEN từ 01/01/2026
+- [x] Cứu + đẩy 2 file của việc department/part lead_id (Cast + migration), CHƯA chạy migration vì thiếu $casts ở 6 model
+
+### Tài liệu
+- [x] `prod-runbook.md`: thêm **PHẦN F - Bài học từ ETEK GREEN** (F.0 checklist, F.1-F.13 lỗi đã trả giá, F.14 verify sau cùng) + **F.15 khảo sát riêng etekpower**
+- [x] Sửa dòng đầu runbook: DB đích nay là `hrm_erp_gop`, không còn `hrm_production`
+
+### Checkpoint - 25/09/2026
+Vừa hoàn thành: đúc toàn bộ lỗi của lần gộp ETEK GREEN vào `prod-runbook.md` PHẦN F, kèm khảo sát etekpower (F.15).
+Đang làm dở: không.
+Bước tiếp theo: **CHƯA chạy gì cho etekpower** - khi chạy thì theo checklist F.0; trước đó cần chốt (a) có bù roster phân ca kỳ cũ hay không, (b) guard cho migration `convert_lead_ids_to_employee_id` (đã nằm trên `gop_db`, sẽ tự chạy ở lần migrate tới trong khi 6 model chưa khai $casts).
+Blocked: 9 file của việc department/part lead_id cần session phụ trách áp lại (tôi đã làm mất khi `reset --hard`).
+
+### Bổ sung 28/09/2026 — mã phòng ban ETEK GREEN
+- [x] Lệnh mới `company:prefix-department-code`; gắn tiền tố `EG_` cho 16 mã phòng ban công ty 9 + đồng bộ 16 dòng `rice_departments`
+- [x] Ghi **F.16** vào `prod-runbook.md` (đo trùng theo tên/mã, quy ước tiền tố, bẫy DepartmentImport khớp theo mã không lọc công ty)
+- Quyết định đã chốt: chỉ đổi MÃ, giữ nguyên TÊN phòng; tiền tố ngắn `EG_` cho khớp `HN_`/`HP_`/`SG_`
+
+### Bổ sung 29/09/2026 — mã quét cơm trên máy check-in cơm
+- [x] Phát hiện: `hikvision:recode` chỉ chạy `conn_infos`, máy cơm ở bảng riêng `rice_conn_infos` nên bị bỏ sót (93/112 người GREEN còn mã cũ trên máy)
+- [x] `app/Support/RiceCodeMapping` — dịch `old_rice_ssn` → `new_rice_ssn`, yêu cầu khớp duy nhất, KHÔNG lọc theo công ty của máy
+- [x] Vá `checkInMachine()` (cơm) + `rice:fetch-checkin`: tra thêm bảng ánh xạ, ghi log thay vì im lặng, thêm guard null (trước đây fatal)
+- [x] Lệnh mới `rice:recode`; chạy 2 lượt trên máy cơm: 99/133 mang mã mới, **0 mã cũ** (kể cả dạng có 0 ở đầu)
+- [x] Lấy bù `rice:fetch-checkin` 25/09 → 29/09: 25/09 đã ăn 8→11, 29/09 đã ăn 4→10 và "không ăn" 6→0; TPE không bị đụng
+- [x] Ghi **F.17** vào `prod-runbook.md` + 1 dòng checklist F.0
+- Còn treo: `rice:fetch-checkin` KHÔNG có trong cron (chỉ chạy tay) — cân nhắc thêm vào crontab làm lưới an toàn
+- Còn treo: 13 người GREEN không có mặt trên máy cơm (chưa đăng ký khuôn mặt ở máy cơm) — nghiệp vụ tự quyết
+- Còn treo: Nguyễn Thành Long (`employees.id` 1315, `ssn` = `rice_ssn` = 103) chưa được đánh lại mã — chờ user xác nhận là nhân sự mới hay bị sót
+
+### Bổ sung 30/09/2026 — mở lại cổng etekgreen để đối chiếu dữ liệu
+- [x] Bật `hrm-client-green` (pm2) + `chmod 757` socket (pm2 tạo lại quyền `755` → nginx 502 dù pm2 báo online)
+- [x] `php artisan up` cho `/var/www/etekgreen/hrm-api` (đang ở maintenance từ 25/09, secret `chuyen-sang-tpe`)
+- [x] Bật lại 11 dòng cron + 3 supervisor worker (`autostart=true`), 3 worker ổn định không còn crash-loop
+- [x] Kiểm an toàn trước khi bật: mọi cron của cổng nguồn chỉ ghi `hrm_green`; rice dùng `DB_DATABASE_TPE=hrm_production` (DB cũ); 2 lệnh rice không có HTTP client nên không bắn sang cổng thật
+- [x] Ghi phần "MỞ LẠI cổng nguồn" + bẫy quyền socket vào `prod-runbook.md` (F.11)
+- Lưu ý: dữ liệu nhập mới trên cổng green KHÔNG chảy sang TPE — chỉ dùng để đọc/đối chiếu, xong nên đóng lại
+- [x] 30/09/2026 15:05 — đã KHOÁ LẠI cổng etekgreen sau khi user đối chiếu xong: `artisan down` (giữ nguyên secret `chuyen-sang-tpe`), `pm2 stop hrm-client-green`, ghi chú lại 11 dòng cron, stop 3 worker + `autostart=false`. Diff crontab đúng 22 dòng, 0 dòng của cổng khác bị đụng; 4 cổng còn lại vẫn HTTP 200.
+
+### Bổ sung 03/10/2026 — báo cáo làm thêm giờ chi tiết không hiện khung giờ
+- [x] Truy nguyên: `overtime_hours` (khung giờ + hệ số) nằm trong `skip` → công ty 9 có 0 khung giờ → `TimesheetSummaryService` không sinh được `overtime_details`, và cột giờ quy đổi ra 0
+- [x] Phân biệt với lần sửa 16/09 (bảng con `overtime_details` bị skip): lần này sai cả những ngày SAU cutover vì `calc:timesheet` chạy mỗi giờ ghi đè quy đổi thành 0
+- [x] Catalog: chuyển `overtime_hours` từ `skip` sang `owned` (commit `27f222a83`), di trú 3 khung giờ cho công ty 9
+- [x] `calc:company_timesheet 9 2026-09-01 2026-09-30` (7 phút, chỉ công ty 9): quy đổi 0,0 → 1.719,3 h, thiếu chi tiết 155 → 9, giờ làm thêm 958,6 h giữ nguyên; công ty 1 và 4 không đổi
+- [x] 9 dòng còn thiếu khớp đúng 12 dòng quy đổi = 0 ở nguồn → đúng nghiệp vụ
+- [x] Ghi **F.18** vào `prod-runbook.md` + bổ sung dòng checklist F.0 (tách cấu hình vs giao dịch khi rà `skip`)

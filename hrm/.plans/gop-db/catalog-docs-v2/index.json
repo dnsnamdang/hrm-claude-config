@@ -1,0 +1,212 @@
+[
+ {
+  "row": 3,
+  "slug": "device-errors",
+  "ten": "Danh mục công việc, lỗi thiết bị",
+  "tab": "22. DM công việc, lỗi thiết bị",
+  "hdsd_file": "HDSD_Danh mục công việc, lỗi thiết bị.docx",
+  "srs_file": "SRS - Danh mục công việc, lỗi thiết bị.docx",
+  "hdsd_id": "1-4RrKe0vTOApF3ho6mXEW_vDWO7GB6p8",
+  "srs_id": "1h2-d3BD9NSnb1GBByEcVFPPWDWwUsMvP"
+ },
+ {
+  "row": 5,
+  "slug": "levels",
+  "ten": "Cấp dịch vụ bảo dưỡng",
+  "tab": "7. DM cấp dịch vụ bảo dưỡng",
+  "hdsd_file": "HDSD_Cap dich vu bao duong.docx",
+  "srs_file": "SRS - Cấp dịch vụ bảo dưỡng.docx",
+  "hdsd_id": "1JtmnGa0M32KlosD9to4xP72B3IzLcONp",
+  "srs_id": "1I2jb1GmSt_dA9rQNLzkaw6GPluprfbE2"
+ },
+ {
+  "row": 6,
+  "slug": "note-maintenances",
+  "ten": "Danh mục ghi chú kiểm tra bảo dưỡng",
+  "tab": "8. DM ghi chú kiểm tra bảo dưỡn",
+  "hdsd_file": "HDSD_Danh muc ghi chu kiem tra bao duong.docx",
+  "srs_file": "SRS - Danh mục ghi chú kiểm tra bảo dưỡng.docx",
+  "hdsd_id": "1jOQZ8kyZqaNSUNqWOjIk9rbmrsGkqMx8",
+  "srs_id": "1Gk-ZM2QpQ3diQdQtRh6anhmXTW9k8FZ0"
+ },
+ {
+  "row": 7,
+  "slug": "costs",
+  "ten": "Danh mục dịch vụ sửa chữa và chi phí khác",
+  "tab": "1. DM dịch vụ sửa chữa và chi p",
+  "hdsd_file": "HDSD_Danh muc dich vu sua chua va chi phi khac.docx",
+  "srs_file": "SRS - Danh mục dịch vụ sửa chữa và chi phí khác.docx",
+  "hdsd_id": "1U9IDBvUNkrz_2dudqA6syne8FTGGfbR1",
+  "srs_id": "1XN4AtnFuSGTHGaYxMbW5974TYuinLk_qhq4edUyd1ok"
+ },
+ {
+  "row": 8,
+  "slug": "service-price-config",
+  "ten": "Cập nhật nhanh giá dịch vụ",
+  "tab": "5. Cập nhật nhanh giá dịch vụ",
+  "hdsd_file": "HDSD_Cap nhat nhanh gia dich vu.docx",
+  "srs_file": "SRS - Cập nhật nhanh giá dịch vụ.docx",
+  "hdsd_id": "1Tpu0KzJ8DmdHU7uVYaaOCjPBrwMNrrO6",
+  "srs_id": "1zaukWnZqCR5lsLqlvZTRGpMOaYKKU3fI"
+ },
+ {
+  "row": 9,
+  "slug": "serials",
+  "ten": "Danh mục serial thiết bị làm dịch vụ",
+  "tab": "6. DM serial thiết bị làm dịch ",
+  "hdsd_file": "HDSD_Danh muc serial thiet bi lam dich vu.docx",
+  "srs_file": "SRS - Danh mục serial thiết bị làm dịch vụ.docx",
+  "hdsd_id": "13VcG9vrLW_UpXTC_E74Wl0UOtAVb8d3D",
+  "srs_id": "12DH419kSUe7WOtchsP8RRhsUluRwh1xj"
+ },
+ {
+  "row": 11,
+  "slug": "areas",
+  "ten": "Danh mục khu vực",
+  "tab": "14. DM khu vực",
+  "hdsd_file": "HDSD_Danh mục khu vực.docx",
+  "srs_file": "SRS - Danh mục khu vực.docx",
+  "hdsd_id": "1aZNDBVW4qa4G2N8HirqnM7N9BJqVS1Ea",
+  "srs_id": "1CRLYOcSe-d0quFLvexqdyyRK18NV-kik"
+ },
+ {
+  "row": 12,
+  "slug": "provinces",
+  "ten": "Danh mục Tỉnh/TP",
+  "tab": "16. DM tỉnhTP",
+  "hdsd_file": "HDSD_Danh mục Tỉnh-TP.docx",
+  "srs_file": "SRS - Danh mục Tỉnh-TP.docx",
+  "hdsd_id": "14ZdBWrNqj7RqRj0QNnj6dweqYLS8o8SZ",
+  "srs_id": "1RfOBqCQOlOuSBc2cWnodbL4O_85jZ6ps"
+ },
+ {
+  "row": 13,
+  "slug": "districts",
+  "ten": "Danh mục Quận/Huyện",
+  "tab": "18. DM quận huyện",
+  "hdsd_file": "HDSD_Danh mục Quận-Huyện.docx",
+  "srs_file": "SRS - Danh mục Quận-Huyện.docx",
+  "hdsd_id": "1RkHdRaaa6Ro2bjcjA37t44j7zEBMxho2",
+  "srs_id": "1yQEMafoJhSPaejKZhSGl5bx-xkt3yerq"
+ },
+ {
+  "row": 14,
+  "slug": "wards",
+  "ten": "Danh mục Phường/Xã",
+  "tab": "15. DM phườngxã",
+  "hdsd_file": "HDSD_Danh mục Phường-Xã.docx",
+  "srs_file": "SRS - Danh mục Phường-Xã.docx",
+  "hdsd_id": "1uBFg7iRhhiX4itJgi6lb9EkbBuU4TwIi",
+  "srs_id": "1uZAQW9ov9QNrkrG8QNekZozd6-ZwrGQs"
+ },
+ {
+  "row": 15,
+  "slug": "hamlets",
+  "ten": "Danh mục Đường/Phố",
+  "tab": "17. DM đườngphố",
+  "hdsd_file": "HDSD_Danh mục Đường-Phố.docx",
+  "srs_file": "SRS - Danh mục Đường-Phố.docx",
+  "hdsd_id": "1QybR1Rp-HMGNSK86cz3SHYKxSxGqkGQF",
+  "srs_id": "16QeFftIdw5Jipb9P_0zfPCBIoyZa_RW4"
+ },
+ {
+  "row": 16,
+  "slug": "customers",
+  "ten": "Danh mục khách hàng",
+  "tab": "9. DM khách hàng",
+  "hdsd_file": "HDSD_Danh muc khach hang.docx",
+  "srs_file": "SRS - Danh mục khách hàng.docx",
+  "hdsd_id": "1kHrQtyUWDS01S8SaGmpXnBJdxtjfFZGD",
+  "srs_id": "1jJRNSH0yR7nt3aQhkWOlCtYgJXC6HlxH"
+ },
+ {
+  "row": 17,
+  "slug": "accounts",
+  "ten": "Danh mục  tài khoản",
+  "tab": "3. DM tài khoản",
+  "hdsd_file": "HDSD_Danh muc tai khoan.docx",
+  "srs_file": "SRS - Danh mục tài khoản.docx",
+  "hdsd_id": "1rzFUw1JdG7QDlCA8R28CM1NbdgSv3Aq1",
+  "srs_id": "13vGxCFClabx69pDm4I8Z1jcVYUZ4b-kp"
+ },
+ {
+  "row": 18,
+  "slug": "type-accounts",
+  "ten": "Danh mục loại tài khoản",
+  "tab": "4. DM loại tài khoản",
+  "hdsd_file": "HDSD_Danh muc loai tai khoan.docx",
+  "srs_file": "SRS - Danh mục loại tài khoản.docx",
+  "hdsd_id": "14Yjg2IgGHZPNeDv1t1OrqDx-ebYD9_BC",
+  "srs_id": "1LWVb6KlvfqaZD34ejeRik7kYxJkx7dB1"
+ },
+ {
+  "row": 19,
+  "slug": "currencies",
+  "ten": "Danh mục tiền tệ",
+  "tab": "2. DM tiền tệ",
+  "hdsd_file": "HDSD_Danh muc tien te.docx",
+  "srs_file": "SRS - Danh mục tiền tệ.docx",
+  "hdsd_id": "1AXQqcyCYDEN8oFeXHUzMGKLhXQuy1eOV",
+  "srs_id": "1HJf-kBjKl3om8biwVhZZNtMhFC8rhcLn"
+ },
+ {
+  "row": 20,
+  "slug": "banks",
+  "ten": "Danh mục ngân hàng",
+  "tab": "10. Danh mục ngân hàng",
+  "hdsd_file": "HDSD_Danh muc ngan hang.docx",
+  "srs_file": "SRS - Danh mục ngân hàng.docx",
+  "hdsd_id": "1Pc5jTtdhaPt0dst6zIILVV4rXINl5S7z",
+  "srs_id": "1LtI9ax76kEvgR81UfFcDgGgldPRRj_pc"
+ },
+ {
+  "row": 21,
+  "slug": "account-banks",
+  "ten": "Danh mục tài khoản ngân hàng",
+  "tab": "11. Danh mục tài khoản ngân hàn",
+  "hdsd_file": "HDSD_Danh muc tai khoan ngan hang.docx",
+  "srs_file": "SRS - Danh mục tài khoản ngân hàng.docx",
+  "hdsd_id": "1R38aOBPQsmDPmjjrRzx-KiMthn35BB4m",
+  "srs_id": "1Py7ebGjs8uBb-V_s1B9H-mEN_8yc8wZN"
+ },
+ {
+  "row": 22,
+  "slug": "works",
+  "ten": "Danh mục vụ việc",
+  "tab": "19. DM vụ việc ",
+  "hdsd_file": "HDSD_Danh mục vụ việc.docx",
+  "srs_file": "SRS - Danh mục vụ việc.docx",
+  "hdsd_id": "1PLi7ECfSyRXfsdkAsIQcs1tt_CSIwRIV",
+  "srs_id": "1FnFT5-pCkWklz565sRcg3cKUB-qvEThk"
+ },
+ {
+  "row": 23,
+  "slug": "cost-debts",
+  "ten": "Danh mục mã phí",
+  "tab": "21. DM mã phí",
+  "hdsd_file": "HDSD_Danh mục mã phí.docx",
+  "srs_file": "SRS - Danh mục mã phí.docx",
+  "hdsd_id": "13oF-BNgXF4KL_5dc-7Wt95HJG3Ves3Q5",
+  "srs_id": "1r9cknmEo9vRShmHtXIG_fZMAfeCHXYtp"
+ },
+ {
+  "row": 24,
+  "slug": "source-capitals",
+  "ten": "Danh mục nguồn vốn",
+  "tab": "20. DM nguồn vốn",
+  "hdsd_file": "HDSD_Danh mục nguồn vốn.docx",
+  "srs_file": "SRS - Danh mục nguồn vốn.docx",
+  "hdsd_id": "1pJDCWTAaF8HPhmgo9O_T3K3GoVSp5Quk",
+  "srs_id": "1I69q9b5wraz-NO1MPnHdyd-OD-XqCG6x"
+ },
+ {
+  "row": null,
+  "slug": "services-package",
+  "ten": "Danh mục gói bảo dưỡng",
+  "tab": "12.Danh mục gói bảo dưỡng",
+  "hdsd_file": "HDSD_Danh muc goi bao duong.docx",
+  "srs_file": "SRS - Danh mục gói bảo dưỡng.docx",
+  "hdsd_id": "1_fYx-BuCywlGcU0B9K6bqweNWSwjDazN",
+  "srs_id": "1sMkZ9v_hy0mHNfsfbf7iJTwpxeuXm0bJ"
+ }
+]

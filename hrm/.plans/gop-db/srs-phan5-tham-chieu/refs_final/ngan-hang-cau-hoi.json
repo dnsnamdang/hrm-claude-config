@@ -1,0 +1,26 @@
+{
+  "catalog": "Ngân hàng câu hỏi khảo sát",
+  "srs_file": "SRS - Ngân hàng câu hỏi khảo sát.docx",
+  "rows": [
+    {
+      "nhom": "Danh mục dùng chung",
+      "man_hinh": "Ngân hàng câu hỏi khảo sát",
+      "duong_dan": "Danh mục dùng chung",
+      "evidence": "FE pages/assign/questions/components/QuestionForm.vue → components/modals/AddSurveyQuestionModal.vue:280 · BE Services/SurveyQuestionService.php:284-288 (survey_question_relations.parent/child_survey_question_id) · Lối vào: master-data.js:266"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Phiếu thu thập thông tin",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE pages/assign/form-templates/components/QuestionLibrary.vue, SectionBuilder.vue, AddQuestionQuickModal.vue:364 · BE Services/FormTemplateService.php:154,222,326 (form_questions.survey_question_id, form_groups.survey_question_id); FormTemplateController.php:516,531. Cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp · Lối vào: presale.js:150"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Phiếu thu thập thông tin",
+      "duong_dan": "Bán hàng -> Danh mục -> Dự án - Giải pháp",
+      "evidence": "FE pages/assign/form-templates/components/QuestionLibrary.vue, SectionBuilder.vue, AddQuestionQuickModal.vue:364 · BE Services/FormTemplateService.php:154,222,326 (form_questions.survey_question_id, form_groups.survey_question_id); FormTemplateController.php:516,531. Cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp · Lối vào: sale-hub.js:362"
+    }
+  ],
+  "notes": "Kiểm tra xoá THIẾU: SurveyQuestion::isCanDelete() (Entities/SurveyQuestion.php:127) xét questionRelations (câu hỏi đang là CHA), formQuestions, formGroups nhưng KHÔNG xét parentQuestionRelations (câu hỏi đang là CON của câu khác) → xoá được câu hỏi con đang gắn, SurveyQuestionService::destroy() (Service:141) không dọn survey_question_relations → còn dòng quan hệ trỏ tới câu đã xoá. Không đưa Meeting/Dự án TKT vào: 2 màn đó dùng PHIẾU (form_template_snapshots), không đọc trực tiếp ngân hàng câu hỏi; phần 'thêm câu hỏi bổ sung' (FormPreview → snapshot/{id}/additional-questions) tạo câu hỏi tự do trong snapshot, không lấy từ ngân hàng. Code chết: action Vuex optionsSelect/fetchQuestionHierarchies (store/optionsSelect.js:431) không màn nào gọi. Đào tạo -> Danh mục -> Ngân hàng câu hỏi là danh mục KHÁC (training), không tính.",
+  "changes": "Trước 2 dòng -> sau 3 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách Phiếu thu thập thông tin thành 2 lối vào (CSKH trước bán -> Danh mục; Bán hàng -> Danh mục -> Dự án - Giải pháp). Ngân hàng câu hỏi khảo sát là mục rail đi thẳng nên Đường dẫn chỉ là \"Danh mục dùng chung\"."
+}

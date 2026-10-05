@@ -164,3 +164,6 @@ chụp bổ sung; SRS hiện dùng ảnh danh sách cho mục này.
 **Cần kiểm chứng trên dữ liệu**: 6 bản ghi test (`Trang test 002`…`007`, tạo 04/08/2026) đều
 trả về không xóa được, dù mới tạo và nhiều khả năng chưa gắn vào gói dịch vụ nào. Chưa đủ căn
 cứ kết luận là lỗi — cần soi dữ liệu bảng liên kết cấp bảo dưỡng để xác nhận.
+
+- [x] Giới hạn import tối đa 500 dòng/lần — FE `V2BaseImportModal` prop `maxRows` (mặc định 500, 41 màn) + BE middleware dùng chung `importRowLimit` (`app/Http/Middleware/CheckImportRowLimit.php`) gắn 35 cặp route `import`/`import/validate`; đã test API + Playwright (2026-09-23)
+- [x] Popup import (`V2BaseImportTable`): cột "Dòng" → "STT", chữ màu thường (bỏ `.text-muted` đỏ), căn giữa (2026-09-23)

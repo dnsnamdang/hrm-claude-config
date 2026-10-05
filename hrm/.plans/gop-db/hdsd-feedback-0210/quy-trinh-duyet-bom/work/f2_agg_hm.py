@@ -1,0 +1,17 @@
+from common import *
+with browser_page() as page:
+    page.goto(BASE+'/assign/bom-list/add'); page.wait_for_timeout(10000)
+    page.fill('input[placeholder="VD: BOM điều khiển dây chuyền line 01"]','BOM tổng hợp hạng mục Xây dựng danh mục thiết bị')
+    pick(page,0,'DA091')
+    pick(page,1,'HM01')
+    print('type now:', page.locator('.select2-selection__rendered').first.inner_text())
+    page.get_by_role('button', name='Chọn BL con').click(); page.wait_for_timeout(3000)
+    page.mouse.move(5,5)
+    page.screenshot(path='x_subbom.png')
+    page.locator('.modal-card tr', has_text='BOM-2026-00023').locator('input[type=checkbox]').check()
+    page.get_by_role('button', name='Gộp BOM con').click(); page.wait_for_timeout(5000)
+    page.mouse.move(5,5)
+    page.screenshot(path='x_agg_filled.png')
+    page.get_by_role('button', name='Lưu BOM').click(); page.wait_for_timeout(8000)
+    print(page.url)
+    page.screenshot(path='x_agg_saved.png')

@@ -1,0 +1,492 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục tài khoản 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Danh mục tài khoản, nhằm: 
+[normal] Là căn cứ nghiệm thu chức năng và phân quyền của màn hình. 
+[normal] Làm rõ ràng buộc cây tài khoản ba bậc: quan hệ mẹ – con, quy tắc đặt số và các trường hợp bị chặn khi tài khoản đã có con. 
+[normal] Làm rõ khác biệt giữa Xóa và chuyển trạng thái Khóa. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Tài khoản | Một mục trong hệ thống tài khoản kế toán, dùng để ghi nhận và phân loại các nghiệp vụ phát sinh.
+  | Số tài khoản | Dãy chữ số định danh tài khoản, duy nhất trên toàn danh mục. Từ 3 đến 15 chữ số.
+  | Bậc tài khoản | Vị trí của tài khoản trên cây ba bậc. Bậc 1 là tài khoản tổng, bậc 2 và 3 là tài khoản chi tiết.
+  | Tài khoản mẹ | Tài khoản ở bậc liền trên. Tài khoản bậc 1 nằm ở gốc cây nên không có tài khoản mẹ.
+  | Tài khoản con | Tài khoản ở bậc liền dưới, có số tài khoản bắt đầu bằng số của tài khoản mẹ.
+  | Loại tài khoản | Nhóm phân loại tài khoản, lấy từ Danh mục loại tài khoản.
+  | Tài khoản theo dõi công nợ | Đánh dấu tài khoản được dùng để theo dõi công nợ phải thu / phải trả theo từng khách hàng và nhà cung cấp.
+  | Trạng thái Hoạt động | Tài khoản còn chọn được khi lập bút toán mới.
+  | Trạng thái Khóa | Tài khoản không còn chọn được ở nghiệp vụ mới nhưng vẫn nằm trong danh mục và các bút toán cũ không bị ảnh hưởng.
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+<<TABLE 2>>
+  | Ký hiệu | Tên quyền | Tác dụng trên màn hình
+  | P1 | Quản lý danh mục tài khoản | Mở màn hình và thực hiện đầy đủ Thêm mới, Chỉnh sửa, Xóa, Khóa / Mở khóa và Nhập dữ liệu từ Excel. Thiếu quyền này thì các nút thao tác không hiển thị.
+  | P2 | Xem danh mục tài khoản | Chỉ mở được màn hình để tra cứu, xuất Excel và xem lịch sử. Không thấy nút Tạo mới, Sửa, Xóa, Khóa và Import. Vẫn dùng được chức năng In danh sách.
+[normal] Màn hình tách riêng quyền quản lý và quyền xem. Người chỉ có quyền xem vẫn vào được màn hình và tra cứu bình thường nhưng mọi nút ghi dữ liệu đều bị ẩn. Người không có quyền nào thì mục menu không hiển thị và truy cập thẳng đường dẫn cũng bị chặn. 
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 3>>
+  | Chức năng | P1 | P2 | Không có quyền nào
+  | FR-01 Xem danh sách tài khoản |  |  | 
+  | FR-02 Tìm kiếm và lọc |  |  | 
+  | FR-03 Xem chi tiết tài khoản |  |  | 
+  | FR-04 Thêm mới tài khoản |  |  | 
+  | FR-05 Chỉnh sửa tài khoản |  |  | 
+  | FR-06 Xóa tài khoản |  |  | 
+  | FR-07 Khóa / Mở khóa |  |  | 
+  | FR-08 Xem lịch sử thay đổi |  |  | 
+  | FR-09 Nhập dữ liệu từ Excel |  |  | 
+  | FR-10 Xuất Excel |  |  | 
+  | FR-11 In danh sách |  |  | 
+  | FR-12 Tùy chỉnh cột hiển thị |  |  | 
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Danh mục tài khoản 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem danh sách tài khoản 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 4>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem danh sách tài khoản
+  | Mô tả | Hiển thị toàn bộ tài khoản trong danh mục, có phân trang, sắp xếp và tùy chỉnh cột.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”); Người tra cứu (chỉ có quyền “Xem danh mục tài khoản”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục tài khoản” hoặc “Xem danh mục tài khoản”.
+  | Dòng sự kiện chính | 1. Người dùng vào Phân hệ Tài chính → Danh mục → Danh mục tài khoản. / 2. Hệ thống kiểm tra quyền rồi nạp trang đầu tiên của danh sách. / 3. Bảng hiển thị dữ liệu kèm tổng số bản ghi.
+  | Dòng sự kiện phụ | • Không có quyền → mục menu không hiển thị; truy cập thẳng đường dẫn thì hệ thống từ chối và báo không có quyền. / • Danh mục chưa có bản ghi nào → bảng hiện thông báo không có dữ liệu.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal]  [IMG]
+[normal] Hình 2: Màn Danh mục tài khoản lúc mới truy cập 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 5>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Mô tả
+  | 1 | STT | Table/Grid | Read-only | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | 2 | Số tài khoản | Table/Grid | Read-only | Dãy chữ số định danh. Luôn hiển thị, sắp xếp được, bấm vào để mở màn chi tiết.
+  | 3 | Tên tài khoản | Table/Grid | Read-only | Tên đầy đủ của tài khoản.
+  | 4 | Bậc | Table/Grid | Read-only | Bậc 1, 2 hoặc 3 trên cây tài khoản.
+  | 5 | Tài khoản mẹ | Table/Grid | Read-only | Số tài khoản ở bậc liền trên. Tài khoản bậc 1 để trống.
+  | 6 | Loại tài khoản | Table/Grid | Read-only | Nhóm phân loại, lấy từ Danh mục loại tài khoản.
+  | 7 | Theo dõi công nợ | Table/Grid | Read-only | Có hoặc Không.
+  | 8 | Người tạo | Table/Grid | Read-only | Họ tên người đã thêm bản ghi.
+  | 9 | Ngày tạo | Table/Grid | Read-only | Ngày giờ thêm bản ghi, sắp xếp được.
+  | 10 | Người cập nhật | Table/Grid | Read-only | Họ tên người sửa gần nhất. Mặc định ẩn.
+  | 11 | Ngày cập nhật | Table/Grid | Read-only | Ngày giờ sửa gần nhất, sắp xếp được. Mặc định ẩn.
+  | 12 | Trạng thái | Table/Grid | Read-only | Hoạt động hoặc Khóa, hiển thị dạng badge.
+  | 13 | Hành động | Table/Grid | Read-only | Nút Sửa, Xóa, Khóa / Mở khóa và Lịch sử. Hai nút đầu còn dùng được hiện thẳng, phần còn lại nằm trong nút ba chấm.
+  | 14 | Nút Tạo mới | Button | Enable / Ẩn | Chỉ hiện với người có quyền quản lý; mở màn hình Thêm tài khoản.
+  | 15 | Nút In danh sách | Button | Enable | Mở bản in trên thẻ trình duyệt mới.
+  | 16 | Nút Xuất Excel | Button | Enable | Mở cửa sổ chọn trường cần xuất.
+  | 17 | Nút Import Excel | Button | Enable / Ẩn | Chỉ hiện với người có quyền quản lý.
+  | 18 | Nút Tùy chỉnh cột | Icon Button | Enable | Mở cửa sổ chọn cột hiển thị trên bảng.
+  | 19 | Phân trang | Pagination | Enable | Nút về đầu / lùi / số trang / tiến / về cuối và ô chọn số dòng mỗi trang (5, 10, 20, 50, 100).
+  | 20 | Tổng số bản ghi | Label | Hiển thị | Dòng “Hiển thị x–y / tổng” ở góc trái dưới bảng.
+  | 21 | Trạng thái rỗng | Label | Hiển thị | Hiện “Không có dữ liệu phù hợp bộ lọc.” khi danh sách trống.
+[normal] 2.1.4 Danh sách event và xử lý event 
+<<TABLE 6>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở màn hình | System | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản” hoặc “Xem danh mục tài khoản”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Nạp trang đầu tiên của danh sách và hiển thị tổng số bản ghi.
+  | 2 | Bấm tiêu đề cột sắp xếp được | Click | After: / – Đổi chiều sắp xếp (tăng ↔ giảm) và nạp lại danh sách từ trang 1.
+  | 3 | Chuyển trang | Click | Before: / – Giữ nguyên bộ lọc và thứ tự sắp xếp đang áp dụng. / After: / – Nạp dữ liệu trang mới, số thứ tự chạy tiếp tục không quay về 1.
+  | 4 | Đổi số dòng mỗi trang | Change | After: / – Quay về trang 1 và nạp lại theo số dòng mới.
+[Heading 3] 2.2 Tìm kiếm và lọc 
+[normal] 2.2.1 Giới thiệu 
+<<TABLE 7>>
+  | Mục | Nội dung
+  | Tên chức năng | Tìm kiếm và lọc danh sách
+  | Mô tả | Thu hẹp danh sách bằng ô tìm kiếm nhanh và các tiêu chí lọc nâng cao.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”); Người tra cứu (chỉ có quyền “Xem danh mục tài khoản”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục tài khoản.
+  | Dòng sự kiện chính | 1. Người dùng nhập từ khóa hoặc chọn tiêu chí lọc. / 2. Người dùng bấm Tìm kiếm. / 3. Hệ thống áp đồng thời mọi tiêu chí và nạp lại danh sách từ trang 1.
+  | Dòng sự kiện phụ | • Không có kết quả → bảng hiện thông báo không có dữ liệu. / • Bấm Làm mới → xóa hết tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+[normal] 2.2.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal]  [IMG]
+[normal] Hình 3: Khu vực tìm kiếm và lọc của màn Danh mục tài khoản 
+[normal] 2.2.3 Mô tả chi tiết giao diện 
+<<TABLE 8>>
+  | STT | Tên đối tượng | Loại | Phạm vi | Mô tả
+  | 1 | Ô tìm kiếm nhanh | Textbox | 0–255 ký tự | Tìm đồng thời theo Số tài khoản và Tên tài khoản.
+  | 2 | Bậc tài khoản | Dropdown | Bậc 1 / 2 / 3 | Lọc theo bậc trên cây.
+  | 3 | Loại tài khoản | Dropdown | Danh sách | Lọc theo nhóm phân loại.
+  | 4 | Trạng thái | Dropdown | Hoạt động / Khóa | Bỏ trống thì hiện cả hai trạng thái.
+  | 5 | Người tạo | Dropdown | Danh sách | Lọc theo người đã thêm bản ghi.
+  | 6 | Người cập nhật | Dropdown | Danh sách | Lọc theo người sửa gần nhất.
+  | 7 | Nút Tìm kiếm | Button | – | Áp dụng đồng thời mọi tiêu chí đang nhập.
+  | 8 | Nút Làm mới | Button | – | Xóa hết tiêu chí VÀ nạp lại danh sách đầy đủ ngay.
+[normal] 2.2.4 Danh sách event và xử lý event 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Tìm kiếm | Click | Before: / – Thu thập giá trị của mọi tiêu chí đang có. / During: / – Áp đồng thời các tiêu chí theo kiểu “và”. / After: / – Nạp lại bảng từ trang 1 và cập nhật tổng số bản ghi.
+  | 2 | Bấm Làm mới | Click | After: / – Xóa trắng mọi tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+  | 3 | Gõ vào ô tìm nhanh rồi nhấn Enter | Keypress | After: / – Chạy tìm kiếm y như bấm nút Tìm kiếm.
+[Heading 3] 2.3 Xem chi tiết tài khoản 
+[normal] 2.3.1 Giới thiệu 
+<<TABLE 10>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem chi tiết tài khoản
+  | Mô tả | Xem đầy đủ thông tin của một tài khoản ở chế độ chỉ đọc, không sửa được.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”); Người tra cứu (chỉ có quyền “Xem danh mục tài khoản”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục tài khoản” hoặc “Xem danh mục tài khoản”.
+  | Dòng sự kiện chính | 1. Người dùng bấm vào số tài khoản ở cột đầu của dòng cần xem. / 2. Hệ thống mở màn hình chi tiết và đổ dữ liệu ở chế độ chỉ đọc.
+  | Dòng sự kiện phụ | • Bản ghi đã bị người khác xóa → hệ thống báo không tìm thấy dữ liệu.
+[normal] 2.3.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal]  [IMG]
+[normal] Hình 4: Màn hình Chi tiết tài khoản 
+[normal] 2.3.3 Mô tả chi tiết giao diện 
+<<TABLE 11>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Mô tả
+  | 1 | Số tài khoản | Textbox | Read-only | 3–15 chữ số | Chỉ nhận chữ số và phải là duy nhất. 3 chữ số là bậc 1, 4 chữ số là bậc 2, từ 5 chữ số là bậc 3. Tài khoản đang có tài khoản con thì ô này bị khóa, không sửa được.
+  | 2 | Bậc tài khoản | Dropdown | Read-only | Bậc 1 / 2 / 3 | Quyết định vị trí trên cây. Tài khoản đang có tài khoản con thì ô này bị khóa.
+  | 3 | Tài khoản mẹ | Dropdown | Read-only | Danh sách | Bắt buộc với bậc 2 và 3, phải đúng bậc liền trên. Bậc 1 nằm ở gốc cây nên ô này bị khóa và ghi rõ lý do.
+  | 4 | Tên tài khoản | Textbox | Read-only | 0–255 ký tự | Tên đầy đủ của tài khoản. Không kiểm tra trùng tên.
+  | 5 | Loại tài khoản | Dropdown | Read-only | Danh sách | Chọn từ Danh mục loại tài khoản.
+  | 6 | Trạng thái | Dropdown | Read-only | Hoạt động / Khóa | Đặt sẵn là Hoạt động khi thêm mới.
+  | 7 | Tài khoản theo dõi công nợ | Icon Button | Read-only | – | Bật khi tài khoản dùng để theo dõi công nợ theo từng khách hàng, nhà cung cấp.
+  | 8 | Nút Quay lại | Button | Enable | – | Trở về màn danh sách.
+[normal] 2.3.4 Danh sách event và xử lý event 
+<<TABLE 12>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm số tài khoản trên dòng | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản” hoặc “Xem danh mục tài khoản”. / After: / – Nạp dữ liệu bản ghi và hiển thị ở chế độ chỉ đọc.
+  | 2 | Bấm Quay lại | Click | After: / – Trở về màn danh sách, không ghi gì.
+[Heading 3] 2.4 Thêm mới tài khoản 
+[normal] 2.4.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 5: Biểu đồ Use Case — FR-04 Thêm mới tài khoản 
+[normal] 2.4.2 Giới thiệu 
+<<TABLE 13>>
+  | Mục | Nội dung
+  | Tên chức năng | Thêm mới tài khoản
+  | Mô tả | Thêm một tài khoản mới vào danh mục thông qua màn hình nhập liệu riêng.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục tài khoản”.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Tạo mới. / 2. Hệ thống mở màn hình nhập liệu. / 3. Người dùng nhập thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu và ghi bản ghi mới. / 5. Hệ thống quay về màn danh sách, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc hoặc trùng Số tài khoản → báo lỗi đỏ ngay dưới ô tương ứng, màn hình KHÔNG đóng, dữ liệu đã nhập vẫn còn. / • Bấm Lưu và tiếp tục → ghi xong vẫn giữ form mở, làm trắng các ô để nhập tiếp. / • Bấm Quay lại → hủy bỏ, không ghi gì.
+[normal] 2.4.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal]  [IMG]
+[normal] Hình 6: Màn hình Thêm tài khoản 
+[normal]  [IMG]
+[normal] Hình 7: Hệ thống báo lỗi đỏ ngay dưới ô còn thiếu 
+[normal] 2.4.4 Mô tả chi tiết giao diện 
+<<TABLE 14>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Mô tả
+  | 1 | Số tài khoản | Textbox | Enable | 3–15 chữ số | Có | Chỉ nhận chữ số và phải là duy nhất. 3 chữ số là bậc 1, 4 chữ số là bậc 2, từ 5 chữ số là bậc 3. Tài khoản đang có tài khoản con thì ô này bị khóa, không sửa được.
+  | 2 | Bậc tài khoản | Dropdown | Enable | Bậc 1 / 2 / 3 | Có | Quyết định vị trí trên cây. Tài khoản đang có tài khoản con thì ô này bị khóa.
+  | 3 | Tài khoản mẹ | Dropdown | Enable / Disable | Danh sách | Có với bậc 2 và 3 | Bắt buộc với bậc 2 và 3, phải đúng bậc liền trên. Bậc 1 nằm ở gốc cây nên ô này bị khóa và ghi rõ lý do.
+  | 4 | Tên tài khoản | Textbox | Enable | 0–255 ký tự | Có | Tên đầy đủ của tài khoản. Không kiểm tra trùng tên.
+  | 5 | Loại tài khoản | Dropdown | Enable | Danh sách | Có | Chọn từ Danh mục loại tài khoản.
+  | 6 | Trạng thái | Dropdown | Enable | Hoạt động / Khóa | Không | Đặt sẵn là Hoạt động khi thêm mới.
+  | 7 | Tài khoản theo dõi công nợ | Icon Button | Enable | – | Không | Bật khi tài khoản dùng để theo dõi công nợ theo từng khách hàng, nhà cung cấp.
+  | 8 | Nút Lưu | Button | Enable | – | – | Ghi bản ghi rồi quay về danh sách.
+  | 9 | Nút Lưu và tiếp tục | Button | Enable | – | – | Ghi bản ghi, giữ form mở và làm trắng các ô để nhập tiếp.
+  | 10 | Nút Quay lại | Button | Enable | – | – | Hủy bỏ, không ghi gì.
+  | 11 | Thông báo lỗi | Toast / Alert | Hiển thị | – | – | Chữ đỏ ngay dưới ô bị lỗi.
+[normal] 2.4.5 Danh sách event và xử lý event 
+<<TABLE 15>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Tạo mới | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản”. / – Nếu không có quyền → nút không hiển thị. / After: / – Mở form nhập liệu trắng, ô Trạng thái đặt sẵn là Hoạt động.
+  | 2 | Bấm Lưu | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Số tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Bậc tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Tên tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Loại tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Số tài khoản có ký tự không phải chữ số, hoặc ít hơn 3 / nhiều hơn 15 chữ số → hiển thị “Chỉ được nhập chữ số, từ 3 đến 15 chữ số”. / – . /  / – Tài khoản mẹ không đúng bậc liền trên → hiển thị “Tài khoản mẹ phải là tài khoản bậc N” kèm bậc thực tế của tài khoản mẹ. / – Số tài khoản con không bắt đầu bằng số tài khoản mẹ → hiển thị hướng dẫn số con phải nối tiếp số mẹ. / – Tài khoản đang có tài khoản con mà đổi Bậc hoặc Số tài khoản → hiển thị cảnh báo kèm số lượng tài khoản con, yêu cầu chuyển hoặc xóa các con trước. / – Số tài khoản đã tồn tại → hiển thị “Số tài khoản đã tồn tại”. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi bản ghi mới vào danh mục. / – Ghi một dòng lịch sử ghi nhận việc thêm mới. / – Quay về màn danh sách và nạp lại danh sách. / – Hiển thị thông báo “Thêm mới tài khoản thành công”.
+  | 3 | Bấm Lưu và tiếp tục | Click | During: / – Kiểm tra y hệt nút Lưu. / After: / – Ghi bản ghi mới, giữ form mở và làm trắng các ô để nhập bản ghi tiếp theo.
+  | 4 | Bấm Quay lại | Click | After: / – Hủy bỏ toàn bộ dữ liệu đang nhập, không ghi gì.
+[Heading 3] 2.5 Chỉnh sửa tài khoản 
+[normal] 2.5.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 8: Biểu đồ Use Case — FR-05 Chỉnh sửa tài khoản 
+[normal] 2.5.2 Giới thiệu 
+<<TABLE 16>>
+  | Mục | Nội dung
+  | Tên chức năng | Chỉnh sửa tài khoản
+  | Mô tả | Sửa thông tin của một tài khoản đã có. Bản ghi đang ở trạng thái Khóa thì nút Sửa bị ẩn, phải Mở khóa trước.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục tài khoản” và bản ghi đang ở trạng thái Hoạt động.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Sửa trên dòng cần sửa. / 2. Hệ thống mở form đã điền sẵn dữ liệu hiện tại. / 3. Người dùng chỉnh sửa và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu và cập nhật bản ghi. / 5. Danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc hoặc trùng Số tài khoản → báo lỗi đỏ ngay dưới ô tương ứng. / • Bản ghi bị người khác khóa trong lúc đang mở form → hệ thống từ chối lưu và báo bản ghi đang bị khóa. / • Thoát khi chưa lưu → hệ thống hỏi xác nhận rời khỏi.
+[normal] 2.5.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal]  [IMG]
+[normal] Hình 9: Màn hình Sửa tài khoản 
+[normal] 2.5.4 Mô tả chi tiết giao diện 
+<<TABLE 17>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Số tài khoản | Textbox | Enable | 3–15 chữ số | Có | Theo dữ liệu | Chỉ nhận chữ số và phải là duy nhất. 3 chữ số là bậc 1, 4 chữ số là bậc 2, từ 5 chữ số là bậc 3. Tài khoản đang có tài khoản con thì ô này bị khóa, không sửa được.
+  | 2 | Bậc tài khoản | Dropdown | Enable | Bậc 1 / 2 / 3 | Có | Theo dữ liệu | Quyết định vị trí trên cây. Tài khoản đang có tài khoản con thì ô này bị khóa.
+  | 3 | Tài khoản mẹ | Dropdown | Enable / Disable | Danh sách | Có với bậc 2 và 3 | Theo dữ liệu | Bắt buộc với bậc 2 và 3, phải đúng bậc liền trên. Bậc 1 nằm ở gốc cây nên ô này bị khóa và ghi rõ lý do.
+  | 4 | Tên tài khoản | Textbox | Enable | 0–255 ký tự | Có | Theo dữ liệu | Tên đầy đủ của tài khoản. Không kiểm tra trùng tên.
+  | 5 | Loại tài khoản | Dropdown | Enable | Danh sách | Có | Theo dữ liệu | Chọn từ Danh mục loại tài khoản.
+  | 6 | Trạng thái | Dropdown | Enable | Hoạt động / Khóa | Không | Theo dữ liệu | Đặt sẵn là Hoạt động khi thêm mới.
+  | 7 | Tài khoản theo dõi công nợ | Icon Button | Enable | – | Không | Theo dữ liệu | Bật khi tài khoản dùng để theo dõi công nợ theo từng khách hàng, nhà cung cấp.
+  | 8 | Nút Lưu | Button | Enable | – | – | Hiển thị | Cập nhật bản ghi.
+  | 9 | Nút Quay lại | Button | Enable | – | – | Hiển thị | Hủy bỏ thay đổi, không ghi gì.
+[normal] 2.5.5 Danh sách event và xử lý event 
+<<TABLE 18>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Sửa | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản”. / – Nếu không có quyền hoặc bản ghi đang Khóa → nút không hiển thị. / After: / – Mở form đã điền sẵn dữ liệu hiện tại của bản ghi.
+  | 2 | Bấm Lưu | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản”. / – Kiểm tra bản ghi có đang bị khóa không; nếu có → từ chối và báo bản ghi đang bị khóa. / During: / – Số tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Bậc tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Tên tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Loại tài khoản để trống → hiển thị “Bắt buộc phải nhập”. / – Số tài khoản có ký tự không phải chữ số, hoặc ít hơn 3 / nhiều hơn 15 chữ số → hiển thị “Chỉ được nhập chữ số, từ 3 đến 15 chữ số”. / – Bậc tài khoản là 2 hoặc 3 mà bỏ trống Tài khoản mẹ → hiển thị “Bắt buộc phải chọn tài khoản mẹ với bậc 2 và 3”. / – Tài khoản mẹ không có thật → hiển thị “Không tìm thấy tài khoản mẹ”. / – Tài khoản mẹ không đúng bậc liền trên → hiển thị “Tài khoản mẹ phải là tài khoản bậc N” kèm bậc thực tế của tài khoản mẹ. / – Số tài khoản con không bắt đầu bằng số tài khoản mẹ → hiển thị hướng dẫn số con phải nối tiếp số mẹ. / – Tài khoản đang có tài khoản con mà đổi Bậc hoặc Số tài khoản → hiển thị cảnh báo kèm số lượng tài khoản con, yêu cầu chuyển hoặc xóa các con trước. / – Số tài khoản trùng với bản ghi khác → hiển thị “Số tài khoản đã tồn tại”. Giữ nguyên giá trị cũ của chính nó thì KHÔNG báo trùng. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Cập nhật bản ghi. / – Ghi một dòng lịch sử cho từng trường đã đổi, kèm giá trị cũ và giá trị mới. / – Nạp lại danh sách và hiển thị thông báo “Cập nhật tài khoản thành công”.
+  | 3 | Thoát khi chưa lưu | Click | After: / – Hệ thống hỏi xác nhận rời khỏi; chọn ở lại thì giữ nguyên dữ liệu đang nhập.
+[Heading 3] 2.6 Xóa tài khoản 
+[normal] 2.6.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 10: Biểu đồ Use Case — FR-06 Xóa tài khoản 
+[normal] 2.6.2 Giới thiệu 
+<<TABLE 19>>
+  | Mục | Nội dung
+  | Tên chức năng | Xóa tài khoản
+  | Mô tả | Xóa hẳn một tài khoản khỏi danh mục. Chỉ tài khoản chưa phát sinh bút toán và không có tài khoản con mới hiện nút Xóa.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục tài khoản” và tài khoản chưa phát sinh bút toán và không có tài khoản con.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Xóa trên dòng cần xóa. / 2. Hệ thống mở hộp thoại xác nhận, nêu rõ tên bản ghi sắp xóa. / 3. Người dùng bấm Xóa để xác nhận. / 4. Hệ thống xóa bản ghi, nạp lại danh sách và báo thành công.
+  | Dòng sự kiện phụ | • Bản ghi đã được dùng ở nghiệp vụ khác → nút Xóa KHÔNG hiển thị. / • Bấm Hủy → đóng hộp thoại, không xóa gì. / • Bản ghi vừa bị người khác dùng ngay trước khi xác nhận → hệ thống từ chối xóa và báo lý do.
+[normal] 2.6.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Modal Xác nhận xóa được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 11: Hộp thoại Xác nhận xóa 
+[normal] 2.6.4 Mô tả chi tiết giao diện 
+<<TABLE 20>>
+  | STT | Tên đối tượng | Loại | Mô tả
+  | 1 | Tiêu đề hộp thoại | Label | Nội dung cố định.
+  | 2 | Câu hỏi xác nhận | Label | Ghi rõ tên tài khoản sắp xóa: “Bạn có chắc muốn xóa tài khoản '1111 - Tài khoản ví dụ bậc 2'?”.
+  | 3 | Nút Xóa | Button | Thực hiện xóa (nút màu đỏ).
+  | 4 | Nút Hủy | Button | Đóng hộp thoại, không xóa gì.
+[normal] 2.6.5 Danh sách event và xử lý event 
+<<TABLE 21>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Xóa trên dòng | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản” và điều kiện tài khoản chưa phát sinh bút toán và không có tài khoản con. / – Không thỏa → nút KHÔNG hiển thị (không hiện nút xám). / After: / – Mở hộp thoại xác nhận kèm tên bản ghi.
+  | 2 | Bấm Xóa trong hộp thoại | Click | Before: / – Kiểm tra lại quyền và điều kiện xóa ở phía máy chủ. / During: / – Bản ghi đã phát sinh dữ liệu liên quan → từ chối và báo lý do cụ thể. / – Nếu bị từ chối → không thực hiện bước After. / After: / – Xóa bản ghi khỏi danh mục. / – Nạp lại danh sách và hiển thị thông báo “Xóa tài khoản thành công”.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp thoại, không xóa gì.
+[Heading 3] 2.7 Khóa / Mở khóa 
+[normal] 2.7.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 12: Biểu đồ Use Case — FR-07 Khóa / Mở khóa 
+[normal] 2.7.2 Giới thiệu 
+<<TABLE 22>>
+  | Mục | Nội dung
+  | Tên chức năng | Khóa / Mở khóa tài khoản
+  | Mô tả | Chuyển tài khoản sang trạng thái Khóa để ngừng cho chọn ở nghiệp vụ mới, hoặc mở lại. Khác với Xóa, dữ liệu vẫn còn nguyên và các chứng từ cũ không bị ảnh hưởng.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục tài khoản”.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Khóa (hoặc Mở khóa) trên dòng tương ứng. / 2. Hệ thống mở hộp thoại xác nhận. / 3. Người dùng xác nhận. / 4. Hệ thống đổi trạng thái, nạp lại danh sách và báo thành công.
+  | Dòng sự kiện phụ | • Bản ghi đang Khóa → nút Sửa bị ẩn, chỉ còn Mở khóa và các thao tác chỉ đọc. / • Bấm Hủy → đóng hộp thoại, không đổi gì.
+[normal] 2.7.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Modal Xác nhận khóa / mở khóa được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 13: Hộp thoại Xác nhận khóa 
+[normal] 2.7.4 Mô tả chi tiết giao diện 
+<<TABLE 23>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Tiêu đề hộp thoại | Label | Hiển thị | Theo dữ liệu | “Xác nhận khóa” hoặc “Xác nhận mở khóa” tùy trạng thái hiện tại.
+  | 2 | Câu hỏi xác nhận | Label | Hiển thị | Theo dữ liệu | Ghi rõ tên tài khoản: “Bạn có chắc muốn khóa tài khoản '111 - Tiền mặt'?”.
+  | 3 | Nút Khóa / Mở khóa | Button | Enable | Hiển thị | Thực hiện đổi trạng thái.
+  | 4 | Nút Hủy | Button | Enable | Hiển thị | Đóng hộp thoại, không đổi gì.
+[normal] 2.7.5 Danh sách event và xử lý event 
+<<TABLE 24>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Khóa / Mở khóa | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản”. / – Nếu không có quyền → nút không hiển thị. / After: / – Mở hộp thoại xác nhận đúng với trạng thái hiện tại.
+  | 2 | Xác nhận trong hộp thoại | Click | Before: / – Kiểm tra lại quyền ở phía máy chủ. / After: / – Đổi trạng thái bản ghi giữa Hoạt động và Khóa. / – Ghi một dòng lịch sử thuộc nhóm thay đổi trạng thái. / – Nạp lại danh sách; dòng vừa đổi hiển thị badge trạng thái mới.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp thoại, không đổi gì.
+[Heading 3] 2.8 Xem lịch sử thay đổi 
+[normal] 2.8.1 Giới thiệu 
+<<TABLE 25>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem lịch sử thay đổi
+  | Mô tả | Xem lại các lần bản ghi bị thay đổi: ai làm, lúc nào, trường nào đổi và giá trị trước / sau.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”); Người tra cứu (chỉ có quyền “Xem danh mục tài khoản”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục tài khoản.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Lịch sử trên dòng cần xem. / 2. Hệ thống mở cửa sổ lịch sử của đúng bản ghi đó. / 3. Các mốc thay đổi hiển thị theo thứ tự mới nhất lên trước.
+  | Dòng sự kiện phụ | 
+[normal] 2.8.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 14: Cửa sổ Lịch sử thay đổi 
+[normal] 2.8.3 Mô tả chi tiết giao diện 
+<<TABLE 26>>
+  | STT | Tên đối tượng | Loại | Mô tả
+  | 1 | Tiêu đề | Label | Ghi rõ đang xem lịch sử của bản ghi nào.
+  | 2 | Mốc thời gian | Label | Ngày giờ của lần thay đổi.
+  | 3 | Nhóm hành động | Label | Ví dụ “Thay đổi thông tin”, “Thay đổi trạng thái”.
+  | 4 | Người thực hiện | Label | Mã nhân viên, họ tên và bộ phận.
+  | 5 | Dòng thay đổi | Table/Grid | Mỗi dòng là một trường: tên trường, giá trị cũ (gạch đỏ) và giá trị mới.
+  | 6 | Nút Làm mới | Button | Nạp lại lịch sử.
+  | 7 | Trạng thái rỗng | Label | Hiện “Chưa có lịch sử thao tác nào.” khi chưa có bản ghi lịch sử.
+  | 8 | Nút Đóng | Button | Đóng cửa sổ.
+[normal] 2.8.4 Danh sách event và xử lý event 
+<<TABLE 27>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Lịch sử | Click | After: / – Mở cửa sổ và nạp lịch sử của đúng bản ghi, sắp mới nhất lên trước.
+  | 2 | Bấm Làm mới | Click | After: / – Nạp lại danh sách lịch sử.
+  | 3 | Bấm Đóng | Click | After: / – Đóng cửa sổ, không ảnh hưởng dữ liệu.
+[Heading 3] 2.9 Nhập dữ liệu từ Excel 
+[normal] 2.9.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 15: Biểu đồ Use Case — FR-09 Nhập dữ liệu từ Excel 
+[normal] 2.9.2 Giới thiệu 
+<<TABLE 28>>
+  | Mục | Nội dung
+  | Tên chức năng | Nhập dữ liệu từ Excel
+  | Mô tả | Thêm nhiều tài khoản cùng lúc từ tệp Excel. Quy trình ba bước: nạp lên bảng xem trước, kiểm tra dữ liệu, rồi mới ghi vào danh mục.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục tài khoản”.
+  | Dòng sự kiện chính | 1. Người dùng bấm Import Excel. / 2. Người dùng tải tệp mẫu, điền dữ liệu rồi chọn tệp. / 3. Bấm Load lên bảng để xem trước nội dung. / 4. Bấm Validate; hệ thống đánh dấu dòng lỗi và khóa dòng hợp lệ. / 5. Bấm Import để ghi các dòng hợp lệ vào danh mục.
+  | Dòng sự kiện phụ | • Có dòng lỗi → hệ thống chỉ ghi các dòng hợp lệ, dòng lỗi giữ nguyên để sửa lại. / • Bật “Chỉ dòng lỗi” → bảng chỉ hiện các dòng còn lỗi. / • Bấm Làm mới → xóa trắng bảng để nhập lại từ đầu.
+  | Yêu cầu đặc biệt | Phải bấm Validate trước thì nút Import mới dùng được.
+[normal] 2.9.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Modal Import tài khoản được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 16: Cửa sổ Import từ Excel 
+[normal] 2.9.4 Mô tả chi tiết giao diện 
+<<TABLE 29>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Nút Chọn file Excel | Button | Enable | .xlsx | Có | Chưa chọn tệp | Mở hộp thoại chọn tệp trên máy.
+  | 2 | Nút Tải file mẫu | Button | Enable | – | – | Hiển thị | Tải tệp mẫu có sẵn tiêu đề cột đúng định dạng.
+  | 3 | Nút Load lên bảng | Button | Enable / Disable | – | – | Disable | Đọc tệp và đổ nội dung lên bảng xem trước.
+  | 4 | Nút Validate | Button | Enable / Disable | – | – | Disable | Kiểm tra từng dòng, đánh dấu lỗi và khóa dòng hợp lệ.
+  | 5 | Nút Import | Button | Enable / Disable | – | – | Disable | Chỉ dùng được sau khi đã Validate.
+  | 6 | Ô tích Chỉ dòng lỗi | Icon Button | Enable | – | Không | Không tích | Lọc bảng chỉ hiện dòng còn lỗi.
+  | 7 | Bảng xem trước | Table/Grid | Enable | – | – | Trống | Mỗi dòng là một bản ghi sắp thêm; dòng lỗi được tô khác màu kèm mô tả lỗi.
+  | 8 | Bộ đếm Tổng | Label | Hiển thị | – | – | 0 | Tổng số dòng đang có trên bảng.
+  | 9 | Nút Làm mới | Button | Enable | – | – | Hiển thị | Xóa trắng bảng.
+  | 10 | Nút Đóng | Button | Enable | – | – | Hiển thị | Đóng cửa sổ.
+[normal] 2.9.5 Danh sách event và xử lý event 
+<<TABLE 30>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Tải file mẫu | Click | After: / – Tải về tệp mẫu đúng định dạng cột.
+  | 2 | Bấm Load lên bảng | Click | During: / – Tệp sai định dạng cột → báo lỗi và không đổ dữ liệu. / After: / – Đổ toàn bộ dòng của tệp lên bảng xem trước.
+  | 3 | Bấm Validate | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản”. / During: / – Dòng thiếu Số tài khoản, Tên tài khoản, Bậc hoặc Loại tài khoản → đánh dấu lỗi. / – Số tài khoản đã có trong danh mục hoặc trùng với dòng khác trong tệp → đánh dấu lỗi. / – Tài khoản mẹ không tồn tại hoặc không đúng bậc liền trên → đánh dấu lỗi. / After: / – Đánh dấu dòng lỗi kèm mô tả, khóa các dòng hợp lệ. / – Bật nút Import.
+  | 4 | Bấm Import | Click | Before: / – Kiểm tra quyền “Quản lý danh mục tài khoản” và bắt buộc đã Validate. / After: / – Ghi các dòng hợp lệ vào danh mục. / – Báo số dòng thêm thành công và số dòng bị bỏ qua. / – Nạp lại danh sách phía sau.
+[Heading 3] 2.10 Xuất Excel 
+[normal] 2.10.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 17: Biểu đồ Use Case — FR-10 Xuất Excel 
+[normal] 2.10.2 Giới thiệu 
+<<TABLE 31>>
+  | Mục | Nội dung
+  | Tên chức năng | Xuất Excel
+  | Mô tả | Kết xuất danh sách đang xem ra tệp Excel. Người dùng tự chọn những cột cần xuất và thứ tự cột trong tệp.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”); Người tra cứu (chỉ có quyền “Xem danh mục tài khoản”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục tài khoản.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Xuất Excel. / 2. Hệ thống mở cửa sổ chọn trường xuất, mặc định chọn hết. / 3. Người dùng chọn / bỏ chọn trường rồi bấm Xuất file. / 4. Hệ thống tạo tệp theo đúng bộ lọc đang áp dụng và tải về.
+  | Dòng sự kiện phụ | • Không chọn trường nào → nút Xuất file không dùng được. / • Danh sách rỗng → tệp chỉ có dòng tiêu đề. / • Bấm Đóng → hủy, không tạo tệp.
+[normal] 2.10.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Modal Chọn trường xuất file được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 18: Cửa sổ Chọn trường xuất file 
+[normal] 2.10.4 Mô tả chi tiết giao diện 
+<<TABLE 32>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Câu hướng dẫn | Label | Hiển thị | – | – | Hiển thị | Nhắc thứ tự cột chạy theo đúng trình tự người dùng chọn.
+  | 2 | Ô chọn Trường xuất | Dropdown | Enable | Danh sách | Có | Chọn tất cả | Chọn nhiều trường; mỗi trường hiện thành một thẻ có nút bỏ chọn.
+  | 3 | Dòng thứ tự cột | Label | Hiển thị | – | – | Theo lựa chọn | Liệt kê thứ tự cột sẽ xuất ra tệp.
+  | 4 | Bộ đếm | Label | Hiển thị | – | – | Theo lựa chọn | Ví dụ “Đang chọn 5/5 trường”.
+  | 5 | Nút Chọn tất cả | Button | Enable | – | – | Hiển thị | Chọn hết trường.
+  | 6 | Nút Bỏ chọn hết | Button | Enable | – | – | Hiển thị | Bỏ chọn hết.
+  | 7 | Nút Xuất file | Button | Enable / Disable | – | – | Enable | Không dùng được khi chưa chọn trường nào.
+  | 8 | Nút Đóng | Button | Enable | – | – | Hiển thị | Hủy, không tạo tệp.
+[normal] 2.10.5 Danh sách event và xử lý event 
+<<TABLE 33>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Xuất Excel | Click | After: / – Mở cửa sổ chọn trường xuất với toàn bộ trường được chọn sẵn.
+  | 2 | Chọn / bỏ chọn trường | Change | After: / – Cập nhật dòng thứ tự cột và bộ đếm số trường đang chọn.
+  | 3 | Bấm Xuất file | Click | Before: / – Kiểm tra đã chọn ít nhất một trường. / During: / – Chưa chọn trường nào → nút không dùng được. / After: / – Tạo tệp Excel theo đúng bộ lọc đang áp dụng trên danh sách. / – Tải tệp về máy người dùng.
+[Heading 3] 2.11 In danh sách 
+[normal] 2.11.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 19: Biểu đồ Use Case — FR-11 In danh sách 
+[normal] 2.11.2 Giới thiệu 
+<<TABLE 34>>
+  | Mục | Nội dung
+  | Tên chức năng | In danh sách
+  | Mô tả | Mở bản in của danh sách đang xem trên một thẻ trình duyệt mới, đã dàn trang sẵn để gửi máy in hoặc lưu thành PDF.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”); Người tra cứu (chỉ có quyền “Xem danh mục tài khoản”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục tài khoản.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút In danh sách. / 2. Hệ thống mở thẻ mới chứa bản in. / 3. Người dùng dùng chức năng in của trình duyệt.
+  | Dòng sự kiện phụ | • Bản in lấy đúng bộ lọc và bộ cột đang hiển thị trên danh sách. / • Danh sách rỗng → bản in chỉ có tiêu đề và bảng trống.
+[normal] 2.11.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal]  [IMG]
+[normal] Hình 20: Bản in danh sách 
+[normal] 2.11.4 Mô tả chi tiết giao diện 
+<<TABLE 35>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Tiêu đề bản in | Label | Hiển thị | Theo dữ liệu | Tên danh mục kèm ngày in.
+  | 2 | Bảng dữ liệu | Table/Grid | Read-only | Theo dữ liệu | Đúng bộ cột đang hiển thị trên màn danh sách.
+  | 3 | Khối ký | Label | Hiển thị | Theo mẫu | Phần chữ ký cuối trang theo mẫu in của công ty.
+[normal] 2.11.5 Danh sách event và xử lý event 
+<<TABLE 36>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm In danh sách | Click | Before: / – Thu thập bộ lọc và bộ cột đang áp dụng. / After: / – Mở thẻ trình duyệt mới hiển thị bản in đã dàn trang.
+[Heading 3] 2.12 Tùy chỉnh cột hiển thị 
+[normal] 2.12.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 21: Biểu đồ Use Case — FR-12 Tùy chỉnh cột hiển thị 
+[normal] 2.12.2 Giới thiệu 
+<<TABLE 37>>
+  | Mục | Nội dung
+  | Tên chức năng | Tùy chỉnh cột hiển thị
+  | Mô tả | Chọn những cột muốn thấy trên bảng danh sách. Cấu hình lưu riêng cho từng người dùng và giữ nguyên ở các lần vào sau.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục tài khoản”); Người tra cứu (chỉ có quyền “Xem danh mục tài khoản”); Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục tài khoản.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng tùy chỉnh cột ở góc phải thanh công cụ. / 2. Hệ thống mở cửa sổ liệt kê toàn bộ cột kèm ô tích. / 3. Người dùng tích / bỏ tích rồi bấm Lưu. / 4. Bảng vẽ lại theo bộ cột mới.
+  | Dòng sự kiện phụ | • Bấm Đóng → giữ nguyên cấu hình cũ. / • Cột bắt buộc (STT, cột tên và Hành động) luôn được chọn, không bỏ tích được.
+[normal] 2.12.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Modal Tuỳ chỉnh cột được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 22: Cửa sổ Tuỳ chỉnh cột hiển thị 
+[normal] 2.12.4 Mô tả chi tiết giao diện 
+<<TABLE 38>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Danh sách cột | Table/Grid | Enable | Theo cấu hình đã lưu | Mỗi dòng là một cột kèm ô tích bật/tắt.
+  | 2 | Ô tích của cột bắt buộc | Icon Button | Disable | Đã tích | STT, cột tên và Hành động luôn hiển thị nên không bỏ tích được.
+  | 3 | Nút Lưu | Button | Enable | Hiển thị | Ghi cấu hình và vẽ lại bảng.
+  | 4 | Nút Đóng | Button | Enable | Hiển thị | Giữ nguyên cấu hình cũ.
+[normal] 2.12.5 Danh sách event và xử lý event 
+<<TABLE 39>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Tích / bỏ tích một cột | Change | After: / – Cập nhật lựa chọn tạm thời, bảng chưa đổi cho tới khi bấm Lưu.
+  | 2 | Bấm Lưu | Click | After: / – Ghi cấu hình cột cho riêng người dùng hiện tại. / – Đóng cửa sổ và vẽ lại bảng theo bộ cột mới.
+[Heading 1] Phần 4. Quy tắc nghiệp vụ 
+[normal] BR-01 — Tách riêng quyền xem và quyền quản lý 
+[normal] Màn hình dùng hai quyền: “Quản lý danh mục tài khoản” cho mọi thao tác ghi và “Xem danh mục tài khoản” cho tra cứu, xuất Excel, in và xem lịch sử. 
+[normal] Người chỉ có quyền xem không thấy nút Tạo mới, Sửa, Xóa, Khóa và Import. 
+[normal] Mọi thao tác ghi đều kiểm tra lại quyền ở tầng máy chủ. 
+[normal] BR-02 — Cây tài khoản có đúng ba bậc 
+[normal] Bậc được suy ra từ độ dài số tài khoản: 3 chữ số là bậc 1, 4 chữ số là bậc 2, từ 5 chữ số là bậc 3. 
+[normal] Tài khoản bậc 1 nằm ở gốc cây nên không có tài khoản mẹ. 
+[normal] Tài khoản bậc 2 và bậc 3 bắt buộc phải có tài khoản mẹ, và mẹ phải ở đúng bậc liền trên. 
+[normal] BR-03 — Số tài khoản con phải nối tiếp số tài khoản mẹ 
+[normal] Số của tài khoản con bắt buộc bắt đầu bằng số của tài khoản mẹ. 
+[normal] Ví dụ mẹ là 111 thì con phải là 1111, 1112 và tương tự. 
+[normal] Ràng buộc này là điều kiện để cây tài khoản sắp đúng thứ tự; con không nối tiếp mẹ sẽ nằm sai chỗ và không kéo về đúng vị trí được. 
+[normal] BR-04 — Tài khoản đang có con thì khóa Số tài khoản và Bậc 
+[normal] Khi tài khoản đã có ít nhất một tài khoản con, hai ô Số tài khoản và Bậc tài khoản bị khóa, không sửa được. 
+[normal] Lý do: cây chỉ có ba bậc nên không thể tự đẩy các con xuống bậc thấp hơn; còn đổi số tài khoản sẽ làm các con mất liên kết với mẹ. 
+[normal] Muốn đổi thì phải chuyển hoặc xóa các tài khoản con trước. 
+[normal] Hệ thống ghi rõ lý do ngay dưới ô bị khóa để người dùng biết vì sao không sửa được. 
+[normal] BR-05 — Số tài khoản là duy nhất và chỉ nhận chữ số 
+[normal] Số tài khoản phải là duy nhất trên toàn danh mục. 
+[normal] Chỉ nhận chữ số, độ dài từ 3 đến 15 chữ số. 
+[normal] Khi sửa, bản ghi đang sửa được loại khỏi phép so trùng. 
+[normal] BR-06 — Bản ghi đã Khóa thì không sửa và không xóa 
+[normal] Tài khoản ở trạng thái Khóa thì nút Sửa bị ẩn; muốn sửa phải Mở khóa trước. 
+[normal] Máy chủ cũng từ chối mọi yêu cầu sửa và xóa trên bản ghi đang Khóa, kể cả khi gọi thẳng chức năng mà bỏ qua giao diện. 
+[normal] Mở khóa là thao tác duy nhất được phép thực hiện trên bản ghi đang Khóa, bên cạnh các thao tác chỉ đọc. 
+[normal] BR-07 — Khóa 
+[normal] Khóa chỉ ngừng cho chọn tài khoản ở nghiệp vụ mới; dữ liệu và bút toán cũ giữ nguyên. 
+[normal] Xóa là bỏ hẳn bản ghi khỏi danh mục và chỉ làm được khi tài khoản chưa phát sinh bút toán và không có tài khoản con. 
+[normal] Khi không xóa được, nút Xóa bị ẩn hẳn chứ không hiện nút xám. 
+[normal] BR-08 — Mọi thay đổi đều được ghi lịch sử 
+[normal] Thêm mới, sửa, xóa và đổi trạng thái đều ghi lại một dòng lịch sử kèm người thực hiện và thời điểm. 
+[normal] Với thao tác sửa, hệ thống ghi từng trường đã đổi kèm giá trị trước và sau. 
+[normal] Lịch sử sắp xếp mới nhất lên trước và không sửa hay xóa được. 
+[normal] BR-09 — Nhập từ Excel phải qua bước kiểm tra 
+[normal] Quy trình bắt buộc ba bước: nạp tệp lên bảng xem trước, kiểm tra dữ liệu, rồi mới ghi. 
+[normal] Nút ghi chỉ dùng được sau khi đã chạy kiểm tra. 
+[normal] Hệ thống chỉ ghi các dòng hợp lệ; dòng lỗi giữ nguyên trên bảng kèm mô tả lỗi để người dùng sửa lại. 

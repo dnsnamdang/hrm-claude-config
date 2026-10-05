@@ -765,3 +765,22 @@ Blocked: không.
 nháp **PYCCH-07366** trên cổng dev rồi **xóa ngay sau khi chụp** — danh sách trở lại đúng 2.972
 phiếu như trước. Phiếu ở trạng thái *Đang tạo* nên không bắn thông báo cho ai. Mã 07366 đã tiêu,
 phiếu kế tiếp sẽ là 07367 trở đi.
+
+
+## Fix — Header card form Thêm/Sửa đồng bộ nhóm màn chuyển hàng (2026-09-30)
+- [x] FE `ProductTransferRequestForm.vue`: bỏ khối `form-header` ("Thêm phiếu yêu cầu chuyển hàng · Phân hệ Tài chính kế toán") + computed `headerTitle` + style `.form-header/.header-*`
+- [x] FE: tiêu đề card "Thông tin chung", "Danh sách hàng hóa" bỏ icon, theo khuôn `form-card-head` của `PrepickTransferRequestForm.vue` (chữ thuần, `d-flex justify-content-between`)- [x] FE: đổi 3 card (Thông tin chung / Danh sách hàng hóa / File đính kèm) sang khuôn màn Phiếu thu `bill-incomes/components/BillIncomeForm.vue`: `card` + `card-header section-header py-2` + `h6` + `card-body`, wrapper `container-fluid px-0`; bỏ style `.form-card*`, khai `.card-header.section-header` trong style riêng
+
+## Fix — Chữ lỗi inline ở dòng khách hàng đè lên nhau (2026-10-01)
+- [x] FE `ProductTransferRequestForm.vue`: lỗi SL ("Không được nhỏ hơn 1", cột 90px) tràn sang lỗi "Ngày cần" vì chữ không xuống dòng → ép `.detail-col .v2-error__text` `white-space: normal` + `overflow-wrap: anywhere`, khoá chữ lỗi trong bề rộng cột
+
+## Fix — Đồng nhất icon xóa dòng KH / dòng hàng hóa với các màn khác (2026-10-01)
+- [x] FE `ProductTransferRequestForm.vue`: nút "x" (xóa dòng khách hàng) và "−" (xóa hàng hóa) đổi sang `V2BaseIconButton danger` + `ri-delete-bin-line` như `ProductTransferForm.vue` / `ProductImportRequestForm.vue`
+
+## Fix — Khối File đính kèm đổi sang khuôn `AttachmentSection` như màn Yêu cầu xuất hàng mượn (2026-10-01)
+- [x] BE: thêm `POST /product-transfer-requests/upload-files` (upload PDF ngay lúc chọn, trả URL S3) + `GET /{id}/attachment-sizes` (cột Dung lượng)
+- [x] BE: store/update nhận `attachment_urls[]` (URL đã upload) thay cho file `attachments[]`, APPEND vào chuỗi cũ; tạo mới bắt buộc >= 1
+- [x] FE `ProductTransferRequestForm.vue`: thay lưới thẻ PDF tự chế bằng `AttachmentSection` (api-base `finance/product-transfer-requests`, chỉ PDF); bỏ newFiles/pickFiles/isRealPdf/askDeleteOldFile + style `.document-item/.doc-*`
+
+## Fix — Ô "Xem tồn theo kho" thiếu nút × xóa nhanh (2026-10-01)
+- [x] FE `ProductTransferRequestForm.vue`: bỏ `:allowClear="false"` (skill select-and-input-state 1b), placeholder "Chọn kho"; xóa trống -> cột SL tồn hiện "-", không gọi API (nhánh `!stockQuery` có sẵn)

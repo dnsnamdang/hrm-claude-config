@@ -185,3 +185,12 @@ trả thẳng file ảnh — đi qua Laravel nên có CORS, và vẫn giữ **m�
 
 Bước tiếp theo: user bấm thử 3 nút xuất trên trình duyệt.
 Blocked: không có.
+
+## Phase 8 — Popup chọn trường xuất theo kiểu "Tuỳ chỉnh cột"
+
+### FE
+- [x] `components/modal/export-fields-modal.vue`: thay select2 multiple bằng danh sách checkbox + kéo thả `vuedraggable` (khuôn `column-customization-modal.vue`) — thứ tự dòng = thứ tự cột trong file; giữ nguyên props/emit nên 88 màn đang dùng không phải sửa. Không lưu lựa chọn cho lần sau (user chốt 2026-09-22).
+- [x] `utils/mixins/exportFieldsMixin.js`: suy khoá cột bảng → cột file thêm bước snake_case + bí danh 4 cột audit (`createdAt`→`created_at`, `created_by`/`createdByName`→`creator_name`|`created_by_name`…). Trước đó ~50 màn đặt khoá camelCase nên Người tạo / Ngày tạo / Người cập nhật / Ngày cập nhật đang hiện trên bảng vẫn không được tick sẵn.
+- [x] Fix UI popup xuất: SCSS toàn cục "nhãn nổi" kéo mọi `.custom-control-label` lên `translateY(-9.6px)` + in đậm → dòng ĐẦU bị cắt mất nửa chữ ở mép vùng cuộn, các dòng sau chữ lệch cao hơn ô tick. Ép `transform: none` + `font-weight: 400` cục bộ trong `export-fields-modal.vue`.
+- [x] Bổ sung `:default-selected="visibleExportFields"` cho **20 màn** còn thiếu (19 màn `pages/finance/*` + `pages/assign/customers`) — trước đó popup ở các màn này tick TẤT CẢ trường thay vì theo cột đang hiện, sai quy tắc chốt 2026-08-25.
+- [x] `exportFieldsMixin`: thêm luật cột trạng thái (`accountStatus` / `meetingStatus` → `status` | `status_text` | `status_name`).

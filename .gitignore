@@ -23,3 +23,13 @@
 **/.plans/**/img/
 **/.plans/**/*_shots/
 **/.plans/**/*_screenshots/
+
+# ── Tài liệu sinh tự động & ảnh chụp màn hình (thêm 05/10/2026) ──
+# Lý do: ảnh chụp + .docx nhúng ảnh làm repo phình ~470 MB mỗi lần push.
+# Các file này sinh lại được bằng script gen_*.py / capture_*.js nằm cùng folder.
+# File .docx/.png ĐÃ commit trước đây vẫn được Git theo dõi, không bị ảnh hưởng.
+**/out/
+hrm/.plans/**/*.png
+hrm/.plans/**/*.docx
+hrm/.plans/**/*.xlsx
+hrm/.plans/**/*.xls

@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
-"""KHUNG MAU sinh SRS theo FORM CHUAN (cap nhat 2026-08-28).
+"""KHUNG MAU sinh SRS theo FORM CHUAN (cap nhat 2026-09-24).
+
+FORM 2026-09-24 (user chot, bam ban QA "SRS - Danh muc quoc gia") — 3 diem moi:
+  a. So do tong quan: MOI chuc nang thao tac noi thang actor; «extend» CHI cho chuc nang PHU
+     cua man danh sach (tim kiem, xem chi tiet, tuy chinh cot, lich su).
+  b. So do tung chuc nang: CHI actor + 1 use case — d.uc_figure(code, ten, nhom, actor=...)
+  c. Dong "Menu:" kem ICON cat tu giao dien that — d.set_menu_icons({...})
+  Ban da lam dung: .plans/danh-muc-nhom-nganh/gen_srs.py
 
 Ban mau doi chieu (QA chot): "SRS - Danh muc quoc gia"
 https://docs.google.com/document/d/1tKvOQqJyK0bJC6BrZGM92974irpDAsFn/edit
@@ -20,8 +27,7 @@ Cau truc — 4 chuong, KHONG hon:
   1. Layout ghi DUONG DAN MENU: d.layout(menu=MENU + ' => Tao moi', ...) — KHONG ghi URL
   2. Dau moi muc "Gioi thieu" co doan d.rule_ref(...) tro sang SRS quy tac chung
   3. Phan 4 la BANG 5 cot: d.rule_table([...])
-  4. So do tong quan dung d.overview_figure2(...) — CO PHAN CAP: chi man hinh that su moi
-     noi toi actor, thao tac tren man do noi bang «include» / «extend»
+  4. So do tong quan dung d.overview_figure2(...) — xem diem (a) cua form 2026-09-24
 
 DA BO so voi form cu: bang thong tin trang bia, muc "Pham vi", chuong "Tong quan",
 muc "Quy tac truy cap bat buoc", chuong "Danh muc chuc nang (Function list)",
@@ -50,6 +56,17 @@ def shot(name):
     return os.path.join(SHOTS, name)
 
 
+# Icon cho tung chang cua dong "Menu:" — ANH CAT TU CHINH PHAN TU TREN GIAO DIEN (Playwright
+# clip theo boundingBox): o phan he trong danh sach phan he, muc menu sidebar, nut thao tac.
+# Key = dung chu hien tren dong Menu. Cach chup: SKILL.md muc "Layout man hinh".
+MENU_ICONS = {
+    'Phân hệ <X>': shot('icon_phanhe.png'),
+    '<Nhóm menu>': shot('icon_nhommenu.png'),
+    '<Tên màn>': shot('icon_man.png'),
+    'Tạo mới': shot('icon_taomoi.png'),
+}
+
+
 # Duong dan menu — muc Layout in dong nay (khong in URL nua).
 # Viet dung nhan menu tren giao dien, ngan cach bang "=>" nhu ban mau.
 MENU = 'Phân hệ <X> => <Nhóm menu> => <Tên màn>'
@@ -61,6 +78,7 @@ d = SrsDoc(
     route='/duong-dan-man',
     full_url='https://<host-hrm>/duong-dan-man',
     img_prefix='mau_')
+d.set_menu_icons(MENU_ICONS)
 
 # ============================================================== TRANG DAU
 # 2 dong can giua, KHONG dung Heading, KHONG co bang thong tin trang bia.
@@ -122,17 +140,19 @@ d.table(['Chức năng', 'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Không có quyền nào'
 d.h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
 
 d.h2('1 Sơ đồ UML tổng quan')
-# CHI use case la MAN HINH that su moi cho vao `mains` (noi thang toi actor).
-# Thao tac lam ngay tren mot man do — tim kiem/loc, tuy chinh cot, xoa, in, lich su,
-# popup chon du lieu — phai cho vao `subs`, noi bang «include» / «extend».
+# `mains` = MOI chuc nang thao tac (xem danh sach, them, sua, xoa, khoa, import, xuat, in...)
+#           -> noi thang toi actor.
+# `subs`  = CHI chuc nang PHU that su cua man danh sach (tim kiem va loc, xem chi tiet,
+#           tuy chinh cot, lich su) -> «extend» vao FR-01. KHONG ve «include» kiem tra
+#           quyen / hop xac nhan / popup chon du lieu.
 d.overview_figure2(
-    [('<Tên actor 1>', [0, 1]),          # chi so trong `mains`
+    [('<Tên actor 1>', [0, 1, 2]),        # chi so trong `mains`
      ('<Tên actor 2>', [0])],
     [('FR-01', 'Xem danh sách', 'view'),
-     ('FR-02', 'Tạo mới', 'crud')],
+     ('FR-02', 'Tạo mới', 'crud'),
+     ('FR-05', 'Xóa', 'action')],
     [('FR-03', 'Tìm kiếm và lọc', 'view', 'extend', [0], None),
-     ('FR-04', 'Tuỳ chỉnh cột hiển thị', 'view', 'extend', [0], None),
-     ('FR-05', 'Chọn <dữ liệu> từ popup', 'crud', 'include', [1], None)],
+     ('FR-04', 'Xem chi tiết', 'view', 'extend', [0], None)],
     'Sơ đồ Use Case tổng quan màn <Tên màn hình>')
 
 d.h2('2 Đặc tả chi tiết từng chức năng')
@@ -200,9 +220,8 @@ d.event_table([
 d.h3('2.2 Tạo mới <đối tượng>')
 
 d.p('2.2.1 Biểu đồ Usecase')
+# Form 2026-09-24: CHI actor + 1 use case, KHONG truyen include/extend
 d.uc_figure('FR-02', 'Tạo mới <đối tượng>', 'crud',
-            [('include', 'Kiểm tra quyền Thêm <đối tượng>'),
-             ('include', 'Sinh mã <đối tượng> tự động')],
             actor=ACTOR_P1,
             caption='Biểu đồ Use Case — FR-02 Tạo mới <đối tượng>')
 

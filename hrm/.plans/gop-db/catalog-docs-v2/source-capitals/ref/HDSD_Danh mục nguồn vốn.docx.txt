@@ -1,0 +1,96 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục nguồn vốn) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Thuật ngữ sử dụng trong tài liệu 
+<<TABLE 1>>
+  | Thuật ngữ | Giải thích
+  | Nguồn vốn | Nguồn hình thành vốn của khoản chi hoặc tài sản, ví dụ vốn tự có, vốn vay ngân hàng.
+  | Xóa | Trên màn này, xóa là chuyển bản ghi sang trạng thái ngừng sử dụng ở phía máy chủ. Bản ghi biến mất khỏi danh sách nhưng dữ liệu không mất hẳn.
+[Heading 2] 2. Cập nhật tài liệu 
+<<TABLE 2>>
+  | Phiên bản | Ngày | Người cập nhật | Nội dung
+  | 1.0 | 17/08/2026 | DNS Media | Lập mới cho màn Danh mục nguồn vốn.
+[Heading 2] 3. Giới thiệu chung 
+[normal] Danh mục nguồn vốn là nơi khai báo danh sách nguồn vốn dùng cho nghiệp vụ kế toán. Dữ liệu của màn này được chọn khi lập bút toán, nên mỗi thay đổi ở đây đều ảnh hưởng tới sổ sách. 
+[Heading 2] 4. Quyền sử dụng 
+<<TABLE 3>>
+  | Tên quyền | Cho phép làm gì | Ghi chú
+  | Quản lý danh mục nguồn vốn | Mở màn hình và thực hiện đầy đủ: Thêm mới, Chỉnh sửa, Xóa, Xem lịch sử. | Màn hình chỉ có MỘT quyền cho cả xem lẫn sửa, không tách quyền xem riêng.
+[normal] Nếu không có quyền này, mục menu Danh mục nguồn vốn sẽ không hiển thị; trường hợp truy cập trực tiếp bằng đường dẫn, hệ thống báo lỗi không có quyền. 
+[Heading 1] PHẦN 1: TRUY CẬP VÀ BỐ CỤC MÀN HÌNH 
+[Heading 2] 1. Truy cập màn hình 
+[normal] Đăng nhập hệ thống, vào menu Tài chính → Danh mục → Danh mục nguồn vốn. 
+[normal]  [IMG]
+[normal] Hình 1: Màn hình Danh mục nguồn vốn khi mới truy cập 
+[Heading 2] 2. Các cột của bảng danh sách 
+<<TABLE 4>>
+  | Cột | Nội dung
+  | STT | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | Tên nguồn vốn | Tên đầy đủ. Luôn hiển thị, sắp xếp được.
+  | Người tạo | Người đã thêm bản ghi.
+  | Ngày tạo | Thời điểm thêm, sắp xếp được.
+  | Hành động | Sửa, Xóa và Lịch sử.
+[Heading 2] 3. Cột Hành động 
+[normal] Trên mỗi dòng, cột Hành động có ba nút: bút chì để sửa, thùng rác để xóa, và biểu tượng đồng hồ để xem Lịch sử thay đổi. 
+[Heading 2] 4. Phân trang và sắp xếp 
+[normal] Cuối bảng có ô hiển thị tổng số bản ghi khớp bộ lọc đang áp dụng. Bấm vào tiêu đề cột có mũi tên để sắp xếp, bấm lần thứ hai để đảo chiều. Thứ tự sắp xếp giữ nguyên khi chuyển trang. 
+[Heading 1] PHẦN 2: TÌM KIẾM VÀ LỌC DANH SÁCH 
+[normal] Các ô tìm kiếm và lọc 
+<<TABLE 5>>
+  | Ô | Cách dùng
+  | Ô tìm kiếm nhanh | Tìm theo tên nguồn vốn. Màn hình KHÔNG có bộ lọc nâng cao nào khác.
+[normal] Màn hình này chỉ có ô tìm kiếm nhanh, không có bộ lọc nâng cao. 
+[normal] Bấm Làm mới để xóa toàn bộ tiêu chí; danh sách nạp lại đầy đủ ngay lập tức. 
+[Heading 1] PHẦN 3: THÊM MỚI NGUỒN VỐN 
+[normal] Yêu cầu quyền: Quản lý danh mục nguồn vốn. 
+[Heading 2] 1. Mở cửa sổ thêm mới 
+[normal] Bấm nút Tạo mới trên thanh công cụ. 
+[normal]  [IMG]
+[normal] Hình 2: Cửa sổ Tạo nguồn vốn 
+[Heading 2] 2. Các trường cần nhập 
+<<TABLE 6>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị ban đầu | Ghi chú
+  | Tên nguồn vốn | Textbox | Có | Trống | Duy nhất toàn hệ thống. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Tên nguồn vốn đã tồn tại”.
+[normal] Màn hình này chỉ có đúng một ô nhập. Giá trị ban đầu là trống. 
+[Heading 2] 3. Hai nút lưu và đóng 
+<<TABLE 7>>
+  | Nút | Tác dụng
+  | Lưu | Ghi bản ghi rồi đóng cửa sổ, quay về danh sách.
+  | Đóng | Hủy bỏ, không ghi gì.
+[normal] Lưu ý: màn hình này KHÔNG có nút “Lưu và tiếp tục” như nhóm danh mục địa lý. Mỗi lần thêm xong cửa sổ sẽ đóng lại. 
+[Heading 2] 4. Các lỗi thường gặp 
+[normal] Nếu còn thiếu sót, hệ thống báo lỗi đỏ ngay dưới ô tương ứng. Cửa sổ KHÔNG đóng và dữ liệu đã nhập vẫn còn nguyên. 
+<<TABLE 8>>
+  | Thông báo | Nguyên nhân và cách xử lý
+  | Bắt buộc phải nhập | Chưa nhập một trong các ô bắt buộc: Tên nguồn vốn.
+  | Tên nguồn vốn đã tồn tại | Đã có nguồn vốn khác dùng tên này. Hãy tra lại danh sách trước khi thêm.
+[Heading 1] PHẦN 4: CHỈNH SỬA VÀ XÓA 
+[normal] Yêu cầu quyền: Quản lý danh mục nguồn vốn. 
+[Heading 2] 1. Chỉnh sửa 
+[normal] Bấm biểu tượng bút chì ở dòng cần sửa. Cửa sổ mở ra giống hệt cửa sổ thêm mới, nhưng mọi ô đã điền sẵn dữ liệu hiện tại. 
+[normal] Sửa xong bấm Lưu. Mọi thay đổi đều được ghi vào Lịch sử kèm tên anh/chị và thời điểm. 
+[Heading 2] 2. Xóa 
+[normal] Bấm biểu tượng thùng rác ở dòng cần xóa. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi — hãy đọc kỹ để chắc chắn không bấm nhầm dòng. 
+[normal]  [IMG]
+[normal] Hình 3: Hộp xác nhận xóa nguồn vốn 
+[normal] Bấm Xóa để xác nhận. Bản ghi biến mất khỏi danh sách. 
+[normal] Bấm Hủy nếu bấm nhầm. Không có gì thay đổi. 
+[normal] Lưu ý về cách xóa của màn này: bản ghi bị xóa được chuyển sang trạng thái ngừng sử dụng chứ không xóa hẳn khỏi hệ thống. Bản ghi biến mất khỏi danh sách và không chọn được ở lần nhập mới, nhưng các chứng từ cũ đang tham chiếu tới nó vẫn hiển thị đúng tên. 
+[Heading 1] PHẦN 5: XEM LỊCH SỬ THAY ĐỔI 
+[normal] Bấm biểu tượng đồng hồ ở dòng cần xem. 
+[normal]  [IMG]
+[normal] Hình 4: Cửa sổ Lịch sử thay đổi của nguồn vốn 
+[normal] Cửa sổ liệt kê mọi lần thay đổi của bản ghi đó, MỚI NHẤT Ở TRÊN CÙNG. Mỗi dòng cho biết: 
+[normal] Thời điểm thay đổi. 
+[normal] Loại thay đổi. 
+[normal] Người thực hiện, kèm mã nhân viên và phòng ban. 
+[normal] Trường nào đã đổi, giá trị cũ và giá trị mới. 
+[normal] Bản ghi vừa được tạo, chưa sửa lần nào thì cửa sổ hiện “Chưa có lịch sử thao tác nào.”. 

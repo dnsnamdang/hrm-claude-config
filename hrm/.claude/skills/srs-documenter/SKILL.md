@@ -40,7 +40,8 @@ chỉ đối chiếu phần chữ:
 ```bash
 mkdir -p /tmp/mau && cd /tmp/mau
 unzip -o -q .claude/skills/srs-documenter/assets/SRS_MAU.docx "word/media/*"
-# anh1 = so do tong quan, anh4 = bieu do use case cua 1 chuc nang → MỞ RA XEM
+# anh1 = so do tong quan; cac anh rong 1700px = bieu do use case tung chuc nang;
+# anh nho cao ~40px = icon tren dong "Menu:" → MỞ RA XEM
 ```
 
 **Bước 3 — Chỉ `assets/SRS_MAU.docx` là chuẩn. File SRS khác trên Drive KHÔNG phải chuẩn.**
@@ -48,6 +49,8 @@ Folder SRS trên Drive chứa cả tài liệu sinh theo form cũ. Lần đó l�
 "SRS - Danh mục quốc gia" (màn danh mục **chưa phân quyền**) làm mẫu → bỏ mất cột Ký hiệu Q/V
 và rút bảng giao diện xuống 4–5 cột, càng sửa càng lệch. Người khác đưa file mẫu khác thì
 hỏi lại, đừng tự đổi chuẩn.
+Riêng sơ đồ use case và icon trên dòng `Menu:` đã được đưa từ bản QA "Danh mục quốc gia" vào
+chính `SRS_MAU.docx` (sinh lại 2026-09-24) — xem mục "Form 2026-09-24".
 
 ### Bộ kiểm tự động — `assets/srs_selfcheck.py`
 
@@ -60,10 +63,16 @@ python3 .claude/skills/srs-documenter/assets/srs_selfcheck.py "<đường dẫn>
 
 Nó đọc thẳng `SRS_MAU.docx` mỗi lần chạy, nên bản mẫu đổi thì phép kiểm đổi theo. Bắt được:
 mục Layout thiếu dòng `Menu:` hoặc còn `URL đầy đủ` · thiếu đoạn `Quy tắc chung:` hoặc đoạn đó
-không phải hyperlink thật · Phần 4 chưa là bảng 5 cột · **sơ đồ tổng quan vẽ phẳng** (đọc dấu
-`srs-uml` mà `srs_uml_render` đóng vào metadata PNG) · bảng giao diện dùng bộ cột lạ · còn mục
-đã bỏ của form cũ · **màn báo cáo thiếu bảng "Cách lấy dữ liệu và giải thích chỉ tiêu"** hoặc bảng
+không phải hyperlink thật · Phần 4 chưa là bảng 5 cột · **sơ đồ tổng quan không sinh bằng
+`overview_figure2()`** · **sơ đồ từng chức năng còn vẽ include/extend** (2 phép này đọc dấu
+`srs-uml` mà `srs_uml_render` đóng vào metadata PNG) · **dòng `Menu:` thiếu icon** · bảng giao
+diện dùng bộ cột lạ · còn mục đã bỏ của form cũ · **màn báo cáo thiếu bảng "Cách lấy dữ liệu và giải thích chỉ tiêu"** hoặc bảng
 đó sai bộ cột (nhận diện màn báo cáo qua dòng tiêu đề `Màn hình: Báo cáo …`).
+
+> ⚠️ Trước 2026-09-24 dấu `srs-uml` bị **đóng ngược** (`draw_usecase` ghi `overview-hierarchy`,
+> `draw_overview2` ghi `usecase`) nên phép kiểm sơ đồ tổng quan luôn qua nhờ ảnh từng chức năng.
+> Đã sửa. Tài liệu sinh trước ngày đó chạy selfcheck sẽ báo "không tìm thấy sơ đồ tổng quan" —
+> sinh lại là hết.
 
 Ngoài ra `overview_figure()` (API form cũ) nay **ném RuntimeError** kèm hướng dẫn chuyển sang
 `overview_figure2()`; muốn dựng lại tài liệu cũ để đối chiếu thì truyền `allow_legacy=True`.
@@ -74,6 +83,9 @@ Ngoài ra `overview_figure()` (API form cũ) nay **ném RuntimeError** kèm hư�
 
 **File mẫu bắt buộc — đóng gói trong skill:** `.claude/skills/srs-documenter/assets/SRS_MAU.docx`
 
+> **Bản mẫu SINH LẠI ngày 2026-09-24 theo form mới** (sơ đồ use case đơn giản + icon trên dòng
+> `Menu:`), vẫn là **"SRS - Phiếu đề nghị thu tiền"**. Bản trước đó lấy lại bằng git history của
+> `assets/SRS_MAU.docx`.
 > **Bản mẫu ĐÃ ĐỔI lần 2 ngày 2026-08-28.** Bản mẫu hiện hành là **"SRS - Phiếu đề nghị thu tiền"**
 > (user chốt) — chính là file đã đóng gói ở `assets/SRS_MAU.docx`. Bản mẫu cũ là
 > "SRS - Danh mục khách hàng" (form 2026-08-17) — **không dùng nữa**, cần thì lấy lại bằng
@@ -123,19 +135,40 @@ lỗi này, nhưng cứ dùng script trên cho an toàn với mọi file mẫu.
 
 ---
 
+## ⚠️ Form 2026-09-24 — 3 điểm mới (bản mẫu đã sinh lại theo)
+
+User chốt ngày 2026-09-24, bám bản QA "SRS - Danh mục quốc gia"
+(https://docs.google.com/document/d/1tKvOQqJyK0bJC6BrZGM92974irpDAsFn/edit). `SRS_MAU.docx`
+(Phiếu đề nghị thu tiền) đã sinh lại theo đủ 3 điểm — generator
+`.plans/gop-db/finance-bill-income-request/gen_srs.py`. Bản nhỏ gọn hơn để đối chiếu:
+`.plans/danh-muc-nhom-nganh/SRS - Danh mục nhóm ngành.docx`.
+
+Bản mẫu có 1 «extend» không nằm ở màn danh sách: **popup chọn đối tượng & hợp đồng** «extend» màn
+Lập / Sửa phiếu — vì nó là chức năng phụ có hẳn mục đặc tả riêng (2.5). Popup chỉ là 1 bước nhỏ
+trong form thì KHÔNG tách thành use case.
+
+| # | Điểm | Làm thế nào |
+|---|---|---|
+| a | **Sơ đồ tổng quan ĐƠN GIẢN**: mọi chức năng thao tác (xem danh sách, thêm, sửa, xóa, khóa/mở khóa, import, xuất, in, duyệt…) nối **thẳng** tới actor. «extend» **chỉ** dùng khi có hẳn 1 **chức năng phụ** của màn danh sách: Tìm kiếm và lọc, Xem chi tiết, Tuỳ chỉnh cột, Lịch sử. KHÔNG vẽ «include» | `d.overview_figure2(actors, mains, subs, caption)` — xem mục "Sơ đồ tổng quan" |
+| b | **Sơ đồ từng chức năng = actor + 1 use case**, KHÔNG vẽ nhánh include/extend kiểu "Kiểm tra quyền", "Xác nhận xóa", "Sinh mã tự động", "Lưu & Tiếp tục" | `d.uc_figure('FR-03', 'Tạo mới <đối tượng>', 'crud', actor=…)` — truyền `relations` sẽ **ném lỗi** |
+| c | **Dòng `Menu:` có ICON**: mỗi chặng kèm ảnh cắt từ chính phần tử trên giao diện (ô phân hệ, mục menu, nút thao tác), cao 0,3 inch | `d.set_menu_icons({...})` trước mọi `d.layout()` — xem mục "Layout màn hình" |
+
+Lý do (user phản hồi): sơ đồ include/extend chi tiết là rườm, *"chỉ thực sự cần extends khi nó có
+hẳn 1 chức năng phụ thôi"*.
+
+---
+
 ## 4 điểm của form 2026-08-28 — thiếu 1 trong 4 là bị trả về
 
 | # | Điểm | Làm thế nào |
 |---|---|---|
-| 1 | Mục Layout ghi **đường dẫn MENU**, KHÔNG ghi URL | `d.layout(menu=MENU + ' => Tạo mới', shot=…)` |
+| 1 | Mục Layout ghi **đường dẫn MENU**, KHÔNG ghi URL (user nhắc lại 2026-09-25: không được có dòng `URL: http://…/customer-care/services/create` hay đường dẫn tương đối `/…/{id}/edit` ở BẤT KỲ đâu trong SRS — kể cả bảng Giới thiệu / Dòng sự kiện; chỉ ghi thao tác menu + nút) | `d.layout(menu=MENU + ' => Tạo mới', shot=…)` |
 | 2 | Đầu **mỗi** mục "Giới thiệu" có đoạn trỏ sang SRS quy tắc chung | `d.rule_ref('- Màn Danh sách, …', anchor='list')` |
 | 3 | **Phần 4** là BẢNG 5 cột, chỉ ghi quy tắc đặc thù | `d.rule_table([...])` |
-| 4 | Sơ đồ tổng quan **có phân cấp** «include»/«extend» | `d.overview_figure2(actors, mains, subs, caption)` |
+| 4 | Sơ đồ tổng quan vẽ bằng `overview_figure2()` | **Đã chỉnh lại ở form 2026-09-24** (điểm a) |
 
-Điểm 4 là lỗi user đã trả tài liệu về ngày 2026-08-28: sơ đồ cũ vẽ **mọi** chức năng thành
-ellipse ngang hàng rồi nối thẳng tới actor, trong khi "Tìm kiếm và lọc", "Tuỳ chỉnh cột", "Xóa"
-là thao tác **ngay trên màn danh sách**, "In / Lịch sử / Duyệt" là thao tác **trên màn chi tiết**,
-popup chọn dữ liệu là **«include» của form thêm/sửa**. Xem mục "Sơ đồ tổng quan" bên dưới.
+> Điểm 4 bản 2026-08-28 từng bắt vẽ phân cấp dày (Xóa «extend», popup «include», In/Duyệt
+> «extend» màn chi tiết). Form 2026-09-24 **bỏ kiểu đó**: chỉ chức năng phụ thật sự mới «extend».
 
 ---
 
@@ -213,6 +246,19 @@ Phần 4. Quy tắc nghiệp vụ                    [Heading 1]
 >
 > Tiêu đề mục 2.x là **tên chức năng thuần**, KHÔNG gắn mã: `2.5 Tạo mới khách hàng`
 > (form cũ ghi `5.2.5 FR-05 — Tạo mới khách hàng`). Mã `FR-xx` chỉ còn dùng ở ma trận phân quyền.
+
+> ⛔ **2 mục "Mô tả chi tiết giao diện" + "Danh sách event và xử lý event" BẮT BUỘC ở MỌI chức năng**
+> (tester trả về 28/09/2026, dính cả 20 danh mục). Chỉ được bỏ "Biểu đồ Usecase", KHÔNG được bỏ 2 bảng
+> này — kể cả Xem chi tiết, In, Lịch sử, Import, Xuất Excel, Tùy chỉnh cột, Nhân bản, Sửa, Xóa, Khóa.
+> - Bản SRS Quốc gia trên Drive để TRỐNG mục 2.10.4/2.10.5 (Xem chi tiết) và 2.11.3/2.11.4 (Tùy chỉnh
+>   cột) — đó là **thiếu sót, không phải chuẩn**. Phải viết đủ: cách mở, tiêu đề cửa sổ, từng trường
+>   Read-only, nút ở chân + điều kiện hiện; Tùy chỉnh cột: nút mở, danh sách cột, **cột bị khoá (đọc
+>   `locked: true` trong code)**, kéo thả, nút, nơi lưu cấu hình.
+> - Generator KHÔNG được viết kiểu `if fr.get('ui'): …` rồi im lặng bỏ qua — thiếu thì phải **ném lỗi**
+>   (bộ `catalog_v2.build_srs` đã sửa như vậy). Tự kiểm ở Bước 4: số mục "Mô tả chi tiết giao diện" =
+>   số mục "Danh sách event" = số chức năng 2.x.
+> - Nội dung agent soạn phải **đối chiếu lại code** trước khi đẩy: đã gặp quy tắc ghi "gói nhân bản
+>   LUÔN ở trạng thái Hoạt động" trong khi code chỉ đặt MẶC ĐỊNH Hoạt động và vẫn cho đổi.
 
 ---
 
@@ -356,6 +402,36 @@ kết luận "màn thiếu dữ liệu". Ghi kèm phạm vi hiển thị của t
 
 Cách đếm đủ lối vào: xem `.claude/skills/list-page/SKILL.md` §3d và §3d-2.
 
+**ICON trên dòng `Menu:` (form 2026-09-24)** — bám bản QA "Danh mục quốc gia":
+
+```
+Menu: Phân hệ Dự án & Giao việc [ô phân hệ] => Danh mục [mục menu] => Nhóm ngành [mục menu] => Tạo mới [nút]
+```
+
+- Icon là **ảnh cắt từ chính phần tử trên giao diện**, KHÔNG vẽ, KHÔNG lấy icon font:
+  ô phân hệ trong danh sách phân hệ (nút lưới ở header), nhóm menu + mục menu ở sidebar,
+  nút thao tác (Tạo mới, bút Sửa, mắt Xem, thùng rác Xóa, ổ khóa, Import Excel, Xuất Excel,
+  Tìm kiếm nâng cao…).
+- Chụp bằng Playwright theo `boundingBox()` của phần tử + đệm 2–4px:
+  ```js
+  const b = await loc.boundingBox();
+  await page.screenshot({ path: D + 'icon_taomoi.png',
+      clip: { x: b.x - 4, y: b.y - 4, width: b.width + 8, height: b.height + 8 } });
+  ```
+  Mục menu nằm trong panel rộng thì cắt bớt phần trắng thừa bên phải (PIL `crop`).
+  Cần icon trạng thái chưa có trên dữ liệu (vd nút Mở khóa khi không có bản ghi nào bị khóa)
+  thì **chỉ đổi class icon trên trình duyệt** rồi chụp — KHÔNG đổi dữ liệu thật.
+- Lưu cùng thư mục ảnh chụp: `<feature>_shots/icon_<tên>.png`.
+- Khai 1 lần, key = **đúng chữ trên dòng Menu**; `layout()` tự gắn icon sau từng chặng, chặng
+  `Khóa / Mở khóa` được tách theo ` / ` để mỗi bên 1 icon:
+  ```python
+  d.set_menu_icons({k: shot('icon_%s.png' % v) for k, v in {
+      'Phân hệ Dự án & Giao việc': 'phanhe', 'Danh mục': 'danhmuc', 'Nhóm ngành': 'nhomnganh',
+      'Tạo mới': 'taomoi', 'Sửa': 'sua', 'Xem chi tiết': 'xem', 'Xóa': 'xoa',
+      'Khóa': 'khoa', 'Mở khóa': 'mokhoa', 'Import Excel': 'import', 'Xuất Excel': 'xuat',
+  }.items()})
+  ```
+
 > Form cũ ghi `Menu:` + `Route (FE):` (trước 2026-08-17) rồi chuyển sang chỉ `URL đầy đủ:`
 > (2026-08-17). Từ 2026-08-28 **quay lại ghi menu và bỏ hẳn URL** — `d.layout()` vẫn nuốt
 > tham số `route=` / `url=` của generator cũ nên không cần sửa các generator đã có.
@@ -420,20 +496,21 @@ d.h2('Mục lục'); d.toc()
 
 d.h1('Phần 1. Giới thiệu')
 
-# 1 Sơ đồ UML tổng quan — CÓ PHÂN CẤP (bắt buộc từ 2026-08-28)
+d.set_menu_icons({...})                # icon cho dòng "Menu:" — form 2026-09-24 điểm (c)
+
+# 1 Sơ đồ UML tổng quan — form 2026-09-24 điểm (a)
 d.overview_figure2(
-    [('<Actor 1>', [0, 1]), ('<Actor 2>', [0])],       # (actor, chỉ số trong `mains`)
-    [('FR-01', 'Xem danh sách', 'view'),               # mains = MÀN HÌNH thật, nối tới actor
-     ('FR-05', 'Tạo mới',      'crud')],
-    [('FR-02', 'Tìm kiếm và lọc', 'view', 'extend', [0], None),   # subs = thao tác trên màn đó
-     ('FR-09', 'Chọn dữ liệu từ popup', 'crud', 'include', [1], 'ghi chú (hiện KHÔNG vẽ)')],
+    [('<Actor 1>', [0, 1, 2]), ('<Actor 2>', [0])],    # (actor, chỉ số trong `mains`)
+    [('FR-01', 'Xem danh sách', 'view'),               # mains = MỌI chức năng thao tác
+     ('FR-03', 'Tạo mới',       'crud'),
+     ('FR-06', 'Xóa',           'action')],
+    [('FR-02', 'Tìm kiếm và lọc', 'view', 'extend', [0], None),   # subs = CHỈ chức năng phụ
+     ('FR-05', 'Xem chi tiết',    'view', 'extend', [0], None)],
     'Sơ đồ Use Case tổng quan màn <Tên màn hình>')
 
-# 2.x.1 Biểu đồ use case của 1 chức năng
-d.uc_figure('FR-05', 'Tạo mới <đối tượng>', 'crud',
-            [('include', 'Kiểm tra quyền Thêm <đối tượng>'),
-             ('extend',  'Sinh mã tự động')],
-            caption='Biểu đồ Use Case — FR-05 Tạo mới <đối tượng>')
+# 2.x.1 Biểu đồ use case của 1 chức năng — CHỈ actor + 1 use case (điểm b)
+d.uc_figure('FR-03', 'Tạo mới <đối tượng>', 'crud', actor='<Actor 1>',
+            caption='Biểu đồ Use Case — FR-03 Tạo mới <đối tượng>')
 
 # Bảng Giới thiệu — chức năng chỉ đọc thì dacbiet=None để BỎ HẲN dòng "Yêu cầu đặc biệt"
 d.intro_table(ten=…, mota=…, tacnhan=…, dieukien=…, chinh=…, phu=…, dacbiet=None)
@@ -441,7 +518,7 @@ d.intro_table(ten=…, mota=…, tacnhan=…, dieukien=…, chinh=…, phu=…, 
 # Đoạn "Quy tắc chung" — đặt NGAY ĐẦU mục Giới thiệu của MỖI chức năng
 d.rule_ref('- Màn Thêm mới, Validate dữ liệu, Thông báo và UI/UX.', anchor='create')
 
-# Layout — in dòng "Menu: …" + ảnh chụp thật
+# Layout — in dòng "Menu: … [icon]" + ảnh chụp thật
 d.layout(menu=MENU + ' => Tạo mới', shot=shot('02-tao-moi.png'),
          shot_caption='Form Tạo mới <đối tượng>')
 
@@ -460,16 +537,18 @@ d.rule_table([
 d.save()
 ```
 
-### Sơ đồ tổng quan — cái gì vào `mains`, cái gì vào `subs`
+### Sơ đồ tổng quan — cái gì vào `mains`, cái gì vào `subs` (form 2026-09-24)
 
-| Vào `mains` (nối thẳng tới actor) | Vào `subs` (nối «include»/«extend» vào màn cha) |
+| Vào `mains` (nối thẳng tới actor) | Vào `subs` («extend» vào màn cha) |
 |---|---|
-| Màn danh sách · màn danh sách chờ duyệt | Tìm kiếm và lọc · Cài đặt bộ lọc · Tuỳ chỉnh cột · Xóa (nút trên dòng) → «extend» màn danh sách |
-| Màn thêm mới · màn chỉnh sửa | Popup chọn khách hàng / hợp đồng / sản phẩm → «include» màn thêm mới **và** màn sửa |
-| Màn chi tiết | In · Lịch sử · Duyệt / Không duyệt → «extend» màn chi tiết |
+| Xem danh sách · Tạo mới · Chỉnh sửa · Xóa · Khóa / Mở khóa · Import · Xuất Excel · In · Duyệt / Không duyệt · mọi thao tác đổi dữ liệu | **Chỉ chức năng phụ thật sự:** Tìm kiếm và lọc · Cài đặt bộ lọc · Xem chi tiết · Tuỳ chỉnh cột · Lịch sử → «extend» màn danh sách. Popup chọn dữ liệu có hẳn mục đặc tả riêng → «extend» màn Tạo mới / Sửa |
 
-Chiều mũi tên (module đã tự xử lý, nhưng phải hiểu để đặt đúng `kind`):
-**«include»** cha → con (cha luôn gọi con) · **«extend»** con → cha (con chỉ chạy trong vài tình huống).
+- KHÔNG vẽ «include» (kiểm tra quyền, hộp xác nhận, popup chọn dữ liệu, sinh mã…).
+- Actor chỉ có quyền xem (Q2) thì chỉ nối tới Xem danh sách — tìm kiếm / xem chi tiết đã là
+  «extend» của nó.
+- Chiều mũi tên «extend»: con → cha (module tự vẽ).
+- Ảnh từng chức năng khi không có nhánh thì module **tự căn giữa** cụm actor–ellipse (trước
+  2026-09-24 giữ toạ độ của bản có nhánh nên hình lệch trái, nửa phải bỏ trống).
 
 **Nhóm màu ellipse:** `view` (xanh dương — xem/lọc/tra cứu) · `crud` (xanh lá — thêm/sửa) ·
 `action` (cam — thao tác trạng thái) · `io` (tím — xuất/nhập/in) · `sub` (xám — include/extend).
@@ -486,6 +565,12 @@ Chiều mũi tên (module đã tự xử lý, nhưng phải hiểu để đặt 
 4. **Chừa `top_pad` đủ lớn** cho tiêu đề khung hệ thống, nếu không tiêu đề đè lên ellipse đầu tiên.
 
 Font dùng `C:\Windows\Fonts\segoeui.ttf` / `segoeuib.ttf` / `segoeuii.ttf` — đủ dấu tiếng Việt.
+Trên **macOS** module tự chuyển sang bộ Arial ở `/System/Library/Fonts/Supplemental`.
+
+**macOS — cập nhật mục lục:** `SrsDoc.save()` tự gọi Microsoft Word qua AppleScript (Windows vẫn
+dùng PowerShell + COM). Hàm **tắt Word trước khi mở file**: nếu Word còn giữ bản cũ trong bộ
+nhớ, `open` trả về bản CŨ rồi `save` ghi đè lên file vừa sinh — mất hết thay đổi mà selfcheck
+vẫn báo OK (đã dính 2026-09-24). Không cần `patch_srs()` của `.plans/gop-db/_mac_docx.py` nữa.
 
 ---
 
@@ -599,10 +684,15 @@ bad = [t for t in paras if '┌' in t or '○' in t]
 print('còn sơ đồ ký tự:', len(bad))    # PHẢI = 0
 
 # form 2026-08-28: 4 điểm bắt buộc
+import re
 n_fn = sum(1 for t in paras if t.startswith('Menu: '))
 print('mục Layout ghi menu:', n_fn)                     # = số chức năng
 print('đoạn Quy tắc chung:', sum(1 for t in paras if t.startswith('Quy tắc chung: ')))
 print('câu dẫn Phần 4:', sum(1 for t in paras if t.startswith('Quy tắc áp dụng: ')))   # = 1
+n_ui = sum('Mô tả chi tiết giao diện' in t for t in paras)
+n_ev = sum('Danh sách event và xử lý event' in t for t in paras)
+n_fr = sum(1 for t in paras if re.match(r'^2\.\d+ \S', t))
+assert n_ui == n_ev == n_fr, 'Thiếu bảng giao diện/event: FR=%d, giao diện=%d, event=%d' % (n_fr, n_ui, n_ev)
 print('hyperlink:', len([r for r in d.part.rels.values() if r.reltype.endswith('/hyperlink')]))
 last = d.tables[-1]                                     # bảng Quy tắc nghiệp vụ
 assert [c.text for c in last.rows[0].cells] ==     ['STT', 'Mã quy tắc', 'Tên quy tắc', 'Mô tả', 'Phạm vi áp dụng'], 'Phần 4 chưa là bảng 5 cột'
@@ -642,6 +732,33 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
   bản rời; đẩy lên chỉ làm nặng repo. Thư mục ảnh đặt tên `img/` hoặc `*_shots/` — `.gitignore`
   đã chặn sẵn 2 dạng này.
 - Trước khi báo xong, chạy `git status`: chỉ được thấy `.docx` và `gen_srs.py`, không được thấy `.png`.
+
+### Đẩy lên Drive (ghi đè giữ link) — 3 bẫy đã dính 28/09/2026
+Áp chung cho SRS, HDSD (và file Word tài liệu nói chung):
+1. **Kiểm có ai sửa tay trên Drive TRƯỚC khi ghi đè.** Drive không trả "người sửa cuối", nên so
+   `ModTime` trên Drive (`rclone lsjson … -M`) với giờ lượt đẩy gần nhất của chính mình (dòng
+   `OK giữ ID <giờ>` trong log). Lệch nhau = đã có người sửa sau mình → **dừng, hỏi user**,
+   không ghi đè (tester/QA hay chỉnh tay SRS, HDSD ngay trên Drive).
+2. **File trên Drive bị người khác ĐỔI TÊN** (vd thêm dấu: `HDSD_Cap dich vu…` → `HDSD_Cấp dịch vụ…`)
+   thì `rclone copyto` theo đường dẫn tên cũ sẽ **TẠO FILE MỚI trùng**, không ghi đè. Luôn đối
+   chiếu ID sau khi đẩy (upload.py in `SAI ID!!`) — gặp thì xoá ngay bản trùng MÌNH vừa tạo
+   (xoá theo tên cũ, kiểm ID trước), không động vào file gốc, rồi hỏi user.
+3. File đã bị chuyển thành Google Docs (ID dài > 40 ký tự) phải đẩy kèm
+   `--drive-import-formats=docx`, nếu không rclone báo lỗi / tạo bản trùng.
+4. **File bị sửa tay → GỘP rồi đẩy, đừng để treo.** Giữ file lại chờ hỏi thì user thấy tài liệu
+   "chưa được làm" (28/09: 4 SRS Khu vực / Phường-Xã / Loại TK / Lỗi thiết bị bị giữ → user tưởng bỏ sót).
+   Cách gộp: tải bản Drive, so từng ý với bản mình dựng TỪ CONFIG CŨ (bản đã đẩy lần trước) → phần
+   khác là của tester. Ghi vào config (`CFG['srs_tester']` — bỏ ý / thay quy tắc, `build_srs` tự áp)
+   rồi dựng lại, so lần nữa: bản Drive không được mất chữ nào ngoài phần mình cố ý thay. Kiểm
+   ModTime lần cuối ngay trước khi đẩy (tester có thể đang mở file).
+   Kiểu tester hay sửa SRS: bỏ ý trùng quy tắc chung ở "Dòng sự kiện phụ" (không có dữ liệu, Lưu và
+   tiếp tục, giữ nguyên tên không báo trùng, lỗi khi xoá, chưa có lịch sử, sai định dạng file / quá
+   500 dòng), bỏ bước "Người dùng vào menu…" ở "Dòng sự kiện chính", bỏ câu "máy chủ chặn / kiểm
+   tra lại…" trong quy tắc Phần 4, cột Phạm vi áp dụng chỉ ghi tên chức năng ngắn ("Chỉnh sửa",
+   "Xóa") và xoá trắng ô Phạm vi kiểu "≥ 0". Chưa phải quy ước chung (SRS Quốc gia vẫn giữ các ý
+   đó) — chỉ gộp đúng file tester đã sửa; muốn áp đại trà thì hỏi user.
+5. **"Đã xong" phải kiểm trên bản ĐANG NẰM TRÊN DRIVE**, không phải bản ở máy: tải từng file về đếm
+   (số mục "Mô tả chi tiết giao diện" = "Danh sách event" = số chức năng) rồi mới báo.
 
 > Bản HTML (`srs.html`) là format CŨ, chỉ giữ cho các feature đã sinh trước 2026-08-07.
 > Feature mới chỉ cần bản .docx theo form chuẩn.
@@ -685,7 +802,8 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 
 | Màn hình | File |
 |---|---|
-| **Phiếu đề nghị thu tiền (Tài chính)** — BẢN MẪU CHUẨN, = `assets/SRS_MAU.docx` | `.plans/gop-db/finance-bill-income-request/SRS - Phiếu đề nghị thu tiền.docx` |
-| **Báo cáo tổng hợp CSKH tiềm năng** — bản mẫu cho MÀN BÁO CÁO (có bảng cách lấy dữ liệu + icon ⓘ) | `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/SRS - Báo cáo tổng hợp chăm sóc khách hàng tiềm năng.docx` |
+| **Danh mục nhóm ngành (Giao việc)** — form 2026-09-24, màn danh mục gọn (9 chức năng) | `.plans/danh-muc-nhom-nganh/SRS - Danh mục nhóm ngành.docx` |
+| **Phiếu đề nghị thu tiền (Tài chính)** — BẢN MẪU CHUẨN, = `assets/SRS_MAU.docx` (sinh lại theo form 2026-09-24) | `.plans/gop-db/finance-bill-income-request/SRS - Phiếu đề nghị thu tiền.docx` |
+| **Báo cáo tổng hợp CSKH tiềm năng** — tham khảo RIÊNG bảng "Cách lấy dữ liệu và giải thích chỉ tiêu" (mục 2.1.6, 2.2.5, 2.5.6). ⚠️ Sinh theo form 2026-08-28: sơ đồ include/extend + Menu chưa có icon — đừng chép phần đó | `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/SRS - Báo cáo tổng hợp chăm sóc khách hàng tiềm năng.docx` |
 | Danh mục khách hàng (Giao việc) — form CŨ 2026-08-17 | `.plans/gop-db/customer-docs/SRS - Danh mục khách hàng.docx` |
 | Danh mục dịch vụ sửa chữa và chi phí khác (CSKH) — form CŨ | `.plans/gop-db/customer-care-cost-catalog/SRS - Danh mục dịch vụ sửa chữa và chi phí khác.docx` |

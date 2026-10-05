@@ -1,0 +1,19 @@
+{
+  "catalog": "Danh mục vai trò dự án",
+  "srs_file": "SRS - Danh mục vai trò dự án.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Hạng mục giải pháp (Quản lý hạng mục – tab Nhân sự: Thêm thành viên – Vai trò dự án)",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solution-modules/_id/components/HumanResourceTab.vue:99-104,244 (assign/project_roles/getAll); BE Requests/SolutionModule/AddMemberRequest.php:13, SolutionModuleService.php:1193-1216 (solution_module_members.project_role_id)"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp (Tạo mới/Sửa – tab Thông tin: nhân sự giải pháp, tab Quản lý hạng mục: nhân sự hạng mục; Quản lý giải pháp – tab Nhân sự: Thêm/Sửa thành viên, popup Phân công quản lý)",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/components/InfoTab.vue:332-339; ModulesTab.vue:282-290; manager/HumanResourceTab.vue:203-208,250-255; manager/AssignManagerModal.vue:85,267; BE SolutionRequest.php:62,68, Requests/Solution/AddMemberRequest.php:18, SolutionService.php:834-878,2797-2874,3269-3354 (solution_members / solution_module_members.project_role_id)"
+    }
+  ],
+  "notes": "KIỂM TRA XOÁ THIẾU: ProjectRoles::isCanDelete() (Entities/ProjectRoles.php:56-59) chỉ chặn khi còn vai trò con (parent_id); KHÔNG xét solution_members.project_role_id và solution_module_members.project_role_id → vai trò đang gán cho nhân sự giải pháp/hạng mục vẫn xoá được (tên vẫn còn nhờ cột project_role_name lưu sẵn, nhưng FK mồ côi). NGHIÊM TRỌNG HƠN: ProjectRolesController::deleteByIds (dòng 85-104, route POST assign/project_roles/delete_by_ids — màn danh sách dùng qua action deleteProjectRolesByIds) gọi thẳng service->destroy, KHÔNG gọi isCanDelete → xoá hàng loạt vượt cả kiểm tra vai trò con. Màn chỉ HIỂN THỊ (không đưa vào bảng): Quản lý giải pháp – tab Sơ đồ nhân sự (OrgChartTab.vue:230-394), Dự án TKT – tab Giải pháp > Nhân sự (SolutionInfoTab.vue:84, readonly)."
+}

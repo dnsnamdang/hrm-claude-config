@@ -4,6 +4,12 @@
 - **Design**: `.plans/redmine-11357-ly-do-huy-cuoc-hop/design.md`
 - **Spec**: `docs/superpowers/specs/2026-09-12-redmine-11357-ly-do-huy-cuoc-hop-design.md`
 
+> **Hồ sơ MÀN DANH MỤC đã tách sang `.plans/danh-muc-ly-do-huy-cuoc-hop/`** (1 danh mục = 1 thư mục):
+> plan + design của màn, việc siết quyền (14/09), sửa file mẫu import (15/09) và **tài liệu testcase**
+> (`testcase - Danh mục lý do hủy cuộc họp.xlsx` + `gen_testcase.py`).
+> Thư mục này giữ **lịch sử thi công #11357** (Phase 1–8 bên dưới, có cả phần danh mục) và là nơi
+> theo dõi tiếp phần **ràng buộc Hoàn thành/Hủy theo giờ + popup hủy** ở màn Cuộc họp.
+
 ---
 
 ## Phase 1 — Database (hrm-api)
@@ -210,23 +216,14 @@ Blocked:
 
 ---
 
-## Phase bổ sung — Sửa file mẫu import (2026-09-15)
+## Phase bổ sung — đã chuyển sang hồ sơ màn danh mục
 
-- [x] Đổi tên sheet trong `hrm-client/static/Mau_import_LyDoHuyCuocHop.xlsx`
-      từ `DM_NNthatbai` (copy nhầm từ mẫu Nguyên nhân thất bại dự án) thành `DM_lydohuycuochop`
-      — sửa ở cả `xl/workbook.xml` và `docProps/app.xml`
+Hai đợt việc dưới đây thuộc **màn danh mục**, nay theo dõi ở `.plans/danh-muc-ly-do-huy-cuoc-hop/plan.md`:
 
-### Checkpoint — 2026-09-15
+- **Sửa file mẫu import (15/09/2026)** — đổi tên sheet `Mau_import_LyDoHuyCuocHop.xlsx` từ
+  `DM_NNthatbai` thành `DM_lydohuycuochop` → Giai đoạn C của plan mới.
+- **Tài liệu testcase màn danh mục (18/09/2026)** — `gen_testcase.py` + file Excel 159 TC
+  → Giai đoạn D của plan mới. Hai file đã chuyển sang thư mục đó.
 
-Vừa hoàn thành: file mẫu import `Mau_import_LyDoHuyCuocHop.xlsx` đã đúng tên sheet
-`DM_lydohuycuochop` (theo convention `DM_` + tên không dấu viết liền của các mẫu khác trong
-`hrm-client/static/`). Nội dung file giữ nguyên: header `STT / Lý do hủy cuộc họp * / Trạng thái * /
-Mô tả` + 3 dòng ví dụ; 11 file trong gói xlsx còn nguyên, `<definedNames/>` rỗng nên không có
-công thức nào trỏ tên sheet cũ. `hrm-client/utils/import-helper.js:43` đọc sheet tên `Data`
-nếu có, không thì lấy sheet đầu tiên → đổi tên không ảnh hưởng luồng import.
-Không đụng code BE/FE.
-
-Đang làm dở: không có.
-Bước tiếp theo: user bấm "Tải file mẫu" ở màn `/assign/meeting_cancel_reason`, mở bằng Excel
-xác nhận tên tab, rồi thử import lại file vừa tải.
-Blocked:
+Cần testcase cho popup "Hủy cuộc họp" ở màn Cuộc họp (phần còn lại của issue này) thì tạo file
+riêng trong thư mục này.

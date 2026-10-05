@@ -1,0 +1,287 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục tài khoản ngân hàng) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] DANH MỤC HÌNH ẢNH 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Thuật ngữ sử dụng trong tài liệu 
+<<TABLE 1>>
+  | Thuật ngữ | Giải thích
+  | Tài khoản ngân hàng của công ty | Một dòng trong danh mục: số tài khoản, chủ tài khoản, ngân hàng, chi nhánh và loại tiền tệ. Đây là tài khoản của CÔNG TY, không phải tài khoản cá nhân của nhân viên.
+  | Chủ tài khoản | Tên chủ tài khoản in trên sổ hoặc thẻ ngân hàng. Hệ thống tự chuyển thành CHỮ IN HOA khi lưu.
+  | Ngân hàng | Lấy từ màn Danh mục ngân hàng của phân hệ Danh mục chung. Chỉ ngân hàng đang Hoạt động mới chọn được.
+  | Chi nhánh | Chi nhánh của ngân hàng đã chọn. Danh sách chi nhánh luôn lọc theo đúng ngân hàng, xem mục 4 của PHẦN 4.
+  | Loại tiền tệ | Lấy từ màn Danh mục tiền tệ của phân hệ Tài chính. Chỉ loại tiền tệ đang Hoạt động mới chọn được.
+  | Trạng thái Hoạt động | Tài khoản đang dùng bình thường, sửa được.
+  | Trạng thái Khóa | Tài khoản ngừng sử dụng nhưng KHÔNG bị xoá; khi đang khóa thì không sửa được, xem PHẦN 7.
+  | Lịch sử thay đổi | Nhật ký ghi lại ai đã tạo, sửa, khóa hay mở khóa một tài khoản, xem PHẦN 8.
+[Heading 2] 2. Cập nhật tài liệu 
+<<TABLE 2>>
+  | Phiên bản | Ngày | Người cập nhật | Nội dung
+  | 1.0 | 17/08/2026 | @khoipv | Lập mới cho màn Danh mục tài khoản ngân hàng sau khi chuyển màn từ phần mềm cũ sang phân hệ Tài chính.
+[Heading 2] 3. Giới thiệu chung 
+[normal] Màn hình “Danh mục tài khoản ngân hàng” là nơi khai báo và quản lý các tài khoản ngân hàng CỦA CÔNG TY: số tài khoản, chủ tài khoản, ngân hàng, chi nhánh và loại tiền tệ. 
+[normal] Dữ liệu khai báo ở đây được dùng lại ở các nghiệp vụ thu chi, đề nghị thanh toán và các chứng từ cần chọn tài khoản nhận hoặc chuyển tiền của công ty. Vì vậy khai báo sai ở màn này sẽ kéo theo sai ở chứng từ. 
+[normal] Lưu ý phạm vi: mỗi người chỉ nhìn thấy tài khoản ngân hàng của CÔNG TY MÌNH. Tài khoản của công ty khác không hiển thị và cũng không tìm ra được. 
+[normal] Đường dẫn truy cập: 
+[normal] Hoặc gõ thẳng đường dẫn /finance/account-banks vào thanh địa chỉ trình duyệt. 
+[Heading 2] 4. Quyền và phạm vi dữ liệu 
+[Heading 3] 4.1 Bảng quyền của màn hình 
+<<TABLE 3>>
+  | Tên quyền | Cho phép làm gì | Nút / cửa sổ tương ứng | Ghi chú
+  | Quản lý danh mục tài khoản ngân hàng | Mở màn hình, xem danh sách, tạo mới, sửa, khóa / mở khóa, xem chi tiết và xem lịch sử. | Toàn bộ nút trên màn hình: Tạo mới, Sửa, Khóa / Mở khóa, Lịch sử. | Đây là quyền DUY NHẤT của màn. Thiếu quyền thì mục menu bị ẩn và gõ thẳng đường dẫn cũng bị chặn.
+[normal] Khác với một số màn danh mục khác, quyền này gắn cho CẢ chức năng xem danh sách, không chỉ các thao tác thêm - sửa. Không có quyền thì không xem được gì. 
+[Heading 3] 4.2 Phạm vi dữ liệu theo công ty 
+[normal] Bạn chỉ thấy tài khoản ngân hàng thuộc công ty ghi trong hồ sơ nhân sự của bạn. 
+[normal] Tài khoản của công ty khác: không hiển thị, tìm kiếm cũng không ra. 
+[normal] Tài khoản mới tạo tự động thuộc công ty của bạn — không có ô chọn công ty trên form. 
+[normal] Nếu hồ sơ nhân sự của bạn CHƯA gắn công ty: danh sách trống hoàn toàn và khi bấm Lưu hệ thống báo “Tài khoản đăng nhập chưa gắn công ty, không thể thao tác”. Hãy báo bộ phận nhân sự bổ sung công ty cho hồ sơ. 
+[normal] Màn hình không chia nhỏ theo phòng ban hay bộ phận: mọi người cùng công ty thấy chung một danh sách. 
+[Heading 1] PHẦN 1: TRUY CẬP VÀ BỐ CỤC MÀN HÌNH 
+[Heading 2] 1. Truy cập màn hình 
+[normal] Bước 1: Đăng nhập hệ thống. 
+[normal] Bước 2: Chọn phân hệ “Tài chính” ở góc trên bên trái. 
+[normal] Bước 3: Trên menu bên trái, mở nhóm “Danh mục”. 
+[normal] Bước 4: Bấm mục “Danh mục tài khoản ngân hàng”. 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/finance/account-banks 
+[normal] Màn hình mở ra với tiêu đề “Danh mục tài khoản ngân hàng”, danh sách hiển thị 10 dòng đầu tiên của công ty bạn. 
+[normal]  [IMG]
+[normal] Hình 1: Màn hình Danh mục tài khoản ngân hàng khi mới truy cập 
+[Heading 2] 2. Bố cục màn hình 
+[normal] Khối trên — “Bộ lọc danh sách”: ô tìm nhanh, ô Chi nhánh, ô Trạng thái, nút Tìm kiếm và nút Làm mới. Ba ô lọc bày sẵn trên một hàng ngang nên màn này KHÔNG có nút “Tìm kiếm nâng cao”. 
+[normal] Khối dưới — bảng “Danh sách tài khoản ngân hàng”: góc phải phía trên có nút Tạo mới và nút Cấu hình cột hiển thị; cuối bảng là dòng thống kê và phần phân trang. 
+[normal]  [IMG]
+[normal] Hình 2: Bảng danh sách khi thu gọn menu bên trái — thấy đủ cột Hành động 
+[Heading 2] 3. Các cột của bảng danh sách 
+[normal] Bảng có 12 cột khả dụng, khi mới dùng hệ thống hiển thị sẵn 8 cột. Bốn cột còn lại bật thêm ở cửa sổ Tùy chỉnh cột, xem PHẦN 3. 
+<<TABLE 4>>
+  | Cột | Hiện sẵn | Nội dung
+  | STT | Có | Số thứ tự tính theo trang đang xem. Trang 2 với 10 dòng/trang bắt đầu từ 11.
+  | Số tài khoản | Có | Số tài khoản ngân hàng, hiển thị dạng đường dẫn. Bấm vào là mở cửa sổ Xem chi tiết.
+  | Chủ tài khoản | Có | Tên chủ tài khoản, luôn hiển thị dạng CHỮ IN HOA.
+  | Ngân hàng | Có | Tên ngân hàng của tài khoản.
+  | Loại tiền tệ | Không | Mã loại tiền tệ, ví dụ VNĐ, AUD, CHF. Dòng chưa khai hiện dấu gạch ngang.
+  | Chi nhánh | Không | Tên chi nhánh ngân hàng.
+  | Người cập nhật | Không | Người sửa gần nhất.
+  | Ngày cập nhật | Không | Ngày giờ sửa gần nhất.
+  | Người tạo | Có | Người đã tạo bản ghi.
+  | Ngày tạo | Có | Ngày giờ tạo bản ghi. Danh sách mặc định xếp theo cột này, mới nhất trước.
+  | Trạng thái | Có | Nhãn Hoạt động màu xanh hoặc Khóa màu đỏ.
+  | Hành động | Có | Các nút thao tác của dòng, luôn nằm ở cuối bảng.
+[Heading 2] 4. Cột Hành động 
+[normal] Màn hình có đúng 3 thao tác trên từng dòng nên cả 3 nút hiện thẳng ra, không có menu ba chấm. Nút nào không dùng được sẽ bị ẨN HẲN chứ không hiện rồi làm mờ. 
+<<TABLE 5>>
+  | Nút | Khi nào hiển thị | Công dụng
+  | Sửa (bút chì) | Tài khoản đang Hoạt động và bạn có quyền quản lý. | Mở cửa sổ Sửa tài khoản ngân hàng, xem PHẦN 5.
+  | Khóa (ổ khoá) | Tài khoản đang Hoạt động và bạn có quyền quản lý. | Chuyển tài khoản sang trạng thái Khóa, xem PHẦN 7.
+  | Mở khóa (ổ khoá mở) | Tài khoản đang Khóa và bạn có quyền quản lý. | Đưa tài khoản trở lại Hoạt động, xem PHẦN 7.
+  | Lịch sử (đồng hồ) | Luôn hiển thị. | Mở cửa sổ Lịch sử thay đổi của tài khoản, xem PHẦN 8.
+[normal] Ghi nhớ nhanh: tài khoản đang KHÓA chỉ còn Mở khóa và Lịch sử. Màn hình KHÔNG có nút Xóa — tài khoản không dùng nữa thì Khóa lại. 
+[Heading 2] 5. Phân trang 
+[normal] Dòng bên trái phía dưới bảng ghi “Hiển thị 1–10 / N”: đang xem dòng 1 đến 10 trong tổng số N tài khoản khớp bộ lọc. 
+[normal] Ô “Số dòng/trang” cho chọn 5, 10, 20, 50 hoặc 100 dòng, mặc định là 10. 
+[normal] Đổi số dòng/trang thì danh sách quay về trang 1. 
+[normal] Danh sách mặc định xếp theo Ngày tạo, mới nhất ở trên cùng. 
+[Heading 2] 6. Sắp xếp theo cột 
+[normal] Bốn cột có biểu tượng mũi tên ở tiêu đề để đổi thứ tự sắp xếp: Số tài khoản, Chủ tài khoản, Ngày tạo và Ngày cập nhật. 
+[normal] Bấm lần 1: xếp tăng dần. Bấm lần 2: xếp giảm dần. 
+[normal] Mỗi lần chỉ sắp xếp theo một cột; bấm cột khác thì bỏ tiêu chí cũ. 
+[normal] Các cột còn lại (Ngân hàng, Chi nhánh, Loại tiền tệ, Trạng thái) không có chức năng sắp xếp, bấm vào không xảy ra gì. 
+[Heading 1] PHẦN 2: TÌM KIẾM VÀ LỌC DANH SÁCH 
+[normal]  [IMG]
+[normal] Hình 3: Kết quả sau khi tìm nhanh theo từ khóa “TRANG TEST” 
+[Heading 2] 1. Tìm kiếm nhanh 
+[normal] Ô đầu tiên có dòng gợi ý “Tìm theo số tài khoản, chủ tài khoản, ngân hàng”. Ô này quét đồng thời cả ba trường đó. 
+[normal] Gõ một phần chuỗi là đủ, kể cả phần nằm ở giữa. 
+[normal] Không phân biệt chữ hoa chữ thường. 
+[normal] PHẢI bấm nút Tìm kiếm hoặc nhấn phím Enter thì danh sách mới lọc; chỉ gõ thôi thì danh sách chưa đổi. 
+[normal] Bấm dấu x ở cuối ô để xoá nhanh từ khoá. 
+[Heading 2] 2. Lọc theo chi nhánh 
+[normal] Nhập một phần tên chi nhánh vào ô thứ hai, ví dụ “Bắc” hoặc “Cầu Giấy”. Hệ thống lọc theo tên chi nhánh đang lưu trên từng tài khoản. 
+[Heading 2] 3. Lọc theo trạng thái 
+[normal] Ô thứ ba cho chọn “Hoạt động” hoặc “Khóa”. Để trống là lấy tất cả, bấm dấu x trong ô để bỏ lựa chọn. 
+[normal] Khác với ô tìm nhanh, hai ô Chi nhánh và Trạng thái tự lọc lại ngay khi bạn thay đổi, không cần bấm Tìm kiếm. 
+[Heading 2] 4. Kết hợp nhiều điều kiện 
+[normal] Các điều kiện được kết hợp theo kiểu “và”: kết quả phải thoả mãn đồng thời tất cả ô đã nhập. Ví dụ gõ “TRANG TEST” ở ô tìm nhanh và chọn Trạng thái = Khóa thì chỉ ra những tài khoản vừa khớp từ khoá vừa đang bị khóa. 
+[Heading 2] 5. Nút Làm mới 
+[normal] Bấm “Làm mới” để xoá sạch cả ba ô lọc và tải lại toàn bộ danh sách. Nên dùng nút này trước khi bắt đầu một việc mới, vì hệ thống có ghi nhớ bộ lọc (xem mục 6). 
+[Heading 2] 6. Hệ thống ghi nhớ bộ lọc trong 10 phút 
+[normal] Nếu bạn đang lọc rồi chuyển sang màn khác và quay lại trong vòng 10 phút, hệ thống giữ nguyên điều kiện lọc cũ. Đây là chủ ý để bạn không phải nhập lại. Nếu thấy danh sách “thiếu” tài khoản, hãy kiểm tra lại các ô lọc rồi bấm Làm mới. 
+[Heading 1] PHẦN 3: TÙY CHỈNH CỘT HIỂN THỊ 
+[normal]  [IMG]
+[normal] Hình 4: Cửa sổ Tùy chỉnh cột — cột STT và Số tài khoản có biểu tượng ổ khoá 
+[Heading 2] 1. Mở cửa sổ tùy chỉnh cột 
+[normal] Bấm nút biểu tượng cột nằm ngay bên phải nút Tạo mới. Cửa sổ “Tuỳ chỉnh cột” hiện ra, liệt kê đủ 12 cột; cột nào đang hiển thị thì được tích sẵn. 
+[Heading 2] 2. Bật và tắt cột 
+[normal] Tích vào ô vuông đầu dòng để bật cột, bỏ tích để tắt. 
+[normal] Ba cột STT, Số tài khoản và Hành động có biểu tượng ổ khoá — không tắt được, vì Số tài khoản là lối vào cửa sổ Xem chi tiết. 
+[normal] Bốn cột mặc định tắt nên bật thêm khi cần: Loại tiền tệ, Chi nhánh, Người cập nhật, Ngày cập nhật. 
+[Heading 2] 3. Đổi thứ tự cột 
+[normal] Dùng chuột kéo biểu tượng ba gạch ở cuối mỗi dòng lên hoặc xuống để đổi vị trí cột trên bảng. 
+[Heading 2] 4. Lưu hoặc bỏ thay đổi 
+[normal] Bấm “Lưu”: cửa sổ đóng, bảng vẽ lại theo lựa chọn mới. Cấu hình được ghi nhớ theo tài khoản của bạn, lần sau vào lại vẫn giữ nguyên và không ảnh hưởng tới người khác. 
+[normal] Bấm “Đóng”: bỏ mọi thay đổi vừa chỉnh, bảng giữ nguyên như cũ. 
+[Heading 1] PHẦN 4: TẠO MỚI TÀI KHOẢN NGÂN HÀNG 
+[Heading 2] 1. Mở cửa sổ Tạo mới 
+[normal] Bấm nút “Tạo mới” ở góc phải phía trên bảng. Cửa sổ “Tạo tài khoản ngân hàng” mở ra ngay trên màn hình danh sách. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Tạo tài khoản ngân hàng khi vừa mở 
+[Heading 2] 2. Các trường trong cửa sổ Tạo mới 
+<<TABLE 6>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị điền sẵn | Mô tả
+  | Số tài khoản | Ô nhập chữ | Có | Trống | Số tài khoản ngân hàng. Không được trùng với bất kỳ tài khoản nào trong hệ thống.
+  | Loại tiền tệ | Ô chọn từ danh sách | Có | Trống | Chọn loại tiền tệ của tài khoản. Danh sách hiển thị dạng “Mã — Tên”, ví dụ “VNĐ — VietNamDong”. Chỉ có loại tiền tệ đang Hoạt động.
+  | Chủ tài khoản | Ô nhập chữ | Có | Trống | Tên chủ tài khoản. Hệ thống tự chuyển thành CHỮ IN HOA khi lưu, gõ chữ thường vẫn đúng.
+  | Ngân hàng | Ô chọn từ danh sách | Có | Trống | Chọn ngân hàng. Chỉ có ngân hàng đang Hoạt động; ngân hàng đã khóa không xuất hiện.
+  | Chi nhánh | Ô chọn từ danh sách | Có | Trống | Bị khoá cho tới khi chọn Ngân hàng. Danh sách chỉ gồm chi nhánh của ngân hàng vừa chọn.
+  | Trạng thái | Ô chọn từ danh sách | Có | Hoạt động | Chọn Hoạt động hoặc Khóa. Không xoá trắng được ô này.
+[Heading 2] 3. Giá trị điền sẵn khi tạo mới 
+[normal] Năm ô bắt buộc đều TRỐNG. 
+[normal] Ô Trạng thái điền sẵn “Hoạt động” — đổi được ngay lúc tạo nếu muốn khai sẵn tài khoản chưa dùng tới. 
+[normal] Ô Chi nhánh bị khoá cho tới khi bạn chọn Ngân hàng. 
+[normal] Công ty, Người tạo và Ngày tạo do hệ thống tự ghi, không có ô nhập. 
+[Heading 2] 4. Thứ tự chọn Ngân hàng rồi tới Chi nhánh 
+[normal] Bước 1: Chọn Ngân hàng trước. Trước đó ô Chi nhánh không mở được. 
+[normal] Bước 2: Mở ô Chi nhánh — danh sách chỉ gồm chi nhánh của ngân hàng vừa chọn. 
+[normal] Nếu sau đó bạn ĐỔI ngân hàng, ô Chi nhánh sẽ tự xoá trắng và phải chọn lại. Đây là chủ ý để tránh gán nhầm chi nhánh của ngân hàng khác. 
+[Heading 2] 5. Lưu bản ghi 
+<<TABLE 7>>
+  | Nút | Kết quả
+  | Lưu | Ghi tài khoản mới, hiện thông báo “Thêm mới thành công”, đóng cửa sổ và làm mới danh sách. Tài khoản vừa tạo nằm ở đầu danh sách.
+  | Đóng | Thoát khỏi cửa sổ, không ghi gì.
+[normal] Sau khi lưu, Chủ tài khoản và tên ngân hàng hiển thị dạng CHỮ IN HOA — đây là quy ước của hệ thống, không phải lỗi nhập liệu. 
+[Heading 2] 6. Các lỗi thường gặp khi lưu 
+[normal]  [IMG]
+[normal] Hình 6: Bấm Lưu khi chưa nhập gì — hệ thống chặn ngay tại ô Chủ tài khoản 
+[normal]  [IMG]
+[normal] Hình 7: Bốn ô còn lại báo lỗi đỏ sau khi hệ thống kiểm tra dữ liệu 
+<<TABLE 8>>
+  | Thông báo | Nguyên nhân | Cách xử lý
+  | Bắt buộc phải nhập (dưới ô Chủ tài khoản) | Chưa nhập chủ tài khoản. | Nhập chủ tài khoản rồi bấm Lưu lại. Ô này bị chặn ngay, chưa gửi dữ liệu đi.
+  | Bắt buộc phải nhập (dưới ô Số tài khoản / Loại tiền tệ / Ngân hàng / Chi nhánh) | Còn ô bắt buộc chưa nhập. | Nhập hoặc chọn nốt ô báo đỏ. Bốn lỗi này hiện sau khi hệ thống kiểm tra.
+  | Số tài khoản đã tồn tại | Đã có tài khoản khác dùng số này. | Kiểm tra lại danh sách. Lưu ý: số tài khoản không được trùng trên toàn hệ thống, kể cả với tài khoản của công ty khác mà bạn không nhìn thấy.
+  | Ngân hàng không tồn tại hoặc đã bị khóa | Ngân hàng vừa bị khóa ở Danh mục ngân hàng. | Chọn ngân hàng khác, hoặc đề nghị mở khóa ngân hàng đó.
+  | Chi nhánh không thuộc ngân hàng đã chọn | Chi nhánh và ngân hàng không khớp nhau. | Chọn lại Ngân hàng rồi chọn Chi nhánh trong danh sách vừa lọc.
+  | Loại tiền tệ không tồn tại hoặc đã bị khóa | Loại tiền tệ vừa bị khóa ở Danh mục tiền tệ. | Chọn loại tiền tệ khác.
+  | Tài khoản đăng nhập chưa gắn công ty, không thể thao tác | Hồ sơ nhân sự của bạn chưa gắn công ty. | Báo bộ phận nhân sự bổ sung công ty cho hồ sơ, sau đó đăng nhập lại.
+[normal] Khi có lỗi, cửa sổ KHÔNG đóng và dữ liệu bạn đã nhập vẫn còn nguyên — chỉ cần sửa ô báo đỏ rồi bấm Lưu lại. 
+[Heading 1] PHẦN 5: SỬA TÀI KHOẢN NGÂN HÀNG 
+[Heading 2] 1. Mở cửa sổ Sửa 
+[normal] Bấm nút Sửa, biểu tượng bút chì, ở cột Hành động của dòng cần sửa. Nút này chỉ hiển thị với tài khoản đang ở trạng thái Hoạt động; tài khoản đang Khóa phải Mở khóa trước, xem PHẦN 7. 
+[normal]  [IMG]
+[normal] Hình 8: Cửa sổ Sửa tài khoản ngân hàng — ô Ngân hàng trống vì ngân hàng của bản ghi đã bị khóa 
+[Heading 2] 2. Các bước sửa 
+[normal] Bước 1: Bấm nút Sửa ở dòng cần chỉnh. 
+[normal] Bước 2: Sửa các ô cần thiết. Quy định bắt buộc và quy định không trùng giống hệt khi tạo mới. 
+[normal] Bước 3: Bấm “Lưu”. Hệ thống báo “Cập nhật thành công”, đóng cửa sổ và làm mới danh sách. 
+[Heading 2] 3. Khi ngân hàng hoặc loại tiền tệ của tài khoản đã bị khóa 
+[normal] Nếu ngân hàng gắn với tài khoản đã bị khóa ở Danh mục ngân hàng, khi mở cửa sổ Sửa bạn sẽ thấy: 
+[normal] Ô Ngân hàng bị XOÁ TRẮNG kèm thông báo “Ngân hàng của tài khoản này đã bị khóa, vui lòng chọn ngân hàng khác”. 
+[normal] Ô Chi nhánh cũng trống theo vì chi nhánh phụ thuộc ngân hàng. 
+[normal] Loại tiền tệ bị khóa cũng xử lý tương tự, kèm thông báo “Loại tiền tệ của tài khoản này đã bị khóa, vui lòng chọn loại tiền tệ khác”. 
+[normal] Đây là hành vi ĐÚNG, không phải mất dữ liệu: hệ thống bắt bạn chọn lại giá trị còn hiệu lực trước khi lưu. Nếu chỉ muốn xem thông tin cũ, hãy dùng cửa sổ Xem chi tiết (PHẦN 6) — ở đó tên ngân hàng cũ vẫn hiển thị đầy đủ. 
+[Heading 2] 4. Những điều nên biết 
+[normal] Giữ nguyên số tài khoản của chính bản ghi đang sửa thì KHÔNG bị báo trùng. 
+[normal] Sau khi lưu, cột Người cập nhật và Ngày cập nhật đổi theo bạn và thời điểm lưu. 
+[normal] Đổi ô Trạng thái sang Khóa ngay trong cửa sổ Sửa cũng có tác dụng như bấm nút Khóa ngoài danh sách. 
+[normal] Mọi thay đổi đều được ghi vào Lịch sử thay đổi kèm giá trị trước và sau, xem PHẦN 8. Bấm Lưu mà không sửa gì thì không phát sinh mốc lịch sử mới. 
+[normal] Tài khoản đang Khóa không sửa được: nút Sửa bị ẩn, và nếu dữ liệu trên màn đã cũ (tài khoản vừa bị người khác khóa) thì hệ thống báo “Tài khoản ngân hàng đang bị khóa, không thể sửa”. 
+[Heading 1] PHẦN 6: XEM CHI TIẾT TÀI KHOẢN NGÂN HÀNG 
+[Heading 2] 1. Cách mở 
+[normal] Bấm vào chính số tài khoản ở cột “Số tài khoản” (chữ có gạch chân). Cửa sổ “Xem tài khoản ngân hàng” mở ra ngay, không chuyển sang trang khác. Cách này dùng được cả với tài khoản đang Khóa. 
+[normal]  [IMG]
+[normal] Hình 9: Cửa sổ Xem tài khoản ngân hàng, khối Lịch sử đã được mở 
+[Heading 2] 2. Nội dung cửa sổ Xem 
+[normal] Toàn bộ ô thông tin ở chế độ chỉ đọc, không gõ sửa được. 
+[normal] Ô Trạng thái hiển thị Hoạt động hoặc Khóa. 
+[normal] Không có nút Lưu; chân cửa sổ chỉ có nút Đóng. 
+[normal] Cuối cửa sổ là khối “Lịch sử” — bấm “Xem lịch sử” để mở ra ngay trong cửa sổ. 
+[Heading 2] 3. Điểm khác với cửa sổ Sửa 
+[normal] Nếu ngân hàng của tài khoản đã bị khóa, cửa sổ Xem VẪN hiển thị đúng tên ngân hàng đó, còn cửa sổ Sửa thì để trống và bắt chọn lại. Lý do: tên ngân hàng được lưu kèm ngay trên bản ghi từ lúc tạo, nên tra cứu vẫn thấy; còn khi sửa thì hệ thống chỉ cho chọn danh mục đang còn hiệu lực. 
+[Heading 1] PHẦN 7: KHÓA VÀ MỞ KHÓA TÀI KHOẢN 
+[Heading 2] 1. Khóa nghĩa là gì 
+[normal] Màn hình này KHÔNG có chức năng xóa. Tài khoản ngân hàng không dùng nữa thì chuyển sang trạng thái Khóa: bản ghi vẫn nằm trong danh sách, vẫn xem được chi tiết và lịch sử, nhưng không sửa được và không nên dùng cho chứng từ mới. 
+[Heading 2] 2. Các bước khóa tài khoản 
+[normal] Bước 1: Ở dòng cần khóa, bấm nút Khóa (biểu tượng ổ khoá). 
+[normal] Bước 2: Hộp thoại “Xác nhận khóa” hiện ra, nêu rõ số tài khoản. 
+[normal] Bước 3: Bấm nút “Khóa” để đồng ý, hoặc “Hủy” để bỏ qua. 
+[normal]  [IMG]
+[normal] Hình 10: Hộp xác nhận khóa tài khoản ngân hàng 
+[normal] Khóa xong hệ thống báo “Khóa thành công”; dòng đó chuyển sang nhãn Khóa màu đỏ và nút Sửa biến mất. 
+[Heading 2] 3. Mở khóa tài khoản 
+[normal] Bước 1: Ở dòng đang Khóa, bấm nút Mở khóa (ổ khoá mở). 
+[normal] Bước 2: Hộp thoại “Xác nhận mở khóa” hiện ra. 
+[normal] Bước 3: Bấm “Mở khóa”. Hệ thống báo “Mở khóa thành công”, dòng trở lại nhãn Hoạt động và hiện lại nút Sửa. 
+[Heading 2] 4. Lưu ý 
+[normal] Có hai cách đổi trạng thái cho cùng một kết quả: nút Khóa / Mở khóa ngoài danh sách, hoặc ô Trạng thái trong cửa sổ Sửa. 
+[normal] Mọi lần khóa và mở khóa đều được ghi vào Lịch sử thay đổi kèm tên người thực hiện. 
+[normal] Muốn xem nhanh các tài khoản đang khóa: chọn ô Trạng thái = Khóa ở khối bộ lọc. 
+[normal] Nếu bấm Khóa mà hệ thống báo “Dữ liệu đã thay đổi, vui lòng tải lại” thì bản ghi vừa bị người khác thay đổi — hãy bấm Làm mới rồi thao tác lại. 
+[Heading 1] PHẦN 8: XEM LỊCH SỬ THAY ĐỔI 
+[Heading 2] 1. Cách mở 
+[normal] Cách 1: Bấm nút Lịch sử (biểu tượng đồng hồ) ở cột Hành động của dòng. 
+[normal] Cách 2: Bấm số tài khoản để mở cửa sổ Xem, rồi bấm “Xem lịch sử” ở cuối cửa sổ. 
+[normal]  [IMG]
+[normal] Hình 11: Cửa sổ Lịch sử thay đổi của một tài khoản ngân hàng 
+[Heading 2] 2. Đọc một mốc lịch sử 
+[normal] Mỗi mốc gồm bốn phần, xếp từ trên xuống: 
+[normal] Ngày giờ thực hiện. 
+[normal] Tên hành động, có màu riêng: Tạo mới, Thay đổi thông tin, Khóa, Mở khóa. 
+[normal] Người thực hiện, kèm mã nhân viên và phòng ban. 
+[normal] Chi tiết thay đổi theo dạng “Tên trường: giá trị cũ → giá trị mới”. 
+[normal] Các mốc xếp mới nhất ở trên cùng. Tài khoản chưa từng bị thay đổi sẽ hiện dòng “Chưa có lịch sử thao tác nào.”. 
+[Heading 2] 3. Những trường được theo dõi 
+<<TABLE 9>>
+  | Trường | Ghi chú
+  | Số tài khoản | Ghi lại giá trị cũ và mới.
+  | Chủ tài khoản | Ghi theo giá trị đã in hoa.
+  | Ngân hàng | Ghi theo TÊN ngân hàng.
+  | Chi nhánh | Ghi theo tên chi nhánh.
+  | Loại tiền tệ | Ghi theo TÊN loại tiền tệ, không phải mã số — đổi tên danh mục sau này cũng không làm sai lịch sử cũ.
+  | Trạng thái | Ghi bằng chữ: Hoạt động hoặc Khóa.
+[Heading 2] 4. Lọc lịch sử 
+[normal] Bấm nút “Bộ lọc” ở góc phải cửa sổ để lọc theo Loại hoạt động. Có đúng ba nhóm, dùng chung cho mọi màn danh mục của hệ thống: 
+<<TABLE 10>>
+  | Nhóm | Bao gồm những mốc nào
+  | Tạo mới | Lần tạo bản ghi.
+  | Thay đổi thông tin | Các lần sửa: số tài khoản, chủ tài khoản, ngân hàng, chi nhánh, loại tiền tệ.
+  | Thay đổi trạng thái | Các lần Khóa và Mở khóa.
+[Heading 1] PHẦN 9: HƯỚNG DẪN THEO TỪNG QUYỀN 
+[Heading 2] 1. Người dùng có quyền “Quản lý danh mục tài khoản ngân hàng” 
+[normal] Bạn nhìn thấy: 
+[normal] Mục “Danh mục tài khoản ngân hàng” trong nhóm Danh mục của phân hệ Tài chính. 
+[normal] Danh sách tài khoản ngân hàng của CÔNG TY MÌNH. 
+[normal] Nút Tạo mới, nút Cấu hình cột và đầy đủ các nút Sửa / Khóa / Mở khóa / Lịch sử trên từng dòng. 
+[normal] Bạn làm được toàn bộ thao tác mô tả từ PHẦN 1 đến PHẦN 8: tìm kiếm, tạo mới, sửa, xem chi tiết, khóa, mở khóa và xem lịch sử. 
+[Heading 2] 2. Người dùng KHÔNG có quyền này 
+[normal] Mục menu Danh mục tài khoản ngân hàng không hiển thị. 
+[normal] Gõ thẳng đường dẫn /finance/account-banks thì hệ thống từ chối, không xem được dữ liệu nào. 
+[normal] Nếu công việc của bạn cần tra cứu tài khoản ngân hàng của công ty, hãy đề nghị quản trị cấp quyền “Quản lý danh mục tài khoản ngân hàng”. Lưu ý màn này chỉ có MỘT quyền, cấp quyền là cấp cả xem lẫn sửa — chưa tách riêng quyền chỉ xem. 
+[Heading 2] 3. Người dùng chưa được gắn công ty 
+[normal] Có quyền nhưng hồ sơ nhân sự chưa gắn công ty thì danh sách hiện trống và khi bấm Lưu hệ thống báo “Tài khoản đăng nhập chưa gắn công ty, không thể thao tác”. Hãy báo bộ phận nhân sự bổ sung công ty cho hồ sơ rồi đăng nhập lại. 
+[Heading 2] 4. Câu hỏi thường gặp 
+[Heading 3] 4.1 Khai báo một tài khoản ngân hàng mới thì làm thế nào 
+[normal] Bước 1: Vào Tài chính → Danh mục → Danh mục tài khoản ngân hàng, gõ số tài khoản vào ô tìm nhanh để chắc chắn chưa có. 
+[normal] Bước 2: Bấm Tạo mới, nhập Số tài khoản, chọn Loại tiền tệ, nhập Chủ tài khoản. 
+[normal] Bước 3: Chọn Ngân hàng rồi chọn Chi nhánh của ngân hàng đó. 
+[normal] Bước 4: Để Trạng thái là Hoạt động rồi bấm Lưu. 
+[Heading 3] 4.2 Không thấy ngân hàng cần chọn trong danh sách 
+[normal] Ngân hàng đó đang bị khóa ở màn Danh mục ngân hàng, hoặc chưa được khai báo. Hãy sang màn Danh mục chung → Ngân hàng để kiểm tra: nếu đang khóa thì mở khóa, nếu chưa có thì khai báo mới rồi quay lại. 
+[Heading 3] 4.3 Không thấy chi nhánh cần chọn 
+[normal] Ô Chi nhánh chỉ liệt kê chi nhánh của ngân hàng đang chọn. Nếu danh sách trống, nghĩa là ngân hàng đó chưa khai chi nhánh nào — sang màn Danh mục ngân hàng, mở cửa sổ Chi nhánh của ngân hàng và thêm chi nhánh trước. 
+[Heading 3] 4.4 Hệ thống báo số tài khoản đã tồn tại nhưng tìm không thấy 
+[normal] Số tài khoản không được trùng trên toàn hệ thống. Bản ghi trùng có thể thuộc CÔNG TY KHÁC nên bạn không nhìn thấy trong danh sách. Hãy kiểm tra lại số tài khoản, nếu chắc chắn đúng thì báo quản trị kiểm tra giúp. 
+[Heading 3] 4.5 Không sửa được một tài khoản 
+[normal] Kiểm tra trạng thái của tài khoản đó: đang Khóa thì nút Sửa bị ẩn, phải Mở khóa trước. Nếu vẫn thấy nút Sửa mà bấm vào báo lỗi, nghĩa là tài khoản vừa bị người khác khóa — bấm Làm mới rồi thao tác lại. 
+[Heading 3] 4.6 Muốn xoá một tài khoản nhập nhầm 
+[normal] Màn hình không có chức năng xóa. Cách xử lý: sửa lại cho đúng nếu tài khoản còn dùng, hoặc Khóa lại nếu không dùng nữa. Trường hợp bắt buộc phải xoá hẳn thì báo bộ phận kỹ thuật. 
+[Heading 3] 4.7 Danh sách thiếu tài khoản so với lúc trước 
+[normal] Thường do bộ lọc còn giữ điều kiện cũ, hệ thống ghi nhớ trong 10 phút. Bấm “Làm mới” ở khối bộ lọc để xem lại toàn bộ danh sách. 
+[Heading 3] 4.8 Không biết ai đã sửa dữ liệu 
+[normal] Bấm nút Lịch sử ở dòng đó. Cửa sổ liệt kê từng mốc kèm tên người thực hiện, thời điểm và giá trị trước - sau. 

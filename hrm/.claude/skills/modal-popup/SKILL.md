@@ -16,9 +16,7 @@ ghim lúc bị nội dung dài đẩy khuất, dòng mô tả bản ghi mỗi n�
 ```vue
 <V2BaseModal
     modal-id="history-work"
-    title="Lịch sử thay đổi"
-    subtitle-label="Vụ việc"
-    subtitle="RRP - Rủi ro theo phòng"
+    title="Lịch sử thay đổi: RRP - Rủi ro theo phòng"
     icon="ri-history-line"
     @hidden="onHidden"
 >
@@ -34,22 +32,24 @@ Component chốt sẵn toàn bộ phần style, màn dùng CHỈ truyền text +
 
 | Phần | Chuẩn (đã nằm sẵn trong component) |
 | --- | --- |
-| **Header** | icon tròn (đổi qua `icon`/`iconColor`/`iconBackground`) + tiêu đề 14px đậm (`title`) + dòng mô tả bản ghi (`subtitleLabel` + `subtitle`) + nút × |
-| **Body** | vùng cuộn riêng, `padding: 0.5rem` — **sát**, khuôn popup "Chọn trường xuất CSV" (`export-fields-modal.vue`). Popup thừa khoảng trắng (padding 1rem+ như popup Import cũ) là SAI. **Tự triệt `margin-top` của khối đầu và `margin-bottom` của khối cuối** — nội dung màn hay có `mt-3`/`mb-3`, cộng vào là body rơi tách khỏi header 32px |
+| **Header** | icon tròn (đổi qua `icon`/`iconColor`/`iconBackground`) + tiêu đề 14px đậm (`title`) + nút ×. **CHỈ 1 DÒNG** — xem quy tắc ngay dưới |
+| **Body** | vùng cuộn riêng, `padding: 0.5rem 0.75rem` — dọc **sát** (popup thừa khoảng trắng, padding dọc 1rem+ như popup Import cũ, là SAI), ngang **0.75rem** để chữ không chạm mép (chốt 2026-09-19); header/footer cùng 0.75rem nên 3 phần thẳng mép trái. **Tự triệt `margin-top` của khối đầu và `margin-bottom` của khối cuối** — nội dung màn hay có `mt-3`/`mb-3`, cộng vào là body rơi tách khỏi header 32px |
 | **Footer** | nằm NGOÀI vùng cuộn + `position: sticky; bottom: 0` → **luôn nhìn thấy**, nội dung dài mấy cũng không nuốt mất nút. Không truyền slot `footer` thì mặc định là nút Đóng |
 
 ⚠️ **Không tự khai lại các style trên trong màn dùng.** Muốn khác (popup có bảng cần cao hơn) thì
 chỉnh qua prop (`maxBodyHeight`, `size`, `dialogClass`), KHÔNG viết CSS đè trong màn — viết đè là
 quay lại đúng tình trạng mỗi popup một kiểu.
 
-**Dòng mô tả bản ghi** (`subtitleLabel` + `subtitle`): `Khách hàng: 19TPHPVI-262 - NGUYỄN HỮU HỌC`
-— nhãn `#6b7280`, giá trị `#374151`, **KHÔNG in đậm**, **KHÔNG màu đỏ** (đỏ chỉ dành cho lỗi
-validate — xem CLAUDE.md).
+🚫 **KHÔNG có dòng mô tả bản ghi dưới tiêu đề** (`Khách hàng: 19TPHPVI-262 - NGUYỄN HỮU HỌC`) —
+**bỏ hẳn 19/09/2026 theo yêu cầu user**. Header popup đúng 1 dòng: icon + tiêu đề + nút ×.
 
-Dòng này **gói gọn 1 dòng**, dài quá thì cắt bằng `…`, **rê chuột hiện đủ** (`title`). Đã nằm sẵn
-trong component — màn dùng cứ **truyền tên đầy đủ**, TUYỆT ĐỐI không tự cắt chuỗi bằng JS kiểu
-`name.slice(0, 60) + '…'`: cắt ở JS là mất hẳn phần đuôi, hover cũng không xem lại được, mà số ký
-tự cứng thì không khớp bề rộng thật của popup (Redmine #11164).
+- 2 prop `subtitle` / `subtitleLabel` của `V2BaseModal` giờ **không render gì** (giữ lại để 35
+  popup cũ đang truyền không văng attribute ra DOM). **Popup mới đừng truyền**; popup cũ bỏ dần
+  khi có dịp đụng vào.
+- Cần cho user biết đang thao tác trên bản ghi nào thì **ghép vào chính tiêu đề**:
+  `Lịch sử thay đổi: TCHH.1231 - Máy móc, thiết bị` (khuôn `CatalogHistoryModal`), theo đúng quy
+  ước tiêu đề màn chi tiết ở CLAUDE.md. Hoặc để thông tin đó trong **thân popup**.
+- TUYỆT ĐỐI không dựng lại dòng mô tả này bằng markup riêng trong từng màn.
 
 ⚠️ **Bẫy đã trả giá (2026-08-24) — nút × bị đẩy RA NGOÀI mép popup.** `.modal-header` là flex row
 chứa khối tiêu đề + nút ×. Khối tiêu đề để `w-100` là chiếm trọn bề rộng, nút × không còn chỗ và
@@ -67,9 +67,17 @@ tràn ra ngoài (đo thật: **26px**). Đúng phải là:
 `min-width: 0` không chỉ để cứu nút ×: mặc định flex item là `min-width: auto`, nó **nở theo nội
 dung dài nhất** nên `text-overflow: ellipsis` bên trong sẽ không bao giờ ăn.
 
-Props: `modalId` (bắt buộc) · `title` · `subtitle` · `subtitleLabel` · `icon` · `iconColor` ·
+Props: `modalId` (bắt buộc) · `title` · `icon` · `iconColor` ·
 `iconBackground` · `size` · `dialogClass` · `maxBodyHeight`. Sự kiện: `show` · `shown` · `hide` ·
 `hidden`. Method: `show()` / `close()`.
+
+**Body của popup XEM một bản ghi có đúng 2 phần, theo thứ tự:**
+
+1. Nội dung nghiệp vụ (các trường)
+2. **Khối "Lịch sử"** ở cuối cùng — bắt buộc, xem **mục 3c**
+
+**KHÔNG có phần thứ 3.** Nhất là dòng `Người tạo: … • Ngày tạo: …` ở đáy body — **đã bỏ hẳn**,
+lý do ở mục 3c.
 
 Popup CŨ tự dựng thì chuyển dần sang khuôn này khi có dịp đụng vào — ưu tiên popup nào đang bị
 mất nút footer hoặc thừa khoảng trắng.
@@ -209,6 +217,9 @@ Khi review modal: gặp `V2BaseSelect` nằm trong `b-modal` → đổi sang `V2
 </div>
 ```
 
+⚠️ Popup Xem của bản ghi đã tồn tại thì **thân popup còn phải có khối "Lịch sử" ở cuối** và
+**không được có dòng `Người tạo / Ngày tạo`** — **mục 3c**. Đây là chỗ hay thiếu nhất.
+
 ### Modal xác nhận xoá
 
 ```vue
@@ -333,6 +344,83 @@ footer.getBoundingClientRect().bottom <= window.innerHeight
 ```
 
 File mẫu: `components/modal/column-customization-modal.vue`.
+
+---
+
+## 3c. Cuối body popup gắn với 1 BẢN GHI — khối Lịch sử, KHÔNG có dòng Người tạo/Ngày tạo (chốt 2026-09-19)
+
+Áp cho **mọi popup XEM một bản ghi đã tồn tại** (popup Xem của danh mục, popup chi tiết):
+điều kiện chuẩn là `v-if="isShow && id"`. Popup **Thêm mới** không có (chưa có bản ghi), popup
+**Sửa** cũng không — đang nhập dở mà kèm timeline thì popup dài gấp đôi; muốn xem lịch sử thì mở
+popup Xem hoặc mục `Lịch sử` ở menu ⋮ ngoài danh sách.
+
+### a) BẮT BUỘC: khối "Lịch sử" là phần cuối cùng của body
+
+```vue
+<V2BaseModal modal-id="type-account" title="Chi tiết loại tài khoản" …>
+    <!-- 1. nội dung nghiệp vụ -->
+    <div class="row">…</div>
+
+    <!-- 2. LUÔN LÀ PHẦN CUỐI CÙNG -->
+    <SystemInfoSection
+        v-if="isShow && id"
+        class="mt-2"
+        entity-type="type_accounts"
+        :entity-id="id"
+        endpoint-base="catalog-histories"
+    />
+
+    <template #footer>…</template>
+</V2BaseModal>
+```
+
+- Mặc định **thu gọn**, **lazy load** lần mở đầu tiên (đã nằm trong `SystemInfoSection`).
+- **Giữ nguyên thanh tiêu đề** của khối (có nút "Xem lịch sử" / "Thu gọn") — đây là khuôn của
+  `currency-modal.vue`, `cost-modal.vue`. `hide-header` chỉ dùng cho popup mà **toàn bộ nội dung
+  là lịch sử** (`CatalogHistoryModal`), vì ở đó tiêu đề popup đã nói rồi.
+- Padding vùng nội dung `.si-body` = **`5px`**, không màn nào tự nới.
+- Quy ước cũ "chi tiết mở dạng modal thì ẩn Lịch sử" **đã BỎ** từ 2026-08-15.
+- Chi tiết BE/DTO/bộ lọc: skill `entity-history` mục 5.1 (danh mục dùng bảng chung `catalog_histories`,
+  KHÔNG tạo bảng log riêng).
+
+### b) CẤM: dòng `Người tạo: … • Ngày tạo: …` ở đáy body
+
+```vue
+<!-- SAI — bỏ hẳn, không comment lại để đó -->
+<V2BaseMetaInfo v-if="id" variant="block"  :created-by="data.created_by_name" :created-at="data.created_at" />
+<V2BaseMetaInfo v-if="id" variant="inline" :created-by="data.creator_name"    :created-at="data.created_at" />
+```
+
+Vì sao bỏ:
+
+- **Trùng lặp**: khối Lịch sử ở (a) đã có dòng "Tạo mới — <người> — <thời điểm>" và cả các lần sửa sau đó.
+- **Chữ in đậm sai chuẩn**: `V2BaseMetaInfo` render giá trị trong `<b>`, trong khi CLAUDE.md quy định
+  nhãn thông tin là chữ xám `#6b7280` / giá trị `#374151`, **không in đậm**.
+- **Đẩy footer**: thêm 1 khối có viền ở đáy body làm popup cao thêm, popup ngắn thì thừa khoảng trắng.
+- **Mỗi màn một kiểu**: đo thật trong `hrm-client` — `industry-modal.vue`, `project-role-modal.vue`,
+  `project_phase_modal.vue`, `application-modal.vue` + 5 modal `pages/master-data/*` đang render khối này,
+  còn `meeting-type-modal.vue` thì **comment lại**, `currency-modal.vue` / `cost-modal.vue` thì không có.
+  Cùng một nhóm danh mục mà 3 kiểu khác nhau.
+
+**Popup dựng trên `V2BaseModal` thì KHÔNG dùng `V2BaseMetaInfo` nữa**: ai sửa / sửa lúc nào đã nằm
+trong khối Lịch sử, và header chỉ còn đúng 1 dòng tiêu đề (mục 0). Chỉ popup CŨ còn `b-modal` thô
+mới giữ chip cũ trên header:
+
+```vue
+<V2BaseMetaInfo v-if="id && data.updated_at" variant="chip" :updated-at="data.updated_at" />
+```
+
+### c) Tự kiểm (chạy ở thư mục client) — cả 2 lệnh phải RỖNG
+
+```bash
+# 1. không còn khối meta ở đáy body
+grep -rn 'variant="block"\|variant="inline"' --include='*.vue' components pages
+
+# 2. popup Xem/Sửa nào có `isShow`/`:id` mà không nhúng SystemInfoSection
+for f in components/modal/**/*.vue; do grep -q "isShow" "$f" && ! grep -q "SystemInfoSection" "$f" && echo "THIẾU LỊCH SỬ: $f"; done
+```
+
+Popup cũ: dọn khi có dịp đụng vào màn đó, **không sửa đại trà** (QA phải nghiệm thu lại toàn hệ thống).
 
 ---
 
@@ -476,17 +564,98 @@ grep -rn "add-on-row-click\|addOnRowClick" pages/ components/ | grep -v "<compon
 
 ---
 
+## 4c. Popup có BỘ LỌC — dùng `V2BaseSmartFilterPanel in-modal`, KHÔNG tự dựng lưới ô lọc (chốt 2026-09-28)
+
+Khuôn gốc: bộ lọc popup **"Thêm hàng hoá"** màn Báo giá
+(`pages/assign/quotations/components/QuotationProductSearchModal.vue` :33-110 — dùng chung BOM + Báo giá).
+Các popup đã bám đúng: `customer-care/services/components/ProductSearchModal.vue`,
+`assign/meeting/components/PopupStaff.vue`, `assign/solutions/components/manager/*UpcomingModal.vue`,
+`components/timesheet/shift-history/EmployeeShiftHistoryModal.vue`.
+
+Popup nào có từ 1 ô lọc trở lên (popup chọn bản ghi, popup xem lịch sử, popup danh sách…) thì bộ lọc
+là **đúng component bộ lọc của màn danh sách**, chỉ thêm `in-modal`:
+
+```vue
+<V2BaseSmartFilterPanel
+    table="<khoá_riêng_của_popup>"        <!-- "Cài đặt bộ lọc" lưu theo khoá này -->
+    floating                              <!-- nhãn nổi, giống màn danh sách -->
+    in-modal                              <!-- BẮT BUỘC: ô chọn tự thành V2BaseSelectInModal -->
+    title="Bộ lọc …"
+    :filter-fields="filterFields"
+    :filters="filters"
+    :collapsed="filterCollapsed"
+    :quickSearchValue="filters.keyword"
+    quickSearchPlaceholder="Tìm theo <các trường BE thực sự lọc>"
+    @toggle-panel="filterCollapsed = !filterCollapsed"
+    @quick-search-change="(v) => (filters.keyword = v)"
+    @filter-change="({ key, value }) => (filters[key] = value)"
+    @search="handleSearch"
+    @reset="handleReset"
+>
+    <template #header-actions>…nút phụ (Thêm hàng tạm…)…</template>
+    <template #field-<key>>…ô đặc biệt (tìm từ xa V2BaseSelectRemote)…</template>
+</V2BaseSmartFilterPanel>
+```
+
+- **`filterFields` khai y như màn danh sách** (skill `list-page`): select nhiều `multiple: true`;
+  khoảng ngày GỘP 1 ô `type: 'date-range'` + `resetKeys: ['x_from', 'x_to']` + khai sẵn khoá
+  `x_range` trong `filters` (Vue 2 không reactive khoá chưa khai); ô gõ tay đưa vào `ignoredFields`.
+- **Ô tìm nhanh là BẮT BUỘC** (cùng dòng với nút Tìm kiếm / Làm mới — mặc định `inlineSearchButtons`).
+  API chưa có tìm theo chữ thì **bổ sung tham số `keyword` ở BE** (tìm các cột chữ user nhìn thấy
+  trong bảng), KHÔNG tắt ô tìm nhanh. Placeholder `Tìm theo <đúng các cột BE tìm>`.
+- "Tìm kiếm nâng cao" **mặc định THU GỌN** (`filterCollapsed: true`) — dồn chỗ cho bảng.
+- **Hành vi giống màn danh sách**: chọn ô select là tìm luôn (deep watcher `filters` + `oldFilters`);
+  ô gõ tay chờ Enter / nút Tìm kiếm; "Làm mới" xoá hết rồi tìm lại; thu gọn nâng cao chỉ ẩn UI,
+  KHÔNG xoá giá trị đã chọn.
+- **Mở lại popup** (bản ghi khác) → reset `filters` về rỗng trước khi gọi API, và chặn watcher bắn
+  thêm 1 lần lúc reset (cờ `silent`), nếu không mở popup gọi API 2 lần.
+- **Danh mục cho ô chọn nạp lười**: gọi lần đầu mở popup rồi giữ lại, KHÔNG gọi ở `mounted` của màn cha
+  (màn cha có thể không bao giờ mở popup). Ô "Người thực hiện"/"Người tạo" ưu tiên API trả đúng những
+  người có trong dữ liệu, không tải toàn bộ nhân viên.
+- **Khung popup**: dựng trên `V2BaseModal` (mục 0) + `dialog-class="<tên riêng>"` để ép khung cao
+  cố định 98vw × 98vh theo **mục 4** (popup có bộ lọc luôn đi kèm bảng dữ liệu → luôn áp mục 4).
+  ⚠️ `b-modal` bị dời ra `<body>` → rule cho `.modal-dialog` / `.modal-content` / `.v2-modal-body`
+  phải để trong `<style>` **KHÔNG scoped**, có tiền tố class riêng của dialog (scoped/`::v-deep`
+  không với tới — đo thật popup chỉ cao 358px). Mẫu: `EmployeeShiftHistoryModal.vue`.
+- **Bảng trong popup = bảng GỌN của mục 4**, KHÔNG dùng `V2BaseDataTable` (nó bọc thêm card có tiêu
+  đề "Danh sách" + padding, tốn ~60px và không co theo khung): `<div class="…-table-wrap">` (khối duy
+  nhất `flex: 1; min-height: 0; overflow: auto`) chứa `<table class="table table-bordered table-hover
+  table-sm mb-0">` — `thead` sticky, `td` `padding: 3px 6px; font-size: 12px`, cột chữ dài
+  `.cell-clamp` + `:title`, dòng đang tải/trống màu xám `#6b7280` (KHÔNG `.text-muted` — ra đỏ);
+  dưới bảng là `V2BasePagination` (`:page-size-options="[20, 50, 100]"`, dòng "Hiển thị x–y / N").
+  Badge trạng thái trong ô vẫn là `V2BaseBadge`, ô badge `text-nowrap`.
+- **Footer popup chỉ xem**: KHÔNG truyền slot `#footer` → `V2BaseModal` tự render đúng nút chuẩn
+  **Đóng** (`tertiary` + `fas fa-arrow-left`, mục 3). Tự khai lại dễ sai icon (`ri-close-line` là SAI).
+- `QuotationProductSearchModal` tự dựng khung vì có trước `V2BaseModal` — copy **bộ lọc + bảng +
+  phân trang**, không copy khung `.modal-backdrop-lite`.
+
+🚫 **CẤM** tự dựng lưới ô lọc bằng `V2BaseLabel` + `V2BaseSelectInModal` + `V2BaseDatePicker` rời
+(nhãn nằm trên, mỗi popup một cách xếp) — lệch kiểu với màn danh sách, mất "Cài đặt bộ lọc", mất
+khoảng ngày gộp 1 ô, mất nút Tìm kiếm/Làm mới chuẩn. Cũng cấm dùng panel mà quên `in-modal`: ô chọn
+khi đó là `V2BaseSelect`, dropdown bị modal cắt/che (mục 2).
+
 ## 5. Checklist khi tạo/review modal
 
 - [ ] **Dựng trên `V2BaseModal`** (mục 0) — popup mới KHÔNG tự khai `b-modal` + header + footer
 - [ ] **Footer ghim đáy, luôn nhìn thấy** kể cả khi nội dung dài (đo: `footer.getBoundingClientRect().bottom <= window.innerHeight`)
-- [ ] **Body padding `0.5rem`** — không để popup thừa khoảng trắng
-- [ ] Dòng mô tả bản ghi: chữ xám, KHÔNG in đậm, KHÔNG màu đỏ
+- [ ] **Body padding `0.5rem 0.75rem`** — dọc sát, ngang 0.75rem thẳng mép với header/footer (mục 0)
+- [ ] **Header đúng 1 dòng**: icon + tiêu đề + nút ×, KHÔNG có dòng mô tả bản ghi (không truyền `subtitle`)
 - [ ] Dùng `hide-footer` + tự viết `<div class="modal-footer">` (chỉ khi không dùng được `V2BaseModal`)
 - [ ] Header có icon tròn + title + nút X
 - [ ] Không dùng `no-close-on-backdrop`
 - [ ] Button tuân thủ skill `button-convention` (variant, icon, thứ tự, size)
 - [ ] Mọi select trong modal dùng `V2BaseSelectInModal`, KHÔNG dùng `V2BaseSelect`
+- [ ] **Popup Xem bản ghi đã tồn tại: có khối "Lịch sử" (`SystemInfoSection`) ở CUỐI body**, `v-if="isShow && id"`, thu gọn sẵn, lazy load (mục 3c-a)
+- [ ] **Đáy body KHÔNG có dòng `Người tạo / Ngày tạo`** — `V2BaseMetaInfo` chỉ được dùng `variant="chip"` ở header (mục 3c-b)
+
+**Nếu popup có bộ lọc — thêm (xem mục 4c):**
+
+- [ ] Bộ lọc là `V2BaseSmartFilterPanel` có `in-modal` + `floating` + `table="<khoá riêng>"` — KHÔNG tự dựng lưới `V2BaseLabel` + select rời
+- [ ] CÓ ô tìm nhanh (thiếu thì thêm `keyword` ở BE), nâng cao thu gọn sẵn
+- [ ] Bảng gọn `table-bordered table-sm` trong khung cuộn + `V2BasePagination` — KHÔNG `V2BaseDataTable`; khung 98vh (mục 4)
+- [ ] Nút Đóng để `V2BaseModal` tự render (`fas fa-arrow-left`), không tự khai icon khác
+- [ ] Khoảng ngày gộp 1 ô `type: 'date-range'`; chọn select là tìm luôn, ô gõ tay chờ Enter
+- [ ] Mở lại popup reset bộ lọc mà không gọi API 2 lần; danh mục ô chọn nạp lười lúc mở lần đầu
 
 **Nếu popup có bảng dữ liệu — thêm (xem mục 4):**
 

@@ -837,6 +837,84 @@ nhưng nếu còn dùng thì màn Tài khoản nhân viên vẫn vào được t
   Tỉ lệ đóng BHXH…) hiện render thành mục bấm không đi đâu. Muốn xám mờ phải sửa `Topbar.vue`
   (component dùng chung → hỏi user trước).
 
+## Phase 7 — Đối chiếu lại với sheet bản 24/09/2026 + sửa theo user chốt (2026-09-24)
+
+Đối chiếu cấu trúc (nhóm → mục, 2 chiều) sheet `book.xlsx` 24/09 ↔ cây menu thật đọc từ `subsystems.js`
+(Node 24 + loader alias `@/`). Kết quả soát tay: `tai-lieu-quy-hoach-phan-he/doi-chieu-cau-truc-menu-24-09.md`.
+⚠️ `doi-chieu-menu.py` cũ hỏng (còn trỏ `legal.js` đã bỏ) và chỉ so tên 1 chiều — không bắt được lệch nhóm.
+
+User chốt 24/09: QUẢN TRỊ LÕI đã ổn; Thuế TNCN / Tuyển dụng / KPI / Sản xuất / An toàn 5S để tạm;
+CSKH trước bán để nguyên; Bán hàng để sau.
+
+- [x] **Công việc theo sheet** (`menu-sidebar.js`): "Vấn đề" về trong nhóm Nhiệm vụ (bỏ mục cấp 1 — TPE 23/09
+      dòng 15 "Sai vị trí vấn đề"); bỏ nhóm "Bàn giao công việc", 2 biên bản về Kết quả công việc;
+      thêm "Đề nghị thanh toán công tác phí" vào Phê duyệt › Công tác (`/assign/payment_business_request?status=2`).
+      (3 màn bàn giao + "Cập nhật tiến độ nhiệm vụ" về nhóm Nhiệm vụ: đã có sẵn trong working tree từ trước.)
+- [x] **Bảo hiểm**: "Cấu hình" đứng riêng (user chốt); 2 tiêu đề "Bảo hiểm bắt buộc" (Báo cáo BHXH) / "Bảo hiểm phúc lợi gia tăng"
+      (Danh mục, Bảo hiểm, Chờ duyệt, Báo cáo) bằng `hubGroup` (`insurance.js`).
+- [x] **Quản lý cơm**: tên rút gọn "Bảng đăng ký cơm", "Thông báo" (TPE 24/09) — có sẵn trong working tree.
+- Còn lệch chưa xử lý (chờ user): Meeting thiếu 2 báo cáo; Đào tạo tên "Đề xuất khoá học" + vị trí
+  "Danh sách khóa học cần duyệt"; Bảo hiểm tên "Bảo hiểm nhân viên" (sheet: "…đăng ký").
+
+### Checkpoint — Phase 7 (2026-09-24)
+**Vừa hoàn thành:** 3 file `hrm-client` worktree gop-db (chưa commit). Kiểm: `deriveHubGroups` ra đúng nhóm;
+link trùng giữa phân hệ = 24 (bằng HEAD, không tăng).
+**Đã verify trình duyệt (localhost:3000, DNS Admin):** rail Công việc không còn "Vấn đề" cấp 1 / nhóm "Bàn giao công việc"; Nhiệm vụ 6 mục đúng sheet; Phê duyệt › Công tác có DNTT (mở ra lọc sẵn "Chờ TP duyệt"); Bảo hiểm: rail Cấu hình riêng + "Bảo hiểm bắt buộc" (Báo cáo BHXH) + "Bảo hiểm phúc lợi gia tăng" (4 nhóm).
+**Bước tiếp theo:** user commit.
+- [x] **Bảng lỗi TPE 23/09 (tab "Test menu chuyển nền tảng_23092") dòng 16-18** (`menu-sidebar.js`):
+      bỏ "Phiếu công tác kỹ thuật" + "Phiếu công tác khác" (bản chất là Phiếu giao công tác);
+      bỏ "Thông báo hoàn thiện hồ sơ" (thừa, vẫn còn ở phân hệ Thông báo) + "Biên bản bàn giao sơ bộ"
+      (sheet không có); thêm "Báo giá chờ duyệt" (`/assign/quotations/pending-approval`) vào
+      Phê duyệt › Giải pháp - Dự án — link trùng sale-hub có chủ đích (24 → 25). Verify trình duyệt OK.
+- [x] Bảo hiểm: "Cấu hình" đứng riêng (user chốt 24/09), không gộp vào "Bảo hiểm bắt buộc".
+- [ ] Bảng lỗi TPE dòng 24 (ERP: menu kho / vận chuyển / cung ứng "chưa xoá bớt menu thừa — hiện trỏ menu
+      về ERP chung") — chưa rõ yêu cầu, chờ user.
+
+### 25/09/2026 — ô ERP ở SX-CƯ + bảng lỗi TPE dòng 14-26
+- [x] Ô "ERP" (`erp-supply`, `external`) đầu nhóm SX-CƯ — hiện ở màn chọn phân hệ + dropdown chuyển phân hệ, bấm
+      mở `ERP_URL`. Không khai `isShowKey: 'use_erp'` (băng HỆ THỐNG ERP không được vẽ ở 2 chỗ đó).
+      Local trỏ `qttt.tanphat.com` vì `.env` client comment `ERP_URL` -> rơi về `TP_URL`.
+- [x] Dòng 14: đổi tên 4 mục duyệt kết quả (Phê duyệt › Giao việc / Công tác) thêm "tại công ty" / "(nghiệp vụ)".
+- [x] Dòng 17 + 22: Meeting › Báo cáo thêm "Meeting theo nhân viên/ phòng ban/ công ty" + "Meeting theo dự án"
+      (cùng link với presale.js).
+- [x] Dòng 20: Đào tạo › Đánh giá chất lượng đào tạo thêm "Danh sách khóa học cần duyệt" (`/training/courses?type=waiting`).
+- [ ] Chờ user: 15/16/23 (CSKH trước bán: Báo giá, Nhiệm vụ, Vấn đề, đổi tên Yêu cầu tính giá bán, 2 báo cáo),
+      18 (tiêu đề tab trình duyệt = tên màn), 19 (Báo cáo thang bảng lương có sẵn, bị ẩn theo quyền), 21 (đã có
+      trên code mới), 24/25 (Bán hàng), 26 (Tài chính 3 mục ghi tạm).
+- [x] 25/09 (user chốt: 1 màn ở nhiều phân hệ là bình thường, dùng tên mới của sheet):
+      15/16/23 CSKH trước bán: "Yêu cầu tính giá bán", thêm Báo giá / Nhiệm vụ / Vấn đề (nút rail), Báo cáo chia
+      2 nhóm "Báo cáo dự án tiền khả thi" + "Báo cáo thị trường" (hubGroup). 24/25 Bán hàng (`sale-hub.js`):
+      Danh mục thêm nhóm "Dự án - Giải pháp" (8 mục) + "Danh mục hàng hóa" (erpPath `/admin/products`);
+      Quy chế - Thiết lập thêm nhóm "Quy chế kinh doanh" (3 màn như Văn bản). 26 Tài chính: "Quỹ - Thu chi"
+      (rail Quản lý tiền) + nhóm "Báo cáo tài chính" (Báo cáo tài chính, Báo cáo dòng tiền) — XÁM.
+- [x] 18 Tiêu đề tab: `screenTitleOf()` (subsystems.js) — 3 layout default / default-sidebar / subsystem dùng làm
+      `head().title`; màn tự khai head() vẫn ưu tiên; "Tổng quan" ghép tên phân hệ.
+- [x] Sidebar trắng: `layouts/subsystem.vue` vẽ SaleHubSidebar (+ sale-theme) cho HUB_SUBSYSTEMS (Quản trị ›
+      Người dùng / Phân quyền / Tài khoản NV); 2 báo cáo BHXH `human/report/insurance_report_*` thêm `layout: 'subsystem'`.
+      Quét toàn bộ link hub: không còn màn nào rơi về layout topbar (trừ `assign/my-job` layout:false có chủ ý).
+- [ ] 19 thang bảng lương: DỮ LIỆU phân quyền — role "Super admin"(18) chỉ tích quyền 969 ở company 8; API login
+      lọc `role_has_permissions.company_id = company_role` -> phải tích quyền cho đúng công ty ở màn Phân quyền.
+- [x] Bảng lỗi TPE "Thiếu cấp menu trong đào tạo": Đào tạo › Báo cáo tách 2 nhóm "Báo cáo khóa học" (11) +
+      "Báo cáo đánh giá năng lực" (6) bằng hubGroup 'Báo cáo', thứ tự theo sheet dòng 168-186. Danh mục trong sheet
+      cũng chia 3 cấp (DM khóa học / DM đánh giá năng lực / DM E-learning) — chưa làm, chờ user.
+- [x] TPE "Đúng ra đây phải là menu 1 cấp": Văn bản › "Quản lý thông báo nội bộ" / "Thông báo nội bộ" thành nút rail
+      đi thẳng. Hub khai tay nay hỗ trợ "nhóm có `link`" (operation-hub.js) -> operation.js sinh mục cấp 1;
+      hub.js: hubGroupsFor lọc nhóm có link, hubNavLinksFor KHÔNG còn trả [] cho HAND_WRITTEN (Bán hàng không đổi — đã kiểm).
+- [ ] TPE dòng 17 Fail "Meeting theo khách hàng": KHÔNG có màn báo cáo này (meeting-by-projects chỉ có ô lọc khách hàng)
+      -> mục đang xám. Chờ user chọn: làm màn mới / trỏ tạm sang BC theo dự án / giữ xám.
+- [x] TPE 25/09 (4 dòng mới):
+  - "Menu 3 cấp khác các màn khác" (Bảo hiểm phúc lợi, Văn bản › Bán hàng DV&XK): user chọn MỌI menu 3 cấp dùng
+    nav-mode 2 cột. SaleHubSidebar.vue `isNav` = mọi nhóm trừ nhóm 2 cấp (1 mục trùng tên nhóm, không subs);
+    bỏ hằng NAV_MIN=5. Ảnh hưởng mọi phân hệ hub.
+  - Văn phòng số thiếu "Quản lý tài sản": thêm nhóm rail sau Hồ sơ pháp lý, 4 mục xám (sheet bôi vàng).
+  - Bỏ "Xem Quy chế chung" ở Bán hàng, dịch vụ và xuất khẩu (trùng Quản trị HCNS).
+- [x] Mẫu in người dùng tìm không ra (25/09): màn `/decision/category/print_templates` (API human/print-templates,
+      mẫu in HĐLĐ/QĐ/Biên bản/HĐĐT/TBNB/Meeting — gốc là mẫu in của menu Quyết định cũ, HC-NS không có màn riêng)
+      CHUYỂN sang Quản trị hệ thống › "Danh mục mẫu in" (mục 1 cấp, isShow 'Quản lý mẫu in') theo sheet QUẢN TRỊ LÕI;
+      bỏ khỏi Văn bản › Danh mục; bỏ 2 mục xám "Quản lý mẫu in"/"(mới)" ở admin.js.
+  - Chỉnh theo user: nhóm "Danh mục mẫu in" = "Mẫu in (Quản trị HC-NS)" (màn HRM, có link) + 2 mục ERP xám giữ nguyên
+    ("Quản lý mẫu in" = ERP /report_templates, "Quản lý mẫu in (mới)" = ERP printTemplate.index).
+
 ---
 
 ## Chỉnh 05/10/2026 — Menu Báo cáo phân hệ CSKH trước bán (@namdangit)
