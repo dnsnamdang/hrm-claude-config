@@ -938,3 +938,173 @@ Vừa hoàn thành: fix validate bắt buộc màn Phiếu kế toán theo skill
 Bước tiếp theo: user mở trình duyệt (Ctrl+Shift+R) kiểm — phiếu nhiều dòng bỏ trống Số tài khoản/Diễn giải dòng dưới cùng → Lưu và duyệt phải cuộn đúng dòng, lỗi tự tắt khi sửa; lưu nháp thiếu Ngày hạch toán hiện đỏ dưới ô.
 Treo chờ user quyết: (1) lỗi 422 từ BE vẫn chỉ toast câu đầu, chưa gắn inline từng ô; (2) có đổi "Tỷ giá (VND) – Phải lớn hơn 0" / "Định khoản – Phải có ít nhất một dòng" không; (3) skill form-validate ghi mẫu "Tên dự án không được để trống" lệch chuẩn "Bắt buộc phải nhập" — cần PR sửa skill.
 Blocked:
+
+
+## Fix — Popup chọn phiếu YCĐC công nợ: gắn link cột Mã phiếu yêu cầu (2026-10-02) @khoipv
+
+User yêu cầu: trong popup "Chọn phiếu yêu cầu điều chỉnh công nợ" (form Phiếu kế toán), cột Mã phiếu yêu cầu gắn link.
+
+- [x] FE `BillAdjustDeptRequestPickerModal.vue`: mã phiếu thành `nuxt-link` → `/finance/bill-adjust-dept-requests/{id}` mở tab mới, `@click.stop` để bấm link không chọn dòng
+- [x] Verify compile template (vue-template-compiler) — CHƯA mở trình duyệt
+- [x] FE: phân trang theo skill modal-popup §4 — bọc `.picker-layout` flex dọc, CHỈ khung bảng cuộn (thead dính), ô lọc + `V2BasePagination` đứng yên ở đáy popup; thu `mt-3` của phân trang còn 4px như popup Phiếu thu
+- [x] Verify compile template (0 lỗi) — CHƯA mở trình duyệt
+
+- [x] FE: user đổi ý — phân trang làm GIỐNG popup "Chọn phiếu xác nhận bảo hành" (`addition-accounting-requests/components/RecordSearchModal.vue`): bỏ bảng thô + `V2BasePagination` + bố cục ghim, chuyển sang `V2BaseDataTable` (20/50/100, mặc định 20, sort qua `@sort`, bấm dòng = chọn qua `onTableClick`)
+- [x] Verify compile template + babel script (0 lỗi) — CHƯA mở trình duyệt
+
+### Checkpoint — 2026-10-02
+Vừa hoàn thành: popup chọn phiếu YCĐC công nợ — link cột Mã phiếu yêu cầu + bảng/phân trang đổi sang `V2BaseDataTable` giống popup Chọn phiếu xác nhận bảo hành.
+Đang làm dở: không.
+Bước tiếp theo: user Ctrl+Shift+R mở popup, so phân trang với popup Chọn phiếu xác nhận bảo hành (addition-accounting-requests/create); thử sort Mã phiếu/Ngày tạo, đổi trang, bấm dòng chọn, bấm link mở tab mới.
+Blocked:
+
+
+## Bug — Chọn phiếu YCĐC xong: ERP điền sẵn STK 1311, HRM để trống (2026-10-02) @khoipv — ĐÃ SỬA 2026-10-03
+
+User báo: sau khi chọn phiếu yêu cầu ĐCCN, bên ERP mọi phiếu fill sẵn STK = 1311, HRM thì không.
+
+Đã trace (CHƯA sửa code):
+- ERP `BillAdjustDeptRequest::getDataForBillAdjustDeptCustomer()` lấy `account_id = bill_income_report_detail->account_has ?? ''` — cả nhánh master; form ERP KHÔNG tự gán 1311.
+- HRM `BillAdjustDeptSourceService::adjustRequestCustomerRows()` :181-240 viết y hệt; FE `loadSourceData()` + `normalizeRow()` giữ nguyên `account_id`; `/form-options` trả đủ mọi TK (id 22 = 1311, 99 = 3311).
+- Dữ liệu thật (status 2): 37 dòng có `bill_income_report_detail_id` → HRM điền 1311 đúng (VD TPE.DNDCCN0726.00521, 00512); 18 dòng NULL (phiếu tạo tay, không đi từ Phiếu báo có — VD TPE.DNDCCN0926.00001, 0826.00004, 0726.00517) → trống, ERP cũng sẽ trống theo code.
+- Màn tạo YC của HRM có lưu `bill_income_report_detail_id` khi vào từ báo có (`BillAdjustDeptRequestForm.vue` :681 → `BillAdjustDeptRequestWriteService` :345).
+
+- [x] User xác nhận (03/10): trên ERP chọn phiếu nào cũng ra 1311 — "Phải thu của khách hàng ngắn hạn"
+- [x] Tìm ra nguồn: ERP gán ở **FE**, không phải BE — `resources/views/partials/classes/IncomeExpenditure/BillAdjustDeptDetail.blade.php` `after()`: `if (!this.account_id && this.parent.bill_adjust_dept_request_id) this.account_id = 22` (= 1311). Lượt điều tra 02/10 chỉ đọc BE nên sót.
+- [x] BE `BillAdjustDeptSourceService::adjustRequestCustomerRows()`: `account_id = account_has ?: accountIdByNumber(1311)` (tra theo số hiệu, không hard-code id 22). Nhánh NCC không cần — BE luôn gán 3311/1311.
+- [x] Verify script thật: TPE.DNDCCN0926.00001 / 0826.00004 (tạo tay) và 0726.00521 (từ báo có) → mọi dòng account_id = 22 (1311)
+
+## Fix — Cột Số TK chỉ hiện số, cột Tên TK chỉ hiện tên (2026-10-03) @khoipv
+
+User yêu cầu: cột STK bỏ tên, cột Tên TK bỏ STK (trước cả 2 cột đều "1311 - Phải thu…").
+
+- [x] FE `BillAdjustDeptForm.vue` `loadOptions()`: option TK `name = identify_number` (ô chọn chỉ hiện số, như ERP), thêm `account_name = item.name`
+- [x] FE `AccountingDetailTable.vue`: `accountName()` + `onAccountChange()` lấy `found.account_name` (tên thuần) thay vì `found.name`
+- [x] Kiểm DB: 0/33.417 dòng `bill_adjust_dept_details.account_name` đang lưu dạng "số - tên" → không có dữ liệu bẩn cần xử lý
+- [x] Verify compile 2 file (0 lỗi) — CHƯA mở trình duyệt
+
+## Fix — 3 cột cuối (Ngân hàng / STK ngân hàng / Nhóm định khoản) sửa được như ERP (2026-10-03) @khoipv
+
+User báo: ERP sửa được 3 cột cuối, HRM không. Đây là mục ⚠️ #2 treo từ 12.12 (05/09) + 1 lỗi port:
+ERP ô Nhóm định khoản (`form.blade.php` :430-435) KHÔNG có điều kiện — HRM khoá theo `lockedRows` là hiểu sai ERP :240/:437 (chỉ ẩn nút thêm/xoá dòng).
+
+- [x] BE `BillAdjustDeptController::formOptions()` trả thêm `banks` (ngân hàng có trong `company_accounts`, mirror `CompanyAccount::bank_for_select()`) + `company_accounts` (TK có ngân hàng của công ty người đăng nhập, mirror `Company::getAccountFroms()`, kèm `currency_name`)
+- [x] FE `BillAdjustDeptForm.vue`: nạp `bankOptions` / `companyAccounts`, truyền xuống bảng
+- [x] FE `AccountingDetailTable.vue`: Ngân hàng = `V2BaseSelect` (đổi ngân hàng → chụp `bank_code`/`bank_name`, xoá STK — chỉ khi giá trị đổi thật, tránh select2 bắn lại `input` lúc nạp phiếu xoá mất STK đã lưu); STK = `V2BaseSelect` lọc theo ngân hàng của dòng, hiện "số - loại tiền - tên TK" như ERP, giữ STK đã lưu dù không còn trong danh sách; Nhóm định khoản bỏ điều kiện `lockedRows`
+- [x] Lưu: WriteService/Request/Resource đã có sẵn 4 trường bank_* — không sửa
+- [x] Verify: smoke formOptions (NV 13, công ty 1) → 12 ngân hàng, 22 TK; compile 2 file 0 lỗi — CHƯA mở trình duyệt
+- ⚠️ ERP `ng-change="detail.account_number = ''"` xoá NHẦM field (không tồn tại) nên đổi ngân hàng ERP vẫn giữ STK cũ — HRM xoá đúng `bank_account_number` (sửa lỗi ERP)
+
+## Feature — Lịch sử thay đổi ở màn danh sách + màn chi tiết (2026-10-03) @khoipv
+
+User yêu cầu theo skill `entity-history`. ERP không có lịch sử cho màn này. Ghi vào bảng CHUNG
+`catalog_histories` như các phiếu Finance chị em — 0 migration, 0 quyền mới (ai vào màn thì xem được).
+
+- [x] BE `BillAdjustDeptHistoryService` (mới, khuôn `BillIncomeHistoryService`): theo dõi 3 mã phiếu nguồn, ngày hạch toán, loại tiền (tên), tỷ giá, diễn giải, tổng tiền + 2 khoá ẢO dạng BẢNG `details_rows` (dòng định khoản, `__key` tự nhiên TK|đối tượng|hợp đồng, tên dòng "TK 1311 — KH — HĐ") và `attachment_rows` (giữ nguyên URL). KHÔNG theo dõi `status` (§3a)
+- [x] BE `CatalogHistoryService::TABLES` đăng ký `bill_adjust_depts` + nhãn tiếng Việt
+- [x] BE `BillAdjustDeptWriteService`: store → "Tạo mới" (+ "Thay đổi trạng thái" nếu Lưu và duyệt); update → snapshot trước fill, "Thay đổi thông tin" + dòng trạng thái riêng khi duyệt/hủy; destroy → "Xóa" (chụp trước khi xoá dòng con)
+- [x] BE `BillAdjustDeptController::deleteFile()` → log "File đính kèm đã xóa"
+- [x] FE `index.vue`: menu ⋮ thêm "Lịch sử" (`ri-history-line`) → `CatalogHistoryModal` (tiêu đề chỉ số phiếu)
+- [x] FE `_id/index.vue`: khối `SystemInfoSection` trong thân trang dưới form, thu gọn sẵn
+- [x] Verify §7a: script 30 ca trong transaction rồi rollback (mỗi trường header + mỗi cột dòng định khoản 1 ca, đổi TK/đối tượng, thêm/xoá dòng, nhiều trường 1 lần, không đổi, lưu 2 lần, thêm/gỡ file, sửa→duyệt, tạo+duyệt, xoá) — đạt hết, 0 log rác, còn 0 bản ghi test. Bộ lọc: 3 nhóm cố định + 783 người thực hiện. HTTP 2 endpoint 200. Compile FE 0 lỗi — CHƯA mở trình duyệt
+- ⚠️ Đổi TK hoặc đối tượng của 1 dòng = "xoá 1 + thêm 1" (2 trường này nằm trong `__key`, giống Phiếu thu). Phiếu lập trước 2026-10-03 không có lịch sử cũ.
+
+## Fix — Excel chi tiết phiếu: logo nhỏ/lệch + chữ dài bị che (2026-10-03) @khoipv
+
+User báo: file Excel màn chi tiết phiếu có logo nhỏ, lệch; nội dung dài bị ô bên cạnh che mất.
+Nguyên nhân: `drawings()` không truyền bề rộng → trait ép ảnh cao 72px; không bật wrap text ở đâu.
+
+- [x] BE `BillAdjustDeptExport`: letterhead rộng ĐÚNG bằng phiếu (`tableWidthPx()` cộng các cột của layout VNĐ 16 / ngoại tệ 18 cột) — khuôn `BillAdjustDeptRequestExport`
+- [x] BE `BillAdjustDeptExport` AfterSheet: wrap text + căn trên toàn vùng dữ liệu (tính từ `getHighestRow()`), dòng ô gộp (Diễn giải…) tự ước chiều cao vì Excel không tự giãn dòng có ô gộp
+- [x] Verify: dựng file thật từ 1 phiếu VNĐ + 1 phiếu ngoại tệ, đọc lại drawing / bề rộng / wrap / chiều cao dòng — phiếu 1453 (VNĐ, 16 cột): logo 2376x212 @A1; phiếu 12852 (RUPEE, 18 cột): logo 2610x233; dòng Diễn giải 241 ký tự giãn 10 dòng chữ; ca giả Diễn giải đầu phiếu 720 ký tự → dòng 7 cao 45pt; ô tiền vẫn kiểu số `#,##0`. CHƯA mở bằng Excel thật
+
+## Fix — Bỏ trạng thái "Hủy" thừa (2026-10-03) @khoipv
+
+User báo: bộ lọc có trạng thái Hủy nhưng màn không có thao tác hủy / không duyệt nào.
+Đối chiếu: ERP cũng KHÔNG có nút nào dẫn tới Hủy (chỉ khai hằng `STATUS_CANCEL` + nhánh chết trong
+`update()`), DB 0/12.633 phiếu status 4 (12.626 Đã duyệt · 7 Đang tạo). HRM port theo nên gọi thẳng
+API `status=4` vẫn hủy được phiếu (và đổi phiếu YCĐC nguồn sang Hủy).
+
+- [x] BE `BillAdjustDept`: thêm `FILTER_STATUSES` (Đang tạo, Đã duyệt); bỏ Hủy khỏi `ALLOWED_TRANSITIONS`. GIỮ hằng + nhãn "Hủy" trong `STATUSES` để hiện đúng tên nếu dữ liệu ERP có
+- [x] BE `BillAdjustDeptController::meta()` trả `statuses` theo `FILTER_STATUSES`; bỏ câu "Hủy phiếu kế toán thành công."
+- [x] BE `BillAdjustDeptUpdateRequest`: `status` chỉ nhận 1/2
+- [x] BE gỡ code chết: `WriteService::cancel()` + nhánh gọi, `SourceService::onBillCancelled()`
+- [x] Verify: API danh sách → statuses = ["Đang tạo","Đã duyệt"]; update `status=4` → 422 bị chặn; chạy lại 30 ca lịch sử vẫn đạt
+
+## Fix — Màu nút "Lưu nháp" theo skill button-convention (2026-10-03) @khoipv
+
+- [x] FE `BillAdjustDeptForm.vue`: "Lưu nháp" `primary` (teal, trùng màu "Lưu và duyệt") → `secondary`, đứng đầu theo §5 — khớp mọi màn có Lưu nháp (Phiếu YCĐC công nợ, YC hạch toán bổ sung, Hợp đồng, Báo giá…). Sửa luôn comment cũ ghi "cả 2 nút primary"
+- [x] Compile template 0 lỗi — CHƯA mở trình duyệt
+- ⚠️ Skill tự mâu thuẫn: §2b bảng màu xếp "Lưu nháp" vào nhóm `primary`, §5 ghi `secondary`. Làm theo §5 + thực tế codebase; cần PR sửa §2b
+
+## Fix — Sửa phiếu báo 422 `attachments.0: Không hợp lệ` (2026-10-03) @khoipv
+Phiếu 12862 (có file đính kèm) → bấm Lưu báo lỗi. Nguyên nhân: `loadDetail()` `Object.assign(this.form, data)` chép luôn `attachments` (mảng URL đã lưu) vào form, `submit()` rải `...this.form` nên gửi `attachments: ["https://..."]` lên — BE rule `attachments.*` = `file` (luồng multipart cũ của ERP) → chuỗi URL bị đánh "Không hợp lệ". Phiếu không có file thì mảng rỗng nên không lộ.
+- [x] FE `BillAdjustDeptForm.vue` `submit()`: `delete payload.attachments` (khuôn `AdditionAccountingRequestForm`) — danh sách file đã lưu BE tự giữ
+- [x] Đổi file ĐÃ LƯU (nút "Thay đổi") — user chốt dùng bản khối của màn YC hạch toán bổ sung:
+  - FE `addition-accounting-requests/components/AttachmentSection.vue`: thêm prop `api-base` (mặc định = màn YC HTBS, hành vi giữ nguyên); `confirmId` suy theo apiBase
+  - FE `BillAdjustDeptForm.vue`: import bản trên, `replacedFiles` + `@replace-saved-file`, gửi `replaced_attachments [{old_url,new_url}]`, đưa vào snapshot "chưa lưu"
+  - BE `BillAdjustDeptUpdateRequest`: rule `replaced_attachments.*` (new_url `starts_with` URL_PREFIX)
+  - BE `BillAdjustDeptAttachmentService`: `replaceAttachments()` (thay đúng vị trí) + `deleteFromS3()` (chỉ xoá file thư mục `bill_adjust_dept`, không xoá file thừa hưởng phiếu nguồn)
+  - BE `BillAdjustDeptWriteService::update()`: thay trước → nối file mới → merge file phiếu nguồn TRỪ URL đã bị thay; xoá S3 file cũ SAU commit
+- [x] php -l 3 file + compile template 2 file 0 lỗi + tinker `replaceAttachments` đúng — CHƯA mở trình duyệt
+- ⚠️ Lỗi có sẵn (chưa sửa): xoá file THỪA HƯỞNG từ YC hạch toán bổ sung thì lần Lưu sau `mergeSourceAttachments` nối nó lại
+
+## Fix — Logo file Excel DANH SÁCH nhỏ + lệch, làm giống file chi tiết (2026-10-05) @khoipv
+File danh sách dựng ở FE bằng `utils/export/listExportFile.js` (dùng chung): letterhead bị giới hạn 900px + căn giữa, bảng ~1.970px → logo chưa tới nửa bảng. File chi tiết (`BillAdjustDeptExport`) kéo letterhead rộng bằng cả bảng từ A1.
+- [x] FE `listExportFile.js`: bỏ trần 900px, letterhead rộng hết bảng từ mép trái (giữ neo 2 ô `tl`+`br` chống đè tiêu đề) — user chốt áp cho MỌI màn danh sách dùng hàm này
+- [x] Sửa skill export-excel mục 4b (trần 900px không còn)
+- [x] Verify bằng ExcelJS trong Node (ảnh letterhead thật công ty 1, 13 cột ~1.969px): `twoCellAnchor` from col0/off0 → to col13/off0 row1, dòng 1 cao 131pt `spans=1:13` — CHƯA mở bằng Excel/trình duyệt
+- ⚠️ Lỗi phát hiện, user chọn KHÔNG sửa: ảnh luôn nhúng extension `png`, letterhead công ty 5/6/7 là JPG
+
+## Fix — Tạo phiếu kế toán từ YC hạch toán bổ sung nổ "Class FirmWarrantyConfirm not found" (2026-10-05) @khoipv
+Loại 1 (bảo hành hãng) / loại 5 (xử lý hàng thiếu) ghi `contractable_type` = tên class ERP `App\Model\Order\FirmWarrantyConfirms\FirmWarrantyConfirm` / `App\Model\Warehouse\InventoryDiscrepancyHandlingImport`, nhưng 2 chuỗi này chưa có trong morphMap → duyệt phiếu (`BillAdjustDeptAccountingService::collectInput()` eager load `details.contractable`) nổ 500.
+- [x] BE: entity chỉ-đọc `Contract\FirmWarrantyConfirm` (`firm_warranty_confirms`) + `Contract\InventoryDiscrepancyHandlingImport` (`inventory_discrepancy_handling_imports`)
+- [x] BE: đăng ký 2 chuỗi class ERP vào morphMap `FinanceServiceProvider`
+- [x] Verify bằng tinker: resolve morph 2 loại ra đúng model (lazy + eager load) — CHƯA tạo phiếu thật trên trình duyệt, phiếu 2156 không có ở DB local
+
+## Fix — Popup "Chọn phiếu yêu cầu điều chỉnh công nợ" bỏ tiêu đề bảng (2026-10-05) @khoipv
+- [x] FE `BillAdjustDeptRequestPickerModal.vue`: bỏ `title="Danh sách phiếu yêu cầu điều chỉnh công nợ"`, bật prop có sẵn `hide-header` của `V2BaseDataTable` (ẩn cả icon + khung tiêu đề; popup đã có tiêu đề riêng)
+
+## Fix — Tạo phiếu kế toán từ YC hạch toán bổ sung: cột "Dung lượng" file trống (2026-10-05) @khoipv
+File thừa hưởng phiếu nguồn hiện ở khối đính kèm dạng "đã lưu", nhưng màn tạo chưa có id → `AttachmentSection::loadSavedSizes()` thoát sớm, không hỏi được `/{id}/attachment-sizes`.
+- [x] BE `BillAdjustDeptController::sourceData()`: có `attachments` thì trả kèm `attachment_sizes` `{url: byte}` (khuôn `WarehousePrepickRequestController::requestData`)
+- [x] FE `AttachmentSection.vue` (khối chung, user chốt thêm prop opt-in): prop `initialSizes` mặc định `{}`, dùng khi `savedSizes` chưa có — màn YC HTBS không truyền nên giữ nguyên
+- [x] FE `BillAdjustDeptForm.vue`: `attachmentSizes` nạp từ `source-data`, truyền `:initial-sizes`
+- [x] Verify: php -l + tinker `sourceData` YC HTBS 2069 → `attachment_sizes` = 71118 byte; compile template 2 file 0 lỗi — CHƯA mở trình duyệt
+- Phiếu 2036 user thử: file `seed-test-file.pdf` không có trên S3 (HEAD 403) → không có dung lượng, không phải lỗi code
+
+## Fix — Tạo phiếu kế toán từ YC hạch toán bổ sung NGOẠI TỆ: tỷ giá ra 1 (2026-10-05) @khoipv
+BE `fromAdditionAccounting()` không trả `exchange_rate` → FE `loadSourceData()` đặt cứng 1. ERP (`formJs` :49) chỉ gán `type_money_id`, setter của class lấy **tỷ giá hiện hành trong danh mục loại tiền** — dữ liệu thật khớp: PKT 12674 (từ YC 1981 USD) lưu 26.510 ≈ danh mục; cột `exchange_rate` của YC HTBS bị cắt (26 thay vì 26.520) nên KHÔNG dùng.
+- [x] FE `BillAdjustDeptForm.vue`: thêm `catalogRate(id)`; `loadSourceData()` BE không trả tỷ giá → lấy tỷ giá danh mục của loại tiền (VNĐ vẫn ra 1); `onCurrencyChange()` dùng chung helper
+- [x] Verify: `form-options` trả `currencies.exchange_rate` (USD 26.520, RUPEE 282,78); compile template 0 lỗi — CHƯA mở trình duyệt
+- ⚠️ Phát hiện, CHƯA sửa: cột `addition_accounting_requests.exchange_rate` của YC USD lưu 26 (thay vì 26.520) — nghi lỗi dấu ngăn nghìn ở màn YC HTBS
+
+## Fix — Lịch sử: đổi TK của 1 dòng định khoản in cả dòng xoá + dòng thêm (2026-10-05) @khoipv
+Phiếu TPE.PKT1026.00001 đổi TK 1311 → 1312 → lịch sử in "Dòng định khoản thêm mới" + "đã xóa" với đủ mọi cột. Nguyên nhân: `BillAdjustDeptHistoryService::detailKey()` có `account_id` (và `__name` có "TK …") → đổi TK = dòng khác. Khuôn YC hạch toán bổ sung: khoá chỉ gồm đối tượng + hợp đồng.
+- [x] BE `BillAdjustDeptHistoryService`: bỏ `account_id` khỏi `detailKey()`, bỏ "TK …" khỏi `detailName()`, thêm cột `Tài khoản` → đổi TK ra dòng "sửa thông tin: Tài khoản: 1311 → 1312". Dòng trùng đối tượng + hợp đồng (Nợ/Có cùng KH) ghép theo thứ tự (`indexRows()` có sẵn)
+- [x] Verify script (transaction + rollback) trên phiếu #12872 (2 dòng Nợ/Có trùng KH + HĐ): đổi TK → 1 dòng "sửa: Tài khoản: 1111 → 111"; đổi STK → "sửa: STK ngân hàng: → 999888777"; không đổi → 0 log — CHƯA mở trình duyệt
+- Log ĐÃ ghi trước đây (như ảnh user gửi) giữ nguyên, không sửa dữ liệu log; không có nhiễu lần đầu vì snapshot "trước" chụp trực tiếp từ DB mỗi lần lưu
+
+## Bug — Sửa phiếu rồi "Lưu và duyệt", lịch sử chỉ có dòng đổi trạng thái (2026-10-05) @khoipv
+Phiếu TPE.PKT1026.00006 (KHÔNG có ở DB local → user test trên server khác): dòng mới nhất 05/10 10:20 chỉ "Thay đổi trạng thái: Đang tạo → Đã duyệt"; 2 dòng "Thay đổi thông tin" gần nhất là 03/10.
+- [x] Đọc code: `BillAdjustDeptWriteService::update()` ghi `logUpdate` TRƯỚC `approve()` rồi mới `logStatusChanged` — thứ tự đúng; mọi ô nhập trên form (4 ô đầu phiếu + 10 ô dòng định khoản) đều nằm trong snapshot
+- [x] Tái hiện local qua HTTP kernel (phiếu #12862, sửa Diễn giải + status 2, transaction rollback) → ghi ĐỦ 2 dòng `update` + `change_status`
+- [x] User thử lại trên LOCAL, phiếu TPE.PKT0926.00001 (#12862) 11:21:30: DB có đủ `catalog_histories` #588 update (Diễn giải) + #589 YCĐC change_status + #590 change_status; `getLogs()` và endpoint HTTP `catalog-histories/bill_adjust_depts/12862` trả đủ 2 dòng; FE `SystemInfoSection` / `CatalogHistoryModal` không lọc/gộp dòng → BE ghi + đọc đúng, nghi FE cũ/popup mở trước khi lưu — chờ user Ctrl+Shift+R mở lại
+- [ ] Chờ user: sửa trường nào, ở môi trường nào
+
+## Fix — Ô phiếu nguồn ở màn Xem: link đồng bộ màu + gạch chân với cột mã phiếu ngoài danh sách (2026-10-05) @khoipv
+Ô "Phiếu yêu cầu hạch toán bổ sung" / "Phiếu YCĐC công nợ" ở màn Xem tự khai style (`text-decoration: underline dashed`, hover #1abc9c) → lệch `a.v2-cell-link` của danh sách (`border-bottom: 1px dashed #b7c4cf`, hover #088f84).
+- [x] FE `BillAdjustDeptForm.vue`: ô khoá `V2BaseInput disabled` (rỗng) làm KHUNG, chữ là `nuxt-link.v2-cell-link` đè lên → dùng ĐÚNG class của danh sách, không tự khai màu/gạch chân; bỏ style `.source-link` cũ
+- [x] Compile template — CHƯA mở trình duyệt, có lưu nháp trước không; xem log server đó có dòng `[BillAdjustDeptHistory] Lỗi ghi lịch sử thay đổi thông tin` không (lỗi ghi lịch sử bị nuốt bởi `guard()`, API vẫn 200)
+
+### Checkpoint — 2026-10-03
+Vừa hoàn thành: màu nút Lưu nháp; bỏ trạng thái Hủy thừa; trước đó: bug mặc định STK 1311 khi chọn phiếu YCĐC (BE) + tách cột Số TK / Tên TK (FE) + 3 cột cuối sửa được + Lịch sử thay đổi 2 nơi.
+Đang làm dở: không.
+Bước tiếp theo: user Ctrl+Shift+R → tạo Phiếu kế toán, chọn phiếu YCĐC tạo tay (VD TPE.DNDCCN0926.00001) → cột Số TK = "1311", Tên TK = "Phải thu của khách hàng ngắn hạn"; đổi TK ở 1 dòng → Tên TK đổi theo, không kèm số. Chọn Ngân hàng → STK chỉ ra TK của ngân hàng đó; đổi ngân hàng → STK bị xoá; sửa Nhóm định khoản ở phiếu tạo từ YCĐC; lưu rồi mở lại màn sửa → Ngân hàng/STK còn nguyên. Lịch sử: tạo phiếu → sửa vài ô → mở menu ⋮ "Lịch sử" ở danh sách và khối "Lịch sử" ở màn chi tiết, 2 nơi phải giống hệt.
+Blocked:
+
+### Checkpoint — 2026-10-02 (cuối ngày)
+Vừa hoàn thành: popup chọn phiếu YCĐC (link mã phiếu + bảng/phân trang theo `V2BaseDataTable`); điều tra bug STK 1311.
+Đang làm dở: bug STK 1311 — chưa sửa code, chờ user.
+Bước tiếp theo: hỏi user mã phiếu đã thử + chốt hướng (a)/(b) ở mục Bug trên; nếu (a) thì sửa ở `BillAdjustDeptSourceService::adjustRequestCustomerRows()` (fallback `accountIdByNumber(1311)`) và nhánh NCC tương ứng.
+Blocked: chờ user xác nhận (user hẹn mai làm tiếp).

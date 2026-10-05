@@ -1887,6 +1887,9 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- finance-bill-adjust-dept-request (fix 03/10, Phase 47) → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
+  Hoàn thành: 2026-10-05 — đã fix lỗi popup chọn hợp đồng hiện HĐ của khách bên kia (popup mở trước khi prop objectId kịp cập nhật).
+
 - bao-cao-tong-hop-cskh-tiem-nang → @namdangit → .plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/plan.md
   Hoàn thành: 2026-10-04 — **ĐÃ MERGE + PUSH gop_db + DEPLOY VPS (user xác nhận)**. hrm-api `85a1c59d7` · hrm-client `a6ad678d0`; nhánh feature `gop_db-bao-cao-tong-hop-cskh-tiem-nang` đã push.
   Màn `/assign/report/potential-customer-tracking` (CSKH trước bán › Báo cáo thị trường): nhu cầu Đang theo dõi + dự án TKT tiến trình 2→9 theo Phòng ▸ Sales ▸ KH, tại thời điểm xem. Quyền 1676–1678 (type 29) + nới `Meeting::canView` cho quyền báo cáo; 4 nhóm quyền báo cáo thị trường chuyển type 4 → 29.
