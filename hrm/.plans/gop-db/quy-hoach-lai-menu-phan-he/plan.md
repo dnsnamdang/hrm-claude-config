@@ -836,3 +836,17 @@ nhưng nếu còn dùng thì màn Tài khoản nhân viên vẫn vào được t
   `Sidebar.vue`. Mục chưa có màn ở các phân hệ này (Cấu hình tiền lương, Báo cáo thu nhập,
   Tỉ lệ đóng BHXH…) hiện render thành mục bấm không đi đâu. Muốn xám mờ phải sửa `Topbar.vue`
   (component dùng chung → hỏi user trước).
+
+---
+
+## Chỉnh 05/10/2026 — Menu Báo cáo phân hệ CSKH trước bán (@namdangit)
+
+Nhánh `hrm-client` `gop_db-menu-presale-bao-cao` (tách từ `gop_db`, worktree `websites/wt-fix-tkt-linh-vuc`). Chỉ sửa `components/subsystem-menu/presale.js`.
+
+- [x] Nhóm "Báo cáo thị trường" lên ĐẦU rail Báo cáo, "Báo cáo dự án tiền khả thi" xuống sau
+- [x] "Báo cáo kế hoạch & kết quả làm việc theo nhân viên" dời sang nhóm Báo cáo thị trường, vị trí đầu (giữ nguyên `isShow` 3 quyền)
+- [x] `hubIcon: 'ri-file-chart-line'` dời theo sang nhóm đứng đầu — icon nút rail lấy từ MỤC ĐẦU nhóm (`hub.js`), không dời là icon đổi thành `ri-map-pin-line`
+- [x] Kiểm Playwright MCP: panel "2 nhóm · 13 chức năng", thị trường 7 (mục đầu = báo cáo theo NV, href đúng), TKT 6
+- [x] E2E mới `e2e/tests/assign/presale-report-menu.spec.ts`: xanh trên 3021, đỏ trên code cũ 3000
+- [ ] ⚠️ Khoá ẩn/hiện menu (`menu_settings.menu_key`) theo ĐƯỜNG NHÃN — mục dời nhóm đổi khoá; local 0 dòng, production cần kiểm trước khi deploy
+- [ ] Commit + merge về `gop_db` (chờ user)

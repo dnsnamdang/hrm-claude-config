@@ -3470,3 +3470,598 @@ Việc cần biết khi bàn giao:
   đang là `00:30-23:59` (do user tự đổi).
 - Migration đã chạy trên DB local: `2026_09_20_000001_*`, `2026_09_20_000002_*` (2 cột mốc nhắc +
   các cột cấu hình mới trong `general_regulations`).
+
+---
+
+## Phase 7 — Fix lỗi 403 luồng quản lý phòng họp (21/09/2026)
+
+Báo lỗi từ VPS: (1) vào màn "Tình trạng phòng họp" hiện toast 403 "Bạn không có quyền thực hiện
+chức năng này"; (2) menu Danh mục không có "Danh sách phòng họp".
+
+**Nguyên nhân gốc (đã tái hiện bằng Playwright MCP, không đoán):**
+
+- Cả 2 triệu chứng cùng quy về quyền `Khai báo phòng họp` — tài khoản trên VPS KHÔNG có quyền này.
+- (1) là lỗi CODE: `pages/meeting/room-board/index.vue::loadAmenityOptions()` gọi
+  `meeting/rooms/form-options` — route gate `checkPermission:Khai báo phòng họp`
+  (`Modules/Meeting/Routes/api.php:77`) — trong khi màn cố ý mở cho MỌI nhân viên
+  (`isShow: true`, `/board` + `/status-board` không gate). Page có `try/catch` im lặng nhưng
+  interceptor chung `plugins/axios.js:32` đã bắn toast TRƯỚC khi page bắt được.
+  Lỗi y hệt ở `pages/meeting/bookings/components/BookingFormModal.vue::loadFormOptions()`.
+- (2) là lỗi DỮ LIỆU/DEPLOY, không phải code: registry gate `isShow: ['Khai báo phòng họp']`
+  (`components/subsystem-menu/meeting.js:43`) chạy đúng thiết kế. Quyền chỉ nằm trong
+  `PermissionsTableSeeder` (seeder `delete()` toàn bộ permissions guard `api`) và id vừa bị đánh
+  số lại **1574 → 1586** ngày 19/09; id 1574 nay là "Xem danh mục tính chất hàng hóa".
+
+**Quyết định đã chốt (user, 21/09/2026):**
+
+- (1) MỞ endpoint tiện nghi thay vì tắt toast — đúng tiền lệ `rooms/bookable`,
+  `rooms/availability`, `room-purposes/options` của chính module (comment ở các route đó đã ghi:
+  gate danh mục cho màn dùng chung là "select trống trơn, không lỗi, không giải thích — hỏng im lặng").
+- (2) Gate menu GIỮ NGUYÊN (khai báo phòng là việc của người quản trị) → cấp quyền trên VPS, không sửa code.
+
+### Task
+
+- [x] T87 — BE: thêm `GET meeting/room-amenities/options` KHÔNG gắn `checkPermission`, trả tiện nghi
+      đang hoạt động (route TĨNH đặt TRƯỚC wildcard `/{meetingRoomAmenity}`)
+- [x] T88 — FE: `room-board/index.vue::loadAmenityOptions()` đổi sang endpoint mới
+- [x] T89 — FE: `BookingFormModal.vue::loadFormOptions()` đổi sang endpoint mới
+- [x] T90 — Kiểm bằng Playwright MCP: nhân viên KHÔNG có quyền `Khai báo phòng họp` → 0 toast 403,
+      ô lọc Tiện nghi CÓ option (đo bằng số lấy từ DOM, cả 2 màn)
+- [x] T91 — Cập nhật ca e2e `meeting-room-board.spec.ts` cho hành vi mới
+- [x] T92 — Soạn SQL kiểm tra + cấp quyền `Khai báo phòng họp` cho VPS (user tự chạy)
+
+### Checkpoint — 21/09/2026
+
+Vừa hoàn thành: T87-T92 — fix 403 luồng quản lý phòng họp.
+
+**Code đã sửa (CHƯA commit, theo quy tắc project):**
+- `hrm-api/Modules/Meeting/Http/Controllers/Api/V1/MeetingRoomAmenityController.php` — thêm `options()`
+- `hrm-api/Modules/Meeting/Routes/api.php` — `GET meeting/room-amenities/options`, KHÔNG gắn checkPermission
+- `hrm-client/pages/meeting/room-board/index.vue` — `loadAmenityOptions()` đổi endpoint
+- `hrm-client/pages/meeting/bookings/components/BookingFormModal.vue` — `loadFormOptions()` đổi endpoint
+- `e2e/tests/meeting/meeting-room-board.api.spec.ts` — thêm ca A4 (khoá cả 2 chiều gate)
+
+**Số đo thật (Playwright MCP, trình duyệt thật) — mô phỏng tài khoản không có quyền:**
+
+| Phép đo | Trước fix | Sau fix |
+|---|---|---|
+| Toast trên `/meeting/room-board` | 1 — "Bạn không có quyền thực hiện chức năng này" | 0 |
+| Request 403 khi mở màn | 1 (`meeting/rooms/form-options`) | 0 |
+| Option ô lọc "Tiện nghi" (room-board) | 0 | 3 |
+| Option ô lọc "Tiện nghi" (modal Đăng ký) | 0 | 3 (+ 6 mục đích, 2 phòng) |
+
+**Đo bằng curl với token nhân viên KHÔNG có quyền (employee 1184):**
+- `meeting/room-amenities/options` -> 200 (mới, cố ý mở)
+- `meeting/rooms/form-options` -> 403 (gate GIỮ NGUYÊN)
+- `meeting/room-amenities` (danh mục) -> 403 (gate GIỮ NGUYÊN — chỉ mở đúng `/options`)
+- `meeting/rooms/board` -> 200
+
+Luồng bình thường (super admin) đo lại sau fix: 3 tiện nghi, 2 phòng, 0 toast.
+
+Đang làm dở: không.
+
+Bước tiếp theo: user chạy `vps-cap-quyen-phong-hop.sql` trên VPS để xử lý phần menu
+(thiếu quyền `Khai báo phòng họp` — không sửa được bằng code).
+
+Blocked: không.
+
+⚠️ Bộ e2e CHƯA CHẠY (chỉ chạy khi user yêu cầu). Ca A4 mới đã kiểm parse bằng
+`npx playwright test --list` (17 ca trong file, A4 đăng ký đúng).
+
+---
+
+## Phase 7b — Thêm nhanh tiện nghi lưu chậm (21/09/2026)
+
+**Đo thật (Playwright MCP, từ lúc bấm Lưu tới lúc chip tiện nghi hiện ra):**
+
+| Mốc | Thời gian |
+|---|---|
+| `POST meeting/room-amenities` | 716 ms |
+| `GET meeting/rooms/form-options` (nạp lại sau lưu) | 1122 ms |
+| Popup con đóng | 794 ms |
+| **Chip tiện nghi hiện ra** | **2014 ms** |
+
+**Nguyên nhân:** `onQuickAmenitySaved()` gọi `await loadFormOptions()` — nạp LẠI toàn bộ
+`form-options` chỉ để biết 1 tiện nghi vừa tạo, trong khi response của chính lệnh POST đã trả
+đủ bản ghi (`id`/`name`/`status`). 2 request chạy NỐI TIẾP nên user chờ cộng dồn.
+
+**Đo trong PHP để chắc chắn không phải BE chậm:**
+- `MeetingRoomAmenityService::updateOrCreate()` = 16-47 ms, 10 query (chỉ 2 query THẬT:
+  insert tiện nghi + insert `catalog_histories`; 8 query còn lại là `information_schema.columns`
+  do `BaseModel` gọi `Schema::hasColumn()` ở hook creating/saving)
+- `MeetingRoomService::formOptions()` = 1.4-27 ms, 3 query, payload bé (13 tiện nghi, 5 công ty)
+- Middleware `CheckPermission` = ~135 ms/request (`Employee::find` 45ms + `getAllPermissions()`
+  90ms, 618 quyền, 4 query) — KHÔNG rẻ đi ở lần gọi sau
+
+=> Việc thật chỉ vài chục ms; phần lớn thời gian là CHI PHÍ DỰNG REQUEST. Bỏ được 1 request là
+bỏ được ~1.1s.
+
+### Task
+
+- [x] T93 — FE: `onQuickAmenitySaved()` gộp thẳng bản ghi POST trả về vào `amenityOptions`,
+      KHÔNG gọi lại `loadFormOptions()`; giữ nạp lại làm đường lui khi payload thiếu id/name
+- [x] T94 — Đo lại bằng Playwright MCP, so trước/sau trên cùng phép đo
+- [x] T95 — Dọn dữ liệu test sinh ra trong lúc đo
+
+### Ghi nhận để user quyết (CHƯA làm — đụng hàm dùng chung, theo CLAUDE.md phải hỏi trước)
+
+- `app/Models/BaseModel.php` gọi `Schema::hasColumn()` **8 lần mỗi lần lưu** (hook creating +
+  saving), mỗi lần là 1 query `information_schema.columns`. Local: 1.861 bảng / 29.497 cột,
+  ~3.4ms/lượt => ~27ms. Trên DB production lớn hơn, `information_schema` thường đắt hơn nhiều.
+  Ảnh hưởng MỌI model `extends BaseModel`, không riêng phòng họp.
+- Middleware `CheckPermission` nạp lại toàn bộ 618 quyền mỗi request, không cache theo request.
+
+### Checkpoint — 21/09/2026 (Phase 7b)
+
+Vừa hoàn thành: T93-T95.
+
+**Code đã sửa (CHƯA commit):**
+- `hrm-client/pages/meeting/rooms/components/MeetingRoomModal.vue`
+  - `onQuickAmenitySaved()` gộp thẳng bản ghi POST trả về vào `amenityOptions` (chèn đúng thứ tự
+    `sort_order` -> `id`), KHÔNG gọi lại `loadFormOptions()`; thiếu `id`/`name` mới nạp lại
+  - `loadFormOptions()` map thêm `sort_order` để có mốc chèn
+- `e2e/tests/meeting/meeting-room.spec.ts` — ca A2b assert thêm: sau khi bấm Lưu chỉ ĐÚNG 1 request,
+  0 request `form-options`
+
+**Số đo trước/sau (Playwright MCP, cùng phép đo: từ lúc bấm Lưu tới lúc chip tiện nghi hiện ra):**
+
+| | Trước | Sau |
+|---|---|---|
+| Số request sau khi bấm Lưu | 2 (POST + form-options) | **1** (chỉ POST) |
+| Thời gian tới lúc chip hiện | 2014 ms | **928 / 1368 ms** (2 lượt đo) |
+
+Luồng Sửa đo lại sau fix: modal mở đúng, `form-options?room_id=2810`, 15 option đủ
+`is_locked` + `sort_order`, 2 tiện nghi tích sẵn — không hồi quy.
+
+Dữ liệu test đã dọn: 10 tiện nghi `ZZZ Perf%` (id 1119-1128) + dòng `catalog_histories` tương ứng;
+pivot `meeting_room_room_amenity` = 0 nên không đụng phòng nào. Còn lại 5 tiện nghi, trong đó
+1117/1118 KHÔNG phải của tôi (có sẵn từ trước) nên giữ nguyên.
+
+Đang làm dở: không.
+
+Bước tiếp theo: user quyết 2 việc ở mục "Ghi nhận để user quyết" (BaseModel `Schema::hasColumn`,
+cache quyền trong `CheckPermission`) — cả hai đều là HÀM DÙNG CHUNG, chưa đụng.
+
+Blocked: không.
+
+---
+
+## Phase 7c — Chuyển quyền Meeting về đúng phân hệ (21/09/2026)
+
+Cột `permissions.type` = PHÂN HỆ ở màn Phân quyền. Phân hệ Meeting đã khai `permissionType: 26`
+trong `components/subsystems.js` nhưng DB chưa có quyền nào type=26 → khối "Phân hệ meeting"
+rỗng, còn 20 quyền meeting nằm nhờ ở type 4 (Phân hệ giao việc).
+
+**Đã rà: `type` CHỈ để gom nhóm hiển thị** — không có `where('type')` nào trên `permissions` ở BE
+(`AuthNewController` chỉ `select('permissions.*')`), `role_has_permissions` khoá theo
+`permission_id`. Nên đổi type KHÔNG làm ai mất quyền.
+
+**User chốt 21/09/2026:** 12 quyền -> type 26 (Meeting); 8 quyền báo cáo meeting -> type 29
+(CSKH trước bán, theo đúng nơi menu đã dời 3 báo cáo này từ 16/09).
+
+| Đích | Id |
+|---|---|
+| 26 — Meeting | 989, 1004, 1184, 1185, 1586 (Danh mục) · 1095-1098 (Quản lý meeting) · 1588, 1589 (Quản lý phòng họp) · 1587 (Báo cáo phòng họp) |
+| 29 — CSKH trước bán | 1057-1061 (meeting theo nhân viên/dự án) · 1174-1176 (kết quả theo thị trường) |
+
+### Task
+
+- [x] T96 — Chụp mốc đối chứng: số dòng `role_has_permissions` + permission_ids của vài role
+- [x] T97 — Seeder `PermissionsTableSeeder.php`: đổi `type` 4 -> 26/29 cho 20 quyền
+- [x] T98 — Migration cộng dồn `UPDATE ... WHERE id IN (...)`, có `down()` trả về 4
+- [x] T99 — Chạy migration + kiểm DB (12 type=26, 8 type=29, 0 quyền meeting còn ở type 4)
+- [x] T100 — Kiểm KHÔNG ai mất quyền: `role_has_permissions` trước/sau phải bằng nhau tuyệt đối
+- [x] T101 — Kiểm màn Phân quyền bằng Playwright MCP, đo số quyền từng khối trên DOM
+
+- [x] T102 — Sửa lỗi gom nhóm ở `components/setting/Permission.vue` (phát sinh trong lúc kiểm)
+
+### Checkpoint — 21/09/2026 (Phase 7c)
+
+Vừa hoàn thành: T96-T102.
+
+**Code đã sửa (CHƯA commit):**
+- `hrm-api/Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` — 20 dòng đổi `type`
+  (diff đúng 20 thêm / 20 xoá, không nhiễu EOL)
+- `hrm-api/database/migrations/2026_09_21_000001_move_meeting_permissions_to_meeting_subsystem.php` — MỚI
+- `hrm-client/components/setting/Permission.vue` — gom nhóm theo CẶP (`type`, `group`)
+
+**⚠️ Lỗi phát sinh khi kiểm — đáng nhớ:** `Permission.vue::initListPermissions()` gom nhóm CHỈ theo
+tên `group`, bỏ qua `type`. Lỗi nằm im nhiều tháng vì trước đây không tên nhóm nào dùng ở 2 phân hệ.
+Vừa chuyển quyền Meeting sang type 26 mà giữ tên nhóm "Danh mục" (type 4 cũng có nhóm này) là 5 quyền
+danh mục meeting hiện nhầm trong khối "Phân hệ giao việc" — KHÔNG lỗi, KHÔNG báo gì. User chốt sửa
+tận gốc (21/09/2026) sau khi đo phạm vi ảnh hưởng.
+
+**Số đo (Playwright MCP, đo từ DOM + state component):**
+
+| Khối | Trước đợt | Sau BE (FE chưa sửa) | Sau cả 2 |
+|---|---|---|---|
+| Phân hệ meeting | không có khối | 7 | **12** |
+| Phân hệ giao việc | 192 | 177 | **172** |
+| Phân hệ CSKH trước bán | 0 | 8 | **8** |
+
+- Khối Meeting gồm 4 nhóm: Danh mục 5 · Quản lý meeting 4 · Quản lý phòng họp 2 · Báo cáo phòng họp 1;
+  12 id đúng danh sách đã chốt.
+- 25 khối phân hệ còn lại giữ nguyên số tuyệt đối (đã liệt kê so từng dòng).
+- Tổng nhóm 159 -> 160, sinh ĐÚNG 1 nhóm mới `{Danh mục, type 26, 5 quyền}` — khớp con số mô phỏng
+  trước khi sửa.
+- `group_id_` (id DOM accordion) không trùng sau khi tách nhóm; tích/bỏ tích quyền vẫn chạy.
+
+**KHÔNG AI MẤT QUYỀN** (chốt chặn quan trọng nhất):
+- `role_has_permissions`: 16.691 dòng trước -> 16.691 dòng sau
+- Số quyền của từng role trong 20 quyền đổi đợt này khớp TỪNG DÒNG với mốc trước migration
+  (27 role, so khớp chuỗi nguyên văn)
+- Seeder vs DB: 762 quyền khai trong seeder, 0 id trùng thật, 0 dòng lệch `type`
+
+Đang làm dở: không.
+
+Bước tiếp theo: user review. Trên VPS cần chạy migration này cùng đợt deploy.
+
+Blocked: không.
+
+**Ghi chú e2e:** nhánh `gop_db` KHÔNG có màn ma trận phân quyền (`pages/admin/roles/` không tồn tại,
+không có markup `pm-srow`) — spec `e2e/tests/admin/permission-matrix-screens.spec.ts` là của nhánh
+khác, sẽ đỏ trên nhánh này dù có hay không thay đổi của đợt này. Màn phân quyền duy nhất trên `gop_db`
+là `/human/roles/add/_id`, hiện CHƯA có spec nào; chưa tạo spec mới cho nó (chờ user quyết).
+
+---
+
+## Phase 7d — Tên phòng bị cắt hụt ở cột nhãn lưới (22/09/2026)
+
+Báo lỗi: "/meeting/room-board — khi có nhiều phòng, tên phòng bị ẩn 1 phần phía trên".
+
+**Đo thật (Playwright MCP, chặn API trả 15 phòng tên dài/ngắn khác nhau — KHÔNG đụng dữ liệu):**
+
+| Ô | Số dòng tên | Cao nội dung | Cao ô | Tràn lên trên |
+|---|---|---|---|---|
+| "Phòng họp Hội đồng quản trị tầng 12 toà nhà Tân Phát" | 3 | 83px | 64px | **10px** |
+| "Phòng đào tạo nội bộ khu vực miền Bắc" | 2 | 65px | 64px | 1px |
+| "Phòng hội thảo lớn tầng trệt" | 2 | 65px | 64px | 1px |
+| "Phòng tiếp khách VIP tầng 5" | 2 | 65px | 64px | 1px |
+| "Phòng A" (và 10 ô tên ngắn) | 1 | 47px | 64px | 0 (dư 8px) |
+
+4/15 ô lỗi, và cả 4 đều là tên phải xuống dòng.
+
+**Nguyên nhân:** hàng lưới cao CỐ ĐỊNH 64px (`gridTemplateRows: 36px repeat(n, 64px)`), ô nhãn
+`padding: 8px 12px` nên vùng chứa chỉ còn **48px** — trong khi nội dung 1 dòng tên đã chiếm 47px
+(tiêu đề line-height 18.2px + dòng phụ 14.3px + khoảng cách). Tên xuống 2 dòng là 65px, 3 dòng 83px.
+`.rtg-room-label` có `align-items: center` + `.rtg-cell { overflow: hidden }` nên phần thừa bị cắt
+ĐỀU cả trên lẫn dưới — mắt bắt rõ nhất là chữ hụt phía trên.
+
+⚠️ **SỐ LƯỢNG PHÒNG KHÔNG PHẢI NGUYÊN NHÂN** — thủ phạm là tên dài trên cột nhãn rộng 180px.
+Nhiều phòng chỉ làm dễ gặp tên dài hơn.
+
+**User chốt 22/09/2026:** tên kẹp 1 dòng + đuôi `…`, hover xem đủ; GIỮ cột nhãn 180px và hàng 64px
+(lưới đều, không dài thêm, không đụng vị trí khối phiếu).
+
+### Task
+
+- [x] T103 — `.rtg-room-label`: ép tên 1 dòng + ellipsis; `title` trên ô để hover xem tên đủ
+- [x] T104 — Đo lại bằng Playwright MCP với đúng 15 phòng đó: 0 ô tràn
+- [x] T105 — Bổ sung ca e2e cho khuôn mới
+
+### Checkpoint — 22/09/2026 (Phase 7d)
+
+Vừa hoàn thành: T103-T105.
+
+**Code đã sửa (CHƯA commit):**
+- `hrm-client/components/meeting-room/RoomTimelineGrid.vue`
+  - template: thêm `:title="room.name"` trên ô nhãn (hover đọc trọn tên)
+  - SCSS: `.rtg-room-label > * { min-width: 0; width: 100% }` +
+    `.field-line`/`.project-sub` kẹp 1 dòng `white-space: nowrap !important` + ellipsis
+  - ⚠️ `!important` BẮT BUỘC: `V2BaseTitleSubInfo` đặt `white-space: normal` bằng INLINE style.
+    `min-width: 0` cũng bắt buộc, thiếu nó con của flex không co lại nên ellipsis không bao giờ hiện.
+- `e2e/tests/meeting/meeting-room-board.spec.ts` — thêm ca A5 (chặn API bơm tên dài, đo 4 điều:
+  hàng vẫn 64px · 0 tràn trên/dưới · tên đúng 1 dòng · có `…` + `title` đầy đủ)
+
+**Số đo trước/sau (15 phòng dựng bằng chặn API, KHÔNG đụng dữ liệu):**
+
+| | Trước | Sau |
+|---|---|---|
+| Ô nhãn bị tràn/cắt chữ | **4/15** (tệ nhất tràn 10px) | **0/15** |
+| Số dòng tên tối đa | 3 | 1 |
+| Chiều cao hàng | 64px | 64px (không đổi) |
+| Tên dài có `…` + title đầy đủ | không | 4/4 ô |
+
+**Hồi quy đã kiểm với dữ liệu thật (2 phòng, ngày 20/09 có 2 phiếu):**
+- Nhãn: 0 ô tràn, `title` đúng tên
+- Khối phiếu: mỗi khối nằm GỌN trong đúng 1 hàng phòng, lề trên/dưới đều 6px, cao 52px trong hàng 64px
+- 94 ô trống render bình thường
+
+Đang làm dở: không.
+
+Bước tiếp theo: user review.
+
+Blocked: không.
+
+---
+
+## Phase 7e — Nút ở thẻ trạng thái phòng bị vỡ chữ 2 dòng (22/09/2026)
+
+Ảnh user chụp production (`hrm-crm.eteksofts.com/meeting/room-board`, tab "Thẻ phòng"): nhãn 2 nút
+"Xem lịch phòng" / "Đặt phòng" xuống 2 dòng ("Xem lịch / phòng"). Không riêng thẻ user khoanh —
+TẤT CẢ thẻ đều bị.
+
+**Đo thật (chặn `status-board` bơm 5 phòng như ảnh, viewport 1900px):** 10/10 nút `soDong = 2`,
+`white-space: normal`.
+
+| Số đo | Giá trị |
+|---|---|
+| Thẻ rộng | 261px (padding 28) -> vùng chứa **233px** |
+| 2 nút cần khi không xuống dòng | 127 + 99 + gap 8 = **234px** |
+| **Thiếu** | **1px** |
+
+**Nguyên nhân:** `.rb-status-card__foot .v2-btn { flex: 1 1 auto }` cho nút CO nhỏ hơn bề rộng chữ,
+mà `V2BaseButton` không khoá `white-space` -> chữ tự xuống dòng. Lưới thẻ
+`minmax(260px, 1fr)` cấp vùng chứa 233px, thiếu đúng 1px so với nhu cầu 234px.
+
+**Không đổi chữ nút:** `button-convention` không có chữ chuẩn cho hành động này; "Xem lịch phòng"
+đúng công thức `<động từ> + <đối tượng>` nên giữ nguyên, chỉ nới chỗ.
+
+### Task
+
+- [x] T106 — `.rb-status-card__foot .v2-btn`: `white-space: nowrap`; foot thêm `flex-wrap: wrap`
+      (lưới an toàn cho màn rất hẹp). **User chốt giữa chừng: bỏ chữ "phòng" khỏi nhãn nút**
+      -> "Xem lịch" / "Đặt"; nhờ vậy `minmax` GIỮ NGUYÊN 260px (không phải nới 280px)
+- [x] T107 — Đo lại: 0/10 nút xuống dòng, thẻ vẫn đủ rộng, số cột hợp lý
+- [x] T108 — Bổ sung ca e2e
+
+### Checkpoint — 22/09/2026 (Phase 7e)
+
+Vừa hoàn thành: T106-T108.
+
+**Code đã sửa (CHƯA commit):** `hrm-client/pages/meeting/room-board/index.vue`
+- Nhãn 2 nút trên thẻ: "Xem lịch phòng" -> **"Xem lịch"**, "Đặt phòng" -> **"Đặt"** (user chốt)
+- `.rb-status-card__foot .v2-btn { white-space: nowrap }` + foot `flex-wrap: wrap` (lưới an toàn)
+- `.rb-status-grid` GIỮ `minmax(260px, 1fr)` — nhãn ngắn rồi nên không cần nới
+
+`e2e/tests/meeting/meeting-room-board.spec.ts` — thêm ca F3 (đo 4 bề rộng màn).
+
+**Số đo trước/sau (chặn `status-board` bơm 5 phòng như ảnh production):**
+
+| | Trước | Sau |
+|---|---|---|
+| Nút vỡ chữ 2 dòng | **10/10** | **0/10** |
+| Nút tràn khỏi thẻ | 0 | 0 |
+| 2 nút cần / vùng chứa có | 234px / 233px (thiếu 1px) | 161px / 233px |
+| Số cột ở màn 1900px | 6 | 6 (không đổi) |
+
+Kiểm ở 4 bề rộng 1900 / 1440 / 1280 / 1024 — đều 0 nút vỡ chữ, 0 nút tràn.
+
+⚠️ **Bẫy phép đo (đã dính rồi sửa):** đếm số dòng chữ trong nút bằng `chiều cao nút / line-height`
+là SAI — nút cao 32px, line-height 14px nên nút 1 dòng cũng ra "2 dòng". Phải đếm bằng
+`Range.getClientRects().length` trên chính text node. Ca e2e F3 ghi rõ bẫy này.
+
+**Chưa đụng (chờ user quyết):** vẫn còn một nút "Xem lịch phòng" khác ở cột Hành động màn
+`/meeting/rooms` (`pages/meeting/rooms/index.vue:683`). Ở đó chữ "phòng" KHÔNG thừa (đang trong
+danh sách phòng, không phải thẻ mang tên phòng), và ca e2e J1 + meeting-room.spec bám đúng chữ đó
+-> để nguyên.
+
+Đang làm dở: không.
+
+Bước tiếp theo: user review.
+
+Blocked: không.
+
+---
+
+## Phase 8 — Yêu cầu dịch vụ trên phiếu đặt phòng (23/09/2026)
+
+**Mục tiêu.** Người đặt phòng nhờ người phụ trách chuẩn bị trà / nước / hoa quả… ngay trên phiếu DPH;
+người phụ trách nhận thông báo, chuẩn bị xong thì xác nhận lại cho người đặt biết.
+
+**Spec:** `docs/superpowers/specs/gop-db/2026-09-23-yeu-cau-dich-vu-phong-hop-design.md`
+(11 quyết định user chốt 23/09/2026 — đọc mục 3 trước khi code).
+
+**Ràng buộc chung (áp cho MỌI task dưới đây):**
+
+- Nhánh `gop_db` ở cả 2 repo. Không `git stash` (nhiều session chạy song song).
+- **Không thêm quyền mới** — danh mục dùng `checkPermission:Khai báo phòng họp`.
+- Model mới `extends BaseModel`; `created_by`/`updated_by` phải có trong `$fillable`.
+- FE: mọi element form là `V2Base*`, select trong modal là `V2BaseSelectInModal`; nút trong cụm
+  `class="mr-2 mb-2"`, nút cuối `mb-2`; badge dùng `V2BaseBadge` với **màu do BE trả**.
+- Số: `1,234.5` (chuẩn quốc tế) — FE `toLocaleString('en-US')`, BE `number_format()` mặc định.
+- Cờ quyền FE khởi tạo `false` (fail-closed), không bao giờ gán literal `true`.
+- Nút không dùng được thì **ẩn hẳn**, không disable; ẩn/hiện phải **khớp giữa danh sách và chi tiết**.
+- Mỗi task đụng UI: **đo bằng số lấy từ DOM qua Playwright MCP** (`http://127.0.0.1:3000`), không
+  nhìn ảnh rồi kết luận. E2E **chỉ chạy khi user yêu cầu**, nhưng spec vẫn phải viết/cập nhật.
+
+### A. Nhiều người phụ trách phòng (nền tảng — làm TRƯỚC)
+
+> Yêu cầu dịch vụ bắn cho "nhóm phụ trách", nên phải có nhóm trước. Đây là phần rủi ro nhất của
+> Phase 8 vì đụng luồng duyệt phiếu đang chạy.
+
+- [x] T109 — Migration `2026_09_23_000001_create_meeting_room_managers_table.php`: bảng nối
+      (`meeting_room_id` FK cascade, `employee_id` index, unique cặp) + **backfill** từ
+      `meeting_rooms.manager_employee_id` + **drop cột cũ**. `down()` dựng lại cột và đổ ngược
+      người đầu tiên của mỗi phòng. Chạy `migrate` rồi đếm: số dòng bảng nối = số phòng có
+      `manager_employee_id` khác NULL trước khi chạy (chụp số trước — local hiện 2 phòng, đều có PT).
+- [x] T110 — `Entities/MeetingRoom.php`: bỏ `manager()` + `manager_employee_id` khỏi `$fillable`;
+      thêm `managers()` (`belongsToMany` Employee qua `meeting_room_managers`) và
+      `managerIds(): array` (cache trong thuộc tính để không query lại nhiều lần trong 1 request).
+- [x] T111 — `Services/MeetingRoomService.php`: lưu nhóm phụ trách bằng `sync()` trong transaction
+      (store + update); sort cột "Người quản lý" đổi sang sub-query theo tên người ĐẦU TIÊN, giữ
+      whitelist cột sort; eager load `managers` ở mọi chỗ trả danh sách (**cấm N+1**).
+- [x] T112 — `Http/Requests/MeetingRoom/MeetingRoomRequest.php`: `manager_employee_ids` =
+      `required|array|min:1`, từng phần tử `integer|exists`. **Chỉ khai `rules()`, KHÔNG khai
+      `messages()`** (câu chuẩn đã có ở lang file).
+- [x] T113 — 2 Resource phòng (`MeetingRoomResource`, `DetailMeetingRoomResource`): trả
+      `manager_employee_ids[]`, `manager_names[]`, `manager_name_text` (ghép `", "`).
+      `BookableMeetingRoomResource` **vẫn không trả id thô** (giữ nguyên chủ ý cũ).
+- [x] T114 — `Services/MeetingRoomBookingService.php` — sửa 4 chỗ so 1 id thành so theo nhóm:
+      `applyVisibilityScope()` (≈dòng 179) dùng `whereHas('managers')`; gate duyệt (≈200, ≈777);
+      danh sách người nhận thông báo (≈1193-1198) bắn **toàn bộ** `managerIds()`, rỗng thì không gửi.
+- [x] T115 — 2 Resource phiếu (`MeetingRoomBookingResource`, `DetailMeetingRoomBookingResource`):
+      `$isRoomManager` tính theo `managerIds()`.
+- [x] T116 — Import/Export phòng họp (`MeetingRoomService` ≈1054 + `BuildsImportTemplate`): cột
+      `ManagerName` nhận **nhiều tên ngăn bằng `;`**; tên không khớp nhân viên nào → báo lỗi ĐÚNG
+      DÒNG (không bỏ qua im lặng). Export ghép ngược lại bằng `"; "`.
+- [x] T117 — `app/Services/CatalogHistoryService.php` (≈441-450): ghi lịch sử theo danh sách tên,
+      nhãn giữ "Người quản lý phòng"; kiểm 1 lần sửa thật để chắc lịch sử không in ra id trần.
+- [x] T118 — FE `pages/meeting/rooms/components/MeetingRoomModal.vue`: select **nhiều người**,
+      `required`; giữ nguyên cách vá option cho người đã nghỉ việc (nay là vá theo mảng
+      `manager_names` API trả về, thiếu thì lưu lại là **mất người** — bẫy cũ đã dính 1 lần).
+- [x] T119 — FE `pages/meeting/rooms/index.vue`: cột "Người quản lý" hiện **2 tên đầu + "+N"**,
+      `title` đủ danh sách; cập nhật map import (`row.ManagerName`).
+- [x] T120 — FE `pages/meeting/bookings/components/BookingFormModal.vue` panel phải: dòng
+      "Người phụ trách" ghép nhiều tên (≈dòng 464) và câu gợi ý gửi duyệt (≈1925) đổi theo.
+- [x] T121 — PHPUnit `MeetingRoomManagersTest`: backfill giữ đúng số lượng · phòng 2 phụ trách thì
+      **cả 2** duyệt được phiếu · người ngoài nhóm gọi `approve` → 403 · `applyVisibilityScope`
+      trả phiếu của phòng mình phụ trách.
+- [x] T122 — Đo bằng Playwright MCP: form phòng lưu 2 phụ trách → danh sách hiện "A, B" (đọc
+      `textContent` thật, không chỉ nhìn ảnh); bỏ trống ô phụ trách → chặn, hiện lỗi dưới ô.
+
+### B. Danh mục Dịch vụ phòng họp
+
+- [x] T123 — Migration `..._000002_create_meeting_room_services_table.php` (name unique · unit ·
+      icon · sort_order · note · status · created_by/updated_by · timestamps) + Seeder
+      `MeetingRoomServicesTableSeeder` 5 món mẫu (Trà · Nước suối · Hoa quả · Khăn lạnh · Bánh ngọt),
+      idempotent theo `name` (`firstOrCreate`).
+- [x] T124 — BE: `Entities/MeetingRoomService.php` (extends BaseModel) ·
+      **`Services/MeetingRoomServiceCatalogService.php`** (KHÔNG đặt `MeetingRoomServiceService` —
+      vừa khó đọc vừa dễ nhầm với `Services/MeetingRoomBookingService.php` đang có) ·
+      `MeetingRoomServiceController` · `MeetingRoomServiceRequest` · 2 Resource — copy nguyên khuôn
+      `MeetingRoomPurpose*`, đổi tên đầy đủ (kể cả **entity-type của `catalog_histories`** và bảng
+      trong rule `unique` — 2 chỗ hay sót khi copy màn danh mục).
+- [x] T125 — Routes `meeting/room-services` đủ 10 route theo đúng thứ tự route TĨNH trước wildcard;
+      tất cả gắn `checkPermission:Khai báo phòng họp`, **trừ `/options`**.
+- [x] T126 — `/options` nhận `include_ids` → `where('status',1)->orWhereIn('id',$includeIds)`, trả kèm
+      `is_locked` để `V2BaseSelect` tự gắn 🔒 (KHÔNG nối chữ vào `name`).
+- [x] T127 — Chặn xoá món đang có phiếu dùng: `destroy()` đếm `meeting_room_booking_services` trước,
+      >0 thì trả lỗi nêu số phiếu + gợi ý dùng Khoá.
+- [ ] T128 — FE màn `pages/meeting/room-services/index.vue` + `components/RoomServiceModal.vue` —
+      copy `room-purposes`, soát đủ **4 chỗ sót im lặng**: entity-type lịch sử · thẻ kebab component ·
+      rule unique · key lưu cấu hình cột.
+- [ ] T129 — Đăng ký menu `components/subsystem-menu/meeting.js` nhóm **Danh mục**, nhãn "Dịch vụ
+      phòng họp"; **đếm số link trên hub bằng DOM** sau khi thêm (khai sai key là cả nhóm biến mất
+      im lặng).
+- [ ] T130 — Đo bằng Playwright MCP: thêm/sửa/khoá/mở khoá 1 món, cột Người cập nhật **ra tên**
+      (cách duy nhất phát hiện thiếu audit), mục Lịch sử ghi đúng.
+
+### C. Yêu cầu dịch vụ trên phiếu
+
+- [x] T131 — Migration `..._000003_create_meeting_room_booking_services_table.php` (booking_id FK
+      cascade · service_id · service_name/unit snapshot · quantity decimal(12,2) · note · sort_order ·
+      unique `(booking_id, service_id)`) + `..._000004_add_service_columns_to_meeting_room_bookings`
+      (4 cột `service_*`, `service_status` **nullable**). Entity **`MeetingRoomBookingServiceItem`**
+      (tên tránh đụng `Services/MeetingRoomBookingService.php`) + quan hệ
+      `MeetingRoomBooking::serviceItems()` (`hasMany`, order theo `sort_order`).
+- [x] T132 — `MeetingRoomBookingRequest`: `services` `nullable|array|max:20`; `services.*.service_id`
+      bắt buộc + `exists` + đang Hoạt động; `services.*.quantity` `numeric|gt:0|max:999999`;
+      `services.*.note` `nullable|max:255`; **chặn trùng `service_id`** trong mảng. Không khai
+      `messages()` cho rule phổ biến.
+- [x] T133 — `MeetingRoomBookingService::store()`: trong transaction ghi các dòng (snapshot
+      `service_name`/`unit` lấy từ danh mục tại thời điểm tạo), set `service_status = 1` khi có dòng,
+      **NULL** khi không. Phòng không có người phụ trách mà gửi `services[]` → **422**.
+- [x] T134 — `update()`: **bỏ hoàn toàn** khoá `services` khỏi payload đọc vào (chặn ở BE). Đổi phòng
+      thì giữ nguyên dòng dịch vụ và bắn thông báo cho nhóm phụ trách phòng MỚI.
+- [x] T135 — 2 endpoint `PUT meeting/room-bookings/{id}/service-prepared` · `/service-rejected`
+      (+ `MeetingRoomBookingServiceRejectRequest`: `reason` bắt buộc ≤ 500). Guard: chỉ người trong
+      `managerIds()`, chỉ khi `service_status = 1`, phiếu không Hủy/Từ chối → ngược lại **409** kèm
+      câu nêu ai đã xử lý lúc nào. Ghi `service_handled_by/at`.
+- [x] T136 — Resource phiếu trả thêm: `has_service_request` · `service_status` · `service_status_text`
+      · `service_status_color` (`#D97706`/`#16A34A`/`#DC2626`) · `service_handled_by_name` ·
+      `service_handled_at` · `service_reject_reason` · `services[]` (detail, từ `serviceItems`) ·
+      **`is_can_handle_service` fail-closed**. Eager load `serviceItems` + `room.managers` ở cả
+      `index()` lẫn `show()` (cấm N+1).
+- [x] T137 — Thông báo `[DPH]` 5 mốc qua `sendBookingNotification()` — nhóm hành động:
+      `Yêu cầu dịch vụ` (tạo mới + đổi phòng) · `Hủy yêu cầu dịch vụ` (phiếu Hủy/Từ chối khi đang
+      Chờ chuẩn bị) · `Đã chuẩn bị dịch vụ` · `Từ chối dịch vụ`. Tên phiếu ≤ 50 ký tự, tổng ≤ 120,
+      deep-link kèm ID.
+- [x] T138 — FE khối "Yêu cầu dịch vụ" trong `BookingFormModal.vue`: **tiêu đề nhóm phẳng** (KHÔNG
+      card), chỉ hiện khi đã chọn phòng **và** phòng có ≥ 1 phụ trách (không thì hiện dòng xám
+      `#6b7280` giải thích — **không dùng `.text-muted`**, class đó bị ép đỏ). Mỗi dòng:
+      `V2BaseSelectInModal` (món đã chọn biến khỏi dropdown dòng khác) + số lượng + ghi chú + nút xoá;
+      dưới cùng nút "Thêm dòng". Lỗi validate hiện **đồng thời mọi dòng**, không tự sửa số user gõ.
+- [x] T139 — FE chế độ **chỉ đọc**: màn Sửa phiếu và popup Xem render khối dạng đọc + `V2BaseBadge`
+      trạng thái (màu BE trả).
+- [x] T140 — FE 2 nút ở footer popup Xem: "Đã chuẩn bị" (primary) · "Từ chối" (nhóm nguy hiểm →
+      `base-confirm-modal` nhập lý do), **`v-if="item.is_can_handle_service"`**, không disable.
+- [x] T141 — FE `pages/meeting/bookings/index.vue`: cột "Dịch vụ" (badge) trong bộ cột cấu hình được +
+      ô lọc "Trạng thái dịch vụ" (Chờ chuẩn bị / Đã chuẩn bị / Từ chối / Không có yêu cầu); BE lọc
+      tương ứng (`whereNull` cho "Không có yêu cầu").
+
+### D. Kiểm chứng & tài liệu
+
+- [x] T142 — PHPUnit `MeetingRoomBookingServiceRequestTest`: `update()` gửi kèm `services[]` →
+      dữ liệu **không đổi** · người thứ hai bấm → 409 · phiếu Hủy → không xác nhận được ·
+      phòng không có phụ trách → 422 · người ngoài nhóm → 403.
+- [ ] T143 — E2E `e2e/tests/meeting/meeting-room-service.api.spec.ts` + `.spec.ts` — 8 ca ở mục 10
+      của spec, **có ca không quyền cả 2 chiều**. Nhớ `--workers=1`, `--no-deps`,
+      `API_BASE=http://127.0.0.1:8001 BASE_URL=http://127.0.0.1:3001` nếu chạy ở checkout phụ.
+- [x] T144 — Đo bằng Playwright MCP trước khi báo xong: khoảng cách 2 nút liền nhau **= 12px** ·
+      khối dịch vụ **không tràn ngang** ở 1900/1440/1280/1024 · badge đúng mã màu (đọc
+      `getComputedStyle`) · nút "Đã chuẩn bị" **không tồn tại trong DOM** với người ngoài nhóm.
+- [x] T145 — Dọn dữ liệu test sinh ra trong lúc đo (kiểm `E2E%` / `DPH-` rác = 0).
+- [ ] T146 — Cập nhật `design.md` (nếu phát sinh quyết định mới) + `STATUS.md` + mục
+      "LƯU Ý KHI DEPLOY" của plan này (migration 3 bước, seeder danh mục, KHÔNG chạy
+      `PermissionsTableSeeder`).
+
+### Task phát sinh trong lúc thực thi Phase 8 (T147–T152)
+
+- [x] T147 — (C3) `assignMeeting()` nhận `services[]` + FE mở khối dịch vụ cho **cả 2 hướng** đăng ký
+      (hụt so với quyết định #9 của user, phát hiện lúc làm FE)
+- [x] T148 — (C3) BE `index()` lọc theo `service_status` (FE đã gửi tham số nhưng BE chưa có nhánh `where`)
+- [x] T149 — (C4) Gom 2 nút dịch vụ liền nhau ở footer popup + bỏ `mr-2` → khoảng cách **8px** đúng
+      khuôn 73 file còn lại (trước 16px do cộng dồn với spacing sẵn có của `.modal-footer`)
+- [x] T150 — (D0) Vá `V2BaseModal` thiếu computed `subtitleFullText` → khôi phục tooltip dòng mô tả
+      cho ~20 popup dùng khuôn này
+- [x] T151 — (D1/D2) Chuẩn hoá message validate toàn luồng phòng họp: xoá 46 câu tự chế, thêm 5 key
+      cho trường mới của Phase 8, dùng `attributes()` thay vì viết lại cả câu
+- [x] T152 — (D3) **Bổ sung 53 mục tiếng Việt vào lang file dùng chung** `vi/validation.php` (0 mục
+      còn tiếng Anh) + FE `locales/vi.json` 5 → 31 key; dọn ngược 18 key thừa ở module Meeting
+
+### Checkpoint — 23/09/2026 (Phase 8)
+
+**Vừa hoàn thành:** T109–T127, T131–T142, T144, T145, T147–T152. (**T128–T130 CHƯA làm** —
+xem mục 0 của Bước tiếp theo.) Khối A (nhiều người phụ trách phòng), khối B
+(danh mục Dịch vụ phòng họp), khối C (yêu cầu dịch vụ trên phiếu) **code done + đã review + đã đo
+trên trình duyệt thật**. Nhóm D: đã làm D0/D1/D2/D3.
+
+**Đang làm dở:** không.
+
+**Bước tiếp theo:**
+0. ⚠️ **T128–T130 — MÀN FE DANH MỤC DỊCH VỤ CHƯA LÀM** (`pages/meeting/room-services/` chưa tồn tại,
+   menu chưa khai). BE đã xong đủ (bảng + 10 route + `/options`), FE mới chỉ dùng `/options` trong
+   popup đặt phòng — tức **chưa có chỗ nào thêm/sửa/khoá món dịch vụ trên giao diện**, phải seed hoặc
+   sửa thẳng DB. Đây là việc phải làm trước khi bàn giao.
+1. **T143 — viết bộ e2e** `e2e/tests/meeting/meeting-room-service.{api.spec,spec}.ts` (8 ca ở mục 10
+   của spec, có ca phân quyền 2 chiều). User đã chốt **chạy sau**, nhưng spec thì vẫn phải viết.
+2. Rà lại spec e2e sẵn có của màn `meeting/bookings` cho khớp bố cục nút mới (T149).
+3. User commit khi ưng — **toàn bộ Phase 8 đang nằm ở working tree, CHƯA commit** (đúng quy ước
+   CLAUDE.md: không commit khi chưa có yêu cầu).
+
+**Blocked:** không. 3 việc chờ user quyết (không chặn code): câu lỗi có kèm tên trường hay không ·
+sửa `plugins/vee-validate.js` để 4 rule FE hiện được con số · dọn message thừa ở 188 FormRequest khác.
+
+**Số đo chốt lại:**
+- PHPUnit toàn bộ suite: **231 tests / 681 assertions**, 5 Errors + 2 Failures = **đúng mức đỏ CÓ SẴN
+  từ trước Phase 8** (2 nhóm test cũ của Meeting), không đỏ mới ở bất kỳ module nào.
+- `--filter MeetingRoom`: **65 tests / 179 assertions**.
+- N+1: `index()` 3 phiếu và 15 phiếu đều **17 query**; sau khi vá `room.managers`, cấu hình 15 phòng
+  × 15 phiếu giảm **43 → 11 query** (board 36 → 8).
+- DB local đã trả về **baseline 2 phòng / 3 phiếu / 0 dòng dịch vụ / 2 dòng người phụ trách**.
+
+---
+
+### Checkpoint — 30/09/2026 (báo giá + sửa marker xung đột đã lỡ push)
+
+**1. File báo giá** `quan-ly-phong-hop/bao-gia-quan-ly-phong-hop.xlsx` (user yêu cầu 26–28/09):
+cây 3 cấp (nhóm chức năng → chức năng → xử lý/logic), 11 nhóm / 121 dòng cấp 3, công chỉ nhập ở
+cấp 3, cấp 1–2 tự cộng, đơn giá ô F3 (CHƯA điền), tổng **89.75 công** (Đã xong 45 · Đã xong chưa
+commit 6 · Chưa làm 19.75 · Bổ sung mới 19). Số công do Claude ước lượng — chưa được user duyệt.
+Kèm 3 chức năng **user mới yêu cầu, CHƯA brainstorm/spec**: (7) Dọn phòng họp — người dọn trên phòng
++ cấu hình thông báo app sau check-out + xác nhận đã dọn; (8) Đánh giá phòng — sao + ghi chú;
+(9) Đổi phòng — sang phòng trống, hoặc hoán đổi với user khác. Sheet "Giả định & cần chốt" có 7 câu
+phải hỏi khách trước khi làm (ảnh hưởng công). Nhóm 7, 8 phụ thuộc Check-in/Check-out (Phase 5).
+Máy không có LibreOffice → công thức chưa recalc, user mở Excel lưu 1 lần.
+
+**2. Marker xung đột lọt vào merge commit đã push** — `8ad4b904d` (merge `03183c203` của khoipv vào
+`gop_db`) commit nguyên `<<<<<<<`/`>>>>>>>` trong `pages/meeting/rooms/components/MeetingRoomModal.vue`.
+Sửa: giữ `managerLockedOptions` (HEAD, nhiều người phụ trách) + `originalStatus` (khoipv, cảnh báo
+Hoạt động → Khoá), BỎ `managerNameNotInStore` (fix kiểu 1 quản lý, đã bị thay). User commit + push
+ở `976e1eb32`. Đã kiểm: 0 marker toàn repo client + api, template/script parse được, dev server nạp
+component OK. ⚠️ CHƯA mở popup thật: role Super admin (18) trên DB local không có quyền 1586 → màn
+`/meeting/rooms` đá 404; cấp tạm quyền bị chặn.
+
+**Bước tiếp theo:** vẫn như checkpoint 23/09 (T128–T130 màn FE Dịch vụ, T143 e2e) + khi khách chốt
+báo giá thì brainstorm 3 chức năng mới (trả lời 7 câu ở sheet 2 trước).

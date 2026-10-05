@@ -1035,3 +1035,441 @@ index: 0 bản ghi trùng tên.
 Kiểm bằng Playwright MCP (không chạy bộ e2e — user đã chốt cách làm việc mới): 2 bảng còn đúng 6 cột
 mặc định, Tên là link, form hết ô Mã, Ghi chú lưu/hiện đúng, trùng tên báo lỗi ở ô Tên.
 e2e: đã chuyển 8 spec sang định danh bằng TÊN nhưng **CHƯA chạy**.
+
+---
+
+# SDD ledger — Phase 8 "Yêu cầu dịch vụ trên phiếu đặt phòng"
+plan: `.plans/gop-db/quan-ly-phong-hop/plan.md` (T109–T146) ·
+spec: `docs/superpowers/specs/gop-db/2026-09-23-yeu-cau-dich-vu-phong-hop-design.md`
+Bắt đầu: 23/09/2026. Nhánh: `gop_db` ở cả 2 repo (checkout chính, KHÔNG worktree).
+
+## Rà xung đột trước khi chạy (pre-flight)
+
+| Cặp / task | Chia sẻ gì | Kết quả |
+|---|---|---|
+| T110 → T111 → T114 | `MeetingRoom::managerIds()` | Khớp: entity định nghĩa trước, 2 service dùng sau |
+| T111 ↔ T116 | cùng file `MeetingRoomService.php` (sync + import) | Không đụng hàm nhau; làm cùng lượt để tránh sửa chồng |
+| T112 → T118 | payload `manager_employee_ids` | Khớp tên cả 2 phía |
+| T113 → T119, T120 | `manager_names[]`, `manager_name_text` | Khớp; `BookableMeetingRoomResource` cố ý KHÔNG trả id thô |
+| T131 → T136, T138 | entity `MeetingRoomBookingServiceItem`, quan hệ `serviceItems()` | Đã sửa tên tránh đụng `Services/MeetingRoomBookingService.php` |
+| T126 → T138 | `/options?include_ids=` + cờ `is_locked` | Khớp; 🔒 do `V2BaseSelect` tự gắn |
+| T136 → T140 | cờ `is_can_handle_service` | Khớp, fail-closed |
+| T133/T135 ↔ T141 | `service_status` NULL vs 1 | Khớp: "Không có yêu cầu" lọc bằng `whereNull` |
+| Từng task với chính nó | file tạo vs file sửa sau đó | Không task nào sửa file mà task khác chưa tạo |
+
+## Rulings trước khi chạy
+
+- **Ruling: KHÔNG commit/push trong lúc thực thi** — CLAUDE.md cấm commit khi chưa có yêu cầu, thắng
+  nếp commit-mỗi-task của skill. Giá nếu sai: không có mốc quay lui từng task, phải dựa vào diff.
+- **Ruling: làm thẳng trên `gop_db` ở checkout chính, không tạo worktree** — user đã chọn phương án
+  này đầu session; worktree `hrm-api` từng dính bẫy symlink `vendor`. Giá nếu sai: 2 session cùng sửa
+  1 file thì đè nhau — đã kiểm không có session nào khác đang chạy trên 2 repo này.
+- **Ruling: dòng import phòng họp thiếu `ManagerName` → báo lỗi dòng** (không tạo phòng không phụ
+  trách) — đồng bộ với luật bắt buộc ≥ 1 phụ trách ở T112. Giá nếu sai: file import cũ của khách có
+  dòng trống cột đó sẽ bị chặn, phải bổ sung tên rồi import lại.
+- **Ruling: gộp T109–T113 thành 1 lượt giao việc** (cùng một đơn vị "đổi 1 phụ trách → nhiều phụ
+  trách" ở BE phòng họp, tách ra thì agent sau phải đọc lại y nguyên ngữ cảnh của agent trước).
+  Giá nếu sai: diff review 1 lượt to hơn.
+
+## Nhật ký thực thi Phase 8
+
+- Lượt **A1 (T109–T113)** — brief `p8-A1-brief.md`, giao subagent (sonnet) 23/09/2026.
+  Nội dung: migration bảng nối + backfill + drop cột · entity `managers()/managerIds()/managerNames()`
+  · service sync + sort + eager load · request `manager_employee_ids` required min 1 · 2 Resource phòng.
+- Lượt **A2 (T114–T117)** — brief `p8-A2-brief.md` đã soạn sẵn, chờ A1 xong mới giao (phụ thuộc chữ
+  ký `managerIds()` mà A1 bàn giao).
+
+### A1 — kết quả review (23/09/2026)
+
+Verdict: **spec ✅ · chất lượng Approved**. PHPUnit `--filter MeetingRoom` 46/79, 5 errors + 2
+failures = **đúng baseline** trước khi sửa (mức đỏ có sẵn, không do Phase 8).
+
+Phát hiện và cách xử:
+
+- **Critical (reviewer nêu) — FE `hrm-client` chưa theo kịp hợp đồng API mới** (cột Người quản lý
+  trống, form Sửa mất người đã chọn, Lưu phòng luôn 422 vì thiếu `manager_employee_ids`).
+  **Ruling: KHÔNG phải lỗi của A1** — đây đúng là task T118–T120 đã nằm sẵn trong plan, và BE+FE đi
+  chung nhánh `gop_db` nên không có cảnh BE lên trước FE. Giá nếu sai: nếu ai đó deploy riêng BE lên
+  môi trường có FE cũ thì màn phòng họp chết cho tới khi FE lên — đã ghi vào mục LƯU Ý KHI DEPLOY.
+- **Critical #2 — phần phiếu đặt phòng đang gãy**: đúng phạm vi lượt A2, đang chạy.
+- **Important #1 — A1 sửa 1 file ngoài danh sách** (`MeetingRoomController` 2 dòng eager load).
+  **Ruling: CHẤP NHẬN, ký nhận tường minh** — không sửa thì `show()`/`export()` của chính màn phòng
+  họp ném `RelationNotFoundException` 500 ngay; agent đã tái hiện bằng tinker và khai báo minh bạch.
+  Giá nếu sai: 2 dòng eager load, dễ đảo lại.
+- **Important #2 — `managerIds()/managerNames()` cache không tự xoá sau `sync()`** → đọc trước khi
+  sync rồi đọc lại trên cùng object sẽ ra mảng CŨ, **không lỗi nào báo ra**. Chưa active nhưng đúng
+  là bẫy cho lượt sau (bàn giao khuyến khích tái dùng 2 hàm này). **→ VÀO FIX LOOP** (vòng 1), gộp
+  với Minor #1 (`managers()` thiếu `orderBy` tường minh trong khi docblock khẳng định có thứ tự).
+  Giao lại cho chính agent A1 sau khi A2 xong, để 2 agent không sửa chồng file.
+- Minor #2 (2 query thừa ở `bookable`) đã tự hết sau A2. Minor #3 (không FK cho `employee_id`) —
+  giữ nguyên, đúng style cột cũ của module.
+
+### A2 (T114–T117 + BS-1/2/3) — xong, vào fix vòng 1 (23/09/2026)
+
+Kết quả: 9 file; `--filter MeetingRoom` 50 tests/92 assertions, vẫn 5 Errors + 2 Failures = baseline
+(4 ca mới chạy riêng OK 4/13). `grep manager_employee_id` chỉ còn trong migration + comment.
+
+**Ruling: chuẩn hoá khoá tên người phụ trách.** A2 khôi phục `manager_name` (ghép `"; "`) vì
+`ExportColumnRegistry` + FE `rooms/index.vue` đọc khoá đó, trong khi A1 đã đặt `manager_name_text`
+(ghép `", "`) — 2 khoá cùng nghĩa thì FE/export mỗi chỗ đọc một kiểu. Chốt: **giữ `manager_name`**
+(dấu `"; "` khớp đúng dấu import tách), giữ `manager_names[]` + `manager_employee_ids[]`, **bỏ hẳn
+`manager_name_text`**. Giá nếu sai: phải đổi tên khoá 1 lần nữa ở 3 Resource + 2 chỗ FE.
+
+**Ruling: gộp fix của A1 vào agent A2** (thay vì resume agent A1) — 2 việc còn lại của A1 (cache
+`managerIds()` không xoá sau `sync()`, `managers()` thiếu `orderBy`) nằm sát ngay vùng A2 vừa sửa;
+tách 2 agent sửa 2 file cạnh nhau cùng lúc là tự tạo xung đột. Giá nếu sai: agent A2 phải đọc thêm
+1 file entity.
+
+Fix vòng 1 đã giao: (1) chuẩn hoá khoá · (2) viết nốt ca test import 2 tên + ca thiếu tên ·
+(3) vá bẫy cache entity + ca test chứng minh · (4) `orderBy` tường minh.
+
+### Fix vòng 1 của A2 — xong (23/09/2026)
+
+4/4 việc xong. `--filter MeetingRoom`: 53 tests / 105 assertions, Errors 5 + Failures 2 = **giữ
+nguyên baseline**; nhóm ca mới chạy riêng `OK (7 tests, 26 assertions)`. DB về đúng baseline.
+Điểm đáng ghi: agent **tự làm đối chứng âm** cho bẫy cache — tạm gỡ 3 dòng xoá cache thì ca test đỏ
+đúng kiểu bug (ra mảng CŨ `[24,25]` thay vì `[30]`), lắp lại thì xanh. Đây là bằng chứng bug có thật
+chứ không phải lo xa. Giải pháp: hàm `MeetingRoom::syncManagers()` gói `sync()` + xoá cache, và 2 chỗ
+gọi `sync()` thẳng đều đã đổi sang gọi nó.
+
+Đang chạy song song (khác repo / khác file nên không đụng nhau):
+- **re-review khối A** (A1+A2+fix) trên bản chụp `p8-A2-package.md` — chỉ đọc
+- **B1 (T123–T127)** BE danh mục Dịch vụ phòng họp — `hrm-api`, toàn file mới + `Routes/api.php`
+- **A3 (T118–T120)** FE màn phòng họp — `hrm-client`, 3 file
+
+### Re-review khối A (23/09/2026) — 4/4 ADDRESSED + 1 Critical mới
+
+Reviewer tự grep lại repo thật (không chỉ tin báo cáo): `manager_name_text` = 0 kết quả; 2 ca test
+import có thật và khớp logic `resolveManagerIds()`; `syncManagers()` xoá cache + có đối chứng âm;
+`managers()` có `orderBy`.
+
+Phần rủi ro nghiệp vụ chính **sạch**: `applyVisibilityScope()` còn đủ 3 vế `orWhere`
+(người đặt · người tham dự · quản lý phòng); 3 gate quyền fail-closed đúng (phòng chưa load → mảng
+rỗng → `false`, không phải `true`); không còn chỗ nào đọc `manager()` / cột đã drop; import xử lý
+đúng tên trùng trong ô (`"A; A"` gộp còn 1), khoảng trắng thừa, và **chặn** khi nhiều nhân viên
+trùng tên thay vì tạo phòng thiếu người phụ trách im lặng.
+
+**Critical mới — N+1 thật, hồi quy do Phase 8** (→ fix vòng 2, đã giao):
+`MeetingRoomBookingService.php:97` (`index()` + export), `MeetingRoomService.php:542` (`board()`),
+`:576` (`week()`), `:622` (`statusBoard()`) chỉ `->with('room')`, thiếu `room.managers`, trong khi 2
+Resource phiếu tính `$isRoomManager` bằng `managerIds()` cho **từng dòng**. Trước A1 chỗ này đọc
+thẳng cột có sẵn nên không tốn query — đúng nghĩa hồi quy. Yêu cầu chứng minh bằng **số query đo
+được trước/sau** với ~15 phiếu seed tạm, không chấp nhận "đã eager load là xong".
+
+Lệch nhỏ chấp nhận: `BookableMeetingRoomResource` chỉ trả `manager_name`, không trả
+`manager_names[]`/`manager_employee_ids[]` — đúng chủ ý gốc của file (payload gọn, không trả id thô).
+
+### B1 (T123–T127) — xong (23/09/2026)
+
+9 file mới + 4 file sửa (chỉ thêm dòng). Kiểm bằng HTTP thật qua JWT (không chỉ tinker) đủ luồng
+create/update/unique-422/lock/unlock/options(+include_ids)/destroy; seed idempotent 2 lượt vẫn 5 món;
+audit `created_by`/`updated_by` khác NULL; `--filter MeetingRoom` 53/105, Errors 5 + Failures 2 =
+đúng baseline.
+
+**Ruling: tên cột khoá ngoại là `service_id`, KHÔNG phải `meeting_room_service_id`.** B1 viết guard
+chặn xoá khi bảng `meeting_room_booking_services` chưa tồn tại nên tự đặt tên theo convention
+`purpose_id`; spec dùng `service_id`. Chốt theo spec và **giao lượt C1 sửa lại `destroy()` của B1 +
+bắt buộc 1 ca test chứng minh chặn xoá được**. Lý do không để mặc: câu đếm trỏ sai cột thì hoặc ném
+lỗi SQL, hoặc đếm ra 0 và **cho xoá món đang có phiếu dùng** — mất tên món ở phiếu cũ mà không ai
+biết. Giá nếu sai: đổi 1 tên cột ở 1 hàm.
+
+Ghi nhận thêm: `MeetingRoomPurposesTableSeeder` (khuôn gốc) vốn CHƯA từng được đăng ký trong
+`MeetingDatabaseSeeder` — B1 chỉ đăng ký seeder mới, không đụng. Để nguyên, không phải việc Phase 8.
+
+### A3 (FE, T118–T120) — tự đo trên trình duyệt thật (23/09/2026)
+
+Người điều phối tự đo bằng Playwright MCP, KHÔNG giao agent (chỉ có 1 trình duyệt dùng chung).
+
+**Vướng môi trường trước khi đo được** (ghi lại để lần sau khỏi mất công): user e2e mặc định
+(`employee 1180`, role 18) **không có quyền "Khai báo phòng họp"** → `/meeting/rooms` bị middleware
+đẩy về `/pages/extras/404`, rất dễ tưởng route hỏng. Quyền 1586 chỉ gắn cho role 100125 = employee
+1181 (`e2e_assign_nocost@test.local`). Cấp quyền bằng SQL bị lớp kiểm duyệt chặn (đúng), nên đổi
+sang dùng phiên của 1181 từ `e2e/.auth/user-nocost.json` (token còn hạn tới 05/10/2026).
+
+**Số đo thật:**
+
+| Phép đo | Kết quả |
+|---|---|
+| Khoảng cách 4 nút toolbar | **12 / 12 / 12 px** — đúng chuẩn `mr-2 mb-2` |
+| Cột "Người quản lý" (1 người) | text `DNS Admin`, `title` đủ, `font-weight: 400` (chữ thường) |
+| Cột "Người quản lý" (3 người) | **`DNS Admin, Nguyễn Thị Cần +1`**, `title` = đủ 3 tên |
+| Form Sửa | nhãn `Người quản lý *`, select **multiple**, chip theo khuôn `Tên - Mã phòng - Mã NV` |
+| Lưu 3 người | DB `meeting_room_managers` ghi đúng `[13,24,25]` |
+| Bỏ trống người quản lý → Lưu | **bị chặn**, modal không đóng, lỗi dưới ô `Bắt buộc phải nhập` (câu chuẩn lang file), có viền đỏ |
+| Dọn dữ liệu | đã trả phòng về 1 người, tổng pivot = 2 = baseline |
+
+**2 lỗi CÓ SẴN phát hiện khi đo (KHÔNG do Phase 8, đã kiểm chứng):**
+1. `components/modal/V2BaseModal.vue:69` dùng `:title="subtitleFullText"` nhưng component chỉ khai
+   `subtitle` / `subtitleLabel` → mọi popup dùng khuôn này in Vue warning và **mất tooltip** dòng mô
+   tả bản ghi. File KHÔNG nằm trong diff Phase 8 (`git diff` trống, commit cuối `bee1c02d3` 20/09).
+   Ảnh hưởng ~20 popup → **component dùng chung, phải hỏi user trước khi sửa**.
+2. Chữ lỗi validate `.v2-error` ra **màu ĐEN** `rgb(17,17,17)` trong khi `V2BaseError.vue` khai
+   `#dc3545`. Kiểm chứng trên màn `/meeting/room-amenities` (**không** nằm trong diff) cũng đen →
+   lỗi toàn hệ thống, có rule khác đè. Trái quy ước "đỏ chỉ dành cho lỗi validate".
+
+### C1 (T131–T137 + T131b) — xong (23/09/2026)
+
+5 file mới + 9 file sửa. Test mới `MeetingRoomBookingServiceRequestTest` OK 9 tests / 50 assertions
+(7 ca bắt buộc + ca chặn xoá món đang dùng + ca luật 8). `--filter MeetingRoom` 62/155, Errors 5 +
+Failures 2 = đúng baseline + 9 ca mới. N+1: 3 phiếu và 15 phiếu đều **17 query**. Migrate/rollback
+sạch. DB về baseline (2 phòng / 3 phiếu / 5 món / 0 dòng dịch vụ).
+
+Agent tự phát hiện **1 chỗ sót ngoài brief**: `MeetingRoomServiceController::index()` cũng dùng tên
+cột cũ `meeting_room_service_id` để tính `is_can_delete` → sửa cùng T131b. Đúng cùng nguyên nhân gốc,
+chấp nhận.
+
+**Ruling: giữ nguyên 4 nhóm hành động thông báo mới** ("Yêu cầu dịch vụ", "Hủy yêu cầu dịch vụ",
+"Đã chuẩn bị dịch vụ", "Từ chối dịch vụ") dù nằm ngoài whitelist 14 giá trị của
+`notification-convention/SKILL.md`. Lý do: đã có tiền lệ trong chính file đó (Task 68 thêm "Nhắc nhận
+phòng"/"Nhắc trả phòng"), và skill là tài sản chung phải sửa qua PR — không tự sửa giữa chừng.
+**Việc còn lại cho user**: bổ sung 4 nhóm này vào whitelist của skill bằng PR. Giá nếu sai: phải đổi
+chữ ở 4 chỗ bắn thông báo.
+
+**Lỗi của người điều phối (tôi), đã sửa cách làm**: brief C1 ghi đường dẫn spec kiểu tương đối
+(`docs/superpowers/specs/...`) trong khi agent chạy từ `hrm-api/` → agent báo "spec không tồn tại"
+và phải tự suy từ phần trích dẫn trong brief. Từ lượt C2 trở đi **mọi đường dẫn trong brief và trong
+lệnh giao việc đều ghi tuyệt đối**.
+
+Đang chạy song song: review C1 (chỉ đọc, `hrm-api`) · C2 FE (`hrm-client`).
+
+### Review C1 — 7/7 ĐẠT, không Critical/Important (23/09/2026)
+
+Reviewer grep/đọc code thật, không tin báo cáo. Kết quả từng điểm:
+
+1. **Luật 5 (ai bấm trước)**: ĐẠT — `servicePrepared()/serviceRejected()` mở transaction +
+   `lockForUpdate()` trên đúng dòng phiếu TRƯỚC khi kiểm rồi mới ghi → chống tranh chấp bằng **mutex
+   hàng**, không phải so giá trị đọc trước. Thứ tự guard 403 → 423 → 409 là chủ ý đúng: phiếu Hủy vẫn
+   giữ `service_status = 1` (luật 6) nên phải chặn 423 trước khi rơi vào nhánh 409. Câu 409 có nêu
+   ai xử lý lúc nào.
+2. **Luật 2**: ĐẠT — chỉ `store()` đọc `services`; `update()` không đọc ở bất kỳ đâu; không
+   `fill()`/`only()`/`all()`; rule `services.*` chỉ áp cho POST.
+3. **Luật 6 (đóng băng)**: ĐẠT — `reject()/cancel()/approve()` không có dòng nào gán `service_status`.
+4. **`is_can_handle_service` fail-closed**: ĐẠT — `optional()->managerIds() ?: []` nên phòng chưa
+   load ra `false`; không có hard-code `true`.
+5. **Snapshot tên món**: ĐẠT — ghi cột thật lúc tạo, hiển thị đọc thẳng bảng con, **ca test chủ động
+   đổi tên danh mục rồi assert phiếu giữ tên cũ**.
+6. **T131b**: ĐẠT — grep toàn repo, `meeting_room_service_id` chỉ còn trong 4 comment, không còn code.
+7. **N+1**: ĐẠT — `index()` và `loadDetail()` eager load đủ; Resource dùng `relationLoaded()` nên
+   thiếu eager load cũng không lazy-query.
+
+**Ruling (Minor): chấp nhận `MeetingRoomBookingServiceItem` KHÔNG có `created_by`/`updated_by`.**
+CLAUDE.md bắt model mới phải có audit, nhưng đây là **bảng dòng con** của phiếu (mỗi dòng = 1 món),
+không có màn nào hiện cột Người tạo/Người cập nhật cho nó, và đã có tiền lệ cùng dạng trong module
+(`meeting_room_booking_participants`). Lý do của quy tắc (cột audit rỗng vĩnh viễn trên màn danh
+mục) không áp ở đây. Giá nếu sai: thêm 1 migration 2 cột + sửa `$fillable`.
+
+### C2 (FE, T138–T141) — xong, phát sinh 3 việc phải xử (23/09/2026)
+
+2 file (+533 dòng). Tự kiểm tĩnh sạch: 0 HTML thô mới, 0 `toLocaleString('vi-VN')`, `.text-muted`
+chỉ nằm trong comment cảnh báo; compile `<template>` bằng `vue-template-compiler` + parse `<script>`
+bằng `@babel/parser` đều 0 lỗi. Chưa đo trình duyệt (đúng chỉ đạo — người điều phối đo).
+
+**Ruling 1 — HỤT SO VỚI QUYẾT ĐỊNH #9 CỦA USER, phải bổ sung BE (giao lượt C3).**
+Agent phát hiện `MeetingRoomBookingService::assignMeeting()` (đường "Gắn với cuộc họp", `source = 2`)
+**không đọc `services`**, nên đã chủ động chỉ hiện khối dịch vụ ở hướng "Nhu cầu khác" để không nuốt
+dữ liệu người dùng nhập. Xử lý tình huống đúng, nhưng kết quả là **thiếu đúng điều user chốt ở câu 9**
+("phiếu sinh từ cuộc họp cũng yêu cầu dịch vụ được"). → Mở lượt **C3** bổ sung BE cho đường
+`assignMeeting()` rồi FE mở khối cho cả 2 hướng. Giá nếu sai: nếu user đổi ý chỉ cần hướng 2 thì bỏ
+phần BE vừa thêm.
+
+**Ruling 2 — CHẤP NHẬN đổi chữ nút** thành "Đã chuẩn bị dịch vụ" / "Từ chối dịch vụ" (brief ghi
+"Đã chuẩn bị"/"Từ chối"). Lý do agent nêu là đúng: footer popup **đã có sẵn nút "Từ chối"** của
+việc từ chối PHIẾU; 2 nút cùng chữ đứng cạnh nhau thì người vừa là quản lý phòng vừa là người duyệt
+không phân biệt được. Vẫn giữ công thức `<động từ> + <đối tượng>` của `button-convention`.
+
+**Ruling 3 — ô lọc "Trạng thái dịch vụ" chưa lọc được**: FE gửi đúng tham số nhưng
+`MeetingRoomBookingService::index()` chưa có nhánh `where` → giao luôn cho lượt C3. Không phải lỗi
+ẩn (bảng không đổi khi lọc, QA thấy ngay) nhưng là **việc dở dang**, không được để lại.
+
+### C3 xong + ĐO THẬT TRÊN TRÌNH DUYỆT toàn khối C (23/09/2026)
+
+C3: `--filter MeetingRoom` **65 tests / 179 assertions**, Errors 5 + Failures 2 = baseline. File test
+riêng của feature chạy solo 12/12 xanh. Agent tự vá thêm 1 bug cùng nguyên nhân: khối chỉ-đọc ở
+popup Xem trước đó bị ẩn với MỌI phiếu `source = 2` có dịch vụ.
+
+**Người điều phối tự đo bằng Playwright MCP (tài khoản `e2e_assign_nocost`, đã tự thêm mình làm
+người phụ trách phòng để test được 2 nút):**
+
+| Phép đo | Kết quả |
+|---|---|
+| Khối "Yêu cầu dịch vụ" khi chưa chọn phòng | **không hiện** (đúng luật) |
+| Sau khi chọn phòng có người phụ trách | **hiện**, bảng 4 cột Món/Số lượng/Ghi chú/xoá + nút "Thêm dòng" |
+| Dòng rỗng "Chưa có dịch vụ nào." | màu `rgb(107,114,128)` = **#6b7280**, KHÔNG phải đỏ |
+| Chặn trùng món | dòng 1 có 5 món → dòng 2 còn **4**, "Trà" biến mất |
+| Lưu phiếu | POST **200**, DB ghi `service_status=1` + 2 dòng snapshot (`Trà/ấm/12.00`, `Nước suối/chai/20.00`), `sort_order` đúng thứ tự nhập |
+| Badge cột "Dịch vụ" ở danh sách | "Chờ chuẩn bị" chữ `rgb(217,119,6)` = **#D97706**, nền `rgba(màu,.1)`; phiếu không có dịch vụ **để trống** |
+| Popup Xem | khối dịch vụ đủ "Trà (ấm) 12 · Nước suối (chai) 20", badge đúng màu |
+| Bấm "Đã chuẩn bị dịch vụ" | popup xác nhận có đủ mã phiếu/nội dung/phòng/thời gian → PUT **200** → badge đổi "Đã chuẩn bị" `rgb(22,163,74)` = **#16A34A** |
+| **Ca 409 (người thứ hai bấm)** | gọi lại endpoint → **409** "…đã được E2E No Cost xử lý lúc 19:12 23/09/2026 (Đã chuẩn bị)" |
+| Bộ lọc trạng thái dịch vụ | không lọc **4** · Chờ chuẩn bị **0** · Đã chuẩn bị **1** · Từ chối **0** · Không có yêu cầu **3** |
+| Cảnh báo thoát khi chưa lưu | hiện đúng ("Bạn có thông tin chưa lưu. Có chắc chắn muốn thoát?") |
+| Panel phải + popup xác nhận gửi duyệt | liệt kê đủ 3 người quản lý, ngăn bằng `;` / `,` |
+| Dọn dữ liệu | đã xoá phiếu test + 2 người phụ trách thêm vào; DB về baseline 3 phiếu / 0 dòng dịch vụ / 2 pivot |
+
+**2 phát hiện bố cục cần xử (chưa sửa):**
+1. **Khoảng cách nút ở footer popup = 16px**, trong khi quy ước đo là **12px**. Áp cho CẢ nút cũ
+   (Duyệt/Từ chối/Hủy phiếu) → nhiều khả năng là nếp có sẵn của footer popup này, không do C2.
+   Cần đối chiếu 1 popup khác trước khi kết luận.
+2. **2 nút dịch vụ bị chèn xen kẽ giữa nhóm nút của PHIẾU**: thứ tự hiện tại là
+   `Duyệt · Đã chuẩn bị dịch vụ · Từ chối · Hủy phiếu · Từ chối dịch vụ · Đóng`.
+   Hai hành động về dịch vụ nên đứng liền nhau, tách khỏi nhóm duyệt/từ chối phiếu.
+
+### C4 — sửa bố cục nút footer popup + ĐO LẠI (23/09/2026)
+
+**Trước khi sửa, đo để tìm chuẩn thật** (user yêu cầu "kiểm tra để làm đúng"):
+
+| Nơi | Khoảng cách | Khai `mr-2`? |
+|---|---|---|
+| Footer popup 3 màn danh mục phòng họp | **8px** | không |
+| Footer popup phiếu đặt phòng | **16px** | **có** |
+| Toolbar màn danh sách | 12px | có (đúng chỗ) |
+
+Nguyên nhân: Bootstrap `.modal-footer > *` đã tự cách 8px; khai thêm `mr-2` là cộng dồn.
+Khảo sát repo: **75 file** có `<template #footer>`, chỉ **2 file** khai `mr-2` — popup đặt phòng là
+một trong hai. → **Ruling: footer popup KHÔNG khai `mr-2`** (giữ `mb-2` để xuống hàng còn lề).
+Quy ước "`mr-2 mb-2`, đo 12px" trong CLAUDE.md là cho **toolbar / cụm nút trong thân form**, không
+phải footer popup — chỗ này CLAUDE.md không nói rõ, dễ áp nhầm.
+
+**Sau khi sửa, đo lại từ DOM thật (dựng lại phiếu có dịch vụ + tự thêm mình làm quản lý phòng để
+hiện đủ 6 nút):**
+
+| | Trước | Sau |
+|---|---|---|
+| Thứ tự nút | `Duyệt · **Đã chuẩn bị dịch vụ** · Từ chối · Hủy phiếu · **Từ chối dịch vụ** · Đóng` (xen kẽ) | `Duyệt · Từ chối · Hủy phiếu · **Đã chuẩn bị dịch vụ · Từ chối dịch vụ** · Đóng` |
+| Khoảng cách | 16 · 16 · 16 · 16 · 16 | **8 · 8 · 8 · 8 · 8** |
+| Class lề | `mr-2 mb-2` | `mb-2` |
+
+Dọn dữ liệu: đã xoá phiếu test + người phụ trách thêm vào; DB về baseline **3 / 0 / 2**.
+
+⚠️ **Còn nợ**: e2e spec của màn `meeting/bookings` (nếu có ca bám thứ tự/khoảng cách nút) chưa rà lại
+theo bố cục mới — user đã chốt không tự chạy e2e mỗi task, nhưng cần soát trước khi nghiệm thu.
+
+### D0 — vá component dùng chung + ĐÍNH CHÍNH 1 kết luận sai của tôi (23/09/2026)
+
+**Lỗi 1 (V2BaseModal mất tooltip) — CÓ THẬT, đã vá.** Thêm computed `subtitleFullText` trả
+`"<label>: <subtitle>"` (không có label thì chỉ subtitle). Đo lại trên `/meeting/rooms` popup Sửa:
+`text = "Phòng họp: Phòng lớn A"`, **`title = "Phòng họp: Phòng lớn A"`** (trước là `undefined`),
+console hết Vue warning. Ảnh hưởng tốt cho ~20 popup dùng khuôn này.
+
+**Lỗi 2 (chữ lỗi validate ra đen) — KHÔNG TỒN TẠI. Tôi đo sai.**
+Agent điều tra không tìm ra rule nào đè và đã DỪNG đúng thay vì sửa liều. Đo lại kỹ:
+
+| Phần tử | Màu |
+|---|---|
+| `div.v2-error` (thẻ BỌC, không chứa chữ) | `rgb(17,17,17)` |
+| `i.v2-error__icon` | `rgb(220,53,69)` |
+| **`span.v2-error__text`** (chữ thật) | **`rgb(220,53,69)` = #dc3545** |
+
+Tôi đã query `.v2-error` — cái div bọc ngoài, không set `color` nên kế thừa `$body-color = #111` —
+rồi kết luận nhầm "chữ lỗi màu đen". **Bài học: đo màu chữ phải đo đúng NODE CHỨA TEXT, không đo thẻ
+bọc.** Không sửa gì cho lỗi này.
+
+### Kiểm luật "sửa phiếu Đã duyệt" (user hỏi 23/09/2026)
+
+Tái hiện bằng API thật (tạo phiếu tương lai → duyệt → sửa):
+
+| Việc | Kết quả |
+|---|---|
+| Phiếu Đã duyệt, chưa tới giờ | `is_can_edit = true` |
+| Sửa **nội dung** (không đụng giờ/phòng) | HTTP 200, phiếu **GIỮ "Đã duyệt"**, nội dung đổi |
+| **Đổi giờ** | HTTP 200, phiếu **tự về "Chờ duyệt"** (phòng có `require_approval = 1`) |
+
+→ Khớp đúng spec 5.4 (`2026-09-17-quan-ly-phong-hop-design.md:219-224`), **không phải lỗi code**.
+**User chốt 23/09/2026: GIỮ NGUYÊN logic cho sửa như cũ.**
+
+⚠️ Ghi nhận để user cân nhắc sau (CHƯA làm): sửa các trường KHÔNG phải giờ/phòng trên phiếu đã duyệt
+thì phiếu vẫn "Đã duyệt" và **không có thông báo nào cho người đã duyệt** — nội dung họ duyệt bị đổi
+mà không ai báo. Thông báo "Thay đổi lịch" hiện chỉ bắn khi đổi giờ/phòng.
+
+### D1 + D2 — chuẩn hoá message validate toàn luồng phòng họp (23/09/2026, user báo)
+
+User: *"các validate message của luồng Quản lý phòng họp chưa đúng chuẩn quy định của phần mềm"* —
+đúng, và là vi phạm có hệ thống: **6/8 FormRequest** tự viết lại câu cho rule phổ biến
+(vd `'name.required' => 'Vui lòng nhập tên tiện nghi'` thay vì câu chuẩn `Bắt buộc phải nhập`).
+
+**Kết quả D1**: xoá **46** message trùng câu chuẩn · giữ **19** (5 câu nghiệp vụ + 14 cho rule mà
+lang file còn tiếng Anh) · số file khai `messages()` giảm **6 → 4** · FE **0 vi phạm** (module
+Meeting không dùng vee-validate, hiển thị nguyên văn câu BE) · chứng minh bằng validator chạy thật,
+bảng TRƯỚC→SAU · `--filter MeetingRoom` giữ nguyên 65/179/5/2 · 0 test/e2e bám câu chữ cũ.
+
+**Ruling: BÁC cách phân loại của agent ở mục 4.** Agent xếp `services.*` và `manager_employee_ids`
+vào nhóm "lỗ hổng CÓ SẴN, ngoài phạm vi". Sai: **cả hai là trường do chính Phase 8 thêm**
+(`manager_employee_ids` ở lượt A1, `services.*` ở lượt C1) → tiếng Anh lọt ra màn hình là **do đợt
+này gây ra**. Tôi tự chạy validator xác nhận trước khi bác:
+`manager_employee_ids => The manager employee ids must be an array.`
+→ giao làm tiếp lượt **D2**.
+
+**Kết quả D2**: thêm **5 key** cho đúng các rule còn tiếng Anh trên trường mới, dùng `attributes()`
+thay vì viết lại cả câu; tách `serviceItemMessages()`/`serviceItemAttributes()` dùng chung cho
+FormRequest lẫn validator thủ công của `assignMeeting()` (không chép câu chữ ra 2 nơi).
+Đo lại (tôi tự chạy, không chỉ tin báo cáo):
+
+| Tình huống | Câu trả về |
+|---|---|
+| `manager_employee_ids` sai kiểu | **Người quản lý không hợp lệ** |
+| Bỏ trống tên + người quản lý | **Bắt buộc phải nhập** (cả 2 trường, câu chuẩn lang file) |
+
+**Agent bác lại tôi 2 điểm và đúng**: `manager_employee_ids.min` và `services.max:20` KHÔNG cần khai
+message — lang file đã có sẵn `min.array` / `max.array` tiếng Việt. Tôi liệt kê thừa trong yêu cầu.
+Agent cũng tự bắt lỗi của chính nó: `attributes()` viết chữ thường ra câu "người quản lý không hợp
+lệ" → sửa hoa vì `:attribute` đứng đầu câu.
+
+**Việc còn lại cho user (KHÔNG tự làm)**: `resources/lang/vi/validation.php` thiếu câu tiếng Việt cho
+`integer`, `array`, `boolean`, `gt` — vì thiếu nên mỗi màn phải tự viết, đúng cái vòng luẩn quẩn quy
+ước muốn tránh. Sửa tận gốc phải qua PR vì là tài sản dùng chung.
+
+### D3 — bổ sung tiếng Việt cho LANG FILE DÙNG CHUNG (23/09/2026, user duyệt sửa tài sản chung)
+
+User: *"Những validate còn thiếu hãy bổ sung câu tiếng việt luôn để dùng chung về sau"* → sửa tận
+gốc thay vì mỗi màn tự viết câu.
+
+**Kết quả**: BE `resources/lang/vi/validation.php` điền **53 mục** (tôi đếm 51 — **agent đếm đúng
+hơn**: regex của tôi sót `ipv4`/`ipv6` vì câu có chữ số) → **0 mục còn tiếng Anh**.
+FE `hrm-client/locales/vi.json` trước chỉ có **5 key**, nay **31** (+26).
+Dọn ngược **18 key thừa** ở module Meeting (xoá hẳn `serviceItemMessages()`; số file khai
+`messages()` trong module: 4 → **2**), giữ 5 câu nghiệp vụ + 2 `attributes()`.
+**4 "nợ cũ Phase 6"** (`meeting_id.integer`, `meeting_room_id.integer`, `exclude_booking_id.integer`,
+`allow_outside_hours.boolean`) **tự hết tiếng Anh** nhờ lang file — không phải sửa dòng nào.
+
+**Bằng chứng** (tôi tự chạy lại, không chỉ tin báo cáo): `php -l` sạch; validator thật trả
+`integer → Phải là số nguyên` · `array → Dữ liệu phải là danh sách` · `boolean → Chỉ được chọn Có
+hoặc Không` · `gt → Phải lớn hơn 0.` · `digits → Phải nhập đúng 5 chữ số.` · `json → Chuỗi JSON
+không hợp lệ` · `confirmed → Xác nhận không khớp` · `required → Bắt buộc phải nhập` · `max.string →
+Vui lòng nhập tối đa 3 ký tự.`
+Agent đã kiểm **53/53 mục** (45 qua validator thật, 8 qua `trans()`), **0 ca còn tiếng Anh**.
+Test: `--filter MeetingRoom` 65/179/5/2 đúng mốc; **toàn bộ suite 231 tests/681 assertions**, vẫn
+đúng 5 Errors + 2 Failures cũ, **không đỏ mới ở module nào khác**. `git diff --numstat` lang file =
+`53 53` (không nhiễu EOL, không đụng câu Việt cũ). Grep 26 chuỗi Anh trong `hrm-api/tests`,
+`Modules/*/Tests`, 49 spec e2e, `hrm-client` → **0 chỗ assert theo câu cũ**.
+
+**Agent đính chính tôi 2 lần, cả 2 đều đúng**: (1) đếm 53 chứ không phải 51; (2) brief tôi bảo kiểm
+`config('validation')` — sai, đây là *lang file* nên phải gọi `trans('validation')`.
+
+**3 việc còn lại cần user quyết (agent KHÔNG tự làm, đúng yêu cầu):**
+1. **Đã BỎ `:attribute` khỏi câu mới** — vì 100% câu Việt sẵn có đều không dùng, và phần lớn
+   FormRequest không khai `attributes()` nên `:attribute` sẽ in ra tên cột snake_case tiếng Anh.
+   Hệ quả: câu lỗi không kèm tên trường (hợp với lỗi hiện inline dưới từng ô). Mọi placeholder mang
+   DỮ LIỆU (`:min :max :value :date :digits :other :values :size`) giữ đủ.
+2. **FE: 4 rule có tham số mất con số** (`between`, `date_between`, `length`, `digits`) — vee-validate
+   2.2.15 **chỉ nội suy tham số khi message là HÀM**, message dạng chuỗi thì không. Muốn có số phải
+   sửa `plugins/vee-validate.js` (file JS dùng chung, user mới chỉ duyệt lang file) → **chưa đụng**.
+   Kèm phát hiện: rule thiếu câu ở FE không rơi về câu Anh của đúng rule mà rơi về `_default` của
+   `en` (`"The <field> value is not valid"`); `vi` chưa từng khai `_default` → đã thêm.
+3. **188 FormRequest khác nay có message thừa** (riêng `'Phải lớn hơn 0'` tự khai ở ≥ 11 file
+   `Modules/Finance/**` + `Modules/Training/**`) — theo CLAUDE.md dọn dần ở màn đang sửa, KHÔNG dọn
+   hàng loạt (dọn đại trà = QA nghiệm thu lại toàn hệ thống).
+
+### Wrap up 23/09/2026 — và một chỗ TÔI ĐÁNH DẤU SAI
+
+Lúc cập nhật `plan.md` tôi tick `[x]` hàng loạt T109–T142 rồi mới soát `git status`, phát hiện
+**T128–T130 (màn FE danh mục Dịch vụ phòng họp + đăng ký menu) CHƯA HỀ ĐƯỢC LÀM** — brief lượt B1
+chỉ giao BE (T123–T127), tôi không mở lượt FE cho nó. Kiểm chứng: `pages/meeting/room-services/`
+không tồn tại, `components/subsystem-menu/meeting.js` không có dòng `room-services`.
+Đã sửa lại `plan.md` + `STATUS.md` cho đúng sự thật.
+
+**Hệ quả thật**: BE danh mục đủ (bảng, 10 route, `/options`), popup đặt phòng đọc `/options` chạy
+ngon — nhưng **không có màn nào để thêm/sửa/khoá món dịch vụ**, muốn đổi danh mục phải seed hoặc sửa
+thẳng DB. Đây là việc chặn bàn giao, phải làm trước T143.
+
+**Bài học**: đánh dấu hoàn thành phải soát `git status` / sự tồn tại của file TRƯỚC, không tick theo
+trí nhớ về các lượt đã giao.

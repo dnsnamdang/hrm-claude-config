@@ -727,6 +727,13 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Hoàn thành
 
+- tong-hop-nghiem-thu-bomlist-baogia — bộ tài liệu TỔNG HỢP KHỐI LƯỢNG luồng **BOM List + Báo giá** phục vụ nghiệm thu thanh toán với khách → @namdangit → .plans/tong-hop-nghiem-thu-bomlist-baogia/
+  Hoàn thành: 24/09/2026 — gom từ `.plans/Bomlist-Quotation/` (33 phase) + **45 hạng mục feature liên quan** + 7 hạng mục chuẩn hoá trên nhánh `gop_db` + lịch sử git 2 repo.
+  Sản phẩm: `tong-hop.md` (bản thuyết minh) + `tong-hop-nghiem-thu-bomlist-baogia.xlsx` — sheet *Tổng hợp nghiệm thu* **84 hạng mục / 10 nhóm** (có cột trống để khách tick), sheet *Phase luồng chính* 36 dòng, sheet *Bằng chứng*.
+  Số chốt: **03/2026 → 09/2026** · **216 commit** (api 110 · client 106) · 135 test case luồng chính · SRS 27 bảng · 1 HDSD.
+  Phân bố trạng thái: 70 Hoàn thành · 7 Code xong-chờ khách test · 1 khách test OK · 1 mockup · 1 khảo sát · **4 Đang làm** (redesign Báo giá · HĐ ERP từ báo giá · HĐ hãng 2 cấp · Giải pháp nhóm ngành/khách hàng cuối).
+  ⚠️ Chưa xuất bản Word biên bản nghiệm thu (user chưa chốt cần hay không).
+
 - reason-project-failure-permission-gate → @khoipv → .plans/reason-project-failure-permission-gate/plan.md
   Hoàn thành: 2026-09-18. Siết quyền 2 màn danh mục **Nguyên nhân thất bại dự án** + **Lý do hủy cuộc họp**; đã commit trên nhánh `fix-bug-11092026` ở cả 2 repo (hrm-api `6c76378aa`, hrm-client `53dee118d`), cây sạch. BE vốn KHÔNG fail-open (POST/DELETE/lock/export với tài khoản chỉ có quyền Xem đều trả 403, dữ liệu không đổi); nguyên nhân "vẫn sửa/xoá/khoá được" là FE không ẩn nút và route `show` không gắn `checkPermission` nên modal Sửa vẫn mở đủ dữ liệu, còn lỗi 403 bị nuốt tại chỗ (`if (status === 403) return`) nên nhìn như thao tác thành công. Đã sửa: FE gate các nút Sửa/Xoá/Khoá + Xuất Excel bằng `v-if="canManage"` ở cả 2 màn, BE gắn `checkPermission:Quản lý…|Xem…` cho route `show`. ⚠️ Cố ý KHÔNG gate `GET /getAll` của cả 2 danh mục — đó là dropdown của `CloseProjectModal.vue` (đóng dự án tiềm năng) và của popup hủy cuộc họp; gate vào sẽ chặn người không có quyền danh mục làm nghiệp vụ chính. Giữ BE `/export` ở mức chỉ quyền Quản lý theo convention 14/15 màn danh mục trong `api.php` (muốn nới thì sửa đồng loạt). KHÔNG migration, KHÔNG quyền mới. Đo được: không quyền → `show` 403 (trước đó 200); chỉ quyền Xem → index/show 200, export/POST/lock/DELETE 403 và bản ghi không đổi; Super admin/Admin_TPE → 200 hết; bản ghi + quyền tạm dùng để test đã dọn sạch. ⚠️ Khi test màn Lý do hủy cuộc họp: role Super admin có sẵn CẢ quyền Quản lý (1182) — phải bỏ tick mới thử được vai "chỉ xem". Design: .plans/reason-project-failure-permission-gate/design.md
 

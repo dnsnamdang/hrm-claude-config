@@ -286,6 +286,25 @@ class SrsDoc(object):
             [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
             widths=[0.4, 1.6, 0.9, 3.6])
 
+    # --------------------------- man BAO CAO: cach lay du lieu + icon (2026-10-05)
+    DATA_HEAD = ['STT', 'Chỉ tiêu / Cột', 'Cách lấy dữ liệu', 'Nội dung icon ⓘ']
+    DATA_TITLE = 'Cách lấy dữ liệu và giải thích chỉ tiêu'
+
+    def data_table(self, rows):
+        """Bang 'Cach lay du lieu va giai thich chi tieu' 4 cot (STT tu danh) — BAT BUOC voi
+        chuc nang hien SO LIEU cua man bao cao (bao cao chinh, popup danh sach chi tiet...).
+
+        rows: [(chi_tieu_hoac_cot, cach_lay_du_lieu, noi_dung_icon), ...]
+          - cach_lay_du_lieu: ngon ngu nghiep vu (dem gi, cong gi, dieu kien nao, khop voi o nao),
+            KHONG ghi ten bang / ten cot DB.
+          - noi_dung_icon: chep NGUYEN VAN chu trong icon (i) tren giao dien; nhieu dong noi bang
+            ' • '. Khong co icon thi ghi '—'; dung chung icon cua khoi thi ghi '(dùng chung ⓘ của khối)'.
+        """
+        return self.table(
+            self.DATA_HEAD,
+            [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
+            widths=[0.45, 1.35, 2.6, 1.6])
+
     # ------------------------------------------------- form RUT GON (2026-08-12)
     def field_table(self, rows):
         """Bang 'Mo ta chi tiet' 7 cot cua FORM RUT GON (STT tu danh).

@@ -62,7 +62,8 @@ Nó đọc thẳng `SRS_MAU.docx` mỗi lần chạy, nên bản mẫu đổi th
 mục Layout thiếu dòng `Menu:` hoặc còn `URL đầy đủ` · thiếu đoạn `Quy tắc chung:` hoặc đoạn đó
 không phải hyperlink thật · Phần 4 chưa là bảng 5 cột · **sơ đồ tổng quan vẽ phẳng** (đọc dấu
 `srs-uml` mà `srs_uml_render` đóng vào metadata PNG) · bảng giao diện dùng bộ cột lạ · còn mục
-đã bỏ của form cũ.
+đã bỏ của form cũ · **màn báo cáo thiếu bảng "Cách lấy dữ liệu và giải thích chỉ tiêu"** hoặc bảng
+đó sai bộ cột (nhận diện màn báo cáo qua dòng tiêu đề `Màn hình: Báo cáo …`).
 
 Ngoài ra `overview_figure()` (API form cũ) nay **ném RuntimeError** kèm hướng dẫn chuyển sang
 `overview_figure2()`; muốn dựng lại tài liệu cũ để đối chiếu thì truyền `allow_legacy=True`.
@@ -207,6 +208,9 @@ Phần 4. Quy tắc nghiệp vụ                    [Heading 1]
 > Chức năng KHÔNG có tương tác riêng (Xem danh sách, Tìm kiếm & lọc, Xem chi tiết, Lịch sử)
 > thì **bỏ mục "Biểu đồ Usecase"** và **lùi số các mục con lại 1 bậc** — bản mẫu làm vậy.
 >
+> **Màn BÁO CÁO** thêm mục **2.x.6 Cách lấy dữ liệu và giải thích chỉ tiêu** (đặt SAU các mục cố
+> định) cho mỗi chức năng hiện số liệu — xem mục "Màn BÁO CÁO" bên dưới.
+>
 > Tiêu đề mục 2.x là **tên chức năng thuần**, KHÔNG gắn mã: `2.5 Tạo mới khách hàng`
 > (form cũ ghi `5.2.5 FR-05 — Tạo mới khách hàng`). Mã `FR-xx` chỉ còn dùng ở ma trận phân quyền.
 
@@ -266,6 +270,60 @@ After:
 – Ghi một dòng lịch sử …
 – Hiển thị thông báo "<thông báo thành công>"
 ```
+
+---
+
+## Màn BÁO CÁO — BẮT BUỘC bảng "Cách lấy dữ liệu và giải thích chỉ tiêu" (từ 2026-10-05)
+
+User yêu cầu 05/10/2026: với **mọi SRS của báo cáo**, người đọc (nghiệp vụ, tester) phải đối chiếu
+được **từng con số** trên màn — số đó đếm/cộng cái gì, điều kiện nào, và icon ⓘ cạnh nó giải thích
+gì. Bảng giao diện (2.x.3/2.x.4) chỉ mô tả *phần tử*, không mô tả *cách tính* → phải có bảng riêng.
+
+**Áp cho:** mọi chức năng HIỆN SỐ LIỆU của màn báo cáo — màn báo cáo chính, popup danh sách chi
+tiết (drill), popup thống kê... Chức năng thuần thao tác (cài đặt bộ lọc, in, xuất Excel) thì không.
+
+**Vị trí:** mục con **2.x.6 `Cách lấy dữ liệu và giải thích chỉ tiêu`**, đặt SAU các mục cố định
+(sau "Danh sách event" / "Quy tắc hiển thị"), mở đầu bằng 1 câu dẫn nói "tập dữ liệu" là gì (sau
+phạm vi quyền + bộ lọc). Không chen vào giữa để khỏi xáo số thứ tự chuẩn. Chức năng lọc có ô lọc
+gắn icon ⓘ thì thêm mục tương tự `2.x.5 Cách lấy dữ liệu của ô lọc`.
+
+**Bảng 4 cột** — `d.data_table(rows)`:
+
+| STT | Chỉ tiêu / Cột | Cách lấy dữ liệu | Nội dung icon ⓘ |
+|---|---|---|---|
+| tự đánh | Tên đúng chữ trên màn: ô tổng hợp, dòng tóm tắt, dòng TỔNG, từng cột số, từng cấp dòng | Đếm / cộng gì, điều kiện gì, đếm trùng hay KHÁC NHAU, ẩn khi nào, khớp với ô nào | Chép NGUYÊN VĂN chữ trong ⓘ |
+
+Phải liệt kê **đủ**:
+- Dòng tóm tắt / thời điểm số liệu (báo cáo theo kỳ thì ghi kỳ lấy theo ngày nào).
+- Từng ô của khối tổng hợp (kể cả ô chỉ hiện khi > 0 — ghi rõ điều kiện ẩn).
+- Dòng TỔNG và mỗi cấp dòng của bảng cây (Phòng / Sales / Khách hàng / dòng lá) nếu cách tính khác nhau.
+- **Từng cột số liệu** của bảng: dòng lá lấy gì, dòng cha cộng gì, loại dòng nào để trống.
+- Các con số trên đầu popup drill + từng cột của popup.
+- Mọi ràng buộc khớp số: "tổng các ô tiến trình = ô Dự án", "khối tổng hợp = dòng TỔNG = số dòng popup".
+
+Cột "Nội dung icon ⓘ":
+- **Chép nguyên văn từ code FE**, không diễn giải lại: grep `InfoTip`, `title-suffix`, `:hint`,
+  `v-b-tooltip`, `tips:` trong page + components của báo cáo. Nhiều dòng nối bằng ` • `, giữ tiêu đề in hoa
+  (vd `NHU CẦU ĐANG THEO DÕI • …`).
+- Không có icon → `—`. Ô dùng chung icon của khối → `(dùng chung ⓘ của khối)`.
+- Lệch giữa chữ ⓘ và cách tính thật trong service = lỗi của màn → báo user, KHÔNG sửa chữ trong SRS cho khớp.
+
+Cột "Cách lấy dữ liệu": **ngôn ngữ nghiệp vụ**, truy vết được tới service nhưng không ghi tên
+bảng / tên cột / tên hàm. Công thức thì viết thẳng (`hôm nay ≥ hạn − M`, `N > M > 0`).
+
+```python
+d.p("2.1.6 Cách lấy dữ liệu và giải thích chỉ tiêu")
+d.p("Bảng dưới mô tả cách hệ thống tính từng chỉ tiêu, từng cột số liệu và nội dung icon ⓘ (nguyên "
+    "văn trên giao diện). “Tập dữ liệu” là … sau khi áp phạm vi quyền và bộ lọc.")
+d.data_table([
+    ("Ô Sắp hết hạn theo dõi", "Đếm nhu cầu có hạn, hôm nay ≥ hạn − M, với N > M > 0 … Chỉ hiện khi > 0.",
+     "(dùng chung ⓘ của khối)"),
+    ("Cột Giá trị dự án", "Dòng lá dự án: giá trị HĐ dự kiến. Dòng cha: tổng … Dòng lá nhu cầu: để trống.",
+     "GIÁ TRỊ DỰ ÁN • Giá trị hợp đồng dự kiến của dự án TKT"),
+])
+```
+
+Bản tham khảo: `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/gen_srs.py` (mục 2.1.6, 2.2.5, 2.5.6).
 
 ---
 
@@ -500,6 +558,8 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)` = **13pt*
 2. Modal component  → Trường nhập, giá trị mặc định, trạng thái enable/disable
 3. API calls        → Endpoint + payload
 4. Menu (components/subsystem-menu/*.js) → đường dẫn MENU (nguồn của mục "Layout màn hình")
+5. Màn BÁO CÁO: chữ trong mọi icon ⓘ (InfoTip / title-suffix / hint / tooltip) → chép nguyên văn
+   vào cột "Nội dung icon ⓘ"; service tính số (summary, đếm, cộng) → cột "Cách lấy dữ liệu"
 ```
 
 ### Bước 2: Phân tích & tổng hợp
@@ -547,6 +607,10 @@ print('hyperlink:', len([r for r in d.part.rels.values() if r.reltype.endswith('
 last = d.tables[-1]                                     # bảng Quy tắc nghiệp vụ
 assert [c.text for c in last.rows[0].cells] ==     ['STT', 'Mã quy tắc', 'Tên quy tắc', 'Mô tả', 'Phạm vi áp dụng'], 'Phần 4 chưa là bảng 5 cột'
 assert not any('URL đầy đủ' in t for t in paras), 'Còn dòng URL đầy đủ (form cũ)'
+
+# Màn BÁO CÁO: có bảng cách lấy dữ liệu 4 cột (srs_selfcheck cũng tự kiểm)
+data = [t for t in d.tables if [c.text for c in t.rows[0].cells][:2] == ['STT', 'Chỉ tiêu / Cột']]
+print('bảng cách lấy dữ liệu:', len(data))   # báo cáo: >= 1, mỗi chức năng hiện số liệu 1 bảng
 
 # KHÔNG được còn các mục đã bỏ
 for s in ['Tổng quan','Mini-Spec','Tiêu chí nghiệm thu','Ngoài phạm vi','Chức năng liên quan',
@@ -604,6 +668,8 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 ### Không được
 - **Không vẽ sơ đồ bằng ký tự** — phải là ảnh PNG
 - **Không bỏ ảnh ở mục Layout** — mỗi chức năng BẮT BUỘC có ảnh chụp thật kèm đường dẫn menu
+- **Không bỏ bảng "Cách lấy dữ liệu và giải thích chỉ tiêu"** ở màn báo cáo, không tự diễn giải lại
+  chữ trong icon ⓘ
 - **Không thêm lại các mục đã bỏ** ở bảng "ĐÃ BỎ" phía trên
 - Không dùng template markdown/HTML tự chế thay cho form chuẩn
 - Không đổi tên cột của 3 bảng bắt buộc (số cột chỉ được rút theo đúng bảng đã quy định)
@@ -620,5 +686,6 @@ assert set(re.findall(r'<a:latin typeface="([^"]*)"', theme)[:2]) == {'Times New
 | Màn hình | File |
 |---|---|
 | **Phiếu đề nghị thu tiền (Tài chính)** — BẢN MẪU CHUẨN, = `assets/SRS_MAU.docx` | `.plans/gop-db/finance-bill-income-request/SRS - Phiếu đề nghị thu tiền.docx` |
+| **Báo cáo tổng hợp CSKH tiềm năng** — bản mẫu cho MÀN BÁO CÁO (có bảng cách lấy dữ liệu + icon ⓘ) | `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/SRS - Báo cáo tổng hợp chăm sóc khách hàng tiềm năng.docx` |
 | Danh mục khách hàng (Giao việc) — form CŨ 2026-08-17 | `.plans/gop-db/customer-docs/SRS - Danh mục khách hàng.docx` |
 | Danh mục dịch vụ sửa chữa và chi phí khác (CSKH) — form CŨ | `.plans/gop-db/customer-care-cost-catalog/SRS - Danh mục dịch vụ sửa chữa và chi phí khác.docx` |

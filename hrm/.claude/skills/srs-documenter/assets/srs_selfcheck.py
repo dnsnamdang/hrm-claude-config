@@ -70,6 +70,7 @@ def _profile(path):
     heads = {}                      # tieu de bang -> so lan xuat hien
     ui_cols = {}                    # bang "Mo ta chi tiet giao dien" -> so cot
     rule_tbl = None
+    data_tbls = []                  # bang "Cach lay du lieu" -> bo tieu de
     for b in _blocks(d):
         if not isinstance(b, Table):
             continue
@@ -80,6 +81,8 @@ def _profile(path):
             ui_cols[len(b.columns)] = ui_cols.get(len(b.columns), 0) + 1
         if h[:2] == ['STT', 'Mã quy tắc']:
             rule_tbl = h
+        if h[:2] == ['STT', 'Chỉ tiêu / Cột']:
+            data_tbls.append(h)
     with zipfile.ZipFile(path) as z:
         media = [n for n in z.namelist() if n.startswith('word/media/')]
     return {
@@ -87,6 +90,8 @@ def _profile(path):
         'heads': heads,
         'ui_cols': ui_cols,
         'rule_tbl': rule_tbl,
+        'data_tbls': data_tbls,
+        'report': any(t.startswith('Màn hình: Báo cáo') for t in paras[:6]),
         'menu': sum(1 for t in paras if t.startswith('Menu: ')),
         'rule_ref': sum(1 for t in paras if t.startswith('Quy tắc chung: ')),
         'rule_lead': sum(1 for t in paras if t.startswith('Quy tắc áp dụng: ')),
@@ -150,6 +155,17 @@ def check(path, verbose=True):
                     'cột, hộp xác nhận = 6 cột (required=False, scope=False).'
                     % (lech, sorted(mau['ui_cols'])))
 
+    # --- man BAO CAO: bang cach lay du lieu + noi dung icon (quy dinh 2026-10-05) ---
+    data_head = ['STT', 'Chỉ tiêu / Cột', 'Cách lấy dữ liệu', 'Nội dung icon ⓘ']
+    if me['report'] and not me['data_tbls']:
+        errs.append('Màn BÁO CÁO phải có mục "2.x.6 Cách lấy dữ liệu và giải thích chỉ tiêu" cho '
+                    'mỗi chức năng hiện số liệu (báo cáo chính, popup danh sách chi tiết) — dùng '
+                    'd.data_table([(chỉ tiêu/cột, cách lấy dữ liệu, nội dung icon ⓘ), ...]).')
+    for h in me['data_tbls']:
+        if h != data_head:
+            errs.append('Bảng cách lấy dữ liệu phải đúng 4 cột %s, đang là %s — dùng d.data_table().'
+                        % (data_head, h))
+
     # --- muc da bo cua form cu ---
     for s in ('Tổng quan', 'Mini-Spec', 'Tiêu chí nghiệm thu', 'Ngoài phạm vi',
               'Chức năng liên quan', 'Route (FE)'):
@@ -160,10 +176,11 @@ def check(path, verbose=True):
         name = os.path.basename(path)
         print('--- Đối chiếu với bản mẫu %s' % os.path.basename(MAU))
         print('    %s: %d chức năng | Menu %d | Quy tắc chung %d | hyperlink %d | '
-              'bảng giao diện %s | Phần 4 %s'
+              'bảng giao diện %s | Phần 4 %s%s'
               % (name, me['fn'], me['menu'], me['rule_ref'], me['links'],
                  dict(sorted(me['ui_cols'].items())),
-                 'bảng 5 cột' if me['rule_tbl'] == mau['rule_tbl'] else 'SAI'))
+                 'bảng 5 cột' if me['rule_tbl'] == mau['rule_tbl'] else 'SAI',
+                 (' | bảng cách lấy dữ liệu %d' % len(me['data_tbls'])) if me['report'] else ''))
         if errs:
             print('!!! %d điểm chưa đúng bản mẫu:' % len(errs))
             for e in errs:

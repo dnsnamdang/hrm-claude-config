@@ -2496,3 +2496,27 @@ nhánh `tpe-bao-cao-ket-qua-du-an-tkt` tách từ đỉnh `tpe` ở cả 2 repo 
 có gộp thêm `tpe-develop-assign` (nhánh khác) nên tổ hợp code sau merge chưa từng được kiểm.
 
 **Blocked:** không có.
+
+---
+
+## Fix 05/10/2026 — Tiêu chí "Lĩnh vực Công ty KD" đọc nhầm danh mục (@namdangit)
+
+Nhánh `gop_db-fix-bao-cao-tkt-linh-vuc` (tách từ `gop_db`, worktree `websites/wt-fix-tkt-linh-vuc`), cả 2 repo.
+Nguyên nhân: thiết kế 13/09 hiểu `prospective_projects.scope_id` là Lĩnh vực Công ty KD — thực ra là
+**Nhóm ngành** (`hrm_scopes`); Lĩnh vực Công ty KD là `internal_business_scopes`, cấp cha qua
+`hrm_scopes.internal_business_scope_id`; `industry_id` là **Nhóm giải pháp** (`industries`). Báo cáo lệch 1 cấp ở cả 2 ô.
+
+- [x] BE `ProspectiveProjectResultReportService`: DIM_FIELDS scope → `business_scope_id`, industry → `industry_group_id`; eager `scope.internalBusinessScope`; lọc `scope_id` qua hrm_scopes, `industry_id` → cột scope_id; filter-options scopes = internal_business_scopes, industries = hrm_scopes (`scope_ids` vẫn là mảng — giữ hợp đồng FE)
+- [x] FE `index.vue`: sửa 2 chú thích (không đổi logic)
+- [x] Seed e2e `database/e2e_tkt_result_report_seed.php`: lấy `hrm_scopes` có lĩnh vực (trước đọc nhầm bảng ERP `scopes`); fixture scope_id = lĩnh vực, industry_id = nhóm ngành
+- [x] E2E API ca 10: chốt danh mục từng cấp + 2 ô lọc
+- [x] Kiểm Playwright MCP (3021/8031): 5 lĩnh vực cộng = TỔNG 249; lọc Dịch vụ ô tô → Nhóm ngành còn 5, 1+60+7+74 = 142; popup cột + ô lọc đúng; Excel đúng
+- [x] Lỗi kèm (user duyệt 05/10): `filterOptions()` thiếu `company_id` (lần mở màn đầu) rơi về công ty ĐẦU DANH MỤC theo tên (CN Hải Phòng) trong khi ô Công ty = `default_company_id` (Tân Phát) ⇒ Phòng ban/Bộ phận/Nhân viên sai công ty, chọn phòng ban ra 0 dự án. Sửa: fallback về `$defaultCompanyId`. E2E API ca 10 (ca Lĩnh vực đổi thành 11). Verify: mở màn lần đầu → 30 phòng ban Tân Phát; chọn PKD Thương mại → 62 dự án
+- [x] E2E (worktree 8031/3021, `--no-deps --workers=1`, `API_REPO` trỏ worktree — `utils/tktResultFixture.ts` nay nhận env `API_REPO`/`PHP_BIN`): API **11/11 xanh**; ca 10 + 11 chạy vào code CŨ (8000) đều ĐỎ ⇒ bắt được lỗi. UI **9/10 xanh**, ca 4 ĐỎ SẴN không liên quan: selector `.advanced-filters .filter-field[data-dim]` đã chết từ khi màn chuyển sang `V2BaseSmartFilterPanel` (class `smart-advanced-filters`, không còn `data-dim`) — CẦN sửa spec sau (ghi ngoài luồng)
+- [x] Commit `06dfef0d5` (api) · `8275fd02b` (client); merge `--no-ff` về `gop_db`: api `dc3929fa3` · client `49d89a037`. ⛔ CHƯA PUSH
+
+### Checkpoint — 2026-10-05
+Vừa hoàn thành: sửa + verify trên trình duyệt
+Đang làm dở: —
+Bước tiếp theo: push gop_db (chờ user) · sửa selector ca 4 spec UI theo V2BaseSmartFilterPanel
+Blocked:

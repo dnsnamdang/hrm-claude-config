@@ -122,3 +122,66 @@ sync Meeting bỏ sót đường ghi (đặt ở model event) · web và app l�
     luôn chức năng tạo cuộc họp là chưa đúng"*).
   - Bấm ô trống ở màn **Tình trạng phòng họp** = đặt cho một khung giờ cụ thể → form ép sang hướng
     "Nhu cầu khác" (hướng 1 không có ô ngày/giờ).
+
+---
+
+## Phase 8 — Yêu cầu dịch vụ trên phiếu đặt phòng (chốt 23/09/2026)
+
+> Spec đầy đủ: `docs/superpowers/specs/gop-db/2026-09-23-yeu-cau-dich-vu-phong-hop-design.md`
+
+Người đặt phòng nhờ người phụ trách chuẩn bị trà, nước, hoa quả… ngay trên phiếu DPH; người phụ trách
+nhận thông báo, chuẩn bị rồi xác nhận lại.
+
+**11 quyết định user chốt (hỏi từng câu 23/09/2026):**
+
+1. **Danh mục mới `meeting_room_services`** (tên · đơn vị tính · icon · khoá/mở khoá), khuôn
+   `meeting_room_purposes`, KHÔNG gắn cờ vào danh mục Tiện nghi — tiện nghi là THIẾT BỊ gắn phòng
+   dùng để lọc phòng, dịch vụ là đồ TIÊU HAO nhờ chuẩn bị.
+2. Mỗi dòng yêu cầu = **món + số lượng + ghi chú dòng** → bảng con `meeting_room_booking_services`,
+   snapshot `service_name`/`unit` để danh mục đổi tên không làm sai phiếu cũ.
+3. Người nhận việc = **người phụ trách phòng**.
+4. **Đổi `manager_employee_id` (1 người) → bảng nối `meeting_room_managers` (NHIỀU người)** và **bắt
+   buộc khai ≥ 1 người** khi tạo/sửa phòng. Đây là thay đổi lan ra ngoài phạm vi dịch vụ: lọc phạm vi
+   xem phiếu, gate duyệt, người nhận thông báo, sort cột, import/export, lịch sử danh mục, 4 chỗ FE
+   (bảng đối chiếu đầy đủ ở mục 5 của spec).
+5. **Ai trong nhóm phụ trách cũng duyệt/xác nhận được, ai bấm trước tính người đó** (người sau nhận
+   409), thông báo bắn cho tất cả.
+6. Trạng thái **mức cả phiếu**: Chờ chuẩn bị → Đã chuẩn bị / Từ chối (lý do bắt buộc).
+   `service_status = NULL` nghĩa là phiếu KHÔNG kèm dịch vụ — khác hẳn "đã yêu cầu, chưa chuẩn bị".
+7. **Chỉ nhập lúc TẠO phiếu**; vào màn Sửa thì khối dịch vụ **khoá hẳn, chỉ xem** (BE `update()` không
+   đọc `services[]`, không dựa FE ẩn).
+8. **3 mốc thông báo `[DPH]`**: có yêu cầu mới → nhóm phụ trách · phiếu Hủy/Từ chối → nhóm phụ trách ·
+   Đã chuẩn bị/Từ chối dịch vụ → người đặt. KHÔNG làm job nhắc trước giờ họp.
+9. Xử lý **ngay trong phiếu** + thêm cột "Dịch vụ" và ô lọc "Trạng thái dịch vụ" ở `/meeting/bookings`.
+   Chưa làm màn tổng hợp yêu cầu dịch vụ riêng.
+10. **Chưa làm chi phí** vòng này (danh mục vẫn có `unit` để sau thêm `unit_price` không phải làm lại).
+11. Phiếu sinh từ cuộc họp (`source = 2`) **cũng yêu cầu dịch vụ được**; ô số lượng **để trống**, không
+    tự điền theo số người dự kiến; **không thêm quyền mới** (danh mục dùng "Khai báo phòng họp").
+
+**Tự đề xuất, user duyệt:** đổi phòng lúc sửa phiếu thì giữ nguyên dòng dịch vụ và **bắn thông báo cho
+nhóm phụ trách phòng MỚI**; phiếu đã qua giờ vẫn xác nhận được (không thì kẹt "Chờ chuẩn bị" vĩnh viễn);
+phòng chưa khai người phụ trách thì ẩn khối và BE trả 422; xoá món đang có phiếu dùng thì chặn, gợi ý Khoá.
+
+### Phase 8 — quyết định phát sinh trong lúc thực thi (23/09/2026)
+
+Bổ sung vào 11 quyết định chốt lúc brainstorm ở trên. Chi tiết + số đo: `.sdd/progress.md`.
+
+1. **Khoá tên trường người phụ trách**: `manager_names[]` (mảng, FE render "2 tên + +N") ·
+   `manager_employee_ids[]` (mảng id) · `manager_name` (chuỗi ghép `"; "`, khớp dấu import tách).
+   **Bỏ `manager_name_text`** — 2 khoá cùng nghĩa thì FE/export mỗi chỗ đọc một kiểu.
+2. **Nút trong footer popup KHÔNG khai `mr-2`** — Bootstrap `.modal-footer > *` đã tự cách 8px; khai
+   thêm là cộng dồn thành 16px. Đo thật: 75 file có `<template #footer>`, chỉ 2 file khai `mr-2`.
+   Quy ước "`mr-2 mb-2`, đo 12px" trong CLAUDE.md là cho **toolbar / cụm nút trong thân form**.
+3. **Thứ tự nút footer popup phiếu**: gom theo nhóm việc — `Duyệt · Từ chối · Hủy phiếu ·
+   Đã chuẩn bị dịch vụ · Từ chối dịch vụ · Đóng`. Chữ nút dịch vụ có hậu tố "dịch vụ" vì footer đã
+   có sẵn nút "Từ chối" của việc từ chối PHIẾU.
+4. **Bảng dòng con không cần `created_by`/`updated_by`** (`meeting_room_booking_services`) — không
+   màn nào hiện cột Người tạo cho nó; tiền lệ `meeting_room_booking_participants`.
+5. **Sửa phiếu Đã duyệt: GIỮ NGUYÊN luật cũ** (user chốt 23/09) — sửa được tới trước giờ bắt đầu;
+   đổi giờ/phòng thì tự về Chờ duyệt, sửa trường khác thì giữ Đã duyệt.
+   ⚠️ Ghi nhận chưa làm: sửa trường KHÔNG phải giờ/phòng thì **không có thông báo cho người đã duyệt**.
+6. **Message validate lấy từ lang file dùng chung**; module chỉ giữ câu **nghiệp vụ** + `attributes()`.
+   Kéo theo: đã bổ sung **53 mục tiếng Việt** vào `resources/lang/vi/validation.php` và 26 key vào
+   `hrm-client/locales/vi.json` (user duyệt sửa tài sản chung). Câu mới **không dùng `:attribute`**
+   (100% câu Việt sẵn có đều vậy; đa số FormRequest không khai `attributes()` nên `:attribute` sẽ in
+   ra tên cột snake_case tiếng Anh).
