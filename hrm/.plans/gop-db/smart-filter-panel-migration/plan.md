@@ -103,3 +103,26 @@ Vừa hoàn thành: toàn bộ Phase 0–4 (trừ verify trình duyệt).
 Đang làm dở: không.
 Bước tiếp theo: user duyệt → chạy Playwright rà một số màn đại diện (báo cáo, modal, bộ lọc gọn).
 Blocked:
+
+## Phase 7 — Hạ chiều cao ô lọc 36px → 32px (22/09/2026)
+
+Lý do: user so màn `/assign/prospective-projects` (ô lọc 36px) với `/assign/prospective-projects/add`
+(ô nhập 32px) và hỏi vì sao bộ lọc to hơn. Chốt: bộ lọc theo form, tức 32px.
+
+- [x] FE — `V2BaseFloatingField`: `--ff-h` 36 → 32px, `line-height` 34 → 30px, đệm ô chip 4 → 3px
+- [x] FE — `V2BaseSmartFilterPanel`: `control-height` 36 → 32px (2 chỗ) + 4 khối CSS ô tìm nhanh/select2/datepicker
+- [x] FE — `V2BaseFilterFieldControl`: cụm khoảng ngày `boxed` 36 → 32px
+- [x] FE — `V2BaseCompanyDepartmentFilter` (4 select) + `V2BaseFieldCategoryApplicationFilter` (3 select)
+- [x] FE — 53 file page/component: `height="36px"` → `height="32px"` (75 chỗ)
+- [x] FE — ô chip `.ff--tags` đo lại ở 3 trạng thái: chip select2 22 → 18px, ô tìm inline ghim 20px,
+      `.select2-container` `display: block` (bỏ 0.56px baseline), `min-height` khung multiple 26 → 20px
+- [x] Verify Playwright (local :3002): `/assign/prospective-projects` (nâng cao + gọn + có chip),
+      `/customer-care/device-errors` (ô tiền), `/assign/tasks` (`.sp-input`),
+      popup "Chọn hàng hoá" (select chọn nhiều) — tất cả 32px ở cả trạng thái nghỉ lẫn nhãn float
+- [x] Cập nhật `.claude/skills/list-page/SKILL.md` (mục 29/38/53/59/70) + `erp-to-hrm-screen/references/khuon-man-mau.md`
+
+### Checkpoint — 2026-09-22
+Vừa hoàn thành: Phase 7, đã đo trên trình duyệt, chưa commit.
+Đang làm dở: không.
+Bước tiếp theo: user duyệt rồi commit/push.
+Blocked:

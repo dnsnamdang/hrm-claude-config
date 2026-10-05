@@ -165,16 +165,20 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Sort bật cho cột mã / tên / tiền / ngày; sort cột mới hủy sort cột cũ
 - [ ] Phân trang mặc định 10, chọn được 5/10/20/50/100, đổi số dòng nhảy về trang 1
 - [ ] Ô lọc dạng chọn tự tìm ngay khi chọn; ô gõ tay chờ Enter/nút Tìm kiếm
-- [ ] **Bật `floating`** trên `V2BaseSmartFilterPanel` — mọi ô lọc cao 36px, nhãn nằm giữa ô khi
+- [ ] **Bật `floating`** trên `V2BaseSmartFilterPanel` — mọi ô lọc cao 32px, nhãn nằm giữa ô khi
       rỗng và bay lên đè viền trên khi có dữ liệu (chuẩn chốt 07/09/2026, mẫu: màn Dự án TKT)
 - [ ] Field gom nhiều ô (khối tổ chức, cặp cha-con...) đã khai `resetKeys` — panel dựa vào đó để
       biết nhãn có phải bay lên không
 - [ ] Placeholder **không lặp lại nhãn** (`Chọn <X>` / `Nhập <X>` là SAI khi bật floating — nhãn
       đã nói rồi). Chỉ giữ khi nói thêm điều nhãn không nói: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`
 - [ ] Ô tìm nhanh: `Tìm theo <các trường BE thực sự lọc>` — không `Tất cả`, không `Chọn...`, không để trống
+- [ ] **Có ô tìm nhanh + 2 nút Tìm kiếm / Làm mới nằm ngay hàng trên cùng** khi vừa vào màn (chưa bấm
+      "Tìm kiếm nâng cao"). Grep `show-quick-search="false"` trong feature phải ra RỖNG — ERP không có ô
+      này thì thêm param `keyword` ở BE (skill `list-page` mục ô tìm nhanh)
 - [ ] Ô lọc tìm-từ-server (Khách hàng / NCC / Sản phẩm) dùng **`V2BaseSelectRemote`** kèm
-      `height="36px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
-- [ ] Mọi ô trong khối lọc đo ra **đúng 36px** — lệch 32px là quên truyền `height`
+      `height="32px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
+- [ ] Mọi ô trong khối lọc đo ra **bằng nhau, chuẩn hiện hành `32px`** (biến `--ff-h`; hạ từ 36px
+      ngày 22/09/2026 — xem skill `list-page`). Lệch hàng là quên truyền `height`
 - [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách**
 - [ ] **Bấm thật TỪNG ô lọc** rồi xem bảng có đổi không — đối chiếu param trên tab Network với
       `searchByFilter` của BE. Ô lọc sai tên key **không báo lỗi gì**, nhìn giao diện y như đúng
@@ -285,6 +289,32 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] FE **ẩn** nút Sửa/Xóa khi khóa; vào màn Sửa bằng URL trực tiếp → đá về Chi tiết
 - [ ] Có lối **Mở khóa**, và Khóa/Mở khóa đều **ghi lịch sử**
 
+### H2. Màn DANH MỤC — Xóa / Khóa / Trạng thái (user chốt 26/09/2026, khuôn Quận/Huyện)
+Đã phải sửa lại cả loạt màn (Nguồn vốn, Đường/Phố, Cấp DV BD, Ghi chú KT, Chi nhánh NH, Vụ việc, Mã
+phí, Chi phí, Gói BD) vì làm sai những điểm dưới — màn mới phải đúng ngay từ đầu.
+- [ ] **KHÔNG xoá mềm** (đổi status / `deleted_at` / "đã dùng thì Xóa thành Khóa"). Xóa = **xoá hẳn**,
+      chỉ khi bản ghi đang Hoạt động VÀ **chưa được dùng**; đã dùng → ẩn nút Xóa (`is_can_delete`) +
+      BE chặn 400 `"<Đối tượng> đang được sử dụng, không thể xóa."`
+- [ ] "Đã dùng" = có dòng ở **MỌI bảng có cột id trỏ tới** (không tính cột lưu tên bằng chữ). Khai 1
+      hằng `USAGE_REFERENCES` trên Entity + `usedIds(array $ids)` (1 query/bảng/trang, cấm N+1).
+      ⚠️ Tên cột lừa: `wr_accounting_service_items.service_id` thực ra trỏ `costs` — kiểm bằng dữ liệu
+      (giá trị có khớp bảng đích không) trước khi xếp. Bảng "dữ liệu của chính bản ghi" (vd hàng hoá
+      gắn gói) không tính là đã dùng — liệt kê cho user chốt.
+- [ ] Có **Khóa / Mở khóa**, và **cho Khóa cả khi đang được dùng** (không cấm khoá vì đã hạch toán).
+      Route `PUT /{id}/lock|unlock` (KHÔNG dùng GET); service kiểm trạng thái hiện tại → đã ở trạng thái
+      đích thì 400 `"Trạng thái đã bị thay đổi. Vui lòng load lại trang"` (đừng báo thành công lần 2).
+- [ ] Popup/form Tạo–Sửa có **ô Trạng thái** (mặc định Hoạt động); danh sách hiện **cả bản ghi Khóa**
+      + cột badge + bộ lọc Trạng thái. Bản ghi Khóa chỉ còn Mở khóa + Lịch sử.
+- [ ] Middleware route theo thứ tự **`checkPermission` TRƯỚC `recordNotLocked`** — ngược lại thì user
+      thiếu quyền nhận 423 thay vì 403 (dính ở Cấp DV, Ghi chú KT, Chi phí).
+- [ ] Route model binding không tìm thấy bản ghi (người khác vừa xoá) đang trả toast tiếng Anh
+      `"Item Not Found!"` / `"not found bank"` → phải ra câu tiếng Việt
+      `"Trạng thái đã bị thay đổi. Vui lòng load lại trang"`.
+- [ ] Danh mục bị Khóa: select ở màn khác ẩn đi nhưng bản ghi cũ đang dùng vẫn hiện đúng tên + 🔒
+      (CLAUDE.md mục danh mục khoá) — kiểm cả **Import** của màn tiêu thụ (hay quên, vẫn nhận giá trị Khóa)
+      và API select dùng chung (vd `AddressController`, `CustomerService::hamlets`).
+- [ ] Sửa code xong → cập nhật luôn HDSD/SRS/testcase (xoá mềm → xoá cứng, thêm Khóa, ô Trạng thái).
+
 ---
 
 ## Bẫy hay dính khi port
@@ -311,7 +341,8 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 | Để ô "Bộ phận"/"Nhân viên" hiện mà BE không lọc theo | Ô lọc chết, user chọn mãi không ra | `:disable_part` / `:disable_employee` — đối chiếu `searchByFilter` của BE xem thật sự lọc theo cấp nào |
 | `$axios` tải file thiếu `Authorization` | Xuất Excel 401 | Tự gắn token cho request export |
 | Bê nguyên `title` cho panel lọc | Mỗi màn một tiêu đề khác nhau | Bỏ prop, dùng mặc định "Bộ lọc danh sách" |
-| Quên bật `floating` | Khối lọc trông như màn cũ (nhãn trên, ô dưới, 32px) trong khi các màn mới đều floating 36px | Thêm prop `floating` — panel lo hết phần còn lại |
+| Tắt ô tìm nhanh vì "ERP không có" (`:show-quick-search="false"`) | Panel chuyển sang kiểu màn báo cáo: mất ô tìm nhanh VÀ nút Tìm kiếm / Làm mới chỉ hiện sau khi bấm "Tìm kiếm nâng cao" (dính thật: Danh sách hàng mượn + Hàng sắp hết hạn mượn, 24/09/2026) | Không bao giờ tắt ở màn danh sách. BE thiếu `keyword` thì thêm vào BE — xem `list-page` |
+| Quên bật `floating` | Khối lọc trông như màn cũ: nhãn nằm TRÊN ô, chiếm thêm một dòng, trong khi các màn mới nhãn nằm trong ô và bay lên viền | Thêm prop `floating` — panel lo hết phần còn lại |
 | Tự chế autocomplete "gõ để tìm" | Chưa gõ gì đã báo "Không tìm thấy…"; dropdown quên `position:absolute` đẩy vỡ layout | `V2BaseSelectRemote` + `minimumInputLength` — nó lo sẵn 3 trạng thái chưa-đủ-ký-tự / đang-tìm / không-có |
 | Đè CSS ô lọc bằng `!important` mà không tính specificity | **Local đúng, lên dev/prod sai** — thứ tự gộp CSS khi build khác dev nên rule bằng điểm đổi phe | Selector phải **nặng ký hơn** rule của `V2BaseSelect`; kiểm chứng bằng cách nhét vào đầu `<head>` rồi đo `getComputedStyle` |
 | Vỏ bọc field tự mở stacking context (`z-index` trên wrapper) | Dropdown của mọi control bên trong bị nhốt — header dính của bảng (z-index 6) vẽ đè lên | Không đặt `z-index` trên wrapper; hạ z-index của thứ cần đè thay vì nâng wrapper |
@@ -330,6 +361,7 @@ grep -rn "status-pill\|statusPillClass"   <thư-mục-feature>   # phải dùng 
 grep -rn "interactable:\|disabledTitle"   <thư-mục-feature>   # nút phải ẩn bằng visible
 grep -rn "action\.key ==="                <thư-mục-feature>   # V2BaseRowActions emit CHUỖI -> nút chết
 grep -rn "V2BaseFilterPanel"              <thư-mục-feature>   # phải là V2BaseSmartFilterPanel
+grep -rn 'show-quick-search="false"\|:showQuickSearch="false"' <thư-mục-feature>   # cấm ở màn danh sách
 grep -rn "advanced-filters"               <thư-mục-feature>   # bộ lọc dựng tay
 grep -rn "showCustomerList\|filtered.*= \[\]"  <thư-mục-feature>   # autocomplete tự chế -> V2BaseSelectRemote
 grep -rn "V2BaseSelectRemote" <thư-mục-feature> | grep -v 'height='   # thiếu height -> ô lùn 32px

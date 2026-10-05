@@ -1,0 +1,98 @@
+{
+  "catalog": "Danh mục nhóm ngành",
+  "srs_file": "SRS - Danh mục nhóm ngành.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Công việc của tôi – tab Nhu cầu của khách hàng",
+      "duong_dan": "Công việc",
+      "evidence": "FE pages/assign/my-job/index.vue:141 -> components/assign/CustomerDemandList.vue:378 (ô lọc Nhóm ngành) · Lối vào: menu-sidebar.js:17"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/components/InfoTab.vue:214-216 (chọn Nhóm ngành) + index.vue:592 (lọc) · BE solutions.scope_id (SolutionService.php:719) · Lối vào: menu-sidebar.js:31"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingInvestmentSurvey.vue:85-86 + MeetingProject.vue:61 (ProjectInfoSection) · BE MeetingService.php:272-310 (meeting_investment_demands.scope_id) · Lối vào: meeting.js:63"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Nhu cầu khách hàng",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/customer-demands/index.vue -> components/assign/CustomerDemandList.vue:378,415 · BE CustomerDemandService.php:198 · Lối vào: meeting.js:71"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/prospective-projects/components/ProjectInfoSection.vue:107-128 · BE prospective_projects.scope_id + prospective_project_scopes (Entities/ProspectiveProject.php:431,441) · Lối vào: presale.js:44"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Yêu cầu giải pháp",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/request-solution/components/RequestTab.vue:72 + RequestSolutionForm.vue:350 · BE request_solutions.scope_id (RequestSolutionService.php:304,392; Entities/RequestSolution.php:130) · Lối vào: presale.js:50"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo kết quả thực hiện dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/prospective-project-results/index.vue:293 · BE ProspectiveProjectResultReportService.php:1017 · Lối vào: presale.js:90"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Theo dõi YCLGP theo phòng KD",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/solution-requests-by-department/index.vue:44,257 (V2BaseFieldCategoryApplicationFilter) · BE SolutionRequestsByDepartmentReportService.php:801 · Lối vào: presale.js:97"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo tổng hợp giải pháp theo phòng ban",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/solutions-work-summary-by-department/index.vue:747 · Lối vào: presale.js:100"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo kết quả CSKH tiềm năng",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo thị trường",
+      "evidence": "FE pages/assign/report/potential-customer-care/index.vue:406 · BE PotentialCustomerCareService.php:201 · Lối vào: presale.js:120"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo phát triển khách hàng theo NVKD",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo thị trường",
+      "evidence": "FE pages/assign/report/customer-development/index.vue:142 · BE CustomerDevelopmentReportService.php:94,273 · Lối vào: presale.js:122"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Nhóm giải pháp",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE components/modal/industry-modal.vue:198 + pages/assign/solution-groups/index.vue:353 · BE Entities/Industries.php:41 (industry_scopes) · Lối vào: presale.js:138"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Ứng dụng",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE components/modal/application-modal.vue:335 + pages/assign/application/index.vue:459 · BE Entities/Applications.php:43 (application_scopes, application_industries) · Lối vào: presale.js:143"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Nhóm giải pháp",
+      "duong_dan": "Bán hàng -> Danh mục -> Dự án - Giải pháp",
+      "evidence": "FE components/modal/industry-modal.vue:198 + pages/assign/solution-groups/index.vue:353 · BE Entities/Industries.php:41 (industry_scopes) · Lối vào: sale-hub.js:351"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Ứng dụng",
+      "duong_dan": "Bán hàng -> Danh mục -> Dự án - Giải pháp",
+      "evidence": "FE components/modal/application-modal.vue:335 + pages/assign/application/index.vue:459 · BE Entities/Applications.php:43 (application_scopes, application_industries) · Lối vào: sale-hub.js:356"
+    }
+  ],
+  "notes": "Bảng thật là hrm_scopes (không phải scopes — scopes là bảng ERP 'Lĩnh vực' hàng hoá dùng ở chapters/product_classifies, popup tìm hàng Báo giá/CSKH sau bán -> KHÔNG thuộc danh mục này). Nhóm giải pháp, Ứng dụng cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp (cùng màn, ghi 1 dòng). Báo cáo meeting theo thị trường không lọc theo Nhóm ngành. Code chết: pages/assign/project_phase/components/ProjectPhaseForm.vue (add.vue, _id/index.vue, _id/show.vue) có ô Nhóm ngành nhưng màn Giai đoạn dự án dùng popup project_phase_modal.vue; BE không lưu (bảng project_phase_scopes không tồn tại, Entities/ProjectPhaseScopes.php mồ côi). Nghi lỗi nhãn: Báo cáo kết quả thực hiện dự án TKT (prospective-project-results/index.vue:293,296) và Báo cáo phát triển khách hàng theo NVKD (customer-development/index.vue:142,143) gọi Nhóm ngành là 'Lĩnh vực' và Nhóm giải pháp là 'Nhóm ngành'/'Ngành hàng'. NGHI LỖI KIỂM TRA XOÁ: Scope::isCanDelete (Entities/Scope/Scope.php:107) chỉ xét industry_scopes + application_scopes; KHÔNG xét prospective_projects.scope_id, prospective_project_scopes (Dự án TKT), request_solutions.scope_id (Yêu cầu giải pháp), solutions.scope_id (Quản lý giải pháp), meeting_investment_demands.scope_id (Meeting/Nhu cầu KH), application_industries.scope_id, form_template_snapshots.scope_id -> xoá được dù đang dùng.",
+  "changes": "Trước 13 dòng -> sau 15 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách Nhóm giải pháp, Ứng dụng thành 2 lối vào (CSKH trước bán -> Danh mục; Bán hàng -> Danh mục -> Dự án - Giải pháp). Sửa đường dẫn 5 báo cáo (thêm cấp \"Báo cáo\"). Nhu cầu khách hàng là mục rail đi thẳng của Meeting nên Đường dẫn = \"Meeting\"."
+}

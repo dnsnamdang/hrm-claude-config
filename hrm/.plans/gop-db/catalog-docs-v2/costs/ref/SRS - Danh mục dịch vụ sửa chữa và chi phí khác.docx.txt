@@ -1,0 +1,260 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] Phân hệ: CSKH – nhóm Danh mục - Dịch vụ 
+[Heading 2] Mục lục 
+[Heading 1] 1. Tổng quan 
+[Heading 2] 1.1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình quản lý danh mục dịch vụ sửa chữa và chi phí khác, nhằm: 
+[normal] Là căn cứ nghiệm thu chức năng và phân quyền 
+[normal] Làm rõ ràng buộc nghiệp vụ: chi phí đã phát sinh chứng từ chỉ được khoá chứ không được xoá; hai chi phí hệ thống không được sửa, khóa hay xóa 
+[normal] Làm rõ đặc thù chiết khấu tách theo từng công ty — cùng một dịch vụ, mỗi công ty một mức chiết khấu khác nhau 
+[Heading 2] 1.2 Thuật ngữ và các từ viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Dịch vụ sửa chữa | Hạng mục dịch vụ do đơn vị cung cấp, có tính doanh thu
+  | Chi phí khác | Hạng mục chi phí phát sinh, không tính doanh thu
+  | % Tính giá vốn | Tỷ lệ phần trăm dùng để tính giá vốn của dịch vụ
+  | % VAT | Thuế suất giá trị gia tăng áp cho dịch vụ / chi phí
+  | ĐM giảm giá | Định mức giảm giá (chiết khấu), khai báo RIÊNG theo từng công ty
+  | Phân loại | Nhãn phân biệt “Dịch vụ có tính doanh thu” và “Chi phí khác”
+  | Công ty hiện tại | Công ty người dùng đang chọn khi đăng nhập, quyết định mức ĐM giảm giá được hiển thị và ghi
+  | Chi phí hệ thống | Hai chi phí “Chi phí đi lại” và “Chi phí vận chuyển” — bị chặn cứng theo tên, không cho sửa / khoá / mở khoá / xoá
+  | Chứng từ phát sinh | Báo giá hãng hoặc Hợp đồng hãng có sử dụng dịch vụ / chi phí
+  | P1 | Quyền “Quản lý dịch vụ sửa chữa và chi phí khác”
+  | P2 | Quyền “Xem dịch vụ sửa chữa và chi phí khác”
+[Heading 2] 1.3 Phân quyền 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/costs 
+[normal] Danh sách quyền:http://hrm-crm.eteksofts.com/customer-care/costs 
+<<TABLE 2>>
+  | Ký hiệu | Tên quyền | Nhóm quyền
+  | P1 | Quản lý dịch vụ sửa chữa và chi phí khác | Danh mục dịch vụ bảo dưỡng
+  | P2 | Xem dịch vụ sửa chữa và chi phí khác | Danh mục dịch vụ bảo dưỡng
+[normal] Quy tắc truy cập bắt buộc: 
+[normal] Chỉ user có P1 hoặc P2 mới được truy cập màn hình. 
+[normal] User không có P1/P2: không hiển thị menu; truy cập trực tiếp URL bị chặn (điều hướng về trang 404), gọi API trả về lỗi 403. 
+[normal] User chỉ có P2: mọi thao tác ghi bị chặn ở cả giao diện lẫn API (403), không phụ thuộc vào việc giao diện có ẩn nút hay không. 
+[normal] ĐM giảm giá hiển thị và ghi nhận theo công ty người dùng đang đăng nhập; không xác định được công ty thì cột ĐM giảm giá để trống và không ghi được giá trị. 
+[normal] Màn hình chỉ hiển thị dữ liệu thuộc nhóm “Dịch vụ sửa chữa và chi phí khác”. Gọi API với bản ghi thuộc nhóm chi phí phải trả / chi phí bán hàng đều bị từ chối. 
+[normal] Ma trận phân quyền: 
+<<TABLE 3>>
+  | Chức năng | P1 | P2 | Không có quyền
+  | Truy cập màn hình | ✅ | ✅ | ❌
+  | Xem danh sách, tìm kiếm, lọc, sắp xếp, phân trang | ✅ | ✅ | ❌
+  | Xem chi tiết | ✅ | ✅ | ❌
+  | Thêm mới | ✅ | ❌ | ❌
+  | Sửa | ✅ | ❌ | ❌
+  | Khoá / Mở khoá | ✅ | ❌ | ❌
+  | Xoá | ✅ | ❌ | ❌
+  | Khai báo ĐM giảm giá theo công ty | ✅ | ❌ | ❌
+  | Xuất Excel | ✅ | ✅ | ❌
+[Heading 1] 2. Thiết kế các phân hệ chức năng 
+[Heading 2] 2.1 Khái niệm, nguyên tắc chung 
+[normal] Dropdown 
+[normal] Dropdown ở bộ lọc luôn có nút xóa lựa chọn; bỏ trống nghĩa là không lọc theo tiêu chí đó. 
+[normal] Bộ lọc KHÔNG dùng lựa chọn “Tất cả”; trạng thái mặc định là chưa chọn gì, hiển thị dòng gợi ý. 
+[normal] Thông báo 
+[normal] Thông báo thành công / thất bại hiển thị dạng toast ở góc màn hình, tự tắt. 
+[normal] Lỗi không hợp lệ của từng trường dữ liệu sẽ được hiển thị thông báo đỏ ngay dưới ô nhập. 
+[normal] Thao tác xoá, khoá, mở khoá đều phải qua hộp thoại xác nhận nêu rõ tên bản ghi bị tác động. 
+[normal] Thông báo từ chối quyền dùng chung câu: “Bạn không có quyền thực hiện chức năng này.” 
+[normal] Tooltip 
+[normal] Mọi nút biểu tượng đều có chú giải hiện khi rê chuột, di chuột sang vị trí khác tự động tắt chú thích. 
+[normal] Date picker 
+[normal] Màn hình này không có trường ngày tháng cho người dùng nhập. Các cột ngày (Cập nhật) chỉ hiển thị, định dạng dd/mm/yyyy. 
+[normal] Phân trang 
+[normal] Mặc định 10 bản ghi mỗi trang, cho phép đổi số dòng hiển thị. 
+[normal] Đổi số dòng mỗi trang luôn quay về trang 1. 
+[normal] Có thể thay đổi hiển thị 5, 10, 20, 50, 100 bản ghi trên 1 trang. 
+[normal] Kịch bản tìm kiếm 
+[normal] Ô tìm kiếm nhanh chỉ áp dụng khi người dùng bấm nút Tìm kiếm, không tự tìm sau mỗi ký tự. 
+[normal] Thay đổi tiêu chí ở bộ lọc nâng cao thì tự tìm lại ngay, không cần bấm Tìm kiếm. 
+[normal] Tìm theo văn bản là tìm gần đúng ở mọi vị trí trong chuỗi. 
+[normal] Kết hợp nhiều tiêu chí cho ra kết quả thỏa mãn đồng thời tất cả tiêu chí. 
+[normal] Nút Làm mới xoá toàn bộ điều kiện lọc và tải lại danh sách đầy đủ. 
+[normal] Điều kiện lọc được ghi nhớ và dùng lại khi người dùng quay về màn hình. 
+[normal] Quy tắc hiển thị bảng danh sách 
+[normal] Cột đầu là STT tính theo trang hiện tại, cột cuối là “Hành động”. 
+[normal] Danh sách hiển thị cả bản ghi Hoạt động lẫn bản ghi Khoá. 
+[normal] Danh sách trống thì hiển thị dòng thông báo không có dữ liệu thay vì bảng rỗng. 
+[normal] Trong lúc chờ tải dữ liệu phải hiển thị trạng thái đang tải. 
+[normal] Quy tắc sắp xếp dữ liệu của bảng 
+[normal] Mặc định bảng danh sách hiển thị theo thứ tự bản ghi tạo mới nhất đến cũ nhất. 
+[normal] Khi người dùng click vào tiêu đề một cột có chức năng Sort: 
+[normal] Lần 1: Sắp xếp dữ liệu theo thứ tự tăng dần (A → Z) đối với dữ liệu dạng chữ; đối với dữ liệu dạng số/ngày tháng, sắp xếp tăng dần. 
+[normal] Lần 2: Sắp xếp dữ liệu theo thứ tự giảm dần (Z → A) đối với dữ liệu dạng chữ; đối với dữ liệu dạng số/ngày tháng, sắp xếp giảm dần. 
+[normal] Mỗi lần chỉ áp dụng Sort theo một cột. Khi người dùng thực hiện Sort tại một cột khác, hệ thống hủy tiêu chí Sort trước đó. 
+[normal] Biểu tượng Sort trên tiêu đề cột thay đổi tương ứng để thể hiện trạng thái tăng dần/giảm dần. 
+[normal] Cấu hình cột: 
+[normal] Cho phép người dùng ẩn/ hiện các cột muốn hiển thị và thay đổi thứ tự hiển thị của các cột 
+[normal] Khi người dùng load lại trang hoặc thay đổi giữa các màn hình, hệ thống tự động load cấu hình cột mà người dùng đã lưu gần nhất . 
+[Heading 2] 2.2 Danh sách use case 
+<<TABLE 4>>
+  | ID | Usecase | Mô tả ngắn | Quyền
+  | UC-01 | Xem danh sách và tìm kiếm | Mặc định hiển thị bảng 11 cột, tìm kiếm nhanh, lọc theo 4 tiêu chí, sắp xếp và phân trang. / Có thể thay đổi số lượng hiển thị các cột trong bảng qua chức năng Cấu hình cột | P1, P2
+  | UC-02 | Thêm mới | Mở modal khai báo dịch vụ / chi phí mới. Bản ghi mới luôn ở trạng thái Hoạt động. | P1
+  | UC-03 | Sửa | Mở modal nạp sẵn dữ liệu, cho sửa toàn bộ trường và Trạng thái. Chi phí hệ thống và chi phí đang Khoá bị chặn sửa. | P1
+  | UC-04 | Xem chi tiết | Mở modal ở chế độ chỉ đọc. | P1, P2
+  | UC-05 | Khoá / Mở khoá | Đổi trạng thái sử dụng của dịch vụ / chi phí. | P1
+  | UC-06 | Xoá | Xoá bản ghi; nếu đã phát sinh chứng từ thì hệ thống tự chuyển sang trạng thái Khoá. | P1
+  | UC-07 | Xuất Excel | Xuất danh sách theo đúng bộ lọc đang áp dụng. | P1, P2
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn hình Danh mục dịch vụ sửa chữa và chi phí khác 
+[Heading 1] 3. Chức năng Xem danh sách và tìm kiếm 
+[Heading 2] 3.1 Giới thiệu và cách truy cập 
+[normal] Hiển thị danh sách các dịch vụ sửa chữa và chi phí khác đã khai báo, kèm % tính giá vốn, % VAT và mức ĐM giảm giá áp dụng cho công ty người dùng đang đăng nhập. 
+[normal] Cách truy cập: 
+[normal] Menu: Phân hệ CSKH → Danh mục → Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] URL đầy đủ: https://<host-hrm>/customer-care/costs 
+[normal]  [IMG]
+[normal] Hình 2: Biểu đồ Use Case — UC-01 Xem danh sách và tìm kiếm 
+[Heading 2] 3.2 Mô tả chi tiết 
+[normal] Bộ lọc: 
+[normal] - Tìm kiếm nhanh cho phép người dùng tìm kiếm danh sách theo Tên dịch vụ/chi phí 
+[normal] - Tìm kiếm nâng cao được mở rộng khi người dùng bấm nút Tìm kiếm nâng cao. Kết hợp nhiều tiêu chí để lọc 
+<<TABLE 5>>
+  | Field name | Placeholder | Field type | Required | Giới hạn ký tự | Ghi chú
+  | Tìm kiếm nhanh | Tìm theo tên dịch vụ / chi phí... | Textbox | Không | 255 | Cho phép nhập một phần hoặc toàn bộ tên dịch vụ/chi phí. Hệ thống thực hiện tìm kiếm khi người dùng bấm Tìm kiếm hoặc bấm tìm kiếm + enter
+  | Tìm kiếm nâng cao: Tên dịch vụ / chi phí | Nhập tên dịch vụ / chi phí | Textbox | Không | 255 | Tìm kiếm gần đúng theo tên dịch vụ/chi phí, áp dụng tìm tại mọi vị trí trong chuỗi
+  | Tìm kiếm nâng cao: Phân loại | Chọn phân loại | Dropdown | Không | – | Danh sách lấy theo hệ thống: Dịch vụ có tính doanh thu/Chi phí khác được cấu hình trên hệ thống. Bỏ trống để không giới hạn phân loại
+  | Tìm kiếm nâng cao: Trạng thái | Chọn trạng thái | Dropdown | Không | – | Lọc theo trạng thái của dịch vụ/chi phí. Bỏ trống để không giới hạn theo trạng thái /
+  | Tìm kiếm nâng cao: Người cập nhật | Chọn người cập nhật | Dropdown | Không | – | Lọc theo người thực hiện cập nhật bản ghi. Bỏ trống để không giới hạn theo người cập nhật
+  | Tìm kiếm | – | Button | – | – | Thực hiện tìm kiếm theo các điều kiện đã nhập/chọn và đưa danh sách về trang 1
+  | Làm mới | – | Button | – | – | Xoá toàn bộ điều kiện tìm kiếm/ lọc và tải lại danh sách ban đầu
+[normal] Bảng danh sách: 
+<<TABLE 6>>
+  | Field name | Field type | Content | Giới hạn ký tự | Ghi chú
+  | STT | Label | Số thứ tự theo trang | – | Không sắp xếp
+  | Tên dịch vụ / chi phí | Text | Lấy từ hệ thống | 255 | Tự xuống dòng khi dài. Cho phép sắp xếp
+  | Phân loại | Badge | Dịch vụ có tính doanh thu / Chi phí khác | – | Hiển thị nhãn tiếng Việt, không hiển thị giá trị số
+  | ĐM giảm giá | Number | Lấy từ hệ thống | 0 – 100 | Mức của CÔNG TY người dùng đang đăng nhập; để trống nếu chưa khai báo. Cho phép sắp xếp
+  | % Tính giá vốn | Number | Lấy từ hệ thống | ≥ 0 | Hiển thị đúng phần thập phân. Cho phép sắp xếp
+  | % VAT | Number | Lấy từ hệ thống | 0 – 100 | Cho phép sắp xếp
+  | Trạng thái | Badge | Hoạt động / Khoá | – | Nút Khoá / Mở khoá nằm ngay trong cột này. Cho phép sắp xếp
+  | Cập nhật | Text | Lấy từ hệ thống | – | Thời điểm cập nhật gần nhất kèm người cập nhật. Cho phép sắp xếp
+  | Hành động | Icon Button | Xem / Sửa / Xoá | – | Nút Sửa và Xóa ẩn khi không có P1; vô hiệu hoá kèm chú giải khi bản ghi không đủ điều kiện
+  | Tạo mới | Button | – | – | Ẩn khi người dùng không có P1
+  | Xuất Excel | Button | – | – | Luôn hiển thị với user có quyền truy cập màn
+  | Phân trang | Pagination | Mặc định 10 dòng/trang | – | Xem quy tắc chung mục 2.1.5
+  | Trạng thái rỗng | Label | Không có dữ liệu phù hợp bộ lọc. | – | Hiển thị khi danh sách trống
+[Heading 2] 3.3 Danh sách event và thông báo 
+<<TABLE 7>>
+  | STT | Event | Loại event | Xử lý và thông báo
+  | 1 | Truy cập màn hình | System | Kiểm tra quyền P1 hoặc P2; không có quyền → điều hướng về trang 404 (giao diện), API trả về 403. / Khôi phục bộ lọc đã lưu và tải danh sách trang 1.
+  | 2 | Không xác định được công ty | System | Màn hình vẫn hiển thị bình thường, toàn bộ cột ĐM giảm giá để trống.
+  | 3 | Nhập ô tìm kiếm nhanh | Keypress | Ghi nhận từ khoá, chưa gọi tìm kiếm.
+  | 4 | Bấm Tìm kiếm | Click | Quay về trang 1 và tải lại danh sách theo toàn bộ điều kiện lọc.
+  | 5 | Đổi tiêu chí lọc nâng cao | Change | Quay về trang 1 và tải lại danh sách ngay theo điều kiện mới.
+  | 6 | Bấm Làm mới | Click | Xóa toàn bộ điều kiện lọc, quay về trang 1 và tải lại danh sách.
+  | 7 | Sort tiêu đề cột | Click | Sắp xếp, tải lại danh sách.
+  | 8 | Đổi trang / đổi số dòng | Click / Change | Tải lại danh sách theo phân trang mới, giữ nguyên bộ lọc. Đổi số dòng thì quay về trang 1.
+  | 9 | Không có kết quả | System | Hiển thị “Không có dữ liệu phù hợp bộ lọc.”
+  | 10 | Lỗi khi tải danh sách | System | Hiển thị thông báo “Lỗi khi tải dữ liệu”.
+[Heading 1] 4. Chức năng Thêm mới 
+[Heading 2] 4.1 Giới thiệu và cách truy cập 
+[normal] Cho phép người quản lý danh mục khai báo một dịch vụ sửa chữa hoặc chi phí khác mới. Bản ghi mới luôn ở trạng thái Hoạt động — modal thêm mới không hiển thị ô Trạng thái. 
+[normal] Mức ĐM giảm giá nhập ở đây chỉ ghi cho công ty người dùng đang đăng nhập, không ảnh hưởng tới công ty khác. 
+[normal] Cách truy cập: 
+[normal] Menu: Phân hệ Chăm sóc khách hàng → Danh mục - Dịch vụ → Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] URL đầy đủ: https://<host-hrm>/customer-care/costs 
+[normal] Thao tác: bấm nút “Tạo mới” dưới bảng danh sách → mở modal “Thêm dịch vụ / chi phí”. 
+[normal]  [IMG]
+[normal] Hình 3: Biểu đồ Use Case — UC-02 Thêm mới 
+[Heading 2] 4.2 Mô tả chi tiết 
+<<TABLE 8>>
+  | Field name | Placeholder | Field type | Content | Required | Giới hạn ký tự | Ghi chú
+  | Tên dịch vụ / chi phí | VD: Chi phí sửa chữa, thay thế | Textbox | Người dùng nhập | Có | 255 | Không được trùng với bản ghi khác trong nhóm dữ liệu của màn
+  | % Tính giá vốn | VD: 80 | Textbox | Người dùng nhập | Có | ≥ 0 và <= 100 | Nhận số thập phân, dấu phẩy được hiểu là dấu thập phân
+  | % VAT | VD: 8 | Textbox | Người dùng nhập | Có | 0 – 100 | Nhận số thập phân, dấu phẩy được hiểu là dấu thập phân
+  | ĐM giảm giá (%) | Bỏ trống nếu không có | Textbox | Người dùng nhập | Không | 0 – 100 | Ghi riêng cho công ty người dùng đang đăng nhập
+  | Dịch vụ có tính doanh thu | – | Checkbox | Bật / Tắt | Không | – | Bật là “Dịch vụ có tính doanh thu”, tắt là “Chi phí khác”. Mặc định tắt
+  | Trạng thái | – | Dropdown | – | – | – | KHÔNG hiển thị ở chế độ thêm mới; bản ghi mới luôn ở trạng thái Hoạt động
+  | Lưu | – | Button | – | – | – | Vô hiệu hoá trong lúc đang gửi
+  | Lưu & Tiếp tục | – | Button | – | – | – | Lưu rồi giữ modal mở với các trường trống để nhập tiếp; chỉ có ở chế độ thêm mới
+  | Đóng | – | Button | – | – | – | Đóng modal, huỷ dữ liệu đang nhập dở
+[Heading 2] 4.3 Danh sách event và thông báo 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý và thông báo
+  | 1 | Bấm Tạo mới | Click | Kiểm tra quyền P1 (không có quyền thì nút không hiển thị). / Xoá dữ liệu cũ trong modal và mở modal “Thêm dịch vụ / chi phí”.
+  | 2 | Bấm Lưu | Click | Khi nhập dữ liệu không hợp lệ: / – Tên dịch vụ / chi phí trống → “Bắt buộc phải nhập” / – Tên đã tồn tại → “Đã tồn tại trên hệ thống” / – Tên vượt 255 ký tự → “Tối đa 255 ký tự” / – % Tính giá vốn trống → “Bắt buộc phải nhập” / – % Tính giá vốn không phải số → “Phải là số” / – % Tính giá vốn <= 0 → “Không được nhỏ hơn 0” / - % Tính giá vốn > 100 → “Tối đa 100” / – % VAT trống → “Bắt buộc phải nhập” / – % VAT không phải số → “Phải là số” / - % VAT ≤ 0 → "Không được nhỏ hơn hoặc bằng 0"  / – % VAT lớn hơn 100 → “Tối đa 100” / - ĐM giảm giá ≤ 0 → "Không được nhỏ hơn hoặc bằng 0"  / – ĐM giảm giá không phải số → “Phải là số” / – ĐM giảm giá lớn hơn 100 → “Tối đa 100” / – Có lỗi validate → không thực hiện bước sau. / Khi nhập dữ liệu hợp lệ: / – Ghi bản ghi mới ở trạng thái Hoạt động kèm người tạo. / – Ghi ĐM giảm giá cho công ty hiện tại (nếu có nhập). / – Hiển thị thông báo “Thêm mới dịch vụ - chi phí thành công”, đóng modal và tải lại danh sách.
+  | 3 | Bấm Lưu & Tiếp tục | Click | Xử lý như bấm Lưu; sau khi ghi thành công thì giữ modal mở và xóa trắng các trường để nhập bản ghi kế tiếp.
+  | 4 | Bấm Đóng | Click | –  Popup chưa có dữ liệu: thực hiện đóng popup quay về màn danh sách / – Popup đã được nhập dữ liệu, hiện popup cho người dùng xác nhận có muốn hủy thao tác hay không. Có hủy, quay về màn danh sách. Không hủy, ở lại popup, các giá trị đã nhập được giữ nguyên
+[Heading 1] 5. Chức năng Sửa 
+[Heading 2] 5.1 Giới thiệu và cách truy cập 
+[normal] Cho phép người quản lý danh mục cập nhật thông tin của một dịch vụ / chi phí đã khai báo, bao gồm cả Trạng thái. 
+[normal] Hai trường hợp bị chặn sửa: bản ghi là chi phí hệ thống (“Chi phí đi lại”, “Chi phí vận chuyển”) và bản ghi đang ở trạng thái Khoá — muốn sửa phải mở khoá trước. 
+[normal] Cách truy cập: 
+[normal] Menu: Phân hệ Chăm sóc khách hàng → Danh mục - Dịch vụ → Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] URL đầy đủ: https://<host-hrm>/customer-care/costs 
+[normal] Thao tác: bấm biểu tượng Sửa ở dòng dữ liệu → mở modal “Sửa dịch vụ / chi phí”. 
+[normal]  [IMG]
+[normal] Hình 4: Biểu đồ Use Case — UC-03 Sửa 
+[Heading 2] 5.2 Mô tả chi tiết 
+<<TABLE 10>>
+  | Field name | Placeholder | Field type | Content | Required | Giới hạn ký tự | Ghi chú
+  | Thông tin cập nhật gần nhất | – | Label | Lấy từ hệ thống | – | – | Hiển thị trên tiêu đề modal khi bản ghi đã từng được cập nhật
+  | Tên dịch vụ / chi phí | VD: Chi phí sửa chữa, thay thế | Textbox | Lấy từ hệ thống | Có | 255 | Cho phép sửa, không được trùng bản ghi khác
+  | % Tính giá vốn | VD: 80 | Textbox | Lấy từ hệ thống | Có | ≥ 0 và <= 100 | Cho phép sửa
+  | % VAT | VD: 8 | Textbox | Lấy từ hệ thống | Có | 0 – 100 | Cho phép sửa
+  | ĐM giảm giá (%) | Bỏ trống nếu không có | Textbox | Lấy từ hệ thống | Không | 0 – 100 | Chỉ ghi / xóa cho công ty hiện tại; xoá trống là bỏ ĐM giảm giá của công ty đó
+  | Dịch vụ có tính doanh thu | – | Checkbox | Lấy từ hệ thống | Không | – | Cho phép bật/tắt
+  | Trạng thái | Chọn trạng thái | Dropdown | Hoạt động / Khoá | Không | – | CHỈ hiển thị ở chế độ sửa; không gửi thì giữ nguyên giá trị cũ
+  | Cảnh báo chi phí hệ thống | – | Label | Chi phí này nằm trong danh sách không được phép sửa của hệ thống. | – | – | Hiển thị khi bản ghi thuộc loại chi phí hệ thống  và không được phép chỉnh sửa
+  | Lưu | – | Button | – | – | – | Ẩn khi modal ở chế độ chỉ đọc
+  | Đóng | – | Button | – | – | – | Đóng modal, huỷ thay đổi chưa lưu
+[Heading 2] 5.3 Danh sách event và thông báo 
+<<TABLE 11>>
+  | STT | Event | Loại event | Xử lý và thông báo
+  | 1 | Bấm biểu tượng Sửa | Click | Kiểm tra quyền P1 (không có quyền thì biểu tượng không hiển thị). / Nạp dữ liệu bản ghi và mở modal “Sửa dịch vụ / chi phí”. / Bản ghi không được phép sửa → hiển thị dòng cảnh báo trong modal.
+  | 2 | Bấm Lưu | Click | Khi dữ liệu không hợp lệ: / – Kiểm tra quyền P1; không có quyền → “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Các lỗi hợp lệ giống chức năng Thêm mới (mục 4.3) / – Tên trùng bản ghi khác → “Đã tồn tại trên hệ thống” / – Nút Sửa ở trạng thái không hoạt động đối với bản ghi không được phép chỉnh sửa  / – Bản ghi đang ở trạng thái Khóa → “Chi phí đang bị khóa, hãy mở khóa trước khi sửa” / – Có lỗi → không thực hiện bước lưu. / Khi dữ liệu hợp lệ: / – Cập nhật bản ghi kèm người cập nhật. / – Ghi hoặc xoá ĐM giảm giá của công ty hiện tại theo giá trị vừa nhập. / – Hiển thị “Cập nhật dịch vụ - chi phí thành công”, đóng modal và tải lại danh sách.
+  | 3 | Xem chi tiết | Click | Click vào tên → mở modal “Xem dịch vụ / chi phí” ở chế độ chỉ đọc: mọi trường bị vô hiệu hoá, các nút Lưu không hiển thị.
+  | 4 | Bấm Đóng | Click | Nếu có thay đổi dữ liệu phải hiển thị Popup Confirm trước. Đóng modal, huỷ thay đổi chưa lưu.
+[Heading 1] 6. Chức năng Khoá / Mở khoá và Xoá 
+[Heading 2] 6.1 Giới thiệu và cách truy cập 
+[normal] Khoá / Mở khoá: đổi trạng thái sử dụng của dịch vụ / chi phí mà vẫn giữ nguyên dữ liệu lịch sử. Dịch vụ đang Khoá không xuất hiện ở các danh sách chọn của màn nghiệp vụ khác. 
+[normal] Xóa: xoá bản ghi khai báo nhầm. Nếu dịch vụ / chi phí đã phát sinh ở Báo giá hãng hoặc Hợp đồng hãng thì hệ thống KHÔNG xóa mà tự chuyển sang trạng thái Khóa, và thông báo cho người dùng biết. Chi phí hệ thống và bản ghi đang Khoá đều không xoá được. 
+[normal] Cách truy cập: 
+[normal] Menu: Phân hệ Chăm sóc khách hàng → Danh mục - Dịch vụ → Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] URL đầy đủ: https://<host-hrm>/customer-care/costs 
+[normal] Thao tác Khoá / Mở khoá: bấm biểu tượng khoá nằm ngay trong cột Trạng thái. 
+[normal] Thao tác Xoá: bấm biểu tượng Xóa ở cột Hành động. 
+[normal]  [IMG]
+[normal] Hình 5: Biểu đồ Use Case — UC-05 Khoá / Mở khoá và UC-06 Xoá 
+[Heading 2] 6.2 Mô tả chi tiết 
+<<TABLE 12>>
+  | Field name | Field type | Content | Ghi chú
+  | Biểu tượng Khoá / Mở khoá | Icon Button | Khóa hoặc Mở khoá theo trạng thái hiện tại | Nằm trong cột Trạng thái. Ẩn khi không có P1; vô hiệu hoá khi bản ghi là chi phí hệ thống hoặc trạng thái không phù hợp
+  | Biểu tượng Xóa | Icon Button | – | Ẩn khi không có P1; vô hiệu hoá khi bản ghi là chi phí hệ thống hoặc đang ở trạng thái Khóa
+  | Chú giải nút | Label | Nêu hành động hoặc lý do bị chặn | Hiện khi rê chuột; nút bị vô hiệu hoá bắt buộc có lý do
+  | Hộp thoại xác nhận | Modal | Nêu rõ tên dịch vụ / chi phí bị tác động | Tiêu đề đổi theo hành động: “Xác nhận xóa” / “Xác nhận khóa” / “Xác nhận mở khóa”
+  | Nút xác nhận | Button | Xóa / Khóa / Mở khóa | Nhãn đổi theo hành động
+  | Huỷ | Button | – | Đóng hộp thoại, không thực hiện gì
+[Heading 2] 6.3 Danh sách event và thông báo 
+<<TABLE 13>>
+  | STT | Event | Loại event | Xử lý và thông báo
+  | 1 | Bấm biểu tượng Khoá / Mở khoá | Click | Kiểm tra quyền P1 và điều kiện bản ghi; không đủ điều kiện thì nút bị vô hiệu hoá kèm chú giải. / Mở hộp thoại xác nhận tương ứng hành động.
+  | 2 | Xác nhận Khoá | Click | Khi dữ liệu không hợp lệ: / – Bản ghi là Dịch vụ/chi phí hệ thống → “ Dịch vụ/chi phí này không được phép khóa” / – Bản ghi đã ở trạng thái Khóa → “Chi phí đang bị khóa” / Khi dữ liệu hợp lệ: / – Đổi trạng thái sang Khoá. / – Hiển thị “Khóa Dịch vụ/chi phí thành công” và tải lại danh sách.
+  | 3 | Xác nhận Mở khoá | Click | Khi dữ liệu không hợp lệ: / – Bản ghi là Dịch vụ/chi phí hệ thống → “Dịch vụ/chi phí này không được phép mở khóa” / – Bản ghi đang Hoạt động → “Dịch vụ/chi phí đang hoạt động” / Khi dữ liệu hợp lệ: / – Đổi trạng thái sang Hoạt động. / – Hiển thị “Mở khóa Dịch vụ/chi phí thành công” và tải lại danh sách.
+  | 4 | Bấm biểu tượng Xóa | Click | Kiểm tra quyền P1 và điều kiện xóa. / Kiểm tra bản ghi đã phát sinh chứng từ chưa; nếu có thì hộp thoại đổi tiêu đề thành “Xác nhận khóa” để người dùng biết trước kết quả là khoá chứ không phải xoá.
+  | 5 | Xác nhận Xoá | Click | Khi dữ liệu không hợp lệ: / – Kiểm tra quyền P1; không có quyền → “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Bản ghi là chi phí hệ thống hoặc đang Khoá → “Dịch vụ/chi phí này không được phép xóa hoặc đã bị khóa”, không thực hiện bước After. / Khi dữ liệu hợp lệ: / – Chưa phát sinh chứng từ → xoá bản ghi, hiển thị “Xóa Dịch vụ/chi phí thành công”. / – Đã phát sinh chứng từ → KHÔNG xoá, chuyển sang trạng thái Khoá và hiển thị “Dịch vụ/chi phí đang được sử dụng nên đã được chuyển sang trạng thái Khóa”. / – Tải lại danh sách.
+  | 6 | Bấm Huỷ | Click | Đóng hộp thoại, không thay đổi dữ liệu.
+[Heading 1] 7. Chức năng Xuất Excel 
+[Heading 2] 7.1 Giới thiệu và cách truy cập 
+[normal] Cho phép người dùng tải danh sách dịch vụ / chi phí ra file Excel để đối chiếu hoặc gửi ra ngoài. File lấy toàn bộ dữ liệu khớp bộ lọc đang áp dụng, không giới hạn theo trang đang xem. 
+[normal] Cách truy cập: 
+[normal] Menu: Phân hệ Chăm sóc khách hàng → Danh mục - Dịch vụ → Danh mục dịch vụ sửa chữa và chi phí khác 
+[normal] URL đầy đủ: https://<host-hrm>/customer-care/costs 
+[normal] Thao tác: bấm nút “Xuất Excel” dưới bảng danh sách. 
+[normal]  [IMG]
+[normal] Hình 6: Biểu đồ Use Case — UC-07 Xuất Excel 
+[Heading 2] 7.2 Mô tả chi tiết 
+<<TABLE 14>>
+  | Field name | Field type | Content | Ghi chú
+  | Xuất Excel | Button | – | Nằm ở thao tác dưới bảng danh sách
+  | Nội dung file | Table/Grid | Các cột như bảng danh sách | Lấy toàn bộ bản ghi khớp bộ lọc, không chỉ trang đang xem
+  | Thông báo lỗi | Toast / Alert | Nội dung lỗi trả về từ hệ thống | Hiển thị khi không dựng được file
+[Heading 2] 7.3 Danh sách event và thông báo 
+<<TABLE 15>>
+  | STT | Event | Loại event | Xử lý và thông báo
+  | 1 | Bấm Xuất Excel | Click | Khi dữ liệu không hợp lệ: / – Kiểm tra quyền P1 hoặc P2; không có quyền → API trả về 403. / Khi dữ liệu hợp lệ: / – Dựng file Excel theo bộ lọc hiện tại và tải xuống.
+  | 2 | Không có dữ liệu khớp bộ lọc | System | Vẫn trả file, chỉ gồm dòng tiêu đề.
+  | 3 | Lỗi khi dựng file | System | Hiển thị thông báo lỗi, không tải file.

@@ -1,0 +1,239 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục nguồn vốn 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Danh mục nguồn vốn, nhằm: 
+[normal] Là căn cứ nghiệm thu chức năng và phân quyền. 
+[normal] Làm rõ đặc thù của màn: chỉ có một trường nhập duy nhất, không có mã, không có cột Trạng thái trên lưới. 
+[normal] Làm rõ thao tác Xóa thực chất là ngừng sử dụng, dữ liệu không mất hẳn. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Nguồn vốn | Nguồn hình thành vốn của khoản chi hoặc tài sản, ví dụ vốn tự có, vốn vay ngân hàng.
+  | Xóa | Trên màn này, xóa là chuyển bản ghi sang trạng thái ngừng sử dụng ở phía máy chủ. Bản ghi biến mất khỏi danh sách nhưng dữ liệu không mất hẳn.
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+<<TABLE 2>>
+  | Ký hiệu | Tên quyền | Tác dụng trên màn hình
+  | P1 | Quản lý danh mục nguồn vốn | Mở màn hình và thực hiện đầy đủ Thêm mới, Chỉnh sửa, Xóa. Thiếu quyền này thì mục menu không hiển thị và truy cập thẳng đường dẫn bị chặn.
+[normal] Màn hình chỉ có MỘT quyền duy nhất, không tách riêng quyền xem và quyền sửa. Người không có quyền này không vào được màn hình. 
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 3>>
+  | Chức năng | P1 | Không có quyền
+  | FR-01 Xem danh sách nguồn vốn | ✅ | ❌
+  | FR-02 Tìm kiếm và lọc | ✅ | ❌
+  | FR-03 Thêm mới nguồn vốn | ✅ | ❌
+  | FR-04 Chỉnh sửa nguồn vốn | ✅ | ❌
+  | FR-05 Xóa nguồn vốn | ✅ | ❌
+  | FR-06 Xem lịch sử thay đổi | ✅ | ❌
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Danh mục nguồn vốn 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem danh sách nguồn vốn 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 4>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem danh sách nguồn vốn
+  | Mô tả | Hiển thị toàn bộ nguồn vốn trong danh mục, có phân trang và sắp xếp.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục nguồn vốn”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục nguồn vốn”.
+  | Dòng sự kiện chính | 1. Người dùng vào menu Tài chính → Danh mục → Danh mục nguồn vốn. / 2. Hệ thống kiểm tra quyền rồi nạp trang đầu tiên của danh sách. / 3. Bảng hiển thị dữ liệu kèm tổng số bản ghi.
+  | Dòng sự kiện phụ | • Không có quyền → mục menu không hiển thị; truy cập thẳng đường dẫn thì hệ thống từ chối và báo không có quyền. / • Danh mục chưa có bản ghi nào → bảng hiện thông báo không có dữ liệu.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục nguồn vốn 
+[normal]  [IMG]
+[normal] Hình 2: Màn Danh mục nguồn vốn lúc mới truy cập 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 5>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Mô tả
+  | 1 | STT | Table/Grid | Read-only | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | 2 | Tên nguồn vốn | Table/Grid | Read-only | Tên đầy đủ. Luôn hiển thị, sắp xếp được.
+  | 3 | Người tạo | Table/Grid | Read-only | Người đã thêm bản ghi.
+  | 4 | Ngày tạo | Table/Grid | Read-only | Thời điểm thêm, sắp xếp được.
+  | 5 | Hành động | Table/Grid | Read-only | Sửa, Xóa và Lịch sử.
+  | 6 | Nút Tạo mới | Button | Enable / Ẩn | Chỉ hiện với người có quyền “Quản lý danh mục nguồn vốn”.
+  | 7 | Phân trang | Pagination | Enable | Nút về đầu / lùi / số trang / tiến / về cuối và ô chọn số dòng mỗi trang.
+  | 8 | Trạng thái rỗng | Label | Hiển thị | Hiện thông báo không có dữ liệu khi danh sách trống.
+  | 9 | Vòng quay chờ | Loading | Hiển thị | Hiện trong lúc nạp dữ liệu.
+[normal] 2.1.4 Danh sách event và xử lý event 
+<<TABLE 6>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở màn hình | System | Before: / – Kiểm tra quyền “Quản lý danh mục nguồn vốn”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Nạp trang đầu tiên của danh sách và hiển thị tổng số bản ghi.
+  | 2 | Bấm tiêu đề cột sắp xếp được | Click | After: / – Đổi chiều sắp xếp và nạp lại danh sách từ trang 1.
+  | 3 | Chuyển trang | Click | Before: / – Giữ nguyên bộ lọc và thứ tự sắp xếp đang áp dụng. / After: / – Nạp dữ liệu trang mới, số thứ tự tiếp tục liên tục.
+  | 4 | Đổi số dòng mỗi trang | Change | After: / – Quay về trang 1 và nạp lại theo số dòng mới.
+[Heading 3] 2.2 Tìm kiếm và lọc 
+[normal] 2.2.1 Giới thiệu 
+<<TABLE 7>>
+  | Mục | Nội dung
+  | Tên chức năng | Tìm kiếm và lọc danh sách
+  | Mô tả | Thu hẹp danh sách bằng ô tìm kiếm nhanh. Màn hình này KHÔNG có bộ lọc nâng cao.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục nguồn vốn”)
+  | Điều kiện ban đầu | Đang ở màn Danh mục nguồn vốn.
+  | Dòng sự kiện chính | 1. Người dùng nhập từ khóa hoặc chọn tiêu chí lọc. / 2. Người dùng bấm Tìm kiếm. / 3. Hệ thống áp đồng thời mọi tiêu chí và nạp lại danh sách từ trang 1.
+  | Dòng sự kiện phụ | • Không có kết quả → bảng hiện thông báo không có dữ liệu. / • Bấm Làm mới → xóa hết tiêu chí VÀ nạp lại danh sách đầy đủ ngay.
+[normal] 2.2.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục nguồn vốn 
+[normal]  [IMG]
+[normal] Hình 3: Khu vực tìm kiếm và lọc của màn Danh mục nguồn vốn 
+[normal] 2.2.3 Mô tả chi tiết giao diện 
+<<TABLE 8>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Mô tả
+  | 1 | Ô tìm kiếm nhanh | Textbox | Enable | 0–255 ký tự | Không | Tìm theo tên nguồn vốn. Màn hình KHÔNG có bộ lọc nâng cao nào khác.
+  | 2 | Nút Tìm kiếm | Button | Enable | – | – | Áp dụng các tiêu chí.
+  | 3 | Nút Làm mới | Button | Enable | – | – | Xóa hết tiêu chí VÀ nạp lại danh sách ngay.
+[normal] 2.2.4 Danh sách event và xử lý event 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Tìm kiếm | Click | Before: / – Thu thập giá trị của mọi tiêu chí đang có. / During: / – Áp đồng thời các tiêu chí theo kiểu “và”. / After: / – Nạp lại bảng từ trang 1 và cập nhật tổng số bản ghi.
+  | 2 | Bấm Làm mới | Click | After: / – Xóa trắng mọi tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+[Heading 3] 2.3 Thêm mới nguồn vốn 
+[normal] 2.3.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 4: Biểu đồ Use Case — FR-03 Thêm mới nguồn vốn 
+[normal] 2.3.2 Giới thiệu 
+<<TABLE 10>>
+  | Mục | Nội dung
+  | Tên chức năng | Thêm mới nguồn vốn
+  | Mô tả | Thêm một nguồn vốn mới vào danh mục thông qua cửa sổ nhập liệu.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục nguồn vốn”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục nguồn vốn”.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Tạo mới. / 2. Hệ thống mở cửa sổ nhập liệu. / 3. Người dùng nhập thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu và ghi bản ghi mới. / 5. Cửa sổ đóng, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc hoặc trùng tên → báo lỗi đỏ ngay dưới ô tương ứng, cửa sổ KHÔNG đóng, dữ liệu đã nhập vẫn còn. / • Bấm Đóng → hủy bỏ, không ghi gì.
+  | Yêu cầu đặc biệt | Cửa sổ chỉ có hai nút: Lưu và Đóng.
+[normal] 2.3.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục nguồn vốn → Tạo mới 
+[normal] Modal Tạo nguồn vốn được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Tạo nguồn vốn 
+[normal] 2.3.4 Mô tả chi tiết giao diện 
+<<TABLE 11>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Mô tả
+  | 1 | Tên nguồn vốn | Textbox | Enable | 0–255 ký tự | Có | Duy nhất toàn hệ thống. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Tên nguồn vốn đã tồn tại”.
+  | 2 | Nút Lưu | Button | Enable | – | – | Ghi bản ghi rồi đóng cửa sổ.
+  | 3 | Nút Đóng | Button | Enable | – | – | Hủy bỏ, không ghi gì.
+  | 4 | Thông báo lỗi | Toast / Alert | Hiển thị | – | – | Chữ đỏ ngay dưới ô bị lỗi.
+[normal] 2.3.5 Danh sách event và xử lý event 
+<<TABLE 12>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Tạo mới | Click | Before: / – Kiểm tra quyền “Quản lý danh mục nguồn vốn”. / – Nếu không có quyền → nút không hiển thị. / After: / – Mở cửa sổ nhập liệu.
+  | 2 | Bấm Lưu | Click | Before: / – Kiểm tra quyền “Quản lý danh mục nguồn vốn”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Tên nguồn vốn để trống → hiển thị “Bắt buộc phải nhập”. / – Tên đã tồn tại → hiển thị “Tên nguồn vốn đã tồn tại”. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi bản ghi mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo thêm mới thành công.
+  | 3 | Bấm Đóng | Click | After: / – Đóng cửa sổ, không ghi dữ liệu.
+[Heading 3] 2.4 Chỉnh sửa nguồn vốn 
+[normal] 2.4.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 6: Biểu đồ Use Case — FR-04 Chỉnh sửa nguồn vốn 
+[normal] 2.4.2 Giới thiệu 
+<<TABLE 13>>
+  | Mục | Nội dung
+  | Tên chức năng | Chỉnh sửa nguồn vốn
+  | Mô tả | Sửa thông tin của một nguồn vốn đã có. Dùng chung cửa sổ với chức năng Thêm mới.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục nguồn vốn”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục nguồn vốn”; bản ghi cần sửa đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng bút chì ở dòng cần sửa. / 2. Hệ thống mở cửa sổ với dữ liệu hiện tại đã điền sẵn. / 3. Người dùng sửa thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu, ghi nhận thay đổi và ghi một dòng lịch sử. / 5. Cửa sổ đóng, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Trùng tên với bản ghi khác → báo lỗi, cửa sổ không đóng. / • Giữ nguyên tên của chính bản ghi đang sửa → lưu bình thường, không báo trùng.
+[normal] 2.4.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục nguồn vốn → Chỉnh sửa 
+[normal] Modal Sửa nguồn vốn được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 7: Cửa sổ Chỉnh sửa nguồn vốn 
+[normal] 2.4.4 Mô tả chi tiết giao diện 
+<<TABLE 14>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Tên nguồn vốn | Textbox | Enable | 0–255 ký tự | Có | Dữ liệu hiện tại | Duy nhất toàn hệ thống. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Tên nguồn vốn đã tồn tại”.
+  | 2 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi thay đổi rồi đóng cửa sổ.
+  | 3 | Nút Đóng | Button | Enable | – | – | Hiển thị | Hủy bỏ, không ghi gì.
+[normal] 2.4.5 Danh sách event và xử lý event 
+<<TABLE 15>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng bút chì | Click | Before: / – Kiểm tra quyền “Quản lý danh mục nguồn vốn”; thiếu quyền thì nút không hiển thị. / After: / – Mở cửa sổ với dữ liệu hiện tại đã điền sẵn.
+  | 2 | Bấm Lưu | Click | During: / – Tên nguồn vốn để trống → hiển thị “Bắt buộc phải nhập”. / – Tên đã tồn tại → hiển thị “Tên nguồn vốn đã tồn tại”. / – Bỏ qua kiểm tra trùng đối với chính bản ghi đang sửa. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi nhận thay đổi và ghi một dòng lịch sử nêu giá trị cũ và giá trị mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo cập nhật thành công.
+[Heading 3] 2.5 Xóa nguồn vốn 
+[normal] 2.5.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 8: Biểu đồ Use Case — FR-05 Xóa nguồn vốn 
+[normal] 2.5.2 Giới thiệu 
+<<TABLE 16>>
+  | Mục | Nội dung
+  | Tên chức năng | Xóa nguồn vốn
+  | Mô tả | Loại một nguồn vốn khỏi danh mục. Trên màn này, xóa được xử lý thành ngừng sử dụng ở phía máy chủ: bản ghi biến mất khỏi danh sách nhưng dữ liệu không bị mất hẳn.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục nguồn vốn”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục nguồn vốn”; bản ghi cần xóa đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng thùng rác ở dòng cần xóa. / 2. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. / 3. Người dùng bấm Xóa để xác nhận. / 4. Hệ thống loại bản ghi khỏi danh sách và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Bấm Hủy → đóng hộp, không thay đổi gì.
+[normal] 2.5.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục nguồn vốn → Xóa 
+[normal] Modal Xóa nguồn vốn được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 9: Hộp xác nhận xóa nguồn vốn 
+[normal] 2.5.4 Mô tả chi tiết giao diện 
+<<TABLE 17>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Biểu tượng thùng rác | Icon Button | Enable / Ẩn | Hiển thị | Nằm trên cột Hành động của từng dòng.
+  | 2 | Tiêu đề hộp xác nhận | Label | Hiển thị | Xóa nguồn vốn | Nêu rõ loại đối tượng đang xóa.
+  | 3 | Nội dung hộp xác nhận | Label | Hiển thị | Bạn có chắc muốn xóa nguồn vốn “<tên>”? | Nêu rõ tên bản ghi để tránh thao tác nhầm dòng.
+  | 4 | Nút Xóa | Button | Enable | Hiển thị | Xác nhận thực hiện.
+  | 5 | Nút Hủy | Button | Enable | Hiển thị | Đóng hộp, không làm gì.
+[normal] 2.5.5 Danh sách event và xử lý event 
+<<TABLE 18>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng thùng rác | Click | After: / – Hiện hộp xác nhận kèm tên bản ghi.
+  | 2 | Bấm Xóa trong hộp xác nhận | Click | Before: / – Kiểm tra quyền “Quản lý danh mục nguồn vốn”; thiếu quyền thì từ chối và dừng xử lý. / After: / – Loại bản ghi khỏi danh sách (chuyển sang trạng thái ngừng sử dụng). / – Nạp lại danh sách và hiển thị thông báo xóa thành công.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp xác nhận, không thay đổi gì.
+[Heading 3] 2.6 Xem lịch sử thay đổi 
+[normal] 2.6.1 Giới thiệu 
+<<TABLE 19>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem lịch sử thay đổi
+  | Mô tả | Liệt kê các lần thay đổi của một nguồn vốn, kèm giá trị cũ, giá trị mới, người thực hiện và thời điểm.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục nguồn vốn”)
+  | Điều kiện ban đầu | Bản ghi cần xem đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng lịch sử ở dòng cần xem. / 2. Hệ thống mở cửa sổ Lịch sử thay đổi. / 3. Danh sách các lần thay đổi hiển thị theo thứ tự mới nhất ở trên cùng.
+  | Dòng sự kiện phụ | • Bản ghi chưa từng sửa → cửa sổ hiện “Chưa có lịch sử thao tác nào.” / • Cửa sổ có bộ lọc riêng để thu hẹp theo loại thay đổi.
+[normal] 2.6.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục nguồn vốn → Lịch sử 
+[normal] Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 10: Cửa sổ Lịch sử thay đổi của nguồn vốn 
+[normal] 2.6.3 Mô tả chi tiết giao diện 
+<<TABLE 20>>
+  | STT | Tên đối tượng | Loại | Giá trị ban đầu | Mô tả
+  | 1 | Tiêu đề cửa sổ | Label | Lịch sử thay đổi | Kèm dòng phụ ghi loại đối tượng và tên bản ghi.
+  | 2 | Bộ lọc | Dropdown | Trống | Thu hẹp theo loại thay đổi.
+  | 3 | Danh sách thay đổi | Table/Grid | Theo dữ liệu | Sắp xếp mới nhất ở trên cùng.
+  | 4 | Thời điểm | Text | Theo dữ liệu | Định dạng dd/mm/yyyy hh:mm.
+  | 5 | Loại thay đổi | Badge | Theo dữ liệu | Ví dụ: Thay đổi thông tin.
+  | 6 | Người thực hiện | Text | Theo dữ liệu | Kèm mã nhân viên và phòng ban.
+  | 7 | Giá trị cũ và giá trị mới | Text | Theo dữ liệu | Hiển thị hai vế cho từng trường đã đổi.
+  | 8 | Trạng thái rỗng | Label | Ẩn | Hiện “Chưa có lịch sử thao tác nào.” khi bản ghi chưa từng sửa.
+  | 9 | Nút Đóng | Button | Hiển thị | Đóng cửa sổ.
+[normal] 2.6.4 Danh sách event và xử lý event 
+<<TABLE 21>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng lịch sử | Click | After: / – Mở cửa sổ và nạp danh sách thay đổi theo thứ tự mới nhất trước.
+  | 2 | Đổi bộ lọc trong cửa sổ | Change | After: / – Nạp lại danh sách theo tiêu chí đã chọn.
+  | 3 | Bấm Đóng | Click | After: / – Đóng cửa sổ; danh sách phía sau giữ nguyên bộ lọc và trang.
+[Heading 1] Phần 4. Quy tắc nghiệp vụ 
+[normal] BR-01 — Một quyền duy nhất cho cả xem và sửa 
+[normal] Màn hình chỉ dùng một quyền “Quản lý danh mục nguồn vốn”, không tách quyền xem riêng. 
+[normal] Người không có quyền này không thấy mục menu và không truy cập được bằng đường dẫn. 
+[normal] BR-02 — Ràng buộc trùng 
+[normal] Tên nguồn vốn là duy nhất trên toàn hệ thống; trùng sẽ bị chặn với thông báo “Tên nguồn vốn đã tồn tại”. 
+[normal] Khi sửa, bản ghi đang sửa được loại khỏi phép kiểm tra trùng — giữ nguyên tên của chính nó thì lưu bình thường. 
+[normal] BR-03 — Xóa là ngừng sử dụng 
+[normal] Màn hình không có cột Trạng thái trên lưới và không có thao tác Khóa riêng. 
+[normal] Thao tác Xóa chuyển bản ghi sang trạng thái ngừng sử dụng ở phía máy chủ: bản ghi biến mất khỏi danh sách nhưng dữ liệu không mất hẳn. 
+[normal] Nhờ vậy, chứng từ cũ đang tham chiếu tới bản ghi vẫn hiển thị đúng tên. 
+[normal] BR-04 — Lịch sử thay đổi sắp xếp mới nhất trước 
+[normal] Mọi thao tác sửa đều sinh dòng lịch sử. 
+[normal] Danh sách lịch sử luôn sắp xếp MỚI NHẤT Ở TRÊN CÙNG. 
+[normal] Mỗi dòng nêu trường đã đổi, giá trị cũ, giá trị mới, người thực hiện và thời điểm. 

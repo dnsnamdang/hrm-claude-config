@@ -1,0 +1,82 @@
+{
+ "cols": [
+  "STT",
+  "Tên meeting",
+  "Ngày họp",
+  "Ngày tạo meeting",
+  "Loại meeting",
+  "Trạng thái",
+  "Khách hàng",
+  "Phòng ban",
+  "Bộ phận",
+  "Nhân viên chủ trì",
+  "Nhu cầu đầu tư ghi nhận",
+  "Giá trị dự kiến (đ)"
+ ],
+ "firstPageRowCount": 20,
+ "sttFirst": "1",
+ "sttLast": "20",
+ "pageTotal": "Hiển thị 1–20 / 598 meeting",
+ "tableBottom": 633,
+ "footerTop": 719,
+ "heightNormal": 752,
+ "tableScrollBorderTopWidth": "0px",
+ "tableScrollBorderRadius": "0px",
+ "modalContentOverflow": "visible",
+ "footerButtonGaps": [
+  {
+   "between": "In danh sách → Xuất Excel danh sách",
+   "gapPx": 8
+  },
+  {
+   "between": "Xuất Excel danh sách → Đóng",
+   "gapPx": 8
+  }
+ ],
+ "sortTextAsc": [
+  "Ban giám đốc Sài Gòn",
+  "Kinh doanh CN Vinh",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN",
+  "PHÒNG DỰ ÁN"
+ ],
+ "sortDateAsc": [
+  "03/09/2026 08:00",
+  "03/09/2026 10:03",
+  "03/09/2026 10:30",
+  "03/09/2026 14:00",
+  "03/09/2026 18:00",
+  "03/09/2026 18:00",
+  "03/09/2026 18:00",
+  "03/09/2026 18:06",
+  "04/09/2026 08:30",
+  "04/09/2026 08:30",
+  "04/09/2026 10:00",
+  "04/09/2026 10:50",
+  "04/09/2026 11:40",
+  "04/09/2026 13:30",
+  "04/09/2026 13:30",
+  "04/09/2026 13:30",
+  "04/09/2026 14:00",
+  "04/09/2026 14:00",
+  "04/09/2026 14:00",
+  "04/09/2026 14:00"
+ ],
+ "heightFull": null,
+ "heightFullNote": "Popup này không có nút \"Phóng to\" (vỏ V2BaseModal không có tính năng này) — bỏ qua phép đo, không bịa số."
+}

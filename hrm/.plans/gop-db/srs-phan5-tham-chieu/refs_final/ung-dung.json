@@ -1,0 +1,68 @@
+{
+  "catalog": "Danh mục ứng dụng",
+  "srs_file": "SRS - Danh mục ứng dụng.docx",
+  "rows": [
+    {
+      "nhom": "Danh mục dùng chung",
+      "man_hinh": "Ngân hàng câu hỏi khảo sát",
+      "duong_dan": "Danh mục dùng chung",
+      "evidence": "FE pages/assign/questions/components/QuestionForm.vue:346,420, index.vue:288 · BE Requests/SurveyQuestion/SurveyQuestionRequest.php:27 (survey_questions.application_id) · Lối vào: master-data.js:266"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/index.vue:604, components/InfoTab.vue:209, SolutionForm.vue:407 · BE Entities/Solution.php:116 (solutions.application_id) · Lối vào: menu-sidebar.js:31"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingProject.vue:484 · BE Requests/Meeting/MeetingCreateApiRequest.php:121, MeetingUpdateApiRequest.php:197, MeetingController.php:226,554,611 · Lối vào: meeting.js:63"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/prospective-projects/components/ProjectInfoSection.vue:465-516, _id/manager.vue:678, index.vue:72 · BE Requests/ProspectiveProject/ProspectiveProjectRequest.php:53; Entities/ProspectiveProject.php:455,481,486 (application_id, customer_application_id, customer_benefit_application_id) · Lối vào: presale.js:44"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo vòng đời dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/prospective-projects/components/ProspectiveProjectsFilter.vue:247 · BE Services/Report/ProspectiveProjectsReportService.php:179 · Lối vào: presale.js:96"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Theo dõi YCLGP theo phòng KD",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/solution-requests-by-department/index.vue:256 (V2BaseFieldCategoryApplicationFilter) · Lối vào: presale.js:97"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo tổng hợp giải pháp theo phòng ban",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/solutions-work-summary-by-department/index.vue:749 · BE Services/Report/SolutionsWorkSummaryByDepartmentReportService.php:851 · Lối vào: presale.js:100"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo phát triển khách hàng theo NVKD",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo thị trường",
+      "evidence": "FE pages/assign/report/customer-development/index.vue:144 · BE Services/Report/CustomerDevelopmentReportService.php:102 · Lối vào: presale.js:122"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Phiếu thu thập thông tin",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE pages/assign/form-templates/components/FormMeta.vue:14, index.vue:335 · BE Requests/FormTemplate/FormTemplateRequest.php:14 (form_templates.application_id, form_template_snapshots.application_id). Cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp · Lối vào: presale.js:150"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Phiếu thu thập thông tin",
+      "duong_dan": "Bán hàng -> Danh mục -> Dự án - Giải pháp",
+      "evidence": "FE pages/assign/form-templates/components/FormMeta.vue:14, index.vue:335 · BE Requests/FormTemplate/FormTemplateRequest.php:14 (form_templates.application_id, form_template_snapshots.application_id). Cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp · Lối vào: sale-hub.js:362"
+    }
+  ],
+  "notes": "Kiểm tra xoá THIẾU NẶNG: Applications::isCanDelete() (Entities/Applications.php:35) chỉ xét prospective_projects.application_id; KHÔNG xét solutions, survey_questions, form_templates, form_template_snapshots, prospective_projects.customer_application_id/customer_benefit_application_id. Tệ hơn: ApplicationsController::destroy() và deleteByIds() (Controller:85-120) + ApplicationService::destroy() (Service:314) KHÔNG gọi isCanDelete() → gọi API xoá thẳng được ứng dụng đang dùng (FE chỉ ẩn nút); bảng không có khoá ngoại nên để lại id mồ côi. isCanDelete() chỉ được dùng để chặn KHOÁ (lock). Bỏ qua: Yêu cầu giải pháp (CSKH trước bán) chỉ HIỂN THỊ Ứng dụng của Dự án TKT ở chế độ chỉ đọc (TktTab.vue:19 isShow=true, RequestTab.vue:69 readonly) — không chọn/lưu. Code chết: pages/assign/project_phase/add.vue + components/ProjectPhaseForm.vue có ô chọn Ứng dụng nhưng màn Giai đoạn dự án thật dùng modal (project_phase_modal.vue), BE ProjectPhases không lưu ứng dụng, bảng project_phase_applications không tồn tại (Entity ProjectPhaseApplications mồ côi). Danh mục Nhóm ngành / Nhóm giải pháp / Lĩnh vực KH là chiều ngược (ứng dụng chọn chúng), không tính.",
+  "changes": "Trước 9 dòng -> sau 10 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách Phiếu thu thập thông tin thành 2 lối vào. Sửa đường dẫn 4 báo cáo (thêm cấp \"Báo cáo\"); Ngân hàng câu hỏi khảo sát là mục rail đi thẳng -> Đường dẫn \"Danh mục dùng chung\"."
+}

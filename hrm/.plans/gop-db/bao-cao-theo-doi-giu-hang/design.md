@@ -619,3 +619,97 @@ dùng màu đặc. Cùng một họ xanh lá, đúng tinh thần "cả nhóm Xu�
 ℹ️ Nút **In** trong popup chọn chế độ in để `primary` (teal) vì nó là **action chính của popup đó**
 (mục 2 xếp In vào nhóm primary), còn nút **In danh sách** ở footer popup chi tiết để `secondary` —
 ở đó nó chỉ là hành động bổ trợ.
+
+## Chốt vướng mắc trước khi code (02/10/2026) — hỏi lần lượt từng câu
+
+| # | Vướng mắc | Chốt |
+|---|---|---|
+| 1 | Duyệt mockup | **ĐÃ DUYỆT** — bản vòng 11 + rà nút 15/09 |
+| 2 | Cách lấy chứng từ gốc qua chuỗi gia hạn | **Lưu cột `root_objectable_id/type` trên `prepick_details`** (ban đầu chọn recursive CTE, user đổi: dữ liệu tích luỹ lâu thì CTE mỗi lần chạy sẽ nặng) |
+| 2b | Phía ERP có ghi root không | **Sửa cả 5 chỗ ERP + 3 chỗ HRM** ghi root ngay lúc tạo dòng — ERP còn chạy song song; deploy phải kèm ERP |
+| 3 | Quyền `Xem báo cáo giữ hàng theo tổng công ty` | Thêm vào `PermissionsTableSeeder` (kiểm trùng id); deploy INSERT tay. **Không gán sẵn role nào** — admin tự gán |
+| 4 | Ô lọc Bộ phận (2,6% dòng có dữ liệu) | **Giữ như mockup** — đủ 3 trạng thái, cascade sau Phòng ban |
+| 5 | Nút Gia hạn ở dòng còn xa hạn | **Báo rõ lý do**: màn gia hạn nhận dòng được bấm, chưa tới ngưỡng thì báo "còn N ngày mới tới hạn, chưa lập được yêu cầu gia hạn". KHÔNG nới `getDataToCreate()` |
+| 6 | Màn cũ `/finance/prepick-stocks` | **GIỮ SONG SONG**, không đụng màn cũ (kể cả `?product_id=` từ ERP vẫn trỏ màn cũ). Báo cáo mới ở **URL mới** — mục §12 Downstream của spec (đổi key localStorage/cấu hình cột) KHÔNG còn áp dụng |
+| 6b | Vị trí menu + URL | **Phân hệ Bán hàng** › khối **Báo cáo** › nhóm MỚI **"Hàng giữ"** › màn **"Báo cáo theo dõi giữ hàng"**, URL **`/sale/prepick-tracking`** (khai ở `components/subsystem-menu/sale-hub.js`; nhóm hub khai `subItems`/`screens` đúng khuôn, đo link trên hub bằng DOM) |
+| 7 | Nhánh | Nhánh riêng **`gop_db-bao-cao-theo-doi-giu-hang`** tách từ `gop_db` ở **cả 3 repo** (hrm-api, hrm-client, ERP `origin/gop_db`) — dùng worktree, không checkout đè thư mục chính |
+
+**Cổng chặn:** đã trả lời đủ 7/7 câu (02/10/2026) → được phép lập plan code.
+
+### 50 · Hệ quả của chốt #2 — điểm ghi root
+Bảng `prepick_details` dùng chung ERP/HRM. Đã rà các chỗ `new PrepickDetail()`:
+- **HRM (3):** `PrepickStockService` — gia hạn (~dòng 662), điều chuyển (~792), xuất giữ/nhập cho khách (~882).
+- **ERP (5):** `WarehousePrepickRequest:388`, `PrepickTransfer2Detail:58`, `ProductImport:1909`,
+  `TransferProductAllocation:220`, `PrepickExtendRequest:662`.
+- Quy tắc root: dòng do **gia hạn** sinh ra → kế thừa root của dòng nguồn (`prepick_detail_id` của
+  dòng gia hạn); mọi đường khác → root = chính `objectable` của nó.
+- ⚠️ Các đường ghi đều **gộp vào dòng sẵn có** khi trùng bộ 4 + hạn giữ → một dòng có thể ôm qty của
+  nhiều chứng từ; root chỉ giữ chứng từ TẠO dòng (cùng ngữ nghĩa với cách CTE lần theo `objectable`).
+  Đo thật trước đây 2.412 dòng / 2.410 yêu cầu → ca gộp rất hiếm.
+- Cần backfill 1 lần cho dữ liệu cũ (dùng chính recursive CTE).
+
+## Đối chiếu Vue thật với mockup (03/10/2026)
+
+**Cách đo (Task 16):** mockup `bao-cao-theo-doi-giu-hang.html` phục vụ qua `python3 -m http.server`
+(cổng mới, đã tắt theo PID), màn thật `http://127.0.0.1:3011/sale/prepick-tracking` (worktree
+`wt-giu-hang`, tài khoản e2e, công ty 1). Cả 2 cùng viewport **1440×900**, cùng bộ lọc mặc định
+(**Theo nhân viên**, cấp bung **Đến Nhân viên**), rồi cùng chuyển **Tất cả cấp** để đo dòng Hàng hoá;
+popup mở từ ô "Số lượng giữ" của dòng TỔNG. Mọi số lấy bằng `getComputedStyle` /
+`getBoundingClientRect` trên cùng tên class (`.rsum-tb*`, `.rsum-blk*`, `.lot-badge*` — Vue port
+nguyên class của mockup). Script: scratchpad session (không commit).
+
+### Khớp (không phải sửa)
+
+| Hạng mục | Mockup | Vue thật |
+|---|---|---|
+| Thứ tự cột bảng — cấp mặc định | STT · Nội dung theo dõi · Số lượng giữ · Trong hạn · Sắp hết hạn · Hết hạn | giống hệt |
+| Thứ tự cột bảng — Tất cả cấp | + Đơn vị · Model · Thương hiệu chen sau Nội dung theo dõi | giống hệt |
+| Tiêu đề cột (th) | 12px / 800 / `rgb(10,124,136)` / padding 7·10 / line-height 15.6px | giống hệt |
+| Ô số (td) | 12.5px / 400 / `rgb(31,41,55)` / line-height 18.75px | giống hệt |
+| Dòng TỔNG | cao 35.8px · nền `rgb(253,241,234)` · chữ `rgb(154,83,38)` UPPERCASE 12.5px | cao 35.8px · màu/nền/cỡ giống hệt |
+| Dòng cấp 1 (Phòng ban) | cao 35.3px · nền `rgb(220,234,244)` · thụt 30px | giống hệt |
+| Dòng cấp 2 (Nhân viên) | cao 34.8px · nền `rgb(247,251,253)` · thụt 52px | giống hệt |
+| Dòng cấp 3 (Hàng hoá) | thụt 74px · chữ `rgb(107,114,128)` · nền `rgb(250,252,254)` | giống hệt (chiều cao xem mục Lệch #4) |
+| `.code-sub` / `.unit-sub` / `.prd-code` | 10.5px `#6b7280` · 10.5px · 11px `#64748b` nền `#f1f5f9` | cỡ + màu giống hệt (độ đậm xem Lệch #1) |
+| Dải tổng hợp | 2 khối · 7 ô · tiêu đề 10px/800 UPPERCASE · số 15px/800 · nhãn 10px/700 `#6b7280` | giống hệt (2 · 7 · cùng cỡ/đậm/màu) |
+| Popup — thứ tự 15 cột | STT · Mã hàng - Tên hàng · ĐVT · SL đang giữ · Ngày bắt đầu giữ · Hạn giữ hiện tại · Số lần gia hạn · Thương hiệu / Model · Khách hàng · Số hợp đồng · Tổng thanh toán · Nhân viên giữ · Phòng ban · Trạng thái · Phiếu giữ gốc | giống hệt |
+| Popup — bề rộng dialog | 1382px | 1382px |
+| Popup — tiêu đề cột | 11px · `rgb(10,124,136)` · nền `rgb(241,251,253)` | giống (độ đậm xem Lệch #5) |
+| Popup — cao dòng đầu | 51.5px | 52px |
+| Popup — ghim cột | 3 cột đầu `sticky`, cột 4 `static` | giống hệt |
+| Badge trạng thái — màu | ok `rgb(21,128,61)` / `rgba(34,197,94,.12)` · soon `rgb(180,83,9)` / `rgba(245,158,11,.15)` · exp `rgb(185,28,28)` / `rgba(220,38,38,.12)`; 11px, bo 999px, padding 1·8 | màu + nền + cỡ + bo + padding giống hệt cả 3 (độ đậm xem Lệch #5) |
+| Không cuộn ngang 1440px | trang 1440/1440 | trang 1440/1440 |
+
+### Lệch (đo được) — chưa sửa, liệt kê để quyết
+
+| # | Hạng mục | Mockup | Vue thật | Nhận xét |
+|---|---|---|---|---|
+| 1 | Độ đậm chữ trong ô | Tên dòng TỔNG + Phòng ban 800 · số bấm được (`.rsum-drill`) 800 · `.unit-sub` 600 · `.prd-code` 700 | tất cả **400** | **Cố ý** — HRM/CLAUDE.md "chữ trong ô bảng để thường" (Task 12 lệch #2, review đã chốt) |
+| 2 | Nút "Hàng giữ của tôi" (tắt) | viền + chữ teal `rgb(10,153,167)`, 700, cao 30px, bo 6px, rộng 139.5px | `V2BaseButton secondary`: chữ `rgb(51,51,51)` 600, viền `rgb(203,213,225)`, cao **32px**, bo **8px**, rộng 135.8px | Theo button-convention (skill thắng mockup về hình thức); bật lên thì `primary` nền teal. Nếu muốn giữ "teal viền" như mockup phải đổi variant — cần user chốt |
+| 3 | Thanh lọc | 12 ô `calendar-filter-field` nhãn trái, rộng theo nội dung (132–359px), cao **30px**, 3 hàng (top 58/96/134) | 12 ô floating `V2BaseSmartFilterPanel`, đều **284px** (col-md-3), cao **32px**, 3 hàng (top 143/193/243) | **Cố ý** — khuôn bộ lọc chuẩn của hrm-client (floating), không dựng lại kiểu mockup |
+| 4 | Dòng cấp 3 (Hàng hoá) xuống dòng | 51/51 dòng cao 34.8–35.3px (1 dòng) | 1440px: **880/1.162** dòng cao > 40px (trung vị **48.8px**, max **90px**); trong đó ô **Tên** xuống dòng 804 dòng, ô **Model** 232 dòng. 1920px: còn 255/1.162 | Do cột tên hẹp hơn (**399px** vs 499px — màn thật có sidebar, bảng 1162px vs 1354px; các cột số cũng hẹp hơn: STT 64/74, Đơn vị 86/110, Model 96/110) **và** tên hàng thật dài hơn nhiều so với dữ liệu demo. Đúng chủ đích Task 12 (xuống dòng thay vì cuộn ngang) nhưng bảng 3 cấp dài gấp ~1,4 lần. Có thể cân nhắc cắt 1 dòng + tooltip, hoặc để Model nowrap |
+| 5 | Độ đậm popup | tiêu đề cột 800 · badge 700 | tiêu đề cột **700** · badge **600** | Lệch nhỏ do vỏ `V2BaseReportModal` / khuôn badge; màu giữ nguyên |
+| 6 | Màu chữ ô popup | `rgb(31,41,55)` (#1f2937) mọi ô thường; ô Hạn giữ đỏ theo trạng thái | **`rgb(0,0,0)`** ở cả 15 ô `td` (màu hạn giữ nằm ở phần tử con `.exp-cell`) | Vỏ `V2BaseReportModal` không đặt màu chữ cho `td` → rơi về đen. Lệch nhẹ (đen thuần vs xám đậm) |
+| 7 | Cao hàng tiêu đề bảng | 36.5px | 37.5px | Ô chọn cấp `V2BaseSelect` cao 22px thay `<select>` thuần (Task 12 lệch #4) |
+| 8 | Cao dải tổng hợp | 80.3px | 81.8px | Icon ⓘ `InfoTip` 14px thay `.rsum-info` 13px (Task 12 lệch #1) |
+
+**Đã sửa trong Task 16:** không có — task chỉ viết e2e + đối chiếu; mọi lệch ở trên đã liệt kê cho
+controller/user quyết, không sửa code app.
+
+## Chốt sau nghiệm thu code (03/10/2026) — phân tích từng vấn đề
+
+| # | Vấn đề | Chốt |
+|---|---|---|
+| A | Super admin mặc định có quyền "theo tổng công ty" | **BỎ** — không có ngoại lệ super admin, chỉ xét permission được gán (user: "logic này hiện nay tuyệt đối không dùng") |
+| B | Nguồn cột "Tổng thanh toán" + popup phiếu thu | **Phát sinh CÓ TK 1311** trong `account_details`: `account_id = 22` (identify_number 1311), `type = 2` (Có), `contractable_id/type` = hợp đồng, `invoiceable_type IN (BillIncome = Phiếu thu, BillIncomeReport = Phiếu báo có, BillAdjustDept = Phiếu kế toán)`; cộng `money_value_exchange` (quy VND, như ERP `FirmSettlementContractService::getActualAmount`). Popup liệt kê theo chứng từ (`invoiceable_code`, `invoiceable_date_accounting`, loại chứng từ, số tiền). |
+
+Số đo trước khi chốt B (DB local, 81 HĐ đang có hàng giữ): nguồn cũ (chỉ phiếu thu) 0/81 · phiếu báo có 4/81 (711.402.394) · Có-1311 theo 3 loại chứng từ: phần lớn là Phiếu kế toán (BillAdjustDept 33,55 tỷ) + Phiếu báo có 711 tr — 53/81 HĐ có ít nhất 1 bút toán Có-1311 (tính cả mọi loại chứng từ). `firm_contracts.payed_cost` KHÔNG phải số đã thu (≈ giá trị thanh toán HĐ, có HĐ lớn hơn giá trị sau VAT) — không dùng.
+| C | Tên hàng dài xuống dòng | **Cắt tối đa 2 dòng + tooltip đủ tên**; Model / Thương hiệu cắt 1 dòng; bản in + Excel vẫn in đủ |
+| D | Kiểu nút "Hàng giữ của tôi" khi tắt | **Giữ nút chuẩn hệ thống** (tắt = secondary, bật = primary) — không theo viền teal của mockup |
+| E | Màu chữ ô popup (đen, mockup #1f2937) | **Sửa khung dùng chung `V2BaseReportModal`**: chữ ô `#374151` (CLAUDE.md) — áp cho cả 7 popup báo cáo, kiểm lại từng popup bằng Playwright |
+| F | Đồng bộ `gop_db` | **Merge `origin/gop_db` vào nhánh feature trước** (hrm-api 74, hrm-client 71 commit — thử merge không xung đột chữ; 6 file cả 2 bên cùng sửa phải kiểm lại) → sửa B, C, E → test + Playwright → chờ user lệnh merge về `gop_db` / push |
+| G | Khoảng trống lớn đầu bản in | Nguyên nhân: `companies.header` là đường dẫn tương đối + local thiếu `ERP_URL` → ảnh 404 trả GIF 1×1, `width:100%` kéo thành ô 1045×1045. Sửa: khối header tự ẩn khi ảnh lỗi/1×1 — **giữ ở layout in dùng chung** `prints/_layout.blade.php` (user đồng ý, áp ~20 bản in Tài chính) |
+| H | Thụt lề cây ở bản in + Excel | **Cấp 3 không lùi đầu dòng** (tránh tràn khổ giấy) · **cấp 2 in đậm** + giữ thụt 1 nấc (cả 2 tiêu chí; tiêu chí Hàng hoá cấp 2 = nhân viên) · áp GIỐNG cho file Excel |
+| I | Logo bản in phiếu yêu cầu huỷ giữ + Danh sách hàng giữ (màn cũ) không ghép ERP_URL | **Sửa luôn trong nhánh này** — dùng chung `headerUrl()` như các bản in khác |
+| J | Nút "Cài đặt bộ lọc" dính 0px với nút trong slot `#header-actions` | **Sửa ở component dùng chung `V2BaseSmartFilterPanel`** (user đồng ý) — các màn báo cáo khác tự đúng theo; bỏ cách vá riêng ở màn này cho khớp chuẩn |
+| K | "Tổng thanh toán" chỉ phát sinh Có 1311 hay theo "thực thu" ERP | **Giữ nguyên: chỉ lấy phát sinh Có** (không trừ Nợ 1311, không cộng TK 21/23 / khai báo đầu kỳ) |

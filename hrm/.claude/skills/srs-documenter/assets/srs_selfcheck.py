@@ -70,6 +70,7 @@ def _profile(path):
     heads = {}                      # tieu de bang -> so lan xuat hien
     ui_cols = {}                    # bang "Mo ta chi tiet giao dien" -> so cot
     rule_tbl = None
+    data_tbls = []                  # bang "Cach lay du lieu" -> bo tieu de
     for b in _blocks(d):
         if not isinstance(b, Table):
             continue
@@ -80,6 +81,8 @@ def _profile(path):
             ui_cols[len(b.columns)] = ui_cols.get(len(b.columns), 0) + 1
         if h[:2] == ['STT', 'Mã quy tắc']:
             rule_tbl = h
+        if h[:2] == ['STT', 'Chỉ tiêu / Cột']:
+            data_tbls.append(h)
     with zipfile.ZipFile(path) as z:
         media = [n for n in z.namelist() if n.startswith('word/media/')]
     return {
@@ -87,11 +90,20 @@ def _profile(path):
         'heads': heads,
         'ui_cols': ui_cols,
         'rule_tbl': rule_tbl,
+        'data_tbls': data_tbls,
+        'report': any(t.startswith('Màn hình: Báo cáo') for t in paras[:6]),
         'menu': sum(1 for t in paras if t.startswith('Menu: ')),
+        # dong "Menu:" co it nhat 1 icon inline (form 2026-09-24)
+        'menu_icon': sum(1 for p in d.paragraphs if p.text.strip().startswith('Menu: ')
+                         and p._p.xpath('.//a:blip')),
         'rule_ref': sum(1 for t in paras if t.startswith('Quy tắc chung: ')),
         'rule_lead': sum(1 for t in paras if t.startswith('Quy tắc áp dụng: ')),
-        'links': len([r for r in Document(path).part.rels.values()
-                      if r.reltype.endswith('/hyperlink')]),
+        # Đếm PHẦN TỬ <w:hyperlink> có r:id trong văn bản, KHÔNG đếm quan hệ (rels): python-docx
+        # gộp các link trùng URL vào 1 quan hệ, nên file chưa qua Word (save(update_fields=False))
+        # bị đếm thiếu và báo lỗi oan (2026-09-24, cả 6 agent sinh song song đều dính).
+        'links': len([h for h in d.element.body.iter(
+            '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hyperlink')
+            if h.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')]),
         'media': len(media),
         'fn': sum(1 for p in Document(path).paragraphs
                   if p.style.name == 'Heading 3' and re.match(r'^2\.\d+\s', p.text.strip())),
@@ -108,6 +120,10 @@ def check(path, verbose=True):
     if me['menu'] < me['fn']:
         errs.append('Mục Layout: chỉ có %d dòng "Menu: " cho %d chức năng. '
                     'Dùng d.layout(menu=MENU + " => Tạo mới", shot=...)' % (me['menu'], me['fn']))
+    if me['menu_icon'] < me['menu']:
+        errs.append('Chỉ %d/%d dòng "Menu: " có icon. Form 2026-09-24: mỗi chặng kèm icon cắt từ '
+                    'giao diện thật — khai d.set_menu_icons({...}) trước khi gọi d.layout().'
+                    % (me['menu_icon'], me['menu']))
     if any('URL đầy đủ' in t for t in me['paras']):
         errs.append('Còn dòng "URL đầy đủ" của form 2026-08-17 — form hiện hành ghi đường dẫn '
                     'MENU, bỏ hẳn URL.')
@@ -134,13 +150,16 @@ def check(path, verbose=True):
     # Doc dau nay chac chan hon doan theo ty le anh — ban phang cung co the rat rong.
     kinds = _uml_kinds(path)
     if 'overview-flat' in kinds:
-        errs.append('Sơ đồ tổng quan đang vẽ PHẲNG (mọi use case nối thẳng tới actor) — form '
-                    'hiện hành vẽ có phân cấp: chỉ MÀN HÌNH thật nối actor, thao tác trên màn đó '
-                    'nối «include»/«extend» vào màn cha. Dùng '
-                    'd.overview_figure2(actors, mains, subs, caption).')
+        errs.append('Sơ đồ tổng quan đang vẽ bằng hàm cũ draw_overview (không có «extend») — '
+                    'dùng d.overview_figure2(actors, mains, subs, caption): chức năng thao tác '
+                    'nối actor, chức năng PHỤ (tìm kiếm, xem chi tiết…) «extend» vào màn danh sách.')
     elif 'overview-hierarchy' not in kinds:
         errs.append('Không tìm thấy sơ đồ Use Case tổng quan sinh bằng d.overview_figure2() — '
                     'ảnh chèn tay hoặc dùng hàm cũ đều không đạt.')
+
+    if 'usecase-rel' in kinds:
+        errs.append('Sơ đồ Use Case của từng chức năng còn vẽ «include»/«extend» — form '
+                    '2026-09-24 chỉ vẽ actor + 1 use case: d.uc_figure(code, tên, nhóm, actor=...).')
 
     # --- bo cot bang giao dien: chi nhan bo cot co trong ban mau ---
     lech = sorted(set(me['ui_cols']) - set(mau['ui_cols']))
@@ -149,6 +168,17 @@ def check(path, verbose=True):
                     'dùng %s cột). Chức năng chỉ đọc = 7 cột (required=False), có nhập liệu = 8 '
                     'cột, hộp xác nhận = 6 cột (required=False, scope=False).'
                     % (lech, sorted(mau['ui_cols'])))
+
+    # --- man BAO CAO: bang cach lay du lieu + noi dung icon (quy dinh 2026-10-05) ---
+    data_head = ['STT', 'Chỉ tiêu / Cột', 'Cách lấy dữ liệu', 'Nội dung icon ⓘ']
+    if me['report'] and not me['data_tbls']:
+        errs.append('Màn BÁO CÁO phải có mục "2.x.6 Cách lấy dữ liệu và giải thích chỉ tiêu" cho '
+                    'mỗi chức năng hiện số liệu (báo cáo chính, popup danh sách chi tiết) — dùng '
+                    'd.data_table([(chỉ tiêu/cột, cách lấy dữ liệu, nội dung icon ⓘ), ...]).')
+    for h in me['data_tbls']:
+        if h != data_head:
+            errs.append('Bảng cách lấy dữ liệu phải đúng 4 cột %s, đang là %s — dùng d.data_table().'
+                        % (data_head, h))
 
     # --- muc da bo cua form cu ---
     for s in ('Tổng quan', 'Mini-Spec', 'Tiêu chí nghiệm thu', 'Ngoài phạm vi',
@@ -160,10 +190,11 @@ def check(path, verbose=True):
         name = os.path.basename(path)
         print('--- Đối chiếu với bản mẫu %s' % os.path.basename(MAU))
         print('    %s: %d chức năng | Menu %d | Quy tắc chung %d | hyperlink %d | '
-              'bảng giao diện %s | Phần 4 %s'
+              'bảng giao diện %s | Phần 4 %s%s'
               % (name, me['fn'], me['menu'], me['rule_ref'], me['links'],
                  dict(sorted(me['ui_cols'].items())),
-                 'bảng 5 cột' if me['rule_tbl'] == mau['rule_tbl'] else 'SAI'))
+                 'bảng 5 cột' if me['rule_tbl'] == mau['rule_tbl'] else 'SAI',
+                 (' | bảng cách lấy dữ liệu %d' % len(me['data_tbls'])) if me['report'] else ''))
         if errs:
             print('!!! %d điểm chưa đúng bản mẫu:' % len(errs))
             for e in errs:

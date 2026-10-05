@@ -1,0 +1,37 @@
+{
+ "draft": {
+  "id": 92,
+  "code": "BG-2026-00092",
+  "scenario": "draft"
+ },
+ "cho_tp_c2": {
+  "id": 93,
+  "code": "BG-2026-00093",
+  "scenario": "l2 -> bị từ chối (Đang tạo + lý do)"
+ },
+ "cho_tp_c3": {
+  "id": 94,
+  "code": "BG-2026-00094",
+  "scenario": "l3"
+ },
+ "cho_bgd": {
+  "id": 95,
+  "code": "BG-2026-00095",
+  "scenario": "l3 -> TP duyệt & chuyển BGĐ (Chờ BGĐ duyệt)"
+ },
+ "da_duyet": {
+  "id": 96,
+  "code": "BG-2026-00096",
+  "scenario": "approved"
+ },
+ "trung_thau": {
+  "id": 97,
+  "code": "BG-2026-00097",
+  "scenario": "approved -> chốt Trúng thầu"
+ },
+ "cho_tp_c2b": {
+  "id": 98,
+  "code": "BG-2026-00098",
+  "scenario": "l2"
+ }
+}

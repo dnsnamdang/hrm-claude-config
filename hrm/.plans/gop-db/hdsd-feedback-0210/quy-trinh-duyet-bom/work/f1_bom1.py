@@ -1,0 +1,21 @@
+from common import *
+with browser_page() as page:
+    page.goto(BASE+'/assign/bom-list/add'); page.wait_for_timeout(10000)
+    page.fill('input[placeholder="VD: BOM điều khiển dây chuyền line 01"]','BOM thiết bị bàn thực hành khí nén')
+    pick(page,0,'DA091')
+    pick(page,1,'HM01')
+    page.fill('input[placeholder="BOM dùng cho giải pháp triển khai demo."]','Trang bị 10 bàn thực hành khí nén cho xưởng')
+    page.get_by_role('button', name='Thêm mới').first.click(); page.wait_for_timeout(15000)
+    page.fill('input[placeholder="Tìm theo tên, mã, model hàng hoá"]','khí nén'); page.keyboard.press('Enter'); page.wait_for_timeout(8000)
+    page.screenshot(path='x_pop3.png')
+    rows=page.locator('.modal-card tbody tr:has(input[type=checkbox])')
+    print(rows.count())
+    for t in ['Bộ thực hành Điều khiển điện', 'Bộ cuộn dây khí nén', 'Ống dẫn khí nén']:
+        rows.filter(has_text=t).first.locator('input[type=checkbox]').check(); page.wait_for_timeout(300)
+    page.get_by_role('button', name='Thêm 3 hàng hoá').click(); page.wait_for_timeout(3000)
+    page.locator('.modal-card').get_by_role('button', name='Đóng').click(); page.wait_for_timeout(3000)
+    page.mouse.move(5,5)
+    page.screenshot(path='x_bom1_filled.png')
+    page.get_by_role('button', name='Lưu BOM').click(); page.wait_for_timeout(8000)
+    print(page.url)
+    page.screenshot(path='x_bom1_saved.png')

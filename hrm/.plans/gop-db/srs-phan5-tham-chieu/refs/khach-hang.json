@@ -1,0 +1,355 @@
+{
+ "catalog": "Danh mục khách hàng",
+ "srs_file": "SRS - Danh mục khách hàng.docx",
+ "rows": [
+  {
+   "nhom": "Bán hàng",
+   "man_hinh": "Báo cáo theo dõi giữ hàng",
+   "duong_dan": "Bán hàng -> Báo cáo -> Hàng giữ",
+   "evidence": "FE pages/sale/prepick-tracking/index.vue:406 (lọc KH)"
+  },
+  {
+   "nhom": "Bán hàng",
+   "man_hinh": "Danh sách báo giá",
+   "duong_dan": "Bán hàng -> Bán dịch vụ -> Báo giá dịch vụ SC-BD-BT",
+   "evidence": "FE pages/customer-care/wr-quotations/components/WrQuotationForm.vue:65 (chọn KH); DB wr_service_quotations"
+  },
+  {
+   "nhom": "Bán hàng",
+   "man_hinh": "Danh sách hợp đồng",
+   "duong_dan": "Bán hàng -> Bán dịch vụ -> HĐ Sửa chữa - Bảo dưỡng - Bảo trì",
+   "evidence": "FE pages/customer-care/wr-service-contracts/index.vue (lọc KH) + components/WrServiceContractForm.vue (customer_id); DB wr_service_contracts"
+  },
+  {
+   "nhom": "Bán hàng",
+   "man_hinh": "Hợp đồng (dự án TKT)",
+   "duong_dan": "Bán hàng -> Bán hàng -> Hợp đồng bán hàng",
+   "evidence": "FE pages/assign/contracts/_id/edit.vue:115 (customer_id); DB hrm_contracts"
+  },
+  {
+   "nhom": "Chấm công",
+   "man_hinh": "Đăng ký làm thêm",
+   "duong_dan": "Chấm công -> Quản lý đơn",
+   "evidence": "FE pages/timesheet/overtime-assignment/add.vue:689 (lưu KH theo phiếu công tác); DB overtime_assignments"
+  },
+  {
+   "nhom": "Chấm công",
+   "man_hinh": "Phân công làm thêm",
+   "duong_dan": "Chấm công -> Quản lý đơn",
+   "evidence": "FE pages/timesheet/overtime-allocation/add.vue:561; DB overtime_assignments"
+  },
+  {
+   "nhom": "Chấm công",
+   "man_hinh": "Phiếu đi công tác",
+   "duong_dan": "Chấm công -> Giao việc - công tác",
+   "evidence": "FE pages/timesheet/business_trip_assigns/add/_id.vue:589; DB business_trip_assigns"
+  },
+  {
+   "nhom": "Chấm công",
+   "man_hinh": "Phiếu giao việc trong ngày",
+   "duong_dan": "Chấm công -> Giao việc - công tác",
+   "evidence": "FE pages/timesheet/jobassignment/add.vue:542 (popup chọn KH); DB job_assignment_note_details"
+  },
+  {
+   "nhom": "Chấm công",
+   "man_hinh": "Phiếu yêu cầu làm thêm",
+   "duong_dan": "Chấm công -> Quản lý đơn",
+   "evidence": "FE pages/timesheet/overtime-requirement/add.vue:347; DB overtime_requirements"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "BOM Giải pháp",
+   "duong_dan": "Công việc -> Làm giải pháp",
+   "evidence": "FE pages/assign/bom-list/index.vue:48 (lọc KH) + components/BomBuilderEditor.vue:333; DB bom_lists"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "Công việc của tôi",
+   "duong_dan": "Công việc",
+   "evidence": "FE pages/assign/my-job/components/MeetingUpcomingModal.vue:43, AssignBusinessTab.vue:587, SolutionsTab.vue:470 (lọc KH)"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "Phiếu đề xuất công tác (nghiệp vụ)",
+   "duong_dan": "Công việc -> Phân công công việc",
+   "evidence": "FE components/assign-components/assign-request/AssignRequestForm.vue:21; DB assign_requests"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "Phiếu đề xuất công việc",
+   "duong_dan": "Công việc -> Phân công công việc",
+   "evidence": "FE components/assign-components/job-requests/JobRequestForm.vue:47 (popup AddCustomerModal); DB job_requests chỉ lưu customer_name"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "Phiếu giao công tác (Tạo/Sửa, Nhập kết quả, Duyệt kết quả)",
+   "duong_dan": "Công việc -> Phân công công việc",
+   "evidence": "FE components/assign-components/assign-business/AssignBusinessForm.vue:83, AssignBusinessImportResultForm.vue:34, AssiginBusinessApproveResultForm.vue:44; DB assign_business"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "Quản lý giải pháp",
+   "duong_dan": "Công việc -> Làm giải pháp",
+   "evidence": "FE pages/assign/solutions/index.vue:545 (lọc KH) + components/SolutionForm.vue:402 (KH theo dự án)"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "Quyết toán công khoán theo hợp đồng",
+   "duong_dan": "Công việc -> Kết quả công việc",
+   "evidence": "FE pages/assign/settlement_contract/index.vue:69 (lọc KH) + create.vue:113; DB settlement_contracts"
+  },
+  {
+   "nhom": "Công việc",
+   "man_hinh": "Theo dõi chỉ số hoàn thành GP theo version",
+   "duong_dan": "Công việc -> Báo cáo",
+   "evidence": "FE pages/assign/report/solution-versions/index.vue:168 (lọc KH)"
+  },
+  {
+   "nhom": "CSKH sau bán",
+   "man_hinh": "Phiếu bảo hành",
+   "duong_dan": "CSKH sau bán -> Kiểm tra bảo hành sửa chữa",
+   "evidence": "FE pages/customer-care/wr-warranties/index.vue:35 (lọc KH)"
+  },
+  {
+   "nhom": "CSKH sau bán",
+   "man_hinh": "Phiếu cung cấp thông tin làm báo giá",
+   "duong_dan": "CSKH sau bán -> Kiểm tra bảo hành sửa chữa",
+   "evidence": "FE pages/customer-care/wr-information-requests/components/WrInformationRequestForm.vue:422"
+  },
+  {
+   "nhom": "CSKH sau bán",
+   "man_hinh": "Phiếu xử lý yêu cầu",
+   "duong_dan": "CSKH sau bán -> Kiểm tra bảo hành sửa chữa",
+   "evidence": "FE pages/customer-care/warranty-repair-handle-requests/components/WarrantyRepairHandleRequestForm.vue:514; DB warranty_repair_handle_requests"
+  },
+  {
+   "nhom": "CSKH sau bán",
+   "man_hinh": "Serial thiết bị làm dịch vụ",
+   "duong_dan": "CSKH sau bán -> Danh mục",
+   "evidence": "FE pages/customer-care/serials/index.vue:23 (lọc KH); DB serials"
+  },
+  {
+   "nhom": "CSKH sau bán",
+   "man_hinh": "Yêu cầu kiểm tra sửa chữa - bảo hành",
+   "duong_dan": "CSKH sau bán -> Kiểm tra bảo hành sửa chữa",
+   "evidence": "FE pages/customer-care/warranty-repair-requests/components/WarrantyRepairRequestForm.vue:33 (popup chọn KH); DB warranty_repair_requests"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Báo cáo kết quả CSKH tiềm năng",
+   "duong_dan": "CSKH trước bán -> Báo cáo thị trường",
+   "evidence": "FE pages/assign/report/potential-customer-care/index.vue:86 (lọc KH)"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Báo cáo kết quả thực hiện dự án TKT",
+   "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+   "evidence": "FE pages/assign/report/prospective-project-results/index.vue:72 (lọc KH)"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Báo cáo phát triển thị trường - Khách hàng",
+   "duong_dan": "CSKH trước bán -> Báo cáo thị trường",
+   "evidence": "FE pages/assign/report/customer-market-development/index.vue:219 (lọc KH)"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Báo cáo tổng hợp giải pháp theo phòng ban",
+   "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+   "evidence": "FE pages/assign/report/solutions-work-summary-by-department/index.vue:48 (lọc KH)"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Báo cáo vòng đời dự án TKT",
+   "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+   "evidence": "FE pages/assign/report/prospective-projects/components/ProspectiveProjectsFilter.vue:26 (lọc KH)"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Báo giá",
+   "duong_dan": "CSKH trước bán",
+   "evidence": "FE pages/assign/quotations/index.vue:56 (lọc KH); DB quotations"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Dự án TKT (Khách hàng, Khách hàng hưởng lợi)",
+   "duong_dan": "CSKH trước bán",
+   "evidence": "FE pages/assign/prospective-projects/components/CustomerInfoSection.vue:67 (ChooseErpCustomerModal + QuickAddCustomerModal); DB prospective_projects.customer_id/customer_benefit_id"
+  },
+  {
+   "nhom": "CSKH trước bán",
+   "man_hinh": "Theo dõi YCLGP theo phòng KD",
+   "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+   "evidence": "FE pages/assign/report/solution-requests-by-department/index.vue:288 (lọc KH)"
+  },
+  {
+   "nhom": "Meeting",
+   "man_hinh": "Meeting theo dự án",
+   "duong_dan": "Meeting -> Báo cáo",
+   "evidence": "FE pages/assign/report/meeting-by-projects/index.vue:333 (lọc KH)"
+  },
+  {
+   "nhom": "Meeting",
+   "man_hinh": "Meeting theo nhân viên/ phòng ban/ công ty",
+   "duong_dan": "Meeting -> Báo cáo",
+   "evidence": "FE pages/assign/report/meeting-by-employees/index.vue:420 (lọc KH)"
+  },
+  {
+   "nhom": "Meeting",
+   "man_hinh": "Tổng hợp meeting",
+   "duong_dan": "Meeting",
+   "evidence": "FE pages/assign/meeting/components/GeneralInfo.vue:743 (ChooseErpCustomerModal); DB meetings"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Đề nghị nhập kho",
+   "duong_dan": "Tài chính -> Nhập hàng",
+   "evidence": "FE pages/finance/warehouse-import-requests/index.vue:450 (lọc KH); DB warehouse_import_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Đề nghị thanh toán",
+   "duong_dan": "Tài chính -> Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi",
+   "evidence": "FE pages/finance/bill-payment-requests/components/BillPaymentRequestForm.vue:317; DB bill_payment_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Đề nghị thu tiền",
+   "duong_dan": "Tài chính -> Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi",
+   "evidence": "FE pages/finance/bill-income-requests/components/BillIncomeRequestForm.vue:382; DB bill_income_request_details"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Đề nghị xuất kho",
+   "duong_dan": "Tài chính -> Xuất hàng",
+   "evidence": "FE pages/finance/warehouse-export-requests/index.vue:42 (lọc KH); DB warehouse_export_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Khai báo đầu kỳ công nợ",
+   "duong_dan": "Tài chính -> Khai báo đầu kỳ",
+   "evidence": "FE utils/finance/declareDebtConfigs.js:187; BE Modules/Finance/Http/Requests/DeclareDebt/DeclareDebtRequest.php:21; DB declare_debt_beginning"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu báo có",
+   "duong_dan": "Tài chính -> Thanh toán tiền mặt",
+   "evidence": "FE pages/finance/bill-income-reports/components/BillIncomeReportForm.vue:232 (popup chọn KH)"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu chi",
+   "duong_dan": "Tài chính -> Thanh toán tiền mặt",
+   "evidence": "FE pages/finance/bill-payments/components/BillPaymentForm.vue:1429; DB bill_payment_details"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu hủy hàng giữ",
+   "duong_dan": "Tài chính -> Giữ hàng",
+   "evidence": "BE Modules/Finance/Services/PrepickCancelService.php (customer_id); DB prepick_cancels"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu huỷ hàng giữ kế toán",
+   "duong_dan": "Tài chính -> Giữ hàng",
+   "evidence": "FE pages/finance/accounting-prepick-cancels/components/AccountingPrepickCancelForm.vue:124; DB accounting_prepick_cancel_detail_customers"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu kế toán",
+   "duong_dan": "Tài chính -> Sổ tổng hợp",
+   "evidence": "FE pages/finance/bill-adjust-depts/index.vue:35 (lọc KH); DB bill_adjust_dept_details"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu nhập hàng",
+   "duong_dan": "Tài chính -> Nhập hàng",
+   "evidence": "FE pages/finance/product-imports/components/ProductImportForm.vue:574 (KH theo yêu cầu); DB product_imports"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu thu",
+   "duong_dan": "Tài chính -> Thanh toán tiền mặt",
+   "evidence": "FE pages/finance/bill-incomes/index.vue:42 (lọc KH) + components/BillIncomeForm.vue:841; DB bill_income_details"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu xuất giữ",
+   "duong_dan": "Tài chính -> Giữ hàng",
+   "evidence": "FE pages/finance/warehouse-prepick-requests/index.vue:41 (lọc KH); DB warehouse_prepick_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu xuất hàng",
+   "duong_dan": "Tài chính -> Xuất hàng",
+   "evidence": "BE Modules/Assign/Services/ProductExportService.php:63 (lưu KH từ đề nghị xuất kho); DB product_exports"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu yêu cầu chuyển hàng",
+   "duong_dan": "Tài chính -> Xuất hàng",
+   "evidence": "FE pages/finance/product-transfer-requests/components/ProductTransferRequestForm.vue:144 (popup chọn KH); DB product_transfer_request_product_details"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu yêu cầu điều chỉnh công nợ",
+   "duong_dan": "Tài chính -> Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi",
+   "evidence": "FE pages/finance/bill-adjust-dept-requests/components/BillAdjustDeptRequestForm.vue:213 + index.vue:35 (lọc KH)"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu Yêu cầu điều chuyển hàng giữ",
+   "duong_dan": "Tài chính -> Giữ hàng",
+   "evidence": "FE pages/finance/prepick-transfer-requests/index.vue:42 (lọc KH nhận); DB prepick_transfer2.to_customer_id"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Phiếu yêu cầu hạch toán bổ sung",
+   "duong_dan": "Tài chính -> Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi",
+   "evidence": "FE pages/finance/addition-accounting-requests/components/AdditionAccountingRequestForm.vue:280; DB addition_accounting_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Tổng hợp tiền về ngân hàng",
+   "duong_dan": "Tài chính -> Thanh toán tiền mặt",
+   "evidence": "FE pages/finance/bill-income-reports/summarize-money.vue:18 (lọc KH)"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Yêu cầu gia hạn hàng giữ",
+   "duong_dan": "Tài chính -> Giữ hàng",
+   "evidence": "FE pages/finance/prepick-extend-requests/components/PrepickExtendRequestForm.vue:729"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Yêu cầu hủy hàng giữ",
+   "duong_dan": "Tài chính -> Giữ hàng",
+   "evidence": "FE pages/finance/prepick-cancel-requests/components/PrepickCancelRequestForm.vue:18; DB prepick_cancel_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Yêu cầu nhập hàng",
+   "duong_dan": "Tài chính -> Nhập hàng",
+   "evidence": "FE pages/finance/product-import-requests/components/ProductImportRequestForm.vue:164; DB product_import_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Yêu cầu xuất bán hàng mượn",
+   "duong_dan": "Tài chính -> Mượn hàng",
+   "evidence": "BE Modules/Finance/Services/BorrowSellRequest/BorrowSellRequestService.php (customer_id theo hợp đồng); DB borrow_sell_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Yêu cầu xuất giữ",
+   "duong_dan": "Tài chính -> Giữ hàng",
+   "evidence": "FE pages/finance/product-prepick-requests/index.vue:41 (lọc KH); DB product_prepick_requests"
+  },
+  {
+   "nhom": "Tài chính",
+   "man_hinh": "Yêu cầu xuất hàng",
+   "duong_dan": "Tài chính -> Xuất hàng",
+   "evidence": "FE pages/finance/product-export-requests/index.vue:41 (lọc KH) + components/ProductExportRequestForm.vue; DB product_export_requests"
+  }
+ ],
+ "notes": "KIỂM TRA XOÁ: màn Khách hàng KHÔNG có chức năng xoá — không có route DELETE trong Modules/Assign/Routes/api.php:132-218, chỉ có Khoá/Mở khoá (POST /{id}/lock|unlock, CustomerController.php:102-138 → CustomerService::setStatus :1939). Comment code ghi ERP canDelete() luôn true; khoá không xét bảng tham chiếu nào. Vì vậy không có 'hàm kiểm tra đang dùng' để so: KH được tham chiếu ở ~170 bảng (customer_id) nhưng chỉ bị khoá chứ không bị xoá → không mất dữ liệu. NGHI LỖI: (1) Khoá KH không chặn chọn KH ở các màn khác qua select2 — CustomerService::searchForSelect2 (:945) không lọc status, chỉ lọc khi caller truyền status; ChooseErpCustomerModal truyền status:1 (:302) còn AddCustomer.vue / AddCustomerModal / các ô lọc gọi assign/customers/search thì không → KH đã khoá vẫn chọn được ở Phiếu giao công tác, Phiếu đề xuất công tác/công việc, Phiếu giao việc trong ngày… (2) Phiếu đề xuất công việc: FE chọn customer_id nhưng bảng job_requests không có cột customer_id, chỉ lưu customer_name → không có liên kết thật. TRÙNG MENU (gộp 1 dòng): Báo giá (CSKH trước bán / Bán hàng -> Bán hàng -> Báo giá -> Danh sách báo giá / Công việc & Bán hàng -> Báo giá chờ duyệt); Yêu cầu kiểm tra sửa chữa - bảo hành (CSKH sau bán / 2 mục ở Bán hàng -> Yêu cầu, Bán hàng -> Bán dịch vụ); Phiếu cung cấp thông tin làm báo giá (CSKH sau bán / Bán hàng -> Bán dịch vụ); Serial thiết bị (CSKH sau bán / Bán hàng -> Danh mục -> Dịch vụ); HĐ SC-BD-BT (Danh sách hợp đồng / Phê Duyệt -> HĐ chờ duyệt); báo cáo meeting (Meeting -> Báo cáo / CSKH trước bán -> Báo cáo dự án tiền khả thi); Đề nghị thu tiền/thanh toán, YC điều chỉnh công nợ, YC hạch toán bổ sung (Tài chính -> Khởi tạo… / Tài chính -> Đề nghị / Phê duyệt / Bán hàng -> Yêu cầu -> Công nợ - Thu - Chi); các phiếu hàng hoá Tài chính cũng có ở Bán hàng -> Yêu cầu -> Hàng hóa; Khai báo đầu kỳ công nợ = Tài chính -> Khách hàng -> Công nợ đầu kỳ theo khách hàng - hợp đồng (cùng màn); Phiếu giao công tác còn ở Kết quả công việc -> Phiếu nhập/duyệt KQ công tác, Phiếu công tác chờ lập DNTT và Công tác -> Phiếu giao công tác cần duyệt; Phiếu đề xuất công tác/công việc cần duyệt; Gia hạn dự án TKT chỉ hiển thị KH của Dự án TKT. BỎ (không chọn/lưu KH từ danh mục): Phiếu giao việc tại công ty (AssignJobForm.vue:71 ô nhập tự do, bảng assign_jobs chỉ có customer_name; import AddCustomer không dùng); các màn danh sách Công việc lọc KH bằng ô gõ chữ (assign_jobs, assign_business, *_result, job_requests, assign_tasks) và Báo cáo tổng hợp công tác (Chấm công) cũng ô gõ chữ; Nhu cầu khách hàng (Meeting) chỉ hiển thị KH của meeting; Yêu cầu giải pháp / Yêu cầu tính giá bán / Đề nghị thanh toán công tác phí / Lịch làm việc của tôi / Đề nghị tra soát công / Đăng ký phòng họp / Danh sách hàng giữ / Hàng sắp hết hạn giữ (đã bỏ dropdown KH) / Phiếu xuất bán hàng mượn (chỉ ghi sổ customer_id theo hợp đồng) / Phiếu ủy nhiệm chi / Hạng mục giải pháp — chỉ hiển thị KH kế thừa. Training (CourseForm, TeacherForm, CapabilityForm, course_requests, examiners) import components/modals/AddCustomer.vue nhưng không render → code chết. Các bảng ERP có customer_id nhưng không có màn HRM (contracts/firm_*, market_employee_plan_customers, sales_employee_plan_customers, business_target_*, delivery_places, customer_contacts/customer_deputies… là bảng con của chính KH) không tính."
+}

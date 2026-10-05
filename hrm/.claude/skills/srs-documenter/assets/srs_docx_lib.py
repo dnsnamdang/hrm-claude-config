@@ -18,6 +18,13 @@ Quy uoc bat buoc (dung theo skill .claude/skills/srs-documenter/SKILL.md):
   - Muc "Layout man hinh" = URL day du + ANH CHUP THAT -> layout()
   - Bieu do Use Case phai la ANH PNG that -> overview_figure() / uc_figure()
 
+FORM 2026-09-24 (user chot, bam ban QA "SRS - Danh muc quoc gia" — thang ban mau o 2 diem):
+  - So do tong quan: moi CHUC NANG THAO TAC noi thang actor; «extend» CHI cho chuc nang
+    PHU cua man danh sach (tim kiem, xem chi tiet, tuy chinh cot, lich su) -> overview_figure2()
+  - So do tung chuc nang: CHI actor + 1 use case, khong include/extend -> uc_figure(code, ten, nhom)
+  - Dong "Menu:" o muc Layout: moi chang kem ICON cat tu giao dien that -> set_menu_icons()
+  Ban da lam theo: .plans/danh-muc-nhom-nganh/gen_srs.py
+
 FORM 2026-08-28 (ban mau moi cua QA: "SRS - Danh muc quoc gia", link trong SKILL.md):
   - Muc Layout ghi DUONG DAN MENU (`layout(menu=...)`), KHONG con dong "URL day du"
   - Dau moi muc "Gioi thieu" co 1 doan tro sang tai lieu quy tac dung chung -> rule_ref()
@@ -127,6 +134,9 @@ class SrsDoc(object):
     def __init__(self, out, menu, route, full_url, img_dir=None, img_prefix=''):
         self.out = out
         self.menu = menu
+        # Icon cho tung chang cua dong "Menu:" (form 2026-09-24) — xem set_menu_icons()
+        self.menu_icons = {}
+        self.menu_icon_h = 0.3
         self.route = route
         self.full_url = full_url
         # Anh UML chi la file TRUNG GIAN — da nhung han vao .docx nen khong can giu.
@@ -286,6 +296,25 @@ class SrsDoc(object):
             [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
             widths=[0.4, 1.6, 0.9, 3.6])
 
+    # --------------------------- man BAO CAO: cach lay du lieu + icon (2026-10-05)
+    DATA_HEAD = ['STT', 'Chỉ tiêu / Cột', 'Cách lấy dữ liệu', 'Nội dung icon ⓘ']
+    DATA_TITLE = 'Cách lấy dữ liệu và giải thích chỉ tiêu'
+
+    def data_table(self, rows):
+        """Bang 'Cach lay du lieu va giai thich chi tieu' 4 cot (STT tu danh) — BAT BUOC voi
+        chuc nang hien SO LIEU cua man bao cao (bao cao chinh, popup danh sach chi tiet...).
+
+        rows: [(chi_tieu_hoac_cot, cach_lay_du_lieu, noi_dung_icon), ...]
+          - cach_lay_du_lieu: ngon ngu nghiep vu (dem gi, cong gi, dieu kien nao, khop voi o nao),
+            KHONG ghi ten bang / ten cot DB.
+          - noi_dung_icon: chep NGUYEN VAN chu trong icon (i) tren giao dien; nhieu dong noi bang
+            ' • '. Khong co icon thi ghi '—'; dung chung icon cua khoi thi ghi '(dùng chung ⓘ của khối)'.
+        """
+        return self.table(
+            self.DATA_HEAD,
+            [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
+            widths=[0.45, 1.35, 2.6, 1.6])
+
     # ------------------------------------------------- form RUT GON (2026-08-12)
     def field_table(self, rows):
         """Bang 'Mo ta chi tiet' 7 cot cua FORM RUT GON (STT tu danh).
@@ -340,16 +369,18 @@ class SrsDoc(object):
         return os.path.join(self.img_dir, '%s%s.png' % (self.img_prefix, name))
 
     def overview_figure2(self, actors, mains, subs, caption):
-        """So do UML tong quan CO PHAN CAP — ban dung tu 2026-08-28.
+        """So do UML tong quan — form 2026-09-24 (bam ban QA "SRS - Danh muc quoc gia").
 
-        Chi use case la MAN HINH that su moi noi thang toi actor. Thao tac lam ngay tren
-        man do (tim kiem/loc, tuy chinh cot, xoa, in, lich su, popup chon du lieu) phai noi
-        vao use case cha bang «include» / «extend» — ve tat ca ngang hang roi noi thang toi
-        actor la SAI nghiep vu (user tra tai lieu ve vi loi nay ngay 2026-08-28).
+        mains : MOI chuc nang thao tac, noi thang toi actor — xem danh sach, them moi, sua,
+                xoa, khoa/mo khoa, import, xuat, in, duyet...
+        subs  : CHI chuc nang PHU that su cua man cha, noi bang «extend» — tim kiem va loc,
+                xem chi tiet, tuy chinh cot, lich su. KHONG ve «include» cho kiem tra quyen,
+                hop xac nhan, popup chon du lieu (user chot 2026-09-24: "chi thuc su can
+                extends khi no co han 1 chuc nang phu").
 
         actors : [(ten_actor, [chi_so_main, ...]), ...]
         mains  : [(ma, ten, nhom), ...]
-        subs   : [(ma, ten, nhom, 'include'|'extend', [chi_so_main, ...], ghi_chu|None), ...]
+        subs   : [(ma, ten, nhom, 'extend', [chi_so_main, ...], None), ...]
         """
         png = self._png('overview')
         uml.draw_overview2(png, actors, mains, subs)
@@ -382,8 +413,19 @@ class SrsDoc(object):
         uml.draw_overview_rel(png, title, actor, nodes, relations, actor_links=actor_links)
         self.figure(png, caption or title, width_in=6.3)
 
-    def uc_figure(self, code, name, group, relations=(), actor=ACTOR_P1, caption=None):
-        """5.2.x.1 Bieu do use case cua 1 chuc nang — anh PNG that."""
+    def uc_figure(self, code, name, group, relations=(), actor=ACTOR_P1, caption=None,
+                  allow_relations=False):
+        """Muc "Bieu do Usecase" cua 1 chuc nang — anh PNG that.
+
+        Form 2026-09-24: CHI actor + 1 use case, KHONG ve include/extend (kiem tra quyen,
+        xac nhan, sinh ma...). `relations` chi con de sinh lai tai lieu cu: phai truyen
+        them allow_relations=True, neu khong se nem loi.
+        """
+        if relations and not allow_relations:
+            raise RuntimeError(
+                'uc_figure(%s): form 2026-09-24 chi ve actor + 1 use case, bo `relations` '
+                '(include/extend chi tiet nhu kiem tra quyen, xac nhan). Chi truyen '
+                'allow_relations=True khi co y sinh lai tai lieu cu.' % code)
         png = self._png('uc_%s' % code.lower().replace('-', ''))
         uml.draw_usecase(png, actor, code, name, group, relations)
         self.figure(png, caption or ('Biểu đồ Use Case — %s %s' % (code, name)), width_in=6.2)
@@ -406,7 +448,7 @@ class SrsDoc(object):
         _ignored     : nuot `route=` / `url=` cua form cu de cac gen_srs.py cu khong vo
         """
         self.p('Đường dẫn màn hình:')
-        self.p('Menu: %s' % (menu or self.menu))
+        self._menu_para(menu or self.menu)
         if modal:
             self.p('Modal %s được mở ngay trên màn hình danh sách theo đường dẫn ở trên.' % modal)
         if note:
@@ -415,6 +457,35 @@ class SrsDoc(object):
             if not os.path.exists(shot):
                 raise IOError('Thieu anh chup cho muc Layout: %s' % shot)
             self.figure(shot, shot_caption or 'Màn hình thực tế', width_in=6.2)
+
+    def set_menu_icons(self, icons, height_in=0.3):
+        """Khai icon cho tung chang cua dong "Menu:" (form 2026-09-24).
+
+        icons: {'<chu tren menu/nut>': '<duong dan .png>'} — ANH CAT TU CHINH PHAN TU TREN
+               GIAO DIEN (o phan he trong danh sach phan he, muc menu sidebar, nut thao tac),
+               chup bang Playwright clip theo boundingBox. Xem SKILL.md muc Layout.
+        Chang "Khóa / Mở khóa" duoc tach theo " / " -> moi ve 1 icon.
+        """
+        for k, path in icons.items():
+            if not os.path.exists(path):
+                raise IOError('Thieu icon menu "%s": %s' % (k, path))
+        self.menu_icons = dict(icons)
+        self.menu_icon_h = height_in
+
+    def _menu_para(self, menu):
+        """Dong "Menu: A [icon] => B [icon] => ..." — chu truoc, icon ngay sau."""
+        par = self.p('Menu: ')
+        for i, seg in enumerate(menu.split(' => ')):
+            if i:
+                par.add_run(' => ')
+            for j, part in enumerate(seg.split(' / ')):
+                if j:
+                    par.add_run(' / ')
+                icon = self.menu_icons.get(part)
+                par.add_run(part + (' ' if icon else ''))
+                if icon:
+                    par.add_run().add_picture(icon, height=Inches(self.menu_icon_h))
+        return par
 
     # ------------------------------------ doan "Quy tac chung: ..." (form 2026-08-28)
     def rule_ref(self, tail, anchor='list', head='Quy tắc chung',
@@ -502,6 +573,10 @@ class SrsDoc(object):
         """
         import subprocess
 
+        if sys.platform == 'darwin':
+            self._word_pages = self._update_fields_by_word_mac()
+            return
+
         ps = r"""
 $p = "{path}"
 $word = New-Object -ComObject Word.Application
@@ -526,6 +601,45 @@ $word.Quit()
         if not out.startswith('Pages='):
             print('!!! Muc luc CHUA duoc Word cap nhat:', out[:200])
         self._word_pages = out
+
+    def _update_fields_by_word_mac(self):
+        """Ban macOS cua _update_fields_by_word(): Microsoft Word qua AppleScript.
+
+        ⚠️ PHAI tat Word truoc khi mo: neu Word con giu ban cu cua file trong bo nho (lan
+        chay truoc chua dong han), `open` tra ve ban CU va `save` ghi de len file vua sinh —
+        tai lieu mat het thay doi ma selfcheck van bao OK (da dinh ngay 2026-09-24).
+        """
+        import subprocess
+        import time
+
+        quit_ = 'tell application "Microsoft Word" to quit saving no'
+        script = """
+tell application "Microsoft Word"
+    set d to open file name POSIX file "%s"
+    repeat with f in (get fields of d)
+        update field f
+    end repeat
+    repeat with t in (get tables of contents of d)
+        update table of contents t
+    end repeat
+    repaginate d
+    save d
+    close d saving no
+    quit saving no
+end tell
+""" % self.out
+        try:
+            subprocess.run(['osascript', '-e', quit_], capture_output=True, timeout=60)
+            time.sleep(2)
+            res = subprocess.run(['osascript', '-e', script], capture_output=True, text=True,
+                                 timeout=300)
+            if res.returncode != 0:
+                print('!!! Muc luc CHUA duoc Word cap nhat:', (res.stderr or '').strip()[:200])
+                return ''
+        except Exception as exc:  # noqa: BLE001
+            print('!!! Muc luc CHUA duoc Word cap nhat:', exc)
+            return ''
+        return 'Pages=?(macOS)'
 
     def selfcheck(self):
         """Buoc 4 cua skill: tu kiem tra truoc khi bao xong."""

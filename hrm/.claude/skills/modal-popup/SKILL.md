@@ -564,6 +564,76 @@ grep -rn "add-on-row-click\|addOnRowClick" pages/ components/ | grep -v "<compon
 
 ---
 
+## 4c. Popup có BỘ LỌC — dùng `V2BaseSmartFilterPanel in-modal`, KHÔNG tự dựng lưới ô lọc (chốt 2026-09-28)
+
+Khuôn gốc: bộ lọc popup **"Thêm hàng hoá"** màn Báo giá
+(`pages/assign/quotations/components/QuotationProductSearchModal.vue` :33-110 — dùng chung BOM + Báo giá).
+Các popup đã bám đúng: `customer-care/services/components/ProductSearchModal.vue`,
+`assign/meeting/components/PopupStaff.vue`, `assign/solutions/components/manager/*UpcomingModal.vue`,
+`components/timesheet/shift-history/EmployeeShiftHistoryModal.vue`.
+
+Popup nào có từ 1 ô lọc trở lên (popup chọn bản ghi, popup xem lịch sử, popup danh sách…) thì bộ lọc
+là **đúng component bộ lọc của màn danh sách**, chỉ thêm `in-modal`:
+
+```vue
+<V2BaseSmartFilterPanel
+    table="<khoá_riêng_của_popup>"        <!-- "Cài đặt bộ lọc" lưu theo khoá này -->
+    floating                              <!-- nhãn nổi, giống màn danh sách -->
+    in-modal                              <!-- BẮT BUỘC: ô chọn tự thành V2BaseSelectInModal -->
+    title="Bộ lọc …"
+    :filter-fields="filterFields"
+    :filters="filters"
+    :collapsed="filterCollapsed"
+    :quickSearchValue="filters.keyword"
+    quickSearchPlaceholder="Tìm theo <các trường BE thực sự lọc>"
+    @toggle-panel="filterCollapsed = !filterCollapsed"
+    @quick-search-change="(v) => (filters.keyword = v)"
+    @filter-change="({ key, value }) => (filters[key] = value)"
+    @search="handleSearch"
+    @reset="handleReset"
+>
+    <template #header-actions>…nút phụ (Thêm hàng tạm…)…</template>
+    <template #field-<key>>…ô đặc biệt (tìm từ xa V2BaseSelectRemote)…</template>
+</V2BaseSmartFilterPanel>
+```
+
+- **`filterFields` khai y như màn danh sách** (skill `list-page`): select nhiều `multiple: true`;
+  khoảng ngày GỘP 1 ô `type: 'date-range'` + `resetKeys: ['x_from', 'x_to']` + khai sẵn khoá
+  `x_range` trong `filters` (Vue 2 không reactive khoá chưa khai); ô gõ tay đưa vào `ignoredFields`.
+- **Ô tìm nhanh là BẮT BUỘC** (cùng dòng với nút Tìm kiếm / Làm mới — mặc định `inlineSearchButtons`).
+  API chưa có tìm theo chữ thì **bổ sung tham số `keyword` ở BE** (tìm các cột chữ user nhìn thấy
+  trong bảng), KHÔNG tắt ô tìm nhanh. Placeholder `Tìm theo <đúng các cột BE tìm>`.
+- "Tìm kiếm nâng cao" **mặc định THU GỌN** (`filterCollapsed: true`) — dồn chỗ cho bảng.
+- **Hành vi giống màn danh sách**: chọn ô select là tìm luôn (deep watcher `filters` + `oldFilters`);
+  ô gõ tay chờ Enter / nút Tìm kiếm; "Làm mới" xoá hết rồi tìm lại; thu gọn nâng cao chỉ ẩn UI,
+  KHÔNG xoá giá trị đã chọn.
+- **Mở lại popup** (bản ghi khác) → reset `filters` về rỗng trước khi gọi API, và chặn watcher bắn
+  thêm 1 lần lúc reset (cờ `silent`), nếu không mở popup gọi API 2 lần.
+- **Danh mục cho ô chọn nạp lười**: gọi lần đầu mở popup rồi giữ lại, KHÔNG gọi ở `mounted` của màn cha
+  (màn cha có thể không bao giờ mở popup). Ô "Người thực hiện"/"Người tạo" ưu tiên API trả đúng những
+  người có trong dữ liệu, không tải toàn bộ nhân viên.
+- **Khung popup**: dựng trên `V2BaseModal` (mục 0) + `dialog-class="<tên riêng>"` để ép khung cao
+  cố định 98vw × 98vh theo **mục 4** (popup có bộ lọc luôn đi kèm bảng dữ liệu → luôn áp mục 4).
+  ⚠️ `b-modal` bị dời ra `<body>` → rule cho `.modal-dialog` / `.modal-content` / `.v2-modal-body`
+  phải để trong `<style>` **KHÔNG scoped**, có tiền tố class riêng của dialog (scoped/`::v-deep`
+  không với tới — đo thật popup chỉ cao 358px). Mẫu: `EmployeeShiftHistoryModal.vue`.
+- **Bảng trong popup = bảng GỌN của mục 4**, KHÔNG dùng `V2BaseDataTable` (nó bọc thêm card có tiêu
+  đề "Danh sách" + padding, tốn ~60px và không co theo khung): `<div class="…-table-wrap">` (khối duy
+  nhất `flex: 1; min-height: 0; overflow: auto`) chứa `<table class="table table-bordered table-hover
+  table-sm mb-0">` — `thead` sticky, `td` `padding: 3px 6px; font-size: 12px`, cột chữ dài
+  `.cell-clamp` + `:title`, dòng đang tải/trống màu xám `#6b7280` (KHÔNG `.text-muted` — ra đỏ);
+  dưới bảng là `V2BasePagination` (`:page-size-options="[20, 50, 100]"`, dòng "Hiển thị x–y / N").
+  Badge trạng thái trong ô vẫn là `V2BaseBadge`, ô badge `text-nowrap`.
+- **Footer popup chỉ xem**: KHÔNG truyền slot `#footer` → `V2BaseModal` tự render đúng nút chuẩn
+  **Đóng** (`tertiary` + `fas fa-arrow-left`, mục 3). Tự khai lại dễ sai icon (`ri-close-line` là SAI).
+- `QuotationProductSearchModal` tự dựng khung vì có trước `V2BaseModal` — copy **bộ lọc + bảng +
+  phân trang**, không copy khung `.modal-backdrop-lite`.
+
+🚫 **CẤM** tự dựng lưới ô lọc bằng `V2BaseLabel` + `V2BaseSelectInModal` + `V2BaseDatePicker` rời
+(nhãn nằm trên, mỗi popup một cách xếp) — lệch kiểu với màn danh sách, mất "Cài đặt bộ lọc", mất
+khoảng ngày gộp 1 ô, mất nút Tìm kiếm/Làm mới chuẩn. Cũng cấm dùng panel mà quên `in-modal`: ô chọn
+khi đó là `V2BaseSelect`, dropdown bị modal cắt/che (mục 2).
+
 ## 5. Checklist khi tạo/review modal
 
 - [ ] **Dựng trên `V2BaseModal`** (mục 0) — popup mới KHÔNG tự khai `b-modal` + header + footer
@@ -577,6 +647,15 @@ grep -rn "add-on-row-click\|addOnRowClick" pages/ components/ | grep -v "<compon
 - [ ] Mọi select trong modal dùng `V2BaseSelectInModal`, KHÔNG dùng `V2BaseSelect`
 - [ ] **Popup Xem bản ghi đã tồn tại: có khối "Lịch sử" (`SystemInfoSection`) ở CUỐI body**, `v-if="isShow && id"`, thu gọn sẵn, lazy load (mục 3c-a)
 - [ ] **Đáy body KHÔNG có dòng `Người tạo / Ngày tạo`** — `V2BaseMetaInfo` chỉ được dùng `variant="chip"` ở header (mục 3c-b)
+
+**Nếu popup có bộ lọc — thêm (xem mục 4c):**
+
+- [ ] Bộ lọc là `V2BaseSmartFilterPanel` có `in-modal` + `floating` + `table="<khoá riêng>"` — KHÔNG tự dựng lưới `V2BaseLabel` + select rời
+- [ ] CÓ ô tìm nhanh (thiếu thì thêm `keyword` ở BE), nâng cao thu gọn sẵn
+- [ ] Bảng gọn `table-bordered table-sm` trong khung cuộn + `V2BasePagination` — KHÔNG `V2BaseDataTable`; khung 98vh (mục 4)
+- [ ] Nút Đóng để `V2BaseModal` tự render (`fas fa-arrow-left`), không tự khai icon khác
+- [ ] Khoảng ngày gộp 1 ô `type: 'date-range'`; chọn select là tìm luôn, ô gõ tay chờ Enter
+- [ ] Mở lại popup reset bộ lọc mà không gọi API 2 lần; danh mục ô chọn nạp lười lúc mở lần đầu
 
 **Nếu popup có bảng dữ liệu — thêm (xem mục 4):**
 

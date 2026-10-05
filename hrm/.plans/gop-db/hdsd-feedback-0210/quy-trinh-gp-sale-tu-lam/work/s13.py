@@ -1,0 +1,25 @@
+from common import *
+with browser_page() as page:
+    page.goto(BASE+'/assign/prospective-projects/151/manager'); page.wait_for_timeout(8000); wait_load(page)
+    page.wait_for_timeout(25000)
+    for t,n in [('Hồ sơ','tab_hoso_duan'),('Báo giá','tab_baogia_duan'),('Giải pháp','tab_giaiphap_duan'),('Nhiệm vụ','tab_nhiemvu_duan'),('Thu thập thông tin','tab_thuthap_duan')]:
+        el=page.get_by_text(t, exact=True).first.locator('xpath=ancestor-or-self::*[self::button or self::a or self::li][1]')
+        tight(page, el, IC+n+'.png')
+    tight(page, page.locator('button:has-text("Chốt giải pháp")'), IC+'btn_chotgp.png')
+    page.get_by_text('Hồ sơ', exact=True).first.evaluate('e=>e.click()')
+    page.get_by_text('HS.TD.CTV_NV.UD.0101.2026.DA001_GP39.1').first.wait_for(timeout=180000)
+    wait_load(page)
+    row=page.locator('tbody tr').filter(has_text='HS.TD.CTV_NV').first
+    row.hover(); page.wait_for_timeout(1200)
+    btn=row.locator('.row-actions button:has(i.ri-file-list-3-line)')
+    tight(page, btn, IC+'btn_taobaogia_row.png')
+    tight(page, row.locator('.row-actions button:has(i.ri-eye-line)'), IC+'btn_xemhoso_row.png')
+    row.locator('td').nth(2).hover(); page.wait_for_timeout(1000)
+    page.screenshot(path=SH+'08_hoso_duan.png')
+    btn.hover(); page.wait_for_timeout(1200); page.screenshot(path='08_tooltip.png')
+    btn.evaluate('e=>e.click()')
+    try: page.wait_for_url('**/quotations/**', timeout=180000)
+    except Exception: print('no nav')
+    page.wait_for_timeout(8000); wait_load(page); page.wait_for_timeout(15000); settle(page)
+    print(page.url)
+    page.screenshot(path='quote_edit.png')

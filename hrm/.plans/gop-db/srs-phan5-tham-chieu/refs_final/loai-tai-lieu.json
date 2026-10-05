@@ -1,0 +1,68 @@
+{
+  "catalog": "Danh mục loại tài liệu",
+  "srs_file": "SRS - Danh mục loại tài liệu.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Lịch làm việc của tôi – popup Tạo/Sửa nhiệm vụ, vấn đề",
+      "duong_dan": "Công việc",
+      "evidence": "FE pages/assign/my-todo/index.vue:106,111 (CreateTaskModal, CreateIssueModal), :342 create, :348 open tạo vấn đề, :527 edit, :546 sửa vấn đề -> CreateTaskModal.vue:770-778 (Loại tài liệu, sửa được khi không ở chế độ xem); CreateIssueModal.vue:427-436 (Loại tài liệu, sửa được khi không chỉ đọc hoặc đang xử lý) · Lối vào: menu-sidebar.js:11"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Công việc của tôi – tab Nhiệm vụ, tab Issue",
+      "duong_dan": "Công việc",
+      "evidence": "FE pages/assign/my-job/components/TasksTab.vue:332,682 (create),927 (edit); IssuesTab.vue:114,310 (tạo),419 (sửa) -> CreateTaskModal.vue:770-778 (Loại tài liệu, sửa được khi không ở chế độ xem); CreateIssueModal.vue:427-436 (Loại tài liệu, sửa được khi không chỉ đọc hoặc đang xử lý) · Lối vào: menu-sidebar.js:17"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp – popup Tạo/Sửa hồ sơ trình duyệt, tab Files, tab Nhiệm vụ, tab Vấn đề giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/components/manager/SolutionApprovalModal.vue:73, ModuleApprovalModal.vue:71 (mở từ solutions/_id/manager.vue:151-165, solutions/_id/edit.vue:82); manager/FilesTab.vue:190,324; BE StoreSolutionReviewProfileRequest.php:37, SolutionService.php:2163-2164,2213; tab Nhiệm vụ/Vấn đề: solutions/components/manager/TasksTab.vue:273,843,871, IssueTab.vue:181,560,569, PendingApprovalModal.vue:413 -> CreateTaskModal.vue:770-778 (Loại tài liệu, sửa được khi không ở chế độ xem); CreateIssueModal.vue:427-436 (Loại tài liệu, sửa được khi không chỉ đọc hoặc đang xử lý) · Lối vào: menu-sidebar.js:31"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Hạng mục giải pháp – popup Tạo/Sửa hồ sơ trình duyệt, tab Files, tab Nhiệm vụ, tab Vấn đề hạng mục",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solution-modules/_id/manager.vue:144 (ModuleApprovalModal), solutions/components/manager/ModuleApprovalModal.vue:71 (FileAttachmentTable show-attachment-type); solution-modules/_id/components/FilesTab.vue:179,303; BE Requests/SolutionModule/StoreReviewProfileRequest.php:23, SolutionModuleService.php:1025-1026,1073 (files.attachment_type_id); tab Nhiệm vụ/Vấn đề: solution-modules/_id/components/TasksTab.vue:269,769,793, IssueTab.vue:165,511,522, PendingApprovalModal.vue:441 -> CreateTaskModal.vue:770-778 (Loại tài liệu, sửa được khi không ở chế độ xem); CreateIssueModal.vue:427-436 (Loại tài liệu, sửa được khi không chỉ đọc hoặc đang xử lý) · Lối vào: menu-sidebar.js:33"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Nhiệm vụ",
+      "duong_dan": "Công việc -> Nhiệm vụ",
+      "evidence": "FE pages/assign/tasks/components/CreateTaskModal.vue:772-778,2572 (assign/attachment-types/getAll); BE TaskStoreRequest.php:87, TaskUpdateRequest.php:115 (required|exists:attachment_types), lưu files.attachment_type_id qua app/Helper/TableFileHelper.php:75. Cùng màn ở CSKH trước bán -> Nhiệm vụ · Lối vào: menu-sidebar.js:45"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Vấn đề",
+      "duong_dan": "Công việc -> Nhiệm vụ",
+      "evidence": "FE pages/assign/issues/components/CreateIssueModal.vue:429-434,1145 (assign/attachment-types/getAll); BE IssueService.php:625,678-685 (issue_attachments.attachment_type_id). Cùng màn ở CSKH trước bán -> Vấn đề · Lối vào: menu-sidebar.js:49"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting – tab Biên bản, tab Nhiệm vụ",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingForm.vue:157 (MeetingReport, tab Biên bản),168 (TaskListTab, tab Nhiệm vụ); MeetingReport.vue:427,1134 (giao nhiệm vụ -> CreateTaskModal.create); components/assign/task/TaskListTab.vue:126,547 (edit) -> CreateTaskModal.vue:770-778 (Loại tài liệu, sửa được khi không ở chế độ xem) · Lối vào: meeting.js:63"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT – tab Nhiệm vụ",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/prospective-projects/_id/manager.vue:106 (TaskListTab, tab Nhiệm vụ) -> components/assign/task/TaskListTab.vue:126,547 (edit) -> CreateTaskModal.vue:770-778 (Loại tài liệu, sửa được khi không ở chế độ xem) · Lối vào: presale.js:44"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Nhiệm vụ",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/tasks/components/CreateTaskModal.vue:772-778,2572 (assign/attachment-types/getAll); BE TaskStoreRequest.php:87, TaskUpdateRequest.php:115 (required|exists:attachment_types), lưu files.attachment_type_id qua app/Helper/TableFileHelper.php:75. Cùng màn ở CSKH trước bán -> Nhiệm vụ · Lối vào: presale.js:72"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Vấn đề",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/issues/components/CreateIssueModal.vue:429-434,1145 (assign/attachment-types/getAll); BE IssueService.php:625,678-685 (issue_attachments.attachment_type_id). Cùng màn ở CSKH trước bán -> Vấn đề · Lối vào: presale.js:78"
+    }
+  ],
+  "notes": "KIỂM TRA XOÁ THIẾU: AttachmentType::isCanDelete() (Entities/AttachmentType/AttachmentType.php:64-67) chỉ đếm bảng files; KHÔNG xét issue_attachments.attachment_type_id (file đính kèm của Vấn đề lưu ở bảng riêng, IssueService.php:625; cột kiểu string — migration 2026_03_18_093635) và product_project_attachments.attachment_type_id → loại tài liệu chỉ dùng ở file đính kèm Vấn đề vẫn xoá được, Vấn đề mất tên loại. Code chết: ProductProjectService.php:113,153 lưu attachment_type_id từ trường 'group' nhưng FE Danh sách hàng tạm (pages/assign/product-project) không gửi attachments → không đưa vào bảng. Màn chỉ HIỂN THỊ: Dự án TKT – xem hồ sơ trình duyệt (prospective-projects/_id/manager.vue:819, mode view). Lưu ý PHÂN BIỆT: danh mục 'File đính kèm' ở Danh mục dùng chung -> Danh mục hàng hóa (/master-data/attachment-types, MasterData ProductCatalog\\AttachmentTypeController, danh mục ERP hàng hoá) là danh mục KHÁC, không thuộc phạm vi. || BỔ SUNG KHI CHUẨN HOÁ: Agent dò ban đầu bỏ sót các lối vào popup Tạo/Sửa nhiệm vụ & vấn đề nhúng ở màn khác (CreateTaskModal / CreateIssueModal dùng chung, đều có ô chọn Loại tài liệu cho file đính kèm) — đã bổ sung: Lịch làm việc của tôi, Công việc của tôi (tab Nhiệm vụ, Issue), tab Nhiệm vụ/Vấn đề của Quản lý giải pháp và Hạng mục giải pháp, Tổng hợp meeting (tab Biên bản giao nhiệm vụ, tab Nhiệm vụ), Dự án TKT (tab Nhiệm vụ). Không tính: Phiếu bàn giao / Tạo bàn giao / Chờ tiếp nhận bàn giao (mở popup ở chế độ chỉ đọc), tab Files mở popup với hideActions (xem), các popup \"Nhiệm vụ/Vấn đề sắp tới hạn\" (chỉ view).",
+  "changes": "Trước 4 dòng -> sau 10 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách Nhiệm vụ, Vấn đề thành 2 lối vào (Công việc -> Nhiệm vụ; CSKH trước bán). Đổi nhãn theo khuôn \"<Màn cha> – tab/popup <tên>\". BỔ SUNG 4 dòng mới (Lịch làm việc của tôi, Công việc của tôi, Tổng hợp meeting, Dự án TKT) và mở rộng nhãn Quản lý giải pháp / Hạng mục giải pháp cho tab Nhiệm vụ, Vấn đề — xem notes."
+}

@@ -1,0 +1,17 @@
+import sys; sys.path.insert(0,'/Users/manhcuong/Desktop/dns/HRM/.plans/gop-db/bao-cao-docs')
+from _shoot import browser_page, BASE
+with browser_page() as page:
+    page.goto(BASE+'/assign/bom-list/add'); page.wait_for_timeout(10000)
+    page.fill('input[placeholder="VD: BOM điều khiển dây chuyền line 01"]','BOM thiết bị khí nén – bàn thực hành')
+    sp=page.locator('.sp-wrap').nth(0); sp.click(); page.wait_for_timeout(500)
+    page.keyboard.type('DA091'); page.wait_for_timeout(1500)
+    print(page.locator('.sp-item').all_inner_texts()[:5])
+    page.locator('.sp-item').first.click(); page.wait_for_timeout(3000)
+    sp=page.locator('.sp-wrap').nth(1); sp.click(); page.wait_for_timeout(1000)
+    print(page.locator('.sp-dropdown:visible .sp-item').all_inner_texts()[:5])
+    page.locator('.sp-dropdown:visible .sp-item').first.click(); page.wait_for_timeout(2000)
+    page.mouse.move(5,5)
+    page.screenshot(path='x_add2.png')
+    page.get_by_role('button', name='Thêm mới').first.click(); page.wait_for_timeout(6000)
+    page.screenshot(path='x_pop.png')
+    print(page.inner_text('.modal.show')[:2500] if page.locator('.modal.show').count() else 'nomodal')

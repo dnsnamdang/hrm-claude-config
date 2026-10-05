@@ -1,0 +1,49 @@
+{
+  "catalog": "Danh mục lĩnh vực kinh doanh khách hàng",
+  "srs_file": "SRS - Danh mục lĩnh vực kinh doanh khách hàng.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/index.vue:617 (lọc + cột) · BE solutions.customer_scope_id (Entities/Solution.php:121)"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo vòng đời dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/prospective-projects/components/ProspectiveProjectsFilter.vue:66-72"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT (Thông tin khách hàng, popup Thêm nhanh khách hàng)",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/prospective-projects/components/CustomerInfoSection.vue:11-46, CspSingleSelect.vue + index.vue:89 · BE prospective_projects.customer_scope_id / customer_benefit_scope_id (Entities/ProspectiveProject.php:460,471)"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Ứng dụng",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE components/modal/application-modal.vue:357 · BE Entities/Applications.php:68 (application_customer_scopes)"
+    },
+    {
+      "nhom": "Danh mục dùng chung",
+      "man_hinh": "Khách hàng (Thêm mới, Sửa, Import, bộ lọc danh sách)",
+      "duong_dan": "Danh mục dùng chung -> Đối tác",
+      "evidence": "FE components/assign-components/customer/CustomerForm.vue:53 + pages/assign/customers/index.vue:32-40,1466 · BE customers.customer_scope_id, customer_business_fields (CustomerService, CustomerImportService)"
+    },
+    {
+      "nhom": "Danh mục dùng chung",
+      "man_hinh": "Loại hình hoạt động kinh doanh KH (popup xem danh sách lĩnh vực thuộc nhóm, Import)",
+      "duong_dan": "Danh mục dùng chung -> Đối tác",
+      "evidence": "FE pages/assign/customer-scope-groups/AddGroupModal.vue:64-70 · BE CustomerScopeGroup::customerScopes() + CustomerScopeGroupService import cột mã lĩnh vực"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting (tab Dự án tiền khả thi, popup Thêm nhanh khách hàng)",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingProject.vue:53-63,485 · BE MeetingService.php:691,711"
+    }
+  ],
+  "notes": "Ứng dụng cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp (cùng màn, ghi 1 dòng). Yêu cầu giải pháp / Công việc của tôi – tab Giải pháp chỉ hiển thị, không lưu -> không đưa vào. NGHI LỖI KIỂM TRA XOÁ (nặng): xoá Lĩnh vực KD KH KHÔNG có bất kỳ kiểm tra nào — CustomerScopeController::delete (Modules/Assign/Http/Controllers/Api/V1/CustomerScopeController.php:90) -> CustomerScopeService::destroy (Services/CustomerScopeService.php:245) xoá thẳng; Entity CustomerScope không có isCanDelete(); FE pages/assign/customer-scopes/index.vue:794 hiện nút Xóa chỉ theo quyền. Xoá được dù đang dùng ở: customers.customer_scope_id, customer_business_fields (Khách hàng), customer_scope_group_members (Loại hình), application_customer_scopes (Ứng dụng), prospective_projects.customer_scope_id/customer_benefit_scope_id (Dự án TKT/Meeting), solutions.customer_scope_id (Quản lý giải pháp)."
+}

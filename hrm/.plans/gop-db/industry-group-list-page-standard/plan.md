@@ -76,3 +76,6 @@ cùng ngày) sau khi tôi đọc skill lần đầu → lần chỉnh bề rộn
 - [x] Bật prop `fixed-layout` trên `V2BaseDataTable`
 - [x] Khai `width` + `minWidth` cho **đủ mọi cột** theo 4 bậc S (130-150) · M (170-190) · L (220-260) · XL (300)
 - [x] Cột chữ dài dùng `cellClass: 'text-wrap clamp-2'` + `:title` trên thẻ trong slot (kẹp 2 dòng, hover xem đủ)
+
+## SRS màn Danh mục nhóm ngành (2026-09-24)
+- [x] Sinh `SRS - Danh mục nhóm ngành.docx` theo code nhánh gop_db (form 2026-09-24: sơ đồ use case đơn giản + icon trên dòng Menu) bằng `gen_srs.py`; ảnh chụp thật từ cổng 3002 ở `nhom-nganh_shots/` (không commit).

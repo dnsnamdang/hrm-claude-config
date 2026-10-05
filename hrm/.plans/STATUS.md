@@ -189,6 +189,14 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Spec: docs/superpowers/specs/2026-08-27-form-template-import-design.md · Plan: .plans/form-template-import/plan.md
   Bước tiếp: code Phase 1 (BE resolveOrCreate + store pre-pass).
 
+- cong-tinh-luong-khong-vdm (Redmine #11457 — cột "Công tính lương" không VĐM/đi đường + TPL CONG_TINH_LUONG) → @dnsnamdang → .plans/cong-tinh-luong-khong-vdm/plan.md
+  Trạng thái: 🟢 **ĐÃ push nhánh `task_11457` + merge vào `develop` (02/10/2026, cả 2 repo).** Redmine: **Code xong chờ test**. Đã build lên dev (dev-hrm.eteksofts.com, api e41a1553a / client 9ead17acd) + insert riêng id 41 `CONG_TINH_LUONG` vào `hrm_erp_test` (KHÔNG chạy seeder vì seeder truncate bảng). Prod chưa có.
+  Đã kiểm bằng Playwright trên DB `hrm_prod_local` kỳ 06/2026: 3 màn + 2 file Excel đều khớp công thức. Ảnh: `.plans/cong-tinh-luong-khong-vdm/screenshots/`.
+  Nhánh: `tpe-develop-assign` (cả 2 repo). Phạm vi: Bảng công chi tiết + Bảng công tổng hợp (2 kiểu xem) + TPL hệ thống + 2 file export Excel.
+  Chốt: TPL là bản ghi MỚI mã `CONG_TINH_LUONG` · **KHÔNG cap công định mức** · cột mới lấy số (13), (13) cũ dồn thành (14) tới (18)→(19).
+  ⚠️ Switch-case chấm công nhân bản ở `CreateEmployeePayroll.php` + `SalaryService.php` — phải sửa CẢ HAI.
+  Design: .plans/cong-tinh-luong-khong-vdm/design.md · Spec: docs/superpowers/specs/2026-09-22-cong-tinh-luong-khong-vdm-design.md
+
 - app-meeting-mobile (Thiết kế app Meeting trên di động — TPE_APP/Flutter) → @dnsnamdang → .plans/app-meeting-mobile/plan.md
   Trạng thái: 🟢 **BÀN GIAO v11 (16/09/2026)** — 50 artboard, chờ khách duyệt. **Đây là việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
   File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao: `exports/` (4 PDF + 50 PNG 3x + file tóm tắt thay đổi).
@@ -916,6 +924,13 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- tong-hop-nghiem-thu-bomlist-baogia — bộ tài liệu TỔNG HỢP KHỐI LƯỢNG luồng **BOM List + Báo giá** phục vụ nghiệm thu thanh toán với khách → @namdangit → .plans/tong-hop-nghiem-thu-bomlist-baogia/
+  Hoàn thành: 24/09/2026 — gom từ `.plans/Bomlist-Quotation/` (33 phase) + **45 hạng mục feature liên quan** + 7 hạng mục chuẩn hoá trên nhánh `gop_db` + lịch sử git 2 repo.
+  Sản phẩm: `tong-hop.md` (bản thuyết minh) + `tong-hop-nghiem-thu-bomlist-baogia.xlsx` — sheet *Tổng hợp nghiệm thu* **84 hạng mục / 10 nhóm** (có cột trống để khách tick), sheet *Phase luồng chính* 36 dòng, sheet *Bằng chứng*.
+  Số chốt: **03/2026 → 09/2026** · **216 commit** (api 110 · client 106) · 135 test case luồng chính · SRS 27 bảng · 1 HDSD.
+  Phân bố trạng thái: 70 Hoàn thành · 7 Code xong-chờ khách test · 1 khách test OK · 1 mockup · 1 khảo sát · **4 Đang làm** (redesign Báo giá · HĐ ERP từ báo giá · HĐ hãng 2 cấp · Giải pháp nhóm ngành/khách hàng cuối).
+  ⚠️ Chưa xuất bản Word biên bản nghiệm thu (user chưa chốt cần hay không).
 
 - reason-project-failure-permission-gate → @khoipv → .plans/reason-project-failure-permission-gate/plan.md
   Hoàn thành: 2026-09-18. Siết quyền màn danh mục **Nguyên nhân thất bại dự án** (`/assign/reason_project_failure`, quyền 990/1005); đã commit trên nhánh `fix-bug-11092026` ở cả 2 repo (hrm-api `6c76378aa`, hrm-client `53dee118d`), cây sạch. BE vốn KHÔNG fail-open (POST/DELETE/lock/export với tài khoản chỉ có quyền Xem đều trả 403, dữ liệu không đổi); nguyên nhân "vẫn sửa/xoá/khoá được" là FE không ẩn nút và route `show` không gắn `checkPermission` nên modal Sửa vẫn mở đủ dữ liệu, còn lỗi 403 bị nuốt tại chỗ (`if (status === 403) return`) nên nhìn như thao tác thành công. Đã sửa: FE gate 4 nút Sửa/Xoá/Khoá + Xuất Excel bằng `v-if="canManage"`, BE gắn `checkPermission:Quản lý…|Xem…` cho route `show`. ⚠️ Cố ý KHÔNG gate `GET /reason_project_failures/getAll` — đó là dropdown của `CloseProjectModal.vue` (đóng dự án tiềm năng), gate vào sẽ chặn người không có quyền danh mục đóng dự án. Giữ BE `/export` ở mức chỉ quyền Quản lý theo convention 14/15 màn danh mục trong `api.php` (muốn nới thì sửa đồng loạt). KHÔNG migration, KHÔNG quyền mới. Đo được: không quyền → `show` 403 (trước đó 200); chỉ quyền Xem → index/show 200, export 403; role Admin_TPE → 200 hết. Màn **Lý do hủy cuộc họp** cùng đợt này tách thành mục riêng bên dưới. Design: .plans/reason-project-failure-permission-gate/design.md

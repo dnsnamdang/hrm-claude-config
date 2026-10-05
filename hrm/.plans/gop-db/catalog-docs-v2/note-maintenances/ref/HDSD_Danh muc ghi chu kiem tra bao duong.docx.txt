@@ -1,0 +1,136 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục ghi chú kiểm tra bảo dưỡng) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] DANH MỤC HÌNH ẢNH 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Mục tiêu 
+[normal] Màn hình “Danh mục ghi chú kiểm tra bảo dưỡng” dùng để khai báo các hạng mục cần ghi chú khi kiểm tra bảo dưỡng thiết bị, ví dụ “Kiểm tra ngoại quan không tháo lắp”, “Đo kiểm, kiểm tra bằng dụng cụ chuyên dùng”, “Bôi trơn bạc đạn, cốt, trục xoay”. 
+[normal] Mỗi hạng mục có một Ký hiệu viết tắt (ví dụ KTBM, DK, CC) để nhân viên kỹ thuật ghi nhanh trên phiếu hiện trường. Danh mục này được gắn vào cấp bảo dưỡng của từng gói dịch vụ. 
+[normal] Lưu ý quan trọng: danh mục này dùng CHUNG dữ liệu với màn tương ứng bên phần mềm cũ. Sửa ở cổng nào thì cổng còn lại cũng thấy ngay. 
+[Heading 2] 2. Đường dẫn truy cập 
+[normal] Trên menu trái của phân hệ Chăm sóc khách hàng, vào nhóm “Danh mục - Dịch vụ” rồi chọn “Danh mục ghi chú kiểm tra bảo dưỡng” (đường dẫn: /customer-care/note-maintenances). 
+[normal] Mục menu chỉ hiển thị khi tài khoản có ít nhất một trong hai quyền “Quản lý ghi chú kiểm tra bảo dưỡng” hoặc “Xem ghi chú kiểm tra bảo dưỡng”. 
+[Heading 2] 3. Vai trò tham gia 
+<<TABLE 1>>
+  | Vai trò | Thao tác chính
+  | Người quản lý danh mục dịch vụ | Thêm mới, Sửa, Xóa ghi chú; xuất Excel.
+  | Người dùng chỉ xem | Xem danh sách, mở xem chi tiết, tìm kiếm và xuất Excel.
+  | Bộ phận kỹ thuật | Là bên sử dụng các ghi chú này khi cấu hình cấp bảo dưỡng của gói dịch vụ và khi ghi kết quả kiểm tra tại hiện trường.
+[Heading 2] 4. Đặc điểm riêng của màn hình 
+[normal] Màn hình KHÔNG có trạng thái Hoạt động / Khóa. Chỉ có ba thao tác: Thêm mới, Sửa và Xóa. 
+[normal] Ghi chú đang được gắn vào cấp bảo dưỡng của gói dịch vụ thì KHÔNG xóa được. 
+[normal] Ở phần mềm cũ, màn này KHÔNG chặn xóa gì cả, dù phần lớn ghi chú đang được sử dụng — xóa xong là gói dịch vụ mất ghi chú. Bản mới đã chặn lại. 
+[normal] Ở phần mềm cũ, thêm và sửa mở ra một trang riêng; bản mới đưa về cửa sổ nhỏ ngay trên danh sách cho đồng bộ với các danh mục khác. Đây là thay đổi có chủ ý. 
+[Heading 2] 5. Luồng sử dụng 
+[normal] Bước 1 — Khai báo các hạng mục ghi chú cần dùng ở màn này. 
+[normal] Bước 2 — Sang màn Danh mục gói bảo dưỡng, gắn ghi chú vào từng cấp bảo dưỡng của gói. 
+[normal] Bước 3 — Nhân viên kỹ thuật dùng ký hiệu để ghi nhanh kết quả kiểm tra tại hiện trường. 
+[normal] Bước 4 (khi cần điều chỉnh) — Sửa lại hạng mục, ký hiệu hoặc mô tả; các gói dịch vụ đang dùng sẽ hiển thị nội dung mới. 
+[normal] URL đầy đủ: http://hrm-crm.eteksofts.com/customer-care/note-maintenances 
+[Heading 1] PHẦN 1: DANH SÁCH & TÌM KIẾM 
+[normal]  [IMG]
+[normal] Hình 1: Màn hình danh sách Danh mục ghi chú kiểm tra bảo dưỡng 
+[Heading 2] 1. Bố cục màn hình 
+[normal] Khối trên — “Bộ lọc ghi chú kiểm tra bảo dưỡng” với dòng phụ “Tìm kiếm theo hạng mục hoặc ký hiệu”: chỉ có ô tìm nhanh, nút Tìm kiếm và nút Làm mới. 
+[normal] Khối dưới — bảng “Danh mục ghi chú kiểm tra bảo dưỡng” cùng nút Tạo mới và Xuất Excel ở đầu bảng. 
+[normal] Trong ảnh minh họa, nút Xóa ở mọi dòng đều bị làm mờ vì các ghi chú này đang được gắn vào cấp bảo dưỡng của gói dịch vụ — xem Phần 4 để hiểu điều kiện xóa. 
+[Heading 2] 2. Các cột của bảng 
+<<TABLE 2>>
+  | Cột | Nội dung
+  | STT | Số thứ tự tính theo trang đang xem.
+  | Hạng mục | Nội dung hạng mục kiểm tra, là giá trị duy nhất trong danh mục.
+  | Ký hiệu | Mã viết tắt của hạng mục, cũng phải duy nhất. Hiển thị dạng nhãn nhỏ.
+  | Mô tả | Diễn giải chi tiết; để trống thì hiện dấu gạch ngang. Nội dung dài được xuống dòng trong ô, không cắt cụt.
+  | Cập nhật | Ngày giờ thay đổi gần nhất.
+  | Hành động | Ba nút: Xem, Sửa, Xóa.
+[Heading 2] 3. Tìm nhanh 
+[normal] Ô tìm nhanh có dòng gợi ý “Tìm theo hạng mục hoặc ký hiệu...”. Ô này quét hai trường Hạng mục và Ký hiệu — KHÔNG quét cột Mô tả. Gõ một chuỗi chỉ có trong Mô tả sẽ ra kết quả rỗng; đây là hành vi đúng theo thiết kế. 
+[normal] Gõ một phần chuỗi là đủ, không phân biệt chữ hoa chữ thường. Phải bấm nút Tìm kiếm hoặc nhấn Enter thì danh sách mới lọc. Nút Làm mới xóa nội dung ô tìm nhanh và nạp lại danh sách ngay. 
+[Heading 2] 4. Sắp xếp và phân trang 
+[normal] Bấm tiêu đề cột Hạng mục, Ký hiệu hoặc Cập nhật để sắp xếp; bấm lần nữa để đảo chiều. 
+[normal] Cột Mô tả không sắp xếp được. 
+[normal] Cuối bảng có dòng “Hiển thị a – b / N”: N là tổng số ghi chú khớp điều kiện tìm kiếm. 
+[Heading 1] PHẦN 2: PHÂN QUYỀN & HƯỚNG DẪN THEO QUYỀN 
+[Heading 2] 1. Bảng quyền của màn hình 
+<<TABLE 3>>
+  | Tên quyền | Cho phép làm gì | Nút / khu vực tương ứng
+  | Xem ghi chú kiểm tra bảo dưỡng | Vào màn hình, xem danh sách, tìm kiếm, mở xem chi tiết, xuất Excel. | Nút Xem trên mỗi dòng; nút Xuất Excel.
+  | Quản lý ghi chú kiểm tra bảo dưỡng | Toàn bộ quyền trên, cộng thêm: thêm mới, sửa và xóa ghi chú. | Nút Tạo mới; nút Sửa và nút Xóa trên mỗi dòng.
+[normal] Danh mục này KHÔNG phân quyền theo công ty, phòng ban hay bộ phận. 
+[Heading 2] 2. Người dùng có quyền “Xem ghi chú kiểm tra bảo dưỡng” 
+[normal] Vào được màn hình và thấy đầy đủ danh sách, nhưng KHÔNG có nút Tạo mới; mỗi dòng chỉ có nút Xem, không có nút Sửa và nút Xóa. Nút Xuất Excel vẫn dùng được bình thường. 
+[Heading 2] 3. Người dùng có quyền “Quản lý ghi chú kiểm tra bảo dưỡng” 
+[normal] Thấy đầy đủ nút Tạo mới và Xuất Excel; trên mỗi dòng có đủ Xem, Sửa, Xóa. 
+[normal] Nếu không có quyền này, các nút trên sẽ không hiển thị; trường hợp truy cập trực tiếp bằng đường dẫn hoặc bằng công cụ ngoài giao diện, hệ thống từ chối và báo không có quyền. 
+[Heading 1] PHẦN 3: THÊM MỚI, SỬA VÀ XEM 
+[Heading 2] 1. Thêm mới 
+[normal] Yêu cầu quyền “Quản lý ghi chú kiểm tra bảo dưỡng”. Bấm nút “Tạo mới” ở đầu bảng; hệ thống mở CỬA SỔ NHỎ “Thêm ghi chú kiểm tra” ngay trên danh sách. 
+[normal]  [IMG]
+[normal] Hình 2: Cửa sổ Thêm ghi chú kiểm tra 
+<<TABLE 4>>
+  | Trường | Kiểu nhập | Bắt buộc | Giá trị mặc định khi mở form | Ghi chú
+  | Hạng mục | Ô chữ | Có | Để trống | Phải duy nhất. Trùng sẽ báo “Hạng mục đã tồn tại”. Tối đa 255 ký tự. Gợi ý trong ô: “VD: Kiểm tra ngoại quan không tháo lắp.”.
+  | Ký hiệu | Ô chữ | Có | Để trống | Cũng phải duy nhất. Trùng sẽ báo “Ký hiệu đã tồn tại”. Tối đa 255 ký tự. Gợi ý trong ô: “VD: KTBM”.
+  | Mô tả | Ô chữ nhiều dòng | Không | Để trống | Diễn giải chi tiết hạng mục kiểm tra. Tối đa 255 ký tự.
+[normal] Hai trường bắt buộc — Hạng mục và Ký hiệu — có dấu sao đỏ bên cạnh nhãn. Cuối cửa sổ có ba nút: 
+<<TABLE 5>>
+  | Nút | Tác dụng
+  | Lưu | Lưu ghi chú, đóng cửa sổ và nạp lại danh sách.
+  | Lưu & Tiếp tục | Lưu ghi chú nhưng GIỮ cửa sổ mở và xóa trắng các ô để nhập tiếp. Dùng khi cần khai nhiều hạng mục liên tiếp.
+  | Đóng | Đóng cửa sổ. Nếu đang nhập dở, hệ thống hỏi xác nhận trước khi đóng.
+[Heading 2] 2. Thông báo lỗi thường gặp 
+<<TABLE 6>>
+  | Tình huống | Hệ thống báo
+  | Bỏ trống ô bắt buộc | Ô viền đỏ, hiện chữ đỏ “Bắt buộc phải nhập” ngay dưới ô; cửa sổ không đóng, dữ liệu đã nhập vẫn còn.
+  | Hạng mục đã có trong danh mục | “Hạng mục đã tồn tại”.
+  | Ký hiệu đã có trong danh mục | “Ký hiệu đã tồn tại”.
+  | Nhập quá 255 ký tự | “Tối đa 255 ký tự”.
+[Heading 2] 3. Sửa 
+[normal] Bấm nút Sửa (hình bút chì); cửa sổ “Sửa ghi chú kiểm tra” mở ra với cả ba ô đã điền sẵn. Ràng buộc giống hệt phần Thêm mới; giữ nguyên hạng mục và ký hiệu của chính bản ghi đang sửa là hợp lệ. Cửa sổ Sửa chỉ có hai nút Lưu và Đóng — nút Lưu & Tiếp tục chỉ dành cho thêm mới. 
+[normal] Ghi chú đang được sử dụng ở gói dịch vụ VẪN sửa được. Sau khi sửa, các gói dịch vụ đang dùng sẽ hiển thị nội dung mới. Việc đang được sử dụng chỉ chặn thao tác Xóa. 
+[normal] Nếu đã sửa nội dung mà bấm Đóng, hệ thống cảnh báo dữ liệu chưa được lưu và hỏi xác nhận. 
+[Heading 2] 4. Xem chi tiết 
+[normal] Bấm nút Xem (hình con mắt). Cửa sổ “Xem ghi chú kiểm tra” mở ra với đầy đủ ba ô nhưng đều bị làm mờ, không gõ được và không có nút Lưu — chỉ có nút Đóng. 
+[normal]  [IMG]
+[normal] Hình 3: Cửa sổ Xem ghi chú kiểm tra ở chế độ chỉ đọc 
+[Heading 1] PHẦN 4: XÓA GHI CHÚ 
+[normal] Yêu cầu quyền “Quản lý ghi chú kiểm tra bảo dưỡng”. 
+[Heading 2] 1. Khi nào xóa được 
+[normal] Chỉ xóa được ghi chú CHƯA được gắn vào cấp bảo dưỡng của bất kỳ gói dịch vụ nào. Với ghi chú đang được sử dụng, nút Xóa bị làm mờ và không bấm được; rê chuột vào nút sẽ hiện chú thích “Ghi chú đang được sử dụng ở nghiệp vụ khác, không thể xóa”. 
+[normal] Trong thực tế phần lớn ghi chú đều đang được sử dụng, nên nút Xóa thường ở trạng thái mờ. Đây là hành vi đúng, không phải lỗi. 
+[Heading 2] 2. Các bước xóa 
+[normal] Bước 1: Bấm nút Xóa (hình thùng rác màu đỏ) trên dòng cần xóa. 
+[normal] Bước 2: Đọc hộp “Xác nhận xóa” — câu hỏi có nêu tên hạng mục để đối chiếu. 
+[normal] Bước 3: Bấm “Xóa” để thực hiện hoặc “Hủy” để bỏ qua. 
+[normal] Sau khi xóa: hiện thông báo “Xóa thành công”, dòng biến mất và tổng số dưới bảng giảm đi một. Nếu đó là dòng cuối cùng của trang, màn hình tự lùi về trang trước. 
+[normal] Việc kiểm tra được thực hiện lại tại đúng thời điểm bấm Xóa, nên nếu người khác vừa gắn ghi chú này vào một gói dịch vụ thì thao tác xóa vẫn bị chặn. 
+[Heading 1] PHẦN 5: XUẤT EXCEL 
+[normal] Mọi người vào được màn hình đều dùng được chức năng này. 
+[normal] Bước 1: Gõ điều kiện tìm kiếm mong muốn. 
+[normal] Bước 2: Bấm nút “Xuất Excel” ở đầu bảng. 
+[normal] Bước 3: Chờ thông báo “Xuất Excel thành công” rồi mở file tải về. 
+[normal] File xuất ra có các cột Hạng mục, Ký hiệu và Mô tả, lấy đúng tập dữ liệu đang tìm kiếm và đủ mọi dòng khớp điều kiện chứ không chỉ trang đang xem. Nội dung mô tả dài vẫn giữ nguyên, không bị cắt cụt. 
+[Heading 1] PHẦN CHI TIẾT: THAO TÁC TỪNG BƯỚC 
+[Heading 2] A. Khai báo một hạng mục ghi chú mới 
+[normal] Bước A1: Vào phân hệ Chăm sóc khách hàng → Danh mục - Dịch vụ → Danh mục ghi chú kiểm tra bảo dưỡng. 
+[normal] Bước A2: Bấm “Tạo mới”. 
+[normal] Bước A3: Nhập Hạng mục, ví dụ “Kiểm tra siết lực bu lông đế máy”. 
+[normal] Bước A4: Nhập Ký hiệu viết tắt, ví dụ “KTSL”. Ký hiệu nên ngắn và dễ nhớ vì nhân viên kỹ thuật dùng để ghi nhanh tại hiện trường. 
+[normal] Bước A5: Nhập Mô tả chi tiết nếu cần, bấm “Lưu”. 
+[normal] Bước A6: Sang màn Danh mục gói bảo dưỡng, vào phần cấp bảo dưỡng, kiểm tra ghi chú vừa tạo đã có trong danh sách chọn. 
+[Heading 2] B. Sửa nội dung một ghi chú đang được sử dụng 
+[normal] Bước B1: Tìm ghi chú bằng ô tìm nhanh theo hạng mục hoặc ký hiệu. 
+[normal] Bước B2: Bấm nút Sửa, chỉnh lại Hạng mục hoặc Mô tả, bấm “Lưu”. 
+[normal] Bước B3: Mở một gói dịch vụ đang dùng ghi chú đó để kiểm tra nội dung đã đổi theo. 
+[Heading 2] C. Xóa một ghi chú khai nhầm 
+[normal] Bước C1: Tìm ghi chú cần xóa. 
+[normal] Bước C2: Rê chuột vào nút Xóa. Nếu nút bị mờ, đọc chú thích — ghi chú đã được gắn vào gói dịch vụ, không xóa được. 
+[normal] Bước C3: Nếu nút bấm được, bấm Xóa, đọc lại tên hạng mục trong hộp xác nhận rồi bấm “Xóa”. 
+[normal] Bước C4: Kiểm tra danh sách, tổng số dưới bảng đã giảm đi một. 

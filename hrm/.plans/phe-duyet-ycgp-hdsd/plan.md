@@ -25,6 +25,11 @@ Tài khoản chụp: namdangit@gmail.com (DNS ADMIN update) — https://dev-hrm.
 - [x] P8 Xuất Excel | P9 thông báo tự động | P10 sau tiếp nhận | P11 FAQ
 - [x] Build + verify: 14 Heading 1, 12 hình + 12 caption, 16 bảng, updateFields=true, broken=0, ~1.4MB
 
+## Phase 4: SRS (01/10/2026)
+- [x] SRS "SRS - Phê duyệt yêu cầu giải pháp.docx" theo form chuẩn 2026-09-24 (9 chức năng, 2 lối vào menu, ảnh thật `ycgp_pending_shots/`, generator `gen_srs.py`)
+- [x] Fix 02/10: Tiếp nhận lưu đúng "Ngày dự kiến xong GP (v1)" (bỏ ghi đè now() trong RequestSolutionService::receive, modal chặn ngày cả khi mở từ Chi tiết) + xuất Excel thêm trường "Mức độ ưu tiên" (priority_level_name) thay cho ánh xạ nhầm sang Giai đoạn dự án (pending + index); SRS sinh lại
+- [x] Test Playwright 02/10 (C1–C5, 5 TK khác quyền/phòng): 16 case, 15 Đạt, 1 Không đạt (C5d); dữ liệu YC 12/14 + lịch sử + mật khẩu TK test đã khôi phục; phát hiện mục menu Bán hàng không ẩn theo quyền (chưa sửa, đã báo)
+
 ### Checkpoint — 27/07/2026
 Vừa hoàn thành: HDSD_PheDuyet_YeuCauGiaiPhap.docx (11 phần + tổng quan).
 Đang làm dở: không

@@ -1,0 +1,31 @@
+{
+  "catalog": "Danh mục loại tài liệu",
+  "srs_file": "SRS - Danh mục loại tài liệu.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Hạng mục giải pháp (Quản lý hạng mục – popup Tạo/Sửa hồ sơ trình duyệt: Loại tài liệu của file; tab Files: lọc Nhóm tài liệu)",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solution-modules/_id/manager.vue:144 (ModuleApprovalModal), solutions/components/manager/ModuleApprovalModal.vue:71 (FileAttachmentTable show-attachment-type); solution-modules/_id/components/FilesTab.vue:179,303; BE Requests/SolutionModule/StoreReviewProfileRequest.php:23, SolutionModuleService.php:1025-1026,1073 (files.attachment_type_id)"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Nhiệm vụ (popup Tạo/Sửa nhiệm vụ – Loại tài liệu của file đính kèm)",
+      "duong_dan": "Công việc -> Nhiệm vụ",
+      "evidence": "FE pages/assign/tasks/components/CreateTaskModal.vue:772-778,2572 (assign/attachment-types/getAll); BE TaskStoreRequest.php:87, TaskUpdateRequest.php:115 (required|exists:attachment_types), lưu files.attachment_type_id qua app/Helper/TableFileHelper.php:75. Cùng màn ở CSKH trước bán -> Nhiệm vụ"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp (popup Tạo/Sửa hồ sơ trình duyệt giải pháp và hồ sơ hạng mục: Loại tài liệu của file; tab Files: lọc Nhóm tài liệu)",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/components/manager/SolutionApprovalModal.vue:73, ModuleApprovalModal.vue:71 (mở từ solutions/_id/manager.vue:151-165, solutions/_id/edit.vue:82); manager/FilesTab.vue:190,324; BE StoreSolutionReviewProfileRequest.php:37, SolutionService.php:2163-2164,2213"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Vấn đề (popup Tạo/Sửa vấn đề – Loại tài liệu của file đính kèm)",
+      "duong_dan": "Công việc -> Nhiệm vụ",
+      "evidence": "FE pages/assign/issues/components/CreateIssueModal.vue:429-434,1145 (assign/attachment-types/getAll); BE IssueService.php:625,678-685 (issue_attachments.attachment_type_id). Cùng màn ở CSKH trước bán -> Vấn đề"
+    }
+  ],
+  "notes": "KIỂM TRA XOÁ THIẾU: AttachmentType::isCanDelete() (Entities/AttachmentType/AttachmentType.php:64-67) chỉ đếm bảng files; KHÔNG xét issue_attachments.attachment_type_id (file đính kèm của Vấn đề lưu ở bảng riêng, IssueService.php:625; cột kiểu string — migration 2026_03_18_093635) và product_project_attachments.attachment_type_id → loại tài liệu chỉ dùng ở file đính kèm Vấn đề vẫn xoá được, Vấn đề mất tên loại. Code chết: ProductProjectService.php:113,153 lưu attachment_type_id từ trường 'group' nhưng FE Danh sách hàng tạm (pages/assign/product-project) không gửi attachments → không đưa vào bảng. Màn chỉ HIỂN THỊ: Dự án TKT – xem hồ sơ trình duyệt (prospective-projects/_id/manager.vue:819, mode view). Lưu ý PHÂN BIỆT: danh mục 'File đính kèm' ở Danh mục dùng chung -> Danh mục hàng hóa (/master-data/attachment-types, MasterData ProductCatalog\\AttachmentTypeController, danh mục ERP hàng hoá) là danh mục KHÁC, không thuộc phạm vi."
+}

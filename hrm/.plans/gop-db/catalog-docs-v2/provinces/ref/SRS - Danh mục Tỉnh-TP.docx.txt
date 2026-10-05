@@ -1,0 +1,303 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục Tỉnh/TP 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Danh mục Tỉnh/TP, nhằm: 
+[normal] Là căn cứ nghiệm thu chức năng. 
+[normal] Làm rõ ràng buộc trùng tên xét theo CẶP Quốc gia và Khu vực, khác với các màn địa lý còn lại. 
+[normal] Ghi nhận hiện trạng màn hình chưa được gắn quyền. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Tỉnh/TP | Đơn vị hành chính cấp tỉnh, trực thuộc một Quốc gia và một Khu vực.
+  | Biển số xe | Mã biển số của tỉnh, bắt buộc nhập, chỉ nhận chữ số.
+  | Mã số tỉnh | Mã tham khảo, chỉ nhận chữ số, không bắt buộc.
+  | Trạng thái Hoạt động | Tỉnh/TP dùng được ở các màn nghiệp vụ khác.
+  | Trạng thái Khóa | Tỉnh/TP không còn chọn được ở nơi khác nhưng vẫn nằm trong danh mục.
+  | SRS | Software Requirements Specification
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+[normal] Màn hình này KHÔNG gắn quyền ở bất kỳ chức năng nào. Mọi người dùng đã đăng nhập đều mở được màn hình và thực hiện được đầy đủ Thêm mới, Chỉnh sửa, Xóa, Khóa / Mở khóa.. 
+<<TABLE 2>>
+  | Tên quyền | Tác dụng trên màn hình
+  | (chưa khai báo quyền nào) | Toàn bộ chức năng của màn hình đều mở cho mọi người dùng đã đăng nhập.
+[normal] Vì chưa có quyền, giao diện KHÔNG ẩn hay làm mờ nút nào theo vai trò. Phía máy chủ cũng không kiểm tra quyền, nên gọi thẳng chức năng mà bỏ qua giao diện vẫn ghi được dữ liệu. 
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 3>>
+  | Chức năng | Người dùng đã đăng nhập
+  | FR-01 Xem danh sách tỉnh/TP | 
+  | FR-02 Tìm kiếm và lọc | 
+  | FR-03 Thêm mới tỉnh/TP | 
+  | FR-04 Chỉnh sửa tỉnh/TP | 
+  | FR-05 Xóa tỉnh/TP | 
+  | FR-06 Khóa / Mở khóa tỉnh/TP | 
+  | FR-07 Xem lịch sử thay đổi | 
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Danh mục Tỉnh/TP 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem danh sách tỉnh/TP 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 4>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem danh sách tỉnh/TP
+  | Mô tả | Hiển thị toàn bộ tỉnh/TP trong danh mục, có phân trang và sắp xếp.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Người dùng đã đăng nhập vào hệ thống.
+  | Dòng sự kiện chính | 1. Người dùng vào menu Danh mục chung → Địa lý → Danh mục Tỉnh/TP. / 2. Hệ thống nạp trang đầu tiên của danh sách. / 3. Bảng hiển thị dữ liệu kèm tổng số bản ghi.
+  | Dòng sự kiện phụ | • Danh mục chưa có bản ghi nào → bảng hiện thông báo không có dữ liệu. / • Phiên đăng nhập hết hạn → điều hướng về màn đăng nhập.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Tỉnh/TP 
+[normal]  [IMG]
+[normal] Hình 2: Màn Danh mục Tỉnh/TP lúc mới truy cập 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 5>>
+  | STT | Tên đối tượng | Loại | Mô tả
+  | 1 | STT | Table/Grid | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | 2 | Tên Tỉnh/TP | Table/Grid | Tên đầy đủ. Luôn hiển thị, sắp xếp được.
+  | 3 | Mã Tỉnh/TP | Table/Grid | Mã tham khảo, sắp xếp được.
+  | 4 | Biển số xe | Table/Grid | Mặc định ẩn.
+  | 5 | Quốc gia | Table/Grid | Mặc định ẩn.
+  | 6 | Khu vực | Table/Grid | Mặc định ẩn.
+  | 7 | Người sửa | Table/Grid | Mặc định ẩn.
+  | 8 | Ngày cập nhật | Table/Grid | Mặc định ẩn, sắp xếp được.
+  | 9 | Người tạo | Table/Grid | Người đã thêm bản ghi.
+  | 10 | Ngày tạo | Table/Grid | Thời điểm thêm, sắp xếp được.
+  | 11 | Trạng thái | Table/Grid | Hoạt động hoặc Khóa.
+  | 12 | Hành động | Table/Grid | Sửa, Xóa hiện thẳng; Khóa / Mở khóa và Lịch sử nằm trong nút ba chấm.
+  | 13 | Nút Tạo mới | Button | Mở cửa sổ thêm mới tỉnh/TP.
+  | 14 | Phân trang | Pagination | Nút về đầu / lùi / số trang / tiến / về cuối và ô chọn số dòng mỗi trang.
+  | 15 | Trạng thái rỗng | Label | Hiện thông báo không có dữ liệu khi danh sách trống.
+[normal] 2.1.4 Danh sách event và xử lý event 
+<<TABLE 6>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở màn hình | System | After: / – Nạp trang đầu tiên của danh sách và hiển thị tổng số bản ghi.
+  | 2 | Bấm tiêu đề cột sắp xếp được | Click | After: / – Đổi chiều sắp xếp và nạp lại danh sách từ trang 1.
+  | 3 | Chuyển trang | Click | Before: / – Giữ nguyên bộ lọc và thứ tự sắp xếp đang áp dụng. / After: / – Nạp dữ liệu trang mới, số thứ tự tiếp tục liên tục.
+  | 4 | Đổi số dòng mỗi trang | Change | After: / – Quay về trang 1 và nạp lại theo số dòng mới.
+[Heading 3] 2.2 Tìm kiếm và lọc 
+[normal] 2.2.1 Giới thiệu 
+<<TABLE 7>>
+  | Mục | Nội dung
+  | Tên chức năng | Tìm kiếm và lọc danh sách
+  | Mô tả | Thu hẹp danh sách bằng ô tìm kiếm nhanh và các tiêu chí lọc của màn hình.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục Tỉnh/TP.
+  | Dòng sự kiện chính | 1. Người dùng nhập từ khóa hoặc chọn tiêu chí lọc. / 2. Người dùng bấm Tìm kiếm. / 3. Hệ thống áp đồng thời mọi tiêu chí và nạp lại danh sách từ trang 1.
+  | Dòng sự kiện phụ | • Không có kết quả → bảng hiện thông báo không có dữ liệu. / • Bấm Làm mới → xóa hết tiêu chí VÀ nạp lại danh sách đầy đủ ngay.
+[normal] 2.2.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Tỉnh/TP 
+[normal]  [IMG]
+[normal] Hình 3: Khu vực tìm kiếm và lọc của màn Danh mục Tỉnh/TP 
+[normal] 2.2.3 Mô tả chi tiết giao diện 
+<<TABLE 8>>
+  | STT | Tên đối tượng | Loại | Phạm vi | Mô tả
+  | 1 | Ô tìm kiếm nhanh | Textbox | 0–255 ký tự | Tìm theo tên và mã Tỉnh/TP.
+  | 2 | Quốc gia | Dropdown | Danh sách | Lọc Tỉnh/TP theo quốc gia.
+  | 3 | Trạng thái | Dropdown | Hoạt động / Khóa | Bỏ trống thì hiện cả hai trạng thái.
+  | 4 | Nút Tìm kiếm | Button | – | Áp dụng các tiêu chí.
+  | 5 | Nút Làm mới | Button | – | Xóa hết tiêu chí VÀ nạp lại danh sách ngay.
+[normal] 2.2.4 Danh sách event và xử lý event 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Tìm kiếm | Click | Before: / – Thu thập giá trị của mọi tiêu chí đang có. / During: / – Áp đồng thời các tiêu chí theo kiểu “và”. / After: / – Nạp lại bảng từ trang 1 và cập nhật tổng số bản ghi.
+  | 2 | Bấm Làm mới | Click | After: / – Xóa trắng mọi tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+[Heading 3] 2.3 Thêm mới tỉnh/TP 
+[normal] 2.3.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 4: Biểu đồ Use Case — FR-03 Thêm mới tỉnh/TP 
+[normal] 2.3.2 Giới thiệu 
+<<TABLE 10>>
+  | Mục | Nội dung
+  | Tên chức năng | Thêm mới tỉnh/TP
+  | Mô tả | Thêm một tỉnh/TP mới vào danh mục thông qua cửa sổ nhập liệu.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Đang ở màn Danh mục Tỉnh/TP.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Tạo mới. / 2. Hệ thống mở cửa sổ nhập liệu với các ô để trống. / 3. Người dùng nhập thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu và ghi bản ghi mới. / 5. Cửa sổ đóng lại, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc hoặc trùng tên → báo lỗi đỏ ngay dưới ô tương ứng, cửa sổ KHÔNG đóng, dữ liệu đã nhập vẫn còn. / • Bấm “Lưu và tiếp tục” → ghi bản ghi rồi giữ cửa sổ mở với các ô đã xóa trắng, để nhập tiếp bản ghi kế theo. / • Bấm Đóng → hủy bỏ, không ghi gì.
+  | Yêu cầu đặc biệt | Cửa sổ có ba nút: Lưu, Lưu và tiếp tục, Đóng.
+[normal] 2.3.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Tỉnh/TP => Thêm mới 
+[normal] Modal Tạo tỉnh/TP được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Tạo tỉnh/TP 
+[normal] 2.3.4 Mô tả chi tiết giao diện 
+<<TABLE 11>>
+  | STT | Tên đối tượng | Loại | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Tên tỉnh/TP | Textbox | 0–255 ký tự | Có | Trống | Không được trùng trong cùng một cặp Quốc gia và Khu vực. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 2 | Mã số tỉnh | Textbox | 0–10 chữ số | Không | Trống | Chỉ nhận chữ số. Nhập chữ báo “Phải là số”.
+  | 3 | Biển số xe | Textbox | 0–50 chữ số | Có | Trống | Chỉ nhận chữ số. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 4 | Quốc gia | Dropdown | Danh sách | Có | Trống | Lấy từ Danh mục quốc gia. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 5 | Khu vực | Dropdown | Danh sách | Có | Trống | Lấy từ Danh mục khu vực. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 6 | Nút Lưu | Button | – | – | Hiển thị | Ghi bản ghi rồi đóng cửa sổ.
+  | 7 | Nút Lưu và tiếp tục | Button | – | – | Hiển thị | Ghi bản ghi rồi giữ cửa sổ mở để nhập tiếp.
+  | 8 | Nút Đóng | Button | – | – | Hiển thị | Hủy bỏ, không ghi gì.
+  | 9 | Thông báo lỗi | Toast / Alert | – | – | Ẩn | Chữ đỏ ngay dưới ô bị lỗi.
+[normal] 2.3.5 Danh sách event và xử lý event 
+<<TABLE 12>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Tạo mới | Click | After: / – Mở cửa sổ nhập liệu với các ô để trống.
+  | 2 | Bấm Lưu | Click | During: / – Tên tỉnh/TP để trống → hiển thị “Bắt buộc phải nhập”. / – Biển số xe để trống → hiển thị “Bắt buộc phải nhập”. / – Quốc gia để trống → hiển thị “Bắt buộc phải nhập”. / – Khu vực để trống → hiển thị “Bắt buộc phải nhập”. / – Tên đã tồn tại trong cùng một cặp Quốc gia và Khu vực → hiển thị “Tên khu vực này đã tồn tại”. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi bản ghi mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo thêm mới thành công.
+  | 3 | Bấm Lưu và tiếp tục | Click | During: / – Áp dụng đúng các quy tắc kiểm tra như nút Lưu. / After: / – Ghi bản ghi mới, xóa trắng các ô và GIỮ cửa sổ mở để nhập tiếp.
+  | 4 | Bấm Đóng | Click | After: / – Đóng cửa sổ, không ghi dữ liệu.
+[Heading 3] 2.4 Chỉnh sửa tỉnh/TP 
+[normal] 2.4.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 6: Biểu đồ Use Case — FR-04 Chỉnh sửa tỉnh/TP 
+[normal] 2.4.2 Giới thiệu 
+<<TABLE 13>>
+  | Mục | Nội dung
+  | Tên chức năng | Chỉnh sửa tỉnh/TP
+  | Mô tả | Sửa thông tin của một tỉnh/TP đã có. Dùng chung cửa sổ với chức năng Thêm mới.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Bản ghi cần sửa đang ở trạng thái Hoạt động.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng bút chì ở dòng cần sửa. / 2. Hệ thống mở cửa sổ với dữ liệu hiện tại đã điền sẵn. / 3. Người dùng sửa thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu, ghi nhận thay đổi và ghi một dòng lịch sử. / 5. Cửa sổ đóng lại, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Trùng tên với bản ghi khác → báo lỗi, cửa sổ không đóng. / • Giữ nguyên tên của chính bản ghi đang sửa → lưu bình thường, không báo trùng. / • Bản ghi đã Khóa → nút Sửa KHÔNG hiển thị, phải Mở khóa trước.
+[normal] 2.4.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Tỉnh/TP => Chỉnh sửa 
+[normal] Modal Sửa tỉnh/TP được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 7: Cửa sổ Chỉnh sửa tỉnh/TP 
+[normal] 2.4.4 Mô tả chi tiết giao diện 
+<<TABLE 14>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Tên tỉnh/TP | Textbox | Enable | 0–255 ký tự | Có | Dữ liệu hiện tại | Không được trùng trong cùng một cặp Quốc gia và Khu vực. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 2 | Mã số tỉnh | Textbox | Enable | 0–10 chữ số | Không | Dữ liệu hiện tại | Chỉ nhận chữ số. Nhập chữ báo “Phải là số”.
+  | 3 | Biển số xe | Textbox | Enable | 0–50 chữ số | Có | Dữ liệu hiện tại | Chỉ nhận chữ số. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 4 | Quốc gia | Dropdown | Enable | Danh sách | Có | Dữ liệu hiện tại | Lấy từ Danh mục quốc gia. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 5 | Khu vực | Dropdown | Enable | Danh sách | Có | Dữ liệu hiện tại | Lấy từ Danh mục khu vực. Bỏ trống báo “Bắt buộc phải nhập”.
+  | 6 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi thay đổi rồi đóng cửa sổ.
+  | 7 | Nút Đóng | Button | Enable | – | – | Hiển thị | Hủy bỏ, không ghi gì.
+[normal] 2.4.5 Danh sách event và xử lý event 
+<<TABLE 15>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng bút chì | Click | Before: / – Bản ghi đã Khóa thì nút này không hiển thị. / After: / – Mở cửa sổ với dữ liệu hiện tại đã điền sẵn.
+  | 2 | Bấm Lưu | Click | During: / – Tên tỉnh/TP để trống → hiển thị “Bắt buộc phải nhập”. / – Biển số xe để trống → hiển thị “Bắt buộc phải nhập”. / – Quốc gia để trống → hiển thị “Bắt buộc phải nhập”. / – Khu vực để trống → hiển thị “Bắt buộc phải nhập”. / – Tên đã tồn tại trong cùng một cặp Quốc gia và Khu vực → hiển thị “Tên khu vực này đã tồn tại”. / – Bỏ qua kiểm tra trùng đối với chính bản ghi đang sửa. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi nhận thay đổi và ghi một dòng lịch sử nêu giá trị cũ và giá trị mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo cập nhật thành công.
+[Heading 3] 2.5 Xóa tỉnh/TP 
+[normal] 2.5.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 8: Biểu đồ Use Case — FR-05 Xóa tỉnh/TP 
+[normal] 2.5.2 Giới thiệu 
+<<TABLE 16>>
+  | Mục | Nội dung
+  | Tên chức năng | Xóa tỉnh/TP
+  | Mô tả | Loại một tỉnh/TP khỏi danh mục.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Bản ghi cần xóa đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng thùng rác ở dòng cần xóa. / 2. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. / 3. Người dùng bấm Xóa để xác nhận. / 4. Hệ thống loại bản ghi khỏi danh sách và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Bấm Hủy → đóng hộp, không thay đổi gì. / • Bản ghi đang được dùng ở cấp địa chỉ bên dưới hoặc ở dữ liệu nghiệp vụ khác → hệ thống từ chối và nêu lý do. / • Bản ghi đã Khóa → nút Xóa KHÔNG hiển thị.
+[normal] 2.5.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Tỉnh/TP => Xóa 
+[normal] Modal Xóa tỉnh/TP được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 9: Hộp xác nhận xóa tỉnh/TP 
+[normal] 2.5.4 Mô tả chi tiết giao diện 
+<<TABLE 17>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Mô tả
+  | 1 | Biểu tượng thùng rác | Icon Button | Enable | Nằm trên cột Hành động của từng dòng.
+  | 2 | Tiêu đề hộp xác nhận | Label | Hiển thị | Nêu rõ loại đối tượng đang xóa.
+  | 3 | Nội dung hộp xác nhận | Label | Hiển thị | Nêu rõ tên bản ghi để tránh thao tác nhầm dòng.
+  | 4 | Nút Xóa | Button | Enable | Xác nhận thực hiện.
+  | 5 | Nút Hủy | Button | Enable | Đóng hộp, không làm gì.
+[normal] 2.5.5 Danh sách event và xử lý event 
+<<TABLE 18>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng thùng rác | Click | Before: / – Bản ghi đã Khóa thì nút này không hiển thị. / After: / – Hiện hộp xác nhận kèm tên bản ghi.
+  | 2 | Bấm Xóa trong hộp xác nhận | Click | During: / – Bản ghi đang được dùng ở nơi khác → hiển thị thông báo từ chối và dừng xử lý. / After: / – Loại bản ghi khỏi danh sách. / – Nạp lại danh sách và hiển thị thông báo xóa thành công.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp xác nhận, không thay đổi gì.
+[Heading 3] 2.6 Khóa / Mở khóa tỉnh/TP 
+[normal] 2.6.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 10: Biểu đồ Use Case — FR-06 Khóa / Mở khóa tỉnh/TP 
+[normal] 2.6.2 Giới thiệu 
+<<TABLE 19>>
+  | Mục | Nội dung
+  | Tên chức năng | Khóa / Mở khóa tỉnh/TP
+  | Mô tả | Đổi trạng thái tỉnh/TP qua lại giữa Hoạt động và Khóa. Bản ghi đã Khóa vẫn nằm trong danh mục nhưng không chọn được ở các màn nghiệp vụ khác.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Bản ghi cần đổi trạng thái đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng mở nút ba chấm ở dòng cần thao tác. / 2. Người dùng chọn Khóa (hoặc Mở khóa). / 3. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. / 4. Người dùng xác nhận. / 5. Hệ thống đổi trạng thái, ghi lịch sử và cập nhật cột Trạng thái.
+  | Dòng sự kiện phụ | • Bấm Hủy → đóng hộp, trạng thái không đổi. / • Sau khi Khóa, hai nút Sửa và Xóa của dòng đó BIẾN MẤT, chỉ còn Mở khóa và Lịch sử. / • Bản ghi đã bị người khác đổi trạng thái trước đó → hệ thống báo dữ liệu đã thay đổi.
+[normal] 2.6.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Tỉnh/TP => Khóa/ Mở khóa 
+[normal] Modal Khóa tỉnh/TP được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 11: Hộp xác nhận khóa tỉnh/TP 
+[normal] 2.6.4 Mô tả chi tiết giao diện 
+<<TABLE 20>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Mô tả
+  | 1 | Nút ba chấm “Hành động khác” | Icon Button | Enable | Chứa hai mục Khóa / Mở khóa và Lịch sử.
+  | 2 | Mục Khóa / Mở khóa | Button | Enable | Nhãn đổi theo trạng thái hiện tại của bản ghi.
+  | 3 | Tiêu đề hộp xác nhận | Label | Hiển thị | Đổi thành “Mở khóa tỉnh/TP” khi bản ghi đang bị khóa.
+  | 4 | Nội dung hộp xác nhận | Label | Hiển thị | Nêu rõ tên bản ghi.
+  | 5 | Nút Khóa / Mở khóa | Button | Enable | Xác nhận thực hiện.
+  | 6 | Nút Hủy | Button | Enable | Đóng hộp, không làm gì.
+  | 7 | Cột Trạng thái | Badge | Read-only | Hoạt động hoặc Khóa, hai màu khác nhau.
+[normal] 2.6.5 Danh sách event và xử lý event 
+<<TABLE 21>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút ba chấm | Click | After: / – Mở menu gồm hai mục Khóa / Mở khóa và Lịch sử.
+  | 2 | Chọn Khóa hoặc Mở khóa | Click | After: / – Hiện hộp xác nhận kèm tên bản ghi.
+  | 3 | Xác nhận trong hộp | Click | During: / – Bản ghi không còn tồn tại hoặc đã ở trạng thái đích → hiển thị thông báo dữ liệu đã thay đổi và dừng xử lý. / After: / – Đổi trạng thái bản ghi, KHÔNG xóa dữ liệu. / – Ghi một dòng lịch sử đổi trạng thái. / – Cập nhật cột Trạng thái và các nút thao tác của dòng.
+  | 4 | Bấm Hủy | Click | After: / – Đóng hộp xác nhận, không thay đổi gì.
+[Heading 3] 2.7 Xem lịch sử thay đổi 
+[normal] 2.7.1 Giới thiệu 
+<<TABLE 22>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem lịch sử thay đổi
+  | Mô tả | Liệt kê các lần thay đổi của một tỉnh/TP, kèm giá trị cũ, giá trị mới, người thực hiện và thời điểm.
+  | Tác nhân | Người dùng đã đăng nhập
+  | Điều kiện ban đầu | Bản ghi cần xem đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng mở lịch sử của bản ghi từ cột Hành động. / 2. Hệ thống mở cửa sổ Lịch sử thay đổi. / 3. Danh sách các lần thay đổi hiển thị theo thứ tự mới nhất ở trên cùng.
+  | Dòng sự kiện phụ | • Bản ghi chưa từng sửa → cửa sổ hiện “Chưa có lịch sử thao tác nào.” / • Cửa sổ có bộ lọc riêng để thu hẹp theo loại thay đổi.
+[normal] 2.7.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Danh mục => Địa lý => Tỉnh/TP => Lịch sử 
+[normal] Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 12: Cửa sổ Lịch sử thay đổi của tỉnh/TP 
+[normal] 2.7.3 Mô tả chi tiết giao diện 
+<<TABLE 23>>
+  | STT | Tên đối tượng | Loại | Giá trị ban đầu | Mô tả
+  | 1 | Tiêu đề cửa sổ | Label | Lịch sử thay đổi | Kèm dòng phụ ghi loại đối tượng và tên bản ghi.
+  | 2 | Bộ lọc | Dropdown | Trống | Thu hẹp theo loại thay đổi.
+  | 3 | Danh sách thay đổi | Table/Grid | Theo dữ liệu | Sắp xếp mới nhất ở trên cùng.
+  | 4 | Thời điểm | Text | Theo dữ liệu | Định dạng dd/mm/yyyy hh:mm.
+  | 5 | Loại thay đổi | Badge | Theo dữ liệu | Ví dụ: Thay đổi thông tin, Khóa, Mở khóa.
+  | 6 | Người thực hiện | Text | Theo dữ liệu | Kèm mã nhân viên và phòng ban.
+  | 7 | Giá trị cũ và giá trị mới | Text | Theo dữ liệu | Hiển thị hai vế cho từng trường đã đổi.
+  | 8 | Trạng thái rỗng | Label | Ẩn | Hiện “Chưa có lịch sử thao tác nào.” khi bản ghi chưa từng sửa.
+  | 9 | Nút Đóng | Button | Hiển thị | Đóng cửa sổ.
+[normal] 2.7.4 Danh sách event và xử lý event 
+<<TABLE 24>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở lịch sử của một bản ghi | Click | After: / – Mở cửa sổ và nạp danh sách thay đổi theo thứ tự mới nhất trước.
+  | 2 | Đổi bộ lọc trong cửa sổ | Change | After: / – Nạp lại danh sách theo tiêu chí đã chọn.
+  | 3 | Bấm Đóng | Click | After: / – Đóng cửa sổ; danh sách phía sau giữ nguyên bộ lọc và trang.
+[Heading 1] Phần 4. Quy tắc nghiệp vụ 
+[normal] BR-01 — Ràng buộc trùng tên 
+[normal] Tên tỉnh/TP không được trùng trong cùng một cặp Quốc gia và Khu vực. 
+[normal] Thông báo khi trùng: “Tên khu vực này đã tồn tại”. 
+[normal] BR-02 — Quan hệ với các cấp địa chỉ khác 
+[normal] Mỗi tỉnh/TP bắt buộc trực thuộc Quốc gia và Khu vực. 
+[normal] Đổi cấp trên thì các ô cấp dưới bị xóa trắng và nạp lại theo giá trị mới. 
+[normal] Danh mục này là nguồn dữ liệu cho ô địa chỉ ở các màn nghiệp vụ khác, nên sửa hoặc khóa một bản ghi sẽ ảnh hưởng tới mọi màn đang dùng nó. 
+[normal] BR-03 — Khóa không phải Xóa 
+[normal] Bản ghi đã Khóa VẪN nằm trong danh mục với nhãn Khóa, vẫn xem được lịch sử. 
+[normal] Tác dụng của Khóa là chặn bản ghi khỏi các ô chọn ở màn nghiệp vụ khác. 
+[normal] Sau khi Khóa, hai nút Sửa và Xóa của dòng đó BIẾN MẤT — muốn sửa phải Mở khóa trước. 
+[normal] BR-04 — Bộ lọc mặc định không lọc trạng thái 
+[normal] Vào màn hình, danh sách hiện CẢ bản ghi Hoạt động lẫn bản ghi đã Khóa. 
+[normal] Trước đây bộ lọc mặc định là Hoạt động nên giấu mất bản ghi đã khóa; hành vi hiện tại là chủ đích sửa lại. 
+[normal] BR-05 — Lịch sử thay đổi sắp xếp mới nhất trước 
+[normal] Mọi thao tác sửa và đổi trạng thái đều sinh dòng lịch sử. 
+[normal] Danh sách lịch sử luôn sắp xếp mới nhất ở trên cùng. 
+[normal] Mỗi dòng nêu trường đã đổi, giá trị cũ, giá trị mới, người thực hiện và thời điểm. 

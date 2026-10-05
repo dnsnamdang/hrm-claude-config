@@ -33,6 +33,7 @@ File Excel chuẩn phải có **ĐỦ 4 KHỐI** theo đúng thứ tự (xem m�
 | Id permission, group, type, guard | "permission id 1123", "type 24", `role_has_permissions`, "guard api" |
 | Tên hàm / class / file | `CustomerListResource`, `filled()`, `has()`, `number_format` |
 | Đường dẫn route / endpoint | `/api/v1/customer-care/costs`, `GET /{cost}/lock`, `checkPermission` |
+| URL / đường dẫn màn hình (chốt 2026-09-25) | `http://hrm-crm.eteksofts.com/customer-care/services/create`, `/customer-care/services/{id}/edit`, "gõ thẳng đường dẫn …" — cột Bước thực hiện / Tiền điều kiện chỉ ghi **đường bấm menu + nút** |
 | Mã HTTP | "BE trả 422", "403 Forbidden", "trả 404" |
 | Tên tham số kỹ thuật | `sort_by=name`, `per_page`, `meta.total`, `current_company_role`, `localStorage`, `filterCollapsed` |
 
@@ -258,6 +259,24 @@ I: - Menu ghi 'Nhiệm vụ'.
   bảng, lệch toàn bộ khối bên dưới.
 - Tự kiểm trước khi bàn giao: mở ngẫu nhiên 3 ô cột G và 3 ô cột I — phải thấy nhiều dòng; và
   `grep -P '[\x{2190}-\x{2BFF}\x{1F300}-\x{1FAFF}]'` trên nội dung sinh ra phải RỖNG.
+
+## Sửa tab testcase ĐÃ CÓ trên Google Sheet (bài học 28/09/2026)
+
+Tab online có tester sửa tay SONG SONG với mình — số hàng đổi bất cứ lúc nào.
+- **Dump lại tab NGAY trước khi chạy script sửa**, không dùng bản dump từ đầu buổi. 28/09 tester
+  vừa xoá 4–10 hàng ở 3 tab (Cấp DV, Ghi chú KT, Chi phí) giữa lúc soạn và lúc chạy → mọi số hàng
+  trong kế hoạch lệch; chạy vào là dán đè nhầm case.
+- **Peek các ô mốc trước khi chạy** (hàng chèn, hàng đầu nhóm, TC ID ở ô sửa) và so với dump. Lệch
+  1 ô là dừng, rebase kế hoạch theo dump mới — không "chạy thử xem sao".
+- Rebase xong vẫn phải báo user: edit nhắm vào case người khác đã xoá thì BỎ (không thêm lại case
+  họ đã xoá); ô họ vừa sửa chữ mà edit của mình ghi đè cả ô thì nêu ra để user quyết.
+- **Theo giọng văn tester đang chuẩn hoá** trên chính tab đó: 28/09 tester đổi hàng loạt
+  "nạp lại" → "**tải lại**" và xoá các case kiểu "gọi thẳng API / bỏ qua giao diện" (testcase là góc
+  nhìn người dùng cuối). Case mới đừng viết ngược lại hướng đó; muốn giữ case API thì hỏi user.
+- Tester đang thao tác trên tab thì hỏi user thời điểm chạy, đừng chạy chèn hàng hàng loạt cùng lúc.
+- Chữ chép từ ô cũ mang theo lỗi gõ (`có2 nút`, `tên  đừng`) — ô đã viết lại thì sửa luôn.
+- **Emoji cấm cả khi mô tả ô chọn có biểu tượng ổ khoá**: viết "có biểu tượng ổ khóa trước tên",
+  KHÔNG ghi `🔒 Tên` (đã lỡ dán vào tab Ngân hàng, Gói BD ngày 28/09 — phải sửa lại).
 
 ## Style + format
 

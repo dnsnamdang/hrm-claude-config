@@ -1,0 +1,68 @@
+{
+  "catalog": "Danh mục loại meeting",
+  "srs_file": "SRS - Danh mục loại meeting.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Công việc của tôi – tab Meeting",
+      "duong_dan": "Công việc",
+      "evidence": "FE pages/assign/my-job/components/MeetingsTab.vue:302, MeetingUpcomingModal.vue:267 · BE Services/MyJobService.php:81,159 · Lối vào: menu-sidebar.js:17"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp – tab Meeting",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/components/manager/MeetingsTab.vue:20, MeetingUpcomingModal.vue:28 · BE Services/SolutionService.php:1125 · Lối vào: menu-sidebar.js:31"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Hạng mục giải pháp – tab Meetings",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solution-modules/_id/components/MeetingsTab.vue:20 · BE Services/SolutionModuleService.php:804 · Lối vào: menu-sidebar.js:33"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingForm.vue, GeneralInfo.vue, index.vue:35, components/assign/meeting/CustomerMeetingHistoryModal.vue:183 · BE Requests/Meeting/MeetingCreateApiRequest.php:29, MeetingUpdateApiRequest.php:100 (meetings.meeting_type_id); Criteria/MeetingCriteria.php:112, MeetingCalendarCriteria.php:66 · Lối vào: meeting.js:63"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Meeting theo nhân viên/ phòng ban/ công ty",
+      "duong_dan": "Meeting -> Báo cáo",
+      "evidence": "FE pages/assign/report/meeting-by-employees/index.vue:61. Cũng có ở CSKH trước bán -> Báo cáo dự án tiền khả thi -> Báo cáo meeting nhân viên theo thời gian · Lối vào: meeting.js:111"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Meeting theo dự án",
+      "duong_dan": "Meeting -> Báo cáo",
+      "evidence": "FE pages/assign/report/meeting-by-projects/index.vue:64 · BE MeetingController.php:1114. Cũng có ở CSKH trước bán -> Báo cáo dự án tiền khả thi -> Báo cáo meeting theo Dự án TKT · Lối vào: meeting.js:112"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo meeting theo Dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/meeting-by-projects/index.vue:64 · BE MeetingController.php:1114. Cũng có ở CSKH trước bán -> Báo cáo dự án tiền khả thi -> Báo cáo meeting theo Dự án TKT · Lối vào: presale.js:91"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo meeting nhân viên theo thời gian",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/meeting-by-employees/index.vue:61. Cũng có ở CSKH trước bán -> Báo cáo dự án tiền khả thi -> Báo cáo meeting nhân viên theo thời gian · Lối vào: presale.js:92"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo phát triển thị trường - Khách hàng",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo thị trường",
+      "evidence": "FE pages/assign/report/customer-market-development/index.vue:227 · BE Services/Report/CustomerMarketDevelopmentPrintService.php · Lối vào: presale.js:119"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo kết quả meeting theo thị trường",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo thị trường",
+      "evidence": "FE pages/assign/report/meeting-by-market/index.vue:197 · Lối vào: presale.js:121"
+    }
+  ],
+  "notes": "Kiểm tra xoá ĐỦ: MeetingType::isCanDelete() (Entities/MeetingType.php:47) xét meetings + chặn loại hệ thống; meetings là bảng duy nhất có meeting_type_id. Lưu ý: Báo cáo kết quả CSKH tiềm năng (PotentialCustomerCareService.php:173) và Dự án TKT (ProspectiveProjectService.php:1281) lọc cứng theo MÃ loại hệ thống CODE_PRODUCT_INTRO, không cho chọn → không đưa vào bảng; nếu đổi mã/xoá loại hệ thống sẽ ảnh hưởng (đã chặn bằng isSystem). Chỉ hiển thị tên loại (không chọn/lọc): Lịch làm việc của tôi (MeetingDrawerBody.vue), Yêu cầu giải pháp / Dự án TKT – tab Meetings — bỏ.",
+  "changes": "Trước 8 dòng -> sau 10 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách 2 báo cáo meeting thành 2 lối vào (Meeting -> Báo cáo; CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi, nhãn \"Báo cáo meeting theo Dự án TKT\" / \"Báo cáo meeting nhân viên theo thời gian\"). Sửa đường dẫn 2 báo cáo thị trường thành \"CSKH trước bán -> Báo cáo -> Báo cáo thị trường\". Nhãn tab theo đúng UI (Quản lý giải pháp: \"Meeting\"; Hạng mục giải pháp: \"Meetings\"). Bỏ \"(ô lọc …)\", \"popup Meeting sắp tới\" khỏi nhãn."
+}

@@ -1,0 +1,25 @@
+{
+  "catalog": "Danh mục mẫu phiếu thu thập thông tin",
+  "srs_file": "SRS - Phiếu thu thập thông tin.docx",
+  "rows": [
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT (Thêm/Sửa – tự gắn mẫu phiếu theo Ứng dụng; Quản lý dự án – nhập Phiếu thu thập thông tin)",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/prospective-projects/components/ProjectInfoSection.vue:609 (form-templates/find-by-criteria), formTabInput.vue:30, _id/manager.vue:190 · BE prospective_projects.form_template_id / form_template_snapshot_id; DetailProspectiveProjectResource.php:207,330"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Yêu cầu giải pháp – tab Phiếu thu thập thông tin",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/request-solution/components/RequestSolutionForm.vue:268, FormTab.vue · BE FormTemplateController.php:274 storeAdditionalQuestions (form_section/question snapshots)"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting (Thêm/Sửa meeting – tab Dự án tiền khả thi: phiếu khảo sát; Nhập / In phiếu khảo sát)",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingProject.vue:124 (FormPreview), _id/survey-input.vue, _id/survey-print.vue · BE Requests/Meeting/MeetingCreateApiRequest.php:133, MeetingUpdateApiRequest.php:209; Services/MeetingService.php:574-657,1108-1214 (form_template_snapshots.base_form_template_id, form_answers.form_template_id)"
+    }
+  ],
+  "notes": "Kiểm tra xoá KHÔNG CÓ ở BE: FormTemplateController::destroy() (Controller:177) → FormTemplateService::destroy() (Service:519) xoá thẳng section/group/question rồi xoá mẫu, KHÔNG kiểm prospective_projects.form_template_id, form_template_snapshots.base_form_template_id, form_answers.form_template_id (Entity có sẵn quan hệ prospectiveProjects() nhưng không dùng). FE chỉ hiện nút 'Xoá mẫu' khi trạng thái Nháp (form-templates/index.vue:692) → gọi API trực tiếp vẫn xoá được mẫu Hoạt động/Khoá đang dùng; bảng không có khoá ngoại → id mồ côi (form_answers cũ fallback theo form_template_id sẽ mất phiếu). Ngân hàng câu hỏi khảo sát và Ứng dụng là chiều ngược (mẫu phiếu tham chiếu chúng), không tính."
+}

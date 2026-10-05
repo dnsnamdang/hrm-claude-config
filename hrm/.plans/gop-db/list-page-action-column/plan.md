@@ -70,3 +70,5 @@ Vừa hoàn thành: toàn bộ code Phase 1, dev server 3002 compile OK (HTTP 20
 Đang làm dở: không.
 Bước tiếp theo: user verify UI; sau đó nhân bản quy ước sang các màn danh sách khác.
 Blocked:
+
+- [x] Cột Hành động trong popup Tuỳ chỉnh cột: cho kéo đổi vị trí, không cho ẩn (mixin đổi locked→required cho key actions + modal) — 2026-10-02

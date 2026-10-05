@@ -72,6 +72,11 @@
 
 ---
 
+### Task 9: SRS màn Danh mục Nhóm ngành (2026-09-24)
+- [x] **B1.** Sinh `SRS - Danh mục nhóm ngành.docx` bằng `gen_srs.py` theo form chuẩn (ảnh chụp thật từ bản `tpe` cổng 3005, thư mục `nhom-nganh_shots/`).
+
+---
+
 ## Checkpoint
 
 ### Checkpoint — 2026-08-23 (wrap up)
