@@ -1887,6 +1887,20 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Hoàn thành
 
+- sale-transport-cost-by-staff → @junfoke → .plans/gop-db/sale-transport-cost-by-staff/plan.md
+  Chuyển Hoàn thành: 2026-10-06 — đã push `develop` cả 2 repo. Còn: chạy SQL quyền 1680-1682 trên server · kế toán xác nhận cước không mã công việc.
+  Trạng thái: 🟢 **CODE XONG BE + FE, khớp ERP + Playwright (05/10/2026)**, nhánh `develop`. **Đã push `develop`.**
+  Port "Báo cáo chi phí vận chuyển theo NV kinh doanh" → `/sale/transport-cost-by-staff`, quyền 1680-1682 (chỉ mở rộng phạm vi).
+  Còn lại: chạy SQL quyền 1680-1682 trên server · kế toán xác nhận 215,7 tr cước không mã công việc (đang loại như ERP).
+  Spec: docs/superpowers/specs/gop-db/2026-10-05-sale-transport-cost-by-staff-design.md | Tóm tắt: .plans/gop-db/sale-transport-cost-by-staff/design.md
+
+- presale-division-market-report → @junfoke → .plans/gop-db/presale-division-market-report/plan.md
+  Chuyển Hoàn thành: 2026-10-06 — đã push `develop` cả 2 repo. Còn: chạy SQL quyền 1679 trên server + gán vai trò.
+  Trạng thái: 🟢 **CODE XONG BE + FE, đã đối chiếu ERP + Playwright (05/10/2026)**, nhánh `develop`. **Đã push `develop`.**
+  Port "Báo cáo phân chia thị trường" → `/assign/report/division-market` (CSKH trước bán), quyền mới id 1679.
+  Còn lại: chạy SQL quyền 1679 trên server + gán cho vai trò.
+  Spec: docs/superpowers/specs/gop-db/2026-10-05-presale-division-market-report-design.md | Tóm tắt: .plans/gop-db/presale-division-market-report/design.md
+
 - finance-bill-adjust-dept-request (fix 03/10, Phase 47) → @khoipv → .plans/gop-db/finance-bill-adjust-dept-request/plan.md
   Hoàn thành: 2026-10-05 — đã fix lỗi popup chọn hợp đồng hiện HĐ của khách bên kia (popup mở trước khi prop objectId kịp cập nhật).
 
