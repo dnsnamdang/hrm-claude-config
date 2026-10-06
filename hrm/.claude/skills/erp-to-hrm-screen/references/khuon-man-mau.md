@@ -354,9 +354,9 @@ Tiêu đề chi tiết: `Chi tiết <đối tượng>: <mã>` — **chỉ ghép 
 - Thứ tự nút form: **Lưu nháp → Lưu / Gửi duyệt / In → Xuất file, Xem trước → Quay lại danh sách**.
 - Validate realtime bằng `vee-validate` gắn trên component `V2Base*`. **Lưu nháp chỉ nới `required`**:
   giữ đúng 1 trường đại diện — Tên, hoặc trường user chốt cho màn (vd Kho vật lý, Loại yêu cầu; thường
-  là cột NOT NULL không default). Rule định dạng + ràng buộc nghiệp vụ vẫn chặn cả khi nháp. Required
-  khi lưu chính thức do BE quyết theo `status` rồi trả 422 → FE map vào `formError`; required có điều
-  kiện (vd tỷ giá khi khác VND) phải gắn ở FE. Chi tiết: skill `form-validate` §1.
+  là cột NOT NULL không default). Rule định dạng + ràng buộc nghiệp vụ vẫn chặn cả khi nháp. Khi Lưu /
+  Gửi duyệt chính thức, **mọi ô bắt buộc validate ở cả FE lẫn BE** (chốt 06/10/2026) — bấm Lưu khi trống
+  thì tất cả đỏ cùng lúc, BE vẫn kiểm lại và trả 422. Chi tiết: skill `form-validate` §1.
 - Select trong modal/popup dùng `V2BaseSelectInModal`, ngoài modal dùng `V2BaseSelect`.
 - Danh mục đã khóa vẫn phải hiện đúng tên khi bản ghi đang dùng nó (🔒 do
   `utils/select2LockedOption.js` tự gắn — FE không phải khai gì).

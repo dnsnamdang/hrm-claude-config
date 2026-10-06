@@ -63,7 +63,8 @@ khi code, không cần mở lại .docx. Khi .docx ra bản mới → cập nh�
 - Trường chọn danh mục **chỉ hiển thị danh mục đang hoạt động**.
 - **Lưu nháp chỉ bắt required trường Tên**, các trường khác không required.
   (HRM áp: 1 trường đại diện — Tên hoặc trường user chốt cho màn khi phiếu không có Tên; rule định dạng
-  vẫn chặn khi nháp — xem `form-validate/SKILL.md` §1.)
+  vẫn chặn khi nháp. Khi Lưu / Gửi duyệt chính thức: mọi ô bắt buộc validate ở **cả FE lẫn BE**, báo đỏ
+  cùng lúc — xem `form-validate/SKILL.md` §1.)
 
 ---
 

@@ -19,7 +19,7 @@ Nghiệp vụ (CLAUDE.md): dropdown chỉ liệt kê danh mục **còn hoạt đ
 
 1. 🔒 hiện ở **CẢ ô đang hiển thị giá trị đã chọn** (và chip của select chọn nhiều), không chỉ trong dropdown. Mở màn Sửa là thấy ngay mình đang giữ danh mục đã khoá.
 2. Danh mục đã khoá **chỉ được hiện đúng ở bản ghi đang dùng nó**. Đổi sang giá trị khác → option khoá cũ **biến mất ngay**, không chờ F5. Kịch bản phải đúng: chọn A → khoá A → mở Sửa (A vẫn hiện, có 🔒) → đổi sang B, Lưu → mở Sửa lại → **A không còn trong danh sách chọn nữa**.
-3. Vì (2), **store dùng chung KHÔNG được cache danh mục đã khoá**. `optionsSelect` chỉ cache bản ghi còn hoạt động; danh mục khoá thuộc về đúng màn đang mở nên do màn tự giữ.
+3. Vì (2), **store dùng chung KHÔNG được cache danh mục đã khoá**. `optionsSelect` chỉ cache bản ghi còn hoạt động; danh mục khoá thuộc về đúng màn đang mở nên do màn tự giữ — dùng mixin có sẵn **`utils/mixins/lockedCatalogOptionsMixin.js`** (đang dùng ở 23 file), đừng tự viết lại phần giữ option khoá cục bộ.
 
 ### BE — 2 việc
 
@@ -136,6 +136,23 @@ select2 4.0.13 vẫn render `.select2-selection__clear` kể cả khi `disabled`
 một nút × chết trên ô chỉ-đọc. Đã ẩn sẵn bằng rule chung trong `V2BaseSelect.vue`
 (`div.v2-select .select2-container--disabled .select2-selection__clear { display: none }`),
 đồng bộ với nút × trên chip của select chọn nhiều. Màn nghiệp vụ không phải khai gì.
+
+### Xoá giá trị phải HỎI XÁC NHẬN → chặn dropdown tự mở
+
+select2 mở dropdown ngay sau khi bấm ×. Nếu xoá giá trị đó cần popup xác nhận (vd đổi nhân viên khi
+phiếu đã có hàng), dropdown đè lên popup, không bấm được nút. Chặn `select2:opening` ngay sau
+`select2:unselecting` — khuôn `bindEmployeeClearNoOpen` ở
+`pages/finance/accounting-prepick-cancels/components/AccountingPrepickCancelForm.vue` (803f62749). Muốn đưa vào
+`V2BaseSelect` cho mọi màn thì hỏi trước (component dùng chung).
+
+---
+
+## 1c. Cache danh mục trong Vuex phải được LÀM MỚI
+
+CLAUDE.md khuyến khích cache danh mục ít đổi vào store (`store/optionsSelect.js`). Cái giá: thêm/sửa/khoá
+ở màn danh mục xong, dropdown ở màn khác vẫn là danh sách cũ tới khi F5 (#11377 BUG7: thêm Nhóm ngành
+xong ô Lĩnh vực không có). Mỗi danh mục cache phải có action xoá cache (khuôn `clearInvestmentScopes`),
+và màn danh mục đó gọi nó sau khi thêm / sửa / khoá / mở khoá / xoá thành công.
 
 ---
 

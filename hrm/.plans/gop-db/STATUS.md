@@ -68,6 +68,7 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- popup-chon-so-dong — popup CHỌN bản ghi: số dòng/trang 10/20/50/100 (34 popup, hằng `utils/pickerPagination.js`) → @junfoke → .plans/gop-db/popup-chon-so-dong/plan.md
 - update-style-bao-cao-cu (feature lớn, mỗi báo cáo 1 folder con) → @namdangit → .plans/gop-db/update-style-bao-cao-cu/design.md
   Khuôn: skill mới `HRM/.claude/skills/report-styles` (04/10, mẫu = báo cáo tổng hợp CSKH tiềm năng; chưa commit repo hrm-claude-config).
   Báo cáo 1 — meeting-by-projects: **CODE XONG 05/10 (SDD 10 task, review từng task), CHƯA push/merge.** Nhánh
