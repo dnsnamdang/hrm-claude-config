@@ -1143,8 +1143,9 @@ không ăn theo khi `V2Footer` đổi.
 
 Key có sẵn trong `menu`: `submit_and_draft` · `submit_form` · `edit` · `print` · `delete` · `cancel` ·
 `history` · `approve` · `complete` · `schedule` · `confirm` · `create_other_task`…
-Hành động không có trong danh sách đó, **hoặc cần disable + tooltip lý do** (nút `menu.delete` không
-hỗ trợ), thì đưa vào slot `#custom-actions`. `V2Footer` tự render "Quay lại" ở cuối — đừng tự thêm.
+Hành động không có trong danh sách đó, **hoặc cần điều kiện hiện/ẩn riêng** (`v-if` theo cờ BE mà
+`menu.delete` không hỗ trợ), thì đưa vào slot `#custom-actions` — nút không dùng được thì ẨN, không
+disable + tooltip (xem gạch đầu dòng bên dưới). `V2Footer` tự render "Quay lại" ở cuối — đừng tự thêm.
 
 - Dùng `menu` có sẵn của `V2Footer` cho Sửa / Xóa / Lịch sử; hành động riêng của màn đưa vào slot `#custom-actions`.
 - Thứ tự: Sửa (primary) → Lịch sử + hành động phụ (secondary) → Xóa / Khóa (danger) → **Quay lại luôn cuối** (V2Footer tự render).

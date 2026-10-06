@@ -443,3 +443,37 @@ Vừa hoàn thành: B1-B6 đợt 05/10 (lọc theo meeting Hoàn thành + popup 
 Đang làm dở: không có.
 Bước tiếp theo: user review diff trên `develop` (cả 2 repo) rồi commit, deploy lên dev cho QA test lại.
 Blocked:
+
+## ĐỢT 06/10/2026 — Ô chọn nhu cầu ở form Dự án TKT lệch với màn danh sách
+
+QA (chị Huyền, KH Bảo Việt Thăng Long): danh sách 4 nhu cầu Đang theo dõi, ô chọn ở form Dự án TKT
+ra 6. Dữ liệu dev: #290 Luyện Kim + #297 Sơn - phủ có `owner_employee_id = 25` (đã bàn giao đi),
+`host_employee_id = 867` (chị Huyền). Ô chọn chỉ xét người chủ trì nên vẫn hiện 2 dòng này.
+User đồng ý đổi luật đã chốt "chỉ người chủ trì" → "người đang phụ trách".
+
+- [x] `ProspectiveProjectService::listSelectableCustomerDemands()` lọc
+      `COALESCE(owner_employee_id, host_employee_id) = mình` — cùng biểu thức màn danh sách
+- [x] `CustomerDemandOptionResource`: số tiền `6.000.000` → `6,000,000`
+- [x] Verify (script, rollback): chủ trì không còn thấy nhu cầu đã bàn giao đi, người nhận thấy được;
+      `include_id` vẫn giữ nhu cầu đang gắn ở màn Sửa. ⚠️ `gop_db` local các loại meeting chưa có
+      `code` → muốn test phải tạm gán `HOP_TIM_HIEU_GIOI_THIEU_SP` trong transaction.
+
+Commit `hrm-api` **919f24cab** trên `develop` (chưa push).
+
+## ĐỢT 06/10/2026 (2) — Xuất Excel + đổi nhãn ô lọc "Nhân viên" → "Kinh doanh chủ trì"
+
+- [x] FE ô lọc: `V2BaseCompanyDepartmentFilter label-employee="Kinh doanh chủ trì"` (prop có sẵn, không sửa component chung)
+- [x] Xuất Excel theo skill list-page 14b/14c: popup "Chọn trường xuất file" (`exportFieldsMixin` +
+      `ExportFieldsModal`) + file dựng ở FE (`listExportFile.js`). Đi đường FE vì `DynamicExport`
+      dùng chung ép mọi ô thành chuỗi → cột tiền không ra số thật `#,##0`.
+- [x] BE `GET assign/customer-demands/export-rows` (khai trước route `/{id}`), `CustomerDemandService::exportRows()`
+      dùng lại `baseQuery()` + `applySort()` (tách từ `list()`) → file khớp bảng, kể cả `only_mine` của tab.
+      Cột khai ở `ExportColumnRegistry::COLUMNS['assign_customer_demands']` (key trùng key cột bảng).
+- [x] Verify: script (rollback) + Playwright màn danh sách: popup tick sẵn 11 cột đang hiện; file ra đúng
+      tiêu đề, thứ tự cột, ô tiền là số `#,##0`, khối ký tên.
+
+⚠️ `app/ExcelExport/ExportColumnRegistry.php` đang có thay đổi CHƯA COMMIT của người khác (khối
+`declare_debt_beginning`) — commit phần của mình phải tách hunk, không `git add` cả file.
+
+Đã commit + push `develop`: `hrm-api` **31722b716** (registry chỉ stage khối `assign_customer_demands`,
+phần `declare_debt_beginning` của người khác vẫn để nguyên ở working tree) · `hrm-client` **f4e24d91b**.

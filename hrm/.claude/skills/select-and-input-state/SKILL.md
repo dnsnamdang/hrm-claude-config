@@ -310,17 +310,28 @@ Khi viết component mới có ô nhập: **cấm** đặt `border-color: #16a34
 
 ---
 
-## 4b. Ô nhập CHỈ CHO SỐ — dùng rule chung, ĐỪNG tự lọc ký tự
+## 4b. Ô nhập CHỈ CHO SỐ (số lượng / tiền) — CHẶN THẲNG bằng helper chung (user chốt 06/10/2026)
 
-**Cách đúng là `v-validate` với rule có sẵn** (`positive_integer`, `integer`, `number_only`… trong
-`plugins/vee-validate.js`) + `V2BaseError`: người dùng gõ chữ thì thấy viền đỏ và câu báo chuẩn của
-hệ thống, giống mọi màn khác. Cách gắn cho ô nằm trong bảng, và cái bẫy khiến `validateAll()` bỏ
-qua ô đó: xem `form-validate` mục 3c.
+QA báo lặp lại ở nhiều màn (#11192, #11215, #11255, #11373, #11377): ô số lượng phải **chặn thẳng**
+chữ, ký tự đặc biệt, số âm — không chỉ báo đỏ. Cách duy nhất được dùng là helper
+**`utils/number-input.js` → `sanitizeNumberEvent`**:
 
-Rule ĐỊNH DẠNG phải chặn cả ở nút **Lưu nháp** và phải có **rule tương ứng ở BE** — `form-validate`
-mục 1.
+```vue
+<V2BaseInput :value="row.qty" @input.native="row.qty = sanitizeNumberEvent($event, { integerOnly: true })" />
+<V2BaseInput :value="row.price" @input.native="row.price = sanitizeNumberEvent($event, { decimals: 2 })" />
+```
 
-### Vì sao đừng tự lọc ký tự trong `@input`
+- BẮT BUỘC `:value` + `@input.native`, **KHÔNG `v-model`** (lý do ở mục dưới: chuỗi lọc trùng state cũ
+  thì Vue không patch DOM, rác vẫn nằm trong ô). Helper tự ghi đè `event.target.value`.
+- **KHÔNG truyền `max` để cắt trần** cho ô có giới hạn nghiệp vụ: vượt trần thì **báo đỏ** để user tự
+  sửa (rule `max_value`/`max_value_decimal` của vee-validate + chặn ở `save()`), không tự kéo về trần/sàn.
+- Vẫn gắn `v-validate` với rule có sẵn (`positive_integer`, `integer`, `number_only`… trong
+  `plugins/vee-validate.js`) + `V2BaseError` cho phần khoảng giá trị / bắt buộc; ô trong bảng và bẫy
+  `validateAll()` bỏ qua ô đó: `form-validate` mục 3c.
+- Rule ĐỊNH DẠNG phải chặn cả ở nút **Lưu nháp** và có **rule tương ứng ở BE** — `form-validate` mục 1.
+- KHÔNG tự viết guard `@keypress` / `@paste` hay lọc chuỗi riêng — dùng helper trên.
+
+### Vì sao đừng tự lọc ký tự trong `@input` (thay vì dùng helper)
 
 Cách hay bị viết đầu tiên là lọc rồi ghi ngược lại:
 
@@ -341,8 +352,8 @@ giá trị đổi từ `""` sang `"123"` nên Vue có patch). Chỉ **gõ tuần
 await page.locator('input[...]').pressSequentially('1abc2')   // Playwright, slowly: true
 ```
 
-Chặn cứng bằng `@keypress` + `@paste` thì dữ liệu sạch thật, nhưng ô im lặng không nhận phím —
-người dùng không hiểu vì sao. Chỉ dùng khi có lý do riêng, và vẫn phải kèm rule ở BE.
+`sanitizeNumberEvent` xử lý đúng bẫy này (ghi đè trực tiếp `event.target.value`), nên chỉ cần dùng
+helper — đừng tự viết lại, và vẫn phải kèm rule ở BE.
 
 ---
 
@@ -384,8 +395,9 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Select chọn 1: có dấu `×` xoá nhanh (mục 1b) — chỉ ô Trạng thái / ô lọc bắt buộc của báo cáo mới được tắt, và phải ghi lý do cạnh dòng code
 - [ ] **Select chọn nhân viên: nhãn đúng khuôn `Tên - Mã phòng - Mã NV`** (mục 2c) — không màn nào tự
       ghép chuỗi, API mới trả nhân viên có `department_code`
-- [ ] Ô "chỉ cho số": gõ chữ → hiện lỗi đỏ chuẩn hệ thống; bấm **Lưu nháp** vẫn bị chặn; gọi thẳng
-      API với giá trị chữ thì BE trả 422 (mục 4b + `form-validate` mục 1, 3c)
+- [ ] Ô "chỉ cho số": gõ tuần tự `1abc-2` → ô chỉ còn `12` (chặn thẳng bằng `sanitizeNumberEvent`);
+      vượt trần → lỗi đỏ, giá trị KHÔNG bị tự kéo về; gọi thẳng API với giá trị chữ thì BE trả 422
+      (mục 4b + `form-validate` mục 1, 3c)
 
 ## Select chọn NHIỀU có tới 2 ô tìm — phải focus ô TRONG DROPDOWN
 
