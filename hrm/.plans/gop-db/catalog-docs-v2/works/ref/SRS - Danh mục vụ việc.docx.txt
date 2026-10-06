@@ -1,0 +1,266 @@
+[normal] SOFTWARE REQUIREMENTS SPECIFICATION (SRS) 
+[normal] Màn hình: Danh mục vụ việc 
+[Heading 2] Mục lục 
+[Heading 1] Phần 1. Giới thiệu 
+[Heading 2] 1 Mục đích 
+[normal] Tài liệu này đặc tả yêu cầu phần mềm cho màn hình Danh mục vụ việc, nhằm: 
+[normal] Là căn cứ nghiệm thu chức năng và phân quyền. 
+[normal] Làm rõ điều kiện được phép xóa: chỉ vụ việc chưa phát sinh ở bút toán kế toán nào mới hiện nút Xóa. 
+[normal] Làm rõ khác biệt giữa Xóa và chuyển trạng thái Khóa. 
+[Heading 2] 2 Thuật ngữ và viết tắt 
+<<TABLE 1>>
+  | Thuật ngữ | Mô tả
+  | Vụ việc | Đối tượng tập hợp chi phí và doanh thu trong kế toán, dùng để theo dõi hiệu quả của từng công việc hoặc từng hợp đồng.
+  | Mã vụ việc | Mã do người dùng tự đặt, duy nhất trên toàn hệ thống, dùng để chọn nhanh khi lập bút toán.
+  | Trạng thái Hoạt động | Vụ việc còn chọn được khi lập bút toán mới.
+  | Trạng thái Khóa | Vụ việc không còn chọn được ở nghiệp vụ mới nhưng vẫn nằm trong danh mục và các bút toán cũ vẫn giữ nguyên.
+  | Bút toán kế toán | Dòng hạch toán trong sổ kế toán có gắn vụ việc này.
+  | SRS | Software Requirements Specification
+[Heading 1] Phần 2. Phân quyền 
+[Heading 2] 1 Danh sách quyền 
+<<TABLE 2>>
+  | Ký hiệu | Tên quyền | Tác dụng trên màn hình
+  | P1 | Quản lý danh mục vụ việc | Mở màn hình và thực hiện đầy đủ Thêm mới, Chỉnh sửa, Xóa. Thiếu quyền này thì mục menu không hiển thị và truy cập thẳng đường dẫn bị chặn.
+[normal] Màn hình chỉ có MỘT quyền duy nhất, không tách riêng quyền xem và quyền sửa. Người không có quyền này không vào được màn hình. 
+[Heading 2] 2 Ma trận phân quyền 
+<<TABLE 3>>
+  | Chức năng | P1 | Không có quyền
+  | FR-01 Xem danh sách vụ việc | ✅ | ❌
+  | FR-02 Tìm kiếm và lọc | ✅ | ❌
+  | FR-03 Thêm mới vụ việc | ✅ | ❌
+  | FR-04 Chỉnh sửa vụ việc | ✅ | ❌
+  | FR-05 Xóa vụ việc | ✅ | ❌
+  | FR-06 Xem lịch sử thay đổi | ✅ | ❌
+[Heading 1] Phần 3. Đặc tả chi tiết theo từng chức năng 
+[Heading 2] 1 Sơ đồ UML tổng quan 
+[normal]  [IMG]
+[normal] Hình 1: Sơ đồ Use Case tổng quan màn Danh mục vụ việc 
+[Heading 2] 2 Đặc tả chi tiết từng chức năng 
+[Heading 3] 2.1 Xem danh sách vụ việc 
+[normal] 2.1.1 Giới thiệu 
+<<TABLE 4>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem danh sách vụ việc
+  | Mô tả | Hiển thị toàn bộ vụ việc trong danh mục, có phân trang và sắp xếp.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục vụ việc”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục vụ việc”.
+  | Dòng sự kiện chính | 1. Người dùng vào menu Tài chính → Danh mục → Danh mục vụ việc. / 2. Hệ thống kiểm tra quyền rồi nạp trang đầu tiên của danh sách. / 3. Bảng hiển thị dữ liệu kèm tổng số bản ghi.
+  | Dòng sự kiện phụ | • Không có quyền → mục menu không hiển thị; truy cập thẳng đường dẫn thì hệ thống từ chối và báo không có quyền. / • Danh mục chưa có bản ghi nào → bảng hiện thông báo không có dữ liệu.
+[normal] 2.1.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục vụ việc 
+[normal]  [IMG]
+[normal] Hình 2: Màn Danh mục vụ việc lúc mới truy cập 
+[normal] 2.1.3 Mô tả chi tiết giao diện 
+<<TABLE 5>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Mô tả
+  | 1 | STT | Table/Grid | Read-only | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | 2 | Mã vụ việc | Table/Grid | Read-only | Mã do người dùng đặt. Luôn hiển thị, sắp xếp được.
+  | 3 | Tên vụ việc | Table/Grid | Read-only | Tên đầy đủ, sắp xếp được.
+  | 4 | Ghi chú | Table/Grid | Read-only | Mặc định ẩn.
+  | 5 | Người sửa | Table/Grid | Read-only | Mặc định ẩn.
+  | 6 | Ngày cập nhật | Table/Grid | Read-only | Mặc định ẩn, sắp xếp được.
+  | 7 | Người tạo | Table/Grid | Read-only | Người đã thêm bản ghi.
+  | 8 | Ngày tạo | Table/Grid | Read-only | Thời điểm thêm, sắp xếp được.
+  | 9 | Trạng thái | Table/Grid | Read-only | Hoạt động hoặc Khóa.
+  | 10 | Hành động | Table/Grid | Read-only | Sửa, Xóa và Lịch sử — hiện thẳng trên cột, không có nút ba chấm.
+  | 11 | Nút Tạo mới | Button | Enable / Ẩn | Chỉ hiện với người có quyền “Quản lý danh mục vụ việc”.
+  | 12 | Phân trang | Pagination | Enable | Nút về đầu / lùi / số trang / tiến / về cuối và ô chọn số dòng mỗi trang.
+  | 13 | Trạng thái rỗng | Label | Hiển thị | Hiện thông báo không có dữ liệu khi danh sách trống.
+  | 14 | Vòng quay chờ | Loading | Hiển thị | Hiện trong lúc nạp dữ liệu.
+[normal] 2.1.4 Danh sách event và xử lý event 
+<<TABLE 6>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Mở màn hình | System | Before: / – Kiểm tra quyền “Quản lý danh mục vụ việc”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / After: / – Nạp trang đầu tiên của danh sách và hiển thị tổng số bản ghi.
+  | 2 | Bấm tiêu đề cột sắp xếp được | Click | After: / – Đổi chiều sắp xếp và nạp lại danh sách từ trang 1.
+  | 3 | Chuyển trang | Click | Before: / – Giữ nguyên bộ lọc và thứ tự sắp xếp đang áp dụng. / After: / – Nạp dữ liệu trang mới, số thứ tự tiếp tục liên tục.
+  | 4 | Đổi số dòng mỗi trang | Change | After: / – Quay về trang 1 và nạp lại theo số dòng mới.
+[Heading 3] 2.2 Tìm kiếm và lọc 
+[normal] 2.2.1 Giới thiệu 
+<<TABLE 7>>
+  | Mục | Nội dung
+  | Tên chức năng | Tìm kiếm và lọc danh sách
+  | Mô tả | Thu hẹp danh sách bằng ô tìm kiếm nhanh và các tiêu chí lọc nâng cao.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục vụ việc”)
+  | Điều kiện ban đầu | Đang ở màn Danh mục vụ việc.
+  | Dòng sự kiện chính | 1. Người dùng nhập từ khóa hoặc chọn tiêu chí lọc. / 2. Người dùng bấm Tìm kiếm. / 3. Hệ thống áp đồng thời mọi tiêu chí và nạp lại danh sách từ trang 1.
+  | Dòng sự kiện phụ | • Không có kết quả → bảng hiện thông báo không có dữ liệu. / • Bấm Làm mới → xóa hết tiêu chí VÀ nạp lại danh sách đầy đủ ngay.
+[normal] 2.2.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục vụ việc 
+[normal]  [IMG]
+[normal] Hình 3: Khu vực tìm kiếm và lọc của màn Danh mục vụ việc 
+[normal] 2.2.3 Mô tả chi tiết giao diện 
+<<TABLE 8>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Mô tả
+  | 1 | Ô tìm kiếm nhanh | Textbox | Enable | 0–255 ký tự | Tìm theo mã vụ việc và tên vụ việc.
+  | 2 | Trạng thái | Dropdown | Enable | Hoạt động / Khóa | Bỏ trống thì hiện cả hai trạng thái.
+  | 3 | Người lập | Dropdown | Enable | Danh sách nhân viên | Lọc theo người đã tạo bản ghi.
+  | 4 | Người cập nhật | Dropdown | Enable | Danh sách nhân viên | Lọc theo người sửa gần nhất.
+  | 5 | Nút Tìm kiếm | Button | Enable | – | Áp dụng các tiêu chí.
+  | 6 | Nút Làm mới | Button | Enable | – | Xóa hết tiêu chí VÀ nạp lại danh sách ngay.
+[normal] 2.2.4 Danh sách event và xử lý event 
+<<TABLE 9>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm Tìm kiếm | Click | Before: / – Thu thập giá trị của mọi tiêu chí đang có. / During: / – Áp đồng thời các tiêu chí theo kiểu “và”. / After: / – Nạp lại bảng từ trang 1 và cập nhật tổng số bản ghi.
+  | 2 | Bấm Làm mới | Click | After: / – Xóa trắng mọi tiêu chí VÀ nạp lại danh sách đầy đủ ngay lập tức.
+[Heading 3] 2.3 Thêm mới vụ việc 
+[normal] 2.3.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 4: Biểu đồ Use Case — FR-03 Thêm mới vụ việc 
+[normal] 2.3.2 Giới thiệu 
+<<TABLE 10>>
+  | Mục | Nội dung
+  | Tên chức năng | Thêm mới vụ việc
+  | Mô tả | Thêm một vụ việc mới vào danh mục thông qua cửa sổ nhập liệu.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục vụ việc”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục vụ việc”.
+  | Dòng sự kiện chính | 1. Người dùng bấm nút Tạo mới. / 2. Hệ thống mở cửa sổ nhập liệu. / 3. Người dùng nhập thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu và ghi bản ghi mới. / 5. Cửa sổ đóng, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Thiếu trường bắt buộc hoặc trùng mã → báo lỗi đỏ ngay dưới ô tương ứng, cửa sổ KHÔNG đóng, dữ liệu đã nhập vẫn còn. / • Bấm Đóng → hủy bỏ, không ghi gì.
+  | Yêu cầu đặc biệt | Cửa sổ chỉ có hai nút: Lưu và Đóng.
+[normal] 2.3.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục vụ việc → Tạo mới 
+[normal] Modal Tạo vụ việc được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Tạo vụ việc 
+[normal]  [IMG]
+[normal] Hình 6: Cửa sổ báo lỗi đỏ ngay dưới ô còn thiếu 
+[normal] 2.3.4 Mô tả chi tiết giao diện 
+<<TABLE 11>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Mô tả
+  | 1 | Mã vụ việc | Textbox | Enable | 0–255 ký tự | Có | Duy nhất toàn hệ thống. Gợi ý nhập dạng VV001. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Mã vụ việc đã tồn tại”.
+  | 2 | Tên vụ việc | Textbox | Enable | 0–255 ký tự | Có | Bỏ trống báo “Bắt buộc phải nhập”.
+  | 3 | Trạng thái | Dropdown | Enable | Hoạt động / Khóa | Không | Chọn Khóa để ngừng sử dụng vụ việc ở nghiệp vụ mới.
+  | 4 | Ghi chú | Textarea | Enable | – | Không | Ghi chú tự do, 3 dòng.
+  | 5 | Nút Lưu | Button | Enable | – | – | Ghi bản ghi rồi đóng cửa sổ.
+  | 6 | Nút Đóng | Button | Enable | – | – | Hủy bỏ, không ghi gì.
+  | 7 | Thông báo lỗi | Toast / Alert | Hiển thị | – | – | Chữ đỏ ngay dưới ô bị lỗi.
+[normal] 2.3.5 Danh sách event và xử lý event 
+<<TABLE 12>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm nút Tạo mới | Click | Before: / – Kiểm tra quyền “Quản lý danh mục vụ việc”. / – Nếu không có quyền → nút không hiển thị. / After: / – Mở cửa sổ nhập liệu với ô Trạng thái đặt sẵn là Hoạt động.
+  | 2 | Bấm Lưu | Click | Before: / – Kiểm tra quyền “Quản lý danh mục vụ việc”. / – Nếu không có quyền → hiển thị “Bạn không có quyền thực hiện chức năng này.” và dừng xử lý. / During: / – Mã vụ việc để trống → hiển thị “Bắt buộc phải nhập”. / – Tên vụ việc để trống → hiển thị “Bắt buộc phải nhập”. / – Mã đã tồn tại → hiển thị “Mã vụ việc đã tồn tại”. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi bản ghi mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo thêm mới thành công.
+  | 3 | Bấm Đóng | Click | After: / – Đóng cửa sổ, không ghi dữ liệu.
+[Heading 3] 2.4 Chỉnh sửa vụ việc 
+[normal] 2.4.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 7: Biểu đồ Use Case — FR-04 Chỉnh sửa vụ việc 
+[normal] 2.4.2 Giới thiệu 
+<<TABLE 13>>
+  | Mục | Nội dung
+  | Tên chức năng | Chỉnh sửa vụ việc
+  | Mô tả | Sửa thông tin của một vụ việc đã có. Dùng chung cửa sổ với chức năng Thêm mới.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục vụ việc”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục vụ việc”; bản ghi cần sửa đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng bút chì ở dòng cần sửa. / 2. Hệ thống mở cửa sổ với dữ liệu hiện tại đã điền sẵn. / 3. Người dùng sửa thông tin và bấm Lưu. / 4. Hệ thống kiểm tra dữ liệu, ghi nhận thay đổi và ghi một dòng lịch sử. / 5. Cửa sổ đóng, danh sách nạp lại và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Trùng mã với bản ghi khác → báo lỗi, cửa sổ không đóng. / • Giữ nguyên mã của chính bản ghi đang sửa → lưu bình thường, không báo trùng.
+[normal] 2.4.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục vụ việc → Chỉnh sửa 
+[normal] Modal Sửa vụ việc được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 8: Cửa sổ Chỉnh sửa vụ việc 
+[normal] 2.4.4 Mô tả chi tiết giao diện 
+<<TABLE 14>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Phạm vi | Bắt buộc | Giá trị ban đầu | Mô tả
+  | 1 | Mã vụ việc | Textbox | Enable | 0–255 ký tự | Có | Dữ liệu hiện tại | Duy nhất toàn hệ thống. Gợi ý nhập dạng VV001. Bỏ trống báo “Bắt buộc phải nhập”; trùng báo “Mã vụ việc đã tồn tại”.
+  | 2 | Tên vụ việc | Textbox | Enable | 0–255 ký tự | Có | Dữ liệu hiện tại | Bỏ trống báo “Bắt buộc phải nhập”.
+  | 3 | Trạng thái | Dropdown | Enable | Hoạt động / Khóa | Không | Dữ liệu hiện tại | Chọn Khóa để ngừng sử dụng vụ việc ở nghiệp vụ mới.
+  | 4 | Ghi chú | Textarea | Enable | – | Không | Dữ liệu hiện tại | Ghi chú tự do, 3 dòng.
+  | 5 | Nút Lưu | Button | Enable | – | – | Hiển thị | Ghi thay đổi rồi đóng cửa sổ.
+  | 6 | Nút Đóng | Button | Enable | – | – | Hiển thị | Hủy bỏ, không ghi gì.
+[normal] 2.4.5 Danh sách event và xử lý event 
+<<TABLE 15>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng bút chì | Click | Before: / – Kiểm tra quyền “Quản lý danh mục vụ việc”; thiếu quyền thì nút không hiển thị. / After: / – Mở cửa sổ với dữ liệu hiện tại đã điền sẵn.
+  | 2 | Bấm Lưu | Click | During: / – Mã vụ việc để trống → hiển thị “Bắt buộc phải nhập”. / – Tên vụ việc để trống → hiển thị “Bắt buộc phải nhập”. / – Mã đã tồn tại → hiển thị “Mã vụ việc đã tồn tại”. / – Bỏ qua kiểm tra trùng đối với chính bản ghi đang sửa. / – Nếu có lỗi kiểm tra → không thực hiện bước After. / After: / – Ghi nhận thay đổi và ghi một dòng lịch sử nêu giá trị cũ và giá trị mới. / – Đóng cửa sổ, nạp lại danh sách, hiển thị thông báo cập nhật thành công.
+[Heading 3] 2.5 Xóa vụ việc 
+[normal] 2.5.1 Biểu đồ Usecase 
+[normal]  [IMG]
+[normal] Hình 9: Biểu đồ Use Case — FR-05 Xóa vụ việc 
+[normal] 2.5.2 Giới thiệu 
+<<TABLE 16>>
+  | Mục | Nội dung
+  | Tên chức năng | Xóa vụ việc
+  | Mô tả | Loại một vụ việc khỏi danh mục.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục vụ việc”)
+  | Điều kiện ban đầu | Người dùng có quyền “Quản lý danh mục vụ việc”; bản ghi cần xóa đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng thùng rác ở dòng cần xóa. / 2. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. / 3. Người dùng bấm Xóa để xác nhận. / 4. Hệ thống loại bản ghi khỏi danh sách và hiển thị thông báo thành công.
+  | Dòng sự kiện phụ | • Bấm Hủy → đóng hộp, không thay đổi gì. / • Nút Xóa CHỈ hiển thị với bản ghi chưa phát sinh ở bút toán kế toán nào. Bản ghi đã dùng ở bút toán thì không có nút Xóa — muốn ngừng dùng thì chuyển Trạng thái sang Khóa.
+[normal] 2.5.3 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục tài khoản → Xóa 
+[normal] Modal Xóa vụ việc được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 10: Hộp xác nhận xóa vụ việc 
+[normal] 2.5.4 Mô tả chi tiết giao diện 
+<<TABLE 17>>
+  | STT | Tên đối tượng | Loại | Trạng thái | Giá trị ban đầu | Mô tả
+  | 1 | Biểu tượng thùng rác | Icon Button | Enable / Ẩn | Ẩn khi không xóa được | Nằm trên cột Hành động của từng dòng.
+  | 2 | Tiêu đề hộp xác nhận | Label | Hiển thị | Xóa vụ việc | Nêu rõ loại đối tượng đang xóa.
+  | 3 | Nội dung hộp xác nhận | Label | Hiển thị | Bạn có chắc muốn xóa vụ việc “<tên>”? | Nêu rõ tên bản ghi để tránh thao tác nhầm dòng.
+  | 4 | Nút Xóa | Button | Enable | Hiển thị | Xác nhận thực hiện.
+  | 5 | Nút Hủy | Button | Enable | Hiển thị | Đóng hộp, không làm gì.
+[normal] 2.5.5 Danh sách event và xử lý event 
+<<TABLE 18>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng thùng rác | Click | Before: / – Bản ghi đã phát sinh ở bút toán kế toán thì nút này KHÔNG hiển thị. / After: / – Hiện hộp xác nhận kèm tên bản ghi.
+  | 2 | Bấm Xóa trong hộp xác nhận | Click | Before: / – Kiểm tra quyền “Quản lý danh mục vụ việc”; thiếu quyền thì từ chối và dừng xử lý. / After: / – Loại bản ghi khỏi danh sách. / – Nạp lại danh sách và hiển thị thông báo xóa thành công.
+  | 3 | Bấm Hủy | Click | After: / – Đóng hộp xác nhận, không thay đổi gì.
+[Heading 3] 2.6 Xem lịch sử thay đổi 
+[normal] 2.6.1 Giới thiệu 
+<<TABLE 19>>
+  | Mục | Nội dung
+  | Tên chức năng | Xem lịch sử thay đổi
+  | Mô tả | Liệt kê các lần thay đổi của một vụ việc, kèm giá trị cũ, giá trị mới, người thực hiện và thời điểm.
+  | Tác nhân | Người quản lý danh mục (có quyền “Quản lý danh mục vụ việc”)
+  | Điều kiện ban đầu | Bản ghi cần xem đang có trong danh sách.
+  | Dòng sự kiện chính | 1. Người dùng bấm biểu tượng lịch sử ở dòng cần xem. / 2. Hệ thống mở cửa sổ Lịch sử thay đổi. / 3. Danh sách các lần thay đổi hiển thị theo thứ tự mới nhất ở trên cùng.
+  | Dòng sự kiện phụ | • Bản ghi chưa từng sửa → cửa sổ hiện “Chưa có lịch sử thao tác nào.” / • Cửa sổ có bộ lọc riêng để thu hẹp theo loại thay đổi.
+[normal] 2.6.2 Layout màn hình 
+[normal] Đường dẫn màn hình: 
+[normal] Menu: Phân hệ Tài chính → Danh mục → Danh mục tài khoản → Lịch sử 
+[normal] Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên. 
+[normal]  [IMG]
+[normal] Hình 11: Cửa sổ Lịch sử thay đổi của vụ việc 
+[normal] 2.6.3 Mô tả chi tiết giao diện 
+<<TABLE 20>>
+  | STT | Tên đối tượng | Loại | Giá trị ban đầu | Mô tả
+  | 1 | Tiêu đề cửa sổ | Label | Lịch sử thay đổi | Kèm dòng phụ ghi loại đối tượng và tên bản ghi.
+  | 2 | Bộ lọc | Dropdown | Trống | Thu hẹp theo loại thay đổi.
+  | 3 | Danh sách thay đổi | Table/Grid | Theo dữ liệu | Sắp xếp mới nhất ở trên cùng.
+  | 4 | Thời điểm | Text | Theo dữ liệu | Định dạng dd/mm/yyyy hh:mm.
+  | 5 | Loại thay đổi | Badge | Theo dữ liệu | Ví dụ: Thay đổi thông tin.
+  | 6 | Người thực hiện | Text | Theo dữ liệu | Kèm mã nhân viên và phòng ban.
+  | 7 | Giá trị cũ và giá trị mới | Text | Theo dữ liệu | Hiển thị hai vế cho từng trường đã đổi.
+  | 8 | Trạng thái rỗng | Label | Ẩn | Hiện “Chưa có lịch sử thao tác nào.” khi bản ghi chưa từng sửa.
+  | 9 | Nút Đóng | Button | Hiển thị | Đóng cửa sổ.
+[normal] 2.6.4 Danh sách event và xử lý event 
+<<TABLE 21>>
+  | STT | Event | Loại event | Xử lý event
+  | 1 | Bấm biểu tượng lịch sử | Click | After: / – Mở cửa sổ và nạp danh sách thay đổi theo thứ tự mới nhất trước.
+  | 2 | Đổi bộ lọc trong cửa sổ | Change | After: / – Nạp lại danh sách theo tiêu chí đã chọn.
+  | 3 | Bấm Đóng | Click | After: / – Đóng cửa sổ; danh sách phía sau giữ nguyên bộ lọc và trang.
+[Heading 1] Phần 4. Quy tắc nghiệp vụ 
+[normal] BR-01 — Một quyền duy nhất cho cả xem và sửa 
+[normal] Màn hình chỉ dùng một quyền “Quản lý danh mục vụ việc”, không tách quyền xem riêng. 
+[normal] Người không có quyền này không thấy mục menu và không truy cập được bằng đường dẫn. 
+[normal] Mọi thao tác ghi đều kiểm tra lại quyền ở tầng máy chủ; gọi thẳng chức năng mà bỏ qua giao diện vẫn bị từ chối. 
+[normal] BR-02 — Ràng buộc trùng 
+[normal] Mã vụ việc là duy nhất trên toàn hệ thống; trùng sẽ bị chặn với thông báo “Mã vụ việc đã tồn tại”. 
+[normal] Tên vụ việc KHÔNG bị ràng buộc duy nhất — hai bản ghi khác mã được phép trùng tên. 
+[normal] Khi sửa, bản ghi đang sửa được loại khỏi phép kiểm tra trùng. 
+[normal] BR-03 — Chỉ xóa được khi chưa phát sinh chứng từ 
+[normal] Nút Xóa CHỈ hiển thị với vụ việc chưa phát sinh ở bút toán kế toán nào. 
+[normal] Bản ghi đã được dùng trong bút toán kế toán sẽ KHÔNG có nút Xóa — đây là thiết kế, nhằm giữ toàn vẹn số liệu kế toán đã ghi. 
+[normal] Muốn ngừng sử dụng bản ghi loại này, người dùng chuyển Trạng thái sang Khóa thay vì xóa. 
+[normal] Quy ước chung của dự án: nút không dùng được thì ẩn hẳn, không hiện rồi làm mờ. 
+[normal] BR-04 — Trạng thái Hoạt động và Khóa 
+[normal] Bản ghi mới luôn được đặt Trạng thái Hoạt động. 
+[normal] Chuyển sang Khóa thì bản ghi không còn chọn được khi lập bút toán mới, nhưng vẫn nằm trong danh mục và các bút toán cũ giữ nguyên. 
+[normal] Trạng thái đổi bằng cách mở cửa sổ Sửa rồi chọn lại ô Trạng thái — màn này KHÔNG có nút Khóa riêng trên cột Hành động. 
+[normal] BR-05 — Lịch sử thay đổi sắp xếp mới nhất trước 
+[normal] Mọi thao tác sửa đều sinh dòng lịch sử. 
+[normal] Danh sách lịch sử luôn sắp xếp MỚI NHẤT Ở TRÊN CÙNG. 
+[normal] Mỗi dòng nêu trường đã đổi, giá trị cũ, giá trị mới, người thực hiện và thời điểm. 

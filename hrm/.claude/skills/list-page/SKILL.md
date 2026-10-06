@@ -11,6 +11,10 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 - **PANEL DUY NHẤT LÀ `V2BaseSmartFilterPanel`, VÀ LUÔN BẬT `floating`** (user chốt 2026-09-21). `V2BaseFilterPanel` **ĐÃ BỊ XOÁ** khỏi repo ngày 2026-09-21 — 56 màn cuối cùng đã chuyển hết sang panel mới; đừng tạo lại, đừng copy pattern slot `#advanced-filters` từ git history.
   - Khuôn tham chiếu chuẩn: **`pages/master-data/product-natures/index.vue`** (`http://127.0.0.1:3002/master-data/product-natures`).
   - Khai tối thiểu: `table` (khoá lưu cấu hình theo user) · `floating` · `:filter-fields` · `:filters` · `:collapsed` · `:quickSearchValue` + `quickSearchPlaceholder` · 5 sự kiện `@toggle-panel @quick-search-change @filter-change @search @reset`.
+  - **Ô TÌM NHANH LÀ BẮT BUỘC ở MỌI màn danh sách — CẤM `:show-quick-search="false"`** (user chốt 24/09/2026). Tắt cờ này KHÔNG chỉ mất ô tìm nhanh: panel tự chuyển sang **kiểu màn BÁO CÁO** (`actionsAtBottom`, `V2BaseSmartFilterPanel.vue` ~dòng 401) — nút **Tìm kiếm / Làm mới biến khỏi hàng trên cùng**, dồn xuống đáy khối nâng cao, user phải bấm "Tìm kiếm nâng cao" mới thấy. Nhìn vào là lệch chuẩn hoàn toàn so với mọi màn khác.
+    - Cờ này chỉ dành cho **màn BÁO CÁO thống kê** kiểu `pages/assign/report/*` (chọn kỳ rồi mới chạy). Màn tra cứu danh sách phiếu — kể cả màn "báo cáo" chỉ đọc như Danh sách hàng mượn — vẫn là **màn danh sách**, phải có ô tìm nhanh.
+    - **"ERP không có ô tìm nhanh" KHÔNG phải lý do để tắt**: ERP là nguồn NGHIỆP VỤ, HRM là nguồn GIAO DIỆN (skill `erp-to-hrm-screen`, nguyên tắc gốc). Đã dính thật ở `borrow-stocks` + `borrow-expiring` (sửa 24/09/2026).
+    - **BE chưa có param `keyword` thì THÊM vào BE**, đừng tắt ô cho khỏi phải làm. Chọn đúng những cột ĐANG HIỆN trên bảng (mã phiếu, tên người tạo/người mượn, tên/mã hàng…), gom cụm OR trong **MỘT closure** (để phẳng là lộ dữ liệu ngoài phạm vi quyền), cho vào `ignoredFields` phía FE (chờ Enter), và placeholder liệt kê đúng các trường đó.
   - Ô lọc khai bằng **schema `filterFields`** (computed), KHÔNG dựng markup tay. Chỉ ô cần logic riêng (tìm từ xa, chip, cascade, khoá theo ô khác) mới dùng slot `#field-<key>`.
   - **Bộ lọc nằm trong MODAL → thêm prop `in-modal`**: panel truyền xuống `V2BaseFilterFieldControl` để ô chọn render `V2BaseSelectInModal` (dropdown neo vào `.modal-content`). Thiếu là danh sách select2 xổ ra NGOÀI modal và bị lớp phủ che. Xem skill `modal-popup`.
   - **Ô chọn NHIỀU**: khai `multiple: true` trên field — control tự truyền `extraSettings: { multiple: true }`, panel tự dùng vỏ `variant: 'tags'`. KHÔNG viết slot riêng chỉ để bật multiple.
@@ -26,7 +30,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   - `resetKeys` là bắt buộc: nó vừa để xoá đủ 2 key khi user ẩn trường, vừa để nhãn floating biết "có giá trị" (một trong hai ô có ngày là nhãn phải bay lên). Thêm `inputCount: 1` vì đây là **một** ô nhập, không khai thì panel đếm 2 và mất ngưỡng bộ lọc gọn.
   - **Đổi 2 field cũ thành 1 field mới KHÔNG làm hỏng cấu hình user đã lưu**: `mergedFields()` bỏ qua key không còn trong schema và tự thêm key mới với `isVisible: true`. Nhưng nhớ kiểm popup "Cài đặt bộ lọc" một lần sau khi đổi — phải thấy đúng MỘT dòng ("Ngày tạo"), không còn 2 dòng cũ.
   - **Ô này phải chạy ở CẢ HAI chế độ.** Trong khối nâng cao có floating thì viền do vỏ `.ff--range .ff__control` vẽ, nên cụm để `display: contents`; còn ở **bộ lọc gọn** (dàn ngang, không có vỏ nào) thì cụm phải TỰ vẽ viền — panel truyền `range-boxed`, thiếu là hai datepicker rời ra với dấu `→` trần ở giữa, nhìn như hai trường khác nhau. Màn chưa bật `floating` thì chế độ gọn không có nhãn, nên placeholder tự ghép tên trường: "Ngày tạo từ" / "Ngày tạo đến" thay vì "Từ ngày" / "Đến ngày". Sửa xong nhớ thử cả hai: mở "Cài đặt bộ lọc" tắt bớt trường cho còn ≤ 3 ô để panel nhảy sang chế độ gọn.
-- **Nhãn floating là chuẩn của khối "Tìm kiếm nâng cao"** (user chốt 2026-09-07, mẫu: `pages/assign/prospective-projects/index.vue`). Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`: nhãn nằm giữa ô khi rỗng, bay lên đè viền trên khi ô có dữ liệu hoặc đang focus; ô cao **36px**. Panel tự bọc `V2BaseFloatingField`, tự tính `hasValue` (field gom nhiều ô thì dựa vào `resetKeys` — **phải khai**), tự truyền chiều cao xuống `V2BaseSelect`. Prop mặc định `false` **chỉ vì lý do kỹ thuật** — **mọi màn đều phải khai `floating`**, không có ngoại lệ (2026-09-21: 51 màn còn thiếu đã được bật hết). **Nút phụ đi kèm nhãn** (công tắc ổ khoá "xem cả danh mục đã khoá" của ô Công ty – Phòng ban – Bộ phận) gắn qua slot **`label-suffix`** của `V2BaseFloatingField`, KHÔNG nhét vào trong ô (tranh chỗ với mũi tên select và nút ×) — `V2BaseCompanyDepartmentFilter` đã làm sẵn cho cả 3 ô, màn không phải khai gì. ⚠️ Nhãn float lên viền thì icon co còn ~14px, nên nút bắt buộc mang class `ff-label-action` (component nới vùng bấm bằng `::after { inset: -9px }` → vùng bắt chuột ~32px). Tự dựng nút phụ mới cũng phải theo đúng khuôn đó, nếu không user phải rê chuột cực khéo mới trúng. Chi tiết + biến thể `range`/`tags` + bẫy specificity: xem skill `erp-to-hrm-screen`, file `references/khuon-man-mau.md`.
+- **Nhãn floating là chuẩn của khối "Tìm kiếm nâng cao"** (user chốt 2026-09-07, mẫu: `pages/assign/prospective-projects/index.vue`). Bật bằng prop `floating` trên `V2BaseSmartFilterPanel`: nhãn nằm giữa ô khi rỗng, bay lên đè viền trên khi ô có dữ liệu hoặc đang focus; ô cao **32px** (hạ từ 36px ngày 22/09/2026 — xem mục bên dưới). Panel tự bọc `V2BaseFloatingField`, tự tính `hasValue` (field gom nhiều ô thì dựa vào `resetKeys` — **phải khai**), tự truyền chiều cao xuống `V2BaseSelect`. Prop mặc định `false` **chỉ vì lý do kỹ thuật** — **mọi màn đều phải khai `floating`**, không có ngoại lệ (2026-09-21: 51 màn còn thiếu đã được bật hết). **Nút phụ đi kèm nhãn** (công tắc ổ khoá "xem cả danh mục đã khoá" của ô Công ty – Phòng ban – Bộ phận) gắn qua slot **`label-suffix`** của `V2BaseFloatingField`, KHÔNG nhét vào trong ô (tranh chỗ với mũi tên select và nút ×) — `V2BaseCompanyDepartmentFilter` đã làm sẵn cho cả 3 ô, màn không phải khai gì. ⚠️ Nhãn float lên viền thì icon co còn ~14px, nên nút bắt buộc mang class `ff-label-action` (component nới vùng bấm bằng `::after { inset: -9px }` → vùng bắt chuột ~32px). Tự dựng nút phụ mới cũng phải theo đúng khuôn đó, nếu không user phải rê chuột cực khéo mới trúng. Chi tiết + biến thể `range`/`tags` + bẫy specificity: xem skill `erp-to-hrm-screen`, file `references/khuon-man-mau.md`.
 - **Placeholder của ô lọc phải NÓI ĐÚNG trường đó lọc gì** (user chốt 2026-08-15), theo công thức:
   - Ô tìm nhanh: **`Tìm theo <các trường BE thực sự lọc>`** — phải liệt kê đúng, đừng ghi "Tìm kiếm..." chung chung.
   - **Khối nâng cao có `floating`** → **BỎ placeholder trùng nhãn**. Nhãn floating đã nói tên trường rồi; lúc nghỉ nhãn nằm đúng chỗ placeholder (component tự giấu placeholder), lúc float thì placeholder hiện ra lặp lại y hệt nhãn. Chỉ giữ placeholder khi nó nói THÊM: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`.
@@ -35,7 +39,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   - Quy tắc này áp cho CẢ placeholder viết trong slot `#field-*`, không riêng `filterFields`.
 - **Ô lọc phân hệ Quản lý công việc (assign) dùng FLOATING LABEL** (chốt 2026-09-01): bọc `components/V2BaseFloatingField.vue` thay cho cặp `V2BaseLabel` + control. Khuôn mẫu: `pages/assign/prospective-projects/index.vue`, e2e đối chiếu: `e2e/tests/assign/prospective-projects-filter.spec.ts`.
   - `<V2BaseFloatingField label="Nguồn vốn" :has-value="!!filters.funding_source_id">` — `has-value` do page truyền **tường minh**; `:placeholder-shown` vô dụng với Select2. Ô autocomplete bám biến hiển thị (`customerQuery`), KHÔNG bám `id` — chọn xong mới có id thì nhãn bay lên trễ.
-  - **Mọi `V2BaseSelect` / `V2BaseSelectInModal` trong ô floating phải truyền `height="36px"`** — `updateHeight()` ghi inline `!important` nên CSS ngoài không đè nổi. Prop mặc định `null` nên màn khác không đổi.
+  - **Mọi `V2BaseSelect` / `V2BaseSelectInModal` trong ô floating phải truyền `height="32px"`** — `updateHeight()` ghi inline `!important` nên CSS ngoài không đè nổi. Prop mặc định `null` nên màn khác không đổi.
   - Cặp ngày "từ … đến" gộp thành MỘT ô `variant="range"` (bớt hẳn 1 ô). Ô chip/multi-select dùng `variant="tags"` (ô cao tự động theo số chip) — nhưng nhãn vẫn theo **đúng quy tắc chung**: nghỉ ở giữa ô, bay lên khi có chip. KHÔNG cho float sẵn, vì như vậy nó hiển thị lệch hẳn với các select còn lại trong cùng panel. Component chip phải tự truyền `has-value` (đếm chip đang chọn) và **giấu placeholder riêng của nó** khi chưa float (`.ff--tags:not(.is-float) .csp-placeholder { color: transparent }`), không thì chữ chồng lên nhãn.
   - Đệm phải của `.ff--tags` chỉ `--ff-pad-x`, KHÔNG dùng `--ff-pad-r` 30px như ô thường: component chip đã tự vẽ mũi tên và chừa chỗ, chừa thêm nữa là mất một khoảng trống to bên phải.
   - **Nhãn nằm TRONG ô (chưa float) để `font-weight: 400`**, bay lên viền mới in đậm 600 — lúc nằm trong nó đóng vai placeholder, đậm nhìn như đã nhập sẵn dữ liệu. Phải khai tay `.ff:not(.is-float) .ff__label { font-weight: 400 }` vì `.ff__label` là thẻ `<label>`, ăn rule toàn cục `label { font-weight: 600 }` của `custom-theme.scss`.
@@ -43,22 +47,30 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   - **`.ff` phải là stacking context riêng (`z-index: 0`) và nhãn `z-index: 10000`**: Select2 gán `z-index: 9999` cho `.select2-container--open`, không nâng nhãn lên là khung select vẽ đè, viền cắt ngang chữ nhãn khi mở dropdown.
   - Component tự render nhãn (`V2BaseCompanyDepartmentFilter`, `CheckboxMultiSelect`, `CascadePairSelect`) nhận prop `floating` **opt-in, mặc định `false`**; bên trong chúng phải bỏ viền `.cps-control`/`.csp-control` vì viền đã do `.ff--tags .ff__control` vẽ, để cả hai là **viền đôi**.
   - Panel cha BẮT BUỘC khai `--panel-bg` khớp nền thật, quên là nhãn hiện vệt trắng lệch màu trên viền.
-  - Khoảng cách hàng **18px**, không dưới 16px: nhãn float nhô lên ~5.5px, gap hẹp hơn là nhãn dính vào ô hàng trên.
+  - Khoảng cách hàng **18px**, không dưới 16px: nhãn float nhô lên ~5.5px, gap hẹp hơn là nhãn dính vào ô hàng trên. `V2BaseSmartFilterPanel` **tự lo** phần này (2026-09-19): panel bật `floating` sẽ khai thêm class `.smart-advanced-filters--floating` → `.form-row { row-gap: 18px }` + `margin-bottom: 0` cho mọi `col-*`. Page **KHÔNG** tự thêm `mb-*` vào ô lọc. Trước đó panel ép cứng `margin-bottom: 0.5rem !important` cho mọi màn, đo thật trên `/meeting/bookings` ra **8px** — nhãn float chỉ còn hở 3px so với đáy ô hàng trên; sau khi sửa: gap **18px**, hở **13px**. Dùng `row-gap` chứ không tăng `margin-bottom` vì margin cộng luôn một khoảng thừa dưới hàng cuối. ⚠️ Nhánh KHÔNG floating giữ nguyên 8px (đã đo lại `/assign/tasks`: 8px) — đổi cả hai là 88 màn khác tự dưng giãn ra. **18px tính cả chỗ nối**: hở giữa hàng TÌM NHANH (hoặc hàng tiêu đề) và hàng ô lọc ĐẦU TIÊN cũng phải 18px — màn chỉ có một hàng ô lọc (`/meeting/rooms`) thì đây là chỗ chật DUY NHẤT, `row-gap` không với tới. Panel lo bằng `padding-top: 10px` trên chính khối lọc (8px `margin-bottom` của hàng tìm nhanh + 10px = 18px), KHÔNG nới `margin-bottom` hàng tìm nhanh: lúc panel đóng `v-show` cho khối lọc `display: none` nên padding tự mất, hàng tìm nhanh giữ nguyên nhịp 8px sát bảng (đo: panel đóng → 19px tới mép card, y như trước).
   - ⚠️ Chỉ áp cho **panel bộ lọc**. Form Tạo/Sửa, modal, màn chi tiết vẫn giữ nhãn-trên-ô-dưới.
 - ⚠️ **CSS cho phần tử do COMPONENT DÙNG CHUNG render thì phải nằm TRONG component đó, KHÔNG để ở `v2-styles.scss`** (chốt 2026-09-21, sau bug thật trên bản deploy).
   - 226 file import `@/assets/scss/v2-styles.scss` bên trong `<style lang="scss" scoped>`. `scoped` khiến Vue gắn `data-v-<hash CỦA TRANG>` vào **mọi** selector của file đó. Phần tử do component con render mang `data-v` của COMPONENT nên **không selector nào khớp** → rule im lặng không áp dụng.
   - Trên dev server nó chỉ chạy khi TÌNH CỜ có component nào đó trên trang import `v2-styles.scss` **không** scoped → cùng một bản build, màn này đúng màn kia vỡ, rất khó lần.
   - Ca đã trả giá: `.d-contents { display: contents }`. Cột gộp nhóm (Công ty–Phòng ban, Nhóm ngành–Ứng dụng) do `V2BaseSmartFilterPanel` render; thiếu rule thì 2 `col-md-3` bên trong bị gói vào một cột block hẹp → **ô lọc co sập còn 7px** (`hrm-crm.eteksofts.com/finance/warehouse-export-requests`), trong khi `/assign/customers` cùng bản build lại đúng 323px. Đã chuyển 4 rule `.d-contents` vào khối `<style>` **không scoped** của chính panel.
   - Quy tắc: viết CSS cho phần tử của component X → đặt trong `<style>` của X. Cần dùng chung nhiều component → đặt ở CSS toàn cục nạp qua `nuxt.config`, **đừng** dựa vào `v2-styles.scss` được ai đó import không scoped.
-  - **Đo trên trình duyệt phải đo CẢ CHIỀU RỘNG**, không chỉ chiều cao — lỗi này cao vẫn đúng 36px nên audit chỉ đo cao sẽ báo "đạt".
+  - **Đo trên trình duyệt phải đo CẢ CHIỀU RỘNG**, không chỉ chiều cao — lỗi này cao vẫn đúng chuẩn nên audit chỉ đo cao sẽ báo "đạt".
 - **SLOT `#field-*` KHÔNG ĐƯỢC TỰ VẼ `V2BaseLabel`** (chốt 2026-09-21). Field khai `hideLabel: true` là panel KHÔNG bọc vỏ floating -> slot phải tự lo nhãn, và kết quả là **ô đó lạc loài: nhãn tĩnh nằm trên ô, cao hơn các ô bên cạnh nguyên một dòng**. Đã dính **24 slot ở 13 file** trước khi bị phát hiện.
   - Chỉ dùng `hideLabel: true` cho component **tự vẽ nhãn cho NHIỀU ô** (`V2BaseCompanyDepartmentFilter`, `V2BaseFieldCategoryApplicationFilter`) — và component đó phải nhận `:floating="true"`.
   - Ô đơn trong slot: **bỏ `hideLabel`**, slot chỉ render control, để panel bọc floating.
   - Cặp "từ – đến" mà panel chưa có `type` sẵn (tiền, số lượng): khai `variant: 'range'` + `resetKeys` + `inputCount: 1`, slot render 2 control + `<span class="ff__sep">→</span>`. **Control bên trong phải bỏ viền riêng**, nếu không thành viền lồng nhau (vỏ `.ff--range` đã vẽ viền) — `V2BaseFloatingField` đã xử sẵn cho `.mx-input`, `.v2-input`, `.v2-currency-input`.
   - Tự kiểm: `grep -n "#field-" -A 6 <file> | grep V2BaseLabel` phải RỖNG.
-- **MỌI Ô LỌC TRONG PANEL PHẢI CAO ĐÚNG 36px** — verify 21/09/2026 phát hiện 4 lỗi cùng một gốc: CSS của `.ff` **thua specificity** CSS riêng của từng control. Đã vá trong `V2BaseFloatingField`, nhưng nhớ nguyên tắc khi thêm control mới:
+- **MỌI Ô LỌC TRONG PANEL PHẢI CAO BẰNG NHAU, CHUẨN HIỆN HÀNH LÀ `32px`** (biến `--ff-h` trong `V2BaseFloatingField`).
+
+  > ⚠️ **Chuẩn đã hạ 36px → 32px ngày 22/09/2026** (commit `2a6e59432` "fix bug", `hrm-client`), sửa
+  > luôn cả docblock trong component: chỗ trước đây coi ô datepicker 32px là *"lệch 4px"* nay ghi
+  > *"CÙNG giá trị với chuẩn hiện hành"*. Tài liệu này viết lúc 10:31 cùng ngày, code đổi lúc 14:28
+  > nên từng lệch nhau 4 tiếng — **số đúng là 32px**. Muốn đổi lại thì sửa `--ff-h`, đừng sửa từng màn.
+
+  Verify 21/09/2026 (khi chuẩn còn là 36px) phát hiện 4 lỗi cùng một gốc: CSS của `.ff` **thua specificity** CSS riêng của từng control. Đã vá trong `V2BaseFloatingField`, nhưng nhớ nguyên tắc khi thêm control mới:
   - Control nào cũng tự khai chiều cao bằng selector nặng + `!important` (`div.v2-select.v2-select--sm …` 7 class, `div.v2-datepicker__wrapper div.v2-datepicker--sm … input.mx-input` 5 class + 3 thẻ). Muốn đè phải viết selector **nặng hơn**, `!important` thôi KHÔNG đủ.
-  - `V2BaseSelectRemote` / `V2BaseSelect` đặt trong slot `#field-*` **bắt buộc `height="36px"`**, thiếu là 32px lệch hàng (đã dính ở 9 slot của 7 màn).
+  - `V2BaseSelectRemote` / `V2BaseSelect` đặt trong slot `#field-*` **bắt buộc truyền `height` đúng bằng `--ff-h` (nay là `32px`)** — cùng giá trị với mặc định `--sm` của control nên hiện tại không lệch, nhưng vẫn khai để ô không trôi theo nếu một trong hai bên đổi số (đã dính lệch hàng ở 9 slot của 7 màn hồi chuẩn còn 36px).
+  - ⚠️ Ô **chip / chọn nhiều** (`.ff--tags`) phải kiểm ở CẢ 3 trạng thái: rỗng, có 1 chip (nhãn đã float), chip tràn dòng. Chỉ đo lúc rỗng là bỏ sót — bản 22/09/2026 từng ra 32px lúc rỗng nhưng 38px khi có chip, vì `padding-top: 7px` lúc float cộng với chip select2 cao 22px. Đã vá bằng 3 rule trong `V2BaseFloatingField` (chip 18px, ô tìm inline 20px, `.select2-container` `display: block` để bỏ 0.56px baseline).
   - Ô **chọn nhiều** (`multiple: true`) có 3 bẫy: select2 tự vẽ **viền riêng** → viền đôi với vỏ `.ff--tags`; khung trong cao 32px → ô ra 42px; khối chip có `line-height: 34px` thừa. Cả 3 đã xử lý sẵn trong `V2BaseFloatingField`.
   - Ô chip lúc nhãn đã float cần `padding-top: 9px` — nội dung ô chip neo mép trên nên nhãn float (thò xuống ~7px dưới viền) sẽ **đè lên chip hàng đầu**.
   - **Tự kiểm bằng trình duyệt** (dán vào console, phải trả về mảng rỗng):
@@ -67,7 +79,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
       .forEach(c => { const b = c.getBoundingClientRect(); (r[Math.round(b.top)] ??= []).push(Math.round(b.height)) })
       return Object.entries(r).filter(([, h]) => new Set(h).size > 1) })()
     ```
-- **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleInputCount` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; ⚠️ đếm theo **số Ô NHẬP thực tế**, KHÔNG phải số phần tử trong `visibleFields`: field gom nhóm render ra nhiều ô nên tính theo `resetKeys.length` (vd `org` = Công ty + Phòng ban + Bộ phận + Nhân viên = **4 ô**, `customer_scope_pairs` = 2 ô), cần khác thì khai `inputCount` trên field để đè. Đếm mỗi field là 1 thì bật đúng field gom nhóm thôi đã kín cả hàng mà panel vẫn tưởng "gọn" rồi bỏ mất nút "Tìm kiếm nâng cao"; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **vẫn dùng nhãn floating y như khối nâng cao** (user chốt 2026-09-09) — nhãn lúc nghỉ nằm giữa ô nên không chiếm thêm dòng, hàng lọc vẫn thẳng trục với ô tìm nhanh; ô tìm nhanh và ô lọc cùng cao **36px**. Trước đây chế độ này bỏ nhãn và chỉ dùng placeholder, kết quả là **cùng một màn mà bộ lọc gọn nhìn xấu hơn hẳn khối nâng cao**, và placeholder biến mất ngay khi chọn giá trị nên không còn gì cho biết ô đó lọc gì. Màn CHƯA bật `floating` thì vẫn chạy theo lối cũ (không nhãn, placeholder tự sinh từ `label`). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
+- **Bộ lọc ≤ 3 ô (TÍNH CẢ ô tìm nhanh) → bày hết ra 1 hàng, KHÔNG có nút "Tìm kiếm nâng cao"**: ô tìm nhanh thu ngắn lại, các ô lọc còn lại nằm ngang hàng và rộng bằng nhau, hiện sẵn ngay khi vào màn. Giấu 1-2 ô lọc sau 1 cú bấm là bắt user thao tác thừa, mà panel mở ra cũng chỉ lấp được 1/4 chiều ngang. `V2BaseSmartFilterPanel` **tự xử lý** bằng computed `isInlineMode` (đếm `visibleInputCount` + ô tìm nhanh) — page KHÔNG phải khai gì thêm; ⚠️ đếm theo **số Ô NHẬP thực tế**, KHÔNG phải số phần tử trong `visibleFields`: field gom nhóm render ra nhiều ô nên tính theo `resetKeys.length` (vd `org` = Công ty + Phòng ban + Bộ phận + Nhân viên = **4 ô**, `customer_scope_pairs` = 2 ô), cần khác thì khai `inputCount` trên field để đè. Đếm mỗi field là 1 thì bật đúng field gom nhóm thôi đã kín cả hàng mà panel vẫn tưởng "gọn" rồi bỏ mất nút "Tìm kiếm nâng cao"; user ẩn bớt trường ở popup "Cài đặt bộ lọc" thì panel tự chuyển sang hàng ngang, và ngược lại. Ở chế độ này ô lọc **vẫn dùng nhãn floating y như khối nâng cao** (user chốt 2026-09-09) — nhãn lúc nghỉ nằm giữa ô nên không chiếm thêm dòng, hàng lọc vẫn thẳng trục với ô tìm nhanh; ô tìm nhanh và ô lọc cùng cao **32px**. Trước đây chế độ này bỏ nhãn và chỉ dùng placeholder, kết quả là **cùng một màn mà bộ lọc gọn nhìn xấu hơn hẳn khối nâng cao**, và placeholder biến mất ngay khi chọn giá trị nên không còn gì cho biết ô đó lọc gì. Màn CHƯA bật `floating` thì vẫn chạy theo lối cũ (không nhãn, placeholder tự sinh từ `label`). Nút **"Cài đặt bộ lọc" cũng ẩn luôn** ở chế độ này (đã bày hết ra rồi thì không còn gì để bật/tắt) — **ngoại lệ**: panel gọn vì chính user tắt bớt trường (schema 6 trường, user để lại 2) thì vẫn giữ nút, không thì khoá mất lối duy nhất để bật lại. Màn còn dùng `V2BaseFilterPanel` cũ không có cơ chế này (panel cũ nhận ô lọc qua slot nên không đếm được) — chuyển sang panel mới thì được luôn.
 - Style bắt buộc: luôn import `@import '@/assets/scss/v2-styles.scss';` trong thẻ `<style lang="scss">` của trang danh sách
 - Các khối bộ lọc theo logic Cascading filter: Công ty =>> Phòng ban =>> Bộ phận; Dự án TKT =>> Giải pháp =>> Hạng mục
 
@@ -234,7 +246,7 @@ grep -rLn "Xuất Excel" --include=index.vue pages/<phân hệ> | xargs grep -l 
     phiếu"), `pages/finance/bill-payment-requests/index.vue` và
     `pages/finance/prepick-cancel-requests/index.vue` ("Không duyệt").
 - Nút **Khóa / Mở khóa KHÔNG để trong ô Trạng thái** — đưa về cột Hành động.
-- Cột Hành động KHÔNG đưa vào modal "Cấu hình cột hiển thị" (không cho ẩn / kéo đổi chỗ) → khai riêng, đừng bỏ vào `allColumns`.
+- Cột Hành động: **mặc định đứng cuối**, khai trong `allColumns` với `locked: true`. Trong popup "Cấu hình cột hiển thị" user **KÉO ĐỔI VỊ TRÍ được nhưng KHÔNG ẨN được** (chốt 2026-10-02) — `columnCustomizationMixin` tự đổi `locked` của cột `actions` thành `required`, màn không phải khai gì thêm.
 - **MỌI màn danh sách BẮT BUỘC có hành động "Lịch sử"** (chốt 2026-08-15) — `{ key: 'history',
   title: 'Lịch sử', icon: 'ri-history-line' }`, nằm trong menu `⋮`, **KHÔNG gắn permission riêng**
   (ai vào được màn thì xem được). Áp cho cả màn danh mục nhỏ nhất (tiền tệ, quốc gia, phường/xã…).
@@ -278,6 +290,35 @@ Thuộc tính mỗi action: `key`, `title`, `icon`, `to?`, `danger?`, `interacta
 **Cờ quyền** đi qua `visible` và phải fail-closed (mặc định `false`, xem CLAUDE.md) — không hard-code `true`.
 
 **Gotcha đã xử lý sẵn trong component:** bảng có `overflow` nên menu để trong ô sẽ bị cắt → component tự `appendChild` menu ra `document.body` và định vị `position: fixed` theo toạ độ nút `⋮`. Đừng bọc menu vào thẻ có `transform`.
+
+## 2b. Màn danh sách V2 trong layout MENU NGANG — xử lý RIÊNG, không sửa base (chốt 2026-09-26)
+
+hrm-client có **2 kiểu khung** màn, cách lo khoảng cách đầu trang khác nhau:
+
+| Khung | Nhận biết | Tiêu đề trang do ai vẽ |
+|---|---|---|
+| **Sidebar** (phân hệ mới: assign, finance, customer-care…) | `layout: 'assign'`/`'subsystem'`… — menu dọc bên trái | Layout tự vẽ từ `PageTitleMixin` (`pageTitle` trong store) |
+| **Menu ngang** (chấm công, ca làm việc, quản lý đơn… — `layouts/default.vue`, `Topbar` phía trên) | Không khai `layout`, route `/timesheet/...` | **Màn tự vẽ** bằng `<PageHeader :title>` (`components/Page-header.vue`) — layout KHÔNG vẽ, `PageTitleMixin` ở layout này không hiện gì |
+
+Màn V2 (`V2BaseSmartFilterPanel` / `V2BaseFilterPanel` + `V2BaseDataTable`) viết theo khuôn sidebar mà đặt vào layout menu ngang thì **thiếu dòng tiêu đề → khối "Bộ lọc danh sách" dính sát thanh menu**, lệch hẳn các màn chấm công bên cạnh (vd `/timesheet/attendance`, `/timesheet/timeworking/working-shift`).
+
+**Cách làm (chỉ trong màn đó):**
+```vue
+<template>
+    <div class="topmenu-v2-list">
+        <PageHeader title="Lịch sử phân ca" />   <!-- tiêu đề + khoảng cách đầu trang y như màn menu ngang khác -->
+        <div class="v2-styles">
+            <V2BaseSmartFilterPanel ... />
+            <V2BaseDataTable ... />
+        </div>
+    </div>
+</template>
+```
+- KHÔNG bọc thêm `container-fluid` (layout đã có) và bỏ `min-vh-100 d-flex justify-content-center pt-2` của khuôn sidebar — thừa padding làm lệch mép trái so với tiêu đề.
+- **CẤM sửa `V2BaseFilterPanel` / `V2BaseSmartFilterPanel` / `v2-styles.scss` để thêm margin-top** — base đang dùng cho ~70 màn sidebar, thêm khoảng ở base là đẩy lệch toàn bộ màn sidebar. Khoảng cách của layout menu ngang do `PageHeader` lo.
+- Vẫn giữ `PageTitleMixin` nếu màn còn được mở ở layout sidebar (không hại gì); tiêu đề `head()` giữ nguyên.
+- Tự kiểm: chụp màn mới cạnh 1 màn chấm công cùng menu — tiêu đề cùng toạ độ, mép trái card thẳng mép trái tiêu đề.
+- Màn mẫu: `pages/timesheet/timeworking/shift-history/index.vue`.
 
 ## 3. Cột Mã + Tên: tách 2 cột, MÃ là link
 
@@ -957,8 +998,8 @@ không mở được các cột còn lại.
 
 Dùng mixin chung `utils/mixins/columnCustomizationMixin.js` (khai `columnScreenKey` + đổi computed cột của màn thành `allColumns`), KHÔNG tự viết lại logic merge/lưu.
 
-- **Cột bắt buộc khai `locked: true`** — chỉ STT, cột Mã (định danh) và Hành động. Cột Tên và mọi cột nghiệp vụ khác để user tự ẩn/hiện + kéo thả. Cột `locked` **vẫn liệt kê trong popup** để user thấy đủ bộ cột của bảng, nhưng bị **xám + tick sẵn**, không bỏ tích và không kéo thả được (modal tự xử lý qua `column-row--locked` + `draggable=".column-row--free"`).
-- **Thứ tự trong popup phải khớp thứ tự trên bảng**: STT / Mã ở đầu, **Hành động ở CUỐI**. Mixin lo việc này bằng computed `pinnedColumns` — ghim cột `locked` về đúng vị trí gốc trong `allColumns` rồi mới đổ ra cả popup lẫn bảng.
+- **Cột bắt buộc khai `locked: true`** — chỉ STT, cột Mã (định danh) và Hành động. Riêng Hành động được mixin hạ thành `required`: tick sẵn, không bỏ tích, nhưng **kéo đổi vị trí được** (chốt 2026-10-02). Cột Tên và mọi cột nghiệp vụ khác để user tự ẩn/hiện + kéo thả. Cột `locked` **vẫn liệt kê trong popup** để user thấy đủ bộ cột của bảng, nhưng bị **xám + tick sẵn**, không bỏ tích và không kéo thả được (modal tự xử lý qua `column-row--locked` + `draggable=".column-row--free"`).
+- **Thứ tự trong popup phải khớp thứ tự trên bảng**: STT / Mã ở đầu, **Hành động mặc định ở CUỐI** (user kéo đi đâu thì bảng theo đó; cấu hình cũ chưa có cột này thì mixin đặt nó ở cuối). Mixin lo việc này bằng computed `pinnedColumns` — ghim cột `locked` về đúng vị trí gốc trong `allColumns` rồi mới đổ ra cả popup lẫn bảng.
   ⚠️ Không đổ thẳng `mergedColumns` ra popup: nó giữ **thứ tự đã lưu của user**, nên cột mới thêm (vd `actions` lần đầu vào popup) bị chèn cạnh hàng xóm gần nhất và hiện ở **giữa** danh sách.
 
 ## 6. Bộ cột hiện MẶC ĐỊNH
@@ -1265,7 +1306,7 @@ hàng chục cột thừa, user phải tự xoá cột trong Excel.
 
 | Lớp | Dùng cái gì |
 | --- | --- |
-| **FE popup** | `components/modal/export-fields-modal.vue` (đã có, KHÔNG viết popup mới) |
+| **FE popup** | `components/modal/export-fields-modal.vue` (đã có, KHÔNG viết popup mới) — danh sách checkbox + kéo thả `vuedraggable` như popup "Tuỳ chỉnh cột", **thứ tự dòng = thứ tự cột trong file** (đổi 2026-09-22, trước đó là select2 multiple phải bỏ tick rồi tick lại mới đổi được thứ tự) |
 | **FE logic** | mixin `utils/mixins/exportFieldsMixin.js` — lo mở popup, nhớ loại file, nhận cột user tick |
 | **BE cột** | `App\ExcelExport\ExportColumnRegistry::COLUMNS['<màn>']` = `[key => nhãn]` — nguồn DUY NHẤT cho cả popup lẫn header file |
 | **BE xuất** | `App\ExcelExport\DynamicExport` + view chung `resources/views/exports/dynamic.blade.php` — cột động, KHÔNG viết `XxxExport` + blade cứng cột cho từng màn |
@@ -1280,7 +1321,7 @@ computed: {
     exportFields() { return [{ id: 'name', name: 'Tên cấp' }, /* … */] },
 },
 methods: {
-    // mixin gọi lại sau khi user chọn; `fields` theo ĐÚNG thứ tự tick
+    // mixin gọi lại sau khi user chọn; `fields` theo ĐÚNG thứ tự dòng user sắp trong popup
     async runExport(type, fields) { /* thêm `params.fields = fields.join(',')` rồi gọi API */ },
 },
 ```
@@ -1598,7 +1639,7 @@ tableColumns() {
 
 Lọc ở page chứ KHÔNG thêm khái niệm "cột khoá" vào `column-customization-modal.vue` — component đó đang phục vụ 20+ màn.
 
-Cột **Hành động** cũng không vào popup, và luôn chốt ở cuối bảng.
+> ⚠️ Đoạn code trên là cách CŨ — màn mới dùng `columnCustomizationMixin` (mục 5): cột Hành động có trong popup, kéo đổi vị trí được nhưng không ẩn được.
 
 ## Cột nào được sort
 

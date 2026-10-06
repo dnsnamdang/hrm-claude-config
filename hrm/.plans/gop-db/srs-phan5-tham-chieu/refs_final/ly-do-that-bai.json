@@ -1,0 +1,14 @@
+{
+  "catalog": "Danh mục lý do thất bại (Nguyên nhân thất bại dự án)",
+  "srs_file": "SRS - Danh mục lý do thất bại.docx",
+  "rows": [
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT – popup Đóng dự án",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE components/assign/prospective-project/CloseProjectModal.vue:34,122 (assign/reason_project_failures/getAll),145 (close / close-parent); mở từ pages/assign/prospective-projects/_id/manager.vue:225,242; BE ProspectiveProjectCloseRequest.php:21 (exists:reason_project_failures), ProspectiveProjectService.php:2004,2134 (prospective_projects.closed_reason_id), Entities/ProspectiveProject.php:739 · Lối vào: presale.js:44"
+    }
+  ],
+  "notes": "KHÔNG CÓ KIỂM TRA XOÁ: ReasonProjectFailure không có isCanDelete(); ReasonProjectFailureController::destroy (dòng 65-81) → ReasonProjectFailureService::destroy (dòng 166-171) xoá thẳng → lý do đã gán cho dự án đã đóng (prospective_projects.closed_reason_id) vẫn xoá được; màn chi tiết dự án (manager.vue:16) và Báo cáo kết quả thực hiện dự án TKT sẽ mất tên lý do. Lý do hệ thống 'tự động đóng' do ProspectiveProjectAutoCloseService.php:134-139 tìm theo TÊN và tự tạo lại nếu bị xoá/đổi tên. Màn chỉ HIỂN THỊ (không đưa vào bảng vì không có ô lọc theo danh mục): Dự án TKT – chi tiết (manager.vue:16), Báo cáo kết quả thực hiện dự án TKT – popup danh sách dự án, cột 'Lý do thất bại' (ProjectListModal.vue:219,271; BE ProspectiveProjectResultReportService.php:206,383). Nhãn menu: CSKH trước bán -> Danh mục ghi 'Nguyên nhân thất bại dự án', Bán hàng -> Danh mục -> Dự án - Giải pháp ghi 'Lý do thất bại'.",
+  "changes": "Trước 1 dòng -> sau 1 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Rút nhãn về \"Dự án TKT – popup Đóng dự án\"; màn chỉ có 1 lối vào."
+}

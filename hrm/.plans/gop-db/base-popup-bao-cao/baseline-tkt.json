@@ -1,0 +1,81 @@
+{
+ "cols": [
+  "STT",
+  "Mã dự án",
+  "Tên dự án TKT",
+  "Ngày lập dự án",
+  "Tiến trình",
+  "Nhân viên phụ trách",
+  "Thị trường",
+  "Khách hàng",
+  "Kết quả",
+  "Lý do thất bại",
+  "Giá trị"
+ ],
+ "firstPageRowCount": 20,
+ "sttFirst": "1",
+ "sttLast": "20",
+ "pageTotal": "Hiển thị 1–20 / 50 dự án",
+ "tableBottom": 656,
+ "footerTop": 742,
+ "heightNormal": 775,
+ "tableScrollBorderTopWidth": "0px",
+ "tableScrollBorderRadius": "0px",
+ "modalContentOverflow": "visible",
+ "footerButtonGaps": [
+  {
+   "between": "In danh sách → Xuất Excel danh sách",
+   "gapPx": 8
+  },
+  {
+   "between": "Xuất Excel danh sách → Đóng",
+   "gapPx": 8
+  }
+ ],
+ "sortTextAsc": [
+  "Nguyễn Quốc Trung",
+  "Nguyễn Đức Hiểu",
+  "Nguyễn Đức Hiểu",
+  "Nguyễn Đức Hiểu",
+  "Nguyễn Đức Hiểu",
+  "Nguyễn Đức Hiểu",
+  "Nguyễn Đức Hiểu",
+  "Nguyễn Đức Hiểu",
+  "Nguyễn Đức Hiểu",
+  "Phạm Trung Đức",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Trần Văn Sơn",
+  "Vũ Quang Hưng"
+ ],
+ "sortDateAsc": [
+  "03/07/2026",
+  "03/07/2026",
+  "06/07/2026",
+  "09/07/2026",
+  "09/07/2026",
+  "09/07/2026",
+  "10/07/2026",
+  "13/07/2026",
+  "23/07/2026",
+  "23/07/2026",
+  "23/07/2026",
+  "23/07/2026",
+  "24/07/2026",
+  "24/07/2026",
+  "24/07/2026",
+  "28/07/2026",
+  "28/07/2026",
+  "28/07/2026",
+  "28/07/2026",
+  "29/07/2026"
+ ],
+ "heightFull": null,
+ "heightFullNote": "Popup này không có nút \"Phóng to\" (vỏ V2BaseModal không có tính năng này) — bỏ qua phép đo, không bịa số."
+}

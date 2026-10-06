@@ -1,5 +1,7 @@
 # Design (tóm tắt) — Báo cáo nhu cầu mua: trừ SL đã mua theo dòng
 
+> Làm lại 01/10/2026 (bản 19/09 đã rollback). Logic ghi cấp phát nằm ở service `PurchaseDemandAllocationService` (không dùng trait), có xử lý dòng đổi hàng và bỏ qua HĐ nguyên tắc — xem mục 0 của spec.
+
 **Spec đầy đủ:** `docs/superpowers/specs/2026-09-19-bc-nhu-cau-mua-tru-sl-da-mua-design.md`
 
 ## Vấn đề
@@ -20,15 +22,16 @@ qua bảng nối mới `purchase_demand_allocations`.
 
 Công thức:
 ```
-Còn cần mua (dòng) = alloc_mua − Σ allocation của chứng từ ĐÃ DUYỆT
-Đang chờ duyệt     = Σ allocation của chứng từ Nháp / Chờ duyệt   (KHÔNG trừ, chỉ cảnh báo)
+Còn cần mua (dòng) = alloc_mua − Σ allocation của chứng từ Nháp / Chờ duyệt / Đã duyệt
+Trong đó chưa duyệt = Σ allocation của chứng từ Nháp / Chờ duyệt   (ĐÃ trừ, chỉ để hiển thị)
+(Từ chối / Hủy / đã xóa → không tính, nhả nhu cầu ra)
 ```
 
 ## Quyết định lớn
 | # | Quyết định |
 |---|---|
 | 1 | Bảng nối `purchase_demand_allocations`, chỉ index, không khóa ngoại |
-| 2 | Chỉ status = 3 (Đã duyệt) mới trừ; 1/2 hiện badge cam "chờ duyệt" |
+| 2 | ~~Chỉ status = 3 mới trừ~~ → **01/10/2026: status 1/2/3 đều trừ** (tránh lập trùng); badge cam "gồm N chưa duyệt" chỉ hiển thị; 4/5/xóa nhả ra |
 | 3 | Tính **cả HĐ mua (doc_type 1) và Đơn mua (doc_type 2)** |
 | 4 | SL cấp phát lưu theo **ĐVT cơ bản** (`qty_base`) để miễn nhiễm với đổi ĐVT trên chứng từ |
 | 5 | Nguồn SL cấp phát = `purposes[].buyQty` (SL người dùng thực sự nhập), không phải `order_qty` cấp dòng |
@@ -51,7 +54,7 @@ Phát sinh ngoài thiết kế ban đầu:
   không có khóa để gửi ngược lại khi lập chứng từ.
 - Chứng từ cũ có `purchase_*_products.unit_id` NULL: đối chiếu dữ liệu thật thấy `purposes[].qty`
   của các phiếu này ghi theo **ĐVT của chính dòng nhu cầu** → nhận nguyên, không quy đổi.
-- Checkbox "Chỉ mã chưa có HĐ mua" **bị bỏ** (tiêu chí đúng bây giờ là "còn cần mua > 0" do BE lọc),
+- Checkbox "Chỉ mã chưa có HĐ mua" **bị bỏ** (tiêu chí đúng bây giờ là "còn cần mua > 0" do BE lọc), *(01/10/2026: user yêu cầu **trả lại** thành checkbox riêng "Chỉ mã chưa có HĐ / đơn mua" — lọc FE theo cột HĐ / Đơn mua rỗng; checkbox "Chọn mã để lập HĐ / đơn mua" bỏ hẳn — cột tick + nút Lập HĐ / đơn mua luôn hiện)*
   đổi thành "Chọn mã để lập HĐ / đơn mua".
 
 **Còn lại:** user click-through trên UI · chạy 2 migration trên môi trường thật · build lại client.

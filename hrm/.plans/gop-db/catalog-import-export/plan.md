@@ -4390,3 +4390,6 @@ rồi gỡ bỏ trong session 21/09 để giữ diff sạch).
 - Key mà mỗi `Resource` trả ra so với bộ cột khai ở `ExportColumnRegistry` — step đầu của mọi task Export.
 - Danh sách key mà các method tạo sẵn có đọc từ `$attrs` / `$request` — step đầu của Task 8, 13, 20.
 - Tên bảng/cột chi nhánh ngân hàng (`bank_branches`) — Task 8 Step 2.
+
+### Sửa nhỏ — 22/09/2026
+- [x] File Excel mẫu: căn giữa theo chiều dọc cho **mọi ô dữ liệu** (dòng ví dụ + khung trống kẻ sẵn tới hàng 17), cột STT căn giữa cả 2 chiều — sửa trong `utils/import-helper.js::writeTemplateSheet()` nên áp cho tất cả màn dùng `buildImportTemplate()`.

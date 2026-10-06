@@ -12,6 +12,30 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **PXL — Tab "Đơn giá quy đổi"** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 02/10/2026 — Đang brainstorming. Tab mới ở PXL chỉ hiện khi có đổi hàng: so sánh tổng giá trị hàng gốc (trước đổi) và hàng thay thế (sau đổi). Giá: hàng nhập khẩu lấy giá public; hàng PPL lấy giá gồm VAT của đơn mua/HĐ mua gần nhất, chưa có thì báo giá mới nhất.
+  - Plan: [.plans/pxl-tab-don-gia-quy-doi/plan.md](pxl-tab-don-gia-quy-doi/plan.md) · Spec: [docs/superpowers/specs/2026-10-02-pxl-tab-don-gia-quy-doi-design.md](../docs/superpowers/specs/2026-10-02-pxl-tab-don-gia-quy-doi-design.md)
+
+- **PXL hiển thị SL đã xử lý của các phiếu trước** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 01/10/2026 — Đang brainstorming. Đề xuất có nhiều PXL: ô Đặt đơn hiện `còn lại / SL đề xuất` + rê chuột xem các PXL trước đã xử lý gì.
+  - Plan: [.plans/pxl-hien-thi-da-xu-ly-phieu-truoc/plan.md](pxl-hien-thi-da-xu-ly-phieu-truoc/plan.md) · Spec: [docs/superpowers/specs/2026-10-01-pxl-hien-thi-da-xu-ly-phieu-truoc-design.md](../docs/superpowers/specs/2026-10-01-pxl-hien-thi-da-xu-ly-phieu-truoc-design.md)
+
+- **Đổi 1 hàng gốc sang nhiều hàng thay thế (PĐX / PXL)** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 01/10/2026 — Đang brainstorming. Hàng A trên HĐ bán đổi được sang nhiều hàng (B, C…) thay vì chỉ 1 hàng như hiện tại.
+  - Plan: [.plans/doi-hang-nhieu-hang-thay-the/plan.md](doi-hang-nhieu-hang-thay-the/plan.md) · Spec: [docs/superpowers/specs/2026-10-01-doi-hang-nhieu-hang-thay-the-design.md](../docs/superpowers/specs/2026-10-01-doi-hang-nhieu-hang-thay-the-design.md)
+
+- **PXL tự suy loại khi đề xuất KH chưa có hàng hóa** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 01/10/2026 — Code BE + FE xong, chờ test UI. Đề xuất KH chỉ chọn khách (không hàng) bị lưu khách lẻ → PXL mặc định khách lẻ; sửa để PXL suy loại theo hàng chọn (giống màn đề xuất).
+  - Plan: [.plans/pxl-tu-suy-loai-de-xuat-khong-hang/plan.md](pxl-tu-suy-loai-de-xuat-khong-hang/plan.md) · Design: [.plans/pxl-tu-suy-loai-de-xuat-khong-hang/design.md](pxl-tu-suy-loai-de-xuat-khong-hang/design.md)
+
+- **Báo cáo nhu cầu mua — trừ SL đã mua theo dòng (LÀM LẠI)** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 01/10/2026 — Code BE + FE xong, chờ build client + test UI. Dựng lại tính năng đã rollback 19/09 theo spec cũ: bảng nối `purchase_demand_allocations`, HĐ mua + đơn mua Đã duyệt mới trừ, Nháp/Chờ duyệt hiện nhãn, mặc định ẩn dòng đã mua đủ.
+  - Plan: [.plans/bc-nhu-cau-mua-tru-sl-da-mua/plan.md](bc-nhu-cau-mua-tru-sl-da-mua/plan.md) · Spec: [docs/superpowers/specs/2026-09-19-bc-nhu-cau-mua-tru-sl-da-mua-design.md](../docs/superpowers/specs/2026-09-19-bc-nhu-cau-mua-tru-sl-da-mua-design.md)
+
+- **Chỉ Cung ứng nội bộ cần duyệt (đề xuất + phiếu xử lý)** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 01/10/2026 — Code BE xong, chờ test UI. Đề xuất/PXL loại khác nội bộ gửi là đi thẳng (Chờ xử lý / Đã xử lý), phiếu cũ đang chờ duyệt vẫn duyệt nốt được.
+  - Plan: [.plans/chi-noi-bo-can-duyet/plan.md](chi-noi-bo-can-duyet/plan.md) · Design: [.plans/chi-noi-bo-can-duyet/design.md](chi-noi-bo-can-duyet/design.md)
+
+- **Phiếu đề xuất từ HĐ kết xuất — không tự fill hàng hóa** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 30/09/2026 — Code FE xong, chờ test UI. Bảng hàng để trống, người dùng tự chọn trong popup (chỉ hàng HĐ nguồn + danh mục).
+  - Plan: [.plans/de-xuat-tu-hd-khong-fill-hang/plan.md](de-xuat-tu-hd-khong-fill-hang/plan.md) · Design: [.plans/de-xuat-tu-hd-khong-fill-hang/design.md](de-xuat-tu-hd-khong-fill-hang/design.md)
+
+- **Popup chọn hàng HĐ mua — tách bộ lọc Mã/Tên · Khách hàng · Số HĐ + nới rộng** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 30/09/2026 — Code FE xong, chờ build + test UI.
+  - Plan: [.plans/popup-chon-hang-hd-mua-bo-loc/plan.md](popup-chon-hang-hd-mua-bo-loc/plan.md) · Spec: [docs/superpowers/specs/2026-09-30-popup-chon-hang-hd-mua-bo-loc-design.md](../docs/superpowers/specs/2026-09-30-popup-chon-hang-hd-mua-bo-loc-design.md)
+
 - **HĐ mua — Đơn giá trước VAT + Chiết khấu (%) + Tổng tiền trước VAT** — @khoipv — Hoàn thành 2026-09-30 — Bắt đầu 29/09/2026 — **Đang code BE + FE**. Bảng hàng hóa `supply/purchase_contracts` thêm Đơn giá trước VAT, CK% nhập theo khách, Đơn giá sau CK; Thành tiền → Tổng tiền (= SL × đơn giá sau CK, trước VAT); VAT lấy theo danh mục hàng hóa; khối tổng Trước VAT / VAT / Sau VAT dưới bảng.
   - Plan: [.plans/hop-dong-mua-gia-truoc-vat-chiet-khau/plan.md](hop-dong-mua-gia-truoc-vat-chiet-khau/plan.md) · Spec: [docs/superpowers/specs/2026-09-29-hop-dong-mua-gia-truoc-vat-chiet-khau-design.md](../docs/superpowers/specs/2026-09-29-hop-dong-mua-gia-truoc-vat-chiet-khau-design.md)
 

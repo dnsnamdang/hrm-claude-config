@@ -1339,3 +1339,171 @@ Nguyên nhân: ô Nhà cung cấp loại 3 (và 2 ô chọn chứng từ nguồn
 
 - [x] `AdditionAccountingRequestForm.vue`: computed `objectFieldPickable` (`!readonly && !objectFieldAutoFilled`) — không chọn được thì `disabled` + bỏ `picker-input`
 - [x] Ô Phiếu xác nhận bảo hành / Phiếu xử lý hàng thiếu: `:disabled="readonly"`, `picker-input` chỉ khi sửa được
+
+## Phase 31 — Popup Chọn nhân viên (loại Khác): sort + gộp 1 ô tìm (2026-09-30)
+
+- [x] BE `AdditionAccountingLookupService::searchEmployees()`: whitelist sort `code` → `ei.code`, `fullname` → `ei.fullname`; mặc định giữ theo mã
+- [x] FE `AdditionAccountingRequestForm.vue`: bật sort cột Mã nhân viên + Tên nhân viên; 2 ô tìm → 1 ô `keyword` "Mã / Tên nhân viên" (khuôn popup Chọn NCC)
+- [x] FE `RecordSearchModal.vue`: ô tìm nhận `colClass` (mặc định `col-md-3`)
+- [x] Popup Chọn nhà cung cấp: sort Mã + Tên NCC — user chốt BẬT CHO MỌI MÀN: `bill-income-requests/components/SupplierSearchModal.vue` (tiêu đề sort) + BE `BillIncomeRequestService::searchSuppliers()` (whitelist `code`/`fullname`, mặc định theo mã)
+
+### Checkpoint — 2026-09-30
+Vừa hoàn thành: Phase 31 — sort Mã/Tên ở popup Chọn nhân viên + Chọn nhà cung cấp (bật cho mọi màn dùng popup này), gộp 1 ô tìm "Mã / Tên nhân viên"
+Đang làm dở: không — code xong, đã chạy thử hàm tìm kiếm với dữ liệu thật (NV 1.085 dòng, NCC 9.547 dòng; tên cột lạ → quay về thứ tự mặc định) + compile 3 SFC
+Bước tiếp theo: user mở trình duyệt nghiệm thu màn Thêm mới loại Khác (2 popup) + popup NCC ở 1 màn khác (vd Đề nghị thu tiền); sau đó commit khi user yêu cầu
+Blocked:
+
+## Phase 32 — Ô "Loại yêu cầu" có nút × xoá nhanh (2026-09-30)
+
+- [x] `AdditionAccountingRequestForm.vue`: bỏ `:allowClear="false"` (trái skill select-and-input-state 1b) — xoá đi qua `onChangeType` nên trường phụ thuộc loại bị dọn như khi đổi loại; màn Chi tiết ô `disabled` nên × tự ẩn
+
+## Phase 33 — URL phiếu không tồn tại báo lỗi 2 lần (2026-09-30)
+
+Nguyên nhân: màn Chi tiết nạp phiếu ở trang vỏ (`_id/index.vue`) VÀ form con (`AdditionAccountingRequestForm.vue`) cũng tự nạp — id không tồn tại (vd 31658) thì cả 2 cùng toast "Lỗi khi tải phiếu".
+
+- [x] `_id/index.vue`: cờ `loaded` — chỉ dựng form/layout loại 7 + khối Lịch sử sau khi nạp phiếu thành công; 404 → toast "Không tìm thấy dữ liệu" + về danh sách (khuôn `prepick-cancel-requests`), 403 giữ như cũ
+- [x] `AdditionAccountingRequestForm.vue::loadDetail()` (màn Sửa): 404/403 → toast câu nghiệp vụ + `markFormPristine()` + về danh sách
+
+### Checkpoint — 2026-09-30 (wrap up)
+Vừa hoàn thành: Phase 31 (sort + gộp ô tìm popup NV/NCC) · Phase 32 (× xoá ô Loại yêu cầu) · Phase 33 (URL phiếu không tồn tại báo lỗi 2 lần → 1 lần + về danh sách)
+Đang làm dở: không — code xong, đã compile FE + chạy thử BE tìm kiếm; chưa mở trình duyệt
+Bước tiếp theo: user nghiệm thu trên trình duyệt: 2 popup loại Khác (+ popup NCC ở màn Đề nghị thu tiền), nút × ô Loại yêu cầu, link `/finance/addition-accounting-requests/31658` và `/31658/edit`; ổn thì commit khi user yêu cầu
+Blocked:
+
+## Phase 34 — 3 popup tra cứu: phân trang theo base (2026-09-30)
+
+User chỉ khuôn: popup "Hàng đang giữ" (`components/finance/prepick/PrepickStockSearchModal.vue`) dùng `V2BaseDataTable`.
+
+- [x] `RecordSearchModal.vue` (dùng cho popup Phiếu xác nhận bảo hành / Phiếu xử lý hàng thiếu / Nhân viên): bảng tự vẽ + `V2BasePagination` → `V2BaseDataTable` (dòng "Hiển thị x–y / n" + "Số dòng/trang" 20/50/100 + `b-pagination`); sort qua sự kiện `sort` của table; bấm dòng chọn bằng click delegation `tr.record-row`; chặn `page-change` dội lại khi popup tự về trang 1 (tránh gọi API 2 lần); bỏ prop `chooseHint`, thêm `tableTitle`
+- [x] `AdditionAccountingRequestForm.vue`: truyền `table-title` cho 3 popup, bỏ `choose-hint`
+- [x] Popup Chọn nhân viên: đã hưởng luôn từ `RecordSearchModal` ở trên
+- [x] `bill-income-requests/components/SupplierSearchModal.vue` (DÙNG CHUNG — Đề nghị thu tiền, Đề nghị chi tiền, Báo có, Điều chỉnh công nợ, Hạch toán bổ sung): cùng khuôn `V2BaseDataTable` (20/50/100 dòng, sort qua sự kiện `sort`, click delegation `tr.supplier-row`, chặn `page-change` dội lại)
+
+### Checkpoint — 2026-09-30 (wrap up 2)
+Vừa hoàn thành: Phase 34 — 3 popup `RecordSearchModal` + popup dùng chung `SupplierSearchModal` chuyển sang `V2BaseDataTable` (phân trang theo base, khuôn popup "Hàng đang giữ")
+Đang làm dở: không — code xong, compile OK; chưa mở trình duyệt
+Bước tiếp theo: user nghiệm thu trên trình duyệt Phase 32-34 (nút × Loại yêu cầu, link phiếu không tồn tại, phân trang/sort/bấm chọn ở 4 popup — popup NCC thử thêm ở 1 màn khác vd Đề nghị thu tiền); ổn thì commit khi user yêu cầu (`SupplierSearchModal.vue` bản sort đã được user commit ở 91b0d2883, lần này là thay đổi mới)
+Blocked:
+
+## Phase 35 — Bảng Chi tiết hạch toán: dòng thêm mới ăn lỗi của lần Gửi duyệt trước (2026-09-30)
+
+Nguyên nhân: `AdditionDetailTable` hiện lỗi theo 1 cờ `touched` chung — bấm Gửi duyệt 1 lần là cờ bật mãi, dòng thêm sau đỏ ngay dù chưa bấm lại.
+
+- [x] `AdditionAccountingRequestForm.vue`: thêm `submitCount` (+1 mỗi lần Gửi duyệt/Lưu, nháp không tăng), truyền xuống bảng
+- [x] `AdditionDetailTable.vue`: prop `submitCount` + `checkedRows` (chụp tham chiếu các dòng đang có mỗi lần submit); 8 chỗ `touched &&` → `isRowChecked(detail) &&`; `touched` về false (Lưu nháp) thì xoá đỏ toàn bảng. Chọn KH/HĐ sửa dòng tại chỗ bằng `$set` nên tham chiếu không đổi
+
+## Phase 36 — Lịch sử bảng Chi tiết hạch toán khó nhìn → theo màn Yêu cầu kiểm tra sửa chữa – bảo hành (2026-09-30)
+
+User chỉ khuôn `customer-care/warranty-repair-requests` (1 dòng/bản ghi: `- Tên — phụ chú`, `- Tên: Trường: cũ → mới`).
+
+- [x] FE `index.vue` (popup) + `_id/index.vue` (khối Lịch sử): bỏ `multiline-rows` — **đảo lại Phase 28** (mỗi trường 1 dòng); prop dùng chung vẫn giữ, mặc định tắt
+- [x] BE `CatalogHistoryService::TABLES['addition_accounting_requests']`: `details_rows` 'Bảng chi tiết' → 'Danh sách chi tiết hạch toán' → nhóm "Chi tiết hạch toán thêm mới / đã xóa / sửa thông tin" (chỉ đổi nhãn của bảng này, KHÔNG sửa `rowItemLabel()` dùng chung — "Bảng chi tiết" còn 6 bảng Finance khác dùng). Log cũ giữ nhãn đã đóng dấu
+- [x] BE `AdditionAccountingRequestWriteService::detailRows()`: bỏ 2 cột Khách hàng/NCC + Hợp đồng khỏi bản ghi (đã nằm trong `__name` + `__key`, in ra chỉ lặp chữ)
+- [x] Test thật trên phiếu 2066 trong transaction (rollback): sửa Số tiền + Ghi chú 1 dòng → 1 dòng "sửa thông tin" đúng 2 trường; thêm 1 dòng → "thêm mới: Tên — Số tiền; Ghi chú"; lưu lại lần 2 không đổi → 0 log
+
+## Phase 37 — Popup "Chọn đơn hàng/hợp đồng" (HĐ bán): sort Số HĐ + Ngày lập (2026-10-03)
+
+Đường vào: loại "Điều chỉnh công nợ khách hàng" → ô Hợp đồng → popup Chọn hợp đồng bán. BE (`paginateContractUnion`) đã nhận `sort_by=code|createdAt` cho cả HĐ bán lẫn mua; FE `ContractSearchModal` (dùng chung) chỉ bật cho HĐ mua. User chốt bật cho MỌI màn dùng popup HĐ bán (trừ chế độ thưởng loại chi 6).
+
+- [x] FE `bill-income-requests/components/ContractSearchModal.vue`: `sortable` = `!bonusMode`; gửi `sort_by`/`sort_desc` cho cả nhánh HĐ bán
+
+## Phase 38 — Lịch sử: thêm/xoá file đính kèm không được ghi (2026-10-03)
+
+Khuôn: `customer-care/warranty-repair-requests` (đường dẫn file giữ nguyên → giao diện lịch sử tự hiện thành link bấm mở xem trước). Cột `attachments` là chuỗi URL (không dùng bảng `files`) → khoá ẢO dạng BẢNG `attachment_rows`, cùng khuôn `bill_adjust_depts`.
+
+- [x] BE `AdditionAccountingRequestWriteService`: `ATTACHMENTS_KEY` vào `catalogColumns()` + `catalogDisplay()`; `attachmentRows()` (1 file = 1 bản ghi, `__key`/`__name` = URL); gắn ở store / update / destroy
+- [x] BE `deleteAttachment()` (nút Xóa gọi API ngay, không qua Lưu) chụp trước/sau + `logCatalogUpdate`; Controller `deleteFile` gọi qua writeService
+- [x] BE `CatalogHistoryService::TABLES['addition_accounting_requests']` += `attachment_rows => 'File đính kèm'` → nhóm "File đính kèm thêm mới / đã xóa"
+- [x] Test phiếu 2033 trong transaction (rollback, S3 stub): lưu không đổi → 0 log; thêm file → 1 dòng "thêm mới"; thêm file + sửa diễn giải → 1 dòng 2 khoá; xoá file → 1 dòng "đã xóa"; xoá URL lạ → false, 0 log
+
+## Phase 39 — Màn Sửa: click chọn hợp đồng bán lần đầu popup rỗng (2026-10-03)
+
+`onPickDetailContract` đổi `pickContext` rồi mở popup cùng tick → `ContractSearchModal.onShow` nạp với `objectId` cũ (null ở màn Sửa); watcher `objectId` chỉ xoá bảng, không nạp lại → phải click lần 2.
+
+- [x] FE `AdditionAccountingRequestForm.vue::onPickDetailContract`: mở popup trong `$nextTick` (cùng cách `BillAdjustDeptRequestForm.vue:841`), không sửa component dùng chung
+
+## Phase 40 — Màn Sửa: đổi file đính kèm ĐÃ LƯU (2026-10-03)
+
+User chốt: chọn file mới chỉ ghi nhận, BẤM LƯU PHIẾU mới áp; thoát không lưu thì file cũ còn nguyên.
+
+- [x] BE `AdditionAccountingAttachmentService::replaceAttachments()` (thay đúng vị trí, bỏ qua `old_url` không thuộc phiếu) + `deleteFromS3()` (lỗi S3 chỉ log)
+- [x] BE `WriteService::update()`: áp `replaced_attachments` trước khi nối file mới; xoá S3 file cũ SAU transaction. Lịch sử tự ra "File đính kèm thêm mới: mới / đã xóa: cũ" (Phase 38)
+- [x] BE `UpdateRequest`: `replaced_attachments.*.old_url` required, `.new_url` required + `starts_with` prefix S3 của màn
+- [x] FE `AttachmentSection.vue`: nút "Thay đổi" cho cả dòng đã lưu → emit `replace-saved-file`; prop `replacedFiles`; dòng đã đổi hiện file mới + nhãn "Chờ lưu" (tooltip tên file cũ); xem trước/tải xuống dùng file mới
+- [x] FE `AdditionAccountingRequestForm.vue`: `form.replaced_attachments` (nằm trong form → cảnh báo chưa lưu bắt được), giữ khi đổi loại, xoá cặp khi file đã lưu bị Xóa, gửi `{old_url, new_url}` lúc lưu
+- [x] Test BE (transaction + rollback, S3 stub): đổi file giữa giữ thứ tự + xoá S3 đúng file cũ + 1 log; đổi + thêm cùng lúc; old_url lạ → không đổi, không log; validate chặn new_url ngoài prefix
+
+## Phase 41 — Màn Chi tiết: nút Gửi duyệt sai màu chuẩn (2026-10-03)
+
+- [x] FE `_id/index.vue`: Gửi duyệt `secondary status="warning"` (cam, quy ước cũ) → `primary` teal, không `status` (skill button-convention §2b), khoá bằng `:interactable="!submitting"`
+- [x] Cùng nút: thêm popup xác nhận `$confirm` (nêu số phiếu + hệ quả, `textAccept` "Gửi duyệt") theo §6c; `changeStatus()` thêm `$safeLoadingStart/Finish` (§6b)
+
+## Phase 42 — "Lập phiếu kế toán" nhảy sang ERP (2026-10-03)
+
+HRM đã có màn phiếu kế toán (`finance-bill-adjust-dept`); `BillAdjustDeptForm` nhận `?addition_accounting_request_id=` → `source-data` (`BillAdjustDeptSourceService::fromAdditionAccounting`, chặn phiếu đã có phiếu kế toán).
+
+- [x] FE `_id/index.vue` + `index.vue` (menu ⋮): `openAccountingBill` → `$router.push('/finance/bill-adjust-depts/create?addition_accounting_request_id=')` (khuôn `bill-adjust-dept-requests/_id`); bỏ import `erpUrl` không còn dùng
+
+## Phase 43 — 3 popup tra cứu: bỏ khung tiêu đề bảng (2026-10-03)
+
+User chốt thêm prop opt-in vào component dùng chung.
+
+- [x] FE `components/V2BaseDataTable.vue`: prop `hideHeader` (mặc định false — các màn khác không đổi); bật thì ẩn khung icon + tiêu đề, `isMergeActionsIntoHeader()` trả false để slot `actions-bottom` không mất
+- [x] FE `RecordSearchModal.vue`: `hide-header`, bỏ prop `tableTitle` + 3 thuộc tính `table-title` ở `AdditionAccountingRequestForm.vue` (áp cho cả 3 popup: Phiếu xác nhận bảo hành / Phiếu xử lý hàng thiếu / Nhân viên)
+- [x] FE `bill-income-requests/components/SupplierSearchModal.vue` (popup Chọn nhà cung cấp, dùng chung 5 màn): `title="Nhà cung cấp"` → `hide-header`
+
+## Phase 44 — Loại Khác: tổng KH/NV trong popup lệch ERP (2026-10-03)
+
+- [x] BE `AdditionAccountingLookupService::searchEmployees()`: thêm `e.status = 1` như ERP `searchAllEmployee` — trước 1.085 NV (gồm 529 nghỉ), nay 554
+- [x] Popup Khách hàng: user chốt THEO ERP (`searchCustomer?type=all`: mọi KH `is_customer=1, status=1`, không phân quyền). BE `GET /search-customers` (`AdditionAccountingLookupService::searchCustomers`, keyword mã/tên, sort code/fullname, trả `customer_type_name`) — 41.634 KH trên DB gộp
+- [x] FE form: bỏ `ChooseErpCustomerModal`, thêm `RecordSearchModal` `choose-addition-customer` (Mã · Tên · Loại KH) cho CẢ ô KH loại 4 lẫn dòng chi tiết loại 2
+
+## Phase 43 — Bản in loại 7 (Phối hợp kinh doanh) thừa thông tin (2026-10-03)
+
+User chốt: chỉ in Loại yêu cầu + Số tiền + Diễn giải, như bản in loại 3.
+
+- [x] BE `AdditionAccountingRequestPrintService::renderTemplate()`: loại 7 dùng `coordinationPrintRows()` (Số tiền, Diễn giải); `detailTableHtml()` chỉ còn bảng loại 2/6 — bỏ Phòng thực hiện / Số HĐ / Khách hàng + bảng 5 chỉ tiêu + bảng phòng ban/nhân viên
+- [x] KHÔNG đổi `build()` → file Excel 1 phiếu loại 7 vẫn đủ khối `coordination` (chờ user quyết có gọn theo không)
+- [x] Render thử #1992 (loại 7) vs #2030 (loại 3): cùng bố cục, không sót `{{`
+
+## Phase 44 — ERP lỗi 500 khi Xem phiếu loại 7 tạo tay (2026-10-03)
+
+Nguyên nhân: ERP `getDataForCoordination()` INNER JOIN `addition_accounting_request_business_coordinations` rồi `foreach` → phiếu loại 7 tạo tay (HRM mở từ 2026-09-07, ERP cũng cho) không có dòng → `null` → 500. Phiếu server PYCHTBS-002154 (DNS Admin tạo trên HRM 01/10/2026, coordination/departments rỗng). User chọn phương án 2: HRM ghi kèm dòng 5 chỉ tiêu = 0.
+
+- [x] BE `AdditionAccountingRequestWriteService::ensureCoordinationRow()` (store + update, chỉ loại 7, `firstOrCreate` — không ghi đè số liệu quyết toán, đổi loại không xoá)
+- [x] Đã soát ERP: view `show_accouting`/`form_accounting` chỉ dùng biểu thức Angular (null-safe), `canApproveSupport()` chạy được với danh sách phòng ban rỗng; lập phiếu kế toán bỏ chỉ tiêu ≤ 0 nên không sinh định khoản rác
+- [x] Test (transaction + rollback): tạo loại 7 → 1 dòng toàn 0, câu JOIN của ERP ra bản ghi; sửa 2 lần vẫn 1 dòng; loại 3 không sinh dòng; phiếu quyết toán #808 không bị ghi đè
+- [x] Phiếu 2154 / dữ liệu cũ thiếu dòng: user chốt 2026-10-03 KHÔNG xử lý (kệ dữ liệu cũ) — chỉ phiếu tạo/sửa từ nay mới có dòng
+- [x] (bổ sung, user yêu cầu sửa cả ERP) Repo **ERP** nhánh `gop_db` — `app/Model/IncomeExpenditure/AdditionAccountingRequest.php::getDataForCoordination()`: `join` → `leftJoin` + `abort(404)` khi không có phiếu + bỏ qua phòng hỗ trợ / công ty không tồn tại. Chữa cả 4 chỗ gọi (Xem · In · Xuất Excel · Lập phiếu kế toán) → phiếu cũ như 2154 xem được, không cần sửa dữ liệu
+- [x] Test ERP (transaction + rollback, DB local): phiếu loại 7 không có dòng 5 chỉ tiêu → getDataForCoordination / getPrintData / getForBillAdjustDeptCoordination / render view `show_accouting` đều chạy; phiếu quyết toán #808 giữ đúng số liệu
+
+## Phase 45 — Đồng bộ UI bảng các popup tra cứu (2026-10-05)
+
+User báo bảng popup "Chọn đơn hàng/hợp đồng" (màn Điều chỉnh công nợ) khác popup "Chọn phiếu xác nhận bảo hành" (màn này): màu tiêu đề, căn trái/phải, khung. Khuôn chuẩn = `V2BaseDataTable` (đã dùng ở `RecordSearchModal` — Phiếu bảo hành / Hàng thiếu / Nhân viên / Khách hàng, và `SupplierSearchModal`).
+
+- [x] Soát: `RecordSearchModal` (gồm popup Chọn nhân viên) + `SupplierSearchModal` đã đúng khuôn — không sửa
+- [x] FE `bill-income-requests/components/ContractSearchModal.vue` (DÙNG CHUNG — Đề nghị thu tiền, Đề nghị chi tiền, Báo có, Điều chỉnh công nợ, Hạch toán bổ sung): bảng tự vẽ `table-bordered` + phân trang chép tay → `V2BaseDataTable` `hide-header`; giữ link mã HĐ (slot `cell-object_code`, `.stop`), dòng đã chọn làm mờ (`row-class` hàm), sort Số HĐ/Ngày lập (tắt ở chế độ thưởng), chặn `page-change` dội lại
+
+## Phase 45 — Popup Chọn khách hàng: giao diện giống màn Đề nghị điều chỉnh công nợ (2026-10-05)
+
+User chốt: CHỈ giống giao diện `ChooseErpCustomerModal` (3 ô lọc Tên/Mã · MST · SĐT, 9 cột STT · Mã-Tên · Loại · MST · SĐT · Email · Nhóm KH · Địa chỉ · Tỉnh/TP, popup rộng, click dòng để chọn) — GIỮ dữ liệu toàn bộ KH như ERP (quyết định Phase 44, không phân quyền). Không sửa component dùng chung.
+
+- [x] BE `AdditionAccountingLookupService::searchCustomers()`: trả thêm short_name/tax_code/mobile/email/address/group_names/province_name/customer_type_text; lọc `tax_code` (khớp đầu) + `mobile`; che SĐT KH cá nhân không phải "của mình" như `CustomerListResource` (khớp khít full SĐT thì hiện), đang lọc SĐT thì KH cá nhân phải khớp khít mới ra
+- [x] FE component mới `addition-accounting-requests/components/CustomerSearchModal.vue` (chép khuôn `ChooseErpCustomerModal`, id `choose-addition-customer`, emit `choose`)
+- [x] FE `AdditionAccountingRequestForm.vue`: thay `RecordSearchModal` khách hàng bằng `CustomerSearchModal`, bỏ `customerColumns`/`customerSearchFields`
+- [x] Verify: smoke test service (tinker, user id 13): 41.634 KH / 0,19s, đủ cột mới; lọc MST `010` = 2.816; SĐT `09` = 322 (0 KH cá nhân lạ); KH cá nhân lạ #71 khớp khít SĐT ra + hiện số, thiếu 1 số không ra, không lọc thì SĐT null; KH của mình #8 tìm đoạn số vẫn ra. FE parse template + script OK
+- [ ] User mở trình duyệt kiểm tra popup (chưa kiểm chứng giao diện thật)
+
+### Checkpoint — 2026-10-05
+Vừa hoàn thành: Phase 45 — popup Chọn khách hàng giống giao diện màn Đề nghị điều chỉnh công nợ (BE `searchCustomers` + FE `CustomerSearchModal.vue`)
+Đang làm dở: —
+Bước tiếp theo: user mở `/finance/addition-accounting-requests/create` kiểm tra popup (loại 4 đối tượng KH + dòng chi tiết loại 2)
+Blocked:
+
+## Phase 46 — Lịch sử: Sửa rồi Gửi duyệt lặp dòng "Trạng thái" (2026-10-05)
+
+User báo: sửa thông tin → bấm Gửi duyệt ở form → timeline có "Trạng thái: Đang tạo → Chờ duyệt" ở CẢ mốc "Thay đổi trạng thái" lẫn mốc "Thay đổi thông tin" (PYCHTBS-002156).
+
+- [x] BE `AdditionAccountingRequestWriteService::update()`: trước `logCatalogUpdate()` gán `$before['status']` = trạng thái MỚI → diff "Thay đổi thông tin" không còn trạng thái, chỉ mốc `change_status` riêng ghi (không unset vì thiếu khoá thì diff vẫn in "trống → Chờ duyệt")
+- [x] Test `CatalogHistoryService::logUpdate` (transaction + rollback): có đổi Số tiền → chỉ ghi Số tiền; chỉ đổi trạng thái → không sinh dòng "Thay đổi thông tin"
+- Log cũ đã ghi trùng (vd 002156) giữ nguyên — không sửa dữ liệu

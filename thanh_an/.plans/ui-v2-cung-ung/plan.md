@@ -77,9 +77,39 @@ Vừa hoàn thành: Kiểm tra màn thí điểm Đơn mua hàng trên trình du
 Bước tiếp theo: Chờ user duyệt màn thí điểm + trả lời Q1–Q4 → Phase 5
 Blocked: Chờ user duyệt
 
+### Bổ sung 30/09 — Bộ lọc đủ mọi cột của danh sách (user yêu cầu)
+> Quy tắc: popup "Cài đặt bộ lọc" phải có ĐỦ trường lọc tương ứng mọi cột dữ liệu trên bảng, mặc định bật hết — **TRỪ cột tiền** (user: "những cái liên quan đến tiền thì bỏ").
+- [x] BE `PurchaseOrderService::getList`: lọc `products_count_from/to` (has products, `filled()` để 0 vẫn lọc), `created_by_ids` (nhiều người, chuỗi `1,2`), `created_at_from/to`; tách helper private `parseIdList` (dùng chung cho `supplier_ids`)
+- [x] BE endpoint `GET supply/purchase-orders/creators` — người đã tạo đơn (còn hiệu lực) → option bộ lọc Người tạo
+- [x] FE `purchase_orders/index.vue`: thêm Số dòng hàng (khoảng số, slot `V2BaseCurrencyInput :precision="0"`, chờ Enter), Người tạo (chọn nhiều, nạp cùng NCC khi mở panel), Ngày tạo (khoảng ngày) + `initialStateForm`, `buildApiParams`, `handleReset`
+- [x] ~~Tổng tiền (khoảng)~~ — đã làm rồi bỏ theo yêu cầu user (cả FE + BE)
+- [x] Skill `list-page` A3 + A15: quy tắc "bộ lọc đủ mọi cột, trừ cột tiền"
+- [x] Kiểm tra: tinker (creators, lọc SL dòng/người tạo/ngày tạo) + trình duyệt (8 ô hiện đủ, popup cài đặt tick hết, request đúng tham số, gõ số không gọi API từng phím, Làm mới xoá sạch)
+
+### Checkpoint — 2026-09-30 09:25
+Vừa hoàn thành: Bộ lọc màn Đơn mua hàng đủ mọi cột (trừ tiền), ghi quy tắc vào skill list-page
+Đang làm dở: —
+Bước tiếp theo: Chờ user duyệt màn thí điểm + Q1–Q4 → Phase 5 (bắt đầu Danh sách HĐ mua)
+Blocked:
+
 ## Phase 5 — Chuyển các màn còn lại (sau khi user duyệt màn thí điểm)
 - [ ] Danh sách: HĐ mua, Đề xuất cung ứng, Phiếu xử lý, HĐ kết xuất (contract_render)
 - [ ] Form + chi tiết: Đơn mua, HĐ mua
+  ### 5.1 — Form Đơn mua hàng (user yêu cầu 30/09 — dùng chung add / edit / show)
+  - [x] `PurchaseOrderForm.vue`: bọc `.v2-styles` + import `v2-styles.scss`; `b-tabs` → `V2BaseTabNavigation` (+ `v-show`, tab có lỗi hiện ⚠); footer → `V2BaseButton` (Lưu · Lưu và gửi duyệt · Quay lại); `formValidateMixin` (`formError` → `formErrors`, `applyServerErrors`, cuộn `scrollToFirstError`); `$nuxt?.$loading?.` + `:interactable`; hỏi xác nhận `BaseConfirmModal` id riêng trước khi Gửi duyệt
+  - [x] `GeneralTab.vue`: 3 khối `V2BaseFormSection`; `V2BaseLabel`/`Input`/`Select`/`DatePicker`/`Textarea`/`Error`; ô tự lấy → `disabled`; nút thêm nhanh liên hệ / địa chỉ → `V2BaseIconButton`
+  - [x] `PaymentTab.vue`: `V2BaseFormSection` + `V2BaseSelect` (hình thức TT) + `V2BaseButton` Thêm dòng; bảng đợt: `V2BaseInput`/`CurrencyInput`/`DatePicker` + `V2BaseIconButton` xóa (dọn lỗi dòng `progress.*`); bảng theo đơn: `V2BaseCheckbox` + `V2BaseInput`/`CurrencyInput`; `V2BaseTextarea` ghi chú; lỗi `progress_total` → `V2BaseError`
+  - [x] `ProductsTab.vue`: nút Chọn hàng hóa → `V2BaseButton`; cột Thao tác → `V2BaseIconButton`; ĐVT / Cty mua → `V2BaseSelect`; SL mua, SL theo phiếu, SL gốc → `V2BaseInput`; Đơn giá → `V2BaseCurrencyInput`; Ngày cần → `V2BaseDatePicker`; Ghi chú → `V2BaseInput`; lỗi → `V2BaseError`; xóa / thêm dòng dọn lỗi `products.*` (emit ra Form); chỉnh CSS bảng cho khớp
+  - [x] Kiểm tra trình duyệt: `/supply/purchase_orders/add` (nhập, lỗi 422 nhảy đúng tab + cuộn, lưu), `/_id/edit`, `/_id` (xem) — đã kiểm: 422 nhảy đúng tab + ⚠, lỗi dòng dời đúng khi xoá dòng, tổng tiền cập nhật, chế độ xem khoá hết ô; KHÔNG bấm lưu thật trên dữ liệu
+  - [x] Bảng hàng: layout ép `.default-layout input {height:35px}` → thu ô trong bảng về 28px (SL theo phiếu 22px); Cty mua / Ngày cần dùng size `xs`
+  - Tồn đọng cần hỏi user: `V2BaseCurrencyInput` (component chung) hiện `1,000,000` (bảng dùng `1.000.000`) và `:focus` viền xanh đè viền đỏ lỗi; footer trang `/_id` vẫn nút cũ (slot trong `_id/index.vue`)
+  - Chưa làm ở lượt này: các popup (Chọn hàng hóa, Đổi hàng, chi tiết phiếu/HĐ, NCC đã mua) — làm sau theo skill `modal-popup`
+### Checkpoint — 2026-09-30 09:50
+Vừa hoàn thành: 5.1 Form Đơn mua hàng (Form + 3 tab) chuyển V2, đã kiểm trên trình duyệt add / edit / show
+Đang làm dở: —
+Bước tiếp theo: chờ user duyệt giao diện + trả lời 2 điểm về V2BaseCurrencyInput; sau đó chuyển footer trang chi tiết và các popup của đơn mua
+Blocked: sửa V2BaseCurrencyInput là component chung → cần user xác nhận
+
 - [ ] Form: Đề xuất cung ứng, Phiếu xử lý (logic phức tạp — làm cuối)
 - [ ] Báo cáo nhu cầu mua, Dashboard
 

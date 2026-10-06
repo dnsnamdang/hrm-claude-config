@@ -1970,7 +1970,7 @@ màn CCTT giữ nguyên đúng như ERP (form CCTT KHÔNG có cột VAT). Chỉ 
 - [x] Thêm khối D - Điều khoản bảo hành, khối Tài khoản ngân hàng - Khách hàng, khối Liên hệ
 - [x] BE: resource trả thêm 18 trường + cờ `can_view_cost_price`; service bồi mã hàng/model bằng 1 truy vấn, nạp `departmentReception` và `customer.fax`
 - [x] Đối chiếu ERP: khối A khớp từng dòng (595,000 / 0 / 595,000 · giá vốn 350,000), khối C khớp từng số (123,671,618), 7/7 bảng cân cột
-- [ ] Khối "Người duyệt" — chờ user quyết (đã bỏ ở màn hợp đồng)
+- [x] Khối "Người duyệt" — **user chốt BỎ (24/09/2026)**, không dựng ở phiếu bảo hành; đồng nhất với màn hợp đồng. Cột/ô lọc "Người duyệt" ở màn DANH SÁCH báo giá + hợp đồng giữ nguyên (khác việc)
 - [x] Bố cục 2 khối phụ theo ERP: ERP dùng layout **2 cột** (`col-md-9` nội dung + `col-md-3` bên phải), "Tài khoản ngân hàng - Khách hàng" và "Liên hệ" nằm CẠNH khối đầu phiếu chứ không phải cuối trang. Đã dựng lại (đo toạ độ: HRM x=241 / x=1209 ↔ ERP x=35 / x=1158, cùng ngang hàng y đầu trang)
 - [x] **Khối Liên hệ ánh xạ sai nguồn**: đang đọc `receiver_*` (luôn rỗng ở phiếu bảo hành) trong khi ERP đọc `customer_contact_name` / `customer_address` / `customer_contact_phones`. Đã sửa; đối chiếu phiếu 6743 khớp ERP từng chữ (Nguyễn Xuân Trường · Số 2 Lê Đức Thọ… · 0915055976) và khối ngân hàng đủ 5 ô (0531100096008 · TMCP QUÂN ĐỘI · Long Biên)
 - [x] Khối đầu phiếu: bỏ 3 ô ERP không có (Trạng thái · Ngày tạo · Người liên hệ — trạng thái chuyển thành badge ở tiêu đề khối), sắp lại ĐÚNG 16 trường và đúng thứ tự ERP; ô Ghi chú đổi sang `V2BaseTextarea` 2 dòng chiếm hết hàng. Đối chiếu nhãn: 16/16 khớp, không thừa không thiếu
@@ -1996,3 +1996,25 @@ màn CCTT giữ nguyên đúng như ERP (form CCTT KHÔNG có cột VAT). Chỉ 
 - [x] Bỏ **14 placeholder trùng nhãn**; ô Khách hàng đổi sang "Gõ để tìm khách hàng..." + `minimumInputLength: 2` + `height="36px"`
 - [x] `inputCount` của ô gom nhóm tính theo quyền thật (`is_all_company ? 2 : 1`)
 - [x] Kiểm bằng Playwright cả 5 màn: mọi ô cao 36px, **0 hàng lệch chiều cao**, không còn nhãn tĩnh sót lại, padding khối lọc 10px
+
+## Chốt 4 việc treo của luồng dịch vụ (user trả lời 24/09/2026)
+
+| Việc treo | Quyết định |
+| --- | --- |
+| Khối "Người duyệt" ở chi tiết phiếu bảo hành | **Bỏ** — không dựng |
+| Phạm vi Super Admin lệch ERP (3 cờ `is_all_company`/`is_company`/`is_department` đều false) | **Không sửa** — user chấp nhận hiện trạng, không gán thêm quyền, không đụng `WarrantyRepairPermission` |
+| Testcase + mô tả nghiệp vụ bản HRM cho chứng từ 3, 4, 5 và phiếu bảo hành | **Chưa cần làm** — để đợt sau |
+| Phiếu thử `TPE.PCCTT.THU-UI` (id 10370) trong DB local | **Để nguyên**, không xoá |
+
+➡️ Sau đợt này luồng dịch vụ **không còn việc nhỏ nào treo**. Phần lớn còn lại: Phụ lục bổ sung /
+Phụ lục giảm, 4 mảng của hợp đồng phụ thuộc phân hệ khác (HTHT · Quản lý hợp đồng · Quyết toán ·
+nút sang Kho/Giao việc/Kế toán), và chứng từ 6-9 chưa port.
+
+## Fix Redmine #11372 — Chi tiết phiếu bảo hành (phản hồi 18/09/2026)
+
+- [x] BE: lỗi 500 khi mở phiếu có Ngày cấp (cột varchar `Y-m-d` không có giờ) → hàm `grantDateText()` riêng ở `WrWarrantyResource` (bỏ `formatDateTime`; `0000-00-00` để trống)
+- [x] BE: trả thêm Phòng QTC / Nhân viên QTC (`department_qtc_name`, `employee_qtc_name`) như ERP
+- [x] FE: thêm 2 ô Phòng QTC, Nhân viên QTC vào khối Thông tin phiếu (sau Phòng tiếp nhận xử lý)
+- [x] FE: dòng 1.2 Danh sách dịch vụ / 1.3 Danh sách vật tư luôn hiện (kể cả trống, tổng = 0) như ERP
+- [x] FE: in đậm tiêu đề "I - Các khoản chi phí liên quan" / "II - Chi phí vận chuyển thiết bị, vật tư"
+- Khung ô Số phiếu cung cấp thông tin: đã có sẵn (`.v2-linked-field`), không phải sửa

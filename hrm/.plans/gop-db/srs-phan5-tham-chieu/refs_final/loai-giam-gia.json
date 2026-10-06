@@ -1,0 +1,26 @@
+{
+  "catalog": "Danh mục loại giảm giá",
+  "srs_file": "SRS - Danh mục loại giảm giá.docx",
+  "rows": [
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo giá",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/quotations/_id/edit.vue:953, 2842 (assign/discount_types/getAll) · BE Requests/Quotation/QuotationStoreRequest.php:77, QuotationUpdateRequest.php:82, Services/QuotationService.php:232, QuotationImportService.php:541 (quotation_discounts.discount_type_id). Cũng có ở Bán hàng -> Bán hàng -> Báo giá -> Danh sách báo giá · Lối vào: presale.js:66"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Danh sách báo giá",
+      "duong_dan": "Bán hàng -> Bán hàng -> Báo giá",
+      "evidence": "FE pages/assign/quotations/_id/edit.vue:953, 2842 (assign/discount_types/getAll) · BE Requests/Quotation/QuotationStoreRequest.php:77, QuotationUpdateRequest.php:82, Services/QuotationService.php:232, QuotationImportService.php:541 (quotation_discounts.discount_type_id). Cũng có ở Bán hàng -> Bán hàng -> Báo giá -> Danh sách báo giá · Lối vào: sale-hub.js:48"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Hợp đồng (dự án TKT)",
+      "duong_dan": "Bán hàng -> Bán hàng -> Hợp đồng bán hàng",
+      "evidence": "BE Services/ContractService.php:229-236 chép quotation_discounts → hrm_contract_discounts.discount_type_id (FK NO ACTION); Transformers/DetailContractResource.php:224 · FE pages/assign/contracts không hiển thị loại GG · Lối vào: sale-hub.js:58"
+    }
+  ],
+  "notes": "Kiểm tra xoá THIẾU: DiscountType::isCanDelete() (Entities/DiscountType.php:50) chỉ xét quotation_discounts, không xét hrm_contract_discounts → xoá loại GG chỉ còn dùng ở hợp đồng sẽ vấp khoá ngoại, API trả lỗi SQL thô thay vì câu nghiệp vụ. Ngoài ra isCanDelete() trả TRUE vô điều kiện khi trạng thái Chờ duyệt (loại GG tạo nhanh từ báo giá, quotation_id) dù báo giá đó đã dùng nó → xoá được, quotation_discounts để lại id mồ côi (bảng không có FK). Route POST assign/discount_types/quick-create không có màn FE nào gọi (chỉ còn API). Báo giá tổng hợp chỉ hiển thị (không chọn/lưu) — giữ dòng để QA biết chỗ hiện tên loại GG; bỏ nếu chỉ tính màn chọn/lưu. || BỔ SUNG KHI CHUẨN HOÁ: Dời ra khỏi bảng: Dự án TKT – tab Báo giá (Báo giá tổng hợp) vì chỉ hiển thị loại GG gộp từ báo giá con, không chọn/lưu (FE pages/assign/summary-quotations/components/SummaryQuotationForm.vue:516 · BE Services/SummaryQuotationService.php:350 (gộp theo discount_type_id từ báo giá con)). Dòng Hợp đồng (dự án TKT) giữ lại vì màn LƯU loại GG (chép từ báo giá khi tạo hợp đồng, khoá ngoại chặn xoá) dù người dùng không tự chọn — phân vân.",
+  "changes": "Trước 3 dòng -> sau 3 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách Báo giá thành 2 lối vào (CSKH trước bán -> Báo giá; Bán hàng -> Bán hàng -> Báo giá -> Danh sách báo giá). Bỏ dòng Báo giá tổng hợp (chỉ đọc)."
+}

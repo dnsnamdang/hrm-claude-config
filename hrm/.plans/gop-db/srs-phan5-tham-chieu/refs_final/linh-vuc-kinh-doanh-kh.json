@@ -1,0 +1,56 @@
+{
+  "catalog": "Danh mục lĩnh vực kinh doanh khách hàng",
+  "srs_file": "SRS - Danh mục lĩnh vực kinh doanh khách hàng.docx",
+  "rows": [
+    {
+      "nhom": "Danh mục dùng chung",
+      "man_hinh": "Khách hàng",
+      "duong_dan": "Danh mục dùng chung -> Đối tác",
+      "evidence": "FE components/assign-components/customer/CustomerForm.vue:53 + pages/assign/customers/index.vue:32-40,1466 · BE customers.customer_scope_id, customer_business_fields (CustomerService, CustomerImportService) · Lối vào: master-data.js:231"
+    },
+    {
+      "nhom": "Danh mục dùng chung",
+      "man_hinh": "Loại hình hoạt động kinh doanh KH",
+      "duong_dan": "Danh mục dùng chung -> Đối tác",
+      "evidence": "FE pages/assign/customer-scope-groups/AddGroupModal.vue:64-70 · BE CustomerScopeGroup::customerScopes() + CustomerScopeGroupService import cột mã lĩnh vực · Lối vào: master-data.js:235"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/index.vue:617 (lọc + cột) · BE solutions.customer_scope_id (Entities/Solution.php:121) · Lối vào: menu-sidebar.js:31"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Tổng hợp meeting",
+      "duong_dan": "Meeting",
+      "evidence": "FE pages/assign/meeting/components/MeetingProject.vue:53-63,485 · BE MeetingService.php:691,711 · Lối vào: meeting.js:63"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/prospective-projects/components/CustomerInfoSection.vue:11-46, CspSingleSelect.vue + index.vue:89 · BE prospective_projects.customer_scope_id / customer_benefit_scope_id (Entities/ProspectiveProject.php:460,471) · Lối vào: presale.js:44"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo vòng đời dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/prospective-projects/components/ProspectiveProjectsFilter.vue:66-72 · Lối vào: presale.js:96"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Ứng dụng",
+      "duong_dan": "CSKH trước bán -> Danh mục",
+      "evidence": "FE components/modal/application-modal.vue:357 · BE Entities/Applications.php:68 (application_customer_scopes) · Lối vào: presale.js:143"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Ứng dụng",
+      "duong_dan": "Bán hàng -> Danh mục -> Dự án - Giải pháp",
+      "evidence": "FE components/modal/application-modal.vue:357 · BE Entities/Applications.php:68 (application_customer_scopes) · Lối vào: sale-hub.js:356"
+    }
+  ],
+  "notes": "Ứng dụng cũng có ở Bán hàng -> Danh mục -> Dự án - Giải pháp (cùng màn, ghi 1 dòng). Yêu cầu giải pháp / Công việc của tôi – tab Giải pháp chỉ hiển thị, không lưu -> không đưa vào. NGHI LỖI KIỂM TRA XOÁ (nặng): xoá Lĩnh vực KD KH KHÔNG có bất kỳ kiểm tra nào — CustomerScopeController::delete (Modules/Assign/Http/Controllers/Api/V1/CustomerScopeController.php:90) -> CustomerScopeService::destroy (Services/CustomerScopeService.php:245) xoá thẳng; Entity CustomerScope không có isCanDelete(); FE pages/assign/customer-scopes/index.vue:794 hiện nút Xóa chỉ theo quyền. Xoá được dù đang dùng ở: customers.customer_scope_id, customer_business_fields (Khách hàng), customer_scope_group_members (Loại hình), application_customer_scopes (Ứng dụng), prospective_projects.customer_scope_id/customer_benefit_scope_id (Dự án TKT/Meeting), solutions.customer_scope_id (Quản lý giải pháp).",
+  "changes": "Trước 7 dòng -> sau 8 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách Ứng dụng thành 2 lối vào (CSKH trước bán -> Danh mục; Bán hàng -> Danh mục -> Dự án - Giải pháp). Sửa đường dẫn Báo cáo vòng đời dự án TKT (thêm cấp \"Báo cáo\"). Rút các ngoặc mô tả (popup Thêm nhanh KH, Import, bộ lọc…) về evidence."
+}

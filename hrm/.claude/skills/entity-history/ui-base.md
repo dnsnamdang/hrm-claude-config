@@ -82,12 +82,12 @@ Nút bật/tắt đặt góc phải trên danh sách, chỉ hiện khi đã tả
         <div class="col-md-3 mb-2">
             <V2BaseLabel>Loại hành động</V2BaseLabel>
             <V2BaseSelectInModal v-model="filters.action" :options="actionOptions" :allowClear="true"
-                placeholder="Tất cả loại hành động" />
+                placeholder="Chọn loại hành động" />
         </div>
         <div class="col-md-3 mb-2">
             <V2BaseLabel>Người thực hiện</V2BaseLabel>
             <V2BaseSelectInModal v-model="filters.performer" :options="performerOptions" :allowClear="true"
-                placeholder="Tất cả người thực hiện" />
+                placeholder="Chọn người thực hiện" />
         </div>
         <div class="col-md-3 mb-2">
             <V2BaseLabel>Từ ngày</V2BaseLabel>
@@ -180,7 +180,7 @@ async fetchFilterOptions() {
 
 Quy tắc:
 
-- Có 2 bộ state: `filters` (đang nhập) và `appliedFilters` (đã áp) — **bấm Tìm kiếm mới lọc**.
+- Có 2 bộ state: `filters` (đang nhập) và `appliedFilters` (đã áp). **Bản đang chạy của `SystemInfoSection`: chọn giá trị là lọc LUÔN (deep watcher chép `filters` → `appliedFilters`), KHÔNG có nút Tìm kiếm** — markup có nút Tìm kiếm ở trên là bản cũ, đừng dựng lại; dùng thẳng `SystemInfoSection`.
 - `Làm mới` = reset cả 2 (không phải tải lại API).
 - Reset lọc + đóng thanh lọc khi: mở popup, đổi entity, tải lại danh sách.
 - `fetchFilterOptions()` gọi **cùng lúc** với `fetchLogs()` (popup: lúc mở; màn chi tiết: lần đầu
@@ -256,14 +256,14 @@ Không có người thực hiện ghi `Hệ thống`; không có phòng ban thì
             <template v-if="c.changed && c.changed.length">
                 <div class="group-label">{{ groupLabel(c, 'changed') }}:</div>
                 <div v-for="(m, mi) in c.changed" :key="'m-' + mi" class="change-modified"
-                >- <SiValue :text="m.name" @preview="openFilePreview" />: <span v-for="(fc, fi) in m.fields" :key="'f-' + fi">{{ fc.field }}: <span class="change-old"><SiValue :text="fc.old" @preview="openFilePreview" /></span><i class="ri-arrow-right-line mx-1 text-muted"></i><span class="change-new"><SiValue :text="fc.new" @preview="openFilePreview" /></span><template v-if="fi < m.fields.length - 1">; </template></span></div>
+                >- <SiValue :text="m.name" @preview="openFilePreview" />: <span v-for="(fc, fi) in m.fields" :key="'f-' + fi">{{ fc.field }}: <span class="change-old"><SiValue :text="fc.old" @preview="openFilePreview" /></span><i class="ri-arrow-right-line mx-1 si-arrow"></i><span class="change-new"><SiValue :text="fc.new" @preview="openFilePreview" /></span><template v-if="fi < m.fields.length - 1">; </template></span></div>
             </template>
         </div>
 
         <!-- Trường thường: cũ → mới -->
         <template v-else>
             <span v-if="c.old" class="change-old"><SiValue :text="c.old" @preview="openFilePreview" /></span>
-            <i v-if="c.old" class="ri-arrow-right-line mx-1 text-muted"></i>
+            <i v-if="c.old" class="ri-arrow-right-line mx-1 si-arrow"></i>
             <span class="change-new"><SiValue :text="c.new" @preview="openFilePreview" /></span>
         </template>
     </div>
@@ -315,6 +315,7 @@ Giá trị trống in `(trống)`. Nhiều trường trong 1 bản ghi sửa ng�
 | Nhãn trường `.change-field` | `#475569`, `font-weight: 600` |
 | Khối thay đổi `.change-item` | `font-size: 12px; padding: 3px 8px; background: #f8fafc; border-radius: 4px; margin-bottom: 3px; display: flex; flex-wrap: wrap; gap: 4px` |
 | Danh sách con `.change-list` | `flex: 0 0 100%; padding-left: 12px` (xuống dòng dưới nhãn, thụt vào) |
+| Mũi tên cũ → mới `.si-arrow` | `#6b7280` — KHÔNG `.text-muted` (hrm-client ép `.text-muted` thành ĐỎ) |
 | Thời gian `.ho-timeline-time` | `font-size: 11px; color: #9ca3af; font-family: monospace` |
 | Tên hành động `.ho-timeline-text` | `font-size: 13px`, đậm, màu `action_color` |
 | Người thực hiện `.ho-timeline-actor` | `font-size: 11px; color: #6b7280; margin-top: 3px` |
@@ -332,8 +333,8 @@ Màu chấm + màu tên hành động lấy từ `action_color` BE trả — **k
 | Title popup | `Lịch sử <đối tượng>` |
 | Nút mở bộ lọc | `Bộ lọc` |
 | Nhãn lọc | `Loại hành động` · `Người thực hiện` · `Từ ngày` · `Đến ngày` |
-| Placeholder lọc | `Tất cả loại hành động` · `Tất cả người thực hiện` · `Từ ngày` · `Đến ngày` |
-| Nút trong thanh lọc | `Tìm kiếm` (primary) · `Làm mới` (tertiary) |
+| Placeholder lọc | `Chọn loại hành động` · `Chọn người thực hiện` · `Từ ngày` · `Đến ngày` (KHÔNG "Tất cả…" — CLAUDE.md cấm; đổi 30/09/2026) |
+| Nút trong thanh lọc | `Làm mới` (tertiary) — chọn là lọc luôn, không có nút Tìm kiếm (theo `SystemInfoSection` hiện hành) |
 | Nút đóng | `Đóng` (tertiary, icon `fas fa-arrow-left`) |
 | Dòng người thực hiện | `Người thực hiện: <tên> — <phòng ban>` — **KHÔNG ghép mã phòng** vào trước tên (chốt 2026-08-25): phòng ban đã in ngay bên cạnh, ghép thêm mã là lặp lại chính thông tin đó. Ô lọc "Người thực hiện" thì VẪN giữ `MÃ PHÒNG - Tên` vì ở đó không có cột phòng ban nào khác |
 | Không xác định người | `Hệ thống` |

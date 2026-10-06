@@ -765,3 +765,54 @@ Blocked: không.
 nháp **PYCCH-07366** trên cổng dev rồi **xóa ngay sau khi chụp** — danh sách trở lại đúng 2.972
 phiếu như trước. Phiếu ở trạng thái *Đang tạo* nên không bắn thông báo cho ai. Mã 07366 đã tiêu,
 phiếu kế tiếp sẽ là 07367 trở đi.
+
+
+## Fix — Header card form Thêm/Sửa đồng bộ nhóm màn chuyển hàng (2026-09-30)
+- [x] FE `ProductTransferRequestForm.vue`: bỏ khối `form-header` ("Thêm phiếu yêu cầu chuyển hàng · Phân hệ Tài chính kế toán") + computed `headerTitle` + style `.form-header/.header-*`
+- [x] FE: tiêu đề card "Thông tin chung", "Danh sách hàng hóa" bỏ icon, theo khuôn `form-card-head` của `PrepickTransferRequestForm.vue` (chữ thuần, `d-flex justify-content-between`)- [x] FE: đổi 3 card (Thông tin chung / Danh sách hàng hóa / File đính kèm) sang khuôn màn Phiếu thu `bill-incomes/components/BillIncomeForm.vue`: `card` + `card-header section-header py-2` + `h6` + `card-body`, wrapper `container-fluid px-0`; bỏ style `.form-card*`, khai `.card-header.section-header` trong style riêng
+
+## Fix — Chữ lỗi inline ở dòng khách hàng đè lên nhau (2026-10-01)
+- [x] FE `ProductTransferRequestForm.vue`: lỗi SL ("Không được nhỏ hơn 1", cột 90px) tràn sang lỗi "Ngày cần" vì chữ không xuống dòng → ép `.detail-col .v2-error__text` `white-space: normal` + `overflow-wrap: anywhere`, khoá chữ lỗi trong bề rộng cột
+
+## Fix — Đồng nhất icon xóa dòng KH / dòng hàng hóa với các màn khác (2026-10-01)
+- [x] FE `ProductTransferRequestForm.vue`: nút "x" (xóa dòng khách hàng) và "−" (xóa hàng hóa) đổi sang `V2BaseIconButton danger` + `ri-delete-bin-line` như `ProductTransferForm.vue` / `ProductImportRequestForm.vue`
+
+## Fix — Khối File đính kèm đổi sang khuôn `AttachmentSection` như màn Yêu cầu xuất hàng mượn (2026-10-01)
+- [x] BE: thêm `POST /product-transfer-requests/upload-files` (upload PDF ngay lúc chọn, trả URL S3) + `GET /{id}/attachment-sizes` (cột Dung lượng)
+- [x] BE: store/update nhận `attachment_urls[]` (URL đã upload) thay cho file `attachments[]`, APPEND vào chuỗi cũ; tạo mới bắt buộc >= 1
+- [x] FE `ProductTransferRequestForm.vue`: thay lưới thẻ PDF tự chế bằng `AttachmentSection` (api-base `finance/product-transfer-requests`, chỉ PDF); bỏ newFiles/pickFiles/isRealPdf/askDeleteOldFile + style `.document-item/.doc-*`
+
+## Fix — Ô "Xem tồn theo kho" thiếu nút × xóa nhanh (2026-10-01)
+- [x] FE `ProductTransferRequestForm.vue`: bỏ `:allowClear="false"` (skill select-and-input-state 1b), placeholder "Chọn kho"; xóa trống -> cột SL tồn hiện "-", không gọi API (nhánh `!stockQuery` có sẵn)
+
+## Fix — Màn Xem chi tiết: khối File đính kèm dùng chung `AttachmentSection` như màn Thêm mới (2026-10-02)
+- [x] FE `_id/index.vue`: thay lưới thẻ PDF tự chế bằng `AttachmentSection readonly` (files = mảng URL, `request-id` để lấy Dung lượng, api-base `finance/product-transfer-requests`); bỏ style `.document-item/.doc-name`
+- [x] FE `_id/index.vue`: đồng bộ toàn màn Xem chi tiết theo form Thêm/Sửa — bỏ `form-header`, 4 card sang khuôn `card` + `card-header section-header` (badge trạng thái dời lên header card Thông tin chung), thứ tự khối Thông tin chung → Danh sách hàng hóa → File đính kèm → Ghi chú duyệt; bảng hàng hóa theo bố cục form (STT / Hàng hóa (Model, Mã hàng) / ĐVT / Giá niêm yết / Khách hàng: dòng con ngang [KH][SL][Được nhận][Ngày cần][Ghi chú] + Tổng cộng), ô chỉ đọc dùng V2BaseInput/V2BaseTextarea disabled; sửa `::rows` gõ thừa dấu `:`
+- [x] FE `_id/index.vue` (feedback ảnh 02/10): bỏ badge trạng thái ở header card Thông tin chung; đổi nhãn "Ngày lập/Người lập" → "Ngày tạo/Người tạo"; huỷ `min-height: 50vh` global của `.table-responsive` (khoảng trắng dưới bảng hàng hóa); bỏ `padding-bottom: 90px` vì V2Footer đã chừa 66px qua `has-v2-footer` (dải trống dưới khối File đính kèm)
+- [x] FE `ProductTransferRequestForm.vue` (Thêm + Sửa): đồng bộ với màn chi tiết — nhãn "Ngày tạo/Người tạo"; huỷ `min-height: 50vh` của `.table-responsive`; bỏ `padding-bottom: 90px` (V2Footer đã chừa đáy)
+
+## Fix — Lịch sử thay đổi: ghi đủ file đính kèm / bảng hàng hóa / Không duyệt + khối Lịch sử ở màn chi tiết (2026-10-02)
+- [x] BE `ProductTransferRequestService`: thêm 3 khoá ẢO dạng BẢNG `attachment_rows` (URL đầy đủ, `__brief` chỉ tên) / `products_rows` (ĐVT, Giá niêm yết — bỏ Tổng SL vì trùng dòng KH) / `details_rows` (KH: SL cần, Ngày cần, Ghi chú; `__brief` Thuộc hàng hóa); giữ ở service, không gán lên model
+- [x] BE: `deleteFile()` ghi "Thay đổi thông tin" (Tệp đính kèm đã xóa); `reject()` ghi `rejected` (nhóm Thay đổi trạng thái) kèm ghi chú duyệt làm note
+- [x] BE `CatalogHistoryService::TABLES`: khai nhãn 3 khoá mới
+- [x] FE `_id/index.vue`: thêm khối `SystemInfoSection` (endpoint-base `catalog-histories`) cuối thân trang
+- [x] Verify: script test từng trường (rollback) theo skill §7a
+
+## Feature — Nút "Tổng hợp" tạo Yêu cầu xuất hàng NGAY TRÊN HRM (giống ERP) (2026-10-02)
+> ERP: `show.blade.php:154` → `productExportRequest.create?product_transfer_request_id={id}`; `create.blade.php:630` đặt `type = 7` (Điều chuyển kho chi nhánh) + `chooseProductTransferRequest(id)`.
+> Trước đây HRM mở tab sang ERP vì màn Yêu cầu xuất hàng chưa port — nay đã có `pages/finance/product-export-requests` (loại 7 + popup chọn phiếu).
+- [x] BE `ProductExportRequestController::transferRequestOptions`: nhận thêm `id` (tuỳ chọn) → lọc đúng 1 phiếu, vẫn giữ điều kiện status=2 + chưa gắn YCXH + `canApprove()`
+- [x] FE `ProductExportRequestForm.vue` (màn Tạo): đọc `?product_transfer_request_id=` → chọn loại 7 + nạp sẵn phiếu; phiếu không chọn được → toast "Không thể chọn phiếu này" (câu ERP)
+- [x] FE `product-transfer-requests/index.vue` + `_id/index.vue`: `openSummary` đổi từ `window.open` ERP sang `$router.push` màn Tạo YCXH HRM
+- [x] FE `product-export-requests/create.vue`: "Lưu và tiếp tục" xoá query trước khi remount (không nạp lại phiếu vừa lưu)
+- [x] Verify: compile 4 file Vue OK · `php -l` OK · tinker HTTP kernel: `?id=6924` → 1 phiếu, `?id=999999999` → 0, `keyword=` → 2 (không đổi hành vi cũ). **Chưa bấm trên trình duyệt.**
+
+## Fix — Nút In màn chi tiết sai màu theo skill button-convention (2026-10-02)
+- [x] FE `_id/index.vue`: bỏ cờ `print` của V2Footer (cứng `primary`), tự dựng nút "In" `secondary` ở slot `custom-actions` (khuôn bill-adjust-dept-requests / bill-incomes); không sửa V2Footer dùng chung
+
+## Fix — Không duyệt nhập lý do bằng POPUP thay cho khối "Ghi chú duyệt *" trong trang (2026-10-02)
+- [x] FE `_id/index.vue`: bỏ card textarea "Ghi chú duyệt *" của người duyệt; nút Không duyệt mở `BaseConfirmModal` (danger, `show-input` textarea, `required-input` "Vui lòng nhập ghi chú duyệt"); 422 BE -> toast + mở lại popup giữ lý do đã gõ; card "Ghi chú duyệt" chỉ đọc vẫn hiện khi phiếu có comment; bỏ state `commentError/touched` + import thừa
+
+## Fix — Màn Xem chi tiết chưa hiện "Người yêu cầu + ngày giờ" góc phải (2026-10-03)
+> Chuẩn: màn Yêu cầu kiểm tra sửa chữa – bảo hành (`WarrantyRepairRequestForm.vue` slot `#actions` của khối đầu). BE `DetailResource` đã trả `creator_name` + `created_at` (d/m/Y H:i) → chỉ sửa FE.
+- [x] FE `_id/index.vue`: header card "Thông tin chung" thêm dòng phải `Người yêu cầu: <tên> · dd/mm/yyyy HH:mm` (cỡ 12px, xám) — chỉ hiện khi có creator_name

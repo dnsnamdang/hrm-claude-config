@@ -1,0 +1,32 @@
+from _form import *
+def go(page, q=''):
+    page.goto(BASE + '/assign/prospective-projects/add' + q, wait_until='domcontentloaded')
+    page.wait_for_selector('text=Thông tin khách hàng', timeout=240000); page.wait_for_timeout(5000)
+with browser_page(height=1480) as page:
+    go(page)
+    try:
+        page.locator('.v2-footer button, footer button, button').filter(has_text='Lưu').filter(has_not_text='nháp').last.click()
+        page.wait_for_timeout(5000); page.evaluate('window.scrollTo(0,0)'); page.wait_for_timeout(800)
+        page.screenshot(path=S + '05f-loi.png')
+    except Exception as e: print('loi', e)
+    go(page)
+    page.get_by_placeholder('Nhấn vào đây để chọn thông tin khách hàng').first.click()
+    try: page.wait_for_function("document.querySelectorAll('#choose-erp-customer tbody tr').length > 3", timeout=120000)
+    except Exception as e: print('kh', e)
+    page.wait_for_timeout(1500)
+    page.screenshot(path=S + '06-chon-kh.png')
+    page.get_by_placeholder('Nhập tên / mã khách hàng').fill('29TPHXHO-1'); page.keyboard.press('Enter'); page.wait_for_timeout(5000)
+    page.locator('#choose-erp-customer tbody tr', has_text='29TPHXHO-1').first.click(); page.wait_for_timeout(6000)
+    try:
+        f = field(page, 'Ứng dụng'); f.locator('.select2-selection').first.click(); page.wait_for_timeout(1000)
+        page.locator('.select2-container--open .select2-results__option').nth(0).click(); page.wait_for_timeout(2500)
+        page.get_by_role('button', name='Xem giải pháp').click()
+        page.wait_for_timeout(3000)
+        page.wait_for_function("!document.body.innerText.includes('Đang tải dữ liệu')", timeout=180000)
+        page.wait_for_timeout(1500)
+        page.screenshot(path=S + '09-ds-giai-phap.png')
+    except Exception as e: print('app', e)
+    go(page, '?parent_id=157')
+    page.wait_for_timeout(6000)
+    page.screenshot(path=S + '24b-them-dac.png')
+    print('done7')

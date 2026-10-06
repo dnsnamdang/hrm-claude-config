@@ -1,0 +1,92 @@
+{
+  "catalog": "Danh mục giai đoạn dự án",
+  "srs_file": "SRS - Danh mục giai đoạn dự án.docx",
+  "rows": [
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Công việc của tôi – tab Giải pháp",
+      "duong_dan": "Công việc",
+      "evidence": "FE pages/assign/my-job/components/SolutionsTab.vue:430,717; SolutionUpcomingModal.vue:40-42,335; BE MyJobService.php:294-296,413-415 · Lối vào: menu-sidebar.js:17"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Quản lý giải pháp",
+      "duong_dan": "Công việc -> Làm giải pháp",
+      "evidence": "FE pages/assign/solutions/index.vue:98-100,566; BE SolutionService.php:119-121,147-149,335-337 · Lối vào: menu-sidebar.js:31"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Yêu cầu làm giải pháp",
+      "duong_dan": "Công việc -> Phê duyệt -> Giải pháp - Dự án",
+      "evidence": "FE pages/assign/request-solution/pending.vue:33-35,370; BE RequestSolutionService.php:249-250. Cũng có ở Công việc -> Phê duyệt -> Giải pháp - Dự án (nhãn 'Yêu cầu làm giải pháp', menu-sidebar.js:165) · Lối vào: menu-sidebar.js:165"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Báo giá chờ duyệt",
+      "duong_dan": "Công việc -> Phê duyệt -> Giải pháp - Dự án",
+      "evidence": "FE pages/assign/quotations/pending-approval/index.vue:33-35,357 (ProjectPhaseSelect lọc); BE QuotationService.php:4481. Cũng có ở Công việc -> Phê duyệt -> Giải pháp - Dự án (menu-sidebar.js:171) · Lối vào: menu-sidebar.js:171"
+    },
+    {
+      "nhom": "Công việc",
+      "man_hinh": "Cấu hình chung (Quy chế thu nhập kỹ thuật - công nghệ) – tab Quản lý dự án / Đóng dự án tự động",
+      "duong_dan": "Công việc -> Thiết lập",
+      "evidence": "FE pages/assign/settings/index.vue:1340,1486,2215; BE ProjectCloseConfigService.php:67-87,145-164 (bảng cấu hình theo giai đoạn), ProspectiveProjectAutoCloseService · Lối vào: menu-sidebar.js:263"
+    },
+    {
+      "nhom": "Meeting",
+      "man_hinh": "Meeting theo dự án",
+      "duong_dan": "Meeting -> Báo cáo",
+      "evidence": "FE pages/assign/report/meeting-by-projects/index.vue:75-78,322,491; BE Report/MeetingByProjectsService.php:103-104. Cùng màn ở Meeting -> Báo cáo -> 'Meeting theo dự án' (meeting.js) · Lối vào: meeting.js:112"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Dự án TKT",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/prospective-projects/components/ProgressFinanceSection.vue:15-21 (dùng ở add.vue, _id/edit.vue); index.vue:62-64,516; BE ProspectiveProjectRequest, Entities/ProspectiveProject.php:64,527; ProjectPhases::isCanDelete() kiểm bảng này · Lối vào: presale.js:44"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Yêu cầu giải pháp",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/request-solution/components/RequestTab.vue:102-109; request-solution/index.vue:34-36,452; BE RequestSolutionRequest.php:23-26, RequestSolutionService.php:306,394, Entities/RequestSolution.php:112 · Lối vào: presale.js:50"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo giá",
+      "duong_dan": "CSKH trước bán",
+      "evidence": "FE pages/assign/quotations/_id/edit.vue:220-228,3662 (bắt buộc chọn); quotations/index.vue:65-67,538; BE QuotationStoreRequest.php:29, QuotationUpdateRequest.php:38, Entities/Quotation.php:259. Cùng màn ở Bán hàng -> Bán hàng -> Báo giá ('Danh sách báo giá') · Lối vào: presale.js:66"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo meeting theo Dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/meeting-by-projects/index.vue:75-78,322,491; BE Report/MeetingByProjectsService.php:103-104. Cùng màn ở Meeting -> Báo cáo -> 'Meeting theo dự án' (meeting.js) · Lối vào: presale.js:91"
+    },
+    {
+      "nhom": "CSKH trước bán",
+      "man_hinh": "Báo cáo vòng đời dự án TKT",
+      "duong_dan": "CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi",
+      "evidence": "FE pages/assign/report/prospective-projects/components/ProspectiveProjectsFilter.vue:83-91,249; index.vue:245,831; BE Report/ProspectiveProjectsReportService.php:450-451,557-558,1204-1217 · Lối vào: presale.js:96"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Danh sách báo giá",
+      "duong_dan": "Bán hàng -> Bán hàng -> Báo giá",
+      "evidence": "FE pages/assign/quotations/_id/edit.vue:220-228,3662 (bắt buộc chọn); quotations/index.vue:65-67,538; BE QuotationStoreRequest.php:29, QuotationUpdateRequest.php:38, Entities/Quotation.php:259. Cùng màn ở Bán hàng -> Bán hàng -> Báo giá ('Danh sách báo giá') · Lối vào: sale-hub.js:48"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Yêu cầu giải pháp chờ duyệt",
+      "duong_dan": "Bán hàng -> Phê Duyệt -> Dự án TKT",
+      "evidence": "FE pages/assign/request-solution/pending.vue:33-35,370; BE RequestSolutionService.php:249-250. Cũng có ở Công việc -> Phê duyệt -> Giải pháp - Dự án (nhãn 'Yêu cầu làm giải pháp', menu-sidebar.js:165) · Lối vào: sale-hub.js:260"
+    },
+    {
+      "nhom": "Bán hàng",
+      "man_hinh": "Báo giá chờ duyệt",
+      "duong_dan": "Bán hàng -> Phê Duyệt -> Dự án TKT",
+      "evidence": "FE pages/assign/quotations/pending-approval/index.vue:33-35,357 (ProjectPhaseSelect lọc); BE QuotationService.php:4481. Cũng có ở Công việc -> Phê duyệt -> Giải pháp - Dự án (menu-sidebar.js:171) · Lối vào: sale-hub.js:261"
+    }
+  ],
+  "notes": "KIỂM TRA XOÁ THIẾU: ProjectPhases::isCanDelete() (Entities/ProjectPhases.php:48-51) chỉ xét prospective_projects; KHÔNG xét quotations.project_phase_id, request_solutions.project_phase_id (migration 2026_08_15_100000) và bảng cấu hình đóng dự án tự động project_phase_close_configs → giai đoạn chỉ còn được dùng ở báo giá/yêu cầu giải pháp (dự án đã đổi giai đoạn) vẫn xoá được, để lại id mồ côi; dòng cấu hình đóng tự động không bị xoá theo (ProjectPhaseService::destroy chỉ delete bản ghi, cũng không xoá project_phase_items/scopes/industries/applications con). Màn chỉ HIỂN THỊ (không đưa vào bảng): Meeting – nhập/in phiếu khảo sát (meeting/_id/survey-input.vue:45, survey-print.vue:85), tab Phiếu thu thập thông tin của Dự án TKT/Yêu cầu giải pháp (formTabInput.vue:187, FormTab.vue:166), Báo cáo theo dõi YCLGP theo phòng KD (BE join project_phases, FE không có ô lọc). Code chết: MeetingProject.vue:486-493 nạp projectPhaseOptions nhưng template không dùng (form Meeting không cho chọn giai đoạn; MeetingService.php:687 nhận project_phase_id nhưng FE luôn gửi null). Lọc Giai đoạn ở màn Báo giá chờ duyệt/Yêu cầu giải pháp chờ duyệt được khai ở 2 phân hệ (Bán hàng và Công việc) — bảng chỉ ghi 1 đường.",
+  "changes": "Trước 10 dòng -> sau 14 dòng. Chuẩn hoá 05/10/2026: mỗi lối vào menu = 1 dòng (Nhóm = phân hệ của lối vào); Đường dẫn = chuỗi hiển thị trên thanh menu trái kiểu hub (Phân hệ -> nhóm rail -> nhóm con ở cột trái panel nếu có; mục rail đi thẳng chỉ ghi tên phân hệ); Màn hình = nhãn mục menu nguyên văn của lối vào đó, chi tiết form/bộ lọc dời sang evidence; màn chỉ hiển thị dời vào notes; sắp theo thứ tự khai phân hệ trong subsystems.js rồi thứ tự menu. Tách thêm lối vào: Báo giá chờ duyệt và Yêu cầu giải pháp chờ duyệt (Công việc -> Phê duyệt -> Giải pháp - Dự án, nhãn \"Yêu cầu làm giải pháp\" / \"Báo giá chờ duyệt\"; Bán hàng -> Phê Duyệt -> Dự án TKT); Báo cáo meeting theo Dự án TKT (+ Meeting -> Báo cáo, nhãn \"Meeting theo dự án\"); Báo giá (+ Bán hàng -> Bán hàng -> Báo giá, nhãn \"Danh sách báo giá\"). Sửa đường dẫn 2 báo cáo thành \"CSKH trước bán -> Báo cáo -> Báo cáo dự án tiền khả thi\". Bỏ phần \"popup Giải pháp sắp tới hạn\" khỏi nhãn (dời sang evidence)."
+}

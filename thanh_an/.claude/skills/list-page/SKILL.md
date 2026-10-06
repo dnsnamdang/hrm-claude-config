@@ -112,6 +112,7 @@ computed: {
 ```
 
 - `table` = khoá lưu cấu hình bộ lọc theo user (`filter_customizations`), đặt `<phân hệ>_<màn>` — Cung ứng dùng `supply_<màn>`.
+- **Bộ lọc ĐỦ MỌI CỘT (user yêu cầu 30/09/2026)**: mỗi cột dữ liệu trên bảng (trừ STT, Hành động và **cột TIỀN** — Tổng tiền, Đơn giá, Thành tiền… KHÔNG làm ô lọc) phải có 1 ô lọc tương ứng trong `filterFields` — popup "Cài đặt bộ lọc" liệt kê đủ và **mặc định bật hết**, user tự tắt bớt. Kiểu ô theo kiểu dữ liệu cột: danh mục/trạng thái → select (người/NCC → chọn nhiều, option lấy từ API riêng nạp khi mở panel); ngày → `date-range`; số lượng → khoảng số `variant: 'range'`; mã/chữ → text. Thiếu API lọc ở BE thì bổ sung (dùng `$request->filled()` cho ô số để giá trị 0 vẫn lọc). Ô số trong slot phải thêm key từ/đến vào `ignoredFields` (chờ Enter). Mẫu: `pages/supply/purchase_orders/index.vue`.
 - Ô lọc khai bằng **schema `filterFields`** (computed), không dựng markup tay. Chỉ ô cần logic riêng (tìm từ xa, cascade, khoá theo ô khác) mới dùng slot `#field-<key>`.
 - **Slot `#field-*` KHÔNG tự vẽ `V2BaseLabel`** và không khai `hideLabel` cho ô đơn — để panel bọc nhãn floating. `V2BaseSelect`/`V2BaseSelectRemote` trong slot **bắt buộc `height="36px"`**.
 - Chọn nhiều: `multiple: true` trên field — không viết slot riêng chỉ để bật multiple.
@@ -359,6 +360,8 @@ grep -n "v2-styles.scss" $F                       # có, trong <style> không sc
 grep -n "id=\"confirm\"" $F                       # rỗng — trùng id với V2Footer
 grep -o 'class="field-line[^"]*"' $F | sort | uniq -c   # field-line trần = 0
 ```
+
+Đối chiếu `allColumns` với `filterFields`: cột dữ liệu nào (trừ cột tiền) chưa có ô lọc → bổ sung (xem A3).
 
 Trên trình duyệt: chọn từng select → có request; Enter ở ô chữ → có request; Cài đặt bộ lọc tắt
 còn ≤ 3 ô → panel nhảy về hàng ngang; cấu hình cột lưu + F5 còn; xuất Excel đúng cột đang hiện;

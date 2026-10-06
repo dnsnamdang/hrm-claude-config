@@ -1426,3 +1426,40 @@ Blocked:
 - [x] Parse-check script 33 file thay đổi: 0 lỗi
 - [x] Bổ sung 2 màn sót (lần rà đầu chỉ bắt `code`, bỏ qua `?.open(` + `identify_number` + biến
       `historyCustomerName`): `finance/accounts` (`số hiệu - tên` → `tên`), `assign/customers` (`mã - tên` → `tên`)
+
+## Phase DOC-2 — Cập nhật HDSD / SRS / Testcase theo code hiện tại + khuôn Quốc gia (25/09/2026)
+
+Yêu cầu: tài liệu trên Drive còn bản 21/08 (ghi "không có Import", export không theo lọc, mã…); làm lại theo
+code nhánh gop_db, bám khuôn tài liệu Danh mục quốc gia (bản TPE đã duyệt 23/09) — làm màn này trước cho user duyệt.
+
+- [x] Rà code hiện tại (list/filter/row actions/mã/import 5 sheet/export/form/quyền/lịch sử)
+- [x] Chụp ảnh thật local :3002 → `shots_v2/`
+- [x] HDSD: dựng lại trên khung HDSD Quốc gia (bìa/style/tone), nội dung gói bảo dưỡng
+- [x] SRS: dựng lại trên khung SRS Quốc gia (FR, bảng giao diện + event, dẫn chiếu SRS quy tắc chung)
+- [x] Testcase: tab mới theo khuôn tab "13. DM quốc gia"
+- [ ] User duyệt → đẩy Drive (hỏi trước khi ghi đè)
+- ⚠️ Phát hiện khi rà: Xuất Excel thiếu cột Mã + Trạng thái (FE gửi `code`/`status_text`, BE `ServiceExport` đặt key `serviceCode`/`serviceStatus`) — chờ user quyết có sửa code không
+- ⚠️ Phát hiện thêm: file PDF đính kèm KHÔNG BAO GIỜ được lưu — API upload trả host `tanphat.s3.cloud.cmctelecom.vn`, `ServiceService::isOwnAttachmentUrl()` chỉ nhận `s3.cloud.cmctelecom.vn` → URL bị lọc bỏ im lặng
+- Công cụ: `docs_v2/` (gen_uml / gen_hdsd / gen_srs / gen_testcase) + thư viện chung `_catalog_docs_lib/qg_writer.py` (dựng trên vỏ file Quốc gia) — dùng lại cho các danh mục khác
+
+### Checkpoint — 25/09/2026
+Vừa hoàn thành: bản nháp HDSD (44 trang) + SRS (13 FR) + testcase (156 TC) ở `docs_v2/out/`
+Đang làm dở: chờ user duyệt
+Bước tiếp theo: user duyệt → ghi đè 2 file Drive (giữ link) + thay tab "12.Danh mục gói bảo dưỡng" trong workbook testcase; quyết có sửa 2 lỗi code không
+Blocked:
+- [x] (25/09) Ghi đè HDSD + SRS trên Drive (giữ ID) — ⚠️ thay cả file, chờ user xác nhận có giữ không (bản cũ còn trong lịch sử Drive + scratchpad)
+- [x] (25/09) Testcase: khôi phục tab 12 về bản 10:27 24/09 (đã lỡ thay cả tab), rồi CHỈ BỔ SUNG dòng 200–236: XI Quy tắc mã (6) · XII Import (23) · XIII Xuất Excel bổ sung (5) = 34 case
+- [ ] Chờ user quyết: các case cũ lỗi thời (TC_01.003 "không có nút Nhập Excel", TC_07.001 "mặc định chọn 6 trường", TC_07.005 "thứ tự theo thứ tự chọn"…) + công thức TP ở P11:P13 chỉ tính tới dòng 200
+- [x] (25/09) Bỏ URL khỏi HDSD + SRS (đã đẩy lại Drive), ghi quy tắc "không ghi URL" vào skill hdsd/srs/testcase + sửa dòng CLAUDE.md mục SRS
+- [x] (25/09) Testcase tab 12 sửa TRỰC TIẾP case cũ: mô tả B4/B7/B8/B10, TC-ROLE-00/03/09, TC_01.003, TC_04.022, TC_07.001/002/004/005; thêm TC_08.015–019 (quy tắc mã) vào cuối nhóm VIII; bỏ 2 nhóm XI mã + XIII export đã thêm dưới cùng; nhóm Import giữ, đánh lại XI / TC_11.001–023 (dòng 205–228)
+- [x] (25/09) Fix: file PDF đính kèm không được lưu — `ServiceService::ATTACHMENT_HOST` thiếu bucket (`s3.cloud…` → `tanphat.s3.cloud.cmctelecom.vn`, đúng URL `CmcS3Helper::putFile()` trả về)
+- [x] (25/09) Fix: Xuất Excel thiếu cột Mã + Trạng thái — `ServiceExport` key `serviceCode`/`serviceStatus` → `code`/`status_text` (khớp id popup Chọn trường xuất file)
+
+## Fix — Màn chi tiết không hiện dung lượng file đính kèm (2026-10-02) @khoipv
+Nguyên nhân: `services.attachments` chỉ lưu URL; `V2BaseAttachmentSection` chỉ biết dung lượng file
+vừa upload trong phiên (`sizeByUrl`) → file đã lưu hiện `—`. Fix theo khuôn Finance (`/{id}/attachment-sizes`).
+- [x] BE: `GET customer-care/services/{service}/attachment-sizes` → `BillPaymentAttachmentService::sizes()`
+- [x] FE: `V2BaseAttachmentSection` thêm prop tuỳ chọn `sizesUrl` (rỗng = như cũ) → tự gọi lấy dung lượng
+- [x] FE: `ServiceFormComponent` truyền `sizes-url` khi có `serviceId` (xem + sửa)
+- [x] Verify: compile 2 file .vue 0 lỗi; gọi thử endpoint gói 247 qua HTTP kernel → 200 `{url: 613}`
+- [ ] User mở màn chi tiết/sửa gói trên trình duyệt kiểm tra cột Dung lượng (chưa tự test UI)

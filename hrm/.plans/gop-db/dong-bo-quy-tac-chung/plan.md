@@ -1128,3 +1128,6 @@ Thêm cột ở FE là chưa đủ — cột trống vì **BE không ghi `update
 
 Đo lại (tinker, user id 13): areas sửa → 13 · areas khóa/mở khóa → 13 · nations sửa → 13;
 đọc qua Resource danh sách: AREA `updated_by_name = "DNS Admin"`, NATION `updated_by_name = "DNS Admin"`.
+
+- [x] 2026-09-23 · `/human/nations` Mã quốc gia + Mã bưu chính chỉ nhận `[A-Za-z0-9_-]` — FE rule mới `code_chars` (plugins/vee-validate.js) + BE `regex` trong `CreateNationRequest` (bỏ `numeric|digits_between` của mã bưu chính)
+- [x] 2026-09-30 · `/human/provinces` chặn xoá Tỉnh/TP đang được dùng — `Province::USED_BY_COLUMNS` (~50 bảng, trước chỉ kiểm wards + employee_infos) + `usedIds()` gộp 1 query UNION; BE `deleteProvince()` ném lỗi (trước chỉ FE ẩn nút); list resource tính `can_delete` cả trang 1 lần

@@ -1,0 +1,142 @@
+[normal] CÔNG TY CỔ PHẦN CÔNG NGHỆ THIẾT BỊ TÂN PHÁT [IMG]
+[normal] 189 Phan Trọng Tuệ, Thanh Liệt, Thanh Trì, HN 
+[normal] ĐT: 0243 3 916 161 / Fax: 0243 3 910 546 
+[normal]  [IMG]
+[normal] TÀI LIỆU HƯỚNG DẪN SỬ DỤNG 
+[normal] NGHIỆP VỤ PHẦN MỀM 
+[normal] TÂN PHÁT ETEK 
+[normal] (Màn hình: Danh mục Tỉnh/TP) 
+[normal] Năm 2026 
+[Heading 1] MỤC LỤC 
+[Heading 1] TỔNG QUAN 
+[Heading 2] 1. Thuật ngữ sử dụng trong tài liệu 
+<<TABLE 1>>
+  | Thuật ngữ | Giải thích
+  | Tỉnh/TP | Đơn vị hành chính cấp tỉnh, trực thuộc một Quốc gia và một Khu vực.
+  | Biển số xe | Mã biển số của tỉnh, bắt buộc nhập, chỉ nhận chữ số.
+  | Mã số tỉnh | Mã tham khảo, chỉ nhận chữ số, không bắt buộc.
+  | Trạng thái Hoạt động | Tỉnh/TP dùng được ở các màn nghiệp vụ khác.
+  | Trạng thái Khóa | Tỉnh/TP không còn chọn được ở nơi khác nhưng vẫn nằm trong danh mục.
+[Heading 2] 2. Cập nhật tài liệu 
+<<TABLE 2>>
+  | Phiên bản | Ngày | Người cập nhật | Nội dung
+  | 1.0 | 17/08/2026 | DNS Media | Lập mới cho màn Danh mục Tỉnh/TP.
+[Heading 2] 3. Giới thiệu chung 
+[normal] Danh mục Tỉnh/TP là nơi khai báo và quản lý danh sách tỉnh/TP dùng chung cho toàn hệ thống. Dữ liệu của màn này là nguồn cho các ô địa chỉ ở mọi màn nghiệp vụ khác, nên mỗi thay đổi ở đây đều ảnh hưởng tới nhiều nơi. 
+[Heading 2] 4. Quyền sử dụng 
+[normal] Màn hình này hiện KHÔNG yêu cầu quyền riêng. Mọi người dùng đã đăng nhập đều mở được màn hình và thực hiện được đầy đủ các thao tác: Thêm mới, Chỉnh sửa, Xóa, Khóa / Mở khóa và Xem lịch sử. 
+[normal] Lưu ý: vì ai cũng sửa được, người dùng hãy cân nhắc kỹ trước khi đổi hoặc xóa một bản ghi — dữ liệu này đang được nhiều màn khác sử dụng. 
+[Heading 1] PHẦN 1: TRUY CẬP VÀ BỐ CỤC MÀN HÌNH 
+[Heading 2] 1. Truy cập màn hình 
+[normal] Đăng nhập hệ thống, vào menu Danh mục→ Địa lý → Tỉnh/TP. Hệ thống hiển thị danh sách tỉnh/TP hiện có. 
+[normal]  [IMG]
+[normal] Hình 1: Màn hình Danh mục Tỉnh/TP khi mới truy cập 
+[Heading 2] 2. Bố cục màn hình 
+[normal] Màn hình chia làm ba khu vực từ trên xuống: 
+[normal] Khu vực tìm kiếm và lọc — ô tìm kiếm nhanh, các ô lọc, nút Tìm kiếm và Làm mới. 
+[normal] Thanh công cụ — nút Tạo mới. 
+[normal] Bảng danh sách — các cột thông tin, cột Hành động ở cuối, và phân trang bên dưới. 
+[Heading 2] 3. Các cột của bảng danh sách 
+<<TABLE 3>>
+  | Cột | Nội dung
+  | STT | Số thứ tự, chạy liên tục qua các trang. Luôn hiển thị.
+  | Tên Tỉnh/TP | Tên đầy đủ. Luôn hiển thị, sắp xếp được.
+  | Mã Tỉnh/TP | Mã tham khảo, sắp xếp được.
+  | Biển số xe | Mặc định ẩn.
+  | Quốc gia | Mặc định ẩn.
+  | Khu vực | Mặc định ẩn.
+  | Người sửa | Mặc định ẩn.
+  | Ngày cập nhật | Mặc định ẩn, sắp xếp được.
+  | Người tạo | Người đã thêm bản ghi.
+  | Ngày tạo | Thời điểm thêm, sắp xếp được.
+  | Trạng thái | Hoạt động hoặc Khóa.
+  | Hành động | Sửa, Xóa hiện thẳng; Khóa / Mở khóa và Lịch sử nằm trong nút ba chấm.
+[Heading 2] 4. Cột Hành động 
+[normal] Trên mỗi dòng, cột Hành động có ba phần: 
+[normal] Biểu tượng bút chì — mở cửa sổ chỉnh sửa. 
+[normal] Biểu tượng thùng rác — xóa bản ghi. 
+[normal] Nút ba chấm “Hành động khác” — chứa hai mục Khóa (hoặc Mở khóa) và Lịch sử. 
+[normal] Lưu ý quan trọng: với bản ghi ĐÃ KHÓA, hai nút Sửa và Xóa sẽ BIẾN MẤT, chỉ còn Mở khóa và Lịch sử. Muốn sửa lại, người dùng phải Mở khóa trước. 
+[Heading 2] 5. Phân trang và sắp xếp 
+[normal] Cuối bảng có ô hiển thị tổng số bản ghi. Con số này là tổng số tỉnh/TP khớp bộ lọc đang áp dụng, không phải tổng toàn danh mục. 
+[normal] Bấm vào tiêu đề cột có mũi tên để sắp xếp. Bấm lần thứ hai để đảo chiều. Thứ tự sắp xếp được giữ nguyên khi chuyển trang. 
+[normal] Người dùng đổi được số dòng mỗi trang. Sau khi đổi, hệ thống tự quay về trang 1. 
+[Heading 1] PHẦN 2: TÌM KIẾM VÀ LỌC DANH SÁCH 
+[Heading 2] 1. Các ô tìm kiếm và lọc 
+<<TABLE 4>>
+  | Ô | Cách dùng
+  | Ô tìm kiếm nhanh | Tìm theo tên và mã Tỉnh/TP.
+  | Quốc gia | Lọc Tỉnh/TP theo quốc gia.
+  | Trạng thái | Bỏ trống thì hiện cả hai trạng thái.
+[Heading 2] 2. Cách áp dụng 
+[normal] Nhập hoặc chọn xong các tiêu chí, bấm Tìm kiếm. Các tiêu chí kết hợp với nhau theo kiểu VÀ — chỉ bản ghi thỏa đồng thời tất cả các tiêu chí mới hiện ra. 
+[normal] Bấm Làm mới để xóa toàn bộ tiêu chí; danh sách nạp lại đầy đủ ngay lập tức. 
+[normal] Ô lọc Trạng thái để trống nghĩa là hiện CẢ bản ghi Hoạt động lẫn bản ghi đã Khóa. Đây là mặc định khi vào màn hình. 
+[Heading 1] PHẦN 3: THÊM MỚI TỈNH/ THÀNH PHỐ 
+[Heading 2] 1. Mở cửa sổ thêm mới 
+[normal] Bấm nút Tạo mới trên thanh công cụ. Hệ thống mở cửa sổ nhập liệu với mọi ô để trống. 
+[normal]  [IMG]
+[normal] Hình 2: Cửa sổ Tạo tỉnh/TP 
+[Heading 2] 2. Các trường cần nhập 
+<<TABLE 5>>
+  | Trường | Kiểu nhập | Bắt buộc | Ghi chú
+  | Tên tỉnh/TP | Textbox | Có | Không được trùng trong cùng một cặp Quốc gia và Khu vực. Bỏ trống báo “Bắt buộc phải nhập”.
+  | Mã số tỉnh | Textbox | Không | Chỉ nhận chữ số. Nhập chữ báo “Phải là số”.
+  | Biển số xe | Textbox | Có | Chỉ nhận chữ số. Bỏ trống báo “Bắt buộc phải nhập”.
+  | Quốc gia | Dropdown | Có | Lấy từ Danh mục quốc gia. Bỏ trống báo “Bắt buộc phải nhập”.
+  | Khu vực | Dropdown | Có | Lấy từ Danh mục khu vực. Bỏ trống báo “Bắt buộc phải nhập”.
+[Heading 2] 3. Ba nút lưu và đóng 
+<<TABLE 6>>
+  | Nút | Tác dụng
+  | Lưu | Ghi bản ghi rồi đóng cửa sổ, quay về danh sách.
+  | Lưu và tiếp tục | Ghi bản ghi nhưng GIỮ cửa sổ mở và xóa trắng các ô, để người dùng nhập tiếp bản ghi kế theo. Rất tiện khi cần thêm nhiều bản ghi liên tiếp.
+  | Đóng | Hủy bỏ, không ghi gì.
+[Heading 2] 4. Các lỗi thường gặp 
+[normal] Nếu còn thiếu sót, hệ thống báo lỗi đỏ ngay dưới ô tương ứng. Cửa sổ KHÔNG đóng và dữ liệu đã nhập vẫn còn nguyên — người dùng chỉ cần sửa chỗ báo đỏ rồi bấm Lưu lại. 
+<<TABLE 7>>
+  | Thông báo | Nguyên nhân và cách xử lý
+  | Bắt buộc phải nhập | Chưa nhập một trong các ô bắt buộc: Tên tỉnh/TP, Biển số xe, Quốc gia, Khu vực.
+  | Tên khu vực này đã tồn tại | Đã có tỉnh/TP khác cùng tên trong cùng một cặp Quốc gia và Khu vực. Hãy kiểm tra lại danh sách trước khi thêm.
+  | Phải là số | Ô chỉ nhận chữ số nhưng người dùng đã nhập chữ cái hoặc ký tự khác.
+  | Chỉ được nhập chữ số, từ … đến … chữ số | Số chữ số vượt quá giới hạn cho phép của ô đó.
+[Heading 1] PHẦN 4: CHỈNH SỬA VÀ XÓA 
+[Heading 2] 1. Chỉnh sửa 
+[normal] Bấm biểu tượng bút chì ở dòng cần sửa. Cửa sổ mở ra giống hệt cửa sổ thêm mới, nhưng mọi ô đã điền sẵn dữ liệu hiện tại. 
+[normal] Các quy tắc bắt buộc và thông báo lỗi giống hệt phần thêm mới. 
+[normal] Sửa xong bấm Lưu. Mọi thay đổi đều được ghi vào Lịch sử kèm tên người dùng và thời điểm. 
+[normal] Lưu ý: bản ghi đang ở trạng thái Khóa sẽ không có nút sửa. Muốn sửa, người dùng phải Mở khóa trước. 
+[Heading 2] 2. Xóa 
+[normal] Bấm biểu tượng thùng rác ở dòng cần xóa. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. 
+[normal]  [IMG]
+[normal] Hình 3: Hộp xác nhận xóa tỉnh/TP 
+[normal] Bấm Xóa để xác nhận. Bản ghi biến mất khỏi danh sách. 
+[normal] Bấm Hủy nếu bấm nhầm. Không có gì thay đổi. 
+[normal] Nếu bản ghi đang được cấp địa chỉ bên dưới hoặc dữ liệu nghiệp vụ khác sử dụng, hệ thống sẽ từ chối xóa và nêu lý do. Khi đó người dùng cần xử lý dữ liệu liên quan trước. 
+[normal] Lưu ý: bản ghi đang ở trạng thái Khóa sẽ KHÔNG có nút thùng rác. 
+[Heading 1] PHẦN 5: KHÓA VÀ MỞ KHÓA 
+[Heading 2] 1. Ý nghĩa 
+[normal] Khi một tỉnh/TP không còn dùng nữa nhưng người dùng không muốn xóa hẳn , hãy dùng thao tác Khóa. Sau khi khóa: 
+[normal] Bản ghi VẪN nằm trong danh sách, cột Trạng thái hiện chữ Khóa. 
+[normal] Vẫn xem được lịch sử thay đổi của bản ghi. 
+[normal] Điểm khác biệt: bản ghi không còn xuất hiện ở ô chọn tỉnh/TP của các màn hình nghiệp vụ khác. 
+[normal] Hai nút Sửa và Xóa của dòng đó biến mất. 
+[Heading 2] 2. Các bước khóa 
+[normal] Bấm nút ba chấm “Hành động khác” ở dòng cần khóa, chọn Khóa. Hệ thống hiện hộp xác nhận nêu rõ tên bản ghi. 
+[normal]  [IMG]
+[normal] Hình 4: Hộp xác nhận khóa tỉnh/TP 
+[normal] Bấm Khóa để xác nhận. Cột Trạng thái đổi thành Khóa. 
+[normal] Bấm Hủy nếu bấm nhầm. 
+[Heading 2] 3. Mở khóa 
+[normal] Với bản ghi đang Khóa, bấm nút ba chấm rồi chọn Mở khóa và xác nhận. Bản ghi trở về trạng thái Hoạt động, hai nút Sửa và Xóa hiện trở lại, và bản ghi lại chọn được ở các màn nghiệp vụ khác. 
+[normal] Nếu bản ghi vừa bị người khác thao tác trước đó, hệ thống báo dữ liệu đã thay đổi. người dùng chỉ cần tải lại danh sách rồi thử lại. 
+[Heading 1] PHẦN 6: XEM LỊCH SỬ THAY ĐỔI 
+[normal] Mở lịch sử của một bản ghi từ cột Hành động (trong nút ba chấm). 
+[normal]  [IMG]
+[normal] Hình 5: Cửa sổ Lịch sử thay đổi của tỉnh/TP 
+[normal] Cửa sổ liệt kê mọi lần thay đổi của bản ghi đó, mới nhất ở trên cùng. Mỗi dòng cho biết: 
+[normal] Thời điểm thay đổi. 
+[normal] Loại thay đổi — ví dụ Thay đổi thông tin, Khóa, Mở khóa. 
+[normal] Người thực hiện, kèm mã nhân viên và phòng ban. 
+[normal] Trường nào đã đổi, giá trị cũ và giá trị mới. 
+[normal] Cửa sổ có bộ lọc riêng để thu hẹp danh sách khi bản ghi có nhiều lần thay đổi. 
+[normal] Bản ghi vừa được tạo, chưa sửa lần nào thì cửa sổ hiện “Chưa có lịch sử thao tác nào.”. 

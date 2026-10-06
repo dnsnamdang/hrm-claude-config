@@ -80,3 +80,17 @@ Vừa hoàn thành: TOÀN BỘ T1-T27 — CODE DONE + MIGRATED + VERIFIED (V1 wr
 Đang làm dở: (không)
 Bước tiếp theo: user verify browser bằng mắt → quyết định commit (chưa git). Lịch sử ĐÃ ghi nhận thao tác phân ca thật của user id=13 trong lúc test (hook hoạt động live).
 Blocked: (không)
+
+## Phase 4 — Fix Redmine #10455 (HM 8, 9) — 2026-09-26
+
+- [x] C1. Thêm cột "Mô tả sự kiện" (bảng đủ 11 cột)
+- [x] C2. Dời ngày BĐ muộn hơn: gỡ ngày [BĐ cũ, BĐ mới) của CHÍNH bảng (`syncShiftDetailEmployeeDates` nhận `$oldStartAt`) + cửa sổ chụp ca cũ mở từ BĐ cũ → log Xóa
+- [x] L3. Gán 1 ô đã có ca ở bảng tổng hợp → cập nhật dòng đó (không tạo dòng 2), trùng ca = no-op; log "Sửa ca trên bảng phân ca tổng hợp"
+- [x] L4. Ca bị gỡ (ca mới null, NV vẫn trong bảng) → action delete, mô tả 'Gỡ ca khỏi ngày làm việc của nhân viên', ghi đè = null
+- [x] L6. Bật lại nút Xóa bảng phân ca chi tiết ($confirm, ẩn khi không có quyền) + checkPermission route DELETE
+- [x] L7. V2BaseBadge (BE trả action_label/action_color), V2BaseIconButton, khuôn tên NV employeeOptionText
+- [x] L8. Gộp 2 API danh mục → `GET shift-assignment-histories/filter-options`; dropdown đang mở được mở lại khi options về; bỏ gọi list 2 lần khi khôi phục bộ lọc
+- [x] L9. Nhãn "Ngày thực hiện chỉnh sửa" không đè icon lịch (giới hạn max-width lúc chưa float)
+- [x] L12. Excel DS nhân viên: cột Mã chấm công / Mã NV ghi dạng text
+- [x] HM9. Icon lịch sử cạnh tên NV ở Bảng phân ca tổng hợp → `/shift-history?employee_info_id=` (lọc sẵn 1 NV)
+- L10. Không đổi (design cố ý hiển thị nguyên dòng log)

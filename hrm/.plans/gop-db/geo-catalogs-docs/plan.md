@@ -148,3 +148,38 @@ tự động, không ảnh hưởng người dùng thật.
   `document.getElementById('webpack-hot-middleware-clientOverlay').remove()` trước khi thao tác.
 - Nút Khóa / Lịch sử nằm trong nút ba chấm: mở ba chấm rồi click phần tử `.v2-row-actions__item`
   đang hiển thị (lọc `offsetParent !== null`, vì mọi dòng đều render sẵn menu ẩn).
+
+## Phase 4 — Rà lại tài liệu màn Quốc gia theo code hiện tại (22/09/2026)
+
+Yêu cầu: HDSD + SRS trên Drive chưa có Import / Xuất Excel; rà soát lại toàn bộ cho khớp code
+nhánh `gop_db`.
+
+- [x] Đọc code màn Quốc gia (FE `pages/human/nations`, BE `NationController` / `NationService` /
+      `CreateNationRequest` / `ExportColumnRegistry`) → liệt kê chỗ lệch
+- [x] Chụp ảnh thật bằng Playwright MCP (client :3002, API :8003) → `hdsd_nations_shots/`
+      (danh sách, Import 3 bước, Chọn trường xuất file, Tuỳ chỉnh cột, popup Xem + Lịch sử)
+- [x] Viết `docx_edit_helper.py` — sửa TẠI CHỖ file .docx (clone đoạn/bảng có sẵn để giữ định dạng),
+      KHÔNG dựng lại từ khung mẫu vì QA đã chỉnh trực tiếp trên Drive
+- [x] `update_hdsd_nations.py`: thêm PHẦN 7 Xem chi tiết · PHẦN 8 Xuất Excel · PHẦN 9 Import Excel ·
+      PHẦN 10 Tuỳ chỉnh cột (Hình 10–16); sửa bảng cột (thêm Người/Ngày cập nhật), thanh công cụ,
+      điều kiện ẩn nút Xóa, ô tìm nhanh chỉ tìm theo TÊN; thay ảnh Hình 1; thêm dòng v1.2
+- [x] `update_srs_nations.py`: sửa đánh số mục con lẫn lộn (2.8/2.9/2.10/2.11) và số hình trùng;
+      chèn ảnh thật thay "Thêm hình sau"/"Thêm sau"; viết lại bảng giao diện + event của 2.8→2.11;
+      bỏ Xuất PDF, bỏ giới hạn 1.000 dòng, bỏ nút Khôi phục mặc định, bỏ nút Quay lại ở màn xem;
+      thêm FR-08→FR-11 vào ma trận phân quyền
+- [x] Ghi đè 2 file trên Drive bằng rclone (giữ nguyên link cũ)
+
+### Checkpoint — 22/09/2026
+Vừa hoàn thành: cập nhật HDSD + SRS màn Danh mục quốc gia theo code hiện tại, đã đẩy lên Drive.
+Đang làm dở: không.
+Bước tiếp theo: nếu cần, rà tương tự cho 5 màn địa lý còn lại (Khu vực, Tỉnh/TP, Quận/Huyện,
+Phường/Xã, Đường-Phố) — các màn đó cũng đã có Import/Export nhưng tài liệu chưa mô tả.
+Blocked:
+
+- [x] Fix: màn Khu vực hiện tên quốc gia cũ sau khi đổi tên ở danh mục Quốc gia → AreaListResource đọc `nation->name` (eager load `nation:id,name`), fallback cột `areas.nation_name` (2026-09-23)
+- [x] Fix: popup Sửa/Xem Khu vực mất quốc gia đã khoá → BE `nations/list` nhận `include_ids` + trả `is_locked`; AreasModel giữ quốc gia khoá cục bộ (không vào store), 🔒 do V2BaseSelectInModal tự gắn (2026-09-23)
+- [x] Quận/Huyện theo khuôn Phường/Xã, Tỉnh/TP (2026-09-26): popup có ô Trạng thái; danh sách hiện cả Khóa + lọc/badge Trạng thái; Khóa/Mở khóa (`PUT /human/districts/{id}/lock|unlock`); `recordNotLocked` chặn 423 PUT/DELETE; Xóa = xoá cứng khi Hoạt động + chưa dùng (`District::USAGE_REFERENCES`, cờ `is_can_delete`); `District extends BaseModel`; export thêm cột Trạng thái
+
+- [x] Màn Tỉnh/TP: thêm bộ lọc Khu vực (BE lọc provinces.area_id, FE cascade Quốc gia → Khu vực) — 2026-10-02
+- [x] Màn Quận/Huyện: thêm bộ lọc Khu vực (BE lọc provinces.area_id, FE cascade Quốc gia → Khu vực → Tỉnh/TP) — 2026-10-03
+- [x] Màn Quận/Huyện: thêm cột Khu vực (mặc định ẩn, bật trong Tuỳ chỉnh cột; có trong xuất Excel) — 2026-10-03

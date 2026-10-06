@@ -1,3 +1,5 @@
+- [x] 25/09/2026 Sinh lại `HideErpMenusMenuSettingSeeder` theo menu gop_db `4fbe1fc1f`: +9 khoá mục mới lọt menu (Hàng hóa, danh mục/cấu hình phòng họp, Khai Quy chế ở Công việc/Bán hàng, báo cáo KH&KQ theo NV), −8 khoá lệch; đổi chỗ 1 placeholder. Chưa chạy trên PROD (hrm_erp_gop chưa có dòng menu_settings nào)
+
 ### Checkpoint — 2026-09-17 (Đã test kỹ trên local)
 Vừa hoàn thành: test thật `HideErpMenusMenuSettingSeeder` trên stack local (BE 8006 + FE 3006,
 DB `local_hrm_erp`), 2 tài khoản: `namdangit@gmail.com` (thuộc "Nhân sự xem đầy đủ") và
@@ -124,6 +126,11 @@ Blocked: không có
 - [x] Kết quả lần chạy 2026-09-14: **60/60 PASS**
 - [x] 8 kịch bản ở mục 9 của spec (menu nguyên trạng · ẩn mục lẻ cây · ẩn mục hub · ẩn cả phân hệ · `use_rice` đồng bộ · không quyền · chồng với quyền · API lỗi)
 - [x] Kiểm CRLF: `git diff --stat` không phình bất thường ở các file cũ đã sửa
+
+## Phase 6 — Trả "Sử dụng quyết định" về màn Cài đặt (user chốt 30/09/2026: cờ dính nhiều logic nghiệp vụ, không suy từ tick phân hệ)
+- [x] BE: bỏ `use_decision` khỏi `MenuSettingService::LEGACY_SUBSYSTEM_KEYS` (lưu Cài đặt phân hệ không ghi đè cờ nữa)
+- [x] FE: thêm lại checkbox "Sử dụng quyết định" ở `setting-master/index.vue` (đọc/ghi `use_decision`)
+- [x] FE: bỏ `isShowKey: 'is_use_decision'` của phân hệ `operation` (ẩn/hiện phân hệ chỉ do màn Cài đặt phân hệ)
 
 ### Checkpoint — 2026-09-14 (XONG Phase 1-5, đã test thật)
 Vừa hoàn thành: **toàn bộ chức năng + test tay bằng Playwright trên cổng 3002/8003.**

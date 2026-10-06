@@ -833,3 +833,11 @@ CHƯA test: build production FE (chỉ chạy dev server), bảng "Dự án con"
 - [x] Điều tra phản hồi "dự án cha 322 có con đã duyệt/trúng thầu nhưng không tạo được báo giá tổng": KHÔNG phải lỗi logic — 2 báo giá của con #326 (BG-2026-00289 Đã duyệt, BG-2026-00291 Trúng thầu) đều đã lập hợp đồng ERP (#1190/#1191) nên bị loại theo Rule 2; 3 dự án con còn lại không có báo giá nào.
 - [x] Sửa thông báo gây hiểu nhầm ở popup chọn nguồn: `SummaryQuotationController@selectableQuotations` đổi payload thành `{ groups, excluded }`, trả kèm báo giá đúng trạng thái nhưng đã lập hợp đồng; `SummaryQuotationSourceModal.vue` liệt kê lý do thật (FE vẫn nhận được mảng thuần nếu BE chưa deploy).
 - Dữ liệu dev test được luồng này: dự án cha #284, #457 (KD chính = namdangit@gmail.com), #301/#310/#313 (KD chính #1172).
+
+### Redmine #10882 phản hồi #4 — cha còn nháp thì không cho tạo dự án con (2026-09-22, nhánh `tpe`)
+- [x] BE `ProspectiveProjectController@parentOptions`: loại cha còn ở `PARENT_STATUS_DANG_TAO` khỏi dropdown chọn dự án cha
+- [x] BE `ProspectiveProjectRequest::addParentChildErrors()` rule 3b: cha ở "Đang tạo" → lỗi inline tại `parent_id` (chốt chặn thật, kể cả khi vào bằng `/add?parent_id=` gõ tay)
+- [x] FE `ProspectiveProjectChildrenTab.vue`: `canAddChild` thêm điều kiện `status !== 1`, ẩn hẳn nút "Thêm dự án con" + hiện dòng giải thích màu xám `#6b7280`
+- [x] `promoteParentToInProgress()` giữ lại làm lưới an toàn cho dữ liệu cũ, đã ghi chú lý do
+- Cơ sở: cha ở "Đang tạo" ⇔ mới Lưu nháp ⇔ `customer_id` chưa bắt buộc; con kế thừa cứng khối KH từ cha nên trước đây luôn 422 mà không rõ lý do
+- [x] Verify (API :8005 + UI :3005, nhánh `tpe`, tài khoản namdangit@gmail.com): dropdown loại cha nháp (4 option còn lại đều status ≥ 2) · POST con dưới cha nháp → 422 đúng message tại `parent_id` cho CẢ lưu nháp lẫn lưu chính thức · con dưới cha "Đang thực hiện" lưu được, kế thừa `customer_id` · hồi quy cha đã đóng vẫn báo "Dự án cha đã đóng" · sửa con đã có không bị chặn oan · tab Dự án con: cha nháp = 0 nút + 1 dòng ghi chú `rgb(107,114,128)`, cha chính thức = 1 nút + 0 ghi chú. Đã xoá dữ liệu test #361/#362.
