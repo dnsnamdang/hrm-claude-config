@@ -68,6 +68,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- sale-customer-debt-reports → @junfoke → .plans/gop-db/sale-customer-debt-reports/plan.md
+  Trạng thái: 🟢 **Xong cả 3 màn (Chi tiết / Theo NV / Đối chiếu 1 KH) BE + FE, khớp ERP + Playwright (07/10/2026)**, nhánh `develop`, CHƯA commit.
+  Còn: chạy SQL quyền 1683-1694 trên server + gán vai trò.
+  Spec: docs/superpowers/specs/gop-db/2026-10-06-sale-customer-debt-reports-design.md | Tóm tắt: .plans/gop-db/sale-customer-debt-reports/design.md
+
+
 - popup-chon-so-dong — popup CHỌN bản ghi: số dòng/trang 10/20/50/100 (34 popup, hằng `utils/pickerPagination.js`) → @junfoke → .plans/gop-db/popup-chon-so-dong/plan.md
 - update-style-bao-cao-cu (feature lớn, mỗi báo cáo 1 folder con) → @namdangit → .plans/gop-db/update-style-bao-cao-cu/design.md
   Khuôn: skill mới `HRM/.claude/skills/report-styles` (04/10, mẫu = báo cáo tổng hợp CSKH tiềm năng; chưa commit repo hrm-claude-config).
