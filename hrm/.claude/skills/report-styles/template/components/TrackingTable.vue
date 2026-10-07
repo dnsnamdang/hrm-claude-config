@@ -42,7 +42,6 @@
                                             :options="levelOptions"
                                             :allow-clear="false"
                                             size="xs"
-                                            height="18px"
                                             @change="onLevelChange"
                                         />
                                     </span>
