@@ -153,7 +153,16 @@
                 @view-report="openMeetingReport"
             />
 
-            <PrintOptionsModal :visible="printOptions" @print="onPrintReport" @close="printOptions = false" />
+            <!-- Popup IN DÙNG CHUNG (quy tắc in — SKILL.md mục 4b): "In báo cáo" = chọn bản in + cột; "In danh sách" của
+                 popup drill = chỉ chọn cột (`drillPrint`). 1 instance cho cả 2. -->
+            <V2BaseReportPrintModal
+                id="pct-print-options-modal"
+                :visible="printOptions"
+                :modes="drillPrint ? [] : printModes"
+                :columns="drillPrint ? drillPrint.columns : []"
+                @print="onPrintChosen"
+                @close="closePrintOptions"
+            />
 
             <ReportPrintPreviewModal
                 :show="printPreview.show"
@@ -184,7 +193,7 @@ import { buildQueryString } from '@/utils/url-action'
 import TrackingSummary from './components/TrackingSummary.vue'
 import TrackingTable from './components/TrackingTable.vue'
 import ItemListModal from './components/ItemListModal.vue'
-import PrintOptionsModal from './components/PrintOptionsModal.vue'
+import V2BaseReportPrintModal from '@/components/report/V2BaseReportPrintModal.vue'
 import InfoTip from './components/InfoTip.vue'
 import { API } from './api'
 import { num, dmy, daysNote } from './format'
@@ -231,7 +240,7 @@ export default {
         TrackingSummary,
         TrackingTable,
         ItemListModal,
-        PrintOptionsModal,
+        V2BaseReportPrintModal,
         ReportPrintPreviewModal,
         MeetingDetailDrawer,
         CustomerMeetingHistoryModal,
@@ -273,6 +282,46 @@ export default {
             meetingDrawer: { show: false, id: null, row: null },
             customerHistory: { show: false, row: null },
             printOptions: false,
+            // Đang chọn cột cho "In danh sách" của popup drill: { own, columns } — null = "In báo cáo" màn chính
+            drillPrint: null,
+            /**
+             * Bản in của nút "In báo cáo". `value` khớp `mode` của BE `print-list-data`; khoá cột khớp whitelist
+             * SUMMARY_COLUMNS / DETAIL_COLUMNS của PrintService (thứ tự = cột của bảng). Cột luôn in (STT, Nội dung) KHÔNG khai.
+             */
+            printModes: [
+                {
+                    value: 'summary',
+                    title: 'In bảng tổng hợp',
+                    desc: 'Đúng bảng đang xem, đủ mọi trang và mọi cấp, kèm dòng TỔNG.',
+                    fixedNote: 'Cột STT và Nội dung theo dõi luôn được in.',
+                    columns: [
+                        { key: 'type', label: 'Loại' },
+                        { key: 'status', label: 'Trạng thái' },
+                        { key: 'vnc', label: 'Giá trị nhu cầu' },
+                        { key: 'vda', label: 'Giá trị dự án' },
+                        { key: 'milestone', label: 'Mốc thời gian' },
+                        { key: 'due', label: 'Hạn theo dõi' },
+                        { key: 'care', label: 'Lần chăm sóc gần nhất' },
+                        { key: 'source', label: 'Nguồn' },
+                    ],
+                },
+                {
+                    value: 'detail',
+                    title: 'In danh sách chi tiết',
+                    desc: 'Mỗi dòng 1 bản ghi, đúng bộ lọc báo cáo hiện tại.',
+                    columns: [
+                        { key: 'type', label: 'Loại' },
+                        { key: 'content', label: 'Nội dung' },
+                        { key: 'customer', label: 'Khách hàng' },
+                        { key: 'sales', label: 'Sales phụ trách' },
+                        { key: 'status', label: 'Trạng thái' },
+                        { key: 'value', label: 'Giá trị dự kiến' },
+                        { key: 'milestone', label: 'Mốc thời gian' },
+                        { key: 'due', label: 'Hạn theo dõi' },
+                        { key: 'source', label: 'Nguồn' },
+                    ],
+                },
+            ],
             hints: {
                 org: 'Phòng ban / công ty lấy theo nơi SALES phụ trách ĐANG làm việc tại thời điểm xem — không theo phòng ghi trên dự án.',
                 sales: 'Sales phụ trách nhu cầu = người nhận bàn giao, chưa bàn giao thì là người chủ trì meeting. Dự án: Sales chủ trì của dự án.',
@@ -606,18 +655,33 @@ export default {
             this.printOptions = true
         },
 
-        onPrintReport(mode) {
-            this.printOptions = false
+        /** Chọn xong ở V2BaseReportPrintModal — `columns` (mảng khoá, đúng thứ tự bảng) gửi thành `cols` */
+        onPrintChosen({ mode, columns }) {
+            const drill = this.drillPrint
+            this.closePrintOptions()
+            const cols = columns.join(',')
+            if (drill) {
+                // In danh sách popup: đúng ô số đã bấm + ô lọc của popup + cột user chọn (Excel KHÔNG qua bước chọn)
+                this.openPrintList(API, { ...this.drill.params, ...this.normalizeOwn(drill.own), mode: 'detail', cols, scope_label: this.drill.title }, 'Xem trước danh sách nhu cầu và dự án TKT')
+
+                return
+            }
             this.openPrintList(
                 API,
-                { ...this.drillBaseParams(), mode },
+                { ...this.drillBaseParams(), mode, cols },
                 mode === 'detail' ? 'Xem trước danh sách nhu cầu và dự án TKT' : 'Xem trước báo cáo tổng hợp CSKH tiềm năng'
             )
         },
 
-        /** Footer popup: bản in danh sách đúng ô số đã bấm + ô lọc của popup */
-        printItemList(own = {}) {
-            this.openPrintList(API, { ...this.drill.params, ...this.normalizeOwn(own), mode: 'detail', scope_label: this.drill.title }, 'Xem trước danh sách nhu cầu và dự án TKT')
+        closePrintOptions() {
+            this.printOptions = false
+            this.drillPrint = null
+        },
+
+        /** Footer popup "In danh sách": mở popup chọn cột với đúng các cột đang hiện trên popup */
+        printItemList({ columns = [], ...own } = {}) {
+            this.drillPrint = { own, columns }
+            this.printOptions = true
         },
 
         onExport() {

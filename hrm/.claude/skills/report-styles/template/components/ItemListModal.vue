@@ -112,7 +112,8 @@
         <!-- button-convention mục 2b + 5: hành động phụ trước, Đóng cuối; Xuất Excel secondary-success.
              Không thêm mr-2/mb-2: khuôn `#footer` của vỏ tự cách nút (xem HoldListModal). -->
         <template #footer>
-            <V2BaseButton secondary size="sm" @click="$emit('print', ownParams())">
+            <!-- In: gửi kèm cột đang hiện để trang cha mở popup "Chọn cột in" (SKILL.md mục 4b); Excel giữ đủ cột -->
+            <V2BaseButton secondary size="sm" @click="$emit('print', { ...ownParams(), columns: columns.map((c) => ({ key: c.key, label: c.label })) })">
                 <template #prefix><i class="ri-printer-line" style="font-size: 14px"></i></template>
                 In danh sách
             </V2BaseButton>

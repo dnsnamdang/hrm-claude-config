@@ -28,7 +28,7 @@ nhánh ở repo chính (nhiều session dùng chung).
 | 2 | Khối tổng hợp `.rsum` | `components/TrackingSummary.vue` | Dòng `.rsum-goal` (tiêu đề · meta · nút Thu gọn) + 2 khối `.rsum-blk` cùng hàng. Mọi số là `DrillNum`. **Chỉ tiêu = 0 thì ẩn**, trừ ô tổng của khối. Số tính trên TOÀN BỘ dữ liệu đã lọc (`summary` của BE), không theo trang |
 | 3 | Bảng cây `table.rsum-tb` | `components/TrackingTable.vue` | `.ptr-table > .market-table-wrap > V2BaseTableScroll max-height="calc(100vh - 200px)"` · 1 hàng tiêu đề dính (`position: sticky; top: 0`) · dòng **TỔNG** (`.rsum-tb__sec`) đầu bảng · ô chọn cấp bung trong tiêu đề cột Nội dung · phân trang `V2BasePagination` theo nhóm CẤP 0 |
 | 4 | Popup drill | `components/ItemListModal.vue` | `components/report/V2BaseReportModal.vue` + `reportDrillListMixin` (tên state `filters`/`keyword` cố định) · footer: In danh sách · Xuất Excel danh sách · Đóng |
-| 5 | In | `components/PrintOptionsModal.vue` + `ReportPrintPreviewModal` + `reportPrintPreviewMixin.openPrintList(API, params)` | 2 bản: `summary` (cây đủ mọi trang) / `detail` (danh sách phẳng). BE: `GET {API}/print-list-data` |
+| 5 | In | `components/report/V2BaseReportPrintModal.vue` (DÙNG CHUNG — KHÔNG copy về từng màn) + `ReportPrintPreviewModal` + `reportPrintPreviewMixin.openPrintList(API, params)` | Theo **mục 4b**: chọn bản in + "Chọn cột in"; nút In danh sách của popup drill cũng qua popup này (chỉ chọn cột) |
 | 6 | Chi tiết bản ghi | `MeetingDetailDrawer` (`WorkItemDetailDrawer`) | `header-gradient="linear-gradient(135deg, #0a1c3d, #06b6d4)"`, `:above-modal="drill.visible"` |
 
 Phụ trợ copy kèm: `DrillNum.vue` (số 0 không bấm được), `InfoTip.vue` (icon ⓘ, PHẢI `font-weight: normal`),
@@ -43,7 +43,8 @@ Phụ trợ copy kèm: `DrillNum.vue` (số 0 không bấm được), `InfoTip.v
 - TỔNG: nền `#fdf1ea`, kẻ trên `2px #c2703a`, chữ `#9a5326`, nhãn viết hoa.
 - Số 0: `#c2cbd6`. Đơn vị sau số (`.unit-sub`) / mã sau tên (`.code-sub`): 10.5px `#6b7280`, **`text-transform: none`**.
 - Bảng nhiều cột: `table-layout: fixed` + `<colgroup>` độ rộng cố định + `min-width` → **cuộn ngang 2 thanh** (`V2BaseTableScroll`). Không ép vừa khít, không `overflow-x: hidden`.
-- Ô chọn cấp: `V2BaseSelect size="xs" height="18px"`; 1 map `expanded{}` dùng chung cho ô chọn và mũi tên `.rsum-caret` (`<button>` thô). `applyLevel()` chạy lại khi `groups` đổi.
+- **Tiêu đề cột LUÔN 1 dòng** (user chốt 07/10/2026): `th { white-space: nowrap }`, ô tiêu đề có ô chọn cấp thì nhãn + ô chọn nằm CÙNG HÀNG (`flex-wrap: nowrap`). Không đủ chỗ thì nới `<colgroup>` / `min-width` cho cuộn ngang — CẤM cho tiêu đề xuống 2 dòng hay xếp ô chọn cấp xuống hàng 2 (lỗi cũ của service-demand: ép vừa khít 1083px ở 1366 làm 4 tiêu đề 2 dòng).
+- Ô chọn cấp: `V2BaseSelect size="xs"` — KHÔNG ép `height` (cỡ xs cao 26px, chữ line-height 24px; ép 18/22px là chữ tràn đáy ô — lỗi khuôn cũ, sửa 07/10/2026); 1 map `expanded{}` dùng chung cho ô chọn và mũi tên `.rsum-caret` (`<button>` thô). `applyLevel()` chạy lại khi `groups` đổi.
 - Dòng cha có nhiều loại số → render-function nhỏ (vd `CountPair`) → CSS con phải chọn qua `::v-deep`.
 
 ## 3. Logic trang (copy từ `template/index.vue`, đừng viết lại)
@@ -69,6 +70,33 @@ GET {API}/print-list-data     -> { template }  (tên cố định — contract c
 `summary` và dòng TỔNG tính trên toàn tập đã lọc. Phân trang theo nhóm cấp 0, không cắt ngang nhóm.
 Trạng thái trả `status_text` + `status_color` → `V2BaseBadge :color`; FE không map số → chữ.
 
+## 4b. In — QUY TẮC CHUNG (user chốt 07/10/2026, mẫu chạy thật: `pages/assign/report/customer-market-development`)
+
+Mọi báo cáo dùng **1 component** `components/report/V2BaseReportPrintModal.vue`, 1 instance/trang cho cả 2 nút:
+
+| Nút | Popup hiện gì | Gửi BE |
+|---|---|---|
+| **In báo cáo** (`#header-actions`) | Truyền `:modes`. Radio chọn bản in (`summary` bảng tổng hợp / `detail` danh sách) + khối **"Chọn cột in"**. Danh sách cột **đổi theo bản in đang chọn** (mỗi mode tự khai `columns`); đổi bản in = tick lại hết | `mode` + `cols` |
+| **In danh sách** (footer popup drill) | KHÔNG truyền `modes` → chỉ "Chọn cột in", danh sách = **đúng các cột đang hiện trên popup** (popup emit kèm `columns: [{ key, label }]`) | `mode=detail` + `cols` + tham số popup (`key`, `metric`, `p_*`, `q`, `sort`, `dir`) |
+| Xuất Excel / Xuất Excel danh sách | **KHÔNG** qua popup chọn cột — luôn đủ cột đang hiện | — |
+
+Hành vi (component đã làm sẵn, đừng viết lại): mở = tick hết · "Chọn tất cả" bán chọn khi tick 1 phần · bỏ hết rồi bấm In
+→ đỏ "Vui lòng chọn ít nhất 1 cột để in", KHÔNG đóng, KHÔNG gọi BE · mở lại = về mặc định · nút **In** trước **Hủy**
+(button-convention) · emit `print({ mode, columns })`, `columns` giữ thứ tự khai báo (= thứ tự cột bảng), trang nối
+`cols = columns.join(',')`. Cột luôn in (STT, Nội dung theo dõi) KHÔNG khai trong `columns`, ghi ở `fixedNote`.
+
+Trang (khuôn `template/index.vue`): `printModes` trong `data`, `drillPrint: null`; `printItemList({ columns, ...own })` gán
+`drillPrint` rồi mở popup; `onPrintChosen` rẽ 2 nhánh; `closePrintOptions()` reset `drillPrint`. Popup in nằm trên popup
+drill (bootstrap-vue xếp theo thứ tự mở) — đo `elementFromPoint` giữa popup in phải trúng popup in.
+
+BE (`{Report}PrintService`):
+- Whitelist khoá theo từng bản in: `SUMMARY_COLUMNS` (cột số của bảng, giá trị `[nhãn, khoá metrics, kiểu]`) và
+  `DETAIL_COLUMNS` (cột danh sách). Khoá = khoá FE, nhãn = tiêu đề cột trên màn.
+- `cols` rỗng / toàn khoá lạ → đủ cột (tương thích lời gọi cũ). Bỏ khoá lạ. Bản tổng hợp lặp cột theo **thứ tự khai báo
+  của bảng**; bản danh sách theo **thứ tự `cols`** (= thứ tự cột popup).
+- Blade dựng `<th>`/`<td>` bằng `@foreach ($columns …)`, `colspan` ô "Không có dữ liệu" = `count($columns) + cột cố định`.
+- Excel KHÔNG nhận `cols` từ bước chọn (đủ cột) — chỉ bản in.
+
 ## 5. Áp cho báo cáo CŨ — trình tự
 
 1. Liệt kê cái báo cáo cũ đang có: bộ lọc, biểu đồ, cột, chip/popup, In/Excel, cách phân trang của BE (nhiều màn cũ cắt trang theo dòng con nên nhóm bị tách giữa 2 trang).
@@ -85,7 +113,7 @@ Trạng thái trả `status_text` + `status_color` → `V2BaseBadge :color`; FE 
 | Cây 2–3 cấp (vd Dự án ▸ Meeting) | Giữ nhịp thụt / màu / vạch của d0..dN đầu tiên, bỏ CSS cấp thừa. Ô chọn cấp có N mục ("Chỉ {cấp 0}" … "Tất cả cấp"); mặc định bung tới cấp áp chót. STT: d0 La Mã, cấp dưới `1`, `1.1` |
 | Cột số không phải "đếm" (phút, tiền) | Ô dòng cha/TỔNG = tổng cộng, căn phải `.rsum-tb__num`, không bấm được; chỉ số ĐẾM bản ghi mới là `DrillNum` |
 | Drill ra danh sách khác loại (vd người tham gia thay vì meeting) | Mỗi loại 1 popup `V2BaseReportModal` riêng với bộ cột riêng. Không nhồi 2 loại dòng vào 1 popup |
-| Màn cũ có `print.vue` / mở tab in / popup `b-modal` / drill POST | Thay bằng `PrintOptionsModal` + `print-list-data` và `item-list` GET. Xoá route `print.vue` + component cũ khi KHÔNG còn chỗ nào import (grep trước). Báo user trong spec |
+| Màn cũ có `print.vue` / mở tab in / popup `b-modal` / drill POST / `PrintOptionsModal` riêng của màn | Thay bằng `V2BaseReportPrintModal` (mục 4b) + `print-list-data` và `item-list` GET. Xoá `PrintOptionsModal.vue` riêng của màn khi chuyển. Xoá route `print.vue` + component cũ khi KHÔNG còn chỗ nào import (grep trước). Báo user trong spec |
 | Màn cũ dùng `V2BaseCompanyDepartmentFilter` + `permissions` | Chuyển sang ô Công ty tự vẽ trong slot `#field-company_id` + `can_change_company` từ `filter-options` (như mẫu). BE phải trả cờ này |
 | Cỡ trang | Theo mẫu: 20, chọn `[10, 20, 50, 100]`, đếm theo nhóm cấp 0 (`item-label` = tên cấp 0) |
 | Màn cũ có biểu đồ | Khuôn không có biểu đồ. Bỏ hay giữ là câu hỏi NGHIỆP VỤ cho user; giữ thì đặt giữa `.rsum` và bảng |
@@ -97,7 +125,10 @@ Trạng thái trả `status_text` + `status_color` → `V2BaseBadge :color`; FE 
 - Đổi cấp bung → đếm đúng số dòng `rsum-tb__row--d*`.
 - Số ở khối tổng hợp = dòng TỔNG = số dòng của popup drill tương ứng.
 - Ở 1366px: ô `.rsum-blk__item` không xuống dòng nhãn, có 2 thanh cuộn khi bảng tràn.
+- Ở 1366px: MỌI `th` chỉ 1 dòng chữ (đếm `top` khác nhau của `Range.getClientRects()` trên text node = 1); ô chọn cấp cao 26px, chữ không tràn đáy, cùng hàng với nhãn — helper e2e `e2e/utils/levelSelect.ts`.
 - In / Excel theo đúng bộ lọc đang hiển thị. Test cả tài khoản CÓ quyền và KHÔNG quyền.
+- In (mục 4b): bỏ 2 cột → request có `cols` đúng, bản xem trước đúng bộ `th` còn lại; đổi bản in → danh sách cột đổi; bỏ hết →
+  báo đỏ, không request `print-list-data`; In danh sách popup → danh sách cột = `thead` popup, popup drill vẫn mở sau khi in.
 
 ## Lỗi thường gặp
 
@@ -111,3 +142,7 @@ Trạng thái trả `status_text` + `status_color` → `V2BaseBadge :color`; FE 
 | Popup `b-modal` tự dựng / chip bấm | `V2BaseReportModal` + `DrillNum` (gạch chân nét đứt) |
 | Tự đặt lại màu/px "cho giống" | Copy SCSS nguyên văn từ `template/`, chỉ đổi tiền tố |
 | `InfoTip` trong tiêu đề đậm thì icon dày | `font-weight: normal` ở `.ptr-info` |
+| Copy `PrintOptionsModal.vue` về màn mới / tự dựng popup chọn cột | Dùng `components/report/V2BaseReportPrintModal.vue`, chỉ khai `printModes` |
+| Nút In danh sách của popup in thẳng | Mở popup chọn cột (`columns` = cột popup) rồi mới in |
+| Cho Xuất Excel đi qua bước chọn cột | Excel luôn đủ cột |
+| BE in cố định cột | Whitelist `SUMMARY_COLUMNS` / `DETAIL_COLUMNS` + đọc `cols` |
