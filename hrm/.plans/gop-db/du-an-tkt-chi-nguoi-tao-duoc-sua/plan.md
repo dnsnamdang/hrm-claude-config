@@ -20,7 +20,8 @@
 - [x] Commit + push `gop_db`: hrm-api `b7083c389` · hrm-client `72a537559` (đặt sau commit mới của remote, không stash việc dở session khác)
 
 ### Checkpoint — 2026-10-08 (wrap up)
-Vừa hoàn thành: code + kiểm API/UI + spec e2e + push gop_db cả 2 repo
+Vừa hoàn thành: code + kiểm API/UI + spec e2e + push gop_db cả 2 repo; sau đó commit+push toàn bộ theo yêu cầu
+  (kèm code CSKH tiềm năng của session khác: hrm-api `c448133eb`, hrm-client `fb0e46bc9`; plans `c63a255`)
 Đang làm dở: —
 Bước tiếp theo: cập nhật SRS Dự án TKT (mục Chỉnh sửa + BR-10 trong srs-man-docs/prospective-projects/gen_srs.py) nếu user yêu cầu
 Blocked:
