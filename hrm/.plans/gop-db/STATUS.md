@@ -68,6 +68,11 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- presale-customer-registers → @junfoke → .plans/gop-db/presale-customer-registers/plan.md
+  Trạng thái: 🟢 **Xong BE + FE, khớp ERP + Playwright (08/10/2026)**, nhánh `develop`, CHƯA commit.
+  Còn: admin gán quyền 1526 (Xem danh sách khách hàng đã đăng ký) cho vai trò.
+  Tóm tắt: .plans/gop-db/presale-customer-registers/design.md
+
 - sale-customer-debt-reports → @junfoke → .plans/gop-db/sale-customer-debt-reports/plan.md
   Trạng thái: 🟢 **Xong cả 3 màn (Chi tiết / Theo NV / Đối chiếu 1 KH) BE + FE, khớp ERP + Playwright (07/10/2026)**, nhánh `develop`, CHƯA commit.
   Còn: chạy SQL quyền 1683-1694 trên server + gán vai trò.
