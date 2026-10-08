@@ -23,6 +23,8 @@ Chuyển lần lượt các báo cáo cũ của hrm-client sang 1 khuôn chung: 
 | 1 | Thời gian meeting theo dự án | `/assign/report/meeting-by-projects` | `meeting-by-projects/` | ĐÃ MERGE gop_db 05/10 (api 8de764f79, client 2f04d1dfb) |
 | 2 | Thời gian meeting theo nhân viên | `/assign/report/meeting-by-employees` | `meeting-by-employees/` | ĐÃ MERGE gop_db 05/10 (api 9696baa26, client 6c0b509de) + bổ sung lọc trạng thái / popup loại / popup NV tham gia (api 60aa9bfa0, client 81b715269); e2e chưa chạy |
 | 3 | Kế hoạch & kết quả làm việc theo nhân viên | `/assign/report/employee-work-performance` | `employee-work-performance/` | ĐÃ MERGE gop_db 06/10 (api 45b8a2b2f, client 88c9f3f01); SRS xong |
+| 4 | Kết quả thực hiện dự án TKT | `/assign/report/prospective-project-results` | `prospective-project-results/` | ĐÃ PUSH gop_db 07/10 (api dc2e24d57, client 7fde5a2fd); e2e chưa chạy |
+| 5 | Tổng hợp CSKH tiềm năng (MẪU CHUẨN, theo kịp khuôn 07/10) | `/assign/report/potential-customer-tracking` | `potential-customer-tracking/` | ĐÃ PUSH gop_db 07/10 (api 1ba6647bc, client de0d12263); e2e chưa chạy |
 
 ## Báo cáo 3 — employee-work-performance: quyết định đã chốt (05–06/10/2026)
 

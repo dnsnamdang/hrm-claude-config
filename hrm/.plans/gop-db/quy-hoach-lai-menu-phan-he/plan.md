@@ -927,4 +927,4 @@ Nhánh `hrm-client` `gop_db-menu-presale-bao-cao` (tách từ `gop_db`, worktree
 - [x] Kiểm Playwright MCP: panel "2 nhóm · 13 chức năng", thị trường 7 (mục đầu = báo cáo theo NV, href đúng), TKT 6
 - [x] E2E mới `e2e/tests/assign/presale-report-menu.spec.ts`: xanh trên 3021, đỏ trên code cũ 3000
 - [ ] ⚠️ Khoá ẩn/hiện menu (`menu_settings.menu_key`) theo ĐƯỜNG NHÃN — mục dời nhóm đổi khoá; local 0 dòng, production cần kiểm trước khi deploy
-- [ ] Commit + merge về `gop_db` (chờ user)
+- [x] Commit `a55f97def`, merge về `gop_db` `855d49b86`, **ĐÃ PUSH 05/10/2026**

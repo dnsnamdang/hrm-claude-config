@@ -99,7 +99,7 @@ màn chính giữ 1 cột Huỷ.
       Quá hạn / Có lý do (1366px không đủ chỗ cho nhãn đầy đủ: cần ~292px, thẻ chỉ ~195px), tên đầy đủ + giải thích dồn vào ⓘ
       của thẻ; lưới thẻ `minmax(max-content, 1fr)` để thẻ huỷ không ép nhãn thẻ khác xuống dòng. Đo 1280/1366/1920: mọi thẻ
       62px (bằng trước khi chia), khối 104px, nhãn 1 dòng, không tràn; bấm 2 số ra popup 89 / 10. E2E sửa theo (chưa chạy).
-- [ ] User kiểm · commit khi user yêu cầu.
+- [x] Đã commit + push cùng đợt 07/10 chiều (xem checkpoint cuối).
 
 ## Đợt 4 — "Nhu cầu thu thập được" đếm theo SỐ NHU CẦU (user chốt nội dung 07/10/2026 — CHƯA có lệnh code)
 
@@ -138,7 +138,7 @@ loạt: thẻ tổng hợp, cột Nhu cầu + Giá trị dự kiến bảng theo
       popup qua API: 145 meeting, tổng 107.631 tỷ = cây, khoá không trùng, meeting 246 ra 3 dòng 3 nhu cầu riêng giá.
       (11 tên nhu cầu có dấu phẩy là tên gốc danh mục, không phải gộp.)
 - [x] PHPUnit `CustomerMarketDevelopmentDemandCountTest` 3 ca + 5 bộ cũ xanh. E2E API thêm 1 ca (chưa chạy).
-- [ ] User kiểm · commit khi user yêu cầu.
+- [x] Đã commit + push cùng đợt 07/10 chiều (xem checkpoint cuối).
 
 ## Đợt 5 — ô chọn cấp xem về tiêu đề cột theo khuôn chung (user "Làm" 07/10/2026)
 
@@ -148,7 +148,7 @@ loạt: thẻ tổng hợp, cột Nhu cầu + Giá trị dự kiến bảng theo
 - [x] Đo MCP 1366/1920: ô 26×230px, chữ không tràn, căn giữa nhãn (lệch 0), 9 ô tiêu đề cao 38px; kỳ tháng (bảng 2 dòng)
       dropdown nằm ở body, 4/4 lựa chọn bấm trúng; chọn "Tất cả cấp" 38 → 1,576 dòng.
 - [x] E2E: viết lại 2 ca "Bộ chọn cấp xem" (nằm trong th + helper levelSelect + dropdown bấm trúng + thao tác thật) — chưa chạy.
-- [ ] User kiểm · commit khi user yêu cầu.
+- [x] Đã commit + push cùng đợt 07/10 chiều (xem checkpoint cuối).
 
 ## Đợt 6 — popup Nhu cầu theo cột nhu cầu (user "Làm" 07/10/2026)
 
@@ -166,7 +166,7 @@ Giới thiệu sản phẩm", chỉ Hoàn thành); các popup khác (7 loại me
       sắp giá trị giảm dần đúng. Excel tải thật: 181 dòng + TỔNG = tổng các dòng, cột tiền số thật. Bản in: tiêu đề "DANH SÁCH
       NHU CẦU ĐẦU TƯ THU THẬP", dòng tổng giá trị, 181 dòng + TỔNG.
 - [x] PHPUnit DemandCount 5 ca (+ 5 bộ cũ) xanh. E2E UI thêm 1 ca (chưa chạy).
-- [ ] User kiểm · commit khi user yêu cầu.
+- [x] Đã commit + push cùng đợt 07/10 chiều (xem checkpoint cuối).
 
 ## Đợt 7 — giá trị hiện số tiền đầy đủ, bỏ đơn vị tỷ (user "Làm" 07/10/2026)
 
@@ -178,7 +178,7 @@ DB) — user chốt bỏ qua; dữ liệu thật 153/153 đủ Lĩnh vực.
 - [x] Excel màn chính: cột giá trị thêm `data-format="#,##0"` (trước là số trơn không phân cách).
 - [x] Đo MCP 1280/1366/1920: thẻ 62px (mọi thẻ bằng nhau), nhãn 1 dòng, không tràn; cột tiền 126px, 0 ô cắt chữ / xuống dòng.
 - [x] E2E: 2 chỗ bám "x.y tỷ" đổi sang số đầy đủ (chưa chạy).
-- [ ] User kiểm · commit khi user yêu cầu.
+- [x] Đã commit + push cùng đợt 07/10 chiều (xem checkpoint cuối).
 
 ## Đợt 8 — nhãn "Giá trị dự kiến (VND)" + bỏ ô lọc Trạng thái ở popup 1 trạng thái (user "Làm" 07/10/2026)
 
@@ -187,7 +187,7 @@ DB) — user chốt bỏ qua; dữ liệu thật 153/153 đủ Lĩnh vực.
 - [x] Popup Hoàn thành + 3 popup Huỷ (Huỷ / Quá hạn / Có lý do): bỏ ô lọc Trạng thái (`SINGLE_STATUS_METRICS`), giữ cột
       Trạng thái ở popup Hoàn thành. Đo MCP: 2 popup không còn ô Trạng thái.
 - [x] PHPUnit 6 bộ CMD xanh; e2e đổi 4 chỗ nhãn + thêm kiểm ô Trạng thái ở ca popup Huỷ (chưa chạy).
-- [ ] User kiểm · commit khi user yêu cầu.
+- [x] Đã commit + push cùng đợt 07/10 chiều (xem checkpoint cuối).
 
 ## Đợt 9 — popup "Chọn cột in" cho In báo cáo + In danh sách popup (user "Làm" 07/10/2026)
 
@@ -206,7 +206,7 @@ danh sách popup — chỉ chọn cột (đúng cột đang hiện); Excel popup
       khuôn mẫu (đo font, vị trí "Chọn tất cả").
 - [x] PHPUnit `CustomerMarketDevelopmentPrintColumnsTest` 2 ca + 6 bộ cũ xanh. E2E sửa 2 ca in + thêm 1 ca chọn cột (chưa chạy).
 - [x] Skill report-styles mục 5 ghi khuôn chọn cột cho In danh sách popup.
-- [ ] User kiểm · commit khi user yêu cầu.
+- [x] Đã commit + push cùng đợt 07/10 chiều (xem checkpoint cuối).
 
 ## Đợt 10 — cách in thành QUY TẮC + component dùng chung (user "Làm" 07/10/2026)
 
@@ -219,4 +219,115 @@ danh sách popup — chỉ chọn cột (đúng cột đang hiện); Excel popup
 - [x] Skill report-styles: mục 4b "In — QUY TẮC CHUNG" (FE + BE: whitelist SUMMARY_COLUMNS / DETAIL_COLUMNS, `cols`, Excel
       không qua chọn cột), bảng bố cục mục 5, biến thể 5b, kiểm mục 6, lỗi thường gặp; template: index.vue dùng
       `V2BaseReportPrintModal` + `printModes` + `drillPrint`, ItemListModal gửi `columns` khi In, xoá template PrintOptionsModal.
-- [ ] User kiểm · commit khi user yêu cầu (gồm repo hrm-claude-config cho skill).
+- [x] ĐÃ COMMIT + PUSH (api `6f7348d30`, client `f785add06`, skill hrm-claude-config `d4d5f16`)
+
+### Checkpoint — 2026-10-07 (wrap up, chiều)
+Vừa hoàn thành: đợt 3→10 — bộ phận theo danh mục (5 báo cáo) + test drill; ô chọn cấp không ép height + tiêu đề cột 1 dòng
+(service-demand cuộn ngang); ô chọn cấp xem về tiêu đề cột; chia "Meeting bị huỷ" (Quá hạn / Có lý do, cùng dòng); Nhu cầu đếm
+theo số nhu cầu chỉ Hoàn thành (phương án C) + popup 1 dòng/nhu cầu (Lĩnh vực › Nhóm ngành, tổng giá trị, bỏ Loại/Trạng thái);
+tiền đầy đủ "(VND)"; bỏ ô lọc Trạng thái ở popup 1 trạng thái; popup "Chọn cột in" dùng chung `V2BaseReportPrintModal` +
+quy tắc skill report-styles mục 4b. ĐÃ COMMIT + PUSH gop_db (api `6f7348d30`, client `f785add06`), skill `d4d5f16` (main).
+Đang làm dở: —
+Bước tiếp theo: chạy e2e (customer-market-development{,.api}, potential-customer-tracking, service-demand, meeting-by-projects,
+meeting-by-employees, report-meeting-drawer) khi user yêu cầu · 5 báo cáo cũ chuyển sang `V2BaseReportPrintModal` khi sửa tới ·
+deploy: chạy BackfillMeetingProvinceSeeder 1 lần (từ đợt 2).
+Blocked: hrm-claude-config local còn 7 mục tài liệu chưa commit (không thuộc đợt này) + local sau remote 10 commit — chờ user
+quyết commit/push.
+
+
+## Đợt 11 — panel xem nhanh meeting: Kết luận + Mục tiêu / Nội dung (user "ok" làm 07/10/2026)
+
+Nguyên nhân: ô "Mục tiêu / Nội dung" (tab Thông tin) lưu vào `note`, panel lại hiện `note` với nhãn "Ghi chú" trong khối
+"Kết luận & ghi chú" → mục tiêu lẫn vào phần kết luận; ô "Nội dung / Mục tiêu" đọc `content` (trường cũ, rỗng 856/856).
+Phạm vi: CHỈ `hrm-client/pages/assign/my-todo/components/calendar/drawer/MeetingDrawerBody.vue` (dùng chung: mọi báo cáo +
+my-todo), nhánh `gop_db`, không BE/DB. CHƯA commit.
+
+- [x] Khối "Thông tin cuộc họp": ô "Mục tiêu / Nội dung" cả dòng = `note` (fallback `content`, như bản in biên bản), bỏ thẻ HTML.
+- [x] Khối "Kết luận & ghi chú" → "Kết luận cuộc họp": chỉ `conclusion` (ô "V/ Kết luận" tab Biên bản) + Lý do hủy; bỏ ô "Ghi chú".
+- [x] Đo MCP 1366: meeting 840 → Mục tiêu "- Tư Vấn Sản Phẩm - Chăm sóc…", Kết luận "- Tư vấn sản phẩm sale trong tháng";
+      857 / 946 (chưa có kết luận) → có Mục tiêu, KHÔNG còn khối Kết luận; 0 nhãn "Ghi chú"; ô mục tiêu `grid-column 1 / -1`.
+- [x] E2E: không spec nào bám nhãn cũ (work-calendar-drawer chỉ kiểm phiếu giao việc) → không sửa.
+- [ ] User kiểm trên app · commit khi user yêu cầu.
+
+## Đợt 12 — panel xem nhanh meeting: khối "Khảo sát nhu cầu khách hàng" (user "làm" 07/10/2026)
+
+Chốt: chỉ meeting "Họp tìm hiểu & Giới thiệu SP" ĐÃ trả lời ít nhất 1 câu khảo sát; hiện badge trạng thái từng nhu cầu.
+Phạm vi: hrm-api `MeetingTransformer` (append `status_text`/`status_color` cho `investment_demands` — chỉ ở API chi tiết, KHÔNG
+khai `$appends` trên model) · hrm-client `MeetingDrawerBody.vue` · e2e. Nhánh `gop_db`, không migration/seeder. CHƯA commit.
+
+- [x] BE: API chi tiết meeting trả kèm trạng thái từng nhu cầu (màu = `MeetingInvestmentDemand::STATUS_COLOR`).
+- [x] FE: khối sau "Kết luận cuộc họp": Nhu cầu đầu tư (Có/Không) · Nhu cầu sửa chữa / bảo trì · Tổng mức đầu tư dự kiến (VND)
+      · N nhu cầu; nhu cầu gom theo Lĩnh vực (tổng nhóm), mỗi dòng: Nhóm ngành + badge `drawer-badge` (khuôn sẵn của panel) ·
+      mức đầu tư · Khánh thành dd/mm/yyyy. Câu 1 = Không → chỉ 2 dòng Có/Không. CSS scoped (thêm `<style scoped>` mới phải
+      tải lại trang — hot-reload không gắn scope id).
+- [x] Đo MCP 1366: 862 (14 nhu cầu) · 858 (3 nhu cầu, 3 trạng thái) · 840 (dữ liệu thật "Dịch vụ ô tô") · 835 (Không/Không) ·
+      946 (chưa khảo sát → không có khối). Badge cùng hàng tên 14/14 · 3/3 · 1/1, cách mép phải 13px, cao 21px, panel cuộn ngang 0.
+      858/862 ra "Chưa xác định lĩnh vực" = dữ liệu seed e2e thiếu Lĩnh vực (đã biết), không phải lỗi.
+- [x] E2E `report-meeting-drawer.spec.ts` ca 6 (Mục tiêu / Kết luận đúng trường + khối khảo sát + meeting chưa khảo sát) —
+      biên dịch được, CHƯA chạy.
+- [ ] User kiểm trên app · commit khi user yêu cầu.
+
+## Đợt 13 — màu cột trạng thái ở báo cáo + popup theo chuẩn màn danh sách (user "ok" làm 07/10/2026)
+
+Rà 10 báo cáo nhóm Thị trường + TKT. Đã chuẩn sẵn: 2 báo cáo meeting theo dự án / nhân viên, 3 báo cáo nhu cầu (CSKH kết quả,
+CSKH tổng hợp, nhu cầu dịch vụ). Ngoài phạm vi (không có màn danh sách đối chiếu): Giai đoạn ở Phát triển KH theo NVKD, 4 nhóm
+xử lý ở popup Kế hoạch & kết quả. CHƯA commit.
+
+- [x] Meeting theo thị trường: cột Trạng thái bỏ bảng màu riêng (Huỷ đỏ, Lên lịch xám) → `V2BaseBadge :color` BE `status_color`;
+      khối tổng hợp theo trạng thái lấy `by_status[].color` từ BE thay bảng màu lịch my-todo. BE `MeetingByMarketService`.
+- [x] Panel xem nhanh meeting ở báo cáo: chấm trạng thái header = `status_color` BE (API chi tiết trả thêm, `MeetingTransformer`);
+      my-todo giữ bảng màu lịch (khớp thẻ lưới) — phân biệt bằng prop `meetingDetailLink`.
+- [x] Popup Phát triển thị trường – KH + popup toàn Meeting của Kế hoạch & kết quả: badge viền tự vẽ → `V2BaseBadge`.
+- [x] Tổng hợp CSKH tiềm năng: màu dự án = `ProspectiveProject::resolveStatusColor(status, is_parent_project)`.
+- [x] Kết quả dự án TKT: bỏ pill xám cố định (user chốt "đổi theo màn danh sách"), màu theo tiến trình cuối kỳ.
+- [x] Đo MCP: màn danh sách meeting = chuẩn (Lên lịch 14,165,233 · Chốt 37,99,235); bảng thị trường 4/4 trạng thái khớp (Huỷ đỏ
+      185,28,28 → 107,114,128), khối tổng hợp 4/4; popup CMD + EWP Hoàn thành / Huỷ khớp; chấm header panel Hoàn thành 34,197,94
+      → 22,163,74; popup TKT tiến trình 4 màu theo danh mục; API CSKH tổng hợp 281 dòng dự án đúng bộ màu.
+- [x] E2E (chưa chạy): `utils/meetingStatusColors.ts` dùng chung; sửa ca CMD (bỏ "viền cùng màu chữ") + ca EWP (`.wd-bucket` →
+      `.wd-status`); thêm ca màu ở meeting-by-market-grouping; ca 6 report-meeting-drawer kiểm chấm header.
+- [x] User chốt: báo cáo CHỈ tính dự án con, không tính dự án cha → xem Đợt 14.
+
+Vấn đề ngoài luồng (ghi lại, chưa sửa): popup Kế hoạch & kết quả mở ở kỳ Tháng → đóng → đổi Năm + Tìm → bấm lại ĐÚNG ô đó: popup
+không tải lại (request vẫn `period=month`, ra 0 đầu việc). Tải lại trang thì đúng.
+
+## Đợt 14 — Tổng hợp CSKH tiềm năng loại MỌI dự án cha (user "ok" làm 07/10/2026)
+
+- [x] `PotentialCustomerTrackingService`: loại dự án cha theo cờ `is_parent_project` (cha chưa có con — trước đó lọt vào: 336)
+      VÀ theo "có dự án con KHÁC trỏ tới" (phòng cờ không bật). Bỏ qua bản ghi tự trỏ `parent_id = id` (dữ liệu lỗi, cả DB
+      local chỉ 159 — dự án con 10 tỷ, "6. Lập dự toán") vốn bị loại NHẦM như dự án cha ở code cũ. Màu tra bộ dự án con.
+- [x] Đo API kỳ Năm: trước 281 dự án (có 336, thiếu 159) → sau 281 (bỏ 336, có 159); ngân sách 4,625,445,868,876 →
+      4,635,445,868,876 (+10 tỷ của 159; 336 ngân sách 0). Thu thập TT 100 → 99.
+- [x] PHPUnit: ca mới `test_loai_ca_du_an_cha_chua_co_du_an_con` + `test_du_an_tu_tro_parent_id_van_duoc_tinh`; ca cũ "cha có con"
+      bỏ qua bản ghi tự trỏ. Fixture PHPUnit `TrackingFixture` + e2e `potentialCustomerTrackingFixture` nhân bản từ dự án mới nhất
+      `parent_id` rỗng = 336 (dự án CHA) → ép `is_parent_project = 0`. 7/7 xanh.
+- Ghi chú (chưa sửa): dữ liệu lỗi 159 tự trỏ `parent_id = id` (nên sửa dữ liệu: `parent_id = NULL`); fixture meeting-by-projects /
+  meeting-by-employees (PHPUnit + e2e) cũng nhân bản từ dự án cha 336.
+
+## Đợt 15 — Cột "Số lượng KH" (07/10/2026)
+
+Yêu cầu: thêm cột Số lượng KH = số KH có meeting trong kỳ, đứng trước "KH mới", bấm mở popup danh sách KH.
+
+User chốt:
+- Đếm KH **khác nhau** có meeting **mọi trạng thái** (cùng tập với Meeting kế hoạch) → năm 2026 = 644 KH, khớp "N khách hàng" ở dải tổng hợp.
+- Popup **1 dòng = 1 KH**: Khách hàng · Thị trường · Phòng ban · Bộ phận · NV chủ trì · Số meeting · Hoàn thành · Huỷ · Lần họp gần nhất.
+
+Hệ quả (đã báo user): đếm distinct nên dòng cha KHÔNG bằng tổng dòng con (max(con) ≤ cha ≤ tổng con).
+
+Đã làm:
+- BE `CustomerMarketDevelopmentService`: metrics `customers`; `drillSets()` (lọc popup trên MEETING rồi mới gom); `groupByCustomer()` (gộp tên phòng/NV theo ABC, thị trường theo meeting gần nhất); sort `meetings` (mặc định desc) + `last_date`; chip phân bổ đếm distinct KH.
+- BE PrintService: SUMMARY_COLUMNS + DETAIL_COLUMNS (meetings, completed_count, cancelled_count, last_date), METRIC_LABEL; bản in / Excel popup dùng `drillSets()[3]`. Blade Excel bảng + căn giữa cột số bản in. DrillExport WIDTHS.
+- FE: DevelopmentTable (cột + ⓘ, min-width 1290), index.vue (cột "Chọn cột in" + tiêu đề xem trước), DevelopmentDrillModal (biến thể customers; 3 cột chữ xuống tối đa 2 dòng vì vỏ `nowrap` kéo cột KH tới 528px, đẩy cột số ra ngoài).
+- Test: `CustomerMarketDevelopmentCustomerCountTest` (4 ca), sửa PrintColumnsTest 7→8 cột; 26/26 CMD xanh.
+- e2e: sửa chỉ số cột / số cột / số icon / cột in; thêm 1 ca UI + 1 ca API + case `customers` ở ca "popup khớp số trên cây". Biên dịch được, CHƯA chạy.
+
+Kiểm MCP (năm 2026): TỔNG 644 = dải tổng hợp = SQL; popup 644/644; 3 dòng thị trường số ô = số dòng popup (305/18/59); dòng PHENIKAA 6/3/2/17-09 khớp DB; sắp Lần họp gần nhất 2 chiều đúng; popup 1271px = khung (trước sửa 1708px); bản in danh sách + bản in bảng đủ cột.
+
+## Đợt 16 — Tiêu đề popup thành câu + bỏ khối tổng hợp popup Số lượng KH (07/10/2026)
+
+- Popup Số lượng KH: bỏ khối "Tổng hợp danh sách đang xem" (`v-if` trên slot #summary).
+- Tiêu đề MỌI popup: `lead` "Bạn đang xem" + "<danh sách theo chỉ tiêu> <đối tượng cuối của path>". Chỉ tiêu: METRIC_LABEL viết thường ("danh sách meeting hoàn thành trong kỳ"…).
+  Đối tượng: dòng TỔNG / dải tổng hợp "trên toàn bộ báo cáo" · "tại thị trường: X" · "của khách hàng / phòng ban / bộ phận: X" ·
+  nhân viên đổi theo chỉ tiêu: "do nhân viên chủ trì: X" (meeting, nhu cầu) / "với nhân viên: X" (Số lượng KH) / "do nhân viên tạo: X" (KH mới) ·
+  nhóm `__no_*__` → "thuộc nhóm: Không thuộc bộ phận". Dòng phụ "Thuộc: …" giữ nguyên. Tiêu đề bản in KHÔNG đổi.
+- Chỉ sửa `DevelopmentDrillModal.vue` + spec (thêm assert ở ca Số lượng KH + ca mới "Tiêu đề popup là 1 câu…"; biên dịch được, chưa chạy).
+- MCP: 8 popup ở 4 cấp + nhóm "Không thuộc bộ phận" + 7 popup dải tổng hợp đều ra đúng câu; popup KH không còn khối tổng hợp, bảng cách ô lọc 6px, tiêu đề 1 dòng.

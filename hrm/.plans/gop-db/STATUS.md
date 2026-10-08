@@ -68,6 +68,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- report-meeting-drawer → @namdangit → .plans/gop-db/report-meeting-drawer/plan.md
+  Báo cáo Thị trường – Dự án: nới Meeting::canView cho báo cáo meeting theo thị trường + kết quả CSKH tiềm năng; panel meeting
+  dùng chung ReportMeetingDetailDrawer (header gradient) cho 6 báo cáo. **ĐÃ MERGE + PUSH gop_db 06/10 (api b64c15d07, client fa6df767d).** Nhánh
+  `gop_db-report-meeting-drawer` (worktree `websites/wt-report-meeting-drawer`, 8022/3022): api 007396696, client 1b030dbb1.
+  PHPUnit 6/6 + 135/135 liên quan; e2e report-meeting-drawer 4/4.
+
 - update-style-bao-cao-cu (feature lớn, mỗi báo cáo 1 folder con) → @namdangit → .plans/gop-db/update-style-bao-cao-cu/design.md
   Khuôn: skill mới `HRM/.claude/skills/report-styles` (04/10, mẫu = báo cáo tổng hợp CSKH tiềm năng; chưa commit repo hrm-claude-config).
   Báo cáo 1 — meeting-by-projects: **CODE XONG 05/10 (SDD 10 task, review từng task), CHƯA push/merge.** Nhánh
@@ -84,6 +90,24 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   phạm vi báo cáo. E2E `e2e/tests/assign/meeting-by-employees{.api,}.spec.ts` ĐÃ VIẾT, CHƯA CHẠY. Sổ: `meeting-by-employees/sdd-ledger.md`.
   Bổ sung 05/10: lọc Trạng thái + popup theo loại + popup NV tham gia — ĐÃ MERGE gop_db (api 60aa9bfa0, client 81b715269).
   Server worktree: api 8019 · client 3019.
+  Báo cáo 3 — employee-work-performance: **ĐÃ MERGE + PUSH gop_db 06/10 (api 45b8a2b2f, client 88c9f3f01).** Nhánh `gop_db-update-style-ewp` (worktree
+  `websites/wt-update-style-ewp`, api 8023 · client 3023): api 214bcfd1b..c3add6709, client 855d49b86..6f4912ae7. BE phân trang
+  theo phòng ban + filter-options + drill/export + item (panel Thông tin phiếu). Bỏ "Chỉ tính việc chủ trì" + cột Vai trò.
+  Commit client de8779fb9 bỏ vạch ::before tiêu đề TOÀN theme Sale (user chốt). PHPUnit 10/10, e2e 7/7. SRS + gen_srs.py ở folder.
+  ### Checkpoint — 2026-10-06 (wrap up chiều, báo cáo 3 + việc phát sinh)
+  Vừa hoàn thành (thẳng trên gop_db): panel meeting dùng chung + Xem biên bản trong popup (api 7fe53a02d, client 94c8a39c3);
+  chỉ NV đang làm việc + nhóm "Không thuộc bộ phận" cho 4 báo cáo Giao việc (api 0abaa3194, client c8c06e90a) — ĐÃ PUSH.
+  Đổi chữ Task → Nhiệm vụ, Issue → Vấn đề (báo cáo + my-todo) — CHƯA COMMIT. Chi tiết: `employee-work-performance/plan.md`.
+  Đang làm dở: không.
+  Bước tiếp theo: user kiểm đổi chữ → commit + push. Còn treo: phiếu công tác bước thanh toán tính sai nhóm trạng thái; báo
+  cáo đánh giá năng lực (Đào tạo) chưa có nhóm "Không thuộc bộ phận"; FE chưa kiểm bằng trình duyệt.
+  Blocked:
+  ### Checkpoint — 2026-10-06 (wrap up, báo cáo 3)
+  Vừa hoàn thành: báo cáo 3 employee-work-performance + 5 vòng góp ý + SRS (chi tiết: `employee-work-performance/plan.md`).
+  Đang làm dở: không.
+  Bước tiếp theo: hỏi user sửa lỗi khuôn report-styles (ô chọn cấp height 18px)
+  ở skill + báo cáo khác.
+  Blocked:
   ### Checkpoint — 2026-10-05 (wrap up, báo cáo 2)
   Vừa hoàn thành: báo cáo 2 meeting-by-employees + bổ sung (lọc trạng thái, popup loại, popup NV tham gia) — ĐÃ MERGE + PUSH gop_db.
   Đang làm dở: không.
@@ -94,6 +118,26 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Vừa hoàn thành: báo cáo meeting-by-projects code xong + review tổng (xem checkpoint cuối `meeting-by-projects/plan.md`).
   Đang làm dở: không. Bước tiếp theo: chờ lệnh merge gop_db. Blocked: chờ user.
 
+  07/10 (wrap up): đợt góp ý 3 báo cáo thị trường — **ĐÃ COMMIT + PUSH gop_db** (api `e20e02e04`, client `c62d1a79b`).
+  · employee-work-performance: popup Meeting trạng thái gốc · panel meeting dùng chung (+ Người chủ trì, File, Xem chi tiết)
+    · Nhiệm vụ/Vấn đề mở popup có sẵn, phiếu mở màn tab mới · bản in khuôn mới (đối tượng + bỏ "Tất cả") · ô lọc đơn vị
+    · e2e 11/11 xanh.
+  · customer-market-development (folder con mới): popup khuôn mới + đọc DB gộp (gỡ @TODO-GOPDB, seeder vá tỉnh ĐÃ chạy local)
+    + phân trang BE (Phase 7 viết lại). Deploy: chạy BackfillMeetingProvinceSeeder 1 lần. E2E đã sửa, CHƯA chạy.
+  · potential-customer-tracking (Phase 6 ở `.plans/gop-db/bao-cao-tong-hop-cskh-tiem-nang/plan.md`): Bộ phận + Ngân sách
+    dự kiến + bỏ dự án cha; sửa lỗi nhóm "Không thuộc bộ phận" không đứng cuối. E2E đã sửa, CHƯA chạy.
+  · Rà 4 báo cáo có nhóm "Không thuộc bộ phận" (agent): không lỗi. Còn chờ user: thêm test drill 2 báo cáo (TKT, CSKH tiềm
+    năng)? · "phòng có chia bộ phận" xét theo dữ liệu nhánh hay theo danh mục?
+  07/10 (chiều): đợt 3–10 báo cáo thị trường — **ĐÃ COMMIT + PUSH gop_db** (api `6f7348d30`, client `f785add06`; skill
+  hrm-claude-config `d4d5f16`). Bộ phận theo danh mục (5 báo cáo) · ô chọn cấp không ép height + tiêu đề cột 1 dòng · phát
+  triển thị trường: chia huỷ, Nhu cầu đếm theo số nhu cầu (chỉ Hoàn thành), popup nhu cầu, tiền đầy đủ (VND) · popup in chọn
+  cột dùng chung `V2BaseReportPrintModal` + quy tắc skill report-styles mục 4b. Đã chốt 2 câu treo ở trên (thêm test drill:
+  có; bộ phận: theo danh mục). E2E đã sửa, CHƯA chạy. Chi tiết: `update-style-bao-cao-cu/customer-market-development/plan.md`.
+  ### Checkpoint — 2026-10-07 (wrap up, chiều)
+  Vừa hoàn thành: đợt 3–10 báo cáo thị trường + quy tắc in chung — ĐÃ PUSH (api 6f7348d30, client f785add06, skill d4d5f16).
+  Đang làm dở: —
+  Bước tiếp theo: chạy e2e khi user yêu cầu; 5 báo cáo cũ chuyển sang V2BaseReportPrintModal khi sửa tới.
+  Blocked: hrm-claude-config còn 7 mục tài liệu khác chưa commit — chờ user.
 - quan-ly-hang-hoa / **Phase 2d cây catalog** (Chương · Mục · Tiểu mục) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/chuyen-cay-catalog/plan.md
   Trạng thái: **CODE XONG (04/10/2026) — ĐÃ PUSH nhánh `origin/feat/p2d-cay-catalog` (04/10, cả 2 repo), ⛔ KHÔNG merge vào gop_db (nhánh production — user chốt 04/10).** Nhánh `feat/p2d-cay-catalog` (từ gop_db 27f222a83 / 6e31e81ae)
   ở thư mục chính cả 2 repo; api 7 commit, client 3 commit (gồm 1 lượt sửa sau review cuối: N+1 is_can_lock, trùng tên khi thiếu lĩnh vực, khoá ô Trạng thái, báo lỗi ô lọc). PHPUnit `BusinessCatalogTreeTest` 12/12 +
