@@ -5,6 +5,7 @@
 > Cập nhật lần cuối: **04/10/2026 (wrap up) — cổng chặn đóng (§35a–§35h); Phase 2d cây catalog XONG (e2e 6/6, chưa push); TIẾP: màn hàng hoá chia 5 đợt (mục 2c) — user chưa chọn đợt đầu, đề xuất 2-A** · Phụ trách: @namdangit
 > ⚠️ 04/10: 10 commit Phase 2 lỡ làm (hrm-api) **CHƯA lên `gop_db`** (cả local + origin); nhưng **4 migration đã chạy vào DB local `hrm_erp`** (batch 410–414) — `can_retail` đã bị drop trong khi code `gop_db` vẫn đọc/ghi cột này. User chốt **để nguyên** (04/10), xử lý cùng câu E1.
 > 🌿 **NHÁNH CHUNG (04/10/2026): `feat/chuyen-doi-hang-hoa`** (cả 2 repo, đã push) — tạo từ `origin/gop_db` (api 706635ece / client 1ad497c05) + đã merge P2d (api 3bb89bc51 / client ca47614e6). Mỗi đợt mở nhánh con **từ nhánh chung**, xong thì merge về nhánh chung; ⛔ không merge vào `gop_db`.
+> 🗂️ **WORKTREE (07/10/2026): `websites/wt-chuyen-doi-hang-hoa/{hrm-api,hrm-client}`** — làm MỌI việc của feature ở đây (checkout chính `ERP-HRM/HRM/*` đang ở `gop_db` cho session khác). Hiện checkout **`feat/chuyen-doi-hang-hoa`** (2-C3 đã merge + push 07/10: api `626113419` / client `e046aff2c`; e2e 13/13 — checkpoint `2c-ghi/plan.md`). Server worktree: api **8031**, Nuxt **3031**; e2e chạy bằng bản sao `wt-chuyen-doi-hang-hoa/e2e`. vendor/node_modules là bản sao `cp -c` (không symlink); `.env` → DB `hrm_erp`.
 > Nhánh cũ: `feat/p1-danh-muc-hang-hoa` (cả 2 repo) — api +29 commit, client +28 commit **chưa merge**
 > về `gop_db`.
 
@@ -67,7 +68,7 @@ Mỗi đợt: khảo sát → plan riêng ở `quan-ly-hang-hoa/<thư-mục-đ�
 
 🔎 **2-B khảo sát + plan (04/10): `2b-doc/`** — chốt Q1 suy ra trạng thái lúc đọc · Q2 ẩn hoàn toàn giá · Q3 thêm 2 cột phân loại ở 2-B · Q4 seed 1652/1653. ✅ XONG 04/10 — đã vào nhánh chung (api `40d3e9028`, client `e9d46129b`), PHPUnit 8/8, e2e 4/4 + 6/6.
 
-🔎 **2-C (04/10): `2c-ghi/`** — chốt G1–G11 (`chot.md`) + danh sách *việc ngoài luồng* N1–N8; plan 4 đợt con 2-C3 → 2-C1 → 2-C2 → 2-C4. **2-C3 Catalog code xong 04/10 (`feat/p2c3-catalog`, chưa commit).**
+🔎 **2-C (04/10): `2c-ghi/`** — chốt G1–G11 (`chot.md`) + danh sách *việc ngoài luồng* N1–N8; plan 4 đợt con 2-C3 → 2-C1 → 2-C2 → 2-C4. **2-C3 Catalog ✅ XONG 07/10 — đã merge nhánh chung + push, e2e 13/13 (ca không quyền đã làm chặt). TIẾP: 2-C1.** 2-C1 ✅ XONG 08/10 — đã merge nhánh chung (api 35c4aa971, client 81f38f36d), e2e 32 xanh + 1 skip; đã push 08/10. Trước go-live: N10 tick cờ Phụ tùng ô tô. **2-C2 (08/10): khảo sát `2c-ghi/c2-khao-sat-be.md` + `c2-khao-sat-fe.md`, user chốt L1–L7 (`chot.md`, `c2-ton.md`) — Plan `c2-plan.md`; user cho "làm" → nhánh `feat/p2c2-lay-ve` (api `2739d0379` PHPUnit 127/127, client `3a9eae100`), Playwright MCP đạt trừ U4 lượt Lưu thành công (DB local không có Tiểu mục chọn được); DB + role tạm đã dọn. CHƯA merge nhánh chung, CHƯA chạy e2e.**
 
 Code cũ lỡ làm (nhánh `feat/p1-danh-muc-hang-hoa`, E1): KHÔNG merge, chỉ tra cứu khi mở nhánh mới từ gop_db.
 

@@ -7,9 +7,9 @@
 
 | Đợt con | Nội dung | Trạng thái |
 |---|---|---|
-| **2-C3 Catalog** | popup *Xây dựng catalog kinh doanh* + *Xếp vào tiểu mục…* ở màn Dữ liệu hàng hoá công ty; giỏ chờ + `sync` (B1); quyền 1655 | 🔄 đang làm (nhánh `feat/p2c3-catalog`) |
-| 2-C1 Tạo + sửa (công ty tạo) | sinh mã (`ProductCodeGenerator` nhánh cũ) · form tạo/sửa 2 tầng tab · 1 nút Lưu (G3) · `products.status = 1` (G1) · đơn vị cơ bản + 6 dòng giá 0 (G2) · dòng công ty `coefficient 1, status 1` · Hệ số công nghệ chung (T6) · cờ "Phụ tùng ô tô" ở Tính chất hàng hoá + ẩn/hiện tab xe (G11) · Sửa ở menu dòng + chi tiết (G9a) | ⬜ |
-| 2-C2 Lấy về + sửa mức Quản trị | lấy về 1/nhiều (≤100, chỉ `products.status = 1` — G9b), upsert dòng công ty (dòng hệ số cũ `status NULL` ⇒ UPDATE) · công ty lấy về chỉ sửa tab Quản trị (BE chặn lớp chung) · hàng cũ chưa có dòng ⇒ sinh dòng status 3 (G4) | ⬜ (tồn nhỏ: lọc hàng ERP đã xoá ở Kho dữ liệu) |
+| **2-C3 Catalog** | popup *Xây dựng catalog kinh doanh* + *Xếp vào tiểu mục…* ở màn Dữ liệu hàng hoá công ty; giỏ chờ + `sync` (B1); quyền 1655 | ✅ 07/10 — đã merge nhánh chung (api `626113419` / client `e046aff2c`), e2e 13/13 |
+| 2-C1 Tạo + sửa (công ty tạo) | sinh mã (`ProductCodeGenerator` nhánh cũ) · form tạo/sửa 2 tầng tab · 1 nút Lưu (G3) · `products.status = 1` (G1) · đơn vị cơ bản + 6 dòng giá 0 (G2) · dòng công ty `coefficient 1, status 1` · Hệ số công nghệ chung (T6) · cờ "Phụ tùng ô tô" ở Tính chất hàng hoá + ẩn/hiện tab xe (G11) · Sửa ở menu dòng + chi tiết (G9a) | ✅ XONG 08/10 — đã merge `feat/chuyen-doi-hang-hoa` (api 35c4aa971, client 81f38f36d), e2e 32/33 (1 skip), đã push 08/10 — plan `c1-plan.md` |
+| 2-C2 Lấy về + sửa mức Quản trị | lấy về 1/nhiều (≤100, chỉ `products.status = 1` — G9b), upsert dòng công ty (dòng hệ số cũ `status NULL` ⇒ UPDATE) · công ty lấy về chỉ sửa tab Quản trị (BE chặn lớp chung) · hàng cũ chưa có dòng ⇒ sinh dòng status 3 (G4) | 🟡 08/10 code xong trên `feat/p2c2-lay-ve` (api 2739d0379, client 3a9eae100), chưa merge — plan `c2-plan.md` |
 | 2-C4 Vòng đời | Xoá (G7: kiểm như ERP + xoá cứng / gỡ dòng công ty) · Khoá/Mở khoá theo công ty status 4 (G6) | ⬜ |
 | — | KHÔNG làm: Lưu nháp (G3), nút Chuyển kinh doanh (H1''), Sao chép (G8), lịch sử (§14b), Excel (2-E), giá | |
 
@@ -37,3 +37,14 @@ Vừa hoàn thành: đợt 2-C3 Catalog code xong C3.1–C3.4 trên `feat/p2c3-c
 Đang làm dở: CHƯA commit (api 7 file sửa + 5 file/thư mục mới; client 3 file sửa + `components/product/catalog/`); spec `products-catalog-popup-ui.spec.ts` (7 ca) + sửa `products-read-ui.spec.ts` chưa chạy.
 Bước tiếp theo: user duyệt (1) commit + merge `feat/p2c3-catalog` → `feat/chuyen-doi-hang-hoa` + push (⛔ không gop_db); (2) có chạy 2 spec e2e không → rồi mở đợt 2-C1 (Tạo + sửa, công ty tạo).
 Blocked: chờ user cho phép commit.
+
+### Checkpoint — 2026-10-07 (e2e 2-C3)
+Chạy trên worktree `websites/wt-chuyen-doi-hang-hoa` (api 8031 · Nuxt 3031 · bản sao e2e riêng có `.auth` riêng), `--project=chromium --no-deps --workers=1 --retries=0`:
+**`products-catalog-popup-ui` 7/7 + `products-read-ui` 6/6 = 13/13 đạt** (lượt 3; dữ liệu E2EC3P đã dọn, 0 nút).
+2 lỗi đều ở SPEC, không phải app (đã tái hiện bằng đo DOM trước khi sửa; đã chép spec về `HRM/e2e`):
+1. Ca 1 chờ popup rộng `1440−16` nhưng project chromium dùng preset Desktop Chrome viewport **1280** ⇒ app ra 1264 là đúng; sửa thành tính theo `page.viewportSize()`.
+2. Ca 5 bấm `<label>` ô tick lưới — label rỗng chữ nên 0×0 (ô vuông là `::before`), Playwright coi "not visible" ở mọi viewport; thêm helper `tickGridRow` bấm toạ độ giữa ô vuông + assert `toBeChecked`.
+Phụ: `readNoPermToken` tìm origin theo `BASE_URL` thay vì cứng `127.0.0.1:3000`.
+✅ Ca 7 đã làm chặt (07/10): `beforeAll` cấp tạm cho nocost (emp 1181) role `E2E C3 tạm - chỉ xem hàng công ty` chỉ có 1653 + `cache:clear`; ca assert lưới công ty CÓ dòng + API list 200, rồi không nút/ô tick/popup và `catalogs/counts`·`catalogs/products`·`catalogs/sync` đều 403; `afterAll` gỡ role. Đối chứng cài lỗi (role có thêm 1655) ⇒ ca ĐỎ (nút hiện: chờ 0 nhận 1). Lại 13/13 đạt.
+✅ Đã merge `feat/p2c3-catalog` → `feat/chuyen-doi-hang-hoa` (giữ tên commit WIP, user chốt) + push: api `626113419`, client `e046aff2c`. ⛔ gop_db không đụng.
+**2-C3 XONG.** Bước tiếp: đợt 2-C1 (Tạo + sửa, công ty tạo) — khảo sát + plan, hỏi tồn, xin "làm" riêng.

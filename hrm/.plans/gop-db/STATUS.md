@@ -139,6 +139,15 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Đang làm dở: —
   Bước tiếp theo: chạy e2e khi user yêu cầu; 5 báo cáo cũ chuyển sang V2BaseReportPrintModal khi sửa tới.
   Blocked: hrm-claude-config còn 7 mục tài liệu khác chưa commit — chờ user.
+  ### Checkpoint — 2026-10-08 (wrap up)
+  Vừa hoàn thành: Kết quả CSKH tiềm năng đợt 3 (làm thẳng trên gop_db thư mục chính) — ô lọc Bộ phận (BE lọc theo hồ sơ người
+  chủ trì + "Bộ phận: X" ở dòng mô tả lọc) · tiền đầy đủ en-US + "(VND)" · % dạng 5.0% · nút Ẩn/Hiện chi tiết → ô chọn cấp
+  (bung theo tên cấp, mặc định "Chỉ cấp 1"). MCP đo đủ; PHPUnit PartFilter 2/2 + NoPart 5/5. Chi tiết: potential-customer-care/plan.md đợt 3.
+  Đang làm dở: — (CHƯA COMMIT: api service + tests/Unit/PotentialCustomerCarePartFilterTest.php; client 6 file folder potential-customer-care)
+  Bước tiếp theo: user kiểm trên app → commit + push gop_db khi user yêu cầu; e2e potential-customer-care.spec (ca 2/24/27/28/30
+  đã sửa/thêm) chạy khi user yêu cầu, --workers=1, không chạy lúc session chuyển đổi hàng hoá đang ghi DB. Còn treo: mặc định
+  ô chọn cấp "Chỉ cấp 1" vs "áp chót" theo skill — chờ user chốt.
+  Blocked: —
 - quan-ly-hang-hoa / **Phase 2d cây catalog** (Chương · Mục · Tiểu mục) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/chuyen-cay-catalog/plan.md
   Trạng thái: **CODE XONG (04/10/2026) — ĐÃ PUSH nhánh `origin/feat/p2d-cay-catalog` (04/10, cả 2 repo), ⛔ KHÔNG merge vào gop_db (nhánh production — user chốt 04/10).** Nhánh `feat/p2d-cay-catalog` (từ gop_db 27f222a83 / 6e31e81ae)
   ở thư mục chính cả 2 repo; api 7 commit, client 3 commit (gồm 1 lượt sửa sau review cuối: N+1 is_can_lock, trùng tên khi thiếu lĩnh vực, khoá ô Trạng thái, báo lỗi ô lọc). PHPUnit `BusinessCatalogTreeTest` 12/12 +
@@ -1931,6 +1940,12 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
+
+- du-an-tkt-chi-nguoi-tao-duoc-sua → @namdangit → .plans/gop-db/du-an-tkt-chi-nguoi-tao-duoc-sua/plan.md
+  Hoàn thành: 2026-10-08 — **ĐÃ PUSH gop_db** hrm-api `b7083c389` · hrm-client `72a537559`.
+  Dự án TKT: chỉ NGƯỜI TẠO được sửa form + lưu phiếu thu thập; 4 quyền "Xem danh sách dự án TKT theo …" chỉ còn xem. Đóng / Chốt GP / Gia hạn giữ quy tắc NV KD phụ trách.
+  Kiểm API + Playwright MCP 2 chiều; e2e mới `prospective-project-can-edit.api.spec.ts` 6/6 (e2e/ không nằm trong git). Còn: cập nhật SRS Dự án TKT (BR-10) nếu cần.
+  Spec: docs/superpowers/specs/gop-db/2026-10-08-du-an-tkt-chi-nguoi-tao-duoc-sua-design.md | Tóm tắt: .plans/gop-db/du-an-tkt-chi-nguoi-tao-duoc-sua/design.md
 
 - sale-transport-cost-by-staff → @junfoke → .plans/gop-db/sale-transport-cost-by-staff/plan.md
   Chuyển Hoàn thành: 2026-10-06 — đã push `develop` cả 2 repo. Còn: chạy SQL quyền 1680-1682 trên server · kế toán xác nhận cước không mã công việc.
