@@ -4427,3 +4427,10 @@ Blocked: không.
 - Cổng local: tạo + sửa + xóa 1 phiếu nháp để lấy dòng lịch sử thật cho 2 ảnh mục Lịch sử.
 - **KHÔNG bấm Duyệt và KHÔNG bấm Hủy** trên bất kỳ phiếu thật nào ở cả 2 cổng — 2 thao tác đó
   ghi/khoá sổ cái, không hoàn tác được. Ảnh minh hoạ chỉ chụp nút, ô nhập và hộp xác nhận.
+
+### Fix — 2026-10-06: bản in thừa 1 ô "THỦ QUỸ"
+- [x] Mẫu ERP 203-206 có ô thứ 6 `<span style="font-size:1px">THỦ QUỸ</span>` (ERP ẩn bằng cỡ
+      chữ 1px). CSS in dùng chung `reportPrintStyle.js` ép mọi font-size inline trong
+      `table.no-border` về 13px → ô hiện ra thành "THỦ QUỸ" thứ 2. Sửa cục bộ ở
+      `BillIncomePrintService::fill()`: gỡ ô 1px khỏi HTML đã fill (không sửa mẫu DB dùng chung
+      với ERP, không sửa CSS dùng chung)

@@ -2540,3 +2540,12 @@ Nguyên nhân: một phần tên trong DB lưu Unicode TỔ HỢP (NFD, vd depar
 - [x] BE: `BillIncomeRequestService::paginateContractUnion()` nhận `sort_by` (`code` | `createdAt`) + `sort_desc`, whitelist; Ngày lập sắp theo `COALESCE(sign_date, created_at)` = giá trị đang hiện; không gửi thì giữ mới nhất lên đầu; thêm `object_id` làm tiêu chí phụ
 - [x] FE: `ContractSearchModal` 2 tiêu đề bấm được (khuôn `BorrowPickerModal`), CHỈ ở popup hợp đồng mua (NCC, không phải chế độ thưởng); mở lại / Làm mới thì xoá sort
 - [x] Verify: NCC 34 — 2 nhánh (màn này 364 HĐ, Đề nghị thu tiền 365 HĐ) × 4 kiểu sort đúng thứ tự; `sort_by` lạ bị bỏ qua
+
+## Bổ sung 2026-10-07 — Popup chọn KH hiện đủ như ERP (@khoipv)
+
+- [x] BE `CustomerService::index()` — cờ `scope_all=1` bỏ `applyVisibilityScope` + `applyB2cOwnershipVisibility`
+      (ERP `searchCustomer?type=all` chỉ lọc status + is_customer). `CustomerListResource`: cờ này tắt
+      `register_locked`; SĐT KH cá nhân người khác vẫn che (popup ERP không có cột SĐT).
+- [x] FE `ChooseErpCustomerModal.vue` thêm prop `scopeAll` (mặc định false — 8 nơi dùng khác không đổi);
+      `BillAdjustDeptRequestForm.vue` truyền `scope-all`.
+- [x] Đo bằng tinker, user 1169 không có quyền xem tất cả: popup cũ 11,029 → `scope_all` 41,634 (khớp ERP).

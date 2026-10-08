@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lập đơn giao hàng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+<style>
+/* ============ Token V2Base (port từ hrm-thanhan-client/assets/scss/v2-styles.scss) ============ */
+:root{
+  --primary:#1abc9c; --primary-h:#17a589; --brand:#16a34a; --brand-bg:#f0fdf4; --brand-tx:#15803d;
+  --danger:#dc2626; --err:#dc3545; --warn:#d97706; --info:#2563eb;
+  --tx:#0f172a; --tx2:#1f2937; --tx3:#475569; --muted:#6b7280;
+  --bd:#e5e7eb; --bd-in:#cbd5e1; --bd-btn:#e2e8f0;
+  --bg:#f5f6f8; --card:#fff; --lock-bg:#f1f5f9; --link:#28539d;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Poppins',sans-serif;font-size:13px;color:var(--tx2);background:var(--bg)}
+.container{padding:8px 16px 24px;max-width:1680px;margin:0 auto}
+.page-title-box{display:flex;justify-content:space-between;align-items:center;padding:12px 0;flex-wrap:wrap;gap:6px}
+.page-title{font-size:18px;font-weight:700;color:#111;margin:0}
+.breadcrumb{font-size:12px;color:var(--muted)} .breadcrumb b{color:var(--tx3);font-weight:500}
+.tp-card{background:#fff;border-radius:.5rem;border:1px solid var(--bd);box-shadow:0 6px 18px rgba(15,23,42,.04)}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mt-2{margin-top:8px}
+/* section */
+.sec{background:#fff;border:1px solid var(--bd);border-radius:.5rem;margin-bottom:8px}
+.sec-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--bd)}
+.sec-h h6{font-size:14px;font-weight:700;color:var(--tx2);margin:0}
+.sec-h .sp{flex:1}
+.sec-b{padding:10px}
+/* grid field */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}
+.s2{grid-column:span 2}.s3{grid-column:1/-1}
+@media(max-width:860px){.grid{grid-template-columns:1fr}.s2,.s3{grid-column:auto}}
+.lbl-tip{color:var(--muted);font-weight:400;font-size:13px;cursor:help}
+.v2-label{display:inline-flex;gap:4px;font-weight:600;color:var(--tx);font-size:12px;margin-bottom:4px;align-items:center}
+.req{color:var(--danger)}
+.v2-input,select.v2-input,textarea.v2-input{width:100%;border:1px solid var(--bd-in);border-radius:5px;padding:7px 10px;font-size:13px;color:var(--tx);font-family:inherit;background:#fff;height:34px}
+textarea.v2-input{height:auto;min-height:56px;resize:vertical}
+.v2-input.sm{height:28px;padding:3px 8px}
+.v2-input:focus{outline:none;border-color:#94a3b8}
+.v2-input[disabled],.v2-input[readonly]{background:var(--lock-bg);color:var(--tx3);border-color:var(--bd-btn);cursor:not-allowed}
+.v2-input.err{border-color:var(--err)}
+.err-tx{color:var(--err);font-size:11.5px;margin-top:3px;display:flex;gap:4px;align-items:center}
+.hint{font-size:11.5px;color:var(--muted);margin-top:3px}
+.fwa{display:flex;gap:6px;align-items:center}
+/* button */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;border:1px solid transparent;font-weight:600;height:32px;padding:0 10px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;background:#fff}
+.btn i{font-size:15px}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-secondary{background:#fff;color:#333;border-color:var(--bd-in)}.btn-secondary:hover{background:#f8fafc}
+.btn-success2{color:#15803d;background:#f7fee7;border-color:#86efac}
+.btn-tertiary{background:#fff;color:var(--tx2);border-color:var(--bd-btn)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-warn{background:var(--warn);color:#fff}
+.btn[disabled]{background:#f1f5f9!important;color:#94a3b8!important;border-color:#e2e8f0!important;cursor:not-allowed}
+.btn-w{min-width:120px}
+.icon-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--bd-btn);background:#fff;color:#4b5563;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.icon-btn.danger{border-color:#fecaca;color:var(--danger);background:#fef2f2}
+.icon-btn.sm{width:22px;height:22px;border-radius:6px;font-size:13px;margin-left:2px}
+/* tabs */
+.tabs-nav{display:flex;padding:6px 8px}
+.tabs-root{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid var(--bd-btn);border-radius:10px;flex-wrap:wrap}
+.tab-btn{height:28px;padding:0 .6rem;font-size:13px;font-weight:500;border-radius:7px;border:0;background:transparent;color:#334155;display:flex;align-items:center;gap:5px;cursor:pointer;font-family:inherit}
+.tab-btn i{font-size:15px;color:#64748b}
+.tab-btn.active{background:var(--brand);color:#fff;font-weight:600;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+.tab-btn.active i{color:#fff} .tab-btn.active .badge{background:#fff;color:#15803d;border-color:#fff}
+.tab-btn:not(.active):hover{background:var(--brand-bg);color:var(--brand-tx)}
+.tab-btn.has-error:not(.active){color:var(--err)} .tab-btn.has-error:not(.active) i{color:var(--err)}
+.tab-btn.has-error.active{background:var(--err)}
+.tab-body{padding:12px;border-top:1px solid var(--bd)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+.form-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--bd)}
+/* badge / chip */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;border-radius:999px;font-weight:600;border:1px solid transparent;white-space:nowrap}
+.b-gray{color:#64748b;background:rgba(100,116,139,.1);border-color:rgba(100,116,139,.2)}
+.b-amber{color:#b45309;background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.25)}
+.b-green{color:#15803d;background:rgba(22,163,74,.1);border-color:rgba(22,163,74,.25)}
+.b-red{color:#b91c1c;background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25)}
+.b-blue{color:#1d4ed8;background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.22)}
+.b-violet{color:#6d28d9;background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.22)}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid var(--bd-btn);background:#f8fafc;color:var(--tx3);font-size:11.5px}
+.chip.on{background:#dcfce7;color:#15803d;border-color:var(--brand)}
+.lnk{color:var(--link);border-bottom:1px dashed #b7c4cf;cursor:pointer;font-weight:600}
+.mono{font-family:Consolas,monospace;font-size:11.5px}
+.mut{color:var(--muted)}
+.tr{text-align:right}.tc{text-align:center}
+/* note boxes */
+.note{border-radius:6px;padding:8px 12px;font-size:12px;line-height:1.55;display:flex;gap:8px}
+.note i{font-size:16px;line-height:1.2}
+.note-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a}
+.note-warn{background:#fffbeb;border:1px solid #fde68a;color:#78350f}
+.note-err{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid var(--danger);color:#7f1d1d}
+.note-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d}
+.box{background:#f8fafc;border:1px dashed var(--bd-in);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--tx3)}
+/* info grid (readonly) */
+.kv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 16px}
+@media(max-width:860px){.kv{grid-template-columns:1fr 1fr}}
+.kv .k{font-size:11px;color:var(--muted)} .kv .v{font-weight:600;color:var(--tx);font-size:12.5px}
+/* option cards */
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:860px){.opts,.opts.two{grid-template-columns:1fr}}
+.opt{border:1.5px solid var(--bd);border-radius:10px;padding:10px 12px;cursor:pointer;background:#fff;position:relative;transition:.12s}
+.opt:hover{border-color:#86efac;background:#fbfffc}
+.opt.on{border-color:var(--brand);background:#f0fdf4;box-shadow:0 0 0 3px rgba(22,163,74,.08)}
+.opt .ot{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--tx);font-size:13px}
+.opt .ot i{font-size:20px;color:var(--brand)}
+.opt .od{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+.opt .tag{position:absolute;top:8px;right:10px}
+.subopts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.subopt{border:1px solid var(--bd-in);border-radius:7px;padding:4px 10px;font-size:12px;background:#fff;cursor:pointer;display:inline-flex;gap:5px;align-items:center}
+.subopt.on{border-color:var(--brand);background:#dcfce7;color:#15803d;font-weight:600}
+/* route */
+/* goods table */
+.tbl-wrap{overflow:auto;border:1px solid #d9e2e0;border-radius:6px;max-height:calc(100vh - 160px)}
+table.pt{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+.pt th{background:#eef4f3;color:#2c3e50;font-size:11.5px;font-weight:600;text-align:center;white-space:nowrap;border-right:1px solid #d9e2e0;border-bottom:1px solid #d9e2e0;padding:6px;position:sticky;top:0;z-index:2}
+.pt th.ref{background:#f3f0fb}
+.pt td{border-right:1px solid #e3e8ee;border-bottom:1px solid #e3e8ee;padding:4px 6px;vertical-align:top;background:#fff}
+.pt tr.newp td{border-top:2px solid #c3d0de}
+.pt .fz{position:sticky;left:0;z-index:1}
+.pt th.fz{z-index:3}
+.pt .inp{width:80px;height:28px;border:1px solid var(--bd-in);border-radius:5px;padding:2px 6px;text-align:right;font-family:inherit;font-size:12px}
+.pt .inp.w60{width:60px}.pt .inp.note{width:170px;text-align:left}
+.pt .inp.over{border-color:var(--err);background:#fef2f2;color:#b91c1c}
+.pt .inp:disabled{background:var(--lock-bg);color:#94a3b8}
+.pt tr.total-row td{background:#eef4f3;font-weight:700;font-size:12.5px}
+.pp{display:flex;flex-direction:column;gap:4px;min-width:390px}
+.pp-it{display:grid;grid-template-columns:1fr auto;gap:2px 8px;align-items:center;padding:4px 6px;border:1px dashed #d3dce6;border-radius:6px;background:#fbfcfe}
+.pp-it.off{background:#f8fafc;opacity:.55}
+.pp-it.bad{border-color:#fca5a5;background:#fef2f2}
+.pp-it .d1{font-weight:700;color:#0d6efd;font-size:11.5px}
+.pp-it .d2{font-size:11px;color:var(--tx3)}
+.pp-it .q{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);grid-row:span 2}
+.pp-none{font-style:italic;color:var(--muted);font-size:11.5px}
+.cell-name b{display:block;color:var(--tx)} .cell-name span{font-size:11px;color:var(--muted)}
+.sum-grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:16px;margin-top:10px}
+@media(max-width:860px){.sum-grid{grid-template-columns:1fr}}
+.srow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed #e3e8ee;font-size:12.5px}
+.srow.tot{border-top:2px solid #cfd8e3;border-bottom:0;font-weight:800;font-size:14px;color:var(--tx);padding-top:8px}
+.srow .mut{font-size:11.5px}
+/* mini table */
+table.mt{width:100%;border-collapse:collapse;font-size:12px}
+.mt th{background:#f8fafc;color:#374151;font-weight:600;padding:6px;text-align:left;border-bottom:1px solid var(--bd);white-space:nowrap}
+.mt td{padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.mt tr.hl td{background:#f0fdf4}
+/* modal */
+.mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-start;justify-content:center;z-index:2000;padding:3vh 12px}
+.mask.show{display:flex}
+.modal{background:#fff;border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.25);width:100%;max-width:760px;display:flex;flex-direction:column;max-height:94vh}
+.modal.xl{max-width:1400px}
+.m-h{display:flex;align-items:center;gap:10px;padding:10px .75rem;border-bottom:1px solid var(--bd)}
+.m-ic{width:28px;height:28px;border-radius:999px;background:rgba(26,188,156,.1);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px}
+.m-h h5{font-size:14px;font-weight:800;margin:0;flex:1}
+.m-x{border:0;background:none;font-size:22px;cursor:pointer;color:#64748b;line-height:1}
+.m-b{padding:.6rem .75rem;overflow-y:auto}
+.m-f{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px .75rem;border-top:1px solid var(--bd)}
+.m-f .left{margin-right:auto;font-size:12px;color:var(--muted)}
+.gm-filter{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+@media(max-width:860px){.gm-filter{grid-template-columns:1fr}}
+.gm-wrap{border:1px solid var(--bd);border-radius:6px;overflow:auto;max-height:62vh}
+table.gm{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.gm th{background:#f8fafc;color:#374151;font-weight:600;padding:6px;position:sticky;top:0;white-space:nowrap;border-bottom:1px solid var(--bd);text-align:left;z-index:1}
+.gm td{padding:4px 6px;border-top:1px solid #f1f5f9;vertical-align:top}
+.gm tr.r{cursor:pointer}.gm tr.r:hover td{background:#f8fafc}.gm tr.r.sel td{background:#e8f8f5}
+.gm tr.dis td{opacity:.5;cursor:not-allowed}
+.gm input[type=checkbox]{accent-color:var(--primary);width:15px;height:15px}
+.pill{padding:1px 8px;border-radius:10px;font-size:10.5px;font-weight:600;white-space:nowrap}
+.pill-b{background:#e3f1ff;color:#0d6efd}.pill-g{background:#eef2f6;color:#475569}
+.toast{position:fixed;right:16px;bottom:16px;background:#0f172a;color:#fff;padding:10px 14px;border-radius:8px;font-size:12.5px;z-index:3000;display:none;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.radio-inline{display:flex;gap:16px;flex-wrap:wrap;align-items:center;min-height:34px}
+.radio-inline label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-size:12.5px}
+input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
+.divider{height:1px;background:var(--bd);margin:10px 0}
+.terms{display:flex;gap:6px;flex-wrap:wrap}
+.cost-tbl td .v2-input{height:30px}
+.hide{display:none!important}
+.status-pill{margin-left:8px;vertical-align:middle}
+.dp{border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.dp-h{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.dp-no{background:var(--brand);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:1px 9px}
+.dp-h .nm{font-weight:700;font-size:13px}
+.dp-h .mt2{font-size:11.5px;color:var(--muted)}
+.dp-tag{display:inline-block;background:#e6f7f2;color:#0f766e;border-radius:4px;font-size:10.5px;font-weight:700;padding:0 5px;margin-right:4px}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="page-title-box">
+    <h4 class="page-title">Lập đơn giao hàng <span id="status-pill" class="badge b-gray status-pill">Nháp</span></h4>
+    <div class="breadcrumb">Cung ứng / <b>Đơn giao hàng</b> / Lập đơn giao hàng</div>
+  </div>
+
+  <div class="tp-card p-0 mb-3">
+    <div class="tabs-nav"><div class="tabs-root" id="tabs">
+      <button class="tab-btn active" data-tab="general"><i class="ri-file-list-3-line"></i>Thông tin chung</button>
+      <button class="tab-btn" data-tab="goods"><i class="ri-shopping-cart-2-line"></i>Hàng hóa <span id="tab-goods-count" class="badge b-gray" style="padding:0 6px">0</span></button>
+      <button class="tab-btn" data-tab="ship"><i class="ri-truck-line"></i>Giao nhận &amp; vận chuyển</button>
+      <button class="tab-btn" data-tab="pay"><i class="ri-bank-card-line"></i>Điều khoản thanh toán</button>
+    </div></div>
+
+    <div class="tab-body">
+      <!-- ================= TAB 1: THÔNG TIN CHUNG ================= -->
+      <div class="tab-pane active" id="pane-general">
+        <div class="sec">
+          <div class="sec-h"><h6>Thông tin đơn giao</h6></div>
+          <div class="sec-b"><div class="grid">
+            <div><label class="v2-label">Mã đơn giao</label><input class="v2-input" value="DGH-2026-0011" disabled><div class="hint">Tự sinh khi lưu (DGH-YYYY-####)</div></div>
+            <div><label class="v2-label">Ngày lập<span class="req">*</span></label><input type="date" class="v2-input" id="f-date"></div>
+            <div><label class="v2-label">Người lập</label><input class="v2-input" value="Trần Thị Bích — Phòng Cung ứng" disabled></div>
+            <div><label class="v2-label">Hợp đồng mua<span class="req">*</span></label>
+              <select class="v2-input" id="f-contract" onchange="onContract(this.value)"></select>
+              <div id="err-contract"></div></div>
+            <div><label class="v2-label">Ngày giao dự kiến<span class="req">*</span></label>
+              <div style="display:flex;gap:6px"><input type="date" class="v2-input" id="f-deliver" style="flex:1" onchange="state.deliverDate=this.value;renderPay();renderShip()"><input type="time" class="v2-input" id="f-deliver-time" style="width:110px" onchange="state.deliverTime=this.value;renderShip()"></div></div>
+            <div><label class="v2-label">Nhà cung cấp (Bên Bán)</label><input class="v2-input" id="f-sup" disabled placeholder="Theo HĐ mua"></div>
+            <div class="s3"><label class="v2-label">Diễn giải</label><textarea class="v2-input" rows="2" placeholder="VD: Giao đợt 2 HĐ Roche — hàng cho BV Vân Đình (HĐB-2026/047)"></textarea></div>
+          </div></div>
+        </div>
+
+        <div class="sec" id="sec-contract">
+          <div class="sec-h"><h6>Thông tin hợp đồng mua</h6><span class="sp"></span><span id="ct-type"></span></div>
+          <div class="sec-b" id="ct-info"><div class="mut">Chọn hợp đồng mua để xem thông tin.</div></div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-h"><h6>Bên nhận hàng &amp; hóa đơn</h6><span class="sp"></span><span id="recv-badge"></span></div>
+          <div class="sec-b">
+            <div class="grid">
+              <div><label class="v2-label">Công ty nhận hàng<span class="req">*</span></label>
+                <select class="v2-input" id="f-recv" onchange="onRecv(this.value)"></select>
+                <div class="hint">Mặc định = Bên A của HĐ. Được chọn công ty khác trong tập đoàn.</div><div id="err-recv"></div></div>
+              <div><label class="v2-label">NCC xuất hóa đơn cho<span class="req">*</span></label>
+                <div class="radio-inline" id="f-invoice">
+                  <label><input type="radio" name="inv" value="recv" checked onchange="onInvoice(this.value)">Công ty nhận hàng</label>
+                  <label><input type="radio" name="inv" value="a" onchange="onInvoice(this.value)">Bên A của HĐ</label>
+                </div></div>
+              <div><label class="v2-label">Công ty thanh toán / ghi công nợ</label><input class="v2-input" id="f-payer" disabled>
+                <div class="hint">= công ty đứng tên hóa đơn</div></div>
+            </div>
+            <div id="recv-note" class="mt-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 2: HÀNG HÓA ================= -->
+      <div class="tab-pane" id="pane-goods">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+          <div id="goods-ctx" class="mut" style="font-size:12px"></div><span style="flex:1"></span>
+          <button class="btn btn-primary" onclick="openPicker()"><i class="ri-add-line"></i>Chọn hàng từ HĐ mua</button>
+        </div>
+        <div id="goods-msg"></div>
+        <div class="tbl-wrap"><table class="pt" id="goods-tbl">
+          <thead><tr>
+            <th class="fz" style="width:40px">STT</th>
+            <th>Mã hàng</th><th style="min-width:200px">Tên hàng hóa</th><th>Thao tác</th>
+            <th>Quy cách</th><th>ĐVT</th><th>Hãng, nước SX</th>
+            <th class="ref" style="min-width:340px">Phiếu đề xuất / KH / HĐ bán → SL giao từng phiếu<span class="req">*</span></th>
+            <th class="ref">SL theo HĐ</th><th class="ref">Đã giao</th><th class="ref">Còn lại</th>
+            <th>Đơn giá có VAT<br>(theo HĐ)</th><th>VAT (%)</th><th>Thành tiền<br>có VAT</th>
+            <th>Ghi chú</th>
+          </tr></thead>
+          <tbody id="goods-body"></tbody>
+        </table></div>
+        <div class="sum-grid">
+          <div id="goods-warn"></div>
+          <div class="box" style="background:#fff;border-style:solid" id="sum-box"></div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3: GIAO NHẬN & VẬN CHUYỂN ================= -->
+      <div class="tab-pane" id="pane-ship">
+        <div class="sec">
+          <div class="sec-h"><h6>Phương thức giao hàng<span class="req">*</span></h6><span class="sp"></span><span id="ship-by-contract"></span></div>
+          <div class="sec-b">
+            <div class="opts" id="ship-opts"></div>
+            <div class="mt-2" id="ship-diff"></div>
+          </div>
+        </div>
+        <div class="sec" id="sec-pickup">
+          <div class="sec-h"><h6>Lấy hàng tại nhà cung cấp</h6></div>
+          <div class="sec-b"><div class="grid">
+            <div class="s2"><label class="v2-label">Địa chỉ lấy hàng<span class="req">*</span></label><input class="v2-input" id="f-pick-addr" oninput="state.pickAddr=this.value"></div>
+            <div><label class="v2-label">Người đi nhận hàng<span class="req">*</span></label>
+              <select class="v2-input" id="f-picker-emp" onchange="state.pickEmp=this.value">
+                <option value="">— Chọn nhân viên —</option><option>Lê Văn Cường — Kho vận</option><option>Phạm Văn Dũng — Kho vận</option><option>Đỗ Minh Tuấn — An Việt</option></select><div id="err-pickemp"></div></div>
+          </div></div>
+        </div>
+        <div class="sec" id="sec-dest-kho">
+          <div class="sec-h"><h6>Nhận tại kho công ty</h6><i class="ri-information-line lbl-tip" title="Hàng về kho → tạo Phiếu nhập kho từ đơn giao (thủ kho xác nhận SL thực nhận)."></i></div>
+          <div class="sec-b"><div class="grid">
+            <div><label class="v2-label">Kho nhận<span class="req">*</span><i class="ri-information-line lbl-tip" title="Lọc theo Công ty nhận hàng"></i></label><select class="v2-input" id="f-kho" onchange="onKho(this.value)"></select>
+              <div id="err-kho"></div></div>
+            <div class="s2"><label class="v2-label">Địa chỉ kho</label><input class="v2-input" id="f-kho-addr" disabled></div>
+            <div><label class="v2-label">Thủ kho tiếp nhận</label><input class="v2-input" id="f-kho-keeper" disabled></div>
+            <div><label class="v2-label">Ngày giờ nhận<span class="req">*</span><i class="ri-information-line lbl-tip" title="Mặc định theo Ngày giao dự kiến — sửa nếu kho hẹn giờ nhận khác"></i></label>
+              <div style="display:flex;gap:6px"><input type="date" class="v2-input" id="f-kho-date" style="flex:1" onchange="state.recvDate=this.value||state.deliverDate;this.value=state.recvDate"><input type="time" class="v2-input" id="f-kho-time" style="width:110px" onchange="state.recvTime=this.value||state.deliverTime;this.value=state.recvTime"></div></div>
+          </div></div>
+        </div>
+        <div class="sec" id="sec-dest-kh">
+          <div class="sec-h"><h6>Giao thẳng cho khách hàng</h6><i class="ri-information-line lbl-tip" title="Hệ thống tự nhóm hàng theo khách hàng (lấy từ phiếu đề xuất / HĐ bán) → mỗi khách là 1 điểm giao với địa chỉ, người nhận riêng.&#10;Kho kế toán: Kho nhập – xuất thẳng (nhập + xuất cùng lúc, lập phiếu xuất theo từng điểm / HĐ bán)."></i><span class="sp"></span><span id="dp-count"></span></div>
+          <div class="sec-b">
+            <div id="dp-list"></div><div id="err-cus"></div>
+          </div>
+        </div>
+        <div class="sec" id="sec-cost">
+          <div class="sec-h"><h6>Chi phí vận chuyển</h6><span class="sp"></span><span id="cost-badge"></span></div>
+          <div class="sec-b" id="cost-body"></div>
+        </div>
+      </div>
+
+      <!-- ================= TAB 4: THANH TOÁN ================= -->
+      <div class="tab-pane" id="pane-pay">
+        <div class="sec">
+          <div class="sec-h"><h6>Điều khoản thanh toán của đơn giao<span class="req">*</span></h6><span class="sp"></span><span id="pay-by-contract" class="terms"></span></div>
+          <div class="sec-b">
+            <div class="opts two" id="pay-opts"></div>
+          </div>
+        </div>
+        <div id="pay-detail"></div>
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <button class="btn btn-primary btn-w" onclick="save(false)"><i class="ri-save-3-line"></i>Lưu</button>
+      <button class="btn btn-primary btn-w" onclick="save(true)"><i class="ri-send-plane-line"></i>Lưu và gửi duyệt</button>
+      <button class="btn btn-tertiary btn-w" onclick="toast('Quay lại danh sách đơn giao hàng')"><i class="ri-arrow-left-line"></i>Quay lại</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ POPUP CHỌN HÀNG TỪ HĐ MUA ============ -->
+<div class="mask" id="m-pick"><div class="modal xl">
+  <div class="m-h"><div class="m-ic"><i class="ri-shopping-cart-2-line"></i></div><h5 id="pick-title">Chọn hàng hóa từ hợp đồng mua</h5><button class="m-x" onclick="closeM('m-pick')">×</button></div>
+  <div class="m-b">
+    <div class="gm-filter">
+      <input class="v2-input" id="pk-q" placeholder="Tìm theo tên / mã hàng / phiếu đề xuất / phiếu xử lý / khách hàng / HĐ bán…" oninput="renderPicker()">
+      <select class="v2-input" id="pk-cus" onchange="renderPicker()"></select>
+      <select class="v2-input" id="pk-sco" onchange="renderPicker()"></select>
+      <label style="font-size:12px;display:flex;gap:6px;align-items:center;white-space:nowrap"><input type="checkbox" id="pk-remain" checked onchange="renderPicker()">Chỉ hàng còn chưa giao</label>
+    </div>
+    <div id="pk-note"></div>
+    <div class="gm-wrap"><table class="gm">
+      <thead><tr><th style="width:40px"><input type="checkbox" id="pk-all" onchange="pickAll(this.checked)"></th><th>STT</th><th>Tên hàng hóa</th><th>Mã hàng</th><th>ĐVT</th>
+        <th>Phiếu đề xuất / xử lý</th><th>Khách hàng SD</th><th>HĐ bán</th><th>Cty thực hiện bán</th>
+        <th class="tr">SL theo HĐ</th><th class="tr">Đã giao</th><th class="tr">Còn lại</th><th>Nguồn</th></tr></thead>
+      <tbody id="pk-body"></tbody>
+    </table></div>
+  </div>
+  <div class="m-f"><div class="left" id="pk-count"></div>
+    <button class="btn btn-primary" id="pk-add" onclick="pickAdd()" disabled><i class="ri-add-line"></i>Thêm vào đơn giao</button>
+    <button class="btn btn-tertiary" onclick="closeM('m-pick')"><i class="ri-arrow-left-line"></i>Đóng</button></div>
+</div></div>
+
+<!-- ============ POPUP ĐỀ NGHỊ THANH TOÁN ============ -->
+<div class="mask" id="m-dntt"><div class="modal">
+  <div class="m-h"><div class="m-ic"><i class="ri-money-dollar-circle-line"></i></div><h5>Tạo đề nghị thanh toán (thanh toán trước khi giao)</h5><button class="m-x" onclick="closeM('m-dntt')">×</button></div>
+  <div class="m-b" id="dntt-body"></div>
+  <div class="m-f"><div class="left">Gửi tới Phòng Kế toán — đơn giao chỉ được giao khi kế toán xác nhận <b>Đã chi</b>.</div>
+    <button class="btn btn-primary" onclick="dnttSend()"><i class="ri-send-plane-line"></i>Gửi kế toán</button>
+    <button class="btn btn-tertiary" onclick="closeM('m-dntt')"><i class="ri-arrow-left-line"></i>Đóng</button></div>
+</div></div>
+
+<!-- ============ POPUP KẾT QUẢ LƯU ============ -->
+<div class="mask" id="m-save"><div class="modal">
+  <div class="m-h"><div class="m-ic"><i class="ri-checkbox-circle-line"></i></div><h5 id="save-title">Đã lưu</h5><button class="m-x" onclick="closeM('m-save')">×</button></div>
+  <div class="m-b" id="save-body"></div>
+  <div class="m-f"><button class="btn btn-tertiary" onclick="closeM('m-save')"><i class="ri-arrow-left-line"></i>Đóng</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   DỮ LIỆU MẪU (mô phỏng API)
+   ===================================================================== */
+const COMPANIES = {   // lấy theo bảng companies trên PM (công ty con của MOTA GROUP)
+  TA:  { name:'CÔNG TY CỔ PHẦN THIẾT BỊ Y TẾ THÀNH AN',               short:'Thành An',  tax:'0106622681', addr:'Số 98, Đường Yên Phụ, Phường Ba Đình, Thành phố Hà Nội' },
+  AV:  { name:'CÔNG TY TNHH THIẾT BỊ AN VIỆT',                         short:'An Việt',   tax:'0103360438', addr:'Số 64 đường Yên Phụ, Phường Ba Đình, Thành phố Hà Nội' },
+  TB:  { name:'CÔNG TY CỔ PHẦN PHÁT TRIỂN DỊCH VỤ THIÊN BÌNH',          short:'Thiên Bình',tax:'0104233640', addr:'Số 11 ngõ 344/58, đường Ngọc Thụy, Phường Bồ Đề, Thành phố Hà Nội' },
+  MN:  { name:'CÔNG TY TNHH Y TẾ MINH NHẬT',                           short:'Minh Nhật', tax:'0109153290', addr:'Số 369 Đường Lâm Du, Phường Bồ Đề, Thành phố Hà Nội' },
+  VL:  { name:'CÔNG TY CỔ PHẦN DƯỢC PHẨM THIẾT BỊ Y TẾ VIỆT LONG',      short:'Việt Long', tax:'0102148238', addr:'Số 39/299/48, đường Hoàng Mai, Phường Tương Mai, Thành phố Hà Nội' },
+  DG:  { name:'CÔNG TY TNHH Y TẾ ĐẶNG GIA',                            short:'Đặng Gia',  tax:'0317031173', addr:'36/36/8 đường 4, khu phố 6, Phường Hiệp Bình, Thành phố Hồ Chí Minh' },
+  OPCN:{ name:'CÔNG TY CỔ PHẦN CÔNG NGHỆ OPTICA VIỆT NAM',              short:'Optica',    tax:'0109593069', addr:'Số 11 ngõ 344/58, Đường Ngọc Thụy, Phường Bồ Đề, Thành phố Hà Nội' },
+  VX:  { name:'CÔNG TY TNHH MTV ĐẦU TƯ VIỆT XANH',                      short:'Việt Xanh', tax:'0110321704', addr:'Số 64 đường Yên Phụ, Phường Ba Đình, Thành phố Hà Nội' },
+};
+const WAREHOUSES = [
+  { id:'KHO-TA-01', co:'TA', name:'Kho tổng Thành An – Yên Phụ',    addr:'Số 98, Đường Yên Phụ, Phường Ba Đình, Hà Nội',  keeper:'Nguyễn Văn Hải' },
+  { id:'KHO-TA-02', co:'TA', name:'Kho lạnh Thành An – Ngọc Hồi',   addr:'Lô 5 KCN Ngọc Hồi, Thanh Trì, Hà Nội',          keeper:'Phạm Thu Trang' },
+  { id:'KHO-AV-01', co:'AV', name:'Kho An Việt – Yên Phụ',          addr:'Số 64 đường Yên Phụ, Phường Ba Đình, Hà Nội',  keeper:'Đỗ Minh Tuấn' },
+  { id:'KHO-TB-01', co:'TB', name:'Kho Thiên Bình – Ngọc Thụy',     addr:'Số 11 ngõ 344/58 Ngọc Thụy, Phường Bồ Đề, Hà Nội', keeper:'Vũ Thị Hoa' },
+  { id:'KHO-MN-01', co:'MN', name:'Kho Minh Nhật – Lâm Du',         addr:'Số 369 Lâm Du, Phường Bồ Đề, Hà Nội',           keeper:'Trần Quốc Bảo' },
+  { id:'KHO-VL-01', co:'VL', name:'Kho Việt Long – Hoàng Mai',      addr:'Số 39/299/48 Hoàng Mai, Phường Tương Mai, Hà Nội', keeper:'Hoàng Văn Nam' },
+  { id:'KHO-DG-01', co:'DG', name:'Kho Đặng Gia – Hiệp Bình',       addr:'36/36/8 đường 4, Phường Hiệp Bình, TP Hồ Chí Minh', keeper:'Lý Thanh Tâm' },
+  { id:'KHO-OPCN-01', co:'OPCN', name:'Kho Optica – Ngọc Thụy',     addr:'Số 11 ngõ 344/58 Ngọc Thụy, Phường Bồ Đề, Hà Nội', keeper:'Ngô Đức Anh' },
+  { id:'KHO-VX-01', co:'VX', name:'Kho Việt Xanh – Yên Phụ',        addr:'Số 64 đường Yên Phụ, Phường Ba Đình, Hà Nội',  keeper:'Bùi Thị Lan' },
+];
+const CUSTOMERS = {
+  BN:{ name:'BV Đa khoa tỉnh Bắc Ninh', rcv:'ThS. Nguyễn Thị Lan', phone:'0912 345 678',
+       addrs:['Khoa Xét nghiệm – Tầng 2 nhà A, BV ĐK tỉnh Bắc Ninh, Đường Nguyễn Quyền, TP Bắc Ninh','Kho Dược – BV ĐK tỉnh Bắc Ninh, Đường Nguyễn Quyền, TP Bắc Ninh'] },
+  VD:{ name:'BV Đa khoa Vân Đình', rcv:'CN. Trần Văn Khánh', phone:'0988 112 233',
+       addrs:['Khoa Xét nghiệm – BV ĐK Vân Đình, TT Vân Đình, Ứng Hòa, Hà Nội'] },
+  TU:{ name:'BV Đa khoa Trung ương Thái Nguyên', rcv:'DS. Hoàng Mai Anh', phone:'0975 445 566',
+       addrs:['Khoa Dược – 479 Lương Ngọc Quyến, TP Thái Nguyên','Khoa Huyết học – 479 Lương Ngọc Quyến, TP Thái Nguyên'] },
+};
+const SUPPLIERS = {
+  ROCHE:  { name:'Công ty TNHH Roche Việt Nam', short:'Roche VN', addr:'Tầng 12, Pearl Plaza, 561A Điện Biên Phủ, Bình Thạnh, TP HCM',
+            whAddr:'Kho Roche miền Bắc – Lô B2 KCN Thăng Long, Đông Anh, Hà Nội',
+            bank:'Vietcombank – CN TP HCM', bankNo:'0071 0012 34567', acc:'CONG TY TNHH ROCHE VIET NAM' },
+  HONGANH:{ name:'Công ty TNHH Kỹ thuật Hồng Anh', short:'Hồng Anh', addr:'Số 15 ngõ 82 Duy Tân, Cầu Giấy, Hà Nội',
+            whAddr:'Kho Hồng Anh – Số 15 ngõ 82 Duy Tân, Cầu Giấy, Hà Nội',
+            bank:'BIDV – CN Cầu Giấy', bankNo:'1251 0000 778899', acc:'CONG TY TNHH KY THUAT HONG ANH' },
+};
+const PRODUCTS = {
+  'HH-01':{ trade:'7030207190', name:'Chất hiệu chuẩn xét nghiệm CA 125', tname:'CA 125 II CalSet II', unit:'Hộp', spec:'2 x 1 mL',  maker:'Roche/Đức' },
+  'HH-02':{ trade:'3045838214', name:'Thuốc thử xét nghiệm CA 15-3',     tname:'Elecsys CA 15-3 II', unit:'Hộp', spec:'100 tests', maker:'Roche (Suzhou)/TQ' },
+  'HH-03':{ trade:'8429324190', name:'Thuốc thử xét nghiệm TSH',         tname:'Elecsys TSH',        unit:'Hộp', spec:'200 tests', maker:'Roche/Đức' },
+  'HH-04':{ trade:'9315322190', name:'Thuốc thử xét nghiệm Troponin T tim', tname:'Elecsys Troponin T hs', unit:'Hộp', spec:'100 tests', maker:'Roche/Đức' },
+  'HH-07':{ trade:'GLV-M',      name:'Găng tay khám không bột size M',  tname:'Glove M',            unit:'Hộp', spec:'100 cái/hộp', maker:'Top Glove/Malaysia' },
+  'HH-09':{ trade:'MED-COMBO',  name:'Que test nhanh SARS-CoV-2 Antigen', tname:'Ag Combo',         unit:'Test', spec:'25 test/hộp', maker:'Hàn Quốc' },
+  'HH-10':{ trade:'INT-HIV',    name:'Rapid Anti-HIV Test',             tname:'Anti-HIV',           unit:'Test', spec:'30 test/hộp', maker:'Hàn Quốc' },
+  'HH-11':{ trade:'MEL-COL',    name:'MELAB Columbia Agar + 5% Sheep Blood', tname:'Columbia Agar', unit:'Đĩa', spec:'20 đĩa/túi', maker:'MELAB/Việt Nam' },
+  'HH-12':{ trade:'WS-5L',      name:'Dung dịch rửa máy sinh hóa',      tname:'Wash Solution',      unit:'Can', spec:'5 L/can',   maker:'Việt Nam' },
+};
+/* HĐ mua đã duyệt. lines[].purposes = mô hình purposes[] của purchase_contract_products
+   (1 dòng hàng gộp nhiều phiếu; mỗi phiếu: Phiếu ĐX / PXL / KH / HĐ bán / Cty thực hiện bán / SL mua theo phiếu) */
+const CONTRACTS = {
+  'HDM-2026-0012':{ number:'0812/2026/HĐMB/RVN-TA', type:2, a:'TA', sup:'ROCHE', sign:'2026-08-15', end:'2026-12-31',
+    deliveryMethod:'Giao tại kho Bên Mua', costPayer:2, payMode:'don',
+    terms:{ '100PCT':false, TIME:30, VALUE:500000000, ROLLING:2 },
+    lines:[
+      { id:'L1', p:'HH-01', qty:15, price:4200000, vat:5, purposes:[
+        { k:'a', proposal:'PĐXM-2026/018', handling:'PXL-2026-0031', cus:'BN', sale:'HĐB-2026/045', sco:'TA', qty:8 },
+        { k:'b', proposal:'PĐXM-2026/021', handling:'PXL-2026-0034', cus:'VD', sale:'HĐB-2026/047', sco:'AV', qty:3 },
+        { k:'c', proposal:'PĐXM-2026/022', handling:'PXL-2026-0035', cus:null, sale:null,           sco:null, qty:4 } ] },
+      { id:'L2', p:'HH-03', qty:8,  price:5100000, vat:5, purposes:[
+        { k:'a', proposal:'PĐXM-2026/021', handling:'PXL-2026-0034', cus:'VD', sale:'HĐB-2026/047', sco:'AV', qty:8 } ] },
+      { id:'L3', p:'HH-04', qty:5,  price:6200000, vat:5, purposes:[
+        { k:'a', proposal:'PĐXM-2026/024', handling:'PXL-2026-0038', cus:'TU', sale:'HĐB-2026/052', sco:'VL', qty:5 } ] },
+      { id:'L4', p:'HH-02', qty:4,  price:3850000, vat:5, purposes:[] },
+    ] },
+  'HDM-2026-0009':{ number:'0907/2026/HĐMB/HA-TA', type:2, a:'TA', sup:'HONGANH', sign:'2026-07-28', end:'2026-11-30',
+    deliveryMethod:'Giao tại nơi sử dụng hàng hóa', costPayer:1, payMode:'don',
+    terms:{ '100PCT':true },
+    lines:[
+      { id:'L1', p:'HH-09', qty:400, price:28000, vat:5, purposes:[
+        { k:'a', proposal:'PĐXM-2026/015', handling:'PXL-2026-0027', cus:'BN', sale:'HĐB-2026/045', sco:'TA', qty:400 } ] },
+      { id:'L2', p:'HH-10', qty:300, price:15000, vat:5, purposes:[
+        { k:'a', proposal:'PĐXM-2026/016', handling:'PXL-2026-0028', cus:'TU', sale:'HĐB-2026/052', sco:'VL', qty:300 } ] },
+    ] },
+  'HDM-2026-0015':{ number:'0115/2026/HĐNT/HA-AV', type:1, a:'AV', sup:'HONGANH', sign:'2026-09-01', end:'2027-08-31',
+    deliveryMethod:'Giao tại kho Bên Bán', costPayer:2, payMode:'nt', payDays:45, payMaxDebt:300000000,
+    terms:{},
+    lines:[
+      { id:'L1', p:'HH-07', qty:null, price:45000,  vat:8,  purposes:[] },
+      { id:'L2', p:'HH-12', qty:null, price:350000, vat:10, purposes:[] },
+      { id:'L3', p:'HH-11', qty:null, price:22000,  vat:5,  purposes:[] },
+    ] },
+};
+/* Các đơn giao đã có của từng HĐ (minh họa 1 HĐ – nhiều đơn giao – mỗi đơn 1 công ty nhận khác nhau) */
+const DELIVERIES = [
+  { code:'DGH-2026-0004', ct:'HDM-2026-0012', date:'2026-08-25', recv:'TA', method:'Cty tự lấy → về kho', dest:'Kho tổng Thành An – Yên Phụ',
+    pay:'prepaid', paid:true,  due:null,         status:'Hoàn thành',   items:{ 'L1|a':5 } },
+  { code:'DGH-2026-0007', ct:'HDM-2026-0012', date:'2026-09-02', recv:'AV', method:'NCC giao tại kho', dest:'Kho An Việt – Yên Phụ',
+    pay:'debt',    paid:false, due:'2026-10-20', status:'Đã nhập kho',  items:{ 'L2|a':3 } },
+  { code:'DGH-2026-0010', ct:'HDM-2026-0012', date:'2026-09-20', recv:'VL', method:'NCC giao thẳng KH', dest:'BV ĐK TW Thái Nguyên',
+    pay:'debt',    paid:false, due:'2026-10-25', status:'KH đã ký nhận', items:{ 'L3|a':2 } },
+  { code:'DGH-2026-0008', ct:'HDM-2026-0015', date:'2026-09-10', recv:'AV', method:'Cty tự lấy → về kho', dest:'Kho An Việt – Yên Phụ',
+    pay:'debt',    paid:false, due:'2026-10-25', status:'Đã nhập kho',  items:{ 'L1|_':100 } },
+];
+const SHIP = {
+  ncc_kho:{ icon:'ri-truck-line',       t:'NCC giao tại kho công ty',       d:'NCC vận chuyển hàng tới kho của công ty nhận hàng. Có thể phát sinh phí vận chuyển NCC thu.' },
+  ncc_kh: { icon:'ri-hospital-line',    t:'NCC giao thẳng cho khách hàng',  d:'NCC vận chuyển thẳng tới KH, không về kho công ty (nhập – xuất thẳng). Có thể phát sinh phí vận chuyển NCC thu.' },
+  tu_lay: { icon:'ri-user-shared-line', t:'Công ty tự lấy hàng tại NCC',    d:'Công ty cử người/xe sang NCC lấy hàng, rồi chở về kho hoặc giao luôn cho KH.' },
+};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x.toISOString().slice(0,10); };
+const TODAY = new Date().toISOString().slice(0,10);
+const state = {
+  contract:'', recv:'', invoice:'recv', deliverDate:addDays(TODAY,3), deliverTime:'08:00', recvDate:'', recvTime:'',
+  rows:[],                   // {lineId, q:{purposeKey:qty}, note}
+  ship:'ncc_kho', tuDest:'kho', kho:'', points:{}, pickAddr:'', pickEmp:'',
+  costPayer:2, costs:[], selfCosts:[], vcName:'', vcPayWhen:'after',
+  payType:'debt', debtMode:'rolling', days:30, daysFrom:'receive', rolling:2, overApprove:false,
+  prepayDue:addDays(TODAY,2),
+  dntt:null, errors:{},
+};
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const fm = n => (Math.round(Number(n)||0)).toLocaleString('vi-VN');
+const fd = s => s ? s.split('-').reverse().join('/') : '—';
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(msg){ const t=$('toast'); t.innerHTML=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',3200); }
+function openM(id){ $(id).classList.add('show'); } function closeM(id){ $(id).classList.remove('show'); }
+const C = () => CONTRACTS[state.contract];
+const lineOf = id => C().lines.find(l=>l.id===id);
+const isNT = () => C() && C().type===1;
+const dest = () => state.ship==='ncc_kho' ? 'kho' : state.ship==='ncc_kh' ? 'kh' : state.tuDest;
+const carrierIsNcc = () => state.ship!=='tu_lay';
+const payerCo = () => state.invoice==='recv' ? state.recv : (C()?C().a:'');
+function delivered(ctCode, lineId, pk){
+  return DELIVERIES.filter(d=>d.ct===ctCode).reduce((s,d)=>s+(d.items[lineId+'|'+pk]||0),0);
+}
+function errHtml(msg){ return msg?`<div class="err-tx"><i class="ri-error-warning-line"></i>${msg}</div>`:''; }
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+$('f-date').value = TODAY; $('f-deliver').value = state.deliverDate; $('f-deliver-time').value = state.deliverTime;
+$('f-contract').innerHTML = '<option value="">— Chọn hợp đồng mua —</option>' + Object.keys(CONTRACTS).map(k=>{
+  const c=CONTRACTS[k]; return `<option value="${k}">${k} · ${c.type===1?'Nguyên tắc':'Thương mại'} · ${SUPPLIERS[c.sup].short} · Bên A: ${COMPANIES[c.a].short}</option>`; }).join('');
+$('f-recv').innerHTML = '<option value="">— Chọn công ty —</option>' + Object.keys(COMPANIES).map(k=>`<option value="${k}">${COMPANIES[k].name}</option>`).join('');
+document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function showTab(t){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+t));
+}
+
+/* =====================================================================
+   TAB 1 — HĐ MUA + BÊN NHẬN
+   ===================================================================== */
+function onContract(code){
+  if(state.rows.length && !confirm('Đổi hợp đồng mua sẽ xóa danh sách hàng đã chọn. Tiếp tục?')){ $('f-contract').value=state.contract; return; }
+  state.contract=code; state.rows=[]; state.errors={};
+  const c=C();
+  if(c){
+    state.recv=c.a; state.invoice='recv';
+    state.ship = c.deliveryMethod==='Giao tại kho Bên Mua' ? 'ncc_kho' : c.deliveryMethod==='Giao tại nơi sử dụng hàng hóa' ? 'ncc_kh' : 'tu_lay';
+    state.tuDest='kho'; state.costPayer=c.costPayer; state.costs = c.costPayer===2 && state.ship!=='tu_lay' ? [defaultCost()] : []; state.selfCosts=[]; state.vcName='';
+    state.pickAddr=SUPPLIERS[c.sup].whAddr; state.kho=''; state.points={};
+    if(c.type===1){ state.payType='debt'; state.debtMode='days'; state.days=c.payDays; state.rolling=1; }
+    else if(c.terms['100PCT']){ state.payType='prepaid'; state.debtMode='days'; state.days=30; state.rolling=1; }
+    else { state.payType='debt'; state.debtMode = c.terms.ROLLING?'rolling':'days';
+           state.days=c.terms.TIME||30; state.rolling=c.terms.ROLLING||1; }
+    state.overApprove=false;
+  } else { state.recv=''; }
+  $('f-sup').value = c ? SUPPLIERS[c.sup].name : '';
+  $('f-recv').value = state.recv;
+  document.querySelector(`input[name=inv][value=${state.invoice}]`).checked=true;
+  $('f-pick-addr').value = state.pickAddr;
+  renderAll();
+}
+function renderContractInfo(){
+  const c=C();
+  if(!c){ $('ct-info').innerHTML='<div class="mut">Chọn hợp đồng mua để xem thông tin.</div>'; $('ct-type').innerHTML=''; return; }
+  $('ct-type').innerHTML = c.type===1 ? '<span class="badge b-violet">HĐ Nguyên tắc</span>' : '<span class="badge b-blue">HĐ Thương mại</span>';
+  const total = c.type===2 ? c.lines.reduce((s,l)=>s+l.qty*l.price,0) : null;
+  const deliveredVal = DELIVERIES.filter(d=>d.ct===state.contract).reduce((s,d)=>s+Object.keys(d.items).reduce((a,k)=>a+d.items[k]*lineOf(k.split('|')[0]).price,0),0);
+  const list = DELIVERIES.filter(d=>d.ct===state.contract);
+  $('ct-info').innerHTML = `
+    <div class="kv">
+      <div><div class="k">Số HĐ</div><div class="v">${c.number}</div></div>
+      <div><div class="k">Bên A (Bên Mua)</div><div class="v">${COMPANIES[c.a].name}</div></div>
+      <div><div class="k">Bên B (NCC)</div><div class="v">${SUPPLIERS[c.sup].name}</div></div>
+      <div><div class="k">Hiệu lực</div><div class="v">${fd(c.sign)} → ${fd(c.end)}</div></div>
+      <div><div class="k">Giá trị HĐ (có VAT)</div><div class="v">${total!=null?fm(total)+' đ':'Theo đơn giá (không cam kết SL)'}</div></div>
+      <div><div class="k">Đã giao (${list.length} đơn)</div><div class="v">${fm(deliveredVal)} đ</div></div>
+      <div><div class="k">Còn lại chưa giao</div><div class="v" style="color:var(--brand-tx)">${total!=null?fm(total-deliveredVal)+' đ':'—'}</div></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-weight:700;font-size:12.5px;margin-bottom:4px">Các đơn giao của HĐ này <span class="mut" style="font-weight:400">— mỗi đơn có thể giao cho 1 công ty khác nhau</span></div>
+    <table class="mt"><thead><tr><th>Mã đơn giao</th><th>Ngày</th><th>Công ty nhận</th><th>Phương thức</th><th>Nơi nhận</th><th class="tr">Giá trị (có VAT)</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead><tbody>
+    ${list.length? list.map(d=>{ const v=Object.keys(d.items).reduce((a,k)=>a+d.items[k]*lineOf(k.split('|')[0]).price,0);
+      return `<tr><td><span class="lnk">${d.code}</span></td><td>${fd(d.date)}</td><td>${COMPANIES[d.recv].short}${d.recv!==c.a?' <span class="badge b-amber">≠ Bên A</span>':''}</td><td>${d.method}</td><td>${d.dest}</td><td class="tr">${fm(v)}</td>
+        <td>${d.pay==='prepaid'?'<span class="badge b-green">Trả trước · Đã chi</span>':d.paid?'<span class="badge b-green">Công nợ · Đã TT</span>':`<span class="badge b-amber">Công nợ · hạn ${fd(d.due)}</span>`}</td><td>${d.status}</td></tr>`; }).join('')
+      : '<tr><td colspan="8" class="mut">Chưa có đơn giao nào.</td></tr>'}
+    </tbody></table>`;
+}
+function onRecv(v){
+  state.recv=v;
+  if(dest()==='kho'){ const w=WAREHOUSES.find(x=>x.id===state.kho); if(!w||w.co!==v) state.kho=''; }
+  renderAll();
+}
+function onInvoice(v){ state.invoice=v; renderAll(); }
+function saleCompaniesInOrder(){
+  const set=new Set(); if(!C()) return set;
+  state.rows.forEach(r=>{ const l=lineOf(r.lineId); l.purposes.forEach(p=>{ if((r.q[p.k]||0)>0 && p.sco) set.add(p.sco); }); });
+  return set;
+}
+function renderRecv(){
+  const c=C(); $('f-payer').value = payerCo()?COMPANIES[payerCo()].name:'';
+  $('err-recv').innerHTML = errHtml(state.errors.recv);
+  if(!c){ $('recv-badge').innerHTML=''; $('recv-note').innerHTML=''; return; }
+  const diff = state.recv && state.recv!==c.a;
+  $('recv-badge').innerHTML = !state.recv ? '' : diff ? `<span class="badge b-amber"><i class="ri-arrow-left-right-line"></i>Giao cho ${COMPANIES[state.recv].short} ≠ Bên A (${COMPANIES[c.a].short})</span>` : '<span class="badge b-green">Đúng Bên A của HĐ</span>';
+  let html='';
+  if(diff){
+    html += state.invoice==='recv'
+      ? `<div class="note note-warn"><i class="ri-information-line"></i><div>HĐ ký bởi <b>${COMPANIES[c.a].short}</b> nhưng đơn này giao cho <b>${COMPANIES[state.recv].short}</b> và NCC xuất hóa đơn cho <b>${COMPANIES[state.recv].short}</b> (MST ${COMPANIES[state.recv].tax}).
+          → Công nợ NCC ghi cho <b>${COMPANIES[state.recv].short}</b>; giá trị đơn vẫn trừ vào HĐ ${state.contract}. Cần NCC đồng ý xuất hóa đơn cho bên thứ ba (nên có văn bản ủy quyền/ phụ lục chỉ định bên nhận).</div></div>`
+      : `<div class="note note-warn"><i class="ri-information-line"></i><div>NCC xuất hóa đơn cho <b>${COMPANIES[c.a].short}</b> (Bên A), hàng giao thẳng cho <b>${COMPANIES[state.recv].short}</b>.
+          → Công nợ NCC ghi cho <b>${COMPANIES[c.a].short}</b>; sau khi nhận hàng cần lập chứng từ <b>bán / điều chuyển nội bộ ${COMPANIES[c.a].short} → ${COMPANIES[state.recv].short}</b>.</div></div>`;
+  }
+  const scos=[...saleCompaniesInOrder()];
+  if(scos.length && !(scos.length===1 && scos[0]===state.recv)){
+    html += `<div class="note note-info mt-2"><i class="ri-lightbulb-line"></i><div>Hàng đã chọn phục vụ HĐ bán của: ${scos.map(s=>`<b>${COMPANIES[s].short}</b>`).join(', ')}.
+      ${scos.length===1?`<button class="btn btn-success2" style="height:24px;margin-left:6px" onclick="$('f-recv').value='${scos[0]}';onRecv('${scos[0]}')">Giao cho ${COMPANIES[scos[0]].short}</button>`:' Nên tách đơn giao theo từng công ty bán.'}</div></div>`;
+  }
+  $('recv-note').innerHTML = html;
+}
+
+/* =====================================================================
+   POPUP CHỌN HÀNG
+   ===================================================================== */
+let pickSel = new Set();
+function pickRows(){
+  const c=C(); const out=[];
+  c.lines.forEach(l=>{
+    const ps = l.purposes.length ? l.purposes : [{ k:'_', proposal:null, handling:null, cus:null, sale:null, sco:null, qty:l.qty }];
+    ps.forEach(p=>{
+      const dlv=delivered(state.contract,l.id,p.k);
+      out.push({ key:l.id+'|'+p.k, l, p, dlv, remain: p.qty==null?null:p.qty-dlv });
+    });
+  });
+  return out;
+}
+function inOrder(key){ const [lid,pk]=key.split('|'); const r=state.rows.find(x=>x.lineId===lid); return r && (pk in r.q); }
+function openPicker(){
+  if(!C()){ toast('Chọn hợp đồng mua trước'); showTab('general'); return; }
+  pickSel=new Set();
+  const rows=pickRows();
+  const cus=[...new Set(rows.map(r=>r.p.cus).filter(Boolean))];
+  $('pk-cus').innerHTML='<option value="">Tất cả khách hàng</option>'+cus.map(k=>`<option value="${k}">${CUSTOMERS[k].name}</option>`).join('')+'<option value="__none">Cung ứng nội bộ / ngoài phiếu</option>';
+  const scos=[...new Set(rows.map(r=>r.p.sco).filter(Boolean))];
+  $('pk-sco').innerHTML='<option value="">Tất cả Cty thực hiện bán</option>'+scos.map(k=>`<option value="${k}">${COMPANIES[k].short}</option>`).join('');
+  $('pk-q').value='';
+  $('pick-title').textContent=`Chọn hàng hóa từ hợp đồng mua ${state.contract}`;
+  renderPicker(); openM('m-pick');
+}
+function pickBlockReason(r){
+  if(inOrder(r.key)) return 'Đã có trong đơn';
+  if(r.remain!=null && r.remain<=0) return 'Đã giao đủ';
+  if(dest()==='kh' && !r.p.cus) return 'Hàng nội bộ — phải về kho';
+  return '';
+}
+function renderPicker(){
+  const q=$('pk-q').value.trim().toLowerCase(), fc=$('pk-cus').value, fs=$('pk-sco').value, onlyRemain=$('pk-remain').checked;
+  const rows=pickRows().filter(r=>{
+    if(onlyRemain && r.remain!=null && r.remain<=0) return false;
+    if(fc==='__none' && r.p.cus) return false;
+    if(fc && fc!=='__none' && r.p.cus!==fc) return false;
+    if(fs && r.p.sco!==fs) return false;
+    if(q){ const P=PRODUCTS[r.l.p]; const hay=[P.name,P.tname,r.l.p,P.trade,r.p.proposal,r.p.handling,r.p.cus&&CUSTOMERS[r.p.cus].name,r.p.sale].join(' ').toLowerCase(); if(!hay.includes(q)) return false; }
+    return true;
+  });
+  $('pk-note').innerHTML = dest()==='kh'
+    ? `<div class="note note-info mb-2"><i class="ri-hospital-line"></i><div>Đơn giao thẳng cho khách hàng → được chọn hàng của <b>nhiều khách</b> (mỗi khách thành 1 điểm giao). Khóa hàng <b>cung ứng nội bộ / mua ngoài phiếu đề xuất</b> (không có HĐ bán để xuất thẳng) — lập đơn giao riêng về kho cho các dòng này.</div></div>`
+    : isNT() ? `<div class="note note-info mb-2"><i class="ri-information-line"></i><div>HĐ Nguyên tắc: không cam kết số lượng → SL giao nhập tự do theo đơn giá HĐ.</div></div>` : '';
+  $('pk-body').innerHTML = rows.length ? rows.map((r,i)=>{
+    const P=PRODUCTS[r.l.p], blk=pickBlockReason(r), sel=pickSel.has(r.key);
+    return `<tr class="r ${blk?'dis':''} ${sel?'sel':''}" onclick="${blk?'':`pickToggle('${r.key}')`}" title="${blk}">
+      <td><input type="checkbox" ${sel?'checked':''} ${blk?'disabled':''} onclick="event.stopPropagation();pickToggle('${r.key}')"></td>
+      <td>${i+1}</td><td><b>${P.name}</b><div class="mut" style="font-size:11px">${P.tname} · ${P.spec}</div></td>
+      <td class="mono">${r.l.p}<br><span class="mut">${P.trade}</span></td><td>${P.unit}</td>
+      <td>${r.p.proposal?`<span style="color:#0d6efd;font-weight:600">${r.p.proposal}</span><br><span style="color:#1e8e4e;font-size:11px">${r.p.handling}</span>`:'<span class="pp-none">Mua ngoài phiếu đề xuất</span>'}</td>
+      <td>${r.p.cus?CUSTOMERS[r.p.cus].name:(r.p.proposal?'<i class="mut">Cung ứng nội bộ</i>':'—')}</td>
+      <td>${r.p.sale||'—'}</td><td>${r.p.sco?COMPANIES[r.p.sco].short:'—'}</td>
+      <td class="tr">${r.p.qty==null?'—':fm(r.p.qty)}</td><td class="tr">${fm(r.dlv)}</td>
+      <td class="tr"><b>${r.remain==null?'∞':fm(r.remain)}</b></td>
+      <td>${blk?`<span class="badge b-gray">${blk}</span>`:r.p.proposal?'<span class="pill pill-b">Theo phiếu đề xuất</span>':'<span class="pill pill-g">Ngoài phiếu</span>'}</td></tr>`;
+  }).join('') : '<tr><td colspan="13" class="tc mut" style="padding:16px">Không có dòng phù hợp</td></tr>';
+  $('pk-count').innerHTML=`Đã chọn: <b>${pickSel.size}</b> dòng · Các dòng <b>cùng mã hàng</b> sẽ gộp 1 dòng (giao theo từng phiếu).`;
+  $('pk-add').disabled=!pickSel.size;
+  const avail=rows.filter(r=>!pickBlockReason(r)); const all=$('pk-all');
+  all.checked = avail.length && avail.every(r=>pickSel.has(r.key)); all.indeterminate = !all.checked && avail.some(r=>pickSel.has(r.key));
+}
+function pickToggle(k){ pickSel.has(k)?pickSel.delete(k):pickSel.add(k); renderPicker(); }
+function pickAll(on){
+  const q=$('pk-q').value; // dùng lại filter hiện tại
+  [...document.querySelectorAll('#pk-body tr.r:not(.dis)')].forEach(tr=>{ const m=tr.getAttribute('onclick').match(/'(.+)'/); if(m){ on?pickSel.add(m[1]):pickSel.delete(m[1]); } });
+  renderPicker();
+}
+function pickAdd(){
+  const rows=pickRows();
+  pickSel.forEach(key=>{
+    const r=rows.find(x=>x.key===key); const [lid,pk]=key.split('|');
+    let row=state.rows.find(x=>x.lineId===lid);
+    if(!row){ row={ lineId:lid, q:{}, note:'' }; state.rows.push(row); }
+    row.q[pk] = r.remain==null ? 0 : r.remain;
+  });
+  // giữ thứ tự theo HĐ
+  const order=C().lines.map(l=>l.id); state.rows.sort((a,b)=>order.indexOf(a.lineId)-order.indexOf(b.lineId));
+  closeM('m-pick'); delete state.errors.goods; renderAll(); showTab('goods');
+  toast(`Đã thêm ${pickSel.size} dòng phiếu vào đơn giao`);
+}
+
+/* =====================================================================
+   TAB 2 — BẢNG HÀNG HÓA
+   ===================================================================== */
+function rowQty(r){ return Object.values(r.q).reduce((s,v)=>s+(Number(v)||0),0); }
+/* Giao thẳng KH: 'int' = hàng nội bộ (không có KH) → phải về kho */
+function purposeIssue(p){
+  if(dest()!=='kh') return '';
+  if(!p.cus) return 'int';
+  return '';
+}
+/* Điểm giao (giao thẳng KH): tự nhóm theo KH của các phiếu đang có SL > 0, giữ thứ tự xuất hiện */
+function deliveryPoints(){
+  if(dest()!=='kh' || !C()) return [];
+  const map={}, order=[];
+  state.rows.forEach(r=>{ const l=lineOf(r.lineId);
+    l.purposes.forEach(p=>{ const q=Number(r.q[p.k])||0; if(!p.cus || !q) return;
+      if(!map[p.cus]){ map[p.cus]={ cus:p.cus, codes:new Set(), qty:0, sales:new Set() }; order.push(p.cus); }
+      map[p.cus].codes.add(l.p); map[p.cus].qty+=q; if(p.sale) map[p.cus].sales.add(p.sale); }); });
+  return order.map((k,i)=>{
+    if(!state.points[k]){ const K=CUSTOMERS[k]; state.points[k]={ addr:K.addrs[0], rcv:K.rcv, phone:K.phone }; }
+    return Object.assign({ no:i+1 }, map[k], state.points[k]);
+  });
+}
+function pointNo(cus){ const d=deliveryPoints().find(x=>x.cus===cus); return d?d.no:null; }
+/* Số dòng hàng nội bộ / mua ngoài phiếu đang có SL khi giao thẳng KH */
+function internalCount(){
+  if(dest()!=='kh') return 0;
+  let n=0;
+  state.rows.forEach(r=>{ const l=lineOf(r.lineId);
+    if(!l.purposes.length){ if(rowQty(r)>0) n++; return; }
+    l.purposes.forEach(p=>{ if((r.q[p.k]||0)>0 && purposeIssue(p)==='int') n++; }); });
+  return n;
+}
+function goodsTotal(){
+  let after=0, before=0, qty=0;
+  if(C()) state.rows.forEach(r=>{ const l=lineOf(r.lineId); const q=rowQty(r); const a=q*l.price; after+=a; before+=Math.round(a/(1+l.vat/100)); qty+=q; });
+  return { after, before, vat:after-before, qty };
+}
+function feeTotals(){
+  /* NCC chở + công ty chịu: khoản "Trả cho NCC" cộng vào tiền thanh toán NCC (NCC xuất hóa đơn);
+     khoản "Trả cho Đơn vị VC" công ty trả thẳng bên vận chuyển — KHÔNG vào hóa đơn / công nợ NCC */
+  const on = carrierIsNcc() && state.costPayer===2;
+  const sum = pt => on ? state.costs.filter(x=>x.payTo===pt).reduce((s,x)=>s+(Number(x.amount)||0),0) : 0;
+  const nccFee = sum('ncc'), carrierFee = sum('vc');
+  const selfFee = state.ship==='tu_lay' ? state.selfCosts.reduce((s,x)=>s+(Number(x.amount)||0),0) : 0;
+  return { nccFee, carrierFee, costFee:nccFee+carrierFee, selfFee };
+}
+function renderGoods(){
+  const c=C();
+  $('goods-ctx').innerHTML = c ? `<b>${state.contract}</b> · ${c.type===1?'Nguyên tắc':'Thương mại'} · NCC <b>${SUPPLIERS[c.sup].short}</b> · Bên A <b>${COMPANIES[c.a].short}</b> → giao cho <b>${state.recv?COMPANIES[state.recv].short:'—'}</b> · ${shipLabel()}` : 'Chưa chọn hợp đồng mua';
+  $('goods-msg').innerHTML = state.errors.goods ? `<div class="note note-err mb-2"><i class="ri-error-warning-line"></i><div>${state.errors.goods}</div></div>` : '';
+  if(!c || !state.rows.length){
+    $('goods-body').innerHTML=`<tr><td colspan="15" class="tc mut" style="padding:24px">Chưa có hàng hóa. Bấm <b>Chọn hàng từ HĐ mua</b>.</td></tr>`;
+  } else {
+    $('goods-body').innerHTML = state.rows.map((r,i)=>{
+      const l=lineOf(r.lineId), P=PRODUCTS[l.p];
+      const dlvAll = l.purposes.length ? l.purposes.reduce((s,p)=>s+delivered(state.contract,l.id,p.k),0) : delivered(state.contract,l.id,'_');
+      const remainAll = l.qty==null?null:l.qty-dlvAll;
+      let ppCell;
+      if(l.purposes.length){
+        ppCell = '<div class="pp">'+l.purposes.filter(p=>p.k in r.q).map(p=>{
+          const rem=p.qty-delivered(state.contract,l.id,p.k), iss=purposeIssue(p), v=r.q[p.k];
+          return `<div class="pp-it ${iss?'bad':''}">
+            <div class="d1">${p.proposal} <span style="color:#1e8e4e;font-weight:500">· ${p.handling}</span></div>
+            <div class="q">Giao <input class="inp w60 ${v>rem&&!isNT()?'over':''}" data-row="${i}" data-pk="${p.k}" value="${v}" oninput="onPpQty(this)"> / còn ${fm(rem)}${Object.keys(r.q).length>1?`<button class="icon-btn danger sm" title="Xóa phiếu này khỏi đơn" onclick="delPurpose(${i},'${p.k}')"><i class="ri-close-line"></i></button>`:''}</div>
+            <div class="d2">${dest()==='kh'&&p.cus&&Number(v)>0&&pointNo(p.cus)?`<span class="dp-tag">Điểm ${pointNo(p.cus)}</span>`:''}${p.cus?CUSTOMERS[p.cus].name:'<i>Cung ứng nội bộ</i>'}${p.sale?' · '+p.sale+' ('+COMPANIES[p.sco].short+')':''}
+              ${iss==='int'?'<br><b style="color:#b91c1c">Hàng nội bộ — phải về kho</b>':''}</div></div>`;
+        }).join('')+'</div>';
+      }
+      const q=rowQty(r), over = remainAll!=null && q>remainAll;
+      if(!l.purposes.length) ppCell = `<div class="pp"><div class="pp-it ${dest()==='kh'?'bad':''}">
+            <div class="d1" style="color:var(--muted);font-style:italic;font-weight:500">Mua ngoài phiếu đề xuất</div>
+            <div class="q">Giao <input class="inp w60 ${over?'over':''}" id="gq-${i}" value="${q}" oninput="onRowQty(this,${i})"> / còn ${remainAll==null?'∞':fm(remainAll)}</div>
+            <div class="d2">${isNT()?'HĐ Nguyên tắc — không giới hạn SL':''}${dest()==='kh'?'<br><b style="color:#b91c1c">Không có HĐ bán — phải về kho</b>':''}</div></div></div>`;
+      return `<tr class="${i?'newp':''}" id="gr-${i}">
+        <td class="fz tc">${i+1}</td><td class="mono">${l.p}<br><span class="mut">${P.trade}</span></td>
+        <td class="cell-name"><b>${P.name}</b><span>${P.tname}</span></td>
+        <td class="tc"><button class="icon-btn danger" title="Xóa" onclick="delRow(${i})"><i class="ri-delete-bin-line"></i></button></td>
+        <td>${P.spec}</td><td class="tc">${P.unit}</td><td>${P.maker}</td>
+        <td>${ppCell}</td>
+        <td class="tr">${l.qty==null?'—':fm(l.qty)}</td><td class="tr">${fm(dlvAll)}</td><td class="tr"><b>${remainAll==null?'∞':fm(remainAll)}</b></td>
+        <td class="tr">${fm(l.price)}</td><td class="tc">${l.vat}</td>
+        <td class="tr" id="ga-${i}"><b>${fm(q*l.price)}</b></td>
+        <td><input class="inp note" value="${esc(r.note)}" oninput="state.rows[${i}].note=this.value" placeholder="Ghi chú giao"></td></tr>`;
+    }).join('') + (()=>{ const g=goodsTotal(); return `<tr class="total-row"><td colspan="11" class="tr">TỔNG CỘNG</td><td></td><td></td><td class="tr" id="gt-a">${fm(g.after)}</td>
+        <td></td></tr>`; })();
+  }
+  $('tab-goods-count').textContent = state.rows.length;
+  renderSum(); renderGoodsWarn();
+}
+/* Sửa SL tại chỗ (không rebuild tbody → không nhảy con trỏ) */
+function onPpQty(inp){
+  const i=+inp.dataset.row, pk=inp.dataset.pk, r=state.rows[i], l=lineOf(r.lineId), p=l.purposes.find(x=>x.k===pk);
+  r.q[pk]=Math.max(0,Number(inp.value.replace(/\D/g,''))||0);
+  const rem=p.qty-delivered(state.contract,l.id,pk);
+  inp.classList.toggle('over', r.q[pk]>rem && !isNT());
+  refreshRow(i);
+}
+function onRowQty(inp,i){ state.rows[i].q['_']=Math.max(0,Number(inp.value.replace(/\D/g,''))||0); refreshRow(i); }
+function refreshRow(i){
+  const r=state.rows[i], l=lineOf(r.lineId), q=rowQty(r);
+  const dlvAll = l.purposes.length ? l.purposes.reduce((s,p)=>s+delivered(state.contract,l.id,p.k),0) : delivered(state.contract,l.id,'_');
+  const over = l.qty!=null && q>l.qty-dlvAll;
+  const gq=$('gq-'+i); if(gq) gq.classList.toggle('over',over);
+  $('ga-'+i).innerHTML=`<b>${fm(q*l.price)}</b>`;
+  const g=goodsTotal(); $('gt-a').textContent=fm(g.after);
+  renderSum(); renderGoodsWarn(); renderRecv(); renderPay(); renderContractInfo();
+  if(dest()==='kh') renderShip();
+}
+function delPurpose(i,pk){
+  const r=state.rows[i], p=lineOf(r.lineId).purposes.find(x=>x.k===pk);
+  if(!confirm(`Xóa phiếu ${p.proposal}${p.cus?' ('+CUSTOMERS[p.cus].name+')':''} khỏi mã ${lineOf(r.lineId).p}?`)) return;
+  delete r.q[pk];
+  if(!Object.keys(r.q).length) state.rows.splice(i,1);
+  delete state.errors.goods; renderAll();
+}
+function delRow(i){ if(!confirm('Xóa hàng hóa này khỏi đơn giao?')) return; state.rows.splice(i,1); renderAll(); }
+function renderSum(){
+  const g=goodsTotal(), ft=feeTotals();
+  const payNcc=g.after+ft.nccFee;
+  $('sum-box').innerHTML = `
+    <div class="srow"><span>Tiền hàng trước VAT</span><b>${fm(g.before)}</b></div>
+    <div class="srow"><span>VAT tiền hàng</span><b>${fm(g.vat)}</b></div>
+    <div class="srow"><span>Tiền hàng sau VAT</span><b>${fm(g.after)}</b></div>
+    ${carrierIsNcc()?`<div class="srow"><span>Phí vận chuyển NCC thu <span class="mut">(${state.costPayer===1?'NCC chịu — không tính':'cùng hóa đơn NCC'})</span></span><b>${fm(ft.nccFee)}</b></div>`:''}
+    <div class="srow tot"><span>Tổng thanh toán cho NCC</span><span>${fm(payNcc)} đ</span></div>
+    ${ft.carrierFee?`<div class="srow"><span>Chi phí VC trả đơn vị vận chuyển <span class="mut">(công ty trả trực tiếp, ngoài NCC)</span></span><b>${fm(ft.carrierFee)}</b></div>`:''}
+    ${state.ship==='tu_lay'?`<div class="srow"><span>Chi phí tự vận chuyển <span class="mut">(công ty trả trực tiếp, ngoài NCC)</span></span><b>${fm(ft.selfFee)}</b></div>`:''}
+    `;
+}
+function renderGoodsWarn(){
+  if(!C()||!state.rows.length){ $('goods-warn').innerHTML=''; return; }
+  const msgs=[];
+  const over=state.rows.filter(r=>{ const l=lineOf(r.lineId); if(l.qty==null) return false;
+    const rem = l.purposes.length ? null : l.qty-delivered(state.contract,l.id,'_');
+    return l.purposes.length ? l.purposes.some(p=>(r.q[p.k]||0)>p.qty-delivered(state.contract,l.id,p.k)) : rowQty(r)>rem; });
+  if(over.length) msgs.push(`<div class="note note-err mb-2"><i class="ri-error-warning-line"></i><div><b>${over.length} mặt hàng giao vượt SL còn lại của HĐ</b> — không lưu được. Muốn giao thêm cần làm <b>phụ lục tăng SL</b> HĐ mua.</div></div>`);
+  const zero=state.rows.filter(r=>!rowQty(r)); if(zero.length) msgs.push(`<div class="note note-warn mb-2"><i class="ri-alert-line"></i><div>${zero.length} mặt hàng có SL giao = 0 — sẽ bị bỏ qua khi lưu.</div></div>`);
+  if(dest()==='kh'){
+    const dps=deliveryPoints();
+    if(dps.length>1) msgs.push(`<div class="note note-info mb-2"><i class="ri-map-pin-line"></i><div>Đơn giao thẳng cho <b>${dps.length} khách hàng</b> → ${dps.map(d=>'Điểm '+d.no+': '+CUSTOMERS[d.cus].name).join(' · ')}. Địa chỉ / người nhận từng điểm ở tab <b>Giao nhận &amp; vận chuyển</b>.</div></div>`);
+    const ni=internalCount();
+    if(ni) msgs.push(`<div class="note note-err mb-2"><i class="ri-home-gear-line"></i><div><b>${ni} dòng hàng cung ứng nội bộ / mua ngoài phiếu đề xuất</b> không giao thẳng cho KH được (không có HĐ bán để xuất thẳng) — không lưu được. Xóa dòng hoặc đổi SL về 0, rồi lập <b>đơn giao riêng về kho</b>.</div></div>`);
+  }
+  if(isNT()) msgs.push(`<div class="note note-info mb-2"><i class="ri-information-line"></i><div>HĐ Nguyên tắc: giao theo đơn giá HĐ, không giới hạn SL. Giá trị đơn được kiểm theo <b>Số nợ tối đa</b> của HĐ (tab Thanh toán).</div></div>`);
+  $('goods-warn').innerHTML=msgs.join('');
+}
+
+/* =====================================================================
+   TAB 3 — GIAO NHẬN & VẬN CHUYỂN
+   ===================================================================== */
+function shipLabel(){ return state.ship==='tu_lay' ? (state.tuDest==='kho'?'Cty tự lấy → về kho':'Cty tự lấy → giao KH') : SHIP[state.ship].t; }
+function destName(){
+  if(dest()==='kho'){ const w=WAREHOUSES.find(x=>x.id===state.kho); return w?w.name:''; }
+  const dps=deliveryPoints();
+  return dps.length>1 ? dps.length+' điểm: '+dps.map(d=>CUSTOMERS[d.cus].name).join(' + ') : dps.length ? CUSTOMERS[dps[0].cus].name : '';
+}
+function setShip(k){ state.ship=k; if(k!=='tu_lay' && state.costPayer===2) ensureCosts(); renderAll(); }
+function setTuDest(v,ev){ if(ev) ev.stopPropagation(); state.ship='tu_lay'; state.tuDest=v; renderAll(); }
+function onKho(v){ state.kho=v; delete state.errors.kho; renderShip(); renderContractInfo(); }
+function onPoint(cus,f,v){ state.points[cus][f]=v; if(f==='addr') delete state.errors.cus; }
+/* Chi phí VC công ty chịu — bảng các khoản chi tự liệt kê */
+const COST_NAMES=['Phí vận chuyển','Phí bốc xếp','Phí cầu đường / bến bãi','Phí giao hàng ngoài giờ','Phí lưu kho','Phí bảo hiểm hàng hóa'];
+const SELF_COST_NAMES=['Cước thuê xe ngoài','Xăng xe / nhiên liệu','Phí cầu đường / bến bãi','Phí bốc xếp','Công tác phí người đi nhận'];
+/* Công ty tự lấy → bảng chi phí tự chi (state.selfCosts); NCC chở + công ty chịu → state.costs */
+const costList = () => state.ship==='tu_lay' ? state.selfCosts : state.costs;
+function defaultCost(){ return { name:'Phí vận chuyển', amount:1500000, payTo:'vc', note:'' }; }
+const CARRIERS=['Vận tải Hoàng Long','Vận tải Thành Bưởi','Xe tải Minh Phát','Viettel Post (hàng nặng)'];
+function ensureCosts(){ if(!state.costs.length) state.costs=[defaultCost()]; }
+function addCost(){ costList().push({ name:'', amount:0, payTo:'vc', note:'' }); renderCost(); }
+function onPayTo(i,v){ state.costs[i].payTo=v; renderAllCost(); }
+function delCost(i){ costList().splice(i,1); renderAllCost(); }
+function onCostAmt(i,inp){ const x=costList()[i]; x.amount=Number(inp.value.replace(/\D/g,''))||0; inp.value=fm(x.amount); renderAllCost(); }
+function costRowBad(x){ return !String(x.name).trim() || !(Number(x.amount)>0); }
+function renderShip(){
+  const c=C();
+  $('ship-opts').innerHTML = Object.keys(SHIP).map(k=>{
+    const s=SHIP[k], on=state.ship===k;
+    return `<div class="opt ${on?'on':''}" onclick="setShip('${k}')">
+      <div class="ot"><input type="radio" ${on?'checked':''}><i class="${s.icon}"></i>${s.t}</div>
+      <div class="od">${s.d}</div>
+      ${k==='tu_lay'?`<div class="subopts">
+         <span class="subopt ${on&&state.tuDest==='kho'?'on':''}" onclick="setTuDest('kho',event)"><i class="ri-home-4-line"></i>Lấy về kho công ty</span>
+         <span class="subopt ${on&&state.tuDest==='kh'?'on':''}" onclick="setTuDest('kh',event)"><i class="ri-hospital-line"></i>Giao luôn cho khách hàng</span></div>`:''}
+    </div>`; }).join('');
+  $('ship-by-contract').innerHTML = c ? `<span class="chip">Theo HĐ: ${c.deliveryMethod}</span>` : '';
+  $('ship-diff').innerHTML = '';
+  if(internalCount()) $('ship-diff').innerHTML += `<div class="note note-err mt-2"><i class="ri-home-gear-line"></i><div>Đơn đang có <b>${internalCount()} dòng hàng cung ứng nội bộ / mua ngoài phiếu đề xuất</b> — giao thẳng KH sẽ không lưu được. Chọn phương thức về kho, hoặc bỏ các dòng đó ở tab Hàng hóa.</div></div>`;
+  $('sec-pickup').classList.toggle('hide', state.ship!=='tu_lay');
+  $('sec-dest-kho').classList.toggle('hide', dest()!=='kho');
+  $('sec-dest-kh').classList.toggle('hide', dest()!=='kh');
+  // kho theo công ty nhận
+  const whs=WAREHOUSES.filter(w=>!state.recv||w.co===state.recv);
+  $('f-kho').innerHTML='<option value="">— Chọn kho —</option>'+whs.map(w=>`<option value="${w.id}" ${w.id===state.kho?'selected':''}>${w.name}</option>`).join('');
+  const w=WAREHOUSES.find(x=>x.id===state.kho);
+  $('f-kho-addr').value=w?w.addr:''; $('f-kho-keeper').value=w?w.keeper:'';
+  $('f-kho-date').value=state.recvDate||state.deliverDate; $('f-kho-time').value=state.recvTime||state.deliverTime;
+  $('err-kho').innerHTML=errHtml(state.errors.kho);
+  // Điểm giao: tự nhóm theo KH của hàng trong đơn
+  const dps=deliveryPoints();
+  $('dp-count').innerHTML = dps.length ? `<span class="badge b-blue">${dps.length} điểm giao</span>` : '';
+  $('dp-list').innerHTML = !dps.length
+    ? '<div class="mut" style="padding:8px 0">Chưa có hàng của khách hàng nào — chọn hàng ở tab <b>Hàng hóa</b>, hệ thống tự tạo điểm giao theo khách hàng.</div>'
+    : dps.map(d=>{ const K=CUSTOMERS[d.cus], ck=`'${d.cus}'`;
+      return `<div class="dp"><div class="dp-h"><span class="dp-no">Điểm ${d.no}</span><span class="nm">${K.name}</span>
+          <span class="mt2">· ${d.codes.size} mã / SL ${fm(d.qty)}${d.sales.size?' · HĐ bán '+[...d.sales].join(', '):''}</span></div>
+        <div class="grid">
+          <div class="s2"><label class="v2-label">Địa chỉ giao hàng<span class="req">*</span></label><select class="v2-input" onchange="onPoint(${ck},'addr',this.value)">${K.addrs.map(x=>`<option ${x===d.addr?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
+          <div><label class="v2-label">Người nhận</label><input class="v2-input" value="${esc(d.rcv)}" oninput="onPoint(${ck},'rcv',this.value)"></div>
+          <div><label class="v2-label">SĐT người nhận</label><input class="v2-input" value="${esc(d.phone)}" oninput="onPoint(${ck},'phone',this.value)"></div>
+        </div></div>`; }).join('');
+  $('err-cus').innerHTML=errHtml(state.errors.cus);
+  $('err-pickemp').innerHTML=errHtml(state.errors.pickEmp);
+  renderCost();
+}
+function renderCost(){
+  const c=C(), ft=feeTotals();
+  let h='';
+  if(carrierIsNcc()){
+    $('cost-badge').innerHTML = c?`<span class="chip">Theo HĐ: ${c.costPayer===1?'Bên bán trả phí':'Bên mua trả phí'}</span>`:'';
+    h += `<div class="grid">
+      <div><label class="v2-label">Bên chịu phí vận chuyển<span class="req">*</span></label>
+        <div class="radio-inline">
+          <label><input type="radio" name="cp" ${state.costPayer===1?'checked':''} onchange="state.costPayer=1;renderAllCost()">NCC chịu (đã gồm trong giá)</label>
+          <label><input type="radio" name="cp" ${state.costPayer===2?'checked':''} onchange="state.costPayer=2;ensureCosts();renderAllCost()">Công ty chịu</label></div></div>
+      ${state.costPayer===2?`
+      <div class="s3">${costTable(ft)}</div>`
+      : `<div class="s2"><div class="note note-ok" style="margin-top:20px"><i class="ri-checkbox-circle-line"></i><div>NCC chịu phí vận chuyển — không phát sinh thêm chi phí.</div></div></div>`}
+    </div>`;
+  } else {
+    $('cost-badge').innerHTML='<span class="chip">Công ty trả trực tiếp</span>';
+    h = costTable(ft);
+  }
+  $('cost-body').innerHTML=h;
+}
+function costTable(ft){
+  const err=!!state.errors.cost, self=state.ship==='tu_lay', list=costList();
+  const bad='style="border-color:var(--danger)"', ncol=self?5:6;
+  const rows=list.map((x,i)=>`<tr>
+      <td class="tc">${i+1}</td>
+      <td><input class="v2-input sm" list="cost-names" placeholder="${self?'VD: Cước thuê xe ngoài':'VD: Phí bốc xếp'}" value="${esc(x.name)}" ${err&&!String(x.name).trim()?bad:''} oninput="costList()[${i}].name=this.value"></td>
+      ${self?'':`<td><select class="v2-input sm" onchange="onPayTo(${i},this.value)"><option value="vc" ${x.payTo==='vc'?'selected':''}>Đơn vị vận chuyển</option><option value="ncc" ${x.payTo==='ncc'?'selected':''}>NCC (cùng hóa đơn)</option></select></td>`}
+      <td><input class="v2-input sm tr" value="${fm(x.amount)}" ${err&&!(Number(x.amount)>0)?bad:''} onchange="onCostAmt(${i},this)"></td>
+      <td><input class="v2-input sm" placeholder="Ghi chú" value="${esc(x.note)}" oninput="costList()[${i}].note=this.value"></td>
+      <td class="tc"><button class="icon-btn danger sm" title="Xóa khoản chi" onclick="delCost(${i})"><i class="ri-delete-bin-line"></i></button></td></tr>`).join('');
+  return `<label class="v2-label">Các khoản chi${self?'':'<span class="req">*</span>'}<i class="ri-information-line lbl-tip" title="${self
+      ? 'Chi phí công ty tự chi khi đi lấy hàng (thuê xe ngoài, xăng xe, cầu đường, bốc xếp…) — trả trực tiếp cho đơn vị / người chi, KHÔNG cộng vào tiền thanh toán NCC.'
+      : 'Trả cho NCC (cùng hóa đơn) → cộng vào tiền thanh toán NCC, vào đề nghị thanh toán / công nợ NCC. Trả cho Đơn vị vận chuyển → công ty trả trực tiếp bên vận chuyển (NCC thuê xe nhưng không thu khoản này), KHÔNG nằm trong hóa đơn / công nợ NCC.'}"></i></label>
+    <datalist id="cost-names">${(self?SELF_COST_NAMES:COST_NAMES).map(n=>`<option value="${n}">`).join('')}</datalist>
+    <table class="mt"><thead><tr><th class="tc" style="width:36px">#</th><th>Khoản chi<span class="req">*</span></th>${self?'':'<th style="width:190px">Trả cho<span class="req">*</span></th>'}<th class="tr" style="width:150px">Số tiền (VNĐ)<span class="req">*</span></th><th>Ghi chú</th><th style="width:40px"></th></tr></thead><tbody>
+      ${rows || `<tr><td colspan="${ncol}" class="mut">Chưa có khoản chi nào.</td></tr>`}
+      <tr><td colspan="${ncol}"><button class="btn btn-secondary" style="height:28px" onclick="addCost()"><i class="ri-add-line"></i>Thêm khoản chi</button></td></tr>
+      ${self?'':`<tr><td colspan="3" class="mut" style="padding-left:12px">Trả NCC (cùng hóa đơn)</td><td class="tr">${fm(ft.nccFee)}</td><td colspan="2"></td></tr>
+      <tr><td colspan="3" class="mut" style="padding-left:12px">Trả đơn vị vận chuyển</td><td class="tr">${fm(ft.carrierFee)}</td><td colspan="2"></td></tr>`}
+      <tr class="hl"><td colspan="${self?2:3}"><b>Tổng chi phí</b></td><td class="tr"><b>${fm(self?ft.selfFee:ft.costFee)}</b></td><td colspan="2"></td></tr>
+    </tbody></table>${errHtml(state.errors.cost)}
+    ${!self&&ft.carrierFee?`<div class="grid mt-2"><div><label class="v2-label">Đơn vị vận chuyển nhận tiền<span class="req">*</span><i class="ri-information-line lbl-tip" title="Bên vận chuyển NCC thuê — công ty thanh toán trực tiếp, đơn vị này xuất hóa đơn cước vận chuyển cho công ty"></i></label>
+      <input class="v2-input" list="carrier-names" placeholder="Nhập / chọn đơn vị vận chuyển" value="${esc(state.vcName)}" ${state.errors.vcName?bad:''} oninput="state.vcName=this.value" onchange="renderPay()">
+      <datalist id="carrier-names">${CARRIERS.map(n=>`<option value="${n}">`).join('')}</datalist>${errHtml(state.errors.vcName)}</div></div>`:''}`;
+}
+function renderAllCost(){ renderCost(); renderGoods(); renderPay(); }
+
+/* =====================================================================
+   TAB 4 — THANH TOÁN
+   ===================================================================== */
+function openDebts(){ return DELIVERIES.filter(d=>d.ct===state.contract && d.pay==='debt' && !d.paid); }
+function debtVal(d){ return Object.keys(d.items).reduce((a,k)=>a+d.items[k]*lineOf(k.split('|')[0]).price,0); }
+/* Tiền thanh toán NCC = tiền hàng (sau VAT) + khoản phí VC trả NCC; không gồm khoản trả đơn vị VC */
+function payTotal(){ return goodsTotal().after + feeTotals().nccFee; }
+function dueDate(){ return addDays(state.deliverDate, Number(state.days)||0); }
+function setPayType(t){ state.payType=t; renderPay(); renderContractInfo(); }
+function rollingCheck(){
+  const c=C(); if(!c) return null;
+  const open=openDebts(); const useRolling = state.debtMode!=='days';
+  const max = isNT()?null:(c.terms.VALUE||null), maxNT = isNT()?c.payMaxDebt:null;
+  const curDebt=open.reduce((s,d)=>s+debtVal(d),0);
+  return { open, curDebt, after:curDebt+payTotal(), limitVal: max||maxNT,
+           rollOver: useRolling && open.length+1>state.rolling };
+}
+function renderPay(){
+  const c=C();
+  $('pay-by-contract').innerHTML = !c ? '' : isNT()
+    ? `<span class="chip">HĐ NT: nợ ${c.payDays} ngày</span><span class="chip">Nợ tối đa ${fm(c.payMaxDebt)} đ</span>`
+    : ['100PCT','TIME','VALUE','ROLLING'].filter(k=>c.terms[k]).map(k=>`<span class="chip on">${k==='100PCT'?'100% trước giao hàng':k==='TIME'?'Giới hạn '+c.terms.TIME+' ngày':k==='VALUE'?'Tối đa '+fm(c.terms.VALUE)+' đ':'Gối đầu '+c.terms.ROLLING+' đơn'}</span>`).join('');
+  const P=[
+    { k:'prepaid', i:'ri-hand-coin-line', t:'Thanh toán trước khi giao', d:'Lập <b>đề nghị thanh toán → Kế toán</b>. Đơn chỉ được giao/lấy hàng khi kế toán xác nhận <b>Đã chi</b>.' },
+    { k:'debt',    i:'ri-file-list-2-line', t:'Ghi vào công nợ', d:'Nhận hàng trước, ghi công nợ phải trả NCC. Bắt buộc ghi rõ <b>hạn thanh toán</b> (số ngày) hoặc <b>gối đầu đơn hàng</b>.' },
+  ];
+  $('pay-opts').innerHTML = P.map(p=>`<div class="opt ${state.payType===p.k?'on':''}" onclick="setPayType('${p.k}')">
+     <div class="ot"><input type="radio" ${state.payType===p.k?'checked':''}><i class="${p.i}"></i>${p.t}</div><div class="od">${p.d}</div>
+     ${c && ((p.k==='prepaid'&&c.terms['100PCT'])||(p.k==='debt'&&!c.terms['100PCT'])) ? '<span class="tag badge b-green">Theo HĐ</span>':''}</div>`).join('');
+  if(!c){ $('pay-detail').innerHTML=''; return; }
+  const total=payTotal(), sup=SUPPLIERS[c.sup], payer=payerCo(), g=goodsTotal(), ft=feeTotals();
+  let h='';
+  if(c.terms['100PCT'] && state.payType==='debt') h+=`<div class="note note-warn mb-2"><i class="ri-alert-line"></i><div>HĐ quy định <b>100% trước giao hàng</b> — ghi công nợ là ngoại lệ, đơn sẽ cần BGĐ duyệt vượt điều khoản.</div></div>`;
+  if(state.payType==='prepaid'){
+    h+=`<div class="sec"><div class="sec-h"><h6>Thanh toán trước</h6><span class="sp"></span>${state.dntt?`<span class="badge ${state.dntt.status==='Đã chi'?'b-green':'b-amber'}">${state.dntt.code} · ${state.dntt.status}</span>`:'<span class="badge b-gray">Chưa có đề nghị thanh toán</span>'}</div><div class="sec-b">
+      <div class="grid">
+        <div><label class="v2-label">Tiền hàng (sau VAT)</label><input class="v2-input tr" value="${fm(g.after)}" disabled></div>
+        <div><label class="v2-label">Phí VC NCC thu<i class="ri-information-line lbl-tip" title="Các khoản chi Trả cho NCC (cùng hóa đơn) ở tab Giao nhận. Khoản trả đơn vị vận chuyển không tính ở đây."></i></label><input class="v2-input tr" value="${fm(ft.nccFee)}" disabled></div>
+        <div><label class="v2-label">Số tiền thanh toán trước NCC</label><input class="v2-input tr" value="${fm(total)}" disabled style="font-weight:700"></div>
+        <div><label class="v2-label">Hạn chi<span class="req">*</span></label><input type="date" class="v2-input" value="${state.prepayDue}" onchange="state.prepayDue=this.value">
+          ${state.prepayDue>state.deliverDate?errHtml('Hạn chi sau ngày giao dự kiến'):'<div class="hint">Phải trước ngày giao dự kiến '+fd(state.deliverDate)+'</div>'}</div>
+        <div><label class="v2-label">Công ty chi tiền</label><input class="v2-input" value="${payer?COMPANIES[payer].name:''}" disabled></div>
+        <div><label class="v2-label">Đơn vị thụ hưởng</label><input class="v2-input" value="${sup.name}" disabled></div>
+        <div><label class="v2-label">Số tài khoản</label><input class="v2-input" value="${sup.bankNo}" disabled></div>
+        <div><label class="v2-label">Ngân hàng</label><input class="v2-input" value="${sup.bank}" disabled></div>
+      </div>
+    </div></div>`;
+  } else {
+    const rc=rollingCheck();
+    h+=`<div class="sec"><div class="sec-h"><h6>Ghi công nợ phải trả NCC</h6><span class="sp"></span><span class="badge b-blue">Ghi nợ cho: ${payer?COMPANIES[payer].short:'—'}</span></div><div class="sec-b">
+      <label class="v2-label">Cách tính hạn nợ<span class="req">*</span></label>
+      <div class="opts two" style="margin-bottom:10px">
+        ${[['days','ri-calendar-event-line','Theo thời hạn','Nợ N ngày kể từ ngày nhận hàng / ngày hóa đơn → ra Ngày đến hạn cố định.'],
+           ['rolling','ri-stack-line','Gối đầu đơn hàng','Tối đa K đơn giao đang nợ. Muốn giao đơn K+1 thì phải trả đơn nợ cũ nhất.']]
+          .map(([k,i,t,d])=>`<div class="opt ${state.debtMode===k?'on':''}" onclick="state.debtMode='${k}';renderPay()"><div class="ot"><input type="radio" ${state.debtMode===k?'checked':''}><i class="${i}"></i>${t}</div><div class="od">${d}</div></div>`).join('')}
+      </div>
+      <div class="grid">
+        ${state.debtMode!=='rolling'?`
+        <div><label class="v2-label">Số ngày được nợ<span class="req">*</span></label><input class="v2-input tr" value="${state.days}" oninput="state.days=Number(this.value.replace(/\\D/g,''))||0;$('f-due').value=fd(dueDate())">
+          <div class="hint">Theo HĐ: ${isNT()?c.payDays:(c.terms.TIME||'—')} ngày</div></div>
+        <div><label class="v2-label">Tính từ</label><select class="v2-input" onchange="state.daysFrom=this.value;renderPay()"><option value="receive" ${state.daysFrom==='receive'?'selected':''}>Ngày nhận hàng (biên bản giao nhận)</option><option value="invoice" ${state.daysFrom==='invoice'?'selected':''}>Ngày nhận hóa đơn hợp lệ</option></select></div>
+        <div><label class="v2-label">Ngày đến hạn (dự kiến)</label><input class="v2-input" id="f-due" value="${fd(dueDate())}" disabled><div class="hint">Tính theo ngày giao dự kiến; chốt lại khi xác nhận nhận hàng</div></div>`:''}
+        ${state.debtMode!=='days'?`
+        <div><label class="v2-label">Số đơn gối đầu tối đa<span class="req">*</span></label><input class="v2-input tr" value="${state.rolling}" oninput="state.rolling=Math.max(1,Number(this.value.replace(/\\D/g,''))||1);renderPayCheck()">
+          <div class="hint">Theo HĐ: ${c.terms.ROLLING||'—'} đơn · đếm các đơn giao <b>đang nợ</b> của HĐ ${state.contract}</div></div>`:''}
+      </div>
+      <div id="pay-check" class="mt-2"></div>
+    </div></div>`;
+  }
+  const ftc=feeTotals();
+  if(ftc.carrierFee){
+    h+=`<div class="sec"><div class="sec-h"><h6>Chi phí vận chuyển trả đơn vị vận chuyển</h6><i class="ri-information-line lbl-tip" title="NCC thuê xe nhưng không thu khoản này → công ty trả trực tiếp bên vận chuyển. Thanh toán riêng, KHÔNG nằm trong hóa đơn / công nợ NCC của đơn."></i><span class="sp"></span><span class="badge b-gray">Ngoài NCC</span></div><div class="sec-b">
+      <div class="grid">
+        <div><label class="v2-label">Số tiền</label><input class="v2-input tr" value="${fm(ftc.carrierFee)}" disabled style="font-weight:700"></div>
+        <div><label class="v2-label">Đơn vị nhận tiền</label><input class="v2-input" value="${esc(state.vcName)||'— chưa nhập ở tab Giao nhận —'}" disabled></div>
+        <div><label class="v2-label">Thời điểm chi</label><select class="v2-input" onchange="state.vcPayWhen=this.value"><option value="after" ${state.vcPayWhen==='after'?'selected':''}>Sau khi giao xong (theo chứng từ VC)</option><option value="before" ${state.vcPayWhen==='before'?'selected':''}>Trước khi giao (ĐNTT riêng)</option></select></div>
+      </div>
+    </div></div>`;
+  }
+  $('pay-detail').innerHTML=h;
+  if(state.payType==='debt') renderPayCheck();
+}
+function renderPayCheck(){
+  const rc=rollingCheck(); if(!rc||!$('pay-check')) return;
+  const c=C();
+  let h=`<div style="font-weight:700;font-size:12.5px;margin:6px 0 4px">Đơn giao đang nợ của HĐ ${state.contract}</div>
+    <table class="mt"><thead><tr><th>#</th><th>Mã đơn giao</th><th>Công ty</th><th>Ngày giao</th><th>Đến hạn</th><th class="tr">Còn nợ (VNĐ)</th><th></th></tr></thead><tbody>
+    ${rc.open.map((d,i)=>`<tr><td>${i+1}</td><td><span class="lnk">${d.code}</span></td><td>${COMPANIES[d.recv].short}</td><td>${fd(d.date)}</td><td>${fd(d.due)}</td><td class="tr">${fm(debtVal(d))}</td>
+      <td>${rc.rollOver&&i===0?'<span class="badge b-red">Phải trả trước khi giao đơn mới</span>':''}</td></tr>`).join('')}
+    <tr class="hl"><td>${rc.open.length+1}</td><td><b>DGH-2026-0011</b> (đơn này)</td><td>${payerCo()?COMPANIES[payerCo()].short:'—'}</td><td>${fd(state.deliverDate)}</td><td>${state.debtMode==='rolling'?'Khi giao đơn thứ '+(state.rolling+1):fd(dueDate())}</td><td class="tr"><b>${fm(payTotal())}</b></td><td></td></tr>
+    </tbody></table>
+    <div class="kv mt-2">
+      <div><div class="k">Số đơn đang nợ (kể cả đơn này)</div><div class="v" style="color:${rc.rollOver?'#b91c1c':'inherit'}">${rc.open.length+1}${state.debtMode!=='days'?' / tối đa '+state.rolling:''}</div></div>
+      <div><div class="k">Dư nợ HĐ hiện tại</div><div class="v">${fm(rc.curDebt)} đ</div></div>
+      <div><div class="k">Dư nợ sau đơn này</div><div class="v" style="color:${rc.limitVal&&rc.after>rc.limitVal?'#b91c1c':'inherit'}">${fm(rc.after)} đ</div></div>
+      <div><div class="k">Hạn mức giá trị</div><div class="v">${rc.limitVal?fm(rc.limitVal)+' đ':'—'}</div></div>
+    </div>`;
+  const viol=[];
+  if(rc.rollOver) viol.push(`Vượt gối đầu: đã có <b>${rc.open.length}</b> đơn đang nợ, tối đa <b>${state.rolling}</b>. Cần thanh toán <b>${rc.open[0].code}</b> trước khi giao đơn này.`);
+  if(rc.limitVal && rc.after>rc.limitVal) viol.push(`Vượt hạn mức giá trị nợ ${fm(rc.limitVal)} đ.`);
+  if(viol.length){
+    h+=`<div class="note note-err mt-2"><i class="ri-error-warning-line"></i><div>${viol.join('<br>')}
+      <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+        <label style="display:inline-flex;gap:6px;align-items:center;font-weight:600"><input type="checkbox" ${state.overApprove?'checked':''} onchange="state.overApprove=this.checked">Gửi BGĐ phê duyệt vượt điều khoản</label>
+        <span class="mut">hoặc</span>
+        <button class="btn btn-secondary" style="height:26px" onclick="toast('Mở đề nghị thanh toán cho ${rc.open[0]?rc.open[0].code:''} (đơn nợ cũ nhất)')"><i class="ri-money-dollar-circle-line"></i>Lập ĐNTT trả ${rc.open[0]?rc.open[0].code:''}</button></div></div></div>`;
+  } else h+=`<div class="note note-ok mt-2"><i class="ri-checkbox-circle-line"></i><div>Trong điều khoản công nợ của HĐ — không cần duyệt vượt.</div></div>`;
+  h+=`<div class="hint mt-2"><i class="ri-information-line"></i> Đến hạn → hệ thống nhắc Cung ứng/Kế toán, lập <b>đề nghị thanh toán</b> từ màn Công nợ NCC (chọn nhiều đơn giao cùng lúc).</div>`;
+  $('pay-check').innerHTML=h;
+}
+
+/* ---------------- Đề nghị thanh toán ---------------- */
+function openDntt(){
+  if(!C()){ toast('Chọn hợp đồng mua trước'); return; }
+  const c=C(), sup=SUPPLIERS[c.sup], g=goodsTotal(), ft=feeTotals(), payer=payerCo();
+  $('dntt-body').innerHTML=`<div class="grid">
+    <div><label class="v2-label">Số đề nghị</label><input class="v2-input" value="${state.dntt?state.dntt.code:'DNTT-2026-0142'}" disabled></div>
+    <div><label class="v2-label">Ngày đề nghị</label><input class="v2-input" value="${fd(TODAY)}" disabled></div>
+    <div><label class="v2-label">Loại</label><input class="v2-input" value="Thanh toán trước giao hàng (NCC)" disabled></div>
+    <div><label class="v2-label">Công ty đề nghị chi</label><input class="v2-input" value="${payer?COMPANIES[payer].name:''}" disabled></div>
+    <div><label class="v2-label">Chứng từ gốc</label><input class="v2-input" value="DGH-2026-0011 · ${state.contract}" disabled></div>
+    <div><label class="v2-label">Hạn chi<span class="req">*</span></label><input class="v2-input" value="${fd(state.prepayDue)}" disabled></div>
+    <div><label class="v2-label">Đơn vị thụ hưởng</label><input class="v2-input" value="${sup.name}" disabled></div>
+    <div><label class="v2-label">STK / Ngân hàng</label><input class="v2-input" value="${sup.bankNo} — ${sup.bank}" disabled></div>
+    <div><label class="v2-label">Người duyệt (Kế toán)<span class="req">*</span></label><select class="v2-input"><option>Nguyễn Thị Hạnh — Kế toán trưởng</option><option>Lê Thu Hà — Kế toán thanh toán</option></select></div>
+    <div class="s3"><label class="v2-label">Nội dung</label><textarea class="v2-input" rows="2">Thanh toán trước đơn giao DGH-2026-0011 theo HĐ ${c.number} (${state.contract}) — ${SUPPLIERS[c.sup].short}</textarea></div>
+  </div>
+  <div class="sum-grid" style="grid-template-columns:1fr 360px"><div class="box"><b>Đính kèm:</b> Hóa đơn / Proforma của NCC, Đơn giao hàng (PDF) <br><button class="btn btn-secondary mt-2" style="height:26px"><i class="ri-attachment-2"></i>Chọn file</button></div>
+  <div class="box" style="background:#fff;border-style:solid">
+    <div class="srow"><span>Tiền hàng (có VAT)</span><b>${fm(g.after)}</b></div>
+    ${ft.nccFee?`<div class="srow"><span>Phí VC NCC thu</span><b>${fm(ft.nccFee)}</b></div>`:''}
+    <div class="srow tot"><span>Số tiền đề nghị</span><span>${fm(payTotal())} đ</span></div></div></div>`;
+  openM('m-dntt');
+}
+function dnttSend(){
+  state.dntt={ code:'DNTT-2026-0142', status:'Chờ kế toán chi' };
+  closeM('m-dntt');
+  toast('Đã gửi <b>DNTT-2026-0142</b> tới Phòng Kế toán'); renderPay();
+}
+
+/* =====================================================================
+   LƯU + VALIDATE
+   ===================================================================== */
+function validate(){
+  const e={}; const c=C();
+  if(!c) e.contract='Chọn hợp đồng mua';
+  if(!state.recv) e.recv='Chọn công ty nhận hàng';
+  if(c){
+    const valid=state.rows.filter(r=>rowQty(r)>0);
+    if(!valid.length) e.goods='Chưa có hàng hóa nào có SL giao > 0';
+    else {
+      const over=state.rows.some(r=>{ const l=lineOf(r.lineId); if(l.qty==null) return false;
+        return l.purposes.length ? l.purposes.some(p=>(r.q[p.k]||0)>p.qty-delivered(state.contract,l.id,p.k)) : rowQty(r)>l.qty-delivered(state.contract,l.id,'_'); });
+      if(over) e.goods='Có mặt hàng giao vượt SL còn lại của HĐ mua';
+      if(internalCount()) e.goods='Giao thẳng KH không được chứa hàng cung ứng nội bộ / mua ngoài phiếu đề xuất — tách đơn giao riêng về kho';
+    }
+  }
+  if(dest()==='kho' && !state.kho) e.kho='Chọn kho nhận';
+  if(dest()==='kh' && c && !deliveryPoints().length) e.cus='Chưa có hàng của khách hàng nào để giao thẳng';
+  if(dest()==='kh' && deliveryPoints().some(d=>!d.addr)) e.cus='Nhập địa chỉ giao hàng cho từng điểm giao';
+  if(carrierIsNcc() && state.costPayer===2){
+    if(!state.costs.length) e.cost='Nhập ít nhất 1 khoản chi phí vận chuyển';
+    else if(state.costs.some(costRowBad)) e.cost='Nhập tên khoản chi và số tiền > 0 cho từng dòng';
+    if(feeTotals().carrierFee && !String(state.vcName).trim()) e.vcName='Nhập đơn vị vận chuyển nhận tiền';
+  }
+  if(state.ship==='tu_lay' && state.selfCosts.some(costRowBad)) e.cost='Nhập tên khoản chi và số tiền > 0 cho từng dòng';
+  if(state.ship==='tu_lay' && !state.pickEmp) e.pickEmp='Chọn người đi nhận hàng';
+  if(state.payType==='prepaid' && state.prepayDue>state.deliverDate) e.pay='Hạn chi sau ngày giao dự kiến';
+  if(state.payType==='debt' && c){ const rc=rollingCheck(); if((rc.rollOver||(rc.limitVal&&rc.after>rc.limitVal)) && !state.overApprove) e.pay='Vượt điều khoản công nợ — tích “Gửi BGĐ phê duyệt vượt” hoặc trả đơn nợ cũ'; }
+  return e;
+}
+function save(send){
+  state.errors=validate();
+  const tabErr={ general:!!(state.errors.contract||state.errors.recv), goods:!!state.errors.goods, ship:!!(state.errors.kho||state.errors.cus||state.errors.pickEmp||state.errors.cost||state.errors.vcName), pay:!!state.errors.pay };
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('has-error',!!tabErr[b.dataset.tab]));
+  $('err-contract').innerHTML=errHtml(state.errors.contract);
+  renderAll();
+  const keys=Object.keys(state.errors);
+  if(keys.length){
+    const first=Object.keys(tabErr).find(k=>tabErr[k]); showTab(first);
+    toast('<b>Chưa lưu được:</b><br>'+keys.map(k=>'• '+state.errors[k]).join('<br>')); return;
+  }
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('has-error'));
+  const c=C(), g=goodsTotal(), ft=feeTotals();
+  if(send){ const pill=$('status-pill'); pill.textContent='Chờ duyệt'; pill.className='badge status-pill b-amber'; }
+  $('save-title').textContent = send?'Đã lưu và gửi duyệt DGH-2026-0011':'Đã lưu nháp DGH-2026-0011';
+  $('save-body').innerHTML=`<div class="kv">
+    <div><div class="k">HĐ mua</div><div class="v">${state.contract}</div></div>
+    <div><div class="k">Công ty nhận hàng</div><div class="v">${COMPANIES[state.recv].short}${state.recv!==c.a?' (≠ Bên A '+COMPANIES[c.a].short+')':''}</div></div>
+    <div><div class="k">Hóa đơn / công nợ cho</div><div class="v">${COMPANIES[payerCo()].short}</div></div>
+    <div><div class="k">Phương thức</div><div class="v">${shipLabel()}</div></div>
+    <div><div class="k">Nơi nhận</div><div class="v">${destName()}</div></div>
+    <div><div class="k">Số mặt hàng / SL</div><div class="v">${state.rows.filter(r=>rowQty(r)).length} / ${fm(g.qty)}</div></div>
+    <div><div class="k">Tiền hàng (sau VAT)</div><div class="v">${fm(g.after)} đ</div></div>
+    <div><div class="k">Tổng thanh toán NCC</div><div class="v">${fm(payTotal())} đ</div></div>
+    ${ft.carrierFee?`<div><div class="k">Chi phí VC trả ${esc(state.vcName)||'đơn vị VC'}</div><div class="v">${fm(ft.carrierFee)} đ</div></div>`:''}
+    ${state.ship==='tu_lay'&&ft.selfFee?`<div><div class="k">Chi phí tự vận chuyển</div><div class="v">${fm(ft.selfFee)} đ</div></div>`:''}
+    <div><div class="k">Thanh toán</div><div class="v">${state.payType==='prepaid'?'Trả trước → ĐNTT':'Công nợ · '+(state.debtMode==='rolling'?'gối đầu '+state.rolling+' đơn':state.days+' ngày')}</div></div>
+    ${state.overApprove?'<div><div class="k">Duyệt</div><div class="v" style="color:#b45309">BGĐ duyệt vượt công nợ</div></div>':''}
+  </div>`;
+  openM('m-save');
+}
+
+/* ===================================================================== */
+function renderAll(){ renderContractInfo(); renderRecv(); renderGoods(); renderShip(); renderPay(); }
+renderAll();
+</script>
+</body>
+</html>

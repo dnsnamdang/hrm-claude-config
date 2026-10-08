@@ -158,3 +158,13 @@ Vừa hoàn thành: bỏ quy đổi ĐVT trên màn báo cáo nhu cầu mua.
 Đang làm dở: —
 Bước tiếp theo: user mở `/supply/reports/purchase-demand` xem bảng + xuất Excel để xác nhận.
 Blocked: —
+
+## Fix — Header 4 cột bị xuống 2 dòng (2026-10-06)
+Yêu cầu: các cột **Tồn kho**, **Đã mua**, **Còn cần mua**, **Mục đích** đang hiện tiêu đề 2 dòng → nới rộng để 1 dòng.
+
+- [x] FE1 Thêm class `th-nowrap` (giữ tiêu đề trên 1 dòng) cho 4 header trên trong `pages/supply/reports/purchase-demand/index.vue`
+- [x] FE2 Thêm `th-nowrap` cho **Cty thực hiện**, **Ngày đề xuất**
+- [x] FE3 Viền header rõ hơn: màu `$th-line` (#bfd6d0) thay #d3e4e0; hàng nhóm có viền đáy (bỏ `border-bottom: 0`);
+      viền phải + đáy vẽ bằng `box-shadow inset` để không mất khi header dính lúc cuộn (kể cả ô cố định trái)
+- [x] ~~FE4 Nhãn nhóm "Chi tiết đề xuất mua" căn trái + sticky~~ → user yêu cầu trả về căn giữa như cũ (đã revert)
+- [ ] FE5 Verify UI (template + SCSS compile OK, chờ user xem trên trình duyệt)

@@ -4393,3 +4393,34 @@ rồi gỡ bỏ trong session 21/09 để giữ diff sạch).
 
 ### Sửa nhỏ — 22/09/2026
 - [x] File Excel mẫu: căn giữa theo chiều dọc cho **mọi ô dữ liệu** (dòng ví dụ + khung trống kẻ sẵn tới hàng 17), cột STT căn giữa cả 2 chiều — sửa trong `utils/import-helper.js::writeTemplateSheet()` nên áp cho tất cả màn dùng `buildImportTemplate()`.
+
+### Bổ sung cột import Phường/xã cho đủ trường popup Tạo mới — 07/10/2026 (@khoipv)
+Popup `WardModel.vue` có: Tên *, Mã số *, Quốc gia, Khu vực, Tỉnh/TP *, Quận/Huyện, Trạng thái. File import cũ thiếu **Quốc gia, Khu vực, Trạng thái**.
+- [x] FE `pages/human/wards/index.vue`: thêm cột `NationName` (select), `AreaName` (select), `Status` (select Hoạt động/Khóa) — sắp đúng thứ tự popup; `mapImportRow` gửi `nation_name`, `area_name`, `status`
+- [x] BE `WardService::importSnapshot()`: thêm `nations`, `areas` (tên thường) + `provinceGeo` (id tỉnh → tên quốc gia/khu vực)
+- [x] BE `validateRows()`: Quốc gia/Khu vực KHÔNG lưu (lấy qua Tỉnh/TP) — điền thì phải tồn tại + khớp với Tỉnh/TP; Trạng thái bỏ trống = Hoạt động, sai nhãn = lỗi dòng
+- [x] BE `import()`: ghi `status` theo file (Khóa = 0, cùng mã với `lock()` và popup)
+- [x] Unit test `WardImportValidationTest` + `php -l` + compile FE
+- [x] Bỏ cột Quận/Huyện khỏi file import (user yêu cầu giữ đúng các ô popup); tỉnh nước ngoài -> BE báo lỗi dòng, hướng dẫn thêm qua popup
+
+### Bổ sung cột import Quận/Huyện + Đường/phố cho đủ ô popup — 07/10/2026 (@khoipv)
+- [x] Tách trait chung `Modules/Human/Services/Concerns/ImportsGeoColumns.php` (snapshot quốc gia/khu vực, đối chiếu với tỉnh, thu hẹp tỉnh trùng tên theo Quốc gia, đọc Trạng thái); `WardService` chuyển sang dùng trait
+- [x] Quận/Huyện: thêm Quốc gia, Khu vực, Trạng thái (đều không bắt buộc — đúng popup)
+- [x] Đường/phố: thêm Quốc gia (**bắt buộc** — popup đánh dấu *), Khu vực, Trạng thái; KHÔNG thêm Quận/Huyện (chỉ hiện với tỉnh nước ngoài — cùng quyết định với màn Phường/xã)
+- [x] Test `GeoImportColumnsTest` (3) + sửa `CatalogImportFixesTest` theo câu lỗi mới; smoke test 3 màn trên DB local
+- Ghi chú: `CatalogImportFixesTest::test_quoc_gia_ma_buu_chinh_phai_la_chu_so` hỏng SẴN từ trước (NationService không đổi trong lần này)
+
+### Fix Redmine #11588 — Import bị từ chối vì dữ liệu trùng phát sinh sau Validate — 07/10/2026 (@khoipv)
+Tình huống: tab A validate hợp lệ → tab B tạo tay cùng dữ liệu → tab A bấm Import. BE validate lại, trả 400 "Không có dòng nào hợp lệ để import" nhưng bảng preview không tô đỏ dòng nào.
+- [x] FE `utils/mixins/CatalogImportMixin.js` (dùng chung 35 màn — user đã đồng ý sửa): Import bị từ chối 400/422 → tự gọi lại `/import/validate` cho TOÀN BỘ dòng trong popup, gắn lỗi vào từng dòng (dòng trùng tô đỏ + lý do), giữ popup, báo dữ liệu đã thay đổi kể từ lần validate trước
+- [x] Parse FE bằng @babel/parser (35 màn dùng mixin, không màn nào override 2 method import)
+- [x] BE — đổi luật Import ở 23 controller: re-validate lúc Import mà có BẤT KỲ dòng nào không còn hợp lệ → **không import dòng nào**, trả 400 kèm kết quả validate (`data.rows`), câu "Có N dòng không còn hợp lệ (dữ liệu đã thay đổi kể từ lần Validate). Chưa import dòng nào". Trước đây: import lặng lẽ phần hợp lệ, bỏ dòng trùng không báo.
+  - 21 controller cùng khuôn: CustomerCare (Cost, Level, NoteMaintenance) · Finance (Account, CompanyAccount, CostDebt, Currency, SourceCapital, TypeAccount, Work) · Human (Area, Bank, District, Hamlet, Nation, Province, Ward) · Meeting (Room, RoomAmenity, RoomPurpose, RoomService)
+  - `Finance/AbstractDeclareDebtController` (2 màn công nợ đầu kỳ): validate trước khi gọi `service()->import()` — service tự bỏ qua dòng lỗi không báo
+  - `MasterData/.../BaseCatalogController` (cha của các màn danh mục hàng hoá): bỏ nhánh import 1 phần (207) khi có dòng lỗi validate
+- [x] FE helper `utils/import-error-helper.js::markRejectedImportRows(modal, error)`: gắn `data.rows` của BE vào đúng dòng trong popup (index BE = vị trí trong mảng dòng hợp lệ đã gửi), tính lại đếm, về bước 3
+- [x] `CatalogImportMixin::revalidateRejectedImport` dùng helper trước; BE nào chưa trả `rows` thì mới tự gọi lại `/import/validate`
+- [x] 3 màn Phòng họp (rooms, room-amenities, room-purposes — handler riêng, không dùng mixin): gọi helper ở nhánh 400/422
+- [x] Verify: `php -l` 23 file · parse/compile FE · smoke trên DB local (rollback): Quận/huyện 1 dòng mới + 1 dòng trùng DB → 400, rows[1] lỗi "đã tồn tại", inserted=0; Tính chất hàng hoá 2 dòng trùng mã → 400, inserted=0
+- Ghi chú: phpunit `Modules/Human/Tests/Unit` 2 fail hỏng SẴN, không liên quan (test service, không đụng): `test_quoc_gia_ma_buu_chinh_phai_la_chu_so`, `ProvinceImportValidationTest::test_bien_so_xe_phai_la_chu_so`
+- Chưa kiểm: thao tác thật 2 tab trên trình duyệt (user tự test)

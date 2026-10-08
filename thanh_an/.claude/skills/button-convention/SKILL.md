@@ -246,14 +246,21 @@ async doApprove() {
 - Nhóm duyệt/gửi duyệt **không** `danger`; `danger` chỉ cho Từ chối · Hủy phiếu · Xóa.
   (`base-confirm-modal` của dns tự suy `danger` theo `textAccept` khi để `null` — khai tường minh cho chắc.)
 
-⚠️ **Bẫy id `confirm` trùng với `V2Footer`**: `V2Footer` của dns render `base-confirm-modal` với
-**id mặc định `confirm`** và mở bằng `$bvModal.show('confirm')`. Màn có `V2Footer` mà đặt thêm
-`<BaseConfirmModal>` không khai `id` → 2 popup cùng id, bấm một nút bật cả hai. **Luôn khai `id` riêng.**
+⚠️ **Luôn khai `id` riêng cho `BaseConfirmModal`**: id mặc định là `confirm`. (Từ 06/10/2026 `V2Footer`
+đã dùng id riêng `v2-footer-confirm-<uid>` nên không còn trùng với nó, nhưng 2 `BaseConfirmModal` không
+khai id trên cùng màn vẫn bật cùng lúc.)
 
 ⚠️ **`V2Footer` đã hỏi sẵn cho các cờ**: `approve` · `forward_director_approve` · `boardDirectorApprove` ·
 `save_and_submit_approve` · `save_and_approve` · `send_and_submit_form` — màn dùng các cờ này **không
 hỏi thêm lần 2**. Các cờ `complete` · `delete` · `cancel` · `print` emit thẳng → màn phải tự hỏi.
 Nút tự dựng ở slot `#custom-actions` cũng phải tự hỏi.
+
+- Truyền **`:confirm-message`** cho `V2Footer` để câu hỏi nêu tên phiếu + hệ quả (nhận HTML → escape
+  dữ liệu người dùng). Không truyền thì ra câu chung chung "Bạn xác nhận duyệt phiếu?". Chữ nút đồng ý
+  tự lấy theo nút gốc (Duyệt / Gửi duyệt…).
+- Cờ `reject_approve` ghi **"Từ chối"** và emit `rejectApprove` → màn mở `V2BaseRejectApproveModal`
+  (id riêng; popup đó trả `{ form, setErrors, setLoading, close }` qua `@confirm`). Mẫu:
+  `pages/supply/purchase_orders/_id/index.vue`.
 
 ## A7. Checklist (màn V2)
 

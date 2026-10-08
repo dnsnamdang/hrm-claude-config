@@ -471,3 +471,12 @@ Tại dòng 162, sau method `handleRejectTransfer()`, thêm:
 1. Mở 2 tab chi tiết cùng 1 dự toán status = 2
 2. Tab 1: phân công nhân viên → thành công
 3. Tab 2: click từ chối → phải nhận lỗi 403 "Không có quyền"
+
+---
+
+## Bổ sung 06/10/2026 — Thông báo cho người tạo khi hủy dự toán — @khoipv
+
+Bug: `ProjectController::rejectAssignment` (status → 17 HUY_DU_TOAN) không gửi thông báo cho người tạo dự toán (khác `rejectBid` đã có).
+
+- [x] BE: `rejectAssignment` gửi `EmployeeInfoService::sendNotification` cho `created_by` (cùng khối với `rejectBid`), nội dung "Dự toán <b>{code}</b> đã bị <b>{người hủy}</b> hủy", url `/sale/project/{id}`
+- [x] Kiểm tra cú pháp (php -l) — OK. Bỏ qua gửi khi người hủy chính là người tạo

@@ -12,6 +12,24 @@ _(chưa có)_
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Demo "Tạo đơn giao hàng từ HĐ mua"** — @khoipv — Hoàn thành 2026-10-08 — Bắt đầu 06/10/2026 — Đang làm demo HTML (V2Base). Đơn giao hàng chọn từ 1 HĐ mua (hàng kèm phiếu đề xuất/KH), cho giao tới công ty khác Bên A, điều khoản TT (trả trước → đề nghị thanh toán / ghi công nợ có hạn + gối đầu), 3 phương thức giao (NCC giao kho · NCC giao thẳng KH · Cty tự lấy → về kho/giao KH) + chi phí vận chuyển.
+  - Plan: [.plans/demo-don-giao-hang/plan.md](demo-don-giao-hang/plan.md) · Spec: [docs/superpowers/specs/2026-10-06-demo-don-giao-hang-design.md](../docs/superpowers/specs/2026-10-06-demo-don-giao-hang-design.md)
+
+- **Xuất DS hàng hóa kèm Hóa chất sử dụng** — @khoipv — Hoàn thành 2026-10-08 — Bắt đầu 06/10/2026 — Code BE + FE xong, chờ build client + test UI. Dropdown "Xuất excel" thêm mục xuất DS hàng hóa kèm hóa chất (xếp dọc, STT 1 / 1.1; cột Tên · Mã · Chủng loại · Quy cách · Mã nội bộ · Hãng, nước SX). Chức năng kèm Thiết bị đã bỏ theo yêu cầu.
+  - Plan: [.plans/xuat-hang-hoa-hoa-chat-thiet-bi/plan.md](xuat-hang-hoa-hoa-chat-thiet-bi/plan.md) · Spec: [docs/superpowers/specs/2026-10-06-xuat-hang-hoa-hoa-chat-thiet-bi-design.md](../docs/superpowers/specs/2026-10-06-xuat-hang-hoa-hoa-chat-thiet-bi-design.md)
+
+- **Đơn mua hàng — Đơn giá trước VAT + Chiết khấu (%) như HĐ mua** — @khoipv — Hoàn thành 2026-10-08 — Bắt đầu 06/10/2026 — Đang brainstorming. Bảng hàng hóa đơn mua thêm cột VAT (%), Đơn giá trước VAT, Chiết khấu (%), Đơn giá sau CK, Tổng tiền trước VAT + khối tổng dưới bảng, theo khuôn HĐ mua.
+  - Plan: [.plans/don-mua-gia-truoc-vat-chiet-khau/plan.md](don-mua-gia-truoc-vat-chiet-khau/plan.md) · Spec: [docs/superpowers/specs/2026-10-06-don-mua-gia-truoc-vat-chiet-khau-design.md](../docs/superpowers/specs/2026-10-06-don-mua-gia-truoc-vat-chiet-khau-design.md)
+
+- **Tiếp nhận thông tin HĐ đã kết xuất (Cung ứng)** — @khoipv — Hoàn thành 2026-10-08 — Bắt đầu 05/10/2026 — Đã làm xong BE + FE (Task 1–9), chờ user kiểm tra. Nút "Tiếp nhận" ở màn HĐ đã kết xuất + màn chi tiết HĐ (đi từ màn kết xuất), ai cũng tiếp nhận được, lưu lịch sử người tiếp nhận.
+  - Plan: [.plans/tiep-nhan-hd-ket-xuat/plan.md](tiep-nhan-hd-ket-xuat/plan.md) · Spec: [docs/superpowers/specs/2026-10-05-tiep-nhan-hd-ket-xuat-design.md](../docs/superpowers/specs/2026-10-05-tiep-nhan-hd-ket-xuat-design.md)
+
+- **Chỉ kết xuất HĐ sang cung ứng từ ngày ký trở đi** — @khoipv — Hoàn thành 2026-10-08 — Bắt đầu 05/10/2026 — Đã sửa BE, chờ user kiểm tra.
+  - Plan: [.plans/ket-xuat-sau-ngay-ky/plan.md](ket-xuat-sau-ngay-ky/plan.md)
+
+- **HĐ đã kết xuất (Cung ứng) — hiện loading ngay khi vào màn** — @khoipv — Hoàn thành 2026-10-08 — Bắt đầu 05/10/2026 — Đã sửa FE, chờ user kiểm tra.
+  - Plan: [.plans/hd-ket-xuat-loading-ngay/plan.md](hd-ket-xuat-loading-ngay/plan.md)
+
 - **PXL — Tab "Đơn giá quy đổi"** — @khoipv — Hoàn thành 2026-10-02 — Bắt đầu 02/10/2026 — Đang brainstorming. Tab mới ở PXL chỉ hiện khi có đổi hàng: so sánh tổng giá trị hàng gốc (trước đổi) và hàng thay thế (sau đổi). Giá: hàng nhập khẩu lấy giá public; hàng PPL lấy giá gồm VAT của đơn mua/HĐ mua gần nhất, chưa có thì báo giá mới nhất.
   - Plan: [.plans/pxl-tab-don-gia-quy-doi/plan.md](pxl-tab-don-gia-quy-doi/plan.md) · Spec: [docs/superpowers/specs/2026-10-02-pxl-tab-don-gia-quy-doi-design.md](../docs/superpowers/specs/2026-10-02-pxl-tab-don-gia-quy-doi-design.md)
 
