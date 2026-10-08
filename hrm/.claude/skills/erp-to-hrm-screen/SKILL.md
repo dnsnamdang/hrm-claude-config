@@ -39,33 +39,107 @@ Skill này khoá 3 thứ lại:
 | Quyền dùng cho từng hành động | `@can` / `hasPermission` trong blade + controller |
 | Trạng thái & nhãn tiếng Việt | hằng số/`status_text` ở model |
 | Xuất/In/Import có không | nút trên toolbar |
+| Vị trí trong menu ERP (tất cả các chỗ) + tham số trên link | `grep "route('<TenRoute>.index'" resources/views/layouts/topmenubar.blade.php` |
 
 ⚠️ **Ghi cả điều kiện ẩn nút**, không chỉ tên nút. Lỗi hay gặp nhất là port nút nhưng bỏ điều kiện.
 
-| Vị trí trong menu ERP (tất cả các chỗ) | `grep "route('<TenRoute>.index'" resources/views/layouts/topmenubar.blade.php` |
+Đọc code ERP, đừng suy từ giao diện/nhãn (đều đã dính thật):
+- ERP gán sai link ≠ ERP không có chức năng — mở route + controller + blade rồi mới kết luận (#11192).
+- Đọc `ng-click` của nút, không suy từ nhãn: "Không duyệt" ở màn tạo phiếu xuất giữ là `submit(3)` = lưu nháp (#11370).
+- Số hiện trên ERP mà DB = 0 → tìm trong class JS (vd `if (!this._extend_qty) this._extend_qty = …`), đừng đi tìm bug BE (#11276).
+- QA báo "không sửa được X" → xem blade ERP ô đó là input hay chữ trước khi sửa; nhiều khi ERP cũng không cho (#11278).
+- Không tự thêm nút/chức năng ERP không có, TRỪ bộ bắt buộc của HRM (Xuất Excel, Cấu hình cột, Lịch sử,
+  Lưu và tiếp tục). Muốn thêm gì khác thì hỏi user; nhãn nút phải đúng việc nó làm.
+- **ERP thường có NHIỀU action cho cùng một truy vấn, khác phạm vi theo vị trí menu** — vd
+  `expiringBorrow` (phân hệ Thông báo, chỉ phiếu `created_by = mình`) và `accountingExpiringBorrow`
+  (Kế toán kho, cả công ty). Port nhầm bản cá nhân thì màn hụt dữ liệu (6 phiếu thay vì 74). Chọn
+  action ứng với **mục menu chính** (link có `all` — xem Bước 2).
+- **Cột / bảng ERP "nói dối"** — kiểm bằng dữ liệu thật trước khi join hoặc tin cột lưu sẵn: `supplier_id`
+  trỏ `customers.id` (model `Supplier` của ERP khai `$table = 'customers'`, bảng `suppliers` rỗng);
+  `supplier_name` lưu sẵn toàn NULL; `cost_id` kiểu varchar join `costs.id` kiểu số. Thêm các bẫy bảng
+  ERP khác: `.plans/gop-db/design.md` mục "Bẫy khi port".
+- **Đối chiếu quyền bên ERP bằng tài khoản Super Admin là vô nghĩa** — `Gate::before` cho qua mọi quyền,
+  không bao giờ thấy trường hợp thiếu quyền. Test âm bằng tài khoản thường (hoặc tinker
+  `Auth::guard('web')->setUser(...)` rồi gọi thẳng controller).
 
-### Bước 2 — Chốt phân hệ, route, quyền
+### Bước 2 — Chốt phân hệ, route, quyền, phạm vi dữ liệu
 
-- Màn thuộc phân hệ nào (theo sơ đồ tách phân hệ) → route `/<phân-hệ>/<slug>`.
-- Quyền: dùng lại **đúng permission ERP** hay tạo mới? Nếu dùng lại thì migration `UPDATE permissions`
-  **giữ nguyên `id`** và phải sửa cả `PermissionsTableSeeder`.
+- Màn thuộc phân hệ nào (theo sheet quy hoạch phân hệ — xem "Đặt mục menu" dưới) → route `/<phân-hệ>/<slug>`.
 - Có cần phân quyền theo cấp (công ty / phòng ban / bộ phận) không → **hỏi user**, đừng tự quyết.
-- Thêm mục menu — **TRA MENU ERP TRƯỚC, ĐỪNG SUY TỪ TÊN MÀN** (chốt 2026-08-26, xem mục dưới).
 
-#### Đặt mục menu: tra ERP, không suy đoán
+#### Quyền: TẠO QUYỀN MỚI ở HRM (user chốt 06/10/2026)
+
+- **Không dùng lại quyền ERP.** Tạo quyền mới `guard_name = 'api'` rồi gắn middleware
+  `checkPermission:<Tên quyền>` bình thường như CLAUDE.md quy định. Lý do dùng lại quyền ERP bị hỏng
+  (docblock `Modules/Finance/Entities/Concerns/ChecksEmployeePermission.php`):
+  - quyền ERP mang `guard_name = web` → `hasPermissionTo($name)` (không truyền guard) ném `PermissionDoesNotExist`;
+  - vai trò gán từ thời ERP nằm trong `employee_has_roles` với `model_type = App\Employee`, mà
+    `checkPermission` đọc qua `getAllPermissions()` của spatie (lọc theo `model_type` của model HRM) →
+    **bỏ sót**, người có quyền thật vẫn 403;
+  - trùng TÊN quyền giữa bản ERP và bản HRM.
+
+  Quyền mới do admin gán lại trong HRM nên không dính 3 bẫy trên. Màn cũ đang tự gate bằng trait
+  `ChecksEmployeePermission` (không gắn middleware) là cách chữa cháy khi còn dùng quyền ERP — màn mới
+  không chép.
+- **Khai vào seeder chung** `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (lần build nào
+  cũng chạy lại seeder này). KHÔNG tạo seeder quyền riêng cho từng màn (kiểu
+  `BuyServiceRequestPermissionSeeder` — màn cũ, đừng chép).
+- **`type` của quyền = `permissionType` của PHÂN HỆ CHÍNH** của màn (tra trong
+  `hrm-client/components/subsystems.js`), không theo module chứa code — màn Bán hàng nằm ở
+  `Modules/Finance` vẫn là `type` của Bán hàng. Màn phân quyền (`components/setting/Permission.vue`) gom
+  quyền theo `type` → thiếu `type` là quyền **không hiện ở phân hệ nào**, admin không gán được; sai `type`
+  là quyền nằm nhầm phân hệ.
+- **Không tự gán quyền mới cho vai trò cũ** — admin tự phân quyền lại khi chuyển sang HRM.
+
+#### Phân hệ chính & phạm vi dữ liệu
+
+Một màn có thể nằm ở nhiều phân hệ. Bên ERP, các lối vào khác nhau phân biệt bằng **tham số trên URL**
+(`?type=all`, `?permission=all`, `?type=waiting`…):
+- **Phân hệ chính** = phân hệ có mục menu trỏ màn danh sách với tham số **`all`**. Quyền của màn khai
+  `type` theo phân hệ này, và **phạm vi dữ liệu dựa vào quyền ở phân hệ chính**.
+- Các phân hệ khác là **lối vào phụ** với tham số riêng (vd `?type=waiting` = danh sách phiếu chờ mình
+  duyệt). Giữ nguyên tham số khi khai menu HRM; chỉ thêm tham số khi trang thật sự đọc
+  `$route.query.type` (đừng tự gắn `?type=all` cho trang không đọc nó).
+- Màn con dùng chung controller/service với màn cha (vd chỉ khác cờ `expiring_only`) → **cờ phải
+  `merge` ở BE** (override `scoped()` ở controller con), đừng để FE gửi — quên 1 lần là màn con thành
+  bản sao màn cha mà không báo lỗi gì.
+
+Quy tắc phạm vi đã dính QA:
+- Phiếu người xem **đã đóng dấu duyệt/từ chối** vẫn phải hiện với họ (đừng chỉ "người lập thấy" —
+  #11519, #11239).
+- Super admin / quyền tổng công ty không bị bó `company_id` của người đăng nhập (#11529). Ô lọc **Công ty**
+  chỉ hiện với người xem được mọi công ty: BE trả `meta.is_all_company`, FE dựa vào đó; BE chỉ đọc
+  `company_id` của request trong nhánh "xem mọi công ty", người khác khoá cứng công ty mình (#11524).
+- **Không port tham số xem chéo công ty** kiểu `?company=` của ERP mà không UI nào gửi — để lại là lỗ
+  xem chéo công ty.
+- `where('company_id', $companyId)` với `$companyId = null` → Laravel dịch thành `IS NULL`, kéo ra phiếu
+  rác không thuộc công ty nào. Null thì `whereRaw('1 = 0')`; so "cùng công ty" phải loại trường hợp 2
+  vế cùng null.
+- "Theo phòng ban" của HRM (phòng quản lý + phòng đang ngồi) rộng hơn ERP là **chủ ý** — ghi vào spec
+  để QA khỏi báo nhầm.
+
+#### Đặt mục menu: SHEET QUY HOẠCH trước, ERP để tham chiếu (user chốt 06/10/2026)
+
+Thứ tự nguồn:
+1. **Sheet quy hoạch phân hệ** (Google Sheet 5 nhóm, chốt 04/09/2026 — cách đọc gạch ngang / màu nền:
+   `.plans/gop-db/quy-hoach-lai-menu-phan-he/design.md`) **+ bảng lỗi TPE**. Đây là nơi quyết định màn
+   nằm ở phân hệ / nhóm nào và tên mục menu.
+2. **Menu ERP** để tham chiếu: tên màn gốc, tất cả các chỗ đặt màn, **tham số trên link**.
+3. **Một màn nằm ở nhiều phân hệ là bình thường** (chốt 25/09/2026) — vd Báo giá ở cả Bán hàng lẫn
+   CSKH trước bán. Phân biệt lối vào bằng tham số trên link như mục trên.
 
 Tên màn KHÔNG nói lên nó thuộc phân hệ nào. Màn "Báo giá dịch vụ" nghe như thuộc CSKH nhưng menu
 ERP đặt nó ở **Kinh doanh → Báo giá → "Báo giá dịch vụ sửa chữa - bảo dưỡng - bảo trì" → "Danh sách
-báo giá"**. Đặt nhầm sang CSKH thì người làm báo giá tìm mãi không ra (đã dính thật, user phải chỉ).
+báo giá"**. Đặt nhầm thì người làm báo giá tìm mãi không ra (đã dính thật, user phải chỉ).
 
-Cách làm đúng — quét mọi vị trí của route trong menu ERP rồi mới quyết:
+Cách quét mọi vị trí của route trong menu ERP:
 
 ```bash
 grep -n "route('<TenRoute>.index'" resources/views/layouts/topmenubar.blade.php
 ```
 
 Với mỗi kết quả, lần ngược lên tìm `ruby-list-heading` (tên nhóm) và `<a href="#">` (tên phân hệ).
-Ba điều rút ra từ lần rà 5 màn của luồng dịch vụ:
+Hai điều rút ra từ lần rà 5 màn của luồng dịch vụ:
 
 1. **Một màn có thể nằm ở NHIỀU nhóm menu.** "Yêu cầu sửa chữa - bảo hành" xuất hiện ở 4 chỗ:
    Hàng hóa → Lắp đặt-BH-SC · Lắp đặt-BH-SC · CSKH → Kiểm tra bảo hành sửa chữa · **và** Kinh doanh
@@ -73,13 +147,26 @@ Ba điều rút ra từ lần rà 5 màn của luồng dịch vụ:
 2. **Giữ nguyên tham số trên link.** Cùng màn nhưng ERP trỏ `?permission=waiting_create_quotation`
    ở nhóm Báo giá và `?permission=all` ở nhóm CSKH — hai phạm vi dữ liệu khác nhau (skill
    `list-page` §3d). Copy link mà bỏ tham số là hỏng ý nghĩa mục menu.
-3. **Đừng khai trùng một màn ở hai nhóm HRM khi ERP chỉ đặt một chỗ** — người dùng không biết đường
-   nào mới đúng.
 
-Bên HRM, menu Bán hàng sinh từ **một nguồn duy nhất** `components/subsystem-menu/sale-hub.js`
-(dùng cho cả hub lẫn cây menu bên trái). Màn chưa port để nguyên chuỗi tên; port xong thì đổi thành
-`{ n: 'Tên màn', link: '/duong-dan?type=all' }`. Nhiều nhóm đã khai sẵn tên màn từ trước — **kiểm
-xem có sẵn chưa rồi hãy thêm mới**, đừng tạo mục trùng.
+**File menu bên HRM — KHÔNG chỉ có 1 nguồn.** Menu Bán hàng sinh từ `components/subsystem-menu/sale-hub.js`
+(cả hub lẫn cây bên trái), nhưng các phân hệ khác nằm ở `components/subsystem-menu/*.js`,
+`components/default-menu/*.js`, `components/menu.js`, `components/menu-sidebar.js`, và có chỗ viết cứng
+(`SettingSlidebar.vue`). Dời màn sang phân hệ khác → grep link ở **tất cả** các file này. Nhiều nhóm đã
+khai sẵn tên màn từ trước — **kiểm xem có sẵn chưa rồi hãy thêm mới**, đừng tạo mục trùng do sơ suất.
+
+Khi khai mục menu:
+- **Màn trong `sale-hub.js` (Bán hàng) có 3 dạng** (docblock đầu file): chuỗi trần = chưa có link, bấm báo
+  "đang phát triển" · `{ n, erpPath }` = màn còn bên ERP (cây menu bên trái mở ERP ở tab mới, hub vẫn báo
+  "đang phát triển") · `{ n, link }` = màn HRM đã port. Port xong thì đổi `erpPath` → `link`.
+  Các phân hệ khác (`subsystem-menu/*.js`, `menu.js`…) dùng khuôn `{ label, icon, link, isShow, subItems }`;
+  mục **không có `link`** render xám mờ. Cờ `external` / `erpGhost` trong `subsystems.js` là cờ cấp
+  **PHÂN HỆ** (cả phân hệ nằm bên ERP), không dùng cho từng mục.
+- **Khai màn ở phân hệ thứ 2 thì bê nguyên `isShow`** (quyền) từ phân hệ chính — thiếu là lộ menu cho
+  người không có quyền. Cây Bán hàng đọc map `SALE_LINK_PERMISSIONS`; mục mới nên khai `isShow` ngay
+  trong mục.
+- **KHÔNG đổi nhãn mục menu đã có** khi không được yêu cầu: nhãn là một phần của `menuKey`
+  (`utils/menuVisibility.js`) — đổi nhãn là mất cấu hình bật/tắt đã lưu; nhãn menu cũng là **tiêu đề
+  tab trình duyệt** (`screenTitleOf` trong `subsystems.js`). Giữ tên ngắn — nhãn dài tràn menu ngang.
 
 ### Bước 3 — Dựng khung theo khuôn màn mẫu
 
@@ -146,10 +233,39 @@ Mở song song màn ERP và màn HRM vừa dựng, đối chiếu **từng dòng
 - Đủ cột chưa? Cột ERP có mà HRM không có → thêm vào, mặc định **ẩn** trong Cấu hình cột nếu ít dùng.
 - Đủ trường lọc chưa?
 - Đủ hành động chưa, **và điều kiện hiện/ẩn có khớp không**?
+- Đọc ERP ở **nhánh/cổng đang chạy thật** và xem `git log` của bảng/blade ERP: ERP vẫn đổi sau khi
+  HRM port xong (vd 26/08/2026 ERP thêm cột Quá hạn / Ngày BGNT vào khai báo đầu kỳ công nợ — HRM
+  thiếu tới khi QA bắt). Đối chiếu cả ô ERP **không** có: HRM thừa ô lọc / cột cũng bị QA báo lỗi.
+
+### Bước 5b — Đối chiếu NGANG với 2-3 màn HRM đã qua QA (bắt buộc)
+
+Phần lớn lỗi UX/UI QA báo sau khi port là **"màn này làm khác các màn khác"**, không phải lỗi
+nghiệp vụ. Checklist dưới không thể liệt kê hết mọi chi tiết, nên trước khi báo xong:
+
+1. Chọn 2-3 màn **cùng loại** đã qua QA (cùng phân hệ, cùng kiểu phiếu duyệt/danh mục/báo cáo).
+2. Với mỗi khối của màn mới (header khối đầu, khối file đính kèm, bảng chi tiết, footer nút, lịch
+   sử, popup chọn, xuất Excel, bản in, câu toast…), mở màn mẫu xem nó dùng **component/helper nào**
+   rồi dùng ĐÚNG cái đó — không tự dựng bản mới dù "trông giống".
+3. Ghi vào báo cáo/STATUS: "đã bám màn X ở khối Y". Không chỉ ra được màn mẫu = chưa đối chiếu.
+
+Khi QA chốt một quy ước MỚI trong lúc sửa lỗi: cập nhật luôn skill này + dùng skill
+`new-screens-sweep` rà đồng loạt các màn khác, đừng chỉ sửa màn bị báo.
 
 ### Bước 6 — Chạy checklist tự kiểm + verify trình duyệt
 
 Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **Không báo xong khi chưa bấm thật.**
+
+- **Chụp ảnh** danh sách / form / chi tiết rồi đặt cạnh màn chuẩn cùng phân hệ. Đọc DOM đủ cột/nút vẫn
+  có thể sai cả vỏ trang (thiếu `layout: 'default-sidebar'` ở `index.vue` → mega menu ngang kiểu ERP).
+- Bấm thử ô lọc bằng Playwright: chờ **≥ 3 giây** sau mỗi lần đổi (API dev chậm, đọc sớm ra kết quả của
+  lần lọc trước). Nghi ô lọc không ăn → gọi thẳng API (curl) so `total` trước khi kết luận.
+- QA báo "thiếu ô lọc / thiếu ô Công ty so với ERP" → kiểm `filter_customizations` và quyền HRM
+  (`employee_has_permissions` / `employee_has_roles`) của **chính tài khoản test** trước khi sửa code.
+- Trang nội dung ngắn có **khoảng xám lớn dưới nội dung, trước footer** → KHÔNG phải lỗi của màn: layout
+  `default-sidebar` ép `body` cao bằng menu trái (đo ngày 10/08/2026: `body` min-height 1550px > `.content-page`
+  1219px). Kiểm lại bằng cách so `getComputedStyle(document.body).minHeight` với chiều cao `.content-page`
+  trước khi kết luận. Đừng sửa padding/chiều cao form để "lấp" (user đã chốt để nguyên; muốn sửa là sửa
+  layout dùng chung, phải hỏi).
 
 ---
 
@@ -157,13 +273,30 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 
 ### A. Màn danh sách
 - [ ] Có đủ 4 mixin: `PageTitleMixin`, `CheckPermission`, `filterStateMixin`, `columnCustomizationMixin`
-- [ ] `localStorageKey` và `columnScreenKey` **duy nhất**, không trùng màn khác
-- [ ] Cột mặc định có: STT, Mã, Tên, Người tạo, Ngày tạo, Trạng thái (nếu có), Hành động
+- [ ] `localStorageKey`, `columnScreenKey` và prop `table` của `V2BaseSmartFilterPanel` **duy nhất**,
+      không trùng màn khác (màn con `extends` màn cha → `:table="columnScreenKey"`, #11515)
+- [ ] Có `columnCustomizationMixin` thì phải đặt `<ColumnCustomizationModal v-if="columnFieldsLoaded">`
+      trong template + gọi `loadColumnFields()` ở `mounted` — mixin không tự render, thiếu là nút Cấu hình
+      cột bấm không có gì (#11513). Cột ẩn mặc định khai `isVisible: false`
+- [ ] Cấu hình cột lưu ở bảng key-value **`user_column_settings`** (1 dòng / user / `screen_key`) — thêm màn
+      mới **KHÔNG cần migration**, chỉ cần `columnScreenKey` mới (`[a-z0-9_]`, duy nhất). KHÔNG thêm cột vào
+      bảng cũ `column_customizations` (kiểu cũ mỗi màn 1 cột JSON + `$casts` — đã bỏ, dữ liệu đã chuyển sang)
+- [ ] Cột mặc định có: STT, Mã, Tên, Người tạo, Ngày tạo, Trạng thái (nếu có), Hành động (+ Khách hàng /
+      Loại phiếu nếu màn có) → skill `list-page` §6
+- [ ] Mọi nhãn (cột, ô lọc, trường form, cột xuất FE + `ExportColumnRegistry` BE, bản in, popup chọn) là
+      **"Người tạo" / "Ngày tạo"** — CẤM "Người lập" / "Ngày lập" bê từ ERP (#11240, #11271, #11400) → `list-page` §6
 - [ ] Mã và Tên là **2 cột riêng**; cột Mã là `<nuxt-link>` thật (chuột phải mở tab mới được)
 - [ ] Sắp xếp mặc định **giảm dần theo ngày tạo**
 - [ ] Bảng trống hiện dòng "Không có dữ liệu phù hợp", không phải bảng rỗng
 - [ ] Sort bật cho cột mã / tên / tiền / ngày; sort cột mới hủy sort cột cũ
+- [ ] `V2BaseDataTable` có `@sort` thì **bắt buộc truyền `:sortBy` + `:sortDirection`** (thiếu là không bao
+      giờ sắp giảm dần, mũi tên đứng im); `key` cột sortable trùng đúng tên trường BE trong
+      `SORTABLE_COLUMNS` — lệch thì BE âm thầm sort theo `id` (#11091, #11098, #11343)
 - [ ] Phân trang mặc định 10, chọn được 5/10/20/50/100, đổi số dòng nhảy về trang 1
+- [ ] Không gọi API lặp: `page`/`per_page` KHÔNG nằm trong `filters`; meta gán qua `Number()` và đọc
+      camelCase (`currentPage`/`perPage`) với fallback giá trị hiện tại (không fallback `1`); deep watcher
+      `filters` so với **bản sao sâu tự giữ** (`oldVal` trùng object với `newVal`). Kiểm bằng đếm request
+      trên tab Network: vào màn / đổi trang / đổi số dòng / sort đều chỉ 1 request
 - [ ] Ô lọc dạng chọn tự tìm ngay khi chọn; ô gõ tay chờ Enter/nút Tìm kiếm
 - [ ] **Bật `floating`** trên `V2BaseSmartFilterPanel` — mọi ô lọc cao 32px, nhãn nằm giữa ô khi
       rỗng và bay lên đè viền trên khi có dữ liệu (chuẩn chốt 07/09/2026, mẫu: màn Dự án TKT)
@@ -171,7 +304,18 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       biết nhãn có phải bay lên không
 - [ ] Placeholder **không lặp lại nhãn** (`Chọn <X>` / `Nhập <X>` là SAI khi bật floating — nhãn
       đã nói rồi). Chỉ giữ khi nói thêm điều nhãn không nói: `Gõ để tìm khách hàng...`, `dd/mm/yyyy`
-- [ ] Ô tìm nhanh: `Tìm theo <các trường BE thực sự lọc>` — không `Tất cả`, không `Chọn...`, không để trống
+- [ ] Ô tìm nhanh: `Tìm theo <các trường BE thực sự lọc>` — không `Tất cả`, không `Chọn...`, không để trống.
+      Ô tìm nhanh chỉ quét **mã / tên / nội dung của chính phiếu**; Người tạo / Người duyệt / Nhân viên
+      luôn là **select ở bộ lọc nâng cao**, không gõ tìm nhanh (user chốt 06/10/2026, #11373)
+- [ ] Options của bộ lọc nâng cao nạp trễ (khi mở panel) thì cũng phải nạp khi panel được **khôi phục ở
+      trạng thái MỞ** từ localStorage (`if (!filterCollapsed) loadFilterOptions()` ở `mounted`) — đường đó
+      không qua `toggleFilterPanel`, thiếu là dropdown rỗng, mất nhãn giá trị đang lọc
+- [ ] Danh sách nhúng trong **TAB** (component con, `v-if`) không có `beforeRouteLeave` → `filterStateMixin`
+      không lưu được bộ lọc khi đổi tab; tự lưu localStorage bằng khoá riêng của tab (#11390,
+      `pages/assign/my-job/components/CustomerDemandsTab.vue`)
+- [ ] Bảng danh sách dạng **cây 2 tầng** (dòng cha bấm mở dòng con): chép khuôn
+      `pages/finance/prepick-stocks/index.vue` — nút tròn `.group-toggle-btn`, dòng con nền `#ecfdf3`, vạch
+      trái `#86efac`, selector đủ nặng để ăn cả `td.sticky-col` (#11513 "đồng bộ bảng, icon, màu")
 - [ ] **Có ô tìm nhanh + 2 nút Tìm kiếm / Làm mới nằm ngay hàng trên cùng** khi vừa vào màn (chưa bấm
       "Tìm kiếm nâng cao"). Grep `show-quick-search="false"` trong feature phải ra RỖNG — ERP không có ô
       này thì thêm param `keyword` ở BE (skill `list-page` mục ô tìm nhanh)
@@ -179,7 +323,10 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       `height="32px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
 - [ ] Mọi ô trong khối lọc đo ra **bằng nhau, chuẩn hiện hành `32px`** (biến `--ff-h`; hạ từ 36px
       ngày 22/09/2026 — xem skill `list-page`). Lệch hàng là quên truyền `height`
-- [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách**
+- [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách** — `handleReset` gọi thẳng `loadData()`
+      (+ `resetLoadDedupe?.()`), đừng trông vào watcher (watcher bỏ qua khi chỉ `keyword` đổi)
+- [ ] Ô lọc nâng cao không lặp cột mà ô tìm nhanh đã quét; bỏ ô lọc thì dọn luôn giá trị cũ trong
+      localStorage (`mergeKnownFilters`) kẻo bảng bị lọc ngầm → `list-page`
 - [ ] **Bấm thật TỪNG ô lọc** rồi xem bảng có đổi không — đối chiếu param trên tab Network với
       `searchByFilter` của BE. Ô lọc sai tên key **không báo lỗi gì**, nhìn giao diện y như đúng
 - [ ] Khối tổ chức khai đúng `company_id` / `department_id` / `part_id` / `employee_id` trong
@@ -188,7 +335,13 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Có nút Cấu hình cột; STT / Mã / Hành động **không tắt được**
 - [ ] Panel lọc là **`V2BaseSmartFilterPanel` + schema `filterFields`** (KHÔNG phải
       `V2BaseFilterPanel` + slot `#advanced-filters` tự dựng tay) → mới có popup "Cài đặt bộ lọc"
-- [ ] > 3 trường lọc → có popup "Cài đặt bộ lọc"; ≤ 3 trường → hiện thẳng, bỏ khối nâng cao
+- [ ] > 3 trường lọc → có popup "Cài đặt bộ lọc"; **≤ 3 trường** → hiện thẳng, bỏ khối nâng cao (quy ước
+      HRM; văn bản SRS chỗ ghi "< 3" chỗ ghi "> 3" — theo dòng này)
+- [ ] Bảng **tự dựng** `<table>` (báo cáo nhiều tầng tiêu đề, bảng trong popup chọn) KHÔNG có sẵn
+      style của `V2BaseDataTable` (CSS của nó là `scoped`, không áp sang) → phải tự đảm bảo đủ 4 thứ
+      giống màn danh sách: header dính khi cuộn (`thead` sticky), hover dòng `var(--sale-row-hover)`,
+      icon sort xám `#9ca3af` 12px, ô "Số dòng/trang" chữ 12-13px cao 30px (QA #11558, #11569, #11572).
+      Ưu tiên dùng `V2BaseDataTable` nếu bảng chỉ 1 tầng tiêu đề.
 
 ### B. Nút & hành động
 - [ ] Mọi nút có **icon + text** (nút chỉ icon → dùng `V2BaseIconButton`)
@@ -201,8 +354,23 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Nút không dùng được thì **ẩn hẳn** (`visible`/`v-if`), KHÔNG hiện xám
 - [ ] Hành động ở màn **chi tiết khớp hệt** màn danh sách — cả danh sách nút lẫn điều kiện ẩn/hiện
 - [ ] Nút màn chi tiết/form nằm trong `V2Footer`, không tự dựng khối nút
-- [ ] Màu nút đúng nhóm (chính = teal, Duyệt = xanh lá, Gửi duyệt/Khóa = cam, Xóa/Từ chối = đỏ,
-      Import = vàng nhạt, Xuất = xanh nhạt)
+- [ ] `V2Footer` lệch quy tắc ở 3 cờ: `menu.print` ra nút In **primary**, `menu.reject_approve` ghi
+      "Không duyệt", `menu.approve` tự bật popup xác nhận chung (màn tự `$confirm` thành 2 popup, validate
+      chạy sau popup) → đưa In / Từ chối / Duyệt / Xóa vào slot `#custom-actions` (Xóa cũng vào slot để giữ
+      thứ tự chính → phụ → nguy hiểm → Quay lại) (#11096, #11104) → `button-convention` §6c
+- [ ] Nút ghi dữ liệu: `$safeLoadingStart/Finish` (trong `finally`) + `:interactable="!submitting"` + guard
+      `if (this.submitting) return` — bấm đúp từng tạo bản ghi trùng (#11555–#11560) → `button-convention` §6b
+- [ ] Hành động **Duyệt ở cột Hành động danh sách** chỉ điều hướng: `to:` mở màn chi tiết +
+      `visible: item.is_can_approve`, icon `ri-checkbox-circle-line`, KHÔNG duyệt thẳng từ danh sách (#11273)
+- [ ] Thao tác xong (Lưu nháp / Lưu / Gửi duyệt / Duyệt / Từ chối / Hủy / Xóa) → `markFormSaved()` rồi
+      `$router.push(<danh sách>)`; "Quay lại" (`url-back`) trỏ về **nơi user đi vào** (#11107, #11192,
+      #11193, #11236) → `list-page` §7.3
+- [ ] Màu nút đúng nhóm — **nguồn duy nhất là skill `button-convention` mục 2b**, đừng nhớ theo
+      checklist này: Tạo mới / Lưu / **Duyệt / Gửi duyệt** = `primary` teal (KHÔNG `status`, KHÔNG
+      xanh lá, KHÔNG cam); **Lưu nháp** = `secondary` trắng + `ri-save-3-line`; Gửi duyệt icon
+      `ri-send-plane-line`; Khóa = `primary status="warning"`; Xóa/Từ chối = `status="danger"`;
+      Import = `secondary status="warning"`; Xuất = `secondary status="success"`.
+      (Dòng cũ ghi "Duyệt = xanh lá, Gửi duyệt = cam" là SAI — đã gây lỗi QA #11548.)
 
 ### C. Hiển thị dữ liệu
 - [ ] Trạng thái dùng `V2BaseBadge`, text từ `status_text` / `status_name` của BE (không map
@@ -221,22 +389,131 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       ⚠️ Không đụng dấu `-` dùng làm **ký tự phân cách** (`name + '-' + position`). Xem
       `list-page/SKILL.md` §3b-3
 - [ ] Chữ trong ô để **thường**, kể cả cột Mã — không `font-weight-bold`
-- [ ] Chữ đỏ **chỉ** dùng cho lỗi validate / nút nguy hiểm / giá trị cũ trong lịch sử
+- [ ] Chữ đỏ **chỉ** dùng cho lỗi validate / nút nguy hiểm / giá trị cũ trong lịch sử. Không dùng
+      `.text-muted` cho chữ phụ trong khối `v2-styles` (bị ép thành đỏ) → `list-page` §3b-2 / §3b-2b
+- [ ] Link sang chứng từ khác: màn đích **đã port sang HRM** thì `nuxt-link` tới HRM, KHÔNG link sang ERP
+      (#11514); màn đích thuộc luồng khác (Quay lại bên đó cố định về list của nó) → `target="_blank"
+      rel="noopener"` (#11373); trong form readonly bọc `.v2-linked-field` → `list-page` §7b
+- [ ] Link sang màn **CHƯA port**: dùng helper `utils/erp-link.js` (`erpUrl`, mở tab mới), KHÔNG tự ghép
+      `process.env.ERP_URL`. Nhiều loại chứng từ → bảng map HRM/ERP có sẵn: `utils/contract-link.js` +
+      `components/finance/declare-debt/ContractCodeLink.vue`, `utils/stock-voucher-link.js` — port xong màn
+      nào thì chuyển dòng đó sang HRM. Link/nút trỏ màn chưa port **vẫn hiện** (ngoại lệ có chủ ý của
+      "không dùng được thì ẩn", chốt 21/08)
+- [ ] Link sang bản ghi người xem **có thể không có quyền** (vd tên khách hàng): BE trả cờ `can_view_*`
+      tính 1 lượt cho cả trang (`CustomerService::visibleIds()`, cấm N+1), FE chỉ dựng link khi cờ bật,
+      còn lại là chữ thường — nếu không, bấm vào nhận 403 rồi bị đá về danh sách
+- [ ] Cột **Người duyệt / Ngày duyệt** của phiếu duyệt nhiều cấp lấy theo **cấp đóng dấu CUỐI** (cả duyệt
+      lẫn từ chối — `lastApproval()`, `COALESCE` các cột thời gian), không chỉ cặp cột cấp cuối; sort, lọc
+      và Excel dùng chung nguồn đó (#11519: phiếu bị TP từ chối hiện 2 ô trống)
+- [ ] Bảng chi tiết giữ đúng **tiêu đề 2 tầng / gộp của ERP** (nhóm "Số lượng" → Có thể giữ / Đề nghị /
+      ĐVT…); cột gộp ghi đủ 2 nghĩa ("Người mượn / Tên hàng") (#11244, #11203, #11524, #11515). Cột cần
+      chắc rộng khai `min-width` (`width` bị bảng co — ĐVT 150px còn ~70px, #11348)
+- [ ] Ô ERP có thì HRM có, **kể cả khi thường rỗng** (#11186); ô chỉ rỗng vì loại phiếu không áp dụng
+      (vd Hợp đồng khi loại "Xuất giữ khác") thì **ẩn hẳn**, không để ô xám trống (#11370)
 
 ### D. Form (thêm mới / chỉnh sửa)
 - [ ] Lỗi validate hiện **ngay dưới ô nhập**, dạng `Tên trường – Nội dung lỗi`
 - [ ] Còn lỗi thì **không gọi API lưu**; nhiều lỗi thì con trỏ nhảy về ô lỗi đầu tiên
-- [ ] Chỉ trường **Tên** gắn `required` ở FE; required còn lại do BE trả 422
-- [ ] Lưu nháp chỉ bắt required trường Tên
+- [ ] **Ô bắt buộc validate ở CẢ FE lẫn BE** (user chốt 06/10/2026): bấm Lưu / Gửi duyệt mà để trống →
+      **mọi** ô bắt buộc báo đỏ **cùng lúc** (không phải chỉ 1 ô, các ô khác im — #11521, #11377), BE vẫn
+      kiểm lại y hệt và trả 422. Form không có nháp (popup danh mục…) → FE luôn bắt đủ → `form-validate` §1
+- [ ] **Lưu nháp chỉ nới `required`**: giữ đúng 1 trường đại diện — Tên, hoặc trường user chốt cho màn
+      (vd Kho vật lý ở Phiếu điều chuyển hàng, Loại yêu cầu ở YCXH; thường là cột NOT NULL không default).
+      Rule **định dạng** và ràng buộc nghiệp vụ vẫn chặn cả khi nháp. Bấm Lưu / Gửi duyệt thì bật lại đủ
+      `required` ở FE; BE quyết theo `status` → `form-validate` §1
+- [ ] Giới hạn `max:` ở FE khớp **độ dài cột DB** và rule BE (màn Tỉnh/TP để `max:50` trong khi cột 10 ký tự)
+- [ ] Bảng nhiều dòng: đổi/xoá/thêm dòng thì dọn lỗi 422 theo chỉ số dòng (`utils/rowFieldErrors.js`),
+      không `formError = {}` (#11312) → `form-validate` §3b
+- [ ] Bảng render từ computed sinh **bản sao dòng** (`{...row}`) thì KHÔNG `v-model` vào bản sao — dùng
+      `:value` + `@input` rồi `$set` vào `form.xxx[row.index]` (#11314, #11315, #11321)
+- [ ] `@input` của `V2BaseSelect` có options nạp sau: bỏ qua khi options còn rỗng và khi giá trị không đổi
+      (v-select2 tự bắn `change` chuỗi rỗng khi nhận options mới → xoá mất giá trị đã lưu, #11322)
+- [ ] Ô số lượng / tiền **chặn thẳng** chữ, ký tự đặc biệt, số âm bằng helper `utils/number-input.js`
+      (`sanitizeNumberEvent`, `:value` + `@input.native`, KHÔNG `v-model`); **vượt trần thì báo đỏ**, không
+      tự kéo về trần/sàn (#11192, #11215, #11255, #11373) → `select-and-input-state` §4b
+- [ ] Không tự xoá dòng user đã thêm mà chưa điền — báo đỏ đúng dòng để user điền hoặc bấm Xoá
 - [ ] Dropdown danh mục chỉ liệt kê danh mục **đang hoạt động**…
 - [ ] …nhưng màn Sửa/Chi tiết vẫn hiện đúng tên danh mục **đã khóa** đang gắn với bản ghi (🔒)
-- [ ] Có `unsavedChangesMixin` + gọi `markFormSaved()` sau khi lưu thành công
+- [ ] Options select phải chứa **giá trị đang gắn** cả khi nằm ngoài phạm vi người xem (kho công ty khác,
+      danh mục khoá) — gửi `include_ids`, không thì nhìn như phiếu mất dữ liệu → `select-and-input-state` §1
+- [ ] Ô cố ý khoá trong form: `V2BaseInput`/`V2BaseCurrencyInput` `:disabled` (KHÔNG `.field-line` — đó là
+      kiểu chữ trong bảng) + ⓘ qua prop `hint` của `V2BaseLabel`, câu nói **vì sao khoá + làm gì để đạt
+      mục đích**. Màn Chi tiết (cả form readonly) không gắn ⓘ → `info-icon-tooltip`
+- [ ] Có `unsavedChangesMixin` + gọi `markFormSaved()` sau khi lưu thành công. KHÔNG gọi `markFormSaved()`
+      lúc mở màn (tắt cảnh báo vĩnh viễn); form không nằm ở `formSubmit` thì override
+      `unsavedSnapshotSource()` → `unsaved-changes` §2b
+- [ ] Dữ liệu **user chọn** nhưng ghi vào form sau một lần `await` (chọn phiếu từ popup, tải tệp lên) vẫn
+      phải tính là "chưa lưu": gán `this.unsavedLastActionAt = Date.now()` ngay trước khi ghi, và
+      `unsavedSnapshotSource()` gồm cả `pendingFiles` (#11538) → `unsaved-changes` §3
 - [ ] Chưa đổi gì mà bấm Hủy → **không** hiện popup confirm
 - [ ] Date picker: click ra lịch **và** gõ tay được, định dạng `dd/mm/yyyy`
+- [ ] Ngày có trần/sàn (hạn giữ, hạn trả, không chọn quá khứ) chặn ngay trên lịch bằng prop
+      `disabled-date` của `V2BaseDatePicker`; parser nhận cả `d/m/Y` lẫn `Y-m-d` nếu BE trả 2 kiểu (#11520)
+- [ ] Tải tệp: chặn dung lượng ở FE trước khi gửi + khai message `attachments.*.uploaded` tiếng Việt (PHP
+      `upload_max_filesize` chặn trước Laravel, trả câu tiếng Anh — #11313); `.xls` đời cũ trượt
+      `mimes:xls` → so đuôi `getClientOriginalExtension()` bằng closure
+- [ ] Bố cục: không lồng `.container-fluid` ở cả trang vỏ lẫn form con (đệm đôi 12px); không tự khai
+      `padding-bottom` chừa footer (V2Footer đã gắn `has-v2-footer`); khối form bám khuôn của màn cùng nhóm
+      (`.form-card` hay `V2BaseFormSection`) — đo `getBoundingClientRect` cạnh màn mẫu (#11356, #11540)
+- [ ] Popup chọn hàng / bản ghi: hàng đã thêm loại ở **BE** (`exclude_*_ids` → `total` và "Hiển thị 1–N/N"
+      đúng), không lọc ở FE; truyền `existingProducts` đúng khuôn `{key, groupId, parentRowId}`; màn không
+      có cộng dồn dùng `duplicateMode="block"`; thứ tự ô lọc khớp thứ tự cột; `size="xl"` chỉ rộng hơn khi
+      màn ≥ 1200px (#11279, #11349, #11524, #11543) → `modal-popup` §4b/§4c
+- [ ] Popup chọn: số dòng/trang **mặc định 10, chọn được 10 / 20 / 50 / 100** (user chốt 06/10/2026,
+      #11524) — hằng `PICKER_PAGE_SIZE_OPTIONS` / `PICKER_DEFAULT_PAGE_SIZE` ở `utils/pickerPagination.js`,
+      không gõ số tay (`modal-popup` §4b). Cột Mã / Ngày tạo / ngày nghiệp vụ **sort được** (#11533 — khuôn bảng gọn tự dựng:
+      `.sortable-header` ở `pages/finance/borrow-extend-requests/components/BorrowPickerModal.vue`); dòng
+      không còn thao tác được thì **ẩn khỏi popup**, đừng cho chọn rồi báo lỗi
+- [ ] Ô chọn mà **xoá giá trị phải hỏi xác nhận** (vd đổi nhân viên khi đã có hàng): select2 mở dropdown
+      ngay sau nút x, đè lên popup xác nhận → chặn `select2:opening` ngay sau `select2:unselecting`
+      (khuôn `bindEmployeeClearNoOpen` ở `AccountingPrepickCancelForm.vue`) → `select-and-input-state`
+- [ ] Bảng con trong form khi rỗng **vẫn vẽ bảng**, dòng "Không có dữ liệu" nằm trong bảng (`colspan`),
+      chữ xám `#6b7280` — không thay bằng `<div>` ngoài bảng, không `.text-muted` (ra đỏ)
+- [ ] **Góc phải header khối đầu tiên** có dòng `Tên người tạo - dd/mm/yyyy HH:mm` ở CẢ Thêm / Sửa /
+      Chi tiết — dùng component `components/CreatorInfoLine.vue` (`name`, `created-at`, `is-create`),
+      KHÔNG tự viết span/computed riêng (Redmine #11575: ~40 màn mỗi màn một kiểu "·", "—",
+      "Người tạo:", chỉ ngày, 11px…). Màn Thêm = người đăng nhập + giờ hiện tại; Sửa/Chi tiết = người
+      tạo phiếu, BE trả `d/m/Y H:i` và **tên thuần** (nhiều resource ERP có `creator_name` = "Tên - Mã
+      phòng" → thêm field mới, không sửa field cũ). Màn chuẩn: `pages/finance/bill-adjust-depts`.
+      Góc phải header này **KHÔNG đặt badge trạng thái** (#11533) — trạng thái nằm ở nơi khác của form.
+- [ ] Màn Thêm có nút **"Lưu và tiếp tục"** (`saveAndContinueMixin` ở form + `saveAndContinuePageMixin`
+      + `:key="formKey"` ở trang vỏ; xem `pages/finance/buy-service-requests/create.vue`)
+- [ ] Mọi ô chọn (`V2BaseSelect`) có **nút x xoá nhanh** — KHÔNG truyền `:allowClear="false"`, kể cả ô
+      bắt buộc (QA báo lặp lại ở #11555, #11569)
+- [ ] Mọi ô nhập/chọn trên FORM có placeholder `Nhập <X>` / `Chọn <X>` (QA #11557, #11562). (Luật
+      "placeholder không lặp nhãn" ở mục A chỉ áp cho ô lọc floating.)
+- [ ] Ô **Ghi chú / Diễn giải** dài: `col-12` + `V2BaseTextarea :rows="2"`, màn Chi tiết `disabled`
+      (khuôn `bill-adjust-dept-requests`) — không để `V2BaseInput` ngắn nửa dòng
+- [ ] Ô chọn nạp options lâu: cờ `isLoadingX` → `:placeholder="isLoadingX ? 'Đang tải...' : 'Chọn …'"`
+      + `:disabled="isLoadingX"` (khuôn `CustomerForm.vue`). Loading cả trang/khối:
+      `<div class="spinner-border text-primary" role="status">` — `ri-loader-4-line ri-spin` đứng
+      yên vì dự án không có CSS `ri-spin` toàn cục.
+- [ ] **File đính kèm** của màn tài chính: khối `pages/finance/bill-payment-requests/components/AttachmentSection.vue`
+      (`:files` URL đã lưu + `:pending-files` + `api-base`), BE có `GET /{id}/attachment-sizes`
+      (`BillPaymentAttachmentService::sizes()`) + `DELETE /{id}/files?file_url=` — KHÔNG dùng
+      `V2BaseAttachmentSection` (không biết dung lượng file đã lưu → cột Dung lượng ra trống, #11549).
+      Đổi/xoá file phải **ghi lịch sử** bằng trait `Services/Concerns/BuildsAttachmentHistoryChange.php`
+      (snapshot lưu danh sách URL, không lưu SỐ file — đếm số thì thay 1 file bằng 1 file không ra log, #11540).
+      Cần xem trước file trước khi lưu (viewer không đọc `blob:`) → FE `POST /upload-files` ngay lúc chọn
+      tệp, lúc lưu gửi `attachment_urls[]`; FormRequest chặn `starts_with:<URL_PREFIX thư mục S3 của màn>`
+      để client không nhét URL lạ (#11348, `ProductTransferFormRequest`).
 
 ### E. Chi tiết
 - [ ] Số phiếu hiện ngay dưới/sau tiêu đề màn
 - [ ] Tiêu đề `Chi tiết <đối tượng>: <mã>` — không có mã thì để trần, không lấy tên thay
+- [ ] Mở URL id không tồn tại / không có quyền (404 / 403) → `this.$router.replace({ path:
+      '/pages/extras/404' })`, **KHÔNG toast** rồi đẩy về danh sách → `list-page` §7 mục 1b.
+      Interceptor `plugins/axios.js` đã tự toast 403 — request chi tiết gửi header `X-Silent-Errors`
+      (khuôn `meeting/GeneralInfo.vue`) và khối Lịch sử chỉ dựng SAU khi nạp chi tiết xong, nếu không ra
+      3 toast trùng (#11546).
+      📌 Một số màn cũ (#11296, #11365, #11373, #11546) đang làm kiểu toast + về danh sách
+      (`handleMissingRecord`) — khi động tới màn đó thì chuyển về chuẩn 404
+- [ ] Thao tác trên phiếu đã bị người khác đổi trạng thái → BE trả **409** với câu
+      `"Trạng thái đã bị thay đổi. Vui lòng load lại trang"` (nguyên văn
+      `GuardsCatalogStatus::$statusConflictMessage`, QA chốt #11549) — KHÔNG trả 403 "không có quyền"
+- [ ] Duyệt / thao tác dựa trên số liệu chép lúc lập phiếu → kiểm lại với **dữ liệu HIỆN TẠI** trong
+      transaction, `lockForUpdate` phiếu cha rồi validate lại (#11520: phiếu gia hạn "27/09 → 27/09" vẫn
+      duyệt được vì phiếu khác vừa được duyệt xen giữa)
 
 #### E1. Lịch sử thay đổi — ĐỌC `entity-history/ui-base.md` TRƯỚC KHI VIẾT MARKUP
 
@@ -247,7 +524,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Làm **ĐỦ 2 NƠI** như màn Khách hàng: popup mở từ menu ⋮ ở màn **danh sách** *và* khối
       "Lịch sử" ở màn **chi tiết**. Làm 1 nơi rồi báo xong là thiếu
 - [ ] Hai nơi hiển thị **y hệt nhau** (bố cục, chữ, màu, bộ lọc, thứ tự)
-- [ ] Khối ở màn chi tiết mặc định **ẩn**, click mới mở (lazy load lần mở đầu)
+- [ ] Khối ở màn chi tiết **thu gọn mặc định** nhưng **dựng sẵn** (`v-show`, không `v-if`) sau khi nạp
+      chi tiết xong — để badge số mốc lịch sử hiện ngay khi vào màn (#11373, user duyệt đánh đổi thêm 1
+      request)
 - [ ] Sắp **MỚI → CŨ** (BE `orderByDesc('changed_at')`)
 - [ ] 4 ô lọc: Loại hành động · Người thực hiện · Từ ngày · Đến ngày. **Bấm "Tìm kiếm" mới lọc**
       (2 state `filters` / `appliedFilters`), "Làm mới" reset chứ không gọi lại API
@@ -266,19 +545,58 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       đường dẫn tệp hiện nguyên URL dài
 - [ ] Đủ 4 trạng thái: đang tải / lỗi tải (+ nút Thử lại) / chưa có log / lọc không ra
 - [ ] Khóa – Mở khóa – Duyệt – Từ chối đều **ghi log**, action lạ tự rơi vào nhóm `status`
+- [ ] Mốc **"Tạo mới"** chỉ hiện thời gian + "Tạo mới" + người thực hiện, KHÔNG liệt kê từng trường (vẫn
+      lưu snapshot đủ) (#11186); nhãn mốc sửa = **"Thay đổi thông tin"**
+- [ ] Ghi chú / giá trị dài trong log: `overflow-wrap: anywhere` + `min-width: 0` — không để popup Lịch sử
+      cuộn ngang (#11198)
 
 ### F. Import / Xuất
 - [ ] Import dùng `V2BaseImportModal`; có file mẫu tải về được
 - [ ] Validate trước khi import; dòng lỗi đỏ sửa được tại chỗ, dòng hợp lệ xanh và khóa
-- [ ] Vẫn import được khi còn dòng lỗi (chỉ import dòng hợp lệ)
+- [ ] Hiện trạng component (khác câu SRS "vẫn import khi còn dòng lỗi"): `V2BaseImportToolbar` **khoá nút
+      Import khi còn dòng lỗi** — user phải sửa dòng lỗi hoặc bấm "Bỏ dòng lỗi" rồi mới Import. HDSD /
+      testcase ghi theo hành vi này. BE vẫn viết kiểu chịu được dòng lỗi (bỏ qua dòng lỗi) để khi
+      component đổi thì không phải sửa lại
 - [ ] Xuất file: mở popup **chọn trường** (`ExportFieldsModal`) trước, KHÔNG xuất thẳng khi bấm nút;
       thứ tự cột trong file theo đúng thứ tự user tick
 - [ ] BE trả **đủ** các trường có trong popup — kể cả cột đang ẩn ở màn danh sách, nếu không user
       tick xong ra cột trống
+- [ ] Trường trong popup khai ở **CẢ** FE `exportFields` **và** BE (`ExportColumnRegistry` nếu dùng
+      `DynamicExport`, hoặc `columnDefinitions()` của class export riêng); không `'always' => true` trừ STT
+      (user bỏ tick vẫn ra cột, lệch thứ tự); cột boolean trả thêm khoá chữ `*_text`; popup tick sẵn cột
+      đang hiện (`exportFieldsMixin.visibleExportFields`) (#11574, #11346) → `list-page` §14b
 - [ ] Nút xuất bị khóa khi đang xuất + có dòng tiến độ
+- [ ] File Excel **tự dựng bằng ExcelJS ở FE** (báo cáo, file tồn…) phải có đủ như file danh sách
+      chuẩn — dùng helper, đừng chép tay:
+      letterhead dòng 1 = `fetchCompanyLetterhead(store)` + `insertLetterhead()` (cùng export từ
+      `utils/export/listExportFile.js`; ERP lấy header công ty NGƯỜI ĐĂNG NHẬP);
+      mã số theo từng ô = `numberFormatOf(value)` (gắn cứng `#,##0.##` cho số nguyên → Excel in
+      "2,000." cụt đuôi, #11569); khối ký "Ngày… / Người lập / (Ký, họ tên)" = `addExcelSignatureBlock`
+      (`utils/export/excel-signature-block.js`); tiêu đề + cột + dòng Tổng cộng khớp file ERP; số 0
+      để ô trống nếu ERP để trống
+- [ ] File mẫu import KHÔNG có dòng mô tả dưới tiêu đề nếu file mẫu ERP không có (dòng đó bị đọc
+      thành dữ liệu lỗi, #11560/#11563) — mô tả cột đặt ở icon ⓘ bảng xem trước
+
+### F2. In
+- [ ] Nút In mở **popup xem trước** `ReportPrintPreviewModal`, không mở trang riêng → `print-page` §0
+- [ ] In danh sách: ô "Thời gian" ghi "Tất cả" khi không lọc ngày, cột ngày kèm giờ, chốt trần số dòng
+      → `print-page` §4d / §4e
+- [ ] Khối ký 1 người: dòng "Ngày … tháng … năm …" nằm **trong chính ô ký**, cùng trục với "Người lập /
+      (Ký, họ tên)", sát lề phải, tên in đậm, không kẻ viền (#11253 qua 3 vòng) → `print-page` §3b
+- [ ] Cột mẫu in khai `%` + `table-layout: fixed`, KHÔNG khai `px` (tổng px > bề ngang A4 → cột co giãn
+      bị bóp, chữ rơi dọc)
+- [ ] Logo/ảnh vỡ trên bản in → `curl` kiểm URL trước; 404 là lỗi dữ liệu, báo user, đừng đổi nguồn ảnh (#11431)
 
 ### G. Thông báo & xác nhận
-- [ ] Toast thành công/thất bại dùng **đúng câu** trong bảng QLDA
+- [ ] Toast thành công/thất bại dùng **đúng câu** trong bảng QLDA, kết thúc bằng dấu chấm
+      (`"<Hành động> thành công."`); lỗi 422 lấy câu cụ thể của BE qua `utils/api-error-message.js`
+      → `apiErrorMessage(error, fallback)`, không toast câu chung "The given data was invalid."
+- [ ] Chỉ dùng toast `success` (xanh) / `error` (đỏ) cho thao tác trên phiếu — KHÔNG `warning` (cam)
+      cho trường hợp "bỏ qua dòng / hết số lượng" (#11552: màn duy nhất trong nhóm dùng cam)
+- [ ] "Bạn chưa nhập đầy đủ thông tin." (QLDA_001) **chỉ** khi thiếu ô bắt buộc; lỗi khác (vượt số có thể
+      hủy…) toast đúng câu lỗi cụ thể, kèm tên hàng (#11524)
+- [ ] **Một thao tác = đúng 1 thông báo**: popup dùng chung và màn không cùng toast cho một việc (#11349);
+      nhưng chọn nguồn mà không có dữ liệu thì VẪN toast lý do — đừng gỡ toast "cho đỡ trùng" (#11370)
 - [ ] Mọi popup xác nhận dùng `base-confirm-modal` / `$confirm()`, không tự khai `b-modal`
 - [ ] Thông báo nghiệp vụ (chuông/push) theo template
       `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`, tên ≤ 50 ký tự và in đậm,
@@ -300,11 +618,17 @@ phí, Chi phí, Gói BD) vì làm sai những điểm dưới — màn mới ph�
       ⚠️ Tên cột lừa: `wr_accounting_service_items.service_id` thực ra trỏ `costs` — kiểm bằng dữ liệu
       (giá trị có khớp bảng đích không) trước khi xếp. Bảng "dữ liệu của chính bản ghi" (vd hàng hoá
       gắn gói) không tính là đã dùng — liệt kê cho user chốt.
+      ⚠️ **Prod có khoá ngoại mà DB `gop_db` local không có** → local xoá chạy, lên prod lỗi SQL 1451 (vd
+      màn Tỉnh/TP — `Province` khai lệch tên `USED_BY_COLUMNS`, màn mới vẫn đặt `USAGE_REFERENCES`). Ngoài `usedIds()` thêm lưới an toàn: `catch (QueryException $e)`
+      với `$e->errorInfo[1] === 1451` → trả đúng câu "… đang được sử dụng, không thể xóa." (`ProvinceService`)
 - [ ] Có **Khóa / Mở khóa**, và **cho Khóa cả khi đang được dùng** (không cấm khoá vì đã hạch toán).
       Route `PUT /{id}/lock|unlock` (KHÔNG dùng GET); service kiểm trạng thái hiện tại → đã ở trạng thái
       đích thì 400 `"Trạng thái đã bị thay đổi. Vui lòng load lại trang"` (đừng báo thành công lần 2).
 - [ ] Popup/form Tạo–Sửa có **ô Trạng thái** (mặc định Hoạt động); danh sách hiện **cả bản ghi Khóa**
       + cột badge + bộ lọc Trạng thái. Bản ghi Khóa chỉ còn Mở khóa + Lịch sử.
+- [ ] Nút Khóa / Mở khóa nằm **trong cột Hành động** (`getRowActions`, icon `ri-lock-line` /
+      `ri-lock-unlock-line`) — chuẩn hiện hành, KHÔNG đặt trong cột Trạng thái như vài màn cũ
+      (khuôn `references/khuon-man-mau.md` mục Cột Hành động).
 - [ ] Middleware route theo thứ tự **`checkPermission` TRƯỚC `recordNotLocked`** — ngược lại thì user
       thiếu quyền nhận 423 thay vì 403 (dính ở Cấp DV, Ghi chú KT, Chi phí).
 - [ ] Route model binding không tìm thấy bản ghi (người khác vừa xoá) đang trả toast tiếng Anh
@@ -336,7 +660,9 @@ phí, Chi phí, Gói BD) vì làm sai những điểm dưới — màn mới ph�
 | STT tính `index + 1` | Sai từ trang 2 | `getNumericalOrder(currentPage, pageSize, index)` |
 | Cột Mã để `@click` trên `<div>` | Không mở được tab mới (vi phạm SRS) | `<nuxt-link>` |
 | `V2BaseRowActions` so `action.key` | **Nút bấm im ru, không lỗi console** — và nút khai `to:` vẫn chạy nên rất dễ nghiệm thu nhầm là "màn chạy được" | Nó emit **chuỗi key** → `switch (action)`. Khuôn đúng: `pages/assign/customers/index.vue::handleRowAction`. ⚠️ Menu hành động **tự dựng tay** thì `action.key` lại đúng — chỉ sai khi qua `V2BaseRowActions` |
-| `V2BaseButton` truyền `disabled` | Không có prop đó → nút vẫn bấm được | Ẩn nút bằng `visible`, đừng disable |
+| `V2BaseButton` truyền `disabled` | Không có prop đó → nút vẫn bấm được | Nút không dùng được → ẩn bằng `visible`/`v-if`. Nút **đang gửi request** thì khoá bằng `:interactable="!submitting"` (đây là cách đúng, không phải rule cũ) — `button-convention` §6b |
+| Truyền prop không tồn tại cho `V2Base*` | Rơi vào `$attrs`, **không báo lỗi**: `V2BaseIconButton icon="…"` ra ô rỗng (icon phải nằm trong slot `<i>`); `V2BaseButton danger` ra màu XANH (đúng là `primary status="danger"`); `defaultHidden` không ẩn cột (đúng là `isVisible: false`) | Component render trống / sai màu → mở file component đọc `props` trước, đừng đoán tên prop (#11346, #11348) |
+| Option `V2BaseSelect` không phải `{ id, name }` | `id` undefined → select2 lấy nhãn làm value: dropdown mở được mà **bấm không chọn được**, popup xuất "Đang chọn 1/9" | Map trước `.map(c => ({ id: c.key, name: c.label }))`; select2 trả **chuỗi** → so `String(a) === String(b)` |
 | Khai `company` / `department` / `part` trong `initialStateForm` | **Ô lọc Công ty/Phòng ban chọn xong không có gì xảy ra.** Hỏng 2 lần: Vue 2 không reactive với property chưa khai → deep watcher không bắn; và tên gửi lên không khớp param BE | `V2BaseCompanyDepartmentFilter` ghi vào **`company_id` / `department_id` / `part_id` / `employee_id`** — khai đúng 4 key này (kể cả key không dùng làm bộ lọc, vì watcher của nó vẫn reset). BE đọc cùng tên |
 | Để ô "Bộ phận"/"Nhân viên" hiện mà BE không lọc theo | Ô lọc chết, user chọn mãi không ra | `:disable_part` / `:disable_employee` — đối chiếu `searchByFilter` của BE xem thật sự lọc theo cấp nào |
 | `$axios` tải file thiếu `Authorization` | Xuất Excel 401 | Tự gắn token cho request export |
@@ -350,6 +676,9 @@ phí, Chi phí, Gói BD) vì làm sai những điểm dưới — màn mới ph�
 | Chỉ làm lịch sử ở màn chi tiết, quên popup ở màn danh sách | Nghiệm thu xong user quay lại yêu cầu bổ sung | Chuẩn màn Khách hàng là **2 nơi** |
 | Suy 2 ô lọc lịch sử từ log đang tải | Dropdown chỉ có 1-2 dòng, user tưởng mất dữ liệu | Gọi `filter-options`, fallback 3 nhóm hard-code |
 | Đổi route mà quên dữ liệu đã lưu URL trong DB | Màn bị đá 404 | Grep xem đường dẫn có bị lưu DB / so khớp ở BE không; redirect FE **không** cứu được |
+| Cache danh mục vào Vuex rồi không làm mới | Thêm Nhóm ngành xong, dropdown ở màn khác vẫn là danh sách cũ tới khi F5 (#11377 BUG7) | Màn danh mục thêm/sửa/khoá xong thì gọi action xoá cache của danh mục đó (khuôn `clearInvestmentScopes` ở `store/optionsSelect.js`) → `select-and-input-state` |
+| Bê bảng/cột ERP mà không đọc `.plans/gop-db/design.md` mục "Bẫy khi port" | Cột polymorphic lưu tên class ERP, cột do ERP ghi bị HRM ghi đè, thiếu cột phụ ERP vẫn ghi, NOT NULL không default, path `/uploads/…` 404… | Đọc mục đó trước khi viết model/service cho bảng ERP |
+| Tự dựng thứ đã có helper | Mỗi màn một kiểu | Có sẵn: `utils/mixins/lockedCatalogOptionsMixin.js` (giữ danh mục khoá trong select form Sửa/Xem) · `utils/historyFormat.js` (giá trị trong popup lịch sử) · `utils/confirmInfoHtml.js` (popup xác nhận kèm bảng thông tin, tự escape) · `components/SubtextSelect.vue` (select có dòng phụ xám) · `utils/import-multi-sheet-helper.js` (import nhiều sheet) · `components/V2BaseImageField.vue` (ô ảnh) · 2 màn giống nhau (Khách hàng / NCC) dùng chung List/Form + file config: `components/finance/declare-debt/*` + `utils/finance/declareDebtConfigs.js` |
 
 ---
 
@@ -368,6 +697,13 @@ grep -rn "V2BaseSelectRemote" <thư-mục-feature> | grep -v 'height='   # thi�
 grep -rn "thành công'"                    <thư-mục-feature>   # câu toast tự chế, so với bảng QLDA
 grep -rn "log.action !=="                 <thư-mục-feature>   # lịch sử phải lọc theo action_group
 grep -rn "actionOptions"                  <thư-mục-feature>   # dựng từ log = sai, phải từ filter-options
+grep -rn "<V2BaseIconButton[^>]*icon=\|<V2BaseButton[^>]* danger\b\|defaultHidden" <thư-mục-feature>   # prop không tồn tại
+grep -rn "Người lập\|Ngày lập"            <thư-mục-feature>   # nhãn phải là Người tạo / Ngày tạo
+grep -L "layout:"  <thư-mục-page>/*.vue <thư-mục-page>/_id/*.vue          # thiếu layout -> sai vỏ trang
+grep -L "v2-styles.scss" <thư-mục-page>/index.vue <file-Form>.vue        # thiếu import -> vỡ bộ lọc nâng cao
+grep -rn "process.env.ERP_URL"            <thư-mục-feature>   # link ERP tự ghép -> utils/erp-link.js
+grep -rLE "pickerPagination" <thư-mục-feature>/components/*{Search,Picker}*Modal.vue   # popup CHỌN chưa dùng hằng số dòng chung
+grep -rn "text-muted"                     <thư-mục-feature>   # ra chữ ĐỎ -> dùng xám #6b7280
 ```
 
 Nếu grep ra sạch mà mắt vẫn thấy lệch → mở màn **Danh mục khách hàng** đặt cạnh và so từng khối.
@@ -391,3 +727,6 @@ Nếu grep ra sạch mà mắt vẫn thấy lệch → mở màn **Danh mục kh
 | Lịch sử thay đổi | `.claude/skills/entity-history/SKILL.md` |
 | Thông báo nghiệp vụ | `.claude/skills/notification-convention/SKILL.md` |
 | Import Excel | `.claude/skills/import-excel/SKILL.md` |
+| Xuất Excel (BE + ExcelJS) | `.claude/skills/export-excel/SKILL.md` |
+| Nút In / bản in | `.claude/skills/print-page/SKILL.md` |
+| Icon ⓘ + tooltip | `.claude/skills/info-icon-tooltip/SKILL.md` |

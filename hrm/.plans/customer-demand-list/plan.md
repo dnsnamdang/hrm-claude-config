@@ -403,3 +403,77 @@ Dữ liệu thử (nhu cầu #60, giá trị + ngày của #59, các dòng lịc
 
 Bước tiếp theo: push lên dev, báo QA retest.
 Blocked: 
+
+## ĐỢT 05/10/2026 — Nhu cầu chỉ ghi nhận khi meeting Hoàn thành + popup Lịch sử theo khuôn chuẩn
+
+Phản hồi QA 05/10: meeting 1244 mới nhập biên bản, CHƯA bấm Hoàn thành mà tab "Nhu cầu của khách
+hàng" (Công việc của tôi) đã hiện nhu cầu "Đang theo dõi". Luật mới: **chỉ khi meeting Hoàn thành
+nhu cầu mới được ghi nhận**. Spec #11386/#11390 trước đây không nói gì về điểm này (chỗ bỏ ngỏ),
+code cũ ghi nhận ngay lúc lưu biên bản. Nhánh: `develop` (cả 2 repo).
+
+User chốt 05/10: (a) cho thêm loại `customer-demand` vào `SystemLogService` dùng chung để popup lịch
+sử dùng đúng khuôn `entity-history`; (b) dòng "Tạo mới" ghi vào LÚC meeting Hoàn thành.
+
+- [x] **B1. BE — lọc danh sách**: `CustomerDemandService::baseQuery()` chỉ lấy nhu cầu của meeting đã
+      Hoàn thành → áp cho cả màn `/assign/customer-demands` lẫn tab Công việc của tôi (dùng chung query)
+- [x] **B2. BE — ghi lịch sử**: meeting chưa Hoàn thành thì sửa biên bản KHÔNG sinh dòng Tạo mới /
+      Cập nhật; chuyển sang Hoàn thành → mỗi nhu cầu 1 dòng "Tạo mới". Chữ trong log có dấu đầy đủ
+- [x] **B3. BE — `SystemLogService`**: thêm type `customer-demand` (getLogs + filter-options) trả DTO chuẩn
+- [x] **B4. FE — popup Lịch sử** ở `CustomerDemandList.vue` thay `b-modal` + bảng tự dựng bằng
+      `V2BaseModal` bọc `SystemInfoSection` (khuôn `CatalogHistoryModal`)
+- [x] **B5. Sửa design.md dòng 91** (bỏ vế "hoặc cuộc họp chưa Hoàn thành")
+- [x] **B6. Verify** BE bằng script + FE bằng Playwright (cả màn danh sách lẫn tab)
+
+Kết quả verify:
+- BE (script, transaction rollback, DB `gop_db`): lưu biên bản lúc chưa Hoàn thành → nhu cầu KHÔNG vào
+  danh sách, 0 dòng lịch sử (kể cả lưu lần 2 có sửa số + thêm nhóm ngành) · Hoàn thành qua `update()`
+  → 3/3 nhu cầu vào danh sách, đúng 3 dòng "Tạo mới", 0 "Cập nhật" · lưu lại không đổi → không thêm
+  dòng · sửa sau Hoàn thành → 1 "Cập nhật" · đường `changeStatus()` → 3 "Tạo mới" · log cũ không dấu
+  đọc ra nhãn có dấu · bộ lọc trả 3 nhóm + danh sách người thực hiện đủ.
+- FE (Playwright, dữ liệu thử đã xoá + trả 2 meeting #41/#42 về nguyên trạng): màn danh sách và tab
+  Công việc của tôi đều chỉ hiện 2 nhu cầu của meeting đã Hoàn thành, nhu cầu của meeting chưa Hoàn
+  thành không hiện. Popup Lịch sử: timeline, nút Bộ lọc, cũ đỏ → mới xanh, ghi chú bàn giao nền vàng.
+
+⚠️ Nhu cầu CŨ trên môi trường thật đã có dòng "Tạo mới" ghi lúc lưu biên bản (mốc cũ) → giữ nguyên,
+không chạy lại dữ liệu; lúc Hoàn thành hàm idempotent thấy đã có nên không ghi thêm.
+Endpoint cũ `assign/customer-demands/{id}/histories` không còn màn nào gọi, chưa gỡ (chờ user).
+
+### Checkpoint — 2026-10-05
+Vừa hoàn thành: B1-B6 đợt 05/10 (lọc theo meeting Hoàn thành + popup Lịch sử theo khuôn chuẩn).
+Đang làm dở: không có.
+Bước tiếp theo: user review diff trên `develop` (cả 2 repo) rồi commit, deploy lên dev cho QA test lại.
+Blocked:
+
+## ĐỢT 06/10/2026 — Ô chọn nhu cầu ở form Dự án TKT lệch với màn danh sách
+
+QA (chị Huyền, KH Bảo Việt Thăng Long): danh sách 4 nhu cầu Đang theo dõi, ô chọn ở form Dự án TKT
+ra 6. Dữ liệu dev: #290 Luyện Kim + #297 Sơn - phủ có `owner_employee_id = 25` (đã bàn giao đi),
+`host_employee_id = 867` (chị Huyền). Ô chọn chỉ xét người chủ trì nên vẫn hiện 2 dòng này.
+User đồng ý đổi luật đã chốt "chỉ người chủ trì" → "người đang phụ trách".
+
+- [x] `ProspectiveProjectService::listSelectableCustomerDemands()` lọc
+      `COALESCE(owner_employee_id, host_employee_id) = mình` — cùng biểu thức màn danh sách
+- [x] `CustomerDemandOptionResource`: số tiền `6.000.000` → `6,000,000`
+- [x] Verify (script, rollback): chủ trì không còn thấy nhu cầu đã bàn giao đi, người nhận thấy được;
+      `include_id` vẫn giữ nhu cầu đang gắn ở màn Sửa. ⚠️ `gop_db` local các loại meeting chưa có
+      `code` → muốn test phải tạm gán `HOP_TIM_HIEU_GIOI_THIEU_SP` trong transaction.
+
+Commit `hrm-api` **919f24cab** trên `develop` (chưa push).
+
+## ĐỢT 06/10/2026 (2) — Xuất Excel + đổi nhãn ô lọc "Nhân viên" → "Kinh doanh chủ trì"
+
+- [x] FE ô lọc: `V2BaseCompanyDepartmentFilter label-employee="Kinh doanh chủ trì"` (prop có sẵn, không sửa component chung)
+- [x] Xuất Excel theo skill list-page 14b/14c: popup "Chọn trường xuất file" (`exportFieldsMixin` +
+      `ExportFieldsModal`) + file dựng ở FE (`listExportFile.js`). Đi đường FE vì `DynamicExport`
+      dùng chung ép mọi ô thành chuỗi → cột tiền không ra số thật `#,##0`.
+- [x] BE `GET assign/customer-demands/export-rows` (khai trước route `/{id}`), `CustomerDemandService::exportRows()`
+      dùng lại `baseQuery()` + `applySort()` (tách từ `list()`) → file khớp bảng, kể cả `only_mine` của tab.
+      Cột khai ở `ExportColumnRegistry::COLUMNS['assign_customer_demands']` (key trùng key cột bảng).
+- [x] Verify: script (rollback) + Playwright màn danh sách: popup tick sẵn 11 cột đang hiện; file ra đúng
+      tiêu đề, thứ tự cột, ô tiền là số `#,##0`, khối ký tên.
+
+⚠️ `app/ExcelExport/ExportColumnRegistry.php` đang có thay đổi CHƯA COMMIT của người khác (khối
+`declare_debt_beginning`) — commit phần của mình phải tách hunk, không `git add` cả file.
+
+Đã commit + push `develop`: `hrm-api` **31722b716** (registry chỉ stage khối `assign_customer_demands`,
+phần `declare_debt_beginning` của người khác vẫn để nguyên ở working tree) · `hrm-client` **f4e24d91b**.

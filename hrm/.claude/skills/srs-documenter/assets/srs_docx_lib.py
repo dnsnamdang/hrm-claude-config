@@ -228,6 +228,8 @@ class SrsDoc(object):
         for row in rows:
             cells = t.add_row().cells
             for i, v in enumerate(row):
+                if isinstance(v, (list, tuple)):     # moi y 1 dong (gop y BA 05/10/2026)
+                    v = chr(10).join(str(x) for x in v)
                 cells[i].text = '' if v is None else str(v)
                 for para in cells[i].paragraphs:
                     for r in para.runs:
@@ -273,6 +275,7 @@ class SrsDoc(object):
         required=False, scope=False-> 6 cot, bo ca 'Pham vi' (hop xac nhan...)
 
         So o trong moi dong PHAI khop so cot da chon.
+        O 'Mo ta' nhieu y thi truyen LIST -> moi phan tu 1 dong (vd ['- Thut le theo cap', '- Bam so -> ...']).
         """
         headers = ['STT', 'Tên đối tượng', 'Loại', 'Trạng thái']
         widths = [0.4, 1.2, 0.8, 0.75]

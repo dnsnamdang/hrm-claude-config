@@ -5,6 +5,11 @@ Viet tu code HRM nhanh `gop_db` (nguon chan ly), khuon cau truc chep tu man sinh
 `finance-prepick-extend-request/gen_testcase.py` nhung noi dung doi han:
 hang MUON khong co nhap, khong sua/xoa, 1 o ngay hen tra moi cho ca phieu.
 Ngon ngu: NGHIEP VU cho QA - khong dung thuat ngu code.
+
+Ra soat lai 05/10/2026 theo code nhanh `develop` (repo chinh — cac sua QA tu 02/10 lam thang vao
+develop): #11534 (tong cong ty thay moi cong ty), #11533 (goc phai khoi Thong tin chung, in phieu
+kho doc, sap xep popup), #11529 (cau bao ly do khong gia han duoc), #11535 (popup qua han),
+#11538 (toast thieu thong tin), #11550 (nguoi nhan thong bao TP = nguoi duyet duoc). 167 -> 171 TC.
 """
 import os
 import sys
@@ -39,10 +44,10 @@ DESCRIPTION_BLOCK = [
      'Hàng mượn chờ duyệt (chỉ người có quyền Kế toán kho thấy mục này); Bán hàng > Yêu cầu > '
      'Hàng hóa > YC gia hạn hàng mượn.'),
     ('2. Đối tượng được tính / hiển thị',
-     'Danh sách (lối vào thường) hiển thị phiếu theo phạm vi quyền, LUÔN bó trong công ty của '
-     'người đăng nhập:\n'
-     '- Có quyền "Xem phiếu hàng mượn theo tổng công ty" hoặc "Xem phiếu hàng mượn theo công ty": '
-     'mọi phiếu của công ty mình.\n'
+     'Danh sách (lối vào thường) hiển thị phiếu theo phạm vi quyền:\n'
+     '- Super Admin hoặc có quyền "Xem phiếu hàng mượn theo tổng công ty": phiếu của MỌI công ty '
+     '(muốn xem riêng một công ty thì chọn ở ô lọc Công ty).\n'
+     '- Có quyền "Xem phiếu hàng mượn theo công ty": mọi phiếu của công ty mình.\n'
      '- Có quyền "Xem phiếu hàng mượn theo phòng ban": phiếu thuộc phòng ban mình quản lý, phòng '
      'ban của chính mình, và phiếu mình lập.\n'
      '- Không có quyền xem nào: chỉ phiếu mình lập.\n'
@@ -54,12 +59,13 @@ DESCRIPTION_BLOCK = [
      'lập, đã xuất kho, còn đang mượn, chưa có yêu cầu gia hạn nào đang chờ duyệt, và hạn trả '
      'hiện tại còn trước ngày trần.'),
     ('3. Đối tượng bị ẩn / không tính',
-     '- Phiếu của công ty khác: không hiện trong danh sách, kể cả với quyền xem theo tổng công ty.\n'
+     '- Phiếu của công ty khác: không hiện trong danh sách, TRỪ với Super Admin và người có quyền '
+     'xem theo tổng công ty. Lối vào "chờ duyệt" thì luôn chỉ có phiếu cùng công ty.\n'
      '- Phiếu mượn của người khác, phiếu đã trả hết hàng, phiếu đang có yêu cầu gia hạn chờ duyệt: '
      'không hiện ở popup chọn phiếu.\n'
      '- Phiếu mượn có hạn trả hiện tại đã bằng hoặc sau ngày trần (hôm nay + số ngày mượn tối đa '
      'theo cấu hình): không hiện ở popup chọn phiếu.\n'
-     '- Mặt hàng trên phiếu mượn không thuộc diện phải xuất: không hiện ở bảng Chi tiết hàng mượn, '
+     '- Mặt hàng trên phiếu mượn không thuộc diện phải xuất: không hiện ở bảng Chi tiết, '
      'và bộ lọc Tên hàng hóa / Model cũng không dò trên các dòng này.\n'
      '- Thao tác duyệt / từ chối làm bên cổng ERP cũ: không có trong Lịch sử thay đổi.'),
     ('4. Bộ lọc thời gian áp dụng cho',
@@ -70,7 +76,7 @@ DESCRIPTION_BLOCK = [
      '"Khoảng thời gian" trên bản in danh sách.'),
     ('5. Cấu trúc dữ liệu / cây phân cấp',
      'Một phiếu gia hạn gắn với ĐÚNG MỘT phiếu yêu cầu xuất hàng mượn. Phiếu gia hạn KHÔNG có '
-     'dòng hàng nhập tay: bảng "Chi tiết hàng mượn" đọc thẳng từ phiếu mượn và chỉ để xem.\n'
+     'dòng hàng nhập tay: bảng "Chi tiết" đọc thẳng từ phiếu mượn và chỉ để xem.\n'
      'Thông tin chính: Ngày hẹn trả (chụp lại từ phiếu mượn lúc lập), Ngày hẹn trả mới (1 ô cho '
      'cả phiếu), Ghi chú, File đính kèm (PDF).\n'
      'Phiếu có ba bộ thông tin duyệt cho ba cấp Trưởng phòng, Ban giám đốc, Kế toán; mỗi bộ gồm '
@@ -95,7 +101,7 @@ DESCRIPTION_BLOCK = [
      'Mọi cấp duyệt đều phải CÙNG CÔNG TY với phiếu.'),
     ('8. Cách tính các ô thống kê',
      'Thanh phân trang ghi tổng số phiếu khớp bộ lọc TRONG PHẠM VI QUYỀN của người đang xem.\n'
-     'Bảng Chi tiết hàng mượn: "SL mượn" và "Đã trả" quy về đơn vị tính trên phiếu mượn; dòng '
+     'Bảng Chi tiết: "SL mượn" và "Đã trả" quy về đơn vị tính trên phiếu mượn; dòng '
      '"Tổng cộng" = tổng hai cột này.\n'
      'Hạn mức vượt cấp: tổng giá trị hàng còn nợ của phiếu mượn = cộng trên mọi dòng hàng '
      '(số lượng đã xuất trừ số lượng đã trả) nhân đơn giá. Tổng này LỚN HƠN hạn mức giá trị hàng '
@@ -107,10 +113,13 @@ DESCRIPTION_BLOCK = [
     ('9. Ghi chú đọc bảng',
      'Các bẫy dễ bị ghi Failed oan:\n'
      '- Màn KHÔNG có nháp, KHÔNG có nút Sửa, KHÔNG có nút Xóa: đó là đúng thiết kế, không phải thiếu.\n'
-     '- Quyền "Xem theo tổng công ty" ở danh sách vẫn chỉ thấy phiếu CÔNG TY MÌNH (giữ đúng như '
-     'ERP), số phiếu bằng quyền "Xem theo công ty".\n'
-     '- Hạn mức vượt cấp tính theo công ty của người duyệt (cũng chính là công ty ghi trên phiếu, '
-     'vì chỉ duyệt được phiếu cùng công ty), không theo công ty người lập hiện tại.\n'
+     '- Quyền "Xem theo tổng công ty" (và Super Admin) thấy phiếu của MỌI công ty ở lối vào thường '
+     '(khác ERP — ERP bó về công ty mình); nhưng chỉ duyệt được phiếu cùng công ty.\n'
+     '- Hạn mức vượt cấp lấy theo công ty GHI TRÊN PHIẾU (cũng là công ty người duyệt, vì chỉ '
+     'duyệt được phiếu cùng công ty). Hạn mức của công ty để trống thì coi như 0: mọi phiếu mượn '
+     'còn nợ đều phải qua Ban giám đốc.\n'
+     '- Trưởng phòng nhận thông báo phiếu mới = đúng những Trưởng phòng duyệt được phiếu: quản lý '
+     'phòng ban của phiếu, tích "Quản lý tất cả phòng ban", hoặc thuộc chính phòng ban của phiếu.\n'
      '- Chỉ Kế toán sửa được Ngày hẹn trả mới, và chỉ khi phiếu đang Chờ KT duyệt. Trưởng phòng và '
      'Ban giám đốc thấy ô này bị khoá là đúng.\n'
      '- Trưởng phòng duyệt xong mà phiếu chưa Đã duyệt là đúng: ngày hẹn trả của phiếu mượn chỉ '
@@ -136,21 +145,23 @@ ROLE_TCS = [
      '- Danh sách chỉ có đúng 6 phiếu do A lập, tổng số ở thanh phân trang = 6.\n'
      '- Nút "Tạo mới" vẫn hiển thị.\n'
      '- Bộ lọc KHÔNG có ô Công ty và ô Phòng ban.'),
-    ('01', 'Quyền "Xem phiếu hàng mượn theo tổng công ty" chỉ thấy phiếu công ty mình', 'P0',
+    ('01', 'Quyền "Xem phiếu hàng mượn theo tổng công ty" thấy phiếu mọi công ty', 'P0',
      'Tài khoản B thuộc công ty 1, chỉ có quyền Xem phiếu hàng mượn theo tổng công ty.\n'
      'Công ty 1 có N1 phiếu, công ty 4 có N4 phiếu (N4 > 0).',
      '1. Đăng nhập bằng B.\n2. ' + MENU_ALL + '\n3. Đọc tổng số phiếu.\n'
-     '4. Mở bộ lọc, xem ô Công ty.',
-     '—',
-     '- Tổng số = N1, KHÔNG có phiếu nào của công ty 4.\n'
+     '4. Mở bộ lọc, chọn Công ty = công ty 4.',
+     'Công ty: công ty 4',
+     '- Bước 3: tổng số = N1 + N4 (có cả phiếu của công ty 4, kể cả phiếu Chờ TP duyệt).\n'
      '- Bộ lọc có ô Công ty và ô Phòng ban.\n'
-     '- Lưu ý: đây là hành vi giữ nguyên như ERP, không phải lỗi thiếu dữ liệu.'),
+     '- Bước 4: còn đúng N4 phiếu.\n'
+     '- Lưu ý: ERP bó về công ty mình; hệ thống mới cho thấy mọi công ty (khớp với việc mở được '
+     'chi tiết phiếu công ty khác).'),
     ('02', 'Quyền "Xem phiếu hàng mượn theo công ty" thấy mọi phiếu công ty mình', 'P0',
      'Tài khoản C thuộc công ty 1, chỉ có quyền Xem phiếu hàng mượn theo công ty. Công ty 1 có N1 '
      'phiếu.',
      '1. Đăng nhập bằng C.\n2. ' + MENU_ALL + '\n3. Đọc tổng số phiếu.',
      '—',
-     '- Tổng số = N1, bằng đúng con số của tài khoản B ở TC-ROLE-01.\n'
+     '- Tổng số = N1 (ít hơn tài khoản B ở TC-ROLE-01 đúng N4 phiếu của công ty 4).\n'
      '- Có cả phiếu của các phòng ban khác trong công ty 1.\n'
      '- Có cả phiếu ở trạng thái Không duyệt do người khác lập.'),
     ('03', 'Quyền "Xem phiếu hàng mượn theo phòng ban" chỉ thấy phòng mình quản lý', 'P0',
@@ -384,10 +395,10 @@ S2 = [
      '1. Gõ "Máy hàn" vào ô Tên hàng hóa, nhấn Enter.',
      'Tên hàng hóa: Máy hàn',
      '- Ra phiếu gia hạn của PYCXH-35542 và các phiếu khác có mặt hàng tên chứa "Máy hàn".\n'
-     '- Mở từng phiếu: bảng Chi tiết hàng mượn đều có mặt hàng chứa "Máy hàn".'),
+     '- Mở từng phiếu: bảng Chi tiết đều có mặt hàng chứa "Máy hàn".'),
     ('012', 'Lọc Tên hàng hóa không dò trên dòng hàng không hiển thị', 'P2',
      'Phiếu mượn M có một dòng hàng "Kìm cắt" thuộc diện không phải xuất (không hiện ở bảng Chi '
-     'tiết hàng mượn). Có 1 phiếu gia hạn cho M.',
+     'tiết). Có 1 phiếu gia hạn cho M.',
      '1. Gõ "Kìm cắt" vào ô Tên hàng hóa, nhấn Enter.',
      'Tên hàng hóa: Kìm cắt',
      '- Phiếu gia hạn của M KHÔNG xuất hiện.\n'
@@ -528,10 +539,13 @@ S4 = [
      '1. Bấm nút "Tạo mới" ở danh sách.',
      '—',
      '- Tiêu đề "Thêm yêu cầu gia hạn hàng mượn".\n'
-     '- Khối "Thông tin chung": Phiếu yêu cầu xuất hàng mượn (bắt buộc, có nút "Chọn phiếu"), Ngày '
-     'hẹn trả (khoá), Ngày hẹn trả mới (bắt buộc), Ngày tạo (khoá, là ngày hôm nay), Ghi chú.\n'
-     '- Khối "File đính kèm" và khối "Chi tiết hàng mượn" (đang ghi "Chưa chọn phiếu mượn. Bấm Chọn '
-     'phiếu ở trên để lấy danh sách hàng.").\n'
+     '- Khối "Thông tin chung", góc phải ghi "<tên người đăng nhập> — <ngày hôm nay>"; các ô: Phiếu '
+     'yêu cầu xuất hàng mượn (bắt buộc, có nút "Chọn phiếu"), Ngày hẹn trả (khoá), Ngày hẹn trả mới '
+     '(bắt buộc), Ngày tạo (khoá, là ngày hôm nay), Ghi chú (gợi ý "Lý do cần gia hạn (không bắt '
+     'buộc)").\n'
+     '- Khối "File đính kèm" có nút "Thêm tài liệu" và các cột STT, UPLOAD / FILE, DUNG LƯỢNG.\n'
+     '- Khối "Chi tiết" đang ghi "Chưa chọn phiếu mượn. Bấm Chọn phiếu ở trên để lấy danh sách '
+     'hàng.".\n'
      '- Cuối màn có nút "Gửi duyệt" và "Lưu và tiếp tục"; KHÔNG có nút Lưu nháp.'),
     ('002', 'Ô khoá có biểu tượng chữ i giải thích', 'P1',
      'Đang ở màn Tạo mới.',
@@ -591,14 +605,14 @@ S4 = [
      '—',
      '- Popup đóng.\n'
      '- Ô Phiếu yêu cầu xuất hàng mượn = PYCXH-35542; Ngày hẹn trả = 23/09/2026.\n'
-     '- Bảng Chi tiết hàng mượn có 3 dòng, cột: STT, Tên hàng hóa, Model, Mã hàng hóa, Thương '
+     '- Bảng Chi tiết có 3 dòng, cột: STT, Tên hàng hóa, Model, Mã hàng hóa, Thương '
      'hiệu, SL mượn, Đã trả, ĐVT; dòng "Tổng cộng" ở cuối.\n'
      '- Không phải nhập số lượng ở dòng nào (bảng chỉ để xem).'),
     ('011', 'Đổi sang phiếu mượn khác', 'P1',
      'Đã chọn PYCXH-35542.',
      '1. Bấm "Chọn phiếu" lần nữa, chọn phiếu mượn khác.',
      '—',
-     '- Ô phiếu, Ngày hẹn trả và bảng Chi tiết hàng mượn đổi theo phiếu mới; không còn dòng của '
+     '- Ô phiếu, Ngày hẹn trả và bảng Chi tiết đổi theo phiếu mới; không còn dòng của '
      'phiếu cũ.'),
     ('012', 'Lịch chỉ cho chọn ngày trong khoảng hợp lệ', 'P0',
      'Hôm nay 30/09/2026, số ngày mượn tối đa = 7 (ngày trần 07/10/2026).\n'
@@ -639,7 +653,7 @@ S4 = [
      '- Trưởng phòng quản lý P1 (không phải P2) là người duyệt được phiếu.'),
     ('017', 'Thông báo cho Trưởng phòng khi có phiếu mới', 'P0',
      'Trưởng phòng E có quyền Trưởng phòng duyệt hàng mượn và quản lý phòng P1; Trưởng phòng E2 '
-     'có quyền nhưng quản lý phòng P2.',
+     'có quyền nhưng chỉ quản lý phòng P2, bản thân E2 cũng thuộc P2.',
      '1. Nhân viên phòng P1 gửi một phiếu.\n2. Kiểm tra chuông thông báo của E và E2.',
      '—',
      '- E nhận thông báo "[PGHHM] Chờ duyệt: <mã phiếu>." kèm ghi chú (nếu có).\n'
@@ -669,6 +683,32 @@ S4 = [
      '—',
      '- Chỉ sinh ra MỘT phiếu gia hạn.\n'
      '- Danh sách không có hai phiếu trùng phiếu mượn đang chờ duyệt.'),
+    ('022', 'Trưởng phòng thuộc chính phòng ban của phiếu nhận thông báo và duyệt được', 'P0',
+     'Trưởng phòng E5 có quyền Trưởng phòng duyệt hàng mượn, bản thân thuộc phòng P1 nhưng KHÔNG '
+     'được phân công quản lý phòng nào.',
+     '1. Nhân viên phòng P1 gửi một phiếu.\n2. Kiểm tra chuông thông báo của E5.\n'
+     '3. E5 bấm vào thông báo.',
+     '—',
+     '- E5 nhận thông báo "[PGHHM] Chờ duyệt: <mã phiếu>."\n'
+     '- Mở đúng màn chi tiết, có nút "TP duyệt" và "Từ chối".\n'
+     '- Lưu ý: trước đây người duyệt được nhưng không nhận thông báo (Redmine #11550), nay "duyệt '
+     'được" và "nhận được thông báo" là cùng một nhóm người.'),
+    ('023', 'Trưởng phòng tích "Quản lý tất cả phòng ban" nhận thông báo và duyệt được', 'P1',
+     'Trưởng phòng E6 có quyền Trưởng phòng duyệt hàng mượn, được tích "Quản lý tất cả phòng ban" '
+     'ở công ty 1, không thuộc phòng P1.',
+     '1. Nhân viên phòng P1 (công ty 1) gửi một phiếu.\n2. Kiểm tra chuông thông báo của E6.\n'
+     '3. E6 mở phiếu.',
+     '—',
+     '- E6 nhận thông báo "[PGHHM] Chờ duyệt: <mã phiếu>."\n'
+     '- Phiếu có nút "TP duyệt" và "Từ chối" với E6.'),
+    ('024', 'Sắp xếp trong popup chọn phiếu mượn', 'P2',
+     'A có ít nhất 3 phiếu mượn đủ điều kiện, ngày tạo và ngày hẹn trả khác nhau.',
+     '1. Mở popup chọn phiếu.\n2. Bấm lần lượt tiêu đề Mã phiếu, Ngày tạo, Ngày hẹn trả; mỗi cột '
+     'bấm 2 lần.',
+     '—',
+     '- Mặc định phiếu tạo mới nhất ở đầu.\n'
+     '- Ba cột Mã phiếu, Ngày tạo, Ngày hẹn trả đổi được tăng / giảm dần, dữ liệu xếp đúng.\n'
+     '- Cột Ghi chú không sắp xếp được.'),
 ]
 
 # ============================================================== V
@@ -678,9 +718,11 @@ S5 = [
      '1. Mở chi tiết PGHHM-02930.',
      '—',
      '- Tiêu đề "Chi tiết yêu cầu gia hạn hàng mượn: PGHHM-02930".\n'
-     '- Khối Thông tin chung có nhãn trạng thái ở góc phải; ô Mã phiếu, Phiếu yêu cầu xuất hàng '
-     'mượn, Người tạo, Phòng ban yêu cầu, Ngày hẹn trả, Ngày hẹn trả mới, Ngày tạo, Ghi chú.\n'
-     '- Khối File đính kèm (chỉ xem), Chi tiết hàng mượn, Lịch sử thay đổi (thu gọn sẵn).\n'
+     '- Khối Thông tin chung, góc phải ghi "<người tạo> — <ngày giờ tạo>" (không còn nhãn trạng '
+     'thái); các ô Mã phiếu, Phiếu yêu cầu xuất hàng mượn (liên kết), Người tạo, Phòng ban yêu cầu, '
+     'Ngày hẹn trả, Ngày hẹn trả mới, Ngày tạo, Ghi chú.\n'
+     '- Khối File đính kèm (xem / tải về, có cột Dung lượng), Chi tiết, Lịch sử thay đổi (thu gọn '
+     'sẵn).\n'
      '- Mọi ô thông tin đều khoá (trừ trường hợp Kế toán ở TC_05.004).'),
     ('002', 'Đang tải không hiện như phiếu rỗng', 'P2',
      'Mạng chậm.',
@@ -703,7 +745,7 @@ S5 = [
      '- Người lập: ô khoá.'),
     ('005', 'Số lượng hiển thị theo chuẩn quốc tế', 'P1',
      'Phiếu mượn có mặt hàng SL mượn 1,250 và đã trả 12.5.',
-     '1. Mở chi tiết, xem bảng Chi tiết hàng mượn.',
+     '1. Mở chi tiết, xem bảng Chi tiết.',
      '—',
      '- SL mượn hiện "1,250"; Đã trả hiện "12.5" (không có số 0 thừa).\n'
      '- Dòng Tổng cộng cộng đúng hai cột.'),
@@ -797,8 +839,8 @@ S6 = [
      '- Popup xác nhận nêu ngày 03/10/2026 (ngày vừa sửa).\n'
      '- Phiếu N Đã duyệt, Ngày hẹn trả mới = 03/10/2026.\n'
      '- Phiếu mượn có hạn trả 03/10/2026.\n'
-     '- Lịch sử có dòng "Chỉnh sửa" (Ngày hẹn trả mới: 05/10/2026 sang 03/10/2026) nằm NGAY TRƯỚC '
-     'dòng "Kế toán duyệt".'),
+     '- Lịch sử có dòng "Thay đổi thông tin" (Ngày hẹn trả mới: 05/10/2026 sang 03/10/2026) nằm '
+     'NGAY DƯỚI dòng "Kế toán duyệt" (xảy ra trước).'),
     ('008', 'Kế toán xoá trống ô ngày rồi bấm duyệt', 'P1',
      'Phiếu N Chờ KT duyệt.',
      '1. G mở N, xoá ô Ngày hẹn trả mới (nếu xoá được).\n2. Bấm "KT duyệt".',
@@ -895,6 +937,14 @@ S6 = [
      '- Chờ TP duyệt: nút "TP duyệt".\n'
      '- Chờ BGĐ duyệt: nút "BGĐ duyệt".\n'
      '- Chờ KT duyệt: nút "KT duyệt".'),
+    ('023', 'Công ty chưa khai hạn mức giá trị hàng mượn', 'P1',
+     'Công ty 3 để TRỐNG hạn mức giá trị hàng mượn. Phiếu X (công ty 3) gắn phiếu mượn còn nợ '
+     '1,500,000.',
+     '1. Trưởng phòng cùng công ty duyệt X.',
+     '—',
+     '- X sang Chờ BGĐ duyệt, thông báo "Yêu cầu đã được chuyển đến Ban giám đốc."\n'
+     '- Lưu ý: hạn mức trống được coi là 0, nên mọi phiếu mượn còn nợ đều phải qua Ban giám đốc. '
+     'Muốn bỏ bước này phải khai hạn mức cho công ty (Redmine #11550).'),
 ]
 
 # ============================================================== VII
@@ -907,6 +957,7 @@ S7 = [
      '—',
      '- Phần mềm báo "Phòng ban bạn quản lý có nhân viên hàng mượn quá hạn. Không thể thực hiện '
      'thao tác này."\n'
+     '- Đồng thời mở cửa sổ liệt kê từng nhân viên đang quá hạn và loại hàng quá hạn.\n'
      '- X vẫn Chờ TP duyệt; không có dòng lịch sử mới.'),
     ('002', 'Không còn nhân viên quá hạn thì duyệt bình thường', 'P0',
      'Như TC_07.001, sau đó V đã trả hàng (hết quá hạn).',
@@ -944,7 +995,7 @@ S8 = [
      'Phiếu N Đã duyệt, qua đủ 3 cấp, phiếu mượn có 3 mặt hàng.',
      '1. Mở chi tiết N, bấm "In".',
      '—',
-     '- Mở popup xem trước "Xem trước yêu cầu gia hạn hàng mượn <mã>" (không mở tab mới), khổ ngang.\n'
+     '- Mở popup xem trước "Xem trước yêu cầu gia hạn hàng mượn <mã>" (không mở tab mới), khổ DỌC.\n'
      '- Tiêu đề "PHIẾU YÊU CẦU GIA HẠN HÀNG MƯỢN", có mã phiếu và ngày lập, đầu trang là header '
      'công ty CỦA PHIẾU.\n'
      '- Thông tin: Người yêu cầu, Phòng ban, Phiếu mượn, Ngày hẹn trả cũ, Ngày hẹn trả mới, Trạng '
@@ -1036,6 +1087,7 @@ S9 = [
      '—',
      '- Báo lỗi dưới ô phiếu "Phiếu yêu cầu xuất hàng mượn – Bắt buộc phải chọn".\n'
      '- Báo lỗi dưới ô ngày "Ngày hẹn trả mới – Bắt buộc phải chọn".\n'
+     '- Kèm thông báo góc màn hình "Bạn chưa nhập đầy đủ thông tin."\n'
      '- Màn cuộn tới lỗi đầu tiên; không sinh phiếu.'),
     ('002', 'Lỗi tự tắt khi đã chọn ngày', 'P1',
      'Đang có lỗi đỏ ở ô Ngày hẹn trả mới.',
@@ -1078,16 +1130,20 @@ S9 = [
      'Ngày hẹn trả mới: 03/10/2026',
      '- Bị từ chối, báo "Phải sau ngày hẹn trả hiện tại (03/10/2026)"; không sinh phiếu.'),
     ('010', 'Gọi thẳng chức năng lập phiếu cho phiếu mượn của người khác', 'P0',
-     'Phiếu mượn M thuộc nhân viên B; đăng nhập bằng A.',
+     'Phiếu mượn M (mã PYCXH-35542) thuộc nhân viên B; đăng nhập bằng A.',
      '1. Dùng công cụ kiểm thử gửi lệnh lập phiếu gia hạn cho M.',
      '—',
-     '- Bị từ chối, lỗi "Không thể gia hạn yêu cầu này!"; không sinh phiếu.'),
+     '- Bị từ chối, lỗi "Không thể gia hạn yêu cầu này: chỉ người lập phiếu PYCXH-35542 mới được '
+     'gia hạn."; không sinh phiếu.'),
     ('011', 'Gọi thẳng chức năng lấy dữ liệu phiếu mượn không đủ điều kiện', 'P2',
-     'Phiếu mượn M đang có yêu cầu gia hạn chờ duyệt.',
-     '1. Dùng công cụ kiểm thử gọi chức năng lấy dữ liệu phiếu mượn M để lập phiếu.',
+     'Phiếu mượn M (mã PYCXH-35542) của A đang có yêu cầu gia hạn PGHHM-02950 Chờ TP duyệt.',
+     '1. Đăng nhập A, dùng công cụ kiểm thử gọi chức năng lấy dữ liệu phiếu mượn M để lập phiếu.',
      '—',
-     '- Báo "Phiếu mượn này không gia hạn được: không phải phiếu của bạn, đã trả hết hàng, hoặc đang '
-     'có yêu cầu gia hạn chờ duyệt."'),
+     '- Báo "Không thể gia hạn yêu cầu này: phiếu PYCXH-35542 đang có yêu cầu gia hạn PGHHM-02950 '
+     '(Chờ TP duyệt) chưa duyệt xong. Chờ yêu cầu đó được duyệt hoặc từ chối rồi mới lập yêu cầu '
+     'mới."\n'
+     '- Lưu ý: câu báo nêu đúng LÝ DO đầu tiên gặp phải (Redmine #11529), không còn câu chung '
+     'chung.'),
     ('012', 'Ngày gõ tay sai định dạng', 'P2',
      'Dùng công cụ kiểm thử.',
      '1. Gửi lệnh lập phiếu với Ngày hẹn trả mới "31/02/2026".',
@@ -1101,7 +1157,9 @@ S10 = [
      'A mở màn Tạo mới ở 2 tab, cả hai đều đã chọn cùng phiếu mượn M.',
      '1. Tab 1 bấm "Gửi duyệt" (thành công).\n2. Tab 2 bấm "Gửi duyệt".',
      '—',
-     '- Tab 2 báo lỗi dưới ô phiếu "Không thể gia hạn yêu cầu này!".\n'
+     '- Tab 2 báo lỗi dưới ô phiếu (kèm thông báo góc màn hình) "Không thể gia hạn yêu cầu này: '
+     'phiếu <mã M> đang có yêu cầu gia hạn <mã phiếu tab 1> (Chờ TP duyệt) chưa duyệt xong. Chờ yêu '
+     'cầu đó được duyệt hoặc từ chối rồi mới lập yêu cầu mới."\n'
      '- M chỉ có MỘT phiếu gia hạn đang chờ duyệt.'),
     ('002', 'Hai Trưởng phòng cùng duyệt một phiếu', 'P1',
      'E và E3 cùng quản lý P1, cùng mở phiếu X Chờ TP duyệt.',
@@ -1140,13 +1198,14 @@ S10 = [
      '- C thấy X.\n'
      '- E vẫn thấy X (người đã từ chối), bấm vào mở được.\n'
      '- Lưu ý: ERP giấu phiếu Không duyệt với mọi người trừ người lập; hệ thống mới đã bỏ luật này.'),
-    ('008', 'Quyền tổng công ty mở phiếu công ty khác bằng đường dẫn', 'P2',
-     'B có quyền Xem theo tổng công ty (công ty 1). Phiếu W thuộc công ty 4.',
-     '1. B dán đường dẫn chi tiết phiếu W.',
+    ('008', 'Quyền tổng công ty thấy và mở phiếu công ty khác nhưng không duyệt được', 'P1',
+     'B có quyền Xem theo tổng công ty và quyền Kế toán kho (công ty 1). Phiếu W thuộc công ty 4, '
+     'đang Chờ KT duyệt.',
+     '1. B tìm W ở danh sách lối vào thường.\n2. Bấm mở W.\n3. B mở lối vào "chờ duyệt".',
      '—',
-     '- Mở xem được nội dung W (chỉ xem, không có nút duyệt).\n'
-     '- Ghi nhận: danh sách của B KHÔNG liệt kê W; hai nơi lệch nhau, báo lại cho nhóm phát triển nếu '
-     'cần thống nhất.'),
+     '- Bước 1: W CÓ trong danh sách (danh sách và màn chi tiết nay khớp nhau, Redmine #11534).\n'
+     '- Bước 2: xem được nội dung W, KHÔNG có nút duyệt / từ chối (khác công ty).\n'
+     '- Bước 3: W KHÔNG có trong danh sách chờ duyệt.'),
 ]
 
 # ============================================================== XI
@@ -1157,12 +1216,12 @@ S11 = [
      '—',
      '- Khối "Lịch sử thay đổi" đang thu gọn, cạnh tiêu đề có số 2.\n'
      '- Bấm "Xem lịch sử" thì mở ra; nút đổi thành "Thu gọn" và có thêm nút "Làm mới".'),
-    ('002', 'Dòng nhắc thao tác bên cổng cũ', 'P1',
-     'Mở khối Lịch sử thay đổi.',
-     '1. Đọc dòng nhắc đầu khối.',
+    ('002', 'Nút Bộ lọc của lịch sử chỉ hiện khi có mốc', 'P2',
+     'Phiếu A có 2 mốc lịch sử; phiếu B lập và xử lý hoàn toàn bên cổng ERP cũ (không có mốc nào).',
+     '1. Mở Lịch sử thay đổi của A.\n2. Mở Lịch sử thay đổi của B.',
      '—',
-     '- Ghi "Lịch sử chỉ ghi các thao tác làm trên hệ thống này. Phiếu duyệt hoặc từ chối bên cổng '
-     'ERP cũ sẽ không có trong danh sách."'),
+     '- A: có nút "Bộ lọc" phía trên danh sách mốc.\n'
+     '- B: KHÔNG có nút "Bộ lọc", chỉ có dòng "Chưa có lịch sử thao tác nào."'),
     ('003', 'Phiếu xử lý bên cổng cũ không có lịch sử', 'P0',
      'Phiếu cũ được lập và duyệt hoàn toàn bên ERP.',
      '1. Mở chi tiết, mở Lịch sử thay đổi.\n2. Ở danh sách chọn Hành động > Lịch sử.',
@@ -1174,8 +1233,8 @@ S11 = [
      'Phiếu tạo trên hệ thống mới, qua TP duyệt, BGĐ duyệt, Kế toán sửa ngày rồi duyệt.',
      '1. Mở Lịch sử thay đổi.',
      '—',
-     '- 5 dòng theo thứ tự từ trên xuống: Kế toán duyệt, Chỉnh sửa, Ban giám đốc duyệt, Trưởng '
-     'phòng duyệt, Tạo phiếu.\n'
+     '- 5 dòng theo thứ tự từ trên xuống: Kế toán duyệt, Thay đổi thông tin, Ban giám đốc duyệt, '
+     'Trưởng phòng duyệt, Tạo phiếu.\n'
      '- Mỗi dòng có thời điểm dd/mm/yyyy hh:mm và "Người thực hiện: <tên> - <phòng ban>".'),
     ('005', 'Dòng Tạo phiếu ghi giá trị ban đầu', 'P1',
      'Phiếu vừa tạo, Ngày hẹn trả mới 05/10/2026, Ghi chú "Khách chưa nghiệm thu xong", 1 file.',
@@ -1195,11 +1254,11 @@ S11 = [
      '- Dòng "Không duyệt" màu đỏ, Trạng thái đổi sang Không duyệt.\n'
      '- Khối ghi chú của dòng hiện "Chưa trả hàng kỳ trước".\n'
      '- Nội dung ở popup danh sách giống hệt ở màn chi tiết.'),
-    ('008', 'Kế toán duyệt không đổi ngày thì không có dòng Chỉnh sửa', 'P1',
+    ('008', 'Kế toán duyệt không đổi ngày thì không có dòng Thay đổi thông tin', 'P1',
      'Phiếu Chờ KT duyệt.',
      '1. Kế toán duyệt giữ nguyên ngày.\n2. Mở lịch sử.',
      '—',
-     '- Không có dòng "Chỉnh sửa", chỉ thêm dòng "Kế toán duyệt".'),
+     '- Không có dòng "Thay đổi thông tin", chỉ thêm dòng "Kế toán duyệt".'),
     ('009', 'Popup Lịch sử ở danh sách', 'P1',
      'Có phiếu có 3 mốc lịch sử.',
      '1. Chọn Hành động > Lịch sử ở dòng đó.',
@@ -1207,10 +1266,11 @@ S11 = [
      '- Popup "Lịch sử yêu cầu gia hạn hàng mượn" kèm mã phiếu, hiện đủ 3 mốc.'),
     ('010', 'Bộ lọc trong lịch sử', 'P2',
      'Phiếu có 5 mốc lịch sử do 4 người thực hiện.',
-     '1. Mở lịch sử, bấm "Bộ lọc".\n2. Chọn Loại hành động = Không duyệt (khi phiếu không có mốc '
-     'này thì chọn Chỉnh sửa).\n3. Chọn Người thực hiện = Kế toán G.',
+     '1. Mở lịch sử, bấm "Bộ lọc".\n2. Mở ô Loại hành động.\n3. Chọn Loại hành động = Thay đổi '
+     'thông tin.\n4. Chọn Người thực hiện = Kế toán G.',
      '—',
      '- Có các ô Loại hành động, Người thực hiện, Từ ngày, Đến ngày.\n'
+     '- Ô Loại hành động chỉ liệt kê những loại ĐÃ CÓ trong lịch sử của chính phiếu này.\n'
      '- Lọc đúng các mốc khớp; không khớp thì ghi "Không có lịch sử phù hợp bộ lọc."'),
     ('011', 'Làm mới lịch sử sau thao tác', 'P2',
      'Đang mở khối lịch sử ở tab 1; tab 2 vừa có người duyệt phiếu.',

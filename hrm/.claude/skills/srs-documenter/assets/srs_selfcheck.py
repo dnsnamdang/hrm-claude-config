@@ -63,6 +63,31 @@ def _uml_kinds(path):
     return kinds
 
 
+UI_LONG = 220                       # o Mo ta dai hon muc nay ma khong xuong dong = kho doc
+
+
+def _ui_row_issues(tbl):
+    """Gop y BA 05/10/2026 (SRS Bao cao tong hop CSKH tiem nang) cho bang 'Mo ta chi tiet giao dien':
+    icon (i) phai ghi NGUYEN VAN noi dung ngay trong o; o Mo ta nhieu y phai xuong dong;
+    ten doi tuong khong dung tu ky thuat 'Bang cay'."""
+    out = []
+    for r in tbl.rows[1:]:
+        cells = r.cells
+        if len(cells) < 3:
+            continue
+        name = _txt(cells[1]._tc)
+        # giu xuong dong: cell.text noi cac doan bang \n, w:br cung ra \n
+        mota = cells[-1].text.strip()
+        if 'bảng cây' in name.lower():
+            out.append('"%s": đổi tên thành "Bảng chi tiết báo cáo" (tên nghiệp vụ, không dùng "bảng cây")' % name)
+        if re.search(r'ⓘ(?!\s*[:“"])', mota):
+            out.append('"%s": nhắc icon ⓘ mà không ghi nội dung — viết `Icon ⓘ: “<nguyên văn>”` ngay trong ô Mô tả'
+                       % name)
+        if len(mota) > UI_LONG and '\n' not in mota:
+            out.append('"%s": ô Mô tả %d ký tự viết liền 1 đoạn — truyền list để mỗi ý 1 dòng' % (name, len(mota)))
+    return out
+
+
 def _profile(path):
     """Rut cac dac trung hinh thuc cua mot file SRS."""
     d = Document(path)
@@ -73,6 +98,7 @@ def _profile(path):
     data_tbls = []                  # bang "Cach lay du lieu" -> bo tieu de
     popup_tbls = []                 # bang "Danh sach popup mo tu so lieu"
     variant_tbls = []               # bang "Cac bien the theo con so bam"
+    ui_issues = []                  # loi cach viet o bang giao dien (gop y BA 05/10/2026)
     for b in _blocks(d):
         if not isinstance(b, Table):
             continue
@@ -81,6 +107,7 @@ def _profile(path):
         heads[key] = heads.get(key, 0) + 1
         if h[:2] == ['STT', 'Tên đối tượng']:
             ui_cols[len(b.columns)] = ui_cols.get(len(b.columns), 0) + 1
+            ui_issues.extend(_ui_row_issues(b))
         if h[:2] == ['STT', 'Mã quy tắc']:
             rule_tbl = h
         if h[:2] == ['STT', 'Chỉ tiêu / Cột']:
@@ -99,6 +126,7 @@ def _profile(path):
         'data_tbls': data_tbls,
         'popup_tbls': popup_tbls,
         'variant_tbls': variant_tbls,
+        'ui_issues': ui_issues,
         'popup_purpose': sum(1 for t in paras if re.match(r'^\d+\.\d+\.\d+ Mục đích thiết kế popup', t)),
         'mentions_popup': any('popup' in t.lower() for t in paras),
         'report': any(t.startswith('Màn hình: Báo cáo') for t in paras[:6]),
@@ -189,6 +217,12 @@ def check(path, verbose=True):
         if h != data_head:
             errs.append('Bảng cách lấy dữ liệu phải đúng 4 cột %s, đang là %s — dùng d.data_table().'
                         % (data_head, h))
+
+    # --- cach viet bang giao dien (gop y BA 05/10/2026) ---
+    if me['ui_issues']:
+        errs.append('Bảng "Mô tả chi tiết giao diện" viết khó đọc (%d chỗ) — xem mục "Viết bảng giao diện cho '
+                    'người đọc" trong SKILL.md:\n    - %s' % (len(me['ui_issues']), '\n    - '.join(me['ui_issues'][:8])
+                    + ('\n    - …' if len(me['ui_issues']) > 8 else '')))
 
     # --- man BAO CAO co popup mo tu so lieu (quy dinh 2026-10-05) ---
     popup_head = ['STT', 'Bấm vào', 'Popup mở ra', 'Mục đích thiết kế', 'Dữ liệu hiển thị']
