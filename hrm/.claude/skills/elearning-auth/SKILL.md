@@ -1,3 +1,8 @@
+---
+name: elearning-auth
+description: "Use when làm đăng nhập / SSO từ hrm-client sang elearning, đăng xuất đồng bộ, guard `elearning.auth`, xác thực email, quên mật khẩu, hồ sơ cá nhân, avatar của project ELEARNING (nhánh `tpe-develop-elearning`). Đọc cả khi gặp vòng lặp redirect SSO hoặc HRM đăng xuất mà elearning vẫn còn phiên."
+---
+
 # Skill: Elearning Auth & SSO
 
 Quy tắc auth, SSO với hrm-client, profile và avatar cho project Elearning.

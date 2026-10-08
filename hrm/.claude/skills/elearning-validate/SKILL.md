@@ -1,3 +1,8 @@
+---
+name: elearning-validate
+description: "Use when làm form, gọi API, hiển thị lỗi validate hoặc toast trong project ELEARNING (nhánh `tpe-develop-elearning`). Đọc cả khi: lỗi 422 không hiện dưới ô, không rõ lỗi nào hiện toast lỗi nào hiện dưới ô, nút `disabled` không khoá được."
+---
+
 # Skill: Elearning Validate / Error / Toast
 
 Quy tắc xử lý validate, error response và thông báo (toast) cho project Elearning.

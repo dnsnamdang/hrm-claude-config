@@ -1,12 +1,12 @@
 ---
 name: bug-fixer
-description: Hướng dẫn quy trình debug và fix bug trong ERP TPE
+description: "Use when user báo lỗi / bug ở HRM (hrm-api Laravel hoặc hrm-client Nuxt) — API trả 500/403/422, màn trắng, dữ liệu không hiện hoặc sai, test phát hiện hành vi sai, lỗi chỉ xảy ra trên production. Bổ sung cho superpowers:systematic-debugging, phần này là cách lần lỗi riêng của dự án."
 ---
 
-# Bug Fixer — ERP TPE
+# Bug Fixer — HRM
 
 ## Mục đích
-Hướng dẫn debug và fix bug theo đúng quy trình project ERP TPE.
+Hướng dẫn debug và fix bug theo đúng quy trình project HRM (hrm-api + hrm-client).
 
 ## Khi nào dùng
 - Khi gặp lỗi trên local hoặc production

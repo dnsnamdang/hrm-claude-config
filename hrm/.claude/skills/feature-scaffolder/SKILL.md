@@ -1,9 +1,9 @@
 ---
 name: feature-scaffolder
-description: Scaffold cấu trúc file cho feature mới (BE + FE)
+description: "Use when bắt đầu feature/màn MỚI ở HRM cần tạo nhiều file cùng lúc (migration, Entity, Controller, Service, Request, Resource, route BE + page danh sách/form FE + mục menu), hoặc thêm entity mới vào module có sẵn."
 ---
 
-# Feature Scaffolder — ERP TPE
+# Feature Scaffolder — HRM
 
 ## Mục đích
 Tạo bộ khung (scaffold) cho feature mới theo đúng pattern và cấu trúc module của project.
@@ -48,7 +48,7 @@ Trước khi scaffold, cần xác nhận:
 |------|-----------|-------|
 | List page | `pages/[module]/[entity]/index.vue` | V2Base components + filter |
 | Detail/Form page | `pages/[module]/[entity]/_id.vue` hoặc `add.vue` | Form CRUD |
-| Menu item | `components/menu-sidebar.js` | Thêm vào nhóm phù hợp |
+| Menu item | `components/subsystem-menu/<phân hệ>.js` (phân hệ cũ Assign/Training: `components/menu-sidebar.js`; Human/Timesheet/Payroll: `components/menu.js`) | Đăng ký phân hệ ở `components/subsystems.js`. Menu hub khai `subItems`, KHÔNG phải `children` |
 
 ## Pattern bắt buộc
 
@@ -96,15 +96,15 @@ class EntityService extends BaseService
 @import '@/assets/scss/v2-styles.scss';
 </style>
 ```
-- Dùng `V2BaseFilterPanel` cho bộ lọc
+- Dùng `V2BaseSmartFilterPanel` (bật `floating`) cho bộ lọc — `V2BaseFilterPanel` đã bị xoá 2026-09-21
 - Cascading filter: Công ty >> Phòng ban >> Bộ phận
 - API qua `this.$store.dispatch('apiGetMethod', ...)`
 
 ## Tham khảo chi tiết
 - Pattern CRUD đầy đủ: `docs/conventions.md`
 - Base classes & components: `docs/shared.md`
-- Màn danh sách: `.skills/list-page/SKILL.md`
-- Import Excel: `.skills/import-excel/SKILL.md`
+- Màn danh sách: `.claude/skills/list-page/SKILL.md`
+- Import Excel: `.claude/skills/import-excel/SKILL.md`
 
 ## Quy tắc
 - Hỏi user trước khi thêm phân quyền theo cấp

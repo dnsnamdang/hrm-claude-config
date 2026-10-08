@@ -22,18 +22,15 @@ Mỗi px tiết kiệm ở khối phụ rơi thẳng vào bảng.
                     <!-- control lẻ: nhãn NGANG control -->
                     <div class="group-picker-row mb-1">...</div>
 
-                    <V2BaseFilterPanel inlineSearchButtons ...>
+                    <!-- Bộ lọc: schema filterFields, KHÔNG tự dựng lưới ô lọc (SKILL.md mục 4c) -->
+                    <V2BaseSmartFilterPanel in-modal floating table="..." :filter-fields="filterFields"
+                                            :filters="filters" ...>
                         <template #header-actions>
                             <V2BaseButton primary size="sm" class="btn-compact">Thêm hàng tạm</V2BaseButton>
                         </template>
-                        <template #advanced-filters="{ collapsed }">
-                            <!-- 1 grid PHẲNG, KHÔNG chia hàng cứng -->
-                            <div v-show="!collapsed" class="filter-grid mt-2">
-                                <div class="filter-item">...</div>
-                                <!-- ...N ô... -->
-                            </div>
-                        </template>
-                    </V2BaseFilterPanel>
+                        <!-- ô đặc thù (select tìm từ xa…) render qua slot #field-<key> -->
+                        <template #field-model>...</template>
+                    </V2BaseSmartFilterPanel>
 
                     <div ref="erpTableWrap" class="erp-table-wrap">
                         <table class="table table-bordered table-hover table-sm mb-0 erp-product-table">...</table>

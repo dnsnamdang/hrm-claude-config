@@ -1,6 +1,6 @@
 ---
 name: srs-documenter
-description: Generate tài liệu SRS cho feature/màn hình đã triển khai hoặc sắp triển khai, theo FORM CHUẨN của team (file .docx)
+description: "Use when user cần tài liệu SRS / ĐẶC TẢ YÊU CẦU (file .docx theo form chuẩn của team) cho feature hoặc màn hình — trước khi code để chốt với BA/PM, hoặc sau khi code để bàn giao/nghiệm thu; cũng dùng khi sửa SRS bị BA trả về."
 ---
 
 # SRS Documenter — HRM / ERP TPE

@@ -1,6 +1,6 @@
 ---
 name: notification-convention
-description: Use when tạo/sửa bất kỳ thông báo nghiệp vụ nào (notification bắn cho user qua chuông/push/socket) ở BE hoặc FE — chuẩn nội dung, prefix, độ dài, in đậm, deep-link theo tài liệu QLDA
+description: "Use when tạo/sửa bất kỳ thông báo nghiệp vụ nào (notification bắn cho user qua chuông/push/socket) ở BE hoặc FE — chuẩn nội dung, prefix, độ dài, in đậm, deep-link theo tài liệu QLDA"
 ---
 
 # Skill: Notification Convention (Thông báo nghiệp vụ)

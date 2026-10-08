@@ -1,3 +1,8 @@
+---
+name: elearning-base
+description: "Use when viết/sửa code của project ELEARNING (Vue 3 + Vite + Pinia + Tailwind, FE `elearning/src/`, BE `Modules/Elearning` của hrm-api — code chỉ có trên nhánh `tpe-develop-elearning`). KHÔNG áp cho hrm-client (Nuxt 2 + V2Base)."
+---
+
 # Skill: Elearning Base Convention
 
 Quy tắc nền tảng khi làm việc với project Elearning (Vue 3 + Vite). Đọc skill này TRƯỚC khi viết code mới cho elearning.

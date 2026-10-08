@@ -1,6 +1,6 @@
 ---
 name: import-excel
-description: Xây dựng chức năng import Excel (V2BaseImportModal) + KHUÔN CHUẨN của file Excel mẫu dùng chung toàn hệ thống
+description: "Use when làm chức năng NHẬP EXCEL (V2BaseImportModal, nút \"Nhập Excel\") ở hrm-client + API import ở hrm-api, hoặc tạo/sửa FILE EXCEL MẪU cho nút \"Tải file mẫu\". Đọc cả khi: file mẫu sai khuôn (màu tiêu đề, dòng mô tả, viền), ô chọn giá trị trong file mẫu không chặn được nhập sai, import có cấu trúc cha/con theo STT."
 ---
 
 # Skill: Import Excel trong module Giao việc
@@ -298,8 +298,6 @@ Khi implement import cho module mới, cần xác định:
 
 Khi bắt đầu implement import cho module mới:
 ```
-@.skills/import-excel/SKILL.md
-
 Implement import excel cho module [TÊN MODULE].
 
 Columns:

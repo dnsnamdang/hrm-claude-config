@@ -1,6 +1,6 @@
 ---
 name: testcase-documenter
-description: Generate tài liệu test case cho feature đã triển khai — output Excel (.xlsx) đầy đủ block mô tả nghiệp vụ + summary + phân quyền + các cột check, viết bằng ngôn ngữ nghiệp vụ cho QA
+description: "Use when user cần TÀI LIỆU TEST CASE (file Excel .xlsx) cho QA — \"tạo testcase\", \"viết test case\", \"viết test\" cho feature/báo cáo đã code xong, hoặc sinh lại testcase sau khi nghiệp vụ đổi. KHÔNG dùng cho test tự động e2e (xem playwright-setup)."
 ---
 
 # Test Case Documenter — ERP TPE

@@ -1,6 +1,6 @@
 ---
 name: entity-history
-description: Use when làm bất kỳ tính năng "lịch sử thay đổi / lịch sử chỉnh sửa / audit log ai sửa gì, giá trị cũ → giá trị mới, lúc nào" cho một màn/entity — tạo mới, sửa cách hiển thị, đổi text/màu/bộ lọc của popup lịch sử, hoặc thêm mục Lịch sử vào màn chi tiết.
+description: "Use when làm bất kỳ tính năng \"lịch sử thay đổi / lịch sử chỉnh sửa / audit log ai sửa gì, giá trị cũ → giá trị mới, lúc nào\" cho một màn/entity — tạo mới, sửa cách hiển thị, đổi text/màu/bộ lọc của popup lịch sử, hoặc thêm mục Lịch sử vào màn chi tiết."
 ---
 
 # Skill: Entity History (Lịch sử thay đổi)

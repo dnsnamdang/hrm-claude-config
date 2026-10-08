@@ -1,6 +1,6 @@
 ---
 name: info-icon-tooltip
-description: Use when thêm/sửa icon Info (chữ "i") kèm tooltip/popover mô tả ở FE hrm-client — icon giải thích cột, tiêu đề bảng, ô nhập, dòng trong dropdown. Chuẩn hoá 1 kiểu duy nhất cho toàn hệ thống.
+description: "Use when thêm/sửa icon Info (chữ \"i\") kèm tooltip/popover mô tả ở FE hrm-client — icon giải thích cột, tiêu đề bảng, ô nhập, dòng trong dropdown. Chuẩn hoá 1 kiểu duy nhất cho toàn hệ thống."
 ---
 
 # Skill: Icon Info + Tooltip mô tả
@@ -61,14 +61,15 @@ Quy tắc phụ:
 - Nội dung ngắn, 1–2 câu, không HTML phức tạp.
 
 **File tham khảo** (copy nguyên mẫu từ đây):
-`pages/assign/report/meeting-by-projects/components/MeetingByProjectsTable.vue:9-17`
+`pages/assign/report/employee-work-performance/components/InfoTip.vue` — component `InfoTip`
+(props `head` + `lines`, tự sinh id duy nhất, đã khai `font-weight: normal`). Màn báo cáo mới lấy
+bản trong `.claude/skills/report-styles/template/components/InfoTip.vue`.
 
 Các màn đã làm đúng chuẩn (dùng để đối chiếu, đừng phát minh lại):
-- `components/TopProjectsChart.vue`
 - `pages/assign/prospective-projects/components/ProjectInfoSection.vue`
-- `pages/assign/report/meeting-by-projects/components/MeetingByProjectsTable.vue`
-- `pages/assign/report/meeting-by-employees/components/MeetingByEmployeesTable.vue`
-- `pages/assign/report/meeting-by-employees/components/TopDepartmentsChart.vue`
+- `pages/assign/report/meeting-by-projects/components/InfoTip.vue`
+- `pages/assign/report/meeting-by-employees/components/InfoTip.vue`
+- `pages/assign/report/potential-customer-care/components/CareTrackingTable.vue`
 - `pages/assign/report/performance-by-solutions/components/PerformanceBySolutionsTable.vue`
 - `pages/assign/report/solution-requests-by-department/components/SolutionRequestsTable.vue`
 - `pages/assign/report/solutions-work-summary-by-department/index.vue`

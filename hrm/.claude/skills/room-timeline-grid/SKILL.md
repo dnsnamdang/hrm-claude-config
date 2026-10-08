@@ -1,6 +1,6 @@
 ---
 name: room-timeline-grid
-description: Use when hiển thị lưới "Phòng × Giờ" (mỗi dòng 1 phòng họp, cột chia theo mốc giờ, khối phiếu đặt nằm ngang) — màn Sơ đồ đặt phòng / Theo dõi tình trạng phòng / bất kỳ màn nào cần xem nhiều phòng cùng lúc theo dòng thời gian. Dùng component `components/meeting-room/RoomTimelineGrid.vue`, KHÔNG tự dựng lưới mới.
+description: "Use when hiển thị lưới \"Phòng × Giờ\" (mỗi dòng 1 phòng họp, cột chia theo mốc giờ, khối phiếu đặt nằm ngang) — màn Sơ đồ đặt phòng / Theo dõi tình trạng phòng / bất kỳ màn nào cần xem nhiều phòng cùng lúc theo dòng thời gian. Dùng component `components/meeting-room/RoomTimelineGrid.vue`, KHÔNG tự dựng lưới mới."
 ---
 
 # Skill: RoomTimelineGrid — lưới Phòng × Giờ dùng chung

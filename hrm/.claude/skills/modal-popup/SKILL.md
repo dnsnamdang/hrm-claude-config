@@ -1,3 +1,8 @@
+---
+name: modal-popup
+description: "Use when tạo/sửa bất kỳ modal / popup / dialog nào ở hrm-client (V2BaseModal, b-modal, popup xác nhận, popup chọn bản ghi, popup có bảng hoặc bộ lọc). Đọc cả khi: select trong popup bị che/không xổ ra, footer popup bị đẩy khuất khi danh sách dài, chip select2 bị cắt chữ, slot trong modal rỗng từ lần mở thứ hai, popup Xem/Sửa thiếu khối Lịch sử."
+---
+
 # Skill: Modal Popup
 
 Chuẩn hoá UI cho tất cả modal/popup sử dụng V2Base components.
@@ -441,8 +446,8 @@ Popup mới có bảng **phải** có đủ 8 điểm sau (thiếu điểm nào 
 3. **`.modal-body { overflow: hidden }`** — KHÔNG `overflow-y: auto`. Chỉ khung bảng được cuộn dọc.
 4. **Khung bảng** `flex: 1 1 auto; min-height: 0; overflow: auto` — KHÔNG đặt `max-height` cứng, cũng **KHÔNG đặt sàn `min-height` cứng** (sàn 160px làm khung không co nổi ở màn hình thấp, lại đẩy phân trang ra ngoài). ⚠️ Bảng bọc trong `V2BaseTableScroll` thì xem bẫy 9 bên dưới — khai nhầm lớp là rule **không chạy** mà không báo lỗi.
 5. **Chiều cao dòng**: `td { padding: 3px 6px; font-size: 12px }`, ảnh thumbnail ≤ 26px, cột chữ dài bọc `.cell-clamp` (cắt 2 dòng) + `:title` tooltip, `thead` sticky.
-6. **Nút phụ** ("Thêm hàng tạm"...) → slot `#header-actions` của `V2BaseFilterPanel` (ngang hàng nút "Tìm kiếm nâng cao", không tốn dòng riêng). Nút Tìm kiếm/Làm mới → prop `inlineSearchButtons`.
-7. **Lọc nâng cao**: 1 grid PHẲNG `repeat(auto-fit, minmax(190px, 1fr))` — KHÔNG chia hàng cứng 5 ô + ô rỗng độn.
+6. **Nút phụ** ("Thêm hàng tạm"...) → slot `#header-actions` của `V2BaseSmartFilterPanel in-modal` (ngang hàng nút "Tìm kiếm nâng cao", không tốn dòng riêng; chỉ `btn-compact`, panel tự cách đều bằng `gap` — cấm `mr-2`/`ml-2`). Nút Tìm kiếm/Làm mới panel tự render (`showActionButtons`).
+7. **Lọc nâng cao**: khai schema `filterFields` cho panel — KHÔNG tự dựng lưới ô lọc (mục 4c). Ô đặc thù (select tìm từ xa…) thì render qua slot `#field-<key>`.
 8. **Control lẻ**: nhãn NGANG control (~32px) thay vì xếp chồng (~56px). Nén `::v-deep .tp-card` và `::v-deep .row.paging` (class `mt-3` tốn 24px).
 
 **Verify BẮT BUỘC bằng số đo, không nhìn bằng mắt** — Playwright `browser_evaluate`, đếm số dòng

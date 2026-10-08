@@ -1,6 +1,6 @@
 ---
 name: form-validate
-description: Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form) — validate realtime bằng vee-validate trên component V2Base*, và quy tắc ô bắt buộc validate ở cả FE lẫn BE (Lưu nháp chỉ nới required). Đọc cả khi: Lưu nháp lọt dữ liệu sai định dạng, ô nhập báo lỗi đỏ nhưng bấm Lưu vẫn đi, hoặc cần chốt rule nào chặn ở FE / rule nào phải chặn thêm ở BE
+description: "Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form) — validate realtime bằng vee-validate trên component V2Base*, và quy tắc ô bắt buộc validate ở cả FE lẫn BE (Lưu nháp chỉ nới required). Đọc cả khi: Lưu nháp lọt dữ liệu sai định dạng, ô nhập báo lỗi đỏ nhưng bấm Lưu vẫn đi, hoặc cần chốt rule nào chặn ở FE / rule nào phải chặn thêm ở BE"
 ---
 
 # Skill: Validate Form ở màn mới (vee-validate + V2Base*)

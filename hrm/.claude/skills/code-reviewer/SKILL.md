@@ -1,16 +1,16 @@
 ---
 name: code-reviewer
-description: Review code theo coding standards của ERP TPE
+description: "Use when review code HRM (hrm-api Laravel 8 / PHP 7.4 + hrm-client Nuxt 2 / Vue 2) — sau khi xong 1 feature hoặc fix bug phức tạp, trước khi push/merge, hoặc khi user nhờ soát code vừa viết theo convention dự án."
 ---
 
-# Code Reviewer — ERP TPE
+# Code Reviewer — HRM
 
 ## Mục đích
-Review code theo đúng conventions của project ERP TPE (Laravel 8 + Nuxt 2) trước khi merge hoặc sau khi hoàn thành feature.
+Review code theo đúng conventions của project HRM (Laravel 8 + Nuxt 2) trước khi merge hoặc sau khi hoàn thành feature.
 
 ## Khi nào dùng
 - Sau khi hoàn thành 1 feature hoặc fix bug phức tạp
-- Trước khi push/merge vào `tpe-develop-assign`
+- Trước khi push/merge vào nhánh đích (hiện là `gop_db`)
 - Khi cần fresh perspective về code vừa viết
 
 ## Cách dùng
@@ -39,7 +39,7 @@ HEAD_SHA: [commit hiện tại]
 
 ### Frontend (Nuxt 2 / Vue 2)
 - [ ] Không dùng Vue 3 syntax (Composition API, `<script setup>`, `defineProps`)
-- [ ] Dùng V2Base components có sẵn (V2BaseButton, V2BaseBadge, V2BaseFilterPanel...)
+- [ ] Dùng V2Base components có sẵn (V2BaseButton, V2BaseBadge, V2BaseSmartFilterPanel...) — `V2BaseFilterPanel` đã bị XOÁ ngày 2026-09-21, gặp import nó là lỗi
 - [ ] Select trong modal/popup (`b-modal`, component `*Modal.vue`) BẮT BUỘC dùng `V2BaseSelectInModal`, KHÔNG dùng `V2BaseSelect` — gặp `V2BaseSelect` trong modal → đổi (chi tiết: `.claude/skills/modal-popup/SKILL.md`)
 - [ ] Style import `@import '@/assets/scss/v2-styles.scss';` trong `<style lang="scss">`
 - [ ] API call qua `this.$store.dispatch('apiGetMethod', ...)` / `apiPostMethod`

@@ -1,3 +1,8 @@
+---
+name: button-convention
+description: "Use when tạo/sửa/review bất kỳ NÚT BẤM nào ở hrm-client (V2BaseButton, V2BaseIconButton) — toolbar danh sách, form, cột hành động trong bảng, footer popup. Đọc cả khi: phân vân variant/màu/icon/chữ trên nút, thứ tự nút, các nút dính sát nhau không có khoảng cách, bấm Lưu 2 lần ra 2 bản ghi (thiếu lớp tải), nút đổi trạng thái phiếu chưa hỏi xác nhận hoặc hỏi 2 lần."
+---
+
 # Skill: Button Convention
 
 Chuẩn hoá quy tắc sử dụng V2BaseButton và V2BaseIconButton trong toàn bộ project.
@@ -272,6 +277,20 @@ Hai hành động giống nhau ở 2 màn khác nhau PHẢI dùng **cùng một 
     <i class="ri-delete-bin-line"></i>
 </V2BaseIconButton>
 ```
+
+### 6a. Khoảng cách giữa các nút trong CÙNG MỘT CỤM
+
+Các ví dụ ở trên viết lẻ từng nút. Khi đặt nhiều nút cạnh nhau (toolbar danh sách, nhóm nút form)
+thì `V2BaseButton` **không tự có lề**: thiếu class là các nút dính sát, khe 0px.
+
+| Chỗ đặt nút | Khai gì |
+|---|---|
+| Cụm nút tự dựng (toolbar danh sách, nhóm nút form) | Mọi nút `class="mr-2 mb-2"`, nút CUỐI cụm chỉ `mb-2`. Nút chỉ-icon thêm `btn-compact` |
+| Slot `#header-actions` của `V2BaseSmartFilterPanel` | Chỉ `btn-compact`, **KHÔNG** `mr-2`/`ml-2`/`mb-2` — panel tự chia khe bằng `gap: 12px` (từ 2026-10-03); thêm lề là khe ra 20-24px và lệch tâm dọc 6px |
+| `V2Footer` (màn chi tiết/form) | Component tự lo, không khai lề |
+| Footer popup (`.modal-footer`) | Theo mẫu skill `modal-popup` mục 3 |
+
+**Tự kiểm** (2 dòng đầu bảng): đo `getBoundingClientRect()` của 2 nút liền nhau — khe phải đúng **12px**.
 
 ---
 

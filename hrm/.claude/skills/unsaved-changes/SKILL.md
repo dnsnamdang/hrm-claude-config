@@ -1,6 +1,6 @@
 ---
 name: unsaved-changes
-description: Use when tạo/sửa bất kỳ màn form nào ở hrm-client — page add/edit, MODAL/POPUP Thêm-Sửa danh mục, trang vỏ render component form con. Bắt buộc cảnh báo "chưa lưu" khi user thoát. Có 3 mixin có sẵn tuỳ kiểu màn (unsavedChangesMixin / unsavedModalMixin / unsavedChildFormMixin) — chọn sai thì popup không bao giờ hiện, xem mục 2b.
+description: "Use when tạo/sửa bất kỳ màn form nào ở hrm-client — page add/edit, MODAL/POPUP Thêm-Sửa danh mục, trang vỏ render component form con. Bắt buộc cảnh báo \"chưa lưu\" khi user thoát. Có 3 mixin có sẵn tuỳ kiểu màn (unsavedChangesMixin / unsavedModalMixin / unsavedChildFormMixin) — chọn sai thì popup không bao giờ hiện, xem mục 2b."
 ---
 
 # Skill: Cảnh báo dữ liệu chưa lưu (Unsaved Changes Guard)
@@ -146,7 +146,7 @@ mixins: [unsavedChangesMixin]                     // component con, có markForm
 - `pages/assign/summary-quotations/_id/edit.vue` (có override `unsavedSnapshotSource`)
 - Modal: `components/modal/customer-care/level-modal.vue` (đơn giản nhất),
   `pages/finance/cost-debts/CostDebtModal.vue` (load detail sau khi show)
-- Trang vỏ + form con: `pages/finance/accounts/{add,_id/edit}.vue` + `components/AccountFormComponent.vue`
+- Trang vỏ + form con: `pages/finance/accounts/{add,_id/edit}.vue` + `pages/finance/accounts/components/AccountFormComponent.vue`
 
 **Đã áp dụng:** 14 màn danh mục của 2 phân hệ customer-care + finance (đợt 1, 2026-08-12).
 Các phân hệ cũ (decision, assign, training, human, timesheet) **chưa làm** — xem

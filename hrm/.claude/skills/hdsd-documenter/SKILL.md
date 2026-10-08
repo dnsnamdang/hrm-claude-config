@@ -1,6 +1,6 @@
 ---
 name: hdsd-documenter
-description: Generate tài liệu Hướng dẫn sử dụng (HDSD) Word cho màn hình — bản GỌN theo khuôn tester duyệt 29/09/2026 (mỗi chức năng 1 phần, các bước ngắn không giải thích, mỗi chức năng 1 ảnh màn hình, mọi nút đều có ảnh nút)
+description: "Use when user cần tài liệu HƯỚNG DẪN SỬ DỤNG (HDSD, file Word .docx) cho màn hình / chức năng — \"viết HDSD\", \"hướng dẫn sử dụng\", \"tài liệu cho người dùng cuối\", hoặc cập nhật HDSD cũ sau khi màn đổi giao diện."
 ---
 
 # HDSD Documenter — ERP TPE (bản GỌN, chốt 29/09/2026)

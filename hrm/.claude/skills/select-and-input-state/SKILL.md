@@ -1,6 +1,6 @@
 ---
 name: select-and-input-state
-description: Use when làm việc với select / ô nhập liệu ở BẤT KỲ màn nào (form, modal, chi tiết, bộ lọc) — không riêng màn danh sách. Bắt buộc đọc khi gặp một trong các triệu chứng/ngữ cảnh: select danh mục MẤT giá trị đã chọn sau khi danh mục bị khoá / ngừng hoạt động; cần đánh dấu 🔒 cho option đã khoá; ô nhập bị disabled/readonly hiển thị sai màu hoặc vẫn bấm được; chip của select chọn nhiều sai khuôn; viền xanh / quầng sáng khi focus ô nhập; FE dùng trường hoặc endpoint mới mà BE chưa deploy kịp.
+description: "Use when làm việc với select / ô nhập liệu ở BẤT KỲ màn nào (form, modal, chi tiết, bộ lọc) — không riêng màn danh sách. Bắt buộc đọc khi gặp một trong các triệu chứng/ngữ cảnh: select danh mục MẤT giá trị đã chọn sau khi danh mục bị khoá / ngừng hoạt động; cần đánh dấu 🔒 cho option đã khoá; ô nhập bị disabled/readonly hiển thị sai màu hoặc vẫn bấm được; chip của select chọn nhiều sai khuôn; viền xanh / quầng sáng khi focus ô nhập; FE dùng trường hoặc endpoint mới mà BE chưa deploy kịp."
 ---
 
 # Select & trạng thái ô nhập liệu — quy tắc dùng chung toàn hệ thống
@@ -318,7 +318,7 @@ Nhớ chặn ở **mọi** handler: mở dropdown, xoá chip, chọn item, xoá 
 
 Đã xử lý sẵn ở 2 tầng, màn mới không phải khai gì:
 
-- 10 component base: `V2BaseInput`, `V2BaseTextarea`, `V2BaseCodeInput`, `V2BaseDatePicker`, `V2BaseSelect`, `V2BaseSelectInModal`, `V2BaseFilterPanel`, `V2BaseSmartFilterPanel`, `SearchPicker`, `MultiSearchPicker`
+- 10 component base: `V2BaseInput`, `V2BaseTextarea`, `V2BaseCodeInput`, `V2BaseDatePicker`, `V2BaseSelect`, `V2BaseSelectInModal`, `V2BaseSmartFilterPanel`, `SearchPicker`, `MultiSearchPicker`
 - `assets/scss/v2-styles.scss`: rule chung `.form-control:focus, input:focus, select:focus, textarea:focus` — bắt cả input dùng `.form-control` thuần
 
 Khi viết component mới có ô nhập: **cấm** đặt `border-color: #16a34a` / `box-shadow: rgba(22, 163, 74, …)` trong khối `:focus`.

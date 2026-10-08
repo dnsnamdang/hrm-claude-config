@@ -1,6 +1,6 @@
 ---
 name: export-excel
-description: Use when tạo mới hoặc sửa chức năng XUẤT EXCEL ở BE (class `*Export` + blade `exports/*.blade.php` dùng `maatwebsite/excel`), hoặc khi user báo lỗi file .xlsx tải về — thiếu logo công ty, logo quá to / đè mất tiêu đề (nhất là khi máy này bị máy kia không), cột quá hẹp/chữ bị cắt, số tiền bị Excel cảnh báo "The number in this cell is formatted as text", số không có dấu phân cách hàng nghìn, cần chốt dấu ngăn nghìn là phẩy hay chấm, cộng SUM ra 0, ô hiện nguyên thẻ HTML (`<div>`, `<br />`, `&agrave;`) hoặc mô tả nhiều dòng bị dính liền.
+description: "Use when tạo mới hoặc sửa chức năng XUẤT EXCEL ở BE (class `*Export` + blade `exports/*.blade.php` dùng `maatwebsite/excel`), hoặc khi user báo lỗi file .xlsx tải về — thiếu logo công ty, logo quá to / đè mất tiêu đề (nhất là khi máy này bị máy kia không), cột quá hẹp/chữ bị cắt, số tiền bị Excel cảnh báo \"The number in this cell is formatted as text\", số không có dấu phân cách hàng nghìn, cần chốt dấu ngăn nghìn là phẩy hay chấm, cộng SUM ra 0, ô hiện nguyên thẻ HTML (`<div>`, `<br />`, `&agrave;`) hoặc mô tả nhiều dòng bị dính liền."
 ---
 
 # Skill: Export Excel (BE)

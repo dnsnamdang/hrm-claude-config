@@ -1,6 +1,6 @@
 ---
 name: print-page
-description: Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước ReportPrintPreviewModal — chuẩn hiện hành, xem mục 0), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
+description: "Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước ReportPrintPreviewModal — chuẩn hiện hành, xem mục 0), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô \"Thời gian\" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in."
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
@@ -18,6 +18,10 @@ làm mất ngữ cảnh, quay lại phải tải lại cả màn danh sách kèm
 
 Cách dựng popup — bộ dùng chung, chỉ khai báo chứ không viết lại — **xem mục 8** (đủ khuôn code,
 CSS, letterhead, bẫy đã dính).
+
+> **Màn BÁO CÁO** (`pages/assign/report/*`, `pages/sale/*-tracking`…) có thêm 1 bước trước popup xem
+> trước: popup chọn bản in + chọn cột `components/report/V2BaseReportPrintModal.vue` — làm theo
+> skill `report-styles` mục 4b, rồi mới tới `ReportPrintPreviewModal` của skill này.
 
 ### Cây quyết định — 3 câu, hỏi theo thứ tự
 
@@ -51,8 +55,9 @@ trang `/print` để không có 2 nguồn CSS in. Đó là hướng đi chuẩn 
 > ⛔ Trước khi đọc tiếp: đã chạy cây quyết định ở mục 0 chưa? Màn port từ ERP thì **quay lại mục 8**.
 > Mục này chỉ áp cho màn HRM gốc / báo cáo tự dựng bằng Vue / trang in có thao tác.
 
-Màn mẫu: `pages/customer-care/device-errors/_id/print.vue` (khổ DỌC) và
-`pages/customer-care/device-errors/print.vue` (khổ NGANG).
+Màn mẫu: `pages/finance/borrow-sells/_id/print.vue` (khổ DỌC). Chưa có màn mẫu khổ NGANG đang
+chạy — 2 màn mẫu cũ `customer-care/device-errors/{_id/,}print.vue` đã bị xoá 2026-09-09 khi
+chuyển sang popup; cần khổ ngang thì đổi `210mm` → `297mm` + `@page { size: A4 landscape }`.
 
 Trang `/print` phải giống 3 điểm sau, không có ngoại lệ:
 
@@ -450,7 +455,7 @@ cũng không vào được ô tìm trong dropdown. Nhìn như màn bị treo.
 Nguyên nhân: cửa sổ in con đóng lại nhưng cửa sổ HRM chưa lấy lại focus của hệ điều hành. Select2
 mở dropdown dựa vào focus và **tự đóng ngay khi mất focus**, nên mọi cú bấm đều "không ăn".
 
-**Cách đúng — in bằng iframe ẩn** (khuôn có sẵn ở `pages/finance/bill-incomes/_id/print.vue`):
+**Cách đúng — in bằng iframe ẩn** (khuôn có sẵn ở `components/print/ReportPrintPreviewModal.vue`, hàm in bằng iframe):
 
 ```js
 const frame = document.createElement('iframe')

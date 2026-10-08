@@ -1,6 +1,6 @@
 ---
 name: report-styles
-description: Use when làm MỚI hoặc UPDATE STYLE một màn báo cáo trong hrm-client (pages/assign/report/*, pages/sale/*-tracking…) — "chuyển báo cáo cũ sang style mới", "đổi giao diện báo cáo", khối tổng hợp .rsum, bảng cây rsum-tb, dòng TỔNG, ô chọn "cấp muốn bung", con số bấm mở popup drill, nút In / Xuất Excel trên header bộ lọc, tiêu đề bảng báo cáo không dính khi cuộn.
+description: "Use when làm MỚI hoặc UPDATE STYLE một màn báo cáo trong hrm-client (pages/assign/report/*, pages/sale/*-tracking…) — \"chuyển báo cáo cũ sang style mới\", \"đổi giao diện báo cáo\", khối tổng hợp .rsum, bảng cây rsum-tb, dòng TỔNG, ô chọn \"cấp muốn bung\", con số bấm mở popup drill, nút In / Xuất Excel trên header bộ lọc, tiêu đề bảng báo cáo không dính khi cuộn."
 ---
 
 # Skill: Style báo cáo (khuôn rsum)

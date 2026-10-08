@@ -1,6 +1,6 @@
 ---
 name: business-flow-documenter
-description: Viết tài liệu MÔ TẢ NGHIỆP VỤ (.docx) cho 1 màn/1 luồng — dùng để làm gì, ai tham gia, chạy qua những bước nào, mỗi bước thông báo cho AI, phân quyền và quy tắc bắt buộc. Dùng khi user nói "mô tả nghiệp vụ", "tả nghiệp vụ", "nghiệp vụ chức năng này thế nào", "luồng hoạt động ra sao"
+description: "Use when user cần tài liệu MÔ TẢ NGHIỆP VỤ (.docx) cho 1 màn / 1 luồng — \"viết mô tả nghiệp vụ\", \"tả nghiệp vụ\", \"nghiệp vụ chức năng này thế nào\", \"luồng hoạt động ra sao\", \"dùng để làm gì, thông báo cho ai\"."
 ---
 
 # Business Flow Documenter — HRM / ERP TPE

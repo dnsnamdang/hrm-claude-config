@@ -1,9 +1,9 @@
 ---
 name: api-documenter
-description: Generate tài liệu API specification cho endpoints đã triển khai
+description: "Use when cần tài liệu API (markdown) cho endpoint hrm-api đã triển khai — để dev mobile / bên thứ 3 tích hợp, hoặc rà lại toàn bộ endpoint của 1 module/feature."
 ---
 
-# API Documenter — ERP TPE
+# API Documenter — HRM
 
 ## Mục đích
 Tạo tài liệu API cho dev mobile hoặc bên thứ 3 tích hợp, dựa trên code BE hiện có.

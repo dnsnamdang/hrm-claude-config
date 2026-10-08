@@ -1,6 +1,6 @@
 ---
 name: playwright-setup
-description: Chuẩn team để Claude Code tự setup Playwright E2E cho 1 project. Dùng khi user yêu cầu "cài/thêm Playwright", "viết test e2e", "setup test tự động", hoặc khi cần kiểm thử luồng FE. Mặc định stack Nuxt 2 + Vue 2 + Select2 + JWT; xem mục cuối nếu project dùng AngularJS/Blade (ERP).
+description: "Use when cài/thêm Playwright E2E cho 1 project, viết hoặc sửa test e2e, \"setup test tự động\", hoặc cần kiểm thử luồng FE bằng trình duyệt thật. Mặc định stack Nuxt 2 + Vue 2 + Select2 + JWT (hrm-client); project AngularJS/Blade (ERP) xem mục cuối."
 ---
 
 # Playwright E2E — Chuẩn setup của team

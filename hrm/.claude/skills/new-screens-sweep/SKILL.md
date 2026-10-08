@@ -1,6 +1,6 @@
 ---
 name: new-screens-sweep
-description: Use when phải RÀ / SỬA ĐỒNG LOẠT nhiều màn theo 1 quy tắc chung mới (task kiểu "tất cả màn danh sách…", "các màn mới phải…", "check lại các màn mới", "sửa lại cho đúng toàn bộ màn", "áp dụng cho mọi màn"), hoặc khi cần biết màn nào là màn MỚI (dùng V2Base — phần dự án + chuyển đổi ERP→HRM) để không sót. Có script kiểm kê inventory.py ra checklist + lệnh tự verify.
+description: "Use when phải RÀ / SỬA ĐỒNG LOẠT nhiều màn theo 1 quy tắc chung mới (task kiểu \"tất cả màn danh sách…\", \"các màn mới phải…\", \"check lại các màn mới\", \"sửa lại cho đúng toàn bộ màn\", \"áp dụng cho mọi màn\"), hoặc khi cần biết màn nào là màn MỚI (dùng V2Base — phần dự án + chuyển đổi ERP→HRM) để không sót. Có script kiểm kê inventory.py ra checklist + lệnh tự verify."
 ---
 
 # Rà / sửa đồng loạt các màn MỚI — không sót, sửa nhanh
