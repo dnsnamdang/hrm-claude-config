@@ -247,7 +247,7 @@ my-todo), nhánh `gop_db`, không BE/DB. CHƯA commit.
 - [x] Đo MCP 1366: meeting 840 → Mục tiêu "- Tư Vấn Sản Phẩm - Chăm sóc…", Kết luận "- Tư vấn sản phẩm sale trong tháng";
       857 / 946 (chưa có kết luận) → có Mục tiêu, KHÔNG còn khối Kết luận; 0 nhãn "Ghi chú"; ô mục tiêu `grid-column 1 / -1`.
 - [x] E2E: không spec nào bám nhãn cũ (work-calendar-drawer chỉ kiểm phiếu giao việc) → không sửa.
-- [ ] User kiểm trên app · commit khi user yêu cầu.
+- [x] Đã commit + push gop_db 07/10 tối cùng đợt 11–16 (api `88d3374aa`, client `533b20846`).
 
 ## Đợt 12 — panel xem nhanh meeting: khối "Khảo sát nhu cầu khách hàng" (user "làm" 07/10/2026)
 
@@ -265,7 +265,7 @@ khai `$appends` trên model) · hrm-client `MeetingDrawerBody.vue` · e2e. Nhán
       858/862 ra "Chưa xác định lĩnh vực" = dữ liệu seed e2e thiếu Lĩnh vực (đã biết), không phải lỗi.
 - [x] E2E `report-meeting-drawer.spec.ts` ca 6 (Mục tiêu / Kết luận đúng trường + khối khảo sát + meeting chưa khảo sát) —
       biên dịch được, CHƯA chạy.
-- [ ] User kiểm trên app · commit khi user yêu cầu.
+- [x] Đã commit + push gop_db 07/10 tối cùng đợt 11–16 (api `88d3374aa`, client `533b20846`).
 
 ## Đợt 13 — màu cột trạng thái ở báo cáo + popup theo chuẩn màn danh sách (user "ok" làm 07/10/2026)
 
@@ -331,3 +331,5 @@ Kiểm MCP (năm 2026): TỔNG 644 = dải tổng hợp = SQL; popup 644/644; 3 
   nhóm `__no_*__` → "thuộc nhóm: Không thuộc bộ phận". Dòng phụ "Thuộc: …" giữ nguyên. Tiêu đề bản in KHÔNG đổi.
 - Chỉ sửa `DevelopmentDrillModal.vue` + spec (thêm assert ở ca Số lượng KH + ca mới "Tiêu đề popup là 1 câu…"; biên dịch được, chưa chạy).
 - MCP: 8 popup ở 4 cấp + nhóm "Không thuộc bộ phận" + 7 popup dải tổng hợp đều ra đúng câu; popup KH không còn khối tổng hợp, bảng cách ô lọc 6px, tiêu đề 1 dòng.
+
+**Đợt 11–16 ĐÃ COMMIT + PUSH gop_db 07/10 tối** (api `88d3374aa`, client `533b20846`, gộp chung với CSKH tiềm năng đợt 1–2). E2E đã sửa, CHƯA chạy.

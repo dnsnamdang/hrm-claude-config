@@ -110,8 +110,50 @@ Vừa hoàn thành: 5.1 Form Đơn mua hàng (Form + 3 tab) chuyển V2, đã ki
 Bước tiếp theo: chờ user duyệt giao diện + trả lời 2 điểm về V2BaseCurrencyInput; sau đó chuyển footer trang chi tiết và các popup của đơn mua
 Blocked: sửa V2BaseCurrencyInput là component chung → cần user xác nhận
 
-- [ ] Form: Đề xuất cung ứng, Phiếu xử lý (logic phức tạp — làm cuối)
-- [ ] Báo cáo nhu cầu mua, Dashboard
+  ### 5.2 — Màn chi tiết Đơn mua hàng `/_id` (user yêu cầu 06/10 — "V2Base hết")
+  - [x] `_id/index.vue`: footer → `V2Footer` (menu edit / approve / reject_approve, cùng cờ `is_can_*` với danh sách); bỏ `msgBoxConfirm` (V2Footer đã hỏi duyệt); popup Từ chối → `V2BaseRejectApproveModal` id riêng; lỗi tải → `/extras/404` (`replace`); lớp tải `$nuxt?.$loading` khi ghi; khung tải V2 (không `text-muted`)
+  - [x] Lý do từ chối: đưa vào trong khung `.v2-styles` của form (slot `notice`), style V2
+  - [x] `PurchaseOrderForm.vue`: tiêu đề `Chi tiết đơn mua hàng: <mã>`; slot `footer` ở chế độ xem render trần (V2Footer là thanh fixed); bỏ `text-muted` ô đang tải
+  - [x] Popup xem: `SupplyDocDetailModal`, `ContractDetailModal` → `V2BaseModal`
+  - [x] `purchase_contracts/components/SupplierHistoryModal.vue` (dùng chung với HĐ mua — user đồng ý sửa bản chung) → `V2BaseModal`
+  - [x] `ProductsTab.vue`: `msgBoxConfirm` (xóa dòng / bỏ phiếu) → `BaseConfirmModal` id riêng
+  - [x] Tab dùng chung add/sửa/xem (`GeneralTab`, `PaymentTab`, `ProductsTab`): bỏ `text-muted` (→ màu #6b7280), ô rỗng để trống thay `—` (giữ nguyên phép so `!== '—'` với dữ liệu cũ đã lưu sẵn dấu gạch)
+  - [~] Kiểm tra compile ✅ (9 file) · trình duyệt ❌ chưa chạy — token `e2e/.env` hết hạn (401)
+  - [ ] Hỏi user: lỗi trong component chung `V2BaseRejectApproveModal` (`:disabled` vô tác dụng, `::rows`, `*` trần, nút "Đồng ý" thiếu `primary`) + `V2Footer` (câu hỏi duyệt chung chung, nhãn "Không duyệt")
+
+  ### Checkpoint — 06/10/2026
+  Vừa hoàn thành: 5.2 màn chi tiết Đơn mua hàng lên V2 (trang `_id`, form, 3 popup xem, confirm trong ProductsTab, dọn text-muted/`—` ở 3 tab)
+  Đang làm dở: không
+  Bước tiếp theo: user làm mới `ACCESS_TOKEN` trong `e2e/.env` → kiểm trên trình duyệt :3001 (duyệt / từ chối / mở 3 popup); chốt việc sửa component chung
+  Blocked: token e2e hết hạn
+  ### 5.3 — Chuyển TOÀN BỘ màn Cung ứng còn lại sang V2 (user yêu cầu 06/10 — "sửa hết", chạy song song theo module)
+  Quyết định user 06/10: sửa component chung · ô tiền kiểu VN · làm song song 4 agent theo module.
+  **Chung (làm trước):**
+  - [x] `V2BaseRejectApproveModal` dựng lại trên `V2BaseModal` (giữ API `id` + `@confirm`): `:rows`, `V2BaseLabel required`, nút Xác nhận `primary danger` khoá bằng `:interactable` + chặn bấm kép, Hủy cuối
+  - [x] `V2Footer`: nhãn "Từ chối"; prop `confirm-message` (câu hỏi nêu tên phiếu, trống = câu cũ); `text-accept` đúng chữ nút; popup xác nhận id riêng `v2-footer-confirm-<uid>` (hết bẫy trùng id `confirm`); bỏ console.log
+  - [x] `V2BaseCurrencyInput`: hiển thị `1.234.567,89` (khớp `formatMoney`); viền đỏ lỗi thắng viền focus
+  - [x] Màn chi tiết đơn mua dùng nút `reject_approve` có sẵn + `confirm-message`
+  - [x] Migration `2026_10_06_100000_add_supply_lists_to_column_customizations_table` (5 cột json) + cast — đã chạy
+  **Theo module (agent song song):**
+  - [x] A — HĐ mua `purchase_contracts/*` (danh sách, chi tiết, form + 4 tab, popup chọn hàng) + `purchase_orders/components/GoodsPickerModal.vue` — BE: lọc từng cột + `GET purchase-contracts/creators`
+  - [x] B — Đề xuất cung ứng `supply_proposals/*` (danh sách, hộp thư, form, components) — BE: `list-creators`, `list-customers`; `listHelpers.js` mới
+  - [x] C — Phiếu xử lý `supply_handlings/*` (danh sách, form, components) — BE: lọc + `GET supply-handlings/creators`
+  - [x] D — HĐ kết xuất `contract_render/*` + Báo cáo nhu cầu mua `reports/purchase-demand` (Dashboard để nguyên) — BE: `GET rendered-contracts/filter-options`
+  - [x] Rà chéo kết quả 4 agent: compile 40/41 OK (dashboard chỉ lỗi giả do style rỗng), php -l sạch, route tĩnh trước `{id}`; grep A15 còn sót 2 file ↓
+  - [x] Dọn nốt `supply_proposals/components/GoodsPickerModal.vue` (dùng ở Đề xuất + Phiếu xử lý) sang V2 — xong (phân trang đổi 25 → 20/50/100, chờ user xác nhận)
+  - [x] Đổi 7 icon `mdi` còn sót ở 2 ProductsTab (HĐ mua, Đơn mua) sang Remixicon 2.4.0 (`ri-corner-*` không có ở 2.4 → dùng `ri-arrow-right-down-line`)
+  - [x] Rà cuối: 42/42 file `.vue` trong `pages/supply` compile OK (trừ dashboard — lỗi giả do style rỗng), grep mẫu cũ sạch
+  - [x] Dọn nốt `purchase_orders/components/ProductsTab.vue` (bộ lọc b-form-*, ô chiết khấu base-input-field, 3 ô tổng currency-input) — xong, compile OK
+  - [x] Báo cáo nhu cầu mua: header bảng chính nền `#f5f8f7` gần trùng nền trang → đổi nền xanh ngọc nhạt `#eaf4f2` (bản `#d9ebe7` user chê đậm quá), chữ `#1f4f49`, viền `#d3e4e0` (user báo 06/10)
+  - [x] Báo cáo nhu cầu mua: ô tích cột chọn căn giữa dọc (lệch xuống giữa dòng gộp, không ngang số STT) + cột 34px còn padding 10px làm checkbox bootstrap lệch → căn đỉnh, bỏ padding ngang, căn giữa cột (user báo 06/10)
+  - [x] HĐ kết xuất: cột Phiếu đề xuất hiện `[]` khi HĐ chưa có phiếu — gốc slot `#cell-proposal_items` có `v-if` → Vue 2 render nội dung mặc định (giá trị thô). Bỏ `v-if` ở gốc; đã quét toàn `pages/supply`, chỉ có chỗ này; ghi bẫy vào skill list-page A9 (user báo 06/10)
+  - [x] Rà soát toàn client lỗi ô hiện giá trị thô (`[]`): quét bằng AST vue-template-compiler mọi slot `#cell-*` có thể render rỗng → thêm 2 chỗ: Đề xuất `inbox.vue` cột File, `index.vue` cột Phiếu xử lý (gốc `v-for`) → bọc `<div>`; xác nhận mọi cột bảng V2 đều có slot; các chỗ `{{ x }}` in thẳng đều là chuỗi (user yêu cầu 06/10)
+  - [x] Mất ô tick "Hiện cả dòng đã mua đủ" / "Chỉ mã chưa có HĐ / đơn mua" (Báo cáo nhu cầu mua) + "Không có phiếu đề xuất mua" (tab Hàng hóa HĐ mua): `V2BaseCheckbox` truyền chữ qua slot → `singleMode=false` → chế độ nhiều ô với `options` rỗng, không render gì. Đổi sang prop `label`; sửa cả khối lọc đang ẩn của Đơn mua; quét AST toàn client sạch (user báo 06/10)
+  - [x] Báo cáo nhu cầu mua: chuyển 2 ô tick "Hiện cả dòng đã mua đủ" / "Chỉ mã chưa có HĐ / đơn mua" từ header bộ lọc vào khối Tìm kiếm nâng cao (field `hideLabel` + slot `#field-*`) (user yêu cầu 06/10)
+  - [x] Chi tiết HĐ (`contract/contract/_id`, ?from=supply_render): bỏ dòng "Người tiếp nhận: … — ngày giờ" (giữ `receiveInfo` cho các nút) (user yêu cầu 06/10)
+  - [ ] Kiểm trên trình duyệt (chờ user làm mới token e2e)
+- [x] Form: Đề xuất cung ứng, Phiếu xử lý (gộp vào 5.3)
+- [x] Báo cáo nhu cầu mua, Dashboard (gộp vào 5.3)
 
 ## Cần user xác nhận (hàm dùng chung)
 - [ ] (Q1) Cập nhật plugin `select2-custom.js` / `select2-focus.js` theo bản hrm (id duy nhất cho select2, focus ô tìm kiếm, bấm × không mở dropdown) — ảnh hưởng mọi màn
@@ -120,3 +162,10 @@ Blocked: sửa V2BaseCurrencyInput là component chung → cần user xác nhậ
 - [ ] (Q4) Thêm ~14 rule vee-validate custom của hrm (`positive_integer`, `greater_than`, `date_greater_than`…) vào `plugins/vee-validate.js`
 
 ---
+
+### Checkpoint — 06/10/2026 (5.3 chuyển toàn bộ Cung ứng sang V2)
+Vừa hoàn thành: 4 module A–D + dọn nốt popup chọn hàng Đề xuất, tab Hàng hóa Đơn mua, icon mdi; compile 42/42, php -l sạch, route tĩnh đặt trước `{id}`
+Đang làm dở: không
+Bước tiếp theo: user trả lời các câu hỏi nghiệp vụ (xem báo cáo chat 06/10) → kiểm trên trình duyệt khi có token e2e mới
+Blocked: token e2e hết hạn (401) — cần làm mới `ACCESS_TOKEN` trong `dns/e2e/.env`
+

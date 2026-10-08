@@ -542,6 +542,18 @@ Popup chọn hàng hoá / dịch vụ / thiết bị: **bấm vào dòng là th�
 dùng tích checkbox rồi bấm nút. Checkbox vẫn giữ (có `@click.stop`) để thêm hàng loạt — click dòng
 chỉ là lối tắt, không mất gì.
 
+**Số dòng/trang của popup chọn: `[10, 20, 50, 100]`, mặc định 10** (user chốt 06/10/2026 theo QA
+#11524). **Lấy từ hằng chung `utils/pickerPagination.js`**, KHÔNG gõ số tay:
+
+```js
+import { PICKER_PAGE_SIZE_OPTIONS, PICKER_DEFAULT_PAGE_SIZE } from '@/utils/pickerPagination'
+// data: perPage: PICKER_DEFAULT_PAGE_SIZE, pickerPageSizeOptions: PICKER_PAGE_SIZE_OPTIONS
+// <V2BasePagination :page-size-options="pickerPageSizeOptions" … />
+```
+
+Đã đồng bộ 34 popup chọn ngày 06/10/2026 (`.plans/gop-db/popup-chon-so-dong/`). Popup chỉ XEM (lịch sử,
+drill báo cáo) giữ mục 4c.
+
 ### Bài học đắt hơn: hành vi chuẩn thì phải là MẶC ĐỊNH của component dùng chung
 
 `ProductSearchModal` vốn đã dùng chung cho hơn 15 màn, nhưng hành vi này khai dạng **opt-in**
@@ -622,7 +634,8 @@ là **đúng component bộ lọc của màn danh sách**, chỉ thêm `in-modal
   nhất `flex: 1; min-height: 0; overflow: auto`) chứa `<table class="table table-bordered table-hover
   table-sm mb-0">` — `thead` sticky, `td` `padding: 3px 6px; font-size: 12px`, cột chữ dài
   `.cell-clamp` + `:title`, dòng đang tải/trống màu xám `#6b7280` (KHÔNG `.text-muted` — ra đỏ);
-  dưới bảng là `V2BasePagination` (`:page-size-options="[20, 50, 100]"`, dòng "Hiển thị x–y / N").
+  dưới bảng là `V2BasePagination` (`:page-size-options="[20, 50, 100]"`, dòng "Hiển thị x–y / N"). Riêng **popup CHỌN bản ghi**
+  dùng `[10, 20, 50, 100]`, mặc định 10 — xem mục 4b.
   Badge trạng thái trong ô vẫn là `V2BaseBadge`, ô badge `text-nowrap`.
 - **Footer popup chỉ xem**: KHÔNG truyền slot `#footer` → `V2BaseModal` tự render đúng nút chuẩn
   **Đóng** (`tertiary` + `fas fa-arrow-left`, mục 3). Tự khai lại dễ sai icon (`ri-close-line` là SAI).

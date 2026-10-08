@@ -9,7 +9,8 @@ File thật đang chạy:
 
 **Phải làm CẢ HAI** (như màn Khách hàng), và hai nơi này **hiển thị y hệt nhau** (bố cục mục log,
 text, màu, bộ lọc, thứ tự mới → cũ). Khác nhau duy nhất: popup có vỏ `b-modal`, section có header
-thu gọn/mở rộng + lazy load lần mở đầu tiên.
+thu gọn/mở rộng — thu gọn mặc định nhưng **dựng sẵn** (`v-show`) sau khi nạp chi tiết xong để badge
+số mốc hiện ngay khi vào màn (#11373; trước đây là lazy load lần mở đầu).
 
 ---
 

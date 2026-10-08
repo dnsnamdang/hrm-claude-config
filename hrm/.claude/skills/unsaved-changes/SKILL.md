@@ -129,6 +129,11 @@ mixins: [unsavedChangesMixin]                     // component con, có markForm
   → bị tính nhầm là user vừa nhập. Màn Sửa luôn gọi `markFormPristine()` cuối hàm load.
 - **KHÔNG thay bằng so sánh trần** `JSON.stringify(form) !== initialForm`. Các section trong màn tự ghi vào form bằng dữ liệu API (KD phụ trách, tiền tệ mặc định, options Loại hình/Lĩnh vực, kế thừa từ dự án cha…) và về lúc nào là không đoán được → sẽ báo "chưa lưu" cả khi user không đụng gì.
 - Mixin chỉ tính là thay đổi DO USER khi nó xảy ra trong ~500ms sau thao tác chuột/bàn phím; thay đổi đến muộn hơn = auto-fill → dời mốc so sánh, không đánh dấu bẩn.
+- **Chiều ngược lại cũng dính**: dữ liệu user CHỌN nhưng ghi vào form sau một lần `await` (chọn phiếu
+  nguồn trong popup rồi gọi API lấy chi tiết, tải tệp lên S3) về muộn quá 500ms → bị coi là auto-fill,
+  thoát màn **không có cảnh báo** (#11538). Gán `this.unsavedLastActionAt = Date.now()` ngay TRƯỚC khi ghi
+  dữ liệu đó vào form; tệp chờ lưu nằm ngoài `formSubmit` thì đưa `pendingFiles` vào
+  `unsavedSnapshotSource()` (khuôn `BorrowExtendRequestForm.vue`, `PrepickExtendRequestForm.vue`).
 - Listener bắt ở `document` (không chỉ trong `$el`) vì dropdown select2 / modal chọn KH render ngoài phạm vi component.
 - Field kiểu mảng options nạp từ API (`*_options`) đã bị mixin loại sẵn khỏi snapshot.
 - Sửa mixin = sửa hàm dùng chung → **hỏi trước khi sửa**, mọi màn form đang phụ thuộc vào nó.

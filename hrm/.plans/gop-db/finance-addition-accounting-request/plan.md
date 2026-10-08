@@ -1507,3 +1507,10 @@ User báo: sửa thông tin → bấm Gửi duyệt ở form → timeline có "T
 - [x] BE `AdditionAccountingRequestWriteService::update()`: trước `logCatalogUpdate()` gán `$before['status']` = trạng thái MỚI → diff "Thay đổi thông tin" không còn trạng thái, chỉ mốc `change_status` riêng ghi (không unset vì thiếu khoá thì diff vẫn in "trống → Chờ duyệt")
 - [x] Test `CatalogHistoryService::logUpdate` (transaction + rollback): có đổi Số tiền → chỉ ghi Số tiền; chỉ đổi trạng thái → không sinh dòng "Thay đổi thông tin"
 - Log cũ đã ghi trùng (vd 002156) giữ nguyên — không sửa dữ liệu
+
+## Phase 47 — Popup tra cứu quá dài (2026-10-07)
+
+User báo popup "Chọn phiếu xác nhận bảo hành" hơi dài. Nguyên nhân: vùng bảng của `V2BaseDataTable` cao tới 640px (20 dòng/trang) + ô lọc + phân trang + footer → popup gần kín màn hình.
+
+- [x] FE `components/RecordSearchModal.vue`: giới hạn `.table-wrapper` trong popup `max-height: 50vh`, cuộn trong bảng (tiêu đề bảng dính sẵn). Áp dụng cho cả 3 popup dùng chung component (bảo hành / hàng thiếu / nhân viên)
+- [ ] User mở trình duyệt kiểm tra (Ctrl+Shift+R)

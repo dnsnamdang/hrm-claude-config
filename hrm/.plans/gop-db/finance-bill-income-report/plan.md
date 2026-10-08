@@ -283,3 +283,15 @@ testcase .xlsx) + 3 generator commit kèm.
 Bước tiếp theo: user đọc lại 3 file, đặc biệt 2 nhánh chưa có dữ liệu thật (Thu nhà cung cấp,
 phiếu yêu cầu xuất hàng) xem mô tả đã khớp nghiệp vụ chưa.
 Blocked:
+
+## Bổ sung 2026-10-07 — Lối vào từ phân hệ Thông báo (@khoipv)
+
+- [x] `components/subsystem-menu/lookup.js` — gắn link `/finance/bill-income-reports/summarize-money`
+      cho 2 mục đang xám: "Tổng hợp tiền về" (nhóm Tra cứu - thông báo) và "Tổng hợp tiền về ngân hàng"
+      (nhóm Thông báo — đúng vị trí menu ERP `topmenubar.blade.php:855`). Mục ở Tài chính giữ nguyên.
+- [x] `summarize-money.vue::goToAdjustDept()` — truyền `back_url` (= `$route.fullPath`) sang màn Tạo phiếu
+      điều chỉnh công nợ để nút Quay lại về đúng màn Tổng hợp tiền về (trước đó rơi về danh sách phiếu điều chỉnh).
+- [x] `BillAdjustDeptRequestForm.vue::submit()` — lưu xong về `backUrl` (cùng đích nút Quay lại) thay vì cứng
+      danh sách phiếu điều chỉnh: đến từ Tổng hợp tiền về / Chi tiết phiếu báo có thì về màn đó. "Lưu và tiếp tục" giữ nguyên.
+- [x] Màn Tổng hợp tiền về: đổi nhãn "Người lập" → "Người tạo" (ô lọc + cột bảng ở `summarize-money.vue`,
+      cột xuất Excel ở `BillIncomeReportSummarizeService::COLUMNS`) — user chốt 2026-10-07, thay quyết định 2026-08-28.

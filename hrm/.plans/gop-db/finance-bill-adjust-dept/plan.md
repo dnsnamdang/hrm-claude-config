@@ -1097,6 +1097,22 @@ Phiếu TPE.PKT1026.00006 (KHÔNG có ở DB local → user test trên server kh
 - [x] FE `BillAdjustDeptForm.vue`: ô khoá `V2BaseInput disabled` (rỗng) làm KHUNG, chữ là `nuxt-link.v2-cell-link` đè lên → dùng ĐÚNG class của danh sách, không tự khai màu/gạch chân; bỏ style `.source-link` cũ
 - [x] Compile template — CHƯA mở trình duyệt, có lưu nháp trước không; xem log server đó có dòng `[BillAdjustDeptHistory] Lỗi ghi lịch sử thay đổi thông tin` không (lỗi ghi lịch sử bị nuốt bởi `guard()`, API vẫn 200)
 
+## Fix — Xuất Excel danh sách: logo hỏng khi letterhead là JPEG (2026-10-06) @khoipv
+File `Danh-sach-phieu-ke-toan-2026-10-06 (1).xlsx`: dòng 1 `ht="-44290"`. Ảnh letterhead công ty là JPEG, `pngAspectRatio()` (hàm DÙNG CHUNG `utils/export/listExportFile.js`) đọc byte 16-23 như PNG → rác → tỉ lệ âm; `addImage` cũng ghi cứng `extension: 'png'`. User đồng ý sửa hàm chung.
+- [x] FE `listExportFile.js`: `pngAspectRatio()` → `letterheadImageInfo()` — nhận dạng loại ảnh theo chữ ký file, đọc kích thước PNG (IHDR) + JPEG (nhảy từng khối tới SOF), chỉ nhận tỉ lệ trong [1, 40], ngoài ra dùng `DEFAULT_LETTERHEAD_RATIO`; không phải PNG/JPEG thì bỏ ảnh (không chừa dòng 1 trống)
+- [x] FE `listExportFile.js`: `extension` của `addImage` theo loại ảnh thật (png/jpeg)
+- [x] Verify Node + ExcelJS: ảnh JPEG trong file lỗi → tỉ lệ 11.22 (2648×236); PNG → 3.34; base64 rác → null. File dựng lại: `xl/media/image1.jpeg` + content-type `image/jpeg`, dòng 1 `ht="131"`, neo A1→M1 (col 13, row 1); openpyxl mở được; babel parse OK — CHƯA mở trình duyệt / Excel thật
+
+## Fix — Lịch sử: tiền Nợ/Có nhập 0 đang ghi là trống (2026-10-06) @khoipv
+`BillAdjustDeptHistoryService::moneyText()` cố ý đổi 0 → null (tránh "Có: 0" ở dòng Nợ) → sửa 100 → 0 ra "100 → trống". User yêu cầu hiện số 0. Ô bỏ trống cũng được lưu 0 (`?? 0`) nên mọi dòng sẽ có đủ cả Nợ và Có.
+- [x] BE `moneyText()` thêm cờ `$keepZero`, chỉ bật cho cột `Nợ` / `Có` (tỷ giá, tổng tiền, cột VND quy đổi giữ nguyên); trả thẳng `'0'` tránh `number_format(-0.0)` = "-0" của PHP 7.4
+- [x] Verify script (transaction + rollback) phiếu #12872 dòng 34100: Nợ 100,000 → 0 + Có 0 → 123,456 ghi đúng "Nợ: 100,000 → 0", "Có: 0 → 123,456" — CHƯA mở trình duyệt
+
+## Fix — Màn Xem: bảng dòng định khoản bỏ dấu "—" ở ô trống (2026-10-06) @khoipv
+Ảnh user (TPE.PKT1026.00011): Mã phí / Mã vụ việc / Ngân hàng hiện "—" khi trống, trong khi Mã khế ước để trống → bỏ gạch, để ô trống.
+- [x] FE `AccountingDetailTable.vue`: bỏ fallback `|| '—'` ở cả 12 ô của bảng (Số TK, Tên TK, Mã/Tên đối tượng, Diễn giải, Hợp đồng, Phiếu YCXH, Người tạo HĐ, Mã phí, Mã vụ việc, Ngân hàng, STK) — popup chọn (ContractPicker/ObjectSearch/ExportRequest) giữ nguyên
+- [x] Compile template — CHƯA mở trình duyệt
+
 ### Checkpoint — 2026-10-03
 Vừa hoàn thành: màu nút Lưu nháp; bỏ trạng thái Hủy thừa; trước đó: bug mặc định STK 1311 khi chọn phiếu YCĐC (BE) + tách cột Số TK / Tên TK (FE) + 3 cột cuối sửa được + Lịch sử thay đổi 2 nơi.
 Đang làm dở: không.

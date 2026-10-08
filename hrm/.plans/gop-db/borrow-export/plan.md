@@ -179,3 +179,50 @@ Blocked:
       → đánh dấu bẩn ngay (`unsavedUserChanged = true`, bảng hàng về sau API > 500ms nên mixin không tự nhận)
 - [x] FE `BorrowExportForm.vue`: bỏ `min-vh-100` ở khung gốc — form ngắn thì dư khoảng trống dưới bảng Chi tiết (100vh + header + đệm footer); sửa luôn màn Chi tiết `_id/index.vue`
 - [x] FE `BorrowExportForm.vue`: ô Xuất điền sẵn `request_qty` (SL đề nghị trên phiếu YC) thay vì 0 — đúng ERP (class JS nhận `qty` của dòng chi tiết)
+
+## Phase 6 — Khoảng trống dưới bảng Chi tiết (2026-10-06)
+
+User báo màn Chi tiết `/finance/borrow-exports/322` có khoảng trống lớn dưới dòng Tổng cộng. Nguyên nhân: `body-class="table-auto-height"` không có rule trong màn này (rule chỉ nằm ở `CustomerForm.vue`, có khi component kia đã nạp) → `min-height: 50vh` global của `.table-responsive` còn hiệu lực.
+
+- [x] FE `_id/index.vue` + `components/BorrowExportForm.vue`: thêm `::v-deep .table-responsive.table-auto-height { min-height: 0 !important; }` (khuôn `borrow-export-requests/_id/index.vue`)
+- [ ] User mở trình duyệt kiểm tra (Ctrl+Shift+R)
+
+## Phase 7 — Đồng bộ lề màn Lập / Chi tiết (2026-10-07)
+
+User báo màn Lập phiếu xuất hàng mượn dư lề trên + lề trái so với các màn phiếu khác. Nguyên nhân: khung gốc `v2-styles pt-2` + `container-fluid` (cộng thêm đệm 15px vào đệm sẵn của layout) — các màn phiếu Finance khác (BillPaymentForm, BorrowSellForm, ProductExportRequestForm…) dùng `v2-styles` + `container-fluid px-0`.
+
+- [x] FE `components/BorrowExportForm.vue` + `_id/index.vue`: bỏ `pt-2`, `container-fluid` → `container-fluid px-0`
+- [ ] User mở trình duyệt kiểm tra (Ctrl+Shift+R)
+
+## Phase 8 — Ô Xuất phải > 0 (2026-10-07)
+
+User chốt: mọi ô Xuất trong bảng Chi tiết phải lớn hơn 0 (bỏ luật ERP `has_change` "ô = 0 vẫn hợp lệ, chỉ cần ≥ 1 ô > 0").
+
+- [x] FE `components/BorrowExportForm.vue`: `detailError` báo "Phải lớn hơn 0" tại từng ô Xuất ≤ 0 (sau lần bấm Lưu đầu)
+- [x] BE `BorrowExportStoreRequest`: `products.*.details.*.qty` `min:0` → `gt:0`, message "Phải lớn hơn 0"
+- [ ] User mở trình duyệt kiểm tra
+
+## Phase 9 — Phân trang popup "Chọn phiếu yêu cầu xuất hàng mượn" (2026-10-07)
+
+User yêu cầu phần phân trang popup chọn phiếu YC sửa giống popup "Chọn phiếu xác nhận bảo hành" màn
+`finance/addition-accounting-requests/create` (`addition-accounting-requests/components/RecordSearchModal.vue`).
+
+- [x] FE `components/BorrowExportRequestPickerModal.vue`: bỏ bảng tự dựng + `V2BasePagination` → `V2BaseDataTable`
+      (`hide-header`, dòng "Hiển thị x–y / n", số dòng/trang 20/50/100, mặc định 20), bấm dòng là chọn (`onTableClick`),
+      chặn `page-change` dội lại khi đang tải (`loadingPage`). BE giữ nguyên (trần per_page 100, không sort)
+- [ ] User mở trình duyệt kiểm tra (Ctrl+Shift+R)
+
+## Phase 10 — Đổi nhãn cột màn danh sách (2026-10-07)
+
+User chốt: màn danh sách đổi "Người lập" → "Người tạo", "Ngày lập" → "Ngày tạo" (bỏ quyết định giữ nhãn ERP trước đó).
+
+- [x] FE `index.vue`: tiêu đề 2 cột `creator_name` / `createdAt`
+- [x] FE `components/export-excel.js`: header 2 cột tương ứng của file Excel danh sách (khối chữ ký "Người lập" cuối file giữ nguyên)
+- [ ] User mở trình duyệt kiểm tra (Ctrl+Shift+R)
+
+## Phase 11 — Ô lọc Trạng thái chỉ còn "Đã duyệt" (2026-10-07)
+
+User hỏi phiếu có trạng thái Đang tạo / Chờ duyệt / Không duyệt không (thấy ở bộ lọc). Kiểm: `store()` luôn ghi `status = 1` (Đã duyệt), không luồng đổi trạng thái; DB 282/282 phiếu `status = 1`. User chọn: giữ ô lọc, chỉ còn "Đã duyệt".
+
+- [x] BE `BorrowExportService::meta()`: `statuses` chỉ trả mục `DA_DUYET`; hằng `BorrowExport::STATUSES` giữ đủ 4 mục (badge `statusMeta()` dùng)
+- [ ] User mở trình duyệt kiểm tra

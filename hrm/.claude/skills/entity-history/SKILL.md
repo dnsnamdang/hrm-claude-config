@@ -403,7 +403,7 @@ từ chối, duyệt (nếu có ô ghi chú duyệt), hủy, đóng, khóa, hủ
 | Nơi | Cách vào | Component |
 | --- | --- | --- |
 | **Màn DANH SÁCH** | menu ⋮ của từng dòng → mục `Lịch sử` (icon `ri-history-line`, KHÔNG gắn permission riêng) | **`components/modal/CatalogHistoryModal.vue`** (màn danh mục) · `CustomerHistoryModal.vue` (entity lớn có log riêng) |
-| **Màn CHI TIẾT** | khối "Lịch sử" trong thân trang, mặc định thu gọn, lazy load lần mở đầu | `SystemInfoSection.vue` (`entity-type` + `entity-id`) |
+| **Màn CHI TIẾT** | khối "Lịch sử" trong thân trang, **thu gọn mặc định nhưng dựng sẵn** (`v-show`, không `v-if`) sau khi nạp chi tiết xong — để badge số mốc hiện ngay khi vào màn (#11373, user duyệt đánh đổi thêm 1 request) | `SystemInfoSection.vue` (`entity-type` + `entity-id`) |
 | **Popup XEM của màn danh mục** | khối "Lịch sử" **cuối popup**, thu gọn sẵn | `SystemInfoSection.vue` — nhúng thẳng vào modal Xem |
 
 ### Màn DANH MỤC — dùng bộ dùng chung, KHÔNG viết mới (chốt 2026-08-15)
