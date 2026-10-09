@@ -1289,3 +1289,155 @@ lặp dừng sớm → **mất dòng trong file mà không báo lỗi**. Cần �
 `per_page >= 2000`. UI không bao giờ gửi mức đó (10/20/50…) nên không ai gặp, nhưng ai gọi API
 tay thì dính. Muốn chặn hẳn thì kẹp trần `per_page` ở BE — cần chốt mức trước khi làm.
 
+## Fix popup Từ chối: đưa lý do vào popup + nút đỏ (2026-10-06, theo ảnh PYCNH-14957)
+**Yêu cầu (ảnh + 3 câu hỏi user):** (1) nút Từ chối ở màn chi tiết; (2) kiểm popup từ chối dùng
+chung đã đúng thiết kế các màn chưa; (3) ô nhập ghi chú ở màn chi tiết đó bên ERP có không.
+
+**Chẩn đoán:**
+- Nút Từ chối ở footer ĐÃ đỏ (`status="danger"`, dòng 389). Nút **"Từ chối" trong POPUP** lại
+  XANH: `BaseConfirmModal` chỉ tự suy `isDanger` khi chữ bắt đầu "xóa/xoá" → "Từ chối" ra
+  `status="info"` (xanh) vì popup KHÔNG truyền `:danger`.
+- Popup từ chối **chưa đồng bộ** giữa các màn: `warehouse-import-requests` và
+  `product-transfer-requests` thu lý do **trong popup** (`:show-input` + `:required-input` +
+  `:danger="true"`); còn `product-import-requests` dùng 1 ô "Ghi chú duyệt" **editable luôn hiện
+  trên trang** + popup confirm KHÔNG input, KHÔNG danger.
+- ERP `warehouse/product_import_requests/show.blade.php`: lý do từ chối nằm **trong modal
+  `#denyRequest`** (textarea `form.comment` required), trang chỉ có **3 khối "Ghi chú duyệt"
+  chỉ-đọc**. ERP KHÔNG có ô ghi chú editable luôn hiện trên trang.
+
+**Quyết định đã chốt (Cách B — user chọn "B"):** đưa ô lý do VÀO popup từ chối dùng chung như các
+màn khác + sát ERP hơn; trang chỉ còn khối ghi chú **chỉ-đọc** (`savedComments`). Vì ô `comment`
+đang dùng chung cho cả 3 cấp Duyệt (BKS/BGĐ gửi `control_board_manager_comment` /
+`board_of_manager_comment`) lẫn Từ chối nên phải rẽ input theo `pendingAction`.
+
+- [x] **FE-1** `_id/index.vue` — GỠ khối 3 "GHI CHÚ DUYỆT" editable (ô `V2BaseTextarea v-model="comment"`
+      + `V2BaseError`, ~dòng 242-267). Giữ nguyên vòng `savedComments` chỉ-đọc ngay dưới.
+- [x] **FE-2** `BaseConfirmModal#confirm-action-pir` — thêm `v-model="comment"`,
+      `:danger="pendingAction === 'reject'"`,
+      `:accept-icon="pendingAction === 'reject' ? 'ri-close-circle-line' : ''"`,
+      `:show-input="confirmShowInput"`, `:input-label="confirmInputLabel"`,
+      `:required-input="pendingAction === 'reject'"`, `input-type="textarea"`,
+      `input-required-message="Vui lòng nhập lý do từ chối"`.
+- [x] **FE-3** Thêm computed `confirmShowInput` (true cho reject + bks-approve/bks-switch/bgd-approve;
+      FALSE cho tp-approve vì endpoint chỉ gửi `{status:2}`) và `confirmInputLabel`
+      (reject → "Lý do từ chối"; còn lại → "Ghi chú duyệt"). Gỡ computed `showCommentError`.
+- [x] **FE-4** `askReject()` — bỏ validate `comment` up-front (popup tự bắt buộc qua `:required-input`);
+      chỉ `this.comment = ''` + `pendingAction='reject'` + mở popup. `askAction()` — thêm
+      `this.comment = ''` trước khi mở (tránh lý do từ chối cũ dính sang thao tác Duyệt).
+      Giữ nguyên `validateApprovedPrices()` cho BKS/BGĐ.
+- [x] **FE-5** `runAction()` giữ đọc `this.comment` (v-model đã đồng bộ); 422 comment-error chỉ còn
+      toast (popup đã đóng). Dọn tham chiếu `touched`/`commentError` chết do gỡ ô inline.
+- [x] **Verify** Playwright `http://127.0.0.1:3000` — đường từ chối VERIFY LIVE (PYCNH-14459, chờ duyệt);
+      đường ghi chú Duyệt verify bằng ĐỌC CODE (xem checkpoint). Line ending LF (0 CR).
+
+### Checkpoint — 2026-10-06 (Fix popup Từ chối)
+Vừa hoàn thành: **toàn bộ FE-1..FE-5 + verify — XONG.**
+
+**Verify LIVE trên trình duyệt (Playwright MCP, PYCNH-14459 "Chờ duyệt", tài khoản DNS Admin):**
+đường **Từ chối** đã chạy đúng toàn bộ:
+- Nút "Từ chối" trong popup **ĐỎ** (`status="danger"`) + icon `ri-close-circle-line`; nút "Từ chối"
+  ở footer cũng đỏ.
+- Popup có textarea **"Lý do từ chối *"** bắt buộc.
+- Bấm Từ chối khi lý do RỖNG → chặn submit, hiện viền đỏ + "Vui lòng nhập lý do từ chối".
+- Gõ lý do → lỗi tự biến mất (validate realtime).
+- "Hủy" đóng popup, KHÔNG gửi (cố ý không submit thật để giữ nguyên bản ghi "Chờ duyệt" trên dev).
+- Console: toàn lỗi nhiễu build-time (postcss flex-end, HMR, socket.io, Vue dev-mode) — không dính
+  luồng từ chối / `confirm-action-pir`.
+
+**Đường ghi chú DUYỆT — verify bằng ĐỌC CODE** (không dựng được live): trên PYCNH-14459/14448 với
+vai trò DNS Admin, cả 3 cờ `is_can_approve_by_manager` / `is_can_control_board_approve` /
+`is_can_board_of_manager_approve` đều false (phiếu đã qua duyệt → chỉ hiện "Tạo phiếu nhập hàng" +
+"Từ chối"), nên nút Duyệt BKS/BGĐ/TP không render để bấm. Xác nhận qua code `_id/index.vue`:
+- `confirmShowInput` = `['reject','bks-approve','bks-switch','bgd-approve'].includes(pendingAction)`
+  → BKS/BGĐ có ô nhập (không bắt buộc vì `:required-input` chỉ true khi `reject`); **tp-approve KHÔNG
+  có ô nhập** (đúng: endpoint TP chỉ gửi `{status:2}`).
+- `confirmInputLabel` = `reject ? 'Lý do từ chối' : 'Ghi chú duyệt'`.
+
+Muốn verify live đường Duyệt cần đăng nhập vai trò BKS/BGĐ/TP trên phiếu đang ở đúng cấp (status
+10/11/12) — chưa thực hiện vì nằm ngoài phạm vi 3 câu hỏi của user (đều về popup Từ chối).
+
+Bước tiếp theo: (không có) — chờ user xác nhận có cần dựng kịch bản đăng nhập BKS/BGĐ/TP để verify
+live đường ghi chú Duyệt không.
+Blocked: không.
+
+---
+
+## Task bổ sung — Đối chiếu trường/cột màn Chi tiết PYCNH với ERP (loại 99 "Nhập hàng khác")
+
+**Yêu cầu user:** so sánh **thông tin chung** + **các cột bảng hàng hoá** ở màn chi tiết phiếu YC
+nhập khác (HRM) với ERP; trường/cột nào ERP có mà HRM thiếu thì **thêm cho đủ** (chỉ đủ trường/cột,
+KHÔNG cần giống style/bố cục). Giữ nguyên các cột giá/VAT HRM đang có.
+
+**Đối chiếu (nguồn ERP: `warehouse/product_import_requests/show.blade.php`):**
+- Thông tin chung — HRM thiếu 3 ô: **Nhân viên** (ng-if `form.employee_id`), **Vận chuyển**
+  (ng-if `form.has_delivery`, chọn từ `transition_types`), **Số km dự kiến** (ng-if
+  `form.has_delivery && form.transition_type == 2`). Loại 99 ∈ `DELIVERY_TYPES` nên 2 ô vận chuyển
+  áp dụng thật.
+- Bảng hàng hoá — ERP tách 4 cột **Tên hàng hóa / Model / Mã hàng hóa / Thương hiệu**; HRM đang gộp
+  thành 1 cột "Hàng hoá" (tên + dòng phụ Model/Mã/Hãng). Resource đã trả sẵn 4 field riêng
+  (`product_name`/`model_name`/`code`/`brand_name`) → tách cột là thuần FE.
+
+- [x] **BE-1** Entity `ProductImportRequest` — thêm relation `employee()` (belongsTo Employee,
+      `employee_id`), mirror `approver()`.
+- [x] **BE-2** `ProductImportRequestService::findForShow()` — eager load `employee.info`.
+- [x] **BE-3** `ProductImportRequestDetailResource` — thêm `employee_name`
+      (`optional(optional($this->employee)->info)->fullname`), `transition_type_name` (helper map
+      từ `TRANSITION_TYPES`), `has_delivery` (`in_array((int)$type, DELIVERY_TYPES, true)`).
+- [x] **FE-1** `_id/index.vue` thông tin chung — thêm 3 ô: Nhân viên (`v-if data.employee_name`),
+      Vận chuyển (`v-if data.has_delivery && data.transition_type_name`), Số km dự kiến
+      (`v-if data.has_delivery && Number(data.transition_type) === 2`).
+- [x] **FE-2** Bảng hàng hoá — tách cột "Hàng hoá" thành 4 cột (Tên hàng hóa / Model / Mã hàng hóa /
+      Thương hiệu); body đổi sang 4 `<td>` riêng (ô rỗng để trống `|| ''`). Giữ nguyên các cột
+      Đơn giá / Thành tiền / VAT% / Tiền VAT + 2 cột giá duyệt.
+- [x] **FE-3** `productColspan` 8/10 → 11/13; dòng "Tổng cộng" colspan 3→6; "Tổng sau thuế" 5→8.
+- [x] **FE-4** (user phản hồi 2026-10-06) "Hình thức nhập" đổi về đúng ERP: thay ô text chỉ-đọc
+      "Nhập thẳng (không qua kho)" (chỉ hiện khi is_import_direct=1) bằng **checkbox "Nhập thẳng"**
+      (`V2BaseCheckbox` single, `disabled`, `:value="!!data.is_import_direct"`) LUÔN hiển thị, tick
+      theo is_import_direct — mirror ERP show.blade dòng 48-54 (`<input type=checkbox id=nhap_thang
+      ng-model=form.is_import_direct disabled>`). Thêm import + registration V2BaseCheckbox.
+- [x] **Verify** Playwright `http://127.0.0.1:3000` trên phiếu loại 99 **PYCNH-14448** (PYCNH-14957
+      không có trong DB dev `erp_new`) — PASS: thông tin chung hiện **Nhân viên = Lê Quốc Bảo** +
+      **Vận chuyển = Tự vận chuyển**; bảng hàng hoá tách đúng 4 cột Tên hàng hóa / Model / Mã hàng hóa
+      / Thương hiệu (dòng: "Sắt đặt trơn phi 10…" | VT-SD0102 | SG-VT-SD0102 | KOURITSU); 2 dòng tổng
+      canh đúng cột. Số km dự kiến ẨN đúng vì phiếu này `transition_type = 1` (khớp ng-if ERP ==2);
+      line ending 4 file LF (0 CR).
+
+### Checkpoint — 2026-10-06 (Đối chiếu trường/cột PYCNH loại 99 với ERP)
+Vừa hoàn thành: BE-1..BE-3 + FE-1..FE-3 + Verify live (PYCNH-14448) — tất cả PASS.
+Đang làm dở: không.
+Bước tiếp theo: xong task. Chưa commit (chưa có yêu cầu).
+Blocked: không.
+
+## Đợt 7 — Fix: phiếu NHÁP lưu thiếu nguồn bị kẹt không sửa được (Hướng A)
+
+**Bug (user, phiếu 12255 loại 2):** Lưu nháp khi MỚI chỉ chọn "Loại yêu cầu" (chưa chọn
+"Phiếu báo hàng về"). Mở lại màn Sửa thì ô chứng từ nguồn bị khoá chỉ bằng `isEdit` → không chọn
+được nguồn → loại 2 chỉ lấy hàng từ nguồn, không thêm tay được → bảng hàng hoá rỗng → bấm "Lưu và
+gửi duyệt" (status=2) BE trả 422 (source_id/products/warehouse_id bắt buộc) → phiếu kẹt vĩnh viễn.
+
+**Root cause:** `ProductImportRequestForm.vue` khoá ô nguồn chỉ dựa vào `isEdit`, không phân biệt
+phiếu nháp ĐÃ có nguồn hay chưa. BE đúng (draft chỉ cần `type`, submit mới bắt nguồn/hàng/kho).
+
+**Hướng A (user chốt):** cho lưu nháp tối thiểu nhưng mở lại vẫn SỬA được — mở khoá ô nguồn cho
+phiếu nháp chưa có nguồn đã lưu. Giữ "Loại yêu cầu" khoá khi sửa; nút "Lưu và gửi duyệt" không disable.
+
+- [x] **FE-1** Thêm data flag `hasPersistedSource:false`; set trong `loadDetail()` =
+      `!!this.form.product_export_request_id` (chốt theo trạng thái LÚC LOAD, không theo giá trị sống).
+- [x] **FE-2** Thêm computed `isSourceLocked = isEdit && hasPersistedSource`.
+- [x] **FE-3** Thay `isEdit` → `isSourceLocked` tại 5 điểm của ô nguồn: tooltip khoá (template),
+      class `source-select--disabled`, nút × xoá nguồn, guard `openExportRequestModal()`,
+      guard `clearExportRequest()`. GIỮ `isEdit` cho: "Loại yêu cầu" khoá + tooltip, watch `form.type`,
+      `submit_and_continue`, `_method=PUT`.
+- [x] **Verify** Playwright `http://127.0.0.1:3000`. Phiếu bug thật 12255 là PROD, DB dev `erp_new`
+      404 → tạo phiếu nháp thiếu nguồn **PYCNH-12233** (type 2, status 3, source_id=null) qua API
+      để tái hiện. Kết quả trên màn Sửa 12233: `isSourceLocked=false`, ô "Phiếu báo hàng về" MẤT class
+      `source-select--disabled` (bấm được), gọi `openExportRequestModal()` → popup "Chọn phiếu yêu cầu
+      xuất hàng" MỞ. "Loại yêu cầu" vẫn `[disabled]` ("Nhập hàng mua ngoài"). PASS.
+      (Phiếu test 12233 còn trong DB dev — không có route xoá, để lại, vô hại.)
+
+### Checkpoint — 2026-10-09 (Fix phiếu nháp thiếu nguồn bị kẹt — Hướng A)
+Vừa hoàn thành: FE-1..FE-3 trong `ProductImportRequestForm.vue` + Verify Playwright PASS (phiếu nháp
+tái hiện PYCNH-12233): ô nguồn mở lại được cho phiếu nháp thiếu nguồn, popup chọn nguồn mở.
+Đang làm dở: không.
+Bước tiếp theo: xong task. Chưa commit (chưa có yêu cầu).
+Blocked: không.
