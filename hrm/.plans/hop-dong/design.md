@@ -19,3 +19,11 @@ Chuyển nghiệp vụ hợp đồng từ ERP sang HRM. Gộp 3 loại hợp đ�
 
 ## Khuôn tham chiếu
 Clone từ module Báo giá HRM (`Modules/Assign`, `pages/assign/quotations`). Tham khảo `SettlementContract` cho pattern cha-con + duyệt.
+
+## HTHT (Hỗ trợ hạch toán) — bổ sung 2026-08-13
+Spec đầy đủ: `docs/superpowers/specs/2026-08-13-hop-dong-htht-design.md`.
+- HTHT = bảng phân tích giá + phân bổ thưởng/hoa hồng phòng–NV. **Không** sinh `account_details` (bút toán GL là downstream, ngoài scope).
+- Tái dùng **cụm bảng ERP** `firm_support_accounting (+ 3 con)` polymorphic (`contractable_type = ...Contract`), tái dùng cấu hình `regulations` + `CompanyRuleCommission` + `Config.tndn`.
+- Có **màn HTHT** riêng: preview khi chưa duyệt (không action); Duyệt trên màn HTHT = HĐ Có hiệu lực (đã gộp 1 bước, bỏ "Xác nhận hiệu lực").
+- Field thiếu (`sale_max_percent`/`standard_price`/`net_price`/`cost_price`): **thêm cột + snapshot lúc tạo HĐ** tra product master qua `erp_product_id`/`bom_list_product_id` (A1, giống ERP). `market_costs` nhập tay (0).
+- Phase A (phòng thực hiện) ✅ xong. Còn B (bóc tách giá), C (phân bổ phòng/quy chế), D (màn + luồng duyệt), E (verify E2E).

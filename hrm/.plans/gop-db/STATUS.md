@@ -1126,6 +1126,79 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   (`products.model_id` gần 39.000 dòng); đủ Xuất Excel + Import 5 màn; 10 quyền mới id 1590–1599.
   Có sửa 1 file dùng chung (user duyệt): thêm hook `duplicateNameScopeColumns()` vào
   `ImportsCatalogRows` để giữ luật trùng tên theo cấp cha của ERP.
+- product-import-form-rework → @namdangit → .plans/gop-db/product-import-form-rework/plan.md
+  Trạng thái: 🟢 **Cụm 1 ĐÃ NGHIỆM THU — CỤM 2 (2,15,99) + CỤM 3 (11,3,9,14) ĐÃ VERIFY XONG, chờ user nghiệm thu (08/10/2026)**.
+  → TOÀN BỘ 8 loại tạo tay (2,3,4,9,11,14,15,99) đã code + verify. Cụm 3 (08/10): BE loại 11 money
+  Option A dựng server-side từ `order_import_request_products` (dry-run PIR 12193/12228 total/pickup/ledger
+  khớp); 9 ledger CÂN; 3/14 Other no-op. **Fix 1 lỗi thật qua Playwright**: loại 14 (Nhập gửi) có cột
+  "Hạn gửi" trong config nhưng thiếu `<th>`/`<td>` (colspan lệch) + cờ bị gate nhầm theo giá vốn →
+  thêm `V2BaseDatePicker` + un-gate (ngày hẹn giữ, ERP chỉ gate `type==14`) + wire `expire_prepick_date`
+  (FE row/edit/payload; BE 2 request `nullable|date|after:today` + Resource prefill Y-m-d). Playwright
+  PYCNH-12226 xác nhận cột render đúng, không runtime error. CHƯA commit/push (chờ user yêu cầu).
+  User đã trao TOÀN QUYỀN tự làm + tự verify (không gate duyệt từng cụm). Cụm 1 gồm khung động +
+  loại 4 + 3 phát hiện lệch cấu trúc (tab Phân bổ chi phí · 3 cột NCC/Ghi chú/File · GỠ dòng gợi ý
+  hạch toán) đều đã verify live PNH-12343 và được user nghiệm thu. CHƯA commit/push (chờ user yêu cầu).
+  Đã hoàn tất Cụm 1:
+  `importTypeConfig.js` (8 loại, chỉ 4 `supported:true`) + `ProductImportForm.vue` reworked (tab/cột/
+  tiêu đề/gợi ý hạch toán ĐỘNG theo loại; nút đổi phiếu nguồn create-only; V2Footer+V2Base; số quốc tế;
+  Duyệt+confirm popup; redirect danh sách). 2 fix session này: (1) supplier_price edit-mapping (màn Sửa
+  khớp màn Tạo), (2) migration `companies.consignment_warehouse_ids` (endpoint accounting-warehouses
+  hết 500). Dọn em-dash ô rỗng ở form + 2 modal. Verify 6 bước §7 PASS trên 127.0.0.1:3000. CHƯA commit/push.
+  Rà soát & sửa form Tạo/Sửa **Phiếu nhập hàng** (`pages/finance/product-imports/`) đã port ERP→HRM.
+  Yêu cầu user: ô chọn PNK **đổi được**; trường/tab/cột/dòng hạch toán **động theo loại nhập hàng**;
+  giống ERP về nghiệp vụ nhưng dựng bằng component HRM (Hướng A); danh mục kho kế toán lấy **không
+  cần quyền** (endpoint đã ungated sẵn trên gop_db — còn lỗi là do DATA). Phạm vi = **8 loại tạo tay**
+  (2,3,4,9,11,14,15,99). Chia 3 cụm, verify từng cụm:
+  **Cụm 1** khung động + loại 4 (✅ xong) · **Cụm 2** loại 2,15,99 (✅ verify xong) · **Cụm 3** loại 11,3,9,14 (chưa mở).
+  **Cụm 2 (08/10/2026):** BE đã có SẴN trọn bộ (gate `update()` 2/15/99; builder chung; `resolveAccountingService`
+  2/15→DomesticPurchase, 99→Other; VAT per-line 2/15) — session này chỉ xác minh + verify live, KHÔNG sửa code BE.
+  Verify 127.0.0.1:3000: **Loại 2** nguồn PYCNH-12183 → PNH-12345 (type 2, status 3 nháp, is_import_direct=1,
+  company 1, warehouse_id=NULL): POST 200, 1 dòng chi tiết + 1 dòng `product_import_detail_accountings` (kho 29
+  "Hà Nội - Nhập xuất thẳng", qty 2), **0 dòng journal** (nháp); mở lại /edit reload đúng (loại/kho/SL 2 (2/2)).
+  **Loại 15** "Nhập hàng mua trong nước (TỰ DO + HÃNG)": draft PNH-12344 (status 3) 0 journal; PI 12294 (đã duyệt)
+  7 dòng journal. **Loại 99** "Nhập hàng khác": render biến thể C đủ cột (Giá bán/Thành tiền bán/Giảm giá/Đơn giá
+  sau giảm/Thành tiền sau giảm/VAT/Tiền VAT/Thành tiền sau VAT) khớp ERP `form.blade` 825-841 verbatim;
+  `OtherProductImportAccountingService::build()`=[] (no-op tạo-tay). Loại 99 render-only (mọi nguồn đường-B là cty 4).
+  Nhãn label 3 loại lấy đúng ERP, không bịa. CHƯA commit/push (chờ user yêu cầu).
+  Bước tiếp: user nghiệm thu Cụm 2 → mở Cụm 3 (loại 11,3,9,14).
+
+- ycxh-xuat-thuc-hien-hop-dong-type19 → @namdangit → .plans/gop-db/ycxh-xuat-thuc-hien-hop-dong-type19/plan.md
+  Trạng thái: 🟢 **XONG code Phase 1–4 + verify trình duyệt Phase 5 (06/10/2026). Chưa commit, chưa push.**
+  Verify end-to-end trên `erp_new`: nguồn **wr** phiếu 41534 → `WrServiceContract`; nguồn **firm** phiếu
+  41535 → `FirmContract`, code snapshot + MST đúng; picker union firm+wr KHÔNG lọc công ty; round-trip
+  sửa (wr) hiện đúng locked label + snapshot KH + dòng hàng. Chi tiết checkpoint trong plan.md.
+  Màn HRM Tạo YCXH: loại 19 "Xuất thực hiện hợp đồng" hiện trong dropdown nhưng chưa có ô chọn HĐ,
+  chưa có bảng hàng, và `store()` chặn 422 (`CREATABLE_TYPE_IDS` thiếu 19). Port tiếp từ đợt loại 14.
+  **Hướng:** nguồn chọn HĐ = UNION ERP `firm_contracts`[type 1,4,8; status 3,6,7,8,9,10; is_zt null] +
+  `wr_service_contracts`[type 1; status 3,4,6], **KHÔNG lọc công ty** (user chốt "cứ theo erp trước");
+  thay scaffold `hrm_contracts` bằng union (user chốt "đúng rồi làm theo erp"); loại 19 **nhập tay
+  dòng hàng**, HĐ chỉ cho KH+địa chỉ+tham chiếu. BE: mở CREATABLE 19 + endpoint union + sửa
+  rulesForType/createManual resolve model động (FirmContract/WrServiceContract). FE: khối chọn HĐ
+  + modal union + giữ bảng nhập tay.
+
+- config-per-company → @namdangit → .plans/gop-db/config-per-company/plan.md
+  Trạng thái: 🟢 **XONG code Phase 1–3 (06/10/2026). Chưa commit, chưa push. Chờ user test thực tế.**
+  DB gộp lưu `configs` **1 dòng/công ty** nhưng nhiều hàm port từ ERP vẫn đọc global
+  (`->first()`/`->value()`/`orderBy('id')->value()`) → luôn trả dòng công ty 1; đổi cấu hình công ty
+  khác vô tác dụng (phát hiện khi điều tra `debt_calculation_date` công ty 9 — công ty 9 CHƯA khai
+  tồn đầu kỳ nên chưa hạch toán sai, nhưng bug sẽ cắn khi khai).
+  **Sửa:** thêm helper `app/Support/CompanyConfig.php` (`value`/`row`/`currentCompanyId`, null-safe
+  PHP 7.4, KHÔNG fallback dòng đầu → trả null/0); chuyển **7 điểm đọc global** (5 file) sang
+  per-company theo **công ty người đăng nhập** — `DeclareDebtPostingService`,
+  `BorrowExtendRequestService` (×2), `PrepickConfigService` (×2), `ProductPrepickRequestService`.
+  Ngoại lệ **`ContractSupportAccountingService`** (`tndn`) đọc theo **công ty của HỢP ĐỒNG**
+  (`$contract->company_id`) — kế toán cty A mở HĐ cty B phải lấy thuế cty B (user chốt).
+  `RegulationConfigService` đã per-company sẵn → không đụng. `php -l` + grep sạch (global còn lại chỉ
+  ở 5 file test MasterData). Bước tiếp: user test công ty 9 khai tồn đầu kỳ ra ngày 2026-10-01.
+
+- ycxh-xuat-ban-hang-type14 → @namdangit → .plans/gop-db/ycxh-xuat-ban-hang-type14/plan.md
+  Trạng thái: 🟡 **Đã viết design + spec, CHỜ user review spec** (05/10/2026), chưa code.
+  Màn HRM *Tạo yêu cầu xuất hàng* (Redmine "Validate khi lưu nháp"). 2 việc:
+  (1) chuẩn hoá **Lưu nháp = chỉ cần chọn "Loại yêu cầu"** cho mọi loại (nới cả 20/21);
+  (2) dựng luồng tạo thật cho **loại 14 "Xuất bán hàng"** (nguồn `firm_contracts`/HĐ hãng),
+  gửi duyệt chỉ 2 check thiết yếu (`canProductExport` + SL-còn-xuất trừ in-flight 3 nguồn +
+  quỹ cha-con); **skip 3 check phụ** (công nợ, lệch giá, support_accounting) + TODO; **không làm
+  loại 15 đợt này**. Spec: `docs/superpowers/specs/gop-db/2026-10-05-ycxh-xuat-ban-hang-type14-design.md`.
 
 - user-profile-performance → @namdangit → .plans/gop-db/user-profile-performance/plan.md
   Trạng thái: 🟡 **Mới lên plan (22/09/2026), chưa code.** Chờ user chốt phạm vi Phase 2–3.
@@ -1680,6 +1753,21 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ngữ cảnh file bàn giao khác màn hình. Không migration, không quyền mới.
 
 - khai-quy-che-cau-hinh → @namdangit → .plans/gop-db/khai-quy-che-cau-hinh/plan.md
+  **#24 Giới hạn bề rộng cột bảng "Lịch sử thay đổi" — ✅ XONG + ĐÃ COMMIT/PUSH gop_db** (03/10/2026):
+  Cột "Nội dung thay đổi" không khai width + table-layout auto + mọi ô nowrap → nở theo nội dung, đẩy bảng tràn ngang.
+  Fix CSS scoped trong `.history` (không đụng bảng hoa hồng cùng `.grid`): `table-layout: fixed` + khai width 4 cột
+  (Thời gian/Người/Phạm vi/Ghi chú), cột nội dung nhận phần dư; ô nội dung + old/new `white-space: normal` + `word-break: break-word`.
+  1 file FE `RegulationConfigScreen.vue` (+8/−4). VERIFY Playwright MCP (đo JS + 2 screenshot): hết tràn ngang cả bảng lẫn trang,
+  nội dung tự xuống dòng, cột khác giữ nguyên. **Commit + push (pull --rebase sạch, KHÔNG force):** hrm-client `1d92bd08e`.
+  **#18 Thêm field "Ngày khai báo công nợ đầu kỳ" tab Công nợ + dựng lại modal Hoa hồng theo ERP — ✅ XONG + ĐÃ COMMIT/PUSH gop_db** (26/09/2026):
+  Field `debt_calculation_date` (store=config, PER-COMPANY theo `where company_id`, type=date, required) là FIELD ĐẦU tab `congno`,
+  khớp màn ERP `Config::getConfig()` → hiển thị dưới nhãn tab "Theo công ty", KHÔNG có tag "Áp dụng toàn hệ thống" (đúng).
+  Đổi `congno` scope SCOPE_COMPANY→SCOPE_MIXED để `saveTabVersions()` chạy nhánh config-store (nếu không `normalizeValues(...,'company')` sẽ drop field config).
+  4 file: `RegulationTabRegistry.php` (field + scope), `RegulationConfigService.php` (castValue case 'date' + fix 500 lịch sử formatHistoryValue array→string),
+  `ScheduleRegulationVersionRequest.php` (rule case 'date'), `data.js` (dateField đầu congno + sửa comment). FE cũng dựng lại modal Hoa hồng theo form ERP.
+  Đã verify Playwright + MySQL round-trip trên `erp_new` local: POST versions 200, `configs.debt_calculation_date` cty1 đổi 2025-08-01→2025-08-20, persist qua hard reload.
+  **Commit + push (rebase sạch lên origin/gop_db, KHÔNG force-push):** hrm-api `c4dadb993` (3 file) · hrm-client `3b590255a` (2 file, gồm modal hoa hồng).
+  Lưu ý hạ tầng: 2 repo remote đã đổi `minhth1905/*`→`DNS-Media/*`, đã `git remote set-url` sang địa chỉ mới (fetch sạch, hết redirect).
   Trạng thái: **Slice 1 (Công nợ versioning) + Slice 2 (tổng quát hoá + 2 tab scalar chietkhau/kythuat)
   + Slice 3a (hạ tầng scope `global` → bảng `configs` singleton, chứng minh qua tab baogia ở tầng service/cron)
   ĐỀU ĐÃ CODE + test XONG. Final whole-branch review (opus) từng slice CLEAN/SẠCH, không finding chặn** (2026-09-14).
@@ -1824,8 +1912,20 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   ⚠️ Hệ quả: **role 18 KHÔNG còn tự thấy hết** — phải gán "Xem phiếu nhập hàng theo tổng công ty" qua màn
   Phân quyền (nhóm "Phiếu nhập hàng" nay đã hiện). Còn giữ 2 nhánh nghiệp vụ hợp lệ ngoài 4 quyền: kế toán
   kho cùng công ty (chi tiết) + người tạo phiếu (`created_by`).
-  Bước tiếp: user QA trên UI (lọc theo cấp tổ chức, tuỳ chỉnh cột, cột Người lập) + gán 4 quyền cho các role
-  qua màn Phân quyền.
+  **Phase 7 (Redmine #11401, 2026-09-28)**: sửa UI màn Phiếu nhập hàng — đổi nhãn "Người lập"→"Người tạo",
+  "Ngày lập"→"Ngày tạo"; thêm cột Người yêu cầu (YCNH.created_by) / Người đề nghị (ĐNNK.created_by) /
+  Người cập nhật / Ngày cập nhật (resolve BATCH bằng `DB::table` trong Service, tránh N+1); sort Mã/Loại/Đối tác;
+  badge trạng thái chuyển sang `V2BaseBadge` (BE trả `status_text`+`status_color`); relabel "Hoàn thành"→"Đã hoàn thành".
+  Áp cho cả danh sách + chi tiết.
+  **Phase 8 (Lịch sử thay đổi, skill entity-history)**: dùng chung `catalog_histories` qua trait `LogsCatalogHistory`
+  ở CẢ 2 nơi — modal ở danh sách (⋮ "Xem lịch sử" → CatalogHistoryModal) + mục nhúng ở chi tiết (SystemInfoSection).
+  BE: `ProductImportService` thêm `catalogTable/catalogColumns/catalogDisplay/detailRows/logStatusChanged` + hook
+  trong store()/update() (create + update + change_status là dòng log RIÊNG, KHÔNG nhét `status` vào catalogColumns);
+  đăng ký `product_imports` trong `CatalogHistoryService::TABLES`. `php -l` sạch.
+  **Verify (Playwright MCP, 2026-09-28)**: list + detail + history modal/section render đúng, endpoint
+  `catalog-histories/product_imports/{id}` = 200; bản ghi cũ hiện "Chưa có lịch sử thao tác nào." (đúng, log mới thêm).
+  Bước tiếp: (Phase 1-4) user QA lọc/tuỳ chỉnh cột + gán 4 quyền qua màn Phân quyền; (Phase 7-8) nếu user đồng ý
+  → tạo/sửa 1 phiếu BAN_TRA_LAI thử để xác nhận log write-path (cần OK vì ghi DB). Chưa commit/push.
 
 - de-nghi-nhap-kho → @namdangit → .plans/gop-db/de-nghi-nhap-kho/plan.md
   Trạng thái: **P1 (Backend) XONG · P2 (Frontend) XONG — chờ user QA** (2026-08-25). Port màn **Đề nghị nhập kho** (ERP

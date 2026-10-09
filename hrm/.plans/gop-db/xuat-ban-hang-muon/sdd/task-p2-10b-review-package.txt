@@ -1,0 +1,859 @@
+# T10b review package — 3 file FE (uncommitted)
+
+## 1. api.js (NEW FILE — full content)
+```js
+// hrm-client/pages/finance/borrow-sells/api.js
+// Lớp gọi API cho màn "Phiếu xuất bán hàng mượn" (PXBHM) — Phase 2.
+// Base /api/v1/ do apiGetMethod/apiPostMethod tự thêm → chỉ truyền path từ 'finance/...'.
+const BASE = 'finance/borrow-sells'
+
+// Build query string từ object params (bỏ null/undefined/'' để URL sạch)
+function qs(params = {}) {
+  const parts = []
+  Object.keys(params).forEach((key) => {
+    const val = params[key]
+    if (val === null || val === undefined || val === '') return
+    if (Array.isArray(val)) {
+      val.forEach((v) => {
+        if (v !== null && v !== undefined && v !== '') {
+          parts.push(`${encodeURIComponent(key)}[]=${encodeURIComponent(v)}`)
+        }
+      })
+    } else {
+      parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
+    }
+  })
+  return parts.length ? `?${parts.join('&')}` : ''
+}
+
+// Danh sách phiếu xuất bán (getBorrowSells) — params: filter + page + per_page.
+export const list = (dispatch, params = {}) =>
+  dispatch('apiGetMethod', `${BASE}${qs(params)}`)
+
+// Chi tiết 1 phiếu xuất bán (getBorrowSell) — kèm khối hạch toán.
+export const show = (dispatch, id) =>
+  dispatch('apiGetMethod', `${BASE}/${id}`)
+
+// Lập phiếu xuất bán (storeBorrowSell) — payload qty-only, BE tự tính tiền.
+export const store = (dispatch, payload) =>
+  dispatch('apiPostMethod', { url: BASE, payload })
+
+// Dữ liệu in phiếu (getBorrowSellPrint).
+export const printData = (dispatch, id) =>
+  dispatch('apiGetMethod', `${BASE}/${id}/print-data`)
+```
+
+## 2. _id/index.vue — diff T10b vs baseline (unstaged)
+```diff
+diff --git a/pages/finance/borrow-sell-requests/_id/index.vue b/pages/finance/borrow-sell-requests/_id/index.vue
+new file mode 100644
+index 000000000..7ba48300a
+--- /dev/null
++++ b/pages/finance/borrow-sell-requests/_id/index.vue
+@@ -0,0 +1,786 @@
++<template>
++    <div class="v2-styles min-vh-100 pt-2" style="padding-bottom: 72px">
++        <div class="container-fluid">
++            <div v-if="loading" class="text-center py-5">
++                <div class="spinner-border text-primary" role="status"></div>
++            </div>
++
++            <template v-else>
++                <!-- ================= THÔNG TIN CHUNG ================= -->
++                <div class="c-section">
++                    <div class="section-header">
++                        <i class="ri-file-text-line"></i>
++                        <span>Thông tin chung</span>
++                    </div>
++                    <div class="section-body">
++                        <dl class="kv-grid">
++                            <div class="kv"><dt>Mã phiếu</dt><dd><b>{{ data.code || '—' }}</b></dd></div>
++                            <div class="kv"><dt>Loại yêu cầu</dt><dd>{{ data.type_name || '—' }}</dd></div>
++                            <div class="kv"><dt>Số hợp đồng</dt><dd>{{ data.contract_code || '—' }}</dd></div>
++                            <div class="kv">
++                                <dt>Trạng thái</dt>
++                                <dd><span class="status-pill" :class="statusPillClass(data.status)">{{ data.status_name || '—' }}</span></dd>
++                            </div>
++                            <div class="kv"><dt>Người lập</dt><dd>{{ data.creator_name || '—' }}</dd></div>
++                            <div class="kv"><dt>Ngày lập</dt><dd>{{ data.created_at || '—' }}</dd></div>
++                            <div class="kv"><dt>Ngày duyệt</dt><dd>{{ data.approved_time || '—' }}</dd></div>
++                            <div class="kv"><dt>Cần lắp đặt</dt><dd>{{ Number(data.need_repair) === 1 ? 'Có' : 'Không' }}</dd></div>
++                            <div class="kv"><dt>Phòng ban</dt><dd>{{ data.department_name || '—' }}</dd></div>
++                        </dl>
++
++                        <!-- Phiếu xuất mượn nguồn (chips, link sang chi tiết YCXH) -->
++                        <div class="kv kv--block mt-2">
++                            <dt>Phiếu xuất mượn</dt>
++                            <dd>
++                                <ul v-if="sourceExportRequests.length" class="chip-list">
++                                    <li v-for="er in sourceExportRequests" :key="er.id" class="chip-item">
++                                        <i class="ri-file-list-2-line chip-ico"></i>
++                                        <a :href="`/finance/product-export-requests/${er.id}`" target="_blank" class="chip-name">
++                                            {{ er.code }}
++                                        </a>
++                                    </li>
++                                </ul>
++                                <span v-else class="kv-empty">Chưa chọn phiếu xuất mượn.</span>
++                            </dd>
++                        </div>
++
++                        <!-- Khách hàng -->
++                        <div class="subpanel">
++                            <div class="subpanel__title"><i class="ri-user-3-line"></i> Khách hàng</div>
++                            <dl class="kv-grid">
++                                <div class="kv"><dt>Mã khách hàng</dt><dd>{{ data.customer_code || '—' }}</dd></div>
++                                <div class="kv"><dt>Khách hàng</dt><dd>{{ data.customer_name || '—' }}</dd></div>
++                                <div class="kv"><dt>CMT/MST</dt><dd>{{ data.customer_tax_code || '—' }}</dd></div>
++                                <div class="kv"><dt>Số điện thoại</dt><dd>{{ data.customer_mobile || '—' }}</dd></div>
++                                <div class="kv kv--wide"><dt>Địa chỉ</dt><dd>{{ data.customer_address || '—' }}</dd></div>
++                                <template v-if="Number(data.customer_type) > 1">
++                                    <div class="kv"><dt>Người liên hệ</dt><dd>{{ data.customer_contact_name || '—' }}</dd></div>
++                                    <div class="kv"><dt>ĐT liên hệ</dt><dd>{{ data.customer_contact_phone || '—' }}</dd></div>
++                                </template>
++                                <div v-if="data.delivery_place" class="kv kv--wide"><dt>Nơi giao hàng</dt><dd>{{ data.delivery_place }}</dd></div>
++                            </dl>
++                        </div>
++
++                        <div class="kv kv--block mt-2"><dt>Ghi chú</dt><dd class="kv-note">{{ data.note || '—' }}</dd></div>
++
++                        <div v-if="isDenied" class="kv kv--block mt-2">
++                            <dt>Lý do từ chối</dt>
++                            <dd class="kv-note kv-note--danger">{{ data.comment || '—' }}</dd>
++                        </div>
++                    </div>
++                </div>
++
++                <!-- ================= DANH SÁCH HÀNG HOÁ ================= -->
++                <div class="c-section sec-goods">
++                    <div class="section-header">
++                        <i class="ri-file-copy-2-line"></i>
++                        <span>Chi tiết số lượng bán</span>
++                    </div>
++                    <div class="section-body">
++                        <div class="table-responsive">
++                            <table class="table table-bordered table-sm mb-0 er-table">
++                                <thead class="bg-light">
++                                    <tr>
++                                        <th rowspan="2" class="text-center" style="width: 44px">STT</th>
++                                        <th rowspan="2" style="min-width: 220px">Tên hàng hóa</th>
++                                        <th rowspan="2" style="width: 90px">ĐVT</th>
++                                        <th colspan="4" class="text-center">Số lượng</th>
++                                        <th colspan="3" class="text-center">Chi tiết</th>
++                                        <th rowspan="2" class="text-right" style="width: 100px">Giá niêm yết</th>
++                                        <th v-if="hasRebatePrice" rowspan="2" class="text-right" style="width: 90px">Chiết khấu</th>
++                                        <th rowspan="2" class="text-right" style="width: 100px">Đơn giá bán</th>
++                                        <th rowspan="2" class="text-right" style="width: 110px">Thành tiền</th>
++                                        <th rowspan="2" class="text-right" style="width: 110px">Đơn giá sau giảm</th>
++                                        <th rowspan="2" class="text-right" style="width: 120px">Thành tiền sau giảm</th>
++                                        <th rowspan="2" class="text-center" style="width: 56px">VAT%</th>
++                                        <th rowspan="2" class="text-right" style="width: 120px">Thành tiền sau VAT</th>
++                                    </tr>
++                                    <tr>
++                                        <th class="text-center" style="width: 80px">Hợp đồng</th>
++                                        <th class="text-center" style="width: 80px">Đã xuất kho</th>
++                                        <th class="text-center" style="width: 90px">Bán hàng mượn</th>
++                                        <th class="text-center" style="width: 80px">Được duyệt</th>
++                                        <th class="text-center" style="min-width: 120px">Phiếu mượn</th>
++                                        <th class="text-center" style="min-width: 70px">Bán</th>
++                                        <th class="text-center" style="min-width: 80px">Được duyệt</th>
++                                    </tr>
++                                </thead>
++                                <tbody>
++                                    <template v-for="(row, idx) in products">
++                                        <!-- Dòng SP-của-HĐ (cell chính rowspan theo số dòng chi tiết) -->
++                                        <tr :key="`p-${row.id}`">
++                                            <td :rowspan="rowspanOf(row)" class="text-center align-middle">{{ idx + 1 }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="align-middle">
++                                                <div>{{ row.product_name || '—' }}</div>
++                                                <div class="cell-sub"><b>Model:</b> {{ row.model_name || '—' }}</div>
++                                                <div class="cell-sub"><b>Mã:</b> {{ row.code || '—' }}</div>
++                                                <div class="cell-sub"><b>Thương hiệu:</b> {{ row.brand_name || '—' }}</div>
++                                            </td>
++                                            <td :rowspan="rowspanOf(row)" class="text-center align-middle">
++                                                {{ row.unit_name || '—' }}<template v-if="Number(row.unit_coefficient) !== 1"> (x{{ row.unit_coefficient }})</template>
++                                            </td>
++                                            <td :rowspan="rowspanOf(row)" class="text-center align-middle">{{ formatNum(row.contract_qty) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-center align-middle">{{ formatNum(row.exported_qty) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-center align-middle">{{ formatNum(row.qty) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-center align-middle">{{ formatNum(row.approved_qty) }}</td>
++
++                                            <!-- Cụm Chi tiết: nếu có phiếu mượn -> render dòng đầu tại đây, còn lại ở các <tr> sau -->
++                                            <template v-if="row.details && row.details.length">
++                                                <td class="text-center align-middle">
++                                                    <a
++                                                        v-if="row.details[0].product_export_request_id"
++                                                        :href="`/finance/product-export-requests/${row.details[0].product_export_request_id}`"
++                                                        target="_blank"
++                                                    >{{ row.details[0].product_export_request_code || row.details[0].product_export_request_id }}</a>
++                                                    <template v-else>—</template>
++                                                </td>
++                                                <td class="text-center align-middle">{{ formatNum(row.details[0].qty) }}</td>
++                                                <td class="text-center align-middle">{{ formatNum(row.details[0].approved_qty) }}</td>
++                                            </template>
++                                            <td v-else colspan="3" class="text-center align-middle text-soft">Chưa có phiếu mượn</td>
++
++                                            <td :rowspan="rowspanOf(row)" class="text-right align-middle">{{ formatMoney(displayPrice(row)) }}</td>
++                                            <td v-if="hasRebatePrice" :rowspan="rowspanOf(row)" class="text-right align-middle">{{ formatMoney(row.rebate_price) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-right align-middle">{{ formatMoney(priceAfterExtra(row)) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-right align-middle">{{ formatMoney(totalAfterExtra(row)) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-right align-middle">{{ formatMoney(row.allocated_price) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-right align-middle">{{ formatMoney(totalAllocated(row)) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-center align-middle">{{ formatNum(row.vat_percent) }}</td>
++                                            <td :rowspan="rowspanOf(row)" class="text-right align-middle">{{ formatMoney(totalAllocatedAfterVat(row)) }}</td>
++                                        </tr>
++                                        <!-- Các dòng chi tiết còn lại (từ dòng thứ 2) -->
++                                        <tr v-for="d in row.details.slice(1)" :key="`d-${d.id}`">
++                                            <td class="text-center align-middle">
++                                                <a
++                                                    v-if="d.product_export_request_id"
++                                                    :href="`/finance/product-export-requests/${d.product_export_request_id}`"
++                                                    target="_blank"
++                                                >{{ d.product_export_request_code || d.product_export_request_id }}</a>
++                                                <template v-else>—</template>
++                                            </td>
++                                            <td class="text-center align-middle">{{ formatNum(d.qty) }}</td>
++                                            <td class="text-center align-middle">{{ formatNum(d.approved_qty) }}</td>
++                                        </tr>
++                                    </template>
++                                    <tr v-if="!products.length">
++                                        <td :colspan="totalColumns" class="text-center text-soft" style="padding: 14px">Không có dòng hàng</td>
++                                    </tr>
++                                </tbody>
++                            </table>
++                        </div>
++
++                        <!-- Box tổng -->
++                        <div v-if="products.length" class="pay-box">
++                            <div class="pay-box__rows">
++                                <div class="pay-row"><span>Tổng tiền bán</span><b>{{ formatMoney(sumAmountAfterExtra) }}</b></div>
++                                <div class="pay-row"><span>Tổng giảm giá</span><b>{{ formatMoney(saleInvoice) }}</b></div>
++                                <div class="pay-row"><span>Tổng tiền trước thuế</span><b>{{ formatMoney(sumAmountAllocated) }}</b></div>
++                                <div class="pay-row"><span>Tiền VAT</span><b>{{ formatMoney(sumAmountAllocatedVat) }}</b></div>
++                                <div v-if="formRebatePrice > 0" class="pay-row"><span>Chiết khấu</span><b>{{ formatMoney(formRebatePrice) }}</b></div>
++                                <div class="pay-row pay-row--total"><span>Tổng tiền sau thuế</span><b>{{ formatMoney(sumAmountAllocatedAfterVat) }}</b></div>
++                            </div>
++                        </div>
++                    </div>
++                </div>
++
++                <!-- ================= THANH HÀNH ĐỘNG CỐ ĐỊNH ================= -->
++                <div class="export-actionbar">
++                    <div class="export-actionbar__hint"></div>
++                    <div class="export-actionbar__btns">
++                        <V2BaseButton light size="sm" @click="goBack">
++                            <template #prefix><i class="ri-arrow-left-line mr-1"></i></template>
++                            Quay lại
++                        </V2BaseButton>
++                        <V2BaseButton v-if="data.is_can_view" light size="sm" @click="openHistory">
++                            <template #prefix><i class="ri-history-line" style="font-size: 15px"></i></template>
++                            Lịch sử
++                        </V2BaseButton>
++                        <V2BaseButton v-if="data.is_can_view" light size="sm" @click="printRequest">
++                            <template #prefix><i class="ri-printer-line" style="font-size: 15px"></i></template>
++                            In
++                        </V2BaseButton>
++                        <V2BaseButton v-if="data.is_can_create_borrow_sell" primary size="sm" @click="goCreateSell">
++                            <template #prefix><i class="ri-shopping-cart-2-line" style="font-size: 15px"></i></template>
++                            Lập phiếu bán
++                        </V2BaseButton>
++                        <V2BaseButton v-if="data.is_can_deny" primary status="danger" size="sm" @click="askDeny">
++                            <template #prefix><i class="ri-close-circle-line" style="font-size: 15px"></i></template>
++                            Từ chối
++                        </V2BaseButton>
++                        <V2BaseButton v-if="data.is_can_manager_approve" primary size="sm" @click="askAction('manager_approve')">
++                            <template #prefix><i class="ri-check-line" style="font-size: 15px"></i></template>
++                            TP duyệt
++                        </V2BaseButton>
++                        <V2BaseButton v-if="data.is_can_manager_approve" secondary size="sm" @click="askAction('switch_board')">
++                            <template #prefix><i class="ri-share-forward-line" style="font-size: 15px"></i></template>
++                            Chuyển BGD
++                        </V2BaseButton>
++                        <V2BaseButton v-if="data.is_can_board_approve" primary size="sm" @click="askAction('board_approve')">
++                            <template #prefix><i class="ri-check-double-line" style="font-size: 15px"></i></template>
++                            BGD duyệt
++                        </V2BaseButton>
++                    </div>
++                </div>
++            </template>
++        </div>
++
++        <!-- Từ chối: modal xác nhận dùng chung, textarea comment bắt buộc -->
++        <BaseConfirmModal
++            id="deny-borrow-sell-request-detail"
++            title="Từ chối yêu cầu xuất bán hàng mượn"
++            :message="denyMessage"
++            :show-input="true"
++            input-label="Lý do từ chối"
++            input-placeholder="Nhập lý do từ chối..."
++            input-type="textarea"
++            text-close="Hủy"
++            text-accept="Xác nhận từ chối"
++            :danger="true"
++            @event="handleDenyConfirm"
++        />
++
++        <!-- Duyệt/Chuyển BGD: modal xác nhận không cần nhập liệu -->
++        <BaseConfirmModal
++            id="confirm-approve-borrow-sell-request-detail"
++            :title="confirmTitle"
++            :message="confirmMessage"
++            text-close="Hủy"
++            :text-accept="confirmAccept"
++            @event="runAction"
++        />
++
++        <BorrowSellRequestHistoryModal
++            v-if="showHistoryModal"
++            :id="requestId"
++            :code="data.code"
++            @close="showHistoryModal = false"
++        />
++    </div>
++</template>
++
++<script>
++import V2BaseButton from '@/components/V2BaseButton.vue'
++import BaseConfirmModal from '@/components/modal/base-confirm-modal.vue'
++import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
++import { buildStatusTitle } from '@/utils/page-title-status'
++import BorrowSellRequestHistoryModal from '../components/BorrowSellRequestHistoryModal.vue'
++import { show, deny, managerApprove, switchBoardOfManager, boardOfManagerApprove } from '../api'
++
++export default {
++    layout: 'default-sidebar',
++    mixins: [PageTitleMixin],
++    components: {
++        V2BaseButton,
++        BaseConfirmModal,
++        BorrowSellRequestHistoryModal,
++    },
++    head() {
++        return { title: this.pageTitle }
++    },
++    data() {
++        return {
++            loading: false,
++            data: {},
++            pendingAction: '',
++            submitting: false,
++            showHistoryModal: false,
++        }
++    },
++    computed: {
++        pageTitle() {
++            const title = this.data.code
++                ? `Chi tiết phiếu yêu cầu xuất bán hàng mượn: ${this.data.code}`
++                : 'Chi tiết phiếu yêu cầu xuất bán hàng mượn'
++            const colorByStatus = { 1: '#22c55e', 4: '#ef4444' }
++            const statusColor = colorByStatus[Number(this.data.status)] || '#94a3b8'
++            return buildStatusTitle(title, this.data.status_name, statusColor)
++        },
++        requestId() {
++            return this.$route.params.id
++        },
++        products() {
++            return this.data.products || []
++        },
++        sourceExportRequests() {
++            return this.data.source_export_requests || []
++        },
++        // Cột "Chiết khấu" chỉ có ở HĐ dịch vụ (WrService) — khớp ERP `has_rebate_price`.
++        hasRebatePrice() {
++            return !!this.data.has_rebate_price
++        },
++        // Tổng số cột của bảng (dùng cho colspan dòng "Không có dòng hàng").
++        totalColumns() {
++            // STT + Tên + ĐVT + 4 (SL) + 3 (Chi tiết) + Giá niêm yết + Đơn giá bán + Thành tiền
++            // + Đơn giá sau giảm + Thành tiền sau giảm + VAT + Thành tiền sau VAT = 17, +1 nếu có Chiết khấu.
++            return this.hasRebatePrice ? 18 : 17
++        },
++        isDenied() {
++            return Number(this.data.status) === 4
++        },
++        denyMessage() {
++            return `Phiếu <b>${this.data.code || ''}</b> sẽ bị từ chối.`
++        },
++        confirmTitle() {
++            if (this.pendingAction === 'switch_board') return 'Xác nhận chuyển Ban giám đốc duyệt'
++            return 'Xác nhận duyệt'
++        },
++        confirmAccept() {
++            if (this.pendingAction === 'switch_board') return 'Chuyển duyệt'
++            return 'Duyệt'
++        },
++        confirmMessage() {
++            const code = this.data.code || ''
++            if (this.pendingAction === 'switch_board') {
++                return `Chuyển phiếu '${code}' sang Ban giám đốc duyệt?`
++            }
++            return `Bạn có chắc muốn duyệt phiếu '${code}'?`
++        },
++
++        // ───────── Dòng tổng (khớp getter form-level ERP) ─────────
++        sumAmountAfterExtra() {
++            return this.products.reduce((a, r) => a + this.totalAfterExtra(r), 0)
++        },
++        saleInvoice() {
++            return this.products.reduce((a, r) => a + this.discountPrice(r) * this.borrowSellQty(r), 0)
++        },
++        sumAmountAllocated() {
++            return this.products.reduce((a, r) => a + this.totalAllocated(r), 0)
++        },
++        sumAmountAllocatedVat() {
++            return this.products.reduce((a, r) => a + this.vatCost(r), 0)
++        },
++        sumAmountAllocatedAfterVat() {
++            return this.products.reduce((a, r) => a + this.totalAllocatedAfterVat(r), 0)
++        },
++        formRebatePrice() {
++            return this.products.reduce((a, r) => a + (Number(r.rebate_price) || 0) * this.borrowSellQty(r), 0)
++        },
++    },
++    async mounted() {
++        await this.loadData()
++    },
++    methods: {
++        toast(type, message) {
++            const fn = this.$toasted?.global?.[type]
++            if (fn) fn({ message })
++        },
++        Number,
++        statusPillClass(status) {
++            const value = Number(status)
++            if (value === 1) return 'tpl-status-active'
++            if (value === 4) return 'tpl-status-lock'
++            return 'tpl-status-draft'
++        },
++        rowspanOf(row) {
++            const n = row.details ? row.details.length : 0
++            return Math.max(n, 1)
++        },
++
++        // ───────── Getter tiền cấp SP (khớp getter class ERP `BorrowSellRequestProduct`) ─────────
++        borrowSellQty(row) {
++            return Number(row.qty) || 0
++        },
++        displayPrice(row) {
++            // type==2 (HĐ dịch vụ) -> giá niêm yết hiển thị 0, ngược lại = price (ERP `price` getter).
++            return Number(this.data.type) === 2 ? 0 : Number(row.price) || 0
++        },
++        priceAfterExtra(row) {
++            return (Number(row.extra_price) || 0) + this.displayPrice(row)
++        },
++        totalAfterExtra(row) {
++            return this.priceAfterExtra(row) * this.borrowSellQty(row)
++        },
++        discountPrice(row) {
++            return Math.round(this.priceAfterExtra(row) - (Number(row.allocated_price) || 0) - (Number(row.rebate_price) || 0))
++        },
++        totalAllocated(row) {
++            return (Number(row.allocated_price) || 0) * this.borrowSellQty(row)
++        },
++        vatCost(row) {
++            return (this.totalAllocated(row) * (Number(row.vat_percent) || 0)) / 100
++        },
++        totalAllocatedAfterVat(row) {
++            return this.totalAllocated(row) + this.vatCost(row)
++        },
++
++        formatNum(value) {
++            if (value === null || value === undefined || value === '') return '—'
++            const num = Number(String(value).replace(/,/g, ''))
++            return isFinite(num) ? num.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'
++        },
++        // Cột tiền: làm tròn về số nguyên rồi phân tách hàng nghìn (ERP dùng number:0).
++        formatMoney(v) {
++            return Math.round(Number(v) || 0).toLocaleString('en-US')
++        },
++
++        async loadData() {
++            try {
++                this.loading = true
++                this.$nuxt?.$loading?.start()
++                const response = await show(this.$store.dispatch, this.requestId)
++                this.data = response?.data || response || {}
++            } catch (error) {
++                console.error('Error loading borrow-sell request detail:', error)
++                const status = Number(error?.response?.status)
++                if (status === 403) {
++                    this.toast('error', error?.response?.data?.message || 'Bạn không có quyền xem phiếu này')
++                } else if (status === 404) {
++                    this.toast('error', 'Phiếu yêu cầu xuất bán hàng mượn không tồn tại')
++                } else {
++                    this.toast('error', error?.response?.data?.message || 'Lỗi khi tải dữ liệu phiếu')
++                }
++            } finally {
++                this.loading = false
++                this.$nuxt?.$loading?.finish()
++            }
++        },
++
++        askDeny() {
++            if (!this.data.is_can_deny) return
++            this.$bvModal.show('deny-borrow-sell-request-detail')
++        },
++        handleDenyConfirm(comment) {
++            const value = (comment || '').trim()
++            if (!value) {
++                this.toast('error', 'Vui lòng nhập lý do từ chối')
++                return
++            }
++            this.runRequest(() => deny(this.$store.dispatch, this.requestId, value))
++        },
++        askAction(action) {
++            this.pendingAction = action
++            this.$bvModal.show('confirm-approve-borrow-sell-request-detail')
++        },
++        runAction() {
++            if (this.pendingAction === 'manager_approve') {
++                this.runRequest(() => managerApprove(this.$store.dispatch, this.requestId))
++            } else if (this.pendingAction === 'switch_board') {
++                this.runRequest(() => switchBoardOfManager(this.$store.dispatch, this.requestId))
++            } else if (this.pendingAction === 'board_approve') {
++                this.runRequest(() => boardOfManagerApprove(this.$store.dispatch, this.requestId))
++            }
++            this.pendingAction = ''
++        },
++
++        /** Gọi 1 API duyệt/từ chối -> toast + reload `show` để cập nhật status + cờ nút. */
++        async runRequest(actionFn) {
++            if (this.submitting) return
++            this.submitting = true
++            this.$nuxt?.$loading?.start()
++            try {
++                const response = await actionFn()
++                this.toast('success', response?.message || 'Thao tác thành công')
++                await this.loadData()
++            } catch (error) {
++                console.error('Error on approve/deny action:', error)
++                const status = Number(error?.response?.status)
++                const body = error?.response?.data
++                if (status === 403) {
++                    this.toast('error', body?.message || 'Không đủ quyền!')
++                    await this.loadData()
++                } else if (status === 422) {
++                    this.toast('error', body?.message || 'Dữ liệu không hợp lệ, vui lòng kiểm tra lại')
++                } else {
++                    this.toast('error', body?.message || 'Thao tác thất bại')
++                }
++            } finally {
++                this.submitting = false
++                this.$nuxt?.$loading?.finish()
++            }
++        },
++
++        printRequest() {
++            if (!this.data.is_can_view) return
++            window.open(`/finance/borrow-sell-requests/${this.requestId}/print`, '_blank')
++        },
++        openHistory() {
++            if (!this.data.is_can_view) return
++            this.showHistoryModal = true
++        },
++        goBack() {
++            this.$router.push('/finance/borrow-sell-requests')
++        },
++        goCreateSell() {
++            this.$router.push(`/finance/borrow-sells/create?request_id=${this.requestId}`)
++        },
++    },
++}
++</script>
++
++<style lang="scss" scoped>
++@import '@/assets/scss/v2-styles.scss';
++
++/* ===== Card khối (đồng bộ màn chi tiết Yêu cầu xuất hàng) ===== */
++.c-section {
++    background: #fff;
++    border: 1px solid #e6e9f0;
++    border-radius: 12px;
++    box-shadow: 0 1px 2px rgba(24, 33, 58, 0.05), 0 4px 14px rgba(24, 33, 58, 0.04);
++    margin-bottom: 14px;
++    overflow: hidden;
++}
++.section-header {
++    display: flex;
++    align-items: center;
++    gap: 9px;
++    padding: 11px 16px;
++    font-weight: 650;
++    color: #1e2530;
++    font-size: 13.5px;
++    background: #f7f9fc;
++    border-bottom: 1px solid #e6e9f0;
++
++    > i:first-child {
++        width: 26px;
++        height: 26px;
++        flex: 0 0 auto;
++        border-radius: 7px;
++        display: inline-flex;
++        align-items: center;
++        justify-content: center;
++        background: #eef0fe;
++        color: #4f46e5;
++        font-size: 15px;
++    }
++}
++.sec-goods .section-header > i:first-child {
++    background: #fdece8;
++    color: #b4341f;
++}
++.section-body {
++    padding: 10px 16px 12px;
++}
++
++/* ===== Lưới key–value ===== */
++.kv-grid {
++    display: grid;
++    grid-template-columns: repeat(3, minmax(0, 1fr));
++    gap: 0 26px;
++    margin: 0;
++}
++.kv {
++    display: flex;
++    align-items: baseline;
++    gap: 10px;
++    min-width: 0;
++    padding: 5px 0;
++    border-bottom: 1px dashed #eef0f4;
++
++    dt {
++        flex: 0 0 110px;
++        color: #6b7280;
++        font-size: 12px;
++        font-weight: 500;
++        margin: 0;
++    }
++    dd {
++        flex: 1 1 auto;
++        margin: 0;
++        font-size: 13px;
++        color: #1e2530;
++        font-weight: 500;
++        word-break: break-word;
++        min-width: 0;
++    }
++}
++.kv--wide {
++    grid-column: span 2;
++}
++.kv--block {
++    display: block;
++    border-bottom: 0;
++    padding: 0;
++
++    dt {
++        display: block;
++        color: #6b7280;
++        font-size: 12px;
++        font-weight: 500;
++        margin: 0 0 4px;
++    }
++}
++.kv-note {
++    white-space: pre-line;
++    padding: 7px 10px;
++    background: #f7f9fc;
++    border: 1px solid #eef0f4;
++    border-radius: 8px;
++    display: block;
++
++    &--danger {
++        background: #fef2f2;
++        border-color: #fecaca;
++        color: #991b1b;
++    }
++}
++.kv-empty {
++    color: #9aa1ac;
++    font-style: italic;
++    font-size: 13px;
++}
++
++/* Panel phụ (Khách hàng) */
++.subpanel {
++    margin-top: 10px;
++    padding: 10px 12px 4px;
++    background: #f9fafc;
++    border: 1px solid #eef0f4;
++    border-radius: 10px;
++
++    &__title {
++        display: flex;
++        align-items: center;
++        gap: 6px;
++        font-size: 12px;
++        font-weight: 650;
++        color: #4f46e5;
++        margin-bottom: 6px;
++        text-transform: uppercase;
++        letter-spacing: 0.02em;
++    }
++    .kv {
++        border-bottom-color: #e9ebf2;
++    }
++}
++
++@media (max-width: 992px) {
++    .kv-grid {
++        grid-template-columns: repeat(2, minmax(0, 1fr));
++    }
++}
++@media (max-width: 575px) {
++    .kv-grid {
++        grid-template-columns: 1fr;
++    }
++    .kv--wide {
++        grid-column: auto;
++    }
++}
++
++/* ===== Chips phiếu xuất mượn ===== */
++.chip-list {
++    list-style: none;
++    margin: 0;
++    padding: 0;
++    display: flex;
++    flex-wrap: wrap;
++    gap: 6px 10px;
++}
++.chip-item {
++    display: flex;
++    align-items: center;
++    gap: 6px;
++    padding: 4px 10px;
++    background: #f7f9fc;
++    border: 1px solid #e6e9f0;
++    border-radius: 20px;
++    font-size: 12.5px;
++}
++.chip-ico {
++    color: #4f46e5;
++    font-size: 14px;
++    flex: 0 0 auto;
++}
++.chip-name {
++    color: #2563eb;
++    text-decoration: none;
++    word-break: break-all;
++
++    &:hover {
++        text-decoration: underline;
++    }
++}
++
++/* ===== Bảng hàng hoá ===== */
++.er-table {
++    font-size: 12.5px;
++    th,
++    td {
++        vertical-align: middle;
++    }
++    thead th {
++        font-weight: 700;
++        white-space: nowrap;
++    }
++    .cell-sub {
++        font-size: 11.5px;
++        color: #6b7280;
++    }
++    .text-soft {
++        color: #9aa1ac;
++    }
++}
++
++/* ===== Box tổng ===== */
++.pay-box {
++    margin-top: 12px;
++    display: flex;
++    justify-content: flex-end;
++    &__rows {
++        width: 340px;
++        max-width: 100%;
++        border: 1px solid #eef0f4;
++        border-radius: 10px;
++        overflow: hidden;
++        background: #fff;
++    }
++    .pay-row {
++        display: flex;
++        justify-content: space-between;
++        align-items: center;
++        padding: 8px 14px;
++        font-size: 13px;
++        border-bottom: 1px dashed #eef0f4;
++        span {
++            color: #6b7280;
++        }
++        b {
++            font-weight: 600;
++        }
++        &--total {
++            background: #f9fafc;
++            border-bottom: 0;
++            span,
++            b {
++                color: #0f172a;
++                font-weight: 700;
++                font-size: 14px;
++            }
++        }
++    }
++}
++
++/* ===== Footer cố định ===== */
++.export-actionbar {
++    position: fixed;
++    left: 0;
++    right: 0;
++    bottom: 0;
++    z-index: 100;
++    background: #fff;
++    border-top: 1px solid #e5e7eb;
++    padding: 8px 16px 8px 80px;
++    display: flex;
++    align-items: center;
++    justify-content: space-between;
++    gap: 12px;
++    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
++
++    &__hint {
++        font-size: 11.5px;
++        color: #6b7280;
++    }
++    &__btns {
++        display: flex;
++        align-items: center;
++        gap: 6px;
++        flex-shrink: 0;
++        flex-wrap: wrap;
++    }
++
++    @media (max-width: 1366px) {
++        padding: 6px 12px 6px 70px;
++        gap: 8px;
++    }
++}
++</style>
+```
+
+## 3. finance.js menu — diff T10b vs baseline (unstaged)
+```diff
+diff --git a/components/subsystem-menu/finance.js b/components/subsystem-menu/finance.js
+index f5672260d..13247cd1a 100644
+--- a/components/subsystem-menu/finance.js
++++ b/components/subsystem-menu/finance.js
+@@ -166,8 +166,8 @@ export const financeItems = [
+             { label: 'Hàng sắp hết hạn mượn' },
+             { label: 'Yêu cầu xuất hàng mượn' },
+             { label: 'Phiếu xuất hàng mượn' },
+-            { label: 'Yêu cầu xuất bán hàng mượn' },
+-            { label: 'Phiếu xuất bán hàng mượn' },
++            { label: 'Yêu cầu xuất bán hàng mượn', link: '/finance/borrow-sell-requests' },
++            { label: 'Phiếu xuất bán hàng mượn', link: '/finance/borrow-sells' },
+             { label: 'Phiếu yêu cầu gia hạn hàng mượn' },
+         ],
+     },
+```

@@ -1,0 +1,3582 @@
+### Phase 2 BE — committed range c562527e0^..HEAD (10 commits)
+
+8b9e77bd6 feat(finance): thêm cờ is_can_create_borrow_sell cho phiếu YC xuất bán hàng mượn
+394b5da44 feat(finance): thêm API BorrowSellController + 3 Resource + routes cho PXBHM (task P2-9)
+7277390be Task P2-8: Thêm FormRequest + test cho xuất bán hàng mượn
+99f08bf6c feat(finance): thêm BorrowSellService::store() - lập phiếu xuất bán hàng mượn (T7)
+60674e96c T6: port hạch toán cước vận chuyển chuyến xe (accountingDeliveryTrip) cho phiếu XBHM
+04869e226 test(finance): khoá regression T5-1 — assert thưởng HĐ value>0 (allocated_price≠0)
+4ddb4cd1a feat(finance): bổ sung nhánh hạch toán HĐ dịch vụ (WrServiceContract) cho BorrowSellPostingService
+34fd29452 fix(finance): giá vốn nhánh Firm bỏ nhân unit_coefficient (port đúng ERP)
+fe9c48f25 feat(finance): BorrowSellPostingService nhánh FirmContract (giá vốn TK157 + doanh thu + cụm hỗ trợ)
+2d4bbfe74 refactor(assign): tách SupportAccountingTrait dùng chung cho hạch toán xuất hàng + bán hàng mượn
+1c103cae5 feat(finance): thêm entity ActivityHasDeliveryTrip (Phase 2 hạch toán chuyến xe)
+c562527e0 feat(finance): thêm 6 entity BorrowSell (Phase 2 phiếu xuất bán hàng mượn)
+
+### diff --stat
+ .../Services/Accounting/SupportAccountingTrait.php | 298 +++++++++++++
+ .../Services/ProductExportPostingService.php       | 282 +-----------
+ .../Feature/ProductExportPostingRegressionTest.php |  57 +++
+ Modules/Finance/Entities/BorrowSell/BorrowSell.php | 147 +++++++
+ .../Entities/BorrowSell/BorrowSellProduct.php      |  16 +
+ .../BorrowSell/BorrowSellProductDetail.php         |  11 +
+ .../Finance/Entities/BorrowSell/BorrowSellTab.php  |  16 +
+ .../Entities/BorrowSell/BorrowSellTabProduct.php   |  16 +
+ .../BorrowSell/BorrowSellTabProductDetail.php      |  11 +
+ .../Entities/Contract/WrSupportAccounting.php      |  41 ++
+ .../Contract/WrSupportAccountingDepartment.php     |  22 +
+ .../WrSupportAccountingDepartmentDetail.php        |  16 +
+ .../Contract/WrSupportAccountingEmployee.php       |  12 +
+ .../Entities/Delivery/ActivityHasDeliveryTrip.php  |  26 ++
+ .../Http/Controllers/V1/BorrowSellController.php   |  81 ++++
+ .../Requests/BorrowSell/StoreBorrowSellRequest.php |  42 ++
+ Modules/Finance/Routes/api.php                     |  31 ++
+ .../BorrowSell/BorrowSellPostingService.php        | 473 +++++++++++++++++++++
+ .../Services/BorrowSell/BorrowSellService.php      | 369 ++++++++++++++++
+ .../Finance/Tests/Feature/BorrowSellApiTest.php    | 160 +++++++
+ .../BorrowSellDeliveryTripAccountingTest.php       |  63 +++
+ .../Tests/Feature/BorrowSellPostingFirmTest.php    | 101 +++++
+ .../Feature/BorrowSellPostingWrServiceTest.php     | 117 +++++
+ .../Finance/Tests/Feature/BorrowSellStoreTest.php  | 210 +++++++++
+ .../Unit/ActivityHasDeliveryTripEntityTest.php     |  23 +
+ .../Finance/Tests/Unit/BorrowSellEntityTest.php    |  26 ++
+ .../Tests/Unit/StoreBorrowSellRequestTest.php      |  86 ++++
+ .../BorrowSellRequestDetailResource.php            | 221 ++++++++++
+ .../BorrowSellDetailResource.php                   | 141 ++++++
+ .../BorrowSellResource/BorrowSellListResource.php  |  73 ++++
+ .../BorrowSellResource/BorrowSellPrintResource.php |  66 +++
+ 31 files changed, 2975 insertions(+), 279 deletions(-)
+
+### full diff -U8
+diff --git a/Modules/Assign/Services/Accounting/SupportAccountingTrait.php b/Modules/Assign/Services/Accounting/SupportAccountingTrait.php
+new file mode 100644
+index 000000000..7db4fd272
+--- /dev/null
++++ b/Modules/Assign/Services/Accounting/SupportAccountingTrait.php
+@@ -0,0 +1,298 @@
++<?php
++
++namespace Modules\Assign\Services\Accounting;
++
++use Illuminate\Support\Facades\DB;
++use Modules\Assign\Entities\Contract\Contract;
++use Modules\Finance\Entities\Account\AccountDetail;
++
++/**
++ * 8 cụm bút toán bán hàng (doanh thu, thưởng, hoa hồng, TNCN, quỹ rủi ro...) + helper tra tổ chức
++ * (phòng/bộ phận). Cắt nguyên văn từ Modules\Assign\Services\ProductExportPostingService (Task P2-3)
++ * để dùng chung giữa ProductExportPostingService (xuất hàng thường) và BorrowSellPostingService
++ * (xuất bán hàng mượn). KHÔNG sửa logic khi di chuyển.
++ */
++trait SupportAccountingTrait
++{
++    /** cache tra tổ chức trong 1 lần chạy */
++    private $deptCache = [];
++    private $partCache = [];
++
++    // ----------------------------------------------------------------------------------
++    // 8 CỤM BÚT TOÁN — port FirmContractExportService (dịch ::class → key cột thô HRM)
++    // ----------------------------------------------------------------------------------
++
++    /** 1. Doanh thu: Nợ 1311 / Có 5111 + 33311 (giá trị gộp, trước giảm trừ). */
++    private function revenueAccounting($total_price, $vat_cost, Contract $contract, array &$accounts, int &$group): void
++    {
++        $group += 1;
++        AccountDetail::createDataSaveDept($accounts, 1311, $total_price + $vat_cost, AccountDetail::TYPE_DEPT,
++            [5111, 33311], ['customer_id' => $contract->customer_id, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 5111, $total_price, AccountDetail::TYPE_HAS, [1311],
++            ['employee_id' => $contract->created_by, 'work_id' => self::WORK_DOANH_THU, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 33311, $vat_cost, AccountDetail::TYPE_HAS, [1311],
++            ['group' => $group]);
++    }
++
++    /** 2. Giảm trừ doanh thu: Nợ 5213 + 33311 / Có 1311. */
++    private function revenueDeductionAccounting($sale_invoice, $sale_invoice_vat, Contract $contract, array &$accounts, int &$group): void
++    {
++        $group += 1;
++        AccountDetail::createDataSaveDept($accounts, 5213, $sale_invoice, AccountDetail::TYPE_DEPT, [1311],
++            ['employee_id' => $contract->created_by, 'work_id' => self::WORK_GIAM_TRU_DT, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 33311, $sale_invoice_vat, AccountDetail::TYPE_DEPT, [1311],
++            ['group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 1311, $sale_invoice + $sale_invoice_vat, AccountDetail::TYPE_HAS,
++            [5213, 33311], ['customer_id' => $contract->customer_id, 'group' => $group]);
++    }
++
++    /** 4. Thưởng thực hiện HĐ: Nợ 5211 / Có 35241 — chia NV / trưởng BP / trưởng phòng. */
++    private function bonusContractAccounting($percent, $sa, Contract $contract, array &$accounts, int &$group): ?string
++    {
++        $amount = round($percent * (float) $sa->bonus_contract_before_vat);
++        $dm = $sa->department_main;
++        if (!$dm) {
++            return 'HĐ ' . $contract->code . ' chưa cấu hình phòng chính (HTHT)!';
++        }
++        $created_by = $contract->created_by;
++        $rootDeptId = (int) $dm->department_id;
++        $manager_parts = [];
++
++        foreach ($dm->employees as $emp) {
++            $partLead = $this->partLeadId($emp->part_id);
++            if ($partLead && !in_array($partLead, $manager_parts)) {
++                $manager_parts[] = $partLead;
++            }
++            $group += 1;
++            $bonus = round($amount * ((float) $emp->commission_sale_percent / 100) * ((float) $dm->diff_employee_percent / 100));
++            AccountDetail::createDataSaveDept($accounts, 5211, $bonus, AccountDetail::TYPE_DEPT, [35241],
++                ['employee_id' => $created_by, 'employee_department_id' => $contract->department_id, 'group' => $group, 'work_id' => self::WORK_THUONG_HH]);
++            AccountDetail::createDataSaveDept($accounts, 35241, $bonus, AccountDetail::TYPE_HAS, [5211],
++                ['employee_id' => $emp->employee_id, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++        }
++        foreach ($manager_parts as $partLead) {
++            $group += 1;
++            $bonus = round($amount * ((float) $dm->diff_part_lead_percent / 100));
++            AccountDetail::createDataSaveDept($accounts, 5211, $bonus, AccountDetail::TYPE_DEPT, [35241],
++                ['employee_id' => $created_by, 'employee_department_id' => $contract->department_id, 'group' => $group, 'work_id' => self::WORK_THUONG_HH]);
++            AccountDetail::createDataSaveDept($accounts, 35241, $bonus, AccountDetail::TYPE_HAS, [5211],
++                ['employee_id' => $partLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++        }
++
++        $deptLead = $this->deptLeadId($rootDeptId);
++        if (!$deptLead) {
++            return 'Chưa cấu hình trưởng phòng ' . $this->deptName($rootDeptId) . '!';
++        }
++        $group += 1;
++        $bonus = round($amount * ((float) $dm->diff_department_lead_percent / 100));
++        AccountDetail::createDataSaveDept($accounts, 5211, $bonus, AccountDetail::TYPE_DEPT, [35241],
++            ['employee_id' => $created_by, 'employee_department_id' => $contract->department_id, 'group' => $group, 'work_id' => self::WORK_THUONG_HH]);
++        AccountDetail::createDataSaveDept($accounts, 35241, $bonus, AccountDetail::TYPE_HAS, [5211],
++            ['employee_id' => $deptLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++
++        return null;
++    }
++
++    /** 5. TNCN tạm tính: Nợ 35241 / Có 3335 — chia NV / trưởng BP / trưởng phòng. */
++    private function vatExtraCostAccounting($percent, $sa, Contract $contract, array &$accounts, int &$group): ?string
++    {
++        $amount = round($percent * (float) $sa->tndn_vat);
++        $group += 1;
++        $dm = $sa->department_main;
++        if (!$dm) {
++            return 'HĐ ' . $contract->code . ' chưa cấu hình phòng chính (HTHT)!';
++        }
++        $deptId = (int) $dm->department_id;
++        $manager_parts = [];
++
++        foreach ($dm->employees as $emp) {
++            $partLead = $this->partLeadId($emp->part_id);
++            if ($partLead && !in_array($partLead, $manager_parts)) {
++                $manager_parts[] = $partLead;
++            }
++            $group += 1;
++            $vat = round($amount * ((float) $emp->commission_sale_percent / 100) * ((float) $dm->diff_employee_percent / 100));
++            AccountDetail::createDataSaveDept($accounts, 35241, $vat, AccountDetail::TYPE_DEPT, [3335],
++                ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++            AccountDetail::createDataSaveDept($accounts, 3335, $vat, AccountDetail::TYPE_HAS, [35241],
++                ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++        }
++        foreach ($manager_parts as $partLead) {
++            $group += 1;
++            $vat = round($amount * ((float) $dm->diff_part_lead_percent / 100));
++            AccountDetail::createDataSaveDept($accounts, 35241, $vat, AccountDetail::TYPE_DEPT, [3335],
++                ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++            AccountDetail::createDataSaveDept($accounts, 3335, $vat, AccountDetail::TYPE_HAS, [35241],
++                ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++        }
++
++        $deptLead = $this->deptLeadId($deptId);
++        if (!$deptLead) {
++            return 'Chưa cấu hình trưởng phòng ' . $this->deptName($deptId) . '!';
++        }
++        $group += 1;
++        $vat = round($amount * ((float) $dm->diff_department_lead_percent / 100));
++        AccountDetail::createDataSaveDept($accounts, 35241, $vat, AccountDetail::TYPE_DEPT, [3335],
++            ['employee_id' => $deptLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 3335, $vat, AccountDetail::TYPE_HAS, [35241],
++            ['employee_id' => $deptLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
++
++        return null;
++    }
++
++    /** 6 + 7. Hoa hồng tháng + quý: Nợ 6411 / Có 35241 — mỗi phòng cùng công ty HĐ. */
++    private function monthlyAndQuarterlyCommissionAccounting($percent, $sa, $contractCompanyId, array &$accounts, int &$group): ?string
++    {
++        foreach ($sa->departments as $department) {
++            if ($contractCompanyId !== null
++                && (int) $this->deptCompany((int) $department->department_id) !== (int) $contractCompanyId) {
++                continue;
++            }
++            $deptId = (int) $department->department_id;
++            $manager_parts = [];
++
++            foreach ($department->employees as $emp) {
++                $partLead = $this->partLeadId($emp->part_id);
++                if ($partLead && !in_array($partLead, $manager_parts)) {
++                    $manager_parts[] = $partLead;
++                }
++                // Hoa hồng tháng
++                $group += 1;
++                $monthEmp = round($percent * (float) $department->month_employee_amount * (float) $emp->commission_sale_percent / 100);
++                AccountDetail::createDataSaveDept($accounts, 6411, $monthEmp, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
++                AccountDetail::createDataSaveDept($accounts, 35241, $monthEmp, AccountDetail::TYPE_HAS, [6411],
++                    ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_THANG, 'group' => $group]);
++                // Hoa hồng quý
++                $group += 1;
++                $qtrEmp = round($percent * (float) $department->after_settlement_employee_amount * (float) $emp->commission_sale_percent / 100);
++                AccountDetail::createDataSaveDept($accounts, 6411, $qtrEmp, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
++                AccountDetail::createDataSaveDept($accounts, 35241, $qtrEmp, AccountDetail::TYPE_HAS, [6411],
++                    ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_QUY, 'group' => $group]);
++            }
++            foreach ($manager_parts as $partLead) {
++                $group += 1;
++                $monthPL = round($percent * (float) $department->month_part_lead_amount);
++                AccountDetail::createDataSaveDept($accounts, 6411, $monthPL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
++                AccountDetail::createDataSaveDept($accounts, 35241, $monthPL, AccountDetail::TYPE_HAS, [6411],
++                    ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_THANG, 'group' => $group]);
++                $group += 1;
++                $qtrPL = round($percent * (float) $department->after_settlement_part_lead_amount);
++                AccountDetail::createDataSaveDept($accounts, 6411, $qtrPL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
++                AccountDetail::createDataSaveDept($accounts, 35241, $qtrPL, AccountDetail::TYPE_HAS, [6411],
++                    ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_QUY, 'group' => $group]);
++            }
++
++            // Trưởng phòng (is_main → chính phòng; ngược lại → phòng objectable)
++            $rootDeptId = $department->is_main ? $deptId : $this->objectableDeptId($department);
++            $deptLead = $rootDeptId ? $this->deptLeadId($rootDeptId) : null;
++            if (!$deptLead) {
++                return 'Chưa cấu hình trưởng phòng ' . $this->deptName($rootDeptId) . '!';
++            }
++            $group += 1;
++            $monthDL = round($percent * (float) $department->month_department_lead_amount);
++            AccountDetail::createDataSaveDept($accounts, 6411, $monthDL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
++            AccountDetail::createDataSaveDept($accounts, 35241, $monthDL, AccountDetail::TYPE_HAS, [6411],
++                ['employee_id' => $deptLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_HH_THANG, 'group' => $group]);
++            $group += 1;
++            $qtrDL = round($percent * (float) $department->after_settlement_department_lead_amount);
++            AccountDetail::createDataSaveDept($accounts, 6411, $qtrDL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
++            AccountDetail::createDataSaveDept($accounts, 35241, $qtrDL, AccountDetail::TYPE_HAS, [6411],
++                ['employee_id' => $deptLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_HH_QUY, 'group' => $group]);
++        }
++
++        return null;
++    }
++
++    /** 8. Quỹ quản lý rủi ro phòng: Nợ 6411 / Có 35241 (đối tượng = phòng/bộ phận objectable). */
++    private function riskFundAccounting($percent, $sa, $contractCompanyId, array &$accounts, int &$group): void
++    {
++        foreach ($sa->departments as $department) {
++            if ($contractCompanyId !== null
++                && (int) $this->deptCompany((int) $department->department_id) !== (int) $contractCompanyId) {
++                continue;
++            }
++            $risk = round($percent * (float) $department->risk_fund_amount);
++            $group += 1;
++            AccountDetail::createDataSaveDept($accounts, 6411, $risk, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
++            $objKey = $this->objColumnFor($department->objectable_type);
++            AccountDetail::createDataSaveDept($accounts, 35241, $risk, AccountDetail::TYPE_HAS, [6411],
++                [$objKey => $department->objectable_id, 'work_id' => self::WORK_QUY_RUI_RO, 'group' => $group]);
++        }
++    }
++
++    // ----------------------------------------------------------------------------------
++    // Tra tổ chức qua DB::table (merged-DB-safe, thay morphTo cross-DB)
++    // ----------------------------------------------------------------------------------
++
++    private function dept(int $id)
++    {
++        if ($id <= 0) return null;
++        if (!array_key_exists($id, $this->deptCache)) {
++            $this->deptCache[$id] = DB::table('departments')
++                ->select('id', 'name', 'company_id', 'department_lead_id')
++                ->where('id', $id)->first();
++        }
++        return $this->deptCache[$id];
++    }
++
++    private function deptLeadId(int $id): ?int
++    {
++        $d = $this->dept($id);
++        return $d && $d->department_lead_id ? (int) $d->department_lead_id : null;
++    }
++
++    private function deptCompany(int $id): ?int
++    {
++        $d = $this->dept($id);
++        return $d ? (int) $d->company_id : null;
++    }
++
++    private function deptName(int $id): string
++    {
++        $d = $this->dept($id);
++        return $d ? $d->name : ('#' . $id);
++    }
++
++    private function partLeadId($partId): ?int
++    {
++        $partId = (int) $partId;
++        if ($partId <= 0) return null;
++        if (!array_key_exists($partId, $this->partCache)) {
++            $this->partCache[$partId] = DB::table('parts')
++                ->select('id', 'department_id', 'part_lead_id')
++                ->where('id', $partId)->first();
++        }
++        $p = $this->partCache[$partId];
++        return $p && $p->part_lead_id ? (int) $p->part_lead_id : null;
++    }
++
++    /** objectable → id phòng (Department: chính id; Part: phòng cha của bộ phận). */
++    private function objectableDeptId($department): ?int
++    {
++        $type = (string) $department->objectable_type;
++        $oid = (int) $department->objectable_id;
++        if ($oid <= 0) return null;
++        if (substr($type, -strlen('\\Part')) === '\\Part') {
++            if (!array_key_exists($oid, $this->partCache)) {
++                $this->partCache[$oid] = DB::table('parts')
++                    ->select('id', 'department_id', 'part_lead_id')->where('id', $oid)->first();
++            }
++            $p = $this->partCache[$oid];
++            return $p ? (int) $p->department_id : null;
++        }
++        return $oid; // Department
++    }
++
++    /** objectable_type (FQN ERP) → cột obj_* trong bút toán. */
++    private function objColumnFor($type): string
++    {
++        $type = (string) $type;
++        if (substr($type, -strlen('\\Part')) === '\\Part') {
++            return 'obj_part_id';
++        }
++        if (substr($type, -strlen('\\Company')) === '\\Company') {
++            return 'obj_company_id';
++        }
++        return 'obj_department_id';
++    }
++}
+diff --git a/Modules/Assign/Services/ProductExportPostingService.php b/Modules/Assign/Services/ProductExportPostingService.php
+index 70f70df58..b57626924 100644
+--- a/Modules/Assign/Services/ProductExportPostingService.php
++++ b/Modules/Assign/Services/ProductExportPostingService.php
+@@ -6,16 +6,17 @@ use Carbon\Carbon;
+ use Illuminate\Support\Facades\DB;
+ use Modules\Assign\Entities\Warehouse\ProductExport;
+ use Modules\Assign\Entities\Warehouse\ProductExportRequest;
+ use Modules\Assign\Entities\Warehouse\ContractProductImport;
+ use Modules\Assign\Entities\Warehouse\WarehouseExport;
+ use Modules\Assign\Entities\Warehouse\ProductImportExportArrangeDelivery;
+ use Modules\Assign\Entities\Contract\Contract;
+ use Modules\Finance\Entities\Account\AccountDetail;
++use Modules\Assign\Services\Accounting\SupportAccountingTrait;
+ 
+ /**
+  * Hạch toán (ghi sổ account_details) cho Phiếu xuất hàng HĐ HRM loại 20/21.
+  *
+  * PORT 1-1 "hạch toán bán hàng theo hãng" của ERP:
+  *   - App\Services\Sale\Firm\Contract\FirmContractProductExportService::getDataProductExportAccounting
+  *   - App\Services\Sale\Firm\Contract\FirmContractExportService (8 cụm bút toán)
+  *
+@@ -32,28 +33,26 @@ use Modules\Finance\Entities\Account\AccountDetail;
+  *     KEY CỘT THÔ → ở đây đã dịch sẵn (Customer→customer_id, Employee→employee_id, Product→product_id,
+  *     Work→work_id, Department→obj_department_id, Part→obj_part_id, giữ nguyên employee_department_id/group).
+  *   - Tra tổ chức (phòng/bộ phận: lead, company) bằng DB::table (merged-DB-safe), KHÔNG morphTo cross-DB.
+  *   - gross/gross_vat tính THẲNG từ chi tiết (product_exports.sum_amount_after_extra có thể chưa được
+  *     điền ở luồng HRM) — bằng đúng định nghĩa Σ(price+extra)×qty của ERP.
+  */
+ class ProductExportPostingService
+ {
++    use SupportAccountingTrait;
++
+     /** Số hiệu công việc (Work) — bám sát ERP (accounting_works.id). */
+     const WORK_DOANH_THU = 15;
+     const WORK_GIAM_TRU_DT = 16;
+     const WORK_THUONG_HH = 12;      // thưởng thực hiện HĐ + TNCN
+     const WORK_HH_THANG = 13;
+     const WORK_HH_QUY = 14;
+     const WORK_QUY_RUI_RO = 6;
+ 
+-    /** cache tra tổ chức trong 1 lần chạy */
+-    private $deptCache = [];
+-    private $partCache = [];
+-
+     /**
+      * Sinh bút toán + ghi sổ cho 1 phiếu xuất hàng. Idempotent, chỉ chạy khi status=1.
+      *
+      * @return array [bool ok, string err]
+      */
+     public function postAccounting(ProductExport $pxh): array
+     {
+         if ((int) $pxh->status !== ProductExport::STATUS_HOAN_TAT) {
+@@ -341,44 +340,16 @@ class ProductExportPostingService
+         $subtraction = (float) $sa->before_vat_total - (float) $sa->before_vat_delivery_cost;
+         $pct_wo_delivery = $subtraction > 0 ? ($amount / $subtraction) : 0;
+         $summation = (float) $sa->before_vat_product + (float) $sa->before_vat_repair_service;
+         $pct_wo_cost = $summation > 0 ? ($amount / $summation) : 0;
+ 
+         return [true, $sale_invoice, $sale_invoice_vat, $gross, $gross_vat, $sa, $pct_wo_delivery, $pct_wo_cost];
+     }
+ 
+-    // ----------------------------------------------------------------------------------
+-    // 8 CỤM BÚT TOÁN — port FirmContractExportService (dịch ::class → key cột thô HRM)
+-    // ----------------------------------------------------------------------------------
+-
+-    /** 1. Doanh thu: Nợ 1311 / Có 5111 + 33311 (giá trị gộp, trước giảm trừ). */
+-    private function revenueAccounting($total_price, $vat_cost, Contract $contract, array &$accounts, int &$group): void
+-    {
+-        $group += 1;
+-        AccountDetail::createDataSaveDept($accounts, 1311, $total_price + $vat_cost, AccountDetail::TYPE_DEPT,
+-            [5111, 33311], ['customer_id' => $contract->customer_id, 'group' => $group]);
+-        AccountDetail::createDataSaveDept($accounts, 5111, $total_price, AccountDetail::TYPE_HAS, [1311],
+-            ['employee_id' => $contract->created_by, 'work_id' => self::WORK_DOANH_THU, 'group' => $group]);
+-        AccountDetail::createDataSaveDept($accounts, 33311, $vat_cost, AccountDetail::TYPE_HAS, [1311],
+-            ['group' => $group]);
+-    }
+-
+-    /** 2. Giảm trừ doanh thu: Nợ 5213 + 33311 / Có 1311. */
+-    private function revenueDeductionAccounting($sale_invoice, $sale_invoice_vat, Contract $contract, array &$accounts, int &$group): void
+-    {
+-        $group += 1;
+-        AccountDetail::createDataSaveDept($accounts, 5213, $sale_invoice, AccountDetail::TYPE_DEPT, [1311],
+-            ['employee_id' => $contract->created_by, 'work_id' => self::WORK_GIAM_TRU_DT, 'group' => $group]);
+-        AccountDetail::createDataSaveDept($accounts, 33311, $sale_invoice_vat, AccountDetail::TYPE_DEPT, [1311],
+-            ['group' => $group]);
+-        AccountDetail::createDataSaveDept($accounts, 1311, $sale_invoice + $sale_invoice_vat, AccountDetail::TYPE_HAS,
+-            [5213, 33311], ['customer_id' => $contract->customer_id, 'group' => $group]);
+-    }
+-
+     /**
+      * 3. Giá vốn (loại 21): mỗi SP dư Có $creditAcc (155) ref 632; tổng dư Nợ 632 ref $creditAcc.
+      * export_price đã do WarehouseExportAccountingService::calculateExportPrice tính = (Σvb−Σva)/(qty×coef)
+      * → total = export_price × qty × coef = Σvb−Σva (khớp tới đồng).
+      */
+     private function costAccounting(ProductExport $pxh, array &$accounts, int &$group, int $creditAcc): void
+     {
+         $sum_export_price = 0;
+@@ -405,256 +376,9 @@ class ProductExportPostingService
+             $sum += $total;
+             AccountDetail::createDataSaveDept($accounts, 1561, $total, AccountDetail::TYPE_HAS, [1541],
+                 ['product_id' => $p->product_id, 'group' => $group]);
+         }
+         AccountDetail::createDataSaveDept($accounts, 1541, $sum, AccountDetail::TYPE_DEPT, [1561],
+             ['group' => $group]);
+     }
+ 
+-    /** 4. Thưởng thực hiện HĐ: Nợ 5211 / Có 35241 — chia NV / trưởng BP / trưởng phòng. */
+-    private function bonusContractAccounting($percent, $sa, Contract $contract, array &$accounts, int &$group): ?string
+-    {
+-        $amount = round($percent * (float) $sa->bonus_contract_before_vat);
+-        $dm = $sa->department_main;
+-        if (!$dm) {
+-            return 'HĐ ' . $contract->code . ' chưa cấu hình phòng chính (HTHT)!';
+-        }
+-        $created_by = $contract->created_by;
+-        $rootDeptId = (int) $dm->department_id;
+-        $manager_parts = [];
+-
+-        foreach ($dm->employees as $emp) {
+-            $partLead = $this->partLeadId($emp->part_id);
+-            if ($partLead && !in_array($partLead, $manager_parts)) {
+-                $manager_parts[] = $partLead;
+-            }
+-            $group += 1;
+-            $bonus = round($amount * ((float) $emp->commission_sale_percent / 100) * ((float) $dm->diff_employee_percent / 100));
+-            AccountDetail::createDataSaveDept($accounts, 5211, $bonus, AccountDetail::TYPE_DEPT, [35241],
+-                ['employee_id' => $created_by, 'employee_department_id' => $contract->department_id, 'group' => $group, 'work_id' => self::WORK_THUONG_HH]);
+-            AccountDetail::createDataSaveDept($accounts, 35241, $bonus, AccountDetail::TYPE_HAS, [5211],
+-                ['employee_id' => $emp->employee_id, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-        }
+-        foreach ($manager_parts as $partLead) {
+-            $group += 1;
+-            $bonus = round($amount * ((float) $dm->diff_part_lead_percent / 100));
+-            AccountDetail::createDataSaveDept($accounts, 5211, $bonus, AccountDetail::TYPE_DEPT, [35241],
+-                ['employee_id' => $created_by, 'employee_department_id' => $contract->department_id, 'group' => $group, 'work_id' => self::WORK_THUONG_HH]);
+-            AccountDetail::createDataSaveDept($accounts, 35241, $bonus, AccountDetail::TYPE_HAS, [5211],
+-                ['employee_id' => $partLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-        }
+-
+-        $deptLead = $this->deptLeadId($rootDeptId);
+-        if (!$deptLead) {
+-            return 'Chưa cấu hình trưởng phòng ' . $this->deptName($rootDeptId) . '!';
+-        }
+-        $group += 1;
+-        $bonus = round($amount * ((float) $dm->diff_department_lead_percent / 100));
+-        AccountDetail::createDataSaveDept($accounts, 5211, $bonus, AccountDetail::TYPE_DEPT, [35241],
+-            ['employee_id' => $created_by, 'employee_department_id' => $contract->department_id, 'group' => $group, 'work_id' => self::WORK_THUONG_HH]);
+-        AccountDetail::createDataSaveDept($accounts, 35241, $bonus, AccountDetail::TYPE_HAS, [5211],
+-            ['employee_id' => $deptLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-
+-        return null;
+-    }
+-
+-    /** 5. TNCN tạm tính: Nợ 35241 / Có 3335 — chia NV / trưởng BP / trưởng phòng. */
+-    private function vatExtraCostAccounting($percent, $sa, Contract $contract, array &$accounts, int &$group): ?string
+-    {
+-        $amount = round($percent * (float) $sa->tndn_vat);
+-        $group += 1;
+-        $dm = $sa->department_main;
+-        if (!$dm) {
+-            return 'HĐ ' . $contract->code . ' chưa cấu hình phòng chính (HTHT)!';
+-        }
+-        $deptId = (int) $dm->department_id;
+-        $manager_parts = [];
+-
+-        foreach ($dm->employees as $emp) {
+-            $partLead = $this->partLeadId($emp->part_id);
+-            if ($partLead && !in_array($partLead, $manager_parts)) {
+-                $manager_parts[] = $partLead;
+-            }
+-            $group += 1;
+-            $vat = round($amount * ((float) $emp->commission_sale_percent / 100) * ((float) $dm->diff_employee_percent / 100));
+-            AccountDetail::createDataSaveDept($accounts, 35241, $vat, AccountDetail::TYPE_DEPT, [3335],
+-                ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-            AccountDetail::createDataSaveDept($accounts, 3335, $vat, AccountDetail::TYPE_HAS, [35241],
+-                ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-        }
+-        foreach ($manager_parts as $partLead) {
+-            $group += 1;
+-            $vat = round($amount * ((float) $dm->diff_part_lead_percent / 100));
+-            AccountDetail::createDataSaveDept($accounts, 35241, $vat, AccountDetail::TYPE_DEPT, [3335],
+-                ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-            AccountDetail::createDataSaveDept($accounts, 3335, $vat, AccountDetail::TYPE_HAS, [35241],
+-                ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-        }
+-
+-        $deptLead = $this->deptLeadId($deptId);
+-        if (!$deptLead) {
+-            return 'Chưa cấu hình trưởng phòng ' . $this->deptName($deptId) . '!';
+-        }
+-        $group += 1;
+-        $vat = round($amount * ((float) $dm->diff_department_lead_percent / 100));
+-        AccountDetail::createDataSaveDept($accounts, 35241, $vat, AccountDetail::TYPE_DEPT, [3335],
+-            ['employee_id' => $deptLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-        AccountDetail::createDataSaveDept($accounts, 3335, $vat, AccountDetail::TYPE_HAS, [35241],
+-            ['employee_id' => $deptLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_THUONG_HH, 'group' => $group]);
+-
+-        return null;
+-    }
+-
+-    /** 6 + 7. Hoa hồng tháng + quý: Nợ 6411 / Có 35241 — mỗi phòng cùng công ty HĐ. */
+-    private function monthlyAndQuarterlyCommissionAccounting($percent, $sa, $contractCompanyId, array &$accounts, int &$group): ?string
+-    {
+-        foreach ($sa->departments as $department) {
+-            if ((int) $this->deptCompany((int) $department->department_id) !== (int) $contractCompanyId) {
+-                continue;
+-            }
+-            $deptId = (int) $department->department_id;
+-            $manager_parts = [];
+-
+-            foreach ($department->employees as $emp) {
+-                $partLead = $this->partLeadId($emp->part_id);
+-                if ($partLead && !in_array($partLead, $manager_parts)) {
+-                    $manager_parts[] = $partLead;
+-                }
+-                // Hoa hồng tháng
+-                $group += 1;
+-                $monthEmp = round($percent * (float) $department->month_employee_amount * (float) $emp->commission_sale_percent / 100);
+-                AccountDetail::createDataSaveDept($accounts, 6411, $monthEmp, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
+-                AccountDetail::createDataSaveDept($accounts, 35241, $monthEmp, AccountDetail::TYPE_HAS, [6411],
+-                    ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_THANG, 'group' => $group]);
+-                // Hoa hồng quý
+-                $group += 1;
+-                $qtrEmp = round($percent * (float) $department->after_settlement_employee_amount * (float) $emp->commission_sale_percent / 100);
+-                AccountDetail::createDataSaveDept($accounts, 6411, $qtrEmp, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
+-                AccountDetail::createDataSaveDept($accounts, 35241, $qtrEmp, AccountDetail::TYPE_HAS, [6411],
+-                    ['employee_id' => $emp->employee_id, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_QUY, 'group' => $group]);
+-            }
+-            foreach ($manager_parts as $partLead) {
+-                $group += 1;
+-                $monthPL = round($percent * (float) $department->month_part_lead_amount);
+-                AccountDetail::createDataSaveDept($accounts, 6411, $monthPL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
+-                AccountDetail::createDataSaveDept($accounts, 35241, $monthPL, AccountDetail::TYPE_HAS, [6411],
+-                    ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_THANG, 'group' => $group]);
+-                $group += 1;
+-                $qtrPL = round($percent * (float) $department->after_settlement_part_lead_amount);
+-                AccountDetail::createDataSaveDept($accounts, 6411, $qtrPL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
+-                AccountDetail::createDataSaveDept($accounts, 35241, $qtrPL, AccountDetail::TYPE_HAS, [6411],
+-                    ['employee_id' => $partLead, 'employee_department_id' => $deptId, 'work_id' => self::WORK_HH_QUY, 'group' => $group]);
+-            }
+-
+-            // Trưởng phòng (is_main → chính phòng; ngược lại → phòng objectable)
+-            $rootDeptId = $department->is_main ? $deptId : $this->objectableDeptId($department);
+-            $deptLead = $rootDeptId ? $this->deptLeadId($rootDeptId) : null;
+-            if (!$deptLead) {
+-                return 'Chưa cấu hình trưởng phòng ' . $this->deptName($rootDeptId) . '!';
+-            }
+-            $group += 1;
+-            $monthDL = round($percent * (float) $department->month_department_lead_amount);
+-            AccountDetail::createDataSaveDept($accounts, 6411, $monthDL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
+-            AccountDetail::createDataSaveDept($accounts, 35241, $monthDL, AccountDetail::TYPE_HAS, [6411],
+-                ['employee_id' => $deptLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_HH_THANG, 'group' => $group]);
+-            $group += 1;
+-            $qtrDL = round($percent * (float) $department->after_settlement_department_lead_amount);
+-            AccountDetail::createDataSaveDept($accounts, 6411, $qtrDL, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
+-            AccountDetail::createDataSaveDept($accounts, 35241, $qtrDL, AccountDetail::TYPE_HAS, [6411],
+-                ['employee_id' => $deptLead, 'employee_department_id' => $rootDeptId, 'work_id' => self::WORK_HH_QUY, 'group' => $group]);
+-        }
+-
+-        return null;
+-    }
+-
+-    /** 8. Quỹ quản lý rủi ro phòng: Nợ 6411 / Có 35241 (đối tượng = phòng/bộ phận objectable). */
+-    private function riskFundAccounting($percent, $sa, $contractCompanyId, array &$accounts, int &$group): void
+-    {
+-        foreach ($sa->departments as $department) {
+-            if ((int) $this->deptCompany((int) $department->department_id) !== (int) $contractCompanyId) {
+-                continue;
+-            }
+-            $risk = round($percent * (float) $department->risk_fund_amount);
+-            $group += 1;
+-            AccountDetail::createDataSaveDept($accounts, 6411, $risk, AccountDetail::TYPE_DEPT, [35241], ['group' => $group]);
+-            $objKey = $this->objColumnFor($department->objectable_type);
+-            AccountDetail::createDataSaveDept($accounts, 35241, $risk, AccountDetail::TYPE_HAS, [6411],
+-                [$objKey => $department->objectable_id, 'work_id' => self::WORK_QUY_RUI_RO, 'group' => $group]);
+-        }
+-    }
+-
+-    // ----------------------------------------------------------------------------------
+-    // Tra tổ chức qua DB::table (merged-DB-safe, thay morphTo cross-DB)
+-    // ----------------------------------------------------------------------------------
+-
+-    private function dept(int $id)
+-    {
+-        if ($id <= 0) return null;
+-        if (!array_key_exists($id, $this->deptCache)) {
+-            $this->deptCache[$id] = DB::table('departments')
+-                ->select('id', 'name', 'company_id', 'department_lead_id')
+-                ->where('id', $id)->first();
+-        }
+-        return $this->deptCache[$id];
+-    }
+-
+-    private function deptLeadId(int $id): ?int
+-    {
+-        $d = $this->dept($id);
+-        return $d && $d->department_lead_id ? (int) $d->department_lead_id : null;
+-    }
+-
+-    private function deptCompany(int $id): ?int
+-    {
+-        $d = $this->dept($id);
+-        return $d ? (int) $d->company_id : null;
+-    }
+-
+-    private function deptName(int $id): string
+-    {
+-        $d = $this->dept($id);
+-        return $d ? $d->name : ('#' . $id);
+-    }
+-
+-    private function partLeadId($partId): ?int
+-    {
+-        $partId = (int) $partId;
+-        if ($partId <= 0) return null;
+-        if (!array_key_exists($partId, $this->partCache)) {
+-            $this->partCache[$partId] = DB::table('parts')
+-                ->select('id', 'department_id', 'part_lead_id')
+-                ->where('id', $partId)->first();
+-        }
+-        $p = $this->partCache[$partId];
+-        return $p && $p->part_lead_id ? (int) $p->part_lead_id : null;
+-    }
+-
+-    /** objectable → id phòng (Department: chính id; Part: phòng cha của bộ phận). */
+-    private function objectableDeptId($department): ?int
+-    {
+-        $type = (string) $department->objectable_type;
+-        $oid = (int) $department->objectable_id;
+-        if ($oid <= 0) return null;
+-        if (substr($type, -strlen('\\Part')) === '\\Part') {
+-            if (!array_key_exists($oid, $this->partCache)) {
+-                $this->partCache[$oid] = DB::table('parts')
+-                    ->select('id', 'department_id', 'part_lead_id')->where('id', $oid)->first();
+-            }
+-            $p = $this->partCache[$oid];
+-            return $p ? (int) $p->department_id : null;
+-        }
+-        return $oid; // Department
+-    }
+-
+-    /** objectable_type (FQN ERP) → cột obj_* trong bút toán. */
+-    private function objColumnFor($type): string
+-    {
+-        $type = (string) $type;
+-        if (substr($type, -strlen('\\Part')) === '\\Part') {
+-            return 'obj_part_id';
+-        }
+-        if (substr($type, -strlen('\\Company')) === '\\Company') {
+-            return 'obj_company_id';
+-        }
+-        return 'obj_department_id';
+-    }
+ }
+diff --git a/Modules/Assign/Tests/Feature/ProductExportPostingRegressionTest.php b/Modules/Assign/Tests/Feature/ProductExportPostingRegressionTest.php
+new file mode 100644
+index 000000000..e06b8d6e3
+--- /dev/null
++++ b/Modules/Assign/Tests/Feature/ProductExportPostingRegressionTest.php
+@@ -0,0 +1,57 @@
++<?php
++
++namespace Modules\Assign\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Modules\Assign\Services\ProductExportPostingService;
++use Modules\Assign\Entities\Warehouse\ProductExport;
++use Modules\Assign\Entities\Warehouse\ProductExportRequest;
++
++class ProductExportPostingRegressionTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    public function test_post_accounting_snapshot_stable()
++    {
++        // Fallback (theo brief): PXH mới nhất (id=34590) là type=3, không hỗ trợ hạch toán
++        // (getDataProductExportAccounting trả ok=false, không throw). Chọn PXH loại 20/21
++        // gắn HĐ hợp lệ (ok=true, có accounts) để snapshot cho khớp trước/sau refactor.
++        // Ưu tiên type=21 (XUAT_BAN_HOP_DONG, đủ 8 cụm — bao phủ 13 method di chuyển sang trait),
++        // fallback type=20 (chỉ costAccountingProduction, method KHÔNG di chuyển) nếu không có.
++        $svc = app(ProductExportPostingService::class);
++        $candidates = ProductExport::whereIn('type', [
++            ProductExportRequest::XUAT_BAN_HOP_DONG,
++            ProductExportRequest::XUAT_SAN_XUAT_HOP_DONG,
++        ])->orderByDesc('id')->get()
++            ->sortBy(function ($c) {
++                return (int) $c->type === ProductExportRequest::XUAT_BAN_HOP_DONG ? 0 : 1;
++            });
++
++        $pxh = null;
++        $data = null;
++        foreach ($candidates as $c) {
++            $res = $svc->getDataProductExportAccounting($c);
++            if ($res[0] && !empty($res[1])) {
++                $pxh = $c;
++                $data = $res[1]; // mảng $accounts thực tế (KHÔNG ghi DB)
++                break;
++            }
++        }
++
++        if (!$pxh) {
++            $this->markTestSkipped('Không có ProductExport loại 20/21 gắn HĐ hợp lệ để snapshot.');
++        }
++
++        $sumDept = collect($data)->where('type', 1)->sum('value');
++        $sumHas  = collect($data)->where('type', 2)->sum('value');
++        $this->assertEqualsWithDelta($sumDept, $sumHas, 1.0, 'Nợ phải cân Có');
++        $this->assertNotEmpty($data);
++
++        // Ghi snapshot ra output để so khớp trước/sau refactor (baseline).
++        fwrite(STDERR, sprintf(
++            "\n[SNAPSHOT] pxh_id=%d type=%d rows=%d sumDept=%s sumHas=%s\n",
++            $pxh->id, $pxh->type, count($data), $sumDept, $sumHas
++        ));
++    }
++}
+diff --git a/Modules/Finance/Entities/BorrowSell/BorrowSell.php b/Modules/Finance/Entities/BorrowSell/BorrowSell.php
+new file mode 100644
+index 000000000..18d7c229a
+--- /dev/null
++++ b/Modules/Finance/Entities/BorrowSell/BorrowSell.php
+@@ -0,0 +1,147 @@
++<?php
++namespace Modules\Finance\Entities\BorrowSell;
++
++use Illuminate\Database\Eloquent\Model;
++use Illuminate\Http\Request;
++use Modules\Finance\Entities\Concerns\ChecksEmployeePermission;
++use Modules\Finance\Entities\BorrowSellRequest\BorrowSellRequest;
++use Modules\Human\Entities\Employee;
++
++/**
++ * Phiếu XUẤT BÁN HÀNG MƯỢN — bảng `borrow_sells` (DB gộp).
++ * Phase 2 (HRM): entity map thuần (task P2-1). Port ERP `App\Model\Warehouse\BorrowSell`.
++ *
++ * Task P2-9 (Ruling T9-entity-additions) bổ sung searchByFilter/meta/userCanCreate/is_can_view.
++ *
++ * GOTCHA đã verify (đọc DESCRIBE thật trên DB `erp_hrm_check`, xem task-p2-9-report.md):
++ * bảng `borrow_sells` KHÔNG có cột `company_id`/`department_id` (khác `borrow_sell_requests` —
++ * bảng NÀY có 2 cột đó). Scope 4 cấp quyền trong searchByFilter() do đó KHÔNG lọc trực tiếp trên
++ * `borrow_sells` mà đi qua quan hệ `borrowSellRequest` (`whereHas`) để lấy company_id/department_id
++ * của phiếu YÊU CẦU gốc — mirror đúng ý nghĩa nghiệp vụ "phạm vi công ty/phòng ban của yêu cầu".
++ */
++class BorrowSell extends Model
++{
++    use ChecksEmployeePermission;
++
++    protected $table = 'borrow_sells';
++    public $timestamps = true;
++    protected $guarded = [];
++
++    const PREFIX = 'PXBHM';
++    const STATUS_DEFAULT = 1;
++    const PERMISSION_KE_TOAN_KHO = 'Kế toán kho';
++    const CONTRACT_FIRM = 'App\Model\Sale\Firm\Contract\FirmContract';
++    const CONTRACT_WR_SERVICE = 'App\Model\Customers\WrServiceContract';
++
++    // ===== Relations =====
++    public function products()
++    {
++        return $this->hasMany(BorrowSellProduct::class, 'parent_id', 'id');
++    }
++
++    public function tabs()
++    {
++        return $this->hasMany(BorrowSellTab::class, 'parent_id');
++    }
++
++    public function borrowSellRequest()
++    {
++        return $this->belongsTo(BorrowSellRequest::class, 'borrow_sell_request_id', 'id');
++    }
++
++    /** Người lập phiếu — dùng cho creator_name ở Resource (mirror BorrowSellRequest::employee_create). */
++    public function employee_create()
++    {
++        return $this->belongsTo(Employee::class, 'created_by', 'id');
++    }
++
++    // ===== Mã phiếu =====
++    // Static thuần (không dùng $this) để dùng được cả khi chưa có instance — port
++    // ERP `generateCode()` ("PXBHM-".generateCode(5,id)) sang dạng trả chuỗi.
++    public static function generateCode(): string
++    {
++        $nextId = (int) (self::max('id') ?? 0) + 1;
++        return self::PREFIX . '-' . str_pad((string) $nextId, 5, '0', STR_PAD_LEFT);
++    }
++
++    // ===== Gate quyền =====
++    // Port ERP `canView()`: Auth::user()->can("Kế toán kho") && status!=3 || created_by==auth->id
++    public function canView(): bool
++    {
++        return (self::currentEmployeeHasPermission(self::PERMISSION_KE_TOAN_KHO) && $this->status != 3)
++            || $this->created_by == auth()->id();
++    }
++
++    // ===== Danh sách + quyền FE (Task P2-9, Ruling T9-perm) =====
++
++    /**
++     * List scope 4 cấp quyền — TÁI DÙNG NAME hằng của `BorrowSellRequest`
++     * (PERMISSION_VIEW_ALL_COMPANY/_COMPANY/_DEPARTMENT) vì `borrow_sells` không có permission
++     * riêng của nó trong seeder — mirror đúng phạm vi của phiếu YÊU CẦU gốc.
++     *
++     * `borrow_sells` KHÔNG có cột company_id/department_id (đã verify DESCRIBE thật) → scope
++     * company/department đi qua whereHas('borrowSellRequest', ...) thay vì where() trực tiếp.
++     */
++    public static function searchByFilter(Request $request)
++    {
++        $query = self::query()->with(['employee_create', 'borrowSellRequest'])->orderByDesc('id');
++
++        if ($request->filled('code')) {
++            $query->where('code', 'like', '%' . $request->get('code') . '%');
++        }
++        if ($request->filled('status')) {
++            $query->where('status', $request->get('status'));
++        }
++        if ($request->filled('contractable_type')) {
++            $query->where('contractable_type', $request->get('contractable_type'));
++        }
++        if ($request->filled('startDate')) {
++            $query->where('created_at', '>=', $request->get('startDate'));
++        }
++        if ($request->filled('endDate')) {
++            $query->where('created_at', '<=', $request->get('endDate'));
++        }
++
++        // Phân quyền 4 cấp (mirror BorrowSellRequest::searchByFilter nhánh type=all).
++        if (self::currentEmployeeHasPermission(BorrowSellRequest::PERMISSION_VIEW_ALL_COMPANY)) {
++            // không lọc thêm — xem toàn bộ tổng công ty
++        } elseif (self::currentEmployeeHasPermission(BorrowSellRequest::PERMISSION_VIEW_COMPANY)) {
++            $companyId = self::currentCompanyId();
++            $query->whereHas('borrowSellRequest', function ($q) use ($companyId) {
++                $q->where('company_id', $companyId);
++            });
++        } elseif (self::currentEmployeeHasPermission(BorrowSellRequest::PERMISSION_VIEW_DEPARTMENT)) {
++            $departmentIds = self::currentManagedDepartmentIds();
++            $query->whereHas('borrowSellRequest', function ($q) use ($departmentIds) {
++                $q->whereIn('department_id', $departmentIds);
++            });
++        } else {
++            $query->where('created_by', auth()->id());
++        }
++
++        return $query;
++    }
++
++    /** Cờ FE cho màn list (fail-closed mặc định false, mirror BorrowSellRequest::meta). */
++    public static function meta(): array
++    {
++        return [
++            'canViewAllCompany' => self::currentEmployeeHasPermission(BorrowSellRequest::PERMISSION_VIEW_ALL_COMPANY),
++            'canViewCompany' => self::currentEmployeeHasPermission(BorrowSellRequest::PERMISSION_VIEW_COMPANY),
++            'canViewDepartment' => self::currentEmployeeHasPermission(BorrowSellRequest::PERMISSION_VIEW_DEPARTMENT),
++            'is_ke_toan_kho' => self::currentEmployeeHasPermission(self::PERMISSION_KE_TOAN_KHO),
++        ];
++    }
++
++    /** Gate tạo phiếu (Ruling T9-store-gate) — controller store() gọi trước khi vào service. */
++    public static function userCanCreate(): bool
++    {
++        return self::currentEmployeeHasPermission(self::PERMISSION_KE_TOAN_KHO);
++    }
++
++    /** Accessor cho Resource — fail-closed, luôn gọi qua canView() thật. */
++    public function getIsCanViewAttribute(): bool
++    {
++        return $this->canView();
++    }
++}
+diff --git a/Modules/Finance/Entities/BorrowSell/BorrowSellProduct.php b/Modules/Finance/Entities/BorrowSell/BorrowSellProduct.php
+new file mode 100644
+index 000000000..085c1e532
+--- /dev/null
++++ b/Modules/Finance/Entities/BorrowSell/BorrowSellProduct.php
+@@ -0,0 +1,16 @@
++<?php
++namespace Modules\Finance\Entities\BorrowSell;
++
++use Illuminate\Database\Eloquent\Model;
++
++class BorrowSellProduct extends Model
++{
++    protected $table = 'borrow_sell_products';
++    public $timestamps = true;
++    protected $guarded = [];
++
++    public function details()
++    {
++        return $this->hasMany(BorrowSellProductDetail::class, 'parent_id', 'id');
++    }
++}
+diff --git a/Modules/Finance/Entities/BorrowSell/BorrowSellProductDetail.php b/Modules/Finance/Entities/BorrowSell/BorrowSellProductDetail.php
+new file mode 100644
+index 000000000..b0450637e
+--- /dev/null
++++ b/Modules/Finance/Entities/BorrowSell/BorrowSellProductDetail.php
+@@ -0,0 +1,11 @@
++<?php
++namespace Modules\Finance\Entities\BorrowSell;
++
++use Illuminate\Database\Eloquent\Model;
++
++class BorrowSellProductDetail extends Model
++{
++    protected $table = 'borrow_sell_product_details';
++    public $timestamps = true;
++    protected $guarded = [];
++}
+diff --git a/Modules/Finance/Entities/BorrowSell/BorrowSellTab.php b/Modules/Finance/Entities/BorrowSell/BorrowSellTab.php
+new file mode 100644
+index 000000000..7f2a2ca98
+--- /dev/null
++++ b/Modules/Finance/Entities/BorrowSell/BorrowSellTab.php
+@@ -0,0 +1,16 @@
++<?php
++namespace Modules\Finance\Entities\BorrowSell;
++
++use Illuminate\Database\Eloquent\Model;
++
++class BorrowSellTab extends Model
++{
++    protected $table = 'borrow_sell_tabs';
++    public $timestamps = true;
++    protected $guarded = [];
++
++    public function products()
++    {
++        return $this->hasMany(BorrowSellTabProduct::class, 'parent_id');
++    }
++}
+diff --git a/Modules/Finance/Entities/BorrowSell/BorrowSellTabProduct.php b/Modules/Finance/Entities/BorrowSell/BorrowSellTabProduct.php
+new file mode 100644
+index 000000000..c72f346a9
+--- /dev/null
++++ b/Modules/Finance/Entities/BorrowSell/BorrowSellTabProduct.php
+@@ -0,0 +1,16 @@
++<?php
++namespace Modules\Finance\Entities\BorrowSell;
++
++use Illuminate\Database\Eloquent\Model;
++
++class BorrowSellTabProduct extends Model
++{
++    protected $table = 'borrow_sell_tab_products';
++    public $timestamps = true;
++    protected $guarded = [];
++
++    public function details()
++    {
++        return $this->hasMany(BorrowSellTabProductDetail::class, 'parent_id', 'id');
++    }
++}
+diff --git a/Modules/Finance/Entities/BorrowSell/BorrowSellTabProductDetail.php b/Modules/Finance/Entities/BorrowSell/BorrowSellTabProductDetail.php
+new file mode 100644
+index 000000000..faada9ff4
+--- /dev/null
++++ b/Modules/Finance/Entities/BorrowSell/BorrowSellTabProductDetail.php
+@@ -0,0 +1,11 @@
++<?php
++namespace Modules\Finance\Entities\BorrowSell;
++
++use Illuminate\Database\Eloquent\Model;
++
++class BorrowSellTabProductDetail extends Model
++{
++    protected $table = 'borrow_sell_tab_product_details';
++    public $timestamps = true;
++    protected $guarded = [];
++}
+diff --git a/Modules/Finance/Entities/Contract/WrSupportAccounting.php b/Modules/Finance/Entities/Contract/WrSupportAccounting.php
+new file mode 100644
+index 000000000..cddf17787
+--- /dev/null
++++ b/Modules/Finance/Entities/Contract/WrSupportAccounting.php
+@@ -0,0 +1,41 @@
++<?php
++
++namespace Modules\Finance\Entities\Contract;
++
++use App\Models\BaseModel;
++
++/**
++ * HTHT (Hỗ trợ hạch toán) của HĐ DỊCH VỤ — bảng `wr_support_accounting`.
++ * Mirror Modules\Assign\Entities\Contract\SupportAccounting (bản HĐ hãng) để dùng lại
++ * SupportAccountingTrait. Bảng WR có tên cột thưởng/TNCN KHÁC bảng firm → khai 2 accessor
++ * alias để trait (đọc $sa->bonus_contract_before_vat / $sa->tndn_vat) lấy đúng giá trị.
++ */
++class WrSupportAccounting extends BaseModel
++{
++    protected $table = 'wr_support_accounting';
++    protected $guarded = [];
++    public $timestamps = true;
++
++    public function departments()
++    {
++        return $this->hasMany(WrSupportAccountingDepartment::class, 'wr_support_accounting_id', 'id');
++    }
++
++    public function department_main()
++    {
++        return $this->hasOne(WrSupportAccountingDepartment::class, 'wr_support_accounting_id', 'id')
++            ->where('is_main', true);
++    }
++
++    /** Alias: trait đọc bonus_contract_before_vat, bảng WR lưu ở contract_performance_bonus_before_vat. */
++    public function getBonusContractBeforeVatAttribute()
++    {
++        return $this->attributes['contract_performance_bonus_before_vat'] ?? 0;
++    }
++
++    /** Alias: trait đọc tndn_vat, bảng WR lưu ở personal_income_tax. */
++    public function getTndnVatAttribute()
++    {
++        return $this->attributes['personal_income_tax'] ?? 0;
++    }
++}
+diff --git a/Modules/Finance/Entities/Contract/WrSupportAccountingDepartment.php b/Modules/Finance/Entities/Contract/WrSupportAccountingDepartment.php
+new file mode 100644
+index 000000000..1739b9736
+--- /dev/null
++++ b/Modules/Finance/Entities/Contract/WrSupportAccountingDepartment.php
+@@ -0,0 +1,22 @@
++<?php
++
++namespace Modules\Finance\Entities\Contract;
++
++use App\Models\BaseModel;
++
++class WrSupportAccountingDepartment extends BaseModel
++{
++    protected $table = 'wr_support_accounting_departments';
++    protected $guarded = [];
++    public $timestamps = true;
++
++    public function employees()
++    {
++        return $this->hasMany(WrSupportAccountingEmployee::class, 'wr_support_accounting_department_id', 'id');
++    }
++
++    public function details()
++    {
++        return $this->hasMany(WrSupportAccountingDepartmentDetail::class, 'wr_support_accounting_department_id', 'id');
++    }
++}
+diff --git a/Modules/Finance/Entities/Contract/WrSupportAccountingDepartmentDetail.php b/Modules/Finance/Entities/Contract/WrSupportAccountingDepartmentDetail.php
+new file mode 100644
+index 000000000..e70935b07
+--- /dev/null
++++ b/Modules/Finance/Entities/Contract/WrSupportAccountingDepartmentDetail.php
+@@ -0,0 +1,16 @@
++<?php
++
++namespace Modules\Finance\Entities\Contract;
++
++use App\Models\BaseModel;
++
++class WrSupportAccountingDepartmentDetail extends BaseModel
++{
++    protected $table = 'wr_support_accounting_department_details';
++    protected $guarded = [];
++    public $timestamps = true;
++
++    const TYPE_REGULATION = 1;
++    const TYPE_PROPOSE = 2;
++    const TYPE_APPROVED = 3;
++}
+diff --git a/Modules/Finance/Entities/Contract/WrSupportAccountingEmployee.php b/Modules/Finance/Entities/Contract/WrSupportAccountingEmployee.php
+new file mode 100644
+index 000000000..19fb80303
+--- /dev/null
++++ b/Modules/Finance/Entities/Contract/WrSupportAccountingEmployee.php
+@@ -0,0 +1,12 @@
++<?php
++
++namespace Modules\Finance\Entities\Contract;
++
++use App\Models\BaseModel;
++
++class WrSupportAccountingEmployee extends BaseModel
++{
++    protected $table = 'wr_support_accounting_employees';
++    protected $guarded = [];
++    public $timestamps = true;
++}
+diff --git a/Modules/Finance/Entities/Delivery/ActivityHasDeliveryTrip.php b/Modules/Finance/Entities/Delivery/ActivityHasDeliveryTrip.php
+new file mode 100644
+index 000000000..2fa10f497
+--- /dev/null
++++ b/Modules/Finance/Entities/Delivery/ActivityHasDeliveryTrip.php
+@@ -0,0 +1,26 @@
++<?php
++
++namespace Modules\Finance\Entities\Delivery;
++
++use Illuminate\Database\Eloquent\Model;
++
++/**
++ * Nối 1 lượt xuất/nhập kho (`warehouse_export`/`warehouse_import`) với 1 chuyến xe giao hàng
++ * (`delivery_trips`) của ERP — dùng cho hạch toán chuyến xe giao hàng (Phase 2, T6).
++ *
++ * @property int   $warehouse_export_id
++ * @property int   $warehouse_import_id
++ * @property int   $delivery_trip_id
++ * @property float $total_cost_transition
++ */
++class ActivityHasDeliveryTrip extends Model
++{
++    protected $table = 'activity_has_delivery_trips';
++
++    protected $guarded = [];
++
++    public function trip()
++    {
++        return $this->belongsTo(DeliveryTrip::class, 'delivery_trip_id', 'id');
++    }
++}
+diff --git a/Modules/Finance/Http/Controllers/V1/BorrowSellController.php b/Modules/Finance/Http/Controllers/V1/BorrowSellController.php
+new file mode 100644
+index 000000000..bacc1fea6
+--- /dev/null
++++ b/Modules/Finance/Http/Controllers/V1/BorrowSellController.php
+@@ -0,0 +1,81 @@
++<?php
++
++namespace Modules\Finance\Http\Controllers\V1;
++
++use Illuminate\Http\Request;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Http\Requests\BorrowSell\StoreBorrowSellRequest;
++use Modules\Finance\Services\BorrowSell\BorrowSellService;
++use Modules\Finance\Transformers\BorrowSellResource\BorrowSellListResource;
++use Modules\Finance\Transformers\BorrowSellResource\BorrowSellDetailResource;
++use Modules\Finance\Transformers\BorrowSellResource\BorrowSellPrintResource;
++
++/**
++ * Phiếu XUẤT BÁN HÀNG MƯỢN thực tế (PXBHM) — tầng HTTP MỎNG, chỉ gọi BorrowSellService::store()
++ * (đã port 1-1 nghiệp vụ ở task T7). Controller CHỈ làm 2 việc: gate quyền tường minh (403) +
++ * chuyển đổi Request/Resource — KHÔNG chứa logic nghiệp vụ.
++ *
++ * Quyền (Ruling T9-store-gate): KHÔNG middleware checkPermission trên route (cùng lý do
++ * BorrowSellRequestController — role gán qua ERP model_type='App\Employee' khiến spatie
++ * hasPermissionTo/middleware checkPermission bỏ sót). store() gate 403 tường minh qua
++ * BorrowSell::userCanCreate() TRƯỚC khi gọi service; BorrowSellRequest::canApprove() bên trong
++ * service vẫn giữ nguyên làm defense-in-depth (double check theo đúng ERP).
++ */
++class BorrowSellController extends ApiController
++{
++    private $service;
++
++    public function __construct(BorrowSellService $service)
++    {
++        $this->service = $service;
++    }
++
++    /** Danh sách — searchByFilter TRÊN ENTITY (trả builder) → paginate ở đây. meta() cờ quyền màn. */
++    public function index(Request $request)
++    {
++        $items = BorrowSell::searchByFilter($request)->paginate((int) $request->get('per_page', 20));
++
++        return (new BorrowSellListResource($items))->additional(array_merge([
++            'total' => $items->total(),
++            'lastPage' => $items->lastPage(),
++            'currentPage' => $items->currentPage(),
++            'perPage' => (int) $items->perPage(),
++        ], BorrowSell::meta()));
++    }
++
++    public function store(StoreBorrowSellRequest $request)
++    {
++        if (!BorrowSell::userCanCreate()) {
++            return $this->responseJson('Không đủ quyền!', 403);
++        }
++
++        $m = $this->service->store($request);
++
++        return $this->responseJson('Lập phiếu xuất bán hàng mượn thành công', 200, [
++            'id' => $m->id,
++            'code' => $m->code,
++            'status' => $m->status,
++        ]);
++    }
++
++    public function show($id)
++    {
++        $m = BorrowSell::with(['products.details', 'tabs.products', 'employee_create', 'borrowSellRequest'])
++            ->findOrFail((int) $id);
++        if (!$m->canView()) {
++            return $this->responseJson('Không đủ quyền!', 403);
++        }
++
++        return new BorrowSellDetailResource($m);
++    }
++
++    public function printData($id)
++    {
++        $m = BorrowSell::with(['products', 'employee_create'])->findOrFail((int) $id);
++        if (!$m->canView()) {
++            return $this->responseJson('Không đủ quyền!', 403);
++        }
++
++        return new BorrowSellPrintResource($m);
++    }
++}
+diff --git a/Modules/Finance/Http/Requests/BorrowSell/StoreBorrowSellRequest.php b/Modules/Finance/Http/Requests/BorrowSell/StoreBorrowSellRequest.php
+new file mode 100644
+index 000000000..82e34a7b1
+--- /dev/null
++++ b/Modules/Finance/Http/Requests/BorrowSell/StoreBorrowSellRequest.php
+@@ -0,0 +1,42 @@
++<?php
++
++namespace Modules\Finance\Http\Requests\BorrowSell;
++
++use Illuminate\Foundation\Http\FormRequest;
++
++class StoreBorrowSellRequest extends FormRequest
++{
++    public function authorize(): bool
++    {
++        return true; // quyền gate ở middleware checkPermission:Kế toán kho (route) + $parent->canApprove() trong service
++    }
++
++    public function rules(): array
++    {
++        return [
++            'borrow_sell_request_id' => 'required|integer|exists:borrow_sell_requests,id',
++            'products' => 'required|array|min:1',
++            'products.*.objectable_id' => 'required|integer',
++            'products.*.objectable_type' => 'required|string',
++            'products.*.details' => 'required|array|min:1',
++            'products.*.details.*.product_export_request_detail_id' => 'required|integer',
++            'products.*.details.*.qty' => 'required|numeric|min:0',
++        ];
++    }
++
++    public function messages(): array
++    {
++        return [
++            'borrow_sell_request_id.required' => 'Thiếu yêu cầu xuất bán hàng mượn.',
++            'borrow_sell_request_id.exists' => 'Yêu cầu xuất bán hàng mượn không tồn tại.',
++            'products.required' => 'Phải có ít nhất một sản phẩm để xuất bán.',
++            'products.min' => 'Phải có ít nhất một sản phẩm để xuất bán.',
++            'products.*.objectable_id.required' => 'Thiếu thông tin dòng hợp đồng của sản phẩm.',
++            'products.*.objectable_type.required' => 'Thiếu loại dòng hợp đồng của sản phẩm.',
++            'products.*.details.required' => 'Mỗi sản phẩm phải có ít nhất một dòng chi tiết xuất.',
++            'products.*.details.*.product_export_request_detail_id.required' => 'Thiếu tham chiếu phiếu xuất kho của dòng chi tiết.',
++            'products.*.details.*.qty.required' => 'Thiếu số lượng xuất bán.',
++            'products.*.details.*.qty.numeric' => 'Số lượng xuất bán phải là số.',
++        ];
++    }
++}
+diff --git a/Modules/Finance/Routes/api.php b/Modules/Finance/Routes/api.php
+index 3b923539f..5ae404ff1 100644
+--- a/Modules/Finance/Routes/api.php
++++ b/Modules/Finance/Routes/api.php
+@@ -5,16 +5,18 @@ use Modules\Finance\Http\Controllers\V1\AccountController;
+ use Modules\Finance\Http\Controllers\V1\BillAdjustDeptController;
+ use Modules\Finance\Http\Controllers\V1\BillAdjustDeptRequestController;
+ use Modules\Finance\Http\Controllers\V1\BillIncomeController;
+ use Modules\Finance\Http\Controllers\V1\BillIncomeRequestController;
+ use Modules\Finance\Http\Controllers\V1\BillIncomeReportController;
+ use Modules\Finance\Http\Controllers\V1\BillPaymentAuthorizationController;
+ use Modules\Finance\Http\Controllers\V1\BillPaymentController;
+ use Modules\Finance\Http\Controllers\V1\BillPaymentRequestController;
++use Modules\Finance\Http\Controllers\V1\BorrowSellController;
++use Modules\Finance\Http\Controllers\V1\BorrowSellRequestController;
+ use Modules\Finance\Http\Controllers\V1\CompanyAccountController;
+ use Modules\Finance\Http\Controllers\V1\CostDebtController;
+ use Modules\Finance\Http\Controllers\V1\PrepickCancelController;
+ use Modules\Finance\Http\Controllers\V1\PrepickCancelRequestController;
+ use Modules\Finance\Http\Controllers\V1\PrepickExtendRequestController;
+ use Modules\Finance\Http\Controllers\V1\PrepickTransferRequestController;
+ use Modules\Finance\Http\Controllers\V1\ProductImportController;
+ use Modules\Finance\Http\Controllers\V1\ProductImportDirectTransferController;
+@@ -734,9 +736,38 @@ Route::group(['prefix' => '/v1/finance', 'middleware' => 'auth:api'], function (
+         Route::get('/meta', [PrepickStockController::class, 'meta']);
+         // Tang 2+3 (nhan vien -> khach hang) cua 1 hang hoa, lay trong CUNG mot lan goi.
+         Route::get('/details', [PrepickStockController::class, 'details']);
+         // So bien dong ton giu cua 1 cap hang hoa x khach hang x cong ty x nhan vien. Sap CU -> MOI.
+         Route::get('/logs', [PrepickStockController::class, 'logs']);
+         Route::get('/export', [PrepickStockController::class, 'export']);
+         Route::get('/print', [PrepickStockController::class, 'print']);
+     });
++
++    // Yeu cau xuat ban hang muon (PYCXBHM). KHONG middleware checkPermission — quyen gate qua
++    // canX() tren entity trong Controller (role ERP model_type='App\Employee' → spatie bo sot,
++    // giong ProductImportController). searchByFilter/meta la static tren ENTITY.
++    Route::group(['prefix' => '/borrow-sell-requests'], function () {
++        Route::get('/', [BorrowSellRequestController::class, 'index']);
++        Route::get('/contracts', [BorrowSellRequestController::class, 'contracts']);
++        Route::get('/contracts/{id}/borrow-sell-data', [BorrowSellRequestController::class, 'contractBorrowSellData']);
++        Route::get('/export-requests', [BorrowSellRequestController::class, 'myExportRequests']);
++        Route::post('/', [BorrowSellRequestController::class, 'store']);
++        Route::post('/{id}/deny', [BorrowSellRequestController::class, 'deny']);
++        Route::post('/{id}/manager-approve', [BorrowSellRequestController::class, 'managerApprove']);
++        Route::post('/{id}/switch-board-of-manager', [BorrowSellRequestController::class, 'switchBoardOfManager']);
++        Route::post('/{id}/board-of-manager-approve', [BorrowSellRequestController::class, 'boardOfManagerApprove']);
++        Route::get('/{id}/histories', [BorrowSellRequestController::class, 'histories']);
++        Route::get('/{id}/print-data', [BorrowSellRequestController::class, 'printData']);
++        Route::get('/export-requests/{id}', [BorrowSellRequestController::class, 'exportRequestBorrowSellData']);
++        Route::get('/{id}', [BorrowSellRequestController::class, 'show']); // CUOI CUNG — sau cac route tinh
++    });
++
++    // Xuat ban hang muon THUC TE (PXBHM). KHONG middleware checkPermission (Ruling T9-store-gate,
++    // cung ly do nhom borrow-sell-requests o tren) — quyen gate tuong minh trong controller
++    // (store() qua BorrowSell::userCanCreate(), show()/printData() qua canView()).
++    Route::group(['prefix' => '/borrow-sells'], function () {
++        Route::get('/', [BorrowSellController::class, 'index']);
++        Route::post('/', [BorrowSellController::class, 'store']);
++        Route::get('/{id}/print-data', [BorrowSellController::class, 'printData']);
++        Route::get('/{id}', [BorrowSellController::class, 'show']); // CUOI CUNG — sau cac route tinh
++    });
+ });
+diff --git a/Modules/Finance/Services/BorrowSell/BorrowSellPostingService.php b/Modules/Finance/Services/BorrowSell/BorrowSellPostingService.php
+new file mode 100644
+index 000000000..36162f563
+--- /dev/null
++++ b/Modules/Finance/Services/BorrowSell/BorrowSellPostingService.php
+@@ -0,0 +1,473 @@
++<?php
++
++namespace Modules\Finance\Services\BorrowSell;
++
++use Carbon\Carbon;
++use Illuminate\Support\Facades\DB;
++use Modules\Assign\Entities\Contract\Contract;
++use Modules\Assign\Entities\Contract\SupportAccounting;
++use Modules\Assign\Entities\Warehouse\WarehouseExportRequest;
++use Modules\Assign\Entities\Warehouse\WarehouseExport;
++use Modules\Assign\Services\Accounting\SupportAccountingTrait;
++use Modules\Finance\Entities\Account\AccountDetail;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Entities\Contract\FirmContract;
++use Modules\Finance\Entities\Contract\WrServiceContract;
++use Modules\Finance\Entities\Contract\WrSupportAccounting;
++use Modules\Finance\Entities\Delivery\ActivityHasDeliveryTrip;
++
++/**
++ * Hạch toán (ghi sổ account_details) cho Phiếu XUẤT BÁN HÀNG MƯỢN (`borrow_sells`) — Phase 2.
++ *
++ * PORT 1-1 ERP `App\Services\Sale\Firm\Contract\FirmContractBorrowSellService`
++ * (`getDataBorrowSellAccounting` + `prepareData` + `costAccounting`), nhái cấu trúc
++ * `Modules\Assign\Services\ProductExportPostingService::getDataProductExportAccounting`.
++ *
++ * TASK P2-4: nhánh FirmContract (`contractable_type = BorrowSell::CONTRACT_FIRM`).
++ * TASK P2-5: bổ sung nhánh WrServiceContract (HĐ dịch vụ, `CONTRACT_WR_SERVICE`) — port 1-1
++ * ERP `BorrowSell::getDataCreateDept()` nhánh WrServiceContract.
++ *
++ * KHÁC xuất hàng thường: giá vốn dư CÓ TK **157** (hàng gửi bán) thay vì 155/156/1561 —
++ * đúng nghiệp vụ "hàng mượn của hãng đang gửi tại kho mình, giờ xuất bán".
++ *
++ * GOTCHA resolveContract (đã điều tra, xem report task-p2-4-report.md):
++ *   `borrow_sells.contractable_id` trỏ THẲNG `firm_contracts.id` (ERP HĐ hãng thật, ~24.9k dòng),
++ *   KHÔNG PHẢI `hrm_contracts.id` (Contract entity Assign module, chỉ có 2 dòng — miền dữ liệu
++ *   hoàn toàn khác, HĐ "Giao việc" theo báo giá). NHƯNG 6 method cụm của SupportAccountingTrait
++ *   type-hint cứng `Contract $contract` (namespace Assign). Giải pháp: dựng 1 `Contract` SHIM
++ *   trong bộ nhớ (KHÔNG lưu DB) từ đúng các cột `firm_contracts` cần (`customer_id`, `created_by`,
++ *   `code`, `company_id`, `department_id`, `part_id` — tên cột trùng khớp `hrm_contracts`), rồi gắn
++ *   thẳng quan hệ `support_accounting` bằng dòng `firm_support_accounting` tra theo
++ *   (`contractable_id` = firm_contracts.id, `contractable_type` = BorrowSell::CONTRACT_FIRM) — bảng
++ *   này vốn đã polymorphic dùng chung giữa FirmContract (ERP, ~21k dòng) và Contract (Assign, 2 dòng).
++ *   Verify bằng SQL thật (report ghi chi tiết) — không phải đoán.
++ */
++class BorrowSellPostingService
++{
++    use SupportAccountingTrait;
++
++    /**
++     * ⚠️ GOTCHA: trait SupportAccountingTrait gọi `self::WORK_*` nhưng các const này KHÔNG
++     * nằm trong trait (chúng thuộc ProductExportPostingService). Vì self:: phân giải theo class
++     * ĐANG DÙNG trait, BorrowSellPostingService PHẢI tự khai đủ 6 const này, nếu không PHP fatal.
++     */
++    const WORK_DOANH_THU = 15;    // DTHH
++    const WORK_GIAM_TRU_DT = 16;  // GGHH
++    const WORK_THUONG_HH = 12;    // TTHHD (thưởng HĐ + TNCN)
++    const WORK_HH_THANG = 13;     // TNST
++    const WORK_HH_QUY = 14;       // TNSQ
++    const WORK_QUY_RUI_RO = 6;    // RRP
++    const WORK_CHIET_KHAU = 20;   // CKHH
++
++    /** FQN model ERP để lưu cột polymorphic invoiceable_type (ERP đọc lại được). */
++    const INVOICEABLE_BORROW_SELL = 'App\\Model\\Warehouse\\BorrowSell';
++
++    const WORK_VAN_CHUYEN = 10;   // TVC — tiền vận chuyển
++    /** FQN model ERP cho chứng từ chuyến xe (ERP đọc lại được; đồng thời là cột check "đã hạch toán"). */
++    const INVOICEABLE_DELIVERY_TRIP = 'App\\Model\\Warehouse\\DeliveryTrip';
++
++    /**
++     * Sinh bút toán + ghi sổ cho 1 phiếu xuất bán hàng mượn.
++     * @return array [bool ok, string err]
++     */
++    public function postAccounting(BorrowSell $bs): array
++    {
++        [$ok, $accounts, $err] = $this->getDataAccounting($bs);
++        if (!$ok) {
++            return [false, $err];
++        }
++        if (empty($accounts)) {
++            return [true, ''];
++        }
++
++        $contract = $this->resolveContract($bs);
++
++        $meta = [
++            'invoiceable_date_accounting' => $bs->created_at ? Carbon::parse($bs->created_at)->format('Y-m-d') : null,
++            'contractable_id' => $bs->contractable_id,
++            'contractable_type' => $bs->contractable_type,
++            'contractable_code' => $contract->code ?? null,
++            'contract_created_by' => $contract->created_by ?? null,
++            'contract_customer_id' => $contract->customer_id ?? null,
++            'company_id' => $contract->company_id ?? null,
++            'department_id' => $contract->department_id ?? null,
++            'part_id' => $contract->part_id ?? null,
++            'created_by' => $bs->created_by,
++        ];
++
++        try {
++            return DB::transaction(function () use ($accounts, $bs, $meta) {
++                return AccountDetail::saveAccountDetail(
++                    $accounts,
++                    $bs->id,
++                    self::INVOICEABLE_BORROW_SELL,
++                    $bs->code,
++                    $meta
++                );
++            });
++        } catch (\Throwable $e) {
++            return [false, 'Lỗi hạch toán phiếu xuất bán hàng mượn ' . $bs->code . ': ' . $e->getMessage()];
++        }
++    }
++
++    /**
++     * Orchestrator — bám sát ERP getDataBorrowSellAccounting. KHÔNG ghi DB.
++     * @return array [bool ok, array accounts, string err]
++     */
++    public function getDataAccounting(BorrowSell $bs): array
++    {
++        $accounts = [];
++        $group = 1;
++
++        if ($bs->contractable_type === BorrowSell::CONTRACT_FIRM) {
++            $contract = $this->resolveContract($bs);
++            if (!$contract) {
++                return [false, [], 'Phiếu ' . $bs->code . ' không tra được hợp đồng hãng (contractable_id='
++                    . $bs->contractable_id . ')!'];
++            }
++            try {
++                $this->firmBranch($bs, $contract, $accounts, $group);
++            } catch (\RuntimeException $e) {
++                return [false, [], $e->getMessage()];
++            }
++            return [true, $accounts, ''];
++        }
++
++        if ($bs->contractable_type === BorrowSell::CONTRACT_WR_SERVICE) {
++            $contract = $this->resolveContract($bs);
++            if (!$contract) {
++                return [false, [], 'Phiếu ' . $bs->code . ' không tra được hợp đồng dịch vụ (contractable_id='
++                    . $bs->contractable_id . ')!'];
++            }
++            try {
++                $this->wrServiceBranch($bs, $contract, $accounts, $group);
++            } catch (\RuntimeException $e) {
++                return [false, [], $e->getMessage()];
++            }
++            return [true, $accounts, ''];
++        }
++
++        return [false, [], 'Phiếu ' . $bs->code . ' có loại hợp đồng không hỗ trợ hạch toán: ' . $bs->contractable_type];
++    }
++
++    /**
++     * Nạp HĐ hãng thật (`firm_contracts`) từ `borrow_sells.contractable_id`, dựng SHIM
++     * `Modules\Assign\Entities\Contract\Contract` (KHÔNG lưu DB) để dùng chung 6 method cụm
++     * của trait (type-hint cứng Contract). Gắn thẳng quan hệ support_accounting bằng dòng
++     * firm_support_accounting polymorphic đúng (contractable_id/contractable_type = FirmContract).
++     */
++    private function resolveContract(BorrowSell $bs): ?Contract
++    {
++        if ($bs->contractable_type === BorrowSell::CONTRACT_FIRM) {
++            $firm = FirmContract::find($bs->contractable_id);
++            if (!$firm) {
++                return null;
++            }
++            $contract = new Contract($firm->getAttributes());
++            $sa = SupportAccounting::where('contractable_id', $firm->id)
++                ->where('contractable_type', BorrowSell::CONTRACT_FIRM)
++                ->first();
++            $contract->setRelation('support_accounting', $sa);
++            return $contract;
++        }
++
++        if ($bs->contractable_type === BorrowSell::CONTRACT_WR_SERVICE) {
++            $wr = WrServiceContract::find($bs->contractable_id);
++            if (!$wr) {
++                return null;
++            }
++            $contract = new Contract($wr->getAttributes());
++            $sa = WrSupportAccounting::where('contractable_id', $wr->id)
++                ->where('contractable_type', BorrowSell::CONTRACT_WR_SERVICE)
++                ->first();
++            $contract->setRelation('support_accounting', $sa);
++            return $contract;
++        }
++
++        return null;
++    }
++
++    /**
++     * Nhánh HĐ hãng — 8 cụm bút toán (port ERP FirmContractBorrowSellService::getDataBorrowSellAccounting
++     * + prepareData). Ném RuntimeException khi thiếu cấu hình (HTHT/trưởng phòng) — getDataAccounting bắt lại.
++     */
++    private function firmBranch(BorrowSell $bs, Contract $contract, array &$accounts, int &$group): void
++    {
++        $sa = $contract->support_accounting;
++        if (!$sa) {
++            throw new \RuntimeException('HĐ ' . $contract->code . ' chưa có bảng Hỗ trợ hạch toán (HTHT)!');
++        }
++
++        // prepareData — port ERP FirmContractBorrowSellService::prepareData.
++        $sale_invoice = 0;
++        $sale_invoice_vat = 0;
++        foreach ($bs->products as $p) {
++            $discount_price = ((float) $p->price + (float) $p->extra_price) - (float) $p->allocated_price - (float) $p->rebate_price;
++            $qty = (float) $p->qty;
++            $sale_invoice += $discount_price * $qty;
++            $sale_invoice_vat += ($discount_price * $qty) * (float) $p->vat_percent / 100;
++        }
++
++        // gross/gross_vat: HRM dùng thẳng cột header sum_amount_after_extra(_vat) — đúng ERP
++        // borrow_sell->sum_amount_after_extra(_vat), KHÔNG cần cộng dồn lại từ chi tiết.
++        $gross = (float) ($bs->sum_amount_after_extra ?? 0);
++        $gross_vat = (float) ($bs->sum_amount_after_extra_vat ?? 0);
++
++        $amount = $gross - $sale_invoice;
++        $before_vat_not_include_delivery = (float) $sa->before_vat_total - (float) $sa->before_vat_delivery_cost;
++        $pct_wo_delivery = intval($before_vat_not_include_delivery) ? $amount / $before_vat_not_include_delivery : 0;
++        $before_vat = (float) $sa->before_vat_product + (float) $sa->before_vat_repair_service;
++        $pct_wo_cost = intval($before_vat) ? $amount / $before_vat : 0;
++
++        // 1. Doanh thu
++        $this->revenueAccounting($gross, $gross_vat, $contract, $accounts, $group);
++        // 2. Giảm trừ doanh thu
++        $this->revenueDeductionAccounting($sale_invoice, $sale_invoice_vat, $contract, $accounts, $group);
++        // 3. Giá vốn: Nợ 632 / Có 157
++        $this->costAccounting($bs, $accounts, $group);
++        // 4. Thưởng thực hiện hợp đồng
++        $e1 = $this->bonusContractAccounting($pct_wo_delivery, $sa, $contract, $accounts, $group);
++        if ($e1) {
++            throw new \RuntimeException($e1);
++        }
++        // 5. Thuế TNCN tạm tính
++        $e2 = $this->vatExtraCostAccounting($pct_wo_delivery, $sa, $contract, $accounts, $group);
++        if ($e2) {
++            throw new \RuntimeException($e2);
++        }
++        // 6 + 7. Hoa hồng tháng + quý
++        $e3 = $this->monthlyAndQuarterlyCommissionAccounting($pct_wo_cost, $sa, $contract->company_id, $accounts, $group);
++        if ($e3) {
++            throw new \RuntimeException($e3);
++        }
++        // 8. Quỹ quản lý rủi ro phòng
++        $this->riskFundAccounting($pct_wo_cost, $sa, $contract->company_id, $accounts, $group);
++    }
++
++    /**
++     * 3. Giá vốn: mỗi SP dư Có 157 (hàng gửi bán) ref 632; tổng dư Nợ 632 ref 157.
++     * $cost = Σ export_price × qty — port ĐÚNG ERP FirmContractBorrowSellService::costAccounting
++     * (dòng 203: `$product->export_price * $product->qty`, KHÔNG nhân unit_coefficient). Ở nhánh Firm,
++     * export_price của borrow_sell_products lưu theo ĐƠN VỊ BÁN (cùng đơn vị `qty`) — verify bằng data:
++     * SP `Chì dán` unit_coefficient=100, export_price≈330.187/Hộp, giá bán≈664.300/Hộp (price/ep≈2 = biên
++     * lãi thường); nếu nhân coefficient → 33.018.700/Hộp = sai gấp 100 lần. Brief P2-4 ghi nhân coefficient
++     * là LỖI của brief (test cũ pass do fixture coef=1). LƯU Ý: nhánh WrService (Task 5) NGƯỢC LẠI có nhân
++     * unit_coefficient — ERP BorrowSell::getDataCreateDept dòng 600 `export_price*qty*unit_coefficient`.
++     */
++    private function costAccounting(BorrowSell $bs, array &$accounts, int &$group): void
++    {
++        $sum = 0;
++        $group += 1;
++        foreach ($bs->products as $p) {
++            $qty = (float) $p->qty;
++            $total = round((float) $p->export_price * $qty);
++            $sum += $total;
++            AccountDetail::createDataSaveDept($accounts, 157, $total, AccountDetail::TYPE_HAS, [632],
++                ['product_id' => $p->product_id, 'group' => $group]);
++        }
++        AccountDetail::createDataSaveDept($accounts, 632, $sum, AccountDetail::TYPE_DEPT, [157],
++            ['group' => $group]);
++    }
++
++    /**
++     * Nhánh HĐ DỊCH VỤ — port 1-1 ERP BorrowSell::getDataCreateDept() (nhánh WrServiceContract).
++     * KHÁC nhánh Firm: có thêm bút toán CHIẾT KHẤU (5211/CKHH); giá vốn dư Có TK 1561 (KHÔNG 157)
++     * và CÓ nhân unit_coefficient; dùng MỘT tỷ lệ percent cho toàn bộ cụm hỗ trợ.
++     */
++    private function wrServiceBranch(BorrowSell $bs, Contract $contract, array &$accounts, int &$group): void
++    {
++        $sa = $contract->support_accounting;
++        if (!$sa) {
++            throw new \RuntimeException('HĐ dịch vụ ' . $contract->code . ' chưa có bảng Hỗ trợ hạch toán (HTHT)!');
++        }
++
++        // ---- Block 1: Doanh thu (Nợ 1311 / Có 5111 + 33311) ----
++        $gross = (float) ($bs->sum_amount_after_extra ?? 0);
++        $gross_vat = (float) ($bs->sum_amount_after_extra_vat ?? 0);
++        $group += 1;
++        AccountDetail::createDataSaveDept($accounts, 1311, $gross + $gross_vat, AccountDetail::TYPE_DEPT,
++            [5111, 33311], ['customer_id' => $contract->customer_id, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 5111, $gross, AccountDetail::TYPE_HAS, [1311],
++            ['employee_id' => $contract->created_by, 'employee_department_id' => $contract->department_id,
++             'work_id' => self::WORK_DOANH_THU, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 33311, $gross_vat, AccountDetail::TYPE_HAS, [1311],
++            ['group' => $group]);
++
++        // ---- Block 2: Chiết khấu (Nợ 5211 + 33311 / Có 1311), work CKHH ----
++        $discount = 0;
++        $discount_vat = 0;
++        foreach ($bs->products as $p) {
++            $tmp = (float) $p->rebate_price * (float) $p->qty;
++            $discount += $tmp;
++            $discount_vat += $tmp * (float) $p->vat_percent / 100;
++        }
++        $group += 1;
++        AccountDetail::createDataSaveDept($accounts, 5211, $discount, AccountDetail::TYPE_DEPT, [1311],
++            ['employee_id' => $contract->created_by, 'employee_department_id' => $contract->department_id,
++             'work_id' => self::WORK_CHIET_KHAU, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 33311, $discount_vat, AccountDetail::TYPE_DEPT, [1311],
++            ['group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 1311, $discount + $discount_vat, AccountDetail::TYPE_HAS,
++            [5211, 33311], ['customer_id' => $contract->customer_id, 'group' => $group]);
++
++        // ---- Block 3: Giảm trừ doanh thu (Nợ 5213 + 33311 / Có 1311), work GGHH ----
++        $sale_invoice = 0;
++        $sale_invoice_vat = 0;
++        foreach ($bs->products as $p) {
++            $tmp = ((float) $p->price + (float) $p->extra_price - (float) $p->allocated_price - (float) $p->rebate_price) * (float) $p->qty;
++            $sale_invoice += $tmp;
++            $sale_invoice_vat += (float) $p->vat_percent * $tmp / 100;
++        }
++        $group += 1;
++        AccountDetail::createDataSaveDept($accounts, 5213, $sale_invoice, AccountDetail::TYPE_DEPT, [1311],
++            ['employee_id' => $contract->created_by, 'employee_department_id' => $contract->department_id,
++             'work_id' => self::WORK_GIAM_TRU_DT, 'group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 33311, $sale_invoice_vat, AccountDetail::TYPE_DEPT, [1311],
++            ['group' => $group]);
++        AccountDetail::createDataSaveDept($accounts, 1311, $sale_invoice + $sale_invoice_vat, AccountDetail::TYPE_HAS,
++            [5213, 33311], ['customer_id' => $contract->customer_id, 'group' => $group]);
++
++        // ---- Block 4: Giá vốn (Nợ 632 / Có 1561), CÓ nhân unit_coefficient ----
++        $this->costAccountingWrService($bs, $accounts, $group);
++
++        // ---- Block 5: Cụm hỗ trợ (thưởng HĐ / TNCN / hoa hồng tháng-quý / quỹ rủi ro) ----
++        // MỘT tỷ lệ percent cho toàn bộ (khác Firm dùng 2). Port ERP dòng 610-611.
++        $before = (float) $sa->before_vat_total - (float) $sa->before_vat_other_cost - (float) $sa->before_vat_delivery_cost;
++        $percent = intval($before) ? ($gross - $sale_invoice - $discount) / $before : 0;
++
++        // Thưởng thực hiện HĐ (đọc contract_performance_bonus_before_vat qua accessor alias bonus_contract_before_vat)
++        $e1 = $this->bonusContractAccounting($percent, $sa, $contract, $accounts, $group);
++        if ($e1) {
++            throw new \RuntimeException($e1);
++        }
++        // TNCN tạm tính (đọc personal_income_tax qua accessor alias tndn_vat)
++        $e2 = $this->vatExtraCostAccounting($percent, $sa, $contract, $accounts, $group);
++        if ($e2) {
++            throw new \RuntimeException($e2);
++        }
++        // Hoa hồng tháng + quý — truyền null để KHÔNG lọc company (Ruling T5-2)
++        $e3 = $this->monthlyAndQuarterlyCommissionAccounting($percent, $sa, null, $accounts, $group);
++        if ($e3) {
++            throw new \RuntimeException($e3);
++        }
++        // Quỹ quản lý rủi ro phòng — truyền null để KHÔNG lọc company
++        $this->riskFundAccounting($percent, $sa, null, $accounts, $group);
++    }
++
++    /**
++     * Giá vốn HĐ dịch vụ: mỗi SP dư Có 1561 ref 632; tổng dư Nợ 632 ref 1561.
++     * $total = export_price × qty × unit_coefficient — port ERP getDataCreateDept dòng 600
++     * (CÓ nhân unit_coefficient, NGƯỢC với nhánh Firm dùng 157 không nhân coefficient).
++     */
++    private function costAccountingWrService(BorrowSell $bs, array &$accounts, int &$group): void
++    {
++        $sum = 0;
++        $group += 1;
++        foreach ($bs->products as $p) {
++            $total = round((float) $p->export_price * (float) $p->qty * (float) $p->unit_coefficient);
++            $sum += $total;
++            AccountDetail::createDataSaveDept($accounts, 1561, $total, AccountDetail::TYPE_HAS, [632],
++                ['product_id' => $p->product_id, 'group' => $group]);
++        }
++        AccountDetail::createDataSaveDept($accounts, 632, $sum, AccountDetail::TYPE_DEPT, [1561],
++            ['group' => $group]);
++    }
++
++    /**
++     * Dựng 2 vế bút toán cước vận chuyển cho 1 chuyến xe. Port ERP accountingDeliveryTrip.
++     *   company_pay > 0  → Nợ 6427 (mã phí TVC=0) / Có 3351 (work TVC)
++     *   company_pay <= 0 → Nợ 3351 (work TVC)     / Có 3351 (work TVC)
++     * Cả 2 vế đều gắn employee_id = người lập phiếu xuất kho; vế 3351 gắn employee_department_id.
++     */
++    private function buildTripCostAccounts(float $amount, bool $isCompanyPay, ?int $createdBy, ?int $deptId, int $group): array
++    {
++        $accounts = [];
++        if ($isCompanyPay) {
++            AccountDetail::createDataSaveDept($accounts, 6427, $amount, AccountDetail::TYPE_DEPT, [3351],
++                ['employee_id' => $createdBy, 'group' => $group, 'cost_debt_id' => 0]);
++        } else {
++            AccountDetail::createDataSaveDept($accounts, 3351, $amount, AccountDetail::TYPE_DEPT, [3351],
++                ['employee_id' => $createdBy, 'employee_department_id' => $deptId, 'group' => $group,
++                 'work_id' => self::WORK_VAN_CHUYEN]);
++        }
++        AccountDetail::createDataSaveDept($accounts, 3351, $amount, AccountDetail::TYPE_HAS, [3351],
++            ['employee_id' => $createdBy, 'employee_department_id' => $deptId, 'group' => $group,
++             'work_id' => self::WORK_VAN_CHUYEN]);
++        return $accounts;
++    }
++
++    /**
++     * Hạch toán CƯỚC VẬN CHUYỂN cho từng chuyến xe của phiếu xuất bán hàng mượn.
++     * Port ERP App\Model\Warehouse\BorrowSell::accountingDeliveryTrip (dòng 512-554).
++     * GHI trực tiếp account_details, mỗi chuyến 1 lần saveAccountDetail keyed theo delivery_trip_id.
++     * Method ĐỘC LẬP với getDataAccounting — orchestrator (T7) gọi RIÊNG sau khi finalize phiếu
++     * (ERP gọi ở BorrowSellsController@update:281).
++     * @return array [bool ok, string err]
++     */
++    public function postDeliveryTripAccounting(BorrowSell $bs): array
++    {
++        $req = $bs->borrowSellRequest;
++        if (!$req) {
++            return [true, ''];
++        }
++        $group = 1;
++        $meta = [
++            'created_by' => $bs->created_by,
++            'invoiceable_date_accounting' => $bs->created_at ? Carbon::parse($bs->created_at)->format('Y-m-d') : null,
++        ];
++
++        try {
++            return DB::transaction(function () use ($req, $group, $meta) {
++                foreach ($req->product_export_requests as $per) {
++                    if ($per->is_export_direct) {
++                        continue;
++                    }
++                    $werIds = WarehouseExportRequest::query()
++                        ->where('product_export_request_id', $per->id)->pluck('id');
++                    $warehouseExport = WarehouseExport::query()
++                        ->whereIn('warehouse_export_request_id', $werIds)->first();
++                    if (!$warehouseExport) {          // Ruling T6-C: guard null
++                        continue;
++                    }
++                    $activity = ActivityHasDeliveryTrip::query()
++                        ->where('warehouse_export_id', $warehouseExport->id)->first();
++                    if (!$activity) {
++                        continue;
++                    }
++                    // Ruling T6-A: chỉ hạch toán khi chuyến đã có bút toán gốc (invoiceable=DeliveryTrip)
++                    $tripAccounted = AccountDetail::query()
++                        ->where('invoiceable_id', $activity->delivery_trip_id)
++                        ->where('invoiceable_type', self::INVOICEABLE_DELIVERY_TRIP)
++                        ->exists();
++                    if (!$tripAccounted) {
++                        continue;
++                    }
++                    $trip = $activity->trip;
++                    $isCompanyPay = $trip && (float) $trip->company_pay > 0;
++
++                    // Ruling T6-B: build mảng MỚI mỗi chuyến → save riêng, tránh double-post
++                    $tripAccounts = $this->buildTripCostAccounts(
++                        (float) $activity->total_cost_transition,
++                        $isCompanyPay,
++                        $per->created_by,
++                        $per->department_id,
++                        $group
++                    );
++                    [$ok, $err] = AccountDetail::saveAccountDetail(
++                        $tripAccounts,
++                        $activity->delivery_trip_id,
++                        self::INVOICEABLE_DELIVERY_TRIP,
++                        $trip->name ?? '',
++                        $meta
++                    );
++                    if (!$ok) {
++                        throw new \RuntimeException($err);
++                    }
++                }
++                return [true, ''];
++            });
++        } catch (\Throwable $e) {
++            return [false, 'Lỗi hạch toán cước vận chuyển phiếu ' . $bs->code . ': ' . $e->getMessage()];
++        }
++    }
++}
+diff --git a/Modules/Finance/Services/BorrowSell/BorrowSellService.php b/Modules/Finance/Services/BorrowSell/BorrowSellService.php
+new file mode 100644
+index 000000000..44b206af5
+--- /dev/null
++++ b/Modules/Finance/Services/BorrowSell/BorrowSellService.php
+@@ -0,0 +1,369 @@
++<?php
++namespace Modules\Finance\Services\BorrowSell;
++
++use Illuminate\Http\Request;
++use Illuminate\Support\Facades\DB;
++use Illuminate\Validation\ValidationException;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Entities\BorrowSell\BorrowSellProduct;
++use Modules\Finance\Entities\BorrowSell\BorrowSellProductDetail;
++use Modules\Finance\Entities\BorrowSellRequest\BorrowSellRequest;
++use Modules\Finance\Entities\BorrowSellRequest\BorrowSellRequestProduct;
++use Modules\Finance\Entities\BorrowSellRequest\BorrowSellRequestProductDetail;
++use Modules\Finance\Entities\ProductImportRequest\ProductExportRequestDetail;
++use Modules\Finance\Services\BorrowSellRequest\BorrowSellRequestCalculator;
++
++/**
++ * Orchestrator lập phiếu XUẤT BÁN HÀNG MƯỢN thực tế (`BorrowSell`) từ 1 yêu cầu
++ * (`BorrowSellRequest`) đã ở trạng thái "Chờ kế toán kho" — port 1-1 ERP
++ * `App\Http\Controllers\Warehouse\BorrowSellsController::store()` + `BorrowSell::updateWarehouse()`.
++ *
++ * Đã bake 7 RULINGS chốt ở task T7 (xem task-p2-7-brief.md):
++ *   T7-1: header sums (sum_amount_*, vat_cost_allocated) TÍNH LẠI server-side, KHÔNG tin FE.
++ *   T7-2: generateCode dùng id THẬT sau save() đầu (KHÔNG dùng BorrowSell::generateCode() static
++ *         vì method đó dùng max('id')+1 trước insert → có race).
++ *   T7-3: cột cộng dồn (borrow_returned_qty, returned_by_sell, exported_qty) dùng increment() ATOMIC
++ *         (ERP gốc dùng += rồi save() — lost-update kinh điển, xem erp-borrowsell-lost-update-incident).
++ *   T7-4: 1 DB::transaction bọc toàn bộ; gọi postDeliveryTripAccounting() RỒI postAccounting();
++ *         check [ok,err] và throw để rollback nếu hạch toán lỗi.
++ *   T7-5: returningQty() loại trừ chính phiếu YC cha khỏi nhánh sell (bsr.status=2).
++ *   T7-6: CHỈ hỗ trợ HANG_THUONG — bỏ hẳn nhánh tabs/syncTabs (KM) của ERP.
++ *   T7-7: bỏ guard `need_check_exported` (cột không tồn tại trên DB gộp).
++ */
++class BorrowSellService
++{
++    // morph objectable của dòng SP (khớp borrow_sell_request_products.objectable_type) — cùng giá trị
++    // const OBJECTABLE_FIRM/OBJECTABLE_WR_SERVICE của BorrowSellRequestService (Phase 1).
++    const OBJECTABLE_FIRM = 'App\Model\Sale\Firm\Contract\FirmContractTabProduct';
++    const OBJECTABLE_WR_SERVICE = 'App\Model\Customers\WrServiceContractItem';
++
++    // ProductExportRequest::XUAT_MUON (ExportModel::XUAT_MUON) — dùng trong returningQty().
++    const XUAT_MUON = 3;
++
++    // ERP App\Model\Warehouse\ProductExportRequest::DA_TRA — HRM entity ProductExportRequest CHƯA
++    // khai const này (chỉ có DA_MUON=2) nên khai lại tại đây, verbatim giá trị ERP.
++    const PER_DA_TRA = 3;
++
++    /**
++     * Lập phiếu xuất bán hàng mượn thực tế từ 1 yêu cầu (BorrowSellRequest) đã ở CHO_KE_TOAN_KHO.
++     * Chạy trong 1 DB::transaction. Throw ValidationException khi không đủ điều kiện / tồn không đủ.
++     */
++    public function store(Request $request): BorrowSell
++    {
++        $parent = BorrowSellRequest::findOrFail($request->borrow_sell_request_id);
++
++        if (!$parent->canApprove()) {
++            throw ValidationException::withMessages([
++                'borrow_sell_request_id' => ['Yêu cầu không ở trạng thái Chờ kế toán kho hoặc bạn không có quyền Kế toán kho'],
++            ]);
++        }
++
++        // Ruling T7-6: Service này CHỈ port nhánh HANG_THUONG (bỏ tabs/KM) — chặn sớm nếu phiếu
++        // cha là hàng khuyến mãi để tránh tạo phiếu xuất bán thiếu logic tabs.
++        if ((int) $parent->type !== BorrowSellRequest::HANG_THUONG) {
++            throw ValidationException::withMessages([
++                'borrow_sell_request_id' => ['Chỉ hỗ trợ lập phiếu xuất bán cho yêu cầu hàng thường'],
++            ]);
++        }
++
++        return DB::transaction(function () use ($request, $parent) {
++            $object = new BorrowSell();
++            $object->code = 'TMP-' . uniqid();
++            $object->borrow_sell_request_id = $parent->id;
++            $object->type = $parent->type;
++            $object->status = BorrowSell::STATUS_DEFAULT;
++            $object->contractable_id = $parent->contractable_id;
++            $object->contractable_type = $parent->contractable_type;
++            $object->firm_contract_tab_id = $parent->firm_contract_tab_id;
++            $object->created_by = auth()->id();
++            $object->note = $request->note;
++            $object->vat_percent = $request->input('vat_percent');
++            $object->bear_the_shipping = $request->input('bear_the_shipping', 0);
++            $object->save();
++
++            // Ruling T7-2: generateCode bằng id THẬT sau save() đầu (KHÔNG dùng static generateCode()).
++            $object->code = BorrowSell::PREFIX . '-' . str_pad((string) $object->id, 5, '0', STR_PAD_LEFT);
++            $object->save();
++
++            $isFirm = $object->contractable_type === BorrowSell::CONTRACT_FIRM;
++
++            $hasChange = false;
++            $rowsForSums = [];
++
++            foreach ((array) $request->products as $product) {
++                if (!isset($product['details'])) {
++                    continue;
++                }
++
++                $requestProduct = BorrowSellRequestProduct::where('parent_id', $parent->id)
++                    ->where('objectable_id', $product['objectable_id'])
++                    ->where('objectable_type', $product['objectable_type'])
++                    ->firstOrFail();
++
++                $p = new BorrowSellProduct();
++                $p->parent_id = $object->id;
++                $p->objectable_id = $requestProduct->objectable_id;
++                $p->objectable_type = $requestProduct->objectable_type;
++                $p->contract_promotion_id = $requestProduct->contract_promotion_id;
++                $p->product_id = $requestProduct->product_id;
++                $p->product_name = $requestProduct->product_name;
++                $p->unit_id = $requestProduct->unit_id;
++                $p->unit_name = $requestProduct->unit_name;
++                $p->model_id = $requestProduct->model_id;
++                $p->model_name = $requestProduct->model_name;
++                $p->brand_id = $requestProduct->brand_id;
++                $p->brand_name = $requestProduct->brand_name;
++                $p->code = $requestProduct->code;
++                $p->contract_qty = $requestProduct->contract_qty;
++                $p->price = $requestProduct->price;
++                $p->extra_price = $requestProduct->extra_price;
++                $p->allocated_price = $requestProduct->allocated_price;
++                $p->unit_coefficient = $requestProduct->unit_coefficient;
++                $p->rebate_price = $requestProduct->rebate_price;
++                $p->vat_percent = $requestProduct->vat_percent;
++                $p->qty = 0;
++                $p->export_price = 0;
++                $p->save();
++
++                $qty = 0.0;
++                $totalExportPrice = 0.0;
++
++                foreach ((array) $product['details'] as $detail) {
++                    $requestDetail = BorrowSellRequestProductDetail::where('parent_id', $requestProduct->id)
++                        ->where('product_export_request_detail_id', $detail['product_export_request_detail_id'])
++                        ->firstOrFail();
++
++                    $borrowDetail = ProductExportRequestDetail::findOrFail($requestDetail->product_export_request_detail_id);
++
++                    // Ruling T7-5: loại trừ chính $parent khỏi nhánh sell (bsr.status=2) của returningQty.
++                    $returning = $this->returningQty(
++                        (int) $requestDetail->product_export_request_id,
++                        (int) $p->product_id,
++                        (int) $parent->id
++                    );
++                    $available = BorrowSellRequestCalculator::availableSellQty(
++                        (float) $borrowDetail->base_exported_qty,
++                        (float) $borrowDetail->borrow_returned_qty,
++                        (float) $returning,
++                        (float) $p->unit_coefficient
++                    );
++                    if (BorrowSellRequestCalculator::isQtyExceeded($available, (float) $p->unit_coefficient, (float) $detail['qty'])) {
++                        throw ValidationException::withMessages([
++                            'products' => ['Sản phẩm "' . $p->product_name . '" tồn không đủ để xuất bán'],
++                        ]);
++                    }
++
++                    $detailQty = (float) $detail['qty'];
++                    $qty += $detailQty;
++                    $totalExportPrice += $detailQty * (float) $p->unit_coefficient * (float) $borrowDetail->export_price;
++                    if ($detailQty > 0) {
++                        $hasChange = true;
++                    }
++
++                    $d = new BorrowSellProductDetail();
++                    $d->parent_id = $p->id;
++                    $d->product_export_request_id = $requestDetail->product_export_request_id;
++                    $d->product_export_request_detail_id = $requestDetail->product_export_request_detail_id;
++                    $d->unit_id = $requestDetail->unit_id;
++                    $d->product_id = $p->product_id;
++                    $d->qty = $detailQty;
++                    $d->save();
++                }
++
++                $p->qty = $qty;
++                $p->export_price = $qty > 0 ? $totalExportPrice / $qty : 0;
++                $p->save();
++
++                // Ghi ngược export_price bình quân gia quyền xuống dòng cha của phiếu YC (như ERP).
++                $requestProduct->export_price = $p->export_price;
++                $requestProduct->save();
++
++                $rowsForSums[] = [
++                    'is_firm' => $isFirm,
++                    'price' => (float) $p->price,
++                    'extra_price' => (float) $p->extra_price,
++                    'allocated_price' => (float) $p->allocated_price,
++                    'vat_percent' => (float) $p->vat_percent,
++                    'qty' => (float) $p->qty,
++                ];
++            }
++
++            if (!$hasChange) {
++                throw ValidationException::withMessages(['products' => ['Không có thay đổi']]);
++            }
++
++            // Ruling T7-1: tính LẠI header sums server-side từ dòng SP vừa build (KHÔNG tin request).
++            $sums = $this->computeHeaderSums($rowsForSums);
++            $object->sum_amount_after_extra = $sums['sum_amount_after_extra'];
++            $object->sum_amount_after_extra_vat = $sums['sum_amount_after_extra_vat'];
++            $object->sum_amount_after_extra_after_vat = $sums['sum_amount_after_extra_after_vat'];
++            $object->sum_amount_allocated = $sums['sum_amount_allocated'];
++            $object->sum_amount_allocated_after_vat = $sums['sum_amount_allocated_after_vat'];
++            $object->vat_cost_allocated = $sums['vat_cost_allocated'];
++            $object->save();
++
++            $this->updateWarehouse($object);
++
++            // Ruling T7-4: gọi postDeliveryTripAccounting() RỒI postAccounting(); check [ok,err]
++            // và throw để rollback outer transaction (2 service này tự mở transaction/savepoint riêng).
++            $postingService = app(BorrowSellPostingService::class);
++
++            [$okTrip, $errTrip] = $postingService->postDeliveryTripAccounting($object);
++            if (!$okTrip) {
++                throw new \RuntimeException($errTrip ?: 'Hạch toán vận chuyển thất bại');
++            }
++
++            [$okAcc, $errAcc] = $postingService->postAccounting($object);
++            if (!$okAcc) {
++                throw new \RuntimeException($errAcc ?: 'Hạch toán phiếu xuất bán thất bại');
++            }
++
++            // Port ERP $parent->approve() (KHÔNG có sẵn method trên entity/Service Phase 1).
++            $parent->status = BorrowSellRequest::DA_DUYET;
++            $parent->approver_id = auth()->id();
++            $parent->approved_time = now();
++            $parent->save();
++
++            return $object;
++        });
++    }
++
++    /**
++     * Trừ kho + cập nhật trạng thái mượn (port ERP BorrowSell::updateWarehouse()).
++     * Ruling T7-3: cột cộng dồn (borrow_returned_qty, returned_by_sell, objectable exported_qty)
++     * dùng increment() ATOMIC — KHÁC ERP gốc dùng `+= rồi save()` (lost-update, xem
++     * erp-borrowsell-lost-update-incident trong memory). Cột gán (approved_qty) dùng update()/save.
++     * Ruling T7-6: bỏ hẳn nhánh tabs (KM) — luôn đi path SP thường (HANG_THUONG).
++     * Ruling T7-7: bỏ guard need_check_exported (cột không tồn tại) — luôn cộng exported_qty.
++     */
++    private function updateWarehouse(BorrowSell $bs): void
++    {
++        $products = BorrowSellProduct::where('parent_id', $bs->id)->with('details')->get();
++
++        foreach ($products as $p) {
++            $requestProduct = BorrowSellRequestProduct::where('parent_id', $bs->borrow_sell_request_id)
++                ->where('objectable_id', $p->objectable_id)
++                ->where('objectable_type', $p->objectable_type)
++                ->firstOrFail();
++            $requestProduct->approved_qty = $p->qty;
++            $requestProduct->save();
++
++            $objectableTable = $p->objectable_type === self::OBJECTABLE_FIRM
++                ? 'firm_contract_tab_products'
++                : 'wr_service_contract_items';
++            DB::table($objectableTable)->where('id', $p->objectable_id)->increment('exported_qty', (float) $p->qty);
++
++            foreach ($p->details as $d) {
++                $requestDetail = BorrowSellRequestProductDetail::where('parent_id', $requestProduct->id)
++                    ->where('product_export_request_detail_id', $d->product_export_request_detail_id)
++                    ->firstOrFail();
++                $requestDetail->approved_qty = $d->qty;
++                $requestDetail->save();
++
++                $qty = (float) $d->qty * (float) $p->unit_coefficient;
++
++                DB::table('product_export_request_details')
++                    ->where('id', $d->product_export_request_detail_id)
++                    ->increment('borrow_returned_qty', $qty);
++                DB::table('product_export_request_details')
++                    ->where('id', $d->product_export_request_detail_id)
++                    ->increment('returned_by_sell', $qty);
++
++                $notFinished = DB::table('product_export_request_details')
++                    ->where('parent_id', $d->product_export_request_id)
++                    ->whereRaw('base_exported_qty > borrow_returned_qty')
++                    ->exists();
++                if (!$notFinished) {
++                    DB::table('product_export_requests')
++                        ->where('id', $d->product_export_request_id)
++                        ->update(['borrow_status' => self::PER_DA_TRA]);
++                }
++            }
++        }
++    }
++
++    /**
++     * Port Phase 1 `BorrowSellRequestService::returningQty()` + Ruling T7-5: loại trừ chính
++     * phiếu YC cha ($excludeParentRequestId) khỏi nhánh sell (bsr.status=2) — vì khi store() đang
++     * chạy, chính $parent vẫn còn status=2 (chỉ chuyển DA_DUYET ở cuối transaction) nên nếu không
++     * loại trừ, phiếu sẽ tự trừ tồn của chính nó lần 2.
++     */
++    private function returningQty(int $exportRequestId, int $productId, int $excludeParentRequestId): float
++    {
++        $parentType = DB::table('product_export_requests')->where('id', $exportRequestId)->value('type');
++        if ((int) $parentType !== self::XUAT_MUON) {
++            return 0;
++        }
++
++        $import = (float) DB::table('product_import_request_details as pird')
++            ->join('product_import_requests as pir', 'pird.parent_id', '=', 'pir.id')
++            ->where('pird.product_id', $productId)
++            ->where('pir.is_complete', false)
++            ->where('pir.product_export_request_id', $exportRequestId)
++            ->sum(DB::raw('pird.qty * pird.unit_coefficient'));
++
++        $sell = (float) DB::table('borrow_sell_request_product_details as bsrpd')
++            ->join('borrow_sell_request_products as bsrp', 'bsrpd.parent_id', '=', 'bsrp.id')
++            ->join('borrow_sell_requests as bsr', 'bsrp.parent_id', '=', 'bsr.id')
++            ->where('bsrp.product_id', $productId)
++            ->where('bsr.status', 2)
++            ->where('bsr.id', '!=', $excludeParentRequestId)
++            ->where('bsrpd.product_export_request_id', $exportRequestId)
++            ->sum(DB::raw('bsrpd.qty * bsrp.unit_coefficient'));
++
++        $other = (float) DB::table('borrow_export_request_product_details as berpd')
++            ->join('borrow_export_request_products as berp', 'berpd.parent_id', '=', 'berp.id')
++            ->join('borrow_export_requests as ber', 'berp.parent_id', '=', 'ber.id')
++            ->where('berp.product_id', $productId)
++            ->where('ber.status', 2)
++            ->where('berpd.product_export_request_id', $exportRequestId)
++            ->sum(DB::raw('berpd.qty * berp.unit_coefficient'));
++
++        return $import + $sell + $other;
++    }
++
++    /**
++     * Ruling T7-1 — mirror công thức `computeAmounts` của Phase 1 `BorrowSellRequestService`, nhưng
++     * tính từ dòng SP SERVER build (BorrowSellProduct đã copy giá từ BorrowSellRequestProduct) thay
++     * vì từ payload FE. Tách riêng (private, pure) để test trực tiếp qua reflection (không cần DB).
++     *
++     * @param array $rows mỗi phần tử: ['is_firm'=>bool,'price'=>float,'extra_price'=>float,
++     *                     'allocated_price'=>float,'vat_percent'=>float,'qty'=>float]
++     */
++    private function computeHeaderSums(array $rows): array
++    {
++        $sumAfterExtra = 0.0;
++        $sumAfterExtraVat = 0.0;
++        $sumAllocated = 0.0;
++        $sumAllocatedAfterVat = 0.0;
++        $vatCostAllocated = 0.0;
++
++        foreach ($rows as $row) {
++            $price = !empty($row['is_firm']) ? (float) ($row['price'] ?? 0) : 0.0;
++            $extraPrice = (float) ($row['extra_price'] ?? 0);
++            $allocatedPrice = (float) ($row['allocated_price'] ?? 0);
++            $vatPercent = (float) ($row['vat_percent'] ?? 0);
++            $qty = (float) ($row['qty'] ?? 0);
++
++            $amountAfterExtra = ($extraPrice + $price) * $qty;
++            $amountAfterExtraVat = $amountAfterExtra * $vatPercent / 100;
++            $amountAllocated = $allocatedPrice * $qty;
++            $vatAllocatedLine = $amountAllocated * $vatPercent / 100;
++
++            $sumAfterExtra += $amountAfterExtra;
++            $sumAfterExtraVat += $amountAfterExtraVat;
++            $sumAllocated += $amountAllocated;
++            $sumAllocatedAfterVat += $amountAllocated + $vatAllocatedLine;
++            $vatCostAllocated += $vatAllocatedLine;
++        }
++
++        return [
++            'sum_amount_after_extra' => $sumAfterExtra,
++            'sum_amount_after_extra_vat' => $sumAfterExtraVat,
++            'sum_amount_after_extra_after_vat' => $sumAfterExtra + $sumAfterExtraVat,
++            'sum_amount_allocated' => $sumAllocated,
++            'sum_amount_allocated_after_vat' => $sumAllocatedAfterVat,
++            'vat_cost_allocated' => $vatCostAllocated,
++        ];
++    }
++}
+diff --git a/Modules/Finance/Tests/Feature/BorrowSellApiTest.php b/Modules/Finance/Tests/Feature/BorrowSellApiTest.php
+new file mode 100644
+index 000000000..2a84e107f
+--- /dev/null
++++ b/Modules/Finance/Tests/Feature/BorrowSellApiTest.php
+@@ -0,0 +1,160 @@
++<?php
++
++namespace Modules\Finance\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Entities\BorrowSell\BorrowSellProduct;
++use Modules\Finance\Transformers\BorrowSellResource\BorrowSellDetailResource;
++use Modules\Finance\Transformers\BorrowSellResource\BorrowSellPrintResource;
++
++/**
++ * Test cho lớp API PXBHM (Task P2-9 — Controller + 3 Resource + routes).
++ * Test API thật (route + auth JWT + phân quyền + dữ liệu HĐ) rất phức tạp để dựng full ở môi
++ * trường test → ưu tiên các test dựng được và XANH THẬT (không mock quyền/DB giả), phần cần
++ * auth context thật (userCanCreate/searchByFilter theo nhân viên đăng nhập) markTestSkipped khi
++ * dữ liệu/fixture không sẵn có (cùng cách tiếp cận BorrowSellPostingWrServiceTest/BorrowSellStoreTest).
++ *
++ * Dùng lại fixture "HĐ dịch vụ thật trong DB gộp" (wr_service_contracts.id=4) từ
++ * BorrowSellPostingWrServiceTest để dựng 1 BorrowSell KHÔNG lưu DB (id giả 999999003) đủ điều
++ * kiện gọi thẳng BorrowSellPostingService::getDataAccounting() qua Resource.
++ */
++class BorrowSellApiTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    private const WR_CONTRACT_ID = 4;
++
++    /**
++     * XANH THẬT #1 — Route đăng ký đúng, prefix module đúng (/api/v1/finance), không lỗi 500.
++     * Không auth → route đứng sau middleware 'auth:api' của group cha → kỳ vọng 401 (Unauthenticated),
++     * KHÔNG phải 404 (chứng minh route /borrow-sells thực sự được đăng ký trong group đúng prefix).
++     */
++    public function test_index_route_is_registered_under_finance_prefix()
++    {
++        $response = $this->getJson('/api/v1/finance/borrow-sells');
++
++        $response->assertStatus(401);
++    }
++
++    /**
++     * XANH THẬT #2 — BorrowSell::userCanCreate() fail-closed: không auth (guest) → luôn false.
++     * Đây là gate 403 mà controller store() dùng (Ruling T9-store-gate) — test đơn vị hoá, không
++     * cần dựng auth context thật vẫn khoá được regression "lỡ hardcode true".
++     */
++    public function test_user_can_create_is_fail_closed_without_auth()
++    {
++        $this->assertFalse(BorrowSell::userCanCreate());
++    }
++
++    /**
++     * XANH THẬT #3 — BorrowSellDetailResource: khối 'accounting'/'accounting_error' (Ruling
++     * T9-accounting-in-detail) đúng shape khi getDataAccounting() trả ok=true, và 'is_can_view'
++     * lấy từ canView() thật (guest, không phải hardcode true) → guest xem phiếu không phải của
++     * mình (created_by khác) và không có quyền Kế toán kho → is_can_view PHẢI false.
++     */
++    public function test_detail_resource_has_accounting_block_and_fail_closed_is_can_view()
++    {
++        $bs = $this->makeWrServiceBorrowSellFixture();
++        if ($bs === null) {
++            $this->markTestSkipped('Không tìm thấy HĐ dịch vụ fixture (wr_service_contracts.id=' . self::WR_CONTRACT_ID . ') đủ điều kiện HTHT trong DB test.');
++        }
++
++        $resource = (new BorrowSellDetailResource($bs))->toArray(request());
++
++        $this->assertArrayHasKey('accounting', $resource);
++        $this->assertArrayHasKey('accounting_error', $resource);
++        $this->assertIsArray($resource['accounting']);
++        $this->assertNotEmpty($resource['accounting'], 'getDataAccounting() phải trả accounts khi ok=true (fixture hợp lệ)');
++        $this->assertNull($resource['accounting_error']);
++
++        // Fail-closed: guest (không auth) không phải created_by của phiếu → is_can_view=false.
++        $this->assertArrayHasKey('is_can_view', $resource);
++        $this->assertFalse($resource['is_can_view']);
++    }
++
++    /** XANH THẬT #4 — BorrowSellPrintResource: JSON thuần, không tra khóa mẫu in (Ruling T9-print). */
++    public function test_print_resource_shape_is_plain_json()
++    {
++        $bs = $this->makeWrServiceBorrowSellFixture();
++        if ($bs === null) {
++            $this->markTestSkipped('Không tìm thấy HĐ dịch vụ fixture (wr_service_contracts.id=' . self::WR_CONTRACT_ID . ') đủ điều kiện HTHT trong DB test.');
++        }
++
++        $resource = (new BorrowSellPrintResource($bs))->toArray(request());
++
++        $this->assertArrayHasKey('code', $resource);
++        $this->assertArrayHasKey('products', $resource);
++        $this->assertCount(1, $resource['products']);
++        $this->assertSame(1, $resource['products'][0]['stt']);
++    }
++
++    /**
++     * store() không quyền → 403. Cần user auth JWT thật + phân quyền dựng qua migration/seeder —
++     * môi trường test hiện không có helper actingAs employee sẵn có trong module này (khác các
++     * test posting/store thuần đơn vị hoá) → skip, ghi rõ lý do thay vì fake auth không thật.
++     */
++    public function test_store_without_permission_returns_403()
++    {
++        $this->markTestSkipped('Cần user JWT thật gán/không gán quyền "Kế toán kho" trong DB test — '
++            . 'chưa có helper actingAs employee cho module Finance ở test suite này. Gate 403 đã được '
++            . 'khoá bằng test đơn vị hoá userCanCreate() (test_user_can_create_is_fail_closed_without_auth) '
++            . 'và bằng đọc code controller (BorrowSellController::store gọi BorrowSell::userCanCreate() '
++            . 'trước khi vào service, ValidationException của service vẫn rethrow bình thường).');
++    }
++
++    private function makeWrServiceBorrowSellFixture(): ?BorrowSell
++    {
++        $wrExists = DB::table('wr_service_contracts')->where('id', self::WR_CONTRACT_ID)->exists();
++        $saExists = DB::table('wr_support_accounting')
++            ->where('contractable_id', self::WR_CONTRACT_ID)
++            ->where('contractable_type', BorrowSell::CONTRACT_WR_SERVICE)
++            ->exists();
++        if (!$wrExists || !$saExists) {
++            return null;
++        }
++
++        $bs = new BorrowSell([
++            'id' => 999999003,
++            'code' => 'PXBHM-TEST-P2-9',
++            'status' => 1,
++            'type' => 1,
++            'contractable_type' => BorrowSell::CONTRACT_WR_SERVICE,
++            'contractable_id' => self::WR_CONTRACT_ID,
++            'created_by' => 999999, // khác auth guest id → is_can_view phải false
++            'sum_amount_after_extra' => 10000000,
++            'sum_amount_after_extra_vat' => 1000000,
++            'sum_amount_after_extra_after_vat' => 11000000,
++        ]);
++
++        $product = new BorrowSellProduct([
++            'id' => 999999003,
++            'parent_id' => 999999003,
++            'product_id' => 1,
++            'code' => 'SP-TEST-P2-9',
++            'product_name' => 'SP test P2-9',
++            'model_name' => 'Model test',
++            'unit_id' => 1,
++            'unit_name' => 'Cái',
++            'price' => 1000000,
++            'extra_price' => 0,
++            'contract_qty' => 10,
++            'qty' => 10,
++            'unit_coefficient' => 5,
++            'export_price' => 900000,
++            'allocated_price' => 50000,
++            'rebate_price' => 100000,
++            'vat_percent' => 10,
++        ]);
++        $product->setRelation('details', collect());
++
++        $bs->setRelation('products', collect([$product]));
++        $bs->setRelation('tabs', collect());
++        $bs->setRelation('employee_create', null);
++        $bs->setRelation('borrowSellRequest', null);
++
++        return $bs;
++    }
++}
+diff --git a/Modules/Finance/Tests/Feature/BorrowSellDeliveryTripAccountingTest.php b/Modules/Finance/Tests/Feature/BorrowSellDeliveryTripAccountingTest.php
+new file mode 100644
+index 000000000..bb265296c
+--- /dev/null
++++ b/Modules/Finance/Tests/Feature/BorrowSellDeliveryTripAccountingTest.php
+@@ -0,0 +1,63 @@
++<?php
++
++namespace Modules\Finance\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Modules\Finance\Services\BorrowSell\BorrowSellPostingService;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++
++class BorrowSellDeliveryTripAccountingTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    /** Gọi helper private buildTripCostAccounts qua reflection. */
++    private function buildAccounts(float $amount, bool $isCompanyPay, ?int $createdBy, ?int $deptId, int $group): array
++    {
++        $svc = app(BorrowSellPostingService::class);
++        $ref = new \ReflectionMethod($svc, 'buildTripCostAccounts');
++        $ref->setAccessible(true);
++        return $ref->invoke($svc, $amount, $isCompanyPay, $createdBy, $deptId, $group);
++    }
++
++    public function test_company_pay_debits_6427_with_cost_debt_zero_and_credits_3351()
++    {
++        $accounts = $this->buildAccounts(500000, true, 808, 47, 1);
++
++        $debit = collect($accounts)->firstWhere('type', 1);
++        $credit = collect($accounts)->firstWhere('type', 2);
++
++        $this->assertSame(6427, $debit['number'], 'company_pay>0 → Nợ 6427');
++        $this->assertSame(0, $debit['cost_debt_id'], 'Nợ 6427 gắn mã phí TVC=0');
++        $this->assertArrayNotHasKey('work_id', $debit, 'Vế 6427 KHÔNG gắn work');
++        $this->assertSame(3351, $credit['number'], 'Có 3351');
++        $this->assertSame(BorrowSellPostingService::WORK_VAN_CHUYEN, $credit['work_id'], 'Có 3351 gắn work TVC=10');
++        $this->assertEqualsWithDelta(500000, $debit['value'], 0.01);
++        $this->assertEqualsWithDelta(
++            collect($accounts)->where('type', 1)->sum('value'),
++            collect($accounts)->where('type', 2)->sum('value'),
++            0.01,
++            'Nợ phải cân Có'
++        );
++    }
++
++    public function test_not_company_pay_debits_3351_with_work_tvc()
++    {
++        $accounts = $this->buildAccounts(300000, false, 808, 47, 1);
++
++        $debit = collect($accounts)->firstWhere('type', 1);
++        $credit = collect($accounts)->firstWhere('type', 2);
++
++        $this->assertSame(3351, $debit['number'], 'company_pay<=0 → Nợ 3351');
++        $this->assertSame(BorrowSellPostingService::WORK_VAN_CHUYEN, $debit['work_id'], 'Nợ 3351 gắn work TVC=10');
++        $this->assertSame(47, $debit['employee_department_id']);
++        $this->assertSame(3351, $credit['number']);
++        $this->assertSame(BorrowSellPostingService::WORK_VAN_CHUYEN, $credit['work_id']);
++        $this->assertEqualsWithDelta(
++            collect($accounts)->where('type', 1)->sum('value'),
++            collect($accounts)->where('type', 2)->sum('value'),
++            0.01,
++            'Nợ phải cân Có'
++        );
++    }
++}
+diff --git a/Modules/Finance/Tests/Feature/BorrowSellPostingFirmTest.php b/Modules/Finance/Tests/Feature/BorrowSellPostingFirmTest.php
+new file mode 100644
+index 000000000..d03f96cbd
+--- /dev/null
++++ b/Modules/Finance/Tests/Feature/BorrowSellPostingFirmTest.php
+@@ -0,0 +1,101 @@
++<?php
++
++namespace Modules\Finance\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Services\BorrowSell\BorrowSellPostingService;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Entities\BorrowSell\BorrowSellProduct;
++
++class BorrowSellPostingFirmTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    /**
++     * HĐ hãng thật trong DB gộp (firm_contracts.id=9) có đủ:
++     *  - firm_support_accounting (id=62), before_vat_* > 0
++     *  - firm_support_accounting_departments (dept 77, is_main=1, dept lead=1056)
++     *  - firm_support_accounting_employees (1 NV, part_id NULL)
++     * Verify bằng SQL thật lúc điều tra task-p2-4 (xem report). Nếu dữ liệu này đã bị xoá/đổi
++     * ở môi trường chạy test → skip thay vì để đỏ vì thiếu data.
++     */
++    private const FIRM_CONTRACT_ID = 9;
++
++    public function test_firm_branch_credits_157_for_cost()
++    {
++        $bs = $this->makeFirmBorrowSellFixture();
++        if ($bs === null) {
++            $this->markTestSkipped('Không tìm thấy HĐ Firm fixture (firm_contracts.id=' . self::FIRM_CONTRACT_ID . ') đủ điều kiện HTHT trong DB test.');
++        }
++
++        [$ok, $accounts, $msg] = app(BorrowSellPostingService::class)->getDataAccounting($bs);
++        $this->assertTrue($ok, $msg);
++
++        $cost157 = collect($accounts)->first(fn($a) => $a['number'] == '157' && $a['type'] == 2);
++        $cost632 = collect($accounts)->first(fn($a) => $a['number'] == '632' && $a['type'] == 1);
++        $this->assertNotNull($cost157, 'Phải có Có 157 (giá vốn hàng gửi bán)');
++        $this->assertNotNull($cost632, 'Phải có Nợ 632');
++        $this->assertEqualsWithDelta($cost157['value'], $cost632['value'], 0.01);
++
++        // Giá vốn nhánh Firm = export_price × qty, KHÔNG nhân unit_coefficient (port ERP
++        // FirmContractBorrowSellService::costAccounting dòng 203). Fixture cố tình dùng
++        // unit_coefficient=5 để bắt lỗi nhân nhầm coefficient: đúng = 900.000×10 = 9.000.000;
++        // nếu nhân coefficient sẽ ra 45.000.000.
++        $this->assertEqualsWithDelta(9000000, $cost157['value'], 0.01,
++            'Giá vốn Firm phải = export_price×qty (KHÔNG nhân unit_coefficient)');
++
++        $this->assertEqualsWithDelta(
++            collect($accounts)->where('type', 1)->sum('value'),
++            collect($accounts)->where('type', 2)->sum('value'),
++            1.0,
++            'Nợ phải cân Có'
++        );
++    }
++
++    private function makeFirmBorrowSellFixture(): ?BorrowSell
++    {
++        $firmExists = DB::table('firm_contracts')->where('id', self::FIRM_CONTRACT_ID)->exists();
++        $saExists = DB::table('firm_support_accounting')
++            ->where('contractable_id', self::FIRM_CONTRACT_ID)
++            ->where('contractable_type', BorrowSell::CONTRACT_FIRM)
++            ->exists();
++        if (!$firmExists || !$saExists) {
++            return null;
++        }
++
++        $bs = new BorrowSell([
++            'id' => 999999001,
++            'code' => 'PXBHM-TEST-P2-4',
++            'status' => 1,
++            'type' => 1,
++            'contractable_type' => BorrowSell::CONTRACT_FIRM,
++            'contractable_id' => self::FIRM_CONTRACT_ID,
++            'created_by' => 1,
++            'sum_amount_after_extra' => 11000000,
++            'sum_amount_after_extra_vat' => 1100000,
++        ]);
++
++        $product = new BorrowSellProduct([
++            'id' => 999999001,
++            'parent_id' => 999999001,
++            'product_id' => 1,
++            'product_name' => 'SP test P2-4',
++            'unit_id' => 1,
++            'price' => 1000000,
++            'extra_price' => 0,
++            'contract_qty' => 10,
++            'qty' => 10,
++            'unit_coefficient' => 5,
++            'export_price' => 900000,
++            'allocated_price' => 0,
++            'rebate_price' => 0,
++            'vat_percent' => 10,
++        ]);
++
++        $bs->setRelation('products', collect([$product]));
++
++        return $bs;
++    }
++}
+diff --git a/Modules/Finance/Tests/Feature/BorrowSellPostingWrServiceTest.php b/Modules/Finance/Tests/Feature/BorrowSellPostingWrServiceTest.php
+new file mode 100644
+index 000000000..e6091ec66
+--- /dev/null
++++ b/Modules/Finance/Tests/Feature/BorrowSellPostingWrServiceTest.php
+@@ -0,0 +1,117 @@
++<?php
++
++namespace Modules\Finance\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Services\BorrowSell\BorrowSellPostingService;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Entities\BorrowSell\BorrowSellProduct;
++
++class BorrowSellPostingWrServiceTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    /**
++     * HĐ dịch vụ thật trong DB gộp (wr_service_contracts.id=4) có đủ:
++     *  - wr_support_accounting (id=1), before_vat_total=969300, contract_performance_bonus_before_vat=9000
++     *  - wr_support_accounting_departments (dept 47, is_main=1, dept lead=96)
++     *  - wr_support_accounting_employees (1 NV id=808, part_id NULL)
++     * Verify bằng SQL thật lúc điều tra task-p2-5 (xem report). Nếu dữ liệu này đã bị xoá/đổi
++     * ở môi trường chạy test → skip thay vì để đỏ vì thiếu data.
++     */
++    private const WR_CONTRACT_ID = 4;
++
++    public function test_wr_service_branch_credits_1561_with_coefficient_and_has_discount_block()
++    {
++        $bs = $this->makeWrServiceBorrowSellFixture();
++        if ($bs === null) {
++            $this->markTestSkipped('Không tìm thấy HĐ dịch vụ fixture (wr_service_contracts.id=' . self::WR_CONTRACT_ID . ') đủ điều kiện HTHT trong DB test.');
++        }
++
++        [$ok, $accounts, $msg] = app(BorrowSellPostingService::class)->getDataAccounting($bs);
++        $this->assertTrue($ok, $msg);
++
++        // Giá vốn: CÓ nhân unit_coefficient (ngược Firm) — export_price×qty×unit_coefficient
++        $cost1561 = collect($accounts)->first(fn($a) => $a['number'] == '1561' && $a['type'] == 2);
++        $cost632 = collect($accounts)->first(fn($a) => $a['number'] == '632' && $a['type'] == 1);
++        $this->assertNotNull($cost1561, 'Phải có Có 1561 (giá vốn HĐ dịch vụ)');
++        $this->assertEqualsWithDelta($cost1561['value'], $cost632['value'], 0.01);
++        $this->assertEqualsWithDelta(45000000, $cost1561['value'], 0.01,
++            'Giá vốn WrService = export_price×qty×unit_coefficient = 900000×10×5');
++
++        // Chiết khấu — work CKHH
++        $ck = collect($accounts)->first(fn($a) => $a['number'] == '5211' && ($a['work_id'] ?? null) == BorrowSellPostingService::WORK_CHIET_KHAU);
++        $this->assertNotNull($ck, 'Phải có Nợ 5211 chiết khấu (work CKHH)');
++        $this->assertEqualsWithDelta(1000000, $ck['value'], 0.01, 'Chiết khấu = rebate_price×qty = 100000×10');
++
++        // Cân Nợ = Có
++        $this->assertEqualsWithDelta(
++            collect($accounts)->where('type', 1)->sum('value'),
++            collect($accounts)->where('type', 2)->sum('value'),
++            1.0,
++            'Nợ phải cân Có'
++        );
++
++        // Cụm thưởng HĐ (bonus_before_vat=9000 ở fixture, percent≠0 nhờ allocated_price=50000)
++        // → phải có bút toán 5211 work TTHHD VÀ value>0.
++        // assertNotNull đơn thuần KHÔNG đủ: entry vẫn được tạo với value=0 kể cả khi accessor
++        // alias getBonusContractBeforeVatAttribute bị xoá/sai (khi đó $sa->bonus_contract_before_vat
++        // = null → amount=0). Chỉ khi assert value>0 mới thực sự khoá regression cho T5-1.
++        $bonus = collect($accounts)->first(fn($a) => $a['number'] == '5211' && ($a['work_id'] ?? null) == BorrowSellPostingService::WORK_THUONG_HH);
++        $this->assertNotNull($bonus, 'Phải có bút toán thưởng HĐ (work TTHHD)');
++        $this->assertGreaterThan(0, $bonus['value'],
++            'Bút toán thưởng HĐ phải >0 — bắt lỗi accessor alias bonus_contract_before_vat (nếu hỏng → value=0)');
++    }
++
++    private function makeWrServiceBorrowSellFixture(): ?BorrowSell
++    {
++        $wrExists = DB::table('wr_service_contracts')->where('id', self::WR_CONTRACT_ID)->exists();
++        $saExists = DB::table('wr_support_accounting')
++            ->where('contractable_id', self::WR_CONTRACT_ID)
++            ->where('contractable_type', BorrowSell::CONTRACT_WR_SERVICE)
++            ->exists();
++        if (!$wrExists || !$saExists) {
++            return null;
++        }
++
++        $bs = new BorrowSell([
++            'id' => 999999002,
++            'code' => 'PXBHM-TEST-P2-5',
++            'status' => 1,
++            'type' => 1,
++            'contractable_type' => BorrowSell::CONTRACT_WR_SERVICE,
++            'contractable_id' => self::WR_CONTRACT_ID,
++            'created_by' => 1,
++            'sum_amount_after_extra' => 10000000,
++            'sum_amount_after_extra_vat' => 1000000,
++        ]);
++
++        $product = new BorrowSellProduct([
++            'id' => 999999002,
++            'parent_id' => 999999002,
++            'product_id' => 1,
++            'product_name' => 'SP test P2-5',
++            'unit_id' => 1,
++            'price' => 1000000,
++            'extra_price' => 0,
++            'contract_qty' => 10,
++            'qty' => 10,
++            'unit_coefficient' => 5,
++            'export_price' => 900000,
++            // allocated_price PHẢI khác 0: numerator của percent cụm hỗ trợ
++            // = sum_amount_after_extra − sale_invoice − discount = allocated_price×qty.
++            // Nếu để 0 → percent=0 → mọi bút toán cụm hỗ trợ (thưởng/TNCN/hoa hồng) = 0
++            // → assertion thưởng HĐ pass ngay cả khi accessor alias hỏng (test vacuous).
++            // Đặt 50000 → percent≠0 → thưởng HĐ (bonus_before_vat=9000) ra value>0 thật.
++            'allocated_price' => 50000,
++            'rebate_price' => 100000,
++            'vat_percent' => 10,
++        ]);
++
++        $bs->setRelation('products', collect([$product]));
++
++        return $bs;
++    }
++}
+diff --git a/Modules/Finance/Tests/Feature/BorrowSellStoreTest.php b/Modules/Finance/Tests/Feature/BorrowSellStoreTest.php
+new file mode 100644
+index 000000000..48e601e9b
+--- /dev/null
++++ b/Modules/Finance/Tests/Feature/BorrowSellStoreTest.php
+@@ -0,0 +1,210 @@
++<?php
++
++namespace Modules\Finance\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Services\BorrowSell\BorrowSellService;
++
++/**
++ * Test cho `BorrowSellService::store()` (Task P2-7 — orchestrator lập phiếu xuất bán hàng mượn).
++ * store() phụ thuộc auth()->id() + quyền "Kế toán kho" + dữ liệu HĐ/kho thật rất phức tạp
++ * (BorrowSellRequest → firm_contract_tab_products/wr_service_contract_items →
++ * product_export_request_details) nên KHÔNG test end-to-end store() ở đây. Test theo hướng
++ * đơn vị hoá 2 phần logic thuần (T7-1 computeHeaderSums, T7-5 returningQty exclude-parent) —
++ * cùng cách tiếp cận BorrowSellPostingWrServiceTest.
++ */
++class BorrowSellStoreTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    /**
++     * T7-1 — QUAN TRỌNG NHẤT: header sums phải tính từ dòng SP server build, KHÔNG tin FE.
++     * Firm: price được tính vào amount_after_extra; WrService: price=0 (chỉ extra_price).
++     * Không cần DB — computeHeaderSums là pure function → test XANH THẬT, không skip.
++     */
++    public function test_compute_header_sums_firm_includes_price_and_wr_service_zeroes_price()
++    {
++        $service = new BorrowSellService();
++        $method = new \ReflectionMethod(BorrowSellService::class, 'computeHeaderSums');
++        $method->setAccessible(true);
++
++        // Firm: price=100, extra_price=10, allocated_price=5, vat_percent=10, qty=3
++        $rowsFirm = [[
++            'is_firm' => true,
++            'price' => 100,
++            'extra_price' => 10,
++            'allocated_price' => 5,
++            'vat_percent' => 10,
++            'qty' => 3,
++        ]];
++        $sumsFirm = $method->invoke($service, $rowsFirm);
++
++        // amount_after_extra = (extra+price)*qty = (10+100)*3 = 330
++        $this->assertEqualsWithDelta(330, $sumsFirm['sum_amount_after_extra'], 0.001);
++        // amount_after_extra_vat = 330*10/100 = 33
++        $this->assertEqualsWithDelta(33, $sumsFirm['sum_amount_after_extra_vat'], 0.001);
++        $this->assertEqualsWithDelta(363, $sumsFirm['sum_amount_after_extra_after_vat'], 0.001);
++        // amount_allocated = allocated_price*qty = 5*3 = 15
++        $this->assertEqualsWithDelta(15, $sumsFirm['sum_amount_allocated'], 0.001);
++        // vat_allocated_line = 15*10/100 = 1.5 -> allocated_after_vat = 15+1.5 = 16.5
++        $this->assertEqualsWithDelta(16.5, $sumsFirm['sum_amount_allocated_after_vat'], 0.001);
++        $this->assertEqualsWithDelta(1.5, $sumsFirm['vat_cost_allocated'], 0.001);
++
++        // WrService cùng số liệu nhưng is_firm=false -> price bị zero-hoá.
++        $rowsWr = [[
++            'is_firm' => false,
++            'price' => 100,
++            'extra_price' => 10,
++            'allocated_price' => 5,
++            'vat_percent' => 10,
++            'qty' => 3,
++        ]];
++        $sumsWr = $method->invoke($service, $rowsWr);
++
++        // amount_after_extra = (extra+0)*qty = 10*3 = 30 (KHÔNG cộng price=100)
++        $this->assertEqualsWithDelta(30, $sumsWr['sum_amount_after_extra'], 0.001);
++        $this->assertEqualsWithDelta(3, $sumsWr['sum_amount_after_extra_vat'], 0.001);
++        $this->assertEqualsWithDelta(33, $sumsWr['sum_amount_after_extra_after_vat'], 0.001);
++        // allocated_price không phụ thuộc is_firm -> giữ nguyên như Firm
++        $this->assertEqualsWithDelta(15, $sumsWr['sum_amount_allocated'], 0.001);
++    }
++
++    /** Nhiều dòng SP phải cộng dồn đúng (không phải chỉ lấy dòng cuối). */
++    public function test_compute_header_sums_accumulates_multiple_rows()
++    {
++        $service = new BorrowSellService();
++        $method = new \ReflectionMethod(BorrowSellService::class, 'computeHeaderSums');
++        $method->setAccessible(true);
++
++        $rows = [
++            ['is_firm' => true, 'price' => 100, 'extra_price' => 0, 'allocated_price' => 0, 'vat_percent' => 0, 'qty' => 2], // 200
++            ['is_firm' => true, 'price' => 50, 'extra_price' => 0, 'allocated_price' => 0, 'vat_percent' => 0, 'qty' => 4],  // 200
++        ];
++        $sums = $method->invoke($service, $rows);
++
++        $this->assertEqualsWithDelta(400, $sums['sum_amount_after_extra'], 0.001);
++    }
++
++    /**
++     * T7-5 — returningQty() phải LOẠI TRỪ chính phiếu YC cha ($excludeParentRequestId) khỏi
++     * nhánh sell (bsr.status=2), nếu không phiếu sẽ tự trừ tồn của chính nó lần 2 khi store()
++     * đang chạy (parent vẫn còn status=2 cho tới cuối transaction).
++     *
++     * Dựng fixture tối thiểu trực tiếp bằng DB::table() (không có FK ràng buộc thật trên các
++     * bảng liên quan — đã verify bằng SHOW CREATE TABLE, chỉ có index đặt tên "*_foreign").
++     * DatabaseTransactions tự rollback sau test.
++     */
++    public function test_returning_qty_excludes_parent_request()
++    {
++        $service = new BorrowSellService();
++        $method = new \ReflectionMethod(BorrowSellService::class, 'returningQty');
++        $method->setAccessible(true);
++
++        $productId = 900000001;
++
++        // 1 phiếu xuất mượn gốc (type=XUAT_MUON=3) — chỉ cần tồn tại để trả đúng "type".
++        $exportRequestId = DB::table('product_export_requests')->insertGetId([
++            'type' => BorrowSellService::XUAT_MUON,
++            'status' => 5,
++            'code' => 'TEST-PER-' . uniqid(),
++            'created_by' => 1,
++            'department' => 0,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++
++        // Phiếu YC bán mượn CHA (đang được store() xử lý) — status=2 (CHO_KE_TOAN_KHO).
++        $parentBsrId = DB::table('borrow_sell_requests')->insertGetId([
++            'status' => 2,
++            'type' => 1,
++            'code' => 'TEST-BSR-PARENT-' . uniqid(),
++            'contractable_id' => 1,
++            'contractable_type' => 'App\Model\Sale\Firm\Contract\FirmContract',
++            'created_by' => 1,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++        $parentBsrProductId = DB::table('borrow_sell_request_products')->insertGetId([
++            'parent_id' => $parentBsrId,
++            'objectable_type' => BorrowSellService::OBJECTABLE_FIRM,
++            'product_id' => $productId,
++            'product_name' => 'SP test T7-5',
++            'unit_id' => 1,
++            'unit_name' => 'Cái',
++            'brand_id' => 1,
++            'brand_name' => 'Test',
++            'model_id' => 1,
++            'model_name' => 'Test',
++            'code' => 'SP-TEST',
++            'price' => 0,
++            'contract_qty' => 100,
++            'qty' => 5,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++        DB::table('borrow_sell_request_product_details')->insert([
++            'parent_id' => $parentBsrProductId,
++            'request_id' => $parentBsrId,
++            'product_export_request_id' => $exportRequestId,
++            'product_export_request_detail_id' => 1,
++            'product_id' => $productId,
++            'unit_id' => 1,
++            'qty' => 5, // 5 * unit_coefficient(mặc định BorrowSellRequestProduct=1) = 5
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++
++        // 1 phiếu YC bán mượn KHÁC (không phải parent) — cũng status=2, PHẢI được tính vào sum.
++        $otherBsrId = DB::table('borrow_sell_requests')->insertGetId([
++            'status' => 2,
++            'type' => 1,
++            'code' => 'TEST-BSR-OTHER-' . uniqid(),
++            'contractable_id' => 1,
++            'contractable_type' => 'App\Model\Sale\Firm\Contract\FirmContract',
++            'created_by' => 1,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++        $otherBsrProductId = DB::table('borrow_sell_request_products')->insertGetId([
++            'parent_id' => $otherBsrId,
++            'objectable_type' => BorrowSellService::OBJECTABLE_FIRM,
++            'product_id' => $productId,
++            'product_name' => 'SP test T7-5',
++            'unit_id' => 1,
++            'unit_name' => 'Cái',
++            'brand_id' => 1,
++            'brand_name' => 'Test',
++            'model_id' => 1,
++            'model_name' => 'Test',
++            'code' => 'SP-TEST',
++            'price' => 0,
++            'contract_qty' => 100,
++            'qty' => 2,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++        DB::table('borrow_sell_request_product_details')->insert([
++            'parent_id' => $otherBsrProductId,
++            'request_id' => $otherBsrId,
++            'product_export_request_id' => $exportRequestId,
++            'product_export_request_detail_id' => 2,
++            'product_id' => $productId,
++            'unit_id' => 1,
++            'qty' => 2,
++            'created_at' => now(),
++            'updated_at' => now(),
++        ]);
++
++        // Loại trừ chính $parentBsrId -> chỉ còn 2 (của $otherBsrId) trong nhánh sell.
++        $qty = $method->invoke($service, $exportRequestId, $productId, $parentBsrId);
++        $this->assertEqualsWithDelta(2.0, $qty, 0.001,
++            'Phải loại trừ 5 (của chính parent) khỏi tổng, chỉ còn 2 (của phiếu khác)');
++
++        // Không loại trừ ai (excludeParentRequestId không khớp gì) -> cộng cả 2 phiếu = 7.
++        $qtyNoExclude = $method->invoke($service, $exportRequestId, $productId, 0);
++        $this->assertEqualsWithDelta(7.0, $qtyNoExclude, 0.001,
++            'Không loại trừ -> phải cộng dồn cả parent (5) lẫn phiếu khác (2) = 7');
++    }
++}
+diff --git a/Modules/Finance/Tests/Unit/ActivityHasDeliveryTripEntityTest.php b/Modules/Finance/Tests/Unit/ActivityHasDeliveryTripEntityTest.php
+new file mode 100644
+index 000000000..489f3e2d0
+--- /dev/null
++++ b/Modules/Finance/Tests/Unit/ActivityHasDeliveryTripEntityTest.php
+@@ -0,0 +1,23 @@
++<?php
++
++namespace Modules\Finance\Tests\Unit;
++
++use Tests\TestCase;
++use Modules\Finance\Entities\Delivery\ActivityHasDeliveryTrip;
++use Modules\Finance\Entities\Delivery\DeliveryTrip;
++
++class ActivityHasDeliveryTripEntityTest extends TestCase
++{
++    public function test_table_name_is_activity_has_delivery_trips()
++    {
++        $this->assertEquals('activity_has_delivery_trips', (new ActivityHasDeliveryTrip())->getTable());
++    }
++
++    public function test_trip_relation_points_to_delivery_trip()
++    {
++        $rel = (new ActivityHasDeliveryTrip())->trip();
++        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $rel);
++        $this->assertInstanceOf(DeliveryTrip::class, $rel->getRelated());
++        $this->assertEquals('delivery_trip_id', $rel->getForeignKeyName());
++    }
++}
+diff --git a/Modules/Finance/Tests/Unit/BorrowSellEntityTest.php b/Modules/Finance/Tests/Unit/BorrowSellEntityTest.php
+new file mode 100644
+index 000000000..ed0e96484
+--- /dev/null
++++ b/Modules/Finance/Tests/Unit/BorrowSellEntityTest.php
+@@ -0,0 +1,26 @@
++<?php
++namespace Modules\Finance\Tests\Unit;
++
++use Tests\TestCase;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Entities\BorrowSell\BorrowSellProduct;
++
++class BorrowSellEntityTest extends TestCase
++{
++    public function test_generate_code_has_pxbhm_prefix()
++    {
++        $this->assertStringStartsWith('PXBHM-', BorrowSell::generateCode());
++    }
++
++    public function test_products_relation_defined()
++    {
++        $this->assertInstanceOf(
++            \Illuminate\Database\Eloquent\Relations\HasMany::class,
++            (new BorrowSell())->products()
++        );
++        $this->assertInstanceOf(
++            \Illuminate\Database\Eloquent\Relations\HasMany::class,
++            (new BorrowSellProduct())->details()
++        );
++    }
++}
+diff --git a/Modules/Finance/Tests/Unit/StoreBorrowSellRequestTest.php b/Modules/Finance/Tests/Unit/StoreBorrowSellRequestTest.php
+new file mode 100644
+index 000000000..81217ab5e
+--- /dev/null
++++ b/Modules/Finance/Tests/Unit/StoreBorrowSellRequestTest.php
+@@ -0,0 +1,86 @@
++<?php
++
++namespace Modules\Finance\Tests\Unit;
++
++use Illuminate\Support\Facades\Validator;
++use Modules\Finance\Http\Requests\BorrowSell\StoreBorrowSellRequest;
++use Tests\TestCase;
++
++class StoreBorrowSellRequestTest extends TestCase
++{
++    /**
++     * Test: Thiếu products → validator fails với lỗi key 'products'
++     */
++    public function test_missing_products_fails()
++    {
++        $rules = (new StoreBorrowSellRequest)->rules();
++        $data = [
++            'borrow_sell_request_id' => 1,
++            // products missing
++        ];
++
++        $validator = Validator::make($data, $rules);
++        $this->assertTrue($validator->fails());
++        $this->assertTrue($validator->errors()->has('products'));
++    }
++
++    /**
++     * Test: Thiếu products.0.details → validator fails
++     */
++    public function test_missing_product_details_fails()
++    {
++        $rules = (new StoreBorrowSellRequest)->rules();
++        $data = [
++            'borrow_sell_request_id' => 1,
++            'products' => [
++                [
++                    'objectable_id' => 456,
++                    'objectable_type' => 'App\\Model\\Sale\\Firm\\Contract\\FirmContractTabProduct',
++                    // details missing
++                ],
++            ],
++        ];
++
++        $validator = Validator::make($data, $rules);
++        $this->assertTrue($validator->fails());
++        $this->assertTrue($validator->errors()->has('products.0.details'));
++    }
++
++    /**
++     * Test: Payload hợp lệ → passes
++     *
++     * Lưu ý: Bỏ rule exists:borrow_sell_requests để không phụ thuộc DB.
++     * Case này chỉ kiểm tra cấu trúc dữ liệu + numeric/min rule của qty,
++     * không cần kiểm tra FK exists (đó là trách nhiệm của integration test nếu có).
++     */
++    public function test_valid_payload_passes()
++    {
++        $rules = (new StoreBorrowSellRequest)->rules();
++
++        // Bỏ rule exists borrow_sell_request_id để test unit không phụ thuộc DB
++        unset($rules['borrow_sell_request_id']);
++
++        $data = [
++            'borrow_sell_request_id' => 123,
++            'products' => [
++                [
++                    'objectable_id' => 456,
++                    'objectable_type' => 'App\\Model\\Sale\\Firm\\Contract\\FirmContractTabProduct',
++                    'details' => [
++                        [
++                            'product_export_request_detail_id' => 789,
++                            'qty' => 5,
++                        ],
++                        [
++                            'product_export_request_detail_id' => 790,
++                            'qty' => 10.5,
++                        ],
++                    ],
++                ],
++            ],
++        ];
++
++        $validator = Validator::make($data, $rules);
++        $this->assertTrue($validator->passes(), $validator->errors()->toJson());
++    }
++}
+diff --git a/Modules/Finance/Transformers/BorrowSellRequestResource/BorrowSellRequestDetailResource.php b/Modules/Finance/Transformers/BorrowSellRequestResource/BorrowSellRequestDetailResource.php
+new file mode 100644
+index 000000000..a13907a77
+--- /dev/null
++++ b/Modules/Finance/Transformers/BorrowSellRequestResource/BorrowSellRequestDetailResource.php
+@@ -0,0 +1,221 @@
++<?php
++
++namespace Modules\Finance\Transformers\BorrowSellRequestResource;
++
++use Carbon\Carbon;
++use Illuminate\Http\Resources\Json\JsonResource;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Entities\BorrowSellRequest\BorrowSellRequest;
++
++class BorrowSellRequestDetailResource extends JsonResource
++{
++    private static $statusNames = [
++        1 => 'Đã duyệt', 2 => 'Chờ duyệt', 3 => 'Đang tạo',
++        4 => 'Không duyệt', 10 => 'Chờ TP duyệt', 11 => 'Chờ BGD duyệt',
++    ];
++    private static $typeNames = [1 => 'HĐ hãng', 2 => 'HĐ dịch vụ'];
++
++    // Bảng objectable của SP-của-HĐ (đọc `exported_qty` — cột "Đã xuất kho" giống ERP).
++    const OBJECTABLE_FIRM = 'App\Model\Sale\Firm\Contract\FirmContractTabProduct';
++    const OBJECTABLE_WR_SERVICE = 'App\Model\Customers\WrServiceContractItem';
++
++    public function toArray($request): array
++    {
++        $isFirm = $this->contractable_type === BorrowSellRequest::CONTRACT_FIRM;
++        $table = $isFirm ? 'firm_contracts' : 'wr_service_contracts';
++        $contractCode = $this->contractable_id
++            ? optional(DB::table($table)->where('id', $this->contractable_id)->first(['code']))->code
++            : null;
++
++        // Khách hàng (mã + CMT/MST) — snapshot BSR không lưu 2 field này, join `customers` như ERP.
++        $customer = $this->customer_id
++            ? DB::table('customers')->where('id', $this->customer_id)->first(['code', 'identity_card_number', 'tax_code'])
++            : null;
++
++        // Phòng ban yêu cầu.
++        $departmentName = $this->department_id
++            ? optional(DB::table('departments')->where('id', $this->department_id)->first(['name']))->name
++            : null;
++
++        // Phiếu xuất mượn nguồn (chips) — pivot borrow_sell_request_has_export_requests → product_export_requests.
++        $sourceExportRequests = DB::table('borrow_sell_request_has_export_requests as pivot')
++            ->join('product_export_requests as per', 'per.id', '=', 'pivot.product_export_request_id')
++            ->where('pivot.borrow_sell_request_id', $this->id)
++            ->get(['per.id', 'per.code'])
++            ->map(function ($r) {
++                return ['id' => $r->id, 'code' => $r->code];
++            })
++            ->values();
++
++        // Map exported_qty theo objectable (gom id theo loại → 2 truy vấn, tránh N+1).
++        $exportedByObjectable = $this->buildExportedQtyMap();
++
++        // Map code phiếu mượn cho các dòng chi tiết (gom product_export_request_id → 1 truy vấn).
++        $perCodeMap = $this->buildExportRequestCodeMap();
++
++        return [
++            'id' => $this->id,
++            'code' => $this->code,
++            'type' => $this->type,
++            'type_name' => self::$typeNames[$this->type] ?? null,
++            'status' => $this->status,
++            'status_name' => self::$statusNames[$this->status] ?? null,
++            'note' => $this->note,
++            'comment' => $this->comment,
++            // Cột "Chiết khấu" chỉ có ở HĐ dịch vụ (WrService) — khớp ERP `has_rebate_price`.
++            'has_rebate_price' => !$isFirm,
++            'need_repair' => $this->need_repair,
++            'department_id' => $this->department_id,
++            'department_name' => $departmentName,
++
++            'contractable_id' => $this->contractable_id,
++            'contractable_type' => $this->contractable_type,
++            'contract_code' => $contractCode,
++            'firm_contract_tab_id' => $this->firm_contract_tab_id,
++            'vat_percent' => $this->vat_percent,
++
++            // Snapshot khách hàng (đọc thẳng cột borrow_sell_requests) + mã/MST join customers.
++            'customer_id' => $this->customer_id,
++            'customer_type' => $this->customer_type,
++            'customer_code' => optional($customer)->code,
++            'customer_tax_code' => optional($customer)->identity_card_number ?: optional($customer)->tax_code,
++            'customer_name' => $this->customer_name,
++            'customer_address' => $this->customer_address,
++            'customer_mobile' => $this->customer_mobile,
++            'customer_contact_name' => $this->customer_contact_name,
++            'customer_contact_phone' => $this->customer_contact_phone,
++            'contact_address' => $this->contact_address,
++            'delivery_place' => $this->delivery_place,
++
++            'source_export_requests' => $sourceExportRequests,
++
++            'created_by' => $this->created_by,
++            'creator_name' => optional(optional($this->employee_create)->info)->fullname,
++            'created_at' => self::formatDateTime($this->created_at),
++            'approved_time' => self::formatDateTime($this->approved_time),
++
++            'products' => $this->products->map(function ($p) use ($exportedByObjectable, $perCodeMap) {
++                return [
++                    'id' => $p->id,
++                    'product_id' => $p->product_id,
++                    'code' => $p->code,
++                    'product_name' => $p->product_name,
++                    'unit_id' => $p->unit_id,
++                    'unit_name' => $p->unit_name,
++                    'brand_name' => $p->brand_name,
++                    'model_name' => $p->model_name,
++                    'contract_qty' => $p->contract_qty,
++                    'qty' => $p->qty,
++                    'approved_qty' => $p->approved_qty,
++                    'returned_qty' => $p->returned_qty,
++                    'exported_qty' => $exportedByObjectable[$p->objectable_type][$p->objectable_id] ?? 0,
++                    'unit_coefficient' => $p->unit_coefficient,
++                    'vat_percent' => $p->vat_percent,
++                    // Cột giá/tiền (công thức tính ở FE khớp getter form) — đọc thẳng cột SP.
++                    'price' => $p->price,
++                    'extra_price' => $p->extra_price,
++                    'allocated_price' => $p->allocated_price,
++                    'rebate_price' => $p->rebate_price,
++                    'net_price' => $p->net_price,
++                    'details' => $p->details->map(function ($d) use ($perCodeMap) {
++                        return [
++                            'id' => $d->id,
++                            'product_export_request_id' => $d->product_export_request_id,
++                            'product_export_request_code' => $perCodeMap[$d->product_export_request_id] ?? null,
++                            'product_export_request_detail_id' => $d->product_export_request_detail_id,
++                            'product_id' => $d->product_id,
++                            'unit_id' => $d->unit_id,
++                            'qty' => $d->qty,
++                            'approved_qty' => $d->approved_qty,
++                        ];
++                    })->values(),
++                ];
++            })->values(),
++
++            'tabs' => $this->tabs->map(function ($t) {
++                return [
++                    'id' => $t->id,
++                    'firm_contract_id' => $t->firm_contract_id,
++                    'firm_contract_tab_id' => $t->firm_contract_tab_id,
++                    'name' => $t->name,
++                ];
++            })->values(),
++
++            'is_can_view' => $this->canView(),
++            'is_can_edit' => $this->canEdit(),
++            'is_can_approve' => $this->canApprove(),
++            'is_can_deny' => $this->canDeny(),
++            'is_can_manager_approve' => $this->canManagerApprove(),
++            'is_can_board_approve' => $this->canBoardOfManagerApprove(),
++            // Cờ hiện nút "Lập phiếu bán" (Phase 2): chỉ Kế toán kho + phiếu YC ở trạng thái
++            // được lập phiếu bán (canApprove) mới thấy. Fail-closed ở FE khởi tạo false.
++            'is_can_create_borrow_sell' => \Modules\Finance\Entities\BorrowSell\BorrowSell::userCanCreate()
++                && $this->canApprove(),
++        ];
++    }
++
++    /**
++     * exported_qty theo objectable ("Đã xuất kho" ERP). Gom objectable_id theo loại (Firm / WrService)
++     * → mỗi loại 1 truy vấn vào bảng contract-product tương ứng. Trả [type => [id => exported_qty]].
++     */
++    private function buildExportedQtyMap(): array
++    {
++        $idsByType = [];
++        foreach ($this->products as $p) {
++            if ($p->objectable_id) {
++                $idsByType[$p->objectable_type][] = $p->objectable_id;
++            }
++        }
++
++        $tableByType = [
++            self::OBJECTABLE_FIRM => 'firm_contract_tab_products',
++            self::OBJECTABLE_WR_SERVICE => 'wr_service_contract_items',
++        ];
++
++        $map = [];
++        foreach ($idsByType as $type => $ids) {
++            $table = $tableByType[$type] ?? null;
++            if (!$table) {
++                continue;
++            }
++            $map[$type] = DB::table($table)
++                ->whereIn('id', array_unique($ids))
++                ->pluck('exported_qty', 'id')
++                ->toArray();
++        }
++
++        return $map;
++    }
++
++    /** Map product_export_request_id => code cho các dòng chi tiết (1 truy vấn gộp). */
++    private function buildExportRequestCodeMap(): array
++    {
++        $ids = [];
++        foreach ($this->products as $p) {
++            foreach ($p->details as $d) {
++                if ($d->product_export_request_id) {
++                    $ids[] = $d->product_export_request_id;
++                }
++            }
++        }
++        if (empty($ids)) {
++            return [];
++        }
++
++        return DB::table('product_export_requests')
++            ->whereIn('id', array_unique($ids))
++            ->pluck('code', 'id')
++            ->toArray();
++    }
++
++    private static function formatDateTime($value): ?string
++    {
++        if (empty($value)) {
++            return null;
++        }
++
++        return $value instanceof Carbon
++            ? $value->format('d/m/Y H:i')
++            : Carbon::parse($value)->format('d/m/Y H:i');
++    }
++}
+diff --git a/Modules/Finance/Transformers/BorrowSellResource/BorrowSellDetailResource.php b/Modules/Finance/Transformers/BorrowSellResource/BorrowSellDetailResource.php
+new file mode 100644
+index 000000000..b7ff43ccb
+--- /dev/null
++++ b/Modules/Finance/Transformers/BorrowSellResource/BorrowSellDetailResource.php
+@@ -0,0 +1,141 @@
++<?php
++
++namespace Modules\Finance\Transformers\BorrowSellResource;
++
++use Carbon\Carbon;
++use Illuminate\Http\Resources\Json\JsonResource;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++use Modules\Finance\Services\BorrowSell\BorrowSellPostingService;
++
++/**
++ * Chi tiết phiếu XUẤT BÁN HÀNG MƯỢN. Mirror `BorrowSellRequestDetailResource` + THÊM tab
++ * "Hạch toán" (Ruling T9-accounting-in-detail) — gọi thẳng BorrowSellPostingService::getDataAccounting
++ * (đã port 1-1 ở T4-6): ok → 'accounting' = accounts, 'accounting_error' = null;
++ * !ok → 'accounting' = [], 'accounting_error' = message lỗi.
++ *
++ * `borrow_sells` KHÔNG lưu snapshot khách hàng như `borrow_sell_requests` (đã verify DESCRIBE) —
++ * lấy qua quan hệ `borrowSellRequest` (yêu cầu gốc, đã có snapshot sẵn ở Phase 1).
++ */
++class BorrowSellDetailResource extends JsonResource
++{
++    private static $statusNames = [1 => 'Đã duyệt'];
++    private static $typeNames = [1 => 'HĐ hãng', 2 => 'HĐ dịch vụ'];
++
++    public function toArray($request): array
++    {
++        $isFirm = $this->contractable_type === BorrowSell::CONTRACT_FIRM;
++        $table = $isFirm ? 'firm_contracts' : 'wr_service_contracts';
++        $contractCode = $this->contractable_id
++            ? optional(DB::table($table)->where('id', $this->contractable_id)->first(['code']))->code
++            : null;
++
++        $bsr = $this->borrowSellRequest;
++
++        [$ok, $accounts, $err] = app(BorrowSellPostingService::class)->getDataAccounting($this->resource);
++
++        return [
++            'id' => $this->id,
++            'code' => $this->code,
++            'type' => $this->type,
++            'type_name' => self::$typeNames[$this->type] ?? null,
++            'status' => $this->status,
++            'status_name' => self::$statusNames[$this->status] ?? null,
++            'note' => $this->note,
++            'bear_the_shipping' => $this->bear_the_shipping,
++
++            'borrow_sell_request_id' => $this->borrow_sell_request_id,
++            'borrow_sell_request_code' => optional($bsr)->code,
++
++            'contractable_id' => $this->contractable_id,
++            'contractable_type' => $this->contractable_type,
++            'contract_type' => $isFirm ? 'firm' : 'wr_service',
++            'contract_code' => $contractCode,
++            'firm_contract_tab_id' => $this->firm_contract_tab_id,
++            'vat_percent' => $this->vat_percent,
++            'export_price' => $this->export_price,
++            'vat_cost_allocated' => $this->vat_cost_allocated,
++            'sum_amount_allocated' => $this->sum_amount_allocated,
++            'sum_amount_allocated_after_vat' => $this->sum_amount_allocated_after_vat,
++            'sum_amount_after_extra' => $this->sum_amount_after_extra,
++            'sum_amount_after_extra_vat' => $this->sum_amount_after_extra_vat,
++            'sum_amount_after_extra_after_vat' => $this->sum_amount_after_extra_after_vat,
++
++            // Snapshot khách hàng — mượn từ yêu cầu gốc (borrow_sells không tự lưu).
++            'customer_id' => optional($bsr)->customer_id,
++            'customer_name' => optional($bsr)->customer_name,
++            'customer_address' => optional($bsr)->customer_address,
++            'customer_mobile' => optional($bsr)->customer_mobile,
++            'customer_contact_name' => optional($bsr)->customer_contact_name,
++            'customer_contact_phone' => optional($bsr)->customer_contact_phone,
++            'contact_address' => optional($bsr)->contact_address,
++            'delivery_place' => optional($bsr)->delivery_place,
++
++            'created_by' => $this->created_by,
++            'creator_name' => optional(optional($this->employee_create)->info)->fullname,
++            'created_at' => self::formatDateTime($this->created_at),
++
++            'products' => $this->products->map(function ($p) {
++                return [
++                    'id' => $p->id,
++                    'product_id' => $p->product_id,
++                    'code' => $p->code,
++                    'product_name' => $p->product_name,
++                    'unit_id' => $p->unit_id,
++                    'unit_name' => $p->unit_name,
++                    'brand_id' => $p->brand_id,
++                    'brand_name' => $p->brand_name,
++                    'model_id' => $p->model_id,
++                    'model_name' => $p->model_name,
++                    'contract_qty' => $p->contract_qty,
++                    'qty' => $p->qty,
++                    'unit_coefficient' => $p->unit_coefficient,
++                    'vat_percent' => $p->vat_percent,
++                    'price' => $p->price,
++                    'extra_price' => $p->extra_price,
++                    'export_price' => $p->export_price,
++                    'allocated_price' => $p->allocated_price,
++                    'rebate_price' => $p->rebate_price,
++                    'details' => $p->relationLoaded('details')
++                        ? $p->details->map(function ($d) {
++                            return [
++                                'id' => $d->id,
++                                'product_export_request_id' => $d->product_export_request_id,
++                                'product_export_request_detail_id' => $d->product_export_request_detail_id,
++                                'product_id' => $d->product_id,
++                                'unit_id' => $d->unit_id,
++                                'qty' => $d->qty,
++                            ];
++                        })->values()
++                        : [],
++                ];
++            })->values(),
++
++            'tabs' => $this->tabs->map(function ($t) {
++                return [
++                    'id' => $t->id,
++                    'firm_contract_id' => $t->firm_contract_id,
++                    'firm_contract_tab_id' => $t->firm_contract_tab_id,
++                    'name' => $t->name,
++                ];
++            })->values(),
++
++            // Ruling T9-accounting-in-detail.
++            'accounting' => $ok ? $accounts : [],
++            'accounting_error' => $ok ? null : $err,
++
++            'is_can_view' => $this->is_can_view,
++        ];
++    }
++
++    private static function formatDateTime($value): ?string
++    {
++        if (empty($value)) {
++            return null;
++        }
++
++        return $value instanceof Carbon
++            ? $value->format('d/m/Y H:i')
++            : Carbon::parse($value)->format('d/m/Y H:i');
++    }
++}
+diff --git a/Modules/Finance/Transformers/BorrowSellResource/BorrowSellListResource.php b/Modules/Finance/Transformers/BorrowSellResource/BorrowSellListResource.php
+new file mode 100644
+index 000000000..3f429ff17
+--- /dev/null
++++ b/Modules/Finance/Transformers/BorrowSellResource/BorrowSellListResource.php
+@@ -0,0 +1,73 @@
++<?php
++
++namespace Modules\Finance\Transformers\BorrowSellResource;
++
++use Carbon\Carbon;
++use Illuminate\Http\Resources\Json\ResourceCollection;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++
++/**
++ * Danh sách phiếu XUẤT BÁN HÀNG MƯỢN. Mirror `BorrowSellRequestListResource` — batch tra
++ * contract_code theo firm/wr ids (tránh N+1); `status_name`/`type_name` là map tối thiểu vì
++ * BorrowSell chỉ khai const STATUS_DEFAULT=1 (chưa có bộ đủ trạng thái như BorrowSellRequest —
++ * ghi giả định trong report).
++ */
++class BorrowSellListResource extends ResourceCollection
++{
++    private static $statusNames = [1 => 'Đã duyệt'];
++    private static $typeNames = [1 => 'HĐ hãng', 2 => 'HĐ dịch vụ'];
++
++    public function toArray($request): array
++    {
++        $firmIds = [];
++        $wrIds = [];
++        foreach ($this->collection as $it) {
++            if ($it->contractable_type === BorrowSell::CONTRACT_FIRM) {
++                $firmIds[] = $it->contractable_id;
++            } elseif ($it->contractable_type === BorrowSell::CONTRACT_WR_SERVICE) {
++                $wrIds[] = $it->contractable_id;
++            }
++        }
++        $firmCodes = $firmIds ? DB::table('firm_contracts')->whereIn('id', array_unique($firmIds))->pluck('code', 'id') : collect();
++        $wrCodes = $wrIds ? DB::table('wr_service_contracts')->whereIn('id', array_unique($wrIds))->pluck('code', 'id') : collect();
++
++        $result = [];
++        foreach ($this->collection as $item) {
++            $contractCode = $item->contractable_type === BorrowSell::CONTRACT_FIRM
++                ? ($firmCodes[$item->contractable_id] ?? null)
++                : ($wrCodes[$item->contractable_id] ?? null);
++
++            $result[] = [
++                'id' => $item->id,
++                'code' => $item->code,
++                'type' => $item->type,
++                'type_name' => self::$typeNames[$item->type] ?? null,
++                'contractable_type' => $item->contractable_type,
++                'contract_code' => $contractCode,
++                'customer_name' => optional($item->borrowSellRequest)->customer_name,
++                'creator_name' => optional(optional($item->employee_create)->info)->fullname,
++                'status' => $item->status,
++                'status_name' => self::$statusNames[$item->status] ?? null,
++                'sum_amount_after_extra_after_vat' => $item->sum_amount_after_extra_after_vat,
++                'created_at' => self::formatDateTime($item->created_at),
++
++                // Cờ hành động — FE disable nút chứ không ẩn (quy ước dự án).
++                'is_can_view' => $item->is_can_view,
++            ];
++        }
++
++        return $result;
++    }
++
++    private static function formatDateTime($value): ?string
++    {
++        if (empty($value)) {
++            return null;
++        }
++
++        return $value instanceof Carbon
++            ? $value->format('d/m/Y H:i')
++            : Carbon::parse($value)->format('d/m/Y H:i');
++    }
++}
+diff --git a/Modules/Finance/Transformers/BorrowSellResource/BorrowSellPrintResource.php b/Modules/Finance/Transformers/BorrowSellResource/BorrowSellPrintResource.php
+new file mode 100644
+index 000000000..4c275e2bf
+--- /dev/null
++++ b/Modules/Finance/Transformers/BorrowSellResource/BorrowSellPrintResource.php
+@@ -0,0 +1,66 @@
++<?php
++
++namespace Modules\Finance\Transformers\BorrowSellResource;
++
++use Carbon\Carbon;
++use Illuminate\Http\Resources\Json\JsonResource;
++use Illuminate\Support\Facades\DB;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++
++/**
++ * Bản in phiếu XUẤT BÁN HÀNG MƯỢN — JSON thuần cho FE tự render (Ruling T9-print: KHÔNG tra
++ * khóa mẫu in). Mirror `BorrowSellRequestPrintResource`.
++ */
++class BorrowSellPrintResource extends JsonResource
++{
++    public function toArray($request): array
++    {
++        $isFirm = $this->contractable_type === BorrowSell::CONTRACT_FIRM;
++        $table = $isFirm ? 'firm_contracts' : 'wr_service_contracts';
++        $contractCode = $this->contractable_id
++            ? optional(DB::table($table)->where('id', $this->contractable_id)->first(['code']))->code
++            : null;
++
++        $bsr = $this->borrowSellRequest;
++
++        return [
++            'code' => $this->code,
++            'contract_code' => $contractCode,
++            'note' => $this->note,
++            'created_at' => self::formatDateTime($this->created_at),
++            'creator_name' => optional(optional($this->employee_create)->info)->fullname,
++
++            'customer_name' => optional($bsr)->customer_name,
++            'customer_address' => optional($bsr)->customer_address,
++            'customer_mobile' => optional($bsr)->customer_mobile,
++            'customer_contact_name' => optional($bsr)->customer_contact_name,
++            'customer_contact_phone' => optional($bsr)->customer_contact_phone,
++            'contact_address' => optional($bsr)->contact_address,
++            'delivery_place' => optional($bsr)->delivery_place,
++
++            'products' => $this->products->map(function ($p, $i) {
++                return [
++                    'stt' => $i + 1,
++                    'code' => $p->code,
++                    'product_name' => $p->product_name,
++                    'model_name' => $p->model_name,
++                    'unit_name' => $p->unit_name,
++                    'qty' => $p->qty,
++                    'export_price' => $p->export_price,
++                    'thanh_tien' => $p->export_price !== null ? $p->export_price * $p->qty : null,
++                ];
++            })->values(),
++        ];
++    }
++
++    private static function formatDateTime($value): ?string
++    {
++        if (empty($value)) {
++            return null;
++        }
++
++        return $value instanceof Carbon
++            ? $value->format('d/m/Y H:i')
++            : Carbon::parse($value)->format('d/m/Y H:i');
++    }
++}

@@ -1,0 +1,245 @@
+===== git log --oneline 04869e226..60674e96c =====
+60674e96c T6: port hạch toán cước vận chuyển chuyến xe (accountingDeliveryTrip) cho phiếu XBHM
+
+===== git diff --stat =====
+ .../BorrowSell/BorrowSellPostingService.php        | 105 +++++++++++++++++++++
+ .../BorrowSellDeliveryTripAccountingTest.php       |  63 +++++++++++++
+ 2 files changed, 168 insertions(+)
+
+===== git diff -U10 =====
+diff --git a/Modules/Finance/Services/BorrowSell/BorrowSellPostingService.php b/Modules/Finance/Services/BorrowSell/BorrowSellPostingService.php
+index 54c97c614..36162f563 100644
+--- a/Modules/Finance/Services/BorrowSell/BorrowSellPostingService.php
++++ b/Modules/Finance/Services/BorrowSell/BorrowSellPostingService.php
+@@ -1,24 +1,27 @@
+ <?php
+ 
+ namespace Modules\Finance\Services\BorrowSell;
+ 
+ use Carbon\Carbon;
+ use Illuminate\Support\Facades\DB;
+ use Modules\Assign\Entities\Contract\Contract;
+ use Modules\Assign\Entities\Contract\SupportAccounting;
++use Modules\Assign\Entities\Warehouse\WarehouseExportRequest;
++use Modules\Assign\Entities\Warehouse\WarehouseExport;
+ use Modules\Assign\Services\Accounting\SupportAccountingTrait;
+ use Modules\Finance\Entities\Account\AccountDetail;
+ use Modules\Finance\Entities\BorrowSell\BorrowSell;
+ use Modules\Finance\Entities\Contract\FirmContract;
+ use Modules\Finance\Entities\Contract\WrServiceContract;
+ use Modules\Finance\Entities\Contract\WrSupportAccounting;
++use Modules\Finance\Entities\Delivery\ActivityHasDeliveryTrip;
+ 
+ /**
+  * Hạch toán (ghi sổ account_details) cho Phiếu XUẤT BÁN HÀNG MƯỢN (`borrow_sells`) — Phase 2.
+  *
+  * PORT 1-1 ERP `App\Services\Sale\Firm\Contract\FirmContractBorrowSellService`
+  * (`getDataBorrowSellAccounting` + `prepareData` + `costAccounting`), nhái cấu trúc
+  * `Modules\Assign\Services\ProductExportPostingService::getDataProductExportAccounting`.
+  *
+  * TASK P2-4: nhánh FirmContract (`contractable_type = BorrowSell::CONTRACT_FIRM`).
+  * TASK P2-5: bổ sung nhánh WrServiceContract (HĐ dịch vụ, `CONTRACT_WR_SERVICE`) — port 1-1
+@@ -52,20 +55,24 @@ class BorrowSellPostingService
+     const WORK_GIAM_TRU_DT = 16;  // GGHH
+     const WORK_THUONG_HH = 12;    // TTHHD (thưởng HĐ + TNCN)
+     const WORK_HH_THANG = 13;     // TNST
+     const WORK_HH_QUY = 14;       // TNSQ
+     const WORK_QUY_RUI_RO = 6;    // RRP
+     const WORK_CHIET_KHAU = 20;   // CKHH
+ 
+     /** FQN model ERP để lưu cột polymorphic invoiceable_type (ERP đọc lại được). */
+     const INVOICEABLE_BORROW_SELL = 'App\\Model\\Warehouse\\BorrowSell';
+ 
++    const WORK_VAN_CHUYEN = 10;   // TVC — tiền vận chuyển
++    /** FQN model ERP cho chứng từ chuyến xe (ERP đọc lại được; đồng thời là cột check "đã hạch toán"). */
++    const INVOICEABLE_DELIVERY_TRIP = 'App\\Model\\Warehouse\\DeliveryTrip';
++
+     /**
+      * Sinh bút toán + ghi sổ cho 1 phiếu xuất bán hàng mượn.
+      * @return array [bool ok, string err]
+      */
+     public function postAccounting(BorrowSell $bs): array
+     {
+         [$ok, $accounts, $err] = $this->getDataAccounting($bs);
+         if (!$ok) {
+             return [false, $err];
+         }
+@@ -358,11 +365,109 @@ class BorrowSellPostingService
+         $group += 1;
+         foreach ($bs->products as $p) {
+             $total = round((float) $p->export_price * (float) $p->qty * (float) $p->unit_coefficient);
+             $sum += $total;
+             AccountDetail::createDataSaveDept($accounts, 1561, $total, AccountDetail::TYPE_HAS, [632],
+                 ['product_id' => $p->product_id, 'group' => $group]);
+         }
+         AccountDetail::createDataSaveDept($accounts, 632, $sum, AccountDetail::TYPE_DEPT, [1561],
+             ['group' => $group]);
+     }
++
++    /**
++     * Dựng 2 vế bút toán cước vận chuyển cho 1 chuyến xe. Port ERP accountingDeliveryTrip.
++     *   company_pay > 0  → Nợ 6427 (mã phí TVC=0) / Có 3351 (work TVC)
++     *   company_pay <= 0 → Nợ 3351 (work TVC)     / Có 3351 (work TVC)
++     * Cả 2 vế đều gắn employee_id = người lập phiếu xuất kho; vế 3351 gắn employee_department_id.
++     */
++    private function buildTripCostAccounts(float $amount, bool $isCompanyPay, ?int $createdBy, ?int $deptId, int $group): array
++    {
++        $accounts = [];
++        if ($isCompanyPay) {
++            AccountDetail::createDataSaveDept($accounts, 6427, $amount, AccountDetail::TYPE_DEPT, [3351],
++                ['employee_id' => $createdBy, 'group' => $group, 'cost_debt_id' => 0]);
++        } else {
++            AccountDetail::createDataSaveDept($accounts, 3351, $amount, AccountDetail::TYPE_DEPT, [3351],
++                ['employee_id' => $createdBy, 'employee_department_id' => $deptId, 'group' => $group,
++                 'work_id' => self::WORK_VAN_CHUYEN]);
++        }
++        AccountDetail::createDataSaveDept($accounts, 3351, $amount, AccountDetail::TYPE_HAS, [3351],
++            ['employee_id' => $createdBy, 'employee_department_id' => $deptId, 'group' => $group,
++             'work_id' => self::WORK_VAN_CHUYEN]);
++        return $accounts;
++    }
++
++    /**
++     * Hạch toán CƯỚC VẬN CHUYỂN cho từng chuyến xe của phiếu xuất bán hàng mượn.
++     * Port ERP App\Model\Warehouse\BorrowSell::accountingDeliveryTrip (dòng 512-554).
++     * GHI trực tiếp account_details, mỗi chuyến 1 lần saveAccountDetail keyed theo delivery_trip_id.
++     * Method ĐỘC LẬP với getDataAccounting — orchestrator (T7) gọi RIÊNG sau khi finalize phiếu
++     * (ERP gọi ở BorrowSellsController@update:281).
++     * @return array [bool ok, string err]
++     */
++    public function postDeliveryTripAccounting(BorrowSell $bs): array
++    {
++        $req = $bs->borrowSellRequest;
++        if (!$req) {
++            return [true, ''];
++        }
++        $group = 1;
++        $meta = [
++            'created_by' => $bs->created_by,
++            'invoiceable_date_accounting' => $bs->created_at ? Carbon::parse($bs->created_at)->format('Y-m-d') : null,
++        ];
++
++        try {
++            return DB::transaction(function () use ($req, $group, $meta) {
++                foreach ($req->product_export_requests as $per) {
++                    if ($per->is_export_direct) {
++                        continue;
++                    }
++                    $werIds = WarehouseExportRequest::query()
++                        ->where('product_export_request_id', $per->id)->pluck('id');
++                    $warehouseExport = WarehouseExport::query()
++                        ->whereIn('warehouse_export_request_id', $werIds)->first();
++                    if (!$warehouseExport) {          // Ruling T6-C: guard null
++                        continue;
++                    }
++                    $activity = ActivityHasDeliveryTrip::query()
++                        ->where('warehouse_export_id', $warehouseExport->id)->first();
++                    if (!$activity) {
++                        continue;
++                    }
++                    // Ruling T6-A: chỉ hạch toán khi chuyến đã có bút toán gốc (invoiceable=DeliveryTrip)
++                    $tripAccounted = AccountDetail::query()
++                        ->where('invoiceable_id', $activity->delivery_trip_id)
++                        ->where('invoiceable_type', self::INVOICEABLE_DELIVERY_TRIP)
++                        ->exists();
++                    if (!$tripAccounted) {
++                        continue;
++                    }
++                    $trip = $activity->trip;
++                    $isCompanyPay = $trip && (float) $trip->company_pay > 0;
++
++                    // Ruling T6-B: build mảng MỚI mỗi chuyến → save riêng, tránh double-post
++                    $tripAccounts = $this->buildTripCostAccounts(
++                        (float) $activity->total_cost_transition,
++                        $isCompanyPay,
++                        $per->created_by,
++                        $per->department_id,
++                        $group
++                    );
++                    [$ok, $err] = AccountDetail::saveAccountDetail(
++                        $tripAccounts,
++                        $activity->delivery_trip_id,
++                        self::INVOICEABLE_DELIVERY_TRIP,
++                        $trip->name ?? '',
++                        $meta
++                    );
++                    if (!$ok) {
++                        throw new \RuntimeException($err);
++                    }
++                }
++                return [true, ''];
++            });
++        } catch (\Throwable $e) {
++            return [false, 'Lỗi hạch toán cước vận chuyển phiếu ' . $bs->code . ': ' . $e->getMessage()];
++        }
++    }
+ }
+diff --git a/Modules/Finance/Tests/Feature/BorrowSellDeliveryTripAccountingTest.php b/Modules/Finance/Tests/Feature/BorrowSellDeliveryTripAccountingTest.php
+new file mode 100644
+index 000000000..bb265296c
+--- /dev/null
++++ b/Modules/Finance/Tests/Feature/BorrowSellDeliveryTripAccountingTest.php
+@@ -0,0 +1,63 @@
++<?php
++
++namespace Modules\Finance\Tests\Feature;
++
++use Tests\TestCase;
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Modules\Finance\Services\BorrowSell\BorrowSellPostingService;
++use Modules\Finance\Entities\BorrowSell\BorrowSell;
++
++class BorrowSellDeliveryTripAccountingTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    /** Gọi helper private buildTripCostAccounts qua reflection. */
++    private function buildAccounts(float $amount, bool $isCompanyPay, ?int $createdBy, ?int $deptId, int $group): array
++    {
++        $svc = app(BorrowSellPostingService::class);
++        $ref = new \ReflectionMethod($svc, 'buildTripCostAccounts');
++        $ref->setAccessible(true);
++        return $ref->invoke($svc, $amount, $isCompanyPay, $createdBy, $deptId, $group);
++    }
++
++    public function test_company_pay_debits_6427_with_cost_debt_zero_and_credits_3351()
++    {
++        $accounts = $this->buildAccounts(500000, true, 808, 47, 1);
++
++        $debit = collect($accounts)->firstWhere('type', 1);
++        $credit = collect($accounts)->firstWhere('type', 2);
++
++        $this->assertSame(6427, $debit['number'], 'company_pay>0 → Nợ 6427');
++        $this->assertSame(0, $debit['cost_debt_id'], 'Nợ 6427 gắn mã phí TVC=0');
++        $this->assertArrayNotHasKey('work_id', $debit, 'Vế 6427 KHÔNG gắn work');
++        $this->assertSame(3351, $credit['number'], 'Có 3351');
++        $this->assertSame(BorrowSellPostingService::WORK_VAN_CHUYEN, $credit['work_id'], 'Có 3351 gắn work TVC=10');
++        $this->assertEqualsWithDelta(500000, $debit['value'], 0.01);
++        $this->assertEqualsWithDelta(
++            collect($accounts)->where('type', 1)->sum('value'),
++            collect($accounts)->where('type', 2)->sum('value'),
++            0.01,
++            'Nợ phải cân Có'
++        );
++    }
++
++    public function test_not_company_pay_debits_3351_with_work_tvc()
++    {
++        $accounts = $this->buildAccounts(300000, false, 808, 47, 1);
++
++        $debit = collect($accounts)->firstWhere('type', 1);
++        $credit = collect($accounts)->firstWhere('type', 2);
++
++        $this->assertSame(3351, $debit['number'], 'company_pay<=0 → Nợ 3351');
++        $this->assertSame(BorrowSellPostingService::WORK_VAN_CHUYEN, $debit['work_id'], 'Nợ 3351 gắn work TVC=10');
++        $this->assertSame(47, $debit['employee_department_id']);
++        $this->assertSame(3351, $credit['number']);
++        $this->assertSame(BorrowSellPostingService::WORK_VAN_CHUYEN, $credit['work_id']);
++        $this->assertEqualsWithDelta(
++            collect($accounts)->where('type', 1)->sum('value'),
++            collect($accounts)->where('type', 2)->sum('value'),
++            0.01,
++            'Nợ phải cân Có'
++        );
++    }
++}

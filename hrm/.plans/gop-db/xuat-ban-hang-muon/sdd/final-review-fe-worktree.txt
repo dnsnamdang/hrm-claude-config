@@ -1,0 +1,1928 @@
+### Phase 2 FE — hrm-client working tree (UNCOMMITTED — quy ước Phase 1 FE)
+### Branch: gop_db  BASE(client)=dbac538
+
+===== [M] components/subsystem-menu/finance.js (diff HEAD) =====
+diff --git a/components/subsystem-menu/finance.js b/components/subsystem-menu/finance.js
+index f5672260d..13247cd1a 100644
+--- a/components/subsystem-menu/finance.js
++++ b/components/subsystem-menu/finance.js
+@@ -163,14 +163,14 @@ export const financeItems = [
+         isMenuCollapsed: false,
+         subItems: [
+             { label: 'Danh sách hàng mượn' },
+             { label: 'Hàng sắp hết hạn mượn' },
+             { label: 'Yêu cầu xuất hàng mượn' },
+             { label: 'Phiếu xuất hàng mượn' },
+-            { label: 'Yêu cầu xuất bán hàng mượn' },
+-            { label: 'Phiếu xuất bán hàng mượn' },
++            { label: 'Yêu cầu xuất bán hàng mượn', link: '/finance/borrow-sell-requests' },
++            { label: 'Phiếu xuất bán hàng mượn', link: '/finance/borrow-sells' },
+             { label: 'Phiếu yêu cầu gia hạn hàng mượn' },
+         ],
+     },
+     {
+         label: 'Giữ hàng',
+         hubGroup: 'Hàng hoá - Dịch vụ - Vận chuyển',
+
+===== [A] pages/finance/borrow-sell-requests/_id/index.vue — CHỈ xem nút 'Lập phiếu bán' (T10) trong file Phase 1 =====
+(grep-only: xem chi tiết ở review T10b đã pass)
+
+===== [??] pages/finance/borrow-sells/** — TOÀN BỘ file mới Phase 2 =====
+
+----- FILE: pages/finance/borrow-sells/api.js -----
+     1	// hrm-client/pages/finance/borrow-sells/api.js
+     2	// Lớp gọi API cho màn "Phiếu xuất bán hàng mượn" (PXBHM) — Phase 2.
+     3	// Base /api/v1/ do apiGetMethod/apiPostMethod tự thêm → chỉ truyền path từ 'finance/...'.
+     4	const BASE = 'finance/borrow-sells'
+     5	
+     6	// Build query string từ object params (bỏ null/undefined/'' để URL sạch)
+     7	function qs(params = {}) {
+     8	  const parts = []
+     9	  Object.keys(params).forEach((key) => {
+    10	    const val = params[key]
+    11	    if (val === null || val === undefined || val === '') return
+    12	    if (Array.isArray(val)) {
+    13	      val.forEach((v) => {
+    14	        if (v !== null && v !== undefined && v !== '') {
+    15	          parts.push(`${encodeURIComponent(key)}[]=${encodeURIComponent(v)}`)
+    16	        }
+    17	      })
+    18	    } else {
+    19	      parts.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`)
+    20	    }
+    21	  })
+    22	  return parts.length ? `?${parts.join('&')}` : ''
+    23	}
+    24	
+    25	// Danh sách phiếu xuất bán (getBorrowSells) — params: filter + page + per_page.
+    26	export const list = (dispatch, params = {}) =>
+    27	  dispatch('apiGetMethod', `${BASE}${qs(params)}`)
+    28	
+    29	// Chi tiết 1 phiếu xuất bán (getBorrowSell) — kèm khối hạch toán.
+    30	export const show = (dispatch, id) =>
+    31	  dispatch('apiGetMethod', `${BASE}/${id}`)
+    32	
+    33	// Lập phiếu xuất bán (storeBorrowSell) — payload qty-only, BE tự tính tiền.
+    34	export const store = (dispatch, payload) =>
+    35	  dispatch('apiPostMethod', { url: BASE, payload })
+    36	
+    37	// Dữ liệu in phiếu (getBorrowSellPrint).
+    38	export const printData = (dispatch, id) =>
+    39	  dispatch('apiGetMethod', `${BASE}/${id}/print-data`)
+
+----- FILE: pages/finance/borrow-sells/index.vue -----
+     1	<template>
+     2	    <div class="v2-styles min-vh-100 d-flex justify-content-center pt-2">
+     3	        <div class="container-fluid">
+     4	            <!-- FILTER PANEL — khuôn Phase 1 `borrow-sell-requests`, chỉ gửi 5 param BE
+     5	                 `BorrowSell::searchByFilter` đọc (Task P2-11 brief). -->
+     6	            <V2BaseSmartFilterPanel
+     7	                table="finance_borrow_sells"
+     8	                title="Bộ lọc phiếu xuất bán hàng mượn"
+     9	                :filter-fields="filterFields"
+    10	                :filters="filters"
+    11	                :collapsed="filterCollapsed"
+    12	                :quickSearchValue="filters.code"
+    13	                quickSearchPlaceholder="Tìm theo mã phiếu..."
+    14	                @toggle-panel="toggleFilterPanel"
+    15	                @quick-search-change="handleQuickSearchChange"
+    16	                @filter-change="handleFilterChange"
+    17	                @search="handleSearch"
+    18	                @reset="handleReset"
+    19	            />
+    20	
+    21	            <!-- DATA TABLE -->
+    22	            <V2BaseDataTable
+    23	                :data="tableData"
+    24	                :columns="tableColumns"
+    25	                :pagination="pagination"
+    26	                :loading="loading"
+    27	                title="Phiếu xuất bán hàng mượn"
+    28	                rowKey="id"
+    29	                itemLabel="phiếu"
+    30	                emptyText="Không có dữ liệu phù hợp bộ lọc."
+    31	                @page-change="handlePageChange"
+    32	                @page-size-change="handlePageSizeChange"
+    33	            >
+    34	                <template #actions-bottom>
+    35	                    <V2BaseButton
+    36	                        secondary
+    37	                        size="sm"
+    38	                        class="btn-compact"
+    39	                        title="Cấu hình cột hiển thị"
+    40	                        @click="configColumns"
+    41	                    >
+    42	                        <i class="ri-layout-column-line"></i>
+    43	                    </V2BaseButton>
+    44	                </template>
+    45	
+    46	                <!-- STT -->
+    47	                <template #cell-index="{ index }">
+    48	                    {{ getNumericalOrder(pagination.currentPage, pagination.pageSize, index) }}
+    49	                </template>
+    50	
+    51	                <!-- Mã phiếu: LINK vào chi tiết (màn Task 13, chưa tồn tại lúc này là bình thường) -->
+    52	                <template #cell-code="{ item }">
+    53	                    <nuxt-link :to="`/finance/borrow-sells/${item.id}`" class="v2-cell-link field-line">
+    54	                        {{ item.code || '—' }}
+    55	                    </nuxt-link>
+    56	                </template>
+    57	
+    58	                <template #cell-type_name="{ item }">
+    59	                    <span class="field-line">{{ item.type_name || '—' }}</span>
+    60	                </template>
+    61	
+    62	                <template #cell-contract_code="{ item }">
+    63	                    <span class="field-line">{{ item.contract_code || '—' }}</span>
+    64	                </template>
+    65	
+    66	                <template #cell-customer_name="{ item }">
+    67	                    <span class="field-line">{{ item.customer_name || '—' }}</span>
+    68	                </template>
+    69	
+    70	                <template #cell-creator_name="{ item }">
+    71	                    <span class="field-line">{{ item.creator_name || '—' }}</span>
+    72	                </template>
+    73	
+    74	                <template #cell-sum_amount_after_extra_after_vat="{ item }">
+    75	                    <span class="field-line">{{ formatMoney(item.sum_amount_after_extra_after_vat) }}</span>
+    76	                </template>
+    77	
+    78	                <template #cell-created_at="{ item }">
+    79	                    <span class="field-line">{{ item.created_at || '—' }}</span>
+    80	                </template>
+    81	
+    82	                <!-- Trạng thái: BE trả sẵn status_name (text), FE chỉ map class badge theo số status
+    83	                     (quy ước khuôn: success -> active, danger -> lock, còn lại -> draft). -->
+    84	                <template #cell-status="{ item }">
+    85	                    <span class="status-pill" :class="statusPillClass(item.status)">
+    86	                        {{ item.status_name }}
+    87	                    </span>
+    88	                </template>
+    89	
+    90	                <!-- Cột Hành động: phiếu bán chỉ có Xem (fail-closed theo is_can_view BE trả). -->
+    91	                <template #cell-actions="{ item }">
+    92	                    <V2BaseRowActions :actions="getRowActions(item)" @action="handleRowAction($event, item)" />
+    93	                </template>
+    94	            </V2BaseDataTable>
+    95	        </div>
+    96	
+    97	        <!-- Cấu hình cột hiển thị (mixin đã khai component) -->
+    98	        <ColumnCustomizationModal
+    99	            v-if="columnFieldsLoaded"
+   100	            :columnsProps="columnConfigList"
+   101	            :table="columnScreenKey"
+   102	            @updateColumns="updateColumns"
+   103	        />
+   104	    </div>
+   105	</template>
+   106	
+   107	<script>
+   108	import V2BaseButton from '@/components/V2BaseButton.vue'
+   109	import V2BaseRowActions from '@/components/V2BaseRowActions.vue'
+   110	import V2BaseSmartFilterPanel from '@/components/V2BaseSmartFilterPanel.vue'
+   111	import V2BaseDataTable from '@/components/V2BaseDataTable.vue'
+   112	import { getNumericalOrder, mergeKnownFilters } from '@/utils/common.js'
+   113	import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
+   114	import filterStateMixin from '@/utils/mixins/filterStateMixin.js'
+   115	import DedupeLoadMixin from '@/utils/mixins/DedupeLoadMixin.js'
+   116	import columnCustomizationMixin from '@/utils/mixins/columnCustomizationMixin.js'
+   117	import * as api from './api'
+   118	
+   119	/**
+   120	 * CHỈ chứa điều kiện lọc. `page` / `per_page` thuộc `pagination`, KHÔNG được để trong đây:
+   121	 * deep watcher dưới sẽ coi việc đổi trang là "đổi bộ lọc" -> reset về trang 1 rồi gọi lại API,
+   122	 * gây vòng lặp request và nhảy trang (bài học phân trang finance-account-catalog, xem
+   123	 * `.plans/gop-db/design.md`).
+   124	 *
+   125	 * BE `BorrowSell::searchByFilter` CHỈ đọc 5 param này (Task P2-11 brief, KHÔNG thêm param khác).
+   126	 */
+   127	const initialStateForm = {
+   128	    // Ô tìm nhanh: BE tìm mã phiếu (LIKE).
+   129	    code: '',
+   130	    contractable_type: '',
+   131	    status: '',
+   132	    startDate: '',
+   133	    endDate: '',
+   134	}
+   135	
+   136	// Loại hợp đồng — param `contractable_type` nhận CHUỖI morph (Task P2-11 brief — verbatim).
+   137	const CONTRACT_TYPE_OPTIONS = [
+   138	    { id: 'App\\Model\\Sale\\Firm\\Contract\\FirmContract', name: 'HĐ hãng' },
+   139	    { id: 'App\\Model\\Customers\\WrServiceContract', name: 'HĐ dịch vụ' },
+   140	]
+   141	
+   142	// Trạng thái: phiếu bán hiện chỉ có 1 giá trị (Đã duyệt); vẫn để 1 option cho nhất quán.
+   143	const STATUS_OPTIONS = [{ id: 1, name: 'Đã duyệt' }]
+   144	
+   145	export default {
+   146	    layout: 'default-sidebar',
+   147	    mixins: [PageTitleMixin, filterStateMixin, DedupeLoadMixin, columnCustomizationMixin],
+   148	    head() {
+   149	        return { title: `${this.title}` }
+   150	    },
+   151	    components: {
+   152	        V2BaseButton,
+   153	        V2BaseRowActions,
+   154	        V2BaseSmartFilterPanel,
+   155	        V2BaseDataTable,
+   156	    },
+   157	    data() {
+   158	        return {
+   159	            // true ngay từ đầu: bảng hiện spinner khi vừa vào màn, không nhấp nháy "không có dữ
+   160	            // liệu" trong lúc chờ request đầu tiên (skill list-page mục 8).
+   161	            loading: true,
+   162	            title: 'Phiếu xuất bán hàng mượn',
+   163	            tableData: [],
+   164	            pagination: {
+   165	                currentPage: 1,
+   166	                pageSize: 10,
+   167	                total: 0,
+   168	                totalPages: 1,
+   169	                from: 0,
+   170	                to: 0,
+   171	            },
+   172	            filterCollapsed: true,
+   173	            filters: { ...initialStateForm },
+   174	            // CHỈ ô tìm nhanh (`code`) chờ bấm nút Tìm kiếm (skill list-page). Các ô trong lọc
+   175	            // nâng cao — kể cả ô gõ tay — tự gọi API khi gõ.
+   176	            ignoredFields: ['code'],
+   177	            oldFilters: {},
+   178	            // Khoá lưu cấu hình cột (bảng key-value `user_column_settings`).
+   179	            columnScreenKey: 'finance_borrow_sells',
+   180	            filterFieldName: 'filters',
+   181	            localStorageKey: 'finance_borrow_sells',
+   182	            pathsToKeep: ['/finance/borrow-sells'],
+   183	            expirationTime: 10 * 60 * 1000,
+   184	        }
+   185	    },
+   186	    computed: {
+   187	        pageTitle() {
+   188	            return this.title
+   189	        },
+   190	        /**
+   191	         * Schema ô lọc cho `V2BaseSmartFilterPanel`. CHỈ 4 ô lọc nâng cao (Task P2-11 brief) —
+   192	         * BE `searchByFilter` không đọc contract_code/customer/created_by/type nên KHÔNG thêm ô
+   193	         * này, tránh gây hiểu nhầm là lọc được.
+   194	         */
+   195	        filterFields() {
+   196	            return [
+   197	                {
+   198	                    key: 'contractable_type',
+   199	                    label: 'Loại hợp đồng',
+   200	                    type: 'select',
+   201	                    options: CONTRACT_TYPE_OPTIONS,
+   202	                    placeholder: 'Chọn loại hợp đồng',
+   203	                },
+   204	                {
+   205	                    key: 'status',
+   206	                    label: 'Trạng thái',
+   207	                    type: 'select',
+   208	                    options: STATUS_OPTIONS,
+   209	                    placeholder: 'Chọn trạng thái',
+   210	                },
+   211	                { key: 'startDate', label: 'Ngày tạo từ', type: 'date', placeholder: 'Từ ngày' },
+   212	                { key: 'endDate', label: 'Ngày tạo đến', type: 'date', placeholder: 'Đến ngày' },
+   213	            ]
+   214	        },
+   215	        /**
+   216	         * Bộ cột GỐC của màn — mixin `columnCustomizationMixin` sinh `tableColumns` từ đây sau khi
+   217	         * áp cấu hình đã lưu của user. `locked` = không cho tắt/kéo thả: STT, Mã phiếu, Hành động.
+   218	         */
+   219	        allColumns() {
+   220	            return [
+   221	                { key: 'index', title: 'STT', width: '60px', minWidth: '60px', sticky: true, align: 'left', locked: true },
+   222	                { key: 'code', title: 'Mã phiếu', width: '160px', minWidth: '160px', sticky: true, align: 'left', locked: true },
+   223	                { key: 'type_name', title: 'Loại phiếu', width: '150px', minWidth: '150px', align: 'left', cellClass: 'text-wrap' },
+   224	                { key: 'contract_code', title: 'Mã HĐ', width: '150px', minWidth: '150px', align: 'left', cellClass: 'text-wrap' },
+   225	                { key: 'customer_name', title: 'Khách hàng', width: '220px', minWidth: '220px', align: 'left', cellClass: 'text-wrap' },
+   226	                { key: 'creator_name', title: 'Người tạo', width: '170px', minWidth: '170px', align: 'left', cellClass: 'text-wrap' },
+   227	                { key: 'sum_amount_after_extra_after_vat', title: 'Tổng tiền', width: '150px', minWidth: '150px', align: 'right' },
+   228	                { key: 'created_at', title: 'Ngày tạo', width: '140px', minWidth: '140px', align: 'left' },
+   229	                { key: 'status', title: 'Trạng thái', width: '140px', minWidth: '140px', align: 'center' },
+   230	                { key: 'actions', title: 'Hành động', width: '110px', minWidth: '110px', align: 'center', locked: true },
+   231	            ]
+   232	        },
+   233	    },
+   234	    watch: {
+   235	        filters: {
+   236	            handler(newVal) {
+   237	                const changedFields = Object.keys(newVal).filter(
+   238	                    (field) => JSON.stringify(newVal[field]) !== JSON.stringify(this.oldFilters[field])
+   239	                )
+   240	                this.oldFilters = JSON.parse(JSON.stringify(newVal))
+   241	
+   242	                // Gán lại nguyên object mà giá trị không đổi (vd khôi phục filter từ localStorage
+   243	                // lúc mounted) -> KHÔNG được gọi lại API, nếu không sẽ dư 1 request mỗi lần vào màn.
+   244	                if (!changedFields.length) return
+   245	
+   246	                // Chỉ đổi ô tìm nhanh (code) -> chờ bấm nút Tìm kiếm (skill list-page).
+   247	                if (changedFields.every((field) => this.ignoredFields.includes(field))) return
+   248	
+   249	                this.pagination.currentPage = 1
+   250	                this.loadData()
+   251	            },
+   252	            deep: true,
+   253	        },
+   254	    },
+   255	    /**
+   256	     * Thứ tự request theo skill `list-page` mục 8: **danh sách phải là request ĐẦU TIÊN**.
+   257	     *
+   258	     * ⚠️ Khôi phục filter từ localStorage phải làm TRƯỚC `loadData()` (nếu không lượt đầu gọi sai
+   259	     * bộ lọc rồi deep watcher gọi lại lần hai). Đây là việc đồng bộ, không tốn request.
+   260	     */
+   261	    mounted() {
+   262	        const savedState = this.loadFilterState()
+   263	        if (savedState) {
+   264	            // Bỏ qua khóa lọc đã xóa còn sót trong localStorage -> tránh lọc ngầm.
+   265	            this.filters = mergeKnownFilters(initialStateForm, savedState.filter)
+   266	            if (savedState.filterCollapsed !== undefined) {
+   267	                this.filterCollapsed = savedState.filterCollapsed
+   268	            }
+   269	        }
+   270	        this.oldFilters = JSON.parse(JSON.stringify(this.filters))
+   271	
+   272	        // 1. Danh sách — bắn NGAY, không await gì.
+   273	        this.loadData()
+   274	        // 2. Cấu hình cột — chạy song song, không chặn bảng.
+   275	        this.loadColumnFields()
+   276	    },
+   277	    methods: {
+   278	        getNumericalOrder,
+   279	
+   280	        /** Query gửi lên API = bộ lọc + phân trang hiện tại. BE nhận `per_page` (KHÔNG phải limit). */
+   281	        buildParams(overrides = {}) {
+   282	            return {
+   283	                ...this.filters,
+   284	                page: this.pagination.currentPage,
+   285	                per_page: this.pagination.pageSize,
+   286	                ...overrides,
+   287	            }
+   288	        },
+   289	
+   290	        /**
+   291	         * Hành động của 1 dòng — CHỈ Xem. Đọc thẳng cờ `is_can_view` BE trả theo dòng, KHÔNG bao
+   292	         * giờ gán `true` (fail-closed, CLAUDE.md).
+   293	         */
+   294	        getRowActions(item) {
+   295	            return [
+   296	                {
+   297	                    key: 'view',
+   298	                    title: 'Xem',
+   299	                    icon: 'ri-eye-line',
+   300	                    to: `/finance/borrow-sells/${item.id}`,
+   301	                    interactable: !!item.is_can_view,
+   302	                },
+   303	            ]
+   304	        },
+   305	        /** Phiếu bán không có action cần xử lý JS — Xem đã điều hướng qua `to`. */
+   306	        handleRowAction() {},
+   307	
+   308	        async loadData() {
+   309	            const params = this.buildParams()
+   310	            // V2BaseDataTable emit trùng sự kiện cho 1 thao tác -> chặn request lặp.
+   311	            if (this.isDuplicateLoad(params)) return
+   312	
+   313	            try {
+   314	                this.loading = true
+   315	
+   316	                // Response: data = mảng dòng, meta phẳng ở cấp 1 (total/lastPage/currentPage/
+   317	                // perPage + cờ phạm vi) — controller dùng additional() (Task 8 brief).
+   318	                const response = await api.list(this.$store.dispatch, params)
+   319	
+   320	                this.tableData = response.data || []
+   321	                // ⚠️ Phải ép Number + fallback về GIÁ TRỊ HIỆN TẠI (KHÔNG phải 1): lệch kiểu hoặc
+   322	                // đọc nhầm tên field meta sẽ ép về trang 1 -> watcher `currentPageValue` trong
+   323	                // V2BaseDataTable emit `page-change(1)` -> gọi lại API -> vòng lặp/nhảy trang
+   324	                // (bài học phân trang finance-account-catalog).
+   325	                this.pagination.currentPage =
+   326	                    Number(response.currentPage ?? response.current_page) || this.pagination.currentPage
+   327	                this.pagination.pageSize =
+   328	                    Number(response.perPage ?? response.per_page) || this.pagination.pageSize
+   329	                this.pagination.total = Number(response.total) || 0
+   330	                this.pagination.totalPages = Number(response.lastPage ?? response.last_page) || 1
+   331	                // BE không trả from/to -> tự tính để V2BaseDataTable hiện "x-y trong z".
+   332	                this.pagination.from = this.pagination.total
+   333	                    ? (this.pagination.currentPage - 1) * this.pagination.pageSize + 1
+   334	                    : 0
+   335	                this.pagination.to = Math.min(
+   336	                    this.pagination.currentPage * this.pagination.pageSize,
+   337	                    this.pagination.total
+   338	                )
+   339	            } catch (error) {
+   340	                console.error('Error loading data:', error)
+   341	                if (error?.response?.status !== 403) {
+   342	                    this.$toasted?.global?.error?.({ message: 'Lỗi khi tải dữ liệu' })
+   343	                }
+   344	            } finally {
+   345	                this.loading = false
+   346	            }
+   347	        },
+   348	
+   349	        toggleFilterPanel() {
+   350	            this.filterCollapsed = !this.filterCollapsed
+   351	        },
+   352	        handleQuickSearchChange(value) {
+   353	            this.filters.code = value
+   354	        },
+   355	        // `V2BaseSmartFilterPanel` không dùng v-model từng ô mà emit { key, value }.
+   356	        handleFilterChange({ key, value }) {
+   357	            this.$set(this.filters, key, value)
+   358	        },
+   359	        // `code` nằm trong ignoredFields nên watcher bỏ qua -> nút Tìm kiếm tự gọi API.
+   360	        async handleSearch() {
+   361	            this.pagination.currentPage = 1
+   362	            this.oldFilters = JSON.parse(JSON.stringify(this.filters))
+   363	            await this.loadData()
+   364	        },
+   365	        // handleReset CHỈ đổi `filters`, deep watcher lo việc gọi API (skill list-page).
+   366	        async handleReset() {
+   367	            this.filters = { ...initialStateForm }
+   368	            // Deep watcher bỏ qua khi không trường nào đổi, hoặc khi chỉ `code` đổi (nằm trong
+   369	            // `ignoredFields`) -> Làm mới phải TỰ nạp lại danh sách, nếu không chỉ xóa ô lọc còn
+   370	            // kết quả cũ vẫn nằm nguyên trên bảng.
+   371	            this.oldFilters = JSON.parse(JSON.stringify(this.filters))
+   372	            this.pagination.currentPage = 1
+   373	            this.resetLoadDedupe?.()
+   374	            await this.loadData()
+   375	        },
+   376	        // Phân trang KHÔNG đụng `filters` -> không kích hoạt watcher, không bị reset về trang 1.
+   377	        async handlePageChange(page) {
+   378	            this.pagination.currentPage = page
+   379	            await this.loadData()
+   380	        },
+   381	        async handlePageSizeChange(pageSize) {
+   382	            this.pagination.pageSize = pageSize
+   383	            this.pagination.currentPage = 1
+   384	            await this.loadData()
+   385	        },
+   386	
+   387	        /** Badge trạng thái: quy ước khuôn — success = xanh (đã duyệt), danger = đỏ (không duyệt),
+   388	         *  còn lại = xám. Text hiển thị lấy nguyên `status_name` từ BE, class chỉ map theo số
+   389	         *  `status`. */
+   390	        statusPillClass(status) {
+   391	            const value = Number(status)
+   392	            if (value === 1) return 'tpl-status-active'
+   393	            if (value === 4) return 'tpl-status-lock'
+   394	            return 'tpl-status-draft'
+   395	        },
+   396	
+   397	        // Không có helper format tiền sẵn trong @/utils/common.js -> viết tối giản tại đây
+   398	        // (Task P2-11 brief).
+   399	        formatMoney(v) {
+   400	            const n = Number(v || 0)
+   401	            return n.toLocaleString('vi-VN')
+   402	        },
+   403	    },
+   404	}
+   405	</script>
+   406	
+   407	<style lang="scss">
+   408	@import '@/assets/scss/v2-styles.scss';
+   409	</style>
+
+----- FILE: pages/finance/borrow-sells/create.vue -----
+     1	<template>
+     2	    <BorrowSellForm ref="form" />
+     3	</template>
+     4	
+     5	<script>
+     6	import BorrowSellForm from './components/BorrowSellForm.vue'
+     7	import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
+     8	import unsavedChildFormMixin from '@/utils/mixins/unsavedChildFormMixin'
+     9	
+    10	/**
+    11	 * Trang vỏ Tạo phiếu xuất bán hàng mượn (PXBHM) — Task P2-12.
+    12	 * Form thật nằm ở component con `BorrowSellForm` (đã tự gắn `unsavedChangesMixin` +
+    13	 * `formValidateMixin`) nên trang vỏ chỉ cần `unsavedChildFormMixin` để guard `beforeRouteLeave`
+    14	 * (khuôn `pages/finance/borrow-sell-requests/create.vue` — Phase 1).
+    15	 */
+    16	export default {
+    17	    name: 'BorrowSellCreate',
+    18	    layout: 'default-sidebar',
+    19	    mixins: [PageTitleMixin, unsavedChildFormMixin],
+    20	    components: { BorrowSellForm },
+    21	    head() {
+    22	        return { title: this.pageTitle }
+    23	    },
+    24	    computed: {
+    25	        pageTitle() {
+    26	            return 'Lập phiếu xuất bán hàng mượn'
+    27	        },
+    28	    },
+    29	}
+    30	</script>
+
+----- FILE: pages/finance/borrow-sells/components/BorrowSellForm.vue -----
+     1	<template>
+     2	    <div class="v2-styles min-vh-100" style="padding-bottom: 72px">
+     3	        <div class="container-fluid px-0">
+     4	            <!-- ══════════════ SECTION 1 — Phiếu yêu cầu / Hợp đồng (READ-ONLY, nạp từ phiếu YC) ══════════════ -->
+     5	            <div class="card">
+     6	                <div class="card-header section-header py-2">
+     7	                    <h6 class="mb-0 font-weight-bold">Phiếu yêu cầu xuất bán hàng mượn</h6>
+     8	                </div>
+     9	                <div class="card-body">
+    10	                    <div class="form-row">
+    11	                        <div class="col-md-3 mb-2">
+    12	                            <V2BaseLabel>Số phiếu yêu cầu</V2BaseLabel>
+    13	                            <V2BaseInput :value="header.code" size="sm" :disabled="true" placeholder="—" />
+    14	                        </div>
+    15	                        <div class="col-md-3 mb-2">
+    16	                            <V2BaseLabel>Số hợp đồng</V2BaseLabel>
+    17	                            <V2BaseInput :value="header.contract_code" size="sm" :disabled="true" placeholder="—" />
+    18	                        </div>
+    19	                        <div class="col-md-3 mb-2">
+    20	                            <V2BaseLabel>Khách hàng</V2BaseLabel>
+    21	                            <V2BaseInput :value="header.customer_name" size="sm" :disabled="true" placeholder="—" />
+    22	                        </div>
+    23	                        <div class="col-md-3 mb-2">
+    24	                            <V2BaseLabel>Loại hợp đồng</V2BaseLabel>
+    25	                            <V2BaseInput :value="header.type_name" size="sm" :disabled="true" placeholder="—" />
+    26	                        </div>
+    27	                    </div>
+    28	                </div>
+    29	            </div>
+    30	
+    31	            <!-- ══════════════ SECTION 2 — Chi tiết số lượng bán ══════════════
+    32	                 Bảng lồng 2 cấp productGroups→details, nạp THẲNG từ BorrowSellRequestDetailResource
+    33	                 (KHÔNG dựng grid từ tích Descartes như phiếu YC — brief §B0/B4). Cột SP + tiền
+    34	                 READ-ONLY (BE tự tính tiền thật khi lưu, đây chỉ là số ước tính hiển thị FE). Chỉ
+    35	                 ô "Bán" cho phép nhập. -->
+    36	            <div class="card">
+    37	                <div class="card-header section-header py-2">
+    38	                    <h6 class="mb-0 font-weight-bold">Chi tiết số lượng bán</h6>
+    39	                </div>
+    40	                <div class="card-body">
+    41	                    <V2BaseTableScroll>
+    42	                        <table class="table table-bordered table-sm mb-0 grid-table bsr-detail-table">
+    43	                            <thead class="bg-light">
+    44	                                <tr>
+    45	                                    <th rowspan="2" style="width: 44px" class="text-center align-middle">STT</th>
+    46	                                    <th rowspan="2" style="min-width: 220px" class="align-middle">Tên hàng hóa</th>
+    47	                                    <th rowspan="2" style="width: 90px" class="align-middle">ĐVT</th>
+    48	                                    <th colspan="3" class="text-center">Số lượng</th>
+    49	                                    <th colspan="2" class="text-center">Chi tiết</th>
+    50	                                    <th rowspan="2" class="text-right align-middle" style="width: 110px">Giá niêm yết</th>
+    51	                                    <th v-if="hasRebatePrice" rowspan="2" class="text-right align-middle" style="width: 100px">Chiết khấu</th>
+    52	                                    <th rowspan="2" class="text-right align-middle" style="width: 110px">Đơn giá bán</th>
+    53	                                    <th rowspan="2" class="text-right align-middle" style="width: 120px">Thành tiền</th>
+    54	                                    <th rowspan="2" class="text-right align-middle" style="width: 120px">Đơn giá sau giảm</th>
+    55	                                    <th rowspan="2" class="text-right align-middle" style="width: 130px">Thành tiền sau giảm</th>
+    56	                                    <th rowspan="2" class="text-center align-middle" style="width: 60px">VAT</th>
+    57	                                    <th rowspan="2" class="text-right align-middle" style="width: 140px">Thành tiền sau VAT</th>
+    58	                                </tr>
+    59	                                <tr>
+    60	                                    <th class="text-center" style="width: 80px">Hợp đồng</th>
+    61	                                    <th class="text-center" style="width: 90px">Đã xuất kho</th>
+    62	                                    <th class="text-center" style="width: 100px">Bán hàng mượn</th>
+    63	                                    <th style="min-width: 140px">Phiếu nguồn</th>
+    64	                                    <th class="text-center" style="width: 160px">Bán</th>
+    65	                                </tr>
+    66	                            </thead>
+    67	                            <tbody>
+    68	                                <template v-for="(g, gi) in productGroups">
+    69	                                    <tr
+    70	                                        v-for="(d, di) in g.details"
+    71	                                        :key="d.key"
+    72	                                        :class="{ 'row-error': detailInvalid(g, d) }"
+    73	                                    >
+    74	                                        <!-- Cột SP (rowspan) chỉ render ở dòng con đầu tiên của nhóm -->
+    75	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-center align-middle">{{ gi + 1 }}</td>
+    76	                                        <td v-if="di === 0" :rowspan="g.details.length" class="align-middle">
+    77	                                            <div class="font-weight-600">{{ g.product_name }}</div>
+    78	                                            <div class="bsr-sub"><b>Model:</b> {{ g.model_name || '—' }}</div>
+    79	                                            <div class="bsr-sub"><b>Mã:</b> {{ g.code || '—' }}</div>
+    80	                                            <div class="bsr-sub"><b>Thương hiệu:</b> {{ g.brand_name || '—' }}</div>
+    81	                                        </td>
+    82	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-center align-middle">
+    83	                                            {{ g.unit_name || '—' }}<span v-if="hasCoefficient(g)"> (x{{ g.unit_coefficient }})</span>
+    84	                                        </td>
+    85	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-center align-middle">{{ formatNum(g.contract_qty) }}</td>
+    86	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-center align-middle">{{ formatNum(g.exported_qty) }}</td>
+    87	                                        <td
+    88	                                            v-if="di === 0"
+    89	                                            :rowspan="g.details.length"
+    90	                                            class="text-center align-middle font-weight-600"
+    91	                                            :class="{ 'text-danger': groupBorrowSellExceedsContract(g) }"
+    92	                                        >
+    93	                                            {{ formatNum(groupBorrowSellQty(g)) }}
+    94	                                        </td>
+    95	                                        <!-- Cột Chi tiết: render mỗi dòng con (mỗi phiếu xuất mượn nguồn của SP) -->
+    96	                                        <td>{{ d.export_request_code }}</td>
+    97	                                        <td>
+    98	                                            <div class="d-flex align-items-center" style="gap: 4px">
+    99	                                                <input
+   100	                                                    type="number"
+   101	                                                    class="form-control text-right qty-input"
+   102	                                                    :class="{ 'is-invalid': detailInvalid(g, d) }"
+   103	                                                    min="0"
+   104	                                                    :max="d.max_qty"
+   105	                                                    step="any"
+   106	                                                    v-model.number="d.qty"
+   107	                                                    @input="onQtyInput"
+   108	                                                />
+   109	                                                <span class="qty-max">/ {{ formatNum(d.max_qty) }}</span>
+   110	                                            </div>
+   111	                                        </td>
+   112	                                        <!-- Cột tiền (rowspan) chỉ render ở dòng con đầu tiên của nhóm -->
+   113	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-right align-middle">{{ formatMoney(groupDisplayPrice(g)) }}</td>
+   114	                                        <td v-if="hasRebatePrice && di === 0" :rowspan="g.details.length" class="text-right align-middle">{{ formatMoney(g.rebate_price) }}</td>
+   115	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-right align-middle">{{ formatMoney(groupPriceAfterExtra(g)) }}</td>
+   116	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-right align-middle">{{ formatMoney(groupTotalAfterExtra(g)) }}</td>
+   117	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-right align-middle">{{ formatMoney(g.allocated_price) }}</td>
+   118	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-right align-middle">{{ formatMoney(groupTotalAllocated(g)) }}</td>
+   119	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-center align-middle">{{ formatNum(g.vat_percent) }}%</td>
+   120	                                        <td v-if="di === 0" :rowspan="g.details.length" class="text-right align-middle">{{ formatMoney(groupTotalAllocatedAfterVat(g)) }}</td>
+   121	                                    </tr>
+   122	                                </template>
+   123	
+   124	                                <tr v-if="!productGroups.length">
+   125	                                    <td :colspan="totalColumns" class="text-center text-muted" style="padding: 14px">
+   126	                                        Phiếu yêu cầu không có hàng hoá.
+   127	                                    </td>
+   128	                                </tr>
+   129	                            </tbody>
+   130	                        </table>
+   131	                    </V2BaseTableScroll>
+   132	
+   133	                    <!-- Box tổng (ước tính hiển thị FE — BE tự tính tiền thật khi lưu) -->
+   134	                    <div v-if="productGroups.length" class="pay-box">
+   135	                        <div class="pay-box__rows">
+   136	                            <div class="pay-row">
+   137	                                <span>Tổng tiền bán</span><b>{{ formatMoney(sumAmountAfterExtra) }}</b>
+   138	                            </div>
+   139	                            <div class="pay-row">
+   140	                                <span>Tổng giảm giá</span><b>{{ formatMoney(saleInvoice) }}</b>
+   141	                            </div>
+   142	                            <div class="pay-row">
+   143	                                <span>Tổng tiền trước thuế</span><b>{{ formatMoney(sumAmountAllocated) }}</b>
+   144	                            </div>
+   145	                            <div class="pay-row"><span>Tiền VAT</span><b>{{ formatMoney(sumAmountAllocatedVat) }}</b></div>
+   146	                            <div v-if="hasRebatePrice && formRebatePrice > 0" class="pay-row">
+   147	                                <span>Chiết khấu</span><b>{{ formatMoney(formRebatePrice) }}</b>
+   148	                            </div>
+   149	                            <div class="pay-row pay-row--total">
+   150	                                <span>Tổng tiền sau thuế</span><b>{{ formatMoney(sumAmountAllocatedAfterVat) }}</b>
+   151	                            </div>
+   152	                        </div>
+   153	                    </div>
+   154	
+   155	                    <V2BaseError :message="fieldError('products')" size="sm" />
+   156	                </div>
+   157	            </div>
+   158	
+   159	            <!-- ══════════════ FOOTER — thanh hành động cố định ══════════════ -->
+   160	            <div class="export-actionbar">
+   161	                <div class="export-actionbar__hint"></div>
+   162	                <div class="export-actionbar__btns">
+   163	                    <V2BaseButton primary size="sm" :interactable="!saving" @click="save">
+   164	                        <template #prefix><i class="ri-save-3-line" style="font-size: 15px"></i></template>
+   165	                        Lập phiếu
+   166	                    </V2BaseButton>
+   167	                    <V2BaseButton tertiary size="sm" @click="goBack">
+   168	                        <template #prefix><i class="fas fa-arrow-left" style="margin-right: 3px"></i></template>
+   169	                        Quay lại
+   170	                    </V2BaseButton>
+   171	                </div>
+   172	            </div>
+   173	        </div>
+   174	    </div>
+   175	</template>
+   176	
+   177	<script>
+   178	import V2BaseInput from '@/components/V2BaseInput.vue'
+   179	import V2BaseLabel from '@/components/V2BaseLabel.vue'
+   180	import V2BaseError from '@/components/V2BaseError.vue'
+   181	import V2BaseTableScroll from '@/components/V2BaseTableScroll.vue'
+   182	import V2BaseButton from '@/components/V2BaseButton.vue'
+   183	import unsavedChangesMixin from '@/utils/mixins/unsavedChangesMixin'
+   184	import formValidateMixin from '@/utils/mixins/formValidateMixin'
+   185	import { scrollToInputError } from '@/utils/helpers'
+   186	import { show as showRequest } from '../../borrow-sell-requests/api'
+   187	import { store as storeBorrowSell } from '../api'
+   188	
+   189	/**
+   190	 * Form chính màn Tạo phiếu xuất bán hàng mượn (PXBHM) — Task P2-12 (Phase 2 —
+   191	 * spec `.plans/gop-db/xuat-ban-hang-muon/sdd/task-p2-12-brief.md`).
+   192	 *
+   193	 * Khác Phase 1 (`BorrowSellRequestForm.vue`): KHÔNG có luồng chọn HĐ / chọn phiếu xuất mượn nguồn
+   194	 * để tự dựng grid — `productGroups` nạp THẲNG từ chi tiết phiếu YC đã duyệt (BorrowSellRequestDetailResource,
+   195	 * qua `showRequest`). Payload gửi lên CHỈ gồm số lượng bán (Ruling T8-payload) — BE tự tính tiền.
+   196	 */
+   197	export default {
+   198	    name: 'BorrowSellForm',
+   199	    mixins: [unsavedChangesMixin, formValidateMixin],
+   200	    components: {
+   201	        V2BaseInput,
+   202	        V2BaseLabel,
+   203	        V2BaseError,
+   204	        V2BaseTableScroll,
+   205	        V2BaseButton,
+   206	    },
+   207	    data() {
+   208	        return {
+   209	            saving: false,
+   210	            requestId: null,
+   211	            header: {
+   212	                code: '',
+   213	                contract_code: '',
+   214	                customer_name: '',
+   215	                type_name: '',
+   216	                type: null,
+   217	                has_rebate_price: false,
+   218	            },
+   219	            // Mỗi phần tử = 1 SP-của-HĐ (1 product của BorrowSellRequestDetailResource).
+   220	            productGroups: [],
+   221	        }
+   222	    },
+   223	    computed: {
+   224	        isFirm() {
+   225	            return Number(this.header.type) === 1
+   226	        },
+   227	        // Cột "Chiết khấu" chỉ có ở HĐ dịch vụ (WrService) — BE trả thẳng qua header.has_rebate_price.
+   228	        hasRebatePrice() {
+   229	            return !!this.header.has_rebate_price
+   230	        },
+   231	        // Tổng số cột bảng chi tiết (để colspan dòng trống). Cột thực tế đang giữ (không tính
+   232	        // Chiết khấu): STT, Tên hàng hóa, ĐVT, SL HĐ, Đã xuất kho, Bán hàng mượn, Phiếu nguồn, Bán,
+   233	        // Giá niêm yết, Đơn giá bán, Thành tiền, Đơn giá sau giảm, Thành tiền sau giảm, VAT,
+   234	        // Thành tiền sau VAT = 15 cột. +1 khi có cột Chiết khấu (WrService) = 16.
+   235	        totalColumns() {
+   236	            return this.hasRebatePrice ? 16 : 15
+   237	        },
+   238	        hasQtyEntered() {
+   239	            return this.productGroups.some((g) => this.groupBorrowSellQty(g) > 0)
+   240	        },
+   241	        hasGridQtyViolation() {
+   242	            return this.productGroups.some((g) =>
+   243	                g.details.some((d) => {
+   244	                    const q = Number(d.qty) || 0
+   245	                    return q < 0 || q > d.max_qty
+   246	                }),
+   247	            )
+   248	        },
+   249	
+   250	        // ───────── Dòng tổng (khớp getter form-level Phase 1) ─────────
+   251	        sumAmountAfterExtra() {
+   252	            return this.productGroups.reduce((a, g) => a + this.groupTotalAfterExtra(g), 0)
+   253	        },
+   254	        saleInvoice() {
+   255	            return this.productGroups.reduce((a, g) => a + this.groupDiscountPrice(g) * this.groupBorrowSellQty(g), 0)
+   256	        },
+   257	        sumAmountAllocated() {
+   258	            return this.productGroups.reduce((a, g) => a + this.groupTotalAllocated(g), 0)
+   259	        },
+   260	        sumAmountAllocatedVat() {
+   261	            return this.productGroups.reduce((a, g) => a + this.groupVatCost(g), 0)
+   262	        },
+   263	        sumAmountAllocatedAfterVat() {
+   264	            return this.productGroups.reduce((a, g) => a + this.groupTotalAllocatedAfterVat(g), 0)
+   265	        },
+   266	        formRebatePrice() {
+   267	            return this.productGroups.reduce((a, g) => a + (Number(g.rebate_price) || 0) * this.groupBorrowSellQty(g), 0)
+   268	        },
+   269	    },
+   270	    async mounted() {
+   271	        this.requestId = this.$route.query.request_id
+   272	        if (!this.requestId) {
+   273	            this.$toasted?.global?.error?.({ message: 'Thiếu mã phiếu yêu cầu' })
+   274	            this.$router.replace('/finance/borrow-sells')
+   275	            return
+   276	        }
+   277	        await this.loadRequest()
+   278	    },
+   279	    methods: {
+   280	        // ───────── unsavedChangesMixin ─────────
+   281	        unsavedSnapshotSource() {
+   282	            const qtys = []
+   283	            this.productGroups.forEach((g) => g.details.forEach((d) => qtys.push({ key: d.key, qty: d.qty })))
+   284	            return { request_id: this.requestId, qtys }
+   285	        },
+   286	
+   287	        // ───────── Nạp dữ liệu phiếu YC (API Phase 1 — KHÔNG viết endpoint mới) ─────────
+   288	        async loadRequest() {
+   289	            try {
+   290	                this.$nuxt.$loading.start()
+   291	                const res = await showRequest(this.$store.dispatch, this.requestId)
+   292	                const data = res?.data || res || {}
+   293	
+   294	                // Gate fail-closed: cờ BE trả, KHÔNG hardcode true.
+   295	                if (!data.is_can_create_borrow_sell) {
+   296	                    this.$toasted?.global?.error?.({ message: 'Bạn không có quyền lập phiếu bán cho phiếu này' })
+   297	                    this.$router.replace('/finance/borrow-sells')
+   298	                    return
+   299	                }
+   300	
+   301	                this.header = {
+   302	                    code: data.code,
+   303	                    contract_code: data.contract_code,
+   304	                    customer_name: data.customer_name,
+   305	                    type_name: data.type_name,
+   306	                    type: data.type,
+   307	                    has_rebate_price: !!data.has_rebate_price,
+   308	                }
+   309	                this.productGroups = (data.products || []).map((p) => ({
+   310	                    // objectable — echo vào payload (BE T7 tra SP-của-HĐ theo objectable, T12-objectable).
+   311	                    objectable_id: p.objectable_id,
+   312	                    objectable_type: p.objectable_type,
+   313	                    product_id: p.product_id,
+   314	                    code: p.code,
+   315	                    product_name: p.product_name,
+   316	                    unit_name: p.unit_name,
+   317	                    brand_name: p.brand_name,
+   318	                    model_name: p.model_name,
+   319	                    contract_qty: Number(p.contract_qty) || 0,
+   320	                    exported_qty: Number(p.exported_qty) || 0,
+   321	                    unit_coefficient: p.unit_coefficient,
+   322	                    vat_percent: p.vat_percent,
+   323	                    price: p.price,
+   324	                    extra_price: p.extra_price,
+   325	                    allocated_price: p.allocated_price,
+   326	                    rebate_price: p.rebate_price,
+   327	                    // Loại (1 Firm hiện giá / 2 WrService giá 0) lấy từ HEADER phiếu.
+   328	                    type: data.type,
+   329	                    details: (p.details || []).map((d) => ({
+   330	                        key: `d_${d.product_export_request_detail_id}`,
+   331	                        product_export_request_detail_id: d.product_export_request_detail_id,
+   332	                        export_request_code: d.product_export_request_code,
+   333	                        // Cận trên ô "SL bán" = SL đã duyệt của dòng (BE hard-validate lại tồn thực).
+   334	                        max_qty: Number(d.approved_qty) || 0,
+   335	                        // Mặc định bán HẾT phần đã duyệt (Ruling B2-default) — user chỉnh giảm được.
+   336	                        qty: Number(d.approved_qty) || 0,
+   337	                    })),
+   338	                }))
+   339	
+   340	                this.$nextTick(() => this.markFormPristine())
+   341	            } catch (error) {
+   342	                console.error('Error loading borrow-sell request:', error)
+   343	                this.$toasted?.global?.error?.({ message: 'Lỗi khi tải dữ liệu phiếu yêu cầu' })
+   344	                this.$router.replace('/finance/borrow-sells')
+   345	            } finally {
+   346	                this.$nuxt.$loading.finish()
+   347	            }
+   348	        },
+   349	
+   350	        // ───────── Số lượng "SL bán" / cận nhập (cấp dòng con) ─────────
+   351	        hasCoefficient(g) {
+   352	            return g.unit_coefficient !== null && g.unit_coefficient !== undefined && Number(g.unit_coefficient) !== 1
+   353	        },
+   354	        detailInvalid(g, d) {
+   355	            const q = Number(d.qty) || 0
+   356	            return q < 0 || q > d.max_qty
+   357	        },
+   358	        onQtyInput() {
+   359	            // Sửa SL -> xoá cờ lỗi field chung để người dùng không thấy thông báo cũ trong lúc gõ.
+   360	            this.clearFieldError('products')
+   361	        },
+   362	
+   363	        // ───────── Getter tiền cấp nhóm SP (khớp getter class BE — verbatim Phase 1) ─────────
+   364	        groupBorrowSellQty(g) {
+   365	            return g.details.reduce((a, d) => a + (Number(d.qty) || 0), 0)
+   366	        },
+   367	        groupDisplayPrice(g) {
+   368	            return Number(g.type) === 2 ? 0 : Number(g.price) || 0
+   369	        },
+   370	        groupPriceAfterExtra(g) {
+   371	            return (Number(g.extra_price) || 0) + this.groupDisplayPrice(g)
+   372	        },
+   373	        groupTotalAfterExtra(g) {
+   374	            return this.groupPriceAfterExtra(g) * this.groupBorrowSellQty(g)
+   375	        },
+   376	        groupDiscountPrice(g) {
+   377	            return Math.round(this.groupPriceAfterExtra(g) - (Number(g.allocated_price) || 0) - (Number(g.rebate_price) || 0))
+   378	        },
+   379	        groupTotalAllocated(g) {
+   380	            return (Number(g.allocated_price) || 0) * this.groupBorrowSellQty(g)
+   381	        },
+   382	        groupVatCost(g) {
+   383	            return (this.groupTotalAllocated(g) * (Number(g.vat_percent) || 0)) / 100
+   384	        },
+   385	        groupTotalAllocatedAfterVat(g) {
+   386	            return this.groupTotalAllocated(g) + this.groupVatCost(g)
+   387	        },
+   388	        groupBorrowSellExceedsContract(g) {
+   389	            return Number(g.contract_qty || 0) - Number(g.exported_qty || 0) < this.groupBorrowSellQty(g)
+   390	        },
+   391	
+   392	        // ───────── Lưu ─────────
+   393	        // Payload chỉ-SL (Ruling T8-payload) — KHÔNG gửi tiền/giá, BE tự tính.
+   394	        buildPayload() {
+   395	            const products = []
+   396	            this.productGroups.forEach((g) => {
+   397	                const details = g.details
+   398	                    .filter((d) => (Number(d.qty) || 0) > 0)
+   399	                    .map((d) => ({ product_export_request_detail_id: d.product_export_request_detail_id, qty: Number(d.qty) || 0 }))
+   400	                if (!details.length) return
+   401	                products.push({ objectable_id: g.objectable_id, objectable_type: g.objectable_type, details })
+   402	            })
+   403	            return { borrow_sell_request_id: Number(this.requestId), products }
+   404	        },
+   405	        validateBeforeSubmit() {
+   406	            const errs = {}
+   407	            if (this.hasGridQtyViolation) errs.products = 'Có dòng vượt số lượng cho phép, vui lòng kiểm tra lại'
+   408	            else if (!this.hasQtyEntered) errs.products = 'Vui lòng nhập số lượng bán cho ít nhất 1 dòng hàng'
+   409	            this.formErrors = errs
+   410	            if (Object.keys(errs).length) {
+   411	                this.toastFormError('Vui lòng kiểm tra lại dữ liệu nhập')
+   412	                this.$nextTick(() => scrollToInputError())
+   413	                return false
+   414	            }
+   415	            return true
+   416	        },
+   417	        handleSaveError(error) {
+   418	            const body = error?.response?.data
+   419	            const errors = body?.errors
+   420	            if (!errors || typeof errors !== 'object') {
+   421	                this.$toasted?.global?.error?.({ message: body?.message || 'Lập phiếu bán thất bại' })
+   422	                return
+   423	            }
+   424	            this.formErrors = { ...errors }
+   425	            const first = Object.values(errors)[0]
+   426	            this.$toasted?.global?.error?.({ message: (Array.isArray(first) ? first[0] : first) || 'Vui lòng kiểm tra lại dữ liệu nhập' })
+   427	            this.$nextTick(() => scrollToInputError())
+   428	        },
+   429	        async save() {
+   430	            if (this.saving) return
+   431	            if (!this.validateBeforeSubmit()) return
+   432	            try {
+   433	                this.saving = true
+   434	                this.$nuxt.$loading.start()
+   435	                const res = await storeBorrowSell(this.$store.dispatch, this.buildPayload())
+   436	                const data = res?.data || res || {}
+   437	                this.$toasted?.global?.success?.({ message: res?.message || 'Lập phiếu bán thành công' })
+   438	                this.markFormSaved()
+   439	                this.$router.push('/finance/borrow-sells/' + data.id)
+   440	            } catch (error) {
+   441	                console.error('Error saving borrow-sell:', error)
+   442	                this.handleSaveError(error)
+   443	            } finally {
+   444	                this.saving = false
+   445	                this.$nuxt.$loading.finish()
+   446	            }
+   447	        },
+   448	        goBack() {
+   449	            this.$router.push('/finance/borrow-sells')
+   450	        },
+   451	
+   452	        formatNum(v) {
+   453	            return Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 3 })
+   454	        },
+   455	        formatMoney(v) {
+   456	            return Math.round(Number(v) || 0).toLocaleString('en-US')
+   457	        },
+   458	    },
+   459	}
+   460	</script>
+   461	
+   462	<style lang="scss">
+   463	@import '@/assets/scss/v2-styles.scss';
+   464	</style>
+   465	
+   466	<style lang="scss" scoped>
+   467	.row-error td {
+   468	    background: rgba(220, 53, 69, 0.06);
+   469	}
+   470	/* Ô nhập SL bán: to rõ hơn ô sm mặc định để dễ nhập/nhìn số */
+   471	.qty-input {
+   472	    height: 34px;
+   473	    min-width: 100px;
+   474	    font-size: 14px;
+   475	    font-weight: 600;
+   476	}
+   477	.qty-max {
+   478	    font-size: 12px;
+   479	    color: #6b7280;
+   480	    white-space: nowrap;
+   481	}
+   482	/* Bảng chi tiết lồng 2 cấp */
+   483	.bsr-detail-table {
+   484	    font-size: 13px;
+   485	}
+   486	.bsr-detail-table th {
+   487	    font-weight: 700;
+   488	    white-space: nowrap;
+   489	}
+   490	.font-weight-600 {
+   491	    font-weight: 600;
+   492	}
+   493	/* Dòng phụ trong ô "Tên hàng hóa": Model / Mã / Thương hiệu */
+   494	.bsr-sub {
+   495	    font-size: 12px;
+   496	    color: #6b7280;
+   497	    line-height: 1.35;
+   498	}
+   499	.bsr-sub b {
+   500	    color: #374151;
+   501	    font-weight: 600;
+   502	}
+   503	/* Box tổng ngoài bảng */
+   504	.pay-box {
+   505	    margin-top: 12px;
+   506	    display: flex;
+   507	    justify-content: flex-end;
+   508	    &__rows {
+   509	        width: 340px;
+   510	        max-width: 100%;
+   511	        border: 1px solid #eef0f4;
+   512	        border-radius: 10px;
+   513	        overflow: hidden;
+   514	        background: #fff;
+   515	    }
+   516	    .pay-row {
+   517	        display: flex;
+   518	        justify-content: space-between;
+   519	        align-items: center;
+   520	        padding: 8px 14px;
+   521	        font-size: 13px;
+   522	        border-bottom: 1px dashed #eef0f4;
+   523	        span {
+   524	            color: #6b7280;
+   525	        }
+   526	        b {
+   527	            font-weight: 600;
+   528	        }
+   529	        &--total {
+   530	            background: #f9fafc;
+   531	            border-bottom: 0;
+   532	            span,
+   533	            b {
+   534	                color: #0f172a;
+   535	                font-weight: 700;
+   536	                font-size: 14px;
+   537	            }
+   538	        }
+   539	    }
+   540	}
+   541	/* Footer cố định */
+   542	.export-actionbar {
+   543	    position: fixed;
+   544	    left: 0;
+   545	    right: 0;
+   546	    bottom: 0;
+   547	    z-index: 100;
+   548	    background: #fff;
+   549	    border-top: 1px solid #e5e7eb;
+   550	    padding: 8px 16px 8px 80px;
+   551	    display: flex;
+   552	    align-items: center;
+   553	    justify-content: space-between;
+   554	    gap: 12px;
+   555	    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+   556	
+   557	    &__hint {
+   558	        font-size: 11.5px;
+   559	        color: #6b7280;
+   560	    }
+   561	    &__btns {
+   562	        display: flex;
+   563	        align-items: center;
+   564	        gap: 6px;
+   565	        flex-shrink: 0;
+   566	        flex-wrap: wrap;
+   567	    }
+   568	
+   569	    @media (max-width: 1366px) {
+   570	        padding: 6px 12px 6px 70px;
+   571	        gap: 8px;
+   572	    }
+   573	}
+   574	</style>
+
+----- FILE: pages/finance/borrow-sells/_id/index.vue -----
+     1	<template>
+     2	    <div class="v2-styles min-vh-100 pt-2" style="padding-bottom: 72px">
+     3	        <div class="container-fluid">
+     4	            <div v-if="loading" class="text-center py-5">
+     5	                <div class="spinner-border text-primary" role="status"></div>
+     6	            </div>
+     7	
+     8	            <template v-else>
+     9	                <!-- 2 tab: "Thông tin phiếu" (mirror Phase 1) + "Hạch toán" (điểm mới Phase 2) -->
+    10	                <b-tabs v-model="activeTab" content-class="mt-2" nav-class="v2-tabs">
+    11	                    <!-- ================= TAB 1: THÔNG TIN PHIẾU ================= -->
+    12	                    <b-tab title="Thông tin phiếu" active>
+    13	                        <div class="c-section">
+    14	                            <div class="section-header">
+    15	                                <i class="ri-file-text-line"></i>
+    16	                                <span>Thông tin chung</span>
+    17	                            </div>
+    18	                            <div class="section-body">
+    19	                                <dl class="kv-grid">
+    20	                                    <div class="kv"><dt>Mã phiếu</dt><dd><b>{{ data.code || '—' }}</b></dd></div>
+    21	                                    <div class="kv"><dt>Loại phiếu</dt><dd>{{ data.type_name || '—' }}</dd></div>
+    22	                                    <div class="kv"><dt>Trạng thái</dt><dd>{{ data.status_name || '—' }}</dd></div>
+    23	                                    <div class="kv"><dt>Số hợp đồng</dt><dd>{{ data.contract_code || '—' }}</dd></div>
+    24	                                    <div class="kv"><dt>Loại hợp đồng</dt><dd>{{ contractTypeLabel }}</dd></div>
+    25	                                    <div class="kv"><dt>Phiếu YC xuất bán</dt><dd>{{ data.borrow_sell_request_code || '—' }}</dd></div>
+    26	                                    <div class="kv"><dt>Người lập</dt><dd>{{ data.creator_name || '—' }}</dd></div>
+    27	                                    <div class="kv"><dt>Ngày lập</dt><dd>{{ data.created_at || '—' }}</dd></div>
+    28	                                    <div class="kv"><dt>Chịu phí ship</dt><dd>{{ bearShippingLabel }}</dd></div>
+    29	                                </dl>
+    30	
+    31	                                <!-- Khách hàng -->
+    32	                                <div class="subpanel">
+    33	                                    <div class="subpanel__title"><i class="ri-user-3-line"></i> Khách hàng</div>
+    34	                                    <dl class="kv-grid">
+    35	                                        <div class="kv"><dt>Khách hàng</dt><dd>{{ data.customer_name || '—' }}</dd></div>
+    36	                                        <div class="kv"><dt>Số điện thoại</dt><dd>{{ data.customer_mobile || '—' }}</dd></div>
+    37	                                        <div class="kv kv--wide"><dt>Địa chỉ</dt><dd>{{ data.customer_address || '—' }}</dd></div>
+    38	                                        <div class="kv"><dt>Người liên hệ</dt><dd>{{ data.customer_contact_name || '—' }}</dd></div>
+    39	                                        <div class="kv"><dt>ĐT liên hệ</dt><dd>{{ data.customer_contact_phone || '—' }}</dd></div>
+    40	                                        <div v-if="data.contact_address" class="kv kv--wide"><dt>Địa chỉ liên hệ</dt><dd>{{ data.contact_address }}</dd></div>
+    41	                                        <div v-if="data.delivery_place" class="kv kv--wide"><dt>Nơi giao hàng</dt><dd>{{ data.delivery_place }}</dd></div>
+    42	                                    </dl>
+    43	                                </div>
+    44	
+    45	                                <div class="kv kv--block mt-2"><dt>Ghi chú</dt><dd class="kv-note">{{ data.note || '—' }}</dd></div>
+    46	                            </div>
+    47	                        </div>
+    48	
+    49	                        <!-- ================= DANH SÁCH HÀNG HOÁ ================= -->
+    50	                        <div class="c-section sec-goods">
+    51	                            <div class="section-header">
+    52	                                <i class="ri-file-copy-2-line"></i>
+    53	                                <span>Danh sách hàng hoá</span>
+    54	                            </div>
+    55	                            <div class="section-body">
+    56	                                <div class="table-responsive">
+    57	                                    <table class="table table-bordered table-sm mb-0 er-table">
+    58	                                        <thead class="bg-light">
+    59	                                            <tr>
+    60	                                                <th class="text-center" style="width: 44px">STT</th>
+    61	                                                <th style="min-width: 220px">Tên hàng hoá</th>
+    62	                                                <th style="width: 90px">ĐVT</th>
+    63	                                                <th class="text-center" style="width: 90px">SL bán</th>
+    64	                                                <th class="text-right" style="width: 100px">Đơn giá niêm yết</th>
+    65	                                                <th class="text-right" style="width: 90px">Phụ thu</th>
+    66	                                                <th class="text-right" style="width: 100px">Đơn giá bán</th>
+    67	                                                <th class="text-right" style="width: 90px">Chiết khấu</th>
+    68	                                                <th class="text-right" style="width: 100px">Đơn giá phân bổ</th>
+    69	                                                <th class="text-center" style="width: 56px">VAT%</th>
+    70	                                                <th class="text-right" style="width: 120px">Thành tiền</th>
+    71	                                            </tr>
+    72	                                        </thead>
+    73	                                        <tbody>
+    74	                                            <tr v-for="(row, idx) in products" :key="`p-${row.id}`">
+    75	                                                <td class="text-center">{{ idx + 1 }}</td>
+    76	                                                <td>
+    77	                                                    <div>{{ row.product_name || '—' }}</div>
+    78	                                                    <div class="cell-sub"><b>Model:</b> {{ row.model_name || '—' }}</div>
+    79	                                                    <div class="cell-sub"><b>Mã:</b> {{ row.code || '—' }}</div>
+    80	                                                    <div class="cell-sub"><b>Thương hiệu:</b> {{ row.brand_name || '—' }}</div>
+    81	                                                    <ul v-if="row.details && row.details.length" class="src-list">
+    82	                                                        <li v-for="d in row.details" :key="`d-${d.id}`">
+    83	                                                            Nguồn phiếu mượn #{{ d.product_export_request_id || '—' }}: SL {{ formatNum(d.qty) }}
+    84	                                                        </li>
+    85	                                                    </ul>
+    86	                                                </td>
+    87	                                                <td class="text-center">
+    88	                                                    {{ row.unit_name || '—' }}<template v-if="Number(row.unit_coefficient) !== 1"> (x{{ row.unit_coefficient }})</template>
+    89	                                                </td>
+    90	                                                <td class="text-center">{{ formatNum(row.qty) }}</td>
+    91	                                                <td class="text-right">{{ formatMoney(row.price) }}</td>
+    92	                                                <td class="text-right">{{ formatMoney(row.extra_price) }}</td>
+    93	                                                <td class="text-right">{{ formatMoney(row.export_price) }}</td>
+    94	                                                <td class="text-right">{{ formatMoney(row.rebate_price) }}</td>
+    95	                                                <td class="text-right">{{ formatMoney(row.allocated_price) }}</td>
+    96	                                                <td class="text-center">{{ formatNum(row.vat_percent) }}</td>
+    97	                                                <td class="text-right">{{ formatMoney(rowTotal(row)) }}</td>
+    98	                                            </tr>
+    99	                                            <tr v-if="!products.length">
+   100	                                                <td colspan="11" class="text-center text-soft" style="padding: 14px">Không có dòng hàng</td>
+   101	                                            </tr>
+   102	                                        </tbody>
+   103	                                    </table>
+   104	                                </div>
+   105	
+   106	                                <!-- Box tổng: tất cả số tiền BE tính sẵn — FE CHỈ hiển thị qua formatMoney -->
+   107	                                <div v-if="products.length" class="pay-box">
+   108	                                    <div class="pay-box__rows">
+   109	                                        <div class="pay-row"><span>Tổng tiền bán (sau phụ thu)</span><b>{{ formatMoney(data.sum_amount_after_extra) }}</b></div>
+   110	                                        <div class="pay-row"><span>VAT (sau phụ thu)</span><b>{{ formatMoney(data.sum_amount_after_extra_vat) }}</b></div>
+   111	                                        <div class="pay-row"><span>Tổng tiền sau thuế (sau phụ thu)</span><b>{{ formatMoney(data.sum_amount_after_extra_after_vat) }}</b></div>
+   112	                                        <div class="pay-row"><span>Tổng tiền phân bổ</span><b>{{ formatMoney(data.sum_amount_allocated) }}</b></div>
+   113	                                        <div class="pay-row"><span>VAT phân bổ</span><b>{{ formatMoney(data.vat_cost_allocated) }}</b></div>
+   114	                                        <div class="pay-row pay-row--total"><span>Tổng tiền phân bổ sau thuế</span><b>{{ formatMoney(data.sum_amount_allocated_after_vat) }}</b></div>
+   115	                                    </div>
+   116	                                </div>
+   117	                            </div>
+   118	                        </div>
+   119	                    </b-tab>
+   120	
+   121	                    <!-- ================= TAB 2: HẠCH TOÁN (điểm mới Phase 2) ================= -->
+   122	                    <b-tab title="Hạch toán">
+   123	                        <div class="c-section">
+   124	                            <div class="section-header">
+   125	                                <i class="ri-book-2-line"></i>
+   126	                                <span>Bút toán hạch toán</span>
+   127	                            </div>
+   128	                            <div class="section-body">
+   129	                                <!-- Có lỗi hạch toán từ BE -> chỉ hiện banner cảnh báo, KHÔNG render bảng -->
+   130	                                <div v-if="hasAccountingError" class="alert alert-warning mb-0">
+   131	                                    {{ data.accounting_error }}
+   132	                                </div>
+   133	                                <template v-else>
+   134	                                    <div v-if="!accounting.length" class="kv-empty">Chưa có dữ liệu hạch toán.</div>
+   135	                                    <div v-else class="table-responsive">
+   136	                                        <table class="table table-bordered table-sm mb-0 er-table">
+   137	                                            <thead class="bg-light">
+   138	                                                <tr>
+   139	                                                    <th class="text-center" style="width: 44px">STT</th>
+   140	                                                    <th style="width: 110px">Tài khoản</th>
+   141	                                                    <th class="text-right" style="width: 130px">Nợ</th>
+   142	                                                    <th class="text-right" style="width: 130px">Có</th>
+   143	                                                    <th style="width: 140px">TK đối ứng</th>
+   144	                                                    <th>Ghi chú</th>
+   145	                                                </tr>
+   146	                                            </thead>
+   147	                                            <tbody>
+   148	                                                <tr v-for="(row, idx) in accounting" :key="`a-${idx}`">
+   149	                                                    <td class="text-center">{{ idx + 1 }}</td>
+   150	                                                    <td>{{ row.number }}</td>
+   151	                                                    <td class="text-right">{{ Number(row.type) === 1 ? formatMoney(row.value) : '' }}</td>
+   152	                                                    <td class="text-right">{{ Number(row.type) === 2 ? formatMoney(row.value) : '' }}</td>
+   153	                                                    <td>{{ (row.ref || []).join(', ') }}</td>
+   154	                                                    <td>{{ row.note || '' }}</td>
+   155	                                                </tr>
+   156	                                            </tbody>
+   157	                                            <tfoot>
+   158	                                                <tr class="font-weight-bold">
+   159	                                                    <td colspan="2" class="text-right">Tổng cộng</td>
+   160	                                                    <td class="text-right">{{ formatMoney(sumDebit) }}</td>
+   161	                                                    <td class="text-right">{{ formatMoney(sumCredit) }}</td>
+   162	                                                    <td colspan="2"></td>
+   163	                                                </tr>
+   164	                                            </tfoot>
+   165	                                        </table>
+   166	                                    </div>
+   167	                                </template>
+   168	                            </div>
+   169	                        </div>
+   170	                    </b-tab>
+   171	                </b-tabs>
+   172	
+   173	                <!-- ================= THANH HÀNH ĐỘNG CỐ ĐỊNH ================= -->
+   174	                <div class="export-actionbar">
+   175	                    <div class="export-actionbar__hint"></div>
+   176	                    <div class="export-actionbar__btns">
+   177	                        <V2BaseButton light size="sm" @click="goBack">
+   178	                            <template #prefix><i class="fas fa-arrow-left"></i></template>
+   179	                            Quay lại
+   180	                        </V2BaseButton>
+   181	                        <V2BaseButton v-if="data.is_can_view" light size="sm" @click="printPage">
+   182	                            <template #prefix><i class="ri-printer-line" style="font-size: 15px"></i></template>
+   183	                            In
+   184	                        </V2BaseButton>
+   185	                    </div>
+   186	                </div>
+   187	            </template>
+   188	        </div>
+   189	    </div>
+   190	</template>
+   191	
+   192	<script>
+   193	import V2BaseButton from '@/components/V2BaseButton.vue'
+   194	import PageTitleMixin from '@/utils/mixins/PageTitleMixin'
+   195	import { buildStatusTitle } from '@/utils/page-title-status'
+   196	import { show } from '../api'
+   197	
+   198	export default {
+   199	    layout: 'default-sidebar',
+   200	    mixins: [PageTitleMixin],
+   201	    components: {
+   202	        V2BaseButton,
+   203	    },
+   204	    head() {
+   205	        return { title: this.pageTitle }
+   206	    },
+   207	    data() {
+   208	        return {
+   209	            loading: false,
+   210	            data: {},
+   211	            activeTab: 0,
+   212	        }
+   213	    },
+   214	    computed: {
+   215	        pageTitle() {
+   216	            const title = this.data.code
+   217	                ? `Chi tiết phiếu xuất bán hàng mượn: ${this.data.code}`
+   218	                : 'Chi tiết phiếu xuất bán hàng mượn'
+   219	            return buildStatusTitle(title, this.data.status_name, '#94a3b8')
+   220	        },
+   221	        requestId() {
+   222	            return this.$route.params.id
+   223	        },
+   224	        products() {
+   225	            return this.data.products || []
+   226	        },
+   227	        accounting() {
+   228	            return this.data.accounting || []
+   229	        },
+   230	        hasAccountingError() {
+   231	            const err = this.data.accounting_error
+   232	            return err !== null && err !== undefined && String(err).trim() !== ''
+   233	        },
+   234	        contractTypeLabel() {
+   235	            const map = { firm: 'Hợp đồng hàng hoá', wr_service: 'Hợp đồng dịch vụ' }
+   236	            return map[this.data.contract_type] || this.data.contract_type || '—'
+   237	        },
+   238	        bearShippingLabel() {
+   239	            if (this.data.bear_the_shipping === null || this.data.bear_the_shipping === undefined) return '—'
+   240	            return Number(this.data.bear_the_shipping) === 1 ? 'Khách hàng' : 'Công ty'
+   241	        },
+   242	        // ───────── Tổng Nợ/Có tab Hạch toán (phải bằng nhau) ─────────
+   243	        sumDebit() {
+   244	            return this.accounting
+   245	                .filter((a) => Number(a.type) === 1)
+   246	                .reduce((s, a) => s + (Number(a.value) || 0), 0)
+   247	        },
+   248	        sumCredit() {
+   249	            return this.accounting
+   250	                .filter((a) => Number(a.type) === 2)
+   251	                .reduce((s, a) => s + (Number(a.value) || 0), 0)
+   252	        },
+   253	    },
+   254	    async mounted() {
+   255	        await this.loadData()
+   256	    },
+   257	    methods: {
+   258	        toast(type, message) {
+   259	            const fn = this.$toasted?.global?.[type]
+   260	            if (fn) fn({ message })
+   261	        },
+   262	        formatNum(value) {
+   263	            if (value === null || value === undefined || value === '') return '—'
+   264	            const num = Number(String(value).replace(/,/g, ''))
+   265	            return isFinite(num) ? num.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'
+   266	        },
+   267	        // Cột tiền: làm tròn về số nguyên rồi phân tách hàng nghìn.
+   268	        formatMoney(v) {
+   269	            return Math.round(Number(v) || 0).toLocaleString('en-US')
+   270	        },
+   271	        // Thành tiền từng dòng hàng hoá = SL x đơn giá bán (đơn giá dòng, KHÔNG phải box tổng do BE tính).
+   272	        rowTotal(row) {
+   273	            return (Number(row.qty) || 0) * (Number(row.export_price) || 0)
+   274	        },
+   275	        async loadData() {
+   276	            try {
+   277	                this.loading = true
+   278	                this.$nuxt?.$loading?.start()
+   279	                const response = await show(this.$store.dispatch, this.requestId)
+   280	                this.data = response?.data || response || {}
+   281	            } catch (error) {
+   282	                console.error('Error loading borrow-sell detail:', error)
+   283	                const status = Number(error?.response?.status)
+   284	                if (status === 403) {
+   285	                    this.toast('error', error?.response?.data?.message || 'Bạn không có quyền xem phiếu này')
+   286	                    this.goBack()
+   287	                } else if (status === 404) {
+   288	                    this.toast('error', 'Phiếu xuất bán hàng mượn không tồn tại')
+   289	                    this.goBack()
+   290	                } else {
+   291	                    this.toast('error', error?.response?.data?.message || 'Lỗi khi tải dữ liệu phiếu')
+   292	                }
+   293	            } finally {
+   294	                this.loading = false
+   295	                this.$nuxt?.$loading?.finish()
+   296	            }
+   297	        },
+   298	        printPage() {
+   299	            if (!this.data.is_can_view) return
+   300	            // Mở trang in ở tab mới — giữ nguyên khuôn Phase 1 (printRequest → window.open _blank).
+   301	            window.open(`/finance/borrow-sells/${this.requestId}/print`, '_blank')
+   302	        },
+   303	        goBack() {
+   304	            this.$router.push('/finance/borrow-sells')
+   305	        },
+   306	    },
+   307	}
+   308	</script>
+   309	
+   310	<style lang="scss" scoped>
+   311	@import '@/assets/scss/v2-styles.scss';
+   312	
+   313	/* ===== Card khối (đồng bộ màn chi tiết Yêu cầu xuất bán hàng mượn Phase 1) ===== */
+   314	.c-section {
+   315	    background: #fff;
+   316	    border: 1px solid #e6e9f0;
+   317	    border-radius: 12px;
+   318	    box-shadow: 0 1px 2px rgba(24, 33, 58, 0.05), 0 4px 14px rgba(24, 33, 58, 0.04);
+   319	    margin-bottom: 14px;
+   320	    overflow: hidden;
+   321	}
+   322	.section-header {
+   323	    display: flex;
+   324	    align-items: center;
+   325	    gap: 9px;
+   326	    padding: 11px 16px;
+   327	    font-weight: 650;
+   328	    color: #1e2530;
+   329	    font-size: 13.5px;
+   330	    background: #f7f9fc;
+   331	    border-bottom: 1px solid #e6e9f0;
+   332	
+   333	    > i:first-child {
+   334	        width: 26px;
+   335	        height: 26px;
+   336	        flex: 0 0 auto;
+   337	        border-radius: 7px;
+   338	        display: inline-flex;
+   339	        align-items: center;
+   340	        justify-content: center;
+   341	        background: #eef0fe;
+   342	        color: #4f46e5;
+   343	        font-size: 15px;
+   344	    }
+   345	}
+   346	.sec-goods .section-header > i:first-child {
+   347	    background: #fdece8;
+   348	    color: #b4341f;
+   349	}
+   350	.section-body {
+   351	    padding: 10px 16px 12px;
+   352	}
+   353	
+   354	/* ===== Lưới key–value ===== */
+   355	.kv-grid {
+   356	    display: grid;
+   357	    grid-template-columns: repeat(3, minmax(0, 1fr));
+   358	    gap: 0 26px;
+   359	    margin: 0;
+   360	}
+   361	.kv {
+   362	    display: flex;
+   363	    align-items: baseline;
+   364	    gap: 10px;
+   365	    min-width: 0;
+   366	    padding: 5px 0;
+   367	    border-bottom: 1px dashed #eef0f4;
+   368	
+   369	    dt {
+   370	        flex: 0 0 130px;
+   371	        color: #6b7280;
+   372	        font-size: 12px;
+   373	        font-weight: 500;
+   374	        margin: 0;
+   375	    }
+   376	    dd {
+   377	        flex: 1 1 auto;
+   378	        margin: 0;
+   379	        font-size: 13px;
+   380	        color: #1e2530;
+   381	        font-weight: 500;
+   382	        word-break: break-word;
+   383	        min-width: 0;
+   384	    }
+   385	}
+   386	.kv--wide {
+   387	    grid-column: span 2;
+   388	}
+   389	.kv--block {
+   390	    display: block;
+   391	    border-bottom: 0;
+   392	    padding: 0;
+   393	
+   394	    dt {
+   395	        display: block;
+   396	        color: #6b7280;
+   397	        font-size: 12px;
+   398	        font-weight: 500;
+   399	        margin: 0 0 4px;
+   400	    }
+   401	}
+   402	.kv-note {
+   403	    white-space: pre-line;
+   404	    padding: 7px 10px;
+   405	    background: #f7f9fc;
+   406	    border: 1px solid #eef0f4;
+   407	    border-radius: 8px;
+   408	    display: block;
+   409	}
+   410	.kv-empty {
+   411	    color: #9aa1ac;
+   412	    font-style: italic;
+   413	    font-size: 13px;
+   414	}
+   415	
+   416	/* Panel phụ (Khách hàng) */
+   417	.subpanel {
+   418	    margin-top: 10px;
+   419	    padding: 10px 12px 4px;
+   420	    background: #f9fafc;
+   421	    border: 1px solid #eef0f4;
+   422	    border-radius: 10px;
+   423	
+   424	    &__title {
+   425	        display: flex;
+   426	        align-items: center;
+   427	        gap: 6px;
+   428	        font-size: 12px;
+   429	        font-weight: 650;
+   430	        color: #4f46e5;
+   431	        margin-bottom: 6px;
+   432	        text-transform: uppercase;
+   433	        letter-spacing: 0.02em;
+   434	    }
+   435	    .kv {
+   436	        border-bottom-color: #e9ebf2;
+   437	    }
+   438	}
+   439	
+   440	@media (max-width: 992px) {
+   441	    .kv-grid {
+   442	        grid-template-columns: repeat(2, minmax(0, 1fr));
+   443	    }
+   444	}
+   445	@media (max-width: 575px) {
+   446	    .kv-grid {
+   447	        grid-template-columns: 1fr;
+   448	    }
+   449	    .kv--wide {
+   450	        grid-column: auto;
+   451	    }
+   452	}
+   453	
+   454	/* ===== Bảng hàng hoá / hạch toán ===== */
+   455	.er-table {
+   456	    font-size: 12.5px;
+   457	    th,
+   458	    td {
+   459	        vertical-align: middle;
+   460	    }
+   461	    thead th {
+   462	        font-weight: 700;
+   463	        white-space: nowrap;
+   464	    }
+   465	    .cell-sub {
+   466	        font-size: 11.5px;
+   467	        color: #6b7280;
+   468	    }
+   469	    .text-soft {
+   470	        color: #9aa1ac;
+   471	    }
+   472	}
+   473	.src-list {
+   474	    margin: 4px 0 0;
+   475	    padding-left: 16px;
+   476	    font-size: 11px;
+   477	    color: #6b7280;
+   478	}
+   479	
+   480	/* ===== Box tổng ===== */
+   481	.pay-box {
+   482	    margin-top: 12px;
+   483	    display: flex;
+   484	    justify-content: flex-end;
+   485	    &__rows {
+   486	        width: 340px;
+   487	        max-width: 100%;
+   488	        border: 1px solid #eef0f4;
+   489	        border-radius: 10px;
+   490	        overflow: hidden;
+   491	        background: #fff;
+   492	    }
+   493	    .pay-row {
+   494	        display: flex;
+   495	        justify-content: space-between;
+   496	        align-items: center;
+   497	        padding: 8px 14px;
+   498	        font-size: 13px;
+   499	        border-bottom: 1px dashed #eef0f4;
+   500	        span {
+   501	            color: #6b7280;
+   502	        }
+   503	        b {
+   504	            font-weight: 600;
+   505	        }
+   506	        &--total {
+   507	            background: #f9fafc;
+   508	            border-bottom: 0;
+   509	            span,
+   510	            b {
+   511	                color: #0f172a;
+   512	                font-weight: 700;
+   513	                font-size: 14px;
+   514	            }
+   515	        }
+   516	    }
+   517	}
+   518	
+   519	/* ===== Footer cố định ===== */
+   520	.export-actionbar {
+   521	    position: fixed;
+   522	    left: 0;
+   523	    right: 0;
+   524	    bottom: 0;
+   525	    z-index: 100;
+   526	    background: #fff;
+   527	    border-top: 1px solid #e5e7eb;
+   528	    padding: 8px 16px 8px 80px;
+   529	    display: flex;
+   530	    align-items: center;
+   531	    justify-content: space-between;
+   532	    gap: 12px;
+   533	    box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.08);
+   534	
+   535	    &__hint {
+   536	        font-size: 11.5px;
+   537	        color: #6b7280;
+   538	    }
+   539	    &__btns {
+   540	        display: flex;
+   541	        align-items: center;
+   542	        gap: 6px;
+   543	        flex-shrink: 0;
+   544	        flex-wrap: wrap;
+   545	    }
+   546	
+   547	    @media (max-width: 1366px) {
+   548	        padding: 6px 12px 6px 70px;
+   549	        gap: 8px;
+   550	    }
+   551	}
+   552	</style>
+
+----- FILE: pages/finance/borrow-sells/_id/print.vue -----
+     1	<template>
+     2	    <!-- Nền xám quanh tờ giấy do layouts/print.vue; tờ giấy #content nền trắng -->
+     3	    <div class="print-preview">
+     4	        <div class="container mt-3">
+     5	            <div class="mb-1 no-print print-toolbar d-flex align-items-center justify-content-end" style="gap: 12px">
+     6	                <V2BaseButton primary size="sm" class="no-print" :interactable="!loading && !loadError" @click="printRequest">
+     7	                    <template #prefix><i class="ri-printer-line" style="font-size: 15px"></i></template>
+     8	                    In
+     9	                </V2BaseButton>
+    10	                <span v-if="loading" class="mr-auto" style="color: #6b7280">Đang tải dữ liệu in...</span>
+    11	                <span v-if="loadError" class="mr-auto" style="color: #dc2626">{{ loadError }}</span>
+    12	            </div>
+    13	
+    14	            <div v-if="loadError && !loading" class="text-center py-5" style="color: #dc2626">{{ loadError }}</div>
+    15	
+    16	            <!-- id="content" để $printContent lấy đúng vùng in. Render bằng template Vue thường
+    17	                 (KHÔNG v-html) — printData BE trả DỮ LIỆU CÓ CẤU TRÚC, không phải HTML (brief Phần B). -->
+    18	            <div v-else id="content">
+    19	                <div class="print-title">PHIẾU XUẤT BÁN HÀNG MƯỢN</div>
+    20	
+    21	                <table class="info-table no-border">
+    22	                    <tbody>
+    23	                        <tr>
+    24	                            <td style="width: 25%"><b>Mã phiếu:</b> {{ data.code || '—' }}</td>
+    25	                            <td style="width: 25%"><b>Mã hợp đồng:</b> {{ data.contract_code || '—' }}</td>
+    26	                            <td style="width: 25%"><b>Ngày lập:</b> {{ data.created_at || '—' }}</td>
+    27	                            <td style="width: 25%"><b>Người lập:</b> {{ data.creator_name || '—' }}</td>
+    28	                        </tr>
+    29	                        <tr>
+    30	                            <td colspan="4"><b>Ghi chú:</b> {{ data.note || '—' }}</td>
+    31	                        </tr>
+    32	                    </tbody>
+    33	                </table>
+    34	
+    35	                <table class="info-table no-border">
+    36	                    <tbody>
+    37	                        <tr>
+    38	                            <td style="width: 50%"><b>Khách hàng:</b> {{ data.customer_name || '—' }}</td>
+    39	                            <td style="width: 50%"><b>Địa chỉ:</b> {{ data.customer_address || '—' }}</td>
+    40	                        </tr>
+    41	                        <tr>
+    42	                            <td><b>Điện thoại:</b> {{ data.customer_mobile || '—' }}</td>
+    43	                            <td><b>Người liên hệ:</b> {{ data.customer_contact_name || '—' }}</td>
+    44	                        </tr>
+    45	                        <tr>
+    46	                            <td><b>SĐT liên hệ:</b> {{ data.customer_contact_phone || '—' }}</td>
+    47	                            <td><b>Địa chỉ liên hệ:</b> {{ data.contact_address || '—' }}</td>
+    48	                        </tr>
+    49	                        <tr>
+    50	                            <td colspan="2"><b>Nơi giao hàng:</b> {{ data.delivery_place || '—' }}</td>
+    51	                        </tr>
+    52	                    </tbody>
+    53	                </table>
+    54	
+    55	                <table class="product-table">
+    56	                    <thead>
+    57	                        <tr>
+    58	                            <th style="width: 40px">STT</th>
+    59	                            <th style="width: 100px">Mã SP</th>
+    60	                            <th>Tên sản phẩm</th>
+    61	                            <th style="width: 110px">Model</th>
+    62	                            <th style="width: 70px">ĐVT</th>
+    63	                            <th style="width: 80px">Số lượng</th>
+    64	                            <th style="width: 100px">Đơn giá</th>
+    65	                            <th style="width: 120px">Thành tiền</th>
+    66	                        </tr>
+    67	                    </thead>
+    68	                    <tbody>
+    69	                        <tr v-for="row in products" :key="`p-${row.stt}-${row.code}`">
+    70	                            <td class="text-center">{{ row.stt }}</td>
+    71	                            <td>{{ row.code || '—' }}</td>
+    72	                            <td>{{ row.product_name || '—' }}</td>
+    73	                            <td>{{ row.model_name || '—' }}</td>
+    74	                            <td>{{ row.unit_name || '—' }}</td>
+    75	                            <td class="text-right">{{ formatNumber(row.qty) }}</td>
+    76	                            <td class="text-right">{{ formatMoney(row.export_price) }}</td>
+    77	                            <td class="text-right">{{ formatMoney(row.thanh_tien) }}</td>
+    78	                        </tr>
+    79	                        <tr v-if="!products.length">
+    80	                            <td colspan="8" class="text-center">Không có sản phẩm nào.</td>
+    81	                        </tr>
+    82	                        <tr v-else>
+    83	                            <td colspan="7" class="text-right"><b>Tổng thành tiền</b></td>
+    84	                            <td class="text-right"><b>{{ formatMoney(sumThanhTien) }}</b></td>
+    85	                        </tr>
+    86	                    </tbody>
+    87	                </table>
+    88	
+    89	                <table class="info-table no-border sign-table">
+    90	                    <tbody>
+    91	                        <tr>
+    92	                            <td class="text-center" style="width: 33.33%"><b>Người lập phiếu</b></td>
+    93	                            <td class="text-center" style="width: 33.33%"><b>Trưởng phòng</b></td>
+    94	                            <td class="text-center" style="width: 33.33%"><b>Ban giám đốc</b></td>
+    95	                        </tr>
+    96	                        <tr>
+    97	                            <td class="text-center" style="height: 60px; color: #6b7280">(Ký, họ tên)</td>
+    98	                            <td class="text-center" style="color: #6b7280">(Ký, họ tên)</td>
+    99	                            <td class="text-center" style="color: #6b7280">(Ký, họ tên)</td>
+   100	                        </tr>
+   101	                    </tbody>
+   102	                </table>
+   103	            </div>
+   104	        </div>
+   105	    </div>
+   106	</template>
+   107	
+   108	<script>
+   109	/**
+   110	 * In 1 Phiếu xuất bán hàng mượn — BE (`BorrowSellController::printData`) trả DỮ LIỆU CÓ CẤU TRÚC
+   111	 * (BorrowSellPrintResource) như khuôn Phase 1, KHÔNG phải HTML dựng sẵn -> tự render template Vue,
+   112	 * KHÔNG dùng v-html.
+   113	 * Quyền: gate bằng `is_can_view` ở màn chi tiết trước khi mở trang này (403 nếu BE tự chặn).
+   114	 */
+   115	import V2BaseButton from '@/components/V2BaseButton.vue'
+   116	import { printData } from '../api'
+   117	
+   118	export default {
+   119	    // Trang in dùng layout RIÊNG (không topbar/sidebar) — theo khuôn Phase 1.
+   120	    layout: 'print',
+   121	    components: { V2BaseButton },
+   122	    head() {
+   123	        return {
+   124	            title: 'In phiếu xuất bán hàng mượn',
+   125	            link: [{ rel: 'stylesheet', href: '/css/print-app.css' }],
+   126	        }
+   127	    },
+   128	    data() {
+   129	        return { loading: false, data: {}, loadError: '' }
+   130	    },
+   131	    computed: {
+   132	        products() {
+   133	            return this.data.products || []
+   134	        },
+   135	        sumThanhTien() {
+   136	            return this.products.reduce((s, r) => s + (Number(r.thanh_tien) || 0), 0)
+   137	        },
+   138	    },
+   139	    mounted() {
+   140	        this.getData()
+   141	    },
+   142	    methods: {
+   143	        formatNumber(value) {
+   144	            if (value === null || value === undefined || value === '') return '—'
+   145	            const num = Number(String(value).replace(/,/g, ''))
+   146	            return isFinite(num) ? num.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'
+   147	        },
+   148	        // Số tiền null -> hiển thị '—' (brief Phần B).
+   149	        formatMoney(value) {
+   150	            if (value === null || value === undefined || value === '') return '—'
+   151	            return Math.round(Number(value) || 0).toLocaleString('en-US')
+   152	        },
+   153	        async getData() {
+   154	            this.loading = true
+   155	            this.loadError = ''
+   156	            try {
+   157	                const id = this.$route.params.id
+   158	                const response = await printData(this.$store.dispatch, id)
+   159	                this.data = response?.data || response || {}
+   160	            } catch (error) {
+   161	                console.error('Error loading print data:', error)
+   162	                this.loadError =
+   163	                    error?.response?.data?.message ||
+   164	                    'Không thể in phiếu này (phiếu không tồn tại hoặc có lỗi tải dữ liệu)'
+   165	            } finally {
+   166	                this.loading = false
+   167	            }
+   168	        },
+   169	
+   170	        /** PHẢI gọi đồng bộ trong click handler (user gesture) — khuôn Phase 1. */
+   171	        printRequest() {
+   172	            if (this.loading || this.loadError) return
+   173	            const styles = `
+   174	                body, #content {
+   175	                    font-family: 'Times New Roman', Times, serif !important;
+   176	                    font-size: 16px !important;
+   177	                    line-height: normal !important;
+   178	                }
+   179	                #content, .container {
+   180	                    box-sizing: border-box !important;
+   181	                    width: 100% !important; max-width: 100% !important;
+   182	                    padding-left: 0 !important; padding-right: 0 !important;
+   183	                    margin-left: 0 !important; margin-right: 0 !important;
+   184	                }
+   185	                #content table { max-width: 100% !important; border-collapse: collapse !important; width: 100% !important; }
+   186	                #content td, #content th {
+   187	                    padding: 5px 8px !important;
+   188	                    word-break: break-word !important;
+   189	                    overflow-wrap: break-word !important;
+   190	                }
+   191	                #content .product-table td, #content .product-table th { border: 1px solid black !important; }
+   192	                #content .no-border td, #content .no-border th { border: none !important; }
+   193	                #content b, #content strong { font-weight: 700 !important; }
+   194	                #content .print-title { text-align: center; font-weight: 700; font-size: 18px; margin-bottom: 10px; }
+   195	                #content .product-table thead { display: table-header-group; }
+   196	                #content .product-table tr { page-break-inside: avoid; }
+   197	            `
+   198	            this.$printContent({ styles, pageMargin: '15mm 10mm 15mm 20mm' })
+   199	        },
+   200	    },
+   201	}
+   202	</script>
+   203	
+   204	<style lang="scss" scoped>
+   205	.print-preview {
+   206	    min-height: 100vh;
+   207	    display: flow-root;
+   208	}
+   209	.print-preview ::v-deep .container {
+   210	    max-width: 100%;
+   211	}
+   212	.print-preview ::v-deep .print-toolbar {
+   213	    width: 210mm;
+   214	    max-width: 100%;
+   215	    margin-left: auto;
+   216	    margin-right: auto;
+   217	}
+   218	.print-preview #content {
+   219	    width: 210mm;
+   220	    max-width: 100%;
+   221	    margin-left: auto;
+   222	    margin-right: auto;
+   223	    padding: 15mm 22mm 22mm 20mm;
+   224	    border: 1px solid #d3d3d3;
+   225	    border-radius: 5px;
+   226	    background: #fff;
+   227	    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+   228	    box-sizing: border-box;
+   229	}
+   230	@media print {
+   231	    .print-preview #content {
+   232	        width: 100%;
+   233	        padding: 0;
+   234	        border: 0;
+   235	        border-radius: 0;
+   236	        box-shadow: none;
+   237	    }
+   238	    .no-print {
+   239	        display: none !important;
+   240	    }
+   241	    .container {
+   242	        margin-top: 0 !important;
+   243	        padding: 0 !important;
+   244	        max-width: 100% !important;
+   245	    }
+   246	}
+   247	#content {
+   248	    font-family: 'Times New Roman', Times, serif;
+   249	    font-size: 16px;
+   250	    line-height: normal;
+   251	}
+   252	#content .print-title {
+   253	    text-align: center;
+   254	    font-weight: 700;
+   255	    font-size: 18px;
+   256	    margin-bottom: 10px;
+   257	}
+   258	#content table {
+   259	    max-width: 100%;
+   260	    width: 100%;
+   261	    border-collapse: collapse;
+   262	    margin-bottom: 12px;
+   263	}
+   264	#content td,
+   265	#content th {
+   266	    padding: 5px 8px;
+   267	    word-break: break-word;
+   268	    overflow-wrap: break-word;
+   269	}
+   270	#content .product-table td,
+   271	#content .product-table th {
+   272	    border: 1px solid black;
+   273	}
+   274	#content .no-border td,
+   275	#content .no-border th {
+   276	    border: none;
+   277	}
+   278	#content b,
+   279	#content strong {
+   280	    font-weight: 700;
+   281	}
+   282	</style>

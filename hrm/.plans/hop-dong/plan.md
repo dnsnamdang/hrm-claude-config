@@ -830,3 +830,114 @@ User: (1) báo giá click mở màn chi tiết; (2) đổi ô chọn báo giá t
 - `edit.vue`: thay `V2BaseSelect` bằng **chip báo giá** (`<a target=_blank>` mở `/assign/quotations/{id}`) + nút "Chọn/Đổi báo giá" (chỉ khi tạo & chưa khoá) mở modal. Chip hiện ở cả tạo lẫn sửa (trước chỉ hiện khi tạo). Thêm computed `quotationId`, data `showQuotationModal`, method `onPickQuotation`, CSS `.src-quotation-row` + `a.quotation-tag` hover.
 - Template compile OK cả 2 file.
 Bước tiếp (user): yarn dev — bấm "Chọn báo giá" → popup tìm/chọn; click chip mã báo giá → mở chi tiết tab mới.
+
+---
+
+## Phase 6 — HTHT (Hỗ trợ hạch toán) — sát ERP
+Spec: `docs/superpowers/specs/2026-08-13-hop-dong-htht-design.md`. Nghiên cứu ERP: 5 báo cáo agent (bóc tách giá / bút toán / approve / cấu hình % / bảng con).
+
+**Chốt brainstorm 2026-08-13:** (B đầy đủ nhưng) chỉ ghi 4 bảng `firm_support_accounting*`, KHÔNG account_details · tái dùng bảng+cấu hình ERP polymorphic · có màn HTHT preview/duyệt · Duyệt=Có hiệu lực (1 bước) · field thiếu → A1 (thêm cột + snapshot lúc tạo HĐ từ product master).
+
+### Phase A — Phòng thực hiện ✅ (xong session 2026-08-13)
+- [x] Models `ImplementDepartment`/`ImplementEmployee` (bảng ERP polymorphic).
+- [x] `syncImplements` (create+update), `DetailContractResource.resolveImplements`, Request rules.
+- [x] FE `ContractImplementSection` (box chính+hỗ trợ ngang, lọc NV theo phòng, tự thêm người lập 100%), màn tạo/sửa/chi tiết.
+- [x] Validate 100%/phòng chỉ khi gửi duyệt (Lưu nháp không chặn) — BE `assertImplementsComplete` + FE `validateForm(isSubmit)`.
+- [x] Gộp Duyệt = Có hiệu lực (bỏ `activate`/"Xác nhận hiệu lực", quyền 1142).
+
+### Phase B — Bóc tách giá (support_accounting cha) [ ]
+- [x] Migration: thêm `sale_max_percent`/`standard_price`/`net_price`/`cost_price` vào `hrm_contract_product_prices` (migrated local).
+- [x] Snapshot lúc tạo HĐ: `snapshotProductMasterPrice` tra `product_prices` (erp_product_id + price_type, dòng launch_date mới nhất ≤ nay, status=1) → điền 4 cột. OPEN-ITEM #3 CHỐT: query thẳng DB (dòng trùng = lịch sử giá).
+- [x] Bóc tách 4 nhóm gộp trong `getAccountingInfo` (không tách accessor riêng — tính trực tiếp từ dòng hàng, mirror recomputeTotals).
+- [x] Models HTHT: `SupportAccounting(+Department/DepartmentDetail/Employee)` trỏ bảng ERP (php -l sạch).
+- [x] Service `ContractSupportAccountingService::getAccountingInfo` (bóc tách 4 nhóm, COMPUTED) — verify HĐ 13 đúng VAT/tổng.
+- [x] API `GET /assign/contracts/{id}/support-accounting` (preview).
+- [ ] FE cột I read-only (bóc tách giá).
+
+### Phase C — Phân bổ phòng/NV theo quy chế [ ]
+- [x] `getDepartmentImplement`: implement_* + company_rule_commissions (chia % địa bàn) + regulations match. Gắn vào `getAccountingInfo` (nested).
+- [x] `calculate` + `saveDepartment` + `saveDepartmentDetail` — verify HĐ 13 ghi đúng 4 bảng. Migration fix unique composite (gop_db collision).
+- [x] `commission_sale` nhánh mới nhất (#4).
+- [ ] FE cột III phân bổ phòng/NV.
+
+### Phase D — Màn HTHT + luồng duyệt [ ]
+- [x] Màn HTHT `support-accounting.vue`: bóc tách giá + input (nguồn vốn/TNDN/dự phòng/thưởng HĐ/market cost/8 dòng chi phí thực hiện) + phân bổ phòng (quy chế % 4 vai trò + NV).
+- [x] `ContractController@approve` nhận payload HTHT → `calculate(true)` + Có hiệu lực.
+- [x] Nút chi tiết HĐ "Duyệt" → điều hướng màn HTHT; nút "Hỗ trợ hạch toán" xem sau duyệt; Không duyệt (reject). [Chuyển duyệt/notify: để sau]
+- [x] Preview khi chưa chờ duyệt: ẩn action (isPreview).
+
+### Phase E — Verify [ ]
+- [ ] E2E + đối chiếu số HTHT với 1 HĐ ERP thật cùng data.
+
+### Open-items cần chốt trước/khi code (xem mục 9 spec)
+#1 service item có định mức/giá vốn? · #2 serviceItems→repair_service vs other_cost · #3 nguồn standard/cost trong master · #4 bỏ nhánh commission_sale lịch sử · #5 market_costs nhập tay=0 · #6 cột ma (service_pack/adjust_price/vat_extra) để null.
+
+### Checkpoint — 2026-08-13 (Phase 6 HTHT — BRAINSTORM + SPEC xong, chưa code)
+Vừa hoàn thành: nghiên cứu sâu HTHT ERP (5 agent) + chốt 4 quyết định lớn (chỉ 4 bảng không account_details / tái dùng bảng ERP / màn preview-duyệt / A1 snapshot field thiếu) + viết spec đầy đủ `docs/superpowers/specs/2026-08-13-hop-dong-htht-design.md`.
+Đang làm dở: (không) — chờ user review spec + chốt 6 open-items.
+Bước tiếp theo: user review spec → chốt open-items #1-#4 → bắt đầu Phase B (migration + snapshot + accessor + getAccountingInfo).
+Blocked:
+
+### Checkpoint — 2026-08-13 (Phase 6B — nền tảng: migration + models + snapshot)
+Vừa hoàn thành: migration 4 cột snapshot (migrated) · 4 model HTHT trỏ bảng ERP · helper `snapshotProductMasterPrice` wire vào `createFromQuotation`. OPEN-ITEM #3 CHỐT = query thẳng `product_prices` (dòng trùng là lịch sử giá → chọn launch_date mới nhất ≤ nay, status=1); sale_max_percent độc lập unit.
+Đang làm dở: (không) — nền Phase B xong.
+Bước tiếp theo: accessor `Contract` (total_*/discount_rate_*/net_price_*/cost_price) + `ContractSupportAccountingService::getAccountingInfo` (bóc tách 4 nhóm) + API preview `GET /support-accounting` + FE cột I read-only.
+Blocked:
+
+### Checkpoint — 2026-08-13 (Phase 6B backend xong — bóc tách giá + API)
+Vừa hoàn thành: `ContractSupportAccountingService::getAccountingInfo` (bóc tách 4 nhóm, port ERP phần AUTO) + API `GET /support-accounting` (preview) + commit `299c31d53`. Verify HĐ 13: price_total 1.260.000, VAT 100.800, after_vat 1.360.800 (discount_rate/cost=0 vì HĐ cũ chưa có snapshot).
+Đang làm dở: (không) — backend Phase B xong.
+Bước tiếp theo: FE cột I (hiển thị bóc tách giá read-only) HOẶC sang Phase C (phân bổ phòng theo regulations + CompanyRuleCommission). Gợi ý: làm Phase C (lõi tính tiền hoa hồng) trước, FE gộp ở Phase D.
+Blocked:
+
+### Checkpoint — 2026-08-13 (Phase 6C backend xong — phân bổ phòng/NV/quy chế)
+Vừa hoàn thành: port trọn `ContractSupportAccountingService` (getAccountingInfo nested + getDepartmentImplement + getRegulations/getMatchRegulation + getBaseCommissionSale + calculate + saveDepartment + saveDepartmentDetail) ghi 4 bảng firm_support_accounting*. Migration `2026_08_13_000002` đổi unique firm_support_accounting → composite (contractable_id, contractable_type) fix collision ERP↔HRM. Commit `d6d5bea45`. Verify HĐ 13: 2 phòng (50/50) + 4 detail (type1/3) + 2 NV, quy chế khớp reg 133/1. commission_sale=0 do HĐ 13 chưa có standard_price snapshot (HĐ mới sẽ có).
+Đang làm dở: (không) — backend Phase B+C xong.
+Bước tiếp theo: Phase D — màn HTHT FE (cột I/II/III + input) + tích hợp luồng duyệt (approve nhận payload HTHT → calculate + Có hiệu lực; nút Duyệt điều hướng màn HTHT; Chuyển duyệt/Không duyệt). Trước đó nên tạo 1 HĐ mới (có snapshot) để verify commission_sale ra số.
+Blocked:
+
+### Checkpoint — 2026-08-13 (Phase 6D xong — màn HTHT + luồng duyệt)
+Vừa hoàn thành: BE approve nhận payload HTHT → calculate(true) + Có hiệu lực (commit df727cde2); FE màn `support-accounting.vue` (bóc tách giá + input + phân bổ phòng, preview/duyệt) + nút chi tiết HĐ điều hướng (commit efcf7de37). Nuxt auto-route /assign/contracts/:id/support-accounting.
+Đang làm dở: (không) — Phase B/C/D code xong.
+Bước tiếp theo (Phase E + user): (1) user `yarn dev` mở màn HTHT xem giao diện + luồng Duyệt; (2) tạo 1 HĐ MỚI (có snapshot standard_price) để verify commission_sale ra số ≠ 0; (3) đối chiếu vài số với HĐ ERP thật. Các mục để sau: Chuyển duyệt (BGD), notify, FE cho phép sửa % phòng (v1 đang dùng % quy chế mặc định), KQKD dự kiến tính live.
+Blocked:
+
+### Phase 6E — Sửa logic HTHT theo spec Excel (1.HTHT 20-1-2025) + JS ERP [ ]
+Nghiên cứu file Excel spec + JS `FirmSupportAccounting.blade.php`. Phát hiện: `market_costs` (biến ERP) = **"Thưởng NVKD"** (label) = HRM `sales_bonus` (xác nhận qua `payment-info.blade.php` bind Thưởng NVKD → form.market_costs).
+- [x] Snapshot standard_price = min(sau giảm, net) × G × H + fallback cost_price.
+- [x] total_market_costs = sales_bonus (mục 12 = Thưởng NVKD, xác nhận biến market_costs = label Thưởng NVKD).
+- [x] 14.1 auto-tính có trần; discount_tndn mặc định config; exec += employee_commission (reorder).
+- [x] FE: mục 12 = sales_bonus (đã có); thêm 4.1 Thưởng năng suất; không có ô market chết.
+- [x] Verify HĐ 15 (từ BG77): DS tiêu chuẩn 52.516.352, gross 30.96tr, eff 94.03% — khớp công thức.
+
+### Checkpoint — 2026-08-14 (Phase 6E — sửa logic HTHT theo spec Excel, verify khớp)
+Vừa hoàn thành: đối chiếu file Excel spec (1.HTHT 20-1-2025) 3 tab + JS FirmSupportAccounting → phát hiện & sửa: (1) market_costs = Thưởng NVKD (sales_bonus); (2) standard_price mục 18 = min(sau giảm,net)×G×H; (3) 14.1 auto-tính có trần; (4) discount_tndn mặc định config; (5) exec += employee_commission. Commit a3c1812ea (BE) + 65a55e982 (FE). Verify HĐ 15 từ BG-2026-00077 khớp công thức (DS tiêu chuẩn 52.516.352, gross 30.96tr, eff 94.03%). Tạo data test: BG-2026-00077 (created_by=13), HĐ 15.
+Đang làm dở: (không).
+Bước tiếp theo (user): yarn dev mở màn HTHT HĐ 15 xem số 3 cột khớp. Còn lại: verify đối chiếu 1 HĐ ERP thật; 2 hệ số G/H cần cấu hình đúng company_price_types/company_product_types theo từng công ty.
+Blocked:
+
+### Phase 7 — Vòng đời HĐ (từ spec LOGIC HỢP ĐỒNG) [ ]
+Chốt: làm Mục 3 (hiệu lực & thời hạn thực hiện) trước; Mục 4 (duyệt đa cấp) bỏ qua (chưa có config tổng công ty); Mục 7 (cảnh báo) chưa làm.
+
+#### 7.3 — Điều kiện hiệu lực + Thời hạn thực hiện HĐ [x] (2026-08-14)
+- [x] Migration hrm_contracts: effective_condition (1 ký/2 đặt cọc/3 bảo lãnh), guarantee_approved_date, execution_deadline_days, execution_deadline_base (1 hiệu lực/2 mặt bằng/3 childpart/4 chốt TK), execution_base_date, execution_end_date.
+- [x] Logic tính effective_date theo điều kiện: 1=sign_date, 2=ngày đặt cọc lần đầu (min account_details phiếu thu/báo có/điều chỉnh của HĐ), 3=guarantee_approved_date.
+- [x] execution_end_date = base_date (hiệu lực nếu base=1, else execution_base_date) + days. Accessor can_export (chưa hiệu lực HOẶC chưa có thời hạn → false).
+- [x] Request rules + Resource trả field. FE form tạo/sửa + chi tiết: select điều kiện + thời hạn + auto hiển thị ngày hiệu lực.
+
+#### 8 — Gỡ gate quyền "Lập hợp đồng" cho khớp ERP [x] (2026-09-17)
+Bối cảnh: user phát hiện `/assign/contracts` không có nút "Tạo hợp đồng" do gate quyền. Điều tra ERP
+(agent) xác nhận **ERP KHÔNG yêu cầu quyền để lập HĐ hãng** (chỉ gate ở khâu DUYỆT). User chốt hướng
+**A — khớp ERP hoàn toàn**: gỡ hết gate quyền `Lập hợp đồng` ở đường TẠO (giữ nguyên gate Sửa/Xóa/Duyệt).
+- [x] FE nút "Tạo hợp đồng" màn danh sách: bỏ `v-if="hasAPermission('Lập hợp đồng')"` (`pages/assign/contracts/index.vue:60`).
+- [x] FE nút "Lập hợp đồng" màn báo giá: bỏ `hasAPermission('Lập hợp đồng')` trong computed `canCreateContract`, giữ điều kiện nghiệp vụ (status=7 trúng thầu + chưa có HĐ + chỉ người lập) (`pages/assign/quotations/_id/index.vue:1064`).
+- [x] BE route store: gỡ `->middleware('checkPermission:Lập hợp đồng')` (`Modules/Assign/Routes/api.php:758`).
+- [x] BE controller store: gỡ block `isCurrentEmployeeHasPermission('Lập hợp đồng')` (defense-in-depth), giữ check "chỉ người lập báo giá" (`Api/V1/ContractController.php:319`).
+- [x] Rà quét sạch: FE grep `hasAPermission('Lập hợp đồng')` rỗng; BE không còn enforce. Quyền id 1137 để nguyên trong seeder (định nghĩa nhưng không enforce — giống ERP giữ id 40 "Thêm hợp đồng"). Luồng "Lập hợp đồng DỊCH VỤ" (CustomerCare) là quyền/nghiệp vụ khác — KHÔNG đụng.
+- [ ] Verify: đăng nhập tài khoản KHÔNG có quyền 1137 → nút "Tạo hợp đồng" hiện; tạo & lưu HĐ không bị 403.
+
+### Checkpoint — 2026-09-17 (Phase 8 — gỡ gate quyền lập HĐ khớp ERP)
+Vừa hoàn thành: gỡ 4 gate quyền `Lập hợp đồng` ở đường TẠO (2 FE nút + BE route middleware + BE controller check), giữ nguyên gate Sửa/Xóa/Duyệt và các điều kiện nghiệp vụ (trúng thầu, chỉ người lập). `php -l` sạch controller + route. Nhánh: `gop_db` (cả hrm-api & hrm-client).
+Đang làm dở: (không).
+Bước tiếp theo (user): bấm thật màn `/assign/contracts` — nút "Tạo hợp đồng" phải hiện, lập & lưu HĐ không 403.
+Blocked: (không)
