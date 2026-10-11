@@ -68,6 +68,24 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- quan-ly-hang-hoa / **Phase 7 Luồng tính giá** (4 chứng từ YCHG → YCTG → PTG → KQ) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/luong-tinh-gia/design.md
+  Trạng thái: chốt Q1–Q20 + D1–D13 + P1 (`luong-tinh-gia/ton.md`); mockup T0 + design 7 đợt T1–T7 **user DUYỆT 11/10/2026**.
+  **T1 Chính sách giá bán nội bộ XONG 11/10** (local, CHƯA push): worktree `websites/wt-chuyen-doi-hang-hoa` (API 8031 / Nuxt 3031, DB `hrm_erp_giacty`),
+  merge LOCAL nhánh chung `feat/chuyen-doi-hang-hoa` — api `d50ccd8b5` (+3 so origin), client `0450fc8f7` (+9). 3 bảng `internal_price_policies*` +
+  quyền 1656 đã chạy giacty. Màn `/sale/internal-price-policies` (Bán hàng › Quy chế - Thiết lập › Quy chế kinh doanh). PHPUnit MasterData 358/358,
+  e2e `HRM/e2e/tests/sale/internal-price-policy.spec.ts` 8/8 (worktree: `BASE_URL=:3031 API_BASE=:8031 API_REPO=… --project=chromium --no-deps --workers=1`).
+  ### Checkpoint — 2026-10-11 (wrap up)
+  Vừa hoàn thành: T1 Chính sách giá bán nội bộ (BE + FE + 3 vòng sửa theo user: chuyển menu, tiêu đề vào topbar ⓘ, hàng lọc 100%) + e2e 8/8.
+  Đang làm dở: không. Role tạm `T1_UAT_NAMDANG` (id 107124, quyền 1656, gán namdangit cty 1+4) còn trên giacty — user: CHƯA gỡ.
+  Bước tiếp theo (ca sau): (1) user chốt P2 "CÓ CHẶN" hãng chưa nhập đủ + dấu * ở cột thông tin — XÁC NHẬN "đủ" = mọi công ty mua hay ≥ 1, rồi xin "làm" (sửa BE validate + FE cột *); (2) push: CHỜ user báo;
+  (3) plan T2 Nền CSDL luồng (bảng nhóm hãng, cột mới, `pcc.status=5`, quyền 1662–1664, lệnh backfill/close-stale) ⇒ xin "làm".
+  Blocked: —
+
+- meeting-theo-doi-tuong → @namdangit → .plans/gop-db/meeting-theo-doi-tuong/design.md
+  Trạng thái: **ĐÃ PUSH gop_db 09/10/2026 (api 59537031f, client 3ea829c51)**. Spec e2e nằm ở HRM/e2e (ngoài git). PHPUnit MeetingTarget 26/26 + MeetingByProjects 28/28; e2e `meeting-target` 11/11 (chạy `--no-deps`).
+  Đã sửa 5 lỗi nhỏ sau review (xem design.md). Đã chạy 2 migration vào DB local `hrm_erp` (`meeting_types.target_type`, `meetings.contract_id`). Còn: cập nhật thiết kế app mobile.
+  Loại meeting thêm "Meeting theo đối tượng" (Dự án TKT / Hợp đồng) → bắt buộc chọn đối tượng; bỏ checkbox "Meeting theo dự án".
+
 - popup-chon-so-dong — popup CHỌN bản ghi: số dòng/trang 10/20/50/100 (34 popup, hằng `utils/pickerPagination.js`) → @junfoke → .plans/gop-db/popup-chon-so-dong/plan.md
 - report-meeting-drawer → @namdangit → .plans/gop-db/report-meeting-drawer/plan.md
   Báo cáo Thị trường – Dự án: nới Meeting::canView cho báo cáo meeting theo thị trường + kết quả CSKH tiềm năng; panel meeting

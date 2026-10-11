@@ -9,8 +9,8 @@
 |---|---|---|
 | **2-C3 Catalog** | popup *Xây dựng catalog kinh doanh* + *Xếp vào tiểu mục…* ở màn Dữ liệu hàng hoá công ty; giỏ chờ + `sync` (B1); quyền 1655 | ✅ 07/10 — đã merge nhánh chung (api `626113419` / client `e046aff2c`), e2e 13/13 |
 | 2-C1 Tạo + sửa (công ty tạo) | sinh mã (`ProductCodeGenerator` nhánh cũ) · form tạo/sửa 2 tầng tab · 1 nút Lưu (G3) · `products.status = 1` (G1) · đơn vị cơ bản + 6 dòng giá 0 (G2) · dòng công ty `coefficient 1, status 1` · Hệ số công nghệ chung (T6) · cờ "Phụ tùng ô tô" ở Tính chất hàng hoá + ẩn/hiện tab xe (G11) · Sửa ở menu dòng + chi tiết (G9a) | ✅ XONG 08/10 — đã merge `feat/chuyen-doi-hang-hoa` (api 35c4aa971, client 81f38f36d), e2e 32/33 (1 skip), đã push 08/10 — plan `c1-plan.md` |
-| 2-C2 Lấy về + sửa mức Quản trị | lấy về 1/nhiều (≤100, chỉ `products.status = 1` — G9b), upsert dòng công ty (dòng hệ số cũ `status NULL` ⇒ UPDATE) · công ty lấy về chỉ sửa tab Quản trị (BE chặn lớp chung) · hàng cũ chưa có dòng ⇒ sinh dòng status 3 (G4) | 🟡 08/10 code xong trên `feat/p2c2-lay-ve` (api 2739d0379, client 3a9eae100), chưa merge — plan `c2-plan.md` |
-| 2-C4 Vòng đời | Xoá (G7: kiểm như ERP + xoá cứng / gỡ dòng công ty) · Khoá/Mở khoá theo công ty status 4 (G6) | ⬜ |
+| 2-C2 Lấy về + sửa mức Quản trị | lấy về 1/nhiều (≤100, chỉ `products.status = 1` — G9b), upsert dòng công ty (dòng hệ số cũ `status NULL` ⇒ UPDATE) · công ty lấy về chỉ sửa tab Quản trị (BE chặn lớp chung) · hàng cũ chưa có dòng ⇒ sinh dòng status 3 (G4) | ✅ 08/10 — đã merge `feat/chuyen-doi-hang-hoa` LOCAL (api d3c6496a1, client 5c2cfb823), chưa push; e2e 25/25 — plan `c2-plan.md` |
+| 2-C4 Vòng đời | Xoá (G7: kiểm như ERP + xoá cứng / gỡ dòng công ty) · Khoá/Mở khoá theo công ty status 4 (G6) | ✅ 09/10 — đã merge `feat/chuyen-doi-hang-hoa` LOCAL (api 488269eed, client 07e829014), chưa push — plan `c4-plan.md` |
 | — | KHÔNG làm: Lưu nháp (G3), nút Chuyển kinh doanh (H1''), Sao chép (G8), lịch sử (§14b), Excel (2-E), giá | |
 
 ## 1. Đợt 2-C3 Catalog — chi tiết
