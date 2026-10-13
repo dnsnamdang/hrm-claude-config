@@ -2513,10 +2513,26 @@ Nguyên nhân: thiết kế 13/09 hiểu `prospective_projects.scope_id` là Lĩ
 - [x] Kiểm Playwright MCP (3021/8031): 5 lĩnh vực cộng = TỔNG 249; lọc Dịch vụ ô tô → Nhóm ngành còn 5, 1+60+7+74 = 142; popup cột + ô lọc đúng; Excel đúng
 - [x] Lỗi kèm (user duyệt 05/10): `filterOptions()` thiếu `company_id` (lần mở màn đầu) rơi về công ty ĐẦU DANH MỤC theo tên (CN Hải Phòng) trong khi ô Công ty = `default_company_id` (Tân Phát) ⇒ Phòng ban/Bộ phận/Nhân viên sai công ty, chọn phòng ban ra 0 dự án. Sửa: fallback về `$defaultCompanyId`. E2E API ca 10 (ca Lĩnh vực đổi thành 11). Verify: mở màn lần đầu → 30 phòng ban Tân Phát; chọn PKD Thương mại → 62 dự án
 - [x] E2E (worktree 8031/3021, `--no-deps --workers=1`, `API_REPO` trỏ worktree — `utils/tktResultFixture.ts` nay nhận env `API_REPO`/`PHP_BIN`): API **11/11 xanh**; ca 10 + 11 chạy vào code CŨ (8000) đều ĐỎ ⇒ bắt được lỗi. UI **9/10 xanh**, ca 4 ĐỎ SẴN không liên quan: selector `.advanced-filters .filter-field[data-dim]` đã chết từ khi màn chuyển sang `V2BaseSmartFilterPanel` (class `smart-advanced-filters`, không còn `data-dim`) — CẦN sửa spec sau (ghi ngoài luồng)
-- [x] Commit `06dfef0d5` (api) · `8275fd02b` (client); merge `--no-ff` về `gop_db`: api `dc3929fa3` · client `49d89a037`. ⛔ CHƯA PUSH
+- [x] Commit `06dfef0d5` (api) · `8275fd02b` (client); merge `--no-ff` về `gop_db`: api `dc3929fa3` · client `49d89a037`. ✅ ĐÃ PUSH cùng đợt 05/10/2026
 
 ### Checkpoint — 2026-10-05
 Vừa hoàn thành: sửa + verify trên trình duyệt
 Đang làm dở: —
 Bước tiếp theo: push gop_db (chờ user) · sửa selector ca 4 spec UI theo V2BaseSmartFilterPanel
 Blocked:
+
+---
+
+## Đổi 05/10/2026 — Cột "Giá trị đầu tư dự kiến" (@namdangit)
+
+Nhánh `gop_db-tkt-gia-tri-dau-tu` (tách từ `gop_db`, worktree `websites/wt-fix-tkt-linh-vuc`), cả 2 repo.
+User chốt: nguồn = **Ngân sách dự kiến** (`estimated_budget`) · **giữ** cột Giá trị HĐ · tính cho **MỌI** dự án.
+THAY quyết định 13/09 (dùng `expected_contract_amount`, không lấy estimated_budget) và 09/09 (Thất bại không mang giá trị).
+
+- [x] BE: `investmentAmountFor()` đọc `estimated_budget` (thay `expectedAmountFor`); `metricsOf` cộng mọi dự án; popup `row_amount` mọi dòng; khoá API giữ `expected_amount`/`amount`
+- [x] Nhãn: Resource `amount` → "Giá trị đầu tư dự kiến"; Excel bảng (cột J) + Excel/bản in popup đổi theo
+- [x] FE `ResultTrackingTable.vue`: tiêu đề + tooltip mới, tooltip Giá trị HĐ bỏ dòng sai; bấm số cột này mở popup `total` (trước: `open`) · `ProjectListModal.vue` nhãn cột
+- [x] Seed e2e: 4 dự án fixture có ngân sách riêng (100/200/300/400 tr), JSON thêm `budgets`
+- [x] E2E: API ca 9 viết lại (mọi dự án mang đúng ngân sách, kể cả Thất bại; tổng dòng = tổng popup) — ĐỎ trên code cũ; UI ca 11 mới (tên cột bảng + popup, bấm số ra đủ dự án, tổng khớp)
+- [x] Chạy: API 11/11 · UI 10/10 (bỏ ca 4 đỏ sẵn). Verify MCP: Chu Khương Duy (PTB ô tô 1) 6 dự án = 26,200,000,000, popup đúng từng dự án; TỔNG công ty 4,514,524,868,875 = tổng 8 phòng
+- [x] Commit api `41514e88a` · client `26dcc2ee0`; merge về `gop_db` (kèm merge origin/gop_db trước) và **ĐÃ PUSH 05/10/2026**: api `214bcfd1b` · client `b64df8d05`
