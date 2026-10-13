@@ -7,7 +7,7 @@
 
 - [x] 1. Đọc luồng Cung ứng + logic HĐ mua (purposes[], điều khoản TT, Bên A/Bên B) + chuẩn UI V2Base
 - [x] 2. Thiết kế nghiệp vụ: giao cho công ty khác Bên A, điều khoản TT (trả trước → ĐNTT / công nợ: hạn nợ + gối đầu), 3 phương thức giao (NCC giao kho · NCC giao thẳng KH · Cty tự lấy → về kho / giao KH) + chi phí vận chuyển
-- [x] 3. Code `demos/demo-tao-don-giao-hang.html` (style V2Base)
+- [x] 3. Code `demos/demo-lap-don-mua-hang.html` (style V2Base)
 - [x] 4. Cập nhật `demos/README.md`
 - [x] 5. Verify Playwright (MCP browser)
 - [x] 6. Fill spec + design.md
@@ -39,9 +39,10 @@
 - [x] 32. Khối Lấy hàng tại NCC: bỏ Phương tiện (Xe công ty / Thuê ngoài), Xe / biển số, Đơn vị vận chuyển + validate + `onVehicle` (thuê xe ngoài ghi ở bảng Các khoản chi)
 - [x] 33. Tách tiền hàng khỏi chi phí VC: bảng Các khoản chi (NCC chở + công ty chịu) thêm cột **Trả cho** (Đơn vị vận chuyển — công ty trả trực tiếp / NCC — cùng hóa đơn) + ô Đơn vị vận chuyển nhận tiền*; Tiền thanh toán NCC = tiền hàng + khoản trả NCC (không gồm khoản trả đơn vị VC); tab Thanh toán tách Tiền hàng / Phí VC NCC thu / Số tiền thanh toán NCC + khối riêng Chi phí VC trả đơn vị vận chuyển; sửa khối tổng, popup ĐNTT, popup lưu
 - [x] 34. Fix ô select / input trong bảng Các khoản chi bị cắt chữ (ép cao 28px nhưng giữ padding 7px) → thêm `.v2-input.sm` (28px, padding 3px 8px); kèm sửa viền đỏ lỗi không hiện do trùng thuộc tính style
+- [x] 35. Đổi tên demo thành **Đơn mua hàng** (09/10/2026 — sau này màn Đơn mua hàng thật sẽ sửa theo demo này): đổi file `demo-tao-don-giao-hang.html` → `demo-lap-don-mua-hang.html` (tên `demo-tao-don-mua-hang.html` đã có demo cũ 23/07 — không ghi đè); đổi chữ "đơn giao" → "đơn mua", mã DGH → DMH trong màn; logic giữ nguyên; cập nhật link ở README / design / plan / spec
 
 ### Checkpoint — 06/10/2026
-Vừa hoàn thành: Demo `demos/demo-tao-don-giao-hang.html` (4 tab + stepper luồng), README, spec + design. Verify MCP browser: 3 HĐ mẫu × các phương thức giao/thanh toán, không lỗi JS; đã sửa lộ trình không cập nhật khi đổi phương tiện + 2 lỗi CSS nhỏ.
+Vừa hoàn thành: Demo `demos/demo-lap-don-mua-hang.html` (4 tab + stepper luồng), README, spec + design. Verify MCP browser: 3 HĐ mẫu × các phương thức giao/thanh toán, không lỗi JS; đã sửa lộ trình không cập nhật khi đổi phương tiện + 2 lỗi CSS nhỏ.
 Đang làm dở: —
 Bước tiếp theo: User xem demo, chốt 5 câu hỏi mở trong spec mục 9.
 Blocked: Chờ phản hồi user

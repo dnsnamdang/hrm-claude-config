@@ -106,3 +106,24 @@ Blocked: không.
 - [x] Kiểm lại 4 màn: customers 18 ô chuẩn · solutions 21 · prospective-projects 10 · product-project 13;
       không còn ô nào dùng `.field-line` trần (trừ 1 chỗ có chủ ý ở màn khách hàng: người không có
       quyền xem thì mã KH là chữ thường, không phải link).
+
+- [x] Bổ sung ô lọc Nhóm ngành (`scope_id`, BE có sẵn) + thu hẹp Ứng dụng theo Nhóm ngành — 12/10/2026
+- [x] Thêm cột Nhóm ngành (`scope_name`, mặc định ẩn) vào Tuỳ chỉnh cột + trường xuất file — 12/10/2026
+
+## Lịch sử dự án TKT theo chuẩn entity-history (13/10/2026)
+- [x] BE: bảng `prospective_project_history` + `ProspectiveProjectHistoryService` (subset-diff 47 trường form + phòng hỗ trợ/meeting), ghi ở `update()` và `syncProjectPhase()`; SystemLogService đọc log, nhãn Tạo mới/Thay đổi thông tin/Thay đổi trạng thái, che SĐT theo quyền, giữ dòng Tạo mới cho dự án cũ
+- [x] FE: khối Lịch sử màn chi tiết dời RA NGOÀI card, sát dưới (khuôn màn Meeting show), bỏ padding-bottom 90px của card; thêm "Lịch sử" ở menu ⋮ danh sách (CatalogHistoryModal thêm prop `endpoint-base`)
+
+## Rà & sửa lịch sử toàn phân hệ dự án theo skill entity-history (13/10/2026)
+Chốt: Giải pháp/Solution module (chưa có log) để đợt sau · KH giữ quyền `perm.history`, áp cả khối chi tiết · Báo giá ghi đủ trường + bảng hàng theo dòng.
+- [x] Skill entity-history §5.1: quy tắc vị trí khối Lịch sử ngoài card (khuôn meeting show) + checklist
+- [x] Gốc SystemLogService: nhãn chuẩn task/issue/handover, ACTION_GROUP_MAP thêm action đổi nội dung báo giá, sắp xếp ổn định khi trùng giây, mergeNote đọc meta.note
+- [x] Báo giá chi tiết: khối Lịch sử ra ngoài .page-content
+- [x] Báo giá + Báo giá tổng hợp: QuotationHistoryService snapshot đủ trường + bảng hàng; SummaryQuotation ghi log; nhãn; popup danh sách bọc SystemInfoSection; khối chi tiết BGTH
+- [x] BOM: dòng đổi trạng thái riêng, bảng hàng hoá khoá dạng bảng, note chỉ lý do; popup bọc SystemInfoSection; khối sát card
+- [x] Task + Issue: HistoryService subset-diff giá trị hiển thị, status dòng riêng + lý do; popup bọc SystemInfoSection
+- [x] Bàn giao + YC làm GP + Nhu cầu KH: ghi log sửa bàn giao, các lần đổi trạng thái còn thiếu, nhãn; mục Lịch sử ở danh sách YCGP; khối sát card
+- [x] Meeting + Khách hàng + Thiết lập duyệt giá: nhãn, tách dòng trạng thái, job tự hủy; popup KH bọc SystemInfoSection + quyền 2 nơi; duyệt giá sang SettingHistoryModal
+- [x] Ẩn dòng "Thay đổi thông tin" rỗng của log BOM cũ (meta null)
+- Migration khi deploy: 2026_10_13_000002 (prospective_project_history) · 000010 (quotation_histories old/new) · 000030 (task_history note/is_subset) · 000031 (issue_history note/is_subset)
+- Để đợt sau: lịch sử Giải pháp + Solution module (chưa có log)

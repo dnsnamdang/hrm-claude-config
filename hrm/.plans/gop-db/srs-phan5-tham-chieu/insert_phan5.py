@@ -5,7 +5,8 @@ Khuôn theo bản QA "SRS - Danh mục quốc gia" (bảng 4 cột STT | Nhóm |
 Làm trên BẢN ĐANG NẰM TRÊN DRIVE (drive/) để giữ nguyên phần tester sửa tay — không sinh lại từ generator.
 Heading + bảng nhân bản từ chính Phần 4 của file → cùng style, font, màu.
 
-    python3 insert_phan5.py            # drive/*.docx + refs/<slug>.json -> out/*.docx
+    python3 insert_phan5.py            # drive/*.docx + refs_final/<slug>.json -> out/*.docx
+    SET=2 python3 insert_phan5.py      # drive2/ + refs2/ -> out2/ (folder SRS chuyển đổi)
 """
 import copy
 import json
@@ -142,16 +143,19 @@ def build(src, rows, dst):
 
 
 def main():
-    cfg = json.load(open(os.path.join(HERE, 'targets.json'), encoding='utf-8'))
-    os.makedirs(os.path.join(HERE, 'out'), exist_ok=True)
+    # Lượt 2 (06/10, folder SRS chuyển đổi): SET=2 -> targets2.json, drive2/, refs2/, out2/
+    sfx = os.environ.get('SET', '')
+    sfx = '' if sfx in ('', '1') else sfx
+    cfg = json.load(open(os.path.join(HERE, 'targets%s.json' % sfx), encoding='utf-8'))
+    os.makedirs(os.path.join(HERE, 'out' + sfx), exist_ok=True)
     only = set(sys.argv[1:])
     for slug, meta in cfg.items():
         if only and slug not in only:
             continue
-        ref = json.load(open(os.path.join(HERE, 'refs_final', slug + '.json'), encoding='utf-8'))
-        rows = ref['rows']
-        src = os.path.join(HERE, 'drive', meta['file'])
-        dst = os.path.join(HERE, 'out', meta['file'])
+        ref = json.load(open(os.path.join(HERE, 'refs2' if sfx else 'refs_final', slug + '.json'), encoding='utf-8'))
+        rows = ref['rows'] or [{'nhom': '—', 'man_hinh': 'Hiện chưa có màn hình nào sử dụng dữ liệu danh mục này', 'duong_dan': '—'}]
+        src = os.path.join(HERE, 'drive' + sfx, meta['file'])
+        dst = os.path.join(HERE, 'out' + sfx, meta['file'])
         build(src, rows, dst)
         print('OK %-45s %2d dòng' % (meta['file'], len(rows)))
 

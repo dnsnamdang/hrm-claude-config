@@ -77,6 +77,10 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- quotation-no-project → @namdangit → .plans/gop-db/quotation-no-project/plan.md
+  Báo giá không gắn Dự án TKT (tester 13/10 + #11651): tạo → duyệt → chốt Trúng thầu → Lập hợp đồng. Bắt đầu 13/10/2026.
+  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6). Deploy nhớ chạy migration 2026_10_13_000001.
+
 - quan-ly-hang-hoa / **Phase 7 Luồng tính giá** (4 chứng từ YCHG → YCTG → PTG → KQ) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/luong-tinh-gia/design.md
   Trạng thái: chốt Q1–Q20 + D1–D13 + P1 (`luong-tinh-gia/ton.md`); mockup T0 + design 7 đợt T1–T7 **user DUYỆT 11/10/2026**.
   **T1 Chính sách giá bán nội bộ XONG 11/10** (local, CHƯA push): worktree `websites/wt-chuyen-doi-hang-hoa` (API 8031 / Nuxt 3031, DB `hrm_erp_giacty`),
@@ -2142,6 +2146,43 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
+
+- report-limit-debts — chuyển màn ERP "Báo cáo hạn mức công nợ khách hàng" sang HRM, phân hệ Kế toán → Kế toán Công nợ → Khách hàng → @khoipv → .plans/gop-db/report-limit-debts/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-report-limit-debts-design.md)
+  Chuyển Hoàn thành: 2026-10-13.
+  13/10: BE + FE code xong, đã push develop (api 759f6e652, client 78f4e5ac0), smoke test API pass, compile FE pass. Không quyền, không migration. Sửa 4 lỗi ERP (dư nợ luôn 0, lọc KH sai id, chỉ tiêu đọc cột không tồn tại, popup NVKD sai). Chờ user mở trình duyệt kiểm.
+
+- legacy-master-data-cleanup — dọn bộ danh mục cũ trùng mã (Nhóm ngành / Nhóm giải pháp) → @khoipv → .plans/gop-db/legacy-master-data-cleanup/plan.md
+  Chuyển Hoàn thành: 2026-10-13.
+  19 NN + 117 NGP đổ thẳng DB ngày 24/04/2026 → trùng mã/tên trên prod + dev; dọn bằng seeder `CleanupLegacyDuplicateCatalogsSeeder`.
+
+- due-configs — chuyển màn ERP "Cấu hình chặn luồng hàng quá hạn" sang HRM, phân hệ Quản trị hệ thống → @khoipv → .plans/gop-db/due-configs/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-due-configs-design.md)
+  Chuyển Hoàn thành: 2026-10-13.
+  13/10: BE + FE + migration chuyển 204 dòng lịch sử ERP xong, smoke test API pass, compile FE pass, đã push develop (api de0a3a485, client 03d265cd9). Quyền mới 1706 chưa gán vai trò. Kế tiếp: gán quyền rồi mở trình duyệt kiểm.
+
+- benefit-rates — chuyển màn ERP "Hệ số công nghệ theo nhóm hàng hóa" sang HRM, phân hệ Quản trị hệ thống → @khoipv → .plans/gop-db/benefit-rates/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-benefit-rates-design.md)
+  Chuyển Hoàn thành: 2026-10-13.
+  13/10: BE + FE code xong, đã push develop (api 6f573d9fe, client 75edefacc), smoke test API pass, compile FE pass. Không quyền, không migration. Chờ user mở trình duyệt kiểm.
+
+- list-bill-accounting — chuyển màn ERP "Danh sách loại phiếu hạch toán" (chỉ xem) sang HRM, phân hệ Quản trị hệ thống → @khoipv → .plans/gop-db/list-bill-accounting/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-list-bill-accounting-design.md)
+  Chuyển Hoàn thành: 2026-10-13.
+  13/10: BE + FE code xong, đã push develop (api d07b353f6, client 6c3b2fb2c), smoke test API 5/5, compile FE pass. Không quyền, không migration. Chờ user mở trình duyệt kiểm.
+
+- doi-ten-khu-vuc-thanh-vung — đổi tên danh mục Khu vực → Vùng (chỉ chữ hiển thị, không đổi DB) → @khoipv → .plans/gop-db/doi-ten-khu-vuc-thanh-vung/plan.md
+  Chuyển Hoàn thành: 2026-10-13.
+
+- delivery-request — chuyển màn ERP "Phiếu yêu cầu vận chuyển, bốc xếp" sang HRM → @khoipv → .plans/gop-db/delivery-request/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-08-delivery-request-design.md)
+  Chuyển Hoàn thành: 2026-10-13.
+  08/10: BE + FE code xong (chưa commit), smoke test API pass, compile FE pass. Chờ user mở trình duyệt kiểm + chạy seeder quyền 1695-1698.
+
+- buy-service-accounting — chuyển màn ERP "Hạch toán mua dịch vụ" (màn 4/4 chuỗi Mua dịch vụ) sang HRM → @khoipv → .plans/gop-db/buy-service-accounting/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-12-buy-service-accounting-design.md)
+  Chuyển Hoàn thành: 2026-10-13.
+  12/10: BE + FE code xong (chưa commit), smoke test API 42/42 + test âm quyền, test Playwright luồng danh sách / tạo / duyệt (ghi sổ) / xoá / bảo hiểm, dữ liệu test đã dọn.
+  Chờ: khởi động lại dev server để kiểm 4 sửa ở màn Yêu cầu · gán quyền 1703-1705 · seeder dev/prod.
+
+- buy-service-accounting-request — chuyển màn ERP "Yêu cầu hạch toán mua dịch vụ" sang HRM → @khoipv → .plans/gop-db/buy-service-accounting-request/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-12-buy-service-accounting-request-design.md)
+  Chuyển Hoàn thành: 2026-10-13.
+  12/10: BE + FE code xong (chưa commit), smoke test API + test race 2 tiến trình pass, compile FE pass, final review đã sửa.
+  Chờ: user mở trình duyệt kiểm · gán 4 quyền 1699-1702 cho vai trò (local đã insert) · seeder trên dev/prod.
 
 - du-an-tkt-chi-nguoi-tao-duoc-sua → @namdangit → .plans/gop-db/du-an-tkt-chi-nguoi-tao-duoc-sua/plan.md
   Hoàn thành: 2026-10-08 — **ĐÃ PUSH gop_db** hrm-api `b7083c389` · hrm-client `72a537559`.

@@ -496,6 +496,46 @@ TUYỆT ĐỐI không tự chép lại cặp `topScroll` / `tableWrapper` cho t�
 này pattern đã bị copy-paste ở 4 nơi (`V2BaseDataTable`, `ChooseErpCustomerModal`,
 `SolutionVersionsTable`, `QuotationProductSearchModal`), mỗi nơi một tên class khác nhau.
 
+⚠️ **Bẫy: bảng GIẬT khi cuộn — KHÔNG đồng bộ 2 chiều bằng cờ `syncing` bật/tắt quanh lệnh gán**
+(đã trả giá 2026-09-24 và 2026-10-13: dính ở 11 màn). Đoạn hay bị chép:
+
+```js
+onTopScroll() {                       // ❌ SAI — đừng viết kiểu này
+    if (this.syncing) return
+    this.syncing = true
+    body.scrollLeft = top.scrollLeft
+    this.syncing = false              // tắt NGAY, trong khi scroll event của `body` tới ở KHUNG HÌNH SAU
+}
+```
+
+Scroll event của thanh bị gán tới muộn 1 khung hình, lúc cờ đã tắt → nó gán ngược về thanh user
+đang cuộn → **huỷ hiệu ứng cuộn mượt** (lăn chuột, phím mũi tên). Đo thật: cuộn mượt 600px thì code
+này dừng ở **1–3px**. Cuộn kiểu nhảy từng nấc thì KHÔNG lộ lỗi → test tay dễ tưởng là đúng.
+
+Chỗ nào không bọc được `V2BaseTableScroll` (markup/CSS riêng: cột ghim, `no-print`, layout flex
+trong popup — bọc lại thì CSS scoped của màn không ăn vào vùng cuộn bên trong component) thì giữ
+markup, chỉ thay phần đồng bộ bằng helper **`utils/scrollSync.js`**:
+
+```js
+import { bindScrollSync, createScrollSyncHandlers } from '@/utils/scrollSync'
+
+// a) Phần tử có sẵn lúc mounted (bảng báo cáo) — gắn listener 1 lần
+mounted() { this.unbindScrollSync = bindScrollSync(this.$refs.topScroll, this.$refs.body) },
+beforeDestroy() { if (this.unbindScrollSync) this.unbindScrollSync() },
+
+// b) Gắn @scroll thẳng trên template / popup dựng lại mỗi lần mở
+created() {
+    this.scrollSync = createScrollSyncHandlers(() => this.$refs.topScroll, () => this.$refs.body)
+},
+// <div ref="topScroll" @scroll="scrollSync.onTopScroll"> … <div ref="body" @scroll="scrollSync.onBodyScroll">
+```
+
+Đang dùng: 7 bảng `pages/assign/report/*/components/*Table.vue` (kiểu a), `QuotationProductSearchModal`,
+`ChooseErpCustomerModal`, `finance/addition-accounting-requests/.../CustomerSearchModal` (kiểu b).
+Tự kiểm (hrm-client) — chỉ được ra đúng `components/modals/AddCustomer.vue` (đồng bộ 1 chiều dưới →
+trên, không có vòng gán ngược nên không giật):
+`grep -rlE 'scrollLeft\s*=' pages components | xargs grep -lE '[Ss]yncing\w*\s*=\s*true'`
+
 ⚠️ **Bẫy: thanh cuộn TRÊN bị bóp còn ~3px, rê chuột không trúng** (đã trả giá 2026-08-24). Khối
 thanh trên không có nội dung thật (ruột chỉ cao 1px để tạo bề ngang) nên **tự co**; nếu thẻ bọc
 lại được dựng thành cột flex (popup cho bảng co theo chiều cao) thì nó **còn bị co thêm** — đo được
@@ -1011,6 +1051,7 @@ Màn danh sách mặc định **chỉ hiện 7 cột**:
 - Mọi cột nghiệp vụ khác (MST, SĐT, Email, Địa chỉ, Nhóm, Tỉnh/TP…) **vẫn khai đủ** trong `allColumns` để user bật ở modal "Cấu hình cột hiển thị", nhưng để `isVisible: false`.
 - **Ngoại lệ**: màn nào có trường **Khách hàng** hoặc **Loại phiếu** thì 2 cột đó cũng hiện mặc định (9 cột) — vì thiếu chúng thì dòng dữ liệu không đọc được là phiếu gì / của ai.
 - Bảng mặc định gọn giúp màn không phải cuộn ngang; ai cần thêm thì tự bật, cấu hình lưu theo user ở bảng key-value `user_column_settings` (theo `columnScreenKey` — màn mới không cần migration).
+- ⚠️ **Task ghi "bổ sung / hiển thị thêm trường X ở màn danh sách" = thêm cột vào popup Tuỳ chỉnh cột, KHÔNG phải bật hiện mặc định** (chốt 2026-10-05, Redmine #11573). Cách làm: khai cột mới trong `allColumns` với `isVisible: false`; cột đã có sẵn đang `isVisible: false` thì **giữ nguyên**, đừng gỡ cờ. Bộ lọc vẫn thêm ô lọc như thường, file xuất Excel thêm cột vào `exportFields` + `ExportColumnRegistry`. Chỉ bật hiện mặc định khi spec/user nói rõ "hiện mặc định". Sai đã gặp: #11573 bật luôn cột Khu vực/Quốc gia ra bảng của 3 màn địa lý → user bắt sửa lại.
 
 Cột `Người tạo` + `Ngày tạo` là **bắt buộc** ở mọi màn, đứng cuối nhóm cột dữ liệu (ngay trước Trạng thái → Hành động).
 
@@ -1783,6 +1824,7 @@ if (typeof ResizeObserver !== 'undefined') {
 ```
 
 `V2BaseDataTable` và `V2BaseTableScroll` đã làm sẵn — dùng 2 component này là đủ, đừng tự dựng lại.
+Không bọc được component thì phần đồng bộ `scrollLeft` dùng `utils/scrollSync.js` (mục 3b-1), đừng tự viết.
 
 Tự kiểm (Console, ở màn có bảng tràn ngang), cả 3 dòng phải đúng:
 

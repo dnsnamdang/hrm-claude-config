@@ -1113,6 +1113,34 @@ File `Danh-sach-phieu-ke-toan-2026-10-06 (1).xlsx`: dòng 1 `ht="-44290"`. Ảnh
 - [x] FE `AccountingDetailTable.vue`: bỏ fallback `|| '—'` ở cả 12 ô của bảng (Số TK, Tên TK, Mã/Tên đối tượng, Diễn giải, Hợp đồng, Phiếu YCXH, Người tạo HĐ, Mã phí, Mã vụ việc, Ngân hàng, STK) — popup chọn (ContractPicker/ObjectSearch/ExportRequest) giữ nguyên
 - [x] Compile template — CHƯA mở trình duyệt
 
+## Fix — Redmine #11608: danh mục khoá trong bảng định khoản + lộ chữ cột ghim (2026-10-10) @khoipv
+(1) Mã vụ việc / Mã phí / Số TK / Ngân hàng / STK ngân hàng liệt kê cả mã đã khoá → chỉ cho chọn mã đang hoạt động; phiếu đã lưu mã khoá thì vẫn hiện kèm 🔒 (rule Quốc gia → Khu vực). (2) Kéo bảng ngang thì chữ cột đang cuộn lộ qua khe viền cạnh STT / Số TK.
+- [x] BE `BillAdjustDeptController::formOptions()`: accounts / cost_debts / works / banks (theo `banks.status`) / company_accounts trả CẢ bản ghi khoá kèm `is_locked` (`LockedCatalogOptions::isLocked`), bỏ cột `status` khỏi response
+- [x] FE `BillAdjustDeptForm.vue` + `AccountingDetailTable.vue`: map `is_locked` vào options → `V2BaseSelect` (`filterUnusedLockedOptions`) tự ẩn mã khoá, chỉ giữ + gắn 🔒 ở đúng ô đang lưu mã đó
+- [x] FE `AccountingDetailTable.vue`: `border-collapse: separate` + viền phải/dưới theo ô, viền trái do ô đầu dòng giữ → viền đi theo cột ghim, hết khe trong suốt
+- [x] php -l + tinker gọi `formOptions()` (local: 1 ngân hàng + 9 STK khoá có `is_locked=true`); compile template + babel parse 2 file Vue — CHƯA mở trình duyệt
+
+## Test data — Cột "Số phiếu yc xuất hàng" không có dữ liệu nào để thử (2026-10-12) @khoipv
+Điều tra (local + API cổng dev): ô chọn chỉ hiện khi HĐ của dòng có `contract_type = 3` → phía KH không HĐ nào đạt (firm 1/4/7/8, wr 1/2); chỉ NCC + "HĐ mua trong nước (mới)" loại 3. Popup lọc `product_export_requests.contract_id` (giống hệt ERP `ProductExportRequest::searchByFilter` :2502) nhưng cột này trống ở mọi phiếu trạng thái 5/12/13 (local 33.895/33.895; dev thử 3 HĐ đều 0 dòng) → popup luôn rỗng. Không sửa code, chỉ seeder dữ liệu test.
+- [x] BE seeder `BillAdjustDeptExportRequestTestDataSeeder`: chọn 1 HĐ mua trong nước (mới) loại 3 của NCC đang hoạt động → tạo 2 phiếu YCXH (trạng thái 5 + 13) gắn `contract_id` + 1 phiếu YC xuất bán hàng mượn (trạng thái 1, đúng công ty tài khoản dev); mã tiền tố `TEST.YCXH-PKT` / `TEST.YCXBHM-PKT`, chạy lại tự dọn
+- [x] Chạy seeder local + gọi `searchExportRequests()` kiểm 2 loại ra đúng số dòng (local: HĐ DHNT-001729 / NCC 15TPHPDO-32 → `contract_type=3`; loại 1 ra 2 phiếu, loại 2 ra 1 phiếu) — CHƯA mở trình duyệt
+- [x] Fix seeder nổ 1452 trên dev: DB dev có FK `product_export_requests.contract_id → contracts.id` (local không) → khi có FK chỉ chọn HĐ loại 3 có id trùng `contracts`; không có thì bỏ qua YCXH, chỉ tạo phiếu bán hàng mượn + cảnh báo; bọc transaction (commit c178737c1, đã push) — chờ user chạy lại trên dev
+
+## Fix — Ô "Số phiếu yc xuất hàng" dùng kiểu ô chọn như Khách hàng / Hợp đồng (2026-10-13) @khoipv
+- [x] FE `AccountingDetailTable.vue`: bỏ input + nút kính lúp riêng → `V2BaseInput` readonly `.picker-input`, placeholder "Nhấn để chọn phiếu YCXH", bấm ô mở popup (`choose-export-request`)
+- [x] Compile template — CHƯA mở trình duyệt
+
+## Fix — Redmine #11660: popup Chọn đối tượng / Chọn hợp đồng (2026-10-12) @khoipv
+Tạo phiếu KHÔNG chọn phiếu YCĐC → nhập tay dòng định khoản.
+- [x] FE `ObjectSearchModal.vue`: thêm ô lọc Loại (KH / NCC / NV), giãn cột nút để "Tìm kiếm"/"Làm mới" trên 1 dòng (ý 1)
+- [x] FE `ObjectSearchModal.vue`: phân trang theo `V2BaseDataTable` + 10/20/50/100 như popup chọn phiếu YCĐC (ý 2)
+- [x] FE + BE `searchObjects()`: sort Mã đối tượng / Tên đối tượng (whitelist `sort_by`) (ý 3)
+- [x] FE: bỏ dòng phụ "Áp dụng cho dòng" ở header popup (ý 4)
+- [x] FE `ContractPickerModal.vue`: ẩn cột Loại hợp đồng + link số HĐ (tab mới) + phân trang `V2BaseDataTable` (ý 5)
+- [x] FE `utils/contract-link.js` (hàm chung — user đồng ý 2026-10-12): thêm 5 route ERP hợp đồng phía NCC
+- [x] BE `searchContracts()`: đối tượng là KH hoặc NCC (chung bảng `customers`, 1 dòng có thể vừa KH vừa NCC như ETEK GREEN) → tìm CẢ nhóm HĐ bán (theo `customer_id`) lẫn nhóm HĐ mua (theo `supplier_id`), đúng nhánh `d.customer` của ERP `extrated()` (ý 6)
+- [x] Verify: php -l + tinker `searchObjects()` (lọc 3 loại: NV 554 / NCC 9.537 / KH 33.542, sort tên giảm dần OK) + `searchContracts()` ETEK GREEN (id 34) loại NCC: 392 dòng gồm 21 HĐ bán + 6 HĐ đầu kỳ (trước chỉ 365 HĐ mua); compile template + babel parse 4 file FE — CHƯA mở trình duyệt; HĐ `0987656789` chỉ có trên DB dev nên chưa đối chiếu được
+
 ### Checkpoint — 2026-10-03
 Vừa hoàn thành: màu nút Lưu nháp; bỏ trạng thái Hủy thừa; trước đó: bug mặc định STK 1311 khi chọn phiếu YCĐC (BE) + tách cột Số TK / Tên TK (FE) + 3 cột cuối sửa được + Lịch sử thay đổi 2 nơi.
 Đang làm dở: không.
