@@ -295,3 +295,89 @@ Blocked:
       danh sách phiếu điều chỉnh: đến từ Tổng hợp tiền về / Chi tiết phiếu báo có thì về màn đó. "Lưu và tiếp tục" giữ nguyên.
 - [x] Màn Tổng hợp tiền về: đổi nhãn "Người lập" → "Người tạo" (ô lọc + cột bảng ở `summarize-money.vue`,
       cột xuất Excel ở `BillIncomeReportSummarizeService::COLUMNS`) — user chốt 2026-10-07, thay quyết định 2026-08-28.
+
+## Bug #11250 (2026-10-08) — Luồng Thu nhà cung cấp không hiện ở Tổng hợp tiền về ngân hàng (@khoipv)
+
+> Redmine: http://quanly.dnsmedia.vn/issues/11250 — TC_10.003. Phiếu "Thu nhà cung cấp" ghi Có 3311
+> nên lọt điều kiện `account_has ∈ 1311/1312/3311` (ERP gốc cũng không lọc theo loại thu). Tiền NCC hoàn
+> lại không cần đối chiếu công nợ khách hàng → loại theo LOẠI THU của phiếu cha, giữ 3311 cho Thu bán hàng / Thu khác.
+
+- [x] BE `BillIncomeReportSummarizeService::baseQuery()` — thêm điều kiện phiếu cha `type <> TYPE_SUPPLIER`
+      (áp cho cả danh sách lẫn xuất Excel vì cùng dùng `baseQuery`)
+- [x] FE `bill-income-reports/_id/index.vue` — ẩn khối "Đánh dấu không báo tiền về" khi phiếu là Thu nhà cung cấp
+      (tích vào không còn tác dụng gì)
+- [x] Verify (tinker, user id 13): SQL có `type <> 2` trong exists phiếu cha; 6559 dòng, 0 dòng NCC. FE compile OK.
+      Chưa đối chứng được bằng dữ liệu: phiếu NCC duy nhất ở local (TEST.PBC.00002) đang "Đang tạo";
+      TPE.PBC0826.00013 chỉ có trên DB cổng dev → user kiểm lại trên cổng dev sau khi deploy.
+
+## Bug 2026-10-10 — Nhãn "Ngày hạch toán" đè icon lịch trên màn nhỏ (@khoipv)
+
+> Màn Tổng hợp tiền về ngân hàng: ô khoảng ngày lúc chưa chọn ngày, nhãn nằm trong ô được rộng tới
+> `84% - 26px` cả khung → tràn qua icon lịch của ô "Từ ngày" khi màn hẹp. Lỗi ở component chung
+> `V2BaseFloatingField` (mọi ô `date-range` dính) — user đồng ý sửa ở component chung.
+
+- [x] FE `V2BaseFloatingField.vue` — thêm rule `.ff--range:not(.is-float) .ff__label { max-width: calc(40% - 36px) }`
+      (nhãn gói trong nửa trái, dư thì "…", title giữ full text)
+- [x] FE `shift-history/index.vue` — bỏ bản vá cục bộ cùng nội dung (đã nằm ở component chung)
+- [x] Verify: compile template 2 file OK. Chưa mở trình duyệt — user kiểm ở màn hẹp (nhãn "Ngày hạch t…", không đè icon).
+
+## Đổi nhãn 2026-10-10 — Ô lọc "Ghi chú" → "Diễn giải" (@khoipv)
+
+- [x] FE `summarize-money.vue` — ô lọc `note`: nhãn "Ghi chú" → "Diễn giải", placeholder "Nhập diễn giải"
+      (chỉ đổi bộ lọc theo yêu cầu; cột bảng + key `note` giữ nguyên)
+- [x] FE `summarize-money.vue` — ô lọc `adjusted`: nhãn "Lọc phiếu" → "Trạng thái" (option + placeholder giữ nguyên)
+
+## Bug 2026-10-10 — Ô lọc Khách hàng ra 2 kết quả khi gõ đúng mã KH (@khoipv)
+
+> Gõ `0104509916` ra thêm `29TPHPHO-289` (hồ sơ trùng tên, MST nhập thừa số 0 `00104509916`). Màn đang mượn
+> endpoint `bill-adjust-dept-requests/search-customers` — tìm cả MST. ERP màn này dùng
+> `Customer::searchCustomerByKeywords` (`app/Model/Sale/Customer.php:1728`): CHỈ tên / SĐT / mã KH, sắp
+> `created_at` giảm dần. Endpoint mượn có 4 màn khác dùng → KHÔNG sửa, dựng endpoint riêng cho màn này.
+
+- [x] BE `BillIncomeReportLookupService::searchSummarizeCustomers()` + route `GET bill-income-reports/summarize-money/customers`
+- [x] FE `summarize-money.vue::fetchCustomers()` — đổi sang endpoint mới
+- [x] Verify (tinker HTTP kernel): `0104509916` → 1 dòng (id 11720); "hợp long", "29TPHPTH-203" OK; FE compile OK. Chưa mở trình duyệt.
+- [x] FE `summarize-money.vue` — cột "Điều chỉnh công nợ" (`choose`): bỏ `locked: true` → kéo đổi vị trí + bật/tắt
+      được trong popup tuỳ chỉnh cột (cấu hình đã lưu cũ: mixin tự chèn cột về vị trí mặc định)
+
+## Sort + giờ ngày hạch toán 2026-10-10 — Màn Tổng hợp tiền về ngân hàng (@khoipv)
+
+- [x] BE `BillIncomeReportSummarizeService::applySort()` — thêm sort `code` / `date_accounting` / `bank`
+      (subquery theo phiếu cha, ngân hàng sắp theo `banks.code` = giá trị đang hiện) / `money_remain`
+      (`money_exchange - COALESCE(money_adjusted_exchange, 0)`); tie-break `id desc`
+- [x] FE `summarize-money.vue` — `SORT_FIELD_MAP` + `sortable: true` cho 4 cột Số báo có / Ngày hạch toán / Ngân hàng / Số tiền chưa điều chỉnh
+- [x] Thêm giờ vào "Ngày hạch toán" — `date_accounting` là cột DATE → user chốt lấy giờ từ `created_at` phiếu:
+      BE `transform()` → `dateAccountingText()` (d/m/Y H:i, dùng chung màn + Excel); sort phụ theo `created_at`;
+      nới cột Excel 16→18, cột màn 140→160px. Verify tinker OK, FE compile OK, chưa mở trình duyệt.
+- [x] Verify sort (tinker, user 13): 4 key × asc/desc đều trả 6559 dòng, thứ tự đúng. FE compile OK. Chưa mở trình duyệt.
+
+## Bug 2026-10-10 — Xuất Excel màn Tổng hợp tiền về ngân hàng bị timeout (@khoipv)
+
+> dev-hrm báo `Maximum execution time of 30 seconds exceeded` (PhpSpreadsheet `StringHelper.php:480`).
+> Đo local (company 4, không lọc): 2.099 dòng — query+transform 0,84s nhưng **dựng file 21,6s** vì
+> `BillIncomeReportSummarizeExport` dùng `FromView` (blade HTML → HTML reader). Cùng bệnh đã chữa ở
+> `BillAdjustDeptRequestListExport` (2026-09-04) → đổi sang `FromArray` theo đúng khuôn đó.
+
+- [x] BE `BillIncomeReportSummarizeExport` — `FromView` → `FromArray` (cột động theo `fields`), viền/đậm/định dạng tiền
+      chuyển sang `AfterSheet` (dò hàng tiêu đề, vùng tính từ `getHighestRow()`), font Times + NFC, letterhead rộng bằng bảng
+- [x] BE xoá blade `finance::exports.bill_income_report_summarize` (không còn dùng)
+- [x] Verify: đo lại thời gian dựng file + đọc lại file (kiểu ô tiền `n` + `#,##0`, STK giữ số 0 đầu, cột chọn đúng thứ tự)
+      → 2.099 dòng: dựng file **21,6s → 1,4s** (có letterhead 1,65s), RAM 76MB. Letterhead đẩy bảng xuống 1 dòng
+      vẫn merge/đậm đúng hàng (tiêu đề dòng 2, heading dòng 5, drawings=1). Chọn 3 cột đảo thứ tự đúng; diễn giải
+      bắt đầu bằng `=` giữ nguyên chuỗi; kết quả rỗng → merge ô "Không có dữ liệu phù hợp". Chưa test trên dev-hrm.
+
+### Checkpoint — 2026-10-10
+Vừa hoàn thành: fix timeout xuất Excel Tổng hợp tiền về ngân hàng (FromView → FromArray)
+Đang làm dở:
+Bước tiếp theo: deploy dev-hrm, xuất lại không lọc để xác nhận hết timeout
+Blocked:
+
+## Bug 2026-10-10 — Logo Excel Tổng hợp tiền về ngân hàng quá bé (@khoipv)
+
+> `drawings()` gọi `letterheadDrawings($this->header)` không truyền `widthPx` → trait ép cao cố định 72px,
+> letterhead chưa tới nửa bảng. Skill export-excel mục 4/4b: letterhead rộng BẰNG bảng, từ mép trái.
+
+- [x] BE `BillIncomeReportSummarizeExport` — thêm `tableWidthPx()` (cộng `columnWidths()` theo cột đã chọn,
+      7px/ký tự + 5px), truyền vào `letterheadDrawings($this->header, 'A1', $this->tableWidthPx())`
+- [x] Verify: dựng file, đọc lại drawing (rộng = bảng, @A1), dòng 1 nới cao theo ảnh, tiêu đề không bị đè
+      → company 1: 10 cột ảnh 1805x161 = bảng 1805px, row1 121pt; 3 cột ảnh 468x42 = bảng 468px. Chưa mở bằng Excel.

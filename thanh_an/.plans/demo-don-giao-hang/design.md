@@ -2,7 +2,7 @@
 
 > Người phụ trách: @khoipv · 06/10/2026
 > Spec đầy đủ: `docs/superpowers/specs/2026-10-06-demo-don-giao-hang-design.md`
-> Demo: `demos/demo-tao-don-giao-hang.html`
+> Demo: `demos/demo-lap-don-mua-hang.html`
 
 ## Mục tiêu
 Demo HTML (V2Base) màn lập Đơn giao hàng (DGH) — bước sau HĐ mua trong luồng Cung ứng, để chốt nghiệp vụ trước khi build.

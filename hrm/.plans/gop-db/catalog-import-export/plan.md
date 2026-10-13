@@ -4424,3 +4424,37 @@ Tình huống: tab A validate hợp lệ → tab B tạo tay cùng dữ liệu �
 - [x] Verify: `php -l` 23 file · parse/compile FE · smoke trên DB local (rollback): Quận/huyện 1 dòng mới + 1 dòng trùng DB → 400, rows[1] lỗi "đã tồn tại", inserted=0; Tính chất hàng hoá 2 dòng trùng mã → 400, inserted=0
 - Ghi chú: phpunit `Modules/Human/Tests/Unit` 2 fail hỏng SẴN, không liên quan (test service, không đụng): `test_quoc_gia_ma_buu_chinh_phai_la_chu_so`, `ProvinceImportValidationTest::test_bien_so_xe_phai_la_chu_so`
 - Chưa kiểm: thao tác thật 2 tab trên trình duyệt (user tự test)
+
+### Fix — Import Phường/xã thiếu cột Quận/Huyện — 10/10/2026 (@khoipv)
+User báo: file import Phường/xã thiếu cột Quận/Huyện; quốc gia khác Việt Nam thì Quận/Huyện bắt buộc (đảo lại quyết định "bỏ cột Quận/Huyện" ngày 07/10). BE vốn đã đọc `district_name` — chỉ FE bỏ cột.
+- [x] FE `pages/human/wards/index.vue`: thêm cột `DistrictName` (select tên quận/huyện thuộc tỉnh nước ngoài) đứng sau Tỉnh/TP, `mapImportRow` gửi `district_name`
+- [x] BE `WardService::resolveImportDistrict()`: câu lỗi khi bỏ trống không còn bảo "thêm qua popup"; tỉnh Việt Nam mà điền Quận/Huyện → báo lỗi dòng (VN không có cấp huyện, tránh mất dữ liệu lặng lẽ)
+- [x] Unit test `WardImportValidationTest` thêm case Quận/Huyện + `php -l` + compile FE
+- Verify: phpunit `WardImportValidationTest` 9/9 · `php -l` · parse template/script FE · smoke DB local (rollback): tỉnh nước ngoài có quận → hợp lệ, ghi đúng `district_id`; bỏ trống quận → lỗi dòng; tỉnh VN không quận → hợp lệ
+- Chưa kiểm: thao tác thật trên trình duyệt (tải file mẫu, ô chọn Quận/Huyện ở bảng preview) — user tự test
+- [x] Lượt 2 (user báo: "Quốc gia nước ngoài, để trống Quận/Huyện chưa báo lỗi" + "Quận/Huyện không thuộc Tỉnh/TP chưa báo lỗi"). Đã đo: API cổng 8000 + chunk Nuxt đều là code mới; lỗ hổng là luật chỉ xét quốc gia CỦA TỈNH, bỏ qua ô Quốc gia → chọn Quốc gia nước ngoài + Tỉnh VN thì không báo thiếu quận; quận sai tỉnh VN ra câu "VN không có cấp huyện" chứ không nói "không thuộc tỉnh"
+  - `resolveImportDistrict()` nhận cả dòng: bắt buộc quận khi Tỉnh/TP nước ngoài **hoặc** ô Quốc gia ≠ Việt Nam → "Quốc gia nước ngoài bắt buộc nhập Quận/Huyện"; quận không có trong tỉnh của dòng (kể cả tỉnh VN) → `Quận/Huyện "X" không thuộc Tỉnh/TP Y`; quận đúng tỉnh VN (di sản) → "Tỉnh/TP ở Việt Nam không có cấp Quận/Huyện"
+  - Test 11/11 · HTTP thật `POST /api/v1/human/wards/import/validate` 5 tình huống đều ra đúng lỗi
+
+### Redmine #11629 — Import nhiều dòng: dòng bị người khác ghi trùng giữa chừng → BỎ QUA, import tiếp + bảng lỗi — 13/10/2026 (@khoipv)
+Yêu cầu (Hằng/tester): trong lúc đang import lần lượt mà có bản ghi bị người khác ghi trùng → bỏ qua bản ghi ấy, tiếp tục import, hiện lỗi **dạng bảng: số dòng trong file · Mã (nếu có) · lý do lỗi, cho phép copy**.
+⚠️ ĐẢO luật #11588 (chặn cả lượt). User chốt 13/10: phạm vi = đúng nhóm màn của #11588; đồng ý sửa code dùng chung (mixin + helper + V2BaseImportModal).
+- [x] BE helper mới `app/Support/CatalogImportOutcome.php` (`splitValid` / `merge` / `response`): gộp dòng bị loại lúc validate lại + lỗi từng dòng khi ghi, quy `errors[].index` về vị trí trong mảng FE đã gửi; 200 đủ / 207 có dòng bỏ qua
+- [x] BE 23 controller: bỏ nhánh 400 "Chưa import dòng nào" + bỏ `DB::transaction` bọc cả lượt (REPEATABLE READ → câu kiểm trùng không thấy bản ghi người khác vừa ghi giữa chừng). 20 controller cùng khuôn sửa bằng script; Account (service nhận dòng validate, index gốc), BaseCatalogController (khoá giữ vị trí gốc), AbstractDeclareDebt (service nhận thêm `$validation` để không validate 2 lần lệch nhau) sửa tay
+- [x] BE service — thêm kiểm trùng LẠI với DB ngay trước khi ghi ở 6 chỗ còn thiếu: `ImportsCatalogRows::assertImportRowNotDuplicated()` (mã + tên), `AbstractDeclareDebtService::importRowDuplicated()` (trong transaction từng dòng), 4 service Phòng họp nạp lại tên từ DB mỗi dòng (giữ luật so tên bỏ dấu) + lỗi có `index`. 17 service còn lại vốn đã `->exists()` trong vòng lặp
+- [x] FE `V2BaseImportModal`: giữ số dòng Excel thật (`__excelRow`), khối "Kết quả import" dạng bảng (Dòng trong file · Mã · Lý do) + nút Sao chép (TSV dán được Excel)
+- [x] FE `CatalogImportMixin::handleImportData`: có dòng thất bại → không đóng popup, gọi `modal.showImportResult(data, importCodeKey)`, vẫn nạp lại danh sách khi success > 0. Cột "Mã" tự chọn Code › IdentifyNumber › ContractCode › AccountNumber › KeyName › ObjectCode › cột đầu (màn có thể khai `importCodeKey`). `import-error-helper` giữ nguyên làm đường lùi cho 400 khác
+- [x] FE 3 màn Phòng họp (handler riêng): đổi cùng cách
+- [x] Verify: `php -l` 30 file · parse template + script 5 file FE · smoke DB local (rollback, gọi thẳng controller, giả "người khác" bằng listener `creating` chèn trùng giữa lượt):
+  - Tiện nghi: [X, Y, Z, W], đang ghi X thì chèn Z → 207, success 3, errors `[{index:2}]`, W vẫn vào
+  - Tiện nghi: dòng 1 trùng sẵn DB → 207, errors `[{index:1}]`
+  - Tiền tệ (HTTP thật): dòng 0 trùng → 207, errors `[{index:0}]` (ánh xạ positions đúng)
+  - Đặc tính sản phẩm: chèn trùng mã ZQ03 giữa lượt → 207, errors `[{index:2, "Mã ... đã tồn tại"}]`, ZQ04 vẫn vào
+- [x] Playwright local (localhost:3000, DNS Admin) màn Tiền tệ, theo yêu cầu user 13/10: file 4 dòng ZZT1-4 → Validate 4/4 hợp lệ → "người khác" tạo ZZT3 qua API → bấm Import: toast + bảng "Import xong: 3 thành công, 1 dòng lỗi bị bỏ qua", dòng **4** · ZZT3 · "Mã tiền tệ đã tồn tại…; Tên tiền tệ đã tồn tại…", danh sách tự nạp lại. DB: ZZT3 chỉ 1 bản (không ghi đúp), 3 dòng kia vào đủ + lịch sử. Nút Sao chép: clipboard ra TSV 2 dòng (header + lỗi); nhánh dự phòng execCommand (khi không có Clipboard API — cổng dev http) cũng báo "Đã sao chép bảng lỗi". Ảnh: `.playwright-mcp/11629-2-ket-qua.png`, `11629-3-sao-chep.png`. Đã xoá dữ liệu test (currencies 14-17, catalog_histories 732-735)
+- Chưa kiểm: công nợ đầu kỳ (chỉ php -l)
+
+### Checkpoint — 2026-10-13
+Vừa hoàn thành: #11629 BE + FE — đã commit + push nhánh `develop` 13/10 (hrm-api 4e40f8c12 · hrm-client 9c59dfead, merge ce7bbfd54)
+Đang làm dở: không
+Bước tiếp theo: chuyển Redmine #11629 sang "Code xong chờ test"; skill import-excel còn ghi luật cũ — cập nhật qua PR nếu team đồng ý
+Blocked:

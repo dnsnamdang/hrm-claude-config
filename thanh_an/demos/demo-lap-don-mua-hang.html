@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lập đơn giao hàng</title>
+<title>Lập đơn mua hàng</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
@@ -191,8 +191,8 @@ input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
 <div class="container">
 
   <div class="page-title-box">
-    <h4 class="page-title">Lập đơn giao hàng <span id="status-pill" class="badge b-gray status-pill">Nháp</span></h4>
-    <div class="breadcrumb">Cung ứng / <b>Đơn giao hàng</b> / Lập đơn giao hàng</div>
+    <h4 class="page-title">Lập đơn mua hàng <span id="status-pill" class="badge b-gray status-pill">Nháp</span></h4>
+    <div class="breadcrumb">Cung ứng / <b>Đơn mua hàng</b> / Lập đơn mua hàng</div>
   </div>
 
   <div class="tp-card p-0 mb-3">
@@ -207,9 +207,9 @@ input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
       <!-- ================= TAB 1: THÔNG TIN CHUNG ================= -->
       <div class="tab-pane active" id="pane-general">
         <div class="sec">
-          <div class="sec-h"><h6>Thông tin đơn giao</h6></div>
+          <div class="sec-h"><h6>Thông tin đơn mua</h6></div>
           <div class="sec-b"><div class="grid">
-            <div><label class="v2-label">Mã đơn giao</label><input class="v2-input" value="DGH-2026-0011" disabled><div class="hint">Tự sinh khi lưu (DGH-YYYY-####)</div></div>
+            <div><label class="v2-label">Mã đơn mua</label><input class="v2-input" value="DMH-2026-0011" disabled><div class="hint">Tự sinh khi lưu (DMH-YYYY-####)</div></div>
             <div><label class="v2-label">Ngày lập<span class="req">*</span></label><input type="date" class="v2-input" id="f-date"></div>
             <div><label class="v2-label">Người lập</label><input class="v2-input" value="Trần Thị Bích — Phòng Cung ứng" disabled></div>
             <div><label class="v2-label">Hợp đồng mua<span class="req">*</span></label>
@@ -291,7 +291,7 @@ input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
           </div></div>
         </div>
         <div class="sec" id="sec-dest-kho">
-          <div class="sec-h"><h6>Nhận tại kho công ty</h6><i class="ri-information-line lbl-tip" title="Hàng về kho → tạo Phiếu nhập kho từ đơn giao (thủ kho xác nhận SL thực nhận)."></i></div>
+          <div class="sec-h"><h6>Nhận tại kho công ty</h6><i class="ri-information-line lbl-tip" title="Hàng về kho → tạo Phiếu nhập kho từ đơn mua (thủ kho xác nhận SL thực nhận)."></i></div>
           <div class="sec-b"><div class="grid">
             <div><label class="v2-label">Kho nhận<span class="req">*</span><i class="ri-information-line lbl-tip" title="Lọc theo Công ty nhận hàng"></i></label><select class="v2-input" id="f-kho" onchange="onKho(this.value)"></select>
               <div id="err-kho"></div></div>
@@ -316,7 +316,7 @@ input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
       <!-- ================= TAB 4: THANH TOÁN ================= -->
       <div class="tab-pane" id="pane-pay">
         <div class="sec">
-          <div class="sec-h"><h6>Điều khoản thanh toán của đơn giao<span class="req">*</span></h6><span class="sp"></span><span id="pay-by-contract" class="terms"></span></div>
+          <div class="sec-h"><h6>Điều khoản thanh toán của đơn mua<span class="req">*</span></h6><span class="sp"></span><span id="pay-by-contract" class="terms"></span></div>
           <div class="sec-b">
             <div class="opts two" id="pay-opts"></div>
           </div>
@@ -328,7 +328,7 @@ input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
     <div class="form-footer">
       <button class="btn btn-primary btn-w" onclick="save(false)"><i class="ri-save-3-line"></i>Lưu</button>
       <button class="btn btn-primary btn-w" onclick="save(true)"><i class="ri-send-plane-line"></i>Lưu và gửi duyệt</button>
-      <button class="btn btn-tertiary btn-w" onclick="toast('Quay lại danh sách đơn giao hàng')"><i class="ri-arrow-left-line"></i>Quay lại</button>
+      <button class="btn btn-tertiary btn-w" onclick="toast('Quay lại danh sách đơn mua hàng')"><i class="ri-arrow-left-line"></i>Quay lại</button>
     </div>
   </div>
 </div>
@@ -352,7 +352,7 @@ input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
     </table></div>
   </div>
   <div class="m-f"><div class="left" id="pk-count"></div>
-    <button class="btn btn-primary" id="pk-add" onclick="pickAdd()" disabled><i class="ri-add-line"></i>Thêm vào đơn giao</button>
+    <button class="btn btn-primary" id="pk-add" onclick="pickAdd()" disabled><i class="ri-add-line"></i>Thêm vào đơn mua</button>
     <button class="btn btn-tertiary" onclick="closeM('m-pick')"><i class="ri-arrow-left-line"></i>Đóng</button></div>
 </div></div>
 
@@ -360,7 +360,7 @@ input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
 <div class="mask" id="m-dntt"><div class="modal">
   <div class="m-h"><div class="m-ic"><i class="ri-money-dollar-circle-line"></i></div><h5>Tạo đề nghị thanh toán (thanh toán trước khi giao)</h5><button class="m-x" onclick="closeM('m-dntt')">×</button></div>
   <div class="m-b" id="dntt-body"></div>
-  <div class="m-f"><div class="left">Gửi tới Phòng Kế toán — đơn giao chỉ được giao khi kế toán xác nhận <b>Đã chi</b>.</div>
+  <div class="m-f"><div class="left">Gửi tới Phòng Kế toán — đơn mua chỉ được giao khi kế toán xác nhận <b>Đã chi</b>.</div>
     <button class="btn btn-primary" onclick="dnttSend()"><i class="ri-send-plane-line"></i>Gửi kế toán</button>
     <button class="btn btn-tertiary" onclick="closeM('m-dntt')"><i class="ri-arrow-left-line"></i>Đóng</button></div>
 </div></div>
@@ -461,15 +461,15 @@ const CONTRACTS = {
       { id:'L3', p:'HH-11', qty:null, price:22000,  vat:5,  purposes:[] },
     ] },
 };
-/* Các đơn giao đã có của từng HĐ (minh họa 1 HĐ – nhiều đơn giao – mỗi đơn 1 công ty nhận khác nhau) */
+/* Các đơn mua đã có của từng HĐ (minh họa 1 HĐ – nhiều đơn mua – mỗi đơn 1 công ty nhận khác nhau) */
 const DELIVERIES = [
-  { code:'DGH-2026-0004', ct:'HDM-2026-0012', date:'2026-08-25', recv:'TA', method:'Cty tự lấy → về kho', dest:'Kho tổng Thành An – Yên Phụ',
+  { code:'DMH-2026-0004', ct:'HDM-2026-0012', date:'2026-08-25', recv:'TA', method:'Cty tự lấy → về kho', dest:'Kho tổng Thành An – Yên Phụ',
     pay:'prepaid', paid:true,  due:null,         status:'Hoàn thành',   items:{ 'L1|a':5 } },
-  { code:'DGH-2026-0007', ct:'HDM-2026-0012', date:'2026-09-02', recv:'AV', method:'NCC giao tại kho', dest:'Kho An Việt – Yên Phụ',
+  { code:'DMH-2026-0007', ct:'HDM-2026-0012', date:'2026-09-02', recv:'AV', method:'NCC giao tại kho', dest:'Kho An Việt – Yên Phụ',
     pay:'debt',    paid:false, due:'2026-10-20', status:'Đã nhập kho',  items:{ 'L2|a':3 } },
-  { code:'DGH-2026-0010', ct:'HDM-2026-0012', date:'2026-09-20', recv:'VL', method:'NCC giao thẳng KH', dest:'BV ĐK TW Thái Nguyên',
+  { code:'DMH-2026-0010', ct:'HDM-2026-0012', date:'2026-09-20', recv:'VL', method:'NCC giao thẳng KH', dest:'BV ĐK TW Thái Nguyên',
     pay:'debt',    paid:false, due:'2026-10-25', status:'KH đã ký nhận', items:{ 'L3|a':2 } },
-  { code:'DGH-2026-0008', ct:'HDM-2026-0015', date:'2026-09-10', recv:'AV', method:'Cty tự lấy → về kho', dest:'Kho An Việt – Yên Phụ',
+  { code:'DMH-2026-0008', ct:'HDM-2026-0015', date:'2026-09-10', recv:'AV', method:'Cty tự lấy → về kho', dest:'Kho An Việt – Yên Phụ',
     pay:'debt',    paid:false, due:'2026-10-25', status:'Đã nhập kho',  items:{ 'L1|_':100 } },
 ];
 const SHIP = {
@@ -568,12 +568,12 @@ function renderContractInfo(){
       <div><div class="k">Còn lại chưa giao</div><div class="v" style="color:var(--brand-tx)">${total!=null?fm(total-deliveredVal)+' đ':'—'}</div></div>
     </div>
     <div class="divider"></div>
-    <div style="font-weight:700;font-size:12.5px;margin-bottom:4px">Các đơn giao của HĐ này <span class="mut" style="font-weight:400">— mỗi đơn có thể giao cho 1 công ty khác nhau</span></div>
-    <table class="mt"><thead><tr><th>Mã đơn giao</th><th>Ngày</th><th>Công ty nhận</th><th>Phương thức</th><th>Nơi nhận</th><th class="tr">Giá trị (có VAT)</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead><tbody>
+    <div style="font-weight:700;font-size:12.5px;margin-bottom:4px">Các đơn mua của HĐ này <span class="mut" style="font-weight:400">— mỗi đơn có thể giao cho 1 công ty khác nhau</span></div>
+    <table class="mt"><thead><tr><th>Mã đơn mua</th><th>Ngày</th><th>Công ty nhận</th><th>Phương thức</th><th>Nơi nhận</th><th class="tr">Giá trị (có VAT)</th><th>Thanh toán</th><th>Trạng thái</th></tr></thead><tbody>
     ${list.length? list.map(d=>{ const v=Object.keys(d.items).reduce((a,k)=>a+d.items[k]*lineOf(k.split('|')[0]).price,0);
       return `<tr><td><span class="lnk">${d.code}</span></td><td>${fd(d.date)}</td><td>${COMPANIES[d.recv].short}${d.recv!==c.a?' <span class="badge b-amber">≠ Bên A</span>':''}</td><td>${d.method}</td><td>${d.dest}</td><td class="tr">${fm(v)}</td>
         <td>${d.pay==='prepaid'?'<span class="badge b-green">Trả trước · Đã chi</span>':d.paid?'<span class="badge b-green">Công nợ · Đã TT</span>':`<span class="badge b-amber">Công nợ · hạn ${fd(d.due)}</span>`}</td><td>${d.status}</td></tr>`; }).join('')
-      : '<tr><td colspan="8" class="mut">Chưa có đơn giao nào.</td></tr>'}
+      : '<tr><td colspan="8" class="mut">Chưa có đơn mua nào.</td></tr>'}
     </tbody></table>`;
 }
 function onRecv(v){
@@ -604,7 +604,7 @@ function renderRecv(){
   const scos=[...saleCompaniesInOrder()];
   if(scos.length && !(scos.length===1 && scos[0]===state.recv)){
     html += `<div class="note note-info mt-2"><i class="ri-lightbulb-line"></i><div>Hàng đã chọn phục vụ HĐ bán của: ${scos.map(s=>`<b>${COMPANIES[s].short}</b>`).join(', ')}.
-      ${scos.length===1?`<button class="btn btn-success2" style="height:24px;margin-left:6px" onclick="$('f-recv').value='${scos[0]}';onRecv('${scos[0]}')">Giao cho ${COMPANIES[scos[0]].short}</button>`:' Nên tách đơn giao theo từng công ty bán.'}</div></div>`;
+      ${scos.length===1?`<button class="btn btn-success2" style="height:24px;margin-left:6px" onclick="$('f-recv').value='${scos[0]}';onRecv('${scos[0]}')">Giao cho ${COMPANIES[scos[0]].short}</button>`:' Nên tách đơn mua theo từng công ty bán.'}</div></div>`;
   }
   $('recv-note').innerHTML = html;
 }
@@ -654,7 +654,7 @@ function renderPicker(){
     return true;
   });
   $('pk-note').innerHTML = dest()==='kh'
-    ? `<div class="note note-info mb-2"><i class="ri-hospital-line"></i><div>Đơn giao thẳng cho khách hàng → được chọn hàng của <b>nhiều khách</b> (mỗi khách thành 1 điểm giao). Khóa hàng <b>cung ứng nội bộ / mua ngoài phiếu đề xuất</b> (không có HĐ bán để xuất thẳng) — lập đơn giao riêng về kho cho các dòng này.</div></div>`
+    ? `<div class="note note-info mb-2"><i class="ri-hospital-line"></i><div>Đơn mua giao thẳng cho khách hàng → được chọn hàng của <b>nhiều khách</b> (mỗi khách thành 1 điểm giao). Khóa hàng <b>cung ứng nội bộ / mua ngoài phiếu đề xuất</b> (không có HĐ bán để xuất thẳng) — lập đơn mua riêng về kho cho các dòng này.</div></div>`
     : isNT() ? `<div class="note note-info mb-2"><i class="ri-information-line"></i><div>HĐ Nguyên tắc: không cam kết số lượng → SL giao nhập tự do theo đơn giá HĐ.</div></div>` : '';
   $('pk-body').innerHTML = rows.length ? rows.map((r,i)=>{
     const P=PRODUCTS[r.l.p], blk=pickBlockReason(r), sel=pickSel.has(r.key);
@@ -691,7 +691,7 @@ function pickAdd(){
   // giữ thứ tự theo HĐ
   const order=C().lines.map(l=>l.id); state.rows.sort((a,b)=>order.indexOf(a.lineId)-order.indexOf(b.lineId));
   closeM('m-pick'); delete state.errors.goods; renderAll(); showTab('goods');
-  toast(`Đã thêm ${pickSel.size} dòng phiếu vào đơn giao`);
+  toast(`Đã thêm ${pickSel.size} dòng phiếu vào đơn mua`);
 }
 
 /* =====================================================================
@@ -810,7 +810,7 @@ function delPurpose(i,pk){
   if(!Object.keys(r.q).length) state.rows.splice(i,1);
   delete state.errors.goods; renderAll();
 }
-function delRow(i){ if(!confirm('Xóa hàng hóa này khỏi đơn giao?')) return; state.rows.splice(i,1); renderAll(); }
+function delRow(i){ if(!confirm('Xóa hàng hóa này khỏi đơn mua?')) return; state.rows.splice(i,1); renderAll(); }
 function renderSum(){
   const g=goodsTotal(), ft=feeTotals();
   const payNcc=g.after+ft.nccFee;
@@ -834,9 +834,9 @@ function renderGoodsWarn(){
   const zero=state.rows.filter(r=>!rowQty(r)); if(zero.length) msgs.push(`<div class="note note-warn mb-2"><i class="ri-alert-line"></i><div>${zero.length} mặt hàng có SL giao = 0 — sẽ bị bỏ qua khi lưu.</div></div>`);
   if(dest()==='kh'){
     const dps=deliveryPoints();
-    if(dps.length>1) msgs.push(`<div class="note note-info mb-2"><i class="ri-map-pin-line"></i><div>Đơn giao thẳng cho <b>${dps.length} khách hàng</b> → ${dps.map(d=>'Điểm '+d.no+': '+CUSTOMERS[d.cus].name).join(' · ')}. Địa chỉ / người nhận từng điểm ở tab <b>Giao nhận &amp; vận chuyển</b>.</div></div>`);
+    if(dps.length>1) msgs.push(`<div class="note note-info mb-2"><i class="ri-map-pin-line"></i><div>Đơn mua giao thẳng cho <b>${dps.length} khách hàng</b> → ${dps.map(d=>'Điểm '+d.no+': '+CUSTOMERS[d.cus].name).join(' · ')}. Địa chỉ / người nhận từng điểm ở tab <b>Giao nhận &amp; vận chuyển</b>.</div></div>`);
     const ni=internalCount();
-    if(ni) msgs.push(`<div class="note note-err mb-2"><i class="ri-home-gear-line"></i><div><b>${ni} dòng hàng cung ứng nội bộ / mua ngoài phiếu đề xuất</b> không giao thẳng cho KH được (không có HĐ bán để xuất thẳng) — không lưu được. Xóa dòng hoặc đổi SL về 0, rồi lập <b>đơn giao riêng về kho</b>.</div></div>`);
+    if(ni) msgs.push(`<div class="note note-err mb-2"><i class="ri-home-gear-line"></i><div><b>${ni} dòng hàng cung ứng nội bộ / mua ngoài phiếu đề xuất</b> không giao thẳng cho KH được (không có HĐ bán để xuất thẳng) — không lưu được. Xóa dòng hoặc đổi SL về 0, rồi lập <b>đơn mua riêng về kho</b>.</div></div>`);
   }
   if(isNT()) msgs.push(`<div class="note note-info mb-2"><i class="ri-information-line"></i><div>HĐ Nguyên tắc: giao theo đơn giá HĐ, không giới hạn SL. Giá trị đơn được kiểm theo <b>Số nợ tối đa</b> của HĐ (tab Thanh toán).</div></div>`);
   $('goods-warn').innerHTML=msgs.join('');
@@ -1009,7 +1009,7 @@ function renderPay(){
       <label class="v2-label">Cách tính hạn nợ<span class="req">*</span></label>
       <div class="opts two" style="margin-bottom:10px">
         ${[['days','ri-calendar-event-line','Theo thời hạn','Nợ N ngày kể từ ngày nhận hàng / ngày hóa đơn → ra Ngày đến hạn cố định.'],
-           ['rolling','ri-stack-line','Gối đầu đơn hàng','Tối đa K đơn giao đang nợ. Muốn giao đơn K+1 thì phải trả đơn nợ cũ nhất.']]
+           ['rolling','ri-stack-line','Gối đầu đơn hàng','Tối đa K đơn mua đang nợ. Muốn đặt đơn K+1 thì phải trả đơn nợ cũ nhất.']]
           .map(([k,i,t,d])=>`<div class="opt ${state.debtMode===k?'on':''}" onclick="state.debtMode='${k}';renderPay()"><div class="ot"><input type="radio" ${state.debtMode===k?'checked':''}><i class="${i}"></i>${t}</div><div class="od">${d}</div></div>`).join('')}
       </div>
       <div class="grid">
@@ -1020,7 +1020,7 @@ function renderPay(){
         <div><label class="v2-label">Ngày đến hạn (dự kiến)</label><input class="v2-input" id="f-due" value="${fd(dueDate())}" disabled><div class="hint">Tính theo ngày giao dự kiến; chốt lại khi xác nhận nhận hàng</div></div>`:''}
         ${state.debtMode!=='days'?`
         <div><label class="v2-label">Số đơn gối đầu tối đa<span class="req">*</span></label><input class="v2-input tr" value="${state.rolling}" oninput="state.rolling=Math.max(1,Number(this.value.replace(/\\D/g,''))||1);renderPayCheck()">
-          <div class="hint">Theo HĐ: ${c.terms.ROLLING||'—'} đơn · đếm các đơn giao <b>đang nợ</b> của HĐ ${state.contract}</div></div>`:''}
+          <div class="hint">Theo HĐ: ${c.terms.ROLLING||'—'} đơn · đếm các đơn mua <b>đang nợ</b> của HĐ ${state.contract}</div></div>`:''}
       </div>
       <div id="pay-check" class="mt-2"></div>
     </div></div>`;
@@ -1041,11 +1041,11 @@ function renderPay(){
 function renderPayCheck(){
   const rc=rollingCheck(); if(!rc||!$('pay-check')) return;
   const c=C();
-  let h=`<div style="font-weight:700;font-size:12.5px;margin:6px 0 4px">Đơn giao đang nợ của HĐ ${state.contract}</div>
-    <table class="mt"><thead><tr><th>#</th><th>Mã đơn giao</th><th>Công ty</th><th>Ngày giao</th><th>Đến hạn</th><th class="tr">Còn nợ (VNĐ)</th><th></th></tr></thead><tbody>
+  let h=`<div style="font-weight:700;font-size:12.5px;margin:6px 0 4px">Đơn mua đang nợ của HĐ ${state.contract}</div>
+    <table class="mt"><thead><tr><th>#</th><th>Mã đơn mua</th><th>Công ty</th><th>Ngày giao</th><th>Đến hạn</th><th class="tr">Còn nợ (VNĐ)</th><th></th></tr></thead><tbody>
     ${rc.open.map((d,i)=>`<tr><td>${i+1}</td><td><span class="lnk">${d.code}</span></td><td>${COMPANIES[d.recv].short}</td><td>${fd(d.date)}</td><td>${fd(d.due)}</td><td class="tr">${fm(debtVal(d))}</td>
       <td>${rc.rollOver&&i===0?'<span class="badge b-red">Phải trả trước khi giao đơn mới</span>':''}</td></tr>`).join('')}
-    <tr class="hl"><td>${rc.open.length+1}</td><td><b>DGH-2026-0011</b> (đơn này)</td><td>${payerCo()?COMPANIES[payerCo()].short:'—'}</td><td>${fd(state.deliverDate)}</td><td>${state.debtMode==='rolling'?'Khi giao đơn thứ '+(state.rolling+1):fd(dueDate())}</td><td class="tr"><b>${fm(payTotal())}</b></td><td></td></tr>
+    <tr class="hl"><td>${rc.open.length+1}</td><td><b>DMH-2026-0011</b> (đơn này)</td><td>${payerCo()?COMPANIES[payerCo()].short:'—'}</td><td>${fd(state.deliverDate)}</td><td>${state.debtMode==='rolling'?'Khi giao đơn thứ '+(state.rolling+1):fd(dueDate())}</td><td class="tr"><b>${fm(payTotal())}</b></td><td></td></tr>
     </tbody></table>
     <div class="kv mt-2">
       <div><div class="k">Số đơn đang nợ (kể cả đơn này)</div><div class="v" style="color:${rc.rollOver?'#b91c1c':'inherit'}">${rc.open.length+1}${state.debtMode!=='days'?' / tối đa '+state.rolling:''}</div></div>
@@ -1063,7 +1063,7 @@ function renderPayCheck(){
         <span class="mut">hoặc</span>
         <button class="btn btn-secondary" style="height:26px" onclick="toast('Mở đề nghị thanh toán cho ${rc.open[0]?rc.open[0].code:''} (đơn nợ cũ nhất)')"><i class="ri-money-dollar-circle-line"></i>Lập ĐNTT trả ${rc.open[0]?rc.open[0].code:''}</button></div></div></div>`;
   } else h+=`<div class="note note-ok mt-2"><i class="ri-checkbox-circle-line"></i><div>Trong điều khoản công nợ của HĐ — không cần duyệt vượt.</div></div>`;
-  h+=`<div class="hint mt-2"><i class="ri-information-line"></i> Đến hạn → hệ thống nhắc Cung ứng/Kế toán, lập <b>đề nghị thanh toán</b> từ màn Công nợ NCC (chọn nhiều đơn giao cùng lúc).</div>`;
+  h+=`<div class="hint mt-2"><i class="ri-information-line"></i> Đến hạn → hệ thống nhắc Cung ứng/Kế toán, lập <b>đề nghị thanh toán</b> từ màn Công nợ NCC (chọn nhiều đơn mua cùng lúc).</div>`;
   $('pay-check').innerHTML=h;
 }
 
@@ -1076,14 +1076,14 @@ function openDntt(){
     <div><label class="v2-label">Ngày đề nghị</label><input class="v2-input" value="${fd(TODAY)}" disabled></div>
     <div><label class="v2-label">Loại</label><input class="v2-input" value="Thanh toán trước giao hàng (NCC)" disabled></div>
     <div><label class="v2-label">Công ty đề nghị chi</label><input class="v2-input" value="${payer?COMPANIES[payer].name:''}" disabled></div>
-    <div><label class="v2-label">Chứng từ gốc</label><input class="v2-input" value="DGH-2026-0011 · ${state.contract}" disabled></div>
+    <div><label class="v2-label">Chứng từ gốc</label><input class="v2-input" value="DMH-2026-0011 · ${state.contract}" disabled></div>
     <div><label class="v2-label">Hạn chi<span class="req">*</span></label><input class="v2-input" value="${fd(state.prepayDue)}" disabled></div>
     <div><label class="v2-label">Đơn vị thụ hưởng</label><input class="v2-input" value="${sup.name}" disabled></div>
     <div><label class="v2-label">STK / Ngân hàng</label><input class="v2-input" value="${sup.bankNo} — ${sup.bank}" disabled></div>
     <div><label class="v2-label">Người duyệt (Kế toán)<span class="req">*</span></label><select class="v2-input"><option>Nguyễn Thị Hạnh — Kế toán trưởng</option><option>Lê Thu Hà — Kế toán thanh toán</option></select></div>
-    <div class="s3"><label class="v2-label">Nội dung</label><textarea class="v2-input" rows="2">Thanh toán trước đơn giao DGH-2026-0011 theo HĐ ${c.number} (${state.contract}) — ${SUPPLIERS[c.sup].short}</textarea></div>
+    <div class="s3"><label class="v2-label">Nội dung</label><textarea class="v2-input" rows="2">Thanh toán trước đơn mua DMH-2026-0011 theo HĐ ${c.number} (${state.contract}) — ${SUPPLIERS[c.sup].short}</textarea></div>
   </div>
-  <div class="sum-grid" style="grid-template-columns:1fr 360px"><div class="box"><b>Đính kèm:</b> Hóa đơn / Proforma của NCC, Đơn giao hàng (PDF) <br><button class="btn btn-secondary mt-2" style="height:26px"><i class="ri-attachment-2"></i>Chọn file</button></div>
+  <div class="sum-grid" style="grid-template-columns:1fr 360px"><div class="box"><b>Đính kèm:</b> Hóa đơn / Proforma của NCC, Đơn mua hàng (PDF) <br><button class="btn btn-secondary mt-2" style="height:26px"><i class="ri-attachment-2"></i>Chọn file</button></div>
   <div class="box" style="background:#fff;border-style:solid">
     <div class="srow"><span>Tiền hàng (có VAT)</span><b>${fm(g.after)}</b></div>
     ${ft.nccFee?`<div class="srow"><span>Phí VC NCC thu</span><b>${fm(ft.nccFee)}</b></div>`:''}
@@ -1110,7 +1110,7 @@ function validate(){
       const over=state.rows.some(r=>{ const l=lineOf(r.lineId); if(l.qty==null) return false;
         return l.purposes.length ? l.purposes.some(p=>(r.q[p.k]||0)>p.qty-delivered(state.contract,l.id,p.k)) : rowQty(r)>l.qty-delivered(state.contract,l.id,'_'); });
       if(over) e.goods='Có mặt hàng giao vượt SL còn lại của HĐ mua';
-      if(internalCount()) e.goods='Giao thẳng KH không được chứa hàng cung ứng nội bộ / mua ngoài phiếu đề xuất — tách đơn giao riêng về kho';
+      if(internalCount()) e.goods='Giao thẳng KH không được chứa hàng cung ứng nội bộ / mua ngoài phiếu đề xuất — tách đơn mua riêng về kho';
     }
   }
   if(dest()==='kho' && !state.kho) e.kho='Chọn kho nhận';
@@ -1141,7 +1141,7 @@ function save(send){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('has-error'));
   const c=C(), g=goodsTotal(), ft=feeTotals();
   if(send){ const pill=$('status-pill'); pill.textContent='Chờ duyệt'; pill.className='badge status-pill b-amber'; }
-  $('save-title').textContent = send?'Đã lưu và gửi duyệt DGH-2026-0011':'Đã lưu nháp DGH-2026-0011';
+  $('save-title').textContent = send?'Đã lưu và gửi duyệt DMH-2026-0011':'Đã lưu nháp DMH-2026-0011';
   $('save-body').innerHTML=`<div class="kv">
     <div><div class="k">HĐ mua</div><div class="v">${state.contract}</div></div>
     <div><div class="k">Công ty nhận hàng</div><div class="v">${COMPANIES[state.recv].short}${state.recv!==c.a?' (≠ Bên A '+COMPANIES[c.a].short+')':''}</div></div>

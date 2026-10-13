@@ -1054,3 +1054,8 @@ chặn trần chiều cao -> ô nở vô hạn theo số chip.
 - [x] Actor cập nhật theo: Người lập phiếu → [danh sách, lập, sửa, chi tiết]; Phòng tiếp nhận xử lý → [danh sách, chi tiết]
 - [x] Giữ lại 2 câu ở mục 1 Mục đích đã được rút gọn trên bản Drive (bản local trước đó còn câu dài) — đưa ngược vào `gen_srs.py` để lần chạy sau không mất
 - [x] Chạy lại `gen_srs.py`, đẩy đè lên Drive — file ID `1xdJN54n1dfcWDWYfjS0KWvd1nYT6eGAL` giữ nguyên, link cũ vẫn chạy
+
+### Redmine #11583 — lưu xong quay về danh sách thiếu `?type=all` (2026-10-10)
+- [x] Đọc task + 5 phản hồi: phiếu xử lý (chứng từ 2) đã được @Manh Cuong vá ở commit `a30080c64` (07/10) và bản build trên dev-hrm ĐÃ có `?type=all`; phản hồi #4 báo thêm lỗi y hệt ở **Lưu nháp phiếu yêu cầu** — chưa sửa
+- [x] `WarrantyRepairRequestForm.vue`: thêm hằng `LIST_URL = '/customer-care/warranty-repair-requests?type=all'` (khuôn giống form phiếu xử lý), dùng cho `url-back` V2Footer, `afterSaveRedirect` sau Lưu nháp / Lưu và gửi, và điều hướng sau Xóa
+- [ ] User kiểm lại trên trình duyệt sau khi deploy (cả 2 màn)

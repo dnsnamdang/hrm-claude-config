@@ -5,7 +5,11 @@
 
 ## Đang làm
 
-_(chưa có)_
+- **Phiếu đề xuất lập từ HĐ đã kết xuất — giữ HĐ nguồn khi chưa chọn hàng** — @khoipv — Bắt đầu 10/10/2026 — Đang sửa BE + FE. Phiếu gửi khi chưa chọn hàng bị suy khách lẻ → mất `contract_id` → cột "Phiếu đề xuất" ở màn HĐ đã kết xuất trống (HĐ-182/2026 trên dev).
+  - Plan: [.plans/de-xuat-tu-hd-giu-hd-nguon/plan.md](de-xuat-tu-hd-giu-hd-nguon/plan.md) · Spec: [docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md](../docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md)
+
+- **Demo PXL — tách "Mua hàng" thành khối Nguồn hàng** — @khoipv — Bắt đầu 08/10/2026 — Đang làm demo HTML. Bảng hàng hóa phiếu xử lý: SL đặt đơn = Lấy tồn kho + Mua hàng (khối Nguồn hàng), tách khỏi khối Xuất phục vụ HĐ (Bán · Xuất gửi · Trả gửi · Xuất vay · Trả vay · Xuất đổi). Chưa sửa code thật.
+  - Plan: [.plans/demo-pxl-tach-nguon-hang/plan.md](demo-pxl-tach-nguon-hang/plan.md) · Spec: [docs/superpowers/specs/2026-10-08-demo-pxl-tach-nguon-hang-design.md](../docs/superpowers/specs/2026-10-08-demo-pxl-tach-nguon-hang-design.md)
 
 ## Tạm dừng
 

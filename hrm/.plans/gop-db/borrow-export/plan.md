@@ -226,3 +226,8 @@ User hỏi phiếu có trạng thái Đang tạo / Chờ duyệt / Không duyệ
 
 - [x] BE `BorrowExportService::meta()`: `statuses` chỉ trả mục `DA_DUYET`; hằng `BorrowExport::STATUSES` giữ đủ 4 mục (badge `statusMeta()` dùng)
 - [ ] User mở trình duyệt kiểm tra
+
+## Fix — Ô "Phiếu mượn" ở bảng Chi tiết thành link mở chi tiết phiếu YCXH (2026-10-08) @khoipv
+- [x] FE `BorrowExportForm.vue` (màn Thêm) — mã phiếu mở `/finance/product-export-requests/{id}` ở TAB MỚI
+      (đang nhập form, mở cùng tab là mất dữ liệu); đồng bộ với màn Yêu cầu xuất hàng mượn
+- [x] FE `_id/index.vue` (màn chi tiết) — `nuxt-link` cùng tab, như chip mã phiếu đầu màn
