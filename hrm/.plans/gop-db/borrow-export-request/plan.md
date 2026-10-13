@@ -635,3 +635,13 @@ nạp (không có ở build production / vào thẳng màn).
 
 - [x] FE `_id/index.vue` + `BorrowExportRequestForm.vue` — tự khai `::v-deep .table-responsive.table-auto-height { min-height: 0 }`
       trong style scoped của màn (class nằm ở div con của `V2BaseTableScroll` nên phải `::v-deep`)
+
+## Fix — Gửi duyệt thiếu popup xác nhận + thiếu toast khi validate lỗi (2026-10-05) @khoipv
+- [x] FE `BorrowExportRequestForm.vue` `submit()`: validate lỗi (vd "Chưa có hàng hoá nào để xuất") trước chỉ cuộn
+      tới ô lỗi, không toast → thêm toast error "Bạn chưa nhập đầy đủ thông tin." (skill form-validate 3d)
+- [x] Thêm `$confirm` "Xác nhận gửi duyệt" trước khi gọi API (áp dụng cả nút "Lưu và tiếp tục")
+
+## Fix — Ô "Phiếu mượn" ở bảng Chi tiết thành link mở chi tiết phiếu YCXH (2026-10-08) @khoipv
+- [x] FE `BorrowExportRequestForm.vue` (màn Thêm) — mã phiếu bấm được, mở `/finance/product-export-requests/{id}`
+      ở TAB MỚI (đang nhập form, mở cùng tab là mất dữ liệu); khuôn link như `borrow-sell-requests/_id/index.vue`
+- [x] FE `_id/index.vue` (màn chi tiết) — cùng cột, làm đồng bộ

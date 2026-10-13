@@ -278,6 +278,7 @@ Thứ tự: `STT → Mã → Tên → [cột nghiệp vụ] → Người tạo �
 - **Không in đậm** trong ô bảng, kể cả cột Mã.
 - **`.text-muted` ở dns ra màu ĐỎ** → dùng `#6b7280`. Đỏ chỉ dành cho lỗi validate.
 - **Ô trống để trống** — cấm `—`, `-`, `N/A`. Rà cả chi tiết, popup, bản in/xuất, BE Resource. Hàm trả giá trị hiển thị `|| ''`.
+- ⚠️ **Bẫy ô hiện `[]` / giá trị thô**: slot `#cell-xxx` của `V2BaseDataTable` mà **phần tử gốc có `v-if` không kèm `v-else`, hoặc có `v-for`** → khi điều kiện sai / mảng rỗng, Vue 2 coi slot rỗng và render **nội dung mặc định** (`getNestedValue(item, key)`) ⇒ cột mảng ra `[]`, cột object ra `{...}`. Gốc slot luôn render (`<div>` trần, đặt `v-if`/`v-for` ở phần tử con). Gặp thật ở cột Phiếu đề xuất màn HĐ kết xuất (06/10/2026).
 - Badge: `V2BaseBadge`, không tự dựng pill. Danh mục 2–3 trạng thái cố định → `variant="brand|required|muted"`. Đối tượng nghiệp vụ nhiều trạng thái → `:color="item.status_color"` do BE trả (hằng `STATUSES` trên Entity có `color`). Chữ lấy `status_text` từ BE.
 - **9 mã màu chuẩn**: Hoàn thành/Đã duyệt `#16A34A` · Đang thực hiện/Đã gửi `#2563EB` · Chờ duyệt/Chờ xử lý `#D97706` · Cảnh báo/Tạm dừng `#F59E0B` · Từ chối/Quá hạn/Khoá `#DC2626` · Theo dõi/Mới tiếp nhận `#0EA5E9` · Chốt/Thương thảo `#7C3AED` · Nháp/Đang tạo `#64748B` · Đã đóng/Đã huỷ `#6B7280`. Trạng thái mới gán vào nhóm có sẵn, không tạo màu mới. Mức ưu tiên là thang riêng: `#94A3B8` → `#F59E0B` → `#F97316` → `#DC2626`.
 - Badge không bấm được; cùng bản ghi phải ra cùng chữ + màu ở danh sách, chi tiết, bản in, file Excel.

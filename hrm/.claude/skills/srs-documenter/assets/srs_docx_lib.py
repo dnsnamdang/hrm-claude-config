@@ -228,6 +228,8 @@ class SrsDoc(object):
         for row in rows:
             cells = t.add_row().cells
             for i, v in enumerate(row):
+                if isinstance(v, (list, tuple)):     # moi y 1 dong (gop y BA 05/10/2026)
+                    v = chr(10).join(str(x) for x in v)
                 cells[i].text = '' if v is None else str(v)
                 for para in cells[i].paragraphs:
                     for r in para.runs:
@@ -273,6 +275,7 @@ class SrsDoc(object):
         required=False, scope=False-> 6 cot, bo ca 'Pham vi' (hop xac nhan...)
 
         So o trong moi dong PHAI khop so cot da chon.
+        O 'Mo ta' nhieu y thi truyen LIST -> moi phan tu 1 dong (vd ['- Thut le theo cap', '- Bam so -> ...']).
         """
         headers = ['STT', 'Tên đối tượng', 'Loại', 'Trạng thái']
         widths = [0.4, 1.2, 0.8, 0.75]
@@ -295,6 +298,53 @@ class SrsDoc(object):
             ['STT', 'Event', 'Loại event', 'Xử lý event'],
             [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
             widths=[0.4, 1.6, 0.9, 3.6])
+
+    # --------------------------- man BAO CAO: cach lay du lieu + icon (2026-10-05)
+    DATA_HEAD = ['STT', 'Chỉ tiêu / Cột', 'Cách lấy dữ liệu', 'Nội dung icon ⓘ']
+    DATA_TITLE = 'Cách lấy dữ liệu và giải thích chỉ tiêu'
+
+    def data_table(self, rows):
+        """Bang 'Cach lay du lieu va giai thich chi tieu' 4 cot (STT tu danh) — BAT BUOC voi
+        chuc nang hien SO LIEU cua man bao cao (bao cao chinh, popup danh sach chi tiet...).
+
+        rows: [(chi_tieu_hoac_cot, cach_lay_du_lieu, noi_dung_icon), ...]
+          - cach_lay_du_lieu: ngon ngu nghiep vu (dem gi, cong gi, dieu kien nao, khop voi o nao),
+            KHONG ghi ten bang / ten cot DB.
+          - noi_dung_icon: chep NGUYEN VAN chu trong icon (i) tren giao dien; nhieu dong noi bang
+            ' • '. Khong co icon thi ghi '—'; dung chung icon cua khoi thi ghi '(dùng chung ⓘ của khối)'.
+        """
+        return self.table(
+            self.DATA_HEAD,
+            [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
+            widths=[0.45, 1.35, 2.6, 1.6])
+
+    # ------------------- man BAO CAO: popup mo tu so lieu (drill) — 2026-10-05
+    POPUP_HEAD = ['STT', 'Bấm vào', 'Popup mở ra', 'Mục đích thiết kế', 'Dữ liệu hiển thị']
+    VARIANT_HEAD = ['STT', 'Con số / vị trí bấm', 'Tập dòng hiển thị', 'Tiêu đề popup', 'Ô lọc ẩn / cố định']
+
+    def popup_table(self, rows):
+        """Bang 'Danh sach popup mo tu so lieu' 5 cot (STT tu danh) — dat o chuc nang bao cao CHINH.
+
+        rows: [(bam_vao, popup_mo_ra, muc_dich_thiet_ke, du_lieu_hien_thi), ...]
+          - bam_vao: DU moi vi tri bam duoc (o tong hop, dong TONG, tung cap dong, ngay, ma chung tu...).
+          - popup_mo_ra: ten popup + tro toi muc dac ta rieng (vd 'Danh sách chi tiết (mục 2.5)').
+            Lien ket mo tab moi / chuyen man cung ghi vao de nguoi doc biet KHONG phai popup.
+          - muc_dich_thiet_ke: popup tra loi CAU HOI nghiep vu nao cua nguoi xem con so.
+        """
+        return self.table(
+            self.POPUP_HEAD,
+            [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
+            widths=[0.4, 1.3, 1.2, 1.75, 1.75])
+
+    def popup_variant_table(self, rows):
+        """Bang 'Cac bien the theo con so bam' 5 cot — dat o muc dac ta TUNG LOAI popup.
+
+        rows: [(con_so_bam, tap_dong, tieu_de_popup, o_loc_an_co_dinh), ...]
+        """
+        return self.table(
+            self.VARIANT_HEAD,
+            [(i + 1,) + tuple(r) for i, r in enumerate(rows)],
+            widths=[0.4, 1.4, 1.9, 1.3, 1.4])
 
     # ------------------------------------------------- form RUT GON (2026-08-12)
     def field_table(self, rows):
@@ -508,8 +558,35 @@ class SrsDoc(object):
                           body, widths=[0.35, 0.7, 1.25, 2.6, 1.1])
 
     # -------------------------------------------------------------- save
+    def _guard_open_in_word(self):
+        """Chan ghi de file .docx DANG MO trong Word (su co 05/10/2026).
+
+        Word KHONG nap het anh luc mo — no doc dan tu file tren dia. Ghi de file trong luc Word dang mo
+        -> moi anh trong cua so Word dang mo bien mat (file moi van tot), va neu nguoi dung bam Luu thi
+        ban thieu anh de len ban tot. Word danh dau file dang mo bang file khoa `~$` + ten (bo 2 ky tu
+        dau) nam canh file.
+        """
+        folder, name = os.path.split(self.out)
+        lock = os.path.join(folder, '~$' + name[2:])
+        if not os.path.exists(lock):
+            return
+        still_open = True                       # khong co lsof (Windows) -> coi nhu dang mo
+        try:
+            import subprocess
+            r = subprocess.run(['lsof', '-t', '--', self.out], capture_output=True, text=True)
+            still_open = bool(r.stdout.strip())
+        except Exception:
+            pass
+        if still_open:
+            raise RuntimeError(
+                'File dang MO trong Word: %s\n'
+                '  Ghi de luc nay se lam mat anh trong cua so Word dang mo. Dong file trong Word '
+                '(KHONG luu) roi chay lai.' % self.out)
+        print('!! Con file khoa Word cu (Word da dong file): %s — co the xoa.' % lock)
+
     def save(self, verbose=True, update_fields=True):
         os.makedirs(os.path.dirname(self.out), exist_ok=True)
+        self._guard_open_in_word()
         self.doc.save(self.out)
         self._force_times_new_roman()
         if update_fields:

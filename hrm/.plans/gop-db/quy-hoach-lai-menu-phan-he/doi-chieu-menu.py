@@ -31,13 +31,17 @@ MAP = {
     'Thuế TNCN': ('tax', ['components/subsystem-menu/tax.js'], None),
     'Tuyển dụng': ('recruitment', ['components/subsystem-menu/recruitment.js'], None),
     'Đánh giá KPI': ('kpi', ['components/subsystem-menu/kpi.js'], None),
-    'Hoạt động pháp lý': ('legal', ['components/subsystem-menu/legal.js'], None),
+    # 16/09/2026: `legal` đã gộp vào `operation` ("Văn bản - Hồ sơ pháp lý"),
+    # `components/subsystem-menu/legal.js` đã xoá.
+    'Hoạt động pháp lý': ('operation', ['components/subsystem-menu/operation-hub.js'], None),
     'Quản lý tài sản': ('asset', ['components/subsystem-menu/asset.js'], None),
     'Hoạt động ISO (QUẢN LÝ QUY TRÌNH)': ('iso', ['components/subsystem-menu/iso.js'], None),
     'Quản lý an toàn 5s': ('safety-5s', ['components/subsystem-menu/safety-5s.js'], None),
+    # 16/09/2026: 2 dòng sheet dưới đây nay CHUNG 1 phân hệ `operation` ("Văn bản nội bộ") —
+    # phân hệ `decision` đã gộp vào, `components/default-menu/decision.js` đã xoá.
     'Ban hành văn bản nội bộ (Quyết định - quy định - quy chế)': (
         'operation', ['components/subsystem-menu/operation-hub.js'], None),
-    'Ban hành văn bản nội bộ': ('decision', ['components/default-menu/decision.js'], None),
+    'Ban hành văn bản nội bộ': ('operation', ['components/subsystem-menu/operation-hub.js'], None),
     'Đào tạo - đánh giá': ('training', ['components/menu-sidebar.js'], 'menuItemsTraining'),
     'Quản lý công việc': ('assign', ['components/menu-sidebar.js'], 'menuItemsAssign'),
     'Meeting': ('meeting', ['components/subsystem-menu/meeting.js'], None),
@@ -79,7 +83,10 @@ def nhan_menu(path, export=None):
             nxt = [src.index('export const ' + e) for e in order if e != export and src.find('export const ' + e) > i]
             src = src[i:min(nxt) if nxt else len(src)]
     labels = []
-    for m in re.finditer(r"(?:label|title|name|n)\s*:\s*'([^']+)'", src):
+    # `hubGroup` cũng là TÊN NHÓM người dùng nhìn thấy trên rail (nhiều mục cấp 1 gộp lại thành
+    # 1 nhóm hub) -> phải tính, nếu không sẽ báo thiếu oan. Vd "Phê duyệt" của phân hệ Công việc
+    # từ 17/09/2026 chỉ tồn tại dưới dạng `hubGroup`.
+    for m in re.finditer(r"(?:label|title|name|n|hubGroup)\s*:\s*'([^']+)'", src):
         labels.append(m.group(1))
     # chuỗi trần trong mảng screens: [...]
     for m in re.finditer(r"screens:\s*\[(.*?)\]", src, re.S):
@@ -125,6 +132,25 @@ BO_QUA = {
     ('Tài chính', 'quy thu chi'): 'user chốt: tài liệu ghi tạm, chưa phân bổ',
     ('Tài chính', 'bao cao tai chinh'): 'user chốt: tài liệu ghi tạm, chưa phân bổ',
     ('Tài chính', 'bao cao dong tien'): 'user chốt: tài liệu ghi tạm, chưa phân bổ',
+    # ----- 16/09/2026: user duyệt lại TỪNG PHÂN HỆ, chốt menu CSKH trước bán -> 11 mục DỜI HẲN
+    # về đó, sheet vẫn để ở phân hệ cũ nên script báo thiếu. Màn vẫn có đường vào, chỉ đổi chỗ.
+    ('Danh mục dùng chung', 'nhom nganh'): 'dời hẳn sang phân hệ CSKH trước bán (user 16/09)',
+    ('Danh mục dùng chung', 'nhom giai phap'): 'dời hẳn sang phân hệ CSKH trước bán (user 16/09)',
+    ('Danh mục dùng chung', 'ung dung'): 'dời hẳn sang phân hệ CSKH trước bán (user 16/09)',
+    ('Quản lý Bán hàng (chuyển sang nền tảng HRM)', 'hang muc du an'): 'dời hẳn sang CSKH trước bán (user 16/09)',
+    ('Quản lý Bán hàng (chuyển sang nền tảng HRM)', 'giai doan du an'): 'dời hẳn sang CSKH trước bán (user 16/09)',
+    ('Quản lý Bán hàng (chuyển sang nền tảng HRM)', 'vai tro du an'): 'dời hẳn sang CSKH trước bán (user 16/09)',
+    ('Quản lý Bán hàng (chuyển sang nền tảng HRM)', 'phieu thu thap thong tin'): 'dời hẳn sang CSKH trước bán (user 16/09)',
+    ('Quản lý Bán hàng (chuyển sang nền tảng HRM)', 'ly do that bai'): 'dời hẳn sang CSKH trước bán (user 16/09)',
+    ('Meeting', 'meeting theo nhan vien phong ban cong ty'): 'dời hẳn sang CSKH trước bán (user 16/09)',
+    ('Meeting', 'meeting theo du an'): 'dời hẳn sang CSKH trước bán (user 16/09)',
+    # 2 mục dưới: user chốt BỎ khỏi menu CSKH trước bán (vẫn vào được từ phân hệ Công việc)
+    ('Quản lý CSKH trước khi bán (CSKH tiềm năng):  (03/09/2026)', 'nhiem vu'): 'user chốt 16/09: bỏ, dùng từ phân hệ Công việc',
+    ('Quản lý CSKH trước khi bán (CSKH tiềm năng):  (03/09/2026)', 'van de'): 'user chốt 16/09: bỏ, dùng từ phân hệ Công việc',
+    # User chốt 17/09/2026: đổi nhãn "Cập nhật tiến độ task" -> "Báo cáo kết quả nhiệm vụ"
+    ('Quản lý công việc', 'cap nhat tien do task'): 'user chốt 17/09: đổi nhãn thành "Báo cáo kết quả nhiệm vụ"',
+    # Sheet đổi tên "Yêu cầu báo giá" -> "Yêu cầu tính giá bán"; user chốt 16/09 giữ tên CŨ
+    ('Quản lý CSKH trước khi bán (CSKH tiềm năng):  (03/09/2026)', 'yeu cau tinh gia ban'): 'user chốt 16/09: giữ nhãn "Yêu cầu báo giá"',
 }
 
 

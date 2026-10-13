@@ -1,6 +1,6 @@
 ---
 name: form-validate
-description: Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form) — validate realtime bằng vee-validate trên component V2Base*, và quy tắc chỉ trường Tên mới required ở FE. Đọc cả khi: Lưu nháp lọt dữ liệu sai định dạng, ô nhập báo lỗi đỏ nhưng bấm Lưu vẫn đi, hoặc cần chốt rule nào chặn ở FE / rule nào phải chặn thêm ở BE
+description: Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form) — validate realtime bằng vee-validate trên component V2Base*, và quy tắc ô bắt buộc validate ở cả FE lẫn BE (Lưu nháp chỉ nới required). Đọc cả khi: Lưu nháp lọt dữ liệu sai định dạng, ô nhập báo lỗi đỏ nhưng bấm Lưu vẫn đi, hoặc cần chốt rule nào chặn ở FE / rule nào phải chặn thêm ở BE
 ---
 
 # Skill: Validate Form ở màn mới (vee-validate + V2Base*)
@@ -12,19 +12,50 @@ description: Use when làm form nhập liệu ở màn MỚI của hrm-client (a
 ## 1. Hai nguyên tắc cốt lõi
 
 1. **Validate realtime ở FE** bằng `vee-validate` (v2, đã cài sẵn) gắn trực tiếp lên component `V2Base*` — user thấy lỗi ngay khi nhập/rời trường, không phải bấm Lưu mới biết.
-2. **KHÔNG gắn `required` ở FE cho bất kỳ trường nào, TRỪ trường Tên.**
-   Lý do nghiệp vụ: hệ thống cho **Lưu nháp** — lúc lưu nháp mọi trường đều được bỏ trống, chỉ Tên là bắt buộc. Các trường bắt buộc khác chỉ áp dụng khi lưu chính thức và **do BE quyết định** (trả 422) → FE map vào `formError` và hiển thị.
+2. **Ô bắt buộc validate ở CẢ FE lẫn BE** (user chốt 06/10/2026 — THAY cho quy tắc cũ "chỉ Tên gắn
+   `required` ở FE, còn lại để BE trả 422").
+   Lý do: để BE trả 422 phần còn lại thì FE chặn sớm ở ô đầu → **chỉ 1 ô báo đỏ, các ô bắt buộc khác im
+   lặng**, user sửa xong bấm lại mới thấy ô tiếp theo (QA báo lặp: #11521, #11377). Bấm Lưu mà để trống
+   thì **mọi ô bắt buộc phải đỏ cùng lúc**.
 
-Hệ quả:
-
-| Loại rule | Ai kiểm | Hiện khi nào |
+| Loại rule | FE | BE |
 |---|---|---|
-| `required` trường **Tên** | FE (`v-validate="'required'"`) | Realtime (blur/nhập) |
-| Định dạng: email, số, số dương, ngày, độ dài, `greater_than`… | FE (`v-validate`) | Realtime |
-| `required` các trường còn lại | **BE** theo `status` (nháp/chính thức) | Sau khi bấm Lưu, từ response 422 |
-| Ràng buộc nghiệp vụ nhiều trường, trùng mã… | **BE** | Sau khi bấm Lưu |
+| `required` khi **Lưu / Gửi duyệt** (chính thức) | Gắn `required` cho **mọi** ô bắt buộc, còn lỗi thì không gọi API | Kiểm lại y hệt theo `status`, trả 422 |
+| `required` khi **Lưu nháp** | Chỉ 1 trường đại diện (Tên / trường đã chốt cho màn) | Như FE |
+| `required` **có điều kiện** (tỷ giá khi khác VND…) | Gắn theo điều kiện | Như FE |
+| Định dạng: email, số, số dương, ngày, độ dài, `greater_than`… | Realtime, chặn cả khi nháp | Luôn bật |
+| Ràng buộc nghiệp vụ nhiều trường, trùng mã… | — | BE, map 422 vào `formError` |
 
-Tuyệt đối **không** tự bịa danh sách required ở FE cho nút Lưu chính thức — sẽ lệch với BE và chặn oan.
+Danh sách ô bắt buộc ở FE **lấy đúng theo rule của FormRequest BE**, không tự bịa — lệch là chặn oan
+hoặc lọt. Form **không có Lưu nháp** (popup danh mục, popup nhập liệu) → FE luôn bắt đủ `required`.
+
+**Khuôn cho form có Lưu nháp** (đề xuất, chưa có màn mẫu — màn đầu tiên làm xong thì ghi `file:dòng` vào đây):
+
+```js
+data() { return { submitMode: 'official' } },          // 'draft' | 'official'
+computed: {
+    // rule object để ghép được với rule định dạng
+    officialRequired() { return this.submitMode !== 'draft' },
+},
+methods: {
+    async save(status) {
+        this.submitMode = status === STATUS_DRAFT ? 'draft' : 'official'
+        this.errors.clear()                              // dọn lỗi required của lần bấm trước
+        await this.$nextTick()                           // để v-validate nhận rule mới
+        // mọi ô lỗi đỏ cùng lúc; vmId: null để quét cả ô trong component con (mục 3c)
+        if (!(await this.$validator.validateAll(null, { vmId: null }))) {
+            return this.$nextTick(() => scrollToFirstError(this.$el))   // import từ utils/scrollToFirstError
+        }
+        // gọi API…
+    },
+},
+```
+
+```vue
+<V2BaseInput  v-model="form.name"         v-validate="'required|max:255'" … />                          <!-- trường đại diện -->
+<V2BaseSelect v-model="form.warehouse_id" v-validate="{ required: officialRequired }" … />               <!-- bắt buộc khi chính thức -->
+<V2BaseInput  v-model="form.qty"          v-validate="{ required: officialRequired, positive_integer: true }" … />
+```
 
 ### ⚠️ "Lưu nháp" chỉ nới `required` — MỌI rule khác vẫn chặn (chốt 2026-08-28)
 
@@ -32,7 +63,7 @@ Tuyệt đối **không** tự bịa danh sách required ở FE cho nút Lưu ch
 
 | | Lưu nháp | Lưu / Gửi chính thức |
 |---|---|---|
-| `required` | Nới — chỉ cần 1 trường đại diện (Tên/mã phiếu gốc) | BE quyết theo `status` |
+| `required` | Nới — chỉ cần 1 trường đại diện (Tên/mã phiếu gốc) | Đủ mọi ô bắt buộc, ở **cả FE lẫn BE** |
 | **Định dạng** (số, số nguyên dương, ngày, email, độ dài, khoảng giá trị) | **CHẶN** | **CHẶN** |
 | Ràng buộc nghiệp vụ (trùng mã, ngày sau > ngày trước…) | **CHẶN** | **CHẶN** |
 
@@ -303,15 +334,18 @@ có prop `value` và emit `input` — cả `V2BaseInput`, `V2BaseSelect`, `V2Bas
 - `data-vv-value-path="currentValue"` — dùng computed của V2Base* để chạy đúng cho cả `v-model` lẫn `:model-value`.
 - `errors.first(...)` = lỗi FE realtime; `formError.<field>` = lỗi BE trả về. Ưu tiên hiện lỗi FE trước.
 - Không có `classes: true` trong config → muốn viền đỏ thì tự bind `:class="{ 'is-invalid': errors.has('...') }"`.
-- Select/DatePicker: chỉ validate khi giá trị đổi, nên chỉ dùng cho rule định dạng/`required` của Tên; **không** gắn `required` cho select khác.
+- Select/DatePicker: chỉ validate realtime khi giá trị đổi, nhưng `validateAll()` lúc bấm Lưu vẫn kiểm
+  chúng → gắn `required` cho select/ngày bắt buộc bình thường (mục 1), lỗi hiện khi bấm Lưu.
 
 Khi submit:
 
 ```js
+import { scrollToFirstError } from '@/utils/scrollToFirstError'   // hàm import, KHÔNG phải method
+
 async submitForm(status = 1) {
-    // Chỉ chặn bởi rule FE (Tên + định dạng). Required khác do BE quyết theo status.
-    const valid = await this.$validator.validateAll()
-    if (!valid) return this.scrollToFirstError()
+    // Chặn bởi rule FE: required (theo nháp/chính thức — mục 1) + định dạng. BE kiểm lại y hệt.
+    const valid = await this.$validator.validateAll(null, { vmId: null })
+    if (!valid) return this.$nextTick(() => scrollToFirstError(this.$el))
 
     try {
         this.formError = {}
@@ -320,7 +354,7 @@ async submitForm(status = 1) {
     } catch (e) {
         this.formError = e.response?.data?.errors || {}
         this.$toast.error('Bạn chưa nhập đầy đủ thông tin.')
-        this.scrollToFirstError()
+        this.$nextTick(() => scrollToFirstError(this.$el))
     }
 }
 ```
@@ -546,8 +580,10 @@ Khai trong `plugins/vee-validate.js`, dùng ngay: `min`, `max`, `max_value`, `ph
 
 ## Checklist form ở màn mới
 
-- [ ] Trường Tên: `v-validate="'required'"` + `data-vv-name` + `data-vv-as`
-- [ ] KHÔNG có `required` ở FE cho trường khác (Lưu nháp phải lưu được với form gần như trống)
+- [ ] Trường đại diện (Tên…): `v-validate="'required'"` + `data-vv-name` + `data-vv-as`
+- [ ] **Mọi** ô bắt buộc theo FormRequest BE đều gắn `required` ở FE — bấm Lưu khi form trống thì tất cả
+      đỏ cùng lúc. Form có Lưu nháp: `required` của các ô này tắt khi nháp (`{ required: officialRequired }`,
+      mục 1) — Lưu nháp vẫn lưu được với form gần như trống
 - [ ] Các rule định dạng (số/ngày/email/độ dài) gắn ở FE, chạy realtime
 - [ ] Lỗi hiện inline qua `V2BaseError`, có `is-invalid`, không popup
 - [ ] `validateAll(null, { vmId: null })` trước khi gọi API; còn lỗi thì không gọi API

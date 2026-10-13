@@ -1454,3 +1454,12 @@ Blocked:
 - [x] (25/09) Testcase tab 12 sửa TRỰC TIẾP case cũ: mô tả B4/B7/B8/B10, TC-ROLE-00/03/09, TC_01.003, TC_04.022, TC_07.001/002/004/005; thêm TC_08.015–019 (quy tắc mã) vào cuối nhóm VIII; bỏ 2 nhóm XI mã + XIII export đã thêm dưới cùng; nhóm Import giữ, đánh lại XI / TC_11.001–023 (dòng 205–228)
 - [x] (25/09) Fix: file PDF đính kèm không được lưu — `ServiceService::ATTACHMENT_HOST` thiếu bucket (`s3.cloud…` → `tanphat.s3.cloud.cmctelecom.vn`, đúng URL `CmcS3Helper::putFile()` trả về)
 - [x] (25/09) Fix: Xuất Excel thiếu cột Mã + Trạng thái — `ServiceExport` key `serviceCode`/`serviceStatus` → `code`/`status_text` (khớp id popup Chọn trường xuất file)
+
+## Fix — Màn chi tiết không hiện dung lượng file đính kèm (2026-10-02) @khoipv
+Nguyên nhân: `services.attachments` chỉ lưu URL; `V2BaseAttachmentSection` chỉ biết dung lượng file
+vừa upload trong phiên (`sizeByUrl`) → file đã lưu hiện `—`. Fix theo khuôn Finance (`/{id}/attachment-sizes`).
+- [x] BE: `GET customer-care/services/{service}/attachment-sizes` → `BillPaymentAttachmentService::sizes()`
+- [x] FE: `V2BaseAttachmentSection` thêm prop tuỳ chọn `sizesUrl` (rỗng = như cũ) → tự gọi lấy dung lượng
+- [x] FE: `ServiceFormComponent` truyền `sizes-url` khi có `serviceId` (xem + sửa)
+- [x] Verify: compile 2 file .vue 0 lỗi; gọi thử endpoint gói 247 qua HTTP kernel → 200 `{url: 613}`
+- [ ] User mở màn chi tiết/sửa gói trên trình duyệt kiểm tra cột Dung lượng (chưa tự test UI)

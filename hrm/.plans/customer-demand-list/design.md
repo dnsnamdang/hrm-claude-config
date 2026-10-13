@@ -84,10 +84,18 @@ Kèm theo, đã sửa 2 vi phạm quy tắc mới của CLAUDE.md trong code đ�
 3. **Danh mục "Lý do đóng nhu cầu"**: khách tự khai trong danh mục hay hệ thống chốt cứng 4 lựa chọn
    như ví dụ trong spec?
 
+## Quyết định đã chốt — 2026-10-05
+
+| Vấn đề | Chốt | Lý do |
+| --- | --- | --- |
+| Nhu cầu được ghi nhận khi nào | **Chỉ khi meeting nguồn Hoàn thành** — trước đó không hiện ở màn danh sách lẫn tab Công việc của tôi | Phản hồi QA 05/10 (meeting 1244). Spec #11386/#11390 không nói, code cũ ghi nhận ngay lúc lưu biên bản |
+| Dòng lịch sử "Tạo mới" | Ghi **lúc Hoàn thành**; sửa biên bản trước đó không sinh lịch sử | User chốt 05/10 |
+| Popup Lịch sử | Khuôn chung `entity-history`: `V2BaseModal` + `SystemInfoSection`, type `customer-demand` trong `SystemLogService` | Bảng 4 cột tự dựng lệch khuôn đã chốt; user đồng ý thêm type vào service dùng chung |
+
 ## Quyết định đã chốt — 2026-09-23
 
 | Vấn đề | Chốt | Lý do |
 | --- | --- | --- |
-| Cột "Thời gian hết hạn nhu cầu" của nhu cầu đã Đóng / đã lập dự án | **Vẫn hiện ngày hạn**, chỉ bỏ ghi chú đếm ngược. "Không thời hạn" chỉ dành cho N = 0 hoặc cuộc họp chưa Hoàn thành | Cron đóng nhu cầu ngay trong ngày hết hạn → dùng chung `dueDate()` thì cột về null, người xem không phân biệt được "hết hạn rồi" với "không có hạn" (phản hồi user #11386). Tách `deadlineDate()` (hiển thị) khỏi `dueDate()` (nghiệp vụ) |
+| Cột "Thời gian hết hạn nhu cầu" của nhu cầu đã Đóng / đã lập dự án | **Vẫn hiện ngày hạn**, chỉ bỏ ghi chú đếm ngược. "Không thời hạn" chỉ dành cho N = 0 (từ 05/10/2026 nhu cầu của cuộc họp chưa Hoàn thành không còn hiện trên danh sách) | Cron đóng nhu cầu ngay trong ngày hết hạn → dùng chung `dueDate()` thì cột về null, người xem không phân biệt được "hết hạn rồi" với "không có hạn" (phản hồi user #11386). Tách `deadlineDate()` (hiển thị) khỏi `dueDate()` (nghiệp vụ) |
 | Tên khách hàng ở cột Khách hàng | **Là hyperlink sang `/assign/customers/{id}`**, kèm `?from=...&tab=...` để nút Quay lại về đúng màn đi vào | Yêu cầu user 2026-09-23; quy ước `url-back` động của project |
 | Khách hàng NGOÀI phạm vi xem của user | **Ẩn link, để chữ thường** (cờ BE `can_view_customer`) | User chốt 2026-09-23. `CustomerController::show` trả 403 với KH ngoài phạm vi → nếu vẫn để link thì bấm vào bị đá ngược về danh sách KH, trông như lỗi. Hệ quả: tài khoản không có cấp xem KH nào sẽ không thấy link nào — đúng ý đồ, không phải bug |

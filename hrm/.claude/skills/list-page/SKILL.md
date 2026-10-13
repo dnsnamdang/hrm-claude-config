@@ -14,7 +14,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   - **Ô TÌM NHANH LÀ BẮT BUỘC ở MỌI màn danh sách — CẤM `:show-quick-search="false"`** (user chốt 24/09/2026). Tắt cờ này KHÔNG chỉ mất ô tìm nhanh: panel tự chuyển sang **kiểu màn BÁO CÁO** (`actionsAtBottom`, `V2BaseSmartFilterPanel.vue` ~dòng 401) — nút **Tìm kiếm / Làm mới biến khỏi hàng trên cùng**, dồn xuống đáy khối nâng cao, user phải bấm "Tìm kiếm nâng cao" mới thấy. Nhìn vào là lệch chuẩn hoàn toàn so với mọi màn khác.
     - Cờ này chỉ dành cho **màn BÁO CÁO thống kê** kiểu `pages/assign/report/*` (chọn kỳ rồi mới chạy). Màn tra cứu danh sách phiếu — kể cả màn "báo cáo" chỉ đọc như Danh sách hàng mượn — vẫn là **màn danh sách**, phải có ô tìm nhanh.
     - **"ERP không có ô tìm nhanh" KHÔNG phải lý do để tắt**: ERP là nguồn NGHIỆP VỤ, HRM là nguồn GIAO DIỆN (skill `erp-to-hrm-screen`, nguyên tắc gốc). Đã dính thật ở `borrow-stocks` + `borrow-expiring` (sửa 24/09/2026).
-    - **BE chưa có param `keyword` thì THÊM vào BE**, đừng tắt ô cho khỏi phải làm. Chọn đúng những cột ĐANG HIỆN trên bảng (mã phiếu, tên người tạo/người mượn, tên/mã hàng…), gom cụm OR trong **MỘT closure** (để phẳng là lộ dữ liệu ngoài phạm vi quyền), cho vào `ignoredFields` phía FE (chờ Enter), và placeholder liệt kê đúng các trường đó.
+    - **BE chưa có param `keyword` thì THÊM vào BE**, đừng tắt ô cho khỏi phải làm. Chọn đúng những cột ĐANG HIỆN trên bảng thuộc **nội dung của chính phiếu** (mã phiếu, tên/mã hàng, khách hàng…) — **KHÔNG** đưa Người tạo / Người duyệt vào ô tìm nhanh: các trường người dùng hệ thống luôn là **select ở bộ lọc nâng cao** (user chốt 06/10/2026, #11373), gom cụm OR trong **MỘT closure** (để phẳng là lộ dữ liệu ngoài phạm vi quyền), cho vào `ignoredFields` phía FE (chờ Enter), và placeholder liệt kê đúng các trường đó.
   - Ô lọc khai bằng **schema `filterFields`** (computed), KHÔNG dựng markup tay. Chỉ ô cần logic riêng (tìm từ xa, chip, cascade, khoá theo ô khác) mới dùng slot `#field-<key>`.
   - **Bộ lọc nằm trong MODAL → thêm prop `in-modal`**: panel truyền xuống `V2BaseFilterFieldControl` để ô chọn render `V2BaseSelectInModal` (dropdown neo vào `.modal-content`). Thiếu là danh sách select2 xổ ra NGOÀI modal và bị lớp phủ che. Xem skill `modal-popup`.
   - **Ô chọn NHIỀU**: khai `multiple: true` trên field — control tự truyền `extraSettings: { multiple: true }`, panel tự dùng vỏ `variant: 'tags'`. KHÔNG viết slot riêng chỉ để bật multiple.
@@ -47,7 +47,7 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
   - **`.ff` phải là stacking context riêng (`z-index: 0`) và nhãn `z-index: 10000`**: Select2 gán `z-index: 9999` cho `.select2-container--open`, không nâng nhãn lên là khung select vẽ đè, viền cắt ngang chữ nhãn khi mở dropdown.
   - Component tự render nhãn (`V2BaseCompanyDepartmentFilter`, `CheckboxMultiSelect`, `CascadePairSelect`) nhận prop `floating` **opt-in, mặc định `false`**; bên trong chúng phải bỏ viền `.cps-control`/`.csp-control` vì viền đã do `.ff--tags .ff__control` vẽ, để cả hai là **viền đôi**.
   - Panel cha BẮT BUỘC khai `--panel-bg` khớp nền thật, quên là nhãn hiện vệt trắng lệch màu trên viền.
-  - Khoảng cách hàng **18px**, không dưới 16px: nhãn float nhô lên ~5.5px, gap hẹp hơn là nhãn dính vào ô hàng trên.
+  - Khoảng cách hàng **18px**, không dưới 16px: nhãn float nhô lên ~5.5px, gap hẹp hơn là nhãn dính vào ô hàng trên. `V2BaseSmartFilterPanel` **tự lo** phần này (2026-09-19): panel bật `floating` sẽ khai thêm class `.smart-advanced-filters--floating` → `.form-row { row-gap: 18px }` + `margin-bottom: 0` cho mọi `col-*`. Page **KHÔNG** tự thêm `mb-*` vào ô lọc. Trước đó panel ép cứng `margin-bottom: 0.5rem !important` cho mọi màn, đo thật trên `/meeting/bookings` ra **8px** — nhãn float chỉ còn hở 3px so với đáy ô hàng trên; sau khi sửa: gap **18px**, hở **13px**. Dùng `row-gap` chứ không tăng `margin-bottom` vì margin cộng luôn một khoảng thừa dưới hàng cuối. ⚠️ Nhánh KHÔNG floating giữ nguyên 8px (đã đo lại `/assign/tasks`: 8px) — đổi cả hai là 88 màn khác tự dưng giãn ra. **18px tính cả chỗ nối**: hở giữa hàng TÌM NHANH (hoặc hàng tiêu đề) và hàng ô lọc ĐẦU TIÊN cũng phải 18px — màn chỉ có một hàng ô lọc (`/meeting/rooms`) thì đây là chỗ chật DUY NHẤT, `row-gap` không với tới. Panel lo bằng `padding-top: 10px` trên chính khối lọc (8px `margin-bottom` của hàng tìm nhanh + 10px = 18px), KHÔNG nới `margin-bottom` hàng tìm nhanh: lúc panel đóng `v-show` cho khối lọc `display: none` nên padding tự mất, hàng tìm nhanh giữ nguyên nhịp 8px sát bảng (đo: panel đóng → 19px tới mép card, y như trước).
   - ⚠️ Chỉ áp cho **panel bộ lọc**. Form Tạo/Sửa, modal, màn chi tiết vẫn giữ nhãn-trên-ô-dưới.
 - ⚠️ **CSS cho phần tử do COMPONENT DÙNG CHUNG render thì phải nằm TRONG component đó, KHÔNG để ở `v2-styles.scss`** (chốt 2026-09-21, sau bug thật trên bản deploy).
   - 226 file import `@/assets/scss/v2-styles.scss` bên trong `<style lang="scss" scoped>`. `scoped` khiến Vue gắn `data-v-<hash CỦA TRANG>` vào **mọi** selector của file đó. Phần tử do component con render mang `data-v` của COMPONENT nên **không selector nào khớp** → rule im lặng không áp dụng.
@@ -1050,7 +1050,7 @@ Màn danh sách mặc định **chỉ hiện 7 cột**:
 
 - Mọi cột nghiệp vụ khác (MST, SĐT, Email, Địa chỉ, Nhóm, Tỉnh/TP…) **vẫn khai đủ** trong `allColumns` để user bật ở modal "Cấu hình cột hiển thị", nhưng để `isVisible: false`.
 - **Ngoại lệ**: màn nào có trường **Khách hàng** hoặc **Loại phiếu** thì 2 cột đó cũng hiện mặc định (9 cột) — vì thiếu chúng thì dòng dữ liệu không đọc được là phiếu gì / của ai.
-- Bảng mặc định gọn giúp màn không phải cuộn ngang; ai cần thêm thì tự bật, cấu hình lưu theo user (`column_customizations`).
+- Bảng mặc định gọn giúp màn không phải cuộn ngang; ai cần thêm thì tự bật, cấu hình lưu theo user ở bảng key-value `user_column_settings` (theo `columnScreenKey` — màn mới không cần migration).
 - ⚠️ **Task ghi "bổ sung / hiển thị thêm trường X ở màn danh sách" = thêm cột vào popup Tuỳ chỉnh cột, KHÔNG phải bật hiện mặc định** (chốt 2026-10-05, Redmine #11573). Cách làm: khai cột mới trong `allColumns` với `isVisible: false`; cột đã có sẵn đang `isVisible: false` thì **giữ nguyên**, đừng gỡ cờ. Bộ lọc vẫn thêm ô lọc như thường, file xuất Excel thêm cột vào `exportFields` + `ExportColumnRegistry`. Chỉ bật hiện mặc định khi spec/user nói rõ "hiện mặc định". Sai đã gặp: #11573 bật luôn cột Khu vực/Quốc gia ra bảng của 3 màn địa lý → user bắt sửa lại.
 
 Cột `Người tạo` + `Ngày tạo` là **bắt buộc** ở mọi màn, đứng cuối nhóm cột dữ liệu (ngay trước Trạng thái → Hành động).
@@ -1184,8 +1184,9 @@ không ăn theo khi `V2Footer` đổi.
 
 Key có sẵn trong `menu`: `submit_and_draft` · `submit_form` · `edit` · `print` · `delete` · `cancel` ·
 `history` · `approve` · `complete` · `schedule` · `confirm` · `create_other_task`…
-Hành động không có trong danh sách đó, **hoặc cần disable + tooltip lý do** (nút `menu.delete` không
-hỗ trợ), thì đưa vào slot `#custom-actions`. `V2Footer` tự render "Quay lại" ở cuối — đừng tự thêm.
+Hành động không có trong danh sách đó, **hoặc cần điều kiện hiện/ẩn riêng** (`v-if` theo cờ BE mà
+`menu.delete` không hỗ trợ), thì đưa vào slot `#custom-actions` — nút không dùng được thì ẨN, không
+disable + tooltip (xem gạch đầu dòng bên dưới). `V2Footer` tự render "Quay lại" ở cuối — đừng tự thêm.
 
 - Dùng `menu` có sẵn của `V2Footer` cho Sửa / Xóa / Lịch sử; hành động riêng của màn đưa vào slot `#custom-actions`.
 - Thứ tự: Sửa (primary) → Lịch sử + hành động phụ (secondary) → Xóa / Khóa (danger) → **Quay lại luôn cuối** (V2Footer tự render).
@@ -1298,6 +1299,8 @@ created() {
 Bắt buộc kèm theo:
 
 - **Hoãn options của bộ lọc nâng cao** đến khi user bấm mở panel (panel mặc định thu gọn). Gom vào `loadFilterOptions()` có cờ `filterOptionsLoaded` để chỉ chạy 1 lần.
+  ⚠️ Panel được **khôi phục ở trạng thái MỞ** từ localStorage không đi qua `toggleFilterPanel` → ở `mounted()` phải tự gọi `if (!this.filterCollapsed) this.loadFilterOptions()`. Thiếu là dropdown rỗng và mất nhãn giá trị đang lọc (`CustomerDemandList.vue`, f49742696).
+- **Danh sách nhúng trong TAB** (component con render bằng `v-if`): `filterStateMixin` bám `beforeRouteLeave` — hook này chỉ chạy ở component TRANG, không chạy ở component con → đổi tab là mất bộ lọc. Tự lưu/khôi phục localStorage bằng khoá riêng của tab (#11390, `pages/assign/my-job/components/CustomerDemandsTab.vue`).
 - ⚠️ **KHÔNG hoãn request cấu hình bộ lọc (`filter-customizations`) của `V2BaseSmartFilterPanel`**, và **không gate nội dung panel bằng `v-if="configLoaded"`**. Panel mở bằng transition tự đo chiều cao: mở lúc nội dung còn rỗng thì đo ra 0 → nhìn như bấm không ăn, phải bấm mấy lần mới thấy. Cấu hình nạp ngay ở `mounted()` cũng không làm chậm danh sách vì `created()` của page đã gọi `loadData()` trước.
 - **KHÔNG gọi thẳng `this.$nuxt.$loading.start()/finish()`** trong hàm chạy ngay đầu `mounted()`/`created()`: lúc đó Nuxt chưa gắn xong thanh loading nên `$loading.finish` chưa phải hàm → ném `TypeError` giữa `finally`, màn **trắng trơn**. Dùng helper toàn cục `this.$safeLoadingStart()` / `this.$safeLoadingFinish()` (`plugins/safe-loading.js`).
 - **Chống response về trễ**: `loadData()` tăng biến đếm `loadSeq` ở đầu hàm, khi có kết quả thì bỏ qua nếu `seq !== this.loadSeq` (vì có thể 2 lượt gọi cùng lúc: lượt đầu + lượt nạp lại theo cấu hình cột).
@@ -1719,7 +1722,7 @@ Hai ô chỉ giống nhau về nghiệp vụ nhưng độc lập dữ liệu th�
 
 Mặc định luôn là **5 / 10 / 20 / 50 / 100**. Đã đặt sẵn ở prop `pageSizeOptions` của `V2BaseDataTable` và `V2BasePagination` — màn danh sách **không cần truyền prop này**.
 
-Chỉ truyền `:page-size-options` khi thực sự cần khác, và phải có lý do rõ ràng — vd popup chọn hàng hoá / chọn KH dùng `[20, 50, 100]` vì popup cao cố định, chọn 5 dòng thì thừa chỗ trống.
+Chỉ truyền `:page-size-options` khi thực sự cần khác, và phải có lý do rõ ràng — vd **popup chọn** (hàng hoá, KH, phiếu nguồn…) dùng **`[10, 20, 50, 100]`, mặc định 10** — lấy từ hằng `utils/pickerPagination.js` (user chốt 06/10/2026 theo QA #11524 — thay cho `[20, 50, 100]` cũ), bỏ 5 vì popup cao cố định, 5 dòng thì thừa chỗ trống. Chi tiết: skill `modal-popup` §4b.
 
 ### 3b-3. Ô KHÔNG CÓ DỮ LIỆU thì để TRỐNG — không điền dấu gạch
 

@@ -631,6 +631,25 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Spec: docs/superpowers/specs/2026-08-14-meeting-pl8-support-design.md
   Bước tiếp: `php artisan migrate` (3 migration) → build FE Node 14.21.3 → test theo AC từng task → kiểm tra cron `schedule:run` đang chạy.
 
+- hop-dong-xuat-hang → @dnsnamdang → .plans/hop-dong-xuat-hang/{design.md,plan.md} + spec docs/superpowers/specs/2026-08-14-hop-dong-xuat-hang-design.md
+  Trạng thái: **ĐANG CODE (2026-08-14)** — nhánh `hop-dong` (con của gop_db, hrm-api + hrm-client), CHƯA commit. Port luồng xuất hàng ERP→HRM cho HĐ HRM. Loại xuất mới: 20 (xuất sản xuất, hàng con) + 21 (xuất bán HĐ HRM, hàng cha); gắn HĐ HRM qua `emplement_contract_*` polymorphic.
+  • **Phase 0 ✅**: 2 loại vào ExportModel ERP (uncommitted, master) + migration product_imports emplement_contract_* + 5 models Modules/Assign/Entities/Warehouse.
+  • **Phase 1 ✅ (loại 21 — xuất bán cha)**: Yêu cầu xuất hàng (BE createFromContract + controller + route; FE modal + nút chi tiết HĐ) + **màn danh sách** yêu cầu (BE list scope 4 cấp + Resource + 4 quyền 1148-1151 + FE `pages/finance/product-export-requests` + menu finance.js) + **Đề nghị xuất kho** (BE createFromExportRequest gate "Kế toán kho" + FE modal "Lập ĐNXK") + **Phiếu xuất hàng** (BE createFromWarehouseExport + FE page `product-exports/create`).
+  • **Điều hướng ERP↔HRM ✅**: "Tạo phiếu xuất kho" dùng thẳng ERP (đề nghị HRM hiện ở list ERP, tương thích loại 20/21); ERP nút "Tạo phiếu xuất hàng" (loại 20/21) → redirect HRM `config('app.HRM_URL_FE')`. Không có bước "duyệt yêu cầu" riêng (ERP không có).
+  • **Phase 2 ✅ (loại 20 — xuất sản xuất + auto nhập cha)**: yêu cầu loại 20 chọn hàng CON (service nhận `type` + FE modal chọn loại); auto-sinh phiếu nhập cha (`ContractParentImportService` → product_imports nhập thẳng) khi phiếu xuất hàng loại 20 hoàn tất. ERP ImportModel +const NHAP_SAN_XUAT_HOP_DONG=20.
+  • **Phase 4 ✅ (module Đề nghị xuất kho đầy đủ trong HRM)**: chuyển từ modal → module CRUD giống ERP — danh sách + 2 màn chi tiết (YCXH + ĐNXK) + tạo/sửa full page + hủy; menu riêng `finance.js`. Header dùng title top-menu + badge trạng thái, nút Quay lại xuống dưới. Bảng hàng hoá 2 màn chi tiết bổ sung cột Thương hiệu/Model (YCXH thêm Đã xuất/Đã trả) cho khớp ERP; cột tiền (giá/VAT) tạm gác vì cần gate quyền.
+  • **Chưa commit**: HRM (nhánh hop-dong) + ERP (master: ExportModel/ImportModel/WarehouseExportsController + 2 blade). **Gác lại**: toàn bộ tồn/hạch toán (updateWarehouse, account_details, prepick/giữ).
+  ### Checkpoint — 2026-08-17
+  Vừa hoàn thành: Module ĐNXK đầy đủ trong HRM (danh sách/chi tiết/tạo/sửa/hủy) + tinh chỉnh header/badge/nút Quay lại + bổ sung cột Thương hiệu/Model/Đã xuất/Đã trả cho 2 màn chi tiết (BE ContractExportRequestController::show + ContractWarehouseExportRequestResource; FE 2 màn `_id/index.vue`).
+  Đang làm dở: (không) — dừng sạch.
+  Bước tiếp theo: (1) chạy `yarn dev` verify render + E2E luồng YCXH "Chờ duyệt" → Lập ĐNXK → Lưu nháp → Sửa → Gửi thủ kho → Hủy; (2) user xác nhận có cần nhóm cột tiền (giá/VAT, gate quyền) không; (3) cân nhắc xoá `WarehouseExportRequestModal.vue` (đã orphan).
+  Blocked:
+  ### Checkpoint — 2026-08-15
+  Vừa hoàn thành: Toàn bộ chuỗi MVP Phase 1 (loại 21) + Phase 2 (loại 20 + auto-nhập-cha). Test tinker OK cả 2 chuỗi (PXH-34578 loại 21; PXH-34579→PNH-12310 loại 20). Compile sạch ERP+HRM.
+  Đang làm dở: (không) — dừng sạch.
+  Bước tiếp theo: (1) test E2E browser (test data: PYCXH-35670 loại 21 status 2 + hàng con 321 HĐ 15); (2) commit ERP changes (master); (3) Phase 3 verify E2E môi trường thật (cần ERP user thủ kho + kho nhập thẳng); (4) tùy: bổ sung tồn/hạch toán đã gác.
+  Blocked:
+
 - hop-dong → @dnsnamdang → .plans/hop-dong/{design.md,plan.md} + spec docs/superpowers/specs/2026-08-10-hop-dong-design.md
   Trạng thái: **ĐANG CODE (2026-08-10, subagent-driven)** — nhánh `hop-dong` (hrm-api + hrm-client, tách từ gop_db), CHƯA commit git. Chuyển nghiệp vụ hợp đồng ERP→HRM: 1 hợp đồng HRM tạo 1-1 từ báo giá đã duyệt (module Assign), snapshot dòng hàng đóng băng, prefix `hrm_` (DB gộp erp_hrm_check).
   • **Phase 1 (DB) 3/3 ✅**: migration `hrm_contracts` (65 cột) + 6 bảng con (`hrm_contract_groups/product_prices/service_items/discounts/process_payments/histories`) + 7 entity `Modules/Assign/Entities/Contract/*` + Quotation.contract()/has_contract. Migrate đã chạy DB local.
@@ -924,6 +943,13 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
 
 ## Hoàn thành
+
+- tong-hop-nghiem-thu-bomlist-baogia — bộ tài liệu TỔNG HỢP KHỐI LƯỢNG luồng **BOM List + Báo giá** phục vụ nghiệm thu thanh toán với khách → @namdangit → .plans/tong-hop-nghiem-thu-bomlist-baogia/
+  Hoàn thành: 24/09/2026 — gom từ `.plans/Bomlist-Quotation/` (33 phase) + **45 hạng mục feature liên quan** + 7 hạng mục chuẩn hoá trên nhánh `gop_db` + lịch sử git 2 repo.
+  Sản phẩm: `tong-hop.md` (bản thuyết minh) + `tong-hop-nghiem-thu-bomlist-baogia.xlsx` — sheet *Tổng hợp nghiệm thu* **84 hạng mục / 10 nhóm** (có cột trống để khách tick), sheet *Phase luồng chính* 36 dòng, sheet *Bằng chứng*.
+  Số chốt: **03/2026 → 09/2026** · **216 commit** (api 110 · client 106) · 135 test case luồng chính · SRS 27 bảng · 1 HDSD.
+  Phân bố trạng thái: 70 Hoàn thành · 7 Code xong-chờ khách test · 1 khách test OK · 1 mockup · 1 khảo sát · **4 Đang làm** (redesign Báo giá · HĐ ERP từ báo giá · HĐ hãng 2 cấp · Giải pháp nhóm ngành/khách hàng cuối).
+  ⚠️ Chưa xuất bản Word biên bản nghiệm thu (user chưa chốt cần hay không).
 
 - reason-project-failure-permission-gate → @khoipv → .plans/reason-project-failure-permission-gate/plan.md
   Hoàn thành: 2026-09-18. Siết quyền màn danh mục **Nguyên nhân thất bại dự án** (`/assign/reason_project_failure`, quyền 990/1005); đã commit trên nhánh `fix-bug-11092026` ở cả 2 repo (hrm-api `6c76378aa`, hrm-client `53dee118d`), cây sạch. BE vốn KHÔNG fail-open (POST/DELETE/lock/export với tài khoản chỉ có quyền Xem đều trả 403, dữ liệu không đổi); nguyên nhân "vẫn sửa/xoá/khoá được" là FE không ẩn nút và route `show` không gắn `checkPermission` nên modal Sửa vẫn mở đủ dữ liệu, còn lỗi 403 bị nuốt tại chỗ (`if (status === 403) return`) nên nhìn như thao tác thành công. Đã sửa: FE gate 4 nút Sửa/Xoá/Khoá + Xuất Excel bằng `v-if="canManage"`, BE gắn `checkPermission:Quản lý…|Xem…` cho route `show`. ⚠️ Cố ý KHÔNG gate `GET /reason_project_failures/getAll` — đó là dropdown của `CloseProjectModal.vue` (đóng dự án tiềm năng), gate vào sẽ chặn người không có quyền danh mục đóng dự án. Giữ BE `/export` ở mức chỉ quyền Quản lý theo convention 14/15 màn danh mục trong `api.php` (muốn nới thì sửa đồng loạt). KHÔNG migration, KHÔNG quyền mới. Đo được: không quyền → `show` 403 (trước đó 200); chỉ quyền Xem → index/show 200, export 403; role Admin_TPE → 200 hết. Màn **Lý do hủy cuộc họp** cùng đợt này tách thành mục riêng bên dưới. Design: .plans/reason-project-failure-permission-gate/design.md

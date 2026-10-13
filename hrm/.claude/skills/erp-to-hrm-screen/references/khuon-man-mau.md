@@ -267,7 +267,8 @@ Tạo mới (primary) → Import Excel (secondary + status="warning")
 - Cột **Mã** là `<nuxt-link>` thật (để chuột giữa / chuột phải mở tab mới được), class
   `v2-cell-link field-line`.
 - Cột **Tên** là chữ thường, KHÔNG phải link, KHÔNG in đậm: `field-line text-dark font-weight-normal`.
-- Giá trị rỗng → in `—` (em dash), không để trống.
+- Giá trị rỗng → để **TRỐNG HẲN** (`{{ x || '' }}`), KHÔNG in `—`, `-`, `N/A` (chốt 22/08/2026; dòng
+  cũ "in `—`" đã bỏ). Không đụng dấu `-` dùng làm ký tự phân cách.
 - Ngày giờ: BE trả sẵn chuỗi `dd/mm/yyyy HH:mm`, FE **không tự format lại**.
 - Trạng thái: `V2BaseBadge` với `variant`. KHÔNG tự khai `<span class="status-pill">` +
   `statusPillClass()` cho từng màn.
@@ -303,6 +304,8 @@ getRowActions(item) {
 - `V2BaseRowActions` emit **chuỗi key**, không phải object — handler phải so `action === 'edit'`.
 - Icon chuẩn: Sửa `ri-edit-line`, Xóa `ri-delete-bin-6-line`, Khóa `ri-lock-line`,
   Mở khóa `ri-lock-unlock-line`, Lịch sử `ri-history-line`.
+- **Khóa / Mở khóa nằm trong cột Hành động** như khuôn trên — đây là chuẩn hiện hành. Vài màn danh mục
+  cũ đặt nút này trong cột Trạng thái (cạnh badge); màn mới không làm vậy.
 
 ---
 
@@ -349,9 +352,11 @@ Tiêu đề chi tiết: `Chi tiết <đối tượng>: <mã>` — **chỉ ghép 
   `<div class="d-flex justify-content-end">` + loạt `V2BaseButton`. `V2Footer` tự render
   "Quay lại" ở cuối — đừng tự thêm.
 - Thứ tự nút form: **Lưu nháp → Lưu / Gửi duyệt / In → Xuất file, Xem trước → Quay lại danh sách**.
-- Validate realtime bằng `vee-validate` gắn trên component `V2Base*`. **Chỉ trường Tên gắn
-  `required` ở FE** (vì Lưu nháp không được chặn trường khác); required còn lại do BE quyết theo
-  `status` rồi trả 422 → FE map vào `formError`.
+- Validate realtime bằng `vee-validate` gắn trên component `V2Base*`. **Lưu nháp chỉ nới `required`**:
+  giữ đúng 1 trường đại diện — Tên, hoặc trường user chốt cho màn (vd Kho vật lý, Loại yêu cầu; thường
+  là cột NOT NULL không default). Rule định dạng + ràng buộc nghiệp vụ vẫn chặn cả khi nháp. Khi Lưu /
+  Gửi duyệt chính thức, **mọi ô bắt buộc validate ở cả FE lẫn BE** (chốt 06/10/2026) — bấm Lưu khi trống
+  thì tất cả đỏ cùng lúc, BE vẫn kiểm lại và trả 422. Chi tiết: skill `form-validate` §1.
 - Select trong modal/popup dùng `V2BaseSelectInModal`, ngoài modal dùng `V2BaseSelect`.
 - Danh mục đã khóa vẫn phải hiện đúng tên khi bản ghi đang dùng nó (🔒 do
   `utils/select2LockedOption.js` tự gắn — FE không phải khai gì).

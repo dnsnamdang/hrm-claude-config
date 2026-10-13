@@ -60,7 +60,8 @@ Nguyên tắc: phân biệt theo **bản chất thao tác**, không theo định
 
 | Hành động | Khai báo |
 | --- | --- |
-| Tạo mới · Lưu · Lưu nháp | `primary` (teal `#1abc9c`) |
+| Tạo mới · Lưu | `primary` (teal `#1abc9c`) |
+| **Lưu nháp** | `secondary` (nền trắng viền) + icon `ri-save-3-line` — khớp nút `submit_and_draft` của `V2Footer` và mục 5 bên dưới. (Bảng này từng ghi "Lưu nháp = primary" — SAI, đã sửa 06/10/2026; đếm code: 40 chỗ secondary / 2 chỗ primary.) |
 | **Duyệt · Gửi duyệt · Hoàn thành · Kích hoạt** | `primary` (teal `#1abc9c`) — **KHÔNG thêm `status`** |
 | **Khóa** · Cảnh báo | `primary status="warning"` |
 | **Mở khóa** · Khôi phục · Kích hoạt lại | `primary status="success"` |

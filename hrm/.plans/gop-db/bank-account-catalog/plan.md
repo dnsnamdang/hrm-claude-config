@@ -1493,3 +1493,7 @@ Blocked: không.
 ## Fix — Giãn cột Ngân hàng ở màn danh sách (2026-09-28) @khoipv
 - [x] `pages/finance/account-banks/index.vue` `allColumns()`: cột `bank_name` 240px → `width`/`minWidth` 380px
       (tên ngân hàng dài bị xuống 2-3 dòng); cấu hình cột theo người không lưu width nên áp ngay cho mọi user
+
+## Fix — Từ khoá dài đè nút ✕ ở ô tìm nhanh (2026-10-10) @khoipv
+- [x] `components/V2BaseSmartFilterPanel.vue`: input `.quick-search` thêm `padding-right: 28px` chừa chỗ cho nút xoá
+      từ khoá (absolute right 10px). Component dùng chung → áp cho mọi màn danh sách dùng ô tìm nhanh.

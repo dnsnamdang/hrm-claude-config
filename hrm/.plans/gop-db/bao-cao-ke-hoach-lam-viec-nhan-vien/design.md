@@ -1,14 +1,19 @@
-# Báo cáo kế hoạch làm việc của nhân viên — Mockup UI
+# Báo cáo kế hoạch & kết quả làm việc theo nhân viên — Mockup UI
 
-File mockup: **`bao-cao-ke-hoach-lam-viec-nhan-vien.html`** (standalone, không phụ thuộc thư viện ngoài).
+File mockup: **`bao-cao-ke-hoach-lam-viec-nhan-vien.html`** (standalone, không phụ thuộc thư viện
+ngoài). Tên FILE giữ nguyên để không phải sửa lại đường dẫn ở plan / ảnh chụp; **tên MÀN** là
+*Báo cáo kế hoạch & kết quả làm việc theo nhân viên* (đổi 2026-09-21).
 
-## Mục tiêu
+## Định nghĩa báo cáo (chốt 2026-09-21)
 
-Theo dõi **khối lượng công việc** của các Phòng ban / Bộ phận / Nhân viên theo thời gian, gom từ
-**5 nguồn** đang nằm rải rác ở 5 màn danh sách khác nhau: Lịch meeting, Công việc (task),
-Vấn đề (issue), Phiếu giao công tác, Phiếu giao việc tại Công ty.
+> Theo dõi **khối lượng và kết quả làm việc của từng nhân viên**, biết được **ai đang nhiều việc**,
+> **có khả năng thực hiện công việc hay không**.
 
-Câu hỏi màn này trả lời: *ai đang ôm nhiều việc, ai đang rảnh, phần việc đó xong tới đâu.*
+Dữ liệu gom từ **5 nguồn** đang nằm rải rác ở 5 màn danh sách khác nhau: Lịch meeting,
+Công việc (task), Vấn đề (issue), Phiếu giao công tác, Phiếu giao việc tại Công ty.
+
+Câu chữ này là **nguồn duy nhất**: tooltip ⓘ cạnh tiêu đề màn phải chép đúng, đổi ở đây thì
+đổi cả ở đó.
 
 ## Bối cảnh
 
@@ -72,11 +77,34 @@ Bảng mã trạng thái gốc (đọc từ Entity, để lần sau không phả
      Phải có chú thích ngay dưới bảng, không để user tưởng lệch số.
    - Trong CÙNG 1 lần chạy báo cáo thì vẫn cộng dồn theo cấp bình thường: dòng cha = tổng dòng con.
 2. **Gán khối lượng cho MỌI người tham gia**, không chỉ người chủ trì.
-   - Đếm theo cặp `(bản ghi × người)` ⇒ dòng phòng ban vẫn = tổng dòng con.
-   - 1 meeting có 3 người dự thì toàn công ty đếm 3 — đúng nghĩa "khối lượng thời gian NV bỏ ra",
-     KHÔNG phải "số chứng từ".
    - Popup chi tiết có cột **Vai trò** (`Chủ trì` / `Tham gia`); checkbox **"Chỉ tính việc chủ trì"**
      đổi góc nhìn của **cả bảng chính** sang cách đếm 1 bản ghi = 1 người.
+   - ⚠️ Cách đếm cụ thể đã đổi ở quyết định **2b** bên dưới — bản đầu đếm theo cặp
+     `(bản ghi × người)` ở MỌI cấp, nay chỉ còn áp cho cấp Nhân viên.
+2b. **CƠ CHẾ ĐẾM khi 1 phiếu có NHIỀU người tham gia** (chốt 2026-09-21 — đè lên quyết định 2):
+
+   | Cấp | Cách đếm |
+   |---|---|
+   | **Nhân viên** | cứ **có tham gia là +1**, không phân biệt chủ trì hay tham gia |
+   | **Bộ phận · Phòng ban · Công ty · dòng TỔNG · dải tổng hợp** | đếm **theo PHIẾU** — 1 phiếu nhiều người tham gia chỉ tính **1** |
+
+   Hàm `metrics(list, byDoc)` nhận cờ `byDoc`; `makeNode` truyền `dim !== 'emp'`.
+
+   ⚠️ **3 hệ quả PHẢI nói rõ với user, đừng để tưởng báo cáo cộng sai:**
+   1. **Dòng cha KHÔNG còn bằng tổng dòng con** — nó NHỎ HƠN, phần chênh chính là việc làm chung.
+      Đo trên demo: 10/10 phòng đều cha < tổng con, 0 phòng ngược chiều.
+   2. **Cộng các phòng ban > dòng TỔNG** — phiếu có người ở 2 phòng được tính 1 ở *mỗi* phòng.
+      Đo trên demo: cộng 10 phòng = 726 so với dòng TỔNG 659 (67 phiếu liên phòng).
+   3. Bật **"Chỉ tính việc chủ trì"** thì mỗi phiếu chỉ còn 1 người ⇒ 2 cách đếm trùng nhau,
+      dòng cha lại bằng tổng dòng con (đo được 0/10 phòng lệch).
+
+   Chỗ nói ra 3 điều trên: tooltip ⓘ cạnh tiêu đề màn · ⓘ cột `Tổng` · ⓘ ô "Nội dung theo dõi" ·
+   **chú thích dưới bảng** (`renderNote`, đổi chữ theo cờ chủ trì) · dòng meta bản in.
+
+   **KHÔNG thêm cột "Lượt tham gia"** (user chốt 2026-09-21): 2 con số ghi trong `title` của ô
+   `Tổng` ở dòng cha — *"659 phiếu · 1040 lượt tham gia"* (`seatNote()` dựa trên `m.seats`).
+   Dòng nhân viên không có ghi chú này vì 2 số luôn bằng nhau.
+
 3. **Nháp và Huỷ/Từ chối ĐỀU TÍNH vào Tổng.** Không lọc bỏ trạng thái nào.
    - Hệ quả: `Đang thực hiện` **không** còn là `Tổng − HT − Quá hạn` (sẽ nuốt luôn phần huỷ).
      Phải tách thành **4 nhóm chia hết Tổng**: `Đã hoàn thành` + `Đang thực hiện` + `Quá hạn` + `Huỷ/Từ chối`.
@@ -93,6 +121,9 @@ Giữ khuôn **2 khối nằm CÙNG 1 HÀNG, ô con xếp NGANG** của màn ph�
 | Khối | Ô con |
 |---|---|
 | Khối lượng trong kỳ | Tổng đầu việc · Nhân viên có việc |
+
+Dải tổng hợp là **số CẤP CÔNG TY** nên đếm theo phiếu; meta của khối 1 ghi thẳng *"Đếm theo phiếu"*
+(đổi *"Mọi người tham gia"* của bản cũ) để không lệch nghĩa với bảng.
 | Trạng thái xử lý | Đã hoàn thành · Đang thực hiện · Quá hạn · Huỷ/Từ chối |
 
 - 4 ô của khối 2 **chia hết** Tổng đầu việc của khối 1 → tự kiểm được, lệch là biết sai.
@@ -200,6 +231,7 @@ Bám nguyên luật đã chốt ở màn phát triển thị trường:
    | Nguồn | Ví dụ | Bỏ cột + ô lọc |
    |---|---|---|
    | `path` của node đã bấm | bấm số ở dòng nhân viên | Phòng ban · Bộ phận · Nhân viên |
+   | popup **gộp theo phiếu** (mở từ cấp cha) | bấm số ở dòng phòng ban | Vai trò |
    | metric là 1 trong 5 **loại** | bấm số ở cột `Meeting` | Loại |
    | metric là 1 trong 4 **trạng thái** | bấm số ở cột `Đã HT` | Trạng thái |
    | cờ "Chỉ tính việc chủ trì" đang bật | — | Vai trò |
@@ -217,6 +249,24 @@ Bám nguyên luật đã chốt ở màn phát triển thị trường:
    Hệ quả kỹ thuật: **số cột thay đổi theo từng popup (7 → 12 cột)** nên `min-width` của bảng phải
    khai INLINE theo tổng colgroup hiện tại (`drillTableWidth()`), KHÔNG để số cứng trong CSS. In và
    Xuất Excel của popup cũng phải lấy `drillColumns(key)`, không dùng hằng `DRILL_COLUMNS`.
+1b. **POPUP MỞ TỪ CẤP CHA GỘP VỀ 1 DÒNG / PHIẾU** (chốt 2026-09-21) — để **số dòng popup khớp
+   đúng con số vừa bấm** ở mọi cấp, tự kiểm được bằng mắt.
+
+   - `drillByDoc(key)` = `true` với mọi node **không phải** `dim = 'emp'` (gồm cả dòng `TỔNG` và
+     các ô của dải tổng hợp). Popup mở từ dòng **Nhân viên** giữ nguyên 1 dòng / đầu việc.
+   - Ô **Nhân viên / Phòng ban / Bộ phận** hiện người (đơn vị) **ĐẠI DIỆN kèm `+N`**:
+     `Nguyễn Minh Hoàng +2`. Đại diện ưu tiên **người chủ trì** nếu người đó nằm trong phạm vi
+     đang xem. Hover ô ra danh sách đủ tên, **người đại diện đứng đầu**; danh sách kèm vai trò
+     xem ở **drawer chi tiết**.
+   - **Bỏ cột Vai trò** ở popup gộp — 1 dòng mang nhiều vai trò cùng lúc.
+   - ⚠️ **LỌC TRƯỚC trên từng cặp `(phiếu × người)` rồi MỚI GỘP.** Làm ngược lại thì lọc theo 1
+     nhân viên vẫn kéo cả những người khác trong phiếu ra. Đo được: lọc 1 NV trong popup phòng ban
+     → 107 dòng còn 26 dòng, **0 dòng còn đuôi `+N`**, khớp đúng số 26 ở dòng NV trên bảng.
+   - Dòng phụ của popup ghi kèm **số lượt tham gia** khi 2 số khác nhau:
+     *"107 đầu việc · 158 lượt tham gia · hoàn thành 59 · quá hạn 10"*.
+   - **Bản in chi tiết** (`detailRows`) cũng gộp theo phiếu và dùng `DETAIL_COLUMNS`
+     (= `DRILL_COLUMNS` bỏ `role`) — nếu không, số dòng in ra sẽ khác con số ghi ở đầu bản in.
+
 2. **Tiêu đề nêu rõ đối tượng**: *"Đang xem &lt;chỉ tiêu&gt; theo &lt;Cấp&gt;: &lt;Tên&gt;"*.
    Node nằm sâu thì dòng phụ hiện đường dẫn cấp cha (`Phòng ban: … › Bộ phận: …`), chữ XÁM `#6b7280`,
    không in đậm, **không tô đỏ**.
@@ -249,6 +299,12 @@ Bám nguyên luật đã chốt ở màn phát triển thị trường:
 5. **3 KPI trong popup**: Tỷ lệ hoàn thành · Tỷ lệ quá hạn · **Tỷ lệ việc chủ trì**.
    KPI thứ 3 KHÔNG dùng "bình quân đầu việc / NV" — user đã chốt bỏ mọi chỉ số bình quân, và
    ở popup mở theo 1 nhân viên thì mẫu số luôn bằng 1 nên chỉ số đó vô nghĩa.
+   - Popup gộp theo phiếu đổi tên KPI thành **"Tỷ lệ phiếu đơn vị chủ trì"** — `role = host` lúc
+     này nghĩa là *đơn vị đang xem* giữ vai chủ trì phiếu đó (đo được phòng TBOT 3: 97/107 = 90,7%).
+   - **Ẩn hẳn KPI thứ 3** khi popup gộp theo phiếu mà **không cố định đơn vị nào** (dòng `TỔNG`,
+     dải tổng hợp): phiếu nào cũng do một ai đó trong phạm vi chủ trì nên nó luôn ra 100%,
+     mẫu số bằng tử số. Cùng lý do đã bỏ "bình quân/người" — chỉ số không đổi thì không mang tin,
+     hiện 100% còn gây hiểu nhầm.
 6. **Sắp xếp được ở 7 cột**: Loại · Phòng ban · Bộ phận · Nhân viên · Bắt đầu · Kết thúc/Hạn ·
    Trạng thái (= 4 nhóm). **Icon sort là 2 MŨI TÊN chồng nhau** (đồng bộ mẫu 2026-09-08): cả 2
    luôn hiện mờ `opacity .3` để biết cột nào sắp được kể cả khi chưa bấm, chiều ĐANG áp mới tô đậm.
@@ -285,8 +341,13 @@ Bám nguyên luật đã chốt ở màn phát triển thị trường:
 - Sinh **2.560 chứng từ** trải 150 ngày từ 01/07/2026 (620 meeting · 880 task · 360 issue ·
   300 phiếu công tác · 400 phiếu giao việc), phẳng hoá thành các cặp (chứng từ × người).
 - Tổng danh mục: **43 nhân viên** (37 có việc + 6 rảnh trong kỳ).
-- Kỳ mặc định 09/2026 ra **1.040 đầu việc**: Meeting 283 · Task 269 · Issue 108 · P.công tác 190 ·
-  P.giao việc 190; trạng thái: hoàn thành 530 (51,0%) · đang thực hiện 266 · quá hạn 174 · huỷ 70.
+- Kỳ mặc định 09/2026, **cách đếm hiện hành (theo phiếu ở cấp công ty)** ra **659 đầu việc**
+  (= 1.040 lượt tham gia gộp lại): Meeting 105 · Task 269 · Issue 108 · P.công tác 76 ·
+  P.giao việc 101; trạng thái: hoàn thành 320 (48,6%) · đang thực hiện 188 · quá hạn 112 · huỷ 39.
+  - Số **1.040** của bản trước (đếm theo cặp ở mọi cấp) nay là **`m.seats`** — chỉ còn xuất hiện
+    trong tooltip ô `Tổng` của dòng `TỔNG` và trong dòng meta bản in.
+  - Task 269 và Issue 108 KHÔNG đổi vì 2 loại này chỉ có đúng 1 người; 3 loại còn lại giảm mạnh
+    (283→105, 190→76, 190→101) đúng bằng phần người tham gia bị gộp.
 
 ## Ngoài phạm vi (giai đoạn này)
 
@@ -401,3 +462,30 @@ Bám nguyên luật đã chốt ở màn phát triển thị trường:
   thì đổi sang nhóm *Đang thực hiện*, số Quá hạn sẽ giảm.
 - Chưa có cột/tín hiệu **mức tải** (so bình quân phòng) — đã bỏ ô "Bình quân/người" nên màn hiện
   không trả lời trực tiếp câu "ai lệch tải". Cần thì bổ sung sau ở dải tổng hợp.
+
+## Đã tự kiểm bằng Playwright — lượt đổi tên + cơ chế đếm (2026-09-21, viewport 1600×900)
+
+Ảnh: `screenshots/klv-18-doi-ten-va-cach-dem-moi.png`. Console **0 lỗi**, body **không cuộn ngang**.
+
+- Tiêu đề trang + `<title>` + `<h2>` bản in + tên file Excel đều mang tên mới.
+- Dòng `TỔNG` = **659**, tooltip ô Tổng ghi *"659 phiếu · 1040 lượt tham gia"*.
+- Cơ cấu 5 loại cộng lại = 659; 4 nhóm trạng thái **chia hết** 659 (320+188+112+39).
+- **Số trên panel "Loại công việc" khớp từng cột của dòng TỔNG** (105/269/108/76/101) — bản trước
+  panel còn đếm theo cặp nên lệch với bảng.
+- **10/10 phòng ban có cha < tổng con, 0 phòng ngược chiều**; cộng 10 phòng = 726 > 659.
+- Cấp **Bộ phận** cũng đếm theo phiếu: BP *hoá chất chăm sóc xe* 72 so với tổng 3 NV = 86.
+- Bật **"Chỉ tính việc chủ trì"**: tổng vẫn 659, **0/10 phòng lệch** (2 cách đếm trùng nhau),
+  tooltip hết phần "lượt tham gia", chú thích dưới bảng đổi chữ theo.
+- **Popup khớp số ở mọi cấp**: dòng `TỔNG` → 659 dòng / 659 mã khác nhau · phòng TBOT 3 → 107 dòng ·
+  nhân viên Nguyễn Minh Hoàng → 26 dòng (đúng số 26 trên bảng).
+- Popup cấp cha **bỏ cột + ô lọc Vai trò**, 33/107 dòng có đuôi `+N`; popup cấp nhân viên **vẫn còn**
+  cột Vai trò. Popup dòng `TỔNG` có 57 dòng mang `+N` ở cột Phòng ban (phiếu liên phòng).
+- Lọc 1 nhân viên **bên trong** popup phòng ban: 107 → 26 dòng, **0 dòng còn `+N`**.
+- KPI: dòng `TỔNG` chỉ còn **2 KPI**; popup phòng ban có đủ 3, KPI thứ 3 đọc *"Tỷ lệ phiếu đơn vị
+  chủ trì 90,7% — 97/107"*.
+- Bản in **bảng theo dõi**: 50 dòng đủ 3 cấp, meta ghi *"659 đầu việc (1040 lượt tham gia)"* +
+  câu giải thích cách đếm. Bản in **chi tiết**: **659 dòng = 659 mã**, không còn cột Vai trò,
+  249 dòng có `+N`.
+- Tắt loại Issue: 659 → **551** (đúng 659 − 108), bảng còn 9 cột.
+- Lọc trạng thái *Quá hạn*: tổng ra **112**, khớp ô Quá hạn ở dải tổng hợp.
+- Bỏ tick *Chỉ hiện NV có việc*: 39 → 45 dòng con, đúng **6 dòng Tổng = 0**.

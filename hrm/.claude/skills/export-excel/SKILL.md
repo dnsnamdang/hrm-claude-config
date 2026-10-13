@@ -460,22 +460,26 @@ phần logo chưa kiểm chứng trên môi trường thật.
 | Render rich-text ở bản IN (FE) | `hrm-client/utils/specHtml.js` + `utils/mixins/SpecHtml.js` (`$specHtml`) |
 | Helper tải file phía FE | `hrm-client/utils/download-excel.js` |
 
-## 4b. Letterhead ở file dựng bằng ExcelJS (FE) — NEO 2 Ô, CĂN GIỮA BẢNG
+## 4b. Letterhead ở file dựng bằng ExcelJS (FE) — NEO 2 Ô, RỘNG BẰNG CẢ BẢNG
 
 Áp cho `utils/export/listExportFile.js` (màn danh sách tự dựng file ở trình duyệt).
 
 Ảnh đầu file là **LETTERHEAD** — dải tiêu đề thư của công ty (tên, địa chỉ, điện thoại, website),
-KHÔNG phải cái logo vuông. Nhưng cũng **đừng kéo nó dài bằng cả bảng**: bảng Excel rộng gấp đôi khổ
-A4, kéo hết bảng thì ảnh cao gấp đôi bản in giấy và tiêu đề trôi mất hút (Redmine #11230). Đúng là:
-**rộng cỡ khổ giấy (trần 900px), CĂN GIỮA bảng** — thẳng trục với dòng tiêu đề ngay dưới.
+KHÔNG phải cái logo vuông. **Trải ĐÚNG bằng bề rộng bảng, từ mép trái** — giống hệt file Excel chi
+tiết chứng từ (trait BE `EmbedsCompanyLetterhead` truyền `widthPx` = bề rộng bảng).
+
+> 📌 **Đổi 2026-10-05 (user chốt, áp MỌI màn danh sách):** bỏ trần 900px + căn giữa. Bảng danh sách
+> hay rộng ~2.000px → logo 900px chưa tới nửa bảng, user báo "logo lỗi", đòi giống file chi tiết.
+> Chuyện "logo to đè mất tiêu đề" (Redmine #11230) thật ra do `ext` (bẫy 1 dưới) — neo 2 ô đã chữa
+> tận gốc, không cần trần bề rộng. **Đừng thêm lại trần.**
 
 ```js
 const edges = columnEdges(headings.length, widths)      // biên trái từng cột, cộng dồn (px)
 const tableWidthPx = edges[headings.length]
-const imageWidthPx = Math.min(tableWidthPx, MAX_LETTERHEAD_WIDTH_PX)   // 900
+const imageWidthPx = tableWidthPx
 const ratio = pngAspectRatio(logo) || DEFAULT_LETTERHEAD_RATIO         // đọc 32 byte đầu của PNG
 const imageHeightPx = Math.round(imageWidthPx / ratio)
-const leftPx = (tableWidthPx - imageWidthPx) / 2
+const leftPx = 0
 
 sheet.getRow(1).height = Math.round(imageHeightPx * 0.75)   // Excel tính dòng bằng POINT
 sheet.mergeCells(1, 1, 1, headings.length)                  // dòng 1 phải là dòng THẬT
@@ -508,7 +512,8 @@ rộng pixel thật (1 ký tự ≈ 7px ≈ 66.675 EMU), lệch ~6,8 lần. Truy
 Neo theo ranh giới cột nguyên cũng không cứu được (lưới cột quá thô: 47 vs 131).
 → Truyền thẳng `{ nativeCol, nativeColOff, nativeRow, nativeRowOff }` với **`nativeColOff` tính
 bằng EMU** (`1px = 9525 EMU`). Constructor `Anchor` có sẵn nhánh nhận `nativeCol`. Sau khi sửa:
-rộng đúng 900px, **lề trái 107 / lề phải 106**.
+rộng đúng 900px, **lề trái 107 / lề phải 106** (đo hồi còn căn giữa; nay `leftPx = 0` nhưng vẫn giữ
+neo EMU cho chắc).
 
 Còn lại vẫn giữ:
 - **Bề rộng cột suy từ chính bảng**, không hằng số: `px = số_ký_tự × 7 + 5` cho MỖI cột (7px/ký tự,
@@ -532,9 +537,9 @@ unzip -p file.xlsx xl/worksheets/sheet1.xml | grep -o '<col [^>]*>'
 ```
 
 Phải thấy đủ 3 điều: thẻ là **`twoCellAnchor`** (không phải `oneCellAnchor`), `<xdr:to>` có
-**`<xdr:row>1</xdr:row>`** với `rowOff = 0`, và dòng 1 có **`spans`**. Rồi tính lề bằng
-`edges[col] + colOff / 9525` cho cả 2 đầu — **lề trái và lề phải phải bằng nhau** (chênh ≤ 2px do
-làm tròn).
+**`<xdr:row>1</xdr:row>`** với `rowOff = 0`, và dòng 1 có **`spans`**. Rồi kiểm 2 đầu: `<xdr:from>`
+là `col 0 / colOff 0`, `<xdr:to>` là `col = số cột / colOff 0` (mép phải cột cuối) — ảnh trải đúng
+cả bảng.
 
 Nhìn bằng mắt thì convert ra ảnh, KHÔNG mở từng trang in (trang in cắt cột, tưởng nhầm là lỗi):
 

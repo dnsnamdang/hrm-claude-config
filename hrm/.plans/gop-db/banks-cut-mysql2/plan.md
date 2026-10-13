@@ -206,3 +206,10 @@ Vừa hoàn thành: 3 tài liệu bàn giao cho màn Danh mục ngân hàng (tes
 Đang làm dở: không.
 Bước tiếp theo: user đọc 3 file; cần sửa nội dung thì sửa `gen_*.py` rồi chạy lại (`python .plans/gop-db/banks-cut-mysql2/gen_testcase.py|gen_srs.py|gen_hdsd.py`). Quyết định có fix 3 lỗi ở trên và có bổ sung quyền cho màn không.
 Blocked: không.
+
+## Phase 8 — Fix bug: sort các cột không chạy (2026-10-07)
+
+Nguyên nhân: FE gửi `sortBy` + `sortDesc=asc|desc`, BE (`BankService::getBanks`) chỉ đọc `sort_by` + `sort_desc=true|false` → luôn sắp mặc định `id desc`.
+
+- [x] FE `pages/human/banks/index.vue`: `loadData()` + `runExport()` gửi `sort_by` / `sort_desc` ('true'|'false') khớp BE
+- [x] Verify: gọi API với tham số mới, thứ tự đổi theo cột + chiều

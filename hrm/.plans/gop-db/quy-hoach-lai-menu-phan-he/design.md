@@ -30,18 +30,35 @@ việc là ĐỔI TÊN, không phải làm màn mới. Cách đọc lại sheet:
    QLCV bị gạch).
 3. **Quản lý CSKH trước khi bán** (tên cũ: dự án TKT) tách khỏi hub Bán hàng thành phân hệ riêng.
 4. **Tra cứu - thông báo** đứng riêng đầu nhóm KINH DOANH (bản nằm trong Bán hàng bị gạch).
-5. **Hai phân hệ khác nhau, KHÔNG gộp**: `Ban hành văn bản nội bộ (Quyết định - quy định - quy chế)`
+5. ~~**Hai phân hệ khác nhau, KHÔNG gộp**~~ → **ĐẢO 16/09/2026 (chiều): user chốt GỘP làm 1**,
+   tên **"Văn bản nội bộ"**, subtext **"Quyết định, Quy chế công ty"**. `decision` (tên cũ: Quyết
+   định) biến mất khỏi registry; `operation` giữ `slugs: ['operation','decision','regulations']`,
+   `permissionType: 6`, `isShowKey: 'is_use_decision'`; 36 link dời từ `default-menu/decision.js`
+   (đã xoá) vào `operation-hub.js`; 143 page `/decision/*` đổi sang `layout: 'default-sidebar'`.
+   Chi tiết ở Phase 11 của plan.md.
+   (Ghi chú gốc) Hai phân hệ khác nhau: `Ban hành văn bản nội bộ (Quyết định - quy định - quy chế)`
    (tên cũ: Vận hành nội bộ → key `operation`) và `Ban hành văn bản nội bộ` (tên cũ: Quyết định →
    key `decision`).
 6. **Quản lý an toàn 5S** tách khỏi ISO thành phân hệ riêng — tách khung trước, chức năng bổ sung sau.
+   (16/09 chiều: đổi tên thành **An toàn - 5S**, xem quyết định #9.)
 7. **Đánh giá KPI** nằm ở nhóm NHÂN SỰ (bản ở VĂN PHÒNG SỐ bị gạch) — đúng như registry hiện tại.
 8. Mục chưa có màn: khai menu **không có `link`** → sidebar render xám mờ (cơ chế sẵn có).
+9. **(16/09 chiều) Rút gọn tên 10 phân hệ + gộp tiếp `legal`** — user chốt, KHÁC tên trong sheet:
+   Đánh giá KPI→**KPI** · Quản lý sản xuất→**Sản xuất** · Quản lý tài sản→**Tài sản** ·
+   Quản lý an toàn 5S→**An toàn - 5S** · Quản lý công việc→**Công việc** ·
+   Quản lý bán hàng→**Bán hàng** · Hoạt động ISO (quản lý quy trình)→**ISO** ·
+   Tra cứu - thông báo→**Thông báo** · Quản lý CSKH trước khi bán→**CSKH trước bán** ·
+   CRM→**CSKH sau bán**; và **Hoạt động pháp lý + Văn bản nội bộ → "Văn bản - Hồ sơ pháp lý"**
+   (subtext "Quyết định, quy chế, hồ sơ pháp lý"). Chi tiết ở Phase 12 của plan.md.
+   ⚠️ Từ nay tên phân hệ **không còn bám nguyên văn sheet** — sửa `label` trong `subsystems.js` là
+   nguồn duy nhất, `doi-chieu-menu.py` vẫn đối chiếu ở mức CHỨC NĂNG nên không ảnh hưởng.
 
 ## Scope
 
 - Chỉ đụng `hrm-client`: `components/subsystems.js`, `components/subsystem-menu/*.js`,
   `components/menu.js`, `components/menu-sidebar.js`, `components/default-menu/*.js`.
-- Thêm 3 phân hệ: `meeting`, `presale` (CSKH trước bán), `safety-5s`.
+- Thêm 3 phân hệ: `meeting`, `presale` (CSKH trước bán), `safety-5s`; **bỏ 2 phân hệ: `decision`
+  và `legal` (đều gộp vào `operation`)** → registry còn **28 phân hệ**.
 - Đổi nhãn: `operation`, `decision`, `iso`, `customer-care`, `training`, `insurance`.
 - Dời chức năng giữa phân hệ theo cột gạch ngang (bảo hiểm → Bảo hiểm, thông báo nội bộ →
   Ban hành VB nội bộ, ngân hàng câu hỏi khảo sát → Danh mục dùng chung…).

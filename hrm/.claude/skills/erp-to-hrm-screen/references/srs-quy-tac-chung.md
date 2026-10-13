@@ -38,6 +38,8 @@ khi code, không cần mở lại .docx. Khi .docx ra bản mới → cập nh�
 - Nút **Làm mới**: xóa toàn bộ điều kiện lọc **và tải lại danh sách đầy đủ**.
 - Điều kiện lọc được **ghi nhớ** và dùng lại khi user quay về màn.
 - **< 3 trường lọc** → ẩn khối "Tìm kiếm nâng cao", hiển thị thẳng ngoài màn danh sách.
+  (SRS chỗ này ghi "< 3", mục 1.5 ghi "> 3" mới có Cài đặt bộ lọc. **Quy ước HRM: ≤ 3 trường hiện thẳng,
+  > 3 trường có khối nâng cao + popup Cài đặt bộ lọc.**)
 
 ### 1.5 Cài đặt bộ lọc
 - Cho phép kéo thả, sắp xếp, ẩn/hiện các bộ lọc ở Tìm kiếm nâng cao.
@@ -60,6 +62,9 @@ khi code, không cần mở lại .docx. Khi .docx ra bản mới → cập nh�
 - Nhiều trường lỗi → **tự đưa con trỏ về trường lỗi đầu tiên**.
 - Trường chọn danh mục **chỉ hiển thị danh mục đang hoạt động**.
 - **Lưu nháp chỉ bắt required trường Tên**, các trường khác không required.
+  (HRM áp: 1 trường đại diện — Tên hoặc trường user chốt cho màn khi phiếu không có Tên; rule định dạng
+  vẫn chặn khi nháp. Khi Lưu / Gửi duyệt chính thức: mọi ô bắt buộc validate ở **cả FE lẫn BE**, báo đỏ
+  cùng lúc — xem `form-validate/SKILL.md` §1.)
 
 ---
 
@@ -238,6 +243,9 @@ khi code, không cần mở lại .docx. Khi .docx ra bản mới → cập nh�
 | 7 | Selection field | Phải khớp giá trị đã định nghĩa; trường autocomplete có hỗ trợ lọc |
 | 8 | Text mô tả dài | Hỗ trợ xuống dòng (multi-line) |
 
+> ⚠️ **HRM override dòng Tiền tệ:** toàn hệ thống HRM dùng **chuẩn quốc tế `1,234,567.89`** — `,` ngăn
+> nghìn, `.` phần thập phân (chốt 26/08/2026). Chi tiết: `print-page/SKILL.md` §2d · `export-excel/SKILL.md` §1a.
+
 ---
 
 ## 13. Màu nút theo nhóm hành động
@@ -254,6 +262,10 @@ khi code, không cần mở lại .docx. Khi .docx ra bản mới → cập nh�
 | Thoát / Hủy / Quay lại / Làm mới | `#FFFFFF` / `#1F2937` / `#E2E8F0` | Đóng · Hủy · Quay lại · Làm mới |
 | Nút phụ ngoài page | `#FFFFFF` / `#374151` / `#E5E7EB` | Quay lại |
 
+> ⚠️ **HRM override bảng trên:** màu nút ở hrm-client theo **`button-convention/SKILL.md` §2b** — Tạo mới /
+> Lưu / Duyệt / Gửi duyệt = `primary` teal (KHÔNG xanh lá, KHÔNG cam); **Lưu nháp = `secondary`** trắng viền;
+> Khóa = `primary status="warning"`. Đọc bảng trên theo nghĩa đen từng gây lỗi QA #11548.
+>
 > Ở hrm-client **không hard-code mã màu** — map sang prop của `V2BaseButton`
 > (`primary`, `secondary` + `status="success" / warning / danger"`). Xem `.claude/skills/button-convention/SKILL.md`.
 

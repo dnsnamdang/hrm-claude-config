@@ -489,6 +489,12 @@ Không phát sinh lệch mới nào khác khi re-verify ở Task 18.
 
 ## Quyết định đã chốt khi lên plan implement
 
+> ⚠️ **05/10/2026 — THAY THẾ các quyết định về cột tiền bên dưới:** cột tiền thứ 2 của bảng và cột tiền của
+> popup đổi tên **"Giá trị đầu tư dự kiến"**, lấy theo **Ngân sách dự kiến** (`estimated_budget`) của **MỌI**
+> dự án (Thành công / Thất bại / Đang triển khai). Bỏ luật "Thất bại không mang giá trị" (09/09) và bỏ
+> nguồn `expected_contract_amount` (13/09). Cột **Giá trị HĐ** giữ nguyên, vẫn treo nguồn hợp đồng HRM.
+> Lĩnh vực = `internal_business_scopes`, Nhóm ngành = `hrm_scopes` (sửa lệch cấp cùng ngày) — xem plan.md.
+
 ### 1. Cột `Giá trị` — nguồn tiền (chốt 13/09/2026)
 
 Thay cho mục *Còn treo → Nguồn 2 cột tiền*. Giá trị của một dự án chấm theo **nhóm kết quả**:
