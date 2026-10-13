@@ -75,3 +75,8 @@ Vừa hoàn thành: Phase 1 (7 việc BE) + Phase 2 (13 việc FE) + 3.1→3.3.
 Đang làm dở: không có.
 Bước tiếp theo: user mở trình duyệt kiểm tra `/assign/quotations` (task 3.4).
 Blocked: không.
+
+### Fix tester 13/10/2026 (sheet "Test báo giá")
+- [x] BE+FE: Danh sách báo giá thêm hành động Lập hợp đồng / Xem hợp đồng (khớp màn chi tiết; resource trả has_contract, contract_id, eager load contract)
+- [x] FE: Tạo báo giá độc lập (không gắn dự án) mặc định loại tiền VNĐ
+- [x] FE: Màn tạo/sửa + chi tiết hợp đồng — nút Quay lại về đúng màn trước (trước gán cứng /assign/contracts)

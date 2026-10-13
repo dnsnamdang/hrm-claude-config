@@ -26,3 +26,8 @@ Verify (màn /assign/quotations/create, login qua API token, viewport 760px ép 
 Đang làm dở: không
 Bước tiếp theo: user verify browser với dữ liệu thật (chọn dự án + thêm hàng để thấy cột 130px đầy đủ)
 Blocked:
+
+## Fix 2026-10-13 — bảng chi tiết báo giá cuộn ngang bị giật (nhánh gop_db)
+- [x] Bỏ cặp `products-scroll-top`/`products-scroll` tự viết (cờ `_syncingScroll` bật/tắt đồng bộ → scroll event tới khung hình sau gán ngược lại → giật), thay bằng `V2BaseTableScroll` ở `quotations/_id/edit.vue` (create dùng chung) + `summary-quotations/components/SummaryQuotationForm.vue`
+- [x] Tách logic đồng bộ đúng ra `utils/scrollSync.js` (`bindScrollSync` cho addEventListener ở mounted, `createScrollSyncHandlers` cho @scroll trên template/popup) — áp cho 7 bảng báo cáo `pages/assign/report/*/components/*Table.vue`, `QuotationProductSearchModal`, `ChooseErpCustomerModal`, `finance/.../CustomerSearchModal`; `AddCustomer.vue` chỉ đồng bộ 1 chiều nên không giật, giữ nguyên
+- [x] Verify cuộn mượt 600px (Chromium headless đầy đủ): code cũ dừng ở 1–3px, code mới tới đích + thanh kia khớp — bảng báo giá, popup thêm hàng hoá, 5/7 bảng báo cáo (meeting-by-market, performance-by-solutions chưa có dữ liệu để test); 2 popup chọn KH chưa mở được để test

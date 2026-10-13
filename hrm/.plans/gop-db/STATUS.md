@@ -68,6 +68,10 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 
 ## Đang làm
 
+- quotation-no-project → @namdangit → .plans/gop-db/quotation-no-project/plan.md
+  Báo giá không gắn Dự án TKT (tester 13/10 + #11651): tạo → duyệt → chốt Trúng thầu → Lập hợp đồng. Bắt đầu 13/10/2026.
+  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6). Deploy nhớ chạy migration 2026_10_13_000001.
+
 - finance-borrow-extend-request → @namdangit → .plans/gop-db/finance-borrow-extend-request/plan.md
   Trạng thái: 🟢 **XONG 9/9 phase + nghiệm thu trình duyệt (24/09). CHƯA commit — chờ user chốt.**
   Nhánh `feat/finance-borrow-extend-request` ở CẢ 2 repo (tách từ `origin/gop_db`).

@@ -33,3 +33,19 @@ hrm/.plans/**/*.png
 hrm/.plans/**/*.docx
 hrm/.plans/**/*.xlsx
 hrm/.plans/**/*.xls
+
+# ── Dữ liệu trung gian của script tài liệu (thêm 13/10/2026) ──
+# Lý do: các lượt sinh/đẩy SRS-testcase, khôi phục nhận xét Google Docs… đổ ra hàng
+# nghìn file .json/.txt/.log (dump Drive, log từng lượt, kết quả agent) — chỉ dùng
+# lúc chạy, sinh lại được, đẩy lên repo là phình vô ích. Giữ lại .md (plan/brief)
+# và script .py/.js. File ĐÃ commit trước đây vẫn được theo dõi; cần đẩy 1 file
+# dữ liệu thật thì dùng `git add -f <file>`.
+hrm/.plans/**/*.json
+hrm/.plans/**/*.txt
+hrm/.plans/**/*.log
+hrm/.plans/**/drive/
+hrm/.plans/**/drive2/
+hrm/.plans/**/out2/
+# Phiên đăng nhập trình duyệt (chứa token) — không bao giờ được lên repo
+**/.auth_*.json
+**/.auth/
