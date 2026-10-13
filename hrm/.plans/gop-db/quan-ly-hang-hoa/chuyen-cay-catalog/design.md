@@ -33,7 +33,7 @@ Cả 3 bảng ERP: không có `code`, không có `description`; `created_by` NOT
 | D7 | Lĩnh vực Công ty kinh doanh: thêm Chương vào điều kiện **xoá** (có Chương ⇒ không xoá) và **khoá** (có Chương đang hoạt động ⇒ không khoá) — 3 đường: `isCanDelete`, `isCanLockUpdate`, `InternalBusinessScopeController@delete` | khuôn nền |
 | D8 | 6 quyền **1670–1675** (`Xem/Quản lý danh mục chương · mục · tiểu mục`), type 9, group `Danh mục hàng hóa` | §30b-3 |
 | D9 | Menu Danh mục chung: nhóm mới **"Catalog kinh doanh"** (`subItems`): Chương → Mục → Tiểu mục. Mục *Lĩnh vực Công ty kinh doanh* giữ chỗ cũ | §30b-7 |
-| D10 | Không làm Import đợt này (giống Xe) — chưa có yêu cầu | — |
+| D10 | ~~Không làm Import đợt này~~ → **13/10 user yêu cầu làm Import** trước khi lên gop_db: file ghi đủ đường cha (Mã Lĩnh vực + tên các cấp trên) — xem plan.md "Đợt bổ sung — Import" | user 13/10 |
 | D11 | Slug = tên bảng: `chapters` · `job-groups` · `job-clusters` (bài học `vehicle-life`) | Phase 2b |
 
 ## 4. Ngoài phạm vi

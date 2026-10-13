@@ -1464,3 +1464,43 @@ Vừa hoàn thành: Phase 2d xong toàn bộ Task 0–9 + 1 lượt sửa sau re
 Đang làm dở: không.
 Bước tiếp theo: chờ user quyết push/merge `feat/p2d-cay-catalog` (cả 2 repo) vào gop_db — khi merge kiểm `uniq -d` id quyền với nhánh `gop_db-bao-cao-nhu-cau-dich-vu`.
 Blocked: 
+
+---
+
+## Đợt bổ sung — Import Excel 3 danh mục (13/10/2026, trước khi đưa 2d lên gop_db)
+
+User yêu cầu 13/10: "làm import 3 danh mục rồi mới push" ⇒ đảo D10 (trước: không làm Import).
+Chốt: file ghi **đủ đường cha** — Mã Lĩnh vực CTKD + tên các cấp trên (Chương/Mục không có mã; tên chỉ duy nhất trong cùng cha).
+Luật: tra cha chỉ trong cây mới (global scope), không thấy / cha khoá ⇒ lỗi dòng, không tự tạo cha; tên ≤ 64, không trùng bản ghi ĐANG HOẠT ĐỘNG cùng cha (DB + trong file);
+trạng thái Hoạt động/Khóa; chỉ thêm mới; còn dòng lỗi ⇒ không ghi dòng nào (khuôn #11588); ghi lịch sử Tạo mới.
+Nhánh: commit trên `feat/p2d-cay-catalog` (worktree `websites/wt-p2d-import`), sau đó merge lại vào worktree gop_db tạm (chưa push).
+
+- [x] I1 · BE concern `BusinessCatalog/Concerns/ImportsBusinessCatalogRows` (validate + import theo đường cha) + khai ở 3 service
+- [x] I2 · BE route `import/validate` + `import` (Quản lý danh mục … + importRowLimit) cho 3 slug
+- [x] I3 · BE test bổ sung `BusinessCatalogTreeTest` (hợp lệ từng cấp, cùng tên chương 2 lĩnh vực, trùng theo cha, chương cũ ẩn, cha khoá, > 64, 403)
+- [x] I4 · FE 3 `index.vue`: nút Import Excel + `V2BaseImportModal` qua `CatalogImportMixin` + file mẫu `buildImportTemplate`
+- [x] I5 · Playwright MCP kiểm 3 màn (file mẫu, import hợp lệ/lỗi, không quyền) + cập nhật spec e2e (không tự chạy cả bộ)
+- [x] I6 · Merge lại `feat/p2d-cay-catalog` vào worktree gop_db tạm, chờ user duyệt push
+
+### Kiểm Import (13/10/2026, worktree wt-p2d-import, API :8010 / client :3010, DB hrm_erp)
+
+| Kiểm | Kết quả |
+|---|---|
+| PHPUnit `BusinessCatalogTreeTest` | 20/20 (thêm 8 ca import) |
+| Nút toolbar màn Chương | Tạo mới · Import Excel · Xuất Excel, cách đều 12px |
+| File mẫu `Mau_import_chapters.xlsx` | sheet DM_chuong, tiêu đề #B8CCE4 đậm Calibri 12 cao 15.5, hàng 2 nghiêng, ô chọn Trạng thái errorStyle=stop, viền tới hàng 17 |
+| Import chính file mẫu đã điền | 3 dòng nạp (dòng mô tả bỏ đúng), mã viết thường vẫn khớp, 3 chương lên bảng đúng lĩnh vực/trạng thái/người tạo |
+| File lỗi Chương | 4/5 lỗi đúng câu (LV khoá, mã không tồn tại, trùng cùng lĩnh vực, > 64), nút Import khoá khi còn lỗi |
+| Mục: Chương "E2E_Máy in" có ở 2 lĩnh vực | LVCTKD.0002 → nhánh Môi trường, LVCTKD.0001 → Công nghiệp |
+| Tiểu mục: file tự gõ không dòng mô tả | 2/2 dòng, không mất dòng đầu |
+| Lịch sử | mỗi dòng import 1 bản ghi `create` |
+| Quyền | NV không quyền: 6 endpoint import 403; role tạm chỉ "Xem danh mục chương": thấy màn, chỉ nút Xuất Excel |
+| Dọn | role tạm + 8 dòng E2E_ + lịch sử đã xoá, DB về 0 chương mới |
+
+⚠️ `e2e/.auth/user-nocost.json` (role "E2E No Cost") nay ĐÃ có 6 quyền 1670–1675 ⇒ ca `[Quyền] không có quyền -> 403` của spec `business-catalog-tree.api.spec.ts` sẽ đỏ dù code đúng (ca này có từ 04/10, không phải do import).
+
+### Checkpoint — 2026-10-13
+Vừa hoàn thành: Import Excel 3 danh mục (api `5389ada7b`, client `096a2af8e` trên `feat/p2d-cay-catalog`); merge lại vào worktree gop_db tạm trên origin/gop_db mới nhất (api `5f3a78f60`, client `40f6be80f`) — CHƯA push.
+Đang làm dở: không.
+Bước tiếp theo: user duyệt ⇒ `git push origin HEAD:gop_db` ở 2 worktree scratchpad `wt-gop-hrm-api` / `wt-gop-hrm-client`, push `feat/p2d-cay-catalog`, cập nhật SO-CHOT-VA-TON.md dòng 2d.
+Blocked: 

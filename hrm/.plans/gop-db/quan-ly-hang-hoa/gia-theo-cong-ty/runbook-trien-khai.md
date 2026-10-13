@@ -131,3 +131,93 @@ Không có lui bằng code (đã bỏ cờ). Khi bất kỳ điểm dừng 3a/3b
 | dry-run lần 2 | | 21,6 s | 0 dòng (idempotent) |
 | M3 | `migrate` | 21,7 s | schema + số dòng = `hrm_erp_giacty` |
 | Dọn | `DROP DATABASE hrm_erp_runbook` | | `hrm_erp` gốc không đổi (batch max 431, pcu 0) |
+
+---
+
+# Phần 2 — Luồng tính giá (Phase 7) — chạy NGAY SAU bước 6.1 ở trên, trong cùng cửa sổ bảo trì
+
+> Viết 12/10/2026 (T7, `luong-tinh-gia/design.md` §11) sau khi **chạy thử trọn cả 2 phần** trên bản sao tạm `hrm_erp_runbook7`
+> (sao từ `hrm_erp` local, code nhánh chung hrm-api `1e194fe5c`; ERP `feat/2d1-erp-khong-loi` `443c812553`). Bản sao đã DROP.
+> Lui: như mục 7 (khôi phục bản sao lưu bước 1 — cùng điểm lui với phần 1).
+
+## 8. Trước 7 ngày (T-7) — dọn phiếu dở ở ERP
+
+Chạy trên production (chỉ đọc), gửi danh sách cho PTKD / XNK / Kế toán mua hàng xử lý xong **ở ERP** (duyệt nốt, tính nốt, huỷ, không có giá):
+```sql
+-- phiếu dở theo trạng thái (YCHG · YCTG · PTG · chéo công ty)
+SELECT a.status ychg, r.status yctg, c.status ptg, (a.company_id<>a.send_company_id) cheo, COUNT(*)
+FROM price_asking_requests a
+LEFT JOIN price_calculate_requests r ON r.price_asking_request_id=a.id
+LEFT JOIN price_calculates c ON c.price_calculate_request_id=r.id
+WHERE a.status NOT IN (4) GROUP BY 1,2,3,4;
+-- (D1) phiếu hỏi CHÉO công ty còn dở — PHẢI = 0 mới deploy
+SELECT COUNT(DISTINCT a.id) FROM price_asking_requests a
+WHERE a.status IN (1,2,5,7) AND a.send_company_id IS NOT NULL AND a.company_id<>a.send_company_id;
+```
+Đo local 12/10: chéo dở **30** (dữ liệu local chưa dọn — production phải về 0).
+
+## 9. Ngày triển khai (sau bước 6.1 phần 1)
+
+| # | Việc | Lệnh | Đạt khi | Đo local 12/10 |
+|---|---|---|---|---|
+| 9.1 | Kiểm trùng trước UNIQUE (chỉ đọc) | `SELECT COUNT(*) FROM (SELECT price_calculate_request_id FROM price_calculates GROUP BY 1 HAVING COUNT(*)>1) x;` · tương tự `price_calculate_results` theo `price_calculate_id` · lại SQL D1 ở mục 8 | trùng = **0**, chéo dở = **0** | trùng 0 / 0 · phiếu thiếu hãng 20 (backfill tự lấy hãng dòng đầu) |
+| 9.2 | 12 migration Phase 7 (theo thứ tự tên file) | `php artisan migrate --force` (lúc này chỉ còn 12 file `2026_10_11_*` đang chờ — kiểm `migrate:status` trước) | `migrate:status \| grep "\| No"` rỗng | mỗi file 0,4–0,7 s; tổng ≈ 6 s. M6/M8 tự kiểm trùng, có trùng thì dừng kèm danh sách id |
+| 9.3 | Quyền — **KHÔNG** `PermissionsTableSeeder` | `php artisan db:seed --force --class="Modules\MasterData\Database\Seeders\InternalPricePolicyPermissionSeeder"` rồi `…\PriceCalculationPermissionSeeder` | chèn **1656** + **1662 · 1663 · 1664**; chạy lại "chèn 0 dòng" | 0,4 s mỗi lệnh; chạy lại 0 dòng |
+| 9.4 | Backfill nhóm YCHG — dry-run | `php artisan price-asking:backfill-groups --dry-run` | số khớp bảng dưới (production đo lại) | 1,8 s |
+| 9.5 | Backfill nhóm — chạy thật | `php artisan price-asking:backfill-groups` | = dry-run | 5,8 s |
+| 9.6 | Kiểm idempotent | `php artisan price-asking:backfill-groups --dry-run` | **0** mọi dòng | 0 |
+| 9.7 | Đóng nhóm cũ dở — dry-run | `php artisan price-asking:close-stale --before=2026-06-01 --dry-run` | xem số, "CHƯA backfill nhóm" = 0 | 45 nhóm / 45 phiếu (st1 10 · st5 13 · st7 22); 22 nhóm có YCTG, 1 có PTG nháp (giữ nguyên) |
+| 9.8 | Đóng nhóm cũ — chạy thật (`--by` bắt buộc = employees.id người chạy, T3-Q6) | `php artisan price-asking:close-stale --before=2026-06-01 --by=13` | = dry-run; chạy lại dry-run = 0 | 0,4 s; lại = 0 |
+| 9.9 | Deploy ERP chặn luồng tính giá (cùng lần deploy ERP của phần 1) | ERP nhánh release có commit T7 · `php artisan config:clear && route:clear && view:clear` | `/admin/orders/price_asking_requests` ⇒ trang "Chức năng đã chuyển sang HRM" 1 link HRM | — |
+| 9.10 | Gán quyền 1656 / 1662 / 1663 / 1664 cho vai trò nghiệp vụ theo công ty (quản trị) + `permission:cache-reset` | màn phân quyền HRM | PTKD / XNK / KTMH thấy menu | — |
+| 9.11 | Nhắc nghiệp vụ | công ty **2 / 5 / 6 / 7 / 8 chưa có phân công XNK** ⇒ không gửi được YCHG tới khi khai phân công | — | — |
+
+Bảng số dry-run 9.4 (local 12/10 — trùng T2 trên giacty 11/10):
+
+| Mục | Số |
+|---|---:|
+| Phiếu xử lý = nhóm sinh ra | 4.029 |
+| Dòng hàng gán group_id | 6.729 |
+| YCTG gán group_id | 3.147 |
+| Log gán group_id | 10.029 |
+| YCTG bị Kế toán trả 3 ⇒ 5 | 21 |
+| Hãng lấy theo dòng hàng đầu | 20 |
+| Phiếu st1 đã có YCTG ⇒ nhóm 7 | 6 |
+| XNK = người XNK đã duyệt / phân công công ty gửi tới / phân công công ty phiếu / không xác định | 3.530 / 435 / 26 / 38 |
+| Trạng thái nhóm | NULL 548 · 1: 67 · 4: 3.119 · 5: 41 · 6: 155 · 7: 28 · 9: 71 |
+
+**Khói phần 2 (5 phút):** HRM `/sale/price-asking-requests` (danh sách có nhóm) · `/sale/price-calculate-requests` · `/finance/price-calculates` mở được;
+1 YCHG cũ đã tính giá ⇒ nhóm "Đã tính giá", bấm "In kết quả" ra KQ · ERP `/admin/orders/price_calculates` ⇒ trang báo 1 link HRM ·
+trang chủ ERP không còn 3 thẻ Yêu cầu hỏi giá / tính giá chờ duyệt.
+
+**Thời gian kỹ thuật phần 2 (local): ≈ 15 s** (migrate 6 s · seed 1 s · backfill nhóm 8 s · close-stale 1 s). Tổng 2 phần ≈ 2,5 phút + sao lưu.
+
+## Nhật ký chạy thử phần 1 + 2 (12/10/2026, local, `hrm_erp_runbook7`)
+
+| Bước | Thời gian | Kết quả |
+|---|---:|---|
+| Sao chép `hrm_erp` ⇒ `hrm_erp_runbook7` (`mysqldump --single-transaction … \| mysql`) | 505 s | 1.869 / 1.869 bảng |
+| (chỉ local) `migrate:rollback --step=2` | 1,5 s | còn chờ đúng 15 migration của feature (M1–M3 + 12 Phase 7) |
+| M1 / M2 | 0,5 s / 2,2 s | |
+| backfill giá dry-run / thật | 5,9 s / 46,4 s | **TỔNG GHI 1.042.374** = dry-run = lần 10/10; B0 = 0; B6 đạt |
+| compare | 13,1 s | **0 lệch** (§3.3 23.492) |
+| M3 | 13,7 s | |
+| seed 1657/1658 | 1,7 s | chèn 2 |
+| kiểm 9.1 | 0,5 s | trùng 0 / 0 · chéo dở 30 (local) · thiếu hãng 20 |
+| 12 migration Phase 7 (`--path` từng file) | ≈ 6 s | đều đạt |
+| seed 1656 / 1662–1664 / chạy lại | 0,4 / 0,4 / 0,3 s | 1 / 3 / 0 dòng |
+| backfill nhóm dry / thật / dry lại | 2,2 / 6,2 / 0,4 s | 4.029 nhóm = bảng 9.4; lại 0 |
+| close-stale dry / thật `--by=13` / dry lại | 0,4 × 3 s | 45 / 45 / 0 |
+| Cuối | | `migrate:status` 0 chờ · batch 444 · `upp` 789.765 · `pcu` 133.101 · nhóm 4.029 · đủ 6 quyền |
+| Dọn | | `DROP DATABASE hrm_erp_runbook7`; `hrm_erp` gốc không đổi (batch 431, `upp` 264.646, `pcu` 0, chưa có bảng nhóm) |
+
+---
+
+# Phần 3 — Hàng tạm (Phase 6) — cùng cửa sổ bảo trì
+
+- **Không migration, không seeder, không quyền mới.** Trạng thái hàng tạm 6/7/8 nằm ở cột `product_company_coefficients.status` có sẵn.
+- **ĐIỀU KIỆN CHẶN GO-LIVE (nghiệp vụ):** nhập cây phân loại (Tính chất · Nhóm chức năng · Nhóm SP · Loại SP) + danh mục **Đặc tính** — local đo 12/10: Loại SP 0, Đặc tính 0 ⇒ không tạo được hàng hoá/hàng tạm (`viec-con-lai.md` B5, B6).
+- Trước ngày chuyển: dọn hàng tạm ERP đang **chờ duyệt** (`tmp_products.status = 2`, local 1 dòng) ở ERP (duyệt nốt hoặc từ chối).
+- Deploy ERP chặn hàng tạm (Phase 6 T8) cùng lần deploy ERP của phần 1–2; `config:clear && route:clear && view:clear`.
+- Gán quyền PTKD duyệt YCHG (1662) như phần 2 — PTKD duyệt hàng tạm bằng chính quyền này.
+- Khói: HRM `/master-data/products/temp` mở được; YCHG có nút "Thêm hàng tạm"; ERP `/admin/tmp_products/{id}/edit` ⇒ trang "Chức năng đã chuyển sang HRM".

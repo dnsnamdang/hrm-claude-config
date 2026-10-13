@@ -103,8 +103,13 @@ ERP: không chỗ nào xử riêng mã 2; popup chọn hàng lọc `= 3` ⇒ 5 b
   0 nhóm mở trước mốc; nhóm sau mốc không đụng (1: 57 · 5: 28 · 7: 6). Chạy lại ghi 0. Phần đầu phiếu sau chạy: 1: 59 · 5: 28 · 7: 4 · 6: 200.
   Điểm tự chốt "mọi nhóm đóng ⇒ 4 nếu có nhóm có giá, không thì 6" — ✅ user duyệt 11/10.
 
-### Checkpoint — 2026-10-11
-Vừa hoàn thành: T2 (code + migrate/seed/backfill giacty + PHPUnit 372/372 + Playwright) — merge LOCAL nhánh chung.
+### Checkpoint — 2026-10-11 (wrap up)
+Vừa hoàn thành: T2 xong — code + DB giacty (migrate, seed 1662–1664, backfill 4.029 nhóm, close-stale THẬT 45 nhóm) + PHPUnit 372/372 + Playwright;
+merge LOCAL nhánh chung api `ee6928c96`, client `fd7a87d4d` (chưa push); tài liệu đã push hrm-claude-config `26189ed`.
 Đang làm dở: không.
-Bước tiếp theo: user đánh giá kết quả close-stale trên giacty (log created_by = 0) · push khi user cho · plan T3 (YCHG).
+Bước tiếp theo: user đánh giá kết quả close-stale (log `created_by` = 0) · push code khi user báo · plan T3 YCHG.
 Blocked: —
+
+### Sau wrap up — 11/10/2026 (user chốt)
+- Log close-stale: user chốt **created_by = 13** ⇒ đã UPDATE trên giacty: 45 log (id 19684–19728) `created_by` 0 ⇒ 13; 45 nhóm "Chuyển hệ thống" `closed_by`/`updated_by` NULL ⇒ 13. Production: xem T3-Q6.
+- Code nhánh chung: **giữ local**, chưa push. Role tạm `T1_UAT_NAMDANG` (107124): **giữ** để user tự test.

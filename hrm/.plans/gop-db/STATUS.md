@@ -66,6 +66,15 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 2. `bank-account-catalog` (@khoipv) có design.md + plan.md, code đã xong nhưng **chưa có mục trong STATUS.md này**
    → nhờ @khoipv bổ sung.
 
+⚠️ **13/10/2026 — route lịch sử dùng chung chưa gate quyền (phát hiện khi soát feature hàng hoá, N64):**
+`GET /api/v1/catalog-histories/{table}/{id}` (hrm-api `routes/api.php:44-47`, `CatalogHistoryService::TABLES`) chỉ cần đăng nhập, không kiểm quyền, không lọc công ty
+⇒ đọc được lịch sử ~90 bảng, gồm phiếu thu/chi, UNC, tài khoản ngân hàng, công nợ đầu kỳ (có số tiền), chỉ cần đoán id. User 13/10: làm SAU, việc riêng
+(hướng: khoá `permission` cho từng mục TABLES nhạy cảm + lọc công ty). Phần hàng hoá/giá đã an toàn (`GATED_TABLES`).
+
+⚠️ **13/10/2026 — ERP trang xem YC xuất hàng lộ số liệu tài chính hợp đồng (N80, phát hiện khi soát N77):**
+`warehouse/product_export_requests/{id}/show` nhúng nguyên khối hiệu quả HĐ vào JSON trang (`cost_price` = tổng giá vốn HĐ, hoa hồng, chi phí…;
+VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là thấy. User 13/10: làm SAU, việc riêng (thu gọn dữ liệu HĐ nhúng trang, rà các màn kho tương tự).
+
 ## Đang làm
 
 - quan-ly-hang-hoa / **Phase 7 Luồng tính giá** (4 chứng từ YCHG → YCTG → PTG → KQ) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/luong-tinh-gia/design.md
@@ -74,11 +83,86 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
   merge LOCAL nhánh chung `feat/chuyen-doi-hang-hoa` — api `d50ccd8b5` (+3 so origin), client `0450fc8f7` (+9). 3 bảng `internal_price_policies*` +
   quyền 1656 đã chạy giacty. Màn `/sale/internal-price-policies` (Bán hàng › Quy chế - Thiết lập › Quy chế kinh doanh). PHPUnit MasterData 358/358,
   e2e `HRM/e2e/tests/sale/internal-price-policy.spec.ts` 8/8 (worktree: `BASE_URL=:3031 API_BASE=:8031 API_REPO=… --project=chromium --no-deps --workers=1`).
-  ### Checkpoint — 2026-10-11 (wrap up)
-  Vừa hoàn thành: T1 Chính sách giá bán nội bộ (BE + FE + 3 vòng sửa theo user: chuyển menu, tiêu đề vào topbar ⓘ, hàng lọc 100%) + e2e 8/8.
-  Đang làm dở: không. Role tạm `T1_UAT_NAMDANG` (id 107124, quyền 1656, gán namdangit cty 1+4) còn trên giacty — user: CHƯA gỡ.
-  Bước tiếp theo (ca sau): (1) user chốt P2 "CÓ CHẶN" hãng chưa nhập đủ + dấu * ở cột thông tin — XÁC NHẬN "đủ" = mọi công ty mua hay ≥ 1, rồi xin "làm" (sửa BE validate + FE cột *); (2) push: CHỜ user báo;
-  (3) plan T2 Nền CSDL luồng (bảng nhóm hãng, cột mới, `pcc.status=5`, quyền 1662–1664, lệnh backfill/close-stale) ⇒ xin "làm".
+  **P2 XONG 11/10** (≥ 1 công ty mua có đủ 2 tỷ lệ; merge LOCAL api `6b7388ebb`, client `8dbd35ec1`).
+  **T2 Nền CSDL luồng XONG 11/10** (`luong-tinh-gia/t2-plan.md`; T2-Q1 module MasterData, T2-Q2 hàng 2/5 ở màn Nhập thông tin): 9 migration + 16 model,
+  mã `pcc.status=5` (vá lỗ G4 sửa giá hàng mã 5), quyền 1662–1664 (seeder riêng), lệnh `price-asking:backfill-groups` + `close-stale`; PHPUnit MasterData 372/372;
+  giacty: migrate + seed + backfill 4.029 nhóm + close-stale THẬT 45 nhóm (user yêu cầu để đánh giá; sao lưu `wt-chuyen-doi-hang-hoa/backup-t2-20261011-1424/`).
+  Merge LOCAL api `ee6928c96`, client `fd7a87d4d` — code CHƯA push. Tài liệu đã push hrm-claude-config `26189ed`.
+  **T3 YCHG XONG 11/10** (`luong-tinh-gia/t3-plan.md`; chốt T3-Q1..Q6): BE 6 lớp `Services/PriceCalculation/` + 12 route `master-data/price-asking-requests`,
+  FE `/sale/price-asking-requests` (danh sách cây nhóm, Thêm/Sửa/Chi tiết, popup chọn hàng + lý do) + tick hàng ở màn Nhập thông tin / Đang KD; close-stale `--by` (T3-Q6).
+  PHPUnit 382/382, Playwright MCP đạt (dữ liệu thử đã dọn); e2e `tests/sale/price-asking-request.spec.ts` viết, chưa chạy. Merge LOCAL api `731db49f1`, client `92bc61723` — CHƯA push.
+  giacty: log close-stale + 45 nhóm đã ghi người chạy = 13 (user chốt). Role `T1_UAT_NAMDANG` giữ cho user test.
+  **T4 YCTG XONG 11/10** (`luong-tinh-gia/t4-plan.md`; chốt T4-Q1 bỏ ô tick · Q2 xem KQ ở T4, Tạm tính T5 · Q3 xoá chỉ Đang tạo · Q4 menu sau YC hỏi giá):
+  `/sale/price-calculate-requests` (danh sách, form 2 tab, popup chọn nhóm), KTMH Từ chối, "Chi tiết kết quả" dùng chung YCHG + YCTG, nút Lập YCTG ở YCHG.
+  PHPUnit 389/389, Playwright MCP đạt (dữ liệu thử đã dọn); e2e T3 + T4 **12/12 passed** (11/10). Merge LOCAL api `e94ebec84`, client `23ebfa9d7` — CHƯA push.
+  **T5 PTG XONG 11/10** (`luong-tinh-gia/t5-plan.md`; chốt T5-Q1 KTMH sửa số XNK như ERP · T5-Q2 cho xoá PTG Đang tạo; C14 / C15 user xác nhận):
+  `/finance/price-calculates` (danh sách, form 3 tab, Tạm tính), tách lõi ghi giá `ProductPriceWriter`, G5 báo ngược dòng PTG (giá thực áp), chặn chéo G4 ↔ PTG ↔ PTG,
+  KQ + đóng nhóm / YCHG. PHPUnit 396/396, Playwright MCP đạt (dữ liệu thử đã dọn). Merge LOCAL api `9e738e18f`, client `7bd5aa626` — CHƯA push (api +21, client +19).
+  e2e `tests/finance/price-calculate.spec.ts` + T4 **13/13 passed** (11/10); spec T4 đổi selector `.price-input-table`. Không có e2e riêng G4/G5 (PHPUnit phủ).
+  **T6 Bản in XONG 12/10** (`luong-tinh-gia/t6-plan.md`; T6-Q1 cả 4 chứng từ dùng blade `_layout`): 4 route print-data, nút In / In kết quả ở YCHG / YCTG / PTG.
+  PHPUnit 397/397; đo 4 bản in đạt. Merge api `1e194fe5c`, client `58965aa63` — **ĐÃ PUSH nhánh chung 12/10** (T1–T6; KHÔNG vào gop_db). e2e T3 + T4 + T5 (có ca In) **19/19 passed** 12/10.
+  "In" ở menu dòng 3 danh sách đã đo 12/10 (đạt).
+  **13/10 VIỆC NGOÀI LUỒNG (bảng C)**: soát 38 mục + chốt 16 câu (`quan-ly-hang-hoa/ngoai-luong/soat-bang-c.md`); A7 (phase 2c/3/4/5) thuộc lần prod này nhưng làm SAU.
+  Đợt **C-a** (N61 N59 N54 N62 N60 N68 N58 N63 N67) + **C-a2** (N77 giá vốn lộ qua trang chứng từ, `ProductUnit::$hidden`; N77-b) XONG — ERP nhánh chung `feat/2d1-erp-khong-loi` **ĐÃ PUSH** `3f017e66dd` (kéo gop_db `43c8a09fbf`).
+  Đợt **C-b** (chặn ghi 9 danh mục + pi-* ở ERP, N32 lan thuế HRM, N33, N42, N78): khảo sát + chốt C-b-1…5 xong (`ngoai-luong/cb-khao-sat.md`), plan `ngoai-luong/cb-plan.md` — CHỜ "làm".
+  **C-d XONG 13/10** (`ngoai-luong/cd-plan.md`): N27 N14 N13 N74 N73 N75 + A8 — merge LOCAL nhánh chung api `72f350cd8`, client `baad69b58` + api `bbc4cf8b2` (provision quyền giá vốn) — **ĐÃ PUSH nhánh chung 13/10** (api `bbc4cf8b2`, client `baad69b58`).
+  Đời xe 7338: mở bước 2,3s → 0,8s, lưu BE ~3,3s → 0,8s. e2e 7 spec: 41 qua · 2 bỏ qua (13/10). Ngoài luồng mới N82–N88 ghi ở cuối cd-plan.
+  **C-c XONG 13/10** (`ngoai-luong/cc-plan.md`): N41 N43 N44 (gỡ hết xuất hàng hoá ERP — user) N45 N46 N49 N50 N51 + N39 tài liệu — + N89 gỡ xuất hàng tạm — **ĐÃ PUSH** ERP `ad57aec450`. PHPUnit ERP 94/94. hrm-claude-config `c1bd5c8` (CLAUDE.md ERP) chưa push.
+  ### Checkpoint — 2026-10-13 (C-c)
+  Vừa hoàn thành: C-c code + PHPUnit + Playwright ERP 8090 trước/sau — merge local ERP.
+  Đang làm dở: không. Server 8090 tắt, role tạm gỡ.
+  Bước tiếp theo: C-e (N1 bảo hành / tồn tối thiểu theo công ty) · C-f · A7.
+  Blocked: —
+  ### Checkpoint — 2026-10-13 (C-d)
+  Vừa hoàn thành: C-d code + PHPUnit + Playwright MCP + đo BE — merge local.
+  Đang làm dở: không. Server 8031 / 3031 đang chạy.
+  Bước tiếp theo: C-c · C-e · C-f · A7 (đã push C-d).
+  Blocked: —
+  ### Checkpoint — 2026-10-13 (wrap up 6)
+  Vừa hoàn thành: C-b (chặn ghi 9 danh mục + pi-* 6 nhóm + N81 pi-groups/brands/manufactures, menu 12 link HRM, 10 màn danh sách bỏ nút ghi,
+  N78 Quy chế, HRM N32 lan thuế) — ĐÃ PUSH ERP `42bbe92ae2`, HRM api `5d109a505`. Khảo sát + chốt C-d-1…3 + mockup `ngoai-luong/mockup-doi-xe.html` + plan `ngoai-luong/cd-plan.md`.
+  Đang làm dở: không (C-d chưa mở nhánh, chưa sửa source). Server ERP 8090 đã tắt; HRM 8031/3031 vẫn chạy.
+  Bước tiếp theo: user duyệt mockup đời xe + cho "làm" C-d (kèm hỏi có CHẠY e2e không) ⇒ code BE/FE ⇒ Playwright 7338/7578 ⇒ PHPUnit; sau đó C-c · C-e · C-f · A7.
+  Blocked: chờ user duyệt mockup + "làm".
+  ### Checkpoint — 2026-10-13 (wrap up 5)
+  Vừa hoàn thành: C-a + C-a2 (code, PHPUnit ERP 89/1 đỏ sẵn, Playwright ERP 8090, checksum) — đã push; khảo sát + chốt + plan C-b.
+  Đang làm dở: không. Role tạm đã gỡ, server 8090 đã tắt; HRM 8031/3031 vẫn chạy.
+  Bước tiếp theo: xin "làm" plan C-b (ERP `feat/cb-chan-ghi-danh-muc` + HRM `feat/cb-thue-suat-lan`) ⇒ code ⇒ kiểm; sau đó C-d (HRM) · C-c (lỗi cũ ERP, kèm đo lại bố cục chi tiết hàng hoá sau N51) · C-e (N1) · C-f (dữ liệu/runbook) · rồi A7.
+  Ghi riêng làm sau (ngoài hàng hoá): route lịch sử chung chưa gate (N64), YC xuất hàng lộ tài chính HĐ (N80) — mục Lưu ý đầu file.
+  Blocked: —
+  ### Checkpoint — 2026-10-12 (wrap up 4)
+  Vừa hoàn thành: T5 PTG + T6 Bản in (code, PHPUnit 397/397, Playwright MCP, e2e T3 + T4 + T5 19/19) — ĐÃ PUSH nhánh chung `feat/chuyen-doi-hang-hoa`
+  (api `1e194fe5c`, client `58965aa63`). Spec e2e ở `HRM/e2e/tests/{sale,finance}/price-*.spec.ts` (ngoài git).
+  Đang làm dở: không. Dữ liệu thử / role tạm đã dọn; quy chế công ty 1 về gốc; `.env` worktree về gốc (không `ERP_URL`). Server 8031 / 3031 đang chạy.
+  Bước tiếp theo: plan T7 (chặn ERP 4 chứng từ — middleware `ProductMovedToHrm`, 41 route giữ tên, 5 link topmenubar, bỏ 3 thẻ dashboard, gỡ `PriceCalculate.*`
+  khỏi miễn audit; nghiệm thu tổng; chạy thử runbook §11 trên bản sao DB tạm rồi DROP) ⇒ hỏi tồn ⇒ xin "làm".
+  Blocked: —
+  ### Checkpoint — 2026-10-11 (T5)
+  Vừa hoàn thành: T5 PTG (code + kiểm + merge local).
+  Đang làm dở: không.
+  Bước tiếp theo: user soát PTG trên 3031 · push khi user báo · plan T6 Bản in.
+  Blocked: —
+  ### Checkpoint — 2026-10-11 (wrap up 3)
+  Vừa hoàn thành: T3 YCHG + T4 YCTG (code, PHPUnit MasterData 389/389, Playwright MCP, e2e T3 + T4 12/12) — merge LOCAL nhánh chung
+  api `e94ebec84` · client `23ebfa9d7` (api +18, client +17 so origin, CHƯA push). Spec e2e ở `HRM/e2e/tests/sale/price-{asking,calculate}-request.spec.ts` (ngoài git).
+  Đang làm dở: không. Server worktree api 8031 / Nuxt 3031 đang chạy; giacty sạch dữ liệu thử; role `T1_UAT_NAMDANG` giữ cho user test.
+  Bước tiếp theo: user soát YCHG / YCTG trên 3031 · push khi user báo · plan T5 PTG (+ Tạm tính, nút KTMH "Tính giá", refactor ghi giá G4/G5 §5) ⇒ hỏi tồn ⇒ xin "làm".
+  Blocked: —
+  ### Checkpoint — 2026-10-11 (T4)
+  Vừa hoàn thành: T4 YCTG (code + kiểm + merge local).
+  Đang làm dở: không.
+  Bước tiếp theo: user soát YCTG · chạy e2e T3 + T4 khi user cho · push khi user báo · plan T5 PTG.
+  Blocked: —
+  ### Checkpoint — 2026-10-11 (T3)
+  Vừa hoàn thành: T3 YCHG (code + kiểm + merge local).
+  Đang làm dở: không.
+  Bước tiếp theo: user soát YCHG trên 3031 · chạy e2e khi user cho · push khi user báo · plan T4 YCTG.
+  Blocked: —
+  ### Checkpoint — 2026-10-11 (wrap up 2)
+  Vừa hoàn thành: P2 + T2 (code, DB giacty, PHPUnit 372/372, Playwright) + chạy thật close-stale trên giacty; user duyệt T2-C1 + điểm tự chốt phần đầu phiếu.
+  Đang làm dở: không. Role tạm `T1_UAT_NAMDANG` (id 107124) còn trên giacty — user chưa cho gỡ. Server worktree api 8031 / Nuxt 3031 đang chạy.
+  Bước tiếp theo: (1) user đánh giá kết quả close-stale (log `created_by` = 0 ⇒ T3 hiện "Hệ thống" hoặc thêm `--by`); (2) push code nhánh chung: CHỜ user báo;
+  (3) plan T3 YCHG (BE + 2 màn + nút ở màn hàng hoá + thông báo) ⇒ hỏi tồn ⇒ xin "làm". e2e mới (products-read api 3b, ui ô lọc entering; P2b) chưa chạy.
   Blocked: —
 
 - meeting-theo-doi-tuong → @namdangit → .plans/gop-db/meeting-theo-doi-tuong/design.md

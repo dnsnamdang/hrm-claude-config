@@ -176,7 +176,7 @@ Tên ≤ 50, câu ≤ 120 ký tự (skill notification-convention).
 
 ## 9. Bản in (Q17) — popup `ReportPrintPreviewModal` + endpoint `print-data`
 
-YCHG (mẫu 98) · YCTG (mẫu 99) dùng `report_templates` sẵn có; PTG + KQ dựng blade `prints/_layout` (không thêm dòng `report_templates`). Letterhead theo công ty phiếu. Theo skill print-page.
+~~YCHG (mẫu 98) · YCTG (mẫu 99) dùng `report_templates` sẵn có;~~ 🔄 **T6-Q1 (11/10): cả 4 chứng từ dựng blade `prints/_layout`** (khớp mockup — letterhead ngang + khối ký); mẫu ERP 98/99 giữ nguyên, không dùng; không thêm dòng `report_templates`. Letterhead theo công ty phiếu. Theo skill print-page.
 
 ## 10. ERP (chặn — đợt T7)
 
@@ -204,7 +204,7 @@ YCHG (mẫu 98) · YCTG (mẫu 99) dùng `report_templates` sẵn có; PTG + KQ 
 | **T6** | Bản in 4 chứng từ | api + client | — | in thử 4 mẫu, đo bản in |
 | **T7** | Chặn ERP + nghiệm thu tổng + chạy thử runbook trên bản sao tạm rồi DROP | ERP + api | bản sao tạm | checklist §10, §11 |
 
-Thứ tự: T1 → T2 → T3 → T4 → T5 → T6 → T7. Mỗi đợt nhánh con từ nhánh chung, merge LOCAL về nhánh chung, push khi user cho.
+Thứ tự: T1 → T2 → T3 → T4 → T5 → T6 → T7. **Tiến độ 12/10: T1–T7 XONG — Phase 7 xong (local).** T1–T6 đã push nhánh chung (api `1e194fe5c`, client `58965aa63`); T7 ERP merge LOCAL `443c812553` (chưa push). Mỗi đợt nhánh con từ nhánh chung, merge LOCAL về nhánh chung, push khi user cho.
 
 ## 13. Rủi ro / để ý
 
