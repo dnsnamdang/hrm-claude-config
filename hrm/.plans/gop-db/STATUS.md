@@ -89,9 +89,38 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Endpoint chọn Dự án TKT phân trang `options-for-meeting` dùng chung web + app (thay `getForMeeting?per_page=10000`). Bắt đầu 14/10/2026.
   Trạng thái: 🟢 Đã PUSH gop_db 15/10 (api d62a22bd7) — đủ Phase 1–4, Phase 3 đã gỡ getForMeeting, migration index đã chạy hrm_erp.
 
+- phieu-nhap-kho (#11693) → @junfoke → .plans/gop-db/phieu-nhap-kho/plan.md
+  Trạng thái: 🔵 **Khảo sát + kế hoạch xong (15/10/2026), CHƯA code** — chờ user chốt Q1–Q13 (spec mục 10).
+  Scope đề xuất đợt 1: port màn **Phiếu nhập kho** ERP `warehouse_imports` (PNK) — danh sách + Excel, tạo từ ĐNNK, phiếu đi xếp hàng,
+  nhập kho Lưu/Gửi (ghi tồn), chi tiết, Không duyệt, Hủy, In (mẫu ERP 46/30), lịch sử; nối nút ĐNNK → PNK nội bộ + menu `finance.js:153`. ~21 công.
+  Để ERP: barcode, xuất lại/nhập lại, 2 màn thừa thiếu. 0 bảng mới, 0 migration, 3 quyền `api` mới (chờ chốt).
+  ⚠️ GOTCHA: lần đầu HRM ghi **tồn vật lý 8 bảng** (`stocks`, `stock_positions`… `stock_position_detail_logs`) — cần `PhysicalStockWriter` dùng chung (chờ user OK) + đối chiếu song song ERP↔HRM.
+  Spec: docs/superpowers/specs/gop-db/2026-10-15-phieu-nhap-kho-design.md | Tóm tắt: .plans/gop-db/phieu-nhap-kho/design.md
+
+- decision-appendix-print-template (#10894) → @junfoke → .plans/gop-db/decision-appendix-print-template/plan.md
+  Trạng thái: 🟡 **Xong BE + FE (09/10/2026)**, nhánh `gop_db`, CHƯA commit. BE verify tinker (3/4 loại QĐ); FE mới parse cú pháp, CHƯA xem trên trình duyệt.
+  Scope: tab "Mẫu in PLHĐ" trên 4 loại QĐ + trường/bộ lọc "PLHĐ của quyết định" ở danh mục mẫu in; duyệt QĐ tự sinh PLHĐ lại (tắt từ 13/07, `aac01d75c`), thiếu mẫu → chặn 422.
+  ⚠️ GOTCHA: mẫu PLHĐ có sẵn (id 17, 46) chưa gắn loại QĐ → lên bản là tab trống, không tạo được QĐ 4 loại tới khi HR gắn.
+  Spec: docs/superpowers/specs/gop-db/2026-10-09-decision-appendix-print-template-design.md | Tóm tắt: .plans/gop-db/decision-appendix-print-template/design.md
+
+- presale-customer-registers → @junfoke → .plans/gop-db/presale-customer-registers/plan.md
+  Trạng thái: 🟢 **Xong BE + FE, khớp ERP + Playwright (08/10/2026)**, nhánh `develop`, CHƯA commit.
+  Còn: admin gán quyền 1526 (Xem danh sách khách hàng đã đăng ký) cho vai trò.
+  Tóm tắt: .plans/gop-db/presale-customer-registers/design.md
+
+- sale-customer-debt-reports → @junfoke → .plans/gop-db/sale-customer-debt-reports/plan.md
+  Trạng thái: 🟢 **Xong cả 3 màn (Chi tiết / Theo NV / Đối chiếu 1 KH) BE + FE, khớp ERP + Playwright (07/10/2026)**, nhánh `develop`, CHƯA commit.
+  Còn: chạy SQL quyền 1683-1694 trên server + gán vai trò.
+  Spec: docs/superpowers/specs/gop-db/2026-10-06-sale-customer-debt-reports-design.md | Tóm tắt: .plans/gop-db/sale-customer-debt-reports/design.md
+
+- permission-seeder-sync → @namdangit → .plans/gop-db/permission-seeder-sync/plan.md
+  Seeder quyền HRM + ERP chuyển từ "xoá hết tạo lại theo id" sang upsert theo `(guard, name)`, khai rõ `RENAMED`/`REMOVED`, có `--dry-run`. Bắt đầu 14/10/2026.
+  Spec: docs/superpowers/specs/gop-db/2026-10-14-permission-seeder-sync-design.md
+  Trạng thái: 🟢 ĐÃ merge gop_db + deploy PROD 15/10/2026 (api 180147fab, ERP bd2a8d4c6a); quyền thực tế prod trước = sau. Đã cleanup prod. Còn: deploy dev, báo team cách khai quyền mới (skill permission-seeder), xoá permission_legacy_ids.php sau khi mọi môi trường đã sync.
+
 - quotation-no-project → @namdangit → .plans/gop-db/quotation-no-project/plan.md
   Báo giá không gắn Dự án TKT (tester 13/10 + #11651): tạo → duyệt → chốt Trúng thầu → Lập hợp đồng. Bắt đầu 13/10/2026.
-  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6). Deploy nhớ chạy migration 2026_10_13_000001.
+  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6) + 14/10 phản hồi tester (api feb3e4cd6, client b98d50568). Deploy nhớ chạy migration 2026_10_13_000001.
 
 - quan-ly-hang-hoa / **Phase 7 Luồng tính giá** (4 chứng từ YCHG → YCTG → PTG → KQ) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/luong-tinh-gia/design.md
   Trạng thái: chốt Q1–Q20 + D1–D13 + P1 (`luong-tinh-gia/ton.md`); mockup T0 + design 7 đợt T1–T7 **user DUYỆT 11/10/2026**.
@@ -2222,6 +2251,15 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- lookup-product-arrived-notifies — chuyển màn ERP "Tổng hợp phiếu báo hàng về" sang HRM (`/lookup/product-arrived-notifies`, Tra cứu - thông báo › Thông báo) → @khoipv → .plans/gop-db/lookup-product-arrived-notifies/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-14-lookup-product-arrived-notifies-design.md)
+  Chuyển Hoàn thành: 2026-10-15.
+
+- report-limit-debt-employees — chuyển màn ERP "Báo cáo hạn mức công nợ nhân viên" sang HRM (`/finance/report-limit-debt-employees`, Kế toán Công nợ › Nhân viên) → @khoipv → .plans/gop-db/report-limit-debt-employees/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-14-report-limit-debt-employees-design.md)
+  Chuyển Hoàn thành: 2026-10-15.
+
+- declare-limit-debts — chuyển màn ERP "Khai báo hạn mức công nợ khách hàng" sang HRM (`/finance/declare-limit-debts`, Kế toán Công nợ › Khách hàng) → @khoipv → .plans/gop-db/declare-limit-debts/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-14-declare-limit-debts-design.md)
+  Chuyển Hoàn thành: 2026-10-15.
+
 - report-limit-debts — chuyển màn ERP "Báo cáo hạn mức công nợ khách hàng" sang HRM, phân hệ Kế toán → Kế toán Công nợ → Khách hàng → @khoipv → .plans/gop-db/report-limit-debts/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-report-limit-debts-design.md)
   Chuyển Hoàn thành: 2026-10-13.
   13/10: BE + FE code xong, đã push develop (api 759f6e652, client 78f4e5ac0), smoke test API pass, compile FE pass. Không quyền, không migration. Sửa 4 lỗi ERP (dư nợ luôn 0, lọc KH sai id, chỉ tiêu đọc cột không tồn tại, popup NVKD sai). Chờ user mở trình duyệt kiểm.
@@ -2269,7 +2307,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Chuyển Hoàn thành: 2026-10-06 — đã push `develop` cả 2 repo. Còn: chạy SQL quyền 1680-1682 trên server · kế toán xác nhận cước không mã công việc.
   Trạng thái: 🟢 **CODE XONG BE + FE, khớp ERP + Playwright (05/10/2026)**, nhánh `develop`. **Đã push `develop`.**
   Port "Báo cáo chi phí vận chuyển theo NV kinh doanh" → `/sale/transport-cost-by-staff`, quyền 1680-1682 (chỉ mở rộng phạm vi).
-  Còn lại: chạy SQL quyền 1680-1682 trên server · kế toán xác nhận 215,7 tr cước không mã công việc (đang loại như ERP).
+  Còn lại: chạy SQL quyền 1680-1682 trên server.
   Spec: docs/superpowers/specs/gop-db/2026-10-05-sale-transport-cost-by-staff-design.md | Tóm tắt: .plans/gop-db/sale-transport-cost-by-staff/design.md
 
 - presale-division-market-report → @junfoke → .plans/gop-db/presale-division-market-report/plan.md

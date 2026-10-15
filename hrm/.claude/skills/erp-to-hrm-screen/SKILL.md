@@ -84,6 +84,10 @@ Skill này khoá 3 thứ lại:
 - **Khai vào seeder chung** `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (lần build nào
   cũng chạy lại seeder này). KHÔNG tạo seeder quyền riêng cho từng màn (kiểu
   `BuyServiceRequestPermissionSeeder` — màn cũ, đừng chép).
+  Từ 14/10/2026 mỗi quyền là 1 dòng `$this->perm([...])` **không có `'id'`** — không còn phải dò/giữ chỗ
+  dải id với nhánh khác; seeder đồng bộ theo tên nên chạy lại không mất gán quyền. Đổi tên → thêm vào
+  `RENAMED`, bỏ quyền → thêm vào `REMOVED` — chi tiết skill `permission-seeder`. Kiểm trước bằng
+  `php artisan permission:sync --dry-run`.
 - **`type` của quyền = `permissionType` của PHÂN HỆ CHÍNH** của màn (tra trong
   `hrm-client/components/subsystems.js`), không theo module chứa code — màn Bán hàng nằm ở
   `Modules/Finance` vẫn là `type` của Bán hàng. Màn phân quyền (`components/setting/Permission.vue`) gom
@@ -391,6 +395,11 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Chữ trong ô để **thường**, kể cả cột Mã — không `font-weight-bold`
 - [ ] Chữ đỏ **chỉ** dùng cho lỗi validate / nút nguy hiểm / giá trị cũ trong lịch sử. Không dùng
       `.text-muted` cho chữ phụ trong khối `v2-styles` (bị ép thành đỏ) → `list-page` §3b-2 / §3b-2b
+- [ ] Checkbox / radio (`V2BaseCheckbox`, `b-form-checkbox`, `custom-control`) KHÔNG tự vá
+      `transform: none` / `top: Npx` cho `.custom-control-label` nữa. Nhãn từng lệch lên nửa dòng do
+      rule toàn cục `input:not(:placeholder-shown) + label` trong `assets/scss/custom-theme.scss` thiếu
+      tiền tố `.mate-field` — đã sửa gốc 06/10/2026. Còn lệch thì đo `getBoundingClientRect` của
+      label / ô tích / nút cùng hàng rồi sửa ở component chung, không vá cục bộ.
 - [ ] Link sang chứng từ khác: màn đích **đã port sang HRM** thì `nuxt-link` tới HRM, KHÔNG link sang ERP
       (#11514); màn đích thuộc luồng khác (Quay lại bên đó cố định về list của nó) → `target="_blank"
       rel="noopener"` (#11373); trong form readonly bọc `.v2-linked-field` → `list-page` §7b
@@ -452,6 +461,10 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Tải tệp: chặn dung lượng ở FE trước khi gửi + khai message `attachments.*.uploaded` tiếng Việt (PHP
       `upload_max_filesize` chặn trước Laravel, trả câu tiếng Anh — #11313); `.xls` đời cũ trượt
       `mimes:xls` → so đuôi `getClientOriginalExtension()` bằng closure
+- [ ] Khoảng cách giữa các DÒNG ô trong khối thông tin (Thêm / Sửa / Chi tiết): mỗi cột ô là
+      `col-md-* mb-2` / `col-12 mb-2` — **`mb-2`, KHÔNG `mb-3`** (user chốt 14/10/2026). Kể cả khi bám
+      màn mẫu đang để `mb-3` (vd `bill-adjust-depts/components/BillAdjustDeptForm.vue`) thì vẫn dùng
+      `mb-2`. (`mb-3` chỉ dùng cho khoảng cách GIỮA các card, không phải giữa các dòng ô.)
 - [ ] Bố cục: không lồng `.container-fluid` ở cả trang vỏ lẫn form con (đệm đôi 12px); không tự khai
       `padding-bottom` chừa footer (V2Footer đã gắn `has-v2-footer`); khối form bám khuôn của màn cùng nhóm
       — nhóm kho / xuất nhập dùng **`V2BaseFormCard`** (khuôn PXG-02188, đoạn mẫu K1 ngay dưới), nhóm khác

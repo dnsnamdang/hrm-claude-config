@@ -4458,3 +4458,11 @@ Vừa hoàn thành: #11629 BE + FE — đã commit + push nhánh `develop` 13/10
 Đang làm dở: không
 Bước tiếp theo: chuyển Redmine #11629 sang "Code xong chờ test"; skill import-excel còn ghi luật cũ — cập nhật qua PR nếu team đồng ý
 Blocked:
+
+### Fix #11629 lượt 2 — Phường/xã báo lỗi SQL "Duplicate entry '13484' for key wards.PRIMARY" khi import — 14/10/2026 (@khoipv)
+User báo trên cổng dev (`/human/wards`, file `Mau_import_phuong_xa (7).xlsx`, 101 dòng): dòng 10 (mã 00008) lỗi SQL thô. Đã đo bằng API dev: id 13484 = "Phường Mẫu 100" do DNS Admin TẠO TAY lúc 15:22 đúng lúc đang import → `WardService::createWards()` cấp id bằng `max(id)+1` (không an toàn đồng thời) nên 2 lượt ghi giành cùng id. Luồng bỏ qua dòng + import tiếp của #11629 vẫn đúng (99/101, dòng 102 trùng tên do chính lượt tạo tay).
+- [x] BE `WardService::createWithNextId()` (mới, `createWards()` gọi): cấp id `max+1` bằng locking read (`lockForUpdate`, để trong transaction REPEATABLE READ vẫn thấy bản ghi người khác vừa commit), gặp 1062 trên PRIMARY → thử lại tối đa 5 lần — áp dụng cả tạo tay lẫn import
+- [x] BE `CatalogImportOutcome::friendlyError()` gọi trong `merge()`: lỗi DB thô (SQLSTATE…) không đưa nguyên câu SQL ra bảng lỗi — đổi câu tiếng Việt, ghi log câu gốc
+- [x] Verify: `php -l` 2 file · smoke DB local (rollback): import 3 phường, "người khác" chèn trước đúng id của dòng 2 → 200, 3/3 thành công, dòng 2 tự lấy id kế tiếp (13469 người khác, 13470 dòng 2); câu SQLSTATE 1062 → câu tiếng Việt, câu lỗi nghiệp vụ giữ nguyên
+- Ghi chú: DB local `wards.id` CÓ auto_increment (comment cũ ghi "không có" — theo môi trường); quét 28 bảng danh mục import khác đều auto_increment, chỉ Phường/xã tự cấp `max+1` trong nhóm này (còn 7 chỗ `max('id')+1` ở Training dùng sinh MÃ, ngoài phạm vi)
+- Chưa commit (chờ user yêu cầu); chưa kiểm trên cổng dev (cần deploy)
