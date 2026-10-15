@@ -1059,3 +1059,38 @@ chặn trần chiều cao -> ô nở vô hạn theo số chip.
 - [x] Đọc task + 5 phản hồi: phiếu xử lý (chứng từ 2) đã được @Manh Cuong vá ở commit `a30080c64` (07/10) và bản build trên dev-hrm ĐÃ có `?type=all`; phản hồi #4 báo thêm lỗi y hệt ở **Lưu nháp phiếu yêu cầu** — chưa sửa
 - [x] `WarrantyRepairRequestForm.vue`: thêm hằng `LIST_URL = '/customer-care/warranty-repair-requests?type=all'` (khuôn giống form phiếu xử lý), dùng cho `url-back` V2Footer, `afterSaveRedirect` sau Lưu nháp / Lưu và gửi, và điều hướng sau Xóa
 - [ ] User kiểm lại trên trình duyệt sau khi deploy (cả 2 màn)
+
+### Redmine #11632 — "Lưu và gửi" báo lỗi nhỏ giọt từng trường (2026-10-14)
+- [x] Nguyên nhân: `submit()` chỉ chặn `customer_id` rồi `return`, phần `required` còn lại để BE trả 422 → user sửa ô này xong bấm lại mới thấy ô tiếp theo (đúng cái CLAUDE.md đã chốt 06/10 là phải bỏ)
+- [x] FE: thêm `collectRequiredErrors(status)` gom lỗi của MỌI ô bắt buộc trong một lượt, map thẳng vào `formError` → tất cả đỏ cùng lúc; tập ô bám đúng `WarrantyRepairRequestRequest::rules()` (Lưu nháp chỉ Khách hàng + Tên thiết bị; Gửi đi thêm Người liên hệ · Địa chỉ sửa chữa · Ghi chú · Phòng tiếp nhận · ≥1 thiết bị · mỗi dòng Nội dung yêu cầu + Serial khi không chọn serial từ danh mục)
+- [x] FE: thêm toast "Bạn chưa nhập đầy đủ thông tin." + `scrollToFirstError(this.$el)` (bảng thiết bị dài thì nhảy tới đúng dòng — skill form-validate mục 3d)
+- [x] Test Playwright trên :3000 (bản `develop`): form trống bấm Lưu và gửi → **6 ô đỏ cùng lúc** (Khách hàng · Người liên hệ · Địa chỉ sửa chữa · Ghi chú · Phòng tiếp nhận · "Vui lòng chọn ít nhất một thiết bị"), trước fix chỉ 1 ô
+- [x] Test theo dòng: 3 dòng thiết bị (dòng 1 thiếu nội dung + serial · dòng 2 đủ · dòng 3 thiếu tên + nội dung, có serial_id nên KHÔNG đòi serial) → ra đúng 8 khoá lỗi, dòng đủ không bị báo oan
+- [x] Test Lưu nháp: chỉ Khách hàng + Tên thiết bị bị chặn, các ô khác để trống vẫn lưu được
+- [ ] User kiểm lại trên dev sau khi deploy
+- 📌 Phát hiện thêm (CHƯA sửa, chờ user chốt vì ngoài phạm vi task): 2 form cùng kiểu chặn sớm — `wr-information-requests/components/WrInformationRequestForm.vue` và `wr-quotations/components/WrQuotationForm.vue`
+
+### Redmine #11632 — làm lại theo hướng user chốt 14/10/2026: FE chỉ lo ĐỊNH DẠNG
+- [x] Bản đầu (commit `cd475b611`) tự kiểm `required` ở FE bằng `collectRequiredErrors()` — **đã bỏ**: user chốt FE không nhân đôi tập `required` vì Lưu nháp không có required, BE đã phân biệt sẵn qua `isSending()`
+- [x] Nguyên nhân thật của lỗi nhỏ giọt: FE **chặn sớm** rồi `return` (ô Khách hàng) nên request không đi lên; máy chủ vốn trả 422 kèm ĐỦ ô thiếu trong một lần
+- [x] `WarrantyRepairRequestForm`: bỏ chặn sớm, giữ `validateAll(null, { vmId: null })` cho rule định dạng, 422 → `formError` + `scrollToFirstError`; bỏ cờ `touched` (không còn chỗ dùng)
+- [x] `WrQuotationForm` (Báo giá): **thiếu hẳn** `validateAll` → rule định dạng của `WrDeviceLinesTable` (ô "Thời gian có vật tư") không chặn khi lưu, đúng bẫy skill form-validate 3c. Đã thêm `validateAll(null, { vmId: null })` + `scrollToFirstError` ở cả nhánh định dạng và nhánh 422
+- [x] `WrInformationRequestForm` (CCTT): thêm `scrollToFirstError` 2 nhánh, bỏ `touched`
+- [x] Sửa lỗi "mất tích": ô chỉ đọc **Người liên hệ** / **Địa chỉ sửa chữa** (và **mẫu điều khoản** ở CCTT) bị BE đòi khi gửi nhưng không có chỗ hiện → người lập chỉ thấy nút Lưu không ăn. Đã thêm dòng lỗi + viền đỏ; địa chỉ gom 2 khoá `customer_address`/`delivery_place` qua computed `diaChiError`
+- [x] Test Playwright trên :3000 — Yêu cầu KT SC-BH: form trống bấm Lưu và gửi → **6 ô đỏ cùng lúc** (câu lỗi do BE trả), Lưu nháp → đúng 1 ô Khách hàng
+- [x] Báo giá: Lưu và duyệt form trống → **4 ô đỏ cùng lúc** (trước khi thêm chỗ hiện lỗi chỉ 2); Lưu nháp → 1 ô
+- [x] CCTT (phiếu `TPE.PCCTT.THU-UI`): bỏ trống 3 ô bắt buộc → **3 ô đỏ cùng lúc** (Người liên hệ · Địa chỉ sửa chữa · Điều khoản); phiếu không bị ghi dữ liệu rỗng (422 chặn, DB giữ nguyên 1.327 ký tự điều khoản)
+- [ ] User kiểm lại trên dev sau khi deploy
+
+### Redmine #11632 — rà lại lần 2 sau khi user nhắc "lỗi BE phải hiện dưới ô, không dùng toast" (14/10/2026)
+- [x] Grep `if (!this.form.` trong hàm submit cả 3 form: còn sót **1 chỗ chặn sớm** ở CCTT (`warranty_repair_handle_request_id`) trong khi BE đã có `required|exists` + đúng câu lỗi đó → đã gỡ, để 422 hiện dưới ô "Phiếu xử lý yêu cầu" (ô đó vốn đã có `fieldError`)
+- [x] Đối chiếu từng khoá `required` của 3 `FormRequest` với chỗ hiện lỗi trên màn — thiếu 2 chỗ, đã vá:
+  - `WarrantyRepairRequestForm`: khoá `customer_address` không có ô riêng (payload lấy từ ô "Địa chỉ sửa chữa") → thêm computed `diaChiError` gom `delivery_place` || `customer_address`
+  - `WrQuotationForm`: ô "Chọn mẫu điều khoản báo giá" (`quotation_term`) BE đòi khi Lưu và duyệt nhưng không có dòng lỗi → đã thêm + viền đỏ
+  - Khoá `customer_name` bỏ qua: hệ quả của `customer_id`, ô gốc đã đỏ
+- [x] `WarrantyRepairRequestForm` vẫn còn cờ `touched` ở 15 chỗ (bản trước chỉ gỡ ở 2 form kia) → gỡ hết; lỗi `required` chỉ đến từ 422 nên không cần
+- [x] Đo lại trên :3000 — Yêu cầu KT SC-BH: form trống + Lưu và gửi → **6 ô đỏ**, Lưu nháp → **1 ô** (Khách hàng); Báo giá: form trống + Lưu và duyệt → **6 ô đỏ** (trước khi vá `quotation_term` là 5)
+- [x] CCTT: gỡ liên kết phiếu gốc rồi gửi → 422 hiện **inline dưới ô "Phiếu xử lý yêu cầu"**, không toast; phiếu 10370 nguyên trạng (status 1, phiếu gốc 5291)
+- [x] Sửa docblock `WarrantyRepairRequestRequest` (còn ghi "FE chỉ gắn required cho Khách hàng")
+- [x] Skill `form-validate`: nói rõ lỗi BE phải hiện dưới đúng ô — toast chỉ là câu nhắc chung, không truyền nội dung lỗi của một trường; khoá là trường ẩn thì gắn dòng lỗi dưới ô chỉ đọc đang hiện mã phiếu
+- [ ] User kiểm lại trên dev sau khi deploy

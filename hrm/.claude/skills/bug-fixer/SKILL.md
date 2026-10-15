@@ -69,7 +69,7 @@ Grep pattern: "ERROR" hoặc "Exception" trong file log ngày hôm nay
 | Triệu chứng | Nguyên nhân thường gặp |
 |---|---|
 | API 500 | Missing relation `with()`, null access, validation fail |
-| API 403 | Thiếu permission trong seeder, sai tên permission |
+| API 403 | Thiếu permission trong seeder, sai tên permission, **vừa đổi tên quyền (`RENAMED`) mà code `checkPermission` / `isShow` menu vẫn dùng tên cũ** (xem skill `permission-seeder`) |
 | FE blank page | Import component sai, missing layout |
 | FE data rỗng | API endpoint sai, response format khác expect |
 | FE không reactive | Dùng `this.obj.newKey = val` thay vì `this.$set()` |

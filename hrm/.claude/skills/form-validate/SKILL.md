@@ -1,6 +1,6 @@
 ---
 name: form-validate
-description: Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form) — validate realtime bằng vee-validate trên component V2Base*, và quy tắc ô bắt buộc validate ở cả FE lẫn BE (Lưu nháp chỉ nới required). Đọc cả khi: Lưu nháp lọt dữ liệu sai định dạng, ô nhập báo lỗi đỏ nhưng bấm Lưu vẫn đi, hoặc cần chốt rule nào chặn ở FE / rule nào phải chặn thêm ở BE
+description: Use when làm form nhập liệu ở màn MỚI của hrm-client (add/edit page, modal form). Luật: FE chỉ validate ĐỊNH DẠNG (realtime bằng vee-validate trên V2Base*), mọi validate khác để BE trả 422; Lưu nháp chỉ cần 1 trường định danh, các kiểu lưu khác required đủ hết. Đọc cả khi: bấm Lưu mà chỉ MỘT ô báo đỏ rồi điền xong bấm lại mới hiện ô tiếp theo (lỗi nhỏ giọt), bấm Lưu không ăn mà không ô nào đỏ, Lưu nháp lọt dữ liệu sai định dạng, ô nhập báo lỗi đỏ nhưng bấm Lưu vẫn đi
 ---
 
 # Skill: Validate Form ở màn mới (vee-validate + V2Base*)
@@ -9,80 +9,97 @@ description: Use when làm form nhập liệu ở màn MỚI của hrm-client (a
 
 ---
 
-## 1. Hai nguyên tắc cốt lõi
+## 1. Chia việc FE / BE (chốt 14/10/2026)
 
-1. **Validate realtime ở FE** bằng `vee-validate` (v2, đã cài sẵn) gắn trực tiếp lên component `V2Base*` — user thấy lỗi ngay khi nhập/rời trường, không phải bấm Lưu mới biết.
-2. **Ô bắt buộc validate ở CẢ FE lẫn BE** (user chốt 06/10/2026 — THAY cho quy tắc cũ "chỉ Tên gắn
-   `required` ở FE, còn lại để BE trả 422").
-   Lý do: để BE trả 422 phần còn lại thì FE chặn sớm ở ô đầu → **chỉ 1 ô báo đỏ, các ô bắt buộc khác im
-   lặng**, user sửa xong bấm lại mới thấy ô tiếp theo (QA báo lặp: #11521, #11377). Bấm Lưu mà để trống
-   thì **mọi ô bắt buộc phải đỏ cùng lúc**.
+**FE chỉ validate ĐỊNH DẠNG — vì cái đó cần báo realtime. Mọi validate còn lại để BE trả về.**
 
-| Loại rule | FE | BE |
-|---|---|---|
-| `required` khi **Lưu / Gửi duyệt** (chính thức) | Gắn `required` cho **mọi** ô bắt buộc, còn lỗi thì không gọi API | Kiểm lại y hệt theo `status`, trả 422 |
-| `required` khi **Lưu nháp** | Chỉ 1 trường đại diện (Tên / trường đã chốt cho màn) | Như FE |
-| `required` **có điều kiện** (tỷ giá khi khác VND…) | Gắn theo điều kiện | Như FE |
-| Định dạng: email, số, số dương, ngày, độ dài, `greater_than`… | Realtime, chặn cả khi nháp | Luôn bật |
-| Ràng buộc nghiệp vụ nhiều trường, trùng mã… | — | BE, map 422 vào `formError` |
+| Loại rule | Ai chặn |
+|---|---|
+| Định dạng: email, số, số dương, ngày, độ dài, `greater_than`… | **FE** realtime (`vee-validate` gắn trên `V2Base*`, chặn trước khi gọi API) **và BE** cũng bật — message 2 bên viết y hệt nhau |
+| `required` | **BE** (`FormRequest` rẽ theo `isSending()`). FE không gắn, chỉ map 422 vào `formError` rồi hiện inline dưới từng ô |
+| Nghiệp vụ: trùng mã, ngày sau > ngày trước, ràng buộc nhiều trường… | **BE**. FE map 422 |
 
-Danh sách ô bắt buộc ở FE **lấy đúng theo rule của FormRequest BE**, không tự bịa — lệch là chặn oan
-hoặc lọt. Form **không có Lưu nháp** (popup danh mục, popup nhập liệu) → FE luôn bắt đủ `required`.
+**`required` nhiều hay ít tuỳ kiểu lưu:**
 
-**Khuôn cho form có Lưu nháp** (đề xuất, chưa có màn mẫu — màn đầu tiên làm xong thì ghi `file:dòng` vào đây):
+| Kiểu lưu | `required` |
+|---|---|
+| **Lưu nháp** | Chỉ **1 trường định danh đại diện** (Tên, hoặc khách hàng / phiếu gốc) |
+| Lưu · Lưu và gửi duyệt · các kiểu lưu khác | **Đủ hết** |
+
+Còn **định dạng và nghiệp vụ thì chặn y như nhau ở mọi kiểu lưu**, kể cả nháp: nháp là bản ghi
+CHƯA ĐỦ, không phải bản ghi SAI. Lưu nháp lọt `time_to_has = "xyzabc"` là cái sai nằm trong DB
+vĩnh viễn, không ai dọn (#11240 — đã lọt thật, phải đi `UPDATE` tay).
+
+Vì sao FE không gắn `required`: gắn thì FE phải tự quản 2 chế độ nháp / chính thức song song với
+`FormRequest` — hai nơi, chắc chắn lệch. Để request đi lên thì Laravel trả 422 kèm **đủ ô thiếu
+trong một lần**, mọi ô đỏ cùng lúc.
+
+**Ngoại lệ — form KHÔNG có Lưu nháp** (popup danh mục, popup nhập liệu): chỉ một chế độ nên không
+sợ lệch, được gắn `required` ở FE cho có realtime. Vẫn phải map 422 của BE.
+
+### Hàm submit — khuôn đúng
 
 ```js
-data() { return { submitMode: 'official' } },          // 'draft' | 'official'
-computed: {
-    // rule object để ghép được với rule định dạng
-    officialRequired() { return this.submitMode !== 'draft' },
-},
-methods: {
-    async save(status) {
-        this.submitMode = status === STATUS_DRAFT ? 'draft' : 'official'
-        this.errors.clear()                              // dọn lỗi required của lần bấm trước
-        await this.$nextTick()                           // để v-validate nhận rule mới
-        // mọi ô lỗi đỏ cùng lúc; vmId: null để quét cả ô trong component con (mục 3c)
-        if (!(await this.$validator.validateAll(null, { vmId: null }))) {
-            return this.$nextTick(() => scrollToFirstError(this.$el))   // import từ utils/scrollToFirstError
-        }
-        // gọi API…
-    },
-},
+// SAI — chặn riêng 1 ô rồi return: request không đi lên, user chỉ thấy MỘT ô đỏ,
+// điền xong bấm lại mới hiện ô tiếp theo (lỗi "nhỏ giọt" — #11521, #11377, #11632)
+if (!this.form.customer_id) {
+    this.formError = { customer_id: 'Bắt buộc phải nhập' }
+    return
+}
 ```
 
-```vue
-<V2BaseInput  v-model="form.name"         v-validate="'required|max:255'" … />                          <!-- trường đại diện -->
-<V2BaseSelect v-model="form.warehouse_id" v-validate="{ required: officialRequired }" … />               <!-- bắt buộc khi chính thức -->
-<V2BaseInput  v-model="form.qty"          v-validate="{ required: officialRequired, positive_integer: true }" … />
+```js
+// ĐÚNG — FE chỉ chặn ĐỊNH DẠNG, rồi để BE trả 422 kèm đủ ô thiếu
+// `vmId: null` để quét cả ô nằm trong component con (mục 3c)
+const dungDinhDang = await this.$validator.validateAll(null, { vmId: null })
+if (!dungDinhDang) {
+    this.$toasted?.global?.error?.({ message: 'Bạn chưa nhập đầy đủ thông tin.' })
+    this.$nextTick(() => scrollToFirstError(this.$el))
+    return
+}
+// … gọi API; catch 422 -> this.formError = data.errors + scrollToFirstError
 ```
 
-### ⚠️ "Lưu nháp" chỉ nới `required` — MỌI rule khác vẫn chặn (chốt 2026-08-28)
+Cờ **`touched` không còn cần**: lỗi `required` chỉ đến từ 422 (tức đã bấm Lưu rồi), lỗi định dạng
+hiện realtime theo tương tác — cả hai đều đúng lúc. Màn đang sửa thì gỡ `touched && fieldError(...)`.
 
-Đây là chỗ hay hiểu sai thành "nháp thì lưu bừa cũng được". Không phải:
+### ⚠️ Mỗi khoá `required` của BE phải có một chỗ hiện lỗi — kể cả ô CHỈ ĐỌC
 
-| | Lưu nháp | Lưu / Gửi chính thức |
-|---|---|---|
-| `required` | Nới — chỉ cần 1 trường đại diện (Tên/mã phiếu gốc) | Đủ mọi ô bắt buộc, ở **cả FE lẫn BE** |
-| **Định dạng** (số, số nguyên dương, ngày, email, độ dài, khoảng giá trị) | **CHẶN** | **CHẶN** |
-| Ràng buộc nghiệp vụ (trùng mã, ngày sau > ngày trước…) | **CHẶN** | **CHẶN** |
+Đây là cái bẫy đắt nhất của luật trên (gặp thật 14/10/2026 ở Báo giá dịch vụ + Phiếu cung cấp
+thông tin): ô **Người liên hệ**, **Địa chỉ sửa chữa** là ô `disabled` tự điền theo khách hàng,
+nhưng `FormRequest` vẫn đòi khi gửi đi. Khách hàng thiếu địa chỉ → 422 trả về mà **không ô nào
+đỏ**, người lập chỉ thấy bấm Lưu không ăn.
 
-Lý do: nháp là bản ghi CHƯA ĐỦ, không phải bản ghi SAI. `time_to_has = "xyzabc"` lưu được thì cái
-sai đó nằm trong DB vĩnh viễn, không ai dọn (Redmine #11240 — đã lọt thật, phải đi `UPDATE` tay).
+- Rà `rules()`: mỗi khoá `required` phải tìm được một `fieldError('<khoá>')` trên màn. Ô chỉ đọc
+  vẫn gắn được dòng lỗi bên dưới.
+- Khoá BE và tên ô **không luôn trùng** (`customer_address` ↔ ô `delivery_place`) → gom bằng computed:
+  ```js
+  diaChiError() {
+      return this.fieldError('customer_address') || this.fieldError('delivery_place')
+  },
+  ```
+- Khoá là **hệ quả** của ô khác (`customer_name` đi kèm `customer_id`) thì bỏ qua — ô gốc đã đỏ.
+- Khoá là **trường ẩn** (id phiếu gốc…) thì gắn dòng lỗi dưới ô chỉ đọc đang hiện mã phiếu đó —
+  **không** đẩy câu lỗi lên toast.
 
-### ⚠️ Rule định dạng phải chặn ở CẢ BE, không chỉ FE
+**Màn mẫu đúng khuôn** (14/10/2026, #11632) — copy theo:
 
-FE chỉ là lớp trải nghiệm. Cùng một rule phải có ở 2 nơi:
+| Màn | File |
+| --- | --- |
+| Yêu cầu kiểm tra sửa chữa – bảo hành | `pages/customer-care/warranty-repair-requests/components/WarrantyRepairRequestForm.vue` (hàm `submit`) |
+| Phiếu cung cấp thông tin làm báo giá | `pages/customer-care/wr-information-requests/components/WrInformationRequestForm.vue` |
+| Báo giá dịch vụ | `pages/customer-care/wr-quotations/components/WrQuotationForm.vue` (computed `diaChiError`) |
+
+### ⚠️ Rule định dạng phải bật ở CẢ BE
+
+FE chỉ là lớp trải nghiệm. Rule định dạng ở BE **không đi theo biến `$required`** (nháp/chính
+thức) — luôn bật:
 
 ```php
-// FormRequest — KHÔNG đi theo biến $required (nháp/chính thức), luôn bật
 $key . '.*.choose_services.*.time_to_has' => 'nullable|integer|min:0',
 ```
 
-Và **message BE viết y hệt message rule FE** ("Giá trị phải là số nguyên dương.") để người dùng
-không thấy 2 câu chữ khác nhau cho cùng một lỗi.
-
-Tự kiểm BE bằng cách gọi thẳng API, bỏ qua giao diện:
+Tự kiểm bằng cách gọi thẳng API, bỏ qua giao diện:
 
 ```js
 const payload = form.buildPayload(1)                       // 1 = trạng thái NHÁP
@@ -317,6 +334,10 @@ có prop `value` và emit `input` — cả `V2BaseInput`, `V2BaseSelect`, `V2Bas
 `V2BaseDatePicker`, `V2BaseTextarea` đều thoả. Vì component không phải native input nên
 **bắt buộc khai `data-vv-name`** (và nên có `data-vv-as` để câu lỗi đọc được):
 
+⚠️ Ví dụ dưới có `required` vì nó là **popup danh mục — form KHÔNG có Lưu nháp** (ngoại lệ ở
+mục 1). Form CÓ Lưu nháp thì chỉ gắn rule định dạng (`max:255`, `positive_integer`…), phần
+`required` để BE trả 422.
+
 ```vue
 <V2BaseLabel required>Tên dự án</V2BaseLabel>
 <V2BaseInput
@@ -334,8 +355,8 @@ có prop `value` và emit `input` — cả `V2BaseInput`, `V2BaseSelect`, `V2Bas
 - `data-vv-value-path="currentValue"` — dùng computed của V2Base* để chạy đúng cho cả `v-model` lẫn `:model-value`.
 - `errors.first(...)` = lỗi FE realtime; `formError.<field>` = lỗi BE trả về. Ưu tiên hiện lỗi FE trước.
 - Không có `classes: true` trong config → muốn viền đỏ thì tự bind `:class="{ 'is-invalid': errors.has('...') }"`.
-- Select/DatePicker: chỉ validate realtime khi giá trị đổi, nhưng `validateAll()` lúc bấm Lưu vẫn kiểm
-  chúng → gắn `required` cho select/ngày bắt buộc bình thường (mục 1), lỗi hiện khi bấm Lưu.
+- Select/DatePicker chỉ validate realtime khi giá trị đổi, nhưng `validateAll()` lúc bấm Lưu vẫn
+  kiểm chúng → rule định dạng của select/ngày gắn bình thường, lỗi hiện khi bấm Lưu.
 
 Khi submit:
 
@@ -363,9 +384,11 @@ async submitForm(status = 1) {
 
 ## 3. Hành vi hiển thị lỗi (UX bắt buộc)
 
-- Lỗi hiện **inline ngay dưới trường** (`V2BaseError`), **không dùng popup/modal để báo lỗi validate**.
+- Lỗi hiện **inline ngay dưới trường** (`V2BaseError`), **không dùng popup/modal/toast để báo lỗi validate**.
 - Rule FE: hiện ngay khi **rời trường / nhập sai** (realtime, không đợi bấm Lưu).
-- Lỗi từ BE: hiện sau khi bấm Lưu; hiện **đồng thời tất cả** trường lỗi.
+- Lỗi từ BE: hiện sau khi bấm Lưu; hiện **đồng thời tất cả** trường lỗi, và **cũng phải nằm dưới
+  đúng ô tương ứng** — toast chỉ là câu nhắc chung ("Vui lòng kiểm tra lại thông tin đã nhập"),
+  KHÔNG được dùng để truyền nội dung lỗi của một trường.
 - Lỗi **tự biến mất** khi giá trị được sửa về hợp lệ (vee-validate tự làm; lỗi BE thì clear `formError` trước mỗi lần submit).
 - Sau khi có lỗi → **scroll + focus vào trường lỗi đầu tiên** (quét trên → dưới, trái → phải).
 - Còn lỗi FE thì **không gọi API lưu**.
@@ -580,10 +603,13 @@ Khai trong `plugins/vee-validate.js`, dùng ngay: `min`, `max`, `max_value`, `ph
 
 ## Checklist form ở màn mới
 
-- [ ] Trường đại diện (Tên…): `v-validate="'required'"` + `data-vv-name` + `data-vv-as`
-- [ ] **Mọi** ô bắt buộc theo FormRequest BE đều gắn `required` ở FE — bấm Lưu khi form trống thì tất cả
-      đỏ cùng lúc. Form có Lưu nháp: `required` của các ô này tắt khi nháp (`{ required: officialRequired }`,
-      mục 1) — Lưu nháp vẫn lưu được với form gần như trống
+- [ ] Hàm submit **KHÔNG chặn sớm** một ô rồi `return` — grep `if (!this.form.` trong hàm submit
+      phải rỗng; đó là nguồn của lỗi "nhỏ giọt" (mục 1)
+- [ ] `required` **không gắn ở FE** (form có Lưu nháp): để `FormRequest` quyết theo `isSending()`,
+      FE map 422 vào `formError`. Form KHÔNG có Lưu nháp thì được gắn (ngoại lệ ở mục 1)
+- [ ] **Mọi khoá `required` của `FormRequest` đều tìm được một chỗ `fieldError('<khoá>')` trên màn**,
+      kể cả ô chỉ đọc (Người liên hệ / Địa chỉ tự điền) — thiếu là lỗi "mất tích", bấm Lưu không ăn
+      mà không ô nào đỏ (mục 1)
 - [ ] Các rule định dạng (số/ngày/email/độ dài) gắn ở FE, chạy realtime
 - [ ] Lỗi hiện inline qua `V2BaseError`, có `is-invalid`, không popup
 - [ ] `validateAll(null, { vmId: null })` trước khi gọi API; còn lỗi thì không gọi API
@@ -596,4 +622,7 @@ Khai trong `plugins/vee-validate.js`, dùng ngay: `min`, `max`, `max_value`, `ph
 - [ ] Bảng nhiều dòng: mọi chỗ xoá/thêm/chuyển dòng đã dọn `formError` bằng `utils/rowFieldErrors.js` (mục 3b)
 - [ ] Form có BẢNG chi tiết: sau khi báo lỗi phải gọi `scrollToFirstError(this.$el)` để nhảy
       tới đúng dòng sai (mục 3d) — KHÔNG tự viết đoạn cuộn tay bằng selector riêng
-- [ ] Test: bấm Lưu nháp với form chỉ có Tên → lưu thành công
+- [ ] KHÔNG còn cờ `touched` ở màn đang sửa (mục 1)
+- [ ] Test: bấm Lưu nháp với form chỉ có trường định danh → lưu thành công
+- [ ] Test: bấm Lưu / Gửi đi với form TRỐNG → **mọi** ô bắt buộc đỏ CÙNG LÚC trong một lần bấm
+      (đếm số ô đỏ, so với số khoá `required` của `FormRequest` có ô trên màn)
