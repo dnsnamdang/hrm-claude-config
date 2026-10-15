@@ -175,6 +175,12 @@ private function logStatusChanged($model, int $statusBefore): void
 }
 ```
 
+> **Ngoại lệ danh mục có Khoá/Mở khoá** (rà 2026-10-13, 13 màn danh mục phân hệ dự án): service
+> gọi `logCatalogSave()` (trait `LogsCatalogHistory`) thì **ĐƯỢC giữ `'status'` trong
+> `catalogColumns()`** — hàm này dựa vào chính cột đó để tự tách đổi trạng thái ra dòng `lock` /
+> `unlock` riêng rồi bỏ `status` khỏi dòng "Thay đổi thông tin". Xoá `status` đi là đổi trạng thái
+> từ form Sửa KHÔNG còn được ghi. Quy tắc cấm ở trên chỉ áp khi gọi thẳng `logCatalogUpdate()`.
+
 Kết quả đúng: một lần lưu vừa sửa ghi chú vừa gửi phiếu → **2 dòng** ("Thay đổi thông tin: Ghi chú
 cũ → mới" và "Thay đổi trạng thái: Đang tạo → Chờ xử lý"), không phải 1 dòng lẫn lộn.
 
@@ -440,6 +446,29 @@ theo khối này (khối không cuộn) nên **trôi mất** khi user cuộn pop
 2026-08-15, khuôn `/assign/customers/{id}`). Footer chỉ chứa hành động thao tác (Sửa, Khóa, Xóa,
 Quay lại). Đặt nút "Lịch sử" ở footer là sai: nội dung lịch sử thuộc về trang, không phải hành động.
 
+⚠️ **VỊ TRÍ khối Lịch sử ở màn chi tiết: HẲN RA NGOÀI card nội dung, sát ngay dưới, full chiều
+ngang** (user chốt 2026-10-13, khuôn **`/assign/meeting/{id}/show`** — `pages/assign/meeting/_id/show.vue`).
+- `SystemInfoSection` là anh em (sibling) ĐỨNG SAU card/form chính — KHÔNG nằm trong `<form>`, trong
+  `tp-card`, trong cột `col-lg-*` hay trong tab.
+- Kéo sát card bằng `margin-top: 2px` (override cục bộ `::v-deep .system-info-section.<class-màn>`),
+  và bỏ `padding-bottom` thừa ở đáy card (không chừa chỗ cho footer — `V2Footer` tự chừa qua
+  class `has-v2-footer` trên `<body>`).
+- ❌ SAI đã gặp: nhét Lịch sử vào cột phải hẹp `col-lg-4` giữa các khối form (Dự án TKT
+  `/assign/prospective-projects/{id}`), hoặc đặt trong card cùng nội dung → user không nhận ra
+  đó là khối riêng của trang.
+
+```vue
+<template>
+    <div>
+        <div class="tp-card"> …nội dung / form… </div>
+        <SystemInfoSection class="xxx-history" entity-type="<type>" :entity-id="id" />
+    </div>
+</template>
+<style scoped>
+::v-deep .system-info-section.xxx-history { margin-top: 2px !important; }
+</style>
+```
+
 ⚠️ **Danh mục Thêm/Sửa/Xem bằng modal cũng phải có khối Lịch sử trong popup Xem** (chốt 2026-08-15).
 Quy ước cũ "chi tiết mở dạng modal thì ẩn khối Lịch sử" đã BỎ.
 Khuôn đặt khối này trong popup (vị trí, prop, và quy tắc **bỏ dòng `Người tạo / Ngày tạo`** ở đáy body):
@@ -613,6 +642,7 @@ Bẫy mà chỉ cách test này mới bắt được:
 - [ ] `changed[]` chỉ chứa trường đã đổi (không in lại cả bản ghi)
 - [ ] Khoá dạng BẢNG trả đủ `added_label` / `removed_label` / `changed_label` + `added_rows` / `removed_rows`; giao diện in **theo nhóm có nhãn**, dòng chính là TÊN bản ghi (§4b)
 - [ ] **Mọi thao tác có lý do/ghi chú (từ chối, hủy, đóng, duyệt kèm ghi chú…) đều hiện đủ trên lịch sử** (§4.1)
+- [ ] **Màn chi tiết: khối Lịch sử nằm NGOÀI card nội dung, sát dưới, full ngang** (khuôn `meeting/_id/show.vue`, §5.1)
 - [ ] **Đã làm ĐỦ 2 nơi**: popup ở màn danh sách (menu ⋮) + khối "Lịch sử" ở màn chi tiết (§5.1)
 - [ ] FE theo đúng `ui-base.md`: bố cục, text, màu, bộ lọc — cả popup lẫn mục màn chi tiết
 - [ ] Bảng dùng chung nhiều loại chứng từ (`type`): nhãn trạng thái lấy từ bản ghi, nhãn cột trung tính, cột riêng của từng loại đã khai (§3c)

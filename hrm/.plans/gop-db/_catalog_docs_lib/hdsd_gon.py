@@ -238,8 +238,10 @@ def build(G, out):
         step(['Bước 1: Ở màn danh sách, bấm biểu tượng ', ic('btn_cauhinhcot')])
         img('25_colcfg', 'Cửa sổ Tùy chỉnh cột')
         step('Bước 2: Tích để hiện cột, bỏ tích để ẩn cột.')
-        step('Bước 3: Kéo biểu tượng ba gạch ở cuối mỗi dòng để đổi thứ tự cột.')
-        step(['Bước 4: Bấm ', ic('btn_luu'), ' để áp dụng'])
+        step(['Bước 3: Bấm ', ic('btn_chontatca'), ' để hiện tất cả các cột.'])
+        sub(['Hoặc bấm ', ic('btn_bochonhet'), ' để ẩn tất cả các cột (trừ các cột bắt buộc).'])
+        step('Bước 4: Kéo biểu tượng ba gạch ở cuối mỗi dòng để đổi thứ tự cột.')
+        step(['Bước 5: Bấm ', ic('btn_luu'), ' để áp dụng'])
         sub(['Hoặc bấm ', ic('btn_dong'), ' nếu muốn bỏ thay đổi.'])
 
     STD = dict(truycap=truycap, them=them, sua=sua, xoa=xoa, khoa=khoa, mokhoa=mokhoa, lichsu=lichsu,

@@ -16,7 +16,7 @@ Hệ thống ERP quản lý bán hàng, kho, kế toán, bảo hành, vận chuy
 
 |                |                                                           |
 | -------------- | --------------------------------------------------------- |
-| **Backend**    | PHP 7.4, Laravel 8, MySQL                                |
+| **Backend**    | PHP 7.4, Laravel 6 (`^6.2`, đang cài 6.20.45), MySQL     |
 | **Frontend**   | Blade template + AngularJS 1.3.9 + jQuery + Bootstrap 4  |
 | **DataTable**  | Yajra DataTables (server-side) + datatables.net           |
 | **Select**     | Select2 (nhiều variant: `select2`, `select2-in-modal`, `select2-ajax`, `select2-create`) |

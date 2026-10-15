@@ -93,3 +93,38 @@ Vừa hoàn thành: feature xong toàn bộ — merge + push gop_db, user đã d
 Đang làm dở: —
 Bước tiếp theo: (tuỳ chọn) gán quyền 1676–1678 cho role trên production · dọn worktree `websites/wt-bao-cao-tong-hop-cskh/` · cân nhắc tách công thức "sắp hết hạn" (3 bản chép: cron, CustomerDemandService, báo cáo này) thành hàm dùng chung
 Blocked: —
+
+## Phase 6 — Bộ phận + Ngân sách dự kiến (07/10/2026, user chốt)
+
+- Bộ lọc thêm ô **Bộ phận** (theo bộ phận HIỆN TẠI của Sales, chỉ bộ phận của phòng đang chọn, không lấy bộ phận đã khoá).
+- Cây Phòng ban ▸ **Bộ phận** ▸ Sales ▸ Khách hàng ▸ NC/DA: phòng không chia bộ phận bỏ cấp; Sales chưa gán bộ phận ở phòng
+  có chia → nhóm "Không thuộc bộ phận" cuối phòng. Ô chọn cấp thêm "Đến Bộ phận". Bản in / Excel / popup có cấp này.
+- Cột "Giá trị dự án" → **"Ngân sách dự kiến"** = `prospective_projects.estimated_budget` (thay `expected_contract_amount`).
+  Đo DB local: có ngân sách 273/282 dự án (giá trị HĐ dự kiến chỉ 151/282).
+- **Dự án cha (có dự án con) KHÔNG đưa vào báo cáo**, chỉ lấy dự án con (tránh cộng trùng ngân sách). DB local: 1 cặp.
+
+- [x] T25. BE service: estimated_budget · bỏ dự án cha · part_id/part_name theo Sales · lọc part_id · cây có cấp Bộ phận · danh mục bộ phận
+- [x] T26. BE bản in + Excel: cấp Bộ phận + đổi tên cột · unit test
+- [x] T27. FE: ô lọc Bộ phận · TrackingTable cấp Bộ phận + ô chọn cấp + tên cột/tooltip · popup
+- [x] T28. Kiểm Playwright MCP + cập nhật e2e: spec UI ca 1 (9 ô / 3 hàng đủ 12 cột) + ca 3 (cây theo độ sâu thật, dòng lá
+      class `rsum-tb__row--leaf`); .api.spec dùng `salesOf()` (Sales nằm trong parts khi phòng có bộ phận). Biên dịch được
+      (16 ca), CHƯA chạy — user: "e2e chạy sau".
+
+### Checkpoint — 2026-10-07
+Vừa hoàn thành: T25–T28. Unit `PotentialCustomerTracking*` 24/24 xanh (3 ca mới `PotentialCustomerTrackingPartBudgetTest`;
+4 ca Feature cũ đổi fixture `expected_contract_amount` → `estimated_budget` + tiêu đề Excel mới).
+Đo: 3/16 phòng có bộ phận (KDTM 4 bộ phận); "Đến Bộ phận" chỉ bung 3 phòng đó; lọc "Kinh doanh dự án" → 13 việc, ô Sales
+co còn 1; popup từ dòng bộ phận gửi part_id, 47 dòng = 47 nhu cầu của bộ phận; dự án 67 = ngân sách DB; dự án cha 159
+không còn trong báo cáo. Giữa chừng dev server Nuxt (PID 43570, chạy 13 ngày) treo — user cho khởi động lại, build sạch.
+Lưu ý dữ liệu: tổng Ngân sách dự kiến 4,625 tỷ+ vì vài dự án nhập ngân sách rất lớn (vd dự án 67 = 1,600 tỷ) — dữ liệu
+nhập tay, không phải lỗi tính.
+Bước tiếp theo: chạy e2e khi user yêu cầu · user kiểm trên app.
+- [x] T29. (07/10, user hỏi) Nhóm "Không thuộc bộ phận": DB local KHÔNG có ca thật (mọi Sales ở 3 phòng có bộ phận đều đã gán)
+      → thêm unit test dữ liệu giả, bắt được LỖI: sắp nhóm so khoá `'0'` nhưng PHP đổi khoá mảng thành số 0 → nhóm bị xếp
+      theo tên thay vì đứng cuối. Sửa: so `part_id === null` của dòng. Unit 25/25 xanh.
+
+### Checkpoint — 2026-10-07 (wrap up)
+Vừa hoàn thành: Phase 6 T25→T29 (Bộ phận, Ngân sách dự kiến, bỏ dự án cha, sửa nhóm Không thuộc bộ phận đứng cuối); ĐÃ COMMIT + PUSH gop_db (api e20e02e04, client c62d1a79b)
+Đang làm dở: —
+Bước tiếp theo: deploy production · chạy e2e potential-customer-tracking{,.api} khi user yêu cầu (spec đã sửa, biên dịch được)
+Blocked: —

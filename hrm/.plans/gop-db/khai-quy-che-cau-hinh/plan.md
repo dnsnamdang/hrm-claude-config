@@ -683,3 +683,289 @@ ngoài {1,2,3} → 422, thiếu field required → 422). Playwright MCP đã ver
 Đang làm dở: (không)
 Bước tiếp theo: chờ lệnh commit gop_db (2 repo). Phần B (port thư viện điều khoản) chờ user mở feature riêng.
 Blocked: (không)
+
+### Task #14: Đổi tên tab "Thưởng thêm quý (lũy tiến)" → "Thưởng lũy tiến"
+- [x] `hrm-client/components/regulation-config/data.js:356` — đổi `name` của group `id:'themquy'` từ `'Thưởng thêm quý (lũy tiến)'` → `'Thưởng lũy tiến'`. Chỉ đổi nhãn hiển thị, GIỮ NGUYÊN `id:'themquy'` (khoá dùng ở RegulationConfigScreen.vue + BE RegulationTabRegistry). Đã grep: nhãn tab chỉ ở 1 chỗ này, .vue không hardcode tiêu đề nào khác.
+
+### Checkpoint Task #14 — 2026-09-25
+Vừa hoàn thành: đổi tên tab (1 dòng data.js). Không đụng id/BE.
+- [x] VERIFY Playwright MCP (client :3000 + api :8000 đang chạy, login sẵn DNS Admin): /sale/regulation-config → chip "Theo phòng ban – bộ phận" → tab hiển thị **"Thưởng lũy tiến"** (tên cũ "Thưởng thêm quý" không còn tìm thấy); click vào tab → panel h2 "Thưởng lũy tiến" + bảng bậc thang/Thêm bậc load bình thường (id 'themquy' vẫn hoạt động). Screenshot: hrm-client/verify-thuong-luy-tien.png.
+Đang làm dở: (không)
+Bước tiếp theo: (tuỳ chọn) commit gop_db khi có lệnh.
+Blocked: (không)
+
+### Task #15: Sửa text màn "Quy chế hoa hồng / năng suất" (tab hoahong) cho đúng
+Nguồn: 4 screenshot user cấp (modal "Thêm quy chế hoa hồng"). Tất cả nhãn modal hardcode ở `hrm-client/components/regulation-config/RegulationConfigScreen.vue` (KHÔNG lấy từ BE cho các `.fs-title` này).
+
+**Text rõ ràng — ĐÃ SỬA:**
+- [x] L1230 `.fs-title` `Chia doanh số (%)` → `Tỷ lệ chia thưởng năng suất`
+- [x] L1240 `.fs-title` `Chia thưởng theo Hợp đồng (%)` → `Tỷ lệ chia thưởng thực hiện hợp đồng`
+- [x] L1174 `.fs-title` `% Thưởng theo tháng` → `% Thưởng năng suất tháng`
+- [x] L1188 `.fs-title` `% Sau hoa hồng` → `% Thưởng năng suất quý`
+- [x] L1232-1233 + L1242-1243 label `Phòng`→`Trưởng phòng`, `Bộ phận`→`Trưởng bộ phận` (sửa CẢ 2 khối rate3 cho khớp header lưới TP/TBP/NV)
+- [x] L527-528 tooltip lưới `title` cập nhật theo tên mới (% Thưởng năng suất tháng / quý)
+- [x] VERIFY Playwright MCP (login DNS Admin → /sale/regulation-config → chip "Theo phòng ban – bộ phận" → mở modal "Thêm quy chế hoa hồng"): snapshot xác nhận cả 6 nhãn render đúng — "% Thưởng năng suất tháng", "% Thưởng năng suất quý", "Tỷ lệ chia thưởng năng suất" (TP/TBP/NV), "Tỷ lệ chia thưởng thực hiện hợp đồng" (TP/TBP/NV). Screenshot: hrm-client/verify-hoahong-text.png
+
+**Cần user quyết (KHÔNG phải sửa text thuần — CHƯA làm, chờ chốt):**
+- G. "So sánh giá net (khoảng chênh lệch)" — user ghi "để như cũ cho dễ hiểu" = revert về chữ ERP CŨ; chưa biết chữ cũ là gì → hỏi.
+- H. Field "Cách tính theo tháng" (Doanh số xuất hàng đã đặt cọc) — user ghi "hình như không dùng nữa" → xoá hay giữ? (không chắc → hỏi).
+- I. Khối "Chuyển duyệt Ban giám đốc" — user ghi "tách ra, để chung khó nhìn" → đổi bố cục (không phải text).
+- J. Dropdown Phòng ban/Bộ phận ở màn chính — user ghi "phải tách bộ phận riêng, để chung không biết bộ phận thuộc phòng nào" → nhóm/hierarchy dữ liệu (không phải text).
+
+### Checkpoint Task #15 — 2026-09-25
+Vừa hoàn thành: 6 sửa text + 2 tooltip ở RegulationConfigScreen.vue + VERIFY Playwright MCP (đã xác nhận trên modal thật).
+Đang làm dở: (không) — phần text thuần khép.
+Bước tiếp theo: chờ user chốt 4 mục G/H/I/J (không phải sửa text thuần). Chưa commit/push (chờ user yêu cầu).
+Blocked: (không)
+
+### Task #16: Dựng lại modal "Thêm/Sửa quy chế hoa hồng" GIỐNG FORM ERP
+Nguồn: user cấp screenshot form ERP "Thêm mới quy chế tính hoa hồng phòng ban" — "làm giống erp là được". User chốt "giữ hẹn" = GIỮ khối HRM-only "Hẹn ngày áp dụng (theo dòng)" (`effective_date`, ERP không có), dời xuống cuối. Đây là làm luôn mục I (bố cục "Chuyển duyệt Ban giám đốc") + G/H (relabel/gộp) đã chờ ở Task #15. Tất cả sửa ở `hrm-client/components/regulation-config/RegulationConfigScreen.vue` (nhãn `.fs-title` hardcode). Giữ nguyên mọi `v-model` + giữ guard `v-if="Number(regForm.condition_type) === 1"` cho "Bảng giá". Component vẫn dùng V2Base (skill thắng về UI).
+
+**Bố cục mới — thứ tự section khớp ERP (ĐÃ SỬA, 4 Edit):**
+- [x] Gộp "Điều kiện áp dụng" + "So sánh giá net" + checkbox "Chuyển duyệt Ban giám đốc" vào 1 fieldset `Điều kiện`. Relabel: Loại điều kiện→"Áp dụng cho", Loại giá→"Bảng giá", Toán tử từ→"Bán", input disabled "Giá net"→nhãn "Theo", Giá net từ→"Từ (%)", gộp Toán tử đến+Giá net đến dưới 1 nhãn "đến (%)" (flex operator 120px + value). Bỏ note dài của checkbox.
+- [x] Tách 2 box `rate2` → 2 fieldset xếp dọc: "Thưởng năng suất tháng (%)" (Giá trị được hưởng (%) `month_percent` + Tính theo `month_type`) và "Thưởng năng suất quý (%)" (Giá trị được hưởng (%) `after_commission_percent`).
+- [x] `.fs-title` "Điều kiện hoa hồng theo ngày" → "Điều kiện thưởng năng suất quý" (bảng from_day/to_day/receive_percent giữ nguyên).
+- [x] Đảo thứ tự 2 fieldset `rate3`: "Tỷ lệ phân chia thưởng thực hiện hợp đồng" (contract) TRƯỚC, rồi "Tỷ lệ phân chia thưởng năng suất" (productivity). Nhãn TP/TBP/NV = Trưởng phòng/Trưởng bộ phận/Nhân viên. (thêm "phân" cho khớp ERP)
+- [x] Dời khối HRM-only "Hẹn ngày áp dụng (theo dòng)" (`effective_date` + field-hint) xuống CUỐI modal (giữ theo quyết định "giữ hẹn"; cũng khớp góp ý screenshot-3 "tách ra để chung khó nhìn").
+- [x] VERIFY Playwright MCP (login DNS Admin → /sale/regulation-config → chip "Theo phòng ban – bộ phận" → mở modal "Thêm quy chế hoa hồng"): snapshot + screenshot xác nhận thứ tự 7 section render đúng ERP — (1) Điều kiện [Áp dụng cho/Bảng giá/Bán/Theo/Từ(%)/đến(%)/Chuyển duyệt Ban giám đốc], (2) Thưởng năng suất tháng (%), (3) Thưởng năng suất quý (%), (4) Điều kiện thưởng năng suất quý, (5) Tỷ lệ phân chia thưởng thực hiện hợp đồng, (6) Tỷ lệ phân chia thưởng năng suất, (7) Hẹn ngày áp dụng (theo dòng) [HRM-only, cuối]. Footer "Lưu quy chế" + "Đóng". Screenshot: /tmp scratch (đã kiểm, không lưu vào .plans).
+
+**Đóng G/H/I từ Task #15:** I (bố cục checkbox) = xong. G (relabel "So sánh giá net"→gộp vào "Điều kiện") = xong theo hướng khớp ERP. H (field "Cách tính theo tháng") = GIỮ, đổi nhãn "Tính theo" (theo ERP), không xoá.
+
+**Đóng J (dropdown scope màn chính) — user chốt "để phòng ban thôi":** data thật vốn chỉ có `departments` (không có bộ phận riêng), nên chỉ cần bỏ chữ "bộ phận" khỏi các nhãn scope. ĐÃ SỬA 5 chỗ:
+- [x] `RegulationConfigScreen.vue` mô tả đầu trang "cấp phòng ban – bộ phận" → "cấp phòng ban"
+- [x] Nút phạm vi "Theo phòng ban – bộ phận" → "Theo phòng ban"
+- [x] Nhãn dropdown "Phòng ban / Bộ phận" → "Phòng ban" (placeholder giữ "Chọn phòng ban")
+- [x] Chip panel `unitType === 'part' ? 'Bộ phận' : 'Phòng ban'` → cứng "Phòng ban" (unitType luôn 'dept')
+- [x] `data.js` `department.chipText` "Theo phòng ban – bộ phận" → "Theo phòng ban" (dùng ở chip panel + tiêu đề Lịch sử thay đổi)
+- [x] VERIFY Playwright MCP: reload màn, chip nút + nhãn dropdown + chip panel "Phòng ban: BAN ĐIỀU HÀNH" + tiêu đề "Lịch sử thay đổi · Theo phòng ban" đều bỏ "bộ phận". Giữ nguyên "Trưởng bộ phận" (vai trò chia thưởng TP/TBP/NV) — KHÔNG đụng.
+
+### Checkpoint Task #16 — 2026-09-25
+Vừa hoàn thành: dựng lại modal "Thêm/Sửa quy chế hoa hồng" khớp form ERP (4 Edit RegulationConfigScreen.vue) + giữ khối "Hẹn ngày áp dụng" ở cuối + VERIFY Playwright MCP (snapshot + screenshot modal thật, 7 section đúng thứ tự). ĐÓNG luôn mục J: scope màn chính "để phòng ban thôi" (5 chỗ text ở RegulationConfigScreen.vue + data.js, VERIFY MCP).
+Đang làm dở: (không).
+Bước tiếp theo: toàn bộ G/H/I/J đã đóng. Chưa commit/push (chờ user yêu cầu).
+Blocked: (không)
+
+### Task #17: Fix 500 API lịch sử thay đổi (scope=department) — "Array to string conversion"
+Repro user cấp: `GET /api/v1/master-data/regulation-config-history?scope=department&department_id=44` → 500. Log: `local.ERROR: Array to string conversion at RegulationConfigService.php:2096` qua `historyRegulationGrid(44)` → `getHistory('department',44,1)` → controller `history()`.
+
+**Root cause (systematic-debugging Phase 1-2):**
+- `formatHistoryValue()` (dòng 2077-2097) kết thúc bằng `return (string) $raw;` (dòng 2096). Khi `$raw` là MẢNG → PHP fatal "Array to string conversion".
+- Field hoahong `conditions_commissions` (registry `RegulationTabRegistry.php:445`, `input:'commission_days'`, KHÔNG có `type`/`columns`; model cast `'array'` `Regulation.php:43`) lưu MẢNG `[{from_day,to_day,receive_percent}]`.
+- `historyRegulationGrid()` (dòng 1687-1710) gọi `formatHistoryValue($before)`/`($after)` KHÔNG truyền `$type` → mảng rơi xuống nhánh `(string) $raw` → nổ. Đường song song đúng là `formatDiffList()`/`buildDiffLines()` (dòng 1761-1836): tự resolve `$type`/`$rich` từ registry + xử lý `subtable`/`options`.
+
+**Fix (chỉ code, KHÔNG ghi DB — root cause ở code):**
+- [x] Hardening `formatHistoryValue` dòng ~2096: mảng/object không bao giờ được `(string)` cast nữa → `is_array/is_object` thì `json_encode(JSON_UNESCAPED_UNICODE)` (rỗng `[]`/`{}`/`null` → `—`). Chốt chặn thật cho MỌI caller.
+- [x] `historyRegulationGrid`: chuyển `logs` (map `key => {value_before,value_after}`) thành diff-list `[{key,label,old,new}]` rồi TÁI DÙNG `formatDiffList($diffs,'hoahong')` cho `content` + `buildDiffLines($diffs,'hoahong')` cho `lines` — boolean/rich/options/subtable render nhất quán với dòng scheduled. Bỏ vòng lặp format type-blind.
+- [x] `php -l` OK.
+- [x] VERIFY: `grep DB_ .env` → local `erp_new` (127.0.0.1) nên repro read-only an toàn. (1) Tinker service layer: `getHistory('department',44,1)` → 50 rows OK; dept 60/61 (CÓ log `conditions_commissions` = mảng, đúng field từng gây fatal) → 47 rows, giá trị mảng render thành JSON thay vì crash. (2) HTTP thật qua Playwright MCP (login DNS Admin): endpoint repro của user `...?scope=department&department_id=44` → **200** (trước là 500). Dept 60/61 qua HTTP trả 403 = gate phân quyền theo phòng của user hiện tại, KHÔNG phải 500.
+- [ ] KHÔNG commit/push cho tới khi user yêu cầu.
+
+### Checkpoint Task #17 — 2026-09-25
+Vừa hoàn thành: fix 500 API lịch sử scope=department. 2 sửa ở `hrm-api/Modules/MasterData/Services/RegulationConfigService.php`: (a) hardening `formatHistoryValue` chống array-to-string fatal; (b) `historyRegulationGrid` tái dùng formatDiffList/buildDiffLines (type-aware). php -l OK. VERIFY: tinker (dept 44=50 rows, dept 60/61 array-field=47 rows không crash) + HTTP thật dept 44 → 200.
+Đang làm dở: (không).
+Bước tiếp theo: chưa commit/push (chờ user). Ghi chú cosmetic: giá trị `conditions_commissions` hiện hiện dạng JSON trong lịch sử (registry chưa có renderer cho input `commission_days`) — không phải lỗi, chỉ chưa đẹp; nếu user muốn hiển thị dạng bảng thì mở task riêng.
+Blocked: (không)
+
+### Task #18: Thêm field "Ngày khai báo công nợ đầu kỳ" vào tab Công nợ (issue #17 — thiếu trường)
+Issue user: tab "Công nợ - tài chính" (`congno`) thiếu trường "Ngày khai báo công nợ đầu kỳ" so với màn cấu hình ERP.
+
+**Nguồn ERP (đã xác minh):** `resources/views/common/configs/edit.blade.php:373` label ↔ `ng-model="config.debt_calculation_date"`; `ConfigsController.php:61` validate `required|date`, dòng 272 lưu `$config->debt_calculation_date`. `Config::getConfig()` lọc `company_id` → **per-company**, thuộc bảng `configs` ⇒ HRM là field **store=config** (khuôn giống field config tab `baogia`).
+
+**Quyết định chốt (user 2026-09-26):** `required: true` (khớp ERP).
+
+**Root cause vì sao chưa có/không lưu được nếu thêm ngây thơ:** tab `congno` là `SCOPE_COMPANY`; `saveTabVersions` scope company CHỈ tạo version company → field `store=config` bị `normalizeValues(...,'company')` loại. Phải đổi `congno` → `SCOPE_MIXED` (như `baogia`) để nhánh config chạy. Đã kiểm MIXED an toàn với 7 field company cũ (save/fetch/scope đều key theo `fieldStore()` per-field).
+
+**Thay đổi:**
+- [x] BE `Support/RegulationTabRegistry.php` tab `congno`: `scope` `SCOPE_COMPANY`→`SCOPE_MIXED`; thêm field `'debt_calculation_date' => ['store'=>'config','label'=>'Ngày khai báo công nợ đầu kỳ','unit'=>'','type'=>'date','required'=>true]`.
+- [x] BE `Services/RegulationConfigService.php` `castValue()`: thêm `case 'date'` → `Carbon::parse($value)->format('Y-m-d')` (chuẩn hoá submit + đọc từ cột date).
+- [x] BE `Http/Requests/ScheduleRegulationVersionRequest.php`: switch build rule thêm `case 'date' => 'date'` (mặc định đang ép `integer|min:0`).
+- [x] FE `components/regulation-config/data.js` nhóm `congno.fields`: thêm `dateField('Ngày khai báo công nợ đầu kỳ', '')` (label khớp 1-1 registry). Screen.vue đã render `t:'date'` bằng `V2BaseDatePicker` (dòng 249) — không sửa.
+- [x] `php -l` OK (cả 3 file BE).
+- [x] VERIFY Playwright MCP: `grep DB_ .env` → local writable `erp_new` (127.0.0.1). Mở /finance/regulation-config tab Công nợ → field date render đầu tab, hiện đúng giá trị DB `01/08/2025`. **Lưu ý sửa notion cũ:** field KHÔNG có nhãn "Áp dụng toàn hệ thống" — đúng, vì `store=config` ở đây là **per-company** (`where('company_id')`, khớp ERP `Config::getConfig`), nên nằm dưới nhãn tab "Theo công ty" như các field company khác. Test ghi: đổi `20/08/2025` → Lưu cấu hình → POST `.../congno/versions` **200** → `configs.debt_calculation_date` (cty 1) = `2025-08-20` → hard reload thấy giữ `20/08/2025`. Round-trip castValue('date')↔configs OK.
+- [ ] KHÔNG commit/push cho tới khi user yêu cầu.
+
+### Task #19: Lịch sử thay đổi lọc THEO PHÂN HỆ (QA feedback — hiện đang dùng chung)
+Feedback QA (chị): "Đã tách quy chế ở các phân hệ khác nhau thì lịch sử lưu riêng của từng nơi, hiện tại đang thấy hiển thị chung như nhau". User chốt: màn cấu hình đặt ở **3 phân hệ** (Danh mục=`master-data`/mặc định, Tài chính=`finance`, Bán hàng=`assign`) — mỗi phân hệ cấu hình vài tab khác nhau. **Lịch sử theo phân hệ = chỉ hiện tất cả tab thuộc phân hệ đó, KHÔNG hiện tab của phân hệ khác.**
+
+**Root cause:** `getHistory($scope,$scopeId,$companyId)` gộp 4 nguồn CHỈ theo scope (company/department), KHÔNG lọc theo tab/phân hệ; FE cache `history` theo scope. Map tab→phân hệ chỉ tồn tại ở FE `data.js` (`group.subsystem`), BE không biết → thiết kế: **FE gửi danh sách `tab_keys` của phân hệ hiện tại, BE lọc; mặc định (không gửi) = mọi tab** (giữ tương thích: `RegulationHistoryTest` gọi 3 tham số + code cũ).
+
+**Map phân hệ→tab (từ `data.js`):** finance=[giaban,congno,xnk,quyettoan] · assign=[kythuat] · master-data=[chung,baogia,chietkhau,thitruong,hanghoa,dieukhoanbaogia,dieukhoanthanhtoan,thuongnam,hoahong,themquy,khac]. (finance/assign chỉ có tab cấp công ty; department tab đều master-data.)
+
+**Thay đổi:**
+- [x] BE `Support/RegulationTabRegistry.php`: thêm helper `companyFieldKeysForTabs(array $tabKeys): array` → gom field key (cột `companies`) của field `store=company` trong các tab cho trước (để lọc `company_regulation_histories` — bảng audit KHÔNG có cột `tab_key`).
+- [x] BE `Services/RegulationConfigService.php` `getHistory()`: thêm tham số 4 `?array $tabKeys = null`, truyền xuống 4 nguồn. `historyConfigCompany/Department` + `historyScheduledCompany/Department`: `->when($tabKeys!==null, whereIn('tab_key',$tabKeys))`. `historyCompanyRegulation`: lọc `whereIn('field_name', companyFieldKeysForTabs($tabKeys))` (rỗng→trả []). `historyRegulationGrid`: `$tabKeys!==null && !in_array('hoahong')` → trả [].
+- [x] BE `Http/Controllers/V1/RegulationConfigController.php` `history()`: đọc `tab_keys` (string CSV hoặc array), chuẩn hoá qua `normalizeHistoryTabKeys()` (lọc bằng `RegulationTabRegistry::has()`), truyền vào `getHistory()`. Không gửi → null → mọi tab (cũ).
+- [x] FE `RegulationConfigScreen.vue`: computed `subsystemTabKeys` (gom `group.id` của cả company+department theo `subsystem` hiện tại); `fetchHistory` gửi `params.tab_keys = this.subsystemTabKeys.join(',')`. Phân hệ cố định theo trang → không cần refetch khi đổi tab.
+- [x] `php -l` OK (3 file BE). `RegulationHistoryTest`: 7/7 ĐỎ nhưng là lỗi MÔI TRƯỜNG có sẵn (baseline stash cũng đỏ y hệt) — `seedHttpUser` insert `employee_infos.department_id=0` vi phạm FK, chết ở SETUP trước khi chạm `getHistory`; KHÔNG do thay đổi này (thêm tham số optional, default null = hành vi cũ).
+- [x] VERIFY tinker read-only (`grep DB_ .env` → local `erp_new` 127.0.0.1): `getHistory('company',1,1,[])`=0 · `[kythuat]`=1 · master-data 11 tab=19 · từng tab riêng (congno=7, baogia=13, xnk=50 chạm trần, giaban=0, quyettoan=0) → lọc hoạt động thật, không no-op. Reverse map company-field finance vs baogia đúng.
+- [x] VERIFY Playwright MCP: /finance → `tab_keys=giaban,congno,xnk,quyettoan` · /assign → `tab_keys=kythuat` · /sale → `tab_keys=chung,baogia,...,hoahong,themquy,khac` (đủ 11). Trang assign bảng lịch sử chỉ 1 dòng "Công khoán 0→350,000" (kythuat), KHÔNG lẫn tab phân hệ khác.
+- [ ] KHÔNG commit/push cho tới khi user yêu cầu.
+
+### Checkpoint Task #19 — 2026-09-26
+Vừa hoàn thành: lịch sử thay đổi lọc theo phân hệ (QA feedback). BE 3 file (registry helper `companyFieldKeysForTabs` + `getHistory` tham số 4 `?array $tabKeys` truyền xuống 4 nguồn + controller `normalizeHistoryTabKeys`), FE 1 file (`subsystemTabKeys` computed + `fetchHistory` gửi `tab_keys`). Backward-compat: default null = mọi tab (test 3 tham số + code cũ không đổi). VERIFY: tinker (empty=0/kythuat=1/md=19, per-tab counts khác nhau) + Playwright (3 phân hệ gửi đúng tab_keys, assign chỉ hiện dòng kythuat).
+Đang làm dở: (không).
+Bước tiếp theo: chờ user duyệt để commit/push (chưa commit). `RegulationHistoryTest` đỏ do FK môi trường `employee_infos.department_id=0` — nếu muốn xanh phải sửa fixture seed (dùng department_id thật), là việc riêng ngoài scope task này.
+Blocked: (không)
+
+## Task #20 — QA: vị trí nút "Lưu cấu hình / Hủy" khi chọn "Theo phòng ban" (2026-09-26)
+
+**QA (chị):** "Vị trí nút của phần cấu hình theo Phòng ban - bộ phận chưa phù hợp" (ảnh prnt.sc/VpQ-qnh2auAE — nút rớt xuống hàng 2, dồn về trái).
+
+**Root cause:** `.scopebar` là flex `flex-wrap: wrap`; khi scope=department có thêm dropdown Phòng ban (min-width 260px) → hàng 1 vượt khung, cụm `.savebar` bị wrap xuống hàng 2 + dồn trái (`justify` mặc định `flex-start`). Scope=company đủ chỗ nên nút vẫn nằm phải hàng 1.
+
+**Hướng chốt (user):** A — ghim nút luôn sát mép phải dù ở hàng nào.
+
+**Thay đổi:**
+- [x] FE `RegulationConfigScreen.vue` CSS `.savebar`: thêm `margin-left: auto` → cụm nút luôn hút về mép phải, wrap xuống hàng dưới thì nằm góc phải card (thẳng mép phải). Chỉ CSS, không đổi chữ/màu/thứ tự nút, không đụng logic.
+- [x] VERIFY Playwright MCP (`http://127.0.0.1:3000` /sale/regulation-config → "Theo phòng ban" → nhóm "Quy chế khác" để savebar hiện): đo được `margin-left:auto` đẩy nút sang phải, `wrappedToNewRow=true` (saveTop 262 > fieldTop 178) nhưng `gapSaveToBarRight=17px` = padding 16px → nút thẳng mép phải card, không còn dồn trái. Screenshot xác nhận trực quan.
+- [ ] KHÔNG commit/push cho tới khi user yêu cầu.
+
+### Checkpoint Task #20 — 2026-09-26
+Vừa hoàn thành: sửa vị trí nút "Lưu cấu hình / Hủy" ở thanh phạm vi khi scope=Phòng ban (QA). 1 dòng CSS `.savebar { margin-left: auto }` — nút luôn sát mép phải dù wrap. VERIFY Playwright (đo hình học + screenshot): nút nằm góc phải hàng dưới, không lệch trái.
+Đang làm dở: (không).
+Bước tiếp theo: chờ user duyệt để commit/push.
+Blocked: (không)
+
+## Task #21 — BUG: toggle + icon tab active MẤT MÀU teal trên server (bản build production) (2026-09-26)
+
+**Hiện tượng (user):** Nút toggle ở "Ràng buộc lập HĐ theo thị trường" trên server không hiện đúng màu teal (ra xám), bấm đi bấm lại vẫn xám; cả icon của tab đang active cũng mất màu. Local `npm run dev` thì đúng màu. Đã `npm run build` + deploy nhưng vẫn lỗi → KHÔNG phải build cũ/cache.
+
+**Root cause (đã chứng minh, không phải giả thuyết):** `cssnano` — bước nén CSS **chỉ chạy ở bản production** — làm hỏng 3 biến CSS `--teal`, `--teal-soft`, `--teal-strong`. Vì `teal` là **tên màu chuẩn CSS**, cssnano tưởng `var(--teal)` là màu teal nên cắt mất `--` (và cả hậu tố `-soft`/`-strong`), gộp cả 3 thành `var(teal)` — cú pháp SAI (tên biến CSS phải bắt đầu `--`) → trình duyệt bỏ dòng khai báo → phần tử về xám.
+- Bằng chứng từ bản build `dist/_nuxt/6859d98…js`: nguồn `.tg.on{background:var(--teal)…}` → build ra `.tg.on{background:var(teal)…}`. Nguồn dùng 8+7+13 = **28** chỗ `var(--teal*)`; build có đúng **28** `var(teal)` hỏng, 0 chỗ đúng.
+- Chạy cssnano standalone trên đúng đoạn CSS xác nhận: `var(--teal)`→`var(teal)` ❌; `var(--line)`→`var(--line)` ✅ (line không phải tên màu).
+- Dev không chạy cssnano → biến còn nguyên → dev đúng màu. → khớp 100% "chỉ lỗi trên server".
+- Chỉ 3 biến `--teal*` dính (chỉ chúng trùng tên màu CSS). Các biến khác trong file (`--card,--ink,--line,--panel,--ok,--warn,--idle,--radius`…) an toàn.
+
+**Hướng chốt (user duyệt):** đổi tên 3 biến sang tên KHÔNG trùng tên màu CSS: `--teal → --brand`, `--teal-soft → --brand-soft`, `--teal-strong → --brand-strong`. Cục bộ 1 file (3 biến này chỉ tồn tại trong `RegulationConfigScreen.vue`), KHÔNG đụng config dùng chung (không tắt cssnano toàn hệ thống). Đã kiểm chứng: cssnano trên bản `--brand*` giữ nguyên `var(--brand)` đúng.
+
+**Thay đổi:**
+- [x] FE `components/regulation-config/RegulationConfigScreen.vue`: đổi tên `--teal`→`--brand`, `--teal-soft`→`--brand-soft`, `--teal-strong`→`--brand-strong` ở CẢ 3 khai báo (`.rc-page,.rc-scope`) LẪN 28 chỗ dùng `var(--teal*)`. Chỉ đổi tên biến, KHÔNG đổi giá trị màu (#0f9e8c/#e3f4f1/#0c8577), không đổi selector/logic.
+- [x] Tự kiểm nguồn: `grep -c 'var(--teal' <file>` = 0 và `grep -c '\-\-teal' <file>` = 0 sau khi sửa. (kết quả: 0 / 0; `--brand` = 27)
+- [x] `npm run build` lại, VERIFY bản prod local (serve `dist/` cổng 3001 + Playwright): bundle mới `dist/_nuxt/57a2c919…js` có `var(teal)` = 0, `var(--brand*)` = 28; computed trên DOM prod: `.gitem.on .gi` nền = rgb(15,158,140) #0f9e8c, `.gitem.on` nền = rgb(227,244,241) #e3f4f1, `.gt b` = rgb(12,133,119) #0c8577; tab market `.tg.on` nền=teal-soft/viền=teal/chữ=teal-strong, `.sw`=teal. TẤT CẢ màu teal đã phục hồi.
+- [ ] KHÔNG commit/push cho tới khi user yêu cầu. → **CẦN: deploy lại bundle mới lên server** (build cũ trên server vẫn còn `var(teal)` hỏng).
+
+### Checkpoint Task #21 — 2026-09-26
+Vừa hoàn thành: Fix bug mất màu teal trên bản build production. Root cause = cssnano băm `var(--teal*)` → `var(teal)` (vì `teal` là tên màu CSS). Fix bằng đổi tên biến `--teal*` → `--brand*` trong `RegulationConfigScreen.vue` (1 file, không đụng config chung). Đã build lại + verify prod local (cổng 3001, Playwright): bundle sạch `var(teal)`, DOM hiển thị đủ màu teal ở toggle + icon tab active.
+Đang làm dở: (không có)
+Bước tiếp theo: User deploy bundle mới lên server (build lại trên server hoặc đẩy `dist/` đã build). Sau khi user xác nhận muốn commit → commit hrm-client.
+Blocked: (không)
+
+## Task #22 — Lịch sử thay đổi hiện `["5"]` thay vì TÊN kho cho field "Kho hàng gửi" (2026-10-01)
+
+**Hiện tượng (user):** Màn `finance/regulation-config` → "Lịch sử thay đổi": dòng đổi **"Kho hàng gửi"** hiện `— → ["5"]` (JSON thô) thay vì tên kho.
+
+**Root cause (CODE, không phải data):** field `consignment_warehouse_ids`/`promo_warehouse_ids` khai `type='json'` + `options` → lưu dạng **mảng JSON** `["5"]`. Hàm format lịch sử `formatOptionValue($raw,$source)` tách id bằng `explode(',', (string)$raw)` (CSV) → `["5"]` ra 1 token `["5"]` → map miss → in nguyên. `optionLabelMap` đúng (id=5 = "Phan Trọng Tuệ - Hàng khách gửi").
+
+**Thay đổi:**
+- [x] BE `RegulationConfigService::formatOptionValue` (~L2090): nhận cả 3 dạng — array thật → dùng thẳng; chuỗi `json_decode` ra array → dùng list đó; else → fallback `explode(',')` cũ. Tương thích ngược (CSV "5,36"/scalar "5"/`[]`/non-JSON "KD1"). Tự sửa cả log CŨ (format lúc ĐỌC). FE không phải sửa.
+- [x] Verify standalone `php -r`: `["5"]`→tên kho, `["5","7"]`→2 tên, `5,36`→OK, `[]`/`""`→"—", `KD1`→giữ nguyên. `php -l` sạch.
+- [x] Hàm dùng chung HRM → đã xin xác nhận user ("ok") trước khi sửa.
+- [x] COMMIT + PUSH `origin/gop_db` hrm-api = `d3b71bf7d` (sau rebase gop_db → `e48f96d87`).
+
+### Checkpoint Task #22 — 2026-10-01
+Vừa hoàn thành: fix lịch sử hiển thị tên kho (thay vì `["5"]`) cho field type=json+options. 1 chỗ `formatOptionValue`. Đã commit+push.
+Đang làm dở: (không)
+Bước tiếp theo: (không)
+Blocked: (không)
+
+## Task #23 — Gỡ field "Tính theo" (month_type) khỏi form hoa hồng + gộp 2 ô thưởng năng suất (2026-10-01)
+
+**Yêu cầu (user, kèm ảnh có chú thích đỏ):** "Cái này bỏ đi nhé, chuyển thưởng năng suất quý lên đây" — bỏ field "Tính theo" (month_type) trong form cấu hình hoa hồng/thưởng, đưa "Thưởng năng suất quý (%)" (after_commission_percent) lên vị trí đó.
+
+**Q1 user chốt:** "bỏ hẳn, mặc định DS xuất hàng đã đặt cọc" → gỡ hoàn toàn khỏi UI/validate/registry/history, **GIỮ cột DB `month_type`**, service luôn lưu ngầm = 1 (DS xuất hàng đã đặt cọc) để calc hỗ trợ kế toán (`ContractSupportAccountingService`) không đổi. KHÔNG migration, KHÔNG drop cột.
+
+**Design user duyệt ("ok"):** gộp 2 fieldset thành 1 "Thưởng năng suất (%)" — 2 ô cạnh nhau: "Thưởng năng suất tháng (%)" (month_percent) + "Thưởng năng suất quý (%)" (after_commission_percent).
+
+**Thay đổi:**
+- [x] FE `components/regulation-config/RegulationConfigScreen.vue` (5 sửa): gộp 2 fieldset thành 1 (month_percent + after_commission_percent cạnh nhau); bỏ `month_type` khỏi init regForm, khỏi payload, khỏi 2 comment.
+- [x] BE `RegulationCommissionRowRequest.php`: bỏ rule `month_type required|in:1,2`, thêm comment giải thích.
+- [x] BE `RegulationTabRegistry.php` (~L447): gỡ định nghĩa field `month_type` (select inline:month_type).
+- [x] BE `RegulationConfigService.php`: gỡ `case 'inline:month_type'`; gỡ `month_type` khỏi `HOAHONG_HISTORY_FIELDS` (không còn đổi); **GIỮ** `$row->month_type = (int)($input['month_type'] ?? 1)` trong `fillGridRow` (luôn lưu 1); gỡ khỏi return `presentGridRow`.
+- [x] Test `RegulationTabRegistryTest.php`: bỏ `month_type` khỏi danh sách field hoahong kỳ vọng.
+- [x] Test `RegulationHoahongGridTest.php`: bỏ `month_type` khỏi payload `validInput`, thêm assert `db->month_type === 1` (bảo vệ invariant calc).
+- [x] `php -l` 5 file BE sạch; grep FE `month_type` = rỗng; grep BE còn lại chỉ ở Entity fillable + ContractSupportAccountingService (cố ý giữ).
+- [x] VERIFY Playwright MCP (login DNS Admin → /sale/regulation-config → "Theo phòng ban" → mở modal "Thêm quy chế hoa hồng"): snapshot xác nhận field "Tính theo" (month_type) ĐÃ BIẾN MẤT; 1 fieldset "Thưởng năng suất (%)" chứa 2 ô cạnh nhau "Thưởng năng suất tháng (%)" + "Thưởng năng suất quý (%)". Screenshot: e2e/topic4-thuong-nang-suat-merged.png.
+- [ ] KHÔNG commit/push cho tới khi user yêu cầu.
+
+### Checkpoint Task #23 — 2026-10-01
+Vừa hoàn thành: FE + BE gỡ field "Tính theo" (month_type) khỏi form hoa hồng, gộp 2 ô thưởng năng suất; giữ cột DB (ngầm = 1). Lint sạch, grep sạch. VERIFY Playwright MCP xong (modal thật: không còn "Tính theo"; 2 ô thưởng năng suất cạnh nhau trong 1 fieldset).
+Đang làm dở: (không) — chờ user yêu cầu commit.
+Bước tiếp theo: chờ user duyệt commit/push.
+Blocked: (không)
+
+## Task #24 — Giới hạn độ rộng cột bảng "Lịch sử thay đổi" (2026-10-03)
+
+**Yêu cầu (user):** "Phần lịch sử giới hạn độ rộng cột, đừng để kéo dài mãi về sau" — cột "Nội dung thay đổi" của bảng "Lịch sử thay đổi" không giới hạn bề rộng → giá trị dài kéo tràn phải, sinh thanh cuộn ngang.
+
+**Root cause (CSS):** base `table.grid` để mọi ô `white-space: nowrap` + cột "Nội dung thay đổi" không khai width + `table-layout: auto` → cột nở theo nội dung rộng nhất, đẩy cả bảng ra tràn ngang. Ô old/new trong `.chg-tbl` cũng nowrap.
+
+**Thay đổi (chỉ FE, scoped trong `.history` — không ảnh hưởng bảng hoa hồng dùng chung `.grid`):** `components/regulation-config/RegulationConfigScreen.vue`
+- [x] Template `<th>`: thêm `width: 210px` (Phạm vi áp dụng) + `width: 160px` (Ghi chú) để dưới `table-layout: fixed` cột "Nội dung thay đổi" nhận phần dư.
+- [x] CSS `.history table.grid`: `table-layout: fixed` + `td { white-space: normal; word-break: break-word; }`.
+- [x] `.chg` / `.c-old` / `.c-new`: `white-space: normal` + `word-break: break-word` (cho old/new tự xuống dòng). Giữ `.c-arrow` nowrap (mũi tên 1 dòng, specificity cao hơn).
+- [x] VERIFY Playwright MCP (login DNS Admin → /finance/regulation-config): đo JS — `table-layout: fixed`; cột 150/150/282/210/160; `wrapHasHScroll=false`; `docScrollW===docClientW` (không tràn ngang cả trang); ô nội dung `white-space: normal`. Mở "Xem tất cả 50 thay đổi": vẫn `wrapHasHScroll=false`, ô dài nhất (130 ký tự) rộng 277px / cao 151px (đã wrap), `scrollWidth===clientWidth` (không tràn trong ô). Screenshots: `history-before-expand.png`, `history-expanded-50.png`.
+- [x] COMMIT + PUSH `origin/gop_db` hrm-client = `1d92bd08e` (pull --rebase onto `c668e6ba7` sạch, không conflict).
+
+### Checkpoint Task #24 — 2026-10-03
+Vừa hoàn thành: giới hạn bề rộng cột bảng Lịch sử (table-layout fixed + width cột + wrap nội dung), scoped trong `.history`. VERIFY Playwright MCP xong (đo JS + screenshot: hết tràn ngang, nội dung tự xuống dòng, cột khác giữ nguyên). ĐÃ commit + push `origin/gop_db` = `1d92bd08e`.
+Đang làm dở: (không)
+Bước tiếp theo: (không)
+Blocked: (không)
+
+## Task #25 — Thêm phạm vi "Theo bộ phận" cho Quy chế thưởng (hoa hồng), song song Phòng ban (2026-10-03)
+
+**Yêu cầu (user, kèm ảnh):** "cấu hình quy chế thưởng cho cấu hình theo bộ phận nữa, làm tương tự erp" — bổ sung cấu hình **Quy chế thưởng (hoa hồng)** ở cấp **Bộ phận (Part)**, song song cấp Phòng ban đang có, mirror ERP (bảng `regulations` polymorphic hỗ trợ cả Department lẫn Part).
+
+**Quyết định đã chốt (user):**
+- Part-level xác nhận "đúng"; UI dạng **cascade 2 dropdown** (Phòng ban → Bộ phận) — chọn "1".
+- **Lịch sử ở cấp bộ phận NGOÀI phạm vi** (chỉ hiện lịch sử phòng ban cha để panel không trống).
+- Chỉ tab **hoa hồng (grid)** có ở cấp bộ phận; `themquy`/`khac` vẫn chỉ cấp phòng.
+- Design "trailing-optional-param" ở BE: method grid thêm tham số cuối `$objectableType = OBJECTABLE_DEPARTMENT` → caller/test phòng ban cũ không đổi. Đã duyệt ("ok").
+
+**Thay đổi BE (đã xong trước continuation):**
+- [x] `Regulation.php`: hằng `OBJECTABLE_DEPARTMENT='App\Model\Common\Department'`, `OBJECTABLE_PART='App\Model\Common\Part'` (chuỗi namespace ERP để calc ERP đọc được row HRM tạo).
+- [x] Route `regulation-config-parts` → `RegulationConfigController@parts` (trong group `checkPermission:Cài đặt cấu hình`).
+- [x] `RegulationCommissionRowRequest`: `department_id` = `required_without:part_id|nullable|integer`; `part_id` = `nullable|integer`.
+- [x] `resolveGridObjectable`: ưu tiên `part_id>0` → `[OBJECTABLE_PART, partId]`, else `[OBJECTABLE_DEPARTMENT, departmentId]`.
+
+**Thay đổi FE `components/regulation-config/data.js`:**
+- [x] Thêm top-level `DATA.part` (tái dùng group `hoahong` type=grid) để `model.part` resolve trong `curScopeMeta`/`curGroups`.
+
+**Thay đổi FE `components/regulation-config/RegulationConfigScreen.vue`:**
+- [x] Template: nút segment thứ 3 "Theo bộ phận" (`v-if="hasPartScope"`) + 2 dropdown cascade (Phòng ban → Bộ phận) hiện khi `scope === 'part'`.
+- [x] data(): `parts`, `selectedPartId`, `prevPartId`, `partLoading`; scope = `'company'|'department'|'part'`.
+- [x] computeds: `partOptions`, `hasPartScope`, `scopeUnitLabel` (bộ phận/phòng ban), `curHistory` map part→department.
+- [x] watch `curGroup` + `revertCurrentTab` + `setScope`: nhánh `part` gọi `fetchGridTab`/`ensurePartScope`/`fetchHistory('department')`.
+- [x] method mới: `ensurePartScope`, `fetchParts(deptId)`, `onPartDeptChange`, `onPartChange`.
+- [x] helper `gridScopeReady()` / `gridScopeParams()` gom routing `part_id` vs `department_id`.
+- [x] `fetchGridTab` dùng `gridScopeReady()`/`gridScopeParams()`; `applyGridConfig` ghi vào `model[this.scope]`; `saveReg` gửi `...gridScopeParams()`; `deleteReg` query `part_id`/`department_id` theo scope.
+- [x] Empty-state + dòng "đang khai cho đơn vị này" dùng nhãn trung tính theo `scopeUnitLabel`.
+
+**Còn lại:**
+- [x] VERIFY Playwright MCP (login → regulation-config → "Theo bộ phận" → chọn Phòng ban "PHÒNG KINH DOANH THƯƠNG MẠI" (47) → Bộ phận "BP Thiết bị, vật tư lốp" (27) → CRUD trọn vòng 1 dòng). Kết quả 2026-10-03:
+  - CREATE: `POST .../hoahong/grid => 200`; DB row `id=714` `objectable_type='App\Model\Common\Part'`, `objectable_id=27`, chia DS 50/30/20, `status=applied`, `created_by=13`.
+  - READ: lưới nạp theo `part_id=27`, dòng hiển thị đúng; empty-state biến mất.
+  - UPDATE: `PUT .../grid/714 => 200`; đổi chia thưởng HĐ 50/30 → 40/40 (tổng vẫn 100); DB `40/40/20`, `updated_by=13`; lịch sử ghi 1 dòng mới gán cho DNS Admin (phạm vi hiển thị = phòng ban cha, đúng thiết kế lịch sử theo phòng).
+  - DELETE: confirm modal "Xoá quy chế hoa hồng" → Xoá; DB không còn row 714 / không còn dòng part=27; lưới về empty-state "Chưa có quy chế hoa hồng cho bộ phận này." (Hiển thị 0–0 / 0).
+- [x] Commit + push (user yêu cầu 2026-10-03): nhánh `gop_db` cả 2 repo.
+  - hrm-api: `feat(regulation-config): thêm phạm vi "Theo bộ phận" cho quy chế hoa hồng` (5 file) → rebase lên `origin/gop_db` → push `622ce6ccc`.
+  - hrm-client: `feat(regulation-config): thêm phạm vi "Theo bộ phận" cho quy chế hoa hồng (FE)` (2 file) → rebase → push `6e31e81ae`.
+
+## Task #26 — Sửa bố cục chọn Phòng ban / Bộ phận ở thanh phạm vi (UI) (2026-10-05)
+
+**Yêu cầu (user, kèm ảnh):** "cái chỗ này chọn phòng ban bộ phận giao diện không được đẹp" — khi chọn scope "Theo bộ phận", 2 ô Phòng ban / Bộ phận bị tách 2 hàng, lệch nhau (Phòng ban cuối hàng 1, Bộ phận đầu hàng 2).
+
+**Nguyên nhân:** `.scopebar` là flex-wrap gồm các `.scope-field` rời + `.scope-spacer` (flex:1) đẩy savebar sang phải. 2 ô Phòng ban + Bộ phận là 2 flex-item độc lập → wrap độc lập → tách hàng, spacer chen giữa.
+
+**Hướng chốt (user "ok"):** thuần CSS/markup, không đụng logic. Gom các ô chọn đơn vị vào wrapper `.scope-units` (flex-row gap riêng, `flex-wrap: nowrap`) để cặp Phòng ban + Bộ phận luôn cạnh nhau, wrap nguyên cụm. Thống nhất min-width 2 select về 220px.
+
+- [x] Bọc 3 ô scope-field điều kiện (department: Phòng ban; part: Phòng ban + Bộ phận) trong `<div class="scope-units">` (v-if="scope !== 'company'"), mỗi select bọc `.scope-select`.
+- [x] Thêm CSS `.scope-units { display:flex; align-items:flex-end; gap:18px; flex-wrap:nowrap } .scope-select { min-width:220px }`.
+- [x] Đồng bộ min-width select = 220px (thay 260/240 cũ).
+- [x] Verify Playwright MCP (2026-10-05): scope "Theo bộ phận" rộng 1280 → Phòng ban + Bộ phận cạnh nhau thẳng hàng; thu hẹp 1050 → cả cụm tụt xuống hàng 2 NGUYÊN KHỐI (không tách lẻ); scope "Theo phòng ban" 1 ô vẫn đúng; không lỗi template/Vue (console chỉ network + warning PostCSS flex-end có sẵn).
+
+### Checkpoint — 2026-10-05
+Vừa hoàn thành: Task #26 — gom cụm chọn đơn vị vào `.scope-units` để Phòng ban + Bộ phận không tách hàng; verify Playwright 2 scope + 2 bề rộng.
+Đang làm dở: (không)
+Bước tiếp theo: user review; chưa commit/push (chờ yêu cầu).
+Blocked: (không)

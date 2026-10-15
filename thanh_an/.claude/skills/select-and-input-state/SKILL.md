@@ -240,6 +240,17 @@ trong dropdown; `V2BaseSelectInModal`, `V2BaseSelectRemote` gọi sẵn. Tự ki
 document.activeElement === document.querySelector('.select2-dropdown .select2-search__field')
 ```
 
+## 7. `V2BaseCheckbox` — chữ đi qua prop `label`, KHÔNG lồng giữa thẻ
+
+`V2BaseCheckbox` tự chọn chế độ: `singleMode = options rỗng && KHÔNG có slot default`. Lồng chữ giữa
+thẻ (`<V2BaseCheckbox v-model="x">Hiện cả dòng…</V2BaseCheckbox>`) → có slot → nhảy sang chế độ
+**nhiều ô** với `options` rỗng → **không render gì, không báo lỗi** (ô tick biến mất). Gặp thật ở
+Báo cáo nhu cầu mua + tab Hàng hóa HĐ mua (06/10/2026).
+
+```vue
+<V2BaseCheckbox v-model="showDone" label="Hiện cả dòng đã mua đủ" />   <!-- đúng -->
+```
+
 ---
 
 ## Tự kiểm trước khi báo xong

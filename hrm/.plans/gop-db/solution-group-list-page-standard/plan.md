@@ -47,3 +47,6 @@ Compile và bộ dò identifier đều KHÔNG bắt được (gọi qua `$refs` 
 
 Đã sửa, và rà lại toàn bộ 7 màn có popup của đợt này bằng cách đối chiếu tên hàm gọi qua `$refs`
 với hàm thật khai trong component modal — 7/7 khớp.
+
+- [x] Fix lịch sử: đổi Nhóm ngành không ghi log (sync pivot sau khi log + snapshot thiếu khoá ảo `scopes`) — 12/10/2026
+- [x] Rà lịch sử 8 danh mục QLDA (test API đầu-cuối từng trường): Ứng dụng thiếu log cặp Nhóm GP/Lĩnh vực KH → khoá dạng BẢNG; Nhóm GP đổi `scopes` sang dạng BẢNG; popup Xem Hạng mục đọc nhầm `system-logs` → `catalog-histories` — 12/10/2026

@@ -454,7 +454,45 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       `mimes:xls` → so đuôi `getClientOriginalExtension()` bằng closure
 - [ ] Bố cục: không lồng `.container-fluid` ở cả trang vỏ lẫn form con (đệm đôi 12px); không tự khai
       `padding-bottom` chừa footer (V2Footer đã gắn `has-v2-footer`); khối form bám khuôn của màn cùng nhóm
-      (`.form-card` hay `V2BaseFormSection`) — đo `getBoundingClientRect` cạnh màn mẫu (#11356, #11540)
+      — nhóm kho / xuất nhập dùng **`V2BaseFormCard`** (khuôn PXG-02188, đoạn mẫu K1 ngay dưới), nhóm khác
+      `V2BaseFormSection` — đo `getBoundingClientRect` cạnh màn mẫu (#11356, #11540). Màn nhóm kho tự kiểm
+      bằng grep, phải RỖNG (trừ ruột bảng):
+      `grep -nE "ri-[a-z0-9-]+(-line|-fill)?\"></i>|kv-grid|c-section|section-header|card-header|subpanel|status-pill|text-muted|'—'|>—<"`
+
+      Đoạn mẫu K1 (chi tiết/form nhóm kho — tiêu đề IN HOA xám không icon, ô rỗng hiện ô xám rỗng, KHÔNG `—`):
+
+      ```vue
+      <V2BaseFormCard>
+          <template #title>{{ data.type_name || 'Phiếu nhập hàng' }}</template>
+          <template #meta>
+              <CreatorInfoLine :name="data.creator_name" :created-at="data.created_at" />
+          </template>
+          <div class="form-row">
+              <div class="col-md-4 mb-2">
+                  <V2BaseLabel>Trạng thái</V2BaseLabel>
+                  <div><V2BaseBadge :color="data.status_color">{{ data.status_text }}</V2BaseBadge></div>
+              </div>
+              <div class="col-md-4 mb-2">
+                  <V2BaseLabel>Kho nhập</V2BaseLabel>
+                  <V2BaseInput :value="data.warehouse_name || ''" disabled size="sm" />
+              </div>
+              <div class="col-12 mb-2">
+                  <V2BaseLabel>Ghi chú</V2BaseLabel>
+                  <V2BaseTextarea :value="data.note || ''" :rows="2" disabled />
+              </div>
+          </div>
+      </V2BaseFormCard>
+
+      <!-- Bảng: card bọc bảng, không đệm thân -->
+      <V2BaseFormCard title="Chi tiết" no-body-padding>
+          <V2BaseTableScroll>…</V2BaseTableScroll>
+      </V2BaseFormCard>
+      ```
+
+      Số đo chuẩn (PXG-02188, viewport 1440): head cao 37px, chữ tiêu đề 12px/700 `#374151` IN HOA
+      letter-spacing 0.24px, nền head `#f9fafb`, padding head `8px 14px`, thân `14px`, viền `1px #e5e7eb`,
+      bo 8px, cách card dưới 24px, ô nhập cao 32px, nhãn 12px/600 `#0f172a`. Trạng thái trên topbar
+      (`buildStatusTitle`) lấy CÙNG `status_color` BE trả — không tự map màu ở FE.
 - [ ] Popup chọn hàng / bản ghi: hàng đã thêm loại ở **BE** (`exclude_*_ids` → `total` và "Hiển thị 1–N/N"
       đúng), không lọc ở FE; truyền `existingProducts` đúng khuôn `{key, groupId, parentRowId}`; màn không
       có cộng dồn dùng `duplicateMode="block"`; thứ tự ô lọc khớp thứ tự cột; `size="xl"` chỉ rộng hơn khi
