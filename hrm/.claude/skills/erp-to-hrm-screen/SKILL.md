@@ -391,6 +391,11 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Chữ trong ô để **thường**, kể cả cột Mã — không `font-weight-bold`
 - [ ] Chữ đỏ **chỉ** dùng cho lỗi validate / nút nguy hiểm / giá trị cũ trong lịch sử. Không dùng
       `.text-muted` cho chữ phụ trong khối `v2-styles` (bị ép thành đỏ) → `list-page` §3b-2 / §3b-2b
+- [ ] Checkbox / radio (`V2BaseCheckbox`, `b-form-checkbox`, `custom-control`) KHÔNG tự vá
+      `transform: none` / `top: Npx` cho `.custom-control-label` nữa. Nhãn từng lệch lên nửa dòng do
+      rule toàn cục `input:not(:placeholder-shown) + label` trong `assets/scss/custom-theme.scss` thiếu
+      tiền tố `.mate-field` — đã sửa gốc 06/10/2026. Còn lệch thì đo `getBoundingClientRect` của
+      label / ô tích / nút cùng hàng rồi sửa ở component chung, không vá cục bộ.
 - [ ] Link sang chứng từ khác: màn đích **đã port sang HRM** thì `nuxt-link` tới HRM, KHÔNG link sang ERP
       (#11514); màn đích thuộc luồng khác (Quay lại bên đó cố định về list của nó) → `target="_blank"
       rel="noopener"` (#11373); trong form readonly bọc `.v2-linked-field` → `list-page` §7b

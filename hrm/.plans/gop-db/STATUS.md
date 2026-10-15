@@ -77,6 +77,12 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- decision-appendix-print-template (#10894) → @junfoke → .plans/gop-db/decision-appendix-print-template/plan.md
+  Trạng thái: 🟡 **Xong BE + FE (09/10/2026)**, nhánh `gop_db`, CHƯA commit. BE verify tinker (3/4 loại QĐ); FE mới parse cú pháp, CHƯA xem trên trình duyệt.
+  Scope: tab "Mẫu in PLHĐ" trên 4 loại QĐ + trường/bộ lọc "PLHĐ của quyết định" ở danh mục mẫu in; duyệt QĐ tự sinh PLHĐ lại (tắt từ 13/07, `aac01d75c`), thiếu mẫu → chặn 422.
+  ⚠️ GOTCHA: mẫu PLHĐ có sẵn (id 17, 46) chưa gắn loại QĐ → lên bản là tab trống, không tạo được QĐ 4 loại tới khi HR gắn.
+  Spec: docs/superpowers/specs/gop-db/2026-10-09-decision-appendix-print-template-design.md | Tóm tắt: .plans/gop-db/decision-appendix-print-template/design.md
+
 - presale-customer-registers → @junfoke → .plans/gop-db/presale-customer-registers/plan.md
   Trạng thái: 🟢 **Xong BE + FE, khớp ERP + Playwright (08/10/2026)**, nhánh `develop`, CHƯA commit.
   Còn: admin gán quyền 1526 (Xem danh sách khách hàng đã đăng ký) cho vai trò.
@@ -2204,7 +2210,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Chuyển Hoàn thành: 2026-10-06 — đã push `develop` cả 2 repo. Còn: chạy SQL quyền 1680-1682 trên server · kế toán xác nhận cước không mã công việc.
   Trạng thái: 🟢 **CODE XONG BE + FE, khớp ERP + Playwright (05/10/2026)**, nhánh `develop`. **Đã push `develop`.**
   Port "Báo cáo chi phí vận chuyển theo NV kinh doanh" → `/sale/transport-cost-by-staff`, quyền 1680-1682 (chỉ mở rộng phạm vi).
-  Còn lại: chạy SQL quyền 1680-1682 trên server · kế toán xác nhận 215,7 tr cước không mã công việc (đang loại như ERP).
+  Còn lại: chạy SQL quyền 1680-1682 trên server.
   Spec: docs/superpowers/specs/gop-db/2026-10-05-sale-transport-cost-by-staff-design.md | Tóm tắt: .plans/gop-db/sale-transport-cost-by-staff/design.md
 
 - presale-division-market-report → @junfoke → .plans/gop-db/presale-division-market-report/plan.md

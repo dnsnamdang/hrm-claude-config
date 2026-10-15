@@ -28,5 +28,6 @@
 ## Checkpoint — 2026-10-05
 
 - **Vừa hoàn thành:** Phase 1-3, CHƯA commit (nhánh `develop`).
-- **Bước tiếp theo:** chạy SQL quyền 1680-1682 trên server; kế toán xác nhận 215,7 tr cước không mã công việc.
+- **Bước tiếp theo:** chạy SQL quyền 1680-1682 trên server.
+- **Đã chốt 06/10/2026:** 215,7 tr cước không mã công việc — ERP cũng KHÔNG tính (tổng ERP 1.265.025.853 = HRM), giữ nguyên.
 - **Blocked:** không.

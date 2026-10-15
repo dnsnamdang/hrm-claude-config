@@ -477,3 +477,73 @@ Commit `hrm-api` **919f24cab** trên `develop` (chưa push).
 
 Đã commit + push `develop`: `hrm-api` **31722b716** (registry chỉ stage khối `assign_customer_demands`,
 phần `declare_debt_beginning` của người khác vẫn để nguyên ở working tree) · `hrm-client` **f4e24d91b**.
+
+## ĐỢT 07/10/2026 — Phản hồi #11386 ngày 05/10 (TPE Lệ) + 2 bug user báo thêm
+
+Phản hồi có 4 ý: popup Lịch sử sai thiết kế · hạn không theo cấu hình N · xuất Excel · đổi nhãn lọc
+"Kinh doanh chủ trì". Ý 1 đã làm ở đợt 05/10 (QA chụp ảnh 15:06, trước commit 15:24); ý 3 + 4 đã làm
+06/10. Còn lại:
+
+- [x] **Hạn ra "Không giới hạn thời gian hiệu lực" dù đã cấu hình N.** Gốc: `due_days_snapshot` chụp lúc
+      LƯU BIÊN BẢN, nhưng từ 05/10 nhu cầu chỉ được ghi nhận lúc meeting Hoàn thành. QA lưu biên bản
+      khi N = 0 → cấu hình N → Hoàn thành → vẫn snapshot 0. Sửa `MeetingService::recordCompletedDemands()`:
+      nhu cầu CHƯA ghi nhận được chụp lại N hiện tại ngay lúc Hoàn thành; đã ghi nhận thì giữ N cũ (TC 004).
+      Verify (script, rollback): snapshot 0 → đổi N 45 → Hoàn thành 07/10 → hạn 21/11/2026, 1 dòng Tạo mới;
+      đổi N 90 sau đó → vẫn 45, không thêm dòng.
+      ⚠️ Nhu cầu QA đã tạo trên dev trước bản này vẫn mang snapshot 0 → test lại bằng meeting MỚI.
+- [x] **Lọc Lĩnh vực không lọc Nhóm ngành theo** (`CustomerDemandList.vue`): `sectorOptions` thành computed
+      theo `filters.field_id`; đổi lĩnh vực thì bỏ chọn nhóm ngành không còn thuộc lĩnh vực mới.
+- [x] **Câu chặn gắn nhu cầu đã đóng vào Dự án TKT** (`ProspectiveProjectService`): đổi thành
+      "Nhu cầu đã bị đóng. Không thể tạo Dự án tiền khả thi" — câu cũ "quá hạn… bị đóng tự động" sai
+      khi user đóng tay.
+
+Sheet testcase "52 - Danh sách Nhu cầu khách hàng" còn 31 F / 4 PE, phần lớn thuộc #11377 (N, M, cảnh báo,
+tự đóng) đã sửa 28/09-02/10; soát mẫu TC_06.006 (Phòng ban theo người nhận bàn giao) thì code đã đúng →
+nhiều khả năng QA test trước bản deploy. Chưa rà hết từng ca.
+
+## ĐỢT 07/10/2026 (2) — Rà màn theo quy tắc chung màn danh sách
+
+- [x] **Thêm "In danh sách"** (thứ tự In → Xuất Excel → Cấu hình cột, không gate quyền). BE
+      `GET assign/customer-demands/print-list-data` (trước `/{id}`) → `CustomerDemandPrintService`
+      dùng lại `CustomerDemandService::exportRows()` + `countRows()`, trait `LimitsPrintListRows`
+      (trần 2.000) + `PrintsCompanyLetterhead`; blade `prints/assign/customer_demand_list.blade.php`.
+      Cột in = cột đang hiện trên màn (FE gửi `fields` = `visibleExportFields`), có `only_mine` của tab.
+- [x] **Cột Thao tác → `V2BaseRowActions`**: Bàn giao · Đóng nhu cầu · Lịch sử (ẩn qua `visible`).
+      Bỏ nút "Xem meeting" (cột Meeting đã là link — quy tắc bỏ hành động Xem). Title "Lịch sử".
+- [x] **Ô rỗng để trống**: bỏ hết `'—'` ở Khách hàng, Giá trị đầu tư, Kinh doanh chủ trì, Meeting,
+      Dự án TKT (list-page 3b-3). Bản in giá trị đầu tư 0/trống cũng để trống cho khớp màn.
+- [x] Verify Playwright local (2 nhu cầu thử, đã xoá): toolbar đúng thứ tự, dòng Đang theo dõi 3 nút,
+      dòng Đóng chỉ còn Lịch sử, popup xem trước in có letterhead + đúng cột + tổng + ngày in.
+
+## ĐỢT 07/10/2026 (3) — Đối chiếu chốt #11390 "nhu cầu chỉ ghi nhận khi meeting Hoàn thành" với #11386
+
+Đã rà mọi chỗ đọc `meeting_investment_demands`: danh sách + tab Công việc của tôi (`baseQuery`), ô chọn
+nhu cầu ở form Dự án TKT, báo cáo CSKH tiềm năng đều đã lọc `meetings.status = HOAN_THANH`; cron tự đóng
+bỏ qua nhu cầu chưa có `completed_at`.
+
+- [x] **Sửa lại cách chốt N lúc Hoàn thành** (thay bản trong commit `1f3c2ecc7`): bản đó chỉ chụp N cho
+      nhu cầu CHƯA có dòng "Tạo mới" → nhu cầu tạo trước 05/10 (đã có dòng đó từ lúc lưu biên bản, đúng
+      ca meeting 1244 của QA) vẫn kẹt N = 0. Nay tách `MeetingService::snapshotDueDaysOnCompletion()`,
+      controller gọi ĐÚNG khoảnh khắc chuyển trạng thái (`$oldStatus !== HOAN_THANH`) ở cả `update()` lẫn
+      `changeStatus()`; `recordCompletedDemands()` trả về chỉ ghi lịch sử. Verify (rollback): nhu cầu có
+      sẵn dòng Tạo mới cũ → Hoàn thành nhận N 45, không thêm dòng; đổi N 90 rồi lưu lại → giữ 45.
+
+## ĐỢT 07/10/2026 (4) — QA: không bật/tắt được "Kinh doanh chủ trì" trong Cài đặt bộ lọc + phân trang 10
+
+- Lý do QA không thấy cả cụm tổ chức ở lần báo đầu: tài khoản chưa có 4 quyền 1193-1196 (DNS Admin trên dev
+  không có quyền nào nhóm "Nhu cầu khách hàng") → cấu hình quyền, không phải code.
+- [x] Tách "Kinh doanh chủ trì" thành trường lọc riêng `employee_id` (user chọn thêm prop cho component chung):
+      `V2BaseCompanyDepartmentFilter` thêm prop `only_employee` (mặc định false, ~28 màn cũ không đổi). Màn dùng
+      2 instance cùng `filters`: cụm `org` khai `disable_employee` + `inputCount: 3`, trường `employee_id` khai
+      `only_employee`. Cấu hình bộ lọc đã lưu của user cũ: trường mới tự nối CUỐI danh sách, bật sẵn.
+- [x] Phân trang mặc định 10 dòng/trang (user chốt).
+- Verify Playwright local (gán tạm quyền trên component, không ghi DB): hàng lọc Công ty · Phòng ban · Bộ phận ·
+  Kinh doanh chủ trì như cũ; popup Cài đặt bộ lọc có mục riêng "Kinh doanh chủ trì"; Số dòng/trang = 10.
+
+## ĐỢT 07/10/2026 (5) — QA: sort cột Giá trị đầu tư / Thời gian khánh thành không ăn + thêm sort Ngày tạo
+
+- [x] Gốc: `handleSort` đọc `{ sortBy, sortDirection }` nhưng `V2BaseDataTable` emit `{ field, direction }` →
+      `sort_field` luôn rỗng, BE rơi về sort mặc định. Sửa đọc đúng khuôn (như `assign/customers`), bỏ `loadData()`
+      thừa (watcher `filters` tự về trang 1 + tải lại). BE `SORTABLE_COLUMNS` đã có sẵn `created_at`.
+- [x] Cột Ngày tạo `sortable: true`.
+- Verify Playwright local (3 nhu cầu thử, đã xoá): Giá trị đầu tư / Thời gian khánh thành / Ngày tạo đều đúng cả asc lẫn desc.
