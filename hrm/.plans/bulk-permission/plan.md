@@ -128,3 +128,7 @@ Quyết định kiến trúc:
 - Lịch sử phân quyền (#10455) defer.
 Bước tiếp theo: Phase 3 — test thủ công 13 case trên trình duyệt (cần chạy hrm-client + hrm-api dev).
 Blocked: Không.
+
+## Redmine #11698 (14/10/2026, nhánh gop_db)
+- [x] BE+FE: DS nhân viên trong popup thêm cột Email (sau Nhân viên) + ô lọc Email (LIKE `employees.email`) + cột Email trong file Excel xuất
+- [x] Test Playwright (client :3002 / API :8003): 11/11 case PASS — cột, lọc 1 phần/hoa thường/khoảng trắng/không tồn tại, Excel khớp tổng, Làm mới, tab Loại trừ

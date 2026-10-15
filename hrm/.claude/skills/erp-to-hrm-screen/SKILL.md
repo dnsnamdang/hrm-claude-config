@@ -84,6 +84,10 @@ Skill này khoá 3 thứ lại:
 - **Khai vào seeder chung** `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (lần build nào
   cũng chạy lại seeder này). KHÔNG tạo seeder quyền riêng cho từng màn (kiểu
   `BuyServiceRequestPermissionSeeder` — màn cũ, đừng chép).
+  Từ 14/10/2026 mỗi quyền là 1 dòng `$this->perm([...])` **không có `'id'`** — không còn phải dò/giữ chỗ
+  dải id với nhánh khác; seeder đồng bộ theo tên nên chạy lại không mất gán quyền. Đổi tên → thêm vào
+  `RENAMED`, bỏ quyền → thêm vào `REMOVED` — chi tiết skill `permission-seeder`. Kiểm trước bằng
+  `php artisan permission:sync --dry-run`.
 - **`type` của quyền = `permissionType` của PHÂN HỆ CHÍNH** của màn (tra trong
   `hrm-client/components/subsystems.js`), không theo module chứa code — màn Bán hàng nằm ở
   `Modules/Finance` vẫn là `type` của Bán hàng. Màn phân quyền (`components/setting/Permission.vue`) gom

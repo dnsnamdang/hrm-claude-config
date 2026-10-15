@@ -93,9 +93,14 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Còn: chạy SQL quyền 1683-1694 trên server + gán vai trò.
   Spec: docs/superpowers/specs/gop-db/2026-10-06-sale-customer-debt-reports-design.md | Tóm tắt: .plans/gop-db/sale-customer-debt-reports/design.md
 
+- permission-seeder-sync → @namdangit → .plans/gop-db/permission-seeder-sync/plan.md
+  Seeder quyền HRM + ERP chuyển từ "xoá hết tạo lại theo id" sang upsert theo `(guard, name)`, khai rõ `RENAMED`/`REMOVED`, có `--dry-run`. Bắt đầu 14/10/2026.
+  Spec: docs/superpowers/specs/gop-db/2026-10-14-permission-seeder-sync-design.md
+  Trạng thái: 🟢 ĐÃ merge gop_db + deploy PROD 15/10/2026 (api 180147fab, ERP bd2a8d4c6a); quyền thực tế prod trước = sau. Đã cleanup prod. Còn: deploy dev, báo team cách khai quyền mới (skill permission-seeder), xoá permission_legacy_ids.php sau khi mọi môi trường đã sync.
+
 - quotation-no-project → @namdangit → .plans/gop-db/quotation-no-project/plan.md
   Báo giá không gắn Dự án TKT (tester 13/10 + #11651): tạo → duyệt → chốt Trúng thầu → Lập hợp đồng. Bắt đầu 13/10/2026.
-  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6). Deploy nhớ chạy migration 2026_10_13_000001.
+  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6) + 14/10 phản hồi tester (api feb3e4cd6, client b98d50568). Deploy nhớ chạy migration 2026_10_13_000001.
 
 - quan-ly-hang-hoa / **Phase 7 Luồng tính giá** (4 chứng từ YCHG → YCTG → PTG → KQ) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/luong-tinh-gia/design.md
   Trạng thái: chốt Q1–Q20 + D1–D13 + P1 (`luong-tinh-gia/ton.md`); mockup T0 + design 7 đợt T1–T7 **user DUYỆT 11/10/2026**.

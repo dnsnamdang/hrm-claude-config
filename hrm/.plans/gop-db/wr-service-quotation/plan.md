@@ -2018,3 +2018,61 @@ nút sang Kho/Giao việc/Kế toán), và chứng từ 6-9 chưa port.
 - [x] FE: dòng 1.2 Danh sách dịch vụ / 1.3 Danh sách vật tư luôn hiện (kể cả trống, tổng = 0) như ERP
 - [x] FE: in đậm tiêu đề "I - Các khoản chi phí liên quan" / "II - Chi phí vận chuyển thiết bị, vật tư"
 - Khung ô Số phiếu cung cấp thông tin: đã có sẵn (`.v2-linked-field`), không phải sửa
+
+### Redmine #11332 — đợt phản hồi 2 (ghi chú #3 Lê Huyền Trang + #4 Nguyễn Minh Hằng), sửa 14/10/2026 trên `develop`
+- [x] **Cột Dung lượng để trống** (ghi chú #3): `V2BaseAttachmentSection` in `—` khi chưa biết dung lượng, màn mẫu `finance/addition-accounting-requests` để trống → bỏ `|| '—'`. File dùng chung nhưng chỉ 3 màn CSKH dùng (Báo giá · Hợp đồng dịch vụ · Dịch vụ)
+- [x] **Dấu `*` cho ô bắt buộc** (ghi chú #4, ảnh chụp ô "Hiệu lực báo giá (ngày)"): thêm `required` cho nhãn Người liên hệ · Địa chỉ sửa chữa · Hiệu lực báo giá (ngày); khối "Điều khoản báo giá" gắn `<Required />` vào tiêu đề (ô chọn mẫu + nội dung đều bắt buộc khi Lưu và duyệt). Khách hàng vốn đã có `*`
+- [x] Gỡ cờ `touched` ở `WrQuotationForm` — biến này còn **không khai trong `data()`** (chỉ gán trong `submit`), lỗi hiện được là nhờ ăn theo lần render của `formError`; bỏ hẳn cho khỏi vỡ ngầm
+- [x] **Ô "Số BBBGNT / BBXNCV" chặn ký tự đặc biệt** (ghi chú #3 — QA ghi "chỉ cho nhập số"): dữ liệu thật 656 dòng thì **569 dòng có chữ** (`TPE.BBBG.01766`, `PYCXH-61413`, `30/05/2025`), ERP cũng không chặn gì → ép "chỉ số" là phiếu cũ mở ra đã đỏ. **User chốt 14/10/2026: chặn ký tự đặc biệt**, cho chữ/số/khoảng trắng và `. , : ( ) / - _`
+  - FE: rule mới `no_special_char` trong `plugins/vee-validate.js` (thêm rule, không sửa rule cũ) + gắn `v-validate` cho ô trong bảng, có viền đỏ + dòng lỗi riêng từng dòng
+  - BE: `products.*.handover_acceptance_record_code` thêm `regex:/^[0-9A-Za-zÀ-ỹ\s.,:()_\/-]+$/u`, LUÔN bật kể cả Lưu nháp (rule định dạng), message nghiệp vụ "Không được chứa ký tự đặc biệt"
+  - Đã quét **toàn bộ 289 giá trị khác nhau đang có trong DB → 0 giá trị bị chặn oan** (vòng đầu để sót 11 giá trị dạng `Ngày xuất : 02/07/2025`, `( PYCXH-24337 )` nên đã nới thêm `: , ( )`)
+- [x] Đo trên :3000 — gõ `y@@%%%` / `@##$$$$` / `abc<script>` đỏ ngay realtime; `TPE.BBBG.01766`, `PYCXH-61413`, `30/05/2025`, `Ngày xuất : 02/07/2025`, `( PYCXH-24337 )`, `65488888` nhập bình thường; gọi thẳng API lúc **Lưu nháp** vẫn 422 đúng khoá
+- [x] Màn Lập báo giá: nhãn `*` đúng 4 ô + tiêu đề khối Điều khoản; ô Dung lượng rỗng; form trống bấm Lưu và duyệt vẫn ra đủ ô đỏ
+- [x] Dọn phiếu nháp rác của phép thử (id 5707)
+- [ ] User kiểm lại trên dev sau khi deploy
+
+### Redmine #11298 ghi chú #12 — "Chỉnh lại UI ghi chú cuối phiếu" (sửa 14/10/2026 trên `develop`)
+Ảnh QA là khối **Lịch sử** của phiếu CCTT: thay đổi ô "Ghi chú cuối phiếu" (nội dung CKEditor ~1.300
+ký tự) hiển thị vỡ — nhãn trường bị căn giữa cạnh một khối cao, mũi tên `→` lạc giữa 2 khối, giá trị
+mới tràn xuống hẳn dòng dưới, và các gạch đầu dòng cách nhau một dòng trống nên thưa thếch.
+- [x] `SystemInfoSection`: thêm `isBlockChange(change)` — thay đổi NHIỀU DÒNG hoặc dài > 160 ký tự thì
+      đổi sang bố cục DỌC: 2 khối **Trước:** (đỏ) / **Sau:** (xanh), mỗi khối nền trắng + viền nhạt,
+      cao tối đa 180px rồi cuộn trong khối. Giá trị ngắn giữ nguyên kiểu cũ `cũ → mới` nằm ngang
+- [x] Dòng chứa khối thêm class `si-change--block` (`align-items: flex-start`) để nhãn trường căn TRÊN
+- [x] `SystemInfoValue.htmlSangChu()`: bỏ dòng TRỐNG (`\n\s*\n+` → `\n`), vẫn giữ xuống dòng — gom hết
+      thành một đoạn là lỗi đã mắc 09/09/2026
+- [x] Sửa 1 chỗ ăn cả 2 nơi: popup Lịch sử ở màn danh sách dùng lại chính `SystemInfoSection`
+      (`CatalogHistoryModal` import nó) — đã xem tận mắt cả khối ở màn chi tiết lẫn popup
+- [x] "Xem thêm / Thu gọn" vẫn chạy trong bố cục mới
+- [x] Dọn sạch sau khi thử: trả `footer` phiếu 10370 về nguyên văn (2 lần "50%", 0 lần "40%") và xoá
+      log thử — log cuối cùng của phiếu trở lại 09/09/2026 14:26, tổng 12 dòng như trước
+- [ ] User kiểm lại trên dev sau khi deploy
+
+**Rà lại TOÀN BỘ phản hồi của #11298 trên :3000 (14/10/2026)** — phiếu `TPE.PCCTT.THU-UI` (10370), `TPE.PCCTT.2026010260` (có lý do từ chối), `TPE.PCCTT.2026010321` (có dòng dịch vụ khối A):
+- [x] Mô tả 1 — ô **Loại hình tổ chức**: có, chỉ đọc
+- [x] Mô tả 2 — khối **A - Bảo hành thiết bị**: có ô **Xem tồn** cạnh tiêu đề + cột **Giá vốn / Tồn dự kiến / Đang giữ**
+- [x] Mô tả 3 — khối **B (I - Dịch vụ kiểm tra, sửa chữa)**: đủ như mục 2
+- [x] Mô tả 4 — **Lý do từ chối tiếp nhận** nằm trong khung ô khoá (viền `#e2e8f0`, nền `#f1f5f9`)
+- [x] Mô tả 5 — **D - Tổng hợp báo giá**: không còn dòng VAT, chỉ còn "Tổng cộng"
+- [x] Mô tả 6 — **Số phiếu xử lý** là link `/customer-care/warranty-repair-handle-requests/5291`, `target=_blank`
+- [x] Ghi chú #5 — lịch sử không còn in nguyên thẻ HTML
+- [x] Ghi chú #8a — sửa gói bảo dưỡng/vật tư/chi phí ĐỀU ghi lịch sử (thử: Số lượng 0 → 1 ra đúng 1 dòng). "Thời gian có vật tư" kiểm riêng ở khối A bằng script so 2 ảnh chụp trước/sau: ra `Thời gian có vật tư (ngày): 0 → 7`. Bảng gói bảo dưỡng KHÔNG có cột thời gian (DB cũng không có cột) nên không ghi là đúng
+- [x] Ghi chú #8c — nút **Thêm vật tư** nay là nút nhỏ 1 dòng (`v2-btn--xs quaternary-info`, cao 24px), không còn "+" rơi xuống dòng riêng
+- [x] Ghi chú #12 — UI ghi chú cuối phiếu trong lịch sử (xem mục trên)
+- [x] Ghi chú #9 — "lịch sử chứa biến `{{VAT_NOTE}}`": **user chốt 14/10/2026 GIỮ NGUYÊN BIẾN**, không thay bằng câu thật. Bản sửa thử (BE `catalogDisplay` + FE `SiValue`) đã gỡ bỏ hoàn toàn
+- [x] Dọn data thử: footer phiếu 10370 về nguyên trạng (1.327 ký tự, "50%"), số lượng gói "Cấp 2 (12T)" trả về 0, `time_to_has` phiếu 10321 trả về NULL, xoá 2 log thử (log mới nhất của phiếu trở lại 09/09/2026 14:26)
+
+### Redmine #11298 — đợt phản hồi 5 lỗi mới (user gửi 14/10/2026, sửa trên `develop`)
+- [x] **(4) Bấm "Thêm N thiết bị" đơ cứng màn hình** — nặng nhất. Nguyên nhân: `CustomerEquipmentPickerModal` dùng `V2BaseCheckbox` (bọc `b-form-checkbox`) với handler ĐẢO trạng thái `@input="toggleSelect(item)"`. `b-form-checkbox` bắn `input` cả khi giá trị bị đổi TỪ BÊN NGOÀI → `addSelected()` dọn `selectedMap` → ô tích nhận `false` → bắn `input` → đảo lại thành `true` → … vòng lặp ĐỒNG BỘ, tab treo 100% CPU (phải kill renderer mới thoát). Sửa: thêm `setSelect(item, checked)` nhận ĐÚNG giá trị gửi lên (lần hai là no-op), `toggleSelect` chỉ còn dùng cho cú bấm vào DÒNG
+  - Cách tìm: bọc đếm quanh `add()` / `onMaintenanceEquipmentChosen` (không tăng) → gọi thẳng từng hàm (16ms, không treo) → chỉ `addSelected()` treo → khoanh vào đúng nhánh dọn `selectedMap`
+- [x] **(5) Popup: cột "Chọn" lên ngay sau STT + nút "Đóng" có icon** (`fas fa-arrow-left`, đúng khuôn skill entity-history/modal)
+- [x] **(1) Lịch sử gọi sai tên ô "Chi phí được bảo hành"**: cùng cột `discount_cost` nhưng nhãn trên màn đổi theo nhánh (`WrDeviceLinesTable`: bảo hành = "Chi phí được bảo hành", sửa chữa = "Chiết khấu"), trait ghi cứng "Chiết khấu". Nay nhãn theo `handle_type` — kiểm: phiếu bảo hành ra "Chi phí được bảo hành", phiếu 3 (sửa chữa) vẫn "Chiết khấu"
+- [x] **(3) Lịch sử ghi cả ô TỰ TÍNH của bảng chi phí**: bỏ "Trả phí" (`not_free_price`), "Chi phí cho SC - BD" (`repair_price`), "Khách hàng phải trả" (`total_price`) — cả 3 do `WrCostTable` tính lại từ Giá trị / Cho bảo hành / Miễn phí. Còn đúng ô người lập nhập: Giá trị · Cho bảo hành · Miễn phí · % VAT · Ghi chú. Đo thật: đổi "Giá trị" 0 → 11 nay ra **1 dòng** thay vì 4
+- [x] **(2) Ghi chú trong bảng không vào lịch sử** — đúng một phần: ghi chú của **chi phí** và **gói bảo dưỡng** VẪN ghi (đo thật: `Ghi chú: (trống) → 'ghi chú thử…'`), nhưng ô Ghi chú ở **dòng "Công"** của khối A thì không — xem mục chờ chốt dưới
+- [ ] **CHỜ USER CHỐT**: ô "Ghi chú" ở dòng Công (khối A) **không lưu được**: bảng ERP `wr_service_quotation_products` KHÔNG có cột `note` (ERP cũng có ô nhập này và cũng mất dữ liệu y hệt). Muốn ghi lịch sử thì trước hết phải lưu được → cần THÊM CỘT vào bảng ERP dùng chung. Phương án: (a) thêm cột `note` (ảnh hưởng cả ERP, nhưng chỉ thêm cột) · (b) bỏ ô nhập ở HRM cho khỏi mất dữ liệu âm thầm. Chưa làm gì vì đụng bảng ERP prod
+- [x] Dọn data thử: chi phí phiếu 10370 trả về 0 đồng + ghi chú rỗng, ghi chú gói xoá, log thử xoá (log mới nhất trở lại 09/09/2026 14:26, tổng 12)
+- [ ] User kiểm lại trên dev sau khi deploy
+- [x] **(2) — user chốt phương án (a) 14/10/2026: THÊM CỘT**. Migration `2026_10_14_000001_add_note_to_wr_service_quotation_products_table` thêm `note` TEXT nullable vào bảng ERP dùng chung (chỉ thêm cột, có `hasColumn` nên chạy lại không lỗi, KHÔNG bọc transaction). Nối đủ 4 chỗ: `$fillable` của `WrServiceQuotationProduct` · `WrServiceQuotationResource` trả `note` · `buildPayload` của form CCTT gửi `note` (màn Báo giá dùng lại chính hàm này) · trait lịch sử ghi cột "Ghi chú"
+  - Đo thật trên phiếu 10370: gõ ghi chú ở dòng Công → lưu → DB có chữ → nạp lại màn vẫn thấy → sửa ghi chú → lịch sử ra **đúng 1 dòng** `Ghi chú: 'ghi chú dòng Công — thử lưu' → 'ghi chú đã sửa lần 2'`; dòng thêm mới in nhãn **"Chi phí được bảo hành"** (đúng nhánh bảo hành)
+  - Dọn sạch: xoá dòng thiết bị thử + 2 log thử (phiếu về 0 dòng khối A, log mới nhất trở lại 09/09/2026 14:26)
