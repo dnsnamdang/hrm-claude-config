@@ -4,6 +4,9 @@
 > code nhánh chung hrm-api `feat/chuyen-doi-hang-hoa` + G6, MySQL 8.0.43, MacBook local). Bản sao đã DROP sau khi chạy.
 > Không cờ, không đường lui bằng code (design "Đổi 10/10/2026 — BỎ CỜ"): **cách lui duy nhất = khôi phục bản sao lưu bước 1**.
 > Bối cảnh 10/10: PTG (Phase 7) + hàng tạm (Phase 6) cũng chuyển HRM trong cùng lần cập nhật ⇒ lên cùng lúc, không giai đoạn tạm.
+>
+> ⚠️ **Đổi 15/10/2026 — luật chép giá mới** (mục 3.0): nhóm chia sẻ **1·3·4**, công ty tự quản **2·7**. Mọi số đo 10/10–12/10 trong
+> file này (bảng 3a cũ, mục 4, mục 5, 2 nhật ký) là của **luật cũ 1-2-3-4**; số dùng để đối chiếu từ nay là bảng 3a mới.
 
 ## 0. Điều kiện trước
 
@@ -48,7 +51,40 @@ php artisan migrate --force --path=Modules/MasterData/Database/Migrations/2026_1
 php -d memory_limit=4G artisan product-price:backfill-company --dry-run     # 6,2 s, không ghi
 php -d memory_limit=4G artisan product-price:backfill-company               # 71 s
 ```
-**Điểm dừng 3a — dry-run** phải khớp bảng (số local 10/10; production đo lại, chênh do dữ liệu mới thì đối chiếu §3.4 design):
+### 3.0 Luật chép (đổi 15/10/2026)
+
+Config `hrm-api/config/price.php` (thay khoá cũ `cluster_company_ids` [1,2,3,4]):
+- `shared_price_company_ids` = **[1, 3, 4]** — Tân Phát · Vinh · Sài Gòn chép LẪN NHAU mọi hàng đang bán (B5): giá × hệ số của công
+  ty NHẬN, không có hệ số ⇒ 1 (giá bằng).
+- `self_managed_company_ids` = **[2, 7]** — Hải Phòng · ETEK Green chỉ dùng hàng mình LÀM CHỦ: vẫn qua B1–B4 (gán chủ dòng giá, pcu
+  chủ, bù loại giá, Đang kinh doanh). KHÔNG nhận hàng chép, KHÔNG cho hàng của mình sang nhóm (3 mã HP ở lại HP).
+- 5 · 6 · 8: không dùng phần mềm ⇒ không chép, không so khớp. Hàng chủ 5/6/8 (nếu có — đo 15/10: **0 mã**) vẫn qua B1–B4 như cũ,
+  vì B1 phải gán công ty cho mọi dòng giá thì M3 NOT NULL mới chạy. Hàng `company_id` NULL vẫn gán theo tiền tố (`SG-` ⇒ 4), không
+  xác định được ⇒ B0 `owner_unknown` dừng (như cũ).
+- Vẫn backfill MỘT lần ngày chuyển đổi (T2 không đổi). Bảng in của lệnh luôn có cột Cty 1·2·3·4·7.
+
+**Điểm dừng 3a — dry-run** phải khớp bảng **luật mới** (đo `hrm_erp` local 15/10 — DB chưa backfill, chỉ dry-run, không ghi;
+production đo lại, chênh do dữ liệu mới thì đối chiếu §3.4 design):
+
+| Việc | Cty 1 | Cty 2 | Cty 3 | Cty 4 | Cty 7 | Tổng |
+|---|---:|---:|---:|---:|---:|---:|
+| B0 kiểm trước | `orphan_upp 0, owner_unknown 0, duplicates 0, pcu_foreign 0` | | | | | |
+| upp.assign (B1) | 258.270 | 18 | 138 | 6.220 | 0 | 264.646 |
+| pcu.owner (B2) | 45.477 | 3 | 23 | 1.057 | 0 | 46.560 |
+| upp.fill (B3) | 5.765 | 0 | 0 | 108 | 0 | 5.873 |
+| pcc.owner insert/update (B4) | 27.370 | 3 | 14 | 980 + 4 | 0 | 28.371 |
+| pcu.copy (B5) | 1.007 | 0 | 28.821 | 27.860 | 0 | 57.688 |
+| upp.copy (B5) | 6.042 | 0 | 172.926 | 167.160 | 0 | 346.128 |
+| pep.copy (B5) | 32 | 0 | 2.007 | 1.975 | 0 | 4.014 |
+| pcc.recv insert/update (B5) | 998 | 0 | 27.972 + 382 | 27.361 + 23 | 0 | 56.736 |
+| **TỔNG GHI** | 344.961 | **24** | 232.283 | 232.748 | 0 | **810.016** |
+| info: giá đổi số vì hệ số ≠ 1 | 0 | 0 | 1.332 | 90 | 0 | 1.422 |
+
+So với luật cũ đo cùng ngày 15/10 (code cũ, cùng DB: TỔNG 1.042.371): bớt 232.355 dòng (toàn bộ phần chép VÀO Cty 2 + 3 mã HP chép ra 1/3/4: pcu 3 · upp 18 mỗi công ty nhận). `pep.copy`
+lệch 1–3 dòng so với 10/10 vì phụ thuộc ngày chạy (chỉ chép giá hiệu lực > hôm nay). Số sau backfill dự kiến (= trước + ghi):
+`upp` **616.647** · `pcu` **104.248** · `pcc` có status **85.107** · `pep` ≈ **99.280**.
+
+<details><summary>Bảng 3a cũ — <b>luật cũ 1-2-3-4</b> (số local 10/10, chỉ để tra lịch sử)</summary>
 
 | Việc | Cty 1 | Cty 2 | Cty 3 | Cty 4 | Tổng |
 |---|---:|---:|---:|---:|---:|
@@ -63,6 +99,8 @@ php -d memory_limit=4G artisan product-price:backfill-company               # 71
 | pcc.recv insert/update (B5) | 1.001 | 27.970 + 398 | 27.975 + 382 | 27.364 + 23 | 85.113 |
 | **TỔNG GHI** | 344.985 | 232.308 | 232.308 | 232.773 | **1.042.374** |
 
+</details>
+
 B0 ≠ 0 ⇒ DỪNG (không chạy thật), báo dev.
 
 **Điểm dừng 3b — chạy thật**: bảng in ra = dry-run, dòng cuối "B6 kiểm sau: đạt". Lỗi giữa chừng ⇒ lô đang chạy tự rollback; chạy lại lệnh
@@ -73,7 +111,10 @@ B0 ≠ 0 ⇒ DỪNG (không chạy thật), báo dev.
 ```bash
 php -d memory_limit=4G artisan product-price:compare --csv=/tmp/compare.csv     # 11 s
 ```
-**Điểm dừng 4** — bắt buộc dòng cuối **`0 lệch.`** Kết quả local: 113.484 cặp; nhóm đã chấp nhận (không tính lệch) T4 = 449,
+**Điểm dừng 4** — bắt buộc dòng cuối **`0 lệch.`** Luật mới (15/10): cặp cần có giá = (hàng × chủ) cho chủ thuộc 1·2·3·4·7 +
+(hàng × công ty nhận) khi chủ và nhận cùng thuộc 1·3·4; HP/ETEK Green thiếu hàng chép KHÔNG phải lệch. Đo 15/10 trên `hrm_erp_giacty`
+(chỉ đọc, DB đã backfill bằng luật cũ): **85.107 cặp, 0 lệch**, T4 = 229, §3.3 = 17.619 (cặp HP × hàng 1/3/4 bị bỏ qua đúng luật).
+*Luật cũ 1-2-3-4 (10/10):* 113.484 cặp; nhóm đã chấp nhận (không tính lệch) T4 = 449,
 §3.3 bù giá 0 = 23.492; "cặp HRM sinh" = 0; `owner_not_ready` = 0. ≠ 0 lệch ⇒ DỪNG, KHÔNG chạy M3, mở `compare.csv` báo dev
 (quyết lui bằng bước 7 hay sửa dữ liệu rồi chạy lại 3–4).
 
@@ -85,7 +126,7 @@ php artisan migrate --force          # chỉ còn M3 đang chờ — 20,5 s (l�
 **Kiểm schema (điểm dừng 5):**
 - `product_unit_prices.company_id bigint unsigned NOT NULL`, `UNIQUE product_unit_prices_unit_company_type_unique (product_unit_id, company_id, price_type_id)`, FK `companies`.
 - `product_company_units`: UNIQUE `(product_unit_id, company_id)`, index `(company_id, product_id)`, 3 FK.
-- Số dòng sau (local): `upp` **789.765** (0 NULL) · `pcu` **133.101** · `pcc` có status **113.484** · `pep` **101.290** — trùng y hệt
+- Số dòng sau (local, **luật cũ 1-2-3-4**; luật mới xem cuối mục 3a): `upp` **789.765** (0 NULL) · `pcu` **133.101** · `pcc` có status **113.484** · `pep` **101.290** — trùng y hệt
   `hrm_erp_giacty` (bản dev dùng suốt G3–G6).
 - `php artisan migrate:status | grep -c "| No"` = 0.
 
@@ -99,6 +140,14 @@ php artisan migrate --force          # chỉ còn M3 đang chờ — 20,5 s (l�
    **type 8**). Idempotent: đã có đúng tên ⇒ "chèn 0 dòng" (thử trên `hrm_erp_giacty`: 0 dòng, 0,7 s, checksum 3 bảng quyền không đổi;
    DB thiếu quyền: PHPUnit trong transaction chèn đúng 2, chạy lại 0). id hoặc tên đã bị quyền khác chiếm ⇒ lỗi, KHÔNG ghi gì ⇒ DỪNG báo dev.
    **Không gán role nào** (kể cả Super admin 18 — không có quyền mặc định): sau triển khai quản trị gán cho role nghiệp vụ theo công ty.
+   **Đợt 2-E (Excel hàng hoá)** — thêm 1 seeder riêng cùng khuôn, chạy ngay sau seeder giá:
+   ```bash
+   php artisan db:seed --class="Modules\MasterData\Database\Seeders\ProductExportPermissionSeeder" --force
+   ```
+   Chèn đúng 1 dòng **1654** "Xuất excel danh sách hàng hoá" (guard api, nhóm Hàng hoá, **type 9** như 1652/1653/1655). Idempotent
+   (đã có đúng tên ⇒ "chèn 0 dòng"; thử trên `hrm_erp_giacty` 14/10: lượt 1 chèn 1654, lượt 2 chèn 0, 0 dòng `role_has_permissions`).
+   id/tên bị quyền khác chiếm ⇒ lỗi, không ghi gì ⇒ DỪNG báo dev. **Không gán role nào** — quản trị gán cho role cần xuất Excel
+   (mọi nút Xuất Excel 5 màn hàng hoá dùng chung quyền này, thiếu là nút ẩn + API 403).
 2. `php artisan permission:cache-reset` (HRM) + `php artisan cache:clear` nếu cần; ERP `php artisan config:clear && php artisan route:clear && php artisan view:clear`.
 3. `php artisan up` cả 2 app; bật lại 2 cron ERP.
 4. Khói (5 phút): HRM `/finance/product-prices` (lọc 1 mã, 4 công ty khác giá) · `/finance/product-price-approvals` mở được ·
@@ -125,7 +174,7 @@ Không có lui bằng code (đã bỏ cờ). Khi bất kỳ điểm dừng 3a/3b
 | (chỉ local) lùi M2, M1 | `migrate:rollback --step=2` | 3,2 s | batch còn 429 |
 | M1 / M2 | `migrate --path=…` | 1,1 s / 5,3 s | |
 | M3 thử sớm | `migrate --path=…000004…` | 0,6 s | tự chặn, không đổi gì |
-| dry-run | | 6,2 s | bảng mục 3, TỔNG 1.042.374 |
+| dry-run | | 6,2 s | bảng mục 3 (luật cũ 1-2-3-4), TỔNG 1.042.374 |
 | backfill | | 71,4 s | = dry-run, B6 đạt |
 | compare | | 11,3 s | **0 lệch** (T4 449 · §3.3 23.492) |
 | dry-run lần 2 | | 21,6 s | 0 dòng (idempotent) |
@@ -199,7 +248,7 @@ trang chủ ERP không còn 3 thẻ Yêu cầu hỏi giá / tính giá chờ duy
 | Sao chép `hrm_erp` ⇒ `hrm_erp_runbook7` (`mysqldump --single-transaction … \| mysql`) | 505 s | 1.869 / 1.869 bảng |
 | (chỉ local) `migrate:rollback --step=2` | 1,5 s | còn chờ đúng 15 migration của feature (M1–M3 + 12 Phase 7) |
 | M1 / M2 | 0,5 s / 2,2 s | |
-| backfill giá dry-run / thật | 5,9 s / 46,4 s | **TỔNG GHI 1.042.374** = dry-run = lần 10/10; B0 = 0; B6 đạt |
+| backfill giá dry-run / thật | 5,9 s / 46,4 s | **TỔNG GHI 1.042.374** (luật cũ 1-2-3-4) = dry-run = lần 10/10; B0 = 0; B6 đạt |
 | compare | 13,1 s | **0 lệch** (§3.3 23.492) |
 | M3 | 13,7 s | |
 | seed 1657/1658 | 1,7 s | chèn 2 |
@@ -221,3 +270,46 @@ trang chủ ERP không còn 3 thẻ Yêu cầu hỏi giá / tính giá chờ duy
 - Deploy ERP chặn hàng tạm (Phase 6 T8) cùng lần deploy ERP của phần 1–2; `config:clear && route:clear && view:clear`.
 - Gán quyền PTKD duyệt YCHG (1662) như phần 2 — PTKD duyệt hàng tạm bằng chính quyền này.
 - Khói: HRM `/master-data/products/temp` mở được; YCHG có nút "Thêm hàng tạm"; ERP `/admin/tmp_products/{id}/edit` ⇒ trang "Chức năng đã chuyển sang HRM".
+
+---
+
+# Phần 4 — Dữ liệu cũ ERP (C-f: N65 giá hiệu lực quá hạn + cờ mồ côi, N26 AUTO_INCREMENT) — cùng cửa sổ bảo trì
+
+> ⛔ **THỨ TỰ BẮT BUỘC:** cron `product:update_price` bản mới áp `effect_date <= hôm nay`. Chưa dọn mà cron chạy thì nó sẽ áp
+> **13.909** giá cũ (đo giacty 13/10, có dòng giá 1,00 đ). Cron đã có **chốt chặn**: còn dòng chờ quá 30 ngày ⇒ dừng, không áp gì,
+> log "chạy price:cleanup-stale trước" — nhưng vẫn phải làm 4.2 NGAY sau deploy ERP, trước 01:00.
+
+### 4.1 N26 — `product_versions` AUTO_INCREMENT (chỉ đọc + chỉnh nếu cần)
+```sql
+SELECT MAX(product_version_id) FROM product_histories;                     -- (A) local 175.610 (59.710 dòng mồ côi — GIỮ, Q-N26)
+SELECT AUTO_INCREMENT FROM information_schema.tables
+ WHERE table_schema = DATABASE() AND table_name = 'product_versions';      -- (B) local 176.616
+-- Chỉ khi (B) <= (A):
+ALTER TABLE product_versions AUTO_INCREMENT = <(A) + 1>;
+```
+Lý do: `product_histories` có `product_version_id` trỏ version đã xoá; nếu AI của `product_versions` cấp lại đúng id đó thì lịch sử cũ
+dính vào version mới (sai lặng lẽ).
+
+### 4.2 N65 — dọn giá hiệu lực quá hạn + cờ chờ duyệt mồ côi (ERP, Q-N65 user chốt 13/10)
+```bash
+php artisan price:cleanup-stale --dry-run      # đếm + xuất storage/app/price-cleanup/<ts>-dry-run/gia-qua-han-<năm>.csv
+# ⇒ gửi gia-qua-han-<năm>.csv cho nghiệp vụ soát (dòng năm hiện tại; local 2.067)
+php artisan price:cleanup-stale                # sao lưu CSV từng bảng TRƯỚC khi ghi, rồi ghi trong 1 transaction
+php artisan price:cleanup-stale --dry-run      # kiểm: mọi nhóm = 0
+```
+- Giá hiệu lực `status 2` quá ngày ⇒ `status 3` (đóng, KHÔNG áp, giá không đổi). Local: 13.915 dòng.
+- Cờ chờ duyệt không còn yêu cầu duyệt nào ⇒ cờ 0, số đề nghị = số đang chạy. Local: `product_unit_prices` 5 · `product_company_units` 6 · `product_units` 6.
+- Lui: cập nhật lại từ `backup-*.csv` theo `id` (file nằm cùng thư mục, giữ ít nhất 30 ngày).
+
+### 4.3 Kiểm cron
+- `php artisan product:update_price <hôm nay>` (hoặc chờ 01:00) ⇒ log không có dòng "Dừng: còn … chưa dọn"; `price_logs` có bản ghi nếu có giá tới hạn.
+
+### Nhật ký chạy thử (13/10/2026, local — bản sao `hrm_erp_cf_tmp` 13 bảng chép từ giacty, đã DROP)
+| Bước | Kết quả |
+|---|---|
+| dry-run | 13.915 quá hạn (2026: 2.067) · cờ mồ côi 5 / 6 / 6 |
+| thật | sao lưu 13.915 / 5 / 6 / 6 dòng + `gia-qua-han-2026.csv` 2.067 dòng; status 3 = 13.915, 2 = 8.078 (tương lai), 1 = 79.297 |
+| dry-run lại | 0 / 0 / 0 / 0 |
+| cron 13/10 trên bản sao | "Đã chạy cron và không có thay đổi giá!" (chốt chặn 0) |
+| chốt chặn trên giacty CHƯA dọn | 13.468 dòng chờ quá 30 ngày ⇒ cron dừng |
+| giacty | không ghi (status 2 vẫn 21.993) |

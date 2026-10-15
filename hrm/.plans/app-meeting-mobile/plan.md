@@ -67,13 +67,13 @@ Phụ trách: @dnsnamdang · File thiết kế: `~/Documents/demo giao dien/penc
 - [ ] Nhóm API lưu từng phần cho điều hướng Hub → xem `api-luu-tung-phan.md`
 - [ ] Danh mục Lý do huỷ + `meetings.cancel_reason_id` → xem `api-luu-tung-phan.md` mục 7
 
-**Cần chốt với khách trước khi code**
-- [ ] Màn 06: web chỉ cho 1 Giải pháp + 1 Hạng mục mỗi dự án (SearchPicker đơn), app vẽ chọn nhiều → đổi web hay đổi app?
-- [ ] Màn 06: meeting gắn NHIỀU dự án thì chọn dự án trước rồi mới tới cây giải pháp — chưa thiết kế
-- [ ] Màn 42: bản rút gọn mặc định copy địa chỉ chính sang địa chỉ xuất hoá đơn
-- [ ] Màn 44: liên hệ tạo từ app có tự thêm vào Thành phần khách hàng không
-- [ ] Màn 18: dòng NGƯỜI 1 (người liên hệ) có cho xoá tại màn này không
-- [ ] Khối "Phiếu tổng hợp kết quả meeting" (#11130) chưa vẽ ở Hub lẫn màn nhập
+**Cần chốt với khách trước khi code** — ✅ ĐÃ CHỐT 14/10, xem bảng trong `design.md`
+- [x] (14/10: bỏ chọn GP/HM, meeting chỉ chọn tới dự án) Màn 06: web chỉ cho 1 Giải pháp + 1 Hạng mục mỗi dự án (SearchPicker đơn), app vẽ chọn nhiều → đổi web hay đổi app?
+- [x] (14/10: hết vướng sau khi bỏ GP/HM) Màn 06: meeting gắn NHIỀU dự án thì chọn dự án trước rồi mới tới cây giải pháp — chưa thiết kế
+- [x] (14/10: chép sang, cho sửa) Màn 42: bản rút gọn mặc định copy địa chỉ chính sang địa chỉ xuất hoá đơn
+- [x] (14/10: Có) Màn 44: liên hệ tạo từ app có tự thêm vào Thành phần khách hàng không
+- [x] (14/10: theo web) Màn 18: dòng NGƯỜI 1 (người liên hệ) có cho xoá tại màn này không
+- [x] (14/10: Có đưa vào → Phase 6) Khối "Phiếu tổng hợp kết quả meeting" (#11130) chưa vẽ ở Hub lẫn màn nhập
 
 **Chưa vẽ**
 - [ ] Trạng thái rỗng màn 21 ("Bạn chưa tham gia cuộc họp nào với khách hàng này")
@@ -81,10 +81,46 @@ Phụ trách: @dnsnamdang · File thiết kế: `~/Documents/demo giao dien/penc
 - [ ] Tab `Nhân sự Khách hàng` ở màn 14 (web `PopupStaff` có 2 tab, app mới có 1)
 - [ ] Người thực hiện biên bản chọn NHIỀU (Redmine #11044) — màn 10 đang vẽ ô đơn
 
+## Phase 6 — Sửa theo chốt khách 14/10 (thiết kế, file .pen)
+
+- [ ] Màn 06 + 34: bỏ khối cây Giải pháp / Hạng mục, chỉ còn danh sách dự án TKT; gỡ DEV NOTE màn 06 phần GP/HM
+- [ ] Màn 42: ô Địa chỉ xuất hoá đơn điền sẵn từ địa chỉ chính, vẫn sửa được (không khoá)
+- [ ] Màn 11 · 19 · 36 · 38: nút Xem chỉ hiện ở dòng PDF / ảnh
+- [ ] Vẽ khối "Phiếu tổng hợp kết quả meeting" (#11130): dòng Hub + màn nhập + màn xem + chặn Hoàn thành khi thiếu câu bắt buộc
+- [x] Meeting theo đối tượng (14/10) — ô theo loại meeting đặt dưới Loại meeting:
+  - [x] 03: ô `Dự án TKT *` trống (loại Đấu thầu = đối tượng TKT)
+  - [x] 05: ô `Hợp đồng *` đã chọn (mã · KH · badge trạng thái · ✕), loại đổi thành "Thương thảo HĐ"
+  - [x] 25: ô Dự án TKT viền đỏ + "Vui lòng chọn Dự án TKT.", banner 4 lỗi
+  - [x] 33: dòng Hợp đồng chỉ xem (mã link mở HĐ + KH + badge)
+  - [x] Màn mới **48 · Chọn dự án TKT** (chọn nhiều, chip đã chọn, dải lọc theo KH, badge tiến trình, cuộn tải thêm, Thêm nhanh dự án + Xác nhận)
+  - [x] Màn mới **49 · Chọn hợp đồng** (chọn 1, bấm thẻ là xong, không hiện tiền) — chèn hàng mới, dịch phần dưới bản đồ +1150px
+  - [x] Caption 03 · 05 · 25 · 33, tiêu đề bản đồ 52 artboard, chip 48/49 ở trang Tổng quan
+  - [ ] Màn 06 / dòng Hub "Dự án tiền khả thi": chờ chốt (bỏ hay giữ dạng xem); điều kiện hiện = loại TKT HOẶC meeting đã có dự án
+- [ ] Đồng bộ theo web (14/10, `.plans/gop-db/meeting-tab-du-an-nhan-su`): Hub/màn Dự án TKT chỉ hiện khi meeting đã có dự án, chỉ XEM thông tin dự án (phiếu vẫn nhập); gộp màn Thành phần + Điểm danh thành "Nhân sự tham gia" (nhóm Phía Công ty / Phía Khách hàng, cột điểm danh chỉ từ Chốt lịch)
+- [ ] Mũi tên luồng tới 48 / 49 trên bản đồ (hiện chỉ có caption giải thích)
+- [ ] Cập nhật caption / bản đồ / số artboard sau khi thêm màn
+- [ ] Xuất bản v12
+
+**BE (bổ sung từ chốt 14/10)**
+- [ ] `customerMeetingHistory()`: THAY `created_by` bằng điều kiện user có trong thành phần (không giữ cả hai)
+- [ ] Endpoint xem file inline cho PDF / ảnh
+
 ---
+
+### Checkpoint — 2026-10-14 (wrap up)
+Vừa hoàn thành: chốt 9 câu với khách; khảo sát "Meeting theo đối tượng" trên gop_db; đề xuất API chọn dự án dùng chung web + app (đã duyệt); vẽ ô đối tượng ở 03 / 05 / 25 / 33 + 2 màn mới 48, 49 (52 artboard, đã kiểm không chồng lấn / không tràn).
+Đang làm dở: Phase 6 — còn màn 06 + 34 (bỏ GP/HM), màn 42 (địa chỉ HĐ điền sẵn cho sửa), nút Xem chỉ PDF/ảnh (11 · 19 · 36 · 38), Phiếu tổng hợp kết quả #11130, mũi tên luồng 48/49, xuất v12.
+Bước tiếp theo: user chốt màn 06 bỏ hay giữ dạng xem → sửa 06 / 34 / dòng Hub; rồi làm tiếp các mục Phase 6.
+Blocked: chờ user chốt màn 06.
 
 ### Checkpoint — 2026-09-16 08:50
 Vừa hoàn thành: xuất bản giao hàng v11 (4 PDF + 50 PNG 3x + file tóm tắt), 50 artboard, khung 2825 × 24617.
 Đang làm dở: không có — bộ thiết kế ở trạng thái bàn giao được.
 Bước tiếp theo: gửi khách bản `BAN-DO-THEO-BUOC_v11_…_BAN-KHACH-HANG.pdf` + file tóm tắt; chờ phản hồi để chốt 6 câu hỏi ở mục "Cần chốt với khách".
 Blocked: "logic tạo task giao cho người xử lý ở biên bản" — user báo đã có nhưng KHÔNG tìm thấy trên `tpe`, `tpe-develop-assign`, `gop_db` (Task entity không có FK sang meeting). Chờ user cho số Redmine / tên nhánh.
+
+### Checkpoint — 2026-10-14 (wrap up tối)
+Vừa hoàn thành: phía web (gop_db, local chưa commit) — endpoint `options-for-meeting` + ô chọn dự án tìm phía server; tab Dự án TKT chỉ xem; tab Nhân sự tham gia.
+Đang làm dở: Phase 6 thiết kế app (như checkpoint trước).
+Bước tiếp theo: chốt màn 06 — theo web nay = chỉ xem, hiện khi có dự án (đề xuất giữ dạng chỉ xem); vẽ lại Thành phần + Điểm danh thành 1 màn "Nhân sự tham gia".
+Blocked:

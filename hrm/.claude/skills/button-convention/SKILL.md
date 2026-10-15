@@ -394,8 +394,35 @@ lúc thì mọi nút dùng chung một câu hỏi chung chung ("Bạn xác nhậ
 đúng tên phiếu / đúng cấp nhận → tự dựng nút ở `#custom-actions` + `$confirm()` như khuôn trên
 (khuôn tham chiếu: `pages/finance/bill-payment-requests/components/ApproveActions.vue`).
 
+## 6d. Nút "Thêm nhanh" — 1 khuôn duy nhất `V2BaseQuickAddButton` (chốt 15/10/2026)
+
+Lối tắt tạo nhanh / thêm dòng ĐẶT CẠNH một ô hoặc đầu một nhóm (không phải nút hành động chính của màn).
+Trước đây có 4 kiểu lệch nhau (`.quick-add-btn` link chữ, `V2BaseButton secondary sm`, `quaternary size="xs"`,
+`secondary class="border"`) — nay dùng DUY NHẤT `components/V2BaseQuickAddButton.vue`
+(nguồn: `.plans/gop-db/meeting-form-redesign/design.md` D7).
+
+| Thuộc tính | Giá trị |
+| --- | --- |
+| Hình | chip cao 22px, bo 11px, viền ĐỨT `#86efac`, nền `#f0fdf4`, chữ `#15803d` 12px 500; hover viền liền `#16a34a` nền `#dcfce7` |
+| Icon | `ri-add-line` (mặc định) · thêm người → `ri-user-add-line` |
+| Chữ | `Thêm nhanh <đối tượng>` — "Thêm nhanh khách hàng", "Thêm nhanh liên hệ", "Thêm nhanh tiện nghi", "Thêm nhanh lỗi thiết bị". Thêm DÒNG (không tạo danh mục) thì dùng động từ đúng việc: "Thêm vật tư", "Thêm nhân sự" |
+| Vị trí | bên phải nhãn trong cùng 1 hàng `d-flex justify-content-between`; trong ô bảng → `block` (xuống dòng dưới ô chọn) |
+
+```vue
+<div class="d-flex align-items-center justify-content-between">
+    <V2BaseLabel>Khách hàng</V2BaseLabel>
+    <V2BaseQuickAddButton v-if="!isShow && canCreateCustomer" @click="openQuickAdd">Thêm nhanh khách hàng</V2BaseQuickAddButton>
+</div>
+<!-- trong ô bảng -->
+<div><V2BaseQuickAddButton block @click="openQuickDeviceError(index)">Thêm nhanh lỗi thiết bị</V2BaseQuickAddButton></div>
+```
+
+- KHÔNG tự viết `<button class="quick-add-btn">`, KHÔNG dùng `V2BaseButton` cho vai trò này.
+- Không có quyền / chế độ Xem → ẩn bằng `v-if` (không disable) — như mọi nút khác.
+
 ## 7. Checklist khi tạo/review button
 
+- [ ] Nút "Thêm nhanh" dùng `V2BaseQuickAddButton` (mục 6d), không tự dựng
 - [ ] Mọi V2BaseButton đều có icon qua `#prefix`
 - [ ] Đã khai báo `size` (mặc định `sm`)
 - [ ] Variant đúng theo nhóm hành động

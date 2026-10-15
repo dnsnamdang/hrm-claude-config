@@ -77,6 +77,18 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- meeting-form-redesign → @dnsnamdang → .plans/gop-db/meeting-form-redesign/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-15-meeting-form-redesign-design.md)
+  Thiết kế lại màn Tạo/Sửa/Chi tiết meeting (5 tab) + 4 component dùng chung kiểu iOS. Bắt đầu 15/10/2026.
+  Trạng thái: 🟢 Đã PUSH gop_db 15/10 (api 00c829746, client f4b44b9d9 — merge origin, giải 1 xung đột GeneralInfo): api f5f05eb01 + d62a22bd7 · client 18596a5dd + 868558c3c + 5cf8a8c71. Mockup chốt (design D1–D9). Deploy chạy migration 2026_10_14_000001. Wrap up 15/10: sau merge e2e 25 passed, PHPUnit 46/46. Tiếp: PR hrm-claude-config (.plans + SKILL), meeting-mobile.pen, gộp ~25 API màn Sửa meeting.
+
+- meeting-tab-du-an-nhan-su → @dnsnamdang → .plans/gop-db/meeting-tab-du-an-nhan-su/plan.md
+  Meeting web: tab Dự án TKT chỉ hiện khi đã chọn dự án, bỏ tạo dự án, chỉ xem chi tiết + phiếu; tab Điểm danh → "Nhân sự tham gia" (gộp Thành phần + Điểm danh). Bắt đầu 14/10/2026.
+  Trạng thái: 🟢 Đã PUSH gop_db 15/10 cùng meeting-form-redesign. Checkpoint 15/10 (wrap up): xong 4 phase + KH bắt buộc chọn trước → Dự án lọc theo KH + sửa bộ lọc màn Dự án TKT (`freshFilters`) + dọn e2e/seed. e2e: investment-survey 22 · prospective-projects-filter 12 · meeting-target 7 · meeting-by-employees 17 đều xanh. Chờ user review + commit.
+
+- meeting-chon-du-an-tkt → @dnsnamdang → .plans/gop-db/meeting-chon-du-an-tkt/plan.md
+  Endpoint chọn Dự án TKT phân trang `options-for-meeting` dùng chung web + app (thay `getForMeeting?per_page=10000`). Bắt đầu 14/10/2026.
+  Trạng thái: 🟢 Đã PUSH gop_db 15/10 (api d62a22bd7) — đủ Phase 1–4, Phase 3 đã gỡ getForMeeting, migration index đã chạy hrm_erp.
+
 - quotation-no-project → @namdangit → .plans/gop-db/quotation-no-project/plan.md
   Báo giá không gắn Dự án TKT (tester 13/10 + #11651): tạo → duyệt → chốt Trúng thầu → Lập hợp đồng. Bắt đầu 13/10/2026.
   Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6). Deploy nhớ chạy migration 2026_10_13_000001.
@@ -112,6 +124,69 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   **C-d XONG 13/10** (`ngoai-luong/cd-plan.md`): N27 N14 N13 N74 N73 N75 + A8 — merge LOCAL nhánh chung api `72f350cd8`, client `baad69b58` + api `bbc4cf8b2` (provision quyền giá vốn) — **ĐÃ PUSH nhánh chung 13/10** (api `bbc4cf8b2`, client `baad69b58`).
   Đời xe 7338: mở bước 2,3s → 0,8s, lưu BE ~3,3s → 0,8s. e2e 7 spec: 41 qua · 2 bỏ qua (13/10). Ngoài luồng mới N82–N88 ghi ở cuối cd-plan.
   **C-c XONG 13/10** (`ngoai-luong/cc-plan.md`): N41 N43 N44 (gỡ hết xuất hàng hoá ERP — user) N45 N46 N49 N50 N51 + N39 tài liệu — + N89 gỡ xuất hàng tạm — **ĐÃ PUSH** ERP `ad57aec450`. PHPUnit ERP 94/94. hrm-claude-config `c1bd5c8` (CLAUDE.md ERP) chưa push.
+  **C-e XONG 13/10** (`ngoai-luong/ce-plan.md`): N1 — ERP đọc bảo hành / tồn tối thiểu theo công ty (17 chỗ chép chứng từ, chi tiết, popup, 2 báo cáo; Luân chuyển bắt buộc chọn công ty) — ERP **ĐÃ PUSH** `d7226cd1b9`. PHPUnit ERP 103/103. Ghi N90, N91.
+  **C-f XONG 13/10** (`ngoai-luong/cf-plan.md`): N65 lệnh `price:cleanup-stale` + cron `<=` có chốt chặn (dữ liệu cũ chưa dọn ⇒ cron dừng), N26 runbook Phần 4 — ERP **ĐÃ PUSH** `4ec31c6ee4`. PHPUnit ERP 108/108. Hết bảng C (trừ N82–N91 ghi lại).
+  **A7 Phase 5 XONG 13/10** (`go-bo-danh-muc-khong-dung/plan.md`): gỡ màn Nhóm hàng hoá + Lĩnh vực ở ERP (16 route stopped-generic, bỏ 3 link menu, giữ bảng + `groups.searchData`) — ERP **ĐÃ PUSH** `3aaae676fe`. Còn A7: Phase 4 · 2c. Phase 3 khảo sát 13/10 = đã hấp thụ vào 2-A/2-C/Phase 8/C-e (`phan-quyen-hang-hoa-theo-cong-ty/khao-sat.md`) — đề xuất đóng, user chuyển sang Phase 4.
+  **A7 Phase 4 — popup chọn hàng hoá dùng chung (13/10):** brainstorm xong, mockup đã duyệt, Phần 1–5 đã duyệt (ERP thay ruột 2 partial chính). Spec `docs/superpowers/specs/gop-db/2026-10-13-popup-chon-hang-hoa-dung-chung-design.md` — spec + plan đã duyệt. **Bước 4.1 + 4.2 XONG 13/10** (merge local nhánh chung: api `7e5c63b1a`, client `aa13b7038` — ĐÃ PUSH 13/10): 2 cờ dịch vụ trên Tính chất (migration đã chạy `hrm_erp_giacty`) + API `product-picker/search|tree-counts|items`; tồn bán được đối chiếu ERP lệch 0/15.345; 9 ca < 1s; review 3 Important đã sửa. Ledger `popup-tim-kiem-hang-hoa/progress.md`. **Bước 4.3 XONG 14/10** (merge local nhánh chung: api `41a64bed6`, client `094412b40` — ĐÃ PUSH 14/10): `ProductPickerPanel` thay phần tìm hàng của popup Thêm mới (báo giá/BOM/6 form kho), cây catalog chế độ picker, cấu hình cột riêng; xoá BomBuilderAddProductModal; sửa 403 công ty đang làm việc; review 1 Important + chặn bấm đúp đã sửa, 9 minor để lại (progress.md). E2E 14/10 (worktree 3031/8031, Node 20, --workers=1): product-picker-ui 5/5, products-catalog-popup-ui 7/7, price-asking-temp-product + quotation-unit-select 14/15 — 1 đỏ có sẵn ghi **N92**: `quotation-unit-select-nocost.spec.ts` gõ cứng 90,000/50,849 trong khi fixture `unit_alt_retail` = 60,000 / `unit_alt_cost` = 31,482 (bản có quyền đã đọc FX, bản không quyền chưa) — API trả đúng 60,000 + cost null cho 2 tài khoản; không do thay đổi 4.3. Còn 4.3b (popup CSKH chế độ máy) · 4.4–4.5 (ERP). **Bước 4.4 XONG 14/10** (nhánh chung api `db6f95787`, ERP `4a0b8a60e3` — ĐÃ PUSH 14/10): 2 partial ERP `searchProduct` (99 view) + `searchProductQuotation` (27) dùng popup AngularJS mới `productPicker` đọc API HRM qua route trung gian `/admin/hrm/product-picker/*` (JWT phiên; local SSO tắt ⇒ tự ký); danh sách khoá HĐ / kho / hàng đang giữ do ERP tính (`LegacyPickerScope`) gửi `only_ids`; báo cáo chọn toàn bộ hàng; API HRM thêm `scope=all`, `only_ids`, `service_quotation_only`, POST, `brand_id`. ERP PHPUnit 149/149, picker HRM 33/33, Playwright đủ nhóm màn (ledger `popup-tim-kiem-hang-hoa/progress.md`). N93 ĐÓNG (báo giá/đơn/HĐ thanh lý không còn dùng ⇒ bỏ qua, không sửa; báo giá + HĐ dự án vẫn dùng), N94, N95 (cột tồn lắp ráp), N96 ĐÓNG (báo giá thường ERP không còn dùng ⇒ bỏ qua). Còn 4.3b · 4.5. **Bước 4.5 XONG 14/10** (nhánh chung api `f5bf2e01c`, ERP `370fdd64de` — ĐÃ PUSH 14/10): popup tương đương / thiết bị / KM / 5 màn đặt hàng (YC gốc giữ Xem tồn theo kho + Hết tồn; TN giữ lọc NCC) / lỗi thiết bị ⇒ popup mới; gỡ 9 partial cũ + 20 include thừa (N94; báo cáo nhẹ 6,06 → 3,89 MB); API HRM thêm `out_of_stock`, `filter_ids`. ERP PHPUnit 176/176, picker HRM 37/37. Ghi N97 (thêm hàng tay NK 2 / TN mới lỗi sẵn từ 01/2024). Còn 4.3b. **Bước 4.3b XONG 14/10** (nhánh chung api `3b7dd0f1a`, client `e3377eb7e`, ERP `d7f15cfcca` — ĐÃ PUSH 14/10): vỏ `V2ProductPickerModal`; 8 chỗ CSKH HRM dùng popup mới (vật tư theo máy = chế độ máy, vật tư gói BD / vật tư thay thế = hàng dùng cho DV); chỗ chọn máy/thiết bị + Tra cứu tồn tìm toàn bộ hàng trừ status 0 (`all_active`, đồng bộ ERP); gói BD gom theo Loại SP; gỡ ProductSearchModal/GroupSearchModal + 4 endpoint cũ. PHPUnit ERP 178/178, picker HRM 41/41. **Hết Phase 4.** Treo: **N100** (gói BD `group_id` → Loại SP, chờ mapping user — CHẶN GO-LIVE), N95, N97, N98, N99, câu hỏi Bảo hành hãng.
+  ### Checkpoint — 2026-10-14 (A7 Phase 2c — danh mục xe công ty)
+  - ✅ XONG + ĐÃ PUSH 14/10: hrm-api `8f5990cca`, hrm-client `cf5efd2ea`, ERP `ca5fa294de` (`quan-ly-hang-hoa/chuyen-danh-muc-xe/plan-2c.md`). Chốt Q1–Q4 (có Nhiên liệu · ERP chặn ghi 10 danh mục xe · menu nhóm Xe · 8 quyền **1720–1727**). MasterData 532/532; e2e vehicles-ui 8/8, product-catalog-ui 29/31 (2 ca N106 có sẵn). Playwright đo DOM HRM + ERP đạt; role tạm đã gỡ; số dòng bảng đúng mốc.
+  **A3 (2-E) — Xuất Excel hàng hoá + nghiệm thu "ERP không vỡ" (15/10):** Excel 5 màn XONG, merge nhánh chung (api `b38852de0`, client `0469c32a3`) — ĐÃ PUSH 15/10. Quyền 1654 (seeder riêng `ProductExportPermissionSeeder`, đã chạy giacty). MasterData 546/546, ProductExportApiTest 9/9, e2e products-export-ui 6/6. Nghiệm thu T5 (2 lượt; lượt 2 user cho ghi dữ liệu thử + chốt N110 chạy đủ luồng giá UI): 12/14 đạt, B2 đạt một phần ((iii) công ty khác chỉ đo SQL + API 403), B3' không đạt ⇒ **N111** (màn chi tiết hàng ERP đọc cột phân loại cũ) — ĐÃ SỬA 15/10: xem chi tiết chuyển sang HRM, ERP `bfbd794503` (ĐÃ PUSH 15/10), PHPUnit ERP 187/187. Dữ liệu đã dọn, mốc 84 bảng trước = sau; ERP 8090 đã tắt. Report `quan-ly-hang-hoa/excel-nghiem-thu-2e/nghiem-thu.md`.
+  **Sửa lỗi mở 15/10:** N79 N82 N84 N85 N86 N87 N91 N97 N98 đã sửa, N99 đóng (không tái hiện) — ĐÃ PUSH 15/10: hrm-api `ca4a37802`, hrm-client `f211bd195`, ERP `f19ef0abca`. Migration index N84 đã chạy giacty. MasterData 553/553, ERP PHPUnit 191 OK, e2e products-form-loimo-ui 5/5 + products-form-ui 17/17 (1 skip sẵn). Lỗi mới N112–N116, N120, N121 (soat-bang-c.md). N79: VAT DV bảo hành theo danh mục chi phí — user chốt giữ.
+  **Sửa lỗi mở 15/10 — đợt bổ sung:** N112 (api `4bdcf760e`), N114 + N116 (client `baa5a3563`), N120 + N121 (ERP `7bfe798a9f`) — ĐÃ PUSH 15/10. MasterData 557/557, ERP PHPUnit 194 OK, e2e products-form-loimo-ui 7/7 + products-form-ui 17/17 (1 skip sẵn). N113, N115 để sau. Lỗi mới N122, N123, N126, N127.
+  **Đổi luật chép giá (15/10):** nhóm chia sẻ 1·3·4 (hệ số công ty nhận, không có = 1), tự quản 2·7 (chỉ hàng mình làm chủ), 5/6/8 bỏ — api `5ab7ab2ac` (ĐÃ PUSH 15/10). Backfill dry-run trên hrm_erp: TỔNG GHI 810.016 (cũ 1.042.371). MasterData 557/557. Treo: dọn giacty (user "dọn sau"), N128 (HP chỉ còn 3 mã).
+  - Deploy: gán quyền HRM cho người đang thao tác TRƯỚC khi bật chặn ERP (checklist trong plan-2c). Ngoài luồng mới N102–N107.
+
+  **Popup chọn hàng — sửa sau nghiệm thu (15/10):** N129 lọc Thương hiệu/Hãng SX/Xuất xứ ra 0 hàng (V2BaseSelectInModal `multiple`) · N131 nhãn ERP · N132 panel catalog 280px · N134 cấu hình cột bấm sớm tự mở (mixin chung) + STT · N135/N136 bảng theo mẫu MISA (header phẳng, 1 dòng "…" + tooltip đen `utils/directives/overflowTooltip.js`, mặc định 20) — ĐÃ PUSH 15/10: hrm-client `41085f380`, ERP `4462d1178b`. e2e product-picker-filters-ui 6/6. Ngoài luồng mới: N130 (popup nuốt lỗi 422 thành "0 hàng"). Chi tiết `quan-ly-hang-hoa/popup-tim-kiem-hang-hoa/plan.md` Phần G.
+
+  **Merge gop_db ⇒ nhánh chung (15/10, đồng bộ 1 chiều):** hrm-api `8e7dd4322` (275 commit, 4 xung đột — seeder quyền chuyển 18 quyền feature sang `perm()` theo tên), hrm-client `0d7c28f11` (299 commit, 10 xung đột) — ĐÃ PUSH 15/10. 23 migration gop_db CHƯA chạy vào `hrm_erp_giacty` (user: chưa chạy). MasterData 556/557 (đỏ = N137). Mở: **N137 🔴** 3 file gop_db đọc giá không theo công ty (chặn go-live, user: làm sau) · N138 runbook đổi sang `permission:sync` · N139 khoá trùng `attachment_types` · N140 port "xem trước ảnh" vào popup chọn hàng. Chi tiết `quan-ly-hang-hoa/ngoai-luong/soat-bang-c.md`.
+
+  ### Checkpoint — 2026-10-15 (wrap up 2 — sau merge gop_db)
+  Vừa hoàn thành: merge origin/gop_db ⇒ feat/chuyen-doi-hang-hoa (api `8e7dd4322`, client `0d7c28f11`) + ĐÃ PUSH; không nằm trong gop_db.
+  Đang làm dở: không. Worktree sạch; 23 migration gop_db chưa chạy trên giacty; ERP 8090 tắt, HRM 8031/3031 chạy.
+  Bước tiếp theo: N137 (sửa đọc giá theo công ty ở ContractService + 2 service YCXH) khi user cho làm; hỏi chạy 23 migration; N138 cập nhật runbook; N130/N140 chờ chốt.
+  Blocked: N100 mapping; N128 chốt nghiệp vụ HP.
+
+  ### Checkpoint — 2026-10-15 (wrap up)
+  Vừa hoàn thành: popup chọn hàng Phần G (N129 N131 N132 N134 N135 N136) — ĐÃ PUSH hrm-client `41085f380` + ERP `4462d1178b`.
+  Đang làm dở: không. ERP 8090 đã tắt; HRM 8031/3031 chạy.
+  Bước tiếp theo: N130 nếu user cho làm; N100 (chờ mapping) · N128 (chờ chốt HP) · N122/N123/N126/N127 — xem `quan-ly-hang-hoa/viec-con-lai.md`.
+  Blocked: N100 mapping, N128 chốt nghiệp vụ.
+
+  ### Checkpoint — 2026-10-14 (wrap up)
+  Vừa hoàn thành: A7 Phase 4 trọn (4.4 · 4.5 · 4.3b) — ĐÃ PUSH 3 repo (api `3b7dd0f1a`, client `e3377eb7e`, ERP `d7f15cfcca`); tổng hợp lại việc còn lại `quan-ly-hang-hoa/viec-con-lai.md` (bản 14/10).
+  Đang làm dở: không. Role tạm / bản ghi thử đã gỡ hết. HRM 8031/3031 chạy; Playwright MCP có thể treo (tab cũ beforeunload).
+  Bước tiếp theo: A7 Phase 2c (biển số · lái xe ngoài · danh mục xe) — khảo sát ⇒ hỏi tồn ⇒ xin "làm". N100 task riêng khi user gửi mapping nhóm cũ → Loại SP.
+  Blocked: N100 chờ mapping.
+  ### Checkpoint — 2026-10-14 (A7 Phase 4 — bước 4.3b, hết Phase 4)
+  Vừa hoàn thành: 4.3b (F-T1…F-T8 + final review/fix) — merge LOCAL 3 nhánh chung, chưa push.
+  Đang làm dở: không. Role tạm + bản ghi thử đã xoá; ERP server tắt; HRM 8031/3031 chạy. Playwright MCP có thể treo (tab cũ beforeunload) — restart MCP nếu cần.
+  Bước tiếp theo: user push 2 repo; N100 (chờ mapping nhóm cũ → Loại SP từ user ⇒ khảo sát + xin "làm"); trả lời câu hỏi Bảo hành hãng; A7 phase 2c.
+  Blocked: N100 chờ mapping.
+  ### Checkpoint — 2026-10-14 (A7 Phase 4 — bước 4.5)
+  Vừa hoàn thành: 4.5 (E-T1…E-T7 + final review/fix) — merge LOCAL nhánh chung, chưa push.
+  Đang làm dở: không. Server ERP 8090–8093 đã tắt; role tạm 119990–120010 + bản ghi thử đã xoá; HRM 8031/3031 vẫn chạy.
+  Bước tiếp theo: user push (`! git -C …/wt-chuyen-doi-hang-hoa/hrm-api push origin feat/chuyen-doi-hang-hoa` + `! git -C …/wt-erp-2d1 push origin feat/2d1-erp-khong-loi`); rồi 4.3b (popup CSKH chế độ máy HRM). Treo: N95 (cột tồn lắp ráp), N97.
+  Blocked: —
+  ### Checkpoint — 2026-10-14 (A7 Phase 4 — bước 4.4)
+  Vừa hoàn thành: 4.4 ERP thay ruột 2 partial chọn hàng (D-T1…D-T7 + final review/fix) — merge nhánh chung — ĐÃ PUSH 14/10.
+  Đang làm dở: không. Server ERP 8090 đã tắt; role tạm 119930–119933 đã gỡ; HRM 8031/3031 vẫn chạy.
+  Bước tiếp theo: user push khi muốn (`! git -C …/wt-chuyen-doi-hang-hoa/hrm-api push origin feat/chuyen-doi-hang-hoa` + `! git -C …/wt-erp-2d1 push origin feat/2d1-erp-khong-loi`); rồi 4.3b (popup CSKH chế độ máy HRM) hoặc 4.5 (3 partial phụ ERP + searchProduct2 + gỡ cũ, kèm N94); N95 chờ user.
+  Blocked: —
+  ### Checkpoint — 2026-10-13 (A7 Phase 5)
+  Vừa hoàn thành: Phase 5 code + PHPUnit 108/108 + Playwright ERP.
+  Đang làm dở: không.
+  Bước tiếp theo: chọn phase A7 tiếp (3 / 4 / 2c) ⇒ khảo sát.
+  Blocked: —
+  ### Checkpoint — 2026-10-13 (C-f)
+  Vừa hoàn thành: C-f code + test + chạy thử bản sao + runbook.
+  Đang làm dở: không.
+  Bước tiếp theo: A7 (phase 2c/3/4/5) — khảo sát.
+  Blocked: —
+  ### Checkpoint — 2026-10-13 (C-e)
+  Vừa hoàn thành: C-e code + PHPUnit + chép thật (rollback) + Playwright ERP.
+  Đang làm dở: không.
+  Bước tiếp theo: C-f · A7.
+  Blocked: —
   ### Checkpoint — 2026-10-13 (C-c)
   Vừa hoàn thành: C-c code + PHPUnit + Playwright ERP 8090 trước/sau — merge local ERP.
   Đang làm dở: không. Server 8090 tắt, role tạm gỡ.
