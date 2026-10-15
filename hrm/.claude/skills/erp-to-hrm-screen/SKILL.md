@@ -461,6 +461,10 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Tải tệp: chặn dung lượng ở FE trước khi gửi + khai message `attachments.*.uploaded` tiếng Việt (PHP
       `upload_max_filesize` chặn trước Laravel, trả câu tiếng Anh — #11313); `.xls` đời cũ trượt
       `mimes:xls` → so đuôi `getClientOriginalExtension()` bằng closure
+- [ ] Khoảng cách giữa các DÒNG ô trong khối thông tin (Thêm / Sửa / Chi tiết): mỗi cột ô là
+      `col-md-* mb-2` / `col-12 mb-2` — **`mb-2`, KHÔNG `mb-3`** (user chốt 14/10/2026). Kể cả khi bám
+      màn mẫu đang để `mb-3` (vd `bill-adjust-depts/components/BillAdjustDeptForm.vue`) thì vẫn dùng
+      `mb-2`. (`mb-3` chỉ dùng cho khoảng cách GIỮA các card, không phải giữa các dòng ô.)
 - [ ] Bố cục: không lồng `.container-fluid` ở cả trang vỏ lẫn form con (đệm đôi 12px); không tự khai
       `padding-bottom` chừa footer (V2Footer đã gắn `has-v2-footer`); khối form bám khuôn của màn cùng nhóm
       — nhóm kho / xuất nhập dùng **`V2BaseFormCard`** (khuôn PXG-02188, đoạn mẫu K1 ngay dưới), nhóm khác
