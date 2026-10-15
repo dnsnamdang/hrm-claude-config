@@ -77,6 +77,14 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- phieu-nhap-kho (#11693) → @junfoke → .plans/gop-db/phieu-nhap-kho/plan.md
+  Trạng thái: 🔵 **Khảo sát + kế hoạch xong (15/10/2026), CHƯA code** — chờ user chốt Q1–Q13 (spec mục 10).
+  Scope đề xuất đợt 1: port màn **Phiếu nhập kho** ERP `warehouse_imports` (PNK) — danh sách + Excel, tạo từ ĐNNK, phiếu đi xếp hàng,
+  nhập kho Lưu/Gửi (ghi tồn), chi tiết, Không duyệt, Hủy, In (mẫu ERP 46/30), lịch sử; nối nút ĐNNK → PNK nội bộ + menu `finance.js:153`. ~21 công.
+  Để ERP: barcode, xuất lại/nhập lại, 2 màn thừa thiếu. 0 bảng mới, 0 migration, 3 quyền `api` mới (chờ chốt).
+  ⚠️ GOTCHA: lần đầu HRM ghi **tồn vật lý 8 bảng** (`stocks`, `stock_positions`… `stock_position_detail_logs`) — cần `PhysicalStockWriter` dùng chung (chờ user OK) + đối chiếu song song ERP↔HRM.
+  Spec: docs/superpowers/specs/gop-db/2026-10-15-phieu-nhap-kho-design.md | Tóm tắt: .plans/gop-db/phieu-nhap-kho/design.md
+
 - decision-appendix-print-template (#10894) → @junfoke → .plans/gop-db/decision-appendix-print-template/plan.md
   Trạng thái: 🟡 **Xong BE + FE (09/10/2026)**, nhánh `gop_db`, CHƯA commit. BE verify tinker (3/4 loại QĐ); FE mới parse cú pháp, CHƯA xem trên trình duyệt.
   Scope: tab "Mẫu in PLHĐ" trên 4 loại QĐ + trường/bộ lọc "PLHĐ của quyết định" ở danh mục mẫu in; duyệt QĐ tự sinh PLHĐ lại (tắt từ 13/07, `aac01d75c`), thiếu mẫu → chặn 422.
