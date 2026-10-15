@@ -2176,6 +2176,15 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- lookup-product-arrived-notifies — chuyển màn ERP "Tổng hợp phiếu báo hàng về" sang HRM (`/lookup/product-arrived-notifies`, Tra cứu - thông báo › Thông báo) → @khoipv → .plans/gop-db/lookup-product-arrived-notifies/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-14-lookup-product-arrived-notifies-design.md)
+  Chuyển Hoàn thành: 2026-10-15.
+
+- report-limit-debt-employees — chuyển màn ERP "Báo cáo hạn mức công nợ nhân viên" sang HRM (`/finance/report-limit-debt-employees`, Kế toán Công nợ › Nhân viên) → @khoipv → .plans/gop-db/report-limit-debt-employees/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-14-report-limit-debt-employees-design.md)
+  Chuyển Hoàn thành: 2026-10-15.
+
+- declare-limit-debts — chuyển màn ERP "Khai báo hạn mức công nợ khách hàng" sang HRM (`/finance/declare-limit-debts`, Kế toán Công nợ › Khách hàng) → @khoipv → .plans/gop-db/declare-limit-debts/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-14-declare-limit-debts-design.md)
+  Chuyển Hoàn thành: 2026-10-15.
+
 - report-limit-debts — chuyển màn ERP "Báo cáo hạn mức công nợ khách hàng" sang HRM, phân hệ Kế toán → Kế toán Công nợ → Khách hàng → @khoipv → .plans/gop-db/report-limit-debts/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-report-limit-debts-design.md)
   Chuyển Hoàn thành: 2026-10-13.
   13/10: BE + FE code xong, đã push develop (api 759f6e652, client 78f4e5ac0), smoke test API pass, compile FE pass. Không quyền, không migration. Sửa 4 lỗi ERP (dư nợ luôn 0, lọc KH sai id, chỉ tiêu đọc cột không tồn tại, popup NVKD sai). Chờ user mở trình duyệt kiểm.
