@@ -1862,3 +1862,19 @@ Vừa hoàn thành: merge gop_db vào nhánh chung — popup báo giá giữ b�
 Bước tiếp theo: N140 (port "bấm ảnh xem trước" của gop_db vào ProductPickerPanel) nếu user muốn; N130.
 Blocked: —
 
+
+## Phần H — Đồng bộ popup Xây dựng catalog + bảng chung + bộ lọc màn hàng hoá (15/10/2026, user yêu cầu)
+- [x] H1 Bảng dùng chung `V2BaseDataTable` (~235 màn) theo mẫu MISA: header phẳng #d8e7e1, bỏ sọc, kẻ dọc chấm, hover cả dòng #e6f5ef; sale-theme bỏ gradient trên `.data-table` (giữ tiêu đề 1 dòng). Spec `e2e/tests/shared/data-table-misa-style.spec.ts` 7/7
+- [x] H2 Menu Danh mục: nhóm Hàng hoá (Hàng hoá, vật tư → Phân loại hàng hoá → Nguồn gốc, đặc tính), "Xe" ⇒ "Xe - Logistics" (cấp 2 "Danh mục xe"), Catalog trên Xe. Spec `master-data-hub-menu.spec.ts` 5/5
+- [x] H3 Popup Xây dựng catalog: style picker (bảng MISA, cây 280px, nút nâng cao trong hàng lọc, phân trang 10/20/50/100 mặc định 20); mô tả công ty vào icon ⓘ tiêu đề; nâng cao dùng chung `ProductPickerAdvancedFilters` (brand_ids[]…); ô tìm có mã đặt hàng; công tắc Còn tồn + cột Tồn kho = tồn VẬT LÝ công ty (SUM `stock_of_companies.qty`). BE `ProductPickerService::applySharedFilters` + `SellableStockReader::physical*`; PHPUnit `ProductCatalogPopupFiltersTest` 3/3
+- [x] H4 Nút ẩn/hiện cây catalog: popup Xây dựng catalog (đầu hàng tab), popup chọn hàng HRM + ERP (đầu hàng lọc); nhớ localStorage
+- [x] H5 Màn Dữ liệu hàng hoá công ty / Đang kinh doanh: catalog thành nhóm đầu Tìm kiếm nâng cao, chia nhóm tiêu đề như picker (V2BaseSmartFilterPanel thêm `field.group` + slot `quick-search-extra`); "Chỉ hàng chưa xếp catalog" cạnh ô tìm. Spec `products-filter-layout-ui.spec.ts` 5/5
+- [x] E2e: products-catalog-popup-ui 10/10, product-picker-filters-ui 7/7; MasterData PHPUnit 559/560 (đỏ có sẵn N137)
+- [x] Push 15/10: hrm-api `35d101453`, hrm-client `cb907f37b`, ERP `af4780843f`, hrm-claude-config `2004eb3` (không nằm trong origin/gop_db)
+
+### Checkpoint — 2026-10-15 (wrap up 3)
+Vừa hoàn thành: Phần H (H1–H5) — ĐÃ PUSH 4 repo.
+Đang làm dở: không. ERP 8090 đã tắt; HRM 8031/3031 chạy.
+Bước tiếp theo: N141 (gán 4 quyền 2c cho tài khoản e2e) + N142 (spec Mẫu in tem chờ đúng mốc) nếu user cho; N130; N137 trước prod.
+Blocked: N100 chờ mapping; N128 chờ chốt HP.
+Lưu ý nghiệp vụ đã trả lời user: cây catalog sắp theo `name` từng cấp (unicode_ci), số thứ tự tính theo vị trí; 🔒 = nút status 0 — popup Xây dựng catalog chặn THÊM vào nhánh khoá (FE ẩn tab + BE 422), picker chỉ hiển thị (vẫn chọn được hàng).

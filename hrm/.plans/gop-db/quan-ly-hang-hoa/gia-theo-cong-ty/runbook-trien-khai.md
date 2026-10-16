@@ -7,6 +7,10 @@
 >
 > ⚠️ **Đổi 15/10/2026 — luật chép giá mới** (mục 3.0): nhóm chia sẻ **1·3·4**, công ty tự quản **2·7**. Mọi số đo 10/10–12/10 trong
 > file này (bảng 3a cũ, mục 4, mục 5, 2 nhật ký) là của **luật cũ 1-2-3-4**; số dùng để đối chiếu từ nay là bảng 3a mới.
+>
+> ⚠️ **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** Luật hiện hành
+> TRÙNG luật cũ 1-2-3-4 (Cty 7 chỉ B1–B4) ⇒ đối chiếu lại bảng **luật cũ** (TỔNG ~1,04 triệu); bảng "luật mới" 810.016 ở 3a là của
+> luật lần 1, ĐÃ CŨ.
 
 ## 0. Điều kiện trước
 
@@ -51,19 +55,27 @@ php artisan migrate --force --path=Modules/MasterData/Database/Migrations/2026_1
 php -d memory_limit=4G artisan product-price:backfill-company --dry-run     # 6,2 s, không ghi
 php -d memory_limit=4G artisan product-price:backfill-company               # 71 s
 ```
-### 3.0 Luật chép (đổi 15/10/2026)
+### 3.0 Luật chép (đổi 15/10/2026 — lần 2 cùng ngày, N128)
+
+> **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** Lý do: `n128-do-chung-tu-hp.md` (HP 668 chứng từ dở, 100% có hàng
+> chủ 1/3/4; tự quản ⇒ HP còn 0/408 mã có giá).
 
 Config `hrm-api/config/price.php` (thay khoá cũ `cluster_company_ids` [1,2,3,4]):
-- `shared_price_company_ids` = **[1, 3, 4]** — Tân Phát · Vinh · Sài Gòn chép LẪN NHAU mọi hàng đang bán (B5): giá × hệ số của công
+- `shared_price_company_ids` = **[1, 2, 3, 4]** — Tân Phát · Hải Phòng · Vinh · Sài Gòn chép LẪN NHAU mọi hàng đang bán (B5): giá × hệ số của công
   ty NHẬN, không có hệ số ⇒ 1 (giá bằng).
-- `self_managed_company_ids` = **[2, 7]** — Hải Phòng · ETEK Green chỉ dùng hàng mình LÀM CHỦ: vẫn qua B1–B4 (gán chủ dòng giá, pcu
-  chủ, bù loại giá, Đang kinh doanh). KHÔNG nhận hàng chép, KHÔNG cho hàng của mình sang nhóm (3 mã HP ở lại HP).
+- `self_managed_company_ids` = **[7]** — ETEK Green chỉ dùng hàng mình LÀM CHỦ: vẫn qua B1–B4 (gán chủ dòng giá, pcu
+  chủ, bù loại giá, Đang kinh doanh). KHÔNG nhận hàng chép, KHÔNG cho hàng của mình sang nhóm.
 - 5 · 6 · 8: không dùng phần mềm ⇒ không chép, không so khớp. Hàng chủ 5/6/8 (nếu có — đo 15/10: **0 mã**) vẫn qua B1–B4 như cũ,
   vì B1 phải gán công ty cho mọi dòng giá thì M3 NOT NULL mới chạy. Hàng `company_id` NULL vẫn gán theo tiền tố (`SG-` ⇒ 4), không
   xác định được ⇒ B0 `owner_unknown` dừng (như cũ).
 - Vẫn backfill MỘT lần ngày chuyển đổi (T2 không đổi). Bảng in của lệnh luôn có cột Cty 1·2·3·4·7.
 
-**Điểm dừng 3a — dry-run** phải khớp bảng **luật mới** (đo `hrm_erp` local 15/10 — DB chưa backfill, chỉ dry-run, không ghi;
+**Điểm dừng 3a — dry-run** — **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** Bảng ngay dưới là **luật lần 1 (1·3·4 / 2·7), ĐÃ CŨ**; luật hiện hành
+= luật cũ 1-2-3-4 ⇒ dry-run phải khớp số **luật cũ đo 15/10: TỔNG 1.042.371** (cột Cty 2 ≈ 232 nghìn; chi tiết từng việc như bảng
+10/10 trong khung "Bảng 3a cũ" bên dưới, chênh vài dòng `pep.copy` do ngày chạy). `hrm_erp_giacty` (đã backfill luật cũ) đo 15/10
+bằng code lần 2: dry-run **TỔNG GHI 0**.
+
+*Bảng luật lần 1 (ĐÃ CŨ — chỉ tra lịch sử)* (đo `hrm_erp` local 15/10 — DB chưa backfill, chỉ dry-run, không ghi;
 production đo lại, chênh do dữ liệu mới thì đối chiếu §3.4 design):
 
 | Việc | Cty 1 | Cty 2 | Cty 3 | Cty 4 | Cty 7 | Tổng |
@@ -111,9 +123,10 @@ B0 ≠ 0 ⇒ DỪNG (không chạy thật), báo dev.
 ```bash
 php -d memory_limit=4G artisan product-price:compare --csv=/tmp/compare.csv     # 11 s
 ```
-**Điểm dừng 4** — bắt buộc dòng cuối **`0 lệch.`** Luật mới (15/10): cặp cần có giá = (hàng × chủ) cho chủ thuộc 1·2·3·4·7 +
-(hàng × công ty nhận) khi chủ và nhận cùng thuộc 1·3·4; HP/ETEK Green thiếu hàng chép KHÔNG phải lệch. Đo 15/10 trên `hrm_erp_giacty`
-(chỉ đọc, DB đã backfill bằng luật cũ): **85.107 cặp, 0 lệch**, T4 = 229, §3.3 = 17.619 (cặp HP × hàng 1/3/4 bị bỏ qua đúng luật).
+**Điểm dừng 4** — bắt buộc dòng cuối **`0 lệch.`** Luật hiện hành (Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.): cặp cần có giá = (hàng × chủ)
+cho chủ thuộc 1·2·3·4·7 + (hàng × công ty nhận) khi chủ và nhận cùng thuộc 1·2·3·4; ETEK Green thiếu hàng chép KHÔNG phải lệch. Đo
+15/10 (lần 2) trên `hrm_erp_giacty` (chỉ đọc): **113.484 cặp, 0 lệch**, T4 = 449, §3.3 = 23.492, cặp HRM = 0, `owner_not_ready` = 0
+— đúng bằng số luật cũ 10/10. *(Luật lần 1, ĐÃ CŨ: 85.107 cặp, T4 = 229, §3.3 = 17.619.)*
 *Luật cũ 1-2-3-4 (10/10):* 113.484 cặp; nhóm đã chấp nhận (không tính lệch) T4 = 449,
 §3.3 bù giá 0 = 23.492; "cặp HRM sinh" = 0; `owner_not_ready` = 0. ≠ 0 lệch ⇒ DỪNG, KHÔNG chạy M3, mở `compare.csv` báo dev
 (quyết lui bằng bước 7 hay sửa dữ liệu rồi chạy lại 3–4).
@@ -131,6 +144,8 @@ php artisan migrate --force          # chỉ còn M3 đang chờ — 20,5 s (l�
 - `php artisan migrate:status | grep -c "| No"` = 0.
 
 ## 6. Quyền + mở lại
+
+> ⚠️ **Đổi 15/10 (N138) — đoạn quyền dưới đây ĐÃ CŨ.** Seeder gộp nay đồng bộ theo TÊN, không truncate; mọi quyền của luồng đã khai trong `PermissionsTableSeeder` ⇒ thay toàn bộ các lệnh seeder riêng / INSERT theo id bằng `php artisan permission:sync --dry-run` rồi `php artisan permission:sync` (chi tiết `../deploy-dev-server.md` §7). Chạy seeder riêng cũ trên DB đã sync sẽ DỪNG "tên đã có ở id khác".
 
 1. Quyền HRM — **KHÔNG chạy `PermissionsTableSeeder`** (truncate cả bảng). Chạy seeder riêng (hrm-api, commit `5b327e085`):
    ```bash
@@ -211,7 +226,7 @@ WHERE a.status IN (1,2,5,7) AND a.send_company_id IS NOT NULL AND a.company_id<>
 |---|---|---|---|---|
 | 9.1 | Kiểm trùng trước UNIQUE (chỉ đọc) | `SELECT COUNT(*) FROM (SELECT price_calculate_request_id FROM price_calculates GROUP BY 1 HAVING COUNT(*)>1) x;` · tương tự `price_calculate_results` theo `price_calculate_id` · lại SQL D1 ở mục 8 | trùng = **0**, chéo dở = **0** | trùng 0 / 0 · phiếu thiếu hãng 20 (backfill tự lấy hãng dòng đầu) |
 | 9.2 | 12 migration Phase 7 (theo thứ tự tên file) | `php artisan migrate --force` (lúc này chỉ còn 12 file `2026_10_11_*` đang chờ — kiểm `migrate:status` trước) | `migrate:status \| grep "\| No"` rỗng | mỗi file 0,4–0,7 s; tổng ≈ 6 s. M6/M8 tự kiểm trùng, có trùng thì dừng kèm danh sách id |
-| 9.3 | Quyền — **KHÔNG** `PermissionsTableSeeder` | `php artisan db:seed --force --class="Modules\MasterData\Database\Seeders\InternalPricePolicyPermissionSeeder"` rồi `…\PriceCalculationPermissionSeeder` | chèn **1656** + **1662 · 1663 · 1664**; chạy lại "chèn 0 dòng" | 0,4 s mỗi lệnh; chạy lại 0 dòng |
+| 9.3 | Quyền — ⚠️ CŨ, thay bằng `php artisan permission:sync` (N138, xem §7 deploy-dev-server.md) | `php artisan db:seed --force --class="Modules\MasterData\Database\Seeders\InternalPricePolicyPermissionSeeder"` rồi `…\PriceCalculationPermissionSeeder` | chèn **1656** + **1662 · 1663 · 1664**; chạy lại "chèn 0 dòng" | 0,4 s mỗi lệnh; chạy lại 0 dòng |
 | 9.4 | Backfill nhóm YCHG — dry-run | `php artisan price-asking:backfill-groups --dry-run` | số khớp bảng dưới (production đo lại) | 1,8 s |
 | 9.5 | Backfill nhóm — chạy thật | `php artisan price-asking:backfill-groups` | = dry-run | 5,8 s |
 | 9.6 | Kiểm idempotent | `php artisan price-asking:backfill-groups --dry-run` | **0** mọi dòng | 0 |

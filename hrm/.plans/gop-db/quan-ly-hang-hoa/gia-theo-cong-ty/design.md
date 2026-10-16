@@ -43,8 +43,8 @@
 | Mã | Chốt | Nguồn |
 |---|---|---|
 | P1 | Công ty khác chủ: chép **đúng con số ERP đang hiện** (giá chủ × hệ số, làm tròn như `getData`) | `ton.md:23` |
-| P2/P2b | **Đổi 15/10:** **nhóm chia sẻ 1 Tân Phát · 3 Vinh · 4 SG** chép giá **lẫn nhau** mọi hàng đang bán: hàng của công ty nào trong nhóm cũng chép cho 2 công ty còn lại, áp hệ số của **công ty NHẬN** (không có ⇒ 1, giá bằng). Không theo mốc chứng từ. ~~Cụm cũ 1·2·3·4~~ (HP ra khỏi nhóm) | `ton.md:24`, `cum-gia-1510-brief.md` |
-| P2c | **Đổi 15/10:** **2 HP · 7 ETEK Green tự quản** — chỉ dùng hàng mình LÀM CHỦ (`products.company_id`): vẫn qua B1–B4, KHÔNG nhận hàng chép, KHÔNG cho hàng của mình sang nhóm (3 mã HP ở lại HP). **Cty 5, 6, 8 không dùng phần mềm**: không chép, không xử lý giá riêng (như cũ) | `ton.md:24, 43-44`, `cum-gia-1510-brief.md` |
+| P2/P2b | **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** **Nhóm chia sẻ 1 Tân Phát · 2 HP · 3 Vinh · 4 SG** chép giá **lẫn nhau** mọi hàng đang bán: hàng của công ty nào trong nhóm cũng chép cho 3 công ty còn lại, áp hệ số của **công ty NHẬN** (không có ⇒ 1, giá bằng). Không theo mốc chứng từ. (lần 1 sáng 15/10 tách HP ra — ~~nhóm 1·3·4~~ — đã đảo) | `ton.md:24`, `cum-gia-1510-brief.md` |
+| P2c | **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** **7 ETEK Green tự quản** (~~2 HP~~) — chỉ dùng hàng mình LÀM CHỦ (`products.company_id`): vẫn qua B1–B4, KHÔNG nhận hàng chép, KHÔNG cho hàng của mình sang nhóm. **Cty 5, 6, 8 không dùng phần mềm**: không chép, không xử lý giá riêng (như cũ) | `ton.md:24, 43-44`, `cum-gia-1510-brief.md` |
 | P2d | Chép giá thì **sinh kèm dòng trạng thái "Đang kinh doanh"** ở công ty nhận. Bất biến 2 chiều trạng thái ⇔ bộ giá | `ton.md:24` |
 | P3 | Dòng giá cũ gán cho `products.company_id` (Cty1 258.270 · Cty4 6.215 · Cty3 138 · Cty2 18 · NULL 5) | `ton.md:25` |
 | P4 | Chưa có giá = chưa tới "Đang kinh doanh" ⇒ không vào popup. Popup chỉ lấy hàng Đang kinh doanh | `ton.md:26` |
@@ -55,7 +55,7 @@
 | P9/P9b | PTG + hàng tạm ERP: **chốt ở Phase 7/6**, không có giai đoạn tạm | `ton.md:31` |
 | P10 | Bỏ hệ số cùng lúc bật giá theo công ty. Chấp nhận 26 chỗ `getPriceByUnitAndType` đổi sang giá có hệ số | `ton.md:32` |
 | P11 | Cron 14:30 chỉ reset dòng giá của chính công ty có cấu hình | `ton.md:33` |
-| P12 | Bật **một lần cả cụm 1-2-3-4**, có lệnh so khớp trước khi bật, có cờ để lui. *(Đổi 10/10 bỏ cờ; đổi 15/10: nhóm chia sẻ 1·3·4 + tự quản 2·7 — xem P2c)* | `ton.md:34` |
+| P12 | Bật **một lần cả cụm 1-2-3-4**, có lệnh so khớp trước khi bật, có cờ để lui. *(Đổi 10/10 bỏ cờ; đổi 15/10 lần 2 (N128): nhóm chia sẻ 1·2·3·4 + tự quản 7 — xem P2c)* | `ton.md:34` |
 | P13 | Duyệt/Không duyệt: chỉ duyệt của **công ty chủ** mới đổi `products.status`. Công ty khác chỉ đổi trạng thái theo công ty mình | `ton.md:35` |
 | P14 | Giá theo công ty lên cùng lúc với 2 màn giá HRM (thực tế cả feature lên một lần) | `ton.md:36` |
 
@@ -164,7 +164,7 @@ Khoá/index: **UNIQUE(`product_unit_id`, `company_id`)** · INDEX(`company_id`, 
 | BB5 | Màn giá không đổi `unit_id`/`is_base`/`unit_coefficient` (HĐ2, C7) | service ghi giá + duyệt (không chép `pa.unit_coefficient` như ERP `PAC:254,490`) |
 | BB6 | `pa.company_id` = công ty của bộ giá. Mỗi (hàng × ĐVT × công ty) có ≤ 1 `pa` đang mở. Xử lý xong thì **xoá cứng `pa` + `pap`** như ERP, vì PTG/dashboard ERP dựa vào việc này (`KB:254-260`) | service ghi + duyệt |
 | BB7 | Mọi đường đọc giá đều mang `company_id` tường minh. Không global scope (`KE:272`) | lớp truy cập §4 + test danh sách trắng |
-| BB8 | Ngày bật, mọi đường đọc trả **đúng số ERP đang hiện** cho cụm 1-2-3-4 (P1, P12), trừ các lệch đã liệt kê ở §3.6. *Đổi 15/10: chỉ cho cặp cần có giá (chủ + nhận trong nhóm 1·3·4); HP/ETEK Green chỉ còn hàng mình làm chủ — N128* | lệnh so khớp + snapshot §3.7 |
+| BB8 | Ngày bật, mọi đường đọc trả **đúng số ERP đang hiện** cho cụm 1-2-3-4 (P1, P12), trừ các lệch đã liệt kê ở §3.6. *Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7. BB8 áp cho cặp cần có giá (chủ + nhận trong nhóm 1·2·3·4); ETEK Green chỉ còn hàng mình làm chủ. Đo 15/10 `hrm_erp_giacty`: 113.484 cặp (= 28.371 hàng × 4), 0 lệch* | lệnh so khớp + snapshot §3.7 |
 
 ---
 
@@ -175,8 +175,8 @@ Khoá/index: **UNIQUE(`product_unit_id`, `company_id`)** · INDEX(`company_id`, 
 - HRM `php artisan product-price:backfill-company {--dry-run} {--company=*} {--chunk=500}` (đặt ở `MD/Console`). Chạy theo lô, mỗi lô
   một transaction. **Idempotent**: `insertOrIgnore` theo UNIQUE. UPDATE chỉ đụng dòng còn `company_id IS NULL`, hoặc `pcc.status IS NULL`.
 - `--dry-run` in số dòng sẽ ghi theo bảng × công ty, để so với bảng ước tính §3.4. Không chạy trong migration.
-- **Đổi 15/10:** 2 danh sách ở 1 chỗ (config `price.php`): `shared_price_company_ids = [1, 3, 4]` (nhóm chia sẻ, B5) và
-  `self_managed_company_ids = [2, 7]` (tự quản: chỉ B1–B4 cho hàng mình làm chủ; dùng cho so khớp + cột bảng in). Cty 5/6/8 không
+- **Đổi 15/10:** 2 danh sách ở 1 chỗ (config `price.php`): `shared_price_company_ids = [1, 2, 3, 4]` (nhóm chia sẻ, B5 — **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.**) và
+  `self_managed_company_ids = [7]` (tự quản: chỉ B1–B4 cho hàng mình làm chủ; dùng cho so khớp + cột bảng in). Cty 5/6/8 không
   thuộc danh sách nào (P2c). ~~`CLUSTER = [1, 2, 3, 4]` (`price.cluster_company_ids`)~~ đã bỏ.
 
 ### 3.2 Thuật toán (đúng thứ tự)
@@ -191,8 +191,8 @@ B3  BÙ LOẠI GIÁ CHO CHỦ: với hàng products.status = 1 (xem T1), ĐVT th
       coefficient 0, sale_max_percent NULL, cờ 0) — y hành vi ERP `PC:2724-2727` tự sinh khi lưu.
 B4  TRẠNG THÁI CHỦ (A3, gỡ @TODO-BACKFILL): hàng products.status = 1 ⇒ pcc(chủ) status 3. Có dòng (status NULL) ⇒ UPDATE status,
       giữ coefficient. Chưa có ⇒ INSERT coefficient 1, status 3, created_by NULL.
-B5  CHÉP NHÓM (P1, P2b — đổi 15/10): với mỗi hàng H: products.status = 1 (T1), chủ C ∈ SHARED = {1,3,4}; với mỗi công ty
-    nhận R ∈ SHARED \ {C}. Chủ ∈ tự quản {2,7} hoặc 5/6/8 ⇒ dừng ở B4 (không chép ra, không nhận vào):
+B5  CHÉP NHÓM (P1, P2b — đổi 15/10): với mỗi hàng H: products.status = 1 (T1), chủ C ∈ SHARED = {1,2,3,4} (lần 2, N128); với mỗi công ty
+    nhận R ∈ SHARED \ {C}. Chủ ∈ tự quản {7} hoặc 5/6/8 ⇒ dừng ở B4 (không chép ra, không nhận vào):
       k = pcc(H, R).coefficient nếu có dòng, ngược lại 1                     # hệ số của công ty NHẬN
       với mỗi ĐVT U của H:
         pcu(U, R)  = chép 5 cột giá trị của pcu(U, C): cost_price, buy_price, sale_max_percent_coefficient,
@@ -228,6 +228,9 @@ B3 bù cho chủ, nên B5 chép ra đủ 6 dòng. Hệ quả: với các ĐVT n�
 > **Đổi 15/10:** bảng dưới là **luật cũ 1-2-3-4**. Số luật mới (nhóm chia sẻ 1·3·4, tự quản 2·7) đo bằng dry-run 15/10: chép
 > `upp` 346.128 · `pcu` 57.688 · `pep` 4.014 · `pcc` nhận 56.736, TỔNG GHI 810.016 (Cty 2 chỉ 24 dòng chủ) — bảng đầy đủ ở
 > `runbook-trien-khai.md` mục 3a.
+>
+> **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** Luật hiện hành trùng luật cũ 1-2-3-4 (Cty 7 vẫn chỉ B1–B4) ⇒ bảng dưới lại là bảng đúng; số 810.016 ở trên là của
+> luật lần 1, ĐÃ CŨ.
 
 | Đối tượng | Chủ (giữ/gán) | Bù chủ | Chép cho 3 công ty nhận | Tổng sau backfill |
 |---|---:|---:|---:|---:|
@@ -243,8 +246,8 @@ dòng (`ton.md:24` ghi "~775k" là tính theo dòng giá Cty 1 × 3, chưa bù l
 
 ### 3.5 Lệnh so khớp (chỉ đọc) — bắt buộc = 0 lệch trước khi bật
 
-`php artisan product-price:compare {--company=1,3,4} {--csv=path}`, đặt ở HRM, đọc thẳng DB. **Đổi 15/10:** cặp cần so = (hàng × chủ)
-cho chủ ∈ nhóm chia sẻ ∪ tự quản + (hàng × R) khi chủ và R cùng ∈ nhóm chia sẻ; HP/ETEK Green thiếu hàng chép không phải lệch. Với mỗi cặp:
+`php artisan product-price:compare {--company=1,2,3,4} {--csv=path}`, đặt ở HRM, đọc thẳng DB. **Đổi 15/10:** cặp cần so = (hàng × chủ)
+cho chủ ∈ nhóm chia sẻ ∪ tự quản + (hàng × R) khi chủ và R cùng ∈ nhóm chia sẻ (1·2·3·4 từ lần 2, N128); ETEK Green (tự quản) thiếu hàng chép không phải lệch. Với mỗi cặp:
 1. Đủ bộ: 6 dòng `upp` + 1 `pcu` / ĐVT (BB1), `pcc.status = 3`.
 2. **Giá hiệu dụng cũ** (= số ERP hiện cho người dùng công ty R hôm nay: dòng chủ × `pcc(H,R)` theo luật `getData`, gồm cả `pep`
    tương lai) **=** dòng mới của R, cho 6 loại × mọi ĐVT + giá hiệu lực. Nếu so ra lệch thì in CSV: mã, ĐVT, loại, công ty, cũ, mới.
@@ -675,7 +678,7 @@ Thứ tự đề xuất: G0 ∥ G1 → G2 ∥ G3 → G4 → G5 → G6. Mỗi đ�
 - **N71** (compare loại cặp HRM sinh ra) làm trong G2b. **N72** ✅ backfill chép 4 ô quản trị từ `products` vào dòng `pcc` chủ + công ty nhận.
 - Nhánh chung hrm-api chưa push (user 10/10).
 
-### Đổi 15/10/2026 — luật chép giá: nhóm chia sẻ 1·3·4, tự quản 2·7
+### Đổi 15/10/2026 — luật chép giá: nhóm chia sẻ 1·3·4, tự quản 2·7 *(đã đảo phần HP — xem mục lần 2 ngay dưới)*
 
 - Chốt user 15/10 (`cum-gia-1510-brief.md`): P2/P2b/P2c, §3.1, §3.2 B5, §3.5 sửa theo. B1–B4 không đổi (mọi công ty chủ). Vẫn backfill
   MỘT lần ngày chuyển đổi (T2 không đổi).
@@ -683,3 +686,16 @@ Thứ tự đề xuất: G0 ∥ G1 → G2 ∥ G3 → G4 → G5 → G6. Mỗi đ�
 - Việc treo: `hrm_erp_giacty` đã backfill bằng luật cũ ⇒ HP đang giữ hàng chép của 1/3/4 (+ 1/3/4 giữ 3 mã HP). Lệnh mới không tự
   dọn (chạy lại = 0 dòng; so khớp bỏ qua cặp ngoài luật ⇒ 0 lệch). User "dọn sau". ERP `PriceSnapshotCommand` (snapshot §3.7) còn
   gõ cứng `[1, 2, 3, 4]` — ngoài phạm vi đợt này.
+
+### Đổi 15/10/2026 (lần 2, N128) — HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7
+
+- Chốt user 15/10 (đảo luật lần 1 cùng ngày, commit merge `5ab7ab2ac`). Lý do — đo N128 (`n128-do-chung-tu-hp.md`): HP có
+  668 chứng từ dở, 100% có hàng chủ 1/3/4 (408 mã); luật tự quản làm HP còn 0/408 mã có giá ⇒ vỡ ngày go-live.
+- Code: hrm-api nhánh `feat/cdhh-viec-ton-1510` — chỉ đổi config `price.php` (`shared_price_company_ids = [1, 2, 3, 4]`,
+  `self_managed_company_ids = [7]`) + chú thích + test `CompanyPriceBackfillTest` (ca tự quản chuyển sang Cty 7). Code
+  backfill/so khớp của lần 1 đọc theo config nên giữ nguyên.
+- Đo 15/10 trên `hrm_erp_giacty` (đã backfill bằng luật cũ 1-2-3-4): dry-run TỔNG GHI = 0 (Cty 2 nhận `recv_has_status`
+  28.368 hàng), `product-price:compare` 113.484 cặp, **0 lệch** ⇒ giacty khớp luật mới. "Việc treo" của lần 1 (HP đang giữ
+  hàng chép của 1/3/4 — "dọn sau") **hết hiệu lực**: HP giữ hàng chép là ĐÚNG luật.
+- ERP `PriceSnapshotCommand` gõ cứng `[1, 2, 3, 4]` (`--companies` mặc định + mẫu `pickSample`) — lại khớp nhóm chia sẻ, không
+  cần sửa. Cty 7 không trong snapshot: đúng (không chép, giacty 0 hàng status 1 chủ 7).

@@ -1,6 +1,7 @@
 # Deploy CHUẨN nhánh Chuyển đổi hàng hoá — DB CHƯA TỪNG chạy (dev server / VPS test)
 
-> Cập nhật 15/10/2026 (luật chép giá mới: nhóm chia sẻ 1·3·4, tự quản 2·7). Bản đầy đủ cho production: `gia-theo-cong-ty/runbook-trien-khai.md`.
+> Cập nhật 15/10/2026 — **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** (Lần 1 cùng ngày: ~~nhóm 1·3·4, tự quản 2·7~~.)
+> Code lần 2 ở hrm-api nhánh `feat/cdhh-viec-ton-1510` (chưa merge/push lúc ghi) — commit bảng dưới (`5ab7ab2ac`) còn luật lần 1. Bản đầy đủ cho production: `gia-theo-cong-ty/runbook-trien-khai.md`.
 > ERP và HRM dùng **chung 1 DB gộp** ⇒ migration/backfill chạy MỘT lần ở hrm-api, ERP chỉ cần code + `.env` + 1 lệnh dọn giá.
 > ⚠️ KHÔNG merge vào `gop_db`: server checkout thẳng nhánh feature.
 > Nhãn mỗi bước: **[HRM-API]** chạy trong thư mục hrm-api · **[HRM-CLIENT]** · **[ERP]** · **[DB]** chạy SQL trực tiếp.
@@ -60,7 +61,7 @@ php artisan migrate --force
 Đúng khi dừng ở `2026_10_09_000004_enforce_company_id_on_product_unit_prices_table` với lỗi "còn N dòng company_id NULL…"
 (migration tự chặn, không đổi gì). **Chạy qua luôn ⇒ DB không phải DB mới — DỪNG, xem bước 0.**
 
-## 5. [HRM-API] Backfill giá theo công ty (luật 15/10)
+## 5. [HRM-API] Backfill giá theo công ty (luật 15/10 lần 2 — N128)
 ```bash
 php -d memory_limit=4G artisan product-price:backfill-company --dry-run
 php -d memory_limit=4G artisan product-price:backfill-company
@@ -69,13 +70,13 @@ php -d memory_limit=4G artisan product-price:compare
 | Kiểm | Đạt khi |
 |---|---|
 | dry-run, dòng "B0 kiểm trước" | toàn 0 (≠ 0 ⇒ DỪNG báo dev) |
-| dry-run, cột Cty 2 / Cty 7 | Cty 2 chỉ phần hàng HP làm chủ (đo `hrm_erp` 15/10: 24 dòng) · Cty 7 = 0 |
-| dry-run, TỔNG GHI | cỡ **810 nghìn** (đo `hrm_erp` 15/10: 810.016; luật cũ ra ~1,04 triệu ⇒ sai code) |
+| dry-run, cột Cty 2 / Cty 7 | Cty 2 nhận chép như 3/4 (cỡ **232 nghìn** dòng, đo `hrm_erp` 15/10) · Cty 7 = 0 |
+| dry-run, TỔNG GHI | cỡ **1,04 triệu** (đo `hrm_erp` 15/10: 1.042.371). Ra ~810 nghìn / Cty 2 chỉ 24 dòng ⇒ đang chạy code luật lần 1 (HP tự quản) — DỪNG |
 | chạy thật | bảng in = dry-run, dòng cuối "B6 kiểm sau: đạt" (~1–2 phút) |
 | compare | dòng cuối **`0 lệch.`** |
 
-Luật (config `hrm-api/config/price.php`): **1 Tân Phát · 3 Vinh · 4 Sài Gòn** chép giá lẫn nhau mọi hàng đang bán (giá × hệ số công ty
-nhận, không có hệ số ⇒ giá bằng). **2 Hải Phòng · 7 ETEK Green** chỉ có hàng mình làm chủ, không nhận / không cho. **5·6·8** bỏ qua.
+Luật (config `hrm-api/config/price.php`): **1 Tân Phát · 2 Hải Phòng · 3 Vinh · 4 Sài Gòn** chép giá lẫn nhau mọi hàng đang bán (giá ×
+hệ số công ty nhận, không có hệ số ⇒ giá bằng). **7 ETEK Green** chỉ có hàng mình làm chủ, không nhận / không cho. **Đổi 15/10 (lần 2, N128): HP vào nhóm chia sẻ 1·2·3·4; tự quản chỉ còn 7.** **5·6·8** bỏ qua.
 
 ## 6. [HRM-API] Migration lượt 2
 ```bash
@@ -84,35 +85,19 @@ php artisan migrate:status | grep -c "| No"       # = 0
 ```
 
 ## 7. Quyền
-**[HRM-API]** — KHÔNG chạy `PermissionsTableSeeder` (truncate cả bảng):
-```bash
-php artisan db:seed --force --class="Modules\MasterData\Database\Seeders\ProductPricePermissionSeeder"          # 1657, 1658
-php artisan db:seed --force --class="Modules\MasterData\Database\Seeders\ProductExportPermissionSeeder"         # 1654
-php artisan db:seed --force --class="Modules\MasterData\Database\Seeders\InternalPricePolicyPermissionSeeder"   # 1656
-php artisan db:seed --force --class="Modules\MasterData\Database\Seeders\PriceCalculationPermissionSeeder"      # 1662–1664
-```
-**[DB]** — quyền không có seeder riêng (11 quyền). Kiểm trước, id đã bị quyền KHÁC chiếm ⇒ DỪNG báo dev:
-```sql
-SELECT id, name FROM permissions WHERE id IN (1652,1653,1655,1720,1721,1722,1723,1724,1725,1726,1727);
+> Đổi 15/10 (N138): seeder quyền gộp `PermissionsTableSeeder` nay **đồng bộ theo TÊN** (thêm quyền mới, cập nhật tại chỗ, giữ id, không truncate). Mọi quyền của luồng (1652–1658, 1662–1664, 1720–1727 trên DB dev) đã khai `$this->perm()` trong seeder đó ⇒ **KHÔNG** chạy 4 seeder riêng cũ (`ProductPrice…`, `ProductExport…`, `InternalPricePolicy…`, `PriceCalculation…` — chèn id cố định ⇒ trên DB đã sync sẽ DỪNG "tên đã có ở id khác") và **KHÔNG** INSERT tay theo id. Trên môi trường mới, id do DB tự sinh ⇒ số id ghi trong tài liệu này chỉ là nhãn tra cứu (code gate theo TÊN quyền) — gán quyền cho vai trò thì tra theo tên.
 
-INSERT INTO permissions (id,name,guard_name,display_name,`group`,type,created_at,updated_at) VALUES
-(1652,'Xây dựng thông tin hàng hoá','api','Xây dựng thông tin hàng hoá','Hàng hoá',9,NOW(),NOW()),
-(1653,'Xem dữ liệu hàng hoá công ty','api','Xem dữ liệu hàng hoá công ty','Hàng hoá',9,NOW(),NOW()),
-(1655,'Xây dựng catalog kinh doanh','api','Xây dựng catalog kinh doanh','Hàng hoá',9,NOW(),NOW()),
-(1720,'Xem danh mục biển số xe','api','Xem danh mục biển số xe','Danh mục hàng hóa',9,NOW(),NOW()),
-(1721,'Quản lý danh mục biển số xe','api','Quản lý danh mục biển số xe','Danh mục hàng hóa',9,NOW(),NOW()),
-(1722,'Xem danh mục lái xe ngoài','api','Xem danh mục lái xe ngoài','Danh mục hàng hóa',9,NOW(),NOW()),
-(1723,'Quản lý danh mục lái xe ngoài','api','Quản lý danh mục lái xe ngoài','Danh mục hàng hóa',9,NOW(),NOW()),
-(1724,'Xem danh mục xe','api','Xem danh mục xe','Danh mục hàng hóa',9,NOW(),NOW()),
-(1725,'Quản lý danh mục xe','api','Quản lý danh mục xe','Danh mục hàng hóa',9,NOW(),NOW()),
-(1726,'Xem danh mục nhiên liệu','api','Xem danh mục nhiên liệu','Danh mục hàng hóa',9,NOW(),NOW()),
-(1727,'Quản lý danh mục nhiên liệu','api','Quản lý danh mục nhiên liệu','Danh mục hàng hóa',9,NOW(),NOW());
+**[HRM-API]**
+```bash
+php artisan permission:sync --dry-run   # xem trước: danh sách quyền THÊM / CẬP NHẬT; có dòng "tên đã có ở id khác" hay lỗi ⇒ DỪNG báo dev
+php artisan permission:sync             # ghi thật
+php artisan permission:sync --dry-run   # chạy lại ⇒ phải 0 thay đổi
 ```
-Dùng INSERT **thường** (không IGNORE): vướng trùng là báo lỗi + không chèn dòng nào; id nào đã có đúng tên thì bỏ dòng đó khỏi câu. (VPS test 15/10: dùng IGNORE thì 11 dòng 1652/1653/1655/1720–1727 bị bỏ qua im lặng, chỉ phát hiện nhờ câu đếm.)
-Kiểm cuối — **phải = 18**:
-```sql
-SELECT COUNT(*) FROM permissions WHERE id IN (1652,1653,1654,1655,1656,1657,1658,1662,1663,1664,1720,1721,1722,1723,1724,1725,1726,1727);
-```
+**Đọc dry-run lượt đầu (N149, soát 16/10 trên `hrm_erp_giacty`)** — DỪNG báo dev nếu thấy:
+- `Thêm: … định mức thưởng P3 …` **và** `⚠ … không khai báo: … lương P3 …` ⇒ migration `2026_10_13_000001_rename_luong_p3_to_dinh_muc_thuong_p3` CHƯA chạy (§6 chưa xong). Ghi thật lúc này sẽ tạo 4 quyền mới id khác, các vai trò đang giữ quyền "lương P3" mất quyền màn P3 (code gate theo tên mới).
+- `⚠ … không khai báo: Xem/Quản lý/Xoá/Xuất dữ liệu danh mục hàng hoá` ⇒ quyền rác sót từ sự cố 21/09, chỉ thấy trên DB dev (id 1616–1619, không chỗ nào trong code dùng). Trên prod không được xuất hiện; xuất hiện ⇒ hỏi dev.
+
+Bình thường được phép: `Gộp trùng: … danh mục tiền tệ` (dọn 2 id trùng, chuyển gán quyền sang id giữ lại) · `Thêm … (giữ id cũ N)` (id legacy còn trống). Id legacy đã bị quyền khác chiếm thì sync tự chèn id mới và KHÔNG chuyển gán quyền — không sai, chỉ là id khác nhãn trong tài liệu.
 **Kiểm đủ quyền cả luồng** (73 quyền theo TÊN — gồm quyền đã đi theo `gop_db`: phân loại hàng hoá, danh mục hàng hoá, xe 2b, catalog Chương/Mục/Tiểu mục, lĩnh vực Công ty KD, Xem giá vốn hàng hoá). **Rỗng = đủ**; ra tên nào ⇒ thiếu, báo dev:
 ```sql
 -- Quyền luồng Chuyển đổi hàng hoá CHƯA có trên DB (rỗng = đủ)

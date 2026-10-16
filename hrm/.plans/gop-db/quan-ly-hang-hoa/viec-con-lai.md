@@ -1,5 +1,117 @@
 # Việc còn lại — feature Chuyển đổi hàng hoá
 
+## 🧭 CÒN LẠI sau 15/10/2026 (bản gom — đọc mục này trước)
+
+### A. Code — chưa có quyết định "để sau" (nên xử lý trước prod)
+**A1. Bảo mật / sai số liệu**
+| # | Việc |
+|---|---|
+| ~~N144~~ ✅ 16/10 | ERP `print()` thêm gate `canView()` như `show()` (chưa commit). Kiểm tinker DB giacty: NV không quyền ⇒ `not_found`, người lập ⇒ bản in. Test `N126InlandOrderRequestNewScreenTest::test_n144_…` |
+| ~~N145~~ ✅ 16/10 | `stockOfProducts` tra phiếu qua `scopedQuery()` (chưa commit) — nháp người khác/phiếu ngoài phạm vi ⇒ ngữ cảnh rơi về người đăng nhập. FE chỉ gửi id ở màn Sửa (nháp của mình) ⇒ luồng thật không đổi. Test mới `StockOfProductsScopeTest` (đỏ trên code cũ); sửa giả định `StockAndUnitTest::test_ctx_…` (dựng nháp của người 999). Thư mục vẫn 24 đỏ sẵn = N159 |
+| N146 ⬇ hạ mức 16/10 | Đã kiểm: KHÔNG sai số liệu — lưu phiếu BE tự tra giá theo công ty phiếu (`ProductExportRequestService::resolveManualLineMeta` + `CompanyHelper::pricingCompanyId($req)`, không tin giá client). Chỉ lệch HIỂN THỊ: `ProductExportRequestForm::onProductsApply` đặt `price = it.quoted_price` của popup (công ty người đăng nhập) cho dòng mới, trong khi đổi ĐVT lấy giá công ty phiếu (N137) ⇒ chỉ xảy ra khi đổi công ty đang làm rồi sửa nháp; tải lại phiếu là đúng. Sửa (FE): `ManualLinesTable` nạp ĐVT xong thì đặt lại giá dòng mới theo ĐVT hiện tại |
+| ~~N147~~ ✅ 16/10 | User chốt "Ẩn nháp người khác". ERP `InlandOrderRequestNew` (chưa commit): `searchByFilter` 3 phạm vi tổng cty/cty/phòng ban gắn `notOthersDraft()`; `canView()` chặn status Đang tạo sau nhánh người lập ⇒ show/print theo. Kiểm tinker (model trong bộ nhớ — DB dev 0 nháp): nháp người khác false, chờ duyệt true, nháp mình true; SQL list có `(status <> 3 or created_by = ?)`. ERP PHPUnit 203 OK. Còn sót: nhánh fallback danh sách `approver_id = tôi` vẫn liệt kê nháp có gán người duyệt (canView đã chặn ⇒ bấm vào not_found) |
+| N160 | (ngoài luồng) ERP `InlandOrderRequestNew::canView()` cho `Super Admin` qua thẳng — trái quy tắc super admin không mặc định có quyền |
+| ~~N148~~ ✖ 16/10 báo nhầm | 1527–1530 là guard `api` (HRM), 100870–100873 là guard `web` (ERP) — tách guard đúng thiết kế DB gộp; 0 ánh xạ chéo guard (api↔api 11.143, web↔web 8.363) |
+| N161 | (ngoài luồng — `permission:sync` tự gộp, giữ 1115/1116) Trùng tên THẬT cùng guard `api`: "Quản lý danh mục tiền tệ" 1115/1117, "Xem danh mục tiền tệ" 1116/1118 — có cả ở `hrm_erp` lẫn `hrm_erp_giacty`; legacy khai 1115/1116. Gate theo tên ⇒ không hỏng chức năng, nhưng màn phân quyền hiện 2 ô. Kiểm prod rồi dọn 1117/1118 (chuyển role_has_permissions sang 1115/1116) |
+| N162 | (ngoài luồng) API YCXH trả 400 kèm NGUYÊN câu SQL lỗi (`{"code":400,"message":"SQLSTATE[23000]… insert into product_export_requests …"}`) — lộ cấu trúc bảng; cùng loại N103 |
+| N163 | (ngoài luồng) `V2BaseSelectInModal` chưa Việt hoá câu lỗi select2 ⇒ hiện "The results could not be loaded." / "Searching…" (vd ô Model popup BOM) |
+| ~~N149~~ ✅ 16/10 soát (tài liệu) | Dry-run giacty: thêm 52 (41 giữ id cũ) · sửa 83 (type NULL→1, nhóm Task→Nhiệm vụ) · gộp trùng 2 (tiền tệ = N161, sync tự dọn) · không khai 8. **4 "lương P3"** = migration đổi tên `2026_10_13_000001_rename_luong_p3…` chưa chạy trên giacty ⇒ thứ tự runbook (migrate §6 trước sync §7) đúng; thêm dấu hiệu DỪNG vào `deploy-dev-server.md` §7. **4 "… danh mục hàng hoá"** (1616–1619) = rác sự cố 21/09, code không dùng, chiếm id legacy của "công nợ đầu kỳ" ⇒ sync chèn id mới, không gán nhầm (đã đọc `PermissionSync::upsert/adoptLegacyPivots`). Còn tuỳ chọn: khai 4 quyền rác vào REMOVED để sync gỡ (cần xin phép code) |
+
+**A2. Ổn định / trải nghiệm**
+| # | Việc |
+|---|---|
+| ~~N150~~ ✅ 16/10 | (chưa commit) Cơ chế: store `apiGetMethod`… ném lại lỗi axios, interceptor không nuốt status nào ⇒ Vue errorHandler của Nuxt (`.nuxt/client.js:63`) ⇒ `layouts/error.vue` luôn "KHÔNG TÌM THẤY TRANG"; 400/404/422 không toast. Khảo sát: ~684 file có await API không bắt lỗi (sai số 15–25%). Sửa: plugin mới `plugins/api-error-guard.js` (client, khai `nuxt.config.js`) BỌC handler Nuxt — lỗi API ⇒ toast `apiErrorMessage` (trừ 401/403/428/500/504 interceptor đã báo, trừ `X-Silent-Errors`) + giữ trang; lỗi code vẫn ra trang lỗi. 2 helper `utils/business-catalog.js`/`vehicle-catalog.js` trả [] khi lỗi (11 chỗ master-data). Đo Playwright trước/sau (trước: 404 cả trang, 0 toast). Spec mới `e2e/tests/shared/api-error-guard-ui.spec.ts` 4/4. Hệ quả: màn nào dựa trang 404 khi mở bản ghi không tồn tại nay hiện toast trên khung trống. Ghi chú: helper bắt lỗi 4xx thì ô trống không toast (interceptor không báo 4xx) |
+| ~~N107~~ ✅ 16/10 | (chưa commit) `V2BaseSelectRemote` + `BomBuilderEditModal` (ô Model) transport trả `{ abort }`, bỏ kết quả request đã huỷ. Tái hiện trước khi sửa trên `/sale/customer-debt-by-employee` (500 ⇒ kẹt "Đang tìm..." + pageerror `'status' in undefined`; gõ nhanh ⇒ ô "abc" hiện kết quả "ab") và popup BOM (kẹt "Searching…"). Sau: "Không tải được dữ liệu", gõ tiếp tìm lại được, kết quả mới không bị đè. Spec mới `e2e/tests/shared/select-remote-error-ui.spec.ts` 2/2 (đỏ trên code cũ) |
+| N105 | `php artisan route:list` hrm-api lỗi sẵn |
+| N151 | 214 gói bảo dưỡng dev không có file đính kèm mà form HRM bắt buộc ⇒ mở Sửa gói cũ 422 (kiểm prod) |
+| N152 | Popup danh mục cũ (vd `BankModel.vue`) báo lỗi bằng `.text-small-error`, ô không viền đỏ · 2 helper song song `scrollToFirstError` / `scrollToInputError` nên gộp |
+| N153 | Snapshot HĐ 2 truy vấn giá/dòng (chưa gom lô) · màn duyệt TN mới ERP gọi searchData 7 lần/lần mở (có sẵn) |
+| N154 | Excel "Loại tài liệu" (Assign) dùng nhãn "loại file đính kèm" (khoá dùng chung) |
+| — | 54 minor hoãn của 4.1–4.5/4.3b — ledger `popup-tim-kiem-hang-hoa/progress.md` (gom 1 đợt dọn) |
+
+**A3. Test / công cụ**
+| # | Việc |
+|---|---|
+| N155 | Chưa có spec e2e màn Gói bảo dưỡng (N100) — tài khoản e2e thiếu quyền Thêm/Sửa gói ⇒ spec tự tạo role tạm |
+| ~~N156~~ ✅ 16/10 | Bắt được đỏ ở lượt 3/3 chạy MasterData: `xe_cha_con_sai_thi_422` nhận 200. Gốc: ca gọi `chain()` rồi `vehiclePayload()` gọi lại `chain()` — `first()` không ORDER BY trên join 3 bảng (1.278 dòng, 41 hãng) có lúc ra dòng khác ⇒ "Loại xe khác hãng" lại khớp hãng của payload. Sửa test: `chain()` orderBy + nhớ trong ca; otherBrand/otherModel orderBy. Ca "nhớ trạng thái" picker: chưa tái hiện lại |
+| ~~N157~~ ✅ 16/10 | `ActsAsProductUser` bỏ id cố định 1652–1658 — quyền thiếu thì tạo id tự sinh (tra theo tên trước như cũ) |
+| N158 | e2e 404 ở `/finance/currencies`, `/customer-care/levels`; console "Module parse failed" (webpack đọc file nhị phân) |
+| ~~N159~~ ✅ 16/10 | 24 ca đỏ = id giả bị FK chặn trên DB gộp: fixture `customer_id=1` (19 ca, gồm 3 TypeError do tạo phiếu 400), `BranchTransferEditTest` thiếu model_id/brand_id (3), `StockAndUnitTest` công ty/KH/lô giả (2), `DownstreamTest` loại 12 `customer_id=1`. Lấy id có thật ⇒ thư mục 120 ca 0 đỏ (1 skip sẵn) |
+| N164 | Role e2e "E2E Assign Admin" (118805) provision 13/10 — chép quyền Super admin lúc đó ⇒ thiếu 9 quyền gán cho Super admin sau (8 quyền xe 2c 1720–1727 + "Xuất excel danh sách hàng hoá") ⇒ 6 ca product-catalog-ui/vehicles-ui đỏ 403 khi chạy `--no-deps`. 16/10 đo bằng role tạm 129854 (đã gỡ): 6 ca xanh. Cần chạy lại provision (`api-setup`) hoặc bổ sung bước cấp quyền |
+| N165 | 2 spec giả định dữ liệu quyền: `product-price-approvals-ui` A2 cần tài khoản e2e KHÔNG có 1092 (provision chép từ Super admin ⇒ có ⇒ 15 cột thay 13); `product-prices-ui` P7 đổi company_role = 2 nhưng role chỉ gắn công ty 1 ⇒ route guard ra trang 404. Không liên quan code |
+| N166 | (phát hiện khi chụp SRS 16/10, Playwright 3031) Form **Thêm mới hàng hoá** đã gõ Tên rồi bấm **Quay lại** ⇒ thoát luôn, KHÔNG hỏi "Bạn có thông tin chưa lưu" (`create.vue` dùng `unsavedChildFormMixin`). Chưa thử form Sửa. Testcase TC_04.015 |
+| N167 | (16/10) Câu xác nhận Khóa / Mở khóa / Gỡ ghi "tại công ty đang làm việc" thay tên công ty — `currentCompanyName()` đọc `store.company_roles` rỗng với tài khoản e2e_assign (có thể chỉ do dữ liệu tài khoản); kiểm với tài khoản thật. Cùng gốc: tiêu đề số đếm màn Cập nhật giá bán cũng ghi "tại công ty đang làm việc"; popup xác nhận Duyệt giá bán ra "…ghi vào công ty công ty đang làm việc." |
+| N168 | (16/10) FE ↔ BE lệch ở form hàng hoá: Bảo hành FE cho số lẻ / BE `integer`; Hệ số thuế BVMT FE `min=0` / BE `min:1`; nhãn "Loại tài liệu" không có * nhưng BE bắt buộc khi có dòng |
+| N169 | (16/10, hỏi nghiệp vụ) (a) Khoá hàng không chặn/huỷ yêu cầu duyệt giá đang chờ — duyệt vẫn áp giá cho hàng khoá; (b) thêm ĐVT cho hàng Đang KD ⇒ ĐVT mới giá 0 vẫn vào popup chứng từ; (c) hàng 2/5 vẫn sửa được toàn bộ, lệch chốt cũ §26c-bis. Testcase TC_09.016 / TC_09.010 |
+| N170 | (SRS Cập nhật giá bán 16/10) Lần nạp đầu, dòng **TMĐT** hiện giá trị DB chứ không theo công thức T5 (`productPriceModel.js`): TEWI-AQUA TMĐT 0 / Bán lẻ 341.000.000; sửa ô bất kỳ là TMĐT nhảy 443.300.000 và Lưu ghi giá trị đó |
+| N171 | (16/10) Màn Cập nhật giá bán: nhảy tới lỗi ô Giá vốn thì ô bị cột dính "ĐVT · Lưu" che 29px (ô left 576 < cột dính right 605) ⇒ chữ lỗi khuất một phần |
+| N172 | (16/10, hỏi nghiệp vụ, thừa kế ERP) Đề xuất giá bị từ chối vẫn nằm trong ô "Giá mới"; ở công ty không bật duyệt, sửa 1 ô rồi Lưu là áp luôn các giá đã bị từ chối thành giá hiệu lực |
+| N173 | (16/10) FE gán cứng hệ số TMĐT 1,3, BE đọc theo cấu hình từng công ty ⇒ công ty cấu hình khác thì màn hình xem trước và giá lưu lệch nhau |
+| N174 | (SRS Duyệt giá bán 16/10) Không duyệt với lý do > 2000 ký tự: popup đóng, mất lý do đã gõ, toast tiếng Anh "The given data was invalid." |
+| N175 | (16/10, hỏi nghiệp vụ) Người duyệt sửa Bán lẻ ở màn Duyệt thì TMĐT không tính lại và 4 loại giá khác không lan theo — lệch luật TMĐT = Bán lẻ × hệ số mà BE ép ở đường lưu thẳng (Cập nhật giá bán) |
+| N176 | (16/10) Hệ số → giá ở dòng giá hiệu lực: màn Duyệt làm tròn tới trăm, màn Cập nhật giá bán làm tròn tới đồng |
+| N177 | (16/10) Ẩn giá vốn không đồng nhất: bảng + Excel màn Duyệt ẩn khi thiếu 1092, popup Lịch sử giá chỉ ẩn khi thiếu CẢ 1657 và 1092 |
+| N178 | (16/10) Không duyệt hàng loạt không báo số yêu cầu bị bỏ qua (đã có người xử lý), Duyệt hàng loạt có báo |
+| N179 | (16/10, giao diện) Chữ lỗi ô Hệ số ở màn Duyệt xuống dòng từng chữ trong cột rộng 72px |
+| N180 | (SRS YC hỏi giá 16/10, giao diện) Bung dòng nhóm có chữ "Chờ <tên> duyệt" làm cột Hành động giãn 100 → 186px ⇒ bảng 1222px trong khung 1139px, cuộn ngang, cột Hành động bị che một phần (đo DOM 1440px) |
+| N181 | (16/10) Màn Hàng đang kinh doanh: khi đang hiện dải "chưa xếp catalog" thì thanh hàng loạt "Đã chọn N" (Lập YCHG / Bỏ chọn / Xếp catalog) không bao giờ hiện — V2BaseDataTable chỉ render slot toolbar HOẶC left-actions |
+| N182 | (16/10) Form Sửa phiếu YCHG Không duyệt không hiện lý do PTKD từ chối |
+| N183 | (16/10) YCHG: ô lọc "XNK tiếp nhận" lọc theo XNK đã lưu trên nhóm, cột hiển thị XNK đang được phân công ⇒ đổi phân công sau khi gửi là lệch |
+| N184 | (16/10) YCHG: "PTKD duyệt" (cột + ô lọc) gồm cả người đã từ chối phiếu |
+| N185 | (16/10, nhẹ) YCHG: ô lọc Người tạo liệt kê cả người chỉ có phiếu nháp / Không duyệt mà người xem không thấy |
+| N186 | (SRS YC tính giá 16/10, hỏi nghiệp vụ) Lưu nháp YCTG "Không duyệt" đưa phiếu về "Đang tạo": mất lý do từ chối, người khác hết thấy, xoá được — trái T4-Q3 (Không duyệt chỉ sửa rồi gửi lại) |
+| N187 | (16/10) YCTG: thao tác từ chối của KTMH có 4 tên (nút "Từ chối" · trạng thái "Không duyệt" · lịch sử "KTMH không duyệt" · thông báo "Yêu cầu làm lại"); thông báo gửi ghi "Chờ duyệt" trong khi trạng thái "Chờ tính giá" |
+| N188 | (16/10) YCTG: lỗi BE "Nhóm không còn hàng hoá nào có đơn vị tính" không có chỗ hiện trên form ⇒ bấm Lưu như không có gì xảy ra |
+| N189 | (16/10) YCTG: số vượt giới hạn báo khác nhau — FE "Không hợp lệ", BE "Không được lớn hơn 999,999,999,999." |
+| N190 | (16/10) YCTG: cột Chi phí màn chi tiết tính lại theo tỷ lệ, bản in lấy số đã lưu ⇒ phiếu ERP cũ lệch (PYCTG-03162: màn 1,958,654 / in 1,959,031) |
+| N191 | (16/10, nhẹ) YCTG: thông báo không quyền hiện 2 toast trùng; ô lọc Thương hiệu/Hãng/Người tạo gồm cả dữ liệu từ nháp người khác (cùng kiểu N185) |
+| N192 | (16/10, VPS test) DB test KHÔNG có dòng giá Cty 2 (HP): lệnh chép giá chạy 15/10 14:01 theo luật cũ (nhóm 1·3·4, `0a598827e`), trước N128 (`06867a1e5` 23:14, HP vào nhóm 1·2·3·4) ⇒ cần chạy lại chép giá cho HP trên test (ghi DB — hỏi riêng). Cùng đợt: ERP test từng hiện 505.730 (= giá Cty 1 × 1,03 không tròn, kiểu code cũ) trong khi HRM 506.000; sau khi giá được lưu lại 2 bên khớp 528.700 ⇒ nghi ERP test lúc đó chưa nạp code mới — deploy xong phải reload php-fpm/opcache |
+| N193 | (16/10, hỏi nghiệp vụ) Giá TMĐT = Bán lẻ × 1,3 làm tròn tới ĐỒNG (luật ERP gốc `round($retail * $ecom)`, HRM chép y) ⇒ DB lưu số lẻ (690.170, 687.310). Có muốn đổi sang tròn nghìn không |
+| N194 | ⚠️ (SRS PTG 16/10, dữ liệu) DB dev có **6.673 dòng giá hiệu lực Bán lẻ = 1 đ, ngày 31/12/2026, status 2 (chờ áp)** (tạo 05/11/2025 → 10/10/2026; gồm cả dòng chép sang công ty nhận) ⇒ tới 31/12 cron áp, giá bán lẻ thành 1 đ. Kiểm trên prod + tìm nguồn sinh trước go-live |
+| N195 | (16/10) Màn PTG dùng câu của YCTG: toast thiếu quyền "Bạn không có quyền xem yêu cầu tính giá" (hiện 2 lần); nhóm đóng "…yêu cầu tính giá chỉ còn xem." |
+| N196 | (16/10) PTG đã lưu giá hiệu lực ⇒ TMĐT hiện 2 dòng "giá sẽ áp dụng"; dòng đầu nhập được nhưng BE bỏ qua (thấy ở PTG-02618; mọi PTG HRM có giá hiệu lực Bán lẻ) |
+| N197 | (16/10, giao diện) Popup Chọn YCTG ở 1440px: bảng 841px trong khung 726px, nút Chọn ngoài khung (left 1116 > right 1083) ⇒ phải cuộn ngang |
+| N198 | (16/10) PTG chi tiết + bản in tính lại chi phí theo tỉ lệ ⇒ lệch giá vốn đã áp (PTG-03178: hiện 13,108,667 / lưu 13,108,986) — cùng gốc N190 |
+| N199 | (16/10, hỏi nghiệp vụ) PTG: "Giá nhập kho" (sẽ thành giá vốn công ty phiếu) không che theo 1092, bản in cũng in |
+| N200 | (16/10, hỏi nghiệp vụ) PTG: Lưu và duyệt / gửi duyệt ghi đè "Lý do sửa giá" của ĐVT thành "Phiếu tính giá PTG-x" |
+| N201 | (16/10, lệch tài liệu) PTG: xoá phiếu người khác trả "Trạng thái đã bị thay đổi…" (t5-plan ghi: không có quyền); C20 ghi cột Hành động có "Xem", code không có |
+| N202 | (16/10, nhẹ) PTG: ô chọn ngày giá hiệu lực mở ra đè chữ lỗi "Bắt buộc phải chọn" |
+
+### B. User đã chốt "để sau"
+N101 Bảo hành hãng tìm toàn bộ hàng · N90 báo cáo CSKH/Tổng hợp bán hàng đọc bảo hành cột chung · N83 gỡ chip select2 · A4 popup hàng công ty khác · A5 (N34 N36) bỏ hệ số giá · N35 hệ số đóng băng tới Phase 8 · A6 2-bc báo cáo theo công ty · A11 bắt buộc Đặc tính hàng thường · N5 cron giá về 0 · N64-rest / N80 lịch sử & YC xuất hàng lộ tài chính · N113 index đời xe (theo dõi) · N115 thiết bị KTSC 403.
+
+### C. Dữ liệu / nghiệp vụ trước go-live
+> **16/10 — B6 + catalog + bỏ Nhóm hàng: xem `catalog-import/README.md`** (tạm dừng; chờ nghiệp vụ sửa file cây theo `can-sua-cay-phan-loai-1610.xlsx`, chờ user trả lời Q1–Q5 đề xuất bỏ Nhóm hàng).
+
+B6 🔴 nhập cây phân loại + quy đổi 45.890 hàng + xếp catalog (dev: Loại SP 0 dòng — gói bảo dưỡng hiện "Chưa phân loại" hết) · B5 🔴 nhập Đặc tính · 🔴 cờ "Hàng hoá làm dịch vụ / Dùng cho báo giá dịch vụ" trên Tính chất · B1 cờ phụ tùng ô tô · B2 Cty 5/6/8 mốc tắt · B4 dọn 30 phiếu hỏi chéo công ty (T-7) · dọn hàng tạm ERP chờ duyệt · gán quyền nghiệp vụ (tra theo TÊN) · A9 nghiệm thu Phase 1/2b/2d/48 màn · A10 dữ liệu thử "lấy về" · N126 kiểm lại 2 màn chờ duyệt TN mới trên dữ liệu thật (dev không có phiếu 2/6).
+
+### D. Deploy
+ERP prod `HRM_API_BASE_URL` + `config:cache`, `IS_USE_SSO=true`, thử staging SSO · runbook `gia-theo-cong-ty/runbook-trien-khai.md` + `deploy-dev-server.md` (quyền = `permission:sync`; backfill luật 1·2·3·4 ⇒ TỔNG ~1,04 triệu, ra ~810 nghìn là code cũ ⇒ DỪNG) · migration `2026_10_15_000001` (gói BD) + 23 migration gop_db chưa chạy giacty + `2026_10_12_000000_change_exchange_rate…` · prod đếm lại `quotations`/`contracts` cũ · công ty 9 chỉ có trên VPS/prod — đối chiếu lại dry-run.
+
+## 📌 Phiên 15/10/2026 tối — nhánh con `feat/cdhh-viec-ton-1510` ĐÃ MERGE nhánh chung + ĐÃ PUSH 15/10: api `46385a8b4`, client `495c4eecf`, ERP `f43a663f5d` (nhánh con đã xoá local)
+
+| # | Việc | Trạng thái |
+|---|---|---|
+| N137 🔴 | 3 file đọc giá theo công ty chứng từ (ContractService, YCXH picker + service) + FE `ManualLinesTable` gửi `product_export_request_id` | ✅ code + PHPUnit (MasterData 547/547) + Playwright |
+| N139 | Gỡ khoá trùng `attachment_types` (giữ bản đang hiệu lực) | ✅ |
+| N138 | Runbook → `permission:sync` ✅; gỡ 4 seeder quyền id cố định + 4 test, thay `ProductPermissionsDeclaredTest` + trait `EnsuresDeclaredPermissions` | ✅ |
+| N130 | Popup chọn hàng: lỗi search hiện khối lỗi + Thử lại | ✅ Playwright; spec +2 ca |
+| N94-rest | ERP gỡ @json danh mục trong `searchProductJs` (~15 truy vấn/trang), gỡ include thừa 7 view, `availableGroup` ở sync_products | ✅ PHPUnit + Playwright 9 trang 0 lỗi JS (self_inventory show chưa kiểm — bảng rỗng) |
+| N100 🔴 | Gói bảo dưỡng: Loại SP lấy TỪ HÀNG (không mapping), `group_id` nullable (migration `2026_10_15_000001…` ĐÃ CHẠY giacty, batch 439), Excel bỏ cột Nhóm hàng, ERP màn gói chạy tiếp (nhóm null ⇒ "Chưa xác định") | ✅ PHPUnit HRM 5/5 · ERP 197; Playwright HRM + ERP. Thiếu spec e2e màn gói |
+| N128 | Đo: 668 chứng từ HP dở ⇒ user chốt HP VÀO nhóm chia sẻ 1·2·3·4 (`config/price.php`) | ✅ test 13/13, compare 113.484 cặp 0 lệch; giacty khớp — hết việc "dọn giacty" phần HP |
+| N133 | Công ty 9 tự quản: `self_managed_company_ids` = [7, 9] | ✅ |
+| N95 | Cột tồn lắp ráp popup ERP | ❌ user: không đưa lại |
+| N104 | Quyền xe 2b lệch id | ✅ hết tác động — seeder đồng bộ theo TÊN, code gate theo tên |
+| N88 · N92 · N142 | e2e: `api.setup.ts` đọc `API_REPO`/`PHP_BIN` env · nocost spec đọc FX · Mẫu in tem chờ request product-natures | ✅ sửa spec (chưa chạy) |
+| N126 · N127 | ERP TN mới: `type` giữ nghĩa loại đặt hàng (menu gửi ?type=1/2 vốn đúng), tên màn sang tham số `screen`; Chờ duyệt = status 2 + approver_id = tôi, Chờ TP duyệt = status 6 + department_approver_id = tôi (bám canApprove/canDepartmentApprove + InlandOrderRequest2 — user xác nhận 15/10); nút In chi tiết | ✅ PHPUnit ERP 201; Playwright: Danh sách 4.990 = SQL, type 1/2 = 3.489/1.501; 2 màn chờ duyệt 0 = 0 (giacty không có phiếu 2/6) |
+| N122 · N123 | `fieldsBagName: 'veeFields'` (grep: 0 chỗ đọc túi cờ vee qua `fields`) · `scrollToInputError`: bỏ lỗi ẩn, bỏ dấu `*`, nhận `.v2-error`/`.invalid-feedback` hiện/`.is-invalid` (+ `.text-small-error`/`.field-error`/`.cell-invalid` — user giữ 15/10), ưu tiên popup trên cùng (user giữ), focus ô 1 lần cuộn | ✅ Playwright: cảnh báo 1–2 ⇒ 0; số ô lỗi trước = sau; spec mới `tests/shared/scroll-to-error-ui.spec.ts` 9 ca (chưa chạy). Rủi ro: 89 nơi gọi helper |
+| N140 · N130b | Popup chọn hàng: bấm ảnh mở FilePreviewModal z 5100 (bám gop_db f4b44b9d9, 1 ảnh `avatar`) · số đếm cây lỗi ⇒ dòng "Không tải được số lượng — Thử lại" · "Chọn tất cả" gom đủ trang rồi mới áp, lỗi giữ lựa chọn cũ + khối báo (trước đây lỗi làm SẬP cả trang thành 404, mất form đang nhập) | ✅ Playwright; spec +3 ca (chưa chạy) |
+| N103 · N143 | Hãng xe trùng tên bản ghi khoá ⇒ 422 (chỉ `vehicle_manufacts` có UNIQUE trong 2b) · `product-units?product_export_request_id` tra phiếu qua `scopedQuery()` như `show`, không thấy ⇒ 404 | ✅ test 3+3; MasterData 551 (1 đỏ chập chờn `VehicleCatalog2cTest::xe_cha_con_sai_thi_422` — `chain()` dùng `first()` không ORDER BY) · Assign 23 OK |
+| N141 | Role tạm 126621 (8 quyền 1720–1727) cho NV e2e 1180 khi chạy e2e, xong ĐÃ GỠ (roles 130 · rhp 20.967 · ehr 1.718 = mốc trước) | ✅ |
+| e2e 15/10 tối | worktree 3031/8031, --workers=1: product-picker-filters-ui **12/12** (sửa spec N140 chờ focus vào preview trước Escape; 1 lượt ca "nhớ trạng thái" đỏ không tái hiện) · scroll-to-error-ui **9/9** · product-catalog-ui **31/31** (lượt 1 có 4 ca timeout 30s do biên dịch/API chậm, lượt 2 xanh — gồm 5 ca N141 + N142) · quotation-unit-select + nocost **2/2** | ✅ |
+
+Ghi mới (ngoài luồng, chưa sửa): popup danh mục cũ (vd `BankModel.vue`) báo lỗi bằng `.text-small-error`, ô không viền đỏ · 2 helper song song `scrollToFirstError` / `scrollToInputError` nên gộp · e2e 404 ở `/finance/currencies`, `/customer-care/levels` · mẫu "async handler không try/catch ⇒ Nuxt thay cả trang bằng 404 khi API lỗi" cần rà toàn app · console "Module parse failed" (webpack đọc file nhị phân) · ERP `InlandOrderRequestNewController::print` không kiểm canView · màn duyệt TN mới gọi searchData 7 lần/lần mở (có sẵn) · Danh sách TN mới phạm vi tổng công ty hiện phiếu Đang tạo của người khác · `stockOfProducts` YCXH tra phiếu bằng `find()` không gate quyền xem · tên quyền "Xem yêu cầu xuất hàng theo …" trùng (id 1527–1530 và 100870–100873) · `VehicleCatalog2cTest::chain()` chập chờn · 214 gói bảo dưỡng dev không có file đính kèm mà form HRM bắt buộc ⇒ mở Sửa gói cũ 422 · `QuotationProductSearchModal` thêm hàng vào YCXH lấy `quoted_price` theo picker báo giá (có thể lệch công ty phiếu) · Snapshot HĐ 2 truy vấn/dòng · Excel Loại tài liệu (Assign) dùng nhãn "loại file đính kèm" · `ActsAsProductUser` còn chèn quyền theo id cố định 1652–1658 · dry-run `permission:sync` báo 8 quyền DB không khai + 41 quyền tạo theo id legacy (soát trước prod).
+
 ## 📌 Bản tổng hợp 14/10/2026 (thay cho số đếm cũ bên dưới)
 Đã xong & ĐÃ PUSH tới 14/10: Phase 1, 2-A…2-D, 2d cây catalog, Phase 6 hàng tạm, Phase 7 (T1–T7), giá theo công ty G0–G6, bảng C đợt C-a…C-f (N1 N13 N14 N26 N27 N32 N33 N39 N41–N46 N49–N51 N54 N58–N63 N65 N67 N68 N73–N78 N81 N89 + A8), A7 Phase 3 (đóng — đã hấp thụ), Phase 4 (4.1–4.5 + 4.3b), Phase 5.
 
@@ -25,7 +137,9 @@
 | ~~N129~~ | Popup chọn hàng HRM: lọc Thương hiệu/Hãng SX/Xuất xứ ra 0 hàng + bố cục ô tag + công tắc lệch + đổi nhãn "Gồm hàng ngoài catalog" | ✅ sửa 15/10 (client merge `995dfb554`, ĐÃ PUSH 15/10 (client `41085f380`, ERP `4462d1178b`)) |
 | N130 | Popup HRM nuốt lỗi 422 thành "0 hàng" — xem `soat-bang-c.md` (N131 nhãn ERP ✅ 15/10 `0441a83b9d`) | ngoài luồng |
 | N137 🔴 | 3 file gop_db đọc giá không theo công ty (Doanh số tiêu chuẩn HĐ, giá bán lẻ YCXH) — sau merge gop_db 15/10 | CHẶN GO-LIVE, user: làm sau |
-| N138 · N139 · N140 | Runbook đổi sang `permission:sync` · khoá trùng `attachment_types` · port "xem trước ảnh" vào popup chọn hàng | chờ |
+| N141 | Tài khoản e2e thiếu 4 quyền Phase 2c (1720–1727) ⇒ 5 ca product-catalog-ui đỏ — xem `soat-bang-c.md` | ngoài luồng (e2e) |
+| N142 | Spec "Mẫu in tem" bấm Tạo mới quá sớm, popup chưa mở — có sẵn | ngoài luồng (e2e) |
+| N138 · N139 · N140 | ~~Runbook đổi sang `permission:sync`~~ ✅ 15/10 (`deploy-dev-server.md` §7 + cảnh báo `runbook-trien-khai.md`; còn phần code: gỡ 4 seeder quyền riêng + test) · khoá trùng `attachment_types` · port "xem trước ảnh" vào popup chọn hàng | chờ |
 | ~~N132 N134 N135 N136~~ | Popup chọn hàng: panel 280px · cấu hình cột bấm sớm + STT · bảng theo mẫu MISA (1 dòng + tooltip đen, mặc định 20) — HRM + ERP | ✅ ĐÃ PUSH 15/10 (client `41085f380`, ERP `4462d1178b`) |
 | N122, N123, N126, N127, N128 + dọn giacty luật giá cũ | Lỗi mới 15/10 (N112 N114 N116 N120 N121 đã sửa; N113 N115 để sau) — xem `soat-bang-c.md` | chờ chốt |
 | — | Minor hoãn của 4.4 / 4.5 / 4.3b (ledger `popup-tim-kiem-hang-hoa/progress.md`) | gom 1 đợt dọn |

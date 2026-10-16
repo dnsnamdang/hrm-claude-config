@@ -169,6 +169,20 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
   **Merge gop_db ⇒ nhánh chung (15/10, đồng bộ 1 chiều):** hrm-api `8e7dd4322` (275 commit, 4 xung đột — seeder quyền chuyển 18 quyền feature sang `perm()` theo tên), hrm-client `0d7c28f11` (299 commit, 10 xung đột) — ĐÃ PUSH 15/10. 23 migration gop_db CHƯA chạy vào `hrm_erp_giacty` (user: chưa chạy). MasterData 556/557 (đỏ = N137). Mở: **N137 🔴** 3 file gop_db đọc giá không theo công ty (chặn go-live, user: làm sau) · N138 runbook đổi sang `permission:sync` · N139 khoá trùng `attachment_types` · N140 port "xem trước ảnh" vào popup chọn hàng. Chi tiết `quan-ly-hang-hoa/ngoai-luong/soat-bang-c.md`.
 
+  **Popup Xây dựng catalog + bảng chung + bộ lọc hàng hoá (15/10, Phần H):** V2BaseDataTable theo mẫu MISA (~235 màn) · menu Danh mục gom nhóm Hàng hoá + "Xe - Logistics" · popup Xây dựng catalog đồng bộ style/bộ lọc picker + Còn tồn + cột Tồn kho (tồn vật lý công ty) · nút ẩn/hiện cây catalog (2 popup HRM + ERP) · màn công ty/đang KD: catalog thành nhóm đầu nâng cao (SmartFilterPanel `field.group` + slot `quick-search-extra`). ĐÃ PUSH 15/10: api `35d101453`, client `cb907f37b`, ERP `af4780843f`. Ngoài luồng mới N141 (e2e thiếu quyền 2c), N142 (spec Mẫu in tem). Chi tiết `quan-ly-hang-hoa/popup-tim-kiem-hang-hoa/plan.md` Phần H.
+
+  ### Checkpoint — 2026-10-15 (wrap up 3)
+  Vừa hoàn thành: Phần H (bảng chung MISA, menu Danh mục, popup Xây dựng catalog, ẩn/hiện cây, bộ lọc màn hàng hoá) — ĐÃ PUSH hrm-api/hrm-client/ERP + hrm-claude-config `2004eb3`.
+  Đang làm dở: không. ERP 8090 tắt; HRM 8031/3031 chạy.
+  Bước tiếp theo: N137 🔴 trước prod; N141/N142 (e2e); N130; N100/N128 chờ user.
+  Blocked: N100 (mapping), N128 (chốt HP).
+
+  ### Checkpoint — 2026-10-16 (wrap up — tài liệu SRS + testcase)
+  Vừa hoàn thành: SRS + testcase màn Hàng hoá nhập thông tin (+ tạo/sửa/chi tiết/xoá/khoá/lập YCHG/xuất Excel) — `quan-ly-hang-hoa/srs-testcase/` (177 TC, 25 TC giá bán). Không đụng source.
+  Đang làm dở: không.
+  Bước tiếp theo: chờ user duyệt; SRS màn kế tiếp của luồng (Cập nhật giá bán → Duyệt giá bán → YCHG → YCTG → PTG). Phát hiện mới N166–N169 (`viec-con-lai.md`).
+  Blocked:
+
   ### Checkpoint — 2026-10-15 (wrap up 2 — sau merge gop_db)
   Vừa hoàn thành: merge origin/gop_db ⇒ feat/chuyen-doi-hang-hoa (api `8e7dd4322`, client `0d7c28f11`) + ĐÃ PUSH; không nằm trong gop_db.
   Đang làm dở: không. Worktree sạch; 23 migration gop_db chưa chạy trên giacty; ERP 8090 tắt, HRM 8031/3031 chạy.
