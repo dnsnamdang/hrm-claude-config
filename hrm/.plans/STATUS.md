@@ -198,13 +198,15 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Design: .plans/cong-tinh-luong-khong-vdm/design.md · Spec: docs/superpowers/specs/2026-09-22-cong-tinh-luong-khong-vdm-design.md
 
 - app-meeting-mobile (Thiết kế app Meeting trên di động — TPE_APP/Flutter) → @dnsnamdang → .plans/app-meeting-mobile/plan.md
+  🟡 **19/10/2026 (wrap up)** — Phase 7 đồng bộ web + W4 Kết luận nằm trong Biên bản (bỏ màn 40, Hub x/3) + W5 Thông tin chung gập/mở từng khối + W6 gộp khối như web (① Thông tin cuộc họp · ② Đối tác · ③ Thời gian). Bản đồ **50 artboard**, 0 chồng lấn. ⚠️ Pen KHÔNG tự lưu — user phải Cmd+S. Khảo sát app thật TPE_APP: `khao-sat-tpe-app.md` (93 màn, CHƯA có Meeting/MyTodo); Mobile MCP đã cài (cần restart Claude Code), máy ảo iPhone 18 Pro chạy flavor `erp`. Tiếp: dùng Mobile MCP đi từng màn → đề xuất sắp xếp lại màn; xuất v12 khi user duyệt.
   Trạng thái: 🟡 **Phase 6 đang làm (14/10/2026)** — 52 artboard. **Việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
   File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao gần nhất: v11 (16/09) ở `exports/`.
   14/10: khách chốt 9 câu (bảng trong design.md) — meeting chỉ chọn tới DỰ ÁN (bỏ Giải pháp / Hạng mục) · màn 42 địa chỉ HĐ chép sang cho sửa · liên hệ tạo từ app vào Thành phần KH · NGƯỜI 1 theo web · có đưa Phiếu tổng hợp kết quả #11130 · nút Xem chỉ PDF + ảnh · `customerMeetingHistory()` THAY `created_by` · task biên bản để sau.
   14/10: vẽ **Meeting theo đối tượng** (khảo sát `gop_db` 59537031f / 3ea829c51): ô Dự án TKT / Hợp đồng dưới Loại meeting ở 03 · 05 · 25 · 33 + màn mới **48 Chọn dự án TKT** · **49 Chọn hợp đồng** (bản đồ chèn hàng, phần dưới dịch +1150px).
   ✅ Đã duyệt đề xuất API chọn dự án DÙNG CHUNG web + app (tìm + phân trang ở BE, thay `getForMeeting?per_page=10000`) — chưa code, xem design.md.
   ⚠️ BE cần: `customerMeetingHistory()` lọc theo user trong thành phần · endpoint xem file inline (PDF/ảnh) · API chọn dự án mới · `host_name` + `end_date` cho customer-history · `company_code` cho API nhân viên.
-  Còn chờ chốt: màn 06 / dòng Hub "Dự án tiền khả thi" bỏ hay giữ dạng xem · có vẽ mũi tên luồng tới 48/49 · 4 hạng mục chưa vẽ (21 rỗng, 01 bật chip, tab Nhân sự KH màn 14, màn 10 chọn nhiều người).
+  19/10: Phase 7 ĐỒNG BỘ THEO WEB gop_db xong trong .pen (51 artboard): 4 khối màu Thông tin chung · Dự án TKT chỉ xem + 06b Phiếu · gộp "Nhân sự tham gia" · Hub x/4 · bỏ màn 47/35. Chờ user Cmd+S + duyệt → xuất bản v12.
+  Còn chờ chốt: 4 hạng mục chưa vẽ (21 rỗng, 01 bật chip, tab Nhân sự KH màn 14, màn 10 chọn nhiều người).
   Design: .plans/app-meeting-mobile/design.md · Spec: docs/superpowers/specs/2026-09-16-app-meeting-mobile-design.md · Chi tiết vòng sửa: .plans/app-meeting-mobile/chon-khach-hang-va-lien-he.md
 
 - bao-cao-cskh-tiem-nang → @dnsnamdang → .plans/bao-cao-cskh-tiem-nang/plan.md

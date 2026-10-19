@@ -57,3 +57,32 @@ nút "Excel" sai chữ chuẩn. Dự án TKT dùng tab gạch chân bootstrap + 
 | Editor Kết luận | thanh công cụ rút gọn | giữ full toolbar | Redmine #11194 (soạn thảo giàu định dạng như ERP); chỉ rút gọn editor Mục tiêu |
 | Thông tin bản ghi | người tạo · phòng, ngày giờ tạo, người cập nhật | ĐÃ ĐỦ (15/10): BE thêm `creator_label`, `created_at_full`, `updater_label` | — |
 | Mã phòng · Mã NV trong Nhân sự | có | ĐÃ ĐỦ (15/10): BE trả `department_code`, `employee_code` cho từng thành viên | — |
+
+## Vòng 2 — Form liền mạch (19/10/2026, CHỜ DUYỆT mockup)
+Mockup: `mockup-lien-mach-2026-10-19.html` (DOM + CSS thật của /assign/meeting/6356/edit, gop_db e58f09621; thanh nổi góc phải chuyển Hiện trạng / A / B) · ảnh `anh-mockup/lien-mach-v-*.png`
+Yêu cầu user: (1) card chính sau `<main>` p-3 → p-1 · (2) bỏ card từng khối, liền mạch, chia bằng tiêu đề khối · (3) vòng số mỗi khối một màu nền.
+
+| Phương án | Mô tả | Cột form cao (1440) |
+|---|---|---|
+| Hiện trạng | 5 card viền + bóng, cách 14px, card chính padding 24px | 1461px · rộng 834px |
+| **A (đề xuất)** | Tiêu đề = vòng số màu + chữ + đường kẻ mảnh `#e5e7eb` chạy hết hàng; không khung | **1303px (−158)** · rộng 874px |
+| B | Dải tiêu đề nền `rgba(màu khối,.07)` bo 6px; không khung | 1333px (−128) · rộng 874px |
+
+Tự chốt (thuần UI, ghi trong comment đầu file mockup): màu gắn theo LOẠI khối (data-sec) không theo số; giữ nghĩa vòng số
+(nhạt = chưa xong, đặc = `.is-done`); khối ⑤ `FileAttachmentTable` đưa về cùng khuôn tiêu đề (hiện lệch: tiêu đề x=292 so với 266
+của 4 khối kia) → khi code cần slot/prop tiêu đề cho component dùng chung này; cột phải giữ dạng card.
+Bảng màu: ① type `#0EA5E9` · ② target `#8B5CF6` · ③ content `#F59E0B` · ④ time `#16A34A` · ⑤ files `#EC4899`.
+
+### Vòng 2b (19/10/2026) — user chọn B (dải tiêu đề màu), thử viền màu nhẹ, phần còn lại giữ hiện trạng
+Mockup cập nhật cùng file (thanh nổi: Hiện trạng / B không viền / **B + viền màu nhẹ** mặc định). Bỏ phương án A.
+Màu theo ý nghĩa tiêu đề: ① Loại meeting indigo `#4F46E5` · ② Khách hàng & đối tượng sky `#0284C7` (đồng bộ thẻ KH + badge "Khách hàng") ·
+③ Nội dung amber `#D97706` · ④ Thời gian, địa điểm & chủ trì emerald `#059669` · ⑤ Tài liệu pink `#DB2777`.
+Dải tiêu đề = `rgba(màu,.07)` padding 6px 10px · viền khối = `1px rgba(màu,.28)` bo 8px · khối cách 12px · thân khối padding 10px 10px 8px.
+Đo (1440): cột form 1461 → B 1333 · B+viền 1351px; rộng 834 → 874px; không tràn ngang (1440 + 1366). CHỜ user chọn có/không viền.
+
+### Vòng 2c (19/10/2026) — tiêu đề lệch xuống + header cột phải cao hơn → 1 chuẩn header chung
+Tái hiện bằng số đo: chữ tiêu đề lệch xuống 3,7px, vòng số 5px so với tâm dải (hiện trạng cũng lệch 3,2px). Gốc: `h6` dính
+`margin-top: 10px` từ rule toàn cục (`mb-0` chỉ xoá margin dưới). Header 2 card cột phải cao 52,6px (padding 12px) vs dải khối 44px.
+Chuẩn chung áp cho 5 khối + 2 card cột phải: header **cao 36px**, padding 0 10px, flex căn giữa, `h6` margin 0 · 14px/700 · lh 20px,
+vòng số / icon 22px, dải `rgba(màu,.07)` không gạch dưới; cột phải màu trung tính slate `#64748B`, cùng khung viền khối.
+Đo lại: 7/7 header cao 36px, lệch tâm 0px (khối ⑤ 0,5px — sai số font). Cột form (1440): hiện trạng 1461 → B 1293 · **B+viền 1327px**.

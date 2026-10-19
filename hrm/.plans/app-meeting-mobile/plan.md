@@ -95,9 +95,9 @@ Phụ trách: @dnsnamdang · File thiết kế: `~/Documents/demo giao dien/penc
   - [x] Màn mới **48 · Chọn dự án TKT** (chọn nhiều, chip đã chọn, dải lọc theo KH, badge tiến trình, cuộn tải thêm, Thêm nhanh dự án + Xác nhận)
   - [x] Màn mới **49 · Chọn hợp đồng** (chọn 1, bấm thẻ là xong, không hiện tiền) — chèn hàng mới, dịch phần dưới bản đồ +1150px
   - [x] Caption 03 · 05 · 25 · 33, tiêu đề bản đồ 52 artboard, chip 48/49 ở trang Tổng quan
-  - [ ] Màn 06 / dòng Hub "Dự án tiền khả thi": chờ chốt (bỏ hay giữ dạng xem); điều kiện hiện = loại TKT HOẶC meeting đã có dự án
+  - [ ] Màn 06 / dòng Hub "Dự án tiền khả thi": ⏸ HOÃN (user chốt 19/10) — tối ưu web xong mới sửa 1 loạt thiết kế app
 - [ ] Đồng bộ theo web (14/10, `.plans/gop-db/meeting-tab-du-an-nhan-su`): Hub/màn Dự án TKT chỉ hiện khi meeting đã có dự án, chỉ XEM thông tin dự án (phiếu vẫn nhập); gộp màn Thành phần + Điểm danh thành "Nhân sự tham gia" (nhóm Phía Công ty / Phía Khách hàng, cột điểm danh chỉ từ Chốt lịch)
-- [ ] Mũi tên luồng tới 48 / 49 trên bản đồ (hiện chỉ có caption giải thích)
+- [x] Mũi tên luồng tới 48 / 49 (19/10): `→ Bấm ô Dự án TKT` ở khe trái màn 48; `↓ Bấm ô Hợp đồng` trên màn 49 — dời phần bản đồ từ 49 trở xuống +150px (khung 2825 × 25917)
 - [ ] Cập nhật caption / bản đồ / số artboard sau khi thêm màn
 - [ ] Xuất bản v12
 
@@ -124,3 +124,57 @@ Vừa hoàn thành: phía web (gop_db, local chưa commit) — endpoint `options
 Đang làm dở: Phase 6 thiết kế app (như checkpoint trước).
 Bước tiếp theo: chốt màn 06 — theo web nay = chỉ xem, hiện khi có dự án (đề xuất giữ dạng chỉ xem); vẽ lại Thành phần + Điểm danh thành 1 màn "Nhân sự tham gia".
 Blocked:
+
+### Checkpoint — 2026-10-19
+Vừa hoàn thành: vẽ mũi tên luồng tới 48 / 49 (đã kiểm không chồng lấn).
+User chốt 19/10: **phần thiết kế app phụ thuộc web (màn 06 · 34 · dòng Hub Dự án TKT, gộp Thành phần + Điểm danh thành "Nhân sự tham gia") HOÃN — tối ưu web xong mới sửa 1 loạt.**
+User chốt tiếp 19/10: "làm web cho xong đã" → **TẠM DỪNG TOÀN BỘ Phase 6** (kể cả màn 42, nút Xem PDF/ảnh, Phiếu #11130); web xong mới sửa app 1 loạt.
+Blocked: chờ web `gop_db` xong (meeting-tab-du-an-nhan-su, meeting-chon-du-an-tkt).
+
+## Phase 7 — Đồng bộ thiết kế app theo web gop_db (19/10/2026)
+Sao lưu trước khi sửa: `meeting-mobile.backup-20261019-truoc-dong-bo-web.pen`
+- [x] 03 Tạo meeting: 5 khối theo thứ tự chọn + màu khối, KH trước → Dự án TKT lọc theo KH, Gợi ý tên, liên hệ 1 ô
+- [x] 05 · 25 · 28 · 33: cùng khuôn 5 khối (sửa / lỗi validate / họp Online / chỉ xem)
+- [x] 48 Chọn dự án TKT: bỏ Thêm nhanh dự án, dải lọc KH cố định; xoá màn 47 + mũi tên/caption trỏ tới 47
+- [x] Hub 04a · 04b · 04c · 24 · 26 · 27 · 46: "Dự án TKT" chỉ khi có dự án; gộp "Nhân sự tham gia"
+- [x] 06 · 34 Dự án TKT: thẻ tóm tắt chỉ xem + nút gạt "Thông tin chung / Phiếu thu thập thông tin", không "Xem chi tiết"
+- [x] Nhân sự tham gia: gộp 07 + 08 (31 nội bộ, 32/35 chỉ xem, 30 chặn Hoàn thành)
+- [x] 12 · 39 Khảo sát: câu Có/Không = nút gạt
+- [x] Caption · bản đồ · trang Tổng quan · số artboard; kiểm chồng lấn / tràn
+
+### Checkpoint — 2026-10-19 (Phase 7 đồng bộ web — XONG trong file .pen, CHƯA xuất bản)
+Vừa hoàn thành (meeting-mobile.pen, 51 artboard, khung 2825 × 27307, 0 chồng lấn):
+- 03 · 05 · 25 · 28 · 33: 4 khối màu theo thứ tự chọn (① Loại indigo · ② KH & đối tượng sky · ③ Nội dung amber · ④ Thời gian, địa điểm & chủ trì
+  emerald), vòng số đặc = khối đủ; Phân loại / Hình thức = nút gạt; KH bắt buộc + chọn trước, Dự án TKT khoá "Chọn khách hàng trước";
+  Gợi ý tên; 33 thêm khối "Thông tin bản ghi" (slate). 25 sửa lỗi cũ: Tên có chữ mà báo trống.
+- 48: bỏ "Thêm nhanh dự án"; xoá màn 47 + mũi tên + chip Tổng quan (chốt W1).
+- 06 → "Dự án TKT — Thông tin chung" chỉ xem (chip dự án · nút gạt · thẻ tóm tắt dự án + KH), bỏ DEV NOTE GP/HM; MỚI 06b "Phiếu thu thập
+  thông tin" (nhập + Lưu phiếu), đặt vào chỗ màn 47; 34 cùng khuôn chỉ xem.
+- Hub 04a/04b/04c/24/26/27/46: "Dự án TKT" (DA.26.018 · DA.26.031 · phiếu 3/4 câu); gộp Thành phần + Điểm danh → "Nhân sự tham gia";
+  thanh hoàn thiện x/5 → x/4 (cả popup 16/22/23).
+- 07 · 08 · 31 · 32 → "Nhân sự tham gia" 2 nhóm Phía Công ty / Phía KH (Mã phòng · Mã NV, badge Chủ trì / Người liên hệ, chip Thêm nhanh,
+  điểm danh = nút gạt 3 màu từ Chốt lịch); xoá 35 (gộp vào 32); 30 chặn Hoàn thành chuyển khuôn mới.
+- 12: câu Có/Không = nút gạt. Caption, DEV NOTE 04a, tiêu đề bước, mũi tên, trang Tổng quan, số artboard cập nhật theo.
+⚠️ File .pen trên đĩa vẫn là bản 16/10 22:32 tới khi user bấm Cmd+S trong app Pen (Claude không gửi được phím tắt). Sao lưu trước sửa:
+  meeting-mobile.backup-20261019-truoc-dong-bo-web.pen.
+Bước tiếp theo: user duyệt trên Pen → xuất bản v12 (PDF bản đồ + PDF chi tiết + PNG) + file tóm tắt thay đổi gửi khách.
+Còn tồn (chưa làm): màn 42 địa chỉ HĐ điền sẵn · nút Xem chỉ PDF/ảnh (11·19·36·38) · Phiếu tổng hợp kết quả #11130.
+Blocked:
+
+### Checkpoint — 2026-10-19 (W4 gộp Kết luận vào Biên bản)
+Vừa hoàn thành: hub 04a/04b/04c/16/22/23/24/26/27/46 bỏ dòng Kết luận, dòng Biên bản ghi kèm kết luận, tiến độ x/3; màn 09 thêm khối Kết luận; màn 13 → "Biên bản — soạn kết luận" (nút Xong); màn 40 gộp vào 37 rồi xoá; caption/ghi chú dev/mũi tên/chip tổng quan cập nhật; bản đồ 50 artboard, 0 chồng lấn
+Đang làm dở: —
+Bước tiếp theo: user bấm Cmd+S trong Pen, duyệt thiết kế → xuất v12 khi được yêu cầu
+Blocked:
+
+### Checkpoint — 2026-10-19 (W5 Thông tin chung gập/mở)
+Vừa hoàn thành: 03 (① gập ✓, ② mở dạng dòng, ③④ gập "Chưa nhập"), 05 (4 khối gập + tóm tắt), 25 (②③ mở kèm lỗi, ④ gập "1 lỗi"), 28 (④ mở, Online); caption 4 màn; bản đồ 0 chồng lấn
+Đang làm dở: —
+Bước tiếp theo: user Cmd+S trong Pen, duyệt → xuất v12 khi được yêu cầu
+Blocked:
+
+### Checkpoint — 2026-10-19 (wrap up: W6 gộp khối + khảo sát TPE_APP)
+Vừa hoàn thành: W6 gộp khối 03/05/25/28/33 theo web Phase 4 (① Thông tin cuộc họp · ② Đối tác · ③ Thời gian) + sửa vòng số ③ ở 03; khảo sát mã nguồn TPE_APP → khao-sat-tpe-app.md; cài Mobile MCP (@mobilenext/mobile-mcp@1.0.8, scope local ERP-HRM); chạy TPE_APP flavor erp trên máy ảo iPhone 18 Pro (2.2.4), chụp được màn Chọn phân hệ
+Đang làm dở: khảo sát app thật bằng Mobile MCP — chờ user restart Claude Code để nạp tool
+Bước tiếp theo: (phiên mới) chạy lại API :8000 + Nuxt :3000 + `fvm flutter run --flavor erp -d D0C0E274-8590-4D39-9196-CD5D535338DD` (từ TPE_APP/app); đi phân hệ Chấm công & Giao việc trước (Tổng quan, drawer, thanh phím tắt, Task/Phiếu giao việc) — CHỈ xem, không lưu phiếu (server dev); rồi đề xuất sắp xếp lại màn
+Blocked: user phải Cmd+S trong Pen để lưu thiết kế hôm nay

@@ -80,6 +80,17 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 - meeting-form-redesign → @dnsnamdang → .plans/gop-db/meeting-form-redesign/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-15-meeting-form-redesign-design.md)
   Thiết kế lại màn Tạo/Sửa/Chi tiết meeting (5 tab) + 4 component dùng chung kiểu iOS. Bắt đầu 15/10/2026.
   Trạng thái: 🟢 Đã PUSH gop_db 15/10 (api 00c829746, client f4b44b9d9 — merge origin, giải 1 xung đột GeneralInfo): api f5f05eb01 + d62a22bd7 · client 18596a5dd + 868558c3c + 5cf8a8c71. Mockup chốt (design D1–D9). Deploy chạy migration 2026_10_14_000001. Wrap up 15/10: sau merge e2e 25 passed, PHPUnit 46/46. Tiếp: PR hrm-claude-config (.plans + SKILL), meeting-mobile.pen, gộp ~25 API màn Sửa meeting.
+  🟡 **Phase 4 (19/10/2026) — gộp khối: ĐÃ COMMIT hrm-client `e00090c9a` (gop_db, CHƯA PUSH)** (user cho phép "Làm", chỉ `GeneralInfo.vue` +59/−60): ① Thông tin cuộc họp (Loại + Tên + Mục tiêu, data-sec="info") · ② Đối tác · ③ Thời gian · ④ Tài liệu. Đo DOM OK (header 36px, màu, Nội bộ đánh lại số, ô Tên cách 16px). Spec `meeting-form-sections` cập nhật + 1 ca mới — **chưa chạy**. Tiếp: push khi user cho phép; chạy e2e khi được yêu cầu.
+  🟡 **Phase 3 (19/10/2026) — form liền mạch + chuẩn header chung: ĐÃ PUSH gop_db `53421e1cb`** (hrm-client) (user "làm cả 2 bước").
+  client: MeetingForm (card p-1) · GeneralInfo (màu theo khối, viền rgba(.28) bo 8px, dải rgba(.07), khối ⑤ slot #title) ·
+  FileAttachmentTable (slot #title tuỳ chọn) · V2BaseFormSection (chuẩn header toàn phần mềm: 36px, căn giữa, dải slate, `body .card` thắng bản copy).
+  Đo: 9 màn mọi header 36px lệch tâm 0 (trước 50–58px, lệch 3.5–4.5px); cột form meeting 1461 → 1327px = mockup. e2e mới
+  `meeting-form-sections.spec.ts` (5 ca) — ĐÃ VIẾT, CHƯA CHẠY. Mockup: `mockup-lien-mach-2026-10-19.html`.
+
+- meeting-form-perf (Giảm request khi mở màn Sửa / Chi tiết meeting) → @dnsnamdang → .plans/gop-db/meeting-form-perf/design.md
+  Trạng thái: ⏸ **HOÃN (user 19/10: "lưu lại làm sau, xử lý UI trước")** — đề xuất xong, chưa duyệt, chưa code. Đo: Sửa 29 request / 2,2 MB,
+  chi tiết về 14 s (tự thân 0,39 s); Chi tiết 39 request / 3,7 MB / 22 s. Nguyên nhân: chi tiết gọi ở mounted page nên xếp cuối hàng + tab ẩn
+  v-show nạp danh mục. ⚠️ Không chuyển tab sang v-if: Lưu đọc projects qua $refs.meetingProject → thiếu payload = BE xoá liên kết dự án.
 
 - meeting-tab-du-an-nhan-su → @dnsnamdang → .plans/gop-db/meeting-tab-du-an-nhan-su/plan.md
   Meeting web: tab Dự án TKT chỉ hiện khi đã chọn dự án, bỏ tạo dự án, chỉ xem chi tiết + phiếu; tab Điểm danh → "Nhân sự tham gia" (gộp Thành phần + Điểm danh). Bắt đầu 14/10/2026.

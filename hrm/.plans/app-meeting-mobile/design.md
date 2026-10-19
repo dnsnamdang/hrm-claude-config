@@ -104,3 +104,19 @@ Có nút Thêm nhanh dự án TKT (màn 47).
 | `chon-khach-hang-va-lien-he.md` | **Spec chi tiết** — 17 mục, ghi từng vòng sửa kèm căn cứ tra từ source web |
 | `api-luu-tung-phan.md` | Đề xuất nhóm endpoint lưu từng phần + danh mục Lý do huỷ |
 | `docs/superpowers/specs/2026-09-16-app-meeting-mobile-design.md` | Spec kỹ thuật gom đầu mối |
+
+## Đồng bộ theo web gop_db (19/10/2026) — user: "Cập nhật những thay đổi bản web sang thiết kế app"
+Nguồn web: meeting-tab-du-an-nhan-su (14/10) · meeting-chon-du-an-tkt (14–15/10) · meeting-form-redesign D1–D9 (15/10) + vòng 2c (19/10, client 53421e1cb).
+
+| # | Chốt 19/10 | Hệ quả trên app |
+|---|---|---|
+| W1 | Bỏ tạo dự án từ meeting theo web | Xoá màn 47 + nút "Thêm nhanh dự án" ở 48 |
+| W2 | Tab Dự án TKT: bỏ nút "Xem chi tiết" (app chưa có phân hệ Dự án) | 06/34 chỉ thẻ tóm tắt trường chính + phiếu thu thập |
+| W3 | Không sắp xếp thứ tự nhân sự trên app | Hiển thị đúng thứ tự đã lưu, thêm mới nối cuối nhóm; sắp xếp làm trên web |
+| W4 | Kết luận cuộc họp nằm TRONG Biên bản (user chốt 19/10) | Hub bỏ dòng Kết luận; màn 09 có khối "Kết luận cuộc họp *" cuối biên bản, bấm mở trình soạn 13 (Xong → về 09, Lưu biên bản ghi cả 2); màn 40 gộp vào 37; Mức độ hoàn thiện x/4 → x/3 (4 nếu có Khảo sát); artboard 51 → 50 |
+| W5 | Thông tin chung gập/mở từng khối (user chọn phương án A, 19/10) | Chỉ khối đang nhập mở, nhập đủ tự gập thành dòng tóm tắt + mở khối kế; màn sửa mở ra 4 khối gập. Trường chọn = dòng nhãn trái–giá trị phải, trường gõ giữ ô nhập. Lỗi validate: khối có lỗi tự mở, khối gập ghi "n lỗi". Thêm nhanh KH chỉ còn trong màn 41/41b; nút bản đồ thành icon trong dòng Địa điểm. Áp 03 · 05 · 25 · 28; 33 (xem) giữ nguyên. Tài liệu (chuẩn bị / biên bản) vẫn để dòng riêng trên Hub cho dễ xem |
+| W6 | Gộp khối như web Phase 4 (19/10) | ① Thông tin cuộc họp = Phân loại · Loại · Tên · Mục tiêu; ② Đối tác (đổi tên từ "Khách hàng & đối tượng"); ③ Thời gian, địa điểm & chủ trì. 03 mở sẵn ①; 05/28 tóm tắt ① gộp; 25 ① mở kèm lỗi Tên; 33 xem 3 khối |
+
+Tự chốt (thuần UI, bám web): thứ tự 5 khối + màu khối (indigo `#4F46E5` · sky `#0284C7` · amber `#D97706` · emerald `#059669` · pink `#DB2777`)
+ở màn nhập Thông tin chung; KH chọn trước → ô Dự án TKT/HĐ khoá "Chọn khách hàng trước"; Gợi ý tên; liên hệ 1 ô;
+Hub: "Dự án tiền khả thi" → "Dự án TKT" chỉ hiện khi có dự án; "Thành phần tham dự" + "Điểm danh" → 1 dòng "Nhân sự tham gia".
