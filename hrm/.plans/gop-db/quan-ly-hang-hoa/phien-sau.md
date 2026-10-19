@@ -1,3 +1,32 @@
+# Bàn giao phiên sau — Chuyển đổi hàng hoá (cập nhật 17/10/2026)
+
+> Đọc mục này trước. Checklist tổng: `viec-con-lai.md` (bảng A + "Chốt nghiệp vụ 16/10 (tối)" + "Chốt 17/10"). Plan đợt lỗi: `ngoai-luong/loi-srs-1610-plan.md` (Kết quả Lượt 1–3, N203/N179, N205, N207).
+
+## 0. Trạng thái code 17/10
+| Repo | Nhánh chung | Commit | Push |
+|---|---|---|---|
+| hrm-api | `feat/chuyen-doi-hang-hoa` | `dbd9ebbb2` | ✅ đã push (gồm merge `develop` của đồng đội 16/10 — CHỦ Ý, code HĐ HRM mới) |
+| hrm-client | `feat/chuyen-doi-hang-hoa` | `862ea0ef6` | ✅ đã push |
+| ERP | `feat/2d1-erp-khong-loi` | `af4e31d0dd` | ✅ đã push 17/10 (gồm N210) |
+Cây sạch, không nhánh con dở. Server dev đang chạy: API 8031 (PID 29073), Nuxt 3031 (PID 29207). DB giacty đã chạy thêm 2 migration `2026_10_16_000001/000002` (payment_conditions) + seeder 8 dòng.
+
+## 1. Việc tiếp theo
+0c. ✅ 18/10 **Test VPS dev cron giá OK** (áp + nhật ký + lịch sử + chuông) — kết quả + việc còn mở: `cron-gia-hieu-luc/design.md` §8–9. Còn test bước 5 (chốt chặn) + 6 (quyền) trên VPS.
+0b. 🆕 18/10: **Người nhận thông báo theo quyền tại công ty** (phát hiện khi test VPS: vai trò gán ở Cty 1, quyền tick ở Cty 3 ⇒ không nhận thông báo Cty 3). Sửa 10 chỗ / 8 file hrm-api (bỏ lọc employee_has_roles.company_id ở 9 hàm "quá chặt" — ProductPriceNotifier, PriceAskingNotifier, EmployeeInfoService::listEmployeeInfoHasPermission (34 nơi gọi) + listEmployeeInfoByPermissionAndDepartment, RequestSolutionController, NotifyRequestSolutionDeadlineCommand, HandoverService, QuotationService::bgdApproverInfoIds, PermissionHelper::allEmployeeInfoHasPermission; thêm lọc role_has_permissions.company_id cho listEmployeeInfoByPermission "lỏng quá"). User chốt: sửa trên nhánh chung hàng hoá. Nhánh `feat/cdhh-nguoi-nhan-thong-bao-theo-quyen` (`42d1291e2`) ĐÃ MERGE nhánh chung + PUSH 18/10 ⇒ hrm-api `518cb1b62`. Test `tests/Feature/PermissionHolderAcrossCompanyTest.php` (đỏ trên code cũ 3/3, xanh sau sửa).
+0a. 🆕 17/10 tối: **Chuyển cron áp giá hiệu lực ERP ⇒ HRM** — ĐÃ MERGE nhánh chung + PUSH 17/10 (api `bb2129b10` · client `963cd8887` · ERP `226a62c0b7`, gồm cả tick bỏ mã); các bước VPS: đầu `deploy-dev-server.md` (U0–U9); migration bảng nhật ký đã chạy giacty. Xem `cron-gia-hieu-luc/design.md` §6–7.
+0. 🆕 17/10 chiều: **Tick bỏ mã ở YCTG/PTG** (đảo T4-Q1) — ĐÃ MERGE nhánh chung + PUSH 17/10 (cùng commit 0a); nhánh con `feat/cdhh-tick-bo-ma-yctg` (api `08e988b2e` · client `500a46c4e`), CHƯA merge nhánh chung; migration `2026_10_17_000001` đã chạy giacty. Chi tiết + kết quả kiểm: `luong-tinh-gia/khao-sat-duyet-tung-ma-erp-1710.md` §9. Chờ user cho merge về nhánh chung.
+1. **18/10: Q1 = Chia 2 (đã chốt); Q2: file 17/10 đã rà (cây nhập được), đã xuất `hang-can-gan-loai-sp-C-D-1810.xlsx` — chờ user điền Loại SP cho nhóm c+d** · 19/10: user "xử lý 4 cấp trước, nhóm để sau" ⇒ cây 4 cấp ĐÃ IMPORT DB local giacty (catalog-import/README.md); gán Loại cho hàng TẠM GÁC ⇒ rồi hỏi tiếp Q2–Q5. (Cũ:) **Đang hỏi dở: Q1–Q5 bỏ Nhóm hàng hoá** (`catalog-import/de-xuat-bo-nhom-hang-hoa.md` §6). Câu đang hỏi Q1 — đề xuất "Chia 2": cùng go-live làm bước 1 (gán Loại SP cho hàng) + A (VAT dự phòng, ngày tồn lâu sang Loại SP) + D (~30 báo cáo ERP INNER JOIN `groups` — hàng mới HRM không nhóm sẽ biến mất); đợt sau làm B/C/E/F. Hỏi lần lượt Q1→Q5. **17/10 (chiều): user hoãn Q1 lần 2 — ưu tiên sửa lỗi user đang ghi trước, hỏi lại Q1 sau.**
+2. ~~Push ERP~~ ✅ đã push 17/10.
+3. Tồn còn mở (bảng A `viec-con-lai.md`): N209 (nhẹ, Sửa Giữ hàng loại 1–5 hiện giá đã lưu) · N105 · N151–N154 · N158 · N161 · cần ghi DB: N164 (provision lại role e2e), N206 (P7/N2 spec cần gắn role công ty khác), N192 (chép giá HP trên VPS test). Để ngoài feature: N204, N208.
+4. Đề nghị đã đưa, chưa trả lời: thêm ca PHPUnit cố định "Cty A tạo giá hiệu lực ⇒ Cty B không thấy" vào `ProductPriceScreenApiTest` (đã chạy ca tạm trong scratchpad: ĐẠT).
+5. Spec e2e đã sửa/thêm nhiều màn (ngoài git) — CHƯA chạy bộ nào; chạy khi user yêu cầu (`--workers=1`, worktree 3031/8031).
+6. Trước deploy: gán quyền "Xem phiếu yêu cầu đặt hàng trong nước theo tổng công ty" (N160) + 2 migration payment_conditions + seeder.
+
+## 2. Điều kiện CHẶN go-live (giữ nguyên): B6 cây phân loại · B5 Đặc tính (chờ nghiệp vụ sửa file `can-sua-cay-phan-loai-1610.xlsx`) · B1 · B2 · B4 · dọn hàng tạm ERP chờ duyệt · gán quyền nghiệp vụ. Runbook `gia-theo-cong-ty/runbook-trien-khai.md` + `deploy-dev-server.md`.
+
+---
+# (Bản cũ 13/10 bên dưới — tham khảo)
+
 # Bàn giao phiên sau — Chuyển đổi hàng hoá (ghi 13/10/2026)
 
 > Đọc file này + mục "ĐIỂM DỪNG 13/10" đầu `SO-CHOT-VA-TON.md` trước khi làm tiếp. Checklist tổng: `viec-con-lai.md`.

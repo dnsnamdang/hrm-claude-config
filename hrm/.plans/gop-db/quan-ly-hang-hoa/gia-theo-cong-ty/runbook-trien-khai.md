@@ -288,6 +288,9 @@ trang chủ ERP không còn 3 thẻ Yêu cầu hỏi giá / tính giá chờ duy
 
 ---
 
+> 🆕 17/10/2026: cron áp giá hiệu lực CHUYỂN SANG HRM (`product-price:apply-expected`, chốt chặn theo công ty) — ERP bỏ lịch `product:update_price`.
+> Các bước kiểm cron 4.3 dưới đây thay bằng `cron-gia-hieu-luc/design.md` §7.
+
 # Phần 4 — Dữ liệu cũ ERP (C-f: N65 giá hiệu lực quá hạn + cờ mồ côi, N26 AUTO_INCREMENT) — cùng cửa sổ bảo trì
 
 > ⛔ **THỨ TỰ BẮT BUỘC:** cron `product:update_price` bản mới áp `effect_date <= hôm nay`. Chưa dọn mà cron chạy thì nó sẽ áp
