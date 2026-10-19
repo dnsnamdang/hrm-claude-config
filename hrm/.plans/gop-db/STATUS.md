@@ -77,6 +77,10 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- danh-muc-kho → @junfoke → .plans/gop-db/danh-muc-kho/plan.md (design: .plans/gop-db/danh-muc-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-19-danh-muc-kho-design.md)
+  Port 7 màn ERP "Danh mục → Kho" sang phân hệ Danh mục chung, nhóm "Kho" (bỏ Nhóm kho, bỏ đồng bộ CRM, 1 quyền "Quản lý kho"). Bắt đầu 19/10/2026; code nằm ở nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, user chỉ định — chuyển từ `feat/warehouse-catalogs`, chưa commit).
+  Trạng thái: 🟢 XONG đủ 7 màn (chưa commit) — verify API 2 góc nhìn + bấm thật local; đã ẩn bản ghi khoá ở Kế hoạch kiểm kê + popup vị trí Phiếu nhập kho. Tiếp: user review → commit → deploy (4 migration + seeder quyền) → admin gán quyền "Quản lý kho" vào vai trò. Ẩn bản ghi khoá ở Kiểm kê vị trí / Phiếu nhập kho dời sang phase 4.
+
 - meeting-form-redesign → @dnsnamdang → .plans/gop-db/meeting-form-redesign/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-15-meeting-form-redesign-design.md)
   Thiết kế lại màn Tạo/Sửa/Chi tiết meeting (5 tab) + 4 component dùng chung kiểu iOS. Bắt đầu 15/10/2026.
   Trạng thái: 🟢 Đã PUSH gop_db 15/10 (api 00c829746, client f4b44b9d9 — merge origin, giải 1 xung đột GeneralInfo): api f5f05eb01 + d62a22bd7 · client 18596a5dd + 868558c3c + 5cf8a8c71. Mockup chốt (design D1–D9). Deploy chạy migration 2026_10_14_000001. Wrap up 15/10: sau merge e2e 25 passed, PHPUnit 46/46. Tiếp: PR hrm-claude-config (.plans + SKILL), meeting-mobile.pen, gộp ~25 API màn Sửa meeting.
@@ -101,11 +105,11 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Trạng thái: 🟢 Đã PUSH gop_db 15/10 (api d62a22bd7) — đủ Phase 1–4, Phase 3 đã gỡ getForMeeting, migration index đã chạy hrm_erp.
 
 - phieu-nhap-kho (#11693) → @junfoke → .plans/gop-db/phieu-nhap-kho/plan.md
-  Trạng thái: 🔵 **Khảo sát + kế hoạch xong (15/10/2026), CHƯA code** — chờ user chốt Q1–Q13 (spec mục 10).
-  Scope đề xuất đợt 1: port màn **Phiếu nhập kho** ERP `warehouse_imports` (PNK) — danh sách + Excel, tạo từ ĐNNK, phiếu đi xếp hàng,
-  nhập kho Lưu/Gửi (ghi tồn), chi tiết, Không duyệt, Hủy, In (mẫu ERP 46/30), lịch sử; nối nút ĐNNK → PNK nội bộ + menu `finance.js:153`. ~21 công.
-  Để ERP: barcode, xuất lại/nhập lại, 2 màn thừa thiếu. 0 bảng mới, 0 migration, 3 quyền `api` mới (chờ chốt).
-  ⚠️ GOTCHA: lần đầu HRM ghi **tồn vật lý 8 bảng** (`stocks`, `stock_positions`… `stock_position_detail_logs`) — cần `PhysicalStockWriter` dùng chung (chờ user OK) + đối chiếu song song ERP↔HRM.
+  Trạng thái: 🟡 **Đang code (15/10/2026)** — xong Phase 1–6 (danh sách, tạo, xếp hàng, nhập kho + GHI TỒN, in, Excel, lịch sử, barcode, nối nút); còn 5b Xuất lại/Nhập lại + QA. Nhánh `feat/finance-warehouse-import`, CHƯA commit.
+  Scope (Q1 = port hết): danh sách + Excel, tạo từ ĐNNK, xếp hàng, nhập kho Lưu/Gửi (ghi tồn), chi tiết, Không duyệt, Hủy, In (46/30),
+  lịch sử, **In barcode**, **Xuất lại / Nhập lại**; vận chuyển + bốc xếp; nối nút ĐNNK → PNK + menu `finance.js:153`. ~26,5 công.
+  Để ERP: 2 màn thừa thiếu (F14/F15). 0 bảng mới, 0 migration, 3 quyền `api` mới. File đính kèm: `CmcS3Helper::putFiles(..., 'warehouse_imports')`.
+  ⚠️ GOTCHA: lần đầu HRM ghi **tồn vật lý 8 bảng** — `PhysicalStockWriter` dùng chung (user OK), cần cả chiều xuất cho Xuất lại; đối chiếu song song ERP↔HRM.
   Spec: docs/superpowers/specs/gop-db/2026-10-15-phieu-nhap-kho-design.md | Tóm tắt: .plans/gop-db/phieu-nhap-kho/design.md
 
 - decision-appendix-print-template (#10894) → @junfoke → .plans/gop-db/decision-appendix-print-template/plan.md
