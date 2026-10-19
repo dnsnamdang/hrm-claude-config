@@ -66,3 +66,12 @@ Vừa hoàn thành: 3 màn chi tiết (`import|inland|outside/_id.vue` + `detail
 Đang làm dở: không.
 Bước tiếp theo: user mở trình duyệt kiểm 3 màn chi tiết + nút Tạo phiếu YCNH (cần restart nuxt nếu route mới chưa nhận); admin gán quyền 1709–1711 (tài khoản Super admin HRM hiện chưa có → tab Nhập khẩu trống).
 Blocked:
+
+## Fix Redmine #11738 — Chỉnh sửa giao diện (2026-10-17)
+
+- [x] BUG 1: cột Ngày tạo danh sách (3 tab) + Excel danh sách hiện thêm giờ phút `d/m/Y H:i` (BE `present()`), nới cột 110 → 140px
+- [x] BUG 2: màn chi tiết Mua ngoài — dấu (*) cho Số hợp đồng / Kho nhập / Dự kiến về kho (giống ERP)
+- [x] BUG 3: "Tên khách:" / "Ngày cần:" (+ "Ghi chú:") in đậm hơn — Mua ngoài + Nhập khẩu
+- [x] BUG 4: màn chi tiết Nhập khẩu — dấu (*) cho Số Invoice / Kho nhận / Dự kiến về kho
+- [x] Verify: php -l, compile template 2 màn + parse tabConfigs; created_at DB có giờ (PBHV-02689 17:38). CHƯA mở trình duyệt.
+- [x] Rà kỹ (17/10): nhãn (*) khớp ERP `product_arrived_notifies/show` + `product_arrived_notify2/show` (Trong nước ERP không có *); API 3 tab + sort asc/desc + Excel danh sách ra `d/m/Y H:i`, Excel tự giãn cột; độ rộng cột lấy từ mặc định (user chỉ lưu ẩn/hiện); `<b>` toàn cục bị ép 500 (`_reboot.scss`) → rule mới 700 đậm hơn thật, SCSS compile OK. Playwright bị khoá → CHƯA mở trình duyệt.

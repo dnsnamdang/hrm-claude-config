@@ -2549,3 +2549,19 @@ Nguyên nhân: một phần tên trong DB lưu Unicode TỔ HỢP (NFD, vd depar
 - [x] FE `ChooseErpCustomerModal.vue` thêm prop `scopeAll` (mặc định false — 8 nơi dùng khác không đổi);
       `BillAdjustDeptRequestForm.vue` truyền `scope-all`.
 - [x] Đo bằng tinker, user 1169 không có quyền xem tất cả: popup cũ 11,029 → `scope_all` 41,634 (khớp ERP).
+
+## Fix #11750 — Gửi duyệt lọt khi "Điều chỉnh đến" chưa chọn hợp đồng (2026-10-17) @khoipv
+Triệu chứng (Redmine #11750): tạo từ Tổng hợp tiền về NH, dòng "đến" có KH nhưng trống Hợp đồng/Đơn hàng → Gửi duyệt vẫn thành công. ERP bắt buộc.
+Nguyên nhân: port bỏ mất luật ERP `details.*.items.*.contract_new_id` (KH) / `buy_contract_new_id` (NCC, trừ NCC "đến" = KHÁCH KHÔNG RÕ 10929).
+- [x] BE `BillAdjustDeptRequestStoreRequest`: khi GỬI DUYỆT bắt buộc hợp đồng "đến" theo đúng ERP (nháp vẫn để trống được); đọc `status`/`request_type`/`currency_id` bằng `input()` thay `get()`
+- [x] BE `validateTotalsOfSavedModel()` (Gửi duyệt từ danh sách/chi tiết): kiểm cùng luật
+- [x] FE `AdjustDetailTable.vue`: dấu `*` ở cột hợp đồng bên "đến" (lỗi 422 đã có chỗ hiện inline sẵn)
+- [x] Verify bằng API: KH thiếu HĐ → 422 đúng khoá; có HĐ → qua; nháp thiếu HĐ → lưu được; NCC KHÁCH KHÔNG RÕ → qua
+  Kết quả: KH thiếu HĐ → 422 `details.0.items.0.contract_new_id` "Bắt buộc chọn hợp đồng/đơn hàng" (cả Store + Update); nháp thiếu HĐ → qua; NCC: dòng KHÁCH KHÔNG RÕ qua, dòng NCC thường thiếu → 422 `buy_contract_new_id`; Gửi duyệt từ danh sách phiếu #10318 (thiếu HĐ) bị chặn, #10304 qua.
+  Chưa làm (khác ERP, chờ user): ERP còn bắt buộc hợp đồng bên "Điều chỉnh từ" (`details.*.contractable_id`, trừ KHÁCH KHÔNG RÕ) — issue chỉ nêu bên "đến".
+
+### Checkpoint — 2026-10-17
+Vừa hoàn thành: Fix #11750 (BE FormRequest + validateTotalsOfSavedModel, FE dấu *)
+Đang làm dở:
+Bước tiếp theo: user mở trình duyệt test lại luồng tạo từ Tổng hợp tiền về NH; quyết có áp luật hợp đồng bên "từ" không
+Blocked:

@@ -23,8 +23,22 @@
 - [ ] User xuất thử trên trình duyệt xem logo
 - ⚠️ Lúc dọn dữ liệu test đã xoá nhầm log "Tạo mới" của bản ghi "Hệ số 1" (id 3) do user tạo → đã khôi phục nguyên văn từ binlog (catalog_histories id 739)
 
+## Fix — Redmine #11705 Lỗi UI/UX (15/10)
+- [x] Bug 1a: bỏ nút lọc ở hàng tiêu đề file Excel — truyền `autoFilter: false` (tuỳ chọn mới của listExportFile.js, 15/10)
+- [ ] Bug 1b: dời khối Người lập — chưa làm (user chưa yêu cầu)
+- [x] Bug 2: popup Tạo mới khớp ERP — title "… tỷ lệ hưởng công khoán", nhãn "Loại tỷ lệ hưởng"
+- [x] Bug 3: thêm ô lọc Công ty — giống ERP (lọc company_id AND vẫn bó công ty người đăng nhập)
+- [x] Bug 4: "Người sửa/Ngày sửa" → "Người cập nhật/Ngày cập nhật" (cột bảng, ô lọc, file xuất)
+- [x] Verify: compile FE + php -l sạch; smoke test lọc công ty (không lọc 1 / công ty mình 1 / công ty khác 0), tiêu đề file xuất đã đổi
+- [ ] User mở trình duyệt kiểm (chưa bấm thật)
+
 ### Checkpoint — 2026-10-13
 Vừa hoàn thành: BE + FE code xong, đã push develop (api 6f573d9fe, client 75edefacc), smoke test API pass, compile FE pass.
 Đang làm dở: không.
 Bước tiếp theo: user mở `/admin/benefit-rates` kiểm giao diện (lọc, popup chọn nhiều nhóm, lịch sử, xuất Excel).
 Blocked:
+
+
+## Dời menu sang Bán hàng (15/10)
+- [x] Gỡ mục khỏi `components/subsystem-menu/admin.js`, thêm vào `sale-hub.js` › Quy chế - Thiết lập › Thiết lập (route giữ `/admin/...`)
+- [ ] User mở trình duyệt kiểm sidebar Bán hàng

@@ -56,6 +56,9 @@ FE `bill-adjust-dept-requests` (form/chi tiết/footer) + `borrow-extend-request
 - [x] (Redmine #11696) Danh sách thêm cột Ngày cập nhật, Người cập nhật (BE resource `updated_at`/`updater_name`, sort `updatedAt`, xuất Excel)
 - [x] (Redmine #11696) Popup Từ chối: nút Hủy thêm icon
 - [x] (Redmine #11696) Sửa phiếu + bấm Gửi duyệt: trạng thái tách sang mốc "Thay đổi trạng thái" riêng, không nằm trong "Thay đổi thông tin" (khuôn `AdditionAccountingRequestWriteService::update`)
+- [x] (Redmine #11696 phản hồi 16/10) Popup "Chọn đơn hàng/hợp đồng": số HĐ thành link mở tab mới (theo `contractLink` — HĐ HRM mở màn HRM, HĐ ERP mở ERP), bấm link không chọn dòng
+- [x] (Redmine #11696 phản hồi 16/10) Form chi tiết: ô Đơn hàng/Hợp đồng có link cả HĐ ERP (`href`) — trước chỉ dựng `to` nên HĐ ERP ra chữ trơn
+- [x] (Redmine #11696 phản hồi 16/10) "Vẫn đổi trạng thái trong Thay đổi thông tin": ảnh tester là log 13/10 16:18 — ghi TRƯỚC bản sửa 15/10 (`c603ad3e2`), log cũ giữ nguyên; code hiện tại đã tách mốc
 
 ### Checkpoint — 2026-10-08
 Vừa hoàn thành: BE + FE màn Phiếu yêu cầu vận chuyển, bốc xếp (`/finance/delivery-requests`), smoke test API pass, compile FE pass.

@@ -2265,6 +2265,12 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- kiem-ke-theo-vi-tri — chuyển màn ERP "Kiểm kê theo vị trí" (phiếu kiểm kê — `position_inventories` type=1, `positionInventoryResult.*`) sang HRM → @khoipv → .plans/gop-db/kiem-ke-theo-vi-tri/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-19-kiem-ke-theo-vi-tri-design.md)
+  Chuyển Hoàn thành: 2026-10-19.
+
+- ke-hoach-kiem-ke-theo-vi-tri — chuyển màn ERP "Kế hoạch kiểm kê theo vị trí" (`position_inventories`, Kế toán › Kiểm kê) sang HRM → @khoipv → .plans/gop-db/ke-hoach-kiem-ke-theo-vi-tri/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-17-ke-hoach-kiem-ke-theo-vi-tri-design.md)
+  Chuyển Hoàn thành: 2026-10-19.
+
 - lookup-product-arrived-notifies — chuyển màn ERP "Tổng hợp phiếu báo hàng về" sang HRM (`/lookup/product-arrived-notifies`, Tra cứu - thông báo › Thông báo) → @khoipv → .plans/gop-db/lookup-product-arrived-notifies/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-14-lookup-product-arrived-notifies-design.md)
   Chuyển Hoàn thành: 2026-10-15.
 

@@ -32,3 +32,17 @@ Vừa hoàn thành: BE (service + controller + route) + FE (danh sách + popup N
 Đang làm dở: —
 Bước tiếp theo: user mở trình duyệt kiểm `/finance/report-limit-debts` (chưa bấm thật: bộ lọc, popup, Xuất Excel, Cấu hình cột).
 Blocked:
+
+## Phase 2 — Fix Redmine #11766 (2026-10-19)
+- [x] BUG 1: ô tìm nhanh bỏ tìm theo SĐT — BE bỏ `orWhere c.mobile`, FE sửa placeholder "Tìm theo mã, tên khách hàng"
+- [x] BUG 2: popup chi tiết theo NVKD mở ra KHÔNG sắp sẵn cột Công nợ (y ERP, icon ⇅) — FE `sortField` rỗng mặc định, BE chỉ sort khi có `sort_desc`
+- [x] BUG 3a: thứ tự mặc định y ERP = id dòng hạn mức tăng dần (đang created_at giảm dần → ngược)
+- [x] BUG 3b: Hạn mức tính lãi / được nợ trống → hiện 0 như ERP (BE trả 0, FE giữ số 0)
+- [x] BUG 3c: Số dư nợ hiện tại — GIỮ công thức sổ 131 (ERP lỗi luôn ra 0, user chốt 13/10) → báo lại tester
+- [x] Verify: php -l + smoke test API, compile FE
+
+### Checkpoint — 2026-10-19
+Vừa hoàn thành: fix #11766 — BE `ReportLimitDebtService` (bỏ tìm SĐT, sort mặc định id tăng dần, hạn mức NULL → 0, popup chỉ sort khi có `sort_desc`); FE `index.vue` (placeholder, hạn mức hiện 0) + `DebtByEmployeeModal.vue` (`sortField` rỗng mặc định). Smoke test service: thứ tự khớp ERP, tìm SĐT = 0 dòng, tìm mã = 1; compile FE pass.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm lại 3 bug; báo tester cột Số dư nợ lệch ERP là CHỦ ĐÍCH (ERP lỗi luôn ra 0).
+Blocked:

@@ -5,6 +5,15 @@
 
 ## Đang làm
 
+- **Dữ liệu chấm công — bộ lọc Nhân viên + Ca/Phiếu, xuất Excel** — @khoipv — Bắt đầu 19/10/2026 — Code BE + FE xong, chờ user test. Ô "Nhân viên" luôn hiện (kể cả không có quyền), danh sách NV theo cấp quyền. Thêm lọc Ca/Phiếu (Ca hành chính · Phiếu công tác · Phiếu giao việc · Tăng ca). Nút Xuất excel theo bộ lọc.
+  - Plan: [.plans/timekeeper-loc-nhan-vien/plan.md](timekeeper-loc-nhan-vien/plan.md)
+
+- **HĐ đã kết xuất — cảnh báo HĐ phát sinh phụ lục sau khi kết xuất** — @khoipv — Bắt đầu 15/10/2026 — Code xong, chờ user test dev. HĐ có PL (7 loại) đã duyệt sau khi kết xuất → icon cạnh Mã HĐ, bấm mở popup danh sách PL; lọc `has_annex`; Excel trường "Phụ lục phát sinh".
+  - Plan: [.plans/hd-ket-xuat-canh-bao-phu-luc/plan.md](hd-ket-xuat-canh-bao-phu-luc/plan.md) · Spec: [docs/superpowers/specs/2026-10-15-hd-ket-xuat-canh-bao-phu-luc-design.md](../docs/superpowers/specs/2026-10-15-hd-ket-xuat-canh-bao-phu-luc-design.md)
+
+- **HĐ đã kết xuất — ký hiệu "Ngày kết thúc" theo phụ lục gia hạn** — @khoipv — Bắt đầu 15/10/2026 — Đang sửa BE + FE. Ngày KT lấy `contracts.contract_end_time` (đã ghi đè khi duyệt PL gia hạn) → thêm icon + tooltip (mã PL, ngày duyệt, ngày gốc) để biết ngày đang tính theo phụ lục.
+  - Plan: [.plans/hd-ket-xuat-ngay-kt-theo-phu-luc/plan.md](hd-ket-xuat-ngay-kt-theo-phu-luc/plan.md)
+
 - **Phiếu đề xuất lập từ HĐ đã kết xuất — giữ HĐ nguồn khi chưa chọn hàng** — @khoipv — Bắt đầu 10/10/2026 — Đang sửa BE + FE. Phiếu gửi khi chưa chọn hàng bị suy khách lẻ → mất `contract_id` → cột "Phiếu đề xuất" ở màn HĐ đã kết xuất trống (HĐ-182/2026 trên dev).
   - Plan: [.plans/de-xuat-tu-hd-giu-hd-nguon/plan.md](de-xuat-tu-hd-giu-hd-nguon/plan.md) · Spec: [docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md](../docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md)
 

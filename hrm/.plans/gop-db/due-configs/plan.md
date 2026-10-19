@@ -19,3 +19,29 @@ Vừa hoàn thành: BE + FE + migration lịch sử, smoke test API pass, compil
 Đang làm dở: không.
 Bước tiếp theo: admin gán quyền "Cấu hình chặn luồng hàng quá hạn" → mở `/admin/due-configs` kiểm tích/bỏ tích, Lưu, lịch sử từng công ty, cảnh báo chưa lưu.
 Blocked:
+
+
+## Dời menu sang Bán hàng (15/10)
+- [x] Gỡ mục khỏi `components/subsystem-menu/admin.js`, thêm vào `sale-hub.js` › Quy chế - Thiết lập › Thiết lập (route giữ `/admin/...`)
+- [ ] User mở trình duyệt kiểm sidebar Bán hàng
+
+## Redmine #11709 (17/10)
+- [x] Bug 1: tiêu đề "Chi tiết chặn" thêm `(*)` đỏ như ERP (`edit.blade.php:35`) + bỏ khoảng trống trên khối (padding-top 8px của trang)
+- [x] Bug 2 (user chốt "làm như ERP"): màn YC nhập hàng HRM trước đây KHÔNG có chặn hàng quá hạn nào. Port ERP `checkDueConfigs` trên productImportRequest.create/store/update:
+  - BE `DueConfigBlockService::importRequestBlockedReason()` (hàm mới) + middleware mới `CheckProductImportRequestDueConfig` gắn vào POST/PUT + `GET /product-import-requests/create-check` (:create)
+  - Đúng ERP: mở màn tạo chỉ chặn nhóm hàng giữ + nhập thẳng; lưu loại 3 (mượn trả lại) được miễn nhóm hàng mượn; bỏ tích thì không chặn
+  - FE `ProductImportRequestForm` màn tạo gọi create-check, 423 -> toast cảnh báo + về danh sách; lưu bị 423 dùng toast có sẵn
+- [x] Smoke test HTTP: emp 27 (hàng giữ QH, cty 1) create-check/lưu -> 423 "Có hàng giữ quá hạn!"; emp 590 (hàng mượn QH) create-check 200, lưu loại 1 -> 423, loại 3 -> lọt qua tới validate 422 (không ghi gì)
+- [x] Khớp ERP nhóm hàng nhập thẳng khi công ty chưa khai `overdue_date_export_direct` (user duyệt sửa hàm chung 17/10): `hasOverdue(..., $self)` — tab 1 (chặn chính người lập, ERP middleware `CheckDueConfigs`) coi mọi dòng còn tồn là quá hạn; tab 2 (chặn TP duyệt, ERP `isManagerBlocked` có `> 0`) giữ không tính. Hiện cty 5/6/7 (null) chưa tích cấu hình + không có dòng tồn nên chưa ảnh hưởng thực tế
+- [ ] User mở trình duyệt kiểm (chưa bấm thật)
+
+### Checkpoint — 2026-10-17
+Vừa hoàn thành: #11709 bug 1 (tiêu đề (*) + bỏ khoảng trống trên khối) + bug 2 (chặn hàng quá hạn ở YC nhập hàng như ERP).
+Đang làm dở: không.
+Bước tiếp theo: user kiểm trên trình duyệt `/admin/due-configs` và `/finance/product-import-requests/create`.
+Blocked:
+
+## Redmine #11722 (17/10) — "chưa chặn luồng bên HRM"
+- [x] YC nhập hàng: đã chặn lập ở #11709 (ảnh tester chụp trước khi sửa). Local không tái hiện được (NV 787 không còn hàng quá hạn trên DB local)
+- [x] Rà toàn bộ: 11 thao tác đã port mà chưa chặn (xem báo cáo chat 17/10) + lỗi tên `Duyệt kết quả công tác trên HRM)` dư `)` ở Assign/Routes/api.php:1220
+- [ ] Chờ user chốt phạm vi sửa (tab 1: báo giá, hợp đồng, YC xuất hàng, gia hạn/điều chuyển hàng giữ · tab 2: duyệt YC nhập hàng, gia hạn/điều chuyển hàng giữ, đề nghị thanh toán, hợp đồng bán, xuất bán hàng mượn)

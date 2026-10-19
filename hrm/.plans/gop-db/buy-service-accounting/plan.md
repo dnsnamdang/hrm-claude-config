@@ -58,6 +58,7 @@
 - [x] Test HTTP kernel (rollback, kiểm lại count 49): nháp trống 200, duyệt trống 422 đủ tiền tố, nháp sai định dạng 422
 - [ ] Chưa sửa: câu lỗi chọn file của AttachmentSection dùng chung (`File "x" không thuộc định dạng cho phép`) thiếu tiền tố — chờ user
 - [ ] User kiểm trên trình duyệt
+- [x] Phản hồi #5 (16/10): chữ trong ô lệch 12/13px — ô link `.v2-linked-field` (dùng chung, 13px) cạnh ô `V2BaseInput`/`V2BaseSelect` cỡ sm (12px). Ép 12px trong `<style scoped>` của `BuyServiceAccountingForm.vue`, KHÔNG sửa class chung (30 file dùng)
 
 ## Phase 8 — Redmine #11714 (15/10) — Lịch sử: File đính kèm
 - [x] Khoá ảo `attachments_list` (chuỗi TÊN tệp, in lại cả danh sách cũ → mới, không mở được) → `attachment_rows` dạng BẢNG giữ NGUYÊN URL (khuôn màn Yêu cầu #11706): chỉ in nhóm "File đính kèm thêm mới / đã xóa", tên file bấm được xem trước (SystemInfoValue sẵn có, không sửa FE)
