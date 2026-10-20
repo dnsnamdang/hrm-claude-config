@@ -81,6 +81,10 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Port 7 màn ERP "Danh mục → Kho" sang phân hệ Danh mục chung, nhóm "Kho" (bỏ Nhóm kho, bỏ đồng bộ CRM, 1 quyền "Quản lý kho"). Bắt đầu 19/10/2026; code nằm ở nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, user chỉ định — chuyển từ `feat/warehouse-catalogs`, chưa commit).
   Trạng thái: 🟢 XONG đủ 7 màn (chưa commit) — verify API 2 góc nhìn + bấm thật local; đã ẩn bản ghi khoá ở Kế hoạch kiểm kê + popup vị trí Phiếu nhập kho. Tiếp: user review → commit → deploy (4 migration + seeder quyền) → admin gán quyền "Quản lý kho" vào vai trò. Ẩn bản ghi khoá ở Kiểm kê vị trí / Phiếu nhập kho dời sang phase 4.
 
+- ton-kho-dau-ky → @junfoke → .plans/gop-db/ton-kho-dau-ky/plan.md (design: .plans/gop-db/ton-kho-dau-ky/design.md)
+  Port màn ERP "Kho › Tồn kho đầu kỳ › Khai báo tồn kho đầu kỳ" sang phân hệ Kho (`/warehouse/beginning-stocks`), quyền riêng "Khai báo tồn kho đầu kỳ". Bắt đầu 20/10/2026, nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, chưa commit).
+  Trạng thái: 🟢 XONG, đã commit local 20/10 (chưa push) — PHPUnit `BeginningStockApiTest` 15/15; bấm thật local đủ luồng (thêm / sửa nhóm / xoá nhóm / import / xuất / popup chọn hàng; DB về đúng mốc). Tiếp: push → deploy chạy `PermissionsTableSeeder` → admin gán quyền vào vai trò.
+
 - meeting-form-redesign → @dnsnamdang → .plans/gop-db/meeting-form-redesign/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-15-meeting-form-redesign-design.md)
   Thiết kế lại màn Tạo/Sửa/Chi tiết meeting (5 tab) + 4 component dùng chung kiểu iOS. Bắt đầu 15/10/2026.
   Trạng thái: 🟢 Đã PUSH gop_db 15/10 (api 00c829746, client f4b44b9d9 — merge origin, giải 1 xung đột GeneralInfo): api f5f05eb01 + d62a22bd7 · client 18596a5dd + 868558c3c + 5cf8a8c71. Mockup chốt (design D1–D9). Deploy chạy migration 2026_10_14_000001. Wrap up 15/10: sau merge e2e 25 passed, PHPUnit 46/46. Tiếp: PR hrm-claude-config (.plans + SKILL), meeting-mobile.pen, gộp ~25 API màn Sửa meeting.
