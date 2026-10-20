@@ -1,5 +1,24 @@
 # Bàn giao phiên sau — Chuyển đổi hàng hoá (cập nhật 17/10/2026)
 
+## ⚡ Phiên 19/10/2026 (đọc trước mục 0)
+- **Merge gop_db ⇒ nhánh chung, ĐÃ PUSH** (hrm-api `1523ce0e5`, hrm-client `3abd5c395`, ERP `2ef6ace7b7`). Xung đột giữ phía feat:
+  nhãn "Hãng sản xuất cần duyệt"; ERP HomeController / ProductsController@editPrices / ManufacturesController (bỏ thẻ hàng tạm,
+  cờ giá theo công ty, không ghi lan `products.company_id`); quotation edit giữ cả `erpProductUrl` + N203.
+- **Migration giacty:** đã chạy 2 bản (`2026_10_15_000001_backfill_labor_contract_missions…` hrm-api, `2026_10_14_000000_add_indexes_for_wr_assign_task_wait_list` ERP).
+  **CÒN 24 bản hrm-api (`2026_10_06…` → `2026_10_19_000001_create_company_product_natures_table`) + 3 bản ERP** — user đồng ý chạy nhưng auto mode
+  chặn `migrate` cả loạt ⇒ user tự chạy bằng `! …` hoặc chạy lẻ `--path`. VPS cũng phải chạy khi deploy.
+- **Sửa CHƯA COMMIT (hrm-client + hrm-api, nhánh chung):**
+  1. Màn rộng 100% (bỏ ghim bề rộng): `ProductPriceTable.vue`, `ProductPriceApprovalTable.vue` (giãn cột không dính), `RegulationConfigScreen.vue`
+     (bỏ max-width 1320), `pages/meeting/settings/index.vue` (bỏ max-width 1180). E2E: ca "Màn rộng" ở 2 spec giá + `tests/shared/full-width-config-screens-ui.spec.ts`.
+  2. Duyệt giá bán: +4 cột danh mục (mặc định hiện) + cấu hình cột (`columnCustomizationMixin`, key `master_data_product_price_approvals`,
+     3 cột dính khoá) + xuất Excel khuôn chung (popup chọn trường + `GET product-price-approvals/export-rows`, gộp ô theo yêu cầu).
+     Route `/export` cũ đã bỏ; **`Exports/ProductPriceApprovalExport.php` còn giữ** vì `InternalPricePolicyController` dùng `headerUrlOf` — hỏi user có chuyển hàm để xoá file không.
+     PHPUnit `ProductPriceApprovalApiTest` 28/28 xanh. E2E: sửa A2 (17/19 cột) + 2 ca mới (Cấu hình cột, Xuất Excel) — CHƯA CHẠY bộ e2e.
+     ⚠️ Khuôn xuất chung tải blob ⇒ lỗi tên file Safari quay lại cho màn này (đã báo user).
+  3. Nhãn ô lọc cấp 2 "Nhóm công nghệ" ⇒ "Nhóm chức năng" ở `pages/finance/product-prices` + `product-price-approvals` (nhãn tự đặt trong mockup 09/10).
+     Mockup + 4 script SRS giữ nguyên theo user; chú thích BE `ProductPriceListService.php:223` còn chữ cũ.
+- Quyền "Xem giá vốn hàng hoá" (1092, nhóm Báo giá) theo công ty trên vai trò — giacty: công ty 3 chưa vai trò nào có.
+
 > Đọc mục này trước. Checklist tổng: `viec-con-lai.md` (bảng A + "Chốt nghiệp vụ 16/10 (tối)" + "Chốt 17/10"). Plan đợt lỗi: `ngoai-luong/loi-srs-1610-plan.md` (Kết quả Lượt 1–3, N203/N179, N205, N207).
 
 ## 0. Trạng thái code 17/10
