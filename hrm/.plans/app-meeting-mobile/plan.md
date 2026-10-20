@@ -178,3 +178,15 @@ Vừa hoàn thành: W6 gộp khối 03/05/25/28/33 theo web Phase 4 (① Thông 
 Đang làm dở: khảo sát app thật bằng Mobile MCP — chờ user restart Claude Code để nạp tool
 Bước tiếp theo: (phiên mới) chạy lại API :8000 + Nuxt :3000 + `fvm flutter run --flavor erp -d D0C0E274-8590-4D39-9196-CD5D535338DD` (từ TPE_APP/app); đi phân hệ Chấm công & Giao việc trước (Tổng quan, drawer, thanh phím tắt, Task/Phiếu giao việc) — CHỈ xem, không lưu phiếu (server dev); rồi đề xuất sắp xếp lại màn
 Blocked: user phải Cmd+S trong Pen để lưu thiết kế hôm nay
+
+### Checkpoint — 2026-10-19 (wrap up: khung phân hệ + dashboard)
+Vừa hoàn thành: 00b chọn phân hệ (5 màu nhận diện + hiệu ứng nền) · drawer 00c/00c'/00d/00e/00f/00g · template C/BottomNav (theme phanhe) · Tổng quan Meeting 00h + 00h' · style phân hệ áp vào ~50 màn meeting (cam → xanh ngọc, header gradient, badge chờ → hổ phách, màn 01 BottomNav) · Tổng quan Chấm công 00i (khảo sát logic ca/chấm công → khối Ca làm trong ngày)
+Đang làm dở: —
+Bước tiếp theo: user Cmd+S trong Pen + duyệt; chờ chốt: tab BottomNav từng phân hệ, ý nghĩa badge, thanh tiến độ/badge "Đã chốt lịch" đổi tím?, tên "Đào tạo" vs "Đào tạo - đánh giá", vẽ thêm trạng thái chưa chấm vào / đã chấm ra / không có ca (00i); dashboard Công việc / Cơm / Đào tạo chưa vẽ; xuất v12 khi được yêu cầu
+Blocked: BE thiếu allow_app/allow_conn theo từng mục listTimesheetTypes, job_id ở timekeeper/employee (cho 00i)
+
+### Checkpoint — 2026-10-20 (wrap up)
+Vừa hoàn thành: xuất PNG @3x v12 (60 màn) · 00b đổi nền theo màn đăng nhập app · 00j Thông báo (chuông) dùng chung
+Đang làm dở: —
+Bước tiếp theo: user Cmd+S trong Pen (file đĩa còn bản 19/10 15:56) + duyệt; chốt các câu tồn (tab BottomNav, ý nghĩa badge, màu "Đã chốt lịch", tên Đào tạo, prefix thông báo DXN/COM/KH/TBNB, trạng thái 00i chưa chấm vào / đã ra / không ca, vuốt trái + trạng thái trống 00j); cập nhật trang 00 Tổng quan luồng rồi xuất lại v12; dashboard Công việc / Cơm / Đào tạo
+Blocked: BE thiếu allow_app/allow_conn theo từng mục listTimesheetTypes, job_id ở timekeeper/employee (00i)

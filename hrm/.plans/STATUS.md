@@ -198,6 +198,8 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Design: .plans/cong-tinh-luong-khong-vdm/design.md · Spec: docs/superpowers/specs/2026-09-22-cong-tinh-luong-khong-vdm-design.md
 
 - app-meeting-mobile (Thiết kế app Meeting trên di động — TPE_APP/Flutter) → @dnsnamdang → .plans/app-meeting-mobile/plan.md
+  🟡 **20/10/2026 (wrap up)** — thêm 00j Thông báo (chuông) dùng chung + 00b dùng nền màn đăng nhập app; đã xuất PNG @3x v12 (exports/Meeting-Mobile_Tung-man_v12_2026-10-20, 60 ảnh). Câu chốt tồn: xem checkpoint cuối plan.md.
+  🟡 **19/10/2026 (wrap up 2)** — Mở rộng sang KHUNG PHÂN HỆ app: màn chọn phân hệ 00b, drawer 5 phân hệ (00c–00g), template C/BottomNav, Tổng quan Meeting 00h/00h', Tổng quan Chấm công 00i (khối Ca làm trong ngày theo logic allow_app/allow_conn), style xanh ngọc áp vào bộ màn meeting (backup meeting-mobile.backup-20261019-truoc-style-phan-he.pen). Chờ user duyệt + các câu chốt trong plan.md checkpoint cuối.
   🟡 **19/10/2026 (wrap up)** — Phase 7 đồng bộ web + W4 Kết luận nằm trong Biên bản (bỏ màn 40, Hub x/3) + W5 Thông tin chung gập/mở từng khối + W6 gộp khối như web (① Thông tin cuộc họp · ② Đối tác · ③ Thời gian). Bản đồ **50 artboard**, 0 chồng lấn. ⚠️ Pen KHÔNG tự lưu — user phải Cmd+S. Khảo sát app thật TPE_APP: `khao-sat-tpe-app.md` (93 màn, CHƯA có Meeting/MyTodo); Mobile MCP đã cài (cần restart Claude Code), máy ảo iPhone 18 Pro chạy flavor `erp`. Tiếp: dùng Mobile MCP đi từng màn → đề xuất sắp xếp lại màn; xuất v12 khi user duyệt.
   Trạng thái: 🟡 **Phase 6 đang làm (14/10/2026)** — 52 artboard. **Việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
   File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao gần nhất: v11 (16/09) ở `exports/`.

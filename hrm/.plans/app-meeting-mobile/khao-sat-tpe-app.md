@@ -39,3 +39,11 @@ Mục đích: user muốn sắp xếp lại một số màn của app hiện t�
 ## Chạy để khảo sát
 `cd TPE_APP/app && fvm flutter run --debug -t lib/main.dart --flavor erp --dart-define=FLAVOR=erp -d D0C0E274-8590-4D39-9196-CD5D535338DD`
 (Podfile dòng Mapbox đã comment sẵn.) Chỉ xem, KHÔNG lưu/gửi phiếu — flavor erp ghi vào server dev.
+
+## Ca làm việc & chấm công (khảo sát 19/10/2026 — cho dashboard Chấm công 00i)
+- 1 ngày nhiều ca/phiếu cùng lúc, nguồn `GET v1/timekeeper/listTimesheetTypes?only_app=true` (BE `TimesheetService::listTimesheetTypesOf` :969-1188): workshift (Ca hành chính, ≤1/ngày; `only_app` lọc `allow_app=1`) · jobassignment (Phiếu giao việc, status 2, phải có place_lat/lng) · business_trip (phiếu công tác cũ + BH-SC ERP) · new_business_trip (phiếu công tác kỹ thuật có `job_assign[]` / khác) · overtime (làm thêm, allow_app=1). Model app `TimesheetTypeData`: id, type, code, name, from_time, end_time, customer_name, places[] (chỉ tên, không lat/lng), job_assign[].
+- Hình thức: `working_shifts.allow_app` / `allow_conn` (+ máy qua `conn_info_working_shifts`); overtime cùng cặp cờ; phiếu luôn App GPS. Lượt chấm `timesheets.type` 0 = máy, 1 = app.
+- BE chặn ở `checkTimesheet` (TimekeeperController :85-126): chưa ssn · thiết bị chưa duyệt · không ca/phiếu · ca allow_app=0 và không phiếu. App KHÔNG ẩn nút theo allow_app — mở màn rồi mới báo lỗi + pop.
+- Chấm: 1 nút "Điểm danh", không phân vào/ra, không giới hạn lượt; BE ghép giờ vào = lượt sớm nhất, ra = muộn nhất (TimesheetSummaryService :530-570). Ảnh không bắt buộc (tối đa 3). Kiểm vị trí Haversine theo max_distance / _for_over_time / _for_business_trip; ca/phiếu không khai địa điểm → không giới hạn.
+- Dữ liệu trong ngày: lượt thô realtime `GET v1/timekeeper/employee` (verify_date, type, place, job_type, job_code); tổng hợp ngày `timesheet_summaries/self_detail` (1 dòng/ngày, không realtime). Dashboard `ca_lam_viec` = checkin_accept/checkout_accept → chỉ có sau job tính công (đầu ngày " - ").
+- BE cần bổ sung cho thẻ "Ca làm trong ngày": allow_app/allow_conn/tên máy theo từng mục listTimesheetTypes; lat/lng địa điểm; job_type + job_id thô ở timekeeper/employee; màn chấm công nhận tham số chọn sẵn ca/phiếu.
