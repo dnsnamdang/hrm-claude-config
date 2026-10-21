@@ -1,5 +1,7 @@
 # Bàn giao phiên sau — Chuyển đổi hàng hoá (cập nhật 17/10/2026)
 
+> ⚠️ **TỪ 21/10/2026: đã go-live bằng `gop_db` ⇒ làm thẳng trên checkout chính `ERP-HRM/{HRM/hrm-api,HRM/hrm-client,ERP/TanPhatDev}` nhánh `gop_db` (DB local `hrm_erp_20_10`). KHÔNG dùng worktree `wt-chuyen-doi-hang-hoa` / `wt-erp-2d1` + nhánh chung nữa** — các ghi chú worktree/nhánh chung/giacty bên dưới là lịch sử.
+
 ## ⚡ Phiên 19/10/2026 (đọc trước mục 0)
 - **Merge gop_db ⇒ nhánh chung, ĐÃ PUSH** (hrm-api `1523ce0e5`, hrm-client `3abd5c395`, ERP `2ef6ace7b7`). Xung đột giữ phía feat:
   nhãn "Hãng sản xuất cần duyệt"; ERP HomeController / ProductsController@editPrices / ManufacturesController (bỏ thẻ hàng tạm,
@@ -7,7 +9,7 @@
 - **Migration giacty:** đã chạy 2 bản (`2026_10_15_000001_backfill_labor_contract_missions…` hrm-api, `2026_10_14_000000_add_indexes_for_wr_assign_task_wait_list` ERP).
   **CÒN 24 bản hrm-api (`2026_10_06…` → `2026_10_19_000001_create_company_product_natures_table`) + 3 bản ERP** — user đồng ý chạy nhưng auto mode
   chặn `migrate` cả loạt ⇒ user tự chạy bằng `! …` hoặc chạy lẻ `--path`. VPS cũng phải chạy khi deploy.
-- **Sửa CHƯA COMMIT (hrm-client + hrm-api, nhánh chung):**
+- **ĐÃ PUSH 20/10** (api `1df5c3997` Duyệt giá + `fcdf728e8` N211 · client `5c6e1b9e8`; merge commit mới của đồng đội ⇒ api `9f48fa8fe` · client `043e36362`; 4 migration `2026_10_19_10000x_add_status_to_{houses,rows,spaces,positions}` CHƯA chạy giacty) — trước đây là sửa chưa commit:
   1. Màn rộng 100% (bỏ ghim bề rộng): `ProductPriceTable.vue`, `ProductPriceApprovalTable.vue` (giãn cột không dính), `RegulationConfigScreen.vue`
      (bỏ max-width 1320), `pages/meeting/settings/index.vue` (bỏ max-width 1180). E2E: ca "Màn rộng" ở 2 spec giá + `tests/shared/full-width-config-screens-ui.spec.ts`.
   2. Duyệt giá bán: +4 cột danh mục (mặc định hiện) + cấu hình cột (`columnCustomizationMixin`, key `master_data_product_price_approvals`,
@@ -17,7 +19,24 @@
      ⚠️ Khuôn xuất chung tải blob ⇒ lỗi tên file Safari quay lại cho màn này (đã báo user).
   3. Nhãn ô lọc cấp 2 "Nhóm công nghệ" ⇒ "Nhóm chức năng" ở `pages/finance/product-prices` + `product-price-approvals` (nhãn tự đặt trong mockup 09/10).
      Mockup + 4 script SRS giữ nguyên theo user; chú thích BE `ProductPriceListService.php:223` còn chữ cũ.
+- ✅ **20/10: kiểm Playwright MCP 3 phần trên (worktree 3031/8031)**: Duyệt giá 19 cột, 0 ô lệch tiêu đề, 3 cột dính đứng yên khi cuộn,
+  tiêu đề 1 dòng; popup cấu hình 19 cột (khoá 3; Esc KHÔNG đóng — bấm Huỷ); xuất Excel: BE thật trả đúng tiêu đề, 0 dòng ⇒ toast
+  "Không có dữ liệu"; chặn `export-rows` 3 dòng ⇒ file `duyet_gia_ban_TPE_20102026.xlsx`, gộp A3:A4/B3:B4/E3:E4, có khối ký.
+  6 màn rộng 100% ở 2560 (el = inner, max-width none, không cuộn ngang). Không còn chữ "Nhóm công nghệ" trên 2 màn giá.
+  giacty KHÔNG có yêu cầu duyệt nào ⇒ ô dữ liệu kiểm bằng dữ liệu chặn API.
+- ✅ **20/10 (user "làm"):** chuyển `headerUrlOf` ⇒ `InternalPricePolicyExport`, XOÁ `Exports/ProductPriceApprovalExport.php` (PHPUnit
+  InternalPricePolicy 19/19; tinker dựng file xuất OK). **N211** sửa xong (xem `viec-con-lai.md`). Spec e2e sửa 2 giả định cũ: ca "Màn rộng"
+  Duyệt giá đo ở 2880 (19 cột = 2402px > vùng cuộn 2246 ở 2560) · N1 Cập nhật giá "3 chức năng" (role noperm 0 quyền ⇒ 3 mục không gate).
+  e2e chạy cần Node 20 (`~/.nvm/versions/node/v20.20.1/bin`) — shell mặc định Node 12.
 - Quyền "Xem giá vốn hàng hoá" (1092, nhóm Báo giá) theo công ty trên vai trò — giacty: công ty 3 chưa vai trò nào có.
+- **Khảo sát YCHG — PTKD duyệt theo QUYỀN, không theo phân công** (chỉ đọc code, chưa đổi gì):
+  - ERP `gop_db` (`PriceAskingRequest::canApprove`): trạng thái Chờ PTKD + quyền "PTKD duyệt yêu cầu hỏi giá" (`canInCompany`, Super Admin qua)
+    + **phạm vi xem** (tổng công ty › công ty › phòng quản lý › bộ phận › phiếu của mình).
+  - HRM (`PriceAskingAccess::canPtkd`): trạng thái 2 + quyền tại công ty, **không giới hạn phạm vi xem** (Q19), không bypass Super admin.
+    ⇒ lệch phạm vi giữa ERP và HRM; user chưa chốt có bám lại ERP không.
+  - Phân công phụ trách hãng (`AssignHistory`) chỉ dùng cho XNK trong YCHG (tab XNK duyệt, `isAssignedBuyer`, thông báo khi PTKD duyệt);
+    ngoài ra dùng rộng ở khối Mua hàng/XNK ERP (đặt hàng, HĐ mua, hoá đơn, hàng về, tờ khai, bảo hành hãng, hàng tạm, thẻ trang chủ).
+  - Lỗi ERP ghi nhận: `approve()` lưu trạng thái "Chờ XNK duyệt" TRƯỚC khi kiểm phân công ⇒ chưa phân công vẫn đổi trạng thái dù báo lỗi.
 
 > Đọc mục này trước. Checklist tổng: `viec-con-lai.md` (bảng A + "Chốt nghiệp vụ 16/10 (tối)" + "Chốt 17/10"). Plan đợt lỗi: `ngoai-luong/loi-srs-1610-plan.md` (Kết quả Lượt 1–3, N203/N179, N205, N207).
 
