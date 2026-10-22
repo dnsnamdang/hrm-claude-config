@@ -75,3 +75,47 @@ Dữ liệu: đã dọn tay phiếu 119 + log 119/120 → về baseline (75 phi�
 
 ## Phase 5 — Fix sau bàn giao (19/10)
 - [x] Fix L7: bản In danh sách — khối "Ngày… / Người lập" ra GIỮA trang. Mẫu ERP 284 (cả 285 của màn Kiểm kê theo vị trí) dùng bảng ký `class="block no-border"` 4 ô → CSS §3b chia đều 4 cột. Dựng lại bảng ký theo khuôn màn trước (mẫu 387/471: 3 cột, không `block`, ô ký 243px sát mép phải) — trait `Finance/Services/Concerns/AlignsListSignatureRight` dùng cho PositionInventoryPrintService + PositionInventoryResultPrintService
+- [x] Fix #11770 (bộ lọc danh sách): (1) Công ty → khối chuẩn `V2BaseCompanyDepartmentFilter` (Công ty + Phòng ban, công tắc 🔒 xem cả công ty đã khoá) + BE lọc `department_id`; (2) Người tạo = toàn bộ nhân viên (`$store.state.employeeOptions`), không chỉ người đã tạo phiếu; (3) cột Ngày kiểm kê mặc định hiện icon sort trung tính (sort_field rỗng, BE vẫn mặc định created_at giảm dần)
+
+### Checkpoint — 2026-10-19 (#11770)
+Vừa hoàn thành: bộ lọc danh sách — khối chuẩn Công ty – Phòng ban (`V2BaseCompanyDepartmentFilter`, có công tắc 🔒 xem đơn vị đã khoá; `is_all_company` lấy cờ BE, `is_company` theo quyền "Xem kế hoạch kiểm kê theo vị trí theo công ty"), BE lọc `department_id` trong phạm vi; Người tạo = `$store.state.employeeOptions`; bỏ `creators`/`companies` + `employeeOptions()` thừa ở BE; sort mặc định rỗng → icon trung tính. e2e A1/A6 sửa kỳ vọng. Kiểm: parse vue + php -l; tinker lọc phòng ban 71 → 5 = DB 5.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm (chưa bấm thật trên UI).
+Blocked:
+- [x] Fix #11771 (cột danh sách): Ngày kiểm kê kèm giờ (`created_at` → `d/m/Y H:i`); thêm cột Ngày cập nhật (`updated_at_full`) + Người cập nhật (`updater_name`, join `updated_by`) ở danh sách + Xuất Excel. Bản In danh sách giữ nguyên mẫu ERP (đã có giờ ở Ngày kiểm kê)
+
+### Checkpoint — 2026-10-19 (#11771)
+Vừa hoàn thành: #11771 — tinker listRows ra đúng giờ + người cập nhật (TPE-KHKKVT-00138: 19/10/2026 11:33 / 11:57 / DNS Admin); parse vue + js + php -l OK.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm #11770 + #11771.
+Blocked:
+- [x] Fix #11772 (màn Tạo): (2) dấu * cho Ngày kiểm kê (4 cột Nhà/Dãy/Khoang/Vị trí đã có ở commit 88e64a7e5, dev chưa deploy); (3) "Chọn hết" riêng từng nhóm ở ScopePicker như ERP; (4) dấu × xoá nhanh ô tìm của 4 cột; (5) bảng Chi tiết hở giữa 2 tầng tiêu đề khi cuộn → `border-collapse: separate` (DetailTable — dùng chung màn Phiếu kiểm kê); (6) nút "Thêm dòng" lên ngang tiêu đề khối Hội đồng kiểm kê
+- [x] #11772 (1) "Cắt bớt khoảng trắng" — chỉ dính bản build dev: CSS toàn cục thêm đè `.py-2` = 0.75rem!important + `h6 {margin:10px 0}` → đầu khối 50px (local 37). Bỏ `py-2`, chốt `padding: 8px 10px` + `h6 {margin:0; line-height:1.5}` trong style scoped (PositionInventoryForm). Giả lập trên dev: 50 → 38px
+
+### Checkpoint — 2026-10-19 (#11772)
+Vừa hoàn thành: #11772 mục 2-6. Kiểm bằng e2e headless (kho HP - Hải Phòng): Chọn hết nhóm Tầng 1 tick đúng 1 dãy, × xoá ô tìm về rỗng, Lấy vị trí rồi cuộn trong khung bảng → 2 tầng tiêu đề liền, Thêm dòng nằm ở header. File probe đã xoá.
+Đang làm dở: mục 1 (khoảng trắng) — chưa rõ chỗ.
+Bước tiếp theo: user xác nhận mục 1; deploy dev để tester thấy dấu * 4 cột.
+Blocked:
+
+### Checkpoint — 2026-10-19 (#11772 mục 1)
+Vừa hoàn thành: #11772 đủ 6 mục. Mục 1 đo thật trên dev-hrm (headless, chép profile Playwright MCP) + giả lập rule mới → 38px.
+Đang làm dở: —
+Bước tiếp theo: deploy dev cho tester kiểm #11770–#11772; màn Phiếu kiểm kê theo vị trí (warehouse/position-inventory-results) có thể dính cùng lỗi đầu khối nếu dùng `py-2` + h6.
+Blocked:
+
+## Phase 6 — Fix #11773 (Xem chi tiết, 20/10)
+- [x] (1) In: cột Công ty 6% → mã liền `DTTDETEK` tràn đè cột Lô → Công ty 10% (Tên hàng 24 → 21%) + ô in `overflow-wrap: anywhere` (PositionInventoryPrintService::detailTable, Excel không đổi)
+- [x] (2) Tag trạng thái cạnh tiêu đề màn chi tiết (`buildStatusTitle`, như Phiếu nhập kho) — thay quyết định 17/10; trong form vẫn không hiện trạng thái
+- [x] (3) Bảng Chi tiết hở đầu tiêu đề khi cuộn — đo trên dev: bản dev CHƯA có fix #11772 (`border-collapse: separate`), chữ lọt qua dải viền 1px của bảng. Không sửa thêm, chờ deploy
+- [x] (4) Lịch sử: bỏ khoá `details_rows` (từng lô) ở kế hoạch → 4 khoá phạm vi `house_rows/row_rows/space_rows/position_rows` (Nhà / Dãy / Khoang / Vị trí, `__brief`), Kho giữ `warehouse_id`. Log cũ giữ nhãn cũ
+- [x] (5) Popup lịch sử: dải 3px trên bộ lọc dính lộ chữ (sticky `top:-5px` không bù padding 0.5rem của `.v2-modal-body`) → `.si-borderless .si-filter-sticky { top: -0.5rem }` — component DÙNG CHUNG `SystemInfoSection.vue`, user duyệt 20/10 → đã sửa (chỉ áp chế độ popup `si-borderless`)
+
+### Checkpoint — 2026-10-20 (#11773)
+Vừa hoàn thành: mục 1, 2, 4 (php -l + tinker: bản in 11 cột 100%, log đổi phạm vi rollback ra đúng Khoang/Vị trí, không đổi → 0 log); mục 3 xác nhận là #11772 chưa deploy.
+Đang làm dở: —
+Bước tiếp theo: deploy dev (kèm #11772) cho tester kiểm #11773; mục 5 đo trên dev bằng CSS tiêm: hở 3px → 0.
+Blocked:
+
+## Phase 7 — Vị trí nút "Lấy vị trí" (21/10)
+- [x] Chuyển nút "Lấy vị trí" từ cuối khối lên góc phải tiêu đề khối "Phạm vi kiểm kê" (slot `#actions` của V2BaseFormSection) — PositionInventoryForm.vue

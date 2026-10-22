@@ -44,4 +44,33 @@ Blocked:
 ## Redmine #11722 (17/10) — "chưa chặn luồng bên HRM"
 - [x] YC nhập hàng: đã chặn lập ở #11709 (ảnh tester chụp trước khi sửa). Local không tái hiện được (NV 787 không còn hàng quá hạn trên DB local)
 - [x] Rà toàn bộ: 11 thao tác đã port mà chưa chặn (xem báo cáo chat 17/10) + lỗi tên `Duyệt kết quả công tác trên HRM)` dư `)` ở Assign/Routes/api.php:1220
-- [ ] Chờ user chốt phạm vi sửa (tab 1: báo giá, hợp đồng, YC xuất hàng, gia hạn/điều chuyển hàng giữ · tab 2: duyệt YC nhập hàng, gia hạn/điều chuyển hàng giữ, đề nghị thanh toán, hợp đồng bán, xuất bán hàng mượn)
+- [x] Chờ user chốt phạm vi sửa → 20/10 user chốt: sửa CẢ tab 1 + tab 2 như ERP, code ngay trên nhánh hiện tại `feat/chuyen-doi-hang-hoa`
+
+## Redmine #11722 phản hồi (20/10) — gắn chặn cho mọi thao tác ERP có `checkDueConfigs(Manager)`
+Tester 20/10: tích "Hàng giữ quá hạn › Lập YC nhập hàng", tạo YC nhập hàng vẫn lọt + "check luôn các phần khác".
+Local: NV 265 (Lại Văn Hiệp, cty 4, 63 dòng giữ quá hạn) create-check/lưu → 423 đúng. Phần còn lại chưa gắn chặn.
+### BE
+- [x] Service: tab 1 xét nhóm theo thứ tự cố định ERP (giữ → mượn → nhập thẳng); nhóm hàng mượn tab 1 join `warehouse_export_requests` + `warehouses` như ERP `CheckDueConfigs`
+- [x] Service: `exportRequestBlockedReason()` — ngoại lệ ERP của YC xuất hàng (mọi hàng trong phiếu đều là hàng mình đang giữ quá hạn, hoặc xuất thẳng → cho qua)
+- [x] Service: `createBlockedReason()` cho màn TẠO (YC nhập hàng giữ ngoại lệ cũ; YC xuất hàng ERP không chặn mở màn)
+- [x] Endpoint chung `GET /v1/finance/due-configs/create-check?action=...` (không gate quyền)
+- [x] Gắn tab 1: báo giá (store/update/create-and-submit/create-from-bom), báo giá DV BH-SC (wr-quotations store/update), hợp đồng (store/update), HĐ DV BH-SC (store/update), YC xuất hàng (store/update + từ HĐ), hàng hoá (store/take/update/admin-data/destroy), duyệt hàng tạm (tempSave/approve/reject), gia hạn + điều chuyển hàng giữ (store/update)
+- [x] Gắn tab 2: duyệt YC nhập hàng (3 cấp), gia hạn/điều chuyển hàng giữ approve, hợp đồng bán approve, đề nghị thanh toán (store/update/approve như ERP), xuất bán hàng mượn manager-approve
+- [x] Sửa tên `Duyệt kết quả công tác trên HRM)` dư `)` ở Assign/Routes/api.php (assign_business update)
+- [x] Smoke test HTTP kernel: NV 265 bị 423 ở từng nhóm route; NV không quá hạn lọt qua
+### FE
+- [x] Helper/mixin gọi create-check khi mở màn tạo (+ màn sửa hàng hoá / hàng tạm như ERP) → 423 toast + quay về danh sách
+- [x] Gắn vào: báo giá, báo giá DV, hợp đồng, HĐ DV, hàng hoá (tạo/sửa), hàng tạm, gia hạn + điều chuyển hàng giữ
+- [x] Kiểm form lưu / nút duyệt có hiện message 423 của BE (đều đọc `response.data.message`)
+- [x] Compile FE
+- [ ] User mở trình duyệt kiểm (CHƯA bấm thật) + đẩy lên dev cho tester
+
+Ghi chú khác ERP / chưa port (không gắn được vì HRM chưa có màn): YC xuất hàng TP duyệt + switchBoardOfManager, YCNH switchBoardManager,
+phụ lục HĐ / HĐ nguyên tắc, HĐ mua, YC đặt hàng, lắp đặt bàn giao, giá VC quốc tế, product.copy/restore/deleted.
+Super Admin: HRM bỏ qua theo role 18 (`Super admin`, guard api); ERP bỏ qua role `Super Admin` (guard web, id 100002 trên DB gộp) — chưa đổi.
+
+### Checkpoint — 2026-10-20
+Vừa hoàn thành: #11722 phản hồi — gắn chặn hàng quá hạn cho toàn bộ route ERP có `checkDueConfigs(Manager)` đã port sang HRM (tab 1 + tab 2) + chặn mở màn tạo ở FE. Smoke HTTP: NV 265 → 423 ở báo giá (4 lối), HĐ, báo giá DV, HĐ DV, YC xuất hàng, create-check; xuất thẳng / xuất đúng hàng đang giữ → lọt; NV 222 (không quá hạn) → 200; TP 233 duyệt gia hạn hàng giữ → 423. Compile FE 10 file OK.
+Đang làm dở: không. Đã commit + push nhánh `feat/chuyen-doi-hang-hoa` (api afb74a09d, client bb913e1c8) — chưa vào develop/gop_db.
+Bước tiếp theo: user kiểm trình duyệt bằng tài khoản người còn hàng giữ quá hạn (vd Lại Văn Hiệp) → commit/đẩy dev → trả lời tester.
+Blocked:

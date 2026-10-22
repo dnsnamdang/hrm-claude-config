@@ -101,3 +101,27 @@ Vừa hoàn thành: hoàn thiện UI cụm lọc trên dòng tiêu đề — 4 �
 Đang làm dở: không
 Bước tiếp theo: user chạy nuxt dev mở /contract/reports/sale-product kiểm tra: 4 ô ngày cùng chiều cao với select cạnh, tooltip 3 nút, reset, popup ngày kết thúc
 Blocked:
+
+## Fix — Gõ ô lọc text bị delay (2026-10-21)
+- [x] Ô text (Tìm kiếm, Mã nội bộ, Tên thương mại, Hãng/Nước SX): thêm `debounce="400"`, bỏ `@input="buildRows"` (watcher đã gọi → đang chạy 2 lần/phím)
+- [x] Select2 (Mảng/Nhóm/Loại HH): bỏ `@change="buildRows"` trùng với watcher
+- [x] `getData`: `Object.freeze` rawItems + từng mặt hàng → Vue không observe sâu cây customers/flows (~700 MH)
+- [x] `renderRows`/`applyVisibility`: tính `_visible` trước rồi gán `this.rows` 1 lần (bỏ gán 2 lần)
+
+### Checkpoint — 2026-10-21
+Vừa hoàn thành: fix gõ ô lọc text bị delay. Nguyên nhân: mỗi phím gõ (1) cập nhật `formFilter` → re-render cả bảng cây (hàng nghìn b-td), (2) `buildRows` chạy 2 lần (`@input` + watcher), (3) rawItems ~700 MH bị Vue observe sâu. Sửa: `debounce="400"` cho 4 ô text, bỏ handler trùng `@input`/`@change`, freeze rawItems, gán `rows` 1 lần.
+Đang làm dở: không
+Bước tiếp theo: user build client, mở /contract/reports/sale-product → gõ Mã nội bộ / Tên thương mại / Hãng-Nước SX / Tìm kiếm, kiểm tra không còn giật; kiểm tra lại thu gọn/mở rộng, phân trang, reset, Excel
+Blocked:
+
+## Đổi — Ô lọc text chỉ tìm khi Enter / Áp dụng (2026-10-21)
+- [x] 4 ô text: bỏ `debounce`, dùng `lazy` (không cập nhật formFilter theo từng phím) + `@keydown.enter="applyTextFilter(field, $event)"`
+- [x] Bỏ watcher `search` / `internal_code` / `trade_name` / `producer_country` (hết tự lọc); Select2 vẫn tự lọc như cũ
+- [x] Method `applyTextFilter`: gán giá trị từ ô rồi gọi `getData` (giống nút Áp dụng)
+
+### Checkpoint — 2026-10-21 (Enter/Áp dụng)
+Vừa hoàn thành: ô text không tự tìm nữa, chỉ lọc khi Enter hoặc bấm Áp dụng.
+Đang làm dở: không
+Bước tiếp theo: user build client kiểm tra: gõ không lọc; Enter lọc; gõ rồi bấm Áp dụng lọc; Đặt lại xoá ô + tải lại
+Blocked:
+- [x] Select2 Khách hàng / Công ty thực hiện: thêm `@change="getData"` → chọn là tìm luôn (trước đây phải bấm Áp dụng). Dùng `@change` thay vì watcher để `reset()` không gọi API 2 lần.

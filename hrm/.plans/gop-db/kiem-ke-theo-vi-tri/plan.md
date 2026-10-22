@@ -49,3 +49,35 @@ Blocked:
 - [x] Fix K4 (user 19/10): khối Phạm vi kiểm kê thiếu dấu `*` — ERP (cả form Kế hoạch lẫn Phiếu) gắn `(*)` cho Nhà/Dãy/Khoang/Vị trí → `ScopePicker.vue` `V2BaseLabel :required="!disabled"` (áp cả màn Kế hoạch)
 - [x] Fix K5 (user 19/10): Ghi chú duyệt chuyển vào popup xác nhận — `components/ApproveNoteModal.vue` (khuôn `bill-adjust-dept-requests/components/RejectModal.vue`, V2BaseModal): Duyệt kết quả (ghi chú tuỳ chọn, popup = bước xác nhận §6c) / Không duyệt (bắt buộc lý do); màn Chi tiết bỏ hẳn khối Ghi chú duyệt (user 19/10: không hiện cả bản chỉ đọc; ghi chú nằm ở Lịch sử)
 - [x] Fix K6 (user 19/10): nút Hoàn thành (bước Xử lý) hỏi `$confirm()` trước lớp tải (button-convention §6c)
+- [x] Fix K7 (user 20/10, chọn "sửa gốc"): header khối trên hrm-crm khác local — chuẩn header chung 19/10 (`body .card .card-header.section-header`, commit `53421e1cb` @dnsnamdang) nằm trong style của `V2BaseFormSection.vue` nên chỉ ăn khi trang đã nạp component đó. Chuyển nguyên khối sang `assets/scss/default.scss` (nạp toàn cục qua app.scss; xác nhận bundle server dùng bản .scss, không phải default.css), bỏ bản trong V2BaseFormSection. Dọn rule `.section-header` tự khai ở 3 form họ Kho: PositionInventoryForm, PositionInventoryResultForm, PositionTransferForm. Phạm vi tự đổi theo: 49 file có `card-header section-header` (`inventory.py --has "card-header[^\"]*section-header"`); màn có selector riêng mạnh hơn (v2-attach-card, form giữ hàng) giữ kiểu cũ
+- [x] Fix K8 (user 20/10 "sửa giống màn bảo hành"): 3 màn họ Kho (Kế hoạch kiểm kê · Phiếu kiểm kê · Điều chuyển vị trí) bỏ `.card` + `.card-header` tự dựng → `V2BaseFormSection class="mb-2"` (khuôn `customer-care/warranty-repair-requests`); AttachmentSection + SystemInfoSection `mb-2`; khối Chi tiết điều chuyển (`card-body p-0` cũ) bọc `.section-flush { margin:-10px }`; 9 trang vỏ create/edit/_id bỏ `v2-styles min-vh-100 pt-2` + `container-fluid` → `<div>` như màn Bảo hành. Compile 12 file OK, nuxt dev 200 ×3; CHƯA mở trình duyệt
+
+## Fix 20/10 — dấu * trường bắt buộc (đối chiếu rule BE)
+- [x] Ngày kiểm kê thêm `*` (đồng bộ màn Kế hoạch #11772)
+- [x] Cột "ĐVT kiểm kê" thêm `*` khi nhập (BE `results.*.unit_id` required) — prop `unit-required` của DetailTable dùng chung (mặc định tắt, màn Kế hoạch không đổi)
+- Đã đủ từ trước: Kho vật lý, Nhà/Dãy/Khoang/Vị trí, Chi tiết, Thực kiểm (lúc nhập kết quả), Hội đồng kiểm kê + Nhân viên + Chức vụ. Kế hoạch kiểm kê = tuỳ chọn (BE nullable)
+
+## Fix 20/10 — popup Chọn kế hoạch lệch ERP (user: "sửa cho giống ERP")
+- [x] `PositionInventoryResultService::plansQuery()` bám ERP `searchByFilter` nhánh `wait-approve` (M:774-778): bỏ ngoại lệ Super admin (ERP Super admin vẫn phải là thủ kho) + đổi "kho ĐẦU TIÊN là kho mình" → "có kho BẤT KỲ trong kế hoạch là kho mình" (`whereHas warehouses`). `planData()` / `store()` giữ `canCreateResult()` (= ERP `canApprove()` dùng kho đầu + Super admin bypass)
+  - Verify: php -l OK; tinker dựng query với employee 13 → SQL đúng (`status=1 AND id IN (pivot kho thủ kho) AND type=0`), local không có kế hoạch Đang kiểm nên count=0. CHƯA thử trên hrm-crm
+
+## Redmine #11803 — Tạo mới (21/10)
+- [x] K1. Ẩn tooltip (hint) ô Kho vật lý
+- [x] K2. Nút "Lấy vị trí" lên header khối Phạm vi kiểm kê (màn Kế hoạch đã có sẵn trong working tree)
+- [x] K3. Nút "Thêm dòng" lên header khối Hội đồng kiểm kê
+- [x] K4. Ô Nhân viên / Chức vụ rộng bằng nhau (đo dev: chữ cùng 12px, chỉ lệch rộng 638 vs 479px) — áp cả màn Kế hoạch
+- [x] K5. Chi tiết: ẩn khối File đính kèm khi chưa có file (trừ lúc nhập kết quả) — ERP chỉ đính kèm ở bước nhập kết quả, không thêm vào form tạo
+  - FE `PositionInventoryResultForm.vue` (K1–K5, bỏ class `.pi-soft` hết chỗ dùng) + `position-inventories/components/PositionInventoryForm.vue` (K4). Verify: vue-template-compiler + babel OK. Chưa mở trình duyệt.
+
+## Redmine #11787 — In (22/10)
+- [x] I1. In danh sách: tiêu đề cột "Kế hoạch KK" → "Kế hoạch kiểm kê" (`PositionInventoryResultPrintService::listHtml`)
+- [x] I2. In chi tiết: vùng thông tin lệch (mẫu 286 khai ô px cứng 228/160/169 + căn giữa dọc) và khối ký lệch dòng (ô "Trưởng bộ phận kho" thừa `<div>&nbsp;</div>`) → `alignResultLayout()` dựng lại 2 bảng lúc in (không sửa `report_templates`): 3 ô `colgroup` 38/22/40% căn trên; bảng ký 3 cột căn trên
+- [x] I3. In chi tiết: bảng nhảy sang trang 2 — CSS in chung `tr { page-break-inside: avoid }` + ô gộp Nhà kho/Vị trí (rowspan cả nhóm) → Chrome không cắt, đẩy cả bảng. Dòng mở ô gộp gắn inline `break-inside: auto` (chỉ bản in, không đụng Excel)
+  - Verify: php -l OK; tinker dựng HTML phiếu id 139 + CSS `buildReportPrintCss('body')` → Chrome headless in PDF: trước 5 trang (trang 1 chỉ đầu phiếu), sau 4 trang (bảng bắt đầu trang 1); chụp ảnh vùng thông tin + ký thẳng hàng. Chưa mở popup thật trên trình duyệt
+
+## Redmine #11786 — Danh sách (22/10) — khuôn #11770/#11771 (Kế hoạch) + R1–R3 (Điều chuyển vị trí)
+- [x] L1. Đổi tên tiêu đề trang + tiêu đề bảng → "Kiểm kê theo vị trí" (menu đã đúng sẵn)
+- [x] L2+L3. Bộ lọc Công ty → khối chuẩn `V2BaseCompanyDepartmentFilter` (slot `#field-org`, xem được cả công ty đã khoá; `is_company` theo quyền "Xem phiếu kiểm kê vị trí - theo công ty") + BE lọc `department_id`
+- [x] L4. Người tạo / Người duyệt = toàn bộ nhân viên (`$store.state.employeeOptions`); BE `filterOptions()` bỏ `creators`/`approvers`/`companies`
+- [x] L5. Bảng: bỏ sort Trạng thái / Người tạo / Người duyệt / Ngày duyệt; thêm sort Kho (key `warehouse_names`, BE sắp theo MIN(tên kho) qua pivot); sort mặc định trống → icon trung tính (BE vẫn `created_at desc`); thêm cột Ngày cập nhật + Người cập nhật (join `updated_by`) ở bảng + Xuất Excel
+  - Verify: vue-template-compiler + babel OK; php -l OK; HTTP kernel: filter-options 200, list có updated_at_full/updater_name, lọc phòng ban 72 → 5 = DB 5, sort Kho asc/desc đúng thứ tự, sort status bị bỏ qua. Chưa mở trình duyệt

@@ -42,6 +42,10 @@
 - [x] FE: placeholder ô Cách tính lãi + 2 ô hạn mức về 12px
 - [x] FE: Xuất Excel treo sau "Đã tải đủ dòng" — `mergeRowGroups` gọi `sheet.mergeCells` 171 nghìn lần, ExcelJS kiểm chồng lấn với MỌI ô gộp trước đó (O(n²), đo ~37 phút); gộp không qua vòng kiểm (nhóm không bao giờ chồng nhau) → 1,8s
 
+## Phase 3 — Fix Redmine #11775 (feedback tester 19/10/2026)
+
+- [x] FE: placeholder "Nhập hạn mức công nợ xuất hàng" bị cắt ("…xuấ"), ô tính lãi cũng cắt ("…tính") — 2 cột chỉ rộng 170/180px; nới `minWidth` 2 cột hạn mức lên 230px cho hiện đủ placeholder
+
 ### Checkpoint — 2026-10-14
 Vừa hoàn thành: BE (quyền 1707/1708 trong seeder + đã chèn DB local, service, controller, 5 route có checkPermission, khoá lịch sử `customer_limit_debts`) + FE (danh sách cây 2 tầng, popup Sửa, menu). Smoke test HTTP kernel bằng role tạm (đã gỡ): không quyền → 403; chỉ Quản lý → chỉ dòng công ty mình, Lưu xoá dòng công ty khác (y ERP, có log "đã xóa"); Quản lý + Xem → 7-8 dòng, gửi kèm giá trị công ty khác bị bỏ qua, lưu không đổi gì thì không ghi; chỉ Xem → PUT 403, `is_can_edit` false; 422 khi hạn mức không phải số; KH không tồn tại 404; sort / lọc / phân trang / export-rows đúng (~0,4s/trang). Dữ liệu KH 1120 + 232397 và log test đã khôi phục theo id. Compile FE pass, grep checklist skill sạch.
 Đang làm dở: —

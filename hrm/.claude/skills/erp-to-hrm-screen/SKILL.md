@@ -421,7 +421,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       (vd Hợp đồng khi loại "Xuất giữ khác") thì **ẩn hẳn**, không để ô xám trống (#11370)
 
 ### D. Form (thêm mới / chỉnh sửa)
-- [ ] Lỗi validate hiện **ngay dưới ô nhập**, dạng `Tên trường – Nội dung lỗi`
+- [ ] Lỗi validate hiện **ngay dưới ô nhập**, **không** đặt tên trường đứng trước, câu lỗi theo
+      `hrm-client/locales/vi.json` — bỏ trống là `Bắt buộc phải nhập`, không phải `Kho – Vui lòng chọn kho.`
+      (bảng câu lỗi đầy đủ: `form-validate` §3 — chốt 22/10/2026, #11791)
 - [ ] Còn lỗi thì **không gọi API lưu**; nhiều lỗi thì con trỏ nhảy về ô lỗi đầu tiên
 - [ ] **Ô bắt buộc validate ở CẢ FE lẫn BE** (user chốt 06/10/2026): bấm Lưu / Gửi duyệt mà để trống →
       **mọi** ô bắt buộc báo đỏ **cùng lúc** (không phải chỉ 1 ô, các ô khác im — #11521, #11377), BE vẫn

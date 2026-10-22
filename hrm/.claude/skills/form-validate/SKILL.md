@@ -392,7 +392,39 @@ async submitForm(status = 1) {
 - Lỗi **tự biến mất** khi giá trị được sửa về hợp lệ (vee-validate tự làm; lỗi BE thì clear `formError` trước mỗi lần submit).
 - Sau khi có lỗi → **scroll + focus vào trường lỗi đầu tiên** (quét trên → dưới, trái → phải).
 - Còn lỗi FE thì **không gọi API lưu**.
-- Câu lỗi tiếng Việt, không dùng thuật ngữ kỹ thuật. Mẫu: `Tên dự án không được để trống`, `Email không đúng định dạng`.
+- **Câu lỗi (chốt 2026-10-22, Redmine #11791) — KHÔNG đặt tên trường đứng trước, câu lấy theo
+  `hrm-client/locales/vi.json`** (bộ message vee-validate dùng chung cả hệ thống). Tên trường đã nằm ngay
+  trên ô nên không lặp lại. Thay mẫu cũ `<Tên trường> – <Nội dung>` (17/08, #11192) — màn cũ còn tiền tố
+  thì sửa khi đụng tới. Lỗi tự viết tay (`formErrors[...] = '...'`) cũng dùng ĐÚNG NGUYÊN VĂN các câu này:
+
+  | Trường hợp | Câu lỗi (nguồn) |
+  |---|---|
+  | Ô bắt buộc để trống (input, select, ngày, file, **bảng chi tiết chưa có dòng**) | `Bắt buộc phải nhập` (`required`, `required_if`) |
+  | Quá độ dài chuỗi | `Vui lòng nhập tối đa {max} ký tự.` (`max`, định nghĩa lại ở `plugins/vee-validate.js`) |
+  | Chưa đủ độ dài | `Vui lòng nhập tối thiểu {min} ký tự.` (`min`, `plugins/vee-validate.js`) |
+  | Số vượt trần | `Giá trị nhập vào không được vượt quá {max}.` (`max_value`) |
+  | Không phải số nguyên / số | `Vui lòng nhập số nguyên.` (`numeric`) · `Vui lòng nhập số hợp lệ.` (`decimal`) |
+  | Email sai | `Định dạng email không hợp lệ` (`email`) |
+  | File sai loại / quá lớn | `Định dạng file không hợp lệ` (`mimes`) · `File quá lớn` (`size`) |
+  | Sai chung (ngày, regex, giá trị ngoài danh sách…) | `Không hợp lệ` (`_default`) |
+
+  Lỗi nghiệp vụ không có trong `vi.json` (vượt tồn, trùng vị trí, phải chọn ô khác trước…) thì viết câu
+  ngắn, tiếng Việt, không thuật ngữ kỹ thuật, **cũng không có tiền tố**: `Vượt quá SL tồn của lô.`,
+  `Không thể xuất và nhập cùng một vị trí!`, `Vui lòng chọn vị trí xuất trước.`
+
+  ```js
+  // SAI — tên trường đứng trước, câu tự chế cho lỗi bỏ trống
+  errors.warehouse_id = 'Kho – Vui lòng chọn kho.'
+  errors.products = 'Chi tiết – Vui lòng thêm hàng hóa.'
+  errors.note = 'Ghi chú – Tối đa 255 ký tự.'
+
+  // ĐÚNG — theo locales/vi.json
+  errors.warehouse_id = 'Bắt buộc phải nhập'
+  errors.products = 'Bắt buộc phải nhập'
+  errors.note = 'Vui lòng nhập tối đa 255 ký tự.'
+  ```
+
+  BE `FormRequest::messages()` của màn mới cũng viết đúng các câu trên để lỗi 422 hiện dưới ô y hệt lỗi FE.
 - ⚠️ **TUYỆT ĐỐI KHÔNG TỰ SỬA GIÁ TRỊ USER VỪA NHẬP.** Nhập vượt trần / dưới sàn / sai định dạng
   thì **báo đỏ ngay dưới ô**, giữ nguyên con số user gõ. Cấm mọi kiểu "chỉnh ngầm": kéo về max/min,
   làm tròn, cắt bớt ký tự, tự xoá dòng trống trong bảng chi tiết. User gõ `2` mà ô nhảy về `1` là
@@ -413,8 +445,8 @@ async submitForm(status = 1) {
   }
   ```
 
-  Câu lỗi theo mẫu `<Tên trường> – <Nội dung>`: `Yêu cầu hủy – Không được vượt 1 (số đang giữ)`.
-  Chốt 2026-08-17, nhắc lại ở Redmine #11192 (màn Yêu cầu hủy hàng giữ).
+  Câu lỗi không có tên trường đứng trước, số vượt trần dùng câu `max_value` của `locales/vi.json`:
+  `Giá trị nhập vào không được vượt quá 1.` (xem mục câu lỗi ở trên — chốt 2026-10-22, #11791).
 
 > Ghi chú: màn mới dùng cách này thì **không cần cờ `touched`** (cờ đó là để màn cũ không hiện lỗi trước lần submit đầu). Lỗi realtime hiện theo tương tác của user là đúng chuẩn.
 
