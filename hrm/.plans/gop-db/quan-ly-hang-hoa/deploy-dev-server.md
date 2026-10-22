@@ -1,17 +1,24 @@
 # Deploy nhánh Chuyển đổi hàng hoá — VPS dev / dev server (viết lại 17/10/2026)
 
+> 🚩 **PRODUCTION 20/10/2026: dùng runbook tổng `TRIEN-KHAI-PROD-2010.md`.** File này dành cho VPS dev/test.
+
 > 1 hướng dẫn duy nhất, theo commit nhánh chung mới nhất. Bản production đầy đủ: `gia-theo-cong-ty/runbook-trien-khai.md` + `cron-gia-hieu-luc/design.md` §7.
 > ERP và HRM dùng **chung 1 DB gộp** ⇒ migration / backfill chạy MỘT lần ở hrm-api; ERP chỉ cần code + `.env` + 1 lệnh dọn giá.
 > ⚠️ KHÔNG merge vào `gop_db`: server checkout thẳng nhánh feature.
 > Nhãn: **[HRM-API]** thư mục hrm-api · **[HRM-CLIENT]** · **[ERP]** · **[DB]** SQL trực tiếp · **[CRON]** crontab máy chủ.
 
-| Repo | Nhánh | Commit (đã push 17/10/2026) |
+| Repo | Nhánh | Commit (đã push — cập nhật 20/10/2026 cho go-live tối 20/10) |
 |---|---|---|
-| hrm-api | `feat/chuyen-doi-hang-hoa` | `518cb1b62` (18/10: + người nhận thông báo theo quyền — không migration) |
-| hrm-client | `feat/chuyen-doi-hang-hoa` | `963cd8887` |
-| ERP | `feat/2d1-erp-khong-loi` | `226a62c0b7` |
+| hrm-api | `feat/chuyen-doi-hang-hoa` | `0425cafb1` (20/10 16:40 — đợt 1 bảng A + Kiểm kê/Tồn đầu kỳ/danh mục kho của đồng đội) |
+| hrm-client | `feat/chuyen-doi-hang-hoa` | `6b27b9946` (20/10 16:40) |
+| ERP | `feat/2d1-erp-khong-loi` | `72cf3142db` (19/10 15:23) |
 
 Sau mỗi `git pull`: `git rev-parse --short HEAD` phải khớp bảng.
+
+**20/10 — go-live production tối 20/10:**
+- hrm-api có thêm migration của đồng đội (Kiểm kê, Tồn đầu kỳ, `company_product_natures`, `add_status_to_{houses,rows,spaces,positions}` …) — `migrate --force` chạy hết, xem trước `migrate:status | grep "| No"`.
+- ERP có 1 migration phía ERP từ `gop_db`: `2026_10_14_000000_add_indexes_for_wr_assign_task_wait_list` (chỉ thêm index, tự bỏ qua nếu đã có). DB gộp dùng chung bảng `migrations`: giacty đã ghi (batch 445). Prod: `php artisan migrate:status | grep wait_list` ở ERP — "No" thì `php artisan migrate --path=database/migrations/2026_10_14_000000_add_indexes_for_wr_assign_task_wait_list.php --force`.
+- **Dữ liệu cây phân loại + bỏ Nhóm hàng** chạy SAU migration + quyền: `catalog-import/golive-2010/README.md` (D0–D4).
 
 **Có gì mới so với bản 15/10:** luật chép giá lần 2 (Hải Phòng vào nhóm chia sẻ) · đợt lỗi SRS 16/10 · điều kiện thanh toán HĐ (merge `develop`) ·
 tick bỏ mã ở YC tính giá / Phiếu tính giá · **cron áp giá hiệu lực chạy ở HRM** (ERP bỏ lịch `product:update_price`, khoá màn Nhật ký giá ERP) +

@@ -1,8 +1,25 @@
 # Việc còn lại — feature Chuyển đổi hàng hoá
 
+## 📌 22/10/2026 — sau go-live: danh mục ETEK GREEN + chép giá + cột Hành động
+- [x] Danh mục 4 cấp hàng ETEK GREEN — chốt 8 câu, SQL chạy local (thử lui) + PROD 22/10 00:05 (827 · 299 · 1063 · 112) — `catalog-import/green-2110/README.md`
+- [x] Chép giá bảng chủ ⇒ nhận + điền "lấy về" rỗng + info_entered_at — api `8d8a01758` (push + pull prod), chạy prod 05:10 (311.361 dòng, checksum giống hệt) — `gia-theo-cong-ty/chia-se-green-2110.md`
+- [x] "Hàng xoá": user chốt KHÔNG xử lý (khôi phục khi cần rồi đi quy trình lấy về)
+- [x] DB local gom về `hrm_erp_21_10_prod`, DROP 5 DB cũ, 9 `.env` đổi trỏ
+- [x] FE cột Hành động 5 màn hàng hoá 90 ⇒ 140px (client, CHƯA commit) + spec products-read-ui (chưa chạy)
+- [ ] Nghiệm thu prod (DTTDETEK + 572 mã TPE) ⇒ DROP `zz_green2110_dm/_hang/_moc/_products_bak` trên prod
+- [ ] Gửi nghiệp vụ `tong-ket-danh-muc-green-2110.xlsx` (127 mã lệch cây, 43 dòng bỏ qua)
+- [ ] Commit fix cột Hành động (user báo) · N215
+
+### Checkpoint — 22/10/2026 sáng
+Vừa hoàn thành: các mục [x] trên.
+Đang làm dở: —
+Bước tiếp theo: nghiệm thu prod ⇒ DROP bảng zz_green2110_* · commit client khi user báo · N215.
+Blocked: e2e chưa provision trên `hrm_erp_21_10_prod`.
+
 ## 🧭 CÒN LẠI sau 15/10/2026 (bản gom — đọc mục này trước)
 
 ### A. Code — chưa có quyết định "để sau" (nên xử lý trước prod)
+- **N215** (22/10, ngoài luồng — gặp khi sửa cột Hành động 5 màn hàng hoá 90px ⇒ 140px) — 3 popup khác còn khai cột Hành động `width: '90px'`, CHƯA đo có cắt nút không: `pages/finance/prepick-transfer-requests/components/ContractSearchModal.vue`, `pages/finance/product-prepick-requests/components/ContractSearchModal.vue`, `components/finance/prepick/PrepickLotSearchModal.vue`. Khuôn chuẩn 140px (114 chỗ).
 **A1. Bảo mật / sai số liệu**
 | # | Việc |
 |---|---|
@@ -22,11 +39,11 @@
 |---|---|
 | ~~N150~~ ✅ 16/10 | (chưa commit) Cơ chế: store `apiGetMethod`… ném lại lỗi axios, interceptor không nuốt status nào ⇒ Vue errorHandler của Nuxt (`.nuxt/client.js:63`) ⇒ `layouts/error.vue` luôn "KHÔNG TÌM THẤY TRANG"; 400/404/422 không toast. Khảo sát: ~684 file có await API không bắt lỗi (sai số 15–25%). Sửa: plugin mới `plugins/api-error-guard.js` (client, khai `nuxt.config.js`) BỌC handler Nuxt — lỗi API ⇒ toast `apiErrorMessage` (trừ 401/403/428/500/504 interceptor đã báo, trừ `X-Silent-Errors`) + giữ trang; lỗi code vẫn ra trang lỗi. 2 helper `utils/business-catalog.js`/`vehicle-catalog.js` trả [] khi lỗi (11 chỗ master-data). Đo Playwright trước/sau (trước: 404 cả trang, 0 toast). Spec mới `e2e/tests/shared/api-error-guard-ui.spec.ts` 4/4. Hệ quả: màn nào dựa trang 404 khi mở bản ghi không tồn tại nay hiện toast trên khung trống. Ghi chú: helper bắt lỗi 4xx thì ô trống không toast (interceptor không báo 4xx) |
 | ~~N107~~ ✅ 16/10 | (chưa commit) `V2BaseSelectRemote` + `BomBuilderEditModal` (ô Model) transport trả `{ abort }`, bỏ kết quả request đã huỷ. Tái hiện trước khi sửa trên `/sale/customer-debt-by-employee` (500 ⇒ kẹt "Đang tìm..." + pageerror `'status' in undefined`; gõ nhanh ⇒ ô "abc" hiện kết quả "ab") và popup BOM (kẹt "Searching…"). Sau: "Không tải được dữ liệu", gõ tiếp tìm lại được, kết quả mới không bị đè. Spec mới `e2e/tests/shared/select-remote-error-ui.spec.ts` 2/2 (đỏ trên code cũ) |
-| N105 | `php artisan route:list` hrm-api lỗi sẵn |
+| N105 | `php artisan route:list` hrm-api lỗi sẵn · ✅ 20/10 đã sửa trong worktree (chưa commit) — xem `ngoai-luong/soat-bang-a-2010.md` |
 | N151 | 214 gói bảo dưỡng dev không có file đính kèm mà form HRM bắt buộc ⇒ mở Sửa gói cũ 422 (kiểm prod) |
 | N152 | Popup danh mục cũ (vd `BankModel.vue`) báo lỗi bằng `.text-small-error`, ô không viền đỏ · 2 helper song song `scrollToFirstError` / `scrollToInputError` nên gộp |
-| N153 | Snapshot HĐ 2 truy vấn giá/dòng (chưa gom lô) · màn duyệt TN mới ERP gọi searchData 7 lần/lần mở (có sẵn) |
-| N154 | Excel "Loại tài liệu" (Assign) dùng nhãn "loại file đính kèm" (khoá dùng chung) |
+| N153 | Snapshot HĐ 2 truy vấn giá/dòng (chưa gom lô) · màn duyệt TN mới ERP gọi searchData 7 lần/lần mở (có sẵn) · **A (snapshot HĐ) ✅ 20/10 gom lô (chưa commit); B (ERP searchData) còn mở** |
+| N154 | Excel "Loại tài liệu" (Assign) dùng nhãn "loại file đính kèm" (khoá dùng chung) · ✅ 20/10 đã sửa trong worktree (chưa commit) — xem `ngoai-luong/soat-bang-a-2010.md` |
 | — | 54 minor hoãn của 4.1–4.5/4.3b — ledger `popup-tim-kiem-hang-hoa/progress.md` (gom 1 đợt dọn) |
 
 **A3. Test / công cụ**
@@ -234,7 +251,7 @@ Ghi mới (ngoài luồng, chưa sửa): popup danh mục cũ (vd `BankModel.vue
 | N2 | Hãng SX ERP ghi đè `company_id` + xoá dòng hàng × công ty | ✅ 2-D1 (bỏ khối ghi) | `d1-plan` |
 | N3 | Thương hiệu ERP ghi đè `company_id` | ✅ 2-D1 (gỡ 2 lời gọi) | `2d/ton.md:10` |
 | N4 | Chặn `products/*` ERP chừa danh sách trắng | ✅ 2-D1 | `khao-sat-a` |
-| N5 | Cron giá về 0 khi hết tồn bỏ sót hàng HRM | ⏸ để sau các chức năng hàng hoá | chot |
+| N5 | Cron giá về 0 khi hết tồn bỏ sót hàng HRM · **21/10: + không ghi Lịch sử giá; cấu hình HRM lưu mã tính chất ≠ cron so `product_cate`** (xem mục 21/10 tối) | ⏸ user 21/10: chốt chuyển cron sang HRM (hướng b), tiêu chí chọn hàng **để xử lý sau** | chot |
 | N6 | `sync:crm` không đẩy hàng HRM | ❌ user bỏ | chot |
 | N7 | `->group->` null (popup 338 màn) | ✅ 2-D1 M1–M7 | `d1-kiem-p3` |
 | N8 | Popup ERP chọn được hàng công ty đã khoá | ✅ 2-D1 | `d1-kiem-p3` K2 |
@@ -335,12 +352,66 @@ Ghi mới (ngoài luồng, chưa sửa): popup danh mục cũ (vd `BankModel.vue
 | N207 | ✅ 17/10 nhánh `feat/cdhh-n207-gia-giu-hang` (api `cf4b83e67` · client `01ef566f7`, chưa merge nhánh chung, chưa push) — BE tự tra giá + nhãn khi lưu (HĐ: dòng HĐ; 99: giá lẻ công ty phiếu; không giá ⇒ 0); màn Sửa loại 99 hiện giá hiện hành. Xem "Kết quả N207" trong `ngoai-luong/loi-srs-1610-plan.md`. (17/10, phát sinh N205, hỏi nghiệp vụ) **Giữ hàng tin giá client khi lưu**: `ProductPrepickRequestService::normalizeLines` lấy `price`/`total_amount` từ payload mọi loại phiếu (YCXH/Mượn hàng thì BE tự tính lại). Sửa = lưu lại nháp cũ sẽ chốt theo bảng giá hiện hành; loại gắn HĐ cần chốt nguồn giá |
 | N208 | (17/10, hệ thống) Công ty phiếu MỚI lệch 2 nguồn: giá đọc `company_role ?: company_id` (công ty đang làm), `store()` Mượn hàng/Giữ hàng/YCXH ghi `company_id = employee_infos.company_id` (công ty gốc) — 3/1119 NV local lệch; Mượn hàng tính lại lúc lưu ⇒ giá màn ≠ giá lưu |
 | N210 | ✅ 17/10 ERP nhánh `feat/2d1-gia-cu-chon-lai` commit `f8c8f3e60a` (chưa merge nhánh chung, chưa push). **Lỗi:** BG HĐ nguyên tắc — chọn hàng (chưa lưu), đổi giá nơi khác, xoá dòng, mở popup (thấy giá mới), chọn lại ⇒ dòng vẫn giá CŨ. **Nguyên nhân:** `$scope.addProduct` tìm trong `$scope.products` (cache phản hồi `/admin/products/{id}/getData` theo trang) và dùng lại, không gọi lại máy chủ. **Sửa:** bỏ nhánh dùng cache, mỗi lần chọn đều gọi getData (giữ tham số cũ), cache thay bản ghi thay vì push trùng — 11 chỗ/10 file: sale/firm/quotations (2: phẳng + chọn SP con), firm/orders, firm/ztect_orders, project_quotations, service_quotations (cả `quotation_products`), liquidation_quotations, liquidation_contracts, sale_orders, quotations, partials/contracts/js/createEditJs. 3 chỗ grep khớp nhưng KHÔNG phải cache (manufacture_expect_prices, quotation_templates, classes/sale/Service — chặn chọn trùng) ⇒ giữ. **Kiểm:** Playwright (e2e_assign không có quyền Thêm báo giá ⇒ render view thật qua tinker rồi route.fulfill, API thật, chặn POST/PUT, giá giả bằng route.fulfill lần getData thứ 2): BG HĐNT trước sửa lần chọn 2 = 0 request, dòng 100,000 (cũ); sau sửa = 1 request, dòng 200,000 (mới), cache 1 bản. BG thúc đẩy bán: lần 2 = 1 request, giữ `query_stock/check_promo/warehouse_group_id`. ĐH bán hàng `addPromotion`: 1 request/lần. PHPUnit 207 OK (4 skip). **Tồn:** `sale_orders.addPromotion` là code chết sẵn (`form.addPromotion is not a function`, không nút nào gọi) — không sửa. |
+| N211 | ✅ 20/10 hrm-api nhánh chung `fcdf728e8` (đã push). **Lỗi** (đến từ merge gop_db 19/10): `PriceReaderWhitelistTest` ĐỎ — `ProductExportRequestService::getWrServiceContractDataForExport` (commit gop_db `9ab7f5184`, YCXH loại 17 Xuất bán SC-BĐ) đọc `product_unit_prices.sale_max_percent` (loại 1) bằng `first()` KHÔNG kẹp công ty ⇒ sau M3 lấy ĐMGG của công ty bất kỳ. **Sửa:** đọc qua `ProductPriceReader::pricesByUnit` theo `CompanyHelper::pricingCompanyId($contract)` (công ty HĐ SC-BH, lùi công ty người dùng — khớp ERP `DocumentCompany::ofOrUser`); thiếu dòng giá của công ty ⇒ vẫn ném như ERP firstOrFail. **Kiểm:** PHPUnit `PriceReadPointsTest::a12` (HĐ B 5% · HĐ C 10% · chủ A không bộ giá ⇒ ném) — ĐỎ trên code cũ (5 ≠ 10), xanh sau sửa; Whitelist 2/2 · PriceReadPoints 10/10 · 2 bộ YCXH xanh; API thật HĐ 7725/7712 trả 200, ĐMGG khớp bộ giá công ty 1. |
 
 ### Chốt 17/10/2026 (tiếp)
 | # | Chốt |
 |---|---|
 | N207 | **Máy chủ tự tra giá khi lưu Giữ hàng** theo công ty phiếu, bỏ giá client; loại gắn HĐ lấy giá dòng HĐ (khảo sát trước khi code) |
 | N208 | ~~Phiếu mới thuộc công ty ĐANG LÀM~~ ⇒ sau khảo sát (quyền duyệt/thông báo/kiểm tồn/letterhead của YCXH·Mượn·Giữ hàng đều theo công ty GỐC qua trait `ChecksEmployeePermission`; BaseModel gán company gốc cho 282 bảng) user chốt **ĐỂ RIÊNG NGOÀI FEATURE** |
-| N209 | (17/10, phát sinh N207, nhẹ) Màn Sửa Giữ hàng loại 1–5 vẫn hiện giá đã lưu, không nạp lại giá dòng HĐ — chỉ lệch với nháp cũ từng lưu giá client khác HĐ (lưu lại thì máy chủ chốt đúng giá HĐ) |
+| N209 | ✅ 20/10 BE `detailData` trả giá dòng HĐ cho phiếu Đang tạo + khoá `lineKey` (chưa commit). (17/10, phát sinh N207, nhẹ) Màn Sửa Giữ hàng loại 1–5 vẫn hiện giá đã lưu, không nạp lại giá dòng HĐ — chỉ lệch với nháp cũ từng lưu giá client khác HĐ (lưu lại thì máy chủ chốt đúng giá HĐ) |
 
 ## 📌 17/10/2026 — đã merge nhánh chung + ĐÃ PUSH: api `dbd9ebbb2` (+17), client `862ea0ef6` (+25), ERP `8d677d7906` (+2); kiểm không nằm trong gop_db. Gồm đợt lỗi SRS (3 lượt) · N203/N179 · N205 · N207.
+
+## ⏰ NHẮC LÀM SAU go-live 20/10 — phần CODE bỏ Nhóm hàng hoá (user chốt 20/10: để đợt code sau)
+Dữ liệu B2–B6 đã có gói `catalog-import/golive-2010/`. Còn CODE (chưa viết, mỗi mục xin "làm" riêng):
+1. **Nhóm máy → Loại** (1.592 liên kết nhóm 1–1): chuyển dữ liệu + ERP picker phụ tùng lọc Loại OR Nhóm (6 chỗ `Common/SearchController`: 694, 911, 1132, 1353, 1575, 1964) + HRM form hàng ô "Dùng cho Loại máy" cạnh `machine_group_ids`. KHÔNG chuyển dữ liệu trước khi có code (picker ERP mất phụ tùng).
+2. ERP báo cáo Tồn lâu đọc `product_types.long_stock_days` theo Loại của hàng, thiếu ⇒ 180 (`Product.php:6798/6830`, `ProductInfo.php:3466/3499`, `ProductTemplate.php:6357`).
+3. ERP ~30 báo cáo INNER JOIN `groups` → LEFT JOIN (kiểm kê `catalog-import/phu-luc-kiem-ke-nhom-hang.md`).
+4. ERP bỏ dự phòng VAT nhóm (`Common/SearchController.php:856,1703,2065`) — sau khi B4 đã chép VAT.
+5. Đợt sau nữa: cấu hình theo nhóm (B), cột chụp nhóm trên chứng từ (Q4), catalog (E), xoá bảng/cột/màn + 3 thuộc tính Q3 (đo prod), lọc báo cáo theo cây (Q5); nghiệp vụ gán Loại dần cho ~16.552 hàng + thuộc tính/Nhóm máy của nhóm nhiều Loại.
+
+## 20/10/2026 — ĐÃ LÊN PRODUCTION (đêm 20/10, ~21:30–23:40) — theo dõi sau go-live
+- Chạy trọn `HUONG-DAN-VPS-PROD-2010.md`, mọi điểm dừng đạt, số khớp bản chạy tập `hrm_erp_20_10`. Sao lưu: VPS HRM `~/backup_hrm_erp_gop_2026-10-20_2157.sql.gz`.
+- **Cron áp giá HRM lần đầu 21/10 01:00** — user chốt (phương án 1) để áp cả 8 dòng 1 đ ngày 21/10 của 2 mã Sài Gòn `SG-MN-SG-DCT-20K` (Đe thuyền 20kg, 2.800.000) ·
+  `SG-MN-SG-VSBD` (Máy vệ sinh buồng đốt, 14.000.000) — 2 dòng gốc Cty 4 (pep 100159/100160, NV 433 lên lịch 21/09) + 6 dòng backfill chép sang Cty 1·2·3 (pep 107329–107334).
+  Sáng 21/10: kiểm Nhật ký áp giá có 8 dòng này; nghiệp vụ xác nhận đúng ý.
+- **Tra sau (không gấp):** cron ERP cũ `product:update_price` báo email 30/06 "không có thay đổi giá" dù DB gộp có 839 dòng `status 2`, `effect_date 2026-06-30`, flag NULL/0, tạo + sửa trước 30/06
+  (sao lưu cleanup xác nhận) ⇒ nghi cron đêm đó đọc DB khác (ERP prod trước gộp DB 09/10) hoặc email từ môi trường khác (VPS test). Cron cũ CÓ áp giá 1 đ (không lọc) — giá 1 đ treo không phải vì 1 đ.
+  2.105 dòng 2026 quá hạn đã đóng bằng `price:cleanup-stale` (sao lưu ERP `storage/app/price-cleanup/20261020-225503`); 22 giá thật cần nghiệp vụ soát: `golive-2010/gia-qua-han-2026-can-soat.xlsx`.
+- ERP thôi gửi email kết quả cron giá (gỡ lịch + PRICE_EMAIL_*) — kết quả xem HRM › Nhật ký áp giá. Nếu nghiệp vụ cần email ⇒ làm thêm phía HRM.
+- **N214 (21/10) ✅ ĐÃ SỬA phương án 1+2 — hrm-api `bde261902`, ĐÃ PUSH feat + gop_db 21/10 (chưa pull lên prod): `expectedFailed()` báo `[GIA] Lỗi` + `emailOutputOnFailure(ADMIN_EMAIL)`; test `cron_loi_mot_cong_ty_…` (ExpectedPriceApplyTest 4/4, đã kiểm ngược). Lên prod: merge gop_db → pull /var/www/tpe/hrm-api (không migration). Còn hở: scheduler chết hẳn thì vẫn im lặng (phương án 3 chưa làm). Mô tả gốc:** cron `product-price:apply-expected` LỖI thì không ai biết. Đã báo: áp được (`Cập nhật`), bị chốt chặn (`Quá hạn`). CHƯA báo: (1) lỗi 1 công ty — `catch` chỉ `report()` vào laravel.log + in bảng ra console (không ai đọc), giao dịch rollback ⇒ giá vẫn chờ, đêm sau thử lại, quá 30 ngày mới thành `Quá hạn`; (2) cron không chạy / chết trước vòng lặp (scheduler dừng, lỗi DB, mutex `withoutOverlapping` kẹt) ⇒ im lặng giống đêm không có giá. Đề xuất: thông báo `[GIA] Lỗi` cho người có "Cập nhật giá bán hàng hoá" của công ty + `emailOutputOnFailure(ADMIN_EMAIL)` (khuôn `finance:update-exchange-rate`, Kernel.php:127); tuỳ chọn thêm email tóm tắt mỗi đêm để biết cron còn sống.
+- Việc còn: gán 30 quyền mới (xe 2c cho 8 người, PTKD "Xây dựng thông tin hàng hoá"…) ⇒ `php artisan cache:clear` (HRM tpe cache file); nhập Đặc tính sản phẩm; phân công XNK Cty 2/5/6/7/8;
+  gửi `ds-gui-nghiep-vu-prod-2010.xlsx`; DROP bảng `zz_golive2010_*` sau nghiệm thu; `rm ~/.golive.cnf` nếu đã tạo; phần CODE bỏ Nhóm hàng (mục "⏰ NHẮC LÀM SAU").
+- **Rà menu 21/10** (`catalog-import/golive-2010/tong-hop-menu-dot-golive-2010.xlsx` — HRM 63 menu · ERP 73 menu/màn, 271 route chặn ghi). Lệch còn mở (chỉ ghi nhận):
+  (a) ERP Kế toán › Quản lý giá - CTKM › Giá bán › Nhật ký cập nhật giá còn link ERP (qua trang trung gian) · (b) ERP Danh mục chương / nhóm công việc / cụm công việc
+  KHÔNG chặn ghi ⇒ 2 bên cùng ghi · (c) HRM Bán hàng › Danh mục › Danh mục chung › Danh mục hàng hóa còn mở `/admin/products` ERP · (d) HRM "YC duyệt hàng tạm" là mục xám ·
+  (e) runbook bước 12 ghi "bỏ 3 thẻ", code bỏ 4 (thêm "Hàng tạm cần duyệt") · (f) SelfInventory/SelfInventoryRequest cho Super admin xem toàn tổng công ty KHÔNG cần quyền — trái quy tắc
+  "Super admin không mặc định có quyền" (feature kho của đồng đội, báo lại) · (g) `bang-man-hinh-menu.md` (12/10) đã cũ — dùng file Excel 21/10.
+- **21/10 — popup chọn hàng ERP đồng bộ HRM + chữ đè cây catalog ✅ ĐÃ MERGE gop_db + PUSH** (chưa pull lên prod): ERP `8318ac7185` → gop_db `b9081f5c61`
+  (`partials/modals/productPicker.blade.php`: vạch dọc phân cấp, số Tiểu mục xanh đậm, mũi tên cuối dòng, bỏ dòng "Công ty … · Bảng giá …" mọi màn;
+  Lĩnh vực đang chọn dính đầu nền đặc) · hrm-client `8f2f5dc28` → gop_db `e45688424` (`ProductCatalogTree.vue` cùng lỗi nền trong suốt).
+  E2E: +1 ca `product-picker-filters-ui.spec.ts` (chưa chạy bộ). Còn: `pp.scopeTip` (`js/productPickerJs.blade.php`) không còn chỗ gọi.
+
+## 21/10/2026 (chiều) — làm thẳng gop_db, ĐÃ PUSH (chưa pull prod)
+- Lịch sử chỉnh sửa hàng hoá — `lich-su-hang-hoa/` (api `fc5ed5cad`, client `002277c01`). Quyền HRM mới cùng tên quyền ERP ⇒ deploy chạy seeder quyền + admin gán.
+- Danh sách: cột công ty hiện mã + tooltip đen (`v-overflow-tooltip.always`) · Tạo mới ở Đang KD + Dữ liệu công ty · Tiểu mục catalog KHÔNG bắt buộc (api `9156d687f`, client `37a0cc97d`).
+- Popup chọn hàng: "Gồm hàng ngoài catalog" mặc định bật cả HRM + ERP (client `e52ae1706`, ERP `cfd3d220b4`).
+- Giá công ty lấy về ≥ giá công ty tạo — `gia-cong-ty-lay-ve-toi-thieu/design.md` (api `fe099fb5b`). Chưa xem UI (màn ẩn ở Cài đặt phân hệ local).
+- Ghi nhận: `HRM/e2e` lệch bản worktree `wt-chuyen-doi-hang-hoa/e2e` (spec mới hơn ở worktree) — mới đồng bộ 1 file product-picker-filters-ui; còn lại chưa.
+- Ghi nhận: `ExpectedPriceApplyTest::chot_chan_…` đỏ trên DB local `hrm_erp_20_10` (cần dữ liệu giá quá hạn chưa dọn — đã dọn lúc go-live).
+
+## 21/10/2026 (tối) — soát nguồn ghi Lịch sử giá ⇒ còn lỗ cron reset giá (N5, ⏸ để sau)
+- Đã ghi lịch sử đủ: màn Cập nhật giá (lưu thẳng/gửi duyệt) · Duyệt/Không duyệt giá · phiếu Tính giá bán · cron áp giá hiệu lực + Áp ngay/Đóng. Màn sửa giá cũ ERP đều `productMovedToHrm`; cron ERP `product:update_price` không còn lịch.
+- **Lỗ**: cron ERP `product:reset_price_when_zero_inventory` (14:30, đang bật) đưa giá bán/hệ số/ĐMGG 6 loại + giá vốn về 0 bằng query builder ⇒ KHÔNG ghi `catalog_histories` (cũng không qua `ProductWriteAuditObserver`).
+- **Lỗi sẵn có**: từ N78 ô "Hàng reset giá" chỉ sửa ở HRM Quy chế, lưu mã **tính chất cũ** (`RegulationConfigService::PRODUCT_TYPES`: product/tool/…), còn cron so `products.product_cate` (`BaseProduct::PRODUCT_CATES`: hang_tieu_chuan/…) ⇒ lưu ở HRM xong là cron không khớp hàng nào. Prod chưa đo cấu hình hiện tại.
+- User chốt: **(b) chuyển cron sang HRM**, dùng `ProductPriceHistoryService` ghi lịch sử. **Tiêu chí chọn hàng để xử lý sau** — 3 phương án đã nêu: `product_cate` (giữ hành vi ERP, phải đổi options Quy chế; hàng HRM tạo không có cate) · `product_type` chuỗi cũ (khớp Quy chế hiện tại; hàng HRM tạo không có) · Tính chất theo cây mới (~40% hàng có Loại SP trên local).
+- Chưa đụng code. Khi làm: tắt lịch bên ERP `Kernel.php`, bật bên HRM `app/Console/Kernel.php` (cùng giờ 14:30), ghi chú lịch sử kiểu "Tự đưa giá về 0 do tồn kế toán = 0".
+- Ngoài phạm vi (chưa chốt có ghi lịch sử không): sinh bộ giá rỗng khi tạo hàng/thêm ĐVT/lấy về · xoá bộ giá khi gỡ hàng · `CompanyPriceBackfill` (1 lần) · ERP `price:cleanup-stale` (chạy tay).
+
+## 21/10/2026 (tối) — các việc nhỏ trên gop_db
+- ✅ PUSH: ERP getData 403 khi "Xem tồn" là tiêu đề công ty khác (`3333a5b543`) · menu "Danh sách hàng giữ" ⇒ `/sale/prepick-tracking` (`faeabfb6a7`).
+- ✅ PUSH: Đặc tính không bắt buộc ở hàng tạm (tạo/sửa + PTKD duyệt) · cột VAT tuỳ chọn + tiêu đề "ĐMĐPG" trong popup chọn hàng (ERP `936b2d2344`, api `fa43fc2f9`, client `130dd58d1`). Test BE cập nhật theo luật mới.
+- ✅ PUSH (ERP `1ef75c0ff7`, api `12d61e3a7`, client `5d0fefffc`): cột "Tồn bán được" theo từng công ty (user chốt: 1 dòng + tooltip, mọi công ty). Bộ lọc Còn/Hết tồn + chế độ Xem tồn theo kho ERP giữ nguyên. Kiểm: PHPUnit SellableStockReader 4/4, ProductPickerSearch 16/16; Playwright HRM thật + ERP (proxy local 401 ⇒ giả lập bằng dữ liệu API HRM).
+- Ghi nhận: `TempProductVisibilityTest::catalog_tab_them_va_sync_khong_nhan_hang_tam` đỏ trên DB local — fixture lấy hàng thật đã có 4 dòng catalog (không do thay đổi).
+

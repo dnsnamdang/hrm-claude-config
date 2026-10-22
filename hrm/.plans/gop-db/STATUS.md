@@ -77,6 +77,42 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- quan-ly-hang-hoa / **Sau go-live 20/10 — làm thẳng trên `gop_db`** (bỏ worktree + nhánh chung) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/viec-con-lai.md (mục 21/10 + 22/10)
+  ### Checkpoint — 22/10/2026 sáng (wrap up)
+  Vừa hoàn thành:
+  · Danh mục 4 cấp hàng ETEK GREEN (file "UPDATE hàng green.xlsx") — ĐÃ CHẠY PROD 22/10 00:05 bằng SQL: +17 Nhóm SP, +95 Loại SP, gán Loại 827 mã (8 câu chốt) — `catalog-import/green-2110/` (tổng kết xlsx + SQL + README)
+  · Chép giá theo bảng chủ ⇒ nhận (9 ⇒ 1·2·3·4·8; cụm 1·2·3·4 + 8; điền 572 cặp TPE "lấy về" rỗng; ghi info_entered_at) — api `8d8a01758` ĐÃ PUSH + pull prod; chạy prod 22/10 ~05:10: 311.361 dòng, lần 2 = 0, checksum dòng trước 21/10 giống hệt, DTTDETEK 30.275 cặp Đang KD — `gia-theo-cong-ty/chia-se-green-2110.md`
+  · Áp tay `product-price:apply-expected` (cron 01:00 bỏ qua vì app bảo trì) — Cty 4 áp 2 giá
+  · DB local: chỉ còn `hrm_erp_21_10_prod` (dump prod 21/10 + 2 việc trên); mọi `.env` (checkout chính + 8 worktree, cả DB_DATABASE_SECOND) trỏ về nó; đã DROP hrm_erp, hrm_erp_20_10, hrm_erp_giacty, hrm_erp_21_10(_kiem)
+  · FE cột Hành động 5 màn hàng hoá 90px ⇒ 140px (nút thứ 3 bị cắt 16px) — client `components/product/ProductListPage.vue` CHƯA COMMIT; Playwright MCP 0/155 nút bị cắt; spec `products-read-ui` thêm ca + cập nhật cột "Tình trạng nhập thông tin" (chưa chạy e2e)
+  Đang làm dở: —
+  Bước tiếp theo: user nghiệm thu prod (DTTDETEK thấy hàng + giá; 572 mã TPE Đang KD) ⇒ DROP 4 bảng `zz_green2110_*` trên prod · gửi nghiệp vụ 127 mã lệch cây + 43 dòng bỏ qua · commit fix cột Hành động khi user báo · N215 (3 popup tài chính cột Hành động 90px)
+  Blocked: e2e chưa chạy được trên DB dev mới (tài khoản e2e chưa provision vào `hrm_erp_21_10_prod`)
+  ### Checkpoint — 21/10/2026 tối (wrap up)
+  Vừa hoàn thành (ĐÃ COMMIT + PUSH gop_db, chưa pull lên prod):
+  · ERP getData chọn hàng 403 "không có quyền xem giá của công ty này" (ô Xem tồn gửi company_id) ⇒ giá theo công ty người dùng (ERP `3333a5b543`)
+  · Menu ERP "Danh sách hàng giữ" ⇒ HRM `/sale/prepick-tracking` (ERP `faeabfb6a7`)
+  · Hàng tạm: Đặc tính KHÔNG bắt buộc khi tạo/sửa + khi PTKD duyệt · popup chọn hàng thêm cột VAT, đổi "ĐMĐPG" (ERP `936b2d2344`, api `fa43fc2f9`, client `130dd58d1`)
+  ĐÃ PUSH (ERP `1ef75c0ff7`, api `12d61e3a7`, client `5d0fefffc`): popup chọn hàng cột "Tồn bán được" theo TỪNG công ty như ERP cũ (1 dòng + tooltip, mọi công ty, công ty chứng từ đầu)
+  — api `SellableStockReader::byCompanyForProducts` + `ProductPickerService` (`sellable_by_company`) + 2 test · client `ProductPickerPanel.vue` · ERP `productPicker(Js).blade.php`.
+  Đang làm dở: —
+  Bước tiếp theo: N5 cron reset giá chuyển sang HRM — chờ chốt tiêu chí chọn hàng (viec-con-lai.md mục 21/10 tối);
+  đỏ sẵn `TempProductVisibilityTest::catalog_tab_them_va_sync_khong_nhan_hang_tam` (fixture lấy hàng thật đã có catalog — không do thay đổi).
+  Blocked:
+  ### Checkpoint — 21/10/2026 (wrap up chiều)
+  Vừa hoàn thành (ĐÃ COMMIT + PUSH gop_db, chưa pull lên prod):
+  · popup chọn hàng ERP đồng bộ HRM + chữ đè cây catalog (ERP `b9081f5c61`, client `e45688424`)
+  · ERP menu "Danh sách hàng giữ" ⇒ link HRM (ERP `1fd6f6701b`)
+  · Lịch sử chỉnh sửa hàng hoá (api `fc5ed5cad`, client `002277c01`) + quyền HRM mới "Xem lịch sử chỉnh sửa hàng hóa" — `lich-su-hang-hoa/`
+  · Danh sách hàng hoá: cột công ty hiện mã + tooltip; nút Tạo mới ở Đang KD / Dữ liệu công ty; bỏ bắt buộc Tiểu mục (api `9156d687f`, client `37a0cc97d`)
+  · "Gồm hàng ngoài catalog" mặc định bật (client `e52ae1706`, ERP `cfd3d220b4`)
+  · Giá công ty lấy về ≥ giá công ty tạo (api `fe099fb5b`, merge `7fa0b01ff`) — `gia-cong-ty-lay-ve-toi-thieu/design.md`
+  · hrm-claude-config `f2a78ca` (tài liệu go-live + lịch sử hàng hoá)
+  Đang làm dở: —
+  Bước tiếp theo: deploy VPS dev theo các bước đã gửi user 21/10 (gói SQL `catalog-import/golive-2010/golive-2010-sql.tar.gz`); spec e2e đã sửa (HRM/e2e) CHƯA chạy;
+  kiểm UI màn Cập nhật giá cho quy tắc giá sàn (màn đang bị ẩn ở Cài đặt phân hệ trên local); còn mở: N214 phương án 3, CODE bỏ Nhóm hàng, lệch menu (a)–(g).
+  Blocked:
+
 - danh-muc-kho → @junfoke → .plans/gop-db/danh-muc-kho/plan.md (design: .plans/gop-db/danh-muc-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-19-danh-muc-kho-design.md)
   Port 7 màn ERP "Danh mục → Kho" sang phân hệ Danh mục chung, nhóm "Kho" (bỏ Nhóm kho, bỏ đồng bộ CRM, 1 quyền "Quản lý kho"). Bắt đầu 19/10/2026; code nằm ở nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, user chỉ định — chuyển từ `feat/warehouse-catalogs`, chưa commit).
   Trạng thái: 🟢 XONG đủ 7 màn (chưa commit) — verify API 2 góc nhìn + bấm thật local; đã ẩn bản ghi khoá ở Kế hoạch kiểm kê + popup vị trí Phiếu nhập kho. Tiếp: user review → commit → deploy (4 migration + seeder quyền) → admin gán quyền "Quản lý kho" vào vai trò. Ẩn bản ghi khoá ở Kiểm kê vị trí / Phiếu nhập kho dời sang phase 4.
