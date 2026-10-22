@@ -46,3 +46,15 @@ Vừa hoàn thành: fix #11766 — BE `ReportLimitDebtService` (bỏ tìm SĐT, 
 Đang làm dở: —
 Bước tiếp theo: user mở trình duyệt kiểm lại 3 bug; báo tester cột Số dư nợ lệch ERP là CHỦ ĐÍCH (ERP lỗi luôn ra 0).
 Blocked:
+
+## Redmine #11777 — lọc "Chỉ tiêu vượt hạn mức" lệch ERP (22/10) — ĐIỀU TRA, CHƯA SỬA
+- [x] Điều tra: lệch do quyết định 13/10 (giữ công thức sổ 131). ERP `AccountDetail::getDebtCustomer()` (erp M:2290) chỉ select SUM, KHÔNG select `customer_id` rồi groupBy → mọi KH tra ra rỗng → dư nợ = 0 → "Trong hạn mức tính lãi" = MỌI dòng có hạn mức tính lãi > 0, "Vượt…" luôn rỗng. HRM dùng dư nợ thật nên KH nợ ≥ hạn mức rơi sang "Vượt"
+- [x] Dữ liệu ảnh 19/10 (35TNXHA-1…) không còn tra được trên dev (màn Khai báo hạn mức không ra các KH đó; báo cáo chi tiết công nợ trả customer_code null) — chưa đối chiếu được số cụ thể
+- [x] User chốt 22/10: "sửa lại giống hệt ERP" → `ReportLimitDebtService`: cột Số dư nợ hiện tại luôn 0 (bỏ `debts()`); `filterTarget()` y ERP với dư nợ 0: chỉ tiêu 1 = dòng có hạn mức tính lãi > 0, chỉ tiêu 2/3/4 luôn rỗng (ERP so cột không tồn tại `limit_export_debt`). Popup NVKD + lọc Khách hàng theo customer_id GIỮ bản sửa 13/10
+  - Verify: php -l OK; tinker công ty 1: tất cả 40 dòng, chỉ tiêu 1 = 3 (= số dòng hạn mức tính lãi > 0 trong DB), 2/3/4 = 0, dư nợ ≠ 0: 0 dòng. Chưa mở trình duyệt
+
+## Redmine #11776 — ô lọc Khách hàng không tìm được KH (22/10)
+- [x] Nguyên nhân: ô lọc dùng `assign/customers/search` (bó phạm vi xem KH của Giao việc: KH cá nhân chỉ ra cho người phụ trách) → "BÔNG" (67DAONA, cá nhân) không ra. ERP dùng `customers.searchCustomerByKeywords` = toàn bộ bảng customers
+- [x] BE: `GET finance/report-limit-debts/customers?q=` → `ReportLimitDebtService::searchCustomers()` y ERP (tên / SĐT / mã, mới tạo trước, < 3 ký tự lấy 20); khác ERP: ≥ 3 ký tự chặn 50 (ERP trả hết — "CÔNG TY" ~11.000 KH)
+- [x] FE `index.vue` `searchCustomers()` đổi url sang endpoint mới
+  - Verify: php -l ×3, compile FE OK; HTTP kernel: "BÔNG" 8 KH (gồm KH cá nhân 29TPHXCH-9), "CÔNG TY" 50, lọc báo cáo theo customer_id → đúng 1 dòng. Chưa mở trình duyệt

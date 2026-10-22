@@ -5,6 +5,12 @@
 
 ## Đang làm
 
+- **Đơn mua hàng — sửa logic theo demo `demo-lap-don-mua-hang.html`** — @khoipv — Bắt đầu 21/10/2026 — Đang brainstorming. Màn `supply/purchase_orders` làm theo demo: HĐ mua không bắt buộc (đơn mua lẻ lấy hàng từ BC nhu cầu mua), Thông tin chung 2 khối Đơn mua / NCC, bảng hàng theo HĐ mua + hàng HĐ bán chưa đề xuất, tab Giao nhận & vận chuyển (mới), tab Điều khoản thanh toán.
+  - Plan: [.plans/don-mua-hang-theo-demo/plan.md](don-mua-hang-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md)
+
+- **Báo cáo tổng hợp nhu cầu mua — sửa theo demo (bỏ tab Đã có HĐ mua)** — @khoipv — Bắt đầu 21/10/2026 — Đang code. Màn `supply/reports/purchase-demand` làm theo `demos/demo-bc-tong-hop-nhu-cau-mua.html` tab Cần đi mua (KPI, cột Cần mua thêm / Đã mua / Còn cần mua, bộ lọc NCC / HĐ mua theo dòng); không có thanh tab; Đã mua vẫn tính cả HĐ mua + đơn mua.
+  - Plan: [.plans/bc-nhu-cau-mua-theo-demo/plan.md](bc-nhu-cau-mua-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md)
+
 - **Dữ liệu chấm công — bộ lọc Nhân viên + Ca/Phiếu, xuất Excel** — @khoipv — Bắt đầu 19/10/2026 — Code BE + FE xong, chờ user test. Ô "Nhân viên" luôn hiện (kể cả không có quyền), danh sách NV theo cấp quyền. Thêm lọc Ca/Phiếu (Ca hành chính · Phiếu công tác · Phiếu giao việc · Tăng ca). Nút Xuất excel theo bộ lọc.
   - Plan: [.plans/timekeeper-loc-nhan-vien/plan.md](timekeeper-loc-nhan-vien/plan.md)
 

@@ -408,3 +408,7 @@ Vừa hoàn thành: #11749 đổi popup xác nhận đổi Loại thu sang `$con
 Đang làm dở:
 Bước tiếp theo: user mở trình duyệt verify 2 fix trên form Thêm phiếu báo có
 Blocked:
+
+## Redmine #11780 — dấu * cột Hợp đồng (22/10)
+- [x] Tiêu đề cột "Số đơn hàng/Hợp đồng" thêm `<Required />` (cột chỉ hiện khi loại Thu bán hàng; BE `conditionalDetailRules()` bắt buộc khi TK có công nợ 1311/1312/3311 + KH khác "Khách không rõ")
+  - Verify: vue-template-compiler OK. Chưa mở trình duyệt

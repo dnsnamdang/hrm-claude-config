@@ -77,6 +77,8 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- the-kho → @khoipv → .plans/gop-db/the-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-22-the-kho-design.md)
+
 - quan-ly-hang-hoa / **Sau go-live 20/10 — làm thẳng trên `gop_db`** (bỏ worktree + nhánh chung) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/viec-con-lai.md (mục 21/10 + 22/10)
   ### Checkpoint — 22/10/2026 sáng (wrap up)
   Vừa hoàn thành:
@@ -2320,6 +2322,24 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- bien-ban-xu-ly-thua-thieu-kiem-ke — Port màn Biên bản xử lý hàng thừa, thiếu sau kiểm kê ERP (`inventory_audit_reports`) sang Tài chính › Kiểm kê — Duyệt ghi bút toán 3381/3341/711, 3341/1381/811. Bắt đầu 21/10/2026 → @khoipv → .plans/gop-db/bien-ban-xu-ly-thua-thieu-kiem-ke/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-21-bien-ban-xu-ly-thua-thieu-kiem-ke-design.md)
+  Chuyển Hoàn thành: 2026-10-22.
+
+- due-configs — Cấu hình chặn luồng hàng quá hạn. Mở lại 20/10/2026 cho Redmine #11722 phản hồi (tester: HRM chưa chặn YC nhập hàng + "check luôn các phần khác") → @khoipv → .plans/gop-db/due-configs/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-due-configs-design.md)
+  Chuyển Hoàn thành: 2026-10-22.
+
+- kiem-ke-theo-hang-hoa — Port màn PHIẾU Kiểm kê theo hàng hóa ERP (`self_inventories`, Kho › Kiểm kho) sang HRM — màn con của Kế hoạch kiểm kê theo hàng hóa, bám màn anh em Kiểm kê theo vị trí. Bắt đầu 20/10/2026 → @khoipv → .plans/gop-db/kiem-ke-theo-hang-hoa/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-20-kiem-ke-theo-hang-hoa-design.md)
+  Chuyển Hoàn thành: 2026-10-22.
+
+- ke-hoach-tong-kiem-ke-hang-hoa — Port màn Kế hoạch tổng kiểm kê hàng hóa ERP (`self_inventory_request_alls`) sang Tài chính › Kiểm kê — bám màn anh em Kế hoạch kiểm kê theo hàng hóa. Bắt đầu 20/10/2026 → @khoipv → .plans/gop-db/ke-hoach-tong-kiem-ke-hang-hoa/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-20-ke-hoach-tong-kiem-ke-hang-hoa-design.md)
+  Chuyển Hoàn thành: 2026-10-22.
+
+- ke-hoach-kiem-ke-theo-hang-hoa — Port màn Kế hoạch kiểm kê theo hàng hóa ERP (`self_inventory_requests`) sang Tài chính › Kiểm kê — bám màn anh em Kế hoạch kiểm kê theo vị trí. Bắt đầu 20/10/2026 → @khoipv → .plans/gop-db/ke-hoach-kiem-ke-theo-hang-hoa/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-20-ke-hoach-kiem-ke-theo-hang-hoa-design.md)
+  Chuyển Hoàn thành: 2026-10-22.
+
+- phieu-dieu-chuyen-vi-tri — Port màn Phiếu điều chuyển vị trí ERP (`position_transfers`) sang phân hệ Kho — ghi tồn vật lý qua `PhysicalStockWriter::transferLot()`. Bắt đầu 19/10/2026 → @khoipv → .plans/gop-db/phieu-dieu-chuyen-vi-tri/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-19-phieu-dieu-chuyen-vi-tri-design.md)
+  Chuyển Hoàn thành: 2026-10-22.
+
 - kiem-ke-theo-vi-tri — chuyển màn ERP "Kiểm kê theo vị trí" (phiếu kiểm kê — `position_inventories` type=1, `positionInventoryResult.*`) sang HRM → @khoipv → .plans/gop-db/kiem-ke-theo-vi-tri/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-19-kiem-ke-theo-vi-tri-design.md)
   Chuyển Hoàn thành: 2026-10-19.
 
@@ -2342,10 +2362,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 - legacy-master-data-cleanup — dọn bộ danh mục cũ trùng mã (Nhóm ngành / Nhóm giải pháp) → @khoipv → .plans/gop-db/legacy-master-data-cleanup/plan.md
   Chuyển Hoàn thành: 2026-10-13.
   19 NN + 117 NGP đổ thẳng DB ngày 24/04/2026 → trùng mã/tên trên prod + dev; dọn bằng seeder `CleanupLegacyDuplicateCatalogsSeeder`.
-
-- due-configs — chuyển màn ERP "Cấu hình chặn luồng hàng quá hạn" sang HRM, phân hệ Quản trị hệ thống → @khoipv → .plans/gop-db/due-configs/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-due-configs-design.md)
-  Chuyển Hoàn thành: 2026-10-13.
-  13/10: BE + FE + migration chuyển 204 dòng lịch sử ERP xong, smoke test API pass, compile FE pass, đã push develop (api de0a3a485, client 03d265cd9). Quyền mới 1706 chưa gán vai trò. Kế tiếp: gán quyền rồi mở trình duyệt kiểm.
 
 - benefit-rates — chuyển màn ERP "Hệ số công nghệ theo nhóm hàng hóa" sang HRM, phân hệ Quản trị hệ thống → @khoipv → .plans/gop-db/benefit-rates/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-13-benefit-rates-design.md)
   Chuyển Hoàn thành: 2026-10-13.
