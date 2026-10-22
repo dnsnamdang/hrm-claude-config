@@ -32,3 +32,9 @@ Playwright MCP 2 nơi + không quyền. Spec e2e mới `product-history-ui.spec.
 Đang làm dở: —
 Bước tiếp theo: user xem; chạy e2e khi user cho; commit/push khi user yêu cầu.
 Blocked:
+
+### Checkpoint — 21/10/2026 (wrap up)
+Vừa hoàn thành: ĐÃ COMMIT + PUSH gop_db — api `fc5ed5cad`, client `002277c01`.
+Đang làm dở: —
+Bước tiếp theo: deploy (seeder quyền) + admin gán "Xem lịch sử chỉnh sửa hàng hóa"; chạy e2e product-history-ui khi user cho.
+Blocked:

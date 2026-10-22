@@ -1,8 +1,25 @@
 # Việc còn lại — feature Chuyển đổi hàng hoá
 
+## 📌 22/10/2026 — sau go-live: danh mục ETEK GREEN + chép giá + cột Hành động
+- [x] Danh mục 4 cấp hàng ETEK GREEN — chốt 8 câu, SQL chạy local (thử lui) + PROD 22/10 00:05 (827 · 299 · 1063 · 112) — `catalog-import/green-2110/README.md`
+- [x] Chép giá bảng chủ ⇒ nhận + điền "lấy về" rỗng + info_entered_at — api `8d8a01758` (push + pull prod), chạy prod 05:10 (311.361 dòng, checksum giống hệt) — `gia-theo-cong-ty/chia-se-green-2110.md`
+- [x] "Hàng xoá": user chốt KHÔNG xử lý (khôi phục khi cần rồi đi quy trình lấy về)
+- [x] DB local gom về `hrm_erp_21_10_prod`, DROP 5 DB cũ, 9 `.env` đổi trỏ
+- [x] FE cột Hành động 5 màn hàng hoá 90 ⇒ 140px (client, CHƯA commit) + spec products-read-ui (chưa chạy)
+- [ ] Nghiệm thu prod (DTTDETEK + 572 mã TPE) ⇒ DROP `zz_green2110_dm/_hang/_moc/_products_bak` trên prod
+- [ ] Gửi nghiệp vụ `tong-ket-danh-muc-green-2110.xlsx` (127 mã lệch cây, 43 dòng bỏ qua)
+- [ ] Commit fix cột Hành động (user báo) · N215
+
+### Checkpoint — 22/10/2026 sáng
+Vừa hoàn thành: các mục [x] trên.
+Đang làm dở: —
+Bước tiếp theo: nghiệm thu prod ⇒ DROP bảng zz_green2110_* · commit client khi user báo · N215.
+Blocked: e2e chưa provision trên `hrm_erp_21_10_prod`.
+
 ## 🧭 CÒN LẠI sau 15/10/2026 (bản gom — đọc mục này trước)
 
 ### A. Code — chưa có quyết định "để sau" (nên xử lý trước prod)
+- **N215** (22/10, ngoài luồng — gặp khi sửa cột Hành động 5 màn hàng hoá 90px ⇒ 140px) — 3 popup khác còn khai cột Hành động `width: '90px'`, CHƯA đo có cắt nút không: `pages/finance/prepick-transfer-requests/components/ContractSearchModal.vue`, `pages/finance/product-prepick-requests/components/ContractSearchModal.vue`, `components/finance/prepick/PrepickLotSearchModal.vue`. Khuôn chuẩn 140px (114 chỗ).
 **A1. Bảo mật / sai số liệu**
 | # | Việc |
 |---|---|
@@ -234,7 +251,7 @@ Ghi mới (ngoài luồng, chưa sửa): popup danh mục cũ (vd `BankModel.vue
 | N2 | Hãng SX ERP ghi đè `company_id` + xoá dòng hàng × công ty | ✅ 2-D1 (bỏ khối ghi) | `d1-plan` |
 | N3 | Thương hiệu ERP ghi đè `company_id` | ✅ 2-D1 (gỡ 2 lời gọi) | `2d/ton.md:10` |
 | N4 | Chặn `products/*` ERP chừa danh sách trắng | ✅ 2-D1 | `khao-sat-a` |
-| N5 | Cron giá về 0 khi hết tồn bỏ sót hàng HRM | ⏸ để sau các chức năng hàng hoá | chot |
+| N5 | Cron giá về 0 khi hết tồn bỏ sót hàng HRM · **21/10: + không ghi Lịch sử giá; cấu hình HRM lưu mã tính chất ≠ cron so `product_cate`** (xem mục 21/10 tối) | ⏸ user 21/10: chốt chuyển cron sang HRM (hướng b), tiêu chí chọn hàng **để xử lý sau** | chot |
 | N6 | `sync:crm` không đẩy hàng HRM | ❌ user bỏ | chot |
 | N7 | `->group->` null (popup 338 màn) | ✅ 2-D1 M1–M7 | `d1-kiem-p3` |
 | N8 | Popup ERP chọn được hàng công ty đã khoá | ✅ 2-D1 | `d1-kiem-p3` K2 |
@@ -375,3 +392,26 @@ Dữ liệu B2–B6 đã có gói `catalog-import/golive-2010/`. Còn CODE (chư
   (`partials/modals/productPicker.blade.php`: vạch dọc phân cấp, số Tiểu mục xanh đậm, mũi tên cuối dòng, bỏ dòng "Công ty … · Bảng giá …" mọi màn;
   Lĩnh vực đang chọn dính đầu nền đặc) · hrm-client `8f2f5dc28` → gop_db `e45688424` (`ProductCatalogTree.vue` cùng lỗi nền trong suốt).
   E2E: +1 ca `product-picker-filters-ui.spec.ts` (chưa chạy bộ). Còn: `pp.scopeTip` (`js/productPickerJs.blade.php`) không còn chỗ gọi.
+
+## 21/10/2026 (chiều) — làm thẳng gop_db, ĐÃ PUSH (chưa pull prod)
+- Lịch sử chỉnh sửa hàng hoá — `lich-su-hang-hoa/` (api `fc5ed5cad`, client `002277c01`). Quyền HRM mới cùng tên quyền ERP ⇒ deploy chạy seeder quyền + admin gán.
+- Danh sách: cột công ty hiện mã + tooltip đen (`v-overflow-tooltip.always`) · Tạo mới ở Đang KD + Dữ liệu công ty · Tiểu mục catalog KHÔNG bắt buộc (api `9156d687f`, client `37a0cc97d`).
+- Popup chọn hàng: "Gồm hàng ngoài catalog" mặc định bật cả HRM + ERP (client `e52ae1706`, ERP `cfd3d220b4`).
+- Giá công ty lấy về ≥ giá công ty tạo — `gia-cong-ty-lay-ve-toi-thieu/design.md` (api `fe099fb5b`). Chưa xem UI (màn ẩn ở Cài đặt phân hệ local).
+- Ghi nhận: `HRM/e2e` lệch bản worktree `wt-chuyen-doi-hang-hoa/e2e` (spec mới hơn ở worktree) — mới đồng bộ 1 file product-picker-filters-ui; còn lại chưa.
+- Ghi nhận: `ExpectedPriceApplyTest::chot_chan_…` đỏ trên DB local `hrm_erp_20_10` (cần dữ liệu giá quá hạn chưa dọn — đã dọn lúc go-live).
+
+## 21/10/2026 (tối) — soát nguồn ghi Lịch sử giá ⇒ còn lỗ cron reset giá (N5, ⏸ để sau)
+- Đã ghi lịch sử đủ: màn Cập nhật giá (lưu thẳng/gửi duyệt) · Duyệt/Không duyệt giá · phiếu Tính giá bán · cron áp giá hiệu lực + Áp ngay/Đóng. Màn sửa giá cũ ERP đều `productMovedToHrm`; cron ERP `product:update_price` không còn lịch.
+- **Lỗ**: cron ERP `product:reset_price_when_zero_inventory` (14:30, đang bật) đưa giá bán/hệ số/ĐMGG 6 loại + giá vốn về 0 bằng query builder ⇒ KHÔNG ghi `catalog_histories` (cũng không qua `ProductWriteAuditObserver`).
+- **Lỗi sẵn có**: từ N78 ô "Hàng reset giá" chỉ sửa ở HRM Quy chế, lưu mã **tính chất cũ** (`RegulationConfigService::PRODUCT_TYPES`: product/tool/…), còn cron so `products.product_cate` (`BaseProduct::PRODUCT_CATES`: hang_tieu_chuan/…) ⇒ lưu ở HRM xong là cron không khớp hàng nào. Prod chưa đo cấu hình hiện tại.
+- User chốt: **(b) chuyển cron sang HRM**, dùng `ProductPriceHistoryService` ghi lịch sử. **Tiêu chí chọn hàng để xử lý sau** — 3 phương án đã nêu: `product_cate` (giữ hành vi ERP, phải đổi options Quy chế; hàng HRM tạo không có cate) · `product_type` chuỗi cũ (khớp Quy chế hiện tại; hàng HRM tạo không có) · Tính chất theo cây mới (~40% hàng có Loại SP trên local).
+- Chưa đụng code. Khi làm: tắt lịch bên ERP `Kernel.php`, bật bên HRM `app/Console/Kernel.php` (cùng giờ 14:30), ghi chú lịch sử kiểu "Tự đưa giá về 0 do tồn kế toán = 0".
+- Ngoài phạm vi (chưa chốt có ghi lịch sử không): sinh bộ giá rỗng khi tạo hàng/thêm ĐVT/lấy về · xoá bộ giá khi gỡ hàng · `CompanyPriceBackfill` (1 lần) · ERP `price:cleanup-stale` (chạy tay).
+
+## 21/10/2026 (tối) — các việc nhỏ trên gop_db
+- ✅ PUSH: ERP getData 403 khi "Xem tồn" là tiêu đề công ty khác (`3333a5b543`) · menu "Danh sách hàng giữ" ⇒ `/sale/prepick-tracking` (`faeabfb6a7`).
+- ✅ PUSH: Đặc tính không bắt buộc ở hàng tạm (tạo/sửa + PTKD duyệt) · cột VAT tuỳ chọn + tiêu đề "ĐMĐPG" trong popup chọn hàng (ERP `936b2d2344`, api `fa43fc2f9`, client `130dd58d1`). Test BE cập nhật theo luật mới.
+- ✅ PUSH (ERP `1ef75c0ff7`, api `12d61e3a7`, client `5d0fefffc`): cột "Tồn bán được" theo từng công ty (user chốt: 1 dòng + tooltip, mọi công ty). Bộ lọc Còn/Hết tồn + chế độ Xem tồn theo kho ERP giữ nguyên. Kiểm: PHPUnit SellableStockReader 4/4, ProductPickerSearch 16/16; Playwright HRM thật + ERP (proxy local 401 ⇒ giả lập bằng dữ liệu API HRM).
+- Ghi nhận: `TempProductVisibilityTest::catalog_tab_them_va_sync_khong_nhan_hang_tam` đỏ trên DB local — fixture lấy hàng thật đã có 4 dòng catalog (không do thay đổi).
+

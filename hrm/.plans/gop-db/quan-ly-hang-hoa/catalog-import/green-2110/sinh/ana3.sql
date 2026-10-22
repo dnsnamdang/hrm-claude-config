@@ -1,0 +1,11 @@
+ALTER TABLE x ADD tid2 BIGINT, ADD fid2 BIGINT, ADD gid2 BIGINT, ADD nid2 BIGINT, ADD mid BIGINT, ADD nt VARCHAR(255), ADD nf VARCHAR(255), ADD ng VARCHAR(255), ADD nn VARCHAR(255);
+UPDATE x SET nt=TRIM(REPLACE(REPLACE(REPLACE(REPLACE(t,',',' - '),'  ',' '),'  ',' '),' - - ',' - ')), nf=TRIM(REPLACE(REPLACE(REPLACE(REPLACE(f,',',' - '),'  ',' '),'  ',' '),' - - ',' - ')), ng=TRIM(REPLACE(REPLACE(REPLACE(REPLACE(g,',',' - '),'  ',' '),'  ',' '),' - - ',' - ')), nn=TRIM(REPLACE(REPLACE(REPLACE(REPLACE(n,',',' - '),'  ',' '),'  ',' '),' - - ',' - '));
+UPDATE x LEFT JOIN product_types t ON TRIM(REPLACE(REPLACE(REPLACE(REPLACE(t.name,',',' - '),'  ',' '),'  ',' '),' - - ',' - '))=x.nt SET x.tid2=t.id;
+UPDATE x LEFT JOIN product_families f ON TRIM(REPLACE(REPLACE(REPLACE(REPLACE(f.name,',',' - '),'  ',' '),'  ',' '),' - - ',' - '))=x.nf SET x.fid2=f.id;
+UPDATE x LEFT JOIN product_function_groups g ON TRIM(REPLACE(REPLACE(REPLACE(REPLACE(g.name,',',' - '),'  ',' '),'  ',' '),' - - ',' - '))=x.ng SET x.gid2=g.id;
+UPDATE x LEFT JOIN product_natures n ON TRIM(REPLACE(REPLACE(REPLACE(REPLACE(n.name,',',' - '),'  ',' '),'  ',' '),' - - ',' - '))=x.nn SET x.nid2=n.id;
+UPDATE x LEFT JOIN product_models m ON m.name=x.model SET x.mid=m.id;
+CREATE TEMPORARY TABLE y AS SELECT * FROM x WHERE tid2 IS NULL AND t<>'0' AND mid IS NOT NULL;
+SELECT COUNT(*) dong_can_tao_loai, COUNT(DISTINCT nt) loai FROM y;
+SELECT 'A. Loai moi nhung Nhom SP da co o NHOM CN khac file' k, y.t, y.f, y.g g_file, g.name g_db, COUNT(*) FROM y JOIN product_families f ON f.id=y.fid2 JOIN product_function_groups g ON g.id=f.product_function_group_id WHERE TRIM(REPLACE(REPLACE(REPLACE(REPLACE(g.name,',',' - '),'  ',' '),'  ',' '),' - - ',' - '))<>y.ng GROUP BY y.t,y.f,y.g,g.name;
+SELECT 'B. Nhom CN da co o TINH CHAT khac file' k, y.g, y.n n_file, n.name n_db, COUNT(*) FROM y JOIN product_function_groups g ON g.id=y.gid2 JOIN product_natures n ON n.id=g.product_nature_id WHERE y.fid2 IS NULL AND TRIM(REPLACE(REPLACE(REPLACE(REPLACE(n.name,',',' - '),'  ',' '),'  ',' '),' - - ',' - '))<>y.nn GROUP BY y.g,y.n,n.name;
