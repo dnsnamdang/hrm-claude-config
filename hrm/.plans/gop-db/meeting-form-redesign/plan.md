@@ -142,3 +142,45 @@ Bước tiếp theo: (1) đưa .plans + SKILL mới (segmented-control, button-c
   (2) cập nhật meeting-mobile.pen theo thiết kế mới; (3) đề xuất gộp ~25 API lúc mở màn Sửa meeting;
   (4) 7 migration của người khác chưa chạy ở DB local (cần user cho phép).
 Blocked:
+
+## Phase 3 — Form liền mạch + chuẩn header chung (mockup vòng 2c duyệt 19/10/2026; user "làm cả 2 bước")
+Phạm vi: hrm-client · gop_db · checkout chính · không BE/DB · không commit. Mockup: `mockup-lien-mach-2026-10-19.html` (bản B + viền màu nhẹ).
+Bước 1 — form meeting
+- [x] `MeetingForm.vue`: card chính `p-3` → `p-1`
+- [x] `FileAttachmentTable.vue` (dùng chung 9 màn): thêm slot `#title` tuỳ chọn — không truyền thì giữ icon + chữ như cũ
+- [x] `GeneralInfo.vue`: màu theo khối (data-sec type/target/content/time/files), vòng số nhạt/đặc theo `.is-done`, viền `rgba(màu,.28)` bo 8px,
+      dải tiêu đề `rgba(màu,.07)`, khối cách 12px; khối ⑤ dùng slot `#title` + `data-sec="files"`; 2 card cột phải cùng khung (slate)
+Bước 2 — chuẩn header toàn phần mềm
+- [x] `V2BaseFormSection.vue` rule `.card-header.section-header`: cao 36px, đệm 2px 10px, căn giữa, `h6` margin 0 / 14px / lh 20px,
+      nền `rgba(100,116,139,.07)`, bỏ gạch dưới
+- [x] Playwright đo: 7 header form meeting (36px, lệch tâm 0), chiều cao cột form ≈ mockup 1327px, không tràn ngang 1440/1366;
+      ~8 màn tiêu biểu dùng V2BaseFormSection + 2 màn viết tay; FileAttachmentTable ở 1 màn khác không đổi
+- [x] Ghi nhận: 55 màn tự viết `.section-header` + CSS riêng KHÔNG ăn đủ chuẩn mới → báo user, chưa sửa
+
+### Checkpoint — 2026-10-19 (Phase 3 code xong)
+Vừa hoàn thành: bước 1 + 2 (hrm-client gop_db, CHƯA commit) — MeetingForm p-1 · FileAttachmentTable slot #title · GeneralInfo màu/viền/dải
+  theo data-sec + khối ⑤ + cột phải slate · V2BaseFormSection chuẩn header chung `body .card .card-header.section-header` (36px, căn giữa,
+  h6 margin 0, dải rgba(100,116,139,.07), bỏ gạch dưới). Gốc lệch tâm: h6 margin-top 10px toàn cục. Gốc nền trắng sót: rule KHÔNG scoped
+  trong assign-components/customer/CustomerForm.vue nạp sau đè rule chung → tăng độ ưu tiên selector.
+  Đo Playwright 9 màn (meeting sửa/tạo/chi tiết, BH sửa chữa, báo giá DV, YC mua DV, gia hạn mượn, YC nhập hàng, bổ sung hạch toán):
+  mọi header 36px, lệch tâm 0, nền slate (meeting giữ màu khối); cột form 1461→1327px (= mockup), không tràn 1440/1366.
+  FileAttachmentTable màn khác (/assign/request-solution/add) giữ nguyên icon + chữ 13px. Ảnh trước/sau: anh-mockup/do-header/.
+  e2e `tests/assign/meeting-form-sections.spec.ts` 5 ca — viết xong, `--list` OK, CHƯA CHẠY (theo quy ước chỉ chạy khi user yêu cầu).
+Đang làm dở: —
+Đã PUSH gop_db hrm-client `53421e1cb` (rebase lên d10edd229 của Tri Lee, không xung đột).
+Bước tiếp theo: user xem trên app; nếu cần thì chạy e2e meeting-form-sections + bộ meeting. Ghi nhận: 55 màn tự viết `.section-header`
+  có CSS riêng — nay chuẩn chung đã thắng ở 2 màn mẫu đo được, các màn còn lại chưa đo từng màn.
+Blocked:
+
+## Phase 4 — Gộp khối (19/10/2026, user cho phép "Làm": hrm-client gop_db · GeneralInfo.vue + spec e2e)
+- [x] Gộp ① Loại meeting + ③ Nội dung cuộc họp → ① "Thông tin cuộc họp" (Phân loại · Loại meeting · Tên * + Gợi ý tên · Mục tiêu/Nội dung)
+- [x] Đổi tên khối "Khách hàng & đối tượng" → "Đối tác" (②); Nội bộ ẩn ② như cũ
+- [x] secNo + màu data-sec + danh sách khối panel phải + is-done
+- [x] Kiểm Playwright (đo DOM) + cập nhật meeting-form-sections.spec.ts
+- [x] Đồng bộ thiết kế app (03 · 05 · 25 · 28 · 33 + caption)
+
+### Checkpoint — 2026-10-19 (Phase 4 gộp khối)
+Vừa hoàn thành: GeneralInfo.vue — ① Thông tin cuộc họp (data-sec="info", is-done = Loại + Tên), ② Đối tác, secNo info/target/time/files, bỏ màu 'content', Tóm tắt đưa Tên lên sau Loại, ô Tên cách hàng Phân loại 16px (.mf-name-grp). Đo DOM: 4 khối header 36px lệch 0, màu đúng, Nội bộ → info:1,time:2,files:3. Spec meeting-form-sections cập nhật + thêm ca gộp khối (--list OK, CHƯA chạy). Thiết kế app 03/05/25/28/33 đã gộp.
+Đang làm dở: —
+Bước tiếp theo: user review web (chưa commit); chạy e2e khi được yêu cầu
+Blocked:

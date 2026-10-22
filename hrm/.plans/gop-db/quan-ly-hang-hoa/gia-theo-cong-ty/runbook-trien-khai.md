@@ -1,5 +1,7 @@
 # Runbook triển khai — Giá theo công ty (một lần, cùng đợt lên production của cả feature)
 
+> 🚩 **PRODUCTION 20/10/2026: dùng runbook tổng `TRIEN-KHAI-PROD-2010.md`** (gộp file này + các file khác, đã rà lại). File này giữ để tra chi tiết / số đo. Luật giá hiện hành: chia sẻ 1·2·3·4, tự quản **7 · 9**.
+
 > Viết 10/10/2026 (G6) sau khi **chạy thử trọn** trên bản sao tạm `hrm_erp_runbook` (dump `--single-transaction` từ `hrm_erp` local,
 > code nhánh chung hrm-api `feat/chuyen-doi-hang-hoa` + G6, MySQL 8.0.43, MacBook local). Bản sao đã DROP sau khi chạy.
 > Không cờ, không đường lui bằng code (design "Đổi 10/10/2026 — BỎ CỜ"): **cách lui duy nhất = khôi phục bản sao lưu bước 1**.
@@ -287,6 +289,9 @@ trang chủ ERP không còn 3 thẻ Yêu cầu hỏi giá / tính giá chờ duy
 - Khói: HRM `/master-data/products/temp` mở được; YCHG có nút "Thêm hàng tạm"; ERP `/admin/tmp_products/{id}/edit` ⇒ trang "Chức năng đã chuyển sang HRM".
 
 ---
+
+> 🆕 17/10/2026: cron áp giá hiệu lực CHUYỂN SANG HRM (`product-price:apply-expected`, chốt chặn theo công ty) — ERP bỏ lịch `product:update_price`.
+> Các bước kiểm cron 4.3 dưới đây thay bằng `cron-gia-hieu-luc/design.md` §7.
 
 # Phần 4 — Dữ liệu cũ ERP (C-f: N65 giá hiệu lực quá hạn + cờ mồ côi, N26 AUTO_INCREMENT) — cùng cửa sổ bảo trì
 

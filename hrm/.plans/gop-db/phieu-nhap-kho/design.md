@@ -16,7 +16,7 @@ này menu (`finance.js:153`) và nút "Tạo phiếu nhập kho" ở màn Đề 
 (SL + vị trí thực, file, vận chuyển, bốc xếp) → Gửi = **ghi tồn kho** → Kế toán kho Không duyệt hoặc lập
 Phiếu nhập hàng (HRM đã có) để hạch toán.
 
-## Phạm vi đề xuất (chờ user chốt Q1)
+## Phạm vi đề xuất ban đầu (đã thay bằng mục "Đã chốt" — Q1 = port hết)
 
 | Port đợt 1 (luồng chính) | Để lại ERP / đợt sau |
 | --- | --- |
@@ -54,7 +54,11 @@ Phiếu nhập hàng (HRM đã có) để hạch toán.
 Ghi tồn kho vật lý dùng chung với ERP (sai 1 cột là lệch tồn mọi màn kho) → bắt buộc đối chiếu song song
 1 phiếu ERP ↔ 1 phiếu HRM từng dòng 8 bảng trước khi bàn giao QA.
 
-## Câu hỏi chờ chốt
+## Đã chốt (user, 2026-10-15)
 
-13 câu ở spec mục 10 — quan trọng nhất: **Q1** phạm vi đợt 1, **Q6** vận chuyển + bốc xếp có port ngay không,
-**Q8** nơi lưu file đính kèm, **Q12** cho tạo `PhysicalStockWriter` dùng chung.
+- **Q1 = Port hết**: luồng chính F1–F10 + In barcode (F11) + Xuất lại / Nhập lại (F12/F13) ngay đợt 1.
+  Vẫn để ERP: F14 Phiếu nhập kho chờ báo thừa thiếu, F15 Phiếu báo hàng thừa thiếu (màn riêng).
+- **Q6** port luôn tab Vận chuyển + Bốc xếp · **Q12** OK tạo `PhysicalStockWriter` dùng chung.
+- **Q8** không cần hỏi hạ tầng: dùng `App\Helper\CmcS3Helper::putFiles(..., 'warehouse_imports')` như Phiếu xuất kho
+  (`Assign/ProductExportController:911`) → ERP đọc lại được.
+- Q2, Q3, Q7, Q9, Q10, Q11, Q13: theo cột "Đề xuất" spec mục 10. Q4/Q5 bị Q1 thay (port thật, không deep-link).

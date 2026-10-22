@@ -1,3 +1,70 @@
+# Bàn giao phiên sau — Chuyển đổi hàng hoá (cập nhật 17/10/2026)
+
+> ⚠️ **TỪ 21/10/2026: đã go-live bằng `gop_db` ⇒ làm thẳng trên checkout chính `ERP-HRM/{HRM/hrm-api,HRM/hrm-client,ERP/TanPhatDev}` nhánh `gop_db` (DB local `hrm_erp_20_10`). KHÔNG dùng worktree `wt-chuyen-doi-hang-hoa` / `wt-erp-2d1` + nhánh chung nữa** — các ghi chú worktree/nhánh chung/giacty bên dưới là lịch sử.
+
+## ⚡ Phiên 19/10/2026 (đọc trước mục 0)
+- **Merge gop_db ⇒ nhánh chung, ĐÃ PUSH** (hrm-api `1523ce0e5`, hrm-client `3abd5c395`, ERP `2ef6ace7b7`). Xung đột giữ phía feat:
+  nhãn "Hãng sản xuất cần duyệt"; ERP HomeController / ProductsController@editPrices / ManufacturesController (bỏ thẻ hàng tạm,
+  cờ giá theo công ty, không ghi lan `products.company_id`); quotation edit giữ cả `erpProductUrl` + N203.
+- **Migration giacty:** đã chạy 2 bản (`2026_10_15_000001_backfill_labor_contract_missions…` hrm-api, `2026_10_14_000000_add_indexes_for_wr_assign_task_wait_list` ERP).
+  **CÒN 24 bản hrm-api (`2026_10_06…` → `2026_10_19_000001_create_company_product_natures_table`) + 3 bản ERP** — user đồng ý chạy nhưng auto mode
+  chặn `migrate` cả loạt ⇒ user tự chạy bằng `! …` hoặc chạy lẻ `--path`. VPS cũng phải chạy khi deploy.
+- **ĐÃ PUSH 20/10** (api `1df5c3997` Duyệt giá + `fcdf728e8` N211 · client `5c6e1b9e8`; merge commit mới của đồng đội ⇒ api `9f48fa8fe` · client `043e36362`; 4 migration `2026_10_19_10000x_add_status_to_{houses,rows,spaces,positions}` CHƯA chạy giacty) — trước đây là sửa chưa commit:
+  1. Màn rộng 100% (bỏ ghim bề rộng): `ProductPriceTable.vue`, `ProductPriceApprovalTable.vue` (giãn cột không dính), `RegulationConfigScreen.vue`
+     (bỏ max-width 1320), `pages/meeting/settings/index.vue` (bỏ max-width 1180). E2E: ca "Màn rộng" ở 2 spec giá + `tests/shared/full-width-config-screens-ui.spec.ts`.
+  2. Duyệt giá bán: +4 cột danh mục (mặc định hiện) + cấu hình cột (`columnCustomizationMixin`, key `master_data_product_price_approvals`,
+     3 cột dính khoá) + xuất Excel khuôn chung (popup chọn trường + `GET product-price-approvals/export-rows`, gộp ô theo yêu cầu).
+     Route `/export` cũ đã bỏ; **`Exports/ProductPriceApprovalExport.php` còn giữ** vì `InternalPricePolicyController` dùng `headerUrlOf` — hỏi user có chuyển hàm để xoá file không.
+     PHPUnit `ProductPriceApprovalApiTest` 28/28 xanh. E2E: sửa A2 (17/19 cột) + 2 ca mới (Cấu hình cột, Xuất Excel) — CHƯA CHẠY bộ e2e.
+     ⚠️ Khuôn xuất chung tải blob ⇒ lỗi tên file Safari quay lại cho màn này (đã báo user).
+  3. Nhãn ô lọc cấp 2 "Nhóm công nghệ" ⇒ "Nhóm chức năng" ở `pages/finance/product-prices` + `product-price-approvals` (nhãn tự đặt trong mockup 09/10).
+     Mockup + 4 script SRS giữ nguyên theo user; chú thích BE `ProductPriceListService.php:223` còn chữ cũ.
+- ✅ **20/10: kiểm Playwright MCP 3 phần trên (worktree 3031/8031)**: Duyệt giá 19 cột, 0 ô lệch tiêu đề, 3 cột dính đứng yên khi cuộn,
+  tiêu đề 1 dòng; popup cấu hình 19 cột (khoá 3; Esc KHÔNG đóng — bấm Huỷ); xuất Excel: BE thật trả đúng tiêu đề, 0 dòng ⇒ toast
+  "Không có dữ liệu"; chặn `export-rows` 3 dòng ⇒ file `duyet_gia_ban_TPE_20102026.xlsx`, gộp A3:A4/B3:B4/E3:E4, có khối ký.
+  6 màn rộng 100% ở 2560 (el = inner, max-width none, không cuộn ngang). Không còn chữ "Nhóm công nghệ" trên 2 màn giá.
+  giacty KHÔNG có yêu cầu duyệt nào ⇒ ô dữ liệu kiểm bằng dữ liệu chặn API.
+- ✅ **20/10 (user "làm"):** chuyển `headerUrlOf` ⇒ `InternalPricePolicyExport`, XOÁ `Exports/ProductPriceApprovalExport.php` (PHPUnit
+  InternalPricePolicy 19/19; tinker dựng file xuất OK). **N211** sửa xong (xem `viec-con-lai.md`). Spec e2e sửa 2 giả định cũ: ca "Màn rộng"
+  Duyệt giá đo ở 2880 (19 cột = 2402px > vùng cuộn 2246 ở 2560) · N1 Cập nhật giá "3 chức năng" (role noperm 0 quyền ⇒ 3 mục không gate).
+  e2e chạy cần Node 20 (`~/.nvm/versions/node/v20.20.1/bin`) — shell mặc định Node 12.
+- Quyền "Xem giá vốn hàng hoá" (1092, nhóm Báo giá) theo công ty trên vai trò — giacty: công ty 3 chưa vai trò nào có.
+- **Khảo sát YCHG — PTKD duyệt theo QUYỀN, không theo phân công** (chỉ đọc code, chưa đổi gì):
+  - ERP `gop_db` (`PriceAskingRequest::canApprove`): trạng thái Chờ PTKD + quyền "PTKD duyệt yêu cầu hỏi giá" (`canInCompany`, Super Admin qua)
+    + **phạm vi xem** (tổng công ty › công ty › phòng quản lý › bộ phận › phiếu của mình).
+  - HRM (`PriceAskingAccess::canPtkd`): trạng thái 2 + quyền tại công ty, **không giới hạn phạm vi xem** (Q19), không bypass Super admin.
+    ⇒ lệch phạm vi giữa ERP và HRM; user chưa chốt có bám lại ERP không.
+  - Phân công phụ trách hãng (`AssignHistory`) chỉ dùng cho XNK trong YCHG (tab XNK duyệt, `isAssignedBuyer`, thông báo khi PTKD duyệt);
+    ngoài ra dùng rộng ở khối Mua hàng/XNK ERP (đặt hàng, HĐ mua, hoá đơn, hàng về, tờ khai, bảo hành hãng, hàng tạm, thẻ trang chủ).
+  - Lỗi ERP ghi nhận: `approve()` lưu trạng thái "Chờ XNK duyệt" TRƯỚC khi kiểm phân công ⇒ chưa phân công vẫn đổi trạng thái dù báo lỗi.
+
+> Đọc mục này trước. Checklist tổng: `viec-con-lai.md` (bảng A + "Chốt nghiệp vụ 16/10 (tối)" + "Chốt 17/10"). Plan đợt lỗi: `ngoai-luong/loi-srs-1610-plan.md` (Kết quả Lượt 1–3, N203/N179, N205, N207).
+
+## 0. Trạng thái code 17/10
+| Repo | Nhánh chung | Commit | Push |
+|---|---|---|---|
+| hrm-api | `feat/chuyen-doi-hang-hoa` | `dbd9ebbb2` | ✅ đã push (gồm merge `develop` của đồng đội 16/10 — CHỦ Ý, code HĐ HRM mới) |
+| hrm-client | `feat/chuyen-doi-hang-hoa` | `862ea0ef6` | ✅ đã push |
+| ERP | `feat/2d1-erp-khong-loi` | `af4e31d0dd` | ✅ đã push 17/10 (gồm N210) |
+Cây sạch, không nhánh con dở. Server dev đang chạy: API 8031 (PID 29073), Nuxt 3031 (PID 29207). DB giacty đã chạy thêm 2 migration `2026_10_16_000001/000002` (payment_conditions) + seeder 8 dòng.
+
+## 1. Việc tiếp theo
+0c. ✅ 18/10 **Test VPS dev cron giá OK** (áp + nhật ký + lịch sử + chuông) — kết quả + việc còn mở: `cron-gia-hieu-luc/design.md` §8–9. Còn test bước 5 (chốt chặn) + 6 (quyền) trên VPS.
+0b. 🆕 18/10: **Người nhận thông báo theo quyền tại công ty** (phát hiện khi test VPS: vai trò gán ở Cty 1, quyền tick ở Cty 3 ⇒ không nhận thông báo Cty 3). Sửa 10 chỗ / 8 file hrm-api (bỏ lọc employee_has_roles.company_id ở 9 hàm "quá chặt" — ProductPriceNotifier, PriceAskingNotifier, EmployeeInfoService::listEmployeeInfoHasPermission (34 nơi gọi) + listEmployeeInfoByPermissionAndDepartment, RequestSolutionController, NotifyRequestSolutionDeadlineCommand, HandoverService, QuotationService::bgdApproverInfoIds, PermissionHelper::allEmployeeInfoHasPermission; thêm lọc role_has_permissions.company_id cho listEmployeeInfoByPermission "lỏng quá"). User chốt: sửa trên nhánh chung hàng hoá. Nhánh `feat/cdhh-nguoi-nhan-thong-bao-theo-quyen` (`42d1291e2`) ĐÃ MERGE nhánh chung + PUSH 18/10 ⇒ hrm-api `518cb1b62`. Test `tests/Feature/PermissionHolderAcrossCompanyTest.php` (đỏ trên code cũ 3/3, xanh sau sửa).
+0a. 🆕 17/10 tối: **Chuyển cron áp giá hiệu lực ERP ⇒ HRM** — ĐÃ MERGE nhánh chung + PUSH 17/10 (api `bb2129b10` · client `963cd8887` · ERP `226a62c0b7`, gồm cả tick bỏ mã); các bước VPS: đầu `deploy-dev-server.md` (U0–U9); migration bảng nhật ký đã chạy giacty. Xem `cron-gia-hieu-luc/design.md` §6–7.
+0. 🆕 17/10 chiều: **Tick bỏ mã ở YCTG/PTG** (đảo T4-Q1) — ĐÃ MERGE nhánh chung + PUSH 17/10 (cùng commit 0a); nhánh con `feat/cdhh-tick-bo-ma-yctg` (api `08e988b2e` · client `500a46c4e`), CHƯA merge nhánh chung; migration `2026_10_17_000001` đã chạy giacty. Chi tiết + kết quả kiểm: `luong-tinh-gia/khao-sat-duyet-tung-ma-erp-1710.md` §9. Chờ user cho merge về nhánh chung.
+1. **18/10: Q1 = Chia 2 (đã chốt); Q2: file 17/10 đã rà (cây nhập được), đã xuất `hang-can-gan-loai-sp-C-D-1810.xlsx` — chờ user điền Loại SP cho nhóm c+d** · 19/10: user "xử lý 4 cấp trước, nhóm để sau" ⇒ cây 4 cấp ĐÃ IMPORT DB local giacty (catalog-import/README.md); gán Loại cho hàng TẠM GÁC ⇒ rồi hỏi tiếp Q2–Q5. (Cũ:) **Đang hỏi dở: Q1–Q5 bỏ Nhóm hàng hoá** (`catalog-import/de-xuat-bo-nhom-hang-hoa.md` §6). Câu đang hỏi Q1 — đề xuất "Chia 2": cùng go-live làm bước 1 (gán Loại SP cho hàng) + A (VAT dự phòng, ngày tồn lâu sang Loại SP) + D (~30 báo cáo ERP INNER JOIN `groups` — hàng mới HRM không nhóm sẽ biến mất); đợt sau làm B/C/E/F. Hỏi lần lượt Q1→Q5. **17/10 (chiều): user hoãn Q1 lần 2 — ưu tiên sửa lỗi user đang ghi trước, hỏi lại Q1 sau.**
+2. ~~Push ERP~~ ✅ đã push 17/10.
+3. Tồn còn mở (bảng A `viec-con-lai.md`): N209 (nhẹ, Sửa Giữ hàng loại 1–5 hiện giá đã lưu) · N105 · N151–N154 · N158 · N161 · cần ghi DB: N164 (provision lại role e2e), N206 (P7/N2 spec cần gắn role công ty khác), N192 (chép giá HP trên VPS test). Để ngoài feature: N204, N208.
+4. Đề nghị đã đưa, chưa trả lời: thêm ca PHPUnit cố định "Cty A tạo giá hiệu lực ⇒ Cty B không thấy" vào `ProductPriceScreenApiTest` (đã chạy ca tạm trong scratchpad: ĐẠT).
+5. Spec e2e đã sửa/thêm nhiều màn (ngoài git) — CHƯA chạy bộ nào; chạy khi user yêu cầu (`--workers=1`, worktree 3031/8031).
+6. Trước deploy: gán quyền "Xem phiếu yêu cầu đặt hàng trong nước theo tổng công ty" (N160) + 2 migration payment_conditions + seeder.
+
+## 2. Điều kiện CHẶN go-live (giữ nguyên): B6 cây phân loại · B5 Đặc tính (chờ nghiệp vụ sửa file `can-sua-cay-phan-loai-1610.xlsx`) · B1 · B2 · B4 · dọn hàng tạm ERP chờ duyệt · gán quyền nghiệp vụ. Runbook `gia-theo-cong-ty/runbook-trien-khai.md` + `deploy-dev-server.md`.
+
+---
+# (Bản cũ 13/10 bên dưới — tham khảo)
+
 # Bàn giao phiên sau — Chuyển đổi hàng hoá (ghi 13/10/2026)
 
 > Đọc file này + mục "ĐIỂM DỪNG 13/10" đầu `SO-CHOT-VA-TON.md` trước khi làm tiếp. Checklist tổng: `viec-con-lai.md`.
