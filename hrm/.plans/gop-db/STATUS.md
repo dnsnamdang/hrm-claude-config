@@ -114,6 +114,9 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Bước tiếp theo: deploy VPS dev theo các bước đã gửi user 21/10 (gói SQL `catalog-import/golive-2010/golive-2010-sql.tar.gz`); spec e2e đã sửa (HRM/e2e) CHƯA chạy;
   kiểm UI màn Cập nhật giá cho quy tắc giá sàn (màn đang bị ẩn ở Cài đặt phân hệ trên local); còn mở: N214 phương án 3, CODE bỏ Nhóm hàng, lệch menu (a)–(g).
   Blocked:
+- nhap-kho-con-lai → @junfoke → .plans/gop-db/nhap-kho-con-lai/plan.md (design: .plans/gop-db/nhap-kho-con-lai/design.md)
+  Port 4 màn ERP "Kho › Nhập kho" còn lại: chờ báo thừa thiếu, phiếu báo thừa thiếu, nhập kho điều chỉnh kiểm kê, nhập lại điều chỉnh sai số liệu. Bắt đầu 22/10/2026, nhánh `feat/kho-nhap-kho-con-lai` (cả 2 repo, từ develop).
+  Trạng thái: 🟡 Phase 1 (2 màn thừa thiếu) + Phase 2 (nhập kho điều chỉnh kiểm kê) XONG, đã commit 22/10 (chưa merge develop) — PHPUnit 12/12 + 9/9 + bấm thật. Kèm: chuyển màn ĐNNK sang `/warehouse/import-requests`. Tiếp: Phase 3 nhập lại.
 
 - danh-muc-kho → @junfoke → .plans/gop-db/danh-muc-kho/plan.md (design: .plans/gop-db/danh-muc-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-19-danh-muc-kho-design.md)
   Port 7 màn ERP "Danh mục → Kho" sang phân hệ Danh mục chung, nhóm "Kho" (bỏ Nhóm kho, bỏ đồng bộ CRM, 1 quyền "Quản lý kho"). Bắt đầu 19/10/2026; code nằm ở nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, user chỉ định — chuyển từ `feat/warehouse-catalogs`, chưa commit).
