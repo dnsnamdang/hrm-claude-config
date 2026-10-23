@@ -77,6 +77,12 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
+  Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.
+  Scope: cho sửa %VAT dòng hàng (2 số lẻ) trên PI trong nước (theo hãng + tự do) và HĐ `inland_buy_contract_new`, tính lại VAT/tổng. Nhập khẩu chưa làm (chờ BA — không có %VAT theo dòng).
+  ⚠️ GOTCHA: trước đây màn sửa PI luôn ghi đè %VAT theo DM hàng hóa — đã đổi thành chỉ lấy DM cho dòng mới.
+  Spec: docs/superpowers/specs/gop-db/2026-10-22-mua-hang-sua-vat-pi-hd-design.md | Tóm tắt: .plans/gop-db/mua-hang-sua-vat-pi-hd/design.md
+
 - the-kho → @khoipv → .plans/gop-db/the-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-22-the-kho-design.md)
 
 - quan-ly-hang-hoa / **Sau go-live 20/10 — làm thẳng trên `gop_db`** (bỏ worktree + nhánh chung) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/viec-con-lai.md (mục 21/10 + 22/10)
@@ -116,7 +122,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Blocked:
 - nhap-kho-con-lai → @junfoke → .plans/gop-db/nhap-kho-con-lai/plan.md (design: .plans/gop-db/nhap-kho-con-lai/design.md)
   Port 4 màn ERP "Kho › Nhập kho" còn lại: chờ báo thừa thiếu, phiếu báo thừa thiếu, nhập kho điều chỉnh kiểm kê, nhập lại điều chỉnh sai số liệu. Bắt đầu 22/10/2026, nhánh `feat/kho-nhap-kho-con-lai` (cả 2 repo, từ develop).
-  Trạng thái: 🟡 Phase 1 (2 màn thừa thiếu) + Phase 2 (nhập kho điều chỉnh kiểm kê) XONG, đã commit 22/10 (chưa merge develop) — PHPUnit 12/12 + 9/9 + bấm thật. Kèm: chuyển màn ĐNNK sang `/warehouse/import-requests`. Tiếp: Phase 3 nhập lại.
+  Trạng thái: 🟡 Phase 1 (2 màn thừa thiếu) + Phase 2 (nhập kho điều chỉnh kiểm kê) XONG, đã commit 22/10 (chưa merge develop) — PHPUnit 12/12 + 9/9 + bấm thật. Kèm: chuyển màn ĐNNK sang `/warehouse/import-requests`. Phase 3 nhập lại TẠM DỪNG (23/10) — chờ BE Phiếu xuất kho của @nguyentrancu97.
 
 - danh-muc-kho → @junfoke → .plans/gop-db/danh-muc-kho/plan.md (design: .plans/gop-db/danh-muc-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-19-danh-muc-kho-design.md)
   Port 7 màn ERP "Danh mục → Kho" sang phân hệ Danh mục chung, nhóm "Kho" (bỏ Nhóm kho, bỏ đồng bộ CRM, 1 quyền "Quản lý kho"). Bắt đầu 19/10/2026; code nằm ở nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, user chỉ định — chuyển từ `feat/warehouse-catalogs`, chưa commit).

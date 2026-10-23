@@ -55,7 +55,17 @@
       Chi tiết → In → Sửa → hộp xác nhận Gửi duyệt (Hủy) → Lưu → In danh sách → 404. Gửi duyệt THẬT (ghi tồn) chỉ kiểm bằng
       PHPUnit để không đổi tồn local. Dữ liệu thử đã dọn.
 
-## Phase 3 — Phiếu nhập lại điều chỉnh sai số liệu (chưa làm)
+## Phase 3 — Phiếu nhập lại điều chỉnh sai số liệu (TẠM DỪNG 23/10 — chờ BE Phiếu xuất kho)
+
+- Chặn: màn Phiếu xuất kho HRM (`/finance/warehouse-exports`, @nguyentrancu97) mới có FE (20/10); BE `assign/warehouse-exports`
+  list/show/cancel/deny CHƯA có trên nhánh nào (develop, gop_db) ⇒ chưa có nguồn PXK status 4, chưa có chỗ gắn nút. User chốt chờ.
+- Khảo sát xong (ERP `WarehouseReImportsController` + `WarehouseReImport`): tạo từ PXK status 4 (người lập / Super Admin) →
+  copy lô + chi tiết lô + tabs → `updateWarehouse` cộng lại tồn 8 bảng dùng lại lô cũ (log type NHAP_THUONG, objectable
+  WarehouseReImportLot / LotDetail) → PXK 5; phiếu nhập lại status 2 "Chờ xuất lại". "Tạo phiếu xuất lại" = `WarehouseExportsController::
+  reExport/reExportStore` (:1482-1920) sinh PXK mới → reimport 1 "Đã xuất lại", PXK cũ 6. Không sửa/xoá. Mã `PNL-`. In ERP hỏng
+  (thiếu hằng PHIEU_NHAP_LAI). Phạm vi `FilterDepartmentHelper::applyFilterWithCreatedBy`.
+- Khuôn HRM đối xứng sẵn có: `WarehouseReExportService` (PNK Không duyệt → xuất lại → nhập lại).
+- Local 23/10: 24 phiếu nhập lại (đều Đã xuất lại), 0 PXK status 4/5.
 
 ## Checkpoint — 2026-10-22
 
