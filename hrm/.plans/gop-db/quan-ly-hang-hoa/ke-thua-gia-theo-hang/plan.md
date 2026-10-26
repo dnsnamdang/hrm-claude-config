@@ -214,3 +214,8 @@ Bước tiếp theo: push khi user cho phép; deploy prod = 2 migration + permis
 Blocked: —
 
 - 24/10/2026: đã push lên origin/gop_db (đi kèm push của session popup ảnh hàng hoá) — hrm-api 7c943033c (merge 2169b460e), hrm-client 1ab0006b6 (merge 0113bddb6). Còn lại: deploy prod (2 migration + permission:sync + gán quyền).
+
+## Bổ sung 26/10/2026 (user cho phép từng việc)
+
+- [x] Lệnh chỉ đọc `product-price:compare-inherited` (`Console/CompareInheritedPricesCommand.php` + đăng ký provider): so bộ giá công ty kế thừa với công ty tạo mã (6 cột chép × ĐVT × loại giá, thiếu dòng, cờ chờ duyệt, giá hiệu lực chờ áp); `--company`, `--csv`. Kiểm trong transaction rollback trên dump prod: TPSG chưa chép 30 mã lệch / 29.221 (5 s), chép xong 0, sửa tay ⇒ bắt đúng.
+- [x] Màn cài đặt: khối "Hướng dẫn" thu gọn được (7 dòng) + dải cảnh báo khi chế độ 2 + danh sách trống; hộp xác nhận có khối "Lưu ý" ở ĐẦU (toàn bộ hãng, áp ngay, N mã không sửa giá được, huỷ N yêu cầu duyệt giá, số mã > 5.000 lưu lâu) + hãng đổi do đổi chế độ chỉ nêu 10 hãng nhiều mã nhất, còn lại gộp 1 dòng. BE `preview` trả thêm `pending_approvals`. Playwright MCP (TPE, quyền tạm đã gỡ) + e2e M4.

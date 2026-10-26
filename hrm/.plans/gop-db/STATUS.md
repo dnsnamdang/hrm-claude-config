@@ -531,8 +531,8 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Trạng thái (wrap up 26/10/2026): **Phase 8 + đợt 25–26/10 ĐÃ PUSH gop_db 26/10** (merge api `12dfba4f6`, client `7ee73ddff`) —
   api `dab856446` · client `55801d64c` (fix hub sập) + `e9238bbfc`. Phase 5 đã làm: check-in/check-out (popup phiếu +
   form Meeting), tự huỷ khi không check-in (cờ mặc định TẮT), tự hoàn thành khi hết giờ, QR in dán + QR xoay vòng
-  + link máy tính bảng (đợt A, B) + **đợt C trang kiosk `/meeting/kiosk/<mã>` (26/10, CHƯA commit, e2e kiosk viết chưa chạy)**.
-  Còn: **đợt D màn quét QR trong TPE_APP**, đặt lặp định kỳ;
+  + link máy tính bảng (đợt A, B) + **đợt C trang kiosk `/meeting/kiosk/<mã>` (26/10, commit api `85c566ad2` client `04d57273b`, chưa push; e2e 146+89 xanh)**.
+  + **đợt D màn quét QR trong TPE_APP (26/10, nhánh `feature/meeting-room-qr-scan` commit `262dea3` chưa push; đã kiểm máy ảo + iPhone thật 26/10 đạt)**. Còn: đặt lặp định kỳ;
   Phase 6 (báo cáo) chưa mở. E2E toàn bộ 15 spec phòng họp xanh (26/10).
   ⚠️ Deploy: 2 migration mới `2026_10_26_000001`, `2026_10_26_000002` + cron `schedule:run` (2 lệnh mới mỗi phút);
   tắt key `meeting::Danh mục::Dịch vụ phòng họp` ở Cài đặt phân hệ trên prod — đủ ở checkpoint cuối plan.md.

@@ -32,3 +32,8 @@ Bỏ nguyên tắc **không hỏi giá chéo giữa các công ty**, cho phép k
 | Q11 | Đổi Kế thừa ⇒ Tự XD | **Giữ giá cuối thành giá riêng**, ngừng đồng bộ; YCHG tách đang chạy vẫn chạy, áp giá chỉ cho công ty quản lý + công ty còn kế thừa |
 | Q12 | Quyền | **Quyền mới riêng** "Cài đặt giá bán theo hãng" (nhóm Tài chính, id mới, seeder riêng) |
 | Q13 | Cách cài | **Chế độ + danh sách ngoại lệ**: "Chọn hãng tự xây dựng" (mặc định kế thừa, danh sách = tự tính) / "Chọn hãng kế thừa" (mặc định tự tính, danh sách = kế thừa). Chưa cài = "Chọn hãng kế thừa" + rỗng. Đổi chế độ hỏi xác nhận số hàng đổi giá (Q10/Q11) |
+
+## Xác nhận sau go-live code (26/10/2026)
+
+- **Q13 giữ nguyên 2 chế độ.** Cách dùng thật: TPSG, TPHP, TPV kế thừa 100% ⇒ "Chọn hãng tự xây dựng" + danh sách rỗng (hãng mới tự kế thừa); các công ty khác "Chọn hãng kế thừa" + vài hãng.
+- **Q2 giữ nguyên:** nguồn giá = công ty tạo mã (công ty quản lý mã hàng), KHÔNG cố định TPE. Vd TPHP nhận giá TPSG cho 1.054 mã TPSG tạo, giá EG cho 1.967 mã EG tạo (số liệu dump prod 21/10).

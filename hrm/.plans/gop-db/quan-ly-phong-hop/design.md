@@ -196,3 +196,11 @@ Bổ sung vào 11 quyết định chốt lúc brainstorm ở trên. Chi tiết +
 - QR: mỗi phòng 1 mã in dán cố định; phòng có máy tính bảng ⇒ chỉ nhận QR xoay vòng 30s. 1 mã cho cả vào/ra (hệ thống
   tự đề xuất + hỏi xác nhận). Quét bằng **app TPE_APP**. Máy tính bảng = **trang web kiosk** (+ Fully Kiosk Browser),
   xác thực bằng mã thiết bị riêng từng phòng. Quản lý mã = quyền Khai báo phòng họp (không thêm quyền).
+- 26/10/2026 — **Đặt lặp định kỳ TẠM BỎ** (user chốt). Cột `meeting_room_bookings.recurrence_id` giữ nguyên, chưa dùng.
+- 26/10/2026 — **Phase 6 báo cáo làm SAU**, khi các chức năng mới đã xong + test hết (user chốt).
+- 26/10/2026 — **Thiết kế lại màn kiosk máy tính bảng** — mockup CHỐT `mockup/kiosk-tablet.html` (user chốt):
+  font **Nunito** (như app) + **tông xanh HRM** (nền `layouts/system.vue` màn chọn phân hệ, khối kính trắng mờ); 4 khối
+  Đang diễn ra · Sắp diễn ra (cuộc gần nhất chưa bắt đầu, đếm ngược) · Kế tiếp (cuộc ngay sau) · Lịch hôm nay; QR góc phải.
+  Cuộc đang diễn ra hiện thêm **Chủ trì** + **Người tham gia** (tên + chức vụ chữ nhỏ dưới tên). Họp **có đối tác** chia
+  2 phía **Công ty | Đối tác** (tên công ty đối tác, avatar viền cam), chủ trì đứng đầu phía Công ty. ⚠️ Thay quyết định
+  "kiosk chỉ Tiêu đề + Chủ trì + Giờ": danh sách người tham gia (cả phía đối tác) hiện trên trang công khai.

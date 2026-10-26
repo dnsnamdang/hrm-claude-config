@@ -4420,8 +4420,100 @@ Deploy: không migration; không thêm cron. Đi cùng 2 middleware FE dùng chu
 
 ## Đợt D (26/10/2026) — TPE_APP: màn quét QR check-in / check-out phòng họp (user "Làm" kèm phạm vi)
 Repo TPE_APP (Flutter, nhánh develop) — theo `TPE_APP/CLAUDE.md`. Không đụng hrm-api/hrm-client/DB.
-- [ ] D1 — `pubspec.yaml` thêm `mobile_scanner` + `make get` + `pod install`.
-- [ ] D2 — `MeetingApiService.scanRoomQr()` / `confirmRoomQr()` (`meeting/room-bookings/scan`, `scan/confirm`).
-- [ ] D3 — Màn `lib/ui/meeting/meeting_room_scan/` (camera → hộp xác nhận → kết quả / lý do lỗi) + route + `make gen`.
-- [ ] D4 — Nút "Quét QR" ở thanh tiêu đề tab Phòng họp.
-- [ ] D5 — `dart analyze` + kiểm trên máy ảo iPhone (Mobile MCP).
+- [x] D1 — `pubspec.yaml` thêm `mobile_scanner` + `make get` + `pod install`.
+- [x] D2 — `MeetingApiService.scanRoomQr()` / `confirmRoomQr()` (`meeting/room-bookings/scan`, `scan/confirm`).
+- [x] D3 — Màn `lib/ui/meeting/meeting_room_scan/` (camera → hộp xác nhận → kết quả / lý do lỗi) + route + `make gen`.
+- [x] D4 — Nút "Quét QR" ở thanh tiêu đề tab Phòng họp.
+- [x] D5 — `dart analyze` + kiểm trên máy ảo iPhone (Mobile MCP).
+
+### Checkpoint — 26/10/2026 (Đợt D xong, CHƯA commit)
+Vừa hoàn thành: Đợt D — TPE_APP màn quét QR (repo TPE_APP, nhánh develop).
+- `pubspec.yaml`: `mobile_scanner: 7.4.2` (ghim cứng như các package khác); `pod install` xong. Quyền camera 2 nền tảng có sẵn.
+  Cảnh báo bảo mật khi `pub get` là của `dio 4.0.1` có từ trước, không phải package mới.
+- `MeetingApiService.scanRoomQr()` / `confirmRoomQr()`.
+- Màn mới `lib/ui/meeting/meeting_room_scan/meeting_room_scan_page.dart` (khuôn StatefulWidget của phân hệ Meeting): camera chỉ
+  đọc QR, `noDuplicates`; mã không bắt đầu `TPEROOM1:`/`TPEROOM2:` ⇒ snackbar, không gọi API; mã đúng ⇒ `scan` ⇒
+  `showAppConfirm` (phòng · mã + tiêu đề phiếu · giờ; check-out thêm giờ đã check-in + câu "nhả phòng ngay"), nút = đúng chữ
+  BE (`Check-in`/`Check-out`) ⇒ `scan/confirm` ⇒ snackbar thành công + quay về tab Phòng họp (nạp lại). Lỗi BE ⇒ `AppDialog` hiện
+  nguyên văn lý do + Đóng / Quét lại. Không có quyền camera ⇒ câu báo + "Mở cài đặt" (ẩn khung ngắm). Đèn flash chỉ hiện khi có.
+  Bản debug: nhấn giữ dòng hướng dẫn để GÕ mã (máy ảo không có camera, app không đọc được clipboard do công cụ ngoài ghi).
+- Route `MeetingRoomScanRoute` (app_router.dart + `make gen`; trả `course_info.freezed.dart` bị gen ghi đè ngoài phạm vi);
+  nút `qr_code_scanner` (AppBarGlassButton) trên header tab Phòng họp, cạnh chuông.
+- Kiểm: `dart analyze lib` 0 error. Máy ảo iPhone 18 Pro, flavor `tpeLocal`, tài khoản `e2e_assign_nocost` (dữ liệu `KT-QR-APP` đã
+  dọn): từ chối quyền camera ⇒ câu báo + Mở cài đặt; mã lạ ⇒ snackbar; mã dán ⇒ hộp Check-in ⇒ Hủy (quay lại quét, không lỗi)
+  ⇒ Check-in (DB `checkin_at`) ⇒ quét lại ⇒ hộp Check-out ⇒ DB status 5 + `checkout_at`, thẻ phòng về "Trống" ⇒ quét lần 3 ⇒
+  hộp lý do 404 ⇒ Đóng về tab. Camera thật + mã xoay vòng trên kiosk CHƯA thử (cần điện thoại thật).
+- Sửa trong lúc kiểm: (1) app_router.dart thiếu import trang mới ⇒ build lỗi; (2) khung ngắm vẽ đè câu báo thiếu quyền camera;
+  (3) hộp nhập debug dispose controller sớm ⇒ assertion `_dependents.isEmpty`.
+- TPE_APP còn thay đổi CHƯA commit của người khác từ trước (`.claude/settings.json`, `ios/Podfile`, `project.pbxproj`, `CLAUDE.md`) —
+  không đụng; khi commit Đợt D chỉ add đúng file của đợt này.
+Đang làm dở: không.
+Bước tiếp theo: thử camera thật trên điện thoại (QR dán + QR xoay vòng của kiosk); sau đó đặt lặp định kỳ / Phase 6 báo cáo — chờ user.
+Blocked: —
+
+### Ghi nhận ngoài luồng (26/10, KHÔNG sửa trong đợt này)
+- [x] ⚠️ BẢO MẬT (user "Làm — 5 model" 26/10): `GET v1/users/auth/user-profile` trả `employee_data.password` (hash bcrypt) +
+  `remember_token`. Đã thêm `protected $hidden = ['password', 'remember_token']` vào 5 model bảng `employees` (hrm-api gop_db, CHƯA
+  commit): `Modules/Timesheet/Entities/Employee`, `app/Models/Employee`, `Modules/Human/Entities/Employee`,
+  `Modules/Human/Entities/TpEmployee`, `app/Models/TpEmployeeData` (`TpEmployee`/`TpEmployee2` đăng nhập đã có sẵn). Kiểm:
+  user-profile 0 trường lộ, các khối khác giống hệt trước; login OK + response không chứa `$2y$`; `->password` vẫn đọc được,
+  `Hash::check` OK (đổi mật khẩu / sync CRM / UpdatePass đọc thuộc tính, không qua JSON); cả 5 model `toJson()` sạch; web mở
+  `/meeting/rooms` bằng namdangit: store có nhân viên + 649 quyền, 0 toast lỗi. Web + app không đọc 2 trường này (app có
+  `@Default('')`). Prod đang lộ tới khi deploy bản này.
+- [x] App tab Meeting › Tổng quan báo "Item Not Found!" trên local — ĐÃ RÕ, KHÔNG phải lỗi code: app gọi `GET v1/assign/meeting/overview`,
+  route này (cùng `mine`, `MeetingMineCriteria`, `MeetingMineResource`) nằm ở commit hrm-api `2f543d6b4` (Manh Cuong 23/10,
+  "meeting cho app") — CHỈ có trên `origin/develop`, chưa vào `gop_db`. API local chạy `gop_db` ⇒ `/overview` rơi vào wildcard
+  `{meeting}` ⇒ ModelNotFound ⇒ "Item Not Found!". Đo 26/10: develop đi trước gop_db 103 commit (83 nguyentrancu97, 11 khoipv,
+  6 Tri Lee, 6 Manh Cuong), gop_db đi trước develop 5 commit (gồm Đợt A/B phòng họp `dab856446`). ⇒ Kiểm app TPE_APP (nhánh develop
+  trở đi) cần API chạy từ hrm-api develop, hoặc chờ develop ↔ gop_db được merge (việc của team, chưa hỏi).
+
+### Ghi chú 26/10/2026 — Đợt D đã commit (user chọn "Commit tất cả 11 file")
+TPE_APP nhánh mới `feature/meeting-room-qr-scan` (tách từ develop `331f51b`), commit `262dea3`, CHƯA push. Gồm code Đợt D + phần có
+sẵn từ trước: `ios/Podfile` + `project.pbxproj` (bỏ loại arm64 cho máy ảo — trước ghi "không commit", user chốt commit cùng),
+`.claude/settings.json` (bỏ đường dẫn máy khác, giữ lệnh fvm/make), `CLAUDE.md`. ⚠️ Merge vào develop: kiểm lại build release
+iOS vì Podfile đổi cấu hình EXCLUDED_ARCHS.
+
+### Ghi chú 26/10/2026 — Đặt lặp định kỳ: TẠM BỎ (user chốt "tạm bỏ lại case lặp lịch")
+Chưa brainstorm, chưa code. Bảng/cột `recurrence_id` có sẵn trên `meeting_room_bookings` (Phase 1) để nguyên, không dùng.
+Mở lại khi user yêu cầu. Việc còn lại của feature: Phase 6 báo cáo hiệu quả sử dụng · thử camera thật (app) · commit việc đang treo.
+
+### Ghi chú 26/10/2026 — Phase 6 báo cáo: LÀM SAU (user chốt)
+Điều kiện mở: làm xong + test hết các chức năng mới (check-in/out, tự huỷ, QR, kiosk, app quét QR) rồi mới làm báo cáo
+`/meeting/report/room-usage` (spec §9.5, quyền "Xem báo cáo hiệu quả sử dụng phòng họp" đã có). Chưa có mockup — khi mở thì dựng
+mockup theo skill `report-styles` trước.
+Còn phải test trước khi mở báo cáo: e2e `meeting-room-kiosk.api` + `meeting-room-kiosk.spec` (viết, CHƯA chạy) · chạy lại toàn bộ
+bộ e2e phòng họp sau Đợt C + vá `$hidden` Employee · camera thật trên điện thoại (QR dán + QR xoay vòng kiosk).
+
+### Checkpoint — 26/10/2026 (test lại toàn bộ trước báo cáo — mục 1 + 2, user "làm 1-2 trước")
+- Mục 1: `meeting-room-kiosk.api` 5/5 · `meeting-room-kiosk.spec` 5/5 (cả ca dọn). Sửa SPEC K1: so `message` sau khi parse JSON
+  (BE escape tiếng Việt `ô…`, so chuỗi thô luôn trượt) — không phải lỗi app.
+- Mục 2: chạy lại TOÀN BỘ bộ e2e phòng họp sau Đợt C + vá `$hidden` Employee, `--workers=1 --retries=0`:
+  API 9 file **146 passed** (4.8m) · UI 8 file **89 passed** (15.4m); 0 failed / 0 did not run / 0 flaky. Rác `E2E-%` trên DB = 0.
+- Còn trước khi mở Phase 6: mục 3 — camera thật trên điện thoại (QR dán + QR xoay vòng kiosk), cần user.
+
+### Checkpoint — 26/10/2026 (mục 3 — camera thật trên iPhone: ĐẠT)
+- TPE_APP nhánh `feature/meeting-room-qr-scan`: pull develop `8d3c940` + merge (commit `e6f0de4`, 0 xung đột; `pub get` + `make gen`
+  không đổi gì; `dart analyze lib` 0 error). `build_config.dart`: tpeLocal đọc `--dart-define=APP_API_BASE_URL` (hằng có sẵn chưa dùng),
+  rỗng thì giữ 127.0.0.1 — CHƯA commit (user: commit khi báo).
+- Cài release lên iPhone 14 Pro Max (team ký `54UWG4H5CH`, cần đăng nhập Xcode + bật Developer Mode), API `artisan serve
+  --host=0.0.0.0 --port=8001` (đã tắt sau khi thử).
+- User thử 6 mục; đối chiếu DB: QR dán (1442) check-in 17:32:55 → check-out 17:33:06 = Hoàn thành; QR xoay vòng kiosk (1443)
+  check-in 17:23:15 → check-out 17:31:42 = Hoàn thành; mã kiosk chụp quá 2 phút báo hết hạn (user xác nhận). Lượt báo "đúng" đầu
+  tiên DB chưa có QR dán ⇒ cho thử lại đúng ảnh mới chốt. Dữ liệu `KT-CAM` + thông báo đã dọn.
+⇒ Điều kiện mở Phase 6 (chức năng mới xong + test hết) ĐÃ ĐỦ. Việc kế: commit việc đang treo trên gop_db, rồi Phase 6 (mockup trước).
+
+### Checkpoint — 26/10/2026 (commit việc đang treo — CHƯA push)
+hrm-api gop_db: `85c566ad2` Đợt C kiosk API · `45dc6a785` vá $hidden 5 model Employee (ahead origin 2, behind 0).
+hrm-client gop_db: `04d57273b` Đợt C trang kiosk (ahead 1, behind 0). e2e kiosk nằm ở HRM/e2e (ngoài git).
+TPE_APP feature/meeting-room-qr-scan: `262dea3` Đợt D + `e6f0de4` merge develop; `build_config.dart` (APP_API_BASE_URL) chưa commit.
+Tiếp theo: Phase 6 báo cáo — dựng mockup theo `report-styles` trước, chờ user.
+
+## Thiết kế lại màn kiosk (26/10/2026) — mockup CHỐT, CHƯA code
+Mockup `mockup/kiosk-tablet.html` (font Nunito + xanh HRM; chốt ở design.md mục 25–26/10). Phạm vi dự kiến khi được "làm":
+- hrm-api `MeetingRoomQrService::kiosk()`: `current` thêm `host_role`, `participants[{name,role}]` (phía công ty),
+  `partner{name, participants[{name,role}]}` (họp có đối tác — `meetings.customer_name` + `customer_members` type 2);
+  dòng `bookings` thêm `has_partner`. Chức vụ NV: `working_positions` qua `employee_infos.employee_work_position_id`.
+  Không migration.
+- hrm-client `pages/meeting/kiosk/_token.vue` (giao diện mới) + `layouts/kiosk.vue` (nền xanh HRM).
+- e2e `meeting-room-kiosk.api.spec.ts` (K3 đang khoá đúng 9 khoá của dòng lịch) + `meeting-room-kiosk.spec.ts`.
+

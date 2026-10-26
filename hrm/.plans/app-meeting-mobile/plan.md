@@ -203,4 +203,5 @@ Vừa hoàn thành: khảo sát bộ lọc app thật + bản thiết kế (`kha
 Bước tiếp theo: chỉnh theo góp ý → áp mẫu cho 1 màn phân hệ khác (Đào tạo / Meeting 01–02) để kiểm tính dùng chung → viết spec component (FilterBar · FilterSheet · 4 loại trường · chip tiêu chí) cho dev Flutter
 Blocked: nút "Xem N kết quả" cần API đếm trước — chưa kiểm; không có thì dùng "Áp dụng (n)"
 ⚠️ Pen không tự lưu — user bấm Cmd+S
-Ghi chú TPE_APP (local, KHÔNG commit/push): app/ios/Podfile comment lại dòng EXCLUDED_ARCHS arm64 + project.pbxproj bỏ EXCLUDED_ARCHS — chỉ để build máy ảo chip Apple; flavor mới tpeDev
+Ghi chú TPE_APP (local, KHÔNG commit/push): app/ios/Podfile comment lại dòng EXCLUDED_ARCHS arm64 + project.pbxproj bỏ EXCLUDED_ARCHS — chỉ để build máy ảo chip Apple; flavor mới tpeDev. Cuối ngày 26/10 TPE_APP đã bị chuyển sang nhánh `feature/meeting-room-qr-scan` (không phải do phiên này), Podfile đã comment sẵn, pbxproj sạch — lần sau build lại kiểm EXCLUDED_ARCHS trước
+Hồ sơ đã commit + push hrm-claude-config `73f861d` (26/10)
