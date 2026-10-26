@@ -1391,6 +1391,12 @@ export async function restoreProducts(vm, rows, companyName) {
 
 ---
 
+### Checkpoint — 22/10/2026 (wrap up)
+Vừa hoàn thành: Task 1–6 + review cuối (3 lỗi đã sửa) — ĐÃ PUSH gop_db: api `7f6ae6e4d`, client `aea4d8983`, ERP `710d383568`.
+Đang làm dở: —
+Bước tiếp theo: user nghiệm thu local ⇒ pull prod; chạy e2e 5 spec đã sửa khi có tài khoản e2e trên DB dev.
+Blocked: e2e chưa provision trên `hrm_erp_21_10_prod`.
+
 ### Checkpoint — 22/10/2026 (thực thi)
 Vừa hoàn thành: Task 1–6 (native, user "Làm, native"); ledger `progress.md` ghi mọi ruling.
 Đang làm dở: review cuối toàn nhánh.

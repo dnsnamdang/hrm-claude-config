@@ -85,7 +85,62 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 - the-kho → @khoipv → .plans/gop-db/the-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-22-the-kho-design.md)
 
+- quan-ly-vai-tro-quyen / **Thiết kế lại quản lý Vai trò & Quyền (ERP + HRM): vai trò thuộc 1 công ty, kiểm theo mã, phạm vi tách khỏi quyền, 1 màn ở Quản trị** → @namdangit → .plans/gop-db/quan-ly-vai-tro-quyen/design.md
+  ### Checkpoint — 26/10/2026
+  Vừa hoàn thành: GĐ1 xong toàn bộ Task 0–12 + review cuối toàn nhánh + diễn tập thật trên `hrm_erp_rbac_rehearsal` (bản sao prod 21/10 + 6 migration gop_db + 5 migration rbac + rbac:convert). Worktree `wt-rbac/{hrm-api,TanPhatDev}` nhánh `rbac` — đã commit 26/10 (hrm-api `b5eb3cb57`, ERP `5101a750a9`), chưa push, chưa merge gop_db. Danh mục 892 mã. Runbook: `gd1-nen-du-lieu/runbook-go-live.md`; biên bản diễn tập: `gd1-nen-du-lieu/bao-cao-dien-tap/playwright.md`.
+  Đang làm dở: — (ledger: wt-rbac/hrm-api/.superpowers/sdd/plan/progress.md)
+  Bước tiếp theo: GĐ2 (màn Vai trò mới) — chờ user; diễn tập tenant riêng etek/toyota khi có dump. DB local giữ: hrm_erp_rbac_test, hrm_erp_rbac_rehearsal (đã chuyển đổi)
+
+- gia-0-canh-bao-chua-tinh-gia / **Giá 0 = chưa tính giá + cảnh báo chọn hàng chưa tính giá ở Báo giá (HRM + ERP)** → @namdangit → .plans/gop-db/gia-0-canh-bao-chua-tinh-gia/design.md
+  ### Checkpoint — 23/10/2026
+  Vừa hoàn thành: code hrm-api + hrm-client + ERP (chưa commit), kiểm Playwright MCP đủ ca 2 màn HRM + 4 màn ERP (plan.md)
+  Đang làm dở: —
+  Bước tiếp theo: chạy PHPUnit 3 test mới (chờ user chọn DB) + e2e quotation-unpriced-warning-ui; nghiệm thu
+  Blocked: —
+
+- sidebar-hub-thu-gon / **Sidebar hub mặc định thu gọn, rê chuột bung (kiểu MISA)** → @namdangit → .plans/gop-db/sidebar-hub-thu-gon/design.md · spec docs/superpowers/specs/gop-db/2026-10-23-sidebar-hub-thu-gon-design.md
+  ### Checkpoint — 23/10/2026 (wrap up)
+  Vừa hoàn thành: ĐÃ PUSH gop_db client `c3b1584cd` — rail 58px, hover/đang mở panel bung 220px đè nội dung; ☰ bật/tắt thu gọn có popup `$confirm`, nhớ localStorage `hub-sidebar-pinned` (chung mọi hub); `?sidebar=open`, < 992px giữ cũ; rời hub trả `data-sidebar-size`; sửa content lùi 55px ⇒ 58px. Kiểm Playwright đủ ca (bảng số đo trong spec).
+  Đang làm dở: —
+  Bước tiếp theo: user nghiệm thu local ⇒ pull prod (không migration)
+  Blocked: chưa nhìn được sidebar phân hệ cũ (tài khoản kiểm 404); e2e chưa chạy (DB local không có tài khoản e2e)
+
+- phieu-cho-duyet-tap-trung-erp-hrm / **Hộp duyệt chung ERP + HRM** → @namdangit → .plans/phieu-cho-duyet-tap-trung-erp-hrm/README.md
+  ### Checkpoint — 22/10/2026 (wrap up, TẠM DỪNG)
+  · Brainstorm xong, **user đã duyệt** spec `design.md` + danh mục `flows-dot1.md` (116 loại phiếu / 154 dòng, 1.925 phiếu chờ; rà lại theo điều kiện màn gốc — recheck-A/B/C.md) + `mockup.html`.
+  · Chốt chính: 1 hộp chung xem ở cả 2 nơi · "chờ" = duyệt + tiếp nhận + lập chứng từ (KHÔNG gồm "chờ giao việc") · đợt 1 nghiệp vụ, đợt 2 nhân sự · kiến trúc A (2 hệ thống cùng đẩy, `sync()` idempotent + model event) · chỉ công ty đang làm · bỏ ngoại lệ Super Admin · gate thật màn gốc · sửa gate HRM khe model_type trong feature · worktree riêng.
+  · Thứ tự: **màn Chờ duyệt (danh sách) ở cả HRM + ERP trước**; my-job tab, badge topbar, báo cáo sau.
+  · TIẾP: viết `plan-dot1a.md` (ghi chú kỹ thuật đã soát ở cuối README) → user duyệt plan → hỏi cho phép code (chưa đụng source/DB).
+  · Nền ERP cũ (`develop_01`, chưa từng lên gop_db/prod): ERP/.plans/phieu-cho-duyet-tap-trung/ + port-gop-db.md (bản port nguyên — đã thay bằng hướng mới).
+
+- quan-ly-hang-hoa / **Nhân bản hàng hoá** (nhánh `feat/sao-chep-hang-hoa` từ gop_db, worktree `websites/wt-sao-chep-hang-hoa`) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/sao-chep-hang-hoa/
+  ### Checkpoint — 25/10/2026 — XONG, đã lên gop_db
+  Vừa hoàn thành: 5/6 minor (#6 giữ) + e2e ⇒ gop_db: api ddd04398a, client c0062eabf + 5fb61efc0 (fix NB5 tìm ra khi chạy e2e). e2e copy-ui 7/7, read-ui 13/13, form-ui 15 (bỏ E1/E10), lifecycle 8 (N1 đỏ). Đã dọn DB test + worktree + server.
+  Spec lỗi thời ngoài luồng (chưa sửa): lifecycle N1 INSERT roles.company_id (DB gộp không có cột); form-ui E1 (Tạo mới đã hiện ở Đang KD từ 21/10); form-ui E10 (9156d687f bỏ bắt buộc Tiểu mục catalog).
+  Đang làm dở: —
+  Bước tiếp theo: user xem diff ⇒ commit/push; chạy e2e products-copy-ui khi user yêu cầu; dọn DB test `hrm_erp_test_saochep` + worktree.
+  Blocked: —
+
 - quan-ly-hang-hoa / **Sau go-live 20/10 — làm thẳng trên `gop_db`** (bỏ worktree + nhánh chung) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/viec-con-lai.md (mục 21/10 + 22/10)
+  ### Checkpoint — 24/10/2026 (wrap up — ảnh hàng hoá)
+  Vừa hoàn thành: chi tiết hàng hoá hiện ảnh đại diện (hàng ERP cũ chỉ có `avatar`, 28.569 hàng ra ô trống) + bấm ảnh mở FilePreviewModal ở chi tiết và 6 màn danh sách — client `f3d7df2d8` (phần ProductListPage lọt vào `1ab0006b6`) — ĐÃ PUSH gop_db 24/10: client `0113bddb6`, api `2169b460e` (kèm Kế thừa giá + Chuyển KD không tính giá). e2e products-read-ui + filter-layout + image-preview 23/23 (sửa 3 ca cũ lệch code). Chi tiết: `quan-ly-hang-hoa/anh-hang-hoa/`
+  Đang làm dở: —
+  Bước tiếp theo: pull prod (hrm-client + hrm-api)
+  Blocked: —
+  ### Checkpoint — 23/10/2026 (wrap up)
+  Vừa hoàn thành: ĐÃ PUSH gop_db client `2be9eefd0` — bảng Tính giá của phiếu tính giá (tạo/sửa/xem): kẻ viền toàn bảng, 6 cột giá sau Mã hàng, bỏ dòng gộp "Giá bán". Kiểm Playwright PTG-03476 + lập từ PYCTG-03469. Spec e2e price-calculate sửa chỉ số ô nhập + thêm ca tiêu đề (chưa chạy). Chi tiết: viec-con-lai.md mục 23/10
+  Đang làm dở: —
+  Bước tiếp theo: user nghiệm thu ⇒ pull prod; user quyết có sửa người nhận thông báo YCTG "Chờ tính giá" không (đang gửi cả người nghỉ việc — ghi ở viec-con-lai.md 23/10)
+  Blocked: —
+  ### Checkpoint — 22/10/2026 chiều (wrap up)
+  Vừa hoàn thành (ĐÃ COMMIT + PUSH gop_db, chưa pull lên prod):
+  · **Màn Hàng hoá đang khoá** `/master-data/products/locked` (`quan-ly-hang-hoa/hang-hoa-dang-khoa/` design + plan + ledger `progress.md`): Ngừng KD (pcc 4, hàng status 1) + hàng ERP đã xoá do công ty tạo; Khôi phục từng dòng / hàng loạt ≤100 — đủ 6 giá (Bán lẻ >1 đ) + có Loại SP ⇒ 3, thiếu ⇒ 1 + info_entered_at; ĐẶC TÍNH KHÔNG XÉT (prod 0/30.279 hàng có); màn khác loại hàng khoá; footer chi tiết "Khôi phục" thay "Mở khóa"; ERP Thùng rác ⇒ HRM. api `7f6ae6e4d`, client `aea4d8983` (kèm fix cột Hành động 90→140px), ERP `710d383568`. PHPUnit MasterData 647 (2 đỏ sẵn), review opus sửa 3 lỗi
+  · Menu hub Danh mục › Hàng hoá: icon ⓘ định nghĩa 23 mục (17 danh mục dùng thẳng `CATALOG_TOOLTIPS` của form tạo) + helper `meetingTypeInfoTooltip` thêm placement 'bottom' — client `48776236b`; skill info-icon-tooltip §3a — hrm-claude-config `aaac6dc`
+  · Popup chọn hàng (HRM + ERP): chữ 13px (nhãn lọc giữ V2), ERP khung 1800px cao vừa màn (flex), cây 280px tên xuống dòng + thụt 14px/cấp, bỏ tiêu đề nhóm lọc, tooltip đen mọi ô bị cắt — client `48951e7cf`, ERP `b71d39801d`
+  · Local: ERP `.env` JWT_SECRET chép từ HRM (popup chọn hàng ERP 401 "phiên HRM hết hạn") — không phải code
+  Đang làm dở: —
+  Bước tiếp theo: user nghiệm thu 3 việc trên local ⇒ pull prod (không migration); đồng bộ thư mục e2e worktree ⇒ HRM/e2e (5 spec hàng hoá đã sửa theo Khôi phục, CHƯA chạy); hoãn nhẹ ở `hang-hoa-dang-khoa/progress.md` (Ngày khoá = updated_at, xác nhận Khôi phục ở chi tiết thiếu đích dự kiến, hàng ERP xoá đang tính giá bị ghi đè)
+  Blocked: e2e không chạy được trên `hrm_erp_21_10_prod` (chưa provision tài khoản e2e)
   ### Checkpoint — 22/10/2026 sáng (wrap up)
   Vừa hoàn thành:
   · Danh mục 4 cấp hàng ETEK GREEN (file "UPDATE hàng green.xlsx") — ĐÃ CHẠY PROD 22/10 00:05 bằng SQL: +17 Nhóm SP, +95 Loại SP, gán Loại 827 mã (8 câu chốt) — `catalog-import/green-2110/` (tổng kết xlsx + SQL + README)
@@ -473,11 +528,15 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   📊 **30/09/2026:** file báo giá `quan-ly-phong-hop/bao-gia-quan-ly-phong-hop.xlsx` (3 cấp, 89.75 công,
   kèm 3 chức năng mới chưa spec: dọn phòng · đánh giá phòng · đổi phòng). Đã sửa marker xung đột lọt vào
   merge `8ad4b904d` ở `MeetingRoomModal.vue` → fix ở client `976e1eb32` (đã push). Chi tiết: checkpoint cuối plan.md.
-  Trạng thái: **Phase 8 "Yêu cầu dịch vụ" — CODE DONE + ĐÃ ĐO TRÊN TRÌNH DUYỆT (23/09/2026), CHƯA
-  COMMIT, còn nợ bộ e2e**.
-  Phase 1→4 + đợt Task 65-86 code done (20/09/2026, đã push); Phase 7e (nút thẻ trạng thái vỡ chữ)
-  xong 22/09 ở client `7bc8bcb1f`. Phase 5 (check-in QR + job nền + đặt lặp định kỳ) và Phase 6
-  (báo cáo) chưa mở.
+  Trạng thái (wrap up 26/10/2026): **Phase 8 + đợt 25–26/10 ĐÃ PUSH gop_db 26/10** (merge api `12dfba4f6`, client `7ee73ddff`) —
+  api `dab856446` · client `55801d64c` (fix hub sập) + `e9238bbfc`. Phase 5 đã làm: check-in/check-out (popup phiếu +
+  form Meeting), tự huỷ khi không check-in (cờ mặc định TẮT), tự hoàn thành khi hết giờ, QR in dán + QR xoay vòng
+  + link máy tính bảng (đợt A, B) + **đợt C trang kiosk `/meeting/kiosk/<mã>` (26/10, CHƯA commit, e2e kiosk viết chưa chạy)**.
+  Còn: **đợt D màn quét QR trong TPE_APP**, đặt lặp định kỳ;
+  Phase 6 (báo cáo) chưa mở. E2E toàn bộ 15 spec phòng họp xanh (26/10).
+  ⚠️ Deploy: 2 migration mới `2026_10_26_000001`, `2026_10_26_000002` + cron `schedule:run` (2 lệnh mới mỗi phút);
+  tắt key `meeting::Danh mục::Dịch vụ phòng họp` ở Cài đặt phân hệ trên prod — đủ ở checkpoint cuối plan.md.
+  Phase 1→4 + đợt Task 65-86 code done (20/09/2026, đã push); Phase 7e xong 22/09 ở client `7bc8bcb1f`.
 
   **Phase 8 — Yêu cầu dịch vụ trên phiếu đặt phòng (trà, nước, hoa quả…)** — user chốt 11 quyết định
   ngày 23/09/2026, spec: `docs/superpowers/specs/gop-db/2026-09-23-yeu-cau-dich-vu-phong-hop-design.md`,
@@ -498,10 +557,19 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   popup về 8px, chuẩn hoá message validate, **bổ sung 53 mục tiếng Việt vào lang file dùng chung**.
   Kiểm: toàn bộ suite PHPUnit **231 tests/681 assertions** giữ đúng mức đỏ có sẵn (5E+2F);
   đo thật trên trình duyệt cả luồng tạo phiếu → xác nhận dịch vụ → ca 409 khi 2 người cùng bấm.
-  ⚠️ **Còn nợ (chặn bàn giao)**: **màn FE danh mục Dịch vụ phòng họp (T128–T130)** — chưa có chỗ nào
-  trên giao diện để thêm/sửa/khoá món, hiện phải seed hoặc sửa thẳng DB.
-  ⚠️ **Còn nợ**: bộ e2e `meeting-room-service.{api.spec,spec}.ts` chưa viết (user chốt chạy sau);
-  spec e2e cũ của `meeting/bookings` cần rà theo bố cục nút mới.
+  ✅ ~~Còn nợ: màn FE danh mục Dịch vụ phòng họp (T128–T130)~~ — xong 25/10 (xem khối dưới).
+  ✅ ~~Còn nợ: bộ e2e `meeting-room-service.{api.spec,spec}.ts`~~ — viết + chạy 25/10.
+  ✅ ~~Còn nợ: spec e2e cũ của `meeting/bookings` (T149)~~ — 25/10 port TOÀN BỘ 11 spec meeting sang
+  `e2e/utils/meetingEnv.ts`, tất cả xanh (API 117 ca, UI 74 ca) — xem checkpoint cuối plan.md.
+
+  **Đợt 25/10/2026 (T128–T130, T143, T146, T153–T157 — checkpoint cuối `plan.md`)** — đã commit 26/10:
+  màn `/meeting/room-services` (copy khuôn `room-purposes` + cột Đơn vị tính) + mục menu nhóm Danh mục ·
+  **sửa hub sập** khi mục rail bị tắt ở Cài đặt phân hệ (`SaleHubSidebar.vue`, tài sản dùng chung — prod
+  đang dính với "meeting::Cấu hình") · 🔒 cho món đã khoá trên popup phiếu (`is_locked` ở
+  `DetailMeetingRoomBookingResource`). E2E (tài khoản namdangit): `meeting-room-service.api` 12 passed,
+  `meeting-room-service` 8 passed, `hub-nav-disabled-by-setting` 4 passed, `master-data-hub-menu` 5 passed
+  (đã cập nhật màn "Hàng hoá đang khoá"). ⚠️ Deploy: **tắt mục `meeting::Danh mục::Dịch vụ phòng họp` ở
+  Cài đặt phân hệ trên prod** (mục mới không tự ẩn) — đủ 7 lưu ý ở mục "LƯU Ý KHI DEPLOY PHASE 8" của plan.md.
   ⚠️ **Đụng tài sản dùng chung**: `hrm-api/resources/lang/vi/validation.php` (+53 câu) và
   `hrm-client/locales/vi.json` (5 → 31 key) — ảnh hưởng toàn hệ thống, cần nêu khi review/PR.
 

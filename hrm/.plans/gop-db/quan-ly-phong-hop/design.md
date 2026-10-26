@@ -185,3 +185,14 @@ Bổ sung vào 11 quyết định chốt lúc brainstorm ở trên. Chi tiết +
    `hrm-client/locales/vi.json` (user duyệt sửa tài sản chung). Câu mới **không dùng `:attribute`**
    (100% câu Việt sẵn có đều vậy; đa số FormRequest không khai `attributes()` nên `:attribute` sẽ in
    ra tên cột snake_case tiếng Anh).
+
+## Quyết định đã chốt 25–26/10/2026 (check-in / check-out / QR / máy tính bảng)
+- Meeting **nháp** không giữ phòng (chặn cả BE); huỷ meeting (tay hoặc tự huỷ quá hạn biên bản) ⇒ huỷ phiếu
+  **chưa check-in**, phiếu **đã check-in giữ nguyên**.
+- Check-in / check-out: chỉ **người đặt + chủ trì**; cửa sổ 15' trước giờ bắt đầu → hết giờ; chủ trì luôn nằm trong
+  danh sách tham gia phiếu. Nút ở popup Xem phiếu **và** form Meeting.
+- Tự huỷ khi quá giờ bắt đầu + N phút chưa check-in: N + cờ bật/tắt theo **công ty** (mặc định TẮT); phiếu Meeting bị
+  tự huỷ ⇒ Meeting giữ lịch, gỡ phòng. Check-out sớm ⇒ nhả phòng ngay; quên check-out ⇒ tự Hoàn thành lúc hết giờ.
+- QR: mỗi phòng 1 mã in dán cố định; phòng có máy tính bảng ⇒ chỉ nhận QR xoay vòng 30s. 1 mã cho cả vào/ra (hệ thống
+  tự đề xuất + hỏi xác nhận). Quét bằng **app TPE_APP**. Máy tính bảng = **trang web kiosk** (+ Fully Kiosk Browser),
+  xác thực bằng mã thiết bị riêng từng phòng. Quản lý mã = quyền Khai báo phòng họp (không thêm quyền).
