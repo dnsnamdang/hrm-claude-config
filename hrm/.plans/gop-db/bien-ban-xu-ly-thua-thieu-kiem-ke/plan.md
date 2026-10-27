@@ -50,3 +50,38 @@ Blocked:
   duyệt), chi tiết (sửa % rồi Duyệt → 8 bút toán đúng số), In ngang + Xuất Excel + Lịch sử, 404. Dữ liệu dọn theo id — DB về mốc.
   Chạy: `PATH=nvm/v24.6.0 node node_modules/@playwright/test/cli.js test tests/finance/inventory-audit-report.spec.ts --project=chromium --workers=1`
 - [ ] V2. Chờ user chốt: cột chi phí `double(8,2)` bị cắt ≥ 1 triệu (spec mục 5)
+
+## Phase 4 — Redmine #11829 (QA 22/10/2026)
+- [x] Bug 1 — file .pdf hợp lệ đuôi bị báo "Chỉ nhận file pdf…": `uploadFiles` bỏ `mimes:` (đoán theo nội dung) → kiểm theo đuôi (khuôn #11262/#11313)
+- [x] Bug 2 — Đơn giá vốn / Thành tiền vốn = 0 hiện trống → hiện `0` như ERP (`formatNumber` chỉ trống khi chưa có giá trị)
+- [x] Bug 3 — danh sách: bỏ sort Ngày tạo / Người tạo / Người duyệt / Trạng thái, mặc định không mũi tên; sort cũ trong localStorage về mặc định (màn Phiếu kiểm kê theo hàng hoá đã sửa ở #11819/#11823/#11857)
+- [x] Bug 4 — Chi tiết: bỏ ô Số phiếu, dấu (*) hiện cả ở màn chi tiết (Từ ngày, Đến ngày, Kho vật lý, Chi tiết, Lý do, Giá xử lý, % CP NV, NV chịu)
+- [x] Bug 5 — Duyệt: xoá (x) Giá xử lý bị bỏ qua → giữ giá mặc định; nay về trống để validate chặn; ô trống gửi `null` (không `Number('')=0`) để BE `required` cũng chặn
+- [x] Bug 6 — In: tiêu đề "Tab1/Tab2" chữ 13px in đậm (thay `<h4>`)
+
+### Checkpoint — 2026-10-26
+Vừa hoàn thành: 6 bug #11829 (FE `InventoryAuditReportForm.vue`, `index.vue`; BE `InventoryAuditReportController::uploadFiles`, `InventoryAuditReportPrintService::table`). Compile FE OK, `php -l` OK, test Validator: file .pdf nội dung lạ — rule cũ trượt, rule mới qua, .exe vẫn chặn.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm lại 6 điểm; commit khi user yêu cầu.
+Blocked:
+
+## Phase 5 — Redmine #11831 (QA 22/10/2026)
+- [x] Validate tại ô, không sót trường: Giá xử lý xoá (x) giờ về trống → viền đỏ + câu lỗi (đi cùng bug 5 #11829); % Chi phí công ty thêm `*` + lỗi riêng `details.{i}.company_cost_percent` (chỉ FE — BE tự tính 100 − %NV)
+- [x] Chi phí lệch ERP (999,999.99 × 50% → ERP 499,999.995, HRM 500,000): bỏ `round2` ở thành tiền / chi phí, format tối đa 3 số lẻ như filter `number` Angular. BE lưu vẫn round 2 (cột double(8,2) — y ERP), bản in / Excel in giá trị đã lưu
+
+### Checkpoint — 2026-10-26 (#11831)
+Vừa hoàn thành: 2 điểm #11831 trong `InventoryAuditReportForm.vue`; compile OK.
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt #11829 + #11831; commit khi user yêu cầu.
+Blocked:
+
+## Phase 6 — Redmine #11832 (QA 22/10/2026)
+- [x] Danh sách: Hàng thừa / Hàng thiếu = 0 hiện `0` như ERP — màn, Xuất Excel (ô số 0), In danh sách
+- [x] Sort làm cột nhảy / vỡ layout: bảng chưa khai bề rộng (table-layout auto, tính theo dữ liệu từng lần) → `fixed-layout` + `width`/`minWidth` đủ 11 cột, cột chữ `text-wrap clamp-2` (skill list-page §15b). BE sort đã có `id` chốt thứ tự
+- [x] In phiếu: Mã hàng dài không dấu cách đè sang cột Mã kho → ô in `word-break: break-word; overflow-wrap: anywhere` (không áp cho Excel)
+
+### Checkpoint — 2026-10-26 (#11832)
+Vừa hoàn thành: 3 điểm #11832 (`index.vue`, `export-excel.js`, `InventoryAuditReportPrintService`); compile FE + `php -l` OK.
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt #11829 + #11831 + #11832; commit khi user yêu cầu.
+Blocked:

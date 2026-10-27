@@ -71,6 +71,11 @@
 - [x] 2. Nhãn ô ghi chú thống nhất "Diễn giải" cho cả 2 loại: form (Tạo/Sửa/Chi tiết), bản in ROW_4 loại bảo hiểm, câu lỗi BE — khớp Lịch sử (vốn luôn "Diễn giải")
 - [ ] Màn Yêu cầu hạch toán vẫn đổi nhãn theo loại (Diễn giải / Ghi chú) như ERP — chưa đụng, chờ user
 
+## Phase 10 — Redmine #11840 (23/10) — Tạo phiếu
+- [x] 1. Mất dung lượng file kế thừa từ phiếu yêu cầu: BE `requestData` trả kèm `attachment_sizes` (`BillPaymentAttachmentService::sizes`, khuôn `WarehousePrepickRequestController`); FE `loadRequest` gắn `size` vào pendingFiles
+- [x] 2. Bản in làm tròn số lẻ: `formatCurrency` (làm tròn số nguyên) → `moneyText` giữ tối đa 2 số lẻ, khuôn màn Yêu cầu #11701 — áp cho bản in phiếu (cả loại bảo hiểm) + cột Tổng thanh toán bản in danh sách
+- [ ] Kiểm trên trình duyệt (dev) — user tự kiểm
+
 ### Checkpoint — 2026-10-12 17:10
 Vừa hoàn thành: port BE + FE + test Playwright màn Hạch toán mua dịch vụ, dọn dữ liệu test.
 Đang làm dở: không.

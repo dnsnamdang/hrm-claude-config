@@ -39,3 +39,40 @@ Blocked:
 - [x] V5. Xóa phiếu nháp từ danh sách: popup xác nhận → xoá hẳn + log delete; URL id lạ → trang 404, không toast
 - [x] Dọn dữ liệu test theo id: phiếu 8 (+ bảng con), log 1255–1259, 7 thông báo; phiếu 9 đã xoá qua UI. DB về như trước (notifications 3125)
 - [ ] ⚠️ Phát hiện (component dùng chung, CHƯA sửa — chờ user): `V2BaseSelect` chọn NHIỀU không bao giờ hiện viền đỏ khi lỗi — rule viền `div.v2-select .select2-container:not(--disabled) .select2-selection--multiple { border … !important }` nặng hơn `.v2-select.is-invalid .select2-selection` (scoped). Dính cả màn Kế hoạch kiểm kê theo hàng hóa + mọi select multiple.
+
+## Phase 4 — Fix Redmine #11816 (26/10/2026)
+- [x] R1. Bộ lọc: thêm Kho, Mã hàng hóa, Tên hàng hóa, Công ty – Phòng ban (khuôn màn anh em #11814). Mã/Tên hàng: kế hoạch tổng không có
+      bảng hàng → lọc theo hàng trong các Phiếu kiểm kê lập từ kế hoạch (`self_inventories.self_inventory_request_all_id` → `self_inventory_products`)
+- [x] R2. Tiêu đề: bỏ chữ "Danh sách" → "Kế hoạch tổng kiểm kê hàng hóa" (tab trình duyệt + tiêu đề bảng)
+- [x] R3. Bỏ sort cột Người tạo (FE + SORT_MAP BE)
+- [x] R4. Nội dung yêu cầu dài: kẹp 2 dòng (`text-wrap clamp-2`) + hover xem đủ
+
+### Checkpoint — 2026-10-26 (#11816)
+Vừa hoàn thành: R1–R4. BE `SelfInventoryRequestAllService` (applyFilters + filterOptions warehouses/is_all_company, bỏ `creator` khỏi SORT_MAP),
+Controller index trả `meta.is_all_company`. FE `index.vue` khuôn màn anh em (V2BaseCompanyDepartmentFilter slot #field-org, ô Kho/Mã/Tên hàng).
+Kiểm: parse vue-template-compiler + babel OK; php -l OK; smoke HTTP kernel (transaction rollback) — mỗi ô lọc khớp 1 / lệch 0, sort creator bị bỏ qua.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm bộ lọc + cột Nội dung yêu cầu dài (CHƯA bấm thật). CHƯA commit.
+Blocked:
+
+## Phase 5 — Fix Redmine #11818 (26/10/2026) — theo skill form-validate
+- [x] V1. Câu lỗi bỏ tên trường đứng trước, theo `locales/vi.json` ("Bắt buộc phải nhập", "Không hợp lệ", "Vui lòng nhập tối đa 255 ký tự.") — cả FE lẫn `messages()` BE
+- [x] V2. Lưu nháp chỉ bắt Ngày kiểm kê từ/đến; Lưu và duyệt bắt đủ. `required` rẽ theo `isSending()` ở FormRequest, rule định dạng/nghiệp vụ luôn bật
+- [x] V3. FE bỏ tự kiểm `required` (để BE trả 422 đủ ô cùng lúc), chỉ giữ kiểm định dạng (≤ 255 ký tự); 422 → toast câu chung
+
+### Checkpoint — 2026-10-26 (#11818)
+Vừa hoàn thành: V1–V3. `SelfInventoryRequestAllStoreRequest` thêm `isSending()` (status 1), câu lỗi theo vi.json; form FE `validateFormat()` thay
+`validateAll()`, 422 → toast câu chung. Smoke HTTP kernel (rollback): nháp trống → 2 lỗi ngày; duyệt trống → 6 lỗi; ngày ngược / note 256 ký tự
+bị chặn cả ở nháp; nháp chỉ có ngày → 200. DB không đổi.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm form Tạo/Sửa (CHƯA bấm thật). Đã commit + push `develop` (api 5dbe9650b, client 0df13b4ef).
+Blocked:
+
+## Phase 6 — Fix Redmine #11820 (26/10/2026)
+- [x] E1. Xuất Excel danh sách: bỏ tô nền dòng tên cột (giữ in đậm + viền) — khuôn #11823 màn Phiếu kiểm kê
+
+### Checkpoint — 2026-10-26 (#11820)
+Vừa hoàn thành: E1 (`components/export-excel.js`, bỏ `cell.fill` dòng tiêu đề cột). Parse babel OK.
+Đang làm dở: —
+Bước tiếp theo: user bấm Xuất Excel kiểm file (CHƯA mở file thật). Đã commit + push `develop` (api 5dbe9650b, client 0df13b4ef).
+Blocked:

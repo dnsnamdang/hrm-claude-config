@@ -2565,3 +2565,16 @@ Vừa hoàn thành: Fix #11750 (BE FormRequest + validateTotalsOfSavedModel, FE 
 Đang làm dở:
 Bước tiếp theo: user mở trình duyệt test lại luồng tạo từ Tổng hợp tiền về NH; quyết có áp luật hợp đồng bên "từ" không
 Blocked:
+
+## Fix #11750 phản hồi 22/10 — Gửi duyệt báo lỗi "nhỏ giọt" (2026-10-26) @khoipv
+Triệu chứng: bấm Gửi duyệt chỉ hiện lỗi lệch tổng tiền, KH / Hợp đồng "đến" trống chưa đỏ; sửa xong bấm lại mới hiện tiếp.
+Nguyên nhân: FE `validateBeforeSubmit()` chặn sớm (Diễn giải / bảng rỗng / tỷ giá / lệch tổng tiền) rồi `return` → request không lên BE → 422 required của FormRequest không bao giờ về.
+- [x] FE `BillAdjustDeptRequestForm.vue`: bỏ `validateBeforeSubmit()` + `failInline()` + `toNumber()` — luôn gửi lên, BE trả 422 đủ ô 1 lượt (skill form-validate mục 1); lệch tổng tiền vẫn tô inline theo `touched` nên hiện cùng lượt
+- [x] FE: câu lỗi FE của Tỷ giá / Diễn giải / bảng rỗng chỉ hiện khi BE chưa trả câu cho ô đó (tránh 2 câu chồng); 422 → `scrollToFirstError`
+- [x] Verify: compile FE OK; FormRequest với payload ảnh tester (Gửi duyệt, KH/HĐ trống, Số tiền 0, Diễn giải trống) → 4 khoá cùng lúc: note, money_new, customer_new_id, contract_new_id. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-10-26
+Vừa hoàn thành: Fix #11750 phản hồi (lỗi báo 1 lượt).
+Đang làm dở:
+Bước tiếp theo: user tạo từ Tổng hợp tiền về NH, để trống KH/HĐ + Số tiền 0 → Gửi duyệt → mọi ô đỏ cùng lúc.
+Blocked:

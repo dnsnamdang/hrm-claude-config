@@ -53,3 +53,26 @@ Vừa hoàn thành: test Playwright MCP toàn màn trên localhost (DNS Admin) �
 Đang làm dở: —
 Bước tiếp theo: `permission:sync` + gán quyền; test bằng tài khoản không phải Super admin trên trình duyệt (đã test phạm vi qua API).
 Blocked:
+
+## Phase 4 — Fix Redmine #11814 (QA 21/10)
+- [x] R1. Bộ lọc bổ sung theo ERP: Kho, Mã hàng hóa, Công ty – Phòng ban (ERP có ô nhưng BE ERP không lọc → HRM làm lọc chạy thật). BE `applyFilters` + `filterOptions` (warehouses, is_all_company) + meta list; FE `filterFields` + `V2BaseCompanyDepartmentFilter`
+- [x] R2. Sort: bỏ sort cột Người tạo, thêm sort cột Ngày tạo (`created_at_full` → `created_at`)
+- [x] R3. Form tạo: ô Ngày kiểm kê đã `disabled` nhưng nền trắng — rule xám `.v2-styles .v2-input:disabled` import trong style scoped không chạm `<input>` bên trong V2BaseInput → thêm `::v-deep` trong form
+
+### Checkpoint — 2026-10-22 (#11814)
+Vừa hoàn thành: R1–R3. Smoke service (Super admin): lọc kho 5→{1,2}, kho 4→{3}, mã hàng, công ty 1/4, phòng ban, sort Ngày tạo 2 chiều OK; `creator` không còn sort; filter-options trả 23 kho + is_all_company. Parse FE OK, nuxt dev 200.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm bộ lọc mới + ô Ngày kiểm kê xám.
+Blocked:
+
+## Phase 5 — Fix Redmine #11821 (QA 21/10) — màn Chi tiết
+- [x] R4. Chi tiết: hiện (*) ở Ngày kiểm kê / Kho / Hàng hóa / Hội đồng kiểm kê như ERP (trước chỉ hiện ở Thêm / Sửa)
+- [x] R5. Bỏ ô Số phiếu trong form (ERP không có; số phiếu đã ở thanh tiêu đề)
+- [x] R6. Nút "Làm mới số liệu" (ERP `updateStock` — bản ERP nổ JS, chưa chạy bao giờ). User chốt 23/10 "làm như ERP" (theo ý định code ERP): cả Thêm / Sửa / Chi tiết, gọi lại `/product-stocks` → ghi đè SL tồn từng kho + Tổng SL, bỏ hàng hết tồn, KHÔNG tự lưu (Chi tiết chỉ hiện tạm, chốt lại mốc unsaved)
+
+### Checkpoint — 2026-10-23 (#11821)
+Vừa hoàn thành: R4 (*) luôn hiện ở Ngày kiểm kê / Kho / Hàng hóa / Hội đồng; R5 bỏ ô Số phiếu; R6 nút Làm mới số liệu `refreshStock()`
+(dùng lại `/product-stocks`, chia 500 hàng/lần). Smoke service local: KH #3 làm mới → SL đổi (8→15, 10→9), 16 hàng hết tồn sẽ bị bỏ; KH #6 không đổi. Parse template + script OK.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm: bấm Làm mới ở Chi tiết (số đổi, thoát không hỏi "chưa lưu", F5 về số cũ) và ở Sửa (phải Lưu mới ghi).
+Blocked:

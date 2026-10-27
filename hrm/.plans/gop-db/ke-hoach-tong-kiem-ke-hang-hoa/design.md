@@ -12,3 +12,5 @@
 - **Quyết định (20/10):** Nội dung yêu cầu + Thành phần tham gia bắt buộc thật (ERP chỉ gắn *); dùng lại 3 quyền màn anh em (ERP cùng tên);
   bỏ ô lọc chết (Kho / Mã hàng / Tên hàng tra nhầm bảng màn anh em); Xóa chạy được (ERP lỗi); điều kiện Lập phiếu giữ y ERP.
 - KHÔNG đổi schema, KHÔNG migration, KHÔNG quyền mới.
+- **Redmine #11816 (26/10):** thêm lại ô lọc Kho / Mã hàng / Tên hàng / Công ty – Phòng ban (lọc theo bảng của màn này; Mã/Tên hàng tra hàng trong Phiếu kiểm kê lập từ kế hoạch); tiêu đề bỏ chữ "Danh sách"; bỏ sort Người tạo; Nội dung yêu cầu kẹp 2 dòng.
+- **Redmine #11818 (26/10):** Lưu nháp chỉ bắt Ngày kiểm kê từ/đến (Lưu và duyệt bắt đủ); câu lỗi bỏ tên trường đứng trước, theo `locales/vi.json`.

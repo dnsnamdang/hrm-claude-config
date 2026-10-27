@@ -81,3 +81,34 @@ Blocked:
 - [x] L4. Người tạo / Người duyệt = toàn bộ nhân viên (`$store.state.employeeOptions`); BE `filterOptions()` bỏ `creators`/`approvers`/`companies`
 - [x] L5. Bảng: bỏ sort Trạng thái / Người tạo / Người duyệt / Ngày duyệt; thêm sort Kho (key `warehouse_names`, BE sắp theo MIN(tên kho) qua pivot); sort mặc định trống → icon trung tính (BE vẫn `created_at desc`); thêm cột Ngày cập nhật + Người cập nhật (join `updated_by`) ở bảng + Xuất Excel
   - Verify: vue-template-compiler + babel OK; php -l OK; HTTP kernel: filter-options 200, list có updated_at_full/updater_name, lọc phòng ban 72 → 5 = DB 5, sort Kho asc/desc đúng thứ tự, sort status bị bỏ qua. Chưa mở trình duyệt
+
+## Redmine #11804 — Lịch sử (22/10)
+- [x] H1. Đổi Kho vật lý → giá trị mới hiện trống (phiếu 138 dev). Nguyên nhân: `catalog_histories.old_value/new_value` kiểu TEXT (64KB) + MySQL không strict → snapshot sau khi lưu (382 dòng hàng tồn) bị CẮT, JSON hỏng → đọc ra rỗng (mất luôn dòng thêm mới, lần lưu sau không còn diff). User chốt: migration đổi 2 cột sang LONGTEXT (bảng chung, không đổi code đọc/ghi; log cũ đã cắt không khôi phục)
+- [x] H2. Đổi Phạm vi kiểm kê không ghi lịch sử — service Phiếu không track Nhà/Dãy/Khoang/Vị trí. Chuyển `scopeRows()` từ `PositionInventoryWriteService` sang `PositionInventoryTreeService` (dùng chung 2 màn, hành vi màn Kế hoạch giữ nguyên) + thêm 4 khoá `house_rows/row_rows/space_rows/position_rows` vào `catalogColumns()` của `PositionInventoryResultWriteService`
+  - Migration `database/migrations/2026_10_22_000001_alter_catalog_histories_values_to_longtext.php` (đã chạy local). Verify: php -l OK; script 4 ca (transaction + rollback, phiếu 139 / kho 21 có 1942 vị trí): (1) đổi kho + lấy vị trí → `new_value` 188KB JSON hợp lệ, "Kho vật lý: Chăm sóc khách hàng → Kho etek group 1" + Nhà/Dãy/Khoang/Vị trí + 144 lô thêm / 69 lô xoá; (2) bỏ 1 vị trí → 1 dòng "Vị trí: -1"; (3) lưu lại không sửa → 0 log; (4) màn Kế hoạch bỏ 1 vị trí → vẫn ghi đúng qua hàm chung. Không đổi FE. Log cũ đã bị cắt trên dev (phiếu 138) không khôi phục được. Deploy cần chạy migrate. CHƯA mở trình duyệt
+
+### Checkpoint — 22/10/2026
+Vừa hoàn thành: Redmine #11804 H1 + H2 (BE + migration, chưa commit)
+Đang làm dở: —
+Bước tiếp theo: user review → commit hrm-api → deploy dev + `php artisan migrate` → thử đổi kho / phạm vi trên hrm-crm
+Blocked:
+
+## Redmine #11805 — Xóa phiếu trả kế hoạch về Đang kiểm (22/10)
+- [x] X1. Xóa phiếu lập từ kế hoạch → kế hoạch cha đang "Đã lập kiểm kê" trả về "Đang kiểm" + log `change_status` trên kế hoạch (ghi chú "Xóa phiếu kiểm kê <số phiếu>."). User 22/10 đổi quyết định 19/10 ("xóa không trả kế hoạch, như ERP") — LỆCH ERP có chủ đích: tránh kế hoạch kẹt, không lập lại được phiếu
+  - `PositionInventoryResultWriteService::destroy()` (gọi `setPlanStatus()` sẵn có). Verify: php -l OK; 3 ca (transaction + rollback): kế hoạch Đã lập → Đang kiểm + log "Thay đổi trạng thái" có ghi chú số phiếu; kế hoạch Hoàn thành → giữ nguyên; phiếu lập tay → không đụng kế hoạch. Spec đã sửa 3 chỗ. CHƯA mở trình duyệt
+
+## Redmine #11806 — Nhập kết quả (22/10)
+- [x] N1. Lag khi gõ Thực kiểm ở phiếu nhiều dòng (dev phiếu 138): slot `extra-cells` chạy trong render của `DetailTable` → mỗi phím gõ vẽ lại cả bảng. Tách 4 ô kết quả thành component `ResultCell.vue` (mỗi ô 1 `<td>`, tự đọc `real_qty`/`note`/`inventory_all`) → gõ chỉ vẽ lại ô của dòng đó
+- [x] N2. Cỡ chữ ô Thực kiểm / Ghi chú 12px → 13px bằng chữ bảng; Chênh lệch ≠ 0 chữ đỏ (ERP `ng-class="{'text-danger': res.diff_qty != 0}"`)
+- [x] N3. Câu lỗi trong ô bảng (Thực kiểm / Ghi chú / ĐVT kiểm kê / SL kiểm kê) theo skill form-validate (chốt #11791): KHÔNG tiền tố tên cột + đúng nguyên văn `locales/vi.json` — "Bắt buộc phải nhập", "Vui lòng nhập số hợp lệ.", "Không được nhỏ hơn 0", "Giá trị nhập vào không được vượt quá 999,999,999.", "Vui lòng nhập tối đa 255 ký tự.", "Không hợp lệ" (FE `validateResults` + BE `PositionInventoryResultSaveResultRequest`, `PositionInventoryResultStoreRequest`, `PositionInventoryResultWriteService`). Lần đầu chỉ cắt tiền tố → user 22/10 bắt sửa lại đúng skill. Verify: tinker Validator 4 ca ra đúng câu
+- [x] N4. Phần trong ngoặc "Công ty (SL)" / "Lô (SL)" chữ đỏ như ERP form.blade.php L340-341 (`DetailTable` nhánh `with-results` — chỉ màn Phiếu dùng)
+  - FE: mới `position-inventory-results/components/ResultCell.vue`; `PositionInventoryResultForm.vue` (slot gọi ResultCell, bỏ `formatNumber`/V2BaseCheckbox thừa, câu lỗi FE bỏ tiền tố); `finance/position-inventories/components/DetailTable.vue` (chỉ nhánh `with-results`, màn Kế hoạch không đổi). BE: 2 FormRequest + `PositionInventoryResultWriteService` (chỉ câu lỗi). Verify: php -l OK; vue-template-compiler + babel OK. CHƯA mở trình duyệt đo độ trễ gõ trên phiếu 138
+
+## Redmine #11807 — Popup Không duyệt / Duyệt (22/10)
+- [x] D1. Nút "Hủy" ở popup Ghi chú duyệt thiếu icon → thêm `fas fa-arrow-left` (button-convention mục 3, khuôn modal-popup). 1 component `ApproveNoteModal.vue` dùng cho cả Duyệt kết quả + Không duyệt → sửa 1 chỗ ăn cả 2 popup. Verify: vue-template-compiler OK, chưa mở trình duyệt
+
+### Checkpoint — 22/10/2026 (push)
+Vừa hoàn thành: commit + push develop — hrm-api 72426e9e1 (#11804 #11805 #11806, kèm migration LONGTEXT), hrm-client 6df271b44 (#11806 #11807)
+Đang làm dở: —
+Bước tiếp theo: deploy dev + `php artisan migrate`; test #11806 (gõ Thực kiểm phiếu 138, câu lỗi, chữ đỏ) + #11807 trên hrm-crm
+Blocked: chờ user chốt có sửa câu lỗi ngoài bảng (Kho vật lý / Phạm vi / Hội đồng — FormRequest dùng chung màn Kế hoạch)

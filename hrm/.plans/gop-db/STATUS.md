@@ -77,8 +77,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
-- the-kho → @khoipv → .plans/gop-db/the-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-22-the-kho-design.md)
-
 - quan-ly-hang-hoa / **Sau go-live 20/10 — làm thẳng trên `gop_db`** (bỏ worktree + nhánh chung) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/viec-con-lai.md (mục 21/10 + 22/10)
   ### Checkpoint — 22/10/2026 sáng (wrap up)
   Vừa hoàn thành:
@@ -2317,6 +2315,36 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
+
+- hoat-dong-kho → @khoipv → .plans/gop-db/hoat-dong-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-26-hoat-dong-kho-design.md)
+  Port ERP `warehouseInfo.activities` (Kho › Hoạt động kho). Bắt đầu 26/10/2026.
+  Chuyển Hoàn thành: 2026-10-27.
+
+- bao-cao-hang-thua-thieu-sau-tong-kiem-ke → @khoipv → .plans/gop-db/bao-cao-hang-thua-thieu-sau-tong-kiem-ke/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-25-bao-cao-hang-thua-thieu-sau-tong-kiem-ke-design.md)
+  Port ERP `warehouseReport.selfInventoryReport` (Kho › Báo cáo kho) → `/warehouse/self-inventory-report`. Bắt đầu 25/10/2026; không quyền + phạm vi y ERP (user chốt).
+  Chuyển Hoàn thành: 2026-10-27.
+
+- the-kho → @khoipv → .plans/gop-db/the-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-22-the-kho-design.md)
+  Chuyển Hoàn thành: 2026-10-27.
+
+- bao-cao-ton-kho-chi-tiet-mat-hang → @khoipv → .plans/gop-db/bao-cao-ton-kho-chi-tiet-mat-hang/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-22-bao-cao-ton-kho-chi-tiet-mat-hang-design.md)
+  Chuyển Hoàn thành: 2026-10-27.
+
+- bao-cao-ton-kho-tong-hop-mat-hang → @khoipv → .plans/gop-db/bao-cao-ton-kho-tong-hop-mat-hang/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-23-bao-cao-ton-kho-tong-hop-mat-hang-design.md)
+  Port ERP `warehouseReport.stockGeneralProduct` → `/warehouse/stock-general-product`. Bắt đầu 23/10/2026; tách query tồn chung `WarehouseStockReportService` (user chốt).
+  Chuyển Hoàn thành: 2026-10-27.
+
+- bao-cao-ton-kho-theo-vi-tri → @khoipv → .plans/gop-db/bao-cao-ton-kho-theo-vi-tri/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-23-bao-cao-ton-kho-theo-vi-tri-design.md)
+  Port ERP `warehouseReport.stockLocationProduct` → `/warehouse/stock-location-product`. Bắt đầu 23/10/2026; tách thêm 3 hàm vào `WarehouseStockReportService` (user chốt) — Thẻ kho + màn Chi tiết gọi lại, số không đổi.
+  Chuyển Hoàn thành: 2026-10-27.
+
+- bao-cao-ton-theo-kho → @khoipv → .plans/gop-db/bao-cao-ton-theo-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-24-bao-cao-ton-theo-kho-design.md)
+  Port ERP `warehouseReport.stockWareshouseProduct` → `/warehouse/stock-warehouse-product`. Bắt đầu 24/10/2026; khuôn màn Tổng hợp theo mặt hàng, chi tiết theo KHO. ĐÃ PUSH develop 24/10 (api `f637713a6`, client `612fede85`); Playwright đã test.
+  Chuyển Hoàn thành: 2026-10-27.
+
+- tong-hop-xuat-nhap-ton → @khoipv → .plans/gop-db/tong-hop-xuat-nhap-ton/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-24-tong-hop-xuat-nhap-ton-design.md)
+  Port ERP `warehouseReport.changeSummaryReport` (Kho › Báo cáo kho) → `/warehouse/change-summary-report`. Bắt đầu 24/10/2026.
+  Chuyển Hoàn thành: 2026-10-27.
 
 - bien-ban-xu-ly-thua-thieu-kiem-ke — Port màn Biên bản xử lý hàng thừa, thiếu sau kiểm kê ERP (`inventory_audit_reports`) sang Tài chính › Kiểm kê — Duyệt ghi bút toán 3381/3341/711, 3341/1381/811. Bắt đầu 21/10/2026 → @khoipv → .plans/gop-db/bien-ban-xu-ly-thua-thieu-kiem-ke/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-21-bien-ban-xu-ly-thua-thieu-kiem-ke-design.md)
   Chuyển Hoàn thành: 2026-10-22.

@@ -5,6 +5,21 @@
 
 ## Đang làm
 
+- **Trả lại / thu hồi HĐ đã kết xuất sang cung ứng** — @khoipv — Bắt đầu 26/10/2026 — Xong BE + FE, chờ user test. HĐ đã kết xuất (status 9) mà chưa có phiếu đề xuất sống → Cung ứng trả lại (bắt buộc lý do) hoặc người lập HĐ thu hồi, về Đã duyệt; popup Lịch sử kết xuất ở màn HĐ đã kết xuất + danh sách HĐ. Checkpoint: Phase 1–5 xong, bước tiếp: user test UI → commit.
+  - Plan: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/plan.md](tra-lai-thu-hoi-hd-da-ket-xuat/plan.md) · Design: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/design.md](tra-lai-thu-hoi-hd-da-ket-xuat/design.md) · Spec: [docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md](../docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md)
+
+- **Duyệt HĐ kết xuất cung ứng theo nhóm nghiệp vụ** — @khoipv — Bắt đầu 26/10/2026 — Đang sửa BE. Quyền 525 đang duyệt toàn hệ thống → đổi sang xét nhóm nghiệp vụ giống "Duyệt hợp đồng" (người lập thuộc nhóm mình quản lý hoặc chính mình), thông báo gửi duyệt chỉ tới quản lý nhóm có quyền.
+  - Plan: [.plans/duyet-ket-xuat-theo-nhom-nghiep-vu/plan.md](duyet-ket-xuat-theo-nhom-nghiep-vu/plan.md)
+
+- **Giá bán HĐ trước — lọc theo nhóm khách hàng** — @khoipv — Bắt đầu 26/10/2026 — Đang sửa BE. KH khối bệnh viện (BV công lập + tư nhân) → đúng KH, fallback BV khác cùng tỉnh; KH Công ty TM / Khách lẻ, HKD / không nhóm → chỉ lấy giá của đúng KH đó.
+  - Plan: [.plans/gia-hd-truoc-theo-nhom-kh/plan.md](gia-hd-truoc-theo-nhom-kh/plan.md) · Spec: [docs/superpowers/specs/2026-10-26-gia-hd-truoc-theo-nhom-kh-design.md](../docs/superpowers/specs/2026-10-26-gia-hd-truoc-theo-nhom-kh-design.md)
+
+- **PXL — bảng Xử lý cung ứng hàng theo ma trận Nguồn × Phương án (code thật theo demo)** — @khoipv — Bắt đầu 23/10/2026 — Đang brainstorming. Làm code thật theo `demo-pxl-tach-nguon-hang.html` bản 23/10: mỗi hàng 3 dòng nguồn (Hàng tồn kho · Khách đang vay · Chốt mua thêm) × 5 phương án (Xuất bán · Xuất khách gửi · Xuất trả gửi cho KH · Xuất cho KH vay · Trừ hàng KH vay), cột "SL đã xử lý" xanh/đỏ (thiếu/thừa).
+  - Plan: [.plans/pxl-ma-tran-nguon-phuong-an/plan.md](pxl-ma-tran-nguon-phuong-an/plan.md) · Spec: [docs/superpowers/specs/2026-10-23-pxl-ma-tran-nguon-phuong-an-design.md](../docs/superpowers/specs/2026-10-23-pxl-ma-tran-nguon-phuong-an-design.md)
+
+- **HĐ mua — cho nhập tay VAT (%) ở bảng hàng hóa** — @khoipv — Bắt đầu 23/10/2026 — Code BE + FE xong, chờ build client + test UI. Cột VAT thành ô nhập (gợi ý theo danh mục hàng hóa, đã có % thì giữ), BE nhận % FE gửi, trống mới lấy `products.tax`.
+  - Plan: [.plans/hop-dong-mua-vat-nhap-tay/plan.md](hop-dong-mua-vat-nhap-tay/plan.md)
+
 - **Đơn mua hàng — sửa logic theo demo `demo-lap-don-mua-hang.html`** — @khoipv — Bắt đầu 21/10/2026 — Đang brainstorming. Màn `supply/purchase_orders` làm theo demo: HĐ mua không bắt buộc (đơn mua lẻ lấy hàng từ BC nhu cầu mua), Thông tin chung 2 khối Đơn mua / NCC, bảng hàng theo HĐ mua + hàng HĐ bán chưa đề xuất, tab Giao nhận & vận chuyển (mới), tab Điều khoản thanh toán.
   - Plan: [.plans/don-mua-hang-theo-demo/plan.md](don-mua-hang-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md)
 

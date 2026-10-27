@@ -23,9 +23,35 @@
       tick Nhà/Vị trí, tìm nhanh, đổi công ty, Loại báo cáo, In (Đầy đủ/Rút gọn), Xuất Excel, Cấu hình cột, F5 khôi phục, Làm mới,
       báo đỏ bắt buộc, link chứng từ — đạt
 - [x] Fix sau test: bản in cột Ngày / Số chứng từ không xuống dòng
+- [x] User 22/10: ô Hàng hóa mở POPUP chọn hàng (`V2BasePickerField` + `V2ProductPickerModal`) thay ô gõ tìm; tên dài cắt "…" giữ ô 32px — test Playwright đạt
+- [x] User 22/10: bỏ icon kính lúp ở ô Hàng hóa (`icon=""`, khuôn ô chọn của Phiếu điều chuyển vị trí)
+
+## Phase 2 — Chuyển sang khuôn báo cáo (skill report-styles, user chốt 22/10/2026)
+
+User chốt: khối tổng hợp 2 khối (Số lượng + Chứng từ, không drill) · bảng cây 2 cấp Chứng từ ▸ Lô/vị trí · ô Kỳ · code luôn không mockup.
+
+### BE
+- [x] `context()` nhận `period` (week / month / year mặc định / last_year / custom + from_date/to_date) — khuôn `ServiceDemandReportService::period()`
+- [x] `report()` trả `meta` (period_label, from, to, generated_at) + `summary` đếm chứng từ (tổng / nhập / xuất / điều chuyển) + tổng Nhập/Xuất dòng điều chuyển
+
+### FE
+- [x] `index.vue`: SmartFilterPanel theo khuôn (Xóa lọc, InfoTip MỤC ĐÍCH BÁO CÁO, In danh sách + Xuất Excel, ô Kỳ, ô ĐVT, ô Số chứng từ/Diễn giải thay ô tìm nhanh), `.pct-body--loading`, Excel tải bằng link `?token=`
+- [x] `components/StockCardSummary.vue` (khuôn TrackingSummary, không DrillNum)
+- [x] `components/StockCardTable.vue` (khuôn TrackingTable: rsum-tb, dòng TỔNG, caret + ô chọn cấp, V2BaseTableScroll, V2BasePagination theo chứng từ)
+- [x] Bỏ bảng tự dựng + Cấu hình cột cũ (khuôn báo cáo không có)
+- [x] Test Playwright theo mục 6 skill
+- [x] Fix sau test: bảng `min-width` 1500 → 1620px — ở 1366px số lô bị cắt "…" (cột Chứng từ / Lô 280 → 400px)
+
+### Fix sau duyệt (user 22/10/2026)
+- [x] Nhập / Xuất trong kỳ ở khối tổng hợp + bản in/Excel CỘNG CẢ điều chuyển vị trí cho khớp số ERP (ERP lỡ cộng vì chuỗi
+      `"App\Model\...PositionTransferDetail"` trong SQL bị MySQL nuốt dấu `\` → điều kiện loại không khớp dòng nào). Loại báo cáo
+      "Không nhặt điều chuyển" vẫn loại như cũ
+- [x] Xuất Excel có loading: tải qua axios blob (bỏ link `?token=`), nút "Đang xuất…" + icon quay + thanh loading Nuxt; popup kiểu
+      xuất giữ mở tới khi tải xong, lỗi thì giữ popup
+- [x] Ô Nhà / Dãy / Khoang / Vị trí chỉ hiện khi đã chọn Kho (bỏ hết kho -> ẩn, tick đã bị xoá ở watcher)
 
 ### Checkpoint — 22/10/2026
-Vừa hoàn thành: port BE + FE màn Thẻ kho, smoke test BE qua HTTP kernel
+Vừa hoàn thành: Phase 2 — chuyển Thẻ kho sang khuôn báo cáo (rsum + bảng cây 2 cấp + ô Kỳ), test Playwright đạt mục 6 skill report-styles
 Đang làm dở: —
-Bước tiếp theo: chạy `php artisan permission:sync` (hoặc seeder) để tạo 2 quyền; user mở `/warehouse/stock-card` kiểm trên trình duyệt
+Bước tiếp theo: chạy `php artisan permission:sync` để tạo 2 quyền; user duyệt giao diện
 Blocked:

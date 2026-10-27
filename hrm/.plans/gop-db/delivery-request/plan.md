@@ -60,6 +60,16 @@ FE `bill-adjust-dept-requests` (form/chi tiết/footer) + `borrow-extend-request
 - [x] (Redmine #11696 phản hồi 16/10) Form chi tiết: ô Đơn hàng/Hợp đồng có link cả HĐ ERP (`href`) — trước chỉ dựng `to` nên HĐ ERP ra chữ trơn
 - [x] (Redmine #11696 phản hồi 16/10) "Vẫn đổi trạng thái trong Thay đổi thông tin": ảnh tester là log 13/10 16:18 — ghi TRƯỚC bản sửa 15/10 (`c603ad3e2`), log cũ giữ nguyên; code hiện tại đã tách mốc
 
+- [x] (Redmine #11852, 26/10) Popup "Chọn đơn hàng/hợp đồng" thêm ô lọc **Loại hợp đồng** (`V2BaseSelectInModal`); BE nhận `contractable_type` (chỉ khoá trong `CONTRACT_SOURCES`), trả kèm `sources`. Verify: tất cả 12.646, lọc HĐ mua dịch vụ 72, loại lạ 0
+- [x] (Redmine #11852) Bấm mã PYCXH báo "không có quyền": màn chi tiết YCXH lọc theo 4 quyền "Xem yêu cầu xuất hàng theo …" (`ProductExportRequestController::scopedQuery`), popup thì liệt kê mọi phiếu. Thêm `DeliveryRequest::viewableExportRequestIds()` (chép đúng scopedQuery) → mã YCXH chỉ là link khi mở được, còn lại chữ trơn — áp ở popup (`can_view`), danh sách + form chi tiết (`objectable_can_view`). Verify: DNS Admin local chỉ xem được 1/100 phiếu ở trang đầu popup
+- [x] (Redmine #11852) ERP 501 phiếu vs HRM 101: do bỏ trạng thái "Đang tạo" (3) hôm 14/10 → user chốt 26/10 trả lại giống ERP, `EXPORT_REQUEST_STATUSES = [1, 2, 3, 10, 11]` (popup, nạp dữ liệu, lưu, duyệt). Verify local: popup 141 → 467; YCXH Đang tạo 33680 nạp được
+- [x] (Redmine #11852) Phiếu YCXH chưa gắn khách hàng: chặn NGAY lúc chọn (`exportRequestData` 422) → báo dưới ô Phiếu YCXH + toast, không điền form. Verify: YCXH 410 bị chặn, 35546 vẫn nạp được
+- [x] (Redmine #11852) Khối Bốc xếp màn Sửa 4 ô 1 hàng như màn Tạo (`carryColClass` theo `readonly`); màn Chi tiết giữ 1/3
+
+- [x] (Redmine #11854, 26/10) Tiêu đề màn Chi tiết + Sửa có tag trạng thái (`buildStatusTitle`, khuôn `product-export-requests/_id`); BE `STATUSES` thêm `color` (hex theo `statusBadgeVariant.js`), detail trả `status_color`. Verify: phiếu Chờ duyệt → `#D97706`
+- [x] (Redmine #11854) Tên chuẩn "Chi tiết/Sửa phiếu yêu cầu vận chuyển, bốc xếp: {mã}" — top-menu + tab trình duyệt (`plainTitle`, tab không dính HTML badge)
+- [x] (Redmine #11854) Câu lỗi validate theo skill form-validate: bỏ tiền tố tên trường, câu nguyên văn `locales/vi.json` (Bắt buộc phải nhập / Vui lòng nhập tối đa N ký tự. / Vui lòng nhập số nguyên. / Không hợp lệ / Định dạng file không hợp lệ / File quá lớn) — FE form + popup Từ chối, BE StoreRequest/RejectRequest/upload/Service/WriteService. Toast lỗi validate đổi thành câu nhắc chung "Vui lòng kiểm tra lại thông tin đã nhập". Verify: Validator payload rỗng ra đúng câu
+
 ### Checkpoint — 2026-10-08
 Vừa hoàn thành: BE + FE màn Phiếu yêu cầu vận chuyển, bốc xếp (`/finance/delivery-requests`), smoke test API pass, compile FE pass.
 Đang làm dở: không.

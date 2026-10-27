@@ -74,3 +74,107 @@ Blocked:
 - [x] Nhãn 2 nút Xử lý theo ERP: "Tạo phiếu nhập kho điều chuyển" / "Tạo phiếu xuất kho điều chuyển" (subagent đặt "điều chỉnh")
 - [x] Grep checklist + fail-open trên `pages/warehouse/self-inventories`: sạch
 - Giữ: "Duyệt kết quả" (đồng bộ màn anh em + popup dùng chung); khối file tiêu đề "File đính kèm" (component chung); cột Kế hoạch KK ở danh sách là chữ (ERP danh sách không có cột này); Hàng thừa khác dùng `position-inventory-results/structure` + `master-data/units/getAll` (route không gate quyền)
+
+## Phase 4 — Fix Redmine #11814 (QA 21/10)
+- [x] R4. Tạo phiếu từ kế hoạch: Ngày kiểm kê / Kho / Công ty thuê kho đã `disabled` nhưng nền trắng (cùng gốc R3 bên Kế hoạch) → `::v-deep` trong `SelfInventoryForm.vue`
+- [x] R5. Tạo phiếu từ kế hoạch báo đỏ "Hàng hóa không còn tồn…" — hàng hết tồn thật (KH 3 local: 16/222, tồn thực tế + kế toán = 0; ERP thì vỡ form). User chốt 22/10: giữ bỏ hàng, đổi toast đỏ → cảnh báo vàng, câu gọn tối đa 5 mã (`warnNoStock`)
+
+### Checkpoint — 2026-10-22 (#11814)
+Vừa hoàn thành: R4 (ô khoá xám bằng ::v-deep trong SelfInventoryForm) + R5 (cảnh báo vàng hàng hết tồn). Kèm R1–R3 bên plan Kế hoạch kiểm kê theo hàng hóa.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm (chưa bấm thật); hỏi user có sửa gốc ở V2BaseInput (component dùng chung) để ô disabled xám ở mọi màn không.
+Blocked:
+
+## Phase 5 — Fix Redmine #11817 (QA 21/10)
+- [x] R6. Tạo phiếu: bấm × ở ô ĐVT kiểm kê → ô trống nhưng dữ liệu vẫn giữ ĐVT cũ (`onUnitInput` bỏ qua giá trị rỗng) nên "Lưu và gửi" lọt, không báo lỗi → cho xoá thật (`unit_id = null`) + `validateAll()` bắt từng dòng ĐVT kiểm kê trống, lỗi inline tại ô (khoá `products.i.positions.j.details.k.results.m.unit_id`, câu khớp BE)
+- [x] R7. Chọn kế hoạch #03 báo đỏ "Hàng hóa không còn tồn…" — trùng R5 (#11814), đã sửa ở local (cảnh báo vàng, tối đa 5 mã), chưa lên dev
+
+### Checkpoint — 2026-10-22 (#11817)
+Vừa hoàn thành: R6 — `SelfInventoryForm.vue` `onUnitInput` cho xoá ĐVT thật (bỏ cơ chế vẽ lại ĐVT cũ + `unitClearAt`), `validateAll()` bắt ĐVT kiểm kê trống từng dòng → viền đỏ + câu lỗi dưới ô. BE đã có sẵn `results.*.unit_id required`. Parse template + script OK. R7 trùng R5.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm: × ô ĐVT → Lưu / Lưu và gửi báo lỗi tại ô; chọn lại ĐVT → hết lỗi, quy đổi tách dòng vẫn đúng.
+Blocked:
+
+## Phase 6 — Fix Redmine #11819 (QA 23/10)
+- [x] R8. Danh sách: bỏ sort cột Người tạo / Người duyệt / Trạng thái (list-page "Cột nào được sort": chỉ mã/tên, tiền, ngày)
+- [x] R9. Cập nhật kết quả: tiêu đề Hàng hóa / Hàng thừa khác / Hội đồng kiểm kê có (*) như tab ERP (trước chỉ hiện ở Thêm/Sửa)
+- [x] R10. Duyệt kết quả: thiếu khối Hàng thừa khác khi phiếu không có hàng thừa → luôn hiện khi `show_result_columns` (bảng trống "Không có dữ liệu", như tab ERP)
+
+### Checkpoint — 2026-10-23 (#11819)
+Vừa hoàn thành: R8 `index.vue` bỏ `sortable` cột Trạng thái / Người tạo / Người duyệt (còn sort: Số phiếu, Ngày kiểm kê, Ngày tạo, Ngày duyệt).
+R9 `SelfInventoryForm.vue` computed `showRequiredMark` (= Thêm/Sửa hoặc đang nhập kết quả) cho (*) khối Hàng hóa / Hội đồng; Hàng thừa khác có (*) khi nhập kết quả — chỉ dấu, không thêm luật validate.
+R10 khối Hàng thừa khác hiện mọi lúc `show_result_columns` (duyệt / đã duyệt không có dòng → "Không có dữ liệu"). Parse template + script OK.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm 3 điểm trên dev.
+Blocked:
+
+## Phase 7 — Fix Redmine #11825 (câu lỗi theo skill form-validate)
+- [x] R11. Lỗi "Hàng hóa – Hàng hóa đã lập phiếu kiểm kê." có tiền tố tên trường (cả toast lẫn dưới dòng) → bỏ tiền tố, chỉ còn "Hàng hóa đã lập phiếu kiểm kê." (skill form-validate §3, chốt #11791)
+- [x] R12. Áp skill cho cả màn: bỏ tiền tố "<Tên trường> –" mọi câu lỗi FE (`SelfInventoryForm.vue`) + BE (StoreRequest, SaveResultRequest, WriteService, Controller); bỏ trống → "Bắt buộc phải nhập", quá dài → "Vui lòng nhập tối đa N ký tự.", sai → "Không hợp lệ"
+- [x] R13. Toast khi BE trả 422 lỗi theo ô → câu chung "Vui lòng kiểm tra lại thông tin đã nhập.", không nhét câu lỗi của ô lên toast
+
+### Checkpoint — 2026-10-23 (#11825)
+Vừa hoàn thành: R11–R13. BE bỏ tiền tố ở StoreRequest / SaveResultRequest / WriteService / Controller (endpoint `product-data` chỉ báo qua toast nên giữ câu tự nói rõ "Vui lòng chọn kho." …; "Kế hoạch kiểm kê không tồn tại.", "Tồn theo lô phải lớn hơn 0." viết thành câu). FE `SelfInventoryForm.vue`: câu lỗi tự kiểm theo vi.json, toast 422 = "Vui lòng kiểm tra lại thông tin đã nhập." (save + runDetailAction), `productRowError` hiện thêm mọi lỗi con của dòng chưa có ô riêng, thêm dòng lỗi dưới ô Kế hoạch kiểm kê. Smoke: POST rỗng → 422 đủ khoá, câu không tiền tố; `duplicateErrors` → "Hàng hóa đã lập phiếu kiểm kê.". Template + script parse OK.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm lại case #11825 (kế hoạch tổng id=8, hàng đã lập phiếu).
+Blocked:
+
+## Phase 8 — Fix Redmine #11826 (QA 23/10, màn Chi tiết phiếu)
+- [x] R14. Hàng thừa khác: nút xoá vị trí (dòng vị trí thứ 2 trở đi) đang là dấu "−" → đổi sang biểu tượng thùng rác như nút Xóa dòng
+- [x] R15. Tiêu đề Hàng hóa / Hàng thừa khác / Hội đồng kiểm kê có (*) khi nhập kết quả — đã làm ở R9 (#11819), chưa lên dev → chỉ kiểm lại
+- [x] R16. Thông tin chung: bỏ ô Số phiếu (mã đã hiện trên thanh tiêu đề) → Ghi chú luôn `col-md-8`
+
+### Checkpoint — 2026-10-23 (#11826)
+Vừa hoàn thành: R14 `SelfInventoryForm.vue` nút "Xóa vị trí" ở Hàng thừa khác `ri-subtract-line` → `ri-delete-bin-line` (vẫn `danger`). R15 đã có từ R9 — ảnh QA chụp trên dev chưa có bản #11819. R16 bỏ ô Số phiếu ở Thông tin chung (Sửa + Chi tiết; mã vẫn trên thanh tiêu đề), Ghi chú luôn `col-md-8`. Template + script parse OK.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm phiếu 1074 (nhập kết quả, thêm 2 vị trí ở Hàng thừa khác); deploy kèm #11819.
+Blocked:
+
+## Phase 9 — Fix Redmine #11822 (QA 21/10, màn Tạo phiếu)
+- [x] R17. Ô Công ty thuê kho (chưa chọn kho): thêm placeholder "Chọn công ty thuê kho" + bỏ tooltip "Chọn kho trước…"
+- [x] R18. Câu lỗi validate theo skill form-validate: bỏ tiền tố tên trường (đã làm ở #11825) + FE KHÔNG tự chặn `required` — chỉ chặn định dạng (Ghi chú ≤ 255), required / trùng để BE trả 422 rồi hiện dưới từng ô
+- [x] R19. Bảng Hàng hóa cuộn dọc: dòng lộ qua khe phía trên tiêu đề dính → phủ kín
+- [x] R20. Bỏ chú thích "TPE - 87" dưới SL tồn kho
+- [x] R21. Đổi kho / công ty thuê kho khi đã có hàng: chưa bấm Đồng ý mà ô đã đổi (công ty thuê kho bị clear) → giữ nguyên giá trị cũ tới khi Đồng ý
+- [x] R22. Popup Thêm hàng hóa chỉ lọc tồn theo kho, không theo công ty thuê kho → thêm tham số `stock_company_ids[]` vào ProductPickerService (user đồng ý 23/10), màn truyền công ty thuê kho đang chọn
+
+### Checkpoint — 2026-10-23 (#11822)
+Vừa hoàn thành: R17–R22. FE `SelfInventoryForm.vue`: placeholder ô Công ty thuê kho + bỏ tooltip "Chọn kho trước"; `validateAll()` → `validateFormat()` chỉ chặn Ghi chú > 255, bắt buộc / trùng thành viên / ĐVT trống để BE 422 (đủ ô 1 lần, câu không tiền tố); tiêu đề bảng dính ở từng `th` + `border-collapse: separate`; bỏ dòng "TPE - 87" dưới SL tồn kho; `confirmClearProducts` vẽ lại giá trị cũ ngay, chỉ đổi khi Đồng ý; popup Thêm hàng hóa truyền `stock_company_ids`. BE `ProductPickerRequest` + `ProductPickerService` thêm `stock_company_ids[]` (cùng điều kiện `PhysicalStockReader::inventoryProducts`).
+Smoke (kho 2, công ty 3): popup 4812 → 136 hàng; product-data trên 100 hàng đã lọc: no_stock 0 (chưa lọc: 98/100 hết tồn — đúng lỗi QA). POST phiếu rỗng → 422 warehouses / company_rentals / products / members.0.* cùng lúc. Template + script parse OK.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm 6 điểm (đặc biệt R19 tiêu đề dính khi cuộn bảng dài, R21 đổi kho → Hủy / Đồng ý).
+Blocked:
+
+## Phase 10 — Fix Redmine #11823 (QA 21/10, màn Danh sách)
+- [x] R23. Ô lọc Kho: công tắc 🔒 xem được cả kho đã khoá (khuôn `LockableFilterSelect` như danh mục kho #11782); BE `filterOptions` trả kho kèm `is_locked` (bỏ kho ERP đã xoá status 2)
+- [x] R24. ERP chỉ thấy phiếu theo công ty, HRM thấy hết. Gốc: `SelfInventory` kiểm quyền qua trait `ChecksEmployeePermission` (bỏ qua `role_has_permissions.company_id`, role 18 = xem hết) trong khi ERP `Employee::can()/hasRole()` lọc theo công ty đang chọn. User chốt 23/10 hướng 1: CHỈ màn này — `isAllCompany` / `canViewCompany` / `hasPermission` → hàm chung `isCurrentEmployeeHasPermission()` (theo `current_company_role`), bỏ lối tắt role 18. Không sửa ERP, không sửa trait chung (103 file)
+- [x] R25. Cột Kế hoạch kiểm kê thành link sang chi tiết kế hoạch (theo hàng hóa / tổng) — BE trả `plan_path`
+- [x] R26. Bỏ sort Ngày tạo / Ngày duyệt (Người tạo / Người duyệt / Trạng thái đã bỏ ở #11819); sort mặc định trống → icon trung tính, BE vẫn created_at giảm dần
+- [x] R27. Thêm cột Ngày cập nhật + Người cập nhật (bảng + Xuất Excel)
+- [x] R28. Ngày duyệt kèm giờ (bảng + Excel; bản in đã có giờ)
+- [x] R29. Xuất Excel: bỏ màu nền dòng tiêu đề cột
+- [x] R30. (Hỏi) Lọc có "Chờ xử lý" / "Đang xử lý" nhưng không thấy phiếu → KHÔNG sửa: 2 trạng thái có thật (Duyệt kết quả có chênh lệch → Chờ xử lý; lập phiếu điều chuyển / nhập-xuất điều chỉnh → Đang xử lý), y ERP; dữ liệu hiện chưa có phiếu nào tới bước đó
+
+### Checkpoint — 2026-10-23 (#11823)
+Vừa hoàn thành: R23–R30. BE `SelfInventoryService`: `filterOptions.warehouses` = `WarehouseCatalogScope::warehouseOptions([], true, true)` (mọi công ty, kèm `is_locked`, bỏ status 2); list join `updated_by` → `updated_at_full` / `updater_name`; `plan_path` theo KH theo hàng hóa / KH tổng; `SORT_MAP` chỉ còn `code` + `inventory_date`. FE `index.vue`: slot `#field-warehouse_id` = `LockableFilterSelect` (công tắc cục bộ `showLockedWarehouses`), cột Kế hoạch KK là link, bỏ sort Ngày tạo / Ngày duyệt (sort mặc định trống), cột Ngày duyệt hiện giờ, thêm Ngày cập nhật / Người cập nhật, `exportFieldKeyMap` (created_at / approve_time → *_full). `export-excel.js`: thêm 2 cột, Ngày duyệt kèm giờ, bỏ nền tiêu đề cột.
+R24 / R30 không sửa code (phạm vi + trạng thái y ERP) — trả lời QA.
+Smoke (tinker, NV 13 Super admin): list 690, có updater/approve giờ/plan_path; kho 19 (1 khoá); sort created_at/approve_time bị bỏ qua → created_at desc; export 690 dòng có updater. Template + script parse OK. Chưa mở trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm: công tắc 🔒 ô Kho, bấm link kế hoạch, Xuất Excel (tiêu đề không nền, đủ 2 cột mới).
+Blocked:
+
+### Checkpoint — 2026-10-23 (#11823 R24)
+Vừa hoàn thành: R24 `SelfInventory.php` 3 hàm quyền dùng `isCurrentEmployeeHasPermission()`. Smoke (tinker, transaction rollback): DNS Admin công ty 1 → xem hết 690; giả `company_role = 4` → all/company/BKS = false, chỉ 1 phiếu của mình; NV 25 không quyền → 0.
+Đang làm dở: —
+Bước tiếp theo: deploy dev → QA kiểm lại với tài khoản/công ty thật; lưu ý người có quyền ở công ty khác công ty hiện tại sẽ mất quyền trên màn này (đúng ERP).
+Blocked:
+
+## Phase 11 — Fix Redmine #11857 (QA 23/10, màn Danh sách + nhập kết quả)
+- [x] R31. "Đặt sort về mặc định": ảnh QA chụp 15:53 23/10, TRƯỚC commit #11823 R26 (16:13) → sort Ngày tạo / Ngày duyệt đã bỏ. Vá nốt: sort cũ (created_at / approve_time…) còn lưu localStorage → khi khôi phục chỉ giữ `code` / `inventory_date`
+- [x] R32. (*) tại khối Hàng hóa / Hàng thừa khác / Hội đồng kiểm kê lúc nhập kết quả → đã có từ #11821 (`4c14fd4bf`, 09:23 23/10, đã lên origin/develop); ảnh QA chụp trên hrm-crm (bản build cũ). Không sửa code
+
+### Checkpoint — 2026-10-26 (#11857)
+Vừa hoàn thành: R31 (FE `index.vue` `restoreAndLoad`), R32 xác minh
+Đang làm dở: —
+Bước tiếp theo: deploy → QA kiểm lại trên bản mới
+Blocked:

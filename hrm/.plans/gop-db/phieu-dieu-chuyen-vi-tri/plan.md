@@ -78,3 +78,115 @@ Blocked:
   - FE `PositionTransferForm.vue`; BE `PositionTransferStoreRequest::messages()`, `PositionTransferController::printExpect`, `PositionTransferWriteService` (5 câu ValidationException)
   - 422 khi Lưu: lỗi đều có ô hiện → toast nhắc chung "Vui lòng kiểm tra lại thông tin đã nhập."; có khoá không có ô (`products.N.position_inventory_result_id`, `products.N.product_id`…) → toast câu đó (hằng `INLINE_ERROR_KEY`). In dự kiến 422 → popup nhắc chung.
   - Verify: vue-template-compiler + babel OK; php -l OK; HTTP kernel 3/3 (store nháp, store điều chuyển, print-expect → câu mới). Chưa mở trình duyệt.
+
+## Phase 8 — Redmine #11808 Tạo mới (23/10)
+- [x] T1. Ẩn tooltip ⓘ cạnh nhãn Kho (bỏ `:hint` + computed `warehouseHint`) — `PositionTransferForm.vue`
+- [x] T2. Ghi chú dạng textarea — đã làm ở Phase 7 F1 (#11791), ảnh tester chụp 20/10 trước khi sửa
+- [x] T3. Bỏ tiền tố "Kho –" / "Chi tiết –" trong câu lỗi — đã làm ở Phase 7 F2/F3 theo skill `form-validate` §3 (`Bắt buộc phải nhập`)
+- [x] T4. Danh sách Phiếu kiểm kê theo vị trí: phiếu còn dòng cần điều chuyển → nút sang THẲNG màn Tạo phiếu điều chuyển vị trí, icon `ri-arrow-left-right-line` + tên "Tạo phiếu điều chuyển vị trí" như footer chi tiết; phiếu Chờ xử lý không cần điều chuyển vẫn "Xử lý" → Chi tiết
+  - BE `PositionInventoryResultService::listFlags()` thêm `is_can_transfer` + `transfer_create_path` (needTransfer chỉ chạy khi canHandle); `actionFlags()` dùng lại; export danh sách lọc bỏ `transfer_create_path`
+  - FE `position-inventory-results/components/row-actions.js`: action `transfer`
+  - Verify: php -l OK; tinker listFlags phiếu 106 → transfer=1 + path đúng, complete=0; vue-template-compiler + babel OK. Chưa mở trình duyệt.
+- [x] T5. Bỏ cột "Bấm để chọn" ở popup dùng chung `RecordPickerModal` (user chốt: bỏ ở CẢ 6 màn dùng popup). Dòng không chọn được (`disabledFn`) → chữ xám, con trỏ cấm, rê chuột hiện lý do (gắn `title` cho `<tr>` lúc mouseover vì V2BaseDataTable không có prop title dòng)
+  - Verify: vue-template-compiler + babel OK. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-10-23
+Vừa hoàn thành: Phase 8 (#11808).
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm: form Tạo (không còn ⓘ ở Kho), danh sách Phiếu kiểm kê theo vị trí (nút ⇄ sang thẳng màn tạo điều chuyển). Kiểm popup Chọn vị trí xuất / nhập / lô: không còn cột "Bấm để chọn", vị trí đang kiểm kho xám + tooltip.
+Blocked:
+
+## Phase 9 — Redmine #11811 Popup chọn vị trí (23/10)
+- [x] V1. Sort cột Tồn (server, `sort_by=unit_qty` → `sp.qty`)
+- [x] V2. Lọc Nhà / Dãy / Khoang: 3 dropdown theo kho đang chọn, phân cấp Nhà → Dãy → Khoang (user chốt dropdown). BE: API `position-transfers/position-filter-options` + lọc `house_id`/`row_id`/`space_id` ở `positionsQuery`
+- [x] V3. RecordPickerModal (dùng chung, user cho phép 23/10): thêm slot `#filters` + phát sự kiện `reset` — màn khác không truyền slot thì không đổi
+- [x] V4. Ô Vị trí không mở link → chữ thường (bỏ `link: true` ở positionColumns)
+- Ghi chú: ô đỏ "Bấm để chọn" trong ảnh đã bỏ ở Phase 8 T5 (#11808)
+  - BE `PositionTransferService::positionsQuery` lọc `house_id`/`row_id`/`space_id` + `positionFilterOptions()`; `PositionTransferController::positionFilterOptions`; route `GET position-transfers/position-filter-options`
+  - FE `RecordPickerModal.vue` (slot `#filters`, ô tìm co về col-md-3 khi có slot, emit `reset`); `PositionTransferForm.vue` (3 `V2BaseSelectInModal`, mở popup thì xoá lọc, danh mục nhớ theo kho, cột Tồn `unit_qty` sortable + format `qty_text`, bỏ `link` ô Vị trí)
+  - Verify: php -l OK; vue-template-compiler + babel OK; HTTP kernel kho 1 / hàng 7462: options 200 (1 nhà / 23 dãy / 133 khoang), sort Tồn asc/desc đúng, lọc nhà 15→13, dãy →8, khoang →1. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-10-23
+Vừa hoàn thành: Phase 9 (#11811).
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm popup Chọn vị trí xuất / nhập: 3 ô lọc Nhà/Dãy/Khoang (phân cấp), sort cột Tồn, ô Vị trí chữ thường; kiểm 5 màn khác dùng RecordPickerModal không đổi giao diện (ô tìm + nút như cũ).
+Blocked:
+
+## Phase 10 — Redmine #11812 Popup chọn vị trí nhập + popup lô (23/10)
+- [x] N1. Lọc Nhà/Dãy/Khoang + sort Tồn ở popup vị trí nhập — đã có từ Phase 9 (#11811, cùng 1 popup cho xuất/nhập)
+- [x] N2. Bỏ "Bấm để chọn", bấm bất kỳ đâu trong dòng để chọn — đã có từ Phase 8 T5 (#11808)
+- [x] N3. Ô tìm vị trí chỉ tìm theo MÃ (user chốt 23/10; tên vị trí trong DB là tầng "Tầng 1", bảng không hiện) → placeholder "Mã vị trí", BE bỏ `positions.name`. Màu ô Vị trí giữ chữ thường như #11811 (user chốt, "để lại màu" coi là gõ nhầm)
+- [x] N4. Popup chọn lô: ô tìm không chạy (BE `lots()` bỏ qua `keyword`) → lọc theo số lô đang hiển thị (gồm tiền tố công ty), không phân biệt hoa thường
+  - BE `PositionTransferService::positionsQuery` (keyword chỉ `positions.code`), `lots()` (lọc `keyword` bằng `mb_stripos` trên nhãn lô); FE `PositionTransferForm.vue` placeholder "Mã vị trí"
+  - Verify: php -l OK; compile FE OK; HTTP kernel: lô không từ khoá 36 → "6-49" 8 → "dhsjkjs" 0; vị trí "Tầng 1" 0, "SG-N1-D2" 20. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-10-23
+Vừa hoàn thành: Phase 10 (#11812).
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm popup vị trí nhập (lọc / sort / placeholder "Mã vị trí") và ô tìm ở popup Chọn lô xuất.
+Blocked:
+
+## Phase 11 — Redmine #11813 Sửa phiếu (23/10)
+- [x] S1. Nút "Lưu" → "Lưu nháp" (+ "Lưu nháp và tiếp tục"); nháp CHỈ bắt Kho (user chốt 23/10 — lệch ERP: ERP bắt cả Ghi chú + ≥1 hàng). Ghi chú / ≥1 hàng / đủ cột dòng chỉ bắt khi Điều chuyển. `note` NOT NULL → nháp trống ghi ''
+- [x] S2. Vượt tồn: ĐỐI CHIẾU ERP, KHÔNG đổi — ERP Lưu cho qua (chỉ tô đỏ SL tồn), Điều chuyển khoá nút (`form.is_invalid`); HRM Lưu nháp cho qua, Điều chuyển chặn → giống ERP
+- [x] S3. Bỏ tiền tố tên cột trong câu lỗi — đã làm Phase 7 F2/F3 (#11791), ảnh tester chụp 21/10 trước khi sửa
+- [x] S4. Lịch sử dòng hàng sửa: "Tên hàng: trường cũ → mới" — bỏ phụ chú (Vị trí xuất; Lô; Vị trí nhập) (`__brief = true`)
+- [x] S5. Ẩn ⓘ cạnh Kho — đã làm Phase 8 T1 (#11808)
+- [x] S6. Lịch sử: xoá 1 dòng giữa bảng → chỉ 1 dòng "đã xóa" (`__key` = product_id#lần xuất hiện, thay chỉ số dòng)
+- [x] S7. Báo lỗi theo skill `form-validate`: FE chỉ chặn định dạng (ghi chú ≤255, SL ≤ trần), required + nghiệp vụ để BE 422; toast nhắc chung "Vui lòng kiểm tra lại thông tin đã nhập."; lỗi đang kiểm kho / vị trí khác kho / vượt tồn của BE gắn về ĐÚNG DÒNG (khoá `products.N.*`) thay vì khoá chung `products` ở cuối bảng; lỗi dòng hàng (`product_id`, dòng kiểm kê đã xử lý) hiện dưới ô Tên hàng hóa
+  - BE `PositionTransferStoreRequest` (nháp: `note`/`products` nullable; Điều chuyển: required + kiểm file trong `withValidator` để báo cùng lượt), `PositionTransferWriteService` (note `''` khi trống; `guardInventory` / `validateStock` gắn lỗi `products.N.product_id|from_position_id|to_position_id|qty`; `__key` = `product_id#n`, `__brief = true`)
+  - FE `PositionTransferForm.vue`: nút "Lưu nháp" / "Lưu nháp và tiếp tục"; `validateAll` → `validateFormat` (chỉ định dạng); `rowError()` dưới ô Tên hàng hóa; toast "Vui lòng kiểm tra lại thông tin đã nhập."
+  - Verify: php -l OK; compile FE OK; HTTP kernel (rollback): nháp chỉ kho 200 · thiếu kho 422 warehouse_id · Điều chuyển trống 422 đủ 4 khoá (note/products/warehouse_id/attachments) · ghi chú 256 ký tự 422; lịch sử: xoá dòng 2/4 → 1 dòng "đã xóa", sửa SL → "Tên: SL 1 → 2", lưu lại không đổi → 0 log; reflection: vượt tồn dòng 3 → `products.2.qty`, vị trí kiểm kho / khác kho → đúng ô từng dòng. Chưa mở trình duyệt.
+  - Lưu ý: log cũ (khoá theo chỉ số dòng) → lần sửa đầu tiên sau deploy của phiếu nháp cũ có thể nhiễu 1 lần (skill entity-history §6).
+
+### Checkpoint — 2026-10-23
+Vừa hoàn thành: Phase 11 (#11813).
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm form Sửa: nút Lưu nháp (chỉ bắt Kho), Điều chuyển thiếu dữ liệu → đỏ đủ ô 1 lượt + toast chung, lỗi đang kiểm kho / vượt tồn hiện ở đúng dòng; lịch sử xoá 1 dòng giữa bảng.
+Blocked:
+
+## Phase 12 — Redmine #11855 File đính kèm thêm dấu (*) (26/10)
+- [x] R1. Khối File đính kèm hiện dấu (*) bắt buộc ở form Tạo/Sửa (cùng khuôn Ghi chú / Chi tiết: `!isShow`). BE đã chặn sẵn khi Điều chuyển mà chưa có file (Phase 11) → không đổi BE
+  - FE `PositionTransferForm.vue`: `AttachmentSection` thêm `:required-file="!isShow"` (prop có sẵn → `<Required>` ở tiêu đề + cột "Upload / File")
+  - Verify: compile FE. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-10-26
+Vừa hoàn thành: Phase 12 (#11855).
+Đang làm dở: không
+Bước tiếp theo: user mở /warehouse/position-transfers/create kiểm dấu (*) cạnh "File đính kèm".
+Blocked:
+
+## Phase 13 — Redmine #11812 phản hồi: nút Tìm kiếm / Làm mới xuống dòng ở màn nhỏ (26/10)
+- [x] S1. Popup Chọn vị trí nhập/xuất: chữ "Tìm kiếm", "Làm mới" bị bẻ 2 dòng khi màn hẹp → để cả 2 nút trên 1 dòng
+  - FE `RecordPickerModal.vue`: cột nút `col-md` → `col-md-auto` (lấy đúng bề rộng nút), nút `white-space: nowrap; flex-shrink: 0`
+  - FE `PositionTransferForm.vue`: 3 ô lọc Nhà/Dãy/Khoang `col-md-2` → `col-md` (tự co nhường chỗ cho nút)
+  - Verify: compile FE. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-10-26
+Vừa hoàn thành: Phase 13 (#11812 phản hồi).
+Đang làm dở: không
+Bước tiếp theo: user thu nhỏ cửa sổ, mở popup Chọn vị trí nhập kiểm 2 nút không xuống dòng.
+Blocked:
+
+## Phase 14 — Redmine #11813 phản hồi 23/10 (26/10)
+- [x] P1. Nút "Lưu nháp và tiếp tục" → "Lưu và tiếp tục" (hành vi giữ nguyên: lưu nháp rồi ở lại tạo tiếp)
+- [x] P2. "Bỏ chỗ trống" (user chốt: khoảng hở giữa icon ⓘ và chữ "Bắt buộc phải nhập") — ô SL canh phải nên câu lỗi dạt phải, bẻ dòng thì hở → `.pt-table ::v-deep .v2-error { text-align: left }`
+  - FE `PositionTransferForm.vue`. Verify: compile FE. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-10-26
+Vừa hoàn thành: Phase 14 (#11813 phản hồi).
+Đang làm dở: không
+Bước tiếp theo: user kiểm nút "Lưu và tiếp tục" + câu lỗi ô SL sát icon.
+Blocked:
+
+## Fix #11875 — Lưu nháp chỉ validate 1 trường bắt buộc + thông báo validate theo skill (2026-10-26)
+
+- [x] Rà lại: luồng Lưu nháp đã có từ #11813 (BE `PositionTransferStoreRequest` nháp chỉ bắt Kho, commit api dd3ebabe0 / client 5d7ab14ba đã lên `origin/gop_db` 23/10) — ảnh tester là bản cũ trên hrm-crm (câu "Ghi chú – Vui lòng nhập ghi chú." trước #11791) → cần deploy
+- [x] FE: toast lỗi validate đổi về câu chuẩn skill `form-validate` §1/§3d "Bạn chưa nhập đầy đủ thông tin." (lưu: lỗi định dạng + 422; In dự kiến 422)
+- [x] Kiểm FormRequest: nháp trống → chỉ đỏ Kho; nháp chỉ Kho → qua; nháp ghi chú 300 ký tự → chặn định dạng; Điều chuyển chỉ Kho → đỏ Ghi chú + Chi tiết + File cùng lượt
+
+### Checkpoint — 2026-10-26
+Vừa hoàn thành: fix #11875
+Đang làm dở: —
+Bước tiếp theo: deploy hrm-crm (api + client) rồi QA test lại
+Blocked:
