@@ -941,3 +941,419 @@ Vừa hoàn thành: gỡ 4 gate quyền `Lập hợp đồng` ở đường TẠ
 Đang làm dở: (không).
 Bước tiếp theo (user): bấm thật màn `/assign/contracts` — nút "Tạo hợp đồng" phải hiện, lập & lưu HĐ không 403.
 Blocked: (không)
+
+#### 9 — Bỏ bắt buộc "Ngày ký" ở form Tạo/Sửa HĐ [x] (2026-10-14)
+Bối cảnh: user báo "Ngày ký hiển thị theo dữ liệu khi Xác nhận KH đã ký >> Form Tạo không thể bắt buộc nhập trường này". Ngày ký chỉ được điền khi xác nhận KH đã ký (chưa có luồng này ở HRM) → form Tạo/Sửa KHÔNG được bắt buộc.
+- [x] FE `pages/assign/contracts/_id/edit.vue`: gỡ dấu `*` nhãn "Ngày ký" (dòng ~49), bỏ wrapper `field-error` + `V2BaseError` cho ô này, giữ nguyên `V2BaseDatePicker` để vẫn nhập tay được.
+- [x] FE `validateForm()`: gỡ dòng `if (!this.form.sign_date) errs.sign_date = 'Vui lòng nhập ngày ký'` (~dòng 1111).
+- [x] BE `ContractStoreRequest`: `sign_date` `required|date` → `nullable|date`, gỡ message `sign_date.required`.
+- [x] BE `ContractUpdateRequest`: `sign_date` `required|date` → `nullable|date`, gỡ message `sign_date.required`.
+- [x] An toàn null: `ContractService::recomputeEffectiveDates()` đã xử lý `sign_date` null (effective_date = null khi điều kiện = Kể từ ngày ký) — không vỡ.
+- [x] Verify Playwright `/assign/contracts/create?quotation_id=74`: nhãn "Ngày ký" không còn `*`; bấm "Trình duyệt" khi ô trống → KHÔNG hiện lỗi "Vui lòng nhập ngày ký". `php -l` sạch 2 FormRequest.
+
+#### 10 — Tài khoản ngân hàng Bên A: dropdown chọn như FirmContract ERP [x] (2026-10-14)
+Bối cảnh: user (chuyển lời chị) — "Tài khoản ngân hàng Bên A hiện PM tự hiển thị, không biết lấy cái nào". Ảnh chú thích đỏ: "phải để CHỌN tài khoản như logic cũ, KHÔNG hiển thị mặc định". User chốt: logic cũ = **HĐ hãng FirmContract bên ERP**. Điều tra: ERP Bên A = **dropdown chọn `company_account_id`** (nguồn `company_accounts` lọc theo `company_id`, KHÔNG auto-chọn mặc định), lưu snapshot 4 cột text từ account được chọn (`FirmContractService.php:458-462`). Cả ERP lẫn HRM **đều không có** khái niệm "tài khoản theo quy chế của phòng" → bỏ ý "default theo phòng". Hiện HRM auto-điền tài khoản `orderBy('id')->first()` (`ContractController::quotationPrefill`).
+Chốt với user: (1) dropdown chọn, KHÔNG mặc định; (2) **chuẩn ERP** — thêm cột FK `company_account_id` + snapshot.
+- [x] BE Migration `hrm_contracts`: thêm `company_account_id` unsignedBigInteger nullable (guard hasColumn).
+- [x] BE `Contract` model: thêm relation `company_account()` belongsTo CompanyAccount.
+- [x] BE `ContractStoreRequest`/`ContractUpdateRequest`: thêm `company_account_id => required|exists:company_accounts,id`; `company_account_number` → nullable (suy từ account); đổi message required sang company_account_id.
+- [x] BE `ContractService` store+update: set `company_account_id` + snapshot 4 cột (account_number/name/bank_name/bank_branch) từ `CompanyAccount::find($company_account_id)` (giống FirmContract ERP), chống lệch FE.
+- [x] BE `ContractController::quotationPrefill`: BỎ prefill 4 cột company_account_* (không auto-chọn tài khoản nữa); giữ company info + Bên B.
+- [x] BE endpoint mới `GET /assign/contracts/company-accounts`: trả danh sách company_accounts status=1 theo company người lập (+ include id đang chọn khi sửa), kèm currency để dựng nhãn.
+- [x] FE `edit.vue`: thay 4 ô text Bên A bằng 1 `V2BaseSelect` "Tài khoản ngân hàng *" (`form.company_account_id`), nhãn option giống ERP `<số TK> - <loại tiền> tại <ngân hàng> chi nhánh <chi nhánh> - <tên TK>`; onChange đổ snapshot 4 cột; fetch options ở mounted (cả tạo & sửa); edit set company_account_id từ detail; validateForm bắt buộc company_account_id thay company_account_number.
+- [x] BE `DetailContractResource`: trả `company_account_id`.
+- [x] Verify Playwright: dropdown hiện danh sách tài khoản, không chọn sẵn; chọn → lưu OK; sửa → reselect đúng tài khoản đã lưu.
+
+## Phase 11 — Bổ sung 6 trường FirmContract còn thiếu trên màn HĐ (mục 1, 2a/b/c, 5, 6) [ ]
+
+> Spec: `.plans/hop-dong/design-phase11-firm-fields.md`. Nhánh `gop_db` (hrm-api + hrm-client).
+> Để lại mục 3 (giao hàng + tiến độ TT #11252) và mục 4 (điều kiện thời gian thực hiện).
+> **Ràng buộc chung** (áp mọi task): ERP = Laravel 6 nhưng HRM = Laravel 8/PHP7.4 — KHÔNG `?->`.
+> DB gộp `erp_hrm_check`: KHÔNG FK cứng, bảng trùng ưu tiên bản ERP. Màn edit.vue là **màn CŨ**:
+> bám pattern `touched`/`formError`/`validateForm()`/`.fld-grid`/`.c-section`, dropdown dùng
+> `V2BaseSelect` (như Bên A). Số quốc tế. Đỏ chỉ cho lỗi validate. KHÔNG tự sửa giá trị user nhập.
+> Cột mới vào `hrm_contracts`: `customer_type`, `customer_deputy_id`, `customer_account_id`,
+> `need_install` (tái dùng `representative_role` cho chức vụ đại diện — KHÔNG thêm `deputy_role`).
+
+### Review Focus (kiểm riêng — spec ngụ ý nhưng dễ vỡ)
+- [ ] Khách **tổ chức không có bản ghi `customer_deputies`** → dropdown rỗng → validate "required" chặn đúng khi chính thức (Task 11.6 + 11.9).
+- [x] **HĐ cũ chưa có `customer_type` snapshot** (2 dòng test) → Resource suy live → FE vẫn rẽ nhánh đúng (Task 11.7 + 11.8).
+- [x] **Đổi ẩn/hiện ô định danh theo loại khách** → lỗi cũ không bám ô đang ẩn; tổ chức không gửi/không validate `customer_id_card_number` (Task 11.9 + 11.12).
+- [x] Khách chỉ **1 tài khoản NH** → dropdown tự chọn; khách **0 tài khoản** → `customer_account_id` nullable, không chặn (Task 11.10).
+- [x] `need_install` **null ở HĐ cũ** → khi Sửa bắt buộc chọn trước khi lưu chính thức (Task 11.11 + 11.12).
+
+### Task 11.1 — Migration thêm 4 cột `hrm_contracts` [x]
+**File:** Create `hrm-api/Modules/Assign/Database/Migrations/2026_10_14_000002_add_firm_fields_to_hrm_contracts_table.php`
+- [x] Viết migration: guard `Schema::hasColumn` từng cột; thêm `customer_type` unsignedTinyInteger nullable, `customer_deputy_id` unsignedBigInteger nullable, `customer_account_id` unsignedBigInteger nullable, `need_install` unsignedTinyInteger nullable. PHPDoc trên `up()`/`down()`. `down()` drop 4 cột (guard hasColumn).
+- [x] Chạy: `cd hrm-api && php artisan migrate` — kiểm `.env` DB trỏ `erp_hrm_check` trước khi chạy.
+- [x] Verify: `SHOW COLUMNS FROM hrm_contracts LIKE 'customer_type'` (và 3 cột còn lại) có kết quả.
+
+### Task 11.2 — Model `Contract` + xác định nguồn deputy/bank [x]
+**File:** Modify `hrm-api/Modules/Assign/Entities/Contract/Contract.php`
+- [x] Grep tìm model sẵn có: `grep -rln "customer_deputies\|customer_has_bank_accounts" hrm-api/app hrm-api/Modules` → xác định class `CustomerDeputy` / `CustomerHasBankAccount` (ERP có `CustomerHasBankAccount::getCustomerAccounts()`). Nếu có model → thêm 2 belongsTo `customerDeputy('customer_deputy_id')`, `customerAccount('customer_account_id')` (khuôn `company_account()` Phase 10). Nếu không có model phù hợp → bỏ qua relation, Service dùng `DB::table('customer_deputies')` / `DB::table('customer_has_bank_accounts')`.
+- [x] `php -l Contract.php` sạch.
+
+### Task 11.3 — 2 endpoint danh sách deputy + bank account [x]
+**File:** Modify `hrm-api/Modules/Assign/Http/Controllers/Api/V1/ContractController.php` (khuôn `companyAccounts()`) + `hrm-api/Modules/Assign/Routes/api.php`
+- [x] Method `customerDeputies(Request $r)`: validate `customer_id`; trả `DB::table('customer_deputies')->where('customer_id',$id)->orderBy('name')->get(['id','name','role'])`.
+- [x] Method `customerBankAccounts(Request $r)`: trả `customer_has_bank_accounts` theo `customer_id` → `['id','account_number','account_name','bank_name','bank_branch']`.
+- [x] Route `GET assign/contracts/customer-deputies` + `GET assign/contracts/customer-bank-accounts` cạnh `company-accounts` (chỉ đọc, không middleware quyền).
+- [x] Verify: `php artisan route:list | grep customer-deputies` thấy route; gọi thử tinker/curl 1 customer_id ra mảng.
+
+### Task 11.4 — `ContractService::store()` snapshot mới [x]
+**File:** Modify `hrm-api/Modules/Assign/Services/ContractService.php` (mảng snapshot khách ~103-118 + trường riêng HĐ ~142-153)
+- [x] Sau snapshot từ `$quotation`: thêm `customer_type` = `Customer::find($quotation->customer_id)` → `$cus ? $cus->customer_type : null` (biến tạm, không `?->`); `customer_email` best-effort (`$cus->email` ?: contact đầu tiên).
+- [x] `customer_deputy_id` = `$data['customer_deputy_id'] ?? null`; nếu có → `$dep = DB::table('customer_deputies')->find(...)`, ghi đè `representative_name`=`$dep->name`, `representative_role`=`$dep->role`. Không có → giữ `representative_name/role` từ `$data`.
+- [x] TK bên B: `$cusAcc = DB::table('customer_has_bank_accounts')->find($data['customer_account_id'] ?? 0)`; set `customer_account_id` + snapshot `customer_bank_account_number`=`$cusAcc->account_number`, `customer_bank_name`=`$cusAcc->bank_name`, `customer_bank_branch`=`$cusAcc->bank_branch` (fallback `$data` nếu rỗng — khuôn Bên A).
+- [x] `need_install` = `$data['need_install'] ?? null`.
+- [x] Định danh: nếu tổ chức (`customer_type`>1) → `customer_id_card_number/date/place` = null (MST đã ở `customer_tax_code`); cá nhân → giữ từ `$data`.
+- [x] `php -l` sạch.
+
+### Task 11.5 — `ContractService::update()` áp cùng logic [x]
+**File:** Modify `ContractService.php` (~334-362)
+- [x] Lặp lại set `customer_deputy_id`+representative snapshot, `customer_account_id`+bank snapshot, `need_install`, định danh theo type (dùng helper riêng nếu trùng nhiều với store để DRY).
+- [x] Guard HĐ cũ: nếu `$contract->customer_type` null → set lại từ `customers` theo `$contract->customer_id`.
+- [x] `php -l` sạch.
+
+### Task 11.6 — Validation 2 FormRequest (required có điều kiện) [x]
+**File:** Modify `hrm-api/Modules/Assign/Http/Requests/Contract/ContractStoreRequest.php` + `ContractUpdateRequest.php`
+- [x] Tính `$isOrg` (tra `customers.customer_type` theo customer_id của báo giá/HĐ) + `$official` (theo status). `customer_deputy_id`: required khi `$isOrg && $official`, nullable khác; `exists:customer_deputies,id` khi có. `customer_account_id`: nullable + `exists:customer_has_bank_accounts,id` khi có. `need_install`: `required|in:0,1` khi `$official`, nullable khi nháp. `customer_id_card_number`: required khi `!$isOrg && $official`, nullable khác.
+- [x] KHÔNG khai `messages()` cho rule phổ biến (lang file đã có). Rethrow `ValidationException`.
+- [x] Verify BE trực tiếp: POST payload tổ chức thiếu `customer_deputy_id` (status chính thức) → 422 `customer_deputy_id`; payload cá nhân thiếu CCCD → 422; payload thiếu `need_install` → 422. `php -l` sạch 2 file.
+
+### Task 11.7 — `DetailContractResource` trả field mới [x]
+**File:** Modify `hrm-api/Modules/Assign/Transformers/DetailContractResource.php`
+- [x] Trả thêm: `customer_type` (snapshot ?: suy live từ quan hệ customer), `customer_deputy_id`, `need_install`, `price_type_name` (từ `price_types` theo `price_type_id`), `customer_email`, `customer_contact_name`, `customer_contact_phone`, `customer_address`, `customer_tax_code`.
+- [x] Verify: mở detail 1 HĐ qua API thấy đủ field, `customer_type` ≠ null kể cả HĐ cũ.
+
+### Task 11.8 — FE: Bảng giá read-only + khai `data()` [x]
+**File:** Modify `hrm-client/pages/assign/contracts/_id/edit.vue`
+- [x] `data().form` thêm: `customer_type`, `customer_deputy_id`, `customer_account_id`, `need_install`, `price_type_name`, `customer_contact_name`, `customer_contact_phone`, `customer_email`, `customer_tax_code`, `customer_address`. Thêm state `customerDeputyOptions:[]`, `customerBankOptions:[]`.
+- [x] Computed `isOrganization()` = `Number(this.form.customer_type || this.contract.customer_type) > 1`.
+- [x] Khối "Thông tin chung": thêm 1 `.fld` read-only "Bảng giá" hiển thị `form.price_type_name` (kiểu `.ro-value` như ô Tên khách hàng dòng 106). Không vào payload.
+
+### Task 11.9 — FE: Bên B rẽ nhánh cá nhân/tổ chức [x]
+**File:** Modify `edit.vue` (template Bên B 102-121)
+- [x] Người đại diện: `v-if="isOrganization"` → `V2BaseSelect` "Người đại diện *" (`form.customer_deputy_id`, `:options="customerDeputyOptions"`) + `@change` đổ `representative_name`=dep.name, `representative_role`=dep.role; ô Chức vụ disabled. `v-else` → giữ 2 ô free-text `representative_name`/`representative_role`.
+- [x] Ô định danh: `v-if="!isOrganization"` → "CCCD/CMND *" (`customer_id_card_number` required) + Ngày/Nơi cấp (giữ 110-115). `v-else` → "Mã số thuế" read-only từ `customer_tax_code`, ẩn ngày/nơi cấp, không `req`.
+- [x] Khối Liên hệ `v-if="isOrganization"`: 3 ô read-only `customer_contact_name`, `customer_contact_phone`, `customer_email` (`.ro-value`/`disabled`, chữ xám).
+
+### Task 11.10 — FE: TK ngân hàng Bên B thành dropdown [x]
+**File:** Modify `edit.vue` (116-118)
+- [x] Thay 3 ô text → 1 `V2BaseSelect` "Số tài khoản" (`form.customer_account_id`, `:options="customerBankOptions"`); nhãn option `<account_number> - <bank_name> chi nhánh <bank_branch> - <account_name>`; `@change` đổ `customer_bank_account_number/name/branch`; 3 ô tên TK/NH/chi nhánh hiển thị disabled (tự fill). 1 TK → tự chọn.
+
+### Task 11.11 — FE: Địa chỉ giao hàng + Lắp đặt [x]
+**File:** Modify `edit.vue`
+- [x] "Địa chỉ giao hàng": `.fld` read-only từ `form.customer_address` (`.ro-value`/disabled).
+- [x] "Lắp đặt": 2 radio Có(1)/Không(0) `form.need_install` bắt buộc; bọc `field-error` + `V2BaseError` khi `touched && formError.need_install`. Dùng `V2BaseRadio` nếu màn có sẵn, else radio theo pattern local.
+
+### Task 11.12 — FE: validate + buildPayload + edit-set + fetch options [x]
+**File:** Modify `edit.vue` (`validateForm` 1140, `buildPayload` 1199, edit-set 1086-1094, mounted)
+- [x] `validateForm()`: tổ chức → bắt buộc `customer_deputy_id`, bỏ bắt buộc `customer_id_card_number`; cá nhân → giữ `customer_id_card_number` (1149). Luôn bắt buộc `need_install` (phải 0/1). Giữ `company_account_id`.
+- [x] Đổi `isOrganization` → xoá lỗi field ẩn (`delete this.formError.customer_id_card_number` / `customer_deputy_id`).
+- [x] `buildPayload()` thêm `customer_deputy_id`, `customer_account_id`, `need_install`; cá nhân gửi `customer_id_card_*`, tổ chức không gửi. Không gửi `price_type_id`.
+- [x] Edit-set (1086-1094): set `customer_type`, `customer_deputy_id`, `customer_account_id`, `need_install`, các field hiển thị MST/liên hệ/địa chỉ/price_type_name.
+- [x] `mounted`/sau khi có `customer_id`: fetch customer-deputies + customer-bank-accounts (chỉ khi có customer_id); reselect đúng khi Sửa.
+- [x] Sau lưu: `markFormSaved()` + `$router.push('/assign/contracts')`.
+
+### Task 11.13 — Verify Playwright 2 loại khách + php -l [x]
+- [x] Mở `http://127.0.0.1:3000` (KHÔNG localhost). HĐ **cá nhân**: ô "CCCD/CMND *" required + ngày/nơi cấp; không có dropdown Người đại diện, không có khối Liên hệ.
+- [x] HĐ **tổ chức**: ô "Mã số thuế" read-only KHÔNG báo đỏ khi trống; dropdown Người đại diện bắt buộc + chức vụ tự fill; khối Liên hệ read-only.
+- [x] Bảng giá read-only đúng tên; TK bên B dropdown nạp + chọn tự fill + lưu OK + Sửa reselect; Địa chỉ giao hàng read-only đúng; Lắp đặt radio bắt buộc (bấm Trình duyệt khi trống → đỏ).
+- [x] Lưu 2 loại khách không mất dữ liệu; mở lại Sửa đúng giá trị. `php -l` sạch toàn bộ file BE. `rm -rf /Users/nguyentrancu/DEV/code/ERP-HRM/.playwright-mcp`.
+
+### Checkpoint — 2026-10-14 (Phase 11 — PLAN xong, chưa code)
+Vừa hoàn thành: brainstorming (duyệt design) + spec `design-phase11-firm-fields.md` + plan 13 task.
+Đang làm dở: (không).
+Bước tiếp theo: user chọn execution method → bắt đầu Task 11.1 (migration).
+Blocked: (không).
+
+### Checkpoint — 2026-10-15 (Phase 11 — CODE XONG, review + fix xong, CHƯA commit)
+Vừa hoàn thành: toàn bộ 13 task Phase 11 (Native execution). BE: migration 4 cột + Contract entity 2 belongsTo + 2 endpoint deputy/bank + ContractService resolveCustomerFirmFields (store/update) + 2 FormRequest required-có-điều-kiện + DetailContractResource. FE: edit.vue rẽ nhánh cá nhân/tổ chức, Bảng giá read-only, TK Bên B dropdown, địa chỉ giao hàng read-only, need_install radio, validate/buildPayload/fetch options. Verify Playwright 2 loại khách PASS. Final review: 2 opus reviewer (api+client) → fix 3 Important (api#1 IDOR scope exists theo customer_id; api#2 deputy null cho cá nhân; api#3+client#1 snapshot-first customer_type), verify curl PASS; 3 minor deferred.
+Đang làm dở: (không).
+Bước tiếp theo: CHỜ user yêu cầu commit/push (CLAUDE.md: không tự commit). Chưa commit cả 2 repo.
+Blocked: (không).
+
+## Phase 12 — Fix hiển thị cha-con bảng dòng hàng màn Chi tiết HĐ (@dangquang)
+
+**Bug (screenshot user):** màn `/assign/contracts/{id}` bảng "Thiết bị chính" hiển thị dòng con
+(`parent_id` ≠ null) **trông ngang cấp** với dòng cha. Điều tra: DB remote `hrm_erp_test` HĐ id=1
+dòng 4,5 ĐÃ có `parent_id=3` (data ĐÚNG, không phải bug tạo-từ-báo-giá). Nguyên nhân thật =
+**render FE**: `buildLineRows` đánh STT **tuần tự** cho cả con (…3,4,5) + tên con chỉ thụt **16px**
+→ con trông như mục top-level. Màn **báo giá** (`pages/assign/quotations/_id/index.vue`) đã có
+pattern cha-con chuẩn: STT con = `{cha}.{con}` ("3.1","3.2"), tên con thụt `pl-4`=24px, dòng con
+`.child-row td { color:#555; font-weight:300 }`. CLAUDE.md bắt buộc copy pattern có sẵn → đồng bộ
+màn Chi tiết HĐ theo báo giá. Fix này đúng cho cả 2 khả năng (deploy remote cũ / indent 16px mờ).
+
+### Task 12.1 — FE: STT phân cấp + indent + style dòng con [x]
+**File:** Modify `pages/assign/contracts/_id/index.vue`
+- [x] `buildLineRows` (`pushProductRows`): thêm tham số `parentStt`. Top-level giữ đếm global `stt` (1,2,3…); con → `_stt = parentStt + '.' + childSeq` (3.1, 3.2; đệ quy → 3.1.1). Gắn cờ `_isChild`.
+- [x] Template dòng product: STT con thêm class xám `.line-child-stt` (`#6b7280`, KHÔNG dùng `.text-muted` vì trong hrm-client là ĐỎ); tên thụt `row._level * 24` (thay 16, cả dòng group); `<tr>` con gắn `.line-child-row`.
+- [x] CSS: `.line-table .line-child-row td { color:#555; font-weight:300 }` + `.line-table .line-child-stt { color:#6b7280 }` (copy từ báo giá nhưng STT xám thay vì đỏ).
+
+### Task 12.2 — Verify Playwright HĐ có dòng con + dọn screenshot [x]
+- [x] Mở `http://127.0.0.1:3000/assign/contracts/15` (HĐ 15 có dòng con "Linh kiện con test" parent_id). DOM + ảnh xác nhận: STT con = "1.1" (cờ `line-child-stt`), tên thụt 24px, dòng con chữ #555; dòng cha "1","2","3" pad 0px đen. Phân cấp rõ ràng.
+- [x] Dọn screenshot MÌNH tạo (`local-contract15-lines.png` + thư mục `.playwright-mcp/` root), 4 png tracked trong `hrm-client/.playwright-mcp/` giữ nguyên.
+
+### Checkpoint — 2026-10-15 (Phase 12 — CODE + VERIFY XONG, CHƯA commit)
+Vừa hoàn thành: fix hiển thị cha-con bảng dòng hàng màn Chi tiết HĐ (`contracts/_id/index.vue`). STT con phân cấp "{cha}.{con}", indent 24px (cả group), dòng con chữ #555 + STT xám #6b7280 — đồng bộ pattern màn Báo giá. Verify Playwright HĐ 15 PASS (DOM + ảnh). Chẩn đoán: data DB remote ĐÚNG (parent_id set đủ), bug thuần ở render FE (STT tuần tự + indent 16px mờ).
+Đang làm dở: (không).
+Bước tiếp theo: CHỜ user yêu cầu commit/push. 1 file FE chưa commit (`contracts/_id/index.vue`) + 2 file task Khách hàng Phase cũ vẫn chưa commit.
+Blocked: (không).
+
+## Phase 13 — Fix DSTC (Doanh số tiêu chuẩn) = 0 ở màn HTHT HĐ (@dangquang)
+
+**Bug (screenshot user):** màn Hỗ trợ hạch toán `HĐ_TPE_HN_KD1_26_0001_HD853` mục 18 "Doanh số
+tiêu chuẩn" = 0 (kéo theo mục 19 = 0), trong khi mục 17 "Tổng HĐ thu về" = 140,197,000 đúng.
+
+**Chẩn đoán (đã xác minh DB remote `hrm_erp_test`):**
+- DSTC = Σ `standard_price × qty` (dòng SP cha, `getBaseCommissionSale` dòng 342-352). `standard_price`
+  được freeze lúc tạo HĐ bởi `ContractService::snapshotProductMasterPrice()` (dòng 704-746).
+- ERP (`FirmContractService.php:702-757`) tính `standard_price` = `min(giá sau giảm, net) × G × H`,
+  `net = quoted − quoted×sale_max/100`; **`sale_max_percent` lấy từ `product_unit_prices`** (qua
+  `Product::getPriceByUnitAndType` → `product_units` theo product_id+unit_id, rồi `product_unit_prices`
+  theo product_unit_id+price_type_id). Khi KHÔNG có dòng giá → `firstOrFail` ném → catch → `sale_max=0`
+  nhưng **vẫn tính** standard_price.
+- HRM **port đúng công thức** nhưng đọc `sale_max_percent` từ bảng **legacy `product_prices`** (khóa
+  `product_id`). Bảng này gộp DB chỉ còn SP cũ (product_id 3895–8527); 8 dòng SP của HĐ đều >31000 →
+  không có dòng → HRM `return` SỚM → `standard_price` NULL cả 8 dòng → DSTC=0. **Đây là lỗi port
+  (sai nguồn đọc + return sớm).**
+- `snapshotProductMasterPrice` chỉ gọi lúc store (dòng 286), KHÔNG gọi lúc update → sửa HĐ không re-freeze.
+
+**Quyết định chốt với user (2026-10-15):**
+1. **cost_price "khớp ERP":** ERP `firm_contract_tab_products` KHÔNG có cột cost; ERP đọc giá vốn ở
+   cấp HĐ (`$contract->cost_price`, từ recipe) không ở dòng. **Ruling:** vẫn freeze `cost_price` theo
+   dòng nhưng đổi nguồn sang `product_units.cost_price` (hậu duệ gop_db của `product_prices.recipe_price`
+   đã rỗng, nằm sẵn trong join) để lãi gộp HTHT (ContractSupportAccountingService:54,105,435) có giá
+   vốn THẬT — khớp màn HTHT ERP hiển thị giá vốn thật, thay vì để 0 (lãi gộp bị thổi phồng). DSTC
+   KHÔNG phụ thuộc cost_price. Nếu user muốn để NULL thuần → chỉ gỡ 1 dòng gán cost_price.
+2. **Không backfill** HĐ cũ (user chốt).
+3. **Gọi re-freeze cả khi update** (user chốt) → HĐ "Chờ duyệt" chỉ cần Không duyệt → Sửa → Lưu là
+   tự tính lại DSTC đúng, không cần script.
+
+### Task 13.1 — BE: `snapshotProductMasterPrice()` đọc `product_unit_prices` (khớp ERP) [x]
+**File:** Modify `hrm-api/Modules/Assign/Services/ContractService.php:704-760`
+- [x] Thay query `product_prices` (by product_id) bằng: `product_units` (where product_id + unit_id,
+      fallback `is_base=1` khi unit_id rỗng) → `product_unit_prices` (where product_unit_id +
+      price_type_id). Lấy `sale_max_percent` từ dòng giá, `cost_price` từ `product_units.cost_price`.
+- [x] **BỎ `return` sớm**: không có product_unit/dòng giá → `sale_max=0`, cost=null, VẪN tính
+      `net_price`/`standard_price` (khớp try/catch ERP). Giữ nguyên công thức G/H.
+- [x] Cập nhật PHPDoc nguồn từ `product_prices` → `product_unit_prices`/`product_units` + ghi rõ lý do bỏ return sớm.
+
+### Task 13.2 — BE: re-freeze `standard_price` khi update HĐ [x]
+**File:** Modify `hrm-api/Modules/Assign/Services/ContractService.php` (update() + method mới ~748)
+- [x] Thêm `refreezeProductMasterPrices(Contract $contract)`: lấy `price_type` từ `$contract->quotation`,
+      G từ `company_price_types`; loop mọi `ContractProductPrice` của HĐ, dựng `$attrs` từ cột dòng
+      (erp_product_id, unit_id, quoted_price, unit_price_after_discount), gọi `snapshotProductMasterPrice`,
+      ghi lại `sale_max_percent/net_price/cost_price/standard_price` + `updated_by`.
+- [x] Gọi trong `update()` — khối 2e sau `recomputeEffectiveDates`, trước History.
+
+### Task 13.3 — Verify [x]
+- [x] Dry-run (Reflection, KHÔNG ghi DB) gọi `snapshotProductMasterPrice` cho từng dòng HĐ 1 trên
+      DB remote `hrm_erp_test` → **DSTC = 129,476,020.00** (khớp tính tay). 8 dòng đều có
+      `standard_price` khác NULL; `cost_price` lấy giá vốn thật (49009=3,769,529…); dòng con id4/id5
+      = 0 và không tính vào DSTC. Code path PHP chạy sạch (dry-run HĐ 15 local cũng không lỗi).
+- [x] `php -l` ContractService.php: No syntax errors.
+
+### Task 13.4 — BE: vế `min()` cộng `extra_price` + đối xứng store/update (khớp ERP có vượt trội) [x]
+**File:** Modify `hrm-api/Modules/Assign/Services/ContractService.php`
+- Explore xác nhận công thức ERP khớp, cảnh báo 1 điểm tinh tế: ERP `FirmContractService:700`
+  `price_after_discount = round(price + price_extra − price_discount)` **CÓ cộng `price_extra`**, còn
+  HRM `QuotationService::recomputeUnitPriceAfterDiscount()` tính `unit_price_after_discount = quoted − discount`
+  **KHÔNG cộng extra** (extra là cột RIÊNG `hrm_contract_product_prices.extra_price`, gán qua
+  `setLineAdjustment` cấp HĐ; `quotation_product_prices` không có cột này).
+- **Ruling (khớp ERP):** vế đầu `min()` của `standard_price` phải là `round(unit_price_after_discount + extra_price)`
+  (hiện chỉ `unit_price_after_discount`). Lệch chỉ lộ khi dòng CÓ vượt trội **và** giảm giá vượt
+  ngưỡng sale_max (min rơi vào vế giá-sau-giảm thay vì net); khi đó HRM cũ thiếu `+ extra × G × H`
+  mỗi đơn vị. HĐ 1 extra=discount=0 nên không đổi (DSTC vẫn 129,476,020). Cost nếu sai: lệch DSTC ở
+  HĐ có vượt trội + chiết khấu sâu.
+- [x] `snapshotProductMasterPrice()`: `$priceAfterDiscount = round((unit_price_after_discount ?? quoted) + extra_price)`.
+- [x] `refreezeProductMasterPrices()`: thêm `extra_price => $line->extra_price` vào `$attrs`.
+- [x] **store() đối xứng update():** store snapshot (286) chạy TRƯỚC khi áp `line_adjustments` (344-352)
+      nên extra chưa vào standard_price; thêm `refreezeProductMasterPrices($contract)` ngay sau khối
+      adjustments (355) để store cũng freeze đúng khi tạo HĐ có vượt trội. (update() đã đúng: refreeze
+      ở 501 sau adjustments 488.)
+- [x] Verify lại dry-run HĐ 1 (extra=0) → DSTC vẫn **129,476,020.00**; case tổng hợp có extra khớp ERP.
+
+### Checkpoint — 2026-10-15 (Phase 13 — CODE + VERIFY XONG, CHƯA commit)
+Vừa hoàn thành: fix DSTC=0 màn HTHT HĐ. `snapshotProductMasterPrice()` nay đọc `product_units` +
+`product_unit_prices` (thay `product_prices` legacy rỗng), bỏ `return` sớm nên hàng hoá không có
+dòng giá vẫn tính `standard_price` (khớp try/catch ERP). Thêm `refreezeProductMasterPrices()` gọi
+trong `update()` → HĐ Chờ duyệt chỉ cần Không duyệt → Sửa → Lưu là tự tính lại đúng, không backfill.
+Verify dry-run trên DB remote: DSTC HĐ 1 = 129,476,020.00 (đúng kỳ vọng).
+Task 13.4 (Explore xác nhận công thức ERP): vế `min()` cộng `extra_price` + `round()` khớp ERP
+`round(price+extra−discount)`; store() thêm refreeze sau adjustments (đối xứng update). Dry-run lại:
+CASE A (HĐ 1, extra=0) DSTC vẫn 129,476,020.00; CASE B (min rơi vào vế giá-sau-giảm) extra 0→595k,
+extra 1tr→1,595k (chênh đúng extra×G×H). `php -l` sạch.
+Đang làm dở: (không).
+Bước tiếp theo: CHỜ user yêu cầu commit/push. 1 file BE chưa commit (`ContractService.php`) + các file
+Phase 11/12 chưa commit (ContractResource.php, contracts/index.vue, contracts/_id/index.vue).
+Blocked: (không).
+
+---
+
+## Phase 14 — Lịch sử HĐ (màn chi tiết): Hành động tiếng Việt + mặc định thu gọn
+
+**Bối cảnh (user, kèm screenshot):** Khối "Lịch sử" ở màn Chi tiết HĐ hiển thị cột **Hành động** ra
+mã thô tiếng Anh (`submit`, `create`). Yêu cầu: (1) Hành động hiển thị **tiếng Việt**; (2) khối Lịch
+sử **mặc định ẩn (thu gọn)**, có nút tùy chỉnh **Xem / Thu gọn**.
+
+**Hiện trạng:** Màn chi tiết dùng khối Lịch sử TỰ CHẾ (bảng đơn giản Thời gian/Hành động/Người thực
+hiện/Ghi chú), KHÔNG dùng `SystemInfoSection`. BE `DetailContractResource::resolveHistories()` trả
+`action` thô; FE `pages/assign/contracts/_id/index.vue:343` render thẳng `h.action`.
+Actions có thể có: create / update / submit / approve / reject / liquidate (ContractService).
+→ Phạm vi: chỉ 2 chỉnh sửa nhỏ trên khối hiện có, KHÔNG rebuild sang SystemInfoSection (user không yêu cầu).
+
+### Task 14.1 — BE: trả `action_label` tiếng Việt [x]
+**File:** Modify `hrm-api/Modules/Assign/Transformers/DetailContractResource.php` (`resolveHistories()` ~318)
+- [x] Thêm helper map action → nhãn VN: create=Tạo mới, update=Chỉnh sửa, submit=Gửi duyệt,
+      approve=Duyệt, reject=Từ chối, liquidate=Thanh lý; fallback = action thô.
+      → `historyActionLabel(?string $action): ?string` (dòng 345), null/rỗng→null.
+- [x] Thêm key `action_label` vào DTO mỗi dòng history (giữ nguyên `action` cho tương thích). (dòng 329)
+
+### Task 14.2 — FE: hiển thị nhãn VN + khối mặc định thu gọn, toggle Xem/Thu gọn [x]
+**File:** Modify `hrm-client/pages/assign/contracts/_id/index.vue`
+- [x] Cột Hành động render `h.action_label || h.action || '—'`. (dòng 349)
+- [x] Thêm data `showHistory: false`; header khối Lịch sử click toggle (`.section-header--toggle`,
+      cursor pointer) + nút `V2BaseButton light` bên phải (slot #prefix chevron ri-arrow-up/down-s-line,
+      chữ "Thu gọn"/"Xem lịch sử"). Thân `.section-body` bọc `v-show="showHistory"` (dựng sẵn, chỉ ẩn).
+- [x] Sửa màu `.text-muted` (ĐỎ) trong khối → xám `#6b7280` (count + dòng rỗng) theo CLAUDE.md.
+
+### Task 14.3 — Verify Playwright [x]
+- [x] Mở màn chi tiết HĐ 13 (có 5 history) trên local: khối Lịch sử thu gọn mặc định (nút "Xem lịch sử"
+      + chevron xuống); bấm "Xem lịch sử" → bảng hiện, cột Hành động ra tiếng Việt (Chỉnh sửa/Duyệt/
+      Gửi duyệt/Chỉnh sửa/Tạo mới); nút đổi "Thu gọn" + chevron lên; bấm "Thu gọn" → ẩn lại. OK.
+
+### Checkpoint — 2026-10-15 (Phase 14 — CODE + VERIFY XONG, CHƯA commit)
+Vừa hoàn thành: BE `action_label` VN (DetailContractResource.php: resolveHistories + historyActionLabel,
+`php -l` sạch) + FE toggle khối Lịch sử (index.vue: data showHistory, header toggle + nút V2BaseButton,
+v-show body, đổi text-muted→xám). Verify Playwright HĐ 13: thu gọn mặc định, nhãn VN đúng, toggle 2 chiều OK.
+Files CHƯA commit: `DetailContractResource.php`, `pages/assign/contracts/_id/index.vue`.
+Lưu ý: `ProductExportRequestForm.vue` có sửa đổi KHÔNG thuộc việc này — vẫn để nguyên unstaged cho user.
+Bước tiếp theo: chờ user yêu cầu commit/push (Phase 11/12/13/14 cùng feature hop-dong).
+Blocked: không
+
+---
+
+## Phase 15 — Màn Duyệt HTHT: nút "Không duyệt" bắt buộc nhập lý do từ chối
+
+**Bối cảnh (user, nguyên văn):** "Không duyệt nhưng chưa bắt buộc nhập lý do từ chối (Phần này em xử
+lý như ở ERP cũ) màn Duyệt HTHT" → Màn Duyệt Hỗ trợ hạch toán (HTHT), nút **Không duyệt** (reject)
+hiện CHƯA bắt buộc nhập lý do. Làm giống ERP cũ: **bắt buộc nhập lý do từ chối**.
+
+**Xác minh ERP cũ:** `ContractsController::validApproveReject()` (dòng 1678-1679) có rule
+`'valid_comment' => 'required'` — ERP luôn bắt buộc nhập lý do khi không duyệt. → đúng yêu cầu.
+
+**Hiện trạng HRM (THIẾU validate):** `support-accounting.vue::doReject()` (dòng 322-340) dùng
+`$bvModal.msgBoxConfirm` rồi POST `/reject` với `payload: { rejected_reason: '' }` (RỖNG). BE
+`ContractController::reject()` (dòng 600) → `ContractService::reject()` chỉ set giá trị truyền vào,
+KHÔNG validate required. Màn chi tiết HĐ `index.vue` ĐÃ có reject modal bắt buộc lý do (mẫu để bám).
+Endpoint `/reject` DÙNG CHUNG cho cả index.vue (đã gửi lý do) và support-accounting.vue → thêm
+validate BE không phá index.vue.
+
+### Task 15.1 — BE: validate `rejected_reason` required ở endpoint reject [x]
+**File:** Modify `hrm-api/Modules/Assign/Http/Controllers/Api/V1/ContractController.php` (`reject()` ~600)
+- [x] Trước khi gọi `$service->reject(...)`, validate `rejected_reason` = `required|string|max:255`
+      (dùng `$request->validate()`, câu lỗi chuẩn lang file "Bắt buộc phải nhập"). Rethrow `ValidationException`.
+
+### Task 15.2 — FE: thay msgBoxConfirm bằng reject modal bắt buộc lý do [x]
+**File:** Modify `hrm-client/pages/assign/contracts/_id/support-accounting.vue`
+- [x] Import `V2BaseLabel`, `V2BaseTextarea`; thêm data `rejectModalShow/rejectReason/rejectError`.
+- [x] Nút "Không duyệt" mở modal (`openReject` → `rejectModalShow = true`, dọn `rejectReason/rejectError`)
+      thay vì gọi doReject trực tiếp. Modal bám pattern index.vue: b-modal + V2BaseLabel required +
+      V2BaseTextarea + text-danger + 2 nút Huỷ/Xác nhận từ chối.
+- [x] `handleReject()`: trống → `rejectError='Vui lòng nhập lý do từ chối'` return (không gọi API);
+      có lý do → POST `/reject` payload `{ rejected_reason }`, thành công push về chi tiết HĐ
+      (`/assign/contracts/${contractId}`) — CÙNG đích với `doApprove` sẵn có, đối xứng approve/reject.
+
+### Task 15.3 — Verify Playwright [x]
+- [x] BE 422: POST `/api/v1/assign/contracts/13/reject` với `{rejected_reason:''}` → **422**
+      `{"errors":{"rejected_reason":["Bắt buộc phải nhập"]}}`.
+- [x] FE màn support-accounting (HĐ 13 set tạm status=2): bấm "Không duyệt" → modal "Từ chối hợp đồng"
+      hiện; bấm "Xác nhận từ chối" khi để trống → lỗi đỏ "Vui lòng nhập lý do từ chối" dưới ô, KHÔNG có
+      request `/reject` (đã soi network).
+- [x] Happy-path: nhập lý do → reject OK, status 2→3 (DANG_TAO, đúng nghiệp vụ), ghi 1 dòng
+      ContractHistory (action=reject, note=lý do), navigate về chi tiết HĐ.
+- [x] Dọn DB về gốc: xoá history test (id 26), `UPDATE hrm_contracts SET status=1, rejected_reason=NULL,
+      updated_by=13 WHERE id=13` — đã xác nhận HĐ 13 về đúng gốc.
+
+### Checkpoint — 2026-10-15 (Phase 15 — CODE + VERIFY XONG, CHƯA commit)
+Vừa hoàn thành: nút "Không duyệt" màn Duyệt HTHT nay bắt buộc nhập lý do từ chối (như ERP cũ), chặn
+ở CẢ FE (modal + lỗi inline, không gọi API khi trống) lẫn BE (422 required). Verify Playwright đủ 3 ca.
+Files CHƯA commit: `ContractController.php` (BE), `support-accounting.vue` (FE).
+Bước tiếp theo: chờ user xác nhận trước khi commit/push.
+Blocked:
+
+---
+
+## Phase 16 — HĐ bị từ chối về "Đang tạo" nhưng danh sách/chi tiết không có nút Sửa/Xóa
+
+**Yêu cầu user:** "khi không duyệt Hợp đồng ở trạng thái Đang tạo nhưng không có nút sửa, màn danh sách".
+
+**Chốt với user (free-text "1 A, 2 có, 3 như erp"):** đồng bộ ERP `app/Contract.php:2699-2707`
+(`canEdit`/`canDelete` = `status==3 (Đang tạo) && created_by==Auth::id()`, KHÔNG gate quyền):
+1. (A) `is_can_edit` = người lập + status Đang tạo(3) — BỎ gate quyền "Sửa hợp đồng", bỏ Chờ duyệt(2).
+2. Nút Xóa đồng bộ: `is_can_delete` = người lập + Đang tạo(3) — BỎ gate quyền "Xóa hợp đồng".
+3. Phạm vi trạng thái = chỉ Đang tạo(3).
+
+Giữ gate Duyệt/Thanh lý nguyên trạng (không đụng). Chốt chặn thật ở BE (middleware route), FE chỉ ẩn nút.
+Màn chi tiết phải KHỚP màn danh sách (CLAUDE.md).
+
+### Task 16.1 — BE Entity: isEditableStatus() chỉ Đang tạo + accessor is_can_edit/is_can_delete theo người lập [x]
+**File:** `hrm-api/Modules/Assign/Entities/Contract/Contract.php`
+- [x] `isEditableStatus()` (215-218) → chỉ `status === STATUS_DANG_TAO`.
+- [x] `getIsCanDeleteAttribute()` (153-156) → `isEditableStatus() && (int)created_by === (int)auth()->id()`.
+- [x] Thêm `getIsCanEditAttribute()` cùng công thức (edit=delete y hệt ERP).
+
+### Task 16.2 — BE Resource: bỏ gate quyền ở is_can_edit/is_can_delete [x]
+**File:** `hrm-api/Modules/Assign/Transformers/ContractResource.php`
+- [x] `is_can_edit` = `(bool) $this->resource->is_can_edit` (bỏ `self::perm('edit')`).
+- [x] `is_can_delete` = `(bool) $this->resource->is_can_delete` (bỏ `self::perm('delete')`).
+- [x] Gỡ 'edit'/'delete' khỏi mảng `perm()` (không còn dùng); giữ approve/liquidate.
+
+### Task 16.3 — BE DetailResource: thêm is_can_edit [x]
+**File:** `hrm-api/Modules/Assign/Transformers/DetailContractResource.php`
+- [x] Thêm `'is_can_edit' => (bool) $this->is_can_edit` cạnh `is_can_delete` (dòng 140).
+
+### Task 16.4 — BE Service: guard update() chỉ Đang tạo [x]
+**File:** `hrm-api/Modules/Assign/Services/ContractService.php`
+- [x] `update()` (388-391): đổi guard sang `!$contract->isEditableStatus()`, message "Chỉ sửa được hợp đồng đang tạo".
+- [x] `destroy()` (104-107): message rõ "Chỉ người lập mới xóa được hợp đồng đang tạo" (accessor tự đúng).
+
+### Task 16.5 — BE Middleware CheckContractEditable + route [x]
+**File:** `hrm-api/app/Http/Middleware/CheckContractEditable.php` (mới) + `app/Http/Kernel.php` + `Modules/Assign/Routes/api.php`
+- [x] Middleware kiểm `is_can_edit` (người lập + Đang tạo) → 403 nếu không. Khuôn CheckCustomerNotLocked.
+- [x] Kernel đăng ký alias `contractEditable`.
+- [x] Route PUT /{id}, DELETE /{id}, attachments POST+DELETE: thay `checkPermission:Sửa/Xóa hợp đồng` → `contractEditable`.
+
+### Task 16.6 — BE Controller: gỡ check quyền trong update()/destroy() [x]
+**File:** `hrm-api/Modules/Assign/Http/Controllers/Api/V1/ContractController.php`
+- [x] `update()` (~498): gỡ `if (!isCurrentEmployeeHasPermission('Sửa hợp đồng')) abort(403)`.
+- [x] `destroy()` (~526): gỡ `if (!isCurrentEmployeeHasPermission('Xóa hợp đồng')) abort(403)`.
+
+### Task 16.7 — FE chi tiết: canEdit/canDelete đọc cờ BE, khớp danh sách [x]
+**File:** `hrm-client/pages/assign/contracts/_id/index.vue`
+- [x] `canEdit()` (604-610) → dùng `item.is_can_edit` từ BE (bỏ hasAPermission + bỏ CHO_DUYET).
+- [x] `canDelete()` (611-618) → dùng `item.is_can_delete` (bỏ hasAPermission).
+- [x] `canManageAttachments()` (637-639) vẫn = canEdit.
+
+### Task 16.8 — Verify Playwright + khôi phục DB [x]
+- [x] Người lập + HĐ Đang tạo(3) → thấy Sửa/Xóa ở CẢ danh sách và chi tiết dù không có quyền "Sửa/Xóa HĐ".
+- [x] HĐ Chờ duyệt(2)/Đã duyệt(1) → KHÔNG thấy Sửa/Xóa.
+- [x] API PUT /{id} của người lập (HĐ Đang tạo) không 403; PUT khi Đã duyệt → chặn.
+- [x] Khôi phục DB: `UPDATE hrm_contracts SET status=1, rejected_reason=NULL, updated_by=13 WHERE id=13` + xoá history test.
+
+### Checkpoint — 2026-10-15 (Phase 16)
+Đồng bộ ERP: Sửa/Xóa HĐ nay mở cho người lập khi HĐ Đang tạo, KHÔNG cần quyền "Sửa/Xóa hợp đồng".
+Chốt chặn BE = middleware contractEditable; FE ẩn nút khi !is_can_edit/!is_can_delete; chi tiết khớp danh sách.
+
+**VERIFY XONG (2026-10-15):**
+- HTTP end-to-end bằng JWT mint cho `App\Models\TpEmployee::find(25)` (user KHÔNG có quyền "Sửa/Xóa hợp đồng"):
+  - creator=25 + status Đang tạo(3) → PUT = **422** (KHÔNG 403) ⇒ ungate OK, người lập không quyền vẫn sửa được.
+  - creator=25 + status Đã duyệt(1) → PUT = **403** (middleware chặn sai trạng thái).
+  - creator=13 + status Đang tạo(3), token emp25 → PUT = **403** (không phải người lập).
+  - DELETE creator≠self → **403** (middleware DELETE chạy; không xoá thật). Route PUT/DELETE/attachments đều gắn `contractEditable` (Routes/api.php:834-842).
+- UI Playwright HĐ 13: Đang tạo(3) → danh sách hiện ri-edit-line + ri-delete-bin-line, chi tiết footer có Sửa+Xoá (+Trình duyệt); Đã duyệt(1) → danh sách KHÔNG nút, chi tiết chỉ còn Quay lại. Chi tiết khớp danh sách.
+- DB khôi phục gốc: HĐ 13 status=1, created_by=13, updated_by=13, rejected_reason=NULL; history giữ nguyên 5 dòng (không phát sinh dòng test — curl bị chặn 422/403 trước khi ghi).
+
+**CHƯA commit/push — chờ user xác nhận.**
