@@ -77,6 +77,16 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- theo-doi-theo-kho → @khoipv → .plans/gop-db/theo-doi-theo-kho/plan.md (design: .plans/gop-db/theo-doi-theo-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-theo-doi-theo-kho-design.md)
+  Port màn ERP "Kho › Theo dõi theo kho" (`warehouse.forActivities` → `warehouse.{id}.activities`): danh sách kho → bảng hoạt động nhập/xuất của 1 kho. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+
+- phieu-xuat-kho-dieu-chinh-kiem-ke → @khoipv → .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/plan.md (design: .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-kho-dieu-chinh-kiem-ke-design.md)
+  Port màn ERP "Kho › Xuất kho › Phiếu xuất kho điều chỉnh kiểm kê" (`warehouse_inventory_exports`, mã PXKĐCKK) — đối xứng màn Phiếu nhập kho điều chỉnh kiểm kê. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+
+- phieu-xuat-dieu-chinh-sai-so-lieu → @khoipv → .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/plan.md (design: .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-dieu-chinh-sai-so-lieu-design.md)
+  Port màn ERP "Kho › Xuất kho › Phiếu xuất điều chỉnh sai số liệu" (`warehouse_reexports`). Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+  Trạng thái: 🟢 ĐÃ PUSH `develop` 27/10 (api `1c1f73892`, client `ce0107575`) — smoke test API 2 góc nhìn OK; CHƯA bấm thử trình duyệt. Tiếp: deploy chạy `PermissionsTableSeeder` → admin gán 4 quyền xem.
+
 - mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
   Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.
   Scope: cho sửa %VAT dòng hàng (2 số lẻ) trên PI trong nước (theo hãng + tự do) và HĐ `inland_buy_contract_new`, tính lại VAT/tổng. Nhập khẩu chưa làm (chờ BA — không có %VAT theo dòng).

@@ -29,6 +29,19 @@
 - [x] 23/10/2026: tách quyền / phạm vi / bộ lọc / `aggregate()` / `unitsOf()` sang `WarehouseStockReportService` (dùng chung với màn
       Báo cáo tồn kho tổng hợp theo mặt hàng — user chốt). Số liệu 3 kho × 2 ngày trước/sau khớp từng byte; options/print/export/422 vẫn chạy
 
+### Fix #11868 (tester 26/10/2026)
+- [x] SL tồn sau đổi ĐVT hiện SỐ NGUYÊN như ERP (`roundNumber(qty/hệ số, 2)` rồi `| number:0`) — `StockDetailTable.vue::q()`;
+      vd 13 Cái → Thùng x12: 1.08 → 1, 186.5 → 187
+
+### Fix #11869 (tester 26/10/2026)
+- [x] Ô Hàng hóa trông như chọn nhiều (chip) mà chỉ giữ 1 hàng → user chốt 27/10 giữ 1 hàng như ERP: ô hiện chữ thường + dấu x
+      xoá riêng (`.sd-product-clear`, `@click.stop`), không đổi BE
+
+### Fix #11872 — Bản in (tester 26/10/2026)
+- [x] Dòng "Ngày … tháng … năm …" lệch cột "Người lập báo cáo": sửa layout DÙNG CHUNG `finance::prints._layout` (user chốt 27/10: áp
+      mọi mẫu in) — dòng ngày nằm trong ô người ký CUỐI, ô khác chừa 1 dòng trống (`visibility: hidden`) cho tên ngang hàng; render
+      thử 1 / 2 người ký qua tinker OK
+
 ### Checkpoint — 22/10/2026
 Vừa hoàn thành: Phase 1 BE + FE, số liệu khớp ERP 100% ở 2 kho
 Đang làm dở: —

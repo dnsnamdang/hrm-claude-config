@@ -36,6 +36,11 @@
 - [ ] Ca quyền "theo công ty" / "theo kho" (không thấy nhóm Chi tiết): DB local chưa có 3 quyền → cần `php artisan permission:sync`
       (việc treo chung với màn Chi tiết) + gán vai trò cho 1 tài khoản test
 
+### Fix #11874 (tester 26/10/2026)
+- [x] 1. ĐVT luôn là ô chọn trên mọi hàng như ERP (kể cả hàng 1 ĐVT — trước hiện chữ trơn) — `StockGeneralTable.vue`
+- [x] 2. Ô Hàng hóa trông như chọn nhiều (chip) mà chỉ giữ 1 hàng -> chữ thường + dấu x riêng (khuôn màn Chi tiết #11869)
+- [x] 3. Bản in: dòng ngày lệch "Người lập báo cáo" — đã sửa ở layout chung `finance::prints._layout` (#11872), không sửa thêm
+
 ### Checkpoint — 23/10/2026
 Vừa hoàn thành: Phase 1 BE + FE, số liệu khớp ERP 100%; tách service dùng chung, màn Chi tiết không đổi số; test Playwright đạt
 Đang làm dở: —

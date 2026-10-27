@@ -5,6 +5,12 @@
 
 ## Đang làm
 
+- **HĐ — sửa số HĐ / tên HĐ sau duyệt (đồng bộ version, không làm mất gia hạn PL thời gian)** — @khoipv — Bắt đầu 27/10/2026 — Code BE + FE xong, chờ user test. Lưu sau duyệt chỉ gửi trường thay đổi; HĐ có PL gia hạn đã duyệt → khoá ô Ngày KT, BE bỏ qua ngày KT/tiến độ (trước đây ghi đè về ngày gốc v0 vào `contracts` + mọi version). Thêm: cho sửa Tên HĐ sau duyệt, bắt buộc không trống.
+  - Plan: [.plans/hd-sua-so-hd-sau-duyet-giu-gia-han/plan.md](hd-sua-so-hd-sau-duyet-giu-gia-han/plan.md)
+
+- **HĐ đã kết xuất — lọc Loại dự toán, Mảng hàng hóa, Người thực hiện HĐ** — @khoipv — Bắt đầu 27/10/2026 — Code BE + FE xong, chờ user test. 3 ô select chọn 1 trong bộ lọc V2 + 3 cột bảng (mặc định ẩn) + 3 trường Excel; Loại dự toán lấy theo dự toán (HĐ từ gói thầu → loại của gói thầu); Người thực hiện = người lập HĐ (`created_by`).
+  - Plan: [.plans/hd-ket-xuat-loc-loai-du-toan-mang-hang-nguoi-thuc-hien/plan.md](hd-ket-xuat-loc-loai-du-toan-mang-hang-nguoi-thuc-hien/plan.md)
+
 - **Trả lại / thu hồi HĐ đã kết xuất sang cung ứng** — @khoipv — Bắt đầu 26/10/2026 — Xong BE + FE, chờ user test. HĐ đã kết xuất (status 9) mà chưa có phiếu đề xuất sống → Cung ứng trả lại (bắt buộc lý do) hoặc người lập HĐ thu hồi, về Đã duyệt; popup Lịch sử kết xuất ở màn HĐ đã kết xuất + danh sách HĐ. Checkpoint: Phase 1–5 xong, bước tiếp: user test UI → commit.
   - Plan: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/plan.md](tra-lai-thu-hoi-hd-da-ket-xuat/plan.md) · Design: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/design.md](tra-lai-thu-hoi-hd-da-ket-xuat/design.md) · Spec: [docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md](../docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md)
 

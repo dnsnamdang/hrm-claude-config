@@ -65,6 +65,7 @@ FE `bill-adjust-dept-requests` (form/chi tiết/footer) + `borrow-extend-request
 - [x] (Redmine #11852) ERP 501 phiếu vs HRM 101: do bỏ trạng thái "Đang tạo" (3) hôm 14/10 → user chốt 26/10 trả lại giống ERP, `EXPORT_REQUEST_STATUSES = [1, 2, 3, 10, 11]` (popup, nạp dữ liệu, lưu, duyệt). Verify local: popup 141 → 467; YCXH Đang tạo 33680 nạp được
 - [x] (Redmine #11852) Phiếu YCXH chưa gắn khách hàng: chặn NGAY lúc chọn (`exportRequestData` 422) → báo dưới ô Phiếu YCXH + toast, không điền form. Verify: YCXH 410 bị chặn, 35546 vẫn nạp được
 - [x] (Redmine #11852) Khối Bốc xếp màn Sửa 4 ô 1 hàng như màn Tạo (`carryColClass` theo `readonly`); màn Chi tiết giữ 1/3
+- [x] (Redmine #11852 phản hồi 26/10) Popup chọn phiếu YCXH ẩn luôn phiếu chưa gắn khách hàng (`searchExportRequests` thêm `customer_id > 0`); chặn ở `exportRequestData` giữ làm lưới an toàn. Verify local: 467 → 249 (218 phiếu không KH), YCXH 410 không còn trong popup
 
 - [x] (Redmine #11854, 26/10) Tiêu đề màn Chi tiết + Sửa có tag trạng thái (`buildStatusTitle`, khuôn `product-export-requests/_id`); BE `STATUSES` thêm `color` (hex theo `statusBadgeVariant.js`), detail trả `status_color`. Verify: phiếu Chờ duyệt → `#D97706`
 - [x] (Redmine #11854) Tên chuẩn "Chi tiết/Sửa phiếu yêu cầu vận chuyển, bốc xếp: {mã}" — top-menu + tab trình duyệt (`plainTitle`, tab không dính HTML badge)

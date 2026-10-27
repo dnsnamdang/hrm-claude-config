@@ -173,6 +173,14 @@ Blocked:
 - [x] R31. "Đặt sort về mặc định": ảnh QA chụp 15:53 23/10, TRƯỚC commit #11823 R26 (16:13) → sort Ngày tạo / Ngày duyệt đã bỏ. Vá nốt: sort cũ (created_at / approve_time…) còn lưu localStorage → khi khôi phục chỉ giữ `code` / `inventory_date`
 - [x] R32. (*) tại khối Hàng hóa / Hàng thừa khác / Hội đồng kiểm kê lúc nhập kết quả → đã có từ #11821 (`4c14fd4bf`, 09:23 23/10, đã lên origin/develop); ảnh QA chụp trên hrm-crm (bản build cũ). Không sửa code
 
+- [x] R33. (phản hồi 27/10) "Thêm sort vào các trường NGÀY": Ngày tạo / Ngày duyệt / Ngày cập nhật sort được — FE `sortable`, BE `SelfInventoryService::SORT_MAP` (`created_at`, `approve_time`, `updated_at_full`→`updated_at`). Làm chung với phản hồi #11829 (đảo R26 #11823). Sort ngày đã lưu localStorage nay được giữ vì cột đã sortable lại
+
+### Checkpoint — 2026-10-27 (#11857 phản hồi)
+Vừa hoàn thành: R33; compile FE + `php -l` OK; smoke test API sort asc/desc 3 cột trả 200, thứ tự đúng
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt; commit khi user yêu cầu
+Blocked:
+
 ### Checkpoint — 2026-10-26 (#11857)
 Vừa hoàn thành: R31 (FE `index.vue` `restoreAndLoad`), R32 xác minh
 Đang làm dở: —
