@@ -3928,13 +3928,13 @@ người phụ trách nhận thông báo, chuẩn bị xong thì xác nhận l�
       `is_locked` để `V2BaseSelect` tự gắn 🔒 (KHÔNG nối chữ vào `name`).
 - [x] T127 — Chặn xoá món đang có phiếu dùng: `destroy()` đếm `meeting_room_booking_services` trước,
       >0 thì trả lỗi nêu số phiếu + gợi ý dùng Khoá.
-- [ ] T128 — FE màn `pages/meeting/room-services/index.vue` + `components/RoomServiceModal.vue` —
+- [x] T128 — FE màn `pages/meeting/room-services/index.vue` + `components/RoomServiceModal.vue` —
       copy `room-purposes`, soát đủ **4 chỗ sót im lặng**: entity-type lịch sử · thẻ kebab component ·
       rule unique · key lưu cấu hình cột.
-- [ ] T129 — Đăng ký menu `components/subsystem-menu/meeting.js` nhóm **Danh mục**, nhãn "Dịch vụ
+- [x] T129 — Đăng ký menu `components/subsystem-menu/meeting.js` nhóm **Danh mục**, nhãn "Dịch vụ
       phòng họp"; **đếm số link trên hub bằng DOM** sau khi thêm (khai sai key là cả nhóm biến mất
       im lặng).
-- [ ] T130 — Đo bằng Playwright MCP: thêm/sửa/khoá/mở khoá 1 món, cột Người cập nhật **ra tên**
+- [x] T130 — Đo bằng Playwright MCP: thêm/sửa/khoá/mở khoá 1 món, cột Người cập nhật **ra tên**
       (cách duy nhất phát hiện thiếu audit), mục Lịch sử ghi đúng.
 
 ### C. Yêu cầu dịch vụ trên phiếu
@@ -3985,14 +3985,14 @@ người phụ trách nhận thông báo, chuẩn bị xong thì xác nhận l�
 - [x] T142 — PHPUnit `MeetingRoomBookingServiceRequestTest`: `update()` gửi kèm `services[]` →
       dữ liệu **không đổi** · người thứ hai bấm → 409 · phiếu Hủy → không xác nhận được ·
       phòng không có phụ trách → 422 · người ngoài nhóm → 403.
-- [ ] T143 — E2E `e2e/tests/meeting/meeting-room-service.api.spec.ts` + `.spec.ts` — 8 ca ở mục 10
+- [x] T143 — E2E `e2e/tests/meeting/meeting-room-service.api.spec.ts` + `.spec.ts` — 8 ca ở mục 10
       của spec, **có ca không quyền cả 2 chiều**. Nhớ `--workers=1`, `--no-deps`,
       `API_BASE=http://127.0.0.1:8001 BASE_URL=http://127.0.0.1:3001` nếu chạy ở checkout phụ.
 - [x] T144 — Đo bằng Playwright MCP trước khi báo xong: khoảng cách 2 nút liền nhau **= 12px** ·
       khối dịch vụ **không tràn ngang** ở 1900/1440/1280/1024 · badge đúng mã màu (đọc
       `getComputedStyle`) · nút "Đã chuẩn bị" **không tồn tại trong DOM** với người ngoài nhóm.
 - [x] T145 — Dọn dữ liệu test sinh ra trong lúc đo (kiểm `E2E%` / `DPH-` rác = 0).
-- [ ] T146 — Cập nhật `design.md` (nếu phát sinh quyết định mới) + `STATUS.md` + mục
+- [x] T146 — Cập nhật `design.md` (nếu phát sinh quyết định mới) + `STATUS.md` + mục
       "LƯU Ý KHI DEPLOY" của plan này (migration 3 bước, seeder danh mục, KHÔNG chạy
       `PermissionsTableSeeder`).
 
@@ -4026,7 +4026,7 @@ trên trình duyệt thật**. Nhóm D: đã làm D0/D1/D2/D3.
    sửa thẳng DB. Đây là việc phải làm trước khi bàn giao.
 1. **T143 — viết bộ e2e** `e2e/tests/meeting/meeting-room-service.{api.spec,spec}.ts` (8 ca ở mục 10
    của spec, có ca phân quyền 2 chiều). User đã chốt **chạy sau**, nhưng spec thì vẫn phải viết.
-2. Rà lại spec e2e sẵn có của màn `meeting/bookings` cho khớp bố cục nút mới (T149).
+2. ~~Rà lại spec e2e sẵn có của màn `meeting/bookings` cho khớp bố cục nút mới (T149).~~ — xong 25/10 (xem checkpoint port e2e).
 3. User commit khi ưng — **toàn bộ Phase 8 đang nằm ở working tree, CHƯA commit** (đúng quy ước
    CLAUDE.md: không commit khi chưa có yêu cầu).
 
@@ -4065,3 +4065,455 @@ component OK. ⚠️ CHƯA mở popup thật: role Super admin (18) trên DB loc
 
 **Bước tiếp theo:** vẫn như checkpoint 23/09 (T128–T130 màn FE Dịch vụ, T143 e2e) + khi khách chốt
 báo giá thì brainstorm 3 chức năng mới (trả lời 7 câu ở sheet 2 trước).
+
+---
+
+### Checkpoint — 25/10/2026 (T128–T130 màn FE Dịch vụ phòng họp)
+
+**Vừa hoàn thành:** T128–T130 (user cho phép "làm" 25/10, phạm vi chỉ `hrm-client` nhánh `gop_db`,
+không BE/migration/quyền, CHƯA commit):
+- MỚI `pages/meeting/room-services/index.vue` + `components/RoomServiceModal.vue` — copy khuôn
+  `room-purposes`, đủ 4 chỗ dễ sót: entity-type lịch sử `meeting_room_services` · id popup/kebab
+  riêng (`modal-room-service`, `confirm-*-room-service`, `history-room-service`) · rule unique ở BE
+  vốn đúng bảng · key cấu hình cột `meeting_room_services`. Thêm cột/ô **Đơn vị tính** (hiện mặc
+  định → bộ cột gọn đúng 7), xuất Excel + import có cột Đơn vị tính, payload import `services`.
+- Popup: ô **Trạng thái chỉ hiện ở chế độ Xem** — BE `updateOrCreate()` không nhận `status`, để ô
+  sửa được là user đổi mà BE lặng lẽ bỏ qua. Hàng đủ 12 cột ở cả 2 chế độ (8+4 · 9+3 / 6+3+3 · 12).
+- Icon: 12 icon đồ ăn uống, **đã đo glyph đủ 12**; `ri-cherry-line` (icon seed của "Hoa quả")
+  **không có glyph** ở cả 2 bản Remix Icon → thay bằng `ri-shopping-basket-2-line`. Icon ngoài bộ
+  (seed/import) vẫn hiện nhờ computed `iconSelectOptions`.
+- SỬA `components/subsystem-menu/meeting.js`: mục "Dịch vụ phòng họp" nhóm Danh mục, gate
+  "Khai báo phòng họp".
+
+**Đo bằng Playwright MCP (tài khoản e2e_assign, DB `hrm_erp_21_10_prod`):** Lưu trống → "Bắt buộc
+phải nhập" · Thêm → dòng mới đủ 7 cột · Sửa (ấm→bình, icon) → Người cập nhật = "E2E Assign" ·
+Khoá → badge Khóa, nút Sửa ẩn · Mở khoá OK · Xem: 4 ô disabled, footer chỉ "Đóng" · Lịch sử 4 mốc
+(Tạo mới / Thay đổi thông tin ấm→bình + icon / Khóa / Mở khóa) · Xoá OK · toolbar cách 12px ·
+panel hub Danh mục DOM = 4 link có `/meeting/room-services` · bỏ quyền → URL thẳng về 404, registry
+(esbuild) không quyền → nhóm Danh mục biến mất. Dọn: 0 dịch vụ, 0 dòng `catalog_histories`.
+
+**Phát hiện ngoài luồng (CHƯA sửa — note lại):**
+1. **Hub Meeting sập toàn trang khi "meeting::Cấu hình" bị tắt ở Cài đặt phân hệ**: `hubNavLinksFor`
+   trả mục "Cấu hình" KHÔNG có `link` (cờ `isHiddenBySetting`) → `SaleHubSidebar` render
+   `<router-link :to="undefined">` → TypeError `_normalized` → mọi trang `/meeting/*` ra trang lỗi.
+   DB dump prod đang tắt mục này ⇒ **prod có thể đang dính**. Có sẵn, không do T129 (so bằng
+   esbuild có/không mục mới: kết quả như nhau). Lúc đo phải xoá `menuHiddenKeys` trong store trình duyệt.
+2. Prod đang **tắt** cả cụm phòng họp ("meeting::Quản lý phòng họp" + 3 danh mục) ở Cài đặt phân hệ;
+   key mới "meeting::Danh mục::Dịch vụ phòng họp" KHÔNG nằm trong danh sách tắt ⇒ lên prod nó sẽ
+   hiện một mình trong nhóm Danh mục — admin cần tắt thêm nếu muốn đồng bộ.
+3. Seed `MeetingRoomServicesTableSeeder` gán `ri-cherry-line` cho "Hoa quả" → icon trống (BE, ngoài phạm vi).
+
+**Bước tiếp theo:** T143 (spec e2e `meeting-room-service.{api.spec,spec}.ts`, chưa được cho phép) ·
+T146 cập nhật STATUS/LƯU Ý DEPLOY · user quyết 3 phát hiện trên.
+
+
+### Task phát sinh 25/10/2026 — Hub sập khi nút rail bị tắt ở Cài đặt phân hệ (user: "sửa luôn")
+
+- [x] T153 — `components/sale/SaleHubSidebar.vue`: nút rail đi thẳng KHÔNG có `link` (bị tắt ở Cài đặt
+      phân hệ — cố ý chặn user prod dùng tính năng đang dev) render `<a>` không href + `openScreen()`
+      ⇒ toast "Tính năng đang phát triển", thay vì `<router-link :to="undefined">` làm sập trang.
+- [x] T154 — Spec e2e MỚI `e2e/tests/shared/hub-nav-disabled-by-setting.spec.ts` (4 ca, giả lập cấu hình
+      ẩn bằng `page.route` trên `/api/v1/menu-settings`) — CHƯA chạy (chỉ chạy khi user yêu cầu).
+
+### Checkpoint — 25/10/2026 (T153–T154)
+Vừa hoàn thành: T153 sửa + đo Playwright MCP — user thường e2e_assign (7 key meeting bị ẩn, đúng
+cấu hình prod): `/meeting/dashboard` tải được, 0 TypeError; rail "Cấu hình" = `<a>` href=null, bấm ⇒
+toast, URL giữ nguyên; panel Danh mục: 3 màn bị tắt href=null, gõ thẳng `/meeting/settings` ⇒
+`/feature-unavailable?reason=hidden`. Tài khoản namdangit (xem đầy đủ): "Cấu hình" vẫn
+href=/meeting/settings; hub Bán hàng vẫn 11 mục rail. T154 viết spec.
+Đang làm dở: không.
+Bước tiếp theo: (1) admin tắt thêm key `meeting::Danh mục::Dịch vụ phòng họp` trên prod khi deploy —
+đo được user thường đang thấy link `/meeting/room-services` (lọt cấu hình ẩn); (2) T143 spec e2e dịch vụ;
+(3) user commit khi ưng (hrm-client: `SaleHubSidebar.vue`, `subsystem-menu/meeting.js`, `pages/meeting/room-services/`).
+Blocked:
+
+**Bổ sung 25/10/2026 — đã CHẠY e2e (user: "chạy")**, tài khoản namdangit (setup tạo lại `.auth/user.json`):
+`hub-nav-disabled-by-setting` **4 passed / 0 failed / 0 did not run**; tắt tạm bản sửa ⇒ ca 1 ĐỎ (spec bắt
+được lỗi cũ), khôi phục ⇒ xanh lại. `master-data-hub-menu`: 4 passed + 1 đỏ CÓ SẴN không liên quan
+(spec thiếu màn "Hàng hoá đang khoá" `/master-data/products/locked` thêm ở commit `aea4d8983`).
+
+### Checkpoint — 25/10/2026 (T143 bộ e2e Dịch vụ phòng họp — viết + CHẠY, user "ok")
+Vừa hoàn thành: T143. 3 file mới trong `HRM/e2e` (ngoài git):
+- `utils/roomServiceFixture.ts` — fixture tự dựng + tự dọn (tiền tố `E2E-DV`): 4 vai (phụ trách A =
+  TEST_EMAIL namdangit · phụ trách B = e2e_assign · người đặt NGOÀI nhóm = e2e_assign_nocost · 1 nhân
+  viên thật KHÔNG có quyền "Khai báo phòng họp", JWT cấp qua tinker), tự tạo mục đích (danh mục Mục đích
+  của DB dump prod RỖNG), 2 phòng (1 phòng xoá thẳng `meeting_room_managers`), 3 món.
+- `tests/meeting/meeting-room-service.api.spec.ts` (project `api`) — **12 passed ×2 lượt**: danh mục
+  không quyền 403 ×3 + `/options` vẫn 200 · trùng tên 422 / Người cập nhật / khoá ⇒ include_ids có
+  is_locked · ca 1–8 của spec mục 10 (thông báo đếm thẳng bảng `notifications` theo employee_info_id) ·
+  xoá món đang dùng bị chặn · rác = 0.
+- `tests/meeting/meeting-room-service.spec.ts` (project `chromium`) — **8 passed ×2 lượt**: màn
+  `/meeting/room-services` thêm/sửa/khoá/mở khoá/lịch sử/xoá · popup phiếu: badge đo màu
+  getComputedStyle, bấm "Đã chuẩn bị" ⇒ nút biến mất khỏi DOM · món khoá vẫn hiện tên · lọc
+  "Trạng thái dịch vụ" (khoanh bằng ô lọc Phòng họp) · người ngoài nhóm (storage user-nocost, giả lập
+  cấu hình ẩn rỗng vì user thường bị Cài đặt phân hệ chặn cụm phòng họp) KHÔNG có nút trong DOM.
+Lệch spec (chưa sửa, chờ user): ca 7 spec ghi "có 🔒" nhưng popup Xem phiếu chỉ in tên snapshot, BE
+không trả `is_locked` cho dòng dịch vụ ⇒ không có 🔒; test assert đúng hành vi thật (giữ đúng tên).
+Đang làm dở: không.
+Bước tiếp theo: user quyết 🔒 ca 7 · T146 (STATUS/LƯU Ý DEPLOY, nhắc tắt key mới ở Cài đặt phân hệ) · user commit hrm-client.
+Blocked:
+
+
+### Task phát sinh 25/10/2026 — 🔒 cho món đã khoá trên phiếu (user: "bổ sung khoá" + "làm")
+- [x] T155 — hrm-api `DetailMeetingRoomBookingResource`: mỗi dòng `services[]` thêm `is_locked` (1 query gom
+      theo service_id của phiếu, không đụng ~10 chỗ eager load).
+- [x] T156 — hrm-client `BookingFormModal.vue`: bảng món chỉ đọc gắn `LOCKED_OPTION_PREFIX` theo `is_locked`
+      (khuôn `AccountingDetailTable.vue:431`), tên giữ snapshot gốc.
+- [x] T157 — e2e ca 7 cả 2 spec: món khoá `is_locked=true` + ô bắt đầu bằng "🔒 <tên>", 2 món còn hoạt động
+      `false` / không 🔒. Chạy: api 12 passed, UI 8 passed, 0 did not run.
+Chưa chạy PHPUnit (suite chạy trên DB .env để lại rác — [[phpunit-chay-tren-db-env-de-lai-rac]]). CHƯA commit.
+
+---
+
+## ⚠️ LƯU Ý KHI DEPLOY PHASE 8 (Yêu cầu dịch vụ) + đợt 25/10/2026 LÊN MÔI TRƯỜNG KHÁC
+
+1. **4 migration Phase 8, chạy đúng thứ tự, chạy lẻ bằng `--path`** (cả 4 đã commit ở `cd33344de`):
+   - `2026_09_23_000001_create_meeting_room_managers_table` — tạo bảng nối nhiều người phụ trách,
+     **BACKFILL** từ `meeting_rooms.manager_employee_id` rồi **DROP cột đó** (đổi dữ liệu, DDL không rollback).
+     Kiểm TRƯỚC: `SELECT COUNT(*) FROM meeting_rooms WHERE manager_employee_id IS NULL;` — các phòng này lên
+     xong sẽ KHÔNG nhận được yêu cầu dịch vụ (API trả 422) cho tới khi khai người phụ trách.
+   - `..._000002_create_meeting_room_services_table` · `..._000003_create_meeting_room_booking_services_table`
+     · `..._000004_add_service_columns_to_meeting_room_bookings_table` (4 cột `service_*`, NULL = không kèm dịch vụ).
+2. **Seeder danh mục** `MeetingRoomServicesTableSeeder` (5 món mẫu, idempotent theo `name`) — tuỳ chọn.
+   ⚠️ Món "Hoa quả" seed icon `ri-cherry-line` **không có glyph** ở hrm-client → icon trống; sửa lại icon trên
+   màn danh mục sau khi seed (hoặc sửa seed trước khi chạy).
+3. **Không có quyền mới** → không cần chạy `PermissionsTableSeeder`. Màn `/meeting/room-services` dùng lại
+   quyền "Khai báo phòng họp".
+4. **Cài đặt phân hệ trên prod — làm NGAY sau deploy**: tắt thêm mục `meeting::Danh mục::Dịch vụ phòng họp`.
+   Cấu hình ẩn lưu theo TỪNG mục (prod đang ẩn 3 danh mục phòng họp còn lại), mục mới không tự ẩn ⇒ đo được
+   user thường đang thấy link `/meeting/room-services` trên DB dump prod.
+5. **Bản sửa hub `components/sale/SaleHubSidebar.vue` (T153) phải lên CÙNG đợt** — prod đang tắt
+   "meeting::Cấu hình", thiếu bản sửa thì mọi `/meeting/*` của user thường ra trang lỗi (TypeError `_normalized`).
+6. **Tài sản dùng chung — nêu trong mô tả PR**: `SaleHubSidebar.vue` (hub mọi phân hệ, T153) ·
+   `hrm-api/resources/lang/vi/validation.php` (+53 câu) và `hrm-client/locales/vi.json` (5 → 31 key) từ 23/09.
+7. **Chưa commit (25/10/2026)**: hrm-api `DetailMeetingRoomBookingResource.php` (T155) · hrm-client
+   `SaleHubSidebar.vue`, `subsystem-menu/meeting.js`, `bookings/components/BookingFormModal.vue`,
+   `pages/meeting/room-services/` (T128–T130, T153, T156). Spec e2e nằm ở `HRM/e2e` (ngoài git).
+
+### Checkpoint — 25/10/2026 (T146)
+Vừa hoàn thành: T146 — mục LƯU Ý KHI DEPLOY Phase 8 (ngay trên) + STATUS.md.
+Đang làm dở: không.
+Bước tiếp theo: user commit + push 2 repo khi ưng; khi khách chốt báo giá ⇒ brainstorm 3 chức năng mới
+(Dọn phòng, Đánh giá phòng, Đổi phòng — 7 câu ở sheet "Giả định & cần chốt" của bao-gia-quan-ly-phong-hop.xlsx).
+Blocked:
+
+### Checkpoint — 25/10/2026 (T149 rà e2e → port TOÀN BỘ bộ e2e phòng họp)
+
+Rà T149 lộ ra 10/12 spec meeting cũ chết vì bám hạ tầng worktree đã xoá (`.auth/*-wt.json` hết hạn,
+cổng :8001/:3001, nhân viên 34/25 cứng, sửa quyền role 20 thật, id quyền cứng, giả định có sẵn mục đích).
+User chọn port hết sang nền chung `e2e/utils/meetingEnv.ts` (quy ước: `e2e/tests/meeting/README-e2e.md`).
+CHỈ sửa `HRM/e2e/` (ngoài git) — không đụng source app.
+
+| Spec | Kết quả (2 lượt / lượt chạy lại cuối) |
+|---|---|
+| meeting-room.api | 13 passed |
+| room-amenity.api | 9 passed |
+| meeting-room-booking.api | 51 passed |
+| meeting-room-board.api | 18 passed |
+| meeting-room-sync.api | 14 passed |
+| meeting-room-service.api | 12 passed |
+| meeting-room.spec | 21 passed ×2 |
+| meeting-room-booking.spec | 19 passed ×2 (có ca mới A5 = T149: thứ tự footer + khoảng cách 8px) |
+| meeting-room-board.spec | 21 passed ×2 |
+| meeting-room-sync.spec | 5 passed ×2 |
+| meeting-room-service.spec | 8 passed |
+
+Không phát hiện lỗi thật của app. Dọn sạch: 0 rác theo mọi tiền tố, 0 role `E2E-TMP`. `_auth-smoke.spec.ts` xoá
+(chỉ kiểm login worktree cũ). Bản gốc spec cũ lưu ở scratchpad phiên 25/10.
+
+**Điểm chờ user quyết (không chặn):**
+1. ~~Meeting nháp gán phòng~~ — user 26/10: KHÔNG cho, đã bịt BE (T158).
+2. ~~Xoá meeting để lại thông báo~~ — hết đường xảy ra: chỉ xoá được nháp, nháp nay không có phiếu.
+3. Ca F1/F2 board.api có thể chập chờn nếu chạy lúc 23:55–24:00 (phiếu vắt qua ngày).
+4. Ca A4b booking.api bật/tắt tạm cờ `allow_outside_hours` trong cấu hình phân hệ (trả lại ngay sau ca).
+5. Footer popup phiếu: khoảng cách nút 8px (theo T149) — lệch quy ước `mr-2 mb-2` trong CLAUDE.md nếu muốn 12px.
+
+### Checkpoint — 26/10/2026 (T158–T159, user cho "làm")
+
+- [x] T158 — BE bịt Task 80: meeting **nháp** không được giữ phòng (trước chỉ FE ẩn nút).
+  `MeetingRoomBookingService::assignMeeting()` chặn 423 khi status < Lên lịch hoặc = Hoàn thành (khớp
+  `Meeting::canBookRoom()`); `MeetingCreateApiRequest` + `MeetingUpdateApiRequest` chặn `meeting_room_id`
+  khi status < Lên lịch (lỗi validate 400 `meta.message.meeting_room_id` theo `ApiBaseRequest`). DB local
+  0 meeting đang gắn phòng ⇒ không bản ghi cũ nào bị kẹt.
+- [x] T159 — Huỷ meeting ⇒ huỷ phòng: code đã đủ (huỷ tay `change-status` + cron `autoCancelOverdueMeeting`
+  đều qua `save()` → hook nhả phòng). Bổ sung e2e P4-9 cho đường tự huỷ (gọi service qua tinker cho đúng
+  1 meeting, KHÔNG chạy lệnh cron vì nó quét cả DB dump prod).
+- E2E: `meeting-room-sync.api` 16 passed (P4-5 viết lại = nháp kèm phòng bị chặn cả tạo/sửa; thêm P4-9,
+  P6-4) · `meeting-room-booking.api` 51 · `meeting-room-board.api` 18 · `meeting-room-service.api` 12 ·
+  `meeting-room-sync.spec` 5 passed. Thêm helper `runTinker()` vào `e2e/utils/meetingEnv.ts`.
+- **Chờ user chốt:** tự huỷ (sau khi họp xong + quá hạn biên bản) hiện huỷ CẢ phiếu "Hoàn thành" (đã trả
+  phòng) ⇒ báo cáo hiệu quả sử dụng phòng mất lượt dùng đó. Giữ hay chỉ huỷ phiếu Chờ duyệt/Đã duyệt?
+- Chưa commit: thêm `hrm-api` `MeetingRoomBookingService.php`, `MeetingCreateApiRequest.php`, `MeetingUpdateApiRequest.php`.
+
+## Đợt 26/10/2026 — Check-in phòng + tự huỷ khi không check-in (một phần Phase 5, spec §5.7)
+
+Yêu cầu user 26/10: "Quá giờ họp N phút (N để cấu hình) mà chưa check-in phòng thì tự huỷ phòng".
+Hiện trạng: DB đã có `general_regulations.meeting_room_checkin_grace_minutes` (mặc định 15),
+`meeting_room_bookings.checkin_at` / `auto_released_at` — nhưng CHƯA có check-in, CHƯA có job, ô N chưa lên UI.
+
+**Quyết định đã chốt (26/10, hỏi lần lượt):**
+1. Check-in bằng **nút web** đợt này (popup Xem phiếu — lưới Theo dõi phòng mở cùng popup); quét QR để đợt sau.
+2. Chỉ **người đặt + chủ trì** của phiếu được check-in (KHÔNG người tham dự, KHÔNG người phụ trách phòng).
+3. N chỉ **cấu hình theo công ty** (màn Cấu hình phân hệ); bỏ qua cột ghi đè `meeting_rooms.checkin_grace_minutes`.
+4. Phiếu sinh từ Meeting bị tự huỷ ⇒ **Meeting giữ lịch, bỏ phòng** (`meeting_room_id = null`), báo người tạo + chủ trì.
+5. Có **cờ bật/tắt "Tự huỷ khi không check-in", mặc định TẮT** (cần 1 migration).
+6. **Check-out để đợt sau.**
+
+**Tự chốt theo spec/khuôn (không hỏi):** cửa sổ check-in = 15' trước `start_at` → `end_at`; chỉ phiếu Đã duyệt;
+job chạy mỗi phút, chỉ huỷ phiếu `start_at + N <= now < end_at` (phiếu đã qua giờ kết thúc không huỷ ngược —
+tránh bật cờ lên là huỷ hàng loạt lịch sử); thông báo dùng `notifyCancelled()` sẵn có
+(`[DPH] Hủy: <b>…</b>. Tự nhả phòng do không check-in.`).
+
+- [x] T160 — Migration `2026_10_26_000001_add_meeting_room_auto_release_to_general_regulations_table`: cột
+      boolean `meeting_room_auto_release` default 0.
+- [x] T161 — BE check-in: `PUT meeting/room-bookings/{id}/checkin` (403 không phải người đặt/chủ trì → 423 sai trạng
+      thái/ngoài cửa sổ → 409 đã check-in; `lockForUpdate`), ghi `checkin_at` + lịch sử; cờ `is_can_checkin` +
+      `checkin_at` ở Resource chi tiết.
+- [x] T162 — BE job `meeting:auto-release-bookings` (Kernel mỗi phút): công ty bật cờ, phiếu Đã duyệt chưa check-in quá
+      `start_at + N` → Đã hủy + `auto_released_at` + lý do + thông báo; phiếu `source = 2` thì gỡ phòng khỏi Meeting.
+- [x] T163 — BE cấu hình: `GET/PUT` room-hours trả + nhận `checkin_grace_minutes` (1–120) và `auto_release` (boolean).
+- [x] T164 — FE `/meeting/settings`: ô N phút + radio Tự huỷ Có/Không. FE popup Xem phiếu: nút Check-in theo
+      `is_can_checkin`, hiện mốc đã check-in.
+- [x] T165 — E2E (api + UI) có phân quyền 2 chiều + kiểm Playwright đo DOM.
+
+### Checkpoint — 26/10/2026 (T160–T165 xong, CHƯA commit)
+
+- Migration `2026_10_26_000001_add_meeting_room_auto_release_to_general_regulations_table` ĐÃ chạy vào DB local
+  `hrm_erp_21_10_prod` (chạy lẻ `--path`).
+- BE: `PUT meeting/room-bookings/{id}/checkin` (403 → 409 đã check-in → 423 sai trạng thái/ngoài cửa sổ) +
+  `is_can_checkin`, `checkin_at_text`, `is_auto_released` ở chi tiết phiếu · lệnh `meeting:auto-release-bookings`
+  (Kernel mỗi phút; thông báo truyền `$sender` vì chạy CLI; gửi người đặt + chủ trì + người tham dự) · cấu hình
+  `checkin_grace_minutes` (1–120) + `auto_release` (`sometimes` — client cũ vẫn lưu được) + 2 nhãn lịch sử.
+- **Phát sinh khi test, user chốt 26/10:** người CHỦ TRÌ luôn được lưu vào danh sách tham gia của phiếu
+  (`ensureHostParticipant()` sau `syncParticipants()` ở store/update) — trước đó chủ trì không nằm trong danh sách
+  thì 403 khi mở phiếu của chính mình.
+- FE: 2 ô ở `RoomHoursSettingPanel` (hàng 2 đủ 12 cột) · nút Check-in ở popup Xem phiếu (popup tự gọi API, màn
+  bookings/room-board nạp lại qua `@checked-in`) + dòng "Check-in lúc …" ở Kết quả xử lý. Đo Playwright: hàng 2 =
+  3 ô cùng y, footer Check-in → Đóng cách 8px; lỗi 0 phút hiện dưới ô "Không được nhỏ hơn 1.".
+- E2E: mới `meeting-room-checkin.api` 8 ca · `meeting-room-checkin.spec` 4 ca · `meeting-room-sync.api` thêm P4-10.
+- Đụng thêm file dùng chung: `app/Services/CatalogHistoryService.php` (2 nhãn cột của `meeting_room_settings`),
+  `app/Console/Kernel.php` (1 lịch chạy).
+- ⚠️ Deploy: chạy migration trên + bảo đảm cron `schedule:run` đang chạy; cờ mặc định TẮT nên không ảnh hưởng gì tới
+  khi admin bật.
+- Còn treo: tự huỷ meeting quá hạn biên bản có huỷ cả phiếu "Hoàn thành" không (chưa phát sinh — check-out để đợt sau).
+
+
+### Ghi chú 26/10/2026 — ca e2e B2 (meeting-room-booking.spec) chập chờn
+- Nguyên nhân: spec cũ chờ 422 của BE dưới hàng giờ; từ Task 76/78 FE tự kiểm lại tình trạng phòng lúc Lưu và chặn
+  với lỗi dưới ô Phòng họp. Lượt kiểm lúc Lưu đôi khi bị lượt kiểm song song đè (`loadRoomAvailability` bỏ kết
+  quả theo `requestId`) ⇒ lọt xuống BE ⇒ lỗi hiện dưới hàng giờ. Đã sửa SPEC (chờ ô phòng báo bận rồi mới Lưu,
+  kiểm lỗi dưới ô Phòng họp + 0 request tạo phiếu) — 3 lượt liền 19/19 passed.
+- [x] T166 (user "làm" 26/10) — sửa app: `submitSave()` huỷ nhịp nạp hẹn trễ + chờ lượt nạp tình trạng phòng MỚI NHẤT
+  (`loadRoomAvailability()` lưu promise mới nhất, `waitLatestAvailability()` chờ tới khi không còn lượt mới chen vào).
+  Tái hiện trước khi sửa (API chậm 1,5s, bấm Lưu ngay sau đổi giờ): lọt xuống BE, lỗi dưới hàng giờ; sau sửa: FE chặn
+  dưới ô Phòng họp, 0 request tạo phiếu. Thêm ca e2e B2b. `meeting-room-booking.spec` 3 lượt 20/20; các spec UI
+  khác của phân hệ xanh (board 21, sync 5, service 8, checkin 4, rooms 21).
+
+- [x] T167 (user "làm" 26/10/2026) — Hủy meeting (tay hoặc tự hủy quá hạn biên bản): phiếu phòng ĐÃ check-in thì GIỮ,
+  chưa check-in thì hủy. Sửa `MeetingRoomBookingSyncService::syncFromMeeting()` (chỉ nhánh meeting = Hủy; chủ động gỡ
+  phòng vẫn hủy phiếu). E2E thêm P4-4b + P4-9b: `meeting-room-sync.api` 19 passed; checkin.api 8, booking.api 51,
+  board.api 18, sync UI 5. Đóng câu treo "tự hủy có hủy phiếu Hoàn thành không" (Hoàn thành chỉ có sau check-in ⇒ giữ).
+
+## Đợt 26/10/2026 (tiếp) — Check-out + check-in/out bằng QR + màn máy tính bảng (Phase 5, mở rộng)
+
+**Quyết định đã chốt (hỏi lần lượt 26/10):**
+- Check-out: bấm sớm ⇒ **nhả phòng ngay** (phiếu Hoàn thành + `checkout_at`, giữ giờ kết thúc dự kiến); quên trả ⇒ **job tự
+  Hoàn thành** lúc hết giờ (`checkout_at` = giờ kết thúc, không thông báo); ai bấm = **người đặt + chủ trì** (giống check-in).
+- 2 phương án check-in/out (user bổ sung): (1) **nút trên form Meeting** (khối phòng họp của `/assign/meeting`) + popup Xem phiếu;
+  (2) **app điện thoại quét QR** — quét bằng **chức năng trong app TPE_APP** (repo Flutter riêng).
+- QR: mỗi phòng 1 mã riêng. QR **in dán = mã cố định** (`checkin_qr_token` đã có); phòng có **máy tính bảng = mã xoay vòng**
+  (~30s, chống chụp ảnh) và phòng đó **chỉ nhận mã xoay vòng**.
+- Máy tính bảng = **trang web kiosk trong hrm-client** (toàn màn hình: lịch họp hôm nay + tình trạng phòng + QR xoay vòng),
+  xác thực bằng **mã thiết bị riêng từng phòng** (chỉ xem, không đăng nhập tài khoản người).
+- Quét xong: **1 mã cho cả vào/ra** — hệ thống tìm phiếu của NGƯỜI QUÉT (người đặt/chủ trì) tại phòng đó trong khung giờ:
+  chưa check-in ⇒ hỏi "Check-in?"; đã check-in ⇒ hỏi "Check-out?"; không có phiếu phù hợp ⇒ báo rõ lý do.
+- Quản lý mã (in QR, đổi mã QR, tạo/thu hồi link kiosk): người có quyền **Khai báo phòng họp** — không thêm quyền mới.
+
+**Đề xuất chia đợt (mỗi đợt xin "làm" riêng):**
+- A — Check-out (BE + popup Xem phiếu) + nút Check-in/Check-out trên form Meeting. Không migration.
+- B — BE QR: endpoint quét (`scan` → đề xuất hành động, `scan/confirm` → thực hiện), mã xoay vòng HMAC theo khung 30s,
+  migration thêm `meeting_rooms.kiosk_token` (+ khoá ký mã xoay vòng); khu "QR & máy tính bảng" ở popup Phòng họp
+  (in QR, đổi mã, tạo/thu hồi link kiosk).
+- C — Trang kiosk `/meeting/kiosk/<mã thiết bị>` + API công khai theo mã thiết bị (giới hạn tần suất).
+- D — TPE_APP: màn quét QR + gọi API đợt B (theo `TPE_APP/CLAUDE.md`, build/phát hành app riêng).
+
+**Chốt 26/10:** màn máy tính bảng = **trang web kiosk** (đề xuất được duyệt), tablet dùng Fully Kiosk Browser
+(tự mở khi bật máy, giữ màn sáng, chặn thoát). API kiosk thiết kế dùng chung được nếu sau này làm app.
+
+### Checkpoint — 26/10/2026 (Đợt A xong, CHƯA commit)
+- [x] A1 — BE check-out `PUT meeting/room-bookings/{id}/checkout` (403 → 409 → 423), phiếu → Hoàn thành + `checkout_at`,
+      `end_at` dự kiến giữ nguyên; `is_can_checkout`, `checkout_at_text` ở chi tiết phiếu; lịch sử.
+- [x] A2 — Lệnh `meeting:auto-complete-bookings` (Kernel mỗi phút): đã check-in + hết giờ ⇒ Hoàn thành, `checkout_at` = `end_at`.
+- [x] A3 — Lưới Theo dõi phòng (`board`, `week`): phiếu Hoàn thành chỉ vẽ tới `checkout_at` (`clipCompletedBookings`, không ghi DB).
+- [x] A4 — Form Meeting: `MeetingTransformer::meetingRoomState()` trả `checkin_at_text`, `checkout_at_text`, `is_can_checkin`,
+      `is_can_checkout`; `GeneralInfo.vue` khối Phòng họp có nút Check-in / Check-out + mốc giờ (cả màn Xem lẫn Sửa).
+- [x] A5 — Popup Xem phiếu: nút Check-out (footer, cách Đóng 8px) + "Check-out lúc …".
+- E2E: `meeting-room-checkin.api` 12 (thêm O1–O4) · `meeting-room-checkin.spec` 6 (thêm K1b, M1) · `meeting-room-sync.api` 20 (thêm P4-11).
+- Ghi chú đo: M1 bấm ngay lúc trang Meeting vừa mở thì lượt nạp lại xếp hàng sau các API nạp form (`artisan serve` 1 luồng ở
+  máy dev); lúc yên check-out + nạp lại ~1s.
+- Tiếp theo: Đợt B (BE QR + migration `kiosk_token`/khoá ký + khu quản lý mã ở popup Phòng họp) — chờ user "làm".
+
+### Checkpoint — 26/10/2026 (Đợt B xong, CHƯA commit)
+- [x] B1 — Migration `2026_10_26_000002_add_kiosk_token_to_meeting_rooms_table` (cột `meeting_rooms.kiosk_token` char(36)
+      nullable unique) — ĐÃ chạy vào DB local `hrm_erp_21_10_prod` (lẻ `--path`, user "Chạy"). `MeetingRoom::$hidden` giấu cột.
+- [x] B2 — `MeetingRoomQrService`: QR in dán `TPEROOM1:<checkin_qr_token>`; QR xoay vòng `TPEROOM2:<room>.<khung30s>.<HMAC>`
+      (khoá = HMAC(room|kiosk_token, APP_KEY), nhận khung hiện tại + 2 khung trước); phòng có kiosk ⇒ QR in dán 423.
+- [x] B3 — API app TPE: `POST meeting/room-bookings/scan` (đề xuất checkin/checkout cho phiếu của NGƯỜI QUÉT, 404 kèm lý do
+      khi không có) + `POST .../scan/confirm` (dùng lại `checkin()/checkout()`).
+- [x] B4 — API quản lý (quyền Khai báo phòng họp): `GET rooms/{id}/qr`, `POST rooms/{id}/qr/regenerate`,
+      `POST|DELETE rooms/{id}/kiosk`; lịch sử phòng chỉ ghi sự kiện, không ghi mã.
+- [x] B5 — FE `components/meeting-room/RoomQrSection.vue` trong popup Xem phòng: ảnh QR, Tải ảnh QR (PNG kèm tên phòng),
+      Đổi mã QR, Tạo/Sao chép/Tạo mới/Thu hồi link máy tính bảng (xác nhận qua `$confirm`). Đo Playwright: QR 140px, nút cách 12px,
+      link không tràn khung. Link kiosk mở ra 404 cho tới đợt C.
+- E2E: `meeting-room-qr.api` 6 · `meeting-room-qr.spec` 3 (README: plainIndex 13/14).
+- Ghi chú: `artisan route:list` lỗi sẵn do `Modules\Rice\...\RiceController` không tồn tại (không liên quan).
+- Tiếp theo: Đợt C (trang kiosk + API công khai theo mã thiết bị) — chờ user "làm"; Đợt D (TPE_APP màn quét).
+
+### Checkpoint — 26/10/2026 (wrap up)
+Vừa hoàn thành: T149 (port 11 spec e2e) · T158–T159 (meeting nháp không giữ phòng, huỷ meeting ⇒ huỷ phòng) ·
+T160–T165 (check-in + tự huỷ) · T166 (race nút Lưu) · T167 (huỷ meeting giữ phiếu đã check-in) · đợt A (check-out,
+form Meeting) · đợt B (QR + link máy tính bảng). **Đã commit + PUSH gop_db 26/10 (merge api `12dfba4f6`, client `7ee73ddff`):** api `dab856446`, client
+`55801d64c` (fix hub) + `e9238bbfc`. E2E 15 spec phòng họp xanh. 2 migration `2026_10_26_000001/000002` đã chạy DB local.
+Đang làm dở: không.
+Bước tiếp theo: Đợt C — trang kiosk `/meeting/kiosk/<mã thiết bị>` + API công khai theo mã thiết bị (giới hạn tần suất),
+không migration — chờ user "làm". Sau đó đợt D (TPE_APP màn quét, repo Flutter riêng).
+Blocked: —
+**Deploy (bổ sung cho mục LƯU Ý KHI DEPLOY):** chạy 2 migration `2026_10_26_000001_add_meeting_room_auto_release_to_general_regulations_table`
++ `2026_10_26_000002_add_kiosk_token_to_meeting_rooms_table`; bảo đảm cron `schedule:run` chạy (2 lệnh mới
+`meeting:auto-release-bookings`, `meeting:auto-complete-bookings` mỗi phút); cờ tự huỷ mặc định TẮT; đi cùng fix hub
+`SaleHubSidebar.vue`; file dùng chung bị đụng: `app/Console/Kernel.php`, `app/Services/CatalogHistoryService.php`.
+
+
+## Đợt C (26/10/2026) — Trang kiosk máy tính bảng `/meeting/kiosk/<mã thiết bị>`
+**Chốt 26/10 (user):** mỗi cuộc họp trên kiosk hiện **Tiêu đề + Chủ trì + Giờ** (bảng tin cửa phòng; chấp nhận lộ tiêu đề).
+**Tự chốt theo khuôn (không hỏi):** chỉ phiếu Đã duyệt / Hoàn thành của hôm nay (không hiện Chờ duyệt — khớp màn Theo dõi
+phòng); QR xoay vòng làm mới theo `expires_at`, lịch nạp lại 60s; API công khai theo `kiosk_token`, `throttle:60,1`;
+link bị thu hồi / đổi ⇒ trang báo "Link không còn hiệu lực" (404), không lộ thông tin phòng; trang không cần đăng nhập
+(bỏ qua middleware FE), layout riêng toàn màn hình.
+- [x] C1 — BE `GET v1/meeting/kiosk/{token}` (ngoài `auth:api`): phòng + trạng thái hiện tại + lịch hôm nay + QR xoay vòng.
+- [x] C2 — FE layout `kiosk.vue` + `pages/meeting/kiosk/_token.vue`; `/meeting/kiosk` vào danh sách public ở middleware.
+- [x] C3 — E2E api + spec (link hợp lệ / thu hồi / mã QR đổi theo khung 30s) + đo Playwright.
+
+### Checkpoint — 26/10/2026 (Đợt C xong, CHƯA commit)
+Vừa hoàn thành: Đợt C — trang kiosk máy tính bảng.
+- BE: `MeetingRoomQrService::kiosk()` + `MeetingRoomKioskController` + route công khai `GET v1/meeting/kiosk/{token}`
+  (`throttle:60,1`, ngoài `auth:api`). Trả phòng (tên, vị trí, sức chứa, công ty, còn hoạt động) · `state/state_text/state_color`
+  (Đang họp #DC2626 · Sắp họp #D97706 · Đang trống #16A34A — cùng bảng màu thẻ phòng màn Theo dõi) · `current`/`next` ·
+  lịch hôm nay (chỉ Đã duyệt + Hoàn thành; mỗi dòng ĐÚNG 9 khoá: tiêu đề, chủ trì — phiếu tự đặt không có chủ trì thì lấy
+  người đặt —, giờ, trạng thái, đã check-in) · QR xoay vòng + `server_time`. Phiếu trả phòng sớm cắt giờ tới `checkout_at`.
+  Mã sai / thu hồi ⇒ 404 chung. Không trả mã phiếu, người đặt, nội dung, mã QR in dán, `kiosk_token`.
+- FE: `layouts/kiosk.vue` (không topbar/menu) + `pages/meeting/kiosk/_token.vue`; `/meeting/kiosk` thêm vào trang public của
+  `middleware/authenticated.js` + `menu-visibility.js` (`checkPermission.js` KHÔNG cần sửa — không phải mục menu). Gọi 1 API, nạp
+  lại đúng lúc khung QR hết hạn (≤31s); đồng hồ + thanh tiến độ theo giờ máy chủ; `X-Silent-Errors` ⇒ không toast/không về /login;
+  mất mạng giữ dữ liệu cũ + dải cảnh báo, thử lại 15s; 404 ⇒ màn "Link không còn hiệu lực".
+- Đo Playwright MCP (không đăng nhập, 1280×800, dữ liệu thử `KT-KIOSK` đã dọn): trang vừa khít 1280×800 không cuộn,
+  0 topbar, 1 API lúc mở, QR 280px (ảnh 560px), viền trạng thái rgb(220,38,38); QR đổi sau khung 30s bằng đúng 1 request;
+  chặn mạng ⇒ dải "Mất kết nối", 0 toast; thu hồi link khi đang mở ⇒ tự sang màn hết hiệu lực. Curl: mã trên kiosk app quét
+  được (`scan` ⇒ checkin); header `X-RateLimit-Limit: 60`.
+- E2E (đã viết, CHƯA chạy — theo quy ước chỉ chạy khi user yêu cầu): `meeting-room-kiosk.api` 4 ca + dọn ·
+  `meeting-room-kiosk.spec` 4 ca + dọn; README plainIndex 15/16.
+- Ghi nhận: lúc mất mạng QR trên màn vẫn là mã cũ, quá ~90s app quét sẽ báo "hết hạn" — chấp nhận (máy có mạng lại là tự đổi).
+Đang làm dở: không.
+Bước tiếp theo: Đợt D — TPE_APP màn quét QR gọi `scan` / `scan/confirm` (repo Flutter riêng, theo `TPE_APP/CLAUDE.md`) — chờ user "làm".
+Blocked: —
+Deploy: không migration; không thêm cron. Đi cùng 2 middleware FE dùng chung đã sửa.
+
+## Đợt D (26/10/2026) — TPE_APP: màn quét QR check-in / check-out phòng họp (user "Làm" kèm phạm vi)
+Repo TPE_APP (Flutter, nhánh develop) — theo `TPE_APP/CLAUDE.md`. Không đụng hrm-api/hrm-client/DB.
+- [x] D1 — `pubspec.yaml` thêm `mobile_scanner` + `make get` + `pod install`.
+- [x] D2 — `MeetingApiService.scanRoomQr()` / `confirmRoomQr()` (`meeting/room-bookings/scan`, `scan/confirm`).
+- [x] D3 — Màn `lib/ui/meeting/meeting_room_scan/` (camera → hộp xác nhận → kết quả / lý do lỗi) + route + `make gen`.
+- [x] D4 — Nút "Quét QR" ở thanh tiêu đề tab Phòng họp.
+- [x] D5 — `dart analyze` + kiểm trên máy ảo iPhone (Mobile MCP).
+
+### Checkpoint — 26/10/2026 (Đợt D xong, CHƯA commit)
+Vừa hoàn thành: Đợt D — TPE_APP màn quét QR (repo TPE_APP, nhánh develop).
+- `pubspec.yaml`: `mobile_scanner: 7.4.2` (ghim cứng như các package khác); `pod install` xong. Quyền camera 2 nền tảng có sẵn.
+  Cảnh báo bảo mật khi `pub get` là của `dio 4.0.1` có từ trước, không phải package mới.
+- `MeetingApiService.scanRoomQr()` / `confirmRoomQr()`.
+- Màn mới `lib/ui/meeting/meeting_room_scan/meeting_room_scan_page.dart` (khuôn StatefulWidget của phân hệ Meeting): camera chỉ
+  đọc QR, `noDuplicates`; mã không bắt đầu `TPEROOM1:`/`TPEROOM2:` ⇒ snackbar, không gọi API; mã đúng ⇒ `scan` ⇒
+  `showAppConfirm` (phòng · mã + tiêu đề phiếu · giờ; check-out thêm giờ đã check-in + câu "nhả phòng ngay"), nút = đúng chữ
+  BE (`Check-in`/`Check-out`) ⇒ `scan/confirm` ⇒ snackbar thành công + quay về tab Phòng họp (nạp lại). Lỗi BE ⇒ `AppDialog` hiện
+  nguyên văn lý do + Đóng / Quét lại. Không có quyền camera ⇒ câu báo + "Mở cài đặt" (ẩn khung ngắm). Đèn flash chỉ hiện khi có.
+  Bản debug: nhấn giữ dòng hướng dẫn để GÕ mã (máy ảo không có camera, app không đọc được clipboard do công cụ ngoài ghi).
+- Route `MeetingRoomScanRoute` (app_router.dart + `make gen`; trả `course_info.freezed.dart` bị gen ghi đè ngoài phạm vi);
+  nút `qr_code_scanner` (AppBarGlassButton) trên header tab Phòng họp, cạnh chuông.
+- Kiểm: `dart analyze lib` 0 error. Máy ảo iPhone 18 Pro, flavor `tpeLocal`, tài khoản `e2e_assign_nocost` (dữ liệu `KT-QR-APP` đã
+  dọn): từ chối quyền camera ⇒ câu báo + Mở cài đặt; mã lạ ⇒ snackbar; mã dán ⇒ hộp Check-in ⇒ Hủy (quay lại quét, không lỗi)
+  ⇒ Check-in (DB `checkin_at`) ⇒ quét lại ⇒ hộp Check-out ⇒ DB status 5 + `checkout_at`, thẻ phòng về "Trống" ⇒ quét lần 3 ⇒
+  hộp lý do 404 ⇒ Đóng về tab. Camera thật + mã xoay vòng trên kiosk CHƯA thử (cần điện thoại thật).
+- Sửa trong lúc kiểm: (1) app_router.dart thiếu import trang mới ⇒ build lỗi; (2) khung ngắm vẽ đè câu báo thiếu quyền camera;
+  (3) hộp nhập debug dispose controller sớm ⇒ assertion `_dependents.isEmpty`.
+- TPE_APP còn thay đổi CHƯA commit của người khác từ trước (`.claude/settings.json`, `ios/Podfile`, `project.pbxproj`, `CLAUDE.md`) —
+  không đụng; khi commit Đợt D chỉ add đúng file của đợt này.
+Đang làm dở: không.
+Bước tiếp theo: thử camera thật trên điện thoại (QR dán + QR xoay vòng của kiosk); sau đó đặt lặp định kỳ / Phase 6 báo cáo — chờ user.
+Blocked: —
+
+### Ghi nhận ngoài luồng (26/10, KHÔNG sửa trong đợt này)
+- [x] ⚠️ BẢO MẬT (user "Làm — 5 model" 26/10): `GET v1/users/auth/user-profile` trả `employee_data.password` (hash bcrypt) +
+  `remember_token`. Đã thêm `protected $hidden = ['password', 'remember_token']` vào 5 model bảng `employees` (hrm-api gop_db, CHƯA
+  commit): `Modules/Timesheet/Entities/Employee`, `app/Models/Employee`, `Modules/Human/Entities/Employee`,
+  `Modules/Human/Entities/TpEmployee`, `app/Models/TpEmployeeData` (`TpEmployee`/`TpEmployee2` đăng nhập đã có sẵn). Kiểm:
+  user-profile 0 trường lộ, các khối khác giống hệt trước; login OK + response không chứa `$2y$`; `->password` vẫn đọc được,
+  `Hash::check` OK (đổi mật khẩu / sync CRM / UpdatePass đọc thuộc tính, không qua JSON); cả 5 model `toJson()` sạch; web mở
+  `/meeting/rooms` bằng namdangit: store có nhân viên + 649 quyền, 0 toast lỗi. Web + app không đọc 2 trường này (app có
+  `@Default('')`). Prod đang lộ tới khi deploy bản này.
+- [x] App tab Meeting › Tổng quan báo "Item Not Found!" trên local — ĐÃ RÕ, KHÔNG phải lỗi code: app gọi `GET v1/assign/meeting/overview`,
+  route này (cùng `mine`, `MeetingMineCriteria`, `MeetingMineResource`) nằm ở commit hrm-api `2f543d6b4` (Manh Cuong 23/10,
+  "meeting cho app") — CHỈ có trên `origin/develop`, chưa vào `gop_db`. API local chạy `gop_db` ⇒ `/overview` rơi vào wildcard
+  `{meeting}` ⇒ ModelNotFound ⇒ "Item Not Found!". Đo 26/10: develop đi trước gop_db 103 commit (83 nguyentrancu97, 11 khoipv,
+  6 Tri Lee, 6 Manh Cuong), gop_db đi trước develop 5 commit (gồm Đợt A/B phòng họp `dab856446`). ⇒ Kiểm app TPE_APP (nhánh develop
+  trở đi) cần API chạy từ hrm-api develop, hoặc chờ develop ↔ gop_db được merge (việc của team, chưa hỏi).
+
+### Ghi chú 26/10/2026 — Đợt D đã commit (user chọn "Commit tất cả 11 file")
+TPE_APP nhánh mới `feature/meeting-room-qr-scan` (tách từ develop `331f51b`), commit `262dea3`, CHƯA push. Gồm code Đợt D + phần có
+sẵn từ trước: `ios/Podfile` + `project.pbxproj` (bỏ loại arm64 cho máy ảo — trước ghi "không commit", user chốt commit cùng),
+`.claude/settings.json` (bỏ đường dẫn máy khác, giữ lệnh fvm/make), `CLAUDE.md`. ⚠️ Merge vào develop: kiểm lại build release
+iOS vì Podfile đổi cấu hình EXCLUDED_ARCHS.
+
+### Ghi chú 26/10/2026 — Đặt lặp định kỳ: TẠM BỎ (user chốt "tạm bỏ lại case lặp lịch")
+Chưa brainstorm, chưa code. Bảng/cột `recurrence_id` có sẵn trên `meeting_room_bookings` (Phase 1) để nguyên, không dùng.
+Mở lại khi user yêu cầu. Việc còn lại của feature: Phase 6 báo cáo hiệu quả sử dụng · thử camera thật (app) · commit việc đang treo.
+
+### Ghi chú 26/10/2026 — Phase 6 báo cáo: LÀM SAU (user chốt)
+Điều kiện mở: làm xong + test hết các chức năng mới (check-in/out, tự huỷ, QR, kiosk, app quét QR) rồi mới làm báo cáo
+`/meeting/report/room-usage` (spec §9.5, quyền "Xem báo cáo hiệu quả sử dụng phòng họp" đã có). Chưa có mockup — khi mở thì dựng
+mockup theo skill `report-styles` trước.
+Còn phải test trước khi mở báo cáo: e2e `meeting-room-kiosk.api` + `meeting-room-kiosk.spec` (viết, CHƯA chạy) · chạy lại toàn bộ
+bộ e2e phòng họp sau Đợt C + vá `$hidden` Employee · camera thật trên điện thoại (QR dán + QR xoay vòng kiosk).
+
+### Checkpoint — 26/10/2026 (test lại toàn bộ trước báo cáo — mục 1 + 2, user "làm 1-2 trước")
+- Mục 1: `meeting-room-kiosk.api` 5/5 · `meeting-room-kiosk.spec` 5/5 (cả ca dọn). Sửa SPEC K1: so `message` sau khi parse JSON
+  (BE escape tiếng Việt `ô…`, so chuỗi thô luôn trượt) — không phải lỗi app.
+- Mục 2: chạy lại TOÀN BỘ bộ e2e phòng họp sau Đợt C + vá `$hidden` Employee, `--workers=1 --retries=0`:
+  API 9 file **146 passed** (4.8m) · UI 8 file **89 passed** (15.4m); 0 failed / 0 did not run / 0 flaky. Rác `E2E-%` trên DB = 0.
+- Còn trước khi mở Phase 6: mục 3 — camera thật trên điện thoại (QR dán + QR xoay vòng kiosk), cần user.
+
+### Checkpoint — 26/10/2026 (mục 3 — camera thật trên iPhone: ĐẠT)
+- TPE_APP nhánh `feature/meeting-room-qr-scan`: pull develop `8d3c940` + merge (commit `e6f0de4`, 0 xung đột; `pub get` + `make gen`
+  không đổi gì; `dart analyze lib` 0 error). `build_config.dart`: tpeLocal đọc `--dart-define=APP_API_BASE_URL` (hằng có sẵn chưa dùng),
+  rỗng thì giữ 127.0.0.1 — CHƯA commit (user: commit khi báo).
+- Cài release lên iPhone 14 Pro Max (team ký `54UWG4H5CH`, cần đăng nhập Xcode + bật Developer Mode), API `artisan serve
+  --host=0.0.0.0 --port=8001` (đã tắt sau khi thử).
+- User thử 6 mục; đối chiếu DB: QR dán (1442) check-in 17:32:55 → check-out 17:33:06 = Hoàn thành; QR xoay vòng kiosk (1443)
+  check-in 17:23:15 → check-out 17:31:42 = Hoàn thành; mã kiosk chụp quá 2 phút báo hết hạn (user xác nhận). Lượt báo "đúng" đầu
+  tiên DB chưa có QR dán ⇒ cho thử lại đúng ảnh mới chốt. Dữ liệu `KT-CAM` + thông báo đã dọn.
+⇒ Điều kiện mở Phase 6 (chức năng mới xong + test hết) ĐÃ ĐỦ. Việc kế: commit việc đang treo trên gop_db, rồi Phase 6 (mockup trước).
+
+### Checkpoint — 26/10/2026 (commit việc đang treo — CHƯA push)
+hrm-api gop_db: `85c566ad2` Đợt C kiosk API · `45dc6a785` vá $hidden 5 model Employee (ahead origin 2, behind 0).
+hrm-client gop_db: `04d57273b` Đợt C trang kiosk (ahead 1, behind 0). e2e kiosk nằm ở HRM/e2e (ngoài git).
+TPE_APP feature/meeting-room-qr-scan: `262dea3` Đợt D + `e6f0de4` merge develop; `build_config.dart` (APP_API_BASE_URL) chưa commit.
+Tiếp theo: Phase 6 báo cáo — dựng mockup theo `report-styles` trước, chờ user.
+
+## Thiết kế lại màn kiosk (26/10/2026) — mockup CHỐT, CHƯA code
+Mockup `mockup/kiosk-tablet.html` (font Nunito + xanh HRM; chốt ở design.md mục 25–26/10). Phạm vi dự kiến khi được "làm":
+- hrm-api `MeetingRoomQrService::kiosk()`: `current` thêm `host_role`, `participants[{name,role}]` (phía công ty),
+  `partner{name, participants[{name,role}]}` (họp có đối tác — `meetings.customer_name` + `customer_members` type 2);
+  dòng `bookings` thêm `has_partner`. Chức vụ NV: `working_positions` qua `employee_infos.employee_work_position_id`.
+  Không migration.
+- hrm-client `pages/meeting/kiosk/_token.vue` (giao diện mới) + `layouts/kiosk.vue` (nền xanh HRM).
+- e2e `meeting-room-kiosk.api.spec.ts` (K3 đang khoá đúng 9 khoá của dòng lịch) + `meeting-room-kiosk.spec.ts`.
+

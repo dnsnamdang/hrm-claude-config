@@ -79,5 +79,6 @@ Khuôn: BE `Modules/MasterData/*/BusinessCatalog/JobGroup*` (danh mục có cha)
   nên kho khoá ở HRM tự ẩn; các nguồn còn lại chưa rà. Chưa chặn ở BE khi lưu phiếu (chỉ ẩn ở ô chọn). ERP không đọc
   `status` mới của nhà/dãy/khoang/vị trí.
 - **Blocked / chờ user:** —
+- **Menu (user chốt 20/10):** 7 màn CHỈ nằm ở phân hệ Danh mục chung (nhóm "Kho"), KHÔNG thêm vào menu phân hệ Kho.
 - **Ghi chú test:** quyền FE lấy QUA VAI TRÒ theo công ty (`role_has_permissions.company_id`), không lấy quyền
   gán thẳng — admin phải gán "Quản lý kho" vào vai trò mới thấy menu.

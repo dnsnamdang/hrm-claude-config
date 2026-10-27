@@ -1,5 +1,15 @@
 # Việc còn lại — feature Chuyển đổi hàng hoá
 
+## 📌 24/10/2026 — Kế thừa giá bán theo hãng (CHƯA COMMIT)
+- Code xong `ke-thua-gia-theo-hang/` (2 repo HRM, gop_db). DB local: chạy 2 migration `2026_10_24_000001/000002` + chèn tay 1 quyền "Cài đặt giá bán theo hãng" (KHÔNG chạy `permission:sync` đầy đủ — sẽ kéo 13 quyền + 715 dòng của người khác).
+- Deploy prod: chạy 2 migration + `permission:sync` (seeder đã khai) + gán quyền cho vai trò phụ trách giá.
+- E2E 2 spec mới chưa chạy (chờ user yêu cầu).
+
+## 📌 23/10/2026 — Chuyển kinh doanh không tính giá (ĐÃ COMMIT 24/10)
+- [x] Bỏ tính bắt buộc 4 chứng từ tính giá: thao tác "Chuyển kinh doanh không tính giá" (giá 0 ⇒ Đang KD) ở Nhập thông tin + Dữ liệu công ty + footer chi tiết; Đ2 hàng khoá theo công ty khôi phục luôn về Đang KD — `chuyen-kd-khong-tinh-gia/`
+- [ ] Commit (user báo) · chạy e2e `products-trade-without-price-ui` + `products-lifecycle-ui` khi user yêu cầu
+- Ghi nhận: `PriceReaderWhitelistTest` đỏ do `Modules/Finance/Services/InventoryAuditReportService.php` (commit đồng đội 21/10) — không thuộc feature này
+
 ## 📌 22/10/2026 — sau go-live: danh mục ETEK GREEN + chép giá + cột Hành động
 - [x] Danh mục 4 cấp hàng ETEK GREEN — chốt 8 câu, SQL chạy local (thử lui) + PROD 22/10 00:05 (827 · 299 · 1063 · 112) — `catalog-import/green-2110/README.md`
 - [x] Chép giá bảng chủ ⇒ nhận + điền "lấy về" rỗng + info_entered_at — api `8d8a01758` (push + pull prod), chạy prod 05:10 (311.361 dòng, checksum giống hệt) — `gia-theo-cong-ty/chia-se-green-2110.md`
@@ -415,3 +425,36 @@ Dữ liệu B2–B6 đã có gói `catalog-import/golive-2010/`. Còn CODE (chư
 - ✅ PUSH (ERP `1ef75c0ff7`, api `12d61e3a7`, client `5d0fefffc`): cột "Tồn bán được" theo từng công ty (user chốt: 1 dòng + tooltip, mọi công ty). Bộ lọc Còn/Hết tồn + chế độ Xem tồn theo kho ERP giữ nguyên. Kiểm: PHPUnit SellableStockReader 4/4, ProductPickerSearch 16/16; Playwright HRM thật + ERP (proxy local 401 ⇒ giả lập bằng dữ liệu API HRM).
 - Ghi nhận: `TempProductVisibilityTest::catalog_tab_them_va_sync_khong_nhan_hang_tam` đỏ trên DB local — fixture lấy hàng thật đã có 4 dòng catalog (không do thay đổi).
 
+
+## 23/10/2026 — giao diện bảng Tính giá của phiếu tính giá, ĐÃ PUSH (chưa pull prod)
+- [x] Kẻ viền toàn bảng (`table-bordered`); 6 cột giá (Loại · Hệ số · Giá công thức · Giá bán · ĐMGG · Ngày hiệu lực) đứng ngay sau Mã hàng; bỏ dòng gộp "Giá bán" — tiêu đề 1 cấp. Chỉ 1 file `components/finance/price-calculate/PriceSellTable.vue` (dùng chung tạo/sửa/xem) — client `2be9eefd0`.
+- [x] Kiểm Playwright (DB local không có PTG 3500 ⇒ dùng PTG-03476 xem + lập từ PYCTG-03469): 15 cột, mọi ô thẳng cột tiêu đề kể cả dòng con của khối, 0 ô thiếu viền, gõ Hệ số Bán lẻ lan 4 loại đúng. Màn sửa chưa mở được local (phiếu nháp 215 `can_edit=false`); cột Kết quả duyệt không có phiếu 5/6 để xem.
+- [x] Spec `HRM/e2e/tests/finance/price-calculate.spec.ts`: thứ tự ô nhập dòng đầu khối đổi ⇒ 0 ghi chú · 1 hệ số · 2 giá bán · 3 ĐMGG · 4 chi phí khác (14 chỗ) + ca kiểm tiêu đề 1 hàng/thứ tự cột/viền. CHƯA chạy (e2e ngoài git, DB local không có tài khoản e2e).
+- Ghi nhận (chỉ đọc, chưa sửa): thông báo YCTG "Chờ tính giá" gửi mọi người có vai trò mang quyền "Tính giá bán hàng hoá" tại công ty phiếu (local: 46–62 người/công ty), KHÔNG lọc người đã nghỉ việc (8/62 ở công ty 1) và không xét công ty làm việc của người nhận (22/62 thuộc công ty khác) — `PriceAskingNotifier::holdersOf`. Chờ user quyết có sửa không.
+
+## 23/10/2026 — popup "Thêm hàng tạm" (YCHG + BOM + Báo giá): đổi tab + ảnh hàng tạm, CHƯA COMMIT
+User chốt: áp cả 3 màn · tab Thêm mới mở sẵn · tối đa 10 ảnh (khuôn ảnh hàng hoá) · BOM/Báo giá lưu ảnh trên dòng (thêm cột) + hiện ảnh thu nhỏ trên dòng · route upload riêng không gắn quyền · thêm prop `uploadUrl` cho `ProductFormGallery`.
+- [x] Popup `QuotationProductSearchModal.vue`: tab "Thêm mới thủ công" ⇒ "Thêm mới", đứng ĐẦU (index 0, mở sẵn), Tái sử dụng index 1; ô Hình ảnh = `ProductFormGallery` (upload `master-data/temp-products/upload-images`); ảnh đi theo: tạo tay, tái sử dụng (dự án + trong phiếu + con), YCHG "Dùng hàng này" / "Bỏ điền sẵn" / Sửa hàng tạm (đọc `galleries` + `avatar`), lỗi `galleries.N` của BE.
+- [x] Migration `Modules/Assign/.../2026_10_23_000001_add_galleries_to_bom_and_quotation_product_lines.php`: `galleries` json null ở `bom_list_products` + `quotation_product_prices` — ĐÃ CHẠY lẻ vào DB local `hrm_erp_21_10_prod`. Prod chưa chạy.
+- [x] BE: cast `galleries` array 2 model + `BomListProduct::normalizeGalleries()`; validate `galleries` (≤10, regex URL như hàng hoá) ở BomListStoreRequest + QuotationStore/UpdateRequest; ghi ở `mapProductPayload` (BOM), `upsertDirectProducts` (create cast / where()->update encode), `upsertBomProducts`, `materializeBomRowsAsDirect`, sao chép phiên bản, 2 đường chép BOM ⇒ BG (insert thô ⇒ `galleriesJson`); đọc ở DetailBomListResource, DetailQuotationResource, `searchBomProducts`, `product-projects` (list + reuse-children). Hàng ERP luôn null.
+- [x] Route `POST master-data/temp-products/upload-images` (ProductImageController@upload, không gắn quyền) — NV 76 (không có "Xây dựng thông tin hàng hoá") gọi route cũ 403, route mới qua gate.
+- [x] FE dòng: component mới `components/product/TempGalleryThumb.vue` (32×32 + "+N", bấm xem lớn qua FilePreviewModal) dưới tên hàng ở `BomBuilderTableCard.vue` (3 chỗ) + `quotations/_id/edit.vue` (cha + con); `BomBuilderEditor.vue` + `edit.vue` mang `galleries` qua đọc/lưu/thêm từ popup/tái sử dụng/gộp BOM con.
+- [x] Kiểm Playwright MCP (NV 76 / NV 553, upload giả lập vì vendor local thiếu intervention/image): 3 màn đúng thứ tự tab + tab mở sẵn; BOM lưu nháp ⇒ DB 2 URL, mở lại có ảnh, lưu lần 2 giữ ảnh; BG lưu + lưu lại (nhánh update) JSON đúng, tái sử dụng mang ảnh; YCHG Dùng hàng này điền ảnh, payload POST/PUT có `galleries` (chặn request, không ghi DB); chép BOM ⇒ BG kiểm bằng tinker trong transaction rollback. Đã xoá BOM 56 / BG 438 thử.
+- [x] Spec: sửa `wt-chuyen-doi-hang-hoa/e2e/tests/sale/price-asking-temp-product.spec.ts` (thứ tự tab, ảnh Y6/Y7) + mới `HRM/e2e/tests/assign/temp-product-gallery-ui.spec.ts` (G1–G3). CHƯA chạy.
+- Ghi nhận ngoài luồng (chưa soát): BOM nháp có 1 hàng tạm, mở sửa rồi Lưu nháp lại ⇒ mã HHB của dòng đổi (HHB003031 ⇒ HHB003032). Không liên quan ảnh; chưa xác định có sẵn từ trước hay không.
+- Bản in / Excel BOM + BG chưa có ảnh (ngoài phạm vi đã chốt).
+- [x] (23/10 tối) `composer install` theo lock ở hrm-api local (vendor lệch lock 107 gói từ 25/03 ⇒ giờ giống prod, có intervention/image) ⇒ upload ảnh thật chạy: route hàng tạm 200, route hàng hoá 403 với NV 76. ⚠️ local dùng S3 PROD — 1 ảnh test `erp_products/test-apng-1792752204-20sA.png` đã lên bucket.
+- [x] Chạy e2e (`--workers=1`, provision e2e chạy được trên `hrm_erp_21_10_prod`):
+  - `HRM/e2e` temp-product-gallery-ui: 5/5 ✅ (sửa spec: chờ ĐVT tải, đóng xem ảnh bằng ×, chọn VNĐ trước).
+  - `wt-chuyen-doi-hang-hoa/e2e` price-asking-temp-product: 15/16 ✅ — sửa spec lỗi thời (quyền tra theo TÊN thay id 1662; Đặc tính không bắt buộc 21/10 ⇒ 11 ô / 6 / 9 lỗi; Y9 có "Lịch sử" ⇒ Xóa vào menu "…"; bỏ `.cpick-hint`; dọn `product_galleries`; Y13/Y14 gỡ tạm quyền PTKD của role admin e2e). ❌ Y14: GET form duyệt hàng tạm của phiếu CÔNG TY KHÁC trả 200 (`tempForm` chỉ assertVisible + PTKD công ty đang làm; ghi thì 403) — CÂU HỎI NGHIỆP VỤ, chưa sửa.
+  - products-temp-ui: 9 ✅ 1 skip (thiếu tài khoản NO_1652).
+  - `HRM/e2e` quotation-unpriced-warning-ui: 5/6 — ca "Tick nhiều hàng" lượt 2 tick lại hàng đã thêm ⇒ app hỏi "Hàng hoá đã tồn tại" (đúng), spec không xử lý ⇒ lỗi spec feature gia-0, chưa sửa.
+  - `HRM/e2e` price-asking-request: 8 ✅ 1 ❌ (P6 — panel sidebar hub bung 220px đè bảng, không bấm được nút mở nhóm; feature sidebar-hub-thu-gon) 1 không chạy. Đã sửa quyền tra theo tên.
+  - product-picker-ui: 4 ✅ 1 ❌ 4 không chạy — sửa 330⇒280, 36⇒32 (đổi khuôn 22/10); còn "bảng tràn ngang 314px" (viewport chromium 1280 + cột VAT 21/10) — khuôn popup chọn hàng, chưa sửa.
+- [x] PHPUnit 18 file (Assign BOM/BG/reuse + MasterData hàng tạm/hàng hoá/upload ảnh): 17 OK; TempProductVisibilityTest::catalog_tab_them_va_sync_khong_nhan_hang_tam ĐỎ SẴN (chạy lại trên HEAD sạch bằng worktree tạm cũng đỏ "4 is identical to 0").
+
+### 23/10/2026 — fix lặp ô "Đặc điểm / TSKT" trong popup Thêm hàng tạm
+- [x] Lỗi: mỗi lần qua tab Tái sử dụng rồi về (hoặc "Dùng hàng này") lại thêm 1 khung CKEditor. Do đợt đổi tab bỏ `lazy` ⇒ editor ẩn/hiện bằng `visible` thay vì huỷ cả component.
+- [x] Gốc ở `components/shared/CompactReviewEditor.vue::destroyEditor`: gọi `removeAllListeners()` TRƯỚC `destroy(true)` ⇒ gỡ luôn listener nội bộ xoá khung `.cke`. Đo: thứ tự cũ còn 1 `.cke`, chỉ destroy còn 0. Bỏ `removeAllListeners()` (destroy tự gỡ). User chọn sửa component chung.
+- [x] Đo lại MCP: mở 1 → qua tab 0 → về 1 → dùng lại 3 lần vẫn 1, nội dung đúng dòng chọn, gõ vẫn cập nhật `product_attributes`.
+- [x] E2E: Y2 kiểm `.cke` = 1 sau khi qua lại tab, Y8 chọn lại lần 2 vẫn 1 khung. `price-asking-temp-product` 15/15 (trừ Y14 đỏ sẵn) · `temp-product-gallery-ui` 2/2.

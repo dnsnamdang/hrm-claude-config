@@ -190,3 +190,18 @@ Vừa hoàn thành: xuất PNG @3x v12 (60 màn) · 00b đổi nền theo màn �
 Đang làm dở: —
 Bước tiếp theo: user Cmd+S trong Pen (file đĩa còn bản 19/10 15:56) + duyệt; chốt các câu tồn (tab BottomNav, ý nghĩa badge, màu "Đã chốt lịch", tên Đào tạo, prefix thông báo DXN/COM/KH/TBNB, trạng thái 00i chưa chấm vào / đã ra / không ca, vuốt trái + trạng thái trống 00j); cập nhật trang 00 Tổng quan luồng rồi xuất lại v12; dashboard Công việc / Cơm / Đào tạo
 Blocked: BE thiếu allow_app/allow_conn theo từng mục listTimesheetTypes, job_id ở timekeeper/employee (00i)
+
+### Checkpoint — 2026-10-22 (wrap up)
+Vừa hoàn thành: 00i' (frame t41x9, đặt cạnh 00i) — khối "Ca làm trong ngày" v2: 3 thẻ rời gom thành 1 khối = dải thời gian 08–18h (thanh màu theo loại, vạch cam giờ hiện tại, vùng đã qua mờ, thanh nhạt = đã xong) + mỗi ca/phiếu 1 dòng (tên · giờ ca · địa điểm/đếm ngược; bên phải chỉ 1 thứ: Vào→Ra + "Tại máy" / "Xong" / nút Chấm). Ghi W10 trong design.md (đã xoá dòng W9 bị lặp)
+Đang làm dở: —
+Bước tiếp theo: user Cmd+S trong Pen + chọn 00i hay 00i' (chọn 00i' → thay vào màn chính, xoá bản cũ); vẽ màn chi tiết khi bấm 1 dòng (chứa mã phiếu, KH, tên máy, hình thức, PGV con); các câu chốt tồn ở checkpoint 20/10 vẫn còn nguyên
+Blocked: BE thiếu allow_app/allow_conn theo từng mục listTimesheetTypes, job_id ở timekeeper/employee (00i)
+
+### Checkpoint — 2026-10-26 (Bộ lọc dùng chung — đề xuất)
+Vừa hoàn thành: khảo sát bộ lọc app thật + bản thiết kế (`khao-sat-bo-loc.md`); pull TPE_APP develop 331f51b chạy máy ảo (flavor tpeDev), xem 3 màn lọc thật (Phiếu giao việc · Danh sách khoá học · Task); vẽ 4 trạng thái bộ lọc mới BL1–BL4 trên màn Phiếu giao việc (design.md W11)
+Đang làm dở: chờ user duyệt hướng BL1–BL4 (đã chỉnh 1 vòng: Đặt lại / Bỏ chọn xuống footer cùng hàng nút chính)
+Bước tiếp theo: chỉnh theo góp ý → áp mẫu cho 1 màn phân hệ khác (Đào tạo / Meeting 01–02) để kiểm tính dùng chung → viết spec component (FilterBar · FilterSheet · 4 loại trường · chip tiêu chí) cho dev Flutter
+Blocked: nút "Xem N kết quả" cần API đếm trước — chưa kiểm; không có thì dùng "Áp dụng (n)"
+⚠️ Pen không tự lưu — user bấm Cmd+S
+Ghi chú TPE_APP (local, KHÔNG commit/push): app/ios/Podfile comment lại dòng EXCLUDED_ARCHS arm64 + project.pbxproj bỏ EXCLUDED_ARCHS — chỉ để build máy ảo chip Apple; flavor mới tpeDev. Cuối ngày 26/10 TPE_APP đã bị chuyển sang nhánh `feature/meeting-room-qr-scan` (không phải do phiên này), Podfile đã comment sẵn, pbxproj sạch — lần sau build lại kiểm EXCLUDED_ARCHS trước
+Hồ sơ đã commit + push hrm-claude-config `73f861d` (26/10)

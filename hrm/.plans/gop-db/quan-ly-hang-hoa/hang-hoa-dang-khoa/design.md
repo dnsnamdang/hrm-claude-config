@@ -52,6 +52,7 @@
 | K1 | Màn gồm hàng nào | **Cả 2 nguồn**: (A) Ngừng KD `pcc.status = 4` của công ty đang làm việc · (B) ERP đã xoá `products.status = 0` có `products.company_id` = công ty đang làm việc |
 | K2 | "Đủ giá bán" | **Mọi ĐVT có đủ 6 loại giá > 0** tại công ty đang làm việc; Bán lẻ 1 đ = chưa có giá |
 | K3 | Thiếu phân loại | Điều kiện về Đang KD = đủ giá **và** đủ phân loại; thiếu ⇒ Đã nhập thông tin |
+| 🔄 Đ2 | (23/10/2026, `chuyen-kd-khong-tinh-gia`) | **K2 + K3 chỉ còn áp cho hàng ERP đã xoá.** Hàng khoá theo công ty (Ngừng KD) khôi phục LUÔN về Đang kinh doanh, không xét giá / Loại SP — `ProductRestoreRule::readySql()` |
 | K4 | Quyền | Xem: không gate. Khôi phục: **Xây dựng thông tin hàng hoá**. Không quyền mới, không seeder |
 | K5 | Hàng loạt | **Từng dòng + tick nhiều dòng**, trần 100 mã/lượt |
 | K6 | Trùng Tên + Model | **Cảnh báo, vẫn cho** khôi phục |
