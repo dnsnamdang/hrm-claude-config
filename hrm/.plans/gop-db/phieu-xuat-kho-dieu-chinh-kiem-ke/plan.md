@@ -55,3 +55,25 @@ Vừa hoàn thành: Phase 1 BE + FE, test BE 10/10, smoke API, compile FE
 Đã push 27/10: hrm-api `ddeda3326`, hrm-client `015c39a1c` (develop).
 Bước tiếp theo: khi deploy cần chạy seeder quyền + admin gán 2 quyền xem
 Blocked:
+
+## Fix #11893 — Lưu nháp / Lưu và tiếp tục / link phiếu kiểm kê (28/10/2026)
+
+User chốt 28/10: nút "Lưu" đổi thành "Lưu nháp", CHỈ bắt chọn Phiếu kiểm kê (kho tự điền theo phiếu); Gửi duyệt vẫn bắt đủ như ERP.
+
+- [x] BE `WarehouseInventoryExportWriteService::validate()/update()`: Ghi chú + File đính kèm chỉ bắt khi Gửi duyệt (CHO_DUYET)
+- [x] FE `InventoryExportForm`: nút "Lưu nháp" — validate chỉ Phiếu kiểm kê; Gửi duyệt giữ validate đủ
+- [x] FE: nút "Lưu và tiếp tục" ở màn Thêm (lưu nháp → mở form trống)
+- [x] FE: link mở phiếu kiểm kê (tab mới) ở màn Thêm khi đã chọn — như phiếu nhập kho điều chỉnh
+- [x] Verify: compile FE + API (nháp thiếu ghi chú/file → 200 trong transaction rollback; gửi duyệt thiếu → 422)
+
+### Checkpoint — 28/10/2026 17:00
+Vừa hoàn thành: #11893 — BE `validate()`: Ghi chú + File chỉ bắt khi Gửi duyệt (CHO_DUYET=1), `update()` chỉ bắt file khi gửi duyệt, `note ?? null`. FE: nút "Lưu nháp" (đầu dãy, ri-save-3-line) chỉ bắt Phiếu kiểm kê; "Lưu và tiếp tục" (màn Thêm, sau Gửi duyệt) lưu nháp rồi `resetForNext()`; icon link mở phiếu kiểm kê cạnh nhãn ở màn Thêm. Test `validate()` 7 tình huống qua reflection đúng; compile FE sạch. Store đầu-cuối CHƯA test được: DB local không còn phiếu kiểm kê nào lập được phiếu xuất điều chỉnh.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm trên dev.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: fix #11893 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d04c`, hrm-client tới `f8f362a51`).
+Đang làm dở: —
+Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
+Blocked:

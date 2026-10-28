@@ -29,3 +29,31 @@ Vừa hoàn thành: B1–B6 + F1–F6 (chưa commit — theo CLAUDE.md).
 Đang làm dở: —
 Bước tiếp theo: user mở trình duyệt kiểm `/finance/warehouse-reexports` (danh sách, lọc, Cấu hình cột, Xuất Excel, Lịch sử, In) + màn chi tiết; deploy chạy `PermissionsTableSeeder` rồi admin gán 4 quyền xem.
 Blocked:
+
+## Fix #11890 — UI phiếu xuất lại / nhập lại (28/10/2026)
+
+User chốt: BỎ nút "Lưu và tiếp tục" (cả màn Nhập lại lẫn Xuất lại); màn Tạo phiếu xuất lại chỉ thêm dòng người tạo + giờ (CreatorInfoLine, góc phải như mọi form).
+
+- [x] FE danh sách: tiêu đề "Danh sách phiếu xuất lại" (ERP `all/index.blade.php`)
+- [x] FE danh sách: bấm sort cột Ngày tạo vỡ layout
+- [x] FE Tạo phiếu xuất lại: dòng người tạo + giờ (CreatorInfoLine)
+- [x] BE: tạo phiếu xuất lại (Chờ nhập lại) chưa ghi lịch sử
+- [x] FE Nhập lại: khoá ô Người giao hàng (ERP `form.blade.php` input disabled)
+- [x] FE+BE Nhập lại: Ghi chú trống → lấy ghi chú của Đề nghị nhập kho (ERP getter `WarehouseImport.note`)
+- [x] FE Nhập lại: placeholder ô SL nhập (LotEditor)
+- [ ] FE Nhập lại › Bốc xếp: chọn NCC xong các ô lệch hàng — CSS
+- [x] FE Nhập lại › Bốc xếp: viền đỏ ô đang báo lỗi (Khối lượng…)
+- [x] Verify: compile FE + API
+
+### Checkpoint — 28/10/2026 16:00
+Vừa hoàn thành: #11890 — BE `WarehouseReExportService::historyLogs()` dựng mốc "Tạo mới" cho phiếu cũ lập bên ERP (khuôn #11847; phiếu tạo ở HRM đã có log thật — test tạo trong transaction OK); `detail()` + `createData()` trả ghi chú ĐNNK. FE: tiêu đề danh sách, width cột (khuôn #11763), CreatorInfoLine màn Tạo phiếu xuất lại, khoá Người giao hàng ở Nhập lại, Ghi chú điền sẵn ghi chú ĐNNK (Tạo / Sửa / Nhập lại — y ERP getter), placeholder SL nhập, viền đỏ + tự gỡ lỗi tab Bốc xếp. Compile 5 file sạch.
+Đang làm dở: mục "Bốc xếp chọn NCC xong vỡ font/lệch ô" — chưa tái hiện được bằng đọc code (V2BaseSelect và V2BaseSelectRemote dùng chung CSS `.v2-select`, cùng size sm 32px), cần mở trình duyệt.
+Bước tiếp theo: user mở trình duyệt kiểm các mục + quyết cách xử lý mục Bốc xếp.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: fix #11890 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d04c`, hrm-client tới `f8f362a51`).
+Đang làm dở: —
+Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
+Còn treo: #11890 mục "Bốc xếp chọn NCC xong vỡ font/lệch ô" (màn Nhập lại) — chưa tái hiện được bằng đọc code, cần mở trình duyệt; sửa ở V2BaseSelectRemote (dùng chung) phải hỏi trước.
+Blocked:

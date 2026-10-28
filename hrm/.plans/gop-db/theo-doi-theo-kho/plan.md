@@ -35,3 +35,9 @@ Vừa hoàn thành: Phase 1 BE + Phase 2 FE. API đã smoke test qua HTTP kernel
 Đang làm dở: —
 Bước tiếp theo: user mở trình duyệt bấm thật `/warehouse/warehouse-tracking`, `/warehouse/warehouse-tracking/4` và `/warehouse/activities`. Tài khoản test cần quyền "Quản lý kho" (id 1840 trên DB local chưa gán cho role nào — kể cả Super admin).
 Blocked: chưa bấm thật trên trình duyệt
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: ĐÃ PUSH `develop` 28/10 — api `1731d3a4c`, client `6f0ece1ba` (gộp cùng fix Hoạt động kho #11894 màu dòng · #11895 Excel giãn dòng · #11904 width cột sort, xem `.plans/gop-db/hoat-dong-kho/plan.md`).
+Đang làm dở: —
+Bước tiếp theo: Phase 3 — user bấm thật 2 màn trên dev; deploy cần quyền "Quản lý kho" có trong seeder + gán role.
+Blocked: chưa bấm thật trên trình duyệt

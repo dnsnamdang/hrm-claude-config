@@ -43,3 +43,23 @@ Blocked: DB local không có Kế hoạch tổng kiểm kê nào (`self_inventor
 - [x] Menu Kho › Báo cáo kho dẫn đúng trang
 - [x] Hồi quy: popup kế hoạch ở màn Thêm phiếu kiểm kê vẫn gọi `self-inventories/plans`, tiêu đề cũ
 - [x] Sửa sau test: thu hẹp cột (tổng 1150px) để cột Phiếu kiểm kê không bị đẩy ra ngoài ở 1440px; câu ghi chú popup In nói "trên popup" → truyền `note` riêng
+
+## Fix #11886 — đồng bộ UI bộ lọc (28/10/2026)
+
+- [x] BE: `context()` lọc theo `period` (trait `ResolvesReportPeriod`: week | month | last_month | year | custom from/to) thay cho `date_from`/`date_to`; meta vẫn trả `date_from`/`date_to` (in / Excel không đổi)
+- [x] FE: ô Kỳ (select) + ô Thời gian (date-range khi Tuỳ chọn) như `transport/arrange-reports/by-supplier`, mặc định Tháng này
+- [x] FE: ô Kế hoạch tổng kiểm kê + Hàng hóa hiện chữ thường + dấu x riêng (khuôn Tồn kho tổng hợp #11874), bỏ chip
+- [x] FE: Công ty thuê kho hiện TÊN công ty; bỏ tooltip (hint) của ô
+- [x] Verify: compile FE + gọi API qua HTTP kernel
+
+### Checkpoint — 28/10/2026 10:10
+Vừa hoàn thành: #11886 — BE `context()` dùng trait `ResolvesReportPeriod`; FE ô Kỳ + Thời gian (Tuỳ chọn), ô Kế hoạch / Hàng hóa chữ thường + dấu x, Công ty thuê hiện tên, bỏ tooltip. HTTP kernel: month/year 200, custom 2020–2026 ra 4 dòng (khớp số cũ), custom thiếu `to` / ngược → 422, export xlsx 200, print 200. FE template + script compile sạch.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm UI (chưa test Playwright) → commit.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: fix #11886 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d04c`, hrm-client tới `f8f362a51`).
+Đang làm dở: —
+Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
+Blocked:

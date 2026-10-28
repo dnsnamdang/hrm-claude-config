@@ -77,16 +77,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
-- theo-doi-theo-kho → @khoipv → .plans/gop-db/theo-doi-theo-kho/plan.md (design: .plans/gop-db/theo-doi-theo-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-theo-doi-theo-kho-design.md)
-  Port màn ERP "Kho › Theo dõi theo kho" (`warehouse.forActivities` → `warehouse.{id}.activities`): danh sách kho → bảng hoạt động nhập/xuất của 1 kho. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
-
-- phieu-xuat-kho-dieu-chinh-kiem-ke → @khoipv → .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/plan.md (design: .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-kho-dieu-chinh-kiem-ke-design.md)
-  Port màn ERP "Kho › Xuất kho › Phiếu xuất kho điều chỉnh kiểm kê" (`warehouse_inventory_exports`, mã PXKĐCKK) — đối xứng màn Phiếu nhập kho điều chỉnh kiểm kê. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
-
-- phieu-xuat-dieu-chinh-sai-so-lieu → @khoipv → .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/plan.md (design: .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-dieu-chinh-sai-so-lieu-design.md)
-  Port màn ERP "Kho › Xuất kho › Phiếu xuất điều chỉnh sai số liệu" (`warehouse_reexports`). Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
-  Trạng thái: 🟢 ĐÃ PUSH `develop` 27/10 (api `1c1f73892`, client `ce0107575`) — smoke test API 2 góc nhìn OK; CHƯA bấm thử trình duyệt. Tiếp: deploy chạy `PermissionsTableSeeder` → admin gán 4 quyền xem.
-
 - mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
   Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.
   Scope: cho sửa %VAT dòng hàng (2 số lẻ) trên PI trong nước (theo hãng + tự do) và HĐ `inland_buy_contract_new`, tính lại VAT/tổng. Nhập khẩu chưa làm (chờ BA — không có %VAT theo dòng).
@@ -2407,11 +2397,29 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- theo-doi-theo-kho → @khoipv → .plans/gop-db/theo-doi-theo-kho/plan.md (design: .plans/gop-db/theo-doi-theo-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-theo-doi-theo-kho-design.md)
+  Port màn ERP "Kho › Theo dõi theo kho" (`warehouse.forActivities` → `warehouse.{id}.activities`): danh sách kho → bảng hoạt động nhập/xuất của 1 kho. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+  Trạng thái: 🟢 ĐÃ PUSH `develop` 28/10 (api `1731d3a4c`, client `6f0ece1ba`). CHƯA bấm thử trình duyệt. Tiếp: user bấm thật; deploy cần quyền "Quản lý kho" trong seeder + gán role.
+  Chuyển Hoàn thành: 2026-10-28.
+
+- phieu-xuat-kho-dieu-chinh-kiem-ke → @khoipv → .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/plan.md (design: .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-kho-dieu-chinh-kiem-ke-design.md)
+  Port màn ERP "Kho › Xuất kho › Phiếu xuất kho điều chỉnh kiểm kê" (`warehouse_inventory_exports`, mã PXKĐCKK) — đối xứng màn Phiếu nhập kho điều chỉnh kiểm kê. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+  28/10: fix #11893 (Lưu nháp chỉ bắt Phiếu kiểm kê · Lưu và tiếp tục · link phiếu kiểm kê) ĐÃ PUSH `develop` (api `ddd23d04c`, client `f8f362a51`). Store đầu-cuối chưa test (DB local không còn phiếu kiểm kê lập được).
+  Chuyển Hoàn thành: 2026-10-28.
+
+- phieu-xuat-dieu-chinh-sai-so-lieu → @khoipv → .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/plan.md (design: .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-dieu-chinh-sai-so-lieu-design.md)
+  Port màn ERP "Kho › Xuất kho › Phiếu xuất điều chỉnh sai số liệu" (`warehouse_reexports`). Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+  Trạng thái: 🟢 ĐÃ PUSH `develop` 27/10 (api `1c1f73892`, client `ce0107575`) — smoke test API 2 góc nhìn OK; CHƯA bấm thử trình duyệt. Tiếp: deploy chạy `PermissionsTableSeeder` → admin gán 4 quyền xem.
+  28/10: fix #11890 (8/9 mục) ĐÃ PUSH `develop` (api `ddd23d04c`, client `f8f362a51`). Còn treo: "Bốc xếp chọn NCC xong vỡ font/lệch ô" — cần mở trình duyệt tái hiện.
+  Chuyển Hoàn thành: 2026-10-28.
+
 - hoat-dong-kho → @khoipv → .plans/gop-db/hoat-dong-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-26-hoat-dong-kho-design.md)
+  28/10: fix #11894 (vạch màu mép trái thay tô cả dòng) · #11895 (Excel giãn dòng) · #11904 (width cột khi sort) ĐÃ PUSH `develop` (client `6f0ece1ba`).
   Port ERP `warehouseInfo.activities` (Kho › Hoạt động kho). Bắt đầu 26/10/2026.
   Chuyển Hoàn thành: 2026-10-27.
 
 - bao-cao-hang-thua-thieu-sau-tong-kiem-ke → @khoipv → .plans/gop-db/bao-cao-hang-thua-thieu-sau-tong-kiem-ke/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-25-bao-cao-hang-thua-thieu-sau-tong-kiem-ke-design.md)
+  28/10: fix #11886 (ô Kỳ, ô chọn chữ thường, công ty thuê hiện tên) ĐÃ PUSH `develop`.
   Port ERP `warehouseReport.selfInventoryReport` (Kho › Báo cáo kho) → `/warehouse/self-inventory-report`. Bắt đầu 25/10/2026; không quyền + phạm vi y ERP (user chốt).
   Chuyển Hoàn thành: 2026-10-27.
 
@@ -2444,6 +2452,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Chuyển Hoàn thành: 2026-10-22.
 
 - kiem-ke-theo-hang-hoa — Port màn PHIẾU Kiểm kê theo hàng hóa ERP (`self_inventories`, Kho › Kiểm kho) sang HRM — màn con của Kế hoạch kiểm kê theo hàng hóa, bám màn anh em Kiểm kê theo vị trí. Bắt đầu 20/10/2026 → @khoipv → .plans/gop-db/kiem-ke-theo-hang-hoa/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-20-kiem-ke-theo-hang-hoa-design.md)
+  28/10: fix #11887 (popup kế hoạch: KH tổng theo điều kiện ngày của nút Lập phiếu) ĐÃ PUSH `develop` (api `ddd23d04c`).
   Chuyển Hoàn thành: 2026-10-22.
 
 - ke-hoach-tong-kiem-ke-hang-hoa — Port màn Kế hoạch tổng kiểm kê hàng hóa ERP (`self_inventory_request_alls`) sang Tài chính › Kiểm kê — bám màn anh em Kế hoạch kiểm kê theo hàng hóa. Bắt đầu 20/10/2026 → @khoipv → .plans/gop-db/ke-hoach-tong-kiem-ke-hang-hoa/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-20-ke-hoach-tong-kiem-ke-hang-hoa-design.md)
