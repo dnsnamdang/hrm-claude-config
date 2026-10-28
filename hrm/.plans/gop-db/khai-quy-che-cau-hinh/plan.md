@@ -969,3 +969,30 @@ Vừa hoàn thành: Task #26 — gom cụm chọn đơn vị vào `.scope-units`
 Đang làm dở: (không)
 Bước tiếp theo: user review; chưa commit/push (chờ yêu cầu).
 Blocked: (không)
+
+---
+
+## Task #27 — Card "Hệ số quy đổi theo tính chất hàng hóa tính DSTC": preset → subtable EDITABLE (user tự thêm nature + hệ số) (2026-10-19)
+
+> **LỆCH SPEC #7 (đã duyệt) — user chủ động chốt đổi hướng.** Spec gốc: card liệt kê **toàn bộ** nature + dòng Dịch vụ. User xem UI thực tế → yêu cầu "thêm từng tính chất vào và điền hệ số quy đổi, vẫn giữ nguyên dòng dịch vụ mặc định" → chọn **cách 2** (nút "Thêm tính chất" inline trên card) → sub-option **A** (nút thêm chọn nature từ **danh mục `product_natures` có sẵn** qua dropdown, KHÔNG free-text) → duyệt thiết kế bounded ("ok"). Đã amend spec #7 + mục "Khai cấu hình" + Phase 1 + Testing trong `docs/superpowers/specs/gop-db/2026-10-19-he-so-dstc-theo-tinh-chat-nature-design.md`.
+
+**BE (hrm-api):**
+- [x] `RegulationTabRegistry.php`: field `company_product_natures` → `input=subtable_product_natures` (editable, GỠ cờ `preset` + cột `name`); cột `product_nature_id` (select, cast int, options=product_natures) + `coefficient` (number, cast decimal); `item_rules` product_nature_id `required|integer|min:0`, coefficient `required|numeric|min:0|max:99.99`.
+- [x] `RegulationConfigService.php`: `resolveOptions` nhánh `product_natures` (LockedCatalogOptions::activeOrIncluded → id int + name + is_locked); `loadSubtable` + `applySubtable` nhánh `subtable_product_natures` gọi `ensurePinnedServiceRow` (ghim nature_id=0 coef 1.0) + `snapshotNatureNames` (snapshot name server-side); field payload dựng `columns[]` kèm options (include_ids giữ nature đã khoá).
+- [x] `ScheduleRegulationVersionRequest.php`: `withValidator` nhánh `subtable_product_natures` → `validateProductNatures` chặn trùng nature (lỗi tại `values.{key}.{i}.product_nature_id`).
+
+**FE (hrm-client):**
+- [x] `data.js` (~L112): `subPreset(...)` → `sub('Hệ số quy đổi theo tính chất hàng hóa tính DSTC')` (subtable editable).
+- [x] `RegulationConfigScreen.vue`: nhánh render cột `input=select` (dòng Dịch vụ = nhãn tĩnh không đổi; dòng thường = `V2BaseSelect` dedupe nature đã dùng); ẩn nút xóa dòng ghim; nhãn nút "Thêm tính chất"; helpers `isNatureCard`/`isPinnedNatureRow`/`natureCellOptions` + `addSubRow` chèn dòng mới TRƯỚC dòng Dịch vụ. Gate `isNatureCard` để subtable khác (Tỷ lệ chia DS) không bị ảnh hưởng.
+
+**Test + Verify:**
+- [x] `RegulationDstcNatureTest.php` viết lại 3 test (PASS): (1) DB trống → chỉ còn 1 dòng Dịch vụ ghim + cột select có options; (2) lưu hôm nay áp ngay + round-trip hệ số; (3) lưu không gửi dòng Dịch vụ → BE tự ghim (coef 1, name 'Dịch vụ') + snapshot name nature server-side.
+- [x] VERIFY Playwright MCP (login DNS Admin → /sale/regulation-config → "Báo giá – Hợp đồng"): card render bảng editable (Tính chất hàng hóa | Hệ số quy đổi | Thao tác); dòng Dịch vụ ghim = nhãn tĩnh + hệ số 1 + KHÔNG có nút xóa; "Thêm tính chất" chèn dòng mới TRƯỚC dòng ghim (dropdown + hệ số mặc định 1 + nút xóa). Scenario (a) lưu "Hàng điện tử (test)"=1.75 → toast "Đã lưu cấu hình" + lịch sử "1 dòng → 2 dòng / Đã áp dụng" → reload PERSIST đúng. Scenario (c) Dịch vụ không xóa được ✓. Scenario (d) thêm dòng 2 → dropdown KHÔNG liệt kê "Hàng điện tử (test)" (dedupe) ✓.
+- [x] Dọn rác test UI (local `erp_hrm_check`, có guard DB): xóa `company_product_natures` company_id=1 (2 dòng), `regulation_scheduled_versions` baogia/scope1 (1 version applied), `product_natures` test ids 20/21/22 → verify 0 remnant (trạng thái trước test: company 1 chưa cấu hình tab baogia).
+- [x] Commit + push (user duyệt 2026-10-19): hrm-api `aab55cf9c` + hrm-client `ace548139` trên `feat/chuyen-doi-hang-hoa`; tài liệu commit riêng ở repo `hrm-claude-config` (spec `docs/superpowers/` là local gitignore, không commit).
+
+### Checkpoint Task #27 — 2026-10-19
+Vừa hoàn thành: Card DSTC nature chuyển preset → subtable editable (user tự "Thêm tính chất" + hệ số, dòng Dịch vụ ghim); BE 3 test PASS; verify Playwright (lưu/reload/dedupe/ghim); dọn rác test; amend spec #7 + design.
+Đang làm dở: (không)
+Bước tiếp theo: ĐÃ commit+push code (hrm-api `aab55cf9c`, hrm-client `ace548139`) + tài liệu. Phase 2 (đọc hệ số HRM 2 điểm) + Phase 3 (ERP 16 điểm) vẫn chờ.
+Blocked: (không)

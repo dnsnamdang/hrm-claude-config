@@ -381,3 +381,34 @@ Blocked:
       7px/ký tự + 5px), truyền vào `letterheadDrawings($this->header, 'A1', $this->tableWidthPx())`
 - [x] Verify: dựng file, đọc lại drawing (rộng = bảng, @A1), dòng 1 nới cao theo ảnh, tiêu đề không bị đè
       → company 1: 10 cột ảnh 1805x161 = bảng 1805px, row1 121pt; 3 cột ảnh 468x42 = bảng 468px. Chưa mở bằng Excel.
+
+## Bug 2026-10-16 — Popup chọn KH không tìm thấy 29TPHPTH-203 (ERP có) (@khoipv)
+
+> KH `29TPHPTH-203 - KHÁCH KHÔNG RÕ` (id 10929) là KH **cá nhân** (`customer_type=1`). Popup `ChooseErpCustomerModal`
+> mặc định chỉ mở hết KH tổ chức (`all_business`), KH cá nhân vẫn qua lớp quyền + ownership → bị ẩn.
+> ERP màn Phiếu báo có gọi `searchCustomer` với `d.type = 'all'` (chỉ lọc `status=1`) — đúng ca cờ `scope_all`
+> đã làm cho Phiếu yêu cầu điều chỉnh công nợ.
+
+- [x] FE `BillIncomeReportForm.vue` — bật `scope-all` cho `ChooseErpCustomerModal`
+- [ ] Verify trên trình duyệt: tìm `29TPHPTH-203` trong popup ra dòng, chọn + lưu được
+
+## Redmine #11749 (2026-10-16) — Popup xác nhận đổi Loại thu chưa đồng bộ kiểu hệ thống (@khoipv)
+
+> Đổi Loại thu khi đã nhập chi tiết → popup `$bvModal.msgBoxConfirm()` (bootstrap-vue mặc định, nút không icon).
+> Skill modal-popup 3a: mọi confirm dùng `$confirm()` (render `base-confirm-modal`).
+
+- [x] FE `BillIncomeReportForm.vue` `onTypeChange()` — `msgBoxConfirm` → `$confirm({ title/textAccept: 'Đổi loại thu' })`
+      (khuôn `AccountingPrepickCancelForm::onEmployeeChange`)
+- [x] FE bấm Hủy → tăng `typeSelectKey` dựng lại select2, ô Loại thu hiện về loại cũ (trước đây vẫn hiện loại mới)
+- [x] Verify compile template + parse script
+- [ ] Verify trình duyệt: nhập chi tiết → đổi Loại thu → popup có icon; Hủy giữ loại cũ; Đổi loại thu reset chi tiết
+
+### Checkpoint — 2026-10-16
+Vừa hoàn thành: #11749 đổi popup xác nhận đổi Loại thu sang `$confirm()`; bật `scope-all` popup chọn KH (29TPHPTH-203)
+Đang làm dở:
+Bước tiếp theo: user mở trình duyệt verify 2 fix trên form Thêm phiếu báo có
+Blocked:
+
+## Redmine #11780 — dấu * cột Hợp đồng (22/10)
+- [x] Tiêu đề cột "Số đơn hàng/Hợp đồng" thêm `<Required />` (cột chỉ hiện khi loại Thu bán hàng; BE `conditionalDetailRules()` bắt buộc khi TK có công nợ 1311/1312/3311 + KH khác "Khách không rõ")
+  - Verify: vue-template-compiler OK. Chưa mở trình duyệt

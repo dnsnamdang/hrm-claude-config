@@ -1152,3 +1152,20 @@ Vừa hoàn thành: popup chọn phiếu YCĐC (link mã phiếu + bảng/phân 
 Đang làm dở: bug STK 1311 — chưa sửa code, chờ user.
 Bước tiếp theo: hỏi user mã phiếu đã thử + chốt hướng (a)/(b) ở mục Bug trên; nếu (a) thì sửa ở `BillAdjustDeptSourceService::adjustRequestCustomerRows()` (fallback `accountIdByNumber(1311)`) và nhánh NCC tương ứng.
 Blocked: chờ user xác nhận (user hẹn mai làm tiếp).
+
+## Fix — Redmine #11660 phản hồi lần 2 (tester 14/10, sửa 2026-10-15) @khoipv
+Tạo phiếu KHÔNG chọn phiếu YCĐC, nhập tay dòng định khoản.
+- [x] (ý 1+2) Lưu nháp KHÔNG bắt Số tài khoản / Diễn giải dòng — BE trước chặn `details.*.account_id` required vì cột `bill_adjust_dept_details.account_id` NOT NULL → toast 422 chung, không có đỏ dưới ô. User chốt: migration cho cột nullable
+  - [x] BE migration `2026_10_15_000001_make_account_id_nullable_on_bill_adjust_dept_details_table` (DB::statement MODIFY INT NULL; down() dừng nếu còn dòng NULL) — ĐÃ CHẠY trên DB dev
+  - [x] BE `BillAdjustDeptStoreRequest`: `details.*.account_id` = `$need('required')` (duyệt vẫn bắt buộc)
+  - [x] BE rà chỗ đọc `account_id`/`->account` của dòng (WriteService, Resource, lịch sử, in, Excel) chịu được null
+- [x] (ý 3) Ô Số tài khoản: danh sách xổ xuống hiện "số - tên" (tìm được theo tên), ô đã chọn vẫn chỉ hiện số (giữ yêu cầu 03/10 — cột Tên TK đứng cạnh)
+- [x] (ý 4) Lưu và duyệt: dòng Nợ = Có = 0 → viền đỏ 2 ô tiền + "Bắt buộc nhập phát sinh nợ hoặc phát sinh có" ngay dưới ô (trước chỉ toast BE); FE chặn sớm trong `validateBeforeSubmit`
+- [x] Verify: php -l + smoke API (nháp dòng trống TK → 200, duyệt dòng trống TK → 422) + compile FE
+  → Kết quả smoke (transaction rollback): nháp dòng trống TK + diễn giải → 200, DB lưu account_id NULL, GET chi tiết 200; duyệt → 422 `details.0.account_id` + `details.0.note` "Bắt buộc phải nhập". Resource / In / Lịch sử / Hạch toán đều đã `optional($detail->account)` — không phải sửa. FE compile 2 file 0 lỗi — CHƯA mở trình duyệt.
+
+### Checkpoint — 2026-10-15
+Vừa hoàn thành: Redmine #11660 phản hồi lần 2 (4 ý) — BE 1 migration + 1 Request; FE `BillAdjustDeptForm.vue` + `AccountingDetailTable.vue`.
+Đang làm dở: không.
+Bước tiếp theo: user Ctrl+Shift+R → tạo phiếu không chọn YCĐC: (1) Thêm dòng để trống TK + diễn giải → Lưu nháp lưu được; (2) Lưu và duyệt → đỏ dưới ô Số TK, Diễn giải, và 2 ô tiền nếu Nợ = Có = 0; (3) mở ô Số TK → danh sách "1311 - Phải thu…", gõ tên tìm được, chọn xong ô chỉ hiện "1311". Server dev/prod phải chạy migration trước khi deploy FE.
+Blocked:

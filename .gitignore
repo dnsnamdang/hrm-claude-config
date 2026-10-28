@@ -49,3 +49,11 @@ hrm/.plans/**/out2/
 # Phiên đăng nhập trình duyệt (chứa token) — không bao giờ được lên repo
 **/.auth_*.json
 **/.auth/
+# File khoá tạm của Excel/Word khi đang mở (không phải tài liệu)
+**/~$*
+# Gói nén lớn (SRS + testcase bản zip 54MB, 21/10/2026) — giữ ở máy, file gốc đã có trong thư mục
+hrm/.plans/gop-db/quan-ly-hang-hoa/srs-testcase/SRS_TESCASE_QLYHANGHOA.zip
+# Báo cáo diễn tập Vai trò & Quyền (CSV vài MB/file, sinh lại được bằng lệnh diễn tập, 26/10/2026)
+hrm/.plans/gop-db/quan-ly-vai-tro-quyen/**/*.csv
+# Gói demo nén (bản HTML gốc nằm cạnh)
+hrm/.plans/demo-man-hinh-ke-toan/demo/*.zip

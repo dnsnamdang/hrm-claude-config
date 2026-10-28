@@ -141,3 +141,5 @@
 | V7 | Không làm hàng loạt — từng dòng (menu dòng + footer chi tiết) |
 | V8 | Quyền 1652, không quyền mới |
 | V9 | ~~xoá cả tệp S3 không còn dòng nào trỏ tới~~ → 🔄 08/10 (lúc xin "làm"): **KHÔNG xoá S3** — xoá cứng chỉ xoá dòng DB, tệp S3 giữ nguyên (như ERP). Bỏ FileJanitor / `PRODUCT_S3_PURGE` / sửa config khỏi plan |
+
+> 24/10/2026: Sao chép / Nhân bản hàng hoá (G8 · T9 · task C4.3 cũ) làm theo hồ sơ `quan-ly-hang-hoa/sao-chep-hang-hoa/` — form tạo điền sẵn, KHÔNG nhân bản server-side.

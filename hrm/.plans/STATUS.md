@@ -196,18 +196,19 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Bước tiếp: code Phase 1 (BE resolveOrCreate + store pre-pass).
 
 - app-meeting-mobile (Thiết kế app Meeting trên di động — TPE_APP/Flutter) → @dnsnamdang → .plans/app-meeting-mobile/plan.md
-  Trạng thái: 🟢 **BÀN GIAO v11 (16/09/2026)** — 50 artboard, chờ khách duyệt. **Đây là việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
-  File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao: `exports/` (4 PDF + 50 PNG 3x + file tóm tắt thay đổi).
-  Bản gửi khách: `Meeting-Mobile-App_BAN-DO-THEO-BUOC_v11_2026-09-16_BAN-KHACH-HANG.pdf` (8 trang, mỗi bước 1 trang, 4 màn/hàng đúng bố cục canvas).
-  Nhánh đối chiếu code: `tpe-develop-assign` (cả 2 repo).
-  Vòng 15–16/09 thêm **8 màn**: 41 Chọn KH · 41b Không tìm thấy · 42 Thêm nhanh KH · 43 Chọn người liên hệ · 44 Thêm nhanh liên hệ · 45 Cảnh báo chưa lưu · 46 Hub chặn Hoàn thành · 47 Thêm nhanh dự án TKT.
-  Chuẩn hoá: nhãn thành phần **Nội bộ → Công ty** · thông báo gom còn **3 loại dải** (bỏ toast đè) · dấu `*` trên Hub **theo trạng thái từng màn** · bỏ field Trạng thái meeting khỏi 4 màn · bản đồ xếp lại **4 màn/hàng** (khung 5685 → 2825px ngang).
-  ⚠️ **BE lọc sai phạm vi** `customerMeetingHistory()`: so `me.employee_id` với `m.created_by` (người TẠO) thay vì user đang đăng nhập → mọi user thấy danh sách giống nhau. Port khuôn `PotentialCustomerCareService::applyPermissionFilter()`.
-  ⚠️ **Danh sách meeting của app phải dùng `MeetingCalendarCriteria`**, KHÔNG dùng `MeetingCriteria` (lọc theo quyền tổ chức, người chủ trì ngoài phạm vi quyền bị mất do `false AND true = false`).
-  ⚠️ BE cần trả thêm: `host_name` + `end_date` cho `customer-history`; `company_code` cho API nhân viên. Vá rule `projects.*.scope_id` / `implementation_type` / `project_address` (nullable nhưng FE bắt buộc — cùng loại lỗi #10874).
-  ⏸ **Blocked**: user báo "biên bản đã có logic tạo task giao cho người xử lý" nhưng KHÔNG tìm thấy trên `tpe`, `tpe-develop-assign`, `gop_db` (`Task` entity không có FK sang meeting; mọi `create_task` trong repo là "Tạo phiếu công tác khác"). Chờ số Redmine / tên nhánh.
-  Còn 6 câu cần chốt với khách + 4 hạng mục chưa vẽ — xem mục cuối `plan.md`.
-  Design: .plans/app-meeting-mobile/design.md · Spec: docs/superpowers/specs/2026-09-16-app-meeting-mobile-design.md · Chi tiết từng vòng sửa: .plans/app-meeting-mobile/chon-khach-hang-va-lien-he.md
+  🟡 **22/10/2026 (wrap up)** — 00i' Tổng quan Chấm công: khối Ca làm trong ngày v2 (dải thời gian + 1 dòng/ca, bớt ~60% chữ), đặt cạnh 00i chờ user chọn bản. Cần Cmd+S trong Pen.
+  🟡 **20/10/2026 (wrap up)** — thêm 00j Thông báo (chuông) dùng chung + 00b dùng nền màn đăng nhập app; đã xuất PNG @3x v12 (exports/Meeting-Mobile_Tung-man_v12_2026-10-20, 60 ảnh). Câu chốt tồn: xem checkpoint cuối plan.md.
+  🟡 **19/10/2026 (wrap up 2)** — Mở rộng sang KHUNG PHÂN HỆ app: màn chọn phân hệ 00b, drawer 5 phân hệ (00c–00g), template C/BottomNav, Tổng quan Meeting 00h/00h', Tổng quan Chấm công 00i (khối Ca làm trong ngày theo logic allow_app/allow_conn), style xanh ngọc áp vào bộ màn meeting (backup meeting-mobile.backup-20261019-truoc-style-phan-he.pen). Chờ user duyệt + các câu chốt trong plan.md checkpoint cuối.
+  🟡 **19/10/2026 (wrap up)** — Phase 7 đồng bộ web + W4 Kết luận nằm trong Biên bản (bỏ màn 40, Hub x/3) + W5 Thông tin chung gập/mở từng khối + W6 gộp khối như web (① Thông tin cuộc họp · ② Đối tác · ③ Thời gian). Bản đồ **50 artboard**, 0 chồng lấn. ⚠️ Pen KHÔNG tự lưu — user phải Cmd+S. Khảo sát app thật TPE_APP: `khao-sat-tpe-app.md` (93 màn, CHƯA có Meeting/MyTodo); Mobile MCP đã cài (cần restart Claude Code), máy ảo iPhone 18 Pro chạy flavor `erp`. Tiếp: dùng Mobile MCP đi từng màn → đề xuất sắp xếp lại màn; xuất v12 khi user duyệt.
+  Trạng thái: 🟡 **Phase 6 đang làm (14/10/2026)** — 52 artboard. **Việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
+  File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao gần nhất: v11 (16/09) ở `exports/`.
+  14/10: khách chốt 9 câu (bảng trong design.md) — meeting chỉ chọn tới DỰ ÁN (bỏ Giải pháp / Hạng mục) · màn 42 địa chỉ HĐ chép sang cho sửa · liên hệ tạo từ app vào Thành phần KH · NGƯỜI 1 theo web · có đưa Phiếu tổng hợp kết quả #11130 · nút Xem chỉ PDF + ảnh · `customerMeetingHistory()` THAY `created_by` · task biên bản để sau.
+  14/10: vẽ **Meeting theo đối tượng** (khảo sát `gop_db` 59537031f / 3ea829c51): ô Dự án TKT / Hợp đồng dưới Loại meeting ở 03 · 05 · 25 · 33 + màn mới **48 Chọn dự án TKT** · **49 Chọn hợp đồng** (bản đồ chèn hàng, phần dưới dịch +1150px).
+  ✅ Đã duyệt đề xuất API chọn dự án DÙNG CHUNG web + app (tìm + phân trang ở BE, thay `getForMeeting?per_page=10000`) — chưa code, xem design.md.
+  ⚠️ BE cần: `customerMeetingHistory()` lọc theo user trong thành phần · endpoint xem file inline (PDF/ảnh) · API chọn dự án mới · `host_name` + `end_date` cho customer-history · `company_code` cho API nhân viên.
+  19/10: Phase 7 ĐỒNG BỘ THEO WEB gop_db xong trong .pen (51 artboard): 4 khối màu Thông tin chung · Dự án TKT chỉ xem + 06b Phiếu · gộp "Nhân sự tham gia" · Hub x/4 · bỏ màn 47/35. Chờ user Cmd+S + duyệt → xuất bản v12.
+  Còn chờ chốt: 4 hạng mục chưa vẽ (21 rỗng, 01 bật chip, tab Nhân sự KH màn 14, màn 10 chọn nhiều người).
+  Design: .plans/app-meeting-mobile/design.md · Spec: docs/superpowers/specs/2026-09-16-app-meeting-mobile-design.md · Chi tiết vòng sửa: .plans/app-meeting-mobile/chon-khach-hang-va-lien-he.md
 
 - bao-cao-cskh-tiem-nang → @dnsnamdang → .plans/bao-cao-cskh-tiem-nang/plan.md
   Trạng thái: 🟢 **Phase 14 XONG 20/20 TASK + TEST, ĐÃ COMMIT (2026-09-07) — chưa push, chưa merge về `tpe`.** `hrm-api` `7bddb9fb1` (11 file, +536/−149) · `hrm-client` `f29eaaf35` "update kq cskh" (6 file, +421/−164). Cả 2 nhánh `tpe-cskh-tieu-chi-khach-hang`, cây sạch, mỗi repo đúng 1 commit so với `tpe`, **chưa có upstream**. **84/84 e2e xanh**, kiểm chứng bằng Playwright ở từng bước. Deploy chỉ cần code: KHÔNG migration, KHÔNG quyền mới, KHÔNG cron.

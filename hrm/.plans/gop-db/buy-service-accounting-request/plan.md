@@ -217,8 +217,114 @@ Modify `hrm-api/Modules/Finance/Routes/api.php` (sau khối buy-service-requests
   các đơn đó (kèm detail / catalog_histories / notifications của phiếu).
 - [ ] User bấm thử trình duyệt.
 
+## Redmine #11699 (15/10/2026) — danh sách
+- [x] 1. Ô lọc Nhà cung cấp (V2BaseSelectRemote, endpoint `/suppliers` của màn) trong bộ lọc nâng cao; bỏ NCC khỏi ô tìm nhanh (BE `keyword` + placeholder).
+- [x] 2. Ẩn cột Công ty / Phòng ban (bỏ khỏi `allColumns`); thêm cột Người cập nhật / Ngày cập nhật (sort được Ngày cập nhật).
+  BE: migration thêm `updated_by` (nullable) vào bảng ERP + hook `saving` ghi `auth()->id()`; resource + Excel thêm 2 cột.
+- [x] 3. Sort cột Tổng thanh toán — BE `orderByRaw` theo đúng `totalPayment()` (loại 1 `total_after_tax`, loại 2 `summary.amount_after_vat`).
+- [x] 4. Verify: migrate local, smoke API (lọc NCC, sort 3 kiểu, updated_by ghi khi sửa), compile FE.
+  Kết quả: migrate local OK · sort totalPayment asc 2.7tr→… / desc 754tr→… · lọc supplier_id=38214 → 1 phiếu đúng NCC ·
+  `/suppliers?keyword=KDO` 200 · hook ghi updated_by=13 (transaction rollback, DB sạch) · Excel 2 cột mới 200 · compile FE 0 lỗi.
+  Chưa mở trình duyệt (chờ user). Deploy: chạy migration `2026_10_15_000002_*`. Phiếu cũ: Người cập nhật trống;
+  cổng ERP sửa phiếu không ghi `updated_by`.
+
 ### Checkpoint — 2026-10-12
 Vừa hoàn thành: bỏ ngoại lệ Super admin ở popup HĐ mua DV (khớp ERP).
 Đang làm dở: không.
 Bước tiếp theo: user mở trình duyệt kiểm; gán 4 quyền mới cho vai trò; chạy 4 dòng seeder 1699-1702 trên dev/prod.
 Blocked:
+
+- [x] 5. (user hỏi 15/10 "Người cập nhật trống") Điền `updated_by` cho 52 phiếu cũ — migration `2026_10_15_000003_backfill_*`
+  (user chốt): Đã hạch toán → `approver_id` (48, updated_at trùng date_accounting); còn lại → `created_by` (4). Không chạm `updated_at`.
+
+## Redmine #11701 (15/10/2026) — bản in
+- [x] 1. In danh sách thiếu Ngày duyệt: 48/48 phiếu Đã hạch toán làm từ ERP có `approved_time` NULL (ERP không ghi). Lấy dự phòng
+  `date_accounting` của phiếu Hạch toán đã duyệt — áp cho cả cột màn danh sách, chi tiết, Excel, bản in, sort Ngày duyệt. Không sửa dữ liệu.
+- [x] 2. In chi tiết: thu cột SL hạch toán (10% → 7%), nới cột Yêu cầu (22% → 25%).
+  - [x] 2b. (user báo 15/10 vẫn rộng) Độ rộng đặt ở hàng tiêu đề 2 bị `table-layout: fixed` bỏ qua (chỉ đọc hàng đầu, ô "Chi tiết"
+    gộp 2 cột → chia đều 16/16) → thêm `<colgroup>` 8 cột 5/22/6/8/12/12/25/10; tiêu đề "SL hạch toán" `nowrap` 1 dòng (user yêu cầu).
+- [x] 3. In chi tiết: mã HĐ / số đơn liền một khối tràn ra ngoài lề → bọc giá trị ROW_1..4 bằng `overflow-wrap: anywhere`.
+  - [x] 3b. (user báo 15/10 vẫn tràn viền) Gốc thật: mẫu 429 khai ô bằng px (402 + 375 = 777px, ô ký 765px) trong bảng
+    `table-layout:fixed` → bảng nở theo tổng px, vượt khổ giấy. `fitTemplateWidths()` đổi px → % theo tổng từng hàng TRƯỚC
+    `fillReport` (không sửa mẫu ERP). Verify: 0 px còn lại, 51.74/48.26 · 21.31/23.4/27.06/28.24.
+- [x] 4. Số tiền in giữ thập phân (tối đa 2 số lẻ, khớp màn hình) thay cho `formatCurrency` làm tròn — cả bản in chi tiết và danh sách.
+- [x] 5. Verify (API, chưa mở trình duyệt): in danh sách 0/48 phiếu Đã hạch toán trống Ngày duyệt · sort Ngày duyệt desc/asc đúng
+  (phiếu chưa duyệt xếp cuối/đầu) · in chi tiết 52: cột 25% / 7%, mã HĐ bọc `overflow-wrap` · `moneyText(248011085.3)` = `248,011,085.3` ·
+  màn chi tiết 52 Ngày duyệt 16/07/2026 15:30 · log BE không lỗi mới. DB local không có phiếu nào có số lẻ để in thật.
+
+### Checkpoint — 2026-10-15
+Vừa hoàn thành: Redmine #11699 (ô lọc NCC, ẩn Công ty/Phòng ban, cột Người/Ngày cập nhật, sort Tổng thanh toán)
+  + #11701 (bản in: Ngày duyệt dự phòng date_accounting, cột Yêu cầu/SL hạch toán, chống tràn mã HĐ, số tiền giữ số lẻ).
+Đang làm dở: không.
+Bước tiếp theo: user bấm thử trình duyệt; chạy 2 migration `2026_10_15_000002_add_updated_by_*` + `2026_10_15_000003_backfill_updated_by_*` trên dev/prod.
+Blocked:
+
+## Redmine #11703 (15/10/2026) — form Tạo mới
+- [x] 1. Lưu nháp chỉ bắt Loại yêu cầu (FE `validate()` + BE FormRequest `isDraft()`); gửi duyệt vẫn bắt đủ.
+  `fillHeader` nhận nháp trống HĐ / NCC / đơn bảo hiểm / VAT → cột NOT NULL ghi 0 / ''; `detailData` trả null cho 0.
+  SL hạch toán vượt còn lại / VAT ngoài 0-100 vẫn chặn cả khi nháp (giữ SL hợp đồng).
+- [x] 2 + 5. Đổi loại đơ 3s / mở dropdown NCC đơ 8s: ô NCC nạp ~9.500 dòng vào select2 → `V2BaseSelectRemote`
+  (tìm theo từ khoá, dropdown hiện "Đang tìm..."); BE `searchSuppliers()` `limit(50)` (ô lọc NCC màn danh sách dùng chung, vẫn chạy).
+- [x] 3. Popup chọn nguồn: nút × xoá nhanh trong ô lọc khi có chữ (khuôn BillAdjustDeptRequestPickerModal), bấm × tìm lại luôn.
+- [x] 4. Popup đơn bảo hiểm: sort Số phụ lục (subquery bảng phụ lục) + Số hợp đồng mua; popup giãn sang phải
+  (mép trái giữ chỗ modal-xl, không đè menu trái; rộng tối đa 1240px — user báo 1360px to quá); nút Tìm kiếm / Làm mới `nowrap` 1 hàng — áp cho cả popup HĐ mua DV.
+- [x] 6. Bảng Danh sách dịch vụ: th/td `vertical-align: middle`.
+- [x] 7. Test Playwright (user yêu cầu): đổi loại 34ms · dropdown NCC 50 dòng mở ngay, gõ "hồng hải" lọc đúng · gửi duyệt
+  báo đỏ HĐ + VAT · Lưu nháp loại 2 (chỉ NCC) + loại 1 (trống đơn) OK, màn Sửa nạp lại đúng nhãn NCC · popup: × xoá chữ,
+  2 nút 1 hàng, sort gửi `sort_by=additional_code|buy_contract2_code` 200 · danh sách hiện 2 phiếu nháp.
+  Đã xoá phiếu test id 73, 74 + catalog_histories 980, 981.
+
+### Checkpoint — 2026-10-15
+Vừa hoàn thành: Redmine #11703 (6 mục) + test Playwright.
+Đang làm dở: không.
+Bước tiếp theo: user kiểm lại trên dev; deploy BE + FE cùng lúc (FE gọi NCC theo keyword).
+Blocked:
+
+## Redmine #11704 (15/10/2026) — Tạo mới loại Dịch vụ thuê ngoài
+- [x] 1. Popup chọn HĐ mua DV: Số hợp đồng là link cổng ERP (tab mới, HĐ chưa port); bấm link KHÔNG chọn dòng
+  (prop `codeLink` của SourcePickerModal, `onTableClick` bỏ qua thẻ `a`).
+- [x] 2. Chọn HĐ lần đầu chậm: API `contracts/{id}` ~97ms (tinker, HĐ 71, 7 dòng); phía FE sau khi có dữ liệu ~35ms — chỗ đơ
+  cũ là ô NCC 9.500 dòng nhận giá trị (đã gỡ ở #11703). Thêm `$safeLoadingStart/Finish` lúc chờ nạp HĐ. Local mọi API ~3s (môi trường).
+- [x] 3. Upload docx hợp lệ bị từ chối: docx sinh bằng công cụ bị finfo đoán `application/octet-stream` → trượt `mimes:docx`.
+  Đổi sang so ĐUÔI file (khuôn DeliveryRequestController) ở `uploadFiles` của cả YC hạch toán + Hạch toán mua DV.
+- [x] 4 + 7. Lưu xong dùng `router.replace` (nhánh lưu thường; "Lưu và tiếp tục" giữ nguyên) ở form YC hạch toán + form Hạch toán →
+  nút Back không quay lại form vừa lưu. Không tái hiện được "Lưu nháp về màn Tạo" bằng code — đoán tester bấm Back sau khi lưu.
+- [ ] 5. File >20MB: FE ĐÃ chặn + hiện chữ đỏ trong khối đính kèm ("File … vượt quá 20MB"), chỉ thiếu toast. Muốn thêm toast phải
+  sửa `AttachmentSection.vue` (component chung nhóm Tài chính) → CHỜ user xác nhận. BE thêm câu `.uploaded` / `.max` tiếng Việt.
+- [x] 6. Icon Hạch toán `ri-calculator-line` (danh sách + chi tiết); thêm "Không duyệt" ở cột Hành động danh sách (cùng CommentModal + API reject).
+- [x] 8. Câu lỗi SL hạch toán rút gọn: "Không được vượt SL còn lại" (user chốt, không kèm số) / "Không được âm" (FE + BE).
+- [x] 9. Test Playwright: link HĐ → `qttt.tanphat.com/admin/orders/buy-service-contract/74/show` tab mới, popup không đóng · chọn HĐ 71
+  nạp 7 dòng · lỗi SL 1 dòng · upload đúng file docx của tester OK · file 21MB báo đỏ · Lưu nháp → danh sách, Back vẫn ở danh sách ·
+  phiếu Chờ duyệt 45 hiện icon máy tính + nút Không duyệt, popup đúng mã (bấm Hủy). Dùng tạm token user 428 (người tạo HĐ 71), đã trả lại
+  token DNS Admin; xoá phiếu test 75 + catalog_histories 982. CHƯA test lưu thật phiếu Hạch toán (tránh đổi trạng thái phiếu thật).
+
+### Checkpoint — 2026-10-15
+Vừa hoàn thành: Redmine #11704 (7/8 mục) + test Playwright.
+Đang làm dở: mục 5 — chờ user đồng ý thêm toast vào AttachmentSection.vue (component chung).
+Bước tiếp theo: user trả lời mục 5; deploy BE + FE.
+Blocked: mục 5 cần xác nhận sửa component chung.
+
+## Redmine #11706 (15/10/2026) — Lịch sử
+- [x] 1. File đính kèm: khoá ảo `attachments_count` (chỉ ra SỐ file) → `attachment_rows` dạng BẢNG giữ NGUYÊN URL
+  (khuôn DeliveryRequestWriteService) → timeline in "File đính kèm thêm mới / đã xóa", tên file bấm mở FilePreviewModal.
+  CatalogHistoryService TABLES: thêm nhãn `attachment_rows`, GIỮ `attachments_count` cho log cũ.
+- [x] 2. NCC: snapshot ghi "mã - tên" (mã lấy từ quan hệ `supplier`, dự phòng cột `supplier_code`) — trước chỉ có tên.
+  Log cũ đã đóng dấu giữ nguyên (không sửa dữ liệu).
+- [x] 3. Verify: tinker rollback (log + API catalog-histories 200, added_rows/removed_rows đúng) · Playwright: tạo nháp (NCC KDO + 1 pdf)
+  → sửa (NCC Hồng Hải + thêm 1 ảnh) → khối Lịch sử màn chi tiết: "KDO - … → 65TPHPPH-31 - HỒNG HẢI", "File đính kèm thêm mới: anh-test…png",
+  bấm tên file mở popup xem trước. Đã xoá phiếu 78 + catalog_histories 986, 987 (2 file test còn trên S3 thư mục buy_service_accounting_requests).
+- Ghi chú: màn Hạch toán mua DV (`buy_service_accountings`) đang log `attachments_list` = chuỗi TÊN file (không bấm được) — chưa đụng, chờ user.
+
+## Redmine #11710 (15/10/2026) — Tạo mới loại Công nợ bảo hiểm
+- [x] 1. Popup đơn bảo hiểm: Số đơn → link ERP `/admin/insurance/form-insurance/{id}/show`, Số HĐ mua → `/admin/orders/buy_contract2/{id}/show`
+  (BE trả thêm `buy_contract2_id`; SourcePickerModal: cột phụ nhận `link: (row) => url`). Nút 1 dòng + sort Phụ lục / HĐ mua đã làm ở #11703.
+- [x] 2. Không duyệt xong lập lại / sửa phiếu không thấy đơn: ERP `reject()` không trả đơn về (kẹt type 3 "Đang hạch toán").
+  · `reject()` gọi `releaseInsuranceForm()` — đơn + phụ lục type 3 → 2 (chiều ngược `afterSentForApproval`).
+  · Dữ liệu CŨ không sửa: popup + `fillHeader` coi đơn type 3 là chọn được khi KHÔNG còn phiếu loại 1 nào giữ
+    (Chờ duyệt / Đang HT / Đã HT — `insuranceHoldersQuery()`); phụ lục nhận cả type 3.
+- [x] 3. Mất Tỉnh/TP: ERP làm rơi tỉnh khi lập đơn từ YC bảo hiểm. `insuranceProvinceId()` lấy dự phòng Phụ lục → Đơn → YC bảo hiểm →
+  HĐNT; màn chi tiết phiếu cũ (đã lưu tỉnh trống) cũng hiện dự phòng — chỉ hiển thị, không ghi DB.
+- [x] 4. Verify: tinker rollback — gửi duyệt ẩn đơn / Không duyệt hiện lại / đơn kẹt type 3 chọn lại được / phiếu thứ 2 bị chặn khi đơn đang
+  bị giữ; tỉnh dự phòng lấy đúng từ YC (Hà Nội) và HĐNT (Đà Nẵng), chi tiết phiếu 67 hiện tỉnh. Playwright: 2 link đúng URL, bấm link không
+  chọn dòng, nút 32px 1 dòng, chọn đơn → Tỉnh/TP có giá trị. (Tạm gán `buy_contract2_id`=999 cho đơn mẫu TEST-DBH-001 để test link, đã trả về null.)
+  Local không có HĐNT / YC bảo hiểm thật — chưa thử với đơn 111 của dev.

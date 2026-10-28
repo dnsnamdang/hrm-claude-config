@@ -48,3 +48,10 @@ Phụ: `readNoPermToken` tìm origin theo `BASE_URL` thay vì cứng `127.0.0.1:
 ✅ Ca 7 đã làm chặt (07/10): `beforeAll` cấp tạm cho nocost (emp 1181) role `E2E C3 tạm - chỉ xem hàng công ty` chỉ có 1653 + `cache:clear`; ca assert lưới công ty CÓ dòng + API list 200, rồi không nút/ô tick/popup và `catalogs/counts`·`catalogs/products`·`catalogs/sync` đều 403; `afterAll` gỡ role. Đối chứng cài lỗi (role có thêm 1655) ⇒ ca ĐỎ (nút hiện: chờ 0 nhận 1). Lại 13/13 đạt.
 ✅ Đã merge `feat/p2c3-catalog` → `feat/chuyen-doi-hang-hoa` (giữ tên commit WIP, user chốt) + push: api `626113419`, client `e046aff2c`. ⛔ gop_db không đụng.
 **2-C3 XONG.** Bước tiếp: đợt 2-C1 (Tạo + sửa, công ty tạo) — khảo sát + plan, hỏi tồn, xin "làm" riêng.
+
+## Bổ sung 26/10/2026 — khoá trường cấu thành mã ở form SỬA (user cho phép: FE + BE, duyệt hàng tạm KHÔNG khoá)
+
+- [x] BE `ProductWriteService::assertCodeSourceKept()` (hằng `CODE_SOURCE_FIELDS` = Hãng SX · Code đặt hàng · Model) gọi ở `ProductWriteController::update` ⇒ 422 từng ô "Không sửa được <trường>: trường cấu thành mã hàng <mã>. Cần đổi thì Nhân bản ra mã mới."; đường duyệt hàng tạm (`PriceAskingRequestWriter` → `update()`) và sale sửa hàng tạm (`updateCommon`) không đi qua controller này ⇒ không khoá.
+- [x] FE `ProductFormGeneral.vue` computed `codeLocked` (mode `edit`): 3 ô disabled, ẩn nút "+" (thêm model / thêm nhanh), ⓘ `hint` trên nhãn.
+- [x] Test BE cập nhật: `ProductWriteApiTest::sua_giu_ma_trang_thai_cong_ty` (đổi 3 trường ⇒ 422), `ProductPricingIdentityLockTest` (khoá tính giá thử Thương hiệu + Xuất xứ). 5 bộ liên quan xanh 98/98.
+- [x] Playwright MCP: form sửa 3 ô khoá + tooltip, Thương hiệu / Xuất xứ mở; form tạo mở; PUT đổi Hãng SX + Model ⇒ 422, DB không đổi. e2e `products-form-ui` thêm E15 (chưa chạy).

@@ -2559,3 +2559,5 @@ Bẫy ghi lại: 3 khung `overflow:hidden` (`.main`, `.qt-cot`, `.tab-cha2`) c�
 toạ độ `::after` + tìm tổ tiên có overflow, không chỉ nhìn icon có hiện · vòng phân quyền `datVaiForm`
 mở khoá cả ô tự điền (đánh dấu `data-chi-doc`) · `nangCapSelect` bắn `change` không bubble ⇒ nghe ở
 pha capture · thay chuỗi trùng 2 chỗ (`if (cty && …)`) ⇒ script assert dừng, luôn kèm ngữ cảnh.
+
+> 24/10/2026: Sao chép / Nhân bản hàng hoá (G8 · T9 · task C4.3 cũ) làm theo hồ sơ `quan-ly-hang-hoa/sao-chep-hang-hoa/` — form tạo điền sẵn, KHÔNG nhân bản server-side.

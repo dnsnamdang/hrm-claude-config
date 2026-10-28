@@ -122,6 +122,13 @@ task riêng trước khi lên production.
 
 ## Bổ sung 3 trường DSTC vào tab "Báo giá – Hợp đồng" (22/09/2026)
 
+> **⚠️ CẬP NHẬT 2026-10-19 — field ② đã ĐỔI SANG bảng/cơ chế mới.** Trường ② "Hệ số quy đổi theo
+> tính chất hàng hóa tính DSTC" KHÔNG còn dùng `company_product_types` (preset theo enum PRODUCT_TYPES)
+> nữa; đã chuyển sang cây phân loại gốc `product_natures` + bảng `company_product_natures`, và card đổi
+> từ **preset** → **subtable EDITABLE** (user tự "Thêm tính chất" từ danh mục + nhập hệ số, dòng "Dịch vụ"
+> ghim cứng). Xem **Task #27** (plan.md) + spec `docs/superpowers/specs/gop-db/2026-10-19-he-so-dstc-theo-tinh-chat-nature-design.md`.
+> Field ① và ③ bên dưới giữ nguyên.
+
 Yêu cầu user: thiếu 3 trường (đã có bên ERP) → bổ sung, viết THẲNG 3 bảng ERP có sẵn
 (`company_price_types`, `company_product_types`, `company_rule_commissions`), đặt ở tab
 `baogia`, có HẸN NGÀY ÁP DỤNG (user uỷ quyền tự thiết kế cơ chế), hành vi GIỐNG ERP.

@@ -2,6 +2,8 @@
 
 ## Đang làm
 
+- [Dashboard Phê duyệt: YC hạch toán mua DV lọc theo công ty](dashboard-hach-toan-mua-dv-loc-cong-ty/plan.md) — @junfoke 2026-10-12. Nhánh `gop_db`. CODE XONG 2 file, CHƯA commit.
+- [Phiếu YC hạch toán bổ sung: tỷ giá 3 số lẻ + tổng Số tiền](bsht-ty-gia-3-so-le-tong-tien/plan.md) — @junfoke 2026-10-12. Nhánh `gop_db`. Đã commit `3aebbbe04f`. Còn chạy migration decimal(16,3).
 - [Khách "không bắt buộc VAT" ⇒ VAT 0% BG/HĐ hãng](vat-khach-khong-bat-buoc/plan.md) — @junfoke 2026-09-24. **ĐỢT 1 XONG + verify Playwright local 6/6.** Nhánh `master`; commit user `10ebb1349e` + còn 3 file working tree (fix getDataForEdit + giữ VAT gốc dòng hàng) CHƯA commit. Đợt 2: BG dự án TKT (HRM Assign) + API đồng bộ. Spec: `erp/docs/superpowers/specs/2026-09-24-vat-khach-khong-bat-buoc-design.md`.
 - [Chặn chọn NV đã nghỉ làm Trưởng phòng — màn Phòng ban](truong-phong-chan-nv-nghi-viec/plan.md) — @junfoke. Repo `TanPhatDev`, nhánh `gop_db`. Phòng MT_KD bị đổi trưởng phòng sang Phạm Sơn Tùng (đã nghỉ) → 31 dòng hạch toán thưởng 01/10 ghi cho Tùng, **user đã sửa data prod** (926→1056). Gốc: ô Trưởng phòng liệt kê cả người nghỉ (`getAll(true)`), BE không kiểm. **CODE XONG 2 file** (controller + blade): chỉ liệt kê NV đang làm, giữ trưởng phòng hiện tại dù đã nghỉ, BE chặn chọn mới người nghỉ. Verify tinker + browser local. **CHƯA commit**.
 

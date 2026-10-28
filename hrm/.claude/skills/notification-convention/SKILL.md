@@ -32,11 +32,13 @@ Ví dụ:
 
 ---
 
-## 2. Nhóm hành động (chỉ dùng 14 giá trị này)
+## 2. Nhóm hành động (chỉ dùng 16 giá trị này)
 
 `Tạo mới` · `Cập nhật` · `Chờ duyệt` · `Đã duyệt` · `Từ chối` · `Yêu cầu làm lại` ·
 `Góp ý` · `Sắp đến hạn` · `Quá hạn` · `Hủy` · `Tạm dừng` · `Tiếp tục` ·
-`Thay đổi lịch` · `Nhắc báo cáo`
+`Thay đổi lịch` · `Nhắc báo cáo` · `Không duyệt` · `Chờ tính giá`
+
+> Bổ sung 17/10/2026 (luồng tính giá): `Không duyệt` dùng khi chứng từ có trạng thái tên đúng "Không duyệt" (vd `[YCTG] Không duyệt: …`) — đồng bộ nút / trạng thái / lịch sử; `Chờ tính giá` dùng khi gửi YC tính giá (trạng thái "Chờ tính giá", vd `[YCTG] Chờ tính giá: …`). Màn khác vẫn dùng `Từ chối` / `Chờ duyệt` như cũ.
 
 Không tự chế nhóm hành động mới. Không viết câu tự do kiểu
 "Nguyễn A đã trả lời bình luận của bạn trong task X" — phải quy về `[TASK] Góp ý: {Tên task}. …`.
@@ -115,7 +117,7 @@ lỗi tự ẩn khi sửa hợp lệ; còn lỗi thì không gọi API lưu.
 
 - [ ] Đúng cấu trúc mục 1: `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`
 - [ ] Prefix là mã viết tắt của loại đối tượng, viết hoa trong ngoặc vuông
-- [ ] Nhóm hành động nằm trong 14 giá trị mục 2
+- [ ] Nhóm hành động nằm trong 16 giá trị mục 2
 - [ ] Tên đối tượng cắt ≤ 50 ký tự, tổng ≤ 120 ký tự
 - [ ] Tên đối tượng in đậm (`<b>`)
 - [ ] `url` deep-link có kèm ID đối tượng, bấm vào mở đúng màn xử lý

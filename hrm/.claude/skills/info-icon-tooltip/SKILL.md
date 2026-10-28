@@ -115,6 +115,35 @@ Icon nằm sát nút xoá (×) của select2 → chừa khoảng trống, nếu 
 
 ---
 
+## 3a. Icon trong chuỗi HTML dựng tay KHÔNG phải select2 (menu hub, `v-html`…) — đặt popover BÊN DƯỚI
+
+Chỗ chỉ nhận chuỗi HTML (dòng được dựng bằng `v-html`, tạo lại mỗi lần render) cũng không gắn được `b-popover` ⇒ dùng
+**cùng helper** `utils/meetingTypeInfoTooltip.js` như mục 3, nhưng truyền tham số thứ 3 `'bottom'`:
+
+```js
+import { buildInfoIconHtml, installMeetingTypeInfoTooltip } from '@/utils/meetingTypeInfoTooltip'
+
+// mounted(): installMeetingTypeInfoTooltip()  — gắn listener uỷ quyền 1 lần cho cả app
+const icon = item.info ? ' ' + buildInfoIconHtml(item.info, `Định nghĩa ${item.name}`, 'bottom') : ''
+return `<span class="row-nm">${esc(item.name)}${icon}</span>`   // icon LIỀN SAU chữ, trong cùng thẻ tên
+```
+
+- `'bottom'` ⇒ helper gắn `data-mt-info-placement="bottom"`: popover nằm **dưới** icon, căn giữa, thiếu chỗ phía dưới
+  thì **lật lên trên**. Không truyền = trái/phải như cũ (đúng cho dropdown select2 ở mục 3 — đừng đổi chỗ đó).
+- **Vì sao phải đặt dưới**: icon nằm liền chữ trong lưới nhiều cột thì đặt ngang luôn **đè lên chính tên mục** đang rê
+  (cột phải thiếu chỗ ⇒ lật trái che tên; cột trái thì vùng tên `flex: 1` kéo dài sang phải nên đặt phải cũng che).
+  Đo thật ở panel hub Danh mục › Hàng hoá 22/10/2026: đè 1.816–4.667 px² ⇒ sau khi đặt dưới: 0, cách icon 8px.
+- Style icon: chép đúng giá trị `.mt-info-icon` (14px, `#94a3b8`, hover `#64748b`) vào scoped bằng `::v-deep`; icon
+  inline cạnh chữ thì thêm `vertical-align: -2px` cho canh giữa dòng.
+- Bấm vào icon vẫn là bấm vào dòng (icon nằm trong thẻ `<a class="row">`) — không chặn sự kiện.
+- **Nội dung định nghĩa danh mục lấy từ MỘT nguồn**: `CATALOG_TOOLTIPS` (`utils/product-classification.js`) — chính là
+  câu ở icon ⓘ của form tạo danh mục. Menu tham chiếu hằng đó, KHÔNG chép câu sang (sửa 1 chỗ, form + menu cùng đổi).
+
+Khuôn: `components/sale/SaleHubSidebar.vue` (`rowsHtml()`) + trường `info` ở `components/subsystem-menu/master-data.js`
+(nhóm hub "Hàng hoá") → `components/subsystem-menu/hub.js` chuyển `info` xuống từng màn.
+
+---
+
 ## 3b. Icon Info hiển thị DỮ LIỆU của bản ghi trong bảng danh sách
 
 Áp dụng khi 1 cột có thông tin phụ **của từng dòng** (giá theo cấp, hệ số, tổng phụ…) mà không
@@ -173,4 +202,5 @@ popup (khuôn "Hàng hoá áp dụng" ở `pages/customer-care/device-errors/ind
 - [ ] `id` target duy nhất trong trang (trong `v-for` phải ghép theo key)
 - [ ] Icon trong vùng in → có `no-print`
 - [ ] Nếu icon nằm trong dropdown select2 → tái dùng `utils/meetingTypeInfoTooltip.js`, không viết tooltip mới
+- [ ] Icon trong chuỗi HTML dựng tay ở lưới nhiều cột (menu hub, `v-html`) → `buildInfoIconHtml(text, label, 'bottom')` (mục 3a) — đo popover KHÔNG đè lên tên mục
 - [ ] Hover thử thật: popover hiện đủ nội dung, không tràn viewport, không bị dropdown/modal che

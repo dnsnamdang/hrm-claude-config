@@ -14,8 +14,9 @@ Khách hàng) sang HRM: `/finance/report-limit-debts`, gắn link vào mục men
 - KHÔNG làm: "Báo cáo hạn mức công nợ nhân viên" (`?type=employee`) — feature riêng sau.
 
 ## Quyết định (user chốt 13/10/2026)
-1. **Số dư nợ**: ERP luôn ra 0 (lỗi gom nhóm). HRM dùng công thức sổ 131 chung `CustomerDebtAggregator` — dư cuối kỳ
-   tới "Đến ngày" (trống = hôm nay), khớp Báo cáo chi tiết công nợ KH.
+1. **Số dư nợ** — ĐỔI 22/10/2026 (#11777, user: "sửa lại giống hệt ERP"): y hệt ERP, luôn 0 (ERP lỗi gom nhóm);
+   Chỉ tiêu theo đúng ERP với dư nợ 0 (chỉ "Trong hạn mức tính lãi" ra dòng, 3 chỉ tiêu còn lại rỗng).
+   ~~Bản 13/10: công thức sổ 131 `CustomerDebtAggregator`~~ — popup NVKD vẫn dùng công thức này.
 2. **Phân quyền**: không quyền, y ERP — bó theo công ty người đăng nhập.
 3. **Popup NVKD**: port và sửa đúng (ERP truyền nhầm id, cộng dồn sai).
 4. Chỉ màn khách hàng.

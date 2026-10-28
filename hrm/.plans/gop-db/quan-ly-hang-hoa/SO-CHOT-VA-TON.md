@@ -1,5 +1,10 @@
 # Sổ chốt & tồn — feature Quản lý hàng hoá
 
+> 🔄 **23/10/2026: BỎ tính bắt buộc của K1/§29a-1** ("mọi hàng phải qua 4 chứng từ tính giá") — thêm thao tác "Chuyển kinh doanh không tính giá" (giá 0 ⇒ Đang KD) cho mọi hàng ở màn Nhập thông tin. Chốt Q1–Q8 + Đ2: `chuyen-kd-khong-tinh-gia/`. ĐÃ CODE 23/10, commit 24/10 (api `17f76d1f9`, client `3940e0c1b`, chưa push).
+> 🔄 **24/10/2026: BỎ nguyên tắc không hỏi giá chéo công ty** — kế thừa giá từ công ty quản lý theo hãng (màn *Giá bán theo hãng sx*, đồng bộ 6 giá + ĐMGG + giá hiệu lực, YCHG hàng kế thừa tách sang công ty quản lý). Chốt Q1–Q13: `ke-thua-gia-theo-hang/` — mockup + plan duyệt, ĐÃ CODE 24/10 (2 migration chạy local, 1 quyền chèn local), CHƯA commit.
+
+> 🔒 **22/10/2026: màn Hàng hoá đang khoá ĐÃ CODE + PUSH gop_db** (api `7f6ae6e4d`, client `aea4d8983`, ERP `710d383568`) — `hang-hoa-dang-khoa/` (design + plan + `progress.md` ledger); 3 repo gop_db (hrm-api · hrm-client · ERP); PHPUnit MasterData 644 (2 đỏ sẵn), Playwright MCP đạt; e2e đã sửa 5 spec, CHƯA chạy (DB 21_10_prod không có tài khoản e2e).
+
 > 📌 **BÀN GIAO PHIÊN SAU: `phien-sau.md`** (việc tiếp theo, điều kiện chặn go-live, việc treo, điểm nhỏ hoãn, quyết định đã chốt).
 > 🧭 **ĐIỂM DỪNG 13/10/2026 (wrap up):** Phase 6 + Phase 7 xong & đã push. ERP nhánh chung đã kéo gop_db (`f941467a49`, push; migration gop_db `2026_10_12_000000_change_exchange_rate…` CHƯA chạy giacty/hrm_erp). **TIẾP:** bảng C đã soát + chốt 16 câu 13/10 (`ngoai-luong/soat-bang-c.md`, 6 đợt C-a…C-f) ⇒ plan + sửa từng đợt (user chốt sửa hết trước prod) · chặn go-live B5/B6 (nhập cây phân loại + Đặc tính) · ✅ A7: user chốt 13/10 phase **2c · 3 · 4 · 5 THUỘC lần lên prod này** (chưa mở phase nào) — **để làm sau**, trước mắt soát + sửa bảng C.
 > ✅ **13/10/2026: PHASE 6 Hàng tạm XONG + ĐÃ PUSH** (api `657fa731f`, client `dc793189e`, ERP `396f42dd7c`) — hàng tạm = hàng thật status 6/7/8, lập trong YCHG, PTKD duyệt từng hàng; ERP chặn. Sổ `danh-muc-hang-tam/p6-so-thuc-hien.md`.
