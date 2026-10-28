@@ -82,3 +82,6 @@ Khuôn: BE `Modules/MasterData/*/BusinessCatalog/JobGroup*` (danh mục có cha)
 - **Menu (user chốt 20/10):** 7 màn CHỈ nằm ở phân hệ Danh mục chung (nhóm "Kho"), KHÔNG thêm vào menu phân hệ Kho.
 - **Ghi chú test:** quyền FE lấy QUA VAI TRÒ theo công ty (`role_has_permissions.company_id`), không lấy quyền
   gán thẳng — admin phải gán "Quản lý kho" vào vai trò mới thấy menu.
+
+## Ngày 28/10/2026 (@junfoke)
+- [x] 28/10/2026 — Phản hồi #11810 (sửa "Số nhà kho" ở kho vật lý): không sửa code, chỉ trả lời QA — ERP cho sửa nhưng khi lưu bỏ qua; HRM sửa số nhà kho là để THÊM nhà kho (chốt ở #11781), nhà kho đã tạo không tự xoá nên không cho nhập nhỏ hơn số đang có và báo đỏ ngay — hành vi có chủ đích.

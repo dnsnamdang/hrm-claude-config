@@ -349,7 +349,7 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 
 ### B. Nút & hành động
 - [ ] Mọi nút có **icon + text** (nút chỉ icon → dùng `V2BaseIconButton`)
-- [ ] Thứ tự toolbar danh sách: Thêm mới → Import → Xuất → Cấu hình cột
+- [ ] Thứ tự toolbar danh sách: Thêm mới → In → Xuất → Import → Cấu hình cột (theo màn Quốc gia, chốt 28/10/2026)
 - [ ] Thứ tự cột thao tác: Sửa → Xóa → menu "…"
 - [ ] > 3 hành động → chỉ hiện 2 nút chính + nút "Hành động khác"
 - [ ] **Bấm thật TỪNG nút trong cột Hành động** (kể cả nút trong menu "…") — `V2BaseRowActions`

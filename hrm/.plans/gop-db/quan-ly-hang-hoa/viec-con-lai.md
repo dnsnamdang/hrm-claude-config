@@ -458,3 +458,6 @@ User chốt: áp cả 3 màn · tab Thêm mới mở sẵn · tối đa 10 ảnh
 - [x] Gốc ở `components/shared/CompactReviewEditor.vue::destroyEditor`: gọi `removeAllListeners()` TRƯỚC `destroy(true)` ⇒ gỡ luôn listener nội bộ xoá khung `.cke`. Đo: thứ tự cũ còn 1 `.cke`, chỉ destroy còn 0. Bỏ `removeAllListeners()` (destroy tự gỡ). User chọn sửa component chung.
 - [x] Đo lại MCP: mở 1 → qua tab 0 → về 1 → dùng lại 3 lần vẫn 1, nội dung đúng dòng chọn, gõ vẫn cập nhật `product_attributes`.
 - [x] E2E: Y2 kiểm `.cke` = 1 sau khi qua lại tab, Y8 chọn lại lần 2 vẫn 1 khung. `price-asking-temp-product` 15/15 (trừ Y14 đỏ sẵn) · `temp-product-gallery-ui` 2/2.
+
+### 28/10/2026 — Xoá hàng hoá chỉ vướng YCHG đã huỷ duyệt (@junfoke)
+- [x] 28/10/2026 — QA báo hàng EG-EEEF01.GC11 (Đang nhập thông tin) xoá bị báo "đã phát sinh chứng từ": tra ra chỉ vướng `price_asking_request_products` (PYCHG-04739). Sửa: hàng chỉ nằm trong YCHG đã huỷ duyệt thì cho xoá (xoá mềm); ô lọc YCHG tìm được theo mã / tên / Model hàng. 4 service + test, api `aed3f3365` trên `gop_db` (đã push).
