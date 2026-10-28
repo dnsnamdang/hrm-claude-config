@@ -100,8 +100,9 @@ tiến của luồng nghiệp vụ, không phải cảnh báo. Cam giờ chỉ c
 | Sửa | `ri-edit-line` | |
 | Xóa | `ri-delete-bin-line` | |
 | Đóng / Hủy / Quay lại | `fas fa-arrow-left` | |
-| Xác nhận / Duyệt | `ri-check-line` | |
+| Xác nhận / Duyệt | `ri-check-line` | Cả "Lưu và duyệt" |
 | Từ chối | `ri-close-circle-line` | |
+| Hủy duyệt | `ri-arrow-go-back-line` | Màu đỏ nhóm nguy hiểm (mục 2). User chốt 15/10/2026 (#11694), khớp màn Hợp đồng dịch vụ |
 | Xuất file (chung, chỉ 1 nút) | `ri-download-line` | |
 | Xuất Excel | `ri-file-excel-2-line` | Khi màn có NHIỀU nút xuất, mỗi định dạng 1 icon riêng để phân biệt |
 | Xuất CSV | `ri-file-text-line` | |
