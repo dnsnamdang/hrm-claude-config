@@ -65,6 +65,16 @@ Vừa hoàn thành: 6 bug #11829 (FE `InventoryAuditReportForm.vue`, `index.vue`
 Bước tiếp theo: user mở trình duyệt kiểm lại 6 điểm; commit khi user yêu cầu.
 Blocked:
 
+### Phản hồi #11829 (QA 26/10/2026) — "Thêm sort vào các trường Ngày"
+- [x] Phiếu kiểm kê theo hàng hoá (`/warehouse/self-inventories`): sort Ngày tạo / Ngày duyệt / Ngày cập nhật — FE `sortable`, BE `SelfInventoryService::SORT_MAP` thêm `created_at`, `approve_time`, `updated_at_full`→`updated_at` (đảo phần bỏ sort ngày của #11823)
+- [x] Biên bản xử lý thừa thiếu: Ngày tạo sort lại cho đồng bộ (BE `SORT_MAP` đã có `created_at`; Ngày duyệt vốn đã sort)
+
+### Checkpoint — 2026-10-27 (phản hồi #11829)
+Vừa hoàn thành: sort cột Ngày 2 màn danh sách; `php -l` + compile FE OK; smoke test API sort asc/desc 3 cột self-inventories trả 200, thứ tự đúng.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm (Ctrl+Shift+R); commit khi user yêu cầu.
+Blocked:
+
 ## Phase 5 — Redmine #11831 (QA 22/10/2026)
 - [x] Validate tại ô, không sót trường: Giá xử lý xoá (x) giờ về trống → viền đỏ + câu lỗi (đi cùng bug 5 #11829); % Chi phí công ty thêm `*` + lỗi riêng `details.{i}.company_cost_percent` (chỉ FE — BE tự tính 100 − %NV)
 - [x] Chi phí lệch ERP (999,999.99 × 50% → ERP 499,999.995, HRM 500,000): bỏ `round2` ở thành tiền / chi phí, format tối đa 3 số lẻ như filter `number` Angular. BE lưu vẫn round 2 (cột double(8,2) — y ERP), bản in / Excel in giá trị đã lưu

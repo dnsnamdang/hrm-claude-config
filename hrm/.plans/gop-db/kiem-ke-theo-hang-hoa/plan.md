@@ -173,8 +173,33 @@ Blocked:
 - [x] R31. "Đặt sort về mặc định": ảnh QA chụp 15:53 23/10, TRƯỚC commit #11823 R26 (16:13) → sort Ngày tạo / Ngày duyệt đã bỏ. Vá nốt: sort cũ (created_at / approve_time…) còn lưu localStorage → khi khôi phục chỉ giữ `code` / `inventory_date`
 - [x] R32. (*) tại khối Hàng hóa / Hàng thừa khác / Hội đồng kiểm kê lúc nhập kết quả → đã có từ #11821 (`4c14fd4bf`, 09:23 23/10, đã lên origin/develop); ảnh QA chụp trên hrm-crm (bản build cũ). Không sửa code
 
+- [x] R33. (phản hồi 27/10) "Thêm sort vào các trường NGÀY": Ngày tạo / Ngày duyệt / Ngày cập nhật sort được — FE `sortable`, BE `SelfInventoryService::SORT_MAP` (`created_at`, `approve_time`, `updated_at_full`→`updated_at`). Làm chung với phản hồi #11829 (đảo R26 #11823). Sort ngày đã lưu localStorage nay được giữ vì cột đã sortable lại
+
+### Checkpoint — 2026-10-27 (#11857 phản hồi)
+Vừa hoàn thành: R33; compile FE + `php -l` OK; smoke test API sort asc/desc 3 cột trả 200, thứ tự đúng
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt; commit khi user yêu cầu
+Blocked:
+
 ### Checkpoint — 2026-10-26 (#11857)
 Vừa hoàn thành: R31 (FE `index.vue` `restoreAndLoad`), R32 xác minh
 Đang làm dở: —
 Bước tiếp theo: deploy → QA kiểm lại trên bản mới
+Blocked:
+
+## Fix #11887 — popup chọn kế hoạch không thấy Kế hoạch tổng đã duyệt (28/10/2026)
+
+- [x] BE `SelfInventoryService::plansQuery()`: điều kiện ngày KH tổng đổi theo `SelfInventoryRequestAll::canSelfInventory()` (nút Lập phiếu màn Kế hoạch) — `inventory_date_from >= hôm nay AND inventory_date_to >= hôm nay`; ERP gốc `from >= hôm nay AND to <= hôm nay` chỉ khớp kỳ 1 ngày (user chốt 28/10)
+- [x] Verify: gọi `/self-inventories/plans` qua HTTP kernel, đối chiếu với `canSelfInventory()` của từng KH tổng Đã duyệt
+
+### Checkpoint — 28/10/2026 10:30
+Vừa hoàn thành: #11887 — `plansQuery()` đổi `inventory_date_to <= hôm nay` → `>= hôm nay` (khớp `canSelfInventory()`). Test 5 KH tổng mẫu trong transaction (rollback, còn 0 dòng): quá hạn / đang chạy giữa kỳ → ẩn; bắt đầu hôm nay / kỳ 1 ngày hôm nay / sắp tới → hiện — khớp nút Lập phiếu cả 5.
+Đang làm dở: —
+Bước tiếp theo: user kiểm trên dev → commit.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: fix #11887 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d04c`, hrm-client tới `f8f362a51`).
+Đang làm dở: —
+Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
 Blocked:

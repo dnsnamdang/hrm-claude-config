@@ -24,6 +24,11 @@
 - [x] F4. Menu `finance.js` erpPath → link
 - [x] F5. Checklist skill (grep) + compile
 
+### Fix #11876 (tester 26/10/2026)
+- [x] Không tái hiện được kế hoạch trạng thái Hoàn thành: ERP không có luồng nào đưa kế hoạch về Hoàn thành (2) (chỉ Đang tạo / Đang kiểm khi
+      lưu, Đã lập phiếu kiểm kê khi lập phiếu). User chốt 27/10: giữ như ERP, bỏ "Hoàn thành" khỏi ô lọc —
+      `SelfInventoryRequestService::filterOptions()`; hằng số / STATUSES giữ nguyên (nhãn dữ liệu cũ). Smoke tinker OK
+
 ### Checkpoint — 2026-10-20 (BE + FE)
 Vừa hoàn thành: B1–B9 + F1–F5.
 - BE: 3 quyền tên y ERP (dry-run OK, CHƯA `permission:sync` thật); picker dùng chung thêm `stock_warehouse_ids[]` (kho HP 96 hàng = DB 96; 2 kho 4.889);

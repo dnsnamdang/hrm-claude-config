@@ -43,3 +43,9 @@
 Vừa hoàn thành: fix điểm 1 + kiểm chứng 3 điểm còn lại
 Bước tiếp theo: user chốt có đồng bộ add.vue không; phản hồi lại QA về 3 điểm không tái hiện
 Blocked:
+
+## Redmine #11063 phản hồi #8 (16/10/2026, nhánh develop) — cache giai đoạn dự án cũ
+- [x] `optionsSelect/fetchProjectPhases` nhận `force: true` bỏ qua cache; `projectPhaseOptionsMixin.loadProjectPhaseOptions(ids, { force })`
+- [x] Form dự án TKT (`ProgressFinanceSection`) luôn nạp lại giai đoạn → BUG 1 (giai đoạn khoá sau khi cache nạp không có 🔒) + BUG 2 (mở khoá xong dropdown không hiện lại)
+- [x] Màn danh mục Giai đoạn dự án: Khoá / Mở khoá / Xoá xong thì xoá cache store
+- [x] Test Playwright local 16/10: mở form Sửa DA 155 (GĐ3) → khoá GĐ3 + mở khoá GĐ16 qua API → điều hướng trong app quay lại form: ô hiện `🔒 3.Chọn giải pháp…`, dropdown có lại GĐ16. Đã trả trạng thái GĐ3/GĐ16. Ảnh test-11063/

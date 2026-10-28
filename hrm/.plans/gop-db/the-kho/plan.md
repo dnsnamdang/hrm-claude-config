@@ -50,6 +50,11 @@ User chốt: khối tổng hợp 2 khối (Số lượng + Chứng từ, không 
       xuất giữ mở tới khi tải xong, lỗi thì giữ popup
 - [x] Ô Nhà / Dãy / Khoang / Vị trí chỉ hiện khi đã chọn Kho (bỏ hết kho -> ẩn, tick đã bị xoá ở watcher)
 
+### Fix #11866 (tester 26/10/2026)
+- [x] Ô Đơn vị tính có nút X xoá nhanh; xoá là về ĐVT cơ sở của hàng (không để ô trống)
+- [x] User 27/10: BỎ hẳn ô lọc Đơn vị tính (như ERP) — số lượng / In / Excel luôn theo ĐVT cơ sở của hàng (`report.unit_id`)
+- [x] ~~Link chứng từ tồn đầu `NHAP_TON_DAU_…`~~ — user bỏ qua 27/10 (ERP không có link, HRM chưa có màn xem tồn đầu)
+
 ### Checkpoint — 22/10/2026
 Vừa hoàn thành: Phase 2 — chuyển Thẻ kho sang khuôn báo cáo (rsum + bảng cây 2 cấp + ô Kỳ), test Playwright đạt mục 6 skill report-styles
 Đang làm dở: —

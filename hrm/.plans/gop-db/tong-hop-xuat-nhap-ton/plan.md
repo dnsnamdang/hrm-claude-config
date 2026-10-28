@@ -33,6 +33,12 @@ User chốt 24/10/2026:
 - [x] Parse template/script (vue-template-compiler + babel) + grep tự kiểm skill erp-to-hrm-screen
 - [ ] User mở trình duyệt kiểm (chưa bấm thật — theo quy ước không tự chạy Playwright)
 
+### Fix #11873 (tester 26/10/2026)
+- [x] Cột Nhà nhóm theo TỪNG KHO như ERP (tiêu đề mã kho, nhà thụt dưới) thay danh sách phẳng "CSKH | N1 - Nhà 1" — user đồng ý sửa chung
+      27/10: BE `WarehouseStockReportService::structureOf()` bỏ tiền tố mã kho trong `code`, gắn `warehouse_id` + `warehouse_code`;
+      FE `ScopePicker.vue` (nhiều kho) nhóm Nhà + Vị trí tự do theo kho, tiêu đề nhóm Dãy/Khoang/Vị trí giữ "MÃ KHO | …".
+      Áp luôn Thẻ kho; 2 form kiểm kê (1 kho, không có `warehouse_code`) không đổi. Smoke tinker 2 kho OK
+
 ### Checkpoint — 24/10/2026
 Vừa hoàn thành: Phase 1 BE + FE; tách `structureOf()` + `period()` khỏi Thẻ kho sang `WarehouseStockReportService`; đối chiếu ERP 8/8 ca khớp
 Đang làm dở: —

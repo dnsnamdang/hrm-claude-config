@@ -206,8 +206,14 @@ vụ, nguồn vốn…). Không có = thiếu chức năng, không phải "màn 
 - Vì sao bắt buộc: bảng mặc định chỉ hiện 7 cột (mục 6) — **không có "Tuỳ chỉnh cột" thì user không
   có cách nào xem các cột còn lại**. Và mọi màn danh sách đều có nhu cầu mang dữ liệu ra ngoài để
   đối chiếu; thiếu nút Xuất là user phải copy tay từng dòng.
-- Thứ tự nhóm nút: **Tạo mới → Import Excel → Xuất Excel → Tuỳ chỉnh cột** (màu theo
-  `button-convention` mục 2b: Tạo mới `primary`, Import cam, Xuất xanh lá).
+- Thứ tự nhóm nút: **Tạo mới → In → Xuất Excel → Import Excel → Tuỳ chỉnh cột** — theo màn
+  Danh mục quốc gia đã được khách nghiệm thu (user chốt 2026-10-28, `pages/human/nations/index.vue`).
+  Nút **In danh sách** (nếu màn có) đứng NGAY SAU Tạo mới, TRƯỚC Xuất Excel; màn không có Tạo mới
+  thì In đứng đầu. Màu theo `button-convention` mục 2b: Tạo mới `primary`, Xuất xanh lá, Import cam.
+- **Màn CHỨNG TỪ (phiếu thu/chi, đề nghị, UNC, báo có…) cũng BẮT BUỘC có Xuất Excel CẢ DANH SÁCH**
+  (user chốt 2026-10-28). Các comment/spec cũ kiểu "không xuất cả danh sách" (vd "spec §11.1",
+  "RULING U-UNC-5") đã HẾT HIỆU LỰC. Mục ⋮ "Xuất Excel" từng phiếu (nếu có) giữ nguyên, nhưng
+  không thay được nút xuất danh sách.
 - Nút **Tạo mới / Import** gate theo quyền quản lý; **Xuất Excel và Tuỳ chỉnh cột KHÔNG gate** —
   ai vào được màn thì dùng được (giống mục ⋮ "Lịch sử").
 #### Thêm nút Xuất Excel cho màn đang thiếu — 4 mắt xích, thiếu 1 là file ra SAI
@@ -242,9 +248,10 @@ grep -rLn "Xuất Excel" --include=index.vue pages/<phân hệ> | xargs grep -l 
   - Vẫn **giữ "Duyệt"** ở danh sách (dạng điều hướng `to` sang chi tiết) — đây là lối tắt cho việc
     duyệt hàng loạt, người duyệt vào chi tiết là thấy đủ cả Duyệt lẫn Hủy/Không duyệt.
   - Áp cho mọi màn chứng từ có vòng đời duyệt (phiếu thu/chi, đề nghị, ủy nhiệm chi, yêu cầu…).
-  - Màn cũ còn sót thì bỏ dần khi có dịp đụng vào: `pages/finance/bill-payments/index.vue` ("Hủy
-    phiếu"), `pages/finance/bill-payment-requests/index.vue` và
-    `pages/finance/prepick-cancel-requests/index.vue` ("Không duyệt").
+  - "Từ chối" cũng là "Không duyệt" — cùng luật. Rà 28/10/2026 còn sót: `finance/prepick-extend-requests`,
+    `finance/borrow-extend-requests` ("Từ chối"), `customer-care/warranty-repair-requests` ("Từ chối"),
+    `customer-care/warranty-repair-handle-requests` ("Không duyệt"). (bill-payments, bill-payment-requests,
+    prepick-cancel-requests đã gỡ.)
 - Nút **Khóa / Mở khóa KHÔNG để trong ô Trạng thái** — đưa về cột Hành động.
 - Cột Hành động: **mặc định đứng cuối**, khai trong `allColumns` với `locked: true`. Trong popup "Cấu hình cột hiển thị" user **KÉO ĐỔI VỊ TRÍ được nhưng KHÔNG ẨN được** (chốt 2026-10-02) — `columnCustomizationMixin` tự đổi `locked` của cột `actions` thành `required`, màn không phải khai gì thêm.
 - **MỌI màn danh sách BẮT BUỘC có hành động "Lịch sử"** (chốt 2026-08-15) — `{ key: 'history',
@@ -1089,7 +1096,10 @@ grep -rn "'Người lập'\|'Ngày lập'" hrm-api/Modules/<Module>/ hrm-api/app
 (Chữ "người lập" trong *câu văn* của comment/thông báo nghiệp vụ thì để nguyên — quy tắc này chỉ
 nói về NHÃN trường và tiêu đề cột.)
 
-- **Người tạo**: chỉ **TÊN** người tạo, KHÔNG kèm mã nhân viên.
+- **Người tạo / Người cập nhật**: **"Tên NV - Mã phòng"** (vd `Nguyễn Thị Cần - HN_KD1`), KHÔNG kèm
+  mã nhân viên (Redmine #11566, user chốt lại 2026-10-28). BE dựng bằng helper chung
+  `employeeAuditLabel($employeeInfo)` (`app/Helper/FormatHelper.php`) — thiếu phần nào tự bỏ phần đó,
+  không để `-` thừa. KHÔNG tự ghép chuỗi ở FE hay ở từng Resource.
 - ⚠️ **Cột Người cập nhật hay ra rỗng vì BE KHÔNG GHI `updated_by`, không phải vì thiếu cột FE.** Trước khi khai cột, kiểm 3 thứ: (1) Entity có `extends BaseModel` không — `extends Model` thuần thì không có hook audit, `updated_by` sẽ NULL vĩnh viễn (xem CLAUDE.md mục *Model MỚI BẮT BUỘC extends BaseModel*); (2) service có gán `updated_by` ở **cả đường khoá/mở khoá** không; (3) query danh sách có eager load / join quan hệ người cập nhật chưa. Cách kiểm nhanh: sửa 1 bản ghi rồi `select updated_by from <bang> where id = <id>` — ra NULL hoặc ra id không có trong `employees` là hỏng.
 - **Ngày tạo / Ngày cập nhật**: **NGÀY + GIỜ PHÚT** — `18/10/2026 16:15`. BE: `Helper::formatDateTime($x, 'd/m/Y H:i')` — truyền format để **bỏ giây** (mặc định của helper là `d/m/Y H:i:s`). Cột này khai `width: '140px'` (110px chỉ vừa phần ngày, thêm giờ là xuống dòng).
 

@@ -57,3 +57,11 @@ hrm/.plans/gop-db/quan-ly-hang-hoa/srs-testcase/SRS_TESCASE_QLYHANGHOA.zip
 hrm/.plans/gop-db/quan-ly-vai-tro-quyen/**/*.csv
 # Gói demo nén (bản HTML gốc nằm cạnh)
 hrm/.plans/demo-man-hinh-ke-toan/demo/*.zip
+
+# ── Bản sao lưu code chưa commit của worktree (thêm 28/10/2026) ──
+# Lý do: backup.sh chụp `git diff` (.patch) + file chưa track (.tgz) của worktree
+# gop_db-api/gop_db-client mỗi vài phút, phòng phiên Claude khác reset mất code.
+# Chỉ dùng để khôi phục trên máy local; code thật nằm ở repo hrm-api/hrm-client.
+hrm/.plans/**/backup/
+# File khoá tạm của Claude Code (mỗi máy khác nhau, remote đã bỏ theo dõi 28/10/2026)
+hrm/.claude/scheduled_tasks.lock

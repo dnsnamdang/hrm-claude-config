@@ -1,6 +1,6 @@
 ---
 name: print-page
-description: Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước ReportPrintPreviewModal — chuẩn hiện hành, xem mục 0), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
+description: Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước gọi bằng this.$printPreview — chuẩn hiện hành, xem mục 0/0a; KHÔNG mở tab /print), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
@@ -16,29 +16,64 @@ danh sách (hoặc ở màn chi tiết) phải bung **popup xem trước ngay t�
 `window.open('/…/print')`, KHÔNG `$router.push`/`$router.resolve` sang trang `/print`: mở tab mới
 làm mất ngữ cảnh, quay lại phải tải lại cả màn danh sách kèm bộ lọc.
 
-Cách dựng popup — bộ dùng chung, chỉ khai báo chứ không viết lại — **xem mục 8** (đủ khuôn code,
-CSS, letterhead, bẫy đã dính).
+Cách gọi popup — **một dòng `this.$printPreview({...})`, xem mục 0a**. Bộ dùng chung bên dưới
+(`ReportPrintPreviewModal` + CSS + letterhead) xem mục 8.
 
-### Cây quyết định — 3 câu, hỏi theo thứ tự
+**Từ 08/10/2026 KHÔNG còn ngoại lệ "được mở tab `/print`"** — đã chuyển hết 110 nút In cũ (Quyết định,
+Đào tạo, Nhân sự, Chấm công, Giao việc, Tài chính…) sang popup. Mở tab mới còn làm trang in lòi nguyên
+thanh menu phân hệ (Topbar đổi 16-17/09) — lỗi user báo trên cổng chính.
 
-1. **BE đã có `print-data` / `print-list-data` chưa?** (`grep -n "printData\|printListData"` ở
-   controller tương ứng trong `hrm-api/Modules/*/Http/Controllers`)
-   → **Có** thì làm popup (mục 8). Hết chuyện, không dựng file `print.vue` nào.
-2. **Chưa có?** → **bổ sung endpoint BE** trả `{ data: { template: '<html>' } }` từ mẫu in ERP
-   (trait `PrintsCompanyLetterhead` cho `{{HEADER}}`), rồi quay lại bước 1.
-   **Thiếu BE KHÔNG phải lý do để dựng trang `/print`.**
-3. Chỉ khi rơi đúng một trong **3 ngoại lệ** dưới đây mới được dựng trang `/print` riêng — và
-   lúc đó theo khuôn mục 0b:
-   - Màn **HRM gốc** (`pages/decision/**`, `pages/training/**`, `pages/human/**`,
-     `pages/regulations/**`, `pages/timesheet/**`) — không có mẫu in ERP ở BE.
-   - **Báo cáo tự dựng bằng Vue** từ dữ liệu API, không có template HTML ở BE
-     (`pages/assign/report/**`).
-   - Bản in cần **thao tác trên chính trang in** (nhập liệu, chọn phiếu, khảo sát) chứ không
-     chỉ xem rồi in.
+### Cây quyết định — chọn ĐÚNG 1 kiểu nội dung cho popup
 
-> Nhóm màn **port từ ERP** (`pages/finance/**`, `pages/customer-care/**`) KHÔNG có ngoại lệ nào:
-> mọi màn đều phải là popup. Màn nào còn `window.open('/…/print')` là **nợ kỹ thuật cần chuyển**,
-> đừng lấy nó ra làm mẫu để copy.
+| Bản in là gì | Gọi | Nội dung lấy từ đâu |
+| --- | --- | --- |
+| Chứng từ / danh sách có endpoint BE trả HTML mẫu ERP (`print-data`, `print-list-data`) | `$printPreview({ url })` hoặc mixin mục 8 | BE `{ data: { template } }`, CSS mẫu ERP 13px/10px |
+| **Quyết định HRM** (HĐLĐ, phụ lục, bổ nhiệm, kỷ luật…) — mẫu soạn ở Danh mục mẫu in | `$printPreview({ decision: '<khoá màn>', id })` | BE `…/{id}/print`, CSS `utils/print/decisionPrintStyle.js` (Times 16px) |
+| **Danh sách** bảng phẳng lấy từ API danh sách sẵn có | `$printPreview({ listRoute: computedPrintUrl })` | FE dựng bảng, khai cột ở `utils/print/list-targets/` |
+| **Báo cáo / phiếu tự dựng bằng Vue** (bảng cây, ô gộp, phiếu công tác…) | `$printPreview({ page: '/…/print?…' })` | Trang `/print` riêng (mục 0b) NHÚNG vào popup bằng iframe |
+
+1. **BE đã có `print-data` / `print-list-data` chưa?** → có thì dùng dòng 1. Chưa có mà là mẫu ERP thì
+   **bổ sung endpoint BE** (trait `PrintsCompanyLetterhead` cho `{{HEADER}}`) — thiếu BE KHÔNG phải lý do
+   dựng trang `/print`.
+2. Trang `/print` riêng (mục 0b) **chỉ còn là NỘI DUNG để popup nhúng** (dòng 4) — không bao giờ là đích
+   của `window.open` / `$router.push` / `:to` nữa.
+
+> Màn nào còn `window.open('/…/print')`, `:to="…/print"`, `$router.push({ path: '…/print' })` là **lỗi**,
+> đổi sang `$printPreview`. Tự kiểm (phải RỖNG, trừ đoạn đã comment ở `training/report/training-status-by-personnel`):
+>
+> ```bash
+> grep -rnE "(window\.open|:to=|router\.(push|resolve)|path:).*/(print|printFull|printSummary|printStudent|survey-print|print-agreement|waiting-approve-print)\b[^_]" pages components | grep -v printPreview
+> ```
+
+## 0a. `this.$printPreview({...})` — cách gọi popup in (chốt 08/10/2026)
+
+Plugin `plugins/print-preview.js` (đăng ký client trong `nuxt.config.js`), cùng khuôn `this.$confirm`: tự mount
+`ReportPrintPreviewModal`, tự gọi API, tự dọn khi đóng — màn gọi KHÔNG đặt thẻ modal, KHÔNG khai mixin.
+
+```js
+// 1. Chi tiết Quyết định — khoá = đoạn route dưới /decision/ (bảng ở utils/print/decisionPrintTargets.js)
+this.$printPreview({ decision: 'labor-contract', id: item.id })
+this.$printPreview({ decision: item.type_url, id: item.id_decision })   // màn QĐ chờ duyệt
+// 2. Danh sách — truyền NGUYÊN computedPrintUrl cũ của màn (bộ lọc nằm trong query)
+this.$printPreview({ listRoute: this.computedPrintUrl })
+// 3. Báo cáo/phiếu tự dựng — nhúng trang in vào popup
+this.$printPreview({ page: `/assign/report/solution-versions/print${query}`, title: 'Xem trước báo cáo …' })
+// 4. HTML mẫu từ BE bất kỳ
+this.$printPreview({ url: `assign/meeting/${id}/print`, title: 'Xem biên bản cuộc họp' })
+```
+
+Thêm màn mới:
+- **Quyết định**: thêm 1 khoá vào `utils/print/decisionPrintTargets.js` (`endpoint`, `title` = tên menu,
+  `styleOptions` / `pageMargin` nếu mẫu khác chuẩn). Lề mặc định `20mm 20mm 20mm 30mm` + giãn dòng 1.6 = đúng
+  giấy in cũ; HĐLĐ riêng `20mm 15mm 20mm 25mm` + 1.4 (khớp file Word).
+- **Danh sách**: khai 1 mục trong `utils/print/list-targets/<phân hệ>.js` — `api`, `title`, `columns`
+  (`value` = chữ, tự escape; `html` = HTML có sẵn), `helpers` cho hàm trạng thái. Trần `LIST_PRINT_LIMIT`
+  = 2.000 dòng: vượt là chặn in + nhắc thu hẹp lọc (mục 4d). Letterhead = công ty người đang in.
+- **Trang nhúng**: trang `/print` khai `layout: 'print'`; nút In của trang để chữ đúng **"In"** hoặc gắn
+  `data-print-trigger` — layout ở chế độ `?embed=1` ẩn thanh nút và để nút In của popup bấm hộ nút đó
+  (`window.__hrmPrintPage()`), nên trang giữ nguyên cách in riêng của nó (`$printContent`, `doPrint`,
+  `window.print()`…). Thanh nút phải mang 1 trong các class `.mb-1.no-print`, `.mb-2.no-print`,
+  `.print-toolbar`, `.assignment-body-header`, `.button-print` để được ẩn.
 
 ⚠️ 2 màn mẫu cũ (`warranty-repair-requests/_id/print.vue` · `warranty-repair-handle-requests/print.vue`)
 **đã bị xóa** ngày 2026-08-22 (commit `ed1c24e53`): 3 màn luồng bảo hành chuyển hẳn sang popup, bỏ
@@ -46,10 +81,11 @@ trang `/print` để không có 2 nguồn CSS in. Đó là hướng đi chuẩn 
 
 ---
 
-## 0b. KHUÔN TRANG `/print` RIÊNG (chốt 2026-08-21) — CHỈ dùng cho 3 ngoại lệ ở mục 0
+## 0b. KHUÔN TRANG `/print` RIÊNG (chốt 2026-08-21) — chỉ làm NỘI DUNG NHÚNG cho popup (mục 0a, kiểu `page`)
 
-> ⛔ Trước khi đọc tiếp: đã chạy cây quyết định ở mục 0 chưa? Màn port từ ERP thì **quay lại mục 8**.
-> Mục này chỉ áp cho màn HRM gốc / báo cáo tự dựng bằng Vue / trang in có thao tác.
+> ⛔ Trước khi đọc tiếp: đã chạy cây quyết định ở mục 0 chưa? Mẫu ERP / Quyết định / danh sách phẳng thì
+> KHÔNG dựng trang này. Chỉ báo cáo / phiếu tự dựng bằng Vue mới cần, và trang đó được mở bằng
+> `$printPreview({ page })` — không bao giờ mở tab riêng.
 
 Màn mẫu: `pages/customer-care/device-errors/_id/print.vue` (khổ DỌC) và
 `pages/customer-care/device-errors/print.vue` (khổ NGANG).
@@ -850,6 +886,12 @@ doc.close()
 ## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22) — CÁCH LÀM CHI TIẾT
 
 *(Luật nằm ở mục 0; mục này là khuôn code để thi hành.)*
+
+> Từ 08/10/2026 màn MỚI gọi popup bằng **`this.$printPreview({ url | decision | listRoute | page })`** (mục 0a)
+> — một dòng, không đặt thẻ modal, không khai mixin. Khuôn mixin + thẻ `<ReportPrintPreviewModal>` dưới đây vẫn
+> chạy (86 màn đang dùng), dùng khi cần điều khiển popup từ state của màn (vd chọn cột rồi mới in).
+> `ReportPrintPreviewModal` có thêm 3 prop: `contentCss(root, { forPrint })` thay CSS mẫu ERP, `pageMargin`
+> (lề `@page` = padding tờ giấy), `src` (nhúng trang in bằng iframe) — mặc định giữ hành vi cũ.
 
 Nút **In** ở màn danh sách / chi tiết mở **popup xem trước** ngay tại chỗ. KHÔNG `window.open()`
 sang trang `/print` nữa: mở tab mới làm mất ngữ cảnh đang xem, quay lại phải tải lại cả màn danh

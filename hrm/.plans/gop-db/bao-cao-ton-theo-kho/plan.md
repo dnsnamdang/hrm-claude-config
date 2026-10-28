@@ -28,6 +28,21 @@
       (letterhead, khối ký) · Xuất Excel Đầy đủ tải file (logo, 2 tầng, `#,##0`) · Xóa lọc về 6.256 · mỗi thao tác đúng 1 request · console 0 lỗi
       Ghi nhận nhỏ: Model toàn chữ số (vd "44700") Excel đọc thành SỐ (maatwebsite FromView) — như màn Tổng hợp / ERP
 
+### Fix #11870 — Bộ lọc (tester 26/10/2026)
+- [x] 1. Bật/tắt "Xem toàn bộ kho" lag: 5 ô danh mục dựng mảng option mới mỗi lần bộ lọc đổi -> select2 khởi tạo lại cả 5 ô;
+      chuyển sang computed `catalogOptions` (giữ tham chiếu)
+- [x] 2 + 5. Danh sách xổ hẹp hơn ô + chip lệch nhãn: sửa component DÙNG CHUNG `V2BaseFloatingField` (user đồng ý 27/10) — select2
+      trong vỏ `tags` tràn hết khung (lề âm = `--ff-pad-x`), đệm trái chip = `--ff-pad-x`, mũi tên / nút × giữ chỗ cũ
+- [x] User 27/10 (ảnh): danh sách xổ đè viền dưới, góc bo + cạnh dọc của ô thò vào danh sách -> select2 tràn tới MÉP NGOÀI
+      viền (đệm + 1px) cả 2 bên + đáy (-4px, bù đệm dưới 4px của khung chọn), bỏ bo 2 góc dưới khi đang xổ (`:has`)
+- [x] 3. Ô Kho: danh sách xổ "mã - tên", chip chỉ mã (slot `#field-warehouse_ids` + `templateSelection`)
+- [x] 4. Model / Hợp đồng: bỏ icon (i), hướng dẫn thành placeholder hiện khi bấm vào ô (`placeholder` + `noHint`)
+- [x] 6. Xóa lọc: xoá trắng Công ty + Kho (user chốt 27/10, khác ERP `clear()`), bảng trống chờ chọn lại
+
+### Fix #11871 — Popup In báo cáo (tester 26/10/2026)
+- [x] Sửa component DÙNG CHUNG `V2BaseReportPrintModal` (user chốt 27/10: áp mọi popup In): bỏ dòng "Bản in A4 ngang…" (+ prop `note`,
+      bỏ luôn `note` ở `self-inventory-report`); chú thích "Cột STT luôn được in…" thành icon (i) + `b-popover info-popover` cạnh "Chọn cột in"
+
 ### Checkpoint — 24/10/2026
 Vừa hoàn thành: Phase 1 BE + FE (khuôn màn Tổng hợp theo mặt hàng); thêm hàm MỚI `aggregateByWarehouse()` vào service dùng chung (không sửa hàm cũ); đối chiếu ERP 6/6 ca khớp
 Đang làm dở: —

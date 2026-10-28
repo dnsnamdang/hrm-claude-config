@@ -50,3 +50,10 @@ ERP có 2 cách đổi giá trên cùng 1 màn — kết quả khác hẳn nhau:
 - Việc cần làm: trả lời tester trên Redmine #10791 (nội dung đã soạn, xem mục dưới), KHÔNG sửa logic.
 - Giá dự kiến vẫn đang được thể hiện ở màn Sửa: icon ⚠ cạnh mã hàng (tooltip "Giá bán thay đổi
   ngày dd/mm") + tự rút "Hiệu lực báo giá" về ngày đổi giá gần nhất.
+
+## Phản hồi #12 Redmine #10791 (2026-10-16, nhánh develop) — link mã hàng sang ERP
+User chốt: chỉ làm ý "gắn hyperlink vào mã sản phẩm", link sang màn chi tiết hàng hoá bên ERP (`/admin/products/{id}/show`). Ý F/PE (TC_2.1022, TC_2.1026) tạm để.
+- [x] `utils/erp-link.js`: thêm `erpProductUrl(erpProductId)` + khai `ERP_PATHS.productShow`
+- [x] Màn Xem chi tiết báo giá (`quotations/_id/index.vue`) + Làm giá (`quotations/_id/edit.vue`): mã hàng ERP (dòng cha + dòng con) thành link `v2-cell-link`, mở tab mới; hàng tạm giữ chữ thường
+- [x] Test 16/10: hàm `erpProductUrl` đúng với ERP_URL có/không có `/` cuối, thiếu ERP_URL → '' (hiện chữ thường); BG-2026-00093 màn Chi tiết + Làm giá: 2 hàng ERP có link (navy, gạch chân đứt, chữ thường), 4 hàng tạm HHBG chữ thường; bấm link mở tab mới, màn Làm giá giữ nguyên; route `/admin/products/{id}/show` tồn tại trên dev-erp + erp prod (302 sang SSO). Chưa có dữ liệu hàng con là hàng ERP để thử (cùng khuôn với dòng cha). Ảnh: test-phan-hoi-12/
+- Ghi nhận: local `ERP_URL` comment, nuxt.config fallback `TP_URL` = qttt.tanphat.com (domain cũ) → link local 404; dev/prod cấu hình đúng
