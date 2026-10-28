@@ -86,6 +86,28 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 - phieu-xuat-dieu-chinh-sai-so-lieu → @khoipv → .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/plan.md (design: .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-dieu-chinh-sai-so-lieu-design.md)
   Port màn ERP "Kho › Xuất kho › Phiếu xuất điều chỉnh sai số liệu" (`warehouse_reexports`). Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
   Trạng thái: 🟢 ĐÃ PUSH `develop` 27/10 (api `1c1f73892`, client `ce0107575`) — smoke test API 2 góc nhìn OK; CHƯA bấm thử trình duyệt. Tiếp: deploy chạy `PermissionsTableSeeder` → admin gán 4 quyền xem.
+- phieu-theo-chuan-quoc-gia → @junfoke → .plans/gop-db/phieu-theo-chuan-quoc-gia/plan.md
+  Trạng thái: 🟢 **Sửa xong 17 màn + nghiệm thu Playwright (28/10/2026)**, commit LOCAL ở nhánh `feat/phieu-theo-chuan-quoc-gia` (client 77079b38e, api 4e6123d19), CHƯA push, worktree đã về develop. Bước tiếp: merge vào develop khi user cho; 7 điểm nhỏ chờ chốt (xem Checkpoint plan.md).
+  Scope: đưa 17 màn chứng từ (Tài chính – tiền, Giữ hàng, Kho, CSKH) về chuẩn màn Danh mục quốc gia đã PASS.
+  Spec: docs/superpowers/specs/gop-db/2026-10-28-phieu-theo-chuan-quoc-gia-design.md | Tóm tắt: .plans/gop-db/phieu-theo-chuan-quoc-gia/design.md
+
+- ycldbg-khao-sat-mat-bang (#11723) → @junfoke → .plans/gop-db/ycldbg-khao-sat-mat-bang/plan.md
+  Trạng thái: 🟢 **ERP đã merge + push `gop_db` (28/10/2026, `30aad08686`)**. Bước tiếp: migrate dev-erp / prod → QA.
+  Scope: YC lắp đặt bàn giao thêm "Cần khảo sát mặt bằng" Có/Không bắt buộc; Có ⇒ bắt buộc file đính kèm. HRM chưa có màn — checklist port ở spec mục 6.
+  ⚠️ GOTCHA: cột `assembly_requests.need_site_survey` migrate ở ERP, HRM KHÔNG tạo lại; phiếu cũ NULL.
+  Spec: docs/superpowers/specs/gop-db/2026-10-27-ycldbg-khao-sat-mat-bang-design.md | Tóm tắt: .plans/gop-db/ycldbg-khao-sat-mat-bang/design.md
+
+- chuyen-xe-khac → @junfoke → .plans/gop-db/chuyen-xe-khac/plan.md
+  Trạng thái: 🟢 **BE + FE xong, test tay trên local (28/10/2026)**, nhánh `feat/chuyen-xe-khac`, CHƯA commit. Còn: test tuyến cố định với bảng giá hiệu lực thật (DB local không có), Excel 1 phiếu.
+  Scope: màn Chuyến xe khác trọn luồng (DS, thêm/sửa/chi tiết 3 kiểu, xuất phát → kết thúc → duyệt, không duyệt, in, Excel) ở phân hệ Vận chuyển; phiếu hạch toán giữ ERP.
+  ⚠️ GOTCHA: ERP không kiểm quyền ở BE (chỉ ẩn nút) — HRM chặn đúng điều kiện nút; `is_bulky` = "Nhân viên chịu phí"; `activity_has_other_delivery_trip_accounting.employee_id` TINYINT.
+  Spec: docs/superpowers/specs/gop-db/2026-10-27-chuyen-xe-khac-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-khac/design.md
+
+- phieu-theo-form-quoc-gia → @junfoke → .plans/gop-db/phieu-theo-form-quoc-gia/plan.md
+  Trạng thái: 🟢 **Xong SRS + HDSD 16 màn "DNS đang fix" theo form Danh mục quốc gia (28/10/2026)**, 32 file ở `giao/`. Bước tiếp: user soát → tải lên Drive.
+
+- nhap-khac-ghi-chu-dong-hang (#11908) → @junfoke → .plans/gop-db/nhap-khac-ghi-chu-dong-hang/plan.md
+  Trạng thái: 🟡 **Khảo sát xong (28/10/2026)**, chờ user chốt. Scope: cột Ghi chú từng dòng hàng loại Nhập khác (YCNH sửa được + chặn trùng; ĐNNK / dự kiến / PNK / PNH chỉ xem), cần migration 4 bảng chi tiết.
 
 - mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
   Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.

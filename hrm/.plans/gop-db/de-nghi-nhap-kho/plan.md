@@ -205,3 +205,7 @@ Vừa hoàn thành:
 Đang làm dở: — (2 fix ĐNNK đã commit+push: hrm-api `6ce777ff6`, hrm-client `bbfb8d45f`).
 Bước tiếp theo: — (user chốt A: giữ ĐNXK nguyên, không sửa. Feature ĐNNK khép lại cho 2 bug Redmine này.)
 Blocked:
+
+## Fix #11896 (2026-10-28, @junfoke)
+
+- [x] 28/10/2026 — Chi tiết đề nghị nhập kho: đổi nhãn "Ngày lập / Người lập" → "Ngày tạo / Người tạo"; đã xem trên local. Client `51b04d60e` (develop).
