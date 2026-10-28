@@ -421,6 +421,9 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Đã sửa 5 lỗi nhỏ sau review (xem design.md). Đã chạy 2 migration vào DB local `hrm_erp` (`meeting_types.target_type`, `meetings.contract_id`). Còn: cập nhật thiết kế app mobile.
   Loại meeting thêm "Meeting theo đối tượng" (Dự án TKT / Hợp đồng) → bắt buộc chọn đối tượng; bỏ checkbox "Meeting theo dự án".
 
+- division-market-employee — Phiếu phân chia thị trường theo nhân viên: phân theo khu vực KD, mỗi phiếu 1 nhân viên (Redmine #11695, nhánh task_11695 tách từ task_11694) → @junfoke → .plans/gop-db/division-market-employee/plan.md
+- division-market-department — Phiếu phân chia thị trường theo phòng ban: port ERP + phân theo khu vực KD (Redmine #11694, phụ thuộc #11623) → @junfoke → .plans/gop-db/division-market-department/plan.md
+- business-areas — Danh mục khu vực kinh doanh MỚI (Redmine #11623: Tỉnh/TP → Khu vực KD → Phường/Xã, 1 phường/xã ≤ 1 khu vực) → @junfoke → .plans/gop-db/business-areas/plan.md
 - popup-chon-so-dong — popup CHỌN bản ghi: số dòng/trang 10/20/50/100 (34 popup, hằng `utils/pickerPagination.js`) → @junfoke → .plans/gop-db/popup-chon-so-dong/plan.md
 - report-meeting-drawer → @namdangit → .plans/gop-db/report-meeting-drawer/plan.md
   Báo cáo Thị trường – Dự án: nới Meeting::canView cho báo cáo meeting theo thị trường + kết quả CSKH tiềm năng; panel meeting

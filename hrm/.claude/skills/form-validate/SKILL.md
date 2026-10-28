@@ -126,6 +126,7 @@ validate realtime không chạy, và ô khoá cũng không ăn kiểu dùng chun
 | `<textarea class="form-control">` | `V2BaseTextarea` |
 | `<select class="form-control">` | `V2BaseSelect` — trong modal/popup: `V2BaseSelectInModal`; danh mục lớn: `V2BaseSelectRemote` |
 | `<input type="checkbox">` / `<input type="radio">` | `V2BaseCheckbox` / `V2BaseRadio` |
+| Chọn 1 trong 2–4 lựa chọn ngắn dạng nút gạt (vd "Phân theo: Phòng \| Bộ phận") | `V2BaseSegmented` (`components/V2BaseSegmented.vue`) — quy ước: `.claude/skills/segmented-control/SKILL.md`. KHÔNG dùng `V2BaseTabNavigation` (đó là điều hướng tab) |
 | `<input type="file">` + `<label class="btn">` tự dựng | **`V2BaseFile`** — xem mục 1d |
 | `<label class="v2-label">Tên <span class="text-danger">*</span></label>` | `<V2BaseLabel required>Tên</V2BaseLabel>` |
 | `<button class="btn btn-primary">` | `V2BaseButton` |
