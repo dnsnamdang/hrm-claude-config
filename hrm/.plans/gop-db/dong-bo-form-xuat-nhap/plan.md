@@ -750,3 +750,31 @@ Bỏ Người lập (L41), Ngày tạo (L43). File (L64-78) → `V2BaseFormCard 
 3. **Gộp ô "Loại phiếu" + "Loại hợp đồng"** ở chi tiết PXBHM (luôn cùng giá trị) → plan bỏ ô "Loại phiếu".
 4. **Trạng thái ở tiêu đề trang** — spec §4.1 ghi "không đặt ở header trang", nhưng 6 màn chi tiết đang ghép trạng thái vào topbar qua `buildStatusTitle()`. Plan **giữ nguyên topbar** (không đụng `pageTitle()`), chỉ thêm badge trong lưới. Muốn bỏ trạng thái khỏi topbar thì báo để thêm bước.
 5. **File đính kèm tự dựng** ở ĐNXK / ĐNNK (tạo/sửa — `<input type=file>` thô + upload `FormData` lên `/attachments`) và YCNH form (kéo thả tự dựng): đổi sang `AttachmentSection` là đổi cơ chế upload (S3 từng file) → phải sửa BE. Plan **chỉ đổi khung**, giữ ruột; chuyển `AttachmentSection` để việc sau. Màn chi tiết chỉ đọc (YCXH, YCNH) thì đổi sang `AttachmentSection readonly` được vì không đụng upload.
+
+---
+
+## Việc sau review (2026-10-10 → 2026-10-12)
+
+- [x] Review opus toàn nhánh: 0 Critical, 1 Important (topbar tự map màu lệch badge) → đã sửa, topbar dùng `status_color` BE
+- [x] PXBHM chi tiết: bỏ `v-if` ô "Địa chỉ liên hệ" / "Nơi giao hàng" → luôn hiện, rỗng = ô xám rỗng (user chốt 12/10)
+- [x] Áp đề xuất vào `HRM/CLAUDE.md` + skill `erp-to-hrm-screen` (user cho sửa thẳng)
+- [x] Commit + push gop_db (client `358a6ead2`, api `61179896c`), config `887b9d5`; merge → develop (client `df1d74307`, api `df767f197`)
+- [x] Danh sách ĐNNK: lọc "Ngày tạo" gộp 1 ô khoảng ngày như YCXBHM (bỏ computed `filterFields` khai trùng do merge) + mặc định 10 dòng/trang — gop_db client `164b2461c` → develop `88fd54695` (12/10)
+- [x] Thông báo lỗi tổng / lỗi nghiệp vụ → toast góc phải (user chốt 12/10, từ ảnh PNK "Tổng SL các kho kế toán … phải bằng SL trả"): bỏ khối chữ đỏ `errorMsg` cuối form ở PNK `ProductImportForm`, YCXH `ProductExportRequestForm` + popup `WarehouseExportRequestModal`, ĐNXK create/edit, PXH create (+ popup thêm nhanh Vụ việc/Mã phí), ĐNNK create/edit (bỏ cả `.ab-err` ở thanh nút). PNK form không qua validate → toast "Bạn chưa nhập đầy đủ thông tin." + `scrollToFirstError`; YCXH lỗi theo ô vẫn hiện dưới ô + toast đúng câu đó. PXH giữ biến `errorMsg` chỉ để hiện icon cảnh báo trên tab Hàng hoá. YCNH / YCXBHM / PXBHM đã dùng toast sẵn → không sửa. Playwright: PNK, YCXH, PXH, ĐNNK ra toast, không còn khối đỏ; ĐNXK không mở được khi thiếu phiếu nguồn (sửa giống ĐNNK). gop_db client `33af10217`
+
+### Việc còn lại (minor đã hoãn, chưa làm)
+- Danh sách YCNH / YCXBHM / PXBHM tự map màu ở FE — lệch màu với chi tiết (file `index.vue` ngoài phạm vi)
+- `ProductImportDetailResource` fallback `#6B7280`, 3 resource kia `#64748B`
+- Khối Lịch sử chi tiết YCNH chỉ bấm được chữ tiêu đề để thu/mở
+- `v-if="$slots.meta"` trong `V2BaseFormCard` không reactive (Vue 2) — chưa gây lỗi
+- `rows="2"` truyền chuỗi → cảnh báo console (có từ trước)
+- Comment "KHỐI 1" lặp / thụt lề lệch vài khối
+- Nút "Chọn phiếu nguồn" form YCXBHM hiện xám khi chưa chọn HĐ thay vì ẩn (có từ trước)
+- ĐNNK sửa bị 422 thì ở lại form rỗng (Task 7)
+- Danh sách ĐNNK: console cảnh báo `visibleExportFields` chưa khai (index.vue:225) + `sortDirection` sai giá trị (index.vue:42) — có từ trước
+
+### Checkpoint — 2026-10-12
+Vừa hoàn thành: lỗi tổng/nghiệp vụ 8 phiếu luồng xuất nhập → toast góc phải (8 file client, gop_db `33af10217` → develop `150fba834`)
+Đang làm dở:
+Bước tiếp theo: (tuỳ user) xử lý các minor ở "Việc còn lại"
+Blocked:

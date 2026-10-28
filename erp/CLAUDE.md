@@ -207,6 +207,7 @@ php artisan tinker
 - Khi cần sửa hàm dùng chung → hỏi ý kiến trước khi làm
 - Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`)
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
+- ⚠️ **Tài liệu (`.plans/`, `docs/`) LUÔN ghi qua symlink ở GỐC project `ERP/`, KHÔNG BAO GIỜ tạo bên trong repo code `ERP/TanPhatDev/`.** Khi đang làm code, cwd = `ERP/TanPhatDev/` → đường dẫn tương đối `.plans/[feature]/...` sẽ rơi vào repo code và tạo thư mục THẬT lạc chỗ (đã dính nhiều lần, từng phải band-aid bằng `.gitignore`), tài liệu KHÔNG về `hrm-claude-config`. Luôn dùng đường dẫn tới gốc project: `ERP/.plans/[feature]/...` (hoặc `../.plans/...` nếu đang ở trong `TanPhatDev/`).
 
 ---
 
