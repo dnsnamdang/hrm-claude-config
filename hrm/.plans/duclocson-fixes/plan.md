@@ -6,3 +6,7 @@
 - [x] BE: lọc nhân viên đã xoá hồ sơ (employeeInfo null) trước khi đọc `->ssn` (JobAssignmentNote + BusinessTripAssign)
 - [x] Deploy 12/10/2026 (api b52db4c6, client e627cdf1) bằng ~/build_tpe.sh mới tạo trên server
 - [ ] User test lại trên hrm.duclocson.vn
+
+## App — Lịch sử điểm danh lỗi "Connection closed while receiving data" (21/10/2026)
+- [x] BE: `TimekeeperService::employeeIndex` không có mốc ngày thì mặc định từ đầu tháng (của mốc "đến" nếu có) + eager load `conn_info`/`employee_info` — 2,77MB/1,42s → 66KB/0,08s
+- [ ] Commit + deploy nhánh `duclocson` (chờ user cho phép)

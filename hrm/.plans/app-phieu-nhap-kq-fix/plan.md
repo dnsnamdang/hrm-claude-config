@@ -303,3 +303,19 @@ Model của dự án này luôn phải parse phòng thủ (`_intFromJson`, `_dou
 - [x] Thử lại trên dữ liệu thật: 44973 (miễn serial, SL2) giữ 1 dòng SL2; 38204 (bắt buộc serial, SL2)
       tách 2 dòng SL1
 - [ ] CẦN ĐẨY LẠI hrm-api: bản user vừa deploy đang chạy ĐÚNG CHIỀU NGƯỢC
+
+## Phase 4 — Phản hồi 21/08 (chị Huyền) — làm 19/10/2026, nhánh hrm-api `develop`, TPE_APP `develop`
+- [x] Bộ lọc danh sách Phiếu nhập KQ đủ 12 trường như ERP: thêm Công ty, Phòng ban (cascade theo công ty), Số phiếu nhập KQ, Số phiếu giao việc, Số hợp đồng, Số phiếu y/c
+      - BE `TpWrImportResultService::searchByFilter`: +`import_code` (mã PNKQ), `company_id`, `department_id`, `request_code` (YC lắp đặt + YC giao việc khác, như ERP); `contract_code` mở rộng như ERP (HĐ dịch vụ + firm_contract_code của phiếu/YC lắp đặt)
+      - GIỮ `code` = số phiếu GIAO VIỆC (app bản cũ đang gửi theo nghĩa này; ô "Mã phiếu" cũ thực ra lọc mã PGV)
+      - HRM chưa có quyền "Xem phiếu nhập KQ theo tổng công ty/công ty/phòng ban" + danh sách không giới hạn theo quyền → ô Công ty/Phòng ban luôn hiện, không mặc định công ty
+      - Kiểm: 13 case API khớp đếm DB (~0,2s/request); app lọc số phiếu, công ty+phòng ban, kết hợp + Làm mới đều đúng
+- [x] Tab Bảo dưỡng: ô % hoàn thành của dịch vụ chỉ là chữ → bấm mở bảng nhập % (như tab Bảo hành); nhập 100 tự tích hoàn thành
+- [x] Popup Thêm/Sửa công phụ tính P3: thêm ô "Định mức công" (ERP "ĐM công"); controller + payload `rate_effort` vốn đã có
+- [x] Vá kèm: ô định mức nhận dấu phẩy thập phân (bàn phím số iOS tiếng Việt chỉ có ",", trước đây "2,5" → 0)
+- [x] Test iOS simulator trên phiếu TPSG.PNKQ.2026007010 (DB local TẠM đổi status=6, created_by=13 để sửa được)
+- [x] Lỗi lộ ra khi bấm Lưu nháp THẬT (user cho phép ghi data local/dev thoải mái):
+      - Lưu nháp bị chặn "Chưa có công việc nào hoàn thành!" dù màn vừa hỏi "Phiếu không hoàn thành công việc, bạn có muốn lưu nháp?"; điều kiện chặn không xét Bảo dưỡng → phiếu chỉ có Bảo dưỡng không bao giờ lưu nháp được. Bỏ điều kiện ở `_onSave` (Lưu và Gửi duyệt đã bỏ từ trước)
+      - Lưu nháp không truyền `serviceOverrides` (Gửi duyệt có) → mọi chỉnh % / tích dịch vụ mất khi lưu nháp. Thêm vào cả nhánh tạo lẫn sửa
+      - Kiểm DB sau Lưu nháp: dịch vụ 50% / chưa hoàn thành, công phụ TestP3 rate_effort 2.50 → đúng
+- Phiếu 7010 trên DB local hiện ở trạng thái Đang tạo, người tạo namdangit (id 13) — để user test lại; data local được sửa thoải mái nên không cần trả

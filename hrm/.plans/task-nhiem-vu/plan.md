@@ -98,3 +98,10 @@ Blocked: không có.
 - [x] BE `DetailTaskResource`: trả thêm `solution_code/name`, `project_code/name`, `solution_module_code/name`; `TaskController::show` eager load `solution`, `modules`
 - [x] FE `CreateTaskModal.vue`: bộ lọc `ALLOWED_SOLUTION_STATUSES_FOR_TASK` và `ALLOWED_MODULE_STATUSES_FOR_TASK` chỉ áp cho danh sách chọn mới, luôn giữ giá trị đang gắn
 - [x] FE: thêm `ensureLinkedOptions()` — vá nhãn 4 ô liên kết từ dữ liệu API chi tiết (không gọi thêm request), vì options nạp 1 lần lúc mở popup và lọc `mine=1` nên `include_id` không bao giờ kịp gửi ở luồng Xem/Sửa
+
+## Phản hồi #17 (2026-10-16, nhánh develop) — thông báo nhiệm vụ
+- [x] `TaskService::handleStatusNotification`: 8 câu thông báo trạng thái → `buildNotificationContent('TASK', …)` theo skill notification-convention
+- [x] Giao nhiệm vụ cho A ở trạng thái "Chờ phê duyệt triển khai" (tạo mới / Nháp → Chờ phê duyệt) thì báo luôn cho A, không đợi duyệt
+- [x] `sendTaskNotification`: `array_unique` người nhận (ảnh tester có 2 thông báo giống hệt)
+- [x] Test API local 16/10: tạo NV giao cho A ở Chờ phê duyệt → người duyệt nhận `[TASK] Chờ duyệt…`, A nhận `[TASK] Tạo mới… Chờ phê duyệt triển khai. Hạn: …`; ở Chờ bắt đầu → A nhận `[TASK] Tạo mới… Hạn: …`; duyệt triển khai → A nhận `[TASK] Đã duyệt…`; tên >50 ký tự tự cắt `...`. Đã xoá NV + thông báo test
+- Chưa làm (ngoài phản hồi #17): 4 thông báo bình luận ở `TaskCommentController` vẫn câu tự do

@@ -35,3 +35,11 @@ Blocked:
 ## Testcase
 - [x] Viết 16 testcase (TC_15.001→016) cho task #10564 → `.plans/bom-aggregate-sort-by-created/testcase-issue-10564.csv` (+ script `.py`), đã chèn vào Google Sheet `Testcase _Quản lý dự án` tab `22.1 BOM list update` mục "XV. TỔNG HỢP BOM — SẮP XẾP..." (dòng 167–183)
 - [x] 24/09/2026: Viết lại 19 testcase (TC-BOM-SORT-01→19) theo khuôn khối UPDATE, chèn vào Google Sheet `Testcase _Quản lý dự án` tab `Update_3107_BomList` (gid 1896896388) dòng 231–250 "UPDATE TESTCASE 24/09- Task: …/issues/10564" — script `gen_testcase_update_3107.py`. (Bộ TC_15 cũ không thấy trong tab 22.1 nên thay bằng bộ này.)
+
+## Phản hồi #8 Redmine #10564 (2026-10-17, nhánh develop)
+TPE: gộp BOM con có nhóm trùng tên ("Thiết bị mạng" ở BL-A và BL-C) → 2 nhóm phải TÁCH RIÊNG, xếp theo thời gian tạo BOM con, KHÔNG gộp thành 1. User chốt chỉ xử lý đúng ý này (không đụng cây nhóm 2 cấp).
+- [x] `BomBuilderEditor.vue → applySubBomSelection()`: bỏ đoạn gộp nhóm theo tên — mỗi nhóm của BOM con là 1 nhóm mới, sort_order nối tiếp theo thứ tự BOM con (cũ → mới)
+- [x] Test: 3 BOM con có nhóm trùng tên → Gộp → thứ tự nhóm A1, B1, C1 → Lưu → mở lại vẫn đúng
+  - Kết quả 17/10 (local, BOM tổng hợp 18 dự án 110; tạm đưa BOM 15 sang status 5 để chọn được): tick BOM 16 trước, BOM 15 sau → Gộp → I. Nhóm thiết bị (BOM 15) · II. Nhóm dịch vụ (BOM 15) · III. Nhóm thiết bị (BOM 16), không gộp nhóm trùng tên, đúng thứ tự ngày tạo. Lưu nháp (bằng người tạo id 260) → DB 3 nhóm sort 0/1/2, hàng đúng nhóm; mở lại màn chi tiết đúng thứ tự. Ảnh: test-phan-hoi-8/
+  - Đã khôi phục: BOM 18 (nhóm/hàng/liên kết/log từ bản sao lưu), BOM 15 status 1, mật khẩu id 260; không phát sinh log/thông báo khác
+- Ghi nhận (chưa sửa, ngoài phạm vi): gộp BOM con chưa giữ cây nhóm 2 cấp (`parent_id`) — nhóm cấp 2 thành cấp 1; Lưu BOM bằng người không phải người tạo → BE 400 "Chỉ người tạo BOM mới được phép sửa" nhưng FE không hiện thông báo

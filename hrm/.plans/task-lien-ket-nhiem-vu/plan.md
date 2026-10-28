@@ -131,6 +131,9 @@ Blocked: không có.
 - [x] Sửa: bỏ `scoped`, đổi tên selector thành `import-modal-dialog` / `import-modal-root` / `import-modal-content` (tránh rò ra toàn hệ thống và tránh đụng `.modal-xxl` mà 2 modal duyệt giải pháp đang dùng); dialog **cố định 1140px** đúng bề ngang cũ ở MỌI bề ngang cửa sổ; `.modal.import-modal-root { overflow-x: auto }` để cửa sổ hẹp thì cuộn ngang. Đo Playwright: 1512/1100/900px đều ra dialog **1140px**, cuộn ngang OK
 - [x] (user chốt 18/09) Nội dung popup import cách header 40px (16px padding bootstrap + `mt-3` 24px của thanh công cụ) → theo skill `modal-popup` mục 0: `.modal-body.import-modal-body { padding: 0.5rem }` + triệt `margin-top` khối đầu / `margin-bottom` khối cuối. Đo lại: **40px → 8px**, footer vẫn ghim đáy nhìn thấy
 - [x] (user chốt 18/09) Bỏ dòng mô tả "Import từ Excel • Validate xong dòng hợp lệ sẽ bị khóa" ở popup import màn này: `V2BaseImportModal` thêm `v-if="subtitle"` cho dòng mô tả, page truyền `subtitle=""` (giữ nguyên default cho 2 màn BOM/Báo giá đang ăn theo mặc định)
+- [x] (tester phản hồi 19/09 "Vùng nhìn thấy được quá bé") Popup import chỉ có `max-height` nên co theo nội dung, bảng preview tụt về 220px → `V2BaseImportModal` thêm `height: calc(100vh - 2.4rem)` cho `.import-modal-content` (màn thấp `100vh - 1rem`), bảng `flex:1` ăn hết phần còn lại — áp cho mọi popup import (user chốt 16/10)
+- [x] (16/10) Dòng mô tả "Import từ Excel • Validate xong…" ở popup import màn này lại hiện (page đang truyền lại subtitle) → đặt lại `subtitle=""` ở `pages/assign/meeting_cancel_reason/index.vue`
+- [x] (user chốt 16/10) Bỏ dòng mô tả dưới tiêu đề cho MỌI popup import: gỡ hẳn prop `subtitle` + dòng hiển thị trong `V2BaseImportModal`, gỡ thuộc tính `subtitle="…"` ở 57 nơi gọi. Popup tự dựng của BOM/Báo giá không dùng component này nên giữ nguyên
 
 ## Phase 12 — Redmine #11496 DEV Danh sách mẫu phiếu thu thập thông tin (18/09/2026)
 - [x] (1) Thêm nút **Lưu và tiếp tục** vào popup Tạo nhanh câu hỏi (`AddQuestionQuickModal`) — `secondary` + icon `ri-save-3-line`, thứ tự Lưu → Lưu và tiếp tục → Đóng; handler `submitForm(2)` đã có sẵn, chỉ thiếu nút
@@ -171,3 +174,18 @@ Blocked: không có.
 - [x] **#11426 #6** Màn "Đề xuất gia hạn dự án chờ duyệt": bỏ nút **Xem dự án** (icon con mắt) khỏi `getRowActions` + gỡ nhánh `view` trong `handleRowAction` — cột Thao tác chỉ còn Duyệt / Từ chối
 - [x] Test Playwright: nhập `-1` và `2.5` → 2 dòng đỏ "Không được nhỏ hơn 0" / "Phải là số nguyên" ngay dưới ô, không gọi API; sửa lại giá trị hợp lệ → lưu thành công. Nhãn báo cáo đã ra "Tiến trình dự án". Màn gia hạn: dòng dữ liệu chỉ còn 2 nút Duyệt/Từ chối
 - [x] DB local thiếu 2 quyền `Trưởng phòng/Ban giám đốc duyệt gia hạn dự án TKT` (đã có trong `PermissionsTableSeeder` nhưng chưa seed) → màn gia hạn bị đẩy 404. Đã tạo đúng id 1182/1183 + gán role Super admin kèm `role_has_permissions.company_id = 1` (bảng này có cột company_id, thiếu là FE không nhận quyền)
+
+## Phase 17 — Phản hồi tester #7 (23/09) trên #11456 (16/10/2026, nhánh develop)
+- [x] BUG 1: tab Nhiệm vụ của dự án chỉ cho chọn giải pháp thuộc dự án đó; chọn giải pháp không ghi đè dự án đang khoá; dự án suy ra từ giải pháp mà chưa có trong options thì thêm vào để hiện tên
+- [x] BUG 4: Sửa nhiệm vụ thì khoá ô Meeting khi nhiệm vụ giao từ dòng biên bản (`meeting_report_id`) hoặc mở từ tab Nhiệm vụ của meeting
+- [x] BUG 5: `MeetingForm` bắt `task-assigned` → tải lại biên bản (badge "Đã giao N nhiệm vụ") + tab Nhiệm vụ
+- BUG 2 (Sửa ở Hoàn thành = lối mở lại của người giao, chờ chốt hướng a/b), BUG 3 (chưa xác định Lê Thị Bắc là NV hay KH), BUG 6 (cùng bảng "Các nội dung khác") — tạm để
+- [x] Test Playwright local 16/10: BUG 1 (tab dự án 97 chỉ còn GP14, dự án giữ nguyên; /assign/tasks vẫn đủ giải pháp + tự điền dự án) · BUG 4 (sửa NV giao từ biên bản / mở từ tab meeting → khoá; NV gắn meeting thường sửa ở /assign/tasks → mở) · BUG 5 (lưu xong hiện ngay "Đã giao 1 nhiệm vụ" + tab Nhiệm vụ cập nhật). Ảnh: test-phase17/. Đã xoá NV test + trả mật khẩu cuonghm
+- Ghi nhận (chưa sửa): DB local 17/49 meeting_report_executors type=1 có executor_id trỏ nhầm NV (dời id gộp DB) → popup Giao không kế thừa được người — manh mối BUG 3; ô Mức độ ưu tiên BE bắt buộc nhưng nhãn thiếu *
+
+## Phase 18 — Redmine #11426 phản hồi #10 (16/10/2026, nhánh develop)
+- [x] Tiêu đề khối "File xác nhận của khách hàng" thêm `*` đỏ ở popup Xác nhận chốt báo giá + popup Chốt giải pháp — prop mới `title-required` (mặc định tắt) của `FileAttachmentTable`, màn khác không đổi. Phần gạch ngang (sáng nút khi có file) không làm theo yêu cầu user
+
+## Phase 19 — Link động: PM / người tạo / leader hạng mục chọn được giải pháp (26/10/2026, nhánh gop_db)
+- [x] `TaskLinkScopeHelper::mySolutionIds()` tính thêm `solutions.pm_id`, `solutions.created_by`, `solution_modules.leader_id` (trước chỉ đọc `solution_members` + `solution_module_members` → người tạo GP41 không thấy giải pháp của mình). Ảnh hưởng cả Tầng 2 phân quyền danh sách Nhiệm vụ + `myProjectIds()`
+- [x] `IssueService::getMySolutionIds()` bỏ bản copy, gọi `TaskLinkScopeHelper::mySolutionIds()` → phân quyền danh sách Vấn đề khớp Nhiệm vụ
