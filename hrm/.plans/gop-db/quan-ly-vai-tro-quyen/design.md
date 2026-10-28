@@ -209,10 +209,10 @@ Thứ tự trên là thứ tự làm. Cả 4 lên prod cùng lúc (mục 5.8).
 
 | # | Folder con | Trạng thái |
 |---|---|---|
-| 1 | `gd1-nen-du-lieu/` | code Task 0–12 xong + review cuối + diễn tập trên bản sao prod 26/10 (worktree `wt-rbac`, nhánh `rbac`, CHƯA commit). Xem `gd1-nen-du-lieu/runbook-go-live.md`, `bao-cao-dien-tap/playwright.md` |
-| 2 | (tạo khi bắt đầu) | chưa |
-| 3 | (tạo khi bắt đầu) | chưa |
-| 4 | (tạo khi bắt đầu) | chưa |
+| 1 | `gd1-nen-du-lieu/` | code Task 0–12 xong + review cuối + diễn tập trên bản sao prod 26/10 (worktree `wt-rbac`, nhánh `rbac`, đã commit 26/10: hrm-api `b5eb3cb57`, ERP `5101a750a9`, push `origin/rbac` 27/10). Xem `gd1-nen-du-lieu/runbook-go-live.md`, `bao-cao-dien-tap/playwright.md` |
+| 2 | `gd2-man-quan-ly/` | Xong 27/10 trên `wt-rbac` nhánh `rbac` (3 repo: hrm-api `80de7580b`, hrm-client `25824b310`, TanPhatDev `f9b85744c5`), commit, push `origin/rbac` 27/10; kiểm Playwright trên `hrm_erp_rbac_rehearsal`. Spec e2e `HRM/e2e/tests/admin/admin-roles.spec.ts` 9/9 xanh. Màn người dùng **tách khỏi GĐ2**, làm lại sau GĐ2 nhưng phải xong trước khi lên prod (user chốt 26/10) |
+| 2b | `gd2b-tai-khoan-va-vai-tro-nhan-vien/` | **Code xong 27/10**, commit + push `origin/rbac` (hrm-api `a7fefc312`, hrm-client `8dbe831cc`, ERP `57aea84917`; nhánh `rbac` push lần đầu nên gồm cả GĐ1+GĐ2). KHÔNG merge `gop_db` khi user chưa yêu cầu. Còn: 3 việc chờ user quyết + chạy 2 spec e2e (xem `gd2b…/plan.md` checkpoint) |
+| 3+4 | `gd3-kiem-quyen-theo-ma/` | **User chốt 27/10 gộp GĐ3 + GĐ4**, làm theo từng phân hệ. Design xong 27/10 (U1–U9), chờ user duyệt rồi lên plan. Chưa code |
 
 ## 8. Chuyển đổi dữ liệu (yêu cầu kết quả, cách làm để builder quyết)
 

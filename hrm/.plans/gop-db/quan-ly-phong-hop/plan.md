@@ -4517,3 +4517,273 @@ Mockup `mockup/kiosk-tablet.html` (font Nunito + xanh HRM; chốt ở design.md 
 - hrm-client `pages/meeting/kiosk/_token.vue` (giao diện mới) + `layouts/kiosk.vue` (nền xanh HRM).
 - e2e `meeting-room-kiosk.api.spec.ts` (K3 đang khoá đúng 9 khoá của dòng lịch) + `meeting-room-kiosk.spec.ts`.
 
+
+## Thiết kế app phòng họp (26/10/2026) — `meeting-mobile.pen`, khu "PHÒNG HỌP (APP)" (x≈12100, y≈-1420)
+- Bước 1 XONG: vẽ lại 8 màn ĐÃ CODE (TPE_APP `feature/meeting-room-qr-scan`): PH1 tab Phòng họp · QR1 camera ·
+  QR2 xác nhận Check-in · QR3 xác nhận Check-out · QR4 lỗi · QR5 chưa cấp quyền camera · QR1b quét nhầm mã · PH1b thành công.
+- Bước 2 (tiếp): thiết kế đầy đủ các màn còn thiếu TRƯỚC khi code (user chốt 26/10).
+- Bước 2 (26/10): khu "PHÒNG HỌP (APP) · THIẾT KẾ MỚI" (x≈12100, y≈900) — PM1 Phiếu của tôi (chế độ Nút) · PM1-QR (chế độ QR)
+  · PM2a Tình trạng phòng/Thẻ · PM2b Tình trạng phòng/Ngày (dải giờ mỗi phòng) · PM2c Lịch 1 phòng (dải tuần + chương trình
+  ngày xen khung trống "Đặt"). Còn: Xem phiếu, Đặt phòng (form), Tổng quan › Lịch hôm nay có phiếu tự đặt, kiosk không QR.
+  Còn chờ chốt: nhóm "Sắp họp" giới hạn 15' như kiosk (PM2a/PM2b đang vẽ theo đề xuất này).
+- 26/10 tiếp: PM3 Xem phiếu (khối NHẬN/TRẢ PHÒNG tách khỏi điểm danh, nút đáy theo cấu hình) · PM4 Đặt phòng (form như web,
+  báo trống/trùng ngay ở ô phòng) · TQ2 Tổng quan có phiếu tự đặt + phòng trống theo luật mới. Kiosk mockup thêm nút chế độ
+  "Nút trên phiếu" (ẩn QR). Ngưỡng "Sắp họp" = cấu hình phân hệ Meeting (mặc định 15'). Còn: mockup web màn Cấu hình
+  (2 trường mới: Cách check-in, Ngưỡng Sắp họp).
+- 26/10 tiếp (hàng 3, y≈3350): HUB-R Hub meeting có dải Phòng họp (Check-in phòng, tách điểm danh) · PM3b phiếu từ meeting
+  đã check-in (Check-out) · PM3c phiếu Chờ duyệt (Huỷ / Sửa) · PM4b Đặt phòng gắn cuộc họp + lỗi trùng giờ + gợi ý phòng
+  trống · PM5 xác nhận Check-out (Check-in bằng nút không hỏi) · PM6 Huỷ phiếu (lý do bắt buộc).
+- 26/10 tiếp: thêm MR1/MR1b/MR2/MR3/MR3b (đặt phòng trên màn Meeting › Thông tin chung, theo luật web GeneralInfo Task 80)
+  + AP0/AP1/AP2/AP3 (duyệt phiếu trên app — user chốt có duyệt trên app). Xếp lại khu THIẾT KẾ MỚI thành 4 hàng có nhãn
+  (① Tab Phòng họp ② Phiếu ③ Meeting + Tổng quan ④ Duyệt), x 12100→15231, y 1000→6877; kiểm 72 khung gốc: 0 chồng lấn.
+
+## Đợt E (dự kiến, CHƯA code) — Check-in theo cấu hình + ngưỡng Sắp họp + kiosk mới + app Phòng họp
+Thiết kế: `meeting-mobile.pen` khu THIẾT KẾ MỚI (4 hàng) + `mockup/kiosk-tablet.html`. Web KHÔNG làm mockup (user chốt 26/10).
+- **E1 · hrm-api (gop_db)** — 1 migration mới `general_regulations` + 2 cột: `meeting_room_checkin_mode` (1 = Nút trên phiếu,
+  2 = Quét QR; NULL ⇒ 1) và `meeting_room_upcoming_minutes` (NULL ⇒ 15). `MeetingSettingController` đọc/ghi + lịch sử.
+  Chặn theo cấu hình lúc thao tác: `checkin/checkout` (nút) chỉ khi mode 1, `scan/confirm` chỉ khi mode 2 (423 + câu rõ).
+  `statusBoard()` + `kiosk()`: state theo ngưỡng N, thêm `free_until`; kiosk trả `checkin_mode` (ẩn QR), `current` thêm
+  chủ trì/chức vụ/người tham gia 2 phía. Cờ `checkin_mode` trả kèm phiếu để FE ẩn/hiện nút.
+- **E2 · hrm-client (gop_db)** — màn Cấu hình 2 trường mới; ẩn nút Check-in/out (popup Xem phiếu, GeneralInfo) khi mode QR;
+  room-board dùng nhãn mới; trang kiosk dựng lại theo mockup (Nunito + xanh HRM, ẩn QR khi mode Nút).
+- **E3 · TPE_APP (feature/meeting-room-qr-scan)** — tab Phòng họp 2 phần (Phiếu của tôi / Tình trạng phòng), Xem phiếu,
+  Đặt phòng, Lịch phòng, Tổng quan có phiếu tự đặt, khối phòng trên Hub + Thông tin chung meeting, Duyệt phiếu.
+- **E4 · e2e** — cập nhật spec kiosk/check-in/settings + ca mới theo cấu hình (cả 2 mode, có quyền + không quyền).
+- 26/10 tiếp: hàng ⑤ SV1 Dịch vụ phòng (người quản lý phòng: yêu cầu dịch vụ trong ngày, Đã chuẩn bị / Từ chối dịch vụ)
+  + SV2 Từ chối dịch vụ (lý do bắt buộc). Dọn phòng: LÀM SAU (user chốt). Kiểm lại toàn file: 0 khung gốc chồng lấn.
+
+### Checkpoint — 26/10/2026 (chuyển nhánh)
+User chưa muốn lên prod qua gop_db ⇒ hrm-api + hrm-client: nhánh **`gop_db-quan-ly-phong-hop`** (từ origin/gop_db +
+cherry-pick: api `d0df84d07` kiosk API, `fc55d4364` vá $hidden; client `c36452fcd` trang kiosk). Local gop_db reset về
+origin/gop_db (0 ahead / 0 behind, nội dung nhánh mới = gop_db cũ, diff 0 dòng). Chưa push. Đợt E code trên nhánh này.
+- 26/10: vá $hidden cherry-pick riêng về gop_db + PUSH (`4ce76d0df`, origin/gop_db ahead 0 / behind 0).
+- 26/10: worktree **`websites/wt-quan-ly-phong-hop/{hrm-api,hrm-client}`** nhánh `gop_db-quan-ly-phong-hop` (vendor + node_modules
+  copy thật `cp -Rc`, autoload kiểm ra đúng đường dẫn worktree). Cổng riêng: API **8050** (`php artisan serve --port=8050`),
+  client **3050** (`.env` worktree đã trỏ BASE_API_URL 8050). DB dùng chung `hrm_erp_21_10_prod` với checkout chính.
+
+### Checkpoint — 26/10/2026 (E1 BE xong, CHƯA commit) — worktree wt-quan-ly-phong-hop/hrm-api
+- Migration ĐÃ CHẠY (DB local hrm_erp_21_10_prod, `--path` từng file): Meeting `2026_10_27_000001_add_checkin_mode_and_reminder_config_for_meeting_rooms`
+  (general_regulations +4 cột cấu hình, meeting_room_bookings.checkin_late_reminded_at) · Assign `2026_10_27_000001_add_start_reminded_at_to_meetings_table`.
+- `MeetingRoom::companySettings()` (checkin_mode / upcoming_minutes) · `MeetingRoomBooking::checkinFlags()` (is_can_* chỉ khi mode Nút,
+  is_checkin_open/is_checkout_open + checkin_mode) dùng ở DetailMeetingRoomBookingResource + MeetingTransformer.
+- Chặn cách check-in tắt: `assertCheckinMode()` trong checkin/checkout (423), scan() + resolveRoom() báo đúng lý do khi mode Nút.
+- Settings: 4 trường mới + validate "nhắc check-in trễ < số phút tự huỷ" khi bật tự huỷ + lịch sử (nhãn ở CatalogHistoryService).
+- Nhắc: nhận phòng chỉ người đặt + chủ trì; trả phòng gộp nhắc check-out; MỚI nhắc check-in trễ ("Quá hạn", kèm giờ tự huỷ);
+  MỚI command `meeting:send-meeting-reminders` (mỗi phút, "[MET] Sắp đến hạn", chủ trì + company_members, reset khi đổi giờ).
+  Nội dung đặt ý chính trước vì bị cắt 120 ký tự.
+- statusBoard + kiosk: "Sắp họp" theo ngưỡng công ty, `free_until`, `checkin_mode`; kiosk `qr` = null khi mode Nút, current +
+  host_role/participants/partner, bookings + has_partner.
+- Kiểm: tinker trong transaction + rollback (Bus::fake chặn push thật), curl 8050. Cấu hình công ty 1 trả về như cũ, xoá 1 dòng lịch sử thử.
+- ⚠️ e2e cần sửa ở E4 (chưa chạy): meeting-room-qr.api (mặc định giờ là Nút ⇒ scan 423, phải bật mode QR cho công ty test),
+  meeting-room-kiosk.api K2 (qr null khi mode Nút) + K3 (thêm khoá has_partner), meeting-room-board (ngưỡng Sắp họp).
+
+### Checkpoint — 26/10/2026 (E2 web xong, CHƯA commit) — worktree wt-quan-ly-phong-hop/hrm-client
+- Cấu hình (`RoomHoursSettingPanel`): hàng 3 = Cách check-in (radio Nút trên phiếu | Quét QR) · Báo "Sắp họp" trước · Nhắc check-in
+  sau giờ bắt đầu · Nhắc họp trước; lỗi BE hiện đúng ô. Popup Xem phiếu + form Meeting (`GeneralInfo`): nút theo cờ BE (tự ẩn ở
+  mode QR) + dòng "Check-in/Check-out bằng cách quét mã QR ở cửa phòng (app TPE)". Room-board thẻ phòng: "Trống đến HH:MM" /
+  "Trống cả ngày". Kiosk dựng lại theo mockup chốt (canvas 1280×800 + zoom, Nunito nạp riêng, nền xanh HRM, 2 phía đối tác,
+  ẩn QR + tải lại 30s ở mode Nút), giữ data-testid cũ của e2e.
+- Kiểm Playwright (client 3050 + API 8050 giờ giả 10:12 qua router `Carbon::setTestNow`, dữ liệu E2-KT đã dọn): kiosk 4 trạng
+  thái + 4 cỡ màn, 0 phần tử tràn; ca nặng (2 phía × 4 dòng, tên đối tác 2 dòng) cách mép 12px; mode QR đếm ngược chạy.
+- Đo 26/10: font app chung là **Roboto** (không phải Nunito như đã nói khi chốt mockup) — đã báo, user chốt GIỮ Nunito cho kiosk.
+- Ngoài luồng (note, chưa sửa): `GeneralInfo`/`MeetingParticipants`/`MeetingReport`/`PopupStaff` cảnh báo prop `hasCustomer`
+  (khai Boolean, nhận Number 1) + "computed hasCustomer is already defined as a prop" — có sẵn từ trước.
+
+### Checkpoint — 26/10/2026 (E4 sửa spec xong, CHƯA chạy) — HRM/e2e (ngoài git)
+- `utils/meetingEnv.ts` + `setRoomConfig({checkinMode, upcomingMinutes}, companyId)` → trả hàm khôi phục (giữ đúng NULL).
+- qr.api: beforeAll bật QR cho công ty phòng test, afterAll trả; **Q6** chặn chéo 2 cách (cờ is_can_checkin / is_checkin_open,
+  PUT checkin 423 ở mode QR, scan/confirm 423 ở mode Nút, 403 vẫn trước).
+- kiosk.api: bật QR + ngưỡng 15'; K3 thêm khoá `has_partner`; **K5** mode Nút ⇒ qr null; **K6** ngưỡng Sắp họp + free_until;
+  **K7** người tham gia cuộc đang diễn ra (không lặp chủ trì, có chức vụ, không lộ ở dòng lịch).
+- kiosk UI: U1 đo bố cục mới (QR 148, --accent, Nunito đã nạp, canvas 1280×800 zoom 1, 0 phần tử tràn); **U5** mode Nút
+  (không khối QR, lịch kín cột phải; 1920×1200 zoom 1.5 không tràn).
+- board: F2 "Trống cả ngày"; **F2b** ngưỡng 15' ⇒ "Sắp họp lúc" / "Trống đến HH:mm" (skip nếu +70' sang ngày mai).
+- checkin UI: **S2** hàng 3 màn Cấu hình + lỗi nhắc trễ ≥ tự huỷ (không ghi DB); **K0** mode QR ⇒ popup không nút, có hướng dẫn.
+- `playwright test --list` biên dịch OK (54 ca / 8 file). Chạy cho nhánh này PHẢI trỏ worktree:
+  `API_BASE=http://127.0.0.1:8050 BASE_URL=http://127.0.0.1:3050 API_REPO=<websites>/wt-quan-ly-phong-hop/hrm-api npx playwright test <spec> --workers=1`.
+
+### Checkpoint — 27/10/2026 (E3a app xong, CHƯA commit) — TPE_APP nhánh feature/meeting-room-qr-scan
+- BE (worktree hrm-api): room-bookings nhận `mine=1` (tôi đặt HOẶC chủ trì) + `managed_by_me=1`; dòng phiếu thêm room_location,
+  meeting_id/code, checkin_at/checkout_at + checkinFlags.
+- App: tab Phòng họp = Phiếu của tôi (chip trạng thái có số, HÔM NAY / SẮP TỚI, Xem phiếu đã qua 30 ngày) | Tình trạng phòng
+  (Thẻ / Ngày) → Lịch phòng (dải tuần, khung trống xen kẽ) · Xem phiếu (khối NHẬN/TRẢ PHÒNG, ⋮ Hủy phiếu, nút đáy theo cờ BE).
+  Nút quét QR trên header chỉ khi checkin_mode = 2.
+- Lỗi gặp khi kiểm: (1) danh sách phiếu `data` là MẢNG (apiGetList) — đọc như paginator ra 0 phiếu; (2) "Bạn đặt/Bạn chủ trì"
+  phải so `currentLoginEmployeeId` (employees.id), `currentUser.employeeId` là của employee_info; (3) dòng giờ bị cắt do Spacer
+  chia đôi chỗ với Flexible; (4) phiếu đã kết thúc vẫn hiện câu hướng dẫn check-in — đã sửa cả 4.
+- Kiểm máy ảo iPhone 18 Pro (API 8050 giờ thật): danh sách + đếm chip, check-in/out ở thẻ và ở Xem phiếu, 423 khi check-out
+  phiếu đã hết giờ, Thẻ/Ngày (vị trí khối 8–9h, 9–10h chờ duyệt, 14–15h30), Lịch phòng cả phiếu ngoài giờ mở cửa.
+  KHÔNG bấm Hủy phiếu thật (bắn thông báo quản lý phòng trên DB bản sao) — chỉ kiểm hộp thoại. Dữ liệu E3-KT đã dọn.
+- Chưa kiểm: quay lại danh sách tự tải lại sau khi đổi phiếu, "Xem phiếu đã qua" (Mobile MCP treo RPC giữa chừng).
+- Tồn nhỏ: chọn ngày ở Tình trạng phòng giữ ngày lúc mở màn nếu để màn qua nửa đêm.
+
+### Checkpoint — 27/10/2026 (E3b app xong, CHƯA commit) — TPE_APP nhánh feature/meeting-room-qr-scan
+- Chỉ sửa TPE_APP, dùng API có sẵn (không đụng hrm-api / hrm-client, không migration).
+- Mới: `meeting_room_booking_form_page.dart` (PM4 Nhu cầu khác · PM4b Gắn với cuộc họp → `assign-meeting` · PM3c Sửa ·
+  MR2 Đăng ký/Đổi phòng cho cuộc họp đang mở), `room_picker_sheet.dart` (tình trạng khung giờ, phòng bận khoá chọn, chip
+  Sức chứa / Chỉ phòng trống), `meeting_room_box.dart` (khối Phòng họp MR1/MR1b/MR3/MR3b trên Thông tin chung).
+- Sửa: Lịch phòng ("+" + "Đặt" ở khung trống, điền sẵn phòng + giờ), tab Phòng họp ("+"), Xem phiếu ("Sửa phiếu" theo
+  `is_can_edit`), Thông tin chung (khối phòng; đổi phòng cập nhật cả bản gốc ⇒ không báo "chưa lưu", lần Lưu sau không gửi phòng
+  cũ), Hub (dải HUB-R + tải lại khi phòng đổi ở Thông tin chung), `RoomActionButton` thành widget dùng chung trong feature.
+- Lỗi E3a tìm ra khi kiểm: màn Xem phiếu dùng `navigator.pop` (= maybePop) trong `PopScope(canPop:false)` ⇒ lặp vô hạn, app 100%
+  CPU (đây là lý do Mobile MCP "treo" lúc kiểm E3a) — đã đổi sang `Navigator.of(context).pop`.
+- Kiểm máy ảo (API 8050, dữ liệu E3B-KT đã dọn + 5 thông báo tự gửi cho tài khoản E2E đã xoá): lỗi BE hiện cùng lúc 3 ô + dòng
+  dịch vụ; tạo phiếu cần duyệt (hỏi xác nhận, DB có dịch vụ); sửa phiếu (loại trừ chính phiếu khi xét trùng; chặn phòng bận + gợi ý
+  phòng trống + khe trống lại); cảnh báo chưa lưu "Lưu và quay lại"; "Đặt" ở Lịch phòng; Gắn với cuộc họp; Hủy đăng ký / Đăng ký lại
+  trên Thông tin chung; HUB-R Check-in; MR1b; MR3b; "Xem phiếu đã qua" (mục tồn E3a).
+- Còn: E3c Duyệt phiếu + Dịch vụ phòng · E3d Tổng quan + deep link thông báo.
+
+### Checkpoint — 27/10/2026 (E3c xong, CHƯA commit) — hrm-api worktree + TPE_APP
+- hrm-api (wt-quan-ly-phong-hop, nhánh gop_db-quan-ly-phong-hop): `MeetingRoomBookingResource` thêm `services` (món dịch vụ,
+  dùng `serviceItems` đã eager load ở index) — không migration.
+- App: `room_approval_page.dart` (AP1 Chờ duyệt / Đã xử lý theo `managed_by_me`; báo trùng giờ = so phiếu chờ duyệt cùng phòng;
+  AP3 xác nhận liệt kê phiếu sẽ bị tự từ chối; AP2 lý do bắt buộc), `room_service_page.dart` (SV1 theo ngày, chip trạng thái dịch vụ,
+  "Còn N phút", Đã chuẩn bị / SV2 Từ chối dịch vụ lý do bắt buộc), dải AP0 trên Phiếu của tôi (phiếu chờ tôi duyệt + dịch vụ chờ
+  chuẩn bị, chỉ hiện khi có việc — thay mục menu ☰ vì drawer là danh sách tĩnh, không biết ai là quản lý phòng).
+- Kiểm máy ảo (dữ liệu E3C-KT do tài khoản E2E đặt ⇒ thông báo chỉ tới chính tài khoản đó; đã dọn, 0 thông báo cho người khác):
+  dải AP0 đúng số; Duyệt E3CKT-01 ⇒ BE tự từ chối E3CKT-02 trùng giờ; Từ chối có lý do; Đã xử lý; Đã chuẩn bị; Từ chối dịch vụ
+  (phiếu vẫn Đã duyệt); lọc chip; Back không treo.
+- 27/10 sửa luôn 2 tồn (user yêu cầu): API danh sách trả thêm `reject_reason` + `is_auto_rejected` ⇒ tab "Đã xử lý" hiện
+  "Lý do: …" / "Tự từ chối: …"; "Đã chuẩn bị" hỏi xác nhận (skill app-ui-convention, nhóm Hoàn thành). Kiểm máy ảo xong, dữ liệu
+  E3C2-KT đã dọn.
+- Còn: E3d Tổng quan + deep link thông báo.
+- 27/10 thêm lối vào cố định (user yêu cầu): người quản lý phòng (suy từ có phiếu phòng mình quản lý từ 7 ngày trước — app không có
+  cờ riêng, fail-closed) luôn thấy nút gọn "Duyệt phiếu" / "Dịch vụ phòng" trên Phiếu của tôi; mục nào đang có dải việc thì bỏ nút.
+  Kiểm 3 ca trên máy ảo (không việc ⇒ 2 nút; có phiếu chờ ⇒ dải + 1 nút; không quản lý ⇒ không gì). Dữ liệu E3C3-KT đã dọn.
+- 27/10 thêm cờ BE (user yêu cầu): `GET meeting/rooms/managed-by-me` → `{is_room_manager, room_ids}` (phòng đang hoạt động
+  có tôi trong `meeting_room_managers`; không gắn checkPermission — chỉ nói về chính mình). App dùng cờ này thay cách suy từ phiếu
+  7 ngày. Kiểm: curl false → true → phòng khoá thì false; máy ảo hiện 2 nút với phòng chưa có phiếu nào, gỡ quản lý thì ẩn.
+
+### Checkpoint — 27/10/2026 (commit + merge develop, CHƯA push) — worktree wt-quan-ly-phong-hop
+- hrm-api `gop_db-quan-ly-phong-hop`: commit `a79467d78` (E1–E3c BE, 19 file) + merge origin/develop `34baec322` (115 commit, có API
+  meeting cho app: mine/overview). 1 xung đột ở `MeetingRoomBookingService` (3 hàm nhắc): giữ người nhận của nhánh (người đặt + chủ
+  trì), dùng khuôn `bookingNote()` của develop. Lint 298 file OK; overview/mine/managed-by-me/status-board/settings 200.
+- hrm-client `gop_db-quan-ly-phong-hop`: commit `69a38047b` (E2, 7 file) + merge origin/develop `261acae54` (57 commit, 0 xung đột).
+  Nuxt 3050 biên dịch không lỗi; Playwright: settings (đủ trường mới), room-board, bookings, assign/meeting (10 dòng) không 4xx.
+- ⚠ 7 migration của develop CHƯA chạy ở DB local (2026_10_22_* x3, 2026_10_23_* x3 …) — hỏi trước khi chạy.
+- ⚠ Đưa nhánh này lên gop_db sẽ kéo theo toàn bộ commit develop đang chưa có trên gop_db.
+
+### Checkpoint — 27/10/2026 (E3d xong, CHƯA commit) — TPE_APP nhánh feature/meeting-room-qr-scan
+- Thông báo phòng họp: `room_notification_route.dart` chọn màn theo `type` (`meeting_room_booking_pending` ⇒ Duyệt phiếu;
+  `meeting_room_service_requested` / `…_service_request_cancelled` ⇒ Dịch vụ phòng; còn lại ⇒ Xem phiếu theo data.id), gọi từ
+  `app_bloc.dart` (push) + `notification_bloc.dart` (danh sách thông báo).
+- Tổng quan (TQ2): tải thêm phiếu tự đặt hôm nay (`mine=1`, bỏ phiếu sinh từ meeting) trộn vào Lịch hôm nay theo giờ (nhãn
+  "Đặt phòng" / trạng thái chờ duyệt), dòng chào thêm "N phòng đã đặt"; bấm thẻ mở Xem phiếu.
+- Kiểm máy ảo (API 8050 sau merge develop): Tổng quan hiện đúng; bấm thông báo nhắc nhận phòng ⇒ Xem phiếu, thông báo chờ duyệt
+  ⇒ Duyệt phiếu. Chưa kiểm được nhánh push thật (máy ảo không nhận FCM) — cùng hàm chọn màn. Dữ liệu E3D-KT đã dọn.
+- Đợt E3 (app) xong toàn bộ: E3a–E3d.
+
+### Checkpoint — 27/10/2026 (wrap up)
+- TPE_APP `feature/meeting-room-qr-scan`: commit `154e401` (E3a–E3d, 21 file). `build_config.dart` (trỏ API local) cố ý KHÔNG
+  commit, còn dirty — chờ user quyết giữ/bỏ.
+- hrm-api / hrm-client `gop_db-quan-ly-phong-hop`: commit đợt E + merge develop → nhánh (api `34baec322`, client `261acae54`).
+- CHƯA push cả 3 repo. 7 migration develop chưa chạy ở DB local.
+- Còn làm sau: Dọn phòng (câu hỏi tồn: ai phụ trách dọn), Phase 6 báo cáo, Đặt lặp định kỳ (tạm bỏ), e2e phòng họp chạy lại sau
+  merge (chưa chạy), Pen file cần user Cmd+S.
+
+### Chỉnh thiết kế 27/10/2026 — thứ tự thông tin phiếu đặt phòng + thẻ meeting (`meeting-mobile.pen`, CHƯA sửa app)
+- User chốt thứ tự trên mọi màn phiếu đặt phòng: **Mã phiếu · Tên phòng** → Ngày giờ → Lý do đặt (nội dung) → **Người đặt** → còn lại
+  (vị trí/tầng, nguồn/meeting, số người, dịch vụ…). Đã vẽ lại: PM1, PM1-QR, AP0 (thẻ Phiếu của tôi) · AP1/AP2/AP3 (Duyệt) ·
+  SV1/SV2 (Dịch vụ phòng) · PM3/PM3b/PM3c/PM5/PM6 (Xem phiếu: khối đầu thêm dòng Người đặt, bỏ dòng "Người đặt" ở bảng dưới) ·
+  PM4 form Nhu cầu khác (khối PHÒNG & THỜI GIAN lên trước, "VIỆC GÌ" đổi thành "LÝ DO ĐẶT"). PM4b/MR2 giữ nguyên (chọn cuộc họp
+  quyết định giờ). "Mã" hiểu là MÃ PHIẾU — bảng meeting_rooms không có cột mã phòng.
+- Màn 01 · Lịch meeting: **Tên meeting lên đầu** (cạnh badge trạng thái), mã meeting xuống dòng dưới chữ xám.
+- Bản sao lưu trước khi sửa: `meeting-mobile.backup-20261027-truoc-doi-thu-tu-phieu.pen`. App TPE_APP chưa sửa theo (chờ user cho phép).
+- 27/10 tiếp — popup quét QR (QR2 Check-in · QR3 Check-out · QR4 lỗi): bỏ đoạn chữ xám 13px đồng cỡ, thay bằng khối nền xám có
+  icon: **Mã phiếu · Phòng** (15 đậm) → **giờ · ngày** (14 đậm xanh teal) → lý do đặt (13 thường). QR3 thêm dòng xanh lá
+  "Đã check-in lúc …" + ô cam "Check-out xong, phòng được nhả ngay…". QR4: câu lỗi đỏ đậm + ô xám "Check-in mở từ 15 phút trước giờ bắt đầu".
+
+### Checkpoint — 27/10/2026 (code theo thiết kế 27/10, CHƯA commit) — TPE_APP nhánh feature/meeting-room-qr-scan
+- Chỉ sửa TPE_APP (BE đã trả sẵn `booked_by_name`, không đụng hrm-api, không migration). 7 file:
+  `room_booking_common.dart` (thẻ Phiếu của tôi + `roomCodeAndName()` + `kRoomTimeColor`), `room_approval_page.dart`,
+  `room_service_page.dart`, `meeting_room_booking_page.dart` (khối đầu Xem phiếu, bỏ "Người đặt" ở bảng),
+  `meeting_room_booking_form_page.dart` (Nhu cầu khác: Phòng & thời gian lên trước, "LÝ DO ĐẶT"; Gắn với cuộc họp giữ
+  nguyên), `meeting_room_scan_page.dart` (popup QR dùng `AppDialog.content` riêng, KHÔNG sửa AppDialog dùng chung; giờ dựng
+  từ start_at/end_at "HH:mm – HH:mm · dd/MM/yyyy"; lỗi BE tách phần trong ngoặc ra ô xám), `meeting_card.dart` (tên trước mã).
+- `dart analyze` sạch. ⚠️ Đừng chạy `dart format -l 120` cả thư mục: nó định dạng lại file không liên quan (đã gỡ).
+- Kiểm máy ảo iPhone 18 Pro (API worktree 8050, tài khoản e2e_assign_nocost): PM1 · Xem phiếu · Duyệt phiếu · Dịch vụ phòng ·
+  form 2 tab · danh sách meeting · popup QR Check-in / Check-out / lỗi. Dữ liệu E3F-KT (2 phòng, 4 phiếu, 2 meeting nhân bản,
+  1 lịch sử check-in) đã xoá; cấu hình `meeting_room_checkin_mode` công ty 1 trả về NULL.
+- Ngoài luồng (note, chưa sửa): trên máy ảo không camera, sau khi bấm Hủy ở popup QR thì lần quét kế tiếp không chạy
+  (`_scanner.start()/pause()` treo) — mở lại màn quét thì được. Chưa thấy trên máy thật.
+- 27/10 tiếp (user "Làm", phạm vi 2 file): popup Check-out bằng nút (PM5, `RoomBookingActions.checkout` trong
+  room_booking_common.dart — dùng chung Xem phiếu / thẻ Phiếu của tôi / dải Hub / khối phòng Thông tin chung) cùng khuôn popup QR;
+  phiếu từ Hub/Thông tin chung không có giờ ⇒ bỏ dòng giờ. Màn 21 Lịch sử meeting KH (`picker/meeting_customer_history_page.dart`):
+  tên trước mã. Pen đã vẽ cả 2 (PM5 · Wrap 21). Kiểm máy ảo xong; dữ liệu E3G-KT (1 phòng, 1 phiếu, 2 meeting) đã xoá. CHƯA commit.
+- 27/10 (user "commit => push"): TPE_APP commit `ce7b2de` (8 file), push lần đầu nhánh `feature/meeting-room-qr-scan` lên origin
+  (tạo nhánh mới, đã đặt upstream; gồm cả E3a–E3d `154e401` + merge develop `e6f0de4`). `build_config.dart` vẫn để dirty, không commit.
+  hrm-api / hrm-client nhánh `gop_db-quan-ly-phong-hop` vẫn CHƯA push.
+
+### Checkpoint — 27/10/2026 (chạy e2e phòng họp sau merge develop — user "làm")
+- Worktree: API 8050 + Nuxt 3050 (node 12, heap 8192), `--workers=1`, 19 file `tests/meeting/meeting-room*`: **231 passed · 1 failed ·
+  5 did not run** (19,4 phút).
+- Đỏ: `meeting-room-kiosk.spec.ts` U1 dòng 82 — chờ `[data-testid="kiosk-progress"]` chứa "Còn" nhưng kiosk dựng lại (E2) để chữ
+  "Còn … phút" ở `<small>` dòng giờ, `kiosk-progress` chỉ còn thanh ⇒ LỖI SPEC (E4 sót), không phải lỗi code. U2–U5 + dọn dữ liệu của
+  file này bị bỏ do serial ⇒ phần kiosk UI CHƯA được kiểm. DB sạch (E2E-KIOSK-UI = 0), cấu hình general_regulations đã về NULL.
+
+### Checkpoint — 27/10/2026 22:30 (sửa spec kiosk + chạy lại)
+Vừa hoàn thành: sửa `HRM/e2e/tests/meeting/meeting-room-kiosk.spec.ts` (ngoài git):
+- U1 dòng 82: chữ "Còn …" giờ kiểm ở `.k-hero__time`; `kiosk-progress` chỉ còn là thanh tiến độ (E4).
+- Fixture beforeAll: giờ 2 phiếu bị ép trong hôm nay. Chạy sau 22h thì +120 phút rơi sang ngày mai, khi đó kiosk báo "Không còn cuộc họp nào hôm nay". Còn dưới 30 phút là hết ngày thì báo lỗi rõ.
+- Chạy lại riêng file kiosk: **9 passed / 0 failed / 0 did not run**. DB sạch (0 rác E2E-KIOSK-UI), config check-in toàn NULL.
+- Như vậy toàn bộ e2e phòng họp: 236/237 xanh, chỉ ca U1 đỏ do spec, nay đã xanh.
+Đang làm dở: —
+Bước tiếp theo: push hrm-api + hrm-client nhánh `gop_db-quan-ly-phong-hop` (hỏi trước: số commit chưa push).
+Blocked:
+
+### Checkpoint — 28/10/2026 (push nhánh phòng họp)
+Vừa hoàn thành: push nhánh mới `origin/gop_db-quan-ly-phong-hop` ở cả 2 repo, upstream đã đổi sang nhánh này (trước đó là origin/gop_db):
+- hrm-api `34baec322`: 119 commit so với gop_db.
+- hrm-client `261acae54`: 60 commit so với gop_db.
+- Không merge vào gop_db. gop_db đang đi trước nhánh này: hrm-api 3 commit, hrm-client 1 commit.
+Đang làm dở: —
+Bước tiếp theo: 7 migration develop chưa chạy ở DB local (hỏi, liệt kê từng file) · thiết kế Dọn phòng · Phase 6 báo cáo.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: wrap up. STATUS.md đã cập nhật; design.md không đổi (thứ tự trường đã ghi ở checkpoint thiết kế 27/10).
+Đang làm dở: —
+Bước tiếp theo: thiết kế mobile Dọn phòng, chờ user chốt ai dọn: quản lý phòng / nhóm dọn riêng / người phụ trách dịch vụ.
+Blocked: câu hỏi "ai dọn phòng".
+Còn treo: Phase 6 báo cáo · 7 migration develop chưa chạy ở DB local · lỗi quét QR lần 2 trên máy ảo · `build_config.dart` · nhấn Cmd+S ở Pen.
+
+### Checkpoint — 28/10/2026 10:10 (data test app cho namdangit)
+Vừa hoàn thành: đã tạo 1 bộ data test app trên DB local cho namdangit (id 13). Tạo bằng API cổng 8051, sau đó chỉnh giờ/trạng thái bằng SQL.
+- Danh mục: mục đích TA Họp nội bộ / TA Tiếp khách; dịch vụ TA Trà / TA Nước suối / TA Hoa quả.
+- Phòng:
+  - TA Phòng Hoa Sen: không duyệt, 13 quản lý.
+  - TA Phòng Hội đồng: cần duyệt, 13 quản lý.
+  - TA Phòng Sen Vàng: cần duyệt, 484 quản lý.
+- 8 phiếu DPH, tiêu đề bắt đầu "TA ":
+  - Đang họp, đã check-in.
+  - Sắp họp sau 10 phút, chờ check-in, có dịch vụ chờ chuẩn bị.
+  - Chờ 484 duyệt.
+  - Hoàn thành hôm qua.
+  - Đã huỷ.
+  - 2 phiếu của 484 chờ 13 duyệt.
+  - Phiếu 16h có dịch vụ chờ.
+- 11 meeting, mã TA.MET.26.001–011: 7 meeting 13 chủ trì (đủ các trạng thái), 4 meeting 13 tham gia.
+- id: `.sdd/data-test-app-ids.json`. Script: `.sdd/seed_api.py` + `.sdd/seed_sql.php`.
+- Dọn: theo id trong file json, hoặc chạy `cleanupMeetingByPrefix('TA ')` của e2e, cộng thêm meetings/meeting_employees có code `TA.MET.%`.
+Bước tiếp theo: user test trên điện thoại; push develop TPE_APP còn chờ quyết định.
+Blocked:
+- 10:40 dời giờ: M1/B1 đang diễn ra tới 18:00; M3/B2 sắp diễn ra 16:30–17:30; B8 chuyển sang phòng Hội đồng 13:00–14:00 cho khỏi trùng phòng. Data này chỉ đúng cho ngày 28/10.
+
+### Checkpoint — 28/10/2026 (TPE_APP develop đã push)
+Vừa hoàn thành: TPE_APP merge feature/meeting-room-qr-scan vào develop, rồi merge thêm origin/develop (`771bbbe` của Manh Cuong) bằng merge commit `f435a78`. flutter analyze: 0 error/warning. Đã push `origin/develop` = `f435a78`.
+Đang làm dở: —
+Bước tiếp theo: build lại app lên điện thoại cho có header mới (tuỳ user) · thiết kế Dọn phòng (chờ chốt ai dọn) · Phase 6.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: wrap up. STATUS.md cập nhật (TPE_APP develop đã push, data test app, API 8051 cho điện thoại).
+Đang làm dở: —
+Bước tiếp theo: (tuỳ user) build lại app lên điện thoại từ develop `f435a78` · thiết kế Dọn phòng (chờ chốt ai dọn) · Phase 6 báo cáo.
+Blocked: câu hỏi "ai dọn phòng".
+Còn treo: 7 migration develop chưa chạy ở DB local · lỗi tab "Tôi tham gia" lẫn meeting mình chủ trì (API mine role=member) · mã phiếu DPH-2026-00001 lệch dãy · lỗi quét QR lần 2 trên máy ảo · data test hết đúng giờ sau 28/10 · nhấn Cmd+S ở Pen.
+
+### Checkpoint — 28/10/2026 (wrap up, đã tắt server)
+Vừa hoàn thành: tắt 3 server của phiên này theo PID: API worktree 8050, Nuxt worktree 3050, API LAN 8051. Giữ nguyên API 8000 của checkout chính.
+Đang làm dở: —
+Bước tiếp theo: thiết kế Dọn phòng (chờ chốt ai dọn) · Phase 6 báo cáo. Muốn test app trên điện thoại thì bật lại 8051 trước: `php -S 0.0.0.0:8051 -t public server.php` trong worktree hrm-api.
+Blocked: câu hỏi "ai dọn phòng".

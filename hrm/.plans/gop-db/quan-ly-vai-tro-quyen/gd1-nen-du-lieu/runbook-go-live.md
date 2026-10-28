@@ -44,12 +44,74 @@
    | 2 | `chenh-lech-khac` khác rỗng, dữ liệu đã huỷ, còn `bak_rbac_*` | Điều tra, xoá `bak_rbac_*`, chạy lại hoặc huỷ go-live |
    | 1 trước commit | Dữ liệu chưa đổi | Xoá `bak_rbac_*` / `rbac_new_*` / `rbac_role_map` rỗng, huỷ hoặc chạy lại |
    | 1 kèm "DDL lỗi" | Dữ liệu đã commit, DDL chưa xong | Sửa nguyên nhân rồi `rbac:convert --resume-ddl --erp-da-bao-tri --report-dir=…/golive` (cũng cần hrm-api đang down) |
-5. **Kiểm bằng SQL:** `role_has_permissions` không còn `company_id`; `roles.company_id` NOT NULL + unique `(company_id, base_name)`; `rbac_role_map` có dòng; số dòng khớp diễn tập. Rồi `permission:catalog-sync --dry-run` = 0 thay đổi.
+5. **Kiểm bằng SQL** (sau B.4b): `role_has_permissions` không còn `company_id`; `roles.company_id` NOT NULL + unique `(company_id, base_name)`; `rbac_role_map` có dòng; số dòng khớp diễn tập. Rồi `permission:catalog-sync --dry-run` = 0 thay đổi.
 6. **Deploy ERP:** merge/push `rbac` vào `gop_db` TanPhatDev lúc này (workflow: `git pull`, `composer install --optimize-autoloader`, `migrate`, `config:cache`, `route:cache`, `view:cache`, `queue:restart`, `optimize`). Rồi `sudo systemctl reload apache2`.
 7. **Cache:** HRM — chuyển đổi đã xoá cache spatie. ERP — cache spatie 0 giây. **Không** `cache:clear` trên Redis dùng chung.
 8. **Khởi động lại worker sau chuyển đổi:** HRM `sudo supervisorctl restart laravel-worker:*`; ERP `php artisan queue:restart`.
 9. **Smoke test** qua đường bypass bảo trì: 3 tài khoản Playwright trên 2 app + đăng nhập TPE_APP (`permissions[].name` phải là tên cũ). So số với diễn tập.
 10. **Mở 2 app** (`php artisan up`), bật lại cron.
+
+### B.4b. Sau chuyển đổi — dữ liệu tài khoản (GĐ2b, user chốt 27/10)
+
+Chạy ngay sau B4 (cần `bak_rbac_*` còn nguyên), trước B5. Diễn tập ở bước A.2.5 chạy đúng các câu này trên DB diễn tập.
+
+1. **Kiểm: tài khoản đang hoạt động thiếu dòng `company_employees` ở công ty chính** — phải 0 dòng (rehearsal 27/10: 0).
+   Khác 0 ⇒ người đó vào HRM không có công ty đang làm (403) — dừng, báo nhân sự bổ sung trước khi mở app.
+   ```sql
+   SELECT e.id AS employee_id, e.email, ei.fullname, ei.company_id AS main_company_id
+   FROM employees e
+   JOIN employee_infos ei ON ei.id = e.employee_info_id
+   LEFT JOIN company_employees ce ON ce.employee_id = e.id AND ce.company_id = ei.company_id
+   WHERE e.status = 1 AND ei.company_id IS NOT NULL AND ce.id IS NULL;
+   ```
+2. **Dọn `employee_has_roles` mồ côi** (vai trò ở công ty nhân viên không còn làm việc — user chốt phương án A: xuất bản lưu rồi xoá;
+   nhân viên quay lại công ty đó phải được cấp vai trò lại). Rehearsal 27/10: 12 dòng / 11 NV, **cả 11 id không còn trong `employees`** (rác của tài khoản đã xoá).
+   ```sql
+   -- (a) bản lưu — lưu kết quả thành CSV vào thư mục báo cáo golive (employee-has-roles-mo-coi.csv)
+   SELECT ehr.*, r.name AS role_name, c.code AS company_code, e.id IS NOT NULL AS con_tai_khoan
+   FROM employee_has_roles ehr
+   LEFT JOIN company_employees ce ON ce.employee_id = ehr.employee_id AND ce.company_id = ehr.company_id
+   LEFT JOIN roles r ON r.id = ehr.role_id
+   LEFT JOIN companies c ON c.id = ehr.company_id
+   LEFT JOIN employees e ON e.id = ehr.employee_id
+   WHERE ce.id IS NULL;
+   -- (b) xoá — số dòng xoá phải bằng số dòng (a)
+   DELETE ehr FROM employee_has_roles ehr
+   LEFT JOIN company_employees ce ON ce.employee_id = ehr.employee_id AND ce.company_id = ehr.company_id
+   WHERE ce.id IS NULL;
+   ```
+   Sau (b): xoá cache quyền — `php artisan tinker --execute='\App\Support\Permissions\PermissionChecker::flush(); cache()->forget("spatie.permission.cache");'`
+   (KHÔNG `cache:clear`, Redis dùng chung).
+3. **Báo cáo: người mất quyền quản lý tài khoản** (có quyền ERP cũ "Quản lý tài khoản" — mã `admin.tai_khoan.manage` đã bỏ, 3 tên cũ
+   nằm trong `dropped_legacy.php` nên chuyển đổi xoá lượt gán — mà sau chuyển đổi không có "Quản lý tài khoản nhân viên" tại cùng công ty).
+   User chốt phương án A: chỉ báo cáo, **quản trị viên tự cấp lại** ở màn Vai trò nhân viên (`/admin/employee-roles`), không tự cấp.
+   Rehearsal 27/10: **0 người** (2 tài khoản đang hoạt động có quyền cũ đều đã có quyền mới — NV 256 qua vai trò Super Admin).
+   SQL cũ trong `gd2b…/bao-cao-code/task-8-report.md` ĐÃ LỖI THỜI (tra theo mã đã bỏ + không lọc tài khoản khoá ⇒ ra nhầm NV 258 đã khoá).
+   ```sql
+   SELECT old.employee_id, old.company_id, c.code AS company_code, ei.fullname, e.email, old.quyen_cu
+   FROM (
+       SELECT ehr.employee_id, rhp.company_id,
+              GROUP_CONCAT(DISTINCT p.name ORDER BY p.name SEPARATOR ' | ') AS quyen_cu
+       FROM bak_rbac_employee_has_roles ehr
+       JOIN bak_rbac_role_has_permissions rhp ON rhp.role_id = ehr.role_id
+       JOIN bak_rbac_permissions p ON p.id = rhp.permission_id AND p.guard_name = 'web'
+            AND p.name IN ('Quản lý tài khoản', 'Quản lý tài khoản theo tổng công ty', 'Quản lý tài khoản theo công ty')
+       WHERE ehr.company_id IS NULL OR ehr.company_id = rhp.company_id
+       GROUP BY ehr.employee_id, rhp.company_id
+   ) old
+   JOIN employees e ON e.id = old.employee_id AND e.status = 1
+   JOIN company_employees ce ON ce.employee_id = old.employee_id AND ce.company_id = old.company_id
+   LEFT JOIN employee_infos ei ON ei.id = e.employee_info_id
+   LEFT JOIN companies c ON c.id = old.company_id
+   WHERE NOT EXISTS (
+       SELECT 1 FROM employee_has_roles h
+       JOIN roles r ON r.id = h.role_id AND r.company_id = h.company_id AND r.status = 1
+       JOIN role_has_permissions rhp2 ON rhp2.role_id = r.id
+       JOIN permissions p2 ON p2.id = rhp2.permission_id AND p2.code = 'human.tai_khoan_nhan_vien.manage' AND p2.deprecated_at IS NULL
+       WHERE h.employee_id = old.employee_id AND h.company_id = old.company_id)
+   ORDER BY old.company_id, old.employee_id;
+   ```
+4. Mỗi tenant (etek, toyota) chạy lại đủ 3 bước trên DB của tenant đó.
 
 ## C. Khôi phục
 

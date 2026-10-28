@@ -77,6 +77,23 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- quan-ly-hang-hoa / **Bảng giá bán hàng hoá hiện hành** (báo cáo giá bán + giá vốn + giá hiệu lực theo công ty) → @dnsnamdang → .plans/gop-db/quan-ly-hang-hoa/bang-gia-ban-hien-hanh/design.md · spec: docs/superpowers/specs/gop-db/2026-10-28-bang-gia-ban-hien-hanh-design.md
+  ### Checkpoint — 28/10/2026 (wrap up 3)
+  Vừa hoàn thành: Phase 4 (cột thông tin hiện đủ chữ) · Phase 5 (nút Lịch sử giá cạnh Mã hàng + API lịch sử theo công ty xem) · Phase 6 (độ rộng cột). Đã PUSH origin/gop_db — hrm-api `36fb5d042` `3a14fac44`; hrm-client `0c3df9a58` `33d666104` `0b63506fb` `5370d6620`. PHPUnit 24/24, e2e 19/19 (spec ngoài git).
+  Đang làm dở: —
+  Bước tiếp theo: user kiểm tay màn Bảng giá bán hiện hành; gỡ role tạm 108490 (hrm_erp_21_10_prod) + DROP DB hrm_erp_bang_gia_test khi user cho. Deploy: seeder quyền (2 quyền mới) + admin gán quyền.
+  Blocked: chờ user kiểm tay
+- quan-ly-hang-hoa / **Kế thừa giá bán theo hãng — sự cố prod 504 khi Lưu cài đặt** → @namdangit → .plans/gop-db/quan-ly-hang-hoa/ke-thua-gia-theo-hang/plan.md (mục "Sự cố prod 27/10/2026")
+  ### Checkpoint — 28/10/2026
+  Vừa hoàn thành: TPHP chuyển kế thừa toàn bộ ⇒ Lưu chạy đồng bộ 30.272 mã ⇒ nginx 504 nhưng đã commit (lịch sử ghi đủ). compare-inherited prod: còn 1 mã lệch `CH-HG6030K:03` (ĐVT 48484, TPHP 1 đ / TPE 2.050.200) — nghi giá TPE ghi sau qua đường không propagate (ERP?).
+  Đang làm dở: — (chưa đụng code/DB)
+  Bước tiếp theo: user gửi kết quả SQL ĐVT 48484; user chọn hướng sửa 504: Job nền (hrm-api + hrm-client, không migration) hoặc tăng `fastcgi_read_timeout` nginx bộ tpe.
+  Blocked: chờ user
+
+- hop-dong (Hợp đồng bán hàng HRM, `/assign/contracts`) → @dnsnamdang → .plans/hop-dong/{design.md,plan.md,design-phase11-firm-fields.md,design-phase18-danh-sach.md,design-phase20-mau-in.md}
+  Trạng thái: 🔄 **Đang làm — wrap up 28/10/2026 (tối).** Xong Phase 18 (danh sách: quyền 4 cấp + 17 ô lọc), 19 (form gọn 2 khối + 6 tab), 20 (mẫu in + 26 mẫu ERP, In HĐ / phụ lục / biên bản, QR, ẩn giá), 21 (kiểm HĐ thật, sửa bản in đợt thanh toán, gate quyền xem giống ERP, cảnh báo thoát chưa lưu) + đợt UI 28/10 tối: màn Chi tiết dựng lại theo UI màn Sửa (style chung `contract-form.scss`), bảng HĐ trượt ngang + ghim cột "TT sau VAT", Mã/Tên xuống dòng, nền nhãn ô chỉ đọc (gốc V2BaseFloatingField), nhãn NV chuẩn. E2E: hide-price.api 6/6 · detail-layout 6/6 · form-layout 11/11.
+  Code: nhánh `gop_db-hop-dong-ban` (cả 2 repo; ĐÃ push Phase 18–20: api `f43174d2e`, client `09a88e317` · Phase 21 commit CHƯA push: api `3537a0c80`, client `c42bda740` · đợt UI 28/10 tối CHƯA commit; chưa merge gop_db) · worktree `websites/wt-hop-dong-ban/{hrm-api,hrm-client}` · cổng API 8060 / client 3060. Đã chạy local: migration `2026_10_23_000001`, `2026_10_27_000001`, `2026_10_28_000001` + `SaleContractPrintTemplatesSeeder`.
+  Bước tiếp: commit đợt UI 28/10 tối (user báo) → push nhánh khi được cho phép → merge về gop_db (chờ user yêu cầu; deploy: 3 migration + seeder quyền + seeder mẫu in). Còn mở: biên bản serial trống, TK Bên A thiếu "VNĐ" ở màn Chi tiết, dọn role tạm 108470 + 108473 / menu_settings / BG-2026-00442 khi test xong.
 - mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
   Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.
   Scope: cho sửa %VAT dòng hàng (2 số lẻ) trên PI trong nước (theo hãng + tự do) và HĐ `inland_buy_contract_new`, tính lại VAT/tổng. Nhập khẩu chưa làm (chờ BA — không có %VAT theo dòng).
@@ -84,10 +101,16 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Spec: docs/superpowers/specs/gop-db/2026-10-22-mua-hang-sua-vat-pi-hd-design.md | Tóm tắt: .plans/gop-db/mua-hang-sua-vat-pi-hd/design.md
 
 - quan-ly-vai-tro-quyen / **Thiết kế lại quản lý Vai trò & Quyền (ERP + HRM): vai trò thuộc 1 công ty, kiểm theo mã, phạm vi tách khỏi quyền, 1 màn ở Quản trị** → @namdangit → .plans/gop-db/quan-ly-vai-tro-quyen/design.md
-  ### Checkpoint — 26/10/2026
-  Vừa hoàn thành: GĐ1 xong toàn bộ Task 0–12 + review cuối toàn nhánh + diễn tập thật trên `hrm_erp_rbac_rehearsal` (bản sao prod 21/10 + 6 migration gop_db + 5 migration rbac + rbac:convert). Worktree `wt-rbac/{hrm-api,TanPhatDev}` nhánh `rbac` — đã commit 26/10 (hrm-api `b5eb3cb57`, ERP `5101a750a9`), chưa push, chưa merge gop_db. Danh mục 892 mã. Runbook: `gd1-nen-du-lieu/runbook-go-live.md`; biên bản diễn tập: `gd1-nen-du-lieu/bao-cao-dien-tap/playwright.md`.
-  Đang làm dở: — (ledger: wt-rbac/hrm-api/.superpowers/sdd/plan/progress.md)
-  Bước tiếp theo: GĐ2 (màn Vai trò mới) — chờ user; diễn tập tenant riêng etek/toyota khi có dump. DB local giữ: hrm_erp_rbac_test, hrm_erp_rbac_rehearsal (đã chuyển đổi)
+  ### Checkpoint — 28/10/2026 (GĐ3 Task 8 tạm dừng)
+  Vừa hoàn thành: GĐ3 Task 8.1→8.13 (13 phân hệ kiểm quyền theo mã), commit nhánh `rbac` chưa push — cuối: hrm-api `26d1bc1f5`, ERP `17158a8c7d`, hrm-client `8a487f1a8`.
+  Đang làm dở: 8.14 finance (chưa sửa code, cây sạch). Bước tiếp: 8.14→8.17 rồi dừng 8.18 hỏi user. Chi tiết: `quan-ly-vai-tro-quyen/gd3-kiem-quyen-theo-ma/plan.md` (checkpoint cuối) + sổ cái `wt-rbac/hrm-api/.superpowers/sdd/plan-gd3-kiem-quyen-theo-ma/progress.md`.
+  ### Checkpoint — 27/10/2026
+  Vừa hoàn thành: GĐ2 màn Vai trò mới (`/admin/roles` + `/admin/roles/:id/permissions`) — Task 1–8 trên `wt-rbac` nhánh `rbac`: hrm-api (RoleController/RoleManagementService/route `/admin/roles`, checker lọc vai trò khoá), hrm-client (worktree mới `wt-rbac/hrm-client` từ gop_db `cdbdc223b`), TanPhatDev (gỡ `common/roles`, menu trỏ HRM). GĐ2 **commit 27/10, chưa push** (hrm-api `80de7580b`, hrm-client `25824b310`, ERP `f9b85744c5`). E2E `admin-roles.spec.ts` 9/9 xanh trên rehearsal. Kiểm Playwright trên `hrm_erp_rbac_rehearsal` (đã dọn dữ liệu thử). Review cuối (reviewer mới) xong, đã sửa 1 Critical (route closure ERP vỡ route:cache) + 2 Important; PHPUnit hrm-api Feature/Rbac 202 OK, ERP Rbac 23+3 OK. GĐ1 đã commit 26/10 (hrm-api `b5eb3cb57`, ERP `5101a750a9`), chưa push.
+  Đang làm dở: — (ledger + rulings + minor hoãn: wt-rbac/hrm-api/.superpowers/sdd/gd2-plan/progress.md)
+  ### Checkpoint — 27/10/2026 (GĐ2b code xong)
+  Vừa hoàn thành: GĐ2b 9/9 task (subagent-driven) trên `wt-rbac` nhánh `rbac` 3 repo, **commit + push origin/rbac 27/10** (hrm-api a7fefc312, hrm-client 8dbe831cc, ERP 57aea84917; gồm cả GĐ1+GĐ2) — KHÔNG merge gop_db khi user chưa yêu cầu: `/admin/accounts` (Màn 1) + `/admin/employee-roles` & `/:id` (Màn 2) + bulk; đóng `/human/employee`, `/timesheet/setting/employees`, ERP `employees`; gỡ route ghi cũ `human/employee` + `timesheet/employees|roles/list|bulk-permissions`. Migration `2026_11_02_000001` đã chạy vào `hrm_erp_rbac_test` + `hrm_erp_rbac_rehearsal`. PHPUnit hrm-api Rbac 238 OK, ERP Rbac 25+3 OK. Kiểm Playwright trên rehearsal (dữ liệu Zz đã dọn). Final review + 1 đợt sửa: sạch. Báo cáo + sổ cái: `gd2b-tai-khoan-va-vai-tro-nhan-vien/bao-cao-code/`.
+  Đang làm dở: — 
+  27/10 đóng hết việc tồn GĐ2b (đã commit rbac, CHƯA push — ERP `7433afc657`, hrm-api `af85813b1`): gỡ ERP `employee.searchData` + popup chọn NV phiếu thu/chi khác (code chết); bỏ `admin.tai_khoan.manage` khỏi catalog (3 tên cũ → `dropped_legacy.php`); runbook B.4b (kiểm công ty chính · dọn ehr mồ côi · báo cáo mất quyền quản lý tài khoản, rehearsal 0); e2e 2 spec trên rehearsal 22/22 passed. Bước tiếp theo: GĐ3 (kiểm quyền theo mã) — brainstorm/design, chờ user. Deploy: cần `DB_*_TPE` (rule exists địa điểm suất ăn chạy `mysql_tpe`). DB local giữ: hrm_erp_rbac_test (CHƯA chuyển đổi), hrm_erp_rbac_rehearsal (đã chuyển đổi)
 
 - gia-0-canh-bao-chua-tinh-gia / **Giá 0 = chưa tính giá + cảnh báo chọn hàng chưa tính giá ở Báo giá (HRM + ERP)** → @namdangit → .plans/gop-db/gia-0-canh-bao-chua-tinh-gia/design.md
   ### Checkpoint — 23/10/2026
@@ -526,6 +549,15 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   📊 **30/09/2026:** file báo giá `quan-ly-phong-hop/bao-gia-quan-ly-phong-hop.xlsx` (3 cấp, 89.75 công,
   kèm 3 chức năng mới chưa spec: dọn phòng · đánh giá phòng · đổi phòng). Đã sửa marker xung đột lọt vào
   merge `8ad4b904d` ở `MeetingRoomModal.vue` → fix ở client `976e1eb32` (đã push). Chi tiết: checkpoint cuối plan.md.
+  🆕 **Wrap up 28/10/2026:** nhánh riêng `gop_db-quan-ly-phong-hop` ĐÃ PUSH origin (api `34baec322` 119 commit · client
+  `261acae54` 60 commit so với gop_db, KHÔNG merge gop_db). TPE_APP: nhánh feature đã merge vào develop + push (`origin/develop` `f435a78`, 28/10).
+  Data test app cho namdangit trên DB local (3 phòng, 8 phiếu, 11 meeting `TA.MET.26.*`, id ở `.sdd/data-test-app-ids.json`)
+  — giờ chỉ đúng ngày 28/10. App release trên iPhone trỏ 192.168.38.102:8051. Server 8050/3050/8051 ĐÃ TẮT 28/10; muốn dùng app phải bật lại
+  `php -S 0.0.0.0:8051 -t public server.php` trong worktree hrm-api.
+  Đợt 27/10: thiết kế mobile `meeting-mobile.pen` cho thứ tự phiếu (Mã·Tên phòng → Ngày giờ → Lý do đặt → Người đặt), list
+  meeting tên trước mã, popup QR/check-out dễ đọc; code app đã làm theo và đã kiểm máy ảo. E2E phòng họp đủ 237/237 xanh, sau khi
+  sửa spec kiosk (U1 chữ "Còn" + giờ fixture vắt qua nửa đêm). Tiếp: thiết kế Dọn phòng (chờ chốt AI DỌN) · Phase 6 báo cáo ·
+  7 migration develop chưa chạy ở DB local (hỏi) · lỗi quét QR lần 2 trên máy ảo · `build_config.dart` chưa commit (cố ý).
   Trạng thái (wrap up 26/10/2026): **Phase 8 + đợt 25–26/10 ĐÃ PUSH gop_db 26/10** (merge api `12dfba4f6`, client `7ee73ddff`) —
   api `dab856446` · client `55801d64c` (fix hub sập) + `e9238bbfc`. Phase 5 đã làm: check-in/check-out (popup phiếu +
   form Meeting), tự huỷ khi không check-in (cờ mặc định TẮT), tự hoàn thành khi hết giờ, QR in dán + QR xoay vòng
@@ -2426,6 +2458,9 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 - tong-hop-xuat-nhap-ton → @khoipv → .plans/gop-db/tong-hop-xuat-nhap-ton/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-24-tong-hop-xuat-nhap-ton-design.md)
   Port ERP `warehouseReport.changeSummaryReport` (Kho › Báo cáo kho) → `/warehouse/change-summary-report`. Bắt đầu 24/10/2026.
   Chuyển Hoàn thành: 2026-10-27.
+
+- chan-tab-lech-cong-ty — Fix lỗ hổng: công ty đang làm dùng chung mọi tab ⇒ tab cũ đọc/ghi nhầm công ty (lộ ở Cập nhật giá bán: TPE sửa giá mã TPE bị sàn "của TPE"). BE middleware `EnsureSameCompany` 409 khi `X-Company-Id` lệch; FE popup bắt tải lại + báo tab khác qua storage. Bắt đầu 27/10/2026 → @namdangit → .plans/gop-db/chan-tab-lech-cong-ty/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-27-chan-tab-lech-cong-ty-design.md)
+  Chuyển Hoàn thành: 2026-10-27. Đã push `gop_db` (api `bf24b5f5b`, client `4eb26ea7d`); deploy cần 2 repo cùng lúc + restart Nuxt. Còn treo: `update-company-role` không kiểm chủ hồ sơ / quyền công ty.
 
 - bien-ban-xu-ly-thua-thieu-kiem-ke — Port màn Biên bản xử lý hàng thừa, thiếu sau kiểm kê ERP (`inventory_audit_reports`) sang Tài chính › Kiểm kê — Duyệt ghi bút toán 3381/3341/711, 3341/1381/811. Bắt đầu 21/10/2026 → @khoipv → .plans/gop-db/bien-ban-xu-ly-thua-thieu-kiem-ke/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-21-bien-ban-xu-ly-thua-thieu-kiem-ke-design.md)
   Chuyển Hoàn thành: 2026-10-22.

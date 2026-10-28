@@ -13,6 +13,9 @@
 | hrm-client | `1ab0006b6` (24/10) | Màn Tài chính › Giá bán theo hãng sx, nút Chuyển KD kế thừa, YCHG tách phiếu |
 | hrm-client | `094e72fc6` (26/10) | Hướng dẫn + cảnh báo khi lưu |
 
+Pull `gop_db` cũng kéo theo (feature khác, không migration/quyền): khoá Hãng SX / Model / Code đặt hàng ở form Sửa hàng hoá —
+api `38c7f68e5` · client `cdbdc223b` — và vá bảo mật api `4ce76d0df`.
+
 Commit TRƯỚC feature (điểm lui code): hrm-api `17f76d1f9` · hrm-client `3940e0c1b`.
 
 **Deploy xong mà chưa ai lưu cài đặt ⇒ hành vi giá KHÔNG đổi** (chưa cài = "Chọn hãng kế thừa" + danh sách rỗng = mọi hãng tự
@@ -37,9 +40,9 @@ php artisan migrate:status | grep "| No"                          # ghi lại da
 ## 2. Code
 
 ```bash
-cd $API && git pull origin gop_db && git log --oneline -1         # >= 326374069
+cd $API && git pull origin gop_db && git log --oneline -1         # >= 326374069 (26/10 tip: 4ce76d0df)
 composer install --no-dev --optimize-autoloader                   # chỉ cần nếu composer.lock đổi (đợt này không đổi)
-cd $CLI && git pull origin gop_db && git log --oneline -1         # >= 094e72fc6
+cd $CLI && git pull origin gop_db && git log --oneline -1         # >= 094e72fc6 (26/10 tip: cdbdc223b)
 ```
 
 ## 3. Migration — chạy LẺ đúng 2 bản

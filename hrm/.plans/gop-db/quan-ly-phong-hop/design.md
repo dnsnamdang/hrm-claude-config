@@ -198,8 +198,48 @@ Bổ sung vào 11 quyết định chốt lúc brainstorm ở trên. Chi tiết +
   xác thực bằng mã thiết bị riêng từng phòng. Quản lý mã = quyền Khai báo phòng họp (không thêm quyền).
 - 26/10/2026 — **Đặt lặp định kỳ TẠM BỎ** (user chốt). Cột `meeting_room_bookings.recurrence_id` giữ nguyên, chưa dùng.
 - 26/10/2026 — **Phase 6 báo cáo làm SAU**, khi các chức năng mới đã xong + test hết (user chốt).
+- 26/10/2026 — **Check-in/out PHÒNG ≠ ĐIỂM DANH meeting** (user nhấn mạnh): check-in/out là nhận / trả PHÒNG trên
+  phiếu đặt phòng; điểm danh là ghi có mặt từng thành phần tham gia cuộc họp (`meeting_employees.attendance_status`).
+  Hai việc tách rời, giao diện không được gộp chữ/nút. **Người check-in/out (user chốt lại 26/10):** **người đặt phòng
+  hoặc chủ trì meeting** — phiếu sinh từ meeting: người tạo meeting (= người đặt) hoặc chủ trì; phiếu tự đặt: chỉ người
+  đặt. TRÙNG luật code hiện tại (`MeetingRoomBooking::isCheckinActor`), không phải sửa. **Đổi (CHƯA code, còn câu hỏi
+  tồn):** cách check-in theo
+  **cấu hình toàn cục theo công ty**, chỉ dùng 1 trong 2: **Quét QR trên app** HOẶC **Nút trên phiếu** (màn Cấu hình
+  `/meeting/settings`, cạnh các cấu hình nhắc nhận/trả phòng).
+  - Chế độ **Nút trên phiếu**: nút Check-in/Check-out có trên **cả web và app** (web: popup Xem phiếu + form Meeting như
+    hiện có; app: thẻ "Phiếu của tôi" + màn Xem phiếu) — user chốt 26/10.
+  - Công ty CHƯA cấu hình ⇒ mặc định **Nút trên phiếu** (user chốt 26/10).
+  - Chế độ **Nút trên phiếu** ⇒ **ẩn hết phần QR**: máy tính bảng bỏ khối QR (vẫn hiện tình trạng + lịch, phần lịch giãn
+    ra), app ẩn nút quét QR ở tab Phòng họp. Chế độ **Quét QR** ⇒ ẩn nút Check-in/Check-out trên phiếu (web + app) (user chốt 26/10).
+  - Đổi cấu hình giữa chừng ⇒ theo cấu hình **tại thời điểm bấm/quét** (phiếu đã check-in bằng QR thì check-out bằng cách
+    đang bật); BE chặn cả 2 đường theo cấu hình hiện tại, không chỉ FE ẩn nút (user chốt 26/10).
+  - Phiếu từ meeting: người đặt = người bấm lưu lúc gắn phòng (`MeetingRoomBookingSyncService:308`), mà chỉ người tạo
+    hoặc chủ trì mới được lưu meeting / đặt phòng (`Meeting::canEdit`, `canBookRoom`) ⇒ người đặt luôn là 1 trong 2.
+- 26/10/2026 — **Màn Tình trạng dịch vụ phòng (app)** cho NGƯỜI CHUẨN BỊ DỊCH VỤ (hiện = người quản lý phòng, nhận
+  thông báo `meeting_room_service_requested`): yêu cầu dịch vụ trong ngày theo giờ / phòng, lọc Chờ chuẩn bị / Đã chuẩn bị /
+  Từ chối, thao tác Đã chuẩn bị / Từ chối ngay trên thẻ — dùng lại API `service-prepared` / `service-rejected` (user chốt A).
+- 26/10/2026 — **Nhắc lịch phòng họp** (số phút cấu hình theo công ty, thông báo web + app — user yêu cầu). Hiện có: "Nhắc
+  nhận phòng" N' trước giờ bắt đầu (mặc định 15, gửi người đặt + người tham gia) và "Nhắc trả phòng" N' trước giờ kết thúc
+  (mặc định 10, gửi người đặt + chủ trì). Chốt: (1) giữ nhắc trước giờ họp; (2) THÊM nhắc check-in N' sau giờ bắt đầu nếu
+  chưa check-in; (3) nhắc sắp hết giờ = nhắc trả phòng hiện có, nội dung gộp luôn lời nhắc check-out khi kết thúc;
+  (4) BỎ nhắc sau giờ kết thúc (user chốt) — giữ luật tự Hoàn thành đúng giờ kết thúc khi quên check-out.
+  Mọi nhắc ở đây đều THEO PHIẾU ĐẶT PHÒNG (user chốt) — meeting không phòng / họp Online không có nhắc ở phần này.
+  User chốt thêm: nhắc check-in / check-out PHÒNG và **nhắc HỌP cho toàn bộ thành phần tham gia trước N phút** là 2 thông
+  báo ĐỘC LẬP. ⚠️ Kiểm 26/10: nhắc họp CHƯA tồn tại (gop_db lẫn origin/develop không có command / thông báo nhắc giờ họp;
+  chỉ có nhắc hạn biên bản `assign:meeting-report-deadline`) ⇒ là việc MỚI, đang hỏi phạm vi.
+  **Bắt buộc check-in nhận phòng N' sau giờ bắt đầu** (user yêu cầu 26/10): ĐÃ CÓ sẵn = cấu hình "Tự nhả phòng" (bật/tắt
+  `meeting_room_auto_release`, mặc định TẮT + `meeting_room_checkin_grace_minutes` mặc định 15, command
+  `meeting:auto-release-bookings`). **User chốt: đã có thì GIỮ NGUYÊN logic cũ** (không đổi lý do / nhãn / mặc định).
+  Chỉ thêm: **phút nhắc check-in sau giờ bắt đầu phải < N** (validate khi lưu cấu hình, chỉ khi đang bật tự nhả phòng).
+- 26/10/2026 — **Dọn phòng: LÀM SAU** (user chốt). Tính năng mới hoàn toàn (chưa có vai trò / trạng thái / thông báo); câu hỏi tồn đầu tiên khi quay lại: ai phụ trách dọn (theo phòng / nhóm chung công ty / người quản lý phòng).
+- 26/10/2026 — **Duyệt phiếu đặt phòng có trên app** (user chốt): người quản lý phòng duyệt / từ chối (lý do bắt buộc) ngay trên app; duyệt phiếu có phiếu Chờ duyệt trùng giờ ⇒ báo trước là phiếu kia tự bị từ chối (đúng hành vi BE `approve`).
+- 26/10/2026 — **Ngưỡng "Sắp họp" = cấu hình phân hệ Meeting** (màn Cấu hình `/meeting/settings`, theo công ty, user chốt):
+  phòng không ai họp lúc này mà phiếu Đã duyệt kế tiếp bắt đầu trong ≤ N phút ⇒ "Sắp họp lúc HH:MM"; xa hơn ⇒ "Trống đến
+  HH:MM" (hết lịch ⇒ "Trống cả ngày"). Áp chung: tab Phòng họp app, màn Tình trạng phòng web (`status-board`), kiosk.
+  Giá trị mặc định khi công ty chưa khai: **15 phút** (Claude chọn = cửa sổ check-in, đổi được). Thay luật cũ "còn lịch
+  bất kỳ trong ngày ⇒ Sắp họp".
 - 26/10/2026 — **Thiết kế lại màn kiosk máy tính bảng** — mockup CHỐT `mockup/kiosk-tablet.html` (user chốt):
-  font **Nunito** (như app) + **tông xanh HRM** (nền `layouts/system.vue` màn chọn phân hệ, khối kính trắng mờ); 4 khối
+  font **Nunito** (user chốt; ⚠️ đo 26/10 trên app thật: app chung dùng **Roboto**, không phải Nunito — đã báo user; user chốt lại 26/10: GIỮ Nunito cho kiosk) + **tông xanh HRM** (nền `layouts/system.vue` màn chọn phân hệ, khối kính trắng mờ); 4 khối
   Đang diễn ra · Sắp diễn ra (cuộc gần nhất chưa bắt đầu, đếm ngược) · Kế tiếp (cuộc ngay sau) · Lịch hôm nay; QR góc phải.
   Cuộc đang diễn ra hiện thêm **Chủ trì** + **Người tham gia** (tên + chức vụ chữ nhỏ dưới tên). Họp **có đối tác** chia
   2 phía **Công ty | Đối tác** (tên công ty đối tác, avatar viền cam), chủ trì đứng đầu phía Công ty. ⚠️ Thay quyết định

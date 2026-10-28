@@ -219,3 +219,17 @@ Blocked: —
 
 - [x] Lệnh chỉ đọc `product-price:compare-inherited` (`Console/CompareInheritedPricesCommand.php` + đăng ký provider): so bộ giá công ty kế thừa với công ty tạo mã (6 cột chép × ĐVT × loại giá, thiếu dòng, cờ chờ duyệt, giá hiệu lực chờ áp); `--company`, `--csv`. Kiểm trong transaction rollback trên dump prod: TPSG chưa chép 30 mã lệch / 29.221 (5 s), chép xong 0, sửa tay ⇒ bắt đúng.
 - [x] Màn cài đặt: khối "Hướng dẫn" thu gọn được (7 dòng) + dải cảnh báo khi chế độ 2 + danh sách trống; hộp xác nhận có khối "Lưu ý" ở ĐẦU (toàn bộ hãng, áp ngay, N mã không sửa giá được, huỷ N yêu cầu duyệt giá, số mã > 5.000 lưu lâu) + hãng đổi do đổi chế độ chỉ nêu 10 hãng nhiều mã nhất, còn lại gộp 1 dòng. BE `preview` trả thêm `pending_approvals`. Playwright MCP (TPE, quyền tạm đã gỡ) + e2e M4.
+
+## Sự cố prod 27/10/2026 — Lưu cài đặt báo 504
+
+- [x] Điều tra: TPHP đổi sang chế độ 2 + danh sách rỗng (kế thừa toàn bộ) ⇒ `ManufacturePriceModeService::save()` chạy đồng bộ trong 1 transaction (diff + huỷ duyệt chờ + `copyMany` 30.272 mã + lịch sử) ⇒ vượt timeout nginx ⇒ 504, FE `plugins/axios.js` hiện "Máy chủ phản hồi quá chậm". PHP vẫn chạy tiếp tới commit: app đã ghi chế độ + lịch sử "30,272 mã đang kinh doanh đổi sang giá của công ty quản lý · 0 mã giữ giá hiện tại làm giá riêng". Local cùng 30.272 mã ≈ 17 s, prod chậm hơn vì MySQL máy riêng (design.md §2 đã ghi: > 30 s ⇒ job nền).
+- [x] Prod `product-price:compare-inherited` (11,4 s): TPHP 30.272 mã · **1 mã lệch** `CH-HG6030K:03` ĐVT 48484 — TPHP giá 1 đ × 6 loại, TPE 2.050.200 (TMĐT 2.665.260). Giả thuyết: TPE có giá SAU lúc lưu qua đường không gọi `propagate()` (ERP chạy song song, hoặc đường HRM sót). Đã đưa user câu SQL so `updated_at` giá TPE/TPHP với giờ lưu cài đặt + lịch sử `product_prices` của mã.
+- [ ] Chờ user gửi kết quả SQL ĐVT 48484 ⇒ kết luận nguồn ghi giá thiếu `propagate()`; sửa dữ liệu mã này (TPE sửa giá 1 lần trên HRM là tự đồng bộ).
+- [ ] Đề xuất (chờ user chọn + cho phép "làm"): (1) đưa `dropPendingApprovals` + `copyMany` ra Job nền, Lưu trả về ngay + FE báo "đang áp giá…" — cần chốt hành vi khoảng chưa chép xong (đường ghi giá đã 423 nhưng giá chưa về); hoặc (2) gỡ tạm: tăng `fastcgi_read_timeout` nginx bộ `tpe`.
+- Ngoài luồng: đưa user SQL lấy bảng giá TPHP theo `products.brand_id = 307` (pivot 6 loại giá/ĐVT) — chỉ đọc, không đụng code.
+
+### Checkpoint — 28/10/2026
+Vừa hoàn thành: điều tra 504 Lưu cài đặt prod (đã lưu thật, 30.272 mã chép xong) + compare-inherited prod còn 1 mã lệch CH-HG6030K:03.
+Đang làm dở: — (chưa đụng code/DB)
+Bước tiếp theo: nhận kết quả SQL ĐVT 48484 ⇒ tìm đường ghi giá thiếu propagate; user chọn hướng sửa 504 (Job nền / tăng timeout nginx).
+Blocked: chờ user (kết quả SQL prod + quyết định hướng sửa).
