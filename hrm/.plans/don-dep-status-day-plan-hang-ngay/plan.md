@@ -10,7 +10,7 @@ Mục tiêu: admin tổng hợp công việc hằng ngày từ commit `.plans/` 
 
 ## Phase 2 — Tự đẩy plan hằng ngày (28/10)
 - [x] Script `~/bin/push-plans.sh`: chỉ add `*/.plans/`, commit message liệt kê từng feature + số Redmine + task vừa tick, merge origin/main (tự cất tạm file dùng chung), push (28/10)
-- [x] Launchd `com.cuong61n.push-plans` chạy 12:00 / 18:30 / 22:00, log `~/Library/Logs/push-plans.log` (28/10)
+- [x] Launchd `com.cuong61n.push-plans` chạy 17:30 T2–T6 + 12:00 T7 (CN nghỉ — đổi theo yêu cầu 28/10), log `~/Library/Logs/push-plans.log` (28/10)
 - [x] Lần đẩy đầu: gom toàn bộ plan tồn đọng (88 file), gỡ conflict gop-db/STATUS.md (2 bên cùng chèn mục → giữ cả hai), đã push `main` (28/10)
 - [x] Ghi quy tắc vào memory + `~/.claude/CLAUDE.md` cá nhân: mọi việc (kể cả bug nhỏ) phải có plan.md chi tiết theo task, tự đẩy không cần hỏi (28/10)
 
