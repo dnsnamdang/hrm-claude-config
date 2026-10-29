@@ -357,3 +357,8 @@ Theo design mytodo.pen (đã sửa 29/10) + Nội dung thống nhất biên bả
 - [x] (29/10) Bỏ hàng chip lọc nhanh (quickChips) ở 17 màn danh sách (Phiếu giao việc, Phiếu công tác, Phiếu giao công tác, Nhập kết quả, Thanh toán, Đơn xin nghỉ, Đi muộn về sớm, Làm thêm, Tra soát công, Gia hạn/kết thúc công tác, Yêu cầu điểm danh, Lịch thi, Lịch thi của bạn, Kết quả thi, Bài thi, Kỳ đánh giá cần tham gia, Đăng ký khóa học) — chip chỉ chọn Trạng thái, Trạng thái đã có trong bảng lọc nên không mất điều kiện. Ghi quy tắc vào skill app-ui-convention.
   - Sự cố: chạy `dart format` (Dart 3.11) lên 54 file đang sửa → diff phình ~10.000 dòng do đổi kiểu thụt dòng. Gỡ bằng script so token (bỏ khoảng trắng + dấu phẩy cuối), ghép đúng phần sửa thật vào bản HEAD; kiểm chứng từng file: format(bản gỡ) == bản đã format → 54/54 đạt. Diff về 91+/280−. Analyze 173 info như cũ; simulator màn Phiếu giao việc không còn hàng chip.
 - [ ] Chưa kiểm được nút "Xác nhận tham gia" trên thẻ meeting (dữ liệu local không có meeting sắp diễn ra mà user chưa xác nhận). Chưa commit TPE_APP / hrm-api / hrm-client.
+
+- [x] (29/10/2026) Fix: bấm "Làm mới" trong bảng lọc rồi "Xem kết quả" mà bộ lọc không xoá (màn Phiếu công tác; Khoá học cùng lỗi tiềm ẩn) — @cuong61n
+  - Nguyên nhân: trường Trạng thái/Loại đào tạo lúc là chip, lúc là danh sách chọn (tuỳ số lựa chọn); màn đọc thử cả 2 kiểu, khi chip rỗng thì `FilterValues.picked()` ép kiểu Set → List → crash giữa `_apply`, bộ lọc cũ giữ nguyên.
+  - Sửa `custom_view/filter_sheet.dart`: `chips()`/`picked()` đọc theo kiểu, sai kiểu coi như rỗng.
+  - Đã kiểm simulator: Phiếu công tác lọc Gửi duyệt (182) → Làm mới → Xem 11,250 phiếu, chip + badge biến mất, không còn lỗi trong log. Code chưa commit.
