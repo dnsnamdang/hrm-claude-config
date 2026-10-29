@@ -13,6 +13,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Hoàn thành
 
+- etekpower-xoa-ca-10-10-cong-dinh-muc → @cuong61n → .plans/etekpower-xoa-ca-10-10-cong-dinh-muc/plan.md
+  Trạng thái: **Đã sửa dữ liệu PROD (29/10/2026)** — Etek Power xoá ca 10/10 của 51 NV Văn phòng + Kinh doanh, dọn công ngày 10/10, tính lại bảng tổng hợp tháng 10 (id 34): công định mức 25 → 24. Không đổi code.
+
 - notification-content → @cuong61n → .plans/notification-content/plan.md (spec: docs/superpowers/specs/2026-10-22-notification-content-design.md)
   Trạng thái: **Đang làm (22/10/2026)** — viết lại nội dung mọi thông báo hrm-api cho đủ thông tin cơ bản (ai · khi nào · lý do), tổng ≤ 180 ký tự, note_full cho Xem thêm. Meeting app (app-ui-redesign Phase 8) TẠM DỪNG.
 - app-ui-redesign → @cuong61n → .plans/app-ui-redesign/plan.md (spec: docs/superpowers/specs/2026-10-20-app-ui-redesign-design.md)
