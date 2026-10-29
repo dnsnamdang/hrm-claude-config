@@ -327,3 +327,12 @@ Blocked:
 - [x] (29/10) Bỏ câu/icon/dòng phụ tự đặt ở 39 màn danh sách: 30 màn có thanh lọc (Chấm công, Công tác/phiếu, Đào tạo, Đánh giá, Cơm, Lịch meeting, Task, Thông báo, Phiếu yêu cầu…) truyền `filtered`; 11 màn không lọc (bảng công, bảng lương, thiết bị, trưởng nhóm, lịch học/lịch thi…) về câu mặc định. Lịch sử chấm công bỏ ảnh + 2 dòng chữ riêng. Task: bỏ nút "Tải lại", màn rỗng kéo xuống được. Giữ câu riêng cho lỗi tải / không tìm thấy bản ghi / trạng thái đăng ký.
 - [x] (29/10) Ghi quy tắc vào skill app-ui-convention mục 4 + "Quyết định đã chốt".
 - [x] (29/10) Kiểm: analyze 0 error/warning (173 info như cũ); simulator Lịch sử chấm công gõ từ khoá không khớp → "Không có dữ liệu phù hợp." + "0 / 22 lượt". Chưa commit TPE_APP.
+
+### Sửa file design mytodo.pen theo biên bản review 16/09 + Nội dung thống nhất (29/10/2026) — @cuong61n
+- [x] (29/10) Chuẩn chung: đổi bộ màu file sang phân hệ Công việc (accent #1E8A63, nền #F2F4F7, chữ slate); header gradient #23A06F→#136B4C→#083A2A + vệt sáng + vòng cung + icon chìm task_alt cho MỌI màn (C/HeaderList có tab Công việc của tôi/Lịch làm việc, C/HeaderDetail); thanh dưới phân hệ Công việc: Việc của tôi · Tasks · [Tạo mới] · Phiếu · Phê duyệt; bỏ nút + cam từng màn; nút chính gradient xanh, ô nhập bo 12; nhãn "Chờ duyệt" về màu chuẩn #D97706; bỏ 3 component cũ (StatusBar navy, TopTabs, Header trắng).
+- [x] (29/10) A1/A2: Quá hạn lên đầu; tên loại theo web (Nhiệm vụ, Vấn đề, Phiếu giao công tác…) + 2 loại chấm công; thẻ Meeting có Xác nhận tham gia; Nhiệm vụ/Vấn đề nhãn vai trò + trạng thái thật; Nhắc việc bỏ 2 nhãn, tick bước ngay trên thẻ; giữ nút ↻.
+- [x] (29/10) A3 khuôn rỗng chung "Không có dữ liệu phù hợp.", bỏ nút Xoá bộ lọc; A4 popup xác nhận hoàn thành (Hoàn thành trước, Hủy cuối).
+- [x] (29/10) B1–B4: chấm ngày tối đa 2 + "+"; bảng lọc lịch đủ loại, "Làm mới", Áp dụng xanh.
+- [x] (29/10) C1–C6: bỏ dải chỉ xem/banner vàng; C2 thêm Meeting liên quan; C3 thêm Hạn hoàn thành + công khoán; C4 "Chi tiết nhiệm vụ", bỏ ô trùng, thêm người giao/duyệt + liên kết, checklist ✓/chấm, tệp 2 nhóm + xem/tải/chia sẻ; C5 gộp dòng đầu, Mô tả lên trên, nút Sửa; C6 "Chi tiết vấn đề", hạn đỏ ⚠, chưa phân công màu cam.
+- [x] (29/10) D1 nút giữa mở sheet Tạo mới (Nhắc việc cá nhân · Meeting · Giao việc); thêm D2 màn Tạo/Sửa nhắc việc cá nhân (đủ trường form web). Cập nhật chú thích, ghi chú tư vấn, dàn lại vị trí các nhóm. Kiểm bằng ảnh xuất từng màn.
+- [ ] Chờ user chốt: thứ tự thanh nút đáy app (Hủy/Lưu) so với web.
