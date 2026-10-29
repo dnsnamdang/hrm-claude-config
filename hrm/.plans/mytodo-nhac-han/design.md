@@ -27,3 +27,33 @@ Thêm nhắc hạn + bản tin sáng, gửi qua đường thông báo sẵn có 
 ## Lỗi phát hiện, sửa kèm
 - Danh sách lấy NGÀY BẮT ĐẦU làm hạn (assign_job/assign_business/ts_job/ts_business) trong khi lịch vẽ tới hạn chót.
 - Danh sách lọc phiếu giao công tác status 4 (chỉ có ở phiếu đề xuất) → phiếu giao công tác không bao giờ hiện ở tab danh sách (đúng phải là status 3 Đã duyệt).
+
+## Bảng thông báo tổng hợp (chốt đề xuất 29/10/2026)
+Ký hiệu: GIỮ = có sẵn, không đổi · MỚI = bổ sung · SỬA = có sẵn nhưng thiếu/sai.
+
+| Loại | Thông báo | Hiện trạng | Đề xuất | Gửi cho | Lúc nào |
+|---|---|---|---|---|---|
+| Nhiệm vụ | Tạo mới / Chờ duyệt / Đã duyệt / Từ chối / Yêu cầu làm lại / Góp ý | có | GIỮ | như hiện tại | theo thao tác |
+| Nhiệm vụ | Nhắc báo cáo tiến độ | có (task có lịch báo cáo) | GIỮ | người thực hiện | 08:30/11:30/14:30/17:30 |
+| Nhiệm vụ | Sắp đến hạn | chưa | MỚI | người thực hiện | 1 ngày trước hạn |
+| Nhiệm vụ | Quá hạn | chưa | MỚI (1 lần) | người thực hiện | sáng hôm sau ngày hạn |
+| Vấn đề | Tạo mới / Chờ duyệt / Từ chối / Góp ý | có | GIỮ | như hiện tại | theo thao tác |
+| Vấn đề | Sắp đến hạn / Quá hạn | chưa | MỚI | người xử lý | như Nhiệm vụ |
+| Meeting | Tạo mới / Chốt lịch / Đổi lịch / Thêm-bớt người / Hủy | có | GIỮ | người dự họp | theo thao tác |
+| Meeting | Nhắc nhập biên bản, tự hủy | có | GIỮ | người tạo | trước hạn biên bản |
+| Meeting | Nhắc nhận phòng | có (họp có đặt phòng) | GIỮ | người đặt + người dự | trước giờ theo cấu hình phòng |
+| Meeting | Sắp bắt đầu | chưa | MỚI — chỉ họp KHÔNG đặt phòng (họp đặt phòng đã có nhắc nhận phòng) | người dự họp | trước 15 phút |
+| Nhắc việc cá nhân | Đến giờ | chưa | MỚI | chính người tạo | đúng giờ hạn (không có giờ → chỉ vào bản tin) |
+| Nhắc việc cá nhân | Quá hạn | chưa | MỚI (1 lần) | chính người tạo | sáng hôm sau |
+| Phiếu giao việc | Chờ duyệt / Đã duyệt / Từ chối | có — Đã duyệt chỉ gửi NGƯỜI TẠO | GIỮ + SỬA: duyệt thì gửi thêm "Tạo mới: được giao" cho người thực hiện | người thực hiện | lúc duyệt |
+| Phiếu giao việc | Sắp đến hạn / Quá hạn | chưa | MỚI | người thực hiện | 1 ngày trước deadline (phiếu ≥ 2 ngày) / sáng hôm sau |
+| Phiếu giao công tác | Chờ duyệt / Đã duyệt / Từ chối / Cập nhật | có — Đã duyệt chỉ gửi NGƯỜI TẠO | GIỮ + SỬA: duyệt thì gửi "Tạo mới: được cử đi công tác" cho người đi | người đi công tác | lúc duyệt |
+| Phiếu giao công tác | Sắp đến hạn (mai đi) / Nhắc nhập KQ / Quá hạn | chưa | MỚI | người đi công tác | 16:00 hôm trước ngày đi / sáng hôm sau ngày về / sáng hôm sau nữa nếu vẫn chưa nhập |
+| Phiếu giao việc (chấm công) | Tạo mới (khi duyệt) / Chờ duyệt / Đã duyệt / Từ chối | có — người làm đã nhận | GIỮ | như hiện tại | theo thao tác |
+| Phiếu giao việc (chấm công) | Quá hạn (chưa nhập KQ) | chưa | MỚI (1 lần) | người làm | sáng hôm sau |
+| Phiếu đi công tác (chấm công) | Chờ duyệt / Tạo mới / Hủy | có — người đi đã nhận | GIỮ | như hiện tại | theo thao tác |
+| Phiếu đi công tác (chấm công) | Sắp đến hạn (mai đi) / Nhắc nhập KQ / Quá hạn | chưa | MỚI | người đi | như Phiếu giao công tác |
+| Chung | Bản tin sáng | chưa | MỚI | mỗi người có việc hôm nay | 07:30, trừ Chủ nhật |
+| Chung | Tổng quá hạn | chưa | MỚI | người còn việc quá hạn | 07:30 thứ Hai |
+
+Không thay thế/bỏ thông báo nào đang có. Nhắc quá hạn chỉ 1 lần/việc; việc nào đã có thông báo riêng trong ngày thì bản tin chỉ đếm, không lặp tên.
