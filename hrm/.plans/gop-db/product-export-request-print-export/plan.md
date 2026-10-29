@@ -55,3 +55,23 @@ Vừa hoàn thành: Function 2 "In biên bản giao nhận - bàn giao" (print_t
 - Đã HOÀN TÁC quyền test tạm (`role_has_permissions` perm 100870/role 18/cty 1 — deleted 1, remaining 0) + flush Spatie cache → DB sạch, hành vi phân quyền production khôi phục.
 Bước tiếp theo: KHÔNG còn — cả 3 chức năng đã xong & verify. Chờ yêu cầu mới. (Chưa commit/push theo ràng buộc.)
 Blocked: không
+
+## Phase 4 — Fix: bỏ khung border khối chữ ký "ĐẠI DIỆN BÊN NHẬN / BÊN GIAO" trên bản in biên bản giao nhận
+- [x] Root cause: mẫu ERP đặt `no-border` trên `<tr class="no-border">` (không phải trên `<table>`); CSS in dùng chung `utils/print/reportPrintStyle.js` port từ ERP bị thu hẹp selector `.no-border td` (ERP) → `table.no-border td` (HRM) nên hàng chữ ký bị kẻ viền + chữ co về 10px.
+- [x] Fix: nới selector khối `no-border` trong `reportPrintStyle.js` về `.no-border` (khớp ERP `public/css/pdf.css` + `print-preview.css` `.no-border td { border:none }`). An toàn: đã kiểm tag-stack 4 mẫu (156/158/160/213) — bảng chi tiết `{{CHI_TIET_*}}` KHÔNG nằm trong tổ tiên `.no-border` nên không mất viền; chỉ hàng chữ ký (table > tr.no-border > td) được gỡ viền. 2 chỗ sửa: khối border `.no-border/th/td` (dòng ~123-129) + override font-size `.no-border [style*="font-size"]` về 13px (dòng ~145).
+- [x] Verify Playwright (127.0.0.1:3000): mở popup In biên bản giao nhận PYCXH-TESTBSR-01, mẫu "Biên bản giao nhận hàng hóa - thiết bị: CÓ GIÁ" (id 160), bản xem trước — đo computed style: ô ĐẠI DIỆN BÊN NHẬN/BÊN GIAO `border-top: 0px none`, `font-size: 13px` (trên `tr.no-border`); ô bảng chi tiết (STT/Tên hàng hóa/Đơn giá/Thành tiền…) vẫn `border-top: 1px solid`. Khớp ảnh chụp.
+
+### Checkpoint — Phase 4 (2026-10-14)
+Vừa hoàn thành: trace root cause khung border khối chữ ký = port-bug selector `.no-border` → `table.no-border` trong `reportPrintStyle.js` (hàm DÙNG CHUNG mọi bản in server-template finance/customer-care).
+Đang làm dở: áp fix selector + verify Playwright.
+Bước tiếp theo: sửa `hrm-client/utils/print/reportPrintStyle.js`, verify bản xem trước.
+Blocked: không
+
+### Checkpoint — Phase 4 XONG (2026-10-14)
+Vừa hoàn thành: FIX khung border khối chữ ký biên bản giao nhận + verify Playwright đạt.
+- Sửa `hrm-client/utils/print/reportPrintStyle.js` 2 chỗ: (1) khối border `table.no-border` → `.no-border` (dòng ~123-129) để `tr.no-border` cũng gỡ viền; (2) `table.no-border [style*="font-size"]` → `.no-border [style*="font-size"]` về 13px (dòng ~145) để chữ ký không co về 10px. Các rule `table.no-border` khác (vertical-align, title, padding, margin) GIỮ hẹp — không hại hàng chữ ký, giảm blast radius.
+- ⚠️ Bẫy đã xử: comment trong file KHÔNG được chứa backtick (file là JS template literal delimited bằng backtick); lần đầu dính "Missing semicolon (118:52)", đã viết lại comment bằng plain text + ngoặc kép. Verify `babel parse OK`.
+- Verify Playwright (127.0.0.1:3000) PYCXH-TESTBSR-01 mẫu "Biên bản giao nhận hàng hóa - thiết bị: CÓ GIÁ": computed style ô ĐẠI DIỆN BÊN NHẬN/BÊN GIAO = `border-top 0px none`, `font-size 13px` (trên `tr.no-border`, `ancestorNoBorder true`); ô bảng chi tiết (STT/Tên hàng hóa/Model/ĐVT/SL/Đơn giá/Thành tiền/Serial) = `border-top 1px solid`. Ảnh chụp khớp: khối chữ ký hết khung, bảng chi tiết còn viền.
+- KHÔNG cần quyền test tạm — DNS Admin đã thấy danh sách + mẫu.
+Bước tiếp theo: KHÔNG còn. (Chưa commit/push theo ràng buộc — hàm dùng chung, chờ user xác nhận.)
+Blocked: không

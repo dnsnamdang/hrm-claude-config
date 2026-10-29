@@ -147,3 +147,86 @@ Bước tiếp theo: **user QA T12 trên trình duyệt** (đặc biệt V-tiề
 Blocked: chờ user QA + lệnh commit
 
 - [ ] (chưa) commit — chờ user yêu cầu
+
+## Phase 4 — Sửa chức năng IN phiếu xuất bán hàng mượn (parity màn `prepick-cancels`)
+Bối cảnh: màn `finance/borrow-sells` đang IN theo kiến trúc cũ (trang `/print` riêng + JSON resource + `$printPreview(:src)` iframe) → 3 lỗi: (1) nút "In" thiếu ở cột Hành động màn danh sách; (2) màn chi tiết bấm In không ra popup như các màn khác; (3) bản in `/borrow-sells/4312/print` font/căn chỉnh xấu vì không dùng CSS in dùng chung. Mẫu chuẩn: `finance/prepick-cancels` (BE render HTML blade qua `_layout` → `responseJson(['template'=>$html])`; FE `reportPrintPreviewMixin.openPrintDetail` + `ReportPrintPreviewModal`). Approach A (user chốt): tái dùng template/layout/CSS/font chung của prepick-cancels, chỉ khác nội dung bảng hàng.
+- [x] BE blade `Modules/Finance/Resources/views/prints/borrow-sell.blade.php` (include `finance::prints._layout`; bảng: STT, Mã SP, Tên sản phẩm, Model, ĐVT, Số lượng, Đơn giá, Thành tiền + Tổng thành tiền; signers `['Người lập phiếu','Trưởng phòng','Ban giám đốc']`)
+- [x] BE `BorrowSellService::renderPrint(BorrowSell $object): string` (dùng trait `ResolvesCompanyLetterhead::letterheadUrl($object->borrowSellRequest->company_id)`; reuse `numText`/`contractCodeOf`; infoRows mirror `BorrowSellPrintResource`)
+- [x] BE `BorrowSellController::printData` → `responseJson('', 200, ['template' => renderPrint(...)])`; `with()` thêm `borrowSellRequest` + `employee_create.info`; bỏ import `BorrowSellPrintResource`
+- [x] FE `borrow-sells/index.vue`: thêm row action `print` + nhánh handler; đăng ký `reportPrintPreviewMixin` + `ReportPrintPreviewModal`
+- [x] FE `borrow-sells/_id/index.vue`: `printPage()` → `openPrintDetail('finance/borrow-sells', requestId, ...)`; đăng ký mixin + modal (giữ gate `is_can_view`)
+- [x] Cleanup: xóa `_id/print.vue`, export `printData()` trong `api.js`, `BorrowSellPrintResource.php`
+- [x] Test BE `BorrowSellApiTest::test_render_print_returns_html_from_shared_layout` thay test resource cũ → PHPUnit 5/5 xanh (1 skip auth như cũ)
+- [x] Verify Playwright MCP (`http://127.0.0.1:3000`): nút In ở danh sách → popup OK; chi tiết In → popup như prepick-cancels OK; font/căn chỉnh = `_layout` chung (Times New Roman, viền bảng, số `155,293`/`416,618`); letterhead ẩn ở local (ERP_URL không host logo — env, không phải code — xem memory [[gopdb-print-logo-404-local-and-ycxh-creator-company-deviation]])
+
+### Checkpoint — 2026-10-10
+Vừa hoàn thành: Phase 4 (sửa IN borrow-sells parity prepick-cancels) — toàn bộ BE/FE/cleanup/test/verify xong.
+Đang làm dở: không.
+Bước tiếp theo: chờ user nghiệm thu; sau đó quay lại "commit và push" đợt product-import-form-rework đang hoãn.
+Blocked: 
+
+## Phase 5 — Đổi nhãn nút "Lưu" → "Lưu và gửi duyệt" (màn Tạo YCXBHM) + thêm popup xác nhận
+Bối cảnh: store() của YCXBHM luôn set status 2 (Chờ kế toán kho) / 10 (Chờ TP duyệt) — tức BẤM LƯU LÀ GỬI THẲNG VÀO LUỒNG DUYỆT, không có nháp. Nút hiện ghi "Lưu" (icon `ri-save-3-line`) gây hiểu nhầm là lưu tạm. User yêu cầu đổi thành "Lưu và gửi duyệt".
+Theo `button-convention`: "Lưu và gửi duyệt" thuộc nhóm "Gửi đi để duyệt" → nhãn chuẩn, màu `primary` (teal) GIỮ NGUYÊN, icon chuẩn = `ri-send-plane-line` (khớp V2Footer dòng 27-28), và BẮT BUỘC có popup xác nhận (§2b/§6c). Màn này dùng actionbar tự chế (không V2Footer) nên phải tự gọi `this.$confirm()`.
+- [x] FE đổi nhãn nút "Lưu" → "Lưu và gửi duyệt", icon `ri-save-3-line` → `ri-send-plane-line` (`BorrowSellRequestForm.vue` footer)
+- [x] FE thêm `this.$confirm()` đầu `save()` (title "Xác nhận lưu và gửi duyệt", textAccept "Lưu và gửi duyệt", không danger) — hỏi TRƯỚC lớp tải
+- [x] Verify Playwright MCP (`http://127.0.0.1:3000/finance/borrow-sell-requests/create`, 2026-10-27): nút footer hiện đúng "Lưu và gửi duyệt" + icon `ri-send-plane-line`, màu primary teal; gọi `save()` → popup "Xác nhận lưu và gửi duyệt" / "Bạn đồng ý lưu và gửi duyệt phiếu yêu cầu xuất bán hàng mượn này?" / nút nhận "Lưu và gửi duyệt" + "Hủy"; **Hủy** → `buildPayload` KHÔNG gọi (không POST), `saving=false`, ở lại màn; **Đồng ý** → đi tiếp tới `buildPayload` (nhánh submit) — chặn POST thật bằng guard throw khi verify
+
+### Checkpoint — 2026-10-27
+Vừa hoàn thành: Phase 5 — đổi nhãn "Lưu" → "Lưu và gửi duyệt" (icon `ri-send-plane-line`) + thêm popup xác nhận `$confirm` đầu `save()`; verify Playwright 2 nhánh Hủy/Đồng ý OK.
+Đang làm dở: không.
+Bước tiếp theo: chờ user nghiệm thu + lệnh commit.
+Blocked:
+
+- [ ] (chưa) commit — chờ user yêu cầu
+
+## Phase 6 — Sửa UI popup "Chọn hợp đồng" (màn Tạo YCXBHM) theo khuôn `bill-adjust-depts/create`
+Bối cảnh: popup `ContractPickerModal.vue` của màn borrow-sell-requests đang tự chế (`b-modal` thô + bảng tay + nhóm nút lọc loại HĐ + live-search). User yêu cầu restyle theo popup "Chọn đơn hàng / hợp đồng" của `finance/bill-adjust-depts/create` (dùng `V2BaseModal` + hàng tìm kiếm Tìm kiếm/Làm mới + `V2BaseDataTable`), đồng thời annotation ảnh: **thêm cột Ngày tạo + thêm sort vào Số hợp đồng và Ngày tạo**.
+Scope đã chốt với user (2026-10-27): (1) BỎ nhóm nút lọc loại HĐ; (2) GIỮ cột Khách hàng → cột = `STT | Số HĐ | Khách hàng | Loại HĐ | Ngày tạo`; (3) THÊM cột Ngày tạo + sort Số HĐ & Ngày tạo (cần sửa BE). Khác bill-adjust: borrow-sell KHÔNG có đối tượng chọn trước → KHÔNG hiện dòng "Đối tượng" ở header.
+- [x] BE `BorrowSellRequestService::searchContracts()`: thêm `created_at` vào 3 subquery UNION + output row; nhận `sort_by` (whitelist `code`|`created_at`) + `sort_dir` (`asc`|`desc`), default type ASC → id DESC (sort có id DESC tie-break); format `created_at` kiểu `d/m/Y H:i`
+- [x] FE viết lại `ContractPickerModal.vue`: vỏ `V2BaseModal` (icon `ri-file-list-3-line`, title "Chọn hợp đồng", KHÔNG subtitle); hàng tìm kiếm `V2BaseLabel` + `V2BaseInput` + nút `Tìm kiếm`(primary, `ri-search-line`) + `Làm mới`(tertiary, `ri-refresh-line`) — bấm nút/Enter mới tìm (bỏ debounce live-search); `V2BaseDataTable` cột `STT|Số HĐ|Khách hàng|Loại HĐ|Ngày tạo`, cột Số HĐ link `contract-link`, sort Số HĐ+Ngày tạo; click dòng để chọn; GIỮ hợp đồng prop `show` + emit `select`/`close` (watcher show→`$refs.modal.show/close`, `@hidden`→emit close) cho parent `BorrowSellRequestForm.vue`
+- [x] Verify Playwright MCP (`http://127.0.0.1:3000/finance/borrow-sell-requests/create`, 2026-10-27): popup render đúng khuôn bill-adjust (header "Chọn hợp đồng" KHÔNG dòng "Đối tượng", hàng Tìm kiếm/Làm mới, bảng 5 cột, Số HĐ link ERP firm-contracts, Ngày tạo `28/07/2026 09:46`, phân trang 19490, KHÔNG còn nút lọc loại); sort "Ngày tạo" ASC → 02/08/2025 lên đầu OK; tìm "HOÀN HẢO" → 13 KH khớp OK (sort giữ); click dòng → đóng popup + điền mã HĐ/khách/loại OK; mở lại → reset keyword rỗng + về trang 1 + thứ tự mặc định OK
+
+### Checkpoint — 2026-10-27 (Phase 6)
+Vừa hoàn thành: Phase 6 — restyle popup chọn HĐ màn YCXBHM theo khuôn `bill-adjust-depts/create` (V2BaseModal + Tìm kiếm/Làm mới + V2BaseDataTable), bỏ nút lọc loại HĐ, thêm cột Ngày tạo + sort Số HĐ/Ngày tạo (sửa BE `searchContracts` thêm `created_at` + param sort). Verify Playwright đủ: render/sort/tìm/chọn/reset OK.
+Đang làm dở: không.
+Bước tiếp theo: chờ user nghiệm thu + lệnh commit (cả Phase 5 + Phase 6 chưa commit).
+Blocked:
+
+### Phase 6b — Đổi chuẩn popup sang khuôn YCXH "xuất bán hãng" (2026-10-27)
+
+User phản hồi: "chưa đứng giao diện" → đổi chuẩn từ `bill-adjust-depts/create` sang popup **"Chọn hợp đồng hãng"** của màn Phiếu yêu cầu xuất hàng (YCXH), loại xuất bán hãng (`finance/product-export-requests/components/FirmContractSearchModal.vue`).
+
+- [x] Viết lại `borrow-sell-requests/components/ContractPickerModal.vue` bám khuôn `FirmContractSearchModal.vue`: `b-modal` full-width (`modal-full-width-bsr-contract` 95vw/94vh), header icon tròn + "Chọn hợp đồng" + X, **2 ô lọc riêng Số hợp đồng + Khách hàng**, `b-table` `no-local-sorting` + scroll-sync trên/dưới (`utils/scrollSync`), sort icon `ri-arrow-*`, `V2BasePagination` + footer "Đóng" ghim đáy.
+- [x] Cột: `STT | Ngày tạo (sort) | Số hợp đồng (sort) | Khách hàng | Loại hợp đồng`. GIỮ cột "Loại hợp đồng" vì borrow-sell đa nguồn (hãng/dịch vụ/HRM); BỎ các cột chỉ có ở HĐ hãng (Tổng thanh toán/Ngày duyệt/Người duyệt). Link Số HĐ: HĐ HRM → `nuxt-link`, HĐ hãng/dịch vụ → `<a href>` ERP (`utils/contract-link`).
+- [x] Giữ hợp đồng với parent: prop `show` + emit `select`/`close` (BorrowSellRequestForm không đổi).
+- [x] BE `searchContracts`: thêm param `code` + `customer` riêng (ô lọc 2 cột), giữ `keyword` fallback; dùng `$applyFilter` closure chung cho 3 subquery. `php -l` PASS.
+- [x] Verify Playwright MCP (`127.0.0.1:3000/finance/borrow-sell-requests/create`, 2026-10-27): popup đúng khuôn YCXH (full-width, header icon tròn, 2 ô Số HĐ/Khách hàng, Tìm kiếm/Làm mới, bảng 5 cột sort `ri-arrow`, phân trang 19490, footer Đóng); lọc ô **Khách hàng** riêng "HOÀN HẢO" → 13 HĐ khớp; sort Ngày tạo ASC → 08/11/2025 lên đầu (server-side, giữ bộ lọc); click dòng → đóng popup + điền Số HĐ `HĐ_TPE_HN_KDTM_25_0338_0811` / KH `CÔNG TY TNHH HOÀN HẢO HT` / loại `HĐ hãng`; console chỉ lỗi socket.io môi trường.
+
+- [ ] (chưa) commit — chờ user yêu cầu
+
+## Phase 7 — Bổ sung đủ thông tin màn Tạo YCXBHM theo ERP (khối KH + Cần lắp đặt + lọc VAT/Nhóm hàng + bảng CONTRACT-DRIVEN)
+Bối cảnh: user báo "hrm thiếu rất nhiều thông tin, k tạo được => check lại toàn bộ màn hình" (2 ảnh so ERP vs HRM). Rà soát: (1) bảng chi tiết HRM đang SOURCE-DRIVEN — rỗng cho tới khi chọn phiếu nguồn; ERP CONTRACT-DRIVEN — chọn HĐ là hiện ngay toàn bộ hàng của HĐ, phiếu nguồn chỉ bơm dòng con "đang mượn". (2) Khối "Thông tin chung" HRM thiếu: block khách hàng (Mã KH, CMT/MST, SĐT, Địa chỉ, + Người liên hệ/Điện thoại khi customer_type>1), radio "Cần lắp đặt" (need_repair), và với HĐ hãng thì "Nhóm VAT" + "Chọn nhóm hàng hóa". BE 3 loader (loadFirm/loadWrService/loadHrm) KHÔNG trả metadata khách hàng.
+Scope đã chốt với user (AskUserQuestion): Q1 = "Bám ERP: hiện ngay hàng của HĐ"; Q2 = "Đủ như ERP (khối KH + Cần lắp đặt + VAT/Nhóm hàng)".
+Tham chiếu ERP: `app/Services/Sale/Firm/Contract/FirmContractBorrowSellService::getDataForBorrowSell`, `resources/views/warehouse/borrow_sell_requests/{create,form}.blade.php`.
+- [x] BE `BorrowSellRequestSourceService`: thêm `contractMeta($contract, $type)` trả block KH `{id, code, customer_code, customer_name, identity_card_number, customer_mobile, customer_address, customer_contact_name, customer_contact_phone, customer_type}` + (firm) `vat_percent_options` (distinct `firm_contract_tab_products.vat_percent`); include `'contract' => $meta` vào return của loadFirm/loadWrService/loadHrm. Firm `tab_options` lấy từ `tabs` trả về (id+name).
+- [x] BE `StoreBorrowSellRequestRequest`: thêm rule `need_repair` nullable `in:0,1` (store() đã đọc `$request->need_repair ?? 0`).
+- [x] FE `BorrowSellRequestForm.vue` — viết lại `rebuildGrid()` CONTRACT-DRIVEN: tạo 1 group / mỗi `contractProducts`, phân bổ breakdown phiếu nguồn vào `details[]` group khớp (product_id + unit), group KHÔNG có details vẫn render (sub-row placeholder; rowspan = max(1, details.length)).
+- [x] FE thêm vào "Thông tin chung": block KH read-only (`V2BaseInput disabled`, guard `customer_type>1` cho 2 ô liên hệ); radio "Cần lắp đặt" `V2BaseRadio` (need_repair Có=1/Không=0) tương tác được; (firm) `V2BaseSelect` "Nhóm VAT" (firm_tab_vat_percent) + "Chọn nhóm hàng hóa" multi (firm_tab_ids) → đổi thì gọi lại loadContractProducts với vat_percent/tab_ids.
+- [x] FE `buildPayload()` thêm `need_repair`; `save()` thêm confirm need_repair kiểu ERP (câu Có/Không — xem create.blade.php:180-182). Lưu contractMeta vào data + bind block KH. **+ Fix redirect: sau save `$router.push('/finance/borrow-sell-requests')` (về DANH SÁCH, bỏ push sang chi tiết — đúng quy ước HRM).**
+- [x] Verify Playwright MCP (`127.0.0.1:3000/finance/borrow-sell-requests/create`): chọn HĐ → bảng hiện ngay hàng HĐ; block KH điền đủ; radio Cần lắp đặt bấm được; HĐ hãng hiện lọc VAT+Nhóm hàng; chọn phiếu nguồn → dòng con "đang mượn" bơm vào đúng group.
+- [ ] (chưa) commit — chờ user yêu cầu
+
+### Checkpoint — 2026-10-27 (Phase 7 — VERIFIED trên browser)
+Toàn bộ scope Phase 7 đã chạy đúng end-to-end trên Playwright MCP (HĐ hãng #24935 `HĐ_TPE_HN_DAU_26_1242`, KH Duy Anh, customer_type>1):
+- **Bảng CONTRACT-DRIVEN**: chọn HĐ → hiện ngay hàng của HĐ (dòng "Dầu thủy lực Eneos Super Hyrando 68", cột HĐ=10 / Đã xuất=1 / Đang mượn=1). Chưa chọn phiếu nguồn vẫn render dòng placeholder.
+- **Khối KH read-only đủ**: Mã KH `29TPHPNG-26`, CMT/MST `0108839168`, Địa chỉ, **Người liên hệ `Chị Hương` + Điện thoại liên hệ `0966399330`** (2 ô này chỉ hiện vì customer_type>1 — guard chạy đúng).
+- **Radio "Cần lắp đặt"** bấm được (test để "Không").
+- **HĐ hãng**: "Nhóm VAT" + "Chọn nhóm hàng hóa" (multi "Nhóm 1") hiện; đổi lọc → gọi lại `borrow-sell-data` với `tab_ids[]`/`vat_percent` (GET #41 → 200).
+- **Chọn phiếu nguồn** `PYCXH-TESTBSR-01` → dòng con "Đang mượn=1" bơm đúng group; nhập Bán=1 → tổng VAT 8% tính đúng (1,390,000 → sau VAT 1,501,200).
+- **Confirm need_repair kiểu ERP**: câu "Không" khớp verbatim ERP create.blade.php ("…**không** tích lắp đặt đều không được tạo yêu cầu lắp đặt bàn giao…").
+- **POST** `/finance/borrow-sell-requests` → **200 OK** (req #77).
+- **Redirect về DANH SÁCH** `/finance/borrow-sell-requests` (title "Yêu cầu xuất bán hàng mượn"), list reload `?type=all&page=1` → 200 — fix redirect PASS, KHÔNG còn đẩy sang màn chi tiết.
+- Ghi chú: 40 "errors" console đều là `socket.io` (`:8891`) connection-refused (server thông báo websocket không chạy local) — KHÔNG phải exception JS của màn.
+- Nghiệp vụ: lưu phiếu YCXBHM TIÊU THỤ qty "đang mượn" của phiếu nguồn → load lại `available` giảm (đúng, không phải bug). Record test đã xóa subtree để trả lại availability khi re-verify.
+- CHƯA commit — chờ user yêu cầu.

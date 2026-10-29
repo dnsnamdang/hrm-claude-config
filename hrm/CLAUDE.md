@@ -106,6 +106,7 @@
     `grep -rnE "(toLocaleString|Intl\.NumberFormat)\(\s*'vi-VN'" pages components utils | grep -v "new Date"` (hrm-client)
     `grep -rnE "number_format\([^)]+,\s*'.?',\s*'\.'\)" app Modules resources` (hrm-api)
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
+- ⚠️ **Tài liệu (`.plans/`, `docs/`) LUÔN ghi qua symlink ở GỐC project `HRM/`, KHÔNG BAO GIỜ tạo bên trong repo code `HRM/hrm-client/` hay `HRM/hrm-api/`.** Khi đang làm code, cwd = repo con → đường dẫn tương đối `.plans/[feature]/...` sẽ rơi vào repo code và tạo thư mục THẬT lạc chỗ, tài liệu KHÔNG về `hrm-claude-config`. Luôn dùng đường dẫn tới gốc project: `HRM/.plans/[feature]/...` (hoặc `../.plans/...` nếu đang ở trong repo con).
 
 ---
 

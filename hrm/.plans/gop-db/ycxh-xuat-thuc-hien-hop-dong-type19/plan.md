@@ -116,6 +116,83 @@ Blocked: (không)
 
 Quan sát nhỏ (không chặn Phase 5, ngoài scope): panel snapshot KH hiện MST rỗng là "—", lệch quy ước ô rỗng để trống hẳn của CLAUDE.md — là lựa chọn hiển thị FE có sẵn của panel chỉ-đọc, chưa sửa.
 
+## Phase 6 — Nâng cấp popup chọn HĐ cho giống ERP (cột + link + sort + phân trang)
+
+**Bối cảnh:** User yêu cầu 4 việc cho popup "Chọn hợp đồng / đơn hàng" ở màn Tạo YCXH loại 19:
+(1) đủ 8 cột như popup ERP, (2) link vào cột số HĐ, (3) sort từng cột, (4) sửa lỗi
+ERP có 16.582 bản ghi mà HRM chỉ hiện 20 (nguyên nhân: FE hard-cap `limit=20` + BE trả mảng
+phẳng không phân trang server-side).
+
+**Quyết định đã chốt (user "ok" 2026-10-13):**
+- **1a:** tái dùng `utils/contract-link.js` nguyên trạng — firm → ERP `/admin/sale/firm-contracts/{id}`
+  (tab mới), wr → HRM `/customer-care/wr-service-contracts/{id}` (nội bộ). Firm type 8 vẫn mở
+  firm-contracts.
+- **2-text:** ô lọc Khách hàng = text input LIKE `customer_name`.
+- **3-snapshot:** cột Khách hàng = snapshot `customer_name` (không join bảng khách hàng).
+
+### BE — `ProductExportRequestController::emplementContracts()` viết lại
+
+- [x] 6.1: Validate params mới: `contract_type` (`in:firm-1,firm-4,firm-8,wr-1`), `code`, `customer`,
+      `page`, `per_page`, `sort_by`, `sort_desc`.
+- [x] 6.2: Mỗi nguồn (firm/wr) `leftJoin employees as ae` (ae.id = c.approver_id) +
+      `leftJoin employee_infos as ai` (ai.id = ae.employee_info_id); selectRaw bổ sung
+      `c.total_after_vat as total`, `ai.fullname as approver_name`, `created_at`, `type`,
+      `approved_time`, `source` + giữ snapshot KH (customer_name/address/contact_name/
+      contact_phone[firm số ít / wr số nhiều]/tax_code[firm NULL]).
+- [x] 6.3: Lọc `contract_type` → chỉ union nguồn liên quan (firm-N lọc cả type N; wr-1 chỉ nguồn wr).
+      Lọc `code` LIKE, `customer` LIKE customer_name.
+- [x] 6.4: Sort whitelist `{created_at, code, type, total, approved_time}`, mặc định `created_at desc`;
+      khoá lạ rơi về mặc định.
+- [x] 6.5: Phân trang server-side: `DB::query()->fromSub($union,'contracts')`,
+      `(clone $base)->count()` lấy total, `->forPage($page,$perPage)->get()`.
+- [x] 6.6: Transform mỗi dòng: thêm `type_name` (helper `emplementTypeName`), `object_type` (morph
+      class để contract-link.js dựng link), `object_id`. Trả
+      `responseJson('success', 200, ['data'=>$items, 'meta'=>{current_page,last_page,total,per_page}])`.
+- [x] 6.7: Helper `private function emplementTypeName(string $source, int $type): string`
+      (wr → "Hợp đồng sửa chữa - bảo dưỡng - bảo trì"; firm 1/4/8 → vật tư / dự án / đơn hàng nguyên tắc).
+- [x] 6.8: `php -l` controller → PASS.
+
+### FE — `EmplementContractSearchModal.vue` viết lại theo `V2BaseDataTable`
+
+- [x] 6.9: Dựng lại trên `V2BaseModal` + `V2BaseDataTable` (khuôn `bill-income/ContractSearchModal`),
+      hỗ trợ `:pagination` + `:sort-by/:sort-direction` + `@sort/@page-change/@page-size-change`.
+- [x] 6.10: 3 ô lọc: `<select>` Loại hợp đồng (Tất cả + 4 option firm-1/firm-4/firm-8/wr-1),
+      `V2BaseInput` Số hợp đồng, `V2BaseInput` Khách hàng + nút Tìm kiếm / Làm mới.
+- [x] 6.11: 8 cột: STT · Ngày lập(sort) · Loại hợp đồng(sort) · Số hợp đồng(sort,link) · Khách hàng ·
+      Tổng thanh toán(phải,sort) · Ngày duyệt(sort) · Người duyệt.
+- [x] 6.12: Cột Số HĐ render `nuxt-link`(to)/`<a href target=_blank>` qua
+      `contractLink(object_type, object_id)`, `@click.stop` (cả dòng đang bắt click để CHỌN).
+- [x] 6.13: `fetch()` gửi `{page,per_page,contract_type?,code?,customer?,sort_by?,sort_desc?}`,
+      đọc `res.data.data` + `res.data.meta`. Chọn dòng qua `tr.emplement-row` → emit `select`+`close`.
+      Tiền format en-US, ngày `DD/MM/YYYY`.
+
+### Phase 6 — Verify (Playwright, DNS Admin namdangit@gmail.com)
+
+- [x] 6.14: Popup hiện đủ 8 cột + 3 ô lọc + mũi tên sort; footer "Hiển thị 1–10 / 19720",
+      page-size 10/20/50/100. Request `emplement-contracts?page=1&per_page=10` →
+      `meta:{current_page:1,last_page:1972,total:19720,per_page:10}` (sửa xong lỗi "20 vs 16582").
+- [x] 6.15: Sort "Tổng thanh toán" → `sort_by=total&sort_desc=0` trả dãy tăng dần (0,0,…,3240,3499),
+      kết quả có cả firm lẫn wr.
+- [x] 6.16: Lọc Loại HĐ "Đơn hàng nguyên tắc" → `contract_type=firm-8` trả 200.
+- [x] 6.17: Link: firm → `http://127.0.0.1:8001/admin/sale/firm-contracts/{id}` (tab mới ERP);
+      wr → `/customer-care/wr-service-contracts/{id}` (nội bộ HRM). Người duyệt join ra tên đúng
+      (vd "Đoàn Sơn Tùng", "Trần Ngọc Duy").
+
+### Checkpoint — 2026-10-13
+Vừa hoàn thành: Phase 6 XONG — nâng cấp popup chọn HĐ cho giống ERP (8 cột + link cột số HĐ +
+sort từng cột + phân trang server-side) và sửa lỗi "chỉ 20 dòng".
+- BE `emplementContracts()` viết lại: validate contract_type/code/customer/page/per_page/sort_by/
+  sort_desc; join `employees`→`employee_infos` lấy tên người duyệt; whitelist sort; phân trang
+  `fromSub + count + forPage`; thêm `type_name`/`object_type`/`object_id`; helper `emplementTypeName`.
+  `php -l` PASS.
+- FE `EmplementContractSearchModal.vue` viết lại theo `V2BaseDataTable` (8 cột, 3 ô lọc, sort,
+  phân trang, link cột số HĐ qua `contract-link.js`).
+- Verify trình duyệt: total **19.720** (dev DB; ERP prod ~16.852), last_page 1972; sort total tăng
+  dần OK; lọc firm-8 OK; link firm→ERP:8001 tab mới, wr→HRM nội bộ OK; tiền en-US "4,309,200".
+Đang làm dở: (không)
+Bước tiếp theo: Chờ yêu cầu commit/push gop_db.
+Blocked: (không)
+
 ## Ghi chú
 
 - gop_db: CHƯA commit (chờ yêu cầu).

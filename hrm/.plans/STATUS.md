@@ -6,7 +6,7 @@
 được theo dõi ở file đó, KHÔNG ghi vào file này. Nền tảng kỹ thuật: `.plans/gop-db/design.md`.
 Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP DATABASE".
 
-## Đang làm
+## Hoàn thành
 
 - notification-content → @cuong61n → .plans/notification-content/plan.md (spec: docs/superpowers/specs/2026-10-22-notification-content-design.md)
   Trạng thái: **Đang làm (22/10/2026)** — viết lại nội dung mọi thông báo hrm-api cho đủ thông tin cơ bản (ai · khi nào · lý do), tổng ≤ 180 ký tự, note_full cho Xem thêm. Meeting app (app-ui-redesign Phase 8) TẠM DỪNG.
@@ -694,8 +694,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Checkpoint: 2026-06-10 — Phase 31 CODE DONE + fixes test vòng 2: giữ nguyên giá ERP (revert roll-up) + validate giá vốn cha<Σcon chặn gửi duyệt; tổng "Thành tiền nhập"=Σ dòng cha (Cách A) đồng bộ mọi nơi; CK hiển thị số dương; validate bắt buộc "Điều khoản thanh toán" khi gửi duyệt; sync auto-allocation+layout edit↔view. CHƯA migrate, CHƯA test browser. Bước tiếp: user migrate + build + test.
   (2026-06-09) Phase 31 CODE DONE toàn bộ (Task 1-20 + nhiều fix sau review). BE+FE đồng bộ BOM + Báo giá. Logic cha-con: cha ERP có recipe → con auto snapshot KHOÁ hoàn toàn (không thêm/xoá/sửa, SL nhân theo SL cha) + toggle show_children; cha tạm → chọn con ERP (cần quyền "Xem giá vốn hàng hoá")/tự tạo, hiện giá bán con, validate cha≥Σcon (gửi duyệt). Validate báo giá: VAT/CK 0-100% (cả nháp+gửi), thành tiền>0/giá nhập tự nhập/dịch vụ (gửi duyệt), hàng ERP giá nhập=0 hợp lệ. Khác: bỏ spinner SL, confirm xoá (cascade con), text "Bảng giá bán lẻ" sau tỷ giá, sync auto-allocation+layout+dòng tổng CK edit↔view. Chọn Cách A (BE tin payload FE). CHƯA migrate, CHƯA test browser. Bước tiếp: user `php artisan migrate` + build FE + test theo test-summary-phase31.md.
 
-## Tạm dừng
-
 - floating-label-bo-loc → @dnsnamdang → .plans/floating-label-bo-loc/plan.md
   Trạng thái: ✅ **Phase 1 XONG (13/13 task) — dừng ở màn thử nghiệm theo yêu cầu user, mở rộng sau.** Code đã nằm trong commit `3b4dc465c` ("fix bao cao cskh + filter styles") trên `tpe`, working tree sạch. e2e **18/18 xanh** (`e2e/tests/assign/prospective-projects-filter.spec.ts`).
   Ô lọc phân hệ assign chuyển sang **floating label** (nhãn nằm giữa ô khi rỗng, trượt lên đè viền trên khi có giá trị / đang focus) qua component mới `components/V2BaseFloatingField.vue` — 3 biến thể thường / `range` / `tags`. Màn pilot `/assign/prospective-projects`: panel lọc **449px → 312px (−31%)**, 5 hàng còn 4, 17 ô còn 16 (gộp "Ngày tạo từ/đến" thành 1 ô range), ô 32px → 36px.
@@ -715,8 +713,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 - notify-task-report → @dnsnamdang → .plans/notify-task-report/plan.md
   Trạng thái: 37/37 task done. Phase 12 + 13 vừa hoàn thành (bỏ cấu hình giờ + giảm spam + an toàn cron).
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
-
-## Hoàn thành
 
 - cong-tinh-luong-khong-vdm (Redmine #11457 — cột "Công tính lương" không VĐM/đi đường + TPL CONG_TINH_LUONG) → @cuong61n → .plans/cong-tinh-luong-khong-vdm/plan.md
   Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
@@ -1689,8 +1685,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Checkpoint: 2026-06-10 — Phase 31 CODE DONE + fixes test vòng 2: giữ nguyên giá ERP (revert roll-up) + validate giá vốn cha<Σcon chặn gửi duyệt; tổng "Thành tiền nhập"=Σ dòng cha (Cách A) đồng bộ mọi nơi; CK hiển thị số dương; validate bắt buộc "Điều khoản thanh toán" khi gửi duyệt; sync auto-allocation+layout edit↔view. CHƯA migrate, CHƯA test browser. Bước tiếp: user migrate + build + test.
   (2026-06-09) Phase 31 CODE DONE toàn bộ (Task 1-20 + nhiều fix sau review). BE+FE đồng bộ BOM + Báo giá. Logic cha-con: cha ERP có recipe → con auto snapshot KHOÁ hoàn toàn (không thêm/xoá/sửa, SL nhân theo SL cha) + toggle show_children; cha tạm → chọn con ERP (cần quyền "Xem giá vốn hàng hoá")/tự tạo, hiện giá bán con, validate cha≥Σcon (gửi duyệt). Validate báo giá: VAT/CK 0-100% (cả nháp+gửi), thành tiền>0/giá nhập tự nhập/dịch vụ (gửi duyệt), hàng ERP giá nhập=0 hợp lệ. Khác: bỏ spinner SL, confirm xoá (cascade con), text "Bảng giá bán lẻ" sau tỷ giá, sync auto-allocation+layout+dòng tổng CK edit↔view. Chọn Cách A (BE tin payload FE). CHƯA migrate, CHƯA test browser. Bước tiếp: user `php artisan migrate` + build FE + test theo test-summary-phase31.md.
 
-## Tạm dừng
-
 - training-elearning → @dnsnamdang → .plans/training-elearning/plan.md
   Trạng thái: Phase 0 done (3/3 task khảo sát BE + FE + deep dive). docs/training.md ~580 dòng / 13 sections. design.md đã enhance với gap analysis P1/P2/P3 + convention bắt buộc + risk note.
   Checkpoint: 2026-04-18 — Wrap up Phase 0. Chờ user gửi spec chung + spec từng màn + file demo HTML/Vue → tạo .plans/training-elearning-<feature>/ riêng cho mỗi màn → brainstorm + lên task BE+FE → code.
@@ -1698,8 +1692,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 - notify-task-report → @dnsnamdang → .plans/notify-task-report/plan.md
   Trạng thái: 37/37 task done. Phase 12 + 13 vừa hoàn thành (bỏ cấu hình giờ + giảm spam + an toàn cron).
   Checkpoint: 2026-04-17 — Phase 13 done. 4 mốc gửi cố định 08:30/11:30/14:30/17:30, withoutOverlapping, fix N+1, deploy code trước rồi migrate sau. Chờ user deploy + test.
-
-## Hoàn thành
 
 - employee-info-concurrent-allowance → @khoipv → .plans/employee-info-concurrent-allowance/design.md
   Hoàn thành: 2026-06-15. Verify browser PASS (Task 6 + Task 7 3 kịch bản nhập PC_KN). Tab "Thông tin thu nhập" màn hồ sơ NS — khi NV có ≥1 dòng phòng ban kiêm nhiệm thì popup hiện ô nhập Phụ cấp kiêm nhiệm (PC_KN, nhập tay), lưu thật vào employee_salary_history_allowances, cột PC_KN hiện trên bảng. BE 3 file (Request validate mảng + Service syncAllowances forceDelete resolve theo allowance_id/allowance_code + Controller store trong transaction) + FE 2 file (add-salary-history-modal prop concurrentPositions + computed hasConcurrent/nonConcurrentAllowances/pcknEntry + prepareConcurrentAllowance + dòng PC_KN editable; EmployeeInfoForm truyền prop + prepare 2 nhánh openSalaryHistory). Task 7 (BUG báo cáo lương): SalaryService::report() chuyển PC_KN từ dòng phòng chính → dòng phòng kiêm nhiệm (cd.id=MIN), bỏ pckn khỏi mainQuery. KHÔNG migration. Spec: .plans/employee-info-concurrent-allowance/design.md
