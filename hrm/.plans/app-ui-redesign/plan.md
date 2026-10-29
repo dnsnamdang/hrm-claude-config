@@ -335,4 +335,5 @@ Blocked:
 - [x] (29/10) B1–B4: chấm ngày tối đa 2 + "+"; bảng lọc lịch đủ loại, "Làm mới", Áp dụng xanh.
 - [x] (29/10) C1–C6: bỏ dải chỉ xem/banner vàng; C2 thêm Meeting liên quan; C3 thêm Hạn hoàn thành + công khoán; C4 "Chi tiết nhiệm vụ", bỏ ô trùng, thêm người giao/duyệt + liên kết, checklist ✓/chấm, tệp 2 nhóm + xem/tải/chia sẻ; C5 gộp dòng đầu, Mô tả lên trên, nút Sửa; C6 "Chi tiết vấn đề", hạn đỏ ⚠, chưa phân công màu cam.
 - [x] (29/10) D1 nút giữa mở sheet Tạo mới (Nhắc việc cá nhân · Meeting · Giao việc); thêm D2 màn Tạo/Sửa nhắc việc cá nhân (đủ trường form web). Cập nhật chú thích, ghi chú tư vấn, dàn lại vị trí các nhóm. Kiểm bằng ảnh xuất từng màn.
+- [x] (29/10) Bổ sung chi tiết: A1 đủ 7 nhóm như web (thêm Tuần sau · Sau đó · Không hạn); thẻ nhắc việc có "Xem bước / Thu gọn"; pill đang lọc có ✕; A3c "Không có dữ liệu."; A4b sheet Sửa bước (Lưu · Xóa bước), A4c xác nhận xoá bước (Xóa · Hủy); B1 thẻ meeting "Đã xác nhận tham gia"; D2c hộp "Thông tin chưa được lưu"; nới khung + dàn lại vị trí.
 - [ ] Chờ user chốt: thứ tự thanh nút đáy app (Hủy/Lưu) so với web.
