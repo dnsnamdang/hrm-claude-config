@@ -64,3 +64,16 @@ Không thay thế/bỏ thông báo nào đang có. Nhắc quá hạn chỉ 1 l�
 - **Gửi đúng mốc tính theo cấu hình, kể cả ban đêm** — user chốt KHÔNG có khung giờ yên lặng, không dời sang bản tin.
 - Màn cấu hình theo khuôn /meeting/settings (chọn công ty → hub "Nhắc hạn công việc" → ô số + nút Lịch sử), đặt ở phân hệ Công việc.
 - Bỏ điều kiện "phiếu ≥ 2 ngày": mốc nhắc rơi trước lúc phiếu được duyệt thì bỏ lượt đó.
+
+## Số liệu prod (hrm_erp_gop, tạo từ 01/10/2025, đọc 29/10/2026) → mặc định nhắc
+| Loại | n | Độ dài p50 / p90 | Lập phiếu so với lúc bắt đầu |
+|---|---|---|---|
+| Nhiệm vụ | 32 | 89h / 209h (29% < 24h) | tạo→hạn p50 74h |
+| Phiếu giao việc | 96 | 23h / 52h (61% < 24h) | lập SAU khi bắt đầu, p50 −8h |
+| Phiếu giao công tác | 5,716 | 25h / 123h | lập p50 0.8h SAU giờ đi; 84% lập < 2h trước giờ đi |
+| Phiếu giao việc (chấm công) | 12,481 | 1.9h / 9h (51% < 2h) | 87% lập < 2h trước khi bắt đầu |
+| Phiếu đi công tác (chấm công) | 1,686 | 12h / 106h | 52% lập < 2h trước giờ đi |
+| Meeting | 2,701 | — | lập p50 16h trước giờ họp; 37% < 2h |
+| Nhắc việc cá nhân | 100 | tạo→hạn p50 31h / p90 270h | — |
+| Vấn đề | 0 có hạn | — | — |
+Kết luận: 1 con số giờ cố định không hợp → đề xuất nhắc trước = 25% độ dài, tối thiểu 1h, tối đa 48h (cấu hình được); bỏ "nhắc trước giờ đi" của công tác (phiếu lập sau khi đi), dùng % rule để nhắc trước giờ VỀ (kịp gia hạn); Phiếu giao việc (chấm công) không nhắc trước, chỉ báo quá hạn chưa nhập KQ; Meeting giữ 15 phút. Chờ user chốt.
