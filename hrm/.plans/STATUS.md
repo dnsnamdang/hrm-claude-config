@@ -6,6 +6,11 @@
 được theo dõi ở file đó, KHÔNG ghi vào file này. Nền tảng kỹ thuật: `.plans/gop-db/design.md`.
 Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP DATABASE".
 
+## Đang làm
+
+- mytodo-nhac-han → @cuong61n → .plans/mytodo-nhac-han/plan.md
+  Trạng thái: **Đang làm (29/10/2026)** — đã chốt nghiệp vụ nhắc hạn + bản tin sáng 07:30 cho Việc của tôi (design.md); chờ user cho code BE.
+
 ## Hoàn thành
 
 - notification-content → @cuong61n → .plans/notification-content/plan.md (spec: docs/superpowers/specs/2026-10-22-notification-content-design.md)
