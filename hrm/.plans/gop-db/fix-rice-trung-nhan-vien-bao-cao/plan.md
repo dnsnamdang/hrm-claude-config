@@ -17,11 +17,11 @@ Không có số Redmine. User gửi ảnh ngày 29/10/2026: màn Báo cáo → B
 
 ## Sửa code
 - [x] Thử bọc hook đồng bộ cơm trong `DB::afterCommit` → test local: chặn được dòng mồ côi khi rollback NHƯNG gây hồi quy: `store()` cần dòng cơm có sẵn trong transaction để hook `Employee::saved` điền rice_ssn + đẩy khuôn mặt lên máy cơm → BỎ, không commit (nguyên nhân gốc đã fix từ 08/09) — 29/10/2026
-- [ ] Toyota PROD: kéo code nhánh tpe mới (`~/build_tpe.sh`) để có fix 07b0bf8fe — chờ user đồng ý
+- [x] Toyota PROD: KHÔNG deploy theo quyết định user (29/10/2026) — vẫn chạy code 28/08, có thể tái diễn dòng cơm trùng khi lưu hồ sơ lỗi
 - [ ] (Đề xuất, chưa làm) Các đường lưu hồ sơ khác ngoài `store()` (EmployeeController, HumanService, duyệt yêu cầu cập nhật hồ sơ) vẫn chỉ mở transaction trên mysql — rủi ro thấp vì chủ yếu là sửa, không tạo dòng cơm mới
 
 ### Checkpoint — 2026-10-29
 Vừa hoàn thành: dọn 36 dòng cơm trùng trên PROD, xác định nguyên nhân đã fix từ 08/09
 Đang làm dở: —
-Bước tiếp theo: user quyết có deploy Toyota không
+Bước tiếp theo: — (đóng việc; Toyota để nguyên theo user)
 Blocked:

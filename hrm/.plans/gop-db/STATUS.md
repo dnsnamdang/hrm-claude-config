@@ -2515,7 +2515,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 ## Hoàn thành
 
 - fix-rice-trung-nhan-vien-bao-cao (không Redmine) → @cuong61n → .plans/gop-db/fix-rice-trung-nhan-vien-bao-cao/plan.md
-  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã dọn dữ liệu PROD 29/10/2026 (36 dòng cơm trùng ở hrm_erp_gop + hrm_toyota), không đổi code; còn chờ user cho deploy Toyota.
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã dọn dữ liệu PROD 29/10/2026 (36 dòng cơm trùng ở hrm_erp_gop + hrm_toyota), không đổi code; Toyota để nguyên theo quyết định user.
   Scope: Báo cáo cơm chi tiết hiện trùng nhân viên do dòng rice_employee_infos mồ côi (lưu hồ sơ lỗi trước fix 08/09/2026).
 
 - 11567-duyet-tai-ql-don (#11567 web + #11568 app) → @cuong61n → .plans/gop-db/11567-duyet-tai-ql-don/plan.md
