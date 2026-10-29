@@ -24,6 +24,9 @@
 - [x] Push không lộ thông tin nhạy cảm trên màn hình chờ (SENSITIVE_PREFIXES): đơn nghỉ / lương / bảo hiểm / HĐLĐ / QĐ / hồ sơ / thu chi chỉ hiện người hoặc mã + "Mở ứng dụng để xem chi tiết"
 - [ ] Chờ user quyết: prefix mới, gửi nhầm người nhận (7 chỗ), báo giá tổng sai loại id, module CSKH/HSTK/BL, thả cảm xúc giữ emoji
 
+## Phase 3 — Sửa lỗi phát sinh
+- [x] (29/10/2026) **Fix sập màn Yêu cầu tính giá / Tính giá trên dev** — mở `/sale/price-calculate-requests/add?group_id=4417` báo lỗi. Nguyên nhân: commit `2f543d6b4` (23/10) khai `private function actorName($label)` ở `PriceCalculateRequestNotifier` + `PriceCalculateNotifier`, trùng tên với `private static actorName()` của lớp cha `PriceAskingNotifier` → PHP 7.4 (dev/prod) fatal "Cannot make static method … non static" ngay lúc nạp class, mọi API dùng notifier trả 500 (log dev 10:35–11:05, user 867). PHP 8 local không lỗi nên không phát hiện khi test. Sửa: đổi tên hàm ở 2 lớp con thành `actorLine()`. Kiểm: PHP 7.4 tái hiện fatal ở bản cũ, bản sửa nạp OK; tinker trên dev new 2 class OK, log không còn lỗi mới. Đã push `develop` commit `a617dccd9`, deploy dev 29/10/2026 (`~/build_tpe.sh`). gop_db không có commit `2f543d6b4` nên không dính.
+
 ### Checkpoint — 22/10/2026
 Vừa hoàn thành: viết lại ~230 thông báo trên 115 file hrm-api theo khuôn tên riêng + ghi chú đủ ai · khi nào · loại · lý do (≤ 180, note_full)
 Đang làm dở: —
