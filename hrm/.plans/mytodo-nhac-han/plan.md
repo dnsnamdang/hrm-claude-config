@@ -28,6 +28,12 @@
   - Còn: chạy migrate + seeder quyền + route:cache khi deploy; admin gán quyền "Cấu hình nhắc hạn công việc" cho vai trò; chưa thử bấm thông báo type work_reminder trên app; chưa sửa NotificationMeta::build (strtoupper hỏng chữ có dấu) — chờ user
   - Code CHƯA commit (hrm-api, hrm-client, TPE_APP develop)
 
+## Phase 4 — Chỉnh theo góp ý (29/10/2026)
+- [x] (29/10/2026) Tiền tố bản tin / nhắc cá nhân đổi [VIỆC] → [VIEC] (user chốt) → bỏ đoạn vá strtoupper, dùng thẳng NotificationMeta::build; không sửa hàm dùng chung
+- [x] (29/10/2026) Bấm thông báo trên app: BE type `work_reminder.<loại>` (thay `work_reminder`) + "Tạo mới" lúc duyệt PGV/PCT dùng type `assign_job` / `assign_business` (trước copy nhầm `lateInEarlyOutApprove` → app mở màn duyệt Đi muộn về sớm); app thêm openWorkItemById + case trong notification_bloc. Đã bấm thử simulator: PGV Tạo mới → chi tiết Phiếu giao việc, bản tin VIEC → Việc của tôi, PCT Sắp đến hạn → chi tiết phiếu giao công tác
+- [x] (29/10/2026) Màn cấu hình bỏ khuôn hub 2 cột (chỉ 1 nhóm): 1 V2BaseFormSection + bảng Loại việc / Nhắc trước (ô có đơn vị giờ|phút) / Mặc định, dòng Nhắc việc cá nhân cố định, V2Footer Lưu, unsavedChangesMixin (lưu xong chốt lại mốc, không tắt cảnh báo vĩnh viễn). Xoá WorkReminderSettingPanel.vue. Đã kiểm Playwright: hỏi chưa lưu khi thoát, lưu OK
+- Phát hiện (chưa sửa, ngoài phạm vi): thông báo Chờ duyệt / Đã duyệt / Từ chối có sẵn của Phiếu giao việc + Phiếu giao công tác (AssignJobController, AssignBusinessController) dùng type `lateInEarlyOutApprove` → trên app bấm vào mở nhầm màn duyệt Đi muộn về sớm
+
 ### Checkpoint — 29/10/2026 16:50
 Vừa hoàn thành: BE nhắc hạn + bản tin + cấu hình, web màn cấu hình + nhãn thẻ, app nhãn thẻ
 Đang làm dở: —
