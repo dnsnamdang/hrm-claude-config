@@ -77,3 +77,17 @@ Không thay thế/bỏ thông báo nào đang có. Nhắc quá hạn chỉ 1 l�
 | Nhắc việc cá nhân | 100 | tạo→hạn p50 31h / p90 270h | — |
 | Vấn đề | 0 có hạn | — | — |
 Kết luận: 1 con số giờ cố định không hợp → đề xuất nhắc trước = 25% độ dài, tối thiểu 1h, tối đa 48h (cấu hình được); bỏ "nhắc trước giờ đi" của công tác (phiếu lập sau khi đi), dùng % rule để nhắc trước giờ VỀ (kịp gia hạn); Phiếu giao việc (chấm công) không nhắc trước, chỉ báo quá hạn chưa nhập KQ; Meeting giữ 15 phút. Chờ user chốt.
+
+## CHỐT: nhắc trước = số CỐ ĐỊNH theo loại (user bỏ cách %, 29/10/2026)
+Mặc định chọn theo tỉ lệ phiếu prod thật sự nhận được nhắc (mốc nhắc rơi sau lúc lập phiếu):
+| Loại | Nhắc trước | Tỉ lệ nhận (prod) | Ghi chú |
+|---|---|---|---|
+| Nhiệm vụ | 24 giờ trước hạn | 75% (48h: 62%) | |
+| Vấn đề | 24 giờ trước hạn | — (prod chưa có) | theo Nhiệm vụ |
+| Phiếu giao việc | 4 giờ trước hạn chót | 90% (24h: 49%) | |
+| Phiếu giao công tác | 4 giờ trước giờ VỀ | 93% (24h: 57%) | bỏ nhắc trước giờ đi; nội dung nhắc gia hạn nếu chưa xong |
+| Phiếu đi công tác (chấm công) | 4 giờ trước giờ VỀ | 90% | như trên |
+| Phiếu giao việc (chấm công) | 30 phút trước giờ kết thúc | 75% (2h: 48%) | nhắc nhập kết quả |
+| Nhắc việc cá nhân | đúng giờ hạn | 99% | |
+| Meeting | 15 phút trước giờ họp | 81% | |
+Báo quá hạn: ngay khi qua hạn chưa xong (0), mọi loại. Cấu hình lưu theo phút, nhập phút/giờ; 0 ở ô "nhắc trước" = tắt.
