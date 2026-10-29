@@ -1,6 +1,6 @@
 ---
 name: print-page
-description: Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước gọi bằng this.$printPreview — chuẩn hiện hành, xem mục 0/0a; KHÔNG mở tab /print), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
+description: Use when làm NÚT IN ở màn danh sách / màn chi tiết (popup xem trước gọi bằng this.$printPreview — chuẩn hiện hành, xem mục 0/0a; KHÔNG mở tab /print), khi tạo mới hoặc sửa trang in riêng (file **/print.vue trong hrm-client) hoặc SERVICE dựng bản in ở máy chủ, hoặc khi gặp lỗi in — ô "Thời gian" trên bản in danh sách bỏ trống, cột ngày thiếu giờ, mất viền (phải/dưới/trên khi sang trang), nội dung cột bị cắt/tràn lề phải, mất logo/letterhead, letterhead ra sai công ty (khác công ty ghi trên chứng từ), style khác preview, không tự bật hộp thoại in (phải Ctrl+P), bảng ô gộp (rowspan) vỡ khi in nhiều trang, ô gộp trống ở đầu trang sau, viền ngang đậm khác màu, tên người ký dính sát chức danh (cần tăng khoảng cách chỗ ký), IN DANH SÁCH lớn thì trình duyệt đơ / không bật được hộp thoại in.
 ---
 
 # Skill: Print Page (màn IN trong hrm-client)
@@ -881,6 +881,7 @@ doc.close()
 | Cột Ghi chú tự phình rộng | auto-layout ăn theo text dài | `table-layout: fixed` + `<colgroup>` % |
 | **In danh sách: bấm In thì đơ / hộp thoại in không hiện, nhiều máy bị** | Endpoint in danh sách `->get()` không giới hạn dòng (đo thật 4.980 dòng → HTML 3,84 MB → ~170 trang, DOM lại bị nhân đôi khi chép sang cửa sổ in) | Mục 4d — chặn trần 2.000 dòng bằng trait `LimitsPrintListRows` + báo rõ trên bản xem trước |
 | **Bản in DANH SÁCH mất dòng mà không ai biết** | Chặn trần nhưng không nói gì / chỉ báo bằng toast | Mục 4d — dòng nhắc đặt trên bản xem trước, đủ 3 ý: in được bao nhiêu · tổng bao nhiêu · làm gì tiếp |
+| **Tên người ký dính sát chức danh / "tăng khoảng cách người đề nghị và tên"** | Mẫu ký chỉ 2 dòng, `markSignatureSpace` không bắt; `padding` inline bị `.no-border td { padding … !important }` đè | Mục 8b — BE chèn `<div class="signature-space">` + inline `height:15px !important` (#11918) |
 | **Khối KÝ TÊN dồn về trái, hụt so với mép phải** | Mẫu ERP khai cứng `width:827px` cho bảng ký `class="block no-border"`; rule `table:not(.no-border)` KHÔNG với tới nó | `#content table.block { width:100% !important; table-layout:fixed !important }` + `td { width:auto !important }` (mục 3b) |
 
 ## 8. Bản in mở bằng POPUP, KHÔNG mở trang riêng (chốt 2026-08-22) — CÁCH LÀM CHI TIẾT
@@ -982,6 +983,21 @@ Bề rộng iframe phải bằng bề rộng vùng xem trước, nếu không `h
   phần tử "chỉ chứa khoảng trắng" nên `markSignatureSpace(html)` gắn class `.signature-space` ngay
   khi NHẬN HTML (không đợi Vue render — lúc html vừa về thì `loading` vẫn true, `$refs` chưa có),
   rồi CSS nới lên `56px`. Popup và bản in dùng chung đúng chuỗi HTML đó.
+- **Mẫu ký chỉ có 2 dòng** (*chức danh* rồi ngay *tên người*, KHÔNG có dòng `&nbsp;` ở giữa — vd mẫu
+  199-202 Phiếu đề nghị thu tiền): `markSignatureSpace` cần ≥3 dòng nên bỏ qua, tên dính sát chức
+  danh. QA hay báo "tăng khoảng cách giữa người đề nghị và tên người lập" (#11918). Cách làm:
+  - Chèn ở **BE lúc render**, KHÔNG sửa `report_templates` (mẫu dùng chung với cổng ERP): regex tìm ô
+    chứa `<strong>{{TEN_PLACEHOLDER}}</strong>` rồi chèn `<div class="signature-space">&nbsp;</div>`
+    lên đầu ô. Mẫu đổi khuôn thì regex trượt, bản in giữ nguyên như cũ. Khuôn copy:
+    `BillIncomeRequestPrintService::widenSignatureSpace()`.
+  - ⚠️ **ĐỪNG dùng `padding-top` inline** cho ô ký: CSS chung ép
+    `.no-border td { padding: 1px 2px !important }` → padding bị nuốt, HTML trả về trông đúng nhưng
+    popup KHÔNG đổi gì (#11918 lần 1 báo xong mà user vẫn thấy dính). Kiểm chuỗi HTML là chưa đủ —
+    phải nhìn popup.
+  - Cỡ: `56px` chuẩn là **quá xa** với vùng ký 2 dòng (user chê cả 56 lẫn 30), user chốt **15px**.
+    Đè riêng bằng inline `style="height: 15px !important; line-height: 15px !important"` trên chính
+    div đó (inline `!important` thắng `!important` của stylesheet) — KHÔNG sửa class
+    `.signature-space` chung vì các mẫu 3 dòng đang dùng 56px.
 - **Rác của tiện ích trình duyệt**: ẩn `img[src^="chrome-extension"]`, `img[src^="moz-extension"]`,
   `.ddict_btn` — chúng chèn vào DOM và lọt cả vào giấy.
 

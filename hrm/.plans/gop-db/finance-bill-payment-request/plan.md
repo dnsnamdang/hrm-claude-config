@@ -5318,3 +5318,91 @@ Vừa hoàn thành: NV-1 → NV-4 (nới validate lưu nháp còn mỗi Loại c
 Đang làm dở: không.
 Bước tiếp theo: user mở màn Tạo, bấm Lưu nháp với form trống (chỉ chọn loại chi) để xác nhận.
 Blocked: không.
+
+---
+
+## Redmine #11920 — [ERP => HRM] Đề nghị thanh toán (2026-10-29)
+
+Issue gồm 7 mục (tester Nguyễn Minh Hằng). Mục 3 + 4 tester ghi "check lại" → chỉ điều tra, báo
+kết luận, chờ user chốt trước khi đổi nguồn hợp đồng.
+
+- [x] **R1** Đổi nhãn "Ngày lập"/"Người lập" → "Ngày tạo"/"Người tạo" trên màn: danh sách (ô lọc + cột)
+      + cột ngày của popup chọn hợp đồng (prop `dateColumnLabel`, mặc định giữ "Ngày lập" cho màn khác).
+- [x] **R2** Ô "Lý do chi" đổi sang textarea.
+- [x] **R3** (điều tra) Popup HĐ loại chi 1 (NCC): ERP 468 vs HRM 470.
+- [x] **R4** (điều tra) Popup HĐ loại chi 2 (KH): ERP 470 vs HRM 6.
+- [x] **R5** Màn Xem/Sửa nháy nhánh "Trả NCC" rồi mới sang loại thật: form khởi tạo `type = 1` trước khi
+      nạp phiếu → chỉ vẽ form sau khi `loadDetail()` xong.
+- [x] **R6** Đổi loại 2 (CK, có KH) → loại 6: dropdown "Tài khoản ngân hàng" của KH cũ vẫn hiện —
+      `clearInfoBank()` không xoá `partyAccounts`/`selectedAccountId`. Kèm: `loadDetail()` không gọi
+      `loadPartyBanks(null)` (nó xoá trắng khối ngân hàng đã lưu của phiếu loại 6).
+- [x] **R7** Popup HĐ loại 6: sort cột Số HĐ, Khách hàng, Số tiền còn lại (+ Ngày tạo) — BE
+      `paginateBonusUnion()` nhận `sort_by`.
+
+### Kết quả #11920
+
+- **R1**: `index.vue` 2 ô lọc + 2 cột; popup HĐ thêm prop `dateColumnLabel` (màn này truyền "Ngày tạo").
+  Excel chứng từ (`exports/bill_payment_request.blade.php` dòng "Ngày lập:"/"Người lập:" + ô ký) CHƯA đổi —
+  đó là chứng từ in, không phải màn; chờ user chốt.
+- **R2**: `V2BaseTextarea` 2 dòng.
+- **R5**: cờ `detailReady` — màn Xem/Sửa hiện "Đang tải phiếu..." tới khi `loadDetail()` gán xong.
+- **R6**: nguyên nhân thật có 2 lớp: (a) `clearInfoBank()` sót `partyAccounts`/`selectedAccountId` → dropdown
+  tài khoản KH cũ còn; (b) bấm **Hủy** ở popup "Đổi loại chi" thì ô Loại chi giữ giá trị MỚI mà dữ liệu nhánh cũ
+  còn nguyên. Sửa: xoá 2 biến trong `clearInfoBank()`; đóng popup không xác nhận (Hủy/✕/Esc/nền) → trả Loại
+  chi / Hình thức về giá trị cũ (`previousChoice` + `bv::modal::hidden`); `askResetForm()` soi cả
+  `customer_id` + `supplier_id`; `loadDetail()` bỏ gọi `loadPartyBanks(null)` (nó xoá khối ngân hàng đã lưu
+  của phiếu loại 6).
+- **R7**: BE `paginateBonusUnion()` nhận `sort_by` = `code` / `customer` / `createdAt` / `remaining`
+  (subquery cùng công thức `bonusRemaining()`); FE `BONUS_SORT_KEYS`. Thử nhân viên id 35 (2.966 HĐ): 6 kiểu
+  sort chạy, `remaining desc` ra 22.408.325 → 402.624 → … khớp số tính từng dòng.
+  Ảnh của tester có cột Khách hàng TRỐNG — local trả đủ tên KH (vd HĐ ..._0177_8.7.26 → "LÊ VĂN TỚI"); nghi
+  dữ liệu `customers` trên dev lệch, chưa kiểm được trên dev.
+- **R3 (điều tra, CHƯA sửa)** — không phải phân quyền (ERP mặc định `is_all_company`). Lệch do NGUỒN:
+  HRM dùng chung `searchBuyContracts()` của Đề nghị thu tiền = 5 bảng HĐ mua, KHÔNG lọc trạng thái.
+  ERP loại 1 gọi `searchContractForPaymentSupplier()` = chứng từ có bút toán TK 331 (account_id 99, gồm cả phiếu
+  nhập/xuất kho) + HĐ mua có LỌC trạng thái (bc2 đã duyệt type 1 · ibc status 1 · ibcn đã duyệt type 1-3 ·
+  HĐ dịch vụ đã duyệt) + `insurance_principle_forms`. → ERP đúng; cần port riêng cho màn này (usage mới), chờ chốt.
+- **R4 (điều tra, CHƯA sửa)** — HRM loại 2 = `hrm_contracts` (của tôi) + `opening_contracts` (cả KH, không
+  lọc người tạo) + `wr_service_contracts` (của tôi). Etek Green (id 34): hrm 0 · opening **6** · wr 3 (không
+  phải của tester) → ra đúng 6. ERP `create_bill` UNION 10 nguồn: `firm_contracts` của tôi + opening của tôi +
+  wr của tôi + **HĐ mua có supplier_id = KH** (không lọc người tạo — Etek Green: 310 + 7 + 48 = 365) + phiếu nhập
+  xử lý thừa thiếu + xác nhận bảo hành → ~470, phần lớn là HĐ MUA lọt vào popup "trả lại khách hàng" (lỗi ERP).
+  Đề xuất: thêm `firm_contracts` (của tôi, status ≠ Đang tạo, type HĐ/HĐDA/ĐHNT) + lọc opening theo người tạo
+  như ERP; KHÔNG kéo HĐ mua sang. Chờ user chốt.
+
+### Checkpoint — 2026-10-29
+Vừa hoàn thành: #11920 R1, R2, R5, R6, R7 (code) + điều tra R3, R4.
+Đang làm dở: không.
+Bước tiếp theo: user chốt R3/R4 (port nguồn HĐ theo ERP) + có đổi nhãn trên Excel chứng từ không; mở trình
+duyệt kiểm R5/R6/R7.
+Blocked: R3/R4 chờ quyết định.
+
+### #11920 — vòng 2 (2026-10-29, user chốt)
+
+User làm rõ: "mục 4" của tester = lỗi màn chi tiết nháy loại chi (đã sửa ở R5), KHÔNG phải số HĐ loại 2 →
+bỏ đề xuất R4. Mục 3: sửa theo ERP. Excel chứng từ: đổi nhãn luôn.
+
+- [x] **R8** Excel chứng từ `exports/bill_payment_request.blade.php`: "Ngày lập:"/"Người lập:" → "Ngày tạo:"/"Người tạo:".
+      Ô ký thật ra là "Người đề nghị" (lượt trước báo nhầm là "Người lập"), giữ nguyên. Bản In dùng mẫu
+      `report_templates` chung với ERP → không sửa.
+- [x] **R9** Popup HĐ loại chi 1 port ERP `searchContractForPaymentSupplier()` (`type=payment_supplier`):
+      class nguồn mới `BillPaymentSupplierContractSource`, `searchBuyContracts()` rẽ nhánh
+      `usage=bill_payment_supplier`, FE `contractExtraParams` gửi usage; `allowedContractTypes(1)` thêm
+      WarehouseImport/WarehouseExport/InsurancePrincipleForm; morphMap thêm alias ERP của InsurancePrincipleForm.
+
+- Kết quả R9 (so trên DB gộp, số ERP tính lại bằng chính logic ERP):
+  NCC 11803: cũ 73 → mới 578 (ERP 580) · NCC 11787: 13 → 545 (ERP 547) · Kho bạc KV1 (11799): 0 → 458 (ERP 460,
+  bút toán 3311 thuế nhập khẩu trên HĐ mua) · Etek Green (34): 365 → 366 (ERP 366).
+  Lệch 2 = 2 đơn bảo hiểm TEST-DBH-001/002 (của Etek Green): ERP không lọc NCC cho đơn bảo hiểm nên NCC nào cũng
+  thấy — HRM cố ý lọc theo NCC. Lệch thứ 2 có chủ ý: bút toán 3311 của loại chứng từ ngoài 6 loại có JOIN (vd
+  OpeningContract) ERP ra dòng mã trống — HRM bỏ (DB hiện tại: 0 dòng như vậy cho 4 NCC đã thử).
+  `allowedContractTypes(1)` thêm WarehouseImport/WarehouseExport/InsurancePrincipleForm; morphMap thêm
+  `App\Model\Insurance\InsurancePrincipleForm`. Màn Đề nghị thu tiền NCC không đổi (không gửi `usage`).
+- R5 (= "mục 4" của tester) đã kiểm lại: nguồn nháy duy nhất là `emptyForm()` mặc định `type = 1` được vẽ trong
+  lúc chờ `loadOptions()` + `loadDetail()` → cờ `detailReady` chặn đúng chỗ.
+
+### Checkpoint — 2026-10-29 (vòng 2)
+Vừa hoàn thành: R8 (nhãn Excel), R9 (port popup HĐ loại 1 theo ERP).
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt kiểm R5/R6/R7/R9 (chọn phiếu nhập kho / đơn bảo hiểm ở loại 1 rồi Lưu nháp + Gửi duyệt).
+Blocked: không.

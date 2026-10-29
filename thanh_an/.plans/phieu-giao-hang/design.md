@@ -12,8 +12,9 @@ Làm thật luồng demo bước 1–3: Đơn mua đã duyệt (mọi hình th�
 - 4 bảng mới `purchase_delivery_notes` / `_points` / `_items` / `_costs` (chỉ index). File hóa đơn chi phí lưu json trên dòng chi phí.
 - Còn phải gửi tính theo cặp (điểm, dòng đơn mua), trừ thực giao của phiếu Hoàn thành + SL yêu cầu của phiếu đang mở.
 - Không cần chặn thêm trên đơn mua: đơn đã duyệt vốn không sửa / xóa / hủy được.
+- [User 29/10] Đơn mua thêm trạng thái **7 "Đã gửi giao hàng"**: gửi phiếu → 3 → 7; hủy hết phiếu → về 3; mọi báo cáo / điều kiện coi 7 như Đã duyệt (spec §6.6).
 - [User] Chống kẹt phiếu: người phụ trách được Trả lại khi đã tiếp nhận nhưng chưa xác nhận gì; Cung ứng được Hủy phiếu Bị trả lại (status 6).
-- FE: màn danh sách + chi tiết mới `pages/supply/delivery_notes`, chuẩn V2 Cung ứng; nút gửi + bảng tiến độ ở `DeliveryNoteBlock.vue` trong slot `#notice` màn chi tiết đơn mua (`purchase_orders/_id/index.vue`). Mã phiếu `PGH-<năm>-<####>`.
+- FE: màn danh sách + chi tiết mới `pages/delivery/delivery_notes` thuộc **phân hệ Giao hàng** (ô Giao hàng ở trang chủ / Topbar, menu `MenuDelivery.js`), chuẩn V2; API giữ ở module Supply; nút *Gửi bộ phận giao hàng* (/ Sửa và gửi lại / Hủy phiếu khi bị trả lại) ở V2Footer màn chi tiết đơn mua (`purchase_orders/_id/index.vue`); khối tiến độ + khối Giao nhận hàng đã bỏ 28/10. Mã phiếu `PGH-<năm>-<####>`.
 
 ## Ngoài phạm vi
 Ghi kết quả về đơn mua, hủy / dời phiếu, chuyển người phụ trách, hoàn ứng, duyệt chi phí, chứng từ, phương tiện, xuất Excel, phân quyền theo cấp.

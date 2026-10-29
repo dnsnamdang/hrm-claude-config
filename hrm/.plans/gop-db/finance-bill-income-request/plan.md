@@ -2053,3 +2053,26 @@ Blocked: không.
 
 ## Phase 16 — Sinh lại SRS theo form 2026-09-24 (2026-09-24)
 - [x] **B1.** Sơ đồ tổng quan đơn giản (thao tác nối thẳng actor, «extend» chỉ cho chức năng phụ) + sơ đồ từng chức năng chỉ actor + 1 use case + icon trên dòng Menu (cắt từ bản gop_db cổng 3002, `dntt_shots/icon_*.png`); ảnh chụp màn tách lại từ file .docx cũ. File mới cũng thay `assets/SRS_MAU.docx` của skill.
+
+## Phase 17 — Redmine #11918: form + bản in + lọc hợp đồng theo người lập (2026-10-29) @khoipv
+- [x] **F1.** Form — ô "Lý do thu" đổi sang textarea, kéo full chiều ngang; hàng đầu "Thông tin chung" phủ kín (màn Tạo 3 ô `col-md-4`, màn Sửa 4 ô `col-md-3`).
+- [x] **F2.** Form — cột hành động (+ / xóa dòng) của bảng Chi tiết dính bên phải (`position: sticky`), màn hẹp không phải kéo ngang mới thấy.
+- [x] **P1.** Bản in — giãn khoảng ký tên giữa "NGƯỜI ĐỀ NGHỊ" và tên người lập (chèn padding lúc render, KHÔNG sửa `report_templates` dùng chung với ERP).
+- [x] **P2.** Bản in — cố định độ rộng cột bảng chi tiết (`table-layout: fixed` + `colgroup`), ghi chú dài tự xuống dòng, cột "Số tiền đề nghị thu" không bị bóp.
+- [x] **B1.** Popup chọn hợp đồng (Thu bán hàng) — port đúng ERP `create_bill_income`: HĐ bán (`hrm_contracts`) + HĐ dịch vụ (`wr_service_contracts`) chỉ lấy do CHÍNH người lập tạo; `wr` thêm lọc status ∈ {3,4,5,6} + type = 1; HĐ đầu kỳ không lọc. Opt-in bằng `usage=bill_income_request` (endpoint dùng chung với Đề nghị thanh toán / Phiếu báo có — không đổi các màn đó). Nguyên nhân lệch: KH Etek Green (id 34) có 6 HĐ đầu kỳ + 3 HĐ dịch vụ của người khác → HRM 9, ERP 6.
+
+### Checkpoint — 2026-10-29
+Vừa hoàn thành: F1, F2, P1, P2, B1 (#11918). Kiểm chứng: tinker — admin (id 13) KH 34 không `usage` 9 HĐ, có `usage` 6 HĐ (= ERP); người tạo HĐ dịch vụ (461) vẫn thấy 9. Render bản in: padding ký tên chèn đúng 1 ô, có `colgroup`. FE: compile template + parse script OK.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt soát form (Lý do thu textarea, hàng đầu phủ kín, cột +/xóa dính phải) + xem trước bản in.
+Blocked: không.
+- [x] **P1b.** (user báo 2026-10-29: bản in vẫn chưa giãn) P1 dùng `padding-top` inline bị CSS chung popup in (`reportPrintStyle.js`: `.no-border td { padding: 1px 2px !important }`) đè mất → đổi sang chèn `<div class="signature-space">&nbsp;</div>` trước tên người lập (class chuẩn cao 56px, dùng chung mọi bản in). Render thử phiếu 2536: chèn đúng 1 chỗ.
+- [x] **P1c.** User thấy 56px xa quá → đè riêng 30px (inline `!important` trên div `signature-space`), class chung giữ nguyên.
+- [x] **P1d.** 30px user vẫn thấy xa → hạ còn 15px.
+
+### Checkpoint — 2026-10-29 (wrap up)
+Vừa hoàn thành: Phase 17 (#11918) — F1, F2, P1→P1d (khoảng ký chốt 15px, user OK), P2, B1.
+Đang làm dở: không.
+Bước tiếp theo: commit khi user yêu cầu (hrm-api: BillIncomeRequestService.php + BillIncomeRequestPrintService.php; hrm-client: BillIncomeRequestForm.vue) → đẩy dev, chuyển #11918 sang "Code xong chờ test".
+Blocked: không.
+- [x] **G1.** Push `develop` (2026-10-29): api `423116a46`, client `9e93e61be`.

@@ -76,3 +76,27 @@ Vừa hoàn thành: fix #11894 #11895 #11904 ĐÃ PUSH `develop` 28/10 (hrm-api 
 Đang làm dở: —
 Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
 Blocked:
+
+## Fix #11901 — Nhãn Loại/Hình thức vận chuyển lệch ERP · tooltip · thứ tự dòng (29/10/2026)
+
+- [x] BE `WarehouseActivityService`: nhãn Loại (xuất/nhập) + Hình thức vận chuyển lấy theo bảng ERP `ExportModel::TYPES` / `ImportModel::TYPES` / `TRANSITION_TYPES` (bảng riêng trong service, KHÔNG sửa bảng tra dùng chung của ĐNXK/ĐNNK) — áp cả màn Theo dõi theo kho
+- [x] FE: tooltip tiêu đề màn (`pageTitleInfo`) + ⓘ từng ô Tổng số phiếu nhận / Tổng hoàn thành / Tổng chưa xử lý (`ActivitySummary`)
+- [x] Ý 2 (dòng mới nhất nằm cuối): CHỈ điều tra — thứ tự y ERP `getActivities()` (chưa đổi tồn lên trước, rồi `received_time` giảm dần) → 3 phiếu cuối là phiếu ĐÃ HOÀN THÀNH nên xuống nhóm dưới. Không sửa, báo user.
+- [ ] Ý 4 (dòng "Cập nhật lúc…" có cần không): trả lời đề xuất, chờ user chốt
+- [x] Verify: php -l + gọi service trong tinker, compile FE
+
+### Checkpoint — 29/10/2026
+Vừa hoàn thành: #11901 ý 1 + 3 — BE `WarehouseActivityService` bảng nhãn ERP riêng (EXPORT_TYPE_NAMES / IMPORT_TYPE_NAMES / TRANSITION_NAMES), bỏ dùng bảng tra ĐNXK/ĐNNK; FE `pageTitleInfo` màn Hoạt động kho + ⓘ 3 ô tổng hợp (`ActivitySummary`, dùng chung Theo dõi kho). php -l + chạy service local 219 dòng, 0 dòng trống loại; compile template OK.
+Đang làm dở: ý 4 chờ user chốt.
+Bước tiếp theo: user mở trình duyệt xem tooltip + nhãn; trả lời QA ý 2 và 4.
+Blocked:
+- [x] Ý 4 — user chốt 29/10: BỎ dòng "Cập nhật lúc … · Chưa hoàn thành quá 10/20 phút" ở `ActivitySummary` (dùng chung → Theo dõi kho cũng bỏ). ⓘ phạm vi + nút Thu gọn lên đầu khối "Phiếu nhận"; chú thích vạch màu chuyển vào ⓘ. Bỏ prop `updatedAt` ở 2 màn. Compile template OK.
+- [x] Ý 4 (tiếp) — user chốt 29/10: BỎ luôn vạch màu mép trái dòng (đánh dấu #11894) ở Hoạt động kho + Theo dõi kho. Xoá `activityRowClass` + hằng WARN/LATE (`activity-table.js`), xoá file `activity-row-marks.scss`, bỏ `rowClass`/`now` ở 2 màn, bỏ câu chú thích màu trong ⓘ. Compile OK.
+- [x] Kiểm tra theo yêu cầu (29/10): thứ tự sắp xếp danh sách Hoạt động kho / Theo dõi kho — `WarehouseActivityService::listForWarehouses()`: [cột user bấm sort] → phiếu CHƯA hoàn thành trước (chưa có Thời gian hoàn thành) → Thời gian nhận giảm dần → id giảm dần (HRM thêm cho ổn định). Y ERP `getActivities()`. Phiếu chưa có Thời gian nhận xuống cuối nhóm chưa hoàn thành; phiếu đã hoàn thành luôn ở cuối. Không sửa code, báo user.
+
+### Checkpoint — 29/10/2026
+Vừa hoàn thành: #11901 — nhãn Loại/HTVC theo ERP (BE), ⓘ tiêu đề + 3 ô tổng hợp, bỏ dòng "Cập nhật lúc…/chú thích màu", bỏ vạch màu dòng (cả Theo dõi kho); kiểm tra thứ tự sắp xếp (giữ y ERP).
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm (chưa xem bằng trình duyệt); trả lời QA ý 2 (thứ tự y ERP).
+Blocked:
+- [x] Kiểm tra theo yêu cầu (29/10): "trạng thái xếp lộn xộn" — không phải lỗi: BE chỉ tách 2 nhóm chưa hoàn thành / đã hoàn thành, "Đã nhận đề nghị" và "Đang lấy/xếp hàng" cùng nhóm chưa hoàn thành nên xen nhau, trong nhóm xếp theo Thời gian nhận giảm dần (ảnh user: 09:25 → 09:01 đúng thứ tự). Y ERP. Đề xuất (chờ user chốt): xếp Đã nhận đề nghị → Đang lấy/xếp hàng → Đã hoàn thành, trong mỗi trạng thái theo Thời gian nhận giảm dần — lệch ERP.
