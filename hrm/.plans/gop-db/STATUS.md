@@ -2514,6 +2514,9 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- fix-don-nghi-14505-doi-loai-nghi (không Redmine) → @cuong61n → .plans/gop-db/fix-don-nghi-14505-doi-loai-nghi/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã sửa dữ liệu PROD 29/10/2026 (đổi loại nghỉ BHXH → Nghỉ phép, tính lại công 28–29/10), không đổi code.
+
 - fix-rice-trung-nhan-vien-bao-cao (không Redmine) → @cuong61n → .plans/gop-db/fix-rice-trung-nhan-vien-bao-cao/plan.md
   Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã dọn dữ liệu PROD 29/10/2026 (36 dòng cơm trùng ở hrm_erp_gop + hrm_toyota), không đổi code; Toyota để nguyên theo quyết định user.
   Scope: Báo cáo cơm chi tiết hiện trùng nhân viên do dòng rice_employee_infos mồ côi (lưu hồ sơ lỗi trước fix 08/09/2026).
