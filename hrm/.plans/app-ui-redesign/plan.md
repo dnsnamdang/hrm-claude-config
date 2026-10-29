@@ -337,3 +337,15 @@ Blocked:
 - [x] (29/10) D1 nút giữa mở sheet Tạo mới (Nhắc việc cá nhân · Meeting · Giao việc); thêm D2 màn Tạo/Sửa nhắc việc cá nhân (đủ trường form web). Cập nhật chú thích, ghi chú tư vấn, dàn lại vị trí các nhóm. Kiểm bằng ảnh xuất từng màn.
 - [x] (29/10) Bổ sung chi tiết: A1 đủ 7 nhóm như web (thêm Tuần sau · Sau đó · Không hạn); thẻ nhắc việc có "Xem bước / Thu gọn"; pill đang lọc có ✕; A3c "Không có dữ liệu."; A4b sheet Sửa bước (Lưu · Xóa bước), A4c xác nhận xoá bước (Xóa · Hủy); B1 thẻ meeting "Đã xác nhận tham gia"; D2c hộp "Thông tin chưa được lưu"; nới khung + dàn lại vị trí.
 - [ ] Chờ user chốt: thứ tự thanh nút đáy app (Hủy/Lưu) so với web.
+
+### Code Mytodo trên app — tab "Việc của tôi" phân hệ Công việc (29/10/2026) — @cuong61n
+Theo design mytodo.pen (đã sửa 29/10) + Nội dung thống nhất biên bản review 16/09. API có sẵn: GET v1/assign/my-todo, /calendar, CRUD /todos, PATCH /todos/{id}/toggle.
+- [x] (29/10) BE hrm-api develop: GET my-todo trả `attendance_confirm` (can_confirm, my_status…) cho meeting, nạp sẵn điểm danh của user 1 query (preloadMyCompanyMember) — kiểm curl: 6 meeting đều có trường. Chưa commit.
+- [x] (29/10) Web hrm-client develop: nhóm Quá hạn lên đầu (TodoMainList groupOrder). Chưa commit.
+- [x] (29/10) App data: MyTodoApiService (my-todo, calendar, lists, CRUD/toggle todo) + model WorkItem/WorkSubItem/TodoListOption. Bẫy: API trả MẢNG ở `data` phải dùng mapper jsonObject + đọc json['data'] (dataResponse chỉ nhận object → ra 0 dòng).
+- [x] (29/10) Khung phân hệ Công việc: tab đầu "Việc của tôi"; "Tiến độ" chuyển vào menu trái (mở màn riêng); nút giữa "Tạo mới" → sheet Nhắc việc cá nhân · Meeting · Giao việc.
+- [x] (29/10) Tab Công việc của tôi (my_todo_list_view.dart): tìm + ↻ xoá lọc, 2 pill Loại/Trạng thái (✕ bỏ điều kiện, tự xuống dòng), 7 nhóm Quá hạn đầu, chỉ Hôm nay mở; thẻ WorkItemCard dùng chung; khuôn rỗng chung.
+- [x] (29/10) Tab Lịch (my_todo_calendar_view.dart): Tuần/Tháng, chấm tối đa 2 + "+", agenda theo ngày (việc nhiều ngày ghi "ngày 2/3"), Bộ lọc loại + nhóm trạng thái, ↻.
+- [x] (29/10) Chi tiết nhắc việc (PersonalTodoDetailPage, C5) + form Tạo/Sửa (PersonalTodoFormPage, D2, cảnh báo chưa lưu, lỗi BE tô đỏ đúng ô, sửa thì ẩn lỗi); sheet sửa/thêm/xoá bước; bấm thẻ loại khác mở màn có sẵn (Meeting Hub, Task, phiếu giao việc, phiếu giao công tác; Vấn đề chưa có màn app → báo xem trên web). Bảng lọc chung đổi "Đặt lại" → "Làm mới".
+- [x] (29/10) Kiểm: analyze 0 error/warning (173 info như cũ); simulator: danh sách 30 việc + nhóm; lọc Loại; tick hoàn thành (popup Hoàn thành/Hủy, DB is_completed=1); tick bước cuối → việc cha tự Hoàn thành; tạo nhắc việc + bước (DB id 28/29), bấm Lưu khi trống → ô Tiêu đề đỏ "Tiêu đề là bắt buộc"; sửa bước (DB id 6, 7); form Sửa điền sẵn. Sửa lỗi màn đỏ `_dependents.isEmpty` (controller ô sửa bước huỷ khi sheet còn trượt → tách _StepSheet).
+- [ ] Chưa kiểm được nút "Xác nhận tham gia" trên thẻ meeting (dữ liệu local không có meeting sắp diễn ra mà user chưa xác nhận). Chưa commit TPE_APP / hrm-api / hrm-client.
