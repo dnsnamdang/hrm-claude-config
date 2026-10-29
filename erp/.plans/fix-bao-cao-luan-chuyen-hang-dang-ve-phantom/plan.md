@@ -441,3 +441,7 @@ Bước tiếp theo khi quay lại: chạy v27 kiểm bất biến 4+2 bảng �
   nhập của updateWarehouse (cả MUA_HANG_NUOC_NGOAI_MOI + MUA_HANG_TRONG_NUOC_TU_DO) cho các cột
   đã chứng minh → php -l → test re-run trên DB test (KHÔNG phải prod) → bàn deploy.
 Blocked: để trống (tạm dừng theo yêu cầu user để xử lý việc công tác phí HRM).
+
+## Ngày 29/10/2026 (@junfoke)
+- [x] 29/10/2026 — BC luân chuyển hàng hoá: cột Hàng đang về ra số lẻ (PI 25WHGC123). Nguyên nhân: PNH không trỏ tới dòng HĐ mà tới phiếu THCPNK / dòng phụ lục, `ArrivingQtyService` chia số đã về theo tỉ lệ cho các dòng HĐ; dòng HĐ 16 bộ đã huỷ vẫn được tính. Sửa: bỏ dòng HĐ đã huỷ (`1f2c64885a`), chia theo FIFO — dòng lập trước nhận đủ trước (`a573797942`), gop_db.
+- [x] 29/10/2026 — Prod ra 0 hết dù local đúng → nhờ user chạy SQL prod (MySQL 8.0.46) để đối chiếu. FIFO chỉ ảnh hưởng 5 phiếu THCPNK thiếu lẻ 1–2 cái (phần còn về dồn vào dòng HĐ lập sau cùng, tổng cột vẫn đúng) → giữ FIFO. Soạn câu giải thích ngắn cho người dùng. Kiểm sau deploy: GC-GC-40PRO-A:06 Hàng đang về KD 20 / Tồn 40.

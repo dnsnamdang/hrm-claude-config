@@ -139,18 +139,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   ⚠️ GOTCHA: cột `assembly_requests.need_site_survey` migrate ở ERP, HRM KHÔNG tạo lại; phiếu cũ NULL.
   Spec: docs/superpowers/specs/gop-db/2026-10-27-ycldbg-khao-sat-mat-bang-design.md | Tóm tắt: .plans/gop-db/ycldbg-khao-sat-mat-bang/design.md
 
-- chuyen-xe-khac → @junfoke → .plans/gop-db/chuyen-xe-khac/plan.md
-  Trạng thái: 🟢 **BE + FE xong, test tay trên local (28/10/2026)**, nhánh `feat/chuyen-xe-khac`, CHƯA commit. Còn: test tuyến cố định với bảng giá hiệu lực thật (DB local không có), Excel 1 phiếu.
-  Scope: màn Chuyến xe khác trọn luồng (DS, thêm/sửa/chi tiết 3 kiểu, xuất phát → kết thúc → duyệt, không duyệt, in, Excel) ở phân hệ Vận chuyển; phiếu hạch toán giữ ERP.
-  ⚠️ GOTCHA: ERP không kiểm quyền ở BE (chỉ ẩn nút) — HRM chặn đúng điều kiện nút; `is_bulky` = "Nhân viên chịu phí"; `activity_has_other_delivery_trip_accounting.employee_id` TINYINT.
-  Spec: docs/superpowers/specs/gop-db/2026-10-27-chuyen-xe-khac-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-khac/design.md
-
-- phieu-theo-form-quoc-gia → @junfoke → .plans/gop-db/phieu-theo-form-quoc-gia/plan.md
-  Trạng thái: 🟢 **Xong SRS + HDSD 16 màn "DNS đang fix" theo form Danh mục quốc gia (28/10/2026)**, 32 file ở `giao/`. Bước tiếp: user soát → tải lên Drive.
-
-- nhap-khac-ghi-chu-dong-hang (#11908) → @junfoke → .plans/gop-db/nhap-khac-ghi-chu-dong-hang/plan.md
-  Trạng thái: 🟡 **Khảo sát xong (28/10/2026)**, chờ user chốt. Scope: cột Ghi chú từng dòng hàng loại Nhập khác (YCNH sửa được + chặn trùng; ĐNNK / dự kiến / PNK / PNH chỉ xem), cần migration 4 bảng chi tiết.
-
 - mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
   Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.
   Scope: cho sửa %VAT dòng hàng (2 số lẻ) trên PI trong nước (theo hãng + tự do) và HĐ `inland_buy_contract_new`, tính lại VAT/tổng. Nhập khẩu chưa làm (chờ BA — không có %VAT theo dòng).
@@ -2519,6 +2507,19 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Scope: form (Lý do thu → textarea full ngang, hàng đầu phủ kín, cột +/xóa sticky phải) · bản in (cột cố định `colgroup`, chừa chỗ ký 15px) · popup hợp đồng Thu bán hàng lọc theo người lập như ERP `create_bill_income` (`usage=bill_income_request`, opt-in).
   ⚠️ GOTCHA: CSS chung popup in ép `padding !important` cho ô `.no-border` → giãn vùng ký phải chèn div `signature-space` + inline `!important`, padding inline vô tác dụng. 3 file, không migration.
   Chuyển Hoàn thành: 2026-10-29.
+
+- chuyen-xe-khac → @junfoke → .plans/gop-db/chuyen-xe-khac/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã lên origin/develop (api `4fcd3b774` + merge `8ef8d7842`, client `015d86f34`), có Excel 1 phiếu. Còn: test tuyến cố định với bảng giá hiệu lực thật; xem ảnh nút Xuất Excel.
+  Scope: màn Chuyến xe khác trọn luồng (DS, thêm/sửa/chi tiết 3 kiểu, xuất phát → kết thúc → duyệt, không duyệt, in, Excel) ở phân hệ Vận chuyển; phiếu hạch toán giữ ERP.
+  ⚠️ GOTCHA: ERP không kiểm quyền ở BE (chỉ ẩn nút) — HRM chặn đúng điều kiện nút; `is_bulky` = "Nhân viên chịu phí"; `activity_has_other_delivery_trip_accounting.employee_id` TINYINT.
+  Spec: docs/superpowers/specs/gop-db/2026-10-27-chuyen-xe-khac-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-khac/design.md
+
+- phieu-theo-form-quoc-gia → @junfoke → .plans/gop-db/phieu-theo-form-quoc-gia/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 SRS + HDSD 16 màn "DNS đang fix" theo form Danh mục quốc gia đã đẩy lên Drive (32 file, giữ ID). Lần sau đẩy bằng `push_drive.py`. Còn: đổi trạng thái 16 dòng trên sheet theo dõi.
+
+- nhap-khac-ghi-chu-dong-hang (#11908) → @junfoke → .plans/gop-db/nhap-khac-ghi-chu-dong-hang/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Xong ERP + HRM. ERP đã merge + push `develop_02`; HRM đã lên origin/develop (api `52a17fa86`, client `b489fb882`). Còn: merge `task_11908` vào `gop_db` ERP khi cần.
+  Scope: cột Ghi chú từng dòng hàng loại Nhập khác — YCNH sửa được + chặn trùng trên cả phiếu; ĐNNK / dự kiến / PNK / PNH chỉ xem.
 
 - fix-don-nghi-14505-doi-loai-nghi (không Redmine) → @cuong61n → .plans/gop-db/fix-don-nghi-14505-doi-loai-nghi/plan.md
   Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã sửa dữ liệu PROD 29/10/2026 (đổi loại nghỉ BHXH → Nghỉ phép, tính lại công 28–29/10), không đổi code.

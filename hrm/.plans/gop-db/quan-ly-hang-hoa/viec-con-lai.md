@@ -461,3 +461,9 @@ User chốt: áp cả 3 màn · tab Thêm mới mở sẵn · tối đa 10 ảnh
 
 ### 28/10/2026 — Xoá hàng hoá chỉ vướng YCHG đã huỷ duyệt (@junfoke)
 - [x] 28/10/2026 — QA báo hàng EG-EEEF01.GC11 (Đang nhập thông tin) xoá bị báo "đã phát sinh chứng từ": tra ra chỉ vướng `price_asking_request_products` (PYCHG-04739). Sửa: hàng chỉ nằm trong YCHG đã huỷ duyệt thì cho xoá (xoá mềm); ô lọc YCHG tìm được theo mã / tên / Model hàng. 4 service + test, api `aed3f3365` trên `gop_db` (đã push).
+
+### 29/10/2026 — QA hàng hoá #11903, #11906, #11907, #11909, #11912 (@junfoke)
+- [x] 29/10/2026 — Hỗ trợ: mã CH-DAUCHANKHONG có trong DS hàng hoá nhưng không tìm thấy khi tạo YC xuất hàng → đang Ngừng kinh doanh (status 4) tại TPE, popup chọn hàng chỉ lấy hàng Đang kinh doanh (status 3).
+- [x] 29/10/2026 — Lỗi #11903 (Dữ liệu hàng hoá công ty), #11909 (Hàng hoá đang khoá), #11912 (Kho dữ liệu hàng hoá): popup Cấu hình cột thêm 5 cột mặc định tắt — Công thức ghép bộ, Ghi chú, Phụ kiện mua thêm, Vật tư lắp đặt, Vật tư sửa chữa - bảo dưỡng (Kho dữ liệu hàng hoá không có Công thức ghép bộ); Excel có đủ cột. Ý phóng to ảnh của #11903 đã có sẵn (dnsnamdang `1ab0006b6`, 24/10). #11907 (Hàng đang kinh doanh) user chốt không đổi. Commit `fix các task hàng hóa` (api `3cdc3cd00`, client `c5e5878f4`) — đã lên origin/gop_db.
+- [x] 29/10/2026 — Lỗi #11906 (form hàng hoá), làm một phần: trường Hình ảnh bắt buộc (dấu * đỏ, báo "Vui lòng tải lên ít nhất 1 hình ảnh."); không áp cho luồng duyệt hàng tạm; ngoại lệ ~26.500 hàng ERP cũ chỉ có ảnh đại diện (sửa không đụng ảnh vẫn lưu được). 7/8 ô danh mục đã có nút "+" từ 26/10. 36 test ghi hàng hoá qua (thêm 2 test mới, bổ sung ảnh vào payload 4 file test cũ). CHƯA commit (worktree gop-db).
+- [ ] #11906: nút "+" cho ô Nhà cung cấp — chờ user chọn hướng; commit phần Hình ảnh bắt buộc.
