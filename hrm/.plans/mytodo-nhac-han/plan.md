@@ -20,5 +20,16 @@
   - Phát hiện: NotificationMeta::build() dùng strtoupper làm hỏng tiền tố có dấu ([VIỆC]) → xử lý riêng trong WorkReminderService, CHƯA sửa hàm dùng chung (chờ user)
 
 ## Phase 3 — Web + App
-- [ ] Web: màn Cấu hình nhắc hạn (khuôn /meeting/settings) + menu Thiết lập
-- [ ] Web + App: nhãn "Đang diễn ra · còn n ngày", "Đi … → về …" trên thẻ
+- [x] (29/10/2026) Web: màn Cấu hình nhắc hạn (khuôn /meeting/settings) + menu Thiết lập
+- [x] (29/10/2026) Web + App: nhãn "Đang diễn ra · còn n ngày", "Đi … → về …" trên thẻ
+  - Web: pages/assign/work-reminder-settings (copy khuôn /meeting/settings) + components/assign-components/WorkReminderSettingPanel.vue (giờ/phút ↔ phút BE) + menu Thiết lập (isShow quyền mới); TodoItem.vue thêm "Đi … → về …" / "Đang diễn ra, còn n …"
+  - App: work_item.dart đọc start_at; work_item_card.dart thêm dòng thời gian + đang diễn ra
+  - Đã kiểm: Playwright :3000 — màn cấu hình hiện 7 ô mặc định, lưu 12 giờ OK, bỏ trống ô Meeting báo "Bắt buộc phải nhập" đúng ô, Lịch sử ghi 1440 → 720; danh sách web + app simulator hiện nhãn đúng. Local đã gán quyền mới cho vai trò Super admin để thử
+  - Còn: chạy migrate + seeder quyền + route:cache khi deploy; admin gán quyền "Cấu hình nhắc hạn công việc" cho vai trò; chưa thử bấm thông báo type work_reminder trên app; chưa sửa NotificationMeta::build (strtoupper hỏng chữ có dấu) — chờ user
+  - Code CHƯA commit (hrm-api, hrm-client, TPE_APP develop)
+
+### Checkpoint — 29/10/2026 16:50
+Vừa hoàn thành: BE nhắc hạn + bản tin + cấu hình, web màn cấu hình + nhãn thẻ, app nhãn thẻ
+Đang làm dở: —
+Bước tiếp theo: user thử trên local; chốt sửa NotificationMeta::build; commit/push khi user cho phép
+Blocked:

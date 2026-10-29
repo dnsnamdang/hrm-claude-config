@@ -9,7 +9,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 ## Đang làm
 
 - mytodo-nhac-han → @cuong61n → .plans/mytodo-nhac-han/plan.md
-  Trạng thái: **Đang làm (29/10/2026)** — đã chốt nghiệp vụ nhắc hạn + bản tin sáng 07:30 cho Việc của tôi (design.md); chờ user cho code BE.
+  Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 
 ## Hoàn thành
 
