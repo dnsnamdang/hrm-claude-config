@@ -57,3 +57,10 @@ Ký hiệu: GIỮ = có sẵn, không đổi · MỚI = bổ sung · SỬA = có
 | Chung | Tổng quá hạn | chưa | MỚI | người còn việc quá hạn | 07:30 thứ Hai |
 
 Không thay thế/bỏ thông báo nào đang có. Nhắc quá hạn chỉ 1 lần/việc; việc nào đã có thông báo riêng trong ngày thì bản tin chỉ đếm, không lặp tên.
+
+## Cấu hình nhắc theo giờ (chốt 29/10/2026)
+- Mỗi công ty, mỗi loại việc 2 số: **nhắc trước hạn** và **báo quá hạn sau hạn** (giờ; Meeting tính phút). Thay cho mốc cứng "1 ngày".
+- Mặc định: Nhiệm vụ / Vấn đề / Phiếu giao việc 24h trước · 0h sau; Phiếu giao việc (chấm công) 2h · 0h; Phiếu giao công tác / Phiếu đi công tác (chấm công) 24h trước GIỜ ĐI · 0h sau ngày về; Meeting 15 phút trước giờ họp; Nhắc việc cá nhân đúng giờ hạn · 0h.
+- **Gửi đúng mốc tính theo cấu hình, kể cả ban đêm** — user chốt KHÔNG có khung giờ yên lặng, không dời sang bản tin.
+- Màn cấu hình theo khuôn /meeting/settings (chọn công ty → hub "Nhắc hạn công việc" → ô số + nút Lịch sử), đặt ở phân hệ Công việc.
+- Bỏ điều kiện "phiếu ≥ 2 ngày": mốc nhắc rơi trước lúc phiếu được duyệt thì bỏ lượt đó.
