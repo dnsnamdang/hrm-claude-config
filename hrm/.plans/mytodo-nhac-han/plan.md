@@ -39,6 +39,7 @@
 - [x] (29/10/2026) Rà kỹ web /assign/my-todo (index.vue + 20 component) đối chiếu app Mytodo, liệt kê chức năng app còn thiếu: thao tác Nhiệm vụ (Sửa/Nhập KQ/Duyệt/Lịch sử — app chỉ xem), Vấn đề (app không có màn), quản lý Danh sách cá nhân (tạo/sửa/xoá/sắp xếp/xem theo danh sách), lọc theo ngày bằng lịch nhỏ, 4 ô số liệu, Tạo mới Nhiệm vụ/Vấn đề + tạo từ ô ngày trên Lịch, "Lưu và tiếp tục", tick bước trong form, xem nhanh biên bản họp — chờ user chọn
 - [x] (29/10/2026) App form Tạo nhắc việc cá nhân: khối "Các bước" nền trắng như các ô nhập khác (trước trong suốt lộ nền xám). Đã xem trên simulator
 - [x] (29/10/2026) App tab Lịch làm việc: kéo thu nhỏ / mở rộng như lịch iOS — vuốt lên trên lịch → 1 tuần, kéo xuống → cả tháng, thanh kéo dưới lịch chạm để đổi; dùng chung _setMonth với nút Tuần/Tháng, AnimatedSize. Đã thử vuốt lên/xuống trên simulator
+- [x] (29/10/2026) App thanh tab "Công việc của tôi / Lịch làm việc": đổi sang khuôn MeetingSegmented — nền trắng trượt ngang (AnimatedPositioned 240ms), chữ giữ độ đậm, chỉ đổi màu (trước tắt/bật ô nên giật). Analyze sạch, đã hot reload; chưa tự bấm thử vì user đang dùng simulator
 - Phát hiện (chưa sửa, ngoài phạm vi): thông báo Chờ duyệt / Đã duyệt / Từ chối có sẵn của Phiếu giao việc + Phiếu giao công tác (AssignJobController, AssignBusinessController) dùng type `lateInEarlyOutApprove` → trên app bấm vào mở nhầm màn duyệt Đi muộn về sớm
 
 ### Checkpoint — 29/10/2026 16:50
