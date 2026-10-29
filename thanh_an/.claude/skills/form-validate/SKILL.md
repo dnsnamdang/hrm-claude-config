@@ -114,6 +114,22 @@ grep -rn "<input \|<textarea\|<select \|<button \|<label \|b-form-input\|base-se
 
 - Tiêu đề cần markup riêng (badge trạng thái) → slot `#title`.
 - Không tự dựng `card` + `card-header` cho từng màn.
+- **Lưới ô thông tin** trong section: `<div class="row">` + mỗi ô `<div class="col-md-4 form-col">`
+  (`V2BaseLabel` + `V2Base*`), ô dài (Ghi chú) `col-12 form-col`. **Màn phải tự khai khoảng cách dòng**
+  — `form-col` không có CSS chung, quên là các dòng ô dính sát nhau (gặp ở chi tiết Phiếu giao hàng 29/10/2026).
+  Giá trị chuẩn theo tab Thông tin chung của Đơn mua hàng (`pages/supply/purchase_orders/components/GeneralTab.vue`):
+
+```scss
+// <style lang="scss" scoped> của màn
+.form-col { margin-bottom: 10px; }
+```
+
+- Màn **chi tiết chỉ xem** cũng dựng y như form (ô `V2Base*` + `disabled`), không tự dựng bảng/lưới
+  `label: value` riêng. Ô tham chiếu sang phiếu khác (Đơn mua hàng…) cần bấm được → mã là link
+  `v2-cell-link field-line` như cột Mã ở danh sách, **không** thêm icon ↗ cạnh nhãn. Không nhét link vào
+  slot `#prefix` của `V2BaseInput` (prefix nằm ngoài viền ô) — giữ `<V2BaseInput value="" disabled />`
+  làm khung rồi đặt `nuxt-link` `position: absolute` đè lên (mẫu `.dn-link-field` ở
+  `pages/delivery/delivery_notes/_id/index.vue`).
 - Màn hẹp (<1400px) tiêu đề và cụm nút chen nhau → ghi đè **trong màn** (không sửa component chung):
 
 ```scss

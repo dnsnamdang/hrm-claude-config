@@ -1,6 +1,6 @@
 ---
 name: select-and-input-state
-description: Use when làm việc với select / ô nhập liệu ở BẤT KỲ màn nào (form, modal, chi tiết, bộ lọc) — không riêng màn danh sách. Bắt buộc đọc khi gặp một trong các triệu chứng/ngữ cảnh: select danh mục MẤT giá trị đã chọn sau khi danh mục bị khoá / ngừng hoạt động; cần đánh dấu 🔒 cho option đã khoá; ô nhập bị disabled/readonly hiển thị sai màu hoặc vẫn bấm được; chip của select chọn nhiều sai khuôn; viền xanh / quầng sáng khi focus ô nhập; FE dùng trường hoặc endpoint mới mà BE chưa deploy kịp.
+description: Use when làm việc với select / ô nhập liệu ở BẤT KỲ màn nào (form, modal, chi tiết, bộ lọc) — không riêng màn danh sách. Bắt buộc đọc khi gặp một trong các triệu chứng/ngữ cảnh: select danh mục MẤT giá trị đã chọn sau khi danh mục bị khoá / ngừng hoạt động; cần đánh dấu 🔒 cho option đã khoá; ô nhập bị disabled/readonly hiển thị sai màu hoặc vẫn bấm được; chip của select chọn nhiều sai khuôn; làm ô "bấm vào hiện popup để chọn" (khách hàng, phiếu đề nghị, hợp đồng…) — V2BasePickerInput, icon kính lúp, nút × bỏ chọn; viền xanh / quầng sáng khi focus ô nhập; FE dùng trường hoặc endpoint mới mà BE chưa deploy kịp.
 ---
 
 # Select & trạng thái ô nhập liệu — quy tắc dùng chung toàn hệ thống
@@ -270,6 +270,51 @@ nhân viên** (phòng ban, ngân hàng, dòng bảng) rồi bỏ qua.
 
 ---
 
+## 2d. Ô chọn MỘT giá trị qua POPUP — dùng `V2BasePickerInput` (chốt 2026-10-29)
+
+Ô "bấm vào hiện popup để chọn" (khách hàng, phiếu đề nghị, hợp đồng, đối tượng, kế hoạch kiểm kê…)
+**bắt buộc** dùng `components/V2BasePickerInput.vue`. KHÔNG tự dựng thêm kiểu nào nữa — trước đây có
+3 kiểu song song, mỗi màn tự chép CSS (`V2BaseInput readonly` + `.picker-input` chép ở 22 file,
+`<div class="source-select">` ở các màn kho, `<input class="form-control" readonly>` ở màn cũ).
+
+```vue
+<V2BasePickerInput
+    :value="customerDisplay"                    <!-- chữ hiện trong ô: mã / "mã - tên" -->
+    placeholder="Nhấn vào đây để chọn khách hàng"
+    :disabled="readonly"                         <!-- màn xem / ô khoá: không mở popup, ẩn icon + × -->
+    :invalid="!!fieldError('customer_id')"
+    @open="openCustomerModal"                    <!-- tự bật popup ở màn cha -->
+    @clear="clearCustomer"                       <!-- bấm × -->
+/>
+<V2BaseError :message="fieldError('customer_id')" />
+```
+
+| Thành phần | Quy ước |
+| --- | --- |
+| Icon | kính lúp `ri-search-line` **trong** ô, góc phải, 14px (nút × cùng cỡ), màu placeholder `#adb5bd` (user chốt 29/10) |
+| Bấm | bấm bất kỳ chỗ nào trong ô (kể cả icon) → `open`. KHÔNG kèm nút icon riêng cạnh ô |
+| Nút × | **bật cho mọi ô** (`clearable` mặc định `true`), chỉ hiện khi ô có giá trị; hover chỉ đổi đỏ, không tô nền |
+| Khoá | `disabled` = thẻ input disabled thật → ăn màu khoá chung (mục 3); placeholder tự ẩn |
+| Tooltip | mặc định là chính chữ trong ô (ô hẹp, chữ dài cắt "…") |
+
+⚠️ **Handler `clear` là phần dễ sai nhất — component chỉ phát sự kiện, KHÔNG tự xoá gì.** Màn cha
+phải dọn ĐỦ những gì hàm chọn đã điền: đọc hàm chọn (vd `onCustomerSelected`, `loadSource`) rồi đưa
+từng field về giá trị lúc mới mở form, gồm:
+- danh sách phụ đã nạp theo lựa chọn (liên hệ, địa chỉ, thiết bị…)
+- **dòng chi tiết kéo xuống** từ phiếu nguồn (chọn phiếu đề nghị → kéo chi tiết; bỏ chọn → bảng về như chưa chọn)
+- **ô phụ thuộc phía sau** (bỏ đối tượng → bỏ luôn hợp đồng / đề nghị xuất của dòng đó)
+- lỗi BE đang treo của trường đó
+
+Có hàm reset sẵn (`clearSource`, `resetEquipment`…) thì gọi lại, đừng viết bản thứ 2.
+Trường hợp nghiệp vụ không cho bỏ chọn → `:disabled` hoặc `:clearable="false"` và **ghi lý do cạnh dòng code**.
+
+- Ô chọn **NHIỀU** dạng chip → `V2BasePickerField` (component khác, giữ nguyên).
+- Ô chọn địa điểm Google Map ở Giao việc / Chấm công (màn cũ) chưa chuyển — không lấy làm khuôn.
+- Đừng thêm `readonly` + `@click` vào `V2BaseInput` để tự chế lại ô chọn; đừng dùng `disabled` cho ô
+  còn được chọn (trình duyệt nuốt sự kiện bấm → popup không mở).
+
+---
+
 ## 3. Ô nhập liệu bị KHOÁ (disabled / readonly) — một kiểu duy nhất
 
 | Thuộc tính | Giá trị |
@@ -412,6 +457,8 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Select chọn 1: có dấu `×` xoá nhanh (mục 1b) — chỉ ô Trạng thái / ô lọc bắt buộc của báo cáo mới được tắt, và phải ghi lý do cạnh dòng code
 - [ ] **Select chọn nhân viên: nhãn đúng khuôn `Tên - Mã phòng - Mã NV`** (mục 2c) — không màn nào tự
       ghép chuỗi, API mới trả nhân viên có `department_code`
+- [ ] Ô chọn qua popup: dùng `V2BasePickerInput` (mục 2d), có icon kính lúp + ×; bấm × → form về
+      như lúc chưa chọn (dòng chi tiết kéo theo + ô phụ thuộc đã dọn); màn xem không mở được popup
 - [ ] Ô "chỉ cho số": gõ tuần tự `1abc-2` → ô chỉ còn `12` (chặn thẳng bằng `sanitizeNumberEvent`);
       vượt trần → lỗi đỏ, giá trị KHÔNG bị tự kéo về; gọi thẳng API với giá trị chữ thì BE trả 422
       (mục 4b + `form-validate` mục 1, 3c)

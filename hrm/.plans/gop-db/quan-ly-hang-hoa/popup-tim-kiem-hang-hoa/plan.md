@@ -1878,3 +1878,13 @@ Vừa hoàn thành: Phần H (H1–H5) — ĐÃ PUSH 4 repo.
 Bước tiếp theo: N141 (gán 4 quyền 2c cho tài khoản e2e) + N142 (spec Mẫu in tem chờ đúng mốc) nếu user cho; N130; N137 trước prod.
 Blocked: N100 chờ mapping; N128 chờ chốt HP.
 Lưu ý nghiệp vụ đã trả lời user: cây catalog sắp theo `name` từng cấp (unicode_ci), số thứ tự tính theo vị trí; 🔒 = nút status 0 — popup Xây dựng catalog chặn THÊM vào nhánh khoá (FE ẩn tab + BE 422), picker chỉ hiển thị (vẫn chọn được hàng).
+
+## Phần I — Redmine #11917 (29/10/2026): header bảng popup chọn hàng hở, lộ dòng phía sau khi cuộn
+- [x] I1 `ProductPickerPanel.vue`: bảng `border-collapse: separate` + viền header vẽ bằng `box-shadow inset` (viền collapse của th sticky không dính ⇒ dải trong suốt lộ chữ dòng dưới); bỏ khe 4px giữa thanh cuộn ngang trên và header (chỉ trong picker, không sửa V2BaseTableScroll dùng chung)
+  - Verify: tiêm đúng CSS mới lên dev-hrm (headless, bản chép profile MCP), cuộn 0/7/60/333px → header phủ kín, top-scroll.bottom = body.top = th.top (184px). Chưa build lại dev.
+
+### Checkpoint — 2026-10-29
+Vừa hoàn thành: I1 (#11917) — chưa commit.
+Đang làm dở: không.
+Bước tiếp theo: user mở popup trên local/dev sau deploy kiểm lại; commit khi user yêu cầu.
+Blocked:

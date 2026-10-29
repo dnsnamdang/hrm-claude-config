@@ -2423,6 +2423,12 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- finance-bill-income-request — Redmine #11918 (Phase 17) → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md (mục "Phase 17")
+  Trạng thái: 🟢 **Đã push `develop` (29/10/2026)** — api `423116a46`, client `9e93e61be`. Bước tiếp: deploy dev → QA test lại #11918.
+  Scope: form (Lý do thu → textarea full ngang, hàng đầu phủ kín, cột +/xóa sticky phải) · bản in (cột cố định `colgroup`, chừa chỗ ký 15px) · popup hợp đồng Thu bán hàng lọc theo người lập như ERP `create_bill_income` (`usage=bill_income_request`, opt-in).
+  ⚠️ GOTCHA: CSS chung popup in ép `padding !important` cho ô `.no-border` → giãn vùng ký phải chèn div `signature-space` + inline `!important`, padding inline vô tác dụng. 3 file, không migration.
+  Chuyển Hoàn thành: 2026-10-29.
+
 - theo-doi-theo-kho → @khoipv → .plans/gop-db/theo-doi-theo-kho/plan.md (design: .plans/gop-db/theo-doi-theo-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-theo-doi-theo-kho-design.md)
   Port màn ERP "Kho › Theo dõi theo kho" (`warehouse.forActivities` → `warehouse.{id}.activities`): danh sách kho → bảng hoạt động nhập/xuất của 1 kho. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
   Trạng thái: 🟢 ĐÃ PUSH `develop` 28/10 (api `1731d3a4c`, client `6f0ece1ba`). CHƯA bấm thử trình duyệt. Tiếp: user bấm thật; deploy cần quyền "Quản lý kho" trong seeder + gán role.
