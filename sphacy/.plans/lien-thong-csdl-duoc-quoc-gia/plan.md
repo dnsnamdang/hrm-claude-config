@@ -30,12 +30,37 @@ Repo: `sphacy_api` (nhánh chính `api2`, nhánh tính năng `dqg`),
     chép vào `/var/www/html/sphacy_gppweb/build` và `/var/www/html/gdp/build` trên cả
     42.96.41.135 và 42.96.41.13 (bản cũ giữ ở `build_truoc_dqg_29_10`).
 
+- [x] **29/10/2026 — Nạp danh mục thuốc quốc gia lên prod và vá lệnh đồng bộ**
+  - Nghiệp vụ: khách phải liên kết thuốc của mình với mã danh mục quốc gia mới đẩy
+    được chứng từ, nên danh mục 54.540 thuốc là điều kiện bắt buộc trước mọi việc khác.
+    Cơ sở đầu tiên khai tài khoản thật: #5349 "NHÀ THUỐC QUẢNG HOÀ - 305A AN DƯƠNG VƯƠNG".
+  - Kỹ thuật — 3 lỗi phải sửa:
+    1. Khách kết nối tài khoản báo `cURL error 60 Peer's Certificate issuer is not recognized`:
+       máy chủ Bộ **không gửi chứng chỉ trung gian**, mà curl trên CentOS 7 dùng NSS nên
+       không tự lấy. Tải `SectigoRSADomainValidationSecureServerCA` theo AIA trong cert,
+       `openssl verify -untrusted` xác minh OK, cài vào `/etc/pki/ca-trust/source/anchors/`
+       + `update-ca-trust extract` trên **cả hai** server API.
+    2. Lượt nạp đầu dừng ở 600/54.540 mà vẫn in "xong": lệnh coi trang HTTP 200 thiếu
+       khoá `data` là hết dữ liệu. Vá `3430bb2` — thiếu `data` là hỏng, không phải hết.
+    3. Nguyên nhân thật của các trang rỗng: **một bản ghi hỏng bên Bộ làm rỗng cả trang
+       chứa nó** (đo: trang 13/33/47/51 lần nào cũng rỗng; chia nhỏ page_size=25 hoặc 20
+       thì lấy được; hỏi từng bản ghi 601–620 → chỉ vị trí 602 rỗng). Vá `4f56048`:
+       trang rỗng thì vớt theo lô 10 rồi hỏi từng bản ghi để tách đúng bản ghi xấu, và
+       ngưỡng dừng đếm **lỗi liên tiếp** thay vì tổng lỗi (code cũ đếm tổng sẽ cắt ngang
+       ở khoảng trang 300/1.091).
+  - Đã kiểm: `select count(*) from sphacy_v1_new.csdlduoc_drugs` → **54.497/54.540**
+    (thiếu 43 bản ghi hỏng bên Bộ, hỏi lẻ từng bản ghi vẫn rỗng); cả 54.497 dòng đều có
+    `registration_number`; 734 dòng Bộ không công bố đóng gói. 14 đơn vị tính đã nạp.
+    Kiểm chứng chuỗi chứng chỉ bằng `CsdlDuocClient::login` với tài khoản bịa →
+    `http 401 "Tên đăng nhập hoặc mật khẩu không đúng"` (tức TLS đã thông).
+  - Trạng thái: **đã deploy prod 29/10/2026**, BE cả hai server ở `deb2c7c`. Danh mục
+    đã dùng được, tester bắt đầu map thuốc được.
+
 ## Còn lại
 
-- Danh mục thuốc quốc gia trên prod đang rỗng: `csdlduoc:sync-master` cần token của một
-  cơ sở đã bật liên thông, mà prod chưa có cơ sở nào khai tài khoản thật. Nhà thuốc đầu
-  tiên khai xong thì cron 03:00 tự nạp (~1.091 trang, 10–40 phút). Danh mục sandbox
-  không dùng lại được.
+- 43 bản ghi danh mục Bộ không trả được (lỗi bên họ, hỏi lẻ từng bản ghi vẫn rỗng).
+  Chờ Bộ sửa dữ liệu; cron 03:00 tự nạp lại nên sẽ tự có khi họ sửa. Nếu khách gặp
+  thuốc không tìm thấy trong danh mục thì khả năng cao thuộc nhóm này.
 - Tab "Tồn đầu kỳ & đẩy bù" còn trên nhánh `dqg`, chờ tester chạy trên cổng test trước
   khi mở ở cổng chính.
 - Chưa làm: cảnh báo/gửi điều chỉnh khi hoá đơn bị sửa sau khi đã liên thông.
