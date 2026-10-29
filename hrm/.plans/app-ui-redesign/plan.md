@@ -307,3 +307,23 @@ Blocked:
 - [x] Nút dùng chung tự quay khi chờ API (chỉ khi màn ở trên cùng — không quay lúc hộp xác nhận đang mở); câu lỗi tải PDF đọc đúng lỗi BE
 - [x] (agent) Chọn khách hàng dùng chung UI picker Meeting (CustomerPickerPage) — thay hộp thoại chon_diem_di ở Tạo phiếu giao việc (chỗ chọn khách duy nhất ngoài Meeting)
 - [x] Bảng lọc: ô nhập tiêu chí (FilterTextField) nền trắng + viền, focus viền màu phân hệ (ô tìm giữ nền xám)
+
+### Header theo bộ màu design + nền header Thông báo (28/10/2026) — @cuong61n
+- [x] (28/10) Header mọi màn trong phân hệ dùng đúng gradient 3 màu của design (meeting-mobile_v2.pen) thay cho màu tự pha: Chấm công #2763B5→#17457F→#0B254F, Meeting, Công việc, Đào tạo, Cơm; kèm vệt sáng + vòng cung + icon phân hệ chìm (vân tay…) ở MỌI màn, Tổng quan ghép liền header + dải lời chào. Kiểm trên simulator 3 màn Chấm công (Tổng quan, Lịch sử, Bảng công). Đã push develop `771bbbe`.
+- [x] (28/10) Header màn Thông báo: nền navy + vệt sáng + chuông nét viền chìm. Đã push cùng `771bbbe`.
+
+### Mytodo app — rà design mytodo.pen + biên bản review 16/09 (28/10/2026) — @cuong61n
+- [x] (28/10) Đọc 15 màn design mytodo.pen + biên bản "REVIEW APP – MYTODO 16/09/2026": design chưa áp góp ý nào; tổng hợp đề xuất cho user.
+- [x] (28/10) Ghi ý kiến DNS vào cột "Nội dung thống nhất" (15 dòng + tiêu đề cột) trên Google Doc họp, đối chiếu web hrm-client /assign/my-todo + skill; sự cố ghi lẫn 6 ô "Nội dung đề xuất" đã gỡ, kiểm bằng bản xuất HTML: cột đề xuất 20/20 dòng y nguyên.
+- [x] (28/10) Sửa theo user: giữ nút refresh (xoá điều kiện lọc) ở A1/A3/B1; A3 đổi thành khuôn rỗng chung mọi màn danh sách.
+- [x] (28/10) Tạo dữ liệu thử nhắc việc cá nhân cho namdangit (id 13) trên DB local_hrm_erp (cổng 3002): 7 việc [TEST] đủ nhóm Hôm nay/Ngày mai/Tuần này/Quá hạn/Không hạn, 2 việc có bước con; hướng dẫn user chỗ tick xác nhận, tạo nhắc việc, tạo meeting từ tab Lịch.
+
+### Đồng bộ thứ tự nút hộp thoại app với web (28/10/2026) — @cuong61n
+- [x] (28/10) Hộp thoại app: nút hành động trước, Hủy/Đóng cuối (như web): showAppConfirm, ReasonInputDialog + 13 hộp thoại tự dựng (meeting, duyệt phiếu công tác, gia hạn, điểm danh…); sửa skill app-ui-convention mục 1c. Analyze sạch (173 info). Chưa commit.
+- [ ] Thanh nút đáy (57 chỗ) còn khác web — chờ user chốt.
+
+### Khuôn rỗng chung mọi màn danh sách app (29/10/2026) — @cuong61n
+- [x] (29/10) AppEmptyWidget thêm cờ `filtered`: không lọc → "Không có dữ liệu.", đang lọc/tìm mà không ra → "Không có dữ liệu phù hợp."; không còn nút "Xóa bộ lọc"/"Tải lại" ở màn rỗng (xoá lọc dùng nút trên thanh lọc, tải lại = kéo xuống). Theo chốt ô A3 biên bản review Mytodo.
+- [x] (29/10) Bỏ câu/icon/dòng phụ tự đặt ở 39 màn danh sách: 30 màn có thanh lọc (Chấm công, Công tác/phiếu, Đào tạo, Đánh giá, Cơm, Lịch meeting, Task, Thông báo, Phiếu yêu cầu…) truyền `filtered`; 11 màn không lọc (bảng công, bảng lương, thiết bị, trưởng nhóm, lịch học/lịch thi…) về câu mặc định. Lịch sử chấm công bỏ ảnh + 2 dòng chữ riêng. Task: bỏ nút "Tải lại", màn rỗng kéo xuống được. Giữ câu riêng cho lỗi tải / không tìm thấy bản ghi / trạng thái đăng ký.
+- [x] (29/10) Ghi quy tắc vào skill app-ui-convention mục 4 + "Quyết định đã chốt".
+- [x] (29/10) Kiểm: analyze 0 error/warning (173 info như cũ); simulator Lịch sử chấm công gõ từ khoá không khớp → "Không có dữ liệu phù hợp." + "0 / 22 lượt". Chưa commit TPE_APP.
