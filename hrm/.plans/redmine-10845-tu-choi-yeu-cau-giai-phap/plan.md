@@ -63,3 +63,12 @@ Vừa hoàn thành: toàn bộ BE + FE #10845, test BE 20/20 và test UI AC1–A
 Lỗi đã bắt được khi test: resource chi tiết thiếu `is_can_reject` (nút không hiện ở màn chi tiết) → đã sửa; form con không tự nạp lại sau khi từ chối → đã gọi `loadRequestSolution()`.
 Bước tiếp theo: chờ user xác nhận chuyển Redmine sang "Đang tiến hành"/"Code xong chờ test" và dọn dữ liệu test.
 Blocked:
+
+## Phản hồi #12 (2026-10-16, nhánh develop) — nút popup lý do
+Quyết định đã chốt (user 16/10): tester yêu cầu "Không" → "Hủy"; sửa đủ theo skill `button-convention` (skill thắng spec về trình bày).
+- Popup Từ chối: `[⊗ Từ chối]` (primary danger, `ri-close-circle-line`) · `[← Hủy]` (tertiary, `fas fa-arrow-left`, đứng cuối)
+- Popup Hủy yêu cầu: `[⊗ Hủy yêu cầu]` · `[← Đóng]` — dùng "Đóng" để không có 2 nút cùng chữ "Hủy"
+- [x] `components/modal/V2BaseRejectApproveModal.vue`: thêm prop `textAccept` (mặc định "Từ chối") / `textClose` (mặc định "Hủy"), đảo thứ tự nút, đổi icon
+- [x] 2 popup Hủy yêu cầu (`request-solution/index.vue`, `request-solution/_id/index.vue`): `text-accept="Hủy yêu cầu"` `text-close="Đóng"`
+- [x] Test UI 5 chỗ dùng popup
+  - Kết quả 16/10: popup Từ chối `[⊗ Từ chối][← Hủy]`, popup Hủy yêu cầu (chi tiết + danh sách) `[⊗ Hủy yêu cầu][← Đóng]`; khoảng cách 8px = `base-confirm-modal` (bỏ `mr-2` vì footer bootstrap đã có margin, thêm vào thành 16px); bấm Từ chối khi trống → lỗi dưới ô, không gọi API; Hủy/Đóng đóng popup. 2 popup duyệt hồ sơ giải pháp/hạng mục dùng mặc định (Từ chối/Hủy), không test UI. Ảnh: test-phan-hoi-12/

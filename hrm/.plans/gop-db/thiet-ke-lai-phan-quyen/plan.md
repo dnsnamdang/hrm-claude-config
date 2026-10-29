@@ -1,6 +1,6 @@
 # Plan — Thiết kế lại màn Quản lý phân quyền HRM
 
-Nhánh: `gop_db`. Người phụ trách: @namdangit.
+Nhánh: `gop_db`. Người phụ trách: @cuong61n.
 Design: `.plans/gop-db/thiet-ke-lai-phan-quyen/design.md`
 Spec chi tiết: `docs/superpowers/specs/gop-db/2026-08-14-thiet-ke-lai-phan-quyen-design.md`
 
@@ -2511,3 +2511,13 @@ nguyên route đọc. Trước khi vá phải rà 9 chức vụ đang giữ quy�
 hợp lý của upsert, đã ghi rõ); 14 dòng Transformer Training/Assign; 21 quyền ma (chốt 1, fail-closed);
 và **37 quyền duyệt chưa khai `approve_scope`** — nợ **ưu tiên cao nhất** vì là nợ duy nhất đang cấp
 quyền RỘNG hơn dự kiến.
+
+### Fix 20/10/2026 — Màn Phân quyền HRM hiện/tìm vai trò ERP theo display_name
+- [x] BE `RoleListResource`: `name` = `display_name ?: name` (khớp ERP `/admin/roles`; áp cả `roles/list` cho select) · `RoleService::index` tìm cả `roles.display_name` · FE placeholder "Tìm theo tên chức vụ"
+- [x] Màn Sửa: `RoleDetailResource.name` = `display_name ?: name`; `RoleService::save` có display_name thì ghi vào display_name, giữ `roles.name`; snapshot lịch sử theo tên hiển thị
+- [x] Rà lại: lưu vai trò ERP ở HRM KHÔNG mất quyền `web` — FE giữ nguyên id quyền ERP trong `permission_ids` (checkbox-group chỉ thêm/bớt id của nó); chỉ mất khi bỏ hẳn công ty (đúng ý đồ)
+- [x] Màn Nhân viên (`timesheet/setting/employees`): `EmployeeResource` List + Detail (`roles`, `erp_roles`) hiện tên vai trò `display_name ?: name` — khớp option `roles/list`, multiselect track-by name
+
+### Fix 23/10/2026 — Thông báo theo quyền gửi nhầm người có vai trò ERP ở công ty khác
+- [x] Helper `employeeIdsHoldingPermission()` (`app/Helper/PermissionHelper.php`) — cùng luật `Employee::permissionRoles`: vai trò ERP chỉ tính khi gán đúng công ty; dùng cho `allEmployeeInfoHasPermission`, `EmployeeInfoService::listEmployeeInfoHasPermission` / `listEmployeeInfoByPermission` / `listEmployeeInfoByPermissionAndDepartment`, `PriceAskingNotifier::holdersOf`, `ProductPriceNotifier::holderInfoIds` (PROD: PYCHG-04730 gửi 84 người, đúng 29) · test `PermissionHolderAcrossCompanyTest` thêm 2 case ERP
+- [ ] Còn 4 bản sao cùng lỗi ở Assign (`NotifyRequestSolutionDeadlineCommand:76`, `RequestSolutionController:371`, `HandoverService:1385`, `QuotationService:5070`) — chờ user quyết

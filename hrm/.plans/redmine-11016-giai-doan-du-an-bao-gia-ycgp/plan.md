@@ -44,3 +44,16 @@ Blocked:
 ### Fix bổ sung — 2026-08-19
 - [x] `QuotationService::copy()` copy thiếu `project_phase_id` → bản sao mất Giai đoạn dự án (BG-2026-00111 → 00122). Copy y nguyên, KHÔNG gọi `syncProjectPhase()` (bản sao không phải chứng từ đổi giai đoạn).
 - [x] Rà cùng lượt: `copyGroups()` không copy `parent_id` → cây nhóm bị bẹt (22/24 nhóm mất cha ở BG 122); `copyServiceItems()` không remap `quotation_group_id`. Đã sửa cả 2.
+
+## Phản hồi #12 (2026-10-16, nhánh develop)
+- [x] BE: rule dùng chung `Modules/Assign/Rules/ActiveProjectPhase` — chọn mới phải là giai đoạn Hoạt động, giữ nguyên giai đoạn đã lưu (nay khoá) vẫn cho lưu; gắn vào QuotationStore/UpdateRequest, RequestSolutionRequest, ProspectiveProjectRequest (BUG 1, 2)
+- [x] FE: form báo giá + yêu cầu giải pháp nạp lại giai đoạn `force: true` khi mở (BUG 1, 2)
+- [x] FE: đổi dự án → giai đoạn lấy theo dự án mới — báo giá `selectProject()` ghi đè; YCGP chỉ ghi đè khi watcher thấy đổi A→B, mở phiếu không đè (BUG 3)
+- [x] FE báo giá: lỗi 422 trước đây chỉ toast "The given data was invalid." → thêm `applyServerValidationErrors()` đưa lỗi xuống dưới ô (+ toast câu BE), dùng ở `save()` và `previewSubmitOnCreate()`; đổi giai đoạn thì xoá dòng lỗi cũ
+- [x] Test 16/10 (API + Playwright local), đạt hết:
+  - BE: tạo báo giá / YCGP / dự án TKT với GĐ khoá → 422 "đã bị khoá"; GĐ hoạt động qua; sửa báo giá đổi sang GĐ khoá → 422, dữ liệu không đổi; rule 5 nhánh (tinker)
+  - Báo giá: chọn DA097 (GĐ3) → đổi DA093 → GĐ1 (BUG 3); khoá GĐ trong lúc form mở → Lưu nháp báo lỗi dưới ô, không tạo bản ghi; đổi GĐ khác → lỗi mất, Lưu nháp OK; sửa báo giá đang giữ GĐ khoá → hiện 🔒, Lưu nháp OK
+  - YCGP: chọn DA091 (GĐ1 khoá) → 🔒 1; đổi dự án 142 → GĐ3, GĐ1 biến khỏi list (BUG 3); khoá GĐ3 khi form mở → Lưu nháp báo lỗi dưới ô (BUG 2); mở Sửa phiếu 34 có GĐ khác dự án → giữ nguyên
+  - Dự án TKT 155 giữ GĐ3 đã khoá → Lưu OK (hồi quy rule mới)
+  - Đã trả: GĐ1/2/3 mở khoá, DA142 created_by=774, YCGP 34 GĐ1, xoá BG-2026-00123
+- Ghi nhận (cũ, chưa sửa): `scrollToFirstError()` báo giá cuộn ngang `.content-page` 50px ở màn hẹp 1200px

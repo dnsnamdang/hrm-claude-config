@@ -102,3 +102,32 @@ Vừa hoàn thành: Cắt lề 2 bên (`px-3`→`px-0`) + bỏ khoảng trắng 
 Đang làm dở: (không)
 Bước tiếp theo: User xác nhận; nếu OK thì commit + push (chưa commit Phase 5).
 Blocked:
+
+## Phase 6 — Fix 500 khi xuất Excel danh sách (chuyển sang export-rows phân trang) — 2026-10-14
+Nguồn: user báo "xuất excel danh sách màn `/finance/product-export-requests` lỗi 500, lúc được lúc không; lần đầu vào màn không được, từ lần 2 mới được".
+
+### Root cause (đo bằng tinker, skill systematic-debugging)
+- `GET assign/product-export-requests/export` → `export()` nạp **35.539 dòng** Eloquent đầy đủ + eager load, KHÔNG phân trang, build JSON 17,8MB. `->get()` peak **599,3MB** > `memory_limit` PHP 512M → Fatal "Allowed memory size exhausted" (không qua catch `Exception`, không ghi được log) → HTTP 500 body rỗng.
+- "Lần đầu lỗi, lần 2 OK" = sát trần 512M: cold OPcache vượt → 500; warm → lọt (~7s, vẫn vi phạm ngưỡng 2s CLAUDE.md, khoá `artisan serve` đơn luồng).
+
+### Hướng fix (user chọn): chuẩn dự án export-rows phân trang
+BE thêm `/export-rows` trả `{ headings, widths, rows, total, page, limit }` theo trang (2.000 dòng/lượt, trần 5.000); FE dùng `utils/export/listExportFile.js` → `exportListFile(...)`. Giữ nguyên `/export` cũ.
+
+### BE — `hrm-api`
+- [x] Task 6.1: `app/ExcelExport/ExportColumnRegistry.php` — thêm entry `product_export_requests` (11 cột, key TRÙNG `export()`: code/type_name/contract_code/customer_name/department_name/creator_name/created_at/sum_amount_after_extra_after_vat/status_name/approver_name/approved_time).
+- [x] Task 6.2: `ProductExportRequestController` — thêm `exportRows()` (page/limit, resolve registry, trả headings/widths/rows/total) + `exportColumnWidth()` + build rows inline giữ cột `sum_amount_after_extra_after_vat` kiểu **float** (FE ghi số thật + numFmt), cột còn lại string. `forPage()` thay cho `get()` → không bao giờ nạp cả 35k dòng.
+- [x] Task 6.3: `Modules/Assign/Routes/api.php` — thêm `GET /export-rows` TRƯỚC `/{id}`.
+
+### FE — `hrm-client`
+- [x] Task 6.4: `pages/finance/product-export-requests/index.vue` — `exportExcel(selectedFields)` dùng `exportListFile({ endpoint:'assign/product-export-requests/export-rows', fields:selectedFields, ... })`; thêm `exportProgress` + `onStage`; import `exportListFile`; bỏ import `exportProductExportRequests` (giữ `productExportRequestExportFields` cho popup).
+- [x] Task 6.5: `components/export-excel.js` — bỏ builder `exportProductExportRequests` (vi phạm skill 14c: freeze/header tô nền/title size 14); giữ `PRODUCT_EXPORT_REQUEST_EXPORT_COLUMNS` + `productExportRequestExportFields` làm nguồn field cho popup.
+
+### Kiểm thử Phase 6
+- [x] Curl BE: `export-rows?page=1&limit=3` → 200 (1,04s), headings 12 cột (gồm STT), widths `[6,20,26,22,34,26,26,18,18,16,26,18]`, total=35213, STT=1/2/3, "Giá trị"=number. `fields=code,status_name,sum...` → headings `['STT','Mã phiếu','Trạng thái','Giá trị']` ✓. `limit=2000` → 200 (1,45s, 651KB) — mem ổn, vs old 599MB.
+- [x] Playwright MCP: mở `/finance/product-export-requests` → bấm **Xuất Excel** → popup 11 cột (7/11 mặc định) → tích thêm "Giá trị" (8 cột) → **Xuất file** → KHÔNG còn 500. FE gọi `export-rows` phân trang page=1..18 đều 200, có request `letterhead`. File `Danh-sach-yeu-cau-xuat-hang-2026-10-14.xlsx` tải về: 35.219 dòng, R1 tiêu đề merge, R2 header `STT|Mã phiếu|Loại|Số hợp đồng|Khách hàng|Phòng ban|Người tạo|Trạng thái|Giá trị`, STT số thật, **"Giá trị" = SỐ THẬT `numFmt=#,##0`** (R18=7.506.000, R19=27.729.000…) SUM được. Console chỉ còn warning `sortDirection` cũ của `V2BaseDataTable` (không liên quan).
+
+### Checkpoint — 2026-10-14 (Phase 6)
+Vừa hoàn thành: Phase 6 hoàn tất — BE `/export-rows` phân trang + FE `exportListFile`, đã test BE (curl) lẫn FE (Playwright) đạt. Fix dứt điểm lỗi 500 do cạn memory khi xuất cả 35k dòng.
+Đang làm dở: không.
+Bước tiếp theo: chờ user review; khi được yêu cầu thì commit (hrm-api 3 file + hrm-client 2 file, tất cả CHƯA commit).
+Blocked:

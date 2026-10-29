@@ -258,6 +258,23 @@ CostTable (mirror ERP `#chi_phi_noi_dia` + `#chi_phi_boc_ha_hang_tai_kho`). Nhã
 ---
 
 ## Checkpoint
+### Checkpoint — ②a "Phân bổ hàng giữ" (loại 2/15) XONG + VERIFY end-to-end (09/10/2026)
+Vừa hoàn thành: mini-feature ②a (mirror FORM ERP, KHÔNG đụng pool hàng giữ). BE + FE đã code từ phiên trước;
+phiên này **verify trọn vòng lưu** qua pipeline HTTP thật (mint JWT emp13 + curl, vì replay qua axios trình duyệt
+bị 401→logout; FormRequest của PUT không parse multipart nên dùng POST `_method=PUT` như FE).
+- **Render (đã verify phiên trước):** tab hiện đúng loại 2/15; nhãn lấy CHÍNH XÁC từ ERP (loại 15: "SL nhập"/"SL báo hàng về";
+  loại 2: "SL"/"SL yêu cầu"); rowspan nhiều khách; "SL giữ" disabled + cột "Hạn giữ"/"Cần giữ" ẩn khi is_import_direct=1.
+- **Store (POST):** phiếu nguồn hợp lệ phải `status=2 (CHO_DUYET)` + `is_import_direct=1` + loại 2/15 + cùng company người đăng nhập
+  (bẫy: req 12208 có is_import_direct=0 → `canProductImport()` false → "Không đủ quyền!"; đổi sang req 12204). Tạo PNH-12353:
+  `product_import_detail_customers` 12215→12217 (+2 khách), parent_id=detail mới, đủ 3 FK inland (bc/orq/arr), allocation/expire đúng.
+- **Update (POST _method=PUT):** xoá+dựng lại dòng khách (12229/30→12231/32); khách allocation=0 → expire_prepick_date tự NULL;
+  khách allocation=1 → lưu ngày mới. Tổng giữ 12217 (xoá 2 + chèn 2).
+- **②b KHÔNG kích hoạt:** lưu nháp (status 3) nên `handleCompleted()` không chạy; `prepick_details`=0 cho dòng khách mới.
+- **Dọn test:** đã xoá sạch PNH-12353 + con (detail_customers/accountings/details/import) → baseline khôi phục (det_cust=12215, max import=12345).
+Đang làm dở: (không) — ②a hoàn tất, CHƯA commit/push (chờ user yêu cầu).
+Bước tiếp theo: chờ user nghiệm thu ②a; ②b (ghi pool hàng giữ) vẫn GATE RIÊNG, cần user duyệt riêng.
+Blocked: (không)
+
 ### Checkpoint — Fix checkbox "Không trả hóa đơn" chỉ loại 4,9 (user báo 09/10/2026)
 Vừa hoàn thành: user phát hiện checkbox **"Không trả hóa đơn"** hiện ở MỌI loại khi tạo phiếu nhập
 hàng, trong khi ERP `form.blade.php:189` chỉ cho loại 4 (Bán trả lại) & 9 (Nhập bán mượn trả lại)
@@ -495,6 +512,122 @@ Nguồn dữ liệu ĐÃ XÁC NHẬN có thật: `erp_hrm_check` có 43 dòng `i
     422 chỉ do `lots.0.acc_warehouses` (nguồn 12031 thiếu kho kế toán, KHÔNG liên quan contract_costs) → validation
     `contract_costs.*` PASS sạch; không ghi bản ghi nào (422 rollback).
 
+##### (3.2-②a) Tab "Phân bổ hàng giữ" loại 2/15 — USER CHỌN Hướng A phân-kỳ 09/10/2026 (ĐANG LÀM)
+**Bối cảnh:** mini-feature "Cụm hàng cần giữ" (mục 3.2 phân tích ở trên). User chốt phân kỳ: **làm ②a NGAY**
+(mirror FORM: nhập SL giữ + Hạn giữ, lưu `product_import_detail_customers`), **GATE ②b riêng** (ghi prepick
+hold lúc hoàn thành — chưa duyệt). ②a **TUYỆT ĐỐI không đụng pool hàng giữ** (`prepick_details`/`prepick_logs`).
+
+**Phát hiện cốt lõi (ĐÃ xác minh session này):**
+- Dòng "hàng cần giữ" của ERP là **construct CLIENT-SIDE** (`need_allocation_products`/`customer_allocations`
+  trong AngularJS), KHÔNG phải bảng server. `customer_allocations` = `lot.customers` lọc `type∈{1,3}` khi
+  `!is_import_direct`, chỉ cho loại {11,15,2}. `rowspan = customer_allocations.length`.
+- Nguồn dòng khách: đường B qua `ProductImportRequestDetail::details` (bảng `product_import_request_detail_customers`);
+  đường A qua `WarehouseImport...->details`. Cả 2 ERP loader alias **`qty as order_qty`** → `order_qty` = `qty` nguồn.
+- Ngữ nghĩa cột-khách: `order_qty`=SL khách yêu cầu (chỉ đọc); `qty`/`_qty`=**SL giữ** (sửa được, mặc định = order_qty,
+  clamp ≤ min(order_qty, SL khả dụng)); `allocation`=checkbox "Cần giữ" (mặc định true nếu qty>0 — **DISPLAY-ONLY** trong form);
+  `expire_prepick_date`=Hạn giữ (mặc định `now + max_prepick_date` ngày, config mặc định 10; disabled khi !allocation; ẩn khi is_import_direct).
+- **Dữ liệu `allocation`/`expire_prepick_date` KHÔNG có trên `product_import_request_detail_customers`** (bảng nguồn thiếu
+  4 cột order_qty/customer_code/allocation/expire_prepick_date) → create: FE tự tính default; edit: ĐỌC từ
+  `product_import_detail_customers` (bảng NÀY có đủ order_qty/qty/allocation/expire_prepick_date/customer_code + FK pass-through).
+- **Giảm có chủ đích (KHÔNG bịa):** cột "Kinh doanh" ERP hiện chuỗi inland sâu (order_request/NV/phòng + expand
+  Tên khách/Ngày cần/Ghi chú) — các entity inland đó CHƯA port sang HRM Finance → HRM chỉ hiện `customer_code + customer_name`.
+
+**Nhãn NGUYÊN VĂN ERP (form.blade.php type-15 :1913, type-2 :2034) — KHÁC NHAU theo loại:**
+- Loại 2: STT · Tên hàng hóa · ĐVT · **SL** · Kinh doanh · **SL yêu cầu** · SL giữ · Hạn giữ (*) · [Cần giữ]
+- Loại 15: STT · Tên hàng hóa · ĐVT · **SL nhập** · Kinh doanh · **SL báo hàng về** · SL giữ · Hạn giữ (*) · [Cần giữ]
+  (cột "SL" loại 2 / "SL nhập" loại 15 = SL dòng hàng CHÍNH; "SL yêu cầu"/"SL báo hàng về" = `order_qty` dòng khách)
+
+**Tasks ②a:**
+- [x] BE: entity `Modules/Finance/Entities/ProductImport/ProductImportDetailCustomer.php` (table `product_import_detail_customers`,
+  extends Model, $fillable đủ cột persist, `parent()` belongsTo(ProductImportDetail,'parent_id'), `customer()` belongsTo(Supplier,'customer_id')).
+- [x] BE: `ProductImportDetail` +`customers()` hasMany(ProductImportDetailCustomer,'parent_id','id').
+- [x] BE: `ProductImportRequestDetailCustomer` +`customer()` belongsTo(Supplier,'customer_id') (lấy `code`).
+- [x] BE: EDIT resource `ProductImportDetailResource` +khối `customers` mỗi SP (id, customer_id, customer_name,
+  customer_code, order_qty, qty, allocation, expire_prepick_date format Y-m-d, type); +`'products.customers'` vào `loadDetail()`.
+- [x] BE: đường-B resource `ProductImportRequestDetailResource` khối `customers` (:148-160) +order_qty(=`$customer->qty`),
+  +customer_code(=`optional($customer->customer)->code`), +product_id, +3 FK inland pass-through; đảm bảo eager `details.customer`.
+- [x] BE: đường-A `getWarehouseImportSource()` +dòng khách (mirror `qty as order_qty`), gate `$canViewCostPrice`.
+- [x] BE: Store/Update validate +`lots.*.customers` (customers=nullable|array; customers.*.qty=required|numeric;
+  customers.*.expire_prepick_date=required_if customers.*.allocation,1|nullable|date|after:today) mirror ERP store :293 / update :1029.
+- [x] BE: lưu `lots[].customers[]` vào `product_import_detail_customers` trong `buildDetailsFromSource` sau :2373
+  (mirror ERP :696-726), CHỈ loại 2/15; +xoá dòng khách cũ theo product_import_id lúc update gần :308 (mirror ERP :1283). KHÔNG ghi pool.
+- [x] FE: `importTypeConfig.js` +tab key `holdAllocation` + nhãn theo loại; `ProductImportForm.vue` +`<b-tab title="Phân bổ hàng giữ">`
+  + component mới (layout rowspan nhiều khách, nhãn đúng loại, "Cần giữ" display-only, "Hạn giữ" sửa được disabled khi !allocation)
+  + prefill 3 path + `buildFormData` append `lots[].customers[]`.
+- [x] Verify Playwright 127.0.0.1:3000. KHÔNG commit/push.
+
+**②b (CHƯA DUYỆT — GATE RIÊNG):** ghi prepick hold lúc `handleCompleted()`, mở rộng `PrepickStockService.addLot()` cho
+objectable `App\Model\Warehouse\ProductImportDetailCustomer`, dry-run trước. Cần confirm riêng của user.
+→ ②b XONG + dry-run PASS 09/10/2026 (xem block "Regression màn Phiếu xuất giữ" ở trên). CHƯA commit/push.
+
+##### (3.2-③) Cụm loại 11 — tab chi phí NGOẠI (READ-ONLY) — USER CHỌN "chi phí trước" 09/10/2026 (ĐANG LÀM)
+**Bối cảnh:** loại 11 phần hàng-hóa + money (`buildDetailsForeignPurchase`/`recomputeMoneyForeign`) + hạch toán
+ForeignPurchase + tab bốc-hạ (`pickupCost`) ĐÃ xong ở "Cụm 3". Còn lại = 4 tab chi phí **chỉ-đọc** mà BE
+CỐ Ý chưa serialize (`ProductImportService::COST_TYPE_QUOC_TE`; ghi chú "QUOC_TE/NCC chưa port"). User chốt
+thứ tự: **4 tab chi phí TRƯỚC**, "Tính giá thành nhập kho" (landed cost, đọc `order_import_requests.sum_*`) LÀM SAU.
+
+**Nguồn dữ liệu đã xác minh trên `erp_hrm_check`:** chuỗi `product_imports(type=11)` → `product_import_requests.order_import_request_id`
+→ `order_import_requests` (có `invoice2_id`, `sum_supplier_cost`, `sum_foreign_cost_with_tax`, `sum_foreign_cost_not_tax`,
+`sum_inland_cost`, `exchange_rate`). 628 phiếu loại 11; 128 OIR có `invoice_cost2`. Mẫu: PNH-12255→PIR12193→OIR644→invoice2#683→invoice_cost2#555.
+- `invoice2.costs` = bảng **`invoice_cost2`** {invoice2_id, cost_id, name, value, annex_addition_json, attachment}.
+- `fast_deliveries` (bảng cùng tên) có `purchase_invoice_id` — nguồn thật cho loại 11 CHỜ agent xác nhận (nhiều biến thể *_fast_deliveries).
+- `foreign_costs` / `foreign_costs_not_tax`: KHÔNG có bảng cùng tên — CHỜ agent map (có thể treo trên invoice2/order_import_request).
+
+**Nhãn + cột NGUYÊN VĂN ERP (form.blade.php, 4 pane đều `disabled`=read-only):**
+- Nav (`ng-if="form.is_foreign"`): "Chi phí HĐ" (:600, dùng chung id `#chi_phi_HD` nhưng pane RIÊNG cho foreign :1027) ·
+  "Chi phí quốc tế có tính thuế nhập khẩu" (:606) · "Chi phí quốc tế không tính thuế nhập khẩu" (:612) · "Giao hàng nhanh" (:1845).
+- **Chi phí HĐ (foreign, :1027)** — 3 cột: STT · **Tên chi phí** · **Giá trị** (value + dòng "Hợp đồng: {contract_value|number}"
+  + mỗi phụ lục "**Phụ lục {code}:** {value|number}"). Nguồn `order_import_request.invoice2.costs[]`. Empty "Không có chi phí".
+- **Chi phí quốc tế có tính thuế nhập khẩu (:1115)** — 8 cột: STT · **Tên chi phí** · **Giá trị** · **Đơn vị tiền** ·
+  **Tỉ giá** · **Giá trị (VNĐ)** · **Nhà cung cấp** · **File đính kèm**. Nguồn `foreign_costs[]`
+  {cost_id→name, value, currency, exchange_rate, exchanged_value, supplier_id, attachment}. Empty "Không có chi phí".
+- **Chi phí quốc tế không tính thuế nhập khẩu (:1168)** — 11 cột: STT · **Tên chi phí** · **Giá trị** · **Đơn vị tiền** ·
+  **Tỉ giá** · **Giá trị (VNĐ)** · **VAT**[**%** | **Số tiền**] · **Giá trị sau VAT (VNĐ)** · **Nhà cung cấp** · **File đính kèm**.
+  Nguồn `foreign_costs_not_tax[]` {cost_id→name, value_before_vat, currency_id, exchange_rate, exchanged_value, vat_percent, vat_cost, value, supplier_id, attachment}. Empty "Không có chi phí".
+- **Giao hàng nhanh (:1845)** — bảng rowspan lồng, 8 cột: STT · **Người chịu phí** ({employee_code} - {employee_name}) ·
+  **Khách hàng** ({customer_code} - {customer_name}) · **Chi phí theo khách hàng** · **File đính kèm** · **Hàng hóa**
+  ({product_code} - {product_name}) · **Phương thức giao hàng** (shipping_methods) · **Tổng chi phí ({currency})**.
+  Nguồn `fast_deliveries[]{amount, employee_*, customers[]{customer_*, amount, attachment, products[]{product_*, method}}}`. Empty "Không có chi phí".
+
+**Tasks ③ (chi phí trước):**
+- [x] BE: xác định nguồn `invoice_contract_costs`/`foreign_costs`/`foreign_costs_not_tax`/`fast_deliveries` loại 11 → 4 reader trên Entity `ProductImportRequest` (09/10/2026). Nguồn CHỐT: `invoice_contract_costs`=`invoice_cost2` (qua OIR.invoice2_id, `contract_value=value−Σannex`); `foreign_costs`=`import_costs` type1 calc_tax1 (exchanged=value×rate); `foreign_costs_not_tax`=`import_costs` type1 calc_tax0 (exchanged/vat/value tính lại); `fast_deliveries`=`buy_contract2_fast_deliveries`→`_customers`→`_customer_products` (qua OIR.buy_contract2_id + phụ lục đầu, lọc theo product_id nhập). ⚠️ `import_costs` dùng FK `product_import_request_id` (KHÔNG `order_import_request_id` như ERP). Verify tinker DB thật: PIR9760 (3 foreign+1 notax+1 invoice cost), PIR9889 (2 fast_deliveries, filter product_id drop đúng).
+- [x] BE: serialize 4 khối vào nguồn form — `getWarehouseImportSource:1790` (đường A) + `ProductImportRequestDetailResource` (đường B, thêm `use ChecksEmployeePermission`) + `ProductImportDetailResource` (Edit, đọc LIVE từ source PIR), gate `canViewCostPrice && type===11` fail-close. `php -l` sạch cả 4 file.
+- [x] FE: `importTypeConfig.js` loại 11 thêm tab keys chi phí ngoại (đúng thứ tự nav ERP: `invoiceContractCost`→`foreignCostTax`→`foreignCostNotTax`→`inlandCost`→`pickupCost`→`fastDelivery`); `ProductImportForm.vue` 4 `<b-tab>` read-only (V2BaseTableScroll + table bordered) render 4 bảng nhãn NGUYÊN VĂN ERP, gate `canViewCostPrice`; wiring qua `setForeignCostBlocks()` ở cả 3 load path (WarehouseImport/Request/Edit); helper `shippingMethodName`+`fastDeliveryRowSpan`.
+- [x] Verify Playwright 127.0.0.1:3000 trên phiếu loại 11 có dữ liệu thật (09/10/2026, KHÔNG commit/push): PIR 9760 — tab "Chi phí HĐ" (Phí đóng gói 2 + "Hợp đồng: 2"), "Chi phí quốc tế có tính thuế NK" (3 dòng, 8 cột, `61,305,600` chuẩn QT), "Chi phí quốc tế không tính thuế NK" (header gộp VAT %/Số tiền rowspan/colspan, Phí tại cảng 8,042,240→VAT 8%→8,685,619, scroll 2 chiều). PIR 9889 — fastDelivery "Không có chi phí" (ĐÚNG: product nhập 5022/43731 không khớp product fast-delivery 8315/37550 → filter `filterFastDeliveriesByProductIds` loại hết). PIR 2306 — fastDelivery 8 cột đủ, rowspan NV/KH/Tổng chi phí qua 3 dòng hàng hoá, `Hàng không` (method=1), `21,775` formatMoney. Nhãn tab khớp ERP `form.blade.php:650` verbatim. Dev-mode console "errors" chỉ là HMR reexport warnings (vô hại).
+**Tasks ④ (Tab A — "Tính giá thành nhập kho" / landed cost, ERP `#phan_bo` type 11, CHỈ-ĐỌC) — 09/10/2026:**
+- [x] BE: `ProductImportRequest::landedCostSummary()` — 4 ô tổng OIR (exchange_rate, sum_supplier_cost, sum_foreign_cost_with_tax, sum_foreign_cost_not_tax) từ `order_import_requests`, `[]` nếu không có `order_import_request_id`.
+- [x] BE: serialize `landed_cost_summary` ở CẢ 3 load path — `ProductImportDetailResource` (Edit, :330) + `ProductImportRequestDetailResource` (đường B) + `getWarehouseImportSource()` (đường A), gate `$isForeign && $canViewCostPrice` fail-close. Per-SP (`amount_after_vat`/`foreign_cost_not_tax`/`inland_allocation`/`pick_up_cost`/`total`/`import_price`) đã serialize sẵn trong Edit path (tính lúc store, LƯU trên `product_import_details`); đường A/B chưa có → chỉ summary + empty-state. `php -l` sạch 4 file BE.
+- [x] FE: `importTypeConfig.js` loại 11 thêm key `landedCost` (sau `pickupCost`, trước `fastDelivery`); `ProductImportForm.vue` thêm `<b-tab>` read-only: 6 ô tổng hợp (4 từ `landedSummary` + `totalInlandCostBeforeVat()`/`sumPickUpCost()` LIVE) + bảng 15 cột (STT·Model·Code đặt hàng·Hàng hóa·ĐVT·SL·Đơn giá·Thành tiền·GT sau thuế NK·VAT[%|Giá trị]·CP quốc tế không thuế·CP nội địa·CP tại kho·GT nhập kho·Đơn giá nhập kho) từ `landedRows`, + totals row (colspan5 "Tổng cộng", Đơn giá/Thành tiền/VAT% blank) + empty-state. Nhãn nguyên văn ERP `form.blade.php:1487-1604`. Data: `landedSummary`/`landedRows`/`landedTotals()`/`formatNum4()`; wiring `landedSummary` ở `setForeignCostBlocks()` (3 path), `landedRows` map trong `loadForEdit()` gate `canViewCostPrice` (exchanged_price=supplier_price×rate, total_exchanged_price=×qty×rate; all_barcodes HRM chưa serialize → blank). CSS `.landed-sum__label/__value/.landed-sub`. Template compile sạch (vue-template-compiler).
+- [x] Verify Playwright 127.0.0.1:3000 phiếu loại 11 có data thật (09/10/2026, KHÔNG commit/push): PNH-12178 (32 SP, foreign_cost_not_tax>0). Edit view bị `canEdit()` chặn (status≠DANG_TAO) → toggle tạm status=3+created_by=13 trên DEV DB, verify, ĐÃ REVERT về 1/207. BE contract xác thực qua `GET show` (cùng Resource) với token thật: landed_cost_summary 4 giá trị, 32 SP đủ field landed, all_barcodes vắng (→blank ĐÚNG). UI: 6 ô tổng đúng (26,111 / 1,305,550 / 1,362,786 / 7,152,080 / 10,057,504 / 0), 15 cột render chuẩn QT, VAT colspan header, "Mã hàng:" xám không đậm, Code đặt hàng trống, totals row SL 363 / GT sau thuế 379,576,631.22 / VAT 30,382,476.13 / CP QT 7,152,080.03 / nội địa 10,057,504 / nhập kho 396,786,215.19 / đơn giá nhập 114,684,874.25 (CP-QT & nội-địa khớp summary), V2BaseTableScroll cuộn 2 chiều (sw 1693 > cw 906).
+
+**Tasks ⑤ (Tab B — "Vận chuyển" / delivery, ERP `#van_chuyen` loại NỘI ĐỊA, CHỈ-ĐỌC) — 09/10/2026:**
+- Khảo sát (survey subagent + truy DB `erp_hrm_check`): cột VC tồn tại VẬT LÝ trên `product_imports` (total_cost_transition/delivery_tax/payer_employee_amount/payer_company_amount/payer_employee_id/payer_company_id/warehouse_import_id), `warehouse_imports` (total_km_expected/total_km_actual), `activity_has_delivery_trips` (warehouse_import_id/delivery_trip_id/total_cost_transition/payer_employee_amount/payer_company_amount), `delivery_trips.name`. Entity HRM `ProductImport`/`WarehouseImport` KHÔNG khai các cột/quan hệ này → phải tự serialize. Dữ liệu thật: loại 15 (32 phiếu có chi phí VC), loại 2 (2), loại 3 (10), loại 99 (3); 51 dòng trip gắn warehouse_import_id. ⇒ Tab B là **CHỈ-ĐỌC** (ERP `#van_chuyen` toàn `disabled`), KHÔNG port khối tính lúc store — khớp Tab A. Phiếu HRM tạo mới chưa populate (store HRM chưa chạy khối VC của ERP) → tab rỗng cho phiếu HRM-tạo, có data cho phiếu ERP-tạo (đúng hành vi read-only ERP). Verify phiếu: PNH-09200 (loại 15, wi=6455, km 20/58, cost 2,662,000, tax 212,960, 1 trip "29TPHXNA-10...").
+- [x] BE: `ProductImport::buildDeliveryData($type, $warehouseImportId, $overrides)` static — `[]` nếu type ∉ DELIVERY_TYPES; đọc km từ `warehouse_imports`, trips từ `activity_has_delivery_trips` LEFT JOIN `delivery_trips` theo warehouse_import_id (trip_id/trip_name/payer_employee_amount/payer_company_amount); 4 ô own-column áp qua `$overrides`. KHÔNG gate `canViewCostPrice` (ERP `#van_chuyen` chỉ gate `has_delivery` type-based — chi phí VC ≠ giá vốn hàng hoá).
+- [x] BE: serialize key `delivery` ở CẢ 3 load path — `ProductImportDetailResource` (Edit, full: own 4 cột + WI km + trips), `getWarehouseImportSource()` (đường A: WI km + trips, own cột null→empty), `ProductImportRequestDetailResource` (đường B: km_expected từ PIR, không WI → trips rỗng). `php -l` sạch.
+- [x] FE: `importTypeConfig.js` thêm key `delivery` (TRAILING) vào tabs của loại NỘI ĐỊA DELIVERY_TYPES = 2, 3, 4, 9, 15, 99 (KHÔNG 11/14); `ProductImportForm.vue` thêm `<b-tab v-if="hasTab('delivery')" title="Vận chuyển">` read-only: 6 ô tổng hợp (Số Km dự kiến·Số Km chốt·Chi phí vận chuyển thực tế·Thuế·Nhân viên chịu phí·Công ty chịu phí) + `<hr>` + "Chi tiết" + v-for trips (Chuyến xe link + Nhân viên/Công ty chịu phí). Nhãn NGUYÊN VĂN ERP `form.blade.php:311-384`. Data `deliverySummary` wiring ở `setForeignCostBlocks()` (3 path). Helper mới `deliveryVal(n,money)` (null/''→blank, mirror `| number`/`| my_number`) + `deliveryTripUrl(id)` dùng `utils/erp-link.erpUrl()` (thiếu ERP_URL → tên trơn). KHÔNG gate `canViewCostPrice`. Template compile sạch (vue-template-compiler).
+- [x] Verify Playwright 127.0.0.1:3000 trên phiếu nội địa có data thật (PNH-09200 loại 15) + BE contract qua `GET show`. KHÔNG commit/push.
+
+### Checkpoint — Tab B "Vận chuyển" (#van_chuyen) VERIFY XONG — 09/10/2026
+Vừa hoàn thành: Tab B read-only loại NỘI ĐỊA DELIVERY_TYPES (2,3,4,9,15,99) — 6 ô tổng hợp (km dự kiến/chốt từ `warehouse_imports`; chi phí/thuế/người-công ty chịu phí từ cột phiếu) + `<hr>` "Chi tiết" + danh sách chuyến xe (`activity_has_delivery_trips`). Nhãn nguyên văn ERP `form.blade.php:311-384`; số chuẩn quốc tế; km null→trống; "Chuyến xe" là link sang ERP qua `erpUrl()` (fallback tên trơn khi thiếu ERP_URL). KHÔNG gate `canViewCostPrice` (chi phí VC ≠ giá vốn — ERP chỉ gate `has_delivery` type-based). BE: `ProductImport::buildDeliveryData()` static + serialize `delivery` ở 3 load path (DetailResource/getWarehouseImportSource/RequestDetailResource), `php -l` 4 file sạch. FE: `importTypeConfig` + `<b-tab>` + `deliverySummary`/`deliveryVal`/`deliveryTripUrl` + wiring `setForeignCostBlocks`. Verify: BE contract qua `GET /api/v1/finance/product-imports/9200` token thật (delivery đầy đủ, km "20.00"/"58.00", cost 2,662,000, tax 212,960, 1 trip 3256) + Playwright Edit view PNH-09200 loại 15 (toggle DEV DB status/created_by tạm rồi REVERT về status=1/created_by=200) → panel render đủ 6 ô + trip, link trip = `http://127.0.0.1:8001/admin/warehouse/delivery_trips/3256/show`. Console chỉ còn warning Nuxt dev (không liên quan).
+Đang làm dở: (không) — Tab B đóng.
+Bước tiếp theo: CHỜ USER NGHIỆM THU Tab A + Tab B. Kế tiếp theo thứ tự user "A trước, B sau, C tách riêng" → **Tab C "Bốc xếp"** (ERP `#boc_xep`, tính năng TÁCH RIÊNG — editable, không gộp vào cụm này).
+Blocked: (không). Lưu ý: phiếu nội địa hiện là status=1 (DA_HOAN_THANH) → Edit view chỉ mở được bằng toggle DEV DB tạm; đã revert.
+KHÔNG commit/push.
+
+### Checkpoint — Cụm loại 11 CHI PHÍ (4 tab read-only) VERIFY XONG — 09/10/2026
+Vừa hoàn thành: 4 tab chi phí ngoại loại 11 (Chi phí HĐ · Chi phí quốc tế có/không tính thuế NK · Phân bổ chi phí vận chuyển nhanh) render read-only, nhãn nguyên văn ERP, số chuẩn quốc tế, ô rỗng để trống, gate `canViewCostPrice`. Playwright verify trên PIR 9760 (3 tab đầu) + PIR 2306 (fastDelivery có data, rowspan đúng) + PIR 9889 (empty-state filter đúng). FE wiring qua `setForeignCostBlocks()` ở 3 load path.
+Đang làm dở: (không) — cụm chi phí đóng.
+Bước tiếp theo: CHỜ USER NGHIỆM THU. Sau đó → tab "Tính giá thành nhập kho" (landed cost #phan_bo) còn hoãn.
+Blocked: (không). Lưu ý môi trường: Playwright MCP config `--isolated` KHÔNG tự nạp `e2e/.auth/user.json` → phải inject `access_token` vào localStorage tay; đã tạo symlink `chromium-1246→1247` cho MCP; Node 20 là `v20.20.2` (không phải v20.20.1).
+KHÔNG commit/push.
+
+### Checkpoint — Tab A "Tính giá thành nhập kho" (landed cost) VERIFY XONG — 09/10/2026
+Vừa hoàn thành: Tab A read-only loại 11 (`#phan_bo`) — 6 ô tổng hợp + bảng 15 cột giá thành nhập kho + totals row, nhãn nguyên văn ERP, số chuẩn quốc tế, "Mã hàng:" xám không đậm, ô rỗng để trống, gate `canViewCostPrice` fail-close. BE: `landedCostSummary()` + serialize `landed_cost_summary` 3 load path. FE: `<b-tab>` + `landedSummary/landedRows/landedTotals/formatNum4` + wiring `setForeignCostBlocks`/`loadForEdit`. Playwright verify PNH-12178 (32 SP) qua Edit view (toggle DEV DB tạm rồi REVERT) + BE contract qua `GET show` token thật; totals cross-match summary.
+Đang làm dở: (không) — Tab A đóng.
+Bước tiếp theo: CHỜ USER NGHIỆM THU Tab A. Kế tiếp theo thứ tự user "A trước, B sau, C tách riêng" → **Tab B "Vận chuyển"** (ERP `#van_chuyen`, gate `has_delivery`).
+Blocked: (không). Lưu ý: KHÔNG tồn tại phiếu loại 11 trạng thái DANG_TAO (3) nên Edit view không mở được với data thật → đã toggle tạm DEV DB (status/created_by) rồi revert; mọi phiếu loại 11 hiện là status=1.
+KHÔNG commit/push.
+
 #### (3.3) Field header ẩn/hiện của "Thông tin chung" — USER DUYỆT "làm cả" 09/10/2026
 Nguồn ERP: `warehouse/product_imports/form.blade.php` tab `#chung` (dòng 34–309). User báo header
 HRM thiếu nhiều field ẩn/hiện, ví dụ loại 4/9 phải hiện khối Tài khoản hạch toán. Scope = 3 cụm:
@@ -546,3 +679,190 @@ Giá bán · Thành tiền giá bán · [is_settlement] Đơn giá mua duyệt �
     tab đều status 1) → không render được form. Đã xác minh RESOURCE Sửa `ProductImportDetailResource(12308)`
     trả `tabs:[{firm_contract_tab_id:34450,name:"Nhóm 1",products:[{product_id:5300,unit_id:41,qty:"2.00"}]}]`
     = input `loadForEdit` đọc (cùng visibleTabs/template đã verify ở A/B).
+
+---
+
+## ②b — Ghi POOL hàng giữ + arrived/arriving khi HOÀN THÀNH phiếu loại 2/15 (ĐANG MỞ — 09/10/2026)
+
+**Bối cảnh:** ②a chỉ ghi FORM (`product_import_detail_customers`), KHÔNG đụng pool hàng giữ. Khi phiếu
+loại 2/15 chuyển `DA_HOAN_THANH` (qua `handleCompleted()` → `updateWarehouse()`), ERP còn: (b1) GIỮ
+HÀNG cho khách (đường A `prepick_details`/`prepick_logs`, đường B `product_import_direct_details`), và
+(b2 — chỉ loại 15) cập nhật `arrived_qty`/`arriving_qty` + `order_stock_progress` trên chuỗi bảng
+inland. HRM hiện KHÔNG làm cả hai → hàng giữ không sinh, "hàng đang về" không trừ.
+
+**Scope user đã chốt:** ①(b) parity đầy đủ cả 2 pool + arrived/arriving · ② **ghi y ERP** (invariant
+fix `arriving = GREATEST(0, Σprogress − arrived)` để TASK RIÊNG sau). Nguồn chân lý = ERP
+`App\Model\Warehouse\ProductImport::updateWarehouse()` loại 15 (:1396-1513) + loại 2 (:1515-1533) +
+helper `prepick()` (:1923-1963) + `productImportDirectDetail()` (:1965-2001).
+
+**PHÁT HIỆN khi khảo sát (báo user lúc nghiệm thu):** HRM **chưa port 7/8 entity inland** mà effect-2
+cần (`OrderStockProgress`, `InlandOrderRequestNewProduct(+Detail)`, `InlandBuyContractNewProductDetail`,
+`InlandPurchaseInvoiceProduct`, `InlandOrderSummaryNewProduct`, `InlandBuyContractNewPromotion`; chỉ
+`InlandProductArrivedNew` có). → ②b phải ghi bằng **raw `DB::table`** y khuôn khối type-14 `hold_details`
+(`ProductImport.php:582-637`), objectable_type lưu FQN ERP (P2.1). **Không có nguy cơ trừ hai lần**
+(HRM chưa ghi arrived/arriving/progress ở đâu — đó là lý do "đang về" phồng). **Không backfill**
+(0 phiếu loại 2/15 hoàn thành qua luồng HRM có allocation).
+
+**Quyết định sequencing (toàn quyền, báo user nghiệm thu):** b1 trước (bounded, dry-run được), b2 ngay
+sau (map chính xác FK inland từ ERP rồi mới viết — không viết mù vùng drift). Cả hai cùng feature ②b.
+
+### b1 — Giữ hàng cả 2 pool (loại 2 + 15)
+- [x] Nới `PrepickStockService::addLot()` THÊM (optional `?string $objectableType=null, ?int $objectableId=null`):
+      null → giữ nguyên hành vi WarehousePrepick (callers cũ không đổi); có giá trị → ghi objectable cho
+      CẢ `prepick_details` (+root) lẫn `prepick_logs` = (FQN, id) — mirror ERP `prepick()` dùng
+      `get_class($customer)` + `$customer->id` cho detail/root/log. Re-test màn "Phiếu xuất giữ".
+- [x] `ProductImport::updateWarehouse()` thêm khối loại 15 + loại 2 giữ hàng, chạy sau khối type-14:
+      mỗi `$p->customers` có `allocation` → đường A (`!is_import_direct`): loại 15 guard `type∈{1,3}`,
+      loại 2 KHÔNG guard → `PrepickStockService::addLot(...)` objectable = `App\Model\Warehouse\ProductImportDetailCustomer`
+      + customer->id, qty = `customer->qty * customer->unit_coefficient`, company = `$this->company_id`,
+      employee = (loại 15: inland_contract_detail_new→order_request.created_by, fallback type2:
+      inland_product_arrived_new→inland_buy_contract_new.created_by; loại 2: inland_order_request.created_by);
+      đường B (`is_import_direct`): `productImportDirectDetail(customer, employeeId)`.
+- [x] Port helper `productImportDirectDetail()` vào HRM (Eloquent `ProductImportDirectDetail`+`Log`):
+      employee_id, company_id=`$this->company_id`, department_id=employee.info.department_id, part_id=null,
+      objectable=(FQN ProductImportDetailCustomer, customer->id), qty base-unit, +log before/after.
+- [x] Resolve `employee_id` qua raw `DB::table` — helper `resolveType15EmployeeId()` + `inlandContractCreatedByFromArrived()`;
+      loại 2 đọc `inland_order_requests` (bảng CŨ). Dry-run xác nhận emp/dept resolve non-null (60/31/159/590/1142).
+- [x] Dry-run (transaction + rollback) TRƯỚC khi ghi pool thật. `grep DB_ .env` = `erp_hrm_check` (DB gộp dev).
+      ĐÃ chạy ĐÚNG `updateWarehouse()` compiled trên 12254(A)/12290(B)/12344(promo) → prepick/direct sinh đúng qty,
+      objectable_type=`App\Model\Warehouse\ProductImportDetailCustomer` (P2.1), rollback sạch, 0 ghi prod.
+
+### b2 — effect-2 arrived/arriving (CHỈ loại 15), raw DB, ghi y ERP
+- [x] reset `inland_buy_contract_new_product_details.arriving_qty=0` cho các contract_detail_id của phiếu.
+- [x] customer type==1: `inland_order_request_new_product_details` arrived+=/arriving-=qty · `order_stock_progress`
+      qty-= (orderable=detail, objectable=inland_product_arrived_new) · root_detail arrived+=/arriving-= ·
+      contract_detail arrived+=/arriving=0. Dry-run 12254: iorn_detail#4179-4183 + root#14253-14257 + osp#44652-44656 trừ đúng.
+- [x] customer type==2: `inland_order_request_new_products` (hoặc fallback qua `inland_purchase_invoice_customer`
+      → `inland_purchase_invoice_products` → `inland_order_summary_new_products`) arrived+=/arriving-=
+      `min(qty_available_for_stock, customer.qty)` · order_stock_progress · root_order_request_product ·
+      contract_detail arrived+=/arriving=0 · trừ dần `qty_available_for_stock`. Dry-run 12230/12223: order_request_product
+      resolve đúng (fallback KHÔNG kích hoạt vì primary luôn tìm thấy — port trung thành, có guard).
+- [x] promotion (count(customers)==0): đường B productImportDirectDetail + `inland_buy_contract_new_promotions`
+      arrived+=qty/arriving=0. Dry-run 12344: direct_detail sinh qty=2, promo guard `if($promo)` bỏ qua đúng khi SP không có dòng KM.
+- [x] Dry-run như b1 — arrived+= và osp qty-= di chuyển cùng nhau (khớp bất biến GREATEST(0,Σprogress−arrived)); không double-count.
+
+### Verify ②b — dry-run live-code (transaction rollback, 0 ghi prod); user nghiệm thu UI
+- [x] Phiếu loại 15 đường A (12254, 5 khách type=1): 5 lô prepick qty 1/5/1/1/1 + arrived/arriving/progress trừ đúng.
+- [x] Phiếu loại 15 đường B (12290): product_import_direct_details sinh qty=2 + effect-2 đủ chuỗi.
+- [x] Phiếu loại 2 đường B (12238): chỉ giữ hàng (direct_detail), KHÔNG effect-2 (arrivedNewId=NULL, ERP loại 2 comment out) ✓.
+- [x] Wiring: `handleCompleted()` (ProductImportService :213 store / :322 update) → `updateWarehouse()` khi status=DA_HOAN_THANH.
+- [x] Regression màn "Phiếu xuất giữ" (addLot thêm 2 param optional): caller cũ `WarehousePrepickRequestService:482`
+  truyền 8 tham số → objectable=null → nhánh mặc định `WAREHOUSE_PREPICK` với documentId/detailId Y NHƯ TRƯỚC
+  (code-proof, thân `addLot` 905-910). Playwright 127.0.0.1:3000: list `/finance/warehouse-prepick-requests`
+  tải đủ 10 phiếu thật (PXG-02188→02179), phân trang 1–10/2056, không lỗi liên quan prepick. ✅
+- [ ] (user) Bấm thật HOÀN THÀNH 1 phiếu loại 2/15 mới qua UI → ghi pool prepick + arrived/arriving thật trên dev
+  (dành cho user nghiệm thu; logic đã cover bằng dry-run live-code transaction+rollback + wiring code-read).
+
+---
+
+## Tab C — "Bốc xếp" (#boc_xep) EDITABLE — ĐANG LÀM (09/10/2026)
+
+**Bối cảnh + phê duyệt:** User chốt "ok" (phiên trước) cho thiết kế Tab C = **port trung thực đầy đủ**
+(gồm `syncPickUp`), **bật cho MỌI loại phiếu như ERP** (hiện tab với 2,3,4,9,15,99,11), gate sửa bằng
+`canEdit()`. Phân biệt rõ với tab `pickupCost` hiện có ("Chi phí bốc hạ hàng tại kho", `import_costs`
+type BOC_XEP, foreign-only) — Tab C là **phiếu bốc xếp** (`arrange_delivery` + `executors`), EDITABLE.
+
+**Nguồn chân lý ERP (đọc verbatim phiên trước):**
+- `#boc_xep` bind `form.arrange_delivery` (object) + `form.executors` (array).
+- `create.blade.php` `changeArrangeDelivery(value)`: set `arrange_delivery.price` từ `arrangeDeliveries.find(id)`:
+  rent_type==2 → delivery.price (nặng) / delivery.price_hour (giờ); else → company_price / company_price_hour;
+  không thấy → 0. Rồi gọi `form.syncPickUp()`.
+- `formJs.blade.php` `$watch('form.arrange_delivery.total_money'|'.vat')`: total_money>0 && type≠11 → upsert
+  `InlandImportCost` cost_id=192 vào `form._inland_costs` (xoá+đẩy lại). `changeRentType()`: rent_type truthy →
+  **account=1561, work=29** (import; export là 6428); else account=null.
+- `ProductImport.blade.php` `syncPickUp()` (782-802): arrange_delivery.price → tìm cost en_name=='arrange_cost'
+  (cost_id 192) → upsert PickUpCost {cost_id, value_before_vat=total_money, vat_percent=vat, supplier_id,
+  disabled=true} vào `_pick_up_costs` (chạy MỌI loại, không guard).
+- Hạch toán (getDataCreateDept, đã phân tích): Foreign(11) → pick_up (rent_type==1 skip cost192; rent_type==2
+  post 1541/1331/3311 WITH contractable=warehouse_import + supplier; no-arrange post không contractable);
+  Domestic(2,15) → inland NOI_DIA với supplier (rent_type==1 null supplier KHÔNG post — tự khớp); else(3,4,9,14,99)
+  → pick_up CHỈ rent_type==2 WITH contractable. Executors = data-only (không hạch toán).
+- **Quyết định routing (toàn quyền, báo nghiệm thu):** dòng chi phí bốc xếp (cost_id 192) đẩy vào ĐÚNG mảng mà
+  accounting của loại đó tiêu thụ (domestic→inland_costs; foreign+else→pick_up_costs), TRÁNH ERP tạo 2 dòng chết
+  (BOC_XEP + NOI_DIA) trùng. Documented là quyết định có chủ đích.
+
+### C1 — BE hạ tầng (type-independent) — XONG 09/10/2026
+- [x] `ProductImport` entity: quan hệ `arrange_delivery()` hasOne(ProductImportExportArrangeDelivery,'parent_id','id')
+  ->where('type',TYPE_IMPORT=1); `executors()` hasMany(...Executor,'parent_id','id')->where('type',1).
+- [x] `ProductImportService::saveArrangeDelivery()` port verbatim từ `ProductExportService` (655-726), adapt:
+  TYPE_IMPORT(1), type_name='import', parent_id=product_import.id, request_id=product_import_request_id,
+  rent_type_name 'Công ty'/'Thuê ngoài'; **xoá-sạch-dựng-lại** (convention HRM) delivery+executors theo parent_id.
+  + `syncArrangeCost()`: ghi dòng ImportCost (cost_id=arrange_cost=192) theo loại — domestic(2,15)→NOI_DIA, còn lại→BOC_XEP.
+- [x] Wire `saveArrangeDelivery()` vào store()/update() — NGAY SAU `syncCosts()`, TRƯỚC `recomputeMoneyServerSide`
+  (để recompute cộng/phân bổ được dòng 192; sau syncCosts để delete-by-type không xoá mất dòng 192).
+- [x] Store/UpdateRequest: `arrange_delivery.*` + `executors.*` conditional + decode JSON (FormData).
+- [x] Route dòng chi phí cost_id=192: domestic(2,15)→NOI_DIA; foreign(11)+else(3,4,9,14,99)→BOC_XEP
+  (server-side từ arrange_delivery; `syncCosts` strip dòng 192 do FE gửi — defense-in-depth).
+- [x] Resource: `ProductImportDetailResource` trả `arrange_delivery` + `executors` (UNGATED canViewCostPrice — bốc xếp do
+  người lập tự nhập, không phải giá vốn; gate sửa bằng `is_can_edit`). `loadDetail()` eager-load 'arrange_delivery','executors'.
+  (ĐÃ QUYẾT: BỎ `ProductImportRequestDetailResource` — ĐNNK nguồn không có tab bốc xếp, đây là tab mới trên phiếu.)
+- [x] Endpoint `GET /product-imports/arrange-form-options` — accounts/cost_debts/works + arrange_goods(scope company người
+  lập, status Hoạt động). UNGATED quyền quản lý danh mục (khuôn `BillAdjustDeptController::formOptions`). Smoke-test 200:
+  308 accounts / 22 cost_debts / 21 works / 7 arrange_goods. NCC + nhân viên vẫn tìm server-side qua endpoint sẵn có
+  (`assign/customers/manager/suppliers` + employee search) — KHÔNG nhúng, mirror export create.vue.
+
+### C2 — BE hạch toán delta — [x] XONG + VERIFIED (09/10/2026, audit trực tiếp — subagent drift bỏ)
+Audit đối chiếu từng dòng ERP `ProductImport::getDataCreateDept()` ↔ HRM services. KẾT LUẬN: C2 đã implement
+đầy đủ & trung thực từ C1, chỉ checkbox cũ còn sót. Bằng chứng:
+- [x] **ForeignPurchase (11)** `ForeignPurchaseProductImportAccountingService` = port ĐÚNG 3 nhánh ERP
+  (`ProductImport.php:2321-2335`): rent_type==1 → skip cost192 (`continue`) + dòng pick_up khác KHÔNG ghi;
+  rent_type==2 → 1541/1331/3311 WITH contractable(warehouse_import)+supplier; không arrange (else) → 1541/1331/3311
+  KHÔNG contractable. Sau đó kết chuyển giá vốn 1561/1541. Docblock ghi rõ 1541 lệch cân-đối CỐ Ý theo ERP
+  (giá trị hàng NN đã ghi Nợ 1541 ở chứng từ thượng nguồn) — KHÔNG bù.
+- [x] **Helper chung `arrangePickUpAccounting()`** (base `ProductImportAccountingService:357-384`) = port EXACT ERP
+  nhánh `else` catch-all (`ProductImport.php:2381-2390`): `$group+=1` TRƯỚC check; rent_type==2 → 1541/1331/3311
+  WITH contractable(warehouse_import)+supplier; else → `continue` (không ghi). Đọc `import_costs` type=5 (BOC_XEP).
+  Gọi bởi: **SaleReturn(4)** (nhánh không-HĐ, dòng 34), **BorrowSellReturn(9)** (dòng 39), **Other(99/3/14)** (dòng 27).
+- [x] **Domestic (2,15)** `DomesticPurchaseProductImportAccountingService`: block chi phí nội địa riêng (đọc
+  `import_costs` type=2 NOI_DIA, mỗi dòng có NCC = 1 group → 1541/1331/3311 NCC chi phí; bỏ dòng không NCC =
+  mirror ERP `if(isset($inland_cost->supplier))`). Dòng bốc xếp cty 2,15 route → NOI_DIA(2); rent_type==1 không NCC
+  → tự bị bỏ (khớp ERP, không cần nhánh riêng).
+- [x] **Dispatcher** `ProductImportService::resolveAccountingService()` (1347-1381) wire đủ: 4→SaleReturn ·
+  2/15→Domestic · 99/3/14→Other · 9→BorrowSellReturn · 11→ForeignPurchase. Chỉ chạy ở `handleCompleted()`
+  (status DA_HOAN_THANH) — khớp ERP ghi bút toán lúc hoàn thành, KHÔNG ở "Đang tạo".
+- NOTE: loại 3 (MUON_TRA_LAI) + 14 (NHAP_GUI) qua Other = no-op hạch toán (ERP không có nhánh bút toán riêng,
+  chỉ cập nhật kho/giữ) — trung thực. Loại 14 cũng KHÔNG mở tab Bốc xếp ở FE (xem C3).
+
+### C3 — FE tab editable — [x] XONG (09/10/2026)
+- [x] `importTypeConfig.js`: thêm tab key `arrangeDelivery` (tab CUỐI) cho loại 2,3,4,9,15,99,11.
+  **Loại 14 CỐ Ý loại trừ** (dòng 236 comment) — ERP `#boc_xep` không mở cho điều chuyển nội bộ type 14.
+- [x] `ProductImportForm.vue` (Edits 1-10): tab editable "Bốc xếp" port trung thực từ export `create.vue` arrange tab.
+  - **MÀN MỚI → dùng `V2Base*`, KHÔNG HTML thô** (khác export cũ dùng `form-control-sm`): is_weight=`V2BaseRadio`,
+    rent_type=`V2BaseSelect` (`:value`+`@change`, component KHÔNG có prop `disabled` → engage grid bằng
+    `v-if="arrangeEngaged"`), account/cost_debt/work/employees=`V2BaseSelectRemote` (local-filter từ catalog),
+    supplier=`V2BaseSelectRemote` (remote `assign/customers/manager/suppliers`), tiền=`V2BaseCurrencyInput`.
+  - **Catalog UNGATED**: GET `finance/product-imports/arrange-form-options` (accounts/cost_debts/works/arrange_goods
+    scoped company+HOẠT ĐỘNG) + `assign/tasks/employees`; lazy-load qua `ensureArrangeOptions()` ở tab `@click`.
+  - **KHÔNG canViewCostPrice gate** trên tab (bốc xếp = chi phí người lập tự nhập, không phải giá vốn); gate SỬA
+    bằng `is_can_edit` của phiếu.
+  - **RESOLVED — KHÔNG auto-default account/work** (khác export mặc định account='6428'): ERP import `change()`
+    CLEAR account/work về null (formJs:80-81); 1561/29 là dòng hạch toán BE (cost_id arrange_cost / syncArrangeCost +
+    syncPickUp `ProductImport.blade.php`:782-802), KHÔNG phải field form → `onRentTypeChange` để trống, user tự chọn.
+  - **RESOLVED — KHÔNG quick-add Mã phí/Vụ việc**: ERP `#boc_xep` không có nút quick-add; POST tạo nhanh sẽ 403
+    (endpoint gated) → bỏ hẳn, chỉ chọn từ catalog.
+  - Computeds khớp export: arrangePrice (rt2→price/price_hour, rt1→company_price/company_price_hour theo is_weight),
+    arrangeTotal=price×weight, arrangeVatPrice, arrangeAfter; executorSum + executorMatched (so khớp 2 chữ số thập phân).
+  - `validateArrange`: arrange_type req · account req · weight>0 · '642*'→cost_debt req · '154*'→work req ·
+    rt2→supplier_id req · rt1→≥1 executor (employee_id + price>0) & executorMatched.
+  - `buildArrangePayload`: arrange_delivery=null & executors=[] khi !engaged; account=identify_number, arrange_type=id,
+    cost_debt/work=id; executors chỉ khi rt1. `loadForEdit` map ngược từ `d.arrange_delivery`/`d.executors`.
+
+### Verify — Playwright 127.0.0.1:3000 (KHÔNG commit/push)
+- [x] FE verified (PNH-12343, type 4, Đang tạo): tab render đủ label ERP (Cách tính/Hình thức thuê/Loại bốc xếp/
+  Khối lượng (Tấn)/Đơn giá bốc xếp/Số tiền/VAT (%)/Tiền VAT/Số tiền sau VAT/Tài khoản nợ/Mã phí/Vụ việc);
+  catalog load (7 arrange_goods, 308 accounts, 22 cost_debts, 21 works, 392 employees); rt1 engage→grid+executors,
+  computeds đúng (29000×10=290000, VAT8%=23200, after=313200, executorMatched); rt2 clear executors + supplier-required;
+  validate gates (account/supplier) fire đúng; payload/deselect shapes đúng. Round-trip save→BE chưa chạy LIVE
+  (tránh mutate phiếu thật bằng FK giả) — BE mapping đã confirm qua code (saveArrangeDelivery) + chờ audit C2.
+- [x] Hạch toán theo loại — verify bằng ĐỐI CHIẾU CODE ERP↔HRM (xem C2): mỗi loại post đúng cụm ERP.
+  Round-trip LIVE (save phiếu thật → bút toán AccountDetail) hoãn chủ đích: tránh tạo bút toán rác trên phiếu
+  DEV bằng FK giả; logic 2 phía đã khớp từng dòng. Khi cần nghiệm thu bút toán thật → lập 1 phiếu nhập test đủ
+  điều kiện hoàn thành cho từng loại rồi so AccountDetail (việc nghiệm thu của user).
+
+### Checkpoint — 2026-10-09
+Vừa hoàn thành: C3 FE tab "Bốc xếp" (Edits 1-10) + verify Playwright (render/catalog/rt1/rt2/validate/payload);
+C2 BE audit TRỰC TIẾP (subagent drift → tự đối chiếu) — xác nhận ForeignPurchase 3 nhánh, helper
+arrangePickUpAccounting (port EXACT ERP else 2381-2390), Domestic inland, dispatcher wire đủ. plan.md C2+C3 → [x].
+Đang làm dở: (không) — C2+C3 đã khép ở mức đối chiếu code + verify FE.
+Bước tiếp theo: CHỜ USER NGHIỆM THU. Nếu user muốn bút toán LIVE → lập phiếu test từng loại, so AccountDetail.
+Blocked: (không)
