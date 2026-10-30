@@ -3,14 +3,14 @@
 from playwright.sync_api import sync_playwright
 from common import *
 
-KH, Q, QP, P_STOCK, P_LOW = 210, 219, 92, 43508, 3900
+KH, Q, QP, P_STOCK, P_LOW = IDS['KH'], IDS['Q_DEMAND'], IDS['Q_PROJECT'], IDS['P_STOCK'], IDS['P_LOW']
 TMP = sql("select id, code from products where name='[TEST] Hàng tự khai thác – đã vào kinh doanh'")[0]
 ERR = []
 
 # ---- API
 st, r = api('POST', 'assign/quotations/stock-info', {'quotation_id': Q, 'items': [{'product_id': P_STOCK}]})
 row = r['data'][0]
-check('Đang giữ: namdangit giữ 2 cái CH-ER-BDCD cho KH 210 ⇒ cột Đang giữ = 2', row['prepick_qty'] == 2, row)
+check('Đang giữ: namdangit giữ 2 cái CH-ER-BDCD cho KH test ⇒ cột Đang giữ = 2', row['prepick_qty'] == 2, row)
 check('Có thể LR: CH-ER-BDCD > 0', row['join_qty'] > 0, row)
 st, r = api('POST', 'assign/quotations/stock-info', {'quotation_id': Q, 'items': [{'product_id': P_STOCK}]}, tok=token('tok_cannt'))
 check('Đang giữ theo NGƯỜI LẬP báo giá (người khác mở vẫn thấy 2)', r['data'][0]['prepick_qty'] == 2, r['data'][0])
@@ -30,23 +30,21 @@ with sync_playwright() as pw:
     ui_login(page)
 
     # Báo giá CÓ dự án: ô nhu cầu chỉ xem, hiện nhu cầu của dự án; áp Báo giá mẫu + Lưu nháp
-    page.goto(FE + f'/assign/quotations/{QP}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(15000)
+    page.goto(FE + f'/assign/quotations/{QP}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(20000 if ENV == 'dev' else 15000)
     row = page.locator('tr', has=page.locator('th', has_text='Nhu cầu khách hàng')).first
-    check('UI dự án: ô nhu cầu là ô CHỌN, có dấu *', '*' in row.locator('th').first.inner_text() and row.locator('.select2-selection').count() == 1)
-    check('UI dự án: điền sẵn nhu cầu của dự án (có mã meeting)', 'Cầu nâng' in row.inner_text() and 'TPE.MET' in row.inner_text(), row.inner_text())
-    row.locator('.select2-selection').first.click(); page.wait_for_timeout(600)
-    page.keyboard.type('khí nén'); page.wait_for_timeout(700); page.keyboard.press('Enter'); page.wait_for_timeout(500)
-    check('UI dự án: đổi sang nhu cầu meeting khác của khách được', 'Hệ thống khí nén' in row.inner_text(), row.inner_text())
+    check('UI dự án: ô nhu cầu không dấu *', '*' not in row.locator('th').first.inner_text())
+    check('UI dự án: hiện nhu cầu kế thừa từ dự án (có mã meeting)', 'Cầu nâng' in row.inner_text() and 'TPE.MET' in row.inner_text(), row.inner_text())
+    check('UI dự án: ô nhu cầu bị khoá, không chọn lại được', row.locator('select[disabled], .select2-container--disabled').count() >= 1, row.inner_html()[:300])
     page.evaluate("(js) => { const v = eval(js)('stockOf'); v.$confirm = async () => true; window.__d = false; v.onPickQuotationTemplate(3).then(() => window.__d = true) }", VM_JS)
     page.wait_for_function('() => window.__d === true', timeout=90000)
     with page.expect_response(lambda r: r.url.endswith(f'/assign/quotations/{QP}') and r.request.method == 'PUT', timeout=90000) as ri:
         page.locator('button:has-text("Lưu nháp")').last.click()
     check('UI dự án: áp Báo giá mẫu cho báo giá CÓ dự án rồi Lưu nháp thành công', ri.value.status == 200, ri.value.text()[:300])
-    check('UI dự án: Lưu nháp ghi nhu cầu đã đổi', sql(f'select customer_demand_id from quotations where id={QP}')[0][0] == sql("select id from meeting_investment_demands where scope_name='[TEST] Hệ thống khí nén KH210'")[0][0])
+    check('UI dự án: Lưu nháp giữ nhu cầu của dự án', sql(f'select customer_demand_id from quotations where id={QP}')[0][0] == str(IDS.get('D_PROJECT') or sql("select id from meeting_investment_demands where scope_name like '[TEST] Cầu nâng%'")[0][0]))
     page.wait_for_timeout(3000)
 
     # Hỏi giá với hàng giá 1đ thật: thêm TEWI-828127 qua popup chọn hàng ⇒ hiện nút ⇒ mở phiếu đúng hàng
-    page.goto(FE + f'/assign/quotations/{Q}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(15000)
+    page.goto(FE + f'/assign/quotations/{Q}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(20000 if ENV == 'dev' else 15000)
     page.locator('tbody.q-section-head-tbody button:has-text("Thêm mới")').first.click(); page.wait_for_timeout(9000)
     page.locator('.modal-backdrop-lite input[placeholder^="Tìm theo mã"]').first.fill('TEWI-828127')
     page.keyboard.press('Enter'); page.wait_for_timeout(5000)
@@ -54,19 +52,19 @@ with sync_playwright() as pw:
     check('UI Hỏi giá: chọn hàng giá 1đ có hỏi lại "Vẫn chọn / Không" (cảnh báo sẵn có)', page.locator('button:has-text("Vẫn chọn")').count() >= 1)
     page.locator('button:has-text("Vẫn chọn")').first.click(); page.wait_for_timeout(4000)
     page.locator('.modal-backdrop-lite button:has-text("Đóng")').last.click(); page.wait_for_timeout(2000)
-    added = page.evaluate("(js) => eval(js)('stockOf').products.some(p => Number(p.erp_product_id) === 3900)", VM_JS)
+    added = page.evaluate("(js) => eval(js)('stockOf').products.some(p => Number(p.erp_product_id) === " + str(P_LOW) + ")", VM_JS)
     check('UI Hỏi giá: thêm được TEWI-828127 qua popup (bấm tên hàng)', added)
     check('UI Hỏi giá: hàng giá 1đ ⇒ hiện nút Hỏi giá', page.locator('button:has-text("Hỏi giá")').count() == 1)
     with ctx.expect_page() as np_:
         page.locator('button:has-text("Hỏi giá")').click()
     np_.value.wait_for_load_state('domcontentloaded')
-    check('UI Hỏi giá: tab mới chứa đúng mã hàng 3900', '3900' in np_.value.url, np_.value.url)
+    check('UI Hỏi giá: tab mới chứa đúng mã hàng', str(P_LOW) in np_.value.url, np_.value.url)
     np_.value.wait_for_timeout(12000)
     check('UI Hỏi giá: phiếu hỏi giá hiện TEWI-828127', 'TEWI-828127' in np_.value.content())
     np_.value.close()
     # tồn của hàng vừa thêm trên lưới (cột Đang giữ của CH-ER-BDCD chỉ có khi thêm hàng đó — kiểm qua API ở trên)
     # Thanh tải Nuxt (lớp phủ .loading-page) khi chọn mẫu: hiện trong lúc tải, tắt khi xong
-    page.goto(FE + f'/assign/quotations/{Q}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(15000)
+    page.goto(FE + f'/assign/quotations/{Q}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(20000 if ENV == 'dev' else 15000)
     for label, js in [
         ('Báo giá mẫu', "(js) => { const v = eval(js)('stockOf'); v.$confirm = async () => true; window.__d = false; v.onPickQuotationTemplate(3).then(() => window.__d = true) }"),
         ('BOM mẫu', "(js) => { const v = eval(js)('stockOf'); v.$confirm = async () => true; window.__d = false; v.onPickBomTemplate(1).then(() => window.__d = true) }"),
@@ -83,7 +81,7 @@ with sync_playwright() as pw:
         page.wait_for_timeout(400)
         check(f'UI thanh tải: chọn {label} ⇒ hiện lớp phủ đang tải, xong thì tắt', any(hits) and not page.evaluate("() => !!document.querySelector('.loading-page')"), hits[:10])
     # Ô "Báo giá mẫu" / "BOM mẫu" giữ tên mẫu đã áp; Huỷ thì giữ giá trị cũ; áp mẫu kia thì ô này về trống
-    page.goto(FE + f'/assign/quotations/{Q}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(15000)
+    page.goto(FE + f'/assign/quotations/{Q}/edit', wait_until='domcontentloaded'); page.wait_for_timeout(20000 if ENV == 'dev' else 15000)
     def pick(row, text, btn):
         page.locator(f'tr:has(th:has-text("{row}")) .select2-selection').first.click(); page.wait_for_timeout(500)
         page.keyboard.type(text, delay=20); page.wait_for_timeout(800); page.keyboard.press('Enter'); page.wait_for_timeout(1200)

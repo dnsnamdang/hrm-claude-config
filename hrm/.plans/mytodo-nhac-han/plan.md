@@ -62,3 +62,6 @@ Vừa hoàn thành: BE nhắc hạn + bản tin + cấu hình, web màn cấu h�
 Đang làm dở: —
 Bước tiếp theo: user thử trên local; chốt sửa NotificationMeta::build; commit/push khi user cho phép
 Blocked:
+
+- [x] (30/10/2026) Điều tra: cổng DEV có thông báo trên chuông nhưng KHÔNG push về màn hình khoá. Hàng đợi bình thường (worker /var/www/tpe chạy, jobs=0, không failed, log không lỗi FCM; dev + app tpeDev cùng Firebase project tan-phat-erp-hrm). Nguyên nhân: LỆCH TIỀN TỐ TOPIC — .env dev /var/www/tpe để FCM_TOPIC_PREFIX="dev_topics_development_" (sửa .env 12/10/2026), còn app flavor tpeDev đăng ký "topics_development_<employee_info_id>" (build_config.dart prefixTopicNotification) → server bắn vào topic không ai nghe. Lưu ý: demo/uat/thanhan trên cùng server dev cũng dùng Firebase tan-phat-erp-hrm + "topics_development_" → trả .env tpe về prefix cũ thì app dev nhận lẫn thông báo của các cổng đó. Chờ user chọn hướng sửa
+- [x] (30/10/2026) Sửa theo user chọn: .env DEV /var/www/tpe/hrm-api FCM_TOPIC_PREFIX "dev_topics_development_" → "topics_development_" (khớp app tpeDev; sao lưu .env.bak_20261030_topic), php artisan queue:restart → supervisor dựng lại 2 worker 10:50, tinker đọc đúng prefix mới. Chấp nhận app dev có thể nhận lẫn push từ demo/uat/thanhan cùng Firebase. Chờ user thử push thật trên máy

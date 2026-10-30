@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- app-nhiem-vu-van-de → @cuong61n → .plans/app-nhiem-vu-van-de/plan.md
+  Trạng thái: **ĐANG LÀM (30/10/2026)** — màn Nhiệm vụ + Vấn đề trên TPE_APP theo meeting-mobile.pen (đã sửa thiết kế theo skill app-*), BE bổ sung chữ/màu trạng thái ở chi tiết + số bình luận.
+
 - mytodo-nhac-han → @cuong61n → .plans/mytodo-nhac-han/plan.md
   Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 

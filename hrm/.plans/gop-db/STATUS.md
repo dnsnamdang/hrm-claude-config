@@ -120,6 +120,9 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- 11950-loc-phong-ban-dinh-bien — Redmine #11950 → @cuong61n → .plans/gop-db/11950-loc-phong-ban-dinh-bien/plan.md
+  Trạng thái: 🟡 Code BE+FE xong, test BE đạt (30/10/2026), chờ test UI · chưa commit (worktree gop_db). Bộ lọc "Phòng ban định biên" chọn nhiều, QĐ phải chứa đủ mọi phòng đã chọn, phòng khoá 🔒.
+
 - quotation-gap-0308 → @cuong61n → .plans/gop-db/quotation-gap-0308/plan.md
   Báo giá sửa theo file GAP tab bao_gia_QLDA_0308 (26/10/2026). Đã code: Nhu cầu KH, Địa chỉ giao hàng, File đính kèm, cột Ảnh/Bảo hành, nhãn doanh thu dịch vụ, cột Báo giá ở Hàng hóa dự án, Chọn báo giá đã có. Kết quả từng dòng ở GAP_baogia_qlda_erp_ghichu.xlsx. Chưa commit; còn nhóm mục chờ chốt nghiệp vụ.
 
@@ -2501,6 +2504,12 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Excel vẫn là số thuần vì đã có cột *Loại tiền* riêng.
 
 ## Hoàn thành
+
+- 11945-dinh-bien-het-hieu-luc — Redmine #11945 → @cuong61n → .plans/gop-db/11945-dinh-bien-het-hieu-luc/plan.md
+  Trạng thái: 🟢 Code + test xong (30/10/2026), chưa commit (worktree gop_db). QĐ định biên có trạng thái tính động Hết hiệu lực 1 phần / Hết hiệu lực; tab phòng đã bị thay tô đỏ + tooltip.
+
+- sidebar-hub-hien-du-chu — phản hồi nhóm chat 30/10 → @cuong61n → .plans/gop-db/sidebar-hub-hien-du-chu/plan.md
+  Trạng thái: 🟢 Code + test xong (30/10/2026), chưa commit (worktree gop_db). Menu hub (rail + panel nhóm con) hiện đủ chữ, xuống dòng thay vì cắt "…".
 
 - finance-bill-income-request — Redmine #11918 (Phase 17) → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md (mục "Phase 17")
   Trạng thái: 🟢 **Đã push `develop` (29/10/2026)** — api `423116a46`, client `9e93e61be`. Bước tiếp: deploy dev → QA test lại #11918.

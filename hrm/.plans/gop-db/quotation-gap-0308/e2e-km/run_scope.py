@@ -1,8 +1,8 @@
 from common import *
 from urllib.parse import urlencode
-TOK = dict(l.split() for l in open(os.path.join(HERE, 'tokens.txt')))
+TOK = dict(l.split() for l in open(os.path.join(DEV_TOK_DIR if ENV == 'dev' else HERE, 'tokens.txt')))
 EMPS = [13, 40, 126, 661, 328, 407]
-CUSTS = [210, 232389, 973, 87, 2440]
+CUSTS = [232834, 21195, 973, 87, 2440] if ENV == 'dev' else [210, 232389, 973, 87, 2440]
 FILTERS = [({}, {}), ({'keyword': 'BÁN BUÔN'}, {'name': 'BÁN BUÔN'}), ({'keyword': 'mafra'}, {'name': 'mafra'}),
            ({'product_code': 'MARA-P1261'}, {'product_code': 'MARA-P1261'}), ({'product_name': 'SJ-40'}, {'product_name': 'SJ-40'}),
            ({'product_model': 'SJ 40'}, {'product_model': 'SJ 40'}), ({'product_code': 'KHONG_CO_XYZ'}, {'product_code': 'KHONG_CO_XYZ'})]
@@ -25,7 +25,7 @@ with sync_playwright() as pw:
     check(f'Danh sách CT: {total} tổ hợp (6 NV × 5 KH × 7 bộ lọc) HRM = ERP', mism == 0, mm[:6])
     print('   các tập kết quả khác nhau:', len(set(x[2] for x in nonempty)), sorted(set(x[2] for x in nonempty)))
     # chi tiết: HRM 200 ⇔ ERP success (mọi CT đang hiệu lực, không lọc phạm vi)
-    cand = [482, 481, 480, 478, 474, 472, 463, 451, 466, 470]
+    cand = [506, 504, 503, 500, 497, 486, 482, 474, 472, 470] if ENV == 'dev' else [482, 481, 480, 478, 474, 472, 463, 451, 466, 470]
     total = mism = 0; mm = []
     for e in EMPS:
         for c in CUSTS:

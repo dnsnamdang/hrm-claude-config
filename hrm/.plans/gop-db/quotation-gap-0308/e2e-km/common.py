@@ -1,10 +1,12 @@
 import json, os, urllib.request
 from playwright.sync_api import sync_playwright
 HERE = os.path.dirname(os.path.abspath(__file__))
-TOKEN = open(os.path.join(HERE, '..', 'token.txt')).read().strip()
-API = 'http://127.0.0.1:8003/api/v1/'
-ERP = 'http://127.0.0.1:8001'
-FE = 'http://127.0.0.1:3002'
+ENV = os.environ.get('E2E_ENV', 'local')   # dev: dev-hrm + ERP dev-erp.dnsmedia.vn (token sinh bằng tinker, xem e2e-p3/common.py)
+DEV_TOK_DIR = '/private/tmp/claude-501/-Users-manhcuong-Desktop-dns-HRM/48345148-7d74-4a08-868e-521b2108aea7/scratchpad/dev'
+TOKEN = open(os.path.join(DEV_TOK_DIR, 'tok.txt') if ENV == 'dev' else os.path.join(HERE, '..', 'token.txt')).read().strip()
+API = 'https://dev-hrm.eteksofts.com/api/v1/' if ENV == 'dev' else 'http://127.0.0.1:8003/api/v1/'
+ERP = 'https://dev-erp.dnsmedia.vn' if ENV == 'dev' else 'http://127.0.0.1:8001'
+FE = 'https://dev-hrm.eteksofts.com' if ENV == 'dev' else 'http://127.0.0.1:3002'
 
 def api(method, url, payload=None, token=None):
     data = json.dumps(payload).encode() if payload is not None else None

@@ -57,6 +57,16 @@ Vừa hoàn thành: màn Chi tiết báo giá thêm 3 cột tồn + cộng tiề
 Bước tiếp theo: user test tay :3002 → xin phép commit 3 repo.
 Blocked: chờ chốt điều kiện xoá BOM mẫu; có gắn "Hàng tự khai thác" cho hàng tạm cũ không.
 
+## Phase 4 — Đẩy code + lên dev (30/10/2026) — @cuong61n
+- [x] 30/10 Gom file báo giá (Phase 1/1b/3) thành nhánh `feature/quotation-gap-0308` dựng từ `origin/gop_db`, không gồm file của phiên khác đang sửa trong worktree (Rank, phiếu công tác, meeting, quyết định nhân lực) — đã push 3 repo: hrm-api 196b0ccdd, hrm-client ca8b12874, TanPhatDev 51664d41c
+- [x] 30/10 Merge vào nhánh dev: hrm-api `develop` 80337359a, hrm-client `develop` 4e2a3e1fc (gỡ conflict nối 2 bên: ProductPickerRequest `product_cate`+`stock_company_ids`, ProductExportService `updater_name`+`note`, product-list-screens cột `updater_name`+`LINKED_COLUMNS`), ERP `develop_02` 9330af057 (không conflict)
+- [x] 30/10 ERP dev (dev-erp.dnsmedia.vn) đã git pull develop_02
+- [x] 30/10 Dọn worktree gop_db-api/gop_db-client: gỡ file báo giá đã nằm trên nhánh feature (so hash từng file), file của phiên khác đã có trên origin/gop_db ⇒ kéo worktree về khớp origin/gop_db (api a3321d08e, client 56d488304), git status sạch cả 2; ERP TanPhatDev sạch
+- [x] 30/10 HRM dev: chạy `~/build_tpe.sh` (migrate 2026_10_26_000001/000002, 2026_10_27_000001 + seeder quyền + route:cache + build FE) — xong
+- [x] 30/10 Test lại trên cổng dev: bộ e2e chạy được 2 môi trường (`E2E_ENV=dev`; `seed_dev.py` dựng dữ liệu [TEST] trên hrm_erp_test: KH 232834, dự án [TEST] 491 nhân bản dự án 489 với Sale = namdangit, báo giá 422/423/424/425, nhu cầu 533–536, BOM mẫu 1/2, BOM nháp 31, hàng tự khai thác 52061/52062; cấp quyền "Quản lý BOM mẫu" cho vai trò Super admin công ty 1 trên dev). Kết quả: API 64/64, UI 58/58, bổ sung 22/22, KM dev (CT 506, KH 18002, BG 433) 13/13
+- [x] 30/10 Bỏ bắt buộc "Nhu cầu khách hàng": FE bỏ * + bỏ chặn khi Gửi duyệt (edit.vue), BE bỏ chặn trong `QuotationService::assertSubmittable` — commit trên feature/quotation-gap-0308: api e400fa09a, client 89ba441c7 — đã push + merge develop (api 9481bb6a1, client bed7c13bd), build dev lại; e2e sửa ca kiểm tương ứng
+- [x] 30/10 Khách chốt lại Nhu cầu KH: báo giá độc lập chọn nhu cầu thu thập từ meeting; báo giá từ dự án TKT KẾ THỪA nhu cầu chọn ở màn tạo dự án, KHÔNG cho đổi. BE: `resolveDemandId` có dự án ⇒ luôn lấy nhu cầu gắn với dự án (bỏ qua giá trị FE gửi), mỗi lần lưu báo giá dự án tự lấy lại; `customer-demand-options` có project_id chỉ trả nhu cầu của dự án; DetailQuotationResource trả nhu cầu dự án (cả bản ghi cũ lưu lệch) + cờ `customer_demand_locked`. FE: ô khoá khi có dự án, placeholder "Dự án chưa gắn nhu cầu khách hàng". Commit api 2b1f28006, client e869b2a25 (chưa push). e2e sửa: gửi nhu cầu khác/KH khác ⇒ vẫn lưu nhu cầu dự án, dự án chưa gắn nhu cầu ⇒ trống không lỗi, UI ô khoá
+
 ### Checkpoint — 2026-10-27 (Phase 3)
 Vừa hoàn thành: 9 việc Phase 3 (nhu cầu meeting, cột Ảnh/Bảo hành/tồn BOM, Hỏi giá, tồn 3 cột, Báo giá mẫu + Dữ liệu mẫu, Tổng hợp VAT + cộng nhóm, Hàng tự khai thác (sửa cả ERP 7 file), tuỳ chọn in, màn BOM mẫu + chọn mẫu ở BOM/báo giá). Test API + Playwright :3002.
 Đang làm dở: —

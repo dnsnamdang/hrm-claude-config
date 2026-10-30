@@ -4,13 +4,15 @@ import re, time
 from playwright.sync_api import sync_playwright
 from common import *
 
-Q_DIRECT = 218      # báo giá độc lập test (KH 210)
-Q_DEMAND = 219      # báo giá test nhu cầu (KH 210)
-Q_PICK = 217        # báo giá test BOM mẫu (không lưu)
-Q_GROUPS = 24       # báo giá ĐÃ DUYỆT có 6 nhóm — màn Chi tiết + In
-Q_EDIT = 218        # báo giá Đang tạo có nhiều nhóm (áp Báo giá mẫu 2) — mọi bước trên màn Sửa
-Q_SPECS = 45        # báo giá 151 hàng ERP có thông số (in bản thông số)
-BOM = 30            # BOM nháp của tài khoản test
+Q_DIRECT = IDS['Q_DIRECT']      # báo giá độc lập test
+Q_DEMAND = IDS['Q_DEMAND']      # báo giá test nhu cầu
+Q_PICK = IDS['Q_PICK']          # báo giá test BOM mẫu (không lưu)
+Q_GROUPS = IDS['Q_GROUPS']      # báo giá ĐÃ DUYỆT có nhiều nhóm — màn Chi tiết + In
+Q_EDIT = IDS['Q_EDIT']          # báo giá Đang tạo có nhiều nhóm (áp Báo giá mẫu 2) — mọi bước trên màn Sửa
+Q_SPECS = IDS['Q_SPECS']        # báo giá nhiều hàng ERP có thông số (in bản thông số)
+BOM = IDS['BOM']                # BOM nháp
+KH_LABEL = IDS['KH_LABEL']
+D_OPEN = str(IDS.get('D_OPEN', 5))
 PAGE_ERRORS = []
 
 
@@ -18,7 +20,7 @@ def vm(page, method):
     return page.evaluate_handle(VM_JS, method)
 
 
-def goto(page, path, wait=13000):
+def goto(page, path, wait=(20000 if ENV == 'dev' else 13000)):
     page.goto(FE + path, wait_until='domcontentloaded', timeout=180000)
     page.wait_for_timeout(wait)
 
@@ -59,13 +61,13 @@ with sync_playwright() as pw:
     sql(f'update quotations set customer_demand_id=null where id={Q_DEMAND}')
     goto(page, f'/assign/quotations/{Q_DEMAND}/edit')
     row = page.locator('tr', has=page.locator('th', has_text='Nhu cầu khách hàng'))
-    check('UI nhu cầu: ô có dấu * (báo giá không dự án)', '*' in row.locator('th').first.inner_text())
-    select2_pick(page, 'tr:has(th:has-text("Nhu cầu khách hàng"))', 'Kết cấu thép KH210')
+    check('UI nhu cầu: ô KHÔNG có dấu * (bỏ bắt buộc 30/10)', '*' not in row.locator('th').first.inner_text())
+    select2_pick(page, 'tr:has(th:has-text("Nhu cầu khách hàng"))', 'Kết cấu thép ' + KH_LABEL)
     st, body = save_draft(page, rf'/assign/quotations/{Q_DEMAND}$')
-    check('UI nhu cầu: Lưu nháp ghi đúng nhu cầu đã chọn', st == 200 and sql(f'select customer_demand_id from quotations where id={Q_DEMAND}')[0][0] == '5', (st, body))
+    check('UI nhu cầu: Lưu nháp ghi đúng nhu cầu đã chọn', st == 200 and sql(f'select customer_demand_id from quotations where id={Q_DEMAND}')[0][0] == D_OPEN, (st, body))
     check('UI nhu cầu: lưu xong quay về danh sách', page.url.rstrip('/').endswith('/assign/quotations'), page.url)
     goto(page, f'/assign/quotations/{Q_DEMAND}')
-    check('UI nhu cầu: màn Chi tiết hiện nhãn nhu cầu', 'Kết cấu thép KH210' in page.locator('tr', has=page.locator('th', has_text='Nhu cầu khách hàng')).first.inner_text())
+    check('UI nhu cầu: màn Chi tiết hiện nhãn nhu cầu', 'Kết cấu thép ' + KH_LABEL in page.locator('tr', has=page.locator('th', has_text='Nhu cầu khách hàng')).first.inner_text())
 
     tpl0 = api('GET', 'assign/quotations/template-options')[1]['data']
     # ============================================================ 5. Báo giá mẫu (UI thật) — thay hết + Lưu nháp + mở lại
