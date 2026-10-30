@@ -1441,3 +1441,6 @@ tái hiện PYCNH-12233): ô nguồn mở lại được cho phiếu nháp thi�
 Đang làm dở: không.
 Bước tiếp theo: xong task. Chưa commit (chưa có yêu cầu).
 Blocked: không.
+
+## Ngày 30/10/2026 (@junfoke)
+- [x] 30/10/2026 — Lỗi #11930 ([ERP => HRM] - Phiếu yêu cầu nhập hàng): nút xoá dòng hàng (bảng hàng loại Nhập hàng khác / Nhập gửi) và nút xoá ở bảng chi phí nội địa canh giữa ô. `ProductImportRequestForm.vue`, client `137f82d43` — đã lên origin/develop.

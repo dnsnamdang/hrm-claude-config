@@ -866,3 +866,6 @@ arrangePickUpAccounting (port EXACT ERP else 2381-2390), Domestic inland, dispat
 Đang làm dở: (không) — C2+C3 đã khép ở mức đối chiếu code + verify FE.
 Bước tiếp theo: CHỜ USER NGHIỆM THU. Nếu user muốn bút toán LIVE → lập phiếu test từng loại, so AccountDetail.
 Blocked: (không)
+
+## Ngày 30/10/2026 (@junfoke)
+- [x] 30/10/2026 — Phản hồi #11865 ([ERP => HRM] - Phiếu nhập hàng: Dữ liệu đang ko khớp erp — thiếu 2 tab "Chi phí giao nhận hàng nội địa" và "Phân bổ chi phí"): không sửa code — 2 tab là thông tin giá vốn, chỉ hiện với quyền "Xem giá vốn hàng hoá"; cần cấp quyền này cho tài khoản test trên dev và trả lời QA.
