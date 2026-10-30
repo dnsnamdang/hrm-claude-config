@@ -653,7 +653,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Mọi popup xác nhận dùng `base-confirm-modal` / `$confirm()`, không tự khai `b-modal`
 - [ ] Thông báo nghiệp vụ (chuông/push) theo template
       `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`, tên ≤ 50 ký tự và in đậm,
-      tổng ≤ 120 ký tự, deep-link kèm ID
+      tổng ≤ 180 ký tự, deep-link kèm ID
+- [ ] Prefix thông báo mới đã khai nhãn ở `NotificationMeta::OBJECT_LABELS` (skill notification-convention mục 3a)
+      — thiếu thì push màn khoá chỉ hiện "Từ chối" không rõ phiếu gì; tự kiểm bằng `check_prefix_labels.py`
 
 ### H. Bản ghi đã khóa
 - [ ] BE chặn `update`/`destroy` bằng **423 LOCKED** (middleware nếu controller nhận `FormRequest`)
