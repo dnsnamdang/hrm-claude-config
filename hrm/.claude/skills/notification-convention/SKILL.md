@@ -56,6 +56,24 @@ Vài prefix đang dùng để tham khảo (**chỉ là ví dụ, không phải d
 Đối tượng khác → lấy prefix theo mã đối tượng tương ứng; nếu không có sẵn thì đề xuất
 prefix ngắn (3–5 ký tự) và **hỏi user xác nhận** — điều bắt buộc vẫn là đúng cấu trúc ở mục 1.
 
+### 3a. ⚠️ Prefix MỚI → BẮT BUỘC khai nhãn ở `NotificationMeta::OBJECT_LABELS`
+
+Tiêu đề push trên màn khoá điện thoại là CÂU tự nhiên ghép từ Loại đối tượng + Nhóm hành động (vd "Đơn xin nghỉ bị từ chối", câu khai ở `NotificationMeta::PUSH_TITLE_PHRASES`, chốt 30/10/2026 — kiểu cũ `Nhóm hành động · Loại` đọc máy móc), trong đó "Loại đối tượng" tra từ
+prefix trong `hrm-api/app/Support/NotificationMeta.php` → `OBJECT_LABELS`. Prefix CHƯA khai thì:
+- phiếu thuộc 5 phân hệ app (Chấm công, Công việc, Meeting, Đào tạo, Cơm) → tiêu đề ghép tên phân hệ;
+- phiếu nhóm Khác (Kho, Vận chuyển, Tài chính, CSKH…) → tiêu đề CHỈ còn `Từ chối` / `Chờ duyệt`, người nhận
+  không biết là phiếu gì.
+
+Đã dính thật 30/10/2026: 6 màn port ERP (HĐ vận chuyển, Tổng hợp giá VC, Chuyến xe khác, Báo thừa thiếu nhập
+kho, Xuất/Nhập điều chỉnh kiểm kê) dùng prefix mới mà không khai → push ra `Từ chối · Thông báo`.
+
+Vì vậy, mỗi khi màn mới / màn port có bắn thông báo với prefix chưa từng dùng:
+1. Thêm 1 dòng `'PREFIX' => 'Tên loại đối tượng'` vào `OBJECT_LABELS` đúng nhóm (khoá viết HOA, không ngoặc
+   vuông; nhãn ngắn ≤ 25 ký tự vì tiêu đề iOS chỉ 1 dòng). File dùng chung nhưng thêm dòng nhãn KHÔNG cần hỏi.
+2. Loại có dữ liệu nhạy cảm (lương, tiền, sức khoẻ, hồ sơ cá nhân) → thêm prefix vào `SENSITIVE_PREFIXES`.
+3. Tự kiểm — lệnh phải in RỖNG:
+   `python3 .claude/skills/notification-convention/scripts/check_prefix_labels.py` (chạy từ `HRM/`)
+
 ---
 
 ## 4. Quy chuẩn hiển thị (UI/UX)
@@ -63,7 +81,7 @@ prefix ngắn (3–5 ký tự) và **hỏi user xác nhận** — điều bắt 
 - **Tổng nội dung ≤ 180 ký tự** (nới từ 120 ngày 22/10/2026 — khách cần đủ ai · khi nào · lý do; màn khoá iOS hiện ~4 dòng). Cắt phần `{Ghi chú}` trước, rồi mới cắt `{Tên đối tượng}` về 50 ký tự. Ghi chú bị cắt thì bản đầy đủ lưu `data.note_full`, app / web bấm **Xem thêm** hiện đủ → chữ tự do người dùng nhập (lý do, nội dung) luôn đặt **CUỐI** ghi chú.
 - **Ghi chú phải đủ thông tin cơ bản** để đọc là nắm được việc: ai (khi người nhận không phải chính họ) · thời gian / khoảng ngày / số tiền · người xử lý · lý do. Vd `[DXN] Chờ duyệt: Nguyễn Văn An - Phép năm. 23/10 – 24/10/2026 (2 ngày). Lý do: Về quê có việc gia đình`.
 - **Tên đối tượng là TÊN RIÊNG, không lặp loại** (loại đã ở `[PREFIX]`, chốt 22/10/2026): có mã → mã (`PNK-2026-00012`); có tiêu đề → tiêu đề; đơn không mã gửi người duyệt → `Người - Loại`, gửi chính chủ → `Loại + thời gian`. Cấm `Đơn xin nghỉ - …`, `Phiếu nhập kho PNK-…`. Bảng hướng dẫn theo loại: `docs/superpowers/specs/2026-10-22-notification-content-design.md`.
-- **Push ra màn hình chờ KHÔNG lộ thông tin nhạy cảm** (chốt 22/10/2026, theo Workday / app ngân hàng): tiêu đề push = `Nhóm hành động · Loại đối tượng` (`NotificationMeta::OBJECT_LABELS`); loại nhạy cảm (`NotificationMeta::SENSITIVE_PREFIXES`: đơn nghỉ, đi muộn về sớm, lương, bảo hiểm, HĐLĐ, quyết định, hồ sơ tự khai, thu chi / công nợ) thì thân push chỉ còn người hoặc mã + `Mở ứng dụng để xem chi tiết` — lý do, loại nghỉ, số tiền chỉ hiện trong app sau khi mở khoá. Thêm loại nhạy cảm mới → khai prefix vào `SENSITIVE_PREFIXES`; thêm prefix mới → khai nhãn vào `OBJECT_LABELS`.
+- **Push ra màn hình chờ KHÔNG lộ thông tin nhạy cảm** (chốt 22/10/2026, theo Workday / app ngân hàng): tiêu đề push = câu tự nhiên "Loại đối tượng + hành động" (`OBJECT_LABELS` + `PUSH_TITLE_PHRASES`; thêm nhóm hành động mới thì khai luôn câu tương ứng, chưa khai thì tiêu đề rơi về kiểu cũ `Nhóm hành động · Loại`; thông báo cần trình bày riêng truyền `push_title` / `push_body`); loại nhạy cảm (`NotificationMeta::SENSITIVE_PREFIXES`: đơn nghỉ, đi muộn về sớm, lương, bảo hiểm, HĐLĐ, quyết định, hồ sơ tự khai, thu chi / công nợ) thì thân push chỉ còn người hoặc mã + `Mở ứng dụng để xem chi tiết` — lý do, loại nghỉ, số tiền chỉ hiện trong app sau khi mở khoá. Thêm loại nhạy cảm mới → khai prefix vào `SENSITIVE_PREFIXES`; thêm prefix mới → khai nhãn vào `OBJECT_LABELS`. Prefix chưa khai nhãn thì tiêu đề lấy tên phân hệ; phiếu nhóm Khác (ngoài 5 phân hệ app) KHÔNG có nhãn dự phòng → tiêu đề chỉ còn `Nhóm hành động` (vd `Từ chối`), không ghép chữ "Thông báo" (chốt 30/10/2026).
 - **Tên đối tượng in đậm** trên Web và App → BE bọc `<b>…</b>` quanh tên đối tượng, FE render bằng `v-html` (đã sanitize).
 - **Deep-link bắt buộc**: mỗi thông báo phải có `url` dẫn thẳng màn xử lý và **luôn kèm ID đối tượng** (`/assign/tasks?open_task=123`). Không bắn thông báo trỏ về màn danh sách trống.
 - Thông báo là **kết quả của event**, gửi ngay khi event xảy ra; loại nhắc hạn gửi theo cấu hình thời điểm.
@@ -120,6 +138,7 @@ lỗi tự ẩn khi sửa hợp lệ; còn lỗi thì không gọi API lưu.
 
 - [ ] Đúng cấu trúc mục 1: `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`
 - [ ] Prefix là mã viết tắt của loại đối tượng, viết hoa trong ngoặc vuông
+- [ ] Prefix mới đã khai nhãn ở `NotificationMeta::OBJECT_LABELS` (mục 3a) — `check_prefix_labels.py` in rỗng
 - [ ] Nhóm hành động nằm trong 16 giá trị mục 2
 - [ ] Tên đối tượng cắt ≤ 50 ký tự, tổng ≤ 180 ký tự (dựng bằng `NotificationMeta::build()`, tự sinh `note_full`)
 - [ ] Ghi chú đủ ai · khi nào · lý do; chữ tự do để cuối

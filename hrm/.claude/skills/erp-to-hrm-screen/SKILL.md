@@ -653,7 +653,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Mọi popup xác nhận dùng `base-confirm-modal` / `$confirm()`, không tự khai `b-modal`
 - [ ] Thông báo nghiệp vụ (chuông/push) theo template
       `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`, tên ≤ 50 ký tự và in đậm,
-      tổng ≤ 120 ký tự, deep-link kèm ID
+      tổng ≤ 180 ký tự, deep-link kèm ID
+- [ ] Prefix thông báo mới đã khai nhãn ở `NotificationMeta::OBJECT_LABELS` (skill notification-convention mục 3a)
+      — thiếu thì push màn khoá chỉ hiện "Từ chối" không rõ phiếu gì; tự kiểm bằng `check_prefix_labels.py`
 
 ### H. Bản ghi đã khóa
 - [ ] BE chặn `update`/`destroy` bằng **423 LOCKED** (middleware nếu controller nhận `FormRequest`)
@@ -699,6 +701,7 @@ phí, Chi phí, Gói BD) vì làm sai những điểm dưới — màn mới ph�
 | Bẫy | Hậu quả | Cách tránh |
 |---|---|---|
 | **Chép lại phép tính nghiệp vụ đã có ở màn khác** | 2 bản cùng 1 công thức, vài tháng sau lệch nhau, không ai biết bản nào đúng | Grep trước khi viết; hàm đã có mà `private` thì **tách ra service dùng chung** (hỏi user trước) — xem Bước 3b |
+| **Bê nguyên ô "Chức vụ" người ký / người duyệt của ERP** (`signer_role_id`, `approver_role_id`, `approver_role` = nhóm quyền `roles`) — #11932, user chốt 30/10/2026 | Sai nghiệp vụ: phải là **"Chức danh"** lấy theo HRM, ERP đã đổi xong ở mọi màn hợp đồng | Nhãn **"Chức danh"**, nguồn **`titles`** qua `employee_infos.employee_role_id` (KHÔNG `roles`, KHÔNG `working_positions`). 1 chức danh → tự chọn, nhiều → cho chọn. Lưu `{signer\|approver}_title_id` + `_title_name` (snapshot). BE dùng `App\Helper\SignerTitleHelper` (bản ERP `App\Helpers\SignerTitleHelper`), FE dùng `utils/signer-title.js` + API `human/titles/by-employee/{id}`. Bản in in chức danh (fallback chức vụ cũ). Mẫu đã làm: `wr-service-contracts`, `assign/contracts` |
 | **Copy màn HRM đã port trước đó làm khuôn** | Nhân bản y nguyên cái sai — 1 lỗi UI thành N màn lỗi | Khuôn chuẩn là **Danh mục khách hàng**, không phải màn gần nhất mình vừa làm. Muốn copy màn khác thì chạy checklist cho **màn nguồn** trước |
 | Dùng `V2BaseFilterPanel` + tự dựng `#advanced-filters` | Mất popup "Cài đặt bộ lọc", user không ẩn/sắp xếp được ô lọc | `V2BaseSmartFilterPanel` + schema `filterFields` cho MỌI màn > 3 ô lọc |
 | Bấm "Xuất Excel" là tải file luôn | Vi phạm quy tắc "user chọn trường xuất" | Mở `ExportFieldsModal` trước, truyền `selectedFields` xuống hàm dựng file |

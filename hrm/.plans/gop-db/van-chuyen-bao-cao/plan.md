@@ -88,3 +88,15 @@
 
 ## Ngày 28/10/2026 (@junfoke)
 - [x] 28/10/2026 — Commit 5 báo cáo vận chuyển (2 BC chi phí vận chuyển theo lái xe + BC hiệu quả gộp xe vận tải, BC chi tiết hiệu quả gộp theo chuyến xe, BC chi tiết chuyến xe) và merge develop vào `feat/van-chuyen-bao-cao`: api `38e0313af` / `6e4e56904`, client `9629666cd` / `a833a0993`.
+
+## Ngày 29/10/2026 (@junfoke)
+- [x] 29/10/2026 — Lỗi #11910, #11911, #11916 (3 BC dùng chung component: hiệu quả gộp theo xe, chi tiết hiệu quả gộp, chi tiết chuyến xe): popup bỏ dòng "Bạn đang xem", ô tìm có nút x, mặc định 10 dòng, tiêu đề cột số canh phải + tooltip tiêu đề, ô 0 ở dòng chi tiết để trống, dấu ✓ đậm, ô tìm chi tiết chuyến bỏ phiếu/chuyến, giãn khối tổng hợp; Excel tiêu đề cột xuống dòng + nới cột; bản in chỉ thu chữ khi thật sự tràn (≤18 cột giữ 10px). Client `bc52f6154`, api `946cdb516` — đã lên origin/develop.
+- [x] 29/10/2026 — Xác nhận nguyên nhân bằng SQL prod (phiếu hạch toán TPE_HTCXK_00417/00418 ↔ chuyến TPE_CXK_00437/00436), ghi vào memory.
+- [x] 29/10/2026 — Xuất testcase BC chi tiết hiệu quả gộp theo chuyến xe: 111 TC (P0 41%) — kiểm số theo luồng phát sinh 15 TC, đối chiếu ERP - HRM 14 TC, đối chiếu nội bộ HRM 5 TC, 11 điểm khác ERP đã chốt. File `testcase/testcase - BC chi tiet hieu qua gop theo chuyen xe.xlsx`.
+
+## Ngày 30/10/2026 (@junfoke)
+- [x] 30/10/2026 — Fix phản hồi #11916: khối tổng hợp vẫn bé khi chọn kỳ "Tuần này" → tăng chữ một bậc (nhãn 10→11px, số 15→17px, tiêu đề khối + dòng kỳ to hơn).
+- [x] 30/10/2026 — Fix phản hồi #11910: ô tìm trong popup không đọc hết các tiêu chí → nới 280→400px, áp cả 3 báo cáo chuyến xe.
+- [x] 30/10/2026 — Lỗi #11929: ô chọn cấp ("Đến từng chuyến xe") lên 12px bằng chữ tiêu đề cột (phải `!important` vì quy tắc 11px của ô chọn cỡ nhỏ đè).
+- [x] 30/10/2026 — Lỗi #11925: bảng chính mặc định 10 dòng/trang, ô "Số dòng/trang" 12px; ô 0 để trống + popup 10 dòng đã có từ commit 29/10 (ảnh QA chụp trước khi dev cập nhật).
+- [x] 30/10/2026 — Commit client `137f82d43` (develop, gộp chung đợt QA với #11923 #11930 #11836), đã lên origin/develop. API không đổi.

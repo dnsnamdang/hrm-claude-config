@@ -4,7 +4,7 @@
 > Nguồn: Google Sheet "GAP_baogia_qlda_erp" tab `bao_gia_QLDA_0308` (bản tải về + ghi chú kết quả: `GAP_baogia_qlda_erp_ghichu_2710_v11.xlsx` cùng thư mục – bản duy nhất). KHÔNG sửa trên link gốc.
 
 ## Quyết định (AI đề xuất, cần user xác nhận khi review)
-1. ~~Nhu cầu = danh mục ERP chọn nhiều~~ → (chốt 27/10, sửa 28/10) Nhu cầu = 1 nhu cầu Meeting (`quotations.customer_demand_id` → `meeting_investment_demands`), chọn được ở CẢ báo giá độc lập lẫn có dự án: danh sách = nhu cầu Đang theo dõi từ mọi meeting của KH (có dự án: KH của dự án + nhu cầu đang gắn dự án, điền sẵn), nhãn kèm mã meeting + ngày họp; bắt buộc khi Gửi duyệt; không đổi trạng thái nhu cầu. Chưa lọc theo loại/trạng thái meeting (chờ user).
+1. ~~Nhu cầu = danh mục ERP chọn nhiều~~ → (chốt 27/10, sửa 28/10) Nhu cầu = 1 nhu cầu Meeting (`quotations.customer_demand_id` → `meeting_investment_demands`), chọn được ở CẢ báo giá độc lập lẫn có dự án: danh sách = nhu cầu Đang theo dõi từ mọi meeting của KH (có dự án: KH của dự án + nhu cầu đang gắn dự án, điền sẵn), nhãn kèm mã meeting + ngày họp; ~~bắt buộc khi Gửi duyệt~~ → KHÔNG bắt buộc (user chốt 30/10/2026); báo giá từ dự án TKT kế thừa nhu cầu của dự án, ô khoá không cho đổi (chốt 30/10/2026); không đổi trạng thái nhu cầu. Chưa lọc theo loại/trạng thái meeting (chờ user).
 2. Địa chỉ giao hàng = ô nhập text `quotations.delivery_address`; bắt buộc khi Gửi duyệt.
 3. File đính kèm = bảng `files` table='quotations', description 'Tài liệu đính kèm' (tách với file xác nhận chốt).
 4. Cột Ảnh + Thời gian bảo hành trên lưới báo giá: lấy `image`/`warranty` BE đã trả, hiện trong nhóm "cột chi tiết".

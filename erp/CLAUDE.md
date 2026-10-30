@@ -189,6 +189,14 @@ php artisan tinker
 >>> (new \Database\Seeds\UpdateDB)->fixSomething()
 ```
 
+### Chức danh người ký / người duyệt (#11932, 30/10/2026)
+
+Ô "Chức vụ" của người ký / người duyệt trên các màn hợp đồng đã đổi thành **"Chức danh"** lấy theo HRM
+(`titles` qua `employee_infos.employee_role_id`), không còn lấy nhóm quyền `roles`. Màn mới / sửa màn có người ký:
+dùng `App\Helpers\SignerTitleHelper` + partial `resources/views/partials/signer_title/{select,readonly,js}.blade.php`,
+lưu `{signer|approver}_title_id` + `_title_name`. Cột `*_role_id` cũ chỉ còn cho HĐ cũ / màn nha khoa (`zt.*`).
+Bản HRM tương ứng: `hrm-api/app/Helper/SignerTitleHelper.php`.
+
 ### Lưu ý khi fix bug TanPhatDev
 
 - Log lỗi: `TanPhatDev/storage/logs/laravel-YYYY-MM-DD.log`

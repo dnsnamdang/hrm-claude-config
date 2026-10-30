@@ -23,7 +23,7 @@
 - [x] Chuyển trạng thái: xuất phát (chặn xe đang chạy), kết thúc, duyệt, không duyệt (màn duyệt → 2), không duyệt của
       kế toán (→ 6) — BE chặn đúng điều kiện (403 / 409); thông báo 3 loại
 - [x] File đính kèm (khuôn AttachmentSection), lịch sử thay đổi
-- [x] In phiếu (blade riêng giữ bố cục 329 — mẫu 329 trong DB tự đặt sai biến, ERP còn dùng nên không sửa DB) + in danh sách riêng; Excel danh sách (`export-rows`). Excel phiếu: chưa (ERP có) — làm cùng FE
+- [x] In phiếu (blade riêng giữ bố cục 329 — mẫu 329 trong DB tự đặt sai biến, ERP còn dùng nên không sửa DB) + in danh sách riêng; Excel danh sách (`export-rows`); Excel 1 phiếu `GET /{id}/export` (29/10 — `OtherDeliveryTripExport` FromView + letterhead, cùng nguồn `detailPairs()` với bản in)
 - [x] Controller + route `transport/other-delivery-trips`; PHPUnit `OtherDeliveryTripApiTest` 5/5 (85 assertion) (phạm vi, validate 3 kiểu, trần cước, chuyển trạng thái,
       chặn quyền, xoá dòng con)
 
@@ -31,6 +31,7 @@
 - [x] Danh sách (khuôn list-page: bộ lọc nổi, cấu hình cột, xuất Excel, in danh sách, hành động dòng theo `can_*`)
 - [x] `OtherDeliveryTripForm.vue` dùng chung Thêm / Sửa / Chi tiết / Xuất phát / Kết thúc (3 kiểu, công thức, khối Chi tiết +
       popup chọn PXK/PNK `VoucherPickerModal`, validate realtime, trần cước báo đỏ)
+- [x] Xuất Excel 1 phiếu: hành động dòng + nút ở màn chi tiết (29/10)
 - [x] Bước xuất phát / kết thúc là 2 trang `_id/start`, `_id/finish`; Duyệt / Không duyệt / Hạch toán (mở ERP) ở màn chi tiết
 - [x] Menu Vận chuyển › Chuyến xe › Chuyến xe khác + lối vào chờ duyệt / chờ hạch toán (gate `isShow` theo quyền api)
 
@@ -45,9 +46,13 @@
 ## Checkpoint — 2026-10-28
 Vừa hoàn thành: Phase 0 + Phase 1 BE (Modules/Transport), test 5/5. Phát hiện thêm: cột `name` UNIQUE → 2 chuyến cùng xe trong 1 phút ERP lỗi; HRM thêm giây khi trùng.
 Đang làm dở: — (Phase 2 FE xong 28/10, test tay local đạt).
-Bước tiếp theo: user review + commit; test tuyến cố định trên dev có bảng giá; Excel 1 phiếu.
+Bước tiếp theo: user review + commit; test tuyến cố định trên dev có bảng giá; chụp ảnh nút Xuất Excel.
 Blocked: test tay tuyến cố định cần bảng giá hiệu lực trên DB local.
 
 ## Ngày 28/10/2026 (@junfoke)
 - [x] 28/10/2026 — Làm chuyển đổi erp->hrm: Chuyến xe khác - 100% code: BE `Modules/Transport` (6 quyền mới cuối seeder, PHPUnit 5/5) + FE danh sách, form chung 3 kiểu, xuất phát/kết thúc, duyệt/không duyệt, hạch toán mở ERP, in, Excel DS, lịch sử, menu. Playwright 1366px đạt. CHƯA commit.
 - [x] 28/10/2026 — Nuxt dev chết vì tràn heap (mã 134) sau nhiều lần HMR khi test → khởi động lại, không do code.
+
+## Ngày 29/10/2026 (@junfoke)
+- [x] 29/10/2026 — Bổ sung Excel 1 phiếu (ERP `otherDeliveryTrip.export`): BE `GET /{id}/export` (ô số kiểu số + `#,##0`, letterhead, tên file kèm mã), FE "Xuất Excel" ở hành động dòng + màn chi tiết. PHPUnit 5/5 (90 assertion), gọi HTTP thật 200 / ngoài phạm vi 404. Chưa chụp ảnh FE (profile Playwright bị giữ).
+- [x] 29/10/2026 — Commit màn (api `4fcd3b774`, client `015d86f34`) + merge develop; conflict `Modules/Transport/Routes/api.php` (develop thêm route Bảng giá hiệu lực / Tổng hợp giá đề xuất / HĐ vận chuyển) giữ cả hai, seeder quyền tự gộp (6 quyền vẫn ở cuối), test lại 5/5 → merge `8760e2250`, `8ef8d7842`. Đã lên origin/develop.

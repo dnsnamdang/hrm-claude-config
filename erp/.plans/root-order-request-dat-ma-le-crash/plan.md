@@ -38,3 +38,8 @@ Cả 3 hàm `inlandNotificationFrees` / `inlandNotificationFirms` / `notificatio
 - [x] Trace + xác định nguyên nhân gốc (recipe-split row không có nested `product`; brand ở object `brand`)
 - [x] Fix 3 hàm bằng helper `productBrandId` trong show.blade.php
 - [x] Verify bằng Playwright trên local: dòng recipe-split không còn crash, resolve đúng brand.id
+
+## Ngày 29/10/2026 (@junfoke)
+- [x] 29/10/2026 — PDH-08809 (Tiếp nhận yêu cầu đặt hàng): chọn "Chuyển người nhận đơn" rồi vẫn báo không tiếp nhận được. Tra SQL prod: phiếu có 1 mã bộ bung 12 mã lẻ theo công thức; 4 mã lẻ (STT 4, 10, 11, 12) cùng hãng SX 1052 (ETEK GREEN) với phiếu nên không được chọn "Chuyển người nhận đơn"; câu báo cũ sai nên trông như phải chọn đúng cái đã chọn. Lệch hãng do người nhập liệu đổi hãng 2 mã HKH- từ "Hãng khác" sang ETEK GREEN ngày 25/10 (hệ thống không ràng buộc thương hiệu ↔ hãng SX). Mã bị khoá không liên quan.
+- [x] 29/10/2026 — Sửa câu báo dưới từng dòng hàng + thông báo chung khi bấm Tiếp nhận (quy tắc giữ nguyên) — commit `7cb96582c6`.
+- [x] 29/10/2026 — Nút "+ Thêm luồng mua" không mở popup ở dòng mã lẻ (mã lẻ không có `product` lồng, hàm đọc `product.product.brand_id` lỗi JS) → sửa `show.blade.php`, commit `503c65b3b8` gop_db. Chưa chạy thử trên màn (DB local không có phiếu này).

@@ -19,3 +19,15 @@ Vừa hoàn thành: dọn STATUS + dựng cơ chế đẩy plan hằng ngày
 Đang làm dở: —
 Bước tiếp theo: các phiên sau tự ghi plan + chạy push-plans.sh khi xong việc
 Blocked:
+
+## Phase 3 — Ngừng tự đẩy sau mỗi việc (29–30/10)
+- [x] Đổi quy tắc trong `~/.claude/CLAUDE.md` + memory: KHÔNG tự chạy push-plans.sh sau mỗi việc, chỉ launchd đẩy 17:30 T2–T6 / 12:00 T7, chạy tay khi Cường bảo (29/10 15:24)
+- [x] Điều tra vì sao tối 29/10 vẫn ~20 commit (18:00–22:55): không phải launchd/hook; do phiên Claude `f0c380e6` mở từ 20/10 còn giữ luật cũ, tự gọi script sau mỗi việc (đối chiếu transcript ↔ `push-plans.log`) (30/10)
+- [x] Sửa 2 memory còn câu "tự đẩy" sót: `feedback_small_task_no_process.md`, `feedback_git_push_xin_phep_tung_lan.md` (30/10)
+- [x] Gửi tin nhắn cross-session nhắc luật mới cho các phiên mở trước 15:24 29/10 (hrm-dc, hrm-bf, hrm-bd, hrm-72, hrm-0e, sphacy-29) (30/10)
+
+### Checkpoint — 30/10/2026 09:10
+Vừa hoàn thành: chặn việc phiên cũ tự đẩy plan liên tục
+Đang làm dở: —
+Bước tiếp theo: theo dõi `~/Library/Logs/push-plans.log` hôm nay, chỉ nên có 1 lần đẩy lúc 17:30
+Blocked:

@@ -3,19 +3,19 @@
 from common import *
 
 ADMIN, LIMITED = token('tok'), token('tok_cannt')
-Q = 219          # báo giá test độc lập, KH 210, Đang tạo, người lập id 13
-QP = 90          # báo giá test có dự án (dự án 151)
-DEM_OK, DEM_CLOSED, DEM_OTHER = 5, 6, 3   # 5,6 thuộc KH 210 (6 đã đóng); 3 thuộc KH 8
+KH = IDS['KH']
+Q = IDS['Q_DEMAND']          # báo giá test độc lập, Đang tạo, người lập id 13
+DEM_OK, DEM_CLOSED, DEM_OTHER = IDS.get('D_OPEN', 5), IDS.get('D_CLOSED', 6), IDS['DEM_OTHER']   # 2 nhu cầu của KH test (1 đã đóng); 1 của KH khác
 
 orig = sql(f"select coalesce(customer_demand_id,'NULL') from quotations where id={Q}")[0][0]
 
 # ---------------------------------------------------------------- 1. Nhu cầu khách hàng (dòng 13)
-st, r = api('GET', 'assign/quotations/customer-demand-options?customer_id=210')
+st, r = api('GET', f'assign/quotations/customer-demand-options?customer_id={KH}')
 ids = [x['id'] for x in r.get('data', [])]
-db = [int(x[0]) for x in sql("select d.id from meeting_investment_demands d join meetings m on m.id=d.meeting_id where m.customer_id=210 and d.status=1")]
+db = [int(x[0]) for x in sql(f"select d.id from meeting_investment_demands d join meetings m on m.id=d.meeting_id where m.customer_id={KH} and d.status=1")]
 check('Nhu cầu: danh sách = nhu cầu Đang theo dõi của KH (đối chiếu DB)', st == 200 and sorted(ids) == sorted(db), (ids, db))
 check('Nhu cầu: không có KH → rỗng', api('GET', 'assign/quotations/customer-demand-options')[1].get('data') == [])
-st, r = api('GET', f'assign/quotations/customer-demand-options?customer_id=210&include_id={DEM_CLOSED}')
+st, r = api('GET', f'assign/quotations/customer-demand-options?customer_id={KH}&include_id={DEM_CLOSED}')
 check('Nhu cầu: nhu cầu đang chọn đã đóng vẫn có trong danh sách', DEM_CLOSED in [x['id'] for x in r['data']])
 check('Nhu cầu: nhãn có nhóm ngành + giá trị định dạng en-US', any('5,000,000' in x['text'] for x in r['data']), r['data'])
 st, r = api('PUT', f'assign/quotations/{Q}', {'customer_demand_id': DEM_OTHER})
@@ -30,35 +30,47 @@ st, r = api('PUT', f'assign/quotations/{Q}', {'customer_demand_id': None})
 check('Nhu cầu: gửi null = bỏ chọn', sql(f'select coalesce(customer_demand_id,"NULL") from quotations where id={Q}')[0][0] == 'NULL')
 sql(f'update quotations set price_approval_level=null where id={Q}')
 st, r = api('POST', f'assign/quotations/{Q}/submit', {})
-check('Nhu cầu: gửi duyệt khi trống bị chặn đúng câu', st == 422 and 'nhu cầu khách hàng' in r.get('message', ''), r)
+check('Nhu cầu: KHÔNG bắt buộc (bỏ 30/10) — gửi duyệt khi trống không bị chặn vì nhu cầu', 'nhu cầu' not in str(r.get('message', '')), r)
+sql(f'update quotations set status=1, price_approval_level=null where id={Q}')
 api('PUT', f'assign/quotations/{Q}', {'customer_demand_id': DEM_OK})
 st, r = api('POST', f'assign/quotations/{Q}/submit', {})
-check('Nhu cầu: có nhu cầu thì qua bước kiểm nhu cầu', 'nhu cầu' not in r.get('message', ''), r)
+check('Nhu cầu: có nhu cầu thì qua bước kiểm nhu cầu', 'nhu cầu' not in str(r.get('message', '')), r)
+sql(f'update quotations set status=1, price_approval_level=null where id={Q}')
 st_dem = sql(f'select status from meeting_investment_demands where id={DEM_OK}')[0][0]
 check('Nhu cầu: lập/gửi duyệt báo giá KHÔNG đổi trạng thái nhu cầu', st_dem == '1', st_dem)
 # báo giá CÓ dự án (28/10/2026): chọn từ nhu cầu meeting của KH dự án, điền sẵn nhu cầu dự án, bắt buộc khi gửi duyệt
-QP2 = 92   # dự án 154 (KH 210)
-D_PRJ = int(sql("select id from meeting_investment_demands where scope_name='[TEST] Cầu nâng (đã lập dự án 154)'")[0][0])
-D_OPEN2 = int(sql("select id from meeting_investment_demands where scope_name='[TEST] Hệ thống khí nén KH210'")[0][0])
-st, r = api('GET', 'assign/quotations/customer-demand-options?customer_id=210&project_id=154')
+QP2 = IDS['Q_PROJECT']   # báo giá có dự án test
+D_PRJ = IDS.get('D_PROJECT') or int(sql("select id from meeting_investment_demands where scope_name='[TEST] Cầu nâng (đã lập dự án 154)'")[0][0])
+D_OPEN2 = IDS.get('D_OPEN2') or int(sql("select id from meeting_investment_demands where scope_name='[TEST] Hệ thống khí nén KH210'")[0][0])
+st, r = api('GET', f"assign/quotations/customer-demand-options?customer_id={KH}&project_id={IDS['PROJECT']}")
 opts = {x['id']: x for x in r['data']}
 check('Nhu cầu (dự án): danh sách có nhu cầu của dự án, đánh dấu để điền sẵn', D_PRJ in opts and opts[D_PRJ]['is_project_demand'], list(opts))
-check('Nhu cầu (dự án): vẫn chọn được nhu cầu meeting khác của KH dự án', D_OPEN2 in opts and not opts[D_OPEN2]['is_project_demand'])
+check('Nhu cầu (dự án): danh sách CHỈ có nhu cầu kế thừa từ dự án (chốt 30/10)', list(opts) == [D_PRJ], list(opts))
 check('Nhu cầu: nhãn có mã meeting + ngày họp (phân biệt nhiều meeting)', all(' — ' in x['text'] and '(' in x['text'] for x in r['data']), [x['text'] for x in r['data']][:2])
+sql(f'update quotations set customer_demand_id=null where id={QP2}')
 st, r = api('PUT', f'assign/quotations/{QP2}', {'customer_demand_id': D_OPEN2})
-check('Nhu cầu (dự án): đổi sang nhu cầu meeting khác của KH → lưu được', st == 200 and sql(f'select customer_demand_id from quotations where id={QP2}')[0][0] == str(D_OPEN2), r)
-st, r = api('PUT', f'assign/quotations/{QP2}', {'note': 'e2e'})
-check('Nhu cầu (dự án): lưu mà không gửi trường → giữ nguyên lựa chọn', sql(f'select customer_demand_id from quotations where id={QP2}')[0][0] == str(D_OPEN2))
+check('Nhu cầu (dự án): gửi nhu cầu khác ⇒ BE bỏ qua, lưu nhu cầu của dự án', st == 200 and sql(f'select customer_demand_id from quotations where id={QP2}')[0][0] == str(D_PRJ), (st, r))
 st, r = api('PUT', f'assign/quotations/{QP2}', {'customer_demand_id': DEM_OTHER})
-check('Nhu cầu (dự án): nhu cầu của KH khác bị chặn 422', st == 422, (st, r))
-api('PUT', f'assign/quotations/{QP2}', {'customer_demand_id': None})
+check('Nhu cầu (dự án): gửi nhu cầu của KH khác ⇒ vẫn lưu nhu cầu của dự án', st == 200 and sql(f'select customer_demand_id from quotations where id={QP2}')[0][0] == str(D_PRJ), (st, r))
+st, r = api('PUT', f'assign/quotations/{QP2}', {'customer_demand_id': None})
+check('Nhu cầu (dự án): gửi rỗng ⇒ vẫn giữ nhu cầu của dự án', sql(f'select customer_demand_id from quotations where id={QP2}')[0][0] == str(D_PRJ))
+sql(f'update quotations set customer_demand_id={D_OPEN2} where id={QP2}')
+st, r = api('GET', f'assign/quotations/{QP2}')
+check('Nhu cầu (dự án): chi tiết hiện nhu cầu dự án (kể cả bản ghi cũ lưu lệch) + cờ khoá', r['data']['customer_demand_id'] == D_PRJ and r['data']['customer_demand_locked'] is True, (r['data'].get('customer_demand_id'), r['data'].get('customer_demand_locked')))
+st, r = api('PUT', f'assign/quotations/{QP2}', {'note': 'e2e'})
+check('Nhu cầu (dự án): lưu không gửi trường ⇒ tự sửa về nhu cầu dự án', sql(f'select customer_demand_id from quotations where id={QP2}')[0][0] == str(D_PRJ))
+sql(f"update meeting_investment_demands set prospective_project_id=null where id={D_PRJ}")
+st, r = api('PUT', f'assign/quotations/{QP2}', {'note': 'e2e'})
+check('Nhu cầu (dự án): dự án chưa gắn nhu cầu ⇒ trống, không lỗi', st == 200 and sql(f'select coalesce(customer_demand_id,"NULL") from quotations where id={QP2}')[0][0] == 'NULL', (st, r))
 st, r = api('POST', f'assign/quotations/{QP2}/submit', {})
-check('Nhu cầu (dự án): gửi duyệt khi trống bị chặn', st == 422 and 'nhu cầu khách hàng' in r.get('message', ''), r)
+check('Nhu cầu (dự án): KHÔNG bắt buộc — gửi duyệt khi trống không bị chặn vì nhu cầu', 'nhu cầu' not in str(r.get('message', '')), r)
+sql(f'update quotations set status=1, price_approval_level=null where id={QP2}')
+sql(f"update meeting_investment_demands set prospective_project_id={IDS['PROJECT']} where id={D_PRJ}")
 api('PUT', f'assign/quotations/{QP2}', {'customer_demand_id': D_PRJ})
-check('Nhu cầu: tài khoản không quyền vẫn đọc danh sách', api('GET', 'assign/quotations/customer-demand-options?customer_id=210', tok=LIMITED)[0] == 200)
+check('Nhu cầu: tài khoản không quyền vẫn đọc danh sách', api('GET', f'assign/quotations/customer-demand-options?customer_id={KH}', tok=LIMITED)[0] == 200)
 
 # ---------------------------------------------------------------- 2. Tồn kho 3 cột (dòng 30)
-st, r = api('POST', 'assign/quotations/stock-info', {'customer_id': 21195, 'items': [{'product_id': 20972}, {'product_id': 20973}]})
+st, r = api('POST', 'assign/quotations/stock-info', {'customer_id': IDS['STOCK_CUSTOMER'], 'items': [{'product_id': 20972}, {'product_id': 20973}]})
 check('Tồn: API trả đủ dòng theo thứ tự', st == 200 and [x['product_id'] for x in r['data']] == [20972, 20973], r)
 codes = [x['company_code'] for x in r['data'][0]['sellable_by_company']]
 check('Tồn: tồn có thể bán chia theo từng công ty', len(codes) >= 1 and len(set(codes)) == len(codes), codes)
@@ -104,12 +116,12 @@ db = sorted(int(x[0]) for x in sql(f"select distinct base_product_id from recipe
 check('Cờ công thức: khớp recipe_products', sorted(r['data']) == db, (len(r['data']), len(db)))
 
 # ---------------------------------------------------------------- 5. Phần mở rộng bản in (dòng 56)
-st, r = api('GET', 'assign/quotations/45/print-extras')
+st, r = api('GET', f"assign/quotations/{IDS['Q_SPECS']}/print-extras")
 d = r['data']['products']
 pid = next((k for k, v in d.items() if v['basic_attributes']), None)
 n = int(sql(f'select count(*) from attribute_products where product_id={pid} and need_print=1')[0][0]) if pid else -1
 check('In: Thông số cơ bản = attribute_products tích in', pid and len(d[pid]['basic_attributes']) == n, (pid, n))
-nprod = int(sql('select count(distinct erp_product_id) from quotation_product_prices where quotation_id=45 and erp_product_id is not null')[0][0])
+nprod = int(sql(f'select count(distinct erp_product_id) from quotation_product_prices where quotation_id={IDS['Q_SPECS']} and erp_product_id is not null')[0][0])
 check('In: đủ hàng ERP của báo giá', len(d) == nprod, (len(d), nprod))
 check('In: có định mức đàm phán theo từng hàng/ĐVT', len(r['data']['negotiation']) >= 1)
 
