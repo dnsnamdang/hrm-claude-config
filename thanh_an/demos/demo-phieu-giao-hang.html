@@ -8,11 +8,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 <style>
-/* ============ Token V2Base (port từ hrm-thanhan-client/assets/scss/v2-styles.scss) ============ */
+/* ============ Token V2Base — cùng bộ với demo-lap-don-mua-hang.html ============ */
 :root{
-  --primary:#1abc9c; --primary-h:#17a589; --brand:#16a34a; --danger:#dc2626; --err:#dc3545;
+  --primary:#1abc9c; --primary-h:#17a589; --brand:#16a34a; --brand-bg:#f0fdf4; --brand-tx:#15803d;
+  --danger:#dc2626; --err:#dc3545; --warn:#d97706; --info:#2563eb;
   --tx:#0f172a; --tx2:#1f2937; --tx3:#475569; --muted:#6b7280;
-  --bd:#e5e7eb; --bd-in:#cbd5e1; --bd-btn:#e2e8f0; --bg:#f5f6f8; --lock-bg:#f1f5f9; --link:#28539d;
+  --bd:#e5e7eb; --bd-in:#cbd5e1; --bd-btn:#e2e8f0;
+  --bg:#f5f6f8; --card:#fff; --lock-bg:#f1f5f9; --link:#28539d;
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:'Poppins',sans-serif;font-size:13px;color:var(--tx2);background:var(--bg)}
@@ -20,693 +22,1016 @@ body{margin:0;font-family:'Poppins',sans-serif;font-size:13px;color:var(--tx2);b
 .page-title-box{display:flex;justify-content:space-between;align-items:center;padding:12px 0;flex-wrap:wrap;gap:6px}
 .page-title{font-size:18px;font-weight:700;color:#111;margin:0}
 .breadcrumb{font-size:12px;color:var(--muted)} .breadcrumb b{color:var(--tx3);font-weight:500}
-.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mt-2{margin-top:8px}.mt-3{margin-top:12px}
+.tp-card{background:#fff;border-radius:.5rem;border:1px solid var(--bd);box-shadow:0 6px 18px rgba(15,23,42,.04)}
+.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mt-1{margin-top:4px}.mt-2{margin-top:8px}
+/* section */
 .sec{background:#fff;border:1px solid var(--bd);border-radius:.5rem;margin-bottom:8px}
-.sec-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
-.sec-h h6{font-size:14px;font-weight:700;color:var(--tx2);margin:0}
-.sec-h .sp,.sp{flex:1}
+.sec-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--bd)}
+.sec-h h6{font-size:14px;font-weight:700;color:var(--tx2);margin:0;display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sec-h .sp{flex:1}
 .sec-b{padding:10px}
+/* grid field */
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px}
-.grid.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .s2{grid-column:span 2}.s3{grid-column:1/-1}
-@media(max-width:860px){.grid,.grid.g2{grid-template-columns:1fr}.s2,.s3{grid-column:auto}}
+@media(max-width:860px){.grid,.grid.g4{grid-template-columns:1fr}.s2,.s3{grid-column:auto}}
+.lbl-tip{color:var(--muted);font-weight:400;font-size:13px;cursor:help}
 .v2-label{display:inline-flex;gap:4px;font-weight:600;color:var(--tx);font-size:12px;margin-bottom:4px;align-items:center}
 .req{color:var(--danger)}
-.tip{color:var(--muted);font-weight:400;font-size:13px;cursor:help}
 .v2-input,select.v2-input,textarea.v2-input{width:100%;border:1px solid var(--bd-in);border-radius:5px;padding:7px 10px;font-size:13px;color:var(--tx);font-family:inherit;background:#fff;height:34px}
 textarea.v2-input{height:auto;min-height:56px;resize:vertical}
-.v2-input:focus{outline:none;border-color:#94a3b8}
-.v2-input[disabled]{background:var(--lock-bg);color:var(--tx3);border-color:var(--bd-btn);cursor:not-allowed}
-.v2-input.err{border-color:var(--err)}
 .v2-input.sm{height:28px;padding:3px 8px;font-size:12px}
+.v2-input:focus{outline:none;border-color:#94a3b8}
+.v2-input[disabled],.v2-input[readonly]{background:var(--lock-bg);color:var(--tx3);border-color:var(--bd-btn);cursor:not-allowed}
+.v2-input.err{border-color:var(--err)}
+.v2-input.num{text-align:right}
 .err-tx{color:var(--err);font-size:11.5px;margin-top:3px;display:flex;gap:4px;align-items:center}
 .hint{font-size:11.5px;color:var(--muted);margin-top:3px}
-.fwa{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.fwa .v2-input{min-width:0;flex:1}
+/* ô khoá có link (như Đơn mua hàng ở chi tiết phiếu) */
+.link-field{position:relative}
+.link-field .lnk-in{position:absolute;left:11px;top:8px}
+/* button */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;border:1px solid transparent;font-weight:600;height:32px;padding:0 10px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;background:#fff}
 .btn i{font-size:15px}
 .btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
 .btn-secondary{background:#fff;color:#333;border-color:var(--bd-in)}.btn-secondary:hover{background:#f8fafc}
-.btn-danger-o{color:#b91c1c;background:#fef2f2;border-color:#fecaca}
 .btn-tertiary{background:#fff;color:var(--tx2);border-color:var(--bd-btn)}
-.btn-sm{height:26px;font-size:11.5px;padding:0 8px}
-.btn-block{width:100%;height:38px;font-size:13px}
+.btn-danger{background:var(--danger);color:#fff}
 .btn[disabled]{background:#f1f5f9!important;color:#94a3b8!important;border-color:#e2e8f0!important;cursor:not-allowed}
-.icon-btn{width:26px;height:26px;border-radius:7px;border:1px solid var(--bd-btn);background:#fff;color:#4b5563;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+.icon-btn{width:28px;height:28px;border-radius:8px;border:1px solid var(--bd-btn);background:#fff;color:#4b5563;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px}
 .icon-btn.danger{border-color:#fecaca;color:var(--danger);background:#fef2f2}
+.icon-btn.ok{border-color:#a7f3d0;color:#047857;background:#ecfdf5}
+/* tabs */
+.tabs-nav{display:flex;padding:6px 8px}
+.tabs-root{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid var(--bd-btn);border-radius:10px;flex-wrap:wrap}
+.tab-btn{height:28px;padding:0 .6rem;font-size:13px;font-weight:500;border-radius:7px;border:0;background:transparent;color:#334155;display:flex;align-items:center;gap:5px;cursor:pointer;font-family:inherit}
+.tab-btn i{font-size:15px;color:#64748b}
+.tab-btn.active{background:var(--brand);color:#fff;font-weight:600;box-shadow:0 1px 2px rgba(15,23,42,.12)}
+.tab-btn.active i{color:#fff}
+.tab-btn:not(.active):hover{background:var(--brand-bg);color:var(--brand-tx)}
+.tab-body{padding:12px;border-top:1px solid var(--bd)}
+.card-body{padding:12px}
+.form-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 12px;border-top:1px solid var(--bd);flex-wrap:wrap}
+/* badge */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:11px;border-radius:999px;font-weight:600;border:1px solid transparent;white-space:nowrap}
 .b-gray{color:#64748b;background:rgba(100,116,139,.1);border-color:rgba(100,116,139,.2)}
 .b-amber{color:#b45309;background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.25)}
 .b-green{color:#15803d;background:rgba(22,163,74,.1);border-color:rgba(22,163,74,.25)}
 .b-red{color:#b91c1c;background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25)}
 .b-blue{color:#1d4ed8;background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.22)}
-.b-violet{color:#6d28d9;background:rgba(124,58,237,.08);border-color:rgba(124,58,237,.22)}
-.b-cyan{color:#0e7490;background:rgba(6,182,212,.08);border-color:rgba(6,182,212,.25)}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;border:1px solid var(--bd-btn);background:#f8fafc;color:var(--tx3);font-size:11.5px;cursor:pointer;font-family:inherit}
-.chip.on{background:#dcfce7;color:#15803d;border-color:var(--brand);font-weight:600}
-.chip[disabled]{cursor:not-allowed;opacity:.6}
 .lnk{color:var(--link);border-bottom:1px dashed #b7c4cf;cursor:pointer;font-weight:600}
-.mono{font-family:Consolas,monospace;font-size:11.5px}
-.mut{color:var(--muted)} .sm{font-size:11.5px}
+.mut{color:var(--muted)}
 .tr{text-align:right}.tc{text-align:center}
-.note{border-radius:6px;padding:8px 12px;font-size:12px;line-height:1.55;display:flex;gap:8px}
-.note i{font-size:16px;line-height:1.2}
+/* note boxes (banner trên card) */
+.note{border-radius:6px;padding:10px 12px;font-size:13px;line-height:1.55;display:flex;gap:10px}
+.note i{font-size:18px;line-height:1.2}
+.note .nt{font-weight:700;margin-bottom:2px}
+.note .pre{white-space:pre-line;word-break:break-word}
 .note-info{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a}
 .note-warn{background:#fffbeb;border:1px solid #fde68a;color:#78350f}
 .note-err{background:#fef2f2;border:1px solid #fecaca;border-left:4px solid var(--danger);color:#7f1d1d}
+.note-err i{color:var(--danger)}
 .note-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#14532d}
-.kv{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px 16px}
-.kv.k3{grid-template-columns:repeat(3,minmax(0,1fr))}
-@media(max-width:860px){.kv,.kv.k3{grid-template-columns:1fr 1fr}}
-.kv .k{font-size:11px;color:var(--muted)} .kv .v{font-weight:600;color:var(--tx);font-size:12.5px}
-
-/* Flow */
-.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:10px 12px}
-@media(max-width:960px){.flow{grid-template-columns:1fr 1fr}}
-.st{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}
-.st:hover{background:#f8fafc}
-.st.lock{cursor:not-allowed;opacity:.55}
-.st .no{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;border:2px solid var(--bd-in);color:var(--tx3);background:#fff}
-.st.done .no{background:var(--brand);border-color:var(--brand);color:#fff}
-.st.cur .no{border-color:var(--primary);color:var(--primary);box-shadow:0 0 0 4px rgba(26,188,156,.15)}
-.st.active{background:#ecfdf5}
-.st .t{font-weight:700;font-size:12.5px;color:var(--tx)}
-.st .r{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px;margin-top:1px}
-.st .s{font-size:11px;margin-top:3px}
-.rolebar{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:#fff;border:1px dashed var(--bd-in);margin-bottom:8px;font-size:12px;color:var(--tx3);flex-wrap:wrap}
-.rolebar .who{font-weight:700;color:var(--tx)}
-.rolebar select{height:28px;border:1px solid var(--brand);border-radius:6px;font-family:inherit;font-size:12px;padding:0 6px;color:#15803d;font-weight:600;background:#f0fdf4}
-
-/* Tables */
-.tbl-wrap{overflow:auto;border:1px solid #d9e2e0;border-radius:6px}
-table.pt{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
-.pt th{background:#eef4f3;color:#2c3e50;font-size:11.5px;font-weight:600;text-align:center;white-space:nowrap;border-right:1px solid #d9e2e0;border-bottom:1px solid #d9e2e0;padding:6px}
-.pt td{border-right:1px solid #e3e8ee;border-bottom:1px solid #e3e8ee;padding:5px 6px;vertical-align:middle;background:#fff}
-.pt tr.grp td{background:#f6f9fc;font-weight:700;color:#1e3a8a}
-.pt tr.total td{background:#eef4f3;font-weight:700}
-.pt tr.click{cursor:pointer}.pt tr.click:hover td{background:#f8fafc}
-.pt tr.hl td{background:#f0fdf4}
-.pt tr.errrow td{background:#fef2f2}
-.pt .inp{width:84px;height:28px;border:1px solid var(--bd-in);border-radius:5px;padding:2px 6px;text-align:right;font-family:inherit;font-size:12px}
-.pt .inp.over{border-color:var(--err);background:#fef2f2;color:#b91c1c}
-.cell-name b{display:block;color:var(--tx);font-weight:600} .cell-name span{font-size:11px;color:var(--muted)}
-.qneg{color:#b91c1c;font-weight:700}.qok{color:#15803d;font-weight:700}
-
-/* Route */
-.route{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
-.stop{flex:1 1 260px;border:1px solid var(--bd);border-radius:10px;padding:10px;background:#fff}
-.stop.pick{background:#fffbeb;border-color:#fde68a}
-.stop .sh{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.stop .sn{font-size:11px;font-weight:700;border-radius:6px;padding:1px 7px;background:#dbeafe;color:#1d4ed8}
-.stop.pick .sn{background:#fde68a;color:#92400e}
-.stop .nm{font-weight:700;color:var(--tx)}
-.stop .ad{font-size:11.5px;color:var(--tx3);line-height:1.55}
-.arrow{display:flex;align-items:center;color:#94a3b8;font-size:22px}
-
-/* Tabs */
-.tabs-root{display:flex;gap:2px;border-bottom:1px solid var(--bd);padding:0 8px;flex-wrap:wrap}
-.tab-btn{border:0;background:none;padding:10px 12px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;display:flex;gap:6px;align-items:center;margin-bottom:-1px}
-.tab-btn.active{color:var(--brand);border-bottom-color:var(--brand)}
-.tab-btn .badge{padding:0 6px}
-.ftabs{display:flex;gap:2px;padding:3px;background:#fff;border:1px solid var(--bd-btn);border-radius:10px;flex-wrap:wrap}
-.ftab{height:28px;padding:0 .6rem;font-size:12.5px;font-weight:500;border-radius:7px;border:0;background:transparent;color:#334155;display:flex;align-items:center;gap:5px;cursor:pointer;font-family:inherit}
-.ftab.active{background:var(--brand);color:#fff;font-weight:600}
-.ftab .badge{padding:0 6px}
-.ftab.active .badge{background:#fff;color:#15803d}
-
-/* Step cards (tiến độ) */
-.step{border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;background:#fff}
-.step.done{border-color:#bbf7d0}
-.step.lockc{opacity:.6}
-.step-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
-.step.done .step-h{background:#f7fef9}
-.step-h .nm{font-weight:700;color:var(--tx)}
-.step-b{padding:10px}
-
-/* Files / checklist / timeline */
-.file{display:inline-flex;gap:4px;align-items:center;padding:2px 8px;border-radius:6px;background:#f1f5f9;border:1px solid var(--bd);font-size:11.5px;margin:2px 4px 2px 0;color:var(--tx2)}
-.file i{color:#64748b}.file .x{cursor:pointer;color:#94a3b8}.file .x:hover{color:var(--danger)}
-.ck{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--bd);font-size:12.5px;cursor:pointer;line-height:1.45}
-.ck i{font-size:17px;line-height:1.1}.ck.ok i{color:var(--brand)}.ck.no i{color:#94a3b8}.ck.bad i{color:var(--danger)}.ck.bad{color:#b91c1c}
-.owner{display:flex;gap:10px;align-items:center}
-.av{width:38px;height:38px;border-radius:50%;background:#dcfce7;color:#15803d;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 38px}
-.av.none{background:#f1f5f9;color:#94a3b8}
-.tl{list-style:none;margin:0;padding:0}
-.tl li{display:flex;gap:10px;padding:0 0 12px;position:relative}
-.tl li:not(:last-child)::before{content:'';position:absolute;left:11px;top:24px;bottom:0;width:2px;background:var(--bd)}
-.tl .d{width:24px;height:24px;flex:0 0 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;background:#dcfce7;color:#15803d;border:1px solid #86efac}
-.tl .d.warn{background:#fef3c7;color:#b45309;border-color:#fde68a}
-.tl .d.bad{background:#fee2e2;color:#b91c1c;border-color:#fecaca}
-.tl .x{font-size:12px;line-height:1.5}.tl .x b{color:var(--tx)}.tl .x .tm{font-size:11px;color:var(--muted)}
-
-.two{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:8px;align-items:start}
-@media(max-width:1100px){.two{grid-template-columns:1fr}}
-.side{position:sticky;top:8px}
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-@media(max-width:860px){.kpis{grid-template-columns:1fr 1fr}}
-.kpi{background:#fff;border:1px solid var(--bd);border-radius:8px;padding:8px 10px}
-.kpi .k{font-size:11px;color:var(--muted)}.kpi .v{font-size:18px;font-weight:700;color:var(--tx)}
-.form-footer{display:flex;justify-content:flex-end;gap:8px;padding:10px 12px;background:#fff;border:1px solid var(--bd);border-radius:.5rem;flex-wrap:wrap}
-.form-footer .left{margin-right:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-.rules h4{font-size:13.5px;margin:14px 0 6px;color:var(--tx)}
-.rules ol,.rules ul{margin:0;padding-left:20px;line-height:1.7;font-size:12.5px}
-
+.box{background:#f8fafc;border:1px dashed var(--bd-in);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--tx3)}
+/* bảng danh sách */
+.tbl-wrap{overflow:auto;border:1px solid #d9e2e0;border-radius:6px;max-height:calc(100vh - 220px)}
+table.pt{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px}
+.pt th{background:#eef4f3;color:#2c3e50;font-size:12px;font-weight:600;text-align:center;white-space:nowrap;border-right:1px solid #d9e2e0;border-bottom:1px solid #d9e2e0;padding:7px 8px;position:sticky;top:0;z-index:2}
+.pt td{border-right:1px solid #e3e8ee;border-bottom:1px solid #e3e8ee;padding:6px 8px;vertical-align:middle;background:#fff;white-space:nowrap}
+.pt tr:hover td{background:#f8fafc}
+.pt .fz{position:sticky;z-index:1}.pt th.fz{z-index:3}
+.pt .c-stt{left:0;width:46px;min-width:46px}
+.pt .c-code{left:46px;min-width:130px;box-shadow:4px 0 6px -3px rgba(44,62,80,.18)}
+.pt td.wrap{white-space:normal;min-width:180px;max-width:280px}
+.row-acts{display:flex;gap:4px;justify-content:center}
+/* bảng nhỏ trong form */
+table.mt{width:100%;border-collapse:collapse;font-size:12.5px}
+.mt th{background:#f8fafc;color:#374151;font-weight:600;padding:6px 8px;text-align:left;border:1px solid var(--bd);white-space:nowrap}
+.mt td{padding:5px 8px;border:1px solid var(--bd);vertical-align:middle}
+.mt tr.is-short td{background:#fffbeb}
+.mt tfoot td{background:#f8fafc}
+.mt td .v2-input{height:30px}
+/* bộ lọc */
+.flt-bar{display:flex;gap:8px;align-items:center;padding:10px 12px;flex-wrap:wrap}
+.flt-bar .q{flex:0 1 380px;position:relative}
+.flt-bar .q i{position:absolute;left:10px;top:9px;color:#94a3b8}
+.flt-bar .q input{padding-left:30px}
+.flt-panel{padding:10px 12px;border-top:1px solid var(--bd);background:#fbfcfd}
+.flt-panel .grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:860px){.flt-panel .grid{grid-template-columns:1fr}}
+.range{display:flex;gap:6px;align-items:center}
+.list-foot{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:12px;color:var(--muted)}
+/* thẻ lấy hàng / điểm giao */
+.dn-step{border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.dn-step.is-done{border-color:#bbf7d0;background:#fcfffd}
+.dn-step__head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.dn-step__title{font-weight:700;font-size:13px;color:var(--tx);display:inline-flex;gap:6px;align-items:center}
+.dn-step__title i{font-size:16px;color:var(--brand)}
+.dn-hint{font-size:12px;color:var(--muted)}
+.dn-warn{font-size:12px;color:#b45309;display:flex;gap:6px;align-items:flex-start}
+.dn-route{margin-bottom:12px}
+.files{display:flex;flex-direction:column;gap:2px}
+.files a{color:var(--link);font-size:12px;cursor:pointer;text-decoration:underline}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:12.5px;cursor:pointer}
+/* modal */
 .mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-start;justify-content:center;z-index:2000;padding:6vh 12px}
 .mask.show{display:flex}
-.modal{background:#fff;border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.25);width:100%;max-width:560px;display:flex;flex-direction:column;max-height:88vh}
+.modal{background:#fff;border-radius:10px;box-shadow:0 20px 50px rgba(0,0,0,.25);width:100%;max-width:560px;display:flex;flex-direction:column;max-height:90vh}
 .m-h{display:flex;align-items:center;gap:10px;padding:10px .75rem;border-bottom:1px solid var(--bd)}
 .m-ic{width:28px;height:28px;border-radius:999px;background:rgba(26,188,156,.1);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px}
-.m-ic.red{background:#fee2e2;color:var(--danger)}
+.m-ic.danger{background:rgba(220,38,38,.1);color:var(--danger)}
 .m-h h5{font-size:14px;font-weight:800;margin:0;flex:1}
 .m-x{border:0;background:none;font-size:22px;cursor:pointer;color:#64748b;line-height:1}
-.m-b{padding:.75rem;overflow-y:auto;font-size:12.5px;line-height:1.6}
-.m-f{display:flex;gap:8px;justify-content:flex-end;padding:10px .75rem;border-top:1px solid var(--bd)}
-.toast{position:fixed;right:16px;bottom:16px;background:#0f172a;color:#fff;padding:10px 14px;border-radius:8px;font-size:12.5px;z-index:3000;display:none;max-width:460px;box-shadow:0 10px 30px rgba(0,0,0,.25);line-height:1.5}
-input[type=radio],input[type=checkbox]{accent-color:var(--brand)}
-.cb{display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-size:12.5px;margin-right:14px;line-height:2}
+.m-b{padding:.75rem;overflow-y:auto}
+.m-f{display:flex;align-items:center;gap:8px;justify-content:flex-end;padding:10px .75rem;border-top:1px solid var(--bd)}
+.toast{position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:8px;font-size:12.5px;z-index:3000;display:none;max-width:460px;box-shadow:0 10px 30px rgba(0,0,0,.25);color:#fff;background:#0f172a}
+.toast.ok{background:#15803d}.toast.bad{background:#b91c1c}
+/* thanh giả lập (chỉ có trong demo) */
+.demo-bar{display:flex;gap:10px 16px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:8px 12px;border:1px dashed #f59e0b;background:#fffbeb;border-radius:8px;font-size:12px;color:#78350f}
+.demo-bar b{font-weight:700}
+.demo-bar select{height:30px;width:auto;font-size:12px;padding:3px 8px}
+.demo-bar .tabs-root{background:#fff}
+.hide{display:none!important}
+.status-pill{margin-left:8px;vertical-align:middle}
+.dp{border:1px solid var(--bd);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.dp-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.dp-no{background:var(--brand);color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:1px 9px}
+.dp-h .nm{font-weight:700;font-size:13px}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="page-title-box">
-    <div>
-      <div class="breadcrumb">Cung ứng / <b>Phiếu giao hàng</b> · demo luồng (dữ liệu giả)</div>
-      <h1 class="page-title">Phiếu giao hàng — Đơn mua hàng gửi Bộ phận giao hàng</h1>
+
+  <!-- ============ THANH GIẢ LẬP (chỉ có trong demo) ============ -->
+  <div class="demo-bar">
+    <b><i class="ri-flask-line"></i> Giả lập demo</b>
+    <div class="tabs-root" id="scr-tabs">
+      <button class="tab-btn" data-scr="po"><i class="ri-shopping-bag-3-line"></i>Đơn mua hàng</button>
+      <button class="tab-btn" data-scr="list"><i class="ri-truck-line"></i>Phiếu giao hàng</button>
     </div>
-    <div class="fwa">
-      <button class="btn btn-secondary" onclick="go('rules')"><i class="ri-book-open-line"></i>Quy tắc nghiệp vụ</button>
-      <button class="btn btn-tertiary" onclick="resetDemo()"><i class="ri-refresh-line"></i>Làm lại demo</button>
+    <label>Người đăng nhập <select class="v2-input" id="sel-user"></select></label>
+    <label>Phương thức của đơn mẫu <select class="v2-input" id="sel-scn"></select></label>
+    <button class="btn btn-tertiary" onclick="resetAll()"><i class="ri-restart-line"></i>Làm lại từ đầu</button>
+  </div>
+
+  <div id="screen"></div>
+</div>
+
+<!-- ============ POPUP GỬI BỘ PHẬN GIAO HÀNG (SendDeliveryNoteModal.vue) ============ -->
+<div class="mask" id="m-send"><div class="modal">
+  <div class="m-h"><div class="m-ic"><i class="ri-send-plane-line"></i></div><h5 id="send-title">Gửi bộ phận giao hàng</h5><button class="m-x" onclick="closeM('m-send')">×</button></div>
+  <div class="m-b">
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <div class="s3"><label class="v2-label">Phương thức giao hàng</label><input class="v2-input" id="send-ship" disabled></div>
+      <div><label class="v2-label">Ngày lấy hàng<span class="req">*</span></label><input type="date" class="v2-input" id="send-date"><div id="send-date-err"></div></div>
+      <div><label class="v2-label">Ưu tiên<span class="req">*</span></label><select class="v2-input" id="send-priority"><option value="1">Thường</option><option value="2">Gấp</option></select></div>
+      <div class="s3"><label class="v2-label">Ghi chú cho bộ phận giao hàng</label><textarea class="v2-input" id="send-note" rows="3" maxlength="2000" placeholder="Lưu ý khi lấy / giao hàng (nếu có)"></textarea></div>
     </div>
   </div>
-  <div class="sec mb-2"><div class="flow" id="flow"></div></div>
-  <div class="rolebar" id="rolebar"></div>
-  <div id="view"></div>
-</div>
-<div class="mask" id="mask"><div class="modal" id="modal"></div></div>
+  <div class="m-f">
+    <button class="btn btn-primary" onclick="submitSend()"><i class="ri-send-plane-line"></i><span id="send-btn-tx">Gửi</span></button>
+    <button class="btn btn-tertiary" onclick="closeM('m-send')"><i class="ri-arrow-left-line"></i>Đóng</button>
+  </div>
+</div></div>
+
+<!-- ============ POPUP TRẢ LẠI (ReturnNoteModal.vue) ============ -->
+<div class="mask" id="m-return"><div class="modal">
+  <div class="m-h"><div class="m-ic danger"><i class="ri-arrow-go-back-line"></i></div><h5 id="ret-title">Trả lại phiếu giao hàng</h5><button class="m-x" onclick="closeM('m-return')">×</button></div>
+  <div class="m-b">
+    <p style="font-size:13px;color:#4b5563;margin:0 0 8px">Phiếu sẽ về trạng thái <b>Bị trả lại</b>, người gửi phiếu nhận được thông báo kèm lý do để sửa và gửi lại.</p>
+    <label class="v2-label">Lý do trả lại<span class="req">*</span></label>
+    <textarea class="v2-input" id="ret-reason" rows="4" maxlength="2000" placeholder="Nhập lý do trả lại phiếu..."></textarea>
+    <div id="ret-err"></div>
+  </div>
+  <div class="m-f">
+    <button class="btn btn-danger" onclick="submitReturn()"><i class="ri-arrow-go-back-line"></i>Trả lại</button>
+    <button class="btn btn-tertiary" onclick="closeM('m-return')"><i class="ri-arrow-left-line"></i>Đóng</button>
+  </div>
+</div></div>
+
+<!-- ============ POPUP XÁC NHẬN (BaseConfirmModal) ============ -->
+<div class="mask" id="m-confirm"><div class="modal" style="max-width:480px">
+  <div class="m-h"><div class="m-ic" id="cf-ic"><i class="ri-question-line"></i></div><h5 id="cf-title">Xác nhận</h5><button class="m-x" onclick="closeM('m-confirm')">×</button></div>
+  <div class="m-b" id="cf-msg" style="font-size:13px;line-height:1.6"></div>
+  <div class="m-f">
+    <button class="btn btn-primary" id="cf-ok" onclick="confirmOk()">Đồng ý</button>
+    <button class="btn btn-tertiary" onclick="closeM('m-confirm')"><i class="ri-arrow-left-line"></i>Đóng</button>
+  </div>
+</div></div>
+
 <div class="toast" id="toast"></div>
+<input type="file" id="file-pick" multiple class="hide">
 
 <script>
-/* ======================= Dữ liệu mẫu ======================= */
-const SUPPLIER = {name:'Công ty TNHH Thiết bị Y tế Minh Phát', code:'NCC-0087', contact:'Nguyễn Văn Bình (Kho NCC)', phone:'0912 345 678', address:'Lô B2, KCN Quang Minh, Mê Linh, Hà Nội', hours:'07:30–11:30 · 13:00–17:00 (T2–T7)'};
+/* =====================================================================
+   Demo phiếu giao hàng — bám code thật (30/10/2026):
+   FE  pages/supply/purchase_orders/_id + components/SendDeliveryNoteModal.vue
+       pages/delivery/delivery_notes/index.vue, _id/index.vue,
+       components/PickupBlock.vue, PointCard.vue, CostTable.vue, ReturnNoteModal.vue
+   BE  Modules/Supply/Services/PurchaseDeliveryNoteService.php
+   ===================================================================== */
+
+// ---------- hằng số (khớp delivery_notes/constants.js) ----------
+const SHIP = { NCC_KHO: 'ncc_kho', NCC_KH: 'ncc_kh', TU_LAY: 'tu_lay' }
+const NOTE_STATUS = { WAITING: 2, RETURNED: 3, PROCESSING: 4, DONE: 5, CANCELED: 6 }
+const NOTE_STATUS_OPTIONS = [
+  { id: 2, text: 'Chờ tiếp nhận', color: '#D97706' },
+  { id: 4, text: 'Đang xử lý', color: '#2563EB' },
+  { id: 5, text: 'Hoàn thành', color: '#16A34A' },
+  { id: 3, text: 'Bị trả lại', color: '#DC2626' },
+  { id: 6, text: 'Đã hủy', color: '#6B7280' },
+]
+const PRIORITY_OPTIONS = [{ id: 1, text: 'Thường', color: '#94A3B8' }, { id: 2, text: 'Gấp', color: '#DC2626' }]
+const SHIP_OPTIONS = [
+  { id: 'ncc_kho', text: 'NCC giao tại kho công ty' },
+  { id: 'ncc_kh', text: 'NCC giao thẳng cho khách hàng' },
+  { id: 'tu_lay', text: 'Công ty tự lấy hàng tại NCC' },
+]
+const SHIP_BADGES = {
+  ncc_kho: { text: 'NCC giao về kho', color: '#0EA5E9' },
+  ncc_kh: { text: 'NCC giao thẳng KH', color: '#2563EB' },
+  tu_lay: { text: 'Cty tự lấy', color: '#7C3AED' },
+}
+const ISSUE_REASON_OPTIONS = [
+  { id: 'ncc_short', text: 'NCC giao thiếu' }, { id: 'damaged', text: 'Hỏng vỡ' },
+  { id: 'kh_reject', text: 'KH từ chối một phần' }, { id: 'wrong_spec', text: 'Sai quy cách' }, { id: 'other', text: 'Khác' },
+]
+const COST_TYPE_OPTIONS = [
+  { id: 'rent', text: 'Cước thuê xe / nhà xe' }, { id: 'fuel', text: 'Xăng dầu' }, { id: 'toll', text: 'Phí cầu đường' },
+  { id: 'parking', text: 'Phí gửi xe, bến bãi' }, { id: 'loading', text: 'Bốc xếp' }, { id: 'allowance', text: 'Công tác phí' }, { id: 'other', text: 'Khác' },
+]
+const PAY_TO_OPTIONS = [{ id: 'self', text: 'Công ty tự chi' }, { id: 'vc', text: 'Đơn vị vận chuyển' }, { id: 'ncc', text: 'NCC' }]
+const PO_STATUS = { 3: { text: 'Đã duyệt', cls: 'b-green' }, 7: { text: 'Đã gửi giao hàng', cls: 'b-blue' } }
+
+// Phiếu giao hàng không phân quyền; chỉ gửi / sửa và gửi lại / hủy cần quyền "Lập đơn mua hàng"
+const USERS = {
+  bich: { name: 'Trần Thị Bích', dept: 'Phòng Cung ứng', canSend: true },
+  hung: { name: 'Nguyễn Văn Hùng', dept: 'Bộ phận giao hàng', canSend: false },
+  tuan: { name: 'Lê Minh Tuấn', dept: 'Bộ phận giao hàng', canSend: false },
+}
+const SCENARIOS = [
+  { id: 'ncc_kho', text: 'NCC giao tại kho công ty', ship: 'ncc_kho', dest: 'kho' },
+  { id: 'ncc_kh', text: 'NCC giao thẳng cho khách hàng', ship: 'ncc_kh', dest: 'kh' },
+  { id: 'tu_lay_kho', text: 'Cty tự lấy → về kho', ship: 'tu_lay', dest: 'kho' },
+  { id: 'tu_lay_kh', text: 'Cty tự lấy → giao KH', ship: 'tu_lay', dest: 'kh' },
+]
+
+// ---------- dữ liệu mẫu ----------
+const SUPPLIER = { name: 'Công ty TNHH Thiết bị Y tế Minh Phát', code: 'NCC0042', tax: '0108123456', contact: 'Phạm Minh Phát', phone: '0904 112 233', address: 'Số 25 Nguyễn Trãi, Thanh Xuân, Hà Nội' }
+const WAREHOUSES = [
+  { id: 1, name: 'Kho tổng Hà Nội', address: 'Số 12 ngõ 68 Cầu Giấy, Hà Nội' },
+  { id: 2, name: 'Kho Hà Nam', address: 'KCN Đồng Văn II, Duy Tiên, Hà Nam' },
+]
 const CUSTOMERS = {
-  A:{id:'A', kind:'kh', name:'Bệnh viện Đa khoa tỉnh Hà Nam', sale:'HĐ-182/2026', address:'Đường Lê Công Thanh, P. Phù Vân, TP. Phủ Lý, Hà Nam', receiver:'Trần Thị Mai (Khoa Dược)', phone:'0226 3852 123', window:'08:00–11:00 · 13:30–16:00'},
-  B:{id:'B', kind:'kh', name:'Bệnh viện Sản Nhi Hà Nam', sale:'HĐ-190/2026', address:'Số 12 Trần Thị Phúc, P. Lê Hồng Phong, TP. Phủ Lý, Hà Nam', receiver:'Phạm Văn Long (Phòng VTTB)', phone:'0226 3841 556', window:'07:30–11:30'},
-};
-const WAREHOUSE = {id:'KHO', kind:'kho', name:'Kho tổng Hà Nội', sale:'', address:'Số 25 Ngõ 72 Nguyễn Trãi, Thanh Xuân, Hà Nội', receiver:'Đỗ Thị Lan (Thủ kho)', phone:'0987 111 222', window:'08:00–17:00'};
-const LINES = [
-  {id:1, code:'HC-0231', name:'Hóa chất xét nghiệm Glucose (R1 4×50ml)', unit:'Hộp', qty:20, cold:true, cust:'A'},
-  {id:2, code:'HC-0418', name:'Hóa chất định lượng CRP (Latex)', unit:'Hộp', qty:10, cold:true, cust:'A'},
-  {id:3, code:'VT-1102', name:'Ống nghiệm chân không EDTA 2ml', unit:'Khay 100 ống', qty:50, cust:'A'},
-  {id:4, code:'VT-1102', name:'Ống nghiệm chân không EDTA 2ml', unit:'Khay 100 ống', qty:30, cust:'B'},
-  {id:5, code:'TB-0057', name:'Máy ly tâm mini 6 chỗ', unit:'Cái', qty:2, fragile:true, cust:'B'},
-];
-const TEAM = [
-  {id:'hung', name:'Trần Văn Hùng', title:'Trưởng bộ phận giao hàng', lead:true},
-  {id:'tuan', name:'Lê Minh Tuấn', title:'Nhân viên giao hàng'},
-  {id:'duc',  name:'Phạm Văn Đức', title:'Nhân viên giao hàng'},
-];
-const COST_TYPES = ['Cước thuê xe / nhà xe','Xăng dầu','Phí cầu đường','Phí gửi xe, bến bãi','Bốc xếp','Công tác phí','Khác'];
-const PAY_TO = {self:'Công ty tự chi (người giao tạm ứng)', vc:'Đơn vị vận chuyển', ncc:'NCC (cộng vào hóa đơn NCC)'};
-const ISSUES = ['NCC giao thiếu hàng','Hàng hỏng / vỡ khi vận chuyển','Khách từ chối nhận một phần','Sai quy cách / hạn dùng','Khác'];
-// Chi phí VC dự kiến nhập ở tab Giao nhận & vận chuyển của đơn mua — khác theo phương thức
-const EST = {tu_lay:{amount:1200000, label:'Chi phí tự lấy hàng (dự kiến lúc lập đơn)', payTo:'self', hint:'công ty tự lấy hàng — tự chi'},
-             ncc:{amount:450000, label:'Cước vận chuyển NCC thu thêm (dự kiến lúc lập đơn)', payTo:'ncc', hint:'NCC tự chở, thu cước — trả NCC'}};
-function estObj(){ return EST[isNcc()?'ncc':'tu_lay']; }
-function estCost(){ return estObj().amount; }
-const U = {supply:'Nguyễn Thu Trang', keeper:'Đỗ Thị Lan', acc:'Kế toán thanh toán'};
-const ST = {2:{t:'Chờ tiếp nhận', c:'b-amber'}, 3:{t:'Bị trả lại', c:'b-red'}, 4:{t:'Đang xử lý', c:'b-violet'}, 5:{t:'Hoàn thành', c:'b-green'}};
-const OPEN = [2,4]; // trạng thái đang giữ SL của đơn mua
-const SAMPLE_ROWS = [
-  {code:'PGH-0041/2026', method:'NCC giao về kho', order:'DMH-0152/2026', sup:'Công ty CP Dược phẩm TW 2', dest:'Kho tổng Hà Nội', pts:1, pick:'28/10/2026', prio:'urgent', by:'Vũ Hải Yến', owner:'Phạm Văn Đức', status:4},
-  {code:'PGH-0040/2026', method:'Cty tự lấy → giao KH', order:'DMH-0149/2026', sup:'Công ty TNHH Sinh Phẩm Nam Việt', dest:'BV Bạch Mai · BV E', pts:2, pick:'27/10/2026', prio:'normal', by:'Nguyễn Thu Trang', owner:'Lê Minh Tuấn', status:5},
-  {code:'PGH-0039/2026', method:'NCC giao thẳng KH', order:'DMH-0147/2026', sup:'Công ty CP Vật tư Y tế Hồng Thiện', dest:'BV Đa khoa Hưng Yên', pts:1, pick:'29/10/2026', prio:'normal', by:'Vũ Hải Yến', owner:'', status:2},
-  {code:'PGH-0038/2026', method:'Cty tự lấy → về kho', order:'DMH-0144/2026', sup:'Công ty TNHH Thiết bị Y tế Minh Phát', dest:'Kho tổng Hà Nội', pts:1, pick:'26/10/2026', prio:'normal', by:'Lưu Đức Anh', owner:'', status:3},
-  {code:'PGH-0037/2026', method:'NCC giao thẳng KH', order:'DMH-0141/2026', sup:'Công ty CP Hóa chất Đông Á', dest:'BV Phổi TW', pts:1, pick:'25/10/2026', prio:'normal', by:'Nguyễn Thu Trang', owner:'Trần Văn Hùng', status:5},
-];
+  A: { name: 'Bệnh viện Đa khoa tỉnh Hà Nam', address: 'Đường Lê Công Thanh, TP Phủ Lý, Hà Nam', receiver: 'Nguyễn Thị Lan', phone: '0912 345 678' },
+  B: { name: 'Bệnh viện Sản Nhi Hà Nam', address: 'Đường Lý Thường Kiệt, TP Phủ Lý, Hà Nam', receiver: 'Trần Văn Nam', phone: '0987 654 321' },
+}
+const PRODUCTS = [
+  { id: 1, code: 'VT00125', name: 'Găng tay y tế nitrile không bột', unit: 'Hộp', price: 95000, alloc: { A: 120, B: 80 } },
+  { id: 2, code: 'VT00311', name: 'Bơm tiêm 5ml Vinahankook', unit: 'Hộp', price: 160000, alloc: { A: 150 } },
+  { id: 3, code: 'VT00402', name: 'Khẩu trang y tế 4 lớp', unit: 'Hộp', price: 45000, alloc: { A: 100, B: 200 } },
+  { id: 4, code: 'VT00518', name: 'Dây truyền dịch có kim', unit: 'Cái', price: 6500, alloc: { B: 500 } },
+  { id: 5, code: 'VT00620', name: 'Bông y tế thấm nước 1kg', unit: 'Gói', price: 120000, alloc: { A: 30, B: 50 } },
+]
+const qtyOf = (p) => Object.values(p.alloc).reduce((a, b) => a + b, 0)
 
-/* ======================= State ======================= */
-let S;
-function fresh(){ return {view:'order', ship:'tu_lay', selfDest:'kh', pghs:[], cur:null, seq:42, me:'tuan', inboxTab:'wait', tab:'progress', t:new Date(2026,9,28,9,5), err:{}, show:false}; }
-S = fresh();
-function resetDemo(){ S = fresh(); render(); toast('Đã làm lại demo từ đầu.'); }
+// ---------- tiện ích ----------
+const $ = (id) => document.getElementById(id)
+const esc = (v) => String(v === null || v === undefined ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+const money = (v) => Math.round(Number(v) || 0).toLocaleString('vi-VN')
+const fmtQty = (v) => (v === null || v === undefined || v === '' ? '' : (Math.round(Number(v) * 1000) / 1000).toLocaleString('vi-VN'))
+const pad = (n) => String(n).padStart(2, '0')
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
+const nowLocal = () => { const d = new Date(); return `${todayISO()}T${pad(d.getHours())}:${pad(d.getMinutes())}` }
+const fmtDate = (iso) => (iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '')
+const fmtDateTime = (v) => (v ? `${v.slice(11, 16)} ${fmtDate(v)}` : '') // 'YYYY-MM-DDTHH:mm' → 'HH:mm DD/MM/YYYY'
+const parseQty = (v) => { if (v === '' || v === null || v === undefined) return null; const n = Number(String(v).trim()); return String(v).trim() !== '' && Number.isFinite(n) ? n : null }
+const optText = (opts, id) => (opts.find((o) => String(o.id) === String(id)) || {}).text || ''
+const badge = (text, color) => `<span class="badge" style="color:${color};background:${color}14;border-color:${color}40">${esc(text)}</span>`
+const statusBadge = (s) => { const o = NOTE_STATUS_OPTIONS.find((x) => x.id === s) || { text: '', color: '#64748B' }; return badge(o.text, o.color) }
+const errTx = (m) => (m ? `<div class="err-tx"><i class="ri-error-warning-line"></i>${esc(m)}</div>` : '')
+const shipLabel = (ship, dest) => (ship === SHIP.TU_LAY ? (dest === 'kh' ? 'Cty tự lấy → giao KH' : 'Cty tự lấy → về kho') : optText(SHIP_OPTIONS, ship))
+const userName = (id) => (USERS[id] ? USERS[id].name : '')
+const me = () => USERS[S.user]
+const selectHtml = (opts, val, attrs, placeholder) =>
+  `<select class="v2-input sm" ${attrs}>${placeholder !== undefined ? `<option value="">${esc(placeholder)}</option>` : ''}${opts.map((o) => `<option value="${o.id}" ${String(o.id) === String(val) ? 'selected' : ''}>${esc(o.text)}</option>`).join('')}</select>`
 
-/* ======================= Helpers ======================= */
-const $ = (s)=>document.querySelector(s);
-const pad = (n)=>String(n).padStart(2,'0');
-const fmt = (n)=>(+n||0).toLocaleString('vi-VN');
-const esc = (s)=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const dmy = (d)=>{ if(!d) return ''; const [y,m,dd]=d.split('-'); return `${dd}/${m}/${y}`; };
-function nowStr(){ const d=S.t; return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
-function tick(min){ S.t = new Date(S.t.getTime()+min*60000); return nowStr(); }
-function setClock(date, time){ const [y,m,d]=date.split('-').map(Number); const [h,mi]=(time||'08:00').split(':').map(Number); const nt=new Date(y,m-1,d,h,mi); if(nt>S.t) S.t=nt; }
-function badge(st){ const s=ST[st]; return `<span class="badge ${s.c}">${s.t}</span>`; }
-function meObj(){ return TEAM.find(x=>x.id===S.me); }
-function initials(n){ const w=n.split(' '); return (w[w.length-2]||'')[0]+(w[w.length-1]||'')[0]; }
-function lineById(id){ return LINES.find(l=>l.id===id); }
-function isNcc(){ return S.ship!=='tu_lay'; }
-function dest(){ return S.ship==='ncc_kho' ? 'kho' : S.ship==='ncc_kh' ? 'kh' : S.selfDest; }
-function shortShip(){ return {ncc_kho:'NCC giao về kho', ncc_kh:'NCC giao thẳng KH'}[S.ship] || (S.selfDest==='kho'?'Cty tự lấy → về kho':'Cty tự lấy → giao KH'); }
-function points(){ return dest()==='kho' ? [WAREHOUSE] : [...new Set(LINES.map(l=>l.cust))].map(id=>CUSTOMERS[id]); }
-function pointOf(l){ return dest()==='kho' ? 'KHO' : l.cust; }
-function pointById(id){ return points().find(p=>p.id===id); }
-function linesOf(pid){ return LINES.filter(l=>pointOf(l)===pid); }
-function cur(){ return S.pghs.find(p=>p.id===S.cur) || null; }
-function isKho(pid){ return pid==='KHO'; }
-function shipLabel(){
-  if (S.ship==='ncc_kho') return 'NCC giao về kho';
-  if (S.ship==='ncc_kh') return 'NCC giao thẳng khách hàng';
-  return dest()==='kho' ? 'Công ty tự lấy hàng tại NCC → Lấy về kho công ty' : 'Công ty tự lấy hàng tại NCC → Giao luôn cho khách hàng';
+let toastTimer
+function toast(msg, kind) {
+  const t = $('toast'); t.className = 'toast' + (kind ? ' ' + kind : ''); t.innerHTML = msg; t.style.display = 'block'
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.style.display = 'none'), 3800)
 }
-const planQty = (p,lid)=>+p.qty[lid]||0;
-// NCC giao: không có bước lấy hàng → "đã lấy từ NCC" = thực nhận tại điểm
-const pickedQty = (p,lid)=>isNcc() ? dlvQty(p,lid) : (p.pickup.done ? (+p.pickup.actual[lid]||0) : 0);
-// SL tối đa được giao tại điểm: tự lấy = đã lấy, NCC giao = SL yêu cầu
-const capQty = (p,lid)=>isNcc() ? planQty(p,lid) : pickedQty(p,lid);
-function dlvQty(p,lid){ const d=p.dlv[pointOf(lineById(lid))]; return d && d.done ? (+d.actual[lid]||0) : 0; }
-function sumPicked(lid){ return S.pghs.filter(p=>p.status===5).reduce((s,p)=>s+pickedQty(p,lid),0); }
-function sumDelivered(lid){ return S.pghs.filter(p=>p.status===5).reduce((s,p)=>s+dlvQty(p,lid),0); }
-function sumOpen(lid){ return S.pghs.filter(p=>OPEN.includes(p.status)).reduce((s,p)=>s+planQty(p,lid),0); }
-function remain(lid){ return lineById(lid).qty - sumPicked(lid) - sumOpen(lid); }
-function orderDone(){ return LINES.every(l=>sumPicked(l.id)>=l.qty); }
-function costTotal(p){ return p.costs.reduce((s,c)=>s+(+c.amount||0),0); }
-function pointStatus(pid){
-  const ls = linesOf(pid);
-  const need = ls.reduce((s,l)=>s+l.qty,0), dl = ls.reduce((s,l)=>s+sumDelivered(l.id),0);
-  const opening = S.pghs.some(p=>OPEN.includes(p.status) && ls.some(l=>planQty(p,l.id)>0));
-  if (dl>=need) return `<span class="badge b-green"><i class="ri-check-line"></i>${isKho(pid)?'Đã bàn giao kho':'Đã giao'}</span>`;
-  if (opening) return `<span class="badge b-violet">Đang giao</span>`;
-  if (dl>0) return `<span class="badge b-amber">Giao một phần ${fmt(dl)}/${fmt(need)}</span>`;
-  return `<span class="badge b-gray">Chờ giao</span>`;
-}
-function canSend(){
-  if (S.pghs.some(p=>p.status===3)) return {ok:false, why:'Có phiếu bị trả lại — sửa & gửi lại phiếu đó.'};
-  if (LINES.every(l=>remain(l.id)<=0)) return {ok:false, why:'Đã gửi bộ phận giao hàng toàn bộ SL của đơn mua.'};
-  return {ok:true};
-}
-let fileSeq = 4021;
+const openM = (id) => $(id).classList.add('show')
+const closeM = (id) => $(id).classList.remove('show')
 
-/* ======================= Khung ======================= */
-const STEPS = [
-  {t:'Đơn mua hàng → Gửi BP giao hàng', r:'Cung ứng', i:'ri-shopping-cart-2-line'},
-  {t:'Tiếp nhận phiếu', r:'Bộ phận giao hàng', i:'ri-inbox-archive-line'},
-  {t:'Cập nhật giao hàng · chi phí', r:'Người phụ trách', i:'ri-truck-line'},
-];
-function activeStep(){
-  const p=cur();
-  if (S.view==='order') return 0;
-  if (S.view==='inbox') return 1;
-  if (S.view==='pgh') return p && p.status>=4 ? 2 : 1;
-  return -1;
-}
-function stepState(i){
-  const p=cur(), st=p?p.status:0;
-  return {reached:[true, !!p, st>=4][i], done:[!!p && st!==3, st>=4, st===5][i]};
-}
-function stepSub(i){
-  const p=cur();
-  if (i===0) return orderDone() ? '<span class="badge b-green">Đơn mua hoàn thành</span>' : '<span class="badge b-green">Đã duyệt</span>';
-  if (!p) return '';
-  if (i===1) return `<span class="mono">${p.code}</span> ${p.status<4?badge(p.status):''}`;
-  if (i===2) return p.owner ? `<span class="sm mut"><i class="ri-user-star-line"></i> ${esc(p.owner)}</span> ${p.status>=4?badge(p.status):''}` : '';
-}
-function renderFlow(){
-  const ai = activeStep();
-  $('#flow').innerHTML = STEPS.map((s,i)=>{ const st=stepState(i);
-    return `<div class="st ${st.done?'done':''} ${i===ai?'active cur':''} ${st.reached?'':'lock'}" onclick="stepClick(${i})">
-      <div class="no">${st.done?'<i class="ri-check-line"></i>':i+1}</div>
-      <div><div class="t">${s.t}</div><div class="r"><i class="${s.i}"></i>${s.r}</div><div class="s">${stepSub(i)}</div></div></div>`; }).join('');
-}
-function stepClick(i){
-  if (!stepState(i).reached) return toast('Chưa tới bước này — làm lần lượt theo luồng.');
-  if (i===0) return go('order');
-  if (i===1) return go('inbox');
-  S.tab='progress'; go('pgh');
-}
-function renderRole(){
-  const dep = S.view==='inbox' || S.view==='pgh';
-  if (dep){
-    const p=cur(), me=meObj();
-    let ctx = 'Thành viên bộ phận giao hàng đều thấy phiếu Chờ tiếp nhận; ai bấm Tiếp nhận thì là người phụ trách.';
-    if (S.view==='pgh' && p && p.owner) ctx = p.owner===me.name ? 'Bạn là người phụ trách phiếu này — được cập nhật tiến độ, chi phí.' : `Người phụ trách: ${p.owner} — bạn chỉ xem. Đổi người đăng nhập để thử.`;
-    $('#rolebar').innerHTML = `<i class="ri-user-3-line"></i>Bộ phận giao hàng · Đăng nhập với:
-      <select onchange="S.me=this.value;S.show=false;render()">${TEAM.map(x=>`<option value="${x.id}" ${x.id===S.me?'selected':''}>${x.name} — ${x.title}</option>`).join('')}</select>
-      <span class="sp"></span><span class="sm mut"><i class="ri-information-line"></i> ${esc(ctx)}</span>`;
-  } else {
-    const m = {order:['Cung ứng', U.supply, 'Màn chi tiết đơn mua hàng (supply/purchase_orders/:id) — thêm nút "Gửi bộ phận giao hàng".'],
-               rules:['—','—','Tóm tắt quy tắc nghiệp vụ.']}[S.view];
-    $('#rolebar').innerHTML = `<i class="ri-user-3-line"></i>Vai trò: <span class="who">${m[0]}</span><span class="mut">· ${m[1]}</span><span class="sp"></span><span class="sm mut"><i class="ri-information-line"></i> ${m[2]}</span>`;
+// ---------- trạng thái demo ----------
+let S
+function makeOrder(scnId) {
+  const scn = SCENARIOS.find((x) => x.id === scnId)
+  return {
+    id: 11, code: 'DMH-2026-0011', status: 3, ship: scn.ship, dest: scn.dest, scn: scn.id,
+    created_by: 'Trần Thị Bích', created_at: '2026-10-27', contract: 'HĐM-2026-0035', company: 'Công ty CP Thành An Medical',
+    warehouse: WAREHOUSES[0],
+    // Chi phí dự kiến: tự lấy → self_cost; NCC giao → ncc_fee + carrier_fee (expectedCost)
+    self_cost: 1200000, ncc_fee: 300000, carrier_fee: 150000,
   }
 }
-function go(v){ S.view=v; S.err={}; S.show=false; render(); window.scrollTo({top:0, behavior:'smooth'}); }
-function render(){
-  renderFlow(); renderRole();
-  $('#view').innerHTML = ({order:vOrder, inbox:vInbox, pgh:vPgh, rules:vRules})[S.view]();
-}
+const expectedCost = (o) => (o.ship === SHIP.TU_LAY ? o.self_cost : o.ncc_fee + o.carrier_fee)
 
-/* ======================= Modal / toast ======================= */
-let modalOk = null;
-function modal({title, body, ok='Xác nhận', okCls='btn-primary', icon='ri-question-line', red=false, onOk}){
-  modalOk = onOk;
-  $('#modal').innerHTML = `<div class="m-h"><div class="m-ic ${red?'red':''}"><i class="${icon}"></i></div><h5>${title}</h5><button class="m-x" onclick="closeModal()">×</button></div>
-    <div class="m-b">${body}</div><div class="m-f"><button class="btn btn-secondary" onclick="closeModal()">Hủy</button><button class="btn ${okCls}" onclick="modalAccept()">${ok}</button></div>`;
-  $('#mask').classList.add('show');
+// Phiếu mẫu của các đơn khác — cho danh sách có đủ trạng thái
+function samplePoint(id, kind, ref, items, extra) {
+  const base = kind === 'kh'
+    ? { customer_name: CUSTOMERS[ref].name, address: CUSTOMERS[ref].address, receiver_name: CUSTOMERS[ref].receiver, receiver_phone: CUSTOMERS[ref].phone }
+    : { warehouse_id: ref, warehouse_name: WAREHOUSES.find((w) => w.id === ref).name, address: WAREHOUSES.find((w) => w.id === ref).address }
+  return Object.assign({ id, status: 1, signer: '', delivered_at: '', issue_reason: '', issue_note: '', delivered_wh: null }, base, extra || {}, {
+    items: items.map((x, i) => ({ id: id * 100 + i, pairKey: '', product_name: x[0], unit_name: x[1], qty_plan: x[2], qty_picked: x[3] === undefined ? null : x[3], qty_delivered: x[4] === undefined ? null : x[4] })),
+  })
 }
-function closeModal(){ $('#mask').classList.remove('show'); modalOk=null; }
-function modalAccept(){ if (modalOk && modalOk()===false) return; closeModal(); }
-let toastT;
-function toast(html){ const t=$('#toast'); t.innerHTML=html; t.style.display='block'; clearTimeout(toastT); toastT=setTimeout(()=>t.style.display='none', 4500); }
-
-/* ======================= 1. Đơn mua hàng ======================= */
-function vOrder(){
-  const cs = canSend(), p3 = S.pghs.find(p=>p.status===3), locked = S.pghs.length>0, done = orderDone();
-  const methods = [['ncc_kho','NCC giao về kho','ri-home-4-line'],['ncc_kh','NCC giao thẳng KH','ri-hospital-line'],['tu_lay|kho','Cty tự lấy → về kho','ri-truck-line'],['tu_lay|kh','Cty tự lấy → giao KH','ri-truck-line']];
-  const curM = S.ship==='tu_lay' ? 'tu_lay|'+S.selfDest : S.ship;
-  let rows='';
-  points().forEach(pt=>{
-    rows += `<tr class="grp"><td colspan="10"><i class="${pt.kind==='kho'?'ri-home-4-line':'ri-hospital-line'}"></i> ${esc(pt.name)} ${pt.sale?`<span class="mut sm">· HĐ bán ${pt.sale}</span>`:''} &nbsp;${pointStatus(pt.id)}</td></tr>`;
-    linesOf(pt.id).forEach(l=>{ const op=sumOpen(l.id), pk=sumPicked(l.id), dl=sumDelivered(l.id), rm=remain(l.id);
-      rows += `<tr><td class="tc">${l.id}</td><td class="mono">${l.code}</td><td class="cell-name"><b>${esc(l.name)}</b>${l.cold?'<span><i class="ri-snowflake-line"></i> Bảo quản 2–8°C</span>':''}</td><td class="tc">${l.unit}</td>
-        <td class="tr">${fmt(l.qty)}</td><td class="tr">${op?`<span class="badge b-violet">${fmt(op)}</span>`:'—'}</td><td class="tr">${pk?fmt(pk):'—'}</td><td class="tr">${dl?fmt(dl):'—'}</td>
-        <td class="tr">${pk-dl>0?`<span class="badge b-amber">${fmt(pk-dl)}</span>`:'—'}</td><td class="tr ${rm>0?'':'qok'}">${fmt(Math.max(0,rm))}</td></tr>`; });
-  });
-  const doneP = S.pghs.filter(p=>p.status===5);
-  const actualCost = doneP.reduce((s,p)=>s+costTotal(p),0);
-  const costRows = [`<tr><td>${estObj().label}</td><td class="mut">—</td><td class="tr">${fmt(estCost())}</td><td>${PAY_TO[estObj().payTo]}</td><td class="tc"><span class="badge b-gray">Dự kiến</span></td><td class="tc">—</td></tr>`,
-    ...doneP.flatMap(p=>p.costs.map(c=>`<tr><td>${esc(c.type)}${c.desc?` <span class="mut sm">— ${esc(c.desc)}</span>`:''}</td><td class="mono">${p.code}</td><td class="tr">${fmt(c.amount)}</td><td>${PAY_TO[c.payTo]}</td><td class="tc"><span class="badge b-green">Thực tế</span></td><td class="tc">${c.files.length?`<span class="badge b-blue"><i class="ri-attachment-2"></i>${c.files.length}</span>`:'<span class="badge b-amber">Chưa có HĐ</span>'}</td></tr>`))].join('');
-
-  return `
-  ${p3?`<div class="note note-err mb-2"><i class="ri-arrow-go-back-line"></i><div><b>${p3.code} bị bộ phận giao hàng trả lại</b> — ${esc(p3.returnBy)}: “${esc(p3.returnReason)}”. Sửa thông tin rồi gửi lại. <span class="lnk" onclick="openSend(${p3.id})">Sửa &amp; gửi lại</span></div></div>`:''}
-  <div class="sec">
-    <div class="sec-h"><h6>Đơn mua hàng <span class="mono">DMH-0158/2026</span></h6>${done?'<span class="badge b-green">Hoàn thành</span>':'<span class="badge b-green">Đã duyệt</span>'}<span class="sp"></span>
-      ${p3?`<button class="btn btn-primary" onclick="openSend(${p3.id})"><i class="ri-send-plane-line"></i>Sửa &amp; gửi lại</button>`
-        :`<span title="${cs.ok?'':esc(cs.why)}"><button class="btn btn-primary" ${cs.ok?'':'disabled'} onclick="openSend()"><i class="ri-send-plane-line"></i>${S.pghs.length?'Gửi giao phần còn lại':'Gửi bộ phận giao hàng'}</button></span>`}
-    </div>
-    <div class="sec-b"><div class="kv">
-      <div><div class="k">Nhà cung cấp</div><div class="v">${SUPPLIER.name}</div></div>
-      <div><div class="k">Hợp đồng mua</div><div class="v">HĐM-045/2026 (Thương mại)</div></div>
-      <div><div class="k">Công ty mua</div><div class="v">Công ty TNHH Thiết bị Y tế Thanh An</div></div>
-      <div><div class="k">Người lập · Ngày duyệt</div><div class="v">${U.supply} · 27/10/2026 09:12</div></div>
-    </div></div>
-  </div>
-  <div class="sec">
-    <div class="sec-h"><h6>Giao nhận & vận chuyển</h6><span class="tip" title="Mọi phương thức đều gửi bộ phận giao hàng. Không cần chọn người — ai phụ trách trong bộ phận sẽ vào tiếp nhận, rồi tự cập nhật tiến độ, chi phí. ${isNcc()?`NCC tự chở → người phụ trách theo dõi NCC giao, có mặt nhận / bàn giao ${dest()==='kho'?'tại kho':'tại khách hàng'}, xác nhận SL thực nhận, khai chi phí phát sinh.`:'Công ty tự đi lấy → người phụ trách lấy hàng tại NCC rồi giao từng điểm.'} Điểm giao + chi phí của đơn mua tự cập nhật theo kết quả (bỏ nút Xác nhận đã nhận hàng / đã giao bấm tay)."><i class="ri-information-line"></i></span><span class="mut sm">(tab đã có trên đơn mua)</span><span class="sp"></span><span class="sm mut">Giả lập phương thức:</span>
-      ${methods.map(m=>`<button class="chip ${curM===m[0]?'on':''}" ${locked?'disabled title="Đã gửi bộ phận giao hàng — không đổi được"':''} onclick="setMethod('${m[0]}')"><i class="${m[2]}"></i>${m[1]}</button>`).join('')}</div>
-    <div class="sec-b">
-      <div class="kv k3">
-        <div><div class="k">Phương thức giao hàng</div><div class="v">${shipLabel()}</div></div>
-        <div><div class="k">${isNcc()?'NCC giao tới':'Lấy hàng tại'}</div><div class="v">${isNcc()?(dest()==='kho'?WAREHOUSE.name+' — '+WAREHOUSE.address:points().map(x=>x.name).join(' · ')):SUPPLIER.address}</div></div>
-        <div><div class="k">Người phụ trách giao nhận</div><div class="v">${S.pghs.find(p=>p.owner)?esc(S.pghs.find(p=>p.owner).owner)+' (BP giao hàng)':'<span class="mut">Bộ phận giao hàng tiếp nhận</span>'}</div></div>
-      </div>
-    </div>
-  </div>
-  <div class="sec">
-    <div class="sec-h"><h6>Hàng hóa & tiến độ giao</h6><span class="sp"></span><span class="sm mut">Còn phải gửi = SL mua − Đã lấy từ NCC − Đang giao</span></div>
-    <div class="sec-b"><div class="tbl-wrap"><table class="pt"><thead><tr><th>#</th><th>Mã</th><th style="min-width:250px">Tên hàng</th><th>ĐVT</th><th>SL mua</th><th>Đang giao</th><th>${isNcc()?'NCC đã giao':'Đã lấy từ NCC'}</th><th>${dest()==='kho'?'Đã bàn giao kho':'Đã giao KH'}</th><th>Mang về kho</th><th>Còn phải gửi</th></tr></thead><tbody>${rows}</tbody></table></div></div>
-  </div>
-  <div class="sec">
-    <div class="sec-h"><h6>Chi phí vận chuyển</h6><span class="sp"></span><span class="sm">Dự kiến <b>${fmt(estCost())}đ</b> · Thực tế <b>${fmt(actualCost)}đ</b> ${doneP.length?(actualCost>estCost()?`<span class="badge b-red">Vượt ${fmt(actualCost-estCost())}đ</span>`:`<span class="badge b-green">Trong dự kiến</span>`):''}</span></div>
-    <div class="sec-b"><div class="tbl-wrap"><table class="pt"><thead><tr><th style="min-width:240px">Khoản chi</th><th>Nguồn</th><th>Số tiền (VNĐ)</th><th>Trả cho</th><th>Loại</th><th>Hóa đơn</th></tr></thead><tbody>${costRows}</tbody></table></div>
-    <div class="hint mt-2"><i class="ri-information-line"></i> Dòng "Thực tế" do người phụ trách giao hàng khai ở phiếu giao hàng, tự ghi vào đây khi phiếu Hoàn thành.</div></div>
-  </div>`;
-}
-function setMethod(id){ if (S.pghs.length) return; const [a,b]=id.split('|'); S.ship=a; if(b) S.selfDest=b; render(); }
-function openPgh(id){ S.cur=id; const p=cur(); if (p.status===3) return go('order'); S.tab='progress'; go('pgh'); }
-
-/* Gửi bộ phận giao hàng */
-function openSend(id){
-  const p = id ? S.pghs.find(x=>x.id===id) : null;
-  const v = p ? p : {pickupDate:'2026-10-29', prio:'normal', note:''};
-  modal({title: p?`Sửa & gửi lại ${p.code}`:'Gửi bộ phận giao hàng', icon:'ri-send-plane-line', ok: p?'Gửi lại':'Gửi',
-    body:`${p?`<div class="note note-err mb-2"><i class="ri-arrow-go-back-line"></i><div>Lý do trả lại: “${esc(p.returnReason)}”</div></div>`:''}
-    <div class="grid g2">
-      <div class="s3"><div class="v2-label">Hình thức vận chuyển</div><input class="v2-input" disabled value="${shipLabel()}"></div>
-      <div><div class="v2-label">Ngày lấy hàng <span class="req">*</span></div><input type="date" id="f_pd" class="v2-input" value="${v.pickupDate}"><div id="f_err" class="err-tx" style="display:none"><i class="ri-error-warning-line"></i>Chọn ngày lấy hàng</div></div>
-      <div><div class="v2-label">Mức ưu tiên</div><select id="f_pr" class="v2-input"><option value="normal" ${v.prio==='normal'?'selected':''}>Bình thường</option><option value="urgent" ${v.prio==='urgent'?'selected':''}>Gấp</option></select></div>
-      <div class="s3"><div class="v2-label">Ghi chú cho bộ phận giao hàng</div><textarea id="f_nt" class="v2-input" placeholder="${isNcc()?'VD: NCC báo xe tới khoảng 9h, cần người có mặt nhận + thu hóa đơn, biên bản':'VD: NCC chỉ xuất hàng buổi sáng, hàng lạnh cần mang thùng đá'}">${esc(v.note)}</textarea></div>
-    </div>
-    <div class="hint mt-2">Người nhận, SĐT, địa chỉ lấy theo điểm giao của đơn mua. Phiếu không cần duyệt.</div>`,
-    onOk:()=>{
-      const f = {pickupDate:$('#f_pd').value, prio:$('#f_pr').value, note:$('#f_nt').value};
-      if (!f.pickupDate){ $('#f_err').style.display='flex'; $('#f_pd').classList.add('err'); return false; }
-      const t = tick(5);
-      let q;
-      if (p){ Object.assign(p, f); q=p; p.status=2; p.sentAt=t; LINES.forEach(l=>p.qty[l.id]=Math.max(0,remain(l.id))); p.history.push({at:t, who:U.supply, t:'Sửa và gửi lại bộ phận giao hàng'}); }
-      else q = newPgh(f, t);
-      S.cur = q.id; S.inboxTab='wait'; go('inbox');
-      toast(`<i class="ri-notification-3-line"></i> Đã gửi ${q.code}. ${TEAM.length} thành viên bộ phận giao hàng nhận thông báo "Có phiếu giao hàng mới chờ tiếp nhận".`);
-    }});
-}
-function newPgh(f, t){
-  const id = Date.now();
-  const p = Object.assign({id, code:`PGH-00${S.seq++}/2026`, status:2, sentAt:t, sentBy:U.supply, qty:{}, pts:[], pinfo:{}, owner:'', receivedAt:'',
-    ship:shortShip(),
-    pickup:{done:false, date:f.pickupDate, time:'08:00', actual:{}, note:''}, dlv:{}, costs:[], noCost:false, history:[], returnReason:'', diff:false}, f);
-  LINES.forEach(l=>p.qty[l.id]=Math.max(0,remain(l.id)));
-  p.pts = points().map(x=>x.id).filter(pid=>linesOf(pid).some(l=>p.qty[l.id]>0));
-  p.pts.forEach(pid=>{ const pt=pointById(pid); p.pinfo[pid]={receiver:pt.receiver, phone:pt.phone, window:pt.window}; });
-  p.history.push({at:t, who:U.supply, t:'Gửi bộ phận giao hàng từ đơn mua DMH-0158/2026'});
-  S.pghs.push(p); return p;
-}
-
-/* ======================= 2. Bộ phận giao hàng — danh sách ======================= */
-const ITABS = [['wait','Chờ tiếp nhận',r=>r.status===2],['doing','Đang xử lý',r=>r.status===4],['mine','Của tôi',r=>r.owner===meObj().name && r.status===4],['done','Hoàn thành',r=>r.status===5],['back','Bị trả lại',r=>r.status===3],['all','Tất cả',()=>true]];
-function inboxRows(){
-  const mine = S.pghs.map(p=>({real:true, id:p.id, code:p.code, order:'DMH-0158/2026', sup:SUPPLIER.name, method:p.ship, dest:p.pts.map(id=>pointById(id).name).join(' · '), pts:p.pts.length,
-    pick:dmy(p.pickupDate), prio:p.prio, by:p.sentBy, owner:p.owner, status:p.status, diff:p.diff}));
-  return [...mine, ...SAMPLE_ROWS];
-}
-function vInbox(){
-  const all = inboxRows(), tab = ITABS.find(t=>t[0]===S.inboxTab), rows = all.filter(tab[2]);
-  const body = rows.length ? rows.map((r,i)=>{
-    let act;
-    if (!r.real) act = `<button class="icon-btn" title="Xem" onclick="toast('Dòng dữ liệu mẫu — thao tác với dòng nền xanh của demo.')"><i class="ri-eye-line"></i></button>`;
-    else if (r.status===2) act = `<button class="btn btn-primary btn-sm" onclick="S.cur=${r.id};receivePgh()"><i class="ri-hand-heart-line"></i>Tiếp nhận</button> <button class="icon-btn danger" title="Trả lại cung ứng" onclick="S.cur=${r.id};returnPgh()"><i class="ri-arrow-go-back-line"></i></button> <button class="icon-btn" title="Xem" onclick="openPgh(${r.id})"><i class="ri-eye-line"></i></button>`;
-    else act = `<button class="icon-btn" title="Xem" onclick="S.cur=${r.id};S.tab='progress';go('pgh')"><i class="ri-eye-line"></i></button>`;
-    return `<tr class="${r.real?'hl':''}"><td class="tc">${i+1}</td><td class="mono">${r.real?`<span class="lnk" onclick="S.cur=${r.id};S.tab='progress';go('pgh')">${r.code}</span>`:r.code}</td><td class="mono">${r.order}</td><td>${esc(r.sup)}</td><td><span class="badge ${/^NCC/.test(r.method)?'b-blue':'b-violet'}">${esc(r.method)}</span></td>
-      <td>${esc(r.dest)} <span class="mut sm">(${r.pts} điểm)</span></td><td>${r.pick}</td><td class="tc">${r.prio==='urgent'?'<span class="badge b-red"><i class="ri-flashlight-line"></i>Gấp</span>':'<span class="mut sm">Thường</span>'}</td>
-      <td>${esc(r.by)}</td><td>${r.owner?esc(r.owner):'<span class="mut">—</span>'}</td><td class="tc">${badge(r.status)}${r.diff?' <span class="badge b-amber">Chênh lệch</span>':''}</td><td class="tc" style="white-space:nowrap">${act}</td></tr>`;
-  }).join('') : `<tr><td colspan="13" class="tc mut" style="padding:16px">Không có phiếu.</td></tr>`;
-  return `<div class="sec">
-    <div class="sec-h"><h6>Danh sách phiếu giao hàng</h6><span class="sp"></span>
-      <input class="v2-input" style="width:280px;height:30px" placeholder="Tìm mã phiếu, đơn mua, NCC, điểm giao…">
-      <select class="v2-input" style="width:180px;height:30px"><option>Người phụ trách</option>${TEAM.map(d=>`<option>${d.name}</option>`).join('')}</select>
-      <input type="date" class="v2-input" style="width:150px;height:30px" title="Ngày lấy hàng">
-    </div>
-    <div class="sec-b">
-      <div class="ftabs mb-2">${ITABS.map(t=>`<button class="ftab ${S.inboxTab===t[0]?'active':''}" onclick="S.inboxTab='${t[0]}';render()">${t[1]} <span class="badge b-gray">${all.filter(t[2]).length}</span></button>`).join('')}</div>
-      <div class="tbl-wrap"><table class="pt"><thead><tr><th>STT</th><th>Mã phiếu</th><th>Đơn mua</th><th>NCC</th><th>Hình thức</th><th>Điểm giao</th><th>Ngày lấy hàng</th><th>Ưu tiên</th><th>Người gửi</th><th>Người phụ trách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${body}</tbody></table></div>
-      <div class="hint mt-2"><i class="ri-information-line"></i> Dòng nền xanh = phiếu của demo (thao tác được). Đổi "Đăng nhập với" ở trên để xem góc nhìn từng thành viên.</div>
-    </div></div>`;
-}
-function receivePgh(){
-  const p=cur(), me=meObj();
-  modal({title:'Tiếp nhận phiếu giao hàng', icon:'ri-hand-heart-line', ok:'Tiếp nhận',
-    body:`<b>${me.name}</b> tiếp nhận <b>${p.code}</b> và trở thành <b>người phụ trách</b>.<br>• ${isNcc()?shipLabel():`Lấy hàng tại ${SUPPLIER.name}`} — ngày lấy hàng ${dmy(p.pickupDate)}<br>• ${p.pts.length} điểm giao${p.prio==='urgent'?' — <b style="color:#b45309">GẤP</b>':''}<br><br><span class="mut">Phiếu biến mất khỏi tab "Chờ tiếp nhận" của người khác. ${U.supply} (Cung ứng) nhận thông báo.</span>`,
-    onOk:()=>{ p.status=4; p.owner=me.name; p.receivedAt=tick(8); if (isNcc()) initDlv(p, p.pickupDate); p.history.push({at:p.receivedAt, who:me.name, t:'Tiếp nhận — người phụ trách: '+me.name});
-      S.tab='progress'; go('pgh'); toast(`<i class="ri-notification-3-line"></i> ${U.supply} nhận thông báo: "${me.name} đã tiếp nhận ${p.code}".`); }});
-}
-function returnPgh(){
-  const p=cur(), me=meObj();
-  modal({title:'Trả lại phiếu giao hàng', red:true, icon:'ri-arrow-go-back-line', ok:'Trả lại', okCls:'btn-danger-o',
-    body:`Trả <b>${p.code}</b> về cho ${p.sentBy} (Cung ứng).<div class="mt-2"><div class="v2-label">Lý do <span class="req">*</span></div><textarea id="rsn" class="v2-input">Ngày 29/10 bộ phận hết xe, đề nghị dời lấy hàng sang sáng 30/10.</textarea><div id="rsnE" class="err-tx" style="display:none"><i class="ri-error-warning-line"></i>Nhập lý do trả lại</div></div>`,
-    onOk:()=>{ const r=$('#rsn').value.trim(); if(!r){ $('#rsnE').style.display='flex'; $('#rsn').classList.add('err'); return false; }
-      p.status=3; p.returnReason=r; p.returnBy=me.name; p.history.push({at:tick(9), who:me.name, t:'Trả lại cung ứng: '+r, k:'bad'});
-      go('order'); toast(`Đã trả lại ${p.code}. ${p.sentBy} nhận thông báo; SL nhả về đơn mua. (Đang xem với vai Cung ứng)`); }});
-}
-/* ======================= 3. Phiếu giao hàng — tiếp nhận / xử lý ======================= */
-function pghInfo(p){
-  return `<div class="kv">
-    <div><div class="k">Đơn mua · NCC</div><div class="v"><span class="lnk" onclick="go('order')">DMH-0158/2026</span> · ${SUPPLIER.name}</div></div>
-    <div><div class="k">Hình thức vận chuyển</div><div class="v">${shipLabel()}</div></div>
-    <div><div class="k">Ngày lấy hàng</div><div class="v">${dmy(p.pickupDate)} ${p.prio==='urgent'?'<span class="badge b-red"><i class="ri-flashlight-line"></i>Gấp</span>':''}</div></div>
-    <div><div class="k">Người gửi · lúc</div><div class="v">${p.sentBy} (Cung ứng) · ${p.sentAt}</div></div>
-    <div class="s2" style="grid-column:span 2"><div class="k">Ghi chú cung ứng</div><div class="v sm">${esc(p.note)||'—'}</div></div>
-    <div><div class="k">Tổng SL</div><div class="v">${fmt(LINES.reduce((s,l)=>s+planQty(p,l.id),0))} · ${LINES.filter(l=>planQty(p,l.id)>0).length} mặt hàng</div></div>
-  </div>`;
-}
-function routeAndGoods(p){
-  const stops = `<div class="route"><div class="stop pick"><div class="sh"><span class="sn">${isNcc()?'NCC TỰ CHỞ':'LẤY HÀNG'}</span><span class="nm">${SUPPLIER.name}</span></div><div class="ad">${isNcc()?'<b>NCC tự vận chuyển tới điểm giao</b><br>':''}<i class="ri-map-pin-line"></i> ${SUPPLIER.address}<br><i class="ri-user-line"></i> ${SUPPLIER.contact} · ${SUPPLIER.phone}<br><i class="ri-time-line"></i> ${SUPPLIER.hours}</div></div>
-    ${p.pts.map((pid,i)=>{ const pt=pointById(pid), pi=p.pinfo[pid]; return `<div class="arrow"><i class="ri-arrow-right-line"></i></div><div class="stop"><div class="sh"><span class="sn">ĐIỂM ${i+1}</span><span class="nm">${esc(pt.name)}</span></div><div class="ad"><i class="ri-map-pin-line"></i> ${esc(pt.address)}<br><i class="ri-user-line"></i> ${esc(pi.receiver)} · ${esc(pi.phone)}<br><i class="ri-time-line"></i> ${esc(pi.window)}${pt.sale?`<br><i class="ri-file-text-line"></i> HĐ bán ${pt.sale}`:''}</div></div>`; }).join('')}</div>`;
-  let rows='';
-  p.pts.forEach((pid,i)=>{ rows += `<tr class="grp"><td colspan="5">Điểm ${i+1}: ${esc(pointById(pid).name)}</td></tr>`;
-    linesOf(pid).filter(l=>planQty(p,l.id)>0).forEach(l=>{ rows += `<tr><td class="mono">${l.code}</td><td class="cell-name"><b>${esc(l.name)}</b></td><td class="tc">${l.unit}</td><td class="tr">${fmt(planQty(p,l.id))}</td><td class="tc">${l.cold?'<span class="badge b-cyan"><i class="ri-snowflake-line"></i>2–8°C</span>':''}${l.fragile?'<span class="badge b-amber">Dễ vỡ</span>':''}</td></tr>`; }); });
-  return `<div class="sec"><div class="sec-h"><h6>Lộ trình & hàng hóa</h6></div><div class="sec-b">${stops}<div class="tbl-wrap mt-3"><table class="pt"><thead><tr><th>Mã</th><th style="min-width:240px">Tên hàng</th><th>ĐVT</th><th>${isNcc()?'SL NCC giao':'SL cần lấy'}</th><th>Bảo quản</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>`;
-}
-function vPgh(){
-  const p=cur(); if(!p) return '';
-  const me=meObj(), edit = p.status===4 && p.owner===me.name;
-  const head = `<div class="sec"><div class="sec-h"><h6>Phiếu giao hàng <span class="mono">${p.code}</span></h6>${badge(p.status)}<span class="sp"></span><button class="btn btn-secondary" onclick="go('inbox')"><i class="ri-arrow-left-line"></i>Danh sách</button></div><div class="sec-b">${pghInfo(p)}</div></div>`;
-  if (p.status===2 || p.status===3){
-    return `${head}${p.status===3?`<div class="note note-err mb-2"><i class="ri-arrow-go-back-line"></i><div>Đã trả lại cung ứng: “${esc(p.returnReason)}” — chờ cung ứng sửa & gửi lại.</div></div>`:''}${routeAndGoods(p)}
-      ${p.status===2?`<div class="form-footer"><div class="left"><i class="ri-information-line"></i> Tiếp nhận = bạn là người phụ trách. Không nhận được thì Trả lại (bắt buộc lý do).</div>
-        <button class="btn btn-danger-o" onclick="returnPgh()"><i class="ri-arrow-go-back-line"></i>Trả lại cung ứng</button>
-        <button class="btn btn-primary" onclick="receivePgh()"><i class="ri-hand-heart-line"></i>Tiếp nhận</button></div>`:''}`;
-  }
-  return `${head}
-    ${p.status===4 && !edit?`<div class="note note-warn mb-2"><i class="ri-eye-line"></i><div>Người phụ trách là <b>${esc(p.owner)}</b> — bạn (${esc(me.name)}) chỉ xem. Đổi "Đăng nhập với" thành ${esc(p.owner)} để cập nhật.</div></div>`:''}
-    <div class="sec"><div class="sec-h"><h6>Tiến độ giao hàng</h6></div><div class="sec-b">${tabProgress(p,edit)}</div></div>
-    <div class="sec"><div class="sec-h"><h6>Chi phí</h6></div><div class="sec-b">${tabCost(p,edit)}</div></div>
-    ${edit?`<div class="form-footer"><button class="btn btn-primary" onclick="finishPgh()"><i class="ri-flag-line"></i>Hoàn thành giao hàng</button></div>`:''}`;
-}
-function checks(p){
-  const nd = p.pts.filter(id=>p.dlv[id]&&p.dlv[id].done).length;
-  const badCost = p.costs.filter(c=>!c.type || !(+c.amount>0)).length;
-  const costOk = p.costs.length ? !badCost : p.noCost;
+function sampleNotes() {
   return [
-    ...(isNcc() ? [] : [{ok:p.pickup.done, t:'Đã lấy hàng tại NCC', tab:'progress'}]),
-    {ok:nd===p.pts.length, t:`${isNcc()?'Đã nhận hàng ở':'Đã giao'} ${nd}/${p.pts.length} điểm`, tab:'progress'},
-    {ok:costOk, t: p.costs.length ? `Chi phí: ${p.costs.length} khoản · ${fmt(costTotal(p))}đ${badCost?` — <b>${badCost} dòng thiếu loại / số tiền</b>`:''}` : (p.noCost?'Không phát sinh chi phí':'Khai chi phí (hoặc tick "Không phát sinh chi phí")'), tab:'cost'},
-  ];
+    {
+      id: 7, code: 'PGH-2026-0007', order_id: 8, order_code: 'DMH-2026-0008', supplier_name: 'Công ty CP Dược phẩm Trung ương 2', order_expected: 350000,
+      ship: 'ncc_kho', dest: 'kho', status: 5, priority: 1, pickup_date: '2026-10-22', note: '', sent_by: 'bich', sent_at: '2026-10-21', owner: 'tuan', received_at: '2026-10-21',
+      picked_at: '', pickup_note: '', completed_at: '16:40 23/10/2026', has_diff: 1, no_cost: 0,
+      points: [samplePoint(71, 'kho', 1, [['Nước muối sinh lý 0,9% 500ml', 'Chai', 600, null, 576], ['Cồn 70 độ 500ml', 'Chai', 200, null, 200]], { status: 2, delivered_at: '2026-10-23', delivered_wh: 1, issue_reason: 'damaged', issue_note: 'Vỡ 24 chai khi bốc xuống' })],
+      costs: [{ type: 'ncc', cost_type: 'other', description: 'Cước NCC thu thêm', amount: 350000, pay_to: 'ncc', files: ['hoa-don-cuoc-0007.pdf'] }],
+    },
+    {
+      id: 9, code: 'PGH-2026-0009', order_id: 9, order_code: 'DMH-2026-0009', supplier_name: 'Công ty TNHH Vật tư Y tế Hồng Hà', order_expected: 900000,
+      ship: 'tu_lay', dest: 'kh', status: 4, priority: 2, pickup_date: '2026-10-29', note: 'Hàng dễ vỡ, chèn kỹ', sent_by: 'bich', sent_at: '2026-10-28', owner: 'tuan', received_at: '2026-10-28',
+      picked_at: '2026-10-29T08:30', pickup_note: '', completed_at: '', has_diff: 0, no_cost: 0,
+      points: [samplePoint(91, 'kh', 'A', [['Ống nghiệm EDTA 2ml', 'Hộp', 40, 40]], { status: 2, delivered_at: '2026-10-29', signer: 'Nguyễn Thị Lan' }),
+        samplePoint(92, 'kh', 'B', [['Ống nghiệm EDTA 2ml', 'Hộp', 30, 30], ['Kim lấy máu chân không', 'Hộp', 20, 20]])],
+      costs: [{ cost_type: 'fuel', description: 'Đổ xăng xe 29C-123.45', amount: 450000, pay_to: 'self', files: [] }],
+    },
+    {
+      id: 10, code: 'PGH-2026-0010', order_id: 10, order_code: 'DMH-2026-0010', supplier_name: 'Công ty TNHH Thiết bị Y tế Minh Phát', order_expected: 500000,
+      ship: 'ncc_kh', dest: 'kh', status: 2, priority: 2, pickup_date: '2026-10-31', note: 'Khoa Dược nhận hàng giờ hành chính', sent_by: 'bich', sent_at: '2026-10-30', owner: '', received_at: '',
+      picked_at: '', pickup_note: '', completed_at: '', has_diff: 0, no_cost: 0,
+      points: [samplePoint(101, 'kh', 'B', [['Máy đo SpO2 cầm tay', 'Cái', 5], ['Nhiệt kế điện tử', 'Cái', 30]])], costs: [],
+    },
+    {
+      id: 5, code: 'PGH-2026-0005', order_id: 6, order_code: 'DMH-2026-0006', supplier_name: 'Công ty CP Dược phẩm Trung ương 2', order_expected: 0,
+      ship: 'tu_lay', dest: 'kho', status: 6, priority: 1, pickup_date: '2026-10-15', note: '', sent_by: 'bich', sent_at: '2026-10-14', owner: '', received_at: '',
+      returned_by: 'hung', returned_at: '09:10 15/10/2026', return_reason: 'NCC báo hết hàng, chưa lấy được',
+      picked_at: '', pickup_note: '', completed_at: '', has_diff: 0, no_cost: 0,
+      points: [samplePoint(51, 'kho', 2, [['Vitamin C 500mg', 'Hộp', 100]])], costs: [],
+    },
+  ]
 }
 
-/* --- Tab Tiến độ --- */
-function tabProgress(p, edit){
-  const D = edit?'':'disabled', E = S.err;
-  // Lấy hàng (chỉ Cty tự lấy)
-  const ncc=isNcc(), pk=p.pickup, ls=LINES.filter(l=>planQty(p,l.id)>0), anyDlv=p.pts.some(id=>p.dlv[id]&&p.dlv[id].done);
-  let pkBody;
-  if (pk.done){
-    const short = ls.filter(l=>pickedQty(p,l.id)<planQty(p,l.id));
-    pkBody = `<div class="tbl-wrap"><table class="pt"><thead><tr><th>Mã</th><th style="min-width:220px">Tên hàng</th><th>ĐVT</th><th>Giao tới</th><th>SL yêu cầu</th><th>Thực lấy</th></tr></thead><tbody>
-      ${ls.map(l=>`<tr><td class="mono">${l.code}</td><td class="cell-name"><b>${esc(l.name)}</b></td><td class="tc">${l.unit}</td><td class="sm">${esc(pointById(pointOf(l)).name)}</td><td class="tr">${fmt(planQty(p,l.id))}</td><td class="tr ${pickedQty(p,l.id)<planQty(p,l.id)?'qneg':''}">${fmt(pickedQty(p,l.id))}</td></tr>`).join('')}</tbody></table></div>
-      ${short.length?`<div class="note note-warn mt-2"><i class="ri-error-warning-line"></i><div>Lấy thiếu ${short.length} mặt hàng: ${esc(pk.note)}</div></div>`:''}`;
-  } else if (edit){
-    pkBody = `<div class="tbl-wrap"><table class="pt"><thead><tr><th>Mã</th><th style="min-width:220px">Tên hàng</th><th>ĐVT</th><th>Giao tới</th><th>SL yêu cầu</th><th>SL thực lấy <span class="req">*</span></th></tr></thead><tbody>
-      ${ls.map(l=>{ const v=pk.actual[l.id]!=null?pk.actual[l.id]:planQty(p,l.id); pk.actual[l.id]=v; return `<tr><td class="mono">${l.code}</td><td class="cell-name"><b>${esc(l.name)}</b></td><td class="tc">${l.unit}</td><td class="sm">${esc(pointById(pointOf(l)).name)}</td><td class="tr">${fmt(planQty(p,l.id))}</td><td class="tc"><input class="inp ${v>planQty(p,l.id)||v<0?'over':''}" type="number" min="0" value="${v}" oninput="setPk(${l.id},this)"></td></tr>`; }).join('')}</tbody></table></div>
+function resetAll(keepUser) {
+  const scn = $('sel-scn').value || 'tu_lay_kh'
+  S = {
+    user: keepUser && S ? S.user : 'bich', screen: 'po', poTab: 'general', detailId: null, seq: 11,
+    order: makeOrder(scn), notes: sampleNotes(),
+    ui: { pickup: null, pts: {}, cost: null, flt: { open: false, q: '' }, sendFor: null, retFor: null },
+  }
+  $('sel-user').value = S.user
+  render()
+}
+
+// ---------- logic đơn mua ↔ phiếu (PurchaseDeliveryNoteService) ----------
+// Cặp có thể gửi: về kho → mỗi dòng hàng; giao KH → (khách, dòng hàng) theo mục đích mua
+function deliverablePairs(o) {
+  const pairs = []
+  PRODUCTS.forEach((p) => {
+    if (o.dest === 'kh') Object.keys(p.alloc).forEach((c) => pairs.push({ key: `${c}:${p.id}`, point: c, pid: p.id, qty: p.alloc[c] }))
+    else pairs.push({ key: `kho:${p.id}`, point: 'kho', pid: p.id, qty: qtyOf(p) })
+  })
+  return pairs
+}
+// SL đã dùng: phiếu Chờ tiếp nhận / Đang xử lý giữ qty_plan, phiếu Hoàn thành tính qty_delivered
+function remainingPairs(o, exceptId) {
+  const used = {}
+  S.notes.filter((n) => n.order_id === o.id && n.id !== exceptId).forEach((n) => {
+    n.points.forEach((pt) => pt.items.forEach((it) => {
+      let q = 0
+      if (n.status === 2 || n.status === 4) q = it.qty_plan
+      else if (n.status === 5) q = it.qty_delivered || 0
+      used[it.pairKey] = (used[it.pairKey] || 0) + q
+    }))
+  })
+  return deliverablePairs(o).map((p) => Object.assign({}, p, { remaining: Math.round((p.qty - (used[p.key] || 0)) * 1000) / 1000 })).filter((p) => p.remaining > 0)
+}
+const notesOf = (o) => S.notes.filter((n) => n.order_id === o.id)
+const returnedNoteOf = (o) => notesOf(o).filter((n) => n.status === 3).sort((a, b) => b.id - a.id)[0] || null
+const canManageDelivery = (o) => me().canSend && [3, 7].includes(o.status)
+function cannotSendReason(o, checkReturned) {
+  if (![3, 7].includes(o.status)) return 'Chỉ gửi được đơn mua đã duyệt'
+  if (checkReturned !== false && returnedNoteOf(o)) return 'Đơn có phiếu bị trả lại — hãy Sửa & gửi lại hoặc Hủy phiếu đó'
+  if (!remainingPairs(o).length) return 'Đơn không còn số lượng cần gửi'
+  return null
+}
+const canSend = (o) => canManageDelivery(o) && cannotSendReason(o) === null
+
+function buildPoints(o, pairs) {
+  const groups = {}
+  pairs.forEach((p) => (groups[p.point] = groups[p.point] || []).push(p))
+  return Object.keys(groups).map((k, gi) => {
+    const id = S.seq * 100 + gi + Math.floor(Math.random() * 10000) * 1000
+    const base = k === 'kho'
+      ? { warehouse_id: o.warehouse.id, warehouse_name: o.warehouse.name, address: o.warehouse.address }
+      : { customer_name: CUSTOMERS[k].name, address: CUSTOMERS[k].address, receiver_name: CUSTOMERS[k].receiver, receiver_phone: CUSTOMERS[k].phone }
+    return Object.assign({ id, status: 1, signer: '', delivered_at: '', issue_reason: '', issue_note: '', delivered_wh: null }, base, {
+      items: groups[k].map((p, i) => {
+        const pr = PRODUCTS.find((x) => x.id === p.pid)
+        return { id: id * 10 + i, pairKey: p.key, product_name: pr.name, unit_name: pr.unit, qty_plan: p.remaining, qty_picked: null, qty_delivered: null }
+      }),
+    })
+  })
+}
+
+// ---------- cờ của phiếu (DetailPurchaseDeliveryNoteResource) ----------
+const isNcc = (n) => n.ship !== SHIP.TU_LAY
+const isOwner = (n) => !!n.owner && n.owner === S.user
+const canEdit = (n) => n.status === 4 && isOwner(n)
+const canReceive = (n) => n.status === 2
+const anyPointDone = (n) => n.points.some((p) => p.status === 2)
+// Trả lại được: Chờ tiếp nhận; hoặc Đang xử lý + mình phụ trách + chưa lấy hàng + chưa xác nhận điểm nào
+const canReturn = (n) => n.status === 2 || (n.status === 4 && isOwner(n) && !n.picked_at && !anyPointDone(n))
+const findNote = (id) => S.notes.find((n) => n.id === id)
+const orderExpected = (n) => (n.order_id === S.order.id ? expectedCost(S.order) : n.order_expected || 0)
+const costTotal = (costs) => costs.reduce((a, c) => a + (Number(c.amount) || 0), 0)
+const otherSpent = (n) => S.notes.filter((x) => x.order_id === n.order_id && x.id !== n.id && [4, 5].includes(x.status)).reduce((a, x) => a + costTotal(x.costs), 0)
+const destinationText = (n) => (n.dest === 'kh' ? [...new Set(n.points.map((p) => p.customer_name).filter(Boolean))].join(', ') : 'Kho' + (n.points[0] && n.points[0].address ? ': ' + n.points[0].address : ''))
+function missingForComplete(n) {
+  const m = []
+  if (n.ship === SHIP.TU_LAY && !n.picked_at) m.push('Chưa cập nhật lấy hàng tại NCC')
+  const waiting = n.points.filter((p) => p.status !== 2).length
+  if (waiting) m.push(`Còn ${waiting} điểm chưa xác nhận giao / nhận`)
+  if (!n.costs.length && !n.no_cost) m.push('Chưa nhập chi phí hoặc tick "Không phát sinh chi phí"')
+  else if (n.costs.some((c) => !c.cost_type || !(Number(c.amount) > 0))) m.push('Có dòng chi phí thiếu loại hoặc số tiền')
+  return m
+}
+
+// ======================================================================
+//  RENDER
+// ======================================================================
+function render() {
+  document.querySelectorAll('#scr-tabs .tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.scr === S.screen || (S.screen === 'detail' && b.dataset.scr === 'list')))
+  if (S.screen === 'po') renderPO()
+  else if (S.screen === 'list') renderList()
+  else renderDetail()
+}
+function go(screen, id) {
+  S.screen = screen
+  if (screen === 'detail') { S.detailId = id; S.ui.pickup = null; S.ui.pts = {}; S.ui.cost = null }
+  render(); window.scrollTo(0, 0)
+}
+function openOrder(orderId) {
+  if (orderId !== S.order.id) return toast('Demo chỉ mở được đơn mẫu ' + S.order.code)
+  S.poTab = 'general'; go('po')
+}
+
+// ---------------- MÀN 1: CHI TIẾT ĐƠN MUA HÀNG ----------------
+function renderPO() {
+  const o = S.order, st = PO_STATUS[o.status]
+  const ret = canManageDelivery(o) ? returnedNoteOf(o) : null
+  let actions = ''
+  if (ret) {
+    actions = `<button class="btn btn-primary" onclick="openSend(${ret.id})"><i class="ri-edit-line"></i>Sửa và gửi lại</button>
+      <button class="btn btn-danger" onclick="askCancel(${ret.id})"><i class="ri-close-circle-line"></i>Hủy phiếu</button>`
+  } else if (canSend(o)) {
+    actions = `<button class="btn btn-primary" onclick="openSend()"><i class="ri-send-plane-line"></i>Gửi bộ phận giao hàng</button>`
+  }
+  const tabs = [['general', 'ri-file-list-3-line', 'Thông tin chung'], ['goods', 'ri-shopping-cart-2-line', 'Hàng hóa'], ['ship', 'ri-truck-line', 'Giao nhận &amp; vận chuyển']]
+  let why = ''
+  if (!actions) {
+    const r = !me().canSend ? 'Người đăng nhập không có quyền "Lập đơn mua hàng" → không thấy nút Gửi bộ phận giao hàng.' : cannotSendReason(o)
+    if (r) why = `<div class="box mb-2"><i class="ri-information-line"></i> Không có nút gửi: ${esc(r)}.</div>`
+  }
+  $('screen').innerHTML = `
+  <div class="page-title-box">
+    <h4 class="page-title">Chi tiết đơn mua hàng <span class="badge ${st.cls} status-pill">${st.text}</span></h4>
+    <div class="breadcrumb">Cung ứng / Đơn mua hàng / <b>Chi tiết đơn mua hàng</b></div>
+  </div>
+  ${ret ? `<div class="note note-err mb-2"><i class="ri-arrow-go-back-line"></i><div>
+      <div class="nt">Phiếu giao hàng <span class="lnk" onclick="go('detail',${ret.id})">${esc(ret.code)}</span> bị trả lại${ret.returned_by ? ' bởi ' + esc(userName(ret.returned_by)) : ''}${ret.returned_at ? ' lúc ' + esc(ret.returned_at) : ''}</div>
+      <span class="pre">${esc(ret.return_reason)}</span></div></div>` : ''}
+  ${why}
+  <div class="tp-card mb-3">
+    <div class="tabs-nav"><div class="tabs-root">
+      ${tabs.map((t) => `<button class="tab-btn ${S.poTab === t[0] ? 'active' : ''}" onclick="S.poTab='${t[0]}';renderPO()"><i class="${t[1]}"></i>${t[2]}</button>`).join('')}
+    </div></div>
+    <div class="tab-body">${S.poTab === 'general' ? poGeneral(o) : S.poTab === 'goods' ? poGoods(o) : poShip(o)}</div>
+    <div class="form-footer">${actions}
+      <button class="btn btn-tertiary" onclick="toast('Demo: Quay lại danh sách đơn mua hàng')"><i class="ri-arrow-left-line"></i>Quay lại</button></div>
+  </div>`
+}
+const dis = (label, val, cls) => `<div class="${cls || ''}"><label class="v2-label">${label}</label><input class="v2-input" value="${esc(val)}" disabled></div>`
+function poGeneral(o) {
+  return `<div class="sec"><div class="sec-h"><h6>Thông tin đơn mua</h6></div><div class="sec-b"><div class="grid">
+      ${dis('Mã đơn mua', o.code)}${dis('Người lập', o.created_by + ' — Phòng Cung ứng')}${dis('Ngày lập', fmtDate(o.created_at))}
+      ${dis('Hợp đồng mua', o.contract)}${dis('Công ty mua', o.company)}</div></div></div>
+    <div class="sec"><div class="sec-h"><h6>Thông tin nhà cung cấp</h6></div><div class="sec-b"><div class="grid">
+      ${dis('Tên nhà cung cấp', SUPPLIER.name)}${dis('Mã NCC', SUPPLIER.code)}${dis('MST', SUPPLIER.tax)}
+      ${dis('Người liên hệ', SUPPLIER.contact)}${dis('SĐT liên hệ', SUPPLIER.phone)}${dis('Địa chỉ', SUPPLIER.address)}</div></div></div>`
+}
+function poGoods(o) {
+  let total = 0
+  const rows = PRODUCTS.map((p, i) => {
+    const q = qtyOf(p), t = q * p.price; total += t
+    const purpose = o.dest === 'kh' ? Object.keys(p.alloc).map((c) => `${esc(CUSTOMERS[c].name)}: <b>${fmtQty(p.alloc[c])}</b>`).join('<br>') : '<span class="mut">Về kho</span>'
+    return `<tr><td class="tc">${i + 1}</td><td>${p.code}</td><td class="wrap">${esc(p.name)}</td><td>${p.unit}</td><td class="wrap">${purpose}</td><td class="tr">${fmtQty(q)}</td><td class="tr">${money(p.price)}</td><td class="tr">${money(t)}</td></tr>`
+  }).join('')
+  return `<div class="tbl-wrap"><table class="pt"><thead><tr><th>STT</th><th>Mã hàng</th><th>Tên hàng hóa</th><th>Đơn vị tính</th><th>Mục đích mua</th><th>SL mua</th><th>Đơn giá có VAT (VNĐ)</th><th>Tổng tiền (VNĐ)</th></tr></thead>
+    <tbody>${rows}<tr><td colspan="7" class="tr"><b>Tổng cộng</b></td><td class="tr"><b>${money(total)}</b></td></tr></tbody></table></div>`
+}
+function poShip(o) {
+  const pts = o.dest === 'kh'
+    ? Object.keys(CUSTOMERS).map((c, i) => `<div class="dp"><div class="dp-h"><span class="dp-no">Điểm ${i + 1}</span><span class="nm">${esc(CUSTOMERS[c].name)}</span></div>
+        <div class="dn-hint">${esc(CUSTOMERS[c].address)} · Người nhận: ${esc(CUSTOMERS[c].receiver)} (${esc(CUSTOMERS[c].phone)})</div></div>`).join('')
+    : `<div class="grid">${dis('Kho nhận', o.warehouse.name)}${dis('Địa chỉ kho', o.warehouse.address, 's2')}</div>`
+  const costRows = o.ship === SHIP.TU_LAY
+    ? `<tr><td>Chi phí tự lấy (công ty tự chi)</td><td class="tr">${money(o.self_cost)}</td></tr>`
+    : `<tr><td>Phí vận chuyển NCC thu thêm</td><td class="tr">${money(o.ncc_fee)}</td></tr><tr><td>Đơn vị vận chuyển</td><td class="tr">${money(o.carrier_fee)}</td></tr>`
+  return `<div class="sec"><div class="sec-h"><h6>Phương thức giao hàng</h6></div><div class="sec-b"><div class="grid">${dis('Phương thức giao hàng', shipLabel(o.ship, o.dest), 's2')}</div></div></div>
+    <div class="sec"><div class="sec-h"><h6>${o.dest === 'kh' ? 'Điểm giao' : 'Kho nhận hàng'}</h6></div><div class="sec-b">${pts}</div></div>
+    <div class="sec"><div class="sec-h"><h6>Chi phí vận chuyển dự kiến</h6></div><div class="sec-b">
+      <table class="mt" style="max-width:520px"><thead><tr><th>Khoản</th><th class="tr">Số tiền (VNĐ)</th></tr></thead><tbody>${costRows}</tbody>
+      <tfoot><tr><td><b>Tổng dự kiến</b></td><td class="tr"><b>${money(expectedCost(o))}</b></td></tr></tfoot></table></div></div>`
+}
+
+// Gửi / Sửa và gửi lại (SendDeliveryNoteModal)
+function openSend(noteId) {
+  const o = S.order, n = noteId ? findNote(noteId) : null
+  S.ui.sendFor = n ? n.id : null
+  $('send-title').textContent = n ? `Sửa và gửi lại phiếu giao hàng: ${n.code}` : 'Gửi bộ phận giao hàng'
+  $('send-btn-tx').textContent = n ? 'Gửi lại' : 'Gửi'
+  $('send-ship').value = shipLabel(o.ship, o.dest)
+  $('send-date').value = n ? n.pickup_date : ''
+  $('send-priority').value = n ? n.priority : 1
+  $('send-note').value = n ? n.note : ''
+  $('send-date').classList.remove('err'); $('send-date-err').innerHTML = ''
+  openM('m-send')
+}
+function submitSend() {
+  const o = S.order, date = $('send-date').value
+  if (!date) { $('send-date').classList.add('err'); $('send-date-err').innerHTML = errTx('Ngày lấy hàng là bắt buộc'); return toast('Bạn chưa nhập đầy đủ thông tin.', 'bad') }
+  const form = { pickup_date: date, priority: Number($('send-priority').value), note: $('send-note').value.trim() }
+  if (S.ui.sendFor) {
+    const n = findNote(S.ui.sendFor)
+    if (n.status !== 3) return toast('Chỉ gửi lại được phiếu bị trả lại', 'bad')
+    const rem = remainingPairs(o, n.id)
+    if (!rem.length) { closeM('m-send'); return toast('Đơn không còn số lượng cần gửi — hãy hủy phiếu', 'bad') }
+    Object.assign(n, form, { status: 2, points: buildPoints(o, rem), sent_by: S.user, sent_at: todayISO(), return_reason: '', returned_by: '', returned_at: '', owner: '', received_at: '' })
+  } else {
+    const r = cannotSendReason(o)
+    if (r) { closeM('m-send'); return toast(r, 'bad') }
+    const id = S.seq++
+    S.notes.push(Object.assign({
+      id, code: `PGH-2026-${String(id).padStart(4, '0')}`, order_id: o.id, order_code: o.code, supplier_name: SUPPLIER.name,
+      ship: o.ship, dest: o.dest, status: 2, sent_by: S.user, sent_at: todayISO(), owner: '', received_at: '',
+      picked_at: '', pickup_note: '', completed_at: '', has_diff: 0, no_cost: 0, costs: [], points: buildPoints(o, remainingPairs(o)),
+    }, form))
+  }
+  o.status = 7 // Đã duyệt → Đã gửi giao hàng
+  closeM('m-send')
+  toast('Đã gửi phiếu sang bộ phận giao hàng. <br><small>(Bản thật quay về danh sách đơn mua — demo ở lại để xem tiếp.)</small>', 'ok')
+  renderPO()
+}
+function askCancel(noteId) {
+  const n = findNote(noteId)
+  ask({
+    title: 'Hủy phiếu giao hàng', danger: true, accept: 'Hủy phiếu',
+    msg: `Hủy phiếu giao hàng <b>${esc(n.code)}</b>? Số lượng của phiếu sẽ trả về "Còn phải gửi" để gửi phiếu mới.`,
+    ok: () => {
+      if (n.status !== 3) return toast('Chỉ hủy được phiếu bị trả lại', 'bad')
+      n.status = 6
+      const o = S.order
+      if (!notesOf(o).some((x) => [2, 4, 5].includes(x.status))) o.status = 3 // không còn phiếu nào → về Đã duyệt
+      toast('Đã hủy phiếu giao hàng', 'ok'); renderPO()
+    },
+  })
+}
+
+// ---------------- MÀN 2: DANH SÁCH PHIẾU GIAO HÀNG ----------------
+const FLT_DEFAULT = () => ({ open: false, q: '', code: '', order: '', supplier: '', ship: '', point: '', from: '', to: '', priority: '', owner: '', status: '' })
+function filteredNotes() {
+  const f = S.ui.flt, lc = (v) => String(v || '').toLowerCase()
+  return S.notes.slice().sort((a, b) => b.id - a.id).filter((n) => {
+    if (f.q && ![n.code, n.order_code, n.supplier_name].some((x) => lc(x).includes(lc(f.q)))) return false
+    if (f.code && !lc(n.code).includes(lc(f.code))) return false
+    if (f.order && !lc(n.order_code).includes(lc(f.order))) return false
+    if (f.supplier && n.supplier_name !== f.supplier) return false
+    if (f.ship && n.ship !== f.ship) return false
+    if (f.point && !lc(destinationText(n)).includes(lc(f.point))) return false
+    if (f.from && n.pickup_date < f.from) return false
+    if (f.to && n.pickup_date > f.to) return false
+    if (f.priority && String(n.priority) !== f.priority) return false
+    if (f.owner && n.owner !== f.owner) return false
+    if (f.status && String(n.status) !== f.status) return false
+    return true
+  })
+}
+function setFlt(k, v) { S.ui.flt[k] = v; renderListBody() }
+function renderList() {
+  if (!S.ui.flt || S.ui.flt.code === undefined) S.ui.flt = FLT_DEFAULT()
+  const f = S.ui.flt
+  const suppliers = [...new Set(S.notes.map((n) => n.supplier_name))].map((s) => ({ id: s, text: s }))
+  const owners = Object.keys(USERS).filter((k) => !USERS[k].canSend).map((k) => ({ id: k, text: USERS[k].name }))
+  const sel = (k, opts) => `<select class="v2-input" onchange="setFlt('${k}',this.value)"><option value="">Tất cả</option>${opts.map((o) => `<option value="${esc(o.id)}" ${String(f[k]) === String(o.id) ? 'selected' : ''}>${esc(o.text)}</option>`).join('')}</select>`
+  const txt = (k, ph) => `<input class="v2-input" value="${esc(f[k])}" placeholder="${ph}" oninput="setFlt('${k}',this.value)">`
+  $('screen').innerHTML = `
+  <div class="page-title-box">
+    <h4 class="page-title">Phiếu giao hàng</h4>
+    <div class="breadcrumb">Giao hàng / <b>Phiếu giao hàng</b></div>
+  </div>
+  <div class="tp-card mb-3">
+    <div class="flt-bar">
+      <div class="q"><i class="ri-search-line"></i><input class="v2-input" placeholder="Tìm theo mã phiếu, mã đơn mua, nhà cung cấp" value="${esc(f.q)}" oninput="setFlt('q',this.value)"></div>
+      <button class="btn btn-secondary" onclick="S.ui.flt.open=!S.ui.flt.open;renderList()"><i class="ri-filter-3-line"></i>Bộ lọc</button>
+      <span style="flex:1"></span>
+      <button class="icon-btn" title="Cài đặt cột (như màn thật)" onclick="toast('Demo: popup cài đặt cột hiển thị như màn thật')"><i class="ri-settings-3-line"></i></button>
+    </div>
+    <div class="flt-panel ${f.open ? '' : 'hide'}"><div class="grid">
+      <div><label class="v2-label">Mã phiếu</label>${txt('code', 'Nhập mã phiếu')}</div>
+      <div><label class="v2-label">Đơn mua hàng</label>${txt('order', 'Nhập mã đơn mua')}</div>
+      <div><label class="v2-label">Nhà cung cấp</label>${sel('supplier', suppliers)}</div>
+      <div><label class="v2-label">Phương thức giao hàng</label>${sel('ship', SHIP_OPTIONS)}</div>
+      <div><label class="v2-label">Nơi nhận</label>${txt('point', 'Nhập nơi nhận')}</div>
+      <div><label class="v2-label">Ngày lấy hàng</label><div class="range"><input type="date" class="v2-input" value="${f.from}" onchange="setFlt('from',this.value)"><span>–</span><input type="date" class="v2-input" value="${f.to}" onchange="setFlt('to',this.value)"></div></div>
+      <div><label class="v2-label">Ưu tiên</label>${sel('priority', PRIORITY_OPTIONS)}</div>
+      <div><label class="v2-label">Người phụ trách</label>${sel('owner', owners)}</div>
+      <div><label class="v2-label">Trạng thái</label>${sel('status', NOTE_STATUS_OPTIONS)}</div>
+    </div><div class="mt-2" style="text-align:right"><button class="btn btn-tertiary" onclick="S.ui.flt=Object.assign(FLT_DEFAULT(),{open:true});renderList()"><i class="ri-refresh-line"></i>Làm mới</button></div></div>
+    <div style="padding:0 12px 4px"><div class="tbl-wrap"><table class="pt">
+      <thead><tr><th class="fz c-stt">STT</th><th class="fz c-code">Mã phiếu</th><th>Đơn mua hàng</th><th>Nhà cung cấp</th><th>Phương thức giao hàng</th><th>Nơi nhận</th><th>Ngày lấy hàng</th><th>Ưu tiên</th><th>Người phụ trách</th><th>Trạng thái</th><th>Hành động</th></tr></thead>
+      <tbody id="list-body"></tbody></table></div></div>
+    <div class="list-foot" id="list-foot"></div>
+  </div>`
+  renderListBody()
+}
+function renderListBody() {
+  const rows = filteredNotes()
+  $('list-body').innerHTML = rows.length ? rows.map((n, i) => {
+    const sb = SHIP_BADGES[n.ship], pr = PRIORITY_OPTIONS.find((p) => p.id === n.priority)
+    const acts = [
+      canReceive(n) ? `<button class="icon-btn ok" title="Tiếp nhận" onclick="askReceive(${n.id},'list')"><i class="ri-inbox-archive-line"></i></button>` : '',
+      canReturn(n) ? `<button class="icon-btn danger" title="Trả lại" onclick="openReturn(${n.id})"><i class="ri-arrow-go-back-line"></i></button>` : '',
+    ].join('')
+    return `<tr><td class="fz c-stt tc">${i + 1}</td><td class="fz c-code"><span class="lnk" onclick="go('detail',${n.id})">${esc(n.code)}</span></td>
+      <td><span class="lnk" onclick="openOrder(${n.order_id})">${esc(n.order_code)}</span></td><td class="wrap">${esc(n.supplier_name)}</td>
+      <td>${badge(sb.text, sb.color)}</td><td class="wrap">${esc(destinationText(n))}</td><td class="tc">${fmtDate(n.pickup_date)}</td>
+      <td class="tc">${badge(pr.text, pr.color)}</td><td>${esc(userName(n.owner))}</td>
+      <td>${statusBadge(n.status)}${n.has_diff ? ' <span class="badge b-amber">⚠ Có chênh lệch</span>' : ''}</td>
+      <td><div class="row-acts">${acts}</div></td></tr>`
+  }).join('') : '<tr><td colspan="11" class="tc mut" style="padding:20px">Không có dữ liệu</td></tr>'
+  $('list-foot').innerHTML = `<span>Tổng ${rows.length} bản ghi · mới nhất lên đầu · không chia tab, mọi người đều thấy mọi phiếu</span><span>Hiển thị 20 / trang</span>`
+}
+
+// Tiếp nhận — ai bấm trước người đó phụ trách
+function askReceive(id, from) {
+  const n = findNote(id)
+  ask({
+    title: 'Xác nhận tiếp nhận', accept: 'Tiếp nhận',
+    msg: from === 'list'
+      ? `Tiếp nhận phiếu giao hàng <b>${esc(n.code)}</b>? Bạn sẽ là người phụ trách phiếu và thực hiện giao/nhận hàng.`
+      : `Tiếp nhận phiếu giao hàng <b>${esc(n.code)}</b>? Bạn sẽ là người phụ trách và cập nhật tiến độ giao hàng của phiếu.`,
+    ok: () => {
+      if (n.status !== 2) return toast(n.owner ? `Phiếu đã được ${userName(n.owner)} tiếp nhận` : 'Phiếu không còn ở trạng thái chờ tiếp nhận', 'bad')
+      Object.assign(n, { status: 4, owner: S.user, received_at: todayISO() })
+      toast(from === 'list' ? `Đã tiếp nhận phiếu ${esc(n.code)}` : 'Đã tiếp nhận phiếu giao hàng', 'ok')
+      go('detail', n.id)
+    },
+  })
+}
+function openReturn(id) {
+  const n = findNote(id)
+  S.ui.retFor = id
+  $('ret-title').textContent = `Trả lại phiếu giao hàng: ${n.code}`
+  $('ret-reason').value = ''; $('ret-reason').classList.remove('err'); $('ret-err').innerHTML = ''
+  openM('m-return')
+}
+function submitReturn() {
+  const n = findNote(S.ui.retFor), reason = $('ret-reason').value.trim()
+  if (!reason) { $('ret-reason').classList.add('err'); $('ret-err').innerHTML = errTx('Lý do trả lại là bắt buộc'); return toast('Vui lòng nhập lý do trả lại', 'bad') }
+  if (!canReturn(n)) { closeM('m-return'); render(); return toast(n.status === 4 && isOwner(n) ? 'Phiếu đã lấy hàng hoặc đã xác nhận điểm giao — không thể trả lại' : 'Không thể trả lại phiếu này', 'bad') }
+  const d = new Date()
+  Object.assign(n, { status: 3, return_reason: reason, returned_by: S.user, returned_at: `${pad(d.getHours())}:${pad(d.getMinutes())} ${fmtDate(todayISO())}`, owner: '' })
+  closeM('m-return')
+  toast('Trả lại phiếu giao hàng thành công', 'ok')
+  render()
+}
+
+// ---------------- MÀN 3: CHI TIẾT PHIẾU GIAO HÀNG ----------------
+function renderDetail() {
+  const n = findNote(S.detailId)
+  const inProgress = [4, 5].includes(n.status), isKh = n.dest === 'kh', editable = canEdit(n)
+  const banners = []
+  if (n.status === 3) banners.push(`<div class="note note-err mb-2"><i class="ri-arrow-go-back-line"></i><div><div class="nt">Bị trả lại${n.returned_by ? ' bởi ' + esc(userName(n.returned_by)) : ''}${n.returned_at ? ' lúc ' + esc(n.returned_at) : ''}</div><span class="pre">${esc(n.return_reason)}</span></div></div>`)
+  if (n.status === 4 && !isOwner(n)) banners.push(`<div class="note note-warn mb-2"><i class="ri-eye-line"></i><div>Người phụ trách là <b>${esc(userName(n.owner))}</b> — bạn chỉ xem.</div></div>`)
+  if (n.status === 5) banners.push(`<div class="note note-ok mb-2"><i class="ri-checkbox-circle-line"></i><div>Đã hoàn thành giao hàng${n.completed_at ? ' lúc ' + esc(n.completed_at) : ''}.</div></div>`)
+  if (canReceive(n)) banners.push(`<div class="note note-info mb-2"><i class="ri-information-line"></i><div>Tiếp nhận = bạn là người phụ trách phiếu này: cập nhật lấy hàng, giao từng điểm và chi phí.</div></div>`)
+
+  const wh = n.points[0] && !isKh ? n.points[0].warehouse_name || '' : ''
+  const general = `<div class="sec"><div class="sec-h"><h6>Thông tin chung ${n.has_diff ? badge('Có chênh lệch', '#F59E0B') : ''}</h6></div><div class="sec-b"><div class="grid">
+      <div><label class="v2-label">Đơn mua hàng</label><div class="link-field"><input class="v2-input" disabled><span class="lnk lnk-in" onclick="openOrder(${n.order_id})">${esc(n.order_code)}</span></div></div>
+      ${dis('Nhà cung cấp', n.supplier_name)}${dis('Phương thức giao hàng', shipLabel(n.ship, n.dest))}
+      ${dis('Ngày lấy hàng', fmtDate(n.pickup_date))}${dis('Người gửi', userName(n.sent_by))}${dis('Ngày gửi', fmtDate(n.sent_at))}
+      ${dis('Người phụ trách', userName(n.owner))}${dis('Ngày tiếp nhận', n.owner ? fmtDate(n.received_at) : '')}
+      ${!isKh ? dis('Kho nhận', wh) : ''}
+      <div class="s3"><label class="v2-label">Ghi chú cung ứng</label><textarea class="v2-input" rows="2" disabled>${esc(n.note)}</textarea></div>
+    </div></div></div>`
+
+  let body
+  if (!inProgress) {
+    body = `<div class="sec"><div class="sec-h"><h6>Lộ trình và hàng hóa</h6></div><div class="sec-b">${n.points.map((p, pi) => `
+      <div class="dn-route"><div class="dn-step__title mb-1"><i class="${isKh ? 'ri-map-pin-line' : 'ri-home-4-line'}"></i>Điểm ${pi + 1}: ${esc(isKh ? p.customer_name || 'Khách hàng' : p.warehouse_name || 'Kho công ty')}</div>
+      <div class="dn-hint mb-1">${esc(p.address)}${p.receiver_name ? ` · Người nhận: ${esc(p.receiver_name)}${p.receiver_phone ? ` (${esc(p.receiver_phone)})` : ''}` : ''}</div>
+      <table class="mt"><thead><tr><th style="width:44px">STT</th><th>Hàng hóa</th><th style="width:90px">ĐVT</th><th style="width:130px" class="tr">Số lượng</th></tr></thead>
+      <tbody>${p.items.map((it, i) => `<tr><td class="tc">${i + 1}</td><td>${esc(it.product_name)}</td><td>${esc(it.unit_name)}</td><td class="tr">${fmtQty(it.qty_plan)}</td></tr>`).join('')}</tbody></table></div>`).join('')}</div></div>`
+  } else {
+    body = `<div class="sec"><div class="sec-h"><h6>Tiến độ giao hàng</h6></div><div class="sec-b">
+        ${!isNcc(n) ? `<div id="pickup-box">${pickupHtml(n, editable)}</div>` : ''}
+        ${n.points.map((p, pi) => `<div id="pc-${p.id}">${pointHtml(n, p, pi, editable)}</div>`).join('')}
+      </div></div>
+      <div class="sec"><div class="sec-h"><h6>Chi phí</h6></div><div class="sec-b" id="cost-box">${costHtml(n, editable)}</div></div>`
+  }
+
+  const acts = [
+    canReceive(n) ? `<button class="btn btn-primary" onclick="askReceive(${n.id},'detail')"><i class="ri-check-line"></i>Tiếp nhận</button>` : '',
+    editable ? `<button class="btn btn-primary" onclick="askComplete(${n.id})"><i class="ri-flag-line"></i>Hoàn thành giao hàng</button>` : '',
+    canReturn(n) ? `<button class="btn btn-danger" onclick="openReturn(${n.id})"><i class="ri-arrow-go-back-line"></i>Trả lại cung ứng</button>` : '',
+  ].join('')
+
+  $('screen').innerHTML = `
+  <div class="page-title-box">
+    <h4 class="page-title">Phiếu giao hàng ${esc(n.code)} ${statusBadge(n.status).replace('class="badge"', 'class="badge status-pill"')}</h4>
+    <div class="breadcrumb">Giao hàng / Phiếu giao hàng / <b>${esc(n.code)}</b></div>
+  </div>
+  ${banners.join('')}
+  <div class="tp-card mb-3">
+    <div class="card-body">${general}${body}</div>
+    <div class="form-footer">${acts}<button class="btn btn-tertiary" onclick="go('list')"><i class="ri-arrow-left-line"></i>Quay lại</button></div>
+  </div>`
+}
+
+// ----- Lấy hàng tại NCC (PickupBlock.vue) — chỉ khi công ty tự lấy -----
+function allItems(n) { const r = []; n.points.forEach((p, pi) => p.items.forEach((it) => r.push({ it, p, pi }))); return r }
+function pickupDraft(n) {
+  if (!S.ui.pickup) {
+    S.ui.pickup = { qty: {}, time: n.picked_at || nowLocal(), note: n.pickup_note || '', errs: {} }
+    allItems(n).forEach(({ it }) => (S.ui.pickup.qty[it.id] = it.qty_picked === null ? it.qty_plan : it.qty_picked))
+  }
+  return S.ui.pickup
+}
+function pickupHtml(n, editable) {
+  const picked = !!n.picked_at
+  const editing = editable && (!picked || (S.ui.pickup && S.ui.pickup.editing))
+  const multi = n.points.length > 1
+  const pointLabel = (p, pi) => (multi ? `<div class="dn-hint">Điểm ${pi + 1}: ${esc(p.customer_name || p.address || '')}</div>` : '')
+  let head = `<div class="dn-step__head"><span class="dn-step__title"><i class="ri-store-2-line"></i>Lấy hàng tại NCC</span>
+    ${picked && !editing ? `<span class="badge b-green">Đã lấy ${fmtDateTime(n.picked_at)}</span>` : '<span class="badge b-gray">Chưa lấy</span>'}<span style="flex:1"></span>
+    ${picked && !editing && editable && !anyPointDone(n) ? `<button class="btn btn-tertiary" onclick="startPickupEdit()"><i class="ri-edit-line"></i>Sửa</button>` : ''}</div>`
+  if (editing) {
+    const d = pickupDraft(n)
+    const short = allItems(n).some(({ it }) => { const q = parseQty(d.qty[it.id]); return q !== null && q < it.qty_plan })
+    return `<div class="dn-step">${head}
+      <table class="mt"><thead><tr><th style="width:44px">STT</th><th>Hàng hóa</th><th style="width:90px">ĐVT</th><th style="width:130px" class="tr">SL yêu cầu</th><th style="width:160px">SL thực lấy<span class="req">*</span></th></tr></thead>
+      <tbody>${allItems(n).map(({ it, p, pi }, i) => `<tr><td class="tc">${i + 1}</td><td>${esc(it.product_name)}${pointLabel(p, pi)}</td><td>${esc(it.unit_name)}</td><td class="tr">${fmtQty(it.qty_plan)}</td>
+        <td><input class="v2-input sm num ${d.errs['q' + it.id] ? 'err' : ''}" value="${esc(d.qty[it.id])}" oninput="S.ui.pickup.qty[${it.id}]=this.value" onchange="rerenderPickup()">${errTx(d.errs['q' + it.id])}</td></tr>`).join('')}</tbody></table>
+      ${errTx(d.errs.items)}
       <div class="grid mt-2">
-        <div><div class="v2-label">Thời gian lấy <span class="req">*</span></div><div class="fwa"><input type="date" class="v2-input" value="${pk.date}" onchange="cur().pickup.date=this.value"><input type="time" class="v2-input" style="max-width:110px" value="${pk.time}" onchange="cur().pickup.time=this.value"></div></div>
-        <div class="s2"><div class="v2-label">Ghi chú lấy hàng <span class="tip" title="Bắt buộc khi lấy thiếu">ⓘ</span></div><input class="v2-input ${E.pkNote?'err':''}" value="${esc(pk.note)}" placeholder="Bắt buộc khi lấy thiếu — VD: NCC hết hàng CRP, hẹn giao bù 31/10" oninput="cur().pickup.note=this.value">${E.pkNote?`<div class="err-tx"><i class="ri-error-warning-line"></i>${E.pkNote}</div>`:''}</div>
-      </div>${E.pk?`<div class="err-tx"><i class="ri-error-warning-line"></i>${E.pk}</div>`:''}
-      <div class="tr mt-2"><button class="btn btn-primary" onclick="confirmPickup()"><i class="ri-checkbox-circle-line"></i>Xác nhận đã lấy hàng</button></div>`;
-  } else pkBody = '<div class="sm mut">Chưa lấy hàng.</div>';
-  const pkCard = `<div class="step ${pk.done?'done':''}"><div class="step-h"><span class="badge b-amber">LẤY HÀNG</span><span class="nm">${SUPPLIER.name}</span><span class="sm mut">${SUPPLIER.phone}</span><span class="sp"></span>
-      ${pk.done?`<span class="badge b-green"><i class="ri-check-line"></i>Đã lấy ${pk.at}</span>${edit&&!anyDlv?` <button class="btn btn-tertiary btn-sm" onclick="cur().pickup.done=false;cur().dlv={};render()"><i class="ri-edit-line"></i>Sửa</button>`:''}`:'<span class="badge b-gray">Chưa lấy</span>'}</div>
-    <div class="step-b">${pkBody}</div></div>`;
-  // Điểm giao
-  const ptCards = p.pts.map((pid,i)=>{
-    const pt=pointById(pid), pi=p.pinfo[pid], d=p.dlv[pid], pls=linesOf(pid).filter(l=>planQty(p,l.id)>0);
-    let inner;
-    if (!ncc && !pk.done) inner = '<div class="sm mut">Xác nhận lấy hàng tại NCC trước.</div>';
-    else if (d.done){
-      inner = `<div class="tbl-wrap"><table class="pt"><thead><tr><th>Mã</th><th style="min-width:220px">Tên hàng</th><th>ĐVT</th>${ncc?'<th>SL yêu cầu</th><th>Thực nhận</th><th>Thiếu</th>':'<th>Đã lấy</th><th>Thực giao</th><th>Mang về kho</th>'}</tr></thead><tbody>
-        ${pls.map(l=>{ const a=capQty(p,l.id), b=dlvQty(p,l.id); return `<tr><td class="mono">${l.code}</td><td class="cell-name"><b>${esc(l.name)}</b></td><td class="tc">${l.unit}</td><td class="tr">${fmt(a)}</td><td class="tr ${b<a?'qneg':''}">${fmt(b)}</td><td class="tr">${a-b>0?`<span class="badge b-amber">${fmt(a-b)}</span>`:'—'}</td></tr>`; }).join('')}</tbody></table></div>
-        <div class="sm mt-2">${ncc?'Nhận':'Giao'} lúc <b>${d.at}</b>${isKho(pid)?'':` · Người ký nhận: <b>${esc(d.signer)}</b>`}${d.issue?` · <span class="qneg">${esc(d.issue)}${d.note?': '+esc(d.note):''}</span>`:''}</div>`;
-    } else if (edit){
-      const short = pls.some(l=>(+d.actual[l.id]||0)<capQty(p,l.id));
-      inner = `<div class="tbl-wrap"><table class="pt"><thead><tr><th>Mã</th><th style="min-width:220px">Tên hàng</th><th>ĐVT</th><th>${ncc?'SL yêu cầu':'Đã lấy'}</th><th>${ncc?'SL thực nhận':'SL thực giao'} <span class="req">*</span></th></tr></thead><tbody>
-        ${pls.map(l=>{ const a=capQty(p,l.id), v=d.actual[l.id]; return `<tr><td class="mono">${l.code}</td><td class="cell-name"><b>${esc(l.name)}</b></td><td class="tc">${l.unit}</td><td class="tr">${fmt(a)}</td><td class="tc"><input class="inp ${v>a||v<0?'over':''}" type="number" min="0" value="${v}" oninput="setDlv('${pid}',${l.id},this)"></td></tr>`; }).join('')}</tbody></table></div>
-        <div class="grid mt-2">
-          ${isKho(pid)?'':`<div><div class="v2-label">Người ký nhận <span class="req">*</span></div><input class="v2-input ${E['sg_'+pid]?'err':''}" value="${esc(d.signer)}" oninput="cur().dlv['${pid}'].signer=this.value">${E['sg_'+pid]?`<div class="err-tx"><i class="ri-error-warning-line"></i>${E['sg_'+pid]}</div>`:''}</div>`}
-          <div><div class="v2-label">Thời gian ${ncc?'nhận':'giao'} <span class="req">*</span></div><div class="fwa"><input type="date" class="v2-input" value="${d.date}" onchange="cur().dlv['${pid}'].date=this.value"><input type="time" class="v2-input" style="max-width:110px" value="${d.time}" onchange="cur().dlv['${pid}'].time=this.value"></div></div>
-          <div class="s3" id="iss_${pid}" style="${short?'':'display:none'}"><div class="fwa"><div style="flex:0 0 280px"><div class="v2-label">Lý do ${ncc?'nhận thiếu':'giao thiếu'} <span class="req">*</span></div><select class="v2-input ${E['iss_'+pid]?'err':''}" onchange="cur().dlv['${pid}'].issue=this.value">${['',...ISSUES].map(x=>`<option value="${x}" ${x===d.issue?'selected':''}>${x||'Chọn lý do'}</option>`).join('')}</select>${E['iss_'+pid]?`<div class="err-tx"><i class="ri-error-warning-line"></i>${E['iss_'+pid]}</div>`:''}</div>
-            <div style="flex:1"><div class="v2-label">Mô tả</div><input class="v2-input" value="${esc(d.note)}" placeholder="${ncc?'VD: NCC hẹn giao bù 31/10 / hàng lỗi trả lại NCC':'Hàng chưa giao được sẽ mang về kho'}" oninput="cur().dlv['${pid}'].note=this.value"></div></div></div>
-        </div>
-        <div class="tr mt-2"><button class="btn btn-primary" onclick="confirmPoint('${pid}')"><i class="ri-checkbox-circle-line"></i>${ncc?(isKho(pid)?'Xác nhận kho đã nhận hàng':'Xác nhận khách đã nhận hàng'):(isKho(pid)?'Xác nhận đã bàn giao kho':'Xác nhận đã giao điểm này')}</button></div>`;
-    } else inner = `<div class="sm mut">${ncc?'Chưa nhận.':'Chưa giao.'}</div>`;
-    return `<div class="step ${d&&d.done?'done':''} ${ncc||pk.done?'':'lockc'}"><div class="step-h"><span class="badge b-blue">ĐIỂM ${i+1}</span><span class="nm">${esc(pt.name)}</span><span class="sm mut">${esc(pi.receiver)} · ${esc(pi.phone)} · ${esc(pi.window)}</span><span class="sp"></span>
-      ${d&&d.done?`<span class="badge ${d.issue?'b-amber':'b-green'}"><i class="ri-check-line"></i>${d.issue?(ncc?'Nhận thiếu':'Giao thiếu'):(ncc?'Đã nhận':'Đã giao')}</span>${edit?` <button class="btn btn-tertiary btn-sm" onclick="cur().dlv['${pid}'].done=false;render()"><i class="ri-edit-line"></i>Sửa</button>`:''}`:`<span class="badge b-gray">${ncc?'Chưa nhận':'Chưa giao'}</span>`}</div>
-      <div class="step-b"><div class="sm mut mb-2"><i class="ri-map-pin-line"></i> ${esc(pt.address)}</div>${inner}</div></div>`;
-  }).join('');
-  return ncc ? ptCards : pkCard + ptCards;
+        <div><label class="v2-label">Thời gian lấy hàng<span class="req">*</span></label><input type="datetime-local" class="v2-input ${d.errs.time ? 'err' : ''}" value="${d.time}" onchange="S.ui.pickup.time=this.value">${errTx(d.errs.time)}</div>
+        <div class="s2"><label class="v2-label">Ghi chú lấy hàng${short ? '<span class="req">*</span>' : ''}</label><input class="v2-input ${d.errs.note ? 'err' : ''}" value="${esc(d.note)}" placeholder="${short ? 'Lấy thiếu — ghi rõ lý do' : 'Ghi chú (nếu có)'}" oninput="S.ui.pickup.note=this.value">${errTx(d.errs.note)}</div>
+      </div>
+      <div class="mt-2" style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="savePickup()"><i class="ri-check-line"></i>Xác nhận đã lấy hàng</button>
+        ${picked ? `<button class="btn btn-tertiary" onclick="S.ui.pickup=null;rerenderPickup()"><i class="ri-close-line"></i>Hủy</button>` : ''}
+      </div></div>`
+  }
+  if (!picked) return `<div class="dn-step">${head}<div class="dn-hint">Chưa lấy hàng tại NCC.</div></div>`
+  const short = allItems(n).some(({ it }) => it.qty_picked < it.qty_plan)
+  return `<div class="dn-step is-done">${head}
+    <table class="mt"><thead><tr><th style="width:44px">STT</th><th>Hàng hóa</th><th style="width:90px">ĐVT</th><th style="width:130px" class="tr">SL yêu cầu</th><th style="width:130px" class="tr">SL thực lấy</th></tr></thead>
+    <tbody>${allItems(n).map(({ it, p, pi }, i) => `<tr class="${it.qty_picked < it.qty_plan ? 'is-short' : ''}"><td class="tc">${i + 1}</td><td>${esc(it.product_name)}${pointLabel(p, pi)}</td><td>${esc(it.unit_name)}</td><td class="tr">${fmtQty(it.qty_plan)}</td><td class="tr">${fmtQty(it.qty_picked)}</td></tr>`).join('')}</tbody></table>
+    ${short ? `<div class="dn-warn mt-2"><i class="ri-error-warning-line"></i>Lấy thiếu so với yêu cầu: ${esc(n.pickup_note)}</div>` : n.pickup_note ? `<div class="dn-hint mt-2">Ghi chú: ${esc(n.pickup_note)}</div>` : ''}
+    ${editable && anyPointDone(n) ? '<div class="dn-hint mt-1">Đã có điểm xác nhận giao — sửa điểm đó trước nếu cần sửa số lấy hàng.</div>' : ''}</div>`
 }
-function setPk(lid, el){ const p=cur(), v=Math.floor(+el.value||0); p.pickup.actual[lid]=v; el.classList.toggle('over', v>planQty(p,lid)||v<0); }
-function confirmPickup(){
-  const p=cur(), pk=p.pickup, E={}, ls=LINES.filter(l=>planQty(p,l.id)>0);
-  if (ls.some(l=>pk.actual[l.id]>planQty(p,l.id) || pk.actual[l.id]<0)) E.pk='SL thực lấy không được vượt SL yêu cầu.';
-  else if (ls.every(l=>!pk.actual[l.id])) E.pk='Chưa lấy được hàng nào — trao đổi với cung ứng để dời / hủy.';
-  if (ls.some(l=>pk.actual[l.id]<planQty(p,l.id)) && !pk.note.trim()) E.pkNote='Lấy thiếu — ghi lý do (cung ứng nhận thông báo).';
-  S.err=E; if (Object.keys(E).length) return render();
-  setClock(pk.date, pk.time); pk.done=true; pk.at=`${dmy(pk.date)} ${pk.time}`;
-  initDlv(p, pk.date);
-  const short = ls.filter(l=>pickedQty(p,l.id)<planQty(p,l.id));
-  p.history.push({at:pk.at, who:p.owner, t:'Đã lấy hàng tại NCC'+(short.length?` — thiếu ${short.length} mặt hàng: ${pk.note}`:''), k:short.length?'warn':''});
-  render(); toast(short.length?`<i class="ri-error-warning-line"></i> Lấy thiếu ${short.length} mặt hàng — ${U.supply} nhận thông báo để làm việc với NCC.`:'Đã xác nhận lấy đủ hàng tại NCC.');
-}
-// Khởi tạo xác nhận từng điểm: tự lấy → sau khi lấy hàng; NCC giao → ngay khi tiếp nhận
-function initDlv(p, date){
-  p.pts.forEach((pid,i)=>{ const d={done:false, actual:{}, signer:isKho(pid)?'':p.pinfo[pid].receiver, issue:'', note:'', date, time:['10:30','13:30','15:00'][i]||'16:00'};
-    linesOf(pid).forEach(l=>{ if (planQty(p,l.id)>0) d.actual[l.id]=capQty(p,l.id); }); p.dlv[pid]=d; });
-}
-function setDlv(pid, lid, el){
-  const p=cur(), d=p.dlv[pid]; d.actual[lid]=Math.floor(+el.value||0);
-  el.classList.toggle('over', d.actual[lid]>capQty(p,lid) || d.actual[lid]<0);
-  $('#iss_'+pid).style.display = linesOf(pid).filter(l=>planQty(p,l.id)>0).some(l=>(+d.actual[l.id]||0)<capQty(p,l.id)) ? '' : 'none';
-}
-function confirmPoint(pid){
-  const p=cur(), d=p.dlv[pid], E={}, ls=linesOf(pid).filter(l=>planQty(p,l.id)>0);
-  const short = ls.some(l=>d.actual[l.id]<capQty(p,l.id));
-  if (ls.some(l=>d.actual[l.id]>capQty(p,l.id) || d.actual[l.id]<0)) E['iss_'+pid]=isNcc()?'SL thực nhận không vượt SL yêu cầu.':'SL giao không vượt SL đã lấy.';
-  else if (short && !d.issue) E['iss_'+pid]='Chọn lý do giao thiếu';
-  if (!short) d.issue='';
-  if (!isKho(pid) && !String(d.signer).trim()) E['sg_'+pid]='Nhập người ký nhận';
-  S.err=E; if (Object.keys(E).length){ render(); if (E['iss_'+pid]) $('#iss_'+pid).style.display=''; return; }
-  setClock(d.date, d.time); d.done=true; d.at=`${dmy(d.date)} ${d.time}`;
-  p.history.push({at:d.at, who:p.owner, t:`${isNcc()?'NCC đã giao':'Đã giao'} ${pointById(pid).name}`+(isKho(pid)?'':` — ký nhận ${d.signer}`)+(d.issue?` (${d.issue})`:''), k:d.issue?'warn':''});
-  render(); toast(`Đã xác nhận ${isNcc()?'nhận hàng tại':'giao'} ${esc(pointById(pid).name)}.`);
+function startPickupEdit() { S.ui.pickup = null; pickupDraft(findNote(S.detailId)).editing = true; rerenderPickup() }
+function rerenderPickup() { const n = findNote(S.detailId); $('pickup-box').innerHTML = pickupHtml(n, canEdit(n)); n.points.forEach((p, pi) => ($('pc-' + p.id).innerHTML = pointHtml(n, p, pi, canEdit(n)))) }
+function savePickup() {
+  const n = findNote(S.detailId), d = S.ui.pickup, errs = {}
+  let anyPos = false, short = false
+  allItems(n).forEach(({ it }) => {
+    const q = parseQty(d.qty[it.id])
+    if (q === null) errs['q' + it.id] = 'SL thực lấy phải là số'
+    else if (q < 0 || q > it.qty_plan) errs['q' + it.id] = `SL thực lấy phải từ 0 đến ${fmtQty(it.qty_plan)}`
+    else { if (q > 0) anyPos = true; if (q < it.qty_plan) short = true }
+  })
+  if (!Object.keys(errs).length && !anyPos) errs.items = 'Phải lấy ít nhất 1 dòng hàng'
+  if (!d.time) errs.time = 'Thời gian lấy hàng là bắt buộc'
+  if (short && !String(d.note).trim()) errs.note = 'Ghi chú lấy hàng là bắt buộc khi lấy thiếu'
+  d.errs = errs
+  if (Object.keys(errs).length) { rerenderPickup(); return toast('Vui lòng kiểm tra lại số liệu lấy hàng', 'bad') }
+  if (anyPointDone(n)) return toast('Sửa điểm đã giao trước khi sửa lấy hàng', 'bad')
+  allItems(n).forEach(({ it }) => (it.qty_picked = parseQty(d.qty[it.id])))
+  n.picked_at = d.time; n.pickup_note = String(d.note).trim()
+  S.ui.pickup = null; S.ui.pts = {}
+  toast('Đã cập nhật lấy hàng', 'ok'); renderDetail()
 }
 
-/* --- Tab Chi phí --- */
-function tabCost(p, edit){
-  const D=edit?'':'disabled', tot=costTotal(p), sh=S.show;
-  const rows = p.costs.map((c,i)=>{ const bad = sh && (!c.type || !(+c.amount>0));
-    return `<tr class="${bad?'errrow':''}"><td class="tc">${i+1}</td>
-      <td><select class="v2-input sm ${sh&&!c.type?'err':''}" ${D} onchange="setCostType(${i},this.value)">${['',...COST_TYPES].map(t=>`<option value="${t}" ${t===c.type?'selected':''}>${t||'Chọn loại chi phí'}</option>`).join('')}</select></td>
-      <td><input class="v2-input sm" ${D} value="${esc(c.desc)}" placeholder="VD: Cao tốc Pháp Vân – Cầu Giẽ 2 lượt" oninput="cur().costs[${i}].desc=this.value"></td>
-      <td><input class="v2-input sm tr ${sh&&!(+c.amount>0)?'err':''}" style="width:120px" ${D} value="${c.amount?fmt(c.amount):''}" placeholder="0" oninput="setCostAmt(${i},this)"></td>
-      <td><select class="v2-input sm" ${D} onchange="cur().costs[${i}].payTo=this.value">${Object.entries(PAY_TO).map(([k,t])=>`<option value="${k}" ${k===c.payTo?'selected':''}>${t}</option>`).join('')}</select></td>
-      <td>${c.files.map((f,fi)=>`<span class="file"><i class="ri-image-line"></i>${f}${edit?`<i class="ri-close-line x" onclick="cur().costs[${i}].files.splice(${fi},1);render()"></i>`:''}</span>`).join('')}${edit?`<button class="icon-btn" title="Tải hóa đơn / biên lai" onclick="addCostFile(${i})"><i class="ri-upload-2-line"></i></button>`:''}${!c.files.length&&!edit?'<span class="mut">—</span>':''}</td>
-      <td class="tc">${edit?`<button class="icon-btn danger" title="Xóa" onclick="cur().costs.splice(${i},1);render()"><i class="ri-delete-bin-line"></i></button>`:''}</td></tr>`; }).join('');
-  return `<div class="tbl-wrap"><table class="pt"><thead><tr><th>STT</th><th style="min-width:180px">Loại chi phí <span class="req">*</span></th><th style="min-width:220px">Diễn giải</th><th>Số tiền (VNĐ) <span class="req">*</span></th><th style="min-width:200px">Trả cho</th><th style="min-width:160px">Hóa đơn / biên lai</th><th></th></tr></thead>
-      <tbody>${rows||`<tr><td colspan="7" class="tc mut" style="padding:14px">Chưa có khoản chi nào.</td></tr>`}
-      <tr class="total"><td colspan="3" class="tr">Tổng chi phí thực tế</td><td class="tr" id="costTot">${fmt(tot)}</td><td colspan="3" id="costCmp">${cmpBadge(tot)}</td></tr></tbody></table></div>
-    <div class="fwa mt-2">${edit?`<button class="btn btn-tertiary" onclick="addCost()"><i class="ri-add-line"></i>Thêm chi phí</button>`:''}
-      ${!p.costs.length?`<label class="cb"><input type="checkbox" ${D} ${p.noCost?'checked':''} onchange="cur().noCost=this.checked;render()"> Chuyến này không phát sinh chi phí</label>`:''}</div>`;
+// ----- Thẻ điểm giao / nhận (PointCard.vue) -----
+function pointDraft(n, p) {
+  if (!S.ui.pts[p.id]) {
+    const d = { qty: {}, signer: '', wh: p.warehouse_id || '', date: todayISO(), reason: '', desc: '', errs: {} }
+    p.items.forEach((it) => (d.qty[it.id] = isNcc(n) ? it.qty_plan : it.qty_picked))
+    S.ui.pts[p.id] = d
+  }
+  return S.ui.pts[p.id]
 }
-function cmpBadge(tot){ if (!tot) return ''; const d=tot-estCost(); return d>0?`<span class="badge b-red">Vượt dự kiến ${fmt(d)}đ</span>`:`<span class="badge b-green">Trong dự kiến (còn ${fmt(-d)}đ)</span>`; }
-function addCost(){ const p=cur(); p.costs.push({type:'', desc:'', amount:0, payTo:isNcc()?'ncc':'self', files:[]}); p.noCost=false; render(); }
-function setCostType(i, v){ const c=cur().costs[i]; c.type=v; if (v===COST_TYPES[0]) c.payTo='vc'; render(); }
-function setCostAmt(i, el){ const p=cur(), n=+el.value.replace(/[^0-9]/g,'')||0; p.costs[i].amount=n; el.value=n?fmt(n):''; $('#costTot').textContent=fmt(costTotal(p)); $('#costCmp').innerHTML=cmpBadge(costTotal(p)); }
-function addCostFile(i){ cur().costs[i].files.push(`HD_CP_${fileSeq++}.jpg`); render(); }
-
-
-/* --- Hoàn thành --- */
-function finishPgh(){
-  const p=cur(), ck=checks(p);
-  if (!ck.every(c=>c.ok)){ S.show=true; render(); return toast('<i class="ri-error-warning-line"></i> Chưa đủ điều kiện hoàn thành: '+ck.filter(c=>!c.ok).map(c=>c.t.replace(/<[^>]+>/g,'')).join(' · ')); }
-  const ls=LINES.filter(l=>planQty(p,l.id)>0);
-  const diff = ls.some(l=>dlvQty(p,l.id)<planQty(p,l.id)), tot=costTotal(p);
-  modal({title:'Hoàn thành giao hàng', icon:'ri-flag-line', ok:'Hoàn thành',
-    body:`Hoàn thành <b>${p.code}</b>?<br>• Chi phí thực tế <b>${fmt(tot)}đ</b> (dự kiến ${fmt(estCost())}đ).
-      ${diff?`<div class="note note-warn mt-2"><i class="ri-error-warning-line"></i><div>Có chênh lệch so với yêu cầu.</div></div>`:''}
-      <div class="mut mt-2">Sau khi hoàn thành không sửa được tiến độ / chi phí.</div>`,
-    onOk:()=>{ p.status=5; p.diff=diff; p.doneAt=tick(30);
-      p.history.push({at:p.doneAt, who:p.owner, t:'Hoàn thành giao hàng'+(diff?' — có chênh lệch':''), k:diff?'warn':''});
-      render(); toast(`<i class="ri-checkbox-circle-line"></i> ${p.code} đã hoàn thành.`); }});
+function pointHtml(n, p, pi, editable) {
+  const ncc = isNcc(n), isKh = n.dest === 'kh', done = p.status === 2
+  const place = isKh ? p.customer_name || 'Khách hàng' : (WAREHOUSES.find((w) => w.id === (p.delivered_wh || p.warehouse_id)) || {}).name || 'Kho công ty'
+  const addr = isKh ? p.address : (WAREHOUSES.find((w) => w.id === (p.delivered_wh || p.warehouse_id)) || {}).address || p.address
+  const isShort = done && p.items.some((it) => it.qty_delivered < it.qty_plan)
+  const qtyLabel = ncc ? 'SL thực nhận' : 'SL thực giao'
+  const head = `<div class="dn-step__head"><span class="dn-step__title"><i class="${isKh ? 'ri-map-pin-line' : 'ri-home-4-line'}"></i>Điểm ${pi + 1}: ${esc(place)}</span>
+    ${done ? badge(isShort ? (ncc ? 'Nhận thiếu' : 'Giao thiếu') : ncc ? 'Đã nhận' : 'Đã giao', isShort ? '#D97706' : '#16A34A') : '<span class="badge b-gray">Chờ xác nhận</span>'}
+    <span style="flex:1"></span>${done && editable ? `<button class="btn btn-tertiary" onclick="askReopen(${p.id},${pi})"><i class="ri-edit-line"></i>Sửa</button>` : ''}</div>
+    ${addr || p.receiver_name ? `<div class="dn-hint mb-2">${esc(addr)}${p.receiver_name ? ` · Người nhận: ${esc(p.receiver_name)}${p.receiver_phone ? ` (${esc(p.receiver_phone)})` : ''}` : ''}</div>` : ''}`
+  if (done) {
+    return `<div class="dn-step is-done">${head}
+      <table class="mt"><thead><tr><th style="width:44px">STT</th><th>Hàng hóa</th><th style="width:90px">ĐVT</th><th style="width:120px" class="tr">${ncc ? 'SL yêu cầu' : 'Đã lấy'}</th><th style="width:120px" class="tr">${ncc ? 'Thực nhận' : 'Thực giao'}</th><th style="width:120px" class="tr">${ncc ? 'Thiếu' : 'Mang về kho'}</th></tr></thead>
+      <tbody>${p.items.map((it, i) => { const base = ncc ? it.qty_plan : it.qty_picked; const diff = Math.round((base - it.qty_delivered) * 1000) / 1000
+        return `<tr class="${it.qty_delivered < it.qty_plan ? 'is-short' : ''}"><td class="tc">${i + 1}</td><td>${esc(it.product_name)}</td><td>${esc(it.unit_name)}</td><td class="tr">${fmtQty(base)}</td><td class="tr">${fmtQty(it.qty_delivered)}</td><td class="tr">${diff > 0 ? fmtQty(diff) : ''}</td></tr>` }).join('')}</tbody></table>
+      <div class="dn-hint mt-2">${ncc ? 'Ngày nhận' : 'Ngày giao'}: ${fmtDate(p.delivered_at)}${p.signer ? ` · Người ký nhận: ${esc(p.signer)}` : ''}</div>
+      ${p.issue_reason ? `<div class="dn-warn mt-1"><i class="ri-error-warning-line"></i>${esc(optText(ISSUE_REASON_OPTIONS, p.issue_reason))}${p.issue_note ? ': ' + esc(p.issue_note) : ''}</div>` : ''}</div>`
+  }
+  if (!editable) return `<div class="dn-step">${head}<div class="dn-hint">Chưa xác nhận.</div></div>`
+  if (!ncc && !n.picked_at) return `<div class="dn-step">${head}<div class="dn-hint">Xác nhận lấy hàng tại NCC trước.</div></div>`
+  const d = pointDraft(n, p)
+  const cap = (it) => (ncc ? it.qty_plan : it.qty_picked)
+  const short = p.items.some((it) => { const q = parseQty(d.qty[it.id]); return q !== null && q < it.qty_plan })
+  const confirmLabel = ncc ? (isKh ? 'Xác nhận khách đã nhận hàng' : 'Xác nhận kho đã nhận hàng') : isKh ? 'Xác nhận đã giao điểm này' : 'Xác nhận đã bàn giao kho'
+  const whSel = WAREHOUSES.find((w) => String(w.id) === String(d.wh))
+  return `<div class="dn-step">${head}
+    <table class="mt"><thead><tr><th style="width:44px">STT</th><th>Hàng hóa</th><th style="width:90px">ĐVT</th><th style="width:120px" class="tr">SL yêu cầu</th>${ncc ? '' : '<th style="width:120px" class="tr">Đã lấy</th>'}<th style="width:160px">${qtyLabel}<span class="req">*</span></th></tr></thead>
+    <tbody>${p.items.map((it, i) => `<tr><td class="tc">${i + 1}</td><td>${esc(it.product_name)}</td><td>${esc(it.unit_name)}</td><td class="tr">${fmtQty(it.qty_plan)}</td>${ncc ? '' : `<td class="tr">${fmtQty(it.qty_picked)}</td>`}
+      <td><input class="v2-input sm num ${d.errs['q' + it.id] ? 'err' : ''}" value="${esc(d.qty[it.id])}" oninput="S.ui.pts[${p.id}].qty[${it.id}]=this.value" onchange="rerenderPoint(${p.id})">${errTx(d.errs['q' + it.id])}</td></tr>`).join('')}</tbody></table>
+    <div class="grid mt-2">
+      ${isKh ? `<div><label class="v2-label">Người ký nhận<span class="req">*</span></label><input class="v2-input ${d.errs.signer ? 'err' : ''}" value="${esc(d.signer)}" placeholder="Họ tên người ký nhận" oninput="S.ui.pts[${p.id}].signer=this.value">${errTx(d.errs.signer)}</div>`
+        : `<div><label class="v2-label">Kho nhận<span class="req">*</span></label><select class="v2-input ${d.errs.wh ? 'err' : ''}" onchange="S.ui.pts[${p.id}].wh=this.value;rerenderPoint(${p.id})"><option value="">Chọn kho nhận</option>${WAREHOUSES.map((w) => `<option value="${w.id}" ${String(w.id) === String(d.wh) ? 'selected' : ''}>${esc(w.name)}</option>`).join('')}</select>${whSel ? `<div class="hint">${esc(whSel.address)}</div>` : ''}${errTx(d.errs.wh)}</div>`}
+      <div><label class="v2-label">${ncc ? 'Ngày nhận' : 'Ngày giao'}<span class="req">*</span></label><input type="date" class="v2-input ${d.errs.date ? 'err' : ''}" value="${d.date}" onchange="S.ui.pts[${p.id}].date=this.value">${errTx(d.errs.date)}</div>
+      ${short ? `<div><label class="v2-label">Lý do thiếu<span class="req">*</span></label><select class="v2-input ${d.errs.reason ? 'err' : ''}" onchange="S.ui.pts[${p.id}].reason=this.value;rerenderPoint(${p.id})"><option value="">Chọn lý do</option>${ISSUE_REASON_OPTIONS.map((o) => `<option value="${o.id}" ${o.id === d.reason ? 'selected' : ''}>${o.text}</option>`).join('')}</select>${errTx(d.errs.reason)}</div>
+        <div class="s3"><label class="v2-label">Mô tả${d.reason === 'other' ? '<span class="req">*</span>' : ''}</label><input class="v2-input ${d.errs.desc ? 'err' : ''}" value="${esc(d.desc)}" placeholder="Mô tả chi tiết" oninput="S.ui.pts[${p.id}].desc=this.value">${errTx(d.errs.desc)}</div>` : ''}
+    </div>
+    <div class="mt-2"><button class="btn btn-primary" onclick="savePoint(${p.id})"><i class="ri-check-line"></i>${confirmLabel}</button></div></div>`
+}
+function pointRef(pid) { const n = findNote(S.detailId); const pi = n.points.findIndex((p) => p.id === pid); return { n, p: n.points[pi], pi } }
+function rerenderPoint(pid) { const { n, p, pi } = pointRef(pid); $('pc-' + pid).innerHTML = pointHtml(n, p, pi, canEdit(n)) }
+function savePoint(pid) {
+  const { n, p } = pointRef(pid), d = S.ui.pts[pid], ncc = isNcc(n), isKh = n.dest === 'kh', errs = {}
+  const label = ncc ? 'SL thực nhận' : 'SL thực giao'
+  let short = false
+  p.items.forEach((it) => {
+    const q = parseQty(d.qty[it.id]), cap = ncc ? it.qty_plan : it.qty_picked
+    if (q === null) errs['q' + it.id] = `${label} phải là số`
+    else if (q < 0 || q > cap) errs['q' + it.id] = `${label} phải từ 0 đến ${fmtQty(cap)}`
+    else if (q < it.qty_plan) short = true
+  })
+  if (isKh && !String(d.signer).trim()) errs.signer = 'Người ký nhận là bắt buộc'
+  if (!isKh && !d.wh) errs.wh = 'Kho nhận là bắt buộc'
+  if (!d.date) errs.date = (ncc ? 'Ngày nhận' : 'Ngày giao') + ' là bắt buộc'
+  if (short && !d.reason) errs.reason = 'Lý do thiếu là bắt buộc'
+  if (short && d.reason === 'other' && !String(d.desc).trim()) errs.desc = 'Mô tả là bắt buộc khi lý do là Khác'
+  d.errs = errs
+  if (Object.keys(errs).length) { rerenderPoint(pid); return toast('Vui lòng kiểm tra lại thông tin xác nhận', 'bad') }
+  p.items.forEach((it) => { it.qty_delivered = parseQty(d.qty[it.id]); if (ncc) it.qty_picked = it.qty_delivered })
+  Object.assign(p, { status: 2, signer: isKh ? String(d.signer).trim() : '', delivered_wh: isKh ? null : Number(d.wh), delivered_at: d.date, issue_reason: short ? d.reason : '', issue_note: short ? String(d.desc).trim() : '' })
+  delete S.ui.pts[pid]
+  toast('Đã xác nhận điểm giao', 'ok'); renderDetail()
+}
+function askReopen(pid, pi) {
+  const { n, p } = pointRef(pid), place = n.dest === 'kh' ? p.customer_name : p.warehouse_name
+  ask({
+    title: 'Mở lại điểm giao', accept: 'Mở lại',
+    msg: `Mở lại <b>Điểm ${pi + 1}: ${esc(place)}</b>? Số lượng ${isNcc(n) ? 'thực nhận' : 'thực giao'}, người ký nhận và lý do thiếu đã nhập sẽ bị xóa để nhập lại.`,
+    ok: () => {
+      p.items.forEach((it) => { it.qty_delivered = null; if (isNcc(n)) it.qty_picked = null })
+      Object.assign(p, { status: 1, signer: '', delivered_at: '', issue_reason: '', issue_note: '', delivered_wh: null })
+      delete S.ui.pts[pid]; renderDetail()
+    },
+  })
 }
 
-/* ======================= Quy tắc ======================= */
-function vRules(){
-  return `<div class="sec rules"><div class="sec-h"><h6>Quy tắc nghiệp vụ (đề xuất)</h6><span class="sp"></span><button class="btn btn-secondary" onclick="go('order')"><i class="ri-arrow-left-line"></i>Về demo</button></div><div class="sec-b">
-  <h4>1. Gửi bộ phận giao hàng (Cung ứng)</h4><ul>
-    <li>Đơn mua <b>Đã duyệt</b>, <b>mọi hình thức vận chuyển</b> đều gửi BP giao hàng: <i>NCC giao về kho</i>, <i>NCC giao thẳng KH</i>, <i>Cty tự lấy → về kho / giao KH</i>.</li>
-    <li>Bấm <b>Gửi bộ phận giao hàng</b>: nhập ngày lấy hàng, ưu tiên, ghi chú → hệ thống tạo phiếu giao hàng với <b>toàn bộ SL còn phải gửi</b>, điểm giao + người nhận theo đơn mua. Không cần duyệt, không chọn người.</li>
-    <li>Còn phải gửi = SL mua − Đã lấy (phiếu Hoàn thành) − Đang giao (phiếu Chờ tiếp nhận / Đang xử lý). Thiếu → "Gửi giao phần còn lại" tạo phiếu mới.</li></ul>
-  <h4>2. Tiếp nhận (Bộ phận giao hàng)</h4><ul>
-    <li>Mọi thành viên BP giao hàng nhận thông báo + thấy phiếu ở tab <b>Chờ tiếp nhận</b>. <b>Ai bấm Tiếp nhận trước → là người phụ trách</b>; phiếu chuyển Đang xử lý.</li>
-    <li>Không nhận được → <b>Trả lại</b> (bắt buộc lý do), SL nhả về đơn mua; cung ứng sửa & gửi lại.</li>
-</ul>
-  <h4>3. Cập nhật (chỉ người phụ trách)</h4><ul>
-    <li><b>Tiến độ</b>: xác nhận lấy hàng (thực lấy ≤ yêu cầu, thiếu → ghi chú); xác nhận từng điểm (thực giao ≤ thực lấy, thiếu → lý do; người ký nhận, thời gian).</li>
-    <li><b>Tiến độ khi NCC giao</b>: không có bước lấy hàng. Người phụ trách có mặt nhận / bàn giao, xác nhận <b>thực nhận ≤ SL yêu cầu</b> từng điểm (thiếu → lý do); điểm kho chỉ ghi thời gian nhận, điểm khách hàng ghi thêm người ký nhận.</li>
-    <li><b>Chi phí</b>: từng khoản (loại, diễn giải, số tiền, trả cho, hóa đơn / biên lai). So với chi phí dự kiến trên đơn mua. Không có chi phí → tick "Không phát sinh".</li>
-    <li>Màn cập nhật 1 trang: Tiến độ giao hàng → Chi phí → nút Hoàn thành. Không có mục chứng từ (hóa đơn chi phí đính kèm theo từng khoản).</li></ul>
-  <h4>4. Hoàn thành</h4><ul>
-    <li>Điều kiện: đã lấy hàng (chỉ Cty tự lấy), giao / nhận hết điểm, chi phí hợp lệ (hoặc không phát sinh).</li>
-    <li>Kết quả (tạm chưa demo): điểm giao đơn mua tự Đã giao / Giao một phần; lấy đủ → đơn mua Hoàn thành; chi phí → bảng Chi phí VC đơn mua (Thực tế), khoản tự chi → kế toán hoàn ứng; về kho → thủ kho lập phiếu nhập; lấy rồi chưa giao → mang về kho.</li></ul>
-  </div></div>`;
+// ----- Chi phí (CostTable.vue) -----
+function costDraft(n) {
+  if (!S.ui.cost || S.ui.cost.noteId !== n.id) S.ui.cost = { noteId: n.id, rows: n.costs.map((c) => Object.assign({}, c, { files: (c.files || []).slice() })), noCost: !!n.no_cost, dirty: false, errs: {} }
+  return S.ui.cost
+}
+function costHtml(n, editable) {
+  const d = costDraft(n), rows = editable ? d.rows : n.costs
+  const total = costTotal(rows), other = otherSpent(n), expected = orderExpected(n), spent = total + other, overBy = spent - expected
+  const body = rows.length ? rows.map((c, i) => editable ? `<tr>
+      <td class="tc">${i + 1}</td>
+      <td>${selectHtml(COST_TYPE_OPTIONS, c.cost_type, `class="v2-input sm ${d.errs[i + 'type'] ? 'err' : ''}" onchange="costSet(${i},'cost_type',this.value)"`, 'Chọn loại')}${errTx(d.errs[i + 'type'])}</td>
+      <td><input class="v2-input sm ${d.errs[i + 'desc'] ? 'err' : ''}" value="${esc(c.description)}" placeholder="Diễn giải" oninput="costSet(${i},'description',this.value,true)">${errTx(d.errs[i + 'desc'])}</td>
+      <td><input class="v2-input sm num ${d.errs[i + 'amount'] ? 'err' : ''}" value="${c.amount ? money(c.amount) : ''}" placeholder="0" oninput="costSet(${i},'amount',this.value.replace(/\\D/g,''),true)" onchange="rerenderCost()">${errTx(d.errs[i + 'amount'])}</td>
+      <td>${selectHtml(PAY_TO_OPTIONS, c.pay_to, `class="v2-input sm ${d.errs[i + 'pay'] ? 'err' : ''}" onchange="costSet(${i},'pay_to',this.value)"`, 'Chọn đối tượng')}${errTx(d.errs[i + 'pay'])}</td>
+      <td><div class="files">${(c.files || []).map((f, fi) => `<span><a onclick="toast('Demo: xem trước tệp ${esc(f)}')">${esc(f)}</a> <i class="ri-close-line" style="cursor:pointer;color:#b91c1c" onclick="costFileDel(${i},${fi})"></i></span>`).join('')}</div>
+        <button class="btn btn-tertiary mt-1" style="height:26px" onclick="pickFile(${i})"><i class="ri-attachment-2"></i>Chọn tệp</button></td>
+      <td class="tc"><button class="icon-btn danger" title="Xóa" onclick="costDel(${i})"><i class="ri-delete-bin-line"></i></button></td></tr>`
+    : `<tr><td class="tc">${i + 1}</td><td>${esc(optText(COST_TYPE_OPTIONS, c.cost_type))}</td><td>${esc(c.description)}</td><td class="tr">${money(c.amount)}</td><td>${esc(optText(PAY_TO_OPTIONS, c.pay_to))}</td>
+      <td><div class="files">${(c.files || []).map((f) => `<a onclick="toast('Demo: xem trước tệp ${esc(f)}')">${esc(f)}</a>`).join('') || '<span class="mut">—</span>'}</div></td></tr>`).join('')
+    : `<tr><td colspan="${editable ? 7 : 6}" class="tc dn-hint" style="padding:12px">${(editable ? d.noCost : n.no_cost) ? 'Chuyến này không phát sinh chi phí.' : 'Chưa có khoản chi nào.'}</td></tr>`
+  return `<table class="mt"><thead><tr><th style="width:44px">STT</th><th style="width:210px">Loại${editable ? '<span class="req">*</span>' : ''}</th><th>Diễn giải</th><th style="width:160px" class="${editable ? '' : 'tr'}">Số tiền${editable ? '<span class="req">*</span>' : ''}</th><th style="width:180px">Trả cho${editable ? '<span class="req">*</span>' : ''}</th><th style="width:230px">Hóa đơn / biên lai</th>${editable ? '<th style="width:50px"></th>' : ''}</tr></thead>
+    <tbody>${body}</tbody>
+    <tfoot><tr><td colspan="3" class="tr"><b>Tổng chi phí thực tế</b></td><td class="tr"><b>${money(total)}</b></td><td colspan="${editable ? 3 : 2}">
+      ${overBy > 0 ? badge(`Vượt dự kiến ${money(overBy)}đ`, '#DC2626') : expected > 0 ? badge(`Trong dự kiến (còn ${money(expected - spent)}đ)`, '#16A34A') : ''}</td></tr></tfoot></table>
+    <div class="dn-hint mt-1">Chi phí dự kiến của đơn: ${money(expected)}đ${other > 0 ? ` · Các phiếu giao khác của đơn đã chi ${money(other)}đ` : ''}</div>
+    ${errTx(editable ? d.errs.costs : '')}
+    ${editable ? `<div class="mt-2" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="costAdd()"><i class="ri-add-line"></i>Thêm chi phí</button>
+      ${!d.rows.length ? `<label class="chk"><input type="checkbox" ${d.noCost ? 'checked' : ''} onchange="S.ui.cost.noCost=this.checked;S.ui.cost.dirty=true;rerenderCost()">Chuyến này không phát sinh chi phí</label>` : ''}
+      <span style="flex:1"></span>
+      ${d.dirty ? `<button class="btn btn-primary" onclick="saveCosts()"><i class="ri-save-3-line"></i>Lưu chi phí</button>` : ''}</div>` : ''}`
+}
+function rerenderCost() { const n = findNote(S.detailId); $('cost-box').innerHTML = costHtml(n, canEdit(n)) }
+function costSet(i, k, v, silent) {
+  const d = S.ui.cost, r = d.rows[i]
+  r[k] = k === 'amount' ? (v === '' ? '' : Number(v)) : v
+  if (k === 'cost_type' && v === 'rent') r.pay_to = 'vc' // thuê xe → trả đơn vị vận chuyển
+  const wasDirty = d.dirty; d.dirty = true
+  if (!silent || !wasDirty) rerenderCost()
+}
+function costAdd() {
+  const n = findNote(S.detailId), d = S.ui.cost
+  d.rows.push({ cost_type: '', description: '', amount: '', pay_to: isNcc(n) ? 'ncc' : 'self', files: [] })
+  d.noCost = false; d.dirty = true; rerenderCost()
+}
+function costDel(i) { S.ui.cost.rows.splice(i, 1); S.ui.cost.dirty = true; S.ui.cost.errs = {}; rerenderCost() }
+function costFileDel(i, fi) { S.ui.cost.rows[i].files.splice(fi, 1); S.ui.cost.dirty = true; rerenderCost() }
+let fileRow = null
+function pickFile(i) { fileRow = i; $('file-pick').value = ''; $('file-pick').click() }
+$('file-pick').addEventListener('change', (e) => {
+  if (fileRow === null) return
+  Array.from(e.target.files || []).forEach((f) => S.ui.cost.rows[fileRow].files.push(f.name))
+  S.ui.cost.dirty = true; rerenderCost()
+})
+function validateCosts() {
+  const d = S.ui.cost, errs = {}
+  if (!d.rows.length && !d.noCost) errs.costs = 'Chưa có chi phí — nhập chi phí hoặc tick "Không phát sinh chi phí"'
+  d.rows.forEach((r, i) => {
+    if (!r.cost_type) errs[i + 'type'] = 'Loại là bắt buộc'
+    if (!(Number(r.amount) > 0) || !Number.isInteger(Number(r.amount))) errs[i + 'amount'] = 'Số tiền phải là số nguyên lớn hơn 0'
+    if (!r.pay_to) errs[i + 'pay'] = 'Trả cho là bắt buộc'
+    if (String(r.description || '').length > 255) errs[i + 'desc'] = 'Diễn giải tối đa 255 ký tự'
+  })
+  d.errs = errs
+  return !Object.keys(errs).length
+}
+function saveCosts(silentOk) {
+  const n = findNote(S.detailId), d = S.ui.cost
+  if (!validateCosts()) { rerenderCost(); toast('Vui lòng kiểm tra lại bảng chi phí', 'bad'); return false }
+  n.costs = d.rows.map((r) => Object.assign({}, r, { files: r.files.slice() }))
+  n.no_cost = d.rows.length ? 0 : d.noCost ? 1 : 0
+  d.dirty = false
+  if (!silentOk) toast('Đã lưu chi phí', 'ok')
+  rerenderCost(); return true
 }
 
-render();
+// ----- Hoàn thành giao hàng -----
+function askComplete(id) {
+  const n = findNote(id), d = S.ui.cost
+  const total = d && d.noteId === id ? costTotal(d.rows) : costTotal(n.costs)
+  ask({
+    title: 'Hoàn thành giao hàng', accept: 'Hoàn thành',
+    msg: `Hoàn thành phiếu giao hàng <b>${esc(n.code)}</b>?<br>Chi phí thực tế ${money(total)}đ (dự kiến ${money(orderExpected(n))}đ).<br>Sau khi hoàn thành không sửa được phiếu.`,
+    ok: () => {
+      if (d && d.noteId === id && d.dirty && !saveCosts(true)) return // lưu chi phí đang sửa trước
+      const missing = missingForComplete(n)
+      if (missing.length) return toast(`Chưa thể hoàn thành: ${missing.join('; ')}`, 'bad')
+      const now = new Date()
+      Object.assign(n, { status: 5, completed_at: `${pad(now.getHours())}:${pad(now.getMinutes())} ${fmtDate(todayISO())}`,
+        has_diff: n.points.some((p) => p.items.some((it) => (it.qty_delivered || 0) < it.qty_plan)) ? 1 : 0 })
+      toast('Đã hoàn thành phiếu giao hàng', 'ok')
+      go('list')
+    },
+  })
+}
+
+// ----- popup xác nhận dùng chung -----
+let confirmCb = null
+function ask({ title, msg, accept, danger, ok }) {
+  $('cf-title').textContent = title; $('cf-msg').innerHTML = msg
+  $('cf-ok').textContent = accept || 'Đồng ý'; $('cf-ok').className = 'btn ' + (danger ? 'btn-danger' : 'btn-primary')
+  $('cf-ic').className = 'm-ic' + (danger ? ' danger' : '')
+  confirmCb = ok; openM('m-confirm')
+}
+function confirmOk() { closeM('m-confirm'); const cb = confirmCb; confirmCb = null; if (cb) cb() }
+
+// ---------- khởi tạo ----------
+$('sel-user').innerHTML = Object.keys(USERS).map((k) => `<option value="${k}">${USERS[k].name} — ${USERS[k].dept}${USERS[k].canSend ? ' (quyền Lập đơn mua hàng)' : ''}</option>`).join('')
+$('sel-scn').innerHTML = SCENARIOS.map((s) => `<option value="${s.id}">${s.text}</option>`).join('')
+$('sel-scn').value = 'tu_lay_kh'
+$('sel-user').addEventListener('change', (e) => { S.user = e.target.value; S.ui.pickup = null; S.ui.pts = {}; S.ui.cost = null; render() })
+$('sel-scn').addEventListener('change', () => resetAll(true))
+document.querySelectorAll('#scr-tabs .tab-btn').forEach((b) => b.addEventListener('click', () => go(b.dataset.scr)))
+document.querySelectorAll('.mask').forEach((m) => m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('show') }))
+resetAll()
 </script>
 </body>
 </html>

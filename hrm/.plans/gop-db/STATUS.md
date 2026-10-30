@@ -19,6 +19,27 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Phiếu xuất hàng điều chỉnh kiểm kê (ERP → HRM) — ĐÃ PUSH `develop`, Playwright local PASS (2026-10-30, @khoipv)
+
+Push: hrm-api `caf2abf87` · hrm-client `7a2880d5f`. Còn chạy seeder quyền trên môi trường.
+
+Port màn ERP `inventoryExport` (bảng `inventory_exports`, mã `PXHĐCKK-`) sang `/finance/inventory-exports` — bước Kế toán kho
+sau Phiếu xuất kho ĐCKK, chép khuôn màn Phiếu nhập hàng ĐCKK. User chốt 30/10: KHÔNG bút toán (y ERP — ERP nhân cột không tồn
+tại ⇒ 0), còn lại y màn nhập. Tài liệu: `.plans/gop-db/phieu-xuat-hang-dieu-chinh-kiem-ke/{design.md,plan.md}` · spec
+`docs/superpowers/specs/gop-db/2026-10-30-phieu-xuat-hang-dieu-chinh-kiem-ke-design.md`.
+
+## Phiếu nhập hàng điều chỉnh kiểm kê (ERP → HRM) — XONG, ĐÃ PUSH develop (hrm-api `ef113e688`, hrm-client `f242fa9d6`) (2026-10-30, @khoipv)
+
+Port màn ERP `inventoryImport` (bảng `inventory_imports`, mã `PNHĐCKK-`) sang `/finance/inventory-imports` — bước Kế toán kho
+sau Phiếu nhập kho ĐCKK. User chốt 30/10: quyền y ERP, menu Tài chính › Nhập hàng + nút ở phiếu nhập kho mở màn HRM, màn Thêm
+có ô chọn phiếu, lỗi ERP giữ nguyên. Tài liệu: `.plans/gop-db/phieu-nhap-hang-dieu-chinh-kiem-ke/{design.md,plan.md}` · spec
+`docs/superpowers/specs/gop-db/2026-10-30-phieu-nhap-hang-dieu-chinh-kiem-ke-design.md`.
+
+**Checkpoint 30/10 (wrap up):** BE `Modules/Finance` (`InventoryImport*`, service chung mới `AccountingStockWriter` +
+`ProductImportPriceReader`, 2 quyền xem type 8 trong seeder chung) + FE `pages/finance/inventory-imports` + menu Tài chính; nút
+"Tạo phiếu nhập hàng" ở Phiếu nhập kho ĐCKK mở màn HRM. Đã test Playwright toàn luồng (dữ liệu test đã dọn) + user test OK.
+Tiếp theo: chạy seeder quyền; commit khi user yêu cầu. Việc treo xem `plan.md` checkpoint cuối.
+
 ## Điều chuyển kho CHI NHÁNH (type 7) — Phase A (xuất) + Phase B (nhập đóng vòng) XONG (2026-10-23), LOCAL develop, chờ user chốt tích hợp
 
 Port loại **điều chuyển chi nhánh = 7** ERP→HRM (nối tiếp nhóm điều chuyển: type 5 cùng thủ kho → type 6 nội bộ → **type 7 chi nhánh**). Chuỗi: YCXH → ĐNXK → PXK (xuất, ×hệ số chi nhánh) → tự sinh YCNH cty ĐÍCH → ĐNNK → PNK → Phiếu nhập hàng (đóng vòng PYCCH) → [PPBHĐC = Phase C].

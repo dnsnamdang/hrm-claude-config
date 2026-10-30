@@ -2578,3 +2578,47 @@ Vừa hoàn thành: Fix #11750 phản hồi (lỗi báo 1 lượt).
 Đang làm dở:
 Bước tiếp theo: user tạo từ Tổng hợp tiền về NH, để trống KH/HĐ + Số tiền 0 → Gửi duyệt → mọi ô đỏ cùng lúc.
 Blocked:
+
+## Tài liệu SRS + HDSD + Testcase theo form Danh mục quốc gia (2026-10-30) @khoipv
+
+Cấu trúc phẳng như `bank-account-catalog/`; nội dung theo skill + `../phieu-theo-form-quoc-gia/CHECKLIST.md`.
+Spec 2026-08-17 đã cũ một phần (màn chờ duyệt nay là `?mode=pending`, đã có nút Tạo phiếu kế toán) → viết theo code.
+
+- [x] Chụp ảnh trên dev-hrm (DNS Admin) bằng `dcbn_shots/_capture/capture.js` — phiếu 00402 Đang tạo, 00401 Chờ tạo phiếu
+      kế toán (KH), 00371 (NCC), 00114 Từ chối. Chỉ mở / Hủy, không ghi dữ liệu
+- [x] `gen_srs.py` → `SRS - Phiếu yêu cầu điều chỉnh công nợ.docx` (57 trang, 16 chức năng, 3 lối vào, Phần 5; selfcheck khớp mẫu)
+- [x] `gen_hdsd.py` → `HDSD_Phieu yeu cau dieu chinh cong no.docx` (22 trang, 12 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (63 TC, P0 49%, kiểm thuật ngữ / emoji / xuống dòng sạch)
+- [ ] User soát → đẩy Drive
+
+Ghi nhận (chưa sửa): danh sách chưa có cửa sổ "Chọn trường xuất Excel" (checklist form quốc gia yêu cầu chọn trường + thứ tự);
+dev chỉ phiếu 00402 có lịch sử (phiếu cũ tạo trước khi bật lịch sử).
+
+### Checkpoint — 2026-10-30 12:40
+Vừa hoàn thành: 3 tài liệu SRS / HDSD / testcase màn Phiếu yêu cầu điều chỉnh công nợ
+Đang làm dở: không
+Bước tiếp theo: user soát tài liệu, đẩy Drive; quyết có bổ sung cửa sổ chọn trường xuất Excel không
+Blocked:
+
+## Check — testcase đối chiếu skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Đạt: khung 9 mục mô tả, Test Summary 2 khối, header 17 cột, dropdown check, font/độ rộng cột, không freeze, không emoji,
+      không thuật ngữ code, ô nhiều ý xuống dòng, P0 ≥ 40%
+- [x] Lệch (chưa sửa, chờ user): tiêu đề thiếu "- Cập nhật ngày dd/mm/yyyy"; thiếu case theo góp ý tester ý 1 (Lưu và tiếp
+      tục khi dữ liệu lỗi), ý 3 (Expected mở màn đủ số dòng/trang + lựa chọn + thứ tự + khuôn dòng tổng), ý 4 (bước "Bấm Tìm
+      kiếm nâng cao" ở case lọc ô nâng cao), ý 5 (nhớ bộ lọc trước/sau 10 phút, đổi tài khoản, tab mới), ý 6 (kết hợp tiêu chí
+      + độ dài ô tìm nhanh); nhiều case tiền điều kiện "—" (skill bắt có số liệu); thiếu case tham số lạ trên thanh địa chỉ
+
+## Fix — testcase theo chuẩn skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Bộ hàm dùng chung `../phieu-theo-form-quoc-gia/tc_phieu_bosung.py` (case mở màn, nhớ bộ lọc, kết hợp tiêu chí, ô cha–con,
+      tham số lạ, chèn bước "Bấm Tìm kiếm nâng cao", điền tiền điều kiện) — hành vi đọc từ code chung (V2BaseDataTable,
+      filterStateMixin, V2BaseCompanyDepartmentFilter)
+- [x] `gen_testcase.py`: tiêu đề "- Cập nhật ngày 30/10/2026"; đủ 6 ý tester áp dụng được (1, 2, 3, 4, 5, 6); tiền điều kiện
+      không còn "—"; số TC 63 → 80; P0 ≥ 40%; kiểm thuật ngữ / emoji / xuống dòng sạch
+
+## Fix — SRS: bảng "Mô tả chi tiết giao diện" mỗi đối tượng 1 hàng (2026-10-30) @khoipv
+User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Người tạo / Phòng ban / Người duyệt / Người cập nhật" phải tách.
+- [x] Hàm dùng chung `../phieu-theo-form-quoc-gia/srs_split_rows.py` (`split_ui_rows`): tách theo " / ", phần sau tự nhận
+      tiền tố Cột/Nút/Ô; mô tả mặc định cho nút chung; chặn còn dòng gộp (assert)
+- [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
+      sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
+- [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu

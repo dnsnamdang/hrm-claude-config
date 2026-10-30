@@ -816,3 +816,10 @@ phiếu kế tiếp sẽ là 07367 trở đi.
 ## Fix — Màn Xem chi tiết chưa hiện "Người yêu cầu + ngày giờ" góc phải (2026-10-03)
 > Chuẩn: màn Yêu cầu kiểm tra sửa chữa – bảo hành (`WarrantyRepairRequestForm.vue` slot `#actions` của khối đầu). BE `DetailResource` đã trả `creator_name` + `created_at` (d/m/Y H:i) → chỉ sửa FE.
 - [x] FE `_id/index.vue`: header card "Thông tin chung" thêm dòng phải `Người yêu cầu: <tên> · dd/mm/yyyy HH:mm` (cỡ 12px, xám) — chỉ hiện khi có creator_name
+
+## Fix #11922 — Phiếu yêu cầu chuyển hàng: toast / màu chip / popup chọn (30/10/2026)
+
+- [x] 1. Toast cảnh báo ("Hàng hóa đã có trong phiếu") hình viên thuốc cam khác các toast khác — gốc ở `plugins/toast.js` global `warning` dùng `theme: 'bubble'`; user chốt 30/10 "giống toast Vui lòng kiểm tra lại…/Đã thêm 1 hàng hoá" → bỏ theme bubble (áp dụng MỌI toast cảnh báo toàn hệ thống, giữ màu cam)
+- [x] 2. YCXH loại 7: chip + nút ＋ "Phiếu yêu cầu chuyển hàng" tím #4f46e5 → xanh chủ đạo #1abc9c (`ProductExportRequestForm.vue`)
+- [x] 3. Popup chọn phiếu YC chuyển hàng theo khuôn popup chọn chứng từ của Đề nghị nhập hàng (`ExportRequestSearchModal`): modal xl cao theo nội dung + `V2BaseDataTable` + phân trang chuẩn; giữ tick nhiều, lọc Người tạo, sort/phân trang FE (`TransferRequestSearchModal.vue`)
+- [x] Verify: compile template + parse script 3 file (chưa mở trình duyệt)

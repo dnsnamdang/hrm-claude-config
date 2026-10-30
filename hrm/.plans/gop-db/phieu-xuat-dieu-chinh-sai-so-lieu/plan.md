@@ -57,3 +57,11 @@ Vừa hoàn thành: fix #11890 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d0
 Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
 Còn treo: #11890 mục "Bốc xếp chọn NCC xong vỡ font/lệch ô" (màn Nhập lại) — chưa tái hiện được bằng đọc code, cần mở trình duyệt; sửa ở V2BaseSelectRemote (dùng chung) phải hỏi trước.
 Blocked:
+
+## Fix #11919 — Nhập lại › tab Bốc xếp (30/10/2026)
+
+Nguyên nhân lệch ô (mục còn treo của #11890): `V2BaseLabel` — chữ nhãn `line-height: 1.2` nhưng dấu `*` kế thừa line-height 1.5 của trang → nhãn có `*` cao hơn ~3.6px, ô bên dưới tụt xuống. Chọn "Thuê ngoài" làm NCC/Loại bốc xếp/Khối lượng hiện `*`, riêng "Loại hình thuê" không có → ô đó lệch lên. Đo bằng HTML tĩnh + bootstrap: 22.4 vs 26.0px → sau fix 80.4 vs 80.4.
+
+- [x] FE `components/V2BaseLabel.vue` (dùng chung — user đồng ý 30/10): `.v2-label__required { line-height: 1.2 }` → sửa cho mọi màn; đã bỏ style cục bộ tạm ở ArrangeDeliveryForm
+- [x] FE `ArrangeDeliveryForm.vue`: placeholder ô Khối lượng hàng / Số giờ, VAT (%), Số tiền người nhận việc
+- [x] Verify: compile template

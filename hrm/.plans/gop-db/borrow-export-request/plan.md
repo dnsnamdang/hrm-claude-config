@@ -645,3 +645,50 @@ nạp (không có ở build production / vào thẳng màn).
 - [x] FE `BorrowExportRequestForm.vue` (màn Thêm) — mã phiếu bấm được, mở `/finance/product-export-requests/{id}`
       ở TAB MỚI (đang nhập form, mở cùng tab là mất dữ liệu); khuôn link như `borrow-sell-requests/_id/index.vue`
 - [x] FE `_id/index.vue` (màn chi tiết) — cùng cột, làm đồng bộ
+
+## Tài liệu SRS + HDSD + Testcase theo form Danh mục quốc gia (2026-10-30) @khoipv
+
+Cấu trúc phẳng như `bank-account-catalog/` (gen_*.py + tài liệu ngay thư mục feature, ảnh ở `pycxhm_shots/`) — chép khuôn `phieu-theo-form-quoc-gia` (CHECKLIST.md, formqg_lib, hdsd_phieu_lib).
+Màn chưa có bản Drive nên SRS dựng mới bằng `SrsDoc` (không vá file Drive như 16 màn kia).
+
+- [x] Chụp ảnh `pycxhm_shots/_capture/capture.js` (dev-hrm, tài khoản DNS Admin) + `_capture/capture_local.js` (local) — dev không có phiếu Chờ duyệt,
+      phiếu có lịch sử và phiếu mượn của DNS Admin nên 6 ảnh lấy ở local (PYCXHM-00337, 00340, PYCXH-TEST-023).
+      Chỉ mở / đóng, không ghi dữ liệu. Icon đã chạy trim_icon (`--dry` 0/N)
+- [x] `gen_srs.py` → `SRS - Yêu cầu xuất hàng mượn.docx` (53 trang, 12 chức năng, Phần 5 màn tham chiếu,
+      selfcheck khớp bản mẫu)
+- [x] `gen_hdsd.py` → `HDSD_Yeu cau xuat hang muon.docx` (21 trang, 11 phần, không trang trắng)
+- [x] `gen_testcase.py` → `testcase.xlsx` (87 TC, P0 43%, kiểm thuật ngữ / emoji sạch)
+- [ ] User soát → đẩy Drive
+
+Lỗi app nghi ngờ (chỉ báo, chưa sửa): màn Thêm mới bấm "Quay lại" khi đã nhập dữ liệu KHÔNG hỏi xác nhận rời trang —
+`BorrowExportRequestForm.vue` (component con của `create.vue`) dùng `unsavedChangesMixin`, mà `beforeRouteLeave` chỉ
+chạy ở component trang (skill unsaved-changes mục 2b: form con phải dùng `unsavedChildFormMixin`).
+
+### Checkpoint — 2026-10-30 11:10
+Vừa hoàn thành: 3 tài liệu SRS / HDSD / testcase màn Yêu cầu xuất hàng mượn, ngay trong thư mục feature (cấu trúc như bank-account-catalog)
+Đang làm dở: không
+Bước tiếp theo: user soát tài liệu; quyết định có sửa lỗi cảnh báo rời trang ở màn Thêm mới không
+Blocked:
+
+## Check — testcase đối chiếu skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Đạt: khung 9 mục mô tả, Test Summary 2 khối, header 17 cột, dropdown check, font/độ rộng cột, không freeze, không emoji,
+      không thuật ngữ code, ô nhiều ý xuống dòng, P0 ≥ 40%
+- [x] Lệch (chưa sửa, chờ user): tiêu đề thiếu "- Cập nhật ngày dd/mm/yyyy"; thiếu case theo góp ý tester ý 1 (Lưu và tiếp
+      tục khi dữ liệu lỗi), ý 3 (Expected mở màn đủ số dòng/trang + lựa chọn + thứ tự + khuôn dòng tổng), ý 4 (bước "Bấm Tìm
+      kiếm nâng cao" ở case lọc ô nâng cao), ý 5 (nhớ bộ lọc trước/sau 10 phút, đổi tài khoản, tab mới), ý 6 (kết hợp tiêu chí
+      + độ dài ô tìm nhanh); nhiều case tiền điều kiện "—" (skill bắt có số liệu); thiếu case tham số lạ trên thanh địa chỉ
+
+## Fix — testcase theo chuẩn skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Bộ hàm dùng chung `../phieu-theo-form-quoc-gia/tc_phieu_bosung.py` (case mở màn, nhớ bộ lọc, kết hợp tiêu chí, ô cha–con,
+      tham số lạ, chèn bước "Bấm Tìm kiếm nâng cao", điền tiền điều kiện) — hành vi đọc từ code chung (V2BaseDataTable,
+      filterStateMixin, V2BaseCompanyDepartmentFilter)
+- [x] `gen_testcase.py`: tiêu đề "- Cập nhật ngày 30/10/2026"; đủ 6 ý tester áp dụng được (1, 2, 3, 4, 5, 6); tiền điều kiện
+      không còn "—"; số TC 87 → 100; P0 ≥ 40%; kiểm thuật ngữ / emoji / xuống dòng sạch
+
+## Fix — SRS: bảng "Mô tả chi tiết giao diện" mỗi đối tượng 1 hàng (2026-10-30) @khoipv
+User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Người tạo / Phòng ban / Người duyệt / Người cập nhật" phải tách.
+- [x] Hàm dùng chung `../phieu-theo-form-quoc-gia/srs_split_rows.py` (`split_ui_rows`): tách theo " / ", phần sau tự nhận
+      tiền tố Cột/Nút/Ô; mô tả mặc định cho nút chung; chặn còn dòng gộp (assert)
+- [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
+      sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
+- [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu

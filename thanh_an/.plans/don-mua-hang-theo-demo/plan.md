@@ -53,6 +53,17 @@
 - [x] 4.18 Dropdown "Hợp đồng mua" ở form lập/sửa đơn chỉ hiện HĐ còn SL chưa mua: API `contracts?available=1` bỏ HĐ thương mại đã duyệt có tổng (SL HĐ − đã mua) ≤ 0 theo từng dòng × mục đích (HĐ nguyên tắc luôn giữ); sửa đơn truyền `exclude_order_id` (không tính SL của chính đơn) + `include_ids` (giữ HĐ đang gắn). Bộ lọc màn danh sách vẫn lấy đủ HĐ
 - [ ] 4.3 User test tay trên trình duyệt (tạo đơn lẻ / theo HĐ TM / HĐ NT, giao thẳng KH, xác nhận nhận/giao)
 
+## Phase 5 — Cập nhật demo `demos/demo-lap-don-mua-hang.html` theo code hiện tại (user yêu cầu 30/10/2026)
+- [x] 5.1 So demo với màn thật `/supply/purchase_orders/add` (PurchaseOrderForm, GeneralTab, ProductsTab, GoodsPickerModal, PaymentTab, ShipTab) — liệt kê khác biệt
+- [x] 5.2 Sửa demo cho khớp code (bỏ phần code đã gỡ, thêm phần code mới): tab chung (Diễn giải, người liên hệ select + thêm nhanh, dư nợ NCC, xác nhận đổi HĐ) · popup chọn hàng (thứ tự bộ lọc, cột Còn cần mua + HĐ mua, nhóm HĐ bán chưa đề xuất, phân trang 20/50/100) · bảng hàng (VAT sửa được, Đổi hàng + dòng THAY CHO, popup xác nhận xoá / bỏ phiếu, khối tổng 4 dòng) · bỏ kho nhận + chi phí VC + trả trước→ĐNTT · thanh toán hiện Tổng thanh toán cho NCC · lưu: popup xác nhận gửi duyệt, toast lỗi + nhảy tab
+- [x] 5.3 Cập nhật `demos/README.md` dòng demo-lap-don-mua-hang
+
+### Checkpoint — 2026-10-30
+Vừa hoàn thành: Phase 5 — demo `demos/demo-lap-don-mua-hang.html` đã khớp code `/supply/purchase_orders/add`; `node --check` OK + chạy thử luồng chính trên DOM giả (đơn lẻ, 3 HĐ, đổi hàng, lưu lỗi) không lỗi runtime
+Đang làm dở: —
+Bước tiếp theo: user mở demo tự kiểm tra; còn 4.3 test tay màn thật
+Blocked:
+
 ### Checkpoint — 2026-10-21
 Vừa hoàn thành: 3.5–3.8 (popup chọn hàng 2 chế độ, ProductsTab bỏ Cty mua + chip HĐ/còn lại + khoá giá/CK/ĐVT dòng HĐ + khối tổng phí VC, PaymentTab tổng NCC + khối phí trả ĐVVC, chi tiết có khối Giao nhận + xác nhận nhận/giao, danh sách cột + lọc HĐ mua / Công ty mua); BE thêm rule `carrier_pay_when`, lọc `purchase_contract_ids` (0 = đơn lẻ)
 Đang làm dở: —

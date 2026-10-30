@@ -41,3 +41,9 @@ Vừa hoàn thành: ĐÃ PUSH `develop` 28/10 — api `1731d3a4c`, client `6f0ec
 Đang làm dở: —
 Bước tiếp theo: Phase 3 — user bấm thật 2 màn trên dev; deploy cần quyền "Quản lý kho" có trong seeder + gán role.
 Blocked: chưa bấm thật trên trình duyệt
+
+## Fix #11931 — Theo dõi theo kho: link tab mới + sort vỡ layout (30/10/2026)
+
+- [x] FE: bấm Mã / Tên kho mở màn Hoạt động kho ở TAB MỚI (`target="_blank"`), không chuyển trong cùng trang
+- [x] FE: sort vỡ layout — cột chỉ khai `width` → khai `width` + `minWidth` mọi cột qua helper `w(px)` (khuôn #11763/#11904); BE đã có cột phụ `w.id desc` nên thứ tự ổn định
+- [x] Verify: compile template
