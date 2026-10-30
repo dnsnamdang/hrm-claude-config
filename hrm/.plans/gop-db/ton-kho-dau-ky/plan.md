@@ -34,3 +34,7 @@
 - **Vừa hoàn thành:** đủ BE + FE + kiểm + test; đã commit local (chưa push). DB local về đúng mốc (10.357 tồn đầu, 10.098 kế toán), quyền tạm đã gỡ.
 - **Bước tiếp theo:** push; deploy chạy `PermissionsTableSeeder`; admin gán quyền vào vai trò.
 - **Còn ngỏ:** ERP vẫn cho khai tay không kiểm khớp kế toán (không đụng ERP).
+
+
+## Ngày 30/10/2026 (@junfoke)
+- [x] 30/10/2026 — Fix phản hồi #11836: ô Kho và Công ty đang lấy theo nhau (đổi công ty xoá kho đã chọn + đổi danh sách kho) → làm như ERP, 2 ô độc lập, đổi công ty chỉ xoá danh sách hàng đã chọn. `BeginningStockForm.vue`, client `137f82d43` — đã lên origin/develop.

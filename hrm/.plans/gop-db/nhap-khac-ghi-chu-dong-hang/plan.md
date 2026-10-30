@@ -21,4 +21,9 @@ Issue: http://quanly.dnsmedia.vn/issues/11908
 - [x] 29/10/2026 — Test đủ màn tạo/sửa ở ERP và HRM (sửa DB local để có phiếu loại 99 cho tài khoản test; đã xem ảnh).
 - [x] 29/10/2026 — ERP: `02ae9a640f` nhánh `task_11908`, merge `develop_02` (`1f2f91cb04`) đã push. HRM: api `52a17fa86`, client `b489fb882` — đã lên origin/develop.
 - [x] 29/10/2026 — Hỗ trợ: phiếu PYCNH-15588 (loại 99) "biến mất" sau khi bấm Không duyệt trên cổng dev (ERP `develop_02`) → phiếu trả về Đang tạo (status 3), người lập đang tìm ở màn "Phiếu YC nhập hàng chờ duyệt" (chỉ hiện status 2); hướng dẫn mở lại ở Kho → Phiếu Yêu cầu nhập hàng.
-- [ ] Merge `task_11908` vào `gop_db` của ERP khi cần.
+- [x] Merge `task_11908` vào `gop_db` của ERP khi cần. (30/10)
+
+## Ngày 30/10/2026 (@junfoke)
+- [x] 30/10/2026 — Fix phản hồi #11908: màn **tạo phiếu xuất lại** (từ PNK, `warehouse_reexports/create`) và màn xem phiếu xuất lại còn thiếu cột Ghi chú → thêm cột Ghi chú chỉ xem sau cột "Tổng SL", chỉ hiện với loại 99, gộp ô theo dòng hàng khi nhiều vị trí. Màn nhập lại dùng chung form PNK nên đã có từ 29/10. ERP `795c92d22a` (`task_11908` → merge `develop_02` `bf4eabf6ef`), HRM client `50b3af254` (`re-export.vue`) — đã lên origin/develop.
+- [x] 30/10/2026 — Merge `task_11908` vào `gop_db` ERP (`0bf8e69dc5`) cho QA test; xoá worktree `hrm-client/.worktrees/task-11908` sau khi push.
+- [x] 30/10/2026 — Xử lý môi trường `gop_db` thiếu cột `product_import_request_details.note` (migration chỉ nằm ở hrm-api, ERP `gop_db` không có file → không ai chạy). ERP và HRM dùng chung DB **và chung bảng `migrations`** → đặt **cùng 1 file migration, giữ nguyên tên, ở cả 2 repo**, kiểm `hasColumn` trước khi thêm. ERP `188cfe3697` merge vào `gop_db` + `develop_02`.
