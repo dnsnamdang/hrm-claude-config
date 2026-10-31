@@ -19,6 +19,67 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Phiếu giao việc (ERP → HRM) — TẠM DỪNG giữa Phase 1 (2026-10-31, @khoipv)
+
+Port màn ERP `WrAssignTasks.index?type=all` (+ `?type=waiting_import_result`) trọn bộ: Danh sách · Chi tiết · Tạo · Sửa · Xóa(Hủy) · In/Xuất.
+Màn chưa port (Nhập KQ, Duyệt KQ, HĐ bán, YC lắp đặt…) link ERP. Menu CSKH sau bán › Giao việc. 3 quyền type 24 tên nguyên văn ERP.
+Tài liệu: `.plans/gop-db/phieu-giao-viec/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-10-31-phieu-giao-viec-design.md`.
+
+**Checkpoint 31/10 (wrap up):** spec/design xong (Sửa: KHÔNG có — y ERP; mã giữ format `{cty}.PGV.{YYYY}{id6}`; sửa lỗi ERP ở cả 2 bên).
+Phase 4 vá 10 lỗi ERP xong (repo erp, chưa commit, chưa bấm thử). Phase 1 BE DỪNG giữa chừng (code đã sinh, lint sạch, chưa smoke test xong — mai rà lại). Tiếp: Phase 2 BE tạo phiếu + Phase 3 FE.
+
+## Phiếu chờ giao việc (ERP → HRM) — XONG, ĐÃ PUSH develop (hrm-api `997a67f7f`, hrm-client `d2ddb8e27`) (2026-10-31, @khoipv)
+
+Port màn ERP `WrAssignTasks.wait` (5 tab: HĐ · PL bổ sung · Phiếu bảo hành · Lắp đặt bàn giao · Giao việc khác) → FE `/customer-care/waiting-assign-tasks`, menu CSKH sau bán › Giao việc.
+Tài liệu: `.plans/gop-db/phieu-cho-giao-viec/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-10-31-phieu-cho-giao-viec-design.md`.
+
+**Checkpoint 31/10:** user test OK. Local đã `permission:sync` + gán 2 quyền mới (2237/2238, type 24) cho role 18. Còn lại: chạy seeder
+quyền trên dev/prod + admin gán quyền; hiệu năng tab HĐ (~3,5 s/trang) chờ chốt; khuôn `ArrivedNotifyList.vue` dính cùng lỗi phân trang, chưa sửa.
+
+## Phiếu xuất hàng điều chỉnh kiểm kê (ERP → HRM) — ĐÃ PUSH `develop`, Playwright local PASS (2026-10-30, @khoipv)
+
+Push: hrm-api `caf2abf87` · hrm-client `7a2880d5f`. Còn chạy seeder quyền trên môi trường.
+
+Port màn ERP `inventoryExport` (bảng `inventory_exports`, mã `PXHĐCKK-`) sang `/finance/inventory-exports` — bước Kế toán kho
+sau Phiếu xuất kho ĐCKK, chép khuôn màn Phiếu nhập hàng ĐCKK. User chốt 30/10: KHÔNG bút toán (y ERP — ERP nhân cột không tồn
+tại ⇒ 0), còn lại y màn nhập. Tài liệu: `.plans/gop-db/phieu-xuat-hang-dieu-chinh-kiem-ke/{design.md,plan.md}` · spec
+`docs/superpowers/specs/gop-db/2026-10-30-phieu-xuat-hang-dieu-chinh-kiem-ke-design.md`.
+
+## Phiếu nhập hàng điều chỉnh kiểm kê (ERP → HRM) — XONG, ĐÃ PUSH develop (hrm-api `ef113e688`, hrm-client `f242fa9d6`) (2026-10-30, @khoipv)
+
+Port màn ERP `inventoryImport` (bảng `inventory_imports`, mã `PNHĐCKK-`) sang `/finance/inventory-imports` — bước Kế toán kho
+sau Phiếu nhập kho ĐCKK. User chốt 30/10: quyền y ERP, menu Tài chính › Nhập hàng + nút ở phiếu nhập kho mở màn HRM, màn Thêm
+có ô chọn phiếu, lỗi ERP giữ nguyên. Tài liệu: `.plans/gop-db/phieu-nhap-hang-dieu-chinh-kiem-ke/{design.md,plan.md}` · spec
+`docs/superpowers/specs/gop-db/2026-10-30-phieu-nhap-hang-dieu-chinh-kiem-ke-design.md`.
+
+**Checkpoint 30/10 (wrap up):** BE `Modules/Finance` (`InventoryImport*`, service chung mới `AccountingStockWriter` +
+`ProductImportPriceReader`, 2 quyền xem type 8 trong seeder chung) + FE `pages/finance/inventory-imports` + menu Tài chính; nút
+"Tạo phiếu nhập hàng" ở Phiếu nhập kho ĐCKK mở màn HRM. Đã test Playwright toàn luồng (dữ liệu test đã dọn) + user test OK.
+Tiếp theo: chạy seeder quyền; commit khi user yêu cầu. Việc treo xem `plan.md` checkpoint cuối.
+
+## Hạch toán dịch vụ HDDV (phía BÁN): YCHTDV + Phiếu hạch toán — XONG + COMMIT/PUSH develop 2026-10-31 (@dangquang)
+
+Port màn ERP `admin/customer-care/wr_accounting_service_requests?type=all` → HRM
+`/finance/wr-accounting-service-requests`. Phía BÁN dịch vụ (chuỗi "Bán Dịch vụ", 4 mục menu sẵn ở
+`finance.js:302-313`). Bản song sinh phía MUA đã port (`buy-service-accounting-request`) = khuôn chuẩn.
+- Bảng `wr_accounting_service_requests` + `wr_accounting_service_request_costs` (ERP sở hữu, CHƯA có
+  model HRM) → không migration. Phiếu tạo TỪ HĐ DV (`wr_service_contracts`, đã có model HRM), chi phí
+  tính sẵn từ HĐ (trừ phụ lục PL_GIAM), màn chỉ-đọc chi phí — KHÔNG có SL còn lại.
+- Chốt (call của tôi, user "làm đi"): 1 loại; 4 quyền mới guard api `type 23` group 'Yêu cầu hạch toán
+  dịch vụ HDDV' (3 cấp xem + Hạch toán dịch vụ HDDV); phân hệ chính Bán hàng; status 1/2/3 (Đang
+  tạo=xám); tạo chỉ từ HĐ qua `?wr_service_contract_id=`; **link màn chưa-port (Số hợp đồng, Hạch toán
+  chi phí→phiếu #2) để TRỐNG** (khác bản MUA mở ERP — chờ user chỉnh nếu muốn); không bản in; có Excel.
+- Trạng thái: **XONG CẢ 2 MÀN + đã commit/push `develop`**.
+  - **Màn 2 — Phiếu hạch toán dịch vụ HDDV** (`wr-accounting-services`, phía ghi sổ): BE entity+list+show+export
+    (Phase 1), posting + store + lật nguồn YCHTDV (Phase 2, feature test đối chiếu số ERP 3/3 pass), FE
+    list/chi tiết/hạch toán-preview (Phase 3, verify Playwright). **Nối link YCHTDV → create?wr_accounting_service_request_id=**.
+  - Commit 2026-10-31: hrm-api `06b01e074`, hrm-client `51f44677b` (fast-forward, stage chọn lọc đúng file feature;
+    KHÔNG đụng thay đổi lạc còn trong working tree hrm-client: bonus-component docs đã xóa + SupplierReturnSearchModal.vue).
+- Tài liệu: YCHTDV `.plans/gop-db/wr-accounting-service-request/{design.md,plan.md}` · Phiếu hạch toán
+  `.plans/phieu-hach-toan-dich-vu-hddv/{design.md,plan.md}` | Spec:
+  `docs/superpowers/specs/gop-db/2026-10-30-wr-accounting-service-request-design.md`.
+- TREO: 2 thay đổi lạc trong working tree hrm-client (bonus-component docs xóa, SupplierReturnSearchModal.vue) chờ user chốt xử lý.
+
 ## Điều chuyển kho CHI NHÁNH (type 7) — Phase A (xuất) + Phase B (nhập đóng vòng) XONG (2026-10-23), LOCAL develop, chờ user chốt tích hợp
 
 Port loại **điều chuyển chi nhánh = 7** ERP→HRM (nối tiếp nhóm điều chuyển: type 5 cùng thủ kho → type 6 nội bộ → **type 7 chi nhánh**). Chuỗi: YCXH → ĐNXK → PXK (xuất, ×hệ số chi nhánh) → tự sinh YCNH cty ĐÍCH → ĐNNK → PNK → Phiếu nhập hàng (đóng vòng PYCCH) → [PPBHĐC = Phase C].
@@ -2534,6 +2595,11 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Scope: form (Lý do thu → textarea full ngang, hàng đầu phủ kín, cột +/xóa sticky phải) · bản in (cột cố định `colgroup`, chừa chỗ ký 15px) · popup hợp đồng Thu bán hàng lọc theo người lập như ERP `create_bill_income` (`usage=bill_income_request`, opt-in).
   ⚠️ GOTCHA: CSS chung popup in ép `padding !important` cho ô `.no-border` → giãn vùng ký phải chèn div `signature-space` + inline `!important`, padding inline vô tác dụng. 3 file, không migration.
   Chuyển Hoàn thành: 2026-10-29.
+
+- chuyen-xe-cho-hang → @junfoke → .plans/gop-db/chuyen-xe-cho-hang/plan.md
+  Trạng thái: 🟢 **BE + FE xong, test + bấm thử local (31/10/2026)**, nhánh `feat/chuyen-xe-cho-hang` (2 repo), CHƯA commit. Còn: thử lưu PXK gắn chuyến trên dev (ĐNXK local lỗi dữ liệu lô có sẵn).
+  Scope: màn Chuyến xe chở hàng trọn luồng (trừ phiếu hạch toán — giữ ERP) + PXK HRM gắn chuyến + popup tạo nhanh chuyến ở PXK/PNK. Giữ nguyên cách tính ERP (kể cả CXK về lại không ×2 cước).
+  Spec: docs/superpowers/specs/gop-db/2026-10-31-chuyen-xe-cho-hang-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-cho-hang/design.md
 
 - chuyen-xe-khac → @junfoke → .plans/gop-db/chuyen-xe-khac/plan.md
   Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã lên origin/develop (api `4fcd3b774` + merge `8ef8d7842`, client `015d86f34`), có Excel 1 phiếu. Còn: test tuyến cố định với bảng giá hiệu lực thật; xem ảnh nút Xuất Excel.

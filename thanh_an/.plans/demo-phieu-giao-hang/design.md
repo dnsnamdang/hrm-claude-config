@@ -2,6 +2,14 @@
 
 > @khoipv · 27/10/2026 · bản 2: 28/10/2026 · Spec đầy đủ: [docs/superpowers/specs/2026-10-27-demo-phieu-giao-hang-design.md](../../docs/superpowers/specs/2026-10-27-demo-phieu-giao-hang-design.md) · Demo: `demos/demo-phieu-giao-hang.html`
 
+## Bản 3 (30/10/2026)
+Demo viết lại để **khớp code thật đang chạy** (giai đoạn 1 đã lên bản thật, xem `.plans/phieu-giao-hang`), UI cùng khung V2Base với `demo-lap-don-mua-hang.html`.
+- Bỏ stepper, thanh vai trò, tab danh sách, màn Quy tắc nghiệp vụ.
+- 3 màn: Chi tiết đơn mua · Danh sách phiếu giao hàng · Chi tiết phiếu.
+- Quy tắc lấy từ `PurchaseDeliveryNoteService` (chi tiết ở spec §10).
+
+Phần dưới là thiết kế bản 2, giữ lại để tra cứu.
+
 ## Mục tiêu
 Áp dụng cho đơn mua đã duyệt, **mọi hình thức vận chuyển** (NCC giao về kho · NCC giao thẳng KH · Cty tự lấy về kho / giao KH). Luồng:
 1. Cung ứng bấm **Gửi bộ phận giao hàng**.

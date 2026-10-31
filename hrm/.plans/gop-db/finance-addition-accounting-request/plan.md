@@ -1514,3 +1514,73 @@ User báo popup "Chọn phiếu xác nhận bảo hành" hơi dài. Nguyên nhâ
 
 - [x] FE `components/RecordSearchModal.vue`: giới hạn `.table-wrapper` trong popup `max-height: 50vh`, cuộn trong bảng (tiêu đề bảng dính sẵn). Áp dụng cho cả 3 popup dùng chung component (bảo hành / hàng thiếu / nhân viên)
 - [ ] User mở trình duyệt kiểm tra (Ctrl+Shift+R)
+
+## Tài liệu SRS + HDSD + Testcase theo form Danh mục quốc gia (2026-10-30) @khoipv
+
+Cấu trúc phẳng như `bank-account-catalog/`; nội dung theo skill + `../phieu-theo-form-quoc-gia/CHECKLIST.md`.
+
+- [x] Chụp ảnh trên dev-hrm (DNS Admin) bằng `htbs_shots/_capture/capture.js` — phiếu Chờ duyệt 002289 (loại 2), 002284
+      (loại 6), 002286 (loại 4), 002285 (loại 7). Dev không có phiếu Đang tạo → ảnh Sửa / Xóa / Gửi duyệt bật tạm cờ hiển thị
+      trên trình duyệt (không ghi dữ liệu). Chỉ mở / Hủy
+- [x] `gen_srs.py` → `SRS - Phiếu yêu cầu hạch toán bổ sung.docx` (55 trang, 15 chức năng, 3 lối vào, Phần 5; selfcheck khớp mẫu)
+- [x] `gen_hdsd.py` → `HDSD_Phieu yeu cau hach toan bo sung.docx` (23 trang)
+- [x] `gen_testcase.py` → `testcase.xlsx` (58 TC, P0 50%, kiểm thuật ngữ / emoji / xuống dòng sạch)
+- [ ] User soát → đẩy Drive
+
+Ghi nhận: lịch sử trên dev trống ở mọi phiếu (phiếu tạo trước khi bật lịch sử) → ảnh Lịch sử là trạng thái "Chưa có lịch sử".
+
+### Checkpoint — 2026-10-30 15:10
+Vừa hoàn thành: 3 tài liệu SRS / HDSD / testcase màn Phiếu yêu cầu hạch toán bổ sung
+Đang làm dở: không
+Bước tiếp theo: user soát tài liệu, đẩy Drive
+Blocked:
+
+## Check — testcase đối chiếu skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Đạt: khung 9 mục mô tả, Test Summary 2 khối, header 17 cột, dropdown check, font/độ rộng cột, không freeze, không emoji,
+      không thuật ngữ code, ô nhiều ý xuống dòng, P0 ≥ 40%
+- [x] Lệch (chưa sửa, chờ user): tiêu đề thiếu "- Cập nhật ngày dd/mm/yyyy"; thiếu case theo góp ý tester ý 1 (Lưu và tiếp
+      tục khi dữ liệu lỗi), ý 3 (Expected mở màn đủ số dòng/trang + lựa chọn + thứ tự + khuôn dòng tổng), ý 4 (bước "Bấm Tìm
+      kiếm nâng cao" ở case lọc ô nâng cao), ý 5 (nhớ bộ lọc trước/sau 10 phút, đổi tài khoản, tab mới), ý 6 (kết hợp tiêu chí
+      + độ dài ô tìm nhanh); nhiều case tiền điều kiện "—" (skill bắt có số liệu); thiếu case tham số lạ trên thanh địa chỉ
+
+## Fix — testcase theo chuẩn skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Bộ hàm dùng chung `../phieu-theo-form-quoc-gia/tc_phieu_bosung.py` (case mở màn, nhớ bộ lọc, kết hợp tiêu chí, ô cha–con,
+      tham số lạ, chèn bước "Bấm Tìm kiếm nâng cao", điền tiền điều kiện) — hành vi đọc từ code chung (V2BaseDataTable,
+      filterStateMixin, V2BaseCompanyDepartmentFilter)
+- [x] `gen_testcase.py`: tiêu đề "- Cập nhật ngày 30/10/2026"; đủ 6 ý tester áp dụng được (1, 2, 3, 4, 5, 6); tiền điều kiện
+      không còn "—"; số TC 58 → 75; P0 ≥ 40%; kiểm thuật ngữ / emoji / xuống dòng sạch
+
+## Fix — SRS: bảng "Mô tả chi tiết giao diện" mỗi đối tượng 1 hàng (2026-10-30) @khoipv
+User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Người tạo / Phòng ban / Người duyệt / Người cập nhật" phải tách.
+- [x] Hàm dùng chung `../phieu-theo-form-quoc-gia/srs_split_rows.py` (`split_ui_rows`): tách theo " / ", phần sau tự nhận
+      tiền tố Cột/Nút/Ô; mô tả mặc định cho nút chung; chặn còn dòng gộp (assert)
+- [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
+      sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
+- [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu
+
+## Fix #11958 — Popup Từ chối: icon nút Hủy + thu nhỏ popup (2026-10-31) @khoipv
+- [x] `RejectModal.vue`: nút Hủy thêm icon `fas fa-arrow-left` (skill button-convention, khớp nút Đóng mặc định V2BaseModal)
+- [x] `RejectModal.vue`: `size="md"` (mặc định V2BaseModal là `lg`, quá rộng cho 1 ô lý do)
+- [x] Push #11958 (2026-10-31, user yêu cầu): hrm-client `870660725` lên `develop`
+
+### Nâng chi tiết SRS theo SRS_MAU (31/10/2026) @khoipv
+User báo SRS chưa chi tiết bằng skill / mẫu quốc gia mới nhất. Chuẩn bám: `../finance-bill-income-request/gen_srs.py` + CHECKLIST.
+- [x] Đối chiếu lại code FE (index, _id/index, create, edit, Form, DetailTable, AttachmentSection, các popup chọn, RejectModal,
+      CoordinationDetail, mixin unsaved / saveAndContinue / printPreview) + BE (Store/Update/ChangeStatus Request, WriteService,
+      NotifyService, PrintService, BillAdjustDeptSourceService) — mọi thông báo / toast / điều kiện hiện nút lấy nguyên văn
+- [x] Bảng Giới thiệu 15 chức năng: Tác nhân ghi quyền thật (bỏ "người dùng đã đăng nhập"), Điều kiện đánh số, Dòng sự kiện
+      chính có bước ghi lịch sử + thông báo + toast, sự kiện phụ đủ nhánh (rỗng, sai quyền, sai trạng thái, đóng popup / click ngoài)
+- [x] Bảng giao diện: mỗi đối tượng 1 hàng, mỗi cột lưới 1 dòng (ghi cột sắp xếp được / cột khóa), dropdown ghi "Mặc định" +
+      lựa chọn, lỗi dưới ô + toast + hộp xác nhận nguyên văn; bỏ loại cấm (Number/Loading/Modal/Text); gọi tên loại yêu cầu
+      thay cho số loại
+- [x] Bảng event: đủ Before / During / After cho 84 event (mở màn, từng nút, đổi ô, sắp xếp, đổi trang, đóng / click ngoài, kéo thả)
+- [x] Sửa chỗ lệch code của bản cũ: Gửi duyệt ở màn chi tiết CÓ hộp xác nhận; Gửi duyệt / Từ chối ở màn chi tiết ở lại màn
+      (không về danh sách); ô hợp đồng không khóa mà báo "Vui lòng chọn đối tượng trước"; Người duyệt gồm cả người duyệt phiếu
+      kế toán; xóa phiếu kế toán trả phiếu yêu cầu về Chờ duyệt; nút trong "…" theo số nút (tối đa 3)
+- [x] Phần 4: thêm BR-08 (không trùng dòng chi tiết), BR-09 (file đính kèm), BR-10 (chứng từ nguồn chọn được); sửa BR-03, BR-06, BR-07
+- [x] Sinh lại docx, selfcheck khớp bản mẫu (120 trang)
+- Số liệu (metrics.py): trước fn=15 ui=7.5 ev=1.7 evch=308 intro=624 · 26 event, thiếu Before 16, thiếu During 21, dòng quyền 4
+  → sau fn=15 ui=14.4 ev=5.6 evch=1706 intro=1594 · 84 event, thiếu Before 0, thiếu During 0, dòng quyền 9
+
+### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
+- [x] HDSD PHẦN 6 Lập phiếu kế toán: thêm trường bắt buộc + luật nợ = có, 4 nút có ảnh (btn_pkt_*) — sinh lại 24 trang

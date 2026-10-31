@@ -325,7 +325,20 @@ Trường hợp nghiệp vụ không cho bỏ chọn → `:disabled` hoặc `:cl
 | Con trỏ | `not-allowed` |
 | `opacity` | **1** — KHÔNG làm mờ |
 
-Rule chung đặt ở `assets/scss/v2-styles.scss`, phủ đủ: `.v2-input:disabled`, `.v2-textarea:disabled`, `input/textarea/select.form-control:disabled`, `.mx-input:disabled` (datepicker), `.v2-code-input.is-disabled`, `.csp-control.is-disabled` (ô chip tự dựng), `.select2-container--disabled .select2-selection`.
+**Ô nào disabled cũng phải ra nền khoá — ở MỌI màn, mọi đường vào (user chốt 31/10/2026).** Rule chung đặt **TOÀN CỤC** ở
+`assets/scss/default.scss` (nạp mọi trang qua `app.scss`), selector có tiền tố `body`, phủ đủ: `.v2-input:disabled`,
+`.v2-currency-input:disabled`, `.v2-textarea:disabled`, `input/textarea/select.form-control:disabled`, `.mx-input:disabled`
+(datepicker), `.v2-code-input.is-disabled`, `.csp-control.is-disabled` (ô chip tự dựng),
+`.select2-container--disabled .select2-selection`. Bản cũ trong `assets/scss/v2-styles.scss` vẫn giữ (cùng giá trị) — sửa màu thì
+sửa **cả 2 chỗ**.
+
+⚠️ **Vì sao phải toàn cục** (lỗi thật 31/10, màn Phiếu xuất hàng ĐCKK): rule trong `v2-styles.scss` nằm lồng dưới `.v2-styles` và
+file đó chỉ nạp khi trang/component **có import nó**. Form dùng chung Thêm / Sửa / Chi tiết không import, chỉ `index.vue` import ⇒
+đi từ danh sách bấm "Tạo mới" thì đúng (local), **mở thẳng link `/create`** thì ô Kho / Thủ kho ra **nền trắng** như ô nhập được
+(cổng dev). Local gần như không bao giờ tái hiện vì dev hay đi từ danh sách vào — kiểm bằng cách mở link ở **tab mới, trình duyệt
+sạch**. Những rule KHÁC của `v2-styles` (vd `.v2-linked-field` — ô link chứng từ trong form readonly) vẫn chỉ ăn khi có import ⇒
+form dùng chung vẫn phải tự `@import '@/assets/scss/v2-styles.scss';` trong `<style scoped>` (checklist skill `erp-to-hrm-screen`
+mục grep `v2-styles.scss`).
 
 **Khi viết component mới có trạng thái khoá: KHÔNG tự đặt màu nền/chữ riêng** — chỉ khai `cursor`. Trước khi chuẩn hoá, mỗi component tự đặt một kiểu (input để trắng, textarea/datepicker `#f1f5f7`, select2 `#f1f5f9` + `opacity .6`, ô chip `#e9ecef`) → 5 kiểu khác nhau trên cùng một form.
 
@@ -453,6 +466,8 @@ vm.options = { actions: [], performers: [] }   // giả lập endpoint mới ch�
 - [ ] Đã gọi lại API danh mục **sau khi** có dữ liệu bản ghi (không chỉ ở `mounted`)
 - [ ] Select đi qua wrapper tự khai `templateResult` → đã tự gắn `LOCKED_OPTION_PREFIX`
 - [ ] Ô disabled: nền `#f1f5f9`, chữ `#475569`, không `opacity`, không bấm được (kể cả ô dựng bằng `<div>`)
+- [ ] Kiểm ô disabled bằng cách **mở thẳng link màn Thêm / Sửa / Chi tiết ở tab mới** (không đi từ danh sách) — đi từ danh sách
+      thì CSS của danh sách đã nạp sẵn, che lỗi thiếu import (mục 3)
 - [ ] Focus ô nhập: không viền xanh, không quầng sáng
 - [ ] Select chọn 1: có dấu `×` xoá nhanh (mục 1b) — chỉ ô Trạng thái / ô lọc bắt buộc của báo cáo mới được tắt, và phải ghi lý do cạnh dòng code
 - [ ] **Select chọn nhân viên: nhãn đúng khuôn `Tên - Mã phòng - Mã NV`** (mục 2c) — không màn nào tự

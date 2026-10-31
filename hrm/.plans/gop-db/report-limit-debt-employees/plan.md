@@ -152,3 +152,10 @@ Vừa hoàn thành: xác minh #11730 trùng nguyên nhân #11727/#11729 (code m�
 Đang làm dở: —
 Bước tiếp theo: deploy develop lên dev → tester kiểm lại popup NV 11410102 / KH 24TLAPYE-50.
 Blocked: chưa kiểm được trực tiếp trên dev (không có API dev).
+
+## Fix #11928 — Bỏ dòng "Không có nhân viên nào." dưới bảng (30/10/2026)
+
+Dòng này do `V2BaseDataTable` (dùng chung) in khi 0 bản ghi; bảng đã có "Không có dữ liệu phù hợp" nên thừa. User chốt chỉ bỏ ở màn này.
+- [x] `components/V2BaseDataTable.vue`: `itemLabel` rỗng ⇒ không in dòng "Không có … nào." (các màn khác giữ nguyên; 4 popup đang truyền `item-label=""` trước in lỗi "Không có  nào." nay để trống)
+- [x] `pages/finance/report-limit-debt-employees/index.vue`: `itemLabel=""`
+- [x] Verify: compile template

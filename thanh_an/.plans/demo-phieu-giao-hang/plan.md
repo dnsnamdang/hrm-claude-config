@@ -71,3 +71,19 @@ Vừa hoàn thành: màn cập nhật phiếu còn Tiến độ giao hàng → C
 Đang làm dở: —
 Bước tiếp theo: user mở demo xem lại; chốt câu hỏi mở spec §9
 Blocked:
+
+## Phase 5 — Làm lại demo theo UI demo lập đơn mua + logic bản thật (30/10/2026)
+
+> Yêu cầu user 30/10: "sửa lại đúng mẫu UI, logic như code hiện tại, tham khảo UI màn demo-lap-don-mua-hang.html, base trên pm hiện có".
+
+- [x] 31. Viết lại `demos/demo-phieu-giao-hang.html`: CSS / khung theo `demo-lap-don-mua-hang.html` (page-title-box, tp-card, sec, ô disabled, form-footer, modal); bỏ stepper / thanh vai trò cũ / tab danh sách / màn Quy tắc
+- [x] 32. Màn Đơn mua (chi tiết): banner phiếu bị trả lại, footer Gửi bộ phận giao hàng / Sửa và gửi lại / Hủy phiếu; popup gửi chỉ có Phương thức (khoá), Ngày lấy hàng*, Ưu tiên*, Ghi chú — như `SendDeliveryNoteModal.vue`
+- [x] 33. Màn Danh sách phiếu giao hàng: bộ lọc + cột + thao tác dòng Tiếp nhận / Trả lại như `delivery_notes/index.vue`
+- [x] 34. Màn Chi tiết phiếu: banner theo trạng thái, Thông tin chung, Lộ trình và hàng hóa / Tiến độ giao hàng (Lấy hàng tại NCC + thẻ Điểm) / Chi phí, footer Tiếp nhận / Hoàn thành giao hàng / Trả lại cung ứng — như `_id/index.vue`, `PickupBlock`, `PointCard`, `CostTable`, `ReturnNoteModal`; điều kiện canReturn / missingForComplete theo `PurchaseDeliveryNoteService`
+- [x] 35. Kiểm cú pháp JS bằng node; cập nhật README, STATUS, design / spec
+
+### Checkpoint — 2026-10-30 (làm lại theo UI demo lập đơn mua + logic bản thật)
+Vừa hoàn thành: viết lại toàn bộ demo — CSS/khung V2Base theo demo-lap-don-mua-hang.html; 3 màn Chi tiết đơn mua (popup gửi như SendDeliveryNoteModal, banner phiếu bị trả lại, Sửa và gửi lại / Hủy phiếu) · Danh sách phiếu giao hàng (không tab, bộ lọc 9 ô, thao tác dòng Tiếp nhận / Trả lại) · Chi tiết phiếu (banner, Thông tin chung, Lộ trình và hàng hóa hoặc Tiến độ giao hàng + Chi phí, footer Tiếp nhận / Hoàn thành giao hàng / Trả lại cung ứng). Logic remainingPairs / canSend / canReturn / missingForComplete / has_diff theo PurchaseDeliveryNoteService. Đã node --check + chạy thử 4 phương thức trên DOM giả (gửi → tiếp nhận → lấy hàng → xác nhận điểm thiếu → chặn hoàn thành khi chưa có chi phí → hoàn thành → gửi phiếu 2 → trả lại → hủy), chưa mở trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user mở demo kiểm UI; bản thật gửi xong quay về danh sách đơn mua, demo ở lại màn đơn mua để xem tiếp
+Blocked:
