@@ -2622,3 +2622,22 @@ User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Ng�
 - [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
       sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
 - [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu
+
+### Nâng chi tiết SRS theo SRS_MAU (31/10/2026) @khoipv
+Brief: độ chi tiết ngang SRS_MAU (Phiếu đề nghị thu tiền) + CHECKLIST form quốc gia. Mọi câu mới đối chiếu code FE/BE nhánh develop.
+- [x] Bảng Giới thiệu 16 chức năng: Mô tả 2–3 câu, Tác nhân "Người dùng có quyền thực hiện chức năng: …", Điều kiện đánh số,
+      Dòng sự kiện chính có bước ghi lịch sử + thông báo [DCCN], Sự kiện phụ đủ nhánh (rỗng, sai quyền 403, sai trạng thái, hết phiên,
+      Đóng/(x)/click ngoài, hộp "Thông tin chưa lưu")
+- [x] Bảng giao diện: mỗi đối tượng 1 hàng (cột lưới, ô lọc, ô bảng chi tiết 2 bên, nút, trạng thái rỗng, toast nguyên văn);
+      bỏ loại cấm (Loading/Modal/Text/Number); cột sắp xếp / cột khóa đúng code
+- [x] Bảng event Before/During/After cho mọi thao tác ghi (lưu, gửi duyệt, từ chối, xóa, xuất, in) với thông báo nguyên văn
+      FormRequest + WriteService; event chỉ đọc có Before + After
+- [x] Sửa sai lệch cũ theo code: đổi Loại phiếu KHÔNG xóa bảng / không hỏi xác nhận; toast xóa là "Xóa thành công";
+      VNĐ tỷ giá khóa = 1; Cột KH / NCC lấy đối tượng nào; bổ sung popup "Chọn nhanh hợp đồng" vào 2.7 và popup Chọn nhà cung cấp vào 2.6
+- [x] Phần 4: BR-01 → BR-13 (thêm BR-11 phạm vi xem, BR-12 phiếu từ phiếu báo có, BR-13 giới hạn xuất); sửa BR-05
+- [x] Sinh lại `SRS - Phiếu yêu cầu điều chỉnh công nợ.docx` — selfcheck khớp bản mẫu, 108 trang
+- Số liệu metrics: trước fn=16 ui=7.4 ev=1.6 evch=361 intro=628 (noBefore=14, noDuring=21, permLine=4)
+  → sau fn=16 ui=14.6 ev=4.8 evch=1403 intro=1563 (noBefore=0, noDuring=52 — toàn event chỉ đọc / thao tác trên form chưa lưu, permLine=8)
+
+### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
+- [x] HDSD PHẦN 6 Tạo phiếu kế toán: thêm trường bắt buộc + luật nợ = có (BillAdjustDeptForm.validateBeforeSubmit, WriteService luật 4), 4 nút có ảnh cắt từ 21_accounting_create (btn_pkt_*) — sinh lại 23 trang

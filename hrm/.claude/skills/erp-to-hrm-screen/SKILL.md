@@ -450,6 +450,10 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Ô cố ý khoá trong form: `V2BaseInput`/`V2BaseCurrencyInput` `:disabled` (KHÔNG `.field-line` — đó là
       kiểu chữ trong bảng) + ⓘ qua prop `hint` của `V2BaseLabel`, câu nói **vì sao khoá + làm gì để đạt
       mục đích**. Màn Chi tiết (cả form readonly) không gắn ⓘ → `info-icon-tooltip`
+- [ ] Ô disabled ra **nền khoá `#f1f5f9`** ở cả 3 màn Thêm / Sửa / Chi tiết khi **mở thẳng link ở tab mới** (không đi từ danh
+      sách). Nền khoá đã là rule toàn cục (`assets/scss/default.scss`, 31/10/2026) — KHÔNG tự đặt nền riêng; nhưng form dùng
+      chung vẫn phải `@import '@/assets/scss/v2-styles.scss';` trong `<style scoped>` cho các rule khác (`.v2-linked-field`…).
+      Lỗi thật: Phiếu xuất hàng ĐCKK trên dev ô Kho / Thủ kho trắng, ô Phiếu kiểm kê mất khung → `select-and-input-state` §3
 - [ ] Có `unsavedChangesMixin` + gọi `markFormSaved()` sau khi lưu thành công. KHÔNG gọi `markFormSaved()`
       lúc mở màn (tắt cảnh báo vĩnh viễn); form không nằm ở `formSubmit` thì override
       `unsavedSnapshotSource()` → `unsaved-changes` §2b
@@ -756,7 +760,7 @@ grep -rn "actionOptions"                  <thư-mục-feature>   # dựng từ l
 grep -rn "<V2BaseIconButton[^>]*icon=\|<V2BaseButton[^>]* danger\b\|defaultHidden" <thư-mục-feature>   # prop không tồn tại
 grep -rn "Người lập\|Ngày lập"            <thư-mục-feature>   # nhãn phải là Người tạo / Ngày tạo
 grep -L "layout:"  <thư-mục-page>/*.vue <thư-mục-page>/_id/*.vue          # thiếu layout -> sai vỏ trang
-grep -L "v2-styles.scss" <thư-mục-page>/index.vue <file-Form>.vue        # thiếu import -> vỡ bộ lọc nâng cao
+grep -L "v2-styles.scss" <thư-mục-page>/index.vue <file-Form>.vue        # thiếu import -> vỡ bộ lọc nâng cao / form mở thẳng link mất khung ô link (grep CẢ form, không chỉ index)
 grep -rn "process.env.ERP_URL"            <thư-mục-feature>   # link ERP tự ghép -> utils/erp-link.js
 grep -rLE "pickerPagination" <thư-mục-feature>/components/*{Search,Picker}*Modal.vue   # popup CHỌN chưa dùng hằng số dòng chung
 grep -rn "text-muted"                     <thư-mục-feature>   # ra chữ ĐỎ -> dùng xám #6b7280

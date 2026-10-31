@@ -95,8 +95,11 @@ def build():
     d.step(['Bước 3: Bấm ', '@btn_taophieuxuat', '. Hệ thống mở màn “Lập phiếu xuất hàng mượn” với phiếu yêu cầu '
             'điền sẵn.'])
     d.img('21_borrow_export_create', 'Màn hình Lập phiếu xuất hàng mượn')
-    d.step('Bước 4: Kiểm tra, sửa số Xuất được duyệt nếu cần.')
-    d.step(['Bước 5: Bấm ', '@btn_luuvaduyet', '. Phiếu yêu cầu chuyển sang Đã duyệt.'])
+    d.step('Bước 4: Nhập Ghi chú (tùy chọn).')
+    d.step('Bước 5: Ở bảng Chi tiết, sửa số Xuất của từng phiếu mượn nếu cần (bắt buộc, lớn hơn 0, không vượt cột Đang mượn).')
+    d.step(['Bước 6: Bấm ', '@btn_luuvaduyet', ' để lưu phiếu xuất và duyệt phiếu yêu cầu'])
+    d.sub(['Hoặc ', '@btn_luutieptuc', ' để lưu rồi lập tiếp phiếu khác.'])
+    d.sub(['Hoặc ', '@btn_quaylai_form', ' để không lưu thông tin.'])
 
     # PHẦN 5 — Từ chối
     d.phan('TỪ CHỐI PHIẾU')

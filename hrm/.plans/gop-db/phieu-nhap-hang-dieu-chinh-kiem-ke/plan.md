@@ -103,3 +103,13 @@ Blocked:
       conflict `CatalogHistoryService` (khối Chuyến xe khác vs Phiếu nhập hàng ĐCKK) giữ cả 2. Push: hrm-api `ef113e688`,
       hrm-client `f242fa9d6` lên `develop`
 - [ ] Repo chính 2 bên đang SAU origin/develop (local chỉ có commit của mình + việc dở màn xuất): pull khi màn xuất commit xong
+
+## Fix #11966 — Phiếu nhập hàng ĐCKK: khung ô, sort Ngày tạo, required cột chi tiết (2026-10-31) @khoipv
+- [x] Bug 1 + 2 (ô Phiếu kiểm kê không có khung — màn Thêm Tài chính + Chi tiết Kho): đã sửa ở commit `43e528f29` (09:20 31/10,
+      đã lên origin/develop) — form tự `@import v2-styles` nên `.v2-linked-field` có khung khi mở thẳng link. QA chụp 09:40 trên
+      dev chưa deploy bản này ⇒ không sửa thêm, chờ deploy rồi QA test lại
+- [x] Bug 3: danh sách `finance/inventory-imports/index.vue` mọi cột khai `width` + `minWidth` qua `w(px)` (khuôn #11763
+      `finance/warehouse-imports`), chữ dài `text-wrap`, Ngày tạo căn giữa. BE sort đã có khoá phụ `id`
+- [x] Bug 4: bảng Chi tiết thêm dấu `*` đỏ (`<Required />`) ở tiêu đề cột Đơn giá nhập / Kho kế toán / Số lượng — chỉ khi
+      Thêm / Sửa (màn Chi tiết không nhập)
+- [x] Push #11966 (2026-10-31, user yêu cầu): hrm-client `a9b3de54f` lên `develop`

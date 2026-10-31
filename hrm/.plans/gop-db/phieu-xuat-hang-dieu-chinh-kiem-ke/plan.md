@@ -77,3 +77,22 @@ Blocked:
 ## Push (2026-10-30)
 - [x] Commit + push `develop` (rebase lên origin, không conflict): hrm-api `caf2abf87` · hrm-client `7a2880d5f`. Chỉ đưa file của
       màn này; 8 file hrm-client đang dở việc khác (V2BaseDataTable, V2BaseLabel, toast.js…) để nguyên, chưa commit
+
+## Fix lệch giao diện trên cổng dev (2026-10-31, user báo ảnh dev vs local)
+- [x] Check: mở thẳng `/finance/inventory-exports/create` trên dev thì ô Phiếu kiểm kê mất khung, ô Kho / Thủ kho nền trắng. Nguyên
+      nhân: `assets/scss/v2-styles.scss` (khai `.v2-linked-field`, nền ô khoá) KHÔNG global, chỉ `index.vue` import ⇒ đi từ danh
+      sách sang thì có CSS, mở thẳng link thì không. Checklist skill có dòng `grep -L "v2-styles.scss" <Form>.vue` — lần đầu chỉ grep index
+- [x] Sửa (user chốt "sửa cả"): thêm `@import '@/assets/scss/v2-styles.scss';` vào `<style scoped>` của 4 form dùng chung khuôn:
+      `finance/inventory-exports`, `finance/inventory-imports`, `warehouse/inventory-exports`, `warehouse/inventory-imports`
+- [x] Verify: mở thẳng link màn Thêm ở tab mới (không qua danh sách, trình duyệt sạch) — ô Phiếu kiểm kê có khung xám, ô Kho / Thủ
+      kho nền xám như local (chụp 3/4 màn; màn còn lại chạy cùng script)
+- [x] Push hrm-client `43e528f29` (chỉ 4 form)
+
+## Nền ô khoá toàn cục (2026-10-31, user: "input nào disable thì để background disable, cập nhật vào skill")
+- [x] Đưa rule nền ô khoá (#f1f5f9 / chữ #475569 / viền #e2e8f0, không opacity) ra `hrm-client/assets/scss/default.scss` (toàn cục,
+      tiền tố `body`, `!important`) — trước chỉ ở `v2-styles.scss` lồng `.v2-styles` ⇒ màn không import ra nền trắng. Bản trong
+      v2-styles giữ nguyên. node-sass biên dịch sạch
+- [x] Skill `select-and-input-state` §3 + mục tự kiểm; skill `erp-to-hrm-screen` checklist D + dòng grep `v2-styles.scss` (grep cả form)
+- [x] Verify trình duyệt (local, mở thẳng link tab mới): `/finance/inventory-exports/1` + `/warehouse/inventory-exports/16` có rule
+      toàn cục `body .v2-input:disabled`, 4/4 ô khoá mỗi màn nền `rgb(241,245,249)`
+- [x] Commit + push hrm-client `7dfbf6445` (chỉ `default.scss`)

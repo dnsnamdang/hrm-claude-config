@@ -109,7 +109,12 @@ def build():
     d.sub(['Hoặc bấm Số phiếu để mở màn chi tiết, chọn ', '@btn_lappktoan'])
     d.step('Bước 3: Hệ thống mở màn “Tạo phiếu kế toán” với phiếu yêu cầu điền sẵn.')
     d.img('21_accounting_create', 'Màn hình Tạo phiếu kế toán')
-    d.step('Bước 4: Kiểm tra, lưu phiếu kế toán.')
+    d.step('Bước 4: Kiểm tra Thông tin chung, nhập đầy đủ trường bắt buộc: Ngày hạch toán (dd/mm/yyyy), Loại tiền, Tỷ giá (VND), Diễn giải.')
+    d.step('Bước 5: Ở bảng Chi tiết, mỗi dòng chọn Số tài khoản, nhập Diễn giải (bắt buộc) và số Phát sinh nợ hoặc Phát sinh có; tổng nợ phải bằng tổng có.')
+    d.step(['Bước 6: Bấm ', '@btn_pkt_luuduyet', ' để lưu và duyệt phiếu kế toán'])
+    d.sub(['Hoặc ', '@btn_pkt_luunhap', ' để lưu nháp (chỉ cần Ngày hạch toán).'])
+    d.sub(['Hoặc ', '@btn_pkt_luutieptuc', ' để lưu rồi lập tiếp phiếu khác.'])
+    d.sub(['Hoặc ', '@btn_pkt_quaylai', ' để không lưu thông tin.'])
 
     d.phan('TỪ CHỐI PHIẾU (KẾ TOÁN THANH TOÁN)')
     d.step('Bước 1: Mở màn chờ duyệt như Bước 1 PHẦN 6, bấm Số phiếu để mở màn chi tiết.')

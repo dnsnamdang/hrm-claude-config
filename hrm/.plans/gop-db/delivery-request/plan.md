@@ -117,3 +117,21 @@ User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Ng�
 - [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
       sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
 - [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu
+
+### Nâng chi tiết SRS theo SRS_MAU (31/10/2026) @khoipv
+- [x] Đối chiếu lại code nhánh develop (FE `pages/finance/delivery-requests/**` + component chung: V2BaseDataTable,
+      V2BaseSmartFilterPanel, filter/column/export modal, CatalogHistoryModal, AttachmentSection, unsavedChangesMixin;
+      BE Controller, StoreRequest/RejectRequest, Service, WriteService, NotifyService, Entity, Resource)
+- [x] `gen_srs.py`: viết lại 14 chức năng — Giới thiệu (Mô tả 2–3 câu, Điều kiện ban đầu đánh số, bước "Ghi nhận …
+      trong lịch sử của phiếu", thông báo gửi ai, toast nguyên văn, sự kiện phụ Đóng / (x) / click ngoài); bảng giao diện
+      mỗi đối tượng 1 hàng (tiêu đề, nút, từng cột + sắp xếp / khóa, ô nhập + phạm vi + lỗi nguyên văn, trạng thái rỗng,
+      toast, hộp xác nhận); event Before / During / After (quyền người lập / thủ kho, 409 trạng thái đổi, lỗi 422 nguyên văn)
+- [x] Sửa sai lệch bản cũ: Người tạo / Người cập nhật dạng "Họ tên - Mã phòng ban", Người duyệt chỉ họ tên; Xuất Excel
+      tích sẵn theo cột đang hiện (không phải tích tất cả); chi tiết ngoài phạm vi → trang không tìm thấy (không toast);
+      sắp xếp tăng → giảm; trạng thái YCXH ghi tên (Đã đề nghị, Chờ duyệt, Đang tạo, Đợi TP duyệt, Đợi BGD duyệt)
+- [x] Thêm ảnh có sẵn: 10_create, 10b_validate (2.5), 17b_detail_rej (2.10), 15b_reject_err (2.12)
+- [x] Phần 4: 9 → 13 BR (thêm nguồn hợp đồng, trường bắt buộc, phiếu đổi trạng thái giữa chừng, lịch sử)
+- [x] Sinh lại docx, selfcheck khớp bản mẫu, 115 trang
+- Số liệu (metrics.py): trước fn=14 ui=9.6 ev=1.8 evch=429 intro=720, 25 event / 15 thiếu Before / 19 thiếu During /
+  0 dòng quyền → sau fn=14 ui=15.6 ev=6.9 evch=2105 intro=1439, 96 event / 0 thiếu Before / 66 thiếu During (đều là
+  event chỉ đọc / thao tác giao diện; mọi event ghi dữ liệu đủ 3 cụm) / 6 dòng quyền

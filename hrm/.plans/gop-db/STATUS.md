@@ -19,6 +19,23 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Phiếu giao việc (ERP → HRM) — TẠM DỪNG giữa Phase 1 (2026-10-31, @khoipv)
+
+Port màn ERP `WrAssignTasks.index?type=all` (+ `?type=waiting_import_result`) trọn bộ: Danh sách · Chi tiết · Tạo · Sửa · Xóa(Hủy) · In/Xuất.
+Màn chưa port (Nhập KQ, Duyệt KQ, HĐ bán, YC lắp đặt…) link ERP. Menu CSKH sau bán › Giao việc. 3 quyền type 24 tên nguyên văn ERP.
+Tài liệu: `.plans/gop-db/phieu-giao-viec/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-10-31-phieu-giao-viec-design.md`.
+
+**Checkpoint 31/10 (wrap up):** spec/design xong (Sửa: KHÔNG có — y ERP; mã giữ format `{cty}.PGV.{YYYY}{id6}`; sửa lỗi ERP ở cả 2 bên).
+Phase 4 vá 10 lỗi ERP xong (repo erp, chưa commit, chưa bấm thử). Phase 1 BE DỪNG giữa chừng (code đã sinh, lint sạch, chưa smoke test xong — mai rà lại). Tiếp: Phase 2 BE tạo phiếu + Phase 3 FE.
+
+## Phiếu chờ giao việc (ERP → HRM) — XONG, ĐÃ PUSH develop (hrm-api `997a67f7f`, hrm-client `d2ddb8e27`) (2026-10-31, @khoipv)
+
+Port màn ERP `WrAssignTasks.wait` (5 tab: HĐ · PL bổ sung · Phiếu bảo hành · Lắp đặt bàn giao · Giao việc khác) → FE `/customer-care/waiting-assign-tasks`, menu CSKH sau bán › Giao việc.
+Tài liệu: `.plans/gop-db/phieu-cho-giao-viec/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-10-31-phieu-cho-giao-viec-design.md`.
+
+**Checkpoint 31/10:** user test OK. Local đã `permission:sync` + gán 2 quyền mới (2237/2238, type 24) cho role 18. Còn lại: chạy seeder
+quyền trên dev/prod + admin gán quyền; hiệu năng tab HĐ (~3,5 s/trang) chờ chốt; khuôn `ArrivedNotifyList.vue` dính cùng lỗi phân trang, chưa sửa.
+
 ## Phiếu xuất hàng điều chỉnh kiểm kê (ERP → HRM) — ĐÃ PUSH `develop`, Playwright local PASS (2026-10-30, @khoipv)
 
 Push: hrm-api `caf2abf87` · hrm-client `7a2880d5f`. Còn chạy seeder quyền trên môi trường.

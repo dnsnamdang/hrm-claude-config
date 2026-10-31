@@ -692,3 +692,23 @@ User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Ng�
 - [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
       sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
 - [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu
+
+### Nâng chi tiết SRS theo SRS_MAU (31/10/2026) @khoipv
+- [x] Đọc skill srs-documenter (5 mục con, 3 bảng, 7 quy tắc BA) + CHECKLIST mẫu Quốc gia + khuôn finance-bill-income-request
+- [x] Đối chiếu lại code develop cả 2 repo (index / _id / create / BorrowExportRequestForm / ExportRequestPickerModal /
+      RejectModal / export-excel + modal dùng chung; Controller, StoreRequest, RejectRequest, Service, NotifyService,
+      HistoryService, Entity) — mọi thông báo / toast / điều kiện hiện nút chép nguyên văn từ code
+- [x] 12 chức năng: Giới thiệu đủ ý (tác nhân ghi quyền, điều kiện đánh số, bước ghi lịch sử + gửi thông báo, nhánh phụ
+      rỗng / lỗi / đóng popup); bảng giao diện mỗi đối tượng 1 dòng, đủ nút (x) / Đóng / Làm mới, trạng thái rỗng, toast,
+      hộp xác nhận nguyên văn; event đủ Before–During–After cho thao tác, Before–After cho thao tác chỉ đọc
+- [x] Sửa câu sai so với code: bấm lại phiếu "Đã chọn" trong popup không báo gì (chỉ tooltip); cột Phòng ban danh sách là
+      phòng ban HIỆN TẠI của người tạo; mã phiếu mượn trong bảng chi tiết mở cùng tab (thẻ mã ở Thông tin chung mới mở tab mới)
+- [x] Thêm 8 ảnh có sẵn trong pycxhm_shots (lối vào Kế toán kho, lỗi validate, popup Thêm hàng hoá, sau khi chọn phiếu,
+      phiếu Không duyệt, khối Lịch sử màn chi tiết, lỗi lý do từ chối, xem trước danh sách) — không chụp mới
+- [x] Phần 4: thêm BR-09 (Đơn giá + công ty của phiếu), BR-10 (File đính kèm, in, xuất); BR-03/07/08 bổ sung ý
+- [x] Sinh lại `SRS - Yêu cầu xuất hàng mượn.docx`: selfcheck OK, khớp bản mẫu, 86 trang
+- Số liệu metrics: trước fn=12 ui=9.0 ev=2.8 evch=459 intro=860 (33 event, thiếu Before 25, thiếu During 25) →
+  sau fn=12 ui=14.6 ev=4.8 evch=1158 intro=1422 (58 event, thiếu Before 0, thiếu During 33 — đều là event chỉ đọc)
+
+### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
+- [x] HDSD PHẦN 4 Duyệt: viết lại bước lập phiếu xuất hàng mượn (Ghi chú, số Xuất > 0 và ≤ Đang mượn theo BorrowExportForm.vue, nút Lưu và duyệt / Lưu và tiếp tục / Quay lại có ảnh) — sinh lại 22 trang
