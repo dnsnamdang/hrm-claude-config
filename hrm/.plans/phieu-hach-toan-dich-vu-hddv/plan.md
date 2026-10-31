@@ -112,5 +112,11 @@ Xem `design.md` cho scope + quyết định. Bám khuôn màn anh em `wr-account
         V2Footer, badge V2BaseBadge theo status_color BE; grep V2Base raw-HTML RỖNG. ✓
 
 ## Checkpoint
-- [ ] Đối chiếu ngược ERP (cột/lọc/hành động/điều kiện) + ngang màn HRM đã QA
-- [ ] Checklist erp-to-hrm-screen; grep V2Base; số format quốc tế; chờ user xác nhận trước khi commit
+- [x] Đối chiếu ngược ERP (cột/lọc/hành động/điều kiện) + ngang màn HRM đã QA — xong ở T3.6b.
+- [x] Checklist erp-to-hrm-screen; grep V2Base RỖNG; số format quốc tế — xong ở T3.6b.
+- [x] **COMMIT + PUSH develop (2026-10-31)** theo yêu cầu user: hrm-api `06b01e074`
+      "feat(finance): port màn Phiếu hạch toán dịch vụ HDDV (phía bán) từ ERP";
+      hrm-client `51f44677b` "feat(finance): màn Phiếu hạch toán dịch vụ HDDV (phía bán)".
+      Stage có chọn lọc (chỉ file feature) — KHÔNG đụng thay đổi lạc (bonus-component docs đã xóa,
+      SupplierReturnSearchModal.vue) trong working tree hrm-client. Cả 2 push fast-forward, không rebase.
+      ✅ TOÀN BỘ feature HOÀN TẤT + BÀN GIAO.

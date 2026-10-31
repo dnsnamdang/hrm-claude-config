@@ -167,3 +167,14 @@ Chi tiết số hiệu TK + ref + đối tượng: xem `design-phase2.md` (viế
 - Q2 (carry-over từ phiếu YCHTDV, chưa trả lời): nút "Hạch toán chi phí"/"Số hợp đồng" ở YCHTDV để
   link trống hay `erpUrl()`? → khi port xong phiếu này, "Hạch toán chi phí" nối thẳng vào HRM
   (hết trống); "Số hợp đồng" vẫn trống tới khi port màn HĐ dịch vụ.
+
+### Chốt khi triển khai (2026-10-31, đã commit/push develop)
+- Q1 → **đường `service` (WrAssignTask) HOÃN** (HRM chưa có module Giao việc); `store()` chặn sớm bằng
+  `RuntimeException`. Chỉ làm đường `cost` (từ YCHTDV).
+- Q2 → "Hạch toán chi phí" ở YCHTDV **đã nối thẳng** `create?wr_accounting_service_request_id=<id>`;
+  "Số hợp đồng" vẫn để trống tới khi port màn HĐ dịch vụ.
+- QĐ #2 (xóa phiếu): giữ mặc định — **KHÔNG port Sửa/Xóa**; phiếu đã ghi sổ bất biến, bỏ hạch toán qua
+  "Không duyệt" YCHTDV.
+- Lệch UI so với QĐ #1: **GIỮ cột Hành động = chỉ Lịch sử** (skill bắt buộc Lịch sử ở list + chi tiết,
+  bám ngang mọi màn anh em) thay vì bỏ hẳn cột action như ERP comment.
+- Commit: hrm-api `06b01e074`, hrm-client `51f44677b`.

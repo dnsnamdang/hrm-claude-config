@@ -56,4 +56,10 @@ Hoàn thành + verify Playwright. BE `PriceAskingProductReader.php` (recipe_chil
   - Dọn fixture sau test: products=0 recipe=0 units=0 pcc=0, bom lines 339-342 `erp_product_id` về NULL.
 
 ## Checkpoint Phase 2 — 2026-10-30 (DONE, verified Playwright)
-Task 4/5/6 verify tinker PASS. Task 7 FE + Task 8 Playwright PASS (fixture đã dọn sạch). Toàn bộ Phase 1 + Phase 2 hoàn tất. **CHƯA commit** (chờ user yêu cầu).
+Task 4/5/6 verify tinker PASS. Task 7 FE + Task 8 Playwright PASS (fixture đã dọn sạch). Toàn bộ Phase 1 + Phase 2 hoàn tất.
+
+## Commit + push — 2026-10-31
+Chỉ stage đúng 4 file feature (loại các thay đổi WrAccountingService/finance không liên quan còn trong working tree), rebase lên origin/develop rồi push:
+- hrm-api `develop` **3e46dd0db** — 3 file BE (PriceAskingProductReader, PriceAskingRequestWriter, TempProductService).
+- hrm-client `develop` **6ebff1775** — 1 file FE (PriceAskingRequestForm.vue).
+Các thay đổi không liên quan (Finance/WrAccountingService, docs/superpowers…) vẫn để nguyên trong working tree, CHƯA commit.
