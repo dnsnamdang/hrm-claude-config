@@ -40,6 +40,22 @@ có ô chọn phiếu, lỗi ERP giữ nguyên. Tài liệu: `.plans/gop-db/phie
 "Tạo phiếu nhập hàng" ở Phiếu nhập kho ĐCKK mở màn HRM. Đã test Playwright toàn luồng (dữ liệu test đã dọn) + user test OK.
 Tiếp theo: chạy seeder quyền; commit khi user yêu cầu. Việc treo xem `plan.md` checkpoint cuối.
 
+## Yêu cầu hạch toán dịch vụ HDDV (phía BÁN) — ĐANG LÀM, bắt đầu 2026-10-30 (@dangquang)
+
+Port màn ERP `admin/customer-care/wr_accounting_service_requests?type=all` → HRM
+`/finance/wr-accounting-service-requests`. Phía BÁN dịch vụ (chuỗi "Bán Dịch vụ", 4 mục menu sẵn ở
+`finance.js:302-313`). Bản song sinh phía MUA đã port (`buy-service-accounting-request`) = khuôn chuẩn.
+- Bảng `wr_accounting_service_requests` + `wr_accounting_service_request_costs` (ERP sở hữu, CHƯA có
+  model HRM) → không migration. Phiếu tạo TỪ HĐ DV (`wr_service_contracts`, đã có model HRM), chi phí
+  tính sẵn từ HĐ (trừ phụ lục PL_GIAM), màn chỉ-đọc chi phí — KHÔNG có SL còn lại.
+- Chốt (call của tôi, user "làm đi"): 1 loại; 4 quyền mới guard api `type 23` group 'Yêu cầu hạch toán
+  dịch vụ HDDV' (3 cấp xem + Hạch toán dịch vụ HDDV); phân hệ chính Bán hàng; status 1/2/3 (Đang
+  tạo=xám); tạo chỉ từ HĐ qua `?wr_service_contract_id=`; **link màn chưa-port (Số hợp đồng, Hạch toán
+  chi phí→phiếu #2) để TRỐNG** (khác bản MUA mở ERP — chờ user chỉnh nếu muốn); không bản in; có Excel.
+- Trạng thái: **Phase 0 DONE** (khảo sát ERP+HRM, spec+design+plan). Bước tiếp: Phase 1 BE (quyền + 2 entity).
+- Tài liệu: `.plans/gop-db/wr-accounting-service-request/{design.md,plan.md}` | Spec:
+  `docs/superpowers/specs/gop-db/2026-10-30-wr-accounting-service-request-design.md`.
+
 ## Điều chuyển kho CHI NHÁNH (type 7) — Phase A (xuất) + Phase B (nhập đóng vòng) XONG (2026-10-23), LOCAL develop, chờ user chốt tích hợp
 
 Port loại **điều chuyển chi nhánh = 7** ERP→HRM (nối tiếp nhóm điều chuyển: type 5 cùng thủ kho → type 6 nội bộ → **type 7 chi nhánh**). Chuỗi: YCXH → ĐNXK → PXK (xuất, ×hệ số chi nhánh) → tự sinh YCNH cty ĐÍCH → ĐNNK → PNK → Phiếu nhập hàng (đóng vòng PYCCH) → [PPBHĐC = Phase C].
