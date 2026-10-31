@@ -35,6 +35,11 @@ Tên bản ghi (17 đậm, tối đa 2–3 dòng)
 - **Hub nhiều khối** (Meeting): mỗi khối 1 `MeetingHubRow` (icon · tên · gợi ý · giá trị Đủ / Trống / số · ›),
   bấm mở màn con; có thanh "Mức độ hoàn thiện"; khối lỗi khi lưu tô đỏ (`error: true`). Dùng khi bản ghi có
   ≥ 5 nhóm dữ liệu sửa riêng; còn lại dùng chi tiết thường.
+- **Lưu từ màn con của Hub chỉ kiểm khối đó** (user chốt 31/10/2026): màn con lưu qua `_saverFor(block)` → payload
+  kèm `save_section` (general / members / prepare_docs / minutes / report_docs / survey) → BE
+  (`MeetingUpdateApiRequest::failedValidation`) chỉ trả lỗi của khối đó, lỗi khối khác bỏ qua. Nút đổi trạng thái
+  ở Hub (Lên lịch / Chốt lịch / Hoàn thành) KHÔNG gửi `save_section` → kiểm đủ, Hub tô đỏ từng khối. Lỗi dòng trong
+  danh sách hiện tại dòng kèm tên trường ("SĐT: Không hợp lệ", `MeetingSaveError.describe` có số dòng + trường con).
 - Thông báo trạng thái bản ghi (đã hủy, chỉ xem, quá hạn biên bản): `MeetingBanner` dưới header. KHÔNG hiện dải
   "Chế độ chỉ xem" khi chỉ thiếu quyền (ẩn nút là đủ).
 

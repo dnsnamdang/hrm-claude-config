@@ -22,7 +22,7 @@ App `TPE_APP` (Flutter, thư mục `HRM/TPE_APP`, repo riêng) là **mặt di đ
 | Màn chi tiết / Hub: đầu thẻ, dòng xem, hành động, menu ⋮ | `app-detail-page` |
 | Gọi API hrm-api, model, lỗi 422, khi nào phải sửa BE | `app-hrm-api` |
 | Thông báo: loại → màn mở, push, nhắc hạn | `app-notification` |
-| Test trên simulator (bắt buộc trước khi báo xong) | `app-simulator-test` |
+| Test E2E trên simulator từng bước (`step.sh` mỗi thao tác, ma trận trạng thái — bắt buộc trước khi báo xong) | `app-simulator-test` |
 | Scaffold màn mới (cấu trúc thư mục, route, DI) | `app-new-screen` |
 | Model freezed / json | `app-new-model` |
 | Review code / trước khi commit | `app-review` |
@@ -231,7 +231,7 @@ User: "lưu xong chưa hiện thông báo thành công như web — đồng bộ
 - [ ] Không còn `AlertDialog` / `CupertinoAlertDialog` tự dựng trong màn
 - [ ] Form: chỉ kiểm định dạng, lỗi BE tô đỏ đúng ô; có cảnh báo chưa lưu
 - [ ] Số `en_US`; badge chữ + màu từ BE
-- [ ] `fvm dart analyze` không thêm lỗi (mức chuẩn 173 info); đã test theo `app-simulator-test`
+- [ ] `fvm dart analyze` không thêm lỗi (mức chuẩn 173 info); đã test theo `app-simulator-test` (mọi bước `step.sh` sạch lỗi + đủ mục 4)
 
 ## Quyết định đã chốt
 
