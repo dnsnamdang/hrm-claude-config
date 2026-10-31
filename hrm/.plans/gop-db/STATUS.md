@@ -57,6 +57,29 @@ có ô chọn phiếu, lỗi ERP giữ nguyên. Tài liệu: `.plans/gop-db/phie
 "Tạo phiếu nhập hàng" ở Phiếu nhập kho ĐCKK mở màn HRM. Đã test Playwright toàn luồng (dữ liệu test đã dọn) + user test OK.
 Tiếp theo: chạy seeder quyền; commit khi user yêu cầu. Việc treo xem `plan.md` checkpoint cuối.
 
+## Hạch toán dịch vụ HDDV (phía BÁN): YCHTDV + Phiếu hạch toán — XONG + COMMIT/PUSH develop 2026-10-31 (@dangquang)
+
+Port màn ERP `admin/customer-care/wr_accounting_service_requests?type=all` → HRM
+`/finance/wr-accounting-service-requests`. Phía BÁN dịch vụ (chuỗi "Bán Dịch vụ", 4 mục menu sẵn ở
+`finance.js:302-313`). Bản song sinh phía MUA đã port (`buy-service-accounting-request`) = khuôn chuẩn.
+- Bảng `wr_accounting_service_requests` + `wr_accounting_service_request_costs` (ERP sở hữu, CHƯA có
+  model HRM) → không migration. Phiếu tạo TỪ HĐ DV (`wr_service_contracts`, đã có model HRM), chi phí
+  tính sẵn từ HĐ (trừ phụ lục PL_GIAM), màn chỉ-đọc chi phí — KHÔNG có SL còn lại.
+- Chốt (call của tôi, user "làm đi"): 1 loại; 4 quyền mới guard api `type 23` group 'Yêu cầu hạch toán
+  dịch vụ HDDV' (3 cấp xem + Hạch toán dịch vụ HDDV); phân hệ chính Bán hàng; status 1/2/3 (Đang
+  tạo=xám); tạo chỉ từ HĐ qua `?wr_service_contract_id=`; **link màn chưa-port (Số hợp đồng, Hạch toán
+  chi phí→phiếu #2) để TRỐNG** (khác bản MUA mở ERP — chờ user chỉnh nếu muốn); không bản in; có Excel.
+- Trạng thái: **XONG CẢ 2 MÀN + đã commit/push `develop`**.
+  - **Màn 2 — Phiếu hạch toán dịch vụ HDDV** (`wr-accounting-services`, phía ghi sổ): BE entity+list+show+export
+    (Phase 1), posting + store + lật nguồn YCHTDV (Phase 2, feature test đối chiếu số ERP 3/3 pass), FE
+    list/chi tiết/hạch toán-preview (Phase 3, verify Playwright). **Nối link YCHTDV → create?wr_accounting_service_request_id=**.
+  - Commit 2026-10-31: hrm-api `06b01e074`, hrm-client `51f44677b` (fast-forward, stage chọn lọc đúng file feature;
+    KHÔNG đụng thay đổi lạc còn trong working tree hrm-client: bonus-component docs đã xóa + SupplierReturnSearchModal.vue).
+- Tài liệu: YCHTDV `.plans/gop-db/wr-accounting-service-request/{design.md,plan.md}` · Phiếu hạch toán
+  `.plans/phieu-hach-toan-dich-vu-hddv/{design.md,plan.md}` | Spec:
+  `docs/superpowers/specs/gop-db/2026-10-30-wr-accounting-service-request-design.md`.
+- TREO: 2 thay đổi lạc trong working tree hrm-client (bonus-component docs xóa, SupplierReturnSearchModal.vue) chờ user chốt xử lý.
+
 ## Điều chuyển kho CHI NHÁNH (type 7) — Phase A (xuất) + Phase B (nhập đóng vòng) XONG (2026-10-23), LOCAL develop, chờ user chốt tích hợp
 
 Port loại **điều chuyển chi nhánh = 7** ERP→HRM (nối tiếp nhóm điều chuyển: type 5 cùng thủ kho → type 6 nội bộ → **type 7 chi nhánh**). Chuỗi: YCXH → ĐNXK → PXK (xuất, ×hệ số chi nhánh) → tự sinh YCNH cty ĐÍCH → ĐNNK → PNK → Phiếu nhập hàng (đóng vòng PYCCH) → [PPBHĐC = Phase C].

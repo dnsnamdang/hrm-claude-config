@@ -86,3 +86,52 @@ Vừa hoàn thành: Toàn bộ 13 task (Danh sách sort+giờ+người lập+l�
 Đang làm dở: (không có — tất cả task đóng)
 Bước tiếp theo: Chờ user test môi trường thật (prod/test DB có schema `notifications` đủ cột — local gop_db thiếu cột `url`/`receiver_id` nên POST reject trả 500 ở local, không phải bug code). Nếu user có feedback mới cho màn này thì mở task tiếp.
 Blocked: (không)
+
+## Lịch sử duyệt đầy đủ — ĐẢO Phương án A → Phương án (1) (Task 14) — 2026-10-30
+- [x] **Phản hồi lặp lại:** "Chưa thấy ghi Lịch sử duyệt trong màn chi tiết". User CHỐT **Phương án (1)**: bám chuẩn Đơn hàng bán (SaleOrder) — dùng bảng polymorphic `contract_approver_histories`, ghi 1 dòng mỗi lần Duyệt / Không duyệt (ai – lúc nào – hành động – ghi chú), render card "Lịch sử duyệt" nhiều dòng. ĐẢO quyết định Phương án A ở Task 13 (card "Ghi chú duyệt" 1 dòng chỉ hiện khi reject).
+- [x] **BE Model** `ExportBillRequest.php`: `use ContractApproveHistoryTrait;` (cấp `logApproves()` morphMany + `getLogApproves($id,$type)`). Không sửa code dùng chung.
+- [x] **BE `approve()`**: sau `save()`, `ContractApproveHistoryService::saveLogApprove($object->id, ExportBillRequest::class, null, ContractApproveHistory::DUYET);` (created_by auto từ BaseModel::creating).
+- [x] **BE `reject()`**: sau `save()`, `saveLogApprove($object->id, ExportBillRequest::class, $request->comment, ContractApproveHistory::KHONG_DUYET);`.
+- [x] **BE `show()`**: sau `getDataForShow`, `$data->getLogApproves($data->id, ExportBillRequest::class);`.
+- [x] **FE `show.blade`**: thêm card "Lịch sử duyệt" (port từ `sale/sale_orders/show.blade.php:636-667`, `ng-repeat="l in form.log_approves"`) đặt sau `@include(form)`; thêm binding `$scope.form.log_approves = @json($data->log_approves ?? []);`.
+- [x] **FE dọn trùng**: gỡ card "Ghi chú duyệt" `ng-if="form.comment"` ở `form.blade:498` (lý do từ chối giờ hiện trong 1 dòng của Lịch sử duyệt → tránh trùng).
+- [x] Lưu ý: nhãn Hành động lấy từ `ContractApproveHistory::TYPES` dùng chung → type 3 = "duyệt hợp đồng", type 7 = "không duyệt" (giống hệt SaleOrder đang chấp nhận, KHÔNG sửa hằng dùng chung).
+- [x] **Verify BE qua tinker** (2026-10-30, DB `erp_hrm_check`): tạo 2 dòng `contract_approver_histories` cho `ExportBillRequest::class` (DUYET note=NULL + KHONG_DUYET note="Sai thông tin hóa đơn"), `getLogApproves` trả đúng 2 dòng → "Tài khoản"=`HN_KD2 - Trần Ngọc Duy`, action=`duyệt hợp đồng`/`không duyệt`, created_date `30/10/2026 09:30`. Đã xóa dòng test. `php -l` 2 file PHP PASS.
+- [ ] **CHƯA verify FE Playwright**: local chưa có phiếu ExportBillRequest nào (phiếu test cũ đã xóa) + reject POST còn vướng schema `notifications` local. Card là port nguyên si markup SaleOrder đang chạy tốt → rủi ro thấp. Chờ user test môi trường thật hoặc dựng phiếu test nếu cần.
+
+## Thông báo duyệt/không duyệt gửi người tạo DNXHD (Task 15) — 2026-10-30
+- [x] **Phản hồi:** chưa có thông báo khi kế toán duyệt/không duyệt gửi đến người tạo; định dạng mong muốn "Mã phòng - tên người duyệt đã duyệt/không duyệt đề nghị xuất hóa đơn".
+- [x] Hiện trạng: `reject()` đã gửi nhưng chỉ `fullname` + chữ "phiếu"; `approve()` CHƯA gửi gì.
+- [x] **BE `approve()`**: thêm `NotificationHelper::sendNotify($object->created_by, $url, $content, auth()->user()->id)` với nội dung `"<Mã phòng> - <tên> đã duyệt đề nghị xuất hóa đơn: <b>CODE</b>"`.
+- [x] **BE `reject()`**: đổi nội dung sang cùng định dạng `"<Mã phòng> - <tên> không duyệt đề nghị xuất hóa đơn: <b>CODE</b>"` (bỏ chữ "phiếu").
+- [x] Thêm private helper `getApproverLabel()` = `optional(optional(auth()->user()->info)->department)->code . ' - ' . fullname` (null-safe nếu không có phòng).
+- [x] `php -l` PASS; tinker preview đúng: `HN_KD2 - Trần Ngọc Duy đã duyệt/không duyệt đề nghị xuất hóa đơn: <b>DNXHD-0001</b>`.
+- [ ] Lưu ý local: bảng `notifications` DB gộp local còn thiếu cột `url`/`receiver_id` → POST approve/reject có thể 500 ở local (schema môi trường, prod đủ cột). Test thực tế trên môi trường thật.
+
+## Đã commit + push (2026-10-30)
+Commit `0a82e00315` trên branch `de_nghi_xuat_hoa_don` (push: `81bb041094..0a82e00315`).
+Gồm 4 file: ExportBillRequestController.php, ExportBillRequest.php (model), show.blade.php, form.blade.php. Bao gồm Task 14 (Lịch sử duyệt) + Task 15 (thông báo duyệt/không duyệt).
+
+### Checkpoint — 2026-10-30
+Vừa hoàn thành: Task 15 — Thông báo duyệt/không duyệt (approve nay có gửi, reject đổi định dạng "Mã phòng - tên"). Task 14 — Lịch sử duyệt đầy đủ. Đã commit `0a82e00315` + push. (bảng `contract_approver_histories`), ghi log khi Duyệt/Không duyệt, render card "Lịch sử duyệt" ở màn chi tiết, gỡ card "Ghi chú duyệt" trùng. BE verified qua tinker, php -l PASS. CHƯA commit.
+Đang làm dở: (không)
+Bước tiếp theo: User test trên môi trường thật (duyệt/không duyệt 1 phiếu → mở chi tiết xem card Lịch sử duyệt). Nếu OK thì commit + push branch `de_nghi_xuat_hoa_don`.
+Blocked: (không)
+
+## Merge `de_nghi_xuat_hoa_don` → `develop_02` + push (Task 16) — 2026-10-30
+- [x] Merge trong worktree tạm `ERP/.worktrees/develop_02-merge` (không đụng checkout chính `gop_db`).
+- [x] 169 xung đột, phân loại: 165 view thuần `@section('breadcrumb')` (do commit tạp `2545923822 "fix"`, KHÔNG liên quan DNXHD) + 4 file thật (`.gitignore`, `SearchController.php`, `SearchContractService.php`, `UpdateDB.php`).
+- [x] **User CHỐT Phương án 1**: 165 view breadcrumb lấy theo develop_02 (`--ours`), bỏ chỉnh breadcrumb của nhánh feature.
+- [x] `SearchController@searchAllContract`: hòa giải giữ CẢ `addColumn(approved_time/approver_name)` + `orderColumn('customer','customer_name $1')` (feature) VÀ `rawColumns(['code','contract_link'])` (develop_02). Cột `contract_link` addColumn ở dòng 2319 (vùng chung). `php -l` PASS.
+- [x] `SearchContractService`: giữ CẢ nhánh `declare_debt_beginning` (develop_02) lẫn `export_bill_request` + lọc `contract_category` (feature). Chèn `}` đóng else-if wr của declare rồi nối `} else if export_bill_request`. `php -l` PASS.
+- [x] `UpdateDB::run()`: lấy develop_02 (rỗng). Conflict 190–1445 thuần scratch tinker (gồm sửa `WrAccountingService` id=170), KHÔNG chứa định nghĩa hàm nào, DNXHD không đóng góp method UpdateDB nào ở cả 2 nhánh → bỏ an toàn.
+- [x] `.gitignore`: lấy develop_02 (đầy đủ hơn; tooling/env, không liên quan DNXHD).
+- [x] Rà soát: không còn marker git trong file code (các `=======` còn lại là gạch tiêu đề README ckeditor vendor). DNXHD đủ file (5 model, controller, 7 view, 17 ref route). Merge commit 2-parent `b82a699efc`.
+- [x] Push bị reject do origin tiến 6 commit → merge `origin/develop_02` vào (sạch, không conflict) → commit `d6614dc8ff` → push thành công `9330af057b..d6614dc8ff`.
+- [x] Dọn worktree tạm `develop_02-merge`.
+
+### Checkpoint — 2026-10-30 (merge)
+Vừa hoàn thành: Merge DNXHD vào develop_02 + tích hợp 6 commit origin + push. `origin/develop_02` = `d6614dc8ff`.
+Đang làm dở: (không)
+Bước tiếp theo: User test DNXHD trên develop_02 môi trường thật.
+Blocked: (không)
