@@ -2505,6 +2505,9 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- decision-transfer-part-mismatch — chưa có số Redmine → @cuong61n → .plans/gop-db/decision-transfer-part-mismatch/plan.md
+  Trạng thái: 🟢 Đã push gop_db + deploy PROD (31/10/2026). QĐ điều chuyển: đổi phòng ban tự bỏ bộ phận phòng cũ, BE chặn bộ phận không thuộc phòng; đã sửa dữ liệu prod (14 QĐ, 14 PLHĐ, 8 hồ sơ NV → bộ phận để trống).
+
 - 11945-dinh-bien-het-hieu-luc — Redmine #11945 → @cuong61n → .plans/gop-db/11945-dinh-bien-het-hieu-luc/plan.md
   Trạng thái: 🟢 Code + test xong (30/10/2026), chưa commit (worktree gop_db). QĐ định biên có trạng thái tính động Hết hiệu lực 1 phần / Hết hiệu lực; tab phòng đã bị thay tô đỏ + tooltip.
 
