@@ -2593,6 +2593,11 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   ⚠️ GOTCHA: CSS chung popup in ép `padding !important` cho ô `.no-border` → giãn vùng ký phải chèn div `signature-space` + inline `!important`, padding inline vô tác dụng. 3 file, không migration.
   Chuyển Hoàn thành: 2026-10-29.
 
+- chuyen-xe-cho-hang → @junfoke → .plans/gop-db/chuyen-xe-cho-hang/plan.md
+  Trạng thái: 🟢 **BE + FE xong, test + bấm thử local (31/10/2026)**, nhánh `feat/chuyen-xe-cho-hang` (2 repo), CHƯA commit. Còn: thử lưu PXK gắn chuyến trên dev (ĐNXK local lỗi dữ liệu lô có sẵn).
+  Scope: màn Chuyến xe chở hàng trọn luồng (trừ phiếu hạch toán — giữ ERP) + PXK HRM gắn chuyến + popup tạo nhanh chuyến ở PXK/PNK. Giữ nguyên cách tính ERP (kể cả CXK về lại không ×2 cước).
+  Spec: docs/superpowers/specs/gop-db/2026-10-31-chuyen-xe-cho-hang-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-cho-hang/design.md
+
 - chuyen-xe-khac → @junfoke → .plans/gop-db/chuyen-xe-khac/plan.md
   Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã lên origin/develop (api `4fcd3b774` + merge `8ef8d7842`, client `015d86f34`), có Excel 1 phiếu. Còn: test tuyến cố định với bảng giá hiệu lực thật; xem ảnh nút Xuất Excel.
   Scope: màn Chuyến xe khác trọn luồng (DS, thêm/sửa/chi tiết 3 kiểu, xuất phát → kết thúc → duyệt, không duyệt, in, Excel) ở phân hệ Vận chuyển; phiếu hạch toán giữ ERP.
