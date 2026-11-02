@@ -1584,3 +1584,37 @@ User báo SRS chưa chi tiết bằng skill / mẫu quốc gia mới nhất. Chu
 
 ### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
 - [x] HDSD PHẦN 6 Lập phiếu kế toán: thêm trường bắt buộc + luật nợ = có, 4 nút có ảnh (btn_pkt_*) — sinh lại 24 trang
+
+### Xuất lại theo checklist Mẫu tài liệu.xlsx (02/11/2026) @khoipv
+Checklist tester `../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json` (Testcase 324 dòng, SRS 163 dòng). Đọc lại code FE + BE để
+mọi expected / thông báo đúng code (không sửa code ứng dụng).
+- [x] `gen_testcase.py` viết lại: section theo đúng thứ tự + tên nhóm checklist I–XIII (XII Duyệt = Lập phiếu kế toán, XIII Không
+      duyệt = Từ chối), rồi XIV Gửi duyệt từ chi tiết + In phiếu, XV Chọn đối tượng / chứng từ + Cài đặt bộ lọc; khối TC-ROLE giữ
+      đầu file (thêm TC-ROLE-11 Kế toán kho nhận thông báo). 75 → 325 TC, P0 42%, tc_engine sạch (thuật ngữ / emoji / xuống dòng)
+- [x] `gen_srs.py` bổ sung: Phần 1 (phạm vi chức năng, mục đích dữ liệu, ràng buộc quan trọng, từng trạng thái, trường đặc thù,
+      cấu trúc phân cấp); Phần 2 (không có Khóa / Import, trường hợp không có quyền, bảng điều kiện hiện nút); 2.1 cột mặc định
+      hiện / ẩn / bắt buộc; 2.2 kiểu khớp + sửa "0–255 ký tự" thành "Không giới hạn ký tự" (code không giới hạn); 2.4 ghi nhớ theo
+      tài khoản; 2.5 quy tắc trùng, màn là trang (không (x)), bấm lưu liên tục; 2.7 trường được / không được sửa, trùng, bị xóa
+      khi đang sửa, 2 tab; 2.9 ràng buộc cấp con / đang dùng; 2.10 quay lại giữ lọc về trang 1; 2.11 lý do > 1.000 ký tự; 2.12 hộp
+      "Xác nhận duyệt phiếu kế toán", chặn 1 phiếu kế toán, thông báo [PKT]; 2.14 cấu trúc file, rỗng, tên file; 2.15 thứ tự, rỗng
+      theo lọc, giữ trạng thái danh sách; Phần 4 BR-11..BR-15; Phần 5 hai bảng 7 / 6 cột. Selfcheck khớp mẫu (129 trang)
+- [x] `gen_checklist.py` mới → `Đối chiếu checklist.xlsx`
+- Số liệu: Testcase 255 dòng có TC / 69 N/A (Khóa / Mở khóa 30, Import Excel 39); SRS 132 dòng có mục / 31 N/A (Khóa 13, Import 18)
+- Lệch code so với checklist (ghi ở cột Ghi chú file đối chiếu): % và _ là ký tự đại diện khi tìm; ô tìm / Diễn giải không giới hạn
+  ký tự; bộ lọc nhớ theo trình duyệt (không theo tài khoản); quay lại từ chi tiết về trang 1; phiếu đã bị xóa báo "Item Not Found!"
+  (tiếng Anh), xóa không tự nạp lại bảng; Lập phiếu kế toán không có hộp xác nhận (hộp ở bước Lưu và duyệt); lịch sử phiếu yêu cầu
+  không ghi mốc Đang duyệt / Đã duyệt; từ chối lý do > 1.000 ký tự thì cửa sổ tự đóng mất nội dung; không chặn dùng lại chứng từ nguồn
+- [ ] User soát → đẩy Drive
+
+### Checkpoint — 2026-11-02
+Vừa hoàn thành: xuất lại SRS + testcase + file đối chiếu theo checklist Mẫu tài liệu.xlsx
+Đang làm dở: không
+Bước tiếp theo: user soát 3 file, quyết các điểm lệch (sửa code hay giữ), đẩy Drive
+Blocked:
+
+### Sửa testcase theo góp ý user (02/11/2026) @khoipv
+- [x] Bỏ trùng 2 phần phân quyền: 12 case khối "Phân quyền & truy cập" (TC-ROLE-00..11) gộp vào XI. PHÂN QUYỀN → TC_11.001–012; case cũ của XI → TC_11.013–023; build với role_tcs=[]
+- [x] 4 case Cài đặt bộ lọc chuyển từ XV sang II. TÌM KIẾM VÀ LỌC → TC_02.036–039; XV đổi tên "CHỌN ĐỐI TƯỢNG VÀ CHỨNG TỪ"
+- [x] Cập nhật mã TC trong gen_checklist.py → Đối chiếu checklist.xlsx (255 có TC / 69 N/A, không đổi); tổng 325 TC, P0 42%
+- [x] User duyệt; đã áp cùng cách cho borrow-export / delivery / adjust-dept. Thêm tiền tố "Cài đặt bộ lọc:" cho 4 case ở II
+

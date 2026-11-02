@@ -96,3 +96,36 @@ Blocked:
 - [x] Verify trình duyệt (local, mở thẳng link tab mới): `/finance/inventory-exports/1` + `/warehouse/inventory-exports/16` có rule
       toàn cục `body .v2-input:disabled`, 4/4 ô khoá mỗi màn nền `rgb(241,245,249)`
 - [x] Commit + push hrm-client `7dfbf6445` (chỉ `default.scss`)
+
+## Redmine #11970 — "Lưu" (nháp) vẫn bắt nhập đủ như duyệt (2026-11-02, @khoipv)
+QA: bấm **Lưu** ở màn Thêm → báo đỏ Nhân viên, Kho kế toán, Số lượng, "Số lượng xuất kho kế toán không khớp" (giống Lưu và duyệt).
+Nguyên nhân: FE `validateAll()` + BE `InventoryExportWriteService::validate()` không phân biệt nháp (port y ERP — ERP cũng bắt đủ).
+Quy tắc skill `form-validate` §1: Lưu nháp chỉ bắt 1 trường định danh (Phiếu xuất kho); định dạng + nghiệp vụ vẫn chặn mọi kiểu lưu.
+- [x] BE: `validate()` rẽ theo `status` (đọc `input()`) — nháp: chỉ `warehouse_inventory_export_id` required; Nhân viên / Đơn giá /
+      Kho kế toán / SL kho / file (sửa) được trống; bỏ kiểm "tổng SL kho ≠ SL xuất" khi nháp; vẫn kiểm trùng kho + vượt SL được xuất
+      với ô đã điền. Gộp lỗi rule + lỗi kho kế toán trả 1 lần (không nhỏ giọt)
+- [x] BE ghi: dòng phân bổ chưa chọn kho ⇒ không ghi (cột NOT NULL, trước ghi 0); đơn giá trống ⇒ 0 (cột NOT NULL default 0)
+- [x] FE: bỏ kiểm `required` + "không khớp" ở `validateAll()` (để BE trả 422), giữ kiểm trùng kho / vượt SL được xuất; đơn giá trống
+      gửi `null` (trước gửi 0 ⇒ lọt required khi duyệt)
+- [x] Verify API: nháp thiếu hết ⇒ 200; nháp không có phiếu xuất kho ⇒ 422; duyệt thiếu ⇒ 422 đủ ô 1 lần; nháp vượt SL ⇒ 422
+      Kết quả (service trong transaction rồi rollback, max id vẫn = 1): nháp thiếu hết ⇒ 200 (Nhân viên NULL, không dòng phân bổ, đơn
+      giá 0); nháp thiếu phiếu XK ⇒ 422 1 ô; duyệt thiếu ⇒ 422 13 ô cùng lúc (cả "không khớp"); nháp vượt SL / trùng kho / đơn giá
+      "abc" ⇒ 422; sửa phiếu nháp không file ⇒ 200; chi tiết phiếu nháp trống không lỗi. FE: vue-template-compiler + babel sạch
+- [ ] Chưa kiểm trên trình duyệt (user tự mở). Lưu ý: "Lưu và duyệt" vẫn hỏi xác nhận TRƯỚC rồi BE mới báo thiếu ô
+
+### Checkpoint — 2026-11-02
+Vừa hoàn thành: #11970 BE `InventoryExportWriteService` + FE `InventoryExportForm.vue`, verify API
+Đang làm dở: —
+Bước tiếp theo: user test trình duyệt; hỏi có áp cùng quy tắc nháp cho 3 màn cùng khuôn (nhập hàng / xuất kho / nhập kho ĐC kiểm kê)
+Blocked:
+- [x] Push `develop` (2026-11-02): hrm-api `2476c8c2b` · hrm-client `f5f4f5a66` — chỉ 2 file của #11970, việc dở khác để nguyên
+
+## Redmine #11976 — sort Ngày tạo vỡ layout + thiếu * đỏ ở cột bắt buộc (2026-11-02, @khoipv)
+Áp y khuôn fix #11966 của màn anh em Phiếu nhập hàng ĐCKK (client `a9b3de54f`).
+- [x] Bug 1 — `pages/finance/inventory-exports/index.vue` `allColumns`: mọi cột khai `width` + `minWidth` bằng nhau qua helper `w(px)`
+      (khuôn #11763), Kho / Người tạo thêm `text-wrap`, Ngày tạo căn giữa. Nguyên nhân: cột chỉ có minWidth / không khai gì ⇒ bấm sort
+      bảng hiện dòng "Đang tải" rồi trình duyệt chia lại độ rộng theo nội dung ⇒ cột nhảy
+- [x] Bug 2 — `InventoryExportForm.vue`: `<Required v-if="!isShow" />` ở tiêu đề cột Đơn giá / Kho kế toán / Số lượng (Thêm / Sửa;
+      màn xem không hiện)
+- [x] Verify: vue-template-compiler + babel sạch 2 file
+- [ ] Chưa kiểm trên trình duyệt (user tự mở)

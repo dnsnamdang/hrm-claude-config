@@ -2641,3 +2641,38 @@ Brief: độ chi tiết ngang SRS_MAU (Phiếu đề nghị thu tiền) + CHECKL
 
 ### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
 - [x] HDSD PHẦN 6 Tạo phiếu kế toán: thêm trường bắt buộc + luật nợ = có (BillAdjustDeptForm.validateBeforeSubmit, WriteService luật 4), 4 nút có ảnh cắt từ 21_accounting_create (btn_pkt_*) — sinh lại 23 trang
+
+### Xuất lại theo checklist Mẫu tài liệu.xlsx (02/11/2026) @khoipv
+Brief: rà từng dòng checklist tester (`../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json`: 324 case testcase, 163 nội dung
+SRS), bổ sung chỗ thiếu, xuất file đối chiếu. Mọi expected / câu thông báo đối chiếu lại code nhánh develop (cả 2 repo).
+- [x] `gen_testcase.py` viết lại: section theo đúng thứ tự + tên nhóm checklist (I Hiển thị danh sách và truy cập → XIII Không
+      duyệt phiếu), rồi XIV In phiếu, XV Cài đặt bộ lọc / Gửi duyệt từ chi tiết / luồng tổng thể; bỏ nhóm Khóa/Mở khóa, Import.
+      Khối TC-ROLE giữ đầu file. Mỗi case có khóa, bảng `ID` tra mã TC cho gen_checklist
+- [x] Sửa các case cũ lệch code: đổi Loại phiếu KHÔNG xóa bảng / không hỏi; toast xóa "Xóa thành công"; màn Sửa không còn ô
+      Ghi chú không duyệt (chỉ ở màn chi tiết)
+- [x] `gen_srs.py` bổ sung: Phần 1 (phạm vi chức năng, mục đích dùng dữ liệu, ràng buộc chính; thuật ngữ tách từng trạng thái,
+      trường đặc thù, cấu trúc phân cấp); Phần 2 (không có Khóa/Import, bảng "Trường hợp không có quyền", bảng "Điều kiện hiển
+      thị và thao tác", 2 dòng Khóa/Import trong ma trận); 2.1 cột mặc định / bắt buộc; 2.2 kiểu khớp + ô chữ không giới hạn ký
+      tự (sửa "0–255" sai code); 2.4 ghi nhớ theo tài khoản / đổi trình duyệt; 2.5 quy tắc trùng, trang riêng không có X; 2.8
+      trường được / không được sửa, trùng, sửa đồng thời; 2.10 ràng buộc con / đang sử dụng; 2.11 quay lại giữ bộ lọc không
+      giữ trang, khối Lịch sử; 2.15 không có chọn trường; 2.16 chưa có lịch sử, giữ trạng thái danh sách; Phần 4 thêm BR-14 →
+      BR-17; Phần 5 bảng 7 cột, 3 màn (Phiếu kế toán, Chi tiết phiếu báo có, Thông báo)
+- [x] `gen_checklist.py` mới → `Đối chiếu checklist.xlsx`
+- [x] Chạy sạch cả 3: SRS selfcheck khớp bản mẫu (115 trang); tc_engine sạch thuật ngữ / emoji / xuống dòng; đối chiếu đủ dòng
+- Số liệu: testcase 80 → 286 TC (P0 42%). Checklist Testcase: 254 dòng có TC / 70 N/A (Khóa/Mở khóa 30 dòng — gồm sửa / xóa /
+  xem bản ghi khóa, quyền khóa; Import 39 dòng; đổi mã phiếu 1 dòng). SRS: 129 dòng có mục / 34 N/A (FR-06 Khóa 10 + 2.8/2.10/2.11 bản ghi
+  khóa + Phần 4/5 khóa = 16, FR-08 Import 18)
+- Lệch code so với checklist (ghi trong cột Ghi chú file đối chiếu): không có cửa sổ chọn trường Xuất Excel; % và _ trong ô tìm
+  là ký tự đại diện; F5 không giữ bộ lọc, quay lại từ chi tiết không giữ số trang; bộ lọc lưu theo trình duyệt (không theo tài
+  khoản); Diễn giải không giới hạn độ dài; sửa / xóa phiếu đã bị xóa báo "Item Not Found!" (tiếng Anh); màn Sửa mở được bằng
+  đường dẫn với người không phải người lập (chặn ở bước Lưu); "duyệt" không có cửa sổ xác nhận (= Tạo phiếu kế toán)
+
+### Checkpoint — 2026-11-02
+Vừa hoàn thành: xuất lại testcase + SRS theo checklist Mẫu tài liệu.xlsx, file Đối chiếu checklist.xlsx
+Đang làm dở: không
+Bước tiếp theo: user soát 3 file; quyết có sửa các điểm lệch (chọn trường xuất Excel, thông báo "Item Not Found!", thoát ký tự %)
+Blocked:
+
+### Sửa testcase theo góp ý user (02/11/2026) @khoipv
+- [x] Bỏ trùng 2 phần phân quyền + Cài đặt bộ lọc ghép vào nhóm Tìm kiếm và lọc (cùng cách đã duyệt ở màn hạch toán bổ sung): Khối phân quyền đầu file → đầu XI (TC_11.001–011); 3 case fc_* từ XV → II (TC_02.037–039); XV đổi tên "Gửi duyệt từ màn chi tiết và luồng tổng thể"
+- [x] Sinh lại testcase.xlsx + Đối chiếu checklist.xlsx (số dòng có TC không đổi); 286 TC, P0 42%, không trùng mã

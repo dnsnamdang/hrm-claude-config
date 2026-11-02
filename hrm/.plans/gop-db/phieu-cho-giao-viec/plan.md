@@ -13,7 +13,7 @@
 - [x] `WaitingAssignTaskController` + route: meta / index / export / check-create / reject-reception (PL)
 - [x] `ExportColumnRegistry` 5 khoá `waiting_assign_tasks_<tab>`
 - [x] Smoke test HTTP kernel + so tập id với thuật toán ERP chép nguyên — KHỚP 100% (NV 34: HĐ 356 · PL 22 · Lắp đặt 160 · GV khác 792 · BH 405); lọc / sort / check-create / export 200
-- [ ] Hiệu năng tab HĐ: ~3,5 s/trang 10 dòng (đếm 1 s + accessor `is_can_close`/`is_can_un_approve` ~110 ms/dòng — bảng `product_export_requests`/`product_import_requests` không có index `wr_service_contract_id`) → chờ user chốt
+- [x] (#11972, 02/11 — còn index chờ chốt) Hiệu năng tab HĐ: ~3,5 s/trang 10 dòng (đếm 1 s + accessor `is_can_close`/`is_can_un_approve` ~110 ms/dòng — bảng `product_export_requests`/`product_import_requests` không có index `wr_service_contract_id`) → chờ user chốt
 
 ### FE (hrm-client)
 - [x] `pages/customer-care/waiting-assign-tasks/index.vue` (tab trên URL) + `tabConfigs.js` — khuôn `pages/lookup/product-arrived-notifies`
@@ -37,3 +37,54 @@ Vừa hoàn thành: user test OK → commit + push develop: hrm-api `997a67f7f` 
 Đang làm dở: —
 Bước tiếp theo: chạy `permission:sync` trên dev/prod + admin gán 2 quyền; (tuỳ user) tối ưu tab HĐ, sửa lỗi phân trang ở `ArrivedNotifyList.vue`
 Blocked:
+
+## Redmine #11975 — cột Mã phiếu bị cắt `…`, không đọc hết mã (2026-11-02, @khoipv)
+QA: mã HĐ dài (`HDDV_TPE_HN_CSKH_26_0385…`) bị cắt ở mọi tab, yêu cầu giãn cột, dài quá thì xuống dòng.
+Nguyên nhân: `COL_CODE` rộng 190px trong bảng `fixed-layout` ⇒ ô `.field-line` bị `overflow: hidden; text-overflow: ellipsis`.
+- [x] `tabConfigs.js` `COL_CODE`: width/minWidth 190 → 250px + `cellClass: 'text-wrap'` (td `white-space: normal` +
+      `overflow-wrap: anywhere` ⇒ mã không có khoảng trắng vẫn ngắt dòng, không cắt). Áp cả 5 tab (tab Lắp đặt / Giao việc khác
+      "Số phiếu" kế thừa qua `COL_REQ_CODE`). Không kẹp 2 dòng (`clamp-2`) vì QA muốn thấy hết mã
+- [x] Verify: babel parse sạch; V2BaseDataTable gắn `column.cellClass` lên td (cả cột sticky)
+- [ ] Chưa kiểm trên trình duyệt (user tự mở) — cột Số hợp đồng (tab Lắp đặt / Giao việc khác) giữ 190px, chưa đụng
+
+## Redmine #11972 — Performance: chuyển tab tải chậm (2026-11-02, @khoipv)
+Đo service (Super admin, 10 dòng/trang) TRƯỚC: Hợp đồng **4,29 s / 163 query** · PL 0,40 s · Bảo hành 0,16 s · Lắp đặt 0,41 s · Khác 0,06 s.
+Nguyên nhân chính: tab HĐ gọi accessor `is_can_close` / `is_can_un_approve` của model TỪNG DÒNG — mỗi cờ ~8 query (phụ lục,
+PGV, `product_export_requests` 35k dòng / `product_import_requests` 12k dòng KHÔNG có index `wr_service_contract_id` ⇒ quét cả
+bảng ~150 ms/lần, `isSuperAdmin()` không cache).
+- [x] BE `WaitingAssignTaskService::contractCloseFlags()`: tính 2 cờ cho cả trang bằng 6 query gộp (phụ lục · PGV · YC xuất kho ·
+      YC nhập kho · hạch toán DV · phòng quản lý trong công ty), điều kiện Y HỆT accessor (ghi chú: sửa accessor thì sửa cả đây).
+      `actionFlags()` đọc từ map này, không gọi accessor nữa. Không đụng model / hàm dùng chung
+- [x] Verify khớp accessor: so toàn bộ HĐ của tab — Super admin 400 dòng, người thường (id 59, quản lý phòng) 44 dòng ⇒ 0 lệch
+- [x] SAU: Hợp đồng **1,16 s / 24 query** (còn count 0,6 s của lọc "còn số lượng để giao") · PL 0,38 · Bảo hành 0,03 · Lắp đặt 0,23 · Khác 0,02
+- [x] FE: đổi tab chỉ gọi meta (hằng, rẻ) + data + cấu hình cột — không thừa, không sửa
+- [ ] Chưa làm (chờ user chốt): thêm index cho bảng ERP để hạ tiếp count tab HĐ — `wr_assign_task_products/_product_services/
+      _extend_product_services.wr_assign_task_id`, `wr_assign_tasks.wr_service_contract_id`, `product_export_requests` /
+      `product_import_requests` / `wr_accounting_service_requests.wr_service_contract_id`
+- [ ] Chưa kiểm trên trình duyệt (user tự mở)
+
+## Redmine #11973 — "Số bản ghi các tab không khớp ERP" (2026-11-02, @khoipv) — CHECK, chưa sửa code
+QA: số bản ghi tab Hợp đồng, Lắp đặt bàn giao… lệch giữa HRM và ERP dev; ERP dev lỗi "Trying to get property 'code' of
+non-object" ở tab PL / BH / Giao việc khác (phần lỗi ERP user báo ĐÃ SỬA — ERP `1ad0620592` thêm optional()).
+- [x] Đối chiếu bằng CHÍNH code ERP (repo `develop_02` = origin, đã có fix null) trên cùng DB local `gop_db`:
+      DNS Admin (id 13, có quyền xem tổng cty ở cả 2 bên) — HĐ 380=380 · PL 22=22 · BH 405=405 · Lắp đặt 160=160 · Khác 792=792,
+      diff từng id = 0. Người thường id 59 (không quyền tổng cty, lọc phòng tiếp nhận) — HĐ 11=11 · PL 0=0 · Lắp đặt 0=0
+- [x] `origin/develop` ERP khác `develop_02` ở các file màn này CHỈ phần hiển thị (optional()), điều kiện lọc giống nhau
+- [x] Số HRM dev (API dev, DNS Admin): HĐ 462 · PL 24 · BH 561 · Lắp đặt 141 · Khác 930. Chưa lấy được số ERP dev — ERP dev
+      đăng nhập SSO qua cookie `jwt_token`, curl không giữ được phiên
+- Kết luận: logic HRM = ERP. Lệch trên dev nhiều khả năng do môi trường: ERP dev / HRM dev không cùng DB hoặc dữ liệu,
+      hoặc quyền "Xem danh sách phiếu chờ giao việc theo tổng công ty" khác nhau giữa 2 hệ thống (ERP `can()` vs HRM role theo công ty)
+- [ ] Chờ QA gửi số ERP dev từng tab (+ 1 mã phiếu có ở bên này mà không có ở bên kia) để chỉ ra đúng dòng lệch
+
+## Redmine #11985 — Tab Phiếu bảo hành › Xem chi tiết (`pages/customer-care/wr-warranties/_id/index.vue`) (2026-11-02, @khoipv)
+Màn chi tiết phiếu BH (dev khác làm) mở từ tab BH của màn chờ — sửa theo ERP `wr_warrantys/form.blade.php` (màn show ERP vẫn hiện *).
+- [x] Dấu *: Số phiếu cung cấp thông tin · Số phiếu bảo hành · Địa chỉ sửa chữa · Khách hàng · Địa chỉ · Phòng tiếp nhận xử lý ·
+      Tên liên hệ · Địa chỉ liên hệ · Điện thoại (`V2BaseLabel required`) + tiêu đề cột bảng A "Chi phí được bảo hành", "Loại công
+      việc" (kiểu `<span class="text-danger">*</span>` như cột "Tên chi phí" bảng B đã có). Tài khoản / Ký duyệt / Chức vụ ERP có *
+      nhưng màn HRM không có khối đó
+- [x] In đậm tên thiết bị + "Serial: …" ở dòng thiết bị bảng A
+- [x] Khối C dòng VAT (%): thêm ô `vat_percent` ở cột "Chi phí được bảo hành" (ERP: ô VAT % khoá) — API đã trả `vat_percent`
+- [x] Khối D dòng cuối không đậm: HTML có `<strong>` nhưng `_reboot.scss` ép `strong, b` = 500; đoạn soạn bằng Times New Roman
+      không có nét 500 ⇒ hiện chữ thường. Scoped `.footer-html ::v-deep strong, b { font-weight: 700 }`
+- [x] Verify: vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt
+- Ghi chú (chưa sửa, QA chưa báo): điều khoản còn nguyên chuỗi `{{VAT_NOTE}}` chưa thay — cả ERP cũng hiện vậy

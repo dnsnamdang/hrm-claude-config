@@ -115,14 +115,39 @@ d.bullets([
     'bố trí vận chuyển và bốc xếp.',
     'Làm rõ người duyệt (thủ kho của kho xuất hàng), điều kiện Sửa / Xóa và phạm vi dữ liệu theo từng cấp quyền.',
 ])
+d.p('Phạm vi chức năng: 14 chức năng đặc tả ở Phần 3 — Xem danh sách, Tìm kiếm và lọc, Cài đặt bộ lọc, Tùy chỉnh cột, '
+    'Lập phiếu (Lưu nháp / Gửi duyệt / Lưu và tiếp tục), Chọn đơn hàng/hợp đồng, Chọn phiếu YCXH, Chỉnh sửa, Xóa, Xem '
+    'chi tiết, Duyệt, Từ chối, Xuất Excel, Xem lịch sử thay đổi. Màn KHÔNG có Khóa / Mở khóa, Nhập Excel (Import), In.')
+d.p('Mục đích sử dụng dữ liệu: phiếu là đề nghị chính thức để thủ kho bố trí phương tiện vận chuyển và nhân lực bốc '
+    'xếp cho một phiếu yêu cầu xuất hàng; dữ liệu phiếu (thời gian vận chuyển, địa điểm, số kiện từng dòng hàng) là '
+    'căn cứ để thủ kho sắp xếp, và khi được duyệt thì phiếu yêu cầu xuất hàng được ghi nhận hình thức vận chuyển '
+    '“Công ty vận chuyển”. Danh sách và file Excel dùng để theo dõi tiến độ duyệt theo phạm vi quyền.')
+d.p('Ràng buộc nghiệp vụ quan trọng:')
+d.bullets([
+    'Mỗi phiếu bắt buộc gắn 1 đơn hàng/hợp đồng và 1 phiếu YCXH có ít nhất 1 dòng hàng số lượng > 0 — kể cả khi lưu nháp.',
+    'Khách hàng, người liên hệ, địa điểm giao, dòng hàng luôn lấy theo phiếu YCXH; người lập chỉ nhập thông tin vận '
+    'chuyển, bốc xếp và Số kiện.',
+    'Chỉ gửi duyệt được khi kho xuất hàng của phiếu YCXH đã khai thủ kho; người duyệt là mọi thủ kho của kho đó.',
+    'Chỉ người lập được sửa / xóa, và chỉ khi phiếu Đang tạo hoặc Từ chối; phiếu Đã duyệt không thay đổi được nữa.',
+    'Phiếu không có trường dữ liệu duy nhất ngoài Mã phiếu do hệ thống tự sinh.',
+])
 d.h2('2 Thuật ngữ và viết tắt')
 d.table(['Thuật ngữ', 'Mô tả'], [
     ('Phiếu yêu cầu vận chuyển', 'Phiếu của màn này, mã dạng <mã công ty>.YCVC<tháng năm>.NNNNN, ví dụ TPE.YCVC1026.00004.'),
     ('Phiếu YCXH', 'Phiếu yêu cầu xuất hàng — nguồn lấy khách hàng, người liên hệ, địa điểm giao và danh sách hàng.'),
     ('Đơn hàng/Hợp đồng', 'Chứng từ bán hàng gắn với phiếu (hợp đồng bán, hợp đồng dịch vụ BH-SC, hợp đồng mua…).'),
     ('Thủ kho', 'Nhân viên được khai là thủ kho của kho xuất hàng trên phiếu YCXH — người duyệt / từ chối.'),
-    ('Số kiện', 'Số kiện hàng của từng dòng, người lập tự nhập để bố trí bốc xếp.'),
-    ('Đang tạo / Chờ duyệt / Đã duyệt / Từ chối', 'Bốn trạng thái của phiếu.'),
+    ('Mã phiếu', 'Trường duy nhất của phiếu, hệ thống tự sinh lúc lập, không nhập / sửa tay.'),
+    ('Số kiện', 'Trường đặc thù trên từng dòng hàng: số kiện hàng của dòng, người lập tự nhập để bố trí bốc xếp (số nguyên ≥ 0).'),
+    ('Tổng số kiện', 'Trường đặc thù của khối Bốc xếp: tổng số kiện người lập tự nhập, không tự cộng từ các dòng.'),
+    ('Hình thức vận chuyển', 'Trường “Vận chuyển” của phiếu YCXH; duyệt phiếu vận chuyển thì trường này thành “Công ty vận chuyển”.'),
+    ('Trạng thái Đang tạo', 'Phiếu lưu nháp (Lưu nháp / Lưu và tiếp tục) hoặc người lập lưu nháp lại phiếu Từ chối; chỉ '
+     'người lập nhìn thấy; sửa / xóa được.'),
+    ('Trạng thái Chờ duyệt', 'Phiếu đã gửi duyệt, chờ thủ kho xử lý; người lập không sửa / xóa được.'),
+    ('Trạng thái Đã duyệt', 'Thủ kho đã duyệt; trạng thái cuối, không sửa / xóa / duyệt lại.'),
+    ('Trạng thái Từ chối', 'Thủ kho trả lại kèm lý do; người lập sửa rồi gửi duyệt lại hoặc xóa.'),
+    ('Cấu trúc phân cấp', 'Phiếu (cấp cha) > các dòng hàng (cấp con) chép từ phiếu YCXH; dòng hàng chỉ thuộc đúng 1 phiếu, '
+     'xóa phiếu thì xóa theo toàn bộ dòng hàng.'),
 ], widths=[1.9, 4.1])
 
 # ============================================================== PHẦN 2
@@ -131,14 +156,18 @@ d.h2('1 Danh sách quyền')
 d.p('Lập phiếu không cần quyền riêng. Sửa / Xóa: chỉ người lập, khi phiếu Đang tạo hoặc Từ chối. Duyệt / Từ chối: '
     'thủ kho của kho xuất hàng (Super admin cũng duyệt được), khi phiếu Chờ duyệt.')
 d.p('Nhóm quyền quyết định phạm vi dữ liệu (xét từ trên xuống, có cấp nào áp cấp đó):')
-d.table(['Ký hiệu', 'Tên quyền', 'Phạm vi dữ liệu'], [
-    ('V1', 'Xem tất cả phiếu yêu cầu vận chuyển của tổng công ty', 'Toàn bộ phiếu của mọi công ty.'),
-    ('V2', 'Xem tất cả phiếu yêu cầu vận chuyển của công ty', 'Phiếu thuộc công ty của người đăng nhập.'),
+d.table(['Ký hiệu', 'Tên quyền', 'Tác dụng', 'Phạm vi dữ liệu'], [
+    ('V1', 'Xem tất cả phiếu yêu cầu vận chuyển của tổng công ty',
+     'Xem danh sách, chi tiết, lịch sử, xuất Excel; hiện ô lọc Công ty, Phòng ban, Bộ phận.', 'Toàn bộ phiếu của mọi công ty.'),
+    ('V2', 'Xem tất cả phiếu yêu cầu vận chuyển của công ty',
+     'Như V1 trong công ty mình; hiện ô lọc Phòng ban, Bộ phận.', 'Phiếu thuộc công ty của người đăng nhập.'),
     ('V3', 'Xem tất cả phiếu yêu cầu vận chuyển của phòng ban',
+     'Như V1 trong phòng ban; hiện ô lọc Phòng ban, ô Bộ phận khóa.',
      'Phiếu thuộc phòng ban người đăng nhập quản lý / đang ngồi + phiếu mình lập.'),
-    ('V4', 'Xem tất cả phiếu yêu cầu vận chuyển của bộ phận', 'Phiếu thuộc bộ phận mình quản lý + phiếu mình lập.'),
-    ('—', '(không có quyền nào)', 'Phiếu mình lập.'),
-], widths=[0.8, 2.4, 2.8])
+    ('V4', 'Xem tất cả phiếu yêu cầu vận chuyển của bộ phận',
+     'Như V1 trong bộ phận; hiện ô lọc Bộ phận.', 'Phiếu thuộc bộ phận mình quản lý + phiếu mình lập.'),
+    ('—', '(không có quyền nào)', 'Vẫn vào màn, lập phiếu, xuất Excel trong phạm vi của mình.', 'Phiếu mình lập.'),
+], widths=[0.6, 1.9, 2.0, 1.5])
 d.p('Mọi cấp đều thấy thêm: phiếu mình đã duyệt / từ chối và phiếu mình là thủ kho của kho xuất hàng. Phiếu Đang tạo '
     'của người khác luôn ẩn.')
 d.h2('2 Ma trận phân quyền')
@@ -157,7 +186,19 @@ d.table(['Chức năng', 'Người lập', 'Thủ kho', 'V1–V4', 'Không có q
     ('FR-12 Từ chối', '❌', '✅ (Chờ duyệt)', '❌', '❌'),
     ('FR-13 Xuất Excel', '✅', '✅', '✅', '✅ (phiếu của mình)'),
     ('FR-14 Xem lịch sử thay đổi', '✅', '✅', '✅', '✅ (phiếu của mình)'),
+    ('Khóa / Mở khóa, Nhập Excel', 'Màn không có', 'Màn không có', 'Màn không có', 'Màn không có'),
 ], widths=[2.0, 1.2, 1.0, 1.0, 1.3])
+d.p('Điều kiện hiển thị và thao tác:')
+d.bullets([
+    'Nút Tạo mới, Xuất Excel, Cấu hình cột hiển thị, icon Lịch sử trên từng dòng: luôn hiện với mọi người vào được màn.',
+    'Icon / nút Sửa, Xóa: chỉ hiện với người lập khi phiếu Đang tạo hoặc Từ chối; người khác không thấy (ẩn hẳn, không mờ).',
+    'Icon Duyệt trên dòng, nút Duyệt, Từ chối ở màn Chi tiết: chỉ hiện với thủ kho của kho xuất hàng (hoặc Super admin) '
+    'khi phiếu Chờ duyệt.',
+    'Không có quyền thao tác mà mở thẳng đường link màn Sửa → chuyển sang màn Chi tiết; phiếu ngoài phạm vi xem → trang '
+    'không tìm thấy; gọi thẳng chức năng ghi bỏ qua giao diện → hệ thống từ chối “Bạn không có quyền sửa / xóa / duyệt / '
+    'từ chối phiếu này”.',
+    'Quyền và vai trò thủ kho được kiểm tra lại ở mỗi thao tác: bị gỡ giữa chừng thì thao tác kế tiếp bị từ chối.',
+])
 
 # ============================================================== PHẦN 3
 d.h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
@@ -459,15 +500,19 @@ fr(1, 'Xem danh sách phiếu',
              'chính người dùng lập.\n'
              '3. Hệ thống cộng thêm phiếu người dùng đã duyệt / từ chối và phiếu thuộc kho người dùng là thủ kho; loại bỏ '
              'phiếu Đang tạo của người khác.\n'
-             '4. Hệ thống áp cấu hình cột đã lưu của người dùng, khôi phục bộ lọc nếu vừa rời sang màn Tạo / Sửa / Chi '
-             'tiết trong vòng 10 phút.\n'
+             '4. Hệ thống áp cấu hình cột đã lưu của người dùng, khôi phục bộ lọc nếu vừa rời sang màn Chi '
+             'tiết / Sửa phiếu trong vòng 10 phút (rời sang màn Tạo mới hoặc màn khác thì bộ lọc bị xóa).\n'
              '5. Hệ thống trả trang 1, 10 dòng, phiếu lập gần nhất lên trước, kèm dòng “Hiển thị a–b / N”.',
        phu='• Không có phiếu nào → giữa bảng hiện “Không có dữ liệu phù hợp.”, dưới bảng “Không có phiếu nào.”.\n'
            '• Phiếu Đang tạo của người khác không bao giờ hiện, kể cả với người có quyền V1.\n'
            '• Thủ kho không giữ quyền xem nào vẫn thấy phiếu thuộc kho mình để duyệt.\n'
            '• Lỗi hệ thống khi nạp → thông báo ' + SYS_ERR + ', bảng giữ trống.\n'
            '• Phiên đăng nhập hết hạn → hệ thống chuyển về màn đăng nhập.',
-       dacbiet=None),
+       dacbiet='Cột mặc định: hiện 12 cột (STT, Mã phiếu, Số hợp đồng/đơn hàng, Khách hàng, Ngày tạo, Người tạo, Ngày cập '
+               'nhật, Người cập nhật, Ngày duyệt, Người duyệt, Trạng thái, Hành động); ẩn cột Phiếu YCXH; cột bắt buộc STT, '
+               'Mã phiếu (ghim trái), Hành động. Sắp xếp mặc định theo Ngày tạo giảm dần (cùng thời điểm thì phiếu lập sau '
+               'lên trước); 6 cột sắp xếp được, bấm lần 1 tăng dần, lần 2 giảm dần, mỗi lần đổi về trang 1; chuyển trang giữ '
+               'nguyên sắp xếp và bộ lọc. Số dòng/trang 5, 10, 20, 50, 100 (mặc định 10); STT chạy liên tục giữa các trang.'),
    layout=dict(menu=MENU, shot=shot('01_list'), shot_caption='Màn danh sách Phiếu yêu cầu vận chuyển, bốc xếp'),
    ui_kw=dict(required=False),
    ui=[
@@ -519,7 +564,7 @@ fr(1, 'Xem danh sách phiếu',
            '- Icon Duyệt: chỉ hiện với thủ kho của kho xuất hàng (hoặc Super admin), phiếu Chờ duyệt; bấm → mở màn '
            'Chi tiết để duyệt / từ chối (mục 2.11, 2.12)',
            '- Icon Lịch sử: luôn hiện; bấm → cửa sổ Lịch sử thay đổi (mục 2.14)',
-           '- Không dùng được thì icon ẩn hẳn; cột khóa trong Tùy chỉnh cột']),
+           '- Không dùng được thì icon ẩn hẳn; cột bắt buộc trong Tùy chỉnh cột (không ẩn được, kéo đổi vị trí được)']),
        ('Dòng “Hiển thị a–b / N”', 'Label', 'Read-only', '–', 'Theo kết quả', [
            '- a–b: thứ tự dòng đầu–cuối của trang đang xem',
            '- N: tổng phiếu khớp bộ lọc trong phạm vi quyền, không phải tổng toàn hệ thống',
@@ -535,8 +580,8 @@ fr(1, 'Xem danh sách phiếu',
    ev=[
        ('Mở màn hình', 'System',
         'Before:\n– Xác định cấp quyền xem theo thứ tự V1 → V2 → V3 → V4; không có cấp nào thì giới hạn ở phiếu do '
-        'chính người dùng lập.\n– Nạp cấu hình cột đã lưu; khôi phục bộ lọc nếu vừa rời sang màn Tạo / Sửa / Chi tiết '
-        'trong vòng 10 phút.\n'
+        'chính người dùng lập.\n– Nạp cấu hình cột đã lưu; khôi phục bộ lọc nếu vừa rời sang màn Chi tiết / Sửa '
+        'trong vòng 10 phút; bộ lọc lưu trên trình duyệt (dùng chung các tab), không lưu số trang.\n'
         'During:\n– Cộng thêm phiếu người dùng đã duyệt / từ chối và phiếu thuộc kho người dùng là thủ kho (BR-09).\n'
         '– Loại bỏ phiếu Đang tạo của người khác.\n– Lỗi hệ thống → thông báo ' + SYS_ERR + '.\n'
         'After:\n– Hiển thị trang 1, 10 dòng, ngày tạo giảm dần, kèm “Hiển thị a–b / N”; icon Sửa / Xóa / Duyệt hiện theo '
@@ -584,7 +629,14 @@ fr(2, 'Tìm kiếm và lọc phiếu',
            '• Đổi Công ty → xóa Phòng ban, Bộ phận đang chọn; đổi Phòng ban → xóa Bộ phận.\n'
            '• Ô Khách hàng gõ dưới 2 ký tự → chưa gợi ý.\n'
            '• Tiêu chí bị tắt trong Cài đặt bộ lọc → không hiện ở khối tìm kiếm nâng cao.',
-       dacbiet=None),
+       dacbiet='Ô tìm nhanh tìm trên 3 trường Mã phiếu, Số hợp đồng/đơn hàng, Mã phiếu YCXH; ô Hợp đồng tìm trên Số hợp '
+               'đồng/đơn hàng. Cả hai khớp MỘT PHẦN (chứa chuỗi đã gõ), nhập đủ mã thì ra đúng phiếu đó; không phân biệt '
+               'hoa / thường; bỏ khoảng trắng đầu / cuối trước khi tìm; ký tự đặc biệt (%, _, \', \\) được hiểu đúng là ký '
+               'tự thường, không phải ký tự đại diện; chữ Đ và D là hai chữ khác nhau (gõ “HD” không ra số hợp đồng “HĐ…”). '
+               'Ô tìm nhanh và ô Hợp đồng không giới hạn số ký tự. Các tiêu chí kết hợp theo điều kiện VÀ; mặc định mọi ô '
+               'trống. Bộ lọc được ghi nhớ 10 phút khi mở màn Chi tiết / Sửa rồi quay lại (lưu trên trình duyệt, dùng chung '
+               'các tab, không phân biệt tài khoản); sang màn khác hoặc màn Tạo mới thì bộ lọc bị xóa; số trang không được '
+               'ghi nhớ.'),
    layout=dict(menu=MENU + ' => Tìm kiếm nâng cao', shot=shot('02_filter'), shot_caption='Khối Bộ lọc danh sách ở trạng thái mở'),
    ui=[
        ('Tiêu đề khối', 'Label', 'Hiển thị', '–', '–', 'Bộ lọc danh sách', ['- Kèm icon phễu bên trái']),
@@ -711,15 +763,19 @@ fr(4, 'Tùy chỉnh cột hiển thị',
    rule=('- Quy tắc Excel và Cấu hình cột.', 'excel'),
    intro=dict(ten='Tùy chỉnh cột của bảng danh sách',
               mota='Cho mỗi người dùng tự chọn cột nào hiện trên bảng danh sách và thứ tự cột. Cấu hình lưu riêng theo '
-                   'người dùng; ba cột STT, Mã phiếu, Hành động bị khóa.',
+                   'người dùng (lưu trên máy chủ theo tài khoản); STT, Mã phiếu là cột khóa, Hành động là cột bắt buộc.',
               tacnhan=TN_XEM, dieukien=DK_XEM,
               chinh='1. Người dùng bấm nút Cấu hình cột hiển thị.\n2. Hệ thống mở cửa sổ “Tuỳ chỉnh cột” với 13 cột kèm ô tích.\n'
                     '3. Người dùng tích / bỏ tích, kéo biểu tượng ≡ để đổi thứ tự.\n4. Người dùng bấm Lưu.\n'
                     '5. Hệ thống lưu cấu hình, đóng cửa sổ, báo “Cập nhật thành công” và vẽ lại bảng.',
-              phu='• Bấm Chọn tất cả / Bỏ chọn hết → không tác động tới 3 cột khóa.\n'
+              phu='• Bấm Chọn tất cả / Bỏ chọn hết → không tác động tới STT, Mã phiếu, Hành động.\n'
                   '• Bấm Đóng / (x) / click ra ngoài cửa sổ → đóng, trả về cấu hình đang áp dụng (không hỏi xác nhận).\n'
                   '• Lưu lỗi → “Thao tác thất bại”.',
-              dacbiet='Cột Phiếu YCXH mặc định ẩn; cấu hình đã lưu cũng quyết định các trường được tích sẵn khi Xuất Excel.'),
+              dacbiet='Mặc định hiện 12 cột, riêng Phiếu YCXH ẩn. Cột bắt buộc: STT, Mã phiếu (khóa — không ẩn, không kéo, '
+                      'ghim trái khi cuộn ngang); Hành động (không ẩn được nhưng kéo đổi vị trí được). Cấu hình lưu trên máy '
+                      'chủ theo tài khoản nên giữ nguyên sau khi tải lại trang, đăng nhập ở trình duyệt / máy khác; mỗi tài '
+                      'khoản một cấu hình riêng. Đổi cột chỉ đổi cách hiển thị, không đổi dữ liệu, bộ lọc. Cấu hình đã lưu '
+                      'cũng quyết định các trường được tích sẵn khi Xuất Excel.'),
    layout=dict(menu=MENU + ' => Cấu hình cột', shot=shot('25_colcfg'), shot_caption='Cửa sổ Tùy chỉnh cột',
                note='Modal Tùy chỉnh cột được mở ngay trên màn hình danh sách theo đường dẫn ở trên.'),
    ui=[
@@ -728,16 +784,17 @@ fr(4, 'Tùy chỉnh cột hiển thị',
        ('Dòng hướng dẫn', 'Label', 'Hiển thị', '–', '–', 'Hiển thị',
         ['- “Tích chọn cột cần hiển thị, kéo ≡ để đổi thứ tự cột trên bảng.”']),
        ('Nút Chọn tất cả', 'Button', 'Enable', '–', '–', 'Hiển thị', ['- Tích mọi cột (cột khóa giữ nguyên)']),
-       ('Nút Bỏ chọn hết', 'Button', 'Enable', '–', '–', 'Hiển thị', ['- Bỏ tích mọi cột trừ 3 cột khóa']),
+       ('Nút Bỏ chọn hết', 'Button', 'Enable', '–', '–', 'Hiển thị', ['- Bỏ tích mọi cột trừ STT, Mã phiếu, Hành động']),
        ('Danh sách cột', 'Table/Grid', 'Enable', 'Danh sách 13 cột', 'Không', 'Theo cấu hình đã lưu', [
            '- STT, Mã phiếu, Số hợp đồng/đơn hàng, Phiếu YCXH, Khách hàng, Ngày tạo, Người tạo, Ngày cập nhật, '
            'Người cập nhật, Ngày duyệt, Người duyệt, Trạng thái, Hành động', '- Phiếu YCXH mặc định không tích']),
        ('Ô tích từng cột', 'Checkbox', 'Enable / Disable', '–', 'Không', 'Theo cấu hình đã lưu', [
            '- Bỏ tích → cột ẩn khỏi bảng',
-           '- Cột khóa STT, Mã phiếu, Hành động: ô tích xám, luôn tích, icon ổ khóa; rê chuột “Cột bắt buộc — không thể '
-           'ẩn hoặc đổi vị trí”']),
+           '- Cột khóa STT, Mã phiếu: ô tích xám, luôn tích, icon ổ khóa; rê chuột “Cột bắt buộc — không thể '
+           'ẩn hoặc đổi vị trí”',
+           '- Cột Hành động: ô tích xám, luôn tích nhưng kéo được; rê chuột “Cột bắt buộc — không thể ẩn, kéo để đổi vị trí”']),
        ('Tay nắm kéo thả', 'Icon Button', 'Enable', '–', '–', 'Hiển thị',
-        ['- Biểu tượng ≡ cuối mỗi dòng; kéo để đổi thứ tự', '- Cột khóa không kéo được']),
+        ['- Biểu tượng ≡ cuối mỗi dòng; kéo để đổi thứ tự', '- STT, Mã phiếu không kéo được; Hành động kéo được']),
        ('Nút Lưu', 'Button', 'Enable', '–', '–', 'Hiển thị', ['- Lưu cấu hình theo người dùng, đóng cửa sổ']),
        ('Nút Đóng', 'Button', 'Enable', '–', '–', 'Hiển thị', ['- Đóng cửa sổ, bỏ thay đổi chưa lưu']),
        ('Thông báo kết quả', 'Toast / Alert', 'Hiển thị', '–', '–', 'Ẩn',
@@ -746,12 +803,12 @@ fr(4, 'Tùy chỉnh cột hiển thị',
    ev=[('Bấm Cấu hình cột hiển thị', 'Click',
         'Before:\n– Không cần quyền riêng.\nAfter:\n– Mở cửa sổ, nạp cấu hình cột đang lưu của người dùng.'),
        ('Tích / bỏ tích một cột', 'Change',
-        'Before:\n– Cột khóa (STT, Mã phiếu, Hành động) không cho bỏ tích.\n'
+        'Before:\n– STT, Mã phiếu, Hành động không cho bỏ tích.\n'
         'After:\n– Ghi nhận trong cửa sổ, chưa áp lên bảng cho tới khi bấm Lưu.'),
        ('Bấm Chọn tất cả / Bỏ chọn hết', 'Click',
-        'Before:\n– Bỏ qua 3 cột khóa.\nAfter:\n– Tích / bỏ tích mọi cột còn lại trong cửa sổ.'),
+        'Before:\n– Bỏ qua STT, Mã phiếu, Hành động.\nAfter:\n– Tích / bỏ tích mọi cột còn lại trong cửa sổ.'),
        ('Kéo biểu tượng ≡', 'Drag',
-        'Before:\n– Cột khóa không kéo được.\nAfter:\n– Đổi thứ tự cột trong cửa sổ.'),
+        'Before:\n– STT, Mã phiếu không kéo được; Hành động kéo được.\nAfter:\n– Đổi thứ tự cột trong cửa sổ.'),
        ('Bấm Lưu', 'Click',
         'Before:\n– Không cần quyền riêng.\n'
         'During:\n– Ghi cấu hình cho người dùng hiện tại; lỗi → “Thao tác thất bại”.\n' + ERR + '\n'
@@ -792,7 +849,17 @@ fr(5, 'Lập phiếu yêu cầu vận chuyển, bốc xếp', usecase=('FR-05', 
            '• Lỗi hệ thống → ' + SYS_ERR + ', giữ nguyên dữ liệu đã nhập.',
        dacbiet='Lưu nháp và Gửi duyệt cùng bắt buộc Đơn hàng/Hợp đồng, Phiếu YCXH và ít nhất 1 dòng hàng (BR-04). Khách '
                'hàng, người liên hệ, địa điểm giao, dòng hàng luôn lấy lại từ phiếu YCXH lúc lưu; người dùng chỉ nhập Số kiện. '
-               'Các nút lưu bị khóa trong lúc đang xử lý.'),
+               'Các nút lưu bị khóa trong lúc đang xử lý (bấm liên tục chỉ tạo 1 phiếu).\n'
+               'Quy tắc trùng dữ liệu: phiếu không có trường duy nhất, Mã phiếu do hệ thống tự sinh (không trùng kể cả khi '
+               'nhiều người lưu cùng lúc); một phiếu YCXH / một đơn hàng được lập nhiều phiếu vận chuyển, hệ thống không chặn.\n'
+               'Chuẩn hóa: các ô chữ bỏ khoảng trắng đầu / cuối khi lưu, ô chỉ có khoảng trắng lưu thành trống; không có độ '
+               'dài tối thiểu; Phương thức / Địa điểm bốc xếp không cho gõ quá 255 ký tự; Ghi chú quá 5000 ký tự báo lỗi khi lưu.\n'
+               'Lưu và tiếp tục: lưu nháp như Lưu nháp, báo “Thêm mới thành công.”, ở lại màn Tạo với form trống hoàn toàn '
+               '(kể cả file đính kèm, bảng Chi tiết); có lỗi thì không lưu và giữ dữ liệu đang nhập.\n'
+               'Đóng màn: màn Tạo là trang riêng (không phải popup) nên không có nút (x) hay click ra ngoài; rời màn bằng nút '
+               'Quay lại, menu hoặc tải lại / đóng tab. Chưa đổi gì (hoặc đổi rồi trả về như ban đầu) thì rời ngay; có thay '
+               'đổi chưa lưu thì hiện hộp “Thông tin chưa lưu” (Thoát / Ở lại), tải lại / đóng tab thì trình duyệt hỏi xác '
+               'nhận; không có giới hạn thời gian chờ.'),
    layout=dict(menu=MENU + ' => Tạo mới', shot=shot('10c_filled'), shot_caption='Màn Tạo phiếu yêu cầu vận chuyển, bốc xếp đã nhập dữ liệu'),
    figs=[('10_create', 'Màn Tạo phiếu lúc vừa mở'), ('10b_validate', 'Thông báo bắt buộc nhập khi bấm lưu thiếu dữ liệu')],
    ui=form_ui(False),
@@ -926,7 +993,16 @@ fr(8, 'Chỉnh sửa phiếu', usecase=('FR-08', 'Chỉnh sửa phiếu', 'crud'
            '• Giữ nguyên phiếu YCXH cũ thì không bắt phiếu đó còn ở trạng thái chọn được.\n'
            '• Xóa file đã lưu → hỏi xác nhận, xóa ngay, ghi lịch sử, không cần bấm lưu.\n'
            '• Rời màn khi có thay đổi chưa lưu → hộp “Thông tin chưa lưu”.',
-       dacbiet='Màn Sửa không có nút Lưu và tiếp tục. Các nút lưu bị khóa trong lúc đang xử lý.'),
+       dacbiet='Màn Sửa không có nút Lưu và tiếp tục. Các nút lưu bị khóa trong lúc đang xử lý.\n'
+               'Trường được sửa: Đơn hàng/Hợp đồng, Phiếu YCXH, Thời gian vận chuyển, Ghi chú, Tổng số kiện, Phương thức / '
+               'Địa điểm / Thời gian bốc xếp, Số kiện từng dòng, file đính kèm. Không sửa được: Mã phiếu, Khách hàng, Người '
+               'liên hệ, Số ĐT, Địa điểm giao hàng, Tên hàng / Model / Mã hàng hóa / ĐVT / Số lượng, Lý do từ chối, người lập.\n'
+               'Kiểm tra trùng: phiếu không có trường duy nhất nên không kiểm trùng với phiếu khác (chọn lại phiếu YCXH đã '
+               'dùng ở phiếu khác vẫn lưu được) và đương nhiên không tính trùng với chính phiếu đang sửa.\n'
+               'Phiếu Chờ duyệt / Đã duyệt (tương đương bản ghi đã khóa) không sửa được: không có nút Sửa, mở thẳng màn Sửa '
+               'thì chuyển sang màn Chi tiết.\n'
+               'Lịch sử: chỉ ghi “Thay đổi thông tin” khi có trường đổi giá trị (cũ → mới); lưu mà không đổi gì thì không '
+               'ghi. Hai lượt sửa nối tiếp cùng ở trạng thái Đang tạo thì lượt lưu sau ghi đè lượt trước.'),
    layout=dict(menu=MENU + ' => Sửa', shot=shot('19_edit'), shot_caption='Màn Sửa phiếu yêu cầu vận chuyển, bốc xếp'),
    ui=form_ui(True),
    ev=[('Mở màn Sửa', 'System',
@@ -962,7 +1038,11 @@ fr(9, 'Xóa phiếu', usecase=('FR-09', 'Xóa phiếu', 'action', A_LAP),
            '• Phiếu vừa đổi trạng thái ở nơi khác → ' + CONFLICT + '; ở màn Chi tiết thì tải lại trang.\n'
            '• Người không phải người lập gọi xóa → “Bạn không có quyền xóa phiếu này”.\n'
            '• Lỗi hệ thống → ' + SYS_ERR + '.',
-       dacbiet='Nút xác nhận Xóa màu đỏ; chặn bấm lặp trong lúc đang xóa.'),
+       dacbiet='Nút xác nhận Xóa màu đỏ; chặn bấm lặp trong lúc đang xóa.\n'
+               'Ràng buộc dữ liệu cấp con: các dòng hàng của phiếu bị xóa cùng phiếu, không chặn xóa.\n'
+               'Ràng buộc dữ liệu đang sử dụng: không màn nào khác tham chiếu tới phiếu vận chuyển; phiếu đã tác động sang '
+               'phiếu YCXH (Đã duyệt) và phiếu Chờ duyệt không xóa được (không có nút Xóa). Xóa phiếu không làm thay đổi '
+               'phiếu YCXH, phiếu YCXH đó vẫn chọn được cho phiếu mới.'),
    layout=dict(menu=MENU + ' => Xóa', shot=shot('13_delete'), shot_caption='Hộp xác nhận xóa phiếu',
                note='Modal Xác nhận xóa được mở ngay trên màn hình danh sách hoặc màn hình chi tiết theo đường dẫn ở trên.'),
    ui_kw=dict(required=False, scope=False),
@@ -1009,7 +1089,9 @@ fr(10, 'Xem chi tiết phiếu', usecase=('FR-10', 'Xem chi tiết phiếu', 'vi
            '• Phiếu không có file → ẩn hẳn khối File đính kèm.\n'
            '• Không đủ điều kiện thao tác → chỉ còn nút Quay lại.\n'
            '• Lỗi hệ thống → ' + SYS_ERR + '.',
-       dacbiet=None),
+       dacbiet='Màn Chi tiết là trang riêng (không phải popup), mọi ô chỉ đọc, không có nút Lưu. Bấm Quay lại về danh sách: '
+               'bộ lọc được khôi phục nếu quay lại trong 10 phút, danh sách mở lại ở trang 1 (số trang không được ghi nhớ). '
+               'Phiếu Đã duyệt / Chờ duyệt (với người lập) chỉ xem, không có nút thao tác. Màn không có trạng thái Khóa.'),
    layout=dict(menu=MENU + ' => Xem chi tiết', shot=shot('17_detail'), shot_caption='Màn chi tiết phiếu Chờ duyệt (thủ kho)'),
    figs=[('17b_detail_rej', 'Màn chi tiết phiếu Từ chối có Người duyệt, Ngày duyệt, Lý do từ chối')],
    ui_kw=dict(required=False),
@@ -1200,7 +1282,13 @@ fr(13, 'Xuất danh sách ra Excel', usecase=('FR-13', 'Xuất Excel', 'io', A_L
            '• Bấm Đóng / (x) / click ra ngoài cửa sổ → không xuất.\n'
            '• Lỗi hệ thống → ' + SYS_ERR + '.',
        dacbiet='Không giới hạn số dòng; dữ liệu lớn tải theo từng đợt, cạnh nút hiện “Đã tải x/y dòng…” rồi “Đang dựng file '
-               'x/y dòng…”. Nút Xuất Excel khóa trong lúc đang xuất.'),
+               'x/y dòng…”. Nút Xuất Excel khóa trong lúc đang xuất.\n'
+               'File gồm MỌI phiếu khớp ô tìm nhanh + bộ lọc + sắp xếp đang áp, trên tất cả các trang (không chỉ trang '
+               'đang xem). Chọn tất cả tích cả 10 trường; Bỏ chọn hết bỏ tích tất cả và khóa nút Xuất file. Cột trong file '
+               'theo đúng thứ tự kéo thả trong cửa sổ, tên cột đúng tên trường. Ngày ghi dạng dd/mm/yyyy hh:mm như trên '
+               'lưới; chữ tiếng Việt có dấu và ký tự đặc biệt giữ nguyên.\n'
+               'Danh sách rỗng: hệ thống KHÔNG tải file, chỉ báo “Không có dữ liệu phù hợp.” (khác quy tắc chung “rỗng vẫn '
+               'xuất file có tiêu đề cột”).'),
    layout=dict(menu=MENU + ' => Xuất Excel', shot=shot('20_export'), shot_caption='Cửa sổ Chọn trường xuất Excel',
                note='Modal Chọn trường xuất Excel được mở ngay trên màn hình danh sách theo đường dẫn ở trên.'),
    ui=[('Tiêu đề cửa sổ', 'Label', 'Hiển thị', '–', '–', 'Chọn trường xuất Excel', ['- Kèm icon tròn bên trái']),
@@ -1258,7 +1346,11 @@ fr(14, 'Xem lịch sử thay đổi',
               phu='• Không có mốc nào → “Chưa có lịch sử thao tác nào.”.\n'
                   '• Lọc không ra mốc nào → “Không có lịch sử phù hợp bộ lọc.”.\n'
                   '• Lỗi khi nạp → hiện thông báo lỗi kèm nút Thử lại.\n'
-                  '• Bấm Đóng / (x) / click ra ngoài cửa sổ → đóng cửa sổ.', dacbiet=None),
+                  '• Bấm Đóng / (x) / click ra ngoài cửa sổ → đóng cửa sổ.',
+              dacbiet='Mọi phiếu lập trên hệ thống đều có ít nhất mốc Tạo mới; câu “Chưa có lịch sử thao tác nào.” chỉ gặp ở '
+                      'phiếu cũ lập từ hệ thống ERP. Lưu mà không đổi trường nào thì không sinh mốc Thay đổi thông tin. '
+                      'Đóng cửa sổ thì danh sách giữ nguyên trang, bộ lọc, sắp xếp đang xem. Thứ tự hiển thị: mốc mới '
+                      'nhất trên cùng.'),
    layout=dict(menu=MENU + ' => Lịch sử', shot=shot('16_history'), shot_caption='Cửa sổ Lịch sử thay đổi',
                note='Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên.'),
    ui_kw=dict(required=False),
@@ -1355,6 +1447,22 @@ d.rule_table([
         '– Lưu nháp, Gửi duyệt, Duyệt, Từ chối, Xóa ở màn Chi tiết thành công đều quay về màn danh sách.',
         '– Lưu và tiếp tục: ở lại màn Tạo với form trống.'],
      ['Lập phiếu', 'Chỉnh sửa', 'Xóa', 'Duyệt', 'Từ chối']),
+    ('BR-14', 'Duy nhất và chuẩn hóa dữ liệu nhập', [
+        '– Trường duy nhất duy nhất là Mã phiếu (hệ thống sinh); không kiểm trùng nội dung: cùng 1 phiếu YCXH / đơn hàng '
+        'lập được nhiều phiếu vận chuyển.',
+        '– Màn không có trạng thái Khóa nên không có quy tắc trùng với bản ghi đã khóa.',
+        '– Ô chữ (Ghi chú, Phương thức / Địa điểm bốc xếp, Lý do từ chối) bỏ khoảng trắng đầu / cuối khi lưu; chỉ có '
+        'khoảng trắng thì lưu thành trống (Lý do từ chối chỉ khoảng trắng bị báo bắt buộc).',
+        '– Ô số (Tổng số kiện, Số kiện) chỉ nhận chữ số; ký tự khác bị bỏ ngay khi gõ.'],
+     ['Lập phiếu', 'Chỉnh sửa', 'Từ chối']),
+    ('BR-15', 'Liên kết cấp cha / con', [
+        '– Phiếu (cha) > dòng hàng (con): dòng hàng chỉ được là dòng có số lượng > 0 của đúng phiếu YCXH đã chọn; gửi '
+        'dòng không thuộc phiếu YCXH → “Không thuộc phiếu yêu cầu xuất hàng đã chọn, vui lòng chọn lại phiếu.”.',
+        '– Đổi phiếu YCXH thì thay toàn bộ dòng hàng theo phiếu mới; xóa phiếu thì xóa theo toàn bộ dòng hàng (không '
+        'để lại dòng mồ côi).',
+        '– Số hợp đồng, khách hàng lưu bản chụp tại thời điểm lưu; đổi tên / số ở màn gốc thì phiếu cũ giữ giá trị cũ, '
+        'liên kết mở chứng từ vẫn đúng.'],
+     ['Lập phiếu', 'Chỉnh sửa', 'Xóa']),
 ])
 
 # ============================================================== PHẦN 5
@@ -1364,6 +1472,27 @@ d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
     ('1', 'Hàng hóa', 'Phiếu yêu cầu xuất hàng — hình thức vận chuyển đổi thành Công ty vận chuyển khi phiếu vận chuyển được duyệt',
      'Phân hệ Bán hàng => Yêu cầu => Hàng hóa => YC xuất hàng'),
 ], widths=[0.45, 1.0, 2.6, 2.4])
+d.p('Chi tiết dữ liệu tham chiếu (cả chiều phiếu vận chuyển đọc từ màn khác):')
+d.table(['Màn hình / phân hệ', 'Trường tham chiếu', 'Mục đích', 'Điều kiện hiển thị / chọn', 'Ảnh hưởng khi chỉnh sửa',
+         'Ràng buộc xóa'], [
+    ('Phiếu yêu cầu xuất hàng (Bán hàng => Yêu cầu => Hàng hóa => YC xuất hàng)',
+     'Mã phiếu YCXH; khách hàng, người liên hệ, số ĐT, địa điểm giao; dòng hàng; kho xuất (thủ kho); trường Vận chuyển',
+     'Nguồn dữ liệu của phiếu; duyệt phiếu vận chuyển ghi “Vận chuyển = Công ty vận chuyển” sang phiếu YCXH',
+     '5 trạng thái Đã đề nghị, Chờ duyệt, Đang tạo, Đợi TP duyệt, Đợi BGD duyệt và đã gắn khách hàng (BR-02)',
+     'Sửa phiếu YCXH sau khi lập: phiếu vận chuyển giữ dữ liệu đã chép, lần lưu kế tiếp đọc lại theo phiếu YCXH',
+     'Xóa phiếu vận chuyển không đổi phiếu YCXH; điều kiện xóa phiếu YCXH do màn đó quy định'),
+    ('Đơn hàng/Hợp đồng (11 loại, BR-03)', 'Số đơn hàng/hợp đồng (bản chụp) + liên kết mở chứng từ',
+     'Gắn phiếu với chứng từ bán / mua hàng', 'Theo điều kiện từng loại ở BR-03',
+     'Đổi số hợp đồng ở màn gốc: phiếu cũ vẫn hiện số cũ, liên kết vẫn mở đúng chứng từ', 'Màn này không khai ràng buộc riêng'),
+    ('Danh mục khách hàng', 'Mã - Tên khách hàng (bản chụp lúc lưu)', 'Hiển thị, lọc, xuất Excel',
+     'Ô lọc Khách hàng chỉ liệt kê khách hàng (không có nhà cung cấp)',
+     'Đổi tên khách hàng: phiếu cũ giữ tên cũ, phiếu lập / lưu sau lấy tên mới', 'Màn này không khai ràng buộc riêng'),
+    ('Kho vật lý (Phân hệ Kho => Danh mục => Kho vật lý)', 'Danh sách thủ kho của kho xuất hàng',
+     'Xác định người được duyệt / từ chối và người nhận thông báo', 'Kho chưa có thủ kho → chỉ lưu nháp được',
+     'Đổi thủ kho: áp ngay cho phiếu Chờ duyệt (thủ kho mới duyệt được, thủ kho cũ hết quyền)', 'Không áp dụng'),
+], widths=[1.15, 1.1, 1.0, 1.0, 1.0, 0.85])
+d.p('Ràng buộc dữ liệu phân cấp: phiếu (cha) > dòng hàng (con) chép từ phiếu YCXH, xem BR-15. Màn không có Khóa / Mở '
+    'khóa nên không có ảnh hưởng khóa / mở khóa tới các màn trên.')
 
 d.save()
 print('Đã ghi', OUT)

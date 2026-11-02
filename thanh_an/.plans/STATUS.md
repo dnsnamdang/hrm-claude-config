@@ -5,6 +5,9 @@
 
 ## Đang làm
 
+- **Check: NV nghỉ 12/10 quên làm đơn, còn phép — cách trừ phép** — @khoipv — Bắt đầu 02/11/2026 — Đã ra cách: HR tạo "Đề nghị tra soát công admin" lý do "Nghỉ phép quên làm phiếu" + Trừ số ngày phép (đơn nghỉ không tạo lùi ngày được, NV tự tra soát quá hạn 72h), sau đó chạy `calc:employee_timesheet` ngày 12/10.
+  - Plan: [.plans/check-tru-phep-nghi-quen-lam-don/plan.md](check-tru-phep-nghi-quen-lam-don/plan.md)
+
 - **Check: Đã tra soát công 22/10 mà vẫn 0.5 công (Nguyễn Thị Phương NV.00032)** — @khoipv — Bắt đầu 30/10/2026 — Đã ra nguyên nhân, không phải bug logic: phiếu tra soát ĐNTSC-3294 duyệt 30/10 09:59, công 22/10 tính lần cuối 28/10 → chưa tính lại (duyệt tra soát không tự tính công, dòng gọi calc đang comment). Chờ user: chạy `calc:employee_timesheet 32 2026-10-22 2026-10-22` hoặc chờ cron; có bật lại tính công khi duyệt không.
   - Plan: [.plans/check-cong-tra-soat-nguyen-thi-phuong/plan.md](check-cong-tra-soat-nguyen-thi-phuong/plan.md)
 

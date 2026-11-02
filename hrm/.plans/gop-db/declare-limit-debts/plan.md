@@ -68,6 +68,11 @@ Cột `limit_debt_interest` / `limit_debt_export` là `INT` (migration ERP 2022)
   - [x] Verify: php -l, smoke test HTTP kernel, compile FE
   - [x] Test `Modules/Assign/Tests/Feature/ProductExportOverLimitApiTest.php` (6 ca, DB thật + rollback): giá trị phiếu payload = dòng đã lưu (= tổng sau thuế ERP), ngưỡng vượt, TP chuyển BGĐ (403 không quyền / không quản phòng ban, 422 thiếu ghi chú, 409 → xác nhận → 11), BGĐ khác công ty 403, BGĐ duyệt → 2, TP Không duyệt → 3, gửi duyệt 409 không tạo phiếu → gửi lại 10 → "Đợi TP duyệt", không vượt → "Chờ duyệt"
 
+## Phase 6 — Phản hồi Redmine #11900 lần 2 (tester 02/11/2026: "bug 3 vẫn chưa thấy", phiếu PYCXH-44434)
+
+- [x] Check (không sửa code): phiếu 44434 trên dev là loại 12 "Xuất hàng gửi" → ngoài phạm vi kiểm vượt hạn mức (chỉ 14 "Xuất bán hàng" + 17 "Xuất bán SC - BD", y ERP `Warehouse/ProductExportRequestsController` :631/:1134/:1386/:1465). Code BE+FE đã lên `origin/develop` (cc8d2af43 / 06cd10e8d).
+- [x] User chốt 02/11: giữ như ERP, soạn phản hồi tester nêu rõ tên loại phiếu cần dùng + điều kiện dữ liệu.
+
 ### Checkpoint — 2026-10-29
 Vừa hoàn thành: Phase 5 (#11900) — 2 fix màn Khai báo hạn mức + port luồng duyệt vượt hạn mức công nợ của YCXH (loại 14/17): BE service `ProductExportOverLimitService`, entity canManagerApprove/canBoardOfManagerApprove, 2 endpoint + route checkPermission, show mở cho người duyệt; FE hộp thoại xác nhận ở Tạo/Sửa, nút Chuyển BGĐ duyệt / BGĐ duyệt / Không duyệt + Ghi chú duyệt ở Chi tiết. Feature test 6/6 pass, test YCXH cũ pass, compile FE pass.
 Đang làm dở: —

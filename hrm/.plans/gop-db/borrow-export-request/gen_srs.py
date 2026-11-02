@@ -139,6 +139,24 @@ d.bullets([
     'Làm rõ cách hệ thống tính số lượng còn “Đang mượn” được phép xuất và các điều kiện chặn khi gửi.',
     'Làm rõ phạm vi dữ liệu theo từng cấp quyền và hai lối vào của màn hình.',
 ])
+d.p('Phạm vi chức năng: Xem danh sách (2 lối vào Bán hàng / Tài chính), Tìm kiếm và lọc, Cài đặt bộ lọc, Tùy chỉnh '
+    'cột, Lập phiếu (Gửi duyệt / Lưu và tiếp tục), Chọn phiếu xuất mượn, Xem chi tiết, Từ chối, Tạo phiếu xuất hàng '
+    'mượn (duyệt), In phiếu / In danh sách, Xuất Excel, Xem lịch sử thay đổi. Màn KHÔNG có Lưu nháp, Sửa, Xóa, '
+    'Khóa / Mở khóa và Import Excel.')
+d.p('Mục đích sử dụng dữ liệu:')
+d.bullets([
+    'Phiếu Chờ duyệt là căn cứ để Kế toán kho lập Phiếu xuất hàng mượn (tất toán phần hàng xuất hẳn).',
+    'Số lượng trên phiếu Chờ duyệt được giữ chỗ: trừ khỏi số còn mượn ở các màn Yêu cầu xuất bán hàng mượn, Phiếu '
+    'xuất bán hàng mượn và ở chính màn này, để một phần hàng không bị xử lý hai lần.',
+    'Phiếu Đã duyệt ghi số Được duyệt; phiếu Không duyệt trả lại số đã giữ chỗ.',
+])
+d.p('Ràng buộc nghiệp vụ quan trọng:')
+d.bullets([
+    'Chỉ gom được phiếu xuất mượn do CHÍNH người lập tạo, đang ở trạng thái Đã mượn (BR-01).',
+    'Số Xuất là số nguyên, không vượt số Đang mượn đã trừ phần đang chờ ở phiếu khác (BR-02).',
+    'Bắt buộc Ghi chú và ít nhất 1 file PDF; phiếu gửi đi vào thẳng Chờ duyệt, không sửa / xóa được (BR-05, BR-10).',
+    'Chỉ người có quyền Kế toán kho duyệt hoặc từ chối; Từ chối bắt buộc lý do và là trạng thái cuối (BR-05).',
+])
 d.h2('2 Thuật ngữ và viết tắt')
 d.table(['Thuật ngữ', 'Mô tả'], [
     ('Phiếu yêu cầu xuất hàng mượn', 'Phiếu PYCXHM-NNNNN của màn này: đề nghị Kế toán kho xuất hẳn một phần '
@@ -151,8 +169,21 @@ d.table(['Thuật ngữ', 'Mô tả'], [
     ('Phiếu xuất hàng mượn', 'Chứng từ PXHM-NNNNN do Kế toán kho lập từ phiếu yêu cầu này. Lập phiếu xuất '
                              'chính là thao tác DUYỆT phiếu yêu cầu.'),
     ('Kế toán kho', 'Người có quyền Kế toán kho — vai trò duy nhất duyệt hoặc từ chối phiếu.'),
-    ('Chờ duyệt / Đã duyệt / Không duyệt', 'Ba trạng thái của phiếu. Phiếu gửi đi là vào thẳng Chờ duyệt '
-                                           '(không có bản nháp). Không duyệt là trạng thái cuối.'),
+    ('Trạng thái Chờ duyệt', 'Phiếu vừa gửi (nhãn màu cam). Phiếu gửi đi là vào thẳng Chờ duyệt, không có bản nháp; '
+                             'chỉ ở trạng thái này Kế toán kho mới duyệt / từ chối được.'),
+    ('Trạng thái Đã duyệt', 'Kế toán kho đã lập Phiếu xuất hàng mượn từ phiếu (nhãn màu xanh lá); có Người duyệt, Ngày '
+                            'duyệt, số Được duyệt. Không thao tác tiếp được.'),
+    ('Trạng thái Không duyệt', 'Kế toán kho đã từ chối kèm lý do (nhãn màu đỏ). Trạng thái cuối, không sửa / gửi lại.'),
+    ('Trạng thái Đang tạo', 'Chỉ còn ở dữ liệu cũ chuyển từ hệ thống trước; chỉ người tạo thấy, không có trong ô lọc '
+                            'Trạng thái, màn không tạo ra trạng thái này.'),
+    ('Xuất', 'Trường đặc thù: số người lập xin xuất hẳn của 1 mặt hàng trên 1 phiếu mượn (số nguyên, 0 – Đang mượn).'),
+    ('Được duyệt', 'Trường đặc thù: số Kế toán kho chấp nhận khi lập Phiếu xuất hàng mượn; 0 khi phiếu chưa duyệt.'),
+    ('Đơn giá', 'Giá bán theo đơn vị tính đang chọn, lấy theo bảng giá của công ty ghi trên phiếu; lưu cố định lúc gửi '
+                '(cùng tên hàng, đơn vị) nên đổi danh mục sau đó không làm đổi phiếu đã lập.'),
+    ('File đính kèm', 'Chứng từ PDF (tối đa 20 MB / file) chứng minh việc xuất hàng; bắt buộc ít nhất 1 file.'),
+    ('Lý do từ chối', 'Nội dung Kế toán kho nhập khi từ chối (1–255 ký tự); hiện ở cột Lý do từ chối và khối Ghi chú duyệt.'),
+    ('Cấu trúc phân cấp', 'Phiếu yêu cầu > dòng hàng hóa (mỗi hàng 1 dòng) > dòng chi tiết theo từng phiếu mượn có hàng '
+                          'đó (Phiếu mượn, Đang mượn, Xuất, Được duyệt). Số lượng của dòng hàng = tổng Xuất các dòng chi tiết.'),
 ], widths=[1.9, 4.1])
 
 # ============================================================== PHẦN 2
@@ -188,7 +219,29 @@ d.table(['Chức năng', 'Q1', 'V1', 'V2', 'V3', 'Không có quyền nào'], [
     ('FR-10 In phiếu / In danh sách', '✅', '✅', '✅', '✅', '✅ (phiếu của mình)'),
     ('FR-11 Xuất Excel', '✅', '✅', '✅', '✅', '✅ (phiếu của mình)'),
     ('FR-12 Xem lịch sử thay đổi', '✅', '✅', '✅', '✅', '✅ (phiếu của mình)'),
+    ('Sửa / Xóa / Khóa – Mở khóa / Import Excel', '—', '—', '—', '—', '— (màn không có chức năng này)'),
 ], widths=[2.0, 0.9, 0.6, 0.85, 0.95, 1.0])
+d.p('Trường hợp không có quyền:')
+d.bullets([
+    'Không có quyền nào: vẫn mở được màn ở lối vào Bán hàng, chỉ thấy / in / xuất Excel / xem lịch sử phiếu do mình lập; '
+    'vẫn lập phiếu được cho phiếu mượn của mình.',
+    'Không có quyền Kế toán kho mà vào lối vào Tài chính: bảng không có dữ liệu (“Không có dữ liệu phù hợp.”).',
+    'Mở chi tiết / in phiếu ngoài phạm vi (qua đường link, thông báo, gọi thẳng chức năng): hệ thống từ chối với câu '
+    '“Bạn không có quyền xem phiếu này” và quay về danh sách.',
+    'Gọi thẳng chức năng Từ chối khi không có quyền Kế toán kho hoặc phiếu không còn Chờ duyệt: từ chối với câu “Phiếu '
+    'không còn ở trạng thái Chờ duyệt hoặc bạn không đủ quyền.”, phiếu giữ nguyên.',
+    'Bị gỡ quyền giữa lúc thao tác: lần bấm tiếp theo bị máy chủ từ chối như trên (quyền kiểm tra lại ở từng thao tác).',
+])
+d.p('Điều kiện hiển thị và thao tác:')
+d.table(['Đối tượng', 'Điều kiện hiển thị', 'Ghi chú'], [
+    ('Nút Tạo mới, In, Xuất Excel, Cấu hình cột, Cài đặt bộ lọc', 'Luôn hiện ở cả 2 lối vào', 'Không gắn quyền riêng'),
+    ('Ô lọc Công ty', 'Có quyền V1', 'Ẩn với V2, V3, không quyền'),
+    ('Ô lọc Phòng ban', 'Có quyền V1, V2 hoặc V3', 'Ẩn khi không có quyền xem theo cấp'),
+    ('Nút Duyệt trên dòng', 'Có quyền Kế toán kho và phiếu Chờ duyệt', 'Chỉ điều hướng sang màn chi tiết'),
+    ('Nút Tạo phiếu xuất hàng mượn, Từ chối (màn chi tiết)', 'Có quyền Kế toán kho và phiếu Chờ duyệt',
+     'Ẩn hẳn (không hiện nút mờ) khi không đủ điều kiện'),
+    ('Nút In, Lịch sử trên dòng; In ở màn chi tiết', 'Mọi phiếu người dùng được xem', 'Theo phạm vi BR-04'),
+], widths=[2.2, 2.0, 1.8])
 
 # ============================================================== PHẦN 3
 d.h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
@@ -236,8 +289,15 @@ fr(1, 'Xem danh sách phiếu',
            '• Vào lối vào Kế toán kho mà không có quyền Kế toán kho → bảng không có dữ liệu.\n'
            '• Đang ở màn, bấm sang lối vào còn lại → danh sách tự nạp lại theo lối vào mới, về trang 1.\n'
            '• Máy chủ lỗi khi nạp danh sách → thông báo “Lỗi khi tải dữ liệu”, bảng giữ trống.\n'
-           '• Người dùng đã lưu cấu hình cột riêng → bảng áp cấu hình đó thay cho bộ cột mặc định.',
-       dacbiet=None),
+           '• Người dùng đã lưu cấu hình cột riêng → bảng áp cấu hình đó thay cho bộ cột mặc định.\n'
+           '• Phiên đăng nhập hết hạn khi đang thao tác → thông báo câu của máy chủ (mặc định “Phiên đăng nhập đã hết '
+           'hạn”), hệ thống xóa phiên và chuyển về màn đăng nhập.',
+       dacbiet='Cột mặc định hiện: STT, Mã phiếu, Người tạo, Ngày tạo, Trạng thái, Người duyệt, Ngày duyệt, Hành động. '
+               'Cột mặc định ẩn: Người cập nhật, Ngày cập nhật, Phòng ban, Ghi chú, Lý do từ chối. Cột bắt buộc (không '
+               'ẩn, không đổi vị trí): STT, Mã phiếu, Hành động; STT và Mã phiếu ghim trái khi cuộn ngang. Sắp xếp: mặc '
+               'định Ngày tạo mới nhất trên; bấm tiêu đề cột lần 1 tăng dần, lần 2 giảm dần, lần 3 tăng dần lại (bỏ '
+               'sắp xếp bằng Làm mới); đổi sắp xếp, đổi bộ lọc, đổi số dòng đều về trang 1; chuyển trang giữ bộ lọc và '
+               'sắp xếp. Tổng N trên dòng “Hiển thị a–b / N” là số phiếu khớp bộ lọc trong phạm vi quyền.'),
    layout=dict(entries=[
        (MENU_SALE, 'Hiển thị: tiêu đề “Yêu cầu xuất hàng mượn”; phiếu trong phạm vi quyền (V1/V2/V3, không có '
                    'quyền thì phiếu của mình); Kế toán kho thấy mọi phiếu đã gửi.'),
@@ -345,13 +405,22 @@ fr(2, 'Tìm kiếm và lọc phiếu',
            '• Không có kết quả → bảng hiện “Không có dữ liệu phù hợp.”.\n'
            '• Đổi Công ty → hệ thống xóa Phòng ban đang chọn và nạp lại danh sách phòng ban của công ty mới.\n'
            '• Gõ vào ô tìm nhanh mà chưa bấm Tìm kiếm → danh sách chưa đổi.\n'
-           '• Ô lọc bị tắt trong Cài đặt bộ lọc → không hiện trên khối lọc.',
-       dacbiet=None),
+           '• Ô lọc bị tắt trong Cài đặt bộ lọc → không hiện trên khối lọc.\n'
+           '• Bấm dấu × trong ô tìm nhanh → xóa từ khóa; danh sách giữ kết quả cũ cho tới khi bấm Tìm kiếm / Enter.\n'
+           '• Nhấn Enter trong ô tìm nhanh → như bấm Tìm kiếm.',
+       dacbiet='Trường tìm nhanh: chỉ Mã phiếu. Kiểu khớp: một phần (chuỗi nhập nằm ở bất kỳ vị trí nào), không phân biệt '
+               'chữ hoa / thường và có dấu / không dấu; khoảng trắng đầu / cuối được bỏ. Giới hạn ký tự: ô tìm nhanh '
+               'không giới hạn (chuỗi dài vẫn chạy, không báo lỗi); các ô nhập lọc nâng cao áp cùng kiểu khớp một phần. '
+               'Ký tự % và _ hiện được hiểu là ký tự đại diện. Cơ chế áp lọc: ô tìm nhanh chạy khi bấm Tìm kiếm / Enter; '
+               'ô lọc nâng cao chạy ngay khi đổi giá trị; mọi điều kiện kết hợp theo kiểu VÀ; sau lọc về trang 1, dòng '
+               '“Hiển thị a–b / N” và phân trang tính lại theo kết quả lọc. Ghi nhớ bộ lọc: chỉ khi đi vào màn chi tiết '
+               'phiếu, giữ 10 phút, lưu trên trình duyệt (dùng chung các tab, không theo tài khoản); sang màn khác, '
+               'tải lại trang (F5) hoặc quá 10 phút thì bộ lọc về trống; trang và sắp xếp không được ghi nhớ.'),
    layout=dict(menu=MENU + ' => Tìm kiếm nâng cao', shot=shot('02_filter'),
                shot_caption='Khối Bộ lọc danh sách đang mở tìm kiếm nâng cao'),
    ui=[
        ('Tiêu đề khối lọc', 'Label', 'Hiển thị', '–', '–', 'Bộ lọc danh sách', '- Chữ cố định “Bộ lọc danh sách”.'),
-       ('Ô tìm nhanh', 'Textbox', 'Enable', '0–255 ký tự', 'Không', 'Trống',
+       ('Ô tìm nhanh', 'Textbox', 'Enable', 'Không giới hạn ký tự', 'Không', 'Trống',
         ['- Gợi ý “Tìm kiếm theo mã phiếu”', '- Tìm theo một phần mã phiếu',
          '- Chỉ lọc khi bấm Tìm kiếm, không lọc khi đang gõ']),
        ('Nút Tìm kiếm', 'Button', 'Enable', '–', '–', 'Hiển thị', '- Bấm → áp ô tìm nhanh, về trang 1.'),
@@ -468,7 +537,10 @@ fr(4, 'Tùy chỉnh cột hiển thị',
        phu='• Bấm Chọn tất cả / Bỏ chọn hết → tích / bỏ tích mọi cột không khóa; chưa lưu.\n'
            '• Bấm Đóng / (x) / click ra ngoài cửa sổ → đóng, danh sách trả về đúng cấu hình đang áp.\n'
            '• Lưu không thành công → thông báo “Thao tác thất bại”.',
-       dacbiet='Mặc định ẩn 5 cột: Người cập nhật, Ngày cập nhật, Phòng ban, Ghi chú, Lý do từ chối.'),
+       dacbiet='Mặc định ẩn 5 cột: Người cập nhật, Ngày cập nhật, Phòng ban, Ghi chú, Lý do từ chối. Cấu hình ghi nhớ '
+               'theo từng người dùng trên máy chủ: giữ nguyên sau khi tải lại trang, đăng nhập lại hay đổi trình duyệt / '
+               'máy khác; người dùng khác không bị ảnh hưởng. Tùy chỉnh cột chỉ đổi cách hiển thị, không làm đổi dữ liệu, '
+               'bộ lọc, tổng số phiếu.'),
    layout=dict(menu=MENU + ' => Cấu hình cột', shot=shot('25_colcfg'), shot_caption='Cửa sổ Tùy chỉnh cột',
                note='Modal Tùy chỉnh cột được mở ngay trên màn hình danh sách theo đường dẫn ở trên.'),
    ui=[
@@ -548,7 +620,14 @@ fr(5, 'Lập phiếu yêu cầu xuất hàng mượn', usecase=('FR-05', 'Lập 
            'câu lỗi của máy chủ, không lưu.',
        dacbiet='Công ty, phòng ban của phiếu lấy theo người lập tại thời điểm lập. Số “Đang mượn” và Đơn giá '
                'được máy chủ tính lại ngay trước khi lưu, không tin số trên màn hình (BR-02, BR-09). Nút Gửi '
-               'duyệt và Lưu và tiếp tục bị khóa trong lúc đang gửi để không tạo trùng phiếu.'),
+               'duyệt và Lưu và tiếp tục bị khóa trong lúc đang gửi để không tạo trùng phiếu. Quy tắc trùng dữ liệu: '
+               'phiếu không có trường duy nhất, mã PYCXHM-NNNNN tự sinh; hai phiếu cùng nội dung vẫn lưu được (phiếu '
+               'sau thấy Đang mượn đã trừ phần của phiếu trước); trong 1 phiếu, mỗi phiếu mượn chỉ chọn 1 lần, mỗi hàng '
+               'hóa chỉ 1 dòng. Ghi chú bỏ khoảng trắng đầu / cuối trước khi lưu, chỉ gồm khoảng trắng coi như trống. '
+               'Phiếu lưu xong có trạng thái mặc định Chờ duyệt. Màn Thêm mới là một trang (không phải cửa sổ) nên không '
+               'có nút Đóng / (x) / click ra ngoài: thoát bằng Quay lại, menu, đóng tab hoặc tải lại trang — đã nhập dở '
+               'thì hỏi xác nhận (đóng tab / tải lại dùng hộp hỏi của trình duyệt); nhập rồi xóa về đúng như ban đầu thì '
+               'không hỏi.'),
    layout=dict(menu=MENU + ' => Tạo mới', shot=shot('10c_filled'),
                shot_caption='Màn Thêm yêu cầu xuất hàng mượn đã nhập dữ liệu'),
    extra=[(shot('10b_validate'), 'Lỗi kiểm tra khi bấm Gửi duyệt mà chưa nhập đủ thông tin'),
@@ -784,7 +863,9 @@ fr(7, 'Xem chi tiết phiếu', usecase=('FR-07', 'Xem chi tiết phiếu', 'vie
            '• Lỗi khác khi tải → “Không tải được chi tiết phiếu.” hoặc câu lỗi của máy chủ, về danh sách.\n'
            '• Phiếu không có file đính kèm → không hiện khối File đính kèm.\n'
            '• Bấm Quay lại → về màn trước đó; mở thẳng bằng đường dẫn / thông báo / tab mới → về danh sách lối vào chung.',
-       dacbiet=None),
+       dacbiet='Quay lại danh sách: bộ lọc đang dùng được giữ (ghi nhớ 10 phút khi đi vào chi tiết), danh sách nạp lại '
+               'từ trang 1 và bỏ sắp xếp — trang đang xem không được giữ. Màn không có trạng thái Khóa; phiếu ở trạng '
+               'thái cuối (Đã duyệt / Không duyệt) xem ở chế độ chỉ đọc như mọi phiếu khác, không có nút thao tác.'),
    layout=dict(menu=MENU + ' => Xem chi tiết', shot=shot('17_detail'),
                shot_caption='Màn chi tiết phiếu đang Chờ duyệt (tài khoản Kế toán kho)'),
    extra=[(shot('17b_detail_rej'), 'Màn chi tiết phiếu Không duyệt, có khối Ghi chú duyệt')],
@@ -861,7 +942,7 @@ fr(8, 'Từ chối phiếu', usecase=('FR-08', 'Từ chối phiếu', 'action', 
              '3. Kế toán kho nhập Lý do từ chối, bấm Xác nhận từ chối.\n'
              '4. Hệ thống kiểm tra lại quyền và trạng thái phiếu.\n'
              '5. Hệ thống chuyển phiếu sang Không duyệt, lưu lý do, người và thời điểm từ chối.\n'
-             '6. Hệ thống ghi nhận hành động “Không duyệt” kèm lý do trong lịch sử của phiếu.\n'
+             '6. Hệ thống ghi nhận hành động “Từ chối” (Trạng thái: Chờ duyệt → Không duyệt) kèm lý do trong lịch sử của phiếu.\n'
              '7. Hệ thống gửi thông báo cho người lập phiếu.\n'
              '8. Hệ thống báo “Thao tác thành công.” và quay về màn danh sách đã mở trước đó.',
        phu='• Lý do trống → “Bắt buộc phải nhập lý do từ chối” dưới ô, cửa sổ không đóng.\n'
@@ -903,7 +984,7 @@ fr(8, 'Từ chối phiếu', usecase=('FR-08', 'Từ chối phiếu', 'action', 
         'During:\n– Lý do trống → “Bắt buộc phải nhập lý do từ chối”; quá 255 ký tự → “Không được vượt quá 255 ký tự”.\n'
         + ERR + '\n'
         'After:\n– Chuyển phiếu sang Không duyệt, lưu lý do, người duyệt, ngày duyệt.\n'
-        '– Ghi một dòng lịch sử “Không duyệt” (Trạng thái: Chờ duyệt → Không duyệt, kèm lý do).\n'
+        '– Ghi một dòng lịch sử hành động “Từ chối” (Trạng thái: Chờ duyệt → Không duyệt, kèm lý do).\n'
         '– Gửi thông báo “[YCXHM] Từ chối: <mã>” (người từ chối, lý do) cho người lập.\n'
         '– Hiển thị “Thao tác thành công.”, quay về màn danh sách đã mở trước đó.'),
        ('Bấm Đóng / (x) / click ra ngoài cửa sổ', 'Click',
@@ -931,7 +1012,10 @@ fr(9, 'Tạo phiếu xuất hàng mượn (duyệt phiếu)', usecase=('FR-09', 
            '• Phiếu đã Đã duyệt / Không duyệt hoặc người dùng không có quyền Kế toán kho → không hiện nút Tạo phiếu '
            'xuất hàng mượn và nút Duyệt.',
        dacbiet='Màn Yêu cầu xuất hàng mượn không có nút “Duyệt” ghi dữ liệu riêng: thao tác duyệt chỉ xảy ra khi '
-               'lưu Phiếu xuất hàng mượn.'),
+               'lưu Phiếu xuất hàng mượn. Bấm Lưu và duyệt ở màn phiếu xuất là ghi ngay, không có hộp xác nhận duyệt '
+               'riêng. Mở lại màn lập phiếu xuất từ phiếu đã xử lý → “Phiếu yêu cầu này không ở trạng thái chờ duyệt '
+               'hoặc bạn không có quyền duyệt.”; hai Kế toán kho cùng lưu → người sau nhận “Không thể duyệt yêu cầu '
+               'này!”. Sau khi duyệt, phiếu không còn trong danh sách chọn của màn Phiếu xuất hàng mượn.'),
    layout=dict(menu=MENU + ' => Xem chi tiết => Tạo phiếu xuất hàng mượn', shot=shot('21_borrow_export_create'),
                shot_caption='Màn Lập phiếu xuất hàng mượn mở từ phiếu yêu cầu (phiếu yêu cầu điền sẵn)'),
    ui_kw=dict(required=False, scope=False),
@@ -1092,7 +1176,7 @@ fr(12, 'Xem lịch sử thay đổi',
    rule=('- Quy tắc ghi lịch sử.', 'history'),
    intro=dict(
        ten='Xem lịch sử thay đổi của phiếu',
-       mota='Xem các mốc Tạo mới, Duyệt, Không duyệt của phiếu: người thực hiện, thời điểm và nội dung thay đổi. '
+       mota='Xem các mốc Tạo mới, Duyệt, Từ chối của phiếu: người thực hiện, thời điểm và nội dung thay đổi. '
             'Cửa sổ ở danh sách và khối Lịch sử ở màn chi tiết dùng chung một nội dung, mới nhất ở trên.',
        tacnhan=TN_XEM, dieukien=DK_XEM,
        chinh='1. Người dùng bấm Lịch sử ở cột Hành động, hoặc Xem lịch sử ở khối Lịch sử màn chi tiết.\n'
@@ -1101,8 +1185,14 @@ fr(12, 'Xem lịch sử thay đổi',
        phu='• Bấm Bộ lọc → mở các ô Loại hành động, Người thực hiện, Từ ngày, Đến ngày; chọn là lọc ngay.\n'
            '• Không có mốc khớp bộ lọc → “Không có lịch sử phù hợp bộ lọc.”.\n'
            '• Bấm Làm mới trong khối lọc → xóa điều kiện lọc.\n'
-           '• Bấm Đóng / (x) / click ra ngoài cửa sổ → đóng cửa sổ.',
-       dacbiet=None),
+           '• Bấm Đóng / (x) / click ra ngoài cửa sổ → đóng cửa sổ; màn danh sách giữ nguyên trang, bộ lọc, sắp '
+           'xếp (không nạp lại).' + chr(10) +
+           '• Phiếu chưa có mốc nào (dữ liệu cũ) → “Chưa có lịch sử thao tác nào.”.',
+       dacbiet='Hệ thống ghi 3 loại mốc: Tạo mới (khi gửi phiếu), Duyệt (khi Kế toán kho lưu Phiếu xuất hàng mượn, kèm '
+               'mã phiếu xuất) và Từ chối (kèm lý do); mỗi thao tác ghi đúng 1 mốc dù đổi nhiều thông tin (trạng thái, '
+               'người duyệt, ngày duyệt, số Được duyệt). Xem, in, xuất Excel, mở rồi đóng cửa sổ Từ chối không ghi mốc. '
+               'Ô Loại hành động có 3 lựa chọn dùng chung: Tạo mới, Thay đổi thông tin, Thay đổi trạng thái (Duyệt và '
+               'Từ chối thuộc Thay đổi trạng thái). Thứ tự: mới nhất ở trên.'),
    layout=dict(menu=MENU + ' => Lịch sử', shot=shot('16_history'), shot_caption='Cửa sổ Lịch sử thay đổi',
                note='Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên.'),
    extra=[(shot('17c_detail_history'), 'Khối Lịch sử ở màn chi tiết phiếu')],
@@ -1113,10 +1203,11 @@ fr(12, 'Xem lịch sử thay đổi',
            '- Mỗi mốc: thời điểm, hành động, “Người thực hiện: <tên> — <phòng ban>”',
            '- Tạo mới: thông tin phiếu và dòng hàng lúc gửi',
            '- Duyệt: “Trạng thái: Chờ duyệt → Đã duyệt” và mã phiếu xuất hàng mượn',
-           '- Không duyệt: “Trạng thái: Chờ duyệt → Không duyệt” và lý do', '- Mới nhất ở trên']),
+           '- Từ chối: “Trạng thái: Chờ duyệt → Không duyệt” và lý do', '- Mới nhất ở trên']),
        ('Nút Bộ lọc', 'Button', 'Enable', '–', 'Hiển thị', '- Bấm → mở / thu gọn khối ô lọc.'),
-       ('Loại hành động', 'Dropdown', 'Enable', 'Danh sách hành động', 'Trống',
-        ['- Gợi ý “Chọn loại hành động”', '- Mặc định: trống (mọi hành động)', '- Chọn là lọc ngay']),
+       ('Loại hành động', 'Dropdown', 'Enable', 'Danh sách 3 giá trị', 'Trống',
+        ['- Gợi ý “Chọn loại hành động”', '- Mặc định: trống (mọi hành động)',
+         '- Lựa chọn: Tạo mới / Thay đổi thông tin / Thay đổi trạng thái', '- Chọn là lọc ngay']),
        ('Người thực hiện', 'Dropdown', 'Enable', 'Danh sách người đã thao tác', 'Trống',
         ['- Gợi ý “Chọn người thực hiện”', '- Mặc định: trống', '- Chọn là lọc ngay']),
        ('Từ ngày', 'Datepicker', 'Enable', 'dd/mm/yyyy', 'Trống', '- Gợi ý “Từ ngày”; lọc mốc từ ngày này.'),
@@ -1167,7 +1258,9 @@ d.rule_table([
     ('BR-05', 'Vòng đời trạng thái', [
         '– Gửi đi → Chờ duyệt (không có nháp, không Sửa / Xóa).',
         '– Kế toán kho lập Phiếu xuất hàng mượn → Đã duyệt.',
-        '– Kế toán kho từ chối (bắt buộc lý do) → Không duyệt, trạng thái cuối.'],
+        '– Kế toán kho từ chối (bắt buộc lý do) → Không duyệt, trạng thái cuối.',
+        '– Điều kiện xóa: màn không có chức năng Xóa ở bất kỳ trạng thái nào; phiếu không dùng nữa được Kế toán kho '
+        'xử lý bằng Từ chối. Màn cũng không có Khóa / Mở khóa.'],
      ['Lập phiếu', 'Từ chối', 'Tạo phiếu xuất hàng mượn']),
     ('BR-06', 'Hai lối vào màn hình', [
         '– Bán hàng › Yêu cầu › Hàng hóa › YC xuất hàng mượn: phạm vi theo BR-04.',
@@ -1191,6 +1284,37 @@ d.rule_table([
         '– Bản in danh sách tối đa 2.000 dòng; vượt thì không in, nhắc thu hẹp bộ lọc.',
         '– Xuất Excel không giới hạn số dòng; không có phiếu vẫn xuất file có tiêu đề và tên cột.'],
      ['Lập phiếu', 'In', 'Xuất Excel']),
+    ('BR-11', 'Tính duy nhất và chống trùng', [
+        '– Phiếu không có trường duy nhất do người dùng nhập; mã PYCXHM-NNNNN tự sinh khi lưu, không sửa được.',
+        '– Hai phiếu cùng nội dung (cùng phiếu mượn, hàng, số lượng, ghi chú) vẫn lưu được, mã khác nhau; phần đã gửi '
+        'ở phiếu trước được trừ khỏi Đang mượn của phiếu sau (BR-02).',
+        '– Trong 1 phiếu: mỗi phiếu mượn chỉ chọn 1 lần, mỗi hàng hóa chỉ 1 dòng.',
+        '– Nút gửi bị khóa trong lúc đang gửi để một lần bấm không tạo 2 phiếu.'], ['Lập phiếu', 'Chọn phiếu xuất mượn']),
+    ('BR-12', 'Chuẩn hóa dữ liệu nhập', [
+        '– Ghi chú, Lý do từ chối: bỏ khoảng trắng đầu / cuối; chỉ gồm khoảng trắng coi như trống; tối đa 255 ký tự; '
+        'không chặn ký tự đặc biệt, hiển thị đúng nguyên văn.',
+        '– Ô Xuất chỉ nhận chữ số: chữ cái, dấu trừ, dấu thập phân bị bỏ; hiển thị có dấu phẩy ngăn hàng nghìn.',
+        '– Tìm kiếm / lọc chữ: bỏ khoảng trắng đầu / cuối, không phân biệt hoa / thường và dấu.'],
+     ['Lập phiếu', 'Từ chối', 'Tìm kiếm và lọc']),
+    ('BR-13', 'Liên kết cấp cha – con của phiếu', [
+        '– Phiếu > dòng hàng > dòng chi tiết theo phiếu mượn; dòng chi tiết chỉ gắn với phiếu mượn đã chọn có chứa hàng đó.',
+        '– Bỏ một phiếu mượn khỏi form → chỉ mất các dòng chi tiết của phiếu đó, dòng hàng giữ nguyên.',
+        '– Tên hàng, đơn vị, hệ số, đơn giá lưu cố định lúc gửi; đổi danh mục hàng hóa sau đó không làm đổi phiếu đã lập.',
+        '– Phiếu lưu trọn gói (phiếu + dòng hàng + chi tiết + lịch sử): lỗi giữa chừng thì không lưu gì, không sinh phiếu '
+        'dở dang.', '– Đổi trạng thái (duyệt / từ chối) không làm mất phiếu mượn, dòng hàng, file đã gắn.'],
+     ['Lập phiếu', 'Xem chi tiết']),
+    ('BR-14', 'Sử dụng phiếu ở màn khác', [
+        '– Phiếu Chờ duyệt: hiện trong danh sách chọn của màn Phiếu xuất hàng mượn; số Xuất được giữ chỗ, trừ khỏi số còn '
+        'mượn ở màn Yêu cầu xuất bán hàng mượn, Phiếu xuất bán hàng mượn và chính màn này.',
+        '– Phiếu Đã duyệt: không còn được chọn để duyệt lại; phần hàng đã xuất hẳn không còn trong Đang mượn.',
+        '– Phiếu Không duyệt: trả lại số đã giữ chỗ.',
+        '– Hàng hóa đã có trên phiếu thì không xóa được ở danh mục hàng hóa (“Hàng hoá đã phát sinh chứng từ, không xoá '
+        'được.”).'], ['Lập phiếu', 'Từ chối', 'Tạo phiếu xuất hàng mượn']),
+    ('BR-15', 'Quy tắc ghi lịch sử', [
+        '– Ghi 3 loại mốc: Tạo mới (kèm toàn bộ phiếu lúc gửi), Duyệt (kèm mã phiếu xuất hàng mượn), Từ chối (kèm lý do).',
+        '– Mỗi thao tác ghi đúng 1 mốc; xem, in, xuất Excel không ghi.',
+        '– Hiển thị mới nhất ở trên; cửa sổ ở danh sách và khối ở màn chi tiết cùng nội dung.'],
+     ['Lập phiếu', 'Từ chối', 'Tạo phiếu xuất hàng mượn', 'Lịch sử']),
 ])
 
 # ============================================================== PHẦN 5
@@ -1204,7 +1328,26 @@ d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
      'Phân hệ Tài chính => Hàng hoá - Dịch vụ - Vận chuyển => Mượn hàng => Yêu cầu xuất bán hàng mượn'),
     ('3', 'Mượn hàng', 'Phiếu xuất bán hàng mượn — trừ phần đang chờ của phiếu yêu cầu Chờ duyệt khỏi số còn mượn',
      'Phân hệ Tài chính => Hàng hoá - Dịch vụ - Vận chuyển => Mượn hàng => Phiếu xuất bán hàng mượn'),
+    ('4', 'Hàng hoá, vật tư', 'Kho dữ liệu hàng hoá — chặn xóa hàng hóa đã có trên phiếu yêu cầu xuất hàng mượn',
+     'Phân hệ Danh mục dùng chung => Hàng hoá, vật tư => Kho dữ liệu hàng hoá'),
 ], widths=[0.45, 1.0, 2.6, 2.4])
+d.p('Chi tiết tham chiếu của từng màn:')
+d.table(['STT', 'Trường tham chiếu', 'Mục đích sử dụng', 'Điều kiện hiển thị / chọn',
+         'Ảnh hưởng khi phiếu đổi / bị từ chối', 'Ràng buộc xóa / phân cấp'], [
+    ('1', 'Mã phiếu yêu cầu, dòng hàng, dòng chi tiết theo phiếu mượn, số Xuất',
+     'Lập phiếu xuất (duyệt); ghi số Được duyệt, trạng thái Đã duyệt', 'Chỉ phiếu Chờ duyệt, người có quyền Kế toán kho',
+     'Phiếu không sửa được nên dữ liệu chọn luôn khớp lúc gửi; Đã duyệt / Không duyệt thì không chọn được nữa',
+     'Phiếu không xóa được; phiếu xuất chỉ nhận dòng hàng / chi tiết thuộc đúng phiếu yêu cầu'),
+    ('2', 'Số Xuất của dòng chi tiết theo phiếu mượn và hàng', 'Trừ phần đang giữ chỗ khỏi số còn mượn',
+     'Chỉ tính phiếu Chờ duyệt', 'Từ chối → trả lại số; Đã duyệt → hàng đã xuất hẳn không còn trong số đang mượn',
+     'Theo từng cặp phiếu mượn – hàng hóa'),
+    ('3', 'Số Xuất của dòng chi tiết theo phiếu mượn và hàng', 'Trừ phần đang giữ chỗ khỏi số còn mượn',
+     'Chỉ tính phiếu Chờ duyệt', 'Như dòng 2', 'Theo từng cặp phiếu mượn – hàng hóa'),
+    ('4', 'Hàng hóa trên dòng hàng / dòng chi tiết', 'Kiểm tra hàng đã phát sinh chứng từ trước khi xóa',
+     'Mọi phiếu ở mọi trạng thái', 'Đổi tên / giá hàng ở danh mục không đổi phiếu đã lập (lưu cố định lúc gửi)',
+     'Không xóa được hàng đã có trên phiếu'),
+], widths=[0.35, 1.2, 1.15, 1.05, 1.25, 1.1])
+d.p('Màn không có Khóa / Mở khóa nên không có ảnh hưởng khóa sang các màn trên.')
 
 d.save()
 print('Đã ghi', OUT)

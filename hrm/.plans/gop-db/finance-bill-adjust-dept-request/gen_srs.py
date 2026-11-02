@@ -150,6 +150,21 @@ d.bullets([
     'Làm rõ các điều kiện chặn khi gửi duyệt (khớp tổng tiền, không trùng hợp đồng, bắt buộc hợp đồng bên “đến”).',
     'Làm rõ vai trò Kế toán thanh toán: từ chối hoặc tạo phiếu kế toán điều chỉnh công nợ từ phiếu yêu cầu.',
 ])
+d.p('Phạm vi chức năng: xem danh sách (3 lối vào: Tài chính, Bán hàng, Chờ duyệt), tìm kiếm và lọc, cài đặt bộ lọc, tùy '
+    'chỉnh cột, lập phiếu (kể cả lập từ phiếu báo có), chọn khách hàng / nhà cung cấp và hợp đồng, chỉnh sửa, gửi duyệt, '
+    'xóa, xem chi tiết, từ chối, tạo phiếu kế toán, in phiếu, xuất Excel (danh sách và một phiếu), xem lịch sử thay đổi '
+    '(FR-01 → FR-16). Màn KHÔNG có chức năng Khóa / Mở khóa và Import Excel.')
+d.p('Mục đích sử dụng dữ liệu: phiếu yêu cầu là chứng từ đề nghị; Kế toán thanh toán dùng phiếu ở trạng thái Chờ tạo phiếu '
+    'kế toán để lập phiếu kế toán điều chỉnh công nợ (đầu phiếu và dòng định khoản lấy theo các dòng “từ” / “đến”), từ đó '
+    'công nợ của hợp đồng mới thật sự được ghi sổ. Bản thân phiếu yêu cầu không làm thay đổi số dư công nợ.')
+d.p('Ràng buộc nghiệp vụ quan trọng:')
+d.bullets([
+    'Gửi duyệt: mỗi nhóm “từ” có ít nhất 1 dòng “đến”, tổng tiền “đến” bằng tiền “từ”, hợp đồng bên “đến” bắt buộc (BR-01, BR-02, BR-04).',
+    'Bên “đến” không trùng khách hàng / hợp đồng với bên “từ”, kiểm cả khi lưu nháp (BR-03).',
+    'Chỉ người lập được sửa / xóa / gửi duyệt, khi phiếu Đang tạo hoặc Từ chối (BR-06).',
+    'Chỉ Kế toán thanh toán cùng công ty ghi trên phiếu được từ chối / tạo phiếu kế toán (BR-07).',
+    'Phiếu không có trường duy nhất ngoài mã phiếu do hệ thống sinh (BR-08, BR-14).',
+])
 d.h2('2 Thuật ngữ và viết tắt')
 d.table(['Thuật ngữ', 'Mô tả'], [
     ('Phiếu yêu cầu điều chỉnh công nợ', 'Phiếu của màn này, mã dạng <mã công ty>.DNDCCN<tháng năm>.NNNNN.'),
@@ -159,8 +174,19 @@ d.table(['Thuật ngữ', 'Mô tả'], [
     ('Số dư cuối kỳ / Số dư', 'Công nợ còn lại của hợp đồng (khách hàng: phải thu; NCC: phải trả), hệ thống tự tính.'),
     ('Phiếu báo có', 'Phiếu ghi nhận tiền về ngân hàng; phiếu tạo từ phiếu báo có thì dòng “từ” bị khóa theo phiếu báo có.'),
     ('Phiếu kế toán', 'Phiếu kế toán điều chỉnh công nợ do Kế toán thanh toán lập từ phiếu yêu cầu để ghi sổ.'),
-    ('Đang tạo / Chờ tạo phiếu kế toán / Đã tạo phiếu kế toán / Đã duyệt phiếu kế toán / Hủy / Từ chối',
-     'Các trạng thái của phiếu.'),
+    ('Trạng thái Đang tạo', 'Phiếu lưu nháp (Lưu nháp / Lưu và tiếp tục); chỉ người lập thấy; sửa, xóa, gửi duyệt được.'),
+    ('Trạng thái Chờ tạo phiếu kế toán', 'Phiếu đã gửi duyệt, nằm ở màn chờ duyệt của Kế toán thanh toán cùng công ty; người lập không sửa / xóa được.'),
+    ('Trạng thái Đã tạo phiếu kế toán', 'Kế toán đã lưu phiếu kế toán từ phiếu yêu cầu; xóa phiếu kế toán thì phiếu trở về Chờ tạo phiếu kế toán.'),
+    ('Trạng thái Đã duyệt phiếu kế toán', 'Phiếu kế toán lập từ phiếu yêu cầu đã được duyệt (ghi sổ); trạng thái cuối.'),
+    ('Trạng thái Hủy', 'Chỉ còn ở dữ liệu cũ chuyển từ ERP; màn không có thao tác chuyển sang Hủy.'),
+    ('Trạng thái Từ chối', 'Kế toán thanh toán không chấp nhận, kèm lý do; người lập sửa và gửi duyệt lại được.'),
+    ('Ngày nhận', 'Thời điểm gửi duyệt gần nhất của phiếu (cột Ngày nhận).'),
+    ('Người duyệt', 'Kế toán thanh toán đã từ chối phiếu, hoặc người duyệt phiếu kế toán lập từ phiếu.'),
+    ('Tỷ giá', 'Chỉ với phiếu nhà cung cấp: VNĐ luôn 1; ngoại tệ > 0; tổng tiền phiếu lưu theo VNĐ = số tiền × tỷ giá.'),
+    ('KHÁCH KHÔNG RÕ', 'Nhà cung cấp đặc biệt (29TPHPTH-203); bên “đến” là đối tượng này thì được để trống hợp đồng mua.'),
+    ('Ghi chú không duyệt', 'Lý do từ chối do Kế toán thanh toán nhập, hiện ở màn chi tiết của phiếu Từ chối.'),
+    ('Cấu trúc phân cấp', 'Phiếu > nhóm “Điều chỉnh từ” (1..n) > dòng “Điều chỉnh đến” (1..n mỗi nhóm). Xóa phiếu / xóa nhóm thì '
+     'các dòng con bị xóa theo; không có dòng “đến” mồ côi.'),
 ], widths=[2.1, 3.9])
 
 # ============================================================== PHẦN 2
@@ -182,6 +208,27 @@ d.table(['Ký hiệu', 'Tên quyền', 'Phạm vi dữ liệu'], [
     ('—', '(không có quyền nào)', 'Phiếu mình lập.'),
 ], widths=[0.8, 2.4, 2.8])
 d.p('Phiếu Đang tạo chỉ người lập thấy. Người duyệt phiếu và Super admin luôn xem được chi tiết phiếu.')
+d.p('Màn không có quyền Khóa / Mở khóa, không có Import Excel. Xuất Excel, In phiếu, Lịch sử không gắn quyền riêng: dùng '
+    'chung phạm vi xem của người dùng.')
+d.p('Trường hợp không có quyền:')
+d.table(['Tình huống', 'Hệ thống xử lý'], [
+    ('Không có quyền xem theo cấp nào', 'Danh sách chỉ hiện phiếu do chính người dùng lập; khối lọc không có Công ty / Phòng ban / Bộ phận.'),
+    ('Mở chi tiết / In / Xuất Excel phiếu ngoài phạm vi (dán đường link)', 'Báo “Bạn không có quyền xem phiếu này”, không hiện dữ liệu.'),
+    ('Lối vào chờ duyệt khi không có quyền Kế toán thanh toán', 'Không có mục menu; mở bằng đường link thì danh sách rỗng.'),
+    ('Sửa / Xóa / Gửi duyệt khi không phải người lập hoặc sai trạng thái', 'Nút ẩn; gọi thẳng chức năng thì báo “Bạn không có '
+     'quyền sửa phiếu này” / “Bạn không có quyền xóa phiếu này” / “Bạn không có quyền gửi duyệt phiếu này”, dữ liệu không đổi.'),
+    ('Từ chối / Tạo phiếu kế toán khi không phải Kế toán thanh toán cùng công ty', 'Nút ẩn; gọi thẳng Từ chối thì báo “Bạn không '
+     'có quyền từ chối phiếu này”.'),
+    ('Quyền bị gỡ trong lúc đang mở màn', 'Thao tác ghi kế tiếp bị từ chối như trên; tải lại trang thì nút biến mất.'),
+], widths=[2.4, 3.6])
+d.p('Điều kiện hiển thị và thao tác:')
+d.table(['Nút / thao tác', 'Hiện khi'], [
+    ('Tạo mới', 'Lối vào chung (Tài chính, Bán hàng); ẩn ở lối vào chờ duyệt.'),
+    ('Sửa, Xóa (dòng + chi tiết), Gửi duyệt (chi tiết)', 'Người đăng nhập là người lập VÀ phiếu Đang tạo / Từ chối.'),
+    ('Tạo phiếu kế toán, Từ chối (dòng + chi tiết)', 'Có quyền Kế toán thanh toán, cùng công ty ghi trên phiếu VÀ phiếu Chờ tạo phiếu kế toán.'),
+    ('In phiếu, Xuất Excel, Lịch sử', 'Luôn có với phiếu nằm trong phạm vi xem.'),
+    ('Ô lọc Công ty / Phòng ban / Bộ phận', 'Theo cấp quyền xem: Công ty chỉ với V1; Phòng ban với V1–V3; Bộ phận hiện với V1–V4, chọn được khi có V4.'),
+], widths=[2.4, 3.6])
 d.h2('2 Ma trận phân quyền')
 d.table(['Chức năng', 'Người lập', 'Q1', 'V1–V4', 'Không có quyền nào'], [
     ('FR-01 Xem danh sách', '✅', '✅ (+ màn chờ duyệt)', '✅ (theo cấp)', '✅ (phiếu của mình)'),
@@ -200,6 +247,8 @@ d.table(['Chức năng', 'Người lập', 'Q1', 'V1–V4', 'Không có quyền 
     ('FR-14 In phiếu', '✅', '✅', '✅', '✅ (phiếu của mình)'),
     ('FR-15 Xuất Excel', '✅', '✅', '✅', '✅ (phiếu của mình)'),
     ('FR-16 Xem lịch sử thay đổi', '✅', '✅', '✅', '✅ (phiếu của mình)'),
+    ('Khóa / Mở khóa', '— (màn không có)', '—', '—', '—'),
+    ('Import Excel', '— (màn không có)', '—', '—', '—'),
 ], widths=[2.0, 1.2, 1.3, 1.0, 1.0])
 
 # ============================================================== PHẦN 3
@@ -373,7 +422,8 @@ fr(1, 'Xem danh sách phiếu',
              '7. Bảng hiển thị dữ liệu; dòng “Hiển thị a–b / N” cho biết khoảng đang xem và tổng.',
        phu='• Không có phiếu nào trong phạm vi → bảng hiện “Không có dữ liệu phù hợp bộ lọc.”, dưới bảng “Không có phiếu nào.”.\n'
            '• Lối vào chờ duyệt mà không có quyền Kế toán thanh toán → danh sách rỗng; lối vào này không có nút Tạo mới.\n'
-           '• Đã lưu cấu hình cột riêng → bảng dựng thẳng theo cấu hình đó.\n'
+           '• Đã lưu cấu hình cột riêng → bảng dựng thẳng theo cấu hình đó. Chưa lưu → hiện đủ 15 cột, KHÔNG có cột ẩn '
+           'mặc định; 3 cột bắt buộc STT, Mã phiếu, Hành động luôn hiện (không ẩn được).\n'
            '• Rời màn quá 10 phút rồi vào lại → bộ lọc trở về mặc định.\n'
            '• Lỗi máy chủ khi nạp → hiển thị “Lỗi khi tải dữ liệu”.\n' + SESSION,
        dacbiet=None),
@@ -492,11 +542,14 @@ fr(2, 'Tìm kiếm và lọc phiếu',
            '• Đổi Công ty → Phòng ban, Bộ phận đã chọn bị xóa; đổi Phòng ban → Bộ phận bị xóa.\n'
            '• Ô Khách hàng / Nhà cung cấp gõ dưới 2 ký tự → chưa gợi ý.\n'
            '• Ẩn một ô lọc ở Cài đặt bộ lọc → giá trị của ô đó bị xóa, không lọc ngầm.',
-       dacbiet=None),
+       dacbiet='Kiểu khớp: ô tìm nhanh và các ô chữ (Số phiếu báo có, Hợp đồng điều chỉnh từ / đến) khớp MỘT PHẦN (chứa chuỗi '
+               'nhập), không phân biệt hoa / thường; khoảng trắng hai đầu tự bỏ. Ô Khách hàng / Nhà cung cấp so khớp mã, tên, '
+               'mã số thuế, không phân biệt dấu (riêng “đ” khác “d”). Ký tự % và _ được hiểu là ký tự đại diện (vd “%” ra mọi phiếu). '
+               'Giới hạn ký tự: các ô chữ không giới hạn độ dài; chuỗi không khớp thì ra danh sách rỗng, không báo lỗi.'),
    layout=dict(menu=MENU + ' => Tìm kiếm nâng cao', shot=shot('02_filter'), shot_caption='Khối Bộ lọc danh sách đang mở'),
    ui=[
        ('Tiêu đề khối lọc', 'Label', 'Hiển thị', '–', '–', 'Bộ lọc danh sách', 'Đầu khối bộ lọc.'),
-       ('Ô tìm nhanh', 'Textbox', 'Enable', '0–255 ký tự', 'Không', 'Trống', [
+       ('Ô tìm nhanh', 'Textbox', 'Enable', 'Không giới hạn ký tự', 'Không', 'Trống', [
            '- Gợi ý “Tìm theo mã phiếu...”', '- Tìm mã phiếu chứa chuỗi nhập',
            '- Chỉ áp khi bấm Tìm kiếm hoặc Enter; nút × xóa nhanh chữ đã gõ']),
        ('Nút Tìm kiếm', 'Button', 'Enable', '–', '–', 'Hiển thị', 'Áp ô tìm nhanh cùng các ô lọc, về trang 1.'),
@@ -516,14 +569,14 @@ fr(2, 'Tìm kiếm và lọc phiếu',
        ('Ô Trạng thái', 'Dropdown', 'Enable', 'Danh sách 6 giá trị', 'Không', 'Trống', [
            '- Mặc định: trống (mọi trạng thái)',
            '- Lựa chọn: Đang tạo, Chờ tạo phiếu kế toán, Đã tạo phiếu kế toán, Đã duyệt phiếu kế toán, Hủy, Từ chối']),
-       ('Ô Số phiếu báo có', 'Textbox', 'Enable', '0–255 ký tự', 'Không', 'Trống', 'Số phiếu báo có chứa chuỗi nhập.'),
+       ('Ô Số phiếu báo có', 'Textbox', 'Enable', 'Không giới hạn ký tự', 'Không', 'Trống', 'Số phiếu báo có chứa chuỗi nhập.'),
        ('Ô Khách hàng / Nhà cung cấp', 'Dropdown', 'Enable', 'Gõ tối thiểu 2 ký tự', 'Không', 'Trống', [
            '- Gợi ý “Gõ mã hoặc tên khách hàng / nhà cung cấp”',
            '- Một ô chung cho cả khách hàng và nhà cung cấp',
            '- Lọc phiếu có đối tượng này ở bên “từ” hoặc bên “đến”']),
-       ('Ô Hợp đồng điều chỉnh từ', 'Textbox', 'Enable', '0–255 ký tự', 'Không', 'Trống', [
+       ('Ô Hợp đồng điều chỉnh từ', 'Textbox', 'Enable', 'Không giới hạn ký tự', 'Không', 'Trống', [
            '- Gợi ý “Nhập mã hợp đồng điều chỉnh từ”', '- Mã hợp đồng (bán hoặc mua) bên “từ” chứa chuỗi nhập']),
-       ('Ô Hợp đồng điều chỉnh đến', 'Textbox', 'Enable', '0–255 ký tự', 'Không', 'Trống', [
+       ('Ô Hợp đồng điều chỉnh đến', 'Textbox', 'Enable', 'Không giới hạn ký tự', 'Không', 'Trống', [
            '- Gợi ý “Nhập mã hợp đồng điều chỉnh đến”', '- Mã hợp đồng bên “đến” chứa chuỗi nhập']),
        ('Ô Người tạo', 'Dropdown', 'Enable', 'Danh sách nhân viên', 'Không', 'Trống', 'Lọc theo người lập phiếu.'),
        ('Ô Người duyệt', 'Dropdown', 'Enable', 'Danh sách nhân viên', 'Không', 'Trống', 'Lọc theo Kế toán thanh toán đã xử lý.'),
@@ -605,7 +658,10 @@ fr(4, 'Tùy chỉnh cột hiển thị',
        phu='• Cột khóa (STT, Mã phiếu, Hành động): xám, không bỏ tích, không kéo; rê chuột hiện “Cột bắt buộc — không thể '
            'ẩn hoặc đổi vị trí”.\n'
            '• Bấm Đóng / (x) / click ra ngoài → đóng, danh sách trả về cấu hình đang áp (không hỏi xác nhận).\n'
-           '• Chưa từng lưu → mặc định hiện đủ 15 cột.',
+           '• Chưa từng lưu → mặc định hiện đủ 15 cột.\n'
+           '• Cấu hình lưu trên máy chủ theo tài khoản: tải lại trang (F5), đăng xuất / đăng nhập lại, đổi trình duyệt hoặc '
+           'máy khác vẫn giữ; tài khoản khác cùng máy không bị ảnh hưởng.\n'
+           '• Ẩn cột chỉ đổi cách hiển thị: không đổi tổng số phiếu, bộ lọc, file Xuất Excel (luôn 12 cột).',
        dacbiet=None),
    layout=dict(menu=MENU + ' => Cấu hình cột', shot=shot('25_colcfg'), shot_caption='Cửa sổ Tùy chỉnh cột',
                note='Modal Tùy chỉnh cột được mở ngay trên màn hình danh sách theo đường dẫn ở trên.'),
@@ -663,7 +719,14 @@ fr(5, 'Lập phiếu yêu cầu điều chỉnh công nợ', usecase=('FR-05', '
            '• Bấm Quay lại / rời màn khi đã nhập → hộp “Thông tin chưa lưu”: Thoát thì bỏ dữ liệu, Ở lại thì giữ form.\n'
            '• Không tải được dòng phiếu báo có → “Không tải được chi tiết phiếu báo có”.\n' + SESSION,
        dacbiet='Tổng tiền phiếu lưu theo VNĐ (NCC ngoại tệ = số tiền × tỷ giá). Nút Lưu nháp / Gửi duyệt / Lưu và tiếp '
-               'tục bị khóa trong lúc đang lưu để không tạo trùng phiếu.'),
+               'tục bị khóa trong lúc đang lưu để không tạo trùng phiếu.\n'
+               'Quy tắc trùng dữ liệu: phiếu không có trường duy nhất, mã tự sinh — hai phiếu cùng nội dung vẫn lưu được với 2 mã '
+               'khác nhau; hai người lưu cùng lúc cũng không trùng mã (BR-08). Chỉ chặn “đến” trùng “từ” trong cùng phiếu (BR-03).\n'
+               'Đóng / X / click ngoài: màn Tạo là trang riêng, không phải popup, nên không có nút (x) và không đóng khi bấm ra '
+               'ngoài; đóng tab / tải lại trang khi có thay đổi → trình duyệt hỏi xác nhận rời trang. Nhập rồi xóa hết, hoặc thêm '
+               'rồi xóa dòng về như ban đầu → coi như không thay đổi, không hỏi.\n'
+               'Độ dài: Diễn giải không giới hạn độ dài, không có độ dài tối thiểu; khoảng trắng hai đầu tự bỏ, chỉ có khoảng trắng '
+               'coi như trống.'),
    layout=dict(menu=MENU + ' => Tạo mới', shot=shot('10c_filled'), shot_caption='Màn Tạo phiếu yêu cầu điều chỉnh công nợ đã nhập dữ liệu'),
    ui=[('Tiêu đề màn', 'Label', 'Hiển thị', '–', '–', 'Tạo phiếu yêu cầu điều chỉnh công nợ', 'Tiêu đề trang và tab trình duyệt.')]
       + FORM_UI
@@ -873,7 +936,16 @@ fr(8, 'Chỉnh sửa phiếu', usecase=('FR-08', 'Chỉnh sửa phiếu', 'crud'
            '• Phiếu Từ chối → màn chi tiết hiện ô Ghi chú không duyệt (lý do) để người lập biết cần sửa gì.\n'
            '• Bấm Quay lại khi đã sửa → hộp “Thông tin chưa lưu”.\n'
            '• Không tải được phiếu → “Không tải được dữ liệu phiếu”.\n' + SESSION,
-       dacbiet='Màn Sửa không có nút Lưu và tiếp tục. Nút lưu bị khóa trong lúc đang xử lý.'),
+       dacbiet='Màn Sửa không có nút Lưu và tiếp tục. Nút lưu bị khóa trong lúc đang xử lý.\n'
+               'Trường được sửa: Diễn giải, Tiền tệ, Tỷ giá (loại NCC), toàn bộ bảng chi tiết. Không sửa được: Loại phiếu, Mã phiếu, '
+               'Người tạo, Phòng ban, Số phiếu báo có; phiếu tạo từ phiếu báo có thì bên “từ” chỉ đọc.\n'
+               'Kiểm tra trùng: không so với phiếu khác (không có trường duy nhất) nên không phát sinh “trùng với chính bản ghi”; '
+               'chỉ áp luật “đến” không trùng “từ” trong cùng phiếu (BR-03).\n'
+               'Sửa đồng thời: không khóa phiếu khi đang sửa — hai phiên cùng lưu nháp thì lần lưu sau ghi đè; phiếu đã được gửi '
+               'duyệt ở phiên khác thì lần lưu sau báo “Bạn không có quyền sửa phiếu này”; phiếu đã bị xóa thì báo lỗi không tìm '
+               'thấy (hiện là câu “Item Not Found!”).\n'
+               'Bản ghi đã khóa: màn không có khóa; phiếu ngoài trạng thái Đang tạo / Từ chối (đang được dùng ở phiếu kế toán) không '
+               'có nút Sửa.'),
    layout=dict(menu=MENU + ' => Sửa', shot=shot('19_edit'), shot_caption='Màn Sửa phiếu yêu cầu điều chỉnh công nợ'),
    ui=[('Tiêu đề màn', 'Label', 'Hiển thị', '–', '–', 'Sửa phiếu yêu cầu điều chỉnh công nợ: <mã>', 'Tiêu đề trang và tab trình duyệt.')]
       + FORM_UI,
@@ -963,7 +1035,11 @@ fr(10, 'Xóa phiếu', usecase=('FR-10', 'Xóa phiếu', 'action', A_LAP),
            '• Không phải người lập hoặc phiếu vừa đổi trạng thái → “Bạn không có quyền xóa phiếu này”; ở danh sách thì nạp '
            'lại cho khớp hiện trạng.\n'
            '• Lỗi khác → “Xóa thất bại” (hoặc thông báo của hệ thống).\n' + SESSION,
-       dacbiet='Mã phiếu đã dùng không được cấp lại cho phiếu mới.'),
+       dacbiet='Mã phiếu đã dùng không được cấp lại cho phiếu mới.\n'
+               'Ràng buộc dữ liệu cấp con: các dòng “Điều chỉnh từ” / “Điều chỉnh đến” bị xóa cùng phiếu, không chặn xóa.\n'
+               'Ràng buộc đang sử dụng: phiếu đã có phiếu kế toán (Đã tạo / Đã duyệt phiếu kế toán) hoặc đang Chờ tạo phiếu kế toán '
+               'không xóa được — nút ẩn, gọi thẳng thì “Bạn không có quyền xóa phiếu này”.\n'
+               'Phiếu đã bị xóa ở phiên khác: báo lỗi không tìm thấy (hiện là câu “Item Not Found!”).'),
    layout=dict(menu=MENU + ' => Xóa', shot=shot('13_delete'), shot_caption='Hộp xác nhận xóa phiếu',
                note='Modal Xác nhận xóa được mở ngay trên màn hình danh sách hoặc màn hình chi tiết theo đường dẫn ở trên.'),
    ui_kw=dict(required=False, scope=False),
@@ -1004,6 +1080,8 @@ fr(11, 'Xem chi tiết phiếu', usecase=('FR-11', 'Xem chi tiết phiếu', 'vi
        phu='• Ngoài phạm vi → ' + NO_VIEW + '.\n'
            '• Phiếu Từ chối → hiện thêm ô Ghi chú không duyệt (lý do).\n'
            '• Phiếu tạo tay → không có ô Số phiếu báo có.\n'
+           '• Bấm Quay lại → về danh sách; danh sách khôi phục bộ lọc và thứ tự sắp xếp đã dùng (trong 10 phút) nhưng về trang 1 '
+           '(hệ thống không nhớ số trang).\n'
            '• Không tải được → “Không tải được dữ liệu phiếu”.\n' + SESSION,
        dacbiet=None),
    layout=dict(menu=MENU + ' => Xem chi tiết', shot=shot('17_detail'), shot_caption='Màn chi tiết phiếu Chờ tạo phiếu kế toán'),
@@ -1021,7 +1099,9 @@ fr(11, 'Xem chi tiết phiếu', usecase=('FR-11', 'Xem chi tiết phiếu', 'vi
        ('Ô Ghi chú không duyệt', 'Textarea', 'Read-only', '–', 'Ẩn', 'Lý do từ chối, chỉ hiện khi có.'),
        ('Bảng Chi tiết', 'Table/Grid', 'Read-only', '–', 'Theo dữ liệu', [
            '- Như màn Tạo nhưng không có ô nhập, nút thêm / xóa', '- Có dòng Số tiền còn lại từng nhóm và dòng Tổng cộng']),
-       ('Khối Lịch sử', 'Table/Grid', 'Read-only', '–', 'Thu gọn', 'Bấm tiêu đề để mở; nội dung như mục 2.16.'),
+       ('Khối Lịch sử', 'Table/Grid', 'Read-only', '–', 'Thu gọn', [
+           '- Mặc định thu gọn; nút “Xem lịch sử” mở ra, “Thu gọn” đóng lại', '- Khi mở: nút Làm mới nạp lại, nút Bộ lọc như mục 2.16',
+           '- Nội dung các mốc như mục 2.16']),
        ('Nút Sửa', 'Button', 'Enable / Ẩn', '–', 'Ẩn', 'Người lập, phiếu Đang tạo / Từ chối → mở màn Sửa (mục 2.8).'),
        ('Nút Gửi duyệt', 'Button', 'Enable / Ẩn', '–', 'Ẩn', 'Người lập, phiếu Đang tạo / Từ chối (mục 2.9).'),
        ('Nút Tạo phiếu kế toán', 'Button', 'Enable / Ẩn', '–', 'Ẩn', 'Kế toán thanh toán cùng công ty, phiếu Chờ tạo phiếu kế toán (mục 2.13).'),
@@ -1055,7 +1135,7 @@ fr(12, 'Từ chối phiếu', usecase=('FR-12', 'Từ chối phiếu', 'action',
              '5. Hệ thống chuyển phiếu sang Từ chối, lưu lý do, ghi người xử lý vào Người duyệt.\n'
              '6. Hệ thống ghi nhận hành động “Thay đổi trạng thái” kèm lý do trong lịch sử của phiếu.\n'
              '7. Hệ thống gửi thông báo cho người lập.\n'
-             '8. Hệ thống hiện “Từ chối phiếu yêu cầu điều chỉnh công nợ thành công”, đóng cửa sổ, về màn danh sách.',
+             '8. Hệ thống hiện “Từ chối phiếu yêu cầu điều chỉnh công nợ thành công”, đóng cửa sổ, về màn danh sách chung.',
        phu='• Lý do trống (hoặc chỉ khoảng trắng) → báo đỏ dưới ô “Vui lòng nhập lý do từ chối”, cửa sổ không đóng.\n'
            '• Không phải Kế toán thanh toán cùng công ty → nút không hiện; gọi thẳng thì “Bạn không có quyền từ chối phiếu này”.\n'
            '• Phiếu vừa được kế toán khác xử lý → “Không thể chuyển phiếu từ trạng thái hiện tại sang trạng thái này”; cửa '
@@ -1206,8 +1286,9 @@ fr(15, 'Xuất Excel', usecase=('FR-15', 'Xuất Excel', 'io', A_LAP),
            '• Phiếu ngoài phạm vi xem → ' + NO_VIEW + '.\n'
            '• Kết quả lọc rỗng → vẫn tải file có letterhead, tiêu đề và hàng tên cột.\n'
            '• Kết quả quá 5.000 dòng → file chỉ chứa 5.000 dòng đầu theo thứ tự đang sắp; cần lọc hẹp lại.',
-       dacbiet='Màn chưa có cửa sổ chọn trường xuất: file danh sách luôn xuất đủ 12 cột theo thứ tự cố định, không theo '
-               'Tùy chỉnh cột. Nút Xuất Excel danh sách bị khóa trong lúc đang xuất. Danh sách lấy letterhead theo công '
+       dacbiet='Màn chưa có cửa sổ chọn trường xuất (không có Chọn tất cả / Bỏ chọn hết, không chọn thứ tự): file danh '
+               'sách luôn xuất đủ 12 cột theo thứ tự cố định STT → Trạng thái, không theo Tùy chỉnh cột; nút Xuất luôn bấm được '
+               '(trừ lúc đang xuất). Nút Xuất Excel danh sách bị khóa trong lúc đang xuất. Danh sách lấy letterhead theo công '
                'ty của người đang đăng nhập; file một phiếu lấy theo công ty ghi trên phiếu.'),
    layout=dict(menu=MENU + ' => Xuất Excel', shot=shot('20_export_toolbar'), shot_caption='Nút Xuất Excel trên thanh công cụ'),
    ui_kw=dict(required=False),
@@ -1250,9 +1331,12 @@ fr(16, 'Xem lịch sử thay đổi',
              '3. Hệ thống hiển thị các mốc mới nhất trên cùng, mỗi mốc có loại hành động, người thực hiện, thời điểm và '
              'nội dung thay đổi.\n'
              '4. Người dùng bấm Bộ lọc để lọc theo loại hành động, người thực hiện, khoảng ngày.',
-       phu='• Phiếu chưa có mốc nào → “Chưa có lịch sử thao tác nào.”.\n'
+       phu='• Phiếu chưa có mốc nào (phiếu lập trước khi hệ thống bật ghi lịch sử) → “Chưa có lịch sử thao tác nào.”. Phiếu '
+           'lập mới luôn có ít nhất mốc Tạo mới.\n'
            '• Lọc không khớp → “Không có lịch sử phù hợp bộ lọc.”.\n'
-           '• Bấm Đóng / (x) / click ra ngoài → đóng cửa sổ.',
+           '• Bấm Làm mới trong vùng lọc → xóa các ô lọc, hiện lại đủ mốc.\n'
+           '• Lưu mà không đổi gì → không sinh mốc mới.\n'
+           '• Bấm Đóng / (x) / click ra ngoài → đóng cửa sổ; danh sách giữ nguyên trang, bộ lọc, thứ tự sắp xếp.',
        dacbiet=None),
    layout=dict(menu=MENU + ' => Lịch sử', shot=shot('16_history'), shot_caption='Cửa sổ Lịch sử thay đổi',
                note='Modal Lịch sử thay đổi được mở ngay trên màn hình danh sách theo đường dẫn ở trên.'),
@@ -1333,15 +1417,52 @@ d.rule_table([
      ['Lập phiếu']),
     ('BR-13', 'Giới hạn xuất danh sách', ['– Xuất toàn bộ kết quả lọc (không chỉ trang đang xem), tối đa 5.000 dòng.',
                                           '– Kết quả rỗng vẫn xuất file có letterhead và tên cột.'], ['Xuất Excel']),
+    ('BR-14', 'Duy nhất và chuẩn hóa dữ liệu', ['– Không có mã / tên / trường nào phải duy nhất ngoài mã phiếu do hệ thống sinh; '
+                                                'hai phiếu cùng nội dung vẫn lưu được.',
+                                                '– Chuẩn hóa: bỏ khoảng trắng hai đầu mọi ô chữ (chỉ khoảng trắng = trống); số tiền bỏ '
+                                                'dấu phẩy ngăn nghìn trước khi lưu; ô Số tiền không nhận chữ; lý do từ chối bỏ khoảng trắng.',
+                                                '– Màn không có khóa nên không có quy tắc trùng với bản ghi đã khóa.'],
+     ['Lập phiếu', 'Chỉnh sửa', 'Từ chối']),
+    ('BR-15', 'Điều kiện xóa', ['– Chỉ người lập, phiếu Đang tạo / Từ chối.',
+                                '– Dòng con “từ” / “đến” xóa theo phiếu (không chặn).',
+                                '– Phiếu đang Chờ tạo phiếu kế toán hoặc đã có phiếu kế toán: không xóa được.'], ['Xóa']),
+    ('BR-16', 'Sử dụng ở màn khác', ['– Phiếu Chờ tạo phiếu kế toán là nguồn của màn Phiếu kế toán điều chỉnh công nợ (Phần 5).',
+                                     '– Lưu / duyệt / xóa phiếu kế toán tự đổi trạng thái phiếu yêu cầu (BR-06), có ghi lịch sử.',
+                                     '– Duyệt phiếu kế toán gửi thông báo “[PKT] Đã duyệt: <mã phiếu kế toán>” cho người lập phiếu yêu cầu.'],
+     ['Tạo phiếu kế toán']),
+    ('BR-17', 'Quy tắc ghi lịch sử', ['– Ghi: Tạo mới (kèm bảng chi tiết), Thay đổi thông tin (chỉ trường đổi, cũ → mới, bảng “Trước” / “Sau”; '
+                                      'gửi duyệt ở form ghi chung trong mốc này), Thay đổi trạng thái (gửi duyệt ở chi tiết, từ chối kèm lý '
+                                      'do, đổi theo phiếu kế toán kèm mã), Xóa.',
+                                      '– Lưu không đổi gì thì không ghi; thứ tự hiển thị mới nhất trên cùng.'],
+     ['Lập phiếu', 'Chỉnh sửa', 'Gửi duyệt', 'Xóa', 'Từ chối', 'Tạo phiếu kế toán', 'Xem lịch sử thay đổi']),
 ])
 
 # ============================================================== PHẦN 5
 d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
-d.p('Các màn hình dưới đây đọc dữ liệu do màn Phiếu yêu cầu điều chỉnh công nợ ghi ra.')
-d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Kế toán công nợ', 'Phiếu kế toán điều chỉnh công nợ — lập từ phiếu yêu cầu Chờ tạo phiếu kế toán, cập nhật trạng thái '
-     'phiếu yêu cầu', 'Phân hệ Tài chính => Sổ tổng hợp => Phiếu kế toán'),
-], widths=[0.45, 1.0, 2.6, 2.4])
+d.p('Các màn hình dưới đây đọc dữ liệu do màn Phiếu yêu cầu điều chỉnh công nợ ghi ra (màn không có Khóa / Mở khóa nên không '
+    'có ảnh hưởng khóa sang các màn này).')
+d.table(['STT', 'Màn hình / phân hệ', 'Trường dữ liệu tham chiếu', 'Mục đích sử dụng', 'Điều kiện hiển thị / chọn',
+         'Ảnh hưởng khi chỉnh sửa', 'Ràng buộc xóa và phân cấp'], [
+    ('1', 'Phiếu kế toán điều chỉnh công nợ — Tài chính (Sổ tổng hợp => Phiếu kế toán)',
+     'Mã phiếu yêu cầu, loại phiếu, tiền tệ, tỷ giá, diễn giải, các dòng “từ” / “đến” (đối tượng, hợp đồng, số tiền)',
+     'Lập phiếu kế toán ghi sổ công nợ từ phiếu yêu cầu; cập nhật ngược trạng thái phiếu yêu cầu',
+     'Chỉ phiếu Chờ tạo phiếu kế toán; người lập phiếu kế toán có quyền Kế toán thanh toán cùng công ty',
+     'Phiếu yêu cầu chỉ sửa được khi Đang tạo / Từ chối (chưa có phiếu kế toán) → phiếu kế toán luôn lấy dữ liệu đã chốt',
+     'Phiếu yêu cầu đã có phiếu kế toán không xóa được; xóa phiếu kế toán → phiếu yêu cầu về Chờ tạo phiếu kế toán. '
+     'Phiếu kế toán lấy đủ cả nhóm “từ” và các dòng “đến” con'),
+    ('2', 'Chi tiết Phiếu báo có — Tài chính',
+     'Số phiếu báo có, các dòng phiếu báo có được tích (bên “từ”)',
+     'Nguồn tạo phiếu yêu cầu từ tiền đã về; cột Số phiếu báo có ở danh sách liên kết ngược về phiếu báo có',
+     'Nút “Tạo phiếu yêu cầu điều chỉnh công nợ” ở màn chi tiết phiếu báo có, với các dòng đã tích',
+     'Bên “từ” và Loại phiếu bị khóa theo phiếu báo có; sửa phiếu yêu cầu không đổi phiếu báo có',
+     'Xóa phiếu yêu cầu không xóa / đổi phiếu báo có. Mỗi dòng phiếu báo có thành 1 nhóm “từ”'),
+    ('3', 'Thông báo (chuông) — toàn hệ thống',
+     'Mã phiếu, số tiền, người lập, diễn giải, lý do từ chối',
+     'Báo Kế toán thanh toán khi có phiếu chờ; báo người lập khi bị từ chối / phiếu kế toán được duyệt',
+     'Gửi duyệt → Kế toán thanh toán cùng công ty; Từ chối → người lập; duyệt phiếu kế toán → người lập',
+     'Thông báo đã gửi giữ nội dung lúc gửi; bấm thông báo mở dữ liệu hiện tại của phiếu',
+     'Phiếu đã xóa thì bấm thông báo báo không tải được dữ liệu phiếu'),
+], widths=[0.35, 1.0, 1.05, 1.0, 1.0, 1.05, 1.05])
 
 d.save()
 print('Đã ghi', OUT)

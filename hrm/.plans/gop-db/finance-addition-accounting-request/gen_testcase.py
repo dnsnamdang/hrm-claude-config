@@ -1,8 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Testcase màn "Phiếu yêu cầu hạch toán bổ sung" — skill testcase-documenter (tc_engine), 30/10/2026.
+"""Testcase màn "Phiếu yêu cầu hạch toán bổ sung" — skill testcase-documenter (tc_engine).
 
 Chạy: python gen_testcase.py -> testcase.xlsx
-Nguồn: cùng nguồn code với gen_srs.py (nhánh develop 30/10/2026).
+30/10/2026: bản đầu (75 TC) theo mẫu Danh mục quốc gia + 8 góp ý tester 07/10.
+02/11/2026: xuất lại theo checklist "Mẫu tài liệu.xlsx" của tester (../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json):
+  section xếp đúng thứ tự + tên nhóm của checklist (I..XIII), rồi phần riêng của màn (XIV, XV). Đối chiếu từng dòng
+  checklist -> TC ở gen_checklist.py.
+Nguồn hành vi (đọc lại 02/11/2026, nhánh develop cả 2 repo):
+  FE pages/finance/addition-accounting-requests/** (index, _id/index, _id/edit, create, components/*), V2BaseDataTable,
+     filterStateMixin, unsavedChangesMixin, saveAndContinueMixin, columnCustomizationMixin, export-fields-modal,
+     SystemInfoSection (lịch sử), plugins/axios (hết phiên), bill-adjust-depts/BillAdjustDeptForm (Lưu và duyệt).
+  BE Modules/Finance: AdditionAccountingRequest (applyFilters / applySort / canView), Store/ChangeStatus Request,
+     WriteService, NotifyService, BillAdjustDeptSourceService (trạng thái theo phiếu kế toán), ListExport + blade,
+     app/Exceptions/Handler (phiếu không còn -> "Item Not Found!"), CatalogHistoryService (không đổi thì không ghi).
 """
 import os
 import sys
@@ -14,7 +24,10 @@ except Exception:
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', '..', '..', '.claude', 'skills', 'testcase-documenter', 'assets'))
+sys.path.insert(0, os.path.join(HERE, '..', 'phieu-theo-form-quoc-gia'))
 from tc_engine import build  # noqa: E402
+from tc_phieu_bosung import (ListScreen, open_menu_case, filter_memory_cases, combo_cases, org_cases,  # noqa: E402
+                             weird_param_case, check_no_dash_pre)
 
 OUT = os.path.join(HERE, 'testcase.xlsx')
 MENU = ('Vào phân hệ Tài chính > menu "Khởi tạo" > nhóm "Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi" > bấm '
@@ -22,218 +35,985 @@ MENU = ('Vào phân hệ Tài chính > menu "Khởi tạo" > nhóm "Khởi tạo
 MENU_SALE = 'Vào phân hệ Bán hàng > menu "Yêu cầu" > nhóm "Công nợ - Thu - Chi" > bấm "YC hạch toán bổ sung".'
 MENU_CD = ('Vào phân hệ Tài chính > menu "Chờ duyệt" > nhóm "Phê duyệt - Công nợ - Thu - Chi" > bấm '
            '"Phiếu yêu cầu hạch toán bổ sung chờ duyệt".')
-TAO = '1. ' + MENU + '\n2. Bấm "Tạo mới".'
+MENU_PKT = 'Vào phân hệ Tài chính > menu "Sổ tổng hợp" > bấm "Phiếu kế toán".'
+TAO = [MENU, 'Bấm "Tạo mới".']
+
+# Tài khoản dùng chung trong file (QA chuẩn bị trước, ghi ở mục 9 của khối mô tả).
+ACC_A = 'Tài khoản A: nhân viên Kinh doanh công ty 1, không có quyền xem theo cấp, không có quyền kế toán.'
+ACC_K = 'Tài khoản K: có quyền Kế toán thanh toán, thuộc công ty 1.'
+ACC_L = 'Tài khoản L: có quyền Kế toán, thuộc công ty 1.'
+ACC_KK = 'Tài khoản KK: có quyền Kế toán kho, thuộc công ty 1.'
+PRE_LIST = 'Tài khoản DNS Admin; trong phạm vi xem có 2140 phiếu thuộc cả 7 loại yêu cầu và 4 trạng thái.'
+PRE_FORM = ACC_A + '\nKH-A có hợp đồng bán HĐ-A1; NCC-X có hợp đồng mua HĐM-X1; trên máy có file bienban.pdf (1MB).'
+DRAFT_A = 'A có phiếu PYCHTBS-A01 Đang tạo, loại Khác, Đối tượng Nhà cung cấp NCC-X, Số tiền 1,500,000, Diễn giải "Đối chiếu Q3", 1 file.'
+WAIT_2289 = 'Phiếu PYCHTBS-002289 Chờ duyệt, loại Điều chỉnh công nợ khách hàng, công ty 1, 1 dòng chi tiết 5,000,000, 1 file.'
+
+
+def T(no, func, prio, pre, steps, td, exp):
+    """Một test case. pre / td: chuỗi hoặc list (mỗi ý 1 dòng); steps: list (tự đánh số); exp: list (tự gạch đầu dòng)."""
+    if isinstance(pre, (list, tuple)):
+        pre = '\n'.join(pre)
+    if isinstance(td, (list, tuple)):
+        td = '\n'.join(td)
+    st = '\n'.join('%d. %s' % (i + 1, s) for i, s in enumerate(steps))
+    ex = '\n'.join(x if x.startswith('- ') else '- ' + x for x in exp)
+    return ('%03d' % no, func, prio, pre, st, td, ex)
+
 
 DESCRIPTION_BLOCK = [
     ('1. Mục đích tính năng',
      'Màn Phiếu yêu cầu hạch toán bổ sung dùng để nhân viên đề nghị kế toán hạch toán bổ sung một khoản công nợ.\n'
-     'Phiếu lưu nháp (Đang tạo), gửi duyệt (Chờ duyệt); Kế toán thanh toán Từ chối (về Đang tạo kèm Ghi chú duyệt) hoặc kế '
-     'toán Lập phiếu kế toán để ghi sổ.'),
+     'Người lập lưu nháp (Đang tạo) hoặc gửi duyệt (Chờ duyệt). Kế toán thanh toán Từ chối (phiếu về Đang tạo kèm Ghi chú '
+     'duyệt) hoặc kế toán Lập phiếu kế toán để ghi sổ: lưu phiếu kế toán thì phiếu yêu cầu thành Đang duyệt, duyệt phiếu kế '
+     'toán thì thành Đã duyệt, xóa phiếu kế toán thì quay lại Chờ duyệt.'),
     ('2. Đối tượng được tính / hiển thị',
      '- 7 loại yêu cầu: Điều chỉnh công nợ khách hàng, Điều chỉnh công nợ nhà cung cấp, Hạch toán công nợ NCC bảo hành, '
      'Hạch toán công nợ NCC thiếu hàng, NCC hỗ trợ phát triển thị trường, Khác, Phối hợp kinh doanh.\n'
-     '- Trạng thái: Đang tạo (xám), Chờ duyệt (vàng), Đang duyệt (vàng), Đã duyệt (xanh).\n'
-     '- Màn chờ duyệt: luôn chỉ phiếu Chờ duyệt.'),
+     '- Trạng thái: Đang tạo (nhãn xám), Chờ duyệt (nhãn vàng), Đang duyệt (nhãn vàng), Đã duyệt (nhãn xanh).\n'
+     '- Danh sách chung: mọi trạng thái trong phạm vi quyền. Màn chờ duyệt: chỉ phiếu Chờ duyệt.'),
     ('3. Đối tượng bị ẩn / không tính',
-     '- Phiếu Đang tạo của người khác: luôn ẩn.\n'
-     '- Ở màn chờ duyệt: người không có quyền kế toán chỉ thấy phiếu của mình.'),
-    ('4. Bộ lọc thời gian áp dụng cho', 'Ô Ngày tạo lọc theo ngày lập phiếu, lấy trọn hai đầu mút.'),
+     '- Phiếu Đang tạo của người khác: luôn ẩn ở mọi cấp quyền.\n'
+     '- Màn chờ duyệt: người không có quyền kế toán chỉ thấy phiếu Chờ duyệt của chính mình.\n'
+     '- Không có trạng thái Khóa / Mở khóa và không có chức năng Import Excel trên màn này.'),
+    ('4. Bộ lọc thời gian áp dụng cho', 'Ô Ngày tạo lọc theo ngày lập phiếu, lấy trọn hai ngày biên (kể cả phiếu lập lúc 23:59).'),
     ('5. Cấu trúc dữ liệu / cây phân cấp',
-     '- 2 loại Điều chỉnh công nợ: phiếu > các dòng Chi tiết hạch toán (đối tượng, hợp đồng, số tiền, ghi chú).\n'
-     '- Các loại khác: phiếu có 1 đối tượng, 1 số tiền, 1 diễn giải.'),
+     '- 2 loại Điều chỉnh công nợ: phiếu > các dòng Chi tiết hạch toán (đối tượng, hợp đồng của đối tượng đó, số tiền, ghi chú).\n'
+     '- Các loại khác: phiếu có 1 đối tượng, 1 số tiền, 1 diễn giải; loại bảo hành / thiếu hàng gắn thêm chứng từ nguồn.\n'
+     '- Mỗi phiếu có danh sách file đính kèm; một phiếu yêu cầu chỉ có tối đa 1 phiếu kế toán còn hiệu lực.'),
     ('6. Quy tắc cộng dồn / deduplicate',
-     '- Số tiền phiếu loại Điều chỉnh công nợ = tổng số tiền các dòng.\n- Đổi loại yêu cầu xóa sạch các trường phụ thuộc loại.'),
+     '- Số tiền phiếu loại Điều chỉnh công nợ = tổng số tiền các dòng.\n'
+     '- Không có trường duy nhất: 2 phiếu cùng nội dung đều lưu được, số phiếu tự sinh khác nhau.\n'
+     '- Trong một phiếu không được trùng cặp đối tượng – hợp đồng giữa các dòng.\n'
+     '- Đổi loại yêu cầu xóa sạch các trường phụ thuộc loại (giữ Loại tiền, Tỷ giá, file).'),
     ('7. Phân quyền cấp',
      '- Xem phiếu yêu cầu hạch toán bổ sung - tổng công ty.\n'
      '- Xem phiếu yêu cầu hạch toán bổ sung - công ty.\n'
      '- Xem phiếu yêu cầu hạch toán bổ sung - phòng ban.\n'
      '- Xem phiếu yêu cầu hạch toán bổ sung - bộ phận.\n'
-     '- Kế toán thanh toán: Từ chối, Lập phiếu kế toán loại 1–6.\n'
-     '- Kế toán: Lập phiếu kế toán loại Phối hợp kinh doanh (công ty có phòng hỗ trợ).\n'
-     '- Kế toán kho: nhận thông báo khi có phiếu gửi duyệt.'),
+     '- Kế toán thanh toán: Từ chối, Lập phiếu kế toán mọi loại trừ Phối hợp kinh doanh (phiếu thuộc công ty mình).\n'
+     '- Kế toán: Lập phiếu kế toán loại Phối hợp kinh doanh (công ty có phòng hỗ trợ của phiếu).\n'
+     '- Kế toán kho: nhận thông báo khi có phiếu gửi duyệt cùng công ty.\n'
+     '- Lập phiếu, In, Xuất Excel, Lịch sử không gắn quyền riêng; Sửa / Xóa / Gửi duyệt chỉ người lập, phiếu Đang tạo.'),
     ('8. Cách tính các ô thống kê',
      '- Dòng Tổng cộng của bảng Chi tiết hạch toán = tổng Số tiền các dòng.\n'
-     '- Ô "Hiển thị a–b / N": N là tổng phiếu khớp bộ lọc trong phạm vi quyền.'),
+     '- Dòng "Hiển thị a–b / N": a–b là khoảng số thứ tự trang đang xem, N là tổng phiếu khớp bộ lọc trong phạm vi quyền.'),
     ('9. Ghi chú đọc bảng',
-     '- Số tiền hiển thị dạng 1,234,567 kèm đơn vị tiền.\n'
+     '- Tài khoản dùng trong file: A (nhân viên lập phiếu, công ty 1, không quyền xem theo cấp), B (nhân viên khác cùng công ty), '
+     'K (Kế toán thanh toán công ty 1), L (Kế toán công ty 1), KK (Kế toán kho công ty 1), C (Xem - tổng công ty), DNS Admin.\n'
+     '- Số tiền hiển thị dạng 1,234,567 kèm mã loại tiền; số tổng ở dòng "Hiển thị" chưa có dấu phẩy ngăn nghìn.\n'
      '- Lưu ý: Lưu nháp chỉ bắt buộc Loại yêu cầu; Gửi duyệt mới kiểm tra đủ.\n'
      '- Lưu ý: Từ chối KHÔNG có trạng thái riêng, phiếu trở về Đang tạo và hiện Ghi chú duyệt.\n'
-     '- Lưu ý: phiếu tạo trước khi bật lịch sử sẽ báo "Chưa có lịch sử thao tác nào.".'),
+     '- Lưu ý: Màn Tạo / Sửa / Chi tiết là TRANG riêng, không phải cửa sổ nổi (không có nút (x), không đóng bằng click ra ngoài).\n'
+     '- Lưu ý: phiếu tạo trước khi bật lịch sử sẽ báo "Chưa có lịch sử thao tác nào.".\n'
+     '- Các case "dùng công cụ kiểm thử API" dành cho tester kỹ thuật.'),
 ]
 
 ROLE_TCS = [
-    ('00', 'Không có quyền nào chỉ thấy phiếu mình lập', 'P0', 'Tài khoản A không có quyền xem, không là kế toán; A lập 3 phiếu.',
-     '1. Đăng nhập bằng A.\n2. ' + MENU, '—', '- Tổng số = 3.\n- Chỉ phiếu A lập.'),
-    ('01', 'Quyền xem - tổng công ty', 'P1', 'Tài khoản C có quyền tổng công ty.', '1. Đăng nhập bằng C.\n2. ' + MENU, '—',
-     '- Thấy phiếu mọi công ty (trừ nháp người khác).'),
+    ('00', 'Không có quyền nào chỉ thấy phiếu mình lập', 'P0', [ACC_A, 'A lập 3 phiếu (1 Đang tạo, 2 Chờ duyệt); hệ thống có 2140 phiếu.'],
+     '1. Đăng nhập bằng A.\n2. ' + MENU, '—',
+     '- Dòng tổng ghi "Hiển thị 1–3 / 3".\n- Cột Người tạo của cả 3 dòng là A.\n'
+     '- Khối Tìm kiếm nâng cao KHÔNG có ô Công ty, Phòng ban.'),
+    ('01', 'Quyền xem - tổng công ty', 'P1', 'Tài khoản C có quyền Xem phiếu yêu cầu hạch toán bổ sung - tổng công ty; công ty 1 và 2 đều có phiếu.',
+     '1. Đăng nhập bằng C.\n2. ' + MENU + '\n3. Bấm Tìm kiếm nâng cao.', '—',
+     '- Thấy phiếu của cả công ty 1 và công ty 2.\n- Không thấy phiếu Đang tạo của người khác.\n- Có ô Công ty và ô Phòng ban.'),
     ('02', 'Quyền xem - công ty với loại Phối hợp kinh doanh', 'P0',
-     'Tài khoản D công ty 1; phiếu Phối hợp kinh doanh lập ở công ty 2 có phòng hỗ trợ thuộc công ty 1.',
-     '1. Đăng nhập D.\n2. ' + MENU, '—', '- Thấy phiếu loại 1–6 của công ty 1.\n- Thấy cả phiếu Phối hợp kinh doanh đó.'),
-    ('03', 'Quyền xem - phòng ban / bộ phận', 'P1', 'Tài khoản E quản lý phòng Kinh doanh.', '1. Đăng nhập E.\n2. ' + MENU, '—',
-     '- Chỉ phiếu phòng Kinh doanh và phiếu E lập.'),
-    ('04', 'Nháp của người khác luôn ẩn', 'P0', 'C; B có 1 phiếu Đang tạo.', '1. Đăng nhập C.\n2. Lọc Trạng thái Đang tạo.', '—',
-     '- Không thấy nháp của B.'),
-    ('05', 'Kế toán thanh toán ở màn chờ duyệt', 'P0', 'K có quyền Kế toán thanh toán công ty 1.', '1. Đăng nhập K.\n2. ' + MENU_CD, '—',
-     '- Tiêu đề "Phiếu yêu cầu hạch toán bổ sung chờ duyệt".\n- Chỉ phiếu Chờ duyệt trong phạm vi công ty.\n- Không có nút Tạo mới.'),
-    ('06', 'Người thường ở màn chờ duyệt', 'P1', 'A có 1 phiếu Chờ duyệt.', '1. Đăng nhập A.\n2. Mở màn chờ duyệt.', '—',
-     '- Chỉ thấy phiếu Chờ duyệt của mình.'),
-    ('07', 'Kế toán thanh toán xử lý loại 1–6', 'P0', 'K; phiếu loại Điều chỉnh công nợ khách hàng Chờ duyệt cùng công ty.',
-     '1. Mở chi tiết phiếu.', '—', '- Có Từ chối và Lập phiếu kế toán.'),
+     'Tài khoản D có quyền Xem - công ty, thuộc công ty 1; phiếu PYCHTBS-002285 loại Phối hợp kinh doanh lập ở công ty 2, có '
+     'phòng hỗ trợ thuộc công ty 1.',
+     '1. Đăng nhập bằng D.\n2. ' + MENU, '—',
+     '- Thấy phiếu 6 loại còn lại của công ty 1.\n- Thấy cả phiếu PYCHTBS-002285 (tính theo công ty của phòng hỗ trợ).\n'
+     '- Không thấy phiếu thường của công ty 2.'),
+    ('03', 'Quyền xem - phòng ban / bộ phận', 'P1', 'Tài khoản E có quyền Xem - phòng ban, quản lý phòng Kinh doanh 1.',
+     '1. Đăng nhập bằng E.\n2. ' + MENU, '—', '- Chỉ thấy phiếu của phòng Kinh doanh 1 và phiếu E tự lập.'),
+    ('04', 'Nháp của người khác luôn ẩn', 'P0', 'Tài khoản C (tổng công ty); B có 1 phiếu Đang tạo PYCHTBS-B01.',
+     '1. Đăng nhập bằng C.\n2. ' + MENU + '\n3. Bấm Tìm kiếm nâng cao, chọn Trạng thái = Đang tạo.', 'Trạng thái: Đang tạo',
+     '- Không có dòng PYCHTBS-B01.\n- Chỉ còn phiếu Đang tạo do C lập (nếu có).'),
+    ('05', 'Kế toán thanh toán ở màn chờ duyệt', 'P0', ACC_K + '\nCông ty 1 có 12 phiếu Chờ duyệt.',
+     '1. Đăng nhập bằng K.\n2. ' + MENU_CD, '—',
+     '- Tiêu đề "Phiếu yêu cầu hạch toán bổ sung chờ duyệt".\n- Đúng 12 phiếu, tất cả nhãn Chờ duyệt.\n- Không có nút Tạo mới.'),
+    ('06', 'Người thường ở màn chờ duyệt', 'P1', ACC_A + '\nA có 1 phiếu Chờ duyệt; công ty 1 có 12 phiếu Chờ duyệt.',
+     '1. Đăng nhập bằng A.\n2. ' + MENU_CD, '—', '- Chỉ thấy 1 phiếu Chờ duyệt của A.'),
+    ('07', 'Kế toán thanh toán xử lý loại 1–6', 'P0', ACC_K + '\n' + WAIT_2289,
+     '1. Đăng nhập bằng K.\n2. ' + MENU_CD + '\n3. Quan sát dòng PYCHTBS-002289.\n4. Bấm số phiếu mở chi tiết.', '—',
+     '- Bước 3: cột Hành động có nút Lập phiếu kế toán.\n- Bước 4: chân màn có Từ chối và Lập phiếu kế toán.'),
     ('08', 'Kế toán xử lý loại Phối hợp kinh doanh', 'P0',
-     'Tài khoản L có quyền Kế toán, công ty 1; phiếu Phối hợp kinh doanh Chờ duyệt có phòng hỗ trợ thuộc công ty 1.',
-     '1. Đăng nhập L.\n2. Mở chi tiết phiếu.', '—', '- Có Lập phiếu kế toán.\n- Với phiếu loại 1–6: không có Lập phiếu kế toán.'),
-    ('09', 'Không phải người lập không sửa / xóa / gửi duyệt', 'P0', 'C; phiếu Đang tạo của A trong phạm vi.', '1. Mở chi tiết.', '—',
-     '- Không có Sửa, Gửi duyệt, Xóa.'),
-    ('10', 'Mở chi tiết ngoài phạm vi', 'P1', 'A; phiếu người khác.', '1. Mở đường link chi tiết.', '—', '- Báo "Bạn không có quyền xem phiếu này".'),
+     ACC_L + '\nPhiếu PYCHTBS-002285 Phối hợp kinh doanh Chờ duyệt có phòng hỗ trợ thuộc công ty 1; ' + WAIT_2289,
+     '1. Đăng nhập bằng L.\n2. Mở chi tiết PYCHTBS-002285.\n3. Mở chi tiết PYCHTBS-002289.', '—',
+     '- Bước 2: có nút Lập phiếu kế toán.\n- Bước 3: KHÔNG có Lập phiếu kế toán, KHÔNG có Từ chối.'),
+    ('09', 'Không phải người lập không sửa / xóa / gửi duyệt', 'P0', 'Tài khoản C (tổng công ty); ' + DRAFT_A +
+     '\nPhiếu PYCHTBS-A02 của A ở trạng thái Chờ duyệt.',
+     '1. Đăng nhập bằng C.\n2. Quan sát cột Hành động của PYCHTBS-A02.\n3. Mở chi tiết PYCHTBS-A02.', '—',
+     '- Không có nút Sửa, Gửi duyệt, Xóa ở cả danh sách và màn chi tiết.\n- Chỉ còn In phiếu, Xuất Excel, Lịch sử.'),
+    ('10', 'Mở chi tiết ngoài phạm vi', 'P1', ACC_A + '\nA đã lưu sẵn đường dẫn màn chi tiết phiếu PYCHTBS-002289 (không phải của A).',
+     '1. Đăng nhập bằng A.\n2. Dán đường dẫn đã lưu vào thanh địa chỉ.', '—',
+     '- Báo "Bạn không có quyền xem phiếu này".\n- Tự quay về màn danh sách, không hiện dữ liệu phiếu.'),
+    ('11', 'Kế toán kho nhận thông báo khi gửi duyệt', 'P1', ACC_KK + '\n' + ACC_A + '\n' + DRAFT_A,
+     '1. A mở chi tiết PYCHTBS-A01, bấm Gửi duyệt, xác nhận.\n2. Đăng nhập KK, mở chuông thông báo.', '—',
+     '- KK nhận thông báo "[HTBS] Chờ duyệt: PYCHTBS-A01".\n- Tài khoản Kế toán kho công ty 2 KHÔNG nhận.'),
 ]
+ROLE_TCS = [tuple('\n'.join(v) if isinstance(v, (list, tuple)) else v for v in tc) for tc in ROLE_TCS]
 
-S1 = [
-    ('001', 'Mở màn từ phân hệ Tài chính', 'P0', 'DNS Admin.', '1. ' + MENU + '\n2. Quan sát danh sách.', '—',
-     '- Tiêu đề "Phiếu yêu cầu hạch toán bổ sung".\n- Mới tạo xếp trên.'),
-    ('002', 'Mở màn từ phân hệ Bán hàng', 'P1', '—', '1. ' + MENU_SALE + '\n2. So tổng số với TC_01.001.', '—', '- Cùng màn, cùng tổng số.'),
-    ('003', 'Các cột mặc định', 'P1', 'Chưa tùy chỉnh cột.', '1. ' + MENU + '\n2. Quan sát tiêu đề cột.', '—',
-     '- 14 cột hiện: STT, Số phiếu, Loại yêu cầu, KH / NCC, Số tiền, Diễn giải, Người tạo, Ngày tạo, Phòng ban, Ngày gửi, '
-     'Người duyệt, Ngày duyệt, Trạng thái, Hành động.\n- Ngày cập nhật, Người cập nhật ẩn.'),
-    ('004', 'Nút trên dòng phiếu Chờ duyệt', 'P0', 'K; phiếu PYCHTBS-002289 Chờ duyệt.', '1. Đăng nhập K, quan sát dòng 002289.', '—',
-     '- Lập phiếu kế toán, In phiếu, nút ba chấm (Xuất Excel, Lịch sử).'),
-    ('005', 'Bấm Số phiếu', 'P0', '—', '1. Bấm PYCHTBS-002289.', '—', '- Mở "Chi tiết phiếu yêu cầu hạch toán bổ sung: PYCHTBS-002289".'),
-]
-
-S2 = [
-    ('001', 'Tìm nhanh theo số phiếu', 'P0', '—', '1. Nhập "002289", bấm Tìm kiếm.', 'Ô tìm nhanh: 002289', '- Chỉ còn phiếu 002289.'),
-    ('002', 'Lọc Loại yêu cầu', 'P0', '—', '1. Tìm kiếm nâng cao.\n2. Loại yêu cầu = Điều chỉnh công nợ nhà cung cấp.', '—',
-     '- Chỉ phiếu loại đó.'),
-    ('003', 'Lọc Trạng thái', 'P1', '—', '1. Trạng thái = Chờ duyệt.', '—', '- Chỉ phiếu Chờ duyệt.'),
-    ('004', 'Lọc Khách hàng / Nhà cung cấp', 'P1', 'NCC X xuất hiện ở dòng chi tiết của 2 phiếu.', '1. Chọn NCC X.', '—',
-     '- Ra 2 phiếu (khớp cả đối tượng ở dòng chi tiết).'),
-    ('005', 'Lọc Diễn giải', 'P2', 'Ghi chú dòng chứa "đối chiếu".', '1. Nhập Diễn giải = "đối chiếu".', '—',
-     '- Ra phiếu có diễn giải hoặc ghi chú dòng chứa chuỗi.'),
-    ('006', 'Lọc Phiếu xác nhận bảo hành', 'P2', '—', '1. Nhập mã phiếu xác nhận bảo hành.', '—', '- Chỉ phiếu gắn phiếu đó.'),
-    ('007', 'Lọc Ngày tạo', 'P1', '—', '1. Ngày tạo 21/10/2026 đến 21/10/2026.', '—', '- Đúng phiếu ngày đó, kể cả 23:59.'),
-    ('008', 'Làm mới', 'P1', 'Đang lọc nhiều ô.', '1. Bấm Làm mới.', '—', '- Mọi ô trống, nạp lại trang 1.'),
-    ('009', 'Cài đặt bộ lọc', 'P2', '—', '1. Cài đặt bộ lọc, bỏ tích Diễn giải, Lưu.', '—', '- Ô Diễn giải không còn.'),
-    ('010', 'Tùy chỉnh cột', 'P2', '—', '1. Cấu hình cột, tích Người cập nhật, Lưu.', '—', '- Cột Người cập nhật hiện.\n- STT, Số phiếu, Hành động có ổ khóa.'),
-    ('011', 'Sắp xếp', 'P2', '—', '1. Bấm tiêu đề Số tiền, Ngày gửi.', '—', '- Sắp xếp đúng.'),
-]
-
-S3 = [
-    ('001', 'Mở màn Tạo mới', 'P0', '—', TAO, '—',
-     '- Tiêu đề "Tạo phiếu yêu cầu hạch toán bổ sung".\n- Loại yêu cầu trống, Loại tiền VNĐ.'),
-    ('002', 'Lưu nháp khi chỉ chọn Loại yêu cầu', 'P0', '—', TAO + '\n3. Chọn Loại yêu cầu = Khác.\n4. Bấm Lưu nháp.', '—',
-     '- Báo "Lưu thành công", phiếu Đang tạo.'),
-    ('003', 'Lưu nháp khi chưa chọn Loại yêu cầu', 'P1', '—', TAO + '\n3. Bấm Lưu nháp.', '—', '- "Bắt buộc phải nhập" dưới Loại yêu cầu.'),
-    ('004', 'Gửi duyệt khi trống', 'P0', '—', TAO + '\n3. Chọn Loại yêu cầu = Khác.\n4. Gửi duyệt.', '—',
-     '- Báo cùng lúc: Đối tượng, Số tiền, Diễn giải, File đính kèm ("Bắt buộc phải nhập").'),
-    ('005', 'Trường theo loại Điều chỉnh công nợ khách hàng', 'P0', '—', TAO + '\n3. Chọn loại Điều chỉnh công nợ khách hàng.', '—',
-     '- Ẩn Số tiền, Diễn giải ở đầu phiếu.\n- Hiện bảng Chi tiết hạch toán: Khách hàng, Hợp đồng bán, Số tiền, Ghi chú.'),
-    ('006', 'Gửi duyệt loại Điều chỉnh công nợ không có dòng', 'P0', 'Như TC_03.005, có file đính kèm.', '1. Gửi duyệt.', '—',
-     '- Báo "Phiếu chưa có dòng chi tiết nào, không gửi duyệt được".'),
-    ('007', 'Thêm dòng chi tiết đủ dữ liệu', 'P0', 'KH-A có hợp đồng HĐ-A1.',
-     '1. Bấm Thêm dòng.\n2. Chọn KH-A, HĐ-A1, Số tiền 5,000,000, Ghi chú.\n3. Đính kèm 1 file.\n4. Gửi duyệt.', '—',
-     '- Báo "Gửi duyệt thành công".\n- Số tiền phiếu = 5,000,000.\n- Kế toán kho nhận thông báo "[HTBS] Chờ duyệt".'),
-    ('008', 'Hợp đồng khóa khi chưa chọn đối tượng', 'P1', '—', '1. Thêm dòng, bấm ô Hợp đồng bán khi chưa chọn khách hàng.', '—',
-     '- Ô bị khóa.'),
-    ('009', 'Loại Hạch toán công nợ NCC bảo hành', 'P1', 'Có phiếu xác nhận bảo hành đã xác nhận.',
-     TAO + '\n3. Chọn loại Hạch toán công nợ NCC bảo hành.\n4. Bấm ô Phiếu xác nhận bảo hành, chọn phiếu.', '—',
-     '- Nhà cung cấp, Số tiền tự điền (chỉ đọc).'),
-    ('010', 'Loại Hạch toán công nợ NCC thiếu hàng nhiều NCC', 'P2', 'Phiếu xử lý hàng thiếu có 2 NCC.',
-     TAO + '\n3. Chọn loại thiếu hàng, chọn phiếu xử lý.', '—', '- Ô Nhà cung cấp cho chọn 1 trong 2 NCC.'),
-    ('011', 'Loại Khác chọn Nhân viên', 'P1', '—', TAO + '\n3. Chọn loại Khác, Đối tượng = Nhân viên.\n4. Gửi duyệt khi chưa chọn nhân viên.', '—',
-     '- Báo "Bắt buộc phải nhập" tại ô Nhân viên.'),
-    ('012', 'Đổi loại xóa trường phụ thuộc', 'P1', 'Đã chọn loại Khác, Đối tượng NCC, nhập Số tiền.', '1. Đổi sang loại Điều chỉnh công nợ khách hàng.', '—',
-     '- Các ô Đối tượng, Số tiền, Diễn giải bị xóa / ẩn.'),
-    ('013', 'Tỷ giá bằng 0', 'P1', '—', '1. Nhập Tỷ giá 0, Gửi duyệt.', 'Tỷ giá: 0', '- Báo Tỷ giá phải lớn hơn 0.'),
-    ('014', 'Lưu và tiếp tục', 'P2', '—', TAO + '\n3. Chọn loại, bấm Lưu và tiếp tục.', '—', '- Lưu nháp, form trống.'),
-    ('015', 'Rời màn khi chưa lưu', 'P1', 'Đã chọn loại.', '1. Bấm Quay lại.', '—', '- Hỏi xác nhận rời trang.'),
-]
-
-S4 = [
-    ('001', 'Sửa phiếu Đang tạo', 'P0', 'A có phiếu Đang tạo.', '1. Bấm biểu tượng Sửa.\n2. Sửa Diễn giải, Lưu nháp.', '—',
-     '- Tiêu đề "Sửa phiếu yêu cầu hạch toán bổ sung: <số phiếu>".\n- Lịch sử có Thay đổi thông tin (không lặp dòng trạng thái).'),
-    ('002', 'Sửa rồi Gửi duyệt', 'P0', 'Như TC_04.001.', '1. Sửa Số tiền, Gửi duyệt.', '—',
-     '- Lịch sử: mốc Thay đổi thông tin ghi Số tiền; mốc Thay đổi trạng thái riêng "Đang tạo sang Chờ duyệt".'),
-    ('003', 'Gửi duyệt từ màn chi tiết', 'P0', 'Phiếu Đang tạo đủ dữ liệu.', '1. Mở chi tiết, Gửi duyệt.', '—', '- Báo "Gửi duyệt thành công".'),
-    ('004', 'Xóa phiếu', 'P0', 'Phiếu Đang tạo của A.', '1. Bấm Xóa, bấm Xóa.', '—',
-     '- Hộp "Bạn có chắc muốn xóa phiếu yêu cầu hạch toán bổ sung \'<số phiếu>\'?".\n- Báo "Xóa thành công".'),
-    ('005', 'Phiếu Chờ duyệt không sửa / xóa được', 'P0', 'A có phiếu Chờ duyệt.', '1. Xem cột Hành động.', '—', '- Không có Sửa, Xóa.'),
-]
-
-S5 = [
-    ('001', 'Chi tiết loại Điều chỉnh công nợ khách hàng', 'P0', 'Phiếu 002289.', '1. Mở chi tiết.', '—',
-     '- Chỉ đọc; bảng Chi tiết hạch toán, File đính kèm, khối Lịch sử.'),
-    ('002', 'Chi tiết loại Phối hợp kinh doanh', 'P1', 'Phiếu 002285.', '1. Mở chi tiết.', '—',
-     '- Khối riêng: Khách hàng, Phòng thực hiện, Phòng hỗ trợ, Gửi tới công ty, Số hợp đồng, nội dung quyết toán, số lượng hạch toán.'),
-    ('003', 'Từ chối thiếu lý do', 'P0', 'K; phiếu Chờ duyệt.', '1. Bấm Từ chối, để trống, bấm Từ chối.', '—', '- "Bắt buộc phải nhập", cửa sổ không đóng.'),
-    ('004', 'Từ chối thành công', 'P0', 'Như TC_05.003.', '1. Nhập lý do, Từ chối.', 'Lý do: Sai hợp đồng',
-     '- Báo "Từ chối phiếu thành công".\n- Phiếu về Đang tạo, hiện Ghi chú duyệt "Sai hợp đồng".\n- Người lập nhận "[HTBS] Từ chối".'),
-    ('005', 'Lập phiếu kế toán', 'P0', 'K; phiếu 002289.', '1. Bấm Lập phiếu kế toán.', '—',
-     '- Mở màn "Tạo phiếu kế toán" điền sẵn phiếu yêu cầu.'),
-    ('006', 'In phiếu', 'P1', '—', '1. Bấm biểu tượng In phiếu.', '—',
-     '- Cửa sổ xem trước, tiêu đề "YÊU CẦU HẠCH TOÁN BỔ SUNG", đúng loại, bảng chi tiết, tổng tiền.'),
-    ('007', 'Xuất Excel danh sách chọn trường', 'P1', 'Lọc Trạng thái Chờ duyệt.',
-     '1. Bấm Xuất Excel.\n2. Bỏ chọn hết, tích Số phiếu, Số tiền, Trạng thái.\n3. Xuất file.', '—',
-     '- Cửa sổ "Chọn trường xuất file", mặc định 12/15.\n- File đúng 3 cột theo thứ tự đã tích, đúng các phiếu Chờ duyệt.'),
-    ('008', 'Xuất Excel một phiếu', 'P2', '—', '1. Nút ba chấm, chọn Xuất Excel.', '—', '- Tải file của đúng phiếu.'),
-    ('009', 'Lịch sử phiếu cũ', 'P2', 'Phiếu tạo trước khi bật lịch sử.', '1. Nút ba chấm, chọn Lịch sử.', '—',
-     '- Cửa sổ "Lịch sử thay đổi: <số phiếu>" ghi "Chưa có lịch sử thao tác nào.".'),
-]
-
-S6 = [
-    ('001', 'Luồng lập, gửi, lập phiếu kế toán', 'P0', 'A người lập; K Kế toán thanh toán cùng công ty.',
-     '1. A lập phiếu loại Điều chỉnh công nợ khách hàng, Gửi duyệt.\n2. K mở màn chờ duyệt, Lập phiếu kế toán, lưu.', '—',
-     '- Bước 1: Kế toán kho nhận thông báo; phiếu có ở màn chờ duyệt.\n- Bước 2: phiếu rời màn chờ duyệt, trạng thái Đang duyệt / Đã duyệt.'),
-    ('002', 'Luồng từ chối, sửa, gửi lại', 'P0', 'Như TC_06.001.', '1. A gửi.\n2. K từ chối.\n3. A sửa, gửi lại.', '—',
-     '- Lịch sử đủ mốc theo thứ tự; phiếu quay lại màn chờ duyệt.'),
-]
-
-SECTIONS = [
-    ('I', 'HIỂN THỊ TRANG & TRUY CẬP', S1),
-    ('II', 'BỘ LỌC, TÌM KIẾM & DANH SÁCH', S2),
-    ('III', 'LẬP PHIẾU (TẠO MỚI) & RÀNG BUỘC NHẬP LIỆU', S3),
-    ('IV', 'CHỈNH SỬA, GỬI DUYỆT & XÓA', S4),
-    ('V', 'XEM CHI TIẾT, TỪ CHỐI, LẬP PHIẾU KẾ TOÁN, IN & XUẤT', S5),
-    ('VI', 'E2E FLOW', S6),
-]
-
-# ---------------------------------------------------------------- bổ sung theo chuẩn (30/10/2026)
-# Mẫu Danh mục quốc gia + 8 ý góp ý tester 07/10/2026 (../phieu-theo-form-quoc-gia/tc_phieu_bosung.py).
-sys.path.insert(0, os.path.join(HERE, '..', 'phieu-theo-form-quoc-gia'))
-from tc_phieu_bosung import (ListScreen, open_menu_case, filter_memory_cases, combo_cases, org_cases,  # noqa: E402
-                             weird_param_case, add_advanced_step, fill_pre, check_no_dash_pre)
-
+# ============================================================== I. HIỂN THỊ DANH SÁCH VÀ TRUY CẬP
 SCREEN = ListScreen(menu=MENU, title='Phiếu yêu cầu hạch toán bổ sung', total=2140, quick_label='số phiếu',
                     quick_sample='0022', quick_hit='các phiếu PYCHTBS-0022xx',
                     filters=[('Loại yêu cầu', 'Điều chỉnh công nợ khách hàng'), ('Trạng thái', 'Chờ duyệt')])
-S1[0] = open_menu_case(SCREEN, pre='Tài khoản DNS Admin; trong phạm vi xem có 2140 phiếu.',
-                       extra=['- Lưu ý: số tổng chưa có dấu phẩy ngăn hàng nghìn (lỗi chung đã ghi nhận).'])
-S1.append(weird_param_case('006', SCREEN, 'tiêu đề "Phiếu yêu cầu hạch toán bổ sung", có nút Tạo mới'))
-S1.append(('007', 'Đang lọc rồi mở lối vào chờ duyệt', 'P1',
-           'Tài khoản K có quyền Kế toán thanh toán; đang ở danh sách chung, lọc Trạng thái = Đã duyệt.',
-           '1. ' + MENU_CD + '\n2. Quan sát tiêu đề và danh sách.', '—',
-           '- Tiêu đề "Phiếu yêu cầu hạch toán bổ sung chờ duyệt", không có nút Tạo mới.\n'
-           '- Danh sách chỉ còn phiếu Chờ duyệt trong phạm vi công ty / phòng hỗ trợ, từ trang 1.'))
-S1.append(('008', 'Làm mới ở màn chờ duyệt giữ nguyên chế độ', 'P2', 'Tài khoản K; đang ở màn chờ duyệt, lọc Loại yêu cầu.',
-           '1. Bấm Làm mới.', '—', '- Xóa điều kiện lọc nhưng vẫn ở màn chờ duyệt (tiêu đề không đổi).'))
-ORG = org_cases(SCREEN, 12)
-MEM = filter_memory_cases(SCREEN, 15)
-S2[:] = add_advanced_step(S2, {'003', '004', '005', '006', '007'}, MENU) + ORG + MEM + combo_cases(SCREEN, 20)
-S3.append(('016', 'Lưu và tiếp tục khi chưa chọn Loại yêu cầu', 'P0',
-           'Đang ở màn Tạo; đã chọn Loại tiền USD, nhập Tỷ giá 25,000, đính kèm 1 file; Loại yêu cầu còn trống.',
-           TAO + '\n3. Chọn Loại tiền, nhập Tỷ giá, thêm file.\n4. Bấm Lưu và tiếp tục.', 'Loại tiền: USD\nTỷ giá: 25,000',
-           '- Chữ đỏ "Bắt buộc phải nhập" dưới Loại yêu cầu.\n- KHÔNG lưu, KHÔNG mở form mới; Loại tiền, Tỷ giá, file vẫn còn.'))
-S3.append(('017', 'Lưu và tiếp tục khi thiếu trường của loại', 'P1',
-           'Đang ở màn Tạo; chọn Loại yêu cầu = Khác, chưa chọn Đối tượng, Số tiền trống.',
-           '1. Bấm Lưu và tiếp tục.', 'Loại yêu cầu: Khác',
-           '- Phiếu vẫn được lưu nháp (Đang tạo) và mở form trống — nháp chỉ bắt buộc Loại yêu cầu.\n'
-           '- Lưu ý: Đối tượng, Số tiền, Diễn giải chỉ bị chặn khi Gửi duyệt (TC_03.004).'))
-PRE_LIST = 'Tài khoản DNS Admin; danh sách có 2140 phiếu thuộc cả 7 loại yêu cầu.'
-PRE_FORM = 'Tài khoản A; KH-A có hợp đồng HĐ-A1; có file bienban.pdf trên máy.'
-S1[:] = fill_pre(S1, {}, PRE_LIST)
-S2[:] = fill_pre(S2, {'006': 'Có 1 phiếu loại Hạch toán công nợ NCC bảo hành gắn một phiếu xác nhận bảo hành đã xác nhận.'}, PRE_LIST)
-S3[:] = fill_pre(S3, {'013': 'Đang ở màn Tạo, loại Khác.'}, PRE_FORM)
-S5[:] = fill_pre(S5, {}, 'Phiếu PYCHTBS-002289 Chờ duyệt, loại Điều chỉnh công nợ khách hàng, 1 dòng chi tiết.')
-check_no_dash_pre(SECTIONS, ROLE_TCS)
+S1 = [
+    open_menu_case(SCREEN, pre=PRE_LIST, extra=['- Lưu ý: số tổng chưa có dấu phẩy ngăn hàng nghìn (lỗi chung đã ghi nhận).']),
+    T(2, 'Mở màn từ phân hệ Bán hàng', 'P1', PRE_LIST, [MENU_SALE, 'So tổng số với lối vào Tài chính (TC_01.001).'], '—',
+      ['Tiêu đề "Phiếu yêu cầu hạch toán bổ sung", có nút Tạo mới.', 'Cùng tổng số 2140, cùng thứ tự dòng với lối vào Tài chính.']),
+    T(3, 'Tiêu đề màn hình theo lối vào', 'P0', [PRE_LIST, ACC_K],
+      ['Đăng nhập DNS Admin.', MENU, 'Quan sát tiêu đề bảng và tiêu đề tab trình duyệt.', 'Đăng nhập K.', MENU_CD,
+       'Quan sát tiêu đề.'], '—',
+      ['Bước 3: tiêu đề bảng và tab trình duyệt đều là "Phiếu yêu cầu hạch toán bổ sung".',
+       'Bước 6: tiêu đề đổi thành "Phiếu yêu cầu hạch toán bổ sung chờ duyệt".']),
+    T(4, 'Các nút chức năng được hiển thị', 'P0', PRE_LIST, [MENU, 'Quan sát khối bộ lọc và thanh công cụ của bảng.', MENU_CD,
+                                                             'Quan sát lại thanh công cụ.'], '—',
+      ['Khối bộ lọc: ô tìm nhanh (gợi ý "Tìm theo số phiếu..."), nút Tìm kiếm, Làm mới, Tìm kiếm nâng cao, Cài đặt bộ lọc.',
+       'Thanh công cụ: Tạo mới, Xuất Excel, nút biểu tượng cột (Cấu hình cột hiển thị).',
+       'Bước 4: màn chờ duyệt KHÔNG có nút Tạo mới, vẫn có Xuất Excel và Cấu hình cột.']),
+    T(5, 'Các cột mặc định hiển thị', 'P0', [PRE_LIST, 'Tài khoản chưa từng lưu cấu hình cột.'], [MENU, 'Đọc tiêu đề cột từ trái sang phải.'], '—',
+      ['Đúng 14 cột theo thứ tự: STT, Số phiếu, Loại yêu cầu, KH / NCC, Số tiền, Diễn giải, Người tạo, Ngày tạo, Phòng ban, '
+       'Ngày gửi, Người duyệt, Ngày duyệt, Trạng thái, Hành động.',
+       'Cột STT và Số phiếu ghim bên trái khi cuộn ngang.']),
+    T(6, 'Các cột mặc định ẩn', 'P1', [PRE_LIST, 'Tài khoản chưa từng lưu cấu hình cột.'],
+      [MENU, 'Quan sát tiêu đề cột.', 'Bấm nút biểu tượng cột, quan sát 2 dòng Ngày cập nhật, Người cập nhật.'], '—',
+      ['Bảng KHÔNG có cột Ngày cập nhật, Người cập nhật.', 'Trong cửa sổ "Tuỳ chỉnh cột" 2 cột này đang bỏ tích.']),
+    T(7, 'Dữ liệu trên dòng khớp với phiếu đã lập', 'P0', [ACC_A, DRAFT_A + ' Lập lúc 21/10/2026 09:15, phòng Kinh doanh 1.'],
+      ['Đăng nhập A.', MENU, 'Đối chiếu dòng PYCHTBS-A01 với phiếu đã lập.'], '—',
+      ['Số phiếu PYCHTBS-A01; Loại yêu cầu "Khác"; KH / NCC "<mã> - NCC-X"; Số tiền "1,500,000 VND".',
+       'Diễn giải "Đối chiếu Q3"; Người tạo "<tên A> - <mã phòng>"; Ngày tạo "21/10/2026 09:15"; Phòng ban "Kinh doanh 1".',
+       'Ngày gửi, Người duyệt, Ngày duyệt trống; Trạng thái nhãn xám "Đang tạo".']),
+    T(8, 'Dòng loại Điều chỉnh công nợ lấy đối tượng và diễn giải của dòng chi tiết đầu', 'P1',
+      'Phiếu PYCHTBS-A03 loại Điều chỉnh công nợ khách hàng có 2 dòng: KH-A ghi chú "Bù trừ T9", KH-B ghi chú "Bù trừ T10"; tổng 7,000,000.',
+      [MENU, 'Quan sát dòng PYCHTBS-A03.'], '—',
+      ['KH / NCC hiện KH-A (dòng chi tiết đầu tiên).', 'Diễn giải hiện "Bù trừ T9".', 'Số tiền "7,000,000 VND" = tổng 2 dòng.']),
+    T(9, 'Nhãn trạng thái của phiếu', 'P0', 'Trong phạm vi xem có phiếu ở đủ 4 trạng thái Đang tạo, Chờ duyệt, Đang duyệt, Đã duyệt.',
+      [MENU, 'Lần lượt lọc Trạng thái từng giá trị, quan sát cột Trạng thái.'], '—',
+      ['Đang tạo: nhãn xám.', 'Chờ duyệt: nhãn vàng.', 'Đang duyệt: nhãn vàng.', 'Đã duyệt: nhãn xanh.',
+       'Cột Trạng thái không bấm sắp xếp được.']),
+    T(10, 'Danh sách chưa có dữ liệu', 'P1', 'Tài khoản N mới tạo, không có quyền xem, chưa lập phiếu nào.',
+      ['Đăng nhập N.', MENU], '—',
+      ['Bảng hiện "Không có dữ liệu phù hợp bộ lọc.".', 'Dưới bảng ghi "Không có phiếu nào.".', 'Không báo lỗi, vẫn có nút Tạo mới.']),
+    T(11, 'Không có dữ liệu phù hợp bộ lọc', 'P1', PRE_LIST, [MENU, 'Nhập "ZZZ999" vào ô tìm nhanh, bấm Tìm kiếm.'], 'Ô tìm nhanh: ZZZ999',
+      ['Bảng hiện "Không có dữ liệu phù hợp bộ lọc.".', 'Dưới bảng ghi "Không có phiếu nào.".']),
+    T(12, 'Thay đổi số dòng / trang', 'P0', PRE_LIST,
+      [MENU, 'Bấm sang trang 3.', 'Đổi ô Số dòng/trang từ 10 thành 20.'], 'Số dòng/trang: 20',
+      ['Bảng hiện 20 phiếu.', 'Tự quay về trang 1, dòng tổng "Hiển thị 1–20 / 2140".', 'STT chạy từ 1 đến 20.']),
+    T(13, 'Trang trước / trang tiếp theo', 'P0', PRE_LIST, [MENU, 'Bấm nút trang tiếp theo (›).', 'Bấm nút trang trước (‹).'], '—',
+      ['Bước 2: sang trang 2, "Hiển thị 11–20 / 2140".', 'Bước 3: về trang 1, "Hiển thị 1–10 / 2140".']),
+    T(14, 'Trang đầu / trang cuối', 'P1', PRE_LIST, [MENU, 'Bấm nút về trang cuối (»).', 'Bấm nút về trang đầu («).'], '—',
+      ['Bước 2: trang 214, "Hiển thị 2131–2140 / 2140", có đúng 10 dòng.', 'Bước 3: về trang 1.']),
+    T(15, 'Trạng thái nút phân trang ở trang đầu / cuối', 'P2', PRE_LIST,
+      [MENU, 'Ở trang 1 quan sát nút « và ‹.', 'Về trang cuối, quan sát nút › và ».'], '—',
+      ['Trang 1: nút « và ‹ mờ, bấm không có tác dụng.', 'Trang cuối: nút › và » mờ, bấm không có tác dụng.']),
+    T(16, 'STT liên tục giữa các trang', 'P0', PRE_LIST, [MENU, 'Sang trang 2, rồi trang 3.'], '—',
+      ['Trang 2: STT từ 11 đến 20.', 'Trang 3: STT từ 21 đến 30.']),
+    T(17, 'Về trang 1 khi thay đổi bộ lọc', 'P0', PRE_LIST,
+      [MENU, 'Sang trang 5.', 'Bấm Tìm kiếm nâng cao, chọn Trạng thái = Chờ duyệt.'], 'Trạng thái: Chờ duyệt',
+      ['Danh sách tự nạp lại ở trang 1.', 'Dòng tổng ghi "Hiển thị 1–10 / <số phiếu Chờ duyệt>".']),
+    T(18, 'Sắp xếp tăng / giảm theo Số tiền', 'P0', PRE_LIST,
+      [MENU, 'Bấm tiêu đề cột Số tiền.', 'Bấm tiêu đề cột Số tiền lần nữa.'], '—',
+      ['Bước 2: số tiền xếp từ nhỏ đến lớn, biểu tượng mũi tên lên.', 'Bước 3: số tiền xếp từ lớn đến nhỏ, biểu tượng mũi tên xuống.']),
+    T(19, 'Sắp xếp theo Ngày tạo / Ngày cập nhật', 'P1', PRE_LIST,
+      [MENU, 'Bấm tiêu đề Ngày tạo hai lần.', 'Bật cột Ngày cập nhật trong Tùy chỉnh cột, bấm tiêu đề Ngày cập nhật.'], '—',
+      ['Ngày tạo: lần 1 cũ nhất trên cùng, lần 2 mới nhất trên cùng.', 'Ngày cập nhật: xếp tăng dần theo thời điểm sửa gần nhất.',
+       'Số phiếu, Ngày gửi, Ngày duyệt cũng sắp xếp được.']),
+    T(20, 'Cột không hỗ trợ sắp xếp', 'P2', PRE_LIST, [MENU, 'Bấm tiêu đề các cột Loại yêu cầu, KH / NCC, Diễn giải, Người tạo, Phòng ban, '
+                                                        'Người duyệt, Trạng thái.'], '—',
+      ['Các tiêu đề này không có biểu tượng sắp xếp.', 'Bấm vào không đổi thứ tự, không nạp lại danh sách.']),
+    T(21, 'Giữ sắp xếp khi chuyển trang', 'P1', PRE_LIST, [MENU, 'Bấm tiêu đề Số tiền (tăng dần).', 'Sang trang 2.'], '—',
+      ['Trang 2 tiếp tục thứ tự tăng dần của trang 1 (số tiền dòng đầu trang 2 lớn hơn hoặc bằng dòng cuối trang 1).',
+       'Biểu tượng sắp xếp vẫn ở cột Số tiền.']),
+    T(22, 'Về trang 1 khi đổi sắp xếp', 'P1', PRE_LIST, [MENU, 'Sang trang 4.', 'Bấm tiêu đề cột Ngày gửi.'], '—',
+      ['Danh sách quay về trang 1, sắp theo Ngày gửi tăng dần.']),
+    weird_param_case('023', SCREEN, 'tiêu đề "Phiếu yêu cầu hạch toán bổ sung", có nút Tạo mới'),
+    T(24, 'Đang lọc rồi mở lối vào chờ duyệt', 'P1', [ACC_K, 'Đang ở danh sách chung, lọc Trạng thái = Đã duyệt.'],
+      [MENU_CD, 'Quan sát tiêu đề và danh sách.'], '—',
+      ['Tiêu đề "Phiếu yêu cầu hạch toán bổ sung chờ duyệt", không có nút Tạo mới.',
+       'Danh sách chỉ còn phiếu Chờ duyệt trong phạm vi công ty / phòng hỗ trợ, từ trang 1 (bộ lọc Đã duyệt của danh sách chung không áp sang).']),
+    T(25, 'Làm mới ở màn chờ duyệt giữ nguyên chế độ', 'P2', [ACC_K, 'Đang ở màn chờ duyệt, lọc Loại yêu cầu = Khác.'],
+      ['Bấm Làm mới.'], '—', ['Xóa điều kiện lọc nhưng vẫn ở màn chờ duyệt (tiêu đề không đổi, chỉ phiếu Chờ duyệt).']),
+    T(26, 'Phiên đăng nhập hết hạn khi đang ở danh sách', 'P2', [PRE_LIST, 'Phiên đăng nhập của tài khoản đã hết hạn (đăng xuất ở tab khác).'],
+      [MENU, 'Bấm sang trang 2.'], '—', ['Hệ thống báo hết phiên đăng nhập.', 'Tự chuyển về màn đăng nhập, không hiện dữ liệu.']),
+]
+
+# ============================================================== II. TÌM KIẾM VÀ LỌC
+ADV = 'Bấm Tìm kiếm nâng cao.'
+S2 = [
+    T(1, 'Tìm theo số phiếu chính xác', 'P0', PRE_LIST, [MENU, 'Nhập "PYCHTBS-002289" vào ô tìm nhanh, bấm Tìm kiếm.'],
+      'Ô tìm nhanh: PYCHTBS-002289', ['Chỉ còn 1 dòng PYCHTBS-002289.', 'Dòng tổng "Hiển thị 1–1 / 1".']),
+    T(2, 'Tìm theo một phần số phiếu', 'P0', PRE_LIST, [MENU, 'Nhập "002289" vào ô tìm nhanh, bấm Tìm kiếm.', 'Đổi thành "0022", bấm Tìm kiếm.'],
+      ['Ô tìm nhanh: 002289', 'Ô tìm nhanh: 0022'],
+      ['Bước 2: ra PYCHTBS-002289.', 'Bước 3: ra mọi phiếu có số chứa "0022" (PYCHTBS-0022xx).']),
+    T(3, 'Không phân biệt hoa / thường', 'P0', PRE_LIST, [MENU, 'Nhập "pychtbs-002289", bấm Tìm kiếm.'], 'Ô tìm nhanh: pychtbs-002289',
+      ['Ra phiếu PYCHTBS-002289 như khi gõ chữ hoa.']),
+    T(4, 'Có dấu / không dấu ở ô Diễn giải', 'P1', 'Có phiếu Diễn giải "Đối chiếu Q3".',
+      [MENU, ADV, 'Nhập Diễn giải "chieu q3", bấm Tìm kiếm.', 'Đổi thành "doi chieu", bấm Tìm kiếm.'],
+      ['Diễn giải: chieu q3', 'Diễn giải: doi chieu'],
+      ['Bước 3: ra phiếu "Đối chiếu Q3" (không phân biệt dấu thanh, hoa thường).',
+       'Bước 4: KHÔNG ra phiếu này — chữ "đ" khác "d" khi tìm.']),
+    T(5, 'Từ khóa không tồn tại', 'P1', PRE_LIST, [MENU, 'Nhập "999999999", bấm Tìm kiếm.'], 'Ô tìm nhanh: 999999999',
+      ['Bảng hiện "Không có dữ liệu phù hợp bộ lọc.".']),
+    T(6, 'Ký tự đặc biệt trong ô tìm nhanh', 'P2', PRE_LIST, [MENU, 'Nhập "@#$<>", bấm Tìm kiếm.', 'Nhập "%", bấm Tìm kiếm.'],
+      ['Ô tìm nhanh: @#$<>', 'Ô tìm nhanh: %'],
+      ['Bước 2: không lỗi, không treo; bảng "Không có dữ liệu phù hợp bộ lọc.".',
+       'Bước 3: không lỗi, không treo.',
+       'Lưu ý: hiện ký tự % và _ được hiểu là ký tự đại diện nên bước 3 ra toàn bộ phiếu — ghi nhận nếu nghiệp vụ yêu cầu chỉ khớp ký tự %.']),
+    T(7, 'Khoảng trắng đầu / cuối từ khóa', 'P1', PRE_LIST, [MENU, 'Nhập "  002289  " (2 dấu cách mỗi đầu), bấm Tìm kiếm.'],
+      'Ô tìm nhanh: "  002289  "', ['Hệ thống bỏ khoảng trắng đầu / cuối, vẫn ra PYCHTBS-002289.']),
+    T(8, 'Xóa từ khóa', 'P1', 'Đang tìm "002289", bảng còn 1 dòng.', ['Xóa hết chữ trong ô tìm nhanh.', 'Bấm Tìm kiếm.'], '—',
+      ['Sau bước 1 bảng chưa đổi (ô gõ tay chỉ áp khi bấm Tìm kiếm).', 'Sau bước 2 hiện lại đủ 2140 phiếu.']),
+    T(9, 'Áp từ khóa bằng Enter hoặc nút Tìm kiếm', 'P1', PRE_LIST,
+      [MENU, 'Nhập "002289", nhấn Enter.', 'Làm mới, nhập lại "002289", bấm nút Tìm kiếm.'], 'Ô tìm nhanh: 002289',
+      ['Cả 2 cách đều ra PYCHTBS-002289, về trang 1.']),
+    T(10, 'Giá trị mặc định của bộ lọc', 'P1', [PRE_LIST, 'Chưa lọc gì trong 10 phút gần nhất.'], [MENU, ADV], '—',
+      ['Ô tìm nhanh trống; Loại yêu cầu, Trạng thái, Khách hàng / Nhà cung cấp, Diễn giải, Phiếu xác nhận bảo hành, Người tạo, '
+       'Người duyệt, Ngày tạo đều trống (tất cả).', 'Danh sách hiện đủ 2140 phiếu.']),
+    T(11, 'Lọc Loại yêu cầu', 'P0', PRE_LIST, [MENU, ADV, 'Chọn Loại yêu cầu = Điều chỉnh công nợ nhà cung cấp.'],
+      'Loại yêu cầu: Điều chỉnh công nợ nhà cung cấp', ['Lọc ngay khi chọn, không cần bấm Tìm kiếm.', 'Cột Loại yêu cầu mọi dòng đều là loại đó.']),
+    T(12, 'Lọc Trạng thái', 'P0', PRE_LIST, [MENU, ADV, 'Chọn Trạng thái = Chờ duyệt.'], 'Trạng thái: Chờ duyệt',
+      ['Chỉ còn phiếu nhãn Chờ duyệt.']),
+    T(13, 'Lọc Khách hàng / Nhà cung cấp', 'P0', 'NCC-X xuất hiện ở dòng chi tiết của 2 phiếu loại Điều chỉnh công nợ nhà cung cấp và ở đầu 1 phiếu loại Khác.',
+      [MENU, ADV, 'Gõ "NC" vào ô Khách hàng / Nhà cung cấp.', 'Gõ tiếp thành "NCC-X", chọn NCC-X.'], 'Khách hàng / Nhà cung cấp: NCC-X',
+      ['Gõ 1 ký tự chưa hiện gợi ý; từ 2 ký tự hiện gợi ý dạng "Mã - Tên".', 'Ra đúng 3 phiếu (khớp cả đối tượng đầu phiếu lẫn dòng chi tiết).']),
+    T(14, 'Lọc Diễn giải', 'P2', 'Ghi chú một dòng chi tiết chứa "đối chiếu"; Diễn giải một phiếu loại Khác chứa "đối chiếu".',
+      [MENU, ADV, 'Nhập Diễn giải = "đối chiếu", bấm Tìm kiếm.'], 'Diễn giải: đối chiếu',
+      ['Ra cả 2 phiếu (khớp Diễn giải đầu phiếu hoặc ghi chú dòng).', 'Chỉ lọc khi bấm Tìm kiếm.']),
+    T(15, 'Lọc Phiếu xác nhận bảo hành', 'P2', 'Có 1 phiếu loại Hạch toán công nợ NCC bảo hành gắn phiếu xác nhận XNBH-0105.',
+      [MENU, ADV, 'Nhập "0105" vào ô Phiếu xác nhận bảo hành, bấm Tìm kiếm.'], 'Phiếu xác nhận bảo hành: 0105', ['Chỉ còn phiếu gắn XNBH-0105.']),
+    T(16, 'Lọc Người tạo, Người duyệt', 'P1', 'A lập 3 phiếu; K đã từ chối 2 phiếu.',
+      [MENU, ADV, 'Chọn Người tạo = A.', 'Bỏ Người tạo, chọn Người duyệt = K.'], '—',
+      ['Bước 3: đúng 3 phiếu của A.', 'Bước 4: đúng các phiếu K đã từ chối / duyệt phiếu kế toán.']),
+    T(17, 'Lọc Ngày tạo lấy trọn ngày biên', 'P0', 'Có phiếu lập 21/10/2026 00:05 và 21/10/2026 23:59.',
+      [MENU, ADV, 'Chọn Ngày tạo từ 21/10/2026 đến 21/10/2026.'], 'Ngày tạo: 21/10/2026 – 21/10/2026',
+      ['Ra cả 2 phiếu, kể cả phiếu lập 23:59.', 'Không có phiếu ngày 20 hoặc 22.']),
+    T(18, 'Kết hợp tìm kiếm với không có kết quả', 'P1', PRE_LIST,
+      [MENU, 'Nhập "002289", bấm Tìm kiếm.', ADV, 'Chọn Trạng thái = Đang tạo.'], '—',
+      ['Bảng "Không có dữ liệu phù hợp bộ lọc." vì 002289 đang Chờ duyệt.', 'Dưới bảng "Không có phiếu nào.".']),
+    T(19, 'Tổng số và phân trang sau lọc', 'P0', 'Có 53 phiếu Chờ duyệt trong phạm vi.',
+      [MENU, ADV, 'Chọn Trạng thái = Chờ duyệt.', 'Bấm trang cuối.'], '—',
+      ['Dòng tổng "Hiển thị 1–10 / 53"; có 6 trang.', 'Trang cuối "Hiển thị 51–53 / 53", 3 dòng.']),
+    T(20, 'Sắp xếp sau lọc', 'P1', 'Đang lọc Trạng thái = Chờ duyệt.', ['Bấm tiêu đề Số tiền.'], '—',
+      ['Chỉ các phiếu Chờ duyệt được sắp tăng theo Số tiền; bộ lọc giữ nguyên.']),
+    T(21, 'Làm mới xóa toàn bộ điều kiện', 'P0', 'Đang tìm "0022", lọc Loại yêu cầu, Trạng thái, Ngày tạo, đang ở trang 2.',
+      ['Bấm Làm mới.'], '—', ['Mọi ô kể cả ô tìm nhanh về trống.', 'Nạp lại từ trang 1, đủ 2140 phiếu.']),
+    T(22, 'Đổi phạm vi lọc Công ty xóa Phòng ban', 'P1', 'Tài khoản C (tổng công ty); đang lọc Phòng ban = Kinh doanh 1 (công ty 1).',
+      [MENU, ADV, 'Đổi Công ty = Công ty 2.'], 'Công ty: Công ty 2', ['Ô Phòng ban bị xóa; danh sách lọc lại theo Công ty 2.']),
+]
+n2 = len(S2) + 1
+S2 += org_cases(SCREEN, n2)
+n2 += 3
+S2 += filter_memory_cases(SCREEN, n2)
+n2 += 5
+S2 += combo_cases(SCREEN, n2)
+n2 += 4
+S2.append(T(n2, 'Tải lại trang (F5) khi đang lọc', 'P1', [PRE_LIST, 'Đang lọc Loại yêu cầu = Khác; trong 10 phút chưa mở màn chi tiết nào.'],
+            ['Nhấn F5.'], '—',
+            ['Màn nạp lại với bộ lọc trống, đủ 2140 phiếu (bộ lọc chỉ được nhớ khi đi vào màn chi tiết / sửa của chính màn).']))
+
+# Cài đặt bộ lọc thuộc nhóm Tìm kiếm và lọc (user 02/11/2026: không tách thành phần riêng).
+S2 += [
+    T(n2 + 1, 'Cài đặt bộ lọc: ẩn một tiêu chí', 'P1', PRE_LIST, [MENU, 'Bấm Cài đặt bộ lọc, bỏ tích Diễn giải, bấm Lưu.'], '—',
+      ['Báo "Cập nhật thành công".', 'Khối Tìm kiếm nâng cao không còn ô Diễn giải.']),
+    T(n2 + 2, 'Cài đặt bộ lọc: bỏ tích tiêu chí đang có giá trị lọc', 'P1', [PRE_LIST, 'Đang lọc Loại yêu cầu = Khác.'],
+      ['Bấm Cài đặt bộ lọc, bỏ tích Loại yêu cầu, bấm Lưu.'], '—', ['Ô Loại yêu cầu ẩn và giá trị Khác bị xóa, danh sách nạp lại đủ phiếu.']),
+    T(n2 + 3, 'Cài đặt bộ lọc: Khôi phục mặc định và đóng không lưu', 'P2', 'Đã ẩn Diễn giải ở TC_02.036.',
+      ['Bấm Cài đặt bộ lọc, bấm Khôi phục mặc định, bấm Đóng.', 'Mở lại, bấm Khôi phục mặc định, bấm Lưu.'], '—',
+      ['Bước 1: đóng không lưu, Diễn giải vẫn ẩn.', 'Bước 2: tích lại đủ 9 tiêu chí, ô Diễn giải hiện lại.']),
+    T(n2 + 4, 'Cài đặt bộ lọc: kéo đổi thứ tự tiêu chí lọc', 'P2', PRE_LIST, ['Bấm Cài đặt bộ lọc, kéo Ngày tạo lên đầu, bấm Lưu.'], '—',
+      ['Ô Ngày tạo đứng đầu khối Tìm kiếm nâng cao.']),
+]
+
+# ============================================================== III. THÊM MỚI
+S3 = [
+    T(1, 'Điều hướng vào màn Tạo', 'P0', PRE_FORM, TAO, '—',
+      ['Mở TRANG "Tạo phiếu yêu cầu hạch toán bổ sung" (không phải cửa sổ nổi).', 'Tab trình duyệt cùng tiêu đề.']),
+    T(2, 'Tiêu đề và dòng người lập', 'P1', PRE_FORM, TAO + ['Quan sát đầu khối Thông tin chung.'], '—',
+      ['Tiêu đề "Tạo phiếu yêu cầu hạch toán bổ sung".', 'Góc phải khối Thông tin chung ghi tên A và thời điểm hiện tại.',
+       'Không có ô Số phiếu (số phiếu sinh khi lưu).']),
+    T(3, 'Các trường và nút khi chưa chọn loại', 'P0', PRE_FORM, TAO, '—',
+      ['Có: Loại yêu cầu, Loại tiền, Tỷ giá, khối File đính kèm (nút Thêm tài liệu).',
+       'Chân màn: Lưu nháp, Lưu và tiếp tục, Gửi duyệt, Quay lại.']),
+    T(4, 'Trường bắt buộc và không bắt buộc', 'P0', PRE_FORM, TAO + ['Chọn Loại yêu cầu = Khác, Đối tượng = Khách hàng.'], '—',
+      ['Có dấu * đỏ ở: Loại yêu cầu, Đối tượng, Khách hàng, Số tiền, Loại tiền, Tỷ giá, Diễn giải, File đính kèm.',
+       'Lưu ý: Lưu nháp chỉ bắt buộc Loại yêu cầu; các dấu * còn lại chỉ kiểm khi Gửi duyệt.']),
+    T(5, 'Giá trị mặc định', 'P0', PRE_FORM, TAO, '—',
+      ['Loại yêu cầu trống, gợi ý "Chọn loại yêu cầu".', 'Loại tiền = loại tiền đầu danh mục (VNĐ), Tỷ giá theo loại tiền đó.',
+       'Chưa có file đính kèm.']),
+    T(6, 'Nút Lưu nháp / Lưu và tiếp tục / Gửi duyệt / Quay lại', 'P1', PRE_FORM, TAO + ['Di chuột lên nút Lưu và tiếp tục.'], '—',
+      ['Lưu nháp màu phụ, Gửi duyệt màu chính, Quay lại có biểu tượng mũi tên.',
+       'Lưu và tiếp tục hiện gợi ý "Lưu nháp phiếu này rồi tiếp tục lập phiếu mới".']),
+    T(7, 'Trường theo loại Điều chỉnh công nợ khách hàng', 'P0', PRE_FORM, TAO + ['Chọn loại Điều chỉnh công nợ khách hàng.'], '—',
+      ['Ẩn Số tiền, Diễn giải ở đầu phiếu.', 'Hiện bảng Chi tiết hạch toán: Khách hàng, Hợp đồng bán, Số tiền, Ghi chú; nút Thêm dòng.',
+       'Bảng rỗng ghi "Chưa có dòng chi tiết nào.".']),
+    T(8, 'Gửi duyệt đầy đủ thông tin hợp lệ (loại Điều chỉnh công nợ khách hàng)', 'P0', PRE_FORM,
+      TAO + ['Chọn loại Điều chỉnh công nợ khách hàng.', 'Bấm Thêm dòng; chọn KH-A, hợp đồng HĐ-A1, Số tiền 5,000,000, Ghi chú "Bù trừ T9".',
+             'Bấm Thêm tài liệu, chọn bienban.pdf.', 'Bấm Gửi duyệt.'],
+      ['Khách hàng: KH-A', 'Hợp đồng bán: HĐ-A1', 'Số tiền: 5,000,000', 'Ghi chú: Bù trừ T9', 'File: bienban.pdf'],
+      ['Báo "Gửi duyệt thành công", quay về danh sách.', 'Dòng mới đứng đầu: số phiếu PYCHTBS-NNNNNN, Số tiền 5,000,000, Trạng thái Chờ duyệt, '
+       'có Ngày gửi.', 'Kế toán kho công ty 1 nhận thông báo "[HTBS] Chờ duyệt: <số phiếu>".']),
+    T(9, 'Lưu nháp chỉ với trường bắt buộc', 'P0', PRE_FORM, TAO + ['Chọn Loại yêu cầu = Khác.', 'Bấm Lưu nháp.'], 'Loại yêu cầu: Khác',
+      ['Báo "Lưu thành công", về danh sách.', 'Phiếu mới Trạng thái Đang tạo, Số tiền 0, KH / NCC và Diễn giải trống.']),
+    T(10, 'Gửi duyệt bỏ trống trường không bắt buộc', 'P1', PRE_FORM,
+      TAO + ['Chọn loại NCC hỗ trợ phát triển thị trường, chọn NCC-X, Số tiền 2,000,000, Diễn giải "Hỗ trợ trưng bày".',
+             'Đính kèm bienban.pdf, giữ Loại tiền VNĐ.', 'Bấm Gửi duyệt.'], ['Số tiền: 2,000,000', 'Diễn giải: Hỗ trợ trưng bày'],
+      ['Gửi duyệt thành công; loại này không còn trường nào khác phải nhập.']),
+    T(11, 'Dữ liệu sau lưu khớp dữ liệu nhập', 'P0', 'Vừa gửi duyệt phiếu ở TC_03.008.', ['Bấm số phiếu vừa tạo.'], '—',
+      ['Màn chi tiết: loại Điều chỉnh công nợ khách hàng; 1 dòng KH-A / HĐ-A1 / 5,000,000 / "Bù trừ T9"; Tổng cộng 5,000,000.',
+       'Loại tiền VNĐ, Tỷ giá 1; File đính kèm bienban.pdf.']),
+    T(12, 'Trạng thái mặc định khi lưu', 'P0', PRE_FORM, TAO + ['Chọn Loại yêu cầu = Khác, bấm Lưu nháp.',
+                                                             'Tạo phiếu khác đủ dữ liệu, bấm Gửi duyệt.'], '—',
+      ['Phiếu lưu nháp: Đang tạo, Ngày gửi trống.', 'Phiếu gửi duyệt: Chờ duyệt, Ngày gửi = thời điểm gửi.']),
+    T(13, 'Lịch sử khi tạo', 'P0', 'Vừa lưu nháp phiếu ở TC_03.009.', ['Ở cột Hành động của phiếu, bấm nút "…" chọn Lịch sử.'], '—',
+      ['Có đúng 1 mốc "Tạo mới" màu xanh lá.', 'Người thực hiện là A, thời gian dạng dd/mm/yyyy hh:mm đúng lúc lưu.']),
+    T(14, 'Gửi duyệt bỏ trống trường bắt buộc', 'P0', PRE_FORM, TAO + ['Chọn Loại yêu cầu = Khác.', 'Bấm Gửi duyệt.'], '—',
+      ['Chữ đỏ "Bắt buộc phải nhập" cùng lúc dưới Đối tượng, Số tiền, Diễn giải, File đính kèm.',
+       'Báo "Vui lòng kiểm tra lại dữ liệu nhập", cuộn tới ô lỗi đầu tiên.', 'Phiếu KHÔNG được lưu.']),
+    T(15, 'Ô số không nhận sai định dạng', 'P1', PRE_FORM, TAO + ['Chọn loại Khác.', 'Gõ "12abc-5" vào Số tiền.', 'Xóa trắng Tỷ giá rồi gõ "x1".'],
+      ['Số tiền: 12abc-5', 'Tỷ giá: x1'],
+      ['Ô Số tiền chỉ giữ chữ số (chữ và dấu trừ bị bỏ), hiện có dấu phẩy ngăn nghìn.', 'Ô Tỷ giá chỉ giữ "1".',
+       'Không nhập được số âm.']),
+    T(16, 'Số tiền / Tỷ giá bằng 0', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, nhập Số tiền 0, Tỷ giá 0.', 'Bấm Gửi duyệt.'],
+      ['Số tiền: 0', 'Tỷ giá: 0'], ['Dưới Số tiền: "Số tiền phải lớn hơn 0".', 'Dưới Tỷ giá: "Tỷ giá phải lớn hơn 0".']),
+    T(17, 'Ký tự đặc biệt trong Diễn giải', 'P2', PRE_FORM,
+      TAO + ['Chọn loại Khác, Đối tượng Nhà cung cấp, NCC-X, Số tiền 1,000,000.', 'Diễn giải nhập "<b>Test</b> & @#%".',
+             'Đính kèm file, bấm Gửi duyệt.', 'Mở chi tiết phiếu.'], 'Diễn giải: <b>Test</b> & @#%',
+      ['Lưu thành công.', 'Màn chi tiết và danh sách hiện nguyên văn "<b>Test</b> & @#%", KHÔNG bị in đậm.']),
+    T(18, 'Diễn giải 1 ký tự (không có độ dài tối thiểu)', 'P2', PRE_FORM,
+      TAO + ['Chọn loại Khác, nhập đủ trường, Diễn giải "a".', 'Bấm Gửi duyệt.'], 'Diễn giải: a', ['Gửi duyệt thành công, Diễn giải lưu "a".']),
+    T(19, 'Diễn giải dài 2.000 ký tự', 'P2', PRE_FORM, TAO + ['Chọn loại Khác, nhập đủ trường, dán Diễn giải 2.000 ký tự.', 'Bấm Gửi duyệt.'],
+      'Diễn giải: chuỗi 2.000 ký tự', ['Lưu thành công.', 'Màn chi tiết hiện đủ 2.000 ký tự, không bị cắt.']),
+    T(20, 'Diễn giải rất dài (vượt độ dài thông thường)', 'P2', PRE_FORM,
+      TAO + ['Chọn loại Khác, nhập đủ trường, dán Diễn giải 10.000 ký tự.', 'Bấm Gửi duyệt.'], 'Diễn giải: chuỗi 10.000 ký tự',
+      ['Lưu thành công, không báo lỗi.', 'Lưu ý: ô Diễn giải chưa giới hạn số ký tự.']),
+    T(21, 'Phiếu trùng nội dung với phiếu đã có', 'P1', [PRE_FORM, DRAFT_A],
+      TAO + ['Nhập y hệt PYCHTBS-A01: loại Khác, NCC-X, 1,500,000, "Đối chiếu Q3", 1 file.', 'Bấm Lưu nháp.'], '—',
+      ['Lưu thành công, không báo trùng (phiếu không có trường duy nhất).', 'Phiếu mới có số phiếu khác PYCHTBS-A01.']),
+    T(22, 'Trùng dòng chi tiết trong cùng phiếu', 'P0', PRE_FORM,
+      TAO + ['Chọn loại Điều chỉnh công nợ khách hàng.', 'Thêm 2 dòng cùng KH-A, cùng HĐ-A1, mỗi dòng 1,000,000, ghi chú "Bù trừ".',
+             'Đính kèm file, bấm Gửi duyệt.'], '—',
+      ['Báo "Hợp đồng này đã có ở dòng 1 với cùng đối tượng" tại dòng 2.', 'Phiếu KHÔNG được gửi duyệt.']),
+    T(23, 'Khoảng trắng đầu / cuối Diễn giải', 'P2', PRE_FORM,
+      TAO + ['Chọn loại Khác, nhập đủ trường, Diễn giải "   Đối chiếu Q4   ".', 'Bấm Gửi duyệt, mở chi tiết.'], 'Diễn giải: "   Đối chiếu Q4   "',
+      ['Diễn giải lưu "Đối chiếu Q4" (bỏ khoảng trắng đầu / cuối).']),
+    T(24, 'Diễn giải chỉ có khoảng trắng', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, nhập đủ trường, Diễn giải 5 dấu cách.', 'Bấm Gửi duyệt.'],
+      'Diễn giải: 5 dấu cách', ['Báo "Bắt buộc phải nhập" dưới Diễn giải.', 'Không gửi duyệt.']),
+    T(25, 'Nội dung và vị trí thông báo lỗi', 'P0', PRE_FORM,
+      TAO + ['Chọn loại Điều chỉnh công nợ nhà cung cấp, thêm 1 dòng để trống.', 'Bấm Gửi duyệt.'], '—',
+      ['Ô lỗi viền đỏ, chữ đỏ ngay dưới ô: Nhà cung cấp, Hợp đồng mua, Số tiền, Ghi chú của dòng; File đính kèm.',
+       'Thông báo góc màn "Vui lòng kiểm tra lại dữ liệu nhập".', 'Màn tự cuộn tới ô lỗi đầu tiên; dữ liệu đã nhập vẫn còn.']),
+    T(26, 'Lỗi biến mất sau khi sửa', 'P0', 'Đang ở TC_03.014, các ô đang báo đỏ.',
+      ['Chọn Đối tượng = Nhân viên, chọn một nhân viên.', 'Nhập Số tiền 500,000, Diễn giải "Tạm ứng".'], '—',
+      ['Chữ đỏ dưới từng ô biến mất ngay khi ô có giá trị hợp lệ, không cần bấm lại.', 'Chỉ còn lỗi ở File đính kèm.']),
+    T(27, 'Lưu và tiếp tục với dữ liệu hợp lệ', 'P0', PRE_FORM,
+      TAO + ['Chọn loại Khác, Đối tượng Nhà cung cấp, NCC-X, Số tiền 800,000, Diễn giải "Phí vận chuyển".', 'Bấm Lưu và tiếp tục.'], '—',
+      ['Báo "Lưu thành công".', 'Phiếu được lưu ở trạng thái Đang tạo (KHÔNG gửi duyệt).', 'Vẫn ở màn Tạo với form trống.']),
+    T(28, 'Lưu và tiếp tục khi chưa chọn Loại yêu cầu', 'P0',
+      [PRE_FORM, 'Đang ở màn Tạo; đã chọn Loại tiền USD, nhập Tỷ giá 25,000, đính kèm 1 file; Loại yêu cầu còn trống.'],
+      TAO + ['Chọn Loại tiền, nhập Tỷ giá, thêm file.', 'Bấm Lưu và tiếp tục.'], ['Loại tiền: USD', 'Tỷ giá: 25,000'],
+      ['Chữ đỏ "Bắt buộc phải nhập" dưới Loại yêu cầu.', 'KHÔNG lưu, KHÔNG mở form mới; Loại tiền, Tỷ giá, file vẫn còn.']),
+    T(29, 'Lưu và tiếp tục khi thiếu trường của loại', 'P1', [PRE_FORM, 'Đang ở màn Tạo; Loại yêu cầu = Khác, chưa chọn Đối tượng, Số tiền 0.'],
+      ['Bấm Lưu và tiếp tục.'], 'Loại yêu cầu: Khác',
+      ['Phiếu vẫn được lưu nháp (Đang tạo) và mở form trống — nháp chỉ bắt buộc Loại yêu cầu.',
+       'Lưu ý: Đối tượng, Số tiền, Diễn giải chỉ bị chặn khi Gửi duyệt (TC_03.014).']),
+    T(30, 'Lưu và tiếp tục với ô số gõ sai định dạng', 'P2', PRE_FORM,
+      TAO + ['Chọn loại Khác, gõ "5tr" vào Số tiền.', 'Bấm Lưu và tiếp tục.', 'Mở phiếu vừa lưu ở danh sách.'], 'Số tiền: 5tr',
+      ['Ô Số tiền chỉ giữ "5"; phiếu lưu nháp với Số tiền 5.', 'Form mở lại trống.']),
+    T(31, 'Lưu và tiếp tục 2 lần cùng nội dung', 'P2', PRE_FORM,
+      TAO + ['Chọn loại Khác, nhập NCC-X, 800,000, "Phí vận chuyển", bấm Lưu và tiếp tục.', 'Nhập lại y hệt, bấm Lưu và tiếp tục.'], '—',
+      ['Cả 2 lần đều "Lưu thành công".', 'Danh sách có 2 phiếu Đang tạo cùng nội dung, số phiếu khác nhau.']),
+    T(32, 'Sau Lưu và tiếp tục vẫn ở màn Tạo', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, bấm Lưu và tiếp tục.', 'Quan sát tiêu đề trang.'], '—',
+      ['Màn Tạo là trang riêng, không phải cửa sổ: vẫn ở trang "Tạo phiếu yêu cầu hạch toán bổ sung", không về danh sách.']),
+    T(33, 'Các trường được làm mới sau Lưu và tiếp tục', 'P1', PRE_FORM,
+      TAO + ['Chọn loại Điều chỉnh công nợ khách hàng, thêm 1 dòng, đổi Loại tiền USD, thêm 1 file.', 'Bấm Lưu và tiếp tục.'], '—',
+      ['Loại yêu cầu trống, bảng chi tiết biến mất.', 'Loại tiền về VNĐ, Tỷ giá theo VNĐ, khối file trống.', 'Không còn chữ đỏ nào.']),
+    T(34, 'Rời màn ngay sau Lưu và tiếp tục', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, bấm Lưu và tiếp tục.', 'Bấm Quay lại.'], '—',
+      ['Về danh sách ngay, KHÔNG hiện hộp "Thông tin chưa lưu".', 'Phiếu vừa lưu có trên danh sách, Đang tạo.']),
+    T(35, 'Lưu nháp với dữ liệu hợp lệ', 'P0', PRE_FORM,
+      TAO + ['Chọn loại Khác, NCC-X, 1,200,000, Diễn giải "Phí kho".', 'Bấm Lưu nháp.'], '—',
+      ['Báo "Lưu thành công".', 'Quay về danh sách, phiếu mới Đang tạo đứng đầu.']),
+    T(36, 'Lưu nháp khi chưa chọn Loại yêu cầu', 'P0', PRE_FORM, TAO + ['Nhập Tỷ giá 1, không chọn Loại yêu cầu.', 'Bấm Lưu nháp.'], '—',
+      ['"Bắt buộc phải nhập" dưới Loại yêu cầu.', 'Không lưu, vẫn ở màn Tạo.']),
+    T(37, 'Lưu nháp với ô số gõ sai định dạng', 'P2', PRE_FORM, TAO + ['Chọn loại Khác, gõ "abc" vào Số tiền.', 'Bấm Lưu nháp.'], 'Số tiền: abc',
+      ['Ô Số tiền không nhận chữ (giữ 0).', 'Lưu nháp thành công với Số tiền 0.']),
+    T(38, 'Lưu nháp phiếu trùng nội dung', 'P2', [PRE_FORM, DRAFT_A], TAO + ['Nhập y hệt PYCHTBS-A01, bấm Lưu nháp.'], '—',
+      ['Lưu thành công, có 2 phiếu cùng nội dung với số phiếu khác nhau.']),
+    T(39, 'Sau Lưu nháp màn chuyển về danh sách', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, bấm Lưu nháp.'], '—',
+      ['Màn Tạo là trang: sau Lưu nháp tự chuyển về danh sách, không ở lại form.']),
+    T(40, 'Mở Tạo mới lại sau Lưu nháp', 'P2', 'Vừa Lưu nháp ở TC_03.035.', ['Bấm Tạo mới lần nữa.'], '—',
+      ['Form trống hoàn toàn, không còn dữ liệu phiếu vừa lưu.']),
+    T(41, 'Không hỏi xác nhận sau khi đã Lưu nháp', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, bấm Lưu nháp.'], '—',
+      ['Chuyển về danh sách, KHÔNG hiện hộp "Thông tin chưa lưu".']),
+    T(42, 'Gửi duyệt với dữ liệu hợp lệ (loại Khác)', 'P0', PRE_FORM,
+      TAO + ['Chọn loại Khác, Đối tượng = Khách hàng, chọn KH-A.', 'Số tiền 3,000,000, Diễn giải "Thưởng doanh số", đính kèm file.',
+             'Bấm Gửi duyệt.'], '—',
+      ['Gửi ngay, KHÔNG hỏi xác nhận.', 'Báo "Gửi duyệt thành công", về danh sách, phiếu Chờ duyệt.']),
+    T(43, 'Gửi duyệt loại Điều chỉnh công nợ chưa có dòng', 'P0', [PRE_FORM, 'Màn Tạo, loại Điều chỉnh công nợ khách hàng, đã đính kèm file.'],
+      ['Bấm Gửi duyệt.'], '—', ['Báo "Bắt buộc phải nhập" ngay dưới bảng Chi tiết hạch toán.', 'Không gửi duyệt.']),
+    T(44, 'Gửi duyệt với Tỷ giá sai', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, nhập đủ trường, xóa trắng Tỷ giá.', 'Bấm Gửi duyệt.'], 'Tỷ giá: trống',
+      ['"Bắt buộc phải nhập" dưới Tỷ giá.', 'Nhập Tỷ giá 0 rồi gửi lại: "Tỷ giá phải lớn hơn 0".']),
+    T(45, 'Gửi duyệt phiếu trùng nội dung', 'P2', [PRE_FORM, 'Đã có phiếu Chờ duyệt loại Khác, NCC-X, 1,500,000, "Đối chiếu Q3".'],
+      TAO + ['Nhập y hệt, đính kèm file, bấm Gửi duyệt.'], '—', ['Gửi duyệt thành công, không báo trùng; số phiếu khác.']),
+    T(46, 'Sau Gửi duyệt màn chuyển về danh sách', 'P1', PRE_FORM, TAO + ['Nhập đủ một phiếu loại Khác, bấm Gửi duyệt.'], '—',
+      ['Màn Tạo là trang: sau gửi duyệt tự về danh sách.']),
+    T(47, 'Form mới sau khi Gửi duyệt', 'P2', 'Vừa gửi duyệt ở TC_03.042.', ['Bấm Tạo mới.'], '—', ['Form trống, Loại tiền VNĐ.']),
+    T(48, 'Không hỏi xác nhận sau Gửi duyệt', 'P1', PRE_FORM, TAO + ['Nhập đủ một phiếu, bấm Gửi duyệt.'], '—',
+      ['Về danh sách, KHÔNG hiện hộp "Thông tin chưa lưu".']),
+    T(49, 'Rời màn khi chưa nhập gì', 'P1', PRE_FORM, TAO + ['Không thao tác gì, bấm Quay lại.'], '—', ['Về danh sách ngay, không hỏi.']),
+    T(50, 'Rời màn khi đã nhập', 'P0', PRE_FORM, TAO + ['Chọn loại Khác, nhập Diễn giải "Nháp".', 'Bấm Quay lại.'], '—',
+      ['Hiện hộp "Thông tin chưa lưu", nội dung "Bạn có thông tin chưa lưu. Có chắc chắn muốn thoát?".', 'Hai nút Thoát và Ở lại.']),
+    T(51, 'Rời màn bằng menu, đóng tab hoặc tải lại', 'P1', PRE_FORM,
+      TAO + ['Chọn loại Khác.', 'Bấm một mục menu khác.', 'Chọn Ở lại, rồi nhấn F5.'], '—',
+      ['Màn Tạo là trang nên không có nút (x): bấm menu khác cũng hiện hộp "Thông tin chưa lưu".',
+       'Nhấn F5 / đóng tab: trình duyệt hiện hộp cảnh báo rời trang mặc định.']),
+    T(52, 'Chọn Thoát', 'P0', 'Đang ở hộp "Thông tin chưa lưu" của TC_03.050.', ['Bấm Thoát.'], '—',
+      ['Về danh sách, không có phiếu mới nào được lưu.']),
+    T(53, 'Chọn Ở lại', 'P0', 'Đang ở hộp "Thông tin chưa lưu" của TC_03.050.', ['Bấm Ở lại.'], '—',
+      ['Hộp đóng, vẫn ở màn Tạo, Loại yêu cầu Khác và Diễn giải "Nháp" còn nguyên.']),
+    T(54, 'Nhập rồi xóa hết trước khi rời', 'P2', PRE_FORM,
+      TAO + ['Chọn loại Khác, nhập Diễn giải "abc".', 'Xóa Diễn giải, bấm × ở ô Loại yêu cầu.', 'Bấm Quay lại.'], '—',
+      ['Về danh sách KHÔNG hỏi (dữ liệu đã trở về như lúc mở màn).']),
+    T(55, 'Đổi Loại tiền rồi khôi phục ban đầu', 'P2', PRE_FORM,
+      TAO + ['Đổi Loại tiền sang USD.', 'Đổi lại VNĐ (Tỷ giá về như cũ).', 'Bấm Quay lại.'], '—', ['Về danh sách KHÔNG hỏi.']),
+    T(56, 'Để form lâu không thao tác', 'P2', PRE_FORM, TAO + ['Nhập dở một phiếu loại Khác.', 'Để nguyên 30 phút rồi bấm Lưu nháp.'], '—',
+      ['Dữ liệu đang nhập không tự mất.', 'Phiên còn hạn: lưu bình thường.',
+       'Phiên đã hết hạn: báo hết phiên đăng nhập, chuyển về màn đăng nhập, phiếu không được lưu.']),
+    T(57, 'Bấm nút Lưu liên tục', 'P0', PRE_FORM, TAO + ['Nhập đủ một phiếu loại Khác.', 'Bấm Gửi duyệt 3 lần thật nhanh.'], '—',
+      ['Nút bị khóa trong lúc đang lưu.', 'Chỉ có ĐÚNG 1 phiếu mới trên danh sách; Kế toán kho nhận 1 thông báo.']),
+    T(58, 'Hai tab tạo cùng lúc', 'P1', PRE_FORM,
+      ['Mở màn Tạo ở 2 tab, nhập cùng nội dung loại Khác.', 'Bấm Lưu nháp ở tab 1, ngay sau đó tab 2.'], '—',
+      ['Cả 2 tab "Lưu thành công".', 'Có 2 phiếu, số phiếu khác nhau liên tiếp, không lỗi.']),
+    T(59, 'Đổi loại xóa trường phụ thuộc', 'P0', [PRE_FORM, 'Đã chọn loại Khác, Đối tượng NCC, NCC-X, Số tiền 900,000, Diễn giải "abc", 1 file.'],
+      ['Đổi sang loại Điều chỉnh công nợ khách hàng.'], '—',
+      ['Đối tượng, NCC-X, Số tiền, Diễn giải bị xóa / ẩn, không hỏi xác nhận.', 'Loại tiền, Tỷ giá, file đính kèm giữ nguyên.']),
+    T(60, 'Loại Hạch toán công nợ NCC bảo hành tự điền', 'P1', [PRE_FORM, 'Có phiếu xác nhận bảo hành XNBH-0105 đã duyệt, NCC-Y, tổng 4,200,000.'],
+      TAO + ['Chọn loại Hạch toán công nợ NCC bảo hành.', 'Bấm ô Phiếu xác nhận bảo hành, chọn XNBH-0105.'], '—',
+      ['Nhà cung cấp tự điền NCC-Y, ô khóa không bấm được.', 'Số tiền tự điền 4,200,000, vẫn sửa được.']),
+    T(61, 'Loại Hạch toán công nợ NCC thiếu hàng nhiều NCC', 'P2', [PRE_FORM, 'Phiếu xử lý hàng thiếu XLHT-007 đã duyệt, có hạch toán, gồm 2 NCC.'],
+      TAO + ['Chọn loại Hạch toán công nợ NCC thiếu hàng, chọn XLHT-007.'], '—',
+      ['Số tiền tự điền theo phiếu.', 'Hiện ô chọn Nhà cung cấp với 2 NCC dạng "Mã - Tên", chưa chọn sẵn.']),
+    T(62, 'Loại Khác chọn Nhân viên', 'P1', PRE_FORM, TAO + ['Chọn loại Khác, Đối tượng = Nhân viên.', 'Gửi duyệt khi chưa chọn nhân viên.'], '—',
+      ['Ô đối tượng đổi nhãn "Nhân viên".', 'Báo "Bắt buộc phải nhập" dưới ô Nhân viên.']),
+    T(63, 'File đính kèm sai định dạng / quá dung lượng', 'P1', [PRE_FORM, 'Trên máy có file setup.exe và video.zip 25MB.'],
+      TAO + ['Bấm Thêm tài liệu, chọn setup.exe.', 'Chọn video.zip.'], '—',
+      ['Bước 3: "File "setup.exe" không thuộc định dạng cho phép".', 'Bước 4: "File "video.zip" vượt quá 20MB".',
+       'Cả 2 file không được thêm vào danh sách.']),
+]
+
+# ============================================================== IV. CHỈNH SỬA
+EDIT = [MENU, 'Ở dòng PYCHTBS-A01 bấm nút Sửa (biểu tượng bút chì).']
+S4 = [
+    T(1, 'Mở màn Sửa', 'P0', [ACC_A, DRAFT_A], ['Đăng nhập A.'] + EDIT, '—',
+      ['Mở TRANG "Sửa phiếu yêu cầu hạch toán bổ sung: PYCHTBS-A01" (không phải cửa sổ nổi).']),
+    T(2, 'Dữ liệu được điền sẵn đúng', 'P0', [ACC_A, DRAFT_A], EDIT, '—',
+      ['Loại yêu cầu Khác, Đối tượng Nhà cung cấp, ô Nhà cung cấp "<mã> - NCC-X".', 'Số tiền 1,500,000; Loại tiền, Tỷ giá đúng phiếu; '
+       'Diễn giải "Đối chiếu Q3".', 'Bảng File đính kèm có file đã lưu (tên, dung lượng).',
+       'Góc phải khối Thông tin chung: người lập và ngày giờ lập của phiếu.']),
+    T(3, 'Trường được và không được sửa', 'P0', [ACC_A, 'PYCHTBS-A04 Đang tạo loại Hạch toán công nợ NCC bảo hành, từng bị từ chối lý do "Sai số tiền".'],
+      [MENU, 'Bấm Sửa ở PYCHTBS-A04.'], '—',
+      ['Sửa được: Loại yêu cầu, Phiếu xác nhận bảo hành, Số tiền, Loại tiền, Tỷ giá, Diễn giải, file.',
+       'Không sửa được: dòng người lập, Ghi chú duyệt "Sai số tiền" (chỉ đọc), Nhà cung cấp (tự điền theo chứng từ).',
+       'Không có ô Số phiếu, không có nhãn trạng thái.']),
+    T(4, 'Các nút trên màn Sửa', 'P1', [ACC_A, DRAFT_A], EDIT, '—',
+      ['Chân màn có Lưu nháp, Gửi duyệt, Quay lại.', 'KHÔNG có Lưu và tiếp tục.']),
+    T(5, 'Sửa một trường', 'P0', [ACC_A, DRAFT_A], EDIT + ['Sửa Diễn giải thành "Đối chiếu Q3 bổ sung".', 'Bấm Lưu nháp.'],
+      'Diễn giải: Đối chiếu Q3 bổ sung',
+      ['Báo "Lưu thành công", về danh sách.', 'Dòng PYCHTBS-A01 hiện Diễn giải mới, vẫn Đang tạo.']),
+    T(6, 'Sửa nhiều trường', 'P0', [ACC_A, DRAFT_A],
+      EDIT + ['Sửa Số tiền 2,500,000, Tỷ giá giữ, Diễn giải "Đối chiếu Q3 lần 2", thêm 1 file.', 'Bấm Lưu nháp.', 'Mở chi tiết.'], '—',
+      ['Màn chi tiết hiện đủ giá trị mới và 2 file.']),
+    T(7, 'Lưu khi giữ nguyên giá trị', 'P1', [ACC_A, DRAFT_A], EDIT + ['Không đổi gì, bấm Lưu nháp.'], '—',
+      ['Báo "Lưu thành công".', 'Dữ liệu phiếu như cũ.']),
+    T(8, 'Dữ liệu sau lưu', 'P0', 'Vừa sửa ở TC_04.006.', [MENU, 'Đối chiếu dòng PYCHTBS-A01.'], '—',
+      ['Số tiền "2,500,000 VND", Diễn giải "Đối chiếu Q3 lần 2".']),
+    T(9, 'Ngày / người cập nhật', 'P1', 'Vừa sửa ở TC_04.006 bằng A lúc 10:20.', [MENU, 'Bật cột Ngày cập nhật, Người cập nhật trong Tùy chỉnh cột.'], '—',
+      ['Ngày cập nhật = thời điểm sửa (dd/mm/yyyy 10:20).', 'Người cập nhật = A.']),
+    T(10, 'Lịch sử khi sửa', 'P0', 'Vừa sửa ở TC_04.006.', ['Mở Lịch sử của PYCHTBS-A01.'], '—',
+      ['Mốc mới nhất "Thay đổi thông tin" màu xanh dương, Người thực hiện A.',
+       'Liệt kê Số tiền: 1,500,000 thành 2,500,000; Diễn giải cũ thành mới; File đính kèm thêm.',
+       'Trường không đổi KHÔNG được liệt kê.']),
+    T(11, 'Sửa rồi Gửi duyệt', 'P0', [ACC_A, DRAFT_A], EDIT + ['Sửa Số tiền 1,800,000, bấm Gửi duyệt.', 'Mở Lịch sử.'], '—',
+      ['Báo "Gửi duyệt thành công", phiếu Chờ duyệt.',
+       'Lịch sử có mốc "Thay đổi thông tin" (chỉ Số tiền) và mốc riêng "Thay đổi trạng thái" Đang tạo thành Chờ duyệt.']),
+    T(12, 'Bỏ trống trường bắt buộc khi Gửi duyệt', 'P0', [ACC_A, DRAFT_A], EDIT + ['Xóa Diễn giải, bấm Gửi duyệt.'], '—',
+      ['"Bắt buộc phải nhập" dưới Diễn giải; báo "Vui lòng kiểm tra lại dữ liệu nhập".', 'Phiếu vẫn Đang tạo.']),
+    T(13, 'Sai định dạng / giá trị khi sửa', 'P1', [ACC_A, DRAFT_A], EDIT + ['Gõ chữ vào Tỷ giá.', 'Nhập Số tiền 0, bấm Gửi duyệt.'], '—',
+      ['Ô Tỷ giá không nhận chữ.', 'Dưới Số tiền: "Số tiền phải lớn hơn 0".']),
+    T(14, 'Vượt giới hạn dung lượng file khi sửa', 'P1', [ACC_A, DRAFT_A, 'Trên máy có video.zip 25MB.'],
+      EDIT + ['Bấm biểu tượng Thay đổi của file đã lưu, chọn video.zip.'], '—',
+      ['Báo "File "video.zip" vượt quá 20MB".', 'File cũ giữ nguyên.']),
+    T(15, 'Trùng với bản ghi khác', 'P1', [ACC_A, DRAFT_A, 'Phiếu PYCHTBS-A05 của A có nội dung loại Khác, NCC-X, 2,000,000, "Phí kho".'],
+      EDIT + ['Sửa PYCHTBS-A01 thành đúng nội dung của PYCHTBS-A05, bấm Lưu nháp.'], '—',
+      ['Lưu thành công (giữa các phiếu không kiểm trùng).', 'Lưu ý: chỉ kiểm trùng cặp đối tượng – hợp đồng giữa các dòng trong CÙNG phiếu.']),
+    T(16, 'Không tính trùng với chính dòng của phiếu', 'P1',
+      [ACC_A, 'PYCHTBS-A03 Đang tạo loại Điều chỉnh công nợ khách hàng: dòng 1 KH-A / HĐ-A1, dòng 2 KH-B / HĐ-B1.'],
+      [MENU, 'Bấm Sửa PYCHTBS-A03, chỉ sửa Ghi chú dòng 1.', 'Bấm Gửi duyệt.', 'Mở lại phiếu khác, đổi dòng 2 thành KH-A / HĐ-A1 rồi Gửi duyệt.'], '—',
+      ['Bước 3: gửi duyệt thành công, không báo trùng với chính dòng đã lưu.',
+       'Bước 4 (phiếu có 2 dòng trùng cặp): "Hợp đồng này đã có ở dòng 1 với cùng đối tượng".']),
+    T(17, 'Thông báo lỗi khi sửa', 'P1', [ACC_A, DRAFT_A], EDIT + ['Xóa Số tiền và Diễn giải, bấm Gửi duyệt.'], '—',
+      ['Chữ đỏ dưới đúng 2 ô, viền đỏ.', 'Thông báo "Vui lòng kiểm tra lại dữ liệu nhập", cuộn tới Số tiền.']),
+    T(18, 'Lỗi biến mất khi sửa hợp lệ', 'P1', 'Đang ở TC_04.017.', ['Nhập Số tiền 1,000,000.', 'Nhập Diễn giải "abc".'], '—',
+      ['Chữ đỏ của từng ô biến mất ngay khi ô hợp lệ.']),
+    T(19, 'Mở rồi rời màn khi không thay đổi', 'P1', [ACC_A, DRAFT_A], EDIT + ['Bấm Quay lại ngay.'], '—', ['Về danh sách, không hỏi.']),
+    T(20, 'Đổi rồi trả về giá trị ban đầu', 'P2', [ACC_A, DRAFT_A],
+      EDIT + ['Sửa Diễn giải thành "x".', 'Sửa lại đúng "Đối chiếu Q3".', 'Bấm Quay lại.'], '—', ['Về danh sách KHÔNG hỏi.']),
+    T(21, 'Rời màn khi đã đổi', 'P0', [ACC_A, DRAFT_A], EDIT + ['Sửa Số tiền 9,000,000.', 'Bấm Quay lại.'], '—',
+      ['Hiện hộp "Thông tin chưa lưu" với nút Thoát, Ở lại.']),
+    T(22, 'Xác nhận Thoát', 'P0', 'Đang ở hộp của TC_04.021.', ['Bấm Thoát.', 'Mở chi tiết PYCHTBS-A01.'], '—',
+      ['Về danh sách.', 'Số tiền vẫn 1,500,000 (không lưu thay đổi).']),
+    T(23, 'Xác nhận Ở lại', 'P0', 'Đang ở hộp của TC_04.021.', ['Bấm Ở lại.'], '—', ['Vẫn ở màn Sửa, Số tiền 9,000,000 còn nguyên.']),
+    T(24, 'Không lưu khi hủy', 'P1', 'Vừa Thoát ở TC_04.022.', ['Mở Lịch sử PYCHTBS-A01.'], '—',
+      ['Không có mốc mới nào cho lần sửa bị hủy.']),
+    T(25, 'Không ghi lịch sử khi không thay đổi', 'P1', [ACC_A, DRAFT_A], EDIT + ['Không đổi gì, bấm Lưu nháp.', 'Mở Lịch sử.'], '—',
+      ['Không sinh mốc "Thay đổi thông tin" mới.']),
+    T(26, 'Phiếu đã gửi duyệt không sửa được', 'P0', [ACC_A, 'PYCHTBS-A02 của A đang Chờ duyệt; A đã lưu đường dẫn màn Sửa của phiếu từ lúc còn nháp.'],
+      [MENU, 'Quan sát cột Hành động dòng PYCHTBS-A02.', 'Dán đường dẫn màn Sửa đã lưu vào thanh địa chỉ.'], '—',
+      ['Không có nút Sửa, Xóa.', 'Bước 3: báo "Phiếu này không sửa được", tự chuyển sang màn chi tiết.']),
+    T(27, 'Phiếu bị xóa trong lúc đang sửa', 'P2', [ACC_A, DRAFT_A],
+      ['Tab 1: mở màn Sửa PYCHTBS-A01, sửa Diễn giải.', 'Tab 2: xóa PYCHTBS-A01.', 'Tab 1: bấm Lưu nháp.'], '—',
+      ['Tab 1 báo lỗi, không lưu, không tạo phiếu mới.',
+       'Lưu ý: hiện thông báo là câu tiếng Anh "Item Not Found!" — ghi nhận nếu yêu cầu câu tiếng Việt.']),
+    T(28, 'Hai phiên sửa cùng lúc', 'P0', [ACC_A, DRAFT_A],
+      ['Tab 1 và tab 2 cùng mở màn Sửa PYCHTBS-A01.', 'Tab 1: đủ dữ liệu, bấm Gửi duyệt.', 'Tab 2: sửa Diễn giải, bấm Lưu nháp.'], '—',
+      ['Tab 1: "Gửi duyệt thành công".', 'Tab 2: báo "Bạn không có quyền sửa phiếu này", phiếu vẫn Chờ duyệt với dữ liệu của tab 1.',
+       'Nếu cả 2 tab cùng Lưu nháp: lần lưu sau ghi đè lần trước.']),
+    T(29, 'Phiếu đang được dùng ở phiếu kế toán', 'P1', 'PYCHTBS-A06 của A đã được kế toán lập phiếu kế toán (Đang duyệt).',
+      ['Đăng nhập A.', MENU, 'Quan sát dòng PYCHTBS-A06, mở chi tiết.'], '—',
+      ['Không có nút Sửa, Xóa, Gửi duyệt ở danh sách và màn chi tiết.']),
+]
+
+# ============================================================== V. XÓA
+S5 = [
+    T(1, 'Điều kiện hiện nút Xóa', 'P0', [ACC_A, DRAFT_A, 'PYCHTBS-A02 của A Chờ duyệt; PYCHTBS-B01 Đang tạo của B.'],
+      ['Đăng nhập A.', MENU, 'Quan sát cột Hành động 2 dòng của A.'], '—',
+      ['PYCHTBS-A01: có nút Xóa màu đỏ.', 'PYCHTBS-A02: không có nút Xóa.', 'PYCHTBS-B01 không hiện với A (nháp người khác).']),
+    T(2, 'Hộp xác nhận xóa', 'P0', [ACC_A, DRAFT_A], [MENU, 'Bấm Xóa ở PYCHTBS-A01.'], '—',
+      ['Hộp tiêu đề "Xác nhận xóa", có nút (x).', 'Hai nút Xóa và Hủy.']),
+    T(3, 'Thông tin trong hộp xác nhận', 'P1', [ACC_A, DRAFT_A], [MENU, 'Bấm Xóa ở PYCHTBS-A01.'], '—',
+      ['Nội dung "Bạn có chắc muốn xóa phiếu yêu cầu hạch toán bổ sung \'PYCHTBS-A01\'?" đúng số phiếu.']),
+    T(4, 'Xóa phiếu thành công', 'P0', [ACC_A, DRAFT_A, 'A đang thấy 3 phiếu.'], [MENU, 'Bấm Xóa ở PYCHTBS-A01.', 'Bấm Xóa trong hộp.'], '—',
+      ['Báo "Xóa thành công".', 'Danh sách nạp lại, không còn PYCHTBS-A01.', 'Dòng tổng giảm từ 3 xuống 2.']),
+    T(5, 'Hủy xóa', 'P1', [ACC_A, DRAFT_A], [MENU, 'Bấm Xóa ở PYCHTBS-A01.', 'Bấm Hủy (hoặc (x), hoặc click ra ngoài hộp).'], '—',
+      ['Hộp đóng, phiếu vẫn còn, không có thông báo.']),
+    T(6, 'Phiếu đang được dùng không xóa được', 'P0', 'PYCHTBS-A06 của A đã có phiếu kế toán (Đang duyệt).',
+      ['Đăng nhập A.', MENU, 'Quan sát dòng PYCHTBS-A06.'], '—', ['Không có nút Xóa (chỉ phiếu Đang tạo mới xóa được).']),
+    T(7, 'Xóa phiếu có dòng chi tiết và file', 'P1', [ACC_A, 'PYCHTBS-A03 Đang tạo có 2 dòng chi tiết và 2 file.'],
+      [MENU, 'Xóa PYCHTBS-A03.', 'Lọc Khách hàng / Nhà cung cấp = KH-A.'], '—',
+      ['Xóa thành công, không hỏi thêm về dòng chi tiết.', 'Bước 3 không còn ra PYCHTBS-A03 (dòng chi tiết bị xóa theo phiếu).']),
+    T(8, 'Phiếu đã bị xóa ở nơi khác', 'P2', [ACC_A, DRAFT_A],
+      ['Tab 1 mở danh sách.', 'Tab 2 xóa PYCHTBS-A01.', 'Tab 1 bấm Xóa ở PYCHTBS-A01, bấm Xóa.'], '—',
+      ['Tab 1 báo lỗi, không xóa gì thêm.', 'Lưu ý: hiện thông báo là "Item Not Found!" và bảng KHÔNG tự nạp lại — ghi nhận nếu cần câu tiếng Việt.']),
+    T(9, 'Xóa phiếu đã bị người khác đổi trạng thái', 'P0', [ACC_A, DRAFT_A],
+      ['Tab 1 mở danh sách.', 'Tab 2 gửi duyệt PYCHTBS-A01.', 'Tab 1 bấm Xóa PYCHTBS-A01, bấm Xóa.'], '—',
+      ['Báo "Bạn không có quyền xóa phiếu này".', 'Bảng tự nạp lại, dòng hiện Chờ duyệt, không còn nút Xóa.']),
+    T(10, 'Xóa từ màn chi tiết', 'P1', [ACC_A, DRAFT_A], ['Mở chi tiết PYCHTBS-A01.', 'Bấm Xóa ở chân màn, bấm Xóa.'], '—',
+      ['Báo "Xóa thành công", tự về danh sách.']),
+    T(11, 'Dữ liệu liên quan sau khi xóa', 'P1', [ACC_A, 'PYCHTBS-A07 Đang tạo loại Hạch toán công nợ NCC bảo hành gắn XNBH-0105.'],
+      ['Xóa PYCHTBS-A07.', 'Tạo phiếu mới loại bảo hành, bấm ô Phiếu xác nhận bảo hành.'], '—',
+      ['XNBH-0105 vẫn chọn được (chứng từ nguồn không bị ảnh hưởng).', 'Phiếu đã xóa không còn ở danh sách chung và lối vào Bán hàng.']),
+]
+
+# ============================================================== VI. LỊCH SỬ THAY ĐỔI
+HIS = [MENU, 'Ở dòng PYCHTBS-A01 bấm nút "…", chọn Lịch sử.']
+HIS_PRE = [ACC_A, 'PYCHTBS-A01 có 4 mốc: Tạo mới (A, 20/10 09:00), Thay đổi thông tin (A, 20/10 10:00), Thay đổi trạng thái gửi duyệt '
+           '(A, 20/10 10:05), Thay đổi trạng thái từ chối (K, 21/10 08:30, lý do "Sai số tiền").']
+S6 = [
+    T(1, 'Mở cửa sổ lịch sử từ danh sách', 'P0', HIS_PRE, HIS, '—',
+      ['Mở cửa sổ "Lịch sử thay đổi: PYCHTBS-A01".', 'Nút Lịch sử nằm trong nút "…" vì dòng có hơn 3 nút.']),
+    T(2, 'Thông tin trên mỗi mốc', 'P1', HIS_PRE, HIS, '—',
+      ['Mỗi mốc có: thời gian, nhãn hành động có màu, "Người thực hiện: <tên> — <phòng ban>", danh sách nội dung thay đổi.']),
+    T(3, 'Mốc mới nhất ở trên', 'P0', HIS_PRE, HIS, '—',
+      ['Thứ tự từ trên xuống: từ chối (21/10 08:30), gửi duyệt, Thay đổi thông tin, Tạo mới.']),
+    T(4, 'Người thực hiện', 'P1', HIS_PRE, HIS, '—', ['Mốc từ chối ghi người thực hiện K; các mốc khác ghi A.']),
+    T(5, 'Thời gian thực hiện', 'P2', HIS_PRE, HIS, '—', ['Thời gian dạng dd/mm/yyyy hh:mm, đúng thời điểm thao tác.']),
+    T(6, 'Loại hành động và màu', 'P1', HIS_PRE, HIS, '—',
+      ['"Tạo mới" xanh lá; "Thay đổi thông tin" xanh dương; "Thay đổi trạng thái" cam; "Xóa" đỏ (nếu có).']),
+    T(7, 'Nội dung thay đổi', 'P0', HIS_PRE, HIS, '—',
+      ['Thay đổi thông tin: từng trường giá trị cũ thành giá trị mới.', 'Từ chối: Trạng thái Chờ duyệt thành Đang tạo, kèm lý do "Sai số tiền".',
+       'Dòng chi tiết thêm có dấu "+", bỏ có dấu "-".']),
+    T(8, 'Lọc theo loại hành động', 'P1', HIS_PRE, HIS + ['Bấm Bộ lọc, chọn Loại hành động = Thay đổi trạng thái.'], '—',
+      ['Chỉ còn 2 mốc Thay đổi trạng thái; lọc ngay không cần nút Tìm.']),
+    T(9, 'Lọc theo người thực hiện', 'P1', HIS_PRE, HIS + ['Bấm Bộ lọc, chọn Người thực hiện = K.'], '—',
+      ['Chỉ còn mốc từ chối.', 'Danh sách người thực hiện dạng "Tên - Mã phòng - Mã NV".']),
+    T(10, 'Lọc theo thời gian', 'P1', HIS_PRE, HIS + ['Bấm Bộ lọc, Từ ngày 21/10/2026, Đến ngày 21/10/2026.'], '—', ['Chỉ còn mốc ngày 21/10.']),
+    T(11, 'Kết hợp lọc và không có kết quả', 'P2', HIS_PRE, HIS + ['Chọn Người thực hiện = K và Loại hành động = Tạo mới.'], '—',
+      ['Hiện "Không có lịch sử phù hợp bộ lọc.".']),
+    T(12, 'Làm mới bộ lọc lịch sử', 'P2', 'Đang lọc ở TC_06.011.', ['Bấm Làm mới trong vùng bộ lọc.'], '—', ['Các ô lọc về trống, hiện lại đủ 4 mốc.']),
+    T(13, 'Đóng / mở vùng bộ lọc', 'P2', HIS_PRE, HIS + ['Bấm Bộ lọc.', 'Bấm Bộ lọc lần nữa.'], '—',
+      ['Lần 1 mở 4 ô: Loại hành động, Người thực hiện, Từ ngày, Đến ngày.', 'Lần 2 thu gọn vùng lọc.']),
+    T(14, 'Ghi nhận khi tạo mới', 'P0', ACC_A, TAO + ['Lập phiếu loại Khác, bấm Lưu nháp.', 'Mở Lịch sử phiếu vừa lập.'], '—',
+      ['Có 1 mốc "Tạo mới", người thực hiện A.']),
+    T(15, 'Ghi nhận khi sửa một trường', 'P0', [ACC_A, DRAFT_A], EDIT + ['Sửa Diễn giải, Lưu nháp.', 'Mở Lịch sử.'], '—',
+      ['Mốc "Thay đổi thông tin" chỉ có 1 dòng Diễn giải cũ thành mới.']),
+    T(16, 'Ghi nhận khi sửa nhiều trường', 'P0', [ACC_A, DRAFT_A], EDIT + ['Sửa Số tiền, Tỷ giá, Diễn giải, thay 1 file, Lưu nháp.', 'Mở Lịch sử.'], '—',
+      ['1 mốc "Thay đổi thông tin" liệt kê đủ Số tiền, Tỷ giá, Diễn giải, file đính kèm.']),
+    T(17, 'Không ghi khi không đổi', 'P1', [ACC_A, DRAFT_A], EDIT + ['Không đổi gì, Lưu nháp.', 'Mở Lịch sử.'], '—', ['Không có mốc mới.']),
+    T(18, 'Đổi thông tin và trạng thái cùng lúc', 'P0', [ACC_A, DRAFT_A], EDIT + ['Sửa Số tiền, bấm Gửi duyệt.', 'Mở Lịch sử.'], '—',
+      ['Sinh 2 mốc: "Thay đổi thông tin" (Số tiền) và "Thay đổi trạng thái" (Đang tạo thành Chờ duyệt).',
+       'Dòng Trạng thái KHÔNG lặp lại trong mốc Thay đổi thông tin.']),
+    T(19, 'Ghi nhận xóa file đã lưu', 'P1', [ACC_A, 'PYCHTBS-A01 Đang tạo có 2 file.'],
+      EDIT + ['Bấm biểu tượng Xóa ở 1 file, bấm Xóa trong hộp "Bạn có chắc muốn xóa file đính kèm này?".', 'Bấm Quay lại, mở Lịch sử.'], '—',
+      ['Báo "Xóa file thành công" (có hiệu lực ngay, không cần Lưu).', 'Lịch sử có mốc "Thay đổi thông tin" ghi file đã xóa.']),
+    T(20, 'Phiếu chưa có lịch sử', 'P2', 'Phiếu cũ PYCHTBS-001500 tạo trước khi bật lịch sử.', [MENU, 'Mở Lịch sử PYCHTBS-001500.'], '—',
+      ['Cửa sổ ghi "Chưa có lịch sử thao tác nào.".']),
+    T(21, 'Đóng cửa sổ lịch sử', 'P1', HIS_PRE, HIS + ['Bấm Đóng.', 'Mở lại, bấm (x).', 'Mở lại, click ra ngoài cửa sổ.'], '—',
+      ['Cả 3 cách đều đóng cửa sổ, không hỏi xác nhận.']),
+    T(22, 'Danh sách giữ nguyên sau khi đóng lịch sử', 'P1', 'Đang ở trang 3, lọc Trạng thái = Chờ duyệt, sắp theo Số tiền.',
+      ['Mở Lịch sử một phiếu ở trang 3.', 'Đóng cửa sổ.'], '—', ['Vẫn ở trang 3, bộ lọc và sắp xếp giữ nguyên.']),
+]
+
+# ============================================================== VII. XEM CHI TIẾT
+S7 = [
+    T(1, 'Mở màn chi tiết', 'P0', [PRE_LIST, WAIT_2289], [MENU, 'Bấm số phiếu PYCHTBS-002289.'], '—',
+      ['Mở TRANG chi tiết (không phải cửa sổ nổi).', 'Chuột phải vào số phiếu mở được ở tab mới.']),
+    T(2, 'Tiêu đề màn chi tiết', 'P1', [PRE_LIST, WAIT_2289], [MENU, 'Bấm PYCHTBS-002289.'], '—',
+      ['Tiêu đề "Chi tiết phiếu yêu cầu hạch toán bổ sung: PYCHTBS-002289".']),
+    T(3, 'Đầy đủ trường theo loại', 'P0', [PRE_LIST, WAIT_2289], [MENU, 'Mở chi tiết PYCHTBS-002289.'], '—',
+      ['Khối Thông tin chung: Loại yêu cầu, Loại tiền, Tỷ giá, người tạo – ngày giờ tạo.',
+       'Bảng Chi tiết hạch toán: STT, Khách hàng, Hợp đồng bán, Số tiền, Ghi chú; dòng Tổng cộng.', 'Bảng File đính kèm; khối Lịch sử.']),
+    T(4, 'Chi tiết loại Phối hợp kinh doanh', 'P1', [PRE_LIST, 'Phiếu PYCHTBS-002285 loại Phối hợp kinh doanh.'], ['Mở chi tiết PYCHTBS-002285.'], '—',
+      ['Bố cục riêng: Khách hàng, Phòng thực hiện, Số hợp đồng, Loại tiền, Tỷ giá, Người tạo, Ngày tạo, Người duyệt, Ngày duyệt, Diễn giải.',
+       'Bảng Nội dung quyết toán và bảng Đối tượng hạch toán (Phòng hỗ trợ, Đối tượng hạch toán, Số tiền, Vụ việc).']),
+    T(5, 'Dữ liệu khớp lúc tạo', 'P0', 'Phiếu vừa tạo ở TC_03.008.', ['Mở chi tiết phiếu đó.'], '—',
+      ['KH-A, HĐ-A1, 5,000,000, "Bù trừ T9", bienban.pdf đúng như đã nhập.']),
+    T(6, 'Dữ liệu khớp danh sách', 'P1', [PRE_LIST, WAIT_2289], [MENU, 'Ghi lại Loại yêu cầu, KH / NCC, Số tiền của dòng 002289.', 'Mở chi tiết.'], '—',
+      ['Loại yêu cầu, khách hàng dòng đầu, Tổng cộng trùng với dòng trên danh sách.']),
+    T(7, 'Mọi trường chỉ đọc', 'P0', [PRE_LIST, WAIT_2289], ['Mở chi tiết PYCHTBS-002289.', 'Thử gõ vào Tỷ giá, bấm ô Khách hàng của dòng.'], '—',
+      ['Các ô nền xám, không gõ được.', 'Bấm ô đối tượng / hợp đồng không mở cửa sổ chọn.', 'Không có nút Thêm dòng, Xóa dòng, Thêm tài liệu.']),
+    T(8, 'Không có nút Lưu', 'P1', [PRE_LIST, WAIT_2289], ['Mở chi tiết PYCHTBS-002289.'], '—',
+      ['Chân màn KHÔNG có Lưu nháp, Gửi duyệt của form; chỉ có các nút theo vai trò, In phiếu, Xuất Excel, Quay lại.']),
+    T(9, 'Nút theo trạng thái phiếu đang xử lý', 'P0', [ACC_A, DRAFT_A, 'PYCHTBS-A02 của A Chờ duyệt.'],
+      ['Đăng nhập A.', 'Mở chi tiết PYCHTBS-A01.', 'Mở chi tiết PYCHTBS-A02.'], '—',
+      ['A01 (Đang tạo): Sửa, Gửi duyệt, In phiếu, Xuất Excel, Xóa, Quay lại.', 'A02 (Chờ duyệt): chỉ In phiếu, Xuất Excel, Quay lại.']),
+    T(10, 'Phiếu đã kết thúc (Đã duyệt)', 'P1', [ACC_K, 'Phiếu PYCHTBS-002100 Đã duyệt trong phạm vi K.'], ['Đăng nhập K.', 'Mở chi tiết PYCHTBS-002100.'], '—',
+      ['Chỉ còn In phiếu, Xuất Excel, Quay lại; không có Từ chối, Lập phiếu kế toán.']),
+    T(11, 'Khối Lịch sử ở màn chi tiết', 'P1', HIS_PRE, ['Mở chi tiết PYCHTBS-A01.', 'Bấm Xem lịch sử.', 'Bấm Thu gọn.'], '—',
+      ['Mặc định khối thu gọn.', 'Bấm Xem lịch sử: hiện các mốc như cửa sổ Lịch sử, có nút Làm mới và Bộ lọc.', 'Bấm Thu gọn: ẩn lại.']),
+    T(12, 'Bấm hợp đồng và file ở màn chi tiết', 'P2', [PRE_LIST, WAIT_2289], ['Mở chi tiết, bấm số hợp đồng của dòng.', 'Bấm tên file đính kèm.'], '—',
+      ['Hợp đồng mở ở tab mới.', 'File mở cửa sổ xem trước.']),
+    T(13, 'Quay lại danh sách giữ bộ lọc', 'P0', 'Đang lọc Trạng thái = Chờ duyệt, sắp theo Số tiền, ở trang 3.',
+      ['Bấm một số phiếu ở trang 3.', 'Trong vòng 10 phút bấm Quay lại.'], '—',
+      ['Danh sách giữ Trạng thái = Chờ duyệt và sắp theo Số tiền.',
+       'Lưu ý: hiện danh sách quay về trang 1, KHÔNG giữ trang 3 — ghi nhận nếu yêu cầu giữ cả trang.']),
+    T(14, 'Mở chi tiết phiếu không tồn tại', 'P2', 'Phiếu PYCHTBS-A01 vừa bị xóa, A còn giữ đường dẫn màn chi tiết.',
+      ['Dán đường dẫn vào thanh địa chỉ.'], '—', ['Báo "Không tìm thấy dữ liệu", tự về danh sách.']),
+]
+
+# ============================================================== VIII. TÙY CHỈNH CỘT
+COL = [MENU, 'Bấm nút biểu tượng cột (Cấu hình cột hiển thị).']
+COL_PRE = [PRE_LIST, 'Tài khoản chưa từng lưu cấu hình cột.']
+S8 = [
+    T(1, 'Mở cửa sổ tùy chỉnh cột', 'P1', COL_PRE, COL, '—', ['Mở cửa sổ "Tuỳ chỉnh cột" có nút (x).']),
+    T(2, 'Danh sách cột', 'P1', COL_PRE, COL, '—',
+      ['Đủ 16 cột: STT, Số phiếu, Loại yêu cầu, KH / NCC, Số tiền, Diễn giải, Người tạo, Ngày tạo, Phòng ban, Ngày gửi, Người duyệt, '
+       'Ngày duyệt, Trạng thái, Ngày cập nhật, Người cập nhật, Hành động.']),
+    T(3, 'Cột được chọn mặc định', 'P1', COL_PRE, COL, '—', ['14 cột đang tích; Ngày cập nhật, Người cập nhật bỏ tích.']),
+    T(4, 'Hiện cột đang ẩn', 'P0', COL_PRE, COL + ['Tích Người cập nhật, bấm Lưu.'], '—',
+      ['Báo "Cập nhật thành công".', 'Bảng có thêm cột Người cập nhật.']),
+    T(5, 'Ẩn cột', 'P0', COL_PRE, COL + ['Bỏ tích Diễn giải, bấm Lưu.'], '—', ['Bảng không còn cột Diễn giải.']),
+    T(6, 'Cột bắt buộc không ẩn được', 'P0', COL_PRE, COL + ['Thử bỏ tích STT, Số phiếu, Hành động; di chuột lên ô tích.'], '—',
+      ['Ô tích xám, không bỏ được, có biểu tượng ổ khóa.', 'Gợi ý "Cột bắt buộc — không thể ẩn hoặc đổi vị trí".']),
+    T(7, 'Kéo thả đổi thứ tự cột', 'P1', COL_PRE, COL + ['Kéo biểu tượng ba gạch của Trạng thái lên ngay sau Số phiếu, bấm Lưu.'], '—',
+      ['Cột Trạng thái đứng ngay sau Số phiếu trên bảng.']),
+    T(8, 'Cột cố định', 'P2', COL_PRE, COL + ['Thử kéo STT, Số phiếu, Hành động.', 'Đóng cửa sổ, cuộn bảng sang phải.'], '—',
+      ['3 cột khóa không kéo được.', 'STT, Số phiếu ghim bên trái khi cuộn ngang; Hành động luôn cuối bảng.']),
+    T(9, 'Chọn tất cả / Bỏ chọn hết', 'P2', COL_PRE, COL + ['Bấm Bỏ chọn hết.', 'Bấm Chọn tất cả.'], '—',
+      ['Bỏ chọn hết: bỏ tích mọi cột trừ 3 cột khóa.', 'Chọn tất cả: tích đủ 16 cột.']),
+    T(10, 'Đóng không lưu', 'P1', COL_PRE, COL + ['Bỏ tích Diễn giải.', 'Bấm Đóng (hoặc (x) / click ra ngoài).', 'Mở lại cửa sổ.'], '—',
+      ['Bảng vẫn có cột Diễn giải.', 'Mở lại thấy Diễn giải vẫn tích.']),
+    T(11, 'Ghi nhớ sau khi tải lại', 'P0', 'Đã lưu cấu hình ẩn Diễn giải ở TC_08.005.', ['Nhấn F5.'], '—', ['Bảng vẫn không có cột Diễn giải.']),
+    T(12, 'Cấu hình theo tài khoản', 'P1', 'A đã ẩn Diễn giải.', ['Đăng nhập B trên cùng trình duyệt, mở màn.', 'Đăng nhập A ở trình duyệt khác, mở màn.'], '—',
+      ['B vẫn thấy cột Diễn giải (cấu hình của A không ảnh hưởng B).', 'A ở trình duyệt khác vẫn không có cột Diễn giải (lưu theo tài khoản).']),
+    T(13, 'Không ảnh hưởng dữ liệu', 'P1', COL_PRE, COL + ['Ẩn 5 cột, bấm Lưu.'], '—', ['Dòng tổng vẫn "Hiển thị 1–10 / 2140".']),
+    T(14, 'Không ảnh hưởng bộ lọc', 'P1', [PRE_LIST, 'Đang lọc Trạng thái = Chờ duyệt, ở trang 2.'], COL + ['Ẩn cột Phòng ban, bấm Lưu.'], '—',
+      ['Bộ lọc Chờ duyệt giữ nguyên, danh sách không đổi.']),
+    T(15, 'Dùng chung cho màn chờ duyệt', 'P2', [ACC_K, 'K đã ẩn cột Phòng ban ở danh sách chung.'], ['Đăng nhập K.', MENU_CD], '—',
+      ['Màn chờ duyệt cũng không có cột Phòng ban.']),
+]
+
+# ============================================================== IX. XUẤT EXCEL
+EXP = [MENU, 'Bấm Xuất Excel trên thanh công cụ.']
+S9 = [
+    T(1, 'Mở cửa sổ chọn trường', 'P1', PRE_LIST, EXP, '—', ['Mở cửa sổ "Chọn trường xuất file", chưa tải file ngay.']),
+    T(2, 'Danh sách trường', 'P1', PRE_LIST, EXP, '—',
+      ['Đủ 15 trường: Số phiếu, Loại yêu cầu, KH/NCC, Số tiền, Loại tiền, Diễn giải, Người tạo, Phòng ban, Ngày tạo, Ngày gửi, '
+       'Người duyệt, Ngày duyệt, Trạng thái, Người cập nhật, Ngày cập nhật.']),
+    T(3, 'Trường chọn mặc định', 'P1', COL_PRE, EXP, '—',
+      ['Tích sẵn đúng các cột đang hiện trên bảng: dòng đếm "Đang chọn 12/15 trường".', 'Loại tiền, Người cập nhật, Ngày cập nhật bỏ tích.']),
+    T(4, 'Xuất với trường mặc định', 'P0', PRE_LIST, EXP + ['Bấm Xuất file.'], '—',
+      ['Cửa sổ đóng ngay, nút đổi "Đang xuất..." rồi tải file.', 'Báo "Xuất Excel thành công".', 'File có cột STT + 12 cột mặc định.']),
+    T(5, 'Xuất tất cả trường', 'P1', PRE_LIST, EXP + ['Bấm Chọn tất cả.', 'Bấm Xuất file.'], '—', ['Dòng đếm "Đang chọn 15/15 trường".', 'File có STT + 15 cột.']),
+    T(6, 'Xuất một số trường', 'P0', PRE_LIST, EXP + ['Bấm Bỏ chọn hết, tích Số phiếu, Số tiền, Trạng thái.', 'Bấm Xuất file.'], '—',
+      ['File đúng STT + 3 cột theo thứ tự đã tích.']),
+    T(7, 'Không chọn trường nào', 'P1', PRE_LIST, EXP + ['Bấm Bỏ chọn hết.'], '—', ['"Đang chọn 0/15 trường"; nút Xuất file bị khóa.']),
+    T(8, 'Xuất theo từ khóa tìm kiếm', 'P1', PRE_LIST, [MENU, 'Tìm "0022".', 'Bấm Xuất Excel, Xuất file.'], '—',
+      ['File chỉ gồm các phiếu PYCHTBS-0022xx đang hiện trên bảng.']),
+    T(9, 'Xuất theo bộ lọc', 'P0', 'Có 53 phiếu Chờ duyệt.', [MENU, 'Lọc Trạng thái = Chờ duyệt.', 'Xuất Excel, Xuất file.'], '—',
+      ['File đúng 53 dòng, cột Trạng thái đều "Chờ duyệt".']),
+    T(10, 'Xuất nhiều trang', 'P0', PRE_LIST, [MENU, 'Đang ở trang 1 (10 dòng / trang).', 'Xuất Excel, Xuất file.'], '—',
+      ['File có đủ 2140 dòng (không chỉ trang đang xem).']),
+    T(11, 'Xuất danh sách rỗng', 'P0', PRE_LIST, [MENU, 'Tìm "ZZZ999".', 'Xuất Excel, Xuất file.'], '—',
+      ['Vẫn tải file: có letterhead, tiêu đề, hàng tên cột.', 'Một dòng "Không có dữ liệu phù hợp".']),
+    T(12, 'Tên file', 'P2', PRE_LIST, EXP + ['Xuất file ngày 02/11/2026.'], '—', ['Tên file "Danh-sach-yeu-cau-hach-toan-bo-sung-2026-11-02.xlsx".']),
+    T(13, 'Định dạng và bố cục file', 'P1', PRE_LIST, EXP + ['Xuất file, mở bằng Excel.'], '—',
+      ['Mở được, đuôi .xlsx.', 'Đầu file: letterhead công ty của người xuất; tiêu đề "DANH SÁCH PHIẾU YÊU CẦU HẠCH TOÁN BỔ SUNG".',
+       'Bảng có viền, chữ dài tự xuống dòng.']),
+    T(14, 'Tiêu đề cột trong file', 'P1', PRE_LIST, EXP + ['Bấm Chọn tất cả, Xuất file.'], '—',
+      ['Hàng tên cột: STT rồi đúng nhãn 15 trường như cửa sổ chọn.']),
+    T(15, 'Thứ tự cột theo kéo thả', 'P1', PRE_LIST, EXP + ['Kéo Trạng thái lên đầu danh sách, Xuất file.'], '—',
+      ['Trong file cột Trạng thái đứng ngay sau STT.']),
+    T(16, 'Số lượng bản ghi', 'P0', 'Lọc Loại yêu cầu = Khác có 9 phiếu.', [MENU, 'Lọc Loại yêu cầu = Khác.', 'Xuất file.'], '—',
+      ['File đúng 9 dòng dữ liệu, STT 1–9.']),
+    T(17, 'Dữ liệu khớp danh sách', 'P0', [PRE_LIST, WAIT_2289], [MENU, 'Tìm "002289", Xuất file.'], '—',
+      ['Các ô Số phiếu, Loại yêu cầu, KH/NCC, Số tiền, Người tạo, Ngày tạo, Trạng thái trùng với dòng trên bảng.']),
+    T(18, 'Định dạng ngày / số / chữ', 'P0', PRE_LIST, EXP + ['Bấm Chọn tất cả, Xuất file, mở Excel.'], '—',
+      ['Ngày dạng dd/mm/yyyy hh:mm.', 'Số tiền là ô số có dấu ngăn nghìn, dùng hàm SUM cộng được, không có cảnh báo "số dạng chữ".',
+       'Loại tiền là chữ (VNĐ, USD).']),
+    T(19, 'Tiếng Việt và ký tự đặc biệt', 'P2', 'Phiếu có Diễn giải "Đối chiếu <b>Q3</b> & 50%".', [MENU, 'Tìm phiếu đó, Xuất file.'], '—',
+      ['Ô Diễn giải hiện đúng dấu tiếng Việt và nguyên văn ký tự đặc biệt, không lỗi phông.']),
+    T(20, 'Đóng cửa sổ không xuất', 'P2', PRE_LIST, EXP + ['Bấm Đóng (hoặc (x) / click ra ngoài).'], '—', ['Cửa sổ đóng, không tải file.']),
+    T(21, 'Xuất màn chờ duyệt', 'P1', [ACC_K, 'Công ty 1 có 12 phiếu Chờ duyệt.'], [MENU_CD, 'Xuất Excel, Xuất file.'], '—', ['File đúng 12 phiếu Chờ duyệt.']),
+    T(22, 'Xuất Excel một phiếu', 'P1', [PRE_LIST, WAIT_2289], [MENU, 'Ở dòng PYCHTBS-002289 bấm "…", chọn Xuất Excel.'], '—',
+      ['Tải ngay file "Yeu-cau-hach-toan-bo-sung-PYCHTBS-002289.xlsx", không mở cửa sổ chọn trường.',
+       'Letterhead theo công ty ghi trên phiếu; báo "Xuất Excel thành công".']),
+]
+
+# ============================================================== X. ẢNH HƯỞNG CÁC MÀN HÌNH SỬ DỤNG DỮ LIỆU
+S10 = [
+    T(1, 'Lập phiếu loại Điều chỉnh công nợ khi chưa có dòng chi tiết', 'P1', PRE_FORM,
+      TAO + ['Chọn loại Điều chỉnh công nợ khách hàng, không thêm dòng.', 'Bấm Lưu nháp.', 'Mở chi tiết, bấm Gửi duyệt, xác nhận.'], '—',
+      ['Lưu nháp được (bảng rỗng).', 'Gửi duyệt bị chặn: "Phiếu chưa có dòng chi tiết nào, không gửi duyệt được".']),
+    T(2, 'Lập phiếu có dòng chi tiết', 'P0', PRE_FORM,
+      TAO + ['Chọn loại Điều chỉnh công nợ khách hàng, thêm 2 dòng KH-A 3,000,000 và KH-B 2,000,000.', 'Bấm Lưu nháp.'], '—',
+      ['Dòng Tổng cộng 5,000,000.', 'Danh sách hiện Số tiền 5,000,000, KH / NCC là KH-A.']),
+    T(3, 'Không xóa / sửa khi đã có phiếu kế toán', 'P0', [ACC_K, ACC_A, WAIT_2289.replace('002289', 'A08') + ' Phiếu do A lập.'],
+      ['K lập phiếu kế toán từ PYCHTBS-A08, bấm Lưu nháp.', 'A mở danh sách và chi tiết PYCHTBS-A08.'], '—',
+      ['PYCHTBS-A08 chuyển Đang duyệt.', 'A không có Sửa, Xóa, Gửi duyệt.']),
+    T(4, 'Không mất liên kết khi sửa', 'P1', [ACC_A, 'PYCHTBS-A03 Đang tạo, dòng 1 KH-A / HĐ-A1.'],
+      [MENU, 'Sửa PYCHTBS-A03, chỉ đổi Số tiền dòng 1, Lưu nháp.', 'Mở chi tiết, bấm số hợp đồng dòng 1.'], '—',
+      ['Dòng 1 vẫn KH-A / HĐ-A1.', 'Bấm số hợp đồng mở đúng HĐ-A1.']),
+    T(5, 'Phiếu gửi duyệt xuất hiện ở màn liên quan', 'P0', [ACC_A, ACC_K, ACC_KK, DRAFT_A],
+      ['A gửi duyệt PYCHTBS-A01.', 'K mở màn chờ duyệt.', 'KK mở chuông thông báo.'], '—',
+      ['PYCHTBS-A01 có ở màn chờ duyệt của K.', 'KK có thông báo "[HTBS] Chờ duyệt: PYCHTBS-A01" kèm loại, đối tượng, số tiền, người lập, ghi chú.']),
+    T(6, 'Sửa nội dung đồng bộ các nơi hiển thị', 'P1', [ACC_A, DRAFT_A],
+      [MENU, 'Sửa Diễn giải PYCHTBS-A01 thành "Đối chiếu Q4", Lưu nháp.', 'Xem danh sách, màn chi tiết, In phiếu, Xuất Excel một phiếu.'], '—',
+      ['Cả 4 nơi đều hiện "Đối chiếu Q4".', 'Phiếu không có trường Tên; số phiếu không đổi khi sửa.']),
+    T(7, 'Số phiếu không đổi và giữ liên kết với phiếu kế toán', 'P1', 'PYCHTBS-002100 đã có phiếu kế toán PKT-0450.',
+      [MENU_PKT, 'Mở PKT-0450.'], '—', ['Phiếu kế toán ghi nguồn PYCHTBS-002100.', 'Số phiếu yêu cầu không có ô sửa ở bất kỳ màn nào.']),
+    T(8, 'Xóa phiếu đồng bộ các lối vào', 'P1', [ACC_A, DRAFT_A], ['Xóa PYCHTBS-A01.', 'Mở lối vào Bán hàng, tìm "A01".'], '—',
+      ['Không còn PYCHTBS-A01 ở cả lối vào Tài chính và Bán hàng.']),
+    T(9, 'Trạng thái tự cập nhật theo phiếu kế toán', 'P0', [ACC_K, WAIT_2289],
+      ['K bấm Lập phiếu kế toán ở PYCHTBS-002289, bấm Lưu nháp.', 'Xem trạng thái PYCHTBS-002289.', 'K mở phiếu kế toán vừa lập, Sửa, Lưu và duyệt, xác nhận Duyệt.',
+       'Xem lại trạng thái.'], '—',
+      ['Bước 2: Đang duyệt (nhãn vàng).', 'Bước 4: Đã duyệt (nhãn xanh), Người duyệt = K, Ngày duyệt = lúc duyệt.']),
+    T(10, 'Xóa phiếu kế toán trả phiếu yêu cầu về Chờ duyệt', 'P0', [ACC_K, 'PYCHTBS-002289 Đang duyệt, phiếu kế toán PKT-0451 đang nháp.'],
+      [MENU_PKT, 'Xóa PKT-0451.', 'Mở màn chờ duyệt.'], '—',
+      ['PYCHTBS-002289 quay lại Chờ duyệt, có lại ở màn chờ duyệt với nút Lập phiếu kế toán.']),
+    T(11, 'Bộ lọc phản ánh trạng thái mới', 'P1', 'Vừa duyệt phiếu kế toán ở TC_10.009.',
+      [MENU, 'Lọc Trạng thái = Đã duyệt, Người duyệt = K.'], '—', ['Ra PYCHTBS-002289.', 'Lọc Trạng thái = Chờ duyệt không còn ra phiếu này.']),
+    T(12, 'Dòng chi tiết đúng phiếu, hợp đồng đúng đối tượng', 'P1', PRE_FORM,
+      TAO + ['Chọn loại Điều chỉnh công nợ khách hàng, thêm dòng chọn KH-A.', 'Bấm ô Hợp đồng bán.'], '—',
+      ['Cửa sổ chọn hợp đồng ghi đối tượng KH-A ở đầu, chỉ liệt kê hợp đồng của KH-A.']),
+    T(13, 'Tham chiếu giữ nguyên khi đổi trạng thái', 'P1', [ACC_K, WAIT_2289],
+      ['K từ chối PYCHTBS-002289 với lý do "Sai hợp đồng".', 'Mở lại chi tiết.'], '—',
+      ['Dòng chi tiết, hợp đồng, file đính kèm giữ nguyên sau khi về Đang tạo.']),
+    T(14, 'Không có dòng chi tiết mồ côi sau khi xóa', 'P1', [ACC_A, 'PYCHTBS-A03 Đang tạo có dòng KH-A ghi chú "Bù trừ T9".'],
+      ['Xóa PYCHTBS-A03.', 'Lọc Diễn giải "Bù trừ T9", lọc Khách hàng = KH-A.'], '—', ['Không còn ra PYCHTBS-A03 ở bất kỳ bộ lọc nào.']),
+    T(15, 'Một phiếu yêu cầu chỉ một phiếu kế toán', 'P0', [ACC_K, 'PYCHTBS-002289 đã có phiếu kế toán; K còn giữ màn Tạo phiếu kế toán mở từ phiếu này ở tab khác.'],
+      ['Ở tab cũ, tải lại màn Tạo phiếu kế toán.'], '—', ['Báo "Phiếu yêu cầu này đã có phiếu kế toán", không cho lập thêm.']),
+    T(16, 'Chứng từ nguồn dùng lại ở nhiều phiếu', 'P2', [PRE_FORM, 'XNBH-0105 đã được dùng ở 1 phiếu Chờ duyệt.'],
+      TAO + ['Chọn loại bảo hành, chọn XNBH-0105, nhập đủ, Gửi duyệt.'], '—',
+      ['Gửi duyệt thành công.', 'Lưu ý: hệ thống KHÔNG chặn dùng lại cùng phiếu xác nhận bảo hành — ghi nhận nếu nghiệp vụ cần chặn.']),
+]
+
+# ============================================================== XI. PHÂN QUYỀN
+S11 = [
+    T(1, 'Xem chi tiết trong phạm vi quyền công ty', 'P0', ['Tài khoản D có quyền Xem - công ty, công ty 1.', WAIT_2289],
+      ['Đăng nhập D.', 'Mở chi tiết PYCHTBS-002289.'], '—', ['Xem được đầy đủ; chỉ có In phiếu, Xuất Excel, Quay lại.']),
+    T(2, 'Mọi nhân viên đều lập được phiếu', 'P0', 'Tài khoản N không có bất kỳ quyền nào của màn.',
+      ['Đăng nhập N.', MENU, 'Bấm Tạo mới, lập phiếu loại Khác, Lưu nháp.'], '—',
+      ['Có nút Tạo mới (chức năng không gắn quyền riêng).', 'Lưu thành công, phiếu hiện trong danh sách của N.']),
+    T(3, 'Chỉ người lập được sửa / xóa', 'P0', ['Tài khoản Super admin; ' + DRAFT_A],
+      ['Đăng nhập Super admin.', 'Mở chi tiết PYCHTBS-A01.'], '—',
+      ['Xem được phiếu (Super admin xem mọi phiếu).', 'KHÔNG có Sửa, Xóa, Gửi duyệt vì không phải người lập.']),
+    T(4, 'Xuất Excel trong phạm vi xem', 'P1', [ACC_A, 'A lập 3 phiếu.'], ['Đăng nhập A.', MENU, 'Xuất Excel, Xuất file.'], '—',
+      ['File chỉ có 3 phiếu của A.']),
+    T(5, 'Xem lịch sử theo quyền xem phiếu', 'P1', [ACC_A, 'A lập 3 phiếu.'], ['Đăng nhập A.', 'Mở Lịch sử một phiếu của A.'], '—',
+      ['Xem được lịch sử (không cần quyền riêng); phiếu ngoài phạm vi không hiện nên không mở được lịch sử.']),
+    T(6, 'Ẩn nút khi thiếu quyền', 'P0', [ACC_A, 'Phiếu PYCHTBS-A02 của A Chờ duyệt.'], ['Đăng nhập A.', 'Mở chi tiết PYCHTBS-A02.'], '—',
+      ['Không có Từ chối, Lập phiếu kế toán (A không phải kế toán).', 'Nút không dùng được bị ẩn hẳn, không hiện xám.']),
+    T(7, 'Mở màn Sửa của phiếu người khác bằng đường dẫn', 'P1', ['Tài khoản C (tổng công ty); PYCHTBS-A02 của A Chờ duyệt; C có đường dẫn màn Sửa của phiếu.'],
+      ['Đăng nhập C.', 'Dán đường dẫn màn Sửa vào thanh địa chỉ.'], '—', ['Báo "Phiếu này không sửa được", chuyển sang màn chi tiết.']),
+    T(8, 'Mở màn Sửa phiếu ngoài phạm vi', 'P0', [ACC_A, 'A có đường dẫn màn Sửa của PYCHTBS-002289 (không thuộc phạm vi A).'],
+      ['Đăng nhập A.', 'Dán đường dẫn vào thanh địa chỉ.'], '—', ['Báo "Bạn không có quyền xem phiếu này", về danh sách.']),
+    T(9, 'Gọi thẳng chức năng khi thiếu quyền', 'P0', [ACC_A, WAIT_2289],
+      ['Dùng công cụ kiểm thử API, đăng nhập A, gọi thẳng chức năng Từ chối PYCHTBS-002289, bỏ qua giao diện.',
+       'Gọi thẳng chức năng Xóa PYCHTBS-002289.'], '—',
+      ['Bước 1: hệ thống từ chối "Bạn không có quyền từ chối phiếu này".', 'Bước 2: hệ thống từ chối "Bạn không có quyền xóa phiếu này".',
+       'Phiếu giữ Chờ duyệt.']),
+    T(10, 'Bị gỡ quyền giữa lúc thao tác', 'P2', [ACC_K, WAIT_2289],
+      ['K mở chi tiết PYCHTBS-002289.', 'Quản trị gỡ quyền Kế toán thanh toán của K.', 'K bấm Từ chối, nhập lý do, bấm Từ chối.'], '—',
+      ['Báo "Bạn không có quyền từ chối phiếu này", phiếu giữ Chờ duyệt.', 'Tải lại màn: nút Từ chối biến mất.']),
+    T(11, 'Phạm vi dữ liệu Kế toán thanh toán theo công ty', 'P1', [ACC_K, 'Công ty 2 có phiếu Chờ duyệt PYCHTBS-002150.'],
+      ['Đăng nhập K.', MENU_CD], '—', ['Không thấy PYCHTBS-002150 (khác công ty).']),
+]
+
+# Một nhóm Phân quyền duy nhất (user 02/11/2026: bỏ khối phân quyền riêng ở đầu file, đưa vào XI).
+S11 = [('%03d' % (i + 1),) + tuple(tc[1:]) for i, tc in enumerate(ROLE_TCS + S11)]
+
+# ============================================================== XII. DUYỆT PHIẾU (Lập phiếu kế toán)
+S12 = [
+    T(1, 'Điều kiện hiện nút Lập phiếu kế toán', 'P0', [ACC_K, WAIT_2289, 'PYCHTBS-002100 Đã duyệt; PYCHTBS-A01 Đang tạo.'],
+      ['Đăng nhập K.', MENU, 'Quan sát cột Hành động 3 phiếu.'], '—',
+      ['Chỉ PYCHTBS-002289 (Chờ duyệt) có nút Lập phiếu kế toán (biểu tượng tờ giấy có dấu +).', 'Đang tạo, Đang duyệt, Đã duyệt: không có.']),
+    T(2, 'Mở màn Tạo phiếu kế toán và hộp xác nhận duyệt', 'P0', [ACC_K, WAIT_2289],
+      [MENU_CD, 'Bấm Lập phiếu kế toán ở PYCHTBS-002289.', 'Nhập đủ dữ liệu, bấm Lưu và duyệt.'], '—',
+      ['Bước 2: KHÔNG hiện hộp xác nhận; mở ngay màn "Tạo phiếu kế toán" điền sẵn từ phiếu yêu cầu (loại tiền, tỷ giá, các dòng nợ / có).',
+       'Bước 3: hiện hộp "Xác nhận duyệt phiếu kế toán", nội dung "Duyệt phiếu sẽ GHI BÚT TOÁN VÀO SỔ CÁI và không thể hoàn tác. '
+       'Bạn có chắc chắn muốn duyệt?", nút Duyệt và Hủy.']),
+    T(3, 'Duyệt thành công khi đủ điều kiện', 'P0', [ACC_K, WAIT_2289],
+      ['Lập phiếu kế toán từ PYCHTBS-002289, nhập đủ Ngày hạch toán, Diễn giải, tổng nợ = tổng có.', 'Bấm Lưu và duyệt, bấm Duyệt.'], '—',
+      ['Phiếu kế toán lưu thành công ở trạng thái đã duyệt.', 'PYCHTBS-002289 chuyển Đã duyệt.']),
+    T(4, 'Thiếu dữ liệu bắt buộc trước khi duyệt', 'P0', [ACC_K, WAIT_2289],
+      ['Lập phiếu kế toán từ PYCHTBS-002289, xóa Ngày hạch toán và Diễn giải.', 'Bấm Lưu và duyệt.'], '—',
+      ['Báo lỗi đỏ dưới Ngày hạch toán, Diễn giải; phiếu kế toán không lưu.', 'PYCHTBS-002289 giữ Chờ duyệt.']),
+    T(5, 'Điều kiện nghiệp vụ trước khi duyệt', 'P1', [ACC_K, WAIT_2289],
+      ['Lập phiếu kế toán, sửa một dòng để tổng phát sinh nợ khác tổng phát sinh có.', 'Bấm Lưu và duyệt, Duyệt.'], '—',
+      ['Báo "Tổng số phát sinh nợ và phát sinh có trong một nhóm không bằng nhau".', 'Phiếu yêu cầu giữ Chờ duyệt.']),
+    T(6, 'Trạng thái phiếu sau khi duyệt', 'P0', 'Vừa duyệt ở TC_12.003.', [MENU, 'Quan sát dòng PYCHTBS-002289.'], '—',
+      ['Trạng thái "Đã duyệt" nhãn xanh.', 'Người duyệt = K, Ngày duyệt = thời điểm duyệt.']),
+    T(7, 'Dữ liệu được tạo / cập nhật sau khi duyệt', 'P1', 'Vừa duyệt ở TC_12.003.', [MENU_PKT, 'Mở phiếu kế toán vừa lập.'], '—',
+      ['Phiếu kế toán ghi nguồn PYCHTBS-002289; số tiền, loại tiền đúng phiếu yêu cầu.']),
+    T(8, 'Ảnh hưởng đến dữ liệu liên quan sau duyệt', 'P1', 'Vừa duyệt ở TC_12.003.', [MENU_CD, 'Mở chi tiết PYCHTBS-002289.'], '—',
+      ['Phiếu không còn ở màn chờ duyệt.', 'Chi tiết không còn Từ chối, Lập phiếu kế toán.']),
+    T(9, 'Thông báo sau khi duyệt', 'P0', [ACC_A, 'A là người lập PYCHTBS-002289; K vừa duyệt phiếu kế toán PKT-0452 lập từ phiếu này.'],
+      ['Đăng nhập A, mở chuông thông báo.'], '—',
+      ['A nhận "[PKT] Đã duyệt: PKT-0452" kèm "Từ đề nghị: PYCHTBS-002289", Số tiền, Ngày hạch toán, Người duyệt.']),
+    T(10, 'Nội dung và điều hướng từ thông báo', 'P1', 'A đang có thông báo ở TC_12.009 và thông báo "[HTBS] Từ chối" của phiếu khác.',
+      ['Bấm thông báo "[PKT] Đã duyệt".', 'Bấm thông báo "[HTBS] Từ chối".'], '—',
+      ['Bước 1 mở màn chi tiết phiếu kế toán PKT-0452.', 'Bước 2 mở màn chi tiết phiếu yêu cầu tương ứng.']),
+    T(11, 'Hủy thao tác duyệt', 'P0', [ACC_K, WAIT_2289],
+      ['Lập phiếu kế toán, bấm Lưu và duyệt, bấm Hủy trong hộp xác nhận.', 'Bấm Quay lại, chọn Thoát.', 'Xem PYCHTBS-002289.'], '—',
+      ['Không có phiếu kế toán nào được lưu.', 'PYCHTBS-002289 vẫn Chờ duyệt, vẫn có nút Lập phiếu kế toán.']),
+    T(12, 'Không duyệt lại phiếu đã xử lý', 'P0', [ACC_K, 'PYCHTBS-002289 đã Đang duyệt.'],
+      [MENU_CD, 'Tìm PYCHTBS-002289.', MENU + ' Mở chi tiết PYCHTBS-002289.'], '—',
+      ['Không còn ở màn chờ duyệt.', 'Chi tiết không có Lập phiếu kế toán; mở lại màn Tạo phiếu kế toán cũ báo "Phiếu yêu cầu này đã có phiếu kế toán".']),
+    T(13, 'Ghi nhận người duyệt, thời gian và lịch sử', 'P1', 'Vừa duyệt ở TC_12.003.', [MENU, 'Quan sát Người duyệt, Ngày duyệt.', 'Mở Lịch sử PYCHTBS-002289.'], '—',
+      ['Người duyệt K, Ngày duyệt đúng thời điểm duyệt phiếu kế toán.',
+       'Lưu ý: lịch sử của phiếu yêu cầu hiện KHÔNG có mốc Đang duyệt / Đã duyệt (đổi trạng thái do phiếu kế toán) — ghi nhận nếu yêu cầu có mốc này.']),
+    T(14, 'Kế toán lập phiếu kế toán loại Phối hợp kinh doanh', 'P1', [ACC_L, 'PYCHTBS-002285 Phối hợp kinh doanh Chờ duyệt, phòng hỗ trợ thuộc công ty 1.'],
+      ['Đăng nhập L.', MENU_CD, 'Bấm Lập phiếu kế toán ở PYCHTBS-002285.'], '—',
+      ['Mở màn Tạo phiếu kế toán điền sẵn các dòng quyết toán theo phòng hỗ trợ.']),
+    T(15, 'Luồng lập, gửi duyệt, lập phiếu kế toán', 'P0', [ACC_A, ACC_K, ACC_KK],
+      ['A lập phiếu loại Điều chỉnh công nợ khách hàng, Gửi duyệt.', 'K mở màn chờ duyệt, Lập phiếu kế toán, Lưu nháp.', 'K Lưu và duyệt phiếu kế toán.'], '—',
+      ['Bước 1: KK nhận thông báo; phiếu có ở màn chờ duyệt.', 'Bước 2: phiếu rời màn chờ duyệt, trạng thái Đang duyệt.',
+       'Bước 3: Đã duyệt; A nhận thông báo "[PKT] Đã duyệt".']),
+]
+
+# ============================================================== XIII. KHÔNG DUYỆT PHIẾU (Từ chối)
+REJ = [MENU_CD, 'Bấm PYCHTBS-002289 mở chi tiết.', 'Bấm Từ chối ở chân màn.']
+S13 = [
+    T(1, 'Điều kiện hiện nút Từ chối', 'P0', [ACC_K, ACC_L, WAIT_2289],
+      ['K mở chi tiết PYCHTBS-002289.', 'L mở chi tiết PYCHTBS-002289.', 'K mở chi tiết một phiếu Đang duyệt.'], '—',
+      ['K thấy nút Từ chối màu đỏ.', 'L (chỉ quyền Kế toán) không thấy Từ chối.', 'Phiếu Đang duyệt không có Từ chối.',
+       'Nút Từ chối chỉ ở màn chi tiết, không có ở cột Hành động.']),
+    T(2, 'Giao diện cửa sổ Từ chối', 'P1', [ACC_K, WAIT_2289], REJ, '—',
+      ['Tiêu đề "Từ chối phiếu yêu cầu hạch toán bổ sung", dòng phụ "Phiếu: PYCHTBS-002289", nút (x).',
+       'Ô "Lý do từ chối" có dấu * đỏ, gợi ý "Nhập lý do từ chối", con trỏ đặt sẵn trong ô.', 'Nút Từ chối (đỏ) và Hủy.']),
+    T(3, 'Từ chối thành công', 'P0', [ACC_K, WAIT_2289], REJ + ['Nhập "Sai hợp đồng", bấm Từ chối.'], 'Lý do từ chối: Sai hợp đồng',
+      ['Báo "Từ chối phiếu thành công", cửa sổ đóng, màn chi tiết nạp lại (vẫn ở màn chi tiết).']),
+    T(4, 'Bỏ trống lý do', 'P0', [ACC_K, WAIT_2289], REJ + ['Để trống (hoặc chỉ gõ dấu cách), bấm Từ chối.'], '—',
+      ['"Bắt buộc phải nhập" dưới ô, viền đỏ.', 'Cửa sổ không đóng, phiếu giữ Chờ duyệt.']),
+    T(5, 'Giới hạn ký tự lý do', 'P1', [ACC_K, WAIT_2289], REJ + ['Dán lý do đúng 1.000 ký tự, bấm Từ chối.', 'Với phiếu khác, dán 1.001 ký tự, bấm Từ chối.'],
+      ['Lý do: 1.000 ký tự', 'Lý do: 1.001 ký tự'],
+      ['1.000 ký tự: từ chối thành công.', '1.001 ký tự: báo "Vui lòng nhập tối đa 1000 ký tự.", phiếu giữ Chờ duyệt.',
+       'Lưu ý: hiện cửa sổ tự đóng và mất nội dung đã nhập khi bị báo lỗi này — ghi nhận nếu cần giữ cửa sổ.']),
+    T(6, 'Trạng thái phiếu sau khi từ chối', 'P0', 'Vừa từ chối ở TC_13.003.', [MENU, 'Quan sát dòng PYCHTBS-002289.'], '—',
+      ['Trạng thái "Đang tạo" nhãn xám (không có trạng thái Từ chối riêng).', 'Người duyệt = K, Ngày duyệt = lúc từ chối.']),
+    T(7, 'Hiển thị và lưu lý do từ chối', 'P0', 'Vừa từ chối ở TC_13.003; người lập là A.', ['A mở chi tiết, rồi màn Sửa PYCHTBS-002289.', 'A sửa và Gửi duyệt lại.'], '—',
+      ['Chi tiết và màn Sửa hiện ô Ghi chú duyệt "Sai hợp đồng" (chỉ đọc).', 'Sau khi gửi lại, Ghi chú duyệt cũ bị xóa.']),
+    T(8, 'Ảnh hưởng dữ liệu liên quan khi từ chối', 'P1', 'Vừa từ chối ở TC_13.003.', [MENU_CD, 'A mở danh sách của mình.'], '—',
+      ['Phiếu rời màn chờ duyệt.', 'A thấy lại nút Sửa, Gửi duyệt, Xóa; dòng chi tiết, file giữ nguyên.']),
+    T(9, 'Thông báo sau khi từ chối', 'P0', 'Vừa từ chối ở TC_13.003; người lập là A.', ['A mở chuông thông báo, bấm thông báo.'], '—',
+      ['A nhận "[HTBS] Từ chối: PYCHTBS-002289" kèm loại yêu cầu, "Người từ chối: <K>", "Lý do: Sai hợp đồng".', 'Bấm vào mở chi tiết phiếu.',
+       'Kế toán kho KHÔNG nhận thông báo từ chối.']),
+    T(10, 'Hủy thao tác từ chối', 'P0', [ACC_K, WAIT_2289], REJ + ['Nhập lý do, bấm Hủy (hoặc (x), hoặc click ra ngoài).'], '—',
+      ['Cửa sổ đóng, không hỏi xác nhận.', 'Phiếu giữ Chờ duyệt; mở lại cửa sổ thì ô lý do trống.']),
+    T(11, 'Không từ chối lại phiếu đã đổi trạng thái', 'P1', ['Tài khoản K và K2 cùng có quyền Kế toán thanh toán công ty 1; ' + WAIT_2289],
+      ['K và K2 cùng mở chi tiết PYCHTBS-002289.', 'K từ chối thành công.', 'K2 bấm Từ chối, nhập lý do, bấm Từ chối.'], '—',
+      ['K2 bị báo "Không thể chuyển phiếu từ trạng thái hiện tại sang trạng thái này".', 'Phiếu giữ Đang tạo với lý do của K.']),
+    T(12, 'Ghi nhận người, thời gian, lịch sử từ chối', 'P0', 'Vừa từ chối ở TC_13.003 lúc 21/10/2026 08:30.', ['Mở Lịch sử PYCHTBS-002289.'], '—',
+      ['Mốc "Thay đổi trạng thái": Chờ duyệt thành Đang tạo, kèm lý do "Sai hợp đồng".', 'Người thực hiện K, thời gian 21/10/2026 08:30.']),
+    T(13, 'Luồng từ chối, sửa, gửi lại', 'P0', [ACC_A, ACC_K, DRAFT_A],
+      ['A gửi duyệt PYCHTBS-A01.', 'K từ chối lý do "Thiếu chứng từ".', 'A sửa, thêm file, Gửi duyệt.'], '—',
+      ['Lịch sử có đủ mốc theo thứ tự thời gian.', 'Phiếu quay lại màn chờ duyệt của K; Ghi chú duyệt trống.']),
+]
+
+# ============================================================== XIV. GỬI DUYỆT TỪ MÀN CHI TIẾT VÀ IN PHIẾU
+SEND = ['Đăng nhập A.', 'Mở chi tiết PYCHTBS-A01.', 'Bấm Gửi duyệt ở chân màn.']
+S14 = [
+    T(1, 'Hộp xác nhận gửi duyệt', 'P0', [ACC_A, DRAFT_A], SEND, '—',
+      ['Hộp "Xác nhận gửi duyệt", nội dung "Gửi duyệt phiếu yêu cầu hạch toán bổ sung "PYCHTBS-A01"? Sau khi gửi, phiếu không sửa '
+       'được nữa cho tới khi bị từ chối."', 'Nút Gửi duyệt và Hủy.']),
+    T(2, 'Gửi duyệt thành công từ màn chi tiết', 'P0', [ACC_A, DRAFT_A], SEND + ['Bấm Gửi duyệt trong hộp.'], '—',
+      ['Báo "Gửi duyệt thành công".', 'Ở lại màn chi tiết, nạp lại: không còn Sửa, Gửi duyệt, Xóa.']),
+    T(3, 'Hủy gửi duyệt', 'P1', [ACC_A, DRAFT_A], SEND + ['Bấm Hủy.'], '—', ['Hộp đóng, phiếu giữ Đang tạo.']),
+    T(4, 'Gửi duyệt phiếu chưa có file', 'P0', [ACC_A, 'PYCHTBS-A09 Đang tạo, loại Khác đủ trường, chưa có file.'],
+      ['Mở chi tiết PYCHTBS-A09, bấm Gửi duyệt, xác nhận.'], '—', ['Báo "Phiếu chưa có file đính kèm", phiếu giữ Đang tạo.']),
+    T(5, 'Gửi duyệt phiếu Số tiền bằng 0', 'P1', [ACC_A, 'PYCHTBS-A10 Đang tạo loại Khác, Số tiền 0, có file.'],
+      ['Mở chi tiết PYCHTBS-A10, bấm Gửi duyệt, xác nhận.'], '—', ['Báo "Số tiền của phiếu phải lớn hơn 0".']),
+    T(6, 'In phiếu từ danh sách', 'P1', [PRE_LIST, WAIT_2289], [MENU, 'Bấm biểu tượng In phiếu ở dòng PYCHTBS-002289.'], '—',
+      ['Mở cửa sổ "Xem trước phiếu yêu cầu hạch toán bổ sung PYCHTBS-002289" ngay trên màn (không mở tab mới), hiện "Đang tải dữ liệu in…".',
+       'Bản in tiêu đề "YÊU CẦU HẠCH TOÁN BỔ SUNG", số phiếu, ngày lập, loại yêu cầu, bảng chi tiết, tổng tiền.']),
+    T(7, 'Letterhead theo công ty ghi trên phiếu', 'P0', ['Tài khoản C thuộc công ty 2; ' + WAIT_2289],
+      ['Đăng nhập C.', 'In PYCHTBS-002289.'], '—', ['Đầu bản in là letterhead của công ty 1 (công ty của phiếu), KHÔNG phải công ty 2 của C.']),
+    T(8, 'In và đóng cửa sổ xem trước', 'P2', 'Đang ở cửa sổ xem trước của TC_14.006.', ['Bấm In.', 'Đóng hộp in, bấm (x).'], '—',
+      ['Bấm In mở hộp thoại in của trình duyệt.', 'Bấm (x) đóng cửa sổ, danh sách giữ nguyên.']),
+    T(9, 'In phiếu loại Phối hợp kinh doanh', 'P2', 'Phiếu PYCHTBS-002285.', ['Mở chi tiết, bấm In phiếu.'], '—',
+      ['Bản in liệt kê các dòng quyết toán theo phòng hỗ trợ.']),
+]
+
+# ============================================================== XV. CHỌN ĐỐI TƯỢNG, CHỨNG TỪ VÀ CÀI ĐẶT BỘ LỌC
+DEBT = TAO + ['Chọn loại Điều chỉnh công nợ khách hàng, bấm Thêm dòng.']
+S15 = [
+    T(1, 'Cửa sổ Chọn khách hàng', 'P1', PRE_FORM, DEBT + ['Bấm ô Khách hàng của dòng.', 'Nhập "KH-A" vào Tên / Mã khách hàng, nhấn Enter.', 'Bấm dòng KH-A.'], '—',
+      ['Cửa sổ "Chọn khách hàng" có ô Tên / Mã khách hàng, Mã số thuế, Số điện thoại.', 'Bấm dòng: báo "Chọn khách hàng thành công", '
+       'cửa sổ đóng, ô hiện "<mã> - KH-A".']),
+    T(2, 'Chọn hợp đồng khi chưa có đối tượng', 'P0', PRE_FORM, DEBT + ['Bấm ô Hợp đồng bán khi chưa chọn khách hàng.'], '—',
+      ['Báo "Vui lòng chọn đối tượng trước", không mở cửa sổ.']),
+    T(3, 'Đổi đối tượng xóa hợp đồng của dòng', 'P1', [PRE_FORM, 'Dòng 1 đã chọn KH-A / HĐ-A1.'], ['Bấm ô Khách hàng dòng 1, chọn KH-B.'], '—',
+      ['Ô Hợp đồng bán của dòng 1 bị xóa, phải chọn lại.']),
+    T(4, 'Cửa sổ Chọn nhà cung cấp', 'P1', PRE_FORM, TAO + ['Chọn loại NCC hỗ trợ phát triển thị trường, bấm ô Nhà cung cấp.', 'Nhập "NCC-X", bấm Tìm kiếm.'], '—',
+      ['Cửa sổ "Chọn nhà cung cấp", cột Mã nhà cung cấp, Tên nhà cung cấp sắp xếp được.', 'Không có kết quả: "Không có nhà cung cấp phù hợp.".']),
+    T(5, 'Cửa sổ Chọn nhân viên chỉ nhân viên đang làm', 'P2', [PRE_FORM, 'Nhân viên NV-09 đã nghỉ việc.'],
+      TAO + ['Chọn loại Khác, Đối tượng Nhân viên, bấm ô Nhân viên.', 'Tìm "NV-09".'], '—', ['"Không có nhân viên phù hợp." (người đã nghỉ không hiện).']),
+    T(6, 'Cửa sổ Chọn phiếu xác nhận bảo hành', 'P1', [PRE_FORM, 'Có XNBH-0105 đã duyệt và XNBH-0106 chưa duyệt.'],
+      TAO + ['Chọn loại bảo hành, bấm ô Phiếu xác nhận bảo hành.', 'Chọn Người tạo một nhân viên.'], '—',
+      ['Chỉ liệt kê phiếu đã duyệt (có XNBH-0105, không có XNBH-0106).', 'Chọn Người tạo là lọc lại ngay.']),
+    T(7, 'Đóng cửa sổ chọn không chọn gì', 'P2', PRE_FORM, DEBT + ['Bấm ô Khách hàng, bấm Đóng (hoặc (x) / click ra ngoài).'], '—',
+      ['Cửa sổ đóng, ô vẫn trống.']),
+    T(8, 'Bỏ chọn bằng nút ×', 'P2', [PRE_FORM, 'Đã chọn XNBH-0105 ở loại bảo hành (NCC-Y, 4,200,000).'], ['Bấm × ở ô Phiếu xác nhận bảo hành.'], '—',
+      ['Phiếu xác nhận, Nhà cung cấp bị xóa; Số tiền về 0.']),
+]
+
+SECTIONS = [
+    ('I', 'HIỂN THỊ DANH SÁCH VÀ TRUY CẬP', S1),
+    ('II', 'TÌM KIẾM VÀ LỌC', S2),
+    ('III', 'THÊM MỚI', S3),
+    ('IV', 'CHỈNH SỬA', S4),
+    ('V', 'XÓA', S5),
+    ('VI', 'LỊCH SỬ THAY ĐỔI', S6),
+    ('VII', 'XEM CHI TIẾT', S7),
+    ('VIII', 'TÙY CHỈNH CỘT', S8),
+    ('IX', 'XUẤT EXCEL', S9),
+    ('X', 'ẢNH HƯỞNG CÁC MÀN HÌNH SỬ DỤNG DỮ LIỆU', S10),
+    ('XI', 'PHÂN QUYỀN', S11),
+    ('XII', 'DUYỆT PHIẾU (LẬP PHIẾU KẾ TOÁN)', S12),
+    ('XIII', 'KHÔNG DUYỆT PHIẾU (TỪ CHỐI)', S13),
+    ('XIV', 'GỬI DUYỆT TỪ MÀN CHI TIẾT VÀ IN PHIẾU', S14),
+    ('XV', 'CHỌN ĐỐI TƯỢNG VÀ CHỨNG TỪ', S15),
+]
+check_no_dash_pre(SECTIONS, [])
 
 if __name__ == '__main__':
-    build(output_file=OUT, sheet_name='Trang tính1', feature_name='Phiếu yêu cầu hạch toán bổ sung - Cập nhật ngày 30/10/2026',
-          module_name='YC hạch toán bổ sung', description_block=DESCRIPTION_BLOCK, role_tcs=ROLE_TCS, sections=SECTIONS)
+    build(output_file=OUT, sheet_name='Trang tính1', feature_name='Phiếu yêu cầu hạch toán bổ sung - Cập nhật ngày 02/11/2026',
+          module_name='YC hạch toán bổ sung', description_block=DESCRIPTION_BLOCK, role_tcs=[], sections=SECTIONS)

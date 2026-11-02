@@ -135,3 +135,33 @@ User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Ng�
 - Số liệu (metrics.py): trước fn=14 ui=9.6 ev=1.8 evch=429 intro=720, 25 event / 15 thiếu Before / 19 thiếu During /
   0 dòng quyền → sau fn=14 ui=15.6 ev=6.9 evch=2105 intro=1439, 96 event / 0 thiếu Before / 66 thiếu During (đều là
   event chỉ đọc / thao tác giao diện; mọi event ghi dữ liệu đủ 3 cụm) / 6 dòng quyền
+
+### Xuất lại theo checklist Mẫu tài liệu.xlsx (02/11/2026) @khoipv
+Checklist tester: `../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json` (Testcase 324 dòng, SRS 163 dòng).
+- [x] Đối chiếu lại code nhánh develop cho các điểm checklist hỏi (tìm kiếm: hoa/thường, Đ ≠ D, ký tự % _ hiểu đúng
+      nghĩa đen, bỏ khoảng trắng; bộ lọc chỉ nhớ khi mở Chi tiết / Sửa, không nhớ số trang, không tách tài khoản; cột
+      Hành động kéo được nhưng không ẩn; cấu hình cột lưu máy chủ theo tài khoản; lưu không đổi gì không ghi lịch sử;
+      không có trường duy nhất; ô số bỏ ký tự lạ khi gõ; phiếu đã bị xóa → câu lỗi tiếng Anh "Item Not Found!")
+- [x] `gen_testcase.py` viết lại: section theo đúng thứ tự + tên nhóm checklist (I Hiển thị … XIII Không duyệt phiếu
+      (Từ chối)), rồi XIV Cài đặt bộ lọc, XV Chọn đơn hàng/hợp đồng và phiếu YCXH; khối TC-ROLE giữ đầu file. Mỗi TC khai
+      stt checklist nó kiểm (COVER). Sửa TC-ROLE-09 theo code (ngoài phạm vi → trang không tìm thấy, không phải toast),
+      Số kiện "1.5" → ô thành "15", câu lỗi file đính kèm nguyên văn. Feature "- Cập nhật ngày 02/11/2026"
+- [x] `gen_srs.py` bổ sung: Phần 1 (phạm vi chức năng, mục đích sử dụng dữ liệu, ràng buộc quan trọng; thuật ngữ từng
+      trạng thái, trường đặc thù, cấu trúc phân cấp); Phần 2 (cột Tác dụng, dòng Khóa/Import "màn không có", điều kiện
+      hiển thị và thao tác); 2.1 (cột mặc định / bắt buộc, sắp xếp, phân trang), 2.2 (kiểu khớp, giới hạn ký tự, ghi nhớ
+      bộ lọc), 2.4 (Hành động là cột bắt buộc kéo được, lưu theo tài khoản / trình duyệt khác), 2.5 (trùng dữ liệu, chuẩn
+      hóa, Lưu và tiếp tục, đóng màn), 2.8 (trường được / không được sửa, không kiểm trùng, lịch sử), 2.9 (ràng buộc con /
+      đang dùng), 2.10 (giữ bộ lọc về trang 1), 2.13 (mọi trang, rỗng không ra file), 2.14 (chưa có lịch sử, giữ trạng
+      thái danh sách); Phần 4 thêm BR-14 (duy nhất + chuẩn hóa), BR-15 (cha / con); Phần 5 thêm bảng chi tiết tham chiếu
+      6 cột. Sửa lệch code: bộ lọc KHÔNG nhớ khi rời sang màn Tạo mới (bản cũ ghi có)
+- [x] `gen_checklist.py` mới → `Đối chiếu checklist.xlsx` (TC_MAP dựng từ COVER + N/A + ghi chú lệch; SRS_MAP khai tay)
+- [x] Chạy sạch: SRS selfcheck khớp bản mẫu (121 trang); tc_engine sạch thuật ngữ / emoji / xuống dòng; đối chiếu đủ dòng
+- Số liệu: TC 82 → 272 (P0 115 = 42%). Checklist Testcase: 254 dòng có TC / 70 N/A (Khóa/Mở khóa 20 + 10 dòng lẻ,
+  Import 37 + 2 dòng lẻ, 1 dòng "bộ lọc màn liên quan"). SRS: 133 dòng có mục / 30 N/A (FR Khóa/Mở khóa 10, FR Import 18,
+  xem bản ghi khóa, điều kiện khóa).
+- Lệch checklist (ghi theo code): xuất Excel rỗng không ra file; bộ lọc nhớ theo trình duyệt (tài khoản khác thấy lại);
+  quay lại từ Chi tiết giữ bộ lọc nhưng về trang 1; phiếu đã bị xóa ở tab khác báo câu tiếng Anh "Item Not Found!"
+
+### Sửa testcase theo góp ý user (02/11/2026) @khoipv
+- [x] Bỏ trùng 2 phần phân quyền + Cài đặt bộ lọc ghép vào nhóm Tìm kiếm và lọc (cùng cách đã duyệt ở màn hạch toán bổ sung): 10 case khối phân quyền đầu file → XI (TC_11.001–010, giữ stt checklist từ ROLE_COVER, P0_UP XI dời +10); 6 case Cài đặt bộ lọc từ XIV → II (thêm tiền tố "Cài đặt bộ lọc:"); XV Chọn đơn hàng/hợp đồng thành XIV
+- [x] Sinh lại testcase.xlsx + Đối chiếu checklist.xlsx (số dòng có TC không đổi); 272 TC, P0 42%, không trùng mã

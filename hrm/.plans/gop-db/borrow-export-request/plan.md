@@ -712,3 +712,39 @@ User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Ng�
 
 ### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
 - [x] HDSD PHẦN 4 Duyệt: viết lại bước lập phiếu xuất hàng mượn (Ghi chú, số Xuất > 0 và ≤ Đang mượn theo BorrowExportForm.vue, nút Lưu và duyệt / Lưu và tiếp tục / Quay lại có ảnh) — sinh lại 22 trang
+
+### Xuất lại theo checklist Mẫu tài liệu.xlsx (02/11/2026) @khoipv
+Checklist tester: `../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json` (324 dòng Testcase, 163 dòng SRS).
+- [x] Đọc lại code develop cả 2 repo để expected / câu thông báo khớp code (danh sách, bộ lọc + ghi nhớ bộ lọc, form Thêm
+      mới + cảnh báo chưa lưu, ô Xuất, popup chọn phiếu, chi tiết, Từ chối, màn Phiếu xuất hàng mượn, lịch sử dùng chung,
+      xuất Excel, xử lý hết phiên)
+- [x] `gen_testcase.py` viết lại: section theo đúng thứ tự + tên nhóm checklist (I Hiển thị danh sách và truy cập … XIII
+      Không duyệt phiếu) + XIV In phiếu và in danh sách, XV Cài đặt bộ lọc; khối TC-ROLE giữ đầu file (+ROLE-09/10 gọi thẳng
+      chức năng khi thiếu quyền); mỗi TC có khóa, mã TC tự đánh, bảng `ID[khóa]` cho file đối chiếu. Số TC 100 → 220,
+      P0 102 (46%), tc_engine sạch (thuật ngữ / emoji / xuống dòng), tiêu đề "- Cập nhật ngày 02/11/2026"
+- [x] `gen_srs.py` bổ sung: Phần 1 (phạm vi chức năng, mục đích sử dụng dữ liệu, ràng buộc quan trọng; thuật ngữ tách từng
+      trạng thái + Đang tạo, trường đặc thù, cấu trúc phân cấp); Phần 2 (dòng Sửa/Xóa/Khóa/Import trong ma trận, trường hợp
+      không có quyền, bảng điều kiện hiển thị); 2.1 (hết phiên, cột hiện/ẩn/bắt buộc, chu kỳ sắp xếp); 2.2 (trường tìm,
+      khớp một phần, không phân biệt hoa thường / dấu, không giới hạn ký tự, cơ chế ghi nhớ bộ lọc); 2.4 (ghi nhớ cấu hình
+      cột theo người dùng); 2.5 (quy tắc trùng, trang không có Đóng/X, chuẩn hóa Ghi chú); 2.7 (quay lại giữ bộ lọc, về
+      trang 1); 2.9 (không có hộp xác nhận duyệt, duyệt lại bị chặn); 2.12 (3 loại mốc, 1 thao tác 1 mốc, 3 nhóm lọc, giữ
+      trạng thái danh sách); Phần 4 BR-11..BR-15 + ý xóa ở BR-05; Phần 5 thêm Kho dữ liệu hàng hoá + bảng chi tiết tham chiếu
+- [x] Sửa SRS lệch code: mốc lịch sử khi từ chối tên là "Từ chối" (không phải "Không duyệt"); ô tìm nhanh không giới hạn
+      ký tự (trước ghi 0–255)
+- [x] `gen_checklist.py` (mới) → `Đối chiếu checklist.xlsx`: Testcase 206 có TC / 118 N/A (Lưu nháp, Chỉnh sửa, Xóa,
+      Khóa/Mở khóa, Import Excel, đổi mã); SRS 111 có mục / 52 N/A (FR-04 Sửa, FR-05 Xóa, FR-06 Khóa, FR-08 Import, trùng
+      bản ghi khóa, ảnh hưởng khóa). Soát ngẫu nhiên 30 dòng: TC ghi đúng ý
+- [x] Chạy sạch cả 3: SRS selfcheck khớp bản mẫu (93 trang), tc_engine không lỗi, đối chiếu không thiếu dòng
+- Lệch code ↔ checklist ghi ở cột Ghi chú: F5 không giữ bộ lọc; quay lại từ chi tiết về trang 1 (chỉ giữ bộ lọc); bộ lọc
+  lưu theo trình duyệt không theo tài khoản; duyệt không có hộp xác nhận riêng; ký tự % và _ trong ô tìm là ký tự đại diện;
+  đổi tên hàng ở danh mục không đồng bộ vào phiếu đã lập (thiết kế chứng từ)
+
+### Checkpoint — 02/11/2026
+Vừa hoàn thành: xuất lại testcase + SRS theo checklist Mẫu tài liệu.xlsx, thêm file đối chiếu
+Đang làm dở: —
+Bước tiếp theo: user xem `Đối chiếu checklist.xlsx` + các lệch ở cột Ghi chú; HDSD chưa đổi (ngoài phạm vi lượt này)
+Blocked:
+
+### Sửa testcase theo góp ý user (02/11/2026) @khoipv
+- [x] Bỏ trùng 2 phần phân quyền + Cài đặt bộ lọc ghép vào nhóm Tìm kiếm và lọc (cùng cách đã duyệt ở màn hạch toán bổ sung): 11 case khối phân quyền đầu file → XI. PHÂN QUYỀN (TC_11.001–011, khóa r00..r10); 4 case Cài đặt bộ lọc từ XV → II (TC_02.034–037); bỏ phần XV, còn 14 nhóm
+- [x] Sinh lại testcase.xlsx + Đối chiếu checklist.xlsx (số dòng có TC không đổi); 220 TC, P0 46%, không trùng mã

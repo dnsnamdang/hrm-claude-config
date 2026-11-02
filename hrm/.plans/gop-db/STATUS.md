@@ -19,7 +19,16 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
-## Phiếu giao việc (ERP → HRM) — TẠM DỪNG giữa Phase 1 (2026-10-31, @khoipv)
+## Phiếu nhập kết quả (ERP → HRM) — ĐANG LÀM (2026-11-02, @khoipv)
+
+Port màn ERP `WrImportResults.index?type=all` (CSKH › Giao việc › Phiếu nhập kết quả). Trọn bộ 1 lần, nghiệp vụ y hệt ERP (kể cả lỗi), Duyệt KQ link ERP, ảnh S3. Code xong T0–T14 (02/11), chưa commit.
+
+**Checkpoint 02/11:** BE + FE trọn bộ (danh sách · chi tiết · tạo · sửa · xóa · không duyệt · in/xuất · lịch sử), nối nút Nhập KQ / Xem PNKQ ở PGV, menu CSKH sau bán › Giao việc. Verify: php -l, compile, API thật (ghi trong transaction rollback). Còn: test trình duyệt, upload S3 thật, `permission:sync` 4 quyền type 24.
+Tài liệu: `.plans/gop-db/phieu-nhap-ket-qua/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-02-phieu-nhap-ket-qua-design.md`.
+
+## Phiếu giao việc (ERP → HRM) — HOÀN THÀNH, ĐÃ PUSH develop (hrm-api `4053ab27c`, hrm-client `50491b5bc`) (2026-11-02, @khoipv)
+
+**Checkpoint 02/11:** Playwright local PASS nhóm A–E (tạo từ 5 nguồn màn chờ, chi tiết 5 type, xóa, cảnh báo chưa lưu); dữ liệu test đã dọn, DB khớp snapshot. Bỏ ô Trạng thái ở khối Thông tin KH màn chi tiết (user chốt). Còn lại: `permission:sync` thật cho 3 quyền xem; repo ERP Phase 4 chưa commit.
 
 Port màn ERP `WrAssignTasks.index?type=all` (+ `?type=waiting_import_result`) trọn bộ: Danh sách · Chi tiết · Tạo · Sửa · Xóa(Hủy) · In/Xuất.
 Màn chưa port (Nhập KQ, Duyệt KQ, HĐ bán, YC lắp đặt…) link ERP. Menu CSKH sau bán › Giao việc. 3 quyền type 24 tên nguyên văn ERP.

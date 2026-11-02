@@ -5406,3 +5406,33 @@ Vừa hoàn thành: R8 (nhãn Excel), R9 (port popup HĐ loại 1 theo ERP).
 Đang làm dở: không.
 Bước tiếp theo: user mở trình duyệt kiểm R5/R6/R7/R9 (chọn phiếu nhập kho / đơn bảo hiểm ở loại 1 rồi Lưu nháp + Gửi duyệt).
 Blocked: không.
+
+### #11920 — vòng 3 (2026-11-02, phản hồi tester)
+
+Tester (Bug 2): "Chọn loại chi trả khách hàng, ERP 470 phiếu, HRM 6 → chưa thấy thay đổi". Vòng 2 bỏ mục này vì
+hiểu nhầm "mục 4" = nháy màn; tester nêu lại rõ ràng → port nguồn ERP như đã làm cho loại chi 1 (R9).
+
+- [x] **R10** Popup HĐ loại chi 2 port ERP `searchAllContract()` nhánh mặc định (`type=create_bill`, 10 nguồn):
+      class nguồn mới `BillPaymentCustomerContractSource`, `searchSellContracts()` rẽ nhánh
+      `usage=bill_payment_customer`, FE `contractExtraParams` loại 2 gửi usage; `allowedContractTypes(2)` thêm
+      các loại chứng từ mới (HĐ mua 4 loại, HĐ dịch vụ mua, HĐ nợ đầu kỳ NCC, phiếu nhập/xuất kho, phiếu nhập
+      xử lý thừa thiếu, xác nhận bảo hành).
+
+- Kết quả R10 — so bằng CHÍNH code ERP (`SearchContractService::searchAllContract`, type `create_bill`) chạy trên
+  cùng DB `gop_db`, cùng người đăng nhập:
+  Etek Green (34): user 781 HRM 386 = ERP 386 (firm 18 · opening 3 · ibc 7 · ibcn 310 · nợ đầu kỳ NCC 48);
+  user 153 HRM 365 = ERP 365 · đối tác 11600: 49 = 49 (gồm 11 xác nhận bảo hành) · 11595: 31 = 31 (gồm 2 phiếu nhập
+  thừa thiếu) · 11803: 578 = 578. Trước khi sửa HRM ra 6.
+  Lệch 470 của tester là do dữ liệu dev/ERP prod khác local — logic giờ trùng ERP.
+- Logic cần note cho tester: loại 2 hiện (a) HĐ bán / HĐ bảo dưỡng / HĐ đầu kỳ do CHÍNH người lập phiếu tạo,
+  (b) toàn bộ HĐ mua / HĐ nợ đầu kỳ NCC / HĐ dịch vụ mua / phiếu nhập thừa thiếu / xác nhận bảo hành của đối tác
+  (bảng `customers` chứa cả NCC) — không lọc người tạo, giống ERP. Thêm so với ERP: `hrm_contracts` của chính mình.
+- File: BE `Services/BillPaymentCustomerContractSource.php` (mới), `BillIncomeRequestService` (hằng
+  `USAGE_PAYMENT_CUSTOMER` + rẽ nhánh đầu `searchSellContracts()`), `BillPaymentRequest::allowedContractTypes(2)`;
+  FE `BillPaymentRequestForm.vue` `contractExtraParams` loại 2 gửi `usage=bill_payment_customer` (bỏ `only_mine`).
+
+### Checkpoint — 2026-11-02
+Vừa hoàn thành: #11920 vòng 3 — R10 (port popup HĐ loại chi 2 theo ERP).
+Đang làm dở: không.
+Bước tiếp theo: mở trình duyệt chọn loại chi 2 + KH Etek Green → popup ra đủ HĐ, chọn 1 HĐ mua rồi Lưu nháp.
+Blocked:
