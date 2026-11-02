@@ -29,6 +29,20 @@ chỉ dùng chữ không dấu (`VIEC`, `TASK`, `PGV`, `PCT`, `MET`).
   ts_business, meeting, personal, digest) → `openWorkItemById(loại, id)` (`ui/my_todo/my_todo_actions.dart`).
   Loại chưa có màn trên app (issue) → snackbar "chưa có trên app"; personal / digest → mở Việc của tôi.
 
+## 2b. Bấm push khi app TẮT HẲN (iOS UIScene) — đã vỡ 1 lần, đừng gỡ
+
+- App chạy UIScene (`ios/Runner/SceneDelegate.swift`) nên iOS đưa thông báo mở app qua
+  `connectionOptions.notificationResponse`, KHÔNG qua launchOptions → `FirebaseMessaging.getInitialMessage()` LUÔN null
+  (firebase_messaging 15.x). Triệu chứng: app đang tắt, bấm push chỉ mở tới "Chọn phân hệ"; app chạy nền thì vẫn đúng.
+- Cách đang chạy (02/11/2026): SceneDelegate giữ `userInfo` → `AppDelegate.launchNotification` → Dart gọi kênh `hrm/tp`
+  `takeLaunchNotification` trong `AppBloc` khi getInitialMessage rỗng; chờ navigator ≤ 10s + 600ms rồi mới mở;
+  chặn mở trùng 15s (firebase vẫn có thể bắn thêm `onMessageOpenedApp` cho cùng lần bấm).
+- Android: thông báo hiện lúc app đang mở (`LocalPushNotificationHelper.notify`) bấm vào cũng đi `openNotificationTarget`.
+- Loại app chưa có màn: vẫn mở app (màn đang đứng / Chọn phân hệ) + `AppToast.info` 6s "Nội dung này chưa có trên app,
+  vui lòng xem chi tiết trên web" (user chốt 02/11/2026 — không mở trình duyệt, không đỏ như lỗi).
+- Thử: `xcrun simctl terminate` app → `simctl push` (payload có `gcm.message_id`) → chạm banner NGAY (≤ 2s, banner tự
+  tắt; chạm thông báo trong Trung tâm thông báo của simulator không ăn) → chờ ~15s (bản debug khởi động chậm) → chụp màn.
+
 ## 3. Nhắc hạn (BE `WorkReminderService`, chốt 29/10/2026)
 
 - Nhắc trước hạn theo cấu hình công ty từng loại (màn web `/assign/work-reminder-settings`, quyền "Cấu hình nhắc
