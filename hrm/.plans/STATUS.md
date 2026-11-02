@@ -16,6 +16,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Hoàn thành
 
+- binh-luan-kieu-facebook → @cuong61n → .plans/binh-luan-kieu-facebook/plan.md
+  Trạng thái: **CODE XONG + TEST LOCAL + ĐÃ PUSH `develop` (31/10/2026)** — bình luận Nhiệm vụ/Vấn đề kiểu Facebook (web + app + BE): giờ tương đối, ghim, "Đã giải quyết", người tạo/phụ trách xóa, phân trang, ảnh thumbnail, gửi tức thì. hrm-api `ff1ccbaed` · hrm-client `84c49fc81` · TPE_APP `7b7670c` (App 2.2.6 build 158 tpeDev → TestFlight). Còn: chạy migration + deploy BE lên server dev.
+
 - etekpower-xoa-ca-10-10-cong-dinh-muc → @cuong61n → .plans/etekpower-xoa-ca-10-10-cong-dinh-muc/plan.md
   Trạng thái: **Đã sửa dữ liệu PROD (29/10/2026)** — Etek Power xoá ca 10/10 của 51 NV Văn phòng + Kinh doanh, dọn công ngày 10/10, tính lại bảng tổng hợp tháng 10 (id 34): công định mức 25 → 24. Không đổi code.
 

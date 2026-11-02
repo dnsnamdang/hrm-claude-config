@@ -60,6 +60,8 @@ if (v != null && mounted) _apply(v);          // _apply: setState(_values = v) +
   liền kề cùng trạng thái (mẫu `meeting_list_filter.dart` `_saveLayout`).
 - **Lọc nhanh theo vai trò** (web có nút icon cạnh dòng Tổng: tôi làm / giao / theo dõi / duyệt KQ) → app để ở
   `WorkTotalLine(roles:, activeRole:, onRole:)` như web, KHÔNG nhét vào bảng lọc; bật thì có dòng "Đang lọc: … ✕".
+  ⚠️ Dòng Tổng + nút vai trò phải hiện **cả khi danh sách rỗng** (tách `_totalLine()`, vẽ ở nhánh rỗng lẫn nhánh
+  có dữ liệu) — để ở phần tử đầu ListView có dữ liệu thì lọc ra 0 dòng là mất luôn nút, không bỏ lọc được (lỗi thật 31/10/2026).
 - Đổi lọc liên tục: màn giữ số lượt tải (`_seq`), bỏ kết quả lượt cũ về muộn (kẻo số Tổng lệch nút đang bật).
 
 ## 3. Nội dung danh sách
@@ -70,6 +72,8 @@ if (v != null && mounted) _apply(v);          // _apply: setState(_values = v) +
   chữ / màu ở app. Màu chỉ trong 9 màu chuẩn web (xanh lá hoàn thành, xanh dương đang làm, cam chờ duyệt…).
 - **Nhóm theo hạn** (Việc của tôi): Quá hạn → Hôm nay → Ngày mai → Tuần này → Tuần sau → Sau đó → Không hạn;
   Quá hạn LÊN ĐẦU; mặc định chỉ mở "Hôm nay"; tiêu đề nhóm chữ hoa màu nhóm + số đếm; nhóm rỗng ẩn (trừ 4 nhóm đầu).
+  ⚠️ 1 việc nằm được ở 2 nhóm (Hôm nay/Ngày mai **và** Tuần này) → key thẻ PHẢI kèm nhóm (`ValueKey('<nhóm>-<loại>-<id>')`);
+  key trùng thì mở cả 2 nhóm rồi đóng/mở/tick là ListView vỡ, bản release đứng hình cả tab (lỗi thật 31/10/2026).
 - Việc nhiều ngày: hạn = hạn chót / giờ về (không phải ngày bắt đầu); thẻ ghi "Đi dd/MM → về dd/MM" và
   "Đang diễn ra, còn n ngày" (xanh) khi đang chạy — không tính quá hạn.
 - Tìm phía app (lọc trên dữ liệu đã tải) chỉ khi API trả trọn; danh mục lớn → tìm phía máy chủ có phân trang
