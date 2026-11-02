@@ -77,6 +77,8 @@ CSKH…) → tiêu đề chỉ còn `Từ chối`, người nhận không biết
    mới vừa 1 dòng**, dài hơn thì hệ thống tự rút (mục 5). Thêm dòng nhãn KHÔNG cần hỏi.
 2. Loại cần câu riêng (họp "sắp bắt đầu" chứ không "sắp đến hạn") → `PUSH_TITLE_PHRASES_BY_PREFIX`.
 3. Loại nhạy cảm → `SENSITIVE_PREFIXES` (mục 6).
+4. Icon ô bên trái màn Thông báo app: thêm prefix vào `TPE_APP/app/lib/ui/notification/notification_icon.dart`
+   (`_byPrefix`, icon Material + màu nhóm) VÀ web `hrm-client/utils/notificationIcon.js` (Remix, cùng màu). Chưa khai thì app dùng icon phân hệ; nhóm Khác → loa chung.
 
 ---
 

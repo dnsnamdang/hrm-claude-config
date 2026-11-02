@@ -19,10 +19,12 @@ Nhánh: `gop_db` (prod chạy gop_db) — worktree `worktrees/gop_db-api` + `wor
 - [x] 30/10/2026 Chỉnh cao ô lọc bằng các ô khác (chỉ màn này): đo Playwright các ô select2/ô ngày của bộ lọc = 35.6px, `CheckboxMultiSelect` mặc định 32px → scoped `.manpower-department-filter ::v-deep .csp-control { min-height: 35.6px }`.
 - [x] 30/10/2026 Test UI cổng 3002 (gop_db-client → API 8003): ô rỗng cao 35.6px = các ô khác · danh sách 39 phòng, 14 có 🔒 · chọn 3 phòng (gồm phòng khoá MAR) → chip có 🔒, 0 bản ghi (đúng, không QĐ nào đủ 3) · bỏ MAR còn HN_QTTT + HN_KD2 → 2 bản ghi (đúng QĐ 4,5). Ghi chú: có chip thì ô giãn (2 chip = 56px) vì tên phòng dài, mỗi chip 1 dòng — hành vi sẵn của CheckboxMultiSelect.
 - [ ] Chưa test Xuất Excel / In theo lọc.
-- [ ] Commit + push `gop_db`, deploy (nhớ `php artisan migrate` + `route:cache` trên PROD).
+- [x] 02/11/2026 Đã commit + push `gop_db` (hrm-api `7974adf1c`, hrm-client `6228734f3`). Còn: `migrate` + `route:cache` khi deploy PROD.
 
 ### Checkpoint — 30/10/2026
 Vừa hoàn thành: BE + FE bộ lọc phòng ban định biên, test BE bằng tinker đạt.
 Đang làm dở: —
 Bước tiếp theo: test UI → commit/push gop_db → deploy.
 Blocked:
+
+**Trạng thái (02/11/2026): CODE XONG, CHỜ TEST** — đã push `gop_db`; chưa test Excel/In.

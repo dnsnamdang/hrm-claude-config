@@ -21,4 +21,6 @@ Nhánh: `gop_db` (worktree `worktrees/gop_db-api` + `gop_db-client`), chưa comm
 - [x] 30/10/2026 `components/FormComponent.vue`: tab phòng `is_manpower_changed` → tên đỏ + popover "Đã thay đổi định biên".
 - [x] 30/10/2026 Test Playwright cổng 3002 (tạm duyệt QĐ 713/714 ở DB local rồi trả lại status=1, hiệu lực 2026-10-20): danh sách hiện "Hết hiệu lực 1 phần" / "Hết hiệu lực" · chi tiết QĐ có tab HN_KD2, HN_QTTT đỏ, HN_KD1 thường, rê chuột hiện "Đã thay đổi định biên" · lọc "Hết hiệu lực" ra đúng 1 QĐ, lọc "Có hiệu lực" loại QĐ đó. ĐẠT.
 - [ ] Chưa test: file Excel xuất ra, bản In danh sách.
-- [ ] Commit + push `gop_db`, deploy PROD (`php artisan migrate` + `route:cache`).
+- [x] 02/11/2026 Đã commit + push `gop_db` (hrm-api `7974adf1c`, hrm-client `6228734f3`). Còn: `migrate` + `route:cache` khi deploy PROD.
+
+**Trạng thái (02/11/2026): CODE XONG, CHỜ TEST** — đã push `gop_db`; chưa test Excel/In.

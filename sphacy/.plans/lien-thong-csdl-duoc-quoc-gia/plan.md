@@ -56,6 +56,35 @@ Repo: `sphacy_api` (nhánh chính `api2`, nhánh tính năng `dqg`),
   - Trạng thái: **đã deploy prod 29/10/2026**, BE cả hai server ở `deb2c7c`. Danh mục
     đã dùng được, tester bắt đầu map thuốc được.
 
+- [x] **02/11/2026 — Sửa hai chỗ gây hiểu nhầm ở màn liên kết thuốc**
+  - Nghiệp vụ: tester báo hai việc khi triển khai cho nhà thuốc đầu tiên
+    (#5349 Quảng Hoà): (1) tab Liên kết thuốc lọc "Chỉ thuốc còn tồn" ra rỗng,
+    (2) cột "Mã quốc gia" ở màn Danh sách thuốc báo "Chưa ánh xạ" cho mọi thuốc.
+  - Việc (1) không phải lỗi: cả 7 thuốc còn tồn đã khớp thẳng danh mục quốc gia
+    (4 thuốc vừa đổi sang số ĐK mới, 3 thuốc giữ số VD-xxxxx-xx còn hiệu lực —
+    30.114/54.497 thuốc trong danh mục Bộ vẫn ở dạng cũ). Nhưng bảng chỉ hiện
+    "No data" nên ai cũng tưởng hỏng → thay bằng câu nói rõ đã xong, kèm gợi ý
+    chuyển sang "Tất cả thuốc"; đang tải thì không kể công sớm.
+  - Việc (2) là lỗi thật, ảnh hưởng MọI nhà thuốc: cột đó đọc `drug.csdlduoc_drug_id`
+    mà **không luồng nào ghi vào cột đó** (luồng duyệt ghi vào bảng
+    `csdlduoc_drug_map`). Việc đẩy liên thông không sai vì
+    `CsdlDuocService::findNationalDrug` đi đường khác, nhưng dược sĩ nhìn cột này
+    tưởng chưa map xong nên không dám khai tồn đầu kỳ.
+  - Kỹ thuật: `CsdlDuocController@drugCodes` viết lại thành một câu SQL tra theo đúng
+    hai đường của `findNationalDrug` — khớp thẳng số đăng ký (kể cả
+    `old_registration_number`), không khớp mới tra ánh xạ `approved` của chính nhà
+    thuốc. Biểu thức SQL dựng `match_key` chuyển về `CsdlDuocMapper::sqlMatchKey`
+    để hai nơi dùng chung một định nghĩa (nội dung giữ nguyên từng ký tự).
+  - Đã kiểm: trên dữ liệu thật local (cơ sở 797, 1349) 200 thuốc → 69 mã khớp thẳng,
+    đúng bằng số đếm bằng SQL; thuốc VD-19745-13 không có trong danh mục quốc gia
+    vẫn ra mã 893110302400 qua ánh xạ đã duyệt kèm `mapped_at`; mảng rỗng và cơ sở
+    chưa bật liên thông vẫn trả đúng; tab Liên kết thuốc và summary không đổi kết quả
+    sau khi dùng chung `sqlMatchKey`. Lint PHP 7.3 của prod — 0 lỗi. Kiểm chứng trên
+    cổng chính bằng tài khoản thật: 7 thuốc hiện đúng mã, chỉ 2 thuốc thật sự chưa có
+    mã (Fexophar 180, terpinzoat hạt) còn báo "Chưa ánh xạ".
+  - Trạng thái: BE `2c93a49` **đã deploy prod 02/11/2026** trên cả hai server API.
+    FE đợi build xong đẩy sau.
+
 ## Còn lại
 
 - 43 bản ghi danh mục Bộ không trả được (lỗi bên họ, hỏi lẻ từng bản ghi vẫn rỗng).

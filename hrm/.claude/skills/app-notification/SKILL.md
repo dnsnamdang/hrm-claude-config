@@ -29,6 +29,16 @@ chỉ dùng chữ không dấu (`VIEC`, `TASK`, `PGV`, `PCT`, `MET`).
   ts_business, meeting, personal, digest) → `openWorkItemById(loại, id)` (`ui/my_todo/my_todo_actions.dart`).
   Loại chưa có màn trên app (issue) → snackbar "chưa có trên app"; personal / digest → mở Việc của tôi.
 
+## 2a. Icon theo loại (02/11/2026)
+
+- Ô icon bên trái dòng thông báo theo PREFIX (`ui/notification/notification_icon.dart`): loại có trong Việc của tôi lấy
+  đúng icon + màu `WorkType` (Nhiệm vụ, Vấn đề, Meeting, phiếu giao việc / công tác, nhắc việc); loại khác icon riêng theo
+  nhóm (kho, tài chính, đào tạo…). Prefix chưa khai → icon phân hệ; nhóm Khác / không rõ → loa `campaign_outlined` navy.
+- Web dùng chung bảng (hình Remix): `hrm-client/utils/notificationIcon.js` — thêm prefix thì sửa CẢ 2 nơi.
+- Mở chuông từ trong 1 phân hệ → màn Thông báo chọn sẵn chip phân hệ đó (`AppModule.current`), "Tất cả" để xem hết.
+- Mapper `fetchNotifications`: `data.id` có thể là chuỗi (vd `runId` đồng bộ khuôn mặt) — luôn `int.tryParse`, ép
+  kiểu là cả danh sách "Không tải được thông báo".
+
 ## 2b. Bấm push khi app TẮT HẲN (iOS UIScene) — đã vỡ 1 lần, đừng gỡ
 
 - App chạy UIScene (`ios/Runner/SceneDelegate.swift`) nên iOS đưa thông báo mở app qua
@@ -45,8 +55,11 @@ chỉ dùng chữ không dấu (`VIEC`, `TASK`, `PGV`, `PCT`, `MET`).
 
 ## 3. Nhắc hạn (BE `WorkReminderService`, chốt 29/10/2026)
 
-- Nhắc trước hạn theo cấu hình công ty từng loại (màn web `/assign/work-reminder-settings`, quyền "Cấu hình nhắc
-  hạn công việc"); quá hạn báo ĐÚNG 1 lần; bản tin sáng 07:30 T2–T7; tổng quá hạn sáng thứ Hai.
+- Từ 02/11/2026 MỖI NGƯỜI tự cấu hình (app: Cài đặt → Thông báo → Nhắc việc, cùng chỗ với Thông báo cơm · web popup ở Việc của tôi, API
+  `assign/work-reminder-preferences`): bật/tắt từng loại + nhắc trước (Tự động = 25% độ dài việc, 15 phút – 1 ngày;
+  mọi mốc ≤ 1 ngày). Tắt = vẫn vào chuông, KHÔNG push (`no_push`); quá hạn luôn push. Màn cấu hình theo
+  công ty `/assign/work-reminder-settings` + quyền "Cấu hình nhắc hạn công việc" đã BỎ (02/11/2026, quyền ở REMOVED). Quá hạn báo ĐÚNG 1 lần (Nhắc việc cá nhân: 07:30 sáng
+  hôm sau); bản tin sáng 07:30 MỖI NGÀY kể cả CN, chỉ khi hôm đó có việc (có công tắc riêng); tổng quá hạn sáng thứ Hai.
 - Chạy `assign:send-work-reminders` (5 phút) + `assign:send-work-digest`; thử bằng `--at="Y-m-d H:i"`.
 - Chi tiết + bảng từng loại: `HRM/.plans/mytodo-nhac-han/design.md`.
 
