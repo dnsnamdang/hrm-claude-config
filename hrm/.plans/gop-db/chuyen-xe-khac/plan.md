@@ -56,3 +56,9 @@ Blocked: test tay tuyến cố định cần bảng giá hiệu lực trên DB l
 ## Ngày 29/10/2026 (@junfoke)
 - [x] 29/10/2026 — Bổ sung Excel 1 phiếu (ERP `otherDeliveryTrip.export`): BE `GET /{id}/export` (ô số kiểu số + `#,##0`, letterhead, tên file kèm mã), FE "Xuất Excel" ở hành động dòng + màn chi tiết. PHPUnit 5/5 (90 assertion), gọi HTTP thật 200 / ngoài phạm vi 404. Chưa chụp ảnh FE (profile Playwright bị giữ).
 - [x] 29/10/2026 — Commit màn (api `4fcd3b774`, client `015d86f34`) + merge develop; conflict `Modules/Transport/Routes/api.php` (develop thêm route Bảng giá hiệu lực / Tổng hợp giá đề xuất / HĐ vận chuyển) giữ cả hai, seeder quyền tự gộp (6 quyền vẫn ở cuối), test lại 5/5 → merge `8760e2250`, `8ef8d7842`. Đã lên origin/develop.
+
+## Ngày 02/11/2026 (@junfoke)
+- [x] 02/11/2026 — Xuất testcase màn Chuyến xe khác: `testcase/testcase - Chuyen xe khac.xlsx`, 138 TC (P0 53%): phân quyền 16, luồng tạo → duyệt → xuất phát → kết thúc → hạch toán, đối chiếu ERP-HRM 13 (gồm nửa luồng mỗi bên), ảnh hưởng báo cáo vận chuyển 6, mục 9 ghi 13 điểm khác ERP đã chốt.
+- [x] 02/11/2026 — Nghi lỗi code ghi lại khi viết TC (chưa sửa): thiếu ô lọc "Người tạo" ở danh sách (TC_02.010); thao tác khi trạng thái đã đổi báo "Bạn không có quyền…" thay vì "Trạng thái đã bị thay đổi" (chỉ Kết thúc đúng); kiểm cước khi Duyệt xuất phát / Kết thúc lấy bảng giá theo công ty người bấm, không theo công ty chuyến; thiếu VAT từng dòng và KM định mức tuyến không có sẵn (phiếu hạch toán ERP Km duyệt = 0).
+- [x] 02/11/2026 — Hỗ trợ trả lời "bảng giá hiệu lực xem/cấu hình ở đâu" cho TC: không tạo tay, tự sinh khi duyệt Tổng hợp giá vận chuyển đề xuất (`syncPriceListValid`), xem ở Vận chuyển › Vận chuyển với NCC › Bảng giá hiệu lực vận chuyển (chỉ xem/in/gia hạn).
+- [x] 02/11/2026 — Ô số đồng nhất (đậm, căn phải, phẩy hàng nghìn) — làm chung với Chuyến xe chở hàng, commit client `f3273c418` (xem plan `chuyen-xe-cho-hang`).

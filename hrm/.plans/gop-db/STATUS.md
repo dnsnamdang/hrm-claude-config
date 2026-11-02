@@ -2605,8 +2605,21 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   ⚠️ GOTCHA: CSS chung popup in ép `padding !important` cho ô `.no-border` → giãn vùng ký phải chèn div `signature-space` + inline `!important`, padding inline vô tác dụng. 3 file, không migration.
   Chuyển Hoàn thành: 2026-10-29.
 
+- xuat-tai-lieu-chuyen-doi → @junfoke → .plans/gop-db/xuat-tai-lieu-chuyen-doi/plan.md
+  Trạng thái: 🟢 **Đợt 1–3 xong, đã đẩy Drive (02/11/2026)**: 7 danh mục kho + 5 báo cáo + 7 phiếu (SRS + HDSD + tab TC 44–62). Còn: user điền sheet Checklist; rà `NGHI_LOI.md` cùng user.
+
+- so-chi-tiet-cong-no-nv → @junfoke → .plans/gop-db/so-chi-tiet-cong-no-nv/plan.md
+  Trạng thái: 🟡 **Spec xong, chờ user duyệt spec (02/11/2026)**. Nhánh dự kiến `feat/so-chi-tiet-cong-no-nv` từ `origin/develop`.
+  Scope: màn Sổ chi tiết công nợ nhân viên (Tài chính › Kế toán công nợ › Nhân viên) + In + Excel; màn 2/4 nhóm công nợ NV.
+  Spec: docs/superpowers/specs/gop-db/2026-11-02-so-chi-tiet-cong-no-nhan-vien-design.md | Tóm tắt: .plans/gop-db/so-chi-tiet-cong-no-nv/design.md
+
+- hach-toan-cpvc-nhanh → @junfoke → .plans/gop-db/hach-toan-cpvc-nhanh/plan.md
+  Trạng thái: 🟢 **BE + FE xong, test 18/18 + bấm thử local + review toàn nhánh (02/11/2026)**, nhánh `feat/hach-toan-cpvc-nhanh` (2 repo, từ origin/develop), đã commit (api `1afcdb68c`, client `bb317da69`), **đã lên origin/develop 02/11** (client merge `48477d3e8`). Seeder +5 quyền — lên dev/prod chạy `permission:sync` rồi gán quyền kế toán.
+  Scope: màn Danh sách cần hạch toán chi phí vận chuyển nhanh (Tài chính › Nhập hàng) + sửa nguồn giao nhanh của phiếu KT giống ERP (loại tiền, NV, popup HĐ).
+  Spec: docs/superpowers/specs/gop-db/2026-11-02-hach-toan-cpvc-nhanh-design.md | Tóm tắt: .plans/gop-db/hach-toan-cpvc-nhanh/design.md
+
 - chuyen-xe-cho-hang → @junfoke → .plans/gop-db/chuyen-xe-cho-hang/plan.md
-  Trạng thái: 🟢 **BE + FE xong, test + bấm thử local (31/10/2026)**, nhánh `feat/chuyen-xe-cho-hang` (2 repo), CHƯA commit. Còn: thử lưu PXK gắn chuyến trên dev (ĐNXK local lỗi dữ liệu lô có sẵn).
+  Trạng thái: 🟢 **BE + FE xong, test + bấm thử local (31/10/2026)**, nhánh `feat/chuyen-xe-cho-hang` (2 repo), đã commit + vào origin/develop (api `e009c9b7f`, client `d833b045b`); riêng client `f3273c418` ô số đồng nhất (02/11, cả Chuyến xe khác + khối chuyến xe phiếu kho) CHƯA push. Còn: thử lưu PXK gắn chuyến trên dev (ĐNXK local lỗi dữ liệu lô có sẵn).
   Scope: màn Chuyến xe chở hàng trọn luồng (trừ phiếu hạch toán — giữ ERP) + PXK HRM gắn chuyến + popup tạo nhanh chuyến ở PXK/PNK. Giữ nguyên cách tính ERP (kể cả CXK về lại không ×2 cước).
   Spec: docs/superpowers/specs/gop-db/2026-10-31-chuyen-xe-cho-hang-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-cho-hang/design.md
 

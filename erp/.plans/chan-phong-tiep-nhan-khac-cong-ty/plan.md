@@ -82,3 +82,7 @@ công ty 1 — dùng dữ liệu local có sẵn 2 phiếu lệch (YCLDBG 24, Wr
   response curl luôn trượt, phải `json.loads` rồi mới so.
 - Màn `edit` / `choiceReceptionDepartment` hay trả "Không có quyền truy cập" tuỳ trạng thái phiếu —
   đừng kết luận "thiếu biến / chưa deploy" khi chưa xem `<title>`.
+
+## Ngày 02/11/2026 (@junfoke)
+- [x] 02/11/2026 — Hỗ trợ check prod: HĐDV 330 (`HDDV_TPE_HN_KD3_25_0011_1908`) trống Phòng tiếp nhận xử lý — không phải lỗi: phòng HN_KTCN (user 364) đã bấm "trả lại hợp đồng" (`backContract` xoá `department_reception_id`, ghi `comment_deny`) ngày 25/08/2026; người lập (user 67) phải chọn lại qua `/{id}/choiceReceptionDepartment`. Gửi SQL kiểm + SQL điền thẳng phòng 51 (không gửi thông báo).
+- [x] 02/11/2026 — Xử lý lỗi đổi phòng tiếp nhận báo thất bại: `choiceReceptionDepartment` lưu lại validate TOÀN BỘ HĐ như form tạo/sửa → HĐ cũ kẹt rule mới (khách hàng, thanh toán 100%, nội dung thanh toán). Thêm `WrServiceContractReceptionRequest` chỉ kiểm ô phòng (bắt buộc, tồn tại, cùng công ty người lập), áp cho `WarrantyRepairContractsController` + `WarrantyRepairContractAdditionAnnexController`. Kiểm local HĐ 330: 3 ca đạt. Commit `08e42d7bce` (gop_db, đã lên origin).

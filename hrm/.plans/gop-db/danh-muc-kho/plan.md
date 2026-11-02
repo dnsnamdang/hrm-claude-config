@@ -85,3 +85,16 @@ Khuôn: BE `Modules/MasterData/*/BusinessCatalog/JobGroup*` (danh mục có cha)
 
 ## Ngày 28/10/2026 (@junfoke)
 - [x] 28/10/2026 — Phản hồi #11810 (sửa "Số nhà kho" ở kho vật lý): không sửa code, chỉ trả lời QA — ERP cho sửa nhưng khi lưu bỏ qua; HRM sửa số nhà kho là để THÊM nhà kho (chốt ở #11781), nhà kho đã tạo không tự xoá nên không cho nhập nhỏ hơn số đang có và báo đỏ ngay — hành vi có chủ đích.
+
+## Phase 8 — Tài liệu SRS + HDSD + Testcase (02/11/2026, @junfoke)
+
+Brief: `docs/BRIEF_AGENT.md` · đầu ra `docs/<slug>/` · đẩy Drive folder "Chuyển đổi ERP => HRM" (SRS/HDSD/TESTCASE) sau khi user duyệt.
+Khuôn form Danh mục quốc gia (TPE duyệt) + CHECKLIST góp ý TPE. TC cũ rà lại theo code HRM hiện tại (bỏ đối chiếu ERP).
+
+- [x] Màn mẫu Kho vật lý: SRS 52 tr · HDSD 19 tr · TC 106 (giữ 54/sửa 33/thêm 19/bỏ 28) — `docs/warehouses/`, script dùng lại `docs/_lib_win.py` — 02/11
+- [x] User duyệt mẫu: chấp nhận ảnh Lịch sử giả lập; Phần 5 giữ hết theo form mẫu — 02/11
+- Ghi chú: menu thật hiện là Phân hệ Kho => Danh mục (commit 21/10), ghi chú "chỉ ở Danh mục chung" ngày 20/10 đã cũ.
+- [x] 6 màn còn lại (6 agent song song): Kho kế toán 53tr/100TC · Nhà kho 51/116 · Dãy 53/107 · Khoang 50/106 · Vị trí 52/119 · Kiện 45/87 — 02/11
+- [x] Đẩy Drive 7 SRS + 7 HDSD (file mới) · chèn tab 44–50 + 7 dòng "Tổng hợp" vào "Testcase chuyển đổi.xlsx" bằng `docs/chen_tab_testcase.ps1` (Excel COM, đối chiếu 43 tab cũ 0 ô khác, đẩy đè giữ ID) — 02/11
+- [ ] Sheet Checklist dòng 259–265: là Google Sheet gốc, không ghi đè bằng rclone → user tự điền trạng thái/link
+- [ ] Nghi lỗi code agent ghi lại (chưa sửa): xoá kho ẩn nhưng con vẫn hiện · Mở khoá con không xét kho/nhà cha · ô khoá thiếu ⓘ (Nhà kho, Khoang) · Thứ tự kiện "007" bị từ chối · lọc Khoang giữ Dãy sai khi đổi Kho · Import 500/1000 dòng · kho kế toán chọn kho vật lý công ty khác

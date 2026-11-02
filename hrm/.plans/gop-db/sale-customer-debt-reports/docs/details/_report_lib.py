@@ -1,0 +1,176 @@
+# -*- coding: utf-8 -*-
+"""Bản mở rộng RIÊNG cho màn báo cáo (không sửa danh-muc-kho/docs/_lib_win.py — agent khác dùng song song).
+
+So với `_lib_win.build_srs`:
+- Mỗi chức năng được thêm các mục SAU "Danh sách event" qua khoá `extra` = [(tiêu đề, kiểu, dữ liệu)]:
+    ('Cách lấy dữ liệu và giải thích chỉ tiêu', 'table', (rows có dòng tiêu đề, widths, câu dẫn))
+    ('Danh sách popup mở từ số liệu', 'table', ...) · ('Mục đích thiết kế popup', 'bullets', [câu]) …
+- Ảnh chú thích chèn đúng cỡ (_fit_width).
+So với `_lib_win.build_hdsd`: thêm mục ('table', rows, widths) và ('p', chuỗi) cho PHẦN "ĐỌC BÁO CÁO".
+"""
+import os
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(HERE, '..', '..', '..', 'danh-muc-kho', 'docs')))
+import _lib_win as L  # noqa: E402
+from _lib_win import (QgWriter, SRS_TPL, SRS_ROLES, QTC_LINK, HDSD_TPL, HDSD_ROLES, h1_trang_moi,  # noqa: E402,F401
+                      PHAN5_TITLE, _keep_next, _keep_with_next, _fit_width, _table_runs_13, _exclude_toc_heading,
+                      force_times_new_roman)
+
+
+def build_srs(scr, S, out):
+    w = QgWriter(SRS_TPL, SRS_ROLES, body_from=10, cover_replace={'Danh mục quốc gia': S['ten']})
+
+    def h1(text):
+        h1_trang_moi(w, text)
+
+    def img(path, cap, width=6.2):
+        w.image(path, width=width, caption=cap)
+        _keep_next(w)
+
+    def sub(text):
+        w.raw('sub', text)
+        _keep_with_next(w)
+
+    menu = []
+    for i, (text, icon) in enumerate(S['menu']):
+        menu.append(('Phân hệ ' if i == 0 else ' => ') + text + ' ')
+        if icon:
+            menu.append(scr.ic(icon, 0.24))
+
+    h1('Phần 1. Giới thiệu')
+    w.h2('1 Mục đích')
+    w.p('Tài liệu này đặc tả yêu cầu phần mềm cho màn hình %s, nhằm:' % S['ten'])
+    for b in S['muc_dich']:
+        w.bullet(b)
+    w.h2('2 Thuật ngữ và viết tắt')
+    w.table([['Thuật ngữ', 'Mô tả']] + S['thuat_ngu'], widths=[1.3, 3])
+
+    h1('Phần 2. Phân quyền')
+    w.h2('1 Danh sách quyền')
+    for p in S['quyen_truoc']:
+        w.p(p)
+    w.table([['Tên quyền', 'Tác dụng trên màn hình']] + S['quyen_rows'], widths=[1.8, 3])
+    w.h2('2 Ma trận phân quyền')
+    w.table(S['ma_tran'], widths=S.get('ma_tran_widths'))
+    for p in S.get('quyen_sau', []):
+        w.p(p)
+    if S.get('pham_vi'):
+        w.h2('3 Phạm vi dữ liệu')
+        w.p(S['pham_vi'][0])
+        _keep_with_next(w)
+        w.table(S['pham_vi'][1], widths=S['pham_vi'][2])
+        for p in S['pham_vi'][3:]:
+            w.p(p)
+
+    h1('Phần 3. Đặc tả chi tiết theo từng chức năng')
+    w.h2('1 Sơ đồ UML tổng quan')
+    img(os.path.join(scr.uml, 'overview.png'), 'Sơ đồ Use Case tổng quan màn %s' % S['ten'], 6.3)
+    w.h2('2 Đặc tả chi tiết từng chức năng')
+    for i, fr in enumerate(S['fr']):
+        if not fr.get('ui') or not fr.get('events'):
+            raise ValueError('FR "%s" thiếu bảng giao diện / event — bắt buộc ở mọi chức năng' % fr['ten'])
+        n = '2.%d' % (i + 1)
+        w.h3('%s %s' % (n, fr['ten']))
+        k = 0
+        if fr.get('uc'):
+            k += 1
+            sub('%s.%d Biểu đồ Usecase' % (n, k))
+            img(os.path.join(scr.uml, fr['uc'] + '.png'), 'Biểu đồ Use Case — %s' % fr['ten'], 6.2)
+        k += 1
+        sub('%s.%d Giới thiệu' % (n, k))
+        w.clone_texts('qtc', ['Quy tắc chung: ', 'Áp dụng SRS Các quy tắc chung ', QTC_LINK,
+                              ' - %s Chỉ bổ sung quy tắc riêng của %s.' % (fr['qtc'], S['ten'])])
+        w.table([['Mục', 'Nội dung']] + fr['gioi_thieu'], widths=[1, 3.2])
+        k += 1
+        sub('%s.%d Layout màn hình' % (n, k))
+        w.p('Đường dẫn màn hình:')
+        extra = scr.segs(fr.get('menu_them', '')) if fr.get('menu_them') else []
+        w.raw('menu_b', 'Menu: ')
+        w.raw('menu', menu + extra)
+        if fr.get('ghi_chu_layout'):
+            w.p(fr['ghi_chu_layout'])
+        for name, cap in fr.get('anh', []):
+            img(scr.shot(name), cap, _fit_width(scr.shot(name)))
+        k += 1
+        sub('%s.%d Mô tả chi tiết giao diện' % (n, k))
+        w.table(fr['ui'], widths=fr.get('ui_widths'))
+        k += 1
+        sub('%s.%d Danh sách event và xử lý event' % (n, k))
+        w.table([['STT', 'Event', 'Loại event', 'Xử lý event']] +
+                [[str(j + 1)] + e for j, e in enumerate(fr['events'])], widths=[0.5, 1.4, 0.8, 3.5])
+        for title, kind, data in fr.get('extra', []):
+            k += 1
+            sub('%s.%d %s' % (n, k, title))
+            if kind == 'table':
+                rows, widths, lead = data
+                if lead:
+                    w.p(lead)
+                w.table(rows, widths=widths)
+            elif kind == 'bullets':
+                for b in data:
+                    w.bullet(b)
+            else:
+                w.p(data)
+
+    h1('Phần 4. Quy tắc nghiệp vụ')
+    w.p('**Quy tắc áp dụng:** Các quy tắc nghiệp vụ dùng chung được định nghĩa tại SRS Các quy tắc chung '
+        'SRS_Các quy tắc chung_VN_1.0. Phần này chỉ ghi các quy tắc đặc thù của %s; không lặp lại các quy tắc '
+        'đã có trong SRS quy tắc chung.' % S['ten'])
+    j = lambda v: '\n'.join(v) if isinstance(v, (list, tuple)) else v  # noqa: E731
+    rows = [['STT', 'Mã quy tắc', 'Tên quy tắc', 'Mô tả', 'Phạm vi áp dụng']]
+    for i, q in enumerate(S['quy_tac'], 1):
+        assert len(q) == 4 and q[0] == 'BR-%02d' % i, 'BR phải liên tục BR-01, BR-02…: %r' % (q[0],)
+        rows.append([str(i), q[0], q[1], j(q[2]), j(q[3])])
+    w.table(rows, widths=[0.5, 0.85, 1.3, 2.75, 1.2])
+
+    p5 = S['phan5']
+    h1(p5.get('title', PHAN5_TITLE))
+    if p5.get('cau_dan'):
+        w.p(p5['cau_dan'])
+    w.table([['STT', 'Nhóm', 'Màn hình', 'Đường dẫn']] +
+            [[str(i + 1)] + list(r) for i, r in enumerate(p5['rows'])], widths=[0.5, 1.4, 2.2, 2.4])
+
+    w.rebuild_toc(levels=(1, 2, 3))
+    _exclude_toc_heading(w)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    _table_runs_13(w)
+    w.save(out)
+    force_times_new_roman(out)
+    return out
+
+
+def build_hdsd(scr, H, out):
+    """Như _lib_win.build_hdsd + mục ('table', rows, widths)."""
+    w = QgWriter(HDSD_TPL, HDSD_ROLES, body_from=19, cover_replace={'Danh mục khu vực': H['ten']})
+    h1_trang_moi(w, 'TỔNG QUAN')
+    w.h2('1. Thuật ngữ sử dụng trong tài liệu')
+    w.table([['Thuật ngữ', 'Giải thích']] + H['thuat_ngu'], widths=[2.0, 4.5])
+    w.h2('2. Cập nhật tài liệu')
+    w.table([['Phiên bản', 'Ngày', 'Người cập nhật', 'Nội dung']] + H['phien_ban'], widths=[0.9, 1.1, 1.5, 3.0])
+    w.h2('3. Quyền sử dụng')
+    for s in H['quyen']:
+        w.p(s)
+    w.h2('4. Sơ đồ chức năng tổng quan')
+    w.image(os.path.join(scr.uml, 'overview.png'), caption='Sơ đồ chức năng tổng quan màn ' + H['ten'])
+    _keep_next(w)
+    for i, (title, items) in enumerate(H['phan'], 1):
+        h1_trang_moi(w, 'PHẦN %d: %s' % (i, title))
+        for it in items:
+            kind = it[0]
+            if kind == 'img':
+                w.image(scr.shot(it[1]), width=_fit_width(scr.shot(it[1]), 6.0), caption=it[2])
+                _keep_next(w)
+            elif kind == 'table':
+                w.table(it[1], widths=it[2])
+            elif kind == 'p':
+                w.p(scr.segs(it[1]))
+            else:
+                w.raw(kind, scr.segs(it[1]))
+    w.rebuild_toc(levels=(1, 2))
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    _table_runs_13(w)
+    w.save(out)
+    force_times_new_roman(out)
+    return out

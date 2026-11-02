@@ -2,8 +2,12 @@
 
 ## Hoàn thành
 
+- [Đồng bộ khổ giấy soạn mẫu in = xem trước = bản in](dong-bo-kho-mau-in-soan-xem-in/plan.md) — @junfoke 2026-11-02. `f28117b631` + `d01b68eed4` gop_db. SQL sửa mẫu in HĐ 30518/30563 (chữ ký, cỡ chữ) gửi user chạy prod.
+- [Xem chi tiết ĐN nhập kho / xuất kho khớp quyền danh sách](fix-canview-de-nghi-nhap-xuat-kho/plan.md) — @junfoke 2026-11-02. `07cc5e2d66` gop_db.
+- [Thêm người liên hệ khi chưa chọn khách hàng lỗi 500](fix-them-nguoi-lien-he-chua-chon-khach-hang/plan.md) — @junfoke 2026-11-02. `91634bbcf9` gop_db.
+- [Đổi phòng tiếp nhận HĐDV/PLBS chỉ validate ô phòng](chan-phong-tiep-nhan-khac-cong-ty/plan.md) — @junfoke 2026-11-02. `08e42d7bce` gop_db.
 - [Chuyến xe khác ERP lỗi load do thiếu chủ xe sau gộp DB](fix-chuyen-xe-khac-thieu-chu-xe/plan.md) — @junfoke 2026-10-31. `1f2007a111` gop_db → `develop_02`. Dữ liệu chủ xe thiếu chờ user xác nhận.
-- [Chức danh người ký / người duyệt HĐ (#11932)](chuc-danh-nguoi-ky-hop-dong/plan.md) — @junfoke 2026-10-30. ERP `task_11932` → `develop_02` (`fea5e243a8`) + HRM `develop`. 2 migration `2026_10_30_00000{1,2}` (đã chạy, 0 HĐ trống). 31/10: fix lưu HĐ lỗi `signer_role_id` NULL (migration `2026_10_31_000001`), lọc chức vụ "null", chặn chức danh đã đổi, fix `@json` màn PI — đã vào `develop_02`; HĐ mua nhập khẩu (migration `2026_10_31_000002`) CHƯA commit.
+- [Chức danh người ký / người duyệt HĐ (#11932)](chuc-danh-nguoi-ky-hop-dong/plan.md) — @junfoke 2026-10-30. ERP `task_11932` → `develop_02` (`fea5e243a8`) + HRM `develop`. 2 migration `2026_10_30_00000{1,2}` (đã chạy, 0 HĐ trống). 31/10: fix lưu HĐ lỗi `signer_role_id` NULL (migration `2026_10_31_000001`), lọc chức vụ "null", chặn chức danh đã đổi, fix `@json` màn PI — đã vào `develop_02`; HĐ mua nhập khẩu (migration `2026_10_31_000002`, `cd876b538d`). 02/11: popup người ký → chức danh, `approver_role` nullable, 10 chỗ JS `roles[0]`; gỡ khỏi gop_db rồi merge lại lên prod (`c3cb4aad1b`) + migration điền bù chức danh `2026_11_02_000002` (`28961dc9da`).
 - [Popup chọn hàng báo giá: SL KM / lắp ráp / Toàn bộ tồn kho (#11937)](../../hrm/.plans/gop-db/11937-popup-chon-hang-sl-km-lap-rap/plan.md) — @junfoke 2026-10-30. ERP `task_11937` → `develop_02` (`f67c7f0304`), logic ở hrm-api.
 - [Hàng đang về: lấy SL đã nhập theo phân bổ kế toán](fix-bao-cao-luan-chuyen-hang-dang-ve-phantom/plan.md) — @junfoke 2026-10-30. `7dac67f501` gop_db, thay FIFO 29/10.
 - [ĐH nguyên tắc báo rõ hàng chưa có giá + fix Missing Request ID](fix-dhnt-bao-ro-hang-chua-co-gia/plan.md) — @junfoke 2026-10-30. `4151172a21` + `09e8875e53` gop_db.

@@ -61,3 +61,6 @@ let valid_days = this.quotation_type == 2        // BG_DU_AN
 
 - Chỉ sửa FE getter, không đụng BE, không đụng `Config::getConfig()` (hàm dùng chung).
 - Chưa commit/push — chờ user yêu cầu (CLAUDE.md ERP cấm tự commit).
+
+## Ngày 02/11/2026 (@junfoke)
+- [x] 02/11/2026 — Hỗ trợ check prod: chị Trần Thị Lan (EG) phân quyền rồi nhưng màn Báo giá dự án không có nút Tạo mới — không phải lỗi quyền: nút phụ thuộc ô "Lập báo giá dự án" (`departments.allow_create_project_quotation`) của phòng (`FirmQuotationController` dòng 58–61, 113–116). Phòng EG_KD2 (id 133) đang 0 → hướng dẫn tick ở Danh mục › Phòng ban hoặc SQL `UPDATE departments SET allow_create_project_quotation = 1 WHERE id = 133`. Không sửa code.
