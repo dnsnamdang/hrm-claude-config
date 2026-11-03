@@ -104,3 +104,11 @@ Kiểm xong ghi kết luận: ✅ lỗi thật (đã sửa / task) · ❌ không
 | 85 | Yêu cầu mua dịch vụ | Hộp "Thông tin chưa lưu" không hiện ở Tạo/Sửa (cùng nguyên nhân #79) — đã thử dev | TC IV-013 | |
 | 86 | Yêu cầu mua dịch vụ | Ban KS duyệt giá không nhập được Giá duyệt + lưu phiếu không gửi giá duyệt → Giá duyệt/Thành tiền duyệt = 0 (suy từ code) | TC VI-004 | |
 | 87 | Yêu cầu mua dịch vụ | Gửi duyệt nhận SL + Giá đề xuất = 0 (phiếu 0 đồng); in phiếu chỉ có cột giá duyệt khi Đã duyệt; in DS 9 cột cố định | TC IV-005, TC VII-002 | |
+
+## Phát hiện khi làm lại testcase (03/11/2026)
+
+| # | Màn | Nghi lỗi / điểm cần QA xác nhận | TC / ghi chú | Kết luận |
+|---|---|---|---|---|
+| 88 | Nhiều màn (danh mục kho, báo cáo, phiếu) | GHI NHỚ BỘ LỌC: TC cũ ghi "rời màn quay lại trong 10 phút vẫn giữ bộ lọc"; agent đọc code thấy rời sang màn khác là xoá bộ lọc (chỉ giữ khi vào trang chi tiết riêng; báo cáo: tab mới trong 10 phút thì giữ) → TC mới viết theo code, CHƯA thử trình duyệt. Khai báo đầu kỳ: phần lưu bộ lọc nằm trong component con, nghi không chạy khi vào chi tiết rồi quay lại | nhóm TÌM KIẾM & LỌC mục "Lưu trạng thái" | ❓ |
+| 89 | 7 danh mục kho | "Mở khoá bản ghi đã bị người khác xoá" — nghi hiện câu tiếng Anh "Item Not Found!" | nhóm KHÓA / MỞ KHÓA | |
+| 90 | Khai báo đầu kỳ công nợ | Đang sửa thì phát sinh chứng từ: câu báo "Khai báo đã phát sinh chứng từ, không được sửa." dưới ô Tài khoản (TC cũ ghi nhầm câu của Xoá) | đã sửa TC | |

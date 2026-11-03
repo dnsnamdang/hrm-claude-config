@@ -2608,8 +2608,13 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 - xuat-tai-lieu-chuyen-doi → @junfoke → .plans/gop-db/xuat-tai-lieu-chuyen-doi/plan.md
   Trạng thái: 🟢 **Đợt 1–3 xong, đã đẩy Drive (02/11/2026)**: 7 danh mục kho + 5 báo cáo + 7 phiếu (SRS + HDSD + tab TC 44–62). Còn: user điền sheet Checklist; rà `NGHI_LOI.md` cùng user.
 
+- bang-can-doi-cong-no-nv → @junfoke → .plans/gop-db/bang-can-doi-cong-no-nv/plan.md
+  Trạng thái: ✅ **Xong, đã merge develop + push (03/11/2026)** — api `9b12040ae`, client `f2831eb45` (nhánh `feat/bang-can-doi-cong-no-nv`, kéo theo cả Sổ chi tiết `d1d77cadd` / `3e6581b38` + ô số chuyến xe `d59dec8d8`); merge develop api `66ce147dd`, client `66a3d7d47`. Test 16 (+15 Sổ chi tiết). Làm mới hết gọi tải 2 lần (cả 2 màn). Seeder +2 quyền — dev cần `permission:sync`. Tách phần chung 2 màn ra trait `EmployeeDebtCommon`.
+  Scope: màn Bảng cân đối phát sinh công nợ nhân viên + In + Excel (ERP không có) + drill-down sang Sổ chi tiết; màn 3/4 nhóm công nợ NV.
+  Spec: docs/superpowers/specs/gop-db/2026-11-03-bang-can-doi-cong-no-nhan-vien-design.md | Tóm tắt: .plans/gop-db/bang-can-doi-cong-no-nv/design.md
+
 - so-chi-tiet-cong-no-nv → @junfoke → .plans/gop-db/so-chi-tiet-cong-no-nv/plan.md
-  Trạng thái: 🟡 **Spec xong, chờ user duyệt spec (02/11/2026)**. Nhánh dự kiến `feat/so-chi-tiet-cong-no-nv` từ `origin/develop`.
+  Trạng thái: ✅ **Xong, đã lên origin/develop 03/11/2026** (đi cùng merge Bảng cân đối), nhánh `feat/so-chi-tiet-cong-no-nv`, commit api `d1d77cadd`, client `3e6581b38`; kèm client `d59dec8d8` sửa ô số chuyến xe. Seeder +2 quyền. Chờ user: index `account_details` (TK lớn 6 tháng 6s → 2,7s).
   Scope: màn Sổ chi tiết công nợ nhân viên (Tài chính › Kế toán công nợ › Nhân viên) + In + Excel; màn 2/4 nhóm công nợ NV.
   Spec: docs/superpowers/specs/gop-db/2026-11-02-so-chi-tiet-cong-no-nhan-vien-design.md | Tóm tắt: .plans/gop-db/so-chi-tiet-cong-no-nv/design.md
 
@@ -2619,7 +2624,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Spec: docs/superpowers/specs/gop-db/2026-11-02-hach-toan-cpvc-nhanh-design.md | Tóm tắt: .plans/gop-db/hach-toan-cpvc-nhanh/design.md
 
 - chuyen-xe-cho-hang → @junfoke → .plans/gop-db/chuyen-xe-cho-hang/plan.md
-  Trạng thái: 🟢 **BE + FE xong, test + bấm thử local (31/10/2026)**, nhánh `feat/chuyen-xe-cho-hang` (2 repo), đã commit + vào origin/develop (api `e009c9b7f`, client `d833b045b`); riêng client `f3273c418` ô số đồng nhất (02/11, cả Chuyến xe khác + khối chuyến xe phiếu kho) CHƯA push. Còn: thử lưu PXK gắn chuyến trên dev (ĐNXK local lỗi dữ liệu lô có sẵn).
+  Trạng thái: 🟢 **BE + FE xong, test + bấm thử local (31/10/2026)**, nhánh `feat/chuyen-xe-cho-hang` (2 repo), đã commit + vào origin/develop (api `e009c9b7f`, client `d833b045b`); sửa ô số đồng nhất (cả Chuyến xe khác + khối chuyến xe phiếu kho) chuyển sang nhánh `feat/so-chi-tiet-cong-no-nv` — client `d59dec8d8` (user chốt 03/11: không sửa nhánh cũ đã merge). Còn: thử lưu PXK gắn chuyến trên dev (ĐNXK local lỗi dữ liệu lô có sẵn).
   Scope: màn Chuyến xe chở hàng trọn luồng (trừ phiếu hạch toán — giữ ERP) + PXK HRM gắn chuyến + popup tạo nhanh chuyến ở PXK/PNK. Giữ nguyên cách tính ERP (kể cả CXK về lại không ×2 cước).
   Spec: docs/superpowers/specs/gop-db/2026-10-31-chuyen-xe-cho-hang-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-cho-hang/design.md
 

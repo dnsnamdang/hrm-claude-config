@@ -1,923 +1,1132 @@
 # -*- coding: utf-8 -*-
-"""Testcase màn "Danh mục dãy" (HRM: phân hệ Kho > nhóm Danh mục > Dãy) — khuôn màn mẫu docs/warehouses/gen_testcase.py.
+"""Testcase màn "Danh mục dãy" — viết lại theo KHUÔN CHUẨN tab "13. DM quốc gia" (user chốt 03/11/2026).
 
-Chép từ ../../testcase/gen_testcase_day.py (20/10/2026, viết lúc còn đối chiếu ERP, 116 case) rồi RÀ LẠI từng case theo
-code HRM hiện tại (02/11/2026):
-  - menu mới (phân hệ Kho > Danh mục), nhãn / thông báo nguyên văn theo code;
-  - BỎ mọi case / câu chữ về ERP và về "gọi thẳng chức năng bằng công cụ kiểm thử API";
-  - dữ liệu "dãy chưa có khoang" trước đây tạo bên ERP (Số khoang 0) -> nay lập bằng cách xóa hết khoang ở màn Khoang;
-  - code đã đổi sau 20/10: tìm nhanh CHỈ theo mã + tên dãy (#11796), công tắc ổ khóa "Hiện cả … đã khoá" ở ô Công ty /
-    Kho / Nhà kho (#11796), Mã dãy chỉ chữ không dấu / số / - / _ tối đa 50, bỏ ⓘ ở ô khóa popup Sửa, lời gợi ý ⓘ
-    Số khoang / Số vị trí mới (#11797), cảnh báo "Thông tin chưa lưu" (#11785), Import Excel (#11830), lọc Ngày tạo
-    ngược chiều báo đỏ (#11788), sắp xếp theo Nhà kho / Kho, lịch sử khoang + vị trí sinh kèm (#11799).
-Mỗi case gắn nhãn: G = giữ nguyên, S = sửa, M = thêm mới. Case bỏ ghi ở BO bên dưới. Cuối file in thống kê.
-Chạy: python gen_testcase.py
+Khuôn + thứ tự nhóm + câu chữ: ../../../xuat-tai-lieu-chuyen-doi/TC_CHUAN.md (loại danh_muc), sinh bằng `build_chuan`
+của `_tc_chuan.py` (tự chạy check_tc.py, phải 0 lỗi).
+  - GIỮ toàn bộ case nghiệp vụ của bản 02/11 (gen_testcase_v1.py, đọc thẳng từ file đó bằng `cu(<section cũ>, <stt>)`),
+    xếp lại vào đúng nhóm chuẩn; bỏ nhóm kiểu cũ (TC-ROLE, TẠO / SỬA / XEM, RÀNG BUỘC NHẬP LIỆU, E2E FLOW);
+  - BỔ SUNG case cho các dòng checklist "Mẫu tài liệu.xlsx" (tab Testcase) mà bản cũ thiếu — hàm ở KHỐI CHUNG
+    (giống hệt ở 4 màn Dãy / Khoang / Vị trí / Kiện, khác nhau ở tham số C) hoặc viết riêng cho màn bằng `moi(...)`;
+  - mã case đánh lại TC_<nhóm>.<stt>; mọi chỗ tham chiếu "như TC_xx.yyy" của bản cũ tự đổi sang mã mới.
+Chạy: python gen_testcase.py  (ghi đè "testcase - Danh mục dãy.xlsx", sheet "Trang tính1")
 """
+import importlib.util
 import os
+import re
 import sys
-from collections import Counter
+from types import SimpleNamespace
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..'))
-import _lib_win as L  # noqa: E402,F401  (đặt sys.path tới tc_engine)
-from tc_engine import build  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, '..', '..', '..', 'xuat-tai-lieu-chuyen-doi'))
+from _tc_chuan import build_chuan  # noqa: E402
 
 try:
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 except Exception:
     pass
 
-NGAY = L.NGAY
-TEN = 'Danh mục dãy'
-MODULE = 'DM dãy'
-OUT = os.path.join(HERE, 'testcase - %s.xlsx' % TEN)
-TAGS = Counter()
-SO_CU = 116
-
-# Case của bản cũ bị BỎ (lý do)
-BO = {
-    'TC-ROLE-02': 'Có quyền ở HRM, không có ở ERP (đối chiếu ERP)',
-    'TC-ROLE-03': 'Có quyền ở ERP, không có ở HRM (đối chiếu ERP)',
-    'TC-ROLE-07': 'Không có quyền, gọi thẳng Tạo / Sửa / Xóa / Khóa bằng công cụ kiểm thử API',
-    'TC-ROLE-08': 'Không có quyền, gọi thẳng Xem / Xuất bằng công cụ kiểm thử API',
-    'TC-ROLE-09': 'Gọi thẳng chức năng trên dãy công ty khác bằng công cụ kiểm thử API',
-    'TC-ROLE-10': 'Gọi thẳng Tạo dãy vào nhà kho công ty khác bằng công cụ kiểm thử API',
-    'TC_01.008': 'Mở màn bên ERP để đối chiếu',
-    'TC_08.005': 'Dãy tạo / sửa ở ERP không có lịch sử',
-    'TC_10.001..018': '18 case section "ĐỐI CHIẾU DỮ LIỆU ERP - HRM"',
-    'TC_11.002': 'Liên hệ thống ERP - HRM',
-    'TC_11.004': 'Xuất Excel đối chiếu danh sách ERP',
-}
-SO_BO = 6 + 1 + 1 + 18 + 2
+# ====================================================================================================
+# KHỐI CHUNG — case chuẩn theo checklist "Mẫu tài liệu.xlsx" (giống nhau ở 4 màn Dãy / Khoang / Vị trí / Kiện,
+# chỉ khác tham số màn ở biến C bên dưới). Mỗi hàm trả 1 case (chức năng, P, tiền điều kiện, bước, test data, expected);
+# chú thích [n] = số dòng checklist mà case phủ.
+# ====================================================================================================
+def B(*steps):
+    """Bước thực hiện: tự đánh số 1., 2., …"""
+    return '\n'.join('%d. %s' % (i, s) for i, s in enumerate(steps, 1))
 
 
-def L_(*lines):
-    return '\n'.join(lines)
+def E(*lines):
+    """Expected: mỗi ý 1 dòng bắt đầu bằng "-  " (giống tab Quốc gia)."""
+    return '\n'.join('-  ' + s for s in lines)
 
 
-def T(tag, n, func, prio, pre, steps, data, exp):
-    assert tag in ('G', 'S', 'M')
-    TAGS[tag] += 1
-
-    def j(x):
-        return x if isinstance(x, str) else L_(*x)
-    return (n, func, prio, j(pre), j(steps), j(data), j(exp))
+def ds(xs):
+    return ', '.join(xs)
 
 
-MENU = 'Vào phân hệ Kho > nhóm Danh mục > bấm "Dãy"'
-KHOANG = 'phân hệ Kho > Danh mục > "Khoang"'
-VITRI = 'phân hệ Kho > Danh mục > "Vị trí"'
-NHA = 'phân hệ Kho > Danh mục > "Nhà kho"'
-KKVT = 'phân hệ Tài chính > nhóm Kiểm kê > "Kế hoạch kiểm kê theo vị trí"'
-TAO = 'Bấm nút "Tạo mới" (góc phải trên bảng) để mở cửa sổ "Tạo mới dãy"'
-MENU3 = 'Ở dòng dãy, quan sát cột Hành động (nút ba chấm "Hành động khác" nếu có)'
-HINT_KHOANG = ('Số khoang của dãy này. Khi lưu, hệ thống tự tạo các khoang "Khoang 1", "Khoang 2"... (mã K1, K2...). '
-               'Chỉ nhập được khi dãy chưa có khoang nào; sau đó muốn thêm, sửa hay khoá khoang thì làm ở màn Khoang.')
-HINT_VITRI = ('Số vị trí (tầng) tạo sẵn trong MỖI khoang của dãy: "Tầng 1", "Tầng 2"..., mã <Mã kho>-<Mã nhà>-<Mã dãy>-'
-              'K<số khoang>-T<số tầng>. Tổng số vị trí tạo ra = Số khoang × Số vị trí mỗi khoang, tối đa 10,000. '
-              'Sau khi tạo, thêm/bớt vị trí làm ở màn Vị trí.')
-KHONG_KHOANG = 'tạo dãy rồi vào màn Khoang xóa hết khoang của nó (xóa vị trí trước) để dãy không còn khoang'
+# ---------------------------------------------------------------- I. HIỂN THỊ TRANG & TRUY CẬP
+def ht_chua_co_du_lieu(C):  # [8]
+    return ('Danh sách khi chưa có %s nào' % C.dt, 'P2', C.pre_rong,
+            B(C.menu, 'Quan sát bảng, dòng tổng dưới bảng và hàng nút'), '',
+            E('Bảng hiện dòng "Không có dữ liệu phù hợp."',
+              'Dòng dưới bảng hiện "Không có %s nào."' % C.dt,
+              'Màn hình không báo lỗi; các nút Tạo mới, Import Excel, Xuất Excel vẫn hiện và dùng được'))
 
-DATA = L_(
-    'Dữ liệu mẫu dùng xuyên suốt (lập trước khi test, ghi lại mã thật vào cột Ghi chú nếu phải đổi tên):',
-    '- Công ty A và Công ty B: 2 công ty có sẵn trên môi trường test.',
-    '- Kho: KHO-TEST-01, KHO-TEST-02 (Công ty A, Hoạt động); KHO-TEST-03 (Công ty B, Hoạt động); KHO-TEST-04 (Công ty A, Khóa).',
-    '- Nhà kho: NHA-TEST-01, NHA-TEST-02 thuộc KHO-TEST-01; NHA-TEST-03 thuộc KHO-TEST-02; NHA-TEST-04 thuộc KHO-TEST-03; '
-    'NHA-TEST-05 thuộc KHO-TEST-01, trạng thái Khóa (chưa có dãy hoặc mọi dãy đã Khóa).',
-    '- Tài khoản QL-A (Công ty A) và QL-B (Công ty B): có quyền "Quản lý kho" (gán qua vai trò của công ty), không phải Super admin.',
-    '- Tài khoản SA: Super admin, có "Quản lý kho".',
-    '- Tài khoản KQ (Công ty A): KHÔNG có "Quản lý kho".',
-    '- Dãy "chưa có khoang" (DAY-TEST-06, 16, 17…): ' + KHONG_KHOANG + '.',
+
+def ht_so_dong_mac_dinh(C):  # [10]
+    return ('Số dòng mặc định mỗi trang', 'P1', 'Danh sách có hơn 10 %s.' % C.dt,
+            B(C.menu, 'Đếm số dòng trên bảng, đọc ô "Số dòng/trang" ở góc dưới bên phải bảng',
+              'Mở ô "Số dòng/trang"'), '',
+            E('Mặc định hiện 10 dòng, dòng tổng "Hiển thị 1–10 / N"',
+              'Ô "Số dòng/trang" cho chọn 5 / 10 / 20 / 50 / 100'))
+
+
+def ht_trang_truoc_sau(C):  # [12]
+    return ('Nút sang trang kế tiếp và lùi về trang trước', 'P0',
+            'Danh sách có ít nhất 3 trang dữ liệu. Đang ở trang 1.',
+            B('Bấm nút › (trang kế tiếp)', 'Đọc thanh phân trang và dòng tổng', 'Bấm nút ‹ (trang trước)', 'Đọc lại'),
+            '',
+            E('Bước 1: chuyển sang trang 2, số trang 2 được tô đậm, dòng tổng hiện "Hiển thị 11–20 / N"',
+              'Bước 3: quay lại trang 1, dòng tổng hiện "Hiển thị 1–10 / N"',
+              'Dữ liệu từng trang không lặp, không thiếu dòng'))
+
+
+def ht_trang_dau_cuoi(C):  # [13]
+    return ('Nút về trang cuối và về trang đầu', 'P0', 'Danh sách có N %s, nhiều hơn 3 trang. Đang ở trang 1.' % C.dt,
+            B('Bấm nút » (về trang cuối)', 'Đọc thanh phân trang, dòng tổng và STT dòng cuối', 'Bấm nút « (về trang đầu)',
+              'Đọc lại'),
+            'N = tổng số %s trong danh sách' % C.dt,
+            E('Bước 1: nhảy tới trang cuối, dòng tổng hiện "Hiển thị …–N / N", STT dòng cuối bằng N',
+              'Bước 3: quay về trang 1, dòng tổng hiện "Hiển thị 1–10 / N"'))
+
+
+def ht_nut_trang_bien(C):  # [14]
+    return ('Nút phân trang ở trang đầu và trang cuối', 'P1', 'Danh sách có nhiều hơn 1 trang.',
+            B('Đứng ở trang 1, quan sát hai nút « và ‹', 'Bấm » để về trang cuối, quan sát hai nút › và »'), '',
+            E('Ở trang 1: nút « và ‹ bị mờ, bấm không có tác dụng',
+              'Ở trang cuối: nút › và » bị mờ, bấm không có tác dụng'))
+
+
+def ht_stt_lien_tuc(C):  # [15]
+    return ('Số thứ tự liên tục qua các trang', 'P0', 'Danh sách có nhiều hơn một trang dữ liệu.',
+            B('Ghi lại STT dòng cuối trang 1', 'Sang trang 2, đọc STT dòng đầu', 'Đổi "Số dòng/trang" sang 5, sang trang 3'),
+            '',
+            E('Bước 2: STT nối tiếp liền mạch (10 → 11), không quay về 1',
+              'Bước 3: STT dòng đầu trang 3 là 11'))
+
+
+def ht_tong_so(C):  # [16]
+    return ('Tổng số bản ghi khi mở danh sách', 'P0',
+            'Trong phạm vi được xem có N %s (gồm cả Hoạt động và Khóa). Chưa lọc gì.' % C.dt,
+            B(C.menu, 'Đọc dòng tổng ở góc dưới bên trái bảng'), 'N = tổng số %s trong phạm vi được xem' % C.dt,
+            E('Dòng tổng hiện "Hiển thị 1–10 / N" (10 là số dòng mặc định mỗi trang)',
+              'N bằng đúng tổng số %s, tính cả %s đã Khóa; số ghi liền, không có dấu phân cách khi dưới 1,000' % (C.dt, C.dt)))
+
+
+def ht_doi_so_dong_ve_trang_1(C):  # [11][18]
+    return ('Đổi số dòng mỗi trang khi đang ở trang giữa', 'P1', 'Danh sách có hơn 30 %s. Đang đứng ở trang 3.' % C.dt,
+            B('Đổi ô "Số dòng/trang" sang 20', 'Đếm số dòng trên bảng, đọc dòng tổng'), 'Số dòng/trang: 20',
+            E('Bảng quay về trang 1 và hiện đúng 20 dòng', 'Dòng tổng hiện "Hiển thị 1–20 / N", tổng N không đổi'))
+
+
+def ht_sx_khong_ho_tro(C):  # [22][23]
+    return ('Các cột không cho sắp xếp', 'P2', 'Đang ở %s, chưa bấm sắp xếp cột nào.' % C.man,
+            B('Di chuột và bấm vào tiêu đề các cột: ' + ds(C.nosort_cols), 'Quan sát thứ tự dòng'), '',
+            E('Các cột này KHÔNG có biểu tượng mũi tên sắp xếp',
+              'Bấm vào tiêu đề không làm thay đổi thứ tự dòng',
+              'Chỉ các cột %s là sắp xếp được' % ds(C.sort_cols)))
+
+
+def ht_sx_giu_khi_chuyen_trang(C):  # [24]
+    return ('Sắp xếp giữ nguyên khi chuyển trang', 'P1',
+            'Danh sách có nhiều hơn 1 trang. Đang sắp xếp giảm dần theo cột %s.' % C.sort_cols[0],
+            B('Bấm sang trang 2', 'So dòng đầu trang 2 với dòng cuối trang 1', 'Quan sát biểu tượng mũi tên ở tiêu đề cột'),
+            '',
+            E('Thứ tự nối tiếp liền mạch, không đảo lộn hay lặp %s' % C.dt,
+              'Cột %s vẫn giữ biểu tượng mũi tên xuống (giảm dần)' % C.sort_cols[0]))
+
+
+def ht_sx_ve_trang_1(C):  # [25]
+    return ('Bấm sắp xếp khi đang ở trang giữa thì quay về trang 1', 'P1',
+            'Danh sách có nhiều hơn 3 trang. Đang đứng ở trang 3.',
+            B('Bấm tiêu đề cột %s' % C.sort_cols[0], 'Quan sát thanh phân trang và dòng tổng'), '',
+            E('Bảng quay về trang 1, hiện các %s đầu tiên theo %s tăng dần' % (C.dt, C.sort_cols[0]),
+              'Dòng tổng hiện "Hiển thị 1–10 / N", tổng N không đổi'))
+
+
+def ht_sx_tang_giam(C, cot):  # [20][21]
+    return ('Sắp xếp theo cột %s' % cot, 'P1', 'Danh sách có ít nhất 5 %s có %s khác nhau.' % (C.dt, cot),
+            B('Bấm tiêu đề cột %s' % cot, 'Đọc 5 dòng đầu', 'Bấm tiêu đề cột %s lần thứ hai' % cot, 'Đọc lại 5 dòng đầu'),
+            '',
+            E('Lần 1: các dòng xếp tăng dần theo %s, biểu tượng mũi tên lên ở tiêu đề cột' % cot,
+              'Lần 2: thứ tự đảo ngược (giảm dần), biểu tượng mũi tên xuống'))
+
+
+# ---------------------------------------------------------------- II. TÌM KIẾM & LỌC DANH SÁCH
+def tk_chinh_xac(C):  # [26]
+    return ('Tìm nhanh theo đúng %s' % C.tk_truong, 'P0', 'Có %s %s.' % (C.dt, C.tk_vd),
+            B('Gõ đúng nguyên văn %s "%s" vào ô tìm nhanh' % (C.tk_truong, C.tk_vd), 'Nhấn Enter'), C.tk_vd,
+            E('Bảng chỉ còn %s có %s đúng "%s" (và %s khác có chứa chuỗi này nếu có)' % (C.dt, C.tk_truong, C.tk_vd, C.dt),
+              'Dòng tổng đổi theo kết quả'))
+
+
+def tk_mot_phan(C):  # [27]
+    return ('Tìm nhanh theo một phần từ khóa', 'P0', 'Có nhiều %s có %s chứa "%s".' % (C.dt, C.tk_truong, C.tk_mot_phan),
+            B('Gõ "%s" vào ô tìm nhanh' % C.tk_mot_phan, 'Bấm nút Tìm kiếm'), 'Từ khóa: ' + C.tk_mot_phan,
+            E('Hiện mọi %s có %s CHỨA "%s" (đứng đầu, giữa hay cuối đều ra)' % (C.dt, C.tk_truong, C.tk_mot_phan),
+              'Không có dòng nào không chứa từ khóa'))
+
+
+def tk_hoa_thuong(C):  # [28]
+    return ('Tìm nhanh không phân biệt chữ hoa chữ thường', 'P1', 'Có %s %s.' % (C.dt, C.tk_vd),
+            B('Gõ "%s" (toàn chữ thường), nhấn Enter, ghi nhận kết quả' % C.tk_vd.lower(),
+              'Xóa, gõ lại "%s" (toàn chữ hoa), nhấn Enter' % C.tk_vd.upper(), 'So sánh hai kết quả'), '',
+            E('Hai lần tìm cho ra CÙNG một tập kết quả, đều có %s %s' % (C.dt, C.tk_vd)))
+
+
+def tk_co_dau(C):  # [29]
+    return ('Tìm nhanh có dấu và không dấu', 'P2', 'Có %s tên "%s".' % (C.dt, C.tk_co_dau),
+            B('Gõ "%s" (có dấu), nhấn Enter' % C.tk_co_dau, 'Gõ "%s" (bỏ dấu), nhấn Enter' % C.tk_khong_dau), '',
+            E('Bước 1: ra %s "%s"' % (C.dt, C.tk_co_dau),
+              'Bước 2: vẫn ra %s "%s" (tìm không phân biệt dấu)' % (C.dt, C.tk_co_dau)))
+
+
+def tk_khong_ton_tai(C):  # [30][40]
+    return ('Tìm từ khóa không tồn tại', 'P1', 'Danh sách có dữ liệu bình thường.',
+            B('Gõ vào ô tìm nhanh một chuỗi chắc chắn không tồn tại', 'Nhấn Enter'), 'Từ khóa: zzzkhongtontai999',
+            E('Bảng hiện "Không có dữ liệu phù hợp."', 'Dòng dưới bảng hiện "Không có %s nào."' % C.dt,
+              'Không báo lỗi hệ thống'))
+
+
+def tk_khoang_trang(C):  # [32]
+    return ('Từ khóa có khoảng trắng đầu và cuối', 'P2', 'Có %s %s.' % (C.dt, C.tk_vd),
+            B('Gõ "   %s   " (thừa khoảng trắng 2 đầu) vào ô tìm nhanh' % C.tk_vd, 'Nhấn Enter'), '',
+            E('Kết quả giống hệt khi gõ "%s" không có khoảng trắng' % C.tk_vd, 'Không báo "Không có dữ liệu phù hợp."'))
+
+
+def tk_gioi_han(C):  # [33]
+    return ('Giới hạn độ dài ô tìm kiếm', 'P2', 'Đang ở %s.' % C.man,
+            B('Dán chuỗi Test data vào ô tìm nhanh', 'Kiểm tra chuỗi trong ô có bị cắt bớt không', 'Nhấn Enter',
+              'Bấm Làm mới'),
+            'Chuỗi 500 ký tự (vd chữ "abcde" lặp lại 100 lần)',
+            E('Bước 2: ô nhận đủ 500 ký tự, không báo lỗi',
+              'Bước 3: bảng hiện "Không có dữ liệu phù hợp."; màn hình không treo, không báo lỗi hệ thống',
+              'Bước 4: ô tìm nhanh trống, bảng về toàn bộ danh sách'))
+
+
+def tk_xoa_tu_khoa(C):  # [34]
+    return ('Xóa từ khóa thì danh sách quay về đầy đủ', 'P0', 'Đang tìm với từ khóa cho ra ít kết quả.',
+            B('Xóa hết nội dung ô tìm nhanh', 'Nhấn Enter'), '',
+            E('Danh sách hiện lại đầy đủ, dòng tổng quay lại như ban đầu', 'Bảng về trang 1'))
+
+
+def loc_mac_dinh(C):  # [36]
+    return ('Giá trị mặc định của bộ lọc khi vào màn', 'P0', 'Có %s Hoạt động và %s đã Khóa.' % (C.dt, C.dt),
+            B(C.menu, 'Bấm "Tìm kiếm nâng cao", đọc từng ô lọc'), '',
+            E('Ô tìm nhanh trống; các ô %s đều để trống' % ds(C.loc),
+              'Danh sách hiện CẢ %s Hoạt động lẫn %s đã Khóa (không lọc trạng thái mặc định)' % (C.dt, C.dt)))
+
+
+def loc_ket_hop_tim(C):  # [39]
+    return ('Kết hợp tìm nhanh với bộ lọc', 'P1', 'Có M %s chứa "%s", trong đó K %s đang Khóa.' % (C.dt, C.tk_mot_phan, C.dt),
+            B('Gõ "%s" vào ô tìm nhanh, nhấn Enter, đọc dòng tổng' % C.tk_mot_phan, 'Chọn thêm Trạng thái = Khóa',
+              'Đọc lại dòng tổng'),
+            'Từ khóa: %s; Trạng thái: Khóa' % C.tk_mot_phan,
+            E('Bước 1: dòng tổng "… / M"', 'Bước 3: dòng tổng "… / K", chỉ còn %s vừa chứa từ khóa vừa đang Khóa' % C.dt,
+              'Số dòng trên bảng khớp con số dòng tổng'))
+
+
+def loc_tong_so(C):  # [41]
+    return ('Tổng số bản ghi sau khi lọc', 'P0', 'Có K %s đang Khóa trong phạm vi được xem.' % C.dt,
+            B('Lọc Trạng thái = Khóa', 'Đọc dòng tổng', 'Bấm Làm mới, đọc lại dòng tổng'), 'Trạng thái: Khóa',
+            E('Bước 2: dòng tổng "Hiển thị 1–… / K", K đúng bằng số %s đang Khóa' % C.dt,
+              'Bước 3: dòng tổng quay lại tổng ban đầu'))
+
+
+def loc_ve_trang_1(C):  # [17][42]
+    return ('Áp dụng bộ lọc khi đang ở trang giữa', 'P0', 'Đang ở trang 3. Bộ lọc mới cho ra hơn 10 kết quả.',
+            B('Chọn một giá trị ở ô lọc (vd Trạng thái = Hoạt động)', 'Quan sát bảng, thanh phân trang', 'Bấm sang trang 2'),
+            '',
+            E('Bước 2: bảng quay về trang 1, dòng tổng "Hiển thị 1–10 / <số kết quả lọc>"',
+              'Bước 3: trang 2 vẫn chỉ gồm %s thỏa bộ lọc, STT tiếp từ 11' % C.dt))
+
+
+def loc_sap_xep(C):  # [43]
+    return ('Sắp xếp sau khi lọc', 'P2', 'Đang lọc Trạng thái = Hoạt động, kết quả hơn 1 trang.',
+            B('Bấm tiêu đề cột %s' % C.sort_cols[0], 'Đọc các dòng, đọc ô Trạng thái của bộ lọc'), '',
+            E('Kết quả lọc được xếp tăng dần theo %s' % C.sort_cols[0],
+              'Bộ lọc giữ nguyên, không lẫn %s đã Khóa vào kết quả' % C.dt))
+
+
+def luu_chuyen_man(C):  # [45]
+    return ('Rời sang màn khác rồi quay lại thì bộ lọc trở về mặc định', 'P1', 'Đang ở %s.' % C.man,
+            B('Gõ từ khóa vào ô tìm nhanh và chọn Trạng thái = Hoạt động', 'Ghi nhận dòng tổng',
+              'Vào màn khác trên menu (vd %s)' % C.man_khac, 'Khoảng 1 phút sau, quay lại bằng menu',
+              'Quan sát khối bộ lọc và bảng'),
+            'Từ khóa: %s; Trạng thái: Hoạt động' % C.tk_mot_phan,
+            E('Ô tìm nhanh trống, các ô lọc trở về rỗng',
+              'Bảng hiện toàn bộ danh sách ở trang 1, dòng tổng bằng tổng số ban đầu'))
+
+
+def luu_f5(C):  # [46]
+    return ('Tải lại trang (F5) khi đang lọc', 'P2', 'Đang ở %s.' % C.man,
+            B('Gõ từ khóa vào ô tìm nhanh và chọn Trạng thái = Hoạt động', 'Nhấn F5 tải lại trang',
+              'Quan sát khối bộ lọc và bảng'),
+            'Từ khóa: %s; Trạng thái: Hoạt động' % C.tk_mot_phan,
+            E('Ô tìm nhanh và các ô lọc trở về rỗng', 'Bảng hiện toàn bộ danh sách ở trang 1 với số dòng mặc định 10'))
+
+
+def luu_tab_moi(C):  # [47]
+    return ('Mở màn hình ở tab trình duyệt mới khi tab cũ đang lọc', 'P2', 'Tab 1 đang mở %s.' % C.man,
+            B('Ở tab 1: gõ từ khóa và chọn Trạng thái = Hoạt động',
+              'Mở tab trình duyệt mới (đã đăng nhập), vào %s bằng menu' % C.man, 'Quan sát tab 2',
+              'Quay lại tab 1, quan sát'),
+            'Từ khóa: %s; Trạng thái: Hoạt động' % C.tk_mot_phan,
+            E('Tab 2: ô tìm nhanh và các ô lọc rỗng, bảng hiện toàn bộ danh sách ở trang 1',
+              'Tab 1: vẫn giữ nguyên từ khóa, giá trị lọc và kết quả đang xem'))
+
+
+def luu_tk_khac(C):  # [48]
+    return ('Đăng xuất, đăng nhập tài khoản khác trên cùng trình duyệt', 'P1',
+            'Có 2 tài khoản A và B cùng có quyền "Quản lý kho", dùng chung một trình duyệt.',
+            B('Đăng nhập tài khoản A, vào %s' % C.man, 'Gõ từ khóa và chọn Trạng thái = Hoạt động', 'Đăng xuất',
+              'Đăng nhập tài khoản B, vào %s' % C.man, 'Quan sát khối bộ lọc và bảng'),
+            'Từ khóa: %s; Trạng thái: Hoạt động' % C.tk_mot_phan,
+            E('Tài khoản B thấy ô tìm nhanh và các ô lọc rỗng, bảng hiện toàn bộ danh sách ở trang 1',
+              'Từ khóa và giá trị lọc của tài khoản A KHÔNG hiện sang tài khoản B'))
+
+
+# ---------------------------------------------------------------- III. THÊM MỚI
+def tm_bat_buoc(C):  # [52]
+    return ('Trường bắt buộc và không bắt buộc', 'P1', 'Đang mở cửa sổ "%s".' % C.tao_title,
+            B('Đọc nhãn từng ô trong cửa sổ'), '',
+            E('Có dấu * đỏ ở: ' + ds(C.bb),
+              'Không có dấu * ở: ' + ds(C.tuy_chon)))
+
+
+def tm_chi_bat_buoc(C):  # [56][57]
+    return ('Thêm mới chỉ nhập trường bắt buộc', 'P0', 'Đang mở cửa sổ "%s".' % C.tao_title,
+            B('Nhập đủ các ô bắt buộc theo Test data, để trống %s' % ds(C.tuy_chon_trong), 'Bấm "Lưu"'),
+            C.tao_data,
+            E('Hiện "Thêm mới thành công.", cửa sổ đóng', 'Danh sách có %s mới ở dòng đầu, Trạng thái "Hoạt động"' % C.dt,
+              'Ô %s của dòng mới để TRỐNG (không in dấu gạch)' % ds(C.tuy_chon_trong)))
+
+
+def tm_du_lieu_sau_luu(C):  # [58]
+    return ('Dữ liệu sau khi lưu khớp với dữ liệu đã nhập', 'P0', 'Vừa tạo %s theo Test data.' % C.dt,
+            B('Đọc dòng %s vừa tạo trên bảng' % C.dt, 'Bấm %s để mở cửa sổ "%s"' % (C.link_xem, C.xem_title)), C.tao_data,
+            E('Mọi ô trên bảng và trong cửa sổ Xem khớp đúng giá trị đã nhập',
+              'Người tạo là tài khoản đang đăng nhập, Ngày tạo là thời điểm lưu (dd/mm/yyyy hh:mm)'))
+
+
+def tm_lich_su(C):  # [60]
+    return ('Ghi nhận lịch sử Tạo mới sau khi thêm thành công', 'P1', 'Vừa tạo %s theo Test data.' % C.dt,
+            B('Ở dòng %s vừa tạo, mở "Lịch sử"' % C.dt, 'Đọc dòng trên cùng'), C.tao_data,
+            E('Có dòng loại hành động "Tạo mới" kèm người tạo và thời gian tạo'))
+
+
+def tm_dung_max(C):  # [65]
+    return ('Nhập đúng độ dài tối đa thì lưu được', 'P1', 'Đang mở cửa sổ "%s".' % C.tao_title,
+            B('Nhập các ô bắt buộc hợp lệ, riêng các ô theo Test data dài đúng giới hạn', 'Bấm "Lưu"'), C.max_data,
+            E('Không báo lỗi dưới các ô', 'Lưu thành công, giá trị hiện đủ, không bị cắt bớt'))
+
+
+def tm_chi_khoang_trang(C):  # [69]
+    return ('Nhập toàn khoảng trắng vào ô bắt buộc', 'P1', 'Đang mở cửa sổ "%s", các ô khác đã nhập hợp lệ.' % C.tao_title,
+            B('Gõ toàn dấu cách vào ô %s' % C.f_chu, 'Bấm "Lưu"'), '%s: "     "' % C.f_chu,
+            E('Dưới ô %s báo "Bắt buộc phải nhập"' % C.f_chu, 'Không tạo %s, cửa sổ vẫn mở' % C.dt))
+
+
+def tm_loi_bien_mat(C):  # [71]
+    return ('Thông báo lỗi biến mất khi nhập lại hợp lệ', 'P1', 'Đang mở cửa sổ "%s".' % C.tao_title,
+            B('Để trống mọi ô, bấm "Lưu"', 'Nhập giá trị hợp lệ vào ô %s' % C.f_chu, 'Quan sát dưới ô vừa nhập'), '',
+            E('Bước 1: dưới các ô bắt buộc báo "Bắt buộc phải nhập"',
+              'Bước 3: lỗi dưới ô %s biến mất, các ô còn trống vẫn giữ lỗi' % C.f_chu))
+
+
+def tm_ltt_thieu(C):  # [73]
+    return ('Lưu & Tiếp tục khi bỏ trống trường bắt buộc', 'P0', 'Đang mở cửa sổ "%s".' % C.tao_title,
+            B('Để trống ô %s, nhập các ô khác hợp lệ' % C.f_chu, 'Bấm "Lưu & Tiếp tục"'), '',
+            E('Dưới ô %s báo "Bắt buộc phải nhập"' % C.f_chu,
+              'Cửa sổ vẫn mở, tiêu đề vẫn "%s"; giá trị đã nhập giữ nguyên, không bị xóa trắng' % C.tao_title,
+              'Không hiện "Thêm mới thành công.", danh sách phía sau không có %s mới' % C.dt))
+
+
+def tm_ltt_sai_dinh_dang(C):  # [74]
+    return ('Lưu & Tiếp tục khi nhập sai định dạng', 'P1', 'Đang mở cửa sổ "%s".' % C.tao_title,
+            B('Nhập các ô hợp lệ, riêng %s nhập theo Test data' % C.f_dd, 'Bấm "Lưu & Tiếp tục"',
+              'Sửa lại đúng định dạng, bấm "Lưu & Tiếp tục"'),
+            '%s: %s' % (C.f_dd, C.dd_sai),
+            E('Bước 2: dưới ô %s báo "%s", không lưu, cửa sổ vẫn mở, giá trị giữ nguyên' % (C.f_dd, C.dd_msg),
+              'Bước 3: lưu thành công, cửa sổ xóa trắng để nhập tiếp'))
+
+
+def tm_ltt_trung(C):  # [75]
+    return ('Lưu & Tiếp tục khi trùng dữ liệu', 'P0', C.pre_trung,
+            B('Nhập %s trùng %s đã có (%s)' % (C.f_trung, C.dt, C.pham_vi_trung), 'Bấm "Lưu & Tiếp tục"',
+              'Sửa thành giá trị chưa có, bấm lại "Lưu & Tiếp tục"'), '',
+            E('Bước 2: dưới ô %s báo "%s", không lưu, cửa sổ vẫn mở, các ô giữ nguyên' % (C.f_trung, C.trung_msg),
+              'Bước 3: lưu thành công, cửa sổ xóa trắng để nhập tiếp'))
+
+
+def tm_ltt_dong(C):  # [78]
+    return ('Bấm Lưu & Tiếp tục rồi bấm Đóng ngay thì không hỏi', 'P1',
+            'Đang mở cửa sổ "%s", đã nhập đủ trường bắt buộc.' % C.tao_title,
+            B('Bấm "Lưu & Tiếp tục"', 'Không nhập gì thêm vào cửa sổ trống', 'Bấm "Đóng"'), C.tao_data,
+            E('%s vừa lưu có trong danh sách' % C.Dt,
+              'Bấm Đóng thì cửa sổ đóng ngay, KHÔNG hiện hộp "Thông tin chưa lưu"'))
+
+
+def tm_dong_chua_nhap(C):  # [93]
+    return ('Bấm Đóng khi chưa nhập thông tin nào', 'P0', 'Đang mở cửa sổ "%s", chưa nhập gì.' % C.tao_title,
+            B('Bấm "Đóng"', 'Xem danh sách'), '',
+            E('Cửa sổ đóng ngay, không hỏi', 'KHÔNG có %s mới nào được tạo' % C.dt))
+
+
+def tm_dong_x(C):  # [95]
+    return ('Đã nhập thông tin rồi bấm nút X góc trên cửa sổ', 'P1',
+            'Đang mở cửa sổ "%s", đã nhập %s.' % (C.tao_title, C.f_chu),
+            B('Bấm nút X ở góc trên bên phải cửa sổ', 'Bấm "Ở lại"', 'Bấm X lần nữa, bấm "Thoát"'), '',
+            E('Bước 1: hiện hộp "Thông tin chưa lưu" với câu "Bạn có thông tin chưa lưu. Có chắc chắn muốn thoát?", '
+              'nút Thoát, Ở lại',
+              'Bước 2: quay về cửa sổ Tạo mới, dữ liệu đã nhập vẫn còn',
+              'Bước 3: cửa sổ đóng, không tạo %s' % C.dt))
+
+
+def tm_nhap_xoa_het(C):  # [98]
+    return ('Nhập rồi xóa hết về như ban đầu, bấm Đóng thì không hỏi', 'P2',
+            'Đang mở cửa sổ "%s", các ô đang trống.' % C.tao_title,
+            B('Gõ vài ký tự vào ô %s' % C.f_chu, 'Xóa hết các ký tự vừa gõ', 'Bấm "Đóng"'), '',
+            E('Cửa sổ đóng ngay, KHÔNG hiện hộp "Thông tin chưa lưu"', 'Không có %s mới nào được tạo' % C.dt))
+
+
+def tm_khong_thao_tac(C):  # [100]
+    return ('Nhập đủ dữ liệu rồi để nguyên cửa sổ, không bấm Lưu', 'P2',
+            'Đang mở cửa sổ "%s", đã nhập đủ dữ liệu hợp lệ.' % C.tao_title,
+            B('Không bấm nút nào, để nguyên khoảng 15 phút', 'Bấm "Lưu"'), C.tao_data,
+            E('Trong lúc chờ: cửa sổ giữ nguyên, KHÔNG tự tạo %s' % C.dt,
+              'Bước 2: lưu bình thường, hiện "Thêm mới thành công." (hoặc yêu cầu đăng nhập lại nếu phiên đã hết hạn, '
+              'không mất dữ liệu đã có)'))
+
+
+def tm_spam_luu(C):  # [101]
+    return ('Bấm Lưu liên tục hai lần', 'P0', 'Đang mở cửa sổ "%s", đã nhập đủ dữ liệu hợp lệ.' % C.tao_title,
+            B('Bấm "Lưu"', 'Bấm "Lưu" lần hai thật nhanh', 'Xem danh sách'), C.tao_data,
+            E('Chỉ tạo ra ĐÚNG MỘT %s, không tạo hai bản trùng' % C.dt, 'Chỉ hiện một thông báo "Thêm mới thành công."'))
+
+
+def tm_trung_2_tab(C):  # [102]
+    return ('Tạo trùng cùng lúc ở hai tab', 'P1', 'Mở %s ở 2 tab, cả hai đang mở cửa sổ "%s".' % (C.man, C.tao_title),
+            B('Ở cả hai tab nhập cùng dữ liệu theo Test data', 'Tab 1 bấm "Lưu"', 'Tab 2 bấm "Lưu"'), C.tao_data,
+            E('Tab 1: "Thêm mới thành công."',
+              'Tab 2: dưới ô %s báo "%s", không tạo thêm bản ghi' % (C.f_trung, C.trung_msg),
+              'Danh sách chỉ có MỘT %s theo dữ liệu này' % C.dt))
+
+
+# ---------------------------------------------------------------- IV. CHỈNH SỬA
+def cs_nut(C):  # [106]
+    return ('Các nút trong cửa sổ Sửa', 'P1', 'Có %s đang Hoạt động.' % C.dt,
+            B('Bấm "Sửa" ở dòng %s đó' % C.dt, 'Quan sát tiêu đề và chân cửa sổ'), '',
+            E('Tiêu đề "%s"' % C.sua_title, 'Chân cửa sổ chỉ có 2 nút "Lưu" và "Đóng", KHÔNG có "Lưu & Tiếp tục"'))
+
+
+def cs_sua_1(C):  # [107][110]
+    return ('Sửa một trường và lưu thành công', 'P0', '%s A đang có %s "%s".' % (C.Dt, C.f_sua, C.sua_cu),
+            B('Mở cửa sổ Sửa %s A' % C.dt, 'Đổi %s thành "%s"' % (C.f_sua, C.sua_moi), 'Bấm "Lưu"', 'Xem bảng'),
+            '%s: %s' % (C.f_sua, C.sua_moi),
+            E('Hiện "Cập nhật thành công.", cửa sổ đóng', 'Cột %s trên bảng đổi thành "%s"' % (C.f_sua_cot, C.sua_moi_hien),
+              'Các cột khác giữ nguyên'))
+
+
+def cs_sua_nhieu(C):  # [108]
+    return ('Sửa nhiều trường cùng lúc', 'P0', '%s A đang Hoạt động.' % C.Dt,
+            B('Mở cửa sổ Sửa %s A' % C.dt, 'Đổi đồng thời: ' + ds(C.sua_nhieu), 'Bấm "Lưu"',
+              'Mở lại cửa sổ Xem của %s A' % C.dt), '',
+            E('Hiện "Cập nhật thành công."', 'Mọi trường vừa đổi đều được lưu đúng, hiện đúng trên bảng và cửa sổ Xem'))
+
+
+def cs_giu_nguyen(C):  # [109]
+    return ('Giữ nguyên %s của chính mình khi sửa' % C.f_trung, 'P0', '%s A đang có %s X.' % (C.Dt, C.f_trung),
+            B('Mở cửa sổ Sửa %s A' % C.dt, 'KHÔNG đổi %s, chỉ đổi %s' % (C.f_trung, C.f_phu), 'Bấm "Lưu"'), '',
+            E('LƯU ĐƯỢC, không báo trùng với chính mình', 'Hiện "Cập nhật thành công."'))
+
+
+def cs_ngay_nguoi(C):  # [111]
+    return ('Người cập nhật và Ngày cập nhật đổi sau khi sửa', 'P1',
+            '%s A do tài khoản khác tạo. Đăng nhập tài khoản B.' % C.Dt,
+            B('Mở cửa sổ Sửa %s A, đổi %s, bấm "Lưu"' % (C.dt, C.f_phu), 'Đọc cột Người cập nhật, Ngày cập nhật, Người tạo, '
+              'Ngày tạo của %s A' % C.dt), '',
+            E('Người cập nhật = tài khoản B, Ngày cập nhật = thời điểm vừa lưu',
+              'Người tạo, Ngày tạo giữ nguyên như trước khi sửa'))
+
+
+def cs_lich_su(C):  # [112]
+    return ('Sửa xong ghi vào lịch sử', 'P0', 'Vừa đổi %s của %s A từ "%s" thành "%s".' % (C.f_sua, C.dt, C.sua_cu, C.sua_moi),
+            B('Mở Lịch sử của %s A' % C.dt, 'Đọc dòng trên cùng'), '',
+            E('Có dòng "Thay đổi thông tin", nêu %s: %s → %s' % (C.f_sua, C.sua_cu, C.sua_moi),
+              'Kèm người thực hiện và thời điểm'))
+
+
+def cs_trong(C):  # [113]
+    return ('Để trống %s khi sửa' % C.f_chu, 'P0', 'Đang mở cửa sổ Sửa %s A.' % C.dt,
+            B('Xóa hết nội dung ô %s' % C.f_chu, 'Bấm "Lưu"'), '',
+            E('Dưới ô %s báo "Bắt buộc phải nhập"' % C.f_chu, 'Không lưu, cửa sổ vẫn mở, %s A giữ nguyên dữ liệu cũ' % C.dt))
+
+
+def cs_sai_dinh_dang(C):  # [114][118]
+    return ('Nhập sai định dạng %s khi sửa' % C.f_dd, 'P0', 'Đang mở cửa sổ Sửa %s A.' % C.dt,
+            B('Đổi %s theo Test data' % C.f_dd, 'Quan sát dưới ô', 'Sửa lại đúng định dạng'), '%s: %s' % (C.f_dd, C.dd_sai),
+            E('Bước 2: dưới ô %s báo "%s", bấm Lưu không lưu' % (C.f_dd, C.dd_msg),
+              'Bước 3: lỗi biến mất ngay, bấm Lưu thành công'))
+
+
+def cs_vuot(C):  # [115]
+    return ('Nhập vượt độ dài tối đa khi sửa', 'P1', 'Đang mở cửa sổ Sửa %s A.' % C.dt,
+            B('Dán vào ô %s chuỗi dài hơn giới hạn' % C.f_dai, 'Đếm số ký tự còn lại trong ô'), C.dai_data,
+            E(*C.dai_exp))
+
+
+def cs_trung_khac(C):  # [116]
+    return ('Sửa trùng %s với %s khác' % (C.f_trung, C.dt), 'P0', C.pre_trung,
+            B('Mở cửa sổ Sửa %s A' % C.dt, 'Đổi %s thành đúng %s của %s B (%s)' % (C.f_trung, C.f_trung, C.dt, C.pham_vi_trung),
+              'Bấm "Lưu"'), '',
+            E('Dưới ô %s báo "%s"' % (C.f_trung, C.trung_msg), 'Không lưu, cửa sổ vẫn mở'))
+
+
+def cs_mo_khong_doi(C):  # [119]
+    return ('Mở Sửa, không thay đổi gì rồi bấm Đóng', 'P1', 'Có %s đang Hoạt động.' % C.dt,
+            B('Bấm "Sửa" ở dòng %s đó' % C.dt, 'Không thay đổi ô nào', 'Bấm "Đóng"'), '',
+            E('Cửa sổ đóng ngay, KHÔNG hiện hộp "Thông tin chưa lưu"', 'Dữ liệu trên bảng không đổi'))
+
+
+def cs_doi_tra_ve(C):  # [120]
+    return ('Sửa rồi trả lại đúng giá trị cũ, bấm Đóng thì không hỏi', 'P2', '%s A có %s "%s".' % (C.Dt, C.f_sua, C.sua_cu),
+            B('Mở cửa sổ Sửa %s A' % C.dt, 'Đổi %s thành "%s"' % (C.f_sua, C.sua_moi), 'Sửa lại đúng "%s"' % C.sua_cu,
+              'Bấm "Đóng"'), '',
+            E('Cửa sổ đóng ngay, KHÔNG hiện hộp "Thông tin chưa lưu" vì dữ liệu không khác ban đầu'))
+
+
+def cs_dong_da_doi(C):  # [121][124]
+    return ('Bấm Đóng hoặc X khi đã thay đổi thông tin', 'P0', 'Đang mở cửa sổ Sửa %s A.' % C.dt,
+            B('Đổi %s' % C.f_sua, 'Bấm "Đóng"'), '',
+            E('Hiện hộp "Thông tin chưa lưu" với câu "Bạn có thông tin chưa lưu. Có chắc chắn muốn thoát?", nút Thoát, Ở lại'))
+
+
+def cs_thoat(C):  # [122][124]
+    return ('Bấm Thoát ở hộp "Thông tin chưa lưu" khi đang sửa', 'P1', 'Đang mở cửa sổ Sửa %s A, đã đổi %s.' % (C.dt, C.f_sua),
+            B('Bấm "Đóng"', 'Bấm "Thoát"', 'Xem dòng %s A trên bảng' % C.dt), '',
+            E('Cửa sổ đóng, quay lại danh sách', '%s của %s A KHÔNG đổi, không ghi lịch sử' % (C.f_sua, C.dt)))
+
+
+def cs_o_lai(C):  # [123]
+    return ('Bấm Ở lại ở hộp "Thông tin chưa lưu" khi đang sửa', 'P1', 'Đang mở cửa sổ Sửa %s A, đã đổi %s.' % (C.dt, C.f_sua),
+            B('Bấm "Đóng"', 'Bấm "Ở lại"'), '',
+            E('Hộp xác nhận đóng, quay lại cửa sổ Sửa', 'Giá trị vừa đổi vẫn còn để lưu tiếp'))
+
+
+def cs_khong_lich_su(C):  # [125]
+    return ('Bấm Lưu nhưng không đổi gì thì không ghi lịch sử', 'P1', '%s B đang Hoạt động.' % C.Dt,
+            B('Mở cửa sổ Sửa %s B' % C.dt, 'Không thay đổi gì', 'Bấm "Lưu"', 'Mở Lịch sử của %s B' % C.dt), '',
+            E('Lịch sử KHÔNG có dòng "Thay đổi thông tin" mới'))
+
+
+def cs_bi_xoa(C):  # [127]
+    return ('Sửa %s đã bị người khác xóa' % C.dt, 'P1',
+            'Tab 1 đang mở danh sách có %s A (chưa được dùng). Tab 2 cùng tài khoản.' % C.dt,
+            B('Tab 2: xóa %s A' % C.dt, 'Tab 1 (chưa tải lại): bấm "Sửa" %s A, hoặc đang mở sẵn cửa sổ Sửa thì bấm "Lưu"' % C.dt),
+            '',
+            E('Hiện thông báo lỗi, không tạo lại %s A' % C.dt, 'Tải lại danh sách thì %s A không còn' % C.dt))
+
+
+def cs_2_nguoi(C):  # [128]
+    return ('Hai người cùng sửa một %s' % C.dt, 'P2', 'Tài khoản A và B cùng mở cửa sổ Sửa %s X.' % C.dt,
+            B('A đổi %s thành "%s", bấm "Lưu"' % (C.f_sua, C.sua_moi), 'B đổi %s, bấm "Lưu"' % C.f_phu,
+              'Mở lại cửa sổ Xem và Lịch sử của %s X' % C.dt), '',
+            E('Cả hai lần lưu đều báo "Cập nhật thành công."',
+              'Dữ liệu cuối cùng là giá trị của lần lưu sau; Lịch sử có đủ 2 dòng "Thay đổi thông tin" của A và B'))
+
+
+# ---------------------------------------------------------------- V. XÓA
+def xoa_popup(C):  # [130][131][132]
+    return ('Hộp xác nhận xóa nêu đúng tên', 'P0', '%s A Hoạt động, %s.' % (C.Dt, C.dk_xoa),
+            B('Bấm "Xóa" ở dòng %s A' % C.dt, 'Đọc hộp xác nhận'), '',
+            E('Hộp tiêu đề "Xác nhận xóa", câu "Bạn có chắc muốn xóa %s \'<%s>\'?"' % (C.dt, C.ten_xn),
+              'Hai nút "Hủy" và "Xóa"'))
+
+
+def xoa_huy(C):  # [134]
+    return ('Bấm Hủy thì không xóa', 'P0', 'Đang mở hộp "Xác nhận xóa" của %s A.' % C.dt,
+            B('Bấm "Hủy"', 'Xem danh sách'), '',
+            E('Hộp đóng, %s A vẫn còn trên danh sách, dòng tổng không đổi' % C.dt))
+
+
+def xoa_tong_so(C):  # [139][140]
+    return ('Sau khi xóa: mất khỏi danh sách và tổng số giảm', 'P0', 'Danh sách có N %s, %s A %s.' % (C.dt, C.dt, C.dk_xoa),
+            B('Xóa %s A, bấm "Xóa" ở hộp xác nhận' % C.dt, 'Đọc dòng tổng', 'Tìm nhanh theo %s A' % C.tk_truong), '',
+            E('Thông báo "Xóa thành công."', 'Dòng tổng còn N - 1', 'Tìm lại không thấy %s A' % C.dt))
+
+
+# ---------------------------------------------------------------- VI. KHÓA / MỞ KHÓA
+def khoa_popup(C):  # [142][143]
+    return ('Hộp xác nhận khóa nêu đúng tên', 'P0', '%s A Hoạt động, %s.' % (C.Dt, C.dk_khoa),
+            B('Ở dòng %s A, mở nút ba chấm "Hành động khác" (nếu có), bấm "Khóa"' % C.dt, 'Đọc hộp xác nhận'), '',
+            E('Hộp tiêu đề "Xác nhận khóa", câu "Bạn có chắc muốn khóa %s \'<%s>\'?"' % (C.dt, C.ten_xn),
+              'Hai nút "Hủy" và "Khóa"'))
+
+
+def khoa_sau(C):  # [148][149]
+    return ('Trạng thái và các nút sau khi Khóa', 'P0', '%s A Hoạt động, %s.' % (C.Dt, C.dk_khoa),
+            B('Khóa %s A, bấm "Khóa" ở hộp xác nhận' % C.dt, 'Đọc cột Trạng thái và cột Hành động'), '',
+            E('Thông báo "Khóa thành công."', 'Trạng thái đổi sang nhãn "Khóa"',
+              'Cột Hành động chỉ còn "Mở khóa" và "Lịch sử"; nút Sửa, Xóa biến mất'))
+
+
+def mo_khoa_popup_huy(C):  # [151][153]
+    return ('Bấm Hủy ở hộp xác nhận mở khóa', 'P1', '%s A đang Khóa, %s.' % (C.Dt, C.dk_mo_khoa),
+            B('Bấm "Mở khóa" ở dòng %s A' % C.dt, 'Đọc hộp xác nhận', 'Bấm "Hủy"'), '',
+            E('Hộp tiêu đề "Xác nhận mở khóa", câu "Bạn có chắc muốn mở khóa %s \'<%s>\'?", nút "Hủy" và "Mở khóa"'
+              % (C.dt, C.ten_xn),
+              'Bấm Hủy: hộp đóng, %s A vẫn Khóa, không ghi lịch sử' % C.dt))
+
+
+def mo_khoa_sau(C):  # [152][154][155]
+    return ('Trạng thái và các nút sau khi Mở khóa', 'P0', '%s A đang Khóa, %s.' % (C.Dt, C.dk_mo_khoa),
+            B('Bấm "Mở khóa" ở dòng %s A, bấm "Mở khóa" ở hộp xác nhận' % C.dt, 'Đọc cột Trạng thái và cột Hành động'), '',
+            E('Thông báo "Mở khóa thành công."', 'Trạng thái đổi về nhãn "Hoạt động"',
+              'Nút Sửa hiện lại; Xóa, Khóa hiện theo điều kiện như %s đang hoạt động bình thường' % C.dt))
+
+
+def mo_khoa_nguoi_khac(C):  # [158]
+    return ('Mở khóa %s đã bị người khác mở khóa' % C.dt, 'P1', 'Tab 1 và tab 2 cùng mở danh sách, %s A đang Khóa.' % C.dt,
+            B('Tab 2: mở khóa %s A' % C.dt, 'Tab 1 (chưa tải lại): bấm "Mở khóa" %s A, xác nhận' % C.dt), '',
+            E('Tab 1 không ghi thêm lần mở khóa thứ hai (báo lỗi hoặc báo thành công nhưng lịch sử chỉ có 1 dòng mở khóa)',
+              'Tải lại: %s A đang Hoạt động' % C.dt))
+
+
+def khoa_bi_xoa(C):  # [159]
+    return ('Khóa / mở khóa %s đã bị người khác xóa' % C.dt, 'P1', 'Tab 1 đang mở danh sách có %s A (chưa được dùng).' % C.dt,
+            B('Tab 2: xóa %s A' % C.dt, 'Tab 1 (chưa tải lại): bấm "Khóa" %s A, xác nhận' % C.dt), '',
+            E('Hiện thông báo lỗi, không có %s nào bị khóa' % C.dt, 'Tải lại thì %s A không còn trong danh sách' % C.dt))
+
+
+# ---------------------------------------------------------------- VII. LỊCH SỬ THAY ĐỔI
+def ls_mo(C):  # [162][163]
+    return ('Mở cửa sổ Lịch sử', 'P0', '%s A đã được tạo và sửa ít nhất 1 lần.' % C.Dt,
+            B('Ở dòng %s A, mở nút ba chấm "Hành động khác" (nếu có), bấm "Lịch sử"' % C.dt, 'Quan sát cửa sổ'), '',
+            E('Cửa sổ tiêu đề "Lịch sử thay đổi: <%s A>"' % C.ten_xn,
+              'Có nút "Bộ lọc"; danh sách các lần thao tác, mỗi lần một khối'))
+
+
+def ls_noi_dung(C):  # [165][166][167][168]
+    return ('Mỗi dòng lịch sử nêu đủ thông tin', 'P0', '%s A có lần "Thay đổi thông tin" đổi %s.' % (C.Dt, C.f_sua),
+            B('Mở Lịch sử của %s A' % C.dt, 'Đọc khối "Thay đổi thông tin"'), '',
+            E('Có người thực hiện (tên nhân viên), thời gian dd/mm/yyyy hh:mm, loại hành động',
+              'Nội dung ghi "%s: <giá trị cũ> → <giá trị mới>", giá trị cũ và mới khác màu' % C.f_sua))
+
+
+def ls_moi_nhat(C):  # [164]
+    return ('Thứ tự mới nhất ở trên cùng', 'P0', '%s A lần lượt được Tạo mới, Sửa, Khóa.' % C.Dt,
+            B('Mở Lịch sử của %s A' % C.dt, 'Đọc thứ tự các khối'), '',
+            E('Khối trên cùng là "Thay đổi trạng thái" (Khóa), dưới là "Thay đổi thông tin", cuối cùng là "Tạo mới"'))
+
+
+def ls_loc_hanh_dong(C):  # [169]
+    return ('Lọc theo Loại hành động', 'P0', 'Lịch sử %s A có đủ Tạo mới, Thay đổi thông tin, Thay đổi trạng thái.' % C.dt,
+            B('Mở Lịch sử %s A, bấm "Bộ lọc"' % C.dt, 'Mở ô "Loại hành động"', 'Chọn "Thay đổi thông tin"'), '',
+            E('Ô có các lựa chọn: Tạo mới, Thay đổi thông tin, Thay đổi trạng thái',
+              'Sau khi chọn: chỉ còn các khối "Thay đổi thông tin"'))
+
+
+def ls_loc_nguoi(C):  # [170]
+    return ('Lọc theo Người thực hiện', 'P0', 'Lịch sử %s A có thao tác của 2 người A và B.' % C.dt,
+            B('Mở Lịch sử %s A, bấm "Bộ lọc"' % C.dt, 'Ô "Người thực hiện" chọn B'), '',
+            E('Ô chỉ liệt kê những người đã thao tác trên %s A' % C.dt, 'Chỉ còn các khối do B thực hiện'))
+
+
+def ls_loc_thoi_gian(C):  # [171]
+    return ('Lọc theo khoảng thời gian', 'P0', 'Lịch sử %s A có thao tác ở nhiều ngày khác nhau.' % C.dt,
+            B('Mở Lịch sử %s A, bấm "Bộ lọc"' % C.dt, 'Chọn "Từ ngày", "Đến ngày" bao một ngày có thao tác'), '',
+            E('Chỉ còn các khối có thời gian nằm trong khoảng đã chọn, tính cả 2 đầu mút'))
+
+
+def ls_loc_ket_hop(C):  # [172][173]
+    return ('Lọc kết hợp và lọc không có kết quả', 'P1', 'Lịch sử %s A có nhiều loại hành động của nhiều người.' % C.dt,
+            B('Chọn Loại hành động = Thay đổi trạng thái và Người thực hiện = một người chưa từng khóa / mở khóa %s A' % C.dt,
+              'Đổi Người thực hiện thành người đã khóa %s A' % C.dt), '',
+            E('Bước 1: hiện "Không có lịch sử phù hợp bộ lọc."',
+              'Bước 2: chỉ còn các khối Thay đổi trạng thái của người đó'))
+
+
+def ls_lam_moi(C):  # [174]
+    return ('Nút Làm mới trong bộ lọc lịch sử', 'P1', 'Đang lọc lịch sử theo Loại hành động và Người thực hiện.',
+            B('Bấm "Làm mới" trong vùng bộ lọc'), '',
+            E('Các ô lọc về trống', 'Hiện lại toàn bộ lịch sử của %s' % C.dt))
+
+
+def ls_dong_mo_loc(C):  # [175]
+    return ('Đóng / mở vùng bộ lọc lịch sử', 'P2', 'Đang mở cửa sổ Lịch sử.',
+            B('Bấm "Bộ lọc"', 'Bấm "Bộ lọc" lần nữa'), '',
+            E('Bước 1: hiện các ô Loại hành động, Người thực hiện, Từ ngày, Đến ngày và nút Làm mới',
+              'Bước 2: vùng bộ lọc thu gọn lại, danh sách lịch sử không đổi'))
+
+
+def ls_sua_nhieu(C):  # [178][183]
+    return ('Lịch sử khi sửa nhiều trường cùng lúc', 'P0', '%s A đang Hoạt động.' % C.Dt,
+            B('Mở Sửa %s A, đổi đồng thời: %s, bấm "Lưu"' % (C.dt, ds(C.sua_nhieu)), 'Mở Lịch sử %s A' % C.dt), '',
+            E('Có MỘT khối "Thay đổi thông tin" mới, liệt kê đủ từng trường đã đổi kèm giá trị cũ → mới',
+              'Trường không đổi không xuất hiện'))
+
+
+def ls_dong(C):  # [184][185]
+    return ('Đóng cửa sổ Lịch sử giữ nguyên danh sách', 'P2', 'Đang lọc danh sách và đứng ở trang 2.',
+            B('Mở Lịch sử của một %s ở trang 2' % C.dt, 'Bấm nút X góc trên (hoặc nút Đóng)'), '',
+            E('Cửa sổ đóng', 'Danh sách vẫn ở trang 2, bộ lọc giữ nguyên'))
+
+
+# ---------------------------------------------------------------- VIII. XEM CHI TIẾT
+def xem_chi_doc(C):  # [187][188][191][192]
+    return ('Cửa sổ Xem chỉ đọc, không có nút Lưu', 'P0', 'Có %s đang Hoạt động.' % C.dt,
+            B('Bấm %s ở dòng %s đó' % (C.link_xem, C.dt), 'Thử gõ vào từng ô', 'Quan sát chân cửa sổ'), '',
+            E('Tiêu đề "%s"; có đủ các ô: %s' % (C.xem_title, ds(C.xem_truong)),
+              'Mọi ô đều không sửa được, không có dấu * bắt buộc', 'Chân cửa sổ chỉ có nút "Đóng"'))
+
+
+def xem_khop(C):  # [189][190]
+    return ('Dữ liệu trong cửa sổ Xem khớp với dòng trên bảng', 'P0', 'Vừa tạo %s theo Test data.' % C.dt,
+            B('Bấm %s của %s vừa tạo' % (C.link_xem, C.dt), 'So từng ô với dữ liệu đã nhập và với dòng trên bảng'),
+            C.tao_data, E('Mọi ô khớp với dữ liệu đã nhập và khớp với dòng trên bảng'))
+
+
+def xem_khoa(C):  # [193][194]
+    return ('Xem chi tiết %s đang Khóa' % C.dt, 'P1', 'Có %s đang Khóa.' % C.dt,
+            B('Bấm %s ở dòng %s đã Khóa' % (C.link_xem, C.dt)), '',
+            E('Cửa sổ Xem mở bình thường, ô Trạng thái hiện "Khóa"', 'Khối Lịch sử bên dưới xem được'))
+
+
+def xem_dong(C):  # [196][197]
+    return ('Đóng cửa sổ Xem giữ nguyên bộ lọc và trang', 'P1', 'Đang lọc danh sách và đứng ở trang 2.',
+            B('Bấm %s một %s ở trang 2' % (C.link_xem, C.dt), 'Bấm "Đóng"'), '',
+            E('Cửa sổ đóng', 'Danh sách vẫn ở trang 2, bộ lọc giữ nguyên, không tải lại về trang 1'))
+
+
+# ---------------------------------------------------------------- IX. TÙY CHỈNH CỘT
+def cot_mo(C):  # [198][199][200]
+    return ('Mở cửa sổ Tuỳ chỉnh cột', 'P0', 'Tài khoản chưa chỉnh cấu hình cột của %s.' % C.man,
+            B('Bấm nút "Cấu hình cột hiển thị" (cạnh Xuất Excel)', 'Đọc danh sách cột'), '',
+            E('Cửa sổ "Tuỳ chỉnh cột" có dòng hướng dẫn, nút "Chọn tất cả", "Bỏ chọn hết"',
+              'Liệt kê đủ cột: ' + ds(C.cot_md + C.cot_an),
+              'Cột đang hiện được tích sẵn; %s chưa tích' % ds(C.cot_an)))
+
+
+def cot_an(C):  # [202]
+    return ('Tắt một cột tùy chọn', 'P1', 'Đang mở cửa sổ Tuỳ chỉnh cột.',
+            B('Bỏ tích cột "Người cập nhật"', 'Bấm "Lưu"'), '',
+            E('Bảng không còn cột Người cập nhật', 'Các cột khác giữ nguyên thứ tự'))
+
+
+def cot_keo_tha(C):  # [204][205]
+    return ('Kéo thả đổi thứ tự cột', 'P1', 'Đang mở cửa sổ Tuỳ chỉnh cột.',
+            B('Kéo cột "Trạng thái" lên ngay sau cột "%s"' % C.cot_md[2], 'Thử kéo cột "STT"', 'Bấm "Lưu"'), '',
+            E('Bước 2: cột STT không kéo được (cột cố định)',
+              'Sau khi lưu: bảng hiện cột Trạng thái ngay sau cột %s' % C.cot_md[2]))
+
+
+def cot_dong_khong_luu(C):  # [207]
+    return ('Đóng cửa sổ mà không lưu thì không áp dụng thay đổi', 'P1', 'Đang mở cửa sổ Tuỳ chỉnh cột.',
+            B('Bỏ tích vài cột, kéo đổi vài vị trí', 'Bấm "Đóng" (không bấm Lưu)', 'Mở lại cửa sổ'), '',
+            E('Bảng giữ nguyên các cột như trước', 'Mở lại cửa sổ: tích và thứ tự như trước khi chỉnh'))
+
+
+def cot_theo_tai_khoan(C):  # [209]
+    return ('Cấu hình cột lưu riêng theo từng tài khoản', 'P2', 'Tài khoản A đã ẩn cột Người tạo ở %s.' % C.man,
+            B('Đăng xuất, đăng nhập tài khoản B', 'Vào %s' % C.man, 'Đăng nhập lại tài khoản A trên máy khác'), '',
+            E('Tài khoản B thấy bộ cột mặc định (có cột Người tạo)',
+              'Tài khoản A trên máy khác vẫn thấy cột Người tạo bị ẩn (cấu hình lưu theo tài khoản)'))
+
+
+def cot_khong_anh_huong(C):  # [210][211]
+    return ('Cấu hình cột không ảnh hưởng dữ liệu và bộ lọc', 'P1', 'Đang lọc Trạng thái = Hoạt động, đứng ở trang 2.',
+            B('Mở Tuỳ chỉnh cột, ẩn cột Ngày tạo, bấm "Lưu"', 'Quan sát bảng, bộ lọc, dòng tổng'), '',
+            E('Bộ lọc và dòng tổng không đổi, số dòng không đổi', 'Chỉ mất cột Ngày tạo trên bảng'))
+
+
+# ---------------------------------------------------------------- X. XUẤT DANH SÁCH EXCEL
+def xuat_tat_ca_truong(C):  # [216][225][226]
+    return ('Xuất file với tất cả trường', 'P0', 'Danh sách có dữ liệu.',
+            B('Bấm "Xuất Excel"', 'Bấm "Chọn tất cả"', 'Bấm "Xuất file"', 'Mở file'), '',
+            E('Thông báo "Xuất Excel thành công", tải file %s' % C.file_xuat,
+              'File có đủ cột theo đúng thứ tự trong cửa sổ: ' + ds(C.truong_xuat)))
+
+
+def xuat_bo_truong(C):  # [217][227]
+    return ('Bỏ tích một trường thì file không có cột đó', 'P0', 'Đang mở cửa sổ "Chọn trường xuất file".',
+            B('Bỏ tích trường "Người cập nhật"', 'Bấm "Xuất file"', 'Mở file'), '',
+            E('File không có cột Người cập nhật', 'Dòng cuối cửa sổ trước khi xuất hiện "Đang chọn … trường" giảm 1'))
+
+
+def xuat_khong_chon(C):  # [218]
+    return ('Không chọn trường nào', 'P1', 'Đang mở cửa sổ "Chọn trường xuất file".',
+            B('Bấm "Bỏ chọn hết"', 'Bấm "Xuất file"'), '',
+            E('Dòng chân cửa sổ hiện "Đang chọn 0/%d trường"' % len(C.truong_xuat),
+              'Nút "Xuất file" bị mờ, bấm không có tác dụng, không tải file'))
+
+
+def xuat_theo_tim(C):  # [219]
+    return ('Xuất theo từ khóa tìm nhanh', 'P1', 'Có M %s chứa "%s".' % (C.dt, C.tk_mot_phan),
+            B('Gõ "%s" vào ô tìm nhanh, nhấn Enter' % C.tk_mot_phan, 'Xuất Excel', 'Đếm số dòng trong file'), '',
+            E('File có đúng M dòng, đều là %s chứa từ khóa' % C.dt))
+
+
+def xuat_rong(C):  # [222]
+    return ('Xuất khi danh sách không có dòng nào', 'P2', 'Đang tìm từ khóa không tồn tại, bảng rỗng.',
+            B('Bấm "Xuất Excel", bấm "Xuất file"', 'Mở file (nếu tải được)'), '',
+            E('Không báo lỗi hệ thống', 'File (nếu tải) chỉ có tiêu đề và dòng tên cột, không có dòng dữ liệu'))
+
+
+def xuat_dinh_dang(C):  # [223][224][229][230]
+    return ('Tên file, định dạng ngày và tiếng Việt trong file', 'P1',
+            'Có %s mà %s chứa dấu tiếng Việt và ký tự đặc biệt (vd "%s").' % (C.dt, C.f_chu, C.vd_dac_biet),
+            B('Xuất Excel với "Chọn tất cả"', 'Mở file bằng Excel'), '',
+            E('Tên file %s, mở được bằng Excel không báo lỗi' % C.file_xuat,
+              'Ngày tạo, Ngày cập nhật dạng dd/mm/yyyy hh:mm; số (nếu có) căn phải, dấu phẩy ngăn nghìn',
+              'Chữ tiếng Việt có dấu và ký tự đặc biệt hiện đúng, không lỗi phông'))
+
+
+# ---------------------------------------------------------------- XI. IMPORT TỪ FILE EXCEL
+def imp_sai_file(C):  # [236]
+    return ('Chọn file không phải Excel', 'P1', 'Đang mở cửa sổ Import.',
+            B('Bấm "Chọn file Excel", chọn file .pdf hoặc .docx'), 'File: tai_lieu.pdf',
+            E('Báo "Vui lòng chọn file .xlsx hoặc .xls"', 'Không nạp dữ liệu, nút Load lên bảng vẫn mờ'))
+
+
+def imp_thieu_cot(C):  # [237][238]
+    return ('File thiếu cột bắt buộc hoặc đổi tên / thứ tự cột', 'P1', 'File mẫu đã xóa cột "%s" (hoặc đổi tên cột này).'
+            % C.imp_cot_bb,
+            B('Chọn file, bấm "Load lên bảng"', 'Bấm "Validate"'), '',
+            E('Cột thiếu / sai tên không được đọc: các dòng báo "%s: Bắt buộc phải nhập"' % C.imp_cot_bb,
+              'Không tạo %s nào' % C.dt))
+
+
+def imp_file_rong(C):  # [239][240]
+    return ('File không có dòng dữ liệu hoặc có dòng trống', 'P2',
+            'File 1: chỉ giữ 2 dòng đầu của file mẫu. File 2: 3 dòng dữ liệu, giữa có 1 dòng trống.',
+            B('Chọn File 1, bấm "Load lên bảng"', 'Chọn File 2, bấm "Load lên bảng"'), '',
+            E('File 1: báo "Không có dòng dữ liệu hợp lệ."', 'File 2: dòng trống bị bỏ qua, bảng xem trước có 2 dòng'))
+
+
+def imp_vuot_do_dai(C):  # [245]
+    return ('Giá trị vượt độ dài tối đa trong file', 'P1', 'File 1 dòng, ô %s dài hơn giới hạn.' % C.imp_cot_dai,
+            B('Load lên bảng', 'Bấm "Validate"'), C.imp_dai_data,
+            E('Dòng đó báo lỗi ở cột %s, không được import' % C.imp_cot_dai))
+
+
+def imp_khoang_trang_hoa_thuong(C):  # [248][249]
+    return ('Khoảng trắng và chữ hoa / thường trong file', 'P2', C.imp_ht_pre,
+            B('Load lên bảng', 'Bấm "Validate"', 'Import (nếu hợp lệ)'), C.imp_ht_data,
+            E(*C.imp_ht_exp))
+
+
+def imp_tat_ca_hop_le(C):  # [255][259][260]
+    return ('Import file tất cả dòng hợp lệ', 'P0', 'File 3 dòng đều hợp lệ, chưa tồn tại trong hệ thống.',
+            B('Load lên bảng', 'Bấm "Validate"', 'Bấm "Import"'), '',
+            E('Validate: "Hợp lệ: 3", "Lỗi: 0", nút Import sáng',
+              'Import: thông báo "Import thành công 3 %s.", cửa sổ đóng' % C.dt,
+              'Danh sách tự tải lại, có đủ 3 %s mới, dòng tổng tăng 3' % C.dt))
+
+
+def imp_khong_hop_le(C):  # [257]
+    return ('Không có dòng nào hợp lệ', 'P1', 'File 2 dòng đều có lỗi.',
+            B('Load lên bảng', 'Bấm "Validate"', 'Bấm "Bỏ dòng lỗi"'), '',
+            E('Validate: "Hợp lệ: 0", "Lỗi: 2", nút Import mờ',
+              'Bỏ dòng lỗi: bảng không còn dòng nào, nút Import vẫn mờ; không tạo %s nào' % C.dt))
+
+
+def imp_lich_su(C):  # [262]
+    return ('Lịch sử của %s tạo bằng Import' % C.dt, 'P1', 'Vừa import thành công %s X.' % C.dt,
+            B('Mở Lịch sử %s X' % C.dt), '',
+            E('Có dòng "Tạo mới" của người import, thời gian bằng lúc bấm Import'))
+
+
+def imp_lai_cung_file(C):  # [265]
+    return ('Import lại cùng một file', 'P1', 'Vừa import thành công file F.',
+            B('Mở lại cửa sổ Import, chọn lại file F', 'Load lên bảng, bấm "Validate"'), '',
+            E('Mọi dòng báo trùng ("%s"), nút Import mờ' % C.imp_trung_msg, 'Không tạo thêm %s nào' % C.dt))
+
+
+def imp_dong_thoi(C):  # [264][266]
+    return ('Hai người import cùng dữ liệu cùng lúc', 'P2', 'Tài khoản A và B cùng có file chứa %s X (chưa tồn tại).' % C.dt,
+            B('A và B cùng Load, Validate (đều hợp lệ)', 'A bấm "Import"', 'B bấm "Import"'), '',
+            E('A: import thành công', 'B: dòng X bị bỏ qua vì đã tồn tại, thông báo nêu số dòng lỗi bị bỏ qua',
+              'Danh sách chỉ có MỘT %s X' % C.dt))
+
+
+def cot_bat_buoc(C):  # [203][205][208]
+    return ('Cột bắt buộc không tắt được, cấu hình giữ sau khi tải lại', 'P0', 'Đang mở cửa sổ Tuỳ chỉnh cột.',
+            B('Thử bỏ tích các cột STT, %s, Hành động' % C.cot_md[1], 'Bỏ tích cột "Người tạo", bấm "Lưu"',
+              'Nhấn F5 tải lại trang'), '',
+            E('Bước 1: STT, %s có biểu tượng khóa, không bỏ tích, không kéo đổi vị trí được; Hành động không bỏ tích được '
+              '(vẫn kéo đổi vị trí được)' % C.cot_md[1],
+              'Bước 3: cột Người tạo vẫn ẩn, các cột khác giữ như đã lưu'))
+
+
+# ---------------------------------------------------------------- PHÂN QUYỀN
+def pq_thu_hoi(C):  # [298]
+    return ('Bị thu hồi quyền khi đang mở màn', 'P2', 'Tài khoản có quyền "Quản lý kho" đang mở %s.' % C.man,
+            B('Quản trị gỡ quyền "Quản lý kho" khỏi vai trò của tài khoản đó',
+              'Tài khoản đó (chưa tải lại trang) bấm "Tạo mới", nhập đủ, bấm "Lưu"', 'Tải lại trang'), '',
+            E('Bước 2: hệ thống từ chối, báo không có quyền, không tạo %s' % C.dt,
+              'Bước 3: menu không còn mục "%s", mở màn bị chặn' % C.Dt))
+
+
+def pq_lich_su(C):  # [294]
+    return ('Lịch sử không cần quyền riêng: có "Quản lý kho" là xem được', 'P2',
+            'Tài khoản có quyền "Quản lý kho" (không có quyền nào khác). Có %s A đã có lịch sử.' % C.dt,
+            B(C.menu, 'Mở "Lịch sử" của %s A' % C.dt, 'Bấm %s của %s A, xem khối Lịch sử' % (C.link_xem, C.dt)), '',
+            E('Mở được cửa sổ "Lịch sử thay đổi: <%s A>", hiện đủ các mốc, không báo thiếu quyền' % C.ten_xn,
+              'Khối Lịch sử trong cửa sổ Xem cũng xem được'))
+
+
+# ====================================================================================================
+# NẠP CASE BẢN CŨ (gen_testcase_v1.py — sinh ngày 02/11, sai khuôn) để GIỮ NGUYÊN nội dung nghiệp vụ đã viết
+# ====================================================================================================
+_spec = importlib.util.spec_from_file_location('gen_testcase_v1', os.path.join(HERE, 'gen_testcase_v1.py'))
+V = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(V)
+
+_ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV']
+OLD = {}      # (biến section cũ, stt) -> tuple case cũ
+OLD_ID = {}   # (biến section cũ, stt) -> mã case ở bản cũ (để đổi các chỗ "như TC_xx.yyy" sang mã mới)
+for _roman, _title, _tcs in V.SECTIONS:
+    _var = next(k for k, v in vars(V).items() if v is _tcs and re.match(r'^S\d+$', k))
+    for _t in _tcs:
+        OLD[(_var, _t[0])] = _t
+        OLD_ID[(_var, _t[0])] = 'TC_%02d.%03d' % (_ROMAN.index(_roman) + 1, int(_t[0]))
+for _t in V.ROLE_TCS:
+    OLD[('ROLE', _t[0])] = _t
+    OLD_ID[('ROLE', _t[0])] = 'TC-ROLE-%s' % _t[0]
+
+
+def cu(var, n, **sua):
+    """Case giữ từ bản cũ; `sua` = các ô sửa lại (func / prio / pre / steps / data / exp)."""
+    t = OLD[(var, n)]
+    c = dict(key=(var, n), func=t[1], prio=t[2], pre=t[3], steps=t[4], data=t[5], exp=t[6])
+    for k, v in sua.items():
+        c[k] = v if isinstance(v, str) else '\n'.join(v)
+    return c
+
+
+def moi(t):
+    """Case bổ sung theo checklist (hàm ở KHỐI CHUNG hoặc tuple viết riêng cho màn)."""
+    func, prio, pre, steps, data, exp = t
+    j = lambda x: x if isinstance(x, str) else '\n'.join(x)  # noqa: E731
+    return dict(key=None, func=func, prio=prio, pre=j(pre), steps=j(steps), data=j(data), exp=j(exp))
+
+
+_TIEN_TO = ('ht', 'tk', 'loc', 'luu', 'tm', 'cs', 'xoa', 'khoa', 'mo', 'ls', 'xem', 'cot', 'xuat', 'imp', 'pq')
+
+
+def nap_g(C):
+    """g.<hàm KHỐI CHUNG>() = case đã điền tham số màn C."""
+    return SimpleNamespace(**{k: (lambda f: (lambda *a: moi(f(C, *a))))(f) for k, f in list(globals().items())
+                              if callable(f) and k.split('_')[0] in _TIEN_TO})
+
+
+# ====================================================================================================
+# RIÊNG MÀN DÃY
+# ====================================================================================================
+NGAY = '03/11/2026'
+SHEET = 'Trang tính1'
+OUT = os.path.join(HERE, 'testcase - %s.xlsx' % V.TEN)
+
+# Khối mô tả giữ của bản cũ; sửa câu ghi nhớ bộ lọc cho đúng code (rời màn / F5 / tab mới đều trả bộ lọc về mặc định)
+DESCRIPTION_BLOCK = [(k, v.replace('Hệ thống ghi nhớ bộ lọc trong 10 phút khi rời màn rồi quay lại.',
+                                   'Rời sang màn khác, tải lại trang (F5) hay mở tab mới thì bộ lọc trở về mặc định.'))
+                     for k, v in V.DESCRIPTION_BLOCK]
+
+C = SimpleNamespace(
+    dt='dãy', Dt='Dãy', menu=V.MENU, man='màn Dãy', man_khac='màn Nhà kho',
+    pre_rong='Đăng nhập tài khoản có quyền "Quản lý kho" của một công ty chưa có dãy nào.',
+    sort_cols=['Mã dãy', 'Tên dãy', 'Nhà kho', 'Kho'],
+    nosort_cols=['STT', 'Người tạo', 'Ngày tạo', 'Người cập nhật', 'Ngày cập nhật', 'Trạng thái', 'Hành động'],
+    tk_truong='mã dãy', tk_vd='DAY-TEST-01', tk_mot_phan='TEST', tk_co_dau='Dãy test 01', tk_khong_dau='day test 01',
+    loc=['Kho', 'Nhà kho', 'Trạng thái', 'Người tạo', 'Ngày tạo'],
+    tao_title='Tạo mới dãy', sua_title='Sửa dãy', xem_title='Xem chi tiết dãy', link_xem='chữ ở cột Mã dãy',
+    bb=['Kho', 'Nhà kho', 'Mã dãy', 'Tên dãy', 'Số khoang', 'Số vị trí mỗi khoang'], tuy_chon=['Trạng thái', 'Mô tả'],
+    tuy_chon_trong=['Mô tả'],
+    tao_data='Kho: KHO-TEST-01; Nhà kho: NHA-TEST-01; Mã dãy: DAY-TEST-20; Tên dãy: Dãy test 20; Số khoang: 1; '
+             'Số vị trí mỗi khoang: 1',
+    max_data='Mã dãy: chuỗi đúng 50 ký tự (chữ không dấu, số); Tên dãy: chuỗi đúng 255 ký tự',
+    f_chu='Tên dãy', f_dd='Mã dãy', dd_sai='DAY @20', dd_msg='Chỉ gồm chữ không dấu, số, dấu - và _',
+    f_trung='Mã dãy', pham_vi_trung='cùng nhà kho', trung_msg='Đã tồn tại trong nhà kho này',
+    pre_trung='Nhà kho NHA-TEST-01 đã có dãy A (DAY-TEST-01) và dãy B (DAY-TEST-02).',
+    f_sua='Tên dãy', f_sua_cot='Tên dãy', sua_cu='Dãy test 01', sua_moi='Dãy test 01 sửa', sua_moi_hien='Dãy test 01 sửa',
+    sua_nhieu=['Tên dãy', 'Mô tả', 'Trạng thái'], f_phu='Mô tả',
+    f_dai='Mã dãy', dai_data='Mã dãy: chuỗi 51 ký tự, sau đó 50 ký tự',
+    dai_exp=['Với 51 ký tự: ô vẫn nhận đủ nhưng báo đỏ ngay dưới ô Mã dãy (tối đa 50 ký tự), bấm Lưu không lưu',
+             'Với 50 ký tự: lỗi biến mất, lưu thành công'],
+    ten_xn='Tên dãy',
+    dk_xoa='chưa có khoang, chưa nằm trong kế hoạch kiểm kê (' + V.KHONG_KHOANG + ')',
+    dk_khoa='không còn khoang đang hoạt động (' + V.KHONG_KHOANG + ')',
+    dk_mo_khoa='nhà kho chứa nó đang Hoạt động',
+    xem_truong=['Kho', 'Nhà kho', 'Mã dãy', 'Tên dãy', 'Số khoang', 'Trạng thái', 'Mô tả'],
+    cot_md=['STT', 'Mã dãy', 'Tên dãy', 'Nhà kho', 'Kho', 'Người tạo', 'Ngày tạo', 'Người cập nhật', 'Ngày cập nhật',
+            'Trạng thái', 'Hành động'],
+    cot_an=['Số khoang', 'Mô tả'],
+    file_xuat='danh_sach_day.xlsx',
+    truong_xuat=['Mã dãy', 'Tên dãy', 'Nhà kho', 'Kho', 'Số khoang', 'Mô tả', 'Trạng thái', 'Người tạo', 'Ngày tạo',
+                 'Người cập nhật', 'Ngày cập nhật'],
+    vd_dac_biet='Dãy kệ "A&B" - tầng 1',
+    imp_cot_bb='Tên dãy *', imp_cot_dai='Tên dãy', imp_dai_data='Tên dãy: chuỗi 256 ký tự',
+    imp_ht_pre='File 2 dòng vào NHA-TEST-01: dòng 1 Mã dãy "DAY-IMP-10", Tên dãy "  Dãy imp 10  " (thừa khoảng trắng 2 đầu); '
+               'dòng 2 Mã dãy "day-test-01" (chữ thường của mã DAY-TEST-01 đã có).',
+    imp_ht_data='Tên dãy: "  Dãy imp 10  "; Mã dãy: "day-test-01"',
+    imp_ht_exp=['Dòng 1: hợp lệ; sau Import, tên lưu là "Dãy imp 10" (đã cắt khoảng trắng 2 đầu)',
+                'Dòng 2: báo "Mã dãy: Đã tồn tại trong nhà kho này" (so trùng không phân biệt hoa thường)'],
+    imp_trung_msg='Mã dãy: Đã tồn tại trong nhà kho này',
 )
+g = nap_g(C)
 
-DESCRIPTION_BLOCK = [
-    ('1. Mục đích tính năng', L_(
-        'Màn "Danh sách dãy" quản lý dãy — cấp thứ 3 của cây kho: Kho > Nhà kho > Dãy > Khoang > Vị trí.',
-        'Chức năng: Tạo mới, Sửa, Xem chi tiết, Khóa / Mở khóa, Xóa, Lịch sử, Xuất Excel, Import Excel, Tùy chỉnh cột.',
-        'Tạo dãy sinh luôn N khoang "Khoang 1"... (mã K1...), mỗi khoang M vị trí "Tầng 1"... mã '
-        '<Mã kho>-<Mã nhà>-<Mã dãy>-K<số khoang>-T<số tầng>.',
-        'Đường vào: ' + MENU + '.',
-    )),
-    ('2. Đối tượng được tính / hiển thị', L_(
-        '- Người dùng thường: mọi dãy thuộc nhà kho nằm trong kho của CÔNG TY ĐANG LÀM VIỆC.',
-        '- Super admin: dãy của mọi công ty; có thêm ô lọc Công ty.',
-        '- Hiện cả dãy Hoạt động lẫn Khóa, cả dãy chưa có khoang, cả dãy thuộc nhà kho / kho đang Khóa.',
-        'Mỗi dòng: STT, Mã dãy (bấm được, mở cửa sổ Xem chi tiết), Tên dãy, Nhà kho, Kho (in TÊN), Người tạo, Ngày tạo, '
-        'Người cập nhật, Ngày cập nhật, Trạng thái, Hành động. Ẩn mặc định: Số khoang, Mô tả.',
-    )),
-    ('3. Đối tượng bị ẩn / không tính', L_(
-        '- Dãy thuộc kho của công ty khác (với người dùng thường).',
-        '- Tài khoản không xác định được công ty đang làm việc: không thấy dãy nào.',
-        '- Dãy đã bị xóa (xóa hẳn).',
-        '- Ô chọn Kho / Nhà kho (cửa sổ Tạo mới) chỉ liệt kê kho / nhà kho ĐANG HOẠT ĐỘNG trong phạm vi; ô lọc cũng vậy trừ khi '
-        'bật công tắc ổ khóa trên nhãn ô.',
-    )),
-    ('4. Bộ lọc thời gian áp dụng cho', L_(
-        'Ô "Ngày tạo" (một ô chọn khoảng Từ ngày - Đến ngày) lọc theo NGÀY TẠO của dãy, tính cả 2 đầu mút.',
-        'Từ ngày lớn hơn Đến ngày: báo đỏ "Đến ngày phải lớn hơn hoặc bằng Từ ngày.", bảng rỗng, không xuất Excel.',
-        'Không có lọc theo Ngày cập nhật. Hệ thống ghi nhớ bộ lọc trong 10 phút khi rời màn rồi quay lại.',
-    )),
-    ('5. Cấu trúc dữ liệu / cây phân cấp', L_(
-        '- Dãy chỉ gắn với Nhà kho; Kho suy ra từ Nhà kho.',
-        '- Ô Kho trong cửa sổ Tạo mới CHỈ ĐỂ LỌC danh sách Nhà kho, không lưu. Khi Sửa, Kho và Nhà kho bị khóa (nền xám).',
-        '- Bộ lọc dây chuyền: Công ty (chỉ Super admin) > Kho > Nhà kho. Đổi cấp trên thì cấp dưới không còn thuộc nó bị bỏ chọn.',
-        '- Dãy "đã được dùng" khi: còn khoang (mọi trạng thái), hoặc đã được chọn trong Kế hoạch kiểm kê theo vị trí.',
-        'Cửa sổ Tạo: Kho*, Nhà kho*, Mã dãy*, Tên dãy*, Số khoang*, Số vị trí mỗi khoang*, Trạng thái, Mô tả. Cửa sổ Sửa: '
-        'Số khoang chỉ đọc nếu dãy đã có khoang; dãy chưa có khoang thì phải nhập 2 ô số.',
-    )),
-    ('6. Quy tắc cộng dồn / deduplicate', L_(
-        '- Mã dãy và Tên dãy không trùng trong CÙNG một nhà kho (tính cả dãy đang Khóa); khác nhà kho thì được trùng.',
-        '- Mã, tên tự cắt khoảng trắng đầu/cuối trước khi kiểm trùng.',
-        '- Mã vị trí sinh ra không được trùng mã vị trí đã có trong cùng kho, tối đa 50 ký tự.',
-        '- Import: 2 dòng cùng Mã dãy (hoặc Tên dãy) trong cùng nhà kho báo "Bị trùng trong file".',
-    )),
-    ('7. Phân quyền cấp', L_(
-        '- Quyền "Quản lý kho": dùng cho CẢ xem lẫn thêm / sửa / khóa / xóa / xuất / import của 7 màn nhóm Danh mục phân hệ Kho.',
-        '- Không có quyền thì mục menu bị ẩn, mở màn bị từ chối. Quyền phải gán vào VAI TRÒ theo công ty thì menu mới hiện.',
-        '- Super admin xem và thao tác được dãy của mọi công ty.',
-        '- Lịch sử không có quyền riêng: vào được màn là xem được.',
-    )),
-    ('8. Cách tính các ô thống kê', L_(
-        'Không có ô thống kê.',
-        '- Chân bảng "Hiển thị a–b / N": a, b là STT dòng đầu / cuối trang, N là tổng số dãy khớp bộ lọc. Không có dữ liệu: '
-        'trong bảng "Không có dữ liệu phù hợp."',
-        '- STT chạy liên tục qua các trang (trang 2, 10 dòng/trang bắt đầu từ 11).',
-        '- Cột Số khoang (ẩn mặc định) = số khoang của dãy (mọi trạng thái); dãy chưa có khoang thì ô để trống.',
-        '- Số vị trí sinh ra = Số khoang × Số vị trí mỗi khoang, tối đa 10,000 mỗi lần lưu.',
-        '- Import: Tổng = số dòng đọc được; Hợp lệ / Lỗi = kết quả Validate.',
-    )),
-    ('9. Ghi chú đọc bảng', L_(
-        DATA,
-        'Bẫy dễ sai:',
-        '- Muốn KHÓA dãy phải khóa hết khoang của nó trước (muốn khóa khoang lại phải khóa hết vị trí trước). Muốn XÓA dãy '
-        'phải xóa hết khoang (và vị trí) trước. Dãy mới tạo luôn có khoang nên nút Khóa / Xóa bị ẨN — đó là đúng, không phải lỗi.',
-        '- Mở khóa dãy chỉ khi nhà kho chứa nó đang Hoạt động.',
-        '- Nút không đủ điều kiện thì ẨN chứ không mờ. Có 4 nút thì 2 nút sau nằm trong nút ba chấm "Hành động khác".',
-        '- Hai ô số chỉ gõ được chữ số, tối đa 3 ký tự. Câu lỗi tổng vị trí / mã vị trí hiện dưới ô "Số vị trí mỗi khoang".',
-        '- Ô tìm nhanh chỉ tìm theo Mã dãy, Tên dãy và chỉ lọc khi bấm Tìm kiếm / Enter; ô chọn lọc ngay khi chọn.',
-        '- Ngày giờ dạng dd/mm/yyyy hh:mm; số dạng 10,000. Ô trống để trống, không in dấu gạch.',
-        '- Import chỉ bấm được khi đã Validate và không còn dòng lỗi; tối đa 500 dòng mỗi lần.',
-    )),
+KHOANG, VITRI, KKVT = V.KHOANG, V.VITRI, V.KKVT
+
+NHOM = [
+    ('HIỂN THỊ TRANG & TRUY CẬP', [
+        cu('S1', '001'), cu('S1', '002'), cu('S1', '003'), cu('S1', '005'), cu('S1', '006'), cu('S1', '008'),
+        cu('S1', '007'), g.ht_chua_co_du_lieu(), g.ht_tong_so(),
+        cu('S3', '004'), g.ht_trang_truoc_sau(), g.ht_trang_dau_cuoi(), g.ht_nut_trang_bien(),
+        cu('S3', '001'), cu('S3', '002'), cu('S3', '003'), g.ht_sx_khong_ho_tro(), g.ht_sx_giu_khi_chuyen_trang(),
+        g.ht_sx_ve_trang_1(),
+    ]),
+    ('TÌM KIẾM & LỌC DANH SÁCH', [
+        cu('S2', '001'), g.tk_mot_phan(), cu('S2', '002'), g.tk_hoa_thuong(), g.tk_co_dau(), cu('S2', '003'),
+        g.tk_khoang_trang(), g.tk_gioi_han(), g.tk_xoa_tu_khoa(),
+        g.loc_mac_dinh(), cu('S2', '004'), cu('S2', '005'), cu('S2', '006'), cu('S2', '007'), cu('S2', '008'),
+        cu('S2', '009'), cu('S2', '010'), cu('S2', '014'), cu('S2', '015'), cu('S2', '011'), g.loc_ket_hop_tim(),
+        g.loc_tong_so(), g.loc_ve_trang_1(), g.loc_sap_xep(), cu('S2', '012'), cu('S2', '016'),
+        cu('S2', '013', func='Rời sang màn khác rồi quay lại thì bộ lọc trở về mặc định', prio='P1',
+           exp=['- Bước 2 và bước 3 cho cùng kết quả: ô Kho trở về trống, danh sách đủ 6 dãy ở trang 1.',
+                '- Không giữ lại bộ lọc cũ dù quay lại trong 10 phút.']),
+        g.luu_f5(), g.luu_tab_moi(), g.luu_tk_khac(),
+    ]),
+    ('THÊM MỚI', [
+        cu('S4', '001'), g.tm_bat_buoc(), cu('S4', '002'), cu('S4', '003'), cu('S4', '004'),
+        cu('S4', '005'), g.tm_chi_bat_buoc(), g.tm_du_lieu_sau_luu(), g.tm_lich_su(), cu('S4', '017'),
+        cu('S10', '001'), g.tm_chi_khoang_trang(), g.tm_loi_bien_mat(), cu('S10', '014'),
+        cu('S10', '002'), cu('S10', '003'), cu('S10', '004'), cu('S10', '005'), cu('S10', '006'),
+        cu('S10', '007'), cu('S10', '008'), cu('S10', '009'), cu('S10', '010'), cu('S10', '015'),
+        cu('S10', '012'), g.tm_dung_max(), cu('S10', '011'),
+        cu('S4', '006'), g.tm_ltt_thieu(), g.tm_ltt_sai_dinh_dang(), g.tm_ltt_trung(), g.tm_ltt_dong(),
+        g.tm_dong_chua_nhap(), cu('S4', '007'), g.tm_dong_x(), g.tm_nhap_xoa_het(), g.tm_khong_thao_tac(),
+        g.tm_spam_luu(), g.tm_trung_2_tab(), cu('S10', '013'),
+    ]),
+    ('CHỈNH SỬA', [
+        cu('S4', '008'), g.cs_nut(), cu('S4', '009'), g.cs_sua_nhieu(), g.cs_giu_nguyen(), g.cs_ngay_nguoi(),
+        g.cs_lich_su(), cu('S4', '010'), cu('S4', '011'), cu('S4', '012'), cu('S4', '013'),
+        g.cs_trong(), g.cs_sai_dinh_dang(), g.cs_vuot(), g.cs_trung_khac(),
+        g.cs_mo_khong_doi(), g.cs_doi_tra_ve(), g.cs_dong_da_doi(), g.cs_thoat(), g.cs_o_lai(), g.cs_khong_lich_su(),
+        cu('S4', '015'), g.cs_bi_xoa(), g.cs_2_nguoi(),
+    ]),
+    ('XÓA', [
+        g.xoa_popup(), g.xoa_huy(), cu('S6', '004'), g.xoa_tong_so(), cu('S6', '005'),
+        cu('S6', '001'), cu('S6', '002'), cu('S6', '003'), cu('S6', '006'), cu('S6', '007'),
+    ]),
+    ('KHÓA / MỞ KHÓA', [
+        g.khoa_popup(), cu('S5', '001'), cu('S5', '002'), g.khoa_sau(), cu('S5', '003'),
+        g.mo_khoa_popup_huy(), cu('S5', '004'), g.mo_khoa_sau(), cu('S5', '005'),
+        cu('S5', '007'), cu('S5', '008'), cu('S5', '010'), g.mo_khoa_nguoi_khac(), g.khoa_bi_xoa(),
+    ]),
+    ('LỊCH SỬ THAY ĐỔI', [
+        g.ls_mo(), g.ls_noi_dung(), g.ls_moi_nhat(), cu('S9', '001'), cu('S9', '002'), g.ls_sua_nhieu(),
+        cu('S9', '003'), cu('S9', '005'),
+        g.ls_loc_hanh_dong(), g.ls_loc_nguoi(), g.ls_loc_thoi_gian(), g.ls_loc_ket_hop(), g.ls_lam_moi(),
+        g.ls_dong_mo_loc(), g.ls_dong(),
+    ]),
+    ('XEM CHI TIẾT DÃY', [
+        cu('S1', '004'), g.xem_chi_doc(), g.xem_khop(), g.xem_khoa(), cu('S9', '004'), cu('S4', '014'),
+        cu('S4', '016'), g.xem_dong(),
+    ]),
+    ('TÙY CHỈNH CỘT', [
+        g.cot_mo(), cu('S3', '005'), g.cot_an(), g.cot_keo_tha(), cu('S3', '006'), g.cot_dong_khong_luu(),
+        g.cot_theo_tai_khoan(), g.cot_khong_anh_huong(),
+    ]),
+    ('XUẤT DANH SÁCH EXCEL', [
+        cu('S7', '001'), g.xuat_tat_ca_truong(), g.xuat_bo_truong(), g.xuat_khong_chon(), cu('S7', '004'),
+        cu('S7', '002'), g.xuat_theo_tim(), g.xuat_rong(), cu('S7', '003'), g.xuat_dinh_dang(),
+    ]),
+    ('IMPORT TỪ FILE EXCEL', [
+        cu('S8', '001'), g.imp_sai_file(), cu('S8', '002'), g.imp_thieu_cot(), g.imp_file_rong(), cu('S8', '007'),
+        cu('S8', '003'), cu('S8', '004'), g.imp_vuot_do_dai(), g.imp_khoang_trang_hoa_thuong(), cu('S8', '006'),
+        g.imp_tat_ca_hop_le(), cu('S8', '005'), g.imp_khong_hop_le(), g.imp_lich_su(), cu('S8', '008'),
+        g.imp_dong_thoi(), g.imp_lai_cung_file(), cu('S8', '009'),
+    ]),
+    ('RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC', [
+        moi(('Dãy mới tạo có ngay ở ô chọn Dãy của màn Khoang và màn Vị trí', 'P0',
+             'Vừa tạo DAY-TEST-21 (Hoạt động, 1 khoang × 1 vị trí) thuộc NHA-TEST-01.',
+             B('Mở ' + KHOANG + ', bấm Tạo mới, chọn Kho KHO-TEST-01, Nhà kho NHA-TEST-01, mở ô Dãy',
+               'Mở ' + VITRI + ', bấm Tạo mới, Loại vị trí "Thuộc khoang", chọn tới ô Dãy',
+               'Ở màn Khoang, lọc Dãy = DAY-TEST-21'),
+             'Mã dãy: DAY-TEST-21',
+             E('Bước 1, 2: ô Dãy có DAY-TEST-21 ngay, không cần tải lại cả trang',
+               'Bước 3: thấy khoang K1 "Khoang 1" sinh kèm, cột Dãy / Nhà kho / Kho đúng DAY-TEST-21 / NHA-TEST-01 / '
+               'KHO-TEST-01'))),
+        cu('S11', '003'), cu('S5', '009'),
+        moi(('Mở khóa dãy thì chọn lại được ở màn khác', 'P1', 'DAY-TEST-07 đang Khóa, NHA-TEST-01 Hoạt động.',
+             B('Mở khóa DAY-TEST-07', 'Mở ' + KHOANG + ', bấm Tạo mới, chọn Kho, Nhà kho NHA-TEST-01, mở ô Dãy'),
+             '', E('Ô Dãy có lại DAY-TEST-07, chọn và lưu khoang được'))),
+        moi(('Khóa dãy không làm mất liên kết của khoang, vị trí bên dưới', 'P1',
+             'DAY-TEST-08 có 2 khoang, 4 vị trí, tất cả đã Khóa; vừa khóa DAY-TEST-08.',
+             B('Mở ' + KHOANG + ', lọc Dãy = DAY-TEST-08 (bật công tắc ổ khóa để hiện dãy đã khóa)',
+               'Mở ' + VITRI + ', tìm các vị trí của DAY-TEST-08'),
+             '', E('Khoang, vị trí vẫn còn, cột Dãy vẫn hiện đúng tên DAY-TEST-08',
+                   'Mở Xem chi tiết khoang vẫn thấy đúng Dãy, Nhà kho, Kho'))),
+        moi(('Đổi tên dãy thì các màn liên quan hiện tên mới', 'P0',
+             'DAY-TEST-01 có khoang K1 và vị trí bên dưới.',
+             B('Sửa Tên dãy DAY-TEST-01 thành "Dãy test 01 mới"', 'Mở ' + KHOANG + ', tìm K1 của DAY-TEST-01',
+               'Mở ' + VITRI + ', tìm các vị trí của DAY-TEST-01'),
+             'Tên dãy: Dãy test 01 mới',
+             E('Cột Dãy ở màn Khoang và màn Vị trí hiện "Dãy test 01 mới"', 'Ô chọn Dãy ở các màn này hiện tên mới'))),
+        moi(('Xóa dãy thì không còn ở các màn liên quan', 'P1', 'DAY-TEST-06 chưa có khoang, chưa dùng ở đâu.',
+             B('Xóa DAY-TEST-06', 'Mở ' + KHOANG + ' và ' + VITRI + ', mở ô Dãy (Tạo mới và bộ lọc)',
+               'Mở ' + KKVT + ', bấm Tạo mới, mở cây vị trí'),
+             '', E('DAY-TEST-06 không còn trong mọi ô chọn Dãy và cây vị trí', 'Không màn nào báo lỗi'))),
+        moi(('Bộ lọc Dãy ở màn Khoang, Vị trí cập nhật theo danh mục', 'P2',
+             'Vừa tạo DAY-TEST-22, vừa khóa DAY-TEST-23 (cùng NHA-TEST-01).',
+             B('Mở ' + KHOANG + ', mở "Tìm kiếm nâng cao", chọn Nhà kho NHA-TEST-01, mở ô lọc Dãy',
+               'Bật công tắc ổ khóa trên nhãn ô Dãy'),
+             '', E('Bước 1: có DAY-TEST-22, KHÔNG có DAY-TEST-23',
+                   'Bước 2: có thêm DAY-TEST-23 (kèm biểu tượng ổ khóa)'))),
+        cu('S5', '006'), cu('S11', '002'), cu('S11', '001'),
+    ]),
+    ('PHÂN QUYỀN', [
+        cu('ROLE', '01'), cu('ROLE', '00'), cu('ROLE', '02'), cu('ROLE', '06'),
+        g.pq_thu_hoi(),
+        cu('ROLE', '03'), cu('ROLE', '04'), cu('ROLE', '05'),
+    ]),
 ]
 
-# ------------------------------------------------------------------ PHÂN QUYỀN
-ROLE_TCS = [
-    T('S', '00', 'Không có quyền "Quản lý kho" - menu ẩn, màn bị chặn', 'P0',
-      ['Tài khoản KQ (Công ty A) không có "Quản lý kho".', 'Đã lưu dấu trang (bookmark) màn Dãy từ tài khoản QL-A.'],
-      ['1. Đăng nhập bằng KQ.', '2. Vào phân hệ Kho, mở nhóm Danh mục.', '3. Mở dấu trang đã lưu.'],
-      'Tài khoản: KQ',
-      ['- Nhóm Danh mục KHÔNG có mục "Dãy" (cả 7 mục của nhóm đều ẩn).',
-       '- Mở bằng dấu trang: hệ thống từ chối, báo không có quyền; bảng không có dòng nào, không lộ dữ liệu.',
-       '- Không hiện nút "Tạo mới", "Import Excel".']),
-    T('S', '01', 'Có quyền "Quản lý kho" thì dùng đủ chức năng của màn', 'P0',
-      ['Tài khoản QL-A có "Quản lý kho" qua vai trò của Công ty A.', 'DAY-TEST-01 (NHA-TEST-01, 2 khoang Hoạt động) đã có.'],
-      ['1. Đăng nhập bằng QL-A.', '2. ' + MENU + '.', '3. Quan sát hàng nút trên bảng và cột Hành động của DAY-TEST-01.'],
-      'Tài khoản: QL-A',
-      ['- Mở được màn, tiêu đề bảng "Danh sách dãy".',
-       '- Có nút "Tạo mới", "Import Excel", "Xuất Excel", nút Cấu hình cột hiển thị.',
-       '- DAY-TEST-01 có nút Sửa và Lịch sử; KHÔNG có Xóa và Khóa (vì còn khoang đang hoạt động).']),
-    T('M', '02', 'Quyền gán thẳng cho người dùng (không qua vai trò) thì menu không hiện', 'P2',
-      'Tài khoản TK-Y được gán thẳng quyền "Quản lý kho", vai trò của TK-Y KHÔNG có quyền này.',
-      ['1. Đăng nhập bằng TK-Y.', '2. Vào phân hệ Kho, mở nhóm Danh mục.'],
-      'Tài khoản: TK-Y',
-      ['- Mục "Dãy" không hiện.',
-       '- Lưu ý: muốn dùng được phải gán quyền vào VAI TRÒ theo công ty rồi đăng nhập lại.']),
-    T('S', '03', 'Người dùng thường chỉ thấy dãy của kho thuộc công ty đang làm việc', 'P0',
-      ['Công ty A: 5 dãy (3 dãy ở KHO-TEST-01, 2 dãy ở KHO-TEST-02).',
-       'Công ty B: 2 dãy ở NHA-TEST-04 (KHO-TEST-03), ví dụ DAY-TEST-B1, DAY-TEST-B2.', 'Tài khoản QL-A, QL-B.'],
-      ['1. Đăng nhập bằng QL-A, ' + MENU + ', ghi lại N ở dòng "Hiển thị a–b / N".',
-       '2. Mở "Tìm kiếm nâng cao", quan sát các ô lọc.', '3. Đăng xuất, đăng nhập bằng QL-B, mở lại màn Dãy.'],
-      'Tài khoản: QL-A, QL-B',
-      ['- QL-A: N = 5 (cộng thêm dãy sẵn có của Công ty A nếu có), KHÔNG có DAY-TEST-B1, DAY-TEST-B2.',
-       '- QL-A: bộ lọc KHÔNG có ô "Công ty"; ô Kho chỉ có kho của Công ty A.',
-       '- QL-B: thấy DAY-TEST-B1, DAY-TEST-B2, không thấy dãy nào của Công ty A.']),
-    T('S', '04', 'Super admin thấy dãy của mọi công ty và có ô lọc Công ty', 'P0',
-      ['Dữ liệu như TC-ROLE-03.', 'Tài khoản SA: Super admin, có "Quản lý kho".'],
-      ['1. Đăng nhập bằng SA, ' + MENU + '.', '2. Mở "Tìm kiếm nâng cao".', '3. Ô Công ty chọn "Công ty B".'],
-      'Công ty: Công ty B',
-      ['- Bước 1: danh sách có cả dãy Công ty A lẫn Công ty B.',
-       '- Bước 2: ô đầu tiên của bộ lọc là "Công ty" (có biểu tượng ổ khóa trên nhãn), liệt kê các công ty.',
-       '- Bước 3: chỉ còn dãy thuộc kho của Công ty B; ô Kho chỉ còn kho của Công ty B.']),
-    T('S', '05', 'Tài khoản không có công ty đang làm việc không thấy dãy nào', 'P2',
-      'Tài khoản NC: có "Quản lý kho" nhưng hồ sơ chưa gắn công ty, không phải Super admin.',
-      ['1. Đăng nhập bằng NC, ' + MENU + '.'],
-      'Tài khoản: NC',
-      ['- Bảng "Không có dữ liệu phù hợp."',
-       '- Ô Kho, Nhà kho không có lựa chọn nào; KHÔNG lộ dãy của bất kỳ công ty nào.']),
-    T('S', '06', 'Lịch sử không cần quyền riêng: có "Quản lý kho" là xem được', 'P2',
-      ['Tài khoản QL-A.', 'DAY-TEST-01 có ít nhất 1 mốc lịch sử.'],
-      ['1. ' + MENU + '.', '2. ' + MENU3 + ' của DAY-TEST-01 > bấm "Lịch sử".'],
-      '-',
-      '- Mở cửa sổ "Lịch sử thay đổi: <Tên dãy>", hiện đủ các mốc, không báo thiếu quyền.'),
-]
 
-# ------------------------------------------------------------------ I. HIỂN THỊ
-S1 = [
-    T('S', '001', 'Mở màn Dãy từ menu', 'P0',
-      ['Tài khoản QL-A.', 'Công ty A có 5 dãy.'],
-      ['1. Đăng nhập bằng QL-A.', '2. ' + MENU + '.'],
-      '-',
-      ['- Tab trình duyệt và tiêu đề bảng: "Danh sách dãy".',
-       '- Khối "Bộ lọc danh sách": ô tìm nhanh gợi ý "Tìm theo mã, tên dãy", nút "Tìm kiếm", "Làm mới", "Cài đặt bộ lọc", '
-       '"Tìm kiếm nâng cao".',
-       '- Danh sách 5 dãy, dòng dưới bảng "Hiển thị 1–5 / 5".',
-       '- Nhóm Danh mục trên menu có đủ 7 mục: Kho vật lý, Kho kế toán, Nhà kho, Dãy, Khoang, Vị trí, Kiện.']),
-    T('G', '002', 'Cột hiển thị mặc định đúng thứ tự và nhãn', 'P0',
-      'Công ty A có 5 dãy.',
-      ['1. ' + MENU + '.', '2. Đọc dòng tiêu đề bảng từ trái sang phải.'],
-      '-',
-      ['- Thứ tự cột: STT, Mã dãy, Tên dãy, Nhà kho, Kho, Người tạo, Ngày tạo, Người cập nhật, Ngày cập nhật, Trạng thái, Hành động.',
-       '- KHÔNG hiện cột Số khoang và Mô tả (ẩn mặc định, bật ở Cấu hình cột).',
-       '- STT và Mã dãy dính bên trái khi cuộn ngang.']),
-    T('G', '003', 'Giá trị từng cột của một dãy', 'P0',
-      ['QL-A (phòng mã KHO1) đã tạo lúc 08:30 ngày 20/10/2026: DAY-TEST-01, tên "Dãy test 01", NHA-TEST-01 '
-       '(tên "Nhà test 01") thuộc KHO-TEST-01 (tên "Kho test 01"), 2 khoang × 2 vị trí, mô tả "Dãy kệ sắt".'],
-      ['1. ' + MENU + '.', '2. Tìm dòng DAY-TEST-01, đọc từng ô.'],
-      '-',
-      ['- Mã dãy: DAY-TEST-01 (chữ liên kết bấm được); Tên dãy: Dãy test 01.',
-       '- Nhà kho: Nhà test 01; Kho: Kho test 01 (in TÊN, không kèm mã).',
-       '- Người tạo, Người cập nhật: dạng "Tên nhân viên - KHO1".',
-       '- Ngày tạo, Ngày cập nhật: 20/10/2026 08:30.',
-       '- Trạng thái: nhãn "Hoạt động" màu xanh.']),
-    T('G', '004', 'Bấm Mã dãy mở cửa sổ Xem chi tiết', 'P1',
-      'DAY-TEST-01 như TC_01.003.',
-      ['1. ' + MENU + '.', '2. Bấm chữ DAY-TEST-01 ở cột Mã dãy.'],
-      '-',
-      ['- Mở cửa sổ "Xem chi tiết dãy", các ô đều chỉ đọc, không có dấu bắt buộc.',
-       '- Kho: KHO-TEST-01 - Kho test 01; Nhà kho: NHA-TEST-01 - Nhà test 01 (dạng Mã - Tên).',
-       '- Ô "Số khoang" chỉ đọc = 2; có khối Lịch sử (nút Xem lịch sử) bên dưới.',
-       '- Chân cửa sổ chỉ có nút "Đóng".']),
-    T('S', '005', 'Nút ở cột Hành động thay đổi theo trạng thái dãy', 'P0',
-      ['DAY-TEST-01: Hoạt động, 2 khoang Hoạt động.',
-       'DAY-TEST-06: Hoạt động, 0 khoang (' + KHONG_KHOANG + '), chưa nằm trong kế hoạch kiểm kê.',
-       'DAY-TEST-07: Khóa, 0 khoang, nhà kho NHA-TEST-01 Hoạt động.'],
-      ['1. ' + MENU + '.', '2. Quan sát nút ở cột Hành động (gồm nút ba chấm) của 3 dãy.'],
-      '-',
-      ['- DAY-TEST-01: Sửa, Lịch sử. KHÔNG có Xóa, Khóa.',
-       '- DAY-TEST-06: Sửa, Xóa hiện thẳng; Khóa, Lịch sử nằm trong nút ba chấm "Hành động khác".',
-       '- DAY-TEST-07: Mở khóa, Lịch sử. KHÔNG có Sửa, Xóa.',
-       '- Nút không dùng được thì ẨN, không hiện mờ.']),
-    T('G', '006', 'Nhãn trạng thái Khóa hiển thị màu đỏ', 'P2',
-      'DAY-TEST-07 đang Khóa.',
-      ['1. ' + MENU + '.', '2. Quan sát ô Trạng thái của DAY-TEST-07.'],
-      '-',
-      '- Nhãn "Khóa" nền đỏ, khác màu nhãn "Hoạt động".'),
-    T('S', '007', 'Không có dữ liệu khớp', 'P2',
-      'Không dãy nào chứa chữ "ZZZ999".',
-      ['1. ' + MENU + '.', '2. Gõ ZZZ999 vào ô tìm nhanh, nhấn Enter.'],
-      'Tìm nhanh: ZZZ999',
-      ['- Bảng hiện "Không có dữ liệu phù hợp."', '- Không báo lỗi.']),
-    T('M', '008', 'Dãy thuộc nhà kho / kho đang Khóa vẫn hiện trong danh sách', 'P1',
-      'DAY-TEST-08 (Hoạt động) thuộc nhà kho NHA-TEST-06 vừa bị khóa (mọi dãy của nhà khác đã khóa) — hoặc thuộc kho KHO-TEST-04 đang Khóa.',
-      ['1. ' + MENU + ', tìm nhanh "DAY-TEST-08".'],
-      'Tìm nhanh: DAY-TEST-08',
-      ['- Dòng DAY-TEST-08 vẫn hiện, cột Nhà kho / Kho hiện đúng tên.',
-       '- Ghi lại vào KQ thực tế: nút Sửa có hiện không (hiện tại dãy Hoạt động dưới nhà kho Khóa vẫn sửa được).']),
-]
+# ====================================================================================================
+# DỰNG FILE
+# ====================================================================================================
+def _chuan_hoa(s):
+    """Bullet "- " -> "-  " như tab Quốc gia; ô chỉ có "-" -> để trống."""
+    s = (s or '').strip()
+    for a, b in globals().get('DOI_CHU', []):   # đổi chữ riêng của màn (vd mã dữ liệu mẫu có chữ cấm)
+        s = s.replace(a, b)
+    if s == '-':
+        return ''
+    return '\n'.join(re.sub(r'^- (?=\S)', '-  ', ln) for ln in s.split('\n'))
 
-# ------------------------------------------------------------------ II. BỘ LỌC
-S2 = [
-    T('G', '001', 'Tìm nhanh theo mã dãy, chờ Enter mới tìm', 'P0',
-      'Công ty A có DAY-TEST-01, DAY-TEST-02, DAY-TEST-03, DAY-KHAC-01, DAY-KHAC-02.',
-      ['1. ' + MENU + '.', '2. Gõ "TEST-0" vào ô tìm nhanh, CHƯA nhấn Enter, chờ 3 giây.', '3. Nhấn Enter.'],
-      'Tìm nhanh: TEST-0',
-      ['- Bước 2: danh sách CHƯA đổi (không tự tìm theo từng ký tự).',
-       '- Bước 3: còn 3 dòng DAY-TEST-01, 02, 03; "Hiển thị 1–3 / 3".']),
-    T('S', '002', 'Tìm nhanh theo tên dãy; KHÔNG tìm theo tên người tạo', 'P1',
-      'DAY-KHAC-01 tên "Dãy kệ nặng" do SA tạo; không dãy nào có mã / tên chứa họ tên của SA.',
-      ['1. ' + MENU + '.', '2. Tìm nhanh "kệ nặng", bấm "Tìm kiếm".', '3. Tìm nhanh bằng một phần họ tên của SA.'],
-      ['Tìm nhanh: kệ nặng', 'Tìm nhanh: <một phần tên SA>'],
-      ['- Bước 2: chỉ DAY-KHAC-01 (không phân biệt hoa thường).',
-       '- Bước 3: "Không có dữ liệu phù hợp." — ô tìm nhanh chỉ tìm theo Mã dãy, Tên dãy; lọc người tạo dùng ô Người tạo.']),
-    T('G', '003', 'Tìm nhanh với ký tự đặc biệt % và _ không làm lộ toàn bộ danh sách', 'P2',
-      'Không có dãy nào có ký tự % hoặc _ trong mã, tên.',
-      ['1. ' + MENU + '.', '2. Tìm nhanh "%", nhấn Enter.', '3. Tìm nhanh "_", nhấn Enter.'],
-      ['Tìm nhanh: %', 'Tìm nhanh: _'],
-      '- Cả 2 lần: "Không có dữ liệu phù hợp." (ký tự được tìm đúng nghĩa đen).'),
-    T('G', '004', 'Lọc theo Kho', 'P0',
-      'KHO-TEST-01 có 3 dãy (NHA-TEST-01: 2, NHA-TEST-02: 1); KHO-TEST-02 có 2 dãy (NHA-TEST-03).',
-      ['1. ' + MENU + '.', '2. Bấm "Tìm kiếm nâng cao".', '3. Ô Kho chọn KHO-TEST-02.'],
-      'Kho: KHO-TEST-02 - Kho test 02',
-      ['- Danh sách tự tải lại ngay khi chọn, không cần bấm Tìm kiếm.',
-       '- Còn đúng 2 dãy, cột Kho đều là Kho test 02; "Hiển thị 1–2 / 2".',
-       '- Ô Kho hiển thị dạng "Mã - Tên".']),
-    T('S', '005', 'Ô Nhà kho chỉ liệt kê nhà của Kho đã chọn; nhà kho Khóa chỉ hiện khi bật công tắc ổ khóa', 'P0',
-      'Như TC_02.004; NHA-TEST-05 (KHO-TEST-01) đang Khóa.',
-      ['1. ' + MENU + ', mở "Tìm kiếm nâng cao".', '2. Chưa chọn Kho, mở ô Nhà kho.',
-       '3. Chọn Kho = KHO-TEST-01, mở lại ô Nhà kho.', '4. Bấm biểu tượng ổ khóa trên nhãn ô Nhà kho, mở lại ô.',
-       '5. Tắt công tắc, chọn Nhà kho = NHA-TEST-01.'],
-      ['Kho: KHO-TEST-01', 'Nhà kho: NHA-TEST-01'],
-      ['- Bước 2: có nhà kho của mọi kho đang hoạt động trong Công ty A (NHA-TEST-01, 02, 03).',
-       '- Bước 3: chỉ còn NHA-TEST-01, NHA-TEST-02; KHÔNG có NHA-TEST-05.',
-       '- Bước 4: rê chuột lên biểu tượng thấy "Hiện cả nhà kho đã khoá"; bật xong danh sách có thêm NHA-TEST-05 (kèm ổ khóa).',
-       '- Bước 5: còn 2 dãy, cột Nhà kho đều là Nhà test 01.']),
-    T('G', '006', 'Lọc dây chuyền: đổi Kho thì bỏ chọn Nhà kho không còn thuộc kho mới', 'P0',
-      'Như TC_02.004.',
-      ['1. ' + MENU + ', mở "Tìm kiếm nâng cao".', '2. Chọn Kho = KHO-TEST-01, Nhà kho = NHA-TEST-01.',
-       '3. Đổi Kho sang KHO-TEST-02.', '4. Xóa trắng ô Kho (bấm dấu x).'],
-      'Kho: KHO-TEST-01 rồi KHO-TEST-02',
-      ['- Bước 3: ô Nhà kho tự trống, danh sách hiện 2 dãy của KHO-TEST-02 (không ra bảng rỗng).',
-       '- Bước 4: ô Nhà kho trống, danh sách về 5 dãy.']),
-    T('G', '007', 'Super admin: đổi Công ty thì bỏ chọn Kho và Nhà kho không thuộc công ty mới', 'P1',
-      'Tài khoản SA. Dữ liệu như TC-ROLE-03.',
-      ['1. Đăng nhập SA, ' + MENU + ', mở "Tìm kiếm nâng cao".', '2. Chọn Công ty A, Kho KHO-TEST-01, Nhà kho NHA-TEST-01.',
-       '3. Đổi Công ty sang Công ty B.'],
-      'Công ty: Công ty A rồi Công ty B',
-      ['- Bước 3: ô Kho và ô Nhà kho tự trống.', '- Ô Kho chỉ còn KHO-TEST-03; danh sách chỉ dãy Công ty B.']),
-    T('G', '008', 'Lọc theo Trạng thái', 'P0',
-      'Công ty A: 5 dãy Hoạt động, 1 dãy Khóa (DAY-TEST-07).',
-      ['1. ' + MENU + ', mở "Tìm kiếm nâng cao".', '2. Trạng thái chọn "Khóa".', '3. Trạng thái chọn "Hoạt động".'],
-      ['Trạng thái: Khóa', 'Trạng thái: Hoạt động'],
-      ['- Khóa: chỉ DAY-TEST-07, "Hiển thị 1–1 / 1".', '- Hoạt động: 5 dãy, không có DAY-TEST-07.',
-       '- Ô Trạng thái có đúng 2 lựa chọn: Hoạt động, Khóa.']),
-    T('G', '009', 'Lọc theo Người tạo', 'P1',
-      'Công ty A: QL-A tạo 3 dãy, SA tạo 2 dãy.',
-      ['1. ' + MENU + ', mở "Tìm kiếm nâng cao".', '2. Người tạo chọn QL-A.'],
-      'Người tạo: QL-A',
-      '- Còn đúng 3 dãy, cột Người tạo đều là QL-A.'),
-    T('G', '010', 'Lọc theo khoảng Ngày tạo, tính cả 2 đầu mút', 'P1',
-      'DAY-TEST-01 tạo 18/10/2026 00:10; DAY-TEST-02 tạo 19/10/2026 23:50; DAY-TEST-03 tạo 20/10/2026 00:05.',
-      ['1. ' + MENU + ', mở "Tìm kiếm nâng cao".', '2. Ô Ngày tạo chọn từ 18/10/2026 đến 19/10/2026.'],
-      'Ngày tạo: 18/10/2026 đến 19/10/2026',
-      ['- Có DAY-TEST-01 (đầu khoảng) và DAY-TEST-02 (tạo lúc 23:50 ngày cuối khoảng).', '- KHÔNG có DAY-TEST-03 (tạo ngày 20/10).']),
-    T('G', '011', 'Kết hợp nhiều điều kiện lọc', 'P1',
-      'Như TC_02.004 và TC_02.008.',
-      ['1. ' + MENU + '.', '2. Chọn Kho KHO-TEST-01, Trạng thái Hoạt động.', '3. Tìm nhanh "01", nhấn Enter.'],
-      ['Kho: KHO-TEST-01', 'Trạng thái: Hoạt động', 'Tìm nhanh: 01'],
-      ['- Chỉ dãy thỏa CẢ 3 điều kiện (ví dụ DAY-TEST-01).', '- Số N ở dòng dưới bảng bằng số dòng đếm tay.']),
-    T('G', '012', 'Làm mới xóa mọi điều kiện lọc', 'P1',
-      'Đang lọc như TC_02.011.',
-      ['1. Bấm nút "Làm mới".'],
-      '-',
-      ['- Ô tìm nhanh, Kho, Nhà kho, Trạng thái, Người tạo, Ngày tạo đều trống.', '- Danh sách về đủ dãy của Công ty A, về trang 1.']),
-    T('G', '013', 'Bộ lọc được ghi nhớ khi rời màn rồi quay lại trong 10 phút', 'P2',
-      'Công ty A có 6 dãy.',
-      ['1. ' + MENU + ', lọc Kho = KHO-TEST-02.', '2. Chuyển sang màn Nhà kho, sau 1 phút quay lại màn Dãy.',
-       '3. Lọc lại Kho = KHO-TEST-02, rời màn hơn 10 phút rồi quay lại.'],
-      'Kho: KHO-TEST-02',
-      ['- Bước 2: ô Kho vẫn là KHO-TEST-02, danh sách vẫn 2 dãy.', '- Bước 3: bộ lọc trở về trống, danh sách đủ 6 dãy.']),
-    T('M', '014', 'Ngày tạo Từ lớn hơn Đến - báo đỏ, không tải dữ liệu, không xuất', 'P1',
-      'Đang ở màn danh sách, bảng có dữ liệu.',
-      ['1. Ô Ngày tạo chọn Từ 10/10/2026, Đến 01/10/2026.', '2. Bấm Xuất Excel, bấm Xuất file.'],
-      'Ngày tạo: 10/10/2026 - 01/10/2026',
-      ['- Ngay dưới ô Ngày tạo báo đỏ "Đến ngày phải lớn hơn hoặc bằng Từ ngày.", có thông báo cùng câu.',
-       '- Bảng rỗng, chân bảng về 0.', '- Bước 2: báo cùng câu, KHÔNG tải file.']),
-    T('M', '015', 'Công tắc ổ khóa ô Kho: hiện cả kho đã khóa', 'P2',
-      'KHO-TEST-04 (Công ty A) đang Khóa, có dãy DAY-TEST-09.',
-      ['1. Mở "Tìm kiếm nâng cao", mở ô Kho.', '2. Bấm biểu tượng ổ khóa trên nhãn ô Kho, mở lại ô, chọn KHO-TEST-04.',
-       '3. Bấm lại công tắc để tắt.'],
-      'Kho: KHO-TEST-04',
-      ['- Bước 1: ô Kho KHÔNG có KHO-TEST-04.',
-       '- Bước 2: có KHO-TEST-04 (kèm ổ khóa); chọn xong danh sách chỉ còn dãy của KHO-TEST-04 (có DAY-TEST-09).',
-       '- Bước 3: KHO-TEST-04 đang được chọn vẫn giữ trong ô, không bị mất giá trị.']),
-    T('M', '016', 'Cài đặt bộ lọc: ẩn bớt ô lọc', 'P2',
-      'Đang ở màn danh sách.',
-      ['1. Bấm Cài đặt bộ lọc.', '2. Bỏ tích ô Người tạo, Lưu.', '3. Bấm Tìm kiếm nâng cao.', '4. Tải lại trang.'],
-      '-',
-      ['- Mở cửa sổ "Cài đặt bộ lọc" liệt kê các ô lọc.',
-       '- Khu vực Tìm kiếm nâng cao không còn ô Người tạo, sau khi tải lại vẫn giữ.']),
-]
 
-# ------------------------------------------------------------------ III. DANH SÁCH
-S3 = [
-    T('S', '001', 'Mặc định sắp xếp dãy tạo mới nhất trước', 'P0',
-      'DAY-TEST-01 tạo 18/10, DAY-TEST-02 tạo 19/10, DAY-TEST-03 tạo 20/10/2026.',
-      ['1. Bấm "Làm mới".', '2. Quan sát 3 dòng đầu.'],
-      '-',
-      ['- Thứ tự: DAY-TEST-03, DAY-TEST-02, DAY-TEST-01 (mới nhất trên cùng).', '- Dãy vừa tạo (tay hoặc Import) lên đầu danh sách.']),
-    T('G', '002', 'Sắp xếp theo Mã dãy và Tên dãy', 'P1',
-      'Công ty A có DAY-TEST-01, DAY-TEST-02, DAY-TEST-03.',
-      ['1. ' + MENU + '.', '2. Bấm tiêu đề cột Mã dãy 2 lần.', '3. Bấm tiêu đề cột Tên dãy.'],
-      '-',
-      ['- Mã dãy lần 1 tăng dần (01, 02, 03), lần 2 giảm dần.',
-       '- Tên dãy: xếp theo tên, dãy trùng tên giữ thứ tự ổn định khi lật trang.']),
-    T('S', '003', 'Sắp xếp theo Nhà kho và Kho', 'P2',
-      'Công ty A có dãy ở NHA-TEST-01, NHA-TEST-02 (KHO-TEST-01) và NHA-TEST-03 (KHO-TEST-02).',
-      ['1. ' + MENU + '.', '2. Bấm tiêu đề cột Nhà kho 2 lần.', '3. Bấm tiêu đề cột Kho.'],
-      '-',
-      ['- Nhà kho: xếp theo TÊN nhà kho tăng rồi giảm dần.', '- Kho: xếp theo TÊN kho.',
-       '- Chỉ 4 cột Mã dãy, Tên dãy, Nhà kho, Kho có mũi tên sắp xếp; Ngày tạo, Ngày cập nhật, Người tạo, Người cập nhật, '
-       'Trạng thái KHÔNG bấm sắp xếp được.']),
-    T('G', '004', 'Phân trang, đổi số dòng mỗi trang và STT liên tục', 'P1',
-      'Công ty A có 23 dãy.',
-      ['1. ' + MENU + '.', '2. Bấm sang trang 2.', '3. Đổi "Số dòng/trang" thành 20.'],
-      'Số dòng/trang: 20',
-      ['- Mặc định 10 dòng/trang, "Hiển thị 1–10 / 23".', '- Trang 2: "Hiển thị 11–20 / 23", STT dòng đầu là 11.',
-       '- Đổi 20 dòng: về trang 1, "Hiển thị 1–20 / 23".', '- Lựa chọn số dòng: 5, 10, 20, 50, 100.']),
-    T('S', '005', 'Cấu hình cột: bật cột Số khoang và Mô tả', 'P0',
-      ['DAY-TEST-01: 2 khoang, mô tả "Dãy kệ sắt".', 'DAY-TEST-06: 0 khoang, không có mô tả.'],
-      ['1. ' + MENU + '.', '2. Bấm nút Cấu hình cột hiển thị (biểu tượng cột, cạnh Xuất Excel).',
-       '3. Cửa sổ "Tuỳ chỉnh cột": tích Số khoang và Mô tả, bấm "Lưu".'],
-      '-',
-      ['- Cửa sổ có nút Chọn tất cả, Bỏ chọn hết, dòng "Đang chọn 11/13 cột" lúc mở.',
-       '- Lưu xong báo "Cập nhật thành công"; bảng có thêm cột Số khoang (căn phải) và Mô tả.',
-       '- DAY-TEST-01: Số khoang 2, Mô tả "Dãy kệ sắt".',
-       '- DAY-TEST-06: ô Số khoang và Mô tả để TRỐNG (không in 0 hay dấu gạch).']),
-    T('G', '006', 'Cấu hình cột: cột bắt buộc không ẩn được, cấu hình được giữ khi tải lại', 'P2',
-      'Đã bật Số khoang như TC_03.005.',
-      ['1. Mở lại cửa sổ "Tuỳ chỉnh cột".', '2. Thử bỏ tích STT, Mã dãy, Hành động.', '3. Bỏ tích cột Người tạo, Lưu, rồi tải lại trang.'],
-      '-',
-      ['- STT, Mã dãy, Hành động có biểu tượng khóa, không bỏ tích, không kéo đổi chỗ được.',
-       '- Sau tải lại: cột Người tạo vẫn ẩn, cột Số khoang vẫn hiện.']),
-]
+def main():
+    new_id, sections = {}, []
+    for i, (title, cases) in enumerate(NHOM, 1):
+        for j, c in enumerate(cases, 1):
+            if c['key']:
+                assert c['key'] not in new_id, 'Case cũ dùng 2 lần: %s' % (c['key'],)
+                new_id[c['key']] = 'TC_%02d.%03d' % (i, j)
+    doi = {OLD_ID[k]: v for k, v in new_id.items()}
 
-# ------------------------------------------------------------------ IV. TẠO / SỬA / XEM
-S4 = [
-    T('G', '001', 'Mở cửa sổ Tạo mới dãy: bố cục và trạng thái các ô', 'P0',
-      'Tài khoản QL-A.',
-      ['1. ' + MENU + '.', '2. ' + TAO + '.'],
-      '-',
-      ['- Tiêu đề "Tạo mới dãy".',
-       '- Các ô: Kho*, Nhà kho*, Mã dãy*, Tên dãy*, Số khoang*, Số vị trí mỗi khoang*, Trạng thái (mặc định Hoạt động), Mô tả.',
-       '- Ô Nhà kho bị khóa cho tới khi chọn Kho.', '- Nút "Lưu", "Lưu & Tiếp tục", "Đóng".']),
-    T('S', '002', 'Biểu tượng chữ i cạnh Số khoang, Số vị trí mỗi khoang', 'P2',
-      'Cửa sổ Tạo mới dãy đang mở.',
-      ['1. Rê chuột vào biểu tượng chữ i cạnh nhãn "Số khoang".', '2. Rê chuột vào biểu tượng chữ i cạnh "Số vị trí mỗi khoang".'],
-      '-',
-      ['- Bước 1 hiện nguyên văn: "' + HINT_KHOANG + '"', '- Bước 2 hiện nguyên văn: "' + HINT_VITRI + '"']),
-    T('S', '003', 'Ô Kho chỉ để lọc Nhà kho: chỉ kho / nhà kho đang hoạt động trong công ty', 'P0',
-      ['Công ty A: KHO-TEST-01, KHO-TEST-02 Hoạt động; KHO-TEST-04 Khóa.',
-       'KHO-TEST-01 có NHA-TEST-01, NHA-TEST-02 (Hoạt động), NHA-TEST-05 (Khóa).'],
-      ['1. ' + TAO + '.', '2. Mở ô Kho.', '3. Chọn KHO-TEST-01, mở ô Nhà kho.'],
-      'Kho: KHO-TEST-01',
-      ['- Ô Kho: KHO-TEST-01, KHO-TEST-02 dạng "Mã - Tên"; KHÔNG có KHO-TEST-04 và kho của Công ty B.',
-       '- Ô Nhà kho: NHA-TEST-01, NHA-TEST-02; KHÔNG có NHA-TEST-05 (Khóa).']),
-    T('G', '004', 'Đổi Kho thì Nhà kho đang chọn bị bỏ', 'P1',
-      'Như TC_04.003.',
-      ['1. ' + TAO + '.', '2. Chọn Kho KHO-TEST-01, Nhà kho NHA-TEST-01.', '3. Đổi Kho sang KHO-TEST-02.'],
-      'Kho: KHO-TEST-01 rồi KHO-TEST-02',
-      '- Ô Nhà kho tự trống, danh sách chọn chỉ còn NHA-TEST-03.'),
-    T('G', '005', 'Tạo dãy thành công: sinh đủ khoang và vị trí', 'P0',
-      ['Tài khoản QL-A.', 'KHO-TEST-01 (mã KHO-TEST-01) > NHA-TEST-01 (mã NHA-TEST-01).', 'NHA-TEST-01 chưa có dãy mã DAY-TEST-10.'],
-      ['1. ' + TAO + '.', '2. Nhập dữ liệu, bấm "Lưu".', '3. Mở ' + KHOANG + ', lọc Dãy = DAY-TEST-10.',
-       '4. Mở ' + VITRI + ', lọc Kho KHO-TEST-01, tìm nhanh "DAY-TEST-10".'],
-      ['Kho: KHO-TEST-01', 'Nhà kho: NHA-TEST-01', 'Mã dãy: DAY-TEST-10', 'Tên dãy: Dãy test 10',
-       'Số khoang: 3', 'Số vị trí mỗi khoang: 4', 'Mô tả: Dãy để pallet'],
-      ['- Thông báo "Thêm mới thành công.", cửa sổ đóng, DAY-TEST-10 lên đầu danh sách, Trạng thái Hoạt động.',
-       '- Bật cột Số khoang: DAY-TEST-10 = 3.',
-       '- Màn Khoang: 3 khoang "Khoang 1", "Khoang 2", "Khoang 3" mã K1, K2, K3, Dãy Dãy test 10, đều Hoạt động.',
-       '- Màn Vị trí: 12 vị trí tên "Tầng 1" đến "Tầng 4" mỗi khoang, mã từ KHO-TEST-01-NHA-TEST-01-DAY-TEST-10-K1-T1 '
-       'đến KHO-TEST-01-NHA-TEST-01-DAY-TEST-10-K3-T4, đều Hoạt động, Kho KHO-TEST-01.']),
-    T('G', '006', 'Lưu & Tiếp tục giữ cửa sổ để tạo dãy kế tiếp', 'P1',
-      'NHA-TEST-02 chưa có DAY-TEST-11, DAY-TEST-12.',
-      ['1. ' + TAO + '.', '2. Nhập DAY-TEST-11, bấm "Lưu & Tiếp tục".', '3. Nhập DAY-TEST-12, bấm "Lưu".'],
-      ['Kho: KHO-TEST-01, Nhà kho: NHA-TEST-02', 'Mã dãy: DAY-TEST-11 / DAY-TEST-12',
-       'Tên dãy: Dãy test 11 / Dãy test 12', 'Số khoang: 1', 'Số vị trí mỗi khoang: 2'],
-      ['- Bước 2: "Thêm mới thành công.", cửa sổ VẪN mở, các ô về trống, danh sách phía sau đã có DAY-TEST-11.',
-       '- Bước 3: cửa sổ đóng, danh sách có cả DAY-TEST-11 và DAY-TEST-12, mỗi dãy 1 khoang 2 vị trí.']),
-    T('S', '007', 'Đóng cửa sổ đã nhập dữ liệu: hỏi Thông tin chưa lưu', 'P1',
-      '-',
-      ['1. ' + TAO + ', gõ Mã dãy DAY-TEST-13.', '2. Bấm "Đóng".', '3. Bấm "Ở lại".', '4. Bấm "Đóng" lần nữa, bấm "Thoát".',
-       '5. Bấm "Tạo mới" lại.'],
-      'Mã dãy: DAY-TEST-13',
-      ['- Bước 2: hộp "Thông tin chưa lưu" nội dung "Bạn có thông tin chưa lưu. Có chắc chắn muốn thoát?", nút Thoát / Ở lại.',
-       '- Bước 3: quay về cửa sổ, Mã dãy vẫn còn DAY-TEST-13.',
-       '- Bước 4: cửa sổ đóng, không sinh dãy DAY-TEST-13.',
-       '- Bước 5: mọi ô trống, Trạng thái về Hoạt động, không còn lỗi đỏ cũ.',
-       '- Mở cửa sổ rồi bấm Đóng ngay (chưa nhập gì): đóng luôn, không hỏi.']),
-    T('S', '008', 'Mở cửa sổ Sửa: Kho và Nhà kho khóa, Số khoang chỉ đọc', 'P0',
-      'DAY-TEST-10 như TC_04.005 (đã có 3 khoang).',
-      ['1. ' + MENU + '.', '2. Bấm Sửa ở dòng DAY-TEST-10.'],
-      '-',
-      ['- Tiêu đề "Sửa dãy"; Kho = KHO-TEST-01 - Kho test 01, Nhà kho = NHA-TEST-01 - Nhà test 01, cả 2 ô bị khóa (nền xám), '
-       'không có dấu *, KHÔNG có biểu tượng chữ i.',
-       '- Ô "Số khoang" chỉ đọc = 3; KHÔNG có ô "Số vị trí mỗi khoang".',
-       '- Chân cửa sổ: "Lưu", "Đóng" (không có "Lưu & Tiếp tục").']),
-    T('G', '009', 'Sửa tên, mô tả dãy thành công', 'P0',
-      'DAY-TEST-10 như TC_04.005.',
-      ['1. Bấm Sửa ở DAY-TEST-10.', '2. Đổi Tên dãy, Mô tả, bấm "Lưu".'],
-      ['Tên dãy: Dãy test 10 sửa', 'Mô tả: Dãy để pallet tầng thấp'],
-      ['- Thông báo "Cập nhật thành công.", cửa sổ đóng.',
-       '- Dòng DAY-TEST-10: Tên dãy mới, Người cập nhật là QL-A, Ngày cập nhật là thời điểm sửa.',
-       '- Số khoang vẫn 3, không sinh thêm khoang.']),
-    T('S', '010', 'Đổi mã dãy không đổi mã các vị trí đã sinh', 'P1',
-      'DAY-TEST-11: 1 khoang, 2 vị trí mã KHO-TEST-01-NHA-TEST-02-DAY-TEST-11-K1-T1, ...-K1-T2.',
-      ['1. Bấm Sửa ở DAY-TEST-11, đổi Mã dãy thành DAY-TEST-11B, bấm "Lưu".', '2. Mở ' + VITRI + ', tìm nhanh "DAY-TEST-11".'],
-      'Mã dãy: DAY-TEST-11B',
-      ['- Dãy đổi mã thành DAY-TEST-11B.', '- 2 vị trí GIỮ mã cũ ...-DAY-TEST-11-K1-T1, ...-K1-T2 (mã vị trí chỉ ghép lúc sinh).']),
-    T('S', '011', 'Sửa dãy chưa có khoang: bắt nhập Số khoang và sinh khoang khi lưu', 'P0',
-      'DAY-TEST-06 (NHA-TEST-01) Hoạt động, chưa có khoang (' + KHONG_KHOANG + ').',
-      ['1. Bấm Sửa ở DAY-TEST-06.', '2. Để trống 2 ô số, bấm "Lưu".', '3. Nhập 2 khoang × 2 vị trí, bấm "Lưu".',
-       '4. Mở ' + KHOANG + ', lọc Dãy = DAY-TEST-06.'],
-      ['Số khoang: 2', 'Số vị trí mỗi khoang: 2'],
-      ['- Cửa sổ Sửa có ô "Số khoang"* và "Số vị trí mỗi khoang"* nhập được (vì dãy chưa có khoang).',
-       '- Bước 2: lỗi "Bắt buộc phải nhập" dưới 2 ô, thông báo "Bạn chưa nhập đầy đủ thông tin.".',
-       '- Bước 3: "Cập nhật thành công."; Số khoang = 2; màn Khoang có Khoang 1, Khoang 2 (K1, K2), mỗi khoang 2 vị trí Tầng 1, Tầng 2.',
-       '- Mở Sửa lần nữa: 2 ô số đã thay bằng ô Số khoang chỉ đọc = 2.']),
-    T('S', '012', 'Ô Trạng thái trong cửa sổ Sửa bị khóa khi dãy còn khoang đang hoạt động', 'P0',
-      'DAY-TEST-10: 3 khoang Hoạt động.',
-      ['1. Bấm Sửa ở DAY-TEST-10.', '2. Thử đổi Trạng thái sang Khóa.'],
-      '-',
-      ['- Ô Trạng thái hiển thị Hoạt động, nền xám, không có nút ×, không chọn được Khóa (không có biểu tượng chữ i).',
-       '- Cùng điều kiện với nút Khóa ngoài danh sách.']),
-    T('G', '013', 'Đổi Trạng thái sang Khóa ngay trong cửa sổ Sửa khi đủ điều kiện', 'P1',
-      'DAY-TEST-06 đã khóa hết 2 khoang (mỗi khoang đã khóa hết vị trí).',
-      ['1. Bấm Sửa ở DAY-TEST-06.', '2. Đổi Trạng thái = Khóa, bấm "Lưu".', '3. Mở Lịch sử của DAY-TEST-06.'],
-      'Trạng thái: Khóa',
-      ['- "Cập nhật thành công."; dòng DAY-TEST-06 nhãn Khóa; chỉ còn Mở khóa, Lịch sử.',
-       '- Lịch sử có mốc Khóa: Trạng thái Hoạt động thành Khóa.']),
-    T('G', '014', 'Xem chi tiết dãy thuộc nhà kho đã khóa vẫn hiện đúng tên', 'P2',
-      'DAY-TEST-07 (Khóa) thuộc NHA-TEST-05; NHA-TEST-05 sau đó bị khóa.',
-      ['1. Bấm mã DAY-TEST-07 để mở Xem.'],
-      '-',
-      ['- Ô Nhà kho vẫn hiện mã và tên NHA-TEST-05 kèm biểu tượng ổ khóa trước tên, KHÔNG để trống.', '- Ô Kho hiện đúng KHO-TEST-01.']),
-    T('G', '015', 'Sửa dãy vừa bị người khác khóa', 'P1',
-      'DAY-TEST-06 Hoạt động, 0 khoang. 2 tab: tab 1 QL-A, tab 2 SA.',
-      ['1. Tab 1: bấm Sửa ở DAY-TEST-06, đổi tên, CHƯA lưu.', '2. Tab 2: khóa DAY-TEST-06.', '3. Tab 1: bấm "Lưu".'],
-      'Tên dãy: Dãy 06 sửa muộn',
-      ['- Tab 1 báo "Dữ liệu đã thay đổi, vui lòng tải lại", tên KHÔNG đổi.', '- Tải lại: DAY-TEST-06 trạng thái Khóa.']),
-    T('S', '016', 'Xem dãy vừa bị người khác xóa', 'P2',
-      'DAY-TEST-12 đang hiện trên danh sách tab 1; ở tab 2 người khác vừa xóa DAY-TEST-12 (sau khi xóa hết khoang, vị trí).',
-      ['1. Tab 1 không tải lại trang, bấm mã DAY-TEST-12.'],
-      '-',
-      '- Báo "Dữ liệu đã thay đổi, vui lòng tải lại", cửa sổ không mở, trang không treo.'),
-    T('G', '017', 'Nghi vấn: Tạo mới chọn Trạng thái Khóa', 'P1',
-      'NHA-TEST-02 chưa có DAY-TEST-14.',
-      ['1. ' + TAO + '.', '2. Nhập dữ liệu, chọn Trạng thái = Khóa, bấm "Lưu".', '3. Mở ' + KHOANG + ', lọc Dãy DAY-TEST-14.'],
-      ['Kho: KHO-TEST-01, Nhà kho: NHA-TEST-02', 'Mã dãy: DAY-TEST-14', 'Tên dãy: Dãy test 14',
-       'Số khoang: 2', 'Số vị trí mỗi khoang: 1', 'Trạng thái: Khóa'],
-      ['- Ghi lại kết quả thực tế: hiện tại hệ thống cho lưu dãy Khóa nhưng 2 khoang + 2 vị trí sinh kèm ở trạng thái Hoạt động.',
-       '- Mong đợi theo quy tắc khóa (dãy chỉ Khóa khi không còn khoang đang hoạt động): KHÔNG có dãy Khóa mà con đang hoạt động.',
-       '- Lệch thì ghi Failed kèm ảnh, chuyển dev xác nhận.']),
-]
+    def tham_chieu(m):
+        assert m.group(0) in doi, 'Tham chiếu tới case cũ không còn: %s' % m.group(0)
+        return doi[m.group(0)]
 
-# ------------------------------------------------------------------ V. KHÓA / MỞ KHÓA
-S5 = [
-    T('G', '001', 'Không khóa được dãy còn khoang đang hoạt động', 'P0',
-      'DAY-TEST-11B: 1 khoang Hoạt động (2 vị trí Hoạt động).',
-      ['1. ' + MENU + '.', '2. ' + MENU3 + ' của DAY-TEST-11B.'],
-      '-',
-      ['- KHÔNG có nút Khóa (ẩn, không mờ).', '- Bật cột Số khoang: 1.']),
-    T('G', '002', 'Khóa dãy sau khi khóa hết vị trí và khoang', 'P0',
-      'DAY-TEST-11B: 1 khoang K1, 2 vị trí.',
-      ['1. Mở ' + VITRI + ': khóa lần lượt 2 vị trí ...-DAY-TEST-11-K1-T1, ...-K1-T2.',
-       '2. Mở ' + KHOANG + ': khóa khoang K1 của DAY-TEST-11B.',
-       '3. Về màn Dãy, ' + MENU3 + ' của DAY-TEST-11B > bấm "Khóa".', '4. Hộp xác nhận bấm "Khóa".'],
-      '-',
-      ['- Bước 3: hộp "Xác nhận khóa" nội dung "Bạn có chắc muốn khóa dãy \'Dãy test 11\'?", nút "Hủy" và "Khóa".',
-       '- Bước 4: "Khóa thành công."; nhãn Trạng thái đổi Khóa; nút Sửa, Xóa ẩn; còn Mở khóa, Lịch sử.',
-       '- Người cập nhật, Ngày cập nhật đổi theo người và lúc khóa.']),
-    T('G', '003', 'Bấm Hủy ở hộp xác nhận khóa không đổi gì', 'P2',
-      'DAY-TEST-06 Hoạt động, 0 khoang.',
-      ['1. Bấm Khóa ở DAY-TEST-06.', '2. Bấm "Hủy".'],
-      '-',
-      '- Hộp đóng, DAY-TEST-06 vẫn Hoạt động, lịch sử không thêm mốc.'),
-    T('G', '004', 'Mở khóa dãy khi nhà kho đang hoạt động', 'P0',
-      'DAY-TEST-11B Khóa (TC_05.002), NHA-TEST-02 Hoạt động.',
-      ['1. ' + MENU3 + ' của DAY-TEST-11B > bấm "Mở khóa".', '2. Hộp xác nhận bấm "Mở khóa".'],
-      '-',
-      ['- Hộp "Xác nhận mở khóa": "Bạn có chắc muốn mở khóa dãy \'Dãy test 11\'?".',
-       '- "Mở khóa thành công."; nhãn Hoạt động; nút Sửa hiện lại.',
-       '- Khoang K1 và 2 vị trí VẪN Khóa (mở khóa không lan xuống cấp con).']),
-    T('G', '005', 'Không mở khóa được dãy khi nhà kho đang khóa', 'P0',
-      'DAY-TEST-07 Khóa, thuộc NHA-TEST-05 đang Khóa.',
-      ['1. ' + MENU + '.', '2. ' + MENU3 + ' của DAY-TEST-07.'],
-      '-',
-      ['- KHÔNG có nút Mở khóa (chỉ còn Lịch sử).',
-       '- Mở khóa NHA-TEST-05 ở màn Nhà kho rồi quay lại: DAY-TEST-07 hiện nút Mở khóa.']),
-    T('G', '006', 'Cấp cha: không khóa được nhà kho còn dãy đang hoạt động', 'P0',
-      'NHA-TEST-03 có 2 dãy, 1 dãy Hoạt động.',
-      ['1. Mở ' + NHA + '.', '2. Quan sát nút ở dòng NHA-TEST-03.', '3. Khóa dãy còn lại (sau khi khóa khoang con), quay lại màn Nhà kho.'],
-      '-',
-      ['- Bước 2: NHA-TEST-03 KHÔNG có nút Khóa.',
-       '- Bước 3: khi mọi dãy của NHA-TEST-03 đã Khóa thì NHA-TEST-03 hiện nút Khóa (dãy Khóa không chặn).']),
-    T('G', '007', 'Khóa trùng lúc: dãy đã bị người khác khóa', 'P1',
-      'DAY-TEST-06 Hoạt động, 0 khoang; tab 1 QL-A, tab 2 SA cùng mở màn Dãy.',
-      ['1. Tab 2: khóa DAY-TEST-06.', '2. Tab 1 (chưa tải lại): khóa DAY-TEST-06.'],
-      '-',
-      ['- Tab 1 báo "Trạng thái đã bị thay đổi. Vui lòng load lại trang".', '- Lịch sử DAY-TEST-06 chỉ có 1 mốc Khóa.']),
-    T('G', '008', 'Khóa khi vừa có khoang được mở khóa ở nơi khác', 'P2',
-      'DAY-TEST-11B Hoạt động, khoang K1 Khóa nên nút Khóa đang hiện. Tab 2 mở màn Khoang.',
-      ['1. Tab 2: mở khóa khoang K1.', '2. Tab 1 (chưa tải lại): khóa DAY-TEST-11B.'],
-      '-',
-      '- Báo "Không thể khóa dãy khi vẫn còn danh mục con đang hoạt động.", dãy vẫn Hoạt động.'),
-    T('G', '009', 'Dãy Khóa bị ẩn ở ô chọn Dãy của màn khác', 'P1',
-      'DAY-TEST-07 Khóa thuộc NHA-TEST-05; DAY-TEST-01 Hoạt động thuộc NHA-TEST-01.',
-      ['1. Mở ' + KHOANG + ', bấm Tạo mới, chọn Kho KHO-TEST-01, Nhà kho NHA-TEST-01, mở ô Dãy.',
-       '2. Mở ' + KKVT + ', bấm Tạo mới, mở cây vị trí của KHO-TEST-01.'],
-      '-',
-      ['- Cửa sổ Khoang: có DAY-TEST-01, KHÔNG có dãy Khóa nào.',
-       '- Kế hoạch kiểm kê theo vị trí: dãy Khóa (và khoang, vị trí bên dưới) không hiện để tick.']),
-    T('M', '010', 'Mở khóa khi nhà kho vừa bị khóa ở nơi khác', 'P2',
-      'DAY-TEST-11B Khóa, NHA-TEST-02 Hoạt động (nút Mở khóa đang hiện ở tab 1); mọi dãy của NHA-TEST-02 đã Khóa.',
-      ['1. Tab 2: mở ' + NHA + ', khóa NHA-TEST-02.', '2. Tab 1 (chưa tải lại): Mở khóa DAY-TEST-11B.'],
-      '-',
-      '- Báo "Không thể mở khóa dãy khi danh mục cha đang bị khóa.", dãy vẫn Khóa.'),
-]
+    for i, (title, cases) in enumerate(NHOM, 1):
+        rows = []
+        for j, c in enumerate(cases, 1):
+            f = {k: re.sub(r'TC[-_](?:ROLE-\d{2}|\d{2}\.\d{3})', tham_chieu, _chuan_hoa(c[k]))
+                 for k in ('func', 'pre', 'steps', 'data', 'exp')}
+            rows.append(('%03d' % j, f['func'], c['prio'], f['pre'], f['steps'], f['data'], f['exp']))
+        sections.append((_ROMAN[i - 1], title, rows))
 
-# ------------------------------------------------------------------ VI. XÓA
-S6 = [
-    T('G', '001', 'Không xóa được dãy còn khoang', 'P0',
-      'DAY-TEST-10: 3 khoang.',
-      ['1. ' + MENU + '.', '2. ' + MENU3 + ' của DAY-TEST-10.'],
-      '-',
-      '- KHÔNG có nút Xóa.'),
-    T('S', '002', 'Không xóa được dãy đã chọn trong Kế hoạch kiểm kê theo vị trí', 'P1',
-      ['DAY-TEST-15 (NHA-TEST-01) đã xóa hết khoang (0 khoang), Hoạt động.',
-       'Một Kế hoạch kiểm kê theo vị trí đã tick DAY-TEST-15 khi nó còn khoang.'],
-      ['1. ' + MENU + '.', '2. ' + MENU3 + ' của DAY-TEST-15.'],
-      '-',
-      ['- KHÔNG có nút Xóa (dãy đã được dùng); vẫn có Sửa và Khóa hiện thẳng, Lịch sử.']),
-    T('G', '003', 'Không xóa được dãy đang Khóa', 'P1',
-      'DAY-TEST-07 Khóa, 0 khoang.',
-      ['1. ' + MENU3 + ' của DAY-TEST-07.'],
-      '-',
-      '- KHÔNG có nút Xóa; muốn xóa phải Mở khóa trước.'),
-    T('S', '004', 'Xóa dãy chưa được dùng thành công', 'P0',
-      'DAY-TEST-16 Hoạt động, 0 khoang (' + KHONG_KHOANG + '), chưa nằm trong kế hoạch kiểm kê nào.',
-      ['1. Ở dòng DAY-TEST-16 bấm "Xóa".', '2. Hộp xác nhận bấm "Xóa".', '3. Tạo mới dãy cùng nhà kho, cùng mã DAY-TEST-16.'],
-      '-',
-      ['- Hộp "Xác nhận xóa": "Bạn có chắc muốn xóa dãy \'<Tên dãy>\'?", nút "Hủy" và "Xóa".',
-       '- "Xóa thành công."; dòng biến mất; N ở dòng dưới bảng giảm 1.',
-       '- Bước 3: lưu được (dãy đã bị xóa hẳn, mã dùng lại được).']),
-    T('G', '005', 'Xóa dãy sau khi xóa hết vị trí và khoang', 'P1',
-      'DAY-TEST-12: 1 khoang K1, 2 vị trí, chưa phát sinh tồn kho.',
-      ['1. Mở ' + VITRI + ': xóa 2 vị trí của DAY-TEST-12.', '2. Mở ' + KHOANG + ': xóa khoang K1.', '3. Về màn Dãy, xóa DAY-TEST-12.'],
-      '-',
-      ['- Sau bước 2: DAY-TEST-12 hiện nút Xóa.', '- Bước 3: "Xóa thành công."']),
-    T('S', '006', 'Xóa khi vừa có người thêm khoang', 'P2',
-      'DAY-TEST-17 Hoạt động, 0 khoang, nút Xóa đang hiện ở tab 1. Tab 2 mở màn Khoang.',
-      ['1. Tab 2: Tạo mới khoang thuộc DAY-TEST-17.', '2. Tab 1 (chưa tải lại): xóa DAY-TEST-17.'],
-      '-',
-      '- Báo "Không thể xóa do dữ liệu đang được sử dụng.", dãy và khoang còn nguyên.'),
-    T('S', '007', 'Xóa dãy đã bị người khác xóa', 'P2',
-      'DAY-TEST-18 (0 khoang) đang hiện ở tab 1; ở tab 2 người khác vừa xóa nó.',
-      ['1. Tab 1 không tải lại trang, xóa DAY-TEST-18.'],
-      '-',
-      '- Báo "Dữ liệu đã thay đổi, vui lòng tải lại", trang không treo.'),
-]
+    thieu = [k for k in OLD if k not in new_id]
+    assert not thieu, 'Case bản cũ chưa được đưa vào nhóm nào: %s' % thieu
+    so_cu = len(OLD)
+    so_moi = sum(len(c) for _, c in NHOM)
+    build_chuan(OUT, SHEET, V.TEN + ' - Cập nhật ngày ' + NGAY, V.MODULE, DESCRIPTION_BLOCK, sections, loai='danh_muc')
+    print('Bản cũ %d case (giữ đủ %d) + bổ sung %d -> %d case, %d nhóm'
+          % (so_cu, len(new_id), so_moi - len(new_id), so_moi, len(NHOM)))
 
-# ------------------------------------------------------------------ VII. XUẤT EXCEL
-S7 = [
-    T('G', '001', 'Cửa sổ chọn trường xuất: đủ trường, mặc định theo cột đang hiện', 'P1',
-      'Bảng đang hiện cột mặc định (Số khoang, Mô tả ẩn).',
-      ['1. ' + MENU + '.', '2. Bấm "Xuất Excel".'],
-      '-',
-      ['- Cửa sổ "Chọn trường xuất file" có 11 trường: Mã dãy, Tên dãy, Nhà kho, Kho, Số khoang, Mô tả, Trạng thái, '
-       'Người tạo, Ngày tạo, Người cập nhật, Ngày cập nhật.',
-       '- Mặc định tích theo cột đang hiện trên bảng; Số khoang, Mô tả chưa tích.',
-       '- Có "Chọn tất cả", kéo đổi thứ tự, nút "Xuất file".']),
-    T('G', '002', 'File xuất theo đúng bộ lọc, đủ mọi dòng không phân trang', 'P0',
-      'Công ty A có 23 dãy, KHO-TEST-01 có 15 dãy.',
-      ['1. ' + MENU + ', lọc Kho = KHO-TEST-01 (đang xem trang 1, 10 dòng).', '2. Bấm "Xuất Excel", "Chọn tất cả", bấm "Xuất file".'],
-      'Kho: KHO-TEST-01',
-      ['- Thông báo "Xuất Excel thành công", tải file danh_sach_day.xlsx.',
-       '- File có tiêu đề "Danh sách dãy", đủ 15 dòng (không chỉ 10 dòng trang 1), không có dãy kho khác.',
-       '- Thứ tự dòng giống thứ tự trên màn.']),
-    T('G', '003', 'Giá trị từng cột trong file khớp màn hình', 'P1',
-      'DAY-TEST-10: 3 khoang, mô tả "Dãy để pallet tầng thấp", Hoạt động.',
-      ['1. Xuất Excel với "Chọn tất cả".', '2. So dòng DAY-TEST-10 trong file với màn (bật cột Số khoang, Mô tả).'],
-      '-',
-      ['- Mã, Tên, Nhà kho, Kho, Mô tả, Trạng thái "Hoạt động", Người tạo, Ngày tạo (dd/mm/yyyy hh:mm) giống hệt màn.',
-       '- Số khoang = 3.']),
-    T('G', '004', 'Chọn và sắp xếp trường xuất', 'P2',
-      '-',
-      ['1. Bấm "Xuất Excel", chỉ tích Tên dãy, Mã dãy, Số khoang; kéo Số khoang lên đầu.', '2. Bấm "Xuất file".'],
-      '-',
-      '- File chỉ có 3 cột theo thứ tự: Số khoang, Tên dãy, Mã dãy.'),
-]
-
-# ------------------------------------------------------------------ VIII. IMPORT EXCEL (mới)
-S8 = [
-    T('M', '001', 'Mở cửa sổ Import và tải file mẫu', 'P0',
-      'Tài khoản QL-A có quyền.',
-      ['1. Bấm Import Excel.', '2. Bấm Tải file mẫu.', '3. Mở file.'],
-      '-',
-      ['- Cửa sổ "Import dãy": nút Chọn file Excel, Tải file mẫu; Load lên bảng, Validate, Import đang mờ; "Tổng: 0".',
-       '- Tải file Mau_import_day.xlsx: dòng 1 tên cột STT, Mã kho *, Mã nhà kho *, Mã dãy *, Tên dãy *, Số khoang *, '
-       'Số vị trí mỗi khoang *, Trạng thái, Mô tả; dòng 2 hướng dẫn từng cột; 2 dòng dữ liệu mẫu.']),
-    T('M', '002', 'Load file lên bảng xem trước', 'P0',
-      'File điền 5 dòng: 2 dòng đúng (DAY-IMP-01, DAY-IMP-02 vào NHA-TEST-01), 3 dòng có lỗi.',
-      ['1. Bấm Chọn file Excel, chọn file.', '2. Bấm Load lên bảng.'],
-      '-',
-      ['- Tên file hiện cạnh nút; bảng xem trước có 5 dòng đúng thứ tự file, "Tổng: 5".',
-       '- Nút Validate sáng lên, Import vẫn mờ (chưa Validate).']),
-    T('M', '003', 'Validate báo lỗi từng dòng, đúng câu', 'P0',
-      ['File như TC_08.002, trong đó:',
-       '- dòng 3: Mã kho KHO-TEST-01, Mã nhà kho NHA-TEST-01, Mã dãy DAY-TEST-01 (đã có trong nhà kho)',
-       '- dòng 4: Mã kho "KHO_KHONG_CO", Mã dãy "Dãy @04", Tên dãy trống, Số khoang 0, Trạng thái "Tạm dừng"',
-       '- dòng 5: Mã dãy trùng dòng 1 (cùng nhà kho), Số khoang 101, Số vị trí mỗi khoang 100'],
-      ['1. Bấm Validate.'],
-      '-',
-      ['- "Tổng: 5", "Hợp lệ: 2", "Lỗi: 3"; thông báo "Validate xong: 2 hợp lệ, 3 không hợp lệ".',
-       '- Dòng 3: "Mã dãy: Đã tồn tại trong nhà kho này".',
-       '- Dòng 4 (đủ lỗi trong 1 lượt): "Mã kho: Không tồn tại kho có mã "KHO_KHONG_CO"", "Mã dãy: Chỉ gồm chữ không dấu, số, '
-       'dấu - và _", "Tên dãy: Bắt buộc phải nhập", "Số khoang: Nhập số nguyên từ 1 đến 999", "Trạng thái: Chỉ nhận Hoạt động hoặc Khóa".',
-       '- Dòng 5: "Số vị trí mỗi khoang: Tổng số vị trí sinh ra (số khoang × số vị trí mỗi khoang) tối đa 10,000", '
-       '"Mã dãy: Bị trùng trong file".',
-       '- Dòng lỗi nền đỏ, dòng hợp lệ bị khóa (xám); Validate KHÔNG tạo dãy nào; nút Import vẫn mờ.']),
-    T('M', '004', 'Mã nhà kho không thuộc kho / nhà kho đã khóa', 'P1',
-      'File 2 dòng: dòng 1 Mã kho KHO-TEST-01, Mã nhà kho NHA-TEST-03 (thuộc KHO-TEST-02); dòng 2 Mã nhà kho NHA-TEST-05 (Khóa).',
-      ['1. Load lên bảng, Validate.'],
-      '-',
-      ['- Dòng 1: "Mã nhà kho: Không tồn tại nhà kho có mã "NHA-TEST-03" trong kho "KHO-TEST-01"".',
-       '- Dòng 2: "Mã nhà kho: Nhà kho "<Tên NHA-TEST-05>" đã bị khóa, vui lòng chọn nhà kho khác".']),
-    T('M', '005', 'Bỏ dòng lỗi rồi Import thành công', 'P0',
-      'Đã Validate file TC_08.003 (2 hợp lệ, 3 lỗi).',
-      ['1. Bấm Bỏ dòng lỗi.', '2. Bấm Import.', '3. Tìm DAY-IMP-01; mở ' + KHOANG + ' lọc dãy này; mở Lịch sử DAY-IMP-01.'],
-      '-',
-      ['- Bước 1: bảng còn 2 dòng, nút Import sáng.',
-       '- Bước 2: thông báo "Import thành công 2 dãy.", cửa sổ đóng, danh sách tải lại có DAY-IMP-01, DAY-IMP-02.',
-       '- Khoang, vị trí sinh đúng Số khoang × Số vị trí như tạo tay.', '- Lịch sử DAY-IMP-01 có mốc "Tạo mới".']),
-    T('M', '006', 'Sửa dòng lỗi trên bảng rồi Validate lại; Xoá trạng thái validate', 'P1',
-      'Đã Validate, có dòng lỗi "Tên dãy: Bắt buộc phải nhập".',
-      ['1. Gõ Tên dãy vào ô của dòng lỗi (sửa các lỗi khác của dòng nếu có).', '2. Bấm Validate.', '3. Bấm Xoá trạng thái validate.'],
-      'Tên dãy: Dãy import 04',
-      ['- Bước 2: dòng đó hết lỗi, chuyển sang khóa; Hợp lệ / Lỗi cập nhật đúng.',
-       '- Bước 3: mọi dòng mở khóa để sửa lại, phải Validate lại mới Import được.']),
-    T('M', '007', 'File quá 500 dòng bị chặn', 'P2',
-      'File điền 501 dòng dữ liệu.',
-      ['1. Chọn file, bấm Load lên bảng.'],
-      '-',
-      '- Báo "File có 501 dòng dữ liệu, vượt quá giới hạn 500 dòng mỗi lần import. Vui lòng tách file và import nhiều lần.", '
-      'không có dòng nào lên bảng.'),
-    T('M', '008', 'Dòng trở nên trùng giữa lúc Validate và Import - bị bỏ qua', 'P2',
-      'Đã Validate file 2 dòng hợp lệ DAY-IMP-03, DAY-IMP-04 (NHA-TEST-01); trước khi bấm Import, phiên khác tạo tay dãy DAY-IMP-04 ở NHA-TEST-01.',
-      ['1. Bấm Import.'],
-      '-',
-      ['- Bảng kết quả "Import xong: 1 dòng thành công, 1 dòng lỗi bị bỏ qua", có nút Sao chép.',
-       '- Bảng lỗi ghi dòng trong file, Mã dãy DAY-IMP-04, lý do trùng; DAY-IMP-03 vẫn được tạo.']),
-    T('M', '009', 'Đóng / Làm mới cửa sổ Import không ghi dữ liệu', 'P2',
-      'Đã Load và Validate một file.',
-      ['1. Bấm Làm mới.', '2. Load lại, bấm Đóng.'],
-      '-',
-      ['- Làm mới: bảng và tên file bị xoá, "Tổng: 0".', '- Đóng: cửa sổ đóng, không có dãy nào được tạo.']),
-]
-
-# ------------------------------------------------------------------ IX. LỊCH SỬ
-S9 = [
-    T('G', '001', 'Lịch sử ghi thao tác Tạo mới', 'P1',
-      'DAY-TEST-10 tạo theo TC_04.005.',
-      ['1. ' + MENU3 + ' của DAY-TEST-10 > bấm "Lịch sử".'],
-      '-',
-      ['- Cửa sổ "Lịch sử thay đổi: Dãy test 10".', '- Có mốc "Tạo mới" ghi người tạo QL-A, thời điểm tạo.']),
-    T('G', '002', 'Lịch sử ghi thay đổi thông tin, mới nhất trên cùng', 'P1',
-      'DAY-TEST-10 đã sửa tên và mô tả (TC_04.009).',
-      ['1. Mở Lịch sử của DAY-TEST-10.'],
-      '-',
-      ['- Mốc "Thay đổi thông tin" nằm TRÊN mốc "Tạo mới".',
-       '- Hiện giá trị cũ và mới của Tên dãy, Mô tả; KHÔNG liệt kê trường không đổi.',
-       '- Mỗi mốc có "Người thực hiện: Họ tên — Phòng ban".']),
-    T('G', '003', 'Lịch sử ghi Khóa / Mở khóa', 'P1',
-      'DAY-TEST-11B đã Khóa rồi Mở khóa (TC_05.002, TC_05.004).',
-      ['1. Mở Lịch sử của DAY-TEST-11B.', '2. Bấm Bộ lọc, chọn Loại hành động là Khóa, Mở khóa.'],
-      '-',
-      ['- 2 mốc "Khóa" và "Mở khóa", ghi người thao tác, Trạng thái từ Hoạt động sang Khóa và ngược lại.', '- Lọc xong chỉ còn 2 mốc đó.']),
-    T('G', '004', 'Khối lịch sử trong cửa sổ Xem giống cửa sổ Lịch sử', 'P2',
-      'DAY-TEST-10 có 2 mốc lịch sử.',
-      ['1. Bấm mã DAY-TEST-10 mở Xem, bấm Xem lịch sử.'],
-      '-',
-      '- Cùng số mốc, cùng nội dung, cùng thứ tự với cửa sổ Lịch sử ở cột Hành động.'),
-    T('M', '005', 'Khoang và vị trí sinh kèm cũng có lịch sử Tạo mới', 'P2',
-      'DAY-TEST-10 vừa tạo với 3 khoang × 4 vị trí.',
-      ['1. Mở ' + KHOANG + ', mở Lịch sử khoang K1 của DAY-TEST-10.', '2. Mở ' + VITRI + ', mở Lịch sử vị trí ...-DAY-TEST-10-K1-T1.'],
-      '-',
-      '- Cả 2 cửa sổ có mốc "Tạo mới" cùng người và thời điểm tạo dãy (không phải "Chưa có lịch sử thao tác nào.").'),
-]
-
-# ------------------------------------------------------------------ X. RÀNG BUỘC NHẬP LIỆU
-S10 = [
-    T('G', '001', 'Bỏ trống mọi ô bắt buộc: báo lỗi cùng lúc dưới từng ô', 'P0',
-      '-',
-      ['1. ' + TAO + '.', '2. Không nhập gì, bấm "Lưu".'],
-      '-',
-      ['- Thông báo "Bạn chưa nhập đầy đủ thông tin.", cửa sổ không đóng.',
-       '- Chữ đỏ "Bắt buộc phải nhập" dưới CẢ 6 ô: Kho, Nhà kho, Mã dãy, Tên dãy, Số khoang, Số vị trí mỗi khoang.',
-       '- Không sinh dãy nào.']),
-    T('G', '002', 'Mã dãy trùng trong cùng nhà kho', 'P0',
-      'NHA-TEST-01 đã có DAY-TEST-01.',
-      ['1. ' + TAO + '.', '2. Nhập dữ liệu, bấm "Lưu".'],
-      ['Kho: KHO-TEST-01, Nhà kho: NHA-TEST-01', 'Mã dãy: DAY-TEST-01', 'Tên dãy: Dãy khác tên',
-       'Số khoang: 1', 'Số vị trí mỗi khoang: 1'],
-      ['- Lỗi dưới ô Mã dãy: "Đã tồn tại trong nhà kho này"; dữ liệu đã nhập vẫn còn.', '- Không sinh dãy, khoang, vị trí.']),
-    T('G', '003', 'Tên dãy trùng trong cùng nhà kho (không phân biệt hoa thường)', 'P0',
-      'NHA-TEST-01 đã có dãy tên "Dãy test 01".',
-      ['1. ' + TAO + ', nhập Tên dãy chữ hoa, bấm "Lưu".'],
-      ['Nhà kho: NHA-TEST-01', 'Mã dãy: DAY-TEST-21', 'Tên dãy: DÃY TEST 01', 'Số khoang: 1', 'Số vị trí mỗi khoang: 1'],
-      '- Lỗi dưới ô Tên dãy: "Đã tồn tại trong nhà kho này".'),
-    T('G', '004', 'Trùng mã / tên ở NHÀ KHO KHÁC thì được lưu', 'P1',
-      'NHA-TEST-01 có DAY-TEST-01 "Dãy test 01"; NHA-TEST-02 chưa có.',
-      ['1. ' + TAO + ', chọn NHA-TEST-02, nhập mã và tên giống DAY-TEST-01, bấm "Lưu".'],
-      ['Nhà kho: NHA-TEST-02', 'Mã dãy: DAY-TEST-01', 'Tên dãy: Dãy test 01', 'Số khoang: 1', 'Số vị trí mỗi khoang: 1'],
-      ['- "Thêm mới thành công."; danh sách có 2 dòng DAY-TEST-01 khác cột Nhà kho.',
-       '- Vị trí sinh ra mã KHO-TEST-01-NHA-TEST-02-DAY-TEST-01-K1-T1 (không trùng vì khác mã nhà).']),
-    T('G', '005', 'Trùng với dãy đang Khóa vẫn bị chặn', 'P1',
-      'NHA-TEST-05 có DAY-TEST-07 (Khóa). Mở khóa NHA-TEST-05 để chọn được trong cửa sổ.',
-      ['1. ' + TAO + ', chọn NHA-TEST-05, Mã dãy DAY-TEST-07, bấm "Lưu".'],
-      ['Nhà kho: NHA-TEST-05', 'Mã dãy: DAY-TEST-07', 'Tên dãy: Dãy mới', 'Số khoang: 1', 'Số vị trí mỗi khoang: 1'],
-      '- Lỗi dưới ô Mã dãy: "Đã tồn tại trong nhà kho này".'),
-    T('G', '006', 'Khoảng trắng đầu / cuối mã và tên bị cắt trước khi lưu và kiểm trùng', 'P2',
-      'NHA-TEST-01 đã có DAY-TEST-01.',
-      ['1. ' + TAO + ', nhập Mã dãy "  DAY-TEST-01  " (có khoảng trắng 2 đầu), bấm "Lưu".',
-       '2. Đổi Mã dãy thành "  DAY-TEST-22  ", Tên "  Dãy 22  ", bấm "Lưu".'],
-      ['Mã dãy: (2 khoảng trắng)DAY-TEST-01(2 khoảng trắng)', 'Mã dãy: (khoảng trắng)DAY-TEST-22(khoảng trắng)'],
-      ['- Bước 1: lỗi "Đã tồn tại trong nhà kho này".',
-       '- Bước 2: lưu thành DAY-TEST-22 và "Dãy 22" không còn khoảng trắng; mã vị trí ...-DAY-TEST-22-K1-T1.',
-       '- Ghi lại vào KQ thực tế nếu khoảng trắng bị báo đỏ là sai ký tự ngay khi gõ.']),
-    T('S', '007', 'Số khoang / Số vị trí mỗi khoang bằng 0', 'P0',
-      '-',
-      ['1. ' + TAO + ', nhập đủ ô khác, Số khoang 0, Số vị trí mỗi khoang 0, bấm "Lưu".'],
-      ['Số khoang: 0', 'Số vị trí mỗi khoang: 0'],
-      '- Lỗi dưới cả 2 ô: "Nhập số nguyên từ 1 đến 999"; không sinh dãy.'),
-    T('G', '008', 'Ô số chỉ nhận chữ số, tối đa 3 ký tự', 'P1',
-      '-',
-      ['1. ' + TAO + '.', '2. Gõ lần lượt vào ô Số khoang: "abc", "-5", "2.5", "1000".'],
-      'Số khoang: abc / -5 / 2.5 / 1000',
-      ['- "abc": ô trống.', '- "-5": còn 5.', '- "2.5": còn 25.', '- "1000": chỉ giữ 100 (tối đa 3 chữ số).']),
-    T('G', '009', 'Tổng số vị trí sinh ra vượt 10,000', 'P0',
-      '-',
-      ['1. ' + TAO + ', nhập đủ ô khác, Số khoang 101, Số vị trí mỗi khoang 100, bấm "Lưu".', '2. Đổi thành 999 và 999, bấm "Lưu".'],
-      ['Số khoang: 101, Số vị trí mỗi khoang: 100 (10,100 vị trí)', 'Số khoang: 999, Số vị trí mỗi khoang: 999'],
-      ['- Cả 2 lần: lỗi dưới ô Số vị trí mỗi khoang: "Tổng số vị trí sinh ra (số khoang × số vị trí mỗi khoang) tối đa 10,000".',
-       '- Không sinh dãy, khoang, vị trí nào; hệ thống phản hồi ngay, không treo.']),
-    T('S', '010', 'Mã vị trí sinh ra trùng mã vị trí đã có trong kho', 'P0',
-      ['Ở màn Vị trí đã tạo 4 vị trí tự do trong KHO-TEST-01, mã:',
-       'KHO-TEST-01-NHA-TEST-01-DAY-TEST-23-K1-T1', 'KHO-TEST-01-NHA-TEST-01-DAY-TEST-23-K1-T2',
-       'KHO-TEST-01-NHA-TEST-01-DAY-TEST-23-K2-T1', 'KHO-TEST-01-NHA-TEST-01-DAY-TEST-23-K2-T2'],
-      ['1. ' + TAO + ', chọn NHA-TEST-01, Mã dãy DAY-TEST-23, 2 khoang × 2 vị trí, bấm "Lưu".', '2. Đổi Mã dãy thành DAY-TEST-23B, bấm "Lưu".'],
-      ['Mã dãy: DAY-TEST-23 rồi DAY-TEST-23B', 'Số khoang: 2', 'Số vị trí mỗi khoang: 2'],
-      ['- Bước 1: lỗi dưới ô Số vị trí mỗi khoang: "Mã vị trí sinh ra đã tồn tại trong kho: <mã 1>, <mã 2>, <mã 3>. '
-       'Hãy đổi mã dãy" (chỉ liệt kê 3 mã trùng đầu tiên dù trùng 4).',
-       '- Không sinh DAY-TEST-23.',
-       '- Bước 2: "Thêm mới thành công.", sinh 4 vị trí mã ...-DAY-TEST-23B-K1-T1 đến ...-K2-T2.']),
-    T('G', '011', 'Mô tả quá 500 ký tự', 'P1',
-      '-',
-      ['1. ' + TAO + ', nhập đủ ô bắt buộc, Mô tả dài 501 ký tự, bấm "Lưu".', '2. Xóa bớt còn 500 ký tự, bấm "Lưu".'],
-      ['Mô tả: 501 ký tự', 'Mô tả: 500 ký tự'],
-      ['- 501 ký tự: lỗi dưới ô Mô tả "Nhập tối đa 500 ký tự".', '- 500 ký tự: lưu thành công.']),
-    T('S', '012', 'Mã dãy tối đa 50 ký tự, Tên dãy tối đa 255 ký tự', 'P2',
-      '-',
-      ['1. ' + TAO + '.', '2. Gõ 51 ký tự (chữ không dấu) vào ô Mã dãy.', '3. Dán chuỗi 300 ký tự vào ô Tên dãy.'],
-      ['Mã dãy: 51 ký tự', 'Tên dãy: 300 ký tự'],
-      ['- Mã dãy: ô vẫn nhận đủ 51 ký tự nhưng báo đỏ ngay dưới ô (giới hạn 50 ký tự), bấm Lưu không gửi đi.',
-       '- Tên dãy: chỉ nhận 255 ký tự đầu, không gõ thêm được.']),
-    T('G', '013', 'Nhà kho vừa bị khóa trong lúc đang nhập', 'P1',
-      'NHA-TEST-02 Hoạt động, mọi dãy của nó đã Khóa (đủ điều kiện khóa nhà kho).',
-      ['1. Tab 1: ' + TAO + ', chọn NHA-TEST-02, nhập đủ, CHƯA lưu.', '2. Tab 2: mở ' + NHA + ', khóa NHA-TEST-02.', '3. Tab 1: bấm "Lưu".'],
-      ['Nhà kho: NHA-TEST-02', 'Mã dãy: DAY-TEST-24'],
-      ['- Lỗi dưới ô Nhà kho: "Nhà kho "Nhà test 02" đã bị khóa, vui lòng chọn nhà kho khác".', '- Không sinh DAY-TEST-24.']),
-    T('M', '014', 'Mã dãy sai ký tự báo đỏ ngay khi gõ', 'P0',
-      '-',
-      ['1. ' + TAO + '.', '2. Gõ lần lượt vào ô Mã dãy: "Dãy 01", "D.01", "D 01", "D-01_A".'],
-      'Mã dãy: Dãy 01 / D.01 / D 01 / D-01_A',
-      ['- 3 giá trị đầu: báo đỏ ngay dưới ô "Chỉ gồm chữ không dấu, số, dấu - và _" (chưa cần bấm Lưu).',
-       '- "D-01_A": hết báo đỏ.', '- Đang báo đỏ mà bấm Lưu: không gửi đi, cửa sổ không đóng.']),
-    T('M', '015', 'Mã vị trí sinh ra dài quá 50 ký tự', 'P1',
-      'KHO-TEST-01 > NHA-TEST-01 (mã kho + mã nhà đã dài 23 ký tự).',
-      ['1. ' + TAO + ', chọn NHA-TEST-01, Mã dãy 25 ký tự "DAY-RAT-DAI-0123456789ABC", 10 khoang × 10 vị trí, bấm "Lưu".'],
-      'Mã dãy: DAY-RAT-DAI-0123456789ABC',
-      ['- Lỗi dưới ô Số vị trí mỗi khoang: "Mã vị trí sinh ra (<mã dài nhất>) dài quá 50 ký tự. Hãy rút ngắn mã dãy".',
-       '- Không sinh dãy.']),
-]
-
-# ------------------------------------------------------------------ XI. E2E
-S11 = [
-    T('S', '001', 'Vòng đời đầy đủ một dãy', 'P0',
-      'Tài khoản QL-A. NHA-TEST-02 chưa có DAY-TEST-30.',
-      ['1. Tạo DAY-TEST-30: 1 khoang × 2 vị trí.', '2. Sửa tên thành "Dãy 30 sửa".',
-       '3. Màn Vị trí khóa 2 vị trí; màn Khoang khóa K1; màn Dãy khóa DAY-TEST-30.', '4. Mở khóa DAY-TEST-30.',
-       '5. Trước bước 6, mở Lịch sử DAY-TEST-30.',
-       '6. Màn Vị trí xóa 2 vị trí; màn Khoang xóa K1 (mở khóa trước nếu cần); màn Dãy xóa DAY-TEST-30.'],
-      ['Mã dãy: DAY-TEST-30', 'Số khoang: 1', 'Số vị trí mỗi khoang: 2'],
-      ['- Mỗi bước có đúng thông báo: "Thêm mới thành công.", "Cập nhật thành công.", "Khóa thành công.", '
-       '"Mở khóa thành công.", "Xóa thành công."',
-       '- Nút Khóa chỉ hiện sau khi K1 Khóa; nút Xóa chỉ hiện sau khi K1 bị xóa.',
-       '- Lịch sử (bước 5): Tạo mới, Thay đổi thông tin, Khóa, Mở khóa, mới nhất trên cùng.',
-       '- Kết thúc: DAY-TEST-30 không còn trong danh sách.']),
-    T('G', '002', 'Khóa theo cây: dãy chặn nhà kho, nhà kho chặn mở khóa dãy', 'P1',
-      'NHA-TEST-03 có đúng 1 dãy DAY-TEST-32 (1 khoang × 1 vị trí).',
-      ['1. Màn Nhà kho: NHA-TEST-03 không có nút Khóa.', '2. Khóa vị trí, khoang, dãy DAY-TEST-32; quay lại màn Nhà kho khóa NHA-TEST-03.',
-       '3. Màn Dãy: DAY-TEST-32 không có Mở khóa.', '4. Mở khóa NHA-TEST-03; màn Dãy mở khóa DAY-TEST-32.'],
-      '-',
-      ['- Bước 1: không khóa được nhà kho còn dãy hoạt động.', '- Bước 2: khóa nhà kho thành công.',
-       '- Bước 3: nút Mở khóa ẩn khi nhà kho Khóa.', '- Bước 4: "Mở khóa thành công."']),
-    T('M', '003', 'Import dãy rồi dùng ở màn nghiệp vụ', 'P1',
-      'File import 1 dòng hợp lệ: KHO-TEST-01, NHA-TEST-01, DAY-IMP-10, 1 khoang × 2 vị trí.',
-      ['1. Import file (Load, Validate, Import).', '2. Mở ' + KKVT + ', Tạo mới, mở cây vị trí của KHO-TEST-01.',
-       '3. Khóa vị trí, khoang, dãy DAY-IMP-10; mở lại bước 2.'],
-      '-',
-      ['- Bước 2: có DAY-IMP-10 với khoang K1 và 2 vị trí để tick.', '- Bước 3: DAY-IMP-10 không còn hiện để tick.']),
-]
-
-SECTIONS = [
-    ('I', 'HIỂN THỊ TRANG & TRUY CẬP', S1),
-    ('II', 'BỘ LỌC & TÌM KIẾM', S2),
-    ('III', 'DANH SÁCH, SẮP XẾP & PHÂN TRANG', S3),
-    ('IV', 'TẠO / SỬA / XEM', S4),
-    ('V', 'KHÓA / MỞ KHÓA', S5),
-    ('VI', 'XÓA', S6),
-    ('VII', 'XUẤT EXCEL', S7),
-    ('VIII', 'IMPORT EXCEL', S8),
-    ('IX', 'LỊCH SỬ THAY ĐỔI', S9),
-    ('X', 'RÀNG BUỘC NHẬP LIỆU', S10),
-    ('XI', 'E2E FLOW', S11),
-]
 
 if __name__ == '__main__':
-    build(output_file=OUT, sheet_name='Trang tính1',
-          feature_name=TEN + ' - Cập nhật ngày ' + NGAY, module_name=MODULE,
-          description_block=DESCRIPTION_BLOCK, role_tcs=ROLE_TCS, sections=SECTIONS)
-    total = sum(TAGS.values())
-    print('Thống kê so với bản cũ (%d case): giữ %d, sửa %d, thêm %d, bỏ %d -> tổng %d'
-          % (SO_CU, TAGS['G'], TAGS['S'], TAGS['M'], SO_BO, total))
-    assert TAGS['G'] + TAGS['S'] + SO_BO == SO_CU, 'giữ + sửa + bỏ phải bằng %d case cũ' % SO_CU
+    main()

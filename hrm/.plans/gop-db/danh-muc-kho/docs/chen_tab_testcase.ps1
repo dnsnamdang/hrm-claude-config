@@ -1,6 +1,7 @@
-﻿param([Parameter(Mandatory=$true)][string]$Master, [string]$ItemsJson)
+﻿param([Parameter(Mandatory=$true)][string]$Master, [string]$ItemsJson, [switch]$Replace)
 # Chèn tab testcase vào file "Testcase chuyển đổi.xlsx" (bản tải từ Drive) bằng Excel thật,
 # giữ nguyên định dạng tab gốc; thêm dòng vào tab "Tổng hợp". Tab đã có thì bỏ qua (chạy lại an toàn).
+# -Replace: tab đã có thì THAY bằng bản mới — giữ tên + vị trí tab, trỏ lại công thức dòng của nó ở tab "Tổng hợp".
 # Chỉ đóng ĐÚNG tiến trình Excel do script này mở.
 # -ItemsJson: file JSON (UTF-8) dạng [["<đường dẫn tuyệt đối file .xlsx>", "<tên tab ≤31 ký tự>", "<tên ở tab Tổng hợp>"], ...]
 #             bỏ trống = 7 danh mục kho (đợt 1).
@@ -32,22 +33,40 @@ try {
     $sum = $wb.Worksheets.Item('Tổng hợp')
     foreach ($it in $items) {
         $file, $tab, $label = $it
-        if ($names -contains $tab) { Write-Output "bỏ qua (đã có): $tab"; continue }
+        $exists = $names -contains $tab
+        if ($exists -and -not $Replace) { Write-Output "bỏ qua (đã có): $tab"; continue }
         if (-not (Test-Path $file)) { Write-Output "THIẾU FILE: $file"; continue }
         $src = $xl.Workbooks.Open($file, 0, $true)
-        $src.Worksheets.Item(1).Copy([Type]::Missing, $wb.Worksheets.Item($wb.Worksheets.Count))
+        if ($exists) {
+            $old = $wb.Worksheets.Item($tab)
+            $src.Worksheets.Item(1).Copy([Type]::Missing, $old)
+            $new = $wb.Worksheets.Item($old.Index + 1)
+            $old.Delete()
+        } else {
+            $src.Worksheets.Item(1).Copy([Type]::Missing, $wb.Worksheets.Item($wb.Worksheets.Count))
+            $new = $wb.Worksheets.Item($wb.Worksheets.Count)
+        }
         $src.Close($false)
-        $new = $wb.Worksheets.Item($wb.Worksheets.Count)
         $new.Name = $tab
-        # dòng Tổng hợp: dòng trống đầu tiên ở cột B, chép định dạng dòng trên
-        $r = $sum.Cells($sum.Rows.Count, 2).End(-4162).Row + 1
-        $sum.Rows($r - 1).Copy() | Out-Null
-        $sum.Rows($r).PasteSpecial(-4122) | Out-Null
-        $sum.Cells($r, 1).Formula = '=ROW()-ROW($A$1)'
-        $sum.Cells($r, 2).Value2 = $label
-        $refs = @('K15', 'K11', 'K12', 'K13', 'K14')   # tổng TC, đạt, không đạt, PE, chưa chạy
+        # tổng số TC: tab có dòng 16 "Tổng số testcase" (khuôn chuẩn) thì lấy K16, không thì K15
+        $tot = 'K15'; if ($new.Cells(16, 9).Value2 -eq 'Tổng số testcase') { $tot = 'K16' }
+        $refs = @($tot, 'K11', 'K12', 'K13', 'K14')    # tổng TC, đạt, không đạt, PE, chưa chạy
+        $r = 0
+        if ($exists) {
+            $last = $sum.Cells($sum.Rows.Count, 2).End(-4162).Row
+            for ($k = 2; $k -le $last; $k++) { if ("$($sum.Cells($k, 2).Value2)".Trim() -eq $label) { $r = $k; break } }
+        }
+        if ($r -eq 0) {
+            # dòng Tổng hợp mới: dòng trống đầu tiên ở cột B, chép định dạng dòng trên
+            $r = $sum.Cells($sum.Rows.Count, 2).End(-4162).Row + 1
+            $sum.Rows($r - 1).Copy() | Out-Null
+            $sum.Rows($r).PasteSpecial(-4122) | Out-Null
+            $sum.Cells($r, 1).Formula = '=ROW()-ROW($A$1)'
+            $sum.Cells($r, 2).Value2 = $label
+        }
         for ($i = 0; $i -lt 5; $i++) { $sum.Cells($r, 7 + $i).Formula = "='" + $tab + "'!" + $refs[$i] }
-        Write-Output "đã chèn: $tab (Tổng hợp dòng $r)"
+        $act = 'đã chèn'; if ($exists) { $act = 'đã thay' }
+        Write-Output "$($act): $tab (Tổng hợp dòng $r)"
     }
     $wb.Worksheets.Item(1).Activate()
     $wb.Save()

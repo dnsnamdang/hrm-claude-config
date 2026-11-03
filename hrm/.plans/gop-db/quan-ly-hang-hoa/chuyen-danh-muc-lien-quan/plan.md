@@ -3211,3 +3211,6 @@ commit nào.
 ## Ngày 02/11/2026 (@junfoke)
 - [x] 02/11/2026 — Theo yêu cầu (hrm.eteksofts.com/master-data/manufacturers): bỏ rule cấm dấu `,` và `:` ở tên hãng sản xuất (hãng nước ngoài kiểu "MPCM, Inc."). Rule nằm ở lớp nền dùng chung `BaseCatalogRequest` (~20 danh mục) → chỉ ghi đè `rules()` trong `ManufacturerRequest`, giữ bắt buộc / 255 ký tự / không trùng. Nhánh `gop_db` hrm-api `949f5a2c4` (đã lên origin). Chưa thử tạo hãng qua giao diện.
 - [ ] Import Excel hãng SX vẫn chặn `,` `:` (trait dùng chung `ImportsCatalogRows` dòng 126) — chờ user quyết có mở không.
+
+## Ngày 03/11/2026 (@junfoke)
+- [x] 03/11/2026 — Import Excel hãng sản xuất vẫn chặn dấu `,` `:` → trait `ImportsCatalogRows` thêm `importNameForbidsCommaColon()` (mặc định true, danh mục khác giữ chặn), `ManufacturerService` trả false cho khớp form tạo/sửa. Commit api `20d05d055` (gop_db, đã lên origin).

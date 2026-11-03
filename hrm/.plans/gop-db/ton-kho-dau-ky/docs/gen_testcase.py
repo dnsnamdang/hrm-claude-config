@@ -1,409 +1,487 @@
 # -*- coding: utf-8 -*-
-"""Testcase màn "Khai báo tồn kho đầu kỳ" (STT 283, phân hệ Kho > Tồn kho đầu kỳ) — viết MỚI (chưa có TC cũ), khuôn
-màn mẫu phiếu finance-declare-debt-beginning/docs/kh/gen_testcase.py (form 17 cột, tc_engine).
+"""Testcase màn "Khai báo tồn kho đầu kỳ" — KHUÔN CHUẨN tab "13. DM quốc gia" (user chốt 03/11/2026, loại 'phieu').
 
-Nguồn: code HRM develop 02/11/2026 (xem gen_srs.py) + design/plan của feature (#11828, #11834, #11836, #11837, #11858).
-Màn không có Chi tiết, Lịch sử, In; không qua duyệt — trạng thái do hệ thống tự xác định (Chưa / Đã có giao dịch).
+Làm lại từ bản 02/11 (gen_testcase_v1.py — giữ để tra): lấy NGUYÊN VĂN mọi case của bản cũ qua hàm cu(<nhóm cũ>, <số cũ>),
+xếp lại vào đúng nhóm chuẩn; bỏ nhóm/mã kiểu cũ (TC-ROLE, DANH SÁCH SẮP XẾP, TÁC ĐỘNG SỐ LIỆU, LUỒNG ĐẦU CUỐI…); viết thêm
+case cho các dòng checklist "Mẫu tài liệu.xlsx" áp dụng được mà bản cũ thiếu. Màn không có Chi tiết, Lịch sử, In, Duyệt.
+Cuối file kiểm: mọi case cũ đều đã dùng đúng 1 lần.
 Chạy: python gen_testcase.py
 """
 import os
 import sys
-
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.abspath(os.path.join(HERE, '..', '..', 'xuat-tai-lieu-chuyen-doi')))
-import _lib_phieu as L  # noqa: E402,F401  (đặt sys.path tới tc_engine)
-from tc_engine import build  # noqa: E402
 
 try:
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 except Exception:
     pass
 
-TEN = 'Khai báo tồn kho đầu kỳ'
-MODULE = 'Kho - Tồn kho đầu kỳ'
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.abspath(os.path.join(HERE, '..', '..', 'xuat-tai-lieu-chuyen-doi')))
+import gen_testcase_v1 as V1  # noqa: E402  (bản 02/11 — nguồn nguyên văn các case cũ)
+from _tc_chuan import build_chuan  # noqa: E402
+
+TEN = V1.TEN
 OUT = os.path.join(HERE, 'testcase - %s.xlsx' % TEN)
-COUNT = [0]
+SHEET = 'Trang tính1'
+MODULE = V1.MODULE
+NGAY = '03/11/2026'
+MENU = V1.MENU
+BC = V1.BC
+TK = V1.TK
+GD = V1.GD
+CHUA_LUU = '"Bạn có thông tin chưa lưu. Có chắc chắn muốn thoát?"'
+DOI = '"Trạng thái đã bị thay đổi. Vui lòng load lại trang"'
 
 
-def L_(*lines):
-    return '\n'.join(lines)
+def _gach(text):
+    """Giọng tab Quốc gia: mỗi ý Expected bắt đầu "-  "; bỏ dấu trừ toán học (U+2212)."""
+    out = []
+    for line in str(text).replace('−', '-').replace(' → ', ' > ').split('\n'):
+        if line.startswith('- ') and not line.startswith('-  '):
+            line = '-  ' + line[2:]
+        out.append(line)
+    return '\n'.join(out)
 
 
-def T(n, func, prio, pre, steps, data, exp):
-    COUNT[0] += 1
+# ------------------------------------------------------------------ case cũ (nguyên văn)
+OLD = {('ROLE', c[0]): c for c in V1.ROLE_TCS}
+for _k, _t, _cs in V1.SECTIONS:
+    for _c in _cs:
+        OLD[(_k, _c[0])] = _c
+SO_CU = len(OLD)
+DA_DUNG = set()
 
-    def j(x):
-        return x if isinstance(x, str) else L_(*x)
-    return (n, func, prio, j(pre), j(steps), j(data), j(exp))
+
+def cu(nhom, so, func=None, pre=None, steps=None, data=None, exp=None, prio=None, them_exp=None):
+    """Lấy nguyên văn case cũ; tham số khác None = sửa câu chữ ô đó; them_exp = thêm ý vào cuối Expected."""
+    key = (nhom, so)
+    assert key not in DA_DUNG, 'Case cũ dùng 2 lần: %s' % (key,)
+    DA_DUNG.add(key)
+    _, f, p, pr, st, td, ex = OLD[key]
+    td = '' if td == '—' else td
+    pr = '' if pr == '—' else pr
+    ex = exp or ex
+    if them_exp:
+        ex = ex + '\n' + '\n'.join('- ' + e for e in them_exp)
+    return (func or f, prio or p, pre or pr, steps or st, td if data is None else data, _gach(ex))
 
 
-MENU = 'phân hệ Kho > menu Tồn kho đầu kỳ > "Khai báo tồn kho đầu kỳ"'
-BC = 'phân hệ Kho > Báo cáo kho > "Báo cáo tồn kho theo vị trí"'
-TK = 'phân hệ Kho > Báo cáo kho > "Thẻ kho"'
-LECH = 'Hàng hóa H-1 khác số lượng đã khai kho kế toán, không thể nhập tồn đầu!'
-GD = 'Hàng hóa đã có giao dịch, không thể sửa / xóa tồn đầu!'
+def moi(func, prio, pre, steps, data, exp):
+    """Case mới: steps / exp truyền list, tự đánh số bước và gạch đầu dòng."""
+    if not isinstance(steps, str):
+        steps = '\n'.join('%d. %s' % (i, s) for i, s in enumerate(steps, 1))
+    if not isinstance(exp, str):
+        exp = '\n'.join('-  ' + e for e in exp)
+    return (func, prio, pre, steps, data, exp)
 
-DU_LIEU = L_(
-    'Dữ liệu mẫu dùng xuyên suốt (ghi mã thật vào cột Ghi chú nếu môi trường test khác):',
-    '- TK-A: nhân viên công ty TPE, có quyền "Khai báo tồn kho đầu kỳ", không được làm việc ở công ty EG.',
-    '- TK-ADMIN: quản trị cao nhất của hệ thống. TK-Z: KHÔNG có quyền "Khai báo tồn kho đầu kỳ".',
-    '- Kho PTT (Phan Trọng Tuệ) có kho kế toán của TPE; kho EG_LN chỉ có kho kế toán của EG.',
-    '- Hàng H-1: đã khai tồn kho KẾ TOÁN đầu kỳ 10 Bộ tại kho PTT của TPE, CHƯA khai tồn kho đầu kỳ.',
-    '- Hàng H-0: chưa khai tồn kho kế toán đầu kỳ tại kho PTT.',
-    '- Nhóm N-TU-DO: BLNS-IR-EVOPYRO tại PTT / TPE, 2 vị trí (PTT-N1-D1-K1-T1: 4, N1-T2-KV: 6), chưa có giao dịch.',
-    '- Nhóm N-GD: 2Q-GSAQ tại LN / TPE, đã có giao dịch kho (đã xuất / chuyển vị trí).',
-)
 
-DESCRIPTION_BLOCK = [
-    ('1. Mục đích tính năng', L_(
-        'Màn "Khai báo tồn kho đầu kỳ" khai báo TỒN KHO THỰC TẾ ĐẦU KỲ theo hàng × kho × vị trí × công ty — số mở đầu cho thẻ '
-        'kho và các báo cáo tồn kho.',
-        'Luồng: chọn Kho + Công ty → "Chọn hàng hóa" → mỗi hàng chia số lượng vào 1 hoặc nhiều vị trí, tổng phải bằng SL tồn '
-        'kế toán → Lưu. Lưu xong có hiệu lực ngay, KHÔNG qua duyệt.',
-        'Đường vào: ' + MENU + '.',
-        'Chức năng: Xem danh sách, Tìm kiếm / lọc, Cài đặt bộ lọc, Tùy chỉnh cột, Tạo mới, Sửa (theo nhóm), Xóa (theo nhóm), '
-        'Xuất Excel, Import Excel. KHÔNG có trang Chi tiết, Lịch sử, In.',
-        DU_LIEU,
-    )),
-    ('2. Đối tượng được tính / hiển thị', L_(
-        '- Quản trị cao nhất: dòng của mọi công ty; có cột Công ty và ô lọc Công ty.',
-        '- Người khác: chỉ dòng của công ty được làm việc (công ty đang làm việc, công ty gắn vai trò, công ty được giao quản lý).',
-        '- Ô Kho ở bộ lọc: kho thường và kho thanh lý đang hoạt động, có kho kế toán của công ty được làm việc.',
-        '- Popup chọn vị trí: vị trí đang hoạt động của kho khai báo (vị trí / khoang / dãy / nhà không bị khóa).',
-    )),
-    ('3. Đối tượng bị ẩn / không tính', L_(
-        '- Dòng của công ty ngoài phạm vi: không hiện.',
-        '- Nút Sửa / Xóa ẨN HẲN khi nhóm (hàng, kho, công ty) ĐÃ CÓ GIAO DỊCH: có nhập / xuất / điều chuyển khác tồn đầu, hoặc '
-        'có phiếu chuyển vị trí / phiếu xuất (kể cả nháp) lấy từ lô tồn đầu.',
-        '- Hàng chưa khai tồn kế toán tại kho, hàng đã khai tại kho + công ty: bị chặn khi chọn vào form.',
-    )),
-    ('4. Bộ lọc thời gian áp dụng cho', L_(
-        'Màn không có ô lọc theo ngày. Ngày tạo / Ngày cập nhật chỉ để hiển thị và sắp xếp.',
-        'Bộ lọc được ghi nhớ 10 phút khi rời màn rồi quay lại.',
-    )),
-    ('5. Cấu trúc dữ liệu / cây phân cấp', L_(
-        'Một dòng danh sách = 1 hàng × 1 vị trí. Nhóm = mọi vị trí của cùng hàng tại cùng kho + công ty.',
-        'Sửa: trang Sửa liệt kê mọi vị trí của nhóm, chỉ sửa Số lượng. Xóa: xóa cả nhóm.',
-        'Trạng thái (hệ thống tự xác định): Chưa có giao dịch (Sửa, Xóa được) → Đã có giao dịch (chỉ xem); Xóa → nhóm bị gỡ, khai lại được.',
-    )),
-    ('6. Quy tắc cộng dồn / deduplicate', L_(
-        '- Tổng số lượng các vị trí của 1 hàng (quy ĐVT cơ bản) PHẢI BẰNG SL tồn kế toán đầu kỳ (Thêm, Sửa, Import).',
-        '- Mỗi nhóm (hàng, kho, công ty) chỉ khai 1 lần; trong 1 hàng không trùng vị trí; trong 1 lần lưu không trùng hàng.',
-        '- Lưu / Sửa / Xóa cộng / điều chỉnh / trừ tồn kho thực tế theo kho, vị trí, công ty.',
-    )),
-    ('7. Phân quyền cấp', L_(
-        '- "Khai báo tồn kho đầu kỳ" (phân hệ Kho, nhóm Tồn kho đầu kỳ): thấy menu, vào màn và dùng mọi chức năng.',
-        '- Không có quyền phạm vi riêng; phạm vi theo công ty như mục 2.',
-    )),
-    ('8. Cách tính các ô thống kê', L_(
-        'Chân bảng "Hiển thị a–b / N": N = tổng dòng khớp bộ lọc và phạm vi.',
-        'Trang Thêm / Sửa: "Tổng số lượng" của hàng = tổng các vị trí; "Tổng cộng" = tổng mọi hàng.',
-    )),
-    ('9. Ghi chú đọc bảng', L_(
-        '- Số theo chuẩn quốc tế: 1,234.56; ô trống để trống.',
-        '- Kiểm số liệu: sau Lưu / Sửa / Xóa mở ' + BC + ' và ' + TK + ' của hàng để thấy tồn đổi theo.',
-        '- Cột kết quả / check để trống cho tester điền.',
-    )),
+def nhom(cases):
+    return [('%03d' % i,) + c for i, c in enumerate(cases, 1)]
+
+
+# ================================================================== I. HIỂN THỊ TRANG & TRUY CẬP
+G1 = [
+    cu('I', '001', func='Mở màn hình từ menu'),
+    moi('Các nút chức năng trên màn danh sách', 'P0', 'TK-A có quyền "Khai báo tồn kho đầu kỳ".',
+        ['Vào ' + MENU, 'Quan sát thanh công cụ của bảng và khu vực tìm kiếm'], '',
+        ['Thanh công cụ của bảng có lần lượt: Tạo mới, Import Excel, Xuất Excel, nút biểu tượng cột (gợi ý "Cấu hình cột hiển thị")',
+         'Khu vực tìm kiếm có ô tìm nhanh (gợi ý "Tìm theo mã / tên hàng"), nút Tìm kiếm, Làm mới, Tìm kiếm nâng cao, Cài đặt bộ lọc',
+         'KHÔNG có nút In']),
+    cu('I', '002', func='Các cột mặc định hiển thị và mặc định ẩn',
+       them_exp=['TK-A: cột Công ty ẩn, bật được ở Cấu hình cột hiển thị']),
+    cu('I', '003', func='Định dạng số, người, ngày và ô trống'),
+    cu('I', '004', func='Tên hàng, Kho, Vị trí dài'),
+    cu('III', '004', func='Nút Sửa, Xóa theo trạng thái giao dịch của nhóm'),
+    moi('Dữ liệu trên bảng khớp với khai báo vừa lưu', 'P0',
+        'TK-A vừa khai H-1 tại kho PTT, công ty TPE: vị trí A 4, vị trí B 6 (ĐVT Bộ).',
+        ['Vào màn danh sách', 'Tìm nhanh "H-1", nhấn Enter', 'Đọc 2 dòng kết quả'], 'Ô tìm nhanh: H-1',
+        ['Có đúng 2 dòng của H-1: một dòng vị trí A số lượng 4, một dòng vị trí B số lượng 6',
+         'Tên hàng, Mã hàng, Kho "Phan Trọng Tuệ", Mã vị trí, Vị trí, ĐVT "Bộ" đúng với dữ liệu đã nhập',
+         'Người tạo = "<họ tên TK-A> - <mã phòng ban>", Ngày tạo đúng thời điểm lưu; Người cập nhật, Ngày cập nhật để trống']),
+    moi('Danh sách khi chưa có khai báo nào', 'P2', 'Môi trường kiểm thử: công ty của TK-A chưa có khai báo tồn kho đầu kỳ nào.',
+        ['Vào ' + MENU, 'Quan sát bảng'], '',
+        ['Bảng hiện dòng "Không có dữ liệu phù hợp."',
+         'Màn hình không báo lỗi; các nút Tạo mới, Import Excel, Xuất Excel vẫn dùng được']),
+    moi('Không có dữ liệu phù hợp bộ lọc', 'P1', 'Không có hàng nào có mã hoặc tên chứa "zzzkhongtontai999".',
+        ['Gõ "zzzkhongtontai999" vào ô tìm nhanh', 'Nhấn Enter'], 'Ô tìm nhanh: zzzkhongtontai999',
+        ['Bảng hiện dòng "Không có dữ liệu phù hợp."',
+         'Không hiện dòng "Hiển thị a–b / N", không có thông báo lỗi']),
+    # --- phân trang
+    moi('Số dòng mặc định và các lựa chọn số dòng/trang', 'P1', 'Danh sách có hơn 50 dòng.',
+        ['Mở màn danh sách', 'Mở ô "Số dòng/trang" ở góc dưới bên phải bảng'], '',
+        ['Mặc định hiển thị 10 dòng/trang, dòng tổng "Hiển thị 1–10 / N"',
+         'Ô "Số dòng/trang" cho chọn 5 / 10 / 20 / 50 / 100']),
+    cu('III', '002', func='Đổi số dòng mỗi trang và số thứ tự liên tục'),
+    moi('Nút sang trang kế tiếp và lùi về trang trước', 'P0', 'Danh sách có N dòng, nhiều hơn 3 trang. Đang ở trang 1.',
+        ['Bấm nút › (trang kế tiếp)', 'Đọc thanh phân trang và dòng tổng', 'Bấm nút ‹ (trang trước)', 'Đọc lại'], '',
+        ['Bước 2: sang trang 2, số trang 2 được tô đậm, dòng tổng hiện "Hiển thị 11–20 / N"',
+         'Bước 4: về trang 1, dòng tổng hiện "Hiển thị 1–10 / N"',
+         'Dữ liệu hai trang không lặp, không thiếu dòng']),
+    moi('Nút về trang cuối và về trang đầu', 'P0', 'Danh sách có N dòng, nhiều hơn 3 trang. Đang ở trang 1.',
+        ['Bấm nút » (về trang cuối)', 'Đọc dòng tổng và STT dòng cuối', 'Bấm nút « (về trang đầu)'], 'N = tổng số dòng',
+        ['Bước 2: nhảy tới trang cuối, dòng tổng hiện "Hiển thị …–N / N", STT dòng cuối bằng N',
+         'Bước 3: về trang 1, dòng tổng hiện "Hiển thị 1–10 / N"']),
+    moi('Nút phân trang ở trang đầu và trang cuối', 'P1', 'Danh sách có nhiều hơn 1 trang.',
+        ['Đứng ở trang 1, quan sát hai nút « và ‹', 'Bấm » về trang cuối, quan sát hai nút › và »'], '',
+        ['Ở trang 1: nút « và ‹ bị mờ, bấm không có tác dụng',
+         'Ở trang cuối: nút › và » bị mờ, bấm không có tác dụng']),
+    moi('Áp dụng bộ lọc khi đang ở trang giữa thì về trang 1', 'P1', 'Đang đứng ở trang 3. Kho PTT có ít dòng hơn 1 trang.',
+        ['Mở Tìm kiếm nâng cao', 'Chọn Kho = PTT', 'Quan sát thanh phân trang và dòng tổng'], 'Kho: PTT',
+        ['Bảng quay về trang 1, dòng tổng hiện "Hiển thị 1–… / <số dòng của kho PTT>"']),
+    # --- sắp xếp
+    moi('Thứ tự mặc định khi mở màn', 'P1', 'Vừa lưu khai báo mới cho hàng H-1. Chưa bấm sắp xếp cột nào.',
+        ['Vào ' + MENU, 'Đọc các dòng đầu'], '',
+        ['Các dòng của H-1 vừa lưu nằm trên cùng',
+         'Các dòng xếp theo khai báo mới nhất ở trên, càng xuống càng cũ']),
+    cu('III', '001', func='Sắp xếp tăng dần, giảm dần và các cột không sắp xếp'),
+    moi('Sắp xếp giữ nguyên khi chuyển trang', 'P1', 'Đang sắp xếp Số lượng giảm dần, 10 dòng/trang.',
+        ['Ghi lại Số lượng dòng cuối trang 1', 'Bấm sang trang 2', 'So Số lượng dòng đầu trang 2'], '',
+        ['Trang 2 vẫn sắp xếp Số lượng giảm dần, mũi tên ở tiêu đề cột không đổi',
+         'Số lượng dòng đầu trang 2 nhỏ hơn hoặc bằng dòng cuối trang 1, không lặp dòng']),
 ]
 
-# ------------------------------------------------------------------ PHÂN QUYỀN + PHẠM VI
-ROLE_TCS = [
-    T('00', 'Không có quyền thì không thấy menu, không xem được dữ liệu', 'P0', 'TK-Z',
-      ['1. Đăng nhập TK-Z', '2. Mở phân hệ Kho, menu Tồn kho đầu kỳ', '3. Dán đường dẫn màn danh sách lên thanh địa chỉ'], 'Tài khoản TK-Z',
-      ['- Menu Tồn kho đầu kỳ KHÔNG có "Khai báo tồn kho đầu kỳ"',
-       '- Dán đường dẫn: báo "Bạn không có quyền thực hiện chức năng này", bảng không có dữ liệu']),
-    T('01', 'Có quyền: đủ chức năng', 'P0', 'TK-A',
-      ['1. Đăng nhập TK-A', '2. Vào ' + MENU], 'Tài khoản TK-A',
-      ['- Danh sách hiện, chân bảng "Hiển thị 1–10 / N"',
-       '- Có nút Tạo mới, Import Excel, Xuất Excel, biểu tượng Cấu hình cột hiển thị',
-       '- Dòng nhóm chưa có giao dịch có Sửa, Xóa; dòng nhóm đã có giao dịch không có nút']),
-    T('02', 'Phạm vi: người dùng thường chỉ thấy công ty được làm việc', 'P0', 'TK-A (TPE); có dòng khai báo của EG',
-      ['1. Đăng nhập TK-A, vào màn', '2. Tìm mã hàng của dòng thuộc EG', '3. Bấm Tìm kiếm nâng cao'], '—',
-      ['- Không thấy dòng của EG', '- Không có cột Công ty, không có ô lọc Công ty']),
-    T('03', 'Phạm vi: quản trị cao nhất thấy mọi công ty', 'P0', 'TK-ADMIN',
-      ['1. Đăng nhập TK-ADMIN, vào màn', '2. Bấm Tìm kiếm nâng cao, chọn Công ty = EG'], '—',
-      ['- Bảng có cột Công ty (mã công ty)', '- Có ô lọc Công ty dạng "Mã - Tên"; chọn EG chỉ còn dòng của EG']),
-    T('04', 'Khai báo cho công ty ngoài phạm vi bị chặn', 'P1', 'TK-A; file import có dòng Mã công ty = EG',
-      ['1. Mở Tạo mới, mở ô Công ty', '2. Import file, bấm Validate'], '—',
-      ['- Ô Công ty chỉ liệt kê công ty TK-A được làm việc (không có EG)',
-       '- Dòng import của EG báo "Bạn không được làm việc tại công ty này"']),
+# ================================================================== II. TÌM KIẾM & LỌC DANH SÁCH
+G2 = [
+    moi('Tìm nhanh đúng nguyên mã hàng', 'P0', 'Có nhóm N-TU-DO (BLNS-IR-EVOPYRO, 2 vị trí).',
+        ['Gõ "BLNS-IR-EVOPYRO" vào ô tìm nhanh', 'Nhấn Enter'], 'Ô tìm nhanh: BLNS-IR-EVOPYRO',
+        ['Ra đúng 2 dòng (2 vị trí) của BLNS-IR-EVOPYRO',
+         'Dòng tổng hiện "Hiển thị 1–2 / 2"']),
+    cu('II', '001', func='Tìm nhanh theo một phần mã hoặc tên hàng'),
+    moi('Tìm nhanh không phân biệt chữ hoa chữ thường', 'P1', 'Có nhóm N-TU-DO.',
+        ['Gõ "evopyro", nhấn Enter, ghi nhận kết quả', 'Xoá, gõ "EVOPYRO", nhấn Enter', 'So sánh'], 'Ô tìm nhanh: evopyro / EVOPYRO',
+        ['Hai lần tìm cho ra CÙNG kết quả']),
+    moi('Tìm nhanh với ký tự đặc biệt', 'P2', 'Không có hàng nào có mã hoặc tên chứa "@#$%".',
+        ['Gõ "@#$%" vào ô tìm nhanh', 'Bấm Tìm kiếm'], 'Ô tìm nhanh: @#$%',
+        ['Bảng hiện "Không có dữ liệu phù hợp."',
+         'Màn hình không treo, không báo lỗi hệ thống']),
+    moi('Tìm nhanh có khoảng trắng đầu và cuối', 'P2', 'Có nhóm N-TU-DO.',
+        ['Gõ "   EVOPYRO   " (có khoảng trắng hai đầu) vào ô tìm nhanh', 'Bấm Tìm kiếm'], 'Ô tìm nhanh: "   EVOPYRO   "',
+        ['Ra cùng kết quả như khi gõ "EVOPYRO" không có khoảng trắng']),
+    moi('Giới hạn độ dài ô tìm nhanh', 'P2', 'Đang ở màn danh sách.',
+        ['Dán chuỗi 300 ký tự vào ô tìm nhanh', 'Bấm Tìm kiếm', 'Bấm Làm mới'], 'Chuỗi 300 ký tự (vd "abcde" lặp 60 lần)',
+        ['Bước 2: bảng hiện "Không có dữ liệu phù hợp."; màn hình không treo, không báo lỗi hệ thống',
+         'Bước 3: ô tìm nhanh trống, bảng về toàn bộ danh sách']),
+    moi('Xóa từ khóa thì danh sách quay về đầy đủ', 'P0', 'Danh sách có N dòng. Đang tìm "EVOPYRO", còn 2 dòng.',
+        ['Xóa hết nội dung ô tìm nhanh', 'Nhấn Enter'], '',
+        ['Dòng tổng quay lại "Hiển thị 1–10 / N"', 'Bảng về trang 1']),
+    moi('Các ô lọc ở Tìm kiếm nâng cao và giá trị mặc định', 'P1', 'TK-A (không phải quản trị cao nhất).',
+        ['Bấm Tìm kiếm nâng cao', 'Đọc nhãn và giá trị các ô lọc'], '',
+        ['Có 4 ô: Mã hàng (gợi ý "Mã hàng"), Kho, Vị trí (gợi ý "Mã / tên vị trí"), Người tạo',
+         'Mọi ô mặc định để TRỐNG (không lọc), danh sách hiện mọi dòng trong phạm vi',
+         'KHÔNG có ô Công ty, KHÔNG có ô lọc theo ngày']),
+    cu('II', '002'),
+    cu('II', '003'),
+    cu('II', '004', func='Lọc theo Vị trí (mã hoặc tên vị trí)'),
+    cu('II', '005'),
+    moi('Lọc kết hợp nhiều tiêu chí', 'P1', 'Kho PTT có nhóm N-TU-DO do TK-A tạo.',
+        ['Chọn Kho = PTT', 'Chọn Người tạo = TK-A', 'Gõ "EVOPYRO" vào ô tìm nhanh, nhấn Enter'],
+        'Kho: PTT\nNgười tạo: TK-A\nÔ tìm nhanh: EVOPYRO',
+        ['Chỉ còn các dòng thoả CẢ BA điều kiện: kho Phan Trọng Tuệ, người tạo TK-A, mã hoặc tên chứa "EVOPYRO"',
+         'Dòng tổng đổi theo đúng số dòng còn lại']),
+    cu('II', '006', func='Lọc kết hợp ra kết quả rỗng'),
+    moi('Tổng số và phân trang sau khi lọc', 'P0', 'Kho PTT có 25 dòng khai báo. Danh sách 10 dòng/trang.',
+        ['Chọn Kho = PTT', 'Đọc dòng tổng và thanh phân trang', 'Bấm sang trang 3'], 'Kho: PTT',
+        ['Bước 2: dòng tổng hiện "Hiển thị 1–10 / 25", thanh phân trang có 3 trang',
+         'Bước 3: dòng tổng hiện "Hiển thị 21–25 / 25", STT từ 21 đến 25']),
+    moi('Sắp xếp trên kết quả đã lọc', 'P2', 'Đang lọc Kho = PTT.',
+        ['Bấm tiêu đề cột Mã hàng', 'Đọc cột Kho và cột Mã hàng'], '',
+        ['Vẫn chỉ có dòng của kho Phan Trọng Tuệ, tổng không đổi, ô lọc Kho vẫn là PTT',
+         'Mã hàng xếp tăng dần, bảng về trang 1']),
+    cu('II', '007', func='Nút Làm mới xóa hết điều kiện lọc'),
+    cu('II', '008', func='Mở trang Sửa rồi Quay lại thì giữ bộ lọc'),
+    moi('Rời sang màn khác rồi quay lại thì bộ lọc về mặc định', 'P1', 'Đang lọc Kho = PTT, ô tìm nhanh "EVOPYRO".',
+        ['Vào menu khác của phân hệ Kho (vd ' + BC + ')', 'Quay lại màn Khai báo tồn kho đầu kỳ bằng menu',
+         'Quan sát khu vực tìm kiếm và bảng'], 'Kho: PTT\nÔ tìm nhanh: EVOPYRO',
+        ['Ô tìm nhanh và các ô lọc trở về trống',
+         'Bảng hiện toàn bộ danh sách ở trang 1']),
+    moi('Tải lại trang (F5) khi đang lọc', 'P2', 'Vừa vào màn từ menu, chưa mở trang Sửa nào. Đang lọc Kho = PTT.',
+        ['Nhấn F5 tải lại trang', 'Quan sát khu vực tìm kiếm và bảng'], 'Kho: PTT',
+        ['Các ô lọc trở về trống', 'Bảng hiện toàn bộ danh sách ở trang 1 với 10 dòng/trang']),
+    moi('Mở màn ở tab trình duyệt mới khi tab cũ đang lọc', 'P2', 'Tab 1 đang mở màn danh sách, chưa mở trang Sửa nào.',
+        ['Ở tab 1: chọn Kho = PTT', 'Mở tab mới, vào màn bằng menu', 'Quan sát tab 2', 'Quay lại tab 1'], 'Kho: PTT',
+        ['Tab 2: các ô lọc trống, bảng hiện toàn bộ danh sách ở trang 1',
+         'Tab 1: vẫn giữ Kho = PTT và kết quả đang xem']),
+    moi('Đăng xuất, đăng nhập tài khoản khác trên cùng trình duyệt', 'P1',
+        'TK-A và một tài khoản khác cùng công ty, cùng quyền. Dùng chung một trình duyệt.',
+        ['Đăng nhập TK-A, vào màn, chọn Kho = PTT, ô tìm nhanh "EVOPYRO"', 'Đăng xuất', 'Đăng nhập tài khoản còn lại, vào màn'],
+        'Kho: PTT\nÔ tìm nhanh: EVOPYRO',
+        ['Tài khoản sau thấy ô tìm nhanh và các ô lọc trống, bảng hiện toàn bộ danh sách ở trang 1',
+         'Điều kiện lọc của TK-A KHÔNG hiện sang tài khoản sau']),
+    cu('II', '009', func='Cài đặt bộ lọc: ẩn, đổi thứ tự, khôi phục mặc định'),
 ]
 
-# ------------------------------------------------------------------ I. HIỂN THỊ
-S1 = [
-    T('001', 'Vào màn qua menu', 'P0', 'TK-A',
-      ['1. Vào ' + MENU], '—',
-      ['- Tiêu đề trang "Khai báo tồn kho đầu kỳ", tiêu đề bảng "Danh sách khai báo tồn kho đầu kỳ"',
-       '- Bảng 10 dòng, dòng khai báo mới nhất đứng đầu, tự tải không cần bấm Tìm kiếm']),
-    T('002', 'Bộ cột mặc định', 'P0', 'Tài khoản chưa từng tùy chỉnh cột ở màn này',
-      ['1. Mở màn', '2. Đọc tiêu đề cột từ trái sang phải'], '—',
-      ['- TK-A: STT, Tên hàng, Mã hàng, Kho, Mã vị trí, Vị trí, ĐVT, Số lượng, Người tạo, Ngày tạo, Người cập nhật, Ngày cập nhật, Hành động',
-       '- TK-ADMIN: thêm cột Công ty sau Vị trí']),
-    T('003', 'Định dạng số, người, ngày, ô trống', 'P1', 'Có dòng số lượng lẻ (406.81) và dòng chưa ai sửa',
-      ['1. Đọc cột Số lượng, Người tạo, Ngày tạo, Người cập nhật, Ngày cập nhật'], '—',
-      ['- Số lượng "406.81", căn phải; số nguyên không có phần lẻ',
-       '- Người tạo "Họ tên - Mã phòng ban"; Ngày tạo dd/mm/yyyy HH:mm',
-       '- Dòng chưa ai sửa: Người cập nhật, Ngày cập nhật để TRỐNG (không gạch, không 0)']),
-    T('004', 'Tên hàng / Kho / Vị trí dài', 'P2', 'Có hàng tên dài hơn 2 dòng',
-      ['1. Xem dòng đó', '2. Rê chuột lên tên'], '—',
-      ['- Chữ xuống dòng, tối đa 2 dòng; rê chuột hiện đủ tên']),
+# ================================================================== III. THÊM MỚI
+G3 = [
+    cu('IV', '001', func='Mở trang Thêm'),
+    cu('IV', '002', func='Ô Kho và Công ty độc lập với nhau'),
+    cu('IV', '003', func='Chọn hàng hóa hợp lệ'),
+    cu('IV', '004', func='Hàng đã khai tồn đầu tại kho thì bị chặn'),
+    cu('IV', '005', func='Hàng chưa khai tồn kế toán tại kho thì bị chặn'),
+    cu('IV', '006'),
+    cu('IV', '007', func='Cửa sổ chọn vị trí'),
+    cu('IV', '008', func='Thêm vị trí tự điền phần số lượng còn thiếu'),
+    cu('IV', '018', func='Bỏ hàng hoặc xóa dòng vị trí'),
+    moi('Thêm mới chỉ một vị trí bằng đúng SL tồn kế toán', 'P0', 'H-1 chưa khai, SL tồn kế toán 10 Bộ tại PTT / TPE.',
+        ['Chọn Kho = PTT, Công ty = TPE', 'Chọn hàng hóa H-1', 'Chọn 1 vị trí, giữ Số lượng = 10', 'Bấm Lưu'], 'H-1: 1 vị trí, 10',
+        ['Báo "Thêm mới thành công", quay về danh sách',
+         'Danh sách có 1 dòng mới của H-1 với Số lượng 10, có nút Sửa, Xóa']),
+    cu('IV', '013', func='Thêm mới nhiều vị trí thành công'),
+    # --- validate
+    cu('IV', '011', func='Bỏ trống trường bắt buộc thì bị chặn'),
+    cu('IV', '012', func='Ô Số lượng chỉ nhận số'),
+    cu('IV', '009', func='Chọn trùng vị trí trong một hàng thì bị chặn'),
+    cu('IV', '010', func='Tổng số lượng khác SL tồn kế toán thì bị chặn'),
+    moi('Thông báo lỗi tổng số lượng mất ngay khi sửa đúng', 'P1',
+        'H-1 hai vị trí 4 + 5 đang báo đỏ "Tổng số lượng phải bằng SL tồn kế toán (10)".',
+        ['Sửa vị trí 2 thành 6', 'Quan sát các ô Số lượng và dòng Tổng số lượng'], 'Vị trí 2: 6',
+        ['Viền đỏ và câu lỗi dưới ô biến mất ngay, Tổng số lượng 10 không còn chữ đỏ',
+         'Bấm Lưu thì lưu thành công']),
+    cu('IV', '016', func='Kho không thuộc công ty đã chọn'),
+    # --- lưu và tiếp tục
+    cu('IV', '014', func='Lưu và tiếp tục giữ trang Thêm để nhập tiếp'),
+    moi('Lưu và tiếp tục khi bỏ trống trường bắt buộc', 'P1', 'Đã chọn Kho, Công ty, thêm H-1, bỏ trống Vị trí.',
+        ['Bấm "Lưu và tiếp tục"'], '',
+        ['Dưới ô Vị trí "Bắt buộc phải chọn"; thông báo "Bạn chưa nhập đầy đủ thông tin."',
+         'Vẫn ở trang Thêm, Kho, Công ty, hàng đã chọn giữ nguyên, không bị xoá trắng',
+         'Không có dòng khai báo mới ở danh sách']),
+    moi('Lưu và tiếp tục khi tổng số lượng lệch', 'P1', 'H-1 (kế toán 10) hai vị trí 4 + 5.',
+        ['Bấm "Lưu và tiếp tục"', 'Sửa vị trí 2 thành 6, bấm lại "Lưu và tiếp tục"'], '',
+        ['Bước 1: báo "Tổng số lượng phải bằng SL tồn kế toán (10)" và thông báo "' + V1.LECH + '"; không lưu, giữ nguyên dữ liệu',
+         'Bước 2: báo "Thêm mới thành công", trang Thêm mở lại trống (Kho, Công ty, bảng trống)']),
+    moi('Bấm Lưu và tiếp tục rồi bấm Quay lại ngay thì không hỏi', 'P2', 'Form hợp lệ trên trang Thêm.',
+        ['Bấm "Lưu và tiếp tục"', 'Không nhập gì thêm vào trang Thêm trống', 'Bấm Quay lại'], '',
+        ['Khai báo vừa lưu có trong danh sách',
+         'Bấm Quay lại về thẳng danh sách, KHÔNG hiện hộp "Thông tin chưa lưu"']),
+    # --- đổi kho / đóng khi chưa lưu
+    cu('IV', '015', func='Đổi Kho hoặc Công ty khi đã có hàng'),
+    moi('Bấm Quay lại khi chưa nhập gì', 'P1', 'Trang Thêm vừa mở, chưa chọn gì.',
+        ['Bấm Quay lại'], '',
+        ['Về thẳng danh sách, KHÔNG hiện hộp "Thông tin chưa lưu"']),
+    cu('IV', '017', func='Bấm Quay lại khi đã nhập thông tin'),
+    moi('Rời trang Thêm bằng menu khi đã nhập', 'P2', 'Đã chọn Kho, Công ty và thêm H-1, chưa Lưu.',
+        ['Bấm một mục menu khác', 'Bấm Ở lại', 'Bấm lại mục menu đó, chọn Thoát'], '',
+        ['Hiện hộp "Thông tin chưa lưu": ' + CHUA_LUU + ' với 2 nút Thoát, Ở lại',
+         'Ở lại: vẫn ở trang Thêm, dữ liệu còn nguyên',
+         'Thoát: sang màn đã chọn, không có khai báo mới']),
+    # --- đặc biệt
+    moi('Bấm Lưu liên tục chỉ ghi một lần', 'P0', 'Form hợp lệ: H-1 hai vị trí 4 + 6.',
+        ['Bấm Lưu', 'Bấm Lưu lần hai thật nhanh', 'Xem danh sách và ' + BC], '',
+        ['Chỉ có đúng 2 dòng của H-1 (không bị ghi đôi thành 4 dòng)',
+         'Báo cáo tồn của H-1 tại PTT tăng đúng 10, không phải 20']),
+    cu('IX', '003', func='Hai người cùng khai báo một hàng cùng lúc'),
 ]
 
-# ------------------------------------------------------------------ II. LỌC
-S2 = [
-    T('001', 'Tìm nhanh theo mã hoặc tên hàng', 'P0', 'Có nhóm N-TU-DO',
-      ['1. Gõ "EVOPYRO" vào ô tìm nhanh (chưa bấm gì)', '2. Nhấn Enter', '3. Gõ một phần tên hàng, bấm Tìm kiếm'], 'EVOPYRO',
-      ['- Đang gõ bảng chưa đổi; Enter / Tìm kiếm mới lọc', '- Ra các dòng có mã hoặc tên chứa từ khóa',
-       '- Placeholder "Tìm theo mã / tên hàng"']),
-    T('002', 'Lọc theo Mã hàng', 'P1', '—',
-      ['1. Mở Tìm kiếm nâng cao', '2. Ô Mã hàng gõ "2Q-GS", nhấn Enter'], 'Mã hàng: 2Q-GS',
-      ['- Chỉ lọc khi Enter', '- Ra dòng có mã hàng chứa chuỗi đã gõ (không tìm theo tên)']),
-    T('003', 'Lọc theo Kho', 'P0', '—',
-      ['1. Mở ô Kho, xem danh sách', '2. Chọn "PTT - Phan Trọng Tuệ"'], 'Kho: PTT',
-      ['- Danh sách "Mã - Tên kho", chỉ kho thường / thanh lý có kho kế toán của công ty được làm việc',
-       '- Chọn là lọc ngay; mọi dòng có Kho = Phan Trọng Tuệ']),
-    T('004', 'Lọc theo Vị trí (mã hoặc tên)', 'P1', '—',
-      ['1. Ô Vị trí gõ "N1-T2", Enter', '2. Đổi sang "Tầng 1", Enter'], 'Vị trí: N1-T2 / Tầng 1',
-      ['- Ra dòng có mã vị trí chứa "N1-T2"', '- Ra dòng có tên vị trí chứa "Tầng 1"']),
-    T('005', 'Lọc theo Người tạo', 'P2', 'Có dòng do TK-A tạo',
-      ['1. Ô Người tạo chọn nhân viên của TK-A'], '—',
-      ['- Danh sách chỉ gồm người đã tạo khai báo trong phạm vi', '- Chỉ còn dòng do người đó tạo']),
-    T('006', 'Kết hợp nhiều điều kiện, không có kết quả', 'P1', '—',
-      ['1. Kho = PTT, Mã hàng = "KHONG-TON-TAI", Enter'], '—',
-      ['- Bảng hiện "Không có dữ liệu phù hợp.", chân bảng 0']),
-    T('007', 'Làm mới', 'P1', 'Đang lọc Kho + từ khóa',
-      ['1. Bấm Làm mới'], '—',
-      ['- Mọi ô lọc về trống, bảng nạp lại toàn bộ phạm vi từ trang 1']),
-    T('008', 'Ghi nhớ bộ lọc khi rời màn', 'P2', 'Đang lọc Kho = PTT',
-      ['1. Bấm Sửa một dòng', '2. Bấm Quay lại', '3. Chờ quá 10 phút ở màn khác rồi quay lại'], '—',
-      ['- Bước 2: vẫn còn Kho = PTT', '- Bước 3: bộ lọc về mặc định']),
-    T('009', 'Cài đặt bộ lọc', 'P2', '—',
-      ['1. Bấm Cài đặt bộ lọc', '2. Bỏ tích "Người tạo", kéo "Vị trí" lên đầu, bấm Lưu', '3. F5', '4. Mở lại, bấm Khôi phục mặc định'], '—',
-      ['- Cửa sổ liệt kê Mã hàng, Kho, Vị trí, Người tạo (TK-ADMIN thêm Công ty)', '- Sau F5: ô Người tạo ẩn, Vị trí đứng đầu',
-       '- Khôi phục mặc định đưa về như ban đầu']),
+# ================================================================== IV. CHỈNH SỬA
+G4 = [
+    cu('V', '001', func='Mở trang Sửa theo nhóm'),
+    cu('V', '003', func='Sửa chia lại số lượng các vị trí thành công'),
+    moi('Sửa xong ghi nhận người và ngày cập nhật', 'P1', 'Vừa sửa nhóm N-TU-DO ở case trên.',
+        ['Tìm các dòng của BLNS-IR-EVOPYRO trên danh sách', 'Đọc cột Người cập nhật, Ngày cập nhật'], '',
+        ['Hai dòng có số lượng thay đổi ghi Người cập nhật = người vừa sửa, Ngày cập nhật = thời điểm lưu',
+         'Người tạo, Ngày tạo giữ nguyên như lúc khai']),
+    moi('Lưu khi không thay đổi gì thì không ghi cập nhật', 'P1', 'Nhóm N-TU-DO chưa ai sửa (Người cập nhật trống).',
+        ['Mở trang Sửa N-TU-DO', 'Không đổi số lượng nào, bấm Lưu', 'Xem các dòng trên danh sách'], '',
+        ['Lưu không báo lỗi, quay về danh sách',
+         'Người cập nhật, Ngày cập nhật của các dòng vẫn để trống; số lượng không đổi']),
+    cu('V', '002', func='Sửa lệch SL tồn kế toán thì bị chặn'),
+    cu('V', '004', func='Bỏ trống hoặc nhập 0 ở Số lượng khi sửa'),
+    moi('Thông báo lỗi mất ngay khi sửa về số hợp lệ', 'P1', 'Trang Sửa N-TU-DO đang báo đỏ do tổng 9 khác 10.',
+        ['Sửa lại số lượng để tổng bằng 10'], '',
+        ['Viền đỏ và câu "Tổng số lượng phải bằng SL tồn kế toán (10)" biến mất ngay',
+         'Bấm Lưu thì báo "Cập nhật thành công"']),
+    cu('V', '006', func='Bấm Quay lại khi đã sửa'),
+    moi('Sửa rồi trả lại đúng số cũ, bấm Quay lại thì không hỏi', 'P2', 'Trang Sửa N-TU-DO, vị trí 1 đang 4.',
+        ['Sửa vị trí 1 thành 5', 'Sửa lại đúng 4', 'Bấm Quay lại'], 'Vị trí 1: 4 -> 5 -> 4',
+        ['Về thẳng danh sách, KHÔNG hiện hộp "Thông tin chưa lưu" vì dữ liệu không khác ban đầu']),
+    moi('Bấm Thoát hoặc Ở lại ở hộp Thông tin chưa lưu khi sửa', 'P1', 'Trang Sửa N-TU-DO, đã đổi vị trí 1 từ 4 thành 3.',
+        ['Bấm Quay lại, chọn Ở lại', 'Bấm Quay lại, chọn Thoát', 'Mở lại trang Sửa N-TU-DO'], '',
+        ['Ở lại: vẫn ở trang Sửa, vị trí 1 vẫn là 3',
+         'Thoát: về danh sách; mở lại trang Sửa vị trí 1 vẫn là 4 (không lưu)']),
+    cu('V', '005', func='Mở thẳng trang Sửa của nhóm đã có giao dịch'),
+    cu('IX', '004', func='Nhóm vừa phát sinh giao dịch khi đang sửa'),
+    moi('Sửa nhóm đã bị người khác xóa', 'P1', 'A đang mở trang Sửa N-TU-DO; B xóa nhóm N-TU-DO.',
+        ['A sửa số lượng (tổng vẫn khớp), bấm Lưu'], '',
+        ['A nhận thông báo ' + DOI,
+         'Không tạo lại dòng nào; danh sách không còn nhóm N-TU-DO']),
 ]
 
-# ------------------------------------------------------------------ III. DANH SÁCH
-S3 = [
-    T('001', 'Sắp xếp', 'P1', 'Có hơn 20 dòng',
-      ['1. Bấm tiêu đề Tên hàng, bấm lần nữa', '2. Lần lượt bấm Mã hàng, Số lượng, Ngày tạo, Ngày cập nhật'], '—',
-      ['- Mỗi cột sắp tăng rồi giảm dần, về trang 1', '- Cột Kho, Vị trí, Người tạo không có biểu tượng sắp xếp']),
-    T('002', 'Phân trang và số dòng / trang', 'P1', 'Có hơn 50 dòng',
-      ['1. Sang trang 3', '2. Đổi số dòng/trang sang 50'], '—',
-      ['- Trang 3 STT bắt đầu từ 21', '- Đổi 50 dòng thì về trang 1, "Hiển thị 1–50 / N"']),
-    T('003', 'Tùy chỉnh cột được ghi nhớ', 'P2', '—',
-      ['1. Bấm biểu tượng Cấu hình cột hiển thị', '2. Bỏ cột Người cập nhật, Ngày cập nhật, kéo Số lượng lên sau Mã hàng, bấm Lưu', '3. F5'], '—',
-      ['- Cửa sổ "Tuỳ chỉnh cột", "Đang chọn x/14 cột"; STT, Tên hàng, Hành động bị khóa',
-       '- Sau Lưu và F5 bảng giữ đúng cấu hình']),
-    T('004', 'Nút Sửa / Xóa theo trạng thái giao dịch', 'P0', 'Nhóm N-TU-DO và nhóm N-GD',
-      ['1. Tìm các dòng của 2 nhóm'], '—',
-      ['- Mọi dòng của N-TU-DO có Sửa, Xóa', '- Mọi dòng của N-GD KHÔNG có nút (ẩn hẳn, không hiện xám)']),
+# ================================================================== V. XÓA
+G5 = [
+    cu('VI', '001', func='Hộp xác nhận xóa và bấm Hủy'),
+    cu('VI', '002', func='Xóa cả nhóm thành công', pre='Nhóm H-1 vừa lập ở TC_03.011 (2 vị trí 4 + 6), chưa có giao dịch.',
+       them_exp=['Dòng tổng dưới bảng giảm đúng 2']),
+    cu('VI', '003', func='Khai lại sau khi xóa'),
+    moi('Nhóm đã có giao dịch không có nút Xóa', 'P0', 'Nhóm N-GD đã có giao dịch kho.',
+        ['Tìm các dòng của N-GD', 'Quan sát cột Hành động'], '',
+        ['Cột Hành động của mọi dòng N-GD KHÔNG có nút Xóa (ẩn hẳn, không hiện xám)']),
+    moi('Xóa nhóm vừa phát sinh giao dịch khi đang mở danh sách', 'P1',
+        'A đang mở danh sách, dòng N-TU-DO còn nút Xóa. B vừa lập phiếu chuyển vị trí (nháp) lấy từ lô tồn đầu của N-TU-DO.',
+        ['A bấm Xóa ở dòng N-TU-DO, bấm Xóa ở hộp xác nhận'], '',
+        ['A nhận thông báo "' + GD + '"',
+         'Không dòng nào bị xóa, tồn kho không đổi']),
+    moi('Xóa nhóm đã bị người khác xóa', 'P1', 'A và B cùng mở danh sách có nhóm N-TU-DO.',
+        ['B xóa nhóm N-TU-DO', 'A (chưa tải lại trang) bấm Xóa ở dòng N-TU-DO, bấm Xóa'], '',
+        ['Bước 1: B xóa thành công',
+         'Bước 2: A nhận thông báo ' + DOI + '; tồn kho không bị trừ lần hai']),
 ]
 
-# ------------------------------------------------------------------ IV. THÊM MỚI
-S4 = [
-    T('001', 'Mở trang Thêm', 'P0', 'TK-A',
-      ['1. Bấm Tạo mới'], '—',
-      ['- Khối "Thông tin chung": ô Kho (*), Công ty (*) — đều trống, không chọn sẵn; góc phải "<tên TK-A> - <ngày giờ hiện tại>"',
-       '- Khối "Hàng hóa": nút "Chọn hàng hóa" (bấm được khi đã chọn Kho và Công ty), bảng trống "Chưa chọn hàng hóa"',
-       '- Cột: STT, Tên hàng hóa, Model, Mã hàng hóa, ĐVT (*), SL tồn kế toán, Tổng số lượng, Vị trí (*), Số lượng (*)',
-       '- Chân trang: Lưu, Lưu và tiếp tục, Quay lại']),
-    T('002', 'Ô Kho và Công ty độc lập', 'P1', '—',
-      ['1. Chọn Kho = PTT', '2. Chọn Công ty = TPE', '3. Đổi Công ty sang công ty khác (bảng chưa có hàng)'], '—',
-      ['- Ô Kho liệt kê kho có kho kế toán của công ty đang làm việc', '- Đổi Công ty KHÔNG xóa Kho đã chọn, danh sách Kho không đổi']),
-    T('003', 'Chọn hàng hóa hợp lệ', 'P0', 'Kho PTT, Công ty TPE',
-      ['1. Bấm Chọn hàng hóa', '2. Tìm H-1, tích chọn, bấm "Thêm (1)"'], 'H-1',
-      ['- Cửa sổ "Chọn hàng hóa khai báo tồn đầu", dòng "Công ty <tên TPE>"',
-       '- H-1 vào bảng: ĐVT = Bộ (không sửa được), SL tồn kế toán 10, 1 dòng vị trí trống, Số lượng = 10, Tổng số lượng 10']),
-    T('004', 'Chặn hàng đã khai tồn đầu tại kho', 'P0', 'Kho PTT, Công ty TPE',
-      ['1. Chọn hàng BLNS-IR-EVOPYRO, bấm Thêm'], '—',
-      ['- Báo "BLNS-IR-EVOPYRO: Hàng hóa đã được khai báo tồn đầu kì. Kho: PTT"', '- Hàng không vào bảng']),
-    T('005', 'Chặn hàng chưa khai tồn kế toán tại kho', 'P0', 'Kho PTT, Công ty TPE',
-      ['1. Chọn H-0, bấm Thêm'], '—',
-      ['- Báo "<mã H-0>: Hàng hóa chưa khai tồn kho kế toán đầu kỳ tại kho này, không thể nhập tồn đầu!"', '- Hàng không vào bảng']),
-    T('006', 'Chọn nhiều hàng, hàng lỗi không chặn hàng hợp lệ', 'P1', '—',
-      ['1. Tích H-1 và BLNS-IR-EVOPYRO, bấm "Thêm (2)"'], '—',
-      ['- H-1 vào bảng; BLNS-IR-EVOPYRO báo lỗi riêng']),
-    T('007', 'Popup chọn vị trí', 'P0', 'Bảng có H-1',
-      ['1. Bấm ô Vị trí', '2. Gõ "PTT-N1-D1", Tìm kiếm', '3. Bấm vào một mã vị trí'], '—',
-      ['- Cửa sổ "Chọn vị trí kho", dòng phụ "Vị trí của kho khai báo"; cột STT, Vị trí, Nhà, Dãy, Khoang; 10 dòng/trang',
-       '- Chỉ vị trí của kho PTT, không có vị trí đang khóa', '- Bấm vị trí: ô điền mã vị trí, cửa sổ đóng']),
-    T('008', 'Thêm vị trí tự điền phần còn thiếu', 'P0', 'H-1 dòng 1 đã chọn vị trí',
-      ['1. Sửa Số lượng dòng 1 thành 4', '2. Bấm "Thêm vị trí"'], '—',
-      ['- Dòng 2 có Số lượng = 6 (10 − 4)', '- Hiện link "Bỏ hàng hóa"; mỗi dòng vị trí có thùng rác "Xóa dòng vị trí"']),
-    T('009', 'Không chọn trùng vị trí trong 1 hàng', 'P0', 'H-1 có 2 dòng, dòng 1 vị trí A',
-      ['1. Ở dòng 2 chọn lại vị trí A'], '—',
-      ['- Báo "Vị trí đã được chọn!", ô dòng 2 không đổi']),
-    T('010', 'Tổng số lượng khác SL tồn kế toán', 'P0', 'H-1 hai vị trí 4 + 5',
-      ['1. Bấm Lưu'], '—',
-      ['- Tổng số lượng 9 chữ đỏ; các ô Số lượng của H-1 viền đỏ, dưới ô cuối "Tổng số lượng phải bằng SL tồn kế toán (10)"',
-       '- Thông báo "' + LECH + '"', '- Không lưu']),
-    T('011', 'Bỏ trống trường bắt buộc', 'P0', '—',
-      ['1. Không chọn Kho, Công ty, bấm Lưu', '2. Chọn Kho, Công ty, thêm H-1, bỏ trống Vị trí, xóa Số lượng, bấm Lưu', '3. Nhập Số lượng 0, Lưu'], '—',
-      ['- Bước 1: dưới Kho, Công ty "Bắt buộc phải chọn"; dưới bảng "Chưa chọn hàng hóa"; thông báo "Bạn chưa nhập đầy đủ thông tin."',
-       '- Bước 2: dưới Vị trí "Bắt buộc phải chọn", dưới Số lượng "Bắt buộc phải nhập"', '- Bước 3: "Số lượng phải lớn hơn 0"',
-       '- Cuộn tới ô lỗi đầu tiên']),
-    T('012', 'Ô Số lượng chỉ nhận số', 'P1', '—',
-      ['1. Gõ "abc", "-5", "1,000.5"'], '—',
-      ['- Không nhận chữ, dấu âm', '- Nhận số thập phân']),
-    T('013', 'Lưu thành công', 'P0', 'H-1 chia 2 vị trí 4 + 6 (tổng 10)',
-      ['1. Bấm Lưu'], '—',
-      ['- Báo "Thêm mới thành công", về danh sách', '- Có 2 dòng mới của H-1 (2 vị trí), Người tạo = TK-A, Người cập nhật trống',
-       '- Hai dòng có Sửa, Xóa']),
-    T('014', 'Lưu và tiếp tục', 'P1', 'Form hợp lệ',
-      ['1. Bấm "Lưu và tiếp tục"'], '—',
-      ['- Báo thành công, trang Thêm mở lại trống (Kho, Công ty trống, bảng trống)']),
-    T('015', 'Đổi Kho / Công ty khi đã có hàng', 'P1', 'Bảng có H-1',
-      ['1. Đổi Kho', '2. Bấm Hủy', '3. Đổi Kho lần nữa, bấm Đồng ý'], '—',
-      ['- Hộp "Xác nhận": "Đổi công ty / kho sẽ xoá danh sách hàng hóa đã chọn. Tiếp tục?"', '- Hủy: giữ kho cũ và hàng',
-       '- Đồng ý: kho mới, bảng về "Chưa chọn hàng hóa"']),
-    T('016', 'Kho không thuộc công ty', 'P1', 'TK-ADMIN đang làm việc ở công ty EG (ô Kho có EG_LN, kho chỉ có kho kế toán của EG)',
-      ['1. Chọn Kho = EG_LN, Công ty = TPE', '2. Bấm Chọn hàng hóa, thêm 1 hàng'], '—',
-      ['- Báo "Kho không thuộc công ty đã chọn", không thêm hàng']),
-    T('017', 'Quay lại khi đã nhập', 'P1', 'Đã chọn Kho, thêm hàng',
-      ['1. Bấm Quay lại', '2. Bấm Ở lại', '3. Bấm Quay lại, bấm Thoát'], '—',
-      ['- Hộp "Thông tin chưa lưu": "Bạn có thông tin chưa lưu. Có chắc chắn muốn thoát?"', '- Ở lại: giữ form',
-       '- Thoát: về danh sách, không lưu']),
-    T('018', 'Bỏ hàng / xóa dòng vị trí', 'P2', 'Bảng có 2 hàng, hàng 1 có 2 vị trí',
-      ['1. Bấm thùng rác dòng vị trí 2 của hàng 1', '2. Bấm thùng rác hàng 2'], '—',
-      ['- Bước 1: hàng 1 còn 1 vị trí, Tổng số lượng cập nhật', '- Bước 2: hàng 2 bị bỏ khỏi bảng; Tổng cộng cập nhật']),
+# ================================================================== VI. TÙY CHỈNH CỘT
+G6 = [
+    moi('Mở cửa sổ Tuỳ chỉnh cột', 'P0', 'TK-A chưa từng tuỳ chỉnh cột ở màn này.',
+        ['Bấm nút biểu tượng cột trên thanh công cụ (gợi ý "Cấu hình cột hiển thị")'], '',
+        ['Mở cửa sổ "Tuỳ chỉnh cột" liệt kê các cột của bảng',
+         'Các cột đang hiện trên bảng được tích sẵn',
+         'STT, Tên hàng, Hành động bị khoá']),
+    moi('Tắt một cột tuỳ chọn', 'P1', 'Bảng đang hiện cột Người cập nhật.',
+        ['Mở Tuỳ chỉnh cột', 'Bỏ tích Người cập nhật', 'Bấm Lưu'], 'Cột tắt: Người cập nhật',
+        ['Cột Người cập nhật biến mất khỏi bảng', 'Thứ tự và dữ liệu các cột còn lại không đổi']),
+    cu('III', '003', func='Ẩn cột, kéo đổi thứ tự và ghi nhớ sau F5'),
+    moi('Cột bắt buộc không tắt, không kéo đi được', 'P2', 'Đang mở cửa sổ Tuỳ chỉnh cột.',
+        ['Thử bỏ tích STT, Tên hàng, Hành động', 'Thử kéo ba dòng này sang vị trí khác'], '',
+        ['Ba cột này không bỏ tích được, luôn hiện', 'Không kéo đổi vị trí được']),
+    moi('Đóng cửa sổ mà không lưu thì không áp dụng thay đổi', 'P1', 'Bảng đang hiện cột Mã vị trí.',
+        ['Mở Tuỳ chỉnh cột', 'Bỏ tích Mã vị trí và kéo đổi thứ tự một cột', 'Bấm Đóng (hoặc nút X)', 'Mở lại cửa sổ'], '',
+        ['Bảng giữ nguyên cột Mã vị trí và thứ tự cột cũ',
+         'Mở lại cửa sổ: Mã vị trí vẫn được tích, thứ tự như trước khi chỉnh']),
+    moi('Cấu hình cột lưu riêng theo từng tài khoản', 'P2', 'TK-A đã tắt cột Người cập nhật và lưu. Tài khoản khác chưa chỉnh cột.',
+        ['Đăng nhập tài khoản khác, vào màn', 'Đăng nhập lại TK-A ở trình duyệt khác, vào màn'], '',
+        ['Tài khoản khác thấy bộ cột mặc định, có cột Người cập nhật',
+         'TK-A vẫn không thấy cột Người cập nhật dù ở trình duyệt khác']),
+    moi('Tuỳ chỉnh cột không ảnh hưởng dữ liệu và bộ lọc', 'P1', 'Đang lọc Kho = PTT, đứng ở trang 2.',
+        ['Mở Tuỳ chỉnh cột, tắt cột Ngày cập nhật, bấm Lưu', 'Quan sát danh sách'], '',
+        ['Vẫn lọc Kho = PTT, tổng số dòng không đổi',
+         'Dữ liệu các dòng không đổi, chỉ ẩn cột Ngày cập nhật']),
 ]
 
-# ------------------------------------------------------------------ V. SỬA
-S5 = [
-    T('001', 'Mở trang Sửa theo nhóm', 'P0', 'Nhóm N-TU-DO',
-      ['1. Bấm Sửa ở dòng vị trí N1-T2-KV'], '—',
-      ['- Tiêu đề "Sửa khai báo tồn kho đầu kỳ: BLNS-IR-EVOPYRO"; góc phải "<người tạo> - <ngày giờ tạo>"',
-       '- Hàng hóa, Đơn vị (*), Kho, SL tồn kế toán bị khóa',
-       '- Khối Vị trí liệt kê ĐỦ 2 vị trí của nhóm (STT, Mã vị trí, Vị trí, Số lượng), dòng Tổng cộng', '- Chân trang: Lưu, Quay lại']),
-    T('002', 'Sửa lệch SL tồn kế toán', 'P0', 'Đang ở trang Sửa N-TU-DO (SL kế toán 10)',
-      ['1. Sửa vị trí 1 từ 4 thành 3', '2. Bấm Lưu'], '—',
-      ['- Tổng cộng 9 chữ đỏ, ô Số lượng viền đỏ, "Tổng số lượng phải bằng SL tồn kế toán (10)"',
-       '- Thông báo "Hàng hóa BLNS-IR-EVOPYRO khác số lượng đã khai kho kế toán, không thể nhập tồn đầu!"', '- Không lưu']),
-    T('003', 'Sửa chia lại vị trí thành công', 'P0', 'N-TU-DO 4 + 6',
-      ['1. Sửa thành 3 + 7', '2. Bấm Lưu', '3. Mở ' + BC + ' lọc hàng BLNS-IR-EVOPYRO'], '—',
-      ['- Báo "Cập nhật thành công", về danh sách; 2 dòng hiện 3 và 7, Người cập nhật = người sửa',
-       '- Báo cáo: vị trí 1 giảm 1, vị trí 2 tăng 1; tổng tại kho không đổi']),
-    T('004', 'Trường Số lượng bắt buộc', 'P1', 'Trang Sửa',
-      ['1. Xóa trống 1 ô Số lượng, Lưu', '2. Nhập 0, Lưu'], '—',
-      ['- "Bắt buộc phải nhập" / "Số lượng phải lớn hơn 0"; thông báo "Bạn chưa nhập đầy đủ thông tin."']),
-    T('005', 'Mở thẳng trang Sửa của nhóm đã có giao dịch', 'P0', 'Nhóm N-GD',
-      ['1. Dán đường dẫn trang Sửa của 1 dòng N-GD'], '—',
-      ['- Báo "' + GD + '"', '- Tự quay về danh sách']),
-    T('006', 'Quay lại khi đã sửa', 'P2', 'Trang Sửa, đã đổi 1 số lượng',
-      ['1. Bấm Quay lại'], '—',
-      ['- Hỏi "Thông tin chưa lưu" (Thoát / Ở lại); chưa đổi gì thì về thẳng danh sách']),
+# ================================================================== VII. XUẤT DANH SÁCH EXCEL
+G7 = [
+    cu('VIII', '001', func='Xuất Excel theo bộ lọc với trường đã chọn'),
+    moi('Xuất file với tất cả trường', 'P1', 'Đang mở cửa sổ "Chọn trường xuất Excel".',
+        ['Bấm Chọn tất cả', 'Bấm Xuất file, mở file tải về'], '',
+        ['File có cột STT rồi đủ các cột: Tên hàng, Mã hàng, Kho, Mã vị trí, Vị trí, Công ty, ĐVT, Số lượng, Người nhập, '
+         'Ngày nhập, Người cập nhật, Ngày cập nhật']),
+    moi('Không chọn trường nào thì không xuất', 'P2', 'Đang mở cửa sổ "Chọn trường xuất Excel".',
+        ['Bấm Bỏ chọn hết', 'Bấm Xuất file'], '',
+        ['Chân cửa sổ ghi "Đang chọn 0/12 trường"',
+         'Bấm Xuất file không có tác dụng, không tải file nào']),
+    moi('Xuất theo từ khoá tìm nhanh', 'P1', 'Có nhóm N-TU-DO (2 dòng).',
+        ['Gõ "EVOPYRO" vào ô tìm nhanh, nhấn Enter', 'Bấm Xuất Excel, Xuất file, mở file'], 'Ô tìm nhanh: EVOPYRO',
+        ['File có đúng 2 dòng dữ liệu của BLNS-IR-EVOPYRO']),
+    moi('Xuất lấy tất cả các trang, không chỉ trang đang xem', 'P0', 'Đang lọc Kho = PTT (25 dòng), 10 dòng/trang, ở trang 1.',
+        ['Bấm Xuất Excel, Xuất file', 'Đếm dòng dữ liệu trong file'], '',
+        ['File có đủ 25 dòng, không chỉ 10 dòng của trang đang xem']),
+    cu('VIII', '002', func='Xuất khi không có dữ liệu'),
+    moi('Tên file, tiêu đề và định dạng trong file', 'P1', 'Vừa xuất file với các trường mặc định.',
+        ['Mở file tải về', 'Đọc dòng tiêu đề, tên cột, cột Ngày nhập và Số lượng'], '',
+        ['Tên file Khai_bao_ton_dau_vat_ly.xlsx, dòng đầu "DANH SÁCH KHAI BÁO TỒN KHO ĐẦU KỲ"',
+         'Tên cột Người tạo / Ngày tạo trên màn ra file là "Người nhập" / "Ngày nhập"',
+         'Ngày dạng dd/mm/yyyy hh:mm; Số lượng là ô số, có phần lẻ thì giữ đúng (vd 406.81)',
+         'Ô không có dữ liệu để TRỐNG']),
+    moi('Dữ liệu trong file khớp với danh sách', 'P0', 'Đang lọc Kho = PTT; có hàng tên tiếng Việt có dấu.',
+        ['Xuất file với các trường mặc định', 'Đối chiếu từng dòng trong file với bảng trên màn'], '',
+        ['Số dòng trong file bằng N ở dòng tổng dưới bảng',
+         'Tên hàng, Mã hàng, Kho, vị trí, Số lượng từng dòng trùng khớp bảng',
+         'Chữ tiếng Việt có dấu hiển thị đúng, không lỗi phông']),
+    cu('VIII', '003', func='Phạm vi công ty áp cho file xuất'),
 ]
 
-# ------------------------------------------------------------------ VI. XÓA
-S6 = [
-    T('001', 'Hộp xác nhận xóa', 'P0', 'Nhóm N-TU-DO',
-      ['1. Bấm Xóa ở 1 dòng', '2. Bấm Hủy'], '—',
-      ['- Hộp "Xác nhận xóa": "Xóa khai báo tồn đầu của hàng BLNS-IR-EVOPYRO tại kho Phan Trọng Tuệ (tất cả vị trí của hàng tại kho này)?"',
-       '- Hủy: đóng hộp, không đổi']),
-    T('002', 'Xóa cả nhóm', 'P0', 'Nhóm vừa lập ở TC_04.013 (H-1, 2 vị trí)',
-      ['1. Bấm Xóa ở 1 trong 2 dòng, bấm Xóa', '2. Mở ' + BC + ' lọc H-1'], '—',
-      ['- Báo "Xóa thành công 2 dòng tồn đầu"; cả 2 dòng của H-1 biến mất', '- Báo cáo: tồn H-1 tại PTT về như trước khi khai']),
-    T('003', 'Khai lại sau khi xóa', 'P1', 'Đã xóa nhóm H-1',
-      ['1. Tạo mới, chọn H-1 tại PTT / TPE'], '—',
-      ['- H-1 thêm vào bảng bình thường, lưu được']),
+# ================================================================== VIII. IMPORT TỪ FILE EXCEL
+G8 = [
+    cu('VII', '001', func='Mở cửa sổ Import và tải file mẫu'),
+    moi('Các nút trong cửa sổ Import', 'P1', 'Đang mở cửa sổ "Import khai báo tồn kho đầu kỳ".',
+        ['Quan sát các nút khi chưa chọn file', 'Bấm "Chọn file Excel", chọn file đúng mẫu', 'Bấm "Load lên bảng"',
+         'Bấm Validate'], '',
+        ['Nhóm File có "Chọn file Excel", "Tải file mẫu"; nhóm Hành động có "Load lên bảng", Validate, Import',
+         'Chưa chọn file: "Load lên bảng", Validate, Import đều mờ',
+         'Sau bước 3: bảng xem trước hiện đủ các dòng trong file; Validate bấm được, Import vẫn mờ',
+         'Sau bước 4: Import chỉ bấm được khi mọi dòng hợp lệ']),
+    moi('Tải lên file sai định dạng', 'P1', 'Có file .pdf và file .csv.',
+        ['Bấm "Chọn file Excel", chọn file .pdf', 'Chọn file .csv'], '',
+        ['Báo "Vui lòng chọn file .xlsx hoặc .xls", không nhận file, "Load lên bảng" vẫn mờ']),
+    moi('Import file Excel không có dữ liệu', 'P2', 'File đúng mẫu nhưng chỉ có dòng tiêu đề và dòng hướng dẫn.',
+        ['Chọn file, bấm "Load lên bảng"'], '',
+        ['Báo "Không có dòng dữ liệu hợp lệ.", bảng xem trước trống',
+         'Validate và Import vẫn mờ']),
+    moi('Import file thiếu cột bắt buộc', 'P2', 'File mẫu đã xoá cột "Mã vị trí *", có 2 dòng dữ liệu.',
+        ['Chọn file, Load lên bảng', 'Bấm Validate'], '',
+        ['Cột Mã vị trí trên bảng xem trước để trống ở mọi dòng',
+         'Validate: mọi dòng báo "Thiếu Mã vị trí", không dòng nào hợp lệ']),
+    cu('VII', '002', func='Validate bắt lỗi từng cột'),
+    cu('VII', '005', func='Cùng nhóm dùng 2 ĐVT hoặc trùng vị trí trong file'),
+    moi('Mã có khoảng trắng đầu cuối trong file', 'P2', 'File H-1 hợp lệ nhưng ô Mã kho ghi " PTT " và Mã vị trí có khoảng trắng hai đầu.',
+        ['Load, Validate'], 'Mã kho: " PTT "',
+        ['Khoảng trắng hai đầu được bỏ qua, dòng hợp lệ như khi ghi "PTT"']),
+    cu('VII', '003', func='Nhóm nhiều dòng phải khớp tồn kế toán, sửa dòng lỗi rồi Validate lại'),
+    cu('VII', '004'),
+    cu('VII', '006', func='Bỏ dòng lỗi rồi Import'),
+    moi('Không có dòng hợp lệ thì không Import được', 'P1', 'File 2 dòng đều lỗi (mã hàng không tồn tại).',
+        ['Load, Validate', 'Quan sát nút Import', 'Bấm "Bỏ dòng lỗi"'], '',
+        ['Validate báo "Validate xong: 0 hợp lệ, 2 không hợp lệ"; mỗi dòng nêu lý do lỗi',
+         'Nút Import mờ, không bấm được',
+         'Bỏ dòng lỗi xong bảng không còn dòng nào, Import vẫn mờ; không ghi dữ liệu']),
+    cu('VII', '007', func='File vượt quá 200 dòng'),
+    cu('VII', '008', func='Nhóm bị người khác khai trước khi Import'),
+    moi('Import lại cùng một file đã import thành công', 'P1', 'Vừa import thành công file H-1 (10) tại PTT / TPE.',
+        ['Mở lại Import, chọn đúng file đó', 'Load, Validate'], '',
+        ['Các dòng của H-1 báo "Hàng hóa H-1 đã được khai báo tồn đầu kỳ tại kho PTT, không thể nhập tiếp!"',
+         'Không có dòng hợp lệ, không ghi trùng']),
+    moi('Dữ liệu import dùng được ngay ở các màn liên quan', 'P1', 'Vừa import thành công H-1 = 10 tại vị trí A, kho PTT.',
+        ['Đóng cửa sổ Import, xem danh sách', 'Mở ' + BC + ' lọc H-1'], '',
+        ['Danh sách tự tải lại, có dòng H-1 với nút Sửa, Xóa',
+         'Báo cáo có H-1 = 10 tại vị trí A, công ty TPE']),
 ]
 
-# ------------------------------------------------------------------ VII. IMPORT
-S7 = [
-    T('001', 'Mở cửa sổ và file mẫu', 'P1', '—',
-      ['1. Bấm Import Excel', '2. Bấm Tải file mẫu'], '—',
-      ['- Cửa sổ "Import khai báo tồn kho đầu kỳ"', '- File Mau_import_ton_kho_dau_ky.xlsx, cột: STT, Tên hàng *, Mã hàng *, ĐVT *, Mã kho *, Mã vị trí *, Số lượng *, Mã công ty *; dòng 2 là hướng dẫn']),
-    T('002', 'Validate bắt lỗi từng cột', 'P0', 'File 4 dòng: (1) hàng đã khai tại PTT; (2) mọi mã sai, SL -5; (3) thiếu Tên hàng, ĐVT, Mã vị trí, SL 0; (4) kho LN với công ty EG',
-      ['1. Chọn file, Load lên bảng', '2. Validate'], '—',
-      ['- "Validate xong: 0 hợp lệ, 4 không hợp lệ"',
-       '- (1) "Hàng hóa BLNS-IR-EVOPYRO đã được khai báo tồn đầu kỳ tại kho PTT, không thể nhập tiếp!"',
-       '- (2) "Số lượng phải lớn hơn 0 và không quá 999,999,999", "Công ty không tồn tại", "Hàng hóa không tồn tại", "Đơn vị không tồn tại", "Kho không tồn tại"',
-       '- (3) "Thiếu Tên hàng", "Thiếu ĐVT", "Thiếu Mã vị trí", "Số lượng phải lớn hơn 0…", "Hàng hóa không tồn tại"',
-       '- (4) "Kho không thuộc công ty (chưa có kho kế toán của công ty)"']),
-    T('003', 'Nhóm nhiều dòng phải khớp tồn kế toán', 'P0', 'H-1 (kế toán 10): file 2 dòng 4 + 5',
-      ['1. Load, Validate', '2. Sửa dòng 2 thành 6, Validate lại'], '—',
-      ['- Bước 1: cả 2 dòng báo "Hàng hóa H-1 khác số lượng đã khai kho kế toán (10 theo ĐVT cơ bản, đang nhập 9), không thể nhập tồn đầu!"',
-       '- Bước 2: 2 dòng hợp lệ, bị khóa']),
-    T('004', 'Một dòng lỗi làm cả nhóm không được ghi', 'P1', 'H-1: 2 dòng, dòng 2 sai mã vị trí',
-      ['1. Validate'], '—',
-      ['- Dòng 2 "Vị trí không tồn tại trong kho"; dòng 1 "Cùng hàng + kho + công ty với dòng lỗi khác trong file — cả nhóm không được ghi"']),
-    T('005', 'Cùng nhóm dùng 2 ĐVT / trùng vị trí', 'P2', 'H-1: 2 dòng khác ĐVT; file khác có 2 dòng cùng vị trí',
-      ['1. Validate từng file'], '—',
-      ['- "Cùng một hàng tại 1 kho phải dùng 1 ĐVT"', '- "Vị trí đã được chọn!"']),
-    T('006', 'Bỏ dòng lỗi rồi Import', 'P0', 'File: H-1 hợp lệ (10) + 1 dòng lỗi',
-      ['1. Validate', '2. Bấm Bỏ dòng lỗi', '3. Bấm Import'], '—',
-      ['- Còn 1 dòng hợp lệ; Import báo số dòng thành công, danh sách tải lại có H-1',
-       '- Báo cáo tồn theo vị trí có H-1 = 10 tại vị trí trong file']),
-    T('007', 'File quá 200 dòng', 'P2', 'File 201 dòng',
-      ['1. Chọn file, Load / Import'], '—',
-      ['- Báo vượt giới hạn 200 dòng, không nhập']),
-    T('008', 'Nhóm bị người khác khai trước khi Import', 'P2', 'Validate xong file H-1; người khác vừa lưu H-1 tại cùng kho + công ty',
-      ['1. Bấm Import'], '—',
-      ['- Nhóm H-1 bị bỏ qua, kết quả nêu dòng lỗi "đã được khai báo tồn đầu kỳ"; nhóm khác vẫn nhập']),
+# ================================================================== IX. RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC
+G9 = [
+    cu('IX', '001', func='Lưu cộng tồn kho đúng kho, vị trí, công ty'),
+    cu('IX', '002', func='Phát sinh giao dịch thì khóa Sửa, Xóa', pre='H-1 đã khai ở TC_09.001.'),
+    moi('Xóa khai báo thì thẻ kho bỏ dòng tồn đầu', 'P1', 'H-1 đã khai 10 tại PTT, chưa có giao dịch.',
+        ['Xóa nhóm H-1 tại PTT', 'Mở ' + TK + ' của H-1 tại PTT'], '',
+        ['Thẻ kho không còn dòng tồn đầu kỳ của H-1', 'Tồn H-1 tại PTT về như trước khi khai']),
+    moi('Vị trí bị khóa không chọn được khi khai báo', 'P1', 'Kho PTT có vị trí V-KHOA đang bị khóa ở Danh mục vị trí.',
+        ['Tạo mới, chọn Kho = PTT, Công ty = TPE, thêm H-1', 'Bấm ô Vị trí, tìm "V-KHOA"'], '',
+        ['Cửa sổ "Chọn vị trí kho" không có V-KHOA',
+         'Mở khóa V-KHOA ở danh mục rồi mở lại cửa sổ thì V-KHOA xuất hiện']),
+    cu('IX', '005', func='Không xóa được kho, vị trí, hàng đã có khai báo'),
+    cu('X', '001', func='Luồng nghiệp vụ: khai, sửa, xóa, khai lại'),
+    cu('X', '002', func='Luồng nghiệp vụ: import rồi phát sinh giao dịch'),
 ]
 
-# ------------------------------------------------------------------ VIII. XUẤT EXCEL
-S8 = [
-    T('001', 'Xuất Excel theo bộ lọc', 'P0', 'Đang lọc Kho = PTT, hơn 10 dòng',
-      ['1. Bấm Xuất Excel', '2. Bỏ tích Người cập nhật, kéo Số lượng lên đầu, bấm Xuất file'], '—',
-      ['- Cửa sổ "Chọn trường xuất Excel" tích sẵn các cột đang hiện; "Đang chọn x/12 trường"',
-       '- Cạnh nút có dòng tiến độ; xong báo "Xuất Excel thành công"',
-       '- File Khai_bao_ton_dau_vat_ly.xlsx, tiêu đề "DANH SÁCH KHAI BÁO TỒN KHO ĐẦU KỲ", có cột STT; đủ mọi dòng khớp bộ lọc (mọi trang), cột đúng thứ tự đã kéo',
-       '- Cột Số lượng là SỐ (SUM được)']),
-    T('002', 'Xuất khi không có dữ liệu', 'P2', 'Lọc Mã hàng "KHONG-TON-TAI"',
-      ['1. Bấm Xuất Excel, Xuất file'], '—',
-      ['- Báo "Không có dữ liệu để xuất", không tải file']),
-    T('003', 'Phạm vi khi xuất', 'P1', 'TK-A',
-      ['1. Không lọc gì, xuất toàn bộ'], '—',
-      ['- File không có dòng của công ty ngoài phạm vi; số dòng = N ở chân bảng']),
+# ================================================================== X. PHÂN QUYỀN
+G10 = [
+    cu('ROLE', '00'),
+    cu('ROLE', '01', func='Có quyền thì dùng được đủ chức năng'),
+    moi('Không có quyền nhưng mở thẳng đường dẫn trang Thêm', 'P1', 'TK-Z không có quyền "Khai báo tồn kho đầu kỳ".',
+        ['Đăng nhập TK-Z', 'Dán đường dẫn trang Thêm khai báo tồn kho đầu kỳ lên thanh địa chỉ'], '',
+        ['Báo "Bạn không có quyền thực hiện chức năng này"',
+         'Không lưu được khai báo nào']),
+    moi('Bị gỡ quyền khi đang khai báo', 'P1', 'TK-A đang ở trang Thêm, form hợp lệ. Quản trị vừa gỡ quyền "Khai báo tồn kho đầu kỳ" của TK-A.',
+        ['TK-A bấm Lưu', 'TK-A tải lại màn danh sách'], '',
+        ['Bước 1: bị từ chối, báo không có quyền; không có dòng khai báo mới, tồn kho không đổi',
+         'Bước 2: menu không còn mục "Khai báo tồn kho đầu kỳ", bảng không có dữ liệu']),
+    cu('ROLE', '02'),
+    cu('ROLE', '03'),
+    cu('ROLE', '04'),
 ]
 
-# ------------------------------------------------------------------ IX. TÁC ĐỘNG SỐ LIỆU / RÀNG BUỘC
-S9 = [
-    T('001', 'Lưu cộng tồn kho đúng kho, vị trí, công ty', 'P0', 'H-1 chưa khai',
-      ['1. Khai H-1 tại PTT / TPE: vị trí A 4, vị trí B 6, Lưu', '2. Mở ' + BC + ' lọc H-1', '3. Mở ' + TK + ' của H-1 tại PTT'], '—',
-      ['- Báo cáo: vị trí A 4, vị trí B 6, tổng 10, công ty TPE', '- Thẻ kho có dòng tồn đầu kỳ của H-1 = 10']),
-    T('002', 'Khóa khi phát sinh giao dịch', 'P0', 'H-1 đã khai (TC_09.001)',
-      ['1. Lập phiếu điều chuyển vị trí (có thể để nháp) chuyển H-1 từ vị trí A', '2. Quay lại danh sách'], '—',
-      ['- Mọi dòng của H-1 tại PTT mất nút Sửa, Xóa', '- Tạo mới chọn lại H-1 tại PTT: bị chặn đã khai']),
-    T('003', 'Hai người cùng khai 1 hàng', 'P1', '2 tài khoản cùng mở trang Thêm, cùng chọn H-1 tại PTT / TPE hợp lệ',
-      ['1. Người 1 bấm Lưu', '2. Người 2 bấm Lưu'], '—',
-      ['- Người 2: dưới Tên hàng "Hàng hóa H-1 đã được khai báo tồn đầu kỳ tại kho PTT, không thể nhập tiếp!"',
-       '- Chỉ có 1 bộ khai báo của H-1']),
-    T('004', 'Nhóm vừa phát sinh giao dịch khi đang sửa', 'P1', 'A mở trang Sửa N-TU-DO; B lập phiếu chuyển vị trí từ lô tồn đầu',
-      ['1. A bấm Lưu (tổng vẫn khớp)'], '—',
-      ['- A bị từ chối "' + GD + '", dữ liệu không đổi']),
-    T('005', 'Không xóa được kho / vị trí / hàng đã có khai báo', 'P2', 'Nhóm H-1 tại PTT, vị trí A',
-      ['1. Danh mục Vị trí: xóa vị trí A', '2. Danh mục Kho vật lý: xóa kho PTT', '3. Danh mục hàng hoá: xóa H-1'], '—',
-      ['- Mỗi thao tác bị chặn do đang được dùng']),
-]
+SECTIONS = [(r, t, nhom(cs)) for r, t, cs in [
+    ('I', 'HIỂN THỊ TRANG & TRUY CẬP', G1),
+    ('II', 'TÌM KIẾM & LỌC DANH SÁCH', G2),
+    ('III', 'THÊM MỚI', G3),
+    ('IV', 'CHỈNH SỬA', G4),
+    ('V', 'XÓA', G5),
+    ('VI', 'TÙY CHỈNH CỘT', G6),
+    ('VII', 'XUẤT DANH SÁCH EXCEL', G7),
+    ('VIII', 'IMPORT TỪ FILE EXCEL', G8),
+    ('IX', 'RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC', G9),
+    ('X', 'PHÂN QUYỀN', G10),
+]]
 
-# ------------------------------------------------------------------ X. LUỒNG ĐẦU CUỐI
-S10 = [
-    T('001', 'Luồng đầu cuối: khai, sửa, xóa, khai lại', 'P0', 'H-1 chưa khai, kế toán 10',
-      ['1. Khai H-1 một vị trí 10', '2. Cần chia thêm vị trí: trang Sửa không thêm được vị trí nên Xóa cả nhóm', '3. Khai lại 2 vị trí 3 + 7', '4. Xem ' + BC], '—',
-      ['- Mỗi bước báo thành công; báo cáo cuối: 3 và 7 ở đúng 2 vị trí, tổng 10']),
-    T('002', 'Luồng đầu cuối: import rồi phát sinh giao dịch', 'P1', 'File import H-1 hợp lệ',
-      ['1. Import', '2. Lập phiếu xuất kho điều chỉnh kiểm kê lấy từ lô tồn đầu của H-1', '3. Quay lại danh sách, mở thẳng trang Sửa'], '—',
-      ['- Bước 1: dòng H-1 có Sửa, Xóa', '- Bước 3: không còn nút; mở thẳng trang Sửa báo "' + GD + '"']),
-]
-
-SECTIONS = [
-    ('I', 'HIỂN THỊ TRANG & TRUY CẬP', S1),
-    ('II', 'BỘ LỌC & TÌM KIẾM', S2),
-    ('III', 'DANH SÁCH, SẮP XẾP & PHÂN TRANG', S3),
-    ('IV', 'THÊM KHAI BÁO — CHỌN HÀNG & VỊ TRÍ', S4),
-    ('V', 'SỬA THEO NHÓM', S5),
-    ('VI', 'XÓA THEO NHÓM', S6),
-    ('VII', 'IMPORT EXCEL', S7),
-    ('VIII', 'XUẤT EXCEL', S8),
-    ('IX', 'TÁC ĐỘNG SỐ LIỆU & RÀNG BUỘC', S9),
-    ('X', 'LUỒNG NGHIỆP VỤ ĐẦU CUỐI', S10),
-]
+DESCRIPTION_BLOCK = [(t, _gach(b)) for t, b in V1.DESCRIPTION_BLOCK]
 
 if __name__ == '__main__':
-    build(output_file=OUT, sheet_name='Trang tính1',
-          feature_name=TEN + ' - Cập nhật ngày ' + L.NGAY, module_name=MODULE,
-          description_block=DESCRIPTION_BLOCK, role_tcs=ROLE_TCS, sections=SECTIONS)
-    print('Tổng số case (viết mới): %d' % COUNT[0])
+    con = sorted(set(OLD) - DA_DUNG)
+    assert not con, 'Còn case cũ chưa đưa vào: %s' % con
+    total = build_chuan(OUT, SHEET, TEN + ' - Cập nhật ngày ' + NGAY, MODULE, DESCRIPTION_BLOCK, SECTIONS, loai='phieu')
+    print('Case cũ (bản 02/11): %d -> mới: %d (thêm %d)' % (SO_CU, total, total - SO_CU))

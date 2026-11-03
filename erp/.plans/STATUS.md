@@ -2,6 +2,10 @@
 
 ## Hoàn thành
 
+- [DS DNTT + DNTT chờ duyệt: gộp ô lọc KH / NCC](dntt-gop-loc-khach-hang-ncc/plan.md) — @junfoke 2026-11-03. `f4e2c56efa` + `2397f6bddd` gop_db.
+- [Tồn đầu kỳ kế toán: danh sách hiện Sửa/Xóa ở dòng đã khoá](fix-ton-dau-ky-ke-toan-an-nut-sua-xoa/plan.md) — @junfoke 2026-11-03. `d04f9e14f8` gop_db.
+- [Hạch toán mua DV: ô lọc Trạng thái sai danh sách](hach-toan-mua-dv-loc-trang-thai/plan.md) — @junfoke 2026-11-03. `2397f6bddd` gop_db. Phiếu nháp chỉ người lập thấy — chờ user chốt.
+- [#11932 ô chức danh gửi tên thay id + PLG/PLBS lấy chức danh theo HĐ gốc](chuc-danh-nguoi-ky-hop-dong/plan.md) — @junfoke 2026-11-03. `f7c57a6d95` + `65489c5755` gop_db.
 - [Đồng bộ khổ giấy soạn mẫu in = xem trước = bản in](dong-bo-kho-mau-in-soan-xem-in/plan.md) — @junfoke 2026-11-02. `f28117b631` + `d01b68eed4` gop_db. SQL sửa mẫu in HĐ 30518/30563 (chữ ký, cỡ chữ) gửi user chạy prod.
 - [Xem chi tiết ĐN nhập kho / xuất kho khớp quyền danh sách](fix-canview-de-nghi-nhap-xuat-kho/plan.md) — @junfoke 2026-11-02. `07cc5e2d66` gop_db.
 - [Thêm người liên hệ khi chưa chọn khách hàng lỗi 500](fix-them-nguoi-lien-he-chua-chon-khach-hang/plan.md) — @junfoke 2026-11-02. `91634bbcf9` gop_db.

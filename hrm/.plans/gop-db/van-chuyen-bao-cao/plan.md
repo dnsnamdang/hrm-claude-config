@@ -100,3 +100,6 @@
 - [x] 30/10/2026 — Lỗi #11929: ô chọn cấp ("Đến từng chuyến xe") lên 12px bằng chữ tiêu đề cột (phải `!important` vì quy tắc 11px của ô chọn cỡ nhỏ đè).
 - [x] 30/10/2026 — Lỗi #11925: bảng chính mặc định 10 dòng/trang, ô "Số dòng/trang" 12px; ô 0 để trống + popup 10 dòng đã có từ commit 29/10 (ảnh QA chụp trước khi dev cập nhật).
 - [x] 30/10/2026 — Commit client `137f82d43` (develop, gộp chung đợt QA với #11923 #11930 #11836), đã lên origin/develop. API không đổi.
+
+## Ngày 03/11/2026 (@junfoke)
+- [x] 03/11/2026 — Lỗi #11969: 2 báo cáo chi phí lái xe + 3 báo cáo bốc xếp mặc định 10 dòng/trang, ô "Số dòng/trang" 12px giống nhóm chuyến xe. Commit client `ee75050e6` (develop).

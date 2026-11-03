@@ -199,3 +199,6 @@ Blocked: —
 ## Ngày 02/11/2026 (@junfoke)
 - [x] 02/11/2026 — Commit màn (api `e009c9b7f`, client `d833b045b`), test chạy lại đều qua; đã vào `origin/develop`.
 - [x] 02/11/2026 — Theo user (ảnh màn xem chi tiết): ô số chỗ đậm chỗ nhạt do form lẫn `V2BaseCurrencyInput` và `V2BaseInput` → đổi 6 ô tính sẵn (KM định mức, KM thực chạy, Cước theo công thức, Chênh lệch, Số km bắt đầu tính / Đơn giá cước vượt trội xe thuê ngoài) cùng loại ô số: đậm, căn phải, dấu phẩy hàng nghìn. Đồng bộ thêm màn Chuyến xe khác (4 ô tính sẵn, các ô km căn phải + phẩy, ẩn chữ gợi ý "Nhập vé cầu đường" khi xem, "/km" chỉ hiện khi có số) và ô "KM dự kiến" ở khối chuyến xe phiếu xuất/nhập kho. Xem ảnh thật. Commit client `f3273c418` (nhánh `feat/chuyen-xe-cho-hang`, CHƯA push).
+
+## Ngày 03/11/2026 (@junfoke)
+- [x] 03/11/2026 — Theo user: sửa ô số đồng nhất không làm trên nhánh cũ đã merge → chuyển sang nhánh `feat/so-chi-tiet-cong-no-nv` (client `d59dec8d8`), gỡ worktree `cxch`; chụp lại màn chi tiết đạt. Đã lên develop 03/11 (merge `66a3d7d47`).

@@ -29,5 +29,14 @@ Brief: `BRIEF_DOT3.md`; màn mẫu 167 (user duyệt cách trình bày luồng t
 - [x] Xoá 18 file phiên đăng nhập dev `.dev_state.json` agent để lại trong `docs/` (đã gitignore)
 - [ ] User điền Checklist dòng 155, 156, 190, 266, 166 (+ 268 nhóm Kho), 192, 57
 
+## Làm lại 19 testcase theo khuôn chuẩn tab "13. DM quốc gia" (03/11/2026)
+Được báo TC 02/11 không giống chuẩn chung. Khuôn: `TC_CHUAN.md` + `_tc_chuan.py` (bọc tc_engine, không sửa engine) + `check_tc.py`;
+mẫu `mau/`. Nguyên nhân gốc: skill `testcase-documenter` đang quy định nhóm TC-ROLE đầu tab — lệch tab Quốc gia (chờ user cho sửa skill).
+- [x] Đối chiếu tab Quốc gia + checklist "Mẫu tài liệu.xlsx" → khuôn + script kiểm (chạy thử khớp tab Quốc gia)
+- [x] `chen_tab_testcase.ps1 -Replace`: thay tab giữ tên/vị trí, trỏ lại dòng Tổng hợp (K16)
+- [x] 7 agent viết lại 19 file (giữ case nghiệp vụ, bổ sung checklist): 1.714 → 3.419 case (kho 1.434 · báo cáo 591 · phiếu 1.394), check_tc 0 lỗi cả 19; bản cũ giữ `gen_testcase_v1.py` (gen mới đọc case từ đó — KHÔNG xoá, KHÔNG chạy v1)
+- [x] User chốt: KQ thực tế / DNS check để TRỐNG; sửa luôn skill. Thay 19 tab 44–62 trên Drive (-Replace, 0 ô đổi ở 43 tab cũ, Tổng hợp trỏ K16, ID giữ) — 03/11
+- [x] Sửa skill `testcase-documenter`: SKILL.md theo khuôn Quốc gia; assets `TC_MAU_QUOC_GIA.xlsx`, `CHECKLIST_TC_SRS.xlsx`, `tc_chuan.py`, `check_tc.py`; `tc_engine.py` ROMAN tới XX. `.plans` `_tc_chuan.py`/`check_tc.py` chỉ còn trỏ sang skill
+
 ## Sau cùng
 - [ ] Rà `NGHI_LOI.md` cùng user: kiểm lỗi thật hay không → sửa code

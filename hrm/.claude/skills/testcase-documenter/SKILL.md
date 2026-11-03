@@ -8,11 +8,16 @@ description: Generate tài liệu test case cho feature đã triển khai — ou
 ## Mục đích
 Generate test cases cho feature/báo cáo đã hoặc sắp triển khai. Output là **file Excel (.xlsx)** để QA dùng test thực tế (dropdown trạng thái, công thức tổng hợp, nhiều lần check).
 
+> **CHUẨN CHUNG (chốt 03/11/2026): tab "13. DM quốc gia"** — bản sao `assets/TC_MAU_QUOC_GIA.xlsx` — và checklist
+> **`assets/CHECKLIST_TC_SRS.xlsx`** tab "Testcase" (299 case cần kiểm tra theo Nhóm → Phân nhóm). Sinh file bằng
+> **`assets/tc_chuan.py` → `build_chuan(...)`**, tự kiểm bằng **`assets/check_tc.py`** (phải 0 lỗi). Bản cũ của skill (nhóm
+> `TC-ROLE` đầu tab, nhóm "TẠO / SỬA / XEM", "E2E FLOW"…) đã bị QA báo lệch chuẩn — 19 tab phải làm lại ngày 03/11/2026.
+
 File Excel chuẩn phải có **ĐỦ 4 KHỐI** theo đúng thứ tự (xem mục Layout bên dưới):
 1. Khối **MÔ TẢ TÍNH NĂNG / BÁO CÁO** (9 mục cố định)
-2. Khối **TEST SUMMARY** (2 khối công thức: DNS và TP)
-3. **Header testcase** (17 cột) + (nếu có phân quyền) section **TC-ROLE**
-4. **Các section testcase** đánh số La mã
+2. Khối **TEST SUMMARY** (2 khối công thức: DNS và TP) + dòng 16 "Tổng số testcase"
+3. **Header testcase** (17 cột)
+4. **Các nhóm testcase** đánh số La Mã liên tục, đúng thứ tự chuẩn — **PHÂN QUYỀN là nhóm CUỐI**, không còn section `TC-ROLE` đầu tab
 
 ## Khi nào dùng
 - Feature/báo cáo đã code xong, cần test case cho QA
@@ -116,7 +121,7 @@ Row 13 : … đang xem xét (PE)                | =COUNTIF(K18:M1000,"Pending")|
 Row 14 : … chưa thực hiện                   | =COUNTIF(K18:K1000,"Not Executed")
 Row 15 : Tổng số trường hợp                 | =COUNTIF(K18:K1000,"<>")     | … | =COUNTIF(C18:C1000,"TC*")
 
-Row 16 : (trống — spacing, height 8)
+Row 16 : Tổng số testcase                   | =COUNTIF(C18:C1000,"TC_*")   (tab "Tổng hợp" của file Drive trỏ K16)
 
 Row 17 : HEADER 17 cột
   A Module | B Nhóm chức năng | C TC ID | D Chức năng | E Priority
@@ -124,7 +129,8 @@ Row 17 : HEADER 17 cột
   I Expected Result (chi tiết) | J KQ thực tế
   K/L/M DNS check lần 1/2/3 | N Ghi chú | O/P/Q TP check lần 1/2/3
 
-Row 18+: Data — section "Phân quyền & truy cập" (nếu có), sau đó section La mã
+Row 18+: Data — các nhóm La Mã (dòng tiêu đề nhóm rồi tới case). A Module + B Nhóm chức năng chỉ ghi ở
+         case ĐẦU MỖI NHÓM. J + K/L/M để TRỐNG (DNS tự điền khi chạy test — không điền sẵn "Passed").
 ```
 
 ⚠️ **2 lỗi CÓ TRONG file mẫu — đừng copy theo:**
@@ -142,30 +148,35 @@ Row 18+: Data — section "Phân quyền & truy cập" (nếu có), sau đó sec
 
 ## Phân loại + đánh số section
 
-### Section "Phân quyền & truy cập"
-- Đứng **đầu tiên** sau header (trước section La mã)
-- ID format: `TC-ROLE-00`, `TC-ROLE-01`, ...
-- Liệt kê 1 TC cho **TỪNG tên quyền** + TC "không có quyền nào" + TC bypass giao diện cho từng
-  thao tác ghi dữ liệu
-- Feature không phân quyền → bỏ section này
+### Nhóm testcase — tên + thứ tự CHUẨN (theo tab Quốc gia + checklist, chốt 03/11/2026)
 
-### Sections nghiệp vụ — đánh số La mã
-```
-I.   HIỂN THỊ TRANG & TRUY CẬP   (gồm cả các LỐI VÀO khác nhau của màn — xem mục dưới)
-II.  BỘ LỌC & TÌM KIẾM
-III. DANH SÁCH, SẮP XẾP & PHÂN TRANG
-IV.  CHỨC NĂNG CHÍNH (TẠO / SỬA / XEM)
-V.   CÁC THAO TÁC TRẠNG THÁI (Khóa/Mở khóa, Duyệt/Từ chối…)
-VI.  XÓA
-VII. XUẤT EXCEL / IN
-VIII.RÀNG BUỘC NHẬP LIỆU
-IX.  CÔ LẬP DỮ LIỆU & THAO TÁC ĐỒNG THỜI
-X.   E2E FLOW
-```
-- Tên section là **dòng riêng**, merge C:Q, bold 12pt màu `#1F4E79` trên nền `#D6E4F0`
-- Bỏ section không áp dụng; thứ tự giữ nguyên
-- ⚠️ Đặt tên section bằng ngôn ngữ nghiệp vụ: dùng "RÀNG BUỘC NHẬP LIỆU" thay cho
-  "EDGE CASES & VALIDATION"
+Bỏ nhóm màn không có; nhóm có mặt phải đúng thứ tự dưới đây, đánh La Mã LIÊN TỤC (I, II, III…). `check_tc.py` chặn sai.
+
+| Loại (`loai`) | Thứ tự nhóm |
+|---|---|
+| `danh_muc` | HIỂN THỊ TRANG & TRUY CẬP · TÌM KIẾM & LỌC DANH SÁCH · THÊM MỚI · CHỈNH SỬA · XÓA · KHÓA / MỞ KHÓA · LỊCH SỬ THAY ĐỔI · XEM CHI TIẾT <ĐỐI TƯỢNG> · TÙY CHỈNH CỘT · XUẤT DANH SÁCH EXCEL · IMPORT TỪ FILE EXCEL · RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC · PHÂN QUYỀN |
+| `phieu` | HIỂN THỊ TRANG & TRUY CẬP · TÌM KIẾM & LỌC DANH SÁCH · THÊM MỚI · CHỈNH SỬA · XÓA · KHÓA / MỞ KHÓA · GỬI DUYỆT · DUYỆT PHIẾU · KHÔNG DUYỆT PHIẾU · HỦY PHIẾU · LỊCH SỬ THAY ĐỔI · XEM CHI TIẾT <PHIẾU> · IN PHIẾU · TÙY CHỈNH CỘT · XUẤT DANH SÁCH EXCEL · IMPORT TỪ FILE EXCEL · RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC · PHÂN QUYỀN |
+| `bao_cao` | HIỂN THỊ TRANG & TRUY CẬP · TÌM KIẾM & LỌC DANH SÁCH · SỐ LIỆU BÁO CÁO · XEM CHI TIẾT <…> (popup) · TÙY CHỈNH CỘT · XUẤT DANH SÁCH EXCEL · IN BÁO CÁO · RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC · PHÂN QUYỀN |
+
+Đặt case vào nhóm (mỗi dòng checklist ÁP DỤNG ĐƯỢC phải có ≥ 1 case):
+- **HIỂN THỊ**: mở từ menu (mọi LỐI VÀO — xem mục dưới), tiêu đề, nút, cột mặc định hiện/ẩn, trạng thái, rỗng / không khớp lọc,
+  **phân trang** (số dòng mặc định, đổi số dòng, trước/sau, đầu/cuối, trạng thái nút, STT liên tục, tổng số, về trang 1) và
+  **sắp xếp** (mặc định, tăng, giảm, ngày tạo/cập nhật, cột không sắp xếp, giữ khi chuyển trang, về trang 1).
+- **TÌM KIẾM & LỌC**: từ khoá chính xác/một phần/hoa-thường/có dấu/không tồn tại/ký tự đặc biệt/khoảng trắng/giới hạn/xoá/Enter;
+  từng ô lọc, kết hợp, mặc định, tổng & phân trang sau lọc, Làm mới; lưu trạng thái (chuyển màn quay lại, F5, tab mới, tài khoản khác).
+- **THÊM MỚI / CHỈNH SỬA**: validate từng trường (trống, định dạng, ký tự, đúng/vượt độ dài, trùng, khoảng trắng, lỗi biến mất), Lưu
+  và tiếp tục / Lưu nháp / Lưu và gửi duyệt, Đóng/X/Thoát/Ở lại/nhập rồi xoá hết, bấm Lưu liên tục, trùng đồng thời 2 tab; sửa: fill
+  đúng, trường không sửa được, giữ nguyên của chính mình, không đổi thì không ghi lịch sử, bản ghi khoá / bị xoá / 2 người sửa.
+- **Phiếu**: tác động số liệu (tồn, công nợ, hàng giữ, bút toán) nằm TRONG nhóm thao tác gây ra nó; luồng nhiều màn → RÀNG BUỘC.
+- **Báo cáo**: mỗi cột/chỉ tiêu, dòng tổng, định dạng số, lập chứng từ rồi kiểm số tăng/giảm → SỐ LIỆU BÁO CÁO.
+- **PHÂN QUYỀN** (cuối): 1 case cho TỪNG tên quyền + không có quyền nào; ẩn nút khi thiếu quyền; mở URL trực tiếp khi thiếu quyền;
+  đổi quyền giữa thao tác; phạm vi dữ liệu theo quyền. KHÔNG viết case "gọi thẳng API / Postman".
+- Tên nhóm là **dòng riêng**, merge C:Q, bold 12pt màu `#1F4E79` trên nền `#D6E4F0` (engine tự làm).
+- KHÔNG dùng các nhóm cũ: "Phân quyền & truy cập" đầu tab, "BỘ LỌC & TÌM KIẾM", "DANH SÁCH, SẮP XẾP & PHÂN TRANG",
+  "TẠO / SỬA / XEM", "RÀNG BUỘC NHẬP LIỆU", "CÔ LẬP DỮ LIỆU…", "E2E FLOW".
+
+Câu chữ bắt chước tab Quốc gia: Chức năng là cụm ngắn ("Mở màn hình từ menu", "Thiếu Tên quốc gia thì bị chặn", "Bấm Hủy thì không
+xóa"); Tiền điều kiện 1 câu; Bước "1. …\n2. …"; Expected mỗi ý 1 dòng bắt đầu "-  ", nhãn/thông báo NGUYÊN VĂN.
 
 ### Bắt buộc: test ĐỦ CÁC LỐI VÀO của màn (chốt 2026-08-26)
 
@@ -202,8 +213,7 @@ nguyên trước khi viết vào cột kết quả mong đợi — đã có lầ
 bên hệ thống mới chứ không phải logic sai.
 
 ### TC ID
-- Section La mã: `TC_{section:02d}.{tc:03d}` — `TC_01.001`, `TC_02.015`
-- Section quyền: `TC-ROLE-01`, `TC-ROLE-02`, ...
+- Một kiểu duy nhất: `TC_{số nhóm:02d}.{tc:03d}` — `TC_01.001`, `TC_02.015` (kể cả nhóm PHÂN QUYỀN). Không còn `TC-ROLE-NN`.
 
 ### Priority
 `P0` critical (≥40% tổng) · `P1` important · `P2` nice-to-have
@@ -307,28 +317,27 @@ O18:Q<last+50>  →  list "P,F,PE"                               (allow_blank, s
 
 ## Generator
 
-**Dùng engine chung, KHÔNG nhân bản 1.300 dòng cho mỗi màn:**
-`.claude/skills/testcase-documenter/assets/tc_engine.py` (Windows, `python` + `openpyxl`).
-Nó lo toàn bộ phần dựng Excel, style, data validation, chống trùng TC ID và bộ kiểm tra thuật ngữ.
-
-Generator của từng màn chỉ còn 3 khối CONFIG:
+**Dùng `assets/tc_chuan.py` → `build_chuan()`** (bọc engine chung `assets/tc_engine.py` rồi chỉnh đúng khuôn tab Quốc gia).
+KHÔNG gọi `tc_engine.build` trực tiếp cho màn mới (sẽ ra khuôn cũ). Generator của từng màn chỉ còn 2 khối CONFIG:
 
 ```python
 import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                "..", "..", "..", ".claude", "skills",
-                                "testcase-documenter", "assets"))
-from tc_engine import build
+sys.path.insert(0, r"<đường dẫn tới>\.claude\skills\testcase-documenter\assets")
+from tc_chuan import build_chuan
 
 DESCRIPTION_BLOCK = [...]   # đúng 9 mục, engine assert
-ROLE_TCS = [...]            # (hậu tố, chức năng, priority, tiền điều kiện, bước, test data, expected)
-SECTIONS = [...]            # (số La Mã, tên section, [tc...])
+SECTIONS = [...]            # (số La Mã, TÊN NHÓM CHUẨN, [(stt, chức năng, priority, tiền điều kiện, bước, test data, expected)...])
+                            # phân quyền = nhóm "PHÂN QUYỀN" cuối cùng, KHÔNG dùng ROLE_TCS nữa
 
-build(output_file=..., sheet_name="Trang tính1", feature_name=..., module_name=...,
-      description_block=DESCRIPTION_BLOCK, role_tcs=ROLE_TCS, sections=SECTIONS)
+build_chuan(output_file=..., sheet_name="Trang tính1", feature_name=..., module_name=...,
+            description_block=DESCRIPTION_BLOCK, sections=SECTIONS, loai="danh_muc" | "phieu" | "bao_cao")
 ```
 
-`build()` tự in kết quả bộ kiểm tra thuật ngữ, tổng TC và tỉ lệ P0 — đọc dòng in ra trước khi báo done.
+`build_chuan()` tự in bộ kiểm tra thuật ngữ, tổng TC, tỉ lệ P0 và kết quả `check_tc` (phải "DAT", 0 lỗi) — đọc trước khi báo
+done. Kiểm lại 1 file bất kỳ: `python assets/check_tc.py <file.xlsx> <loai>`.
+
+Đẩy lên file Drive "Testcase chuyển đổi" (1 file nhiều tab + tab "Tổng hợp"): file đó là .xlsx thật → chèn/thay tab bằng Excel COM,
+script mẫu `.plans/gop-db/danh-muc-kho/docs/chen_tab_testcase.ps1` (`-Replace` để thay tab cũ, giữ tên/vị trí + trỏ lại Tổng hợp).
 
 *(`assets/gen_testcase_mau.py` là bản đầy đủ một file, giữ lại để tham chiếu cách dựng; màn mới
 nên dùng `tc_engine.py`.)*
@@ -355,16 +364,17 @@ except Exception: pass
 - [ ] Mục 2/3: liệt kê **từng trạng thái / điều kiện cụ thể**
 - [ ] Mục 7: liệt kê **tên quyền tiếng Việt** đúng như trong seeder
 - [ ] Mục 9: đã ghi các **bẫy dễ sai nhất** của màn
-- [ ] Test Summary: 2 khối DNS + TP, range thống nhất
+- [ ] Test Summary: 2 khối DNS + TP, range thống nhất + dòng 16 "Tổng số testcase"
 - [ ] **Có dòng header 17 cột ở row 17** (file mẫu thiếu — đừng quên)
-- [ ] (Nếu phân quyền) Section `TC-ROLE-XX` đứng đầu, cover **mọi tên quyền** + TC bypass giao diện
-- [ ] Section nghiệp vụ đánh **La mã**, tên section bằng ngôn ngữ nghiệp vụ
+- [ ] **`check_tc.py` báo 0 lỗi**: nhóm đúng tên + thứ tự chuẩn, La Mã liên tục, mã `TC_NN.NNN`, A/B chỉ ở case đầu nhóm
+- [ ] (Nếu phân quyền) nhóm **PHÂN QUYỀN đứng CUỐI**, cover **mọi tên quyền** + ẩn nút + URL trực tiếp + phạm vi dữ liệu
+- [ ] **Đối chiếu checklist `assets/CHECKLIST_TC_SRS.xlsx`**: mỗi dòng áp dụng được có ≥ 1 case
 - [ ] **Tiền điều kiện có số liệu cụ thể**
 - [ ] **Test Data viết bằng nhãn màn hình**, không phải tên field
 - [ ] **Expected Result kiểm chứng được**, bẫy ghi bằng chữ (`Lưu ý:` / viết hoa từ khoá)
 - [ ] **KHÔNG có emoji/icon trong bất kỳ ô nào** (`⚠️ ✅ ❌ 🔒` …)
 - [ ] **Ô nhiều ý đã xuống dòng thật** ở cả 4 cột Tiền điều kiện / Bước thực hiện / Test Data / Expected Result
-- [ ] K/L/M default `Not Executed` + dropdown; O/P/Q để trống + dropdown
+- [ ] J + K/L/M + O/P/Q để TRỐNG (có dropdown) — DNS/TP tự điền khi chạy test, KHÔNG điền sẵn "Passed"
 - [ ] P0 ≥ 40% tổng TC
 - [ ] **Có TC cho ĐỦ mọi lối vào của màn** (mỗi `?type=` / `?permission=` một bộ TC), gồm cả giá trị lạ và tài khoản thiếu quyền
 - [ ] Mỗi business rule có ≥ 1 TC
@@ -377,7 +387,7 @@ except Exception: pass
 - Mỗi business rule PHẢI có ≥ 1 test case
 - Số lượng tối thiểu: 30 TC (feature nhỏ), 60–100 (trung), 100+ (lớn).
   Tham chiếu: màn danh mục 1 bảng + 1 modal ra ~139 TC
-- Section trống → vẫn ghi tên section + 1 dòng "Không áp dụng cho feature này"
+- Nhóm màn không có (vd không có Import, không có Khóa) → BỎ hẳn nhóm đó (như tab Quốc gia), không ghi dòng "Không áp dụng"
 
 ## Không được
 
@@ -397,7 +407,9 @@ Tất cả đều nằm **trong repo** — không phụ thuộc máy cá nhân.
 
 | Mục đích | File |
 |---------|------|
-| **Form mẫu (đóng gói trong skill)** | `.claude/skills/testcase-documenter/assets/TC_MAU.xlsx` |
-| **Generator mẫu (đóng gói trong skill)** | `.claude/skills/testcase-documenter/assets/gen_testcase_mau.py` |
-| **Bản dựng đúng chuẩn để đối chiếu** | `.plans/gop-db/customer-care-cost-catalog/testcase.xlsx` |
+| **CHUẨN CHUNG — tab "13. DM quốc gia"** | `.claude/skills/testcase-documenter/assets/TC_MAU_QUOC_GIA.xlsx` |
+| **Checklist case cần kiểm tra (tab Testcase) + nội dung SRS (tab SRS)** | `.claude/skills/testcase-documenter/assets/CHECKLIST_TC_SRS.xlsx` |
+| **Hàm sinh đúng khuôn + bộ kiểm** | `assets/tc_chuan.py` (`build_chuan`) · `assets/check_tc.py` |
+| Form mẫu cũ (bomlist — chỉ tham khảo style ô) | `.claude/skills/testcase-documenter/assets/TC_MAU.xlsx` |
+| Generator mẫu cũ (khuôn cũ, KHÔNG dùng cho màn mới) | `.claude/skills/testcase-documenter/assets/gen_testcase_mau.py` |
 | Mẫu Excel báo cáo nhiều quyền | `hrm-api/database/files/Testcase _baocao.xlsx` |
