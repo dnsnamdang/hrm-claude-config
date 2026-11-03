@@ -328,3 +328,30 @@ Blocked: mục 5 cần xác nhận sửa component chung.
   bị giữ; tỉnh dự phòng lấy đúng từ YC (Hà Nội) và HĐNT (Đà Nẵng), chi tiết phiếu 67 hiện tỉnh. Playwright: 2 link đúng URL, bấm link không
   chọn dòng, nút 32px 1 dòng, chọn đơn → Tỉnh/TP có giá trị. (Tạm gán `buy_contract2_id`=999 cho đơn mẫu TEST-DBH-001 để test link, đã trả về null.)
   Local không có HĐNT / YC bảo hiểm thật — chưa thử với đơn 111 của dev.
+
+## Tài liệu SRS / HDSD / Testcase (03/11/2026) @khoipv
+Bộ tài liệu theo chuẩn form Danh mục quốc gia + checklist tester "Mẫu tài liệu.xlsx"; khuôn cấu trúc `../finance-addition-accounting-request/`.
+- [x] Đọc code FE (`pages/finance/buy-service-accounting-requests/**`, CommentModal, AttachmentSection, menu sale-hub / finance) + BE
+  (Entity, Service, Controller, FormRequest, NotifyService, BuyServiceAccountingService đổi trạng thái phiếu yêu cầu, quyền 1699–1702).
+- [x] Chụp ảnh dev-hrm (DNS Admin, chỉ đọc) — `ychtmdv_shots/_capture/capture.js`: 30 ảnh màn + 72 icon (đã trim_icon, `--dry` 0/72).
+  Sửa / Xóa / màn Sửa / hộp Xác nhận xóa chụp trên phiếu Không duyệt TPE.YCHTMDV.2026000045 với cờ is_can_edit / is_can_delete bật
+  tạm trên trình duyệt (không ghi dữ liệu). Không bấm lưu / duyệt / xóa nào (script log 0 yêu cầu ghi).
+- [x] `gen_srs.py` → `SRS - Yêu cầu hạch toán mua dịch vụ.docx`: 14 chức năng, 125 trang, selfcheck khớp mẫu.
+  Metrics: ui=14.4, ev=5.5, evch=1658, intro=1989, noBefore=0, noDuring=0.
+- [x] `gen_hdsd.py` → `HDSD_Yeu cau hach toan mua dich vu.docx`: 12 PHẦN, 22 trang.
+- [x] `gen_testcase.py` → `testcase.xlsx`: 287 TC, P0 122 (43%), 15 section (I–XIII theo checklist, bỏ Khóa / Import; XIV In, XV Chọn
+  hợp đồng / đơn bảo hiểm), 1 nhóm Phân quyền, Cài đặt bộ lọc trong nhóm II.
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 258 có TC / 66 N/A (Khóa / Mở khóa, Import); SRS 132 có mục / 31 N/A.
+- Ghi nhận lệch code ↔ brief / checklist (không sửa code): menu không còn lối chờ duyệt `?type=for-approve` (đã bỏ 12/10); nút Hạch toán mở
+  màn Tạo phiếu hạch toán mua dịch vụ của HRM (không mở ERP); hạch toán xong không có thông báo cho người tạo; Xóa ở danh sách chỉ mở màn
+  chi tiết; Ghi chú duyệt FE không chặn độ dài, BE chặn 255.
+
+### Checkpoint — 2026-11-03
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Yêu cầu hạch toán mua dịch vụ.
+Đang làm dở: không.
+Bước tiếp theo: user xem lại tài liệu, đẩy Drive khi duyệt.
+Blocked:
+
+### Sửa Phần 5 SRS theo khuôn Drive (03/11/2026) @khoipv
+- [x] Phần 5 đổi về khuôn các SRS phiếu đã duyệt trên Drive (folder SRS chuyển đổi — Phiếu thu tiền, Phiếu báo có, Yêu cầu xuất giữ…): tiêu đề "Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu", 1 câu dẫn + 1 bảng 4 cột STT | Nhóm | Màn hình | Đường dẫn (giải thích trong ngoặc ở cột Màn hình, đường dẫn "Phân hệ -> Nhóm"); bỏ bảng 7 cột + bảng 2
+- [x] gen_checklist: dòng 161 → N/A (màn không có Khóa / Mở khóa), dòng 163 ghi chú lại; sinh lại SRS (selfcheck khớp bản mẫu) + Đối chiếu checklist

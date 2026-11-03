@@ -88,3 +88,24 @@ Màn chi tiết phiếu BH (dev khác làm) mở từ tab BH của màn chờ �
       không có nét 500 ⇒ hiện chữ thường. Scoped `.footer-html ::v-deep strong, b { font-weight: 700 }`
 - [x] Verify: vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt
 - Ghi chú (chưa sửa, QA chưa báo): điều khoản còn nguyên chuỗi `{{VAT_NOTE}}` chưa thay — cả ERP cũng hiện vậy
+
+## Redmine #11988 — Xuất Excel các tab · In tab Lắp đặt bàn giao (2026-11-03, @khoipv)
+Mục 1-2 của #11988 (mục 3-5 là form Tạo PGV → ghi ở `.plans/gop-db/phieu-giao-viec/plan.md`).
+- [x] Mục 1 — Xuất Excel 5 tab: banner (ảnh `info-tpe.jpg` HTML reader chèn đúng 1600px gốc) rộng hơn bảng → giãn banner bằng
+      đúng bề rộng bảng. Lớp con `Modules/Assign/Exports/WaitingAssignTaskExport` (khuôn `WarehouseCatalogExport::stretchBanner`),
+      KHÔNG sửa `DynamicExport` dùng chung
+- [x] Mục 2 — Tab Lắp đặt bàn giao › In: đang mở tab ERP `assembly_requests/{id}/print` → popup `$printPreview({ url })`.
+      BE `GET assign/waiting-assign-tasks/assembly/{id}/print-data` port ERP `AssemblyRequestController@print` (mẫu 368,
+      letterhead theo `company_id` của phiếu YC)
+- [x] Verify: `php -l` sạch · HTTP kernel (DNS Admin): print-data phiếu 1441 → 200, đủ biến + letterhead công ty 1; id không có → 404;
+      export assembly / contract / warranty → 200, ảnh banner = đúng bề rộng bảng (1386 / 1849 / 1246 px), dòng 1 nới theo ảnh.
+      FE vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt (user tự mở)
+- Ghi chú: Xuất Excel 1 phiếu (icon cạnh nút In ở tab Lắp đặt) VẪN mở ERP — #11988 chỉ nêu In. `DynamicExport` dùng chung (82 màn)
+      cùng lỗi banner; chưa sửa lớp cha (cần hỏi)
+
+## Check — Phiếu chờ giao việc có trạng thái "Đang thực hiện" không? (2026-11-03, @khoipv)
+- [x] Chỉ điều tra, không sửa code. Kết luận: danh sách KHÔNG BAO GIỜ ra dòng "Đang thực hiện" — mỗi tab BE lọc cứng 1 trạng thái
+      (`WaitingAssignTaskService`): HĐ / PL bổ sung = 3 "Có hiệu lực" · Phiếu BH = 2 "Đã duyệt" (+ `is_assign=1`) ·
+      Lắp đặt / Giao việc khác = 1 "Chờ giao việc"
+- Ghi chú: ô lọc Trạng thái tab Phiếu BH vẫn liệt kê đủ `STATUSES_WARRANTY` (có 3 "Đang thực hiện") → chọn là 0 dòng; tab HĐ / PL /
+      Giao việc khác tương tự (dropdown đủ trạng thái, chỉ 1 giá trị có dữ liệu). Chưa sửa — chờ user chốt

@@ -163,3 +163,34 @@ Blocked:
 - [ ] (ghi chú cũ) Nút Nhập kết quả: KHÔNG sửa ở đây — nút đang trỏ ERP `wr_import_results/create`; feature phieu-nhap-ket-qua T13 (đang làm
       dở, chưa commit) chuyển nút sang màn HRM `/customer-care/wr-import-results/create` — sửa cùng `index.vue`, tránh đè
 - [x] Verify: `php -l` · vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt
+
+## Redmine #11988 — Form Tạo phiếu giao việc: placeholder · số liệu lệch ERP · dấu * · in đậm Mã hàng (2026-11-03, @khoipv)
+Mục 3-5 của #11988 (mục 1-2 ở `.plans/gop-db/phieu-cho-giao-viec/plan.md`).
+- [x] Mục 3 — Placeholder 7 ô số còn thiếu (`WrAssignTaskNumberCell`): SL bàn giao ("Nhập SL bàn giao"), SL thiết bị / dịch vụ /
+      vật tư (bảng BH-SC), SL gói + hàng bảo dưỡng, SL vật tư bán thêm ("Nhập số lượng"). Ô chọn ngày / ghi chú đã có sẵn
+- [x] Mục 4 — Định mức công hiện 1.3 / 0.02, ERP 1.302 / 0.019 → hiện đủ số lẻ như ERP; thêm (*) đỏ: Phiếu YC lắp đặt bàn giao,
+      Hợp đồng, Khách hàng, Người liên hệ, cột Hàng hóa (như ERP)
+- [x] Mục 5 — In đậm nhãn "Mã hàng:" dưới tên hàng (ERP `<b>Mã hàng:</b>`)
+      → Định mức công bảng lắp đặt dùng `fmtRaw` mới (số thô, ERP không qua filter); dấu * 4 ô đầu form ĐÃ có từ commit
+      `a9100f111` (02/11 16:52 — sau lúc QA chụp 16:01), chỉ cần deploy; thêm * cột "Hàng hóa" (lắp đặt) + "Tên vật tư" (vật tư bán thêm) như ERP
+      → "Mã hàng:" in đậm ở bảng lắp đặt, bảo dưỡng, khối tổng hợp
+- [x] Verify: vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt
+- Ghi chú (chưa sửa, QA chưa báo): ĐM công bảng BH / sửa chữa ERP dùng filter `number` (3 số lẻ: 0.019), HRM `fmt` 2 số lẻ (0.02)
+
+## Redmine #11984 — PGV thiếu lọc Công ty/Phòng ban · placeholder · tạo xong về danh sách · validate từ chối tiếp nhận (2026-11-03, @khoipv)
+- [x] Bug 1 — Danh sách PGV thiếu bộ lọc Công ty, Phòng ban dù tài khoản có quyền (ERP KHÔNG có ô này — QA yêu cầu thêm):
+      BE `WrAssignTaskService::meta()` trả `scope` {is_all_company, is_company, is_department} theo 3 quyền xem; `filteredQuery()`
+      lọc thêm `company_id` / `department_id` (trong phạm vi `applyScope`, không nới quyền — in / xuất dùng chung query).
+      FE `index.vue` ô `org` (`V2BaseCompanyDepartmentFilter`, khuôn warranty-repair-handle-requests) chỉ ở lối vào `?type=all`
+      khi có ≥1 quyền; `scopeFlags` mặc định false (fail-closed); `inputCount` 2/1 theo is_all_company
+- [x] Bug 2 — Tạo PGV từ tab Hợp đồng: placeholder các ô nhập (SL giao lần này bảng sửa chữa) — đã làm trong #11988 mục 3
+- [x] Bug 3 — Tạo PGV xong quay về màn DANH SÁCH `?type=all` như ERP `create.blade.php` (trước: mở chi tiết) — `WrAssignTaskForm.vue` save()
+- [x] Bug 4 — Popup Từ chối tiếp nhận xử lý (màn chờ, tab HĐ + PL bổ sung): `$confirm` thêm `requiredInput` → dấu * + lỗi đỏ dưới ô,
+      popup không đóng khi trống (trước: đóng popup rồi toast). Áp luôn popup Hủy duyệt HĐ cùng màn (cùng lỗi)
+- [x] Verify: `php -l` · HTTP kernel (DNS Admin): meta trả scope đủ 3 cờ; type=all 7745 · company 1 = 7231 · + phòng 51 = 2425
+      — khớp đếm DB. FE vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt
+
+## Redmine #11991 — Danh sách PGV: giãn cột Số hợp đồng, dài thì xuống dòng (2026-11-03, @khoipv)
+- [x] `index.vue` `allColumns()`: cột `contract_code` 200px → 260px + `cellClass: 'text-wrap'` (V2BaseDataTable: `white-space: normal`
+      + `overflow-wrap: anywhere` — số HĐ nối bằng `_` không có khoảng trắng nên phải bẻ giữa chữ). Link HĐ vẫn giữ nguyên
+- [x] Verify: vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt

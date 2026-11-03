@@ -19,6 +19,13 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Biên bản bàn giao nghiệm thu (ERP → HRM) — ĐANG LÀM (2026-11-03, @khoipv)
+
+Port màn ERP `handoverAcceptanceRecord.index?type=all` (Giao việc › Kết quả công việc) + lối phụ `?type=for-business-staff` (Tra cứu › Thông báo). Chốt: 2 nguồn HĐ (hãng + HRM), theo cấp y ERP (4 quyền type 4), nghiệp vụ y ERP, In danh sách + In biên bản.
+
+**Checkpoint 03/11:** BE (`Modules/CustomerCare` — entity, 4 service, request, controller, route) + FE (`pages/assign/handover-acceptance-records`) xong; smoke test API (rollback) + compile FE pass. Còn: user bấm thử trình duyệt, `permission:sync` thật, quyết vá ERP đọc biên bản gắn HĐ HRM.
+Tài liệu: `.plans/gop-db/bien-ban-ban-giao-nghiem-thu/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-03-bien-ban-ban-giao-nghiem-thu-design.md`.
+
 ## Phiếu nhập kết quả (ERP → HRM) — ĐANG LÀM (2026-11-02, @khoipv)
 
 Port màn ERP `WrImportResults.index?type=all` (CSKH › Giao việc › Phiếu nhập kết quả). Trọn bộ 1 lần, nghiệp vụ y hệt ERP (kể cả lỗi), Duyệt KQ link ERP, ảnh S3. Code xong T0–T14 (02/11), chưa commit.

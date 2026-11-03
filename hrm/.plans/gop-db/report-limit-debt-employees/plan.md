@@ -159,3 +159,23 @@ Dòng này do `V2BaseDataTable` (dùng chung) in khi 0 bản ghi; bảng đã c�
 - [x] `components/V2BaseDataTable.vue`: `itemLabel` rỗng ⇒ không in dòng "Không có … nào." (các màn khác giữ nguyên; 4 popup đang truyền `item-label=""` trước in lỗi "Không có  nào." nay để trống)
 - [x] `pages/finance/report-limit-debt-employees/index.vue`: `itemLabel=""`
 - [x] Verify: compile template
+
+## Tài liệu SRS / HDSD / Testcase (03/11/2026) @khoipv
+- [x] Đọc lại code hiện hành (sau #11724–#11730, #11928): `index.vue`, `DebtByCustomerModal.vue`, `ReportLimitDebtEmployeeService`, `ReportLimitDebtEmployeeController`, `V2BaseCompanyDepartmentFilter`, `V2BaseSmartFilterPanel`, `listExportFile.js` (allowEmpty), `EmployeeForm.vue` + `Create/UpdateEmployeeRequest`, menu `finance.js`
+- [x] Chụp ảnh dev-hrm (DNS Admin, chỉ đọc — không Lưu cấu hình cột / bộ lọc, form Tài khoản nhân viên chỉ mở để chụp ô hạn mức rồi rời trang): `bchmcnnv_shots/` (15 ảnh màn + 36 icon + uml), script `bchmcnnv_shots/_capture/{capture.js, api.js}`. Dev có 2 NV có hạn mức (DNS01 200, 10410006 6,770,777), công nợ 0 → ảnh popup là bảng rỗng; local cũng không có NV vừa có hạn mức vừa có công nợ (không tự ghi dữ liệu)
+- [x] `gen_srs.py` → `SRS - Báo cáo hạn mức công nợ nhân viên.docx`: 6 chức năng, bảng Cách lấy dữ liệu (2.1.5 — chữ ⓘ nguyên văn, 2.2.5, 2.6.8), bảng popup 2.1.6, Mục đích thiết kế popup + biến thể (2.6), Phần 4 BR-01…BR-15, Phần 5; selfcheck khớp bản mẫu, 60 trang
+- [x] `gen_hdsd.py` → `HDSD_Bao cao han muc cong no nhan vien.docx`: 5 phần, 10 trang
+- [x] `gen_testcase.py` → `testcase.xlsx`: 139 TC, P0 59 (42%), 7 nhóm (I Hiển thị … VII Phân quyền), role_tcs=[]
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 115 có TC / 209 N/A; SRS 91 có mục / 72 N/A
+- Số liệu metrics SRS: ui=13.7 · ev=6.0 · evch=1600 · intro=2183 · noBefore=0 · noDuring=0
+- Lệch phát hiện (báo user, không sửa): chữ ⓘ cột "Tổng công nợ khách hàng hiện tại" ghi "Bằng tổng cột Công nợ của popup theo khách hàng" — sai từ #11729 (popup cộng dồn, cộng các dòng không ra tổng); rời màn mất bộ lọc (F5 trong 10 phút thì giữ); ô tìm nhanh popup phân biệt dấu (ô tìm nhanh bảng chính thì không)
+
+### Checkpoint — 2026-11-03
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Báo cáo hạn mức công nợ nhân viên
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết định sửa chữ ⓘ cột Tổng công nợ; chụp lại ảnh popup có dữ liệu khi dev có NV vừa có hạn mức vừa có công nợ
+Blocked: chưa có dữ liệu (dev / local) cho ảnh popup có số liệu
+
+### Sửa Phần 5 SRS theo khuôn Drive (03/11/2026) @khoipv
+- [x] Phần 5 đổi về khuôn các SRS phiếu đã duyệt trên Drive (folder SRS chuyển đổi — Phiếu thu tiền, Phiếu báo có, Yêu cầu xuất giữ…): tiêu đề "Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu", 1 câu dẫn + 1 bảng 4 cột STT | Nhóm | Màn hình | Đường dẫn (giải thích trong ngoặc ở cột Màn hình, đường dẫn "Phân hệ -> Nhóm"); bỏ bảng 7 cột + bảng 2
+- [x] gen_checklist: dòng 161 → N/A (màn không có Khóa / Mở khóa), dòng 163 ghi chú lại; sinh lại SRS (selfcheck khớp bản mẫu) + Đối chiếu checklist

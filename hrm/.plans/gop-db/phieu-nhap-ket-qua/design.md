@@ -20,3 +20,10 @@ Port màn ERP `WrImportResults` (`/admin/customer-care/wr_import_results?type=al
   source/edit-data, store/update (+ATP 6 nhánh), validate serial + phiếu xuất, port `getListProductOfCustomer`, print/export, thông báo;
   route `/v1/customer-care/wr-import-results`.
 - FE `pages/customer-care/wr-import-results/` (index, create, `_id/index`, `_id/edit`) + `WrImportResultForm.vue` + bảng con; menu; nối PGV.
+
+## Phase 5 — Duyệt kết quả (user chốt 03/11/2026)
+- Không màn riêng: trang con `/customer-care/wr-import-results/{id}/approve` (chế độ duyệt của form PNKQ), nút "Duyệt kết quả" bỏ link ERP.
+- Ghi y ERP: PDKQ = `wr_assign_tasks.parent_id`, bảng con PGV; 3 nút Lưu / Duyệt / Không duyệt; 1 cấp duyệt.
+- Sửa 5 lỗi ERP làm sai dữ liệu, các quirk khác giữ; bỏ 3 ô ghi chú không lưu; chi tiết PNKQ thêm khối "Kết quả duyệt" chỉ đọc.
+- Không port BKS / KT kho trả về / xoá PDKQ / danh sách PDKQ + chờ hạch toán.
+- Chi tiết: spec mục 11, khảo sát `khao-sat-C-duyet-ket-qua.md`.

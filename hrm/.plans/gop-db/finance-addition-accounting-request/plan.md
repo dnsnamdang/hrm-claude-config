@@ -1618,3 +1618,21 @@ Blocked:
 - [x] Cập nhật mã TC trong gen_checklist.py → Đối chiếu checklist.xlsx (255 có TC / 69 N/A, không đổi); tổng 325 TC, P0 42%
 - [x] User duyệt; đã áp cùng cách cho borrow-export / delivery / adjust-dept. Thêm tiền tố "Cài đặt bộ lọc:" cho 4 case ở II
 
+
+### Fix Redmine #11989 — phiếu đã bị xóa ở phiên khác báo "Item Not Found!" (03/11/2026) @khoipv
+Nguyên nhân: mọi `findOrFail` hụt rơi vào Handler chung → JSON 404 "Item Not Found!"; FE màn này in thẳng `data.message`
+(xóa / gửi duyệt / từ chối / lưu sửa / gỡ file / in), còn chỗ nạp phiếu + xuất Excel in câu "Không tìm thấy dữ liệu" / "Lỗi khi xuất Excel".
+- [x] BE: `AdditionAccountingRequestService::findOrDeleted()` — hụt id ném 404 "Phiếu đã bị xóa"; thay 6 chỗ `findOrFail` (controller + `findForShow`)
+- [x] FE chi tiết `_id/index.vue`: nạp phiếu 404 → hiện câu BE; gửi duyệt / từ chối / xóa 404 → về danh sách; xuất Excel 404 → "Phiếu đã bị xóa"
+- [x] FE form (màn Sửa): nạp 404 → câu BE; lưu 404 → về danh sách
+- [x] FE danh sách: xóa 404 → nạp lại bảng; xuất Excel 1 phiếu 404 → "Phiếu đã bị xóa" + nạp lại
+- [x] Verify: php -l + smoke API id không tồn tại; compile FE
+- Kết quả smoke (HTTP kernel, id không tồn tại): GET show / DELETE / POST change-status / GET print-data / GET export đều 404
+  "Phiếu đã bị xóa"; phiếu còn tồn tại vẫn 200. 3 file Vue compile sạch. Chưa mở trình duyệt.
+- Lưu ý: PUT sửa chạy FormRequest trước controller -> payload sai thì vẫn ra 422 trước 404 (payload đủ thì ra 404).
+
+### Checkpoint — 2026-11-03
+Vừa hoàn thành: fix #11989 (BE findOrDeleted + FE chi tiết / form sửa / danh sách)
+Đang làm dở: không
+Bước tiếp theo: user mở 2 tab test thực tế (tab A xóa, tab B bấm Gửi duyệt / Xóa / Lưu / Xuất Excel)
+Blocked:

@@ -58,3 +58,23 @@ Blocked:
 - [x] BE: `GET finance/report-limit-debts/customers?q=` → `ReportLimitDebtService::searchCustomers()` y ERP (tên / SĐT / mã, mới tạo trước, < 3 ký tự lấy 20); khác ERP: ≥ 3 ký tự chặn 50 (ERP trả hết — "CÔNG TY" ~11.000 KH)
 - [x] FE `index.vue` `searchCustomers()` đổi url sang endpoint mới
   - Verify: php -l ×3, compile FE OK; HTTP kernel: "BÔNG" 8 KH (gồm KH cá nhân 29TPHXCH-9), "CÔNG TY" 50, lọc báo cáo theo customer_id → đúng 1 dòng. Chưa mở trình duyệt
+
+## Tài liệu SRS / HDSD / Testcase (03/11/2026) @khoipv
+- [x] Đọc lại code hiện hành (sau #11766, #11776, #11777): `index.vue`, `DebtByEmployeeModal.vue`, `ReportLimitDebtService`, `ReportLimitDebtController`, `CustomerDebtAggregator`, `listExportFile.js`, `filterStateMixin`, menu `finance.js`
+- [x] Chụp ảnh dev-hrm (DNS Admin, chỉ đọc — không bấm Lưu cấu hình cột / bộ lọc): `bchmcn_shots/` (12 ảnh màn + 29 icon + uml), script `bchmcn_shots/_capture/{capture.js, api.js}`
+- [x] `gen_srs.py` → `SRS - Báo cáo hạn mức công nợ khách hàng.docx`: 6 chức năng, bảng Cách lấy dữ liệu (2.1.5, 2.2.5, 2.6.8), bảng popup 2.1.6, Mục đích thiết kế popup + biến thể (2.6), Phần 4 BR-01…BR-14, Phần 5; selfcheck khớp bản mẫu, 55 trang
+- [x] `gen_hdsd.py` → `HDSD_Bao cao han muc cong no khach hang.docx`: 5 phần, 12 trang
+- [x] `gen_testcase.py` → `testcase.xlsx`: 132 TC, P0 56 (42%), 7 nhóm (I Hiển thị … VII Phân quyền), role_tcs=[]
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 115 có TC / 209 N/A; SRS 91 có mục / 72 N/A
+- Số liệu metrics SRS: ui=13.2 · ev=5.5 · evch=1472 · intro=2070 · noBefore=0 · noDuring=0
+- Lệch checklist (ghi theo code): xuất rỗng không tạo file; rời màn mất bộ lọc (F5 trong 10 phút thì giữ); Số dư nợ luôn 0 + 3 chỉ tiêu luôn rỗng (giữ y ERP #11777); Tổng công nợ popup ≠ cột Số dư nợ
+
+### Checkpoint — 2026-11-03
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Báo cáo hạn mức công nợ khách hàng
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu, quyết định có đẩy Drive không
+Blocked:
+
+### Sửa Phần 5 SRS theo khuôn Drive (03/11/2026) @khoipv
+- [x] Phần 5 đổi về khuôn các SRS phiếu đã duyệt trên Drive (folder SRS chuyển đổi — Phiếu thu tiền, Phiếu báo có, Yêu cầu xuất giữ…): tiêu đề "Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu", 1 câu dẫn + 1 bảng 4 cột STT | Nhóm | Màn hình | Đường dẫn (giải thích trong ngoặc ở cột Màn hình, đường dẫn "Phân hệ -> Nhóm"); bỏ bảng 7 cột + bảng 2
+- [x] gen_checklist: dòng 161 → N/A (màn không có Khóa / Mở khóa), dòng 163 ghi chú lại; sinh lại SRS (selfcheck khớp bản mẫu) + Đối chiếu checklist
