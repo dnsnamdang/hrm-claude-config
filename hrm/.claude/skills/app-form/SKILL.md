@@ -23,7 +23,7 @@ BottomActionBar [ Hủy ][ Lưu ]     ← nút trắng trái, nút chính phải
 
 - Ô: `MeetingTextField` / `MeetingSelectRow` (cao 44, bo 8, viền `AppPalette.border`, **nền trắng**). Khối tự dựng
   (danh sách bước…) cũng nền trắng, cao dòng 48, chữ căn giữa dọc (từng lệch vì đệm trên 2 – dưới 12).
-- Nút gạt 2–3 lựa chọn: `MeetingSegmented`. Ngày / giờ: ô chỉ đọc mở date/time picker, hiện `dd/mm/yyyy`, `hh:mm`.
+- Nút gạt 2–3 lựa chọn: `MeetingSegmented`. Ngày / giờ: ô chỉ đọc mở `showAppDatePicker` / `showAppTimePicker` / `showAppDateTimePicker` (`custom_view/app_date_picker.dart`), hiện `dd/mm/yyyy`, `hh:mm`.
 - Form dài (> 8 trường): chia khối `MeetingSection` ①②③ như Meeting, khối có lỗi tự mở.
 
 ## 2. Bàn phím (user báo 29/10/2026: "nhập xong không tắt được bàn phím để bấm Lưu")

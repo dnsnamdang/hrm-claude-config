@@ -63,6 +63,8 @@ Meeting — dựng cho Meeting trước, Việc của tôi đã dùng lại. Mà
 | Ô gõ (khuôn thiết kế C/Field) | `MeetingTextField(controller:, hint:, label:, required:, maxLines:, error:)` |
 | Ô chọn (bấm mở màn / sheet chọn) | `MeetingSelectRow(label:, placeholder:, value:, required:, error:, onTap:)` |
 | Nhãn + lỗi dưới ô (khi tự dựng ô) | `MeetingFieldLabel` · `MeetingFieldError` |
+| Chọn ngày / giờ / ngày-giờ | `showAppDatePicker(context, initial:, first:, last:, title:)` · `showAppTimePicker(context, initial:, title:)` · `showAppDateTimePicker(...)` (`custom_view/app_date_picker.dart`) — bottom sheet lịch tháng màu phân hệ + ngày âm, nút ✕ Hủy · ✓ Chọn (chốt 03/11/2026). KHÔNG dùng `showDatePicker` / `showTimePicker` Material ("HUỶ / OK" xanh dương) hay `DatePicker.show*` (flutter_datetime_picker_plus) ở màn mới |
+| Công tắc bật / tắt (1 dòng cài đặt, 1 tuỳ chọn) | `AppSwitch(value:, onChanged:, color:)` (`custom_view/app_switch.dart`) — CÙNG kiểu iOS trên cả Android; KHÔNG dùng `Switch` / `Switch.adaptive` (Android ra núm xanh dương theme) |
 | Nút gạt 2–3 lựa chọn | `MeetingSegmented(options: [(value, label, icon)], value:, onChanged:)` — nền trắng TRƯỢT ngang |
 | Khối gập đánh số ①②③ | `MeetingSection` |
 | Chọn 1 nhân sự (toàn trang, tìm máy chủ) | `pickEmployee()` → `ApiNvData?` (`ui/chon_nv/employee_picker.dart`) |
