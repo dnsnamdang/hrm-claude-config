@@ -61,3 +61,42 @@ Dữ liệu thật: con BOM 48/57 đã có `erp_product_id`, 9 con THÔ chưa; c
 
 ## Checkpoint
 Đã duyệt hướng A + B. Vướng manufacture_id NOT NULL đã giải bằng kế thừa-từ-cha + chặn-gửi ép rà soát. Bắt đầu code.
+
+---
+
+# Item 4 — Bổ sung 2 cột hiển thị nguồn gốc & trạng thái giá (THUẦN HIỂN THỊ)
+
+## Yêu cầu
+Thêm 2 cột vào bảng "Hàng hoá hỏi giá" (`/sale/price-asking-requests/add`):
+1. **Nguồn gốc hàng tạm**: "Từ Báo giá - <trạng thái: Trúng thầu/Chờ phê duyệt>: BG-xxxxxx" HOẶC "Từ BOM dự án".
+2. **Trạng thái dữ liệu giá** (badge): "Đã có sẵn giá từ BG" (xanh #16A34A — CHỈ khi báo giá **Trúng thầu** AND có giá > 0) HOẶC "Hàng tạm mới - Cần tính giá" (cam #D97706).
+
+## User chốt (AskUserQuestion, trước compaction)
+- **Phạm vi = Thuần hiển thị**: KHÔNG mang giá từ BG vào phiếu; chỉ hiển thị nhãn + badge.
+- **"Lập từ" = Thay bằng cột mới**: bỏ dòng ghi chú `temp-from-note` cũ, thay bằng 2 cột mới.
+- **Dòng con = Chỉ dòng cha**: con (ERP lẫn tạm) để trống 2 cột mới; dòng hàng ERP (đang kinh doanh) cũng để trống.
+- Giữ nguyên thứ tự ưu tiên BOM-trước-rồi-Báo-giá.
+
+## Logic badge (BE quyết text + màu, FE chỉ hiển thị)
+- `won = quotation.status === Quotation::STATUS_TRUNG_THAU (7)`
+- `hasPrice = won && quoted_price > 0`
+- BOM → luôn "Từ BOM dự án" + badge cam (NEW, chưa có giá).
+- Báo giá: source_text "Từ Báo giá - " + (won ? "Trúng thầu" : "Chờ phê duyệt") + ": " + doc_code; badge = hasPrice ? xanh "Đã có sẵn giá từ BG" : cam "Hàng tạm mới - Cần tính giá".
+
+## Hiện thực
+- BE `PriceAskingProductReader.php`: import `Quotation`; 4 hằng text/màu; `tempSources()` trả `[id => [temp_from, source_text, source_tooltip, price_text, price_color]]` (BOM trước, báo giá phần còn lại); `enrich()` emit `temp_source_text/_tooltip`, `price_data_text/_color`, giữ `temp_from` cũ (shape không đổi).
+- BE `PriceAskingRequestService.php` `lineRow()` (đường show/detail): emit 4 field mới chỉ khi `is_temp`.
+- FE `PriceAskingRequestForm.vue`: +2 `<th>`; bỏ block `temp-from-note`; dòng CHA +2 `<td>` (span text title=tooltip + `V2BaseBadge :color`); dòng con +2 `<td></td>` trống; `colCount` 7/8 → 9/10; CSS `.temp-source-cell`.
+
+## Verify (2026-11-02)
+- **php -l** pass cả 2 file BE. **Zero-regression**: git-stash 2 file BE, chạy `TempProductApiTest` → 6 fail/11 pass GIỐNG HỆT khi có thay đổi ⇒ 6 fail là do bảng `inherited_price_factors` thiếu local (code path khác), không phải từ thay đổi này.
+- **Reflection trên data dev thật**: pid 8310 (quotation Trúng thầu status7, giá>0) → "Từ Báo giá - Trúng thầu: BG-2026-00001" + xanh #16A34A "Đã có sẵn giá từ BG"; pid 30370 (status2) → cam "Chờ phê duyệt"; pid 31913 (BOM) → "Từ BOM dự án" + cam.
+- **Playwright live** (DNS Admin, cty 1, `/add`): chọn BT3D-CH-CUONDAYHOI (hàng tạm, báo giá status 4) + CH-MN-H-CUONDAYHOI (đang kinh doanh). Kết quả đúng:
+  - Hàng tạm: "Từ Báo giá - Chờ phê duyệt: BG-2026-00075" + badge CAM "Hàng tạm mới - Cần tính giá".
+  - Hàng ERP đang kinh doanh: 2 cột mới TRỐNG.
+  - Nhánh xanh "Trúng thầu + Đã có sẵn giá" không hiện được live (3 hàng tạm local đều link báo giá status 4) — đã chứng minh qua reflection.
+
+## Setup phụ (không phải test data)
+- Chạy migration `2026_10_29_000002_create_inherited_price_factors_table.php` trên `erp_hrm_check` local để app không 500 (bảng module chưa migrate local). Là setup hợp lệ, không phải dữ liệu test.
+
+## Trạng thái: XONG hiện thực + verify. CHƯA commit/push (chờ user yêu cầu).
