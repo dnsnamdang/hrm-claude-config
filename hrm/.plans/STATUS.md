@@ -9,7 +9,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 ## Đang làm
 
 - phieu-hach-toan-dich-vu-hdbh → @nguyentrancu97 → .plans/phieu-hach-toan-dich-vu-hdbh/plan.md
-  Trạng thái: **BRAINSTORMING (03/11/2026)** — port Phiếu hạch toán dịch vụ HĐBH (ERP `Sale\ServiceAccountingController`, bảng `service_accounting`) sang HRM. design.md xong, chờ builder-check + user duyệt doc. Phân kỳ: Phase 1 chỉ-đọc → checkpoint số liệu → Phase 2 ghi sổ. Là phiếu #2 đóng luồng YC hạch toán DV HĐBH đã port.
+  Trạng thái: **PHASE 1 CHỈ-ĐỌC XONG (04/11/2026), PHASE 2 GHI SỔ ĐANG LÀM** — port Phiếu hạch toán dịch vụ HĐBH (ERP `Sale\ServiceAccountingController`, bảng `service_accounting`, chỉ contractable FirmContract) sang HRM. Phase 1: list + chi tiết + export + lịch sử + quyền 3 cấp + menu; cost_price gate quyền "Xem giá vốn hàng hoá" (fail-closed); checkpoint 20 phiếu thật ΣNợ=ΣCó → cổng số liệu MỞ. Nhánh `feature/phieu-hach-toan-dich-vu-hdbh-phase1` (hrm-api + hrm-client) **GIỮ NGUYÊN, CHƯA merge/push** (user tự xử lý). Phase 2: tạo từ YC, duyệt sinh bút toán + lật YC→Đã hạch toán, sửa/xóa khi Đang tạo — đang recon dependency (`FirmContractCostService::getDataCostAccounting`, `updateHandoverDate`). Ledger: `progress-ledger.md`.
 
 - app-nhiem-vu-van-de → @cuong61n → .plans/app-nhiem-vu-van-de/plan.md
   Trạng thái: **ĐANG LÀM (30/10/2026)** — màn Nhiệm vụ + Vấn đề trên TPE_APP theo meeting-mobile.pen (đã sửa thiết kế theo skill app-*), BE bổ sung chữ/màu trạng thái ở chi tiết + số bình luận.
@@ -18,6 +18,21 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 
 ## Hoàn thành
+
+- ychg-duyet-khong-can-tinh-gia → @nguyentrancu97 → .plans/ychg-duyet-khong-can-tinh-gia/plan.md
+  Trạng thái: **CODE XONG + TEST + ĐÃ PUSH `develop` (03/11/2026)** — YCHG thêm tùy chọn 3 "Duyệt không cần tính giá" khi PTKD duyệt từng dòng (cả hàng cha + con): status dòng 9 → lúc duyệt phiếu ghi giá danh mục rồi lên 3 Đang kinh doanh, bỏ qua YCTG (XNK) + Phiếu tính giá (KT). TH1 vật tư giá 0; TH2 hàng tạm kế thừa báo giá trúng thầu (ngoại tệ quy đổi tỉ giá hiện tại). Fix final review: nhóm hỗn hợp (dòng no-price + dòng Đồng ý cùng thương hiệu×hãng) làm dòng no-price lọt YCTG bị tính giá đè → cột cờ `price_asking_request_products.no_price` loại khỏi skeleton YCTG (migration `2026_11_03_000001`). 129 test xanh. hrm-api `4473321a7` · hrm-client `468b6e9ae`. Còn: chạy migration server.
+
+- ychg-chon-hang-kho-tam → @nguyentrancu97 → .plans/ychg-chon-hang-kho-tam/
+  Trạng thái: **CODE XONG + PLAYWRIGHT + ĐÃ PUSH `develop` (03/11/2026)** — YCHG popup chọn hàng hoá thêm cột Giá nhập (gate quyền "Xem giá vốn hàng hoá" ở BE) + toggle cột; tab "Chọn từ kho hàng tạm" phân trang server, tìm theo model, bộ lọc nâng cao (dự án/báo giá/BOM/thương hiệu/nguồn/cấu trúc), cột Hình ảnh/Trạng thái/Thông tin giá. Fix rò giá vốn: BE chỉ trả giá cho hàng tạm user tạo từ báo giá trúng thầu + có quyền. hrm-api `7e753bb07`…`73ea6ec25` · hrm-client `8fb5dadf2`…`dadd3deb0`.
+
+- kho-du-lieu-cot-trang-thai-cong-ty-quan-ly → @nguyentrancu97 → .plans/kho-du-lieu-cot-trang-thai-cong-ty-quan-ly/
+  Trạng thái: **ĐÃ PUSH `develop` (03/11/2026)** — màn Kho dữ liệu thêm cột "Trạng thái HH công ty quản lý" (dùng `owner_status` sẵn có, không query mới). hrm-api `8f23401b7` · hrm-client `57539391d`.
+
+- ychg-bat-buoc-anh-hang-tam → @nguyentrancu97 → .plans/ychg-bat-buoc-anh-hang-tam/
+  Trạng thái: **ĐÃ PUSH `develop` (03/11/2026)** — popup Thêm hàng tạm ở YCHG bắt buộc nhập ảnh (chỉ YCHG, PTKD không bắt). hrm-api `db71c5ac8` · hrm-client `ac2958dbd`.
+
+- ychg-hien-hang-con (phase 3) → @nguyentrancu97 → .plans/ychg-hien-hang-con/plan.md
+  Trạng thái: **ĐÃ PUSH `develop` (03/11/2026)** — chi tiết YCHG hiện hàng con của cụm, PTKD duyệt/sửa/không duyệt từng con. hrm-api `aa381f01c` · hrm-client `d6bf8b065`.
 
 - binh-luan-kieu-facebook → @cuong61n → .plans/binh-luan-kieu-facebook/plan.md
   Trạng thái: **CODE XONG + TEST LOCAL + ĐÃ PUSH `develop` (31/10/2026)** — bình luận Nhiệm vụ/Vấn đề kiểu Facebook (web + app + BE): giờ tương đối, ghim, "Đã giải quyết", người tạo/phụ trách xóa, phân trang, ảnh thumbnail, gửi tức thì. hrm-api `ff1ccbaed` · hrm-client `84c49fc81` · TPE_APP `7b7670c` (App 2.2.6 build 158 tpeDev → TestFlight). Còn: chạy migration + deploy BE lên server dev.
