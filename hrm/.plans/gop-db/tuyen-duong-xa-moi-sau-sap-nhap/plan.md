@@ -1,0 +1,11 @@
+# Tuyến đường đến xã mới sau sáp nhập — khảo sát & phương án
+
+Không Redmine (user nhờ tìm phương án) · @junfoke · dữ liệu `roads` dùng chung ERP/HRM (`gop_db` / prod `hrm_erp_gop`)
+Bối cảnh: DM tuyến đường trước tính đến Huyện, nay bỏ cấp huyện nên sai; chỉ một số tuyến tạo sau là đúng ⇒ cần bổ sung tuyến mới đến các Xã mới.
+
+## Ngày 04/11/2026 (@junfoke)
+- [x] 04/11/2026 — Khảo sát local: 3.200 tuyến đang dùng / 7 điểm đi; 1.147 tuyến chỉ tới huyện, 1.461 tuyến gắn xã cũ (đã khoá), 592 tuyến đúng xã mới. 18 bảng trỏ tới tuyến (chuyến xe, phiếu xuất/nhập, bảng giá hiệu lực ~86 nghìn dòng, HĐ NCC vận chuyển, định mức, công tác phí, SCBH…) ⇒ **không sửa/xoá tuyến cũ, thêm tuyến mới**. Seeder cũ `UpdateRoadsByNewWard` / `RebuildRoadNamesSeeder` từng thử sửa tuyến cũ, không xong; `id_mapping` xã cũ→mới gần như không dùng được, cột tên xã mới trên xã cũ ghép được ~64%. Tuyến mới phải có giá trong bảng giá thì thủ kho mới chọn được.
+- [x] 04/11/2026 — Đề xuất 3 phương án; user chốt **A** (sinh tự động từ tuyến cũ, nghiệp vụ duyệt km qua Excel, xong khoá tuyến cũ) **+ dùng B (bản đồ Goong — HRM đã dùng ở `TimesheetService.php:705`) để gợi ý/kiểm chéo km**, km chốt vẫn do nghiệp vụ. Excel có cột km tuyến cũ, km bản đồ, % lệch, km chốt, cờ lệch > 20%; đo độ lệch Goong trên các tuyến km thật trước khi chạy cả loạt. Key Goong đang ghi cứng trong code → nếu dùng sẽ chuyển `.env`.
+- [x] 04/11/2026 — So local ⇄ prod (SQL user chạy): prod 4.147 tuyến (+937), tuyến cũ (id ≤ 2000 checksum khớp, nhóm huyện/xã cũ y nguyên) chưa ai sửa; bảng xã gần như giống (+4 xã đang dùng). Nhân viên đã tự tạo tuyến xã mới: Tân Thới Hiệp (HCM) ~935 tuyến phủ 8 tỉnh, Vinh 199 tuyến (đủ Nghệ An + Hà Tĩnh), Phấn Dũng 113 (đủ Hải Phòng) ⇒ coi như xong. Thiếu: Liên Ninh, Phan Trọng Tuệ (HN), Vườn Đốm (HP ~101). Mẫu học theo người dùng: tên `<Điểm đi> - <Phường/Xã>, <Tỉnh/TP>`, mỗi xã mới 1 tuyến, chỉ phủ kín tỉnh hay giao.
+- [x] 04/11/2026 — Đề xuất phạm vi lớp 1 ~1.800 tuyến (Liên Ninh ~1.100 ở các tỉnh ≥ 10 chuyến, Phan Trọng Tuệ, Vườn Đốm), tỉnh xa cần đâu tạo đó.
+- [ ] Chờ user xác nhận Vườn Đốm và Phấn Dũng (Hải Phòng) có dùng song song không; rồi viết script sinh tuyến + gọi Goong + xuất Excel.

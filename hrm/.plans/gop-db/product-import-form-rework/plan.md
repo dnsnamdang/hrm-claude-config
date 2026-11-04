@@ -869,3 +869,8 @@ Blocked: (không)
 
 ## Ngày 30/10/2026 (@junfoke)
 - [x] 30/10/2026 — Phản hồi #11865 ([ERP => HRM] - Phiếu nhập hàng: Dữ liệu đang ko khớp erp — thiếu 2 tab "Chi phí giao nhận hàng nội địa" và "Phân bổ chi phí"): không sửa code — 2 tab là thông tin giá vốn, chỉ hiện với quyền "Xem giá vốn hàng hoá"; cần cấp quyền này cho tài khoản test trên dev và trả lời QA.
+
+## Ngày 04/11/2026 (@junfoke)
+- [x] 04/11/2026 — Fix phản hồi #12002 (bấm Phiếu nhập kho lại sang ERP): link Phiếu nhập kho ở màn chi tiết phiếu nhập hàng mở màn HRM (`/finance/warehouse-imports/{id}`, kiểm PNH-04130); sửa kèm link mã phiếu trong popup chọn phiếu nhập kho và link chuyến xe ở tab Vận chuyển (về màn Chuyến xe chở hàng HRM).
+- [x] 04/11/2026 — Fix phản hồi #12001 (chi tiết phiếu nhập hàng thiếu tab/trường so với ERP): Thông tin chung bỏ "Mã phiếu", thêm "Hợp đồng" + "Tổng hợp chi phí nhập khẩu" và các ô ERP hiện theo loại phiếu; đủ 9 tab như ERP show (Hàng hóa, Chi phí HĐ, 2 tab chi phí quốc tế, Chi phí nội địa, Bốc hạ tại kho, Tính giá thành nhập kho, Phân bổ hàng giữ, Phân bổ CPVC nhanh); bảng Hàng hóa thêm Thương hiệu, Giá NCC; khối tổng chỉ có ở loại 4/9/13 như ERP (loại 11 bỏ). Còn khác ERP: chưa có checkbox "Chi tiết" tab Phân bổ hàng giữ (dữ liệu không lưu tên khách/ngày cần), Hợp đồng + THCPNK chưa có link (HRM chưa có màn xem), vài ô hiện tên thay mã.
+- [x] 04/11/2026 — Commit api `51bdde6d9`, client `11639de6c` (develop), đã lên `origin/develop`.

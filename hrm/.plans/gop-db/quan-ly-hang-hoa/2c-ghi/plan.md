@@ -55,3 +55,9 @@ Phụ: `readNoPermToken` tìm origin theo `BASE_URL` thay vì cứng `127.0.0.1:
 - [x] FE `ProductFormGeneral.vue` computed `codeLocked` (mode `edit`): 3 ô disabled, ẩn nút "+" (thêm model / thêm nhanh), ⓘ `hint` trên nhãn.
 - [x] Test BE cập nhật: `ProductWriteApiTest::sua_giu_ma_trang_thai_cong_ty` (đổi 3 trường ⇒ 422), `ProductPricingIdentityLockTest` (khoá tính giá thử Thương hiệu + Xuất xứ). 5 bộ liên quan xanh 98/98.
 - [x] Playwright MCP: form sửa 3 ô khoá + tooltip, Thương hiệu / Xuất xứ mở; form tạo mở; PUT đổi Hãng SX + Model ⇒ 422, DB không đổi. e2e `products-form-ui` thêm E15 (chưa chạy).
+
+## Bổ sung 04/11/2026 — khoá luôn Thương hiệu ở form SỬA hàng hóa (@junfoke)
+
+- [x] 04/11/2026 — Hỗ trợ check "HĐ nhập khẩu FLY 1026 HN (chị Nhài lập) trạng thái Đang tạo mà không sửa được": đúng quy tắc phân quyền mua hàng (task #6098 — nút Sửa xét người được phân công cặp thương hiệu–hãng của dòng hàng). Truy ra lúc 10:48–10:50 ngày 04/11 anh Nguyễn Hoàng Việt đổi thương hiệu 3 mã FLY-FY… từ EAGLE-FLY sang FY-TECH ở danh mục hàng hóa HRM (`catalog_histories`); 10:52 chị Nhài cập nhật HĐ (bước cập nhật kiểm theo thương hiệu đầu PI ZH-6063) nên dòng hàng nhận FY-TECH — thương hiệu này phân công cho chị Nguyễn Thị Ngoan. Soạn tin nhắn mẫu cho user gửi nghiệp vụ.
+- [x] 04/11/2026 — Theo user: form sửa hàng hóa **luôn khoá Thương hiệu** khi hàng đã có mã (trước chỉ khoá khi Chờ tính giá / Đang tính giá), vì thương hiệu là căn cứ phân công người mua. BE chặn 422 "Không sửa được Thương hiệu của mã hàng X: thương hiệu là căn cứ phân công người mua hàng. Cần đổi thì Nhân bản ra mã mới."; FE ô Thương hiệu disabled. Tạo mới / nhân bản chọn bình thường; duyệt hàng tạm giữ như cũ. Test API qua.
+- [x] 04/11/2026 — Commit api `0d041d8ba`, client `ad0ed6a1f` ("khóa sửa thương hiệu"), đã lên `origin/gop_db`.

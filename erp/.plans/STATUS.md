@@ -4,6 +4,12 @@
 
 - [PLBS HĐ hãng chặn lưu "chưa có giá (loại giá N)"](fix-plbs-hd-hang-sale-max-percent/plan.md) — @nguyentrancu97 2026-11-03. `FirmContractService` sync đọc `sale_max_percent` ngoài try/catch → bọc try, thiếu giá = 0. `1018518339` gop_db.
 - [ĐH nguyên tắc: chỉ validate giá với hàng SL > 0](don-hang-nguyen-tac-validate-gia-chi-sl-lon-hon-0/plan.md) — @nguyentrancu97 2026-11-03. `getPriceByUnitAndType` ném lỗi cả với dòng SL 0 → chặn cả Lưu nháp. `def03b04dc` gop_db.
+- [Báo cáo luân chuyển hàng hóa: tối ưu, không làm quá tải CPU DB + mở khoá](toi-uu-bao-cao-luan-chuyen-cpu/plan.md) — @junfoke 2026-11-04. `bbe5fa53f2` gop_db. Theo dõi slow log sau deploy (lọc Còn tồn/Hết tồn chưa tối ưu).
+- [Trang tổng quan: đếm YCXH chờ BGĐ duyệt lọc theo công ty](fix-dashboard-dem-ycxh-cho-bgd-theo-cong-ty/plan.md) — @junfoke 2026-11-04. `3e713a23de` gop_db.
+- [DS tất cả YC giữ hàng: Ngày lập hiện giờ:phút](ycgh-all-ngay-lap-gio-phut/plan.md) — @junfoke 2026-11-04. `6b3063a98c` gop_db.
+- [DS HĐ nhập khẩu lỗi "No query results for model Supplier"](fix-hd-nhap-khau-ncc-khong-con-la-ncc/plan.md) — @junfoke 2026-11-04. `18b2b30792` gop_db.
+- #11833 sửa %VAT PI/HĐ mua: merge `task_11833` → gop_db (`d95e29ae12`) — xem `hrm/.plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md` — @junfoke 2026-11-04.
+- Hỗ trợ (không sửa code) 04/11: [quyền duyệt phiếu chi](ho-tro-quyen-duyet-phieu-chi/plan.md); [phiếu HT mua DV YC 70 đã được người lập hạch toán](hach-toan-mua-dv-loc-trang-thai/plan.md) — @junfoke.
 - [DS DNTT + DNTT chờ duyệt: gộp ô lọc KH / NCC](dntt-gop-loc-khach-hang-ncc/plan.md) — @junfoke 2026-11-03. `f4e2c56efa` + `2397f6bddd` gop_db.
 - [Tồn đầu kỳ kế toán: danh sách hiện Sửa/Xóa ở dòng đã khoá](fix-ton-dau-ky-ke-toan-an-nut-sua-xoa/plan.md) — @junfoke 2026-11-03. `d04f9e14f8` gop_db.
 - [Hạch toán mua DV: ô lọc Trạng thái sai danh sách](hach-toan-mua-dv-loc-trang-thai/plan.md) — @junfoke 2026-11-03. `2397f6bddd` gop_db. Phiếu nháp chỉ người lập thấy — chờ user chốt.

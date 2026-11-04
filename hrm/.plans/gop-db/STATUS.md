@@ -2622,6 +2622,14 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 - xuat-tai-lieu-chuyen-doi → @junfoke → .plans/gop-db/xuat-tai-lieu-chuyen-doi/plan.md
   Trạng thái: 🟢 **Đợt 1–3 xong, đã đẩy Drive (02/11/2026)**: 7 danh mục kho + 5 báo cáo + 7 phiếu (SRS + HDSD + tab TC 44–62). Còn: user điền sheet Checklist; rà `NGHI_LOI.md` cùng user.
 
+- so-chi-tiet-cong-no-ncc → @junfoke → .plans/gop-db/so-chi-tiet-cong-no-ncc/plan.md
+  Trạng thái: 🟢 **Xong + đối chiếu ERP khớp 7 ca + review (04/11/2026)**, nhánh `feat/so-chi-tiet-cong-no-ncc`, đã commit (api `e8773a469` + `eaf6fc507`, client `21a7df575` + `e05d27860`), ĐÃ merge develop + push 04/11 (merge api `5465d9946`, client `5e2fb0997` — gộp xung đột seeder với quyền Quyết toán thưởng NS quý; dev cần `permission:sync` + gán 2 quyền NCC vào vai trò). Test 37/37. Seeder +2 quyền. Tách khung sổ chi tiết `AccountLedgerService` + trait `AccountDebtCommon` dùng chung với 2 màn NV; sửa kèm 2 màn NV (chuyển trang / In / Excel theo bộ lọc đã áp).
+  Scope: màn Sổ chi tiết công nợ phải trả NCC + In (ERP không có) + Excel; màn 4/4 nhóm công nợ.
+  Spec: docs/superpowers/specs/gop-db/2026-11-04-so-chi-tiet-cong-no-ncc-design.md | Tóm tắt: .plans/gop-db/so-chi-tiet-cong-no-ncc/design.md
+
+- tuyen-duong-xa-moi-sau-sap-nhap → @junfoke → .plans/gop-db/tuyen-duong-xa-moi-sau-sap-nhap/plan.md
+  Trạng thái: 🟡 **Khảo sát + chốt phương án (04/11/2026)**: thêm tuyến mới đến xã mới (không sửa tuyến cũ), sinh tự động + km gợi ý Goong, nghiệp vụ duyệt qua Excel; ~1.800 tuyến cho Liên Ninh / Phan Trọng Tuệ / Vườn Đốm. Chờ user xác nhận Vườn Đốm vs Phấn Dũng. Chưa code.
+
 - bang-can-doi-cong-no-nv → @junfoke → .plans/gop-db/bang-can-doi-cong-no-nv/plan.md
   Trạng thái: ✅ **Xong, đã merge develop + push (03/11/2026)** — api `9b12040ae`, client `f2831eb45` (nhánh `feat/bang-can-doi-cong-no-nv`, kéo theo cả Sổ chi tiết `d1d77cadd` / `3e6581b38` + ô số chuyến xe `d59dec8d8`); merge develop api `66ce147dd`, client `66a3d7d47`. Test 16 (+15 Sổ chi tiết). Làm mới hết gọi tải 2 lần (cả 2 màn). Seeder +2 quyền — dev cần `permission:sync`. Tách phần chung 2 màn ra trait `EmployeeDebtCommon`.
   Scope: màn Bảng cân đối phát sinh công nợ nhân viên + In + Excel (ERP không có) + drill-down sang Sổ chi tiết; màn 3/4 nhóm công nợ NV.

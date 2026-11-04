@@ -70,3 +70,7 @@ Sửa thêm phát hiện khi test:
 - Đang làm dở: không.
 - Bước tiếp theo: user commit; QA test trên dev-erp; hỏi BA phạm vi luồng nhập khẩu.
 - Blocked: không.
+
+
+## Ngày 04/11/2026 (@junfoke)
+- [x] 04/11/2026 — #11833 ([Mua hàng] cho phép sửa %VAT trên PI và Hợp đồng mua): kiểm code đã có trên `origin/develop_02` (`6dd2c3158a` + `041ab09245`); merge `task_11833` vào `gop_db` ERP — xung đột mảng `$translate` ở `InlandBuyContractNewController.php`, giữ cả hai (thông báo `signer_title_id` + %VAT). Merge commit `d95e29ae12`, đã lên `origin/gop_db`.

@@ -59,3 +59,7 @@ Vừa hoàn thành: BE + FE 2 màn, kiểm API + Playwright
 Đang làm dở: —
 Bước tiếp theo: user nghiệm thu; chạy SQL quyền 1615-1622 trên server; bấm thử Import + tải Excel
 Blocked:
+
+
+## Ngày 04/11/2026 (@junfoke)
+- [x] 04/11/2026 — Xuất testcase mới màn "Công nợ đầu kỳ theo khách hàng - hợp đồng" (cùng màn Khai báo đầu kỳ công nợ, ERP đặt ở 2 nhóm menu): `testcase/testcase - Cong no dau ky theo khach hang - hop dong.xlsx` — 130 TC (P0 54%), khuôn chuẩn mới 03/11, bộ kiểm 0 lỗi. Lấy lại TC cũ 02/10 còn đúng, sửa chỗ lệch code hiện tại; thêm TC 2 lối vào, đối chiếu hệ thống cũ ⇄ mới, ảnh hưởng báo cáo công nợ KH. Chỉ phần khách hàng; file cũ giữ nguyên. Script: `testcase/gen_testcase_cong-no-dau-ky-kh-hd.py`.

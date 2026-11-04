@@ -202,3 +202,8 @@ Blocked: —
 
 ## Ngày 03/11/2026 (@junfoke)
 - [x] 03/11/2026 — Theo user: sửa ô số đồng nhất không làm trên nhánh cũ đã merge → chuyển sang nhánh `feat/so-chi-tiet-cong-no-nv` (client `d59dec8d8`), gỡ worktree `cxch`; chụp lại màn chi tiết đạt. Đã lên develop 03/11 (merge `66a3d7d47`).
+
+## Ngày 04/11/2026 (@junfoke)
+- [x] 04/11/2026 — Fix phản hồi #11986 (danh sách): bộ lọc NCC hiện đủ 757 NCC đang dùng dạng "mã - tên"; cột NCC sắp xếp được; thêm cột Người cập nhật, Ngày cập nhật, Người duyệt (cả xuất Excel). Người duyệt lấy từ lịch sử (người chuyển sang Đang chạy / Chờ hạch toán gần nhất), không thêm cột vào bảng dùng chung ERP ⇒ chuyến duyệt bên ERP trước đây để trống ô này (muốn đủ thì phải thêm cột ở 2 repo — chờ user).
+- [x] 04/11/2026 — Fix phản hồi #11987 (popup tạo): NCC bỏ ⓘ, thay chữ gợi ý "Tự lấy theo biển số xe"; biển số xe theo mẫu ERP ("TP - 3.5 tấn - 15C-13876"); bỏ ô Đi 2 chiều ở form tạo (ERP chỉ có ở form duyệt). BE: sửa chuyến không gửi ô Đi 2 chiều thì giữ giá trị cũ (trước bị về 0).
+- [x] 04/11/2026 — Commit chung với Chuyến xe khác: api `c7e9da2fc`, client `865e4319f`, đã lên `origin/develop`.
