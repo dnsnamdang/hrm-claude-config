@@ -1,0 +1,414 @@
+=== TASK 4: d8d34725f..b574b0cc6 ===
+b574b0cc6 feat(ychg): ptkdApprove validates+writes price+promotes no-price lines (3), closes request
+
+ .../PriceCalculation/PriceAskingRequestWriter.php  |  97 +++++++++++-
+ .../Feature/PriceAskingNoPriceApproveTest.php      | 173 +++++++++++++++++++++
+ 2 files changed, 269 insertions(+), 1 deletion(-)
+
+diff --git a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
+index 7a1b0fa89..98a5c39c1 100644
+--- a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
++++ b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
+@@ -3,24 +3,27 @@
+ namespace Modules\MasterData\Services\PriceCalculation;
+ 
+ use App\Models\EmployeeInfo;
+ use Illuminate\Support\Facades\DB;
+ use Illuminate\Validation\ValidationException;
+ use Modules\MasterData\Entities\PriceCalculation\PriceAskingRequest;
+ use Modules\MasterData\Entities\PriceCalculation\PriceAskingRequestApproveHistory;
+ use Modules\MasterData\Entities\PriceCalculation\PriceAskingRequestGroup;
+ use Modules\MasterData\Entities\PriceCalculation\PriceAskingRequestProduct;
+ use Modules\MasterData\Entities\Product\Product;
+ use Modules\MasterData\Entities\Product\ProductCompany;
+ use Modules\MasterData\Services\Product\ProductHistoryService;
++use Modules\MasterData\Services\ProductPrice\ProductPriceListService;
++use Modules\MasterData\Services\ProductPrice\ProductPriceSetWriter;
++use Modules\MasterData\Services\ProductPrice\ProductPriceWriter;
+ use Modules\MasterData\Services\Product\ProductWriteService;
+ 
+ /**
+  * Ghi YCHG (T3 — t3-plan.md A1–A9, T3-Q4/Q5; design §2.2, §2.3).
+  *
+  * - Lưu nháp / Lưu và gửi duyệt: gom nhóm (thương hiệu × hãng) lại MỖI lần lưu; gửi ⇒ mọi nhóm phải có XNK phân công
+  *   (chặn, nêu tên hãng); hàng mới 1 ⇒ 2.
+  * - PTKD Duyệt ⇒ phiếu 10, nhóm 5 · Từ chối ⇒ phiếu 8, hàng 2/5 ⇒ 1.
+  * - XNK Duyệt nhóm 5 ⇒ 1 · Không có giá 5 ⇒ 9 · Huỷ duyệt 1 ⇒ 6 (chưa có YCTG); nhóm đóng ⇒ hàng 2/5 của nhóm ⇒ 1;
+  *   mọi nhóm đóng ⇒ phiếu 4 (có nhóm có giá) | 9.
+  * - Mọi thao tác chuyển trạng thái khoá dòng phiếu rồi kiểm lại trạng thái trong transaction (A7) ⇒ bấm trùng chỉ 1
+  *   người thành công, người sau nhận 409 "Trạng thái đã bị thay đổi…". Thông báo gửi SAU commit.
+@@ -44,24 +47,28 @@ class PriceAskingRequestWriter
+     const LOG_XNK_NO_PRICE = 'XNK không duyệt';
+     const LOG_CANCEL = 'Huỷ duyệt';
+     /** Phiếu / nhóm đã bị người khác đổi trạng thái ⇒ 409 câu chuẩn (`GuardsCatalogStatus::$statusConflictMessage`, QA #11549) */
+     const MSG_CONFLICT = 'Trạng thái đã bị thay đổi. Vui lòng load lại trang';
+     const MSG_NOT_XNK = 'Bạn không phải XNK phụ trách nhóm này.';
+     const MSG_REQUIRED = 'Bắt buộc phải nhập';
+     const MSG_NOT_PTKD = 'Bạn không có quyền PTKD duyệt yêu cầu hỏi giá ở công ty của phiếu.';
+     const MSG_NOT_IN_REQUEST = 'Hàng hoá không thuộc yêu cầu hỏi giá này';
+     /** Dấu vết hàng tạm gắn vào phiếu (C5) — note = product_id; không hiện ở lịch sử phiếu */
+     const LOG_TEMP_CREATED = 'temp_created';
+     /** Không duyệt từng hàng tạm (C4) — note = "<mã hàng>: <lý do>" */
+     const LOG_TEMP_REJECT = 'temp_reject';
++    /** Duyệt không cần tính giá (dòng 9): ghi giá + lên Đang KD khi PTKD duyệt phiếu — note = "<mã hàng>: ..." */
++    const LOG_TEMP_NO_PRICE = 'temp_approve_no_price';
++    /** Đóng nhóm chỉ gồm hàng Duyệt không cần tính giá (+ Không duyệt) — không qua XNK */
++    const LOG_NO_PRICE_CLOSE = 'Duyệt không cần tính giá';
+     const TEMP_REASON_MAX = 255;
+     const TEMP_ALL_REJECTED = 'Mọi hàng tạm không được duyệt';
+ 
+     /** @var PriceAskingAccess */
+     private $access;
+     /** @var PriceAskingProductReader */
+     private $products;
+     /** @var XnkAssignmentResolver */
+     private $xnk;
+     /** @var PriceAskingNotifier */
+     private $notifier;
+     /** @var ProductWriteService */
+@@ -628,65 +635,153 @@ class PriceAskingRequestWriter
+             if ($pending) {
+                 throw ValidationException::withMessages(['temp_products' => ["Còn $pending hàng tạm chưa duyệt"]]);
+             }
+             // C6: nhóm mà mọi dòng đều hàng tạm Không duyệt (8) ⇒ đóng nhóm Huỷ duyệt, không gửi XNK
+             [$closed, $groups] = $groups->partition(function ($g) use ($lines, $statuses) {
+                 $ids = $lines->where('group_id', $g->id)->pluck('product_id')->unique();
+ 
+                 return $ids->isNotEmpty() && $ids->every(function ($pid) use ($statuses) {
+                     return ($statuses[$pid] ?? null) === ProductCompany::STATUS_TEMP_REJECTED;
+                 });
+             });
+             $groups = $groups->values();
++            // Duyệt không cần tính giá: dòng 9 phải còn đủ điều kiện (resolver) — kiểm TRƯỚC khi ghi gì (rollback sạch)
++            $noPriceIds = $statuses->filter(function ($s) { return $s === ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE; })->keys()->map('intval')->all();
++            $resolved = $this->resolveNoPriceLines($noPriceIds, (int) $request->company_id);
++            // nhóm chỉ gồm hàng 9 (±8) ⇒ đóng "đã có giá", không cần XNK
++            [$pricedGroups, $groups] = $groups->partition(function ($g) use ($lines, $statuses) {
++                $ids = $lines->where('group_id', $g->id)->pluck('product_id')->unique();
++
++                return $ids->isNotEmpty()
++                    && $ids->contains(function ($pid) use ($statuses) { return ($statuses[$pid] ?? null) === ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE; })
++                    && $ids->every(function ($pid) use ($statuses) {
++                        return in_array($statuses[$pid] ?? null, [ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE, ProductCompany::STATUS_TEMP_REJECTED], true);
++                    });
++            });
++            $groups = $groups->values();
+             $missing = [];
+             foreach ($groups as $g) {
+                 $g->xnk_employee_id = $this->xnk->resolve($g->brand_id, $g->manufacture_id, (int) $request->company_id);
+                 if (!$g->xnk_employee_id) {
+                     $missing[] = 'Nhóm ' . $this->groupName($g) . ' chưa có XNK phụ trách tại công ty, chưa duyệt được.';
+                 }
+             }
+             if ($missing) {
+                 throw ValidationException::withMessages(['groups' => $missing]);
+             }
+             foreach ($groups as $g) {
+                 $g->status = PriceAskingRequestGroup::STATUS_WAITING_XNK;
+                 $g->updated_by = $me;
+                 $g->save();
+             }
+             $request->status = PriceAskingRequest::STATUS_ASKING;
+             $request->approver_id = $me;
+             $request->approved_time = now();
+             $request->comment = $comment !== '' ? $comment : null;
+             $request->updated_by = $me;
+             $request->save();
+             $this->log($request->id, null, self::LOG_PTKD_APPROVE, $comment, $me);
+             $this->moveProducts($lines->pluck('product_id')->all(), (int) $request->company_id, [ProductCompany::STATUS_TEMP_APPROVED], ProductCompany::STATUS_WAITING_PRICE, $me, $request->code);
++            foreach ($resolved as $productId => $r) {
++                $this->promoteNoPriceLine($request, (int) $productId, $r, $me);
++            }
+             foreach ($closed as $g) {
+                 $this->markGroupClosed($request, $g, PriceAskingRequestGroup::STATUS_CANCELLED, self::LOG_CANCEL, self::TEMP_ALL_REJECTED, $me);
+             }
+-            if ($closed->isNotEmpty()) {
++            foreach ($pricedGroups as $g) {
++                $this->markGroupClosed($request, $g, PriceAskingRequestGroup::STATUS_PRICED, self::LOG_NO_PRICE_CLOSE, '', $me);
++            }
++            if ($closed->isNotEmpty() || $pricedGroups->isNotEmpty()) {
+                 $this->refreshHead($request, $me);
+             }
+ 
+             return [$request, $groups, $closed->values()];
+         });
+ 
+         $this->notifier->ptkdApproved($request->id, $request->code, $groups->map(function ($g) {
+             return ['id' => $g->id, 'xnk_employee_id' => $g->xnk_employee_id, 'name' => $this->groupName($g)];
+         })->all());
+         foreach ($closed as $g) {
+             $this->notifier->groupCancelled($request->id, $g->id, $request->code, (int) $request->created_by, $this->groupName($g), self::TEMP_ALL_REJECTED);
+         }
+     }
+ 
++    /**
++     * Resolve các dòng 9; dòng không còn đủ điều kiện ⇒ 422 `temp_products` (ném trước mọi thao tác ghi).
++     *
++     * @param int[] $productIds
++     * @return array<int,array> product_id => kết quả resolver
++     */
++    private function resolveNoPriceLines(array $productIds, int $companyId): array
++    {
++        $resolver = app(TempNoPriceResolver::class);
++        $out = [];
++        $invalid = [];
++        foreach ($productIds as $pid) {
++            $r = $resolver->resolve($pid, $companyId);
++            if ($r === null) {
++                $invalid[] = $pid;
++            } else {
++                $out[$pid] = $r;
++            }
++        }
++        if ($invalid) {
++            $codes = DB::table('products')->whereIn('id', $invalid)->orderBy('id')->pluck('code')->implode(', ');
++            throw ValidationException::withMessages(['temp_products' => [$codes . ': chưa đủ điều kiện duyệt không cần tính giá']]);
++        }
++
++        return $out;
++    }
++
++    /**
++     * Dòng 9: ghi bộ giá danh mục (cả 6 loại giá bán = giá bán resolver, TMĐT đặt tay để không tự nhân hệ số) + giá vốn,
++     * rồi 9 → 3 Đang KD (khuôn PriceCalculateFinalizer::promoteProducts, không qua Chờ tính giá). Gọi TRONG transaction.
++     */
++    private function promoteNoPriceLine(PriceAskingRequest $request, int $productId, array $r, int $me): void
++    {
++        $companyId = (int) $request->company_id;
++        $unitRow = DB::table('product_units')->where('product_id', $productId)->where('unit_id', (int) $r['unit_id'])->orderByDesc('is_base')->first(['id']);
++        if (!$unitRow) {
++            $unitRow = DB::table('product_units')->where('product_id', $productId)->where('is_base', 1)->first(['id']);
++        }
++        if (!$unitRow) {
++            $code = (string) DB::table('products')->where('id', $productId)->value('code');
++            throw ValidationException::withMessages(['temp_products' => [$code . ': chưa đủ điều kiện duyệt không cần tính giá']]);
++        }
++        $cost = (float) $r['cost'];
++        $sale = (float) $r['sale'];
++        $coef = $cost > 0 ? round($sale / $cost, 2) : 0.0;
++        $prices = [];
++        foreach (ProductPriceListService::TYPE_ORDER as $type) {
++            $prices[] = [
++                'price_type_id' => $type, 'price' => $sale, 'coefficient' => $coef, 'sale_max_percent' => 0, 'expected_prices' => [],
++                'is_manual_price_online' => true, 'is_manual_coefficient_online' => true, 'is_manual_sale_max_percent_online' => true,
++            ];
++        }
++        $writer = app(ProductPriceWriter::class);
++        $note = 'Duyệt không cần tính giá - Yêu cầu hỏi giá ' . $request->code;
++        $writer->apply($productId, (int) $unitRow->id, $companyId, $writer->resolvePrices($prices, $companyId), $cost, $note, $me);
++
++        $moved = app(ProductHistoryService::class)->trackStatus($companyId, [$productId], function () use ($productId, $companyId, $me) {
++            return DB::table('product_company_coefficients')->where('product_id', $productId)->where('company_id', $companyId)
++                ->where('status', ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE)
++                ->update(['status' => ProductCompany::STATUS_TRADING, 'updated_by' => $me, 'updated_at' => now()]);
++        }, null, 'Yêu cầu hỏi giá ' . $request->code . '. Duyệt không cần tính giá');
++        if ($moved) {
++            app(ProductPriceSetWriter::class)->ensureProductSet($productId, $companyId, $me);
++        }
++        $code = (string) DB::table('products')->where('id', $productId)->value('code');
++        $this->log($request->id, null, self::LOG_TEMP_NO_PRICE, $code . ': giá nhập ' . $cost . ', giá bán ' . $sale, $me);
++    }
++
+     public function ptkdReject(int $id, array $input): void
+     {
+         $comment = $this->requireReason($input, 'comment', self::COMMENT_MAX);
+         $me = $this->access->me();
+ 
+         $request = DB::transaction(function () use ($id, $comment, $me) {
+             $request = $this->lockForPtkd($id);
+             $request->status = PriceAskingRequest::STATUS_REJECTED;
+             $request->approver_id = $me;
+             $request->approved_time = now();
+             $request->comment = $comment;
+             $request->updated_by = $me;
+diff --git a/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+index cbf5c8914..e8c425ac9 100644
+--- a/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
++++ b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+@@ -274,13 +274,186 @@ class PriceAskingNoPriceApproveTest extends TestCase
+         $this->assertSame(8, $this->pccStatus());
+     }
+ 
+     public function test_creator_edit_resets_9_to_6(): void
+     {
+         $this->bootApi();
+         $id = $this->sentRequest();
+         $this->postJson($this->npUrl($id))->assertOk();
+         $this->loginAs('creator');
+         $this->putJson('/api/v1/master-data/temp-products/' . $this->fx['pid'], $this->approveForm())->assertOk();
+         $this->assertSame(6, $this->pccStatus());
+     }
++
++    /* ================================================================ Task 4: ptkdApprove xử lý dòng 9 */
++
++    /** [product_units.id, units.id] ĐVT gốc của hàng bootApi */
++    private function baseUnitOf(int $pid): array
++    {
++        $u = DB::table('product_units')->where('product_id', $pid)->where('is_base', 1)->first();
++
++        return [(int) $u->id, (int) $u->unit_id];
++    }
++
++    /** Hàng tạm thứ 2 cùng hãng / thương hiệu (cùng nhóm) với hàng bootApi, status 6 */
++    private function mkSecondProduct(): int
++    {
++        $row = (array) DB::table('products')->find($this->fx['pid']);
++        unset($row['id']);
++        $row['code'] = $row['code'] . '2';
++        $pid2 = (int) DB::table('products')->insertGetId($row);
++        $unit = (int) DB::table('units')->value('id');
++        DB::table('product_units')->insert(['product_id' => $pid2, 'unit_id' => $unit, 'is_base' => 1, 'unit_coefficient' => 1, 'cost_price' => 0, 'buy_price' => 0, 'created_at' => now(), 'updated_at' => now()]);
++        DB::table('product_company_coefficients')->insert(['product_id' => $pid2, 'company_id' => self::CO, 'coefficient' => 1, 'status' => 6, 'created_at' => now(), 'updated_at' => now()]);
++
++        return $pid2;
++    }
++
++    private function sentRequestOf(array $pids): int
++    {
++        $this->loginAs('creator');
++        $id = (int) $this->postJson(self::URL, ['note' => 'Hỏi giá', 'product_ids' => $pids, 'send' => true])->assertOk()->json('data.id');
++        $this->loginAs('ptkd');
++
++        return $id;
++    }
++
++    private function statusOf(int $pid): int
++    {
++        return (int) DB::table('product_company_coefficients')->where('product_id', $pid)->where('company_id', self::CO)->value('status');
++    }
++
++    private function setNoPrice(int $id, int $pid): void
++    {
++        $this->postJson(self::URL . "/$id/temp-products/$pid/approve-no-price")->assertOk();
++    }
++
++    private function assertAllSixPrices(int $puId, float $price): void
++    {
++        $rows = DB::table('product_unit_prices')->where('product_unit_id', $puId)->where('company_id', self::CO)->orderBy('price_type_id')->get();
++        $this->assertSame([1, 2, 3, 4, 5, 6], $rows->pluck('price_type_id')->map('intval')->all());
++        foreach ($rows as $r) {
++            $this->assertEquals($price, (float) $r->price, 'giá loại ' . $r->price_type_id);
++        }
++    }
++
++    public function test_ptkd_approve_promotes_th1_zero(): void
++    {
++        $this->bootApi();
++        [$puId] = $this->baseUnitOf($this->fx['pid']);
++        $this->setPrices($puId, $this->fx['pid'], 0, 0);
++        $id = $this->sentRequest();
++        $this->setNoPrice($id, $this->fx['pid']);
++        $this->postJson(self::URL . "/$id/approve")->assertOk();
++        $this->assertSame(3, $this->pccStatus());
++        $this->assertEquals(0, DB::table('product_company_units')->where('product_unit_id', $puId)->where('company_id', self::CO)->value('cost_price'));
++        $this->assertAllSixPrices($puId, 0.0);
++    }
++
++    public function test_ptkd_approve_promotes_th2_writes_all_six_prices_flat(): void
++    {
++        $this->bootApi();
++        [$puId, $unitId] = $this->baseUnitOf($this->fx['pid']);
++        $this->mkQuote($this->fx['pid'], 7, null, 100, 150, $unitId);
++        $id = $this->sentRequest();
++        $this->setNoPrice($id, $this->fx['pid']);
++        $this->postJson(self::URL . "/$id/approve")->assertOk();
++        $this->assertSame(3, $this->pccStatus());
++        $this->assertEquals(100, DB::table('product_company_units')->where('product_unit_id', $puId)->where('company_id', self::CO)->value('cost_price'));
++        $this->assertAllSixPrices($puId, 150.0);   // TMĐT (6) KHÔNG tự nhân hệ số
++    }
++
++    public function test_ptkd_approve_th2_foreign_currency(): void
++    {
++        $this->bootApi();
++        [$puId, $unitId] = $this->baseUnitOf($this->fx['pid']);
++        $cid = (int) DB::table('currencies')->insertGetId([
++            'code' => 'XX' . mt_rand(100, 999), 'name' => 'Test', 'status' => 1, 'exchange_rate' => 25000,
++            'created_at' => now(), 'updated_at' => now(),
++        ]);
++        $this->mkQuote($this->fx['pid'], 7, $cid, 2, 3, $unitId);
++        $id = $this->sentRequest();
++        $this->setNoPrice($id, $this->fx['pid']);
++        $this->postJson(self::URL . "/$id/approve")->assertOk();
++        $this->assertEquals(50000, DB::table('product_company_units')->where('product_unit_id', $puId)->where('company_id', self::CO)->value('cost_price'));
++        $this->assertAllSixPrices($puId, 75000.0);
++    }
++
++    public function test_ptkd_approve_blocks_ineligible_no_price_line(): void
++    {
++        $this->bootApi();
++        $id = $this->sentRequest();
++        $this->setNoPrice($id, $this->fx['pid']);                 // không có giá 0 / báo giá trúng thầu ⇒ resolve() = null
++        $code = DB::table('products')->where('id', $this->fx['pid'])->value('code');
++        $res = $this->postJson(self::URL . "/$id/approve")->assertStatus(422)->assertJsonValidationErrors(['temp_products']);
++        $this->assertStringContainsString($code, json_encode($res->json(), JSON_UNESCAPED_UNICODE));
++        $this->assertSame(9, $this->pccStatus());
++        $this->assertSame(2, (int) DB::table('price_asking_requests')->where('id', $id)->value('status'));
++    }
++
++    public function test_parent_no_price_child_normal_route_independently(): void
++    {
++        $this->bootApi();
++        [$puId] = $this->baseUnitOf($this->fx['pid']);
++        $this->setPrices($puId, $this->fx['pid'], 0, 0);
++        $pid1 = $this->fx['pid'];
++        $pid2 = $this->mkSecondProduct();
++        $id = $this->sentRequestOf([$pid1, $pid2]);
++        $this->setNoPrice($id, $pid1);
++        $this->fx['pid'] = $pid2;
++        $this->postJson($this->npUrl($id, 'approve'), $this->approveForm())->assertOk();
++        $this->postJson(self::URL . "/$id/approve")->assertOk();
++        $this->assertSame(3, $this->statusOf($pid1));
++        $this->assertSame(2, $this->statusOf($pid2));             // Đồng ý (7) ⇒ Chờ tính giá, đi XNK
++        $this->assertSame(10, (int) DB::table('price_asking_requests')->where('id', $id)->value('status'));
++    }
++
++    public function test_request_all_no_price_closes_priced(): void
++    {
++        $this->bootApi();
++        [$puId] = $this->baseUnitOf($this->fx['pid']);
++        $this->setPrices($puId, $this->fx['pid'], 0, 0);
++        $pid1 = $this->fx['pid'];
++        $pid2 = $this->mkSecondProduct();
++        $id = $this->sentRequestOf([$pid1, $pid2]);
++        $this->setNoPrice($id, $pid1);
++        $this->postJson(self::URL . "/$id/temp-products/$pid2/reject", ['reason' => 'Sai'])->assertOk();   // ±dòng 8
++        $this->postJson(self::URL . "/$id/approve")->assertOk();
++        $this->assertSame(3, $this->statusOf($pid1));
++        $this->assertSame(8, $this->statusOf($pid2));
++        $this->assertSame(4, (int) DB::table('price_asking_requests')->where('id', $id)->value('status'));
++        $this->assertSame([4], DB::table('price_asking_request_groups')->where('price_asking_request_id', $id)->pluck('status')->map('intval')->all());
++    }
++
++    public function test_request_mixed_goes_asking_but_promotes_no_price_now(): void
++    {
++        $this->bootApi();
++        [$puId] = $this->baseUnitOf($this->fx['pid']);
++        $this->setPrices($puId, $this->fx['pid'], 0, 0);
++        $pid1 = $this->fx['pid'];
++        $pid2 = $this->mkSecondProduct();
++        $id = $this->sentRequestOf([$pid1, $pid2]);
++        $this->setNoPrice($id, $pid1);
++        $this->fx['pid'] = $pid2;
++        $this->postJson($this->npUrl($id, 'approve'), $this->approveForm())->assertOk();
++        $this->postJson(self::URL . "/$id/approve")->assertOk();
++        $this->assertSame(10, (int) DB::table('price_asking_requests')->where('id', $id)->value('status'));
++        $this->assertSame(3, $this->statusOf($pid1));
++    }
++
++    public function test_promote_is_atomic_on_failure(): void
++    {
++        $this->bootApi();
++        [$puId] = $this->baseUnitOf($this->fx['pid']);
++        $this->setPrices($puId, $this->fx['pid'], 0, 0);          // dòng 1 hợp lệ
++        $pid1 = $this->fx['pid'];
++        $pid2 = $this->mkSecondProduct();                         // dòng 2 không có giá ⇒ resolve() = null
++        $id = $this->sentRequestOf([$pid1, $pid2]);
++        $this->setNoPrice($id, $pid1);
++        $this->setNoPrice($id, $pid2);
++        $this->postJson(self::URL . "/$id/approve")->assertStatus(422)->assertJsonValidationErrors(['temp_products']);
++        $this->assertSame(9, $this->statusOf($pid1));
++        $this->assertSame(9, $this->statusOf($pid2));
++        $this->assertSame(0, DB::table('product_unit_prices')->where('product_unit_id', $puId)->where('company_id', self::CO)->where('price_type_id', 6)->count());   // chưa ghi bộ giá
++        $this->assertSame(2, (int) DB::table('price_asking_requests')->where('id', $id)->value('status'));
++    }
+ }

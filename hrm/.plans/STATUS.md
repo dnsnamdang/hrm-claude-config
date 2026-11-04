@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- phieu-hach-toan-dich-vu-hdbh → @nguyentrancu97 → .plans/phieu-hach-toan-dich-vu-hdbh/plan.md
+  Trạng thái: **BRAINSTORMING (03/11/2026)** — port Phiếu hạch toán dịch vụ HĐBH (ERP `Sale\ServiceAccountingController`, bảng `service_accounting`) sang HRM. design.md xong, chờ builder-check + user duyệt doc. Phân kỳ: Phase 1 chỉ-đọc → checkpoint số liệu → Phase 2 ghi sổ. Là phiếu #2 đóng luồng YC hạch toán DV HĐBH đã port.
+
 - app-nhiem-vu-van-de → @cuong61n → .plans/app-nhiem-vu-van-de/plan.md
   Trạng thái: **ĐANG LÀM (30/10/2026)** — màn Nhiệm vụ + Vấn đề trên TPE_APP theo meeting-mobile.pen (đã sửa thiết kế theo skill app-*), BE bổ sung chữ/màu trạng thái ở chi tiết + số bình luận.
 

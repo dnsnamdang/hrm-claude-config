@@ -63,3 +63,17 @@ Chỉ stage đúng 4 file feature (loại các thay đổi WrAccountingService/f
 - hrm-api `develop` **3e46dd0db** — 3 file BE (PriceAskingProductReader, PriceAskingRequestWriter, TempProductService).
 - hrm-client `develop` **6ebff1775** — 1 file FE (PriceAskingRequestForm.vue).
 Các thay đổi không liên quan (Finance/WrAccountingService, docs/superpowers…) vẫn để nguyên trong working tree, CHƯA commit.
+
+---
+
+## Phase 3 — Chi tiết hiện con + PTKD duyệt từng con (bug PYCHG-04697, 2026-11-03)
+
+Hướng CHỐT: "Hiện lồng + duyệt từng con" — xem design-phase3.md. Con vẫn KHÔNG hỏi giá; "duyệt con" = vòng đời hàng tạm (6→7/8), độc lập hỏi giá.
+
+### Tasks Phase 3
+- [x] Task 9 — BE `PriceAskingProductReader::recipeChildren()`: thêm `company_status` (số pcc) vào mỗi con. ✅
+- [x] Task 10 — BE `PriceAskingRequestWriter::productInRequest($requestId,$productId)` static: true nếu là DÒNG hỏi giá HOẶC con ghép bộ (recipe_products.base ∈ dòng phiếu). `assertTempGate()` dùng helper này (gate 404 mở cho con); `$line` fetch có điều kiện. ✅
+- [x] Task 11 — BE `PriceAskingRequestService::lineRow()` trả `recipe_children` + mỗi con có `can_temp_approve` (`canPtkd && is_temp`) + `temp_reject_reason` (status 8). `show()`: rejectReasons map gồm mã con; `temp_pending_count` += con status 6. `tempForm()` gate dùng `productInRequest()`. ✅
+- [x] Task 12 — BE `ptkdApprove()` gate: gộp product_id con ghép bộ vào `$statuses` → `$pending` đếm cả con 6; C6 đóng nhóm giữ nguyên chỉ xét dòng cha. ✅
+- [x] Task 13 — FE `PriceAskingRequestForm.vue`: `ptkdTempActions` tính cả con; dòng con readonly render Duyệt/Sửa mirror cha + ⓘ popover + lý do Không duyệt con (8). ✅
+- [x] Task 14 — `php -l` 3 file BE PASS. Playwright verify end-to-end (fixture tạm trên `erp_hrm_check`: 2 con tạm 6 gắn recipe_products dưới dòng 24314 phiếu 3577, cấp quyền PTKD role18 cty1 cho emp13, tạo group cho dòng): ✅ con hiện lồng dưới cụm cha (note "Công thức ghép bộ: 2 hàng con"); mỗi con 6 có nút **Duyệt** + ⓘ; nút **Duyệt phiếu** khoá (`disabled`) khi `temp_pending_count=2`; endpoint con mở gate (tempForm 200, reject 200 → con→8 + lý do hiện); duyệt/quyết hết con (8+7) → `temp_pending_count=0` → nút Duyệt phiếu **mở khoá**; con đã quyết hiện **Sửa**. Màn Thêm (`/add`) render sạch, KHÔNG regress (branch mới chỉ chạy khi `readonly && ptkdTempActions`). Đã dọn sạch fixture + grant + log reject, DB về nguyên trạng.

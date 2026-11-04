@@ -1,0 +1,174 @@
+=== FIX ROUND 1: 9b88dc7cb..d8d34725f ===
+d8d34725f fix(ychg): whole-phieu reject resets status 9 to 6 + tests
+
+ .../PriceCalculation/PriceAskingRequestService.php |  2 +-
+ .../PriceCalculation/PriceAskingRequestWriter.php  |  8 +++---
+ .../Feature/PriceAskingNoPriceApproveTest.php      | 32 +++++++++++++++++++++-
+ 3 files changed, 36 insertions(+), 6 deletions(-)
+
+diff --git a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestService.php b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestService.php
+index df0284ab8..0aa698895 100644
+--- a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestService.php
++++ b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestService.php
+@@ -550,16 +550,16 @@ class PriceAskingRequestService
+         $reasons = $status === ProductCompany::STATUS_TEMP_REJECTED
+             ? $this->tempRejectReasons($request->id, [$productId => ['code' => $product->code]]) : [];
+ 
+         return (new ProductFormResource($product))->withScope(ProductWriteService::SCOPE_FULL)->toArray(request()) + [
+             'ychg' => ['id' => $request->id, 'code' => $request->code],
+             'company' => ['id' => $companyId, 'name' => DB::table('companies')->where('id', $companyId)->value('name')],
+             'company_status_text' => ProductCompany::STATUS_TEXT[$status] ?? null,
+             'company_status_color' => ProductCompany::STATUS_COLOR[$status] ?? null,
+             'temp_reject_reason' => $reasons[$productId] ?? null,
+             'can_save' => $open,
+-            'can_approve' => $open,   // PTKD đổi ý được khi phiếu còn Chờ PTKD (6/7/8)
++            'can_approve' => $open,   // PTKD đổi ý được khi phiếu còn Chờ PTKD (6/7/8/9)
+             'can_reject' => $open,
+             'can_approve_no_price' => $open,
+         ];
+     }
+ }
+diff --git a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
+index 8dbb198e4..7a1b0fa89 100644
+--- a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
++++ b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
+@@ -518,21 +518,21 @@ class PriceAskingRequestWriter
+             $pcc->lockForUpdate();
+         }
+         $status = $pcc->value('status');
+         if ($request->status !== PriceAskingRequest::STATUS_WAITING_PTKD || $status === null || !in_array((int) $status, $statuses, true)) {
+             PriceAskingAccess::fail(409, self::MSG_CONFLICT);
+         }
+ 
+         return [$request, $line, (int) $status];
+     }
+ 
+-    /** Đồng ý: ghi thông tin chung + Quản trị công ty phiếu (dữ liệu đã validate đủ ở FormRequest) ⇒ 7. PTKD đổi ý được khi phiếu còn Chờ PTKD (6/7/8) */
++    /** Đồng ý: ghi thông tin chung + Quản trị công ty phiếu (dữ liệu đã validate đủ ở FormRequest) ⇒ 7. PTKD đổi ý được khi phiếu còn Chờ PTKD (6/7/8/9) */
+     public function tempApprove(int $id, int $productId, array $data): int
+     {
+         return DB::transaction(function () use ($id, $productId, $data) {
+             [$request] = $this->assertTempGate($id, $productId, ProductCompany::TEMP_STATUSES, true);
+             $this->writeTempProduct($request, $productId, $data);
+             $this->setTempStatus($request, $productId, ProductCompany::STATUS_TEMP_APPROVED, 'approved');
+ 
+             return ProductCompany::STATUS_TEMP_APPROVED;
+         });
+     }
+@@ -559,21 +559,21 @@ class PriceAskingRequestWriter
+             $this->writeTempProduct($request, $productId, $data);
+             if (in_array($status, [ProductCompany::STATUS_TEMP_APPROVED, ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE], true)) {
+                 $this->setTempStatus($request, $productId, ProductCompany::STATUS_TEMP);
+                 $status = ProductCompany::STATUS_TEMP;
+             }
+ 
+             return $status;
+         });
+     }
+ 
+-    /** Không duyệt: lý do bắt buộc ≤ 255 ⇒ 8 + log `temp_reject` mới "<mã>: <lý do>" (C4). PTKD đổi ý được (6/7/8) */
++    /** Không duyệt: lý do bắt buộc ≤ 255 ⇒ 8 + log `temp_reject` mới "<mã>: <lý do>" (C4). PTKD đổi ý được (6/7/8/9) */
+     public function tempReject(int $id, int $productId, array $input): int
+     {
+         return DB::transaction(function () use ($id, $productId, $input) {
+             [$request] = $this->assertTempGate($id, $productId, ProductCompany::TEMP_STATUSES, true);
+             $reason = $this->requireReason($input, 'reason', self::TEMP_REASON_MAX);
+             $this->setTempStatus($request, $productId, ProductCompany::STATUS_TEMP_REJECTED, 'rejected', 'Lý do không duyệt: ' . $reason);
+             $code = (string) DB::table('products')->where('id', $productId)->value('code');
+             // group_id NULL: nhóm bị xoá / gom lại mỗi lần người lập lưu phiếu (FK `parah_group_id_foreign`) — tra lý do theo mã hàng
+             $this->log($request->id, null, self::LOG_TEMP_REJECT, $code . ': ' . $reason, $this->access->me());
+ 
+@@ -687,22 +687,22 @@ class PriceAskingRequestWriter
+             $request = $this->lockForPtkd($id);
+             $request->status = PriceAskingRequest::STATUS_REJECTED;
+             $request->approver_id = $me;
+             $request->approved_time = now();
+             $request->comment = $comment;
+             $request->updated_by = $me;
+             $request->save();
+             $this->log($request->id, null, self::LOG_PTKD_REJECT, $comment, $me);
+             $productIds = $request->products()->pluck('product_id')->all();
+             $this->moveProducts($productIds, (int) $request->company_id, ProductCompany::PRICING_FLOW_STATUSES, ProductCompany::STATUS_ENTERING_INFO, $me);
+-            // A9: hàng tạm đã Đồng ý (7) về 6 — đưa vào YCHG khác phải duyệt lại; Không duyệt (8) giữ
+-            $this->moveProducts($productIds, (int) $request->company_id, [ProductCompany::STATUS_TEMP_APPROVED], ProductCompany::STATUS_TEMP, $me);
++            // A9: hàng tạm đã Đồng ý (7) / Duyệt không cần tính giá (9) về 6 — đưa vào YCHG khác phải duyệt lại; Không duyệt (8) giữ
++            $this->moveProducts($productIds, (int) $request->company_id, [ProductCompany::STATUS_TEMP_APPROVED, ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE], ProductCompany::STATUS_TEMP, $me);
+ 
+             return $request;
+         });
+ 
+         $this->notifier->ptkdRejected($request->id, $request->code, (int) $request->created_by, $comment);
+     }
+ 
+     private function lockForPtkd(int $id): PriceAskingRequest
+     {
+         $request = $this->access->assertWritable(PriceAskingRequest::query()->lockForUpdate()->find($id));
+diff --git a/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+index 6db0dbc51..cbf5c8914 100644
+--- a/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
++++ b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+@@ -3,21 +3,23 @@
+ namespace Modules\MasterData\Tests\Feature;
+ 
+ use Illuminate\Foundation\Testing\DatabaseTransactions;
+ use App\Helper\CmcS3Helper;
+ use Illuminate\Support\Facades\DB;
+ use Modules\MasterData\Services\PriceCalculation\PriceAskingNotifier;
+ use Modules\MasterData\Services\PriceCalculation\TempNoPriceResolver;
+ use Tests\TestCase;
+ 
+ /**
+- * YCHG "Duyệt không cần tính giá" — Task 2: TempNoPriceResolver (TH1 giá 0 tường minh / TH2 kế thừa báo giá trúng thầu).
++ * YCHG "Duyệt không cần tính giá" — Task 2: TempNoPriceResolver (TH1 giá 0 tường minh / TH2 kế thừa báo giá trúng thầu);
++ * Task 3: endpoint approve-no-price (dòng ⇒ 9), gate nhận 9 (đổi ý 9→7/8, Lưu 9→6), cờ can_approve_no_price,
++ * reset 9→6 khi PTKD không duyệt phiếu / sale sửa hàng tạm.
+  */
+ class PriceAskingNoPriceApproveTest extends TestCase
+ {
+     use DatabaseTransactions;
+     use Concerns\ActsAsProductUser;
+     use Concerns\EnsuresDeclaredPermissions;
+ 
+     private const CO = 1;
+     private const URL = '/api/v1/master-data/price-asking-requests';
+     private const PTKD = 'PTKD duyệt yêu cầu hỏi giá';
+@@ -246,11 +248,39 @@ class PriceAskingNoPriceApproveTest extends TestCase
+         $this->postJson(self::URL . "/$id/approve")->assertOk();   // phiếu qua PTKD ⇒ không còn Chờ PTKD
+         $this->postJson($this->npUrl($id))->assertStatus(409);
+     }
+ 
+     public function test_temp_form_exposes_can_approve_no_price(): void
+     {
+         $this->bootApi();
+         $id = $this->sentRequest();
+         $this->getJson(self::URL . "/$id/temp-products/" . $this->fx['pid'])->assertOk()->assertJsonPath('data.can_approve_no_price', true);
+     }
++
++    public function test_reject_whole_request_resets_9_to_6(): void
++    {
++        $this->bootApi();
++        $id = $this->sentRequest();
++        $this->postJson($this->npUrl($id))->assertOk();
++        $this->postJson(self::URL . "/$id/reject", ['comment' => 'Không duyệt'])->assertOk();
++        $this->assertSame(6, $this->pccStatus());
++    }
++
++    public function test_temp_reject_from_9_goes_to_8(): void
++    {
++        $this->bootApi();
++        $id = $this->sentRequest();
++        $this->postJson($this->npUrl($id))->assertOk();
++        $this->postJson($this->npUrl($id, 'reject'), ['reason' => 'Sai'])->assertOk()->assertJsonPath('data.company_status', 8);
++        $this->assertSame(8, $this->pccStatus());
++    }
++
++    public function test_creator_edit_resets_9_to_6(): void
++    {
++        $this->bootApi();
++        $id = $this->sentRequest();
++        $this->postJson($this->npUrl($id))->assertOk();
++        $this->loginAs('creator');
++        $this->putJson('/api/v1/master-data/temp-products/' . $this->fx['pid'], $this->approveForm())->assertOk();
++        $this->assertSame(6, $this->pccStatus());
++    }
+ }

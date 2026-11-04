@@ -1,0 +1,82 @@
+diff --git a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
+index 98a5c39c1..6f6f66aa6 100644
+--- a/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
++++ b/Modules/MasterData/Services/PriceCalculation/PriceAskingRequestWriter.php
+@@ -742,20 +742,21 @@ class PriceAskingRequestWriter
+         $unitRow = DB::table('product_units')->where('product_id', $productId)->where('unit_id', (int) $r['unit_id'])->orderByDesc('is_base')->first(['id']);
+         if (!$unitRow) {
+             $unitRow = DB::table('product_units')->where('product_id', $productId)->where('is_base', 1)->first(['id']);
+         }
+         if (!$unitRow) {
+             $code = (string) DB::table('products')->where('id', $productId)->value('code');
+             throw ValidationException::withMessages(['temp_products' => [$code . ': chưa đủ điều kiện duyệt không cần tính giá']]);
+         }
+         $cost = (float) $r['cost'];
+         $sale = (float) $r['sale'];
++        // Hệ số chỉ mang tính thông tin: giá bán được ghi tường minh nên hệ số không làm sai giá danh mục; cost=0 ⇒ 0
+         $coef = $cost > 0 ? round($sale / $cost, 2) : 0.0;
+         $prices = [];
+         foreach (ProductPriceListService::TYPE_ORDER as $type) {
+             $prices[] = [
+                 'price_type_id' => $type, 'price' => $sale, 'coefficient' => $coef, 'sale_max_percent' => 0, 'expected_prices' => [],
+                 'is_manual_price_online' => true, 'is_manual_coefficient_online' => true, 'is_manual_sale_max_percent_online' => true,
+             ];
+         }
+         $writer = app(ProductPriceWriter::class);
+         $note = 'Duyệt không cần tính giá - Yêu cầu hỏi giá ' . $request->code;
+@@ -763,21 +764,21 @@ class PriceAskingRequestWriter
+ 
+         $moved = app(ProductHistoryService::class)->trackStatus($companyId, [$productId], function () use ($productId, $companyId, $me) {
+             return DB::table('product_company_coefficients')->where('product_id', $productId)->where('company_id', $companyId)
+                 ->where('status', ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE)
+                 ->update(['status' => ProductCompany::STATUS_TRADING, 'updated_by' => $me, 'updated_at' => now()]);
+         }, null, 'Yêu cầu hỏi giá ' . $request->code . '. Duyệt không cần tính giá');
+         if ($moved) {
+             app(ProductPriceSetWriter::class)->ensureProductSet($productId, $companyId, $me);
+         }
+         $code = (string) DB::table('products')->where('id', $productId)->value('code');
+-        $this->log($request->id, null, self::LOG_TEMP_NO_PRICE, $code . ': giá nhập ' . $cost . ', giá bán ' . $sale, $me);
++        $this->log($request->id, null, self::LOG_TEMP_NO_PRICE, $code . ': duyệt không cần tính giá', $me);
+     }
+ 
+     public function ptkdReject(int $id, array $input): void
+     {
+         $comment = $this->requireReason($input, 'comment', self::COMMENT_MAX);
+         $me = $this->access->me();
+ 
+         $request = DB::transaction(function () use ($id, $comment, $me) {
+             $request = $this->lockForPtkd($id);
+             $request->status = PriceAskingRequest::STATUS_REJECTED;
+diff --git a/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+index e8c425ac9..1da7b4b19 100644
+--- a/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
++++ b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+@@ -449,11 +449,28 @@ class PriceAskingNoPriceApproveTest extends TestCase
+         $pid2 = $this->mkSecondProduct();                         // dòng 2 không có giá ⇒ resolve() = null
+         $id = $this->sentRequestOf([$pid1, $pid2]);
+         $this->setNoPrice($id, $pid1);
+         $this->setNoPrice($id, $pid2);
+         $this->postJson(self::URL . "/$id/approve")->assertStatus(422)->assertJsonValidationErrors(['temp_products']);
+         $this->assertSame(9, $this->statusOf($pid1));
+         $this->assertSame(9, $this->statusOf($pid2));
+         $this->assertSame(0, DB::table('product_unit_prices')->where('product_unit_id', $puId)->where('company_id', self::CO)->where('price_type_id', 6)->count());   // chưa ghi bộ giá
+         $this->assertSame(2, (int) DB::table('price_asking_requests')->where('id', $id)->value('status'));
+     }
++
++    public function test_no_price_history_note_does_not_leak_cost(): void
++    {
++        $this->bootApi();
++        [, $unitId] = $this->baseUnitOf($this->fx['pid']);
++        $this->mkQuote($this->fx['pid'], 7, null, 123457, 234568, $unitId);
++        $id = $this->sentRequest();
++        $this->setNoPrice($id, $this->fx['pid']);
++        $this->postJson(self::URL . "/$id/approve")->assertOk();
++        $this->assertSame(3, $this->pccStatus());
++        $res = $this->getJson(self::URL . "/$id")->assertOk();
++        $body = json_encode($res->json(), JSON_UNESCAPED_UNICODE);
++        $this->assertStringNotContainsString('123457', $body);   // giá nhập không được lộ qua lịch sử phiếu
++        $code = DB::table('products')->where('id', $this->fx['pid'])->value('code');
++        $notes = collect($res->json('data.histories'))->where('type', 'temp_approve_no_price')->pluck('note')->all();
++        $this->assertSame([$code . ': duyệt không cần tính giá'], $notes);
++    }
+ }

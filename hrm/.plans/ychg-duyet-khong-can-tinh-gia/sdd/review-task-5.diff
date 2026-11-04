@@ -1,0 +1,115 @@
+diff --git a/components/product/form/ProductForm.vue b/components/product/form/ProductForm.vue
+index a624e485f..5ffaf6dfa 100644
+--- a/components/product/form/ProductForm.vue
++++ b/components/product/form/ProductForm.vue
+@@ -85,24 +85,34 @@
+                         Lưu thông tin, chưa ghi quyết định. Nếu hàng đang "Đã duyệt" sẽ quay về chờ duyệt lại.
+                     </b-popover>
+                     <V2BaseButton v-if="tempMeta.can_approve && tempStatus !== 7" primary size="sm" :interactable="ready && !saving" @click="tempSubmit('approve')">
+                         <template #prefix><i class="ri-check-line"></i></template>
+                         Đồng ý
+                     </V2BaseButton>
+                     <span v-if="tempMeta.can_approve && tempStatus !== 7" id="temp-info-approve" class="no-print" style="cursor: pointer; color: #94a3b8">
+                         <i class="ri-information-line" style="font-size: 14px"></i>
+                     </span>
+                     <b-popover v-if="tempMeta.can_approve && tempStatus !== 7" target="temp-info-approve" triggers="hover focus" placement="top" custom-class="info-popover">
+                         Hàng chuyển "Hàng tạm đã duyệt". Khi duyệt phiếu, hàng sẽ sang Chờ tính giá bán.
+                     </b-popover>
++                    <V2BaseButton v-if="tempMeta.can_approve_no_price && tempStatus !== 9" primary size="sm" :interactable="ready && !saving" @click="tempApproveNoPrice">
++                        <template #prefix><i class="ri-checkbox-circle-line"></i></template>
++                        Duyệt không cần tính giá
++                    </V2BaseButton>
++                    <span v-if="tempMeta.can_approve_no_price && tempStatus !== 9" id="temp-info-approve-no-price" class="no-print" style="cursor: pointer; color: #94a3b8">
++                        <i class="ri-information-line" style="font-size: 14px"></i>
++                    </span>
++                    <b-popover v-if="tempMeta.can_approve_no_price && tempStatus !== 9" target="temp-info-approve-no-price" triggers="hover focus" placement="top" custom-class="info-popover">
++                        Dùng khi: (1) vật tư giá 0; (2) hàng tạm lấy từ báo giá trúng thầu. Hàng lên "Đang kinh doanh" khi duyệt phiếu, bỏ qua hỏi giá và tính giá.
++                    </b-popover>
+                     <V2BaseButton v-if="tempMeta.can_reject && tempStatus !== 8" primary status="danger" size="sm" :interactable="ready && !saving" @click="tempReject">
+                         <template #prefix><i class="ri-close-circle-line"></i></template>
+                         Không duyệt
+                     </V2BaseButton>
+                     <span v-if="tempMeta.can_reject && tempStatus !== 8" id="temp-info-reject" class="no-print" style="cursor: pointer; color: #94a3b8">
+                         <i class="ri-information-line" style="font-size: 14px"></i>
+                     </span>
+                     <b-popover v-if="tempMeta.can_reject && tempStatus !== 8" target="temp-info-reject" triggers="hover focus" placement="top" custom-class="info-popover">
+                         Bắt buộc nhập lý do. Hàng nằm lại phiếu, không đi tiếp. Người lập sửa rồi đưa vào YCHG khác.
+                     </b-popover>
+                     <V2BaseButton tertiary size="sm" @click="$router.push(backUrl)">
+                         <template #prefix><i class="ri-arrow-left-line"></i></template>
+@@ -359,28 +369,28 @@ export default {
+                 this.toastFormError(message)
+                 return
+             }
+             this.ready = true
+             this.$nextTick(() => this.markFormPristine())
+         },
+         /** mode 'temp-approve': dữ liệu form + khối meta (không đưa vào `form` ⇒ không lọt payload) */
+         async loadTempForm() {
+             const [res] = await Promise.all([
+                 this.$store.dispatch('apiGetMethod', `${ASKING}/${this.requestId}/temp-products/${this.productId}`),
+                 this.loadTempCreator(),
+             ])
+-            const { ychg, company, company_status_text: statusText, company_status_color: statusColor, temp_reject_reason: reason, can_save: canSave, can_approve: canApprove, can_reject: canReject, ...data } = res.data || {}
++            const { ychg, company, company_status_text: statusText, company_status_color: statusColor, temp_reject_reason: reason, can_save: canSave, can_approve: canApprove, can_reject: canReject, can_approve_no_price: canApproveNoPrice, ...data } = res.data || {}
+             this.tempMeta = {
+                 ychg: ychg || null, company: company || null, company_status_text: statusText, company_status_color: statusColor,
+-                temp_reject_reason: reason || '', can_save: !!canSave, can_approve: !!canApprove, can_reject: !!canReject,
++                temp_reject_reason: reason || '', can_save: !!canSave, can_approve: !!canApprove, can_reject: !!canReject, can_approve_no_price: !!canApproveNoPrice,
+             }
+             return { ...res, data }
+         },
+         /** Người lập phiếu YCHG (dòng đầu form duyệt) — chỉ để hiển thị, lỗi thì bỏ qua */
+         async loadTempCreator() {
+             try {
+                 const res = await this.$store.dispatch('apiGetMethod', { url: `${ASKING}/${this.requestId}`, headers: { 'X-Silent-Errors': '1' } })
+                 const d = (res && res.data) || {}
+                 this.tempCreator = d.creator_name || d.creator || ''
+             } catch (e) {
+                 this.tempCreator = ''
+             }
+@@ -457,24 +467,44 @@ export default {
+             } catch (error) {
+                 if (this.applyServerErrors(error)) {
+                     this.tempFeKeys = []
+                     this.openFirstErrorTab()
+                     this.focusFirstError() // N114
+                 } else {
+                     this.toastFormError((error && error.response && error.response.data && error.response.data.message) || 'Lưu không thành công')
+                 }
+             } finally {
+                 this.saving = false
+             }
+         },
++        /** Duyệt không cần tính giá: POST approve-no-price ⇒ 9 (không gửi payload form) */
++        async tempApproveNoPrice() {
++            if (this.saving || !this.ready) return
++            const code = this.form.code || ''
++            const ok = await this.$confirm({
++                title: 'Duyệt không cần tính giá',
++                message: `Duyệt không cần tính giá cho hàng ${code}? Hàng sẽ lên "Đang kinh doanh" khi phiếu được duyệt, bỏ qua hỏi giá và tính giá.`,
++                textAccept: 'Duyệt',
++            })
++            if (!ok) return
++            this.saving = true
++            try {
++                await this.$store.dispatch('apiPostMethod', { url: this.tempUrl('/approve-no-price'), payload: {} })
++                this.tempDone(`Đã duyệt không cần tính giá hàng tạm ${code}`)
++            } catch (error) {
++                this.toastFormError((error && error.response && error.response.data && error.response.data.message) || 'Thao tác thất bại, vui lòng thử lại.')
++            } finally {
++                this.saving = false
++            }
++        },
+         /** Không duyệt: popup lý do bắt buộc (≤ 255) ⇒ POST reject ⇒ 8. 422 hiện dưới ô lý do, lỗi khác toast */
+         tempReject() {
+             if (this.saving || !this.ready) return
+             const code = this.form.code || ''
+             this.$refs.reason.open({
+                 title: 'Không duyệt hàng tạm',
+                 // Không duyệt KHÔNG lưu form ⇒ báo rõ khi đang có thay đổi chưa lưu (không mất dữ liệu âm thầm)
+                 subtitle: `${code} — hàng giữ trong phiếu nhưng không đi tiếp (không gửi XNK)`
+                     + (this.isFormDirty() ? '. Các thay đổi chưa lưu trên form sẽ không được lưu.' : ''),
+                 label: 'Lý do không duyệt',
+                 max: 255,
+                 field: 'reason',

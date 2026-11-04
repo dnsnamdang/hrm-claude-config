@@ -1,0 +1,200 @@
+### hrm-client full-feature diff — range 57539391d..602e0a959 (Tasks 5-6)
+### commits:
+602e0a959 feat(ychg): recognize status 9 (approved-no-price) on request detail for parent + children
+0fd2a1da7 feat(ychg): third footer action 'Duyệt không cần tính giá' on temp-approve form
+
+### stat:
+ components/product/form/ProductForm.vue            | 35 ++++++++++++++++++++--
+ .../sale/price-asking/PriceAskingRequestForm.vue   | 12 ++++----
+ 2 files changed, 39 insertions(+), 8 deletions(-)
+
+### full diff (-U10):
+diff --git a/components/product/form/ProductForm.vue b/components/product/form/ProductForm.vue
+index a624e485f..0ffd7625d 100644
+--- a/components/product/form/ProductForm.vue
++++ b/components/product/form/ProductForm.vue
+@@ -87,20 +87,30 @@
+                     <V2BaseButton v-if="tempMeta.can_approve && tempStatus !== 7" primary size="sm" :interactable="ready && !saving" @click="tempSubmit('approve')">
+                         <template #prefix><i class="ri-check-line"></i></template>
+                         Đồng ý
+                     </V2BaseButton>
+                     <span v-if="tempMeta.can_approve && tempStatus !== 7" id="temp-info-approve" class="no-print" style="cursor: pointer; color: #94a3b8">
+                         <i class="ri-information-line" style="font-size: 14px"></i>
+                     </span>
+                     <b-popover v-if="tempMeta.can_approve && tempStatus !== 7" target="temp-info-approve" triggers="hover focus" placement="top" custom-class="info-popover">
+                         Hàng chuyển "Hàng tạm đã duyệt". Khi duyệt phiếu, hàng sẽ sang Chờ tính giá bán.
+                     </b-popover>
++                    <V2BaseButton v-if="tempMeta.can_approve_no_price && tempStatus !== 9" primary size="sm" :interactable="ready && !saving" @click="tempApproveNoPrice">
++                        <template #prefix><i class="ri-checkbox-circle-line"></i></template>
++                        Duyệt không cần tính giá
++                    </V2BaseButton>
++                    <span v-if="tempMeta.can_approve_no_price && tempStatus !== 9" id="temp-info-approve-no-price" class="no-print" style="cursor: pointer; color: #94a3b8">
++                        <i class="ri-information-line" style="font-size: 14px"></i>
++                    </span>
++                    <b-popover v-if="tempMeta.can_approve_no_price && tempStatus !== 9" target="temp-info-approve-no-price" triggers="hover focus" placement="top" custom-class="info-popover">
++                        Dùng khi: (1) vật tư giá 0; (2) hàng tạm lấy từ báo giá trúng thầu. Hàng lên "Đang kinh doanh" khi duyệt phiếu, bỏ qua hỏi giá và tính giá.
++                    </b-popover>
+                     <V2BaseButton v-if="tempMeta.can_reject && tempStatus !== 8" primary status="danger" size="sm" :interactable="ready && !saving" @click="tempReject">
+                         <template #prefix><i class="ri-close-circle-line"></i></template>
+                         Không duyệt
+                     </V2BaseButton>
+                     <span v-if="tempMeta.can_reject && tempStatus !== 8" id="temp-info-reject" class="no-print" style="cursor: pointer; color: #94a3b8">
+                         <i class="ri-information-line" style="font-size: 14px"></i>
+                     </span>
+                     <b-popover v-if="tempMeta.can_reject && tempStatus !== 8" target="temp-info-reject" triggers="hover focus" placement="top" custom-class="info-popover">
+                         Bắt buộc nhập lý do. Hàng nằm lại phiếu, không đi tiếp. Người lập sửa rồi đưa vào YCHG khác.
+                     </b-popover>
+@@ -361,24 +371,24 @@ export default {
+             }
+             this.ready = true
+             this.$nextTick(() => this.markFormPristine())
+         },
+         /** mode 'temp-approve': dữ liệu form + khối meta (không đưa vào `form` ⇒ không lọt payload) */
+         async loadTempForm() {
+             const [res] = await Promise.all([
+                 this.$store.dispatch('apiGetMethod', `${ASKING}/${this.requestId}/temp-products/${this.productId}`),
+                 this.loadTempCreator(),
+             ])
+-            const { ychg, company, company_status_text: statusText, company_status_color: statusColor, temp_reject_reason: reason, can_save: canSave, can_approve: canApprove, can_reject: canReject, ...data } = res.data || {}
++            const { ychg, company, company_status_text: statusText, company_status_color: statusColor, temp_reject_reason: reason, can_save: canSave, can_approve: canApprove, can_reject: canReject, can_approve_no_price: canApproveNoPrice, ...data } = res.data || {}
+             this.tempMeta = {
+                 ychg: ychg || null, company: company || null, company_status_text: statusText, company_status_color: statusColor,
+-                temp_reject_reason: reason || '', can_save: !!canSave, can_approve: !!canApprove, can_reject: !!canReject,
++                temp_reject_reason: reason || '', can_save: !!canSave, can_approve: !!canApprove, can_reject: !!canReject, can_approve_no_price: !!canApproveNoPrice,
+             }
+             return { ...res, data }
+         },
+         /** Người lập phiếu YCHG (dòng đầu form duyệt) — chỉ để hiển thị, lỗi thì bỏ qua */
+         async loadTempCreator() {
+             try {
+                 const res = await this.$store.dispatch('apiGetMethod', { url: `${ASKING}/${this.requestId}`, headers: { 'X-Silent-Errors': '1' } })
+                 const d = (res && res.data) || {}
+                 this.tempCreator = d.creator_name || d.creator || ''
+             } catch (e) {
+@@ -459,20 +469,41 @@ export default {
+                     this.tempFeKeys = []
+                     this.openFirstErrorTab()
+                     this.focusFirstError() // N114
+                 } else {
+                     this.toastFormError((error && error.response && error.response.data && error.response.data.message) || 'Lưu không thành công')
+                 }
+             } finally {
+                 this.saving = false
+             }
+         },
++        /** Duyệt không cần tính giá: POST approve-no-price ⇒ 9 (không gửi payload form) */
++        async tempApproveNoPrice() {
++            if (this.saving || !this.ready) return
++            const code = this.form.code || ''
++            const ok = await this.$confirm({
++                title: 'Duyệt không cần tính giá',
++                message: `Duyệt không cần tính giá cho hàng ${code}? Hàng sẽ lên "Đang kinh doanh" khi phiếu được duyệt, bỏ qua hỏi giá và tính giá.`
++                    + (this.isFormDirty() ? ' Các thay đổi chưa lưu trên form sẽ không được lưu.' : ''),
++                textAccept: 'Duyệt',
++            })
++            if (!ok) return
++            this.saving = true
++            try {
++                await this.$store.dispatch('apiPostMethod', { url: this.tempUrl('/approve-no-price'), payload: {} })
++                this.tempDone(`Đã duyệt không cần tính giá hàng tạm ${code}`)
++            } catch (error) {
++                this.toastFormError((error && error.response && error.response.data && error.response.data.message) || 'Thao tác thất bại, vui lòng thử lại.')
++            } finally {
++                this.saving = false
++            }
++        },
+         /** Không duyệt: popup lý do bắt buộc (≤ 255) ⇒ POST reject ⇒ 8. 422 hiện dưới ô lý do, lỗi khác toast */
+         tempReject() {
+             if (this.saving || !this.ready) return
+             const code = this.form.code || ''
+             this.$refs.reason.open({
+                 title: 'Không duyệt hàng tạm',
+                 // Không duyệt KHÔNG lưu form ⇒ báo rõ khi đang có thay đổi chưa lưu (không mất dữ liệu âm thầm)
+                 subtitle: `${code} — hàng giữ trong phiếu nhưng không đi tiếp (không gửi XNK)`
+                     + (this.isFormDirty() ? '. Các thay đổi chưa lưu trên form sẽ không được lưu.' : ''),
+                 label: 'Lý do không duyệt',
+diff --git a/components/sale/price-asking/PriceAskingRequestForm.vue b/components/sale/price-asking/PriceAskingRequestForm.vue
+index 832ff465b..3544d9a37 100644
+--- a/components/sale/price-asking/PriceAskingRequestForm.vue
++++ b/components/sale/price-asking/PriceAskingRequestForm.vue
+@@ -244,36 +244,36 @@
+                                             size="sm"
+                                             :title="row.is_temp ? 'Bỏ khỏi phiếu — hàng tạm vẫn giữ ở màn Hàng tạm' : 'Bỏ hàng khỏi phiếu'"
+                                             @click="removeProduct(row.product_id)"
+                                         >
+                                             <i class="ri-delete-bin-line"></i>
+                                         </V2BaseIconButton>
+                                     </span>
+                                 </td>
+                                 <td v-else-if="ptkdTempActions" class="text-center">
+                                     <span v-if="row.can_temp_approve" class="row-actions">
+-                                        <!-- 6 ⇒ "Duyệt" (chỉ điều hướng, không hỏi); 7/8 ⇒ "Sửa" mở lại form duyệt -->
++                                        <!-- 6 ⇒ "Duyệt" (chỉ điều hướng, không hỏi); 7/8/9 ⇒ "Sửa" mở lại form duyệt -->
+                                         <V2BaseButton v-if="Number(row.company_status) === 6" primary size="sm" @click="openTempApprove(row)">
+                                             <template #prefix><i class="ri-check-line"></i></template>
+                                             Duyệt
+                                         </V2BaseButton>
+                                         <V2BaseButton v-else secondary size="sm" @click="openTempApprove(row)">
+                                             <template #prefix><i class="ri-edit-line"></i></template>
+                                             Sửa
+                                         </V2BaseButton>
+                                         <span :id="'temp-row-info-' + row.product_id" class="ml-1 no-print" style="cursor: pointer; color: #94a3b8">
+                                             <i class="ri-information-line" style="font-size: 14px"></i>
+                                         </span>
+                                         <b-popover :target="'temp-row-info-' + row.product_id" triggers="hover focus" placement="bottom" custom-class="info-popover">
+                                             {{ Number(row.company_status) === 6
+-                                                ? 'Mở form kiểm tra, bổ sung thông tin hàng tạm. Chọn Đồng ý hoặc Không duyệt cho từng hàng trước khi duyệt phiếu.'
+-                                                : 'Mở lại form để đổi quyết định Đồng ý ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
++                                                ? 'Mở form kiểm tra, bổ sung thông tin hàng tạm. Chọn Đồng ý, Duyệt không cần tính giá hoặc Không duyệt cho từng hàng trước khi duyệt phiếu.'
++                                                : 'Mở lại form để đổi quyết định: Đồng ý ↔ Duyệt không cần tính giá ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
+                                         </b-popover>
+                                     </span>
+                                 </td>
+                             </tr>
+                             <!-- Hàng con theo công thức ghép bộ (recipe_products) — CHỈ XEM, không sửa/xoá -->
+                             <tr
+                                 v-for="child in (row.recipe_children || [])"
+                                 :key="`${group.key}-${row.product_id}-rc${child.id}`"
+                                 class="recipe-child-row"
+                             >
+@@ -299,37 +299,37 @@
+                                 <!-- Item 4: cột Nguồn gốc / Trạng thái dữ liệu giá để trống ở dòng con -->
+                                 <td></td>
+                                 <td></td>
+                                 <td></td>
+                                 <td v-if="!readonly" class="text-center">
+                                     <V2BaseIconButton v-if="child.editable" size="sm" title="Sửa hàng tạm con" @click="openTempEdit(child.product_id)">
+                                         <i class="ri-edit-line"></i>
+                                     </V2BaseIconButton>
+                                 </td>
+                                 <td v-else-if="ptkdTempActions" class="text-center">
+-                                    <!-- P3: PTKD duyệt từng con tạm — 6 ⇒ "Duyệt"; 7/8 ⇒ "Sửa" mở lại form đổi quyết định (mirror dòng cha) -->
++                                    <!-- P3: PTKD duyệt từng con tạm — 6 ⇒ "Duyệt"; 7/8/9 ⇒ "Sửa" mở lại form đổi quyết định (mirror dòng cha) -->
+                                     <span v-if="child.can_temp_approve" class="row-actions">
+                                         <V2BaseButton v-if="Number(child.company_status) === 6" primary size="sm" @click="openTempApprove(child)">
+                                             <template #prefix><i class="ri-check-line"></i></template>
+                                             Duyệt
+                                         </V2BaseButton>
+                                         <V2BaseButton v-else secondary size="sm" @click="openTempApprove(child)">
+                                             <template #prefix><i class="ri-edit-line"></i></template>
+                                             Sửa
+                                         </V2BaseButton>
+                                         <span :id="'temp-child-info-' + child.product_id" class="ml-1 no-print" style="cursor: pointer; color: #94a3b8">
+                                             <i class="ri-information-line" style="font-size: 14px"></i>
+                                         </span>
+                                         <b-popover :target="'temp-child-info-' + child.product_id" triggers="hover focus" placement="bottom" custom-class="info-popover">
+                                             {{ Number(child.company_status) === 6
+-                                                ? 'Mở form kiểm tra, bổ sung thông tin hàng tạm con. Chọn Đồng ý hoặc Không duyệt cho từng hàng con trước khi duyệt phiếu.'
+-                                                : 'Mở lại form để đổi quyết định Đồng ý ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
++                                                ? 'Mở form kiểm tra, bổ sung thông tin hàng tạm con. Chọn Đồng ý, Duyệt không cần tính giá hoặc Không duyệt cho từng hàng con trước khi duyệt phiếu.'
++                                                : 'Mở lại form để đổi quyết định: Đồng ý ↔ Duyệt không cần tính giá ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
+                                         </b-popover>
+                                     </span>
+                                 </td>
+                             </tr>
+                             <tr
+                                 v-if="showResult && hasRowResult(row) && !hiddenResults[row.product_id]"
+                                 :key="`${group.key}-${row.product_id}-result`"
+                                 class="result-row"
+                             >
+                                 <td></td>
