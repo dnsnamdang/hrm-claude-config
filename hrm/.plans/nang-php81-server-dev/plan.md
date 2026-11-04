@@ -47,5 +47,21 @@ Phạm vi: cả 8 site trên máy dev (tpe, uat, hrm_crm, demo, nhatlinh, matvie
 - [ ] Test so sánh 7.4 ↔ 8.1 từng site (API GET + cron + luồng ghi) trước khi chuyển
 - [ ] Commit + push 2 nhánh, deploy, chuyển nginx / cron / worker 2 site sang 8.1, theo dõi log
 
+## Nâng server PROD (hrm.eteksofts.com) lên 8.1 — yêu cầu 03/11/2026
+- [x] Khảo sát prod (03/11/2026, chỉ đọc): Ubuntu 22.04, 8 CPU/15GB; 5 site HRM trên 1 pool `php7.4-fpm.sock` (max_children 40) — tpe (hrm.eteksofts.com, nhánh `gop_db` d29b60688), etek / etekpower (nhánh `tpe` 347dad7ca), etekgreen (tpe, chậm 86 commit), toyota (tpe, chậm 266 commit); help-app đã chạy 8.3. CLI ghim tay 7.4; 35 dòng cron erp_tpe + 17 worker supervisor đều gọi `php`
+- [x] Quét lỗi PHP 8 (sửa script bỏ qua classmap trỏ file đã xoá + thư mục tests): tpe (gop_db) sạch; 4 site nhánh tpe dính `SalaryService` (báo cáo thu nhập) như dev
+- [x] User chốt (03/11): tpe + etek + etekpower lên 8.1 tối nay sau test; etekgreen + toyota GIỮ 7.4, nâng gói 7.4.33-31 (đã vá CVE); cherry-pick fix sang nhánh tpe
+- [x] Cherry-pick `1b19f762c` → nhánh `tpe` = `50d55a12a` (worktree tạm `worktrees/php81-tpe-fix`), push; deploy BE etek + etekpower `--ff-only` (chỉ kéo đúng commit này, không build FE): migrate không có gì, route:cache, seeder quyền
+- [x] Cài php8.1 8.1.34-9 song song trên prod (backup `/home/erp_tpe/backup-php81-20261103-2201/`): 90-hrm-custom.ini fpm (post 128M, upload 50M, upload_progress off) + cli (memory -1…), opcache tuning, pool = bản 7.4 đổi socket; CLI vẫn 7.4. Lint + boot 3 site bằng 8.1: route list giống hệt 7.4
+- [x] Test tính công code gop_db prod (worktree riêng `worktrees/php81-gopdb-test` ở d29b60688, DB local đã migrate 11 migration thiếu): timesheet_details 496.054 + timesheet_summaries 540.684 + employee_attendances GIỐNG HỆT 7.4↔8.1
+- [x] So sánh API nhánh tpe trên dev uat (deploy uat lên 50d55a12a, +75 commit, 6 migration; cổng tạm 7.4 :18085): 1.118 route giống; lệch đều là file tạm laravel-excel do 2 bản chạy song song / lỗi có sẵn / thứ tự / `job_type` dữ liệu cũ — chạy lại tuần tự 6 route lệch → giống hệt
+- [x] So sánh API gop_db ở local: chạy tới ~1.300/1.598 route thì script chết (TimeoutError khi đọc body HTTPError, chưa lưu kết quả); user chốt DỪNG vì gop_db = merge từ develop (đã test kỹ trên dev tpe) + quét tĩnh sạch + tính công giống hệt + route giống hệt
+- [x] **Chuyển prod 22:35 03/11/2026**: ghim toyota (18 dòng cron) + etekgreen/toyota (6 conf supervisor) vào `php7.4` TRƯỚC → `update-alternatives --set php /usr/bin/php8.1` → nginx hrm.eteksofts.com / hrm.etek.com.vn / hrm.etekpower.com.vn → php8.1-fpm.sock → restart worker 3 site (tên chương trình `crm_sync.conf` là `rice_sync`). Worker tpe 5 / etek 3 / etekpower 3 = php8.1, toyota 3 = php7.4; 3 worker etekgreen vốn `autostart=false` (site bảo trì từ 30/09, `artisan down`) — để nguyên
+- [x] Nâng gói php7.4 lên **7.4.33-31** (đã vá CVE-2026-109618/109619, build 21/10) cho etekgreen + toyota; cấu hình 7.4 giữ nguyên (pool 40, ini, opcache)
+- [x] Kiểm sau chuyển: login sai 422 + user-profile 200 + domain 200 ở tpe/etek/etekpower/toyota; help-app 8.3 vẫn 200; etek user-profile ~4s chậm SẴN (đo trong process: 7.4 2,6–4,1s, 8.1 2,9–4,1s, payload 943KB); cron calc 22:45 tpe chạy 8.1 cập nhật 368 dòng; log 4 site 22:35→22:46 không lỗi PHP, failed_jobs 0 (etek có lỗi máy chấm công 101.99.15.111 cURL 28 ~600 lần/ngày từ trước)
+- [x] Dọn: xoá /tmp/php81test prod + dev (token), cổng tạm uat trên dev, worktree tạm local `php81-gopdb-test` + `php81-tpe-fix` (nhánh tạm đã xoá). DB local `local_hrm_erp` đã chạy thêm 11 migration của gop_db
+- Rollback prod: `update-alternatives --set php /usr/bin/php7.4` · sed 3 file nginx về php7.4-fpm.sock · reload · `supervisorctl restart all`; backup `/home/erp_tpe/backup-php81-20261103-2201/` (có crontab trước khi chuyển)
+- [ ] (dev, còn treo) cron `www-data` của hrm_crm vẫn `/usr/bin/php7.4 artisan schedule:run`
+
 ## Rollback
 update-alternatives --set php /usr/bin/php7.4 · sed fastcgi_pass về php7.4-fpm.sock · nginx reload · supervisorctl restart all
