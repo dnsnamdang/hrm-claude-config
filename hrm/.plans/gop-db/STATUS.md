@@ -19,6 +19,13 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Biên bản bàn giao sơ bộ (ERP → HRM) — ĐÃ PUSH develop (hrm-api `4168dde79`, hrm-client `9c5e59719`) (2026-11-04, @khoipv)
+
+Port màn ERP `handoverRecords.index?type=all` (CSKH › Hồ sơ công việc + "Phiếu CSKH"). Chốt: không quyền (y ERP), sửa 3 lỗi ERP cả 2 bên, menu 2 chỗ, có In danh sách + In biên bản.
+
+**Checkpoint 04/11:** BE + FE đã push develop; Playwright local PASS toàn luồng, dữ liệu test đã dọn. Vá ERP (repo erp) CHƯA commit. Smoke test API (rollback) + compile FE pass. Còn: user bấm thử trình duyệt, upload S3 thật.
+Tài liệu: `.plans/gop-db/bien-ban-ban-giao-so-bo/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-04-bien-ban-ban-giao-so-bo-design.md`.
+
 ## Biên bản bàn giao nghiệm thu (ERP → HRM) — ĐANG LÀM (2026-11-03, @khoipv)
 
 Port màn ERP `handoverAcceptanceRecord.index?type=all` (Giao việc › Kết quả công việc) + lối phụ `?type=for-business-staff` (Tra cứu › Thông báo). Chốt: 2 nguồn HĐ (hãng + HRM), theo cấp y ERP (4 quyền type 4), nghiệp vụ y ERP, In danh sách + In biên bản.

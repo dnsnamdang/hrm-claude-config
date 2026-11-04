@@ -35,6 +35,8 @@ Design: `design.md` · Spec: `docs/superpowers/specs/gop-db/2026-11-03-bien-ban-
 - [x] T19 Fix lỗi Playwright bắt được: popup bấm sang trang 2 → STT nhảy 11–20 nhưng KHÔNG gọi API (V2BaseDataTable tự đổi `currentPage` trước khi emit) → chặn trùng trang theo `requestedPage` như màn danh sách
 - [x] T20 E2E `e2e/tests/customer-care/handover-acceptance-record.spec.ts` (21 test: danh sách, popup, tạo/sửa/chi tiết/in, duyệt, xoá, menu) — PASS hết; fixture `e2e/utils/handoverFixture.ts` tạo tạm 4 quyền + trả lại `firm_contracts.handover_date` + dọn biên bản/lịch sử theo tag
   - Chạy: `cd e2e && <node 24> node_modules/@playwright/test/cli.js test tests/customer-care/handover-acceptance-record.spec.ts --headed` (API `php artisan serve` 1 luồng → mỗi test 1–3 phút)
+- [x] T21 Popup chọn HĐ bỏ cột Hành động (user 04/11/2026) → bấm vào DÒNG để chọn (khuôn popup chọn phiếu xuất kho), bấm link Số HĐ chỉ mở tab xem HĐ; e2e B1 + C2 sửa theo, PASS
+- [x] T22 Rà nút theo skill button-convention (user 04/11/2026): "Thêm mới" → "Tạo mới"; icon Xóa dòng danh sách → `ri-delete-bin-line`; form Lưu → primary; footer xếp Lưu → Lưu và duyệt → Lưu và tiếp tục → Quay lại (tự dựng Lưu và tiếp tục, bỏ cờ `submit_and_continue` vì V2Footer vẽ nó trước slot); chi tiết In → primary; nút bỏ dòng serial → "Xóa dòng" + `ri-delete-bin-line` + danger; e2e kiểm thứ tự nút footer, PASS
 
 ## Việc còn lại
 - [ ] Còn chưa có test tự động: Xuất Excel (tải file), upload file đính kèm thật lên S3, tạo biên bản theo HĐ HRM có hàng (vướng `exported_qty` HĐ HRM chưa ghi)
@@ -46,3 +48,12 @@ Vừa hoàn thành: Phase 4 — popup chọn HĐ gộp 2 nguồn + bộ lọc kh
 Đang làm dở: không
 Bước tiếp theo: chạy permission:sync; quyết vá ERP cho biên bản HĐ HRM
 Blocked:
+
+## Fix — Danh sách BBNT ERP nổ "Trying to get property 'code' of non-object" (2026-11-04, @khoipv)
+User gửi ảnh: `dev-erp.../admin/customer-care/handover_acceptance_records?type=all` → DataTables warning, bảng không tải.
+- [x] Điều tra: `HandoverAcceptanceRecordsController::searchData()` (repo ERP, nhánh `gop_db`) đọc `->code` thẳng qua 3 chuỗi
+      `contractable->code` / `contractable->customer->code` / `employee_create->info->department->code` — 1 bản ghi mồ côi là sập cả bảng.
+      Local `gop_db` duyệt 6.824 BBNT: 0 bản null → lỗi do dữ liệu dev (chưa vào được DB dev để chỉ đúng bản ghi)
+- [x] Vá cùng khuôn `a323e97c3c` (YC lắp đặt) / `af2b9ed3d6` (giao việc): `optional()` cho cột Hợp đồng, Khách hàng (rỗng nếu thiếu),
+      Người tạo (thiếu phòng ban thì chỉ hiện tên). CHƯA commit
+- [x] Verify: `php -l` sạch. Chưa kiểm trên dev (cần deploy)

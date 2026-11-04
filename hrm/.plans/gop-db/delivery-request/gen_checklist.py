@@ -124,7 +124,7 @@ SRS_MAP = {
     150: 'Phần 4', 151: 'Phần 4', 152: 'N/A: màn không có chức năng Khóa/Mở khóa',
     153: 'Phần 4, Phần 5', 154: 'Phần 4', 155: 'Phần 4',
     156: 'Phần 5', 157: 'Phần 5', 158: 'Phần 5', 159: 'Phần 5', 160: 'Phần 5',
-    161: 'Phần 5 (không có Khóa/Mở khóa — ghi rõ dưới bảng)', 162: 'Phần 5', 163: 'Phần 5, Phần 4',
+    161: 'N/A: màn không có chức năng Khóa / Mở khóa (Phần 5 theo khuôn Drive 4 cột STT | Nhóm | Màn hình | Đường dẫn)', 162: 'Phần 5', 163: 'Phần 5, Phần 4',
 }
 SRS_MAP.update({s: SRS_LOCK for s in range(84, 94)})
 SRS_MAP.update({s: SRS_IMPORT for s in range(102, 120)})

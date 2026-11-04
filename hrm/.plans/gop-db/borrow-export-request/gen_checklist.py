@@ -340,7 +340,7 @@ SRS_MAP = {
     150: 'Phần 4 BR-13', 151: 'Phần 4 BR-05', 152: NA_SRS_LOCK, 153: 'Phần 4 BR-14; Phần 5', 154: 'Phần 4 BR-15',
     155: 'Phần 4 (BR-01 đến BR-15)',
     156: 'Phần 5', 157: 'Phần 5', 158: 'Phần 5', 159: 'Phần 5', 160: 'Phần 5',
-    161: 'N/A: màn không có Khóa / Mở khóa (Phần 5 có ghi câu này)', 162: 'Phần 5', 163: 'Phần 5',
+    161: 'N/A: màn không có chức năng Khóa / Mở khóa (Phần 5 theo khuôn Drive 4 cột STT | Nhóm | Màn hình | Đường dẫn)', 162: 'Phần 5', 163: 'Phần 5',
 }
 
 if __name__ == '__main__':

@@ -2676,3 +2676,7 @@ Blocked:
 ### Sửa testcase theo góp ý user (02/11/2026) @khoipv
 - [x] Bỏ trùng 2 phần phân quyền + Cài đặt bộ lọc ghép vào nhóm Tìm kiếm và lọc (cùng cách đã duyệt ở màn hạch toán bổ sung): Khối phân quyền đầu file → đầu XI (TC_11.001–011); 3 case fc_* từ XV → II (TC_02.037–039); XV đổi tên "Gửi duyệt từ màn chi tiết và luồng tổng thể"
 - [x] Sinh lại testcase.xlsx + Đối chiếu checklist.xlsx (số dòng có TC không đổi); 286 TC, P0 42%, không trùng mã
+
+### Sửa Phần 5 SRS theo mẫu YC kiểm tra sửa chữa – bảo hành (04/11/2026) @khoipv
+- [x] Phần 5 về khuôn: 1 câu dẫn + 1 bảng 4 cột STT | Nhóm (phân hệ) | Màn hình (giải thích trong ngoặc) | Đường dẫn "Phân hệ -> nhóm menu"; bỏ bảng chi tiết / bảng 7 cột / bảng 2. gen_srs thêm ngắt trang trước Mục lục + căn giữa; gen_checklist dòng 161 → N/A (không có Khóa / Mở khóa); sinh lại SRS (selfcheck khớp) + Đối chiếu checklist
+- [x] Drive (bản người dùng tải lên 02/11, 0 nhận xét): sửa TRỰC TIẾP trên Google Docs — thay nội dung dưới tiêu đề Phần 5, thêm ngắt trang trước Mục lục + căn giữa (file nào chưa có), file đang khổ ngang chuyển khổ đứng. Tải về kiểm: Phần 1–4 không đổi chữ, số ảnh không đổi

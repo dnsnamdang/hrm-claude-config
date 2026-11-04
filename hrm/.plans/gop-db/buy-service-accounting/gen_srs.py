@@ -138,7 +138,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None, ex
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -1278,14 +1280,14 @@ d.rule_table([
 ])
 
 # ============================================================== PHẦN 5
-d.h1('Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu')
-d.p('Các màn hình dưới đây đọc dữ liệu do Hạch toán mua dịch vụ ghi ra (trạng thái ghi ngược về phiếu yêu cầu, số lượng đã hạch toán và bút toán ghi sổ khi Lưu và duyệt).')
+d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
+d.p('Các màn hình dưới đây đọc hoặc dùng dữ liệu do Hạch toán mua dịch vụ ghi ra (trạng thái ghi ngược về phiếu yêu cầu, số lượng đã hạch toán, bút toán ghi sổ khi Lưu và duyệt). Phiếu Đã duyệt không sửa / xóa được (BR-07, BR-08, BR-13).')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Bán hàng', 'Yêu cầu hạch toán mua dịch vụ (trạng thái Đang hạch toán / Đã hạch toán, Người duyệt, Ngày duyệt do phiếu hạch toán ghi ngược về; xóa phiếu hạch toán nháp trả phiếu yêu cầu về Chờ duyệt)', 'Bán hàng -> Yêu cầu -> Mua dịch vụ'),
+    ('1', 'Bán hàng', 'Yêu cầu hạch toán mua dịch vụ (trạng thái Đang hạch toán / Đã hạch toán, Người duyệt, Ngày duyệt)', 'Bán hàng -> Yêu cầu -> Mua dịch vụ'),
     ('2', 'Tài chính', 'Yêu cầu hạch toán mua dịch vụ (như dòng 1)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Mua dịch vụ'),
-    ('3', 'Tài chính', 'Sổ kế toán, báo cáo tài khoản và công nợ nhà cung cấp (bút toán Nợ / Có, số phiếu, ngày hạch toán, nhà cung cấp, hợp đồng ghi khi Lưu và duyệt)', 'Tài chính -> Sổ tổng hợp; Tài chính -> Kế toán công nợ -> Nhà cung cấp'),
-    ('4', 'Hệ thống ERP', 'Hợp đồng mua dịch vụ (cộng số lượng đã hạch toán theo dòng phân bổ khi phiếu được duyệt)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
-    ('5', 'Hệ thống ERP', 'Đơn bảo hiểm / phụ lục (duyệt phiếu loại Công nợ bảo hiểm thì đơn chuyển đã hạch toán)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
+    ('3', 'Tài chính', 'Phiếu kế toán, sổ kế toán và báo cáo công nợ nhà cung cấp (bút toán Nợ / Có của phiếu đã duyệt)', 'Tài chính -> Sổ tổng hợp; Tài chính -> Kế toán công nợ -> Nhà cung cấp'),
+    ('4', 'Hệ thống ERP', 'Hợp đồng mua dịch vụ (cộng số lượng đã hạch toán khi duyệt)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
+    ('5', 'Hệ thống ERP', 'Đơn bảo hiểm / phụ lục (duyệt phiếu Công nợ bảo hiểm thì đơn chuyển đã hạch toán)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
 ], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()

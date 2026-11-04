@@ -1169,3 +1169,39 @@ Vừa hoàn thành: Redmine #11660 phản hồi lần 2 (4 ý) — BE 1 migratio
 Đang làm dở: không.
 Bước tiếp theo: user Ctrl+Shift+R → tạo phiếu không chọn YCĐC: (1) Thêm dòng để trống TK + diễn giải → Lưu nháp lưu được; (2) Lưu và duyệt → đỏ dưới ô Số TK, Diễn giải, và 2 ô tiền nếu Nợ = Có = 0; (3) mở ô Số TK → danh sách "1311 - Phải thu…", gõ tên tìm được, chọn xong ô chỉ hiện "1311". Server dev/prod phải chạy migration trước khi deploy FE.
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (04/11/2026) @khoipv
+
+Bộ tài liệu theo chuẩn chung (khuôn `finance-addition-accounting-request` + `buy-service-accounting`) và chuẩn user chốt 04/11
+(Phần 5 bảng 4 cột STT | Nhóm | Màn hình | Đường dẫn theo khuôn Drive; Mục lục sang trang riêng, căn giữa).
+
+- [x] Chụp ảnh dev-hrm (DNS Admin, `pkt_shots/_capture/capture.js`): 30 ảnh màn + 80 icon (trim_icon `--dry` 0/80); MỌI yêu cầu ghi bị chặn ở trình duyệt — log "TỔNG yêu cầu ghi bị chặn: 0"; không bấm Lưu nháp / Duyệt / Xóa xác nhận
+- [x] Phiếu Đang tạo TPE.PKT1126.00001 (EURO) có sẵn trên dev → Sửa / Xóa / màn Sửa / hộp Xác nhận xóa là ảnh thật; ảnh lỗi đỏ: gọi hàm kiểm tra của form trên trình duyệt; popup Chọn phiếu YC xuất hàng: mở thẳng trên trình duyệt (dev không có dòng hợp đồng loại 3)
+- [x] `gen_srs.py` → `SRS - Phiếu kế toán.docx`: 14 chức năng, 131 trang, selfcheck khớp bản mẫu; metrics ui=17.4 · ev=5.2 · evch=1307 · intro=1854 (noBefore 0, noDuring 0); Phần 4 BR-01…BR-15; Phần 5: 9 màn tham chiếu
+- [x] `gen_hdsd.py` → `HDSD_Phieu ke toan.docx`: 12 phần, 24 trang
+- [x] `gen_testcase.py` → `testcase.xlsx`: 231 TC, P0 105 (45%), 14 nhóm (I–XII theo checklist, XIII In phiếu, XIV Chọn phiếu yêu cầu / đối tượng / hợp đồng), tc_engine sạch
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 246 có TC / 78 N/A (Khóa / Mở khóa, Import, Không duyệt); SRS 132 có mục / 31 N/A
+
+### Checkpoint — 2026-11-04 12:30
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu kế toán (4 script chạy sạch).
+Đang làm dở: không.
+Bước tiếp theo: user soát tài liệu, quyết đẩy Drive; xác minh trên dev các điểm ghi "chưa xác minh" trong file đối chiếu (lưu nháp đồng thời 2 tab từ cùng phiếu YCĐC, bỏ khoảng trắng ô tìm nhanh).
+Blocked:
+
+### Testcase theo chuẩn mới 03/11 (04/11/2026) @khoipv
+
+Làm lại `testcase.xlsx` theo khuôn chuẩn tab "13. DM quốc gia" + `assets/CHECKLIST_TC_SRS.xlsx` (skill testcase-documenter chốt 03/11/2026).
+
+- [x] `gen_testcase.py`: đổi `tc_engine.build` → `tc_chuan.build_chuan(..., loai='phieu')`; feature "Phiếu kế toán - Cập nhật ngày 04/11/2026"
+- [x] Sắp lại nhóm đúng tên + thứ tự chuẩn loại phiếu (bỏ Khóa / Mở khóa, Gửi duyệt, Không duyệt, Hủy phiếu, Import — màn không có): I Hiển thị trang & truy cập · II Tìm kiếm & lọc danh sách · III Thêm mới (gộp nhóm cũ XIV Chọn phiếu yêu cầu / đối tượng / hợp đồng) · IV Chỉnh sửa · V Xóa · VI Duyệt phiếu (Lưu và duyệt) · VII Lịch sử thay đổi · VIII Xem chi tiết phiếu kế toán · IX In phiếu · X Tùy chỉnh cột · XI Xuất danh sách Excel · XII Ràng buộc với các chức năng khác · XIII Phân quyền (cuối)
+- [x] Giữ nguyên nội dung 230 TC cũ; sửa mã TC nhắc trong nội dung theo số nhóm mới (TC_12.xxx → TC_06.xxx, TC_09.002 → TC_11.002) + assert mọi mã nhắc tới đều tồn tại, assert không trùng mã
+- [x] Bỏ chữ cấm của check_tc: "khác ERP vốn báo lỗi" (lọc STK); case "Gọi thẳng chức năng duyệt khi thiếu quyền" (công cụ kiểm thử API) viết lại thành case giao diện "Phiếu nháp của tài khoản đã bị gỡ quyền Kế toán thanh toán" (checklist 297)
+- [x] Bổ sung 3 TC: TC_13.011 Tài khoản không có quyền nào của màn · TC_13.012 Mở thẳng đường dẫn màn Sửa phiếu của người khác · TC_09.005 Letterhead theo công ty ghi trên phiếu
+- [x] `gen_checklist.py`: thêm `_assert_checklist_moi()` so 2 tab của CHECKLIST_TC_SRS.xlsx với bản JSON mà `checklist_doi_chieu.write()` dùng (khớp 324/324 + 163/163 → không đổi mapping); ghi chú stt 297; không sửa thư viện dùng chung
+- [x] Kết quả: TC 231 → 234; P0 107 (45.7%); check_tc `testcase.xlsx phieu` → 13 nhóm, 0 lỗi, "DAT" (trước: 921 lỗi); Đối chiếu checklist: Testcase 246 có TC / 78 N/A (Khóa / Mở khóa 26, Import 39, Không duyệt 12, Xóa bản ghi khóa 1); SRS 132 có mục / 31 N/A (không đổi)
+
+### Checkpoint — 2026-11-04 (testcase chuẩn mới)
+Vừa hoàn thành: testcase.xlsx + Đối chiếu checklist.xlsx theo chuẩn 03/11 (gen_testcase.py, gen_checklist.py chạy sạch).
+Đang làm dở: không.
+Bước tiếp theo: user soát testcase; quyết đẩy tab lên file Drive "Testcase chuyển đổi" (thay tab cũ).
+Blocked:

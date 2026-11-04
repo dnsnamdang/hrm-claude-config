@@ -137,7 +137,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None):
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -858,12 +860,12 @@ d.rule_table([
 ])
 
 # ============================================================== PHẦN 5
-d.h1('Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu')
-d.p('Màn Tổng hợp tiền về ngân hàng chỉ đọc, không tự ghi dữ liệu. Các màn hình dưới đây cung cấp hoặc cập nhật dữ liệu dòng tiền về hiển thị trên màn (dòng chi tiết phiếu báo có và số tiền đã điều chỉnh).')
+d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
+d.p('Màn Tổng hợp tiền về ngân hàng chỉ đọc, không tự ghi dữ liệu. Các màn hình dưới đây cung cấp hoặc dùng dữ liệu dòng tiền về hiển thị trên màn (dòng chi tiết phiếu báo có, số tiền đã điều chỉnh) — điều kiện dòng lên màn ở BR-01, dữ liệu chuyển sang phiếu yêu cầu điều chỉnh công nợ ở BR-05.')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Tài chính', 'Phiếu báo có (nguồn dữ liệu của màn: chỉ phiếu Đã duyệt của công ty người dùng, dòng tài khoản 1311 / 1312 / 3311; đánh dấu Không báo tiền về thì dòng rời màn)', 'Tài chính -> Quản lý tiền -> Thanh toán tiền mặt'),
-    ('2', 'Tài chính', 'Phiếu yêu cầu điều chỉnh công nợ (lập từ các dòng tiền về đã tích, cùng 1 phiếu báo có, còn số tiền chưa điều chỉnh)', 'Tài chính -> Khởi tạo -> Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi'),
-    ('3', 'Tài chính', 'Phiếu kế toán (duyệt phiếu kế toán lập từ yêu cầu điều chỉnh đã duyệt thì cộng tiền đã điều chỉnh vào dòng, Số tiền chưa điều chỉnh giảm, hết tiền thì chuyển Đã điều chỉnh hết)', 'Tài chính -> Sổ tổng hợp'),
+    ('1', 'Tài chính', 'Phiếu báo có (nguồn dữ liệu của màn: phiếu Đã duyệt, dòng tài khoản 1311 / 1312 / 3311)', 'Tài chính -> Quản lý tiền -> Thanh toán tiền mặt'),
+    ('2', 'Tài chính', 'Phiếu yêu cầu điều chỉnh công nợ (lập từ các dòng tiền về đã tích)', 'Tài chính -> Khởi tạo -> Khởi tạo phiếu yêu cầu - Công nợ - Thu - Chi'),
+    ('3', 'Tài chính', 'Phiếu kế toán (duyệt thì cộng tiền đã điều chỉnh, giảm Số tiền chưa điều chỉnh)', 'Tài chính -> Sổ tổng hợp'),
 ], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()

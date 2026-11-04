@@ -167,7 +167,7 @@ SRS_MAP = {
     147: 'Phần 4 (BR-08, BR-14)', 148: 'Phần 4 (BR-14)', 149: 'N/A: màn không có khóa nên không có trùng với bản ghi đã khóa (ghi ở BR-14)',
     150: 'Phần 4 (BR-01)', 151: 'Phần 4 (BR-15)', 152: S_NA_KHOA, 153: 'Phần 4 (BR-16); Phần 5', 154: 'Phần 4 (BR-17)',
     155: 'Phần 4 (BR-02 → BR-13)',
-    156: 'Phần 5', 157: 'Phần 5', 158: 'Phần 5', 159: 'Phần 5', 160: 'Phần 5', 161: S_NA_KHOA + ' (Phần 5 ghi rõ)', 162: 'Phần 5',
+    156: 'Phần 5', 157: 'Phần 5', 158: 'Phần 5', 159: 'Phần 5', 160: 'Phần 5', 161: 'N/A: màn không có chức năng Khóa / Mở khóa (Phần 5 theo khuôn Drive 4 cột STT | Nhóm | Màn hình | Đường dẫn)', 162: 'Phần 5',
     163: 'Phần 5',
 }
 for n in range(84, 94):

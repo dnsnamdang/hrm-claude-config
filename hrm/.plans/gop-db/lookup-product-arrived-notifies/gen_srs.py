@@ -153,7 +153,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None):
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -1291,14 +1293,14 @@ d.rule_table([
 ])
 
 # ============================================================== PHẦN 5
-d.h1('Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu')
-d.p('Các màn hình dưới đây đọc dữ liệu do Phiếu báo hàng về ghi ra (phiếu, dòng hàng thực về, hợp đồng mua và invoice của phiếu).')
+d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
+d.p('Các màn hình dưới đây đọc hoặc dùng dữ liệu do Phiếu báo hàng về ghi ra (phiếu, dòng hàng thực về, hợp đồng mua và invoice của phiếu). Phiếu đã lập yêu cầu nhập hàng / phân bổ chi phí không xóa được (BR-05, BR-09).')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Tài chính', 'Yêu cầu nhập hàng — loại Nhập hàng mua ngoài (chọn phiếu báo hàng về mua ngoài trạng thái Đã gửi do chính mình tạo làm chứng từ nguồn, nạp hợp đồng, nhà cung cấp, dòng hàng theo số lượng thực về; lưu yêu cầu thì phiếu chuyển Đã yêu cầu nhập hàng)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Nhập hàng'),
-    ('2', 'Tài chính', 'Phiếu nhập kho (lọc theo số hợp đồng mua của phiếu báo hàng về, qua yêu cầu nhập hàng loại Nhập hàng mua ngoài)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Nhập hàng'),
-    ('3', 'Tài chính', 'Phiếu báo có (tra hợp đồng mua của phiếu nhập loại Nhập hàng mua ngoài)', 'Tài chính -> Quản lý tiền -> Thanh toán tiền mặt'),
-    ('4', 'Hệ thống ERP', 'Phân bổ chi phí nhập khẩu (mở từ nút Tạo phân bổ chi phí ở màn chi tiết phiếu tab Nhập khẩu; lập xong thì phiếu chuyển Đã yêu cầu nhập hàng và không xóa được nữa)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
-    ('5', 'Hệ thống ERP', 'Invoice nhập khẩu (dấu “đã báo hàng về” chặn lập trùng phiếu cho 1 invoice; xóa phiếu nhập khẩu thì invoice về chưa báo hàng về)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
+    ('1', 'Tài chính', 'Yêu cầu nhập hàng (loại Nhập hàng mua ngoài lấy phiếu báo hàng về mua ngoài làm chứng từ nguồn)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Nhập hàng'),
+    ('2', 'Tài chính', 'Phiếu nhập kho (lọc theo số hợp đồng mua của phiếu báo hàng về)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Nhập hàng'),
+    ('3', 'Tài chính', 'Phiếu báo có (tra hợp đồng mua của phiếu nhập hàng mua ngoài)', 'Tài chính -> Quản lý tiền -> Thanh toán tiền mặt'),
+    ('4', 'Hệ thống ERP', 'Phân bổ chi phí nhập khẩu (lập từ phiếu tab Nhập khẩu)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
+    ('5', 'Hệ thống ERP', 'Invoice nhập khẩu (invoice đã có phiếu báo hàng về không lập phiếu thứ 2)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
 ], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()

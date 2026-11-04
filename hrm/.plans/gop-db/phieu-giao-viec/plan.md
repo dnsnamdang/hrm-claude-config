@@ -194,3 +194,12 @@ Mục 3-5 của #11988 (mục 1-2 ở `.plans/gop-db/phieu-cho-giao-viec/plan.md
 - [x] `index.vue` `allColumns()`: cột `contract_code` 200px → 260px + `cellClass: 'text-wrap'` (V2BaseDataTable: `white-space: normal`
       + `overflow-wrap: anywhere` — số HĐ nối bằng `_` không có khoảng trắng nên phải bẻ giữa chữ). Link HĐ vẫn giữ nguyên
 - [x] Verify: vue-template-compiler + babel sạch. Chưa kiểm trên trình duyệt
+
+## Redmine #11998 — Cột Hành động "Xem phiếu nhập kết quả" mở ERP ra 404 (2026-11-04, @khoipv)
+PGV TPE.PGV.2026018146, phiếu nhập KQ id 9116 tạo trên cổng HRM. Ảnh QA: `dev-erp.../admin/customer-care/wr_import_results/9116/show` → 404.
+- [x] Điều tra: ERP `WrImportResultsController@show` → `WrImportResult::getForEdit()` dùng `findOrFail($id)` → 404 = DB của dev-erp (suy luận, chưa vào được DB dev để kiểm)
+      KHÔNG có dòng 9116 (phiếu tạo ở HRM nằm DB gộp, dev-erp đọc DB khác) — không phải lỗi code ERP
+- [x] Phía HRM đã sửa sẵn trong commit `44f138085` (03/11 14:14, đã lên origin/develop + origin/gop_db): `wrAssignTaskLinks.js`
+      `importResultShowUrl()` → HRM `/customer-care/wr-import-results/{id}` (trước trỏ ERP `.../wr_import_results/{id}/show`);
+      dùng ở cột Hành động (`index.vue:632`) + nút ở form chi tiết (`WrAssignTaskForm.vue:251`). QA chụp 16:05 — bản dev chưa deploy
+- [x] Rà toàn hrm-client: không còn chỗ nào trỏ ERP `wr_import_results/{id}/show`. Không sửa code → chỉ cần deploy dev-hrm rồi QA test lại

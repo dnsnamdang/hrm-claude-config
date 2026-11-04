@@ -5,6 +5,9 @@
 
 ## Đang làm
 
+- **Check: SL hàng hóa Báo giá / Gói thầu / HĐ không lưu được số < 1** — @khoipv — Bắt đầu 04/11/2026 — Chỉ BE chặn (`min:1`); FE `CurrencyInput` vẫn gõ được thập phân (đã chạy thử). **Đã sửa 04/11**: BE `numeric|gt:0` cho 3 request, FE giữ nguyên. Chờ user test; phụ lục HĐ / BB thương thảo chưa làm.
+  - Plan: [.plans/check-bao-gia-sl-nho-hon-1/plan.md](check-bao-gia-sl-nho-hon-1/plan.md)
+
 - **Check: NV nghỉ 12/10 quên làm đơn, còn phép — cách trừ phép** — @khoipv — Bắt đầu 02/11/2026 — Đã ra cách: HR tạo "Đề nghị tra soát công admin" lý do "Nghỉ phép quên làm phiếu" + Trừ số ngày phép (đơn nghỉ không tạo lùi ngày được, NV tự tra soát quá hạn 72h), sau đó chạy `calc:employee_timesheet` ngày 12/10.
   - Plan: [.plans/check-tru-phep-nghi-quen-lam-don/plan.md](check-tru-phep-nghi-quen-lam-don/plan.md)
 

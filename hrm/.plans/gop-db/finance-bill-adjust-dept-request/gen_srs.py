@@ -136,7 +136,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None):
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -1439,30 +1441,12 @@ d.rule_table([
 
 # ============================================================== PHẦN 5
 d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
-d.p('Các màn hình dưới đây đọc dữ liệu do màn Phiếu yêu cầu điều chỉnh công nợ ghi ra (màn không có Khóa / Mở khóa nên không '
-    'có ảnh hưởng khóa sang các màn này).')
-d.table(['STT', 'Màn hình / phân hệ', 'Trường dữ liệu tham chiếu', 'Mục đích sử dụng', 'Điều kiện hiển thị / chọn',
-         'Ảnh hưởng khi chỉnh sửa', 'Ràng buộc xóa và phân cấp'], [
-    ('1', 'Phiếu kế toán điều chỉnh công nợ — Tài chính (Sổ tổng hợp => Phiếu kế toán)',
-     'Mã phiếu yêu cầu, loại phiếu, tiền tệ, tỷ giá, diễn giải, các dòng “từ” / “đến” (đối tượng, hợp đồng, số tiền)',
-     'Lập phiếu kế toán ghi sổ công nợ từ phiếu yêu cầu; cập nhật ngược trạng thái phiếu yêu cầu',
-     'Chỉ phiếu Chờ tạo phiếu kế toán; người lập phiếu kế toán có quyền Kế toán thanh toán cùng công ty',
-     'Phiếu yêu cầu chỉ sửa được khi Đang tạo / Từ chối (chưa có phiếu kế toán) → phiếu kế toán luôn lấy dữ liệu đã chốt',
-     'Phiếu yêu cầu đã có phiếu kế toán không xóa được; xóa phiếu kế toán → phiếu yêu cầu về Chờ tạo phiếu kế toán. '
-     'Phiếu kế toán lấy đủ cả nhóm “từ” và các dòng “đến” con'),
-    ('2', 'Chi tiết Phiếu báo có — Tài chính',
-     'Số phiếu báo có, các dòng phiếu báo có được tích (bên “từ”)',
-     'Nguồn tạo phiếu yêu cầu từ tiền đã về; cột Số phiếu báo có ở danh sách liên kết ngược về phiếu báo có',
-     'Nút “Tạo phiếu yêu cầu điều chỉnh công nợ” ở màn chi tiết phiếu báo có, với các dòng đã tích',
-     'Bên “từ” và Loại phiếu bị khóa theo phiếu báo có; sửa phiếu yêu cầu không đổi phiếu báo có',
-     'Xóa phiếu yêu cầu không xóa / đổi phiếu báo có. Mỗi dòng phiếu báo có thành 1 nhóm “từ”'),
-    ('3', 'Thông báo (chuông) — toàn hệ thống',
-     'Mã phiếu, số tiền, người lập, diễn giải, lý do từ chối',
-     'Báo Kế toán thanh toán khi có phiếu chờ; báo người lập khi bị từ chối / phiếu kế toán được duyệt',
-     'Gửi duyệt → Kế toán thanh toán cùng công ty; Từ chối → người lập; duyệt phiếu kế toán → người lập',
-     'Thông báo đã gửi giữ nội dung lúc gửi; bấm thông báo mở dữ liệu hiện tại của phiếu',
-     'Phiếu đã xóa thì bấm thông báo báo không tải được dữ liệu phiếu'),
-], widths=[0.35, 1.0, 1.05, 1.0, 1.0, 1.05, 1.05])
+d.p('Các màn hình dưới đây đọc hoặc ghi ngược dữ liệu của Phiếu yêu cầu điều chỉnh công nợ (phiếu, nhóm dòng “từ” / “đến”).')
+d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
+    ('1', 'Tài chính', 'Phiếu kế toán (lập từ phiếu yêu cầu Chờ tạo phiếu kế toán để ghi sổ công nợ, cập nhật ngược trạng thái phiếu yêu cầu; xóa phiếu kế toán thì phiếu yêu cầu về Chờ tạo phiếu kế toán)', 'Tài chính -> Sổ tổng hợp'),
+    ('2', 'Tài chính', 'Phiếu báo có (màn chi tiết có nút Tạo phiếu yêu cầu điều chỉnh công nợ từ các dòng đã tích; cột Số phiếu báo có ở danh sách liên kết ngược về phiếu báo có)', 'Tài chính -> Quản lý tiền -> Thanh toán tiền mặt'),
+    ('3', 'Tài chính', 'Tổng hợp tiền về ngân hàng (tích các dòng tiền về để lập phiếu yêu cầu; phiếu kế toán được duyệt thì cộng số tiền đã điều chỉnh của dòng)', 'Tài chính -> Quản lý tiền -> Thanh toán tiền mặt'),
+], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()
 print('Đã ghi', OUT)

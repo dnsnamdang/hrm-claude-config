@@ -145,7 +145,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None):
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -1625,35 +1627,10 @@ d.rule_table([
 
 # ============================================================== PHẦN 5
 d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
-d.p('Bảng 1 — Các màn hình đọc dữ liệu do màn Phiếu yêu cầu hạch toán bổ sung ghi ra.')
-d.table(['STT', 'Màn hình / phân hệ', 'Trường tham chiếu', 'Mục đích', 'Điều kiện hiển thị / chọn', 'Ảnh hưởng khi sửa',
-         'Ràng buộc xóa'], [
-    ('1', 'Phiếu kế toán (Phân hệ Tài chính => Sổ tổng hợp => Phiếu kế toán)',
-     'Số phiếu yêu cầu, loại yêu cầu, đối tượng, hợp đồng, số tiền, loại tiền, tỷ giá, dòng quyết toán (Phối hợp kinh doanh)',
-     'Điền sẵn khi lập phiếu kế toán; ghi nguồn chứng từ; cập nhật trạng thái phiếu yêu cầu',
-     'Chỉ phiếu Chờ duyệt, người có quyền Kế toán thanh toán / Kế toán đúng phạm vi; tối đa 1 phiếu kế toán còn hiệu lực',
-     'Phiếu yêu cầu chỉ sửa được khi Đang tạo (chưa có phiếu kế toán) nên không làm lệch phiếu kế toán đã lập',
-     'Phiếu yêu cầu đã có phiếu kế toán không xóa được; xóa phiếu kế toán thì phiếu yêu cầu về Chờ duyệt'),
-    ('2', 'Thông báo hệ thống (chuông thông báo)', 'Số phiếu, loại yêu cầu, đối tượng, số tiền, người lập, lý do từ chối',
-     'Báo Kế toán kho khi gửi duyệt; báo người lập khi bị từ chối / được duyệt; bấm mở màn chi tiết',
-     'Kế toán kho cùng công ty với phiếu; người lập phiếu', 'Thông báo đã gửi giữ nguyên nội dung lúc gửi',
-     'Phiếu bị xóa thì bấm thông báo cũ báo “Không tìm thấy dữ liệu”'),
-], widths=[0.35, 1.0, 1.0, 1.0, 1.0, 0.9, 0.9])
-d.p('Bảng 2 — Danh mục / chứng từ màn này tham chiếu khi lập phiếu.')
-d.table(['STT', 'Màn hình / phân hệ', 'Trường tham chiếu', 'Điều kiện hiển thị / chọn', 'Ảnh hưởng khi khóa / mở khóa',
-         'Ràng buộc phân cấp'], [
-    ('1', 'Khách hàng, Nhà cung cấp (danh mục đối tác)', 'Mã - Tên đối tượng đầu phiếu / của dòng',
-     'Khách hàng đang hoạt động; nhà cung cấp theo danh mục', 'Không chọn mới được đối tượng đã ngừng; phiếu cũ giữ nguyên',
-     'Hợp đồng của dòng lọc theo đối tượng của dòng'),
-    ('2', 'Nhân viên (Hành chính nhân sự)', 'Mã - Tên nhân viên (loại Khác)', 'Chỉ nhân viên đang làm',
-     'Nhân viên nghỉ việc không chọn mới được', '–'),
-    ('3', 'Hợp đồng bán / Hợp đồng mua', 'Số hợp đồng của dòng chi tiết', 'Hợp đồng của đúng đối tượng của dòng', '–',
-     'Đổi / bỏ đối tượng thì xóa hợp đồng của dòng'),
-    ('4', 'Phiếu xác nhận bảo hành / Phiếu xử lý hàng thiếu (Kho, bảo hành)', 'Số chứng từ, nhà cung cấp, số tiền',
-     'Phiếu xác nhận đã duyệt; phiếu xử lý hàng thiếu đã duyệt, có hạch toán', '–', 'Nhà cung cấp, số tiền lấy theo chứng từ'),
-    ('5', 'Loại tiền (danh mục Tài chính)', 'Loại tiền, tỷ giá mặc định', 'Loại tiền đang hoạt động',
-     'Loại tiền đã khóa không chọn mới được; phiếu đang dùng vẫn hiện kèm biểu tượng ổ khóa; mở khóa thì chọn lại được', '–'),
-], widths=[0.35, 1.3, 1.1, 1.3, 1.5, 1.0])
+d.p('Các màn hình dưới đây đọc hoặc ghi ngược dữ liệu của Phiếu yêu cầu hạch toán bổ sung (phiếu và dòng quyết toán của phiếu).')
+d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
+    ('1', 'Tài chính', 'Phiếu kế toán (lập từ phiếu yêu cầu Chờ duyệt: điền sẵn đối tượng, hợp đồng, số tiền, loại tiền, tỷ giá; cập nhật ngược trạng thái phiếu yêu cầu; xóa phiếu kế toán thì phiếu yêu cầu về Chờ duyệt)', 'Tài chính -> Sổ tổng hợp'),
+], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()
 print('Đã ghi', OUT)

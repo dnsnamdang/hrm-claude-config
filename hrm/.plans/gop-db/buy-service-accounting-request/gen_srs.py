@@ -139,7 +139,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None, ex
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -1341,13 +1343,13 @@ d.rule_table([
 ])
 
 # ============================================================== PHẦN 5
-d.h1('Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu')
-d.p('Các màn hình dưới đây đọc dữ liệu do Yêu cầu hạch toán mua dịch vụ ghi ra (phiếu, dòng dịch vụ, số lượng hạch toán, file đính kèm và đơn bảo hiểm của phiếu).')
+d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
+d.p('Các màn hình dưới đây đọc hoặc dùng dữ liệu do Yêu cầu hạch toán mua dịch vụ ghi ra (phiếu, dòng dịch vụ, số lượng hạch toán, file đính kèm và đơn bảo hiểm). Phiếu đã có phiếu hạch toán không sửa / xóa được (BR-04, BR-13).')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Bán hàng', 'Hạch toán mua dịch vụ (chọn phiếu Chờ duyệt để lập phiếu hạch toán, nạp loại, nhà cung cấp, hợp đồng, dịch vụ, số lượng, file, đơn bảo hiểm; Lưu nháp → phiếu yêu cầu Đang hạch toán, Lưu và duyệt → Đã hạch toán; xóa phiếu hạch toán nháp trả phiếu yêu cầu về Chờ duyệt)', 'Bán hàng -> Yêu cầu -> Mua dịch vụ'),
+    ('1', 'Bán hàng', 'Hạch toán mua dịch vụ (lập phiếu hạch toán từ phiếu Chờ duyệt, ghi ngược trạng thái)', 'Bán hàng -> Yêu cầu -> Mua dịch vụ'),
     ('2', 'Tài chính', 'Hạch toán mua dịch vụ (như dòng 1)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Mua dịch vụ'),
-    ('3', 'Hệ thống ERP', 'Hợp đồng mua dịch vụ (số lượng của phiếu Đang tạo / Chờ duyệt / Đang hạch toán được giữ chỗ khi tính số lượng còn lại; xóa phiếu thì trả lại số lượng)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
-    ('4', 'Hệ thống ERP', 'Đơn bảo hiểm (gửi duyệt phiếu loại Công nợ bảo hiểm thì đơn chuyển Đang hạch toán; Không duyệt trả đơn về Đã duyệt)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
+    ('3', 'Hệ thống ERP', 'Hợp đồng mua dịch vụ (số lượng của phiếu chưa hạch toán được giữ chỗ trong số còn lại)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
+    ('4', 'Hệ thống ERP', 'Đơn bảo hiểm (gửi duyệt khóa đơn sang Đang hạch toán, Không duyệt trả về Đã duyệt)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
 ], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()

@@ -125,7 +125,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None, ex
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -1319,35 +1321,13 @@ d.rule_table([
 
 # ============================================================== PHẦN 5
 d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
-d.p('Các màn hình dưới đây đọc dữ liệu do màn Yêu cầu xuất hàng mượn ghi ra.')
+d.p('Các màn hình dưới đây đọc hoặc ghi ngược dữ liệu của phiếu Yêu cầu xuất hàng mượn (phiếu, dòng hàng, dòng chi tiết theo phiếu mượn và số Xuất).')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Mượn hàng', 'Phiếu xuất hàng mượn — chọn phiếu yêu cầu Chờ duyệt để lập phiếu xuất (duyệt), ghi ngược '
-     'số Được duyệt và trạng thái Đã duyệt',
-     'Phân hệ Tài chính => Hàng hoá - Dịch vụ - Vận chuyển => Mượn hàng => Phiếu xuất hàng mượn'),
-    ('2', 'Mượn hàng', 'Yêu cầu xuất bán hàng mượn — trừ phần đang chờ của phiếu yêu cầu Chờ duyệt khỏi số còn mượn',
-     'Phân hệ Tài chính => Hàng hoá - Dịch vụ - Vận chuyển => Mượn hàng => Yêu cầu xuất bán hàng mượn'),
-    ('3', 'Mượn hàng', 'Phiếu xuất bán hàng mượn — trừ phần đang chờ của phiếu yêu cầu Chờ duyệt khỏi số còn mượn',
-     'Phân hệ Tài chính => Hàng hoá - Dịch vụ - Vận chuyển => Mượn hàng => Phiếu xuất bán hàng mượn'),
-    ('4', 'Hàng hoá, vật tư', 'Kho dữ liệu hàng hoá — chặn xóa hàng hóa đã có trên phiếu yêu cầu xuất hàng mượn',
-     'Phân hệ Danh mục dùng chung => Hàng hoá, vật tư => Kho dữ liệu hàng hoá'),
-], widths=[0.45, 1.0, 2.6, 2.4])
-d.p('Chi tiết tham chiếu của từng màn:')
-d.table(['STT', 'Trường tham chiếu', 'Mục đích sử dụng', 'Điều kiện hiển thị / chọn',
-         'Ảnh hưởng khi phiếu đổi / bị từ chối', 'Ràng buộc xóa / phân cấp'], [
-    ('1', 'Mã phiếu yêu cầu, dòng hàng, dòng chi tiết theo phiếu mượn, số Xuất',
-     'Lập phiếu xuất (duyệt); ghi số Được duyệt, trạng thái Đã duyệt', 'Chỉ phiếu Chờ duyệt, người có quyền Kế toán kho',
-     'Phiếu không sửa được nên dữ liệu chọn luôn khớp lúc gửi; Đã duyệt / Không duyệt thì không chọn được nữa',
-     'Phiếu không xóa được; phiếu xuất chỉ nhận dòng hàng / chi tiết thuộc đúng phiếu yêu cầu'),
-    ('2', 'Số Xuất của dòng chi tiết theo phiếu mượn và hàng', 'Trừ phần đang giữ chỗ khỏi số còn mượn',
-     'Chỉ tính phiếu Chờ duyệt', 'Từ chối → trả lại số; Đã duyệt → hàng đã xuất hẳn không còn trong số đang mượn',
-     'Theo từng cặp phiếu mượn – hàng hóa'),
-    ('3', 'Số Xuất của dòng chi tiết theo phiếu mượn và hàng', 'Trừ phần đang giữ chỗ khỏi số còn mượn',
-     'Chỉ tính phiếu Chờ duyệt', 'Như dòng 2', 'Theo từng cặp phiếu mượn – hàng hóa'),
-    ('4', 'Hàng hóa trên dòng hàng / dòng chi tiết', 'Kiểm tra hàng đã phát sinh chứng từ trước khi xóa',
-     'Mọi phiếu ở mọi trạng thái', 'Đổi tên / giá hàng ở danh mục không đổi phiếu đã lập (lưu cố định lúc gửi)',
-     'Không xóa được hàng đã có trên phiếu'),
-], widths=[0.35, 1.2, 1.15, 1.05, 1.25, 1.1])
-d.p('Màn không có Khóa / Mở khóa nên không có ảnh hưởng khóa sang các màn trên.')
+    ('1', 'Tài chính', 'Phiếu xuất hàng mượn (chọn phiếu yêu cầu Chờ duyệt để lập phiếu xuất; duyệt thì ghi ngược số Được duyệt và trạng thái Đã duyệt về phiếu yêu cầu)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Mượn hàng'),
+    ('2', 'Tài chính', 'Yêu cầu xuất bán hàng mượn (trừ phần đang chờ của phiếu yêu cầu Chờ duyệt khỏi số còn mượn)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Mượn hàng'),
+    ('3', 'Tài chính', 'Phiếu xuất bán hàng mượn (trừ phần đang chờ của phiếu yêu cầu Chờ duyệt khỏi số còn mượn)', 'Tài chính -> Hàng hoá - Dịch vụ - Vận chuyển -> Mượn hàng'),
+    ('4', 'Danh mục dùng chung', 'Kho dữ liệu hàng hoá (chặn xóa hàng hóa đã có trên phiếu yêu cầu xuất hàng mượn)', 'Danh mục dùng chung -> Hàng hoá, vật tư'),
+], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()
 print('Đã ghi', OUT)

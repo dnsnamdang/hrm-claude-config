@@ -124,7 +124,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None):
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -825,11 +827,11 @@ d.rule_table([
 ])
 
 # ============================================================== PHẦN 5
-d.h1('Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu')
-d.p('Báo cáo hạn mức công nợ khách hàng chỉ đọc, không ghi dữ liệu. Các màn hình dưới đây cung cấp dữ liệu cho báo cáo (dòng khai báo hạn mức và bút toán công nợ phải thu 131).')
+d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
+d.p('Báo cáo hạn mức công nợ khách hàng chỉ đọc, không ghi dữ liệu. Các màn hình dưới đây cung cấp dữ liệu cho báo cáo (dòng khai báo hạn mức, bút toán công nợ phải thu 131) — điều kiện dòng lên báo cáo ở BR-01, công nợ theo NVKD ở BR-05.')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Tài chính', 'Khai báo hạn mức công nợ KH (nguồn duy nhất của báo cáo: dòng hạn mức của công ty người dùng, có hạn mức tính lãi hoặc hạn mức được nợ > 0; sửa / xóa dòng khai báo thì báo cáo đổi theo ở lần tải sau)', 'Tài chính -> Kế toán công nợ -> Khách hàng'),
-    ('2', 'Tài chính', 'Các chứng từ ghi sổ công nợ phải thu 131 — Phiếu thu tiền, Phiếu báo có, Phiếu kế toán… (bút toán của khách tới Đến ngày, theo người lập hợp đồng, dùng tính Công nợ ở cửa sổ theo NVKD)', 'Tài chính -> Quản lý tiền; Tài chính -> Sổ tổng hợp'),
+    ('1', 'Tài chính', 'Khai báo hạn mức công nợ KH (nguồn duy nhất của báo cáo)', 'Tài chính -> Kế toán công nợ -> Khách hàng'),
+    ('2', 'Tài chính', 'Phiếu thu, Phiếu báo có, Phiếu kế toán (bút toán công nợ 131 tính Công nợ ở cửa sổ theo NVKD)', 'Tài chính -> Quản lý tiền -> Thanh toán tiền mặt; Tài chính -> Sổ tổng hợp'),
 ], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()

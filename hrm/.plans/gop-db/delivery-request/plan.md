@@ -165,3 +165,7 @@ Checklist tester: `../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json` (Tes
 ### Sửa testcase theo góp ý user (02/11/2026) @khoipv
 - [x] Bỏ trùng 2 phần phân quyền + Cài đặt bộ lọc ghép vào nhóm Tìm kiếm và lọc (cùng cách đã duyệt ở màn hạch toán bổ sung): 10 case khối phân quyền đầu file → XI (TC_11.001–010, giữ stt checklist từ ROLE_COVER, P0_UP XI dời +10); 6 case Cài đặt bộ lọc từ XIV → II (thêm tiền tố "Cài đặt bộ lọc:"); XV Chọn đơn hàng/hợp đồng thành XIV
 - [x] Sinh lại testcase.xlsx + Đối chiếu checklist.xlsx (số dòng có TC không đổi); 272 TC, P0 42%, không trùng mã
+
+### Sửa Phần 5 SRS theo mẫu YC kiểm tra sửa chữa – bảo hành (04/11/2026) @khoipv
+- [x] Phần 5 về khuôn: 1 câu dẫn + 1 bảng 4 cột STT | Nhóm (phân hệ) | Màn hình (giải thích trong ngoặc) | Đường dẫn "Phân hệ -> nhóm menu"; bỏ bảng chi tiết / bảng 7 cột / bảng 2. gen_srs thêm ngắt trang trước Mục lục + căn giữa; gen_checklist dòng 161 → N/A (không có Khóa / Mở khóa); sinh lại SRS (selfcheck khớp) + Đối chiếu checklist
+- [x] Drive (bản người dùng tải lên 02/11, 0 nhận xét): sửa TRỰC TIẾP trên Google Docs — thay nội dung dưới tiêu đề Phần 5, thêm ngắt trang trước Mục lục + căn giữa (file nào chưa có), file đang khổ ngang chuyển khổ đứng. Tải về kiểm: Phần 1–4 không đổi chữ, số ảnh không đổi

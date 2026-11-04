@@ -102,7 +102,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None, fi
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -1467,32 +1469,10 @@ d.rule_table([
 
 # ============================================================== PHẦN 5
 d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
-d.p('Các màn hình dưới đây đọc dữ liệu do màn Phiếu yêu cầu vận chuyển, bốc xếp ghi ra.')
+d.p('Các màn hình dưới đây đọc hoặc ghi ngược dữ liệu của Phiếu yêu cầu vận chuyển, bốc xếp (phiếu và dòng hàng chép từ phiếu yêu cầu xuất hàng).')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Hàng hóa', 'Phiếu yêu cầu xuất hàng — hình thức vận chuyển đổi thành Công ty vận chuyển khi phiếu vận chuyển được duyệt',
-     'Phân hệ Bán hàng => Yêu cầu => Hàng hóa => YC xuất hàng'),
-], widths=[0.45, 1.0, 2.6, 2.4])
-d.p('Chi tiết dữ liệu tham chiếu (cả chiều phiếu vận chuyển đọc từ màn khác):')
-d.table(['Màn hình / phân hệ', 'Trường tham chiếu', 'Mục đích', 'Điều kiện hiển thị / chọn', 'Ảnh hưởng khi chỉnh sửa',
-         'Ràng buộc xóa'], [
-    ('Phiếu yêu cầu xuất hàng (Bán hàng => Yêu cầu => Hàng hóa => YC xuất hàng)',
-     'Mã phiếu YCXH; khách hàng, người liên hệ, số ĐT, địa điểm giao; dòng hàng; kho xuất (thủ kho); trường Vận chuyển',
-     'Nguồn dữ liệu của phiếu; duyệt phiếu vận chuyển ghi “Vận chuyển = Công ty vận chuyển” sang phiếu YCXH',
-     '5 trạng thái Đã đề nghị, Chờ duyệt, Đang tạo, Đợi TP duyệt, Đợi BGD duyệt và đã gắn khách hàng (BR-02)',
-     'Sửa phiếu YCXH sau khi lập: phiếu vận chuyển giữ dữ liệu đã chép, lần lưu kế tiếp đọc lại theo phiếu YCXH',
-     'Xóa phiếu vận chuyển không đổi phiếu YCXH; điều kiện xóa phiếu YCXH do màn đó quy định'),
-    ('Đơn hàng/Hợp đồng (11 loại, BR-03)', 'Số đơn hàng/hợp đồng (bản chụp) + liên kết mở chứng từ',
-     'Gắn phiếu với chứng từ bán / mua hàng', 'Theo điều kiện từng loại ở BR-03',
-     'Đổi số hợp đồng ở màn gốc: phiếu cũ vẫn hiện số cũ, liên kết vẫn mở đúng chứng từ', 'Màn này không khai ràng buộc riêng'),
-    ('Danh mục khách hàng', 'Mã - Tên khách hàng (bản chụp lúc lưu)', 'Hiển thị, lọc, xuất Excel',
-     'Ô lọc Khách hàng chỉ liệt kê khách hàng (không có nhà cung cấp)',
-     'Đổi tên khách hàng: phiếu cũ giữ tên cũ, phiếu lập / lưu sau lấy tên mới', 'Màn này không khai ràng buộc riêng'),
-    ('Kho vật lý (Phân hệ Kho => Danh mục => Kho vật lý)', 'Danh sách thủ kho của kho xuất hàng',
-     'Xác định người được duyệt / từ chối và người nhận thông báo', 'Kho chưa có thủ kho → chỉ lưu nháp được',
-     'Đổi thủ kho: áp ngay cho phiếu Chờ duyệt (thủ kho mới duyệt được, thủ kho cũ hết quyền)', 'Không áp dụng'),
-], widths=[1.15, 1.1, 1.0, 1.0, 1.0, 0.85])
-d.p('Ràng buộc dữ liệu phân cấp: phiếu (cha) > dòng hàng (con) chép từ phiếu YCXH, xem BR-15. Màn không có Khóa / Mở '
-    'khóa nên không có ảnh hưởng khóa / mở khóa tới các màn trên.')
+    ('1', 'Bán hàng', 'Phiếu yêu cầu xuất hàng (duyệt phiếu vận chuyển thì hình thức vận chuyển của phiếu yêu cầu xuất hàng đổi thành Công ty vận chuyển)', 'Bán hàng -> Yêu cầu -> Hàng hóa'),
+], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()
 print('Đã ghi', OUT)

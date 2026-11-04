@@ -136,7 +136,9 @@ def fr(no, title, intro, layout, ui, ev, ui_kw=None, usecase=None, rule=None):
 
 # ============================================================== TRANG ĐẦU
 d.title_block(TEN)
+d.doc.add_page_break()  # Mục lục sang trang riêng như bản Drive đã chuẩn hoá
 d.h2('Mục lục')
+d.doc.paragraphs[-1].alignment = 1  # căn giữa chữ 'Mục lục'
 d.toc()
 
 # ============================================================== PHẦN 1
@@ -876,12 +878,12 @@ d.rule_table([
 ])
 
 # ============================================================== PHẦN 5
-d.h1('Phần 5. Bảng Danh sách các màn hình tham chiếu dữ liệu')
-d.p('Báo cáo hạn mức công nợ nhân viên chỉ đọc, không ghi dữ liệu. Các màn hình dưới đây cung cấp dữ liệu cho báo cáo (hạn mức của tài khoản nhân viên và bút toán công nợ phải thu 131 theo hợp đồng).')
+d.h1('Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu')
+d.p('Báo cáo hạn mức công nợ nhân viên chỉ đọc, không ghi dữ liệu. Các màn hình dưới đây cung cấp dữ liệu cho báo cáo (hạn mức của tài khoản nhân viên, bút toán công nợ phải thu 131 theo hợp đồng) — điều kiện dòng lên báo cáo ở BR-01, cách tính công nợ ở BR-02 và BR-05.')
 d.table(['STT', 'Nhóm', 'Màn hình', 'Đường dẫn'], [
-    ('1', 'Quản trị hệ thống', 'Tài khoản nhân viên — ô Hạn mức công nợ xuất hàng ở form Thêm / Sửa (nguồn hạn mức duy nhất; nhân viên có hạn mức > 0 mới lên báo cáo)', 'Quản trị hệ thống -> Người dùng & phân quyền'),
-    ('2', 'Tài chính', 'Công nợ đầu kỳ theo khách hàng - hợp đồng (hợp đồng đầu kỳ và bút toán tài khoản con của 131; người tạo hợp đồng quyết định công nợ thuộc nhân viên nào, tính tới Đến ngày)', 'Tài chính -> Khai báo đầu kỳ; Tài chính -> Kế toán công nợ -> Khách hàng'),
-    ('3', 'Hệ thống ERP', 'Hợp đồng thanh lý, hợp đồng dịch vụ, hợp đồng dự án (bút toán tài khoản con của 131 gắn các hợp đồng này cũng được cộng vào công nợ của người tạo hợp đồng)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
+    ('1', 'Quản trị hệ thống', 'Tài khoản nhân viên (ô Hạn mức công nợ xuất hàng — nguồn hạn mức duy nhất)', 'Quản trị hệ thống -> Người dùng & phân quyền'),
+    ('2', 'Tài chính', 'Khai báo đầu kỳ công nợ (hợp đồng đầu kỳ và bút toán 131 của nó)', 'Tài chính -> Khai báo đầu kỳ'),
+    ('3', 'Hệ thống ERP', 'Hợp đồng thanh lý, dịch vụ, dự án (bút toán 131 cộng vào công nợ của người tạo hợp đồng)', 'Hệ thống ERP (chưa chuyển sang HRM)'),
 ], widths=[0.65, 1.2, 2.45, 2.2])
 
 d.save()

@@ -175,7 +175,7 @@ SRS_MAP = {
     152: 'N/A: màn không có chức năng Khóa / Mở khóa',
     153: 'Phần 4 — BR-14; Phần 5', 154: 'Phần 4 — BR-15', 155: 'Phần 4 — BR-01 đến BR-10',
     156: 'Phần 5', 157: 'Phần 5', 158: 'Phần 5', 159: 'Phần 5', 160: 'Phần 5',
-    161: 'Phần 5 (áp cho danh mục màn tham chiếu — Loại tiền, đối tác, nhân viên ở bảng 2; bản thân phiếu không có Khóa)',
+    161: 'N/A: màn không có chức năng Khóa / Mở khóa (Phần 5 theo khuôn Drive 4 cột STT | Nhóm | Màn hình | Đường dẫn)',
     162: 'Phần 5', 163: 'Phần 5',
 }
 for _stt in range(84, 94):            # FR-06 Khóa / Mở khóa
