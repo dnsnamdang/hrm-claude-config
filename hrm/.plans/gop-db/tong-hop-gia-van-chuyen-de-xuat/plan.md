@@ -580,3 +580,89 @@ tinker: `\Modules\Transport\Entities\DeliveryCostSummary\DeliveryCostSummary::wi
 - [x] BE: route `GET /v1/transport/delivery-cost-summaries/{id}/quotation-template` → `DeliveryCostSummaryController::quotationTemplate()` — `canView()` như exportExcel, xuất `DeliveryQuotationExport` với `base_quotation->excel_data`. Không dùng thẳng route BGVC vì nhóm đó gate quyền "Quản lý mẫu báo giá vận chuyển" (người chỉ có quyền THGVC sẽ 403).
 - [x] FE: `api.js` `downloadQuotationTemplate()`; `components/ImportQuotationModal.vue` thêm dòng chữ nghiêng xám + link "Mẫu báo giá" dưới khối File báo giá.
 - [x] Kiểm: API trả file xlsx; Playwright mở popup thấy dòng link, bấm tải được.
+
+## QA 05/11/2026 (đợt Nhập báo giá NCC) — Bug 4: bấm "Lưu lại" thiếu toast báo lỗi
+
+- [x] Hiện trạng: thiếu NCC/file → `submit()` chỉ bật lỗi inline rồi `return` im lặng; lỗi BE (file sai khung) cũng chỉ inline.
+- [x] FE `ImportQuotationModal.vue`: thiếu trường → toast chung "Bạn chưa nhập đầy đủ thông tin." (câu chuẩn skill form-validate), lỗi inline giữ nguyên; lỗi BE → toast `importError.message`, bảng dòng lỗi vẫn inline.
+- [x] Playwright (phiếu 120): bấm Lưu lại khi chưa chọn file → toast "Bạn chưa nhập đầy đủ thông tin." + lỗi dưới ô.
+
+## QA 05/11/2026 — Bug 5: Tìm kiếm nâng cao thiếu Phòng ban, Mã, Ghi chú
+
+- [x] BE `DeliveryCostSummaryService::searchByFilter`: thêm `department_id` (phòng của NGƯỜI TẠO — cùng cách lọc `company_id` qua `employeeIdsSubquery`) + `note` (like). ERP chỉ có ô tìm Ghi chú dạng cột datatable, không có Phòng ban.
+- [x] FE `index.vue`: thêm ô Mã (text, cùng key `code` với ô tìm nhanh), Phòng ban (select `$store.state.departments`, lọc theo Công ty đang chọn), Ghi chú (text).
+- [x] Kiểm API: note="giá" → 4 phiếu, department_id=54 → 25, 94 → 22. Playwright: panel hiện đủ 9 ô (Mã, Phòng ban 64 phòng, Ghi chú), lọc Ghi chú qua giao diện ra 4.
+- [x] Kèm theo (sót của Bug 1): cột Ngày tạo 110px → 150px, trước cắt "09/05/2026 10:...".
+
+## QA 05/11/2026 — Bug 6: chi tiết "Chờ duyệt" thiếu nút Không duyệt + footer lệch CSS
+- [x] Bỏ ô Mã / Trạng thái: ĐÃ bỏ từ 04/11 (mã + badge nằm trên tiêu đề) — server QA chạy code cũ.
+- [x] Thêm nút **Không duyệt** (`primary status="danger"`, `ri-close-circle-line`, cùng điều kiện `is_can_approve`) ở `_id/index.vue`; nút Duyệt đổi icon `ri-check-line` (button-convention).
+- [x] `ApproveModal.vue` tách 2 chế độ `open({ mode: 'approve' | 'reject' })`: reject = popup `md` chỉ ô "Lý do không duyệt" (bắt buộc) + nút Không duyệt/Đóng → `submit(3)`; approve = ghi chú + bảng giá duyệt + nút Duyệt/Đóng. BE `approve()` đã sẵn nhận status 3 (log 'rejected').
+- [x] CSS footer: bỏ `class="mr-2 mb-2"` ở các nút trong slot `#custom-actions` — V2Footer tự chia khoảng (khớp YCNH `product-import-requests/_id/index.vue`); gắn vào là nút cao lệch + giãn so với "Quay lại".
+- [x] Playwright 127.0.0.1:3000/…/110 (tạm status 2, đã trả về 3): 4 nút footer cùng top 860, cách đều 5px; popup Không duyệt để trống → "Bắt buộc phải nhập"; popup Duyệt chỉ Duyệt/Đóng.
+
+## QA 05/11/2026 — Bug 7: cột "Duyệt" lúc Chờ duyệt hiện "-", không khớp ERP (THGVC-00126)
+- Nguyên nhân: ERP `show.blade.php` khi `canApprove()` render ô nhập `approve_extra_price` / `approve_cost` NGAY trong bảng tổng hợp (prefill = MIN > 0 các NCC); HRM lại để bảng sửa giá trong popup Duyệt, nên trên trang cột Duyệt luôn "-".
+- [x] `_id/index.vue`: `SummaryMatrix :mode="detail.is_can_approve ? 'approve' : 'view'"` + `approveModel` prefill bằng `prefillApprove(frame, quotations)` khi load; `onApproveExtra` / `onApproveCost` ghi vào model (`$set`). Người không có quyền duyệt vẫn thấy "-" khi chờ duyệt (đúng ERP).
+- [x] `ApproveModal.vue`: bỏ SummaryMatrix khỏi popup; `open({ ..., model })` nhận model từ trang; popup Duyệt chỉ còn "Ghi chú duyệt (*)" + Duyệt/Đóng. `buildVehicles()` / `submit()` giữ nguyên.
+- Khác ERP còn lại: ô Ghi chú duyệt nằm trong popup (ERP để card trên trang) — giữ để thống nhất với popup Không duyệt.
+- [x] Playwright …/117 (tạm status 2 + giả `is_can_approve`, đã trả về 1): cột Duyệt prefill MIN (13,750 · 1,960,000 · 1,437,500…; cột chỉ có giá 0 → 0); sửa ô đầu thành 2,000,000 → payload approve mang đúng 2000000, comment, status 1 (request đã chặn, không ghi DB).
+
+## QA 05/11/2026 — Nút "Lưu lại" popup Nhập báo giá NCC → "Lưu"
+- [x] `ImportQuotationModal.vue` + `EditExtraPriceModal.vue` + `EditPayloadRoadModal.vue`: đổi chữ nút "Lưu lại" → "Lưu" theo bảng text chuẩn `button-convention` (user chốt 05/11).
+
+## QA 05/11/2026 — Popup Duyệt/Không duyệt "không đồng bộ các màn khác" (mẫu self-inventories/1089)
+- Hiện trạng: project chưa có popup duyệt dùng chung thống nhất (V2BaseRejectApproveModal chỉ từ chối, b-modal cũ; ~20 màn tự viết). User chốt: CHỈ chỉnh THGVC giống mẫu, không tạo/sửa component chung.
+- [x] `ApproveModal.vue` copy khung `position-inventory-results/components/ApproveNoteModal.vue`: size md · subtitle "Phiếu: <mã>" · icon `ri-check-line` #16a34a / `ri-close-circle-line` #dc2626 · 1 ô "Ghi chú duyệt" (V2BaseTextarea sm rows 3, viền đỏ khi lỗi) · footer nút xác nhận (Duyệt primary / Không duyệt primary danger) + "Hủy" tertiary `fas fa-arrow-left`, không `mr-2 mb-2`.
+- Khác mẫu (cố ý): ghi chú BẮT BUỘC cả khi Duyệt (ERP đòi approver_comment); chữ nút "Duyệt" thay "Duyệt kết quả".
+- [x] Playwright …/117 (tạm status 2 + giả is_can_approve + chặn approve, đã trả về 1): 2 popup đúng khung, để trống → "Bắt buộc phải nhập" + viền đỏ; nút Duyệt/Hủy cách 8px.
+
+## QA 05/11/2026 — Click "Mẫu báo giá" ở danh sách mở TAB MỚI
+- [x] `index.vue` slot `cell-baseQuotationCode`: `nuxt-link` thêm `target="_blank" rel="noopener"` (khuôn `pages/sale/customer-debt-details/index.vue:167`). Chỉ danh sách có link BGVC (chi tiết/sửa không có).
+- [x] Playwright (gán tạm quyền 101390 cho role 18, đã gỡ + cache:clear): click BGVC-00002 → mở tab mới `/transport/delivery-quotations/2`, tab danh sách giữ nguyên.
+
+## QA 05/11/2026 — Xuất Excel THGVC-00111 báo "Không thể xuất Excel" (dev)
+
+- [x] Nguyên nhân: `DeliveryCostSummaryExcel` (port ERP) ép font lên vùng CỨNG `A1:Z9999` / `A1:L9999` → PhpSpreadsheet sinh ~260k ô rỗng có style; autosize + ghi file phình. Phiếu 111 (352 tuyến × 30 cột): local 16.4s / RAM 185MB / file 551KB → server dev quá giới hạn thời gian/bộ nhớ, FE nuốt lỗi thành toast chung. KHÔNG phải lỗi dữ liệu (dựng thử trên DB gộp read-only vẫn ra file), route dev đã có (401 khi thiếu token).
+- [x] Fix: dời set font sang AfterSheet, chỉ style tới `getHighestRow()` (giữ cột Z/L như ERP). Áp cả `DeliveryQuotationExport` (BGVC, cũng là file mẫu "Tải báo giá mẫu" của THGVC) — cùng khuôn.
+- [x] Kiểm: 111 export 16.4s → 8.5s, file 551KB → 58KB; so từng ô với file cũ: 0 ô lệch, 27/27 merge giống; quotation-template 200 / 5.3s.
+
+## QA 05/11/2026 — Bỏ sort cột "Thời gian gửi duyệt" + "Thời gian duyệt" (danh sách)
+
+- [x] `hrm-client/pages/transport/delivery-cost-summaries/index.vue`: bỏ `sortable: true` ở 2 cột `sendTime`, `approvedTime` (không có quy tắc sort cho 2 trường này). Còn sort: Mã, Ngày tạo.
+- BE `SORTABLE_COLUMNS` giữ nguyên (FE không gửi nữa; giữ để không vỡ bộ lọc đã lưu cũ).
+- Kiểm Playwright: header chỉ còn icon sort ở Mã + Ngày tạo.
+
+## QA 05/11/2026 — CSS lại ô "Nhà cung cấp" (popup Nhập báo giá NCC)
+- [x] Mở dropdown thì ô gõ tìm có viền #aaa và outline xanh mặc định của trình duyệt, lệch với select chuẩn trong popup.
+- Sửa cục bộ `components/ImportQuotationModal.vue`: thêm `dialog-class="iq-modal"` và một khối style không scoped khoá theo `.iq-modal`, vì dropdown gắn vào `.modal-content`. Bám bộ màu của `V2BaseSelectInModal`: viền #cbd5e1, khi focus/mở #94a3b8, không outline, không bóng; ô tìm cao 30px, bo 4px, chữ 13px; option 13px, dòng đang trỏ nền xanh nhạt. KHÔNG sửa `V2BaseSelectRemote` dùng chung.
+- Đã kiểm bằng Playwright trên phiếu 120 local: mở dropdown, gõ "cong" ra danh sách NCC, ô tìm viền xám nhạt, không còn outline.
+
+### QA 05/11/2026 — Ô chọn file popup Nhập báo giá NCC theo kiểu màn import
+- [x] `ImportQuotationModal.vue`: thay `V2BaseAttachmentSection` + dòng link "Mẫu báo giá" bằng nhóm "FILE | Chọn file Excel | Tải file mẫu | tên file", copy nhóm File của `components/V2BaseImportToolbar.vue` (màn `/finance/declare-debt-beginnings`). Không dùng nguyên toolbar vì nhóm Hành động (Load/Validate/Import) không hợp luồng (BE tự đọc file khi Lưu). Ô file ẩn như `V2BaseImportModal`; chặn đuôi khác .xlsx/.xls; lỗi "Vui lòng chọn file báo giá…" vẫn inline dưới nhóm.
+- [x] Kiểm Playwright: chọn file hiện tên, Lưu thiếu NCC báo lỗi inline; quyền/dữ liệu tạm ở DB local đã gỡ.
+
+## QA 05/11/2026 — Dòng "Người tạo - thời gian" (Thông tin chung) theo khuôn chung
+
+- [x] Chi tiết + Sửa hiện "DNS Admin - HDQT - 30/10/2026" (tên kèm mã phòng, thiếu giờ) → `DeliveryCostSummaryDetailResource`: `creator_name` = `info->fullname` (bỏ `employeeAuditLabel`), `created_at` = `d/m/Y H:i`. Khuôn: `/finance/declare-debt-beginnings/{id}` ("DNS Admin - 04/11/2026 20:49").
+- [x] Tạo mới không hiện dòng nào → `create.vue` `<CreatorInfoLine is-create />` (người đăng nhập + giờ hiện tại).
+- Kiểm Playwright: chi tiết 120 "Hồ Chí Dũng - 09/05/2026 10:41"; sửa 120 "DNS Admin - 09/05/2026 10:41" (đổi tạm created_by, đã trả); tạo mới "DNS Admin - 05/11/2026 15:40". Quyền gán tạm 101390/101301 cho role 18 đã gỡ.
+
+## QA 05/11/2026 — Bảng ma trận chưa đồng bộ khuôn bảng chung
+
+- [x] `components/CostMatrix.vue` + `components/SummaryMatrix.vue`: bỏ class riêng `.cost-matrix`/`.summary-matrix` tự kẻ viền (misa-grid) → dùng khuôn bảng chi tiết chuẩn `table table-bordered table-sm mb-0 er-table` + `thead.bg-light` (copy pattern `pages/finance/product-imports/_id/index.vue` ~dòng 269, style `.er-table` cuối file).
+- [x] Dòng "Giá cước vượt trội" chuyển từ `thead` xuống dòng đầu `tbody` (th → td) → hết vạch kẻ đậm/lệch giữa nó và dòng tuyến; chữ thường không đậm.
+- [x] Kiểm Playwright chi tiết THGVC-00120: padding ô, viền, nền/viền tiêu đề, cỡ chữ trùng khớp bảng mẫu Phiếu nhập kho 12345.
+
+## QA 05/11 — Lịch sử chưa ghi khi thêm/sửa (ảnh 15.48.30)
+
+- [x] Rà: tạo/sửa phiếu ĐÃ ghi log ở local (Tạo mới · Ghi chú · đổi trạng thái riêng dòng). Môi trường test cần deploy bản 44cadc45a; phiếu tạo trước bản đó không có dòng "Tạo mới" là đúng.
+- [x] Lỗ hổng thật: 2 popup "Sửa giá cước vượt trội" (`updateExtraPrice`) và "Sửa giá tuyến" (`updatePayLoadRoads`) không ghi log → thêm khoá bảng ảo `price_rows` (nhãn "Danh sách giá nhà cung cấp"): mỗi NCC 1 bản ghi `__key=supplier_id`, mỗi ô giá trong lần sửa là 1 trường (`Giá cước vượt trội (Loại xe - Trọng tải)` / `Giá tuyến <tuyến> (Loại xe - Trọng tải)`), số `number_format`. Không đổi giá thì không ghi.
+- [x] Kèm: query update 2 hàm khoá thêm `delivery_cost_summary_id = phiếu` (trước chỉ lọc parent_id client gửi → sửa được dòng phiếu khác).
+- [x] Kiểm tinker có rollback trên phiếu 120: 2 dòng log, gửi lại cùng giá không sinh log, `getLogs()` ra nhóm "Giá nhà cung cấp sửa thông tin" chỉ ô đổi.
+
+## QA 05/11 — Duyệt (ảnh 16.01.57 / 16.02.02)
+
+- [x] **Popup Không duyệt / Duyệt bấm khi ghi chú trống không có toast** → `components/ApproveModal.vue` `submit()`: thêm toast chung `Bạn chưa nhập đầy đủ thông tin.` (lỗi chi tiết vẫn inline "Bắt buộc phải nhập" dưới ô — khuôn form-validate). Verify Playwright phiếu 120: toast + inline đều hiện, không gọi API.
+- [x] **Chi tiết có ô "Người duyệt" + "Thời gian gửi / duyệt" mà ERP không có** → `_id/index.vue` bỏ 2 ô + computed `timeText()`; bám ERP `common/delivery_cost_summaries/show.blade.php` (Thông tin chung chỉ Ghi chú + File đính kèm, thẻ Ghi chú duyệt riêng). Thông tin duyệt vẫn xem được ở mục Lịch sử.
+- Ghi chú test: quyền `Duyệt giá vận chuyển` tính theo `current_company_role` — gán tạm cho role 18 không làm `is_can_approve` bật ở request thật, nên test popup bằng cách gọi `open()` trực tiếp; đã gỡ quyền tạm.

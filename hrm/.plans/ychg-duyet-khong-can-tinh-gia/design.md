@@ -173,3 +173,32 @@ Với mỗi dòng `9` hợp lệ, trước khi/khi chuyển trạng thái:
 ## 8. Kiểm thử (định hướng cho plan)
 - BE: TH1 (giá 0) promote + ghi 0; TH2 VND; TH2 ngoại tệ (quy đổi × rate, đồng giá 6 loại); nhiều báo giá → lấy mới nhất; dòng `9` không đủ điều kiện → chặn Duyệt phiếu; Cha/Con độc lập; phiếu toàn option-3 → đóng `4`; phiếu lẫn option-1 → `10`; không lộ giá cho người không đủ quyền.
 - FE/Playwright (`http://127.0.0.1:3000`): 3 nút trên trang quyết định; nút Duyệt phiếu sáng khi 100% dòng có trạng thái; nhãn trạng thái `9`.
+
+---
+
+## 9. PL01 (05/11/2026) — PTKD duyệt TỪNG dòng hàng Cha – Con
+
+Redmine "[PL01 - YC hỏi giá] PTKD duyệt YC hỏi giá: Bổ sung tùy chọn Duyệt không cần tính giá và quy tắc duyệt chi tiết từng dòng hàng Cha - Con".
+
+### Quyết định đã chốt (user, 05/11/2026)
+- Dòng thuộc diện: hàng KHÔNG tạm, trạng thái công ty 1 (Đang nhập thông tin) / 2 (Chờ tính giá bán) — cả dòng cha lẫn hàng con ghép bộ (`recipe_products.base_product_id`). **Hàng Đang kinh doanh (3) KHÔNG tính.**
+- 3 quyết định mỗi dòng: **Đồng ý** (bấm thẳng, không form) · **Duyệt không cần tính giá** (điều kiện như tùy chọn 3: giá 0 / báo giá trúng thầu) · **Từ chối** (lý do bắt buộc ≤255).
+- Từ chối ⇒ hàng về **1 Đang nhập thông tin** (KHÔNG đẩy XNK); nhóm toàn dòng Từ chối đóng **Huỷ duyệt**. Lý do hiện trên dòng + ghi Lịch sử.
+- Nút Duyệt cả phiếu chỉ bật khi 100% dòng thuộc diện (+ hàng tạm) đã có quyết định; đổi quyết định được tới khi duyệt phiếu. Từ chối cả phiếu xoá hết quyết định.
+
+### Hiện thực
+- Bảng `price_asking_request_line_decisions` (request_id, product_id, decision 1/2/3, reason). Helper `PriceAskingLineDecisions` (`applicableIds`, `put`, `of`, `clear`).
+- API `POST master-data/price-asking-requests/{id}/line-decisions/{product}` `{decision: approved|rejected|no_price, reason}` — 403 không quyền PTKD, 409 sai trạng thái/không thuộc diện, 404 không thuộc phiếu.
+- Detail trả `line_pending_count`, `can_ptkd`, mỗi dòng `can_line_decide`, `line_decision(_text/_color)`, `line_reject_reason`. Gate ở `PriceAskingRequestWriter::ptkdApprove` (422 "Còn N hàng chưa duyệt").
+- FE: `PriceAskingLineDecisionModal.vue` (V2BaseModal) + nút "Duyệt"/"Sửa" mỗi dòng, badge quyết định + "Lý do: …" dưới tên hàng, tooltip "Còn N hàng chưa duyệt" trên nút Duyệt footer.
+- Test: `PriceAskingLineDecisionTest` (6) + trait `Concerns/DecidesAskingLines` cho 5 test cũ.
+- Kiểm FE bằng Playwright với API detail mock (local không tài khoản nào có quyền "PTKD duyệt yêu cầu hỏi giá" qua vai trò).
+
+---
+
+## 10. QA 05/11/2026 — đã sửa + trạng thái bàn giao
+
+- **Lưu nháp không ghi lịch sử phiếu** → `PriceRequestHistoryService` ghi dòng "Thay đổi thông tin" cả khi Lưu nháp (YCHG + YCTG, chuẩn entity-history; khai `price_asking_requests` / `price_calculate_requests` trong `CatalogHistoryService::TABLES`).
+- **Chi tiết YCHG mất 2 cột "Nguồn gốc hàng tạm" / "Trạng thái dữ liệu giá" khi hàng đã rời trạng thái tạm** (PYCHG-04702) → `PriceAskingProductReader::rows(..., $allSources = true)` dò nguồn gốc cho MỌI dòng ở màn chi tiết; `lineRow()` bỏ gate `is_temp`; FE `v-if` theo chính field BE trả. Test `test_detail_keeps_source_columns_after_product_leaves_temp`.
+  - Lưu ý: "Trạng thái dữ liệu giá" phản ánh báo giá NGUỒN — hàng đã Đang KD vẫn có thể hiện "Hàng tạm mới - Cần tính giá". Đổi nhãn = chờ user chốt.
+- Bàn giao: develop api `79af1e6c2` / client `64317e3d2`; đã gộp `gop_db` (api `a9147a0d9` ff, client `f08142a33`). Migration mới `2026_11_05_000001_create_price_asking_request_line_decisions_table` — môi trường nào kéo về phải `php artisan migrate`.

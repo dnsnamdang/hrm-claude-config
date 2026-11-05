@@ -413,3 +413,67 @@ Năm lớp input/hành vi spec ngụ ý mà dễ cắn người dùng nhất —
 **4. Review Focus:** 5 lớp đã gắn test vào task sở hữu (RF#1→Task2/8; RF#2→Task4; RF#3→Task5; RF#4→Task9; RF#5→Task6/7). ✅
 
 **5. Proportion:** Plan ~ dài hơn design vài lần nhưng phần lớn là bước verify runtime + Interfaces (quyết định không thể suy) — không transcribe code ERP (chỉ trỏ file:line + sibling). 15 task khớp shape THGVC 16 task. ✅
+
+## QA 05/11/2026 — Danh sách HĐ vận chuyển
+
+- [x] (2) Nút "Thêm" → "Tạo mới" (button-convention) — `components/DeliveryContractList.vue`.
+- [x] (3) Cùng account ERP thấy 14 bản ghi, HRM rỗng. Nguyên nhân: menu HRM trỏ `/transport/delivery-contracts` (index = "HĐ do tôi lập", BE ép `type=mine`), còn menu ERP trỏ `deliveryContract.all`. Sửa: menu `components/subsystem-menu/transport.js` → `/transport/delivery-contracts/all`; `listUrl`/`urlBack` của ContractForm, AnnexForm, `_id/index.vue` cũng về `/all` (khớp ERP quay về `deliveryContract.all`). Phạm vi xem ở trang all vẫn lọc theo 3 quyền xem (ruling C, giữ nguyên).
+
+### QA 05/11/2026 đợt 2 — Danh sách HĐ vận chuyển
+- [x] (4) Bộ lọc trạng thái bỏ "Đã đóng" (như ERP `common/delivery_contracts/all.blade.php`) — `DeliveryContractList.vue` `statusOptions`; badge "Đã đóng" do BE vẫn giữ.
+- [x] (5) Sort cột Mã (+ Ngày duyệt / Ngày tạo / Ngày cập nhật): BE `DeliveryContractService::SORTABLE_COLUMNS` + `applySort()` (whitelist, mặc định `created_at desc, id desc`), FE `sort_by`/`sort_dir` trong filters + `handleSort` — copy pattern THGVC `DeliveryCostSummaryService::applySort`.
+- [x] (6) Thêm cột Người cập nhật / Ngày cập nhật: Resource trả `updater_name` (`employeeAuditLabel`) + `updated_at`; service eager-load `employee_update.info`.
+- [x] (7) Ngày tạo / ngày cập nhật format `d/m/Y H:i`; cột Ngày tạo nới 140px.
+- Kiểm Playwright `/transport/delivery-contracts/all`: đủ 12 cột, `HĐVC-00192:PL-03` → `29/10/2026 12:56`, bấm Mã → `sort_by=code&sort_dir=asc` rồi `desc` đúng thứ tự.
+
+### QA 05/11/2026 đợt 3 — Màn Tạo HĐ vận chuyển
+- [x] (1) Lưu nháp đang bắt mọi trường bắt buộc → chỉ bắt "Bảng giá hiệu lực" (skill form-validate: nháp chỉ 1 trường đại diện; gửi duyệt bắt đủ như ERP store).
+  - Trait mới `Modules/Transport/Http/Requests/DeliveryContract/DeliveryContractHeaderRules.php`: `is_send=1` → required `supplier_id`, `company_account_id` + nhánh theo `customers.customer_type` (1 cá nhân: CMT/ngày cấp/nơi cấp · 2 tổ chức: MST/người đại diện/chức vụ); nháp → nullable. Rule định dạng/exists luôn bật. `StoreRequest` = `price_list_valid_id` required + trait; `UpdateRequest` = trait.
+  - Migration `2026_11_05_000001_make_supplier_id_nullable_delivery_contracts_table.php`: `delivery_contracts.supplier_id` → NULL (nháp chưa chọn NCC). **Phải chạy migrate khi deploy.** Bảng chung ERP — list/show ERP đã null-safe.
+  - `DeliveryContractService::applyHeaderSnapshots`: tài khoản/NCC rỗng → snapshot null (không ném "Không tồn tại"); đổi/bỏ NCC → xoá cột CMT/MST/đại diện cũ.
+  - FE `ContractForm.vue` `fillFromDetail`: `supplier_id` null → không dựng option NCC (tránh crash màn Sửa nháp).
+- [x] (2) Cùng account: ERP thấy BGHLVC-00002…00007, HRM chỉ 00007. Nguyên nhân: `getFormOptions` lọc theo công ty + loại BGHLVC đã gắn HĐ. ERP `create` dùng `PriceListValidDelivery::latest()->get()` (không lọc). Sửa: bỏ 2 bộ lọc, `orderByDesc('id')` khớp ERP.
+- Kiểm Playwright `/transport/delivery-contracts/create`: dropdown 6 bảng giá 00007→00002; nháp trống → chỉ lỗi `price_list_valid_id`; gửi duyệt trống → lỗi BGHLVC + NCC + tài khoản; NCC tổ chức → thêm lỗi người đại diện/chức vụ; NCC cá nhân → lỗi CMT/ngày cấp/nơi cấp, lỗi hiện dưới từng ô. Nháp chỉ chọn BGHLVC-00005 lưu được (status 3, supplier_id NULL), quay về `/all`. Đã xoá bản ghi test.
+
+### QA 05/11/2026 đợt 4 — Màn Tạo/Sửa HĐ vận chuyển (HĐVC-00088)
+- [x] (3) Ô NCC ở form và ở bộ lọc danh sách tìm theo 2 kiểu (danh sách gọi `finance/bill-income-requests/search-suppliers`, bắt gõ ≥ 2 ký tự). Sửa: endpoint dùng chung mới `GET transport/delivery-contracts/search-suppliers?keyword=` (`DeliveryContractService::searchSuppliers`: tìm theo tên/mã, 50 dòng, nhãn `Mã - Tên`); `getFormOptions` cũng dùng hàm này. FE `api.js` `searchSuppliers`; `ContractForm.vue` + `DeliveryContractList.vue` cùng gọi, bộ lọc bỏ `minimum-input-length`.
+- [x] (4) CMT/ngày cấp/nơi cấp gửi duyệt trống không báo lỗi → code đợt 3 (trait `DeliveryContractHeaderRules`) đã bắt cho NCC cá nhân (`customer_type=1`), A HẢI (17791) đúng là cá nhân. Môi trường QA chưa có bản đợt 3 → cần deploy + `migrate`. Đã kiểm lại: gửi duyệt trống → 3 lỗi dưới 3 ô.
+- [x] (5) Nơi cấp hiện cả tỉnh nước ngoài → lọc `provinces.nation_id = 1` như ERP `Province::getForSelect()`, cộng thêm `include_place_id` (giá trị đang lưu) để màn Sửa HĐ cũ vẫn hiện đúng tên. FE truyền `include_place_id: d.identity_card_place` lúc mở màn Sửa.
+- [x] (6) CMT chưa chặn chữ → FE `v-validate="'numeric|max:50'"` (báo đỏ realtime, không tự xoá chữ), BE `regex:/^[0-9]+$/` luôn bật.
+- [x] (7) Ghi chú → `V2BaseTextarea` 2 dòng.
+- Kiểm Playwright: nơi cấp 34 tỉnh VN; `include_place_id=69` → 35 (có "BENGULURU- RURAL"); NCC trống → 50 dòng ở cả form lẫn bộ lọc, "A HẢI" → `20TTHPGI-27 - A HẢI`; gửi duyệt NCC cá nhân trống CMT → lỗi `identity_card_number/date/place`; CMT `12ab` → FE "Vui lòng nhập số nguyên.", BE 422 "Không hợp lệ". Không tạo bản ghi test. Console chỉ còn lỗi socket :8891 (local không chạy).
+
+## QA 05/11/2026 đợt 5 (ảnh 11.00.28)
+
+- [x] (1) Placeholder lệch cỡ chữ → ô tiền `V2BaseCurrencyInput--sm` 13px, `V2BaseTextarea` 13px `!important` + global `.form-control::placeholder` 0.8rem, trong khi input/select/ngày sm là 12px. Override CỤC BỘ (không sửa component chung) theo khuôn #11968 `OtherDeliveryTripForm.vue:1454`: root thêm class `dc-form`, `::v-deep .v2-currency-input--sm` + `.v2-textarea--sm(::placeholder)` = 12px. Áp ContractForm + AnnexForm.
+- [x] (2) File đính kèm → bỏ `FileAttachmentTable`, dùng `V2BaseAttachmentSection` (copy pattern THGVC `delivery-cost-summaries/create.vue:31`, helper `delivery-cost-summaries/utils/attachmentFiles.js` map path ↔ object `files`). Áp ContractForm, AnnexForm và màn chi tiết `_id/index.vue` (readonly). BE không đổi (`TableFileHelper` nhận mảng object có `file_path`).
+- Kiểm Playwright: mọi placeholder form tạo HĐ + sửa phụ lục = 12px; upload PDF → lưới STT/File/Dung lượng + xem/tải/thay/xóa giống THGVC; lưu nháp phụ lục 193 → 200, `files` có bản ghi (đã xoá bản ghi test); chi tiết hiện file readonly, không có nút Thêm/Xóa.
+- Ghi nhận (chưa sửa, ngoài phạm vi): sau lưu phụ lục FE đẩy về `/transport/delivery-contracts/all` — user test không có quyền "tất cả" nên ra 404.
+
+## QA 05/11/2026 đợt 6 (ảnh 11.11.14 — "HĐVC IN")
+
+- [x] Bấm In / In bảng kê / Xuất Excel khi không có quyền → BE 403 "Bạn không có quyền thực hiện chức năng này" → nay **ẨN nút** khi thiếu quyền (BE vẫn chặn `checkPermission`). Cờ computed `canPrint` = `hasAPermission('In hợp đồng vận chuyển')`, `canExport` = `hasAPermission('Xuất Excel hợp đồng vận chuyển')` (fail-closed, đọc `$store.state.permissions`).
+  - `components/DeliveryContractList.vue`: toolbar Xuất Excel `v-if="canExport"`, In bảng kê `v-if="canPrint"`; row action `print` + `print-list` thêm `visible: this.canPrint`; sửa comment cũ "luôn hiện".
+  - `_id/index.vue`: thêm mixin `CheckPermission`, 3 nút footer In / In bảng kê (`canPrint`) · Xuất Excel (`canExport`) — khớp danh sách.
+- Kiểm Playwright (user 13): không quyền → danh sách mất Xuất Excel + In bảng kê, dòng chỉ còn Sửa · Xóa; chi tiết 193 mất cả 3 nút. Gán tạm 2 quyền vào vai trò 18 (cty 1) ở DB local → hiện đủ toolbar, dòng có In + ⋮ In bảng kê, chi tiết có In / In bảng kê / Xuất Excel, bấm In mở xem trước bình thường. Đã gỡ quyền tạm.
+- Lưu ý: FE chỉ nạp quyền qua VAI TRÒ (`role_has_permissions` theo công ty, `AuthNewController`), quyền gán thẳng `employee_has_permissions` không lên FE.
+
+## QA 05/11/2026 đợt 7 (ảnh 11.26.28 — màn chi tiết)
+
+- [x] (1) Khoảng cách nút footer không đều: nút trong slot `#custom-actions` gắn `mr-2 mb-2` cộng thêm vào khoảng V2Footer tự chia → giãn lệch so với Sửa/Xóa/Quay lại. Bỏ `mr-2 mb-2` ở 7 nút slot (copy khuôn THGVC `delivery-cost-summaries/_id/index.vue:65`, comment "QA 05/11 bug 6").
+- [x] (2) Badge trạng thái lên tiêu đề topbar: `pageTitle` = `buildStatusTitle(titleText, status_text, status_color)` (`utils/page-title-status.js`, khuôn THGVC); `head()` dùng `titleText` (tab trình duyệt không lẫn HTML). Bỏ ô "Trạng thái" trong khối Thông tin chung + import `V2BaseBadge` thừa.
+- Kiểm Playwright chi tiết 193: tiêu đề "Chi tiết hợp đồng vận chuyển: HĐVC-00192:PL-02 [Đang tạo]"; đủ 7 nút (gán tạm quyền In/Xuất Excel vào vai trò 18, đã gỡ) Sửa · Xóa · Gửi duyệt · In · In bảng kê · Xuất Excel · Quay lại cùng hàng, cao 31px, cách đều 5px.
+
+## QA 05/11/2026 đợt 8 (ảnh 11.26.43 — màn chi tiết + popup duyệt)
+
+- [x] (3) Chi tiết thừa trường → chỉ giữ trường có ở form Tạo mới (đối chiếu `ContractForm.vue` / `AnnexForm.vue`):
+  - Phụ lục: Mã phụ lục · Hợp đồng gốc · Kho · Số km tính cước vượt trội · Ghi chú.
+  - HĐ: Mã HĐ · Bảng giá hiệu lực (`price_list_code` BGHLVC-xxxxx) · Nhà cung cấp · Số km vượt trội · rẽ nhánh theo loại NCC (`supplier_type`): cá nhân = CMT · Ngày cấp · Nơi cấp; tổ chức = MST · Người đại diện · Chức vụ · Tài khoản công ty · Ghi chú · File đính kèm.
+  - Bỏ: Loại, Địa chỉ, STK/Ngân hàng NCC, Ngân hàng công ty tách rời, Kho (ở HĐ), km chốt, Người duyệt, Thời gian duyệt.
+  - GIỮ ô "Ghi chú từ chối / Ghi chú duyệt" (`approver_comment`, chỉ hiện khi có) để người lập đọc được lý do bị từ chối — không có ở form tạo nhưng là thông tin luồng duyệt.
+  - Sửa kèm: "Nơi cấp" hiện id (69) → BE trả `identity_card_place_name` (tên `provinces`, cùng nguồn danh mục của form).
+  - BE: `DeliveryContractController::show` load `supplier:id,fullname,code,customer_type`; `DeliveryContractDetailResource` thêm `identity_card_place_name`, `supplier_type`, `price_list_code`.
+- [x] (4) Tách nút Duyệt / Từ chối ra footer chi tiết (khuôn popup THGVC): `Duyệt` primary `ri-check-line` · `Từ chối` primary danger `ri-close-circle-line`, cùng `v-if="detail.is_can_approve"`. `ApproveModal.vue` viết lại 2 chế độ `open({ id, code, mode, isAnnex })`: mỗi popup chỉ 1 nút hành động + Hủy; Từ chối bắt buộc ghi chú (dấu *, "Bắt buộc phải nhập" + viền đỏ, BE vẫn chặn); Duyệt ghi chú không bắt buộc. Phụ đề popup "Hợp đồng:" / "Phụ lục:" theo loại.
+- Kiểm Playwright: phụ lục 194 hiện đúng 5 trường; Từ chối trống → báo lỗi, nhập lý do → status 3 + approver_comment lưu đúng, về danh sách. Popup Duyệt 193 không dấu *, bấm Duyệt thành công. HĐ 192 (cá nhân): CMT 012345678901 · 15/03/2020 · Nơi cấp tên tỉnh; HĐ 86 (tổ chức): MST 3001373916 · NGUYỄN VĂN KÍNH · Giám đốc.
+- Ghi chú: sau thao tác về `/transport/delivery-contracts/all` ra 404 với user test 13 — do vai trò 18 không có quyền "Xem hợp đồng vận chuyển theo …" (`isShow` menu, `middleware/checkPermission.js`), không phải lỗi.
+- Dọn DB local: 193/194 về status 3, xoá approver_*; gỡ quyền tạm 101389 khỏi vai trò 18; xoá 2 thông báo test. Lần duyệt thử 193 đã ghi lại 2 dòng Final của HĐ 192 (giá trị trùng ma trận phụ lục) và đặt `final_min_extra_km` 192 = 7 — để nguyên.
