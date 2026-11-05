@@ -472,3 +472,111 @@ tinker: `\Modules\Transport\Entities\DeliveryCostSummary\DeliveryCostSummary::wi
 - Thứ tự phụ thuộc: Task 1→2→3 nền; Task 4 (write BGHLVC) + 7 (import) + 8 (export) độc lập nhau, đều trước Task 5; Task 5 gom; Task 6/9/10 dựng API; FE 11–16 sau khi API 9 chạy. Import (12) cần trước khi kiểm RF#1 của Task 11 — có thể hoán đổi 11↔12 khi chạy FE.
 - Mỗi task BE: `php -l` + tinker read-back; mỗi task FE: Playwright `127.0.0.1:3000` + grep V2Base RỖNG.
 - Rulings (lệch tên cột/FK/số dòng Excel so với ERP, hay quyết định khung ma trận) ghi vào ledger + nhắc user ở bàn giao.
+
+---
+
+## QA 04/11/2026 — Danh sách: số dòng/trang mặc định 10
+
+- [x] `hrm-client/pages/transport/delivery-cost-summaries/index.vue`: `pagination.pageSize` 20 → **10** (FE luôn gửi `per_page`, nên BE mặc định 20 ở `DeliveryCostSummaryController::index` không ảnh hưởng). `per_page: 20` ở `fetchSuppliers` là giới hạn ô tìm NCC, không đổi.
+- [x] Playwright `/transport/delivery-cost-summaries`: ô Số dòng/trang = 10, request gửi `per_page=10`.
+
+## QA 04/11/2026 — Màn chi tiết: trạng thái lên tiêu đề, bỏ ô Trạng thái, nút Xuất Excel xanh
+
+- [x] `hrm-client/pages/transport/delivery-cost-summaries/_id/index.vue`:
+  - Tiêu đề topbar = `buildStatusTitle(titleText, status_text, status_color)` (copy pattern `pages/finance/warehouse-reexports/_id/index.vue`); `head()` dùng `titleText` trần nên tab trình duyệt không lẫn HTML.
+  - Bỏ ô "Trạng thái" trong Thông tin chung (gỡ luôn import `V2BaseBadge`); Mã / Người duyệt / Thời gian gửi / duyệt dàn `col-md-4`.
+  - Nút Xuất Excel `secondary` → `secondary status="success"` + icon `ri-file-excel-2-line` (button-convention 2b: nhóm Xuất = xanh lá).
+- [x] Playwright `/transport/delivery-cost-summaries/111` (THGVC-00111): tiêu đề có badge "Đã duyệt" màu `#16A34A`; nhãn còn Mã · Người duyệt · Thời gian gửi / duyệt · Ghi chú · Ghi chú duyệt; nút class `v2-btn--secondary-success` (nền `rgb(247,254,231)`, chữ `rgb(21,128,61)`).
+
+## QA 04/11/2026 — Bug: Xuất Excel "Lỗi máy chủ" (dev THGVC-00111)
+
+- Nguyên nhân: `DeliveryCostSummaryService::getExcelData()` gọi `$data->base_quotation->toArray()` không chặn null. Trên dev, phiếu trỏ tới mẫu báo giá gốc không còn (màn chi tiết không có cột xe, tab NCC hiện "NCC 7040" vì thiếu cả NCC) → `Call to a member function toArray() on null` → 500. Màn chi tiết KHÔNG lỗi vì Resource `buildBase()` đã trả null.
+- [x] Fix `hrm-api/Modules/Transport/Services/DeliveryCostSummary/DeliveryCostSummaryService.php`: thiếu báo giá gốc → `BASE_QUOTATION = ['vehicles' => []]`; `vehicles`/`payloads` đều `?? []`; `ROADS` đọc từ mảng đã chuẩn hoá. File vẫn xuất ra với khung rỗng (Mã, Ghi chú, tên NCC) — khớp màn chi tiết.
+- [x] Tái hiện local bằng transaction rollback (trỏ `delivery_quotation_id` = 99999999): trước fix ra đúng lỗi trên; sau fix `Excel::store` OK (roads=0, cols=2). Phiếu bình thường 111: roads=352, cols=30, OK. Playwright bấm Xuất Excel: 200 + tải `THGVC-00111.xlsx`.
+
+## QA 04/11/2026 — Danh sách: sort cột Mã + cột ngày
+
+- Chuẩn: skill `list-page` mục "Cột nào được sort" (Mã + tiền + ngày). Copy pattern màn BGHLVC `pages/transport/valid-delivery-prices/index.vue` (`:sortBy`/`:sortDirection`/`@sort`, tham số `sort_by` + `sort_dir`).
+- [x] BE `DeliveryCostSummaryService`: hằng `SORTABLE_COLUMNS` (key cột FE → cột DB: `code`, `createdAt→created_at`, `sendTime→send_time`, `approvedTime→approved_time`) + `applySort()` (khoá lạ/rỗng → `id DESC` như cũ; có khoá phụ `id` để thứ tự ổn định). Controller `index` gọi `applySort()` thay `orderByDesc(id)`.
+- [x] FE `pages/transport/delivery-cost-summaries/index.vue`: `sortable: true` cho Mã, Ngày tạo, Thời gian gửi duyệt, Thời gian duyệt; `sort_by`/`sort_dir` vào `initialStateForm` (Làm mới thì bỏ sort); `handleSort`.
+- [x] Playwright: 4 cột hiện icon sort; bấm từng cột → request `sort_by=<key>&sort_dir=asc|desc`, bảng đổi đúng thứ tự (Mã asc THGVC-00005… / desc THGVC-00120…). API `sort_by=bogus` → về id DESC.
+- Ghi chú: sort tăng dần theo Thời gian gửi duyệt/duyệt thì phiếu chưa gửi/chưa duyệt (NULL) đứng đầu (mặc định MySQL).
+
+## QA 04/11/2026 — Danh sách: nút x xoá nhanh ở ô "Phạm vi xem"
+
+- Nguyên nhân: field `type` khai `allowClear: false` trong `filterFields` → select2 không có nút x.
+- Bẫy: BE `applyViewScope()` để `type` rỗng rơi vào nhánh `else` = "Phiếu của tôi" (mirror ERP) → xoá ô mà gửi rỗng thì ô hiện trống nhưng dữ liệu bị thu hẹp.
+- [x] FE `pages/transport/delivery-cost-summaries/index.vue`: bỏ `allowClear: false`; `loadData()` gửi `type: this.filters.type || 'all'` (ô trống = "Tất cả phiếu được xem", đúng mặc định màn). BE không đổi.
+- [x] Playwright: mở Tìm kiếm nâng cao, ô Phạm vi xem có x; bấm x → `filters.type = null`, request `type=all`, vẫn 53 phiếu, không lỗi JS (console chỉ có lỗi socket :8891 local).
+
+## QA 04/11/2026 — Đổi khối "File đính kèm" sang khuôn chung V2BaseAttachmentSection
+
+- Yêu cầu: khối "File đính kèm (PDF)" ở Tạo/Sửa/Chi tiết đang dùng `FileAttachmentTable` → đổi về khuôn đính kèm như các màn khác (skill `form-validate` mục 1d).
+- Thiết kế: chỉ sửa FE, BE giữ nguyên (`TableFileHelper` nhận mảng object có `file_path`). `V2BaseAttachmentSection` dùng v-model = mảng URL → map 2 chiều ở util riêng của màn, KHÔNG sửa component dùng chung. Copy pattern từ `components/product/form/ProductFormTechDocs.vue:93-108` (`pathsOf`/`setPaths`).
+- [x] Tạo `pages/transport/delivery-cost-summaries/utils/attachmentFiles.js`: `filePaths(files)` / `filesFromPaths(paths, oldFiles)` (file cũ giữ nguyên object, file mới `{id:null, file_path, file_name, name}`).
+- [x] `create.vue` + `_id/edit.vue`: `V2BaseAttachmentSection` `upload-url="files/upload"` `upload-field="attachments[]"` `:extensions="['pdf']"` + `:error-message="errorOf('files')"`. Payload submit không đổi.
+- [x] `_id/index.vue`: `V2BaseAttachmentSection readonly` (vẫn chỉ hiện khi phiếu có file).
+- [x] Playwright (chặn GET phiếu 120 giả `is_can_edit` + 1 file cũ, chặn PUT để không ghi DB): màn Sửa hiện lưới STT · Upload / File · Dung lượng + nút "Thêm tài liệu"; upload PDF thật lên S3 OK, dòng mới hiện "45 B"; Lưu nháp gửi `files` = [file cũ id 999, file mới id null + file_path S3]. Màn Chi tiết: readonly, không có nút Thêm/Thay đổi, chỉ Xem/Tải. DB phiếu 120 không đổi.
+- Hạn chế: màn Tạo dùng cùng đoạn code nhưng KHÔNG mở được ở local (user local bị 403 ở API mẫu báo giá `transport/delivery-quotations`). File cũ không hiện dung lượng (bảng `files` có cột nhưng component chỉ biết dung lượng file vừa upload, trừ khi có `sizesUrl`).
+
+## QA 04/11/2026 — Bug 2: cột "Báo giá gốc" → "Mẫu báo giá" + link sang BGVC (màn danh sách)
+
+- [x] `pages/transport/delivery-cost-summaries/index.vue`: đổi nhãn cột `baseQuotationCode` thành **Mẫu báo giá**; ô hiển thị `nuxt-link` sang `/transport/delivery-quotations/{delivery_quotation_id}`, dùng class `v2-cell-link field-line` (copy pattern từ cột Mã cùng file). Thiếu id/mã thì hiện chữ thường. BE đã có sẵn `delivery_quotation_id` trong `DeliveryCostSummaryListResource`, không phải sửa BE.
+- [x] Playwright (127.0.0.1:3000): header ra "Mẫu báo giá"; 10 dòng có link (vd BGVC-00002 → `/transport/delivery-quotations/2`); bấm link mở đúng màn chi tiết BGVC. Ảnh: `.playwright-mcp/thgvc-list-mau-bao-gia.png`.
+  - Lưu ý môi trường: user local (cty 1) chưa được gán quyền xem THGVC, middleware đẩy sang 404. Khi test đã tạm nạp quyền vào store trình duyệt, không ghi DB.
+
+### QA 04/11/2026 — Bug 3: bỏ chú thích ở màn Sửa
+- [x] `pages/transport/delivery-cost-summaries/_id/edit.vue`: phiếu chưa có báo giá NCC → bỏ dòng "Chưa có báo giá nhà cung cấp nào.", chỉ còn bảng khung giá (`CostMatrix :quotation="null"`).
+- [x] Playwright 127.0.0.1:3000 `/transport/delivery-cost-summaries/120/edit`: không còn câu chú thích, bảng khung (Giá cước vượt trội + các tuyến) vẫn hiện, nút "Nhập báo giá NCC" giữ nguyên.
+
+### QA 04/11/2026 — Bug 4: Sửa → "Lưu và gửi duyệt" thiếu toast / viền đỏ / (*)
+- [x] `_id/edit.vue`: khi BE trả 422 thì hiện toast "Bạn chưa nhập đầy đủ thông tin." (lỗi chi tiết vẫn hiện dưới đúng ô).
+- [x] Tiêu đề khối "Chi tiết" thêm dấu (*) đỏ (gửi duyệt bắt buộc ≥ 1 báo giá NCC — BE `quotation_datas`).
+- [x] Bảng khung giá bọc `.matrix-wrap`, viền đỏ `#dc3545` khi có lỗi `quotation_datas`.
+- [x] Playwright: giả GET (is_can_edit, quotations=[]) + PUT 422 → toast hiện, viền rgb(220,53,69), tiêu đề "Chi tiết *".
+
+### QA 04/11/2026 — Bug 5: popup "Nhập báo giá nhà cung cấp"
+- Yêu cầu: (a) placeholder ô NCC "Nhập tìm nhà cung cấp"; (b) ô File báo giá đổi sang khuôn đính kèm như các màn khác.
+- ⚠️ Sửa component DÙNG CHUNG `components/V2BaseAttachmentSection.vue` (user đã đồng ý 04/11): API import cần gửi thẳng tệp (FormData), không upload S3 trước → thêm chế độ giữ tệp ở máy:
+  - `localFiles` (Boolean, mặc định false): v-model là mảng `File`, không gọi upload, ẩn nút Xem trước/Tải xuống, dung lượng lấy từ `file.size`.
+  - `maxFiles` (Number, 0 = không giới hạn): đủ số tệp thì ẩn nút "Thêm tài liệu".
+  - `uploadUrl` bỏ `required` (default `''`). 7 chỗ đang truyền `upload-url` không đổi hành vi.
+- [x] `components/ImportQuotationModal.vue`: placeholder mới; thay `V2BaseFile` bằng `V2BaseAttachmentSection local-files :max-files="1" :extensions="['xlsx','xls']" required`; popup nới `size="lg"` (md làm gãy cột STT). Bảng lỗi lệch khung giữ nguyên.
+- [x] Playwright 127.0.0.1:3000 `/transport/delivery-cost-summaries/120/edit` (giả GET is_can_edit + chặn POST import trả 422, không ghi DB): chọn xlsx → lưới STT 1, icon excel, tên, dung lượng, nút Thêm tài liệu ẩn; xóa tệp → Lưu lại báo lỗi 2 ô ("Vui lòng chọn một nhà cung cấp", "Vui lòng chọn file báo giá…") + khối file viền đỏ; chọn NCC + tệp → POST `quotation-import` có `supplier_id` + `file`, 422 lệch khung hiện bảng lỗi bên dưới.
+
+### QA 04/11/2026 — Bug 6: màn Sửa bỏ ô "Mã"
+- [x] `_id/edit.vue`: xoá ô "Mã" (disabled) ở khối Thông tin chung — mã đã có trên tiêu đề màn "Sửa tổng hợp giá vận chuyển đề xuất: THGVC-xxxxx". Payload không đổi (không gửi code).
+- [x] Playwright `/transport/delivery-cost-summaries/120/edit`: khối Thông tin chung chỉ còn Ghi chú + File đính kèm, tiêu đề vẫn có mã.
+
+### QA 04/11/2026 — Bug 7: màn Chi tiết, nút "Nhập báo giá NCC" cùng màu nút Sửa
+- [x] `_id/index.vue`: nút "Nhập báo giá NCC" đổi `secondary` → `primary` (teal #1abc9c như nút Sửa của V2Footer). Điều kiện hiện giữ `is_can_edit`.
+- [x] Playwright `/transport/delivery-cost-summaries/120`: nền nút Sửa và Nhập báo giá NCC đều rgb(26,188,156); Xuất Excel giữ xanh lá nhạt (secondary success).
+
+### QA 04/11/2026 — Bug 8: màn Chi tiết đồng bộ "màu xanh" như chi tiết khác + bỏ ô Mã + thay "-" bằng ô trống
+- Màn mẫu: `pages/finance/product-import-requests/_id/index.vue` (tab `.pir-tabs-nav`) + bộ màu MISA `assets/scss/_misa-grid.scss`. Trang `/transport` không có `sale-theme` nên style khai trong component.
+- [x] `_id/index.vue`: bỏ ô "Mã" (mã đã nằm trên tiêu đề); Người duyệt + Thời gian gửi/duyệt chia `col-md-6`.
+- [x] `_id/index.vue` + `_id/edit.vue`: `V2BaseTabNavigation` → `b-tabs` gạch chân (`.dcs-tabs-nav`, copy `.pir-tabs-nav`), tab active teal `#1abc9c`; computed `tabIndex` map ↔ `activeTab`, nội dung bảng vẫn render theo `activeTab`.
+- [x] `components/SummaryMatrix.vue` + `CostMatrix.vue`: tiêu đề bảng nền `$misa-head-bg #d8e7e1`, chữ `#10141b` đậm, gạch dưới `$misa-head-line`; viền ô `#edeff1`, 12px.
+- [x] Ô Số km dòng "Giá cước vượt trội" và cột "Duyệt" (phiếu chưa duyệt) để trống thay "-".
+- [x] Playwright 127.0.0.1:3000: phiếu 76 (đã duyệt) — không còn ô Mã, tab active rgb(26,188,156), thead rgb(216,231,225), bấm tab NCC chuyển đúng; phiếu 110/102 (chưa duyệt) — cột Duyệt rỗng, 0 ô "-". Console chỉ có lỗi socket :8891 (không chạy local).
+
+### QA 04/11/2026 — Bug 9: chức năng Lịch sử (cột hành động danh sách + màn chi tiết)
+- Khuôn: skill `entity-history` (bộ chung `catalog_histories`), copy pattern màn Mẫu báo giá vận chuyển (BGVC).
+- [x] `hrm-api/app/Services/CatalogHistoryService.php`: đăng ký `delivery_cost_summaries` (Ghi chú · File đính kèm · Danh sách báo giá nhà cung cấp · Trạng thái; `rejected` = "Không duyệt").
+- [x] `DeliveryCostSummaryService` dùng trait `LogsCatalogHistory`: cột ảo dạng BẢNG `attachment_rows` (giữ nguyên URL file) + `quotation_rows` (NCC `__key`=supplier_id, kèm "File báo giá"). Ghi log ở store (Tạo mới + Đang tạo→trạng thái lưu), update (Thay đổi thông tin + dòng Thay đổi trạng thái RIÊNG), approve (Duyệt / Không duyệt kèm ghi chú duyệt), nhập báo giá NCC (Thay đổi thông tin), destroy (Xóa). `status` KHÔNG nằm trong catalogColumns (§3a).
+- [x] FE `index.vue`: row action "Lịch sử" (`ri-history-line`) → `CatalogHistoryModal`; `_id/index.vue`: `SystemInfoSection` (endpoint `catalog-histories`).
+- [x] Test BE trong transaction rồi rollback: create → change_status → update (ghi chú + file) ra đúng thứ tự MỚI→CŨ.
+- [x] Playwright: chi tiết 120 — khối "Lịch sử (2)" hiện Duyệt (Chờ duyệt→Đã duyệt, ghi chú "Đồng ý giá") + Thay đổi thông tin (Ghi chú, "Báo giá nhà cung cấp thêm mới: 29TPHXNA-10 … — File báo giá: mau.xlsx"); danh sách — popup "Lịch sử thay đổi: THGVC-00120" cùng nội dung. Log thử đã xoá khỏi DB local.
+- Ghi chú môi trường: tài khoản test local chưa được gán quyền "Xem tổng hợp giá vận chuyển đề xuất…" (guard api) nên vào danh sách bằng URL bị đẩy 404 — lỗi dữ liệu local, không phải code.
+
+### QA 04/11/2026 (đợt Nhập báo giá NCC) — Bug 1: danh sách cột "Ngày tạo" thiếu giờ
+- [x] `DeliveryCostSummaryListResource`: `created_at` format `d/m/Y` → `d/m/Y H:i` (khớp cột Thời gian gửi duyệt).
+- [x] Playwright danh sách: cột Ngày tạo hiện "09/05/2026 10:41", "28/04/2026 13:49"…
+
+
+## QA 04/11/2026 (đợt Nhập báo giá NCC) — Bug 3: popup Nhập báo giá NCC thiếu link tải file báo giá mẫu
+
+- [x] Hiện trạng: popup HRM bỏ hẳn dòng tải mẫu (design §13 ghi nhầm "ERP không có"). ERP `common/delivery_cost_summaries/index.blade.php:66-73` có dòng "Bấm vào đây để tải file báo giá mẫu về: Mẫu báo giá", link = `DeliveryQuotation.exportExcel` của mẫu báo giá gốc (`base_quotation`).
+- [x] BE: route `GET /v1/transport/delivery-cost-summaries/{id}/quotation-template` → `DeliveryCostSummaryController::quotationTemplate()` — `canView()` như exportExcel, xuất `DeliveryQuotationExport` với `base_quotation->excel_data`. Không dùng thẳng route BGVC vì nhóm đó gate quyền "Quản lý mẫu báo giá vận chuyển" (người chỉ có quyền THGVC sẽ 403).
+- [x] FE: `api.js` `downloadQuotationTemplate()`; `components/ImportQuotationModal.vue` thêm dòng chữ nghiêng xám + link "Mẫu báo giá" dưới khối File báo giá.
+- [x] Kiểm: API trả file xlsx; Playwright mở popup thấy dòng link, bấm tải được.

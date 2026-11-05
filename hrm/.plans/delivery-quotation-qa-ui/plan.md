@@ -271,3 +271,65 @@ User (mục 4): "NHập số km là số âm đang báo lỗi k đúng -> chặn
 - [x] Các ô ma trận cước là `V2BaseInput disabled` (không nhập tay) → không cần min.
 - [x] Verify Playwright: gõ "-92" vào `km_actual` → giá trị ô = "92" (phím `-` bị chặn ngay lúc
       gõ), KHÔNG còn hiện "Bắt buộc phải nhập". Synthetic keydown `-` → `minusKeyPrevented = true`.
+
+## Item 14 — Danh sách thêm cột Trạng thái, Người cập nhật, Ngày cập nhật (2026-11-04) — DONE
+
+- [x] BE `DeliveryQuotation`: hằng `DA_TONG_HOP`, `STATUS_META`, `statusMetaOf()`; `updatedAt` vào cột sort.
+- [x] BE `DeliveryQuotationListResource`: `status_text` / `status_color`, `updater_name`, `updated_at`.
+      `DeliveryQuotationController::index` eager load `employee_create.info`, `employee_update.info` (không N+1).
+- [x] FE `pages/transport/delivery-quotations/index.vue`: cột `status` (`V2BaseBadge`, màu BE),
+      `updatedByName`, `updatedAt` (sortable). Màu/chữ theo QĐ2 `design.md`.
+- [x] Verify Playwright: BGVC-00089 "Đang tạo" badge `#64748B`; BGVC-00088/87 "Đã lập tổng hợp giá";
+      Người cập nhật ra tên; Ngày cập nhật có giờ.
+
+## Item 15 — Lịch sử ở danh sách + chi tiết (2026-11-04) — DONE
+
+- [x] BE `DeliveryQuotationService`: ghi lịch sử store / update / destroy qua `LogsCatalogHistory`, khoá ảo
+      `vehicle_rows` / `road_rows`; `logStatusSummarized()` ghi "Thay đổi trạng thái".
+- [x] BE `DeliveryCostSummaryService::store`: lập THGVC → set mẫu báo giá `DA_TONG_HOP` + ghi log trạng thái.
+- [x] BE `CatalogHistoryService::TABLES['delivery_quotations']` (nhãn 5 trường + 2 khoá ảo + status).
+      ⚠️ Lần đầu đặt nhầm vào `GATED_TABLES` → endpoint chung trả 400 "Loại đối tượng không hợp lệ";
+      đã chuyển sang `TABLES`.
+- [x] FE danh sách: row action "Lịch sử" (`ri-history-line`) → `CatalogHistoryModal`.
+- [x] FE chi tiết `_id/index.vue`: khối `SystemInfoSection` (`endpoint-base="catalog-histories"`).
+- [x] Test script (tạo / không đổi / 7 ca sửa / đổi trạng thái / xóa) FAILS=0.
+- [x] Verify Playwright: popup danh sách và khối chi tiết BGVC-00089 đều hiện 2 lần "Thay đổi thông tin"
+      (Ghi chú + Tuyến đường sửa Km 24↔30) — dữ liệu test cố ý tạo trên DB local.
+
+## Item 16 — Ngày tạo hiển thị kèm giờ (2026-11-04) — DONE
+
+- [x] BE Resource format `created_at` `d/m/Y H:i`; FE nới cột Ngày tạo 150px.
+- [x] Verify Playwright: "08/05/2026 15:45".
+
+## Item 17 — Dropdown "Áp dụng cho bảng giá hiệu lực": ERP 3 bảng, HRM 7 bảng (2026-11-04) — DONE
+
+- [x] Nguyên nhân: lookup HRM thiếu lọc công ty mà ERP có (`company_id` của người đăng nhập).
+- [x] BE `DeliveryQuotationLookupController`: `scopeCurrentCompany()` + `include_ids` cho `priceLists`;
+      `priceListData` cùng phạm vi.
+- [x] BE `DeliveryQuotationStoreRequest` / `UpdateRequest`: `Rule::exists` theo phạm vi công ty
+      (Update cho qua bảng giá phiếu đang dùng).
+- [x] FE `DeliveryQuotationForm.vue`: `loadOptions(..., includePriceListIds)`; nhân bản xoá bảng giá ngoài phạm vi.
+- [x] Test script FAILS=0 (9 ca: danh sách, include_ids, priceListData khác cty, store/update hợp lệ + bị chặn).
+- [x] Verify Playwright `/create`: dropdown còn đúng BGHLVC-00007 / 00005 / 00002 (user cty 1);
+      chi tiết BGVC-00088 vẫn hiện BGHLVC-00003 (cty 3) nhờ `include_ids`. Quyền test gán tạm local đã gỡ.
+
+## Item 18 — Thiếu dòng "Giá cước vượt trội" trong ma trận (2026-11-04) — DONE
+
+- [x] FE `DeliveryQuotationForm.vue`: thêm dòng `thead` thứ 3 "Giá cước vượt trội | - | ô khoá mỗi tải trọng"
+      (+ ô cột hành động riêng khi không readonly vì ô hàng 1 chỉ `rowspan=2`). Không lưu dữ liệu — QĐ3.
+- [x] Excel đã có sẵn dòng này, không sửa.
+- [x] Verify Playwright: hiện ở Tạo mới và Chi tiết BGVC-00088.
+
+## Item 19 — Số Km hiện "118,00" + cột trọng tải bị bóp hẹp (2026-11-04, phát hiện khi verify Item 17–18) — DONE
+
+**Nguyên nhân:**
+- Km: BE trả cột decimal `"118.00"`, ô `V2BaseInput type=number` hiện theo locale trình duyệt → máy tiếng Việt ra `118,00`.
+- Cột hẹp: bảng `table-layout: fixed` lấy bề rộng theo HÀNG ĐẦU; ô loại xe ở hàng đầu có `colspan=N` mà chỉ khai
+  `width: 190px` → N cột trọng tải chia nhau 190px (vd xe có 5 tải trọng → mỗi cột ~38px, chữ bị cắt).
+
+- [x] FE `DeliveryQuotationForm.vue`: hàm `kmText()` chuẩn hoá km (`Number()` → `"118"`, `"15.5"`) ở 5 chỗ nạp
+      dữ liệu (chi tiết / sửa / nhân bản / chọn bảng giá / chọn tuyến).
+- [x] FE: thêm `<colgroup>` khai bề rộng TỪNG cột (Tuyến 280 · Km 120 · mỗi trọng tải 190 · cột hành động auto);
+      bỏ `width` trên `th` colspan.
+- [x] Verify Playwright chi tiết BGVC-00088: 11 cột trọng tải đều 190px, Số Km hiện `118`, `80`…;
+      `/create`: Tuyến 280 / Km 120 / trọng tải 190, cột hành động hút phần dư như cũ. Quyền test gán tạm local đã gỡ.

@@ -33,3 +33,49 @@ một kiểu LƯU ĐẦY ĐỦ (chỉ khác "Lưu" ở chỗ ở lại form tạ
 (1 xe `vehicle_category_id=null`, 1 tuyến `road_id=null`) sẽ nổ ràng buộc khoá ngoại. →
 `DeliveryQuotationService::sanitizeDetails()` lọc bỏ mọi dòng con chưa đủ khoá ngoại TRƯỚC khi
 `syncDetails` (no-op với bản lưu đầy đủ vì validate đã bắt đủ).
+
+### QĐ2 — Trạng thái, Người/Ngày cập nhật, Lịch sử (Item 14–16, 2026-11-04)
+
+**Trạng thái — chữ + màu do BE quyết** (`DeliveryQuotation::STATUS_META` / `statusMetaOf()`, Resource trả
+`status_text` + `status_color`, FE chỉ `V2BaseBadge`):
+
+| status | Chữ | Màu (nhóm chuẩn) |
+| --- | --- | --- |
+| 3 `DANG_TAO` | Đang tạo | `#64748B` (nháp) |
+| 1 `DA_TONG_HOP` | Đã lập tổng hợp giá | `#16A34A` (hoàn thành) |
+| khác | Không xác định | `#6B7280` |
+
+Status 1 được set khi lập **Tổng hợp giá vận chuyển đề xuất (THGVC)** từ mẫu báo giá
+(`DeliveryCostSummaryService::store`) — đồng thời ghi 1 dòng lịch sử "Thay đổi trạng thái".
+
+**Lịch sử — dùng hạ tầng chung `catalog_histories`** (trait `LogsCatalogHistory` +
+`CatalogHistoryService`), KHÔNG tạo bảng log riêng:
+- Phạm vi ghi: 5 trường đầu phiếu (`date_valid_from`, `date_valid_to`, `km_actual`, `price_list_valid_id`,
+  `note`) + 2 khoá ẢO dạng bảng `vehicle_rows` (Dòng xe – tải trọng) / `road_rows` (Tuyến đường, gồm Km)
+  — cây con xóa-tạo-lại mỗi lần lưu nên khoá dòng là khoá tự nhiên (`vehicle_category_id`, `road_id`), DTO
+  diff ra thêm mới / đã xóa / sửa thông tin. Ghi ở store / update (không đổi gì thì KHÔNG ghi) / destroy
+  + đổi trạng thái.
+- Khai ở `CatalogHistoryService::TABLES` (KHÔNG phải `GATED_TABLES`) → đọc qua endpoint chung
+  `GET catalog-histories/delivery_quotations/{id}`: mẫu báo giá không chứa giá, danh sách không scope dữ
+  liệu theo người xem → **không cần quyền mới / endpoint riêng có gate**.
+- FE: danh sách = row action "Lịch sử" mở `CatalogHistoryModal`; chi tiết = khối `SystemInfoSection`
+  cuối form (`endpoint-base="catalog-histories"`). Bản ghi cũ trước 04/11/2026 không có log (không backfill).
+
+**Ngày giờ:** cột Ngày tạo / Ngày cập nhật hiển thị `d/m/Y H:i` (BE format sẵn).
+
+### QĐ3 — Phạm vi dropdown "Áp dụng cho bảng giá hiệu lực" + dòng "Giá cước vượt trội" (Item 17–18, 2026-11-04)
+
+**Phạm vi bảng giá = công ty của NGƯỜI ĐĂNG NHẬP** (bám ERP `DeliveryQuotationController::create/edit/copy`:
+`PriceListValidDelivery::where('company_id', auth()->user()->info->company_id)`). Trước đây HRM trả cả 7 bảng
+của mọi công ty, ERP chỉ 3.
+- Một hàm duy nhất `DeliveryQuotationLookupController::scopeCurrentCompany()`, dùng chung cho dropdown
+  (`priceLists`), lấy dữ liệu bảng giá (`priceListData`) và rule `exists` của Store/UpdateRequest
+  (defense-in-depth: gọi thẳng API với id bảng giá công ty khác → 422).
+- Không xác định được công ty → `whereRaw('1 = 0')`, KHÔNG `company_id IS NULL`.
+- **Sửa / Chi tiết giữ bảng giá phiếu đang dùng** kể cả khi thuộc công ty khác (phiếu cũ): FE gửi
+  `include_ids`, UpdateRequest cho qua đúng id phiếu đang lưu; đổi sang bảng giá công ty khác vẫn bị chặn.
+- **Nhân bản**: bảng giá nguồn không nằm trong phạm vi → xoá trống, người dùng chọn lại.
+
+**"Giá cước vượt trội"**: dòng thứ 3 trong `thead` của ma trận (Số km = `-`, mỗi cột tải trọng 1 ô khoá
+`—`), chỉ để HIỂN THỊ, KHÔNG lưu dữ liệu — giống ERP (input `disabled`, không có cột trong DB). File
+Excel xuất đã có dòng này từ trước.

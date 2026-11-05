@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- quyet-toan-thuong-nam → @nguyentrancu97 → .plans/quyet-toan-thuong-nam/plan.md
+  Trạng thái: **ĐANG LÀM (04/11/2026)** — port "Quyết toán thưởng năm" ERP (`BonusEndYearSettlement`, controller `Accounting\BonusEndYearSettlementsController`) sang HRM `Modules/Finance`, FE `pages/finance/bonus-end-year-settlements`. 3 loại QT (DSTC/Lợi nhuận phòng/Lợi nhuận công ty), chi tiết theo **phòng ban**, có **BGĐ duyệt riêng** (status 2→3/4) chỉnh tỉ lệ duyệt từng phòng. **KHÔNG ghi sổ account_details** (chỉ đọc TK 511/521x để lấy doanh số thực + `sales_department_plans` status=3 cho DSTC đăng ký). Ghi bảng ERP sẵn có; tạo mới model `bonus_end_year_settlements(+details+files)` + `sales_department_plans`. Màn **cấu hình** quỹ thưởng ĐÃ port sẵn (regulation-config tab `thuongnam` / `CompanyBonusEndYearConfig`) → chỉ đọc. 5 quyền mới type 8. Khuôn: `finance/bill-payments` + `settlement_contract`. Spec: `design.md`.
+
 - phieu-hach-toan-dich-vu-hdbh → @nguyentrancu97 → .plans/phieu-hach-toan-dich-vu-hdbh/plan.md
   Trạng thái: **PHASE 1 CHỈ-ĐỌC XONG (04/11/2026), PHASE 2 GHI SỔ ĐANG LÀM** — port Phiếu hạch toán dịch vụ HĐBH (ERP `Sale\ServiceAccountingController`, bảng `service_accounting`, chỉ contractable FirmContract) sang HRM. Phase 1: list + chi tiết + export + lịch sử + quyền 3 cấp + menu; cost_price gate quyền "Xem giá vốn hàng hoá" (fail-closed); checkpoint 20 phiếu thật ΣNợ=ΣCó → cổng số liệu MỞ. Nhánh `feature/phieu-hach-toan-dich-vu-hdbh-phase1` (hrm-api + hrm-client) **GIỮ NGUYÊN, CHƯA merge/push** (user tự xử lý). Phase 2: tạo từ YC, duyệt sinh bút toán + lật YC→Đã hạch toán, sửa/xóa khi Đang tạo — đang recon dependency (`FirmContractCostService::getDataCostAccounting`, `updateHandoverDate`). Ledger: `progress-ledger.md`.
 
@@ -18,6 +21,12 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 
 ## Hoàn thành
+
+- hd-ban-dau-ky → @nguyentrancu97 → .plans/hd-ban-dau-ky/plan.md
+  Trạng thái: **XONG + ĐÃ MERGE + PUSH `develop` (05/11/2026)** — port "Hợp đồng bán đầu kỳ" ERP (`Accounting\OpeningContractController`, bảng `opening_contracts`) sang HRM `Modules/Finance` + FE `pages/sale/opening-contracts`. 4 quyền xem mới type 23 (tạo/sửa/xoá/import không gate như ERP), chặn sửa/xoá khi đã khai báo công nợ đầu kỳ / có hạch toán (middleware `CheckOpeningContractEditable`), import/xuất/in (template 467)/lịch sử. Kèm: link ContractCostModal → HRM, sửa sort màn BPSQ. 9 test BE xanh (cả trên bản gộp), Playwright đủ luồng. hrm-api develop `1f0ad33e6` (feature `9ab7cbed2`; xung đột seeder quyền với khối Sổ chi tiết công nợ NCC → giữ cả 2) · hrm-client develop `fdbb5f5b5` (feature `7195ff4c0`). Nhánh `feature/hd-ban-dau-ky` đã push; worktree hdbdk đã xoá. Còn: chạy seeder quyền trên server + admin gán quyền.
+
+- qt-thuong-ns-quy-moi → @nguyentrancu97 → .plans/qt-thuong-ns-quy-moi/plan.md
+  Trạng thái: **XONG + ĐÃ MERGE + PUSH `develop` (04/11/2026)** — hrm-api develop `a982cb60a`, hrm-client develop `1e675af2e`; 7 test BE xanh. Port "Quyết toán thưởng năng suất quý (mới)" ERP (`BillProductivitySettlementQuarter`), quyền mới type 8, ghi sổ Nợ 6411/Có 3351. Worktree qtnsq đã xoá.
 
 - ychg-duyet-khong-can-tinh-gia → @nguyentrancu97 → .plans/ychg-duyet-khong-can-tinh-gia/plan.md
   Trạng thái: **CODE XONG + TEST + ĐÃ PUSH `develop` (03/11/2026)** — YCHG thêm tùy chọn 3 "Duyệt không cần tính giá" khi PTKD duyệt từng dòng (cả hàng cha + con): status dòng 9 → lúc duyệt phiếu ghi giá danh mục rồi lên 3 Đang kinh doanh, bỏ qua YCTG (XNK) + Phiếu tính giá (KT). TH1 vật tư giá 0; TH2 hàng tạm kế thừa báo giá trúng thầu (ngoại tệ quy đổi tỉ giá hiện tại). Fix final review: nhóm hỗn hợp (dòng no-price + dòng Đồng ý cùng thương hiệu×hãng) làm dòng no-price lọt YCTG bị tính giá đè → cột cờ `price_asking_request_products.no_price` loại khỏi skeleton YCTG (migration `2026_11_03_000001`). 129 test xanh. hrm-api `4473321a7` · hrm-client `468b6e9ae`. Còn: chạy migration server.

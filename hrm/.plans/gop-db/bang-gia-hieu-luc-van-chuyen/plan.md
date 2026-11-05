@@ -221,3 +221,34 @@ Khuôn HRM (bám 1:1 màn anh em đã port):
 - Mỗi task kết thúc = **checkpoint cho user** (AI không commit). hrm-client đẩy `develop` sau khi user chốt; hrm-api giữ local chờ review (xác nhận lại lúc bàn giao).
 - Luôn so trực tiếp với màn ERP `price-list-valid-deliveries` khi verify từng phần; đối chiếu ngang 2–3 màn HRM đã QA (skill Bước 5b).
 - Builder-call còn mở (design §7, mặc định an toàn): có tô màu dòng bảng giá đã hết hiệu lực ở danh sách không (mặc định **không**, chỉ hiện khoảng ngày) — hỏi user nếu muốn thêm.
+
+---
+
+## QA 2026-11-04 — Danh sách + Bản in
+
+- [x] **QA1 — Ngày tạo ở danh sách thêm giờ.** Nguyên nhân: `PriceListValidDeliveryListResource` format `created_at` là `d/m/Y`. Sửa: đổi thành `d/m/Y H:i` (BE format sẵn, FE `index.vue` chỉ in chuỗi; màn không có xuất Excel nên không phải sửa thêm chỗ nào).
+- [x] **QA2 — Bản in: khối thông tin chung + dòng "Giá cước vượt trội".** Sửa `hrm-client/pages/transport/valid-delivery-prices/_id/print.vue` cho khớp ERP `common/price_list_valid_deliveries/show.blade.php`:
+  - Khối thông tin chung đổi thành 2 dòng: `Ngày hiệu lực từ: dd/mm/yyyy - dd/mm/yyyy` · `Công ty áp dụng: <tên>`, rồi `Km tính cước vượt trội: N`. Thôi in ô Mã và cặp ô Hiệu lực từ / Hiệu lực đến tách rời (ERP không in ô Mã). Km rỗng thì in `0`, giống `number_format` của ERP.
+  - Dòng "Giá cước vượt trội": nhãn nằm ở ô Tuyến đường, ô Số Km in `-`, mỗi cột trọng tải in 1 giá. **Không có dữ liệu thì in `0`** (hàm riêng `formatExtra`). Ô cước của từng tuyến vẫn để trống khi = 0/null như trước.
+  - Verify: Playwright mở `/transport/valid-delivery-prices` (cột Ngày tạo có giờ) và `/transport/valid-delivery-prices/<id>/print`.
+
+## 2026-11-04 — Lịch sử (danh sách + chi tiết)
+
+- [x] **H1 — Ghi lịch sử (BE).** `PriceListValidDeliveryService` dùng trait `LogsCatalogHistory` (bảng `catalog_histories`):
+  - Gia hạn (`extendDate`): snapshot → save → `logCatalogUpdate`. Gia hạn trùng ngày cũ thì không ghi.
+  - Tạo (`create`, lúc duyệt THGVC sinh bảng giá): `logCatalogCreate`.
+  - Cập nhật khi duyệt THGVC (`update`): `logCatalogUpdate`, ghi chú "Cập nhật khi duyệt phiếu tổng hợp giá vận chuyển <mã>".
+  - Cột theo dõi: code, company_id (tên cty), date_valid_from/to (`d/m/Y`, ngày 0000 → trống), km_actual + 2 khoá ảo: `vehicle_rows` (khoá dạng BẢNG, `__key` = loại xe-trọng tải, trường "Giá cước vượt trội") và `road_count` (số tuyến DISTINCT). Không ghi từng ô cước tuyến (ma trận hàng trăm tuyến × N cột — log sẽ phình); chỉ ghi số tuyến.
+- [x] **H2 — Whitelist đọc.** `CatalogHistoryService::TABLES` thêm `price_list_valid_deliveries` (route chung `catalog-histories/{table}/{id}`, KHÔNG gate). Lý do không đưa vào `GATED_TABLES`: bảng giá không có giá vốn, người vào màn chi tiết đã xem được toàn bộ ma trận.
+- [x] **H3 — FE.** Danh sách: thêm nút `Lịch sử` (`ri-history-line`) cuối cột hành động → `CatalogHistoryModal`. Chi tiết: khối `SystemInfoSection` (endpoint-base `catalog-histories`) sau phần Báo giá NCC; gia hạn xong tự `fetchLogs()`.
+- Verify: script tinker (transaction + rollback) ở scratchpad `bghlvc_hist.php` — gia hạn ra 1 dòng, trùng ngày 0 dòng, đổi giá vượt trội ra nhóm "Loại xe – trọng tải sửa thông tin". Playwright: chi tiết `/transport/valid-delivery-prices/7` hiện khối Lịch sử; danh sách bấm Lịch sử dòng BGHLVC-00007 ra popup "Lịch sử thay đổi: BGHLVC-00007" đúng dòng gia hạn.
+- ⚠️ Dữ liệu local `erp_hrm_check`: BGHLVC-00007 đã bị gia hạn thật khi test (01/01/2026 → 31/12/2027).
+- Còn để ngỏ (chưa sửa, ngoài phạm vi): BGHLVC-00005 hiện ngày `30/11/-0001` ở danh sách (ngày 0000-00-00 do Carbon parse) — chờ user quyết.
+
+## QA 2026-11-04 — Chi tiết
+
+- [x] **QA3 — Cắt khoảng trắng khối Thông tin chung.** 5 ô (Mã 2 · Công ty 4 · Hiệu lực từ 2 · Hiệu lực đến 2 · Số Km 2) về CÙNG 1 hàng (trước đây col-md-3 → Số Km rơi xuống hàng 2), `mb-3` → `mb-2`; các khối cách nhau `mb-2`. Khối cao ~290px → ~140px.
+- [x] **QA4 — Đưa "Báo giá nhà cung cấp" lên ngay sau "Thông tin chung"** (trước Ma trận giá cước). File: `hrm-client/pages/transport/valid-delivery-prices/_id/index.vue`. Verify Playwright `/transport/valid-delivery-prices/7`.
+- [x] **QA5 — Ẩn ô Mã, đẩy Số Km lên hàng trên** (mã đã có trên tiêu đề trang "Chi tiết bảng giá hiệu lực vận chuyển: BGHLVC-…"). Còn 4 ô cùng 1 hàng: Công ty `col-md-6` · Hiệu lực từ 2 · Hiệu lực đến 2 · Số Km 2. File: `hrm-client/pages/transport/valid-delivery-prices/_id/index.vue`.
+
+- **Push develop 04/11/2026** (qua worktree, KHÔNG commit nhánh feature): hrm-api `3c2993d90` · hrm-client `cc9d474a7`. Conflict `CatalogHistoryService::TABLES` với mục `delivery_quotations` (BGVC) → giữ cả 2.

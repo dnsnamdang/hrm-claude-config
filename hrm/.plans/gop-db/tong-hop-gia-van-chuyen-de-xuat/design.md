@@ -149,7 +149,7 @@ Hợp đồng vận chuyển (deliveryContract)   ← CHƯA port → nút hiện
     đều dùng bảng `files`; cột CSV đúng kiểu HRM đã thay thế. `deleteFile` thao tác trên bảng `files`.
     *(File cấp NCC thì ERP vốn đã dùng bảng `files` → giữ nguyên, bước duyệt copy sang
     `PriceListValidDeliveryQuotation`.)*
-13. **File mẫu import NCC**: **KHÔNG** thêm action "tải mẫu" riêng (ERP không có, và `QuotationImport`
+13. **File mẫu import NCC** — ⚠️ ĐÃ ĐẢO 04/11/2026 (QA bug 3): ERP CÓ link "Bấm vào đây để tải file báo giá mẫu về: Mẫu báo giá" (`urlDownload` = `DeliveryQuotation.exportExcel` của mẫu báo giá gốc) → HRM thêm `GET delivery-cost-summaries/{id}/quotation-template` (xuất `DeliveryQuotationExport` của `base_quotation`, gate `canView()` THGVC). Ghi chú cũ bên dưới giữ để tham khảo: ~~**KHÔNG** thêm action "tải mẫu" riêng (ERP không có, và `QuotationImport`
     đọc ma trận theo vị trí cố định khớp khung báo giá gốc — không phải khuôn 1-hàng-tiêu-đề của skill
     `import-excel` nên `buildImportTemplate()` không dùng được). **Bản xuất Excel tổng hợp chính là
     khung để NCC điền** (đúng thứ tự xe/trọng tải/tuyến). Import lệch khung → báo lỗi, không lưu.

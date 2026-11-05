@@ -258,3 +258,167 @@ $this->assertStringContainsString('contractable_type', $sql);
 5. **Proportion:** plan ngắn hơn code sẽ sinh; chủ yếu quyết định + tên test. ✓
 
 **⚠️ Build-time verify (không đoán):** tên cột VAT `firm_contracts`/`firm_contract_costs`; cơ chế `actingAs(...,'api')` theo 1 feature test Finance/MasterData sẵn có; quan hệ `cost()` của `ServiceAccountingCost` (mẫu YC); có cần `registerMorphMap` thêm FQN FirmContract cho `whereHasMorph` không.
+
+---
+---
+
+# PHASE 2 — GHI SỔ (write-side) — PLAN
+
+> **Cổng vào:** Task 7 (checkpoint số liệu) XANH — ĐÃ qua ở Phase 1. Phase 2 **ghi `account_details`** (khó lùi) nên final review bắt buộc trên model mạnh nhất.
+> **REQUIRED SUB-SKILL:** `superpowers:executing-plans` (native inline, user đã chọn) + `superpowers:test-driven-development` mỗi task. Full suite: `php -d memory_limit=-1 ./vendor/bin/phpunit Modules/Finance/Tests/Feature` (KHÔNG `artisan test` — OOM). Baseline 173 test, 21 fail pre-existing KHÔNG liên quan (FastDelivery*/PrepickTracking*/WarehouseInventory*).
+
+**Goal (Phase 2):** Cho phép **tạo phiếu hạch toán DV HĐBH từ 1 YC** (`service_accounting_request_id` bắt buộc), **duyệt = sinh bút toán** ghi `account_details` + lật YC → `Đã hạch toán (5)` + cập nhật ngày bàn giao HĐ; **Sửa/Xóa** chỉ khi người lập & `Đang tạo (1)` — bám ERP `Sale\ServiceAccountingController` + `FirmContractCostService` 1:1, scope FirmContract-only.
+
+**Architecture (Phase 2):** Engine bút toán = **port ERP `FirmContractCostService::getDataCostAccounting`** vào service Finance mới. **3 cụm SA-riêng** (doanh thu 5113/Work18, giảm trừ 5213/Work19, giá vốn 632/1541 theo-cost) viết mới (TK/Work khác trait sẵn có). **4 cụm nặng** (thưởng HĐ, TNCN, NS tháng-quý, quỹ rủi ro) **tái dùng `Modules/Assign/Services/Accounting/SupportAccountingTrait`** — nạp nguồn hỗ-trợ-hạch-toán bằng entity Assign `SupportAccounting` (CÙNG bảng `firm_support_accounting`, đã có `departments()`/`department_main()`). Ghi sổ qua `AccountDetail::createDataSaveDept` + `saveAccountDetail` (đã có, key thô → cột phẳng). Bọc **transaction + rollback** (sửa bug ERP store thiếu `DB::rollBack()` ở 2 nhánh `return` sớm).
+
+## Global Constraints (Phase 2 — bổ sung)
+
+- **Ghi sổ chỉ khi `status == DA_DUYET (2)`**; `DANG_TAO (1)` = chỉ lưu phiếu + copy items/costs, KHÔNG ghi `account_details`.
+- **Idempotent:** trước khi ghi, xoá `account_details` cũ của phiếu (`invoiceable_id = phiếu, invoiceable_type = ServiceAccounting::INVOICEABLE_TYPE`) rồi ghi lại — tránh nhân đôi khi update.
+- **Quyền ghi mới:** `Hạch toán dịch vụ HĐBH` (type 23 Bán hàng, guard `api`), khai `$this->perm([...])` trong `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` — KHÔNG `id`, KHÔNG `guard_name`. Route `store`/`update`/`destroy` gắn `checkPermission:Hạch toán dịch vụ HĐBH`.
+- **canEdit/canDelete fail-closed BE:** `created_by == auth()->id() && status == DANG_TAO`; vi phạm → `423` (update) / `403|404` (destroy), chặn NGAY đầu service trước validate nghiệp vụ. FE ẩn nút (không disable) khi không owner / không `DANG_TAO`.
+- **KHÔNG lộ trace:** nhánh lỗi trả message nghiệp vụ, KHÔNG `Log::error($e)` kèm response (ERP lộ `$exception->getMessage()`); log nội bộ được, response chỉ câu ngắn.
+- **Số bút toán khớp ERP TUYỆT ĐỐI** — Task 10 golden test đối chiếu 1:1 với `account_details` thật; lệch → DỪNG, systematic-debugging, **KHÔNG sửa công thức để ép khớp**.
+
+## Review Focus (Phase 2)
+
+1. **Ghi sổ 2 lần (update phiếu đã duyệt lại)** — phải xoá bút toán cũ trước khi ghi, ΣNợ=ΣCó sau update, không nhân đôi dòng. *(Task 11: `test_update_reposts_without_duplicating_account_details`)*
+2. **Nhánh posting lỗi giữa chừng** (TK thiếu trong `accounts`, `getData` trả false) — **rollback sạch**: phiếu KHÔNG lưu `DA_DUYET`, YC KHÔNG lật, `account_details` 0 dòng. *(Task 11: `test_posting_failure_rolls_back_everything`)*
+3. **Phiếu VẬN CHUYỂN (type 3) & CHI_PHI (type 2)** — bỏ cụm giá vốn với type 3, bỏ 4 cụm nặng với type≠1; chỉ type 1 (DỊCH VỤ) chạy đủ 8 cụm. *(Task 9: `test_van_chuyen_skips_cost_cluster`, `test_only_dich_vu_runs_heavy_clusters`)*
+4. **`support_accounting` thiếu / phòng rỗng / mẫu số = 0** — `percent_export_* = 0`, 4 cụm nặng ra 0 dòng (bị `intval(value)<=0` loại), không chia 0, không 500. *(Task 9: `test_zero_denominator_yields_no_heavy_lines`)*
+5. **PLBS/HDDA_PLBS** — bút toán ghi về **HĐ gốc** (`parent_contract_id`), `account_details.contractable_id` = cha, không phải phụ lục. *(Task 9: `test_plbs_posts_to_parent_contract`)*
+6. **Không quyền `Hạch toán dịch vụ HĐBH`** — `store`/`update`/`destroy` trả 403 dù là owner. *(Task 11: `test_write_endpoints_forbidden_without_permission`)*
+
+---
+
+## File Structure (Phase 2)
+
+**BE (hrm-api):**
+- Modify `Modules/Finance/Entities/ServiceAccounting/ServiceAccounting.php` — `generateCode()`, `canEdit()`, `canDelete()`, `syncItems()`, `syncCosts()`, fillable write-side.
+- Modify `Modules/Finance/Entities/Contract/FirmContract.php` — consts `PL_BO_SUNG`/`HDDA_PLBS`, `parent_contract()`, `updateHandoverDate()`.
+- Create `Modules/Finance/Services/FirmContractServiceAccountingPostingService.php` — engine bút toán (port ERP `FirmContractCostService`).
+- Modify `Modules/Finance/Services/ServiceAccountingService.php` — `store()`, `update()`, `destroy()`.
+- Create `Modules/Finance/Http/Requests/ServiceAccounting/ServiceAccountingStoreRequest.php` + `ServiceAccountingUpdateRequest.php`.
+- Modify `Modules/Finance/Http/Controllers/V1/ServiceAccountingController.php` — `store`/`update`/`destroy`.
+- Modify `Modules/Finance/Routes/api.php` — 3 route + `checkPermission`.
+- Create `Modules/Finance/Services/ServiceAccountingNotifyService.php` — thông báo duyệt (mẫu `ServiceAccountingRequestNotifyService`).
+- Modify `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` — quyền `Hạch toán dịch vụ HĐBH`.
+- Create tests: `ServiceAccountingWriteApiTest.php`, `FirmContractServiceAccountingPostingTest.php`, `ServiceAccountingPostingReconcileTest.php`.
+
+**FE (hrm-client):**
+- Create `pages/finance/service-accounting/create.vue` + `components/ServiceAccountingForm.vue`.
+- Modify `pages/finance/service-accounting/_id/index.vue` — footer Sửa/Xóa (ẩn nếu không owner/`DANG_TAO`).
+
+---
+
+### Task 8: Entity write-side + FirmContract deps
+
+**Files:**
+- Modify: `Modules/Finance/Entities/ServiceAccounting/ServiceAccounting.php`
+- Modify: `Modules/Finance/Entities/Contract/FirmContract.php`
+- Test: `Modules/Finance/Tests/Feature/ServiceAccountingWriteApiTest.php` (phần entity)
+
+**Interfaces:**
+- Produces: `ServiceAccounting::generateCode(): string` (pattern `<company_code>.HTDV.NNNNN`, `autoGenerateCode` tương đương — dùng helper mã HRM sẵn có, build-time verify tên); `canEdit(): bool` / `canDelete(): bool` = `created_by == auth()->id() && status == DANG_TAO`; `syncItems(array $items): bool`; `syncCosts(array $costs): bool`; `FirmContract::parent_contract()`, `FirmContract::updateHandoverDate(): void`, consts `PL_BO_SUNG`/`HDDA_PLBS`.
+- Consumes: YC bảng `service_accounting_request_items` / `_costs` (copy cột — port ERP `ServiceAccounting::syncItems/syncCosts`, ERP model dòng 353–415).
+
+- [ ] **Step 1:** Test `test_can_edit_delete_only_owner_and_draft` — owner+`DANG_TAO`→true; owner+`DA_DUYET`→false; người khác+`DANG_TAO`→false (3 assert).
+- [ ] **Step 2:** Chạy — FAIL (method chưa có). → implement `canEdit`/`canDelete` (copy ERP model:154–165, đổi `Auth::id()`→`auth()->id()`). Chạy — PASS.
+- [ ] **Step 3:** Test `test_sync_items_costs_copy_from_request` — seed YC + item/cost; gọi `syncItems`/`syncCosts`; assert `service_accounting_items`/`_costs` có dòng copy đúng (`service_id`, `price`, `value_discount`, `coefficient_cost_price`, `total_price`). **BỎ guard `accounted`** (cột không tồn tại ở HRM — xem Ruling 8.1).
+- [ ] **Step 4:** Chạy FAIL → implement `syncItems`/`syncCosts` (port ERP model:353–415, BỎ 2 nhánh `if ($sr->accounted) return false;`; GIỮ nhánh `name==='Chi phí vận chuyển' && DA_DUYET → contractable->accounted_delivery_cost=true` vì cột `firm_contracts.accounted_delivery_cost` CÓ). Chạy PASS.
+- [ ] **Step 5:** Test `test_update_handover_date_and_parent_contract_relation` — FirmContract PLBS có `parent_contract`; `updateHandoverDate()` set `handover_date`. **Port ERP `FirmContract::updateHandoverDate()` + `parent_contract()`** (đọc ERP `app/Model/Sale/Firm/Contract/FirmContract.php` lúc build — build-time verify thân hàm). Chạy FAIL→PASS.
+- [ ] **Step 6: Commit** `feat(finance): ServiceAccounting write-side entity + FirmContract posting deps`
+
+---
+
+### Task 9: Posting engine — `FirmContractServiceAccountingPostingService`
+
+**Files:**
+- Create: `Modules/Finance/Services/FirmContractServiceAccountingPostingService.php`
+- Test: `Modules/Finance/Tests/Feature/FirmContractServiceAccountingPostingTest.php`
+
+**Interfaces:**
+- Produces: `getDataCostAccounting(ServiceAccounting $sa): array` → `[bool $ok, array $accounts]` (mảng vế `createDataSaveDept`); `private prepareData($sa, $contract): array`.
+- Consumes: `AccountDetail::createDataSaveDept(&$accounts,$number,$value,$type,$ref,$objects,$note)` (đã có, key thô `customer_id`/`employee_id`/`work_id`/`service_accounting_cost_id`/`group`); `SupportAccountingTrait` (4 method nặng: `bonusContractAccounting`, `vatExtraCostAccounting`, `monthlyAndQuarterlyCommissionAccounting`, `riskFundAccounting`); Assign `SupportAccounting` (bảng `firm_support_accounting`, `departments()`/`department_main()`).
+
+> **Port 1:1 ERP `FirmContractCostService` (`app/Services/Sale/Firm/Contract/FirmContractCostService.php:109–273`).** Dịch key `::class` → key thô: `Customer::class=>customer_id` → `['customer_id'=>...]`; `Employee::class=>...` → `['employee_id'=>...]`; `Work::class=>N` → `['work_id'=>N]`; `ServiceAccountingCost::class=>id` → `['service_accounting_cost_id'=>id]`.
+
+- [ ] **Step 1:** Test `test_revenue_cluster_posts_1311_5113_33311_work18` — stub SA type 1 + 1 cost; assert 3 vế: `1311 Nợ (total+vat) ref[5113,33311] customer_id`; `5113 Có (total) ref[1311] employee_id=created_by work_id=18`; `33311 Có (vat) ref[1311]`; tất cả cùng `group`.
+- [ ] **Step 2:** FAIL → implement `getDataCostAccounting` khung + `prepareData` + `revenueAccounting` (SA-riêng: TK **5113**, Work **18** — KHÁC trait 5111/Work15). `prepareData` port ERP:157–207 (đọc `support_accounting->before_vat_total/_delivery_cost/_product/_repair_service`; `vat_percent` theo type 1→`revenue_costs[0]`, 2→`costs[0]`, else→`delivery_vat_percent`). PASS.
+- [ ] **Step 3:** Test `test_deduction_cluster_5213_33311_1311_work19` + `test_cost_cluster_632_1541_per_cost` (632 Nợ tổng ref[1541]; mỗi cost 1541 Có `price*coefficient_cost_price/100` ref[632] `service_accounting_cost_id`). FAIL → implement `revenueDeductionAccounting` (5213/Work19) + `costAccounting` (632/1541). PASS.
+- [ ] **Step 4:** Test `test_van_chuyen_skips_cost_cluster` (type 3 → KHÔNG cụm giá vốn) + `test_only_dich_vu_runs_heavy_clusters` (type 2 → KHÔNG 4 cụm nặng; type 1 → CÓ). FAIL → thêm nhánh `if type != VAN_CHUYEN costAccounting`, `if type == DICH_VU { 4 cụm nặng }` + `use SupportAccountingTrait` + định nghĩa hằng `WORK_*` khớp ERP (thưởng HH=12, HH tháng=13, HH quý=14, quỹ rủi ro=6, giảm trừ=19, doanh thu=18). PASS.
+- [ ] **Step 5:** Test `test_zero_denominator_yields_no_heavy_lines` (support_accounting mẫu số 0 → percent=0 → 4 cụm 0 dòng, không chia 0) + `test_plbs_posts_to_parent_contract` (contractable PLBS → sau Task 11 contractable_id = parent). FAIL→PASS (guard mẫu số trong `prepareData`).
+- [ ] **Step 6: Nạp nguồn hỗ-trợ-hạch-toán.** `$sa->contractable->support_accounting` trả stub `FirmSupportAccounting` (đọc được cột scalar, THIẾU `departments`/`department_main`). 4 cụm nặng cần quan hệ → trong service nạp `\Modules\Assign\Entities\Contract\SupportAccounting::where('contractable_id',$contract->id)->where('contractable_type', <FirmContract FQN>)->first()` truyền vào cụm nặng. **Ruling 9.1** (ghi ledger): trait type-hint `Assign\Contract` cho `$contract` — nếu PHP reject `FirmContract` (Finance), **nới type-hint** trait về không-ràng-buộc (4 method chỉ đọc `company_id`/`customer_id`/`created_by` + quan hệ phòng); đổi file dùng chung → mục này cần xác minh không vỡ `ProductExportPostingService`. Test trait-reuse: `test_bonus_ns_clusters_produce_lines_for_dich_vu`.
+- [ ] **Step 7:** Chạy full file xanh. **Commit** `feat(finance): ServiceAccounting posting engine (port FirmContractCostService)`
+
+---
+
+### Task 10: Golden reconcile — bút toán sinh ra KHỚP `account_details` thật
+
+**Files:**
+- Create: `Modules/Finance/Tests/Feature/ServiceAccountingPostingReconcileTest.php`
+
+**Interfaces:**
+- Consumes: `FirmContractServiceAccountingPostingService::getDataCostAccounting`; `account_details` thật (1275 phiếu FirmContract đã hạch toán, 7257 dòng).
+
+- [ ] **Step 1:** Test `test_generated_journal_matches_stored_account_details` — lấy **mẫu** phiếu `DA_DUYET` thật đủ 3 type (vd 15 DỊCH VỤ + 10 CHI_PHI + 10 VẬN CHUYỂN; `markTestSkipped` nếu DB rỗng). Mỗi phiếu: `getDataCostAccounting($phiếu)` → chuẩn hoá (TK `identify_number`, `money_value`, `type`, `group`, `work_id`, `service_accounting_cost_id`, `customer_id`/`employee_id`) → so **multiset** với `account_details` thật của phiếu (lọc `value>0`). Assert KHỚP từng vế (sai số tiền = 0 đồng).
+- [ ] **Step 2: Chạy.** Lệch → **DỪNG**, systematic-debugging (so field lệch đầu tiên), **KHÔNG** sửa công thức ép khớp cho tới khi hiểu gốc. Khi gốc là khác biệt dữ liệu (vd phiếu cũ công thức đời trước) → ghi **Ruling** + thu hẹp mẫu sang phiếu gần đây, KHÔNG nới assert.
+- [ ] **Step 3:** XANH trên mẫu. **Commit** `test(finance): ServiceAccounting posting reconciles 1:1 with real account_details`
+
+---
+
+### Task 11: Service store/update/destroy + controller + routes + request + quyền + notify
+
+**Files:**
+- Modify: `Modules/Finance/Services/ServiceAccountingService.php`, `Http/Controllers/V1/ServiceAccountingController.php`, `Routes/api.php`
+- Create: `Http/Requests/ServiceAccounting/ServiceAccountingStoreRequest.php` + `ServiceAccountingUpdateRequest.php`, `Services/ServiceAccountingNotifyService.php`
+- Modify: `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php`
+- Test: `Modules/Finance/Tests/Feature/ServiceAccountingWriteApiTest.php`
+
+**Interfaces:**
+- Produces: `POST finance/service-accounting` (store), `POST finance/service-accounting/{id}` (update), `DELETE finance/service-accounting/{id}` (destroy) — tất cả `checkPermission:Hạch toán dịch vụ HĐBH`.
+- Consumes: Task 8 (`generateCode`/`syncItems`/`syncCosts`/`canEdit`/`canDelete`/`updateHandoverDate`); Task 9 (`getDataCostAccounting`); `AccountDetail::saveAccountDetail($accounts,$invId,$invType,$invCode,$meta)`; YC `ServiceAccountingRequest` (consts `DA_HACH_TOAN=5`, `approver_id`/`approved_at`).
+
+> **Port ERP `ServiceAccountingController::store/update/delete` (`:123–350`)** nhưng (a) **bọc transaction + rollback mọi nhánh lỗi** (sửa bug ERP: 2 nhánh `return responseErrors` trong khối `DA_DUYET` KHÔNG `DB::rollBack()`); (b) **FirmContract-only** — bỏ nhánh `else getDataCreateDept`; (c) **bỏ** `service_export_request` flip (class vắng — Ruling 11.1) ; (d) notify theo `NotificationMeta::build` (Ruling: thay `NotificationHelper::sendNotify`).
+
+- [ ] **Step 1:** Quyền — thêm dòng `$this->perm(['name'=>'Hạch toán dịch vụ HĐBH','display_name'=>...,'group'=>...,'type'=>23])` vào seeder; `php artisan permission:sync --dry-run` thấy quyền mới. (Không test riêng — kiểm ở Step 7.)
+- [ ] **Step 2:** Test `test_store_draft_creates_without_posting` — `status=DANG_TAO` + `service_accounting_request_id` + items/costs → tạo phiếu, copy items/costs, `account_details` 0 dòng, YC KHÔNG lật. FAIL → implement `store()` phần nháp (generateCode, fill contractable từ YC, syncItems/syncCosts). PASS.
+- [ ] **Step 3:** Test `test_store_approved_posts_and_flips_request` — `status=DA_DUYET` → `account_details` > 0 (ΣNợ=ΣCó), YC `status=5 + approver_id + approved_at`, `handover_date` set. FAIL → implement nhánh `DA_DUYET` (posting service → `saveAccountDetail` với meta org theo phiếu → flip YC → `updateHandoverDate`) trong transaction. PASS.
+- [ ] **Step 4:** Test `test_update_reposts_without_duplicating_account_details` (Review Focus 1) + `test_posting_failure_rolls_back_everything` (Review Focus 2 — ép `saveAccountDetail` false bằng TK không tồn tại → assert 0 dòng, phiếu không `DA_DUYET`, YC không lật). FAIL → implement `update()` (xoá bút toán cũ theo invoiceable trước khi ghi lại; rollback). PASS.
+- [ ] **Step 5:** Test `test_update_delete_blocked_when_not_owner_or_approved` (423/403) + `test_destroy_removes_draft_owned` + `test_write_endpoints_forbidden_without_permission` (Review Focus 6 — 403). FAIL → implement guard `canEdit`/`canDelete` đầu service + `destroy()` + route `checkPermission` + FormRequest (nếu FormRequest nuốt guard → chuyển guard sang middleware, bám khuôn khoá bản ghi trong CLAUDE.md). PASS.
+- [ ] **Step 6:** Notify — `ServiceAccountingNotifyService` theo `NotificationMeta::build` (mẫu `ServiceAccountingRequestNotifyService`), gọi khi duyệt (báo người lập YC). Test `test_approve_notifies_request_creator`. FAIL→PASS.
+- [ ] **Step 7: Full suite** `php -d memory_limit=-1 ./vendor/bin/phpunit Modules/Finance/Tests/Feature` — xanh (trừ 21 pre-existing). **Commit** `feat(finance): ServiceAccounting store/update/destroy + posting + permission`
+
+---
+
+### Task 12: FE — form tạo/sửa + nút Sửa/Xóa
+
+**Files:**
+- Create: `pages/finance/service-accounting/create.vue`, `components/ServiceAccountingForm.vue`
+- Modify: `pages/finance/service-accounting/_id/index.vue`
+
+**Interfaces:**
+- Consumes: BE store/update/destroy; `detailData` Phase 1; cờ BE `is_can_edit`/`is_can_delete` (thêm vào detail resource Task 11).
+- Produces: route `/finance/service-accounting/create` + edit qua `_id`.
+
+- [ ] **Step 1:** `ServiceAccountingForm.vue` — chọn YC nguồn (`service_accounting_request_id`), hiển thị items/costs copy (readonly bảng), ô `payed_cost`/`note`; nút **Lưu nháp** / **Lưu và duyệt** (`status` 1/2). Dùng `V2Base*`, `unsavedChangesMixin`, số `toLocaleString('en-US')`. `create.vue` = shell gọi Form.
+- [ ] **Step 2:** `_id/index.vue` footer — thêm **Sửa** (`/create?id=` hoặc `_id?edit`) + **Xóa** (`$confirm`), **ẩn** (v-if, không disable) khi `!is_can_edit`/`!is_can_delete`. Đồng bộ nút chi tiết ↔ danh sách (CLAUDE.md).
+- [ ] **Step 3: Verify (Playwright, `http://127.0.0.1:3000`)** — (a) tạo nháp từ 1 YC → phiếu `Đang tạo`; (b) sửa phiếu nháp của mình thấy nút Sửa/Xóa, phiếu đã duyệt KHÔNG thấy; (c) không console error.
+- [ ] **Step 4: Commit** `feat(finance-fe): ServiceAccounting create/edit form + Sửa/Xóa actions`
+
+---
+
+## Self-review Phase 2 (đã chạy)
+
+1. **Spec coverage:** design §3 posting (getDataCostAccounting, PLBS→parent, rollback-fix, 4 dependency) → Task 8/9/11; §6 quyết định (canEdit/canDelete owner+DANG_TAO; tạo từ YC; FirmContract-only) → Task 8/11; quyền mới → Task 11; FE tạo/sửa → Task 12. ✓
+2. **Dependency design §3 (4 mục):** (1) `getDataCostAccounting` → Task 9 (port + tái dùng trait); (2) `updateHandoverDate` → Task 8 (port); (3) `ServiceExportRequest` → **Ruling 11.1 skip** (class vắng); (4) cờ `accounted` → **Ruling 8.1 drop** (cột vắng, YC→5 thay vai trò chống double). ✓
+3. **Type consistency:** `getDataCostAccounting(ServiceAccounting)` (Task 9) = caller Task 11; `createDataSaveDept` key thô (Task 9) = cột phẳng `saveAccountDetail` (đã có) = golden chuẩn hoá (Task 10); `INVOICEABLE_TYPE` = key xoá idempotent (Task 11). ✓
+4. **Review Focus:** 6 mục → test Task 9 (3,4,5) + Task 11 (1,2,6). ✓
+5. **Proportion:** plan = quyết định + tên test + con trỏ dòng ERP; thân hàm KHÔNG chép (port theo path). ✓
+
+**⚠️ Build-time verify Phase 2 (không đoán):** thân `FirmContract::updateHandoverDate()` + `parent_contract()` đọc từ ERP lúc build; helper sinh mã HRM tương đương `autoGenerateCode`; `WORK_*` id khớp `account_details.work_id` thật (đối chiếu ở Task 10); trait type-hint có reject `FirmContract` không (Ruling 9.1); `type` quyền (23 Bán hàng) + `group` hiển thị; detail resource cần thêm `is_can_edit`/`is_can_delete`; FE đường vào Sửa (`create?id` vs `_id?edit`) theo khuôn HDDV/YC.
+
+**Rulings đã chốt sẵn trong plan (sẽ ledger khi execute):**
+- **8.1** — BỎ guard `accounted` ở syncItems/syncCosts (cột không tồn tại HRM; chống double = YC lật status 5). *Cost nếu sai:* lý thuyết double-accounting 1 request-item qua 2 phiếu — chặn bởi YC rời pool duyệt sau lật.
+- **9.1** — Tái dùng `SupportAccountingTrait`; nếu type-hint reject FirmContract thì nới hint (đổi file chung → xác minh `ProductExportPostingService` không vỡ). *Cost nếu sai:* phải tách bản sao 4 method vào service Finance.
+- **11.1** — SKIP lật `ServiceExportRequest` (class vắng ở HRM). *Cost nếu sai:* PXK dịch vụ không tự chuyển "Đã hạch toán" — bổ sung khi có class.
