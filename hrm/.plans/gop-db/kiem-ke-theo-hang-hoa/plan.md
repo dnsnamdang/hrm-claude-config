@@ -203,3 +203,29 @@ Vừa hoàn thành: fix #11887 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d0
 Đang làm dở: —
 Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
 Blocked:
+
+## Fix Redmine #12039 (QA 05/11, form + chi tiết + lịch sử)
+- [x] R34. Ghi chú ở trạng thái mặc định cao bằng các ô còn lại (form tạo/sửa)
+- [x] R35. Thêm hàng hóa → xoá ĐVT (× select2) → không cuộn được bảng
+- [x] R36. Nút Duyệt + Không duyệt đứng cạnh nhau, In / Xuất Excel dời về sau
+- [x] R37. Chi tiết: thu nhỏ cột dữ liệu ngắn (SL tồn kho, ĐVT kiểm kê…); Chênh lệch ≠ 0 bôi đỏ như ERP
+- [x] R38. Lịch sử: tiêu đề "Duyệt" đổi thành "Thay đổi trạng thái"
+
+### Checkpoint — 2026-11-05 (#12039)
+Vừa hoàn thành: R34–R38. FE `SelfInventoryForm.vue`: Ghi chú `rows` 2→1; `unitOptionsOf()` cache theo `product.units` (WeakMap ngoài data) — gốc lỗi R35: mảng options mới mỗi lần vẽ → v-select2-component dựng lại select2 đúng lúc × vừa tự mở dropdown → handler ghim cuộn `attachBody` mồ côi trên vùng cuộn bảng; nút Không duyệt ngay sau Duyệt kết quả, In / Xuất Excel cuối; Chi tiết: cột ĐVT / SL tồn kho / Công ty / Tồn theo lô / ĐVT kiểm kê / Thực kiểm (không nhập) / Chênh lệch `si-col-fit` (width 1%, nowrap); Chênh lệch ≠ 0 màu đỏ (ERP `text-danger` khi diff_qty != 0). BE `CatalogHistoryService` TABLES `self_inventories.action_labels` approved → "Thay đổi trạng thái" (áp cả log cũ).
+Verify: template + script parse OK, `php -l` OK, `getLogs(876)` approved → "Thay đổi trạng thái". Chưa mở trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt (đặc biệt R35: thêm hàng → × ĐVT → cuộn bảng); commit khi user yêu cầu.
+Blocked:
+- [x] R34b. (user báo Ghi chú vẫn cao) `rows=1` KHÔNG ăn: `b-form-textarea` ép tối thiểu 2 dòng (DOM vẫn `rows="2"`, đo 53px vs ô khác 32px). Sửa theo khuôn #12037: wrapper `.si-note` + `::v-deep .v2-textarea { height/min-height 32px; line-height 18px }`, trả `rows` về 2
+
+### Checkpoint — 2026-11-05 (#12039 lượt 2)
+Vừa hoàn thành: R34b; compile template/script OK. Test Playwright đo được lỗi Ghi chú (53px) trước khi sửa; user dừng test giữa chừng → R34b, R35 (× ĐVT → cuộn), R36, R37 CHƯA kiểm trên trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user tự kiểm trình duyệt (Ctrl+Shift+R nếu HMR giữ bản cũ); commit khi user yêu cầu.
+Blocked:
+
+### Checkpoint — 2026-11-05 (#12039 push)
+Vừa hoàn thành: ĐÃ PUSH `develop` — hrm-api `14705dc36` (merge `06220838c`), hrm-client `a9954fed8` (merge `bd29ec032`). Chỉ commit 2 file của #12039; WIP màn khác giữ nguyên chưa commit.
+Bước tiếp theo: deploy dev → QA kiểm lại, đóng issue Redmine.
+Blocked:

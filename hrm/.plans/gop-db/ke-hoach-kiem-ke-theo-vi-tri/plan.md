@@ -119,3 +119,17 @@ Blocked:
 
 ## Phase 7 — Vị trí nút "Lấy vị trí" (21/10)
 - [x] Chuyển nút "Lấy vị trí" từ cuối khối lên góc phải tiêu đề khối "Phạm vi kiểm kê" (slot `#actions` của V2BaseFormSection) — PositionInventoryForm.vue
+
+## Tài liệu SRS / HDSD / Testcase (05/11/2026) @khoipv
+- [x] Đọc code FE `pages/finance/position-inventories/**` + BE `Modules/Finance` PositionInventory* (Entity / Service / WriteService / Controller / StoreRequest / Print / Export), WarehouseInventoryLockService, PositionInventoryResultWriteService, PositionTransferWriteService, quyền trong PermissionsTableSeeder
+- [x] Chụp ảnh dev-hrm (DNS Admin) bằng `khkkvt_shots/_capture/capture.js` — chặn mọi yêu cầu ghi (0 bị chặn / 0 lọt); cho qua 1 yêu cầu "Lấy vị trí" (chỉ đọc tồn). Bật cờ tạm trên trình duyệt cho 12_edit, 13_delete, 03_rowmenu, 15_send_detail (giả Đang tạo / Đang kiểm); 10b_validate gọi kiểm tra form trên trình duyệt (không bấm Lưu)
+- [x] `gen_srs.py` → `SRS - Kế hoạch kiểm kê theo vị trí.docx`: 14 chức năng, 94 trang, selfcheck khớp bản mẫu; metrics ui=12.4 ev=4.2 evch=992 intro=1610; Phần 5 bảng 4 cột 9 màn; Mục lục trang riêng căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Ke hoach kiem ke theo vi tri.docx`: 15 phần, 24 trang; icon 72 file, trim_icon `Cần cắt 0/72`
+- [x] `gen_testcase.py` → `testcase.xlsx`: loai phieu, 234 TC, 13 nhóm, P0 47.9%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 247 có TC / 77 N/A (Khóa, Import, Không duyệt); SRS 132 có mục / 31 N/A
+
+### Checkpoint — 2026-11-05 (tài liệu)
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Kế hoạch kiểm kê theo vị trí.
+Đang làm dở: —
+Bước tiếp theo: user xem lại tài liệu; quyết các điểm nghi lỗi code (Phiếu nhập kho so sai loại kế hoạch khi chặn vị trí đang kiểm kho; dấu * ở Nhà / Dãy / Khoang nhưng không bắt buộc; bảng Chi tiết không tự xóa khi đổi phạm vi sau Lấy vị trí).
+Blocked:

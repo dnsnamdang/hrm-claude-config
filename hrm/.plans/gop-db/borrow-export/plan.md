@@ -231,3 +231,20 @@ User hỏi phiếu có trạng thái Đang tạo / Chờ duyệt / Không duyệ
 - [x] FE `BorrowExportForm.vue` (màn Thêm) — mã phiếu mở `/finance/product-export-requests/{id}` ở TAB MỚI
       (đang nhập form, mở cùng tab là mất dữ liệu); đồng bộ với màn Yêu cầu xuất hàng mượn
 - [x] FE `_id/index.vue` (màn chi tiết) — `nuxt-link` cùng tab, như chip mã phiếu đầu màn
+
+## Tài liệu SRS / HDSD / Testcase (05/11/2026) @khoipv
+
+- [x] Đọc lại 3 skill (srs-documenter, hdsd-documenter, testcase-documenter) + brief PBHV / PKT (chuẩn 04/11: Mục lục trang riêng căn giữa, Phần 5 bảng 4 cột)
+- [x] Đọc code FE `pages/finance/borrow-exports/**` + BE `BorrowExport*` (Entity / Service / Controller / StoreRequest / History / Notify / print blade) — xác nhận màn KHÔNG có Sửa / Xóa / Khóa / Không duyệt / Import / Lưu nháp
+- [x] Chụp ảnh `pxhm_shots/` — dev-hrm (`_capture/capture.js`): danh sách, bộ lọc, form Lập trống, lỗi validate, chi tiết, in phiếu / in danh sách, xuất Excel, tùy chỉnh cột, cài đặt bộ lọc, lịch sử rỗng; LOCAL (`_capture/capture_local.js`, dev không có phiếu yêu cầu Chờ duyệt / phiếu có lịch sử): popup chọn phiếu yêu cầu, form đã chọn phiếu, hộp "Thông tin chưa lưu", mở từ phiếu yêu cầu, lịch sử có mốc. Chặn mọi yêu cầu ghi: 0 yêu cầu ghi (cả dev và local). Ảnh `10b_validate` bật cờ touched trên trình duyệt (không bấm Lưu và duyệt)
+- [x] `gen_srs.py` → `SRS - Phiếu xuất hàng mượn.docx`: 69 trang, 10 chức năng, selfcheck khớp bản mẫu; metrics ui=14.6 · ev=4.7 · evch=983 · intro=1556
+- [x] `gen_hdsd.py` → `HDSD_Phieu xuat hang muon.docx`: 17 trang, 10 PHẦN
+- [x] `gen_testcase.py` → `testcase.xlsx`: 187 TC, 11 nhóm, P0 88 (47.1%), check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 194 có TC / 130 N/A (Lưu nháp, Chỉnh sửa, Xóa, Khóa, Import, Không duyệt); SRS 112 có mục / 51 N/A
+- [x] Nghi lỗi code (chưa sửa, báo user): (1) BE bắt `products.*.details` min:1 nhưng FE gửi `details: []` cho dòng "Chưa có phiếu mượn" → phiếu yêu cầu có dòng như vậy có thể không lưu được; (2) bản in danh sách ghi cột "Người lập / Ngày lập" trong khi màn + Excel đã đổi "Người tạo / Ngày tạo"; (3) file Excel danh sách không có logo công ty; (4) menu + nút Tạo mới hiện với người không có quyền Kế toán kho (bấm vào mới báo không có quyền)
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: sinh đủ bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu xuất hàng mượn.
+Đang làm dở: không.
+Bước tiếp theo: user mở file kiểm tra, quyết định 4 điểm nghi lỗi; đẩy Drive khi user yêu cầu.
+Blocked:

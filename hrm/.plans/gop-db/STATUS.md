@@ -19,6 +19,14 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Phiếu yêu cầu giao việc khác (ERP → HRM) — ĐANG LÀM (2026-11-05, @khoipv)
+
+Port màn ERP `assignOtherRequest.index?type=all` (Bán hàng › Lắp đặt - BH - SC). Nguồn tạo Phiếu giao việc type 5 (PGV đã port).
+Chốt: theo cấp y ERP (3 quyền type 23), Xoá y ERP, HĐ 2 nguồn (thêm cột `hrm_contract_id`).
+
+**Checkpoint 05/11:** BE (`Modules/CustomerCare`) + FE (`pages/customer-care/assign-other-requests`) xong, menu Bán hàng › Lắp đặt - BH - SC, link PGV / PNKQ / Phiếu chờ giao việc đổi sang HRM. Verify: php -l, migration local, smoke API (rollback), compile FE. Còn: bấm thử trình duyệt, `permission:sync` thật, 2 việc chờ user quyết (plan T14, T15).
+Tài liệu: `.plans/gop-db/phieu-yeu-cau-giao-viec-khac/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-05-phieu-yeu-cau-giao-viec-khac-design.md`.
+
 ## Biên bản bàn giao sơ bộ (ERP → HRM) — ĐÃ PUSH develop (hrm-api `4168dde79`, hrm-client `9c5e59719`) (2026-11-04, @khoipv)
 
 Port màn ERP `handoverRecords.index?type=all` (CSKH › Hồ sơ công việc + "Phiếu CSKH"). Chốt: không quyền (y ERP), sửa 3 lỗi ERP cả 2 bên, menu 2 chỗ, có In danh sách + In biên bản.

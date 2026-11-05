@@ -161,3 +161,24 @@ Bước tiếp theo: `php artisan permission:sync` local + gán 4 quyền cho ro
 Blocked:
 
 - [x] Chốt sau Phase 1 (02/11, user: "cứ làm như erp cho tôi"): giữ y ERP (1) Không duyệt tính lại `wr_service_contracts.is_assign` cho MỌI PGV có HĐ (kể cả HĐ/PL — cột chỉ tab BH đọc); (2) `type=wait_approve_result` không có quyền duyệt = không bó phạm vi. Code đã đúng như vậy, không sửa gì.
+
+- [x] T36 (#12006, 05/11 — QA: In danh sách PNKQ) (1) cột giãn không hợp lý; (2) "Người lập" dính sát tên người lập
+  - Nguyên nhân (1): `WrImportResultPrintService::listTable()` đặt `width` px trên từng ô tiêu đề (tổng 1410px > khổ ngang ~1047px) + auto-layout → trình duyệt tự co theo nội dung: mã phiếu không có khoảng trắng chiếm chỗ, cột Khách hàng bị bóp. Sửa: `table-layout: fixed` + `<colgroup>` % (khuôn `PositionInventoryPrintService`), ô dài tự xuống dòng (`overflow-wrap: anywhere`)
+  - Nguyên nhân (2): dòng trống `&nbsp;` nằm SAU tên nên không có khoảng ký. Sửa: chèn `<div class="signature-space">` 15px giữa "Người lập" và tên (khuôn #11918 `widenSignatureSpace`)
+  - Verify: `php -l` OK; dựng HTML bằng dữ liệu thật (NV13) — `<colgroup>` 11 cột tổng 100%, bảng `table-layout: fixed`, khối ký: Người lập → signature-space 15px → tên. Chỉ sửa BE, không đụng CSS/component chung. CHƯA mở trình duyệt xem popup in.
+
+- [x] T37 (#12007, 05/11 — QA: chi tiết PNKQ) 4 ý — sửa (1)(2)(4), ý (3) giữ nguyên theo user
+  - (1) Bỏ thanh 3 tab → 3 khối `V2BaseFormSection` "Thông tin khách hàng" (giữ dòng Người tạo - Ngày tạo góc phải) · "Chấm công" · "File ảnh đính kèm" (khuôn PGV). Bỏ `V2BaseTabNavigation`, `activeTab`, `tabs`, `TAB_KEYS`; `revealErrors()` chỉ còn cuộn tới lỗi đầu tiên.
+  - (2) Đầu cột "Đã hoàn thành" (Device / Maintain / Assembly / P3Work): chữ + ô tích chọn tất cả cùng 1 dòng (`.wr-ir-th-check` inline-flex nowrap trong style chung của form), cột 110 → 150px.
+  - (4) 2 khối ảnh xếp chồng `col-12` thay vì `col-md-6` cạnh nhau → cột STT / Dung lượng của `V2BaseAttachmentSection` không bị bẻ dòng (như các màn khác dùng khối này). Không sửa component chung.
+  - (3) "Thiếu nút + Công phụ tính P3" ở màn CHI TIẾT: ERP `form_show.blade.php:1073` có nút + nhưng dòng thêm bị khoá (`ng-disabled="show"`) và màn Xem không có nút lưu → nút vô tác dụng. HRM: nút "Thêm dòng" chỉ có ở Tạo / Sửa. User chốt 05/11: KHÔNG thêm ở chi tiết, trả lời QA.
+  - Verify: compile 5 file (vue-template-compiler + babel) OK. CHƯA mở trình duyệt.
+
+- [x] T38 (#12009, 05/11 — QA: màn Sửa PNKQ) 3 ý
+  - (1) Khối ảnh không hiện STT + nút xoá sát viền: cùng gốc với #12007 ý 4 (2 khối ảnh `col-md-6` quá hẹp) → đã xử lý ở T37 (xếp chồng `col-12`), không sửa thêm.
+  - (2) Sửa dữ liệu trong bảng không ghi lịch sử: trước chỉ theo dõi 5 cột đầu phiếu. Thêm `WrImportResultHistoryRows` (Services) dựng 12 khoá ẢO dạng BẢNG (entity-history §3b): thiết bị BH / SC · dịch vụ-vật tư của thiết bị · dịch vụ BD · vật tư BD · hàng lắp đặt · dịch vụ đính kèm · công phụ P3 · hàng hoá (SL bàn giao) · chấm công thực tế · ảnh công trình · ảnh biên bản bàn giao. `__key` khoá tự nhiên (bảng con xoá-ghi lại mỗi lần lưu), trùng thì `#n`; chấm công khoá id. Builder nạp BẢN GHI RIÊNG (không `load()` lên model đang lưu — hàm tính tiến độ đọc quan hệ của nó). `WrImportResultStoreService::update` chụp trước / sau, `catalogColumns` + `catalogDisplay` thêm khoá ảo (giữ ở property service, không gán model). Nhãn 12 khoá thêm vào `CatalogHistoryService::TABLES['wr_import_results']` (chỉ cấu hình, không sửa hàm chung).
+  - (3) Khối "Ghi chú duyệt": user chốt 05/11 bỏ khỏi MỌI màn (cả chi tiết) — lý do Không duyệt chỉ xem ở Lịch sử (cả 2 nhánh `reject` / `rejectApproveDraft` đã ghi "Lý do: …" vào `catalog_histories`). Xoá khối ở `WrImportResultForm.vue`.
+  - Verify: `php -l` 3 file; tinker trong transaction rollBack (max `catalog_histories` 1814 trước = sau) PNKQ 7047 (lắp đặt + P3 + ảnh) và 7010 (bảo dưỡng): sửa ghi chú P3 / tick lắp đặt / % BD / xoá 1 ảnh / thêm 1 công P3 → 1 dòng "Thay đổi thông tin" mỗi phiếu, nhóm đúng "… sửa thông tin / thêm mới / đã xóa", chỉ liệt kê ô đổi; snapshot không đổi → không ghi. Compile FE OK. CHƯA kiểm: chấm công (local không có dòng `wr_assign_task_timesheets` nào), thiết bị BH/SC + hàng hoá (không có PNKQ mẫu), luồng PUT thật qua form trên trình duyệt, hiển thị trong popup lịch sử.
+
+- [x] T39 (05/11, chỉ check, không sửa code): ô tích "Đã hoàn thành" đầu cột bị disabled ở bảng "II. Danh mục thiết bị cần bảo dưỡng" + "B - I. Công việc phụ tính P3"
+  - Kết luận: đúng thiết kế. Ô "chọn tất cả" khoá khi bảng rỗng: `WrImportResultMaintainTable.vue:29` `:disabled="readonly || !serviceCount"`, `WrImportResultP3WorkTable.vue:18` `:disabled="readonly || !rows.length"` (Device cũng vậy). Ảnh QA cả 2 bảng đều "Không có dữ liệu" → khoá. P3 bấm "Thêm dòng" là ô tự mở; bảng bảo dưỡng rỗng vì PGV 18705 không có dịch vụ bảo dưỡng.

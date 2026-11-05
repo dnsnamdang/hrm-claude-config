@@ -146,13 +146,13 @@ SEC_VII = [
      "- Lưu ý: theo code hiện tại lọc Từ ngày theo ngày dự kiến và Đến ngày không có tác dụng, ra cả LD-01 "
      "và LD-04 - ghi Failed"),
 
-    ("008", "Từ ngày / Đến ngày ở tab Giao việc khác", "P2",
+    ("008", "Từ ngày / Đến ngày ở tab Giao việc khác", "P1",
      "YC-01 lập 10/10/2026, dự kiến 01/11 - 03/11/2026\n" + DATA,
      "1. " + OPEN_TP1 + ", bấm tab Giao việc khác\n"
      "2. Chọn Từ ngày 01/10/2026, Đến ngày 15/10/2026",
      "—",
      "- Mong đợi: lọc theo Ngày lập, có YC-01\n"
-     "- Lưu ý: theo code hiện tại lọc theo ngày dự kiến nên không có YC-01 - ghi Failed"),
+     "- Lưu ý: theo code hiện tại bảng báo lỗi, không hiện dòng nào (lọc theo thông tin phiếu không có) - ghi Failed"),
 
     ("009", "Lọc Hàng hóa ở tab Phiếu bảo hành", "P1",
      "BH-01 có máy M2 mã MM2; BH-05 Đã duyệt, phòng PKT1, có máy M5\n" + DATA,

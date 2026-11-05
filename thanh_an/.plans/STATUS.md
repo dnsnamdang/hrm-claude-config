@@ -5,6 +5,9 @@
 
 ## Đang làm
 
+- **HĐ — Tab Kết quả: bỏ bắt buộc Tên file** — @khoipv — Bắt đầu 05/11/2026 — Đã sửa: cột `contract_results.title` NOT NULL → migration cho nullable (đã chạy). FE không cần sửa. Chờ user test.
+  - Plan: [.plans/contract-result-title-nullable/plan.md](contract-result-title-nullable/plan.md)
+
 - **Check: SL hàng hóa Báo giá / Gói thầu / HĐ không lưu được số < 1** — @khoipv — Bắt đầu 04/11/2026 — Chỉ BE chặn (`min:1`); FE `CurrencyInput` vẫn gõ được thập phân (đã chạy thử). **Đã sửa 04/11**: BE `numeric|gt:0` cho 3 request, FE giữ nguyên. Chờ user test; phụ lục HĐ / BB thương thảo chưa làm.
   - Plan: [.plans/check-bao-gia-sl-nho-hon-1/plan.md](check-bao-gia-sl-nho-hon-1/plan.md)
 

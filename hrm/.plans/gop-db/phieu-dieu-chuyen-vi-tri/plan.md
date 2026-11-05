@@ -190,3 +190,47 @@ Vừa hoàn thành: fix #11875
 Đang làm dở: —
 Bước tiếp theo: deploy hrm-crm (api + client) rồi QA test lại
 Blocked:
+
+## Fix #12036 — Danh sách: định dạng cột Người tạo + thêm Ngày cập nhật / Người cập nhật (2026-11-05)
+
+- [x] BE `PositionTransferService::listQuery/listRows`: thêm `updated_at_full` + `updater_label` (subquery tên NV + mã phòng, `employeeAuditLabel`)
+- [x] FE `position-transfers/index.vue`: cột Người tạo hiện `creator_label` ("Tên NV - Mã phòng", list-page §6); thêm cột Ngày cập nhật + Người cập nhật (hiện mặc định)
+- [x] FE `export-excel.js`: Người tạo → `creator_label`; thêm 2 cột Ngày cập nhật / Người cập nhật
+- [x] Verify: service danh sách (tinker) ra "DNS Admin - CTV_NV | 22/10/2026 10:04 | DNS Admin - CTV_NV"; 668 phiếu đều có updated_by hợp lệ; compile FE OK. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: fix #12036
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm danh sách + Xuất Excel; cấu hình cột đã lưu của user cũ có thể cần bật 2 cột mới trong "Cấu hình cột"
+Blocked:
+
+## Fix #12037 — Tạo mới: giao diện form + popup chọn vị trí/lô (2026-11-05)
+
+- [x] 1. Ô Ghi chú mặc định CAO bằng ô Kho (user đính chính: chiều cao, không phải chiều rộng) — độ rộng giữ `col-md`; textarea `rows=1`, scoped `.pt-note` height 32px, vẫn kéo giãn được
+- [x] 2. Popup Chọn vị trí xuất/nhập rộng hơn: CSS theo modal-id `#position-transfer-position-picker` (width 100vw-32px, max 1320px) — không đụng `RecordPickerModal` dùng chung
+- [x] 3. Popup Chọn lô xuất: bỏ `link` cột Lô (chữ thường, bấm dòng vẫn chọn) + cột Tồn `sortable` (key `unit_qty`); BE `PositionTransferService::lots()` sort theo `unit_qty` khi `sort_by=unit_qty`
+- [x] 4. Bảng chi tiết: ô Vị trí xuất / Lô xuất / Vị trí nhập (`.pt-picker`) 1 dòng, dài thì "...", rê chuột xem đủ (title sẵn có)
+- [x] 5. Sửa / Chi tiết: bỏ ô "Mã phiếu" ở Thông tin chung (mã đã nằm trên thanh tiêu đề)
+- [x] Verify: compile template/script/scss FE OK; tinker `lots()` không sort 4,6 · asc 4,6 · desc 6,4; php -l OK. Chưa mở trình duyệt.
+
+- [x] 6. (user bổ sung) Bộ lọc popup Chọn vị trí xuất/nhập theo khuôn popup đã sửa hôm nay (`WarehouseExportPickerModal` / `HandoverContractPickerModal`): `V2BaseModal` + `V2BaseSmartFilterPanel floating in-modal` (ô tìm nhanh Mã vị trí + Nhà/Dãy/Khoang, nút Tìm kiếm/Làm mới của panel) + `V2BaseDataTable`. Tách `PositionPickerModal.vue` riêng màn (logic lọc phân cấp chuyển vào), KHÔNG sửa `RecordPickerModal` dùng chung
+  - FE mới `position-transfers/components/PositionPickerModal.vue`: ô tìm nhanh "Tìm theo mã vị trí" + Nhà/Dãy/Khoang (≤ 3 ô → panel dàn ngang, chọn là tìm ngay, phân cấp như #11811), sort Tồn, phân trang chuẩn popup (10/20/50/100), dòng khoá mờ + rê chuột hiện lý do, dialog rộng 1320px (thay CSS theo id ở mục 2)
+  - Form: bỏ `positionFilter*`, `rowFilterOptions`, `spaceFilterOptions`, `onPositionFilterInput`, `resetPositionFilter`, `loadPositionFilterOptions`, `positionColumns`, import `V2BaseSelectInModal`; popup Lô vẫn dùng `RecordPickerModal`
+  - Verify: compile template/script/scss 2 file OK; tinker `positionsQuery` trả đủ code/house_name/row_name/space_name/unit_qty/qty_text/in_inventory. Chưa mở trình duyệt
+
+- [x] 7. (user phản hồi) Popup vị trí bỏ "Cài đặt bộ lọc" / "Tìm kiếm nâng cao" — panel đếm ô tìm nhanh + 3 ô = 4 > 3 nên tự sang chế độ nâng cao. Không khai `filter-fields`; Nhà / Dãy / Khoang dựng trong slot `quick-search-extra` (cùng hàng ô tìm nhanh, `V2BaseFloatingField` + `V2BaseFilterFieldControl` như panel), không sửa panel dùng chung. Verify compile OK, chưa mở trình duyệt
+
+- [x] 8. (user bổ sung) Popup Chọn lô xuất cùng khuôn popup vị trí: tách `LotPickerModal.vue` (V2BaseModal + panel chỉ ô tìm nhanh số lô + V2BaseDataTable, sort Tồn, bấm dòng chọn, lô hết hàng mờ); bỏ `RecordPickerModal` khỏi form
+  - BE `lots` trả hết lô không phân trang → phân trang ở FE (10/20/50/100); tìm số lô + sort Tồn vẫn BE. Form bỏ `lotColumns` + import `RecordPickerModal`. Verify compile OK, chưa mở trình duyệt
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: fix #12037
+Đang làm dở: —
+Bước tiếp theo: user mở /warehouse/position-transfers/create kiểm 5 mục
+Blocked:
+
+### Checkpoint — 2026-11-05 (push)
+Vừa hoàn thành: ĐÃ PUSH `develop` (hrm-api tới `6b0b11b6e`, hrm-client tới `cf57d6f54`) theo yêu cầu user.
+Đang làm dở: —
+Bước tiếp theo: deploy dev → QA kiểm lại.
+Blocked:

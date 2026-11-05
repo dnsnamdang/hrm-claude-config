@@ -81,3 +81,17 @@ Vừa hoàn thành: R4 (*) luôn hiện ở Ngày kiểm kê / Kho / Hàng hóa 
 Đang làm dở: —
 Bước tiếp theo: user mở trình duyệt kiểm: bấm Làm mới ở Chi tiết (số đổi, thoát không hỏi "chưa lưu", F5 về số cũ) và ở Sửa (phải Lưu mới ghi).
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (05/11/2026) @khoipv
+- [x] Đọc code FE `pages/finance/self-inventory-requests/**` (index, create, _id/index, _id/edit, SelfInventoryRequestForm, PendingVouchersModal, row-actions.js, export-excel.js) + BE `Modules/Finance` SelfInventoryRequest* (Entity / Service / WriteService / Controller / StoreRequest / PrintService / Export), SelfInventoryWriteService + SelfInventoryService (đổi trạng thái kế hoạch, popup chọn kế hoạch), ProductPickerService (`stock_warehouse_ids`), PhysicalWarehouse (chặn xóa kho), quyền trong PermissionsTableSeeder. Phân biệt màn Kế hoạch tổng kiểm kê hàng hóa: bảng riêng, chỉ dùng chung 3 tên quyền
+- [x] Chụp ảnh dev-hrm (DNS Admin) bằng `khkkhh_shots/_capture/capture.js` — chặn mọi yêu cầu ghi (0 bị chặn / 0 lọt); cho qua 2 yêu cầu chỉ đọc tồn kho kế toán (thêm hàng, Làm mới số liệu — đã đọc code: chỉ SELECT). Bật cờ tạm trên trình duyệt cho 12_edit, 13_delete, 03_rowmenu, 15_send_detail (dev 20/20 kế hoạch Đã lập phiếu kiểm kê); 10b_validate gọi kiểm tra form trên trình duyệt; 10f_pending mở popup cảnh báo trên trình duyệt với 2 số phiếu nhập kho thật (PNK-11618/11617, minh họa)
+- [x] `gen_srs.py` → `SRS - Kế hoạch kiểm kê theo hàng hóa.docx`: 14 chức năng, 100 trang, selfcheck khớp bản mẫu; metrics ui=12.8 ev=4.5 evch=1048 intro=1726; Phần 5 bảng 4 cột 4 màn; Mục lục trang riêng căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Ke hoach kiem ke theo hang hoa.docx`: 15 phần, 24 trang; icon 74 file, trim_icon `Cần cắt 0/74`
+- [x] `gen_testcase.py` → `testcase.xlsx`: loai phieu, 240 TC, 13 nhóm, P0 46.2%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 247 có TC / 77 N/A (Khóa, Import, Không duyệt); SRS 132 có mục / 31 N/A
+
+### Checkpoint — 2026-11-05 (tài liệu)
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Kế hoạch kiểm kê theo hàng hóa.
+Đang làm dở: —
+Bước tiếp theo: user xem lại tài liệu; quyết các điểm nghi lỗi code (Ngày kiểm kê bị ghi lại bằng ngày lưu mỗi lần Sửa; xóa phiếu kiểm kê không trả kế hoạch về Đang kiểm nên không lập lại được; popup cảnh báo phiếu treo chưa kiểm chứng bằng dữ liệu thật trên dev).
+Blocked:

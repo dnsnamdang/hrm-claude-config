@@ -57,3 +57,56 @@ User gửi ảnh: `dev-erp.../admin/customer-care/handover_acceptance_records?ty
 - [x] Vá cùng khuôn `a323e97c3c` (YC lắp đặt) / `af2b9ed3d6` (giao việc): `optional()` cho cột Hợp đồng, Khách hàng (rỗng nếu thiếu),
       Người tạo (thiếu phòng ban thì chỉ hiện tên). CHƯA commit
 - [x] Verify: `php -l` sạch. Chưa kiểm trên dev (cần deploy)
+
+## Fix #12011 — Danh sách BBNT: 7 góp ý QA (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12011
+- [x] 1. Nút "Thêm mới" → "Tạo mới" (đã đúng từ T22 — kiểm lại)
+- [x] 2. Đồng bộ icon Tùy chỉnh cột: `V2BaseIconButton` → `V2BaseButton secondary size="sm" btn-icon` (skill list-page)
+- [x] 3. Bỏ sort cột Trạng thái, thêm sort cột Số hợp đồng (FE + `SORTABLE_COLUMNS`)
+- [x] 4. NVKD / NV kỹ thuật / Người tạo dạng "Tên - Mã phòng" (`employeeAuditLabel`, nạp theo lô) — danh sách, in, xuất
+- [x] 5. Thêm cột Ngày cập nhật + Người cập nhật (danh sách, sort Ngày cập nhật, in, xuất `ExportColumnRegistry`)
+- [x] 6. Ngày BGNT có giờ — user chốt đổi cột `handover_acceptance_records.date` DATE → DATETIME (migration); form chọn ngày giờ; validate `Y-m-d H:i` (nhận cả `Y-m-d`), không lớn hơn hôm nay; serial `handover_date` vẫn lấy phần ngày
+- [x] 7. In danh sách: giãn khoảng "Người lập" ↔ tên (khuôn `signature-space` 15px, #11918)
+- [x] ERP (repo `erp`, nhánh `develop_02` con của gop_db): lọc Ngày BGNT `where('date', …)` → `whereDate` (`app/Model/Customers/HandoverAcceptanceRecord.php`) — cột thành DATETIME thì so bằng sẽ lọt biên bản có giờ. CHƯA commit
+- [x] Verify: migration chạy local (cột = datetime); php -l sạch; smoke HTTP kernel (Super admin): list 200, sort `contract_code` asc đúng, Ngày BGNT `dd/mm/yyyy HH:mm`, 4 cột người dạng "Tên - Mã phòng", có Ngày/Người cập nhật; in danh sách có 2 cột mới + `signature-space`; rule `before:tomorrow` (hôm nay 23:59 qua, mai 00:00 trượt); compile 3 file FE OK. CHƯA test lưu form thật trên trình duyệt
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: Fix #12011 (7 mục) BE + FE + vá lọc ERP
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm form tạo/sửa (ô ngày giờ) + danh sách + in; deploy nhớ chạy migration `2026_11_05_000002`
+Blocked:
+
+## Fix #12018 — Tạo mới: popup Chọn hợp đồng + lỗi "không có quyền" (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12018
+- [x] 1. "ERP 3182 HĐ, HRM 2994" — điều tra: KHÔNG do phân quyền (cả 2 cùng lọc công ty người tạo). ERP `SearchController::searchFirmContract` hiện cả HĐ ĐÃ có biên bản (chọn vào mới báo lỗi); HRM loại sẵn (phụ đề popup đã ghi). Local cty 1: 2884 HĐ, 196 đã có BB. User chốt: GIỮ loại sẵn, trả lời QA
+- [x] 2. Popup rộng hơn, không đè menu trái — `dialog-class="hcp-dialog"`, lúc mở đo mép trái `.content-page` ghi biến `--hcp-sidebar-right` trên body (≥ 992px), đóng thì gỡ
+- [x] 3. Sort cột Loại hợp đồng — UNION thêm cột `contract_type_text` (CASE nhãn HĐ hãng / "Hợp đồng HRM"), sort theo nhãn
+- [x] 4. Ngày duyệt có giờ (`d/m/Y H:i`)
+- [x] 5. Upload/Lưu báo "không có quyền": `viewer()['perm_create']` cho Super admin bỏ qua quyền → nút Tạo mới hiện, nhưng middleware `checkPermission` chỉ nhận quyền tick thật. User chốt: cờ Tạo theo quyền thật (bỏ đặc cách Super admin), admin tick quyền ở Phân quyền
+  - `perm_create` đọc quyền đúng cách middleware đọc (`getAllPermissions`, chung cache `perm_all_by_emp:`); `is_can_edit` / `is_can_delete` thêm điều kiện quyền Tạo (route PUT/DELETE cũng gắn middleware đó — chỉ ẩn nút vốn đã bị chặn, không đổi điều kiện nghiệp vụ)
+- [x] Verify: php -l sạch; compile popup OK; smoke HTTP kernel: sort Loại HĐ asc/desc 200, ngày duyệt `d/m/Y H:i`; Super admin id 34 CHƯA tick quyền → meta `can_create=false`, edit/delete 0, upload 403 (khớp); id 13 có quyền → `can_create=true`. CHƯA mở trình duyệt xem độ rộng popup
+
+### Checkpoint — 2026-11-05 (2)
+Vừa hoàn thành: Fix #12018 (mục 2–5; mục 1 trả lời QA)
+Đang làm dở: không
+Bước tiếp theo: user xem popup trên trình duyệt; trên dev admin tick quyền "Tạo biên bản bàn giao nghiệm thu" cho vai trò (và chạy permission:sync nếu dev chưa có quyền)
+Blocked:
+
+## Bỏ tiêu đề "Bộ lọc danh sách" ở bộ lọc trong MỌI popup (user yêu cầu 05/11/2026, @khoipv)
+- [x] `components/V2BaseSmartFilterPanel.vue` (hàm chung — user yêu cầu áp toàn bộ popup): `hideTitle` = `in-modal` HOẶC panel nằm trong `.modal` (đo lúc mount — 3 popup Task trễ quên `in-modal` vẫn ăn). Ẩn icon + tiêu đề (+ `title-suffix`); header không còn nút (bộ lọc ≤ 3 ô, không slot) thì bỏ cả dòng; còn nút thì dồn phải. Màn danh sách thường không đổi
+- [x] Rà: 18 popup dùng panel; tiêu đề riêng đang có ("Bộ lọc nhân sự", "Bộ lọc lịch sử meeting", "Bộ lọc lịch sử phân ca", "Bộ lọc công nợ theo khách hàng", `Bộ lọc <tên popup>` ở my-job) đều ẩn theo
+- [x] Verify: compile OK. CHƯA mở trình duyệt
+
+## Fix #12021 — Tạo mới: nút Lưu nháp, trạng thái Đang tạo, câu lỗi SL nghiệm thu (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12021
+- [x] 1. Nút "Lưu" → "Lưu nháp" (form Tạo / Sửa)
+- [x] 2. Nhãn trạng thái 1 "Đang cập nhật" → "Đang tạo" (đồng bộ BB bàn giao sơ bộ, YC xử lý BH…) — chỉ đổi nhãn HRM `STATUSES`; ERP giữ nhãn ERP; log lịch sử cũ giữ chữ cũ
+- [x] 3. Câu lỗi ô "Số lượng đã nghiệm thu" thay "Không hợp lệ" bằng câu nói rõ số so sánh — FE `validateForm` + BE `withValidator` cùng câu
+- [x] Sửa e2e `handover-acceptance-record.spec.ts` theo nhãn / nút mới
+  - Câu mới: vượt SL → "Số lượng đã nghiệm thu không được lớn hơn số lượng đã xuất (X)" (có SL đã trả → "…tổng số lượng đã xuất và đã trả (X)"); hàng bắt buộc seri → "Hàng bắt buộc nhập seri: số dòng seri (n) phải bằng số lượng đã nghiệm thu (q)"; Lưu và duyệt → "Lưu và duyệt: số lượng đã nghiệm thu phải bằng số lượng đã xuất (X)"
+- [x] Verify: php -l sạch; compile 2 file FE OK; tinker: STATUSES = Đang tạo / Chờ duyệt / Đã duyệt, 2 nhánh câu vượt SL đúng số. CHƯA chạy lại e2e, CHƯA mở trình duyệt
+
+## Fix #12023 — Lịch sử: dòng duyệt mang nhãn "Duyệt" thay vì "Thay đổi trạng thái" (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12023
+- [x] Nguyên nhân: `HandoverAcceptanceRecordService::logStatus()` rẽ action `approved` khi sang Đã duyệt (nhãn "Duyệt"); các màn khác dùng bộ nhãn chuẩn `change_status` (skill entity-history §0, §3a)
+- [x] Sửa: luôn ghi `change_status`. Log cũ (action `approved`) giữ nguyên, không sửa dữ liệu

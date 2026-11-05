@@ -2076,3 +2076,17 @@ Vừa hoàn thành: Phase 17 (#11918) — F1, F2, P1→P1d (khoảng ký chốt 
 Bước tiếp theo: commit khi user yêu cầu (hrm-api: BillIncomeRequestService.php + BillIncomeRequestPrintService.php; hrm-client: BillIncomeRequestForm.vue) → đẩy dev, chuyển #11918 sang "Code xong chờ test".
 Blocked: không.
 - [x] **G1.** Push `develop` (2026-10-29): api `423116a46`, client `9e93e61be`.
+
+## Fix #12022 — Lịch sử: đổi trạng thái khi Sửa bị ghi nhóm "Thay đổi thông tin" (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12022
+- [x] Nguyên nhân: Sửa phiếu nháp rồi "Lưu và gửi" → `BillIncomeRequestService::update()` đổi `status` (Đang tạo → Chờ KT duyệt) và `logCatalogUpdate()` diff cả cột `status` (có trong `catalogColumns()`) → dòng "Thay đổi thông tin" chứa "Trạng thái: …" (trái skill entity-history §3a)
+- [x] Sửa: `update()` — trạng thái đổi thì ghi dòng `change_status` riêng; dòng "Thay đổi thông tin" chỉ ghi các trường khác (không đổi gì khác thì không ghi). Không dùng `logCatalogSave()` (ghi action lock/unlock của danh mục)
+- [x] Verify: tinker sửa phiếu nháp → gửi duyệt (transaction ROLLBACK), đọc log catalog_histories
+  - Kết quả (phiếu #2536, đổi Chờ KT duyệt → Đang tạo + ghi chú, ROLLBACK): 2 dòng — `update` {Ghi chú} + `change_status` {Trạng thái}. Chiều gửi duyệt 1→2 cùng nhánh code, không chạy thật để khỏi bắn thông báo kế toán
+  - Log cũ đã ghi sai nhóm giữ nguyên (không sửa dữ liệu)
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: Fix #12022
+Đang làm dở: không
+Bước tiếp theo: user kiểm trên trình duyệt (Sửa phiếu nháp → Lưu và gửi → xem Lịch sử)
+Blocked:

@@ -60,3 +60,70 @@ Blocked:
 - [x] T18 Commit + push develop (04/11/2026, user yêu cầu): hrm-api `4168dde79` (merge `51dd5e96e`), hrm-client `9c5e59719` (merge `7c906c1e7`).
   Chỉ commit file của màn này — các file `handover-acceptance-records` / `HandoverAcceptanceRecord*` đang sửa dở (feature BB nghiệm thu) để nguyên.
   Sau merge: php -l + smoke API (rollback) + compile FE pass. Repo ERP chưa commit (chờ user).
+
+## Fix #12025 — Danh sách BBBGSB: 6 góp ý QA (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12025 — khuôn #12011 (BB nghiệm thu)
+- [x] 1. Nút "Thêm mới" → "Tạo mới"
+- [x] 2. Đồng bộ icon Tùy chỉnh cột: `V2BaseIconButton` → `V2BaseButton secondary size="sm" btn-icon`
+- [x] 3. Thêm cột Người cập nhật + Ngày cập nhật (danh sách, sort Ngày cập nhật, in, xuất `ExportColumnRegistry`)
+- [x] 4. Người tạo / Người duyệt / Người cập nhật dạng "Tên - Mã phòng" (`employeeAuditLabel`) — danh sách, chi tiết, in, xuất
+- [x] 5. Ngày duyệt có giờ (`d/m/Y H:i`)
+- [x] 6. In danh sách: giãn khoảng "Người lập" ↔ tên (`signature-space` 15px)
+- [x] Verify: php -l 3 file sạch; smoke HTTP kernel (id 13): list sort `updated_at` 200, in danh sách 200 có `signature-space`; local 0 biên bản → presentRows bản ghi giả: "DNS Admin - CTV_NV" cho 3 người, Ngày duyệt / Ngày cập nhật `d/m/Y H:i`; bản in có 2 cột mới; compile `index.vue` OK. CHƯA mở trình duyệt
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: Fix #12025 (6 mục) — FE `index.vue`; BE `HandoverRecordService` (`peopleLabels`, cột cập nhật, sort, Ngày duyệt có giờ — cả màn chi tiết đổi tên người tạo/duyệt sang "Tên - Mã phòng"), `HandoverRecordPrintService`, `ExportColumnRegistry`
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm danh sách + in + xuất Excel
+Blocked:
+
+## Fix #12027 — Form Tạo BBBGSB: 6 góp ý QA (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12027
+- [x] 1. Nút "Lưu" → "Lưu nháp", đứng trước "Lưu và tiếp tục" (dùng `menu.submit_and_draft` của V2Footer)
+- [x] 2. Lưu nháp (+ Lưu và tiếp tục) chỉ bắt Phiếu xuất kho — FE `validate()` + BE `HandoverRecordRequest` rẽ theo status
+      (cột NOT NULL: người duyệt trống ghi 0, SL trống ghi 0; nạp lại SL 0 → ô trống)
+- [x] 3. Popup chọn PXK: bỏ dòng chú thích (subtitle)
+- [x] 4. File đính kèm có dấu * (`required` của V2BaseAttachmentSection)
+- [x] 5. Lỗi ô Số lượng nằm 1 dòng (không bị đẩy khoảng trắng / xuống dòng)
+- [x] 6. Bấm Hình ảnh tham khảo → phóng to (`components/common/ImagePreviewModal.vue`)
+- [x] Verify: `php -l` sạch; smoke HTTP kernel (id 13, transaction rollback): nháp chỉ có PXK → 200 (approver_id 0, qty 0),
+      edit-data trả approver_id null; show / list / in 200; nháp sửa bỏ hết hàng 200; nháp thiếu PXK 422; Gửi duyệt thiếu → 422
+      đủ 4 lỗi (approver, SL từng dòng, file). Compile FE 2 file OK. CHƯA mở trình duyệt
+- [x] Đổi luật (user chốt 05/11/2026): Lưu nháp chỉ bắt **Người duyệt** (không bắt Phiếu xuất kho nữa); Gửi duyệt bắt thêm PXK + hàng + SL + file.
+      Người duyệt luôn có → hết rủi ro ERP `$handoverRecord->approver->fullname` (không cần vá ERP).
+      Verify smoke (rollback): nháp chỉ người duyệt 200 (0 dòng PXK), edit-data / show / list / in / in DS / xuất 200; sửa nháp thêm PXK SL trống 200;
+      nháp thiếu người duyệt 422; gửi duyệt trống 422 đủ 4 lỗi; gửi duyệt thiếu SL + file 422. Compile FE OK. CHƯA mở trình duyệt
+
+- [x] Lỗi "Bắt buộc phải nhập" ô Số lượng căn TRÁI (user chốt 05/11/2026, ảnh Screenshot_17) — `.hr-qty-cell` scoped. Compile OK
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: Fix #12027 (6 mục + đổi luật nháp chỉ bắt Người duyệt) — FE `HandoverRecordForm.vue`, `WarehouseExportPickerModal.vue`; BE `HandoverRecordRequest.php`
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm form Tạo / Sửa; —
+Blocked:
+
+## Fix #12028 — Chi tiết BBBGSB: 4 góp ý QA (2026-11-05, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12028
+- [x] 1. Ẩn ô Trạng thái ở màn chi tiết (đã có badge trên tiêu đề)
+- [x] 2. Nút Duyệt và Từ chối đứng cạnh nhau
+- [x] 3. Bảng chi tiết (chế độ xem) có cột Hình ảnh tham khảo (bấm phóng to)
+- [x] 4. Từ chối bắt buộc nhập lý do: popup `RejectModal` (khuôn delivery-requests) · BE 422 nếu trống · cột mới
+      `handover_records.reject_reason` (text nullable, migration) · lý do vào `note` log lịch sử (entity-history §4.1) ·
+      thông báo Từ chối kèm "Lý do: …" · chi tiết hiện ô "Lý do từ chối" khi trạng thái Từ chối
+- [x] Verify: migration chạy local; `php -l` 3 file sạch; smoke HTTP kernel (rollback, chặn notifier thật): từ chối lý do trống 422
+      `reason`; có lý do 200 → cột + show trả lý do, log `rejected` note = lý do, thông báo "Người từ chối: … Lý do: …";
+      Duyệt xoá lý do (show trả rỗng). Compile FE (form, RejectModal, actions) OK. CHƯA mở trình duyệt.
+      ⚠️ Server dev cần chạy migration `2026_11_05_120000_add_reject_reason_to_handover_records_table`
+
+### Checkpoint — 2026-11-05 (#12028)
+Vừa hoàn thành: Fix #12028 — FE `HandoverRecordForm.vue`, `RejectModal.vue` (mới), `handoverRecordActions.js`;
+BE migration mới, `HandoverRecordController@approve`, `HandoverRecordService` (approve / logStatus / detail), `HandoverRecordNotifier`
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm màn chi tiết (Chờ duyệt → Từ chối nhập lý do → chi tiết Từ chối hiện lý do)
+Blocked:
+
+### Checkpoint — 2026-11-05 (push)
+Vừa hoàn thành: ĐÃ PUSH `develop` (hrm-api tới `6b0b11b6e`, hrm-client tới `cf57d6f54`) theo yêu cầu user.
+Đang làm dở: —
+Bước tiếp theo: deploy dev → QA kiểm lại.
+Blocked:
