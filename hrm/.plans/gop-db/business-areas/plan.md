@@ -36,3 +36,6 @@ Vừa hoàn thành: migrate + kiểm API & UI. Sửa 3 lỗi phát hiện khi te
 Đang làm dở: không.
 Bước tiếp theo: user duyệt → commit 2 repo (chưa commit). Dữ liệu test local: 3 khu vực (Cầu Giấy, Hoàn Kiếm[Khóa], Hoàn Kiếm mới).
 Blocked:
+
+## Ngày 05/11/2026 (@junfoke)
+- [x] 05/11/2026 — Hỗ trợ check "Khu vực kinh doanh cần quyền gì": màn chưa gắn quyền nào (menu `master-data.js`, trang `business-areas/index.vue`, route API không `checkPermission`) — đúng chốt 10/10 cho cả nhóm danh mục Địa lý; ai đăng nhập cũng thêm/sửa/xoá/khoá/nhập Excel được, chỉ chặn sửa/xoá bản ghi đã khoá. Không sửa code.

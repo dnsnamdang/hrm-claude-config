@@ -2,6 +2,9 @@
 
 ## Hoàn thành
 
+- [#12019 BGDV: ghi chú từng dòng mục C + chặn chọn trùng hàng](12019-bgdv-ghi-chu-hang-hoa-muc-c/plan.md) — @junfoke 2026-11-05. `01379ab72f` → develop_02 (`147354bfc1`, cần migrate); chặn trùng `209d1867a2` gop_db. `task_12019` chưa vào gop_db.
+- [Quyết toán HĐDV báo "chưa hoàn thành giao việc" khi có PGV đời cũ](fix-quyet-toan-hddv-giao-viec-pgv-doi-cu/plan.md) — @junfoke 2026-11-05. Cộng cả tiến độ + PDKQ của PGV cũ. `9323072f2b` gop_db.
+- [HĐ dự án: số HĐ nhận "/" + tối đa 70 ký tự](so-hop-dong-du-an-gach-cheo-70-ky-tu/plan.md) — @junfoke 2026-11-04/05. `49571151fc`, `51ce2e883a` gop_db. Popup chọn hàng: ảnh 40px, bỏ chặn 360px tên hàng (cùng `51ce2e883a`).
 - [PLBS HĐ hãng chặn lưu "chưa có giá (loại giá N)"](fix-plbs-hd-hang-sale-max-percent/plan.md) — @nguyentrancu97 2026-11-03. `FirmContractService` sync đọc `sale_max_percent` ngoài try/catch → bọc try, thiếu giá = 0. `1018518339` gop_db.
 - [ĐH nguyên tắc: chỉ validate giá với hàng SL > 0](don-hang-nguyen-tac-validate-gia-chi-sl-lon-hon-0/plan.md) — @nguyentrancu97 2026-11-03. `getPriceByUnitAndType` ném lỗi cả với dòng SL 0 → chặn cả Lưu nháp. `def03b04dc` gop_db.
 - [Báo cáo luân chuyển hàng hóa: tối ưu, không làm quá tải CPU DB + mở khoá](toi-uu-bao-cao-luan-chuyen-cpu/plan.md) — @junfoke 2026-11-04. `bbe5fa53f2` gop_db. Theo dõi slow log sau deploy (lọc Còn tồn/Hết tồn chưa tối ưu).

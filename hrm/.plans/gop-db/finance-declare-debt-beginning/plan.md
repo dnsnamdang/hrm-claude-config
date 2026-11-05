@@ -63,3 +63,14 @@ Blocked:
 
 ## Ngày 04/11/2026 (@junfoke)
 - [x] 04/11/2026 — Xuất testcase mới màn "Công nợ đầu kỳ theo khách hàng - hợp đồng" (cùng màn Khai báo đầu kỳ công nợ, ERP đặt ở 2 nhóm menu): `testcase/testcase - Cong no dau ky theo khach hang - hop dong.xlsx` — 130 TC (P0 54%), khuôn chuẩn mới 03/11, bộ kiểm 0 lỗi. Lấy lại TC cũ 02/10 còn đúng, sửa chỗ lệch code hiện tại; thêm TC 2 lối vào, đối chiếu hệ thống cũ ⇄ mới, ảnh hưởng báo cáo công nợ KH. Chỉ phần khách hàng; file cũ giữ nguyên. Script: `testcase/gen_testcase_cong-no-dau-ky-kh-hd.py`.
+
+## Ngày 05/11/2026 (@junfoke)
+- [x] 05/11/2026 — Lỗi #12016: bỏ ô "Mã phiếu" ở màn Chi tiết khai báo đầu kỳ (mã vẫn hiện ở tiêu đề trang); áp cả màn NCC dùng chung form.
+- [x] 05/11/2026 — Lỗi #12014 (Công nợ đầu kỳ theo khách hàng - hợp đồng):
+  - Popup chọn hợp đồng: số HĐ là link mở tab mới, bấm tiêu đề Số HĐ / Ngày tạo để sắp xếp, bấm dòng thì thêm HĐ và tự đóng popup (cả màn NCC).
+  - Số HĐ lệch ERP (23 so với 484): từ 03/09 popup ERP lấy HĐ từ **10 nguồn**, HRM vẫn theo bản 8 nguồn chốt 01/10 (thiếu Đơn hàng nguyên tắc + phụ lục) → sửa theo 10 nguồn ERP, ô lọc "Loại hợp đồng" đổi theo; đếm local khớp điều kiện ERP (0 → 626, 237 → 282). Nguồn HĐ màn NCC không đổi.
+  - "Tick quá hạn không hoạt động": đúng như ERP (chỉ dòng Dư nợ mới được quá hạn) → thêm ⓘ ở tiêu đề cột Quá hạn giải thích.
+  - Toast "Service Unavailable" khi Lưu (503 lúc server dev deploy, mỗi lần bấm thêm 1 toast) → mọi lỗi máy chủ chỉ hiện 1 toast "Đã xảy ra lỗi hệ thống. Vui lòng thử lại."
+  - Đổi tiêu đề thành "Công nợ đầu kỳ theo khách hàng - hợp đồng" ở 4 màn Danh sách / Thêm / Sửa / Chi tiết (nhãn menu giữ nguyên).
+- [x] 05/11/2026 — Commit api `280c343e6`, client `fcde078c1` ("fix lỗi", develop, đã lên origin develop + gop_db).
+- [ ] Chờ user xác nhận giữ thay đổi nguồn HĐ 10 nguồn (khác bản 8 nguồn chốt 01/10).

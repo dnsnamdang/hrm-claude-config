@@ -2636,7 +2636,12 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Spec: docs/superpowers/specs/gop-db/2026-11-04-so-chi-tiet-cong-no-ncc-design.md | Tóm tắt: .plans/gop-db/so-chi-tiet-cong-no-ncc/design.md
 
 - tuyen-duong-xa-moi-sau-sap-nhap → @junfoke → .plans/gop-db/tuyen-duong-xa-moi-sau-sap-nhap/plan.md
-  Trạng thái: 🟡 **Khảo sát + chốt phương án (04/11/2026)**: thêm tuyến mới đến xã mới (không sửa tuyến cũ), sinh tự động + km gợi ý Goong, nghiệp vụ duyệt qua Excel; ~1.800 tuyến cho Liên Ninh / Phan Trọng Tuệ / Vườn Đốm. Chờ user xác nhận Vườn Đốm vs Phấn Dũng. Chưa code.
+  Trạng thái: 🟡 **Đã xuất Excel đề xuất (05/11/2026)**: `D:\CompanyProject\DB\tuyen_duong\tuyen_duong_moi_de_xuat.xlsx` — Lớp 1 1.826 tuyến (301 cần khảo sát) + Lớp 2 1.847 tuyến (102 cần khảo sát), km gợi ý Goong. Chờ nghiệp vụ duyệt km → viết lệnh nhập → khoá tuyến cũ.
+
+- loc-nhan-vien-theo-quyen-company-department-filter → @junfoke → .plans/gop-db/loc-nhan-vien-theo-quyen-company-department-filter/plan.md
+  Trạng thái: ✅ **Đã push gop_db + develop (05/11/2026)** — client `50ea799f7`. `CompanyDepartmentFilter.vue` ô Nhân viên lọc theo quyền xem của màn. Chưa thử Đơn xin nghỉ / quyền phòng ban, bộ phận.
+
+- Ghi nhanh 05/11/2026 (@junfoke), chi tiết ở plan từng màn: #12013 Sổ chi tiết công nợ NV + #12014/#12016 Công nợ đầu kỳ KH-HĐ (api `280c343e6`, client `fcde078c1`, chờ user xác nhận 2 chỗ đổi quyết định cũ) · #11996 lọc Ghi chú 6 màn hàng hoá (`viec-con-lai.md`) · giảm RAM build FE 6,1 → 2,2 GB `e212d0cfb` (`fe-build-toi-uu`) · merge task_11694/11695 vào develop (`division-market-employee`).
 
 - bang-can-doi-cong-no-nv → @junfoke → .plans/gop-db/bang-can-doi-cong-no-nv/plan.md
   Trạng thái: ✅ **Xong, đã merge develop + push (03/11/2026)** — api `9b12040ae`, client `f2831eb45` (nhánh `feat/bang-can-doi-cong-no-nv`, kéo theo cả Sổ chi tiết `d1d77cadd` / `3e6581b38` + ô số chuyến xe `d59dec8d8`); merge develop api `66ce147dd`, client `66a3d7d47`. Test 16 (+15 Sổ chi tiết). Làm mới hết gọi tải 2 lần (cả 2 màn). Seeder +2 quyền — dev cần `permission:sync`. Tách phần chung 2 màn ra trait `EmployeeDebtCommon`.

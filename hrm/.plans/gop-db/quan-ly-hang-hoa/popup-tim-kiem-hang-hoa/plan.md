@@ -1888,3 +1888,7 @@ Vừa hoàn thành: I1 (#11917) — chưa commit.
 Đang làm dở: không.
 Bước tiếp theo: user mở popup trên local/dev sau deploy kiểm lại; commit khi user yêu cầu.
 Blocked:
+
+## Phần J — 05/11/2026: popup chọn hàng bên ERP (@junfoke)
+- [x] 05/11/2026 — Hỗ trợ check "chọn catalog mà vẫn hiện hàng ngoài" (BGDV mục C): lọc đúng — dev-erp lĩnh vực "II. Dịch vụ ô tô" 767 hàng khớp cây; prod TPE chương "3. Sửa chữa, bảo dưỡng xe máy" 139 hàng đều có catalog thuộc chương, bật/tắt "Gồm hàng ngoài catalog" cùng kết quả (công tắc chỉ mở rộng phần "Tất cả"). Người dùng nhầm vì đọc cột **"Phân loại" = loại sản phẩm, không phải catalog** (vd tủ BETA ở Đồ nghề sửa xe máy › Tủ đồ nghề dụng cụ). Không sửa code. Yêu cầu sửa popup chọn hàng hồi trưa để sau — chưa chốt yêu cầu.
+- [x] 05/11/2026 — Popup chọn hàng (`TanPhatDev` `productPicker.blade.php`, `productPickerJs.blade.php`, dùng chung mọi màn có chọn hàng): ảnh 24×24 → **40×40px** co vừa khung, cột Ảnh 44 → 56px; bỏ `max-width: 360px` của chữ tên hàng (cột giãn mà chữ vẫn 2 dòng). Giải thích ảnh người dùng gửi cột tên rộng vì popup phóng to toàn màn + ẩn cây catalog + cột tên là cột duy nhất không có độ rộng cố định. Commit `51ce2e883a` (gop_db, đã push).

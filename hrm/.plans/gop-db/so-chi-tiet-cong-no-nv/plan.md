@@ -143,3 +143,8 @@ public function test_print_list_data_truncates_over_limit(): void
 - [x] 03/11/2026 — Sửa lỗi bấm Làm mới gọi API 2 lần (đi cùng commit Bảng cân đối): `handleReset` báo trước cho watcher bộ lọc. Ô Số tiền = 0 được bỏ qua như ERP.
 - [x] 03/11/2026 — Lên `origin/develop` cùng merge Bảng cân đối (api `66ce147dd`, client `66a3d7d47`). Dev cần `permission:sync`.
 - [ ] Chờ user: thêm index `account_details` (TK lớn 6 tháng ~6s → ~2,7s); xoá nhánh local `feat/chuyen-xe-cho-hang` (còn commit cũ `f3273c418` chưa push).
+
+## Ngày 05/11/2026 (@junfoke)
+- [x] 05/11/2026 — Lỗi #12013 (Sổ chi tiết công nợ nhân viên): gộp ô Số tiền từ/đến thành một ô "Số tiền" định dạng 1,234,567 như màn YC điều chỉnh công nợ.
+- [x] 05/11/2026 — Lỗi #12013: cùng bộ lọc mà dữ liệu khác ERP (TK 131 gần như trống) — ERP lấy mọi bút toán của TK, kể cả bút toán không gắn nhân viên, chỉ Số dư đầu kỳ mới lọc "phải có nhân viên"; HRM lọc "phải có nhân viên" cho mọi dòng theo spec mục 8.2 (02/11) → sửa theo ERP (`EmployeeDebtDetailService`), 4 file test liên quan qua. Commit api `280c343e6`, client `fcde078c1` (develop, đã push).
+- [ ] Chờ user xác nhận đảo spec mục 8.2; spec `docs/superpowers/specs/gop-db/2026-11-02-so-chi-tiet-cong-no-nhan-vien-design.md` chưa cập nhật theo.

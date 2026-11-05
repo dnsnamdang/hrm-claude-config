@@ -42,3 +42,8 @@ Vừa hoàn thành: e2e #11695 chạy xanh 16/16; test tự dọn phiếu NV ph�
 Bước tiếp theo: user review; commit task_11695.
 Blocked:
 Lệnh chạy: `cd e2e && PATH="/c/Users/Legion/AppData/Local/nvm/v24.6.0:$PATH" E2E_BASE_URL=http://127.0.0.1:3005 E2E_API_URL=http://127.0.0.1:8002 npx playwright test`
+
+## Ngày 05/11/2026 (@junfoke)
+- [x] 05/11/2026 — Đưa `task_11694` + `task_11695` (làm lại xử lý phiếu phân chia thị trường) vào `develop` cả 2 repo: api merge `f58667fba` / `8475075a8` (làm ở worktree `gop-db` vì develop đang bị worktree giữ), client `76e54cf26` / `966d70450` (thư mục chính). Conflict `V2BaseSegmented.vue` giữ bản develop; menu `sale-hub.js` tự gộp, "Phiếu phân chia thị trường" có 2 link Theo phòng ban / Theo nhân viên.
+- [x] 05/11/2026 — Xử lý lỗi editor gạch đỏ `V2BaseSegmented.vue`: comment HTML lồng trong comment đầu file (dòng 11) đóng sớm comment lớn → đổi thành chữ thường; có từ commit `868558c3c` của người khác, không do merge. Client `16c73fc24`.
+- [x] 05/11/2026 — Hỗ trợ lỗi ERP sau khi develop vào `gop_db`: tạo HĐ… báo SQL 1052 `employee_id ambiguous`. Đã lỡ revert merge task_11695 khỏi `gop_db` hrm-api (`5eb4b971e`) rồi khôi phục lại (`abd54ea75`, code y như `a9147a0d9`). Nguyên nhân thật: migration thêm cột `employee_id` vào `division_market_department_employees` ⇒ truy vấn ERP join bảng này mà `where('employee_id')` không ghi tên bảng bị mơ hồ; revert HRM không gỡ được cột. Chữa ở ERP: `FirmQuotationService::marketDivisionContract` đã được @nguyentrancu97 sửa (`7bc428417b`, origin/gop_db TanPhatDev) → chỉ cần pull `gop_db` TanPhatDev trên server. Không chạy SQL gỡ DB.
