@@ -26,3 +26,15 @@
     cần người dùng trả thử HD1526681.
   - Chưa làm: `pages/updateData/partials/SalesReturnModal.jsx` và `WarehousingReturnModal.jsx`
     có logic tương tự, ngoài phạm vi đơn này.
+
+- [x] **05/11/2026 — Hoàn tác phiếu trả nhầm HDT204604 của HD1526681 (prod)**
+  - Nghiệp vụ: khách bấm trả hết nên phiếu HDT204604 (02/11, 120 sp, hoàn 6.190.800 đ) trả luôn 3 thuốc
+    khách không định trả, kho lệch. Cần coi như chưa trả để khách trả riêng Becolitor 10.
+  - Kỹ thuật: gọi `v3.f_invoice_cancel` (store 2612) → phiếu `cancel`; dòng `cashbook` 2026359 → `cancel`
+    (đúng quy ước app). Hàm đảo kho chỉ đảo dòng quà vì `update … from` khớp nhiều dòng cùng lô chỉ áp
+    một dòng → 3 lô kẹt thừa 30 hộp (0690, 0770, 0140). Đối chiếu snapshot `t_stockym_agency` 202611 +
+    tồn trước khi hủy, bù trừ 30 hộp mỗi lô ở `warehouse` và `warehouse_agency` (có điều kiện khớp tồn).
+    Lô 0100 đảo đúng. Lưu ý: lỗi đảo kho này sẽ lặp lại với mọi phiếu trả có dòng bán + quà cùng lô.
+  - Sao lưu trước khi ghi: `scratchpad/backup_HDT204604_prod.csv` (invoice, cashbook, warehouse_agency).
+  - Trạng thái: **đã làm prod 05/11/2026**. HD1526681 `done`, chưa còn phiếu trả hiệu lực. Chưa có bản
+    vá cho lỗi đảo kho (ngoài phạm vi).
