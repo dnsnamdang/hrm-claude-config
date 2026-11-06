@@ -8,6 +8,8 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+  Trạng thái: **ĐANG LÀM (06/11/2026)** — thiết kế lại màn Chấm công TPE_APP (`ui/check_in_out`): đọc logic BE, vẽ pen cho user duyệt; chỉ 1 ca / 1 phiếu hôm nay thì tự chọn.
+
 - quyet-toan-thuong-nam → @nguyentrancu97 → .plans/quyet-toan-thuong-nam/plan.md
   Trạng thái: **ĐANG LÀM (04/11/2026)** — port "Quyết toán thưởng năm" ERP (`BonusEndYearSettlement`, controller `Accounting\BonusEndYearSettlementsController`) sang HRM `Modules/Finance`, FE `pages/finance/bonus-end-year-settlements`. 3 loại QT (DSTC/Lợi nhuận phòng/Lợi nhuận công ty), chi tiết theo **phòng ban**, có **BGĐ duyệt riêng** (status 2→3/4) chỉnh tỉ lệ duyệt từng phòng. **KHÔNG ghi sổ account_details** (chỉ đọc TK 511/521x để lấy doanh số thực + `sales_department_plans` status=3 cho DSTC đăng ký). Ghi bảng ERP sẵn có; tạo mới model `bonus_end_year_settlements(+details+files)` + `sales_department_plans`. Màn **cấu hình** quỹ thưởng ĐÃ port sẵn (regulation-config tab `thuongnam` / `CompanyBonusEndYearConfig`) → chỉ đọc. 5 quyền mới type 8. Khuôn: `finance/bill-payments` + `settlement_contract`. Spec: `design.md`.
 
@@ -21,6 +23,10 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 
 ## Hoàn thành
+
+- app-cham-cong → @cuong61n → .plans/app-cham-cong/plan.md (deploy dev + prod, HRM TPE 2.3.8 gửi duyệt 06/11/2026)
+- app-don-xin-nghi → @cuong61n → .plans/app-don-xin-nghi/plan.md
+  Trạng thái: **CODE + TEST XONG (06/11/2026), chờ user xem + cho commit** — thiết kế lại Đơn xin nghỉ trên TPE_APP theo logic web (bản vẽ "DXN · Đơn xin nghỉ" trong meeting-mobile_v2.pen); sửa 3 lỗi user báo (thiếu Loại nghỉ / Lý do từ chối / dấu *) + người bàn giao, is_calc_holiday, NSHC duyệt, trùng đơn, hủy cơm; BE thêm status_color (web + app cùng màu).
 
 - hd-ban-dau-ky → @nguyentrancu97 → .plans/hd-ban-dau-ky/plan.md
   Trạng thái: **XONG + ĐÃ MERGE + PUSH `develop` (05/11/2026)** — port "Hợp đồng bán đầu kỳ" ERP (`Accounting\OpeningContractController`, bảng `opening_contracts`) sang HRM `Modules/Finance` + FE `pages/sale/opening-contracts`. 4 quyền xem mới type 23 (tạo/sửa/xoá/import không gate như ERP), chặn sửa/xoá khi đã khai báo công nợ đầu kỳ / có hạch toán (middleware `CheckOpeningContractEditable`), import/xuất/in (template 467)/lịch sử. Kèm: link ContractCostModal → HRM, sửa sort màn BPSQ. 9 test BE xanh (cả trên bản gộp), Playwright đủ luồng. hrm-api develop `1f0ad33e6` (feature `9ab7cbed2`; xung đột seeder quyền với khối Sổ chi tiết công nợ NCC → giữ cả 2) · hrm-client develop `fdbb5f5b5` (feature `7195ff4c0`). Nhánh `feature/hd-ban-dau-ky` đã push; worktree hdbdk đã xoá. Còn: chạy seeder quyền trên server + admin gán quyền.

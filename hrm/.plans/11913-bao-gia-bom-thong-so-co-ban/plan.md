@@ -30,5 +30,11 @@ báo giá/BOM, không migration); hàng tạm → trống.
   · BOM-00030: xuất Excel đổi thứ tự rồi nhập lại → 3/3 Hợp lệ, 0 lỗi; BOM-00006 nhập: header đủ, cột thừa bỏ qua (Validate bị chặn "chỉ người tạo BOM" — không liên quan task)
   · Ghi chú: popup "Chọn cột hiển thị" của BOM không có nút mở (sẵn từ trước); `e2e/` trống trên máy này nên chưa có spec lưu lại.
 
+## Testcase (#11913)
+- [x] 06/11 Viết 28 testcase Báo giá (TC-BG-17 → TC-BG-44) vào Google Sheet "Testcase _Quản lý dự án", tab Update_3107_Baogia, nhóm "UPDATE TESTCASE 06/11/2026" (dòng 507–535, sau TC-BG-16). Theo khuôn nhóm UPDATE cuối tab: chỉ thêm dòng mới, cột DNS/TP check để trống, không sửa dòng cũ.
+  · 5 nhóm nhỏ: cột Thông số kỹ thuật (Xem thêm/Thu gọn) 7 case · cột Thông số cơ bản (Tạo mới/Cập nhật/Xem chi tiết, hàng tạm trống) 10 case · Cấu hình in 4 case · Xuất Excel 4 case · Import Excel (bỏ qua cột, thiếu cột không lỗi, xuất rồi nhập lại) 3 case.
+  · Viết theo UI thật: In = ô "Thông số cơ bản" trong "Chọn cột hiển thị" (không phải checkbox riêng như mô tả task); Xuất Excel = popup "Chọn trường xuất file".
+  · Trạng thái: đã ghi lên Sheet, chờ DNS test. Chưa làm tab BOM (Update_3107_BomList) — chờ user xác nhận.
+
 ## Còn mở
 - Báo giá tổng hợp (`summary-quotations`) chưa làm cột này (ngoài phạm vi task).

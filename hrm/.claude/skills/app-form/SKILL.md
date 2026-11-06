@@ -53,8 +53,9 @@ BottomActionBar [ Hủy ][ Lưu ]     ← nút trắng trái, nút chính phải
 
 | Số mục | Cách chọn |
 |---|---|
-| ≤ ~15, cố định (danh sách cá nhân, loại nghỉ) | `showModalBottomSheet` (`useRootNavigator: true`), mục đang chọn có ✓, bấm là chọn + đóng |
-| Nhiều / tìm máy chủ (nhân sự, khách hàng, dự án) | trang chọn toàn màn: `pickEmployee()`, `CustomerPickerPage`, `MeetingEmployeePickerPage` |
+| ≤ 8, cố định (loại meeting, lý do hủy, sắp xếp) | `showAppPickSheet` (khuôn PK-03), mục đang chọn đậm + ✓, bấm là chọn + đóng |
+| > 8 danh mục đã tải (loại nghỉ) | `pickWorkOption` — trang chọn có ô tìm (PK-01) |
+| Tìm máy chủ (nhân sự, khách hàng, dự án) | trang chọn toàn màn phẳng (PK-02): `pickEmployee()`, `CustomerPickerPage`, `MeetingEmployeePickerPage` — chi tiết khuôn: `app-list-page` mục 5 |
 
 - KHÔNG hộp thoại nhỏ có ô tìm + danh sách nhãn xếp dọc (kiểu `ChonNvPage` cũ — đã thay 29/10/2026).
 - Giá trị đang chọn mà danh mục đã khoá vẫn hiện đúng tên (thêm vào danh sách chọn nếu thiếu), không đổi ngầm.

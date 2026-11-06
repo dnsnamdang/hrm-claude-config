@@ -25,6 +25,10 @@ chỉ dùng chữ không dấu (`VIEC`, `TASK`, `PGV`, `PCT`, `MET`).
   giao công tác dùng `lateInEarlyOutApprove` → app mở màn duyệt Đi muộn về sớm; phần "Tạo mới" đã đổi sang
   `assign_job` / `assign_business` 29/10/2026, các thông báo Chờ duyệt / Đã duyệt cũ của 2 phiếu này vẫn còn sai).
 - `data.id` = id đối tượng cần mở (không phải id người nhận).
+- ⚠️ **Thêm màn cho loại NHẠY CẢM** (prefix nằm trong `NotificationMeta::SENSITIVE_PREFIXES` — Quyết định `QD`,
+  bảo hiểm `DKBH`, hồ sơ `HSTK`, thu chi `DNTT`/`PT`/`PC`/`PBC`/`PKT`/`DCCN`/`HTBS`…) → ngoài `case` ở router **PHẢI
+  thêm prefix vào `NotificationMeta::APP_SCREEN_PREFIXES`** (hrm-api). Chưa thêm thì push màn hình chờ vẫn ghi
+  "Xem chi tiết trên web" thay vì "Mở ứng dụng để xem chi tiết" (chốt 06/11/2026, skill `notification-convention` mục 6).
 - Nhắc hạn Việc của tôi: `type = work_reminder.<loại>` (task, issue, assign_job, assign_business, ts_job,
   ts_business, meeting, personal, digest) → `openWorkItemById(loại, id)` (`ui/my_todo/my_todo_actions.dart`).
   Loại chưa có màn trên app (issue) → snackbar "chưa có trên app"; personal / digest → mở Việc của tôi.
@@ -53,6 +57,31 @@ chỉ dùng chữ không dấu (`VIEC`, `TASK`, `PGV`, `PCT`, `MET`).
 - Thử: `xcrun simctl terminate` app → `simctl push` (payload có `gcm.message_id`) → chạm banner NGAY (≤ 2s, banner tự
   tắt; chạm thông báo trong Trung tâm thông báo của simulator không ăn) → chờ ~15s (bản debug khởi động chậm) → chụp màn.
 
+## 2c. Số chưa đọc: chuông ↔ icon app ↔ màn Thông báo — MỘT nguồn (chốt 06/11/2026)
+
+Nguồn duy nhất = số chưa đọc BE (`unreadNotificationCount` của `users/auth/user-profile` =
+`$employeeInfo->unreadNotifications()->count()`). App KHÔNG tự cộng / trừ số trên icon.
+
+| Lúc nào | Ai đặt số | Ở đâu |
+|---|---|---|
+| Push đến (kể cả app tắt hẳn) | BE gửi kèm `aps.badge` (iOS) + `notification_count` (Android) | `App\Support\NotificationBadge` → `FCMService::setBadge()` trong `SendNotification` / `Rice\SendMobileNotification` |
+| Mở app · quay lại app · đăng nhập | `NotificationBellButton.refreshAll()` | `MyApp` (`AppLifecycleListener`), `AppBloc._onInitLoad`, `LoginBloc` |
+| Push đến lúc đang mở app | `refreshAll()` trong `onMessage` | `AppBloc` |
+| Đọc 1 dòng / vuốt đọc / Đọc tất cả | màn Thông báo đẩy tổng mới lên `NotificationBellButton.setCount()` | `NotificationPage` (BlocListener) |
+| Bấm push | gọi `mark_as_read` theo `data.notification_id` rồi `refreshAll()` | `AppBloc._markPushRead` |
+| Đăng xuất / phiên hết hạn | `AppIconBadge.set(0)` | `UserRepositoryImpl.logout`, `RemoteExceptionHandler` |
+
+- `NotificationBellButton` giữ số DÙNG CHUNG (`count` — `ValueListenable`) cho mọi nút chuông + icon; `refreshAll()` gộp
+  các lần gọi trùng thành 1 request. Màn Thông báo nghe `count`, lệch số đang hiện thì tự tải lại (push mới lúc đang mở màn).
+- `AppIconBadge` (`lib/helper/app_icon_badge.dart`): iOS đặt số qua kênh `hrm/tp` `setBadgeCount` (AppDelegate), về 0
+  thì xoá khay; Android không đặt được số (launcher tự đếm theo khay / Android gốc chỉ chấm) → về 0 thì xoá khay.
+- **"Đọc tất cả" chỉ đọc hết PHÂN HỆ của chip đang chọn** (chip "Tất cả" = mọi phân hệ) — user chốt GIỮ cách này
+  06/11/2026 sau khi đã thử đổi sang "luôn đọc hết". Nút hiện theo số chưa đọc của chip đang chọn; đọc xong chuông + icon
+  còn số của phân hệ khác là ĐÚNG. Đọc xong ở tab "Chưa đọc" thì tải lại cho trống.
+- Đường gửi push mới: truyền `notification_id` (id dòng `notifications`) vào `$notificationData` trước khi dispatch —
+  thiếu thì bấm push không đánh dấu đã đọc, và số trên icon có thể thiếu 1 nếu job chạy trước khi dòng được ghi.
+- Thử số trên icon ở simulator MỚI: Cài đặt → app → Notifications phải BẬT (mặc định Tắt → push/badge không hiện).
+
 ## 3. Nhắc hạn (BE `WorkReminderService`, chốt 29/10/2026)
 
 - Từ 02/11/2026 MỖI NGƯỜI tự cấu hình (app: Cài đặt → Thông báo → Nhắc việc, cùng chỗ với Thông báo cơm · web popup ở Việc của tôi, API
@@ -78,4 +107,6 @@ chỉ dùng chữ không dấu (`VIEC`, `TASK`, `PGV`, `PCT`, `MET`).
 
 - [ ] Nội dung dựng ở BE theo `notification-convention`, tiền tố không dấu
 - [ ] `type` riêng đúng đối tượng + `case` trong `openNotificationTarget()` (thử bấm cả push lẫn dòng ở màn Thông báo); `id` là id đối tượng
+- [ ] Loại nhạy cảm vừa có màn trên app → đã thêm prefix vào `NotificationMeta::APP_SCREEN_PREFIXES` (push ra "Mở ứng dụng để xem chi tiết")
 - [ ] Bấm thử trên app mở đúng màn; push hiện đúng trên màn hình khoá
+- [ ] Đường gửi push mới có `notification_id` + số trên icon đúng (mục 2c): push đến → icon = số chưa đọc; bấm push → giảm 1

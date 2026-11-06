@@ -139,6 +139,22 @@ màn hình chờ + toast chỉ còn người hoặc mã + `Mở ứng dụng đ�
 HĐLĐ sắp hết hạn **không** nhạy cảm (user 02/11/2026 — hiện "còn N ngày"). Thêm loại có lương / tiền / sức khoẻ /
 hồ sơ cá nhân → khai vào danh sách này.
 
+**Lời nhắc thay ghi chú phải chỉ ĐÚNG nơi xem được** (user chốt 06/11/2026) — `NotificationMeta::privateHint()`:
+
+| Nơi hiện | Điều kiện | Câu |
+|---|---|---|
+| Push điện thoại | prefix có trong `APP_SCREEN_PREFIXES` (app ĐÃ có màn) | `Mở ứng dụng để xem chi tiết` |
+| Push điện thoại | loại mới chỉ làm trên **web**, app chưa có màn | `Xem chi tiết trên web` |
+| Toast web (`NotificationSocket`, `push($data, true)`) | mọi loại nhạy cảm | `Bấm để xem chi tiết` |
+
+Lý do: trước đây mọi loại đều ghi "Mở ứng dụng…", nhưng Quyết định / bảo hiểm / hồ sơ / thu chi chưa có màn trên app —
+bấm vào app lại báo "chưa có trên app, xem trên web", 2 câu nói ngược nhau.
+
+- **Làm loại nhạy cảm mới chỉ có trên web** → chỉ khai `SENSITIVE_PREFIXES`, **KHÔNG** thêm vào `APP_SCREEN_PREFIXES`
+  (tự ra "Xem chi tiết trên web").
+- ⚠️ **Sau này làm màn đó trên app** (thêm `case` trong `notification_router.dart`) → **PHẢI thêm prefix vào
+  `APP_SCREEN_PREFIXES`** cùng lúc. Quên thì push vẫn bảo xem trên web dù app đã mở được. Hiện có: `DXN`, `DMVS`, `BL`.
+
 ---
 
 ## 7. Bấm vào mở đúng màn — `type` + `id` + `url`
@@ -154,6 +170,16 @@ hồ sơ cá nhân → khai vào danh sách này.
   `push_body`, `comment_id`), không thì bị lọc mất.
 
 ---
+
+## 7b. Số trên icon app (badge) + đánh dấu đã đọc khi bấm push (06/11/2026)
+
+- Push luôn gửi kèm **số chưa đọc** của người nhận (iOS `aps.badge`, Android `notification_count`) —
+  `App\Support\NotificationBadge::unreadCount()` + `FCMService::setBadge()`, đã nối sẵn trong `SendNotification` và
+  `Rice\SendMobileNotification`. Đếm cùng cách số chuông (2–3 ms trên bảng 637k dòng PROD, chạy trong job nền).
+- Đường gửi mới tự dispatch job push → đặt `$notificationData['notification_id'] = $notification->id` (id dòng
+  `notifications`) trước khi dispatch: app dùng để đánh dấu đã đọc khi bấm push, và job cộng thêm 1 nếu dòng chưa kịp ghi.
+- Tự gọi `FCMService` ngoài 2 job trên → `setBadge(NotificationBadge::unreadCount($infoId, $notificationId))`.
+- Phía app: skill `app-notification` mục 2c.
 
 ## 8. Cách implement
 
@@ -197,6 +223,8 @@ toast: `utils/notificationToast.js` (gọi từ `components/BasicSubsystem.vue`)
 - [ ] Dựng bằng `NotificationMeta::build()`; nhóm hành động nằm trong mục 2
 - [ ] Tên là tên riêng, không lặp tên loại; ghi chú dùng đúng nhãn mục 4, chữ tự do để cuối
 - [ ] Prefix mới đã khai `OBJECT_LABELS` (loại nhạy cảm → `SENSITIVE_PREFIXES`)
+- [ ] Loại nhạy cảm: app có màn mở được thì thêm vào `APP_SCREEN_PREFIXES`, chưa có thì KHÔNG (mục 6)
+- [ ] Tự dispatch job push → có `notification_id` trong `$notificationData` (mục 7b)
 - [ ] `type` đúng loại đối tượng, `id` = id phiếu, `url` có ID
 - [ ] `push_title` riêng (nếu có) ≤ 28 ký tự
 - [ ] Gửi qua `sendNotification` / `NotificationSocket::publish`, không `Redis::publish` tay

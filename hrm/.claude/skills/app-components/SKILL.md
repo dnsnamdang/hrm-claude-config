@@ -53,8 +53,11 @@ Meeting — dựng cho Meeting trước, Việc của tôi đã dùng lại. Mà
 | Thẻ việc (Việc của tôi / lịch) | `WorkItemCard` (`ui/my_todo/widget/work_item_card.dart`) |
 | Thẻ meeting | `MeetingCard` (`ui/meeting/widget/meeting_card.dart`) |
 | Badge trạng thái | `StatusBadge(text:, color:, textColor:)` — chữ + màu do BE trả (`common_view/status_badge.dart`) |
-| Danh sách tìm phía máy chủ có phân trang (màn chọn) | `MeetingSearchList<T>(fetch: (kw, page, filters) => SearchPage(...), itemBuilder:, hint:, grouped:)` |
-| Thẻ gom nhiều dòng | `meetingGroupedCard([...])` |
+| Danh sách tìm phía máy chủ có phân trang (màn chọn) | `MeetingSearchList<T>(fetch: (kw, page, filters) => SearchPage(...), itemBuilder:, hint:, flat: true)` — màn chọn LUÔN `flat: true` + dòng `AppPickTile` (khuôn PK, chốt 06/11/2026) |
+| Dòng trong màn chọn / bảng chọn | `AppPickTile(title:, subtitle:, selected:, multi:, enabled:, note:, trailing:)` + `AppPickClearTile` ("Bỏ chọn") — `custom_view/app_pick_tile.dart` |
+| Bảng trượt chọn 1 (≤ 8 mục) | `showAppPickSheet<T>(context, title:, items: [AppPickItem(v, title)], isSelected:, clearValue:, message:)` — KHÔNG tự dựng `showModalBottomSheet` + `ListTile` |
+| Xem ảnh to (bấm ảnh thu nhỏ) | `showAppPhotoViewer(urls, initialIndex:, caption:, subCaption:)` (`custom_view/app_photo_viewer.dart`) — toàn màn nền tối, vuốt qua lại, chụm phóng to, 1 / N, chú thích đáy. KHÔNG tự dựng `AlertDialog` / `Dialog` ảnh cố định cỡ |
+| Thẻ gom nhiều dòng | `meetingGroupedCard([...])` — KHÔNG dùng trong màn chọn (khuôn PK là danh sách phẳng) |
 
 ## 4. Form → quy tắc ở `app-form`
 
@@ -67,7 +70,7 @@ Meeting — dựng cho Meeting trước, Việc của tôi đã dùng lại. Mà
 | Công tắc bật / tắt (1 dòng cài đặt, 1 tuỳ chọn) | `AppSwitch(value:, onChanged:, color:)` (`custom_view/app_switch.dart`) — CÙNG kiểu iOS trên cả Android; KHÔNG dùng `Switch` / `Switch.adaptive` (Android ra núm xanh dương theme) |
 | Nút gạt 2–3 lựa chọn | `MeetingSegmented(options: [(value, label, icon)], value:, onChanged:)` — nền trắng TRƯỢT ngang |
 | Khối gập đánh số ①②③ | `MeetingSection` |
-| Chọn 1 nhân sự (toàn trang, tìm máy chủ) | `pickEmployee()` → `ApiNvData?` (`ui/chon_nv/employee_picker.dart`) |
+| Chọn 1 nhân sự (toàn trang, tìm máy chủ) | `pickEmployee(title:, selectedId:, allowClear:)` → `ApiNvData?` (`kPickEmployeeCleared` = bấm Bỏ chọn) (`ui/chon_nv/employee_picker.dart`) |
 | Chọn nhân sự (Meeting, nhiều người, gợi ý) | `MeetingEmployeePickerPage` |
 | Chọn khách hàng | `CustomerPickerPage<T>(fetch:, describe: → CustomerPickInfo)` (`ui/customer_picker/`) — vd `pickJobAssignCustomer()` |
 | Soạn văn bản có định dạng (HTML như web) | `MeetingRichEditor` |

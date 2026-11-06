@@ -13,7 +13,7 @@ theo hạn, lọc chip chọn 1). Đọc `app-components` mục 3 để biết w
 ```
 PrimaryAppBar (☰/‹ · tiêu đề · chuông)          ← không nút lọc / ➕ trên header
 ListFilterBar  [🔍 Tìm theo …        ] [⚙ 2]     ← dải trắng ngay dưới header
-               (chip tiêu chí đang bật có ✕)   (dòng "24 / 128 phiếu · Xoá lọc" nếu có)
+               (chip tiêu chí đang bật có ✕)   (dòng "Tổng 128 phiếu" / "24 / 128 phiếu · Xóa lọc")
 RefreshIndicator → ListView (thẻ / nhóm)         ← kéo xuống = tải lại
 ```
 
@@ -66,6 +66,12 @@ if (v != null && mounted) _apply(v);          // _apply: setState(_values = v) +
 
 ## 3. Nội dung danh sách
 
+- **Dòng tổng** (user chốt 06/11/2026): `ListResultLine` tự trình bày "Tổng **128** phiếu" (chưa lọc) / "**24** / 128 phiếu"
+  (đang lọc) — số đậm màu chữ chính, chữ xám. Màn chỉ truyền `resultText: '128 phiếu'` hoặc `'24 / 128 phiếu'`
+  (số theo `en_US`), KHÔNG tự ghép chữ "Tổng" hay tự tô đậm.
+- **Khoảng cách dòng tổng → thẻ đầu = 10** (user chốt 06/11/2026, khuôn màn Nhiệm vụ): `ListFilterBar(resultText:)` đã
+  có lề dưới 10 → danh sách bên dưới để lề TRÊN = 0 (`EdgeInsets.fromLTRB(16, 0, 16, 16)`). Khai thêm lề trên 8 / 12 / 16
+  là khoảng hở 18–26, nhìn rộng hơn các màn khác (đã sửa đồng loạt 18 màn ngày 06/11/2026).
 - **Thẻ:** `AppCard` hoặc thẻ chuyên (`WorkItemCard`, `MeetingCard`). Dòng đầu: loại (chip màu loại) · vai trò ·
   badge trạng thái bên phải; tên đậm 14; các dòng meta có icon 13–14 xám (thời gian, địa điểm, bước…).
 - **Badge trạng thái:** `StatusBadge` chữ + màu **do BE trả** (`status_text` / `status_color`), không map số →
@@ -89,12 +95,27 @@ if (v != null && mounted) _apply(v);          // _apply: setState(_values = v) +
 - Sau khi màn con đổi dữ liệu (tick, lưu, xoá) → danh sách tự tải lại (nghe `ValueNotifier` chung hoặc
   `push(...).then(reload)`), không bắt user kéo.
 
-## 5. Màn chọn (picker)
+## 5. Màn chọn (picker) — 1 khuôn chung (user chốt 06/11/2026)
 
-- Toàn trang (không hộp thoại nhỏ): `PrimaryAppBar` có ✕ · 1 ô tìm · danh sách `MeetingSearchList` (gom thẻ
-  `grouped: true`) · bấm dòng là chọn + đóng. Ô lọc phụ (MST, SĐT…) nằm trong bảng lọc, không xếp thêm hàng ô gõ.
-- Mẫu: `pickEmployee()` (nhân sự), `CustomerPickerPage` (khách hàng), `MeetingEmployeePickerPage` (chọn nhiều + gợi ý).
-- Nhân viên hiển thị `Tên` + dòng phụ `chức danh · phòng ban · mã` (web: `Tên - Mã phòng - Mã NV`).
+Bản vẽ: board "PK · Màn chọn — khuôn chung" trong `meeting-mobile_v2.pen` (PK-01 → PK-04).
+
+- **Dòng chọn = `AppPickTile`** (`custom_view/app_pick_tile.dart`) ở MỌI màn chọn: danh sách PHẲNG trên nền
+  trắng, kẻ dưới mảnh, tên 15 + dòng phụ xám 12.5. Mục đang chọn chữ đậm màu phân hệ + ✓. KHÔNG thẻ / khối gom
+  nhóm, KHÔNG avatar, KHÔNG dấu › (› = mở sang màn khác). Không chọn được → `enabled: false` (mờ) + `note:` lý do (cam).
+- **≤ 8 mục, không cần tìm** → `showAppPickSheet(context, title:, items: [AppPickItem(value, title, subtitle:)],
+  isSelected:, clearValue:, message:)` (PK-03: thanh kéo · tiêu đề + ✕ · các dòng). KHÔNG tự dựng
+  `showModalBottomSheet` + `ListTile` cho bảng chọn.
+- **> 8 mục / danh mục đã tải** → `pickWorkOption` (tự chọn bảng trượt hay trang theo số mục).
+- **Tìm máy chủ** (nhân sự, khách hàng, dự án, hợp đồng) → trang toàn màn `MeetingSearchList(flat: true)` +
+  `CommonScaffold(backgroundColor: Colors.white)` + `PrimaryAppBar(showNotificationBell: false)` (header ‹, không ✕,
+  không chuông, không nút Hủy đáy). Không dòng "KẾT QUẢ · n".
+- **Ô không bắt buộc đang có giá trị** → dòng "Bỏ chọn" (`AppPickClearTile`) đầu danh sách
+  (vd `pickEmployee(selectedId:, allowClear: true)` → trả `kPickEmployeeCleared`).
+- **Chọn nhiều** (PK-04) → `AppPickTile(multi: true)` (vòng tròn bên phải) + thanh đáy `[Hủy | Xác nhận (n)]`;
+  trang con chọn nhiều của bảng lọc cũng dùng vòng tròn.
+- Mẫu: `pickEmployee()`, `CustomerPickerPage`, `MeetingCustomerPickerPage`, `MeetingProjectPickerPage` (chọn nhiều),
+  `MeetingContractPickerPage`, `MeetingEmployeePickerPage`, `pickWorkOption`.
+- Nhân viên: `Tên` + dòng phụ `chức danh · phòng ban · mã` (web: `Tên - Mã phòng - Mã NV`).
 
 ## Checklist
 
