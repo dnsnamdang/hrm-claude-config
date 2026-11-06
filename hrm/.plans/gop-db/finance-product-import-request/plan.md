@@ -1444,3 +1444,7 @@ Blocked: không.
 
 ## Ngày 30/10/2026 (@junfoke)
 - [x] 30/10/2026 — Lỗi #11930 ([ERP => HRM] - Phiếu yêu cầu nhập hàng): nút xoá dòng hàng (bảng hàng loại Nhập hàng khác / Nhập gửi) và nút xoá ở bảng chi phí nội địa canh giữa ô. `ProductImportRequestForm.vue`, client `137f82d43` — đã lên origin/develop.
+
+## Ngày 06/11/2026 (@junfoke)
+- [x] 06/11/2026 — Fix phản hồi #12020 (Phiếu yêu cầu nhập hàng): các ô hàng hai của "Thông tin chung" (Hợp đồng, Nhà cung cấp, Kho nhập, Vận chuyển…) chia đều hết bề ngang, không còn trống bên phải — ≤5 ô nằm 1 hàng, 6 ô xếp 2 hàng × 3; hàng chỉ có 1 ô (loại 14/15 tick Nhập thẳng) kéo hết hàng. `ProductImportRequestForm.vue`, client `8b6321dbc` (develop).
+- [x] 06/11/2026 — Fix phản hồi #12051: icon Từ chối ở cột Hành động đổi sang `ri-close-circle-line` (ⓧ), giống màn Yêu cầu xuất bán hàng mượn và nút Từ chối màn chi tiết. Client `4269cf7cc` (develop, đã lên origin).

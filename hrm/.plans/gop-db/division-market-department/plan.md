@@ -35,3 +35,7 @@ Sửa trong lúc verify: bảng chi tiết thêm viền dọc (table-bordered, u
 Đang làm dở: không.
 Bước tiếp theo: user duyệt → commit nhánh task_11694 (2 repo).
 Blocked:
+
+## Ngày 06/11/2026 (@junfoke)
+- [x] 06/11/2026 — Fix phản hồi #12042 (Phiếu phân chia thị trường theo phòng ban): ô SL NV tối đa chỉ nhận chữ số; màn Tạo bỏ ô Số phiếu, thêm "Lưu và tiếp tục" (lưu xong ở lại form trắng), icon "Lưu và duyệt" như Phiếu giao việc WR; danh sách đổi "Người lập / Ngày lập" → "Người tạo / Ngày tạo" (cả bộ lọc + Excel danh sách); chỉ sort Số phiếu + các cột ngày; Thêm Tỉnh/TP xong hiện toast "Thêm thành công"; thêm Xuất Excel từng phiếu (menu ⋮ danh sách + màn Chi tiết, giống ERP — file mới `utils/export/divisionMarketPhieuExcel.js`); chặn Duyệt / Gửi duyệt khi khu vực KD đã khoá, báo rõ tên khu vực (áp cả phiếu nhân viên, Lưu vẫn giữ được); popup Tạo khu vực KD (Danh mục KVKD) tick luôn một kiểu, dòng đứng yên + dấu tick; ô "Tìm khu vực" khoá hẳn khi chưa chọn tỉnh. Commit api `fb890c98d`, client `8b6321dbc` (develop).
+- [x] 06/11/2026 — Fix phản hồi #12056: Hủy duyệt xong quay về danh sách; trạng thái đưa lên tiêu đề cạnh mã phiếu (màn Sửa + Chi tiết), bỏ badge trong khối "Thông tin phiếu"; nút Xuất Excel màu xanh lá như màn khác. Lỗi 9 (ô "Tìm khu vực" khoá vẫn hiện con trỏ) đã có ở lần đẩy trước, ảnh QA chụp bản cũ. Bấm thật trên trình duyệt, client `4269cf7cc` (develop, đã lên origin).

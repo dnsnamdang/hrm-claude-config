@@ -1,0 +1,6 @@
+# Sổ chi tiết vật tư (accountingStockCard): quyền "Xem báo cáo hàng tồn kho theo tổng công ty" chưa từng được tạo (ERP) — @junfoke
+
+## Ngày 06/11/2026 (@junfoke)
+- [x] 06/11/2026 — Hỗ trợ check vì sao chị Nguyễn Thị Mỹ Dung (NV 195) không xem Sổ chi tiết vật tư theo tổng công ty: màn cần `Kế toán kho` (route) + `Xem báo cáo hàng tồn kho theo tổng công ty` (ô Công ty, danh sách kho mọi công ty, dữ liệu Lọc/Excel/In ở `Product.php`). ERP kiểm quyền theo công ty trong hồ sơ NV (`role_has_permissions.company_id`). Tra prod: quyền tổng công ty **không tồn tại** trong bảng `permissions` — code kiểm từ lâu nhưng seeder chưa từng khai ⇒ không ai (trừ Super Admin) xem được tổng công ty.
+- [x] 06/11/2026 — Thêm quyền vào cuối `PermissionsTableSeeder.php` (nhóm Kế toán, cạnh `Kế toán kho`), `permission:sync --dry-run` ok. Rà hết màn: không thiếu quyền nào khác (Xuất Excel có quyền riêng). Commit `ee298400da` (gop_db, đã push). Server cần `permission:sync` rồi tick quyền cho chức vụ ở đúng tab công ty.
+- [x] 06/11/2026 — Hỗ trợ check màn có 4 quyền "Xem yêu cầu chuyển hàng theo tổng công ty / công ty / phòng ban / bộ phận": là quyền của màn Phiếu yêu cầu chuyển hàng (`product_transfer_requests?type=all`), không dính phiếu báo hàng về; xét lần lượt từ trên xuống — xem [fix-canview-phieu-yeu-cau-chuyen-hang](../fix-canview-phieu-yeu-cau-chuyen-hang/plan.md).

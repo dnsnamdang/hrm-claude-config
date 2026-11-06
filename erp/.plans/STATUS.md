@@ -2,7 +2,14 @@
 
 ## Hoàn thành
 
-- [#12019 BGDV: ghi chú từng dòng mục C + chặn chọn trùng hàng](12019-bgdv-ghi-chu-hang-hoa-muc-c/plan.md) — @junfoke 2026-11-05. `01379ab72f` → develop_02 (`147354bfc1`, cần migrate); chặn trùng `209d1867a2` gop_db. `task_12019` chưa vào gop_db.
+- [Mẫu in "Báo giá dịch vụ" + BGDV-02A lọt vào Loại HĐ dịch vụ](mau-in-loai-bao-gia-dich-vu/plan.md) — @junfoke 2026-11-06. Chặn tạm `d9978f0644` gop_db; loại mẫu in 13 `5d42014853` → develop_02 (`69c62c82d9`, cần migrate). Chưa vào gop_db.
+- [PYC chuyển hàng: chi tiết/In xét 4 quyền phạm vi](fix-canview-phieu-yeu-cau-chuyen-hang/plan.md) — @junfoke 2026-11-06. `ce03b6832f` gop_db.
+- [Sổ chi tiết vật tư: thêm quyền xem tổng công ty vào seeder](quyen-so-chi-tiet-vat-tu-tong-cong-ty/plan.md) — @junfoke 2026-11-06. `ee298400da` gop_db, cần `permission:sync`.
+- [Cảnh báo phân công NV phụ trách hãng đếm nhầm phòng](fix-canh-bao-phan-cong-nv-phu-trach-hang-sai-phong/plan.md) — @junfoke 2026-11-06. `79aea9119c` + `9908e677b4` (PCTT NV) gop_db.
+- [Chi phí phải trả: hiện ô % VAT](chi-phi-phai-tra-hien-o-vat/plan.md) — @junfoke 2026-11-06. `f10f16c882` gop_db.
+- [Import KH bỏ bắt buộc Nhóm KH](import-khach-hang-bo-bat-buoc-nhom-kh/plan.md) — @junfoke 2026-11-06. `18b24cff48` gop_db.
+- #12019 merge vào gop_db `ad93fc03a1`; popup chọn hàng thêm cột Thời gian bảo hành `5e6cb6bdf4` (+ hrm-api `36269786a`) — xem `hrm/.plans/gop-db/quan-ly-hang-hoa/popup-tim-kiem-hang-hoa/plan.md` — @junfoke 2026-11-06.
+- [#12019 BGDV: ghi chú từng dòng mục C + chặn chọn trùng hàng](12019-bgdv-ghi-chu-hang-hoa-muc-c/plan.md) — @junfoke 2026-11-05. `01379ab72f` → develop_02 (`147354bfc1`, cần migrate); chặn trùng `209d1867a2` gop_db. `task_12019` vào gop_db 06/11 (`ad93fc03a1`).
 - [Quyết toán HĐDV báo "chưa hoàn thành giao việc" khi có PGV đời cũ](fix-quyet-toan-hddv-giao-viec-pgv-doi-cu/plan.md) — @junfoke 2026-11-05. Cộng cả tiến độ + PDKQ của PGV cũ. `9323072f2b` gop_db.
 - [HĐ dự án: số HĐ nhận "/" + tối đa 70 ký tự](so-hop-dong-du-an-gach-cheo-70-ky-tu/plan.md) — @junfoke 2026-11-04/05. `49571151fc`, `51ce2e883a` gop_db. Popup chọn hàng: ảnh 40px, bỏ chặn 360px tên hàng (cùng `51ce2e883a`).
 - [PLBS HĐ hãng chặn lưu "chưa có giá (loại giá N)"](fix-plbs-hd-hang-sale-max-percent/plan.md) — @nguyentrancu97 2026-11-03. `FirmContractService` sync đọc `sale_max_percent` ngoài try/catch → bọc try, thiếu giá = 0. `1018518339` gop_db.

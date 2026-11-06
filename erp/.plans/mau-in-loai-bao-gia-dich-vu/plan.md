@@ -1,0 +1,8 @@
+# Mẫu in báo giá dịch vụ BGDV-02A lọt vào "Loại hợp đồng" HĐ dịch vụ + thêm loại mẫu in "Báo giá dịch vụ" (ERP) — @junfoke
+
+## Ngày 06/11/2026 (@junfoke)
+- [x] 06/11/2026 — Xử lý lỗi HĐ dịch vụ (vd HĐ 8297) in ra "BÁO GIÁ DỊCH VỤ BẢO DƯỠNG SỬA CHỮA": mẫu `BGDV-02A` (id 233, tạo 12/03/2026 bởi NV 787 Trịnh Thị Lợi) mang loại 6 = Hợp đồng dịch vụ nên hiện trong dropdown "Loại hợp đồng" (4 mẫu: 216, 229, 230, 233). Đã kiểm trên prod (chỉ đọc): ~280 HĐ từ 03/2026 chọn nhầm, in thử 5 HĐ đều ra báo giá. Kết luận người tạo không sai — bản in báo giá DV lấy cứng mã `BGDV-02A` từ 27/10/2025 (`d628866122`) mà màn Mẫu in không có loại "Báo giá". Dữ liệu HĐ cũ giữ nguyên.
+- [x] 06/11/2026 — Chặn tạm: loại `BGDV-02A` khỏi danh sách "Loại hợp đồng" (`ReportTemplate.php`), commit `d9978f0644` (gop_db, đã push).
+- [x] 06/11/2026 — Hỗ trợ trả lời QA "thêm mẫu báo giá từ Quản lý mẫu in được không": trước đây không được (không có loại Báo giá; nút In báo giá cố định Mẫu 1/2 + đúng 1 mẫu mã `BGDV-02A`).
+- [x] 06/11/2026 — Tính năng: thêm loại mẫu in 13 **"Báo giá dịch vụ"** (`PrintTemplate`, `PrintTemplateVariable`), migration `2026_11_06_000001_add_service_quotation_print_template_type` khai 22 biến (số báo giá, khách hàng, bảng dịch vụ / vật tư / chi phí khác / tổng thanh toán…) + chuyển `BGDV-02A` sang loại 13 (có down); popup In báo giá DV giữ Mẫu 1, Mẫu 2, thay "Mẫu 3" bằng danh sách mọi mẫu loại 13; controller in chỉ nhận mẫu loại 13, không truyền mẫu thì vẫn in `BGDV-02A` (link cũ không hỏng). Nhánh `fix_loai_mau_in_bao_gia_dv` `5d42014853` (tách `01ee153495`) → merge `develop_02` `69c62c82d9` (đã lên origin). Dev 02 cần `php artisan migrate`.
+- [ ] Merge sang `gop_db`: bỏ đoạn chặn tạm trong `ReportTemplate.php` (`d9978f0644`) — giữ cũng không sao.

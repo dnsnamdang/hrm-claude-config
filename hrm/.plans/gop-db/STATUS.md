@@ -19,6 +19,19 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Giao chỉ tiêu kinh doanh theo phòng ban + theo nhân viên (ERP → HRM, #11643 + #11651) — ĐANG LÀM (2026-11-06, @junfoke)
+
+Port 2 phiếu `business_target_*` sang HRM theo bản mẫu QA: bỏ popup chi tiết KH (8 ô nhập thẳng), bỏ "Nhân viên mới",
+thêm cấp Bộ phận (bảng mới `business_target_department_parts`). Phòng ban trước, nhân viên nạp chỉ tiêu từ phiếu phòng ban Đã duyệt.
+Chốt: sửa 2 báo cáo ERP đếm KH = SUM cột nhập; ẩn menu ERP; Hủy duyệt → Đang tạo (không thu hồi); phòng phiếu NV theo ERP.
+
+**Checkpoint 06/11 (cuối ngày):** CODE XONG 17/17 task trên nhánh `feat/giao-chi-tieu-kinh-doanh` (hrm-api, hrm-client,
+TanPhatDev — tách từ `origin/gop_db`, CHƯA commit). 37 test BE xanh, Playwright local trọn luồng 2 màn, đối chiếu code ERP khớp.
+Còn: review toàn nhánh + sửa; user commit; gán quyền dev/prod (8 quyền type 23 "…phiếu giao chỉ tiêu kinh doanh…"); migration
+`2026_11_06_000001_create_business_target_department_parts_table`.
+⚠️ GOTCHA: prop bảng không đặt tên `errors` (vee-validate chiếm); 2 báo cáo ERP đã SUM cột SL khách nhập sẵn — không cần sửa.
+Tài liệu: `.plans/gop-db/giao-chi-tieu-kinh-doanh/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-06-giao-chi-tieu-kinh-doanh-design.md`.
+
 ## Phiếu yêu cầu giao việc khác (ERP → HRM) — ĐANG LÀM (2026-11-05, @khoipv)
 
 Port màn ERP `assignOtherRequest.index?type=all` (Bán hàng › Lắp đặt - BH - SC). Nguồn tạo Phiếu giao việc type 5 (PGV đã port).
@@ -2640,6 +2653,8 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 - loc-nhan-vien-theo-quyen-company-department-filter → @junfoke → .plans/gop-db/loc-nhan-vien-theo-quyen-company-department-filter/plan.md
   Trạng thái: ✅ **Đã push gop_db + develop (05/11/2026)** — client `50ea799f7`. `CompanyDepartmentFilter.vue` ô Nhân viên lọc theo quyền xem của màn. Chưa thử Đơn xin nghỉ / quyền phòng ban, bộ phận.
+
+- Ghi nhanh 06/11/2026 (@junfoke), chi tiết ở plan từng màn: fix phản hồi #12042/#12040 Phiếu phân chia thị trường + #12020 YC nhập hàng (api `fb890c98d`, client `8b6321dbc`) · #12056/#12057/#12051 (client `4269cf7cc`, đã lên develop) · popup chọn hàng ERP thêm cột Thời gian bảo hành (api `36269786a` + ERP `5e6cb6bdf4`) · testcase Sổ chi tiết công nợ NCC (111 TC) + Bảng cân đối công nợ NV (106 TC).
 
 - Ghi nhanh 05/11/2026 (@junfoke), chi tiết ở plan từng màn: #12013 Sổ chi tiết công nợ NV + #12014/#12016 Công nợ đầu kỳ KH-HĐ (api `280c343e6`, client `fcde078c1`, chờ user xác nhận 2 chỗ đổi quyết định cũ) · #11996 lọc Ghi chú 6 màn hàng hoá (`viec-con-lai.md`) · giảm RAM build FE 6,1 → 2,2 GB `e212d0cfb` (`fe-build-toi-uu`) · merge task_11694/11695 vào develop (`division-market-employee`).
 

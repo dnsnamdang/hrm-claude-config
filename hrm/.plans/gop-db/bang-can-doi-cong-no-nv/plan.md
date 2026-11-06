@@ -65,3 +65,7 @@
 - [x] 03/11/2026 — Theo user: sửa lỗi Làm mới gọi API 2 lần (cả 2 màn), Playwright đếm mỗi thao tác 1 lần gọi.
 - [x] 03/11/2026 — Commit api `9b12040ae`, client `f2831eb45`; merge develop + push (api `66ce147dd`, client `66a3d7d47`). Xung đột form Chuyến xe khác (với `ee75050e6`): giữ nhãn/placeholder bản QA + kiểu ô số đồng nhất. Gửi user link dev HRM/ERP 4 màn công nợ. Dev cần `permission:sync` + build client.
 - [ ] Màn 4/4 Sổ chi tiết công nợ phải trả NCC — chờ user bảo làm.
+
+
+## Ngày 06/11/2026 (@junfoke)
+- [x] 06/11/2026 — Xuất testcase màn Bảng cân đối phát sinh công nợ nhân viên theo khuôn chuẩn mới: 106 TC, P0 45%. Kiểm số theo luồng phát sinh (TK tạm ứng 1411, kỳ T10: NV-A đầu kỳ Nợ 6,500,000 → cuối kỳ Nợ 9,200,000, đổi sang T11 thì cuối kỳ T10 thành đầu kỳ; ca NV dư Có, ngoại tệ, bút toán đảo), đối chiếu 2 hệ thống, số dư từng NV phải khớp màn Sổ chi tiết công nợ NV. File `testcase/testcase - Bang can doi phat sinh cong no nhan vien.xlsx`, script `testcase/gen_testcase_bang-can-doi-cong-no-nv.py`.
