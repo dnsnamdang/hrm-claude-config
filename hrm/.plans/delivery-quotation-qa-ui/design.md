@@ -79,3 +79,15 @@ của mọi công ty, ERP chỉ 3.
 **"Giá cước vượt trội"**: dòng thứ 3 trong `thead` của ma trận (Số km = `-`, mỗi cột tải trọng 1 ô khoá
 `—`), chỉ để HIỂN THỊ, KHÔNG lưu dữ liệu — giống ERP (input `disabled`, không có cột trong DB). File
 Excel xuất đã có dòng này từ trước.
+
+### QĐ4 — Ô giá trang trí trong ma trận dùng markup TĨNH, KHÔNG V2Base (Item 20, user chốt 2026-11-06)
+
+**Vấn đề:** CLAUDE.md quy định "ô chỉ để ĐỌC vẫn dùng V2Base* + disabled". Nhưng ma trận giá có N ô
+trang trí = số tuyến × số cột (loại xe × trọng tải); 50 tuyến × ~14 cột ≈ 700+ ô. Mỗi `V2BaseInput`
+gắn mixin vee-validate → đăng ký 1 field validate, 700+ instance làm màn treo khi gõ/bấm.
+
+**Quyết định (user "Đồng ý dùng ô tĩnh"):** 2 vị trí ô giá THUẦN TRANG TRÍ — hàng "Giá cước vượt trội"
+và thân ma trận — đổi sang `<div class="cell-placeholder">—</div>` (SCSS giả khung ô disabled). Các ô
+này KHÔNG `v-model`, KHÔNG gửi BE, KHÔNG cần validate (ma trận rỗng để NCC điền trên file Excel xuất ra)
+nên bỏ V2Base không mất gì. NGOẠI LỆ hẹp của quy tắc V2Base, chỉ áp cho ô trang trí số-lượng-lớn ở màn
+này; mọi ô THỰC (Số Km `v-model`, ô Tuyến mở picker, select loại xe / trọng tải) GIỮ nguyên V2Base.

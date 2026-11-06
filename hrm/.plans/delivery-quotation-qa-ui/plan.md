@@ -333,3 +333,27 @@ User (mục 4): "NHập số km là số âm đang báo lỗi k đúng -> chặn
       bỏ `width` trên `th` colspan.
 - [x] Verify Playwright chi tiết BGVC-00088: 11 cột trọng tải đều 190px, Số Km hiện `118`, `80`…;
       `/create`: Tuyến 280 / Km 120 / trọng tải 190, cột hành động hút phần dư như cũ. Quyền test gán tạm local đã gỡ.
+
+## Item 20 — Màn Thêm/Sửa treo khi nhập ~50 tuyến (2026-11-06) — DONE
+
+**Bối cảnh:** QA báo ticket "[ERP => HRM] Chi tiết mẫu báo giá vận chuyển - Xuất excel" có 2 ý:
+- (1) `/transport/delivery-quotations/97` bấm "Xuất excel" lỗi → **QA xác nhận lại xuất được, không lỗi nữa**
+  (không tái hiện được local: tinker export phiếu 39/59/81 tới 508 tuyến×14 cột đều OK 1.3–2.5s). KHÔNG sửa #1.
+- (2) Thêm ~50 tuyến → gõ/bấm trong bảng ma trận bị treo. **Fix bằng ô tĩnh** (user chốt "Đồng ý dùng ô tĩnh").
+
+**Nguyên nhân (2):** mỗi ô giá trang trí trong ma trận là 1 `V2BaseInput disabled placeholder="—"`. Component
+V2Base* gắn mixin vee-validate (`v2ValidateMixin`) → mỗi instance đăng ký 1 field validate. 50 tuyến × ~14 cột
+≈ 700+ instance vee-validate (cộng dòng "Giá cước vượt trội") → compile + theo dõi validate làm treo khi gõ.
+Các ô này THUẦN TRANG TRÍ: không `v-model`, không gửi BE (ma trận rỗng để NCC điền trên file Excel xuất ra).
+
+- [x] FE `DeliveryQuotationForm.vue`: thay ô trang trí `V2BaseInput disabled "—"` ở 2 chỗ bằng markup tĩnh
+      `<div class="cell-placeholder">—</div>` + SCSS giả khung ô disabled:
+      - hàng "Giá cước vượt trội" (thead)
+      - thân ma trận (road × vehicle × payload)
+      GIỮ V2Base cho ô thực: Số Km (`v-model`), ô Tuyến (click mở picker), select loại xe / trọng tải.
+- [x] Self-check grep V2Base cho `pages/transport/delivery-quotations/` = RỖNG (không có element thô).
+- [x] Verify Playwright `/create` với 50 tuyến × 3 loại xe × 5 trọng tải (= 15 cột giá, 765 ô trang trí):
+      - DOM: 765 `.cell-placeholder` (div tĩnh), **0 input** trang trí; chỉ còn **101 V2BaseInput thực**
+        (50 tuyến × [ô Tuyến + ô Km] + 1 ô header). Trước fix ~866 V2BaseInput → giảm 765 instance vee-validate.
+      - Gõ 10 phím vào ô Km: mượt, không treo (avg 187ms/phím ở DEV chưa minify + HMR; prod thấp hơn nhiều).
+      - Ảnh `bgvc-50-roads-static-cells.png`: ô "—" xám khớp hệt ô disabled cũ, ô Tuyến/Km vẫn là V2BaseInput.
