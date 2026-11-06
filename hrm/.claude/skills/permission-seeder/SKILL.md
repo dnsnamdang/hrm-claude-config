@@ -37,7 +37,7 @@ Tài liệu đầy đủ cho dev: `hrm-api/docs/huong-dan-phan-quyen.md`. Đọc
    ```
 2. `php artisan permission:catalog-sync --dry-run` rồi chạy thật. Chạy vào DB là việc phải hỏi user như migration.
 3. Mã mới **chưa ai có, kể cả Super Admin**: cấp ở `/admin/roles`.
-4. Ghi vào ghi chú deploy: prod phải chạy `permission:catalog-sync` tay trên VPS HRM, **trước khi push ERP** nếu ERP dùng mã mới.
+4. Ghi vào ghi chú deploy: `~/build_tpe.sh` trên VPS HRM tự chạy `permission:catalog-sync`; chạy script **trước khi push ERP** nếu ERP dùng mã mới.
 
 ## Kiểm quyền
 

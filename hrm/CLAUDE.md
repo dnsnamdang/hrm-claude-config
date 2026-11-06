@@ -185,7 +185,7 @@
   ```
 - **Mã code tự sinh**: pattern `PREFIX-YYYY-NNNNN`, implement `getNextCode()` trên Entity (copy pattern `BomList::getNextCode()`).
 - **Permission**: Quyền khai trong `app/Support/Permissions/Catalog/<phan_he>.php` (dùng chung HRM + ERP), đồng bộ bằng `php artisan permission:catalog-sync`. `PermissionsTableSeeder` ở cả 2 repo đã gỡ từ 06/11/2026: KHÔNG khai seeder, KHÔNG tạo migration cho permission. Code mới kiểm theo **mã** (`phan_he.doi_tuong.hanh_dong`), không theo tên tiếng Việt, không theo tên Vai trò, không bypass Super Admin. Chi tiết: skill `permission-seeder` và `hrm-api/docs/huong-dan-phan-quyen.md`.
-  - Mã mới chưa ai có, kể cả Super Admin: phải cấp ở `/admin/roles`. Prod phải chạy `permission:catalog-sync` tay trên VPS HRM, trước khi push ERP nếu ERP dùng mã mới.
+  - Mã mới chưa ai có, kể cả Super Admin: phải cấp ở `/admin/roles`. Prod sync qua `~/build_tpe.sh` trên VPS HRM (script tự chạy `permission:catalog-sync`), chạy script trước khi push ERP nếu ERP dùng mã mới.
   - Không đổi `code` của mã đã lên prod. Bỏ quyền thì gỡ khỏi Catalog, sync sẽ đặt `deprecated_at`, không xoá.
   - **Màn chuyển đổi từ ERP**: dùng lại mã ERP có sẵn trong Catalog (thêm `hrm` vào `platforms`), chỉ tạo mã mới khi chức năng chưa có mã.
 - **Middleware checkPermission**: các route thao tác dữ liệu (store, update, destroy, approve, toggle,...) phải gắn middleware `checkPermission:<mã>`; nhiều mã nối bằng `|`, có 1 mã là qua. FE ẩn nút không thay được kiểm ở BE.
