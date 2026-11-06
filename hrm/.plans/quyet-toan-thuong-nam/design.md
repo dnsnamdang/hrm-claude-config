@@ -157,6 +157,10 @@ group `'Quyết toán thưởng năm'`, `type=8` — chèn cạnh nhóm Tài ch�
 - **[AI]** Sinh mã có lockForUpdate.
 - **[AI]** Phân hệ chính = **Tài chính (type 8)**, khớp màn anh em quý. (Agent khảo sát nêu Bán hàng type 23 là lựa chọn thay thế — nếu user muốn đổi, chỉ cần sửa `type` quyền + file menu.)
 - **[ĐÃ XÁC NHẬN]** `reserve_fund_value` KHÔNG tham gia tính quyết toán (ERP service chỉ dùng percent + maxRisk) — port đúng vậy.
+- **[#12044]** Công ty khoá theo công ty đang làm việc, kể cả người có quyền xem tổng công ty (ticket ghi rõ); BE chặn bằng `Rule::in`.
+- **[#12044]** Năm trước tự điền tới 31/12, năm nay tới hôm nay — theo `changeYear` của ERP. Ngày hạch toán khoá, luôn bằng Đến ngày như ERP.
+- **[#12044]** Nháp để trống: BE điền mặc định (loại DSTC, năm hiện tại, ngày theo năm) vì các cột NOT NULL.
+- **[#12047]** Tag trạng thái + bỏ Mã phiếu áp cả màn Chi tiết vì dùng chung form.
 
 ## 6. Ngoài phạm vi
 - **Màn cấu hình quỹ thưởng năm** — đã port sẵn (regulation-config tab `thuongnam`).

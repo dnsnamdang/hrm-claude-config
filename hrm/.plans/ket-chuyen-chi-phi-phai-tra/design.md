@@ -38,3 +38,5 @@ Mỗi dòng vụ việc: gom `account_details` TK 117(3351), employee/contract n
 - Sửa bug ERP: lọc năm/ngày hạch toán ERP lọc sai cột → HRM không port 2 ô lọc đó (ERP UI cũng không có ô); thiếu rollBack → HRM transaction đầy đủ; hạch toán đồng bộ.
 - Mã phiếu `{mã cty}.KCCPPT{năm}.NNNNN`.
 - "Theo công ty" = phòng ban thuộc `company_id` người đăng nhập.
+- **#12052 (user chốt 06/11/2026)**: form tạo có 2 nút "Lưu và tiếp tục" + "Lưu và duyệt", cả 2 đều hỏi xác nhận rồi ghi sổ.
+- **Icon "Lưu và duyệt" = `ri-send-plane-line`**, theo màn mẫu người test đưa và `V2Footer`; lệch `button-convention` (`ri-check-line`), user đã đồng ý ngoại lệ.

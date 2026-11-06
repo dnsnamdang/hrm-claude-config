@@ -32,3 +32,11 @@ Server riêng của worktree: API `:8001`, Nuxt `:3001` (không đụng `:8000/:
 ## Dữ liệu test để lại trên DB local `erp_hrm_check`
 - Phiếu 168 `TPE.KCCPPT2026.00056` (đã ghi sổ) + `catalog_histories` 8410.
 - Gán quyền tạm: `role_has_permissions` (102372,31), (102373,31) — 3 quyền api id 102372–102374.
+
+## #12052 — UI/UX (06/11/2026)
+- [x] Bug 1: danh sách không mặc định sort theo cột (`sort_by: ''`), BE vẫn trả mới nhất trước.
+- [x] Bug 2: tiêu đề `Thông tin chung` / `Chi tiết`; placeholder `Nhập ghi chú`; "Thêm dòng" dùng `V2BaseQuickAddButton`; nút Xóa `V2BaseIconButton danger` ở MỌI dòng (copy pattern `AssignOtherRequestForm.vue:207`); thêm "Lưu và tiếp tục" (`saveAndContinueMixin`); icon "Lưu và duyệt" đổi `ri-send-plane-line`.
+- [x] Bug 3: bỏ ô Mã phiếu ở chi tiết; không hiện placeholder khi chỉ đọc.
+- [x] Playwright 127.0.0.1:3000: danh sách/chi tiết/thêm; "Lưu và tiếp tục" giả lập POST (không ghi sổ): Hủy không gọi API, xác nhận gọi 1 lần, form dựng lại trống.
+
+- 2026-11-06: đã commit local trên develop, api `ecbb395c8` / client `5ee34182a`, chưa push.

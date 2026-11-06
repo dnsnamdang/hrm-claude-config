@@ -42,6 +42,8 @@
 4. Mã HĐ: unique form = trong công ty người tạo; import = toàn hệ thống — lệch nhau nhưng **giữ như ERP**.
 5. Edit/delete cùng điều kiện ở danh sách và chi tiết (cờ BE `is_can_edit`/`is_can_delete`).
 6. `hrm-client/utils/contract-link.js`: `OpeningContract` → `/sale/opening-contracts/${id}`.
+7. **#12055 (06/11/2026)**: import chỉ còn 3 cột bắt buộc (Số hợp đồng, Ngày ký, Mã khách hàng), mỗi trường báo lỗi riêng; không còn đọc/so sánh tên KH, địa chỉ, SĐT. Mục này thay phần import 6 cột kiểu ERP ở trên.
+8. **#12054 (06/11/2026)**: user chốt Lịch sử ghi chú nhiều dòng hiện Trước/Sau 2 cột, sửa ở `SystemInfoSection` nên áp cho mọi màn có Lịch sử.
 
 ## 4. API (prefix `api/v1/finance/opening-contracts`)
 | Method | Path | Ghi chú |
@@ -61,7 +63,7 @@ Resource: id, code, sign_day (Y-m-d) + sign_day_text (d/m/Y), customer {id, code
 - In danh sách: endpoint `GET /print` (không phải `/print-data`), template 467 khổ ngang.
 - Import: `POST /import/validate` + `POST /import`, payload key `items`.
 - Form: 1 khối `V2BaseFormCard` "THÔNG TIN CHUNG" + `CreatorInfoLine`; Khách hàng = `V2BaseSelectRemote` gọi
-  `assign/customers/search` (gõ ≥ 2 ký tự); Địa chỉ / SĐT chỉ đọc chỉ hiện ở Sửa/Chi tiết.
+  `assign/customers/search` (gõ ≥ 2 ký tự); Địa chỉ / SĐT chỉ đọc luôn hiện, tự điền khi chọn khách (#12053).
 - Sửa/xoá: chặn bằng middleware route `CheckOpeningContractEditable` (chạy trước FormRequest).
 
 ## 4c. Việc sót ở màn khác — ĐÃ SỬA (user đồng ý 04/11)

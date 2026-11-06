@@ -32,7 +32,18 @@
 ## Phase 4 — Lịch sử
 - [x] **T7 Lịch sử** (skill entity-history, khuôn `BillAdjustDeptHistoryService`) — BE `BillProductivitySettlementQuarterHistoryService` ghi `catalog_histories` (tạo/sửa/đổi trạng thái/xoá; bảng con `employee_rows` key employee_id + `attachment_rows`), khai `CatalogHistoryService::TABLES`. FE `CatalogHistoryModal` ở danh sách (menu ⋮) + `SystemInfoSection` ở chi tiết.
 
+## Phase QA — Redmine #12031–#12035 (06/11/2026)
+- [x] #12031 Danh sách: sort mặc định, bỏ nút Xem, sort 2 cột tổng, "Tạo mới", thêm Người/Ngày cập nhật (cả file xuất).
+- [x] #12032 Form: tiêu đề khối cỡ chuẩn, sắp lại Năm–Phòng ban–Kỳ / Từ–Đến–Ngày HT / Bộ phận + Ghi chú, chữ bảng 12px.
+- [x] #12033 Popup hợp đồng: badge vai trò sau tên, link đủ mọi hợp đồng, phân trang, nới rộng không đè menu, thu hẹp cột Khách hàng. Copy pattern `components/report/V2BaseReportModal.vue:223`.
+- [x] #12034 Chi tiết: nút Sửa, Duyệt, Xóa, In, Xuất Excel, Quay lại; trạng thái lên tiêu đề; bỏ Mã phiếu; sửa hở/lệch tiêu đề bảng khi cuộn.
+- [x] #12035 Excel 1 phiếu bỏ Trạng thái (giữ logo, xem design §5). In: phòng ban in hoa dưới dòng Kỳ, bỏ Mã phiếu, tiêu đề NV/TBP/TP/STT trên 1 dòng.
+- [ ] #12035 Xuất Excel danh sách báo lỗi trên dev: CHƯA tái hiện được ở local, chưa sửa. Đã thử luồng thật, phiếu nháp (BE, 4 tài khoản), dòng rỗng/null/mã toàn số (FE) đều thành công. Cần response lỗi của `export-rows` trên dev (Network/log).
+
 ## Checkpoint
+
+### Checkpoint — 2026-11-06 — QA #12031–#12035 đã commit trên develop (chưa push)
+Commit: api `d011eb69b`, client `659126842`. Feature test 7/7. Playwright đạt phần đã sửa; riêng lỗi xuất Excel danh sách của #12035 chưa tái hiện được, chưa sửa. Local không nhúng được logo vì `companies.header` là path tương đối tới ảnh không có ở máy này, chưa kiểm được logo trong file Excel 1 phiếu.
 
 ### Checkpoint — 2026-11-04 13:50 — Lịch sử XONG, đã commit (chưa push)
 Commit: api `542ed5694` + `3451ae03a`, client `3a7da560c` + `de4b6ca63`, nhánh `feature/qt-thuong-ns-quy-moi`.

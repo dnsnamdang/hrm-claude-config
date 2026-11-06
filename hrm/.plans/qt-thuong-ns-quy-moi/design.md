@@ -97,5 +97,8 @@ Màn HRM mẫu: `pages/finance/bill-adjust-depts` (cùng phân hệ, phiếu k�
 - **[AI]** Xoá = xoá cứng như ERP (điều kiện ERP: status 1 + người tạo) — giữ nguyên điều kiện ERP, không tự đặt thêm.
 - **[AI]** Lịch sử: HRM bắt buộc mục Lịch sử → dùng khuôn entity-history nếu bill-adjust-depts có; nếu không có thì để phase sau.
 
+- **#12035 Excel 1 phiếu — giữ logo (user chốt 06/11/2026):** ticket ghi "ẩn logo Tân Phát" nhưng CLAUDE.md bắt buộc file Excel chứng từ có letterhead theo công ty trên phiếu → giữ logo theo quy định, chỉ ẩn dòng Trạng thái. Cần báo lại người viết ticket.
+- **#12033 popup hợp đồng:** rộng tối đa 1400px, chừa 70px mỗi bên để không đè menu trái; phân trang phía client (dữ liệu đã có sẵn trong dòng nhân viên), mặc định 25 dòng.
+
 ## 6. Ngoài phạm vi
 Route deny; sửa màn cũ; thay đổi cấu hình quy chế (đã có ở regulation-config tab `themquy`).

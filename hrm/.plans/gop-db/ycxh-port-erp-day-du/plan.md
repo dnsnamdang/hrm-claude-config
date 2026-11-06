@@ -2168,3 +2168,9 @@ Blocked: —
 
 ## Bugfix list — gỡ "Hủy" thừa khỏi cột Hành động (2026-10-14)
 - [x] **Phiếu "Đang tạo" (nháp) thừa hành động "Hủy"** (user báo kèm ảnh). ERP `canCancel()` = nháp + người tạo, **trùng khít** `canDelete()`, và ERP **không** render Hủy trên danh sách — nháp chỉ có "Xóa" (route `productExportRequest.cancel` tồn tại nhưng mồ côi, không view nào gọi). Port HRM lỡ thêm Hủy vào `getRowActions` (commit 51a3187c7). FIX **chỉ FE** `pages/finance/product-export-requests/index.vue`: gỡ action `key:'cancel'` + case `'cancel'` + method `cancelRow()`, thêm comment chặn thêm lại. BE `canCancel()`/endpoint `/cancel` GIỮ NGUYÊN (ERP parity — route mồ côi). **Verify Playwright** (PYCXH-39303, Đang tạo, user 13): menu Hành động khác = In yêu cầu · In biên bản giao nhận - bàn giao · Xuất excel danh sách hàng · Lịch sử — KHÔNG còn Hủy; nút ngoài vẫn Sửa + Xóa. CHƯA commit.
+
+## Redmine #11898 (06/11/2026) — Xóa YCXH nháp báo 404, popup xác nhận kiểu cũ
+
+- [x] Popup: đã sửa ở commit `3ce873351` (06/11, đã có trên origin/develop, dùng `$confirm`). Ảnh ticket chụp popup cũ.
+- [x] 404: KHÔNG tái hiện được ở local. Thử DELETE trong transaction + rollback với phiếu nháp (status 3) loại 7, 6, 99, 19, 3, 14: đều 200. Route `Modules/Assign/Routes/api.php:788` có từ 20/08; controller chỉ trả 404 khi bản ghi không còn (vd đã bị xóa). Phiếu 44417 của ticket không có ở DB local nên chưa thử trên dev. KHÔNG sửa code.
+- [ ] Nhờ tester thử lại trên dev; nếu còn 404 thì chụp response của lệnh DELETE.

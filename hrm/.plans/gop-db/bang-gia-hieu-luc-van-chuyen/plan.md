@@ -252,3 +252,9 @@ Khuôn HRM (bám 1:1 màn anh em đã port):
 - [x] **QA5 — Ẩn ô Mã, đẩy Số Km lên hàng trên** (mã đã có trên tiêu đề trang "Chi tiết bảng giá hiệu lực vận chuyển: BGHLVC-…"). Còn 4 ô cùng 1 hàng: Công ty `col-md-6` · Hiệu lực từ 2 · Hiệu lực đến 2 · Số Km 2. File: `hrm-client/pages/transport/valid-delivery-prices/_id/index.vue`.
 
 - **Push develop 04/11/2026** (qua worktree, KHÔNG commit nhánh feature): hrm-api `3c2993d90` · hrm-client `cc9d474a7`. Conflict `CatalogHistoryService::TABLES` với mục `delivery_quotations` (BGVC) → giữ cả 2.
+
+## Redmine 06/11/2026
+
+- [x] **#11951 — In mở tab mới.** Danh sách + chi tiết gọi `$printPreview({ page: '/transport/valid-delivery-prices/<id>/print', title: 'Xem trước bảng giá hiệu lực vận chuyển', landscape: true })`. Kiểm Playwright phiếu 7: mở popup, 0 tab mới, iframe `?embed=1`, có tiêu đề bản in, ẩn thanh công cụ, không lỗi trang.
+- [x] **#11952 — Bấm file báo giá NCC tải về thay vì xem.** `components/QuotationTab.vue` thêm `FilePreviewModal` + `canPreviewFile`/`openFilePreviewModal`; file không xem được thì vẫn `window.open`. Kiểm Playwright phiếu 2: xlsx mở popup xem trước, 0 tab mới.
+  - Phần "cắt khoảng trắng": Mã đã ẩn, Báo giá đã nằm ngay sau Thông tin chung (QA4, QA5). Khoảng cách còn lại là layout dùng chung (top 70, left 68, right 10; card-body 10px), giữ nguyên theo quyết định 03/11 "Hướng A".

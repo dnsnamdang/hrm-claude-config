@@ -115,3 +115,15 @@ Final: fixed getDepartments ungated cross-company revenue leak — test_can_crea
 **Reviewer xác nhận SẠCH:** nợ kỹ thuật `approved_by_name` null ĐÃ GIẢI QUYẾT (relation đổi tên `approver()`, cả List + Detail Resource populate đúng); parity công thức FE/BE khít; defense-in-depth lưu (`recomputeDetailForSave`); veto-parity danh sách↔chi tiết; route ghi gated; không N+1.
 
 Review toàn nhánh: XONG. Mergeable sau khi user tự xử lý tích hợp #1 (bắt buộc). #2 đã fix. Minors để user quyết.
+
+## QA Redmine #12044–#12048 (2026-11-06)
+- [x] **#12044.1** Ẩn Tạo mới khi không quyền: `currentCanCreate()` đọc cùng nguồn với middleware route (`BaseModel::isCurrentEmployeeHasPermission`). Vào URL tạo khi không quyền → về danh sách. Bỏ toast trùng: `toastRequestError` không toast lại lỗi interceptor đã toast (401/403/428/500/504).
+- [x] **#12044.2** Đồng bộ tiêu đề khối: "Thông tin chung", "Chi tiết theo phòng ban".
+- [x] **#12044.3** Lưu nháp/Lưu tiếp tục chỉ bắt buộc Công ty; `resolveHeader()` điền mặc định vì cột NOT NULL trên bảng chung với ERP.
+- [x] **#12044.4** Câu lỗi nghiệp vụ `date_to.after_or_equal`.
+- [x] **#12044.5** Chọn Năm tự điền ngày, copy `changeYear` ERP (`resources/views/accounting/bonus_end_year_settlements/partials/BonusEndYearSettlement.blade.php`); Ngày hạch toán = Đến ngày, khoá.
+- [x] **#12044.6** Công ty tự điền theo công ty đang làm việc, khoá; BE chặn bằng `Rule::in`.
+- [x] **#12046** Lịch sử: `__name` file là URL để bấm được.
+- [x] **#12047** Tag trạng thái lên tiêu đề (copy pattern `pages/finance/position-inventories/_id/index.vue`, `buildStatusTitle`); bỏ Mã phiếu trong Thông tin chung; dung lượng tệp qua `GET /{id}/attachment-sizes`.
+- [x] **#12048** Đổi nhãn bộ lọc theo ERP; thêm cột Người cập nhật, Ngày cập nhật (có cả ở xuất file).
+- Test: `BonusEndYearSettlementScopeTest` +5 (nháp, gửi duyệt, ngày, công ty, mặc định); suite QTN 39/39 PASS. `setUp` thêm `RequestCache::flush()`.

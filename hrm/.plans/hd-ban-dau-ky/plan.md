@@ -23,6 +23,12 @@
 ## Phase 3 — Kiểm
 - [x] **T4** Đối chiếu ERP + checklist skill, Playwright: danh sách/lọc → tạo → sửa → lịch sử → xuất/in → import → xoá; chặn sửa/xoá HĐ đã khai báo công nợ.
 
+## Phase 4 — Bug Redmine 06/11/2026
+- [x] **#12050 Danh sách**: ô tìm chỉ theo số hợp đồng (BE keyword chỉ `opening_contracts.code`), placeholder `Tìm theo số hợp đồng`, nút "Tạo mới", bỏ nút Xem ở cột Hành động.
+- [x] **#12053 Tạo/Sửa**: tiêu đề `Thông tin chung`, placeholder `Nhập số hợp đồng`, Địa chỉ/SĐT luôn hiện (ô khoá), tự điền khi chọn khách qua `GET opening-contracts/customer-contact/{customerId}`. Cỡ chữ nhãn/ô đo đúng chuẩn 12px; "chỉnh size chữ" hiểu là tiêu đề in hoa.
+- [x] **#12054 Lịch sử**: `components/assign/SystemInfoSection.vue` (DÙNG CHUNG, user chốt 06/11): khối Trước/Sau 2 cột, thẻ giãn hết chiều rộng, popup hẹp tự xuống hàng; dòng ngắn giữ bề rộng theo nội dung.
+- [x] **#12055 Import**: file mẫu còn 3 cột (Số hợp đồng, Ngày ký, Mã khách hàng); báo lỗi riêng từng trường trống; bỏ so sánh tên/địa chỉ/SĐT.
+
 ## Checkpoint
 - 2026-11-04: `vendor/bin/phpunit Modules/Finance/Tests/Feature/OpeningContractApiTest.php` → OK 9 tests / 64 assertions
   (chặn sửa/xoá khi đã khai báo công nợ / hạch toán được phủ bằng feature test).
@@ -34,3 +40,6 @@
 - 2 lỗi FE tự phát hiện & đã sửa ở `index.vue`: (1) `:sortBy` truyền tên trường BE nên bấm lần 2 không bao giờ sang desc →
   computed `tableSortBy` map ngược `SORT_FIELD_MAP`; (2) response cũ về muộn đè `currentPage` → watcher bảng bắn thêm
   `page-change` (3 request/thao tác) → `loadSeq` chỉ nhận response mới nhất.
+- 2026-11-06: `OpeningContractApiTest` → OK 12 tests / 77 assertions. Playwright 127.0.0.1:3000: #12050, #12053, #12055 (cột mẫu + map dòng; không import thật), #12054 (dữ liệu Lịch sử giả lập bằng route, 2 cột 359px cùng hàng, dòng ngắn không giãn).
+
+- 2026-11-06: đã commit local trên develop, api `ecbb395c8` / client `5ee34182a`, chưa push.
