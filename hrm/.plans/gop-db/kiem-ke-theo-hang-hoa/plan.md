@@ -225,7 +225,40 @@ Vừa hoàn thành: R34b; compile template/script OK. Test Playwright đo đư�
 Bước tiếp theo: user tự kiểm trình duyệt (Ctrl+Shift+R nếu HMR giữ bản cũ); commit khi user yêu cầu.
 Blocked:
 
+## Fix Redmine #12039 lượt 2 (QA phản hồi 06/11)
+- [x] R35b. Bug 2 vẫn còn: Thêm hàng hóa → × ĐVT → bảng không cuộn. Cache options ở màn CHƯA đủ: `V2BaseSelect.visibleOptions` đọc `currentValue` → mỗi lần giá trị đổi `select2Options` map ra mảng mới → v-select2 dựng lại select2 lúc × vừa mở dropdown → `scroll.select2` mồ côi. Sửa tại màn `SelfInventoryForm.vue`: `releaseTableScrollLock()` (khuôn `V2BaseSelectInModal.releaseScrollLock`) gọi sau × ở ĐVT kiểm kê + ĐVT hàng thừa khác — đóng dropdown còn mở trong form, gỡ `scroll.select2` trên `.v2-table-scroll__body` + mọi cha
+- [x] R38b. Bug 5 sai màu: dòng Duyệt kết quả (`approved`) đã đổi tên "Thay đổi trạng thái" nhưng vẫn xanh lá, dòng `change_status` cam. `SelfInventoryController::histories()` đè `action_color` của `approved` = `ACTION_COLORS['change_status']` (#d97706), không sửa hằng dùng chung
+
+### Checkpoint — 2026-11-06 (#12039 lượt 2)
+Vừa hoàn thành: R35b, R38b. Verify: template + script parse OK, `php -l` OK, `getLogs(876)`: approved + change_status cùng "Thay đổi trạng thái" / #d97706. CHƯA mở trình duyệt (R35b cần user bấm thử).
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt (Ctrl+Shift+R); gốc rễ chung nằm ở `V2BaseSelect` (mảng options mới mỗi lần đổi giá trị) — chờ user quyết có sửa hàm dùng chung không; commit khi user yêu cầu.
+Blocked:
+- [x] R35c. (user đồng ý sửa hàm dùng chung) `components/V2BaseSelect.vue`: `select2Options` qua `stableOptions()` — trả lại ĐÚNG mảng cũ khi id/text/cờ khoá không đổi → đổi giá trị không còn dựng lại select2 (gốc lỗi R35, áp mọi màn dùng V2BaseSelect). `SelfInventoryForm.releaseTableScrollLock()` hạ xuống lớp dự phòng: KHÔNG đóng dropdown, chỉ gỡ `scroll.select2` khi không còn dropdown nào mở
+
+### Checkpoint — 2026-11-06 (#12039 lượt 2, sửa V2BaseSelect)
+Vừa hoàn thành: R35c. Verify: parse template/script 2 file OK. CHƯA mở trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user kiểm (1) × ĐVT ở Tạo phiếu kiểm kê → cuộn bảng; (2) regression vài màn khác có V2BaseSelect: chọn / × / options nạp lại theo ô cha; commit khi user yêu cầu.
+Blocked:
+
 ### Checkpoint — 2026-11-05 (#12039 push)
 Vừa hoàn thành: ĐÃ PUSH `develop` — hrm-api `14705dc36` (merge `06220838c`), hrm-client `a9954fed8` (merge `bd29ec032`). Chỉ commit 2 file của #12039; WIP màn khác giữ nguyên chưa commit.
 Bước tiếp theo: deploy dev → QA kiểm lại, đóng issue Redmine.
+Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter; khuôn chép `../kiem-ke-theo-vi-tri/`
+- [x] Đọc code màn (FE `pages/warehouse/self-inventories/**`, BE `SelfInventory*`, FormRequest, quyền seeder) + màn đọc / ghi ngược (2 màn Kế hoạch, Phiếu điều chuyển vị trí, Phiếu nhập / xuất kho điều chỉnh kiểm kê, Phiếu nhập / xuất hàng điều chỉnh kiểm kê, Phiếu nhập kho, Phiếu điều chuyển hàng, Báo cáo hàng thừa thiếu sau tổng kiểm kê, Biên bản xử lý hàng thừa thiếu, danh mục Kho vật lý / Vị trí)
+- [x] Chụp ảnh dev-hrm (`kkhh_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi): 1 yêu cầu ghi bị chặn (POST lưu phiếu — trả lỗi kiểm tra giả tại trình duyệt để chụp ảnh lỗi), 0 lọt máy chủ; 2 POST chỉ đọc (product-data, lot-stocks — đã đọc code); giả trạng thái Đang tạo cho phiếu 1090 (ảnh Sửa / Xóa). Icon menu Tài chính › Kiểm kê cắt từ ảnh màn Kế hoạch
+- [x] `gen_srs.py` → `SRS - Kiểm kê theo hàng hóa.docx`: 18 chức năng, selfcheck khớp bản mẫu; metrics ui 14.2 / ev 4.8 / evch 1336 / intro 1848; Phần 5 bảng 4 cột 13 màn
+- [x] `gen_hdsd.py` → `HDSD_Kiem ke theo hang hoa.docx`: 19 PHẦN, 29 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`): 294 TC, 15 nhóm, P0 47,3%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 259 có TC / 65 N/A (Khóa, Import); SRS 132 / 31 N/A
+- [x] Kiểm "xóa phiếu không trả kế hoạch về Đang kiểm" (bộ Kế hoạch theo hàng hóa nghi lỗi): đúng code hiện hành — `SelfInventoryWriteService::destroy()` cố ý không trả (y ERP, user chốt 20/10); ghi vào SRS BR-05 + testcase TC_05.006, không sửa code
+
+### Checkpoint — 2026-11-06 15:30
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Kiểm kê theo hàng hóa
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; báo user nghi lỗi xuất Excel (trường Người duyệt không tích sẵn, 10/11) và quyết định giữ / đổi hành vi xóa phiếu không trả kế hoạch
 Blocked:

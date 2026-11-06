@@ -32,33 +32,37 @@ Còn: review toàn nhánh + sửa; user commit; gán quyền dev/prod (8 quyền
 ⚠️ GOTCHA: prop bảng không đặt tên `errors` (vee-validate chiếm); 2 báo cáo ERP đã SUM cột SL khách nhập sẵn — không cần sửa.
 Tài liệu: `.plans/gop-db/giao-chi-tieu-kinh-doanh/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-06-giao-chi-tieu-kinh-doanh-design.md`.
 
-## Phiếu yêu cầu giao việc khác (ERP → HRM) — ĐANG LÀM (2026-11-05, @khoipv)
+## Phiếu yêu cầu giao việc khác (ERP → HRM) — HOÀN THÀNH 2026-11-06 (2026-11-05, @khoipv)
 
 Port màn ERP `assignOtherRequest.index?type=all` (Bán hàng › Lắp đặt - BH - SC). Nguồn tạo Phiếu giao việc type 5 (PGV đã port).
 Chốt: theo cấp y ERP (3 quyền type 23), Xoá y ERP, HĐ 2 nguồn (thêm cột `hrm_contract_id`).
 
 **Checkpoint 05/11:** BE (`Modules/CustomerCare`) + FE (`pages/customer-care/assign-other-requests`) xong, menu Bán hàng › Lắp đặt - BH - SC, link PGV / PNKQ / Phiếu chờ giao việc đổi sang HRM. Verify: php -l, migration local, smoke API (rollback), compile FE. Còn: bấm thử trình duyệt, `permission:sync` thật, 2 việc chờ user quyết (plan T14, T15).
+**Checkpoint 06/11:** sửa Redmine #12045 (duyệt PNKQ xong về danh sách, bỏ sort cột Trạng thái) và #12049; deploy cần chạy migration `2026_11_06_000001`.
 Tài liệu: `.plans/gop-db/phieu-yeu-cau-giao-viec-khac/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-05-phieu-yeu-cau-giao-viec-khac-design.md`.
 
-## Biên bản bàn giao sơ bộ (ERP → HRM) — ĐÃ PUSH develop (hrm-api `4168dde79`, hrm-client `9c5e59719`) (2026-11-04, @khoipv)
+## Biên bản bàn giao sơ bộ (ERP → HRM) — HOÀN THÀNH 2026-11-06, ĐÃ PUSH develop (hrm-api `4168dde79`, hrm-client `9c5e59719`) (2026-11-04, @khoipv)
 
 Port màn ERP `handoverRecords.index?type=all` (CSKH › Hồ sơ công việc + "Phiếu CSKH"). Chốt: không quyền (y ERP), sửa 3 lỗi ERP cả 2 bên, menu 2 chỗ, có In danh sách + In biên bản.
 
 **Checkpoint 04/11:** BE + FE đã push develop; Playwright local PASS toàn luồng, dữ liệu test đã dọn. Vá ERP (repo erp) CHƯA commit. Smoke test API (rollback) + compile FE pass. Còn: user bấm thử trình duyệt, upload S3 thật.
+**Checkpoint 06/11:** #12028 đổi nhãn Duyệt / Từ chối ở popup Lịch sử thay đổi thành "Thay đổi trạng thái" (giữ mã action, log cũ cũng ra nhãn mới).
 Tài liệu: `.plans/gop-db/bien-ban-ban-giao-so-bo/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-04-bien-ban-ban-giao-so-bo-design.md`.
 
-## Biên bản bàn giao nghiệm thu (ERP → HRM) — ĐANG LÀM (2026-11-03, @khoipv)
+## Biên bản bàn giao nghiệm thu (ERP → HRM) — HOÀN THÀNH 2026-11-06 (2026-11-03, @khoipv)
 
 Port màn ERP `handoverAcceptanceRecord.index?type=all` (Giao việc › Kết quả công việc) + lối phụ `?type=for-business-staff` (Tra cứu › Thông báo). Chốt: 2 nguồn HĐ (hãng + HRM), theo cấp y ERP (4 quyền type 4), nghiệp vụ y ERP, In danh sách + In biên bản.
 
 **Checkpoint 03/11:** BE (`Modules/CustomerCare` — entity, 4 service, request, controller, route) + FE (`pages/assign/handover-acceptance-records`) xong; smoke test API (rollback) + compile FE pass. Còn: user bấm thử trình duyệt, `permission:sync` thật, quyết vá ERP đọc biên bản gắn HĐ HRM.
+**Checkpoint 06/11:** xử lý phản hồi QA #12021 (màu nút Lưu nháp, câu lỗi SL nghiệm thu, căn trái câu lỗi) và fix #12060 (popup Chọn hợp đồng chỉ hiện HĐ đã xuất hết hàng).
 Tài liệu: `.plans/gop-db/bien-ban-ban-giao-nghiem-thu/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-03-bien-ban-ban-giao-nghiem-thu-design.md`.
 
-## Phiếu nhập kết quả (ERP → HRM) — ĐANG LÀM (2026-11-02, @khoipv)
+## Phiếu nhập kết quả (ERP → HRM) — HOÀN THÀNH 2026-11-06 (2026-11-02, @khoipv)
 
 Port màn ERP `WrImportResults.index?type=all` (CSKH › Giao việc › Phiếu nhập kết quả). Trọn bộ 1 lần, nghiệp vụ y hệt ERP (kể cả lỗi), Duyệt KQ link ERP, ảnh S3. Code xong T0–T14 (02/11), chưa commit.
 
 **Checkpoint 02/11:** BE + FE trọn bộ (danh sách · chi tiết · tạo · sửa · xóa · không duyệt · in/xuất · lịch sử), nối nút Nhập KQ / Xem PNKQ ở PGV, menu CSKH sau bán › Giao việc. Verify: php -l, compile, API thật (ghi trong transaction rollback). Còn: test trình duyệt, upload S3 thật, `permission:sync` 4 quyền type 24.
+**Checkpoint 06/11:** #12045 duyệt xong về danh sách + bỏ sort Trạng thái; check T40 (PNKQ 9114 báo "Không tìm thấy dữ liệu" do KH id 978 không có trên dev — lỗi dữ liệu, không sửa code).
 Tài liệu: `.plans/gop-db/phieu-nhap-ket-qua/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-02-phieu-nhap-ket-qua-design.md`.
 
 ## Phiếu giao việc (ERP → HRM) — HOÀN THÀNH, ĐÃ PUSH develop (hrm-api `4053ab27c`, hrm-client `50491b5bc`) (2026-11-02, @khoipv)

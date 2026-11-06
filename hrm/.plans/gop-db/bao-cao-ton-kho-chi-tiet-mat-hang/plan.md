@@ -47,3 +47,20 @@ Vừa hoàn thành: Phase 1 BE + FE, số liệu khớp ERP 100% ở 2 kho
 Đang làm dở: —
 Bước tiếp theo: user mở `/warehouse/stock-detail-by-product` kiểm giao diện; chạy `php artisan permission:sync`
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+
+- [x] Đọc brief + skill srs-documenter / hdsd-documenter / testcase-documenter; đọc code FE `pages/warehouse/stock-detail-by-product/**`, BE `StockDetailByProduct*` + `WarehouseStockReportService`
+- [x] Chụp ảnh dev-hrm (DNS Admin, `bctkct_shots/_capture/capture.js`, hồ sơ đăng nhập riêng, chặn mọi yêu cầu ghi — lọt 0; màn chỉ có API GET) — kho HP - Hải Phòng (96 mặt hàng); 40 icon (`trim_icon --dry` 0/40)
+- [x] Đối soát số dev (`_capture/doisoat.js`, chỉ GET): ENEO-700-V5231 kho HP / TPHP — tồn 31/12/2025 = 70; Thẻ kho 01/01–06/11/2026 nhập 496, xuất 546, tồn cuối 20 = SL tồn báo cáo (20) = Báo cáo tồn kho tổng hợp theo mặt hàng (20); tổng 4 lô = 20 — KHỚP
+- [x] `gen_srs.py` → `SRS - Báo cáo tồn kho chi tiết theo mặt hàng.docx` (68 trang, 7 chức năng, selfcheck khớp mẫu; metrics ui=14.3 ev=5.3 evch=1186 intro=1913; Phần 5 bảng 4 cột 15 dòng; Mục lục trang riêng căn giữa)
+- [x] `gen_hdsd.py` → `HDSD_Bao cao ton kho chi tiet theo mat hang.docx` (12 trang, 6 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (128 TC, 8 nhóm, P0 41,4%, check_tc `bao_cao` 0 lỗi)
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx` (Testcase 103 có TC / 221 N/A; SRS 79 có mục / 84 N/A)
+- [x] Ghi nhận nghi lỗi (chưa sửa): popup Chọn hàng hóa báo 403 khi Tồn theo công ty ≠ công ty đăng nhập (dev, CN Hải Phòng); ô Hợp đồng không thoát ký tự `%` `_`; link hợp đồng loại HRM (`to`) bị hiện chữ trơn vì bảng chỉ xử lý `href`; Cài đặt bộ lọc cho ẩn cả 3 ô bắt buộc
+
+### Checkpoint — 06/11/2026
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Báo cáo tồn kho chi tiết theo mặt hàng
+Đang làm dở: —
+Bước tiếp theo: user xem tài liệu; quyết định có sửa 4 điểm nghi lỗi không; đẩy Drive khi user yêu cầu
+Blocked:

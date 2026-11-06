@@ -203,3 +203,13 @@ PGV TPE.PGV.2026018146, phiếu nhập KQ id 9116 tạo trên cổng HRM. Ảnh 
       `importResultShowUrl()` → HRM `/customer-care/wr-import-results/{id}` (trước trỏ ERP `.../wr_import_results/{id}/show`);
       dùng ở cột Hành động (`index.vue:632`) + nút ở form chi tiết (`WrAssignTaskForm.vue:251`). QA chụp 16:05 — bản dev chưa deploy
 - [x] Rà toàn hrm-client: không còn chỗ nào trỏ ERP `wr_import_results/{id}/show`. Không sửa code → chỉ cần deploy dev-hrm rồi QA test lại
+
+## Check — Cùng "Chờ thực hiện" mà phiếu có nút Nhập kết quả, phiếu không (2026-11-06, @khoipv)
+- [x] Đọc `WrAssignTaskService::canImportResult()` (y ERP `WrAssignTask::canImportResult()`): nút hiện khi
+      (1) PGV CHƯA có phiếu nhập KQ nào, VÀ (2) Super admin + PCT đã duyệt (`has_assign_business = 1`), HOẶC
+      status = Chờ thực hiện + PCT đã duyệt + có người thực hiện + (mình là người thực hiện HOẶC có quyền "Nhập kết quả thực hiện")
+- [x] Kết luận: trạng thái chỉ là 1/4 điều kiện; khác biệt giữa 2 phiếu cùng "Chờ thực hiện" nằm ở cờ PCT
+      (`has_assign_business` 0 = chưa lập PCT, 2 = PCT chưa duyệt → ẩn) hoặc PGV đã có phiếu nhập KQ. Không sửa code
+- [x] Tra TPE.PGV.2026018718 (id 18718, dev-hrm, API bằng DNS Admin): status 1 Chờ thực hiện, `has_assign_business = 0`
+      (chưa lập PCT), `executors = []`, chưa có phiếu nhập KQ → `is_can_import_result = false` đúng logic (kể cả Super admin
+      vì thiếu PCT đã duyệt). Phiếu từ YC giao việc khác TPE.YCGVK.2026003065, tạo 06/11 14:21. Không sửa code

@@ -112,3 +112,18 @@ Vừa hoàn thành: commit + push develop — hrm-api 72426e9e1 (#11804 #11805 #
 Đang làm dở: —
 Bước tiếp theo: deploy dev + `php artisan migrate`; test #11806 (gõ Thực kiểm phiếu 138, câu lỗi, chữ đỏ) + #11807 trên hrm-crm
 Blocked: chờ user chốt có sửa câu lỗi ngoài bảng (Kho vật lý / Phạm vi / Hội đồng — FormRequest dùng chung màn Kế hoạch)
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+- [x] Đọc brief + skill srs / hdsd / testcase hiện hành, khuôn màn anh em `ke-hoach-kiem-ke-theo-vi-tri` (05/11); đọc code FE `pages/warehouse/position-inventory-results/**` + BE `Modules/Finance` PositionInventoryResult* (Entity / Service / WriteService / Controller / StoreRequest + SaveResultRequest / Print / Export), PositionInventoryTreeService, WarehouseInventoryLockService, WarehouseImportWriteService, PositionTransferWriteService, MasterData (chặn xóa danh mục), quyền nhóm "Kiểm kê theo vị trí" trong PermissionsTableSeeder
+- [x] Chụp ảnh dev-hrm (`kkvt_shots/_capture/capture.js`, DNS Admin): 39 ảnh + 93 icon (trim_icon 0/93; 3 icon Lập phiếu kiểm kê / Thêm dòng chép từ khkkvt_shots); chặn mọi yêu cầu ghi — 0 yêu cầu ghi phát sinh / 0 lọt; cho qua 1 yêu cầu "Lấy vị trí" (chỉ đọc tồn, đã đọc code). Giả trạng thái trên trình duyệt: `12_edit`, `13_delete` (144 giả Đang tạo), `15_wait_detail`, `15_approve`, `15b_reject` (140 giả Chờ duyệt kết quả), `16b_complete` (142 giả không còn dòng cần điều chuyển), `11_plan_picker`, `11b_from_plan` (popup Chọn kế hoạch giả 1 dòng — dev không có kế hoạch Đang kiểm mà DNS Admin là thủ kho). Thật: `14_result` (146 Đang kiểm), `16_handle` (142 Chờ xử lý). Ảnh lỗi `10b_validate`, `14b_result_validate`: gọi hàm kiểm của form, không bấm Lưu / Lưu kết quả. Phân hệ Kho đang bật (không ẩn)
+- [x] `gen_srs.py` → `SRS - Kiểm kê theo vị trí.docx`: 18 chức năng, 133 trang, selfcheck khớp bản mẫu; metrics ui 14.3 · ev 4.7 · evch 1216 · intro 1751; Phần 5 bảng 4 cột (7 dòng), Mục lục trang riêng căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Kiem ke theo vi tri.docx`: 19 phần, 28 trang
+- [x] `gen_testcase.py` → `testcase.xlsx`: loại `phieu` (vòng đời Đang tạo > Đang kiểm > Chờ duyệt kết quả > Chờ xử lý > Hoàn thành, có Duyệt / Không duyệt), 280 TC, 15 nhóm, P0 49,6%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 259 có TC / 65 N/A (Khóa, Import); SRS 132 / 31 N/A
+- [x] Nghi lỗi ghi nhận (không sửa): (1) Xuất Excel danh sách không tích sẵn trường "Người duyệt" dù cột đang hiện ("Đang chọn 10/11 trường"); (2) Phiếu nhập kho chỉ chặn vị trí của phiếu kiểm kê Đang kiểm, không chặn Chờ duyệt kết quả (WarehouseImportWriteService so `type 1 status 1` / `type 2`, lệch WarehouseInventoryLockService) — và không chặn vị trí của Kế hoạch Đang kiểm; (3) comment cũ trong `row-actions.js` ghi "Xóa KHÔNG trả kế hoạch về Đang kiểm" — code BE (#11805) đã trả về, chỉ lệch chú thích
+
+### Checkpoint — 2026-11-06 (tài liệu)
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Kiểm kê theo vị trí.
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết 2 nghi lỗi (trường xuất Excel Người duyệt mặc định, Phiếu nhập kho chặn vị trí đang kiểm kho); đẩy Drive khi user yêu cầu.
+Blocked:

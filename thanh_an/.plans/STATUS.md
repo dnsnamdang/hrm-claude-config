@@ -47,9 +47,6 @@
 - **HĐ mua — cho nhập tay VAT (%) ở bảng hàng hóa** — @khoipv — Bắt đầu 23/10/2026 — Code BE + FE xong, chờ build client + test UI. Cột VAT thành ô nhập (gợi ý theo danh mục hàng hóa, đã có % thì giữ), BE nhận % FE gửi, trống mới lấy `products.tax`.
   - Plan: [.plans/hop-dong-mua-vat-nhap-tay/plan.md](hop-dong-mua-vat-nhap-tay/plan.md)
 
-- **Đơn mua hàng — sửa logic theo demo `demo-lap-don-mua-hang.html`** — @khoipv — Bắt đầu 21/10/2026 — Đang brainstorming. Màn `supply/purchase_orders` làm theo demo: HĐ mua không bắt buộc (đơn mua lẻ lấy hàng từ BC nhu cầu mua), Thông tin chung 2 khối Đơn mua / NCC, bảng hàng theo HĐ mua + hàng HĐ bán chưa đề xuất, tab Giao nhận & vận chuyển (mới), tab Điều khoản thanh toán.
-  - Plan: [.plans/don-mua-hang-theo-demo/plan.md](don-mua-hang-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md)
-
 - **Báo cáo tổng hợp nhu cầu mua — sửa theo demo (bỏ tab Đã có HĐ mua)** — @khoipv — Bắt đầu 21/10/2026 — Đang code. Màn `supply/reports/purchase-demand` làm theo `demos/demo-bc-tong-hop-nhu-cau-mua.html` tab Cần đi mua (KPI, cột Cần mua thêm / Đã mua / Còn cần mua, bộ lọc NCC / HĐ mua theo dòng); không có thanh tab; Đã mua vẫn tính cả HĐ mua + đơn mua.
   - Plan: [.plans/bc-nhu-cau-mua-theo-demo/plan.md](bc-nhu-cau-mua-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md)
 
@@ -73,6 +70,9 @@
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Đơn mua hàng — sửa logic theo demo `demo-lap-don-mua-hang.html`** — @khoipv — Hoàn thành 2026-11-06 — Bắt đầu 21/10/2026 — 06/11: popup thêm nhanh người liên hệ NCC bỏ ô Phòng ban, nút "Lưu và gửi duyệt" → "Gửi"; Phase 6 đơn toàn hàng cung ứng khách hàng bỏ qua duyệt (duyệt tự động + lập phiếu giao hàng trong 1 transaction), Playwright e2e PASS. Màn `supply/purchase_orders` làm theo demo: HĐ mua không bắt buộc (đơn mua lẻ lấy hàng từ BC nhu cầu mua), Thông tin chung 2 khối Đơn mua / NCC, bảng hàng theo HĐ mua + hàng HĐ bán chưa đề xuất, tab Giao nhận & vận chuyển (mới), tab Điều khoản thanh toán.
+  - Plan: [.plans/don-mua-hang-theo-demo/plan.md](don-mua-hang-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md)
+
 - **Fix: HĐ đã duyệt — lưu Điều khoản thanh toán xong mở lại vẫn hiện dữ liệu cũ** — @khoipv — Hoàn thành 2026-10-30 — Bắt đầu 30/10/2026 — Nguyên nhân: lưu sau duyệt ghi bảng thật nhưng màn chi tiết đọc ĐKTT từ snapshot version 0. Sửa: lưu xong đồng bộ 5 trường ĐKTT vào mọi version; HĐ có PL thay đổi ĐKTT đã duyệt → khoá tab, BE chặn (cả luồng kết xuất); thêm loading nút Lưu. Đã commit + push `master` (API 366a5571, Client 8e13db52). Còn treo: HĐ đã lưu ĐKTT trước bản sửa vẫn hiện bản cũ tới khi lưu lại.
   - Plan: [.plans/fix-hd-luu-dktt-sau-duyet/plan.md](fix-hd-luu-dktt-sau-duyet/plan.md)
 

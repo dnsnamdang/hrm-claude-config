@@ -42,3 +42,18 @@ Blocked:
 ## Dời menu sang Bán hàng (15/10)
 - [x] Gỡ mục khỏi `components/subsystem-menu/admin.js`, thêm vào `sale-hub.js` › Quy chế - Thiết lập › Thiết lập (route giữ `/admin/...`)
 - [ ] User mở trình duyệt kiểm sidebar Bán hàng
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+- [x] Đọc code màn (FE `pages/admin/list-bill-accountings/index.vue` — file duy nhất; BE `Modules/Finance` ListBillAccounting*): màn CHỈ XEM — không Thêm / Sửa / Xóa / Khóa / Lịch sử / Xem chi tiết / Import; bộ lọc gọn 2 ô (không có Tìm kiếm nâng cao / Cài đặt bộ lọc); không gắn quyền, không giới hạn phạm vi
+- [x] Grep màn đọc ngược (hrm-api, hrm-client, ERP, cột `*bill_accounting*` trong DB gộp): không màn HRM nào đọc; chỉ màn gốc ERP đọc cùng bảng → Phần 5 1 dòng "Hệ thống ERP"
+- [x] Chụp ảnh dev-hrm (`dslpht_shots/_capture/capture.js`, chặn mọi yêu cầu ghi — 0 yêu cầu ghi): 8 ảnh màn + 16 icon, dữ liệu thật 105 loại phiếu, không giả dữ liệu
+- [x] `gen_srs.py` → `SRS - Danh sách loại phiếu hạch toán.docx`: 4 chức năng (Xem DS, Tìm kiếm và lọc, Tùy chỉnh cột, Xuất Excel — UC), BR-01..09, Phần 5 bảng 4 cột, Mục lục trang riêng căn giữa; selfcheck khớp mẫu; metrics ui=12.8 ev=4.8 evch=1003 intro=1767
+- [x] `gen_hdsd.py` → `HDSD_Danh sach loai phieu hach toan.docx`: 9 trang, 4 phần (Truy cập và tìm kiếm, Sắp xếp và phân trang, Xuất Excel, Tùy chỉnh cột)
+- [x] `gen_testcase.py` → `testcase.xlsx` (loai danh_muc): 84 TC, 6 nhóm, P0 41.7%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 89 có TC / 235 N/A; SRS 79 có mục / 84 N/A
+
+### Checkpoint — 2026-11-06
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Danh sách loại phiếu hạch toán (chuẩn 04/11)
+Đang làm dở: —
+Bước tiếp theo: user mở 4 file kiểm tra, quyết định đẩy Drive
+Blocked:

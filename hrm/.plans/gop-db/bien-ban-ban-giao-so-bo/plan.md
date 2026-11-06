@@ -122,6 +122,11 @@ BE migration mới, `HandoverRecordController@approve`, `HandoverRecordService` 
 Bước tiếp theo: user mở trình duyệt kiểm màn chi tiết (Chờ duyệt → Từ chối nhập lý do → chi tiết Từ chối hiện lý do)
 Blocked:
 
+### #12028 — QA phản hồi 06/11/2026: "Sửa lại tên tiêu đề" (popup Lịch sử thay đổi)
+- [x] Nhãn timeline "Duyệt" / "Từ chối" → "Thay đổi trạng thái" (user chốt 06/11, đồng bộ dòng Gửi lại duyệt). Khuôn #12039:
+      `CatalogHistoryService::TABLES['handover_records']['action_labels']` đè nhãn, GIỮ mã `approved`/`rejected`
+      (màu xanh/đỏ, nhóm lọc, lý do từ chối ở `note` không đổi) → log cũ cũng ra nhãn mới, không đụng dữ liệu
+
 ### Checkpoint — 2026-11-05 (push)
 Vừa hoàn thành: ĐÃ PUSH `develop` (hrm-api tới `6b0b11b6e`, hrm-client tới `cf57d6f54`) theo yêu cầu user.
 Đang làm dở: —

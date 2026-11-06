@@ -182,3 +182,11 @@ Blocked:
 
 - [x] T39 (05/11, chỉ check, không sửa code): ô tích "Đã hoàn thành" đầu cột bị disabled ở bảng "II. Danh mục thiết bị cần bảo dưỡng" + "B - I. Công việc phụ tính P3"
   - Kết luận: đúng thiết kế. Ô "chọn tất cả" khoá khi bảng rỗng: `WrImportResultMaintainTable.vue:29` `:disabled="readonly || !serviceCount"`, `WrImportResultP3WorkTable.vue:18` `:disabled="readonly || !rows.length"` (Device cũng vậy). Ảnh QA cả 2 bảng đều "Không có dữ liệu" → khoá. P3 bấm "Thêm dòng" là ô tự mở; bảng bảo dưỡng rỗng vì PGV 18705 không có dịch vụ bảo dưỡng.
+
+- [x] (06/11, Redmine #12045) Duyệt xong → về danh sách; bỏ sort cột Trạng thái. Chi tiết ở `.plans/gop-db/phieu-yeu-cau-giao-viec-khac/plan.md` mục Fix bug #12045.
+
+- [x] T40 (06/11, chỉ check, không sửa code): dev PNKQ 9114 (TPE.PNKQ.2026009114, PGV TPE.PGV.2026018152, PBH TPE.PBH.2026.008258) màn Duyệt bấm Lưu / Duyệt → toast "Không tìm thấy dữ liệu"
+  - Tái hiện trên dev (Playwright, DNS Admin): `POST /9114/approve` → 404 `Không tìm thấy dữ liệu`; `PUT` cùng payload cũng 404 (lẽ ra 409) ⇒ nổ TRƯỚC store/update, ở `precheck()`. Log dev không có gì (404 không ghi log).
+  - Nguyên nhân: `precheck` → `WrImportResultValidationService::checkValidateSerial` → `CustomerDeviceListService::forCustomer(978)` ném `ModelNotFoundException('customers')` (y ERP `firstOrFail`) vì **KH id 978 không tồn tại trong bảng `customers` trên dev**: approve-data / chi tiết PGV trả `customer_code` rỗng, `GET /assign/customers/978` 403 (KH mẫu id 34 → 200). Tên KH trên phiếu chỉ là chuỗi lưu sẵn ("CÔNG TY CỔ PHẦN VẬN TẢI THƯƠNG MẠI VÀ ĐẦU TƯ AN VIỆT").
+  - Local: chạy store với PNKQ 7034 (BH) trong transaction rollBack → lưu OK ⇒ code đúng, lỗi do dữ liệu.
+  - Đề xuất (chờ user): (a) dữ liệu — user chọn lại KH đúng cho PGV/PBH hoặc khôi phục KH 978 trên dev; (b) code — đổi câu 404 thành "Không tìm thấy khách hàng của phiếu (id 978) — vui lòng kiểm tra lại khách hàng" để lần sau đọc là hiểu.

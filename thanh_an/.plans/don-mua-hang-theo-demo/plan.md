@@ -51,12 +51,27 @@
 - [x] 4.16 Kho nhận: lấy toàn bộ kho vật lý đang hoạt động (bảng `warehouses`), bỏ lọc theo Công ty mua + bỏ watcher xoá kho khi đổi Công ty mua
 - [x] 4.17 Thủ kho tiếp nhận: đổi ô hiển thị thành ô chọn (thủ kho của kho nhận, `warehouses.stockers`); cột mới `purchase_orders.warehouse_keeper_id` (migration 2026_10_21_000004, index, không FK); BE kiểm thủ kho thuộc kho; đổi kho → bỏ thủ kho cũ, kho có 1 thủ kho thì chọn sẵn; chi tiết đơn hiện thủ kho. Kèm sửa `headerData` loại các khoá chỉ hiển thị (`warehouse_keeper`, `pickup_employee_name`…) — trước đó bị fill vào model → lỗi Unknown column khi lưu
 - [x] 4.18 Dropdown "Hợp đồng mua" ở form lập/sửa đơn chỉ hiện HĐ còn SL chưa mua: API `contracts?available=1` bỏ HĐ thương mại đã duyệt có tổng (SL HĐ − đã mua) ≤ 0 theo từng dòng × mục đích (HĐ nguyên tắc luôn giữ); sửa đơn truyền `exclude_order_id` (không tính SL của chính đơn) + `include_ids` (giữ HĐ đang gắn). Bộ lọc màn danh sách vẫn lấy đủ HĐ
+- [x] 4.19 Popup thêm nhanh người liên hệ NCC (tab Thông tin chung): bỏ ô "Phòng ban" — thêm prop opt-in `hideDepartment` (mặc định false) vào `components/modal/CustomerContactModal.vue`, chỉ đơn mua truyền vào; dự toán / dự án giữ nguyên. BE `department` vốn nullable
+- [x] 4.20 Đổi nhãn nút "Lưu và gửi duyệt" → "Lưu và gửi" (nút footer form + nút đồng ý popup xác nhận) ở `PurchaseOrderForm.vue`
 - [ ] 4.3 User test tay trên trình duyệt (tạo đơn lẻ / theo HĐ TM / HĐ NT, giao thẳng KH, xác nhận nhận/giao)
 
 ## Phase 5 — Cập nhật demo `demos/demo-lap-don-mua-hang.html` theo code hiện tại (user yêu cầu 30/10/2026)
 - [x] 5.1 So demo với màn thật `/supply/purchase_orders/add` (PurchaseOrderForm, GeneralTab, ProductsTab, GoodsPickerModal, PaymentTab, ShipTab) — liệt kê khác biệt
 - [x] 5.2 Sửa demo cho khớp code (bỏ phần code đã gỡ, thêm phần code mới): tab chung (Diễn giải, người liên hệ select + thêm nhanh, dư nợ NCC, xác nhận đổi HĐ) · popup chọn hàng (thứ tự bộ lọc, cột Còn cần mua + HĐ mua, nhóm HĐ bán chưa đề xuất, phân trang 20/50/100) · bảng hàng (VAT sửa được, Đổi hàng + dòng THAY CHO, popup xác nhận xoá / bỏ phiếu, khối tổng 4 dòng) · bỏ kho nhận + chi phí VC + trả trước→ĐNTT · thanh toán hiện Tổng thanh toán cho NCC · lưu: popup xác nhận gửi duyệt, toast lỗi + nhảy tab
 - [x] 5.3 Cập nhật `demos/README.md` dòng demo-lap-don-mua-hang
+
+## Phase 6 — Bỏ qua duyệt cho đơn toàn hàng cung ứng khách hàng (user yêu cầu 06/11/2026)
+Quy tắc (user chốt): đơn **bỏ qua duyệt** khi MỌI dòng hàng đều có nguồn, và MỌI nguồn (purposes) là cung ứng khách hàng:
+PXL/đề xuất loại ≠ Nội bộ (type 1,3,4,5,6), hoặc dòng "HĐ bán chưa đề xuất" (có contract_id HĐ bán, không phiếu).
+Có 1 dòng từ đề xuất nội bộ / dòng không gắn đề xuất, HĐ bán nào (vd dòng HĐ mua không mục đích) → cả đơn vẫn gửi duyệt.
+Nút "Gửi" ở form: đơn phải duyệt → popup xác nhận → Chờ duyệt (như cũ); đơn bỏ qua duyệt → mở popup "Gửi bộ phận giao hàng"
+(Ngày lấy hàng, Ưu tiên, Ghi chú) ngay trên form → lưu đơn + duyệt tự động (approved_at = now, approved_by = null, không báo người duyệt)
++ lập phiếu giao hàng (báo kho) → đơn "Đã gửi giao hàng", tất cả trong 1 transaction. Quyền: "Lập đơn mua hàng".
+- [x] 6.1 BE `PurchaseOrderService::isCustomerSupplyOnly(items)` + API `POST supply/purchase-orders/approval-mode` trả `skip_approval`
+- [x] 6.2 BE store/update nhận `send_delivery` {pickup_date, priority, note} khi status = Chờ duyệt: kiểm lại quy tắc (không đạt → báo lỗi), duyệt tự động + `PurchaseDeliveryNoteService::send` trong cùng transaction; validate `send_delivery.*`
+- [x] 6.3 FE `SendDeliveryNoteModal` thêm chế độ `emitOnly` (không gọi API, emit `confirm` với dữ liệu popup)
+- [x] 6.4 FE `PurchaseOrderForm`: nút "Lưu và gửi" → "Gửi"; bấm Gửi → validate form → hỏi `approval-mode` → mở popup giao hàng hoặc popup xác nhận gửi duyệt; toast theo nhánh
+- [x] 6.5 Test trình duyệt (Playwright e2e/tests/supply/don-mua-gui-bo-qua-duyet.spec.js, 06/11/2026): đơn toàn hàng cung ứng KH → popup Gửi BP giao hàng → status 7 + có phiếu giao hàng; đơn có dòng không gắn đề xuất → Xác nhận gửi duyệt → status 2; API send_delivery cho đơn không đủ ĐK → 400, không tạo đơn. 4/4 pass, dữ liệu test tự dọn.
 
 ### Checkpoint — 2026-10-30
 Vừa hoàn thành: Phase 5 — demo `demos/demo-lap-don-mua-hang.html` đã khớp code `/supply/purchase_orders/add`; `node --check` OK + chạy thử luồng chính trên DOM giả (đơn lẻ, 3 HĐ, đổi hàng, lưu lỗi) không lỗi runtime

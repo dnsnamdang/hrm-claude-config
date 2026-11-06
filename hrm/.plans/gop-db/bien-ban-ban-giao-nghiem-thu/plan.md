@@ -106,7 +106,21 @@ Redmine http://quanly.dnsmedia.vn/issues/12021
   - Câu mới: vượt SL → "Số lượng đã nghiệm thu không được lớn hơn số lượng đã xuất (X)" (có SL đã trả → "…tổng số lượng đã xuất và đã trả (X)"); hàng bắt buộc seri → "Hàng bắt buộc nhập seri: số dòng seri (n) phải bằng số lượng đã nghiệm thu (q)"; Lưu và duyệt → "Lưu và duyệt: số lượng đã nghiệm thu phải bằng số lượng đã xuất (X)"
 - [x] Verify: php -l sạch; compile 2 file FE OK; tinker: STATUSES = Đang tạo / Chờ duyệt / Đã duyệt, 2 nhánh câu vượt SL đúng số. CHƯA chạy lại e2e, CHƯA mở trình duyệt
 
+### Phản hồi #12021 (QA 06/11/2026, @khoipv)
+- [x] Sai màu nút Lưu nháp: `primary` → `secondary` (skill button-convention §1/§5) — `HandoverAcceptanceRecordForm.vue`
+- [x] Thu gọn câu lỗi ô SL nghiệm thu (tiêu đề cột đã nói tên trường) — FE `handoverBuild.js` + BE `HandoverAcceptanceRecordRequest` cùng câu: "Không được lớn hơn số lượng đã xuất (X)" / "Không được lớn hơn tổng số lượng đã xuất và đã trả (X)" / "Phải bằng số dòng seri (n)" / "Phải bằng số lượng đã xuất (X)"
+- [x] Căn đều: ô `text-right` làm câu lỗi căn phải lởm chởm → `V2BaseError class="text-left"` — `HandoverProductTable.vue`
+- [x] Verify: php -l sạch; compile 2 file .vue + parse js OK. CHƯA mở trình duyệt
+
 ## Fix #12023 — Lịch sử: dòng duyệt mang nhãn "Duyệt" thay vì "Thay đổi trạng thái" (2026-11-05, @khoipv)
 Redmine http://quanly.dnsmedia.vn/issues/12023
 - [x] Nguyên nhân: `HandoverAcceptanceRecordService::logStatus()` rẽ action `approved` khi sang Đã duyệt (nhãn "Duyệt"); các màn khác dùng bộ nhãn chuẩn `change_status` (skill entity-history §0, §3a)
 - [x] Sửa: luôn ghi `change_status`. Log cũ (action `approved`) giữ nguyên, không sửa dữ liệu
+
+## Fix #12060 — Popup Chọn hợp đồng: không hiện HĐ chưa xuất hết hàng (2026-11-06, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12060
+- [x] Triệu chứng: nhập đủ thông tin, bấm Lưu mới báo "Hợp đồng chưa xuất hết hàng" dưới ô Hợp đồng → chọn được HĐ mà không bao giờ lưu được
+- [x] Sửa BE `HandoverContractSourceService::contracts()` + hàm mới `whereFullyExported()`: loại HĐ còn dòng `quantity > exported + returned` (SQL y hệt `pendingProductIds()` — HĐ gốc + PL bổ sung 2/5/9; HĐ HRM theo `qty_needed`)
+- [x] FE `HandoverContractPickerModal.vue`: phụ đề + câu rỗng thêm "đã xuất hết hàng"
+- [x] Verify: php -l sạch; tinker cty 1: trước 2688 HĐ hãng (1184 còn hàng chưa xuất) + 11 HĐ HRM → sau 1515, khớp đúng số HĐ `pendingProductIds()` rỗng; quét toàn bộ 1515 dòng popup: 0 HĐ còn hàng chưa xuất. HĐ trong ảnh QA (HD_TPE_HN_KD3_26_0818_1510) chỉ có trên dev. CHƯA mở trình duyệt
+  - Lưu ý: HĐ HRM có hàng sẽ biến khỏi popup tới khi luồng xuất kho ghi `exported_qty` (trước đó chọn được nhưng cũng không lưu được)
