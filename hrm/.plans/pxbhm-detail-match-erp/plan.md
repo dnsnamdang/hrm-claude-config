@@ -106,3 +106,7 @@ ERP gốc `show.blade.php` L16-34: dòng người tạo (`form.creator - form.cr
 ## Ghi chú
 - Chỉ sửa màn CHI TIẾT PXBHM (borrow-sells), không đụng borrow-sell-requests (Phase 1 đã OK).
 - Branch: develop (cả 2 repo). KHÔNG commit/push khi user chưa yêu cầu.
+
+## Redmine #11427 (06/11/2026) — Kiểm lại phản hồi 10/10, không phải sửa
+
+- [x] Verify Playwright PXBHM-04312 (HĐ_TPE_HN_KDXM_26_0398_03): có tab Hàng hoá + Nhóm 1, có bảng Thông tin thanh toán hợp đồng, vùng thông tin dạng textbox, tiêu đề khối không icon, lưới không còn trạng thái. Badge cạnh tiêu đề màn là khuôn chung `buildStatusTitle`, giữ nguyên.

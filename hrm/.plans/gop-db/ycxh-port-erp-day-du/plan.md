@@ -2174,3 +2174,10 @@ Blocked: —
 - [x] Popup: đã sửa ở commit `3ce873351` (06/11, đã có trên origin/develop, dùng `$confirm`). Ảnh ticket chụp popup cũ.
 - [x] 404: KHÔNG tái hiện được ở local. Thử DELETE trong transaction + rollback với phiếu nháp (status 3) loại 7, 6, 99, 19, 3, 14: đều 200. Route `Modules/Assign/Routes/api.php:788` có từ 20/08; controller chỉ trả 404 khi bản ghi không còn (vd đã bị xóa). Phiếu 44417 của ticket không có ở DB local nên chưa thử trên dev. KHÔNG sửa code.
 - [ ] Nhờ tester thử lại trên dev; nếu còn 404 thì chụp response của lệnh DELETE.
+
+## Redmine #11387 (06/11/2026) — Popup chọn hợp đồng loại 19: tổng lệch ERP, cột Ngày lập
+
+- [x] Tổng số HĐ: HRM dư đúng nhóm Đơn hàng nguyên tắc. ERP `SearchContractService::searchEmplementAllContract` JOIN thường `firm_quotations`, mà 5.053/5.053 ĐHNT không có báo giá nên ERP không hiện. HRM dùng LEFT JOIN. Đổi `emplementContracts` sang JOIN thường cho cả firm và wr. Local: 19.720 → 14.832, bằng công thức ERP (13.503 + 324 + 1.005).
+- [x] Đổi cột "Ngày lập" thành "Ngày tạo" ở `EmplementContractSearchModal.vue`.
+- [x] Các ý còn lại của phản hồi 13/10 đã có từ `a5632ee0d`: không còn tiêu đề danh sách, dropdown bo 5px, Tìm kiếm + Làm mới cùng 1 dòng, popup 95vw không đè menu.
+- [ ] Hỏi nghiệp vụ: lọc "Đơn hàng nguyên tắc" giờ luôn rỗng, giống ERP. Chưa có YCXH nào dùng loại này (`emplement_contract_type = 4`: 0 phiếu).

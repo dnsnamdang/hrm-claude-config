@@ -337,3 +337,8 @@ Blocked:
 
 ### MỞ — chờ user
 - Phiếu đã tạo bằng FE lỗi có `product_export_details.qty` lưu ĐV cơ bản → có backfill không? (cần kiểm data thật trước, user thường KHÔNG backfill systemic).
+
+## Redmine #11411 (06/11/2026) — Số hợp đồng dài làm ô cao hơn 2 ô bên cạnh
+
+- [x] `_id/index.vue`: ô Số hợp đồng 1 dòng, cắt "...", rê chuột xem đủ (class `.linked-one-line` riêng màn này, không sửa `.v2-linked-field` dùng chung).
+- [x] Verify Playwright PDNXK-13014, rộng 1100px: ô 32px bằng 2 ô bên cạnh, chữ bị cắt (320 > 239). Checkbox KD chịu vận chuyển ngang textbox. Màn tạo/sửa dùng input nên không bị xuống dòng.
