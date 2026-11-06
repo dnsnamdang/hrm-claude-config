@@ -48,7 +48,7 @@ id quyền, tên hàm/class/file, đường dẫn kỹ thuật, mã lỗi kỹ t
 | "gửi thông báo qua hàng đợi" | "hệ thống gửi thông báo qua chuông thông báo trên thanh công cụ" |
 | "bảng con bị xóa cascade" | "xóa phiếu là xóa cả các dòng thiết bị của phiếu" |
 
-**Được giữ**: tên quyền nguyên văn tiếng Việt (copy đúng `PermissionsTableSeeder`), tên nhãn/nút
+**Được giữ**: tên quyền nguyên văn tiếng Việt (copy đúng `name` trong Catalog), tên nhãn/nút
 đúng như hiển thị trên màn hình, tên trạng thái đúng như badge.
 
 Gắn bộ kiểm tra tự động vào cuối generator (copy từ `tc_engine.check_terms`) và đọc kết quả trước
@@ -148,7 +148,7 @@ nghiệp vụ không · sự kiện nào **không** phát sinh thông báo (cũn
 | **Người nhận thông báo** | Lớp Notifier/Helper gửi thông báo — xem nó lấy danh sách người nhận theo gì |
 | Nội dung thông báo | Hàm dựng nội dung trong Notifier + `.claude/skills/notification-convention/SKILL.md` |
 | Bắt buộc nhập theo trạng thái | FormRequest |
-| Tên quyền | `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` |
+| Tên quyền | `app/Support/Permissions/Catalog/<phan_he>.php` |
 | Nhãn/nút/chữ đúng như user thấy | Mở màn thật trên cổng dev (Playwright) — **đừng lấy tên field trong code** |
 | Khác biệt với ERP | So với code ERP tương ứng; nếu feature là port màn thì lấy từ `plan.md` mục "Khác biệt có chủ đích" |
 

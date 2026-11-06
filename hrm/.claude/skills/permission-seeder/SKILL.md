@@ -1,112 +1,68 @@
 ---
 name: permission-seeder
-description: Use when thêm / sửa / đổi tên / bỏ quyền (permission) ở hrm-api hoặc ERP TanPhatDev trên nhánh gop_db — khai dòng `$this->perm([...])` trong PermissionsTableSeeder, dùng hằng RENAMED / REMOVED, chạy `permission:sync --dry-run`, resolve conflict seeder quyền khi merge nhánh cũ, hoặc khi seeder quyền báo lỗi khai báo / API 403 sau khi đổi tên quyền.
+description: Use when thêm / sửa / đổi tên / bỏ quyền (permission) ở hrm-api, hrm-client hoặc ERP TanPhatDev trên nhánh gop_db, khi gắn checkPermission hay kiểm quyền trong code, khi port màn ERP cần quyền, hoặc khi gặp UnknownPermissionCode, API 403 do thiếu quyền, tên quyền cũ luôn false. Cơ chế hiện hành là Catalog + mã quyền; seeder quyền đã gỡ từ 06/11/2026, KHÔNG khai vào PermissionsTableSeeder.
 ---
 
-# Khai báo quyền bằng seeder đồng bộ (HRM + ERP, DB gộp)
+# Khai và kiểm quyền (Catalog + mã quyền)
 
-Áp dụng từ 14/10/2026 (feature `.plans/gop-db/permission-seeder-sync/`). Thay cho kiểu cũ
-"xoá hết quyền rồi `Permission::create(['id' => N, ...])` lại từ đầu".
+Từ 06/11/2026 phân quyền mới đã lên prod. **`PermissionsTableSeeder` ở cả 2 repo đã gỡ, `permission:sync` không còn dùng.**
+Tài liệu đầy đủ cho dev: `hrm-api/docs/huong-dan-phan-quyen.md`. Đọc file đó khi cần code mẫu đủ 3 repo.
 
-| | Seeder | Guard |
-|---|---|---|
-| HRM | `hrm-api/Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` | `api` |
-| ERP | `TanPhatDev/database/seeds/PermissionsTableSeeder.php` | `web` |
+## Nguyên tắc
 
-Engine dùng chung: `app/Support/Permissions/PermissionSync.php` + `DeclaresPermissions.php` — **bản giống hệt ở 2 repo**,
-sửa 1 bên phải chép sang bên kia.
+- Quyền khai ở `hrm-api/app/Support/Permissions/Catalog/<phan_he>.php`. ERP dùng chung, không khai ở repo ERP.
+- Mã dạng `phan_he.doi_tuong.hanh_dong`. Code mới kiểm theo **mã**, không theo tên tiếng Việt, không theo tên Vai trò.
+- `kind`: `view` có `scopes` (1 Bộ phận, 2 Phòng ban, 3 Công ty, 4 Tổng công ty). `action`, `approve` để `scopes => []`.
+- Một chức năng Xem là **một mã có phạm vi**, không tạo mã riêng cho từng mức. Mỗi bước duyệt một mã riêng.
+- Quyền tính ở công ty đang làm. So phạm vi bằng `>=`.
+- **Không bypass Super Admin** dưới mọi hình thức. Không `hasRole`, không kiểm role id.
+- Port màn ERP: dùng lại mã ERP đã có trong Catalog và thêm `platforms` `hrm`; chỉ tạo mã mới khi chức năng chưa có mã.
 
-## 1. Cơ chế (đọc 1 lần cho hiểu)
+## Thêm quyền
 
-- Mỗi quyền là 1 dòng `$this->perm([...])` trong hàm `declarePermissions()`. Hàm này **không ghi DB**, chỉ gom vào danh sách.
-- Khi seeder chạy, `PermissionSync` so danh sách với DB **theo TÊN** (chỉ guard của seeder đó):
-  tên chưa có → thêm (id DB tự sinh) · tên đã có → cập nhật nhãn/nhóm/phân hệ tại chỗ, **giữ id** →
-  gán quyền của vai trò không mất · tên có trong DB mà file không khai → **chỉ cảnh báo ⚠, không xoá**.
-- Thứ tự dòng trong file = thứ tự hiển thị trên màn Phân quyền (cột `seed_order`).
-- 2 seeder chỉ đụng guard của mình → HRM và ERP không ảnh hưởng nhau, kể cả trùng tên quyền.
-- Khai sai → dừng, KHÔNG ghi gì. Lỗi SQL giữa chừng → rollback toàn bộ.
-
-## 2. Thêm quyền
-
-```php
-$this->perm(['name' => 'Xem danh mục loại xe', 'display_name' => 'Xem danh mục loại xe', 'group' => 'Danh mục hàng hóa', 'type' => 9]);
-```
-- **KHÔNG khai `'id'`, KHÔNG khai `'guard_name'`** (seeder báo lỗi). Đặt dòng cạnh các quyền cùng nhóm.
-- `name` bắt buộc, ≤ 255 ký tự, không trùng dòng khác. `group` bắt buộc.
-- HRM: `type` = `permissionType` của **phân hệ chính** (tra `hrm-client/components/subsystems.js`, bảng số ở đầu seeder).
-  Thiếu `type` → quyền không hiện ở phân hệ nào. `sort_order` (tuỳ chọn) = xếp trước trong nhóm.
-- ERP: dùng `group_category` (Danh mục, Kinh doanh, Kho, Kế toán, Mua hàng, CSKH…) thay cho `type`.
-- Cột không khai = NULL (seeder là nguồn duy nhất).
-- **Không dùng lại tên đã có trong `RENAMED` (vế trái) hoặc `REMOVED`** — seeder sẽ chặn (mục 5).
-- Màn port từ ERP: tạo quyền MỚI ở seeder HRM, không dùng lại quyền ERP (skill `erp-to-hrm-screen` Bước 2).
-
-## 3. Đổi tên quyền — sửa 3 chỗ
-
-1. Sửa `name` ở dòng `$this->perm`.
-2. Thêm vào hằng `RENAMED` ở đầu seeder, kèm ngày + lý do:
+1. Thêm mục vào Catalog, cạnh quyền cùng chức năng, giữ đúng chữ `subsystem_group`, `subsystem`, `feature`:
    ```php
-   const RENAMED = [
-       // 15/10/2026 — chuẩn hoá theo menu (#1234)
-       'Xem nhóm ngành' => 'Xem danh mục nhóm ngành',
-   ];
+   [
+       'code' => 'accounting.quyet_toan_thuong_nam.view',
+       'name' => 'Xem quyết toán thưởng năm',
+       'subsystem_group' => 'Kinh doanh - Tài chính',
+       'subsystem' => 'Kế toán',
+       'feature' => 'Quyết toán thưởng năm',
+       'kind' => 'view',
+       'scopes' => [2, 3, 4],
+       'depends_on' => [],
+       'platforms' => ['hrm'],
+       'legacy' => [],
+   ],
    ```
-3. **Sửa mọi chỗ code dùng tên cũ**: `checkPermission:...` trên route, `isCurrentEmployeeHasPermission(...)`,
-   `isShow` menu FE (`hrm-client/components/subsystem-menu/*.js`), `hasAPermission(...)`. Quên → người có quyền bị 403.
+2. `php artisan permission:catalog-sync --dry-run` rồi chạy thật. Chạy vào DB là việc phải hỏi user như migration.
+3. Mã mới **chưa ai có, kể cả Super Admin**: cấp ở `/admin/roles`.
+4. Ghi vào ghi chú deploy: prod phải chạy `permission:catalog-sync` tay trên VPS HRM, **trước khi push ERP** nếu ERP dùng mã mới.
 
-- Quên bước 2 → tạo quyền mới chưa ai được gán, quyền cũ nằm lại + cảnh báo. Bổ sung `RENAMED` sau vẫn cứu được (chế độ merge).
-- Đổi tiếp lần nữa: **THÊM** mục `'B' => 'C'`, **giữ nguyên** `'A' => 'B'` — môi trường còn ở A tự đi thẳng tới C.
+## Kiểm quyền
 
-## 4. Bỏ quyền — sửa 2 chỗ
-
-1. `grep` chắc chắn không còn code nào dùng tên quyền.
-2. Comment (hoặc xoá) dòng `$this->perm` **VÀ** thêm tên vào `REMOVED` (kèm ngày + lý do).
-- Gỡ = xoá quyền + mọi gán quyền của nó. Chỉ comment mà không thêm `REMOVED` → quyền còn nguyên (cố ý, tránh comment nhầm).
-- Dry-run in `Gỡ: <tên> — mất ở N vai trò, M nhân viên` → N > 0 thì báo admin.
-
-## 5. ⚠️ KHÔNG BAO GIỜ xoá mục cũ trong RENAMED / REMOVED
-
-- Môi trường khác (dev, prod, Đức Lộc Sơn…) deploy lúc khác — xoá mục là môi trường chưa chạy sẽ không được đổi tên / gỡ.
-- Mục cũ chặn việc **dùng lại tên** đã khai tử. Đã tái hiện 15/10/2026: xoá `'A' => 'B'` rồi khai lại "A" cho chức năng
-  khác → môi trường chưa chạy bản đổi tên **trao quyền A mới cho vai trò đang giữ A cũ** + vai trò mất B.
-- Để mục cũ vô hại: tên cũ không còn trong DB thì seeder bỏ qua.
-
-## 6. Lệnh
-
-| Lệnh | Dùng khi |
+| Nơi | Cách dùng |
 |---|---|
-| `php artisan permission:sync --dry-run` | Xem trước thêm / sửa / đổi tên / gỡ, không ghi DB — **luôn chạy trước** |
-| `php artisan permission:sync` | Ghi vào DB local (= `db:seed` seeder quyền) |
-| `php artisan db:seed --class="Modules\Timesheet\Database\Seeders\PermissionsTableSeeder"` | Đường deploy `~/build_tpe.sh` (HRM tự chạy sau `migrate`) |
-| `php artisan permission:cleanup --dry-run` (chỉ hrm-api) | Dọn gán quyền mồ côi, có CSV backup — chạy tay, prod phải hỏi trước |
+| Route hrm-api, ERP | `->middleware('checkPermission:ma.a.b')`, nhiều mã nối `\|` là có 1 mã là qua |
+| hrm-api | `isCurrentEmployeeHasPermission($ma)`, `CurrentPermission::scope($ma)`, `PermissionLookup::holders($ma, $companyId)` |
+| ERP | `Auth::user()->can($ma)`, `canInCompany($ma, $id)`, `permissionScope($ma)`, `@can($ma)` |
+| hrm-client | `hasAPermission($ma)`, `permissionScope($ma)`, `hasAnyPermission([...])`, menu khai `codes: [...]` |
 
-Báo cáo: `Guard api: thêm X (giữ id cũ Y) · sửa · đổi tên · gỡ · gộp trùng · nhận gán quyền id cũ · không khai báo`.
-Đổi vị trí dòng không hiện trong "sửa" (chỉ cập nhật `seed_order`).
+Không query thẳng `role_has_permissions`, `employee_has_roles` để hỏi quyền. `role_has_permissions` không còn `company_id`.
 
-## 7. Lỗi khai báo (seeder dừng, DB không đổi)
+## Sửa, bỏ quyền
 
-| Câu lỗi | Sửa |
-|---|---|
-| `trùng tên với dòng #M` | Xoá 1 dòng |
-| `không được khai 'id' / 'guard_name' / 'seed_order'` | Bỏ key đó |
-| `bảng permissions không có cột '<x>'` | Gõ sai tên cột |
-| `thiếu 'name'` / `thiếu 'group'` | Bổ sung |
-| `RENAMED: tên cũ 'X' vẫn còn trong khai báo.` | Quên sửa `name`, hoặc đang dùng lại tên đã khai tử → đặt tên khác |
-| `RENAMED: tên mới 'Y' (đích cuối của 'X') không có trong khai báo.` | Gõ sai tên mới / quên sửa `name` |
-| `RENAMED: ... vòng tròn` / `đổi sang chính nó` | Sửa lại mục RENAMED |
-| `REMOVED: 'X' vẫn còn trong khai báo.` | Comment dòng khai báo |
-| `REMOVED: 'X' đồng thời nằm trong RENAMED.` | Chọn 1 trong 2 |
-| SQL `Duplicate entry ... permissions_name_guard_name_unique` | Tên chỉ khác dấu / hoa-thường với tên đã có (DB so không phân biệt dấu) → đặt tên khác hẳn |
+- Đổi tên hiển thị: sửa `name`, sync.
+- **Không đổi `code`** của mã đã lên prod.
+- Bỏ quyền: gỡ khỏi Catalog và mọi chỗ kiểm, sync. Mã chuyển `deprecated_at`, không xoá.
+- Code cũ còn gọi tên tiếng Việt: thêm `legacy` `['api'|'web', 'tên cũ', phạm_vi|null]`. Tên phải đúng từng ký tự; `api` là HRM, `web` là ERP.
 
-## 8. Merge nhánh tạo trước 14/10/2026
+## Merge nhánh cũ còn seeder
 
-Dòng `Permission::create(['id' => N, 'guard_name' => 'api', ...])` (HRM) hoặc `$this->createPermission(['id' => N, ...])` (ERP)
-→ đổi thành `$this->perm([...])`, bỏ `'id'` và `'guard_name'`. Nhánh cũ comment quyền → thêm `REMOVED`; đổi tên → thêm `RENAMED`.
-`run()` giữ bản mới (chỉ `$this->syncPermissions();`), KHÔNG đưa lại đoạn `delete()` / `truncate()`.
-Resolve xong chạy `php -l` + `permission:sync --dry-run`.
+Conflict `PermissionsTableSeeder` (modify/delete): **giữ đã xoá**. Lấy các tên quyền nhánh đó thêm, khai vào Catalog. Sót tên thì `rbac:convert` hoặc chỗ kiểm quyền sẽ không nhận.
 
-## 9. Không làm
+## Lỗi hay gặp
 
-- Không viết migration / SQL tay để thêm, sửa, xoá quyền; không tạo seeder quyền riêng cho từng màn.
-- Không sửa `permission_legacy_ids.php` (chỉ cho lần sync chuyển đổi đầu, xoá khi mọi môi trường đã sync).
-- Không tự gán quyền mới cho vai trò cũ trên dev/prod — admin tự phân.
-- Không sửa `PermissionSync.php` ở 1 repo mà quên chép sang repo kia.
+- `UnknownPermissionCode` ở local: mã sai hoặc chưa sync. Prod không văng lỗi mà trả false và log kênh `permission`.
+- Đã sync vẫn 403: Vai trò chưa được cấp, hoặc đang ở công ty khác.
+- API 500 thiếu `permission_aliases`: DB chưa chuyển đổi.

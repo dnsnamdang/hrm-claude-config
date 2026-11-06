@@ -100,7 +100,7 @@ Form này bám theo bản QA gửi ("SRS - Danh mục quốc gia":
 https://docs.google.com/document/d/1tKvOQqJyK0bJC6BrZGM92974irpDAsFn/edit — đọc bằng MCP Google
 Drive `read_file_content`, **đừng** tải base64 về vì file 5MB), khác một điểm có chủ đích:
 bản QA để trống phân quyền vì màn đó chưa chốt quyền, còn form của team **giữ quyền thật**
-(Q1…Qn + V1…Vn + ma trận ✅/❌ theo `PermissionsTableSeeder`).
+(Q1…Qn + V1…Vn + ma trận ✅/❌ theo Catalog quyền).
 
 Trước khi sinh SRS, **luôn đọc lại file mẫu** để bám đúng khung và cách hành văn:
 
@@ -763,7 +763,7 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)` = **13pt*
 5. Controller       → Request flow, response format
 6. Service          → Business logic, điều kiện, phép tính (nguồn của Phần 4)
 7. Transformer      → Response data structure
-8. PermissionsTableSeeder → Tên quyền + group (nguồn của bảng Danh sách quyền)
+8. Catalog `app/Support/Permissions/Catalog` → Tên quyền + chức năng (nguồn của bảng Danh sách quyền)
 9. Console Command  → Scheduled jobs, cron logic
 ```
 

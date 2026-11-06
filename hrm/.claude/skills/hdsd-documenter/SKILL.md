@@ -80,7 +80,7 @@ bước Import nhảy từ Bước 5 sang Bước 7. Tài liệu sinh ra phải 
 
 ### Bước 1 — Đọc code (vừa đủ để viết ĐÚNG, không để viết DÀI)
 Đọc FE màn + popup để lấy: danh sách chức năng, **nhãn nút nguyên văn**, tên cửa sổ, **tên các trường
-bắt buộc**, các ô lọc, chức năng nào gắn quyền nào (seeder `PermissionsTableSeeder` + `checkPermission`
+bắt buộc**, các ô lọc, chức năng nào gắn quyền nào (Catalog `app/Support/Permissions/Catalog` + `checkPermission`
 trên route + `isCurrentEmployeeHasPermission` trong controller). Đọc BE chỉ khi cần xác nhận trường bắt
 buộc / nút có thật chạy không. Không cần khảo sát luồng xuôi-ngược, edge case — tài liệu gọn không dùng.
 Hành vi nghi là lỗi → báo riêng cho user, không ghi vào HDSD.

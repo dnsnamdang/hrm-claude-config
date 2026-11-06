@@ -67,40 +67,23 @@ Skill này khoá 3 thứ lại:
 - Màn thuộc phân hệ nào (theo sheet quy hoạch phân hệ — xem "Đặt mục menu" dưới) → route `/<phân-hệ>/<slug>`.
 - Có cần phân quyền theo cấp (công ty / phòng ban / bộ phận) không → **hỏi user**, đừng tự quyết.
 
-#### Quyền: TẠO QUYỀN MỚI ở HRM (user chốt 06/10/2026)
+#### Quyền: dùng mã trong Catalog (từ 06/11/2026)
 
-- **Không dùng lại quyền ERP.** Tạo quyền mới `guard_name = 'api'` rồi gắn middleware
-  `checkPermission:<Tên quyền>` bình thường như CLAUDE.md quy định. Lý do dùng lại quyền ERP bị hỏng
-  (docblock `Modules/Finance/Entities/Concerns/ChecksEmployeePermission.php`):
-  - quyền ERP mang `guard_name = web` → `hasPermissionTo($name)` (không truyền guard) ném `PermissionDoesNotExist`;
-  - vai trò gán từ thời ERP nằm trong `employee_has_roles` với `model_type = App\Employee`, mà
-    `checkPermission` đọc qua `getAllPermissions()` của spatie (lọc theo `model_type` của model HRM) →
-    **bỏ sót**, người có quyền thật vẫn 403;
-  - trùng TÊN quyền giữa bản ERP và bản HRM.
-
-  Quyền mới do admin gán lại trong HRM nên không dính 3 bẫy trên. Màn cũ đang tự gate bằng trait
-  `ChecksEmployeePermission` (không gắn middleware) là cách chữa cháy khi còn dùng quyền ERP — màn mới
-  không chép.
-- **Khai vào seeder chung** `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (lần build nào
-  cũng chạy lại seeder này). KHÔNG tạo seeder quyền riêng cho từng màn (kiểu
-  `BuyServiceRequestPermissionSeeder` — màn cũ, đừng chép).
-  Từ 14/10/2026 mỗi quyền là 1 dòng `$this->perm([...])` **không có `'id'`** — không còn phải dò/giữ chỗ
-  dải id với nhánh khác; seeder đồng bộ theo tên nên chạy lại không mất gán quyền. Đổi tên → thêm vào
-  `RENAMED`, bỏ quyền → thêm vào `REMOVED` — chi tiết skill `permission-seeder`. Kiểm trước bằng
-  `php artisan permission:sync --dry-run`.
-- **`type` của quyền = `permissionType` của PHÂN HỆ CHÍNH** của màn (tra trong
-  `hrm-client/components/subsystems.js`), không theo module chứa code — màn Bán hàng nằm ở
-  `Modules/Finance` vẫn là `type` của Bán hàng. Màn phân quyền (`components/setting/Permission.vue`) gom
-  quyền theo `type` → thiếu `type` là quyền **không hiện ở phân hệ nào**, admin không gán được; sai `type`
-  là quyền nằm nhầm phân hệ.
-- **Không tự gán quyền mới cho vai trò cũ** — admin tự phân quyền lại khi chuyển sang HRM.
+- **Tìm mã có sẵn trước.** Chức năng ERP đã có mã trong `hrm-api/app/Support/Permissions/Catalog/` thì dùng lại, thêm
+  `hrm` vào `platforms`. Chỉ tạo mã mới khi chức năng chưa có mã. Phân quyền mới đã bỏ các bẫy guard và `model_type`
+  cũ nên dùng lại mã ERP là an toàn.
+- Route gắn `checkPermission:<mã>`, FE dùng `hasAPermission('<mã>')`. Quyền Xem là một mã có `scopes`, đọc mức bằng
+  `CurrentPermission::scope('<mã>')`. Không tạo mã riêng cho từng mức "theo công ty / phòng ban".
+- **Không khai seeder**, seeder quyền đã gỡ. Nhóm hiển thị trên màn Phân quyền theo `subsystem_group`, `subsystem`,
+  `feature` của mã: giữ đúng chữ các quyền cùng nhóm. Cách khai và lệnh `permission:catalog-sync`: skill `permission-seeder`.
+- **Không tự cấp quyền cho vai trò.** Mã mới chưa ai có, admin cấp ở `/admin/roles`.
 
 #### Phân hệ chính & phạm vi dữ liệu
 
 Một màn có thể nằm ở nhiều phân hệ. Bên ERP, các lối vào khác nhau phân biệt bằng **tham số trên URL**
 (`?type=all`, `?permission=all`, `?type=waiting`…):
 - **Phân hệ chính** = phân hệ có mục menu trỏ màn danh sách với tham số **`all`**. Quyền của màn khai
-  `type` theo phân hệ này, và **phạm vi dữ liệu dựa vào quyền ở phân hệ chính**.
+  `subsystem` theo phân hệ này, và **phạm vi dữ liệu dựa vào quyền ở phân hệ chính**.
 - Các phân hệ khác là **lối vào phụ** với tham số riêng (vd `?type=waiting` = danh sách phiếu chờ mình
   duyệt). Giữ nguyên tham số khi khai menu HRM; chỉ thêm tham số khi trang thật sự đọc
   `$route.query.type` (đừng tự gắn `?type=all` cho trang không đọc nó).

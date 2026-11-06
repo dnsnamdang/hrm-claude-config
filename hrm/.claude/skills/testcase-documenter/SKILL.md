@@ -395,7 +395,7 @@ except Exception: pass
 - Không bỏ qua bất kỳ mục nào trong 9 mục mô tả
 - Không viết tiền điều kiện chung chung ("user có data") — phải có **số liệu cụ thể**
 - Không viết Expected Result mơ hồ ("hiển thị đúng") — phải nói **đúng cái gì**
-- Không tự chế tên quyền — copy đúng từ `PermissionsTableSeeder`
+- Không tự chế tên quyền — copy đúng `name` trong Catalog
 - Không thay các cột check bằng 1 cột (QA chạy nhiều round, có 2 bên DNS và TP)
 - Không đoán validation — đọc Request class thực tế rồi DIỄN GIẢI ra ngôn ngữ người dùng
 - **Không chèn emoji/icon vào ô** (`⚠️ ✅ ❌ 🔒` …) — nhấn mạnh bằng chữ

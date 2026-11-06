@@ -32,7 +32,7 @@ còn **thứ tự danh sách luôn MỚI → CŨ** (mới nhất lên đầu, §
 ## 0. Câu hỏi PHẢI chốt với user trước khi code
 
 1. **Track trường nào?** Chỉ trường trên màn đó, hay mọi cột? (endpoint save có thể được màn khác dùng chung → trường của màn khác KHÔNG được sinh log)
-2. **Ai được xem?** Mặc định: KHÔNG permission riêng (ai vào được màn thì xem được lịch sử). Chỉ thêm permission khi user yêu cầu (sửa `PermissionsTableSeeder`, không migration).
+2. **Ai được xem?** Mặc định: KHÔNG permission riêng (ai vào được màn thì xem được lịch sử). Chỉ thêm permission khi user yêu cầu (khai trong Catalog, không migration).
 3. **Có action nào ngoài `update` không?** (create / khóa / mở khóa / đổi trạng thái / duyệt / từ chối)
    → action nào có ô lý do hoặc ghi chú thì phải hiện trên lịch sử (§4.1)
    → nhưng bộ lọc "Loại hoạt động" thì KHÔNG liệt kê chúng: luôn đúng 3 nhóm cố định (§0a)
