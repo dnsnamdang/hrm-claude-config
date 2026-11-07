@@ -5,6 +5,9 @@
 
 ## Đang làm
 
+- **Phiếu nhập kho + Phiếu giao hàng chờ nhập kho (bản thật theo `demo-phieu-nhap-kho.html`)** — @khoipv — Bắt đầu 07/11/2026 — BE xong (7 bảng, quyền 526, test 33/33) + FE xong (Hàng chờ, DS PNK, form tạo/sửa/xem, in 01-VT) ở phân hệ Kho. Phase 3 xong (A + C): PGH về kho → Chờ nhập kho (7), duyệt đủ PNK → tự Hoàn thành; chi tiết PGH hiện trạng thái nhập kho từng điểm + link PNK; E2E 4/4 + 6/6. Checkpoint 07/11/2026 11:57: chờ user chạy migration Supply 000003 + test tay (tài khoản phải là thủ kho kho nhận hoặc có quyền 526 mới thấy hàng chờ) + chốt vị trí migration 000001; kiểu quản lý lô/seri chốt sau (env `WAREHOUSE_DEFAULT_MANAGE_TYPE`, mặc định none).
+  - Plan: [.plans/phieu-nhap-kho/plan.md](phieu-nhap-kho/plan.md) · Design: [.plans/phieu-nhap-kho/design.md](phieu-nhap-kho/design.md) · Spec: [docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md](../docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md)
+
 - **HĐ — Tab Kết quả: bỏ bắt buộc Tên file** — @khoipv — Bắt đầu 05/11/2026 — Đã sửa: cột `contract_results.title` NOT NULL → migration cho nullable (đã chạy). FE không cần sửa. Chờ user test.
   - Plan: [.plans/contract-result-title-nullable/plan.md](contract-result-title-nullable/plan.md)
 

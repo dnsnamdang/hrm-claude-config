@@ -46,3 +46,20 @@ Vừa hoàn thành: Phase 1 BE + FE, số liệu khớp ERP 100%; tách service 
 Đang làm dở: —
 Bước tiếp theo: chạy `permission:sync` + thử tài khoản quyền "theo công ty" / "theo kho"
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (07/11/2026) @khoipv
+
+- [x] Đọc brief + skill srs-documenter / hdsd-documenter / testcase-documenter; đọc code FE `pages/warehouse/stock-general-product/**`, BE `StockGeneralProduct*` + `WarehouseStockReportService`; khuôn chép `../bao-cao-ton-kho-chi-tiet-mat-hang/` + `../bao-cao-ton-kho-theo-vi-tri/`
+- [x] Chụp ảnh dev-hrm (DNS Admin, `bctkth_shots/_capture/capture.js`, hồ sơ đăng nhập riêng, chặn mọi yêu cầu ghi — lọt 0; màn chỉ có API GET) — công ty CN Hải Phòng, 4 kho CB / HP / KĐN-ALM / NM (96 mặt hàng, cột Chi tiết TPE / TPHP / TPV); 37 icon (`trim_icon --dry` 0/37). Popup Chọn hàng hóa chụp với công ty TPE (CN Hải Phòng dev báo 403 ở `product-picker/tree-counts` + `search`)
+- [x] Đối soát số dev (`_capture/doisoat.js`, chỉ GET): ENEO-700-V5231 kho HP / TPHP = 20 = Báo cáo chi tiết theo mặt hàng (20) = Báo cáo theo vị trí (KHOANG1 20) = Thẻ kho 01/01–07/11/2026 (70 + 496 − 546); 31/12/2025 = 70 ở cả 2 báo cáo; 4 kho CN HP = 47 = HP 20 + CB 27. ENEO-640-V5236 kho PTT / TPE = 3,197 = chi tiết = vị trí = Thẻ kho Năm nay (15,141 + 11,404 − 23,348); 31/12/2025 = 15,141 = tồn đầu kỳ. 96/96 dòng: SL tồn = tổng cột công ty — KHỚP
+- [x] `gen_srs.py` → `SRS - Báo cáo tồn kho tổng hợp theo mặt hàng.docx` (69 trang, 7 chức năng, selfcheck khớp mẫu; metrics ui=13.0 ev=5.1 evch=1159 intro=2018; Phần 5 bảng 4 cột 16 dòng; Mục lục trang riêng căn giữa)
+- [x] `gen_hdsd.py` → `HDSD_Bao cao ton kho tong hop theo mat hang.docx` (11 trang, 6 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (128 TC, 8 nhóm, P0 41,4%, check_tc `bao_cao` 0 lỗi)
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx` (Testcase 103 có TC / 221 N/A; SRS 79 có mục / 84 N/A)
+- [x] Ghi nhận nghi lỗi (chưa sửa): popup Chọn hàng hóa lỗi 403 khi Tồn theo công ty ≠ công ty đăng nhập (giống 2 màn anh em); ô Hợp đồng không thoát `%` `_` (gõ "%" ra 3.939 / 6.157 mặt hàng công ty TPE); quyền theo công ty / theo kho không thấy nhóm Chi tiết trên màn nhưng In / Excel Đầy đủ vẫn có (giữ y ERP — ghi rõ trong tài liệu, cần user xác nhận)
+
+### Checkpoint — 07/11/2026
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Báo cáo tồn kho tổng hợp theo mặt hàng
+Đang làm dở: —
+Bước tiếp theo: user xem tài liệu; quyết định có sửa 3 điểm nghi lỗi không; đẩy Drive khi user yêu cầu
+Blocked:

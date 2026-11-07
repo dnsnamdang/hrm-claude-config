@@ -43,3 +43,20 @@ Blocked:
       In/Excel đã đúng sẵn, không đụng
 - [x] Parse template/script (vue-template-compiler + babel); đếm ô mỗi dòng cây = 10 = số cột
 - [ ] Mở trình duyệt kiểm thật (user tự test)
+
+## Tài liệu SRS / HDSD / Testcase (07/11/2026) @khoipv
+
+- [x] Đọc brief + skill srs-documenter / hdsd-documenter / testcase-documenter; đọc code FE `pages/warehouse/stock-location-product/**` (+ ScopePicker), BE `StockLocationProduct*` + `WarehouseStockReportService`; khuôn chép `../bao-cao-ton-kho-chi-tiet-mat-hang/`
+- [x] Chụp ảnh dev-hrm (DNS Admin, `bctkvt_shots/_capture/capture.js`, hồ sơ đăng nhập riêng, chặn mọi yêu cầu ghi — lọt 0; màn chỉ có API GET) — kho HP - Hải Phòng (8 vị trí, 96 mặt hàng, tổng SL 8,530); ảnh bảng chụp với khối lọc thu gọn; 40 icon (`trim_icon --dry` 0/40). Popup Chọn hàng hóa chụp với công ty TPE (CN Hải Phòng dev báo "Không tải được số lượng")
+- [x] Đối soát số dev (`_capture/doisoat.js`, chỉ GET): ENEO-700-V5231 kho HP / TPHP — chỉ ở KHOANG1 = 20 (4 lô 6+2+6+6) = Báo cáo tồn kho chi tiết theo mặt hàng (20) = Thẻ kho 01/01–07/11/2026 (70 + 496 − 546 = 20); ngày 31/12/2025: 70 ở cả 2 báo cáo, lô cắt theo ngày (30+1+3+30+6). 8/8 vị trí: SL vị trí = tổng các dòng hàng hóa — KHỚP
+- [x] `gen_srs.py` → `SRS - Báo cáo tồn kho theo vị trí.docx` (75 trang, 7 chức năng, selfcheck khớp mẫu; metrics ui=15.4 ev=5.4 evch=1290 intro=2064; Phần 5 bảng 4 cột 16 dòng; Mục lục trang riêng căn giữa)
+- [x] `gen_hdsd.py` → `HDSD_Bao cao ton kho theo vi tri.docx` (11 trang, 6 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (134 TC, 8 nhóm, P0 41,8%, check_tc `bao_cao` 0 lỗi)
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx` (Testcase 103 có TC / 221 N/A; SRS 79 có mục / 84 N/A)
+- [x] Ghi nhận nghi lỗi (chưa sửa): ô Lô cắt chữ (nowrap + ẩn tràn) nên mã lô dài che mất "Hợp đồng: <mã>" và liên kết hợp đồng — chỉ còn xem được khi rê chuột; popup Chọn hàng hóa không tải được số lượng khi Tồn theo công ty ≠ công ty đăng nhập (dev, CN Hải Phòng — giống màn Chi tiết); ô Hợp đồng không thoát ký tự `%` `_`
+
+### Checkpoint — 07/11/2026
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Báo cáo tồn kho theo vị trí
+Đang làm dở: —
+Bước tiếp theo: user xem tài liệu; quyết định có sửa 3 điểm nghi lỗi không; đẩy Drive khi user yêu cầu
+Blocked:
