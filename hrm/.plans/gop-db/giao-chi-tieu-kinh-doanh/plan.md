@@ -248,3 +248,16 @@
 ## Ngày 06/11/2026 (@junfoke)
 - [x] 06/11/2026 — Khảo sát Redmine #11651 + #11643: port sang HRM (không sửa ERP), làm #11643 theo phòng ban trước vì #11651 theo nhân viên nạp chỉ tiêu từ phiếu phòng ban Đã duyệt; user chốt làm chung 1 đợt.
 - [x] 06/11/2026 — Làm chuyển đổi erp->hrm: Phiếu giao chỉ tiêu kinh doanh theo phòng ban (#11643) + theo nhân viên (#11651) — code xong 17/17 task, chưa commit (nhánh `feat/giao-chi-tieu-kinh-doanh` 3 repo). Viết design + spec + plan; user chốt Hủy duyệt → Đang tạo (không có Thu hồi), phòng của phiếu NV theo ERP. 39 test BE xanh, review toàn nhánh sửa 5 Important + 2 Minor. Chi tiết ở Checkpoint 06/11 phía trên.
+- [x] 06/11/2026 (tối) — Kiểm thật lần cuối: 39/39 test BE pass; 9 test fail của module Finance (Theo dõi giữ hàng ×1, Phiếu nhập/xuất điều chỉnh kiểm kê ×8) là có sẵn — dựng bản sạch đúng commit gốc `36269786a` chạy cùng 3 file test, fail trùng tên từng cái, không do đợt này. Bấm thật trên trình duyệt local (chọn bằng chuột/bàn phím): phiếu phòng ban (Năm trước ra đúng số 2025, số 14 chữ số báo đỏ, Từ chối có lý do → gửi lại thì lý do cũ mất → Duyệt được), phiếu nhân viên (nạp chỉ tiêu phòng, giao vượt tô cam + tooltip), Hủy duyệt phòng ban bị chặn khi có phiếu NV chờ duyệt, Xuất Excel khối "Chi nhánh/Đơn vị thành viên" (trước lỗi), menu Bán hàng › Phê duyệt › Kế hoạch & chỉ tiêu. Xoá phiếu test, gỡ quyền gán tạm.
+
+## Ngày 07/11/2026 (@junfoke)
+- [x] 07/11/2026 — Theo user: file test chỉ dùng local, không đẩy lên → loại 9 file `Modules/Finance/Tests/Feature/BusinessTarget*.php` bằng `.git/info/exclude` của hrm-api (file vẫn trên đĩa để chạy).
+- [x] 07/11/2026 — Phân quyền mới (Catalog + mã quyền) đã lên prod 06/11: kéo `gop_db` mới nhất về nhánh `feat/giao-chi-tieu-kinh-doanh`, chuyển quyền của 2 màn sang Catalog (`app/Support/Permissions/Catalog/sale.php`, dùng lại mã ERP + thêm `platforms` `hrm`, không khai seeder). Sao lưu `gop_db` local trước khi đụng (dump gzip) + chạy 43 migration chờ.
+- [x] 07/11/2026 — Hỗ trợ user kéo DB prod `hrm_erp_gop` (đã chuyển RBAC) về local `gop_db_rbac` bằng Navicat Data Transfer: cấu hình MySQL (`max_allowed_packet` 1GB, `net_read/write_timeout` 600, `sql_mode` NO_ENGINE_SUBSTITUTION, `log_bin_trust_function_creators`), bỏ khoá ngoại/definer/transaction/lock, Continue on error. Trỏ `.env` sang DB mới.
+- [x] 07/11/2026 — Xử lý lỗi migration `2026_11_06_000001_create_business_target_department_parts_table`: tên index tự sinh dài quá 64 ký tự (prod cũng sẽ lỗi) → đặt tên index ngắn. Sync Catalog (chỉ sửa `platforms` của 5 mã; prod đã có vai trò được cấp sẵn). 39/39 test pass trên DB RBAC mới; gọi API thật (nginx 8002) bằng DNS Admin (có đủ 5 mã qua vai trò thật) đúng; đang kiểm chiều người không có quyền + bấm thử trên client.
+
+### Checkpoint — 2026-11-07 11:20
+Vừa hoàn thành: merge phân quyền Catalog mới vào nhánh, sửa tên index migration, 39/39 test trên DB `gop_db_rbac`.
+Đang làm dở: kiểm người không có mã quyền (danh sách trả 200 — đang xem có lọc về phiếu của chính mình không) + bấm thử client 3000.
+Bước tiếp theo: xong kiểm quyền → user commit 3 repo (code vẫn chưa commit); QA.
+Blocked: —

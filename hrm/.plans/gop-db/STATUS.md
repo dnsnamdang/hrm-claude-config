@@ -29,6 +29,8 @@ Chốt: sửa 2 báo cáo ERP đếm KH = SUM cột nhập; ẩn menu ERP; Hủy
 TanPhatDev — tách từ `origin/gop_db`, CHƯA commit). 37 test BE xanh, Playwright local trọn luồng 2 màn, đối chiếu code ERP khớp.
 Còn: review toàn nhánh + sửa; user commit; gán quyền dev/prod (8 quyền type 23 "…phiếu giao chỉ tiêu kinh doanh…"); migration
 `2026_11_06_000001_create_business_target_department_parts_table`.
+**Checkpoint 07/11:** review xong; đã merge phân quyền Catalog mới (`Catalog/sale.php`, bỏ seeder), sửa tên index migration quá 64 ký tự,
+39/39 test trên DB prod kéo về (`gop_db_rbac`). Đang kiểm người không có quyền + bấm client. Code CHƯA commit; file test chỉ để local.
 ⚠️ GOTCHA: prop bảng không đặt tên `errors` (vee-validate chiếm); 2 báo cáo ERP đã SUM cột SL khách nhập sẵn — không cần sửa.
 Tài liệu: `.plans/gop-db/giao-chi-tieu-kinh-doanh/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-06-giao-chi-tieu-kinh-doanh-design.md`.
 
@@ -2657,6 +2659,8 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 - loc-nhan-vien-theo-quyen-company-department-filter → @junfoke → .plans/gop-db/loc-nhan-vien-theo-quyen-company-department-filter/plan.md
   Trạng thái: ✅ **Đã push gop_db + develop (05/11/2026)** — client `50ea799f7`. `CompanyDepartmentFilter.vue` ô Nhân viên lọc theo quyền xem của màn. Chưa thử Đơn xin nghỉ / quyền phòng ban, bộ phận.
+
+- Ghi nhanh 07/11/2026 (@junfoke), chi tiết ở plan từng màn: fix phản hồi #12063 bản in công nợ NV + #12066 tab Bốc xếp phiếu nhập hàng (api `18e72f6b9`, client `1af092419`) · #12068 Bảng cân đối công nợ NV (api `ebaa18a76`, client `72ff17b3a`), đã lên develop · #12069 đang làm (ô NV đã nghỉ, sửa `V2BaseCompanyDepartmentFilter` được user đồng ý).
 
 - Ghi nhanh 06/11/2026 (@junfoke), chi tiết ở plan từng màn: fix phản hồi #12042/#12040 Phiếu phân chia thị trường + #12020 YC nhập hàng (api `fb890c98d`, client `8b6321dbc`) · #12056/#12057/#12051 (client `4269cf7cc`, đã lên develop) · popup chọn hàng ERP thêm cột Thời gian bảo hành (api `36269786a` + ERP `5e6cb6bdf4`) · testcase Sổ chi tiết công nợ NCC (111 TC) + Bảng cân đối công nợ NV (106 TC).
 

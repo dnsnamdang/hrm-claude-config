@@ -2,6 +2,8 @@
 
 ## Hoàn thành
 
+- [YC hạch toán mua DV: chặn YC 0đ + vượt SL còn lại](fix-yc-hach-toan-mdv-chan-0d/plan.md) — @junfoke 2026-11-07. `12e73d624d` → develop_02 `95e12277f6` + gop_db `822a4695ac`. Prod: không duyệt EG.YCHTMDV.2026000096.
+- [Hỗ trợ HĐ 31032 TP chỉ được chuyển duyệt (is_market)](ho-tro-hd-31032-bat-chuyen-duyet-is-market/plan.md) — @junfoke 2026-11-07. Không lỗi code: địa chỉ giao hàng còn phường cũ.
 - [Mẫu in "Báo giá dịch vụ" + BGDV-02A lọt vào Loại HĐ dịch vụ](mau-in-loai-bao-gia-dich-vu/plan.md) — @junfoke 2026-11-06. Chặn tạm `d9978f0644` gop_db; loại mẫu in 13 `5d42014853` → develop_02 (`69c62c82d9`, cần migrate). Chưa vào gop_db.
 - [PYC chuyển hàng: chi tiết/In xét 4 quyền phạm vi](fix-canview-phieu-yeu-cau-chuyen-hang/plan.md) — @junfoke 2026-11-06. `ce03b6832f` gop_db.
 - [Sổ chi tiết vật tư: thêm quyền xem tổng công ty vào seeder](quyen-so-chi-tiet-vat-tu-tong-cong-ty/plan.md) — @junfoke 2026-11-06. `ee298400da` gop_db, cần `permission:sync`.
