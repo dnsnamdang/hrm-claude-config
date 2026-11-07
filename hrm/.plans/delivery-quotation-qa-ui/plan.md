@@ -357,3 +357,14 @@ Các ô này THUẦN TRANG TRÍ: không `v-model`, không gửi BE (ma trận r�
         (50 tuyến × [ô Tuyến + ô Km] + 1 ô header). Trước fix ~866 V2BaseInput → giảm 765 instance vee-validate.
       - Gõ 10 phím vào ô Km: mượt, không treo (avg 187ms/phím ở DEV chưa minify + HMR; prod thấp hơn nhiều).
       - Ảnh `bgvc-50-roads-static-cells.png`: ô "—" xám khớp hệt ô disabled cũ, ô Tuyến/Km vẫn là V2BaseInput.
+
+## Item 21 — Nhóm Vận chuyển với NCC lề trang rộng hơn màn khác (2026-11-07)
+
+Nguyên nhân: 12 file có wrapper `v2-styles min-vh-100 pt-2 > container-fluid` nhưng không import `v2-styles.scss`,
+nên `.container-fluid` giữ padding Bootstrap và `pt-2` vẫn còn. Không sửa file dùng chung.
+
+- [x] Thêm `@import '@/assets/scss/v2-styles.scss';` (scoped) vào 12 file: delivery-quotations (index, create, _id/index, _id/edit),
+      valid-delivery-prices (index, _id/index), delivery-cost-summaries (index, create, _id/index, _id/edit),
+      delivery-contracts (_id/index, components/DeliveryContractList).
+- [x] Đo Playwright: x=68, y=70, rộng 1362 khớp màn mẫu `/transport/delivery-trips` trên 10 màn render được.
+      Chưa đo được 4 màn do local thiếu quyền API: delivery-cost-summaries create, _id, _id/edit và valid-delivery-prices/_id.
