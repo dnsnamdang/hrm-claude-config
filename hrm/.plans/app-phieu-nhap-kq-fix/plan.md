@@ -319,3 +319,31 @@ Model của dự án này luôn phải parse phòng thủ (`_intFromJson`, `_dou
       - Lưu nháp không truyền `serviceOverrides` (Gửi duyệt có) → mọi chỉnh % / tích dịch vụ mất khi lưu nháp. Thêm vào cả nhánh tạo lẫn sửa
       - Kiểm DB sau Lưu nháp: dịch vụ 50% / chưa hoàn thành, công phụ TestP3 rate_effort 2.50 → đúng
 - Phiếu 7010 trên DB local hiện ở trạng thái Đang tạo, người tạo namdangit (id 13) — để user test lại; data local được sửa thoải mái nên không cần trả
+
+## Push nhầm người — máy nhận thông báo của tài khoản khác (07/11/2026) — @cuong61n
+
+Báo từ chị Huyền (qua chat): anh Hoàng Trung Hậu có quyền NVKD nhưng app nhận push "Đã duyệt phiếu nhập kết quả" PNKQ, bấm vào báo "không có dữ liệu".
+
+- [x] 07/11 Điều tra (DB prod `hrm_erp_gop`, chỉ đọc): phiếu `TPE.PNKQ.2026008980` (id 8980) do chị Nguyễn Thị Thu Hiền tạo (employees 305, employee_info 257); thông báo chỉ có 1 dòng `notifications` của hồ sơ 257; hồ sơ anh Hậu (info 246) KHÔNG có dòng nào → anh chỉ nhận push màn hình khoá, không có trong danh sách chuông. BE gửi đúng người; lỗi nằm ở máy: topic FCM `prefix + employee_info_id` còn sót từ tài khoản cũ (huỷ topic khi đăng xuất bị `catch (e) {}` nuốt lỗi, đường phiên hết hạn không chờ kết quả).
+- [x] 07/11 App: thêm `helper/push_topic_manager.dart` — nhớ topic đang đăng ký (`AppPreferences.subscribedPushTopic`); đăng ký topic mới thì huỷ topic cũ; chưa nhớ gì (bản app trước) thì `deleteToken()` 1 lần để xoá sạch topic sót; đăng xuất / phiên hết hạn huỷ topic đã nhớ + `deleteToken()`. Thay 4 chỗ gọi subscribe/unsubscribe trực tiếp (login, mở app, logout, token hết hạn). `dart analyze` 5 file sửa: 0 lỗi, 0 cảnh báo.
+- [x] 07/11 Test simulator (tpeLocal, 2 máy ảo, xem log `[PushTopic]` — thêm log debug `kDebugMode`):
+      - Android emulator (FCM chạy thật): máy đã đăng nhập sẵn từ bản cũ, mở bản mới → `sync previous=null` → `deleteToken` → đăng ký topic hiện tại, KHÔNG phải đăng xuất/đăng nhập lại (đúng ca anh Hậu); mở lại lần 2 → `previous=<topic>` không deleteToken nữa; đăng xuất → `clear` huỷ topic + deleteToken, API logout 2xx, về màn đăng nhập; đăng nhập TK khác (info 19) → đăng ký đúng topic mới, không còn topic cũ.
+      - Ca mất mạng lúc đăng xuất: API logout lỗi nhưng topic đã huỷ, app vẫn đăng nhập → mở lại app tự đăng ký lại topic (sync previous=null), không kẹt.
+      - iOS simulator: không có APNs token nên `subscribeToTopic` luôn lỗi `apns-token-not-set` (có từ trước, không phải do bản sửa) → chỉ kiểm được luồng gọi/huỷ + không crash, không kiểm được push thật. Cần iPhone thật.
+      - Chưa thử: gửi push thật tới máy cũ/mới; đổi TK mà không qua đăng xuất (nhánh `previous != topic`); TK không quyền.
+      - Lỗi phát hiện ngoài phạm vi: `GET auth/user-profile` 500 trên DB local (`role_has_permissions.company_id` không tồn tại — schema local lệch code), không liên quan; emulator phải `adb reverse tcp:8000 tcp:8000` mới gọi được API local.
+- [ ] Chưa commit.
+- Lưu ý: chỉ có hiệu lực với máy đã cập nhật app; máy còn bản cũ vẫn có thể nhận push sót. Sau `deleteToken()` token FCM đổi — cần kiểm token đăng ký cho nhắc báo cáo tiến độ task có tự đăng ký lại khi mở app không.
+
+## Màn đăng nhập gõ bị lag (07/11/2026) — @cuong61n
+
+- [x] 07/11 Nguyên nhân: mỗi ký tự gõ emit state mới (`EmailChanged`/`PasswordChanged`) → `BasePageState` (`buildWhen previous != current`) dựng lại CẢ màn (nền ảnh 856×1852, thẻ đổ bóng blur 24, logo, 2 ô, nút). Đo trước sửa: gõ 6 ký tự → `buildPage` chạy 6 lần. Cờ `isLoginButtonEnabled` không nơi nào đọc.
+- [x] 07/11 Sửa `login_bloc.dart`: email/mật khẩu giữ ở field `_email`/`_password`, không emit; `LoginPressed` đọc 2 field. Sau sửa: gõ 6 ký tự → 0 lần dựng lại (10→10); đăng nhập `manhnv.kd1` vẫn thành công (login 2xx, vào được). Android emulator, bản debug. Chưa đo trên máy thật / iOS; chưa commit.
+- Còn lại (chưa làm, không bắt buộc): xoá field `email`/`password`/`isLoginButtonEnabled` thừa ở `login_state.dart` (cần `make gen`); bọc nền `RepaintBoundary`.
+
+## Phát hành HRM TPE 2.3.8 (104) — 07/11/2026 — @cuong61n
+
+- [x] 07/11 Commit 2 phần lên `develop` (push topic `4e28e72`, màn đăng nhập `aaddfba`), merge `develop` → `tpe` (fast-forward), bump `tpeProd` build 103 → 104 giữ tên 2.3.8 (user chọn không đổi tên phiên bản); `tpe` và `develop` cùng commit `f16bb69`. Không đưa `scripts/build/play_release.py` (untracked) vào commit.
+- [x] 07/11 iOS: build IPA `HRM TPE.ipa` (com.tanphat.soft.app, 2.3.8 (104), profile App Store) → upload TestFlight thành công (Delivery UUID 63b7a877-fae3-45ec-b8e3-64d465417a0b). Chờ Processing → Complete 10–30 phút; chưa gán nhóm tester external.
+- [x] 07/11 Android: build AAB (ký đúng SHA-1 upload key), `play_release.py --dry-run` hợp lệ rồi gửi thật production 100%, versionCode 104 — chờ Google duyệt (vài giờ–2 ngày). Ghi chú: sửa nhận nhầm thông báo tài khoản khác + đăng nhập mượt hơn.
+- [x] 07/11 TestFlight HRM TPE (Apple ID 6446807087) build 2.3.8 (104): gán nhóm external "Tân Phát" (`757fa3b1-d79b-4272-abd6-e9c7084815cd`, có link công khai) bằng App Store Connect API (khoá ASC_KEY_ID trong `~/.asc_api.env`, không cần đăng nhập trình duyệt): ghi "What to Test" (vi) + gán nhóm (204) + gửi Beta App Review (201) → vài giây sau `IN_BETA_TESTING` cả external lẫn internal. Nhóm internal "Tân Phát" `0669a9fd-50bb-49d4-9e49-b0f48f01197b` tự nhận. Chưa gửi App Store (người dùng cuối).

@@ -148,9 +148,12 @@ Khi khai mục menu:
   Các phân hệ khác (`subsystem-menu/*.js`, `menu.js`…) dùng khuôn `{ label, icon, link, isShow, subItems }`;
   mục **không có `link`** render xám mờ. Cờ `external` / `erpGhost` trong `subsystems.js` là cờ cấp
   **PHÂN HỆ** (cả phân hệ nằm bên ERP), không dùng cho từng mục.
-- **Khai màn ở phân hệ thứ 2 thì bê nguyên `isShow`** (quyền) từ phân hệ chính — thiếu là lộ menu cho
-  người không có quyền. Cây Bán hàng đọc map `SALE_LINK_PERMISSIONS`; mục mới nên khai `isShow` ngay
-  trong mục.
+- **Quyền của mục menu khai bằng `codes: ['<mã>.view', …]`** (có ≥ 1 mã là hiện; vào thẳng URL khi thiếu mã
+  → 404). Menu xét `codes` **VÀ** `isShow` (`components/Topbar.vue::showMenuChild`), nên mục MỚI chỉ khai `codes`,
+  KHÔNG thêm `isShow` theo tên quyền tiếng Việt (tên cũ chỉ còn cho mục cũ). Cây Bán hàng: map `SALE_LINK_PERMISSIONS`
+  cũ chạy song song với `codes` (`subsystem-menu/sale.js`) — mục mới khai `codes`.
+- **Khai màn ở phân hệ thứ 2 thì bê nguyên `codes`** (và `isShow` nếu mục gốc còn dùng) từ phân hệ chính — thiếu
+  là lộ menu cho người không có quyền.
 - **KHÔNG đổi nhãn mục menu đã có** khi không được yêu cầu: nhãn là một phần của `menuKey`
   (`utils/menuVisibility.js`) — đổi nhãn là mất cấu hình bật/tắt đã lưu; nhãn menu cũng là **tiêu đề
   tab trình duyệt** (`screenTitleOf` trong `subsystems.js`). Giữ tên ngắn — nhãn dài tràn menu ngang.

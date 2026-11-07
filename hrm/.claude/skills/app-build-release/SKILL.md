@@ -185,7 +185,28 @@ keystore.storePassword=<hỏi chủ repo>
 - Verify AAB đã ký đúng: `~/Library/Java/jdk17/bin/keytool -printcert -jarfile output/<flavor>-release.aab | grep SHA1` — phải khớp SHA-1 trên
 - ⚠️ KHÔNG commit keystore vào repo (đã từng lọt file `app/android/mykey` ở commit init, đã gỡ). File ký app lọt git = ai clone cũng ký giả được app.
 
-### Upload lên CH Play (qua Playwright, cần user đã đăng nhập Play Console)
+### Upload lên CH Play bằng API — CÁCH CHÍNH (từ 07/11/2026, không cần mở trình duyệt)
+
+Service account `play-publisher@tanphat-soft.iam.gserviceaccount.com` (project Google Cloud `tanphat-soft`, đã bật
+Google Play Android Developer API) được mời vào Play Console với quyền: xem app, phát hành công khai, phát hành / quản lý
+kênh thử nghiệm (KHÔNG có quyền Quản trị / tài chính). Khoá JSON ở `~/.play_api/play-publisher.json` (chmod 600, NGOÀI repo),
+môi trường Python sẵn ở `~/.play_api/venv`.
+
+```bash
+PY=~/.play_api/venv/bin/python
+$PY scripts/build/play_release.py status com.tanphat.soft.app                     # xem các kênh
+$PY scripts/build/play_release.py release com.tanphat.soft.app output/tpeProd-release.aab \
+    --notes "- Dòng 1
+- Dòng 2" [--track production] [--rollout 1.0] [--dry-run]
+```
+
+- `release` = tạo edit → tải AAB → gán kênh (mặc định production 100%) + ghi chú `vi` (≤ 500 ký tự) → validate → commit.
+  "Chế độ xuất bản có quản lý" đang tắt ⇒ commit là gửi Google xét duyệt luôn, duyệt xong tự phát hành.
+- `--dry-run` tải lên + validate rồi xoá edit (không gửi). Version code đã dùng → 403 "Version code N has already been used".
+- Vẫn phải hỏi user trước khi `release` không `--dry-run` lên production (hành động ra ngoài), trừ khi user đã nói "phát hành luôn".
+- Máy khác / mất khoá: tạo khoá mới cho service account trên Google Cloud (IAM → Service Accounts → play-publisher → Keys), KHÔNG commit khoá.
+
+### Upload lên CH Play qua Playwright (dự phòng khi API lỗi — cần user đã đăng nhập Play Console)
 
 Các app đều bật **Play App Signing** — mất upload key vẫn xin Google reset được, không mất app.
 

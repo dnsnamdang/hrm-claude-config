@@ -58,7 +58,7 @@ File Excel chuẩn phải có **ĐỦ 4 KHỐI** theo đúng thứ tự (xem m�
 | "lưu localStorage TTL 10 phút" | "hệ thống ghi nhớ bộ lọc trong 10 phút" |
 
 **Vẫn ĐƯỢC giữ** (đây là ngôn ngữ tester, không phải jargon nội bộ):
-- Tên quyền nguyên văn tiếng Việt như trong seeder ("Quản lý dịch vụ sửa chữa và chi phí khác")
+- Tên quyền nguyên văn tiếng Việt như `name` trong Catalog ("Quản lý dịch vụ sửa chữa và chi phí khác")
 - Nhóm test bảo mật gọi thẳng API — viết dạng *"dùng công cụ kiểm thử API gọi thẳng chức năng
   Xóa, bỏ qua giao diện"*. Bỏ hẳn nhóm này thì mất khả năng phát hiện lỗ hổng phân quyền; ghi
   chú ở mục 9 rằng nhóm này dành cho tester kỹ thuật.
@@ -104,7 +104,7 @@ Row 4  : 3. Đối tượng bị ẩn / không tính    | <nội dung>
 Row 5  : 4. Bộ lọc thời gian áp dụng cho    | <chỉ rõ cột nào, range nào>
 Row 6  : 5. Cấu trúc dữ liệu / cây phân cấp | <nội dung>
 Row 7  : 6. Quy tắc cộng dồn / deduplicate  | <nội dung>
-Row 8  : 7. Phân quyền cấp                  | <liệt kê từng tên quyền tiếng Việt>
+Row 8  : 7. Phân quyền cấp                  | <liệt kê từng tên quyền tiếng Việt; quyền Xem ghi kèm các mức phạm vi cho phép>
 Row 9  : 8. Cách tính các ô thống kê        | <công thức từng ô, diễn giải bằng lời>
 Row 10 : 9. Ghi chú đọc bảng                | <phân trang, định dạng, bẫy dễ sai…>
          (cột A nền #FFF2CC bold; cột B merge B:N)
@@ -141,7 +141,9 @@ Row 18+: Data — các nhóm La Mã (dòng tiêu đề nhóm rồi tới case). 
 ### Quy tắc nội dung 9 mục mô tả
 - **Không bỏ mục nào**. Không áp dụng thì ghi "Không áp dụng" + 1 dòng lý do
 - Mục 2 & 3 **PHẢI liệt kê từng trạng thái / điều kiện cụ thể**, không nói chung chung
-- Mục 7 **PHẢI liệt kê đầy đủ tên quyền tiếng Việt** đúng như trong seeder
+- Mục 7 **PHẢI liệt kê đầy đủ tên quyền tiếng Việt** đúng như `name` trong Catalog. Quyền Xem có phạm vi là
+  **một** quyền kèm các mức (vd "Xem phiếu đề nghị thu — mức: Tổng công ty / Công ty / Phòng ban / Bộ phận",
+  đọc `scopes` của mã), KHÔNG viết thành 4 quyền "Xem … theo công ty / theo phòng ban…" (tên cũ)
 - Mục 8 viết công thức bằng lời: `Ô 'Hiển thị a–b / N' = a là dòng đầu trang, N là tổng bản ghi khớp bộ lọc`
 - Mục 9 là nơi cảnh báo **các bẫy dễ sai nhất của màn** (định dạng số, dấu phẩy thập phân, ô nào
   chặn trần ô nào không…) — QA đọc mục này trước khi chạy test
@@ -170,7 +172,9 @@ Bỏ nhóm màn không có; nhóm có mặt phải đúng thứ tự dưới đ�
 - **Phiếu**: tác động số liệu (tồn, công nợ, hàng giữ, bút toán) nằm TRONG nhóm thao tác gây ra nó; luồng nhiều màn → RÀNG BUỘC.
 - **Báo cáo**: mỗi cột/chỉ tiêu, dòng tổng, định dạng số, lập chứng từ rồi kiểm số tăng/giảm → SỐ LIỆU BÁO CÁO.
 - **PHÂN QUYỀN** (cuối): 1 case cho TỪNG tên quyền + không có quyền nào; ẩn nút khi thiếu quyền; mở URL trực tiếp khi thiếu quyền;
-  đổi quyền giữa thao tác; phạm vi dữ liệu theo quyền. KHÔNG viết case "gọi thẳng API / Postman".
+  đổi quyền giữa thao tác; phạm vi dữ liệu theo quyền: **1 case cho TỪNG mức phạm vi** của quyền Xem (Vai trò cấp mức đó
+  → thấy đúng tập bản ghi, không thấy bản ghi ngoài mức); người có 2 Vai trò khác mức → áp mức lớn hơn; đổi công ty đang
+  làm việc → quyền tính lại theo công ty mới, không thấy dữ liệu công ty khác. KHÔNG viết case "gọi thẳng API / Postman".
 - Tên nhóm là **dòng riêng**, merge C:Q, bold 12pt màu `#1F4E79` trên nền `#D6E4F0` (engine tự làm).
 - KHÔNG dùng các nhóm cũ: "Phân quyền & truy cập" đầu tab, "BỘ LỌC & TÌM KIẾM", "DANH SÁCH, SẮP XẾP & PHÂN TRANG",
   "TẠO / SỬA / XEM", "RÀNG BUỘC NHẬP LIỆU", "CÔ LẬP DỮ LIỆU…", "E2E FLOW".
@@ -362,12 +366,12 @@ except Exception: pass
 - [ ] **Bộ kiểm tra thuật ngữ in "OK - sach"** — không còn tên bảng/cột, id quyền, route, mã HTTP
 - [ ] **9 mục mô tả** đầy đủ, không bỏ mục
 - [ ] Mục 2/3: liệt kê **từng trạng thái / điều kiện cụ thể**
-- [ ] Mục 7: liệt kê **tên quyền tiếng Việt** đúng như trong seeder
+- [ ] Mục 7: liệt kê **tên quyền tiếng Việt** đúng như `name` trong Catalog
 - [ ] Mục 9: đã ghi các **bẫy dễ sai nhất** của màn
 - [ ] Test Summary: 2 khối DNS + TP, range thống nhất + dòng 16 "Tổng số testcase"
 - [ ] **Có dòng header 17 cột ở row 17** (file mẫu thiếu — đừng quên)
 - [ ] **`check_tc.py` báo 0 lỗi**: nhóm đúng tên + thứ tự chuẩn, La Mã liên tục, mã `TC_NN.NNN`, A/B chỉ ở case đầu nhóm
-- [ ] (Nếu phân quyền) nhóm **PHÂN QUYỀN đứng CUỐI**, cover **mọi tên quyền** + ẩn nút + URL trực tiếp + phạm vi dữ liệu
+- [ ] (Nếu phân quyền) nhóm **PHÂN QUYỀN đứng CUỐI**, cover **mọi tên quyền** + **từng mức phạm vi** + ẩn nút + URL trực tiếp + đổi công ty
 - [ ] **Đối chiếu checklist `assets/CHECKLIST_TC_SRS.xlsx`**: mỗi dòng áp dụng được có ≥ 1 case
 - [ ] **Tiền điều kiện có số liệu cụ thể**
 - [ ] **Test Data viết bằng nhãn màn hình**, không phải tên field

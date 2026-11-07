@@ -47,10 +47,11 @@ class XxxApiService {
 
 ## 4. Quyền
 
-- Tên quyền = quyền HRM (guard `api`, tra qua `legacy` trong Catalog `hrm-api/app/Support/Permissions/Catalog`). App kiểm bằng
-  `currentUser.permissions.map((e) => e.name)` cho menu / nút tạo; thao tác trên bản ghi đọc cờ BE (`can_edit`…).
-- Cờ quyền khởi tạo `false` (fail-closed). Quyền mới → thêm ở seeder hrm-api (skill `permission-seeder`), admin
-  gán cho vai trò; đăng nhập lại app mới nhận quyền mới.
+- Quyền kiểm theo **mã** (`phan_he.doi_tuong.hanh_dong`, Catalog `hrm-api/app/Support/Permissions/Catalog`). API trả
+  `permission_codes`: `{ "<mã>": phạm vi }` — code mới đọc map này cho menu / nút tạo; KHÔNG thêm logic mới theo
+  `currentUser.permissions[].name` (tên cũ, chỉ còn cho code cũ). Thao tác trên bản ghi đọc cờ BE (`can_edit`…).
+- Cờ quyền khởi tạo `false` (fail-closed). Quyền mới → khai mã trong Catalog hrm-api (skill `permission-seeder`), admin
+  cấp cho vai trò ở `/admin/roles`; đăng nhập lại app mới nhận quyền mới.
 
 ## 5. Khi phải sửa BE (hrm-api)
 

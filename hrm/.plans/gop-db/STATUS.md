@@ -19,6 +19,12 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Nghỉ việc thì xoá mã trên máy chấm công khuôn mặt + máy cơm — ĐÃ PUSH gop_db `0214e192b`, deploy prod (2026-11-07, @cuong61n)
+
+Sự cố prod 07/11: 3 NV ETEK đầu tư → TPE, máy còn mã cũ nên chấm không lên công — đã xoá mã cũ trên 9 máy, chuyển 13 lượt chấm, chạy lại công.
+Code nhánh `feat/xoa-ma-may-khi-nghi-viec` (hrm-api, từ `origin/gop_db`, CHƯA commit): job khi status→0 + lệnh `timesheet:remove-left-from-machines` lịch 01:45.
+Tài liệu: `.plans/gop-db/xoa-ma-may-cham-cong-khi-nghi-viec/plan.md`.
+
 ## Giao chỉ tiêu kinh doanh theo phòng ban + theo nhân viên (ERP → HRM, #11643 + #11651) — ĐANG LÀM (2026-11-06, @junfoke)
 
 Port 2 phiếu `business_target_*` sang HRM theo bản mẫu QA: bỏ popup chi tiết KH (8 ô nhập thẳng), bỏ "Nhân viên mới",

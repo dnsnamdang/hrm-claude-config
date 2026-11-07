@@ -119,14 +119,17 @@ d.table(['Ký hiệu', 'Tên quyền', 'Tác dụng trên màn hình'], [
 ], widths=[0.8, 2.0, 3.2])
 
 # Chi them bang nay khi man co phan quyen theo CAP DU LIEU (cong ty/phong ban/bo phan).
-d.p('Nhóm quyền quyết định phạm vi dữ liệu '
-    '(xét theo thứ tự ưu tiên từ trên xuống, cấp nào có trước thì áp cấp đó):')
-d.table(['Ký hiệu', 'Tên quyền', 'Phạm vi dữ liệu'], [
-    ('V1', 'Xem tất cả <đối tượng>', 'Toàn bộ <đối tượng> của hệ thống.'),
-    ('V2', 'Xem tất cả <đối tượng> của công ty', 'Giới hạn theo công ty của người đăng nhập.'),
-    ('V3', 'Xem tất cả <đối tượng> của phòng ban', 'Giới hạn theo phòng ban của người đăng nhập.'),
-    ('V4', 'Xem tất cả <đối tượng> của bộ phận', 'Giới hạn theo bộ phận của người đăng nhập.'),
-    ('—', '(không có cấp nào)', 'Chỉ <đối tượng> do chính mình tạo.'),
+# Phan quyen moi (06/11/2026): quyen Xem la MOT ma `.view` co `scopes` trong Catalog; muc pham vi chon khi
+# cap cho Vai tro. V1..V4 la 4 MUC cua cung 1 quyen, KHONG phai 4 quyen. Chi liet ke cac muc co trong
+# `scopes` cua ma do; dong '—' ghi dung hanh vi that cua man khi khong co quyen Xem (doc code loc danh sach).
+d.p('Nhóm quyền quyết định phạm vi dữ liệu: "Xem <đối tượng>" là MỘT quyền, khi cấp cho Vai trò thì chọn '
+    '1 trong các mức phạm vi dưới đây; người có nhiều Vai trò được áp mức lớn nhất, tính ở công ty đang làm việc:')
+d.table(['Ký hiệu', 'Quyền – mức phạm vi', 'Phạm vi dữ liệu'], [
+    ('V1', 'Xem <đối tượng> – Tổng công ty', 'Toàn bộ <đối tượng> của mọi công ty.'),
+    ('V2', 'Xem <đối tượng> – Công ty', 'Giới hạn theo công ty người đăng nhập đang làm việc.'),
+    ('V3', 'Xem <đối tượng> – Phòng ban', 'Phòng ban / bộ phận người đăng nhập quản lý, hoặc do chính mình tạo.'),
+    ('V4', 'Xem <đối tượng> – Bộ phận', 'Bộ phận người đăng nhập quản lý, hoặc do chính mình tạo.'),
+    ('—', '(không được cấp quyền Xem <đối tượng>)', '<Theo code màn: không thấy gì / chỉ bản ghi của mình>.'),
 ], widths=[0.8, 2.0, 3.2])
 
 d.h2('2 Ma trận phân quyền')

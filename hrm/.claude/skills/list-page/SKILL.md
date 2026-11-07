@@ -4,9 +4,9 @@ description: Quy tắc xây dựng màn danh sách với permission theo cấp
 ---
 
 # Quy tắc xây dựng permission cho các màn danh sách tổng hợp
-- Áp dụng cho các bảng có các field: company_id, department_id, part_id (field này có thể có hoặc không) =>> Nếu có thì quyền sẽ theo bộ quyền như sau Xem [Tên màn danh sách] theo công ty, Xem [Tên màn danh sách] theo phòng ban, Xem [Tên màn danh sách] theo bộ phận, Xem tất cả [Tên màn danh sách]
-- Quyền xem tất cả =>> Lấy tất cả bản ghi trừ trạng thái Đang tạo / Nháp
-- Các quyền còn lại query theo các field tương ứng
+- Áp dụng cho các bảng có các field: company_id, department_id, part_id (field này có thể có hoặc không) =>> quyền Xem là **MỘT mã `<phan_he>.<doi_tuong>.view` có `scopes`** (1 Bộ phận · 2 Phòng ban · 3 Công ty · 4 Tổng công ty) khai trong Catalog, mức nào do admin chọn khi cấp cho Vai trò. **KHÔNG tạo 4 quyền "Xem … theo công ty / theo phòng ban / theo bộ phận / Xem tất cả"** (kiểu seeder cũ, bỏ từ 06/11/2026). Cách khai mã: skill `permission-seeder`
+- BE lọc bằng `HrmScopeContext::applyCurrent($query, '<mã>.view', [...cột..., 'mode' => 'record_unit'])` — đủ bảng nhánh lọc ở skill `permission-seeder` mục "Lọc dữ liệu danh sách theo phạm vi". KHÔNG tự viết `if` theo từng mức, KHÔNG truyền mã vào `checkPermissionList`
+- Phạm vi Tổng công ty (4) =>> Lấy tất cả bản ghi trừ trạng thái Đang tạo / Nháp
 - Bộ lọc luông bắt đầu bằng: Lọc theo công ty >> Lọc theo phòng ban >> lọc theo bộ phận
 - **PANEL DUY NHẤT LÀ `V2BaseSmartFilterPanel`, VÀ LUÔN BẬT `floating`** (user chốt 2026-09-21). `V2BaseFilterPanel` **ĐÃ BỊ XOÁ** khỏi repo ngày 2026-09-21 — 56 màn cuối cùng đã chuyển hết sang panel mới; đừng tạo lại, đừng copy pattern slot `#advanced-filters` từ git history.
   - Khuôn tham chiếu chuẩn: **`pages/master-data/product-natures/index.vue`** (`http://127.0.0.1:3002/master-data/product-natures`).

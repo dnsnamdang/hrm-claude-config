@@ -187,8 +187,10 @@ Phần 1. Giới thiệu                          [Heading 1]
 Phần 2. Phân quyền                          [Heading 1]
    1 Danh sách quyền
        "Nhóm quyền thao tác:"                 BẢNG (Ký hiệu | Tên quyền | Tác dụng trên màn hình)
-       "Nhóm quyền quyết định phạm vi dữ liệu:" BẢNG (Ký hiệu | Tên quyền | Phạm vi dữ liệu)
+       "Nhóm quyền quyết định phạm vi dữ liệu:" BẢNG (Ký hiệu | Quyền – mức phạm vi | Phạm vi dữ liệu)
                                               ← chỉ thêm bảng 2 khi màn CÓ phân quyền theo cấp
+                                              ← V1..Vn là các MỨC của MỘT mã `.view` (đọc `scopes` trong
+                                                Catalog), KHÔNG phải nhiều quyền; chỉ liệt kê mức có trong `scopes`
    2 Ma trận phân quyền      — BẢNG (Chức năng | Q1..Qn | Không có quyền nào), dùng ✅ / ❌
 
 Phần 3. Đặc tả chi tiết theo từng chức năng  [Heading 1]
@@ -782,7 +784,9 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)` = **13pt*
 ### Bước 2: Phân tích & tổng hợp
 
 - Liệt kê **chức năng FR-01…FR-0N** từ route + nút trên màn → đưa vào **ma trận phân quyền**
-- Ký hiệu quyền dùng **Q1…Qn** cho nhóm thao tác, **V1…Vn** cho nhóm phạm vi dữ liệu
+- Ký hiệu quyền dùng **Q1…Qn** cho nhóm thao tác, **V1…Vn** cho các **mức phạm vi của quyền Xem** (1 mã `.view` có
+  `scopes` trong Catalog — Tổng công ty / Công ty / Phòng ban / Bộ phận). Tên quyền lấy đúng `name` trong Catalog,
+  KHÔNG lấy tên cũ ở `legacy` (vd "Xem tất cả … của công ty")
 - Trích **business rules BR-01…** từ service layer (if/else, validate, calculate, điều kiện chặn)
 - Lấy **thông báo lỗi** đúng nguyên văn từ Request `messages()` để điền vào cột "Xử lý event"
 

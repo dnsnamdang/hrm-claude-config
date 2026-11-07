@@ -50,6 +50,60 @@ Tài liệu đầy đủ cho dev: `hrm-api/docs/huong-dan-phan-quyen.md`. Đọc
 
 Không query thẳng `role_has_permissions`, `employee_has_roles` để hỏi quyền. `role_has_permissions` không còn `company_id`.
 
+## Lọc dữ liệu danh sách theo phạm vi
+
+Màn danh sách có quyền Xem theo cấp: **1 mã `.view` có `scopes`**, BE lọc bằng `HrmScopeContext::applyCurrent()`
+(bọc `DataScope::apply`, ERP dùng bản giống hệt qua `ErpScopeContext`). KHÔNG tự viết chuỗi `if ($scope >= …)` ở từng màn.
+
+```php
+use App\Support\Permissions\HrmScopeContext;
+
+HrmScopeContext::applyCurrent($query, 'sale.hop_dong.view', [
+    'company' => 'contracts.company_id',
+    'department' => 'contracts.department_id', // bảng không có cột thì bỏ dòng
+    'part' => 'contracts.part_id',
+    'owner' => 'contracts.created_by',
+    'mode' => 'record_unit',                   // bắt buộc, xem bảng dưới
+]);
+```
+
+| Phạm vi được cấp | `record_unit` (bản ghi có phòng ban / bộ phận) | `owner_members` (lọc theo người tạo, kiểu ERP) |
+|---|---|---|
+| 4 Tổng công ty | không lọc | không lọc |
+| 3 Công ty | `company` = công ty đang làm | người tạo thuộc công ty (+ tôi) |
+| 2 Phòng ban | phòng ban ∈ phòng tôi quản lý OR bộ phận ∈ bộ phận tôi quản lý OR tôi tạo | người tạo cùng phòng (+ tôi) |
+| 1 Bộ phận | bộ phận ∈ bộ phận tôi quản lý OR tôi tạo | người tạo cùng bộ phận (+ tôi) |
+| Có mã nhưng mã không phạm vi | chỉ bản ghi tôi tạo | như trái |
+| Không có mã / chưa đăng nhập | không thấy gì (`1 = 0`) | như trái |
+
+- Báo cáo / dashboard tổng hợp truyền `$aggregate = true`: không có phạm vi thì không thấy gì (không rơi về "tôi tạo").
+- Kiểm 1 bản ghi (màn chi tiết, sửa, xoá) dùng `DataScope::allowsRecord($ma, $record, $cols, HrmScopeContext::current())` (context `null` ⇒ coi là không có quyền) — cùng bộ điều kiện với `apply()`.
+- Tổng công ty bị tắt ở `/admin/group-scope-companies` thì hệ thống tự hạ về mức Công ty, đừng tự xử lý.
+- Hàm cũ `checkPermissionList($query, [tên tất cả, tên công ty, tên phòng, tên bộ phận…])` chỉ để code cũ chạy qua bí danh.
+  **KHÔNG truyền mã vào đó**: nó coi "có mã" là có quyền ở vị trí đó, cấp Bộ phận cũng thấy toàn bộ.
+- FE: `permissionScope('<mã>')` (1..4 hoặc `null`) để quyết định hiện ô lọc Công ty / Phòng ban; dữ liệu vẫn do BE lọc.
+- Mẫu test đủ mọi nhánh: `hrm-api/tests/Feature/Rbac/DataScopeTest.php`.
+
+## Đưa DB local lên kiểu mới
+
+Code `gop_db` từ 06/11 kiểm theo mã. DB local chưa chuyển thì **mọi** quyền đều false, kể cả Super Admin.
+
+**Cách khuyên dùng: lấy dump prod `hrm_erp_gop`** (đã chuyển sẵn). Muốn tự chuyển DB local thì làm ĐÚNG thứ tự:
+
+1. `php artisan migrate` — thêm cột `permissions.code`, bảng `permission_aliases`, `roles.company_id`…
+2. `php -d memory_limit=2G artisan rbac:convert --dry-run` → đọc báo cáo ở `storage/app/rbac-convert/<giờ>_dry-run/`.
+3. `php artisan down` → `php -d memory_limit=2G artisan rbac:convert --erp-da-bao-tri` → `php artisan up`.
+4. `php artisan permission:catalog-sync`.
+
+Chỉ migrate + `catalog-sync` là CHƯA đủ: vai trò cũ chưa gắn công ty, chưa ai có mã nào. Lỗi hay gặp khi tự chuyển:
+
+| Lỗi | Xử lý |
+|---|---|
+| `permission_aliases đã có dữ liệu` | Đã lỡ chạy `catalog-sync` trước. Nếu chưa ai được gán mã: xoá `permissions` có `code` + làm rỗng `permission_aliases`, chạy lại |
+| `Có N quyền cũ trong DB không thuộc danh mục…` | Tên rác chỉ có ở DB local (nhánh cũ seed vào). Grep code `gop_db`, không còn dùng thì xoá quyền đó + dòng gán. Code còn dùng thì phải khai vào Catalog |
+| `Bảng bak_rbac_… đã tồn tại` | Lần chạy thật trước bị rollback. Kiểm `roles.company_id` vẫn NULL hết (dữ liệu chưa đổi) rồi DROP các `bak_rbac_*` |
+| `Có N chênh lệch không giải thích được… đã rollback` | Xem `chenh-lech-khac.csv`. Toàn chiều `them` của vài tài khoản admin thì là lệch dữ liệu local; đây là chốt an toàn, KHÔNG sửa code để bỏ qua mà lấy dump prod |
+
 ## Sửa, bỏ quyền
 
 - Đổi tên hiển thị: sửa `name`, sync.
@@ -63,6 +117,8 @@ Conflict `PermissionsTableSeeder` (modify/delete): **giữ đã xoá**. Lấy c�
 
 ## Lỗi hay gặp
 
+- `catalog-sync` lỗi `Unknown column 'code'`: DB local chưa migrate, xem mục "Đưa DB local lên kiểu mới".
+- Local mọi quyền đều false, kể cả Super Admin: DB chưa `rbac:convert`.
 - `UnknownPermissionCode` ở local: mã sai hoặc chưa sync. Prod không văng lỗi mà trả false và log kênh `permission`.
 - Đã sync vẫn 403: Vai trò chưa được cấp, hoặc đang ở công ty khác.
 - API 500 thiếu `permission_aliases`: DB chưa chuyển đổi.
