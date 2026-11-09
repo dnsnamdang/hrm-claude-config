@@ -234,3 +234,19 @@ Vừa hoàn thành: ĐÃ PUSH `develop` (hrm-api tới `6b0b11b6e`, hrm-client t
 Đang làm dở: —
 Bước tiếp theo: deploy dev → QA kiểm lại.
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (09/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter; khuôn chép `../phieu-xuat-kho-dieu-chinh-kiem-ke/` + `../kiem-ke-theo-vi-tri/` (tên gọi vị trí / Nhà / Dãy / Khoang / lô)
+- [x] Đọc code màn (FE `pages/warehouse/position-transfers/**`, PositionPickerModal, LotPickerModal, menu warehouse.js; BE `PositionTransfer` Entity / Controller / StoreRequest / Service / WriteService / PrintService, `WarehouseInventoryLockService`, `PhysicalStockWriter::transferLot`, StockCard / ChangeSummary / BeginningStock, chặn xóa MasterData). Quyền: nhánh develop chưa có Catalog + mã quyền → ghi theo tên quyền trong code: "Điều chuyển vị trí" + 3 quyền xem (tổng công ty / công ty / kho)
+- [x] Chụp ảnh dev-hrm (`pdcvt_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi): 0 yêu cầu ghi bị chặn / 0 lọt (6 lượt chạy); POST In dự kiến cho qua 1 lần (đọc code: chỉ dựng HTML mẫu 54, không ghi). Giả trên trình duyệt: danh sách Kho chọn được ở form Tạo (DNS Admin không là thủ kho kho nào → form-options trả 0 kho) cho ảnh 10_create / 10c / 10d / 10e / 10f / 10h / 11_* / 18b; lỗi máy chủ của Lưu nháp / Điều chuyển gán vào form (không bấm lưu) cho 10b_validate / 10d_validate_transfer. Hộp Xác nhận xóa / Xác nhận điều chuyển / Đổi kho / Thông tin chưa lưu chỉ mở rồi Hủy / Thoát. Dev không có phiếu Kiểm kê theo hàng hóa nào hiện nút Tạo phiếu điều chuyển vị trí → không có ảnh lối vào đó (mô tả bằng chữ, icon menu chép từ `kkhh_shots`)
+- [x] `gen_srs.py` → `SRS - Phiếu điều chuyển vị trí.docx`: 14 chức năng, 94 trang, selfcheck khớp bản mẫu; metrics ui 12.4 / ev 4.7 / evch 987 / intro 1841; Phần 5 bảng 4 cột 12 màn
+- [x] `gen_hdsd.py` → `HDSD_Phieu dieu chuyen vi tri.docx`: 12 PHẦN, 19 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`, Điều chuyển xếp vào nhóm "DUYỆT PHIẾU (ĐIỀU CHUYỂN)"): 253 TC, 13 nhóm, P0 41,9%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 247 có TC / 77 N/A (Khóa, Import, Không duyệt); SRS 132 / 31 N/A
+- [x] Ghi nhận điểm lệch / nghi lỗi (không sửa code): bản in + In dự kiến dùng mẫu 54 của hệ thống cũ nên tiêu đề "KIỂM KÊ KHO", dòng "Ngày kiểm kê"; Xuất Excel danh sách rỗng vẫn ra file + báo thành công; SL lưu nháp bị cắt phần thập phân (cột INT, giữ như hệ thống cũ); phiếu Đang tạo ai xem được cũng sửa / xóa (đã chốt); 2 dòng cùng hàng cùng vị trí / lô chỉ chặn khi Điều chuyển
+
+### Checkpoint — 2026-11-09 16:00
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu điều chuyển vị trí
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết có đổi tiêu đề mẫu in "KIỂM KÊ KHO" / chặn xuất Excel rỗng không
+Blocked:

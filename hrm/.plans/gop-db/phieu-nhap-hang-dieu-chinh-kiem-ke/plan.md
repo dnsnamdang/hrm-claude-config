@@ -113,3 +113,19 @@ Blocked:
 - [x] Bug 4: bảng Chi tiết thêm dấu `*` đỏ (`<Required />`) ở tiêu đề cột Đơn giá nhập / Kho kế toán / Số lượng — chỉ khi
       Thêm / Sửa (màn Chi tiết không nhập)
 - [x] Push #11966 (2026-10-31, user yêu cầu): hrm-client `a9b3de54f` lên `develop`
+
+## Tài liệu SRS / HDSD / Testcase (09/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter; khuôn chép `../phieu-xuat-kho-dieu-chinh-kiem-ke/` + `../phieu-dieu-chuyen-vi-tri/`, tên gọi theo `../kiem-ke-theo-hang-hoa/`
+- [x] Đọc code màn (FE `pages/finance/inventory-imports/**`, AttachmentSection, row-actions Phiếu nhập kho ĐCKK; BE `InventoryImport` Entity / Controller / Service / WriteService, `AccountingStockWriter`, `ProductImportPriceReader`, `WarehouseInventoryImport::canCreateProductImport`, `SelfInventory::handleCompleted`, `StockValueFifoService`, danh mục chặn xóa, sổ công nợ nhân viên). Quyền: nhánh develop chưa có Catalog + mã quyền → ghi theo tên quyền trong code (2 quyền xem + Kế toán kho). Kiểm lại 4 hành vi "giữ như ERP" (cộng handled_qty khi sửa, không chặn lập trùng, nhận dòng FE gửi, lưu không kiểm quyền) — code vẫn y vậy
+- [x] Chụp ảnh dev-hrm (`pnhdckk_shots/_capture/capture.js`, DNS Admin = Super admin, chặn mọi yêu cầu ghi): 0 yêu cầu ghi bị chặn / 0 lọt (2 lượt chạy + 1 lượt dò dữ liệu `api.js`). Dữ liệu thật đủ trạng thái (PNHĐCKK-00053 Đang tạo, 00052 Đã hạch toán, PNKĐCKK-00054 Chờ duyệt) — KHÔNG giả trạng thái. Form Tạo / Sửa chỉ nhập thử để chụp lỗi; hộp Xác nhận lưu và duyệt mở rồi Hủy; không chọn file. Icon menu_muc / menu_muc_kho cắt lại từ ảnh 00_menu / 00b_menu_kho
+- [x] `gen_srs.py` → `SRS - Phiếu nhập hàng điều chỉnh kiểm kê.docx`: 12 chức năng, 83 trang, selfcheck khớp bản mẫu; metrics ui 13.2 / ev 4.6 / evch 959 / intro 1808; Phần 5 bảng 4 cột 9 màn
+- [x] `gen_hdsd.py` → `HDSD_Phieu nhap hang dieu chinh kiem ke.docx`: 11 PHẦN, 18 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`, bỏ Xóa / Khóa / Gửi duyệt / Không duyệt / Hủy / Import): 225 TC, 12 nhóm, P0 40,0%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 234 có TC / 90 N/A (Xóa, Khóa, Import, Không duyệt); SRS 123 / 40 N/A
+- [x] Ghi nhận nghi lỗi / điểm lệch (không sửa code): Thành tiền nhập trên màn / bản in = SL × đơn giá nhưng bút toán 1561 nhân thêm hệ số ĐVT (lệch khi hệ số ≠ 1); bản in mẫu 296 còn chữ "Phiếu nhập kho (*)"; màn chi tiết còn dấu * ở Phiếu nhập kho / Nhân viên; ô Phiếu nhập kho liệt kê phiếu Chờ duyệt mọi công ty (không theo phạm vi); Lưu nháp cũng ghi Người duyệt / Ngày duyệt cho phiếu nhập kho (y ERP)
+
+### Checkpoint — 2026-11-09 15:30
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu nhập hàng điều chỉnh kiểm kê
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết các điểm nghi lỗi (Thành tiền × hệ số ĐVT, chữ "(*)" bản in, dấu * màn chi tiết)
+Blocked:

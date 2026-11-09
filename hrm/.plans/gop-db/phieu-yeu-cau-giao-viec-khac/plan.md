@@ -69,6 +69,11 @@ Blocked: T14, T15 chờ user
 - [x] C5. Từ chối ở chi tiết → về danh sách; 409/404 vẫn nạp lại chi tiết (`AssignOtherRejectModal` emit `submitted('success'|'conflict')`).
 - Verify: `php -l` 6 file BE; compile 4 file FE OK; smoke API (transaction rollback, tài khoản 13): search-costs sort Người tạo asc/desc đúng; nháp chỉ có KH → 200, cột date/phòng NULL, chi tiết + danh sách 200; Lưu và gửi thiếu → 422 đủ 5 ô; `logStatusByAssignTask` ghi đúng dòng lịch sử. CHƯA mở trình duyệt, CHƯA chạy luồng tạo PGV thật end-to-end.
 
+## Fix bug Redmine #12065 (2026-11-09) — UI
+- [x] D1. Popup Chọn dịch vụ sửa chữa (`CostSearchModal.vue`): khung cố định `height: 82vh` → 10 dòng vẫn để trống nửa dưới. Bỏ chiều cao cố định, chỉ giữ `max-height: 82vh` (popup co theo nội dung như các popup chọn khác, nhiều dòng thì bảng cuộn).
+- [x] D2. Ô Người liên hệ (`AssignOtherRequestForm.vue`): chip "Thêm nhanh" cao 22px căn giữa hàng nhãn → dính sát ô chọn bên dưới. Căn chip theo dòng chữ nhãn (không làm hàng nhãn cao hơn các cột bên cạnh), chừa khoảng hở với ô chọn. Làm: hàng nhãn `align-items-start` + chip `margin-top:-3px` (class `.aor-quick-add` scoped).
+- Verify: compile template 2 file OK. CHƯA mở trình duyệt. `CostSearchModal` dùng chung (Lỗi thiết bị, YC thông tin BH-SC, YCGVK) → cả 3 màn cùng co popup.
+
 ### Checkpoint — 2026-11-06
 Vừa hoàn thành: C1–C5 (#12049)
 Đang làm dở: không

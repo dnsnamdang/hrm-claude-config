@@ -14,7 +14,8 @@ Sau khi phiếu giao hàng hoàn thành và kho đã nhận hàng, thủ kho c�
 - Thông báo thủ kho khi PGH hoàn thành có điểm về kho; thông báo khi duyệt PNK
 
 ## Quyết định lớn
-- Kiểu quản lý lô/seri của hàng hóa: **chưa chốt** — gom về `StockManageType::forProduct()`, tạm mặc định theo env `WAREHOUSE_DEFAULT_MANAGE_TYPE` (`none`); dòng PNK snapshot `manage_type`.
+- Kiểu quản lý lô/seri của hàng hóa (chốt 09/11/2026): cột `products.stock_manage_type`, chọn bắt buộc ở màn Quản lý hàng hóa (mặc định Không quản lý, chỉ hàng hóa thường), khóa đổi khi đã có PNK đã duyệt; danh sách hàng hóa có cột + lọc + Excel. `StockManageType::forProduct()` đọc cột này; dòng PNK snapshot `manage_type`.
+- Quyền tạm mở (09/11/2026): config `warehouse.receipt_open_permission` = true → ai cũng làm được mọi thao tác PNK.
 - Quyền mới `Xem phiếu nhập kho` (id 526) xem tất cả; thủ kho xem kho mình; Tạo / Sửa / Duyệt / Xóa nháp chỉ thủ kho của kho nhập. Không phân quyền theo cấp.
 - Xóa: chỉ phiếu nháp (status 2), thủ kho kho nhập; PGH quay về hàng chờ.
 - Duyệt: ghi sổ tồn theo kho / hàng / lô / HSD / mục đích giữ hàng; seri trong kho; thẻ kho. Không hủy duyệt.

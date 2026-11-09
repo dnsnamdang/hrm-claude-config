@@ -139,6 +139,7 @@ Nếu có → đọc trước khi viết code.
 | Tạo/sửa **button** (nút bấm) trên FE hrm-thanhan-client — nhất là cột Thao tác của màn danh sách | `.claude/skills/button-convention/SKILL.md` (Phần A: màn V2 · Phần B: màn cũ) |
 | Tạo màn **danh sách** mới / chuyển màn danh sách sang V2 (phân quyền theo cấp, bộ lọc, cột, xuất Excel) | `.claude/skills/list-page/SKILL.md` (Phần A: V2 · Phần B: cũ) |
 | Làm **modal / popup** ở màn V2 (V2BaseModal, xác nhận, popup có bảng) | `.claude/skills/modal-popup/SKILL.md` |
+| Làm **popup Tạo mới / Sửa / Xem của màn danh mục** (danh mục không có màn chi tiết, mã mở popup Xem) | `.claude/skills/catalog-popup/SKILL.md` |
 | Làm **form nhập liệu** ở màn V2 (validate realtime, lỗi 422, bảng nhiều dòng) | `.claude/skills/form-validate/SKILL.md` |
 | Làm **select / ô nhập** ở màn V2 (danh mục khoá 🔒, allowClear, chip, ô disabled, nhãn nhân viên) | `.claude/skills/select-and-input-state/SKILL.md` |
 | Tạo **bộ khung feature mới** (module BE + page FE) | `.claude/skills/feature-scaffolder/SKILL.md` |

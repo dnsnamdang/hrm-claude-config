@@ -7,6 +7,7 @@ description: Use when tạo/sửa MODAL / POPUP trên hrm-thanhan-client (dns) �
 
 > Bản dns của skill `modal-popup` bên hrm. Nút trong modal theo `button-convention` Phần A; skill
 > này chỉ lo **cấu trúc popup**. Bộ lọc/bảng trong popup đọc thêm `list-page`.
+> Popup **Tạo mới / Sửa / Xem của màn danh mục** (3 chế độ, mã mở popup Xem, Lưu và tiếp tục) → skill `catalog-popup`.
 
 ## Khác biệt dns so với hrm
 
@@ -19,7 +20,7 @@ description: Use when tạo/sửa MODAL / POPUP trên hrm-thanhan-client (dns) �
 | `ProductSearchModal` dùng chung | dns có popup chọn hàng riêng từng phân hệ — áp nguyên tắc mục 5 khi sửa |
 
 Component đã có ở dns: `components/modal/V2BaseModal.vue`, `components/modal/base-confirm-modal.vue`,
-`components/V2BaseSelectInModal.vue`, `components/V2BaseTableScroll.vue`, `components/modal/V2BaseRejectApproveModal.vue`.
+`components/V2BaseSelectInModal.vue`, `components/V2BaseFormTable.vue` (bảng trong popup — mục 5), `components/modal/V2BaseRejectApproveModal.vue`.
 
 ---
 
@@ -136,6 +137,14 @@ cuộn lồng nhau. Tự kiểm (console, đã cuộn hết nội dung): số kh
 
 ## 5. Popup có BẢNG dữ liệu (chọn hàng hoá, chọn nhân viên, xem danh sách…)
 
+**Bảng trong popup CHỈ dựng bằng `V2BaseFormTable`** (đủ prop/slot ở skill `form-validate` mục 1e) +
+prop `dense` (dòng thấp) + `loading` (dòng "Đang tải") — không `<table>` viết tay, không `V2BaseDataTable`
+trong popup. Phân trang (nếu có) đặt `V2BasePagination` ngay dưới bảng.
+
+Màu bảng popup = mẫu MISA chung (`assets/scss/_misa-grid.scss`, bảng biến ở skill `list-page` mục A8b).
+Popup XEM chứng từ dùng `.dd-table` của `assets/scss/v2-detail-modal.scss` (đã theo MISA) — không khai lại
+màu header / kẻ / hover ở từng popup. Popup cũ còn bảng tự viết (`.gm-table`…) thì import `misa-grid` và dùng biến.
+
 Nguyên tắc: bảng là vùng làm việc → popup **cao cố định**, mọi khối phụ `flex-shrink: 0`, **chỉ khung
 bảng** `flex: 1`. Số dòng thấy được = chiều cao bảng ÷ chiều cao dòng — tối ưu cả hai.
 
@@ -145,18 +154,18 @@ bảng** `flex: 1`. Số dòng thấy được = chiều cao bảng ÷ chiều c
 2. `min-height: 0` ở **mọi** mắt xích flex từ body xuống bảng (b-tabs chèn `.tabs` → `.tab-content` → `.tab-pane.active`).
 3. Body `overflow: hidden` — chỉ khung bảng cuộn dọc.
 4. Khung bảng `flex: 1 1 auto; min-height: 0; overflow: auto` — không `max-height` cứng, không sàn `min-height` cứng.
-5. Dòng thấp: `td { padding: 3px 6px; font-size: 12px }`, thumbnail ≤ 26px, chữ dài cắt 2 dòng (`clamp-2`) + `:title`, `thead` sticky.
+5. Dòng thấp: `V2BaseFormTable dense` (đã có `padding: 3px 6px; font-size: 12px` + `thead` sticky), thumbnail ≤ 26px, chữ dài cắt 2 dòng (`clamp-2`) + `:title` trong slot ô.
 6. Nút phụ ("Thêm hàng tạm"…) đặt cùng hàng với khối lọc, không chiếm dòng riêng.
 7. Lọc nâng cao là grid phẳng `repeat(auto-fit, minmax(190px, 1fr))`, không chia hàng cứng + ô độn.
 8. Control lẻ: nhãn ngang control thay vì xếp chồng; nén margin thừa của phân trang.
 
-**Bẫy `V2BaseTableScroll`**: component có 2 lớp — gốc `.v2-table-scroll` và trong
-`.v2-table-scroll__body` (nhận `body-class`). Khai flex cho **lớp gốc**, `::v-deep` cho lớp trong;
-khai nhầm lớp thì phân trang bị đẩy khuất dưới đáy popup mà không báo lỗi.
+**Bẫy 2 lớp cuộn**: `V2BaseFormTable` render qua `V2BaseTableScroll` — gốc `.v2-table-scroll` và lớp
+trong `.v2-table-scroll__body.v2-form-table-wrap` (nhận `body-class`). Khai flex cho **lớp gốc**,
+`::v-deep` cho lớp trong; khai nhầm lớp thì phân trang bị đẩy khuất dưới đáy popup mà không báo lỗi.
 
 ```scss
 .v2-modal-body ::v-deep > .v2-table-scroll { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
-.v2-modal-body ::v-deep .my-table-wrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.v2-modal-body ::v-deep .v2-form-table-wrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 ```
 
 Tự kiểm: `paging.getBoundingClientRect().bottom <= card.getBoundingClientRect().bottom` phải `true`.
@@ -204,5 +213,5 @@ Component nằm trong modal kiểm **cả hai**: `v-if="$slots.prefix || $scoped
 - [ ] Xác nhận bằng `BaseConfirmModal` với `id` riêng (không `confirm`), không `msgBoxConfirm`
 - [ ] Nút theo `button-convention`, thứ tự như mục 7
 - [ ] Nhãn trường bắt buộc: `<V2BaseLabel required>` (form V2) hoặc `<Required />` (form cũ) — không viết `*` trần; validate theo skill `form-validate`
-- [ ] Popup có bảng: đủ 8 điểm mục 5, phân trang không bị đẩy khuất
+- [ ] Popup có bảng: dựng bằng `V2BaseFormTable dense`, đủ 8 điểm mục 5, phân trang không bị đẩy khuất
 - [ ] Ô trống để trống, không `—`; không `.text-muted` (ra đỏ ở dns)

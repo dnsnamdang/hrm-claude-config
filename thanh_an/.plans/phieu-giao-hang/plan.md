@@ -571,3 +571,12 @@ Vừa hoàn thành: Phase 31 (bỏ chi phí vận chuyển ở form đơn mua), 
 Đang làm dở: không
 Bước tiếp theo: user test UI đơn mua (tạo / sửa / chi tiết: không còn khối chi phí vận chuyển, ô VAT, chọn / đổi HĐ mua, popup chọn hàng theo HĐ) → user tự commit. Chờ trả lời: tối ưu `unproposedActiveContractGoods()` dùng chung; BE có tự áp VAT dòng HĐ không; sửa comment `utils/purchase-pricing.js:96`.
 Blocked: 
+
+## Phase 34 — Nút xử lý phiếu Đang xử lý ở cột Hành động danh sách (user hỏi 09/11/2026)
+
+> User: "Màn phiếu giao hàng Đang xử lý, cột hành động không có button nào để bấm vào để xử lý à?" — trước đây danh sách chỉ có Tiếp nhận / Trả lại, cập nhật tiến độ phải bấm mã phiếu vào chi tiết.
+> Theo skill `button-convention` A5: nút nghiệp vụ ở danh sách chỉ ĐIỀU HƯỚNG sang màn chi tiết (như "Duyệt"). Điều kiện hiện = `can_edit` của chi tiết (Đang xử lý + mình phụ trách).
+
+- [x] 101. BE `PurchaseDeliveryNoteResource`: thêm `can_edit` (status 4 + `isOwner`)
+- [x] 102. FE `pages/delivery/delivery_notes/index.vue`: action `process` "Cập nhật giao hàng" (`ri-truck-line`) đứng đầu, `visible: can_edit`, bấm → `/delivery/delivery_notes/:id`
+- [x] 103. Kiểm: `php -l`, compile FE OK; PGH-2026-0001 (Đang xử lý, phụ trách nv 13): nv 13 → `can_edit` true, nv 15 → false

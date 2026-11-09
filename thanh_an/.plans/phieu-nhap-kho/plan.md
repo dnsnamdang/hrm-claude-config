@@ -53,9 +53,73 @@
 - [x] 10i. Kiểm: script BE (migration up/down, PGH giữ 7 khi chưa có PNK / PNK nháp, duyệt → 5, gọi lại không đổi, resource đúng badge, `usedByPair` 5 = 7) — PASS; E2E `pgh-sang-cho-nhap-kho` **4/4**, `phieu-nhap-kho` **6/6** (thêm test 4b: chi tiết PGH thấy "Đã nhập kho" + link PNK); DB đã khôi phục sạch
 - [x] 10k. Chi tiết PGH: bỏ ô "Kho nhận" ở khối Thông tin chung (user yêu cầu) — xóa ô + computed `warehouseText` trong `pages/delivery/delivery_notes/_id/index.vue`; kho nhận vẫn hiện ở từng điểm
 - [x] 10l. User hỏi: PGH-2026-0004 đang Chờ nhập kho mà `/warehouse/receipt_queue` trống → đã trace: dữ liệu PGH đủ điều kiện (status 7, điểm 500 đã nhận, kho 1, chưa có PNK); không phải lỗi code — nv 13 không phải thủ kho kho 1 (chỉ nv 15, 17) và chưa role nào có quyền 526 nên hàng chờ lọc mất. Chạy `queueCount` theo user: 13 → 0, 15 → 1, 17 → 1. Cách xử lý: gán thủ kho ở Danh mục kho hoặc cấp quyền 526 (chỉ xem)
-- [ ] 10j. User chạy migration `php artisan module:migrate Supply` (000003 — trên stag hiện không đổi bản ghi nào) + test tay
+- [ ] 10j. (vẫn cần) User chạy migration `php artisan module:migrate Supply` (000003 — trên stag hiện không đổi bản ghi nào) + test tay
 
-- [ ] 9. Chờ user: có chuyển migration `2026_11_07_000001` từ `Modules/Warehouse/Database/Migrations/` sang `database/migrations/` (nơi các bảng kho cũ đang nằm) không
+## Phase 4 — Tạm mở quyền phiếu nhập kho (user yêu cầu 09/11/2026)
+> "Tạm thời bỏ qua hết quyền tạo phiếu nhập kho, để ai cũng có thể tạo". Làm bằng công tắc config để bật lại quyền dễ dàng.
+- [x] 11a. Config `warehouse.receipt_open_permission` (env `WAREHOUSE_RECEIPT_OPEN_PERMISSION`, mặc định `true`)
+- [x] 11b. `WarehouseReceiptService`: bật công tắc → `canViewAll()` = true (ai cũng thấy hàng chờ / mọi PNK / mọi kho trong bộ lọc), `isKeeper()` = true (ai cũng tạo / sửa / duyệt / xóa nháp); vẫn giữ: chỉ sửa / duyệt / xóa phiếu nháp
+- [x] 11c. Kiểm bằng script với nv 13 (không phải thủ kho; nay đã có quyền 526 qua role 3): bật công tắc → isKeeper(1) = true, phiếu nháp is_can_edit/approve/delete = true, phiếu đã duyệt vẫn false; tắt công tắc → isKeeper(1) = false (như cũ) — PASS
+
+## Phase 5 — Kiểu quản lý lô / HSD / seri ở màn Quản lý hàng hóa (user yêu cầu 09/11/2026)
+> Gỡ blocker "chưa chốt nơi lưu kiểu quản lý": lưu theo mã hàng ở `products`, `StockManageType::forProduct()` đọc từ đây.
+- [x] 12a. Hỏi user → chốt 09/11/2026: **bắt buộc, mặc định "Không quản lý"** (hàng cũ migration gán none); **khóa đổi khi mã hàng đã có PNK đã duyệt** (chỉ nháp thì vẫn đổi, nháp giữ kiểu đã snapshot); danh sách hàng hóa thêm **cột + ô lọc (chọn 1) + xuất Excel**; **chỉ hàng hóa thường** (hàng hóa mẫu / biến thể không có ô, mặc định none)
+- [x] 12b. BE: migration `Modules/Category/Database/Migrations/2026_11_09_000001_add_stock_manage_type_to_products` (string(10) default `none`, **đã chạy local** — 3303 hàng = none); `ProductService` create (chỉ TYPE_PRODUCT, sai/thiếu → none) / update (`resolveStockManageType`: không gửi / hàng mẫu / đã khóa → giữ cũ) + lọc `stock_manage_type` ở `index()`; `ProductRequest` `required|in` + closure khóa đổi khi có PNK đã duyệt (422) + messages; `ProductResource` / `DetailProductResource` trả `stock_manage_type`, `stock_manage_type_name` (+ `is_stock_manage_type_locked` ở chi tiết)
+- [x] 12c. BE `StockManageType`: `forProduct()` đọc `products.stock_manage_type` (cache theo request; rỗng / lạ → config), thêm `name()`, `options()`, `isLockedForProduct()` (có dòng PNK status 3 chưa xóa)
+- [x] 12d. FE: hằng `utils/constants/stockManageType.js`; ô "Quản lý lô / HSD / seri" `<Required />` (Select2, sau ô HSD) ở `GeneralComponent.vue`, khóa + ghi chú khi `is_stock_manage_type_locked`; `add.vue` mặc định `none`; danh sách `index.vue`: cột (hiện mặc định, sau HSD từ ngày SX), ô lọc chọn 1, xuất Excel (id 31); `ProductHistoryModal` nhãn + hiện tên kiểu. Hàng hóa mẫu (`product_templates`) không sửa
+- [x] 12e. Kiểm: script BE trong transaction (rollback) **16/16 PASS** (khóa / không khóa, forProduct, request 422, service giữ cũ, lọc, resource); compile template + parse script 4 file FE OK. Chưa test trên trình duyệt
+- [x] 12f. User yêu cầu cột "Quản lý lô / HSD / seri" ở danh sách hàng hóa đặt **trước cột Trạng thái** (cả thứ tự trong popup Xuất Excel); cấu hình cột đã lưu chưa có cột này → `placeNewColumnsBeforeStatus()` trong `index.vue` chèn trước Trạng thái (không sửa `mergeSavedColumns` dùng chung, vốn nối cột mới xuống cuối). Compile OK
+- [x] 12g. User báo hàng "Hóa chất kiểm chuẩn" chọn Lô + HSD + Seri mà màn Hàng chờ nhập kho hiện "Lô + Seri" → dữ liệu vẫn đúng (`loseri`), lỗi do nhãn rút gọn viết cứng `MANAGE_INFO.loseri.short = 'Lô + Seri'` ở `pages/warehouse/receipts/constants.js` (chip ở `receipt_queue/index.vue` + badge dòng ở `ReceiptForm.vue`) → đổi thành 'Lô + HSD + Seri'; `none.text` → 'Không quản lý lô / seri' cho khớp BE `StockManageType::NAMES` (nhãn chip "Thường" giữ nguyên)
+- [x] 12h. User yêu cầu màn Hàng chờ nhập kho (`receipt_queue/index.vue`) cột Hàng hóa **bỏ dòng "N dòng · SL x"**, chỉ còn chip kiểu quản lý; bỏ import `fmtQty` không còn dùng. Xuất Excel vẫn giữ cột Số dòng hàng / Tổng số lượng
+
+## Phase 6 — Rà soát chuẩn V2 / skill các màn Hàng chờ nhập kho + Phiếu nhập kho (user yêu cầu 09/11/2026)
+> Đối chiếu skill `list-page` A, `button-convention` A, `modal-popup`, `form-validate`, `select-and-input-state` cho `pages/warehouse/receipt_queue/**`, `pages/warehouse/receipts/**`.
+- [x] 13a. Rà grep tự kiểm (HTML thô, text-muted, —, Người lập, id confirm, v2-styles, nút thiếu icon/size, :disabled trên V2BaseButton, b-modal tự dựng…) → lập danh sách lệch. Sạch: không input/select/button thô, không text-muted, không "—", v2-styles import đúng, BaseConfirmModal đều có id riêng, popup import seri đã dùng V2BaseModal (footer Xác nhận → Đóng đúng chuẩn)
+- [x] 13b. Sửa màn Hàng chờ nhập kho (`receipt_queue/index.vue`): chip loại quản lý tự dựng `.rq-chip` → `V2BaseBadge size="sm" :color`; cột Thao tác bỏ chữ "Chỉ thủ kho lập phiếu" (không dùng được thì ẩn, gốc slot vẫn là `<div>`)
+- [x] 13c. Sửa màn danh sách Phiếu nhập kho (`receipts/index.vue`): `handleConfirmDelete` thêm cờ `deleting` chống bấm kép
+- [x] 13d. Sửa form / chi tiết (`ReceiptForm.vue`, `LinePanel.vue`): pill trạng thái dòng `.st-chip` → `V2BaseBadge` (màu theo 9 mã chuẩn, hàm `chipColor`); "Lưu nháp" secondary → primary; "In phiếu nhập kho" → "In"; nhãn "cận date" tự dựng → `V2BaseBadge color="#F59E0B"`. Serial*.vue giữ nguyên (ô chip seri tự dựng có ghi chú, không có V2Base tương đương)
+- [x] 13e. Compile check 4 file đã sửa → OK
+- [x] 13f. Bảng "Hàng hóa nhập kho" (`ReceiptForm.vue`) dựng lại theo khuôn bảng hàng `supply/purchase_orders/add` (ProductsTab `.product-table`): `table-bordered`, thead dính khi cuộn dọc (V2BaseTableScroll `max-height`), tiêu đề 1 hàng nền `#eef4f3` căn giữa, đông cứng STT / Mã hàng / Tên hàng hóa khi cuộn ngang, ô nhập/select `size="xs"` cao 28px, số căn phải, ô căn giữa dọc (user yêu cầu 09/11/2026)
+- [x] 14a. Tạo component bảng dùng chung `components/V2BaseFormTable.vue` theo khuôn bảng form của hrm (V2BaseTableScroll + `table table-bordered table-sm`): khai báo `columns` (type index / width / align / wrap / freeze / required / formatter), thead dính nền `#f8fafc`, đông cứng cột trái (tự tính `left`), viền `border-collapse: separate` (không mất viền khi sticky), dòng trống / đang tải xám, cao theo nội dung, row-class có sẵn `is-active` / `is-warn`, prop `dense` cho popup; slot `cell-<key>` / `head-<key>` / `row-after` / `append` / `empty` (user yêu cầu 09/11/2026). Không sửa `V2BaseTableScroll` (bản dns đã có ResizeObserver như hrm)
+- [x] 14b. Chuyển bảng "Hàng hóa nhập kho" (`ReceiptForm.vue`, computed `goodsColumns`) + bảng xem lô / seri (`LinePanel.vue`, computed `viewColumns`, dòng cận date `is-warn`) sang `V2BaseFormTable`; bỏ khối CSS `.rf-table` / `.rv` tự viết
+- [x] 14c. Compile check template + SCSS 3 file → OK; render thử SSR component (đông cứng `left` cộng dồn, dòng mở rộng, dòng trống) → đúng
+- [x] 14d. Sửa skill: `form-validate` thêm mục 1e (prop / cột / slot / quy tắc, bảng ánh xạ 1b + grep tự kiểm có `<table`, checklist); `list-page` A8 + `modal-popup` (mục 5, bẫy 2 lớp cuộn, checklist) trỏ về `V2BaseFormTable` — bảng viết tay trong form / modal / chi tiết CHỈ dùng component này
+- [x] 15. Bỏ banner "Tạo phiếu nhập kho từ PGH-… — hàng về kho ngày … / Dòng hàng và SL thực nhận lấy từ phiếu giao hàng…" ở màn tạo mới (`ReceiptForm.vue`, nhánh `isNew` không hiện banner gì) (user yêu cầu 09/11/2026)
+- [~] 14e. (bỏ — đã gỡ PNK ở Phase 7) Chờ user xem trên trình duyệt `/warehouse/receipts/create?...` + màn chi tiết PNK (bảng hàng, mở panel lô / seri, cuộn ngang cột đông cứng)
+- Cố ý KHÔNG đổi (báo user): bản in 01-VT giữ "Người lập phiếu" (mẫu luật định); số cột hiện mặc định > 7; validate tự viết `receiptRules.js` (không vee-validate — viết lại rủi ro cao); 422 chỉ toast, chưa map vào ô; nút "Duyệt nhập kho" giữ chữ; `b-spinner` lúc tải giữ (supply V2 cũng dùng); SerialImportModal không đổi sang V2BaseImportModal (cái đó là import bảng nhiều cột)
+
+- [~] 9. (bỏ — đã xóa migration 000001 ở Phase 7) Chờ user: có chuyển migration `2026_11_07_000001` từ `Modules/Warehouse/Database/Migrations/` sang `database/migrations/` (nơi các bảng kho cũ đang nằm) không
+
+## Phase 7 — Gỡ toàn bộ Phiếu nhập kho, chỉ giữ màn PGH chờ nhập kho (user yêu cầu 09/11/2026)
+
+> Chốt với user: gỡ hết FE + BE phiếu nhập kho; **giữ** màn `/warehouse/receipt_queue`, trạng thái PGH "Chờ nhập kho" (Phase 3), `V2BaseFormTable` + skill; **gỡ** Phase 4 (công tắc mở quyền) + Phase 5 (kiểu quản lý lô / HSD / seri ở hàng hóa). Các task 8, 9, 10j, 14e không còn ý nghĩa.
+
+- [x] 16a. BE: tách hàng chờ ra `ReceiptQueueService` + `ReceiptQueueController` (list / count / filter-options: kho, NCC, thủ kho, hình thức), bỏ điều kiện "chưa có PNK" + lọc quyền + manage_types / is_can_create
+- [x] 16b. BE: xóa Entities PNK / tồn kho (7 file), `WarehouseReceiptController`, Requests, Service, Exception, `Support/StockManageType`, Transformers PNK, migration `2026_11_07_000001`; routes chỉ còn `receipt-queue`
+- [x] 16c. BE: `PurchaseDeliveryNoteService` bỏ `notifyArrived`; `DetailPurchaseDeliveryNoteResource` bỏ `receipt` từng điểm; config Warehouse về như cũ; seeder bỏ quyền 526; `ColumnCustomization` + migration 000002 chỉ còn cột `warehouse_receipt_queue`
+- [x] 16d. BE: revert Phase 5 ở Category (`ProductRequest`, `ProductService`, `ProductResource`, `DetailProductResource`) + xóa migration `2026_11_09_000001`
+- [x] 16e. DB local: drop 7 bảng PNK / tồn kho, cột `products.stock_manage_type`, cột `column_customizations.warehouse_receipts`; xóa dòng migrations 1326, 1328; xóa quyền 526 + role_has_permissions
+- [x] 16f. FE: xóa `pages/warehouse/receipts/`, `utils/constants/stockManageType.js`; menu bỏ "Phiếu nhập kho"; `receipt_queue/index.vue` bỏ nút / thao tác lập PNK, chip kiểu quản lý, đổi API filter-options; revert Phase 5 ở màn hàng hóa (4 file)
+- [x] 16g. FE chi tiết PGH: `PointCard` bỏ badge / link PNK (giữ badge "Chờ nhập kho"); banner trạng thái 7 bỏ câu "tự chuyển Hoàn thành khi có PNK duyệt"
+- [x] 16h. Skill `form-validate` 1e: ví dụ không trỏ tới ReceiptForm / LinePanel nữa
+- [x] 16i. Kiểm: `php -l`, compile FE, grep sót `WarehouseReceipt` / `StockManageType` / `stock_manage_type` / `/warehouse/receipts`; gọi thử API hàng chờ
+- [x] 16j. E2E `dns/e2e`: xóa `tests/warehouse/phieu-nhap-kho.spec.js` + `pages/WarehouseReceiptPage.js`; thay bằng `pages/ReceiptQueuePage.js` (chỉ hàng chờ); `pgh-sang-cho-nhap-kho.spec.js` bỏ kiểm bảng `warehouse_receipts` + bước mở form PNK (test 4 chỉ còn kiểm dòng ở hàng chờ). Chưa chạy (chỉ chạy khi user bảo)
+- [x] 16k. Ghi chú kết quả: hàng chờ không còn lọc "chưa có PNK" / theo quyền → mọi điểm về kho đã nhận của PGH 5 / 7 đều hiện; PGH ở "Chờ nhập kho" (7) không tự sang Hoàn thành nữa (chưa có nghiệp vụ nhập kho). Màn hàng chờ bỏ cột "Hàng hóa" (chỉ còn chip kiểu quản lý → trống) + cột Hành động; Excel vẫn có Số dòng hàng / Tổng số lượng. Badge "Chờ nhập kho" ở thẻ điểm chỉ hiện khi PGH đúng trạng thái 7. Migration Supply 000003 bỏ nhánh kiểm `warehouse_receipts`. `V2BaseFormTable` giữ lại (hiện chưa màn nào dùng)
+- [x] 16l. User yêu cầu bỏ ô "Quản lý lô / HSD / seri" ở màn hàng hóa → đã kiểm: 4 file FE + 4 file BE Category không còn diff (đã revert ở 16d / 16f), cột `products.stock_manage_type` đã drop, cấu hình cột `column_customizations.products` không có cột này; sót 1 dòng `product_history` id 166 (hàng 145, nv 13 sửa 09/11 10:00) → `JSON_REMOVE` khóa `stock_manage_type` ở old/new_value (giữ các thay đổi thật khác). Các trường HSD từ ngày SX / HSD từ ngày mở là trường có sẵn từ trước, KHÔNG thuộc Phase 5 → giữ nguyên
+- [x] 16m. User yêu cầu bỏ banner "Đã giao xong lúc … — chờ thủ kho nhập kho." ở chi tiết PGH trạng thái 7 (`pages/delivery/delivery_notes/_id/index.vue`)
+
+## Phase 8 — Đồng nhất style bảng theo hrm (mẫu MISA) (user yêu cầu 09/11/2026)
+
+> Nguyên nhân lệch: `V2BaseDataTable` dns port từ bản hrm trước 15/10/2026 (header xám, sọc xen kẽ, kẻ liền #e5e7eb); hrm đã đổi sang bộ màu MISA (`assets/scss/_misa-grid.scss`). Các bảng form / popup ở Cung ứng, Giao hàng tự đặt màu riêng trong style scoped. User đồng ý sửa component dùng chung.
+> Bộ màu MISA: header nền #d8e7e1, chữ #10141b đậm, gạch dưới #7cc7ae; kẻ #ced1d6; nền dòng #fbfbfc (không sọc); hover cả dòng #e6f5ef; dòng tick #ddf1e9.
+
+- [x] 17a. Tạo `assets/scss/_misa-grid.scss` (chỉ biến, copy hrm)
+- [x] 17b. Port `V2BaseDataTable` theo hrm: style MISA + `hideHeader`, `cellSpan`, `column.tip` (port `components/report/ReportInfoTip.vue`), `itemLabel` rỗng, `dt-state-row`
+- [x] 17c. `V2BaseFormTable` đổi sang bộ màu MISA
+- [x] 17d. Bảng form / popup Cung ứng: purchase_orders, purchase_contracts (ProductsTab, PaymentTab, GoodsPickerModal, các modal `dd-table`), supply_proposals (GoodsTable, GoodsPickerModal, FileTable, ContractRefTab, ProductInfoTab, ViewHistoryModal), supply_handlings (HandlingGoodsTable, `sum-tbl`), contract_render modal, báo cáo purchase-demand
+- [x] 17e. Bảng Giao hàng: `dn-table` (chi tiết PGH, PointCard, PickupBlock, CostTable)
+- [x] 17f. Kiểm compile FE các file đã sửa — compile_check + scss_check2 (scratchpad, có nạp _misa-grid) OK 21 file + v2-detail-modal.scss
+- [x] 17g. Ghi chú kết quả: `.dd-table` (6 popup chi tiết) sửa ở file chung `assets/scss/v2-detail-modal.scss` (chỉ khối bảng); `.dn-table` chỉ định nghĩa ở `delivery_notes/_id/index.vue` (PointCard / PickupBlock / CostTable ăn theo); `.sum-tbl` khai trùng ở 3 file supply_handlings. HandlingGoodsTable đổi style sang scss (`>>>` → `::v-deep`, `min()` bọc `unquote`) + bỏ tô nền xen kẽ theo khối (`blk-even`). GIỮ màu ngữ nghĩa: warning-row, swap-row, row-over, is-short, header tím 4 cột tham chiếu HĐ bán (`th.cell-ref-h`), cột mới `th.col-new`, gạch chân màu theo nhóm cột. Dòng tổng / foot-row → nền header MISA. Skill `form-validate` (1e), `list-page` (mục A8b mới: bảng biến + prop mới của V2BaseDataTable), `modal-popup` (mục 5) thêm quy định màu MISA. Chưa sửa: bảng b-table màn Kho / Kho kế toán (màn cũ), bảng in PrintTab, bảng module Hợp đồng (acceptance_report)
 
 ### Checkpoint — 07/11/2026
 Vừa hoàn thành: spec + design + plan
@@ -86,3 +150,32 @@ Vừa hoàn thành: 10k bỏ ô Kho nhận ở Thông tin chung chi tiết PGH; 
 Đang làm dở: —
 Bước tiếp theo: user chọn cách thấy phiếu (đăng nhập nv 15/17, gán nv 13 làm thủ kho kho 1, hoặc cấp quyền 526) → test tay luồng tạo / duyệt PNK (task 8); chạy migration Supply 000003 (10j); chốt vị trí migration 000001 (task 9)
 Blocked: kiểu quản lý lô/seri của hàng hóa chưa chốt (mặc định `none`). Ghi nhận thêm, chưa xử lý: `column_customizations` thiếu cột `delivery_notes` → log lỗi SQL lúc 11:50:15, chờ user quyết
+
+### Checkpoint — 09/11/2026
+Vừa hoàn thành: Phase 4 — tạm mở quyền phiếu nhập kho bằng config `warehouse.receipt_open_permission` (env `WAREHOUSE_RECEIPT_OPEN_PERMISSION`, mặc định true) trong `Modules/Warehouse/Config/config.php`; `WarehouseReceiptService::isOpenPermission()` → `canViewAll()` / `isKeeper()` / `filterOptions.is_keeper` luôn true. FE không sửa (đọc cờ BE).
+Đang làm dở: —
+Bước tiếp theo: user test tay tạo / duyệt PNK bằng tài khoản bất kỳ; khi cần bật lại quyền → đặt `WAREHOUSE_RECEIPT_OPEN_PERMISSION=false` trong .env
+Blocked: kiểu quản lý lô/seri chưa chốt (mặc định `none`)
+
+### Checkpoint — 09/11/2026 (Phase 5)
+Vừa hoàn thành: Phase 5 — kiểu quản lý lô / HSD / seri chọn ở màn Quản lý hàng hóa (form + cột + lọc + Excel), PNK đọc theo mã hàng; migration Category 2026_11_09_000001 đã chạy local
+Đang làm dở: —
+Bước tiếp theo: user test tay: sửa 1 hàng hóa sang "Lô + HSD" → lập PNK từ hàng chờ thấy panel lô / HSD; duyệt PNK → mở lại hàng hóa thấy ô bị khóa; lọc / xuất Excel danh sách
+Blocked: —
+
+### Checkpoint — 09/11/2026 (Phase 7 — gỡ PNK)
+Vừa hoàn thành: 16a–16k — gỡ toàn bộ Phiếu nhập kho (FE + BE + DB local) và Phase 4, 5; màn `/warehouse/receipt_queue` chạy bằng `ReceiptQueueService` / `ReceiptQueueController` (`receipt-queue`, `/count`, `/filter-options`) — tinker: count = 1 (PGH-2026-0004), filter-options đủ 4 nhóm
+Đang làm dở: —
+Bước tiếp theo: user mở `/warehouse/receipt_queue` + chi tiết PGH-2026-0004 kiểm tra; chạy `php artisan module:migrate Supply` (000003) trên môi trường khác
+Blocked: —
+
+### Hỏi đáp — 09/11/2026: PGH Hoàn thành khi nào?
+- [x] 17a Trace `PurchaseDeliveryNoteService::complete()` + `missingForComplete()`: chỉ duy nhất `complete()` gán `STATUS_DONE`, và chỉ khi phiếu KHÔNG về kho (giao thẳng KH / không có điểm đã giao nào gắn kho). Phiếu về kho → `STATUS_WAITING_RECEIPT` (7).
+- [x] 17b Sau Phase 7 (gỡ PNK) không còn code nào chuyển 7 → 5 (luồng "duyệt đủ PNK → tự Hoàn thành" đã gỡ cùng PNK) → phiếu về kho hiện đứng mãi ở Chờ nhập kho.
+- [ ] 17c (Chờ user) Có cần cơ chế chuyển Chờ nhập kho → Hoàn thành không (vd nút "Xác nhận đã nhập kho" ở màn hàng chờ)?
+
+### Checkpoint — 09/11/2026 (wrap up)
+Vừa hoàn thành: 17a–17b — trả lời "PGH Hoàn thành khi nào": chỉ `complete()` gán Hoàn thành khi phiếu không về kho; phiếu về kho → Chờ nhập kho và sau khi gỡ PNK không còn đường chuyển sang Hoàn thành
+Đang làm dở: —
+Bước tiếp theo: user chốt 17c (có thêm cơ chế Chờ nhập kho → Hoàn thành, vd nút "Xác nhận đã nhập kho" ở màn hàng chờ, hay giữ nguyên); chạy `php artisan module:migrate Supply` (000003) trên môi trường khác
+Blocked: chờ quyết định 17c

@@ -5,8 +5,14 @@
 
 ## Đang làm
 
-- **Phiếu nhập kho + Phiếu giao hàng chờ nhập kho (bản thật theo `demo-phieu-nhap-kho.html`)** — @khoipv — Bắt đầu 07/11/2026 — BE xong (7 bảng, quyền 526, test 33/33) + FE xong (Hàng chờ, DS PNK, form tạo/sửa/xem, in 01-VT) ở phân hệ Kho. Phase 3 xong (A + C): PGH về kho → Chờ nhập kho (7), duyệt đủ PNK → tự Hoàn thành; chi tiết PGH hiện trạng thái nhập kho từng điểm + link PNK; E2E 4/4 + 6/6. Checkpoint 07/11/2026 11:57: chờ user chạy migration Supply 000003 + test tay (tài khoản phải là thủ kho kho nhận hoặc có quyền 526 mới thấy hàng chờ) + chốt vị trí migration 000001; kiểu quản lý lô/seri chốt sau (env `WAREHOUSE_DEFAULT_MANAGE_TYPE`, mặc định none).
+- **Check: Đơn xin nghỉ 1779 số ngày nghỉ dự kiến = 0** — @khoipv — Bắt đầu 09/11/2026 — Đã ra nguyên nhân, không phải bug code: đơn tạo 02/11 cho 07/11 (thứ 7 lẻ) khi quy định còn "nghỉ thứ 7 lẻ" (5) → 0 đúng lúc đó; 03/11 quy định đổi sang "nghỉ thứ 7 chẵn" (4), đơn cũ không tính lại. Chờ user: có sửa tay `total_days` → 1 không.
+  - Plan: [.plans/check-don-nghi-1779-so-ngay-0/plan.md](check-don-nghi-1779-so-ngay-0/plan.md)
+
+- **Phiếu nhập kho + Phiếu giao hàng chờ nhập kho (bản thật theo `demo-phieu-nhap-kho.html`)** — @khoipv — Bắt đầu 07/11/2026 — Phase 7 (09/11): đã gỡ toàn bộ Phiếu nhập kho + quản lý lô/HSD/seri, chỉ giữ màn `/warehouse/receipt_queue` (PGH chờ nhập kho, `ReceiptQueueService`). PGH về kho → Chờ nhập kho (7); giao thẳng KH → Hoàn thành (5). Checkpoint 09/11/2026 (wrap up): sau khi gỡ PNK không còn đường Chờ nhập kho → Hoàn thành — chờ user chốt có thêm cơ chế xác nhận nhập kho không (17c); môi trường khác chạy `module:migrate Supply` (000003).
   - Plan: [.plans/phieu-nhap-kho/plan.md](phieu-nhap-kho/plan.md) · Design: [.plans/phieu-nhap-kho/design.md](phieu-nhap-kho/design.md) · Spec: [docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md](../docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md)
+
+- **Danh mục kho — chuyển Kho vật lý / Kho kế toán sang V2 + skill `catalog-popup`** — @khoipv — Bắt đầu lại 09/11/2026 (bản gốc @namdangit 13/05/2026) — BE + FE xong: list V2 lọc mọi cột, `is_can_delete` (kho vật lý chỉ xóa khi chưa có kho kế toán trỏ tới), cột Người tạo/Ngày tạo, popup V2BaseModal; skill `catalog-popup` đã tạo. Checkpoint 09/11/2026: chờ user test tay + trả lời (a) xóa 2 modal cũ, (b) áp `catalog-popup` cho 2 popup kho; môi trường khác chạy migration `2026_11_09_000001_add_warehouse_catalog_lists_to_column_customizations_table`.
+  - Plan: [.plans/danh-muc-kho/plan.md](danh-muc-kho/plan.md) · Design: [.plans/danh-muc-kho/design.md](danh-muc-kho/design.md)
 
 - **HĐ — Tab Kết quả: bỏ bắt buộc Tên file** — @khoipv — Bắt đầu 05/11/2026 — Đã sửa: cột `contract_results.title` NOT NULL → migration cho nullable (đã chạy). FE không cần sửa. Chờ user test.
   - Plan: [.plans/contract-result-title-nullable/plan.md](contract-result-title-nullable/plan.md)
@@ -585,10 +591,6 @@ _(chưa có)_
 - **Thêm hàng hóa vào phụ lục thay đổi số lượng** — Cho phép thêm sản phẩm mới từ danh mục hệ thống vào phụ lục thay đổi số lượng, tạo nhóm mới/chọn nhóm cũ, nhân bản (@khoipv) — 2026-05-08
   - Spec: `docs/superpowers/specs/2026-05-08-annex-quantity-add-product-design.md`
   - Plan: `.plans/annex-quantity-add-product/plan.md`
-
-- **Danh mục kho** — FE + BE hoàn chỉnh: menu, danh sách, modal CRUD cho Kho Vật Lý + Kho Kế Toán, 4 migrations, full API (@namdangit) — 2026-05-13
-  - Spec: `docs/superpowers/specs/2026-05-13-danh-muc-kho-design.md`
-  - Plan: `.plans/danh-muc-kho/plan.md`
 
 - **Báo cáo chi tiết thầu** — Báo cáo chi tiết gói thầu (27 cột, 9 filters, phân quyền 3 cấp, export Excel, link HĐ) (@khoipv) — 2026-05-06
   - Spec: `docs/superpowers/specs/2026-05-06-detail-report-bid-package-design.md`

@@ -1,6 +1,6 @@
 ---
 name: form-validate
-description: Use when làm form nhập liệu ở màn đã/đang lên chuẩn V2 của hrm-thanhan-client (trang add/edit, modal form, nhất là phân hệ Cung ứng) — validate realtime bằng vee-validate trên component V2Base*, gộp lỗi FE + lỗi BE 422 bằng formValidateMixin, dọn lỗi bảng nhiều dòng, cuộn tới ô lỗi đầu tiên. Đọc cả khi: ô báo đỏ mà bấm Lưu vẫn đi, lỗi nhảy sai dòng sau khi xoá dòng, hoặc cần chốt rule nào chặn ở FE / rule nào chặn ở BE
+description: Use when làm form nhập liệu hoặc BẢNG trong form / modal / màn chi tiết (bắt buộc V2BaseFormTable) ở màn đã/đang lên chuẩn V2 của hrm-thanhan-client (trang add/edit, modal form, nhất là phân hệ Cung ứng) — validate realtime bằng vee-validate trên component V2Base*, gộp lỗi FE + lỗi BE 422 bằng formValidateMixin, dọn lỗi bảng nhiều dòng, cuộn tới ô lỗi đầu tiên. Đọc cả khi: ô báo đỏ mà bấm Lưu vẫn đi, lỗi nhảy sai dòng sau khi xoá dòng, hoặc cần chốt rule nào chặn ở FE / rule nào chặn ở BE
 ---
 
 # Skill: Validate form ở màn V2 (vee-validate + V2Base*)
@@ -85,6 +85,7 @@ realtime, mất `is-invalid`, mất kiểu ô khoá chung.
 | `<button class="btn …">` / `b-button` | `V2BaseButton` (xem skill `button-convention` Phần A) |
 | Nút chỉ có icon | `V2BaseIconButton` |
 | `<span class="badge">` trạng thái | `V2BaseBadge` |
+| `<table class="table …">` / `V2BaseTableScroll` + CSS bảng tự viết | `V2BaseFormTable` (mục 1e) |
 
 - `V2BaseLabel` tự render dấu `*` và tự gắn tooltip ⓘ từ `utils/constants/field-hints.js`.
 - **Ô chỉ để đọc**: vẫn `V2Base*` + `disabled`, không dùng `<input readonly>` thô.
@@ -95,7 +96,7 @@ realtime, mất `is-invalid`, mất kiểu ô khoá chung.
 **Tự kiểm** — lệnh này phải KHÔNG ra kết quả:
 
 ```bash
-grep -rn "<input \|<textarea\|<select \|<button \|<label \|b-form-input\|base-select2\|class=\"btn \|class=\"form-control" \
+grep -rn "<table\|<input \|<textarea\|<select \|<button \|<label \|b-form-input\|base-select2\|class=\"btn \|class=\"form-control" \
   pages/supply/<màn>/ | grep -v "V2Base"
 ```
 
@@ -140,14 +141,95 @@ grep -rn "<input \|<textarea\|<select \|<button \|<label \|b-form-input\|base-se
 }
 ```
 
-- Cột chứa **tên tệp / chuỗi dài không dấu cách** kéo giãn cả bảng → chốt bề rộng ngay trên `<th>`:
-  `<th style="width: 230px; min-width: 230px">File đính kèm</th>`.
-- Bảng trong form: bóp padding dọc ô cho gọn:
+---
 
-```scss
-.v2-form-table th,
-.v2-form-table td { padding-top: 4px; padding-bottom: 4px; }
+## 1e. Bảng trong form / modal / chi tiết — CHỈ dùng `V2BaseFormTable`
+
+**Mọi bảng viết tay** (bảng hàng hóa, bảng lô / seri, bảng chi phí, bảng chọn trong popup, bảng xem
+chi tiết…) dựng bằng `components/V2BaseFormTable.vue`. **KHÔNG** viết `<table class="table …">` tay,
+**KHÔNG** tự bọc `V2BaseTableScroll` + tự viết CSS bảng (`.rf-table`, `.product-table`, `.rv`…) ở màn.
+Màn danh sách có phân trang / cài đặt cột vẫn dùng `V2BaseDataTable` (skill `list-page`).
+
+Khuôn gốc: bảng form của hrm (`InventoryImportForm.vue` — V2BaseTableScroll + `table-bordered table-sm`
++ huỷ `min-height` + dòng trống xám). Component đã có sẵn, màn KHÔNG khai lại:
+thanh cuộn ngang trên + dưới · viền đủ · tiêu đề căn giữa, dính khi cuộn dọc · đông cứng
+cột trái · số căn phải · dòng "Không có dữ liệu" / "Đang tải" xám · cao theo nội dung · hover dòng.
+
+**Màu bảng = mẫu MISA giống `V2BaseDataTable`** (biến ở `assets/scss/_misa-grid.scss`, đồng bộ hrm từ
+09/11/2026): header `$misa-head-bg` #d8e7e1 chữ đậm `$misa-head-fg` #10141b + gạch dưới `$misa-head-line`
+#7cc7ae · kẻ `$misa-grid-line` #ced1d6 · nền dòng `$misa-row-bg` #fbfbfc (không sọc) · hover cả dòng
+`$misa-row-hover` #e6f5ef · dòng chọn `$misa-row-ticked` #ddf1e9. Bảng cũ chưa chuyển sang component mà
+còn CSS riêng thì `@import '~/assets/scss/misa-grid';` và dùng đúng các biến này — KHÔNG gõ màu bảng khác.
+
+```vue
+<V2BaseFormTable
+    :columns="goodsColumns"
+    :items="lines"
+    row-key="key"
+    :row-class="(line) => ({ 'is-active': open[line.key] })"
+    :row-after="(line) => open[line.key]"
+    max-height="calc(100vh - 110px)"
+>
+    <template #cell-qty_in="{ item, index }">
+        <V2BaseInput :value="item.qty_in" size="xs" :invalid="!!lineErr(index, 'qin')" @input="…" />
+        <V2BaseError :message="lineErr(index, 'qin')" />
+    </template>
+    <!-- panel chi tiết ngay dưới dòng (component con của màn) -->
+    <template #row-after="{ item }"><LineDetailPanel :line="item" /></template>
+</V2BaseFormTable>
 ```
+
+```js
+computed: {
+    goodsColumns() {
+        return [
+            { key: 'stt', label: 'STT', type: 'index', width: 42, freeze: true },
+            { key: 'product_code', label: 'Mã hàng', width: 110, freeze: true, wrap: true },
+            { key: 'product_name', label: 'Tên hàng hóa', width: 240, freeze: true, wrap: true },
+            { key: 'unit_name', label: 'Đơn vị tính', minWidth: 90 },
+            { key: 'qty_order', label: 'SL theo đơn', minWidth: 100, align: 'right', formatter: (v) => fmtQty(v) },
+            { key: 'qty_in', label: 'SL nhập kho', minWidth: 200, required: this.editable },
+        ]
+    },
+},
+```
+
+| Prop | Ý nghĩa |
+| --- | --- |
+| `columns` | Mảng cột (bảng dưới). Cột ẩn/hiện theo điều kiện → dựng mảng trong `computed` (`...(cond ? [col] : [])`) |
+| `items` | Mảng dòng |
+| `row-key` | Tên field key dòng hoặc hàm `(item, index) => key` (mặc định `id`, thiếu thì dùng index) |
+| `row-class` | Chuỗi/object hoặc hàm `(item, index)`. Có sẵn 2 class: `is-active` (dòng đang mở/chọn, nền xanh nhạt), `is-warn` (dòng cần chú ý, nền vàng nhạt) |
+| `row-after` | Hàm `(item, index) => bool` — dòng nào hiện slot `#row-after` (panel chi tiết ngay dưới dòng) |
+| `max-height` | Giới hạn chiều cao để tiêu đề dính; bỏ trống = cao theo nội dung |
+| `loading` / `empty-text` | Dòng "Đang tải dữ liệu…" / chữ dòng trống (mặc định "Không có dữ liệu") |
+| `dense` | Dòng thấp 3px 6px / 12px — popup có bảng (skill `modal-popup` mục 5) |
+| `hover` | Nền dòng khi rê chuột (mặc định bật) |
+
+| Thuộc tính cột | Ý nghĩa |
+| --- | --- |
+| `key`, `label` | Field của dòng + tiêu đề. Ô mặc định in `item[key]`; null → để trống (không in `—`) |
+| `type: 'index'` | Cột STT tự đánh số |
+| `width` / `minWidth` / `maxWidth` | Số = px. Cột chứa tên tệp / chuỗi dài không dấu cách → chốt `width` |
+| `align` | `left` (mặc định) / `center` / `right` (số lượng, tiền) — chỉ áp ô dữ liệu, tiêu đề luôn căn giữa |
+| `wrap` | Cho ô xuống dòng (mặc định 1 dòng) — tên hàng, ghi chú, mục đích… |
+| `freeze` | Đông cứng bên trái khi cuộn ngang. Các cột freeze phải **liền nhau ở đầu** và có `width` dạng số |
+| `required` | Sao đỏ sau tiêu đề (cột nhập bắt buộc) |
+| `formatter(v, item, index)` | Định dạng ô không cần slot (`fmtQty`, `fmtDate`, tra nhãn…) |
+| `class` / `headClass` | Class thêm cho `td` / `th` |
+
+Slot: `#cell-<key>="{ item, index, value }"` · `#head-<key>="{ column }"` · `#row-after="{ item, index }"` ·
+`#append="{ colspan }"` (dòng cộng / dòng "Thêm dòng" cuối bảng — tự viết `<tr><td :colspan>…`) · `#empty`.
+
+Quy tắc:
+- Ô nhập / select trong bảng dùng `size="xs"`.
+- Style nội dung ô (dòng phụ xám, khoảng cách giữa các khối) đặt class trên phần tử **trong slot** ở
+  style scoped của màn. KHÔNG `::v-deep .v2-form-table td {…}` để đè khung bảng — cần kiểu mới cho
+  mọi màn thì sửa component (hỏi trước, component dùng chung).
+- Bảng tự viết cũ (`ProductsTab .product-table`, `delivery_notes/CostTable`…) — khi sửa vào màn đó
+  thì chuyển sang `V2BaseFormTable` luôn (ghi task vào plan).
+
+Tự kiểm: `grep -n "<table" <file>.vue` → rỗng (trừ bản in / template Excel).
 
 ---
 
@@ -334,6 +416,7 @@ dòng ~1,5s và focus ô. **Đừng tự viết đoạn cuộn tay** bằng sele
 - [ ] Không HTML thô (lệnh grep mục 1b không ra kết quả); nhãn bắt buộc dùng `V2BaseLabel required`
 - [ ] Không đoạn nào tự sửa giá trị user nhập (grep `Math.min(`, `Math.max(`, `= max` trong `onXxxChange`)
 - [ ] Lỗi 422 qua `applyServerErrors` (đọc cả `errors` lẫn `data.error_messages`)
+- [ ] Bảng trong form / chi tiết dựng bằng `V2BaseFormTable` (mục 1e) — không `<table>` viết tay, không CSS khung bảng riêng
 - [ ] Bảng nhiều dòng: mọi chỗ xoá/thêm/thay mảng đã dọn lỗi bằng `rowFieldErrors.js`
 - [ ] Form có bảng con: `validateAll(null, { vmId: null })`, `data-vv-name` duy nhất theo dòng
 - [ ] Có lỗi → cuộn tới ô lỗi đầu tiên (`scrollToFirstError(this.$el)`)

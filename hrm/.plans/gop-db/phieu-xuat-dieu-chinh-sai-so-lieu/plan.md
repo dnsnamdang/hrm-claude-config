@@ -65,3 +65,19 @@ Nguyên nhân lệch ô (mục còn treo của #11890): `V2BaseLabel` — chữ 
 - [x] FE `components/V2BaseLabel.vue` (dùng chung — user đồng ý 30/10): `.v2-label__required { line-height: 1.2 }` → sửa cho mọi màn; đã bỏ style cục bộ tạm ở ArrangeDeliveryForm
 - [x] FE `ArrangeDeliveryForm.vue`: placeholder ô Khối lượng hàng / Số giờ, VAT (%), Số tiền người nhận việc
 - [x] Verify: compile template
+
+## Tài liệu SRS / HDSD / Testcase (09/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter; khuôn chép `../borrow-export/` + `../kiem-ke-theo-hang-hoa/`
+- [x] Đọc code màn (FE `pages/finance/warehouse-reexports/**`, `warehouse-imports/_id/{re-export,re-import,index}.vue`; BE `WarehouseReExportService` / Controller, `WarehouseImportController` reExport / reImport, `WarehouseImportWriteService::reImport`, `PhysicalStockWriter`, `checkPermissionListWithColumn`) + màn đọc / ghi ngược (Phiếu nhập kho, Thẻ kho, Tổng hợp xuất nhập tồn, 4 báo cáo tồn, danh mục Vị trí, Hàng hoá). Quyền: nhánh develop chưa có Catalog + mã quyền → ghi theo 4 tên quyền trong code
+- [x] Chụp ảnh dev-hrm (`pxdc_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi): 0 yêu cầu ghi bị chặn / 0 lọt; form Tạo phiếu xuất lại (PNK-11608) + hộp Xác nhận xuất lại và form Tạo phiếu nhập lại (PXL-00022) chỉ mở rồi Đóng / Quay lại; mọi ảnh là trạng thái thật trên dev, không giả trạng thái, không chụp local
+- [x] `gen_srs.py` → `SRS - Phiếu xuất điều chỉnh sai số liệu.docx`: 10 chức năng, 64 trang, selfcheck khớp bản mẫu; metrics ui 12.6 / ev 4.6 / evch 936 / intro 1873; Phần 5 bảng 4 cột 10 màn
+- [x] `gen_hdsd.py` → `HDSD_Phieu xuat dieu chinh sai so lieu.docx`: 9 PHẦN, 15 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`): 180 TC, 10 nhóm, P0 44,4%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 180 có TC / 144 N/A (Sửa, Xóa, Khóa, Import, Lưu nháp / Lưu và tiếp tục / gửi duyệt, Duyệt / Không duyệt); SRS 112 / 51 N/A
+- [x] Ghi nhận nghi lỗi (không sửa code): màn Tạo phiếu xuất lại (`warehouse-imports/_id/re-export.vue`) không có cảnh báo "Thông tin chưa lưu" — Quay lại khi đã nhập Ghi chú rời màn ngay (skill unsaved-changes bắt buộc)
+
+### Checkpoint — 2026-11-09 10:45
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu xuất điều chỉnh sai số liệu
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết có thêm cảnh báo chưa lưu cho màn Tạo phiếu xuất lại không
+Blocked:

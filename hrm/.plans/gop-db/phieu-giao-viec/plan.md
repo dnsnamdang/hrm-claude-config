@@ -213,3 +213,24 @@ PGV TPE.PGV.2026018146, phiếu nhập KQ id 9116 tạo trên cổng HRM. Ảnh 
 - [x] Tra TPE.PGV.2026018718 (id 18718, dev-hrm, API bằng DNS Admin): status 1 Chờ thực hiện, `has_assign_business = 0`
       (chưa lập PCT), `executors = []`, chưa có phiếu nhập KQ → `is_can_import_result = false` đúng logic (kể cả Super admin
       vì thiếu PCT đã duyệt). Phiếu từ YC giao việc khác TPE.YCGVK.2026003065, tạo 06/11 14:21. Không sửa code
+
+## Check — Màn "Phiếu giao việc được giao" gồm những phiếu nào, vai trò gì (2026-11-09, @khoipv)
+- [x] Lối vào: menu CSKH → Giao việc → `/customer-care/wr-assign-tasks?type=waiting_import_result` (cùng màn với
+      "Phiếu giao việc", khác `type`). BE `WrAssignTaskService::applyScope()` — y ERP `WrAssignTask::searchByFilter()` dòng 523
+- [x] Tập phiếu: PGV gốc (`parent_id IS NULL`, loại phiếu duyệt KQ), trừ Hủy, mà **mình có tên trong `wr_assign_task_executors`**
+      (trưởng nhóm hay thành viên đều tính; KHÔNG xét quyền xem theo cấp, KHÔNG lấy phiếu mình tạo). Mọi trạng thái còn lại
+      (Chờ thực hiện → Đã thanh toán) đều hiện — tên "chờ nhập KQ" nhưng không lọc trạng thái, y ERP
+- [x] Người thực hiện được ghi khi: lưu PGV (khối Người thực hiện, ERP `syncExecutors`) và bị GHI ĐÈ khi lập/sửa Phiếu công tác
+      (`AssignBusinessService::syncWrAssignTaskExecutors`: xoá cũ, ghi theo nhân sự PCT + is_leader + hệ số)
+- [x] Vai trò: hộp việc của người đi làm (KTV) — xem phiếu mình được giao, bấm Nhập kết quả (khi PGV Chờ thực hiện + PCT đã duyệt
+      + chưa có phiếu nhập KQ), xem phiếu nhập KQ. Khác "Phiếu giao việc" (`type=all`) là màn quản lý theo quyền cấp. Không sửa code
+
+## Check — Tóm tắt luồng Phiếu chờ giao việc → Nhập kết quả (2026-11-09, @khoipv)
+- [x] (1) Phiếu chờ giao việc (`WaitingAssignTaskService`, 5 tab nguồn còn SL chưa giao) → "Tạo phiếu giao việc"
+- [x] (2) Lưu PGV (`WrAssignTaskStoreService`): status 1 Chờ thực hiện, `has_assign_business = 0`, ghi người thực hiện,
+      ghi `assign_task_progresses` (trừ SL còn giao), YC giao việc khác → Đã giao việc
+- [x] (3) Phiếu công tác (Giao việc › `assign_business`) chọn PGV qua popup `AddWrAssignTask` (PGV gốc, status 1):
+      lưu PCT → `has_assign_business = 2` + ghi đè người thực hiện theo nhân sự PCT; duyệt → `= 1`; không duyệt → PGV về status 1, cờ 0
+- [x] (4) Người thực hiện vào "Phiếu giao việc được giao" → Nhập kết quả (đủ 4 điều kiện `canImportResult`)
+- [x] (5) Lưu PNKQ (`WrImportResultStoreService::updateTaskStatus`): nháp → PGV 7 Đang nhập KQ; gửi duyệt → PGV 2 Đã nhập KQ
+      + báo người duyệt; sau đó Duyệt KQ (PGV 8 → 3). Không sửa code

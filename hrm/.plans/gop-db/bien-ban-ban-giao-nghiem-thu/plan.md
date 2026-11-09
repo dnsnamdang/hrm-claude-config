@@ -124,3 +124,34 @@ Redmine http://quanly.dnsmedia.vn/issues/12060
 - [x] FE `HandoverContractPickerModal.vue`: phụ đề + câu rỗng thêm "đã xuất hết hàng"
 - [x] Verify: php -l sạch; tinker cty 1: trước 2688 HĐ hãng (1184 còn hàng chưa xuất) + 11 HĐ HRM → sau 1515, khớp đúng số HĐ `pendingProductIds()` rỗng; quét toàn bộ 1515 dòng popup: 0 HĐ còn hàng chưa xuất. HĐ trong ảnh QA (HD_TPE_HN_KD3_26_0818_1510) chỉ có trên dev. CHƯA mở trình duyệt
   - Lưu ý: HĐ HRM có hàng sẽ biến khỏi popup tới khi luồng xuất kho ghi `exported_qty` (trước đó chọn được nhưng cũng không lưu được)
+
+## Fix #12083 — Form Tạo mới: 6 góp ý QA (2026-11-09, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12083
+- [x] 1. "Lưu nháp" / "Lưu và tiếp tục" chỉ BẮT BUỘC hợp đồng (bỏ bắt buộc SĐT người nhận, Ngày bàn giao, NV kỹ thuật, ngày bàn giao dòng chi tiết, seri / ghi chú theo luật nhóm). Ô có nhập vẫn kiểm định dạng. "Lưu và duyệt" giữ đủ luật — FE `validateForm` + BE `HandoverAcceptanceRecordRequest`
+- [x] 2. Nút × xoá nhanh ở ô Người nhận bàn giao + SĐT người nhận khi ô có ký tự (dựng tại form qua slot `suffix`, không sửa `V2BaseInput` dùng chung)
+- [x] 3. Đổi chỗ: SĐT người nhận lên vị trí NV kỹ thuật (cạnh NVKD / Phòng ban — cùng lấy từ HĐ)
+- [x] 4. SL đã nghiệm thu: gõ chữ bị lọc nhưng vẫn tự thêm dòng chi tiết → bỏ qua khi giá trị không đổi; SL = 0/rỗng không thêm dòng
+- [x] 5. Popup Chọn hợp đồng: thêm ô lọc Loại hợp đồng (3 loại HĐ hãng + Hợp đồng HRM) — FE filterFields + BE `contracts()` param `contract_type`
+- [x] 6. SĐT người nhận: luật giống SĐT khách hàng `/^(0)[0-9]{9,11}$/`, câu "Số điện thoại không đúng định dạng" — FE + BE
+- [x] Verify: php -l sạch; tinker validator — nháp chỉ HĐ: OK · thiếu HĐ: "Bắt buộc phải chọn 1 hợp đồng" · SĐT `12345`: "Số điện thoại không đúng định dạng" · duyệt thiếu: đủ 4 lỗi (SĐT, NVKT, ngày, file); lưu nháp chỉ HĐ qua StoreService (transaction rollback, không để lại dữ liệu) → `technical_staff_id=0`, phone '', date NULL, không nổ NOT NULL; lọc popup cty 1: tất cả 1515 = 1246 (bán hàng) + 162 (dự án) + 96 (ĐHNT) + 11 (HRM), giá trị lạ → không lọc; compile 3 file .vue + parse js OK; e2e C1 (trống → "Bạn chưa nhập đầy đủ thông tin.") vẫn đúng vì thiếu HĐ. CHƯA mở trình duyệt
+  - Lưu ý: biên bản nháp không có NV kỹ thuật lưu `technical_staff_id = 0` (cột NOT NULL, bảng chung ERP) — ERP mở chi tiết biên bản nháp đó cần kiểm lại
+
+### Checkpoint — 2026-11-09
+Vừa hoàn thành: Fix #12083 (6 mục) BE + FE
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm form Tạo (vị trí ô, nút ×, gõ chữ vào SL nghiệm thu, lọc Loại HĐ trong popup)
+Blocked:
+
+## Fix #12084 — Chi tiết: nút Xóa đổi màu + placeholder ô lấy từ HĐ (2026-11-09, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12084
+- [x] 1. Bấm Xóa → bấm ra ngoài popup xác nhận → nút Xóa đổi màu. Nguyên nhân: `confirmDelete()` bật `submitting = true` TRƯỚC `$confirm`; plugin dùng chung `plugins/confirm-dialog.js` chỉ resolve khi bấm nút / × trong popup — đóng bằng backdrop / ESC thì Promise treo mãi → `submitting` kẹt true → nút `:interactable=false` ra màu disabled (danh sách cũng dính: lần Xóa sau bị `return` im lặng)
+  - Sửa trong màn: `deleteRecord(vm, id, { onConfirmed })` — chỉ khoá nút SAU khi user bấm "Xóa" xác nhận; áp cả form chi tiết lẫn `index.vue`
+  - CHƯA sửa gốc ở plugin dùng chung (248 chỗ gọi `$confirm`) — chờ user đồng ý: resolve `false` khi modal `hidden` (backdrop / ESC)
+- [x] 2. Placeholder "Tự điền theo hợp đồng" (khuôn `ProductPrepickRequestForm.vue`) cho 6 ô khoá: Khách hàng, CMT/MST, Số điện thoại, Địa chỉ, NV kinh doanh, Phòng ban — chỉ Tạo/Sửa, Chi tiết để trống
+- [x] Verify: compile form + index.vue, parse handoverActions.js OK. CHƯA mở trình duyệt
+
+### Checkpoint — 2026-11-09 (2)
+Vừa hoàn thành: Fix #12084 (2 mục)
+Đang làm dở: không
+Bước tiếp theo: user quyết có sửa gốc `plugins/confirm-dialog.js` (đóng ngoài popup → trả false) không; mở trình duyệt kiểm
+Blocked:

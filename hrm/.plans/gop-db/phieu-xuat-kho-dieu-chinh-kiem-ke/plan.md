@@ -77,3 +77,19 @@ Vừa hoàn thành: fix #11893 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d0
 Đang làm dở: —
 Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (09/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter; khuôn chép `../phieu-xuat-dieu-chinh-sai-so-lieu/` + `../kiem-ke-theo-hang-hoa/` (tên gọi màn nguồn)
+- [x] Đọc code màn (FE `pages/warehouse/inventory-exports/**`, AttachmentSection, SelfInventoryForm, voucher-link Thẻ kho; BE `WarehouseInventoryExport` Entity / Controller / Service / WriteService, `InventoryExportWriteService::afterSave`, `PhysicalStockWriter::exportShortage`, `SelfInventory::canInventoryExport`). Quyền: nhánh develop chưa có Catalog + mã quyền → ghi theo tên quyền trong code (2 quyền xem + Kế toán kho + Xử lý phiếu kiểm kê hàng hóa). Nút Tạo phiếu xuất hàng nay mở màn HRM `/finance/inventory-exports/create` (không còn mở ERP)
+- [x] Chụp ảnh dev-hrm (`pxkdckk_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi): 0 yêu cầu ghi bị chặn / 0 lọt (4 lượt chạy). Giả trạng thái trên trình duyệt (dev không có phiếu Đang tạo): `03_list_flags` (dòng 00083 hiện Đang tạo + Sửa), `12_edit`, `12b_confirm_send` (00091 hiện Đang tạo). Form Tạo / Sửa / hộp Xác nhận gửi duyệt / màn Tạo phiếu xuất hàng chỉ mở rồi Hủy / Quay lại → Thoát. Icon menu Kiểm kho / Theo vị trí / Kiểm kê theo hàng hóa + nút Thêm tài liệu chép từ `kkhh_shots/icons`
+- [x] `gen_srs.py` → `SRS - Phiếu xuất kho điều chỉnh kiểm kê.docx`: 13 chức năng, 81 trang, selfcheck khớp bản mẫu; metrics ui 12.2 / ev 4.5 / evch 897 / intro 1730; Phần 5 bảng 4 cột 10 màn
+- [x] `gen_hdsd.py` → `HDSD_Phieu xuat kho dieu chinh kiem ke.docx`: 12 PHẦN, 19 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`): 235 TC, 13 nhóm, P0 41,7%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 232 có TC / 92 N/A (Xóa, Khóa, Import, Không duyệt); SRS 123 / 40 N/A
+- [x] Ghi nhận nghi lỗi / điểm lệch (không sửa code): cột "Ngày kiểm kê" hiển thị ngày lập phiếu xuất (giữ như ERP, dễ hiểu nhầm); ô Ghi chú luôn có dấu * dù Lưu nháp không bắt; quyền "theo công ty" không thấy phiếu mình tạo thuộc công ty khác (khuôn ERP); docstring `create.vue` còn ghi "Không có Lưu và tiếp tục" (đã có từ #11893)
+
+### Checkpoint — 2026-11-09 12:30
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu xuất kho điều chỉnh kiểm kê
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết có chỉnh nhãn cột "Ngày kiểm kê" / dấu * ô Ghi chú không
+Blocked:
