@@ -347,3 +347,16 @@ Báo từ chị Huyền (qua chat): anh Hoàng Trung Hậu có quyền NVKD như
 - [x] 07/11 iOS: build IPA `HRM TPE.ipa` (com.tanphat.soft.app, 2.3.8 (104), profile App Store) → upload TestFlight thành công (Delivery UUID 63b7a877-fae3-45ec-b8e3-64d465417a0b). Chờ Processing → Complete 10–30 phút; chưa gán nhóm tester external.
 - [x] 07/11 Android: build AAB (ký đúng SHA-1 upload key), `play_release.py --dry-run` hợp lệ rồi gửi thật production 100%, versionCode 104 — chờ Google duyệt (vài giờ–2 ngày). Ghi chú: sửa nhận nhầm thông báo tài khoản khác + đăng nhập mượt hơn.
 - [x] 07/11 TestFlight HRM TPE (Apple ID 6446807087) build 2.3.8 (104): gán nhóm external "Tân Phát" (`757fa3b1-d79b-4272-abd6-e9c7084815cd`, có link công khai) bằng App Store Connect API (khoá ASC_KEY_ID trong `~/.asc_api.env`, không cần đăng nhập trình duyệt): ghi "What to Test" (vi) + gán nhóm (204) + gửi Beta App Review (201) → vài giây sau `IN_BETA_TESTING` cả external lẫn internal. Nhóm internal "Tân Phát" `0669a9fd-50bb-49d4-9e49-b0f48f01197b` tự nhận. Chưa gửi App Store (người dùng cuối).
+
+## Phát hành HRM TPE 2.3.8 (105) — 08/11/2026 — @cuong61n
+
+- [x] 08/11 Kéo `origin/develop` (`9fa648e`, 7 commit của dnsnamdang 08/11: Danh bạ cá nhân, Lịch làm việc lãnh đạo, Biên bản Meeting, Nhiệm vụ v2, Công việc lên đầu màn chọn phân hệ) → merge vào `tpe` (fast-forward, không conflict). Có thêm plugin mới (pubspec + Info.plist) → `pub get` + `pod install` OK.
+- [x] 08/11 Kiểm route BE của tính năng mới trên prod hrm.eteksofts.com (leader-schedules, my-todo/contacts|lists, tasks, extension-requests, filter-customizations) → đều tồn tại (401/405). Lưu ý: hrm.etek.com.vn CHƯA có các route này (404) — không ảnh hưởng HRM TPE, nhưng chưa build app ETEK được.
+- [x] 08/11 Bump `tpeProd` build 104 → 105, giữ tên 2.3.8 (user chốt), iOS + Android, commit `0a1965d` trên `tpe` (chưa push).
+- [ ] 08/11 Build IPA + AAB → user cho phát hành luôn (dnsnamdang đã test) → upload TestFlight + gán nhóm external "Tân Phát" `757fa3b1…` + gửi duyệt; CH Play production 100%.
+- [ ] 08/11 TẠM DỪNG build theo yêu cầu user (dnsnamdang còn đẩy thêm code lên `develop`). Chưa upload gì. Làm tiếp: fetch `develop` → merge vào `tpe` (commit bump `0a1965d` vẫn ở trên, chưa push) → build IPA + AAB 2.3.8 (105) → phát hành.
+- [x] 08/11 User báo không còn code mới (`develop` vẫn `9fa648e`) → build lại; push `tpe` lên GitHub `f16bb69..0a1965d` (user yêu cầu). `develop` CHƯA nhận commit bump 105.
+- [x] 08/11 iOS: IPA `HRM TPE.ipa` 2.3.8 (105), profile App Store `com.tanphat.soft.app` → upload bằng ASC API key OK (Delivery UUID 912c91b8-6edf-4ce1-98ca-4c64857e4660), chờ Processing.
+- [x] 08/11 Android: AAB versionCode 105 (SHA-1 65:1B…F8 đúng upload key) → `play_release.py` dry-run hợp lệ → gửi thật production 100%, ghi chú vi 4 dòng (Danh bạ / Lịch lãnh đạo / Nhiệm vụ mới / Biên bản Meeting / Công việc lên đầu) → chờ Google duyệt.
+- [x] 08/11 TestFlight HRM TPE 2.3.8 (105): VALID → ghi "What to Test" + gán nhóm external "Tân Phát" `757fa3b1…` (link công khai) + gửi Beta App Review → APPROVED, `IN_BETA_TESTING` cả internal lẫn external. Chưa gửi App Store (người dùng cuối) — giống bản 104.
+- [x] 08/11 Cập nhật state gia hạn TestFlight `tpeProd.env` → 2.3.8 (105) `0a1965d`.

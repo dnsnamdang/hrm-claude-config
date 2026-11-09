@@ -145,6 +145,118 @@ Repo: `sphacy_api` (nhánh chính `api2`, nhánh tính năng `dqg`),
     chạy, cron đã bật lại. FE (cảnh báo đỏ) đang build.
   - **Cần Kiệt làm**: liên hệ 6 nhà thuốc trên khai lại tài khoản liên thông.
 
+## 09/11/2026 — Mốc ngày tồn đầu kỳ: sửa được trên cổng DQG, và test đẩy bù ở local — @cuong61n
+
+- [x] **Đo quy tắc ngày chứng từ trên sandbox DQG** (cơ sở 945). Bộ nhận chứng từ
+  ngày quá khứ, nhưng chỉ trong khoảng `[ngày phiếu tồn đầu kỳ … hôm nay]`:
+  hôm nay / lùi 7 ngày / lùi 3 tháng đều `Completed`; 01/01/2026 và 01/06/2025
+  trả `Error` "Ngày nhập không được nhỏ hơn ngày nhập phiếu tồn đầu"; ngày tương
+  lai trả `Error` "Ngày tạo phiếu phải nhỏ hơn hoặc bằng ngày hiện tại". Dò nhị
+  phân ra mốc chặn của cơ sở 945 nằm giữa 15/07 và 01/08/2026.
+- [x] **Phiếu tồn đầu kỳ SỬA ĐƯỢC ngày trên cổng DQG** — điều chỉnh kết luận trước
+  đó (tưởng là chặn dưới vĩnh viễn). Vào `web-sandbox.csdlduoc.com.vn` bằng
+  Playwright, phiếu nằm ở Nghiệp vụ bán hàng ▸ Nhập hàng, loại `102 Phiếu nhập tồn`
+  (mã `5`), mở bằng route `/app/shop/stock/import/update/{idHash}` → ô "Ngày nhập"
+  cho sửa dù phiếu đã Hoàn thành. Đã đổi 01/08/2026 → **01/01/2026**, bấm Hoàn thành,
+  lưu thành công.
+  - Kiểm chứng sau khi sửa: gửi stock-in ngày 15/03/2026 → `Completed` (trước đó
+    cùng khoảng này bị chặn); ngày 20/12/2025 → vẫn `Error` đúng thông điệp cũ.
+    Mốc chặn đã lùi về đúng ngày mới. Một phiếu ngày 05/01/2026 kẹt `Accepted`
+    suốt 2,5 phút không ra kết quả — chưa rõ vì sao, chưa ảnh hưởng kết luận.
+  - **Hệ quả nghiệp vụ**: khách lỡ khai tồn đầu kỳ ngày hôm nay vẫn cứu được bằng
+    cách sửa ngày trên cổng DQG, không mất vĩnh viễn đường đẩy bù như lo ban đầu.
+- [x] **Test chức năng đẩy bù hoá đơn cũ ở local** (nhánh `dqg`, cơ sở 797, PHP 7.4,
+  `CSDLDUOC_ENV=sandbox`). Màn Tồn đầu kỳ & đẩy bù đã có sẵn ô chọn ngày mốc, nút
+  Lưu mốc / Kiểm tra trước / Đẩy bù chứng từ / Tạm dừng.
+  - Luồng đủ: "Kiểm tra trước" đếm đúng 2 chứng từ cần đẩy → bấm "Đẩy bù chứng từ"
+    xếp đợt (`Đang đẩy 0/2`) → chạy `artisan csdlduoc:replay-run` gửi 2/2, 0 lỗi →
+    màn tự cập nhật `Hoàn tất 2/2` → `artisan csdlduoc:poll` trả 2 `completed`,
+    bộ đếm trên màn nhảy từ 45 lên 47 thành công.
+  - **Chứng từ đẩy bù vào thẳng tab "Theo dõi liên thông"**, dùng chung nhật ký với
+    luồng gửi thường — cột "Ngày chứng từ" giữ ngày gốc quá khứ (30/09, 07/10/2026),
+    cột "Gửi lúc" là hôm nay. Tester theo dõi ở cùng một chỗ, không cần màn riêng.
+  - Nhánh lỗi: bấm Đẩy bù khi không còn gì → toast "Không còn chứng từ nào cần đẩy
+    trong kỳ", đúng. Ô chọn ngày đã chặn sẵn ngày tương lai bằng `disabledDate`.
+  - Điểm nhỏ còn lại: `batDau()` ở `CsdlDuocReplay.jsx` không `catch`, nên lỗi từ
+    `replayStart` sinh unhandled promise rejection trong console (người dùng vẫn
+    thấy toast do `sendRequest` tự báo). Chưa sửa.
+  - Dữ liệu test: đã gỡ tạm nhật ký 2 chứng từ của cơ sở 797 để dựng ca, có sao lưu,
+    xong đã dọn bảng tạm. **Đã đổi mật khẩu tài khoản `sphlinhbinhduong` trên DB
+    local** (`sphacy_prod_local`) để đăng nhập test — hash cũ không giữ lại.
+
+## 09/11/2026 (chiều) — Đẩy nhánh dqg lên cổng test, test GPP + GDP, vá lỗi đợt đẩy bù lặp vô hạn — @cuong61n
+
+- [x] **Deploy BE lên cổng test** (42.96.40.67). Server test vốn ở `7ff0699`, thiếu hẳn
+  chức năng đẩy bù. Remote git trên server tên là `github` (không phải `origin`) và
+  không có credential, nên đẩy bằng **git bundle**: tạo bundle nhánh `dqg` ở máy,
+  scp sang `/tmp`, `git fetch /tmp/dqg.bundle`, `reset --hard`. Đã tạo nhánh sao lưu
+  `bak-truoc-day-bu-20261109` trỏ về `7ff0699` trước khi reset.
+  - `artisan migrate` toàn bộ bị vướng migration cũ (`control_quality_books` đã tồn tại),
+    và `--path` trỏ thẳng một file thì Laravel 5.6 báo "Nothing to migrate" — phải gom
+    3 file vào thư mục tạm rồi `--path=` thư mục đó. Chạy xong cả 3, đã xoá thư mục tạm.
+- [x] **Deploy FE GPP + GDP lên cổng test**, bản cũ sao lưu `build.bak-20261109` ở cả hai.
+- [x] **Sửa ngày phiếu tồn đầu kỳ của cơ sở GDP trên DQG**: cơ sở 1706 (tài khoản
+  `0314345936`) có mốc **01/07/2026**, nếu để nguyên thì mọi chứng từ nửa đầu năm bị
+  Bộ từ chối. Đã sửa về 01/01/2026, giống cơ sở GPP.
+- [x] **LỖI THẬT phát hiện khi test: đợt đẩy bù lặp vô hạn.** Đợt của cơ sở 945 kẹt
+  "Đang đẩy", cron mỗi phút chạy lại một lượt, `skipped_count` tăng mãi (2→3→5) mà
+  `con_lai` không bao giờ về 0.
+  - Nguyên nhân: hoá đơn `PN374594` chỉ có BIOTIN 5 MG, số đăng ký `80/2019/ĐKSP` —
+    thực phẩm chức năng, ngoài diện liên thông. `InvoicePusher::push()` trả `null` và
+    **không ghi gì vào `csdlduoc_transactions`**, trong khi `danhSachChungTu()` nhận
+    biết việc còn lại bằng `whereNull('t.id')` → lượt sau nhặt lại đúng phiếu ấy.
+  - Mức nghiêm trọng: nhà thuốc nào cũng bán TPCN, nên gặp ở gần như mọi cơ sở; cron
+    quay vô ích mỗi phút và đợt không bao giờ kết thúc.
+  - Đã sửa 3 chỗ:
+    1. `CsdlDuocTransaction`: thêm `STATUS_OUT_OF_SCOPE = 'skipped_out_of_scope'`,
+       tính vào `isFinal()`.
+    2. `CsdlDuocReplayer::ghiDauNgoaiPhamVi()` — ghi một dòng nhật ký khi `push()` trả
+       null. Cột `endpoint`/`reason` là NOT NULL nên suy từ loại phiếu bằng
+       `CsdlDuocMapper::resolveEndpointAndReason($row->loai, $drugStore->type)`
+       (lần đầu để null đã nổ `SQLSTATE[23502]`).
+    3. `ketQuaTheoNhatKy()` đếm `skipped_out_of_scope` **và** `cancelled_local` vào
+       "bỏ qua" — trước đó cả hai rơi nhầm vào "đang chờ duyệt".
+    4. FE `CsdlDuocConnect.jsx`: nhãn "Ngoài diện liên thông", không cho gửi lại.
+  - Sau khi vá: `còn 0 — Đợt đã hoàn tất`; nhật ký ghi
+    `PN374594 | stock-in | supplier | skipped_out_of_scope`.
+- [x] **Test đủ luồng trên cổng test, cả hai nhánh:**
+  - **GPP (cơ sở 945)**: lưu mốc 01/01/2026 → toast đúng, tự thống kê "1 chứng từ cần
+    đẩy" kèm cảnh báo 2 thuốc chưa liên kết (Pantoloc 40mg `VN-18402-14`, TROPIUSPHA
+    SLIM `06/U.SPHAR/2020`) → đẩy bù → đợt `done`, bỏ qua 1 (phiếu TPCN).
+  - **GDP (cơ sở 1706)**: lưu mốc → cảnh báo 1 thuốc chưa liên kết → đẩy bù → **cron tự
+    chạy** (15:11:57→15:12:04) gửi 1/1, 0 lỗi → Bộ duyệt `completed` cho phiếu
+    **ngày 02/08/2026**, tức chứng từ quá khứ đẩy bù thành công thật.
+  - Cả hai nhánh: chứng từ đẩy bù hiện ở tab Theo dõi liên thông, cột "Ngày chứng từ"
+    giữ ngày gốc quá khứ, cột "Gửi lúc" là hôm nay.
+  - Trạng thái: code sửa mới **copy file lên server test, CHƯA commit** — chờ xác nhận.
+  - FE: lý do của phiếu "Ngoài diện liên thông" hiện ở cột *Lý do bị từ chối* nên để
+    chữ xám thay vì đỏ — chữ đỏ khiến dược sĩ tưởng Bộ từ chối và đi tìm cách gửi lại.
+  - Dọn dẹp sau test: 2 chứng từ của cơ sở 1706 đã được gửi lại và `completed`, bảng
+    sao lưu `csdlduoc_tx_bak_test20261109` đã xoá; mật khẩu `duocsi1` và
+    `demo.sphacygdp` **đã khôi phục đúng hash cũ**.
+  - **Bẫy đã dính**: khôi phục hash bcrypt bằng `psql -c "... '$2y$10$...'"` qua ssh thì
+    shell nuốt mất `$2`/`$10`, hash bị cắt còn 13 ký tự và tài khoản hỏng. Phải viết
+    file `.sql` (nháy đơn) rồi `scp` sang và `psql -f`. Đã kiểm lại `length(password)=60`.
+
+## 09/11/2026 — Dựng sẵn ca test trên cổng test để bàn giao tester — @cuong61n
+
+- [x] Sau khi tôi test xong thì hai cơ sở không còn chứng từ nào chờ đẩy, tester vào sẽ
+  chỉ thấy "Không còn chứng từ nào cần đẩy trong kỳ". Đã gỡ tạm nhật ký 7 bản ghi để
+  tester có việc mà bấm (sao lưu ở bảng `csdlduoc_tx_bak_kiet`, khôi phục được):
+  - **GPP cơ sở 945 — 4 chứng từ**: 3 phiếu nhập `PN374606`, `PN374602`, `PN374595`
+    cộng phiếu `PN374594` (chỉ có BIOTIN 5 MG, TPCN) để tester thấy luôn nhánh
+    "Ngoài diện liên thông" của bản vá.
+  - **GDP cơ sở 1706 — 3 chứng từ**: `PN374635`, `PN374629`, `PN374628`.
+  - Chỉ chọn **phiếu nhập**: phiếu bán gửi lại dễ bị Bộ trả "không đủ tồn kho", tester
+    sẽ tưởng là lỗi phần mềm.
+- [x] Kiểm trên giao diện cổng test: GPP hiện "4 chứng từ cần đẩy", GDP hiện "3 chứng
+  từ cần đẩy", kèm cảnh báo thuốc chưa liên kết. Mốc 01/01/2026 đã lưu sẵn cho cả hai.
+- [x] Mật khẩu `duocsi1` / `demo.sphacygdp` đã đối chiếu **khớp từng byte** với hash gốc.
+- **Nhắc tester**: FE có service worker, lần đầu mở phải Ctrl+Shift+R nếu thấy bản cũ.
+- **CHƯA LÀM — rủi ro**: bản vá lỗi đợt đẩy bù lặp vô hạn mới chỉ là file copy lên server
+  test, **chưa commit vào nhánh `dqg`**. Ai deploy lại hoặc `git reset` trên server test
+  là mất vá và lỗi quay lại ngay giữa lúc tester đang chạy.
+
 ## Còn lại
 
 - 43 bản ghi danh mục Bộ không trả được (lỗi bên họ, hỏi lẻ từng bản ghi vẫn rỗng).

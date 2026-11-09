@@ -19,6 +19,11 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Xoá HĐ + QĐ tiếp nhận của 3 NV Phòng Dự án trọng điểm trên PROD — HOÀN THÀNH 2026-11-09 (@cuong61n)
+
+Xoá 6 HĐ (592–594, 598–600/2026/HĐLĐ-TPE) + 3 QĐ tiếp nhận 153–155/2026/QĐTN-TPE của Sầm Văn Linh, Nguyễn Thế Huấn, Nguyễn Quang Tuyến. Đã sao lưu ra `~/Desktop/dns/backup_prod_xoa_hd_20261109.sql`.
+Tài liệu: `.plans/gop-db/prod-xoa-hd-3-nhan-vien-dat-d/plan.md`.
+
 ## Nghỉ việc thì xoá mã trên máy chấm công khuôn mặt + máy cơm — ĐÃ PUSH gop_db `0214e192b`, deploy prod (2026-11-07, @cuong61n)
 
 Sự cố prod 07/11: 3 NV ETEK đầu tư → TPE, máy còn mã cũ nên chấm không lên công — đã xoá mã cũ trên 9 máy, chuyển 13 lượt chấm, chạy lại công.
