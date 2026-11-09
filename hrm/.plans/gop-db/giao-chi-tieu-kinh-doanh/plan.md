@@ -261,3 +261,13 @@ Vừa hoàn thành: merge phân quyền Catalog mới vào nhánh, sửa tên in
 Đang làm dở: kiểm người không có mã quyền (danh sách trả 200 — đang xem có lọc về phiếu của chính mình không) + bấm thử client 3000.
 Bước tiếp theo: xong kiểm quyền → user commit 3 repo (code vẫn chưa commit); QA.
 Blocked: —
+
+## Ngày 09/11/2026 (@junfoke)
+- [x] 09/11/2026 — Kéo `gop_db` mới nhất về nhánh `feat/giao-chi-tieu-kinh-doanh` (fast-forward cả 3 repo, giữ nguyên phần đang làm, không conflict); chạy 13 migration upstream + `permission:catalog-sync` trên DB local `gop_db_rbac`. 39/39 test BusinessTarget pass.
+- [x] 09/11/2026 — Bấm thật trên client 3000 + API nginx 8002 với dữ liệu prod (DNS Admin có đủ 5 mã qua vai trò thật): danh sách + chi tiết phiếu thật; trọn luồng phiếu phòng ban 2099 có cấp bộ phận (tạo → gửi → duyệt → hủy duyệt → gửi lại → duyệt), phiếu nhân viên nạp đúng chỉ tiêu phòng, chặn hủy duyệt phiếu phòng ban khi đã có phiếu NV duyệt, In (popup xem trước), Xuất Excel, 2 mục "chờ duyệt" ở menu Bán hàng hiện theo mã duyệt. Người không có mã: danh sách rỗng, xem phiếu người khác 404, tạo 403. Đã dọn dữ liệu thử 2099.
+
+### Checkpoint — 2026-11-09
+Vừa hoàn thành: cập nhật gop_db mới nhất + nghiệm thu đủ trên quyền mới với dữ liệu prod.
+Đang làm dở: —
+Bước tiếp theo: user commit 3 repo (file test `BusinessTarget*` chỉ để local); deploy cần chạy migration `2026_11_06_000001_create_business_target_department_parts_table` + `permission:catalog-sync` (build_tpe.sh tự chạy). Bộ test Finance còn lỗi ở màn khác chưa chuyển RBAC — ngoài phạm vi.
+Blocked: —

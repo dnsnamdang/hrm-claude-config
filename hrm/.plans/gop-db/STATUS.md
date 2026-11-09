@@ -50,6 +50,7 @@ Còn: review toàn nhánh + sửa; user commit; gán quyền dev/prod (8 quyền
 `2026_11_06_000001_create_business_target_department_parts_table`.
 **Checkpoint 07/11:** review xong; đã merge phân quyền Catalog mới (`Catalog/sale.php`, bỏ seeder), sửa tên index migration quá 64 ký tự,
 39/39 test trên DB prod kéo về (`gop_db_rbac`). Đang kiểm người không có quyền + bấm client. Code CHƯA commit; file test chỉ để local.
+**Checkpoint 09/11:** kéo `gop_db` mới nhất (fast-forward 3 repo, không conflict) + 13 migration upstream + `catalog-sync` trên `gop_db_rbac`. 39/39 test; bấm thật trên dữ liệu prod (list/xem phiếu thật 187 phòng, tạo→gửi→duyệt→hủy duyệt phiếu 2099 có bộ phận, phiếu NV, chặn hủy duyệt khi có phiếu NV, In, Xuất Excel, menu chờ duyệt theo mã) — đạt, đã dọn dữ liệu. Người không có mã: list rỗng / show 404 / tạo 403. Bộ Finance đầy đủ còn lỗi ở test màn KHÁC chưa theo RBAC mới (cột `role_has_permissions.company_id`, `permissionCache`, `currentEmployeeIsSuperAdmin`) — không phải phần này. Còn: user commit 3 repo.
 ⚠️ GOTCHA: prop bảng không đặt tên `errors` (vee-validate chiếm); 2 báo cáo ERP đã SUM cột SL khách nhập sẵn — không cần sửa.
 Tài liệu: `.plans/gop-db/giao-chi-tieu-kinh-doanh/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-06-giao-chi-tieu-kinh-doanh-design.md`.
 
