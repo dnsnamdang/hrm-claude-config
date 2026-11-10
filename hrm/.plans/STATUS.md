@@ -953,6 +953,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 - task-lien-ket-nhiem-vu (Liên kết Nhiệm vụ với Dự án, Meeting, Phòng ban) → @cuong61n → .plans/task-lien-ket-nhiem-vu/plan.md
   Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Cập nhật 10/11/2026: **Phase 20 — phản hồi #11 của TPE: CODE XONG + TEST XONG + ĐÃ DEPLOY DEV** (nhánh `develop` cả 2 repo) — chặn tạo nhiệm vụ khi Dự án Đóng / Meeting Hủy (BE 422 + ẩn nút + bỏ khỏi ô chọn), KD chính chọn được dự án mình, lọc nhanh 4 nút + Tuỳ chỉnh cột ở tab Nhiệm vụ, popup "Nhiệm vụ đã giao" thành bảng, ô Hạng mục lọc theo trạng thái. API 26/26 + Playwright 45/46 (1 case chập chờn do API local chậm, chạy riêng 4/4 đạt). Đã push `develop` (api `5207f2a45`, client `e1c6d9729`) + build dev 10/11.
   Trạng thái: **CODE XONG + KIỂM THỬ UI PASS (2026-09-18)** — 4 tài khoản khác quyền, 5 lỗi đã sửa; chưa commit — Redmine #11456, nhánh `tpe-develop-assign` (cả 2 repo).
   Phạm vi: tab Nhiệm vụ ở chi tiết Dự án (ẩn tab Nhiệm vụ giải pháp) · tab Nhiệm vụ + icon Giao nhiệm vụ
   trên biên bản Meeting · nhiệm vụ phòng ban (bỏ bắt buộc dự án/giải pháp/hạng mục/meeting) + link động
