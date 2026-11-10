@@ -47,3 +47,22 @@ Blocked: chưa bấm thật trên trình duyệt
 - [x] FE: bấm Mã / Tên kho mở màn Hoạt động kho ở TAB MỚI (`target="_blank"`), không chuyển trong cùng trang
 - [x] FE: sort vỡ layout — cột chỉ khai `width` → khai `width` + `minWidth` mọi cột qua helper `w(px)` (khuôn #11763/#11904); BE đã có cột phụ `w.id desc` nên thứ tự ổn định
 - [x] Verify: compile template
+
+## Tài liệu SRS / HDSD / Testcase (10/11/2026) @khoipv
+
+Khuôn: `../hoat-dong-kho/` (10/11, cùng bảng hoạt động, cùng `WarehouseActivityService::listForWarehouses()`, cùng `components/warehouse/activity/*`). Không sửa code / dữ liệu / skill chung.
+
+- [x] Đọc code FE (`pages/warehouse/warehouse-tracking/{index,_id/index}.vue`, `components/warehouse/activity/*`, filterStateMixin, exportFieldsMixin, middleware checkPermission) + BE (`WarehouseTrackingService`, `WarehouseTrackingController`, route `checkPermission:warehouse.kho.manage`, `WarehouseCatalogScope` mã `warehouse.kho_tat_ca_cong_ty.view`)
+- [x] Chụp ảnh dev (`tdtk_shots/_capture/capture.js` + `export_empty.js`, DNS Admin, dữ liệu thật, chặn mọi yêu cầu ghi — 0 lọt; không bấm Lưu Cấu hình cột)
+- [x] Đối soát dev (`_capture/probe.js`, chỉ GET): trang 1 = 22 kho = Kho vật lý 21 Hoạt động + 1 Khóa (MT-KNXT), đúng từng mã; trang 2 PTT 55 = 40 ĐNXK + 15 ĐNNK = đúng từng mã ở 2 màn danh sách (Chờ duyệt + Đang xuất/nhập kho); MT 5 = 1 + 4; KTCN 2 = 2 + 0; ô tổng hợp = số dòng; thứ tự đúng; kho 999999 → 404. (Sáng 10/11 bộ Hoạt động kho đo PTT 54 — thêm PDNXK-39058 gửi 11:12)
+- [x] `gen_srs.py` → `SRS - Theo dõi theo kho.docx` (64 trang, 8 chức năng, selfcheck khớp mẫu; metrics ui 13.1 / ev 4.2 / evch 860 / intro 1904)
+- [x] `gen_hdsd.py` → `HDSD_Theo doi theo kho.docx` (12 trang, 6 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (loai `bao_cao`, 130 TC, 8 nhóm, P0 44.6%, check_tc 0 lỗi)
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx` (Testcase 117 có TC / 207 N/A; SRS 88 có mục / 75 N/A)
+- [x] Ghi nhận (KHÔNG sửa): (1) bấm Mã/Tên mở TAB MỚI (fix #11931) — khác design.md "mở cùng tab"; tài liệu viết theo code; (2) quyền đã chuyển sang mã: route `checkPermission:warehouse.kho.manage`, Super Admin xem mọi công ty nhờ mã `warehouse.kho_tat_ca_cong_ty.view` (dev đúng: 22 kho + ô Công ty) — không dính lỗi mất nhánh Super Admin của Hoạt động kho; (3) menu còn khai `isShow: ['Quản lý kho']` theo tên cũ, chưa có `codes: ['warehouse.kho.manage']` như 7 màn Danh mục kho — khi gỡ tên cũ menu sẽ ẩn; (4) Xuất Excel 2 trang lệch nhau: trang 1 rỗng không tạo file + tích theo cột đang hiện, trang 2 rỗng vẫn tạo file + luôn tích đủ 10
+
+### Checkpoint — 10/11/2026
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Theo dõi theo kho.
+Đang làm dở: —
+Bước tiếp theo: user xem tài liệu; quyết định có thêm `codes` cho mục menu và có thống nhất hành vi Xuất Excel rỗng giữa 2 trang không.
+Blocked:

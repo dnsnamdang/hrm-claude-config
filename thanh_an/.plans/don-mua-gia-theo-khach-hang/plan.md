@@ -109,8 +109,23 @@
 - Ca biên: 0 phiếu / 1 phiếu trả về nguyên trạng; dòng thiếu tên khách vẫn được gom chung một cụm
 - **1 khách = 1 ô nhập giá** (yêu cầu bổ sung): `customersOf()` khử trùng theo `customerKey` nên mỗi khách chỉ sinh 1 ô; `onCustomerPriceInput()` ghi giá đó vào **mọi** phiếu của khách — đã có sẵn từ Phase 1-3, không phải sửa thêm
 
+## Phase 8 — Fix bug: dòng không có khách báo "Vui lòng nhập đơn giá." dù đã nhập (2026-11-10)
+
+Nguyên nhân: popup chọn hàng gán `purposes[].price = 0`; dòng có 1 nhóm không có khách dùng ô giá cấp dòng → `onPriceInput` chỉ ghi `p.price`, không ghi xuống `purposes[]` → BE (`StorePurchaseOrderRequest::withValidator`) ưu tiên giá phiếu = 0 → báo lỗi `products.N.price`.
+
+- [x] FE `ProductsTab.vue::onPriceInput` — ghi giá vào mọi phiếu của dòng + neo lại `priceBase`
+- [x] Verify: compile template/script + test hàm với payload thật (DMH-2026-0008, dòng HC-HH-021)
+
+Kết quả: template 0 lỗi, script parse OK, file giữ CRLF · `onPriceInput(300000)` → `purposes[0].price = 300000`, `priceBase` neo lại · dòng mua ngoài phiếu (0 phiếu) không ảnh hưởng · validator BE: phiếu giá 0 → báo lỗi (tái hiện), phiếu giá 300000 → không lỗi. Chưa test trên trình duyệt.
+
 ### Checkpoint — 2026-09-10
 Vừa hoàn thành: toàn bộ Phase 1-3 + 2 việc phát sinh
 Đang làm dở: (không)
 Bước tiếp theo: @khoipv build lại client + hard refresh, test tay trên trình duyệt
 Blocked: (không)
+
+### Checkpoint — 10/11/2026 (push)
+Vừa hoàn thành: commit + push `thanhan-dev` theo yêu cầu user — Client ab07dd97 (`ProductsTab.vue`: `onPriceInput` ghi giá xuống mọi phiếu của dòng, sửa lỗi "Vui lòng nhập đơn giá.").
+Đang làm dở: không
+Bước tiếp theo: user test lập đơn mua dòng 1 ô giá trên dev
+Blocked: 

@@ -127,6 +127,16 @@ Blocked:
       `CatalogHistoryService::TABLES['handover_records']['action_labels']` đè nhãn, GIỮ mã `approved`/`rejected`
       (màu xanh/đỏ, nhóm lọc, lý do từ chối ở `note` không đổi) → log cũ cũng ra nhãn mới, không đụng dữ liệu
 
+### #12028 — QA phản hồi 09/11/2026: "sai màu" (popup Lịch sử thay đổi)
+- [x] Cùng tiêu đề "Thay đổi trạng thái" nhưng chấm/tiêu đề lệch màu (Từ chối đỏ, Duyệt xanh lá, Gửi duyệt cam). User chốt
+      10/11: "Thay đổi trạng thái" để màu CAM, chỉ màn này. Thêm khoá tuỳ chọn `action_colors` theo bảng ở
+      `CatalogHistoryService::TABLES` (cặp với `action_labels`, user đồng ý sửa hàm chung `getLogs()` — bảng không khai giữ nguyên);
+      `handover_records`: approved/rejected → `ACTION_COLORS['change_status']`. Màu giá trị cũ đỏ / mới xanh giữ chuẩn entity-history
+- [x] Verify: `php -l` sạch; tinker getLogs (log giả trong transaction, rollback, còn 0 dòng): change_status / approved / rejected
+      đều "Thay đổi trạng thái" #d97706, create xanh lá, update xanh dương; self_inventories vẫn approved #16a34a (không ảnh hưởng).
+      FE `SystemInfoSection` tô theo `action_color` → không sửa FE. CHƯA mở trình duyệt. Chỉ sửa BE, chưa commit
+      (lưu ý: `CatalogHistoryService.php` đang có sẵn khối `handover_acceptance_product_records` chưa commit của việc khác)
+
 ### Checkpoint — 2026-11-05 (push)
 Vừa hoàn thành: ĐÃ PUSH `develop` (hrm-api tới `6b0b11b6e`, hrm-client tới `cf57d6f54`) theo yêu cầu user.
 Đang làm dở: —

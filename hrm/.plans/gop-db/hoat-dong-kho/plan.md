@@ -100,3 +100,22 @@ Vừa hoàn thành: #11901 — nhãn Loại/HTVC theo ERP (BE), ⓘ tiêu đề 
 Bước tiếp theo: user mở trình duyệt kiểm (chưa xem bằng trình duyệt); trả lời QA ý 2 (thứ tự y ERP).
 Blocked:
 - [x] Kiểm tra theo yêu cầu (29/10): "trạng thái xếp lộn xộn" — không phải lỗi: BE chỉ tách 2 nhóm chưa hoàn thành / đã hoàn thành, "Đã nhận đề nghị" và "Đang lấy/xếp hàng" cùng nhóm chưa hoàn thành nên xen nhau, trong nhóm xếp theo Thời gian nhận giảm dần (ảnh user: 09:25 → 09:01 đúng thứ tự). Y ERP. Đề xuất (chờ user chốt): xếp Đã nhận đề nghị → Đang lấy/xếp hàng → Đã hoàn thành, trong mỗi trạng thái theo Thời gian nhận giảm dần — lệch ERP.
+
+## Tài liệu SRS / HDSD / Testcase (10/11/2026) @khoipv
+
+Khuôn: `../list-bill-accounting/` (màn chỉ xem dạng danh sách) + `../tong-hop-xuat-nhap-ton/` (báo cáo kho 09/11). Không sửa code / dữ liệu / skill chung.
+
+- [x] Đọc code FE (`pages/warehouse/activities`, `components/warehouse/activity/*`) + BE (`WarehouseActivityService`, controller, route không checkPermission) + nguồn 3 mốc thời gian (lập / gửi phiếu xuất kho, phiếu nhập kho, điều chuyển kho)
+- [x] Chụp ảnh dev (`hdk_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi — 0 lọt). DNS Admin không là thủ kho kho nào → màn thật rỗng; ảnh có dữ liệu = dữ liệu THẬT kho PTT lấy từ "Theo dõi theo kho" thay vào trên trình duyệt (cùng hàm dựng dữ liệu)
+- [x] Đối soát dev (`_capture/doisoat.js`, chỉ GET): PTT 54 = 39 ĐNXK + 15 ĐNNK = đúng từng mã ở 2 màn danh sách (Chờ duyệt + Đang xuất/nhập kho); MT 5 = 1 + 4; KTCN 2 = 2 + 0; ô tổng hợp = số dòng; thứ tự đúng BR-05
+- [x] `gen_srs.py` → `SRS - Hoạt động kho.docx` (44 trang, 5 chức năng, selfcheck khớp mẫu; metrics ui 12.6 / ev 4.2 / evch 857 / intro 1857)
+- [x] `gen_hdsd.py` → `HDSD_Hoat dong kho.docx` (9 trang, 5 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (loai `bao_cao`, 102 TC, 8 nhóm, P0 43%, check_tc 0 lỗi)
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx` (Testcase 115 có TC / 209 N/A; SRS 87 có mục / 76 N/A)
+- [x] Ghi nhận nghi lỗi (KHÔNG sửa): (1) Super Admin không còn xem mọi kho — nhánh Super Admin trong `stockerWarehouseIds()` mất ở merge rbac 31/10 (d7b032a59), lệch quyết định 26/10 + ERP; (2) ĐNXK/ĐNNK gửi thủ kho từ HRM không ghi Thời gian nhận (ERP `send()` có ghi) → phiếu trống cột này, không vào nhánh "nhận hôm nay", xong là rời bảng; dev kho LN có 1 phiếu trống Thời gian nhận
+
+### Checkpoint — 10/11/2026
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Hoạt động kho.
+Đang làm dở: —
+Bước tiếp theo: user xem tài liệu; quyết định sửa 2 nghi lỗi (Super Admin mọi kho, ghi Thời gian nhận khi gửi thủ kho từ HRM).
+Blocked:

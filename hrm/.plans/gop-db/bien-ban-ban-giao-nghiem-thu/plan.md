@@ -142,6 +142,26 @@ Vừa hoàn thành: Fix #12083 (6 mục) BE + FE
 Bước tiếp theo: user mở trình duyệt kiểm form Tạo (vị trí ô, nút ×, gõ chữ vào SL nghiệm thu, lọc Loại HĐ trong popup)
 Blocked:
 
+## Fix #12083 (phản hồi QA 10/11) — ô lọc Loại hợp đồng chọn xong không tự lọc (2026-11-10, @khoipv)
+QA: "Bấm vào lọc Loại hợp đồng đang chưa lọc gtri luôn => sửa lại cho logic chung các màn: với lọc chọn giá trị sẽ tự lọc luôn k cần bấm enter"
+- [x] Nguyên nhân: popup `HandoverContractPickerModal` nối `@filter-change` chỉ `$set` giá trị, không gọi tìm → trái luật chung skill `list-page` mục "Filter auto-search" (ô CHỌN đổi là tìm luôn, ô GÕ TAY chờ Enter). Màn danh sách đã đúng (deep watcher), chỉ popup chọn sót
+- [x] Sửa `onFilterChange`: ô chọn đổi giá trị → về trang 1 + tải lại; giá trị không đổi thì bỏ qua; ô gõ tay (`textFilterKeys`) vẫn chờ Enter
+- [x] Áp luôn popup cùng khuôn `HandoverProductContractPickerModal` (Biên bản bàn giao hàng hóa): ô Loại hợp đồng + ô Khách hàng (select2 remote)
+- [x] Verify: compile template + parse script 2 file .vue OK. CHƯA mở trình duyệt
+
+- [x] Rà toàn hệ thống (user yêu cầu "xem còn chỗ nào không sửa"): phạm vi `inventory.py --has "<V2BaseSmartFilterPanel"` = 291 file màn mới; script `classify2.py` (scratchpad) xếp theo cơ chế tự tìm: 255 có watcher trên filters, 20 có handler gọi tìm, còn lại soi tay
+  - Sai thật 9 file — đã sửa `handleFilterChange` (đổi ô chọn → tìm luôn, ô gõ tay trong `ignoredFields` chờ Enter, giá trị không đổi bỏ qua). 8 file đã khai sẵn `ignoredFields` nhưng CHƯA TỪNG có watcher (git log -S không có):
+    `components/assign/meeting/CustomerMeetingHistoryModal.vue`, `pages/assign/my-job/components/IssuesTab.vue`, `DetailListModal.vue` (2 file my-job lọc tại chỗ — đã ăn nhưng không về trang 1),
+    `prospective-projects/components/ProspectiveProjectReviewProfilesTab.vue`, `SolutionListModal.vue`, `solution-modules/_id/components/IssueTab.vue`, `ReviewProfilesTab.vue`, `solutions/components/manager/IssueTab.vue`, `ProgressTab.vue` (gọi `fetchData`)
+  - Bỏ qua có lý do: `PopupStaff.vue` (watcher từng khoá), `report/customer-development` (watcher `filterDraft`), 5 màn `assign/report/**` chờ bấm Tìm (ngoại lệ báo cáo), `sale/sales-income-summary` (báo cáo, ô Năm bắt buộc), `warehouse-tracking/_id` + `LotPickerModal` + `AssignOtherContractPickerModal` (không có ô lọc), `PositionPickerModal` (đã tự tìm qua slot)
+  - Verify: compile 9 file OK; chạy lại classifier không còn file sai ngoài danh sách bỏ qua. CHƯA mở trình duyệt
+
+### Checkpoint — 2026-11-10
+Vừa hoàn thành: phản hồi #12083 — ô lọc chọn trong 2 popup Chọn hợp đồng tự lọc
+Đang làm dở: không
+Bước tiếp theo: user mở popup Chọn hợp đồng (Biên bản BGNT + Biên bản bàn giao hàng hóa), chọn Loại hợp đồng → danh sách lọc ngay
+Blocked:
+
 ## Fix #12084 — Chi tiết: nút Xóa đổi màu + placeholder ô lấy từ HĐ (2026-11-09, @khoipv)
 Redmine http://quanly.dnsmedia.vn/issues/12084
 - [x] 1. Bấm Xóa → bấm ra ngoài popup xác nhận → nút Xóa đổi màu. Nguyên nhân: `confirmDelete()` bật `submitting = true` TRƯỚC `$confirm`; plugin dùng chung `plugins/confirm-dialog.js` chỉ resolve khi bấm nút / × trong popup — đóng bằng backdrop / ESC thì Promise treo mãi → `submitting` kẹt true → nút `:interactable=false` ra màu disabled (danh sách cũng dính: lần Xóa sau bị `return` im lặng)
@@ -154,4 +174,20 @@ Redmine http://quanly.dnsmedia.vn/issues/12084
 Vừa hoàn thành: Fix #12084 (2 mục)
 Đang làm dở: không
 Bước tiếp theo: user quyết có sửa gốc `plugins/confirm-dialog.js` (đóng ngoài popup → trả false) không; mở trình duyệt kiểm
+Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (10/11/2026) @khoipv
+Khuôn: `../phieu-nhap-hang-dieu-chinh-kiem-ke/` (09/11) + `../borrow-export/`. Nguồn: code nhánh `develop` (con `gop_db`) cả 2 repo.
+- [x] Đọc code BE (`Modules/CustomerCare` HandoverAcceptanceRecord*, HandoverContractSourceService, Catalog `customer_care.bien_ban_ban_giao_nghiem_thu.create/.view`) + FE (`pages/assign/handover-acceptance-records/**`, 3 mục menu) + màn đọc ngược (báo cáo công nợ theo NV, thiết bị khách hàng, phiếu nhập kết quả, Phiếu xuất hàng ghi SL đã xuất, chặn xóa hàng hóa)
+- [x] Chụp ảnh dev-hrm (`bbbgnt_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi — 0 yêu cầu ghi): 30 ảnh màn + 77 icon (trim_icon `Cần cắt 0`). Giả trạng thái duy nhất: `12b_confirm_approve` (sửa dữ liệu form trên trình duyệt SL nghiệm thu = SL đã xuất để tới hộp Xác nhận lưu và duyệt)
+- [x] `gen_srs.py` → `SRS - Biên bản bàn giao nghiệm thu.docx`: 14 chức năng, 104 trang, selfcheck khớp bản mẫu; metrics ui 13.8 · ev 4.7 · evch 937 · intro 1819; Phần 5 bảng 4 cột 10 màn; Mục lục ngắt trang + căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Bien ban ban giao nghiem thu.docx`: 12 PHẦN, 19 trang
+- [x] `gen_testcase.py` → `testcase.xlsx`: loại `phieu`, 252 TC, 13 nhóm, P0 107 (42,5%), check_tc 0 lỗi, sạch thuật ngữ / emoji
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 247 có TC / 77 N/A (Khóa, Import, Không duyệt); SRS 132 có mục / 31 N/A
+- Nghi lỗi (không sửa, báo user): lối "theo NV" + chi tiết qua đường link vẫn lộ biên bản Đang tạo của người khác; Lưu nháp không có Ngày bàn giao ghi `handover_date` HĐ hãng = trống; Xóa biên bản không trả lại ngày bàn giao trên HĐ hãng; dấu * ở SĐT / NV kỹ thuật / Ngày / File nhưng Lưu nháp không bắt buộc; HĐ HRM có hàng không vào được popup (SL đã xuất HĐ HRM chưa ghi); spec mục 3 "Super admin sửa được" đã cũ (code #12018: chỉ người tạo có quyền Tạo)
+
+### Checkpoint — 2026-11-10 (tài liệu)
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Biên bản bàn giao nghiệm thu
+Đang làm dở: không
+Bước tiếp theo: user soát tài liệu, quyết các điểm nghi lỗi; đẩy Drive khi user yêu cầu
 Blocked:

@@ -580,3 +580,45 @@ Blocked:
 - [x] 101. BE `PurchaseDeliveryNoteResource`: thêm `can_edit` (status 4 + `isOwner`)
 - [x] 102. FE `pages/delivery/delivery_notes/index.vue`: action `process` "Cập nhật giao hàng" (`ri-truck-line`) đứng đầu, `visible: can_edit`, bấm → `/delivery/delivery_notes/:id`
 - [x] 103. Kiểm: `php -l`, compile FE OK; PGH-2026-0001 (Đang xử lý, phụ trách nv 13): nv 13 → `can_edit` true, nv 15 → false
+
+## Phase 35 — Tự lấy tại NCC về kho: bỏ bảng SL ở thẻ điểm kho (user yêu cầu 10/11/2026)
+
+> User (kèm ảnh): "trường hợp lấy hàng tại ncc về kho thì bỏ mục này đi cho tôi, chỉ để kho nhận và ngày giao là được" — gạch tiêu đề "Điểm 1: Kho công ty / Chờ xác nhận" + bảng SL thực giao.
+> Quyết định (Claude): chỉ sửa FE `PointCard.vue`, áp cho `ship_method = tu_lay` + `dest = kho`. SL thực giao gửi ngầm = SL đã lấy (trần cũ, mặc định cũ) → không giao thiếu được ở bước này, không có ô Lý do thiếu; thiếu so với yêu cầu đã ghi ở bước Lấy hàng tại NCC. BE `deliver` giữ nguyên.
+> Lúc đang nhập: ẩn tiêu đề điểm + địa chỉ + bảng. Sau khi xác nhận: giữ tiêu đề (badge Đã giao / Chờ nhập kho + nút Sửa), bỏ bảng, chỉ còn dòng Kho nhận · Ngày giao.
+
+- [x] 104. FE `PointCard.vue`: computed `isPickupToWarehouse`; ẩn tiêu đề / địa chỉ / bảng ở trạng thái nhập; trạng thái đã xác nhận bỏ bảng, hiện Kho nhận · Ngày giao
+- [x] 105. Kiểm: compile FE (vuecheck)
+
+### Checkpoint — 10/11/2026 (Phase 35)
+Vừa hoàn thành: `PointCard.vue` thêm `isPickupToWarehouse` (tu_lay + về kho) / `compactForm`. Đang nhập: ẩn tiêu đề điểm, địa chỉ, bảng SL → chỉ Kho nhận + Ngày giao + nút "Xác nhận đã bàn giao kho"; SL thực giao gửi ngầm = SL đã lấy. Đã xác nhận: giữ tiêu đề (badge + Sửa), bỏ bảng, hiện "Kho nhận · Ngày giao". Lấy thiếu ở bước NCC → BE vẫn bắt Lý do thiếu nên ô Lý do / Mô tả vẫn hiện (không sửa BE). Compile template + script OK.
+Đang làm dở: không
+Bước tiếp theo: user test UI phiếu tự lấy về kho (lấy đủ + lấy thiếu) rồi tự commit (Client: PointCard.vue)
+Blocked: chờ user: lấy thiếu có bỏ luôn Lý do thiếu ở bước bàn giao kho không (cần sửa BE `deliverPoint`)
+
+## Phase 36 — Tự lấy về kho: bỏ nút "Xác nhận đã bàn giao kho", lưu Kho nhận + Ngày giao khi bấm Hoàn thành (user chọn 10/11/2026)
+
+> User: "bỏ cái xác nhận đã bàn giao kho đi" → hỏi lại chỗ lưu → chọn **lưu lúc bấm Hoàn thành**.
+> Quyết định: phiếu `tu_lay` + về kho, điểm kho đang Chờ → thẻ điểm chỉ còn 2 ô Kho nhận + Ngày giao (không nút, hiện cả khi chưa lấy hàng). Hoàn thành gửi `points: [{id, warehouse_id, delivered_at}]`; BE trong cùng transaction ghi điểm Đã giao (SL thực giao = SL thực lấy, không hỏi lý do thiếu — lấy thiếu đã ghi ở ghi chú lấy hàng) rồi mới kiểm `missingForComplete`; thiếu điều kiện thì rollback cả điểm. Thay cho Phase 35 (bỏ luôn câu treo Lý do thiếu). Endpoint `deliver` giữ nguyên cho NCC giao / giao KH; điểm kho đã xác nhận theo cách cũ vẫn hiện + Sửa được.
+
+- [x] 106. BE `CompleteDeliveryNoteRequest` (mới): `points` nullable array, `points.*.id/warehouse_id` integer, `points.*.delivered_at` date
+- [x] 107. BE `PurchaseDeliveryNoteService::complete($note, $data)` + `confirmWarehousePoints()`; controller `complete` dùng request mới
+- [x] 108. FE `PointCard.vue`: `compactForm` = tự lấy về kho + Chờ + được sửa → chỉ 2 ô, bỏ nút; method `completePayload()` validate + trả dữ liệu
+- [x] 109. FE `_id/index.vue`: `ref="points"`; askComplete validate điểm kho; doComplete gửi `points`
+- [x] 110. Kiểm: php -l, compile FE, test BE tinker (thiếu kho / đủ → Chờ nhập kho / thiếu chi phí → rollback điểm)
+
+### Checkpoint — 10/11/2026 (Phase 36)
+Vừa hoàn thành: task 106–110. Phiếu Cty tự lấy về kho: thẻ điểm kho đang Chờ chỉ còn Kho nhận + Ngày giao (không tiêu đề / bảng / nút "Xác nhận đã bàn giao kho", hiện cả khi chưa lấy hàng; lưu khối Lấy hàng không xóa kho đang chọn). Bấm Hoàn thành giao hàng → FE kiểm 2 ô rồi gửi `points:[{id, warehouse_id, delivered_at}]`; BE `confirmWarehousePoints()` ghi điểm Đã giao (SL thực giao = SL thực lấy, không lý do thiếu) trong cùng transaction, thiếu chi phí → rollback cả điểm. Request mới `CompleteDeliveryNoteRequest`. php -l OK, compile 2 file Vue OK, test t14 (rollback, PGH-2026-0005) 8/8 PASS. Câu treo Phase 35 (Lý do thiếu) không còn.
+Đang làm dở: không
+Bước tiếp theo: user test UI PGH tự lấy về kho (chọn kho trước / sau khi lấy hàng, bấm Hoàn thành thiếu kho, thiếu chi phí, đủ → Chờ nhập kho) rồi tự commit. Client: PointCard.vue, _id/index.vue · API: PurchaseDeliveryNoteService.php, PurchaseDeliveryNoteController.php, CompleteDeliveryNoteRequest.php (mới)
+Blocked: 
+
+## Phase 37 — Badge "Đã lấy" bỏ giờ (user yêu cầu 10/11/2026)
+> User: "chỗ Đã lấy 10:22 10/11/2026 bỏ giờ đi". Chỉ đổi hiển thị badge ở khối Lấy hàng tại NCC; ô nhập "Thời gian lấy hàng" giữ nguyên.
+- [x] 111. FE `PickupBlock.vue`: badge dùng `fmtDate` thay `fmtDateTime` (gỡ import `fmtDateTime` không còn dùng); compile OK
+
+### Checkpoint — 10/11/2026 (push Phase 35–37)
+Vừa hoàn thành: commit + push `thanhan-dev` theo yêu cầu user — API d86a23ba, Client 192af0cf. Không đưa `pages/supply/purchase_orders/components/ProductsTab.vue` (thay đổi có sẵn, không thuộc phiên này) vào commit.
+Đang làm dở: không
+Bước tiếp theo: user test UI PGH tự lấy về kho trên dev
+Blocked: 

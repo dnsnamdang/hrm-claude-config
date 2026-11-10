@@ -73,6 +73,7 @@ Blocked: T14, T15 chờ user
 - [x] D1. Popup Chọn dịch vụ sửa chữa (`CostSearchModal.vue`): khung cố định `height: 82vh` → 10 dòng vẫn để trống nửa dưới. Bỏ chiều cao cố định, chỉ giữ `max-height: 82vh` (popup co theo nội dung như các popup chọn khác, nhiều dòng thì bảng cuộn).
 - [x] D2. Ô Người liên hệ (`AssignOtherRequestForm.vue`): chip "Thêm nhanh" cao 22px căn giữa hàng nhãn → dính sát ô chọn bên dưới. Căn chip theo dòng chữ nhãn (không làm hàng nhãn cao hơn các cột bên cạnh), chừa khoảng hở với ô chọn. Làm: hàng nhãn `align-items-start` + chip `margin-top:-3px` (class `.aor-quick-add` scoped).
 - Verify: compile template 2 file OK. CHƯA mở trình duyệt. `CostSearchModal` dùng chung (Lỗi thiết bị, YC thông tin BH-SC, YCGVK) → cả 3 màn cùng co popup.
+- [x] D3. (10/11, tester mở lại) Popup Chọn dịch vụ sửa chữa đang căn giữa dọc màn hình → đưa lên sát trên cho đồng bộ các popup b-modal khác: `.modal-backdrop-lite` `align-items: flex-start` + lề trên `1.75rem` (= `$modal-dialog-margin-y-sm-up`). Áp cho cả các màn dùng chung `CostSearchModal`. Compile OK, CHƯA mở trình duyệt.
 
 ### Checkpoint — 2026-11-06
 Vừa hoàn thành: C1–C5 (#12049)
