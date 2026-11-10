@@ -103,3 +103,7 @@
 
 ## Ngày 03/11/2026 (@junfoke)
 - [x] 03/11/2026 — Lỗi #11969: 2 báo cáo chi phí lái xe + 3 báo cáo bốc xếp mặc định 10 dòng/trang, ô "Số dòng/trang" 12px giống nhóm chuyến xe. Commit client `ee75050e6` (develop).
+
+## Ngày 09–10/11/2026 (@junfoke)
+- [x] 09/11/2026 — Lỗi #12085 (BC chi tiết chuyến xe): khảo sát chuyến ghép nhiều khách (259 chuyến năm 2026), gửi 9 chuyến mẫu đối chiếu; chốt cây Khách hàng ▸ Tuyến đường ▸ Phiếu hạch toán, Excel dựng ở FE.
+- [x] 10/11/2026 — Lỗi #12085: thêm ô "Xem theo" Khách hàng (mặc định) / Chuyến xe; góc nhìn KH lấy cước kế toán đã chia cho từng phiếu (`total_cost_transition`, `delivery_tax`) nên cộng các khách khớp đúng dòng TỔNG; chuyến ghép có nhãn "ghép N KH", để trống KM/cước chính/phụ trội/vé cầu đường; khối tổng hợp xếp ngang + ô "Ghép nhiều KH"; Xuất Excel dựng ở trình duyệt (cả năm 2026 ~13s, trước >30s lỗi), bản in góc nhìn KH 3 cấp. Hai góc nhìn khớp tới từng xu. Sửa 3 component dùng chung báo cáo vận chuyển (chỉ chạy khi config khai). Commit develop api `d05a308ce`, client `3f97c0b21` (đã push).

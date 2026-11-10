@@ -1402,3 +1402,7 @@ Vừa hoàn thành: Task 1–6 (native, user "Làm, native"); ledger `progress.m
 Đang làm dở: review cuối toàn nhánh.
 Bước tiếp theo: xử lý phát hiện Critical/Important của review; user tự commit/push (3 repo gop_db).
 Blocked: e2e không chạy được trên `hrm_erp_21_10_prod` (không có tài khoản e2e) — spec đã sửa, chờ môi trường.
+
+## Ngày 10/11/2026 (@junfoke)
+- [x] 10/11/2026 — Xử lý phản hồi QA (không issue): hàng BZAI-ABST-180A-2-07-04-PH còn gán máy BZAI-ABST-180B-2 đã khoá ⇒ giữ chốt C-d-2 (dòng đã gắn vẫn giữ); tab Nhóm máy (chi tiết + form sửa) thêm cột Nhóm máy (nhóm của chính máy) + cột Trạng thái theo công ty đang làm (ERP đã xoá / Ngừng kinh doanh / Hàng tạm…), icon khoá đỏ trước mã máy đang khoá kèm tooltip, xếp theo nhóm rồi mã. Helper BE mới `ProductMachineRows.php`, ô tìm `item-search` thêm tham số tuỳ chọn `with_status`; FE `ProductMachineCode.vue` mới. 3 test mới + 38 test cũ qua; chưa nghiệm thu bằng ảnh (DB local thiếu mã quyền Catalog). Lên `origin/gop_db`: api `0c3c67484`, client `fbccc6b08`.
+- [x] 10/11/2026 — Hỗ trợ tra nguồn gốc: BZAI-ABST-180B-2 bị xoá trên ERP 15/04/2026 bởi longtth.ptkd (hãng ngưng, thay bằng 180C-2); ERP xoá không gỡ `productables`. Xoá bên HRM bị `ProductUsageGuard` chặn nếu còn là máy của hàng khác ⇒ chỉ còn dữ liệu cũ từ ERP + hàng khoá Ngừng KD (chủ ý giữ).

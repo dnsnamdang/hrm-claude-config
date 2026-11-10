@@ -3214,3 +3214,6 @@ commit nào.
 
 ## Ngày 03/11/2026 (@junfoke)
 - [x] 03/11/2026 — Import Excel hãng sản xuất vẫn chặn dấu `,` `:` → trait `ImportsCatalogRows` thêm `importNameForbidsCommaColon()` (mặc định true, danh mục khác giữ chặn), `ManufacturerService` trả false cho khớp form tạo/sửa. Commit api `20d05d055` (gop_db, đã lên origin).
+
+## Ngày 09/11/2026 (@junfoke)
+- [x] 09/11/2026 — Lỗi #12076: Tên model cho phép dấu phẩy, chặn dấu hai chấm (:) và chấm phẩy (;) — `ProductModelRequest` (form + popup tạo nhanh, câu "Tên model không được chứa ký tự dấu hai chấm (:) và dấu chấm phẩy (;)"); Import Excel Model qua hook mới `importNameCharRule()` trong `ImportsCatalogRows` (mặc định giữ luật cũ cho danh mục khác); API tạo nhanh Model ở màn tạo hàng tạm `assign/product-projects/create-model` trước không chặn gì nay cùng luật. Kiểm giao diện Danh mục › Model (gán quyền tạm trên `gop_db_rbac`, đã dọn). Commit api `6de202214` (gop_db).

@@ -1,0 +1,5 @@
+# Hỗ trợ vận hành HRM (không thuộc feature riêng) (@junfoke)
+
+## Ngày 09–10/11/2026 (@junfoke)
+- [x] 09–10/11/2026 — Hỗ trợ check quyền trang Thông tin nhân sự › Tổng quan (`/human/dashboard`, khối Sinh nhật nhân sự), trưởng phòng KDTM báo không thấy: trang và API không gắn quyền nào, chỉ lọc theo công ty đang chọn; 3 quyền "Dashboard…" thuộc trang Tổng quan Chấm công, quyền "Dashboard nhân viên" hiện không dùng. Kiểm local bằng tài khoản Nguyễn Quốc Đại (emp 96): thấy đủ 33 người ở màn 1920 lẫn 1366. Lưu ý: khi API chậm khối hiện "Tổng số: 0" trong lúc chờ. Chờ ảnh chụp từ người dùng.
+- [x] 10/11/2026 — Hỗ trợ bổ sung testcase vào Google Sheet theo dõi task (`1jaOHW6xsLrwspKOf9ALNKw4fTFYaP5ks8MO-Bq4uimc`): thêm 17 task (STT 23–39) vào tab checklist + 17 tab testcase mới, tổng 590 TC, đối chiếu code trên gop_db. Cảnh báo 6 task sẽ Failed nếu test ngay trên gop_db: #11845 (phần HRM Báo giá TKT bị commit "GAP báo giá 0308" 30/10 ghi đè), #11937 (giao diện ERP chưa vào gop_db), #11932 (`65489c5755` chưa có trên gop_db), #12074 (nút PTG lúc đó mới ở develop), #11907 (mới 1/3 yêu cầu), #11833 (chưa luồng nhập khẩu).

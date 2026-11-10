@@ -73,3 +73,10 @@
 - **Bước tiếp theo:** Phase 3.
 - **Ghi chú test:** thông báo "Chờ xử lý" gửi người có quyền Duyệt + quản lý phòng ban người lập (ERP `is_same_department`) —
   local chưa ai giữ quyền mới nên chưa thấy thông báo này; thông báo "Không duyệt" tới người lập đã kiểm thật.
+
+## Ngày 09/11/2026 (@junfoke)
+- [x] 09/11/2026 — Phase 3 BỎ: màn Phiếu nhập lại điều chỉnh sai số liệu @nguyentrancu97 đã port (`/finance/warehouse-reimports`). Gắn link cho mục Kho › Nhập kho › Phiếu nhập lại điều chỉnh sai số liệu (trước bấm không mở gì). Client `b1121c720` (develop, đã push).
+
+## Ngày 10/11/2026 (@junfoke)
+- [ ] 10/11/2026 — Lỗi #12097 (Chi tiết phiếu xuất kho): bỏ khoảng trống dưới bảng hàng hoá (CSS toàn cục min-height 50% màn hình) + bỏ nhãn trạng thái lặp ở khối thông tin; sửa luôn cùng lỗi ở chi tiết Phiếu nhập lại, Sửa phiếu xuất kho, Tạo phiếu nhập lại. CHƯA commit (worktree `.worktrees/develop`).
+- [ ] 10/11/2026 — Lỗi #12094 + #12098 (Danh sách Phiếu nhập lại): thêm lọc Công ty + Phòng ban, nút Xuất Excel (theo bộ lọc, cột như ERP), cột Người tạo, sắp xếp Mã/Ngày tạo, ô tìm nhanh trước không tác dụng nay tìm được; kiểm giao diện thật. CHƯA commit. Chờ user: cột hành động trống (đúng ERP — giữ / thêm Lịch sử / làm In phiếu); quyền 2 màn chỉ cần trả lời QA (nằm ở Sản xuất – Cung ứng › Kho).

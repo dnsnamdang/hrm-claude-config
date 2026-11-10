@@ -271,3 +271,7 @@ Vừa hoàn thành: cập nhật gop_db mới nhất + nghiệm thu đủ trên 
 Đang làm dở: —
 Bước tiếp theo: user commit 3 repo (file test `BusinessTarget*` chỉ để local); deploy cần chạy migration `2026_11_06_000001_create_business_target_department_parts_table` + `permission:catalog-sync` (build_tpe.sh tự chạy). Bộ test Finance còn lỗi ở màn khác chưa chuyển RBAC — ngoài phạm vi.
 Blocked: —
+
+## Ngày 09/11/2026 — sau commit (@junfoke)
+- [x] 09/11/2026 — Commit 3 repo: api `20fe26e80`, client `731843d9e`, ERP `556be978c1` (file test `BusinessTarget*` chỉ local). Nút Sync VS Code đã đẩy cả 3 vào `origin/gop_db` (nhánh feat track gop_db); rà ảnh hưởng: chỉ thêm route/bảng/khoá mới, ERP chỉ đổi link menu ⇒ user chốt để nguyên trên gop_db, không revert.
+- [x] 09/11/2026 — Merge `gop_db` vào ERP `develop_02` (`6b76a455d9`, 58 commit gồm bộ RBAC mới), giải 3 xung đột: `PermissionsTableSeeder` (xoá theo gop_db), `topmenubar.blade.php` (giữ link Đề nghị xuất hóa đơn của develop_02, chuyển mã `finance.ke_toan_thanh_toan.manage`), `productPickerJs.blade.php` (giữ `promo_by_company`/`join_qty` + thêm `guarantee_text`). Đã lên origin.

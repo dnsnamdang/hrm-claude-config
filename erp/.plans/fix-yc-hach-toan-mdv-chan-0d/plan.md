@@ -8,3 +8,6 @@
 - [x] 07/11/2026 — Kiểm local trên dữ liệu thật (transaction + rollback): gửi toàn 0 bị chặn, gửi đúng bằng SL còn lại hợp lệ, gửi vượt bị chặn; dựng lại ca HĐ 109 — YC đầu lấy hết SL thì nút ẩn, YC thứ hai bị chặn, sửa chính YC đó vẫn được.
 - [x] 07/11/2026 — Commit `12e73d624d` nhánh `fix_yc_hach_toan_mdv_chan_0d` (đã push) → merge develop_02 `95e12277f6` + gop_db `822a4695ac` (đã push, tự gộp với thay đổi mã quyền trên gop_db).
 - [ ] Prod còn YC **EG.YCHTMDV.2026000096** (0đ, Chờ duyệt) tạo trước bản sửa → kế toán bấm "Không duyệt".
+
+## Ngày 09/11/2026 (@junfoke)
+- [x] 09/11/2026 — Màn YC hạch toán mua dịch vụ thêm bộ lọc "Người tạo" (cùng commit lọc mẫu in `3f87275c4a`, develop_02 `79fb244c79`, gop_db `176739bc69`). Dev đã pull, QA kiểm được.

@@ -38,6 +38,15 @@ Sự cố prod 07/11: 3 NV ETEK đầu tư → TPE, máy còn mã cũ nên chấ
 Code nhánh `feat/xoa-ma-may-khi-nghi-viec` (hrm-api, từ `origin/gop_db`, CHƯA commit): job khi status→0 + lệnh `timesheet:remove-left-from-machines` lịch 01:45.
 Tài liệu: `.plans/gop-db/xoa-ma-may-cham-cong-khi-nghi-viec/plan.md`.
 
+## #12074 Cập nhật giá bán: mặc định Giá bán lẻ, Show đủ bảng giá, cấu hình cột, bảng giá độc lập — ĐANG LÀM (2026-11-09, @junfoke)
+
+Trạng thái: ĐÃ lên origin/develop (`fda841d41`) và origin/gop_db (merge `52e795dfd`, 10/11). Fix QA 10/11 co giãn cột `5542a006c`: + `3cbebf632` (Tên 290 / Loại giá 176): ĐÃ lên gop_db `cc213ac89` (cổng chính đã duyệt), develop merge local `d6a6883cf` CHƯA push. hrm-api không đổi. Đã verify trình duyệt.
+Scope: `/finance/product-prices` popover "Cài đặt bảng giá" (loại giá hiển thị + giá chính đứng đầu, lưu theo tài khoản × công ty) + cột STT + cấu hình cột; bỏ lan Bán lẻ ⇒ Theo lô/ĐL1–3 ở cả G4 lẫn Phiếu tính giá (sửa `Calc` dùng chung).
+⚠️ GOTCHA: TMĐT VẪN = Bán lẻ × hệ số (issue ghi rõ "giữ nguyên logic cũ"); "Duyệt không cần tính giá" của YCHG giữ nguyên.
+Issue 10/11 "Cài đặt bảng giá" lên Phiếu tính giá + dùng chung mọi màn: develop `d194baa03` (CHƯA push) → ĐÃ lên origin/gop_db `881920825` (cherry-pick, 10/11, user duyệt).
+Bước tiếp: push develop (đi trước 5 commit); chưa thử nhánh Gửi duyệt.
+Tài liệu: `.plans/gop-db/12074-cap-nhat-gia-ban/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-09-12074-cap-nhat-gia-ban-design.md`.
+
 ## Giao chỉ tiêu kinh doanh theo phòng ban + theo nhân viên (ERP → HRM, #11643 + #11651) — ĐANG LÀM (2026-11-06, @junfoke)
 
 Port 2 phiếu `business_target_*` sang HRM theo bản mẫu QA: bỏ popup chi tiết KH (8 ô nhập thẳng), bỏ "Nhân viên mới",
@@ -371,7 +380,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Blocked:
 - nhap-kho-con-lai → @junfoke → .plans/gop-db/nhap-kho-con-lai/plan.md (design: .plans/gop-db/nhap-kho-con-lai/design.md)
   Port 4 màn ERP "Kho › Nhập kho" còn lại: chờ báo thừa thiếu, phiếu báo thừa thiếu, nhập kho điều chỉnh kiểm kê, nhập lại điều chỉnh sai số liệu. Bắt đầu 22/10/2026, nhánh `feat/kho-nhap-kho-con-lai` (cả 2 repo, từ develop).
-  Trạng thái: 🟡 Phase 1 (2 màn thừa thiếu) + Phase 2 (nhập kho điều chỉnh kiểm kê) XONG, đã commit 22/10 (chưa merge develop) — PHPUnit 12/12 + 9/9 + bấm thật. Kèm: chuyển màn ĐNNK sang `/warehouse/import-requests`. Phase 3 nhập lại TẠM DỪNG (23/10) — chờ BE Phiếu xuất kho của @nguyentrancu97.
+  Trạng thái: 🟡 Phase 1 (2 màn thừa thiếu) + Phase 2 (nhập kho điều chỉnh kiểm kê) XONG, đã commit 22/10 (chưa merge develop) — PHPUnit 12/12 + 9/9 + bấm thật. Kèm: chuyển màn ĐNNK sang `/warehouse/import-requests`. Phase 3 nhập lại BỎ — @nguyentrancu97 đã port (`/finance/warehouse-reimports`, develop 22/10); 09/11 gắn link menu Kho (client `b1121c720`).
 
 - danh-muc-kho → @junfoke → .plans/gop-db/danh-muc-kho/plan.md (design: .plans/gop-db/danh-muc-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-19-danh-muc-kho-design.md)
   Port 7 màn ERP "Danh mục → Kho" sang phân hệ Danh mục chung, nhóm "Kho" (bỏ Nhóm kho, bỏ đồng bộ CRM, 1 quyền "Quản lý kho"). Bắt đầu 19/10/2026; code nằm ở nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, user chỉ định — chuyển từ `feat/warehouse-catalogs`, chưa commit).
@@ -2673,6 +2682,12 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Trạng thái: 🟢 **Xong + đối chiếu ERP khớp 7 ca + review (04/11/2026)**, nhánh `feat/so-chi-tiet-cong-no-ncc`, đã commit (api `e8773a469` + `eaf6fc507`, client `21a7df575` + `e05d27860`), ĐÃ merge develop + push 04/11 (merge api `5465d9946`, client `5e2fb0997` — gộp xung đột seeder với quyền Quyết toán thưởng NS quý; dev cần `permission:sync` + gán 2 quyền NCC vào vai trò). Test 37/37. Seeder +2 quyền. Tách khung sổ chi tiết `AccountLedgerService` + trait `AccountDebtCommon` dùng chung với 2 màn NV; sửa kèm 2 màn NV (chuyển trang / In / Excel theo bộ lọc đã áp).
   Scope: màn Sổ chi tiết công nợ phải trả NCC + In (ERP không có) + Excel; màn 4/4 nhóm công nợ.
   Spec: docs/superpowers/specs/gop-db/2026-11-04-so-chi-tiet-cong-no-ncc-design.md | Tóm tắt: .plans/gop-db/so-chi-tiet-cong-no-ncc/design.md
+
+- cong-no-khach-hang → @junfoke → .plans/gop-db/cong-no-khach-hang/plan.md
+  2 màn ERP Kế toán công nợ › Khách hàng, làm từng màn. Nhánh `feat/cong-no-khach-hang` (2 repo, từ `gop_db` 10/11/2026).
+  Trạng thái: ✅ 2 màn KH (`/finance/customer-ledger-details`, `/finance/customer-debt-balances`) + chuyển 3 màn NV/NCC sang
+  kiểm quyền theo mã — đã merge + push develop 10/11 (api `df407199e`, client `39c427075`), đã chạy trên dev-hrm. Chưa lên gop_db.
+  Deploy: `permission:catalog-sync` (mã KH thêm `hrm`). Spec: docs/superpowers/specs/gop-db/2026-11-10-so-chi-tiet-cong-no-kh-design.md
 
 - tuyen-duong-xa-moi-sau-sap-nhap → @junfoke → .plans/gop-db/tuyen-duong-xa-moi-sau-sap-nhap/plan.md
   Trạng thái: 🟡 **Đã xuất Excel đề xuất (05/11/2026)**: `D:\CompanyProject\DB\tuyen_duong\tuyen_duong_moi_de_xuat.xlsx` — Lớp 1 1.826 tuyến (301 cần khảo sát) + Lớp 2 1.847 tuyến (102 cần khảo sát), km gợi ý Goong. Chờ nghiệp vụ duyệt km → viết lệnh nhập → khoá tuyến cũ.
