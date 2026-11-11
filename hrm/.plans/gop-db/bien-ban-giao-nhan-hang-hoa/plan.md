@@ -40,6 +40,33 @@ Khuôn bám: BB bàn giao nghiệm thu (`Modules/CustomerCare/*HandoverAcceptanc
       3 YCXH đã hạch toán (35778–35780), vai trò tạm 100211 công ty 1 cấp `customer_care.bien_ban_giao_nhan.view` mức Tổng công ty.
       Xoá: `test-data/cleanup_bbgn_test.php` (xoá kèm biên bản tạo trên các HĐ test; serial ở bảng `serials` chung chỉ liệt kê).
 
+## Phase 5 — Redmine #12119 (11/11/2026): thêm cột Ngày cập nhật, Người cập nhật vào danh sách
+- [x] B1 Migration thêm `updated_by` (nullable, sau `created_by`) bảng ERP `handover_acceptance_product_records` + backfill dòng cũ = `created_by`
+- [x] B2 Entity hook `saving` ghi `updated_by` = người đăng nhập; sửa phiếu luôn chạm `updated_at` (kể cả chỉ đổi dòng hàng)
+- [x] B3 Service: `updater_name` / `updated_at` trong danh sách + chi tiết, sort `updated_at`, export registry
+- [x] F1 index.vue: 2 cột mới (sau Ngày tạo) + exportFields
+- [x] V1 Verify: migrate, gọi API danh sách, compile FE
+      Local: migrate 2 file OK, 0 dòng còn NULL; presentRows trả đúng `updater_name`/`updated_at`; php -l + compile FE sạch.
+      Backfill = `created_by` vì cả ERP (`canEdit`) lẫn HRM chỉ cho người tạo sửa. Bản in danh sách giữ nguyên cột (không nằm trong yêu cầu).
+      Chưa kiểm trên trình duyệt. Deploy dev cần chạy `php artisan migrate`.
+
+## Phase 6 — Redmine #12121 (11/11/2026): góp ý màn Tạo mới
+- [x] 1. Ô lọc "Loại hợp đồng" ở popup chọn HĐ: tên trùng cột bảng — HĐ hãng tách 4 loại (`firm_contract:<type>`:
+      bán hàng hóa - vật tư / dự án / nguyên tắc / ĐH nguyên tắc) + HĐ BH-SC + HĐ HRM. BE `contracts()` nhận khoá `firm_contract:<type>`
+- [x] 2. SL bàn giao > SL có thể bàn giao: báo đỏ NGAY khi gõ (`qtyExceedError()` + `field-error`), câu rút gọn
+      "Không vượt quá số lượng đã xuất (N)" ở cả FE lẫn BE (`HandoverProductRecordStoreService`)
+- [x] 3. Popup Nhập seri thu nhỏ: `size="md"`, thân cao tối đa 60vh
+- [x] 4. Ẩn dòng chú thích "Seri: …" dưới ô SL bàn giao ở form (màn chi tiết vẫn hiện — chỗ duy nhất xem seri khi chỉ đọc)
+- [x] 5. Check "tạo → xoá → chọn lại HĐ báo không có hàng hóa": KHÔNG tái hiện ở local — tinker HTTP kernel (rollback) với HĐ test
+      24940 / 24941 / HRM 44: trước 6/7/7 hàng → tạo xong 0 → xoá → 6/7/7 hàng. Xoá đã xoá tường minh serial + dòng hàng.
+      Cần dữ liệu dev (mã HĐ `HĐ_TPE_CTV_NV_26_0002_0987656789`): còn biên bản nào khác của HĐ trong
+      `handover_acceptance_product_records` (kể cả tạo từ ERP / bấm "Lưu và tiếp tục") không
+- [x] V. php -l + tinker: lọc `firm_contract:1` → 1 HĐ đúng loại, `:8` → 1, `:99` → bỏ qua lọc loại; 422 trả câu mới.
+      Compile FE (vue-template-compiler + babel) 5 file sạch. Chưa bấm trên trình duyệt.
+- [x] Check mục 5 trên dev (API, DNS Admin): HĐ 29962 còn biên bản TPE.BBGN.00011 (id 11, Đang tạo, giữ SL 1/1) → 0 hàng là ĐÚNG.
+      id 9 xoá 10:02 có log; id 10 tạo 10:03 rồi mất KHÔNG có log xoá (nghi xoá từ ERP / lưu lỗi giữa chừng) — chưa rõ, cần log dev.
+- [x] Push develop: hrm-api `99928bf99`, hrm-client `c4be15627`
+
 ### Checkpoint — 2026-11-10
 Vừa hoàn thành: BE `Modules/Sale` (entity 3 bảng, `ContractDeliveredQtyService` dùng chung, nguồn HĐ, danh sách/chi tiết/xoá/lịch sử,
 lưu + FormRequest + validate-serials, in mẫu BBGNHHVT + in danh sách, route `/v1/sale/handover-product-records`, Catalog `platforms` hrm,

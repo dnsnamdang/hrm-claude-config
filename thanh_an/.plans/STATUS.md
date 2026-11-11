@@ -5,6 +5,9 @@
 
 ## Đang làm
 
+- **Danh mục phương tiện (phân hệ Chấm công)** — @khoipv — Bắt đầu 11/11/2026 — Đã code xong BE + FE; Tạo mới đã test OK. Checkpoint 11/11/2026: chờ user test Sửa/Xem/Khóa/Xóa/lọc.
+  - Plan: [.plans/danh-muc-phuong-tien/plan.md](danh-muc-phuong-tien/plan.md) · Design: [.plans/danh-muc-phuong-tien/design.md](danh-muc-phuong-tien/design.md) · Spec: [docs/superpowers/specs/2026-11-11-danh-muc-phuong-tien-design.md](../docs/superpowers/specs/2026-11-11-danh-muc-phuong-tien-design.md)
+
 - **Check: Đơn xin nghỉ 1779 số ngày nghỉ dự kiến = 0** — @khoipv — Bắt đầu 09/11/2026 — Đã ra nguyên nhân, không phải bug code: đơn tạo 02/11 cho 07/11 (thứ 7 lẻ) khi quy định còn "nghỉ thứ 7 lẻ" (5) → 0 đúng lúc đó; 03/11 quy định đổi sang "nghỉ thứ 7 chẵn" (4), đơn cũ không tính lại. Chờ user: có sửa tay `total_days` → 1 không.
   - Plan: [.plans/check-don-nghi-1779-so-ngay-0/plan.md](check-don-nghi-1779-so-ngay-0/plan.md)
 

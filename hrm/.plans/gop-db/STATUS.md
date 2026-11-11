@@ -19,6 +19,13 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Danh sách hàng xuất nhập thẳng (ERP → HRM) — HOÀN THÀNH 2026-11-11, ĐÃ PUSH develop (hrm-api `0b472de60`, hrm-client `56d08069e`) (2026-11-11, @khoipv)
+
+Port màn ERP `warehouseInfo.productImportDirectDetails` → `/finance/import-direct-stocks` (menu Tài chính › Báo cáo hàng tồn kho + Tra cứu › Thông báo).
+Chốt: quyền theo cấp y ERP (mã accounting.bao_cao_ton_hang_nhap_xuat_thang_theo_nhan_vien.view + platform hrm), phân trang theo phòng ban, cây 3 tầng.
+**Checkpoint 11/11:** XONG. Smoke test BE đủ 4 mức phạm vi, Playwright 27/27 + không quyền PASS, user tự test trình duyệt xong. Đã push develop. Deploy phải chạy `permission:catalog-sync` (bật on_hrm cho mã quyền). Dữ liệu test local còn giữ (13 dòng id 15872–15884 + vai trò tạm 100216) — lệnh dọn ở plan.md T14/T15.
+Tài liệu: `.plans/gop-db/danh-sach-hang-xuat-nhap-thang/` · spec `docs/superpowers/specs/gop-db/2026-11-11-danh-sach-hang-xuat-nhap-thang-design.md`.
+
 ## Xoá HĐ + QĐ tiếp nhận của 3 NV Phòng Dự án trọng điểm trên PROD — HOÀN THÀNH 2026-11-09 (@cuong61n)
 
 Xoá 6 HĐ (592–594, 598–600/2026/HĐLĐ-TPE) + 3 QĐ tiếp nhận 153–155/2026/QĐTN-TPE của Sầm Văn Linh, Nguyễn Thế Huấn, Nguyễn Quang Tuyến. Đã sao lưu ra `~/Desktop/dns/backup_prod_xoa_hd_20261109.sql`.

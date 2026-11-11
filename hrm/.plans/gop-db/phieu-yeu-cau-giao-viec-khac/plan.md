@@ -75,6 +75,15 @@ Blocked: T14, T15 chờ user
 - Verify: compile template 2 file OK. CHƯA mở trình duyệt. `CostSearchModal` dùng chung (Lỗi thiết bị, YC thông tin BH-SC, YCGVK) → cả 3 màn cùng co popup.
 - [x] D3. (10/11, tester mở lại) Popup Chọn dịch vụ sửa chữa đang căn giữa dọc màn hình → đưa lên sát trên cho đồng bộ các popup b-modal khác: `.modal-backdrop-lite` `align-items: flex-start` + lề trên `1.75rem` (= `$modal-dialog-margin-y-sm-up`). Áp cho cả các màn dùng chung `CostSearchModal`. Compile OK, CHƯA mở trình duyệt.
 
+## Fix bug Redmine #12100 (2026-11-11) — sort popup Chọn dịch vụ sửa chữa
+Tester: sort Tên dịch vụ / Người tạo "không ổn định, bấm vào bị vỡ"; Người tạo đang để sẵn giảm dần → về mặc định.
+Nguyên nhân (đọc code, không phải BE — BE đã có cột phụ `costs.name, costs.id` nên thứ tự ổn định):
+- Bấm sort → `V2BaseDataTable` thay 10 dòng bằng 1 dòng "Đang tải" + ẩn phân trang; từ D1 popup co theo bảng → popup sập còn ~1/4 rồi bung lại = "vỡ".
+- Component popup KHÔNG huỷ khi đóng (`v-if` nằm trong template) → sort giữ nguyên qua các lần mở; "Làm mới" cũng không bỏ sort → mở lại thấy Người tạo ↓ sẵn.
+- [x] E1. `CostSearchModal.vue`: khi đã có dữ liệu thì giữ nguyên các dòng cũ trong lúc tải (chỉ mờ đi, khoá bấm), chỉ hiện dòng "Đang tải" ở lần tải đầu → popup không co/giãn khi sort/chuyển trang.
+- [x] E2. `CostSearchModal.vue`: mỗi lần mở popup + bấm "Làm mới" → bỏ sort (mũi tên ⇅, thứ tự mặc định Tên A→Z), về trang 1; mở popup luôn tải lại.
+- Verify: compile template + parse script OK. BE không đổi. CHƯA mở trình duyệt. `CostSearchModal` dùng chung 5 màn (Lỗi thiết bị, YC thông tin BH-SC, Báo giá BH-SC, HĐ dịch vụ BH-SC, YCGVK) → cả 5 cùng nhận sửa.
+
 ### Checkpoint — 2026-11-06
 Vừa hoàn thành: C1–C5 (#12049)
 Đang làm dở: không

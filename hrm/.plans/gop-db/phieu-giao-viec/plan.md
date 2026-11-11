@@ -234,3 +234,21 @@ PGV TPE.PGV.2026018146, phiếu nhập KQ id 9116 tạo trên cổng HRM. Ảnh 
 - [x] (4) Người thực hiện vào "Phiếu giao việc được giao" → Nhập kết quả (đủ 4 điều kiện `canImportResult`)
 - [x] (5) Lưu PNKQ (`WrImportResultStoreService::updateTaskStatus`): nháp → PGV 7 Đang nhập KQ; gửi duyệt → PGV 2 Đã nhập KQ
       + báo người duyệt; sau đó Duyệt KQ (PGV 8 → 3). Không sửa code
+
+## Check — Màn "Phiếu giao việc được giao" bên ERP lấy dữ liệu từ đâu, luồng ra sao (2026-11-11, @khoipv)
+- [x] Menu ERP `topmenubar.blade.php:1909` → `WrAssignTasks.index?type=waiting_import_result` → view
+      `customercare/warranty_repair_assign_tasks/index.blade.php` → ajax `WrAssignTasks.searchData` →
+      `WrAssignTask::searchByFilter($request, 'assign_task')` (model `app/Model/Customers/WrAssignTask.php:446`)
+- [x] Điều kiện: bảng `wr_assign_tasks`, `parent_id IS NULL`, `status != 9 Hủy`, `id IN (wr_assign_task_executors.employee_id = mình)`;
+      không xét quyền cấp, không lọc trạng thái. Cột hiện kèm HĐ (`wr_service_contracts`/ HĐ bán qua `assembly_requests`),
+      số YC (lắp đặt / giao việc khác), người thực hiện (ưu tiên `is_leader`)
+- [x] Đối chiếu bản port HRM (`WrAssignTaskService::applyScope`) — khớp như check 09/11. Không sửa code
+- [x] Đính chính (user hỏi lại): form PGV ERP KHÔNG có khối chọn người thực hiện — khối "Người thực hiện" trong
+      `warranty_repair_assign_tasks/form.blade.php` ~dòng 1130-1190 đã bị comment `{{-- --}}`, JS vẫn gửi `executors` nhưng luôn rỗng.
+      → `wr_assign_task_executors` THỰC TẾ chỉ do Phiếu công tác (HRM) ghi: `AssignBusinessService::syncWrAssignTaskExecutors`
+      (gọi từ `AssignRequest.php:650`, `:738`) xoá hết rồi ghi lại theo nhân sự PCT + hệ số công + is_leader.
+      PGV chưa gắn PCT ⇒ không ai thấy ở màn "được giao". Ghi chú 09/11 "ghi khi lưu PGV" là sai với ERP hiện tại
+- [x] Đối chiếu HRM: `WrAssignTaskService::applyScope()` dòng 299 = `whereIn(id, wr_assign_task_executors.employee_id = auth id)`
+      + base `parent_id IS NULL`, `status != Hủy` (dòng 169-170) → y ERP. Form PGV HRM cũng KHÔNG có khối người thực hiện
+      (`WrAssignTaskSourceService` trả `executors => []`, `WrAssignTaskStoreService` không ghi executor) → nguồn duy nhất vẫn là PCT
+      (`syncWrAssignTaskExecutors`, cùng bảng `employees` nên id khớp). Không sửa code
