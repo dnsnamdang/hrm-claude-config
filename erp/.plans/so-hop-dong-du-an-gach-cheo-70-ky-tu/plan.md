@@ -8,3 +8,6 @@ Không Redmine (user nhờ, ảnh số `0726/TPE-EG/PO3200374723`) · @junfoke �
 ## Ngày 05/11/2026 (@junfoke)
 - [x] 05/11/2026 — Ô Số hợp đồng cố định tối đa **70 ký tự** (trước = 50 trừ tiền tố "HĐ_công ty_phòng_năm_số" nên mỗi phòng một mức, phòng trong ảnh chỉ 23); báo lỗi "Số hợp đồng không được quá 70 ký tự."; cột mã HĐ DB 255 nên mã đầy đủ ~95 ký tự vẫn lưu được. Commit `51ce2e883a` (gop_db, đã push).
 - [ ] Hỏi user: nâng HĐ nguyên tắc / ĐH nguyên tắc (`PrincipleContract*Request`, `PrincipleOrderStoreRequest`, vẫn 50) cho đồng bộ?
+
+## Ngày 11/11/2026 (@junfoke)
+- [ ] 11/11/2026 — Đang làm (user yêu cầu): sửa rule Số hợp đồng của HĐ vật tư / HĐ dịch vụ / HĐ nguyên tắc / Đơn hàng nguyên tắc giống HĐ dự án (nhận `/`, tối đa 70 ký tự…) bên ERP rồi đẩy gop_db. Đang dò request ERP (HĐ vật tư và HĐ dự án dùng chung `FirmContractStoreRequest`), chưa có commit.

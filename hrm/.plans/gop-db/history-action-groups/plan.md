@@ -137,3 +137,6 @@ TRƯỚC khi fill, mọi đường ghi (tạo / sửa / khóa / mở khóa / xó
 - `services`: file đính kèm (`attachments`) và các bảng con (gói bảo dưỡng con, công ty áp dụng, nhóm hàng hóa) đổi không sinh log. Muốn log thì phải tóm tắt kiểu `details_summary` như phiếu điều chỉnh công nợ
 - `product_transfer_requests`: bảng chi tiết hàng hóa đổi không sinh log; `approver_id` có nhãn nhưng không theo dõi (chỉ đổi qua luồng duyệt, đã có log `change_status`)
 - Task / Vấn đề (Giao việc) vẫn log id thô (mục đã ghi ở phần rà 2026-08-17)
+
+## Ngày 11/11/2026 (@junfoke)
+- [x] 11/11/2026 — Theo #12113 (user chốt): nhãn hành động Khóa / Mở khóa trong `CatalogHistoryService` gộp thành "Thay đổi trạng thái" màu cam cho mọi màn dùng bộ nhãn chung; dòng chi tiết "Trạng thái: A → B" giữ để biết chiều đổi. Lịch sử Khách hàng (lưu kiểu riêng) chưa đổi. Api `d0d2a261e` (develop, đã push). Chi tiết ở plan `business-areas`.

@@ -184,3 +184,7 @@ nâng cấp đã sửa RED→GREEN; 6 Minor để sau.
 Bước tiếp theo: user xem diff ⇒ commit/push (user tự báo); chạy e2e `products-copy-ui` + 3 spec đã sửa khi user yêu cầu;
 dọn sau: DROP DB `hrm_erp_test_saochep`, gỡ worktree, dừng server :8011/:3011.
 Blocked: —
+
+## Ngày 11/11/2026 (@junfoke)
+- [x] 11/11/2026 — Lỗi #12129: Sao chép xong bấm Lưu quay về đúng danh sách đã bấm (vd Hàng đang kinh doanh), không sang trang chi tiết; tạo mới thường vẫn sang chi tiết. Thử bằng cách giả lập bước lưu (không tạo hàng thật). Lưu ý cho QA: hàng vừa sao chép thường ở trạng thái đang nhập thông tin nên chưa thấy ngay ở danh sách Hàng đang kinh doanh.
+- [x] 11/11/2026 — Lỗi #12130: đổi tên "Nhân bản" → "Sao chép hàng hóa" ở menu dòng, nút trang chi tiết, tiêu đề trang, chú thích (dòng lịch sử BE vẫn ghi "Nhân bản từ <mã>"). Phần quyền không phải lỗi: tài khoản DNS Admin trên dev-hrm có 3 vai trò, QA chỉ bỏ quyền "Xây dựng thông tin hàng hoá" ở "Super admin (DNS DÙNG)" nhưng vai trò "Super Admin" (đủ 940 quyền) vẫn cấp. Client `c076d5ba8` (develop, đã push).

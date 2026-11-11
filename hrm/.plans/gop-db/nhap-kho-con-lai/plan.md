@@ -78,5 +78,8 @@
 - [x] 09/11/2026 — Phase 3 BỎ: màn Phiếu nhập lại điều chỉnh sai số liệu @nguyentrancu97 đã port (`/finance/warehouse-reimports`). Gắn link cho mục Kho › Nhập kho › Phiếu nhập lại điều chỉnh sai số liệu (trước bấm không mở gì). Client `b1121c720` (develop, đã push).
 
 ## Ngày 10/11/2026 (@junfoke)
-- [ ] 10/11/2026 — Lỗi #12097 (Chi tiết phiếu xuất kho): bỏ khoảng trống dưới bảng hàng hoá (CSS toàn cục min-height 50% màn hình) + bỏ nhãn trạng thái lặp ở khối thông tin; sửa luôn cùng lỗi ở chi tiết Phiếu nhập lại, Sửa phiếu xuất kho, Tạo phiếu nhập lại. CHƯA commit (worktree `.worktrees/develop`).
-- [ ] 10/11/2026 — Lỗi #12094 + #12098 (Danh sách Phiếu nhập lại): thêm lọc Công ty + Phòng ban, nút Xuất Excel (theo bộ lọc, cột như ERP), cột Người tạo, sắp xếp Mã/Ngày tạo, ô tìm nhanh trước không tác dụng nay tìm được; kiểm giao diện thật. CHƯA commit. Chờ user: cột hành động trống (đúng ERP — giữ / thêm Lịch sử / làm In phiếu); quyền 2 màn chỉ cần trả lời QA (nằm ở Sản xuất – Cung ứng › Kho).
+- [x] 10/11/2026 — Lỗi #12097 (Chi tiết phiếu xuất kho): bỏ khoảng trống dưới bảng hàng hoá (CSS toàn cục min-height 50% màn hình) + bỏ nhãn trạng thái lặp ở khối thông tin; sửa luôn cùng lỗi ở chi tiết Phiếu nhập lại, Sửa phiếu xuất kho, Tạo phiếu nhập lại. Commit client `b8fce047f` (10/11 17:29, develop, đã push).
+- [x] 10/11/2026 — Lỗi #12094 + #12098 (Danh sách Phiếu nhập lại): thêm lọc Công ty + Phòng ban, nút Xuất Excel (theo bộ lọc, cột như ERP), cột Người tạo, sắp xếp Mã/Ngày tạo, ô tìm nhanh trước không tác dụng nay tìm được; kiểm giao diện thật. Commit api `50cc33030`, client `aa7768d8b` (10/11 17:29, develop, đã push). Chờ user: cột hành động trống (đúng ERP — giữ / thêm Lịch sử / làm In phiếu); quyền 2 màn chỉ cần trả lời QA (nằm ở Sản xuất – Cung ứng › Kho).
+
+## Ngày 11/11/2026 (@junfoke)
+- [x] 11/11/2026 — Lỗi #12109 (hiện 2 lần "Không đủ quyền"): mở chi tiết phiếu bị 403 thì interceptor chung đã báo 1 lần, màn lại tự báo thêm ⇒ bỏ báo riêng ở 8 chỗ cùng lỗi trong nhóm màn Phiếu xuất kho / Phiếu nhập lại; giả lập BE trả 403 giờ chỉ còn 1 thông báo rồi tự về danh sách. Client `dbc9102a1` (develop, đã push).

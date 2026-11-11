@@ -2688,6 +2688,10 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Trạng thái: ✅ 2 màn KH (`/finance/customer-ledger-details`, `/finance/customer-debt-balances`) + chuyển 3 màn NV/NCC sang
   kiểm quyền theo mã — đã merge + push develop 10/11 (api `df407199e`, client `39c427075`), đã chạy trên dev-hrm. Chưa lên gop_db.
   Deploy: `permission:catalog-sync` (mã KH thêm `hrm`). Spec: docs/superpowers/specs/gop-db/2026-11-10-so-chi-tiet-cong-no-kh-design.md
+- yeu-cau-xuat-tach-ghep → @junfoke → .plans/gop-db/yeu-cau-xuat-tach-ghep/plan.md
+  Port 2 màn ERP Phiếu yêu cầu xuất tách + xuất ghép (dựng 1 khung chung). Trạng thái: 🟡 khảo sát xong 11/11/2026, chưa code —
+  chờ user chốt phạm vi (a) chỉ 2 màn / (b) kèm Đề nghị xuất kho từ tách-ghép.
+
 
 - tuyen-duong-xa-moi-sau-sap-nhap → @junfoke → .plans/gop-db/tuyen-duong-xa-moi-sau-sap-nhap/plan.md
   Trạng thái: 🟡 **Đã xuất Excel đề xuất (05/11/2026)**: `D:\CompanyProject\DB\tuyen_duong\tuyen_duong_moi_de_xuat.xlsx` — Lớp 1 1.826 tuyến (301 cần khảo sát) + Lớp 2 1.847 tuyến (102 cần khảo sát), km gợi ý Goong. Chờ nghiệp vụ duyệt km → viết lệnh nhập → khoá tuyến cũ.
