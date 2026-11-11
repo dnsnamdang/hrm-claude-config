@@ -30,3 +30,9 @@ Nguồn: ERP `FirmQuotation*` (form.blade "Chương trình khuyến mãi", class
 - Hàng tự khai thác: `product_cate` = `hang_tu_khai_thac`, gắn ở TempProductService::create; khai cả ERP (7 file).
 - In: tuỳ chọn trong QuotationPrintConfigModal (dùng chung 4 màn), dữ liệu mở rộng `GET assign/quotations/{id}/print-extras`.
 - Để sau: tạo hợp đồng (dòng 61), TSKT chính (dòng 62).
+
+## Quyết định đã chốt — Ô "Số lần nhận" của Chương trình khuyến mại (11/11/2026)
+- Ô cột "Nhận" nhập theo số LẦN nhận mốc (giữ như ERP và BE `select_qty`), KHÔNG đổi sang nhập số hàng tặng. Đổi nhãn thành "Số lần nhận" + icon ⓘ giải thích (1 lần = đúng "Mốc mua" xô trong SL mua; các dòng dùng chung SL mua nên nhập dòng này thì dòng kia giảm).
+- Nhập vượt trần → báo đỏ dưới ô "Tối đa N lần", GIỮ NGUYÊN số user gõ, chặn lưu (hasFormatError). KHÁC ERP (ERP tự kẹp về trần) — theo CLAUDE.md "không tự sửa giá trị user nhập". Placeholder ô = "Tối đa N".
+- Trần mỗi dòng tính từ quỹ SL mua trừ phần các DÒNG KHÁC đã dùng, nên cột "SL được tặng" đứng yên khi nhập vượt (trước đây nhảy 22 → 44).
+- Màn Sửa báo giá: mã KM chỉ hiện (và nhập SL mua) khi hàng thuộc mã có trong báo giá; bỏ ô tích cho xem mã không có hàng (user chọn 11/11/2026, khác ERP). Màn Xem giữ ô "Chỉ hiện mã đã áp dụng".

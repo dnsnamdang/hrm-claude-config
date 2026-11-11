@@ -638,3 +638,47 @@ liệu cũ — nó làm tính toán sai mãi mãi.
 5. **2 máy chấm công** → phải làm đủ F.6 + F.7 cho cả hai, và nhớ `--conn=<2 id máy>` khi lấy bù.
 6. Phân ca 26.513 dòng: quyết trước xem có bù kỳ cũ hay không (F.9), và nếu bù thì lấy **cùng mốc**
    với `timesheet_summaries` của công ty đó.
+
+---
+### F.19 Diễn tập etekpower trên LOCAL (11/11/2026) — 3 lỗi MỚI, cổng green không có
+
+1. **Nguồn có cột mà đích không có** (`companies.company_id/department_id/part_id/hamlet`,
+   `roles.department_id/part_id`, `role_has_permissions.company_id`) → lần chạy thật lỗi `1054 Unknown
+   column` rồi rollback. Đã vá: `stepInsertTable` chỉ giữ cột có ở bảng đích.
+2. **Quyền của vai trò RƠI HẾT, không lỗi nào báo** — `hrm_power` vẫn mô hình quyền CŨ (permissions theo
+   tên, chưa `rbac:convert`), còn đích (local VÀ prod `hrm_erp_gop` từ 06/11) đã sang mô hình mã quyền.
+   Catalog khớp permissions theo `code` → 1.395 lượt gán → 0, 17 vai trò sang đích có 0 quyền.
+   Đã vá: `convertLegacyRolePermissions()` chạy post-commit (luật PermissionMerger, hạ Tổng công ty →
+   Công ty, tên vai trò `<mã công ty>_<tên>`); dòng "Quyền vai trò -> mã" in ra phải có số > 0.
+   Tên quyền chỉ POWER có (lương P3, Quản lý khách hàng, Xem tất cả khách hàng theo…) không có trong
+   Catalog → bị bỏ và liệt kê — nếu cần giữ phải khai vào Catalog TRƯỚC khi chạy.
+3. **Trưởng phòng/bộ phận vẫn lưu `employee_infos.id`** (catalog dịch OWNED:employee_infos) trong khi
+   đích đã thống nhất `employees.id` (migration `convert_lead_ids_to_employee_id`, 25/09). Sau khi chạy:
+   ```sql
+   UPDATE departments t JOIN employees e ON e.employee_info_id=t.department_lead_id
+     LEFT JOIN employees x ON x.id=t.department_lead_id
+     SET t.department_lead_id=e.id WHERE t.company_id=<id mới> AND t.department_lead_id>0 AND x.id IS NULL;
+   -- tương tự parts.part_lead_id
+   ```
+   (Chỉ an toàn khi dải `employee_infos.id` mới > mọi `employees.id` — kiểm trước.)
+
+Ngoài ra:
+- Ảnh: ở prod dùng `--asset-dir=/var/www/etekpower/hrm-api/public` (ảnh nguồn đa số đã là URL S3, 7 ảnh path tương đối).
+- `--source-company=1` bắt buộc (nguồn có 2 công ty: 1 ETEK POWER, 2 "Tân Phát 686 tmp" status 0).
+- Tiền tố mã phòng `EP_`: nguồn có 2 cặp phòng TRÙNG MÃ (KD2/KD3 + KD2/KD3 `_đã khóa`) → 2 phòng KD2, KD3 không gắn được tiền tố. Cả 4 phòng đều đã ngừng hoạt động → user chốt 11/11 để nguyên.
+- Cơm: cổng etekpower ghi thẳng vào `hrm_erp_gop` (DB_DATABASE_TPE) — không phải kéo gì thêm.
+
+**Bổ sung sau khi test kỹ (11/11, đã chạy lại cả lượt trên local):**
+4. **Lọc "theo bảng cha" bỏ oan dòng** (lỗi có từ trước, green cũng dính): coi `created_by` là khoá cha
+   + bỏ cả dòng khi tham chiếu treo → mất bảng lương 11/2024 (do TK bị loại tạo) và 25/43 lịch sử công
+   tác. Đã vá `selectOldIdsParent`. Lượt chạy lại: 45.739 → 46.550 dòng.
+5. **Catalog thiếu 4 bảng** (user chốt đưa): `bank_branches` (SHARED mới, strategy `name_parent` — khớp
+   theo ngân hàng + tên, thiếu thì chèn), `customer_contacts`, `customer_deputies`,
+   `customer_scope_group_members`. Kiểm: 18/18 TK lương có chi nhánh đúng ngân hàng.
+6. **Công ty mới không có dòng `configs`** → màn Quy chế 500 "configs công ty X không tồn tại". Đã vá:
+   `ensureCompanyConfigRow()` post-commit (nhân bản dòng cty 1 + contract_rows). Dòng báo cáo
+   "Cấu hình công ty (configs): tạo dòng …" phải xuất hiện.
+- Quyết định Quy chế chung 2026 (6 QĐ) + quy định bảo hiểm theo vị trí: user chốt KHÔNG chuyển (như green).
+7. **Phụ cấp khác nhập kiểu `10.000.000`** (cột `employee_salary_histories.other_allowances` là varchar) → Báo cáo
+   thu nhập tháng 500 "A non-numeric value". Sau gộp chạy:
+   `UPDATE employee_salary_histories h JOIN employee_infos i ON i.id=h.employee_info_id SET h.other_allowances=REPLACE(h.other_allowances,'.','') WHERE i.company_id=<id mới> AND h.other_allowances REGEXP '^[0-9]{1,3}([.][0-9]{3})+$';` (local: 5 dòng)

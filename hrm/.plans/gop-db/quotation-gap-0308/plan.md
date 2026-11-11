@@ -57,6 +57,17 @@ Vừa hoàn thành: màn Chi tiết báo giá thêm 3 cột tồn + cộng tiề
 Bước tiếp theo: user test tay :3002 → xin phép commit 3 repo.
 Blocked: chờ chốt điều kiện xoá BOM mẫu; có gắn "Hàng tự khai thác" cho hàng tạm cũ không.
 
+## Phase 5 — Sửa ô "Số lần nhận" CTKM (11/11/2026) — @cuong61n
+Nguồn: chị Lệ báo BG-2026-00496 nhập 22 vào "Nhận" dòng 1 thì "SL được tặng" nhảy 22 → 44, dòng 2 về 0, không báo lỗi.
+- [x] 11/11 Điều tra: tái hiện trên cổng hrm-crm (bỏ tick "Chỉ hiện mã có hàng trong báo giá" + SL mua 100) đúng 44/0; nguyên nhân: "Nhận" là số LẦN (mốc 9 → trần 11), hai dòng dùng chung quỹ 100 xô, FE không chặn vượt trần. ERP kẹp tự động về trần.
+- [x] 11/11 FE `utils/quotationPromotion.js`: trần `max_select_qty` tính từ quỹ trừ phần dòng khác (đứng yên khi nhập vượt), thêm `selectQtyError`, `hasFormatError` chặn lưu khi vượt trần.
+- [x] 11/11 FE `QuotationPromotionGiftTable.vue`: nhãn "Số lần nhận" + icon ⓘ (b-popover info-popover), placeholder "Tối đa N", báo đỏ "Tối đa N lần".
+- [x] 11/11 Kiểm bằng hàm tính (node): nhập 5/11 hợp lệ; 12 và 22 báo "Tối đa 11 lần", SL được tặng giữ 22; hasFormatError 22 = true. CHƯA test UI (cổng dev chưa có code mới) — chờ user quyết có test không.
+- [x] 11/11 FE `QuotationPromotionSection.vue`: màn Sửa bỏ ô tích "Chỉ hiện mã có hàng trong báo giá", luôn chỉ hiện mã có hàng trong báo giá (hàng đã nhập SL mua rồi bị xoá khỏi báo giá vẫn hiện để thấy lỗi); màn Xem giữ ô "Chỉ hiện mã đã áp dụng". BE vẫn chặn lúc lưu (`QuotationPromotionService.php:497`). Script `e2e-km/run_ui.py` dòng 88-97 còn click ô tích cũ → cần cập nhật trước khi chạy lại. CHƯA test UI.
+- [x] 11/11 Đã push `develop` (333a6ecf6) + merge develop vào `gop_db-xuat-hang-cha-con` (ca3202c12, 90 commit develop kéo theo, API chưa merge) + build hrm_crm xong (script server khai nhánh rbac nên chạy bản sao đổi BRANCH_NAME).
+- [x] 11/11 Kiểm Playwright trên hrm_crm (BG-496, bản nháp không lưu): nhãn "Số lần nhận" + ⓘ, placeholder "Tối đa 11", nhập 11 hợp lệ (SL nhận 22), nhập 22 báo đỏ "Tối đa 11 lần" và SL được tặng đứng yên 22, ô tích lọc mã đã biến mất ở màn Sửa.
+- Ghi chú trả lời chị Lệ: lỗi đỏ ở ô SL mua xô 18L "Hàng ENEO-700-V5262 không có trong báo giá" là đúng — báo giá phải có dòng xô 18L trước.
+
 ## Phase 4 — Đẩy code + lên dev (30/10/2026) — @cuong61n
 - [x] 30/10 Gom file báo giá (Phase 1/1b/3) thành nhánh `feature/quotation-gap-0308` dựng từ `origin/gop_db`, không gồm file của phiên khác đang sửa trong worktree (Rank, phiếu công tác, meeting, quyết định nhân lực) — đã push 3 repo: hrm-api 196b0ccdd, hrm-client ca8b12874, TanPhatDev 51664d41c
 - [x] 30/10 Merge vào nhánh dev: hrm-api `develop` 80337359a, hrm-client `develop` 4e2a3e1fc (gỡ conflict nối 2 bên: ProductPickerRequest `product_cate`+`stock_company_ids`, ProductExportService `updater_name`+`note`, product-list-screens cột `updater_name`+`LINKED_COLUMNS`), ERP `develop_02` 9330af057 (không conflict)

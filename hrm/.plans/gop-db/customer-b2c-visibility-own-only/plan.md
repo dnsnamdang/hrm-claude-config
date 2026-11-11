@@ -20,3 +20,6 @@ Trạng thái: đã sửa code trên nhánh `gop_db`, chưa commit, chưa test.
 - [x] 6. Dropdown chọn khách (`searchForSelect2`, dùng ở form Hợp đồng bán đầu kỳ) chỉ có 1 ô gõ: gõ trọn SĐT (≥ 8 số) thì tìm chính xác để khách cá nhân của người khác hiện ra
 - [x] 7. Test local: người tạo thấy khách qua mã; người khác tìm mã/tên không thấy, tìm SĐT thấy; khách tổ chức thấy đủ
 - [x] Đã đẩy prod bản đầu (commit 463dddc62). Bản sửa 5–6: đã commit local trên `gop_db`, chờ user cho đẩy
+- [x] 8. FE form Hợp đồng bán đầu kỳ: ô Khách hàng chuyển sang popup chung `ChooseErpCustomerModal` + `V2BasePickerInput`, tự kiểm bắt buộc khi Lưu (2026-11-11)
+- [x] 9. Test Playwright local (:3002, tk manhnv.kd1): popup 11.171 KH; tìm tên/mã khách cá nhân của người khác → ẩn; đủ SĐT → hiện; một phần SĐT → ẩn; chọn → điền Địa chỉ/SĐT; × → xoá sạch; Lưu trống → 3 ô đỏ "Bắt buộc phải nhập"
+- [x] 10. Đã đẩy `gop_db` (api 9d21bb754, client 3c5473036) và deploy prod bằng build_tpe.sh ngày 2026-11-11. Chưa test Báo giá/Meeting/TKT trên giao diện (cùng popup)

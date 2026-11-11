@@ -1,0 +1,43 @@
+500100136224 | Gaviscon
+500110086823 | Fycompa 4mg
+500110413225 | Apretude
+500114446023 | Zoladex
+560110120824 | Aminoral
+560110127324 | Enlapylac 10
+560110167700 | Decebal 75
+560110178723 | Paroxetina GP
+560110331025 | Neocef 100 mg/ 5 ml
+560110401323 | Cyzina
+560110433425 | Cefmidon
+560110439323 | Femadex 10
+560110519124 | Ondansetron Kabi 2mg/ml
+560110961524 | Bluecan HCTZ
+560110962324 | Pragmiak 10mg
+560110963124 | Cefuroxime Kabi 1500mg
+570110990324 | Vancomycin
+590100073923 | Zyx, film-coated tablets
+590110018124 | Levonor
+590110024825 | Bisoprolol 5mg
+590110037926 | Vicebrol forte
+590110071123 | Valsacard
+590110175023 | Salmex Inhalation powder
+590110178423 | Hevipoint 200mg
+590110432523 | Lamictal 100mg
+590110524824 | Lamictal 50mg
+590410647424 | Scilin M30 (30/70)
+594100035726 | Espumisan Capsules
+594100303025 | Painnil
+594110008325 | Alopurinol Arena 100 mg Tablets
+594110014125 | Tusligo
+594110348424 | Oxacilina arena 500mg capsules
+594114516224 | Vinorelsin 50mg/5ml
+594115444525 | Oradays
+599110007623 | Dutasteride
+599110011724 | Clostilbegyt
+599110026623 | Torvazin
+599110028223 | Beatil 8mg/10mg
+599110042026 | Milurit
+599110069326 | Xiltess 10 mg
+599110302925 | Miderix
+599110407823 | Piracetam-Egis
+599110447423 | Aripegis

@@ -257,6 +257,197 @@ Repo: `sphacy_api` (nhánh chính `api2`, nhánh tính năng `dqg`),
   test, **chưa commit vào nhánh `dqg`**. Ai deploy lại hoặc `git reset` trên server test
   là mất vá và lỗi quay lại ngay giữa lúc tester đang chạy.
 
+## 11/11/2026 — Kiểm phản ánh "mã dược tự gán vào thuốc" ở cổng chính — @cuong61n
+
+- [x] Tester báo: NHÀ THUỐC SỐ 20 - 268 HÒA HẢO (cơ sở 1551) có thuốc **DIOSRIN**
+  (`DRUG788457`) hiện Mã quốc gia `893100328824`, tra trên CSDL Dược lại ra thuốc tên
+  khác. Đã tra prod, kết luận: **phần mềm không tự gán gì cả.**
+  - Cột "Mã quốc gia" ở màn Danh sách thuốc chỉ **tra ngược**: lấy `drug.registry_number`
+    đem khớp với `csdlduoc_drugs.id` (`CsdlDuocController::drugCodes`). Không có luồng
+    nào ghi vào danh mục thuốc khi hiển thị.
+  - `893100328824` chính là **số đăng ký đang nằm sẵn ở ô Số đăng ký của DIOSRIN**, có
+    từ trước, không qua chức năng "Áp số đăng ký mới" (`registry_number_replaced_at`
+    rỗng). Toàn prod chỉ đúng 1 bản ghi mang mã này.
+  - Mã đó là của **Bividios** — hoạt chất `Diosmin 450mg; Hesperidin 50mg`, trùng khít
+    hoạt chất DIOSRIN, chỉ khác tên thương mại. Tên trên cổng là "Bividios" (ảnh chụp mờ
+    nên dễ đọc nhầm), **không phải mã rác**.
+  - Bản thân tên **DIOSRIN không có trong danh mục quốc gia** (0 bản ghi trong
+    `csdlduoc_drugs`, 0 trong `drug_master_data`).
+- [x] Hậu quả có thật: 2 hoá đơn của cơ sở này chứa DIOSRIN đã gửi và bị Bộ trả lỗi,
+  trong đó `HD2321925` ghi rõ *"Sản phẩm 'Bividios' không đủ tồn kho"* — tức Bộ đang
+  ghi nhận mặt hàng này dưới tên Bividios.
+- [x] Quét rộng cơ sở 1551: **48 mặt hàng** có số đăng ký khớp danh mục quốc gia nhưng
+  tên lệch hẳn. Đa số vô hại (khác cách gọi: `Ercefuryl`↔`Ercéfuryl`,
+  `CALCIUM SANDOZ 600`↔`CalSource 600`), nhưng có vài ca sai thật đáng xem lại:
+  `Medskin Ery`↔`GliritDHG 500mg/5mg`, `Kachita`↔`Nhiệt miệng Nhất Nhất`,
+  `CALCERGY`↔`Colchicine Tablets BP`. **Tất cả đều không qua chức năng áp mã** — là dữ
+  liệu nhà thuốc tự nhập từ nhiều năm trước.
+- [x] **Truy ra nguồn mã**: `drug_option` id 88557 — cùng `drug_code DRUG788457`, cùng
+  số đăng ký `893100328824`, `created_at` trùng **đúng từng giây** với bản ghi `drug`
+  (2026-01-25 08:49:56), `status = 'pending'`. Đây là bản sinh đôi mà hệ thống ghi sang
+  hàng chờ duyệt danh mục chung mỗi khi nhà thuốc **tự khai một thuốc mới**. Tức mã do
+  chính người của nhà thuốc gõ vào ô Số đăng ký hôm tạo thuốc, không phải máy sinh ra.
+  Bảng `drug` không có trigger audit nào (chỉ `drug_drugautosearch_trig` phục vụ tìm
+  kiếm), nên `drug_option` là dấu vết duy nhất còn lại.
+- [x] Nhà sản xuất lệch: nhà thuốc ghi *Công ty cổ phần dược phẩm Reliv*, còn Bividios
+  trong danh mục quốc gia là của *Công ty TNHH BRV Healthcare* (cấp 27/05/2024). Quy
+  cách thì lại khớp (`Hộp 6 vỉ x 10 viên` nằm trong quy cách của Bividios).
+- [x] **Kiệt phản biện** (11/11, 09:07-09:10): cơ sở này còn một mặt hàng tên đúng
+  **Bividios** `DRUG770895` đang "Chưa ánh xạ", nên số mới phải thuộc về nó; và mã 12 số
+  là mã mới thì không thể "gõ từ lâu". Đã tra lại — Kiệt **đúng về nghiệp vụ, sai về
+  nguyên nhân**:
+  - `DRUG770895` Bividios: hãng *BRV Healthcare* (khớp danh mục quốc gia), số đăng ký
+    `VD-29607-18`, `active='no'` (đã ngừng kinh doanh), sửa lần cuối 06/11/2026 11:40:16.
+    Hiện "Chưa ánh xạ" vì `VD-29607-18` không có trong `csdlduoc_drugs`, kể cả ở cột
+    `old_registration_number` → không có đường tự nối số cũ sang số mới.
+  - `DRUG788457` DIOSRIN sửa lần cuối 06/11/2026 11:39:57 — **cách nhau đúng 19 giây**.
+    Một người ngồi xử lý liền hai mặt hàng.
+  - Mã mới `893100328824` được Bộ cấp **27/05/2024**, tức trước khi nhà thuốc tạo DIOSRIN
+    (25/01/2026) 20 tháng. Gõ tay hoàn toàn khả thi.
+- [x] **Phép thử loại trừ chức năng áp mã**: với 31 thuốc đã qua `applyRegistry` ở cơ sở
+  này, `drug_option` vẫn giữ **số đăng ký CŨ** trong mọi trường hợp (`DRUG639669`
+  `VD-34347-20` trong khi `drug` đã thành `893110119325`…). `drug_option` không có
+  trigger và không bao giờ được ghi lại khi sửa thuốc. Mà `drug_option` của DIOSRIN đã
+  mang `893100328824` ngay từ 25/01/2026 ⇒ **mã do người gõ lúc tạo thuốc, không phải
+  phần mềm gán.**
+- [x] Lịch sử bấm nút "Áp số đăng ký mới" của cơ sở 1551: 05/11/2026 09:54:14 (4 thuốc)
+  và 06/11/2026 10:23:55 (27 thuốc). Bảng `csdlduoc_drug_map` có 27 dòng (22 `approved`
+  + 5 `out_of_scope`), **không dòng nào trỏ tới `893100328824`**.
+- [x] Trong 67 thuốc Diosmin+Hesperidin của danh mục quốc gia, **không có tên nào là
+  Diosrin và không có thuốc nào của Reliv** → DIOSRIN không có đường liên thông hợp lệ.
+- **Cần nhà thuốc xác nhận**: DIOSRIN có đúng là Bividios không. Nếu không thì phải sửa
+  ô Số đăng ký, vì đang khai sai biệt dược lên Bộ.
+
+## 11/11/2026 — LỖI THIẾT KẾ: thuốc khớp thẳng số ĐK không sửa lại được — @cuong61n
+
+Từ ca DIOSRIN, Cường chỉ ra hai điểm — tra code thì **đúng cả hai**, đây là lỗi thật:
+
+- [x] **Không vào được màn Liên kết thuốc.** `CsdlDuocMapController::danhSach()` loại hẳn
+  thuốc đã khớp thẳng:
+  `AND NOT EXISTS (SELECT 1 FROM csdlduoc_drugs n WHERE n.id = btrim(d.registry_number))`
+  (cả ở `summary()`). Thuốc nào số đăng ký dò trúng danh mục Bộ là biến mất khỏi màn
+  ánh xạ — dù trúng **nhầm thuốc khác**. Dược sĩ không có đường nào sửa.
+- [x] **Sửa được cũng vô ích.** `CsdlDuocService::findNationalDrug()` xếp khớp thẳng số
+  đăng ký là bước 1, ánh xạ tay là bước 2 dự phòng. Nên nếu dược sĩ liên kết tay sang mã
+  đúng, lúc đẩy chứng từ **vẫn gửi theo mã khớp thẳng**. `CsdlDuocController::drugCodes()`
+  cũng vậy: `ORDER BY t.id, n1.id NULLS LAST` cho khớp thẳng thắng ánh xạ tay.
+- [x] **Quy mô** (49 cơ sở đang bật liên thông): 16.045 thuốc khớp thẳng / 45.792 không
+  khớp. Trong nhóm khớp thẳng có **705 mặt hàng tên lệch hẳn tên bên danh mục Bộ** — tất
+  cả đều đang không vào được màn Liên kết thuốc. Phần lớn chỉ là khác cách gọi
+  (`Ercefuryl`↔`Ercéfuryl`), nhưng không ai rà được thì không biết ca nào sai thật.
+- [x] **Đã sửa xong, test local kỹ** (11/11/2026). Cường chốt: cột Mã quốc gia chỉ hiện
+  mã khi đã liên kết tay; thuốc khớp thẳng gộp chung vào màn Liên kết thuốc; chưa xác
+  nhận thì vẫn đẩy theo mã tự khớp (không để 49 cơ sở đứt liên thông giữa kỳ).
+
+  **Backend**
+  - `CsdlDuocService::findNationalDrug()` — đảo thứ tự: ánh xạ tay đã duyệt TRƯỚC, khớp
+    thẳng số đăng ký sau. Đây là bước then chốt, không có nó thì sửa ánh xạ vô nghĩa.
+  - `CsdlDuocMapController::index()`/`summary()` — bỏ `NOT EXISTS`, thêm `LEFT JOIN
+    LATERAL` lấy mã tự khớp (`tu_khop_id/ten/nsx`), thêm bộ lọc ảo `status=auto_matched`
+    và hai số đếm `ton_tu_khop` / `tong_tu_khop`.
+  - `CsdlDuocController::drugCodes()` — `ORDER BY n2.id NULLS LAST` (ánh xạ tay thắng,
+    khớp đúng thứ tự lúc đẩy); trả `source` = manual|auto, mã tự khớp để ở `auto_code`
+    chứ không ở `code`.
+  - `bulkApprove()` — nhận cả dòng tự khớp (trước đây báo "bỏ qua N thuốc không có gợi ý").
+  - **Mới**: `POST /api/csdlduoc/drug-map/approve-auto` — xác nhận cả nhóm tự khớp, bắt gõ
+    `confirm=XAC NHAN TU KHOP`, ghi `match_type='auto_registry'`, chèn theo lô 500.
+
+  **Frontend**
+  - `DrugList.jsx` — cột Mã quốc gia ba trạng thái: mã (đã liên kết) / "Chờ xác nhận"
+    (tự khớp, chữ vàng, tooltip nêu mã và tên bên Bộ) / "Chưa ánh xạ". File excel vẫn
+    lấy cả mã tự khớp vì khách dùng nó khai tồn đầu kỳ, phải khớp mã SPHACY thật sự gửi.
+  - `CsdlDuocDrugMap.jsx` — `OChon` ưu tiên mã tự khớp trên gợi ý máy; **cảnh báo đỏ
+    "Tên lệch hẳn"** khi tên hai bên không trùng 5 ký tự đầu; tag "Khớp số ĐK"; tick chọn
+    và nút Đúng dùng được cho dòng tự khớp; ô cảnh báo + nút xác nhận cả nhóm; bộ lọc
+    "Tự khớp theo số ĐK"; "Còn lại" trừ nhóm tự khớp ra để con số không nhảy vô cớ.
+
+  **Kết quả test local** (PHP 7.4, cơ sở 797 — có sẵn ca y hệt DIOSRIN: `GLUCOFINE 500MG`
+  mang số `VD-14811-11` mà bên Bộ là *Gel Kupscarcare 10g*):
+  - Trước vá ca này KHÔNG hiện trong màn Liên kết thuốc; sau vá hiện ra kèm cảnh báo đỏ.
+  - Sửa liên kết sang `893110497324` qua giao diện → cột Mã quốc gia đổi từ "Chờ xác nhận"
+    sang `893110497324`; `findNationalDrug` trả đúng mã mới; cơ sở khác chưa liên kết vẫn
+    rơi về khớp thẳng (liên thông không đứt).
+  - Sửa liên kết **chữa luôn** lỗi quy đổi đơn vị: dòng GLUCOFINE biến mất khỏi bảng
+    "thiếu hệ số" vì mã mới có quy cách Viên thay vì Tuýp của tuýp gel.
+  - **Regression toàn cơ sở**: duyệt 3.484 mặt hàng, so mã đẩy cũ/mới — **chỉ 1 mặt hàng
+    đổi** (đúng cái cố ý sửa), không mặt hàng nào mất mã.
+  - `approve-auto`: chặn khi thiếu confirm; chạy ra 185 dòng (còn tồn) rồi 1.183 dòng (cả
+    danh mục); chạy lại lần hai không nhân đôi; mã đẩy của nhóm này không đổi.
+  - Hiệu năng: 265ms (pending), 610ms (all, 3.360 dòng), 261ms (summary).
+  - `csdlduoc:scan-missing --dry-run`, `csdlduoc:poll` chạy sạch. Truy vấn mới kiểm cả
+    trên cơ sở **GDP 1349** (17 tồn cần xử lý / 5 tự khớp / 3.193 tổng).
+  - Đã dọn sạch dữ liệu test ở local, `csdlduoc_drug_map` của 797 về đúng 10 dòng ban đầu.
+- **Hướng sửa ban đầu** (đã làm hết):
+  1. Cho thuốc khớp thẳng vào màn Liên kết thuốc dưới một bộ lọc riêng ("Tự khớp theo số
+     ĐK"), mặc định vẫn ẩn để không ngập 16.045 dòng.
+  2. Đảo thứ tự ưu tiên: ánh xạ tay đã duyệt phải **thắng** khớp thẳng, ở cả
+     `findNationalDrug()` lẫn `drugCodes()`. Không làm bước này thì bước 1 vô nghĩa.
+  3. Cột "Mã quốc gia": phân biệt mã **tự khớp** với mã **đã liên kết tay**. Bỏ hẳn
+     hiển thị mã tự khớp sẽ lặp lại lỗi cũ — dược sĩ tưởng chưa ánh xạ nên không dám khai
+     tồn đầu kỳ, dù liên thông vẫn chạy đúng.
+
+## 11/11/2026 — Đẩy bản sửa liên kết thuốc lên cổng chính — @cuong61n
+
+- [x] Commit lên `dqg` rồi cherry-pick sang nhánh prod (`api2` cho API, `main` cho web),
+  **không** mang theo tab "Tồn đầu kỳ & đẩy bù" — Cường yêu cầu giữ nguyên trạng thái
+  đóng. Kiểm lại sau khi cherry-pick: 4 route `csdlduoc/replay` vẫn comment, lịch chạy
+  `csdlduoc:replay-run` vẫn comment, `CsdlDuocConnect.jsx` vẫn ẩn tab.
+- [x] **API** `fc6459e`: deploy cả hai server `42.96.43.234` và `42.96.40.220`
+  (`git merge --ff-only FETCH_HEAD`, `config:clear`, `route:clear`). Không có migration
+  mới; đã soát `migrate:status` — 9 migration csdlduoc đều `Y`. Commit trước khi deploy
+  là `4b630dd`, ghi ở `/tmp/api_truoc_deploy_20261111.txt` trên cả hai máy để rollback.
+  Kiểm qua LB: `POST /api/csdlduoc/drug-map/approve-auto` trả 200 sáu lượt liên tiếp,
+  cả 4 route `csdlduoc/replay*` vẫn 404.
+- [x] **Web** `7ecf3f5`: build GPP và GDP riêng (`NODE_OPTIONS=--max-old-space-size=8192`),
+  chép lên cả `42.96.41.13` và `42.96.41.135`, cho cả `/var/www/html/sphacy_gppweb` lẫn
+  `/var/www/html/gdp`. Bản cũ đổi tên `build_truoc_lienketthuoc_20261111` (rollback được).
+  Script deploy có chốt an toàn: grep `auto_matched` trong bundle mới, thiếu thì dừng chứ
+  không đụng bản đang chạy. Kiểm qua LB: `gpp.thuocvietnam.vn` main.aedf1b9d,
+  `gdp.thuocvietnam.vn` main.35936fb0, chunk `1.63e604f7` có `auto_matched` ở cả hai tên miền.
+- [x] **Kiệt báo thêm**: search "Gaviscon" ở ô tìm mã quốc gia ra 5 kết quả, cổng Bộ ra 6.
+  **Không phải lỗi SPHACY** — mã thiếu là `500100136224` (Gaviscon, hộp 24 gói x 10ml).
+
+  Chẩn đoán qua ba vòng, hai vòng đầu tôi kết luận sai nên ghi lại cho rõ:
+  1. Gọi qua `CsdlDuocClient::get()` thấy `body => null` → tưởng "bản ghi hỏng bên Bộ".
+  2. Đọc **raw body** thì ra trang HTML `<title>Request Rejected</title> ... Your support
+     ID is: 14916108910044169134`, HTTP vẫn 200 → tưởng tường lửa bên Bộ chặn. Client
+     parse JSON thất bại nên nuốt mất trang này thành `null`.
+  3. Thử mã bịa (`KHONGCOMANAY`, `abc`, `VD-99999-99`, `00000000`) — **đều trả đúng trang
+     đó**. Còn 12/12 mã lấy ngẫu nhiên từ `csdlduoc_drugs` trả JSON bình thường. Vậy
+     "Request Rejected" chính là cách hệ quốc gia báo **không có mã này**, không phải chặn.
+
+  Kết luận: `500100136224` **không tồn tại trong kho mà API tích hợp phục vụ**, dù cổng
+  tra cứu công khai liệt kê nó. Hai kho khác nhau — đúng kiểu đã gặp ở đơn thuốc quốc gia.
+  Bằng chứng chạy trên `ecs-prod-sphacy-api-01` lúc 11/11/2026 10:37, token cơ sở #1830:
+  5 mã Gaviscon còn lại trả 582–748 byte JSON, riêng mã này trả 247 byte HTML.
+
+  Danh mục prod vẫn 54.497/54.540, cron 03:00 còn chạy (`last_update_time` mới nhất
+  11/11 01:17).
+- [x] **Đo dứt điểm** (Cường hỏi "web với api lại khác nhau được nhỉ?" — câu hỏi đúng,
+  kết luận "hai kho khác nhau" của tôi là **sai**):
+  - Cả hai kênh đều báo **54.540**: `GET /v2/master/drugs?page=1&page_size=1` trả
+    `total: 54540`, cổng web trả `totalCount: 54540`. Cùng kho, cùng tên miền, chỉ khác
+    đường dẫn. Không hề là hai nguồn.
+  - Quét hết 1.091 trang qua API rồi vớt 35 trang rỗng theo lô 10 và hỏi lẻ từng bản ghi
+    (đúng cách `csdlduoc:sync-master` làm): lấy được **54.497**, còn **đúng 43 vị trí**
+    không lấy nổi — khớp y hệt lần đo 29/10, bằng một script viết hoàn toàn khác.
+  - So danh sách quét với 54.540 mã lấy từ cổng web thì lệch **hai chiều** (372 / 328) →
+    **phân trang của Bộ không ổn định**, bản ghi dịch chỗ giữa các lần gọi. Phải xác minh
+    lại từng mã bằng endpoint chi tiết: 372 ứng viên lọc còn **đúng 43 mã** API không trả.
+  - 43 mã đó **đều tiền tố 5xx** (thuốc nhập khẩu), trong khi 829 mã 5xx khác vẫn lấy
+    bình thường. Danh sách đầy đủ kèm tên thuốc: `43-ma-api-khong-tra-20261111.txt`.
+  - Ảnh hưởng thật trên prod: **17 cơ sở / 22 mặt hàng**. Trong đó **7 cơ sở đang bật
+    liên thông** đều vướng đúng **Gaviscon** (`500100136224`).
+  - Cách nhận ra: `GET /master/drugs/{ma}` trả **HTTP 200 kèm trang HTML F5**
+    `Request Rejected ... Your support ID is: 14916108910044169134`. Route sai thật thì
+    trả **404 thật** — đó là cách phân biệt. `CsdlDuocClient::get()` parse JSON hỏng nên
+    nuốt trang này thành `body => null`, chính chỗ đó làm tôi chẩn đoán nhầm hai lần.
+- **Đề xuất, chưa làm**: `decide()` chặn mã không có trong `csdlduoc_drugs`
+  ("Mã thuốc quốc gia không tồn tại trong danh mục đã đồng bộ"), nên 43 mã này dược sĩ
+  không liên kết tay được dù nhìn thấy trên cổng Bộ. Có thể (a) cho nhập tay mã ngoài danh
+  mục, hoặc (b) quét đối chiếu toàn bộ 54.540 mã từ API web công khai để biết đúng 43 mã
+  nào đang hổng. Chờ Cường quyết.
+
 ## Còn lại
 
 - 43 bản ghi danh mục Bộ không trả được (lỗi bên họ, hỏi lẻ từng bản ghi vẫn rỗng).
@@ -265,3 +456,21 @@ Repo: `sphacy_api` (nhánh chính `api2`, nhánh tính năng `dqg`),
 - Tab "Tồn đầu kỳ & đẩy bù" còn trên nhánh `dqg`, chờ tester chạy trên cổng test trước
   khi mở ở cổng chính.
 - Chưa làm: cảnh báo/gửi điều chỉnh khi hoá đơn bị sửa sau khi đã liên thông.
+
+## 11/11/2026 — Lấy được 43 mã bị tường lửa chặn & nạp danh mục prod
+
+- [x] **Tìm ra nguyên nhân gốc 43 mã API không lấy được** (đính chính 3 kết luận sai trước đó:
+  "bản ghi hỏng", "WAF chặn chung", "hai kho khác nhau" — đều SAI).
+  Thủ phạm: tường lửa F5 của Bộ chặn chuỗi 12 số khớp khuôn thẻ **Maestro** = tiền tố
+  `5[06-9]` + qua **Luhn**. Kiểm: 43/43 mã hợp Luhn + tiền tố 5x; 18/18 mã bịa khớp dự đoán
+  (5x+Luhn→chặn, Luhn-sai hoặc tiền tố khác→404 sạch); mã không tồn tại đúng khuôn vẫn chặn.
+- [x] **Lấy đủ 43/43 mã qua cổng tra cứu công khai**. Field đúng là `registrationNumber`
+  (không phải keyword/filter/productCode). Server curl vẫn bị chặn → phải **fetch trong
+  trình duyệt thật** (Playwright origin csdlduoc.com.vn) mới qua. Lưu
+  `43-ma-du-lieu-tu-cong-web-20261111.json` (code, name, quy cách, nước, loại kê đơn).
+- [x] **Nạp 43 mã vào `csdlduoc_drugs` prod** (idempotent ON CONFLICT). Sau nạp: 23 mặt
+  hàng / 18 cơ sở khớp được danh mục. Gỡ triệu chứng Kiệt báo "search phần mềm không ra mã".
+- [ ] **CHƯA kiểm: đẩy chứng từ 43 mã này có qua tường lửa không** — lệnh đẩy là POST từ
+  server (đang bị chặn với khuôn này). Cần đẩy 1 chứng từ thật (chờ user duyệt) hoặc thử sandbox.
+- [ ] Gửi Bộ: nới luật chặn thẻ Maestro trên `/v2/master/drugs/` + endpoint tra cứu; kèm
+  support ID và danh sách 43 mã.
