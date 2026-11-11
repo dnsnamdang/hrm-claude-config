@@ -43,6 +43,7 @@
 - [x] Fix bug: lưu phương tiện báo 422 thiếu cả 3 trường dù đã nhập — `dispatch('apiPost', url, payload)` làm rơi payload (Vuex dispatch chỉ nhận 1 payload) → đổi sang `apiPostMethod`/`apiPutMethod({ url, payload })` ở `VehicleModal.vue` + khóa/mở khóa ở `index.vue`
 
 ## Phase 3 — Bàn giao
+- [x] Push code (user yêu cầu 11/11/2026): API `3200bf0e`, Client `87c1663e` — thẳng `master`
 - [ ] User test tay (cần gán quyền "Quản lý phương tiện" cho vai trò/nhân viên trước khi vào màn)
   - [x] Tạo mới / Lưu — user xác nhận "lưu được rồi" (11/11/2026, sau fix apiPostMethod)
   - [ ] Sửa · Xem · Khóa/Mở khóa · Xóa · bộ lọc · sort · phân trang
