@@ -26,6 +26,15 @@ Chốt: quyền theo cấp y ERP (mã accounting.bao_cao_ton_hang_nhap_xuat_than
 **Checkpoint 11/11:** XONG. Smoke test BE đủ 4 mức phạm vi, Playwright 27/27 + không quyền PASS, user tự test trình duyệt xong. Đã push develop. Deploy phải chạy `permission:catalog-sync` (bật on_hrm cho mã quyền). Dữ liệu test local còn giữ (13 dòng id 15872–15884 + vai trò tạm 100216) — lệnh dọn ở plan.md T14/T15.
 Tài liệu: `.plans/gop-db/danh-sach-hang-xuat-nhap-thang/` · spec `docs/superpowers/specs/gop-db/2026-11-11-danh-sach-hang-xuat-nhap-thang-design.md`.
 
+## #12128 Xem trước file đính kèm trên mọi phiếu (ERP TanPhatDev) — ĐÃ MERGE gop_db, chờ QA (2026-11-12, @junfoke)
+
+Trạng thái: `task_12128` (4 commit, đến `fb17375071`) → `develop_02` `02b11a8a71` + `gop_db` `5d33749939`, đã push cả 2 (12/11).
+Kèm: thẻ file theo ảnh mẫu (icon màu, bấm = xem, chỉ icon tải mới tải) + sửa lỗi có sẵn gửi nhầm file khi xoá dòng ở 12 form (`track by $index`).
+Scope: 1 partial `partials/common-js/file-preview.blade.php` include ở `layouts/app` — popup xem trước giống HRM (ảnh `<img>`, PDF/txt Google Viewer, Office Online) + directive `a` tự gắn 👁 cho mọi link file S3/`/uploads` (~210 màn `document-item` + ~70 link lẻ), xem cả file chưa lưu.
+⚠️ GOTCHA: S3 CMC trả `octet-stream` + không CORS ⇒ không nhúng thẳng URL vào iframe / fetch. Lỗi `infdig` ở BBBGNT có sẵn từ trước.
+Bước tiếp: QA test trên dev; lỗi phát sinh sửa tiếp trên nhánh `task_12128`.
+Tài liệu: `.plans/gop-db/12128-xem-truoc-file-dinh-kem-erp/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-12-12128-xem-truoc-file-dinh-kem-erp-design.md`.
+
 ## Xoá HĐ + QĐ tiếp nhận của 3 NV Phòng Dự án trọng điểm trên PROD — HOÀN THÀNH 2026-11-09 (@cuong61n)
 
 Xoá 6 HĐ (592–594, 598–600/2026/HĐLĐ-TPE) + 3 QĐ tiếp nhận 153–155/2026/QĐTN-TPE của Sầm Văn Linh, Nguyễn Thế Huấn, Nguyễn Quang Tuyến. Đã sao lưu ra `~/Desktop/dns/backup_prod_xoa_hd_20261109.sql`.
@@ -266,6 +275,9 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là thấy. User 13/10: làm SAU, việc riêng (thu gọn dữ liệu HĐ nhúng trang, rà các màn kho tương tự).
 
 ## Đang làm
+
+- 12135-import-dm-cong-di-lai — Redmine #12135 → @junfoke → .plans/gop-db/12135-import-dm-cong-di-lai/plan.md
+  Trạng thái: 🟡 Đã lên dev chờ QA (12/11/2026): HRM `develop`, ERP `develop_02`. Nhánh feat chỉ ở local, CHƯA lên gop_db.
 
 - 11950-loc-phong-ban-dinh-bien — Redmine #11950 → @cuong61n → .plans/gop-db/11950-loc-phong-ban-dinh-bien/plan.md
   Trạng thái: 🟡 Code BE+FE xong, test BE đạt (30/10/2026), chờ test UI · chưa commit (worktree gop_db). Bộ lọc "Phòng ban định biên" chọn nhiều, QĐ phải chứa đủ mọi phòng đã chọn, phòng khoá 🔒.
@@ -2696,10 +2708,9 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   kiểm quyền theo mã — đã merge + push develop 10/11 (api `df407199e`, client `39c427075`), đã chạy trên dev-hrm. Chưa lên gop_db.
   Deploy: `permission:catalog-sync` (mã KH thêm `hrm`). Spec: docs/superpowers/specs/gop-db/2026-11-10-so-chi-tiet-cong-no-kh-design.md
 - yeu-cau-xuat-tach-ghep → @junfoke → .plans/gop-db/yeu-cau-xuat-tach-ghep/plan.md
-  Port 2 màn ERP Phiếu yêu cầu xuất tách + xuất ghép (dựng 1 khung chung). Trạng thái: 🟡 khảo sát xong 11/11/2026, chưa code —
-  chờ user chốt phạm vi (a) chỉ 2 màn / (b) kèm Đề nghị xuất kho từ tách-ghép.
-
-
+  Port 2 màn ERP Phiếu yêu cầu xuất tách + xuất ghép (1 khung chung) + nối chuỗi ĐNXK/PXK/PXH/Phiếu nhập (5 phase).
+  Trạng thái: 🟡 Phase 1-3, 4a, 5 đã commit 12/11/2026 (chưa push); còn 4b (ghép Xuất thẳng) + xem trình duyệt form PNH 8/10. Nhánh `feat/yc-xuat-tach-ghep` (thư mục chính 2 repo), cuối: api `63fa9ced0`, client `df66361e8`.
+  Spec: docs/superpowers/specs/gop-db/2026-11-12-yeu-cau-xuat-tach-ghep-design.md | Tóm tắt: .plans/gop-db/yeu-cau-xuat-tach-ghep/design.md
 - tuyen-duong-xa-moi-sau-sap-nhap → @junfoke → .plans/gop-db/tuyen-duong-xa-moi-sau-sap-nhap/plan.md
   Trạng thái: 🟡 **Đã xuất Excel đề xuất (05/11/2026)**: `D:\CompanyProject\DB\tuyen_duong\tuyen_duong_moi_de_xuat.xlsx` — Lớp 1 1.826 tuyến (301 cần khảo sát) + Lớp 2 1.847 tuyến (102 cần khảo sát), km gợi ý Goong. Chờ nghiệp vụ duyệt km → viết lệnh nhập → khoá tuyến cũ.
 
