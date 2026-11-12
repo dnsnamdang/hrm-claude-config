@@ -474,3 +474,14 @@ Từ ca DIOSRIN, Cường chỉ ra hai điểm — tra code thì **đúng cả h
   server (đang bị chặn với khuôn này). Cần đẩy 1 chứng từ thật (chờ user duyệt) hoặc thử sandbox.
 - [ ] Gửi Bộ: nới luật chặn thẻ Maestro trên `/v2/master/drugs/` + endpoint tra cứu; kèm
   support ID và danh sách 43 mã.
+
+## 12/11/2026 — Sửa ô quy đổi mất số ở bảng liên thông (phản ánh prod)
+
+- [x] **Lỗi**: màn Liên kết thuốc (`/lien-thong-csdl-duoc/3`), bảng "Quy đổi đơn vị",
+  gõ hệ số ở trang 2+ rồi blur là mất số. Nguyên nhân: `CsdlDuocUnitConv.jsx` cập nhật
+  state theo `idx` của render antd — chỉ số này tính theo TRANG hiện tại nên từ trang 2
+  lệch với mảng `items`, ghi nhầm sang dòng trang 1; nguy hơn là "Lưu tất cả" khai nhầm.
+  Sửa: cập nhật theo khoá riêng dòng (`drugId+unitId`). Commit `06cb861` nhánh main.
+- [x] Đã test trang 1 trên cổng test (gõ giữ nguyên); cơ sở 945 chỉ 2 dòng quy đổi nên
+  không ép được trang 2 — dựa vào cơ chế antd để chốt.
+- [x] Deploy prod 12/11: build GPP+GDP (chunk vá 1.89a6f88d), đẩy cả 2 webstatic 41.13/41.135 × 2 thư mục (gpp + gdp). Xác minh index.html prod trỏ đúng hash 89a6f88d, chunk tải 200 qua LB. Bản cũ lưu `build_truoc_oquydoi_20261112` (đường lùi). Commit main `06cb861`, cherry-pick dqg `2781adf`.

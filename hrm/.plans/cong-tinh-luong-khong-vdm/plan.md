@@ -48,3 +48,9 @@ Vừa hoàn thành: code Phase 1-3 + chạy seeder + test đủ 3 màn và 2 fil
 Đang làm dở: không.
 Bước tiếp theo: chờ task Redmine #11457 duyệt giá → commit/push (chưa commit theo quy ước).
 Blocked: ⚠️ `SystemSalaryCompositionSeeder` `truncate()` bảng `system_salary_compositions` trước khi insert — chạy trên server thật cần cân nhắc, hoặc thay bằng 1 lệnh insert riêng cho id 41.
+
+## Phase 5 — Đưa `CONG_TINH_LUONG` vào DB dev + prod TPE (12/11/2026) ✅
+
+- [x] Điều tra (#11457): màn `/payroll/salarycomposition/system-category` trên dev không thấy "Công tính lương" vì bảng `system_salary_compositions` dev (`hrm_erp_test`) chỉ có 39 bản ghi, thiếu mã `CONG_TINH_LUONG` (bản insert tay 02/10 đã mất). Không công ty nào đã thêm nên API không ẩn.
+- [x] Insert 1 bản ghi (không chạy seeder vì seeder `truncate()`): dev `/var/www/tpe` (`hrm_erp_test`) và prod TPE `/var/www/tpe` (`hrm_erp_gop`) → cả hai 39 → 40 bản ghi, id 41, type=2, feature=3, value_type=1, status=1. Đã đọc lại bản ghi sau insert. Code BE `CONG_TINH_LUONG` đã có sẵn trên cả 2 server. Các site khác (etek/toyota/etekgreen/etekpower…) không đụng.
+- [ ] Còn lại: nhờ tester mở lại màn trên dev để xác nhận thấy dòng "Công tính lương". Nên đổi seeder sang `updateOrInsert` theo `code` để không mất lần nữa (chưa làm).

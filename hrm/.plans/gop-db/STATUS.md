@@ -152,6 +152,11 @@ Scope: 1 partial `partials/common-js/file-preview.blade.php` include ở `layout
 Bước tiếp: QA test trên dev; lỗi phát sinh sửa tiếp trên nhánh `task_12128`.
 Tài liệu: `.plans/gop-db/12128-xem-truoc-file-dinh-kem-erp/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-12-12128-xem-truoc-file-dinh-kem-erp-design.md`.
 
+## Làm lại màn Bảng định biên theo quy mô (chặn xóa khi dùng Quyết định + giao diện V2) — CODE XONG, CHỜ TEST 2026-11-12 (@cuong61n)
+
+Khách phản ánh màn vẫn cho xóa dòng định biên khi đang dùng Quyết định. BE: cờ `is_can_delete` + chặn 423 + lọc keyword/nhóm chức vụ/chức vụ; FE: viết lại theo khuôn V2 menu ngang, bỏ ô lọc Công ty.
+Tài liệu: `.plans/gop-db/department-manpower-redesign/plan.md`. Chưa làm: popup V2, Xuất Excel, Tuỳ chỉnh cột, Lịch sử.
+
 ## Xoá HĐ + QĐ tiếp nhận của 3 NV Phòng Dự án trọng điểm trên PROD — HOÀN THÀNH 2026-11-09 (@cuong61n)
 
 Xoá 6 HĐ (592–594, 598–600/2026/HĐLĐ-TPE) + 3 QĐ tiếp nhận 153–155/2026/QĐTN-TPE của Sầm Văn Linh, Nguyễn Thế Huấn, Nguyễn Quang Tuyến. Đã sao lưu ra `~/Desktop/dns/backup_prod_xoa_hd_20261109.sql`.
