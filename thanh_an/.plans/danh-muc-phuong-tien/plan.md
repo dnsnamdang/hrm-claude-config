@@ -42,6 +42,9 @@
 - [x] Đổi tiếp nút "Lưu và tiếp tục" sang `primary` — cùng màu nút Lưu (user yêu cầu 11/11/2026)
 - [x] Fix bug: lưu phương tiện báo 422 thiếu cả 3 trường dù đã nhập — `dispatch('apiPost', url, payload)` làm rơi payload (Vuex dispatch chỉ nhận 1 payload) → đổi sang `apiPostMethod`/`apiPutMethod({ url, payload })` ở `VehicleModal.vue` + khóa/mở khóa ở `index.vue`
 
+- [x] Cột Ngày tạo bỏ giờ: `VehicleResource` `created_at` format `d/m/Y` (user yêu cầu 12/11/2026)
+- [x] Cột Phòng phụ trách nhiều phòng → mỗi phòng 1 dòng: `index.vue` thêm slot `cell(department_names)` lặp `item.departments` (BE đã trả mảng, không sửa BE) (user yêu cầu 12/11/2026)
+
 ## Phase 3 — Bàn giao
 - [x] Push code (user yêu cầu 11/11/2026): API `3200bf0e`, Client `87c1663e` — thẳng `master`
 - [ ] User test tay (cần gán quyền "Quản lý phương tiện" cho vai trò/nhân viên trước khi vào màn)

@@ -56,3 +56,28 @@ Vừa hoàn thành: user tự test trình duyệt xong; commit + push develop (h
 Đang làm dở: không
 Bước tiếp theo: deploy chạy `permission:catalog-sync`; dọn dữ liệu test local (T14/T15) khi user báo.
 Blocked:
+
+## Phase 4 — Redmine #12137 (12/11/2026, @khoipv)
+- [x] T16. Dropdown Thương hiệu / Hãng SX đổ CẢ danh mục `status = 1` như ERP (bỏ lọc "chỉ giá trị có hàng tồn") — BE `filterMeta`
+- [x] T17. Nút Cấu hình cột theo chuẩn list-page: `V2BaseButton secondary size="sm"` (đang là `V2BaseIconButton size="lg"`)
+- [x] T18. Đổi tên màn → "Báo cáo tồn hàng nhập xuất thẳng theo nhân viên" (tiêu đề màn + popup xem trước + tên sheet Excel)
+- [x] T19. Ô chọn cấp bung trong tiêu đề cột Tên hàng: Đến phòng ban / Đến nhân viên / Đến hàng hóa (mặc định Đến hàng hóa)
+- [x] T20. Thu hẹp cột để vừa màn nhỏ, không cuộn ngang
+- [x] T21. Bản in: dòng ngày in nghiêng căn giữa dưới tiêu đề (bỏ bảng "Ngày in"); in đậm Tổng cộng / phòng / nhân viên (`!important` — CSS trang in đè `font-weight`)
+- [x] T22. Excel: tên phòng + nhân viên căn trái (ô gộp ExcelJS dùng chung object style → vòng kẻ viền ghi đè căn giữa của cột ĐVT lên ô chủ)
+
+### Checkpoint — 2026-11-12
+Vừa hoàn thành: #12137 đủ 7 mục — BE `ImportDirectStockReportService::filterMeta` (danh mục status=1, local 1120 TH / 981 HSX),
+bản in `import-direct-stock-list.blade.php` (dòng "Tính đến: …" nghiêng giữa + đậm !important), FE `index.vue` (tên màn, nút cấu hình
+cột, ô chọn cấp, cột tổng 940px), `export-excel.js` (bỏ qua ô phụ vùng gộp — đã chạy thử: phòng/NV căn trái, TỔNG CỘNG giữa).
+Đang làm dở: không
+Bước tiếp theo: user mở trình duyệt kiểm ô chọn cấp + độ rộng cột ở màn 1366; chưa commit.
+Blocked:
+
+## Phase 5 — #12137 bổ sung mục 8, 9 (12/11/2026, @khoipv)
+- [x] T23. (mục 8) ⓘ "MỤC ĐÍCH BÁO CÁO" ở `#title-suffix` bộ lọc — `ReportInfoTip` (khuôn Thẻ kho)
+- [x] T24. (mục 9, chỉ điều tra trên dev) PXH-43223 = xuất thẳng loại 14, người lập phiếu Thu Trang (209, kế toán) nhưng YCXH-44387
+      do Trần Văn Thắng (87, NVKD) lập. ERP `ProductExport::updateWarehouse` trừ tồn nhập thẳng của NGƯỜI LẬP YCXH; báo cáo chỉ
+      hiện tồn > 0 (ERP `having qty > 0`, HRM giống). Dev: NV 209 và 87 đều 0 dòng, mã XM-XM-DDBUONGDOT 0 dòng → không phải lỗi báo cáo.
+- [ ] T25. Lỗ hổng phát hiện thêm (CHƯA sửa, chờ user): HRM `Assign\ProductExportService` tạo PXH xuất thẳng KHÔNG trừ
+      `product_import_direct_details` như ERP (:1256-1310) → tồn nhập thẳng trên báo cáo bị thừa sau khi xuất thẳng ở HRM.

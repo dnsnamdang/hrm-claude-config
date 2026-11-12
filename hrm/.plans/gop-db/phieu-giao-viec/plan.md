@@ -252,3 +252,19 @@ PGV TPE.PGV.2026018146, phiếu nhập KQ id 9116 tạo trên cổng HRM. Ảnh 
       + base `parent_id IS NULL`, `status != Hủy` (dòng 169-170) → y ERP. Form PGV HRM cũng KHÔNG có khối người thực hiện
       (`WrAssignTaskSourceService` trả `executors => []`, `WrAssignTaskStoreService` không ghi executor) → nguồn duy nhất vẫn là PCT
       (`syncWrAssignTaskExecutors`, cùng bảng `employees` nên id khớp). Không sửa code
+
+## Fix #12138 — Phiếu giao việc được giao: sort cột, (*) màn chi tiết, số Tổng hợp (2026-11-12, @khoipv)
+- [x] Bug 1: sort cột "Số hợp đồng" + "Số phiếu yêu cầu" — BE `WrAssignTaskService::SORTABLE` thêm 2 khoá, sort theo biểu thức
+      subquery cùng thứ tự `presentBase()` (HĐ/BH/PL → HĐ bán của YC lắp đặt; YC lắp đặt → YC giao việc khác); FE `index.vue` bật `sortable`
+- [x] Bug 2: màn chi tiết hiện (*) đỏ y ERP (`form.blade.php`: chứng từ nguồn, Khách hàng, Người liên hệ, Ngày dự kiến bắt đầu/kết thúc,
+      cột Hàng hóa / Tên vật tư / Công phụ tính P3) — bỏ điều kiện `!readonly`
+- [x] Bug 3: bảng "I. Tổng công định mức" in 2 số lẻ cố định như ERP `number:2` (0.30 / 0.00) — HRM đang cắt (0.3 / 0)
+- [x] Verify: tinker sort asc/desc 2 cột ra đúng thứ tự trên DB local, SQL qua `filteredQuery` đúng; FE compile OK
+      (vue-template-compiler + babel). Chưa mở trình duyệt
+
+### Checkpoint — 2026-11-12
+Vừa hoàn thành: fix 3 bug #12138 (BE `WrAssignTaskService` SORTABLE + SORT_EXPRESSIONS; FE index.vue, WrAssignTaskForm,
+P3Work/Merchandise/Assembly table, SummarySection + `fmt2` trong wrAssignTaskCalc.js)
+Đang làm dở:
+Bước tiếp theo: user mở trình duyệt kiểm tra sort + màn chi tiết PGV 18724
+Blocked:

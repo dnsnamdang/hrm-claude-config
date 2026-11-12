@@ -5,6 +5,15 @@
 
 ## Đang làm
 
+- **Chấm công theo phiếu công tác — chọn phương tiện (BE + App mobile)** — @khoipv — Bắt đầu 12/11/2026 — Lượt chấm vào theo phiếu công tác bắt buộc chọn xe của phòng ban hoặc "Không đi xe công ty"; lưu `timesheets.vehicle_id` / `no_company_vehicle`; chi tiết phiếu hiện "Phương tiện sử dụng". Đã dựng môi trường code app (máy ảo + BE local :8001 + hot reload, xem Phase 0). Code BE + App (`TPE_APP` nhánh `thanhan`) xong, chưa commit; chờ test.
+  - Plan: [.plans/cham-cong-chon-phuong-tien/plan.md](cham-cong-chon-phuong-tien/plan.md)
+
+- **Check: BC tổng hợp nhu cầu mua chỉ gồm hàng "Chốt mua thêm" từ PXL?** — @khoipv — Bắt đầu 12/11/2026 — Đúng: chỉ lấy dòng PXL Đã duyệt có `alloc_mua > 0`, `alloc_mua` = Σ ô dòng Chốt mua thêm (normalizeMatrix ở Tạo/Sửa); DB 0 dòng lệch.
+  - Plan: [.plans/check-bc-nhu-cau-mua-chi-chot-mua-them/plan.md](check-bc-nhu-cau-mua-chi-chot-mua-them/plan.md)
+
+- **Check: Dừng 2 mã hàng hóa kê khai trùng — ảnh hưởng báo giá đã làm?** — @khoipv — Bắt đầu 12/11/2026 — Đã soát xong: Dừng chỉ đổi `products.status` = 3, báo giá cũ giữ nguyên (dòng hàng lưu sẵn), chỉ chặn chọn mã đó khi thêm mới; báo giá dở vẫn lưu/duyệt được, giá HĐ trước bị tách theo mã. Chờ user gửi 2 mã để tra chứng từ đang dùng.
+  - Plan: [.plans/check-dung-ma-hang-ke-khai-trung/plan.md](check-dung-ma-hang-ke-khai-trung/plan.md)
+
 - **Danh mục phương tiện (phân hệ Chấm công)** — @khoipv — Bắt đầu 11/11/2026 — Đã code xong BE + FE; Tạo mới đã test OK. Checkpoint 11/11/2026: chờ user test Sửa/Xem/Khóa/Xóa/lọc.
   - Plan: [.plans/danh-muc-phuong-tien/plan.md](danh-muc-phuong-tien/plan.md) · Design: [.plans/danh-muc-phuong-tien/design.md](danh-muc-phuong-tien/design.md) · Spec: [docs/superpowers/specs/2026-11-11-danh-muc-phuong-tien-design.md](../docs/superpowers/specs/2026-11-11-danh-muc-phuong-tien-design.md)
 
