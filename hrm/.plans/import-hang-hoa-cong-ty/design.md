@@ -36,7 +36,7 @@ Không được xảy ra:
 | # | Vấn đề | Quyết định |
 |---|---|---|
 | U1 | Giao diện và cách làm | Theo BOM/báo giá: popup toàn màn hình, toolbar 3 nhóm (không có stepper: BOM và báo giá đã bỏ), pill Tổng/Hợp lệ/Lỗi, bảng lỗi có Sao chép và Tải File lỗi |
-| U2 | CẬP NHẬT hàng do công ty khác tạo | Từ chối dòng |
+| U2 | CẬP NHẬT hàng do công ty khác tạo (đổi 07/11) | Công ty đã lấy về thì chỉ ghi 6 ô tab Quản trị của công ty mình; cột khác, gồm Hệ số công nghệ và Kinh doanh ngay, bỏ qua và tô xám. Giá: hàng kế thừa giá mà điền giá thì báo lỗi ở mọi trạng thái; hàng tự tính giá thì theo U3, chỉ ĐVT đã có và không thấp hơn giá công ty tạo. Chưa lấy về thì từ chối dòng |
 | U3 | Cột giá khi hàng đang ở Đang kinh doanh | Bỏ qua cột giá, dòng vẫn cập nhật các cột khác |
 | U4 | Model / Code đặt hàng chưa có trong danh mục | Báo lỗi, từ chối dòng |
 | U5 | Bảng xem trước | Đủ 79 cột, sửa trực tiếp trên ô |
@@ -115,14 +115,14 @@ THÊM MỚI:
 
 CẬP NHẬT, kiểm theo thứ tự, dừng ở lỗi đầu của nhóm chặn này:
 1. Mã hàng bắt buộc và tồn tại.
-2. Hàng do công ty đang làm việc tạo (U2).
+2. Hàng chưa xoá; hàng công ty khác tạo thì công ty đã lấy về (U2).
 3. Hàng đang bị khóa: giữ thông báo sẵn có của `assertOwner`.
 4. Không thuộc YCHG mở: `Hàng hóa đang bị khóa bởi phiếu YCHG [Mã_Phiếu] ở trạng thái [Tên_Trạng_thái], không được phép cập nhật.`
 5. Trạng thái tại công ty là 1 hoặc 3; khác thì từ chối.
 
 Hai dòng CẬP NHẬT cùng một mã trong file: lỗi ở cả hai dòng.
 
-Không cần kiểm hàng kế thừa giá: hàng kế thừa luôn do công ty khác tạo nên đã bị chặn ở bước 2.
+Hàng kế thừa giá luôn do công ty khác tạo: kiểm ở `validateForeign()` và kiểm lại trong transaction ghi giá.
 
 ## 7. Ghi dữ liệu
 

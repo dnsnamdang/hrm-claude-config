@@ -10,12 +10,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
   Trạng thái: **ĐANG LÀM (06/11/2026)** — thiết kế lại màn Chấm công TPE_APP (`ui/check_in_out`): đọc logic BE, vẽ pen cho user duyệt; chỉ 1 ca / 1 phiếu hôm nay thì tự chọn.
 
-- quyet-toan-thuong-nam → @nguyentrancu97 → .plans/quyet-toan-thuong-nam/plan.md
-  Trạng thái: **ĐANG LÀM (04/11/2026)** — port "Quyết toán thưởng năm" ERP (`BonusEndYearSettlement`, controller `Accounting\BonusEndYearSettlementsController`) sang HRM `Modules/Finance`, FE `pages/finance/bonus-end-year-settlements`. 3 loại QT (DSTC/Lợi nhuận phòng/Lợi nhuận công ty), chi tiết theo **phòng ban**, có **BGĐ duyệt riêng** (status 2→3/4) chỉnh tỉ lệ duyệt từng phòng. **KHÔNG ghi sổ account_details** (chỉ đọc TK 511/521x để lấy doanh số thực + `sales_department_plans` status=3 cho DSTC đăng ký). Ghi bảng ERP sẵn có; tạo mới model `bonus_end_year_settlements(+details+files)` + `sales_department_plans`. Màn **cấu hình** quỹ thưởng ĐÃ port sẵn (regulation-config tab `thuongnam` / `CompanyBonusEndYearConfig`) → chỉ đọc. 5 quyền mới type 8. Khuôn: `finance/bill-payments` + `settlement_contract`. Spec: `design.md`.
-
-- phieu-hach-toan-dich-vu-hdbh → @nguyentrancu97 → .plans/phieu-hach-toan-dich-vu-hdbh/plan.md
-  Trạng thái: **PHASE 1 CHỈ-ĐỌC XONG (04/11/2026), PHASE 2 GHI SỔ ĐANG LÀM** — port Phiếu hạch toán dịch vụ HĐBH (ERP `Sale\ServiceAccountingController`, bảng `service_accounting`, chỉ contractable FirmContract) sang HRM. Phase 1: list + chi tiết + export + lịch sử + quyền 3 cấp + menu; cost_price gate quyền "Xem giá vốn hàng hoá" (fail-closed); checkpoint 20 phiếu thật ΣNợ=ΣCó → cổng số liệu MỞ. Nhánh `feature/phieu-hach-toan-dich-vu-hdbh-phase1` (hrm-api + hrm-client) **GIỮ NGUYÊN, CHƯA merge/push** (user tự xử lý). Phase 2: tạo từ YC, duyệt sinh bút toán + lật YC→Đã hạch toán, sửa/xóa khi Đang tạo — đang recon dependency (`FirmContractCostService::getDataCostAccounting`, `updateHandoverDate`). Ledger: `progress-ledger.md`.
-
 - app-nhiem-vu-van-de → @cuong61n → .plans/app-nhiem-vu-van-de/plan.md
   Trạng thái: **ĐANG LÀM (30/10/2026)** — màn Nhiệm vụ + Vấn đề trên TPE_APP theo meeting-mobile.pen (đã sửa thiết kế theo skill app-*), BE bổ sung chữ/màu trạng thái ở chi tiết + số bình luận.
 
@@ -23,6 +17,12 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 
 ## Hoàn thành
+
+- phieu-hach-toan-dich-vu-hdbh → @nguyentrancu97 → .plans/phieu-hach-toan-dich-vu-hdbh/plan.md
+  Trạng thái: **PHASE 1 + PHASE 2 XONG, ĐÃ MERGE + PUSH `develop`** 2 repo; nhánh feature giữ local.
+
+- quyet-toan-thuong-nam → @nguyentrancu97 → .plans/quyet-toan-thuong-nam/plan.md
+  Trạng thái: **XONG + ĐÃ MERGE + PUSH `develop`** — hrm-api `02f75a0b4`, hrm-client `c909233f7`; worktree đã xoá.
 
 - app-cham-cong → @cuong61n → .plans/app-cham-cong/plan.md (deploy dev + prod, HRM TPE 2.3.8 gửi duyệt 06/11/2026)
 - app-don-xin-nghi → @cuong61n → .plans/app-don-xin-nghi/plan.md
@@ -541,7 +541,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Bước tiếp theo: user đăng nhập lại verify menu + màn 4 danh mục; chạy `ReconcileNationsSeeder` trên server test (đọc dòng ⚠ KH mơ hồ server-specific); DROP hrm_nations_bak/hrm_nations trên server sau verify.
   Blocked:
 
-
 - danh-muc-vu-viec-hrm → @dnsnamdang → .plans/danh-muc-vu-viec-hrm/plan.md
   Trạng thái: CODE DONE (2026-07-31, no-commit) qua subagent-driven 6 task. BE `Modules/Finance` (Work entity+service, WorkController+Request+Resource, routes /v1/finance/works có auth:api+checkPermission) + 2 permission (id 1107/1108 type=8) vào seeder (CHƯA áp DB). FE: menu finance.js + pages/finance/works/{index.vue, WorkModal.vue} (V2Base) + Permission.vue thêm tab "Tài chính" (type 8). CHƯA commit, CHƯA verify runtime. Bước tiếp (user, trên DB gộp): áp 2 permission qua tinker firstOrCreate → gán role qua UI Phân quyền tab Tài chính, route:list, yarn dev verify, commit. Chốt: phân hệ Tài chính = type 8 mới (đã thêm tab FE). Port "Danh mục vụ việc" (bảng `works`) ERP → HRM, nhánh `gop_db`, menu phân hệ Tài chính. Chốt: DB gộp (Entity `Work` connection mặc định, không mysql2, không thêm cột); Module BE `Modules/Finance` (stub sẵn, route /v1/finance); toàn cục không phân cấp; 2 quyền (Xem/Quản lý danh mục vụ việc); rule xóa/khóa y hệt ERP (đã dùng account_details.work_id → không xóa/khóa); FE V2Base (FilterPanel keyword+status + DataTable + modal). Spec đầy đủ: docs/superpowers/specs/2026-07-31-danh-muc-vu-viec-hrm-design.md
 
@@ -1013,7 +1012,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
   Trạng thái: Phase A+B done. Phase C đã pivot sang quotation-redesign. Branch `tpe-develop-assign`.
   Checkpoint: 2026-05-27 — Phase C scope mở rộng → tách thành feature riêng quotation-redesign.
-
 
 - tong-hop-nghiem-thu-bomlist-baogia — bộ tài liệu TỔNG HỢP KHỐI LƯỢNG luồng **BOM List + Báo giá** phục vụ nghiệm thu thanh toán với khách → @namdangit → .plans/tong-hop-nghiem-thu-bomlist-baogia/
   Hoàn thành: 24/09/2026 — gom từ `.plans/Bomlist-Quotation/` (33 phase) + **45 hạng mục feature liên quan** + 7 hạng mục chuẩn hoá trên nhánh `gop_db` + lịch sử git 2 repo.

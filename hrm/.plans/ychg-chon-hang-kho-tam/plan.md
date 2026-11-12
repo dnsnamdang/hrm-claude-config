@@ -44,8 +44,8 @@
 **Interfaces:**
 - Produces: `PriceAskingAccess::hasCost(): bool` — `isCurrentEmployeeHasPermission(self::PERMISSION_COST)`, hằng `PERMISSION_COST = 'Xem giá vốn hàng hoá'`.
 
-- [ ] **Step 1:** Thêm hằng `PERMISSION_COST = 'Xem giá vốn hàng hoá'` và method `hasCost(): bool { return isCurrentEmployeeHasPermission(self::PERMISSION_COST); }` vào `PriceAskingAccess`, copy đúng mẫu `PriceCalculateRequestAccess`.
-- [ ] **Step 2:** Verify bằng tinker/route tạm: user có quyền → `true`, không quyền → `false`.
+- [x] **Step 1:** Thêm hằng `PERMISSION_COST = 'Xem giá vốn hàng hoá'` và method `hasCost(): bool { return isCurrentEmployeeHasPermission(self::PERMISSION_COST); }` vào `PriceAskingAccess`, copy đúng mẫu `PriceCalculateRequestAccess`.
+- [x] **Step 2:** Verify bằng tinker/route tạm: user có quyền → `true`, không quyền → `false`.
 
 ### Task A2: BE — Reader trả `cost_price` gate quyền + controller trả `can_view_cost_price`
 
@@ -57,11 +57,11 @@
 - Consumes: `ProductPriceReader::costPrices(array $productIds, int $companyId): array` (ProductPriceReader.php:96); `PriceAskingAccess::hasCost()` (Task A1).
 - Produces: mỗi dòng option thêm `cost_price` (số|null); meta response thêm `can_view_cost_price` (bool).
 
-- [ ] **Step 1 (test):** Viết test/kịch bản API: gọi `product-options` với user CÓ quyền → mỗi item có `cost_price` numeric, meta `can_view_cost_price=true`; user KHÔNG quyền → `cost_price=null`, meta `false`.
-- [ ] **Step 2:** Chạy, xác nhận FAIL (chưa có field).
-- [ ] **Step 3:** Reader: nhận cờ `canCost` (truyền từ controller) → nếu `canCost` gọi `costPrices(ids, companyId)` gắn `cost_price` mỗi dòng, ngược lại `cost_price=null` và KHÔNG query giá vốn. Áp cho CẢ nhánh `ids` lẫn nhánh `search`.
-- [ ] **Step 4:** Controller `productOptions`: `$canCost = $access->hasCost();` truyền vào reader; thêm `can_view_cost_price => $canCost` vào meta cả 2 nhánh.
-- [ ] **Step 5:** Chạy lại 2 kịch bản → PASS. Tự kiểm: user không quyền, dump query log không có truy vấn bảng giá vốn.
+- [x] **Step 1 (test):** Viết test/kịch bản API: gọi `product-options` với user CÓ quyền → mỗi item có `cost_price` numeric, meta `can_view_cost_price=true`; user KHÔNG quyền → `cost_price=null`, meta `false`.
+- [x] **Step 2:** Chạy, xác nhận FAIL (chưa có field).
+- [x] **Step 3:** Reader: nhận cờ `canCost` (truyền từ controller) → nếu `canCost` gọi `costPrices(ids, companyId)` gắn `cost_price` mỗi dòng, ngược lại `cost_price=null` và KHÔNG query giá vốn. Áp cho CẢ nhánh `ids` lẫn nhánh `search`.
+- [x] **Step 4:** Controller `productOptions`: `$canCost = $access->hasCost();` truyền vào reader; thêm `can_view_cost_price => $canCost` vào meta cả 2 nhánh.
+- [x] **Step 5:** Chạy lại 2 kịch bản → PASS. Tự kiểm: user không quyền, dump query log không có truy vấn bảng giá vốn.
 
 ### Task A3: FE — PriceAskingProductPickerModal thêm cột Giá nhập + toggle phiên
 
@@ -72,11 +72,11 @@
 **Interfaces:**
 - Consumes: field `cost_price` + meta `can_view_cost_price` (Task A2).
 
-- [ ] **Step 1:** Cờ `canViewCostPrice: false` (data, fail-closed); set từ `meta.can_view_cost_price` sau mỗi lần load options.
-- [ ] **Step 2:** State `showCostColumn: true` (phiên, không persist). Computed `columns` chỉ chèn cột `cost_price` ("Giá nhập") khi `canViewCostPrice === true && showCostColumn`. Format `Number(v).toLocaleString('en-US')`, null → "—".
-- [ ] **Step 3:** Nút icon "Cấu hình cột hiển thị" (`btn-compact`) ở thanh trên bảng, chỉ render khi `canViewCostPrice`; bấm toggle `showCostColumn`. Bám pattern đã grep (dropdown checkbox cột nếu project đã có; nếu chỉ 1 cột toggle thì nút toggle đơn giản theo đúng pattern gần nhất).
-- [ ] **Step 4 (Playwright):** Mở `http://127.0.0.1:3000/sale/price-asking-requests/add`, bấm "Chọn hàng hoá": user có quyền thấy cột Giá nhập + nút cấu hình, toggle ẩn/hiện chạy, số đúng format; (nếu dựng được user không quyền) cột ẩn, network `product-options` trả `cost_price:null`. Mở lại popup → về mặc định hiện.
-- [ ] **Step 5:** Tự kiểm grep `can[A-Za-z]*\s*=\s*true` trên file → rỗng.
+- [x] **Step 1:** Cờ `canViewCostPrice: false` (data, fail-closed); set từ `meta.can_view_cost_price` sau mỗi lần load options.
+- [x] **Step 2:** State `showCostColumn: true` (phiên, không persist). Computed `columns` chỉ chèn cột `cost_price` ("Giá nhập") khi `canViewCostPrice === true && showCostColumn`. Format `Number(v).toLocaleString('en-US')`, null → "—".
+- [x] **Step 3:** Nút icon "Cấu hình cột hiển thị" (`btn-compact`) ở thanh trên bảng, chỉ render khi `canViewCostPrice`; bấm toggle `showCostColumn`. Bám pattern đã grep (dropdown checkbox cột nếu project đã có; nếu chỉ 1 cột toggle thì nút toggle đơn giản theo đúng pattern gần nhất).
+- [x] **Step 4 (Playwright):** Mở `http://127.0.0.1:3000/sale/price-asking-requests/add`, bấm "Chọn hàng hoá": user có quyền thấy cột Giá nhập + nút cấu hình, toggle ẩn/hiện chạy, số đúng format; (nếu dựng được user không quyền) cột ẩn, network `product-options` trả `cost_price:null`. Mở lại popup → về mặc định hiện.
+- [x] **Step 5:** Tự kiểm grep `can[A-Za-z]*\s*=\s*true` trên file → rỗng.
 
 ---
 
@@ -92,11 +92,11 @@
 
 > **Quyết định (builder-check 2026-11-03):** `estimated_price` KHÔNG phải giá vốn → KHÔNG gate quyền, KHÔNG null field, giữ nguyên endpoint cho màn danh sách dự án / export / picker BOM-Báo giá cũ (không regress).
 
-- [ ] **Step 1 (test):** Kịch bản API `GET assign/product-projects?scope=ychg&keyword=<model>&page=1&per_page=20`: trả đúng dòng khớp model; mỗi dòng có đủ field trên (bao gồm `is_won`, `quotation_created_by`); phân trang hoạt động.
-- [ ] **Step 2:** Chạy → FAIL (model-in-keyword chưa có / field `is_won`/`quotation_created_by` thiếu).
-- [ ] **Step 3:** `applyKeyFilters`: mệnh đề keyword thêm `orWhere` theo model (`pm.name`/alias model đã join trong buildQuery) cạnh code+name hiện có.
-- [ ] **Step 4:** `transformQuotationItem`/`transformItem`: bổ sung `is_won` (quotation status 7) + `quotation_created_by` (người tạo Báo giá nguồn). KHÔNG đổi field cũ, KHÔNG gate `estimated_price`.
-- [ ] **Step 5:** Chạy lại → PASS. Xác nhận màn danh sách dự án + export + picker BOM/Báo giá cũ không đổi hành vi.
+- [x] **Step 1 (test):** Kịch bản API `GET assign/product-projects?scope=ychg&keyword=<model>&page=1&per_page=20`: trả đúng dòng khớp model; mỗi dòng có đủ field trên (bao gồm `is_won`, `quotation_created_by`); phân trang hoạt động.
+- [x] **Step 2:** Chạy → FAIL (model-in-keyword chưa có / field `is_won`/`quotation_created_by` thiếu).
+- [x] **Step 3:** `applyKeyFilters`: mệnh đề keyword thêm `orWhere` theo model (`pm.name`/alias model đã join trong buildQuery) cạnh code+name hiện có.
+- [x] **Step 4:** `transformQuotationItem`/`transformItem`: bổ sung `is_won` (quotation status 7) + `quotation_created_by` (người tạo Báo giá nguồn). KHÔNG đổi field cũ, KHÔNG gate `estimated_price`.
+- [x] **Step 5:** Chạy lại → PASS. Xác nhận màn danh sách dự án + export + picker BOM/Báo giá cũ không đổi hành vi.
 
 ### Task B2: FE — loadReuseRows dùng scope=ychg phân trang + quick search model + ghim session
 
@@ -106,10 +106,10 @@
 **Interfaces:**
 - Consumes: endpoint `assign/product-projects?scope=ychg&page=&per_page=&keyword=` (Task B1).
 
-- [ ] **Step 1:** `loadReuseRows` (nhánh ychg): gọi `scope=ychg` + `page`/`per_page` + `keyword`; BỎ `only_temp=1&per_page=1000` và BỎ lọc client theo code/name. Debounce `reuseSearch` ≥300ms + cancel request cũ (dùng pattern cancel đã có trong project — grep).
-- [ ] **Step 2:** `sessionTempGoods` (hàng tạm trong phiên nháp) tách thành nhóm ghim đầu bảng (client), nhãn "Trong phiếu"; không bị endpoint server ghi đè.
-- [ ] **Step 3:** Placeholder ô tìm nhanh: "Tìm theo mã / tên / model hàng tạm". (Phase B không cần cờ quyền giá vốn.)
-- [ ] **Step 4 (Playwright):** Mở popup "Thêm hàng tạm" → tab "Chọn từ kho hàng tạm": gõ model thấy lọc đúng (server), phân trang hoạt động, hàng tạm trong phiếu hiện ở nhóm ghim. Chọn 1 dòng cha có con ghép bộ → thêm vào phiếu copy đủ con (không regress).
+- [x] **Step 1:** `loadReuseRows` (nhánh ychg): gọi `scope=ychg` + `page`/`per_page` + `keyword`; BỎ `only_temp=1&per_page=1000` và BỎ lọc client theo code/name. Debounce `reuseSearch` ≥300ms + cancel request cũ (dùng pattern cancel đã có trong project — grep).
+- [x] **Step 2:** `sessionTempGoods` (hàng tạm trong phiên nháp) tách thành nhóm ghim đầu bảng (client), nhãn "Trong phiếu"; không bị endpoint server ghi đè.
+- [x] **Step 3:** Placeholder ô tìm nhanh: "Tìm theo mã / tên / model hàng tạm". (Phase B không cần cờ quyền giá vốn.)
+- [x] **Step 4 (Playwright):** Mở popup "Thêm hàng tạm" → tab "Chọn từ kho hàng tạm": gõ model thấy lọc đúng (server), phân trang hoạt động, hàng tạm trong phiếu hiện ở nhóm ghim. Chọn 1 dòng cha có con ghép bộ → thêm vào phiếu copy đủ con (không regress).
 
 ### Task B3: FE — 3 cột Ảnh / Trạng thái / Thông tin giá
 
@@ -120,10 +120,10 @@
 **Interfaces:**
 - Consumes: `row.galleries`, `row.erp_sync_status_name/_color`, `row.estimated_price`, `row.quoted_price`, `row.is_won`, `row.quotation_created_by`, `row.sourceType` (Task B1).
 
-- [ ] **Step 1:** Cột **Hình ảnh**: `<TempGalleryThumb :galleries="row.galleries" />`.
-- [ ] **Step 2:** Cột **Trạng thái**: `<V2BaseBadge :color="row.erp_sync_status_color">{{ row.erp_sync_status_name }}</V2BaseBadge>`.
-- [ ] **Step 3:** Cột **Thông tin giá**: computed per-row hiện `giá nhập – giá bán` CHỈ khi `row.sourceType==='quotation' && row.is_won && row.quotation_created_by===currentEmployeeId`; còn lại "—". Format `toLocaleString('en-US')`. KHÔNG gate quyền giá vốn (estimated_price không phải giá vốn). (Lấy `currentEmployeeId` từ store theo pattern có sẵn — grep.)
-- [ ] **Step 4 (Playwright):** Dòng Báo giá trúng thầu do chính user tạo Báo giá → hiện cụm giá; dòng BOM / báo giá người khác tạo / chưa trúng thầu → "—". Ảnh click phóng to. Badge trạng thái đúng màu BE.
+- [x] **Step 1:** Cột **Hình ảnh**: `<TempGalleryThumb :galleries="row.galleries" />`.
+- [x] **Step 2:** Cột **Trạng thái**: `<V2BaseBadge :color="row.erp_sync_status_color">{{ row.erp_sync_status_name }}</V2BaseBadge>`.
+- [x] **Step 3:** Cột **Thông tin giá**: computed per-row hiện `giá nhập – giá bán` CHỈ khi `row.sourceType==='quotation' && row.is_won && row.quotation_created_by===currentEmployeeId`; còn lại "—". Format `toLocaleString('en-US')`. KHÔNG gate quyền giá vốn (estimated_price không phải giá vốn). (Lấy `currentEmployeeId` từ store theo pattern có sẵn — grep.)
+- [x] **Step 4 (Playwright):** Dòng Báo giá trúng thầu do chính user tạo Báo giá → hiện cụm giá; dòng BOM / báo giá người khác tạo / chưa trúng thầu → "—". Ảnh click phóng to. Badge trạng thái đúng màu BE.
 
 ---
 
@@ -137,10 +137,10 @@
 **Interfaces:**
 - Produces: endpoint nhận thêm `source_type` (all|bom|quotation), `quotation_id`, `bom_list_id`, `structure` (all|standalone|parent|recipe).
 
-- [ ] **Step 1 (test):** Kịch bản API cho từng filter: `source_type=quotation` chỉ trả dòng báo giá; `quotation_id=X`/`bom_list_id=Y` lọc đúng nguồn; `structure=recipe` chỉ trả cha có `recipe_products.base_product_id=p.id`, `standalone` không con/không recipe.
-- [ ] **Step 2:** Chạy → FAIL.
-- [ ] **Step 3:** Thêm các mệnh đề filter vào `applyKeyFilters`/union. `structure`: `recipe` = tồn tại `recipe_products.base_product_id`; `parent` vs `recipe` phân biệt theo quyết định ở Step 0 (xác nhận định nghĩa "Hàng Cha" vs "ghép bộ" với user nếu dữ liệu không tách bạch — xem design §9); `standalone` = không con + không recipe. Lưu ý picker reuse đang `whereNull parent_id` → nới cho filter `parent` nếu cần.
-- [ ] **Step 4:** Chạy lại → PASS.
+- [x] **Step 1 (test):** Kịch bản API cho từng filter: `source_type=quotation` chỉ trả dòng báo giá; `quotation_id=X`/`bom_list_id=Y` lọc đúng nguồn; `structure=recipe` chỉ trả cha có `recipe_products.base_product_id=p.id`, `standalone` không con/không recipe.
+- [x] **Step 2:** Chạy → FAIL.
+- [x] **Step 3:** Thêm các mệnh đề filter vào `applyKeyFilters`/union. `structure`: `recipe` = tồn tại `recipe_products.base_product_id`; `parent` vs `recipe` phân biệt theo quyết định ở Step 0 (xác nhận định nghĩa "Hàng Cha" vs "ghép bộ" với user nếu dữ liệu không tách bạch — xem design §9); `standalone` = không con + không recipe. Lưu ý picker reuse đang `whereNull parent_id` → nới cho filter `parent` nếu cần.
+- [x] **Step 4:** Chạy lại → PASS.
 
 ### Task C2: BE — endpoint options cho dropdown nguồn (nếu chưa có)
 
@@ -150,8 +150,8 @@
 **Interfaces:**
 - Produces: option list server-side có `limit`, trả `{id, text}` cho từng dropdown.
 
-- [ ] **Step 1:** Grep endpoint options sẵn có (project list đã có cho nhân viên/hàng hoá). Nếu đủ → ghi lại, bỏ task. Nếu thiếu dropdown nào → bổ sung endpoint search `limit` cho đúng dropdown đó.
-- [ ] **Step 2:** Verify từng endpoint trả đúng, có phân trang/limit.
+- [x] **Step 1:** Grep endpoint options sẵn có (project list đã có cho nhân viên/hàng hoá). Nếu đủ → ghi lại, bỏ task. Nếu thiếu dropdown nào → bổ sung endpoint search `limit` cho đúng dropdown đó.
+- [x] **Step 2:** Verify từng endpoint trả đúng, có phân trang/limit.
 
 ### Task C3: FE — khối bộ lọc nâng cao trên bảng kho hàng tạm
 
@@ -162,10 +162,10 @@
 **Interfaces:**
 - Consumes: filter params của Task C1; options của Task C2.
 
-- [ ] **Step 1:** Thêm khối filter: Dự án (autocomplete), Báo giá nguồn, Bomlist nguồn, Thương hiệu, Nguồn (Tất cả/Từ BOM Giải pháp/Từ Báo giá), Trạng thái cấu trúc (Tất cả/Độc lập/Cha/Ghép bộ), Model — tất cả `V2BaseSelectInModal`/`V2BaseInput`. Placeholder theo quy ước list-page.
-- [ ] **Step 2:** Gửi tham số xuống `loadReuseRows` (giữ phân trang server-side, debounce). Đổi filter → reset về trang 1.
-- [ ] **Step 3 (Playwright):** Mỗi filter lọc đúng, kết hợp nhiều filter + quick search cùng lúc; đổi filter reset trang; không regress chọn dòng.
-- [ ] **Step 4:** Tự kiểm grep HTML thô (`<select `/`<input ` không V2Base) trên khối mới → rỗng; cờ quyền `= true` → rỗng.
+- [x] **Step 1:** Thêm khối filter: Dự án (autocomplete), Báo giá nguồn, Bomlist nguồn, Thương hiệu, Nguồn (Tất cả/Từ BOM Giải pháp/Từ Báo giá), Trạng thái cấu trúc (Tất cả/Độc lập/Cha/Ghép bộ), Model — tất cả `V2BaseSelectInModal`/`V2BaseInput`. Placeholder theo quy ước list-page.
+- [x] **Step 2:** Gửi tham số xuống `loadReuseRows` (giữ phân trang server-side, debounce). Đổi filter → reset về trang 1.
+- [x] **Step 3 (Playwright):** Mỗi filter lọc đúng, kết hợp nhiều filter + quick search cùng lúc; đổi filter reset trang; không regress chọn dòng.
+- [x] **Step 4:** Tự kiểm grep HTML thô (`<select `/`<input ` không V2Base) trên khối mới → rỗng; cờ quyền `= true` → rỗng.
 
 ---
 
@@ -174,3 +174,16 @@
 - Spec coverage: Phase A = popup "Chọn hàng hoá" + Giá nhập gate + toggle phiên (✓). Phase B = quick search model + 3 cột (✓) + chuyển data server-side (quyết định §3.4). Phase C = toàn bộ bộ lọc nâng cao (✓).
 - Điểm cần user xác nhận trước khi code Phase C: định nghĩa "Hàng Cha" vs "Hàng công thức lắp ghép bộ" (design §9) — Task C1 Step 3 chặn ở đây.
 - Đã chốt qua builder-check (2026-11-03): `estimated_price` KHÔNG phải giá vốn → Phase B không gate; chủ sở hữu cụm giá = `quotations.created_by` (người tạo Báo giá nguồn).
+
+## 09/11/2026 — Giá bán ở popup "Chọn từ kho hàng tạm" ai cũng xem được
+- [x] BE ProductProjectController: quoted_price + currency_code luôn trả (scope ychg), estimated_price giữ luật cũ (quyền giá vốn + BG trúng thầu + chính người lập)
+- [x] FE QuotationProductSearchModal: cột Giá bán bỏ canShowReusePrice
+- [x] Test + verify
+
+### Checkpoint — 09/11/2026
+Vừa hoàn thành: bỏ chặn Giá bán (BE + FE); ProductProjectReuseYchgTest 7/7, FilterOptions 1/1
+Đang làm dở: API ở worktree .wt-hrm-api-ychg nhánh fix/ychg-reuse-gia-ban; client sửa trên develop, chưa commit
+Bước tiếp theo: commit/push khi user đồng ý
+Blocked: không chạy thử UI được vì DB local chưa nạp quyền RBAC (code develop mới trả 0 dòng)
+- Đã push develop: api 88106c220, client 367957e9a (09/11). Chưa gop_db.
+- Đã cherry-pick gop_db: api 053ad2d5c, client e71328d7b (09/11).

@@ -78,7 +78,7 @@
   - `ServiceAccountingItem extends Model`, `$table='service_accounting_items'`, `$guarded=['id']`; `ServiceAccountingCost extends Model`, `$table='service_accounting_costs'`, `$guarded=['id']`, quan hệ `cost():belongsTo(...)` (bảng danh mục chi phí, mẫu YC `ServiceAccountingRequestCost`).
 - Consumes: `Modules\Finance\Entities\ServiceAccountingRequest\ServiceAccountingRequest` (quan hệ + mẫu scope), `Modules\Finance\Entities\Account\AccountDetail` (quan hệ accounting), `ChecksEmployeePermission` trait.
 
-- [ ] **Step 1: Viết test đỏ** `ServiceAccountingReadApiTest::test_entity_relations_and_scope_on_real_firm_contract_rows`
+- [x] **Step 1: Viết test đỏ** `ServiceAccountingReadApiTest::test_entity_relations_and_scope_on_real_firm_contract_rows`
 
 ```php
 // DatabaseTransactions. Lấy 1 phiếu thật trên DB gộp:
@@ -93,10 +93,10 @@ $sql = ServiceAccounting::searchByFilter(new Request(['type'=>'all']))->toSql();
 $this->assertStringContainsString('contractable_type', $sql);
 ```
 
-- [ ] **Step 2: Chạy test — đỏ** `Expected: FAIL (class ServiceAccounting not found)`
-- [ ] **Step 3:** Tạo 3 entity + hằng + quan hệ + method theo Interfaces (mẫu: `ServiceAccountingRequest.php` cho scope/canView, `WrAccountingService.php` cho `accounting()`/`statusMeta`/`totalPayment`). Đăng ký morphMap FQN FirmContract trong `FinanceServiceProvider` nếu `whereHasMorph` cần.
-- [ ] **Step 4: Chạy test — xanh** `Expected: PASS`
-- [ ] **Step 5: Commit** `feat(finance): ServiceAccounting entity layer (read-only, FirmContract scope)`
+- [x] **Step 2: Chạy test — đỏ** `Expected: FAIL (class ServiceAccounting not found)`
+- [x] **Step 3:** Tạo 3 entity + hằng + quan hệ + method theo Interfaces (mẫu: `ServiceAccountingRequest.php` cho scope/canView, `WrAccountingService.php` cho `accounting()`/`statusMeta`/`totalPayment`). Đăng ký morphMap FQN FirmContract trong `FinanceServiceProvider` nếu `whereHasMorph` cần.
+- [x] **Step 4: Chạy test — xanh** `Expected: PASS`
+- [x] **Step 5: Commit** `feat(finance): ServiceAccounting entity layer (read-only, FirmContract scope)`
 
 ---
 
@@ -119,15 +119,15 @@ $this->assertStringContainsString('contractable_type', $sql);
   - Bộ lọc (`applyFilters`): `startDate/endDate`(created_at), `code`(like), `status`, `company`/`department`(ánh xạ qua employee_create.info), `contract_code`(whereHasMorph FirmContract code), `customer`(whereHasMorph customer_id), `cost`(whereHas costs.cost_id), `money_from/money_to`(payed_cost). Default sort `created_at DESC`.
 - Consumes: Task 1 entity + `searchByFilter`.
 
-- [ ] **Step 1: Viết test đỏ** — 3 test:
+- [x] **Step 1: Viết test đỏ** — 3 test:
   - `test_list_scopes_by_permission_level`: seed/dùng user có quyền "theo công ty" → chỉ thấy phiếu người cùng công ty; user "tổng công ty" → thấy tất cả FirmContract.
   - `test_list_excludes_rows_for_unprivileged_user` (Review Focus #3): user không quyền + không owner → `data` rỗng.
   - `test_list_hides_others_draft_shows_own_draft` (Review Focus #4): seed 1 phiếu `DANG_TAO` của user khác + 1 của chính user → viewer 3-cấp chỉ thấy phiếu `DA_DUYET` + nháp của mình.
   - Auth: `actingAs($employee, 'api')` (mẫu HTTP feature test sẵn có trong `Modules/*/Tests/Feature`).
-- [ ] **Step 2: Chạy — đỏ** `Expected: FAIL (route/controller chưa có)`
-- [ ] **Step 3:** Khai 3 quyền (`$this->perm`), viết ListResource + service `searchByFilter`/`meta` + controller `index` + route. Badge quadruple từ `statusMeta()`.
-- [ ] **Step 4: Chạy — xanh** `Expected: PASS` (chạy `php artisan db:seed --class=...PermissionsTableSeeder` hoặc seed quyền trong `setUp` test trước khi assert).
-- [ ] **Step 5: Commit** `feat(finance): ServiceAccounting list endpoint + view permissions`
+- [x] **Step 2: Chạy — đỏ** `Expected: FAIL (route/controller chưa có)`
+- [x] **Step 3:** Khai 3 quyền (`$this->perm`), viết ListResource + service `searchByFilter`/`meta` + controller `index` + route. Badge quadruple từ `statusMeta()`.
+- [x] **Step 4: Chạy — xanh** `Expected: PASS` (chạy `php artisan db:seed --class=...PermissionsTableSeeder` hoặc seed quyền trong `setUp` test trước khi assert).
+- [x] **Step 5: Commit** `feat(finance): ServiceAccounting list endpoint + view permissions`
 
 ---
 
@@ -148,16 +148,16 @@ $this->assertStringContainsString('contractable_type', $sql);
   - `ServiceAccountingController::show($id)` → `findForShow` → `if(!$m->canView()) responseJson(...,403)` → `responseJson($service->detailData($m))`.
 - Consumes: Task 1 entity, `Account\AccountDetail` (cột phẳng + `account()`).
 
-- [ ] **Step 1: Viết test đỏ** — 4 test:
+- [x] **Step 1: Viết test đỏ** — 4 test:
   - `test_show_returns_header_costs_and_journal_for_real_voucher`: lấy phiếu thật `DA_DUYET` (markTestSkipped nếu không có); assert `code`, `journal` non-empty khớp `accounting->count()`, mỗi journal row có `account_number`.
   - `test_show_null_guards_missing_contractable` (RF #1): tạo phiếu trỏ `contractable_id` không tồn tại → `show` 200, customer rỗng, không 500.
   - `test_show_renders_empty_service_table_when_cost_only` (RF #2): phiếu items=0, costs>0 → `items=[]`, `total` tính từ costs.
   - `test_vat_percent_falls_back_to_zero` (RF #5): FirmContract thiếu mảng/cột VAT → `vat_percent===0`.
   - `test_show_forbidden_without_permission_returns_403` (RF #3).
-- [ ] **Step 2: Chạy — đỏ**
-- [ ] **Step 3:** Viết `findForShow`/`detailData`/`journalRows`/`vatPercentFor` + controller `show` + route.
-- [ ] **Step 4: Chạy — xanh**
-- [ ] **Step 5: Commit** `feat(finance): ServiceAccounting detail + journal rendering (flat columns)`
+- [x] **Step 2: Chạy — đỏ**
+- [x] **Step 3:** Viết `findForShow`/`detailData`/`journalRows`/`vatPercentFor` + controller `show` + route.
+- [x] **Step 4: Chạy — xanh**
+- [x] **Step 5: Commit** `feat(finance): ServiceAccounting detail + journal rendering (flat columns)`
 
 ---
 
@@ -177,11 +177,11 @@ $this->assertStringContainsString('contractable_type', $sql);
   - `ServiceAccountingController::export(Request)` → `(new DynamicExport())->forData($service->exportRows($request))->withColumns(ExportColumnRegistry::resolve('service_accounting',$request))->withTitle('Phiếu hạch toán dịch vụ HĐBH')` → `Excel::download(...)`.
 - Consumes: Task 2 ListResource + service query.
 
-- [ ] **Step 1: Viết test đỏ** `test_export_returns_xlsx_with_expected_columns`: GET `/finance/service-accounting/export?type=all&fields=...` → 200, content-type xlsx; assert `ExportColumnRegistry::resolve('service_accounting', $req)` chứa 8 label trên.
-- [ ] **Step 2: Chạy — đỏ**
-- [ ] **Step 3:** Thêm registry entry + `exportRows` + controller `export` + route.
-- [ ] **Step 4: Chạy — xanh**
-- [ ] **Step 5: Commit** `feat(finance): ServiceAccounting Excel export`
+- [x] **Step 1: Viết test đỏ** `test_export_returns_xlsx_with_expected_columns`: GET `/finance/service-accounting/export?type=all&fields=...` → 200, content-type xlsx; assert `ExportColumnRegistry::resolve('service_accounting', $req)` chứa 8 label trên.
+- [x] **Step 2: Chạy — đỏ**
+- [x] **Step 3:** Thêm registry entry + `exportRows` + controller `export` + route.
+- [x] **Step 4: Chạy — xanh**
+- [x] **Step 5: Commit** `feat(finance): ServiceAccounting Excel export`
 
 ---
 
@@ -196,16 +196,16 @@ $this->assertStringContainsString('contractable_type', $sql);
 - Consumes: BE `GET finance/service-accounting` (list + meta) + `/export`.
 - Produces: route `/finance/service-accounting?type=all`.
 
-- [ ] **Step 1:** Port `index.vue` từ `pages/finance/wr-accounting-services/index.vue`:
+- [x] **Step 1:** Port `index.vue` từ `pages/finance/wr-accounting-services/index.vue`:
   - Mixin: `PageTitleMixin, filterStateMixin, columnCustomizationMixin, exportFieldsMixin`; `columnScreenKey='service_accounting'`; `API_PREFIX='finance/service-accounting'`.
   - Cột `allColumns`: STT · Mã(link `/finance/service-accounting/{id}`) · Số hợp đồng · Khách hàng · Tổng thanh toán(money) · Người lập · Ngày duyệt · Trạng thái(`V2BaseBadge :color=status_color`). `exportFields` + `exportFieldKeyMap` khớp registry.
   - Toolbar **chỉ**: Xuất Excel (`exportFieldsMixin` + `downloadExcel(this.$axios,'finance/service-accounting/export?...',filename)`, `per_page:10000`) + Cấu hình cột. **KHÔNG Tạo mới** (phiếu sinh từ YC — Phase 2).
   - Row actions: **chỉ Lịch sử** (`CatalogHistoryModal`, entity `service_accounting`). Lọc: `V2BaseSmartFilterPanel` + `V2BaseCompanyDepartmentFilter` + `V2BaseSelectRemote` (contract_code/customer/cost) + date range + status.
   - Money: `toLocaleString('en-US')`.
-- [ ] **Step 2:** Menu: `finance.js` stub `{ label:'Phiếu hạch toán dịch vụ - HĐBH' }` → thêm `link:'/finance/service-accounting?type=all'`; `sale-hub.js` thêm `{ n:'Phiếu hạch toán dịch vụ - HĐBH', link:'/finance/service-accounting?type=all' }` dưới title "Dịch vụ", ngay sau YC HĐBH.
-- [ ] **Step 3: Verify (Playwright)** — chạy app (`skill run-hrm`), mở `http://127.0.0.1:3000/finance/service-accounting?type=all`:
+- [x] **Step 2:** Menu: `finance.js` stub `{ label:'Phiếu hạch toán dịch vụ - HĐBH' }` → thêm `link:'/finance/service-accounting?type=all'`; `sale-hub.js` thêm `{ n:'Phiếu hạch toán dịch vụ - HĐBH', link:'/finance/service-accounting?type=all' }` dưới title "Dịch vụ", ngay sau YC HĐBH.
+- [x] **Step 3: Verify (Playwright)** — chạy app (`skill run-hrm`), mở `http://127.0.0.1:3000/finance/service-accounting?type=all`:
   - Menu có link (không còn xám); list render; cột đúng thứ tự; badge màu từ `status_color`; Xuất Excel tải file; không console error liên quan.
-- [ ] **Step 4: Commit** `feat(finance-fe): ServiceAccounting list page + menu link`
+- [x] **Step 4: Commit** `feat(finance-fe): ServiceAccounting list page + menu link`
 
 ---
 
@@ -221,13 +221,13 @@ $this->assertStringContainsString('contractable_type', $sql);
 - Consumes: BE `GET finance/service-accounting/{id}` (`detailData`).
 - Produces: route `/finance/service-accounting/{id}`.
 
-- [ ] **Step 1:** `_id/index.vue` shell (mẫu HDDV `_id/index.vue`): `<ServiceAccountingForm :id>` + `<SystemInfoSection entity-type="service_accounting" endpoint-base="catalog-histories">` + `<V2Footer url-back="/finance/service-accounting?type=all">`. **Footer chỉ Quay lại** (không Sửa/Xóa — Phase 2).
+- [x] **Step 1:** `_id/index.vue` shell (mẫu HDDV `_id/index.vue`): `<ServiceAccountingForm :id>` + `<SystemInfoSection entity-type="service_accounting" endpoint-base="catalog-histories">` + `<V2Footer url-back="/finance/service-accounting?type=all">`. **Footer chỉ Quay lại** (không Sửa/Xóa — Phase 2).
   - *Lưu ý:* Phase 1 chưa ghi catalog-history → phần "thay đổi" của `SystemInfoSection` rỗng; vẫn hiện người lập/người duyệt/ngày từ `detailData`. Không coi là lỗi.
-- [ ] **Step 2:** `ServiceAccountingForm.vue` (mẫu `WrAccountingServiceForm.vue`): `V2BaseFormSection` "Thông tin chung" (`#actions`=`CreatorInfoLine`), các `V2BaseLabel`+`V2BaseInput :disabled` (Mã, Số HĐ=chữ, Khách hàng, Loại, Ghi chú, VAT%); rồi `ServiceTable` (Dịch vụ — rỗng khi items=0), `CostTable` (Chi phí/Vận chuyển), `JournalTable` (bút toán). Số: `toLocaleString('en-US')`.
-- [ ] **Step 3:** `JournalTable.vue` (port từ HDDV): cột `account_name, account_number, debit(phải), credit(phải), object_code, object_name, work_code(, work_name)`.
-- [ ] **Step 4: Verify (Playwright)** — mở 1 phiếu thật `/finance/service-accounting/{id}`:
+- [x] **Step 2:** `ServiceAccountingForm.vue` (mẫu `WrAccountingServiceForm.vue`): `V2BaseFormSection` "Thông tin chung" (`#actions`=`CreatorInfoLine`), các `V2BaseLabel`+`V2BaseInput :disabled` (Mã, Số HĐ=chữ, Khách hàng, Loại, Ghi chú, VAT%); rồi `ServiceTable` (Dịch vụ — rỗng khi items=0), `CostTable` (Chi phí/Vận chuyển), `JournalTable` (bút toán). Số: `toLocaleString('en-US')`.
+- [x] **Step 3:** `JournalTable.vue` (port từ HDDV): cột `account_name, account_number, debit(phải), credit(phải), object_code, object_name, work_code(, work_name)`.
+- [x] **Step 4: Verify (Playwright)** — mở 1 phiếu thật `/finance/service-accounting/{id}`:
   - Thông tin chung + bảng Chi phí + bảng bút toán render; tổng Nợ=Có; VAT% hiển thị; footer chỉ "Quay lại"; không console error liên quan.
-- [ ] **Step 5: Commit** `feat(finance-fe): ServiceAccounting detail page + journal/history`
+- [x] **Step 5: Commit** `feat(finance-fe): ServiceAccounting detail page + journal/history`
 
 ---
 
@@ -239,13 +239,13 @@ $this->assertStringContainsString('contractable_type', $sql);
 **Interfaces:**
 - Consumes: `ServiceAccountingService::detailData` + `journalRows`; bảng `account_details` thật.
 
-- [ ] **Step 1: Viết test** `test_rendered_journal_reconciles_with_stored_account_details`:
+- [x] **Step 1: Viết test** `test_rendered_journal_reconciles_with_stored_account_details`:
   - Lấy **N=20** phiếu `DA_DUYET` FirmContract ngẫu nhiên có `accounting` (markTestSkipped nếu DB rỗng).
   - Với mỗi phiếu: `journal = journalRows($m)`; assert **ΣNợ (debit) == ΣCó (credit)** (cân đối); assert tổng `money_value_exchange` theo `group` khớp tổng cột phẳng `account_details` của phiếu; assert số dòng journal == `accounting->count()`.
   - `test_total_payment_matches_payed_cost_within_tolerance`: `detailData.total` ≈ `payed_cost` (sai số ≤ 1đ) cho N phiếu.
-- [ ] **Step 2: Chạy — xanh.** Nếu lệch → **DỪNG**, báo user (đây là cổng số liệu của design §1.4), **KHÔNG** sửa công thức để ép khớp cho tới khi user xác nhận.
-- [ ] **Step 3: Commit** `test(finance): ServiceAccounting numbers checkpoint (gate Phase 2)`
-- [ ] **Step 4:** Báo user kết quả checkpoint + xin chốt mở **Phase 2** (plan riêng).
+- [x] **Step 2: Chạy — xanh.** Nếu lệch → **DỪNG**, báo user (đây là cổng số liệu của design §1.4), **KHÔNG** sửa công thức để ép khớp cho tới khi user xác nhận.
+- [x] **Step 3: Commit** `test(finance): ServiceAccounting numbers checkpoint (gate Phase 2)`
+- [x] **Step 4:** Báo user kết quả checkpoint + xin chốt mở **Phase 2** (plan riêng).
 
 ---
 
@@ -322,12 +322,12 @@ $this->assertStringContainsString('contractable_type', $sql);
 - Produces: `ServiceAccounting::generateCode(): string` (pattern `<company_code>.HTDV.NNNNN`, `autoGenerateCode` tương đương — dùng helper mã HRM sẵn có, build-time verify tên); `canEdit(): bool` / `canDelete(): bool` = `created_by == auth()->id() && status == DANG_TAO`; `syncItems(array $items): bool`; `syncCosts(array $costs): bool`; `FirmContract::parent_contract()`, `FirmContract::updateHandoverDate(): void`, consts `PL_BO_SUNG`/`HDDA_PLBS`.
 - Consumes: YC bảng `service_accounting_request_items` / `_costs` (copy cột — port ERP `ServiceAccounting::syncItems/syncCosts`, ERP model dòng 353–415).
 
-- [ ] **Step 1:** Test `test_can_edit_delete_only_owner_and_draft` — owner+`DANG_TAO`→true; owner+`DA_DUYET`→false; người khác+`DANG_TAO`→false (3 assert).
-- [ ] **Step 2:** Chạy — FAIL (method chưa có). → implement `canEdit`/`canDelete` (copy ERP model:154–165, đổi `Auth::id()`→`auth()->id()`). Chạy — PASS.
-- [ ] **Step 3:** Test `test_sync_items_costs_copy_from_request` — seed YC + item/cost; gọi `syncItems`/`syncCosts`; assert `service_accounting_items`/`_costs` có dòng copy đúng (`service_id`, `price`, `value_discount`, `coefficient_cost_price`, `total_price`). **BỎ guard `accounted`** (cột không tồn tại ở HRM — xem Ruling 8.1).
-- [ ] **Step 4:** Chạy FAIL → implement `syncItems`/`syncCosts` (port ERP model:353–415, BỎ 2 nhánh `if ($sr->accounted) return false;`; GIỮ nhánh `name==='Chi phí vận chuyển' && DA_DUYET → contractable->accounted_delivery_cost=true` vì cột `firm_contracts.accounted_delivery_cost` CÓ). Chạy PASS.
-- [ ] **Step 5:** Test `test_update_handover_date_and_parent_contract_relation` — FirmContract PLBS có `parent_contract`; `updateHandoverDate()` set `handover_date`. **Port ERP `FirmContract::updateHandoverDate()` + `parent_contract()`** (đọc ERP `app/Model/Sale/Firm/Contract/FirmContract.php` lúc build — build-time verify thân hàm). Chạy FAIL→PASS.
-- [ ] **Step 6: Commit** `feat(finance): ServiceAccounting write-side entity + FirmContract posting deps`
+- [x] **Step 1:** Test `test_can_edit_delete_only_owner_and_draft` — owner+`DANG_TAO`→true; owner+`DA_DUYET`→false; người khác+`DANG_TAO`→false (3 assert).
+- [x] **Step 2:** Chạy — FAIL (method chưa có). → implement `canEdit`/`canDelete` (copy ERP model:154–165, đổi `Auth::id()`→`auth()->id()`). Chạy — PASS.
+- [x] **Step 3:** Test `test_sync_items_costs_copy_from_request` — seed YC + item/cost; gọi `syncItems`/`syncCosts`; assert `service_accounting_items`/`_costs` có dòng copy đúng (`service_id`, `price`, `value_discount`, `coefficient_cost_price`, `total_price`). **BỎ guard `accounted`** (cột không tồn tại ở HRM — xem Ruling 8.1).
+- [x] **Step 4:** Chạy FAIL → implement `syncItems`/`syncCosts` (port ERP model:353–415, BỎ 2 nhánh `if ($sr->accounted) return false;`; GIỮ nhánh `name==='Chi phí vận chuyển' && DA_DUYET → contractable->accounted_delivery_cost=true` vì cột `firm_contracts.accounted_delivery_cost` CÓ). Chạy PASS.
+- [x] **Step 5:** Test `test_update_handover_date_and_parent_contract_relation` — FirmContract PLBS có `parent_contract`; `updateHandoverDate()` set `handover_date`. **Port ERP `FirmContract::updateHandoverDate()` + `parent_contract()`** (đọc ERP `app/Model/Sale/Firm/Contract/FirmContract.php` lúc build — build-time verify thân hàm). Chạy FAIL→PASS.
+- [x] **Step 6: Commit** `feat(finance): ServiceAccounting write-side entity + FirmContract posting deps`
 
 ---
 
@@ -343,13 +343,13 @@ $this->assertStringContainsString('contractable_type', $sql);
 
 > **Port 1:1 ERP `FirmContractCostService` (`app/Services/Sale/Firm/Contract/FirmContractCostService.php:109–273`).** Dịch key `::class` → key thô: `Customer::class=>customer_id` → `['customer_id'=>...]`; `Employee::class=>...` → `['employee_id'=>...]`; `Work::class=>N` → `['work_id'=>N]`; `ServiceAccountingCost::class=>id` → `['service_accounting_cost_id'=>id]`.
 
-- [ ] **Step 1:** Test `test_revenue_cluster_posts_1311_5113_33311_work18` — stub SA type 1 + 1 cost; assert 3 vế: `1311 Nợ (total+vat) ref[5113,33311] customer_id`; `5113 Có (total) ref[1311] employee_id=created_by work_id=18`; `33311 Có (vat) ref[1311]`; tất cả cùng `group`.
-- [ ] **Step 2:** FAIL → implement `getDataCostAccounting` khung + `prepareData` + `revenueAccounting` (SA-riêng: TK **5113**, Work **18** — KHÁC trait 5111/Work15). `prepareData` port ERP:157–207 (đọc `support_accounting->before_vat_total/_delivery_cost/_product/_repair_service`; `vat_percent` theo type 1→`revenue_costs[0]`, 2→`costs[0]`, else→`delivery_vat_percent`). PASS.
-- [ ] **Step 3:** Test `test_deduction_cluster_5213_33311_1311_work19` + `test_cost_cluster_632_1541_per_cost` (632 Nợ tổng ref[1541]; mỗi cost 1541 Có `price*coefficient_cost_price/100` ref[632] `service_accounting_cost_id`). FAIL → implement `revenueDeductionAccounting` (5213/Work19) + `costAccounting` (632/1541). PASS.
-- [ ] **Step 4:** Test `test_van_chuyen_skips_cost_cluster` (type 3 → KHÔNG cụm giá vốn) + `test_only_dich_vu_runs_heavy_clusters` (type 2 → KHÔNG 4 cụm nặng; type 1 → CÓ). FAIL → thêm nhánh `if type != VAN_CHUYEN costAccounting`, `if type == DICH_VU { 4 cụm nặng }` + `use SupportAccountingTrait` + định nghĩa hằng `WORK_*` khớp ERP (thưởng HH=12, HH tháng=13, HH quý=14, quỹ rủi ro=6, giảm trừ=19, doanh thu=18). PASS.
-- [ ] **Step 5:** Test `test_zero_denominator_yields_no_heavy_lines` (support_accounting mẫu số 0 → percent=0 → 4 cụm 0 dòng, không chia 0) + `test_plbs_posts_to_parent_contract` (contractable PLBS → sau Task 11 contractable_id = parent). FAIL→PASS (guard mẫu số trong `prepareData`).
-- [ ] **Step 6: Nạp nguồn hỗ-trợ-hạch-toán.** `$sa->contractable->support_accounting` trả stub `FirmSupportAccounting` (đọc được cột scalar, THIẾU `departments`/`department_main`). 4 cụm nặng cần quan hệ → trong service nạp `\Modules\Assign\Entities\Contract\SupportAccounting::where('contractable_id',$contract->id)->where('contractable_type', <FirmContract FQN>)->first()` truyền vào cụm nặng. **Ruling 9.1** (ghi ledger): trait type-hint `Assign\Contract` cho `$contract` — nếu PHP reject `FirmContract` (Finance), **nới type-hint** trait về không-ràng-buộc (4 method chỉ đọc `company_id`/`customer_id`/`created_by` + quan hệ phòng); đổi file dùng chung → mục này cần xác minh không vỡ `ProductExportPostingService`. Test trait-reuse: `test_bonus_ns_clusters_produce_lines_for_dich_vu`.
-- [ ] **Step 7:** Chạy full file xanh. **Commit** `feat(finance): ServiceAccounting posting engine (port FirmContractCostService)`
+- [x] **Step 1:** Test `test_revenue_cluster_posts_1311_5113_33311_work18` — stub SA type 1 + 1 cost; assert 3 vế: `1311 Nợ (total+vat) ref[5113,33311] customer_id`; `5113 Có (total) ref[1311] employee_id=created_by work_id=18`; `33311 Có (vat) ref[1311]`; tất cả cùng `group`.
+- [x] **Step 2:** FAIL → implement `getDataCostAccounting` khung + `prepareData` + `revenueAccounting` (SA-riêng: TK **5113**, Work **18** — KHÁC trait 5111/Work15). `prepareData` port ERP:157–207 (đọc `support_accounting->before_vat_total/_delivery_cost/_product/_repair_service`; `vat_percent` theo type 1→`revenue_costs[0]`, 2→`costs[0]`, else→`delivery_vat_percent`). PASS.
+- [x] **Step 3:** Test `test_deduction_cluster_5213_33311_1311_work19` + `test_cost_cluster_632_1541_per_cost` (632 Nợ tổng ref[1541]; mỗi cost 1541 Có `price*coefficient_cost_price/100` ref[632] `service_accounting_cost_id`). FAIL → implement `revenueDeductionAccounting` (5213/Work19) + `costAccounting` (632/1541). PASS.
+- [x] **Step 4:** Test `test_van_chuyen_skips_cost_cluster` (type 3 → KHÔNG cụm giá vốn) + `test_only_dich_vu_runs_heavy_clusters` (type 2 → KHÔNG 4 cụm nặng; type 1 → CÓ). FAIL → thêm nhánh `if type != VAN_CHUYEN costAccounting`, `if type == DICH_VU { 4 cụm nặng }` + `use SupportAccountingTrait` + định nghĩa hằng `WORK_*` khớp ERP (thưởng HH=12, HH tháng=13, HH quý=14, quỹ rủi ro=6, giảm trừ=19, doanh thu=18). PASS.
+- [x] **Step 5:** Test `test_zero_denominator_yields_no_heavy_lines` (support_accounting mẫu số 0 → percent=0 → 4 cụm 0 dòng, không chia 0) + `test_plbs_posts_to_parent_contract` (contractable PLBS → sau Task 11 contractable_id = parent). FAIL→PASS (guard mẫu số trong `prepareData`).
+- [x] **Step 6: Nạp nguồn hỗ-trợ-hạch-toán.** `$sa->contractable->support_accounting` trả stub `FirmSupportAccounting` (đọc được cột scalar, THIẾU `departments`/`department_main`). 4 cụm nặng cần quan hệ → trong service nạp `\Modules\Assign\Entities\Contract\SupportAccounting::where('contractable_id',$contract->id)->where('contractable_type', <FirmContract FQN>)->first()` truyền vào cụm nặng. **Ruling 9.1** (ghi ledger): trait type-hint `Assign\Contract` cho `$contract` — nếu PHP reject `FirmContract` (Finance), **nới type-hint** trait về không-ràng-buộc (4 method chỉ đọc `company_id`/`customer_id`/`created_by` + quan hệ phòng); đổi file dùng chung → mục này cần xác minh không vỡ `ProductExportPostingService`. Test trait-reuse: `test_bonus_ns_clusters_produce_lines_for_dich_vu`.
+- [x] **Step 7:** Chạy full file xanh. **Commit** `feat(finance): ServiceAccounting posting engine (port FirmContractCostService)`
 
 ---
 
@@ -361,9 +361,9 @@ $this->assertStringContainsString('contractable_type', $sql);
 **Interfaces:**
 - Consumes: `FirmContractServiceAccountingPostingService::getDataCostAccounting`; `account_details` thật (1275 phiếu FirmContract đã hạch toán, 7257 dòng).
 
-- [ ] **Step 1:** Test `test_generated_journal_matches_stored_account_details` — lấy **mẫu** phiếu `DA_DUYET` thật đủ 3 type (vd 15 DỊCH VỤ + 10 CHI_PHI + 10 VẬN CHUYỂN; `markTestSkipped` nếu DB rỗng). Mỗi phiếu: `getDataCostAccounting($phiếu)` → chuẩn hoá (TK `identify_number`, `money_value`, `type`, `group`, `work_id`, `service_accounting_cost_id`, `customer_id`/`employee_id`) → so **multiset** với `account_details` thật của phiếu (lọc `value>0`). Assert KHỚP từng vế (sai số tiền = 0 đồng).
-- [ ] **Step 2: Chạy.** Lệch → **DỪNG**, systematic-debugging (so field lệch đầu tiên), **KHÔNG** sửa công thức ép khớp cho tới khi hiểu gốc. Khi gốc là khác biệt dữ liệu (vd phiếu cũ công thức đời trước) → ghi **Ruling** + thu hẹp mẫu sang phiếu gần đây, KHÔNG nới assert.
-- [ ] **Step 3:** XANH trên mẫu. **Commit** `test(finance): ServiceAccounting posting reconciles 1:1 with real account_details`
+- [x] **Step 1:** Test `test_generated_journal_matches_stored_account_details` — lấy **mẫu** phiếu `DA_DUYET` thật đủ 3 type (vd 15 DỊCH VỤ + 10 CHI_PHI + 10 VẬN CHUYỂN; `markTestSkipped` nếu DB rỗng). Mỗi phiếu: `getDataCostAccounting($phiếu)` → chuẩn hoá (TK `identify_number`, `money_value`, `type`, `group`, `work_id`, `service_accounting_cost_id`, `customer_id`/`employee_id`) → so **multiset** với `account_details` thật của phiếu (lọc `value>0`). Assert KHỚP từng vế (sai số tiền = 0 đồng).
+- [x] **Step 2: Chạy.** Lệch → **DỪNG**, systematic-debugging (so field lệch đầu tiên), **KHÔNG** sửa công thức ép khớp cho tới khi hiểu gốc. Khi gốc là khác biệt dữ liệu (vd phiếu cũ công thức đời trước) → ghi **Ruling** + thu hẹp mẫu sang phiếu gần đây, KHÔNG nới assert.
+- [x] **Step 3:** XANH trên mẫu. **Commit** `test(finance): ServiceAccounting posting reconciles 1:1 with real account_details`
 
 ---
 
@@ -381,13 +381,13 @@ $this->assertStringContainsString('contractable_type', $sql);
 
 > **Port ERP `ServiceAccountingController::store/update/delete` (`:123–350`)** nhưng (a) **bọc transaction + rollback mọi nhánh lỗi** (sửa bug ERP: 2 nhánh `return responseErrors` trong khối `DA_DUYET` KHÔNG `DB::rollBack()`); (b) **FirmContract-only** — bỏ nhánh `else getDataCreateDept`; (c) **bỏ** `service_export_request` flip (class vắng — Ruling 11.1) ; (d) notify theo `NotificationMeta::build` (Ruling: thay `NotificationHelper::sendNotify`).
 
-- [ ] **Step 1:** Quyền — thêm dòng `$this->perm(['name'=>'Hạch toán dịch vụ HĐBH','display_name'=>...,'group'=>...,'type'=>23])` vào seeder; `php artisan permission:sync --dry-run` thấy quyền mới. (Không test riêng — kiểm ở Step 7.)
-- [ ] **Step 2:** Test `test_store_draft_creates_without_posting` — `status=DANG_TAO` + `service_accounting_request_id` + items/costs → tạo phiếu, copy items/costs, `account_details` 0 dòng, YC KHÔNG lật. FAIL → implement `store()` phần nháp (generateCode, fill contractable từ YC, syncItems/syncCosts). PASS.
-- [ ] **Step 3:** Test `test_store_approved_posts_and_flips_request` — `status=DA_DUYET` → `account_details` > 0 (ΣNợ=ΣCó), YC `status=5 + approver_id + approved_at`, `handover_date` set. FAIL → implement nhánh `DA_DUYET` (posting service → `saveAccountDetail` với meta org theo phiếu → flip YC → `updateHandoverDate`) trong transaction. PASS.
-- [ ] **Step 4:** Test `test_update_reposts_without_duplicating_account_details` (Review Focus 1) + `test_posting_failure_rolls_back_everything` (Review Focus 2 — ép `saveAccountDetail` false bằng TK không tồn tại → assert 0 dòng, phiếu không `DA_DUYET`, YC không lật). FAIL → implement `update()` (xoá bút toán cũ theo invoiceable trước khi ghi lại; rollback). PASS.
-- [ ] **Step 5:** Test `test_update_delete_blocked_when_not_owner_or_approved` (423/403) + `test_destroy_removes_draft_owned` + `test_write_endpoints_forbidden_without_permission` (Review Focus 6 — 403). FAIL → implement guard `canEdit`/`canDelete` đầu service + `destroy()` + route `checkPermission` + FormRequest (nếu FormRequest nuốt guard → chuyển guard sang middleware, bám khuôn khoá bản ghi trong CLAUDE.md). PASS.
-- [ ] **Step 6:** Notify — `ServiceAccountingNotifyService` theo `NotificationMeta::build` (mẫu `ServiceAccountingRequestNotifyService`), gọi khi duyệt (báo người lập YC). Test `test_approve_notifies_request_creator`. FAIL→PASS.
-- [ ] **Step 7: Full suite** `php -d memory_limit=-1 ./vendor/bin/phpunit Modules/Finance/Tests/Feature` — xanh (trừ 21 pre-existing). **Commit** `feat(finance): ServiceAccounting store/update/destroy + posting + permission`
+- [x] **Step 1:** Quyền — thêm dòng `$this->perm(['name'=>'Hạch toán dịch vụ HĐBH','display_name'=>...,'group'=>...,'type'=>23])` vào seeder; `php artisan permission:sync --dry-run` thấy quyền mới. (Không test riêng — kiểm ở Step 7.)
+- [x] **Step 2:** Test `test_store_draft_creates_without_posting` — `status=DANG_TAO` + `service_accounting_request_id` + items/costs → tạo phiếu, copy items/costs, `account_details` 0 dòng, YC KHÔNG lật. FAIL → implement `store()` phần nháp (generateCode, fill contractable từ YC, syncItems/syncCosts). PASS.
+- [x] **Step 3:** Test `test_store_approved_posts_and_flips_request` — `status=DA_DUYET` → `account_details` > 0 (ΣNợ=ΣCó), YC `status=5 + approver_id + approved_at`, `handover_date` set. FAIL → implement nhánh `DA_DUYET` (posting service → `saveAccountDetail` với meta org theo phiếu → flip YC → `updateHandoverDate`) trong transaction. PASS.
+- [x] **Step 4:** Test `test_update_reposts_without_duplicating_account_details` (Review Focus 1) + `test_posting_failure_rolls_back_everything` (Review Focus 2 — ép `saveAccountDetail` false bằng TK không tồn tại → assert 0 dòng, phiếu không `DA_DUYET`, YC không lật). FAIL → implement `update()` (xoá bút toán cũ theo invoiceable trước khi ghi lại; rollback). PASS.
+- [x] **Step 5:** Test `test_update_delete_blocked_when_not_owner_or_approved` (423/403) + `test_destroy_removes_draft_owned` + `test_write_endpoints_forbidden_without_permission` (Review Focus 6 — 403). FAIL → implement guard `canEdit`/`canDelete` đầu service + `destroy()` + route `checkPermission` + FormRequest (nếu FormRequest nuốt guard → chuyển guard sang middleware, bám khuôn khoá bản ghi trong CLAUDE.md). PASS.
+- [x] **Step 6:** Notify — `ServiceAccountingNotifyService` theo `NotificationMeta::build` (mẫu `ServiceAccountingRequestNotifyService`), gọi khi duyệt (báo người lập YC). Test `test_approve_notifies_request_creator`. FAIL→PASS.
+- [x] **Step 7: Full suite** `php -d memory_limit=-1 ./vendor/bin/phpunit Modules/Finance/Tests/Feature` — xanh (trừ 21 pre-existing). **Commit** `feat(finance): ServiceAccounting store/update/destroy + posting + permission`
 
 ---
 
@@ -401,10 +401,10 @@ $this->assertStringContainsString('contractable_type', $sql);
 - Consumes: BE store/update/destroy; `detailData` Phase 1; cờ BE `is_can_edit`/`is_can_delete` (thêm vào detail resource Task 11).
 - Produces: route `/finance/service-accounting/create` + edit qua `_id`.
 
-- [ ] **Step 1:** `ServiceAccountingForm.vue` — chọn YC nguồn (`service_accounting_request_id`), hiển thị items/costs copy (readonly bảng), ô `payed_cost`/`note`; nút **Lưu nháp** / **Lưu và duyệt** (`status` 1/2). Dùng `V2Base*`, `unsavedChangesMixin`, số `toLocaleString('en-US')`. `create.vue` = shell gọi Form.
-- [ ] **Step 2:** `_id/index.vue` footer — thêm **Sửa** (`/create?id=` hoặc `_id?edit`) + **Xóa** (`$confirm`), **ẩn** (v-if, không disable) khi `!is_can_edit`/`!is_can_delete`. Đồng bộ nút chi tiết ↔ danh sách (CLAUDE.md).
-- [ ] **Step 3: Verify (Playwright, `http://127.0.0.1:3000`)** — (a) tạo nháp từ 1 YC → phiếu `Đang tạo`; (b) sửa phiếu nháp của mình thấy nút Sửa/Xóa, phiếu đã duyệt KHÔNG thấy; (c) không console error.
-- [ ] **Step 4: Commit** `feat(finance-fe): ServiceAccounting create/edit form + Sửa/Xóa actions`
+- [x] **Step 1:** `ServiceAccountingForm.vue` — chọn YC nguồn (`service_accounting_request_id`), hiển thị items/costs copy (readonly bảng), ô `payed_cost`/`note`; nút **Lưu nháp** / **Lưu và duyệt** (`status` 1/2). Dùng `V2Base*`, `unsavedChangesMixin`, số `toLocaleString('en-US')`. `create.vue` = shell gọi Form.
+- [x] **Step 2:** `_id/index.vue` footer — thêm **Sửa** (`/create?id=` hoặc `_id?edit`) + **Xóa** (`$confirm`), **ẩn** (v-if, không disable) khi `!is_can_edit`/`!is_can_delete`. Đồng bộ nút chi tiết ↔ danh sách (CLAUDE.md).
+- [x] **Step 3: Verify (Playwright, `http://127.0.0.1:3000`)** — (a) tạo nháp từ 1 YC → phiếu `Đang tạo`; (b) sửa phiếu nháp của mình thấy nút Sửa/Xóa, phiếu đã duyệt KHÔNG thấy; (c) không console error.
+- [x] **Step 4: Commit** `feat(finance-fe): ServiceAccounting create/edit form + Sửa/Xóa actions`
 
 ---
 
