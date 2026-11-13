@@ -2550,3 +2550,61 @@ quyền RỘNG hơn dự kiến.
 - [x] 10/11/2026 (@cuong61n) Màn Phân công quản lý phòng ban (`/admin/employee-roles/{id}`) hiện "Phòng ban #116 🔒" thay vì tên (báo từ cổng chính): phòng ban/bộ phận đã khoá mà nhân viên đang được gán không có trong `state.departments` (user-profile chỉ trả status=1) → rơi về chữ dự phòng. Sửa: BE `EmployeeRoleService` detail trả thêm `locked_departments` / `locked_parts` [{id,code,name}]; FE `EmployeeRoleManageDepartments.vue` nhận 2 prop và tra tên ở đó trước (`_id/index.vue` truyền). Chưa test trên trình duyệt, chưa commit
 - [x] 10/11/2026 Đã deploy prod (API d1054b4c8, client 4b0bd5f59, build_tpe.sh) + xoá 9 dòng lệch công ty trên prod `hrm_erp_gop` theo user chọn "cả 9 dòng" (id 82,142,144,146,56,147,149,151,165); sao lưu `scratchpad/backup_emd_20261110.tsv`; kiểm lại: còn 0 dòng lệch. Lưu ý: dòng của NV 210 và 1021 (phòng 76/67/90) có thể là gán chéo công ty cố ý → nếu họ báo mất quyền quản lý phòng ban thì khôi phục từ bản sao lưu.
 - (đã xong ở dòng trên) Dữ liệu prod `employee_manage_departments` id 165 (NV 1060, phòng 116 thuộc công ty 1 nhưng gán ở công ty 8, created_at NULL, tạo trước 04/2023) + 8 dòng lệch công ty khác (NV 13, 210, 326, 1021) — chờ user xác nhận trước khi xoá
+
+## Sao chép quyền từ NHIỀU vai trò (Redmine dòng 16 sheet test, DNS log 12/11/2026) — @cuong61n
+Yêu cầu (Huyền): popup "Thêm mới vai trò" → ô "Sao chép quyền từ" cho chọn nhiều vai trò, hệ thống lấy tổng hợp (hợp) quyền.
+Quy tắc gộp (đã đề xuất, user bảo làm): hợp mọi mã quyền của các vai trò nguồn; cùng 1 mã mà khác phạm vi → lấy phạm vi RỘNG NHẤT (4 > 3 > 2 > 1); sau đó vẫn hạ Tổng công ty → Công ty nếu công ty chưa được bật. Lịch sử `create.copy_from` ghi đủ tên các vai trò nguồn.
+### BE
+- [x] (13/11/2026) RoleRequest: nhận `copy_from_role_ids` (mảng id, cùng công ty, distinct); giữ `copy_from_role_id` đơn để không vỡ client/test cũ
+- [x] (13/11/2026) RoleManagementService::store: gộp quyền nhiều nguồn (max phạm vi), giữ luật hạ Tổng công ty, log `copy_from` = "A, B, C"
+### FE
+- [x] (13/11/2026) RoleFormModal.vue: ô "Sao chép quyền từ" chọn nhiều (V2BaseSelectInModal multiple), gửi `copy_from_role_ids`, đổi dòng gợi ý
+### Test
+- [x] (13/11/2026) AdminRoleApiTest (33/33 đạt, thêm 3 ca; sửa GateFixture::grant tự nhận cột company_id vì DB local đã bỏ cột, trước đó cả 30 ca cũ lỗi sẵn): gộp 2 vai trò (hợp quyền, khác phạm vi lấy rộng nhất), 1 vai trò (như cũ), id công ty khác → 422, trùng id, hạ Tổng công ty
+- [x] (13/11/2026) UI local /admin/roles (Playwright MCP, namdangit): chọn 2 vai trò (Kế toán trưởng + Trưởng bộ phận kinh doanh) → payload `copy_from_role_ids` [102755,100122], tạo 201, DB: 132 quyền = đúng hợp 2 nguồn, 0 mã thiếu, 14 mã trùng khác phạm vi đều ra mức rộng nhất (1/2 vs 3 → 3), lịch sử `copy_from` ghi đủ 2 tên; ca 1 nguồn (Thủ quỹ) khớp nguồn 100%; ca không chọn nguồn → 0 quyền. Đã xoá 3 vai trò test
+
+### Checkpoint — 2026-11-13
+Vừa hoàn thành: BE + FE + test BE cho chọn nhiều vai trò nguồn (chưa commit, chưa push)
+Chưa làm: kiểm UI trên trình duyệt (chờ user yêu cầu); lỗi 422 theo phần tử mảng (`copy_from_role_ids.N`) chưa hiện dưới ô — chỉ xảy ra khi gọi API tay, UI đã lọc cùng công ty + không trùng
+Bước tiếp theo: user duyệt → commit/deploy; sau đó trả lời dòng 16 sheet test
+- [x] (13/11/2026) FE: lỗi 422 theo phần tử mảng (`copy_from_role_ids.N`) nay hiện dưới ô (RoleFormModal: copyFromError / clearCopyFromError)
+- [x] (13/11/2026) UI bổ sung (Playwright MCP): (a) công ty 1 tắt tạm allow_group_scope → chọn Kiểm soát + Kế toán trưởng: 230 quyền, 0 quyền Tổng công ty (177 hạ xuống Công ty), lịch sử ghi "177 quyền … hạ xuống Công ty", vai trò nguồn giữ nguyên; đã trả cờ về 1; (b) chặn request thêm id vai trò công ty 4 → 422 "Không tồn tại" hiện dưới ô, modal giữ nguyên, không tạo vai trò. Đã xoá mọi vai trò E2E
+
+## Màn Phân quyền vai trò: tick quyền làm các nhóm tự đóng (dòng 17 sheet test, Huyền log 12/11/2026) — @cuong61n
+Lỗi: vào 1 vai trò → lọc Loại quyền = Duyệt → "Mở tất cả" → tick 1 quyền → các nhóm tự đóng lại. Yêu cầu: không tự đóng.
+Nguyên nhân: `visible` (computed) phụ thuộc cả `selected` nên tick 1 quyền cũng chạy lại watcher `visible`; watcher đặt `expanded` về "trạng thái trước lúc lọc" ⇒ ghi đè thao tác "Mở tất cả".
+### FE
+- [x] (13/11/2026) `pages/admin/roles/_id/permissions.vue`: watcher `visible` chỉ đặt lại thẻ mở khi BỘ LỌC đổi (so `JSON.stringify(filter)` với `lastFilterKey`), tick / bỏ tick không còn đụng tới `expanded`
+### Test (Playwright MCP, local, vai trò 102755, không bấm Lưu)
+- [x] (13/11/2026) Tái hiện trước khi sửa: lọc Duyệt → Mở tất cả (0/15 đóng) → tick 1 quyền ⇒ 14/15 đóng (đúng lỗi báo)
+- [x] (13/11/2026) Sau sửa: lọc Duyệt → Mở tất cả → tick 2 quyền → bỏ 1 tick ⇒ vẫn 0/15 đóng, bộ đếm "thay đổi chưa lưu" 1→2→1; Xoá lọc ⇒ về 18/19 đóng như ban đầu; từ khoá hẹp ⇒ tự mở 2 nhóm chứa kết quả; "Chỉ hiện quyền đã chọn" + Mở tất cả + bỏ tick ⇒ vẫn 0 nhóm đóng (cách so nội dung Set lần đầu KHÔNG đủ vì ca này nội dung đổi thật, nên chuyển sang so bộ lọc)
+
+### Checkpoint — 2026-11-13 (dòng 17)
+Vừa hoàn thành: sửa + test UI; chưa commit, chưa push (cùng nhóm thay đổi với dòng 16 trong hrm-client)
+Bước tiếp theo: user duyệt → commit/deploy dev; trả lời dòng 17 sheet test
+
+## #12004 [Phân quyền] Lỗi và bổ sung chức năng — dòng 6 sheet test (Huyền log 07/11/2026) — @cuong61n
+Yêu cầu (Redmine, trạng thái Mới): màn "DS vai trò nhân viên" (/admin/employee-roles): (1) cho lọc theo quyền cụ thể để xem ai đang giữ; (2) search theo chức vụ (lấy từ danh mục chức vụ sang).
+Hiện trạng: (1) ĐÃ CÓ từ 09/11/2026 (commit 2deb41818 bộ lọc "Quyền", `permission_codes`). (2) chưa có. "Chức vụ" = bảng `working_positions` (màn Quản lý chức vụ), gắn NV qua `employee_infos.employee_work_position_id` (khác "Chức danh" = `titles`).
+### BE
+- [x] (13/11/2026) EmployeeRoleService (query danh sách, dùng chung cho xuất): lọc `working_position_ids[]` → `employee_infos.employee_work_position_id IN (...)`
+### FE
+- [x] (13/11/2026) pages/admin/employee-roles/index.vue: bộ lọc "Chức vụ" (chọn nhiều), nguồn `bulk/options.working_positions` (đã có sẵn, không thêm API), gửi `working_position_ids[]`
+### Test
+- [x] (13/11/2026) PHPUnit AdminEmployeeRoleApiTest 26/26 (thêm test_loc_theo_chuc_vu: 1 / nhiều / không có / kết hợp vai trò / xuất Excel)
+- [x] (13/11/2026) UI Playwright local (C1, 817 NV): Chức vụ 'Nhân viên Kinh doanh' → 72, + 'Nhân viên lắp đặt' → 129 (đúng DB); + Vai trò 'Nhân viên kinh doanh' → 70; bỏ vai trò → 129; + Quyền 'Xem danh mục nhóm ngành' → 39; Làm mới → 817, 0 chip. Xuất Excel có lọc: file nhỏ dần 136KB (không lọc) > 89KB (2 chức vụ) > 85KB (1 chức vụ). Chưa chạy trên dev/prod
+
+### Checkpoint — 2026-11-13 (#12004 / dòng 6)
+Vừa hoàn thành: bộ lọc "Chức vụ" (chọn nhiều) ở màn Vai trò nhân viên — BE + FE + test; chưa commit, chưa push. Mục (1) "lọc theo quyền" đã có từ 09/11 nên không làm lại
+Chưa làm / cần user chốt: cột "Chức vụ" trong bảng (Redmine chỉ nói lọc; nếu cần thêm làm cột ẩn trong Tuỳ chỉnh cột + khai ExportColumnRegistry)
+
+### Đã push nhánh gop_db — 13/11/2026 (@cuong61n, theo yêu cầu user)
+- hrm-api `a1aace11d` (2 commit: sao chép nhiều vai trò `8ce6cf8cc`; lọc Chức vụ #12004 `a1aace11d`)
+- hrm-client `994cf90bd` (3 commit: RoleFormModal `ad21f0b49`; tick quyền không đóng nhóm `3bb2e25cc`; bộ lọc Chức vụ `994cf90bd`)
+- Chưa deploy dev/prod (chạy ~/build_tpe.sh khi cần). Sau deploy: vào /admin/roles cấp lại mức phạm vi nếu cần; trả lời dòng 6, 16, 17 sheet test
+
+### Merge gop_db ⇄ develop — 13/11/2026 (@cuong61n, theo yêu cầu user)
+- hrm-api: merge `origin/develop` vào `gop_db` sạch (`286c2650d`), thêm `filter_working_positions` vào `EmployeeRoleService::listFilterOptions` (`d95abd650`) để ô lọc Chức vụ (#12004) khớp #11736 (hiện cả mục đã khoá còn NV dùng, 🔒). Test lại AdminEmployeeRoleApiTest 26/26 + AdminRoleApiTest 33/33
+- hrm-client: 1 xung đột `pages/admin/employee-roles/index.vue` (#11736 `keepLockedOptions`/`filter_*` ↔ ô Chức vụ của mình): giữ cả hai, Chức vụ đọc `filter_working_positions || working_positions`, thêm `keepLockedOptions` (`ba5fbabc0`). UI local: lọc Chức vụ 817→72→129 đúng
+- Đã push `gop_db` rồi `develop` (fast-forward) cả 2 repo ⇒ develop = gop_db = api `d95abd650`, client `ba5fbabc0`. Nhánh local `develop` trên máy vẫn cũ (chưa kéo)
+- Prod đang build bản cũ hơn (client `d178b590c`): cần chạy lại `~/build_tpe.sh` để lấy bản merge
