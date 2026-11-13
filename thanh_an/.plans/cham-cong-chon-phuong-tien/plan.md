@@ -19,7 +19,11 @@
   - Cửa sổ máy ảo mở lệch lên trên màn hình (1536x824) → sau khi mở phải dời/đổi cỡ (SetWindowPos ~x=1150, y=5, 365x800)
 - [x] `app/android/app/build.gradle`: chuyển `abiFilters` xuống `buildTypes` — release giữ `arm64-v8a`, debug thêm `x86_64` để cài được lên máy ảo trên PC
 - [x] Backend local: `D:\laragon\www\dns\hrm-thanhan-api` (Laravel 8, nhánh `thanhan-dev`, DB `thanhan_stag_07052026` trên MySQL Laragon) — KHÔNG phải `D:\laragon\www\hrm\hrm-api`
-  - Chạy: `D:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe artisan serve --host=0.0.0.0 --port=8001`
+  - ~~Chạy: `D:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe artisan serve --host=0.0.0.0 --port=8001`~~ — **bỏ từ 13/11/2026**: `artisan serve` trên Windows chạy từng request một → màn Tổng quan (10–20 request song song) bị timeout 30s, app báo "Lỗi kết nối"
+  - [x] (13/11/2026) Chạy bằng nginx Laragon + 4 worker PHP 8.1: file `D:\laragon\etc\nginx\sites-enabled\thanhan-api-8001.conf` (listen 8001, root `.../hrm-thanhan-api/public`, upstream `127.0.0.1:9101–9104`)
+    - Mỗi lần khởi động lại máy phải bật lại worker (PowerShell): `$env:PHP_FCGI_MAX_REQUESTS='0'; 9101..9104 | % { Start-Process D:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php-cgi.exe -ArgumentList '-b',"127.0.0.1:$_" -WindowStyle Hidden }`
+    - nginx Laragon phải đang chạy; nạp lại cấu hình: `nginx.exe -s reload` trong `D:\laragon\bin\nginx\nginx-1.22.0`
+    - Kết quả: 10 request song song ~3.5s (trước xếp hàng > 30s)
   - Kiểm tra: POST `http://127.0.0.1:8001/api/v1/users/auth/login` → 422 "Bắt buộc phải nhập" là OK
 - [x] Trỏ app vào BE local: `BuildConfig` đọc `--dart-define=API_DOMAIN=...` (không truyền thì dùng domain theo flavor như cũ); máy ảo gọi máy tính qua `10.0.2.2`
 - [x] Lệnh chạy app Thành An (trong `app/`):
@@ -79,6 +83,10 @@
 - Code App: chọn phương tiện ở màn Chấm công, hiện "Phương tiện sử dụng" ở chi tiết phiếu công tác
 - Web (Phase 2c): user đổi ý — bỏ cột ở bảng Lịch sử chấm công, chuyển thành ô "Phương tiện sử dụng" ở phần thông tin phiếu (gom xe các lượt chấm, bỏ trùng). BE giữ `vehicle_text` từng lượt làm nguồn dữ liệu. Helper chạy thử OK với timesheet_info dạng mảng + object
 - Web (Phase 2b): thêm cột "Phương tiện sử dụng" vào bảng Lịch sử chấm công ở chi tiết phiếu công tác + phiếu đề nghị TT công tác phí. Kiểm bằng tinker trên DB local: lượt 407809 (phiếu CT 5911) ra "29A-00435 (Lexus)" ở cả Detail / List / DetailRequestPaymentWorkingFee resource
+
+### 13/11/2026
+- BE local chuyển từ `artisan serve` sang nginx + 4 php-cgi 8.1 (cổng 8001 giữ nguyên) để hết "Lỗi kết nối" ở Tổng quan — chi tiết Phase 0
+- Fix app: sheet chọn ca lần đầu trống → plan riêng [fix-app-cham-cong-chon-ca-lan-dau](../fix-app-cham-cong-chon-ca-lan-dau/plan.md)
 
 ### Checkpoint — 12/11/2026
 Vừa hoàn thành: dựng môi trường + code BE + App (chưa commit)

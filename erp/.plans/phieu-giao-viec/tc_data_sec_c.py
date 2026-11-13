@@ -82,11 +82,10 @@ SEC_X = [
     ("001", "Phiếu công tác chưa duyệt thì chưa nhập kết quả", "P0",
      "PGV-01 có phiếu công tác bên HRM gắn KTV-1, phiếu công tác chưa duyệt",
      "1. Đăng nhập KTV-1\n"
-     "2. " + MENU_DG + "\n"
-     "3. Bấm nút bánh răng ở PGV-01",
+     "2. " + MENU_DG,
      "—",
-     "- Có PGV-01, Người thực hiện KTV-1\n"
-     "- Không có \"Nhập kết quả\""),
+     "- Danh sách Phiếu giao việc được giao của KTV-1 chưa có PGV-01 (người thực hiện chỉ được ghi sang khi phiếu công tác đã duyệt)\n"
+     "- Ở menu Phiếu giao việc, PGV-01 vẫn Chờ thực hiện, chưa có Người thực hiện"),
 
     ("002", "Phiếu công tác đã duyệt thì người thực hiện nhập kết quả", "P0",
      "Phiếu công tác của PGV-01 đã duyệt",

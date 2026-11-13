@@ -19,6 +19,24 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Báo cáo bán hàng theo từng mặt hàng (ERP → HRM) — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `6ce0a92ab`, hrm-client `fb38e3761`) (2026-11-13, @khoipv)
+
+Port ERP `report.summary_sale` → `/sale/sale-by-product-report` (Bán hàng › Báo cáo › Tổng hợp & so sánh). Chốt: CỘNG THÊM HĐ HRM vào nguồn cũ;
+bỏ cột Bảo hành + ĐMGG; quyền 4 cấp y ERP (+platform hrm); popup chi tiết thêm NVKD + lọc + In + Excel.
+**Checkpoint 13/11 (wrap up):** CODE XONG BE + FE + menu, test Playwright trình duyệt thật 16/16 đạt (spec `e2e/tests/sale/sale-by-product-report.spec.ts`), đã sửa lỗi chọn cột In của popup. ĐÃ PUSH develop 13/11. Deploy phải chạy `permission:catalog-sync`. Bộ e2e (`e2e/` không phải repo git) chỉ ở máy local.
+Tài liệu: `.plans/gop-db/bao-cao-ban-hang-theo-mat-hang/` · spec `docs/superpowers/specs/gop-db/2026-11-13-bao-cao-ban-hang-theo-mat-hang-design.md`.
+
+## #11736 Bộ lọc danh mục hiện cả danh mục đã khoá 🔒 (mọi màn port ERP→HRM) — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `288108f40`, hrm-client `2651bb4fd`) (2026-11-13, @khoipv)
+
+Ô lọc danh mục = đang hoạt động + đã khoá mà còn bản ghi CỦA MÀN dùng tới. Nền: `LockedCatalogOptions::activeOrUsed()` (BE) + `keepLockedOptions` trên field lọc (FE, sửa `V2BaseFilterFieldControl` — user đồng ý).
+**Checkpoint 13/11:** CODE XONG cả 7 lô (~120 ô lọc, 95 file PHP + 92 file FE). php -l + parse FE + HTTP kernel đạt. ĐÃ PUSH develop 13/11 (commit tách riêng với #11739).
+Tài liệu: `.plans/gop-db/11736-loc-danh-muc-khoa/`.
+
+## #11739 Tiêu đề màn chi tiết Tài chính kèm mã + badge trạng thái — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `288108f40`, hrm-client `2651bb4fd`) (2026-11-13, @khoipv)
+
+35 màn chi tiết Tài chính có tiêu đề `Chi tiết <tên>: <mã>` + badge trạng thái qua `buildStatusTitle` (thêm `statusTypeHex` cho BE trả status_type bootstrap); user chốt gắn badge cả 5 màn có quyết định cũ trái quy tắc. Verify parse 42 file FE + php -l sạch. ĐÃ PUSH develop 13/11 (commit tách riêng với #11736).
+Tài liệu: `.plans/gop-db/11739-tieu-de-chi-tiet-trang-thai/`.
+
 ## Danh sách hàng xuất nhập thẳng (ERP → HRM) — HOÀN THÀNH 2026-11-11, ĐÃ PUSH develop (hrm-api `0b472de60`, hrm-client `56d08069e`) (2026-11-11, @khoipv)
 
 Port màn ERP `warehouseInfo.productImportDirectDetails` → `/finance/import-direct-stocks` (menu Tài chính › Báo cáo hàng tồn kho + Tra cứu › Thông báo).
