@@ -1416,3 +1416,6 @@ Blocked: e2e không chạy được trên `hrm_erp_21_10_prod` (không có tài 
 
 ## Ngày 12/11/2026 (@junfoke)
 - [ ] 12/11/2026 — Lỗi #12133 (Thêm nhanh danh mục ở form tạo hàng hoá): popup Hãng sản xuất bỏ nhãn "Có VAT", ô Vị trí đứng trước checkbox "Hãng có VAT" (dùng chung với màn DM Hãng sản xuất nên đổi theo); popup Loại sản phẩm báo đỏ "Bắt buộc phải chọn" khi trống Tính chất hàng hóa / Nhóm chức năng (BE kiểm bắt buộc, không lưu thêm cột); điền đủ placeholder popup Loại SP + NCC; popup thêm nhanh NCC: Người đại diện, Người liên hệ thành bảng nhiều dòng có nút "+", Ngân hàng nhiều dòng chỉ với loại Nước ngoài (như ERP). Kiểm bằng ảnh, chưa lưu thật NCC, chưa chạy PHPUnit. **Chưa commit** (worktree `.worktrees/develop`). Chờ user quyết: popup Nhóm sản phẩm cùng lỗi có sửa không; Ngân hàng nhiều dòng cho Tổ chức/Cá nhân (phải sửa BE); SĐT người liên hệ tách nhiều ô.
+
+## Ngày 13/11/2026 (@junfoke)
+- [x] 13/11/2026 — Commit #12133 (phần ghi 12/11 ở trên): api `ec0c8b35c` (Loại SP bắt buộc Tính chất hàng hóa + Nhóm chức năng), client `eda40e859` (develop, đã push). 3 câu hỏi chờ user vẫn còn.

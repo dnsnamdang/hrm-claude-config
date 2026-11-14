@@ -42,6 +42,17 @@ Design: `design.md` · Spec: `docs/superpowers/specs/gop-db/2026-11-12-12128-xem
 - [x] Thẻ: padding 15px trên / 10px dưới + `space-between` (theo ảnh user). Commit `fb17375071` → `develop_02` `02b11a8a71` → push
 - [x] Commit `314e69c331` trên `task_12128` → merge `develop_02` (`c1ee29a80a`) → push origin (12/11)
 
+## Phase 6 — Lỗi prod 13/11: PDF ĐNTT EG.DNTT1126.00073 không xem được, Chrome hiện "viewer — File wasn't available on site"
+- [x] Prod: 3 file S3 vẫn 200; Google Viewer trả **204 rỗng** với 2/3 file ⇒ popup quay mãi + file tải lỗi "viewer". Nút Tải xuống vẫn tải được
+- [x] Route `admin/file-preview/stream` (`Common\FilePreviewController`): server đọc file S3 CMC (chỉ host kho `tanphat`, chỉ pdf/txt/csv; 403/415/404)
+- [x] FE `renderFetched`: fetch → Blob PDF → iframe blob (trình xem sẵn Chrome); file cùng domain fetch thẳng; host lạ mới dùng Google
+- [x] Bẫy IDM: trỏ iframe/fetch vào phản hồi `application/pdf` ⇒ IDM bật hộp tải + trình duyệt nhận 204. Chữa: link gốc base64url ở `?u=`, phản hồi `text/plain` không tên file
+- [x] Verify local 8318 (máy có IDM): 3 file của phiếu hiện đủ (4,6 MB/9 trang ~1s), bấm thẻ thật + Tải lại OK, link lạ 403, .html 415
+- [x] Commit `12bcec5a53` trên `gop_db`, push
+- [x] 13/11/2026 — Prod báo `Route [filePreview.stream] not defined` (do đang build giữa chừng) → đã lỡ revert + push (`ed94ec3cf5`) trước khi đọc tin "không cần revert" ⇒ đẩy Reapply (`0c4de783bc`) thay vì force push nhánh chung. Lần sau gặp yêu cầu revert nhánh chung thì hỏi lại 1 câu trước khi push.
+- [x] 13/11/2026 — Prod vẫn "Không thể xem trước file" (tải về được): link route dùng đường dẫn tương đối `/admin/file-preview/stream` (tránh `http://` trên trang https) + log `[FilePreview]` khi đọc S3 lỗi + cảnh báo console. `f748b8dd03` (gop_db, đã push).
+- [ ] Chờ user build xong để kiểm lại phiếu `EG.DNTT1126.00073` trên prod; còn lỗi thì cần dòng `[FilePreview]` trong `laravel.log` prod.
+
 ## Checkpoint — 2026-11-12
 - Vừa hoàn thành: code + verify local, đã lên `origin/develop_02`.
 - Đang làm dở: không.

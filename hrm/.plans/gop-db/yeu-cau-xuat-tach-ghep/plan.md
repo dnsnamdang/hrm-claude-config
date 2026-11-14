@@ -105,8 +105,44 @@ User chốt 12/11: làm 4a trước, commit, rồi 4b.
 - [x] Commit Phase 5
 - [x] 12/11/2026 — User chốt "giữ logic ERP nhiều nhất, chỉ khác khi ERP sai rành rành": giá nhập phiếu tách giữ như ERP (giá nhập gần nhất, cho sửa); bỏ 2 chỗ khác ERP không phải lỗi — thông báo khi phiếu tách/ghép sang Hoàn thành, và bắt buộc ô Vụ việc trên PNH 8/10 (TK Có / TK Nợ vẫn bắt buộc). Danh sách chỗ còn khác ERP (đều là lỗi ERP) ghi ở mục 11 spec. Commit api `63fa9ced0`, client `df66361e8` (chưa push).
 
-### Checkpoint — 12/11/2026 16:40
-Vừa hoàn thành: Phase 5 (BE + FE, verify script; chưa xem trình duyệt form PNH 8/10).
+- [x] 12/11: user chốt "giữ logic ERP nhiều nhất có thể, chỉ sửa khi sai rành rành" → bỏ thông báo Hoàn thành + bỏ bắt buộc Vụ việc (api `63fa9ced0`, client `df66361e8`). Spec mục 11.
+
+## Phase 4b — ghép Xuất thẳng (13/11/2026)
+- [x] BE: 3 endpoint `finance/join-export-requests/{id}/product-export-data|accounting-stock-of-product|product-exports` (ProductExportController, Kế toán kho); tách `directExportRules()` dùng chung với nguồn YCXH
+- [x] `ProductExportService::createFromJoinExportRequest`: dòng = NVL gộp, giá bảng giá loại 1, kho kế toán xuất thẳng; nháp → phiếu ghép 8; hoàn tất → trừ tồn kế toán + bút toán + `SplitJoinImportService::onDirectJoinExportFinalized` (PNH Nhập ghép nhập thẳng: cộng tồn, `ProductImport::markJoinImportDirect`, bút toán) → 10
+- [x] Phát hiện + vá: màn PXH HRM không có ô "Tài khoản có" theo kho kế toán (ERP có, mặc định 1561) → bút toán Có loại 9/10 (cả 4a) thiếu tài khoản. Thêm ô + bắt buộc khi hoàn tất. (Loại 19 cũng thiếu — lỗi sẵn có của màn, CHƯA sửa, đã báo user.)
+- [x] FE `product-exports/create.vue` nguồn `?join_export_request_id=`; approve_link Xuất thẳng → màn HRM
+- [x] Verify script rollback (t8): nháp → 8; hoàn tất → bút toán xuất cân, PNH 777,780 = giá trị xuất, tồn thành phẩm +1, hàng nhập thẳng cho người tạo, nguồn 10; chặn lập lần 2
+- [x] Verify trình duyệt (giả lập API nguồn bằng page.route, dữ liệu sinh từ API thật): form PXH xuất thẳng từ phiếu ghép + form PNH Nhập ghép — xem ảnh, bố cục đúng
+- [x] Commit: api `fe384aca6`, client `a57d539b4`
+
+## Rà lại toàn chuỗi + bù phần thiếu so với ERP (13/11/2026 chiều)
+- [x] Chạy lại toàn bộ script rollback (t2-t8, cả tách/ghép) — đạt; reviewer độc lập đọc diff 10 commit; đối chiếu ERP từng điểm
+- [x] User chốt: giá nhập tách / ĐNNK tách hủy / tab chi phí 8-10 → GIỮ như ERP
+- [x] TK nợ mặc định '1541' cho PXH 9/10 từ PXK (+ chuỗi cho nguồn ghép xuất thẳng)
+- [x] Vụ việc bắt buộc khi TK Có dòng kho là 154* (BE + FE); BE bắt buộc TK Có theo kho khi hoàn tất 9/10; ghép xuất thẳng bắt buộc TK nợ
+- [x] Loại 19: TK Có theo kho khoá 1561 (FE ô khoá + BE tự điền)
+- [x] Hàm dùng chung `updateWarehouse`: port nhánh xuất thẳng ERP — trừ hàng nhập thẳng của người yêu cầu (mọi PXH xuất thẳng)
+- [x] Chốt chặn BE "SL được xuất" theo kho kế toán cho 3 đường lập PXH (`StockService::exportCapacityBase`, port validateAccountingWarehouse)
+- [x] Verify: t10 (ghép xuất thẳng: thiếu nhập thẳng → chặn, đủ → trừ FIFO + log), t11 (YCXH xuất thẳng loại 14 trừ + chặn vượt; SL được xuất thường khớp màn ĐNXK), t5-t7b chạy lại đạt
+- [x] Commit: api `067bf9445`, client `f86e7c9fc`
+
+### Checkpoint — 13/11/2026 10:10
+Vừa hoàn thành: TOÀN BỘ chuỗi (Phase 1-5 + 4b), đã commit trên `feat/yc-xuat-tach-ghep`, chưa push.
 Đang làm dở: —
-Bước tiếp theo: xem form PNH 8/10 trên trình duyệt khi rảnh Playwright → 4b (ghép Xuất thẳng: màn PXH thẳng từ phiếu ghép + tự sinh PNH Nhập ghép nhập thẳng, dùng lại SplitJoinProductImportAccountingService).
+Bước tiếp theo: user review → push nhánh feat / merge gop_db (phải hỏi). Deploy: `permission:catalog-sync`.
 Blocked:
+
+## Ngày 13/11/2026 — ghi chép note cuối ngày (@junfoke)
+- [x] 13/11/2026 — Làm chuyển đổi erp->hrm: Phiếu yêu cầu xuất tách / Phiếu yêu cầu xuất ghép - 100% (Phase 1-5 + 4b ghép Xuất thẳng + rà toàn chuỗi, bù phần thiếu so với ERP).
+- [x] 13/11/2026 — Push nhánh `feat/yc-xuat-tach-ghep` + merge vào `develop` để test (api `7a10f899d`, client `d488578fd`), chưa lên gop_db. User chốt: sau nhánh chức năng mặc định merge `develop`, chỉ lên `gop_db` khi user bảo.
+- [x] 13/11/2026 — Hỗ trợ gửi link dev-hrm + dev-erp của 2 màn và 6 màn liên quan đã sửa (ĐNXK, PXK, PXH, ĐNNK, PNK, PNH); dặn QA test lại cả YCXH xuất thẳng có từ trước vì đã sửa hàm PXH dùng chung.
+
+## Ngày 14/11/2026 — phản hồi QA (@junfoke)
+- [x] 14/11/2026 — Lỗi #12160, #12161, #12163, #12165 (Xuất tách / Xuất ghép, dùng chung component nên sửa cả 2 màn):
+  - Danh sách: bỏ sort cột Trạng thái; nút Tạo mới / Xuất Excel / Cấu hình cột hết thưa; nút duyệt ở cột Hành động theo ERP "Tạo đề nghị xuất kho" (ghép xuất thẳng: "Tạo phiếu xuất hàng"), bấm mở thẳng màn lập chứng từ — BE trả `approve_link` từng dòng.
+  - Chi tiết: bỏ ô Mã phiếu + Phòng ban yêu cầu, trạng thái thành badge trên tiêu đề; bỏ khoảng trắng dưới bảng; nhãn Model / Mã / Thương hiệu in đậm; nút footer cách đều.
+  - Tạo / Sửa: thêm "Lưu và tiếp tục" (chỉ Tạo mới: lưu nháp, giữ Kho xuất, xoá Ghi chú + hàng hoá — chưa thử lưu thật); placeholder Ghi chú / Kho xuất / Số lượng; dấu x xoá nhanh ô Kho xuất + ĐVT; `*` đỏ ở tab Hàng hóa; icon xoá dòng đỏ; chọn hàng không có công thức chỉ còn 1 toast lỗi ghi rõ hàng (xoá toast "Đã thêm…" của popup chọn hàng dùng chung trong form, không sửa popup).
+  - Bản In: tiêu đề "Danh sách tổng hợp (sau khi tách)" nhỏ lại.
+  - Commit: client `27d347314`, api `6266c272c` (develop, đã push). Kiểm bằng ảnh local.
+- [ ] Chờ user: #12165 "check các trường hiển thị ở chi tiết bên ERP" — mới bỏ đúng ô QA khoanh, còn giữ Người duyệt / Ngày duyệt; ERP không hiện thì bỏ nốt.

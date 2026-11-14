@@ -23,3 +23,6 @@ client develop 1e11ea955, ERP develop_02 9c587685ac
 Đang làm dở: —
 Bước tiếp theo: QA test trên dev-hrm / dev-erp; lên gop_db khi user bảo
 Blocked:
+
+## Ngày 13/11/2026 (@junfoke)
+- [x] 13/11/2026 — Xử lý lọc Người tạo / Người sửa gần nhất ở màn ERP Quản lý tuyến đường không ăn (user bảo sửa thẳng gop_db ERP): thêm 2 điều kiện vào `Road::scopeSearchByFilter` (`app/Model/Common/Road.php`). Script local 4.147 tuyến: người tạo 194 → 1.475, người sửa 194 → 1.787, kết hợp + Hoạt động → 1.461, đều khớp đếm DB. Lọc Trạng thái vốn đúng. ERP `8ed657d4e4` (gop_db, đã push).
