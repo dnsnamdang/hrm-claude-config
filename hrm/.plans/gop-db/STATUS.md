@@ -19,6 +19,15 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Báo cáo theo dõi lắp đặt - bàn giao - SC - BD (ERP → HRM) — ĐANG LÀM (2026-11-14, @khoipv)
+
+Port ERP `customerCareReport.reportInstallDeliveryRepair` → `/customer-care/report/install-delivery-repair` (CSKH › Báo cáo).
+Chốt 14/11: không quyền (y ERP), Người yêu cầu chạy thật + bỏ ô Trạng thái, có In + Excel, khuôn báo cáo rsum (HĐ ▸ phiếu giao việc).
+**Checkpoint 14/11:** CODE XONG BE (`Modules/CustomerCare`, `/v1/customer-care/report/install-delivery-repair`) + FE + menu; compile + smoke HTTP đạt.
+Còn: user bấm trình duyệt. Code CHƯA commit.
+**Phase 2 (14/11): XONG + E2E 17/17 + ĐÃ PUSH develop (hrm-api `6fa8d92b9`, hrm-client `44518bef6`, gồm cả Phase 1)** — màn CHI TIẾT `reportInstallDeliveryRepairDetail` → `/customer-care/report/install-delivery-repair-detail` (3 tab).
+Tài liệu: `.plans/gop-db/bao-cao-theo-doi-lap-dat-ban-giao-sc-bd/` · spec `docs/superpowers/specs/gop-db/2026-11-14-bao-cao-theo-doi-lap-dat-ban-giao-sc-bd-design.md`.
+
 ## Báo cáo bán hàng theo từng mặt hàng (ERP → HRM) — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `6ce0a92ab`, hrm-client `fb38e3761`) (2026-11-13, @khoipv)
 
 Port ERP `report.summary_sale` → `/sale/sale-by-product-report` (Bán hàng › Báo cáo › Tổng hợp & so sánh). Chốt: CỘNG THÊM HĐ HRM vào nguồn cũ;

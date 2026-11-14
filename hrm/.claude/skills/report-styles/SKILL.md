@@ -53,7 +53,8 @@ Phụ trợ copy kèm: `DrillNum.vue` (số 0 không bấm được), `InfoTip.v
 - Đang tải lại thì làm mờ (`.pct-body--loading` opacity .6), không xoá trắng. Lỗi thì GIỮ báo cáo cũ.
 - `reportParams` = params của lần tải thành công gần nhất. In / Excel / drill dùng `drillBaseParams()` (bỏ `page`/`per_page`).
 - `keepSelectedOptions()`: danh mục đổi theo phạm vi thì vẫn giữ mục đang chọn, nếu không sẽ lọc ngầm.
-- Quyền đổi công ty lấy từ BE `can_change_company === true` (fail-closed, không bypass super admin).
+- Quyền đổi công ty lấy từ BE `can_change_company === true` / cờ `permissions.is_all_company` (fail-closed, không bypass super
+  admin). Ô tổ chức dùng `V2BaseCompanyDepartmentFilter` để có công tắc 🔒 — xem mục 5b "Ô lọc Công ty / Phòng ban…".
 - Nhóm "Chưa xác định" gửi `0` khi drill, đừng bỏ trống (bỏ trống thì popup liệt kê mọi dòng).
 - Excel tải bằng LINK trực tiếp `?token=`, không dùng blob (Safari hỏng).
 - Mảng gửi dạng chuỗi `"7,8"` (link Excel không giữ được `[]`).
@@ -114,7 +115,9 @@ BE (`{Report}PrintService`):
 | Cột số không phải "đếm" (phút, tiền) | Ô dòng cha/TỔNG = tổng cộng, căn phải `.rsum-tb__num`, không bấm được; chỉ số ĐẾM bản ghi mới là `DrillNum` |
 | Drill ra danh sách khác loại (vd người tham gia thay vì meeting) | Mỗi loại 1 popup `V2BaseReportModal` riêng với bộ cột riêng. Không nhồi 2 loại dòng vào 1 popup |
 | Màn cũ có `print.vue` / mở tab in / popup `b-modal` / drill POST / `PrintOptionsModal` riêng của màn | Thay bằng `V2BaseReportPrintModal` (mục 4b) + `print-list-data` và `item-list` GET. Xoá `PrintOptionsModal.vue` riêng của màn khi chuyển. Xoá route `print.vue` + component cũ khi KHÔNG còn chỗ nào import (grep trước). Báo user trong spec |
-| Màn cũ dùng `V2BaseCompanyDepartmentFilter` + `permissions` | Chuyển sang ô Công ty tự vẽ trong slot `#field-company_id` + `can_change_company` từ `filter-options` (như mẫu). BE phải trả cờ này |
+| Ô lọc Công ty / Phòng ban / Bộ phận / Nhân viên | **Cập nhật 14/11/2026 (user chốt, #11736):** dùng `V2BaseCompanyDepartmentFilter` (`:floating="true"` + `:permissions` = cờ BE `is_all_company / is_company / is_department / is_part`) vì nó có **công tắc 🔒 trên nhãn** hiện cả mục đã khoá. KHÔNG tự vẽ ô Công ty trong slot `#field-company_id` / tự dựng 4 select theo phạm vi — mất 🔒, user bắt lỗi ở Báo cáo bán hàng theo từng mặt hàng. Mẫu cũ (`template/`) còn ô Công ty tự vẽ: KHÔNG chép phần này. Khuôn đúng: `pages/finance/import-direct-stocks`, `pages/sale/sale-by-product-report` |
+| Ô lọc danh mục có khoá (thương hiệu, hãng SX, nhóm hàng, kho…) | BE `filter-options` trả danh mục RIÊNG của báo cáo qua `LockedCatalogOptions::activeOrUsed` (đang hoạt động + đã khoá mà báo cáo còn bản ghi dùng tới) kèm `is_locked`; FE giữ `is_locked` khi map options + `keepLockedOptions: true`. Không dùng endpoint danh mục dùng chung (chỉ có mục đang hoạt động). Ô chọn 1 có công tắc 🔒 trên nhãn, ô chọn nhiều luôn hiện mục khoá kèm 🔒 — chi tiết `erp-to-hrm-screen` checklist A |
+| Bề rộng ô lọc | Để mặc định của panel (`col-md-3`, 4 ô / hàng) — KHÔNG trộn `col: 2` / `col: 3` (ra hàng "cái dài cái ngắn") |
 | Cỡ trang | Theo mẫu: 20, chọn `[10, 20, 50, 100]`, đếm theo nhóm cấp 0 (`item-label` = tên cấp 0) |
 | Màn cũ có biểu đồ | Khuôn không có biểu đồ. Bỏ hay giữ là câu hỏi NGHIỆP VỤ cho user; giữ thì đặt giữa `.rsum` và bảng |
 

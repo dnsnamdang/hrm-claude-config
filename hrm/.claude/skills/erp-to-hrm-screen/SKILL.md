@@ -313,6 +313,29 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       `height="32px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
 - [ ] Mọi ô trong khối lọc đo ra **bằng nhau, chuẩn hiện hành `32px`** (biến `--ff-h`; hạ từ 36px
       ngày 22/09/2026 — xem skill `list-page`). Lệch hàng là quên truyền `height`
+- [ ] Ô lọc **cùng BỀ RỘNG**: KHÔNG tự đặt `col: 2` / `col: 3` lẫn lộn trong `filterFields` — để mặc định của panel
+      (`col-md-3`, 4 ô / hàng). Trộn 2 với 3 là ra hàng "cái dài cái ngắn" (user bắt lỗi 14/11/2026, Báo cáo bán hàng theo
+      từng mặt hàng). Kiểm: đo `boundingBox().width` mọi `.ff` trong panel, chênh ≤ 2px
+- [ ] **Ô lọc danh mục có trạng thái khoá (#11736 — BẮT BUỘC mọi màn port, user nhắc lại 14/11/2026)** — lỗi hay gặp là tự
+      dựng ô tổ chức / lấy danh mục dùng chung chỉ có mục ĐANG HOẠT ĐỘNG, mất hẳn mục đã khoá:
+      - **Công ty / Phòng ban / Bộ phận / Nhân viên** → `V2BaseCompanyDepartmentFilter` (`:floating="true"`, `:permissions`
+        = cờ BE `is_all_company / is_company / is_department / is_part` theo phạm vi, field
+        `{ key: 'org', wrapperClass: 'd-contents', hideLabel: true, resetKeys: [4 khoá] }`). Component tự có **công tắc 🔒
+        trên nhãn** (hiện cả mục đã khoá) + tự xoá ô con khi đổi ô cha. KHÔNG tự dựng 4 select theo `scope` (khuôn đúng:
+        `pages/finance/import-direct-stocks`, `pages/sale/sale-by-product-report`)
+      - **Danh mục khác** (thương hiệu, hãng SX, nhóm hàng, kho, tỉnh…) → BE trả options riêng của màn bằng
+        `LockedCatalogOptions::activeOrUsed($query, $usages)` (đang hoạt động + đã khoá mà CHÍNH MÀN còn bản ghi dùng tới)
+        kèm `is_locked`; FE giữ `is_locked` khi map options + field khai `keepLockedOptions: true`. KHÔNG lấy từ endpoint
+        danh mục dùng chung (vd `customer-care/services/product-catalogs` chỉ có mục đang hoạt động)
+      - Công tắc 🔒 trên nhãn **chỉ có ở ô CHỌN 1** (`V2BaseSmartFilterPanel::hasLockToggle`); ô CHỌN NHIỀU luôn hiện mục
+        khoá kèm 🔒, không có công tắc — component cố ý (bật/tắt làm select2 dựng lại, mất mục đã tích). Ô hằng số / enum
+        (Tính chất, Loại hàng hóa, Trạng thái…) ngoài phạm vi — KHÔNG có trạng thái khoá trong DB (vd `PRODUCT_TYPE_NAMES`,
+        `PRODUCT_CATE_NAMES`), nên không có 🔒; giải thích cho user thay vì cố thêm
+      - ⚠️ Danh sách hằng số của `customer-care/services/product-catalogs` (`product_types`, `product_cates`) trả
+        **`{ value, name }`, KHÔNG có `id`** → map `id: x.value ?? x.id`. Map theo `x.id` thì option thiếu id, select2 lấy
+        nhãn làm giá trị, ô lọc chết im lặng (bắt được ở Báo cáo bán hàng theo từng mặt hàng 14/11/2026)
+      - Tự kiểm: grep `filterFields` không còn `key: 'company_id'` / `'department_id'` tự dựng; Playwright bấm công tắc 🔒
+        → dropdown có thêm mục mang 🔒
 - [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách** — `handleReset` gọi thẳng `loadData()`
       (+ `resetLoadDedupe?.()`), đừng trông vào watcher (watcher bỏ qua khi chỉ `keyword` đổi)
 - [ ] Ô lọc nâng cao không lặp cột mà ô tìm nhanh đã quét; bỏ ô lọc thì dọn luôn giá trị cũ trong
