@@ -18,7 +18,7 @@ Ký hiệu: **N** = duyệt nhanh 1 bấm được · **N\*** = được nếu c
 | Xuất bán hàng mượn | Chờ TP → Chờ BGĐ → KT kho | Loại, hợp đồng, khách, người tạo | — | TP/BGĐ không nhập gì, từ chối bắt lý do | N\* |
 | Yêu cầu nhập hàng | Chờ TP → Chờ BKS → Chờ BGĐ | NCC/khách, loại phiếu, giá mua duyệt (khi trả lại) | Chỉ ở chi tiết | 3 endpoint riêng theo cấp, từ chối bắt lý do | N\* |
 | Phiếu thu / Phiếu chi | Thủ quỹ (phiếu chi nhánh B: KT trưởng) | Số tiền thực thu/chi, đối tượng | Có | Nhập số thực thu / số duyệt chi từng dòng, có trần | K |
-| Quyết toán thưởng năng suất quý | Chờ duyệt | Tổng thưởng NV, tổng thưởng thêm | Có | Không nhập gì | N |
+| Quyết toán thưởng năng suất quý | ⚠ HRM KHÔNG có bước Chờ duyệt (FORM_STATUSES=[1,3], người tạo tự duyệt phiếu Đang tạo) → bỏ khỏi màn tổng hợp (sửa 15/11, chưa kiểm dữ liệu DB) | Tổng thưởng NV, tổng thưởng thêm | Có | — | — |
 | Quyết toán thưởng cuối năm | Chờ BGĐ duyệt | Quỹ thưởng, còn lại, tổng duyệt | Có | Duyệt từng dòng | K |
 | Yêu cầu mua dịch vụ | Chờ TP → Chờ BKS | Ý kiến TP, ý kiến BKS, đối tượng | — | Có "gửi lại BKS", từ chối | N\* |
 | Điều chuyển kho | Chờ duyệt → KT kho nguồn | Kho đi/đến, hàng | — | Chỉ có duyệt, KHÔNG có từ chối | N |
@@ -38,7 +38,7 @@ Ký hiệu: **N** = duyệt nhanh 1 bấm được · **N\*** = được nếu c
 | Đề xuất công việc | Chờ duyệt (TP phòng yêu cầu) | Tên + mô tả việc, phòng thực hiện, hạn, giờ dự kiến | Không | Qua màn trung gian; từ chối bắt lý do | N\* |
 | Giao việc | Chờ duyệt (TP) | Tên việc, phòng thực hiện, tổng công khoán, hạn | Công khoán (điểm) | Đi qua form có thể sửa | K |
 | Duyệt kết quả giao việc | Đã nhập kết quả (status 5) | Tổng công khoán, kết quả từng đầu việc, công khoán đề nghị vs duyệt | Điểm công | Nhập công khoán duyệt từng việc | K |
-| Giao công tác | Chờ duyệt (TP) | Loại công tác, khách + hợp đồng, thời gian, địa điểm, người đi | Không | Phải rà TRÙNG LỊCH nhân sự | K |
+| Giao công tác | Chờ duyệt (TP) | Loại công tác, khách + hợp đồng, thời gian, địa điểm, người đi | Có 4 khoản chi dự trù (`total_cost_*`), list không hiện (sửa 15/11: trước ghi "Không") | Phải rà TRÙNG LỊCH nhân sự | K |
 | Duyệt kết quả công tác | status 5 | 4 khoản chi (đi đường, công tác phí, lưu trú, khác), kết quả từng người | Có | Chỉ có "Duyệt kết quả", KHÔNG có từ chối | N\* |
 | Đề nghị thanh toán công tác phí | Chờ TP → Chờ KT | Tổng tiền đề nghị (4 khoản), số ngày/đêm đề nghị vs TP duyệt, phiếu công tác gốc | Có (list chưa hiện) | TP chỉnh số ngày/đêm + chi phí | K |
 | Quyết toán công khoán theo hợp đồng | Chờ TP → Chờ KT | Hợp đồng, biên bản nghiệm thu, công khoán | Điểm | TP nhập công khoán duyệt, không vượt đã duyệt | K |

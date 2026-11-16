@@ -43,3 +43,9 @@ Blocked:
 - [x] Blade `customer_scopes.blade.php`: đổi header cột "Mã lĩnh vực" → "Mã lĩnh vực kinh doanh" cho chuẩn nghiệp vụ (giữ nguyên 10 cột)
 - [x] `CustomerScopeController::export`: đổi tên file tải về `danh_sach_linh_vuc_khach_hang.xls` → `danh_sach_linh_vuc_kinh_doanh_khach_hang.xls`
 - [x] FE `customer-scopes/index.vue` exportExcel: tên file tải `download` đổi `danh_sach_linh_vuc_khach_hang.xls` → `danh_sach_linh_vuc_kinh_doanh_khach_hang.xls` (FE override BE, đây mới là tên thật)
+
+### Bổ sung — dọn lĩnh vực kinh doanh KH không có loại hình (2026-11-16) — @cuong61n
+- [x] Nghiệp vụ: trên PROD (`hrm_erp_gop`) có 59/206 lĩnh vực kinh doanh KH (mã LVKDKH.0001–0059, tạo 24/04/2026, ô "Loại hình hoạt động khách hàng" trống) chưa được dùng ở đâu → đã xoá, còn 147 lĩnh vực, 0 dòng thiếu loại hình. Số Redmine: chưa có.
+- [x] Kỹ thuật: bảng `customer_scopes` id 148–206, xoá cứng (danh mục không xoá mềm). Kiểm "đã dùng" qua 6 nơi: `customer_scope_group_members` (loại hình), `customers.customer_scope_id`, `customer_business_fields`, `prospective_projects` (cả `customer_scope_id` lẫn `customer_benefit_scope_id`), `solutions`, `application_customer_scopes` → cả 59 dòng đều 0 lượt dùng; không có khoá ngoại trỏ vào. Câu DELETE kèm lại đủ điều kiện NOT EXISTS để không xoá nhầm bản ghi vừa phát sinh.
+- [x] Đã kiểm: số dòng xoá = 59 (khớp kỳ vọng); đếm lại sau xoá = 147, khong_loai_hinh = 0. Sao lưu 59 dòng ở `~/backup_customer_scopes_prod_59dong_20261116.sql` (chỉ INSERT, khôi phục được nếu cần).
+- Trạng thái: đã thực hiện trực tiếp trên DB PROD ngày 2026-11-16 (không đổi code).

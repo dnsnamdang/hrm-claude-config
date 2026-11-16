@@ -682,3 +682,7 @@ Ngoài ra:
 7. **Phụ cấp khác nhập kiểu `10.000.000`** (cột `employee_salary_histories.other_allowances` là varchar) → Báo cáo
    thu nhập tháng 500 "A non-numeric value". Sau gộp chạy:
    `UPDATE employee_salary_histories h JOIN employee_infos i ON i.id=h.employee_info_id SET h.other_allowances=REPLACE(h.other_allowances,'.','') WHERE i.company_id=<id mới> AND h.other_allowances REGEXP '^[0-9]{1,3}([.][0-9]{3})+$';` (local: 5 dòng)
+8. **Chặn phạm vi Tổng công ty cho công ty mới** (16/11): engine đã hạ mọi quyền vai trò về tối đa Công ty, nhưng
+   `companies.allow_group_scope` của công ty mới mặc định = 1 → admin vẫn cấp lại được. Sau gộp tắt ở màn
+   Quản trị › Cấu hình phạm vi Tổng công ty (cần TK trong `RBAC_GROUP_SCOPE_ADMINS`), hoặc tinker
+   `GroupScopeCompanyService::update(<id mới>, false)` (có ghi lịch sử). Kiểm: `SELECT COUNT(*) FROM roles r JOIN role_has_permissions h ON h.role_id=r.id WHERE r.company_id=<id mới> AND h.scope=4` = 0.
