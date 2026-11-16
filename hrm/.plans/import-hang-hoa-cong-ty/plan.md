@@ -1,6 +1,6 @@
 # Import hàng hóa công ty — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Thêm nút Import trên màn Dữ liệu hàng hoá công ty để thêm mới và cập nhật hàng hóa từ file Excel 79 cột, giao diện và cách làm theo import BOM.
 
@@ -80,15 +80,15 @@ Response import: `{ "created": n, "updated": n, "failed": n, "errors": [...] }`.
 - Produces: `ProductImportService::validate(array $rows): array`, `import(array $rows, bool $skipInvalid): array`.
 - Produces: `ProductImportCatalog::load(array $rows): self`; `find(string $type, ?string $name): array` trả danh sách id khớp; `barcode(?string $name, ?int $manufactureId): array`. `$type` là một trong `model, product_type, brand, origin, manufacture, unit, unittech, attribute, characteristic, tax_rate, business_policy, supplier, machine_group`.
 
-- [ ] **Step 1: Viết test đỏ**
+- [x] **Step 1: Viết test đỏ**
 
 `test_requires_build_permission` (403), `test_rejects_more_than_500_rows` (422, không ghi gì), `test_rejects_empty_rows` (422), `test_catalog_lookup_is_case_insensitive_and_trimmed`, `test_catalog_returns_all_matches_for_duplicate_name`, `test_catalog_ignores_inactive_entries`, `test_barcode_lookup_is_scoped_by_manufacture`.
 
 Dùng `Concerns\ActsAsProductUser`, `DatabaseTransactions`, công ty 6 như `ProductWriteApiTest`.
 
-- [ ] **Step 2: Chạy test, xác nhận FAIL do chưa có route**
+- [x] **Step 2: Chạy test, xác nhận FAIL do chưa có route**
 
-- [ ] **Step 3: Thêm 2 route và controller**
+- [x] **Step 3: Thêm 2 route và controller**
 
 ```php
 Route::post('/import/validate', 'V1\\Product\\ProductImportController@validateRows')->middleware(['checkPermission:' . $build, 'dueConfig:Cập nhật hàng hóa']);
@@ -97,11 +97,11 @@ Route::post('/import', 'V1\\Product\\ProductImportController@import')->middlewar
 
 Controller kiểm `rows` là mảng 1–500 phần tử, gọi `assertCanWrite()`. Trả bằng `responseJson` như `BomListController::validateImport`.
 
-- [ ] **Step 4: Viết `ProductImportCatalog`**
+- [x] **Step 4: Viết `ProductImportCatalog`**
 
 Mỗi loại danh mục một truy vấn `whereIn` trên tên đã chuẩn hóa (trim, lowercase) cho cả file. Không query theo ô.
 
-- [ ] **Step 5: Chạy test, xác nhận PASS**
+- [x] **Step 5: Chạy test, xác nhận PASS**
 
 ### Task 2: Validate chung và THÊM MỚI
 
@@ -115,7 +115,7 @@ Mỗi loại danh mục một truy vấn `whereIn` trên tên đã chuẩn hóa 
 - Produces: `ProductImportCells::isBlank($v): bool` (chỉ null và chuỗi rỗng sau trim), `list($v): array` (tách `;`, trim, bỏ phần tử rỗng), `number($v): ?float` (ném `InvalidArgumentException` nếu không phải số), `yesNo($v): ?bool`.
 - Produces: `ProductImportValidator::validate(array $rows): array` trả shape response validate; mỗi dòng hợp lệ có thêm khóa nội bộ `resolved` (id đã tra) để Task 4 dùng. `ProductImportService::validate` bỏ `resolved` trước khi trả FE.
 
-- [ ] **Step 1: Viết test đỏ**
+- [x] **Step 1: Viết test đỏ**
 
 Test đơn vị của Cells: `list('A ; B;') === ['A','B']`, `number('1,25') === 1.25`, `number('1.000.000') === 1000000.0`, `number(0) === 0.0`, `isBlank(0) === false`, `isBlank('0') === false`, `isBlank('  ') === true`.
 
@@ -132,13 +132,13 @@ Test validator, mỗi test assert đúng `column` và `message`:
 - `test_price_limits` (`MONEY_MAX`, hệ số `< 100`, % 0–100), `test_code_column_is_ignored_on_add`.
 - `test_collects_all_errors_of_a_row`.
 
-- [ ] **Step 2: Chạy test, xác nhận FAIL**
+- [x] **Step 2: Chạy test, xác nhận FAIL**
 
-- [ ] **Step 3: Viết `ProductImportCells`, `ProductImportValidator` (nhánh chung + add)**
+- [x] **Step 3: Viết `ProductImportCells`, `ProductImportValidator` (nhánh chung + add)**
 
 Giới hạn độ dài và số lấy đúng theo `ProductRequest::commonRules()`/`adminRules()`. Hàng tham chiếu trong lưới tra `products` theo `code`, `status = 1`, không phải hàng tạm; phụ kiện phải có dòng ĐVT khai trong file. Quy tắc form trùng lấy từ `ProductRequest::checkUniqueName` (`where status <> 0`).
 
-- [ ] **Step 4: Chạy test, xác nhận PASS**
+- [x] **Step 4: Chạy test, xác nhận PASS**
 
 ### Task 3: Validate CẬP NHẬT
 
@@ -149,7 +149,7 @@ Giới hạn độ dài và số lấy đúng theo `ProductRequest::commonRules(
 **Interfaces:**
 - Produces: dòng update có `resolved.product_id`, `resolved.status`; `ignored` gồm `model, manufacture, brand`, thêm `barcode_code` khi hàng đã có Code, thêm `trade_flag` và các cột giá khi status 3.
 
-- [ ] **Step 1: Viết test đỏ**
+- [x] **Step 1: Viết test đỏ**
 
 - `test_code_required_and_must_exist`.
 - `test_other_company_product_rejected`, kể cả công ty mình đã lấy về.
@@ -167,13 +167,13 @@ Giới hạn độ dài và số lấy đúng theo `ProductRequest::commonRules(
 - `test_grid_code_cannot_be_self`, `test_grid_code_cannot_be_temp_or_deleted`.
 - `test_import_revalidates`: validate pass, tạo YCHG mở, gọi `/import` thì dòng bị từ chối.
 
-- [ ] **Step 2: Chạy test, xác nhận FAIL**
+- [x] **Step 2: Chạy test, xác nhận FAIL**
 
-- [ ] **Step 3: Viết nhánh update theo đúng thứ tự mục 6 của design**
+- [x] **Step 3: Viết nhánh update theo đúng thứ tự mục 6 của design**
 
 Bước chặn (1–5) dừng ở lỗi đầu. Tra YCHG cho cả file bằng một truy vấn: `price_asking_request_products.group_id → price_asking_request_groups.price_asking_request_id → price_asking_requests`, lọc status mở, lấy phiếu `id` lớn nhất mỗi hàng. Thêm hằng `PriceAskingRequest::OPEN_STATUSES`. Không dùng `assertOwner` (ném lỗi); đọc cùng điều kiện rồi đẩy vào `errors`.
 
-- [ ] **Step 4: Chạy test, xác nhận PASS**
+- [x] **Step 4: Chạy test, xác nhận PASS**
 
 ### Task 4: Ghi THÊM MỚI
 
@@ -188,7 +188,7 @@ Bước chặn (1–5) dừng ở lỗi đầu. Tra YCHG cho cả file bằng m�
 - Produces: `ProductImportWriter::write(array $row): int` trả product id, chạy trong `DB::transaction`, ném exception thì dòng rollback.
 - Produces: `ProductWriteService::withHistoryNote(?string $note): self`; ghi chú dùng cho `logCreate` và `logUpdate`. Writer đặt `'Import Excel'` rồi trả về `null` trong `finally`.
 
-- [ ] **Step 1: Viết test đỏ**
+- [x] **Step 1: Viết test đỏ**
 
 - `test_add_creates_product_with_generated_code`: mã đúng `ProductCodeGenerator`, `product_company_coefficients.status = 1`, `info_entered_at` khác null, không có ảnh.
 - `test_add_writes_all_grids`: thuộc tính, 4 bảng kit, `product_suppliers`, `product_business_catalogs`, `productables`.
@@ -197,13 +197,13 @@ Bước chặn (1–5) dừng ở lỗi đầu. Tra YCHG cho cả file bằng m�
 - `test_write_failure_is_reported_and_other_rows_stay`: mock lỗi ở dòng 2, dòng 1 và 3 còn, `failed = 1`.
 - `test_history_note_is_import_excel`.
 
-- [ ] **Step 2: Chạy test, xác nhận FAIL**
+- [x] **Step 2: Chạy test, xác nhận FAIL**
 
-- [ ] **Step 3: Viết `write` nhánh add và `ProductImportService::import`**
+- [x] **Step 3: Viết `write` nhánh add và `ProductImportService::import`**
 
 `$data` đúng shape `ProductRequest`: `units` một dòng `is_base=1`, `unit_coefficient=1`; kit dùng `product_id, unit_id, qty`; `repair_accessories` chỉ `product_id`; `admin` luôn có. Gọi `store($data, ProductCompany::STATUS_ENTERING_INFO)`. `import` validate lại; `skip_invalid=false` mà có lỗi thì trả lỗi, không ghi.
 
-- [ ] **Step 4: Chạy test, xác nhận PASS**
+- [x] **Step 4: Chạy test, xác nhận PASS**
 
 ### Task 5: Ghi CẬP NHẬT một phần
 
@@ -214,7 +214,7 @@ Bước chặn (1–5) dừng ở lỗi đầu. Tra YCHG cho cả file bằng m�
 **Interfaces:**
 - Consumes: `ProductFormResource::RELATIONS`, `ProductWriteService::update(Product, array $data)`.
 
-- [ ] **Step 1: Viết test đỏ**
+- [x] **Step 1: Viết test đỏ**
 
 - `test_blank_cells_keep_every_field`: hàng đủ dữ liệu (ảnh, video, tài liệu, đời xe, 4 kit, NCC, catalog, nhóm máy); import chỉ đổi Ghi chú; so snapshot toàn bộ bảng con trước và sau.
 - `test_zero_overwrites`: `min_buy_qty`/`min_stock_qty`/`guarantee` nhận `0` cả dạng number và chuỗi.
@@ -225,13 +225,13 @@ Bước chặn (1–5) dừng ở lỗi đầu. Tra YCHG cho cả file bằng m�
 - `test_new_unit_added_old_unit_id_unchanged`, `test_existing_unit_not_duplicated`.
 - `test_no_price_columns_touched_for_trading`.
 
-- [ ] **Step 2: Chạy test, xác nhận FAIL**
+- [x] **Step 2: Chạy test, xác nhận FAIL**
 
-- [ ] **Step 3: Viết nhánh update**
+- [x] **Step 3: Viết nhánh update**
 
 Dựng dữ liệu nền từ DB theo đúng shape `ProductRequest` (dùng `ProductFormResource`, đổi key khi cần), trộn ô có dữ liệu lên trên, rồi gọi `update()` kèm `admin`. Dòng ĐVT cũ giữ `id` để `writeUnits` bỏ qua. `assertCodeSourceKept` chỉ ở controller nên không cần tham số. Test `test_blank_cells_keep_every_field` là chốt chặn chính của bước này.
 
-- [ ] **Step 4: Chạy test, xác nhận PASS**
+- [x] **Step 4: Chạy test, xác nhận PASS**
 
 ### Task 6: Ghi giá và chuyển kinh doanh
 
@@ -243,7 +243,7 @@ Dựng dữ liệu nền từ DB theo đúng shape `ProductRequest` (dùng `Prod
 **Interfaces:**
 - Produces: `ProductPriceWriter::applyImported(int $productId, int $productUnitId, int $companyId, array $cells, ?float $cost, int $by): void`. `$cells = [priceTypeId => ['price'?, 'coefficient'?, 'sale_max_percent'?]]`; chỉ key có mặt mới ghi.
 
-- [ ] **Step 1: Viết test đỏ**
+- [x] **Step 1: Viết test đỏ**
 
 - `test_add_flag_no_saves_prices_status_1`, `test_add_flag_yes_saves_prices_status_3`.
 - `test_add_flag_yes_logs_status_history` (note của `TRADE_NOTE`).
@@ -256,17 +256,17 @@ Dựng dữ liệu nền từ DB theo đúng shape `ProductRequest` (dùng `Prod
 - `test_trade_blocked_rolls_back_row`: `tradeWithoutPrice` trả `skipped` thì dòng rollback, báo lỗi.
 - `test_inherited_sync_called`.
 
-- [ ] **Step 2: Chạy test, xác nhận FAIL**
+- [x] **Step 2: Chạy test, xác nhận FAIL**
 
-- [ ] **Step 3: Viết `applyImported`**
+- [x] **Step 3: Viết `applyImported`**
 
 Gọi `sets->ensureUnitSet`, khóa dòng `product_company_units`, update đúng cột của `product_unit_prices`. Không dùng `writePrices`, `writeExpected`, `writeCompanyUnit`, `dropPendingApprovals`. `cost_price` update riêng một cột. Loại 6 tính lại theo `resolvePrices` khi Bán lẻ đổi và cờ sửa tay tắt. Cuối cùng gọi `InheritedPriceSync::propagate([$productUnitId], $companyId, $by)`.
 
-- [ ] **Step 4: Nối vào writer**
+- [x] **Step 4: Nối vào writer**
 
 Thứ tự trong transaction của dòng: ghi hàng → `applyImported` → nếu cờ Có thì `tradeWithoutPrice([$id])`; `skipped` khác rỗng thì ném exception kèm `message`.
 
-- [ ] **Step 5: Chạy toàn bộ test import và test hàng hóa liên quan**
+- [x] **Step 5: Chạy toàn bộ test import và test hàng hóa liên quan**
 
 Run: `vendor/bin/phpunit --filter 'ProductImport|ProductWriteApiTest|ProductLifecycleApiTest' `
 Expected: PASS, trừ lỗi đã có trước khi làm (đối chiếu bằng cách chạy trên `develop`).
@@ -284,21 +284,21 @@ Expected: PASS, trừ lỗi đã có trước khi làm (đối chiếu bằng c�
 - Consumes: 2 API và hợp đồng dữ liệu ở trên.
 - Produces: `PRODUCT_IMPORT_COLUMNS: Array<{key, header, group, width}>`; `ProductImportModal` phát event `imported`.
 
-- [ ] **Step 1: Sinh file mẫu**
+- [x] **Step 1: Sinh file mẫu**
 
 Từ file Google Sheet: giữ 4 dòng đầu, header thành một dòng và duy nhất theo `PRODUCT_IMPORT_COLUMNS`, sửa mọi ghi chú và dữ liệu mẫu dùng dấu phẩy thành `;`, ghi rõ NCC và Catalog nhập nhiều bằng `;` và thay toàn bộ (U9), ghi `Đơn vị` là một giá trị. Sheet tên `Data`. Kiểm: đọc lại bằng `parseExcelFile` ra đúng 79 cột, không key trùng sau `normKey`.
 
-- [ ] **Step 2: Viết modal**
+- [x] **Step 2: Viết modal**
 
 Copy pattern từ `pages/assign/quotations/components/QuotationImportModal.vue` (prefix `.pim-`), logic validate từ `BomImportModal.vue:969`. Gọi `parseExcelFile(file, PRODUCT_IMPORT_COLUMNS, 2, 1)`. Thiếu header thì báo sai mẫu. Giữ `_validateSeq`, toggle "Bỏ qua dòng lỗi", bảng lỗi với Sao chép lỗi và Tải File lỗi.
 
 Khác BOM: phân trang 50 dòng, ô là text và chỉ đổi thành input khi bấm (C14); ô trong `ignored` tô xám, không sửa được; sửa ô đánh dấu dòng cần validate lại và khóa Import; quá 500 dòng thì báo và không load.
 
-- [ ] **Step 3: Thêm nút**
+- [x] **Step 3: Thêm nút**
 
 `v-if="screen.import && canBuildProduct"`, nhãn `Import`, icon `ri-file-upload-line`. Sau `imported` tải lại danh sách.
 
-- [ ] **Step 4: Kiểm tra bằng lint**
+- [x] **Step 4: Kiểm tra bằng lint**
 
 Run: `npx eslint components/product/ProductImportModal.vue utils/product-import-columns.js components/product/ProductListPage.vue`
 Expected: không lỗi mới.
@@ -307,20 +307,20 @@ Expected: không lỗi mới.
 
 **Files:** không tạo file code. Ảnh chụp để ở scratchpad.
 
-- [ ] **Step 1: Chạy app bằng skill run-hrm, mở `http://127.0.0.1:3000/master-data/products/company`**
+- [x] **Step 1: Chạy app bằng skill run-hrm, mở `http://127.0.0.1:3000/master-data/products/company`**
 
-- [ ] **Step 2: Chạy luồng với file có đủ loại dòng**
+- [x] **Step 2: Chạy luồng với file có đủ loại dòng**
 
 File gồm: thêm mới hợp lệ cờ Có; thêm mới hợp lệ cờ Không; trùng trong file; danh mục sai; cập nhật hợp lệ; cập nhật bị khóa YCHG; cập nhật hàng công ty khác. Kiểm: tải mẫu, load, pill đúng, chỉ dòng lỗi, sửa ô rồi validate lại, Sao chép lỗi, Tải File lỗi, bật bỏ qua dòng lỗi, import, danh sách tải lại, mở chi tiết hàng vừa tạo.
 
-- [ ] **Step 3: Đối chiếu ảnh chụp với popup BOM**
+- [x] **Step 3: Đối chiếu ảnh chụp với popup BOM**
 
 Layout, stepper, toolbar, pill, modal lỗi phải cùng khuôn. Kiểm tra màn 1366px.
 
-- [ ] **Step 4: Kiểm hiệu năng 500 dòng**
+- [x] **Step 4: Kiểm hiệu năng 500 dòng**
 
 Load, cuộn, chuyển trang, validate: không treo; console không có lỗi mới.
 
-- [ ] **Step 5: Kiểm người không có quyền**
+- [x] **Step 5: Kiểm người không có quyền**
 
 Không có `$build`: không thấy nút. Có `$build`, không có 1657: dòng có giá báo lỗi, dòng không giá import được.

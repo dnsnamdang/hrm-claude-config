@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- bao-cao-tong-hop-ban-hang → @nguyentrancu97 → .plans/bao-cao-tong-hop-ban-hang/plan.md
+  Trạng thái: **CODE XONG, CHỜ GỘP/PUSH (16/11/2026)** — worktree wt-sale-summary-api / wt-sale-summary-client (nhánh feature/bao-cao-tong-hop-ban-hang); dùng chung lõi SaleByProductReportService + 3 cột vốn/lãi lỗ. Đối chiếu ERP 0 lệch, không vá ERP. Deploy: permission:catalog-sync → cấp accounting.bao_cao_tong_hop_ban_hang.view ở /admin/roles.
+
   Trạng thái: **ĐANG LÀM (06/11/2026)** — thiết kế lại màn Chấm công TPE_APP (`ui/check_in_out`): đọc logic BE, vẽ pen cho user duyệt; chỉ 1 ca / 1 phiếu hôm nay thì tự chọn.
 
 - app-nhiem-vu-van-de → @cuong61n → .plans/app-nhiem-vu-van-de/plan.md
@@ -17,6 +20,18 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 
 ## Hoàn thành
+
+- bao-cao-thuong-nang-suat-thang → @nguyentrancu97 → .plans/bao-cao-thuong-nang-suat-thang/plan.md
+  Trạng thái: **ĐÃ PUSH develop (16/11/2026)** — api 4b69a64ea, client 8244a6c92, ERP develop_02 ca185e425e; chưa gop_db. 12 task SDD + final review; e2e 983c012 (repo e2e local). Đối số HRM↔ERP đã vá 0 lệch (05/2026, 2025, 2026 — doi-chieu.md); ERP sau vá đổi số (05/2026 thưởng 394,2tr→341,1tr). Phạm vi cấp công ty/phòng theo công ty HỒ SƠ như ERP (user chốt). Mở: test golden RBAC ERP (AccountingScopeConversionTest service.commission_month) cần chụp lại trên DB hrm_erp_rbac_test. Deploy: permission:catalog-sync → cấp quyền accounting.bao_cao_thuong_nang_suat_thang.view ở /admin/roles.
+
+- bc-thuong-theo-quy → @nguyentrancu97 → .plans/bc-thuong-theo-quy/plan.md
+  Trạng thái: **ĐÃ PUSH develop (16/11/2026)** — merge api 6203b2632 (62c41928a), client b9bd36312 (6cc83e3c9); chưa gop_db. 7 test BE xanh trên develop, đối chiếu ERP Q2/2026 khớp 100% (doi-chieu.md), Playwright đạt. Deploy: permission:catalog-sync.
+
+- bao-cao-thuong-theo-hop-dong → @nguyentrancu97 → .plans/bao-cao-thuong-theo-hop-dong/plan.md
+  Trạng thái: **ĐÃ PUSH develop (16/11/2026)** — merge api 1e73eef58 (df16b7617), client 82c97a7a7; chưa gop_db — 9 task + final review. e2e 9d85426. Đối số ERP 0 lệch. Deploy: migrate index account_details → reload php-fpm/queue; permission:catalog-sync.
+
+- bc-thuong-theo-nhan-vien → @nguyentrancu97 → .plans/bc-thuong-theo-nhan-vien/plan.md
+  Trạng thái: **XONG + ĐÃ MERGE + PUSH (16/11/2026), chưa gop_db** — hrm-api develop 047e48523, hrm-client develop 4d592a980, ERP develop_02 09ac07a86e; e2e main f255469. Đối chiếu ERP 0 lệch; worktree đã xoá. Deploy: permission:catalog-sync.
 
 - phieu-hach-toan-dich-vu-hdbh → @nguyentrancu97 → .plans/phieu-hach-toan-dich-vu-hdbh/plan.md
   Trạng thái: **PHASE 1 + PHASE 2 XONG, ĐÃ MERGE + PUSH `develop`** 2 repo; nhánh feature giữ local.

@@ -41,7 +41,7 @@ Không được xảy ra:
 | U4 | Model / Code đặt hàng chưa có trong danh mục | Báo lỗi, từ chối dòng |
 | U5 | Bảng xem trước | Đủ 79 cột, sửa trực tiếp trên ô |
 | U6 | Quyền ghi giá | Dòng có cột giá cần quyền 1657, thiếu quyền thì báo lỗi dòng. Có quyền thì ghi thẳng, kể cả công ty bật duyệt giá. Không xóa giá hẹn và đề nghị đang chờ duyệt |
-| U7 | Kiểm tra trùng | Áp cả hai quy tắc: Model + Hãng SX + Code (ticket) và Tên + Model + Thương hiệu + Hãng SX (`checkUniqueName` của form). Đổi Tên khi CẬP NHẬT cũng kiểm tra quy tắc form |
+| U7 | Kiểm tra trùng | **Chốt lại 12/11/2026 (sau #12012):** theo form nhập tay (`ProductRequest::checkUniqueName`) cho cả THÊM MỚI và CẬP NHẬT: Tên + Model + Thương hiệu + Hãng SX (KHÔNG tính Code đặt hàng), trong file và trong DB (không lọc công ty, bỏ hàng status 0, Tên không phân biệt hoa thường/dấu). Trùng file: `Trùng Tên + Model + Thương hiệu + Hãng SX với dòng N trong file`; trùng DB: câu của form `Đã có hàng hoá cùng Tên, Model, Thương hiệu và Hãng sản xuất: <mã>`. CẬP NHẬT chỉ xét khi đổi Tên, loại chính hàng. THÊM MỚI bỏ qua cột Mã, mã sinh qua `ProductWriteService::store` như form. Giữ luật #12012: một file chỉ 1 loại Hành động |
 | U8 | Hàng không ảnh | Chấp nhận, kể cả cờ Có. Lần sửa tiếp theo trên form sẽ buộc thêm ảnh |
 | U9 | NCC và Catalog | Nhập nhiều giá trị bằng `;`, có dữ liệu thì thay toàn bộ. Catalog: 4 cột cùng số phần tử, tương ứng theo vị trí. Ghi rõ trong file mẫu |
 
@@ -110,8 +110,8 @@ Chung:
 
 THÊM MỚI:
 - Bỏ qua Mã hàng hóa. Bắt buộc các cột `(*)`.
-- ≥ 2 dòng cùng Model + Hãng SX + Code trong file: lỗi ở tất cả các dòng đó.
-- Trùng DB theo một trong hai quy tắc của U7: `Sản phẩm đã tồn tại trên hệ thống`. Trùng trong file cũng xét cả hai quy tắc.
+- ~~≥ 2 dòng cùng Model + Hãng SX + Code trong file: lỗi ở tất cả các dòng đó.~~ (bỏ 12/11/2026, xem U7)
+- Trùng DB theo quy tắc form của U7: `Sản phẩm đã tồn tại trên hệ thống: <mã>`. Trùng trong file cũng xét tổ hợp 5 trường.
 
 CẬP NHẬT, kiểm theo thứ tự, dừng ở lỗi đầu của nhóm chặn này:
 1. Mã hàng bắt buộc và tồn tại.
@@ -164,7 +164,7 @@ API test (mỗi quy tắc mục 6 ít nhất một ca), trọng tâm:
 - `skip_invalid` ghi đúng dòng hợp lệ; tắt thì không ghi gì.
 - Chuyển trạng thái có lịch sử; hàng Đang kinh doanh không đổi giá.
 - Thiếu quyền 1657 mà có ô giá thì lỗi; công ty bật duyệt giá vẫn ghi thẳng, giá hẹn và đề nghị chờ duyệt còn nguyên. Local mọi công ty có `is_company_price = 0`, test phải tự bật.
-- Trùng theo từng quy tắc của U7, cả trong file và trong DB.
+- Trùng theo quy tắc form của U7, cả trong file và trong DB.
 - Điền Code đang trống không đổi mã hàng.
 
 Playwright: tải mẫu, load, sửa ô, validate lại, chỉ dòng lỗi, tải file lỗi, import, danh sách cập nhật; đối chiếu với popup BOM.
