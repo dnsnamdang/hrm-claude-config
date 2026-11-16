@@ -79,7 +79,8 @@ Mọi báo cáo dùng **1 component** `components/report/V2BaseReportPrintModal.
 |---|---|---|
 | **In báo cáo** (`#header-actions`) | Truyền `:modes`. Radio chọn bản in (`summary` bảng tổng hợp / `detail` danh sách) + khối **"Chọn cột in"**. Danh sách cột **đổi theo bản in đang chọn** (mỗi mode tự khai `columns`); đổi bản in = tick lại hết | `mode` + `cols` |
 | **In danh sách** (footer popup drill) | KHÔNG truyền `modes` → chỉ "Chọn cột in", danh sách = **đúng các cột đang hiện trên popup** (popup emit kèm `columns: [{ key, label }]`) | `mode=detail` + `cols` + tham số popup (`key`, `metric`, `p_*`, `q`, `sort`, `dir`) |
-| Xuất Excel / Xuất Excel danh sách | **KHÔNG** qua popup chọn cột — luôn đủ cột đang hiện | — |
+| Xuất Excel / Xuất Excel danh sách | Mặc định đủ cột (không qua bước chọn cột) | — |
+| Xuất Excel CÓ CHỌN CỘT (khi được yêu cầu — #12172) | Popup kiểu xuất dùng chung `pages/warehouse/stock-card/components/ExportModeModal.vue` + prop **`pick-columns`**: khối "Chọn cột xuất" lấy cột từ `modes[].columns` (khai CHUNG với popup In), hành vi như "Chọn cột in"; emit `export(mode, columns)`. Không bật prop = emit `export(mode)` như cũ. Đã bật ở 6 báo cáo Kho (Thẻ kho, Tồn chi tiết / tổng hợp theo mặt hàng, Tồn theo vị trí, Tồn theo kho, Tổng hợp XNT). Mẫu: `pages/warehouse/stock-location-product` | `mode` + `cols` |
 
 Hành vi (component đã làm sẵn, đừng viết lại): mở = tick hết · "Chọn tất cả" bán chọn khi tick 1 phần · bỏ hết rồi bấm In
 → đỏ "Vui lòng chọn ít nhất 1 cột để in", KHÔNG đóng, KHÔNG gọi BE · mở lại = về mặc định · nút **In** trước **Hủy**
@@ -96,7 +97,8 @@ BE (`{Report}PrintService`):
 - `cols` rỗng / toàn khoá lạ → đủ cột (tương thích lời gọi cũ). Bỏ khoá lạ. Bản tổng hợp lặp cột theo **thứ tự khai báo
   của bảng**; bản danh sách theo **thứ tự `cols`** (= thứ tự cột popup).
 - Blade dựng `<th>`/`<td>` bằng `@foreach ($columns …)`, `colspan` ô "Không có dữ liệu" = `count($columns) + cột cố định`.
-- Excel KHÔNG nhận `cols` từ bước chọn (đủ cột) — chỉ bản in.
+- Excel mặc định đủ cột. Màn bật chọn cột xuất (`pick-columns`) thì `/export` đọc `cols` qua CÙNG whitelist với bản in
+  (`columnsOf($mode, $cols)`; rỗng = đủ cột) — mẫu `StockLocationProductController::export`.
 
 ## 5. Áp cho báo cáo CŨ — trình tự
 
@@ -147,5 +149,5 @@ BE (`{Report}PrintService`):
 | `InfoTip` trong tiêu đề đậm thì icon dày | `font-weight: normal` ở `.ptr-info` |
 | Copy `PrintOptionsModal.vue` về màn mới / tự dựng popup chọn cột | Dùng `components/report/V2BaseReportPrintModal.vue`, chỉ khai `printModes` |
 | Nút In danh sách của popup in thẳng | Mở popup chọn cột (`columns` = cột popup) rồi mới in |
-| Cho Xuất Excel đi qua bước chọn cột | Excel luôn đủ cột |
+| Tự dựng popup chọn cột riêng cho Xuất Excel | Dùng `ExportModeModal` + `pick-columns` (khai cột 1 lần ở `modes`, dùng chung với In) |
 | BE in cố định cột | Whitelist `SUMMARY_COLUMNS` / `DETAIL_COLUMNS` + đọc `cols` |

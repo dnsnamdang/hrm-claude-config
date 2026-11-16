@@ -95,3 +95,13 @@ Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu chec
 Đang làm dở: —
 Bước tiếp theo: user xem lại tài liệu; quyết các điểm nghi lỗi code (Ngày kiểm kê bị ghi lại bằng ngày lưu mỗi lần Sửa; xóa phiếu kiểm kê không trả kế hoạch về Đang kiểm nên không lập lại được; popup cảnh báo phiếu treo chưa kiểm chứng bằng dữ liệu thật trên dev).
 Blocked:
+
+## Check 16/11/2026 — Tiêu đề top-menu đè lên nội dung ở màn nhỏ @khoipv
+- [x] C1. Điều tra (chưa sửa code): `components/training-components/SidebarMenu.vue` — `<li>` tiêu đề trong `.topnav-menu-left` là `float:left` + `.topbar-page-title { white-space: nowrap }`; navbar `position: fixed` cao cố định. Màn hẹp: (nút ☰ + tiêu đề dài + badge) + khối icon phải (`BasicSubsystem` float-right) > bề rộng navbar → `<li>` tiêu đề rớt xuống dòng float thứ 2, nằm ngoài navbar, chữ trắng (`sale-theme`) đè lên card "Thông tin chung". Lỗi CHUNG mọi màn có tiêu đề dài, không riêng màn này. Đề xuất: ép tiêu đề 1 dòng + cắt "…" (min-width:0, overflow hidden, ellipsis) + tooltip full tiêu đề — chờ user duyệt (hàm/component dùng chung).
+- [x] C2. Sửa (user duyệt 16/11): `SidebarMenu.vue` — `ul.topbar-left-menu` thành flex nowrap + overflow hidden (BFC nằm cạnh khối icon float-right, chỉ chiếm phần còn lại); `li.topbar-title-item` flex co được (min-width 0); `.topbar-page-title` ellipsis; tooltip `:title="pageTitlePlain"` (bỏ thẻ HTML badge). Parse template + script OK; chưa mở trình duyệt.
+
+### Checkpoint — 2026-11-16 (tiêu đề top-menu)
+Vừa hoàn thành: C1–C2.
+Đang làm dở: —
+Bước tiếp theo: user thu nhỏ cửa sổ kiểm: tiêu đề cắt "…" trong navbar, không đè nội dung; rê chuột thấy đủ tiêu đề; màn rộng hiện như cũ.
+Blocked:

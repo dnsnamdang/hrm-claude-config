@@ -191,3 +191,6 @@ Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn B
 Đang làm dở: không
 Bước tiếp theo: user soát tài liệu, quyết các điểm nghi lỗi; đẩy Drive khi user yêu cầu
 Blocked:
+
+## Check — yêu cầu "chuyển màn BB bàn giao nghiệm thu theo nhân viên" (2026-11-16, @khoipv)
+- [x] Đối chiếu ERP `topmenubar.blade.php:841` (`handoverAcceptanceRecord.index?type=for-business-staff`, nhóm Thông báo) với HRM → đã port từ 03/11 cùng màn chính: FE `pages/assign/handover-acceptance-records/index.vue` (lối `for-business-staff`, key riêng `handover_acceptance_records_business_staff`), BE `HandoverAcceptanceRecordService::TYPE_BUSINESS_STAFF`, menu `components/subsystem-menu/lookup.js:64`. Không sửa code, chờ user nói rõ cần làm thêm gì.

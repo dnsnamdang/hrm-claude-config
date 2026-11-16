@@ -60,3 +60,27 @@ Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn B
 Đang làm dở: —
 Bước tiếp theo: user xem tài liệu; quyết định có sửa 3 điểm nghi lỗi không; đẩy Drive khi user yêu cầu
 Blocked:
+
+## Fix — Redmine #12172 (16/11/2026) @khoipv
+
+User chốt: (2) popup cho cả ô tổng hợp + SL tồn trong bảng; (4) Excel chọn cột làm KHUÔN CHUNG (ExportModeModal opt-in + sửa skill report-styles).
+
+- [x] (1) Ô vị trí hiện "CODE · Nhà <mã nhà>", bỏ cột Nhà kho trên bảng (In/Excel giữ cột Nhà kho như ERP)
+- [x] (3) Thu nhỏ bề rộng cột; min-width bảng tính theo cột đang hiện
+- [x] (2) BE `GET /v1/finance/stock-location-product/item-list?metric=positions|products|companies|lots` (+ `d_rental_id`, `d_position_id`, `d_product_id`)
+- [x] (2) FE số bấm được ở khối tổng hợp (vị trí / mặt hàng / công ty / từng công ty thuê) + SL tồn dòng TỔNG / vị trí / hàng hóa → popup `StockLocationDrillModal` (V2BaseReportModal + reportDrillListMixin)
+- [x] (4) `ExportModeModal` thêm prop `pick-columns` (mặc định tắt, 6 màn khác không đổi); BE `/export` nhận `cols`; sửa skill report-styles §4b
+- [x] Kiểm: php -l + smoke HTTP kernel item-list/export; compile template + babel
+- [ ] Mở trình duyệt kiểm thật (user tự test)
+
+Kết quả smoke (kho CSKH, 16/11/2026): ô 29 vị trí = popup 29 dòng; 417 mặt hàng = 417 dòng; công ty TPE 29 vị trí = 29; tổng SL lô cả kho
+7.517 = dòng TỔNG; vị trí N1-D1-TS16N 199 = tổng lô 199; 1 mặt hàng 6 = lô 6; metric lạ → 422; Excel `mode=short&cols=position,name,qty` ra
+đúng 4 cột (STT + 3). Bảng: tối thiểu 1045px (cũ 1330px), ẩn cột thì hẹp lại theo.
+Ngoài phạm vi / chưa làm: popup chỉ có nút Đóng (theo khuôn popup cùng phân hệ — màn Hàng thừa thiếu), chưa có In / Xuất Excel danh sách.
+
+### Checkpoint — 16/11/2026
+Vừa hoàn thành: #12172 đủ 4 mục — BE `item-list` + `/export` nhận `cols`; FE ô vị trí "· Nhà N1" bỏ cột Nhà kho, thu cột, số bấm mở
+`StockLocationDrillModal`, `ExportModeModal pick-columns` (khuôn chung, 5 màn khác không đổi); skill report-styles §4b cập nhật
+Đang làm dở: —
+Bước tiếp theo: user mở `/warehouse/stock-location-product` kiểm 4 mục + popup Xuất Excel của 1 màn khác (vd Thẻ kho) vẫn như cũ
+Blocked:

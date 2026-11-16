@@ -1,0 +1,45 @@
+pages/timesheet/admin-request-update-workings/_id/index.vue	/timesheet/admin-request-update-workings/_id			Đề nghị tra soát công admin	Xem tra soát công admin
+pages/timesheet/admin-request-update-workings/index.vue	/timesheet/admin-request-update-workings		Đề nghị tra soát công admin	Đề nghị tra soát công admin	Đề nghị tra soát công admin
+pages/timesheet/admin-request-update-workings/new.vue	/timesheet/admin-request-update-workings/new			Đề nghị tra soát công admin	Thêm tra soát công admin
+pages/timesheet/attendance/_id/approve.vue	/timesheet/attendance/_id/approve			Đơn xin nghỉ	Giấy báo vắng mặt
+pages/timesheet/attendance/_id/index.vue	/timesheet/attendance/_id			Đơn xin nghỉ	Giấy báo vắng mặt
+pages/timesheet/attendance/add.vue	/timesheet/attendance/add			Đơn xin nghỉ	Giấy báo vắng mặt
+pages/timesheet/attendance/approve.vue	/timesheet/attendance/approve		Đơn xin nghỉ	Đơn xin nghỉ	Danh sách đơn xin nghỉ cần duyệt
+pages/timesheet/attendance/attendances-extend-request.vue	/timesheet/attendance/attendances-extend-request		Đơn kết thúc nghỉ phép	Đơn kết thúc nghỉ phép	Duyệt dự kiến kết thúc nghỉ phép
+pages/timesheet/attendance/index.vue	/timesheet/attendance		Đơn xin nghỉ	Đơn xin nghỉ	Đơn xin nghỉ
+pages/timesheet/business_trip_assigns/_id/approve.vue	/timesheet/business_trip_assigns/_id/approve				
+pages/timesheet/business_trip_assigns/add/_id.vue	/timesheet/business_trip_assigns/add/_id				
+pages/timesheet/business_trip_assigns/approve.vue	/timesheet/business_trip_assigns/approve				Phiếu công tác
+pages/timesheet/business_trip_assigns/finish-extend.vue	/timesheet/business_trip_assigns/finish-extend		Gia hạn/kết thúc phiếu công tác		
+pages/timesheet/business_trip_assigns/index.vue	/timesheet/business_trip_assigns		Phiếu đi công tác		Phiếu công tác
+pages/timesheet/business_trip_assigns/self-list.vue	/timesheet/business_trip_assigns/self-list				Phiếu công tác
+pages/timesheet/conn-info/faces/index.vue	/timesheet/conn-info/faces		Dữ liệu máy chấm công khuôn mặt	Dữ liệu máy chấm công khuôn mặt	
+pages/timesheet/conn-info/index.vue	/timesheet/conn-info		Danh mục máy chấm công	Danh mục máy chấm công	Quản lý máy chấm công
+pages/timesheet/conn-info/users/index.vue	/timesheet/conn-info/users		Dữ liệu máy chấm công (vân tay)	Dữ liệu máy chấm công (vân tay)	Dữ liệu máy chấm công
+pages/timesheet/dashboard/index.vue	/timesheet/dashboard		Tổng quan	Tổng quan - Chấm công	
+pages/timesheet/dashboard/index1.vue	/timesheet/dashboard/index1			Tổng quan - Chấm công	Tổng quan
+pages/timesheet/dashboard/index2.vue	/timesheet/dashboard/index2			Tổng quan - Chấm công	Tổng quan
+pages/timesheet/dashboard/index3.vue	/timesheet/dashboard/index3			Tổng quan - Chấm công	Tổng quan
+pages/timesheet/devices/index.vue	/timesheet/devices		Thiết bị chấm công	Thiết bị chấm công	Phê duyệt thiết bị chấm công
+pages/timesheet/jobassignment/_id/approve.vue	/timesheet/jobassignment/_id/approve			Phiếu giao việc trong ngày	Phiếu giao việc
+pages/timesheet/jobassignment/_id/index.vue	/timesheet/jobassignment/_id			Phiếu giao việc trong ngày	Sửa phiếu giao việc
+pages/timesheet/jobassignment/add.vue	/timesheet/jobassignment/add			Phiếu giao việc trong ngày	Tạo phiếu giao việc
+pages/timesheet/jobassignment/approve.vue	/timesheet/jobassignment/approve			Phiếu giao việc trong ngày	Phiếu Giao Việc
+pages/timesheet/jobassignment/index.vue	/timesheet/jobassignment		Phiếu giao việc trong ngày	Phiếu giao việc trong ngày	Phiếu Giao Việc
+pages/timesheet/late-in-early-out/_id/approve.vue	/timesheet/late-in-early-out/_id/approve			Đăng ký đi muộn về sớm	Phiếu đi muộn, về sớm
+pages/timesheet/late-in-early-out/_id/index.vue	/timesheet/late-in-early-out/_id			Đăng ký đi muộn về sớm	Phiếu đi muộn, về sớm
+pages/timesheet/late-in-early-out/add.vue	/timesheet/late-in-early-out/add			Đăng ký đi muộn về sớm	Phiếu đi muộn, về sớm
+pages/timesheet/late-in-early-out/approve.vue	/timesheet/late-in-early-out/approve		Đăng ký đi muộn về sớm	Đăng ký đi muộn về sớm	Đăng ký đi muộn, về sớm cần duyệt
+pages/timesheet/late-in-early-out/change-end-request.vue	/timesheet/late-in-early-out/change-end-request		Đơn kết thúc đăng ký đi muộn về sớm	Đơn kết thúc đăng ký đi muộn về sớm	
+pages/timesheet/late-in-early-out/index.vue	/timesheet/late-in-early-out		Đăng ký đi muộn về sớm	Đăng ký đi muộn về sớm	Đi muộn, về sớm
+pages/timesheet/location-conn-info/index.vue	/timesheet/location-conn-info		Danh mục địa điểm máy chấm công	Danh mục địa điểm máy chấm công	
+pages/timesheet/notifications/index.vue	/timesheet/notifications				Thông báo
+pages/timesheet/overtime-allocation/_id/index.vue	/timesheet/overtime-allocation/_id			Phân công làm thêm	Phân công làm thêm
+pages/timesheet/overtime-allocation/add.vue	/timesheet/overtime-allocation/add			Phân công làm thêm	Phân công làm thêm
+pages/timesheet/overtime-allocation/index.vue	/timesheet/overtime-allocation		Phân công làm thêm	Phân công làm thêm	Phân công làm thêm
+pages/timesheet/overtime-assignment/_id/approve.vue	/timesheet/overtime-assignment/_id/approve			Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-assignment/_id/index.vue	/timesheet/overtime-assignment/_id			Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-assignment/add.vue	/timesheet/overtime-assignment/add			Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-assignment/approve.vue	/timesheet/overtime-assignment/approve		Đăng ký làm thêm	Đăng ký làm thêm	Đăng ký làm thêm cần duyệt
+pages/timesheet/overtime-assignment/index.vue	/timesheet/overtime-assignment		Đăng ký làm thêm	Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-requirement/_id/approve.vue	/timesheet/overtime-requirement/_id/approve			Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm

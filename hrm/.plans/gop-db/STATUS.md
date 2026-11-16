@@ -19,13 +19,35 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Đồng bộ sidebar 4 phân hệ cũ (Nhân sự, Chấm công, Cơm, Tính lương) về chuẩn hub — ĐANG LÀM (2026-11-16, @khoipv)
+- Chỉ đổi khung menu topbar → sidebar hub, giữ nguyên mục menu.
+- **Checkpoint 16/11 (wrap up):** CODE XONG + ĐÃ PUSH develop hrm-client `e876d0237` — sidebar hub 4 phân hệ (layout 'subsystem' 212 page), tên màn trên topbar + bỏ cụm tiêu đề/breadcrumb 201 page, fix `mixins` khai 2 lần ở 2 báo cáo Cơm. Verify parse 201+ file; chưa test trình duyệt.
+- Còn: user test trình duyệt; chốt đuôi "… chờ duyệt" + 9 màn human chép từ màn Công ty; nhóm Cấu hình Chấm công ẩn trên local do mã `timesheet.thong_so.configure` chưa gán vai trò.
+- Tài liệu: `.plans/gop-db/dong-bo-sidebar-phan-he-cu/` · spec `docs/superpowers/specs/gop-db/2026-11-16-dong-bo-sidebar-phan-he-cu-design.md`
+
+## #12173 Báo cáo tồn theo kho — cây Hàng hóa ▸ Kho, popup bấm số, thu cột, Excel nhanh + chọn cột (5 màn kho) — ĐÃ PUSH develop (hrm-api `7befc9ec6` merge `3b4140900`, hrm-client `6433484f2` merge `a89cce6c1`), chờ user test (2026-11-16, @khoipv)
+- Plan: `.plans/gop-db/bao-cao-ton-theo-kho/plan.md` (mục "Fix — Redmine #12173")
+- Checkpoint: code BE + FE xong, smoke API khớp số, Excel 129s → 19s; chờ user mở trình duyệt kiểm
+
+## #12172 Báo cáo tồn kho theo vị trí — Nhà kho trong ô vị trí, popup bấm số, thu cột, Excel chọn cột — ĐÃ PUSH develop (hrm-api `7befc9ec6` merge `3b4140900`, hrm-client `6433484f2` merge `a89cce6c1`), chờ user test (2026-11-16, @khoipv)
+- Plan: `.plans/gop-db/bao-cao-ton-kho-theo-vi-tri/plan.md` (mục "Fix — Redmine #12172")
+- Checkpoint: code BE + FE xong, smoke API khớp số; chờ user mở trình duyệt kiểm
+
+## #12170 Báo cáo - Tùy chỉnh cột (8 màn báo cáo rsum-tb) — ĐANG LÀM (2026-11-16, @khoipv)
+- Plan: `.plans/gop-db/12170-tuy-chinh-cot-bao-cao/plan.md`
+
+## Phiếu yêu cầu lắp đặt, bàn giao (ERP → HRM) — ĐANG LÀM (2026-11-16, @khoipv)
+
+Port ERP `assemblyRequest.index?type=all` (+ lối `?type=wait-approve`). Đang khảo sát + chốt yêu cầu.
+Tài liệu: `.plans/gop-db/yeu-cau-lap-dat-ban-giao/` · spec `docs/superpowers/specs/gop-db/2026-11-16-yeu-cau-lap-dat-ban-giao-design.md`.
+
 ## Báo cáo theo dõi lắp đặt - bàn giao - SC - BD (ERP → HRM) — ĐANG LÀM (2026-11-14, @khoipv)
 
 Port ERP `customerCareReport.reportInstallDeliveryRepair` → `/customer-care/report/install-delivery-repair` (CSKH › Báo cáo).
 Chốt 14/11: không quyền (y ERP), Người yêu cầu chạy thật + bỏ ô Trạng thái, có In + Excel, khuôn báo cáo rsum (HĐ ▸ phiếu giao việc).
 **Checkpoint 14/11:** CODE XONG BE (`Modules/CustomerCare`, `/v1/customer-care/report/install-delivery-repair`) + FE + menu; compile + smoke HTTP đạt.
 Còn: user bấm trình duyệt. Code CHƯA commit.
-**Phase 2 (14/11): XONG + E2E 17/17 + ĐÃ PUSH develop (hrm-api `6fa8d92b9`, hrm-client `44518bef6`, gồm cả Phase 1)** — màn CHI TIẾT `reportInstallDeliveryRepairDetail` → `/customer-care/report/install-delivery-repair-detail` (3 tab).
+**Phase 2: XONG + ĐÃ PUSH develop** (14/11 hrm-api `6fa8d92b9` / client `44518bef6`; 16/11 phân trang kiểu màn danh sách + theo thiết bị, fix gọi API thừa: api `ce7fb5ce1` / client `9ef6d6e3f`). E2E 2 bộ: `e2e/tests/customer-care/install-delivery-repair-detail-{report,deep}.spec.ts` — màn CHI TIẾT `reportInstallDeliveryRepairDetail` → `/customer-care/report/install-delivery-repair-detail` (3 tab).
 Tài liệu: `.plans/gop-db/bao-cao-theo-doi-lap-dat-ban-giao-sc-bd/` · spec `docs/superpowers/specs/gop-db/2026-11-14-bao-cao-theo-doi-lap-dat-ban-giao-sc-bd-design.md`.
 
 ## Báo cáo bán hàng theo từng mặt hàng (ERP → HRM) — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `6ce0a92ab`, hrm-client `fb38e3761`) (2026-11-13, @khoipv)

@@ -5,7 +5,8 @@
 
 ## Đang làm
 
-_(chưa có)_
+- **Fix: In HĐLĐ 145 — tên công ty xuống dòng, khối chữ ký không căn giữa** — @khoipv — Bắt đầu 16/11/2026 — Lỗi do nội dung mẫu in (cột cố định 300px + chữ 20px; chữ ký căn bằng dấu cách), không phải code. Đã soạn HTML thay thế, chờ user dán vào mẫu in + HĐ 145 trên demo.
+  - Plan: [.plans/fix-in-hdld-can-giua-chu-ky/plan.md](fix-in-hdld-can-giua-chu-ky/plan.md)
 
 ## Tạm dừng
 

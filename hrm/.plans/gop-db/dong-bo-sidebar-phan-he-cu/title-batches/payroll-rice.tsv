@@ -1,0 +1,55 @@
+pages/payroll/bonus-component/index.vue	/payroll/bonus-component		Thành phần tính thưởng	Thành phần tính thưởng	Thành phần tính thưởng
+pages/payroll/bonus-distribution/index.vue	/payroll/bonus-distribution		Bảng chia thưởng	Bảng chia thưởng	Bảng chia thưởng cuối năm
+pages/payroll/bonus-distribution/_id/index.vue	/payroll/bonus-distribution/_id			Bảng chia thưởng	
+pages/payroll/dashboard/index.vue	/payroll/dashboard		Tổng quan	Tổng quan - Tính lương	
+pages/payroll/manpower-allocations/index.vue	/payroll/manpower-allocations				
+pages/payroll/manpower-allocations/_id/index.vue	/payroll/manpower-allocations/_id				
+pages/payroll/payment/index.vue	/payroll/payment		Bảng chi trả	Bảng chi trả	Chi trả lương
+pages/payroll/payment/_id/index.vue	/payroll/payment/_id			Bảng chi trả	
+pages/payroll/policy/salary/edit/_id.vue	/payroll/policy/salary/edit/_id			Mẫu bảng tính thu nhập	Thêm mẫu bảng lương
+pages/payroll/policy/salary/index.vue	/payroll/policy/salary		Mẫu bảng tính thu nhập	Mẫu bảng tính thu nhập	Mẫu bảng lương
+pages/payroll/reports/payroll_info.vue	/payroll/reports/payroll_info		Bảng chi trả		
+pages/payroll/salary/distribution/index.vue	/payroll/salary/distribution		Phân công lương	Phân công lương	Phân bổ lương
+pages/payroll/salary/distribution/rule/index.vue	/payroll/salary/distribution/rule			Phân công lương	Quy tắc phân bổ lương
+pages/payroll/salary/distribution/_id/index.vue	/payroll/salary/distribution/_id			Phân công lương	Chi tiết phân bổ lương
+pages/payroll/salary/index.vue	/payroll/salary		Bảng tính thu nhập	Bảng tính thu nhập	Bảng lương
+pages/payroll/salary/manpower_report/index.vue	/payroll/salary/manpower_report			Bảng tính thu nhập	
+pages/payroll/salary/report/index.vue	/payroll/salary/report			Bảng tính thu nhập	
+pages/payroll/salary/salary-advance/index.vue	/payroll/salary/salary-advance		Tạm ứng	Tạm ứng	Tạm ứng lương
+pages/payroll/salary/salary-advance/_id/index.vue	/payroll/salary/salary-advance/_id			Tạm ứng	
+pages/payroll/salary/salary-summary/index.vue	/payroll/salary/salary-summary		Tổng hợp lương	Tổng hợp lương	Bảng tổng hợp lương
+pages/payroll/salary/salary-summary/_id/index.vue	/payroll/salary/salary-summary/_id			Tổng hợp lương	
+pages/payroll/salary/_id/index.vue	/payroll/salary/_id			Bảng tính thu nhập	
+pages/payroll/salary-data/other-allowance/index.vue	/payroll/salary-data/other-allowance		Các thành phần khác	Các thành phần khác	Các thành phần khác
+pages/payroll/salary-data/other-allowance/_id/index.vue	/payroll/salary-data/other-allowance/_id			Các thành phần khác	
+pages/payroll/salary-data/other-deduction/index.vue	/payroll/salary-data/other-deduction		Khấu trừ khác	Khấu trừ khác	Khấu trừ khác
+pages/payroll/salary-data/other-deduction/_id/index.vue	/payroll/salary-data/other-deduction/_id			Khấu trừ khác	
+pages/payroll/salary-data/other-income/index.vue	/payroll/salary-data/other-income		Thu nhập khác	Thu nhập khác	Thu nhập khác
+pages/payroll/salary-data/other-income/_id/index.vue	/payroll/salary-data/other-income/_id			Thu nhập khác	
+pages/payroll/salary-data/p3-salary/approve.vue	/payroll/salary-data/p3-salary/approve			Thu nhập P3	Duyệt đề xuất định mức thưởng P3
+pages/payroll/salary-data/p3-salary/index.vue	/payroll/salary-data/p3-salary		Thu nhập P3	Thu nhập P3	Định mức thưởng P3 (Hoa hồng/lương khoán)
+pages/payroll/salary-data/p3-salary/_id/approve.vue	/payroll/salary-data/p3-salary/_id/approve			Thu nhập P3	
+pages/payroll/salary-data/p3-salary/_id/index.vue	/payroll/salary-data/p3-salary/_id			Thu nhập P3	
+pages/payroll/salarycomposition/index.vue	/payroll/salarycomposition		Thành phần thu nhập	Thành phần thu nhập	Thành phần lương
+pages/payroll/salarycomposition/system-category/index.vue	/payroll/salarycomposition/system-category			Thành phần thu nhập	Danh mục thành phần lương của hệ thống
+pages/payroll/salarycomposition/_id/index.vue	/payroll/salarycomposition/_id			Thành phần thu nhập	Thành phần lương
+pages/payroll/setting/default-param/index.vue	/payroll/setting/default-param				
+pages/payroll/setting/employees/index.vue	/payroll/setting/employees				
+pages/payroll/setting/employees/_id/index.vue	/payroll/setting/employees/_id				
+pages/payroll/setting/job-position/index.vue	/payroll/setting/job-position				
+pages/payroll/setting/roles/index.vue	/payroll/setting/roles				
+pages/payroll/setting/salary-config/index.vue	/payroll/setting/salary-config		Cấu hình tiền lương	Cấu hình tiền lương	
+pages/payroll/timesheet_summaries/index.vue	/payroll/timesheet_summaries		Bảng chấm công tổng hợp		Bảng chấm công tổng hợp
+pages/payroll/timesheet_summaries/_id/index.vue	/payroll/timesheet_summaries/_id				
+pages/rice/category/conn-info/index.vue	/rice/category/conn-info		Máy check-in cơm	Máy check-in cơm	
+pages/rice/category/faces/index.vue	/rice/category/faces		Dữ liệu máy chấm cơm khuôn mặt	Dữ liệu máy chấm cơm khuôn mặt	
+pages/rice/category/menu/index.vue	/rice/category/menu		Thực đơn	Thực đơn	
+pages/rice/dashboard/index.vue	/rice/dashboard				
+pages/rice/menu-board/index.vue	/rice/menu-board		Bảng thực đơn	Bảng thực đơn	
+pages/rice/notification/index.vue	/rice/notification		Thông báo	Thông báo	
+pages/rice/personal-registration/index.vue	/rice/personal-registration		Bảng đăng ký cơm	Bảng đăng ký cơm	
+pages/rice/report/general/index.vue	/rice/report/general		Báo cáo tổng hợp đăng ký	Báo cáo tổng hợp đăng ký	
+pages/rice/report/report-detail/index.vue	/rice/report/report-detail		Báo cáo cơm chi tiết	Báo cáo cơm chi tiết	
+pages/rice/setting/index.vue	/rice/setting		Thiết lập báo cơm thường	Thiết lập báo cơm thường	
+pages/rice/sheet-registration/index.vue	/rice/sheet-registration		Phiếu đăng ký suất ăn	Phiếu đăng ký suất ăn	
+pages/rice/sheet-registration-admin/index.vue	/rice/sheet-registration-admin		Đăng ký suất ăn admin	Đăng ký suất ăn admin	
