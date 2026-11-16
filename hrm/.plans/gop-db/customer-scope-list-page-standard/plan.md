@@ -38,3 +38,6 @@ Người phụ trách: @khoipv · Nhánh: `gop_db`
 Vừa hoàn thành: toàn bộ Phase 1-2, kiểm chứng 3.1-3.3.
 Bước tiếp theo: user kiểm tra trên trình duyệt.
 Blocked: không có.
+
+## Ngày 16/11/2026 (@junfoke)
+- [x] 16/11/2026 — Hỗ trợ check Lĩnh vực kinh doanh KH có dòng không người tạo / người cập nhật, ngày 24/04, trùng mã LVKDKH.0001–0059: 59 dòng (id 148–206, `created_by = 0`) là danh mục của ETEK GREEN (`company_id = 9`) chèn thẳng vào DB lúc gộp dữ liệu 24/04 — bỏ qua kiểm trùng ở form, bảng không có unique index trên `code`, không mang liên kết Loại hình hoạt động. Prod giống local, chưa khách hàng / dự án / giải pháp nào dùng. 7 dòng trùng tên danh mục Tân Phát, 52 dòng là lĩnh vực riêng của ETEK. Script `CleanupLegacyDuplicateCatalogsSeeder` (09/10) chỉ dọn Nhóm ngành + Nhóm giải pháp. Chưa sửa dữ liệu — chờ nghiệp vụ chốt: gộp vào bộ chuẩn (cấp mã từ LVKDKH.0150) hay khoá/xoá.

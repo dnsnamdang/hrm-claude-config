@@ -52,3 +52,56 @@ Lệnh chạy: `cd e2e && PATH="/c/Users/Legion/AppData/Local/nvm/v24.6.0:$PATH"
 - [x] 06/11/2026 — Hỗ trợ check lại `gop_db` sau vụ revert/khôi phục task_11695 hôm 05/11: hrm-api đủ 18 file, không lệch dòng nào so với `a9147a0d9`; ERP `7bc428417b` (ghi rõ `division_market_employees.employee_id`) vẫn trên `gop_db`. Lỗi `employee_id ambiguous` còn thì chỉ do server ERP chưa pull.
 - [x] 06/11/2026 — Fix phản hồi #12040 (Phiếu phân chia thị trường theo nhân viên): màn Sửa bỏ ô Số phiếu + badge "Đang tạo" (badge chỉ còn ở Chi tiết, áp cả phiếu phòng ban); màn Tạo bỏ Số phiếu, "Phạm vi được chia" thành ô riêng tự lấy theo nhân viên có ⓘ, thêm "Lưu và tiếp tục"; popup Thêm Tỉnh/TP trống là do dữ liệu (phường/xã của phiếu phòng ban TPE_PCTT_00001 chưa gán khu vực KD) → bảng ghi rõ lý do + cách gán, ẩn nút Thêm Tỉnh/TP; danh sách Người tạo / Ngày tạo, sort như #12042; ô hãng xe trống để trống. Icon "Lưu và gửi duyệt" giữ máy bay giấy, chỉnh cỡ 15px như WR (chờ QA nếu muốn icon khác). Commit cùng api `fb890c98d`, client `8b6321dbc`.
 - [x] 06/11/2026 — Fix phản hồi #12057: bỏ dòng "Lý do từ chối" trên form; trạng thái cạnh mã phiếu, Xuất Excel xanh lá; bấm Từ chối mà chưa nhập lý do → toast "Bạn chưa nhập đầy đủ thông tin" + vẫn báo đỏ dưới ô (thêm prop `inputRequiredToast` mặc định tắt vào popup dùng chung `base-confirm-modal.vue`, màn khác không đổi). Bấm Từ chối thật trên trình duyệt; client `4269cf7cc` (develop, đã lên origin).
+
+## Ngày 16/11/2026 (@junfoke) — PROD ĐÃ GỘP NGƯỢC VỀ 1 PHIẾU / PHÒNG
+
+- [x] 16/11/2026 — TP kinh doanh báo không phân chia được trên ERP `admin/division_market/employee`. Nguyên nhân: migration
+  `2026_10_16_000002_split_division_market_department_employees_by_employee` đã tách 14 phiếu (1 phiếu/phòng) thành 141 phiếu
+  (1 phiếu/NV), còn màn ERP vẫn hiểu 1 phiếu/phòng → lập mới bị chặn (unique phòng), mở sửa thì phần lớn NV ra bảng trống.
+  Màn HRM #11695 chưa test nên CHƯA chuyển được → **gộp ngược dữ liệu prod** để ERP chạy luồng cũ. Code không đổi.
+- [x] Đã chạy prod 16/11: 141 → **14 phiếu / 14 phòng**, 0 dòng mồ côi. Sao lưu ở 6 bảng `bk20261116_dmde`, `_dme`, `_dmep`,
+  `_dmew`, `_dmepv`, `_dmdeh` (bản trước khi gộp — xoá khi ERP dùng ổn).
+  Cách gộp: nhóm bản tách theo (company_id, division_department_id, created_at, created_by), giữ MIN(id) (= phiếu gốc, giữ mã
+  cũ); chuyển con ở `division_market_employees.parent_id` + `division_market_employee_{provinces,wards,province_vehicles}` +
+  `division_market_department_employee_histories` (cột `division_market_department_employee_id`) về phiếu gốc; xoá bản tách;
+  phiếu gốc set `employee_id = NULL`, `division_part_id = NULL`.
+- [x] Đối chiếu prod sau gộp (16/11): phân công phường/xã ở lần lưu/duyệt gần nhất trong lịch sử ERP đều còn (chỉ lệch 3 dòng
+  phiếu 14 = phường Hạnh Thông đổi id 0 → 13467, không phải mất); 0 tỉnh/xã/hãng mồ côi; trong lúc bị tách có 2 lần sửa trên
+  ERP ngày 12/11 (phiếu gốc 12 phòng 107, phiếu tách 103 phòng 109 → nay thuộc phiếu 10, lịch sử #482/#483 đã chuyển theo),
+  trạng thái giữ Đã duyệt, không lặp NV. Lần tách đầu chỉ xoá dòng NV chưa giao tỉnh nào (không kèm dữ liệu) ⇒ KHÔNG MẤT DỮ LIỆU.
+- [ ] **KHI CHUYỂN PROD SANG MÀN HRM #11695** — phải TÁCH LẠI dữ liệu, vì bảng `migrations` trên prod đã ghi migration tách
+  là "đã chạy" nên deploy/`migrate` sẽ KHÔNG tự tách nữa. Migration này idempotent (chỉ xử lý phiếu `employee_id IS NULL` —
+  đúng là toàn bộ phiếu sau khi gộp + phiếu ERP lập thêm sau 16/11), nên chạy lại chính nó là đủ, không cần viết SQL tách tay:
+
+  ```sql
+  -- 1. Sao lưu (đổi hậu tố ngày)
+  CREATE TABLE bkYYYYMMDD_dmde  AS SELECT * FROM division_market_department_employees;
+  CREATE TABLE bkYYYYMMDD_dme   AS SELECT * FROM division_market_employees;
+  CREATE TABLE bkYYYYMMDD_dmep  AS SELECT * FROM division_market_employee_provinces;
+  CREATE TABLE bkYYYYMMDD_dmew  AS SELECT * FROM division_market_employee_wards;
+  CREATE TABLE bkYYYYMMDD_dmepv AS SELECT * FROM division_market_employee_province_vehicles;
+  -- 2. Kiểm trước: số phiếu / phòng (đang 1 phiếu / phòng)
+  SELECT COUNT(*) phieu, COUNT(DISTINCT division_department_id) phong FROM division_market_department_employees;
+  -- 3. Gỡ dấu "đã chạy" của migration tách
+  DELETE FROM migrations WHERE migration = '2026_10_16_000002_split_division_market_department_employees_by_employee';
+  ```
+
+  ```bash
+  # 4. Chạy lại đúng 1 file migration (hrm-api trên server)
+  php artisan migrate --path=Modules/Finance/Database/Migrations/2026_10_16_000002_split_division_market_department_employees_by_employee.php --force
+  ```
+
+  ```sql
+  -- 5. Kiểm sau: mỗi phiếu đúng 1 NV, không còn phiếu employee_id NULL, không mồ côi
+  SELECT COUNT(*) phieu, SUM(employee_id IS NULL) chua_tach FROM division_market_department_employees;   -- chua_tach = 0
+  SELECT parent_id, COUNT(*) n FROM division_market_employees GROUP BY parent_id HAVING n > 1;            -- rỗng
+  SELECT COUNT(*) FROM division_market_employee_wards w
+    LEFT JOIN division_market_department_employees d ON d.id = w.division_market_department_employee_id
+   WHERE d.id IS NULL;                                                                                     -- 0
+  ```
+
+  Lưu ý khi tách lại: (1) NV không có Tỉnh/TP nào bị migration XOÁ khỏi phiếu (như lần đầu); (2) dữ liệu ERP gốc có 2 NV lặp
+  trong 1 phiếu (local: phiếu 1 NV 25, phiếu 5 NV 61) → tách ra 2 phiếu cho cùng NV, cần dọn tay sau; (3) **cùng lúc** phải ẩn
+  nút Thêm/Sửa ở màn ERP `division_market/employee` (ERP không hiểu 1 phiếu/NV), nếu không sẽ lặp lại lỗi 16/11;
+  (4) phiếu phòng ban cũ của ERP chưa gán khu vực KD → popup Thêm Tỉnh/TP ở màn HRM trống, phải gán khu vực trước.
+  Thử trên local trước khi làm prod. DB local hiện VẪN ở dạng đã tách (không gộp).

@@ -521,6 +521,15 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       letter-spacing 0.24px, nền head `#f9fafb`, padding head `8px 14px`, thân `14px`, viền `1px #e5e7eb`,
       bo 8px, cách card dưới 24px, ô nhập cao 32px, nhãn 12px/600 `#0f172a`. Trạng thái trên topbar
       (`buildStatusTitle`) lấy CÙNG `status_color` BE trả — không tự map màu ở FE.
+- [ ] **Màn CHI TIẾT phiếu: KHÔNG đặt ô "Mã phiếu" / "Số phiếu" và ô "Trạng thái" trong khối Thông tin chung.**
+      Mã phiếu đã nằm trên tiêu đề topbar ("Chi tiết …: MÃ-PHIẾU"); trạng thái là **badge cạnh mã trên topbar**:
+      trang vỏ `_id/index.vue` (và các trang thao tác cùng form như `start.vue` / `finish.vue` / `edit.vue` nếu
+      tiêu đề có mã) dùng `buildStatusTitle(documentTitle, status_text, status_color || '#64748B')` từ
+      `utils/page-title-status.js` cho `pageTitle`, còn `head().title` dùng `documentTitle` (chuỗi thường, không
+      HTML). Form phát `@loaded` kèm `status_text` / `status_color`. Khuôn: `pages/assign/handover-acceptance-records/_id/index.vue`,
+      `pages/transport/delivery-trips/_id/index.vue`, `pages/finance/split-export-requests/_id/index.vue`.
+      QA đã bắt lỗi này nhiều lần (#12149, #12160, #12163, #12165 — 11/2026) — port màn nào cũng phải tự làm,
+      đừng chờ QA báo. Các ô phụ chỉ là thông tin người tạo (Phòng ban yêu cầu…) mà ERP show không có thì cũng bỏ.
 - [ ] Popup chọn hàng / bản ghi: hàng đã thêm loại ở **BE** (`exclude_*_ids` → `total` và "Hiển thị 1–N/N"
       đúng), không lọc ở FE; truyền `existingProducts` đúng khuôn `{key, groupId, parentRowId}`; màn không
       có cộng dồn dùng `duplicateMode="block"`; thứ tự ô lọc khớp thứ tự cột; `size="xl"` chỉ rộng hơn khi

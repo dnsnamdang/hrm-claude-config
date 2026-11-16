@@ -2,6 +2,8 @@
 
 ## Hoàn thành
 
+- [YC lắp đặt bàn giao: màn sửa chọn phòng mọi công ty + "Chuyển phòng tiếp nhận" lưu phòng = 0](chan-phong-tiep-nhan-khac-cong-ty/plan.md) — @junfoke 2026-11-16. `c62ac47e77` + `92b35d3d9c` gop_db. Prod: phiếu 1619, 1996 đưa về Từ chối.
+- [PI trong nước: sửa được ngày giao hàng ở màn sửa](fix-pi-trong-nuoc-sua-ngay-giao/plan.md) — @junfoke 2026-11-16. `8d106db793` gop_db.
 - [#12072 Chặn duyệt báo giá/HĐ khi địa chỉ giao hàng thuộc tỉnh/phường đã khoá](12072-chan-duyet-dia-chi-giao-hang-khoa/plan.md) — @junfoke 2026-11-13. `ab40c62a70` → develop_02 `4bd5da4d67`, chờ QA; chưa vào gop_db.
 - [#11577 HĐNT mua hàng trong nước: chức năng In](11577-in-hdnt-mua-hang-trong-nuoc/plan.md) — @junfoke 2026-11-13. `cae17d9c57` → develop_02 `9b1c632b92`, chờ check dev; chưa vào gop_db.
 - [Duyệt KQ HĐDV lỗi khi phiếu không giao đủ hàng của HĐ](fix-duyet-kq-hddv-giao-thieu-hang/plan.md) — @junfoke 2026-11-13. `101bda88a6` gop_db. Prod: duyệt lại PDKQ 20028.

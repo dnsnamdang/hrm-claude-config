@@ -146,3 +146,7 @@ Blocked:
   - Bản In: tiêu đề "Danh sách tổng hợp (sau khi tách)" nhỏ lại.
   - Commit: client `27d347314`, api `6266c272c` (develop, đã push). Kiểm bằng ảnh local.
 - [ ] Chờ user: #12165 "check các trường hiển thị ở chi tiết bên ERP" — mới bỏ đúng ô QA khoanh, còn giữ Người duyệt / Ngày duyệt; ERP không hiện thì bỏ nốt.
+
+## Ngày 16/11/2026 — phản hồi QA (@junfoke)
+- [x] 16/11/2026 — Lỗi #12166 (Xuất ghép – Tạo mới): thêm dấu `*` ở tiêu đề cột "Đơn vị tính" và "Số lượng" khi Tạo/Sửa; các điểm còn lại đã sửa trong bản đẩy 14/11 (QA chụp trước lúc đẩy). Client `f1591e830` (develop, đã push).
+- [x] 16/11/2026 — Lỗi đặt ô Mã phiếu / Trạng thái trong khối Thông tin chung bị QA bắt lặp lại (#12149, #12160, #12163, #12165) ⇒ bổ sung mục checklist vào skill `erp-to-hrm-screen`: màn chi tiết không đặt 2 ô này, trạng thái là badge trên tiêu đề (`buildStatusTitle`), kèm màn mẫu.
