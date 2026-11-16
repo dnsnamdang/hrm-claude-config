@@ -109,3 +109,31 @@ Mục 1-2 của #11988 (mục 3-5 là form Tạo PGV → ghi ở `.plans/gop-db/
       Lắp đặt / Giao việc khác = 1 "Chờ giao việc"
 - Ghi chú: ô lọc Trạng thái tab Phiếu BH vẫn liệt kê đủ `STATUSES_WARRANTY` (có 3 "Đang thực hiện") → chọn là 0 dòng; tab HĐ / PL /
       Giao việc khác tương tự (dropdown đủ trạng thái, chỉ 1 giá trị có dữ liệu). Chưa sửa — chờ user chốt
+
+## Tài liệu SRS / HDSD / Testcase (12/11/2026) @khoipv
+
+Khuôn: `../bien-ban-ban-giao-nghiem-thu/` (10/11). Không sửa code / dữ liệu / skill chung. Nhánh develop cả 2 repo.
+
+- [x] Đọc code FE (`pages/customer-care/waiting-assign-tasks/**`, menu `customer-care.js` nhóm "Giao việc", `base-confirm-modal`) + BE
+      (`WaitingAssignTaskService` / Controller / route, `WrServiceContractController` từ chối / đóng / hủy duyệt, `WrAssignTaskStoreService`,
+      Catalog `customer_care.phieu_cho_giao_viec.view` mức 3-4 + `customer_care.phieu_giao_viec.create` + `sale.hop_dong_an_gia.view`)
+- [x] Chụp ảnh dev (`pcgv_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi — 0 lọt). GIẢ cờ nút dòng 1 trên trình duyệt
+      (DNS Admin không thuộc phòng tiếp nhận nào): 01b_row_more, 01c_pl_actions, 01d_assembly_actions, 30/30b/31/32/33. Đã xóa file lưu đăng nhập
+- [x] Đối soát dev (`_capture/doisoat.js`, chỉ GET): tab Giao việc khác 931 = Phiếu YC giao việc khác "Chờ giao việc" ở màn nguồn 931;
+      PBH TPE.PBH.2026.008226 màn Tạo PGV nạp đúng 1 thiết bị còn chưa giao. Tổng dev: HĐ 463 · PL 24 · BH 560 · LĐ 141 · GVK 931
+- [x] `gen_srs.py` → `SRS - Phiếu chờ giao việc.docx` (84 trang, 12 chức năng, selfcheck khớp mẫu; metrics ui 12.8 / ev 4.8 / evch 945 / intro 1768)
+- [x] `gen_hdsd.py` → `HDSD_Phieu cho giao viec.docx` (17 trang, 11 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (loai `phieu`, 131 TC, 10 nhóm, P0 44%, check_tc 0 lỗi)
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx` (Testcase 125 có TC / 199 N/A; SRS 94 có mục / 69 N/A)
+- [x] Ghi nhận lệch design (code hiện tại là chuẩn): Tạo phiếu giao việc nay mở màn HRM (design: ERP); tab Giao việc khác link chi tiết HRM;
+      In tab Lắp đặt là popup HRM (#11988); lọc Ngày tạo tab Lắp đặt / Giao việc khác theo ngày tạo (design: thời gian dự kiến);
+      nút Tạo PGV / Từ chối HĐ-PL không còn đặc cách Super admin; menu thật là CSKH sau bán → Giao việc (không phải Công việc)
+- [x] Ghi nhận nghi lỗi (KHÔNG sửa): (1) quyền Xem mức Công ty không có tác dụng (code chỉ đọc mức Tổng công ty); (2) ô Trạng thái liệt kê
+      đủ trạng thái nhưng chỉ 1 ra dữ liệu (đã ghi 03/11); (3) Từ chối tiếp nhận PL không ghi lịch sử, thông báo trỏ màn ERP; (4) xuất Excel
+      rỗng vẫn ra file + báo thành công; (5) tab BH luôn hiện nút Tạo PGV cho cả người không có quyền (giữ như ERP)
+
+### Checkpoint — 12/11/2026
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu chờ giao việc.
+Đang làm dở: —
+Bước tiếp theo: user xem tài liệu; quyết định các nghi lỗi (mức Công ty của quyền Xem, ô Trạng thái, lịch sử từ chối PL).
+Blocked:

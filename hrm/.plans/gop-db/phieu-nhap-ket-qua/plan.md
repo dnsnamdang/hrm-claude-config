@@ -190,3 +190,21 @@ Blocked:
   - Nguyên nhân: `precheck` → `WrImportResultValidationService::checkValidateSerial` → `CustomerDeviceListService::forCustomer(978)` ném `ModelNotFoundException('customers')` (y ERP `firstOrFail`) vì **KH id 978 không tồn tại trong bảng `customers` trên dev**: approve-data / chi tiết PGV trả `customer_code` rỗng, `GET /assign/customers/978` 403 (KH mẫu id 34 → 200). Tên KH trên phiếu chỉ là chuỗi lưu sẵn ("CÔNG TY CỔ PHẦN VẬN TẢI THƯƠNG MẠI VÀ ĐẦU TƯ AN VIỆT").
   - Local: chạy store với PNKQ 7034 (BH) trong transaction rollBack → lưu OK ⇒ code đúng, lỗi do dữ liệu.
   - Đề xuất (chờ user): (a) dữ liệu — user chọn lại KH đúng cho PGV/PBH hoặc khôi phục KH 978 trên dev; (b) code — đổi câu 404 thành "Không tìm thấy khách hàng của phiếu (id 978) — vui lòng kiểm tra lại khách hàng" để lần sau đọc là hiểu.
+
+## Fix #12139 — Tạo phiếu nhập kết quả từ "Phiếu giao việc được giao" (2026-11-12, @khoipv)
+- [x] Bug 1: (*) y ERP `warranty_repair_import_results/form.blade.php` + `wr_approve_results/form.blade.php` — `WrImportResultForm.vue`:
+      Phiếu giao việc, chứng từ nguồn (Phiếu YCGV khác / Hợp đồng / các số phiếu ở chế độ duyệt), Khách hàng, Người liên hệ;
+      tiêu đề khối "File ảnh đính kèm *" (y tab ERP — bắt buộc thật của 2 khối ảnh vẫn theo `galleriesRequired`)
+- [x] Bug 2: Quay lại không về được danh sách — vòng lặp: chi tiết PGV → Nhập kết quả → Quay lại về chi tiết PGV, chi tiết PGV
+      lấy màn tạo PNKQ làm "nơi đi vào" → Quay lại về màn tạo… Sửa `wr-assign-tasks/_id/index.vue`: nhớ nơi đi vào thật theo id phiếu
+      (biến cấp module), về từ màn `/customer-care/wr-import-results*` thì dùng lại nơi đã nhớ (không có → danh sách `?type=all`)
+- [x] Bug 2 (đổi cách, user chốt "Quay lại cứ cho về màn trước đó"): bỏ cách nhớ theo id; chi tiết PGV (`_id/index.vue`) + Tạo PNKQ
+      (`create.vue`) đi vào từ trong app → `backUrl = ''` → V2Footer `$router.go(-1)` (lùi 1 bước lịch sử); `WrAssignTaskForm.backTarget`
+      bỏ `|| LIST_URL` để '' lọt xuống V2Footer. Mở thẳng link / tab mới / về từ màn Tạo PGV, 404 → vẫn về danh sách `?type=all`
+- [x] Verify: compile OK (vue-template-compiler + babel). Chưa mở trình duyệt
+
+## Fix #12146 — Màn Duyệt kết quả PNKQ (2026-11-12, @khoipv)
+- [x] Ý 1: (*) bắt buộc y ERP `wr_approve_results/form.blade.php` — đã có sẵn từ #12139 (commit a899bc08b, 11:29 sau khi QA chụp 11:23, form dùng chung chế độ duyệt). Ô "SĐT người yêu cầu" QA khoanh nhưng ERP `form.blade.php:172` KHÔNG có `required-label` → giữ không *
+- [x] Ý 2: bỏ in đậm tên dịch vụ ở bảng "I - Dịch vụ đính kèm" — `WrImportResultRevenueCostTable.vue` (áp cả Tạo / Sửa / Chi tiết, dùng chung bảng)
+- [x] Ý 3: Lưu nháp phiếu duyệt → về danh sách (trước về chi tiết) — `WrImportResultForm.vue` submit duyệt luôn `$router.push(LIST_URL)`; sửa comment `_id/approve.vue`
+- [x] Verify: compile 3 file (vue-template-compiler + babel). Chưa mở trình duyệt

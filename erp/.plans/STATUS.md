@@ -2,6 +2,9 @@
 
 ## Hoàn thành
 
+- [#12072 Chặn duyệt báo giá/HĐ khi địa chỉ giao hàng thuộc tỉnh/phường đã khoá](12072-chan-duyet-dia-chi-giao-hang-khoa/plan.md) — @junfoke 2026-11-13. `ab40c62a70` → develop_02 `4bd5da4d67`, chờ QA; chưa vào gop_db.
+- [#11577 HĐNT mua hàng trong nước: chức năng In](11577-in-hdnt-mua-hang-trong-nuoc/plan.md) — @junfoke 2026-11-13. `cae17d9c57` → develop_02 `9b1c632b92`, chờ check dev; chưa vào gop_db.
+- [Duyệt KQ HĐDV lỗi khi phiếu không giao đủ hàng của HĐ](fix-duyet-kq-hddv-giao-thieu-hang/plan.md) — @junfoke 2026-11-13. `101bda88a6` gop_db. Prod: duyệt lại PDKQ 20028.
 - [YC hạch toán mua DV: chặn YC 0đ + vượt SL còn lại](fix-yc-hach-toan-mdv-chan-0d/plan.md) — @junfoke 2026-11-07. `12e73d624d` → develop_02 `95e12277f6` + gop_db `822a4695ac`. Prod: không duyệt EG.YCHTMDV.2026000096.
 - [Hỗ trợ HĐ 31032 TP chỉ được chuyển duyệt (is_market)](ho-tro-hd-31032-bat-chuyen-duyet-is-market/plan.md) — @junfoke 2026-11-07. Không lỗi code: địa chỉ giao hàng còn phường cũ.
 - [Mẫu in "Báo giá dịch vụ" + BGDV-02A lọt vào Loại HĐ dịch vụ](mau-in-loai-bao-gia-dich-vu/plan.md) — @junfoke 2026-11-06. Chặn tạm `d9978f0644` gop_db; loại mẫu in 13 `5d42014853` → develop_02 (`69c62c82d9`, cần migrate). Chưa vào gop_db.

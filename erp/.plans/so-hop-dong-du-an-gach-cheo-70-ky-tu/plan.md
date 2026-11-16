@@ -10,4 +10,7 @@ Không Redmine (user nhờ, ảnh số `0726/TPE-EG/PO3200374723`) · @junfoke �
 - [ ] Hỏi user: nâng HĐ nguyên tắc / ĐH nguyên tắc (`PrincipleContract*Request`, `PrincipleOrderStoreRequest`, vẫn 50) cho đồng bộ?
 
 ## Ngày 11/11/2026 (@junfoke)
-- [ ] 11/11/2026 — Đang làm (user yêu cầu): sửa rule Số hợp đồng của HĐ vật tư / HĐ dịch vụ / HĐ nguyên tắc / Đơn hàng nguyên tắc giống HĐ dự án (nhận `/`, tối đa 70 ký tự…) bên ERP rồi đẩy gop_db. Đang dò request ERP (HĐ vật tư và HĐ dự án dùng chung `FirmContractStoreRequest`), chưa có commit.
+- [x] 11/11/2026 — Đang làm (user yêu cầu) — xong 12/11, xem mục dưới: sửa rule Số hợp đồng của HĐ vật tư / HĐ dịch vụ / HĐ nguyên tắc / Đơn hàng nguyên tắc giống HĐ dự án (nhận `/`, tối đa 70 ký tự…) bên ERP rồi đẩy gop_db. Đang dò request ERP (HĐ vật tư và HĐ dự án dùng chung `FirmContractStoreRequest`), chưa có commit.
+
+## Ngày 12/11/2026 (@junfoke)
+- [x] 12/11/2026 — User chốt áp rule **HĐ dự án bên HRM** (không phải HĐ dự án ERP): Số hợp đồng bắt buộc, tối đa 255 ký tự, không chặn ký tự nào (số `112026/HĐKT/FDN-EG` có chữ Đ giờ nhập được). Sửa 6 request trong `app/Http/Requests/`: HĐ vật tư (+ HĐ dự án ERP vì dùng chung `FirmContractStoreRequest`), HĐ nguyên tắc, Đơn hàng nguyên tắc (vẫn chặn trùng số), HĐ dịch vụ SC-BH (thêm tối đa 255). Màn nha khoa (ZT) chưa đổi. Lưu ý: mã HĐ = tiền tố tự sinh + số nhập, cột 255 ⇒ gõ gần 255 ký tự có thể lỗi khi lưu (HRM cũng vậy). Commit `df16b6bfe5` (gop_db) + `7d6937fd48` (develop_02), đã push cả 2. Câu hỏi ngày 05/11 về HĐ nguyên tắc / ĐH nguyên tắc coi như đã giải quyết.
