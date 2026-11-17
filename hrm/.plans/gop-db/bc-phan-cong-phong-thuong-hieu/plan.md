@@ -34,3 +34,7 @@ Blocked: quyết định phân hệ Mua hàng.
 Vừa hoàn thành: push `feat/bc-phan-cong-phong-thuong-hieu` + merge vào `develop` (api `77e6b4ffc`, client `1e78669a5`).
 User chốt: lối Mua hàng › Báo cáo để nguyên (phân hệ Mua hàng còn ẩn, sau sẽ bật) — chỉ chuyển lối Tra cứu - thông báo trước.
 Bước tiếp theo: chờ test dev; lên gop_db khi user bảo. Deploy: `permission:catalog-sync`.
+
+## Ngày 17/11/2026 (@junfoke)
+- [x] 17/11/2026 — Hỗ trợ check vì sao người dùng vào màn lại hiện phân hệ Mua hàng: họ vào đúng lối Tra cứu (`?type=all`), nhưng hàm dùng chung `findSubsystemByLink` (`components/subsystems.js`) bỏ phần query nên hoà với lối Mua hàng (đang `hidden` + `erpGhost`), rồi chọn theo `sessionStorage` / tiền tố URL `/purchase` → mở tab mới, dán link, F5 tab mới là rơi vào Mua hàng.
+- [ ] Chờ user duyệt (hàm dùng chung): khi hoà ưu tiên mục menu khớp cả query (như `screenTitleOf`) + bỏ phân hệ `hidden` khỏi lượt chọn. Chưa sửa.

@@ -150,3 +150,8 @@ Blocked:
 ## Ngày 16/11/2026 — phản hồi QA (@junfoke)
 - [x] 16/11/2026 — Lỗi #12166 (Xuất ghép – Tạo mới): thêm dấu `*` ở tiêu đề cột "Đơn vị tính" và "Số lượng" khi Tạo/Sửa; các điểm còn lại đã sửa trong bản đẩy 14/11 (QA chụp trước lúc đẩy). Client `f1591e830` (develop, đã push).
 - [x] 16/11/2026 — Lỗi đặt ô Mã phiếu / Trạng thái trong khối Thông tin chung bị QA bắt lặp lại (#12149, #12160, #12163, #12165) ⇒ bổ sung mục checklist vào skill `erp-to-hrm-screen`: màn chi tiết không đặt 2 ô này, trạng thái là badge trên tiêu đề (`buildStatusTitle`), kèm màn mẫu.
+
+## Ngày 17/11/2026 — phản hồi QA (@junfoke)
+- [x] 17/11/2026 — Lỗi #12184 (Phiếu YC xuất tách): dấu (*) cột ĐVT / SL đã có trong #12166 (QA chụp 14:05 16/11, trước khi bản đó lên dev); chọn hàng bị lag do form gọi API công thức lần lượt từng hàng → thêm API nạp công thức nhiều hàng trong 1 request, FE `onApplyProducts` gọi 1 lần (4 hàng 2,9 giây, trước ~2 giây/hàng). "Thông báo lỗi giật" chưa dựng lại được ở local — cần QA thử lại sau deploy.
+- [x] 17/11/2026 — Lỗi #12185 (Phiếu YC xuất ghép): nới cột Số lượng hiện đủ "Nhập số lượng"; dòng tô đỏ tab tổng hợp ghi rõ "Vượt tồn kho (cần X, còn Y)" ngay, không đợi bấm Lưu; tab Hàng hóa hiện dòng lỗi dưới nguyên vật liệu thiếu tồn + chấm đỏ ở tab. "Cổng ERP không có dữ liệu" là dữ liệu dev-erp, không phải lỗi code (user trả lời QA).
+- [x] 17/11/2026 — Commit #12184 #12185: client `98b5646e9`, api `e4154e323` (develop, đã push).

@@ -50,6 +50,16 @@ Còn: user bấm trình duyệt. Code CHƯA commit.
 **Phase 2: XONG + ĐÃ PUSH develop** (14/11 hrm-api `6fa8d92b9` / client `44518bef6`; 16/11 phân trang kiểu màn danh sách + theo thiết bị, fix gọi API thừa: api `ce7fb5ce1` / client `9ef6d6e3f`). E2E 2 bộ: `e2e/tests/customer-care/install-delivery-repair-detail-{report,deep}.spec.ts` — màn CHI TIẾT `reportInstallDeliveryRepairDetail` → `/customer-care/report/install-delivery-repair-detail` (3 tab).
 Tài liệu: `.plans/gop-db/bao-cao-theo-doi-lap-dat-ban-giao-sc-bd/` · spec `docs/superpowers/specs/gop-db/2026-11-14-bao-cao-theo-doi-lap-dat-ban-giao-sc-bd-design.md`.
 
+## #12198 Dự án TKT — link mở chi tiết giải pháp — ĐÃ MERGE develop (`904aa525c` / merge `33019e371`), CHƯA gop_db (2026-11-17, @junfoke)
+Chỉ FE (2 file), nhánh `task_12198`. Tài liệu: `.plans/gop-db/12198-link-giai-phap-du-an-tkt/plan.md`.
+
+## Báo cáo so sánh số liệu bán hàng theo khu vực chi tiết theo thời gian (ERP → HRM) — ĐÃ MERGE develop (api 44d2720bc, client 5ee6aa610), CHƯA gop_db (2026-11-17, @junfoke)
+
+Port `report.compareContractByTimes` → `/sale/compare-contract-by-time-report` (Bán hàng › Tổng hợp & so sánh). Nhánh
+`feat/bc-so-sanh-bh-khu-vuc-theo-thoi-gian` (worktree `.worktrees/bc-so-sanh-khu-vuc`, 2 repo). Mã quyền MỚI → deploy
+`permission:catalog-sync` + cấp ở `/admin/roles`. Sửa lỗi ERP lọc status 2 (Chờ duyệt / phiếu bảo hành).
+Tài liệu: `.plans/gop-db/bc-so-sanh-bh-khu-vuc-theo-thoi-gian/` · spec `docs/superpowers/specs/gop-db/2026-11-17-bc-so-sanh-bh-khu-vuc-theo-thoi-gian-design.md`.
+
 ## Báo cáo số lượt sửa chữa - bảo dưỡng cho 1 khách hàng (ERP → HRM) — ĐÃ MERGE develop (2026-11-16, @junfoke)
 
 Port `report.warrantyRepairServiceByCustomer` → `/sale/warranty-repair-by-customer-report` (Bán hàng › Báo cáo › Tổng hợp & so sánh).

@@ -25,3 +25,6 @@ Bước tiếp theo: user check → push + merge `develop`. Deploy `permission:c
 Vừa hoàn thành: push `feat/bc-so-luot-sc-bd-khach-hang` + merge vào `develop` (api `d51632a4c`, client `f9b8ced17`). Merge kéo theo 8 commit đã có trên gop_db mà develop chưa có (7 commit trợ lý agent của dnsnamdang, 1 commit "Giao cho tôi" của Manh Cuong).
 Bước tiếp theo: QA trên dev (HRM `/sale/warranty-repair-by-customer-report`, ERP `/admin/report/warranty_repair_service_by_customer`); dev chạy `permission:catalog-sync`; lên gop_db khi user bảo.
 Blocked:
+
+## Ngày 17/11/2026 (@junfoke)
+- [x] 17/11/2026 — Hỗ trợ check route ERP `warranty_repair_service_by_customer` + quyền: URL đúng là `/admin/reports/...` (gõ `report` sẽ 404); route và menu ERP không chặn quyền, ai đăng nhập cũng mở được — quyền chỉ quyết phạm vi dữ liệu: `sale.bao_cao_so_luot_sua_chua_bao_duong_cho_1_khach_hang.view` (≥ GROUP tất cả công ty / ≥ COMPANY công ty mình), `..._theo_nhan_vien.view` (≥ DEPARTMENT phòng / ≥ PART bộ phận).
