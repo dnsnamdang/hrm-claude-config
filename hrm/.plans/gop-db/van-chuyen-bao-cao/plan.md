@@ -107,3 +107,21 @@
 ## Ngày 09–10/11/2026 (@junfoke)
 - [x] 09/11/2026 — Lỗi #12085 (BC chi tiết chuyến xe): khảo sát chuyến ghép nhiều khách (259 chuyến năm 2026), gửi 9 chuyến mẫu đối chiếu; chốt cây Khách hàng ▸ Tuyến đường ▸ Phiếu hạch toán, Excel dựng ở FE.
 - [x] 10/11/2026 — Lỗi #12085: thêm ô "Xem theo" Khách hàng (mặc định) / Chuyến xe; góc nhìn KH lấy cước kế toán đã chia cho từng phiếu (`total_cost_transition`, `delivery_tax`) nên cộng các khách khớp đúng dòng TỔNG; chuyến ghép có nhãn "ghép N KH", để trống KM/cước chính/phụ trội/vé cầu đường; khối tổng hợp xếp ngang + ô "Ghép nhiều KH"; Xuất Excel dựng ở trình duyệt (cả năm 2026 ~13s, trước >30s lỗi), bản in góc nhìn KH 3 cấp. Hai góc nhìn khớp tới từng xu. Sửa 3 component dùng chung báo cáo vận chuyển (chỉ chạy khi config khai). Commit develop api `d05a308ce`, client `3f97c0b21` (đã push).
+
+## Ngày 16/11/2026 — phản hồi QA (@junfoke)
+- [x] 16/11/2026 — Lỗi #12168 (BC chi tiết cẩu hàng bốc xếp theo NV): cột "Nhân viên / Phiếu hạch toán" và các cột popup chi tiết thu gọn vừa nội dung; Ngày hạch toán + Ngày bốc xếp hiện kèm giờ `dd/mm/yyyy HH:mm` ở bảng, popup, bản in, Excel (phần BE dùng chung nên BC bốc xếp theo NCC cũng có giờ). Test `ArrangeReportApiTest` chuyển sang cấp quyền theo mã mới (trait `GrantsLegacyPermissionByRole`), 6/6 đạt; `.env` worktree develop trỏ lại DB `gop_db_rbac`.
+- [x] 16/11/2026 — Lỗi #12169: thêm nút Tuỳ chỉnh cột (dùng lại popup cấu hình cột của màn danh sách, lưu theo người dùng + màn) cho 13 màn báo cáo — 8 màn vận tải (bốc xếp theo NCC / theo NV / chi tiết theo NV, tổng hợp + chi tiết CP vận chuyển theo lái xe, chi tiết hiệu quả gộp theo chuyến, hiệu quả gộp xe vận tải, chi tiết chuyến xe — lưu riêng từng góc nhìn "Xem theo") và 5 màn bán hàng (CP vận chuyển theo NVKD, Đối chiếu công nợ 1 KH, Tổng hợp công nợ theo NV, Chi tiết công nợ KH, Phân chia thị trường). Khoá cột STT + cột chính; helper mới `utils/reportColumnLayout.js` tính gộp ô tiêu đề 2 tầng + dòng Tổng. "Báo cáo chăm sóc khách hàng" chưa port nên chưa làm.
+- [x] 16/11/2026 — Commit chung #12166 / #12168 / #12169: client `f1591e830`, api `3ee51d71d` (develop, đã push). Kiểm bằng ảnh local.
+- [ ] 16/11/2026 — Lỗi #12179, #12181, #12183 (BC hiệu quả gộp / bốc xếp): ĐANG SỬA trên develop, chưa commit — Xuất Excel cho chọn cột như In (user đồng ý thêm prop vào popup dùng chung `V2BaseReportPrintModal`), số âm ở khối thống kê hiện "- 486,851", bỏ chữ "lượt", bỏ cuộn ngang.
+- [ ] Chờ user: In / Xuất Excel có theo cấu hình cột không; BC CP vận chuyển theo NVKD có cố định thêm 1 cột không.
+
+## Ngày 17/11/2026 — phản hồi QA (@junfoke)
+- [x] 17/11/2026 — Lỗi #12179, #12181, #12183 (BC hiệu quả gộp / bốc xếp — mục "ĐANG SỬA" 16/11 ở trên, nay đã xong):
+  - #12183 Xuất Excel từ popup 1.801 chuyến bị loading mãi: Excel danh sách đang dựng từ HTML (1.996 chuyến = 7,7 MB, 28 giây) → dựng thẳng từ dữ liệu, giữ bố cục cũ (logo, tiêu đề, dòng TỔNG, khối Người lập), còn 4 giây. Áp chung Excel danh sách nhóm bốc xếp + vận chuyển.
+  - Cả 3 issue: nút "Xuất Excel" màn chính và "Xuất Excel danh sách" trong popup mở cùng popup chọn bản + cột như In; BE nhận bản xuất + danh sách cột, báo cáo không gửi cột vẫn xuất đủ. BC chi tiết chuyến xe tự dựng Excel ở trình duyệt nên giữ xuất thẳng.
+  - #12179 (cẩu hàng bốc xếp theo NCC) + #12181 (chi tiết theo NV): ô Nhà cung cấp có ô tìm trong dropdown; các ô lọc nằm 1 hàng.
+  - Xử lý kèm: test BC chi phí vận chuyển theo lái xe chuyển cách cấp quyền sang mã quyền mới (5/5 xanh); 2 lỗi `TripReportsApiTest` có sẵn từ trước.
+  - Commit client `41009059f`, api `873caee05` (develop, đã push).
+- [x] 17/11/2026 — Fix phản hồi #12169: nút cấu hình cột chuyển lên ĐẦU cụm nút (trước "In báo cáo", tách khỏi "Cài đặt bộ lọc") ở 3 khuôn báo cáo vận chuyển (bốc xếp, vận chuyển, chi phí lái xe). Báo cáo sale/assign có cụm nút riêng trên thẻ bảng, nút đã ngoài cùng nên giữ.
+- [x] 17/11/2026 — Fix phản hồi #12085 (BC chi tiết chuyến xe): các khối tổng hợp giãn lấp đầy hàng, mép phải thẳng nhau; khối "Đối tượng chịu phí" phủ kín phần còn lại. Kiểm 1366px kỳ năm 2026 (2 hàng kín bề ngang) và 1600px (3 khối 1 hàng).
+- [x] 17/11/2026 — Commit chung phản hồi #12169 #12149 #12133 #12111 #12085: client `ecf4a74d1` (develop, đã push; đợt này chỉ FE).

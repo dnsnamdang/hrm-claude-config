@@ -55,6 +55,31 @@ Còn: user bấm trình duyệt. Code CHƯA commit.
 **Phase 2: XONG + ĐÃ PUSH develop** (14/11 hrm-api `6fa8d92b9` / client `44518bef6`; 16/11 phân trang kiểu màn danh sách + theo thiết bị, fix gọi API thừa: api `ce7fb5ce1` / client `9ef6d6e3f`). E2E 2 bộ: `e2e/tests/customer-care/install-delivery-repair-detail-{report,deep}.spec.ts` — màn CHI TIẾT `reportInstallDeliveryRepairDetail` → `/customer-care/report/install-delivery-repair-detail` (3 tab).
 Tài liệu: `.plans/gop-db/bao-cao-theo-doi-lap-dat-ban-giao-sc-bd/` · spec `docs/superpowers/specs/gop-db/2026-11-14-bao-cao-theo-doi-lap-dat-ban-giao-sc-bd-design.md`.
 
+## #12198 Dự án TKT — link mở chi tiết giải pháp — ĐÃ MERGE develop (`904aa525c` / merge `33019e371`), CHƯA gop_db (2026-11-17, @junfoke)
+Chỉ FE (2 file), nhánh `task_12198`. Tài liệu: `.plans/gop-db/12198-link-giai-phap-du-an-tkt/plan.md`.
+
+## Báo cáo so sánh số liệu bán hàng theo khu vực chi tiết theo thời gian (ERP → HRM) — ĐÃ MERGE develop (api 44d2720bc, client 5ee6aa610), CHƯA gop_db (2026-11-17, @junfoke)
+
+Port `report.compareContractByTimes` → `/sale/compare-contract-by-time-report` (Bán hàng › Tổng hợp & so sánh). Nhánh
+`feat/bc-so-sanh-bh-khu-vuc-theo-thoi-gian` (worktree `.worktrees/bc-so-sanh-khu-vuc`, 2 repo). Mã quyền MỚI → deploy
+`permission:catalog-sync` + cấp ở `/admin/roles`. Sửa lỗi ERP lọc status 2 (Chờ duyệt / phiếu bảo hành).
+Tài liệu: `.plans/gop-db/bc-so-sanh-bh-khu-vuc-theo-thoi-gian/` · spec `docs/superpowers/specs/gop-db/2026-11-17-bc-so-sanh-bh-khu-vuc-theo-thoi-gian-design.md`.
+
+## Báo cáo số lượt sửa chữa - bảo dưỡng cho 1 khách hàng (ERP → HRM) — ĐÃ MERGE develop (2026-11-16, @junfoke)
+
+Port `report.warrantyRepairServiceByCustomer` → `/sale/warranty-repair-by-customer-report` (Bán hàng › Báo cáo › Tổng hợp & so sánh).
+Chốt: bắt buộc quyền; ẩn thiết bị chỉ bảo hành; sửa lỗi ERP (SL ghi đè, nhân đôi, bảo dưỡng thiếu dịch vụ, NCC, ngày cuối kỳ…).
+Xong + verify trình duyệt, push nhánh `feat/bc-so-luot-sc-bd-khach-hang` + merge develop (api `d51632a4c`, client `f9b8ced17`). Chưa lên gop_db. Deploy `permission:catalog-sync`.
+Tài liệu: `.plans/gop-db/bc-so-luot-sc-bd-khach-hang/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-16-bc-so-luot-sc-bd-khach-hang-design.md`.
+
+## Báo cáo phân công phòng phụ trách thương hiệu - hãng sản xuất (ERP → HRM) — ĐÃ MERGE develop (2026-11-16, @junfoke)
+
+Port `assign-department-brand.reportAssignDepartmentBrands`, trang `/purchase/reports/assign-department-brands`
+(Tra cứu `?type=all` ẩn In/Excel/Lịch sử · Mua hàng đủ), cả 2 kiểm quyền + phạm vi; sửa các lỗi ERP (lọc người mua, cặp có phiếu nháp bị mất…).
+Trạng thái: push `feat/bc-phan-cong-phong-thuong-hieu` + merge develop (api `77e6b4ffc`, client `1e78669a5`). Lối Mua hàng để nguyên
+(phân hệ Mua hàng còn ẩn, user 16/11: "sau kiểu gì cũng mở"). Chưa lên gop_db. Deploy `permission:catalog-sync`.
+Tài liệu: `.plans/gop-db/bc-phan-cong-phong-thuong-hieu/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-16-bc-phan-cong-phong-thuong-hieu-design.md`.
+
 ## Báo cáo bán hàng theo từng mặt hàng (ERP → HRM) — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `6ce0a92ab`, hrm-client `fb38e3761`) (2026-11-13, @khoipv)
 
 Port ERP `report.summary_sale` → `/sale/sale-by-product-report` (Bán hàng › Báo cáo › Tổng hợp & so sánh). Chốt: CỘNG THÊM HĐ HRM vào nguồn cũ;
@@ -77,8 +102,9 @@ Tài liệu: `.plans/gop-db/11739-tieu-de-chi-tiet-trang-thai/`.
 
 Port 2 phiếu kế hoạch nhân viên theo demo khách (bản chốt): bỏ tầng khách hàng, nhập ở dòng Tỉnh/TP (+SL khách, +DS xuất hàng),
 Tỉnh/TP theo chỉ tiêu được giao, duyệt TP → Gửi BGĐ, lấy dữ liệu chéo theo hệ số. BGĐ duyệt + sửa báo cáo ERP: đợt sau.
-Trạng thái: spec xong, CHỜ USER DUYỆT; chưa tạo nhánh, chưa code.
-Bước tiếp: duyệt spec → viết plan → nhánh mới từ `origin/gop_db` (hrm-api, hrm-client, TanPhatDev).
+Trạng thái: ĐÃ PUSH `feat/ke-hoach-nhan-vien` + MERGE dev (16/11): hrm-api develop `b542a7797`, hrm-client develop `6052f391b`, TanPhatDev develop_02 `1b7dbf7c12` (merge nguyên nhánh, kéo theo commit gop_db chat/agent/#12128 — user chọn). Chờ QA dev.
+Bước tiếp: dev/prod chạy migration `2026_11_14_000001_add_hrm_columns_to_employee_plans` + `permission:catalog-sync`; cấp mã duyệt NV cho TP; lên gop_db khi user bảo.
+⚠️ GOTCHA: `Collection->map('intval')` biến chuỗi thành 0 (khoá làm base) — dùng closure; popup in gộp các `<br>` liền nhau.
 Tài liệu: `.plans/gop-db/11884-11885-ke-hoach-nhan-vien/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-14-11884-11885-ke-hoach-nhan-vien-design.md`.
 
 ## Danh sách hàng xuất nhập thẳng (ERP → HRM) — HOÀN THÀNH 2026-11-11, ĐÃ PUSH develop (hrm-api `0b472de60`, hrm-client `56d08069e`) (2026-11-11, @khoipv)

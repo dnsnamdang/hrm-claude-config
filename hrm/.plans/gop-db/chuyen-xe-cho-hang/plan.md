@@ -212,3 +212,6 @@ Blocked: —
 - [x] 13/11/2026 — Lỗi #12149 (Chi tiết chuyến xe chở hàng): màu nút theo Chuyến xe khác (Không duyệt/Sửa/Xoá nút đặc, Xoá + Không duyệt đỏ, Xoá icon thùng rác; In/Xuất Excel nút viền); bỏ ô Số phiếu + Trạng thái, trạng thái thành badge cạnh mã phiếu trên tiêu đề (`buildStatusTitle`) cho cả Chi tiết / Duyệt xe xuất phát / Kết thúc chuyến xe; dấu ":" trên bản In sát nhãn (sửa luôn bản in Chuyến xe khác); đủ placeholder mọi ô trống ("Tự lấy theo biển số xe", "Ghi nhận khi duyệt xe xuất phát", "Chưa nhập số tiền"…).
 - [x] 13/11/2026 — Lỗi #12150 (Danh sách chuyến xe chở hàng): bản In danh sách tách khối ký "Người lập" (ngày, Người lập, chỗ ký, tên) — Chuyến xe khác dính y hệt nên sửa luôn; nút Xoá ở cột Hành động màu đỏ (chỉ đọc code, local không có chuyến được xoá).
 - [x] 13/11/2026 — Commit #12149 + #12150: api `7109ca401`, client `2e11a108a` (develop, đã push). Kiểm bằng ảnh local trừ màu nút Xoá danh sách.
+
+## Ngày 17/11/2026 (@junfoke)
+- [x] 17/11/2026 — Fix phản hồi #12149 (Chi tiết chuyến xe chở hàng): nút Xuất Excel đổi sang viền xanh lá; đổi luôn ở màn Chuyến xe khác cho đồng bộ. Client `ecf4a74d1` (develop, đã push).

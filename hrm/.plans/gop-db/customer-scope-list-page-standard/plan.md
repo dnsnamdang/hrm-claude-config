@@ -38,3 +38,10 @@ Người phụ trách: @khoipv · Nhánh: `gop_db`
 Vừa hoàn thành: toàn bộ Phase 1-2, kiểm chứng 3.1-3.3.
 Bước tiếp theo: user kiểm tra trên trình duyệt.
 Blocked: không có.
+
+## Ngày 16/11/2026 (@junfoke)
+- [x] 16/11/2026 — Hỗ trợ check Lĩnh vực kinh doanh KH có dòng không người tạo / người cập nhật, ngày 24/04, trùng mã LVKDKH.0001–0059: 59 dòng (id 148–206, `created_by = 0`) là danh mục của ETEK GREEN (`company_id = 9`) chèn thẳng vào DB lúc gộp dữ liệu 24/04 — bỏ qua kiểm trùng ở form, bảng không có unique index trên `code`, không mang liên kết Loại hình hoạt động. Prod giống local, chưa khách hàng / dự án / giải pháp nào dùng. 7 dòng trùng tên danh mục Tân Phát, 52 dòng là lĩnh vực riêng của ETEK. Script `CleanupLegacyDuplicateCatalogsSeeder` (09/10) chỉ dọn Nhóm ngành + Nhóm giải pháp. Chưa sửa dữ liệu — chờ nghiệp vụ chốt: gộp vào bộ chuẩn (cấp mã từ LVKDKH.0150) hay khoá/xoá.
+
+## Ngày 17/11/2026 (@junfoke)
+- [x] 17/11/2026 — Lỗi #12192 (DM khách hàng): chọn Quốc gia thì dropdown Tỉnh/TP chỉ còn tỉnh của nước đó, tỉnh đang chọn thuộc nước khác tự bỏ (API tỉnh trả kèm `nation_id`; thử China còn 7 tỉnh, Việt Nam 34); icon Tùy chỉnh cột đổi sang kiểu nút như đa số màn, cùng cỡ hàng nút Xuất. Client `98b5646e9`, api `e4154e323` (develop, đã push).
+- [ ] Chờ user: tài liệu quy ước nút trong hrm-claude-config ghi "nút chỉ icon dùng kiểu cũ" và lấy DM khách hàng làm mẫu — sau #12192 tài liệu lệch code, cập nhật hay giữ.

@@ -1419,3 +1419,7 @@ Blocked: e2e không chạy được trên `hrm_erp_21_10_prod` (không có tài 
 
 ## Ngày 13/11/2026 (@junfoke)
 - [x] 13/11/2026 — Commit #12133 (phần ghi 12/11 ở trên): api `ec0c8b35c` (Loại SP bắt buộc Tính chất hàng hóa + Nhóm chức năng), client `eda40e859` (develop, đã push). 3 câu hỏi chờ user vẫn còn.
+
+## Ngày 17/11/2026 (@junfoke)
+- [x] 17/11/2026 — Lỗi #12211 (Hàng hóa nhập thông tin): ô tìm Ghi chú trong Tìm kiếm nâng cao đã có từ #11996 cho cả 6 màn hàng hóa (QA không thấy có thể do dev chưa deploy); cột Ghi chú chỉ thiếu ở màn "Nhập thông tin" và "Hàng tạm" → thêm vào bảng, popup tùy chọn cột, file Excel (`product-list-screens.js`, `ExportColumnRegistry.php`), để ẩn sẵn như 4 màn kia. Client `98b5646e9`, api `e4154e323` (develop, đã push). Test lọc Ghi chú chưa chạy được local vì `ActsAsProductUser` còn cấp quyền kiểu cũ (ngoài phạm vi, chưa sửa).
+- [x] 17/11/2026 — Fix phản hồi #12133 (popup Thêm nhanh nhà cung cấp): đầu bảng Người đại diện / Người liên hệ / Ngân hàng đổi từ xám `thead-light` (#e9ecef) sang nền nhạt #f8fafc như bảng các form khác (không dùng xanh nhạt của bảng danh sách vì tối hơn, sai ý "sáng hơn"). Client `ecf4a74d1` (develop, đã push).
