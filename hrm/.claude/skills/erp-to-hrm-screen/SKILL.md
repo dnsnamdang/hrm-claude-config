@@ -786,6 +786,15 @@ grep -rn "text-muted"                     <thư-mục-feature>   # ra chữ Đ�
 
 Nếu grep ra sạch mà mắt vẫn thấy lệch → mở màn **Danh mục khách hàng** đặt cạnh và so từng khối.
 
+## ⚠️ Màn/luồng CÓ DUYỆT → PHẢI đưa vào "Trung tâm phê duyệt"
+
+Port từ ERP sang HRM hoặc làm tính năng mới mà có bước **Duyệt / Từ chối / Không duyệt / Xác nhận / Tiếp nhận** do người khác người lập bấm (kể cả "nửa luồng" chỉ có nút Không duyệt) thì **phải đăng ký thêm 1 loại phiếu** vào phân hệ Trung tâm phê duyệt (`/approval-center/inbox`). Việc ERP ghi thẳng DB không cần quan tâm — chỉ tính code chạy trên HRM.
+
+- Cách làm: `hrm-api/Modules/ApprovalCenter/` — đọc `.plans/phieu-cho-duyet-tap-trung-erp-hrm/BRIEF-dinh-nghia-loai-phieu.md` + `BRIEF-bo-sung-phu-het-man-duyet.md`; mẫu `Definitions/Timesheet/AttendanceDefinition.php`.
+- Gồm: lớp `*Definition` (cấp duyệt, người duyệt đúng như code gốc, `truth()` gọi đúng hàm kiểm quyền của nút Duyệt), gắn trait `SyncsApprovalInbox` vào model, `seedTest`, test đối soát + kiểm thử đột biến, `php artisan approval-inbox:verify <doc_type>` phải 0 chênh lệch.
+- Muốn bỏ một luồng khỏi Trung tâm phê duyệt phải có bằng chứng `file:dòng` (hàng đợi thuần không có nút duyệt / người lập tự duyệt / không có trạng thái duyệt).
+- Khi port: **đọc thật kỹ để không sót luồng duyệt nào** (route FE `*approve*`/`*waiting*`, menu "Phê duyệt", route BE `approve|deny|reject|confirm|receive|cancel`).
+
 ## Khi phát hiện project đang có nhiều kiểu khác nhau
 
 **Nêu ra cho user chọn kiểu chuẩn. KHÔNG tự chọn rồi làm tiếp, cũng KHÔNG tự sửa đại trà các màn cũ.**

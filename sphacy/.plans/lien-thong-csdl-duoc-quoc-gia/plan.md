@@ -485,3 +485,17 @@ Từ ca DIOSRIN, Cường chỉ ra hai điểm — tra code thì **đúng cả h
 - [x] Đã test trang 1 trên cổng test (gõ giữ nguyên); cơ sở 945 chỉ 2 dòng quy đổi nên
   không ép được trang 2 — dựa vào cơ chế antd để chốt.
 - [x] Deploy prod 12/11: build GPP+GDP (chunk vá 1.89a6f88d), đẩy cả 2 webstatic 41.13/41.135 × 2 thư mục (gpp + gdp). Xác minh index.html prod trỏ đúng hash 89a6f88d, chunk tải 200 qua LB. Bản cũ lưu `build_truoc_oquydoi_20261112` (đường lùi). Commit main `06cb861`, cherry-pick dqg `2781adf`.
+
+## Kiểm tra phản hồi tester Kiệt 16/11 — VD-12811-10 "Chai vs Hộp"
+- [x] Kiệt báo: SĐK VD-12811-10 (QT Nguyên Hồng, cơ sở 519, user gppnguyenhongbd), phần mềm
+  đơn vị **Chai**, popup CSDL Dược ghi "Hộp 1 lọ x 10 ml", tìm trong bảng quy đổi ra rỗng —
+  nghi lỗi. Tra prod (thuốc id 352726): đơn vị cơ bản = Chai (tồn 150) + Lốc (=10 Chai);
+  csdlduoc_drugs VD-12811-10 `packagings` = đúng **1 đơn vị "Lọ" (U21)**; chưa khai hệ số.
+- [x] **Kết luận: KHÔNG lỗi.** (1) "Hộp 1 lọ" là dòng *mô tả quy cách*, không phải đơn vị
+  liên thông — đơn vị Bộ nhận là **Lọ**. (2) `canonicalUnitName` quy Chai≡Lọ (cùng bậc) nên
+  đẩy 1 Chai → 1 Lọ, 1 Lốc → 10 Lọ, đúng số. (3) Bảng quy đổi để trống là ĐÚNG: chỉ liệt kê
+  khi đơn vị cơ bản không khớp quy cách Bộ, Chai đã khớp Lọ nên không cần khai. (4) Ô tìm bảng
+  quy đổi chỉ tra `d.name`/`d.drug_code`, KHÔNG tra `registry_number` → gõ SĐK ra rỗng, gây
+  hiểu nhầm "mất thuốc" (CsdlDuocController@unitConvList dòng 627-631).
+- [ ] (tuỳ chọn, chờ ý anh) Thêm `registry_number` vào điều kiện keyword của unitConvList để
+  tra được theo số đăng ký — tránh tester tưởng thuốc biến mất.
