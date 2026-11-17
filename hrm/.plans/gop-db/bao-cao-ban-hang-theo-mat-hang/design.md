@@ -14,7 +14,7 @@ Báo cáo chỉ đọc: mỗi mặt hàng 1 dòng — SL bán / trả lại / th
 |---|---|
 | Nguồn hợp đồng | **Cộng thêm HĐ HRM** (`hrm_contracts`, YCXH/phiếu xuất loại 21, bán mượn + nhập trả gắn HĐ HRM) vào các nguồn cũ ERP (HĐ hãng 14/15, BH-SC 17) |
 | Cột | Bỏ "Thời gian bảo hành (tháng)" + "ĐM đàm phán giá" |
-| Quyền | Giữ y ERP: mã `accounting.bao_cao_ban_hang_theo_mat_hang.view` 4 mức, thêm platform `hrm`; ai cũng vào, không quyền = phiếu mình tạo |
+| Quyền | Mã `accounting.bao_cao_ban_hang_theo_mat_hang.view` 4 mức, thêm platform `hrm`. 13/11 chốt ai cũng vào (y ERP); **17/11 (#12214) đổi: không có mã thì chặn** (menu `codes` + route checkPermission), mức phạm vi quyết định dữ liệu |
 | Popup chi tiết | Thêm cột NVKD (người tạo HĐ), lọc (tìm nhanh Số HĐ/KH + Khách hàng + NVKD, ngày kế thừa màn ngoài), In, Xuất Excel |
 | Giao diện | Khuôn report-styles bảng phẳng (bám `warehouse/self-inventory-report`) |
 

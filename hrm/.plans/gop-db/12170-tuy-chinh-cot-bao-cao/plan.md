@@ -12,6 +12,13 @@
 - [x] BC theo dõi chi tiết lắp đặt - bàn giao - SC - BD (`customer-care/report/install-delivery-repair-detail`) — key `cc_report_install_delivery_repair_detail`, 1 cấu hình chung 3 tab
 - [x] Kiểm: compile template + babel parse 16 file OK (chưa mở trình duyệt)
 
+## Phản hồi QA 17/11 — "Chuyển nút ra ngoài cùng"
+Ảnh QA chụp màn BC bốc xếp (transport, #12169 — Tri Lee) mũi tên chỉ nút cột sang trái, trước "In báo cáo".
+- [x] Chuyển nút "Cấu hình cột hiển thị" lên ĐẦU nhóm `#header-actions` (trước In / Xuất Excel) ở 8 màn
+- [x] Kiểm compile template 8 file — OK (chưa mở trình duyệt)
+- [x] User yêu cầu sửa cả: chuyển nút lên đầu ở 3 màn transport (`ArrangeReportPage`, `TransportReportPage`,
+  `DriverCostReportPage` — #12169 Tri Lee) + `finance/import-direct-stocks` — compile OK
+
 ### Checkpoint — 16/11/2026
 Vừa hoàn thành: nút Tuỳ chỉnh cột cho 8 màn báo cáo rsum-tb (3 màn hạn mức công nợ đã có sẵn); 16 file hrm-client, biên dịch OK
 Đang làm dở: —

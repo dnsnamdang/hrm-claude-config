@@ -96,3 +96,68 @@ Blocked:
       V2BasePagination → ~25 popup khác không đổi; slot truyền `onPageChange` / `onPageSizeChange` của vỏ để giữ cuộn-về-đầu). Popup dùng
       `SaleByProductPagination`. Tiêu đề popup chỉ còn TÊN hàng (bỏ mã). Parse OK, không test Playwright.
 - [x] T20 Khối tổng hợp: dòng phụ thẻ 'SL bán thực tế' tràn khỏi thẻ khi số lớn → cho xuống dòng (flex-wrap), không nowrap
+
+## Phase 4 — Redmine #12175 (tester 16/11/2026)
+- [x] T21 Bug 1 + 4: ~~đổi sang V2BasePagination~~ → user bác 17/11: GIỮ NGUYÊN `SaleByProductPagination` (bảng chính + popup), chỉ tăng cỡ số trong ô "Số dòng/trang" lên 13px (class `sbp-page-size`; áp luôn cho `warranty-repair-by-customer-report` vì dùng chung component)
+- [x] T22 Bug 2: ô tìm trong popup chi tiết có nút × xoá nhanh (2 ô chọn đã có × sẵn)
+- [x] T23 Bug 3: bỏ chữ "Chi tiết phát sinh của" ở tiêu đề popup (chỉ còn tên hàng)
+- [x] T24 Ảnh phụ: bỏ cột NVKD ở popup (ERP không có) — kèm ô lọc NVKD; bỏ cột NVKD khỏi In / Excel popup (BE `DETAIL_COLUMNS`)
+- Verify: parse template + babel OK (2 file FE), `php -l` OK. Chưa mở trình duyệt (user tự kiểm).
+- `SaleByProductPagination.vue` GIỮ LẠI — `warranty-repair-by-customer-report` (WrcTable, WrcVisitModal) còn import.
+- BE vẫn nhận `p_sale_employee_id` + trả `sale_employees` (không ai gửi/đọc nữa, vô hại) — để nguyên.
+
+## Phase 5 — Redmine #12176 (tester 16/11/2026)
+- [x] T25 Cột "Chênh lệch" = 0 đang để trống (ERP hiện `0`) → hiện `0`. Nguyên nhân: hàm định dạng tiền `m()` (FE) / `num()` (BE) coi 0 là ô trống. Sửa riêng cột Chênh lệch, các cột tiền/SL khác GIỮ trống như cũ (ERP vẫn in "-" ở SL trả lại):
+  - FE: thêm hàm `d()` ở `SaleByProductDetailModal.vue` (popup) + `SaleByProductTable.vue` (bảng chính, gồm dòng Tổng cộng — ERP bảng chính cũng hiện 0)
+  - BE `SaleByProductReportPrintService`: cột `diff` đổi kiểu `money` → `diff` (làm tròn như tiền, 0 vẫn in "0") → In + Excel cả bảng chính lẫn popup; chặn "-0" của PHP 7.4
+- Verify: parse template + babel OK (2 file FE), `php -l` OK. Chưa mở trình duyệt (user tự kiểm).
+
+## Phase 6 — Redmine #12178 (tester 16/11/2026, bảng chính)
+- [x] T26 Ý 1: cột Chênh lệch bảng chính = 0 để trống → đã xử lý chung ở T25 (`d()` trong `SaleByProductTable.vue`, cả dòng Tổng cộng)
+- [x] T27 Ý 2: icon ⓘ cạnh "Từ ngày … đến ngày …" lệch xuống. Đo trên dev-hrm (headless, chỉ đọc): hộp icon đã căn giữa dòng, nhưng chữ hoa/số của tiêu đề nằm px 5–14 (tâm 9.5) còn vòng icon px 6–17 (tâm 11.5) → `.rsum-goal > .rsum-tip { transform: translateY(-2px) }` trong `SaleByProductSummary.vue`; tiêm thử CSS trên dev → icon px 4–15, trùng tâm chữ
+- Verify: parse template OK. Chưa xem bằng mắt trên trình duyệt (user tự kiểm).
+
+### Checkpoint — 2026-11-17
+Vừa hoàn thành: #12175 (T21–T24), #12176 (T25), #12178 (T26–T27)
+Đang làm dở: — (CHƯA commit: hrm-client `SaleByProductDetailModal.vue`, `SaleByProductPagination.vue`, `SaleByProductTable.vue`, `SaleByProductSummary.vue`; hrm-api `SaleByProductReportPrintService.php`)
+Bước tiếp theo: user mở màn kiểm → commit (KHÔNG lẫn file self-inventory-report đang sửa dở của phiên khác)
+Blocked:
+
+## Phase 7 — Redmine #12182 (tester 16/11/2026)
+- [x] T28 Bug 1: ô Kỳ thiếu nút × xoá nhanh (các ô chọn khác đã có sẵn) → bỏ `allowClear: false`; bấm × thì watcher đưa Kỳ về mặc
+      định "Tháng này" (BE thiếu `period` cũng tính tháng này — để ô trống là lệch số). Bộ lọc lưu cũ có Kỳ rỗng cũng về Tháng này.
+- [x] T29 Bug 2 (user chốt 17/11: "chi tiết phát sinh mọi hàng, có dòng trả lại"): 5 số ở khối tổng hợp (≠ 0) bấm được (gạch chân
+      nét đứt, khuôn DrillNum) → popup mới `components/SaleByProductAllItemsModal.vue`: từng dòng xuất bán / bán mượn / NHẬP TRẢ của
+      mọi mặt hàng theo bộ lọc báo cáo; cột Ngày · Mã hàng (+ nhãn "Trả lại") · Tên hàng · Số HĐ · KH · ĐVT · SL bán / trả / thực tế ·
+      đơn giá + thành tiền bán / net · Chênh lệch; dải TỔNG trên bảng; tìm (mã / tên hàng, số HĐ, KH) + lọc KH; In + Xuất Excel.
+  - BE `SaleByProductReportService::allItems()` + route `all-items`, `all-items/print-list-data`, `all-items/export`;
+    `branchReturn(..., $detail)`; select chi tiết của 2 nhánh kia thêm `product_id`, `line_type`, `returned_qty` (itemList cũ không đổi).
+  - Dòng trả lại định giá ÂM theo đơn giá bình quân bán / net của hàng trong kỳ → tổng popup KHỚP thẻ (đo local T6/2026: 6.149 dòng,
+    SL / tiền bán / net / chênh lệch khớp tới đồng; T1–T7 lọc HT bán: 33.610 dòng khớp).
+  - Lọc / sắp / phân trang ở BE (1 tháng ~5–6 nghìn dòng). Danh mục KH chỉ dựng khi `with_options=1` (lần mở). Tốc độ local: mở
+    popup T6 ~7,8s, đổi trang / lọc ~1,5–2,5s.
+  - In / Excel: `SaleByProductReportPrintService::ALL_COLUMNS` + `allItemsPrintHtml()` / `allItemsExcelData()`.
+- [x] T30 Bug 3: bảng chính 2.140px → ~1.550px (thu hẹp cột, padding 8px); Mã / Tên hàng / Thương hiệu / Hãng SX / ĐVT xuống dòng
+      (bỏ cắt "…"), tiêu đề cột xuống dòng. Bản in / Excel không đổi.
+- Verify: `php -l` 3 file BE OK; smoke HTTP kernel 5 endpoint 200 (all-items, lọc q, print-list-data, export, item-list cũ); parse
+  template + babel 6 file FE OK. CHƯA mở trình duyệt (user tự kiểm).
+
+### Checkpoint — 2026-11-17
+Vừa hoàn thành: #12182 (T28–T30)
+Đang làm dở: — (CHƯA commit. hrm-api: `SaleByProductReportService.php`, `SaleByProductReportPrintService.php`,
+`SaleByProductReportController.php`, `Routes/api.php`; hrm-client: `index.vue`, `SaleByProductSummary.vue`, `SaleByProductTable.vue`,
+`SaleByProductAllItemsModal.vue` (mới) — cộng các file Phase 4–6 chưa commit)
+Bước tiếp theo: user mở màn kiểm (bấm × ô Kỳ, bấm số thẻ tổng hợp, bảng chính không cuộn ngang) → commit
+Blocked:
+
+### 2026-11-17 — #12200 Đổi nút "Xóa lọc" → "Làm mới"
+- [x] Bỏ `reset-button-text="Xóa lọc"` ở `pages/sale/sale-by-product-report/index.vue` → dùng mặc định `V2BaseSmartFilterPanel` ("Tìm kiếm" / "Làm mới"), hành vi giữ nguyên
+- Kiểm: compile template OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-17 — #12214 QA: không có quyền vẫn vào xem được màn
+- [x] User chốt 17/11 đổi quyết định 13/11 ("ai cũng vào y ERP") → CHẶN khi không có mã `accounting.bao_cao_ban_hang_theo_mat_hang.view` (ERP `ReportController@summarySale` không chặn — lệch ERP có chủ đích)
+- [x] BE: group route `/finance/sale-by-product-report` gắn `checkPermission:accounting.bao_cao_ban_hang_theo_mat_hang.view` (mọi endpoint: màn, filter-options, in, Excel, popup) — `Modules/Finance/Routes/api.php`
+- [x] FE: menu `sale-hub.js` khai `codes` → ẩn menu + middleware `checkPermission` đẩy link trực tiếp về 404
+- [x] Sửa ghi chú cũ "ai cũng vào" ở Catalog / Controller / Service / page index.vue. Mức phạm vi 4 mức giữ nguyên; nhánh `own` của `scopeLevel()` nay không còn tới được (giữ, vô hại)
+- Kiểm: `php -l` 4 file; HTTP kernel: user 13 (vai trò test 100224 có mã) 200 ở index / filter-options / export; user 658 (không vai trò) 403 cả 3. Chưa mở trình duyệt. CHƯA commit.
+- Lưu ý deploy: trên dev vai trò Super admin (DNS DÙNG) đang "Không xem" mã này (ảnh QA) → sau deploy ai cần xem phải được cấp mã ở `/admin/roles`

@@ -124,3 +124,35 @@ trên DB stag, tổng 25 kịch bản đều đúng, DB đã dọn sạch.
 Đang làm dở: (không)
 Bước tiếp theo: Phase 2 — test UI thật trên màn `plan/quotation/_id/edit` với tài khoản người lập.
 Blocked:
+
+## Bug báo 17/11/2026 — BG-627, BG-747: đổi Kết quả sang "Từ chối thực hiện" không về Chờ duyệt
+
+**Hiện tượng:** báo giá đã được TP duyệt lần 1 → người lập sửa tab Tiến độ thực hiện, Kết quả =
+"Từ chối thực hiện" (`result = 2`) → **Lưu và gửi** → vẫn `3 Đã duyệt`, TP không nhận thông báo.
+
+**Nguyên nhân (do chính thay đổi 25/09 ở trên):** `result` nằm trong `APPROVAL_INSENSITIVE_FIELDS`
+→ dấu vân tay không đổi → `update()` ép `status = DA_DUYET` + merge request → `sendNotificationQuotation()`
+bỏ qua nhánh `CHO_DUYET`. Làm gãy luồng hủy báo giá cũ:
+1. `result = 2` + Lưu và gửi → `2 Chờ duyệt` → TP nhận "Báo giá ... không được chấp nhận thực hiện"
+2. TP duyệt (`approve()` dòng ~638) → `result == 2` → `status = HUY`, dự án → `BAO_GIA_DA_BI_HUY`
+
+Local DB `thanhan_stag_07052026` không có BG-627/BG-747 (max BG-99) → chưa đối chiếu được dữ liệu thật.
+
+**Hướng sửa đề xuất (chờ user chốt):** trong `update()`, nếu `result` chuyển sang `2` (trước khác 2)
+thì KHÔNG giữ Đã duyệt → đi theo nút bấm như cũ.
+
+- [x] User chốt (17/11): **mọi thay đổi ô Kết quả** (`result`) đều phải duyệt lại → bỏ `result` khỏi `APPROVAL_INSENSITIVE_FIELDS`, trạng thái đi theo nút bấm (Lưu → 1, Lưu và gửi → 2). `reason` + bảng tiến độ + tab Thư mời vẫn giữ Đã duyệt
+- [x] Bỏ `result` khỏi `APPROVAL_INSENSITIVE_FIELDS` + sửa comment `update()` + `php -l`
+- [x] Verify (tinker, transaction + rollBack, BG-335): đổi result→2 + Lưu và gửi → `2`, noti+1 · + Lưu → `1` · result→trống + Lưu và gửi → `2`
+- [ ] Test UI: TP duyệt báo giá result=2 → `HUY` + dự án hủy (`approve()` không đổi)
+- [x] Regression: không sửa gì / chỉ sửa Lý do + Lưu và gửi → vẫn `3`, noti+0
+- [x] Verify thêm: đã duyệt + result 2→1 + Lưu và gửi → `2` noti+1 · + Lưu → `1` · giữ result=2 không sửa gì + Lưu và gửi → vẫn `3`
+- [ ] Gỡ BG-627, BG-747 trên production — ⚠️ KHÔNG gỡ được bằng "bấm Lưu và gửi lại": DB đã lưu result=2 nên signature không đổi → vẫn `3`. Chờ user chọn: SQL chuyển `status=2` (không có thông báo) hoặc người lập đổi Kết quả 2→1 rồi lưu lại 1→2
+- [ ] (Ghi nhận, chưa sửa) `approve()`: TP duyệt báo giá result=2 → set HUY ở dòng ~640 nhưng khối dưới (project_type 4/5/6 hoặc giá ngoài khoảng) ghi đè thành `CHO_BGĐ_DUYET` → BGĐ duyệt xong ra `DA_DUYET` thay vì HUY
+
+### Checkpoint — 17/11/2026
+Vừa hoàn thành: bỏ `result` khỏi `APPROVAL_INSENSITIVE_FIELDS` (`QuotationService.php`), verify 5 kịch bản trên stag, DB đã rollBack (BG-335 vẫn status=3 result=1).
+Đang làm dở: (không)
+Đã push: commit `f7b552e9` lên `master` hrm-thanhan-api (17/11/2026).
+Bước tiếp theo: test UI luồng TP duyệt → HUY; user chốt cách gỡ BG-627, BG-747 (không gỡ được bằng bấm Lưu và gửi lại).
+Blocked:

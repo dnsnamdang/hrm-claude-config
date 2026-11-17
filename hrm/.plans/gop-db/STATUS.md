@@ -19,6 +19,11 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## #12180 Báo cáo tồn hàng nhập xuất thẳng theo nhân viên — đổi sang khuôn báo cáo (rsum) + khối thống kê + popup chi tiết — ĐANG LÀM (2026-11-17, @khoipv)
+- Chốt 17/11: thống kê chỉ ĐẾM (Phòng ban · Nhân viên · Mặt hàng + khối theo phòng ban); bấm SL tồn → popup DS hàng đang giữ; SL tồn ngay sau Tên hàng.
+- Plan: `.plans/gop-db/danh-sach-hang-xuat-nhap-thang/plan.md` (Phase 6)
+- **Checkpoint 17/11:** code BE + FE xong, smoke API khớp số, chưa test trình duyệt, chưa commit.
+
 ## Đồng bộ sidebar 4 phân hệ cũ (Nhân sự, Chấm công, Cơm, Tính lương) về chuẩn hub — ĐANG LÀM (2026-11-16, @khoipv)
 - Chỉ đổi khung menu topbar → sidebar hub, giữ nguyên mục menu.
 - **Checkpoint 16/11 (wrap up):** CODE XONG + ĐÃ PUSH develop hrm-client `e876d0237` — sidebar hub 4 phân hệ (layout 'subsystem' 212 page), tên màn trên topbar + bỏ cụm tiêu đề/breadcrumb 201 page, fix `mixins` khai 2 lần ở 2 báo cáo Cơm. Verify parse 201+ file; chưa test trình duyệt.

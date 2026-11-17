@@ -81,3 +81,26 @@ Blocked:
       hiện tồn > 0 (ERP `having qty > 0`, HRM giống). Dev: NV 209 và 87 đều 0 dòng, mã XM-XM-DDBUONGDOT 0 dòng → không phải lỗi báo cáo.
 - [ ] T25. Lỗ hổng phát hiện thêm (CHƯA sửa, chờ user): HRM `Assign\ProductExportService` tạo PXH xuất thẳng KHÔNG trừ
       `product_import_direct_details` như ERP (:1256-1310) → tồn nhập thẳng trên báo cáo bị thừa sau khi xuất thẳng ở HRM.
+
+## Phase 6 — Redmine #12180 (17/11/2026, @khoipv): đổi sang khuôn báo cáo + thống kê + popup chi tiết
+Chốt với user 17/11: khối thống kê chỉ ĐẾM (Phòng ban · Nhân viên đang giữ hàng · Mặt hàng còn tồn + khối "Theo phòng ban":
+mỗi phòng = số NV đang giữ hàng) — không cộng SL vì mỗi hàng 1 ĐVT. Bấm SL tồn → popup DS hàng đang giữ (phẳng). Mẫu: màn
+`warehouse/stock-location-product` (tester dẫn link).
+- [x] T26. BE `ImportDirectStockReportService`: `paginate()` trả thêm `summary` {departments, employees, products, qty, by_department} + `generated_at`; hàm `itemList()` (metric departments | employees | products | items, phạm vi `d_department_id` (0 = chưa gán) / `d_employee_id` / `d_product_id`) + route `GET item-list`
+- [x] T27. FE tách component theo khuôn rsum: `ImportDirectSummary.vue` (khối thống kê, số bấm được), `ImportDirectTable.vue` (bảng cây `rsum-tb` Phòng ban ▸ Nhân viên ▸ Hàng, dòng TỔNG, ô chọn cấp, SL tồn ngay sau Tên hàng, SL tồn bấm được), `ImportDirectDrillModal.vue` (`V2BaseReportModal` 4 bộ cột)
+- [x] T28. FE `index.vue`: nút In / Xuất Excel / Cấu hình cột lên `#header-actions` bộ lọc, `reset-button-text="Xóa lọc"`, khung `pct-body` mờ khi tải lại, `reportSeq`/`drillSeq`; đổi khoá cấu hình cột (cấu hình cũ giữ thứ tự cột cũ → SL tồn không lên được)
+- [x] T29. In + Excel: SL tồn cũng ngay sau Tên hàng cho khớp màn
+- [x] T30. Verify: smoke API (summary khớp tree, item-list từng metric khớp số), parse template FE
+- Kết quả verify T30 (local, NV 13 Super admin): summary 11 phòng / 17 NV / 84 mặt hàng / SL 566.5; item-list departments 11 dòng,
+  employees 17, products 84, items 85 — cả 4 tổng SL 566.5; lọc theo phòng / NV / hàng khớp SL dòng bảng; keyword vẫn áp vào popup.
+  Bản in 7 cột mọi dòng, thứ tự STT · Tên hàng · SL tồn · Model · Mã hàng · Thương hiệu · ĐVT. Parse template 4 file FE + babel OK.
+  CHƯA mở trình duyệt (user tự kiểm). Popup chỉ có nút Đóng (như popup mẫu Tồn kho theo vị trí) — không In / Excel danh sách popup.
+- File: hrm-api `ImportDirectStockReportService.php`, `ImportDirectStockController.php`, `Routes/api.php`,
+  `prints/import-direct-stock-list.blade.php`; hrm-client `pages/finance/import-direct-stocks/index.vue`, `components/export-excel.js`,
+  MỚI `components/ImportDirectSummary.vue`, `ImportDirectTable.vue`, `ImportDirectDrillModal.vue`.
+
+### Checkpoint — 2026-11-17
+Vừa hoàn thành: #12180 (T26–T30)
+Đang làm dở: — (CHƯA commit)
+Bước tiếp theo: user mở trình duyệt kiểm màn /finance/import-direct-stocks → commit (chỉ các file trên).
+Blocked:

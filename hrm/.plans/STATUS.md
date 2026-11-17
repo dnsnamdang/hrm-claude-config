@@ -19,6 +19,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 - mytodo-nhac-han → @cuong61n → .plans/mytodo-nhac-han/plan.md
   Trạng thái: **CODE XONG + KIỂM LOCAL (29/10/2026)**, chưa commit — nhắc hạn theo cấu hình từng loại việc, quá hạn 1 lần, bản tin 07:30 + tổng quá hạn thứ Hai, màn Cấu hình nhắc hạn công việc (quyền mới), sửa hạn tab danh sách + phiếu giao công tác không hiện, báo người được giao lúc duyệt phiếu.
 
+- chat-drawer-topbar-dropdown → @khoipv → .plans/chat-drawer-topbar-dropdown/plan.md (spec: docs/superpowers/specs/2026-11-17-chat-drawer-topbar-dropdown-design.md)
+  Trạng thái: **ĐÃ PUSH develop (17/11/2026)** — client 1515bed38 (merge 52c21c707) — mở ngăn chat thì dropdown topbar bị ngăn che; nâng `.navbar-custom` z-index 1039 khi `body.chat-drawer-open` (ChatDrawer.vue).
+
 ## Hoàn thành
 
 - bao-cao-thuong-nang-suat-thang → @nguyentrancu97 → .plans/bao-cao-thuong-nang-suat-thang/plan.md

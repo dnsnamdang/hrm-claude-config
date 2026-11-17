@@ -94,3 +94,24 @@ Blocked: DB local không có Kế hoạch tổng kiểm kê → popup chọn k�
 ### Checkpoint — 10/11/2026 (push)
 Vừa hoàn thành: #12095 ĐÃ PUSH `develop` (hrm-api `1f74d44df`, hrm-client `2585cec12`; cùng lượt push kèm commit Biên bản giao nhận hàng hoá theo yêu cầu user).
 Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
+
+## Fix #12095 phản hồi 13/11 — thêm link mở popup ở bảng chi tiết (17/11/2026)
+
+Tester (ảnh 13/11) khoanh ô "Tổng số mặt hàng" + số SL thừa / SL thiếu ở dòng công ty: "cho t thêm link mở popup chi tiết ở bảng chi tiết nữa".
+
+- [x] BE: `item-list` nhận thêm `metric=all` (mọi dòng chênh lệch) cho thẻ Tổng số mặt hàng
+- [x] FE: thẻ "Tổng số mặt hàng" bấm được → popup danh sách mặt hàng chênh lệch (cột SL thừa + SL thiếu)
+- [x] FE: bảng cây — số SL thừa / SL thiếu ở dòng TỔNG, dòng Công ty (d0), dòng Kho (d1) bấm được (khuôn DrillNum, 0 không bấm)
+- [x] FE: popup mở từ dòng Công ty / Kho tự đặt sẵn ô lọc Công ty thuê kho / Kho (user bỏ lọc được)
+- [x] Verify: HTTP kernel BE + compile FE
+
+Ghi chú thực hiện:
+- Popup "Tổng số mặt hàng" liệt kê theo DÒNG chênh lệch (1 mặt hàng có thể nhiều dòng ở nhiều phiếu / kho), có cả 2 cột SL thừa + SL thiếu.
+- Lọc đặt sẵn áp khi dữ liệu về (select2 cần option trước). Kho luôn đi kèm công ty cha vì 1 kho có thể nằm dưới nhiều công ty thuê.
+- Dòng hàng (d2) không bấm — popup chỉ ra lại đúng dòng đó.
+
+### Checkpoint — 17/11/2026
+Vừa hoàn thành: phản hồi #12095 (13/11). BE `item-list` thêm `metric=all`; HTTP kernel: surplus 200/1 dòng, shortage 200/3, all 200/4 (= 1 + 3), metric lạ 422. FE 4 file compile sạch (Summary, Table, ItemListModal, index).
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt bấm thử (thẻ Tổng số mặt hàng, số ở dòng TỔNG / Công ty / Kho → popup đặt sẵn lọc) → commit.
+Blocked:

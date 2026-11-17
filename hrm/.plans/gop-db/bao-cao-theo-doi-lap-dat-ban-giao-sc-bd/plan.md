@@ -80,3 +80,49 @@ Blocked: API local chậm ~3s/request (máy thiếu RAM) — test chạy lâu, k
 - [x] P2-T17. Phân trang THEO THIẾT BỊ tab SC-BD / Bảo hành (user chọn 16/11): BE `service()` cắt trang thiết bị (STT gốc, 1 thiết bị đi trọn), In/Excel `$all`; FE gửi page/per_page cả 3 tab. FIX bắt từ e2e D16: HĐ không khớp lọc -> BE trả per_page = 1 -> FE kẹt 1 dòng/trang; sửa BE giữ per_page + FE chỉ nhận cỡ trang 5/10/20/50/100. Test mới D18b.
 - [x] P2-T18. Push develop 16/11 (user yêu cầu): hrm-api `ce7fb5ce1`, hrm-client `9ef6d6e3f` (gồm P2-T13/T15/T17). Rebase qua 35 / 24 commit mới của remote, không đụng file.
 - [ ] P2-T19. Chạy lại bộ e2e chuyên sâu sau fix per_page: chưa được — Nuxt dev (:3000) không trả lời từ sau khi pull 24 commit mới về hrm-client (16/11), API vẫn sống. Chờ user khởi động lại Nuxt rồi chạy `npx playwright test tests/customer-care/install-delivery-repair-detail-deep.spec.ts`.
+
+### 2026-11-17 — #12186 QA (Huyền Trang) màn `/customer-care/report/install-delivery-repair`
+- [x] P3-T1. Khối tổng hợp: 2 khối Chứng từ nguồn / Tiến độ xử lý chia đều 50/50 (bỏ khối nguồn rộng theo nội dung)
+- [x] P3-T2. Ô chọn cấp ở tiêu đề cột "Chứng từ nguồn / Phiếu yêu cầu": chữ 12px (khuôn #11929 transport), đủ rộng đọc hết "Đến phiếu giao việc" — nới cột 320 → 370px
+- [x] P3-T3. Ô "Số dòng/trang" (bảng chính + popup): chữ 12px khớp nhãn (đang 10.24px của form-control-sm), mặc định vẫn 10. Áp cả `components/report/ReportListPagination.vue` (chỉ màn chi tiết cùng báo cáo dùng)
+- Kiểm: compile template + babel 4 file OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-17 — #12187 QA (Huyền Trang) popup bấm số
+- [x] P3-T4. Bỏ chữ "Bạn đang xem:" ở tiêu đề popup (bỏ prop `lead`) — `ItemListModal.vue` + áp luôn `install-delivery-repair-detail/components/DetailDrillModal.vue`
+- [x] P3-T5. Ô tìm của popup thêm nút × xoá nhanh (khuôn PlanPickerModal: button tuyệt đối + `ri-close-line`, xoá xong về trang 1) — 2 popup trên
+- Kiểm: compile template + babel 2 file OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-17 — #12190 QA (Huyền Trang) đối chiếu ERP
+- [x] Ý 2 (lọc Thời gian công tác — QA kết luận ERP sai): ĐÚNG. ERP gửi `to_date=YYYY-MM-DD`, `ReportInstallDeliveryRepairService::filter()` so `assign_business_work_end_time <= '2026-11-07'` = 07/11 00:00 → loại mọi CT kết thúc trong ngày cuối. Sửa ERP (repo `D:\laragon\www\erp`, nhánh gop_db): ghép ` 23:59:59`. HRM đã đúng (`<= $to 23:59:59`), không sửa
+- [x] Ý 1 (thiếu ô Hợp đồng + Trạng thái), ý 3 (thiếu cột Số phiếu yêu cầu), ý 4 (thiếu cột Phiếu duyệt KQ): NGƯỢC quyết định đã chốt → user chốt 17/11 GIỮ NGUYÊN cả 4, không sửa code, trả lời QA (ô tìm nhanh = ô Hợp đồng; phiếu YC ở dòng con cột cây; bỏ Trạng thái 14/11; bỏ Phiếu duyệt KQ 16/11)
+- Kiểm: `php -l` file ERP OK; chưa chạy thử màn ERP. CHƯA commit (cả repo erp).
+- [x] Đã đăng ghi chú trả lời QA lên Redmine #12190 (journal change-44022, 17/11); không đổi trạng thái (đang "Đang tiến hành")
+
+### 2026-11-17 — #12194 QA (Huyền Trang) màn CHI TIẾT `/customer-care/report/install-delivery-repair-detail`
+- [x] P3-T6. Ô chọn cấp ở tiêu đề cột: thêm × xoá nhanh (bấm × = về "Chỉ hợp đồng"/"Chỉ chứng từ nguồn", cấp 1) + chữ 12px — `DetailTreeTable.vue`; áp luôn `install-delivery-repair/components/ReportTable.vue` cho đồng bộ
+- [x] P3-T7. Ô "Số dòng/trang" to lên — đã xong ở #12186 (`components/report/ReportListPagination.vue` 12px / cao 30px)
+- [x] P3-T8. ⓘ tooltip cạnh tiêu đề trang trên topbar (`pageTitleInfo`, khuôn transport #11877) — 2 màn index
+- Kiểm: compile template + babel 4 file OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-17 — #12196 QA (Huyền Trang) màn CHI TIẾT
+- [x] Ý 1: ô Hàng hóa đổi chip `V2BasePickerField` → `V2BasePickerInput` (kính lúp + × cuối ô, skill select-and-input-state 2d) — `install-delivery-repair-detail/index.vue`. Ô tìm popup đã có × từ #12187
+- [x] Ý 2 (ô Số dòng/trang) + ý 3 (bỏ "Bạn đang xem") — đã xong ở #12186 / #12187 (dùng chung ReportListPagination / DetailDrillModal)
+- [x] Ý 4: Chi tiết đề nghị xuất kho (`finance/warehouse-export-requests/_id/index.vue`) — khoảng trắng dưới "Tổng thành tiền" do `.table-responsive { min-height: 50vh }` global → huỷ trong `.wer-tabs` (khuôn borrow-export-requests)
+- [x] Ý 5: thu cột `DetailTreeTable` 1.784 → 1.484px (cột cây 380, SL theo HĐ 135, 6 cột SL 95, hoàn thành 105, chưa HT 110, còn tạo GV 120), tiêu đề cột số xuống dòng
+- [x] Ý 6: số 0 → để trống y ERP `numberOrHyphen` (mọi cột số), riêng "SL còn được tạo giao việc" giữ 0 (ERP `my_number`). Chỉ màn, In/Excel chưa đổi
+- Kiểm: compile template + babel 3 file OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-17 — #12197 QA (Huyền Trang) màn CHI TIẾT
+- [x] Bug 1 + 2: tab SC-BD / Bảo hành bật ô TÌM NHANH (bỏ `:show-quick-search="isInstall"`) → bộ lọc cùng bố cục tab Lắp đặt (hàng tìm nhanh + nút Tìm kiếm / Xóa lọc ở trên, ô lọc ở dưới). Tìm theo THIẾT BỊ trong HĐ: tên / model / mã hàng / seri — BE `InstallDeliveryRepairDetailReportService::filterDevices()` lọc trước khi phân trang (nhóm rỗng giữ nhãn); FE gửi `keyword` cả 3 tab; dòng điều kiện bản in ghi "Thiết bị: "…"" (PrintService)
+- [x] Bug 3: 2 toast "Bạn không được làm việc tại công ty này" = popup chọn hàng nhận `company-id` = Công ty đang LỌC → `ProductPickerRequest` 403 ở cả search + tree-counts (interceptor toast mỗi cái 1 lần). Bỏ truyền `company-id` (hàng hóa dùng chung, popup tự dùng công ty đang làm việc). Chưa đụng interceptor chung `plugins/axios.js` (gộp toast trùng = hàm chung, cần hỏi)
+- [x] Bug 4: × xoá nhanh — đã làm ở #12194 (ô chọn cấp) + #12196 (ô Hàng hóa `V2BasePickerInput`); Công ty / Phòng ban / Hợp đồng / ô tìm nhanh vốn có ×. Ảnh QA chụp trên dev chưa có bản này
+- Kiểm: `php -l` 2 file; tinker gọi `service()` 2 tab với keyword (tên đầy đủ / chữ hoa / không khớp → 0) OK; compile template + babel index.vue OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-17 — #12199 QA (Huyền Trang) màn CHI TIẾT — STT + số 0
+- [x] Ý 1 "1.2 đâu": ERP đánh cứng "x.1 Công tháo lắp / x.2 Danh sách dịch vụ / x.3 Danh sách vật tư", nhóm dịch vụ ẩn khi thiết bị không có dịch vụ → nhảy 1.1 → 1.3 (ERP cũng vậy). Sửa BE `deviceNodes()`: STT vật tư liền sau nhóm trước (không có dịch vụ → x.2, con x.2.n). In / Excel dùng chung `no` từ BE. Tab Bảo dưỡng (`extendNodes`) vốn đánh liên tục, không đổi
+- [x] Ý 2 "-" → trống, 0 giữ 0: đã làm ở #12196 (đối chiếu lại ERP `detail.blade.php`: mọi cột `numberOrHyphen`, riêng "còn được tạo giao việc" `my_number`). Ảnh QA chụp trên dev chưa có bản đó. Bổ sung: số 0 cột "còn được tạo giao việc" bỏ màu mờ `rsum-tb__zero` (#c2cbd6 gần như không thấy) → màu chữ thường — `DetailTreeTable.vue`
+- Kiểm: `php -l`; tinker HĐ bảo hành local → 1 / 1.1 / 1.2 Danh sách vật tư, can_request = 0; compile template + babel DetailTreeTable OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-17 — #12200 Đổi nút "Xóa lọc" → "Làm mới" (2 màn BC theo dõi LĐ-BG-SC-BD + chi tiết)
+- [x] Bỏ `reset-button-text="Xóa lọc"` ở `install-delivery-repair/index.vue` + `install-delivery-repair-detail/index.vue` → dùng mặc định `V2BaseSmartFilterPanel` ("Tìm kiếm" / "Làm mới"), hành vi giữ nguyên. Làm cùng màn BC bán hàng theo mặt hàng
+- Kiểm: compile template OK; chưa mở trình duyệt. CHƯA commit.

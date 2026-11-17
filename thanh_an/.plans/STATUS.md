@@ -5,6 +5,12 @@
 
 ## Đang làm
 
+- **Danh mục phương tiện — tách Phòng phụ trách (1 phòng) / Phòng sử dụng (nhiều phòng); app lọc xe theo Phòng phụ trách HOẶC Phòng sử dụng** — @khoipv — Bắt đầu 17/11/2026 — Chỉ sửa API + màn web, không sửa app mobile. Playwright 7/7 đạt. Đã push: API `8ac8ddca`, client `4d495c2c` (master). Còn: deploy cả 2 cùng lúc + `php artisan migrate`, test tay web + app.
+  - Plan: [.plans/phuong-tien-phong-su-dung/plan.md](phuong-tien-phong-su-dung/plan.md)
+
+- **Check: NV Trần Văn Chót (NV.00046) làm đơn phép 21/11 bị báo "Ngày nghỉ không được lớn hơn số ngày nghỉ còn lại"** — @khoipv — Bắt đầu 17/11/2026 — Đã ra nguyên nhân: đơn phép 10/10 (T7 chẵn) đã duyệt 1 ngày nhưng bảng công 10/10 bị tính lại 06/11 theo quy định mới (nghỉ T7 chẵn) → phép 0 ⇒ báo cáo còn 1, validate (theo đơn) còn 0. User chọn sửa code: `sumDate()` thêm tham số tùy chọn `$workingDates`, `calcTimesheetEmployee()` bỏ qua check cuối tuần với ngày đã chốt `type_day = 1`. Test local OK. Commit `60931eac` đã push `origin/master`. Sau deploy chạy `php artisan calc:timesheet 2026-10-10` + `2026-10-24`.
+  - Plan: [.plans/check-phep-con-lai-tran-van-chot/plan.md](check-phep-con-lai-tran-van-chot/plan.md)
+
 - **Fix: In HĐLĐ 145 — tên công ty xuống dòng, khối chữ ký không căn giữa** — @khoipv — Bắt đầu 16/11/2026 — Lỗi do nội dung mẫu in (cột cố định 300px + chữ 20px; chữ ký căn bằng dấu cách), không phải code. Đã soạn HTML thay thế, chờ user dán vào mẫu in + HĐ 145 trên demo.
   - Plan: [.plans/fix-in-hdld-can-giua-chu-ky/plan.md](fix-in-hdld-can-giua-chu-ky/plan.md)
 

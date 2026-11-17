@@ -208,3 +208,9 @@ Blocked:
 - [x] Ý 2: bỏ in đậm tên dịch vụ ở bảng "I - Dịch vụ đính kèm" — `WrImportResultRevenueCostTable.vue` (áp cả Tạo / Sửa / Chi tiết, dùng chung bảng)
 - [x] Ý 3: Lưu nháp phiếu duyệt → về danh sách (trước về chi tiết) — `WrImportResultForm.vue` submit duyệt luôn `$router.push(LIST_URL)`; sửa comment `_id/approve.vue`
 - [x] Verify: compile 3 file (vue-template-compiler + babel). Chưa mở trình duyệt
+
+### 2026-11-17 — #12189 QA: Quay lại ở chi tiết PGV / Phiếu nhập KQ không về được danh sách
+Nguyên nhân: chi tiết PGV "Quay lại" = lùi 1 bước lịch sử (#12139), chi tiết Phiếu nhập KQ lại PUSH `from.fullPath` →
+DS → PGV → (link) Phiếu nhập KQ → Quay lại push PGV → Quay lại lùi về Phiếu nhập KQ → push PGV … vòng lặp mãi.
+- [x] `wr-import-results/_id/index.vue`: vào từ trong app → `backUrl = ''` (V2Footer go(-1)) như PGV; vừa lưu ở Sửa/Duyệt hoặc mở thẳng link → vẫn về danh sách
+- [x] Kiểm compile template + babel; chưa mở trình duyệt. CHƯA commit.
