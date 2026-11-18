@@ -129,3 +129,20 @@ Blocked:
       màn xem không hiện)
 - [x] Verify: vue-template-compiler + babel sạch 2 file
 - [ ] Chưa kiểm trên trình duyệt (user tự mở)
+
+## Tài liệu SRS / HDSD / Testcase (18/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter (không đổi từ 09/11); khuôn chép `../phieu-nhap-hang-dieu-chinh-kiem-ke/` (màn đối xứng), tên gọi theo `../phieu-xuat-kho-dieu-chinh-kiem-ke/`
+- [x] Đọc code màn (FE `pages/finance/inventory-exports/**`, row-actions + form Phiếu xuất kho ĐCKK; BE `InventoryExport` Entity / Controller / Service / WriteService, `AccountingStockWriter::export`, `WarehouseInventoryExport::canCreateProductExport`, `SelfInventory::handleCompleted`, Biên bản xử lý thừa thiếu, Thẻ kho, danh mục chặn xóa). Quyền: nhánh develop ĐÃ sang Catalog + mã quyền → ghi `warehouse.phieu_xuat_hang_dieu_chinh_kiem_ke.view` (mức Công ty / Tổng công ty) + `accounting.ke_toan_kho.manage`, không đặc cách Super admin. Kiểm lại 4 hành vi "giữ như ERP" + không bút toán — code vẫn y vậy
+- [x] Chụp ảnh dev-hrm (`pxhdckk_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi): 0 yêu cầu ghi bị chặn / 0 lọt (2 lượt chạy + 1 lượt dò dữ liệu `api.js`). Dữ liệu thật đủ trạng thái (PXHĐCKK-00074 Đang tạo, 00073 Đã hạch toán, PXKĐCKK-00091 Chờ duyệt). Chỉ bấm Lưu ở 2 tình huống FE tự chặn trước khi gửi (chưa chọn phiếu, vượt SL được xuất); hộp Xác nhận lưu và duyệt mở rồi Hủy; không chọn file. Riêng ảnh `10i_approve_required` GIẢ LẬP lỗi 422 máy chủ trên trình duyệt (gán lỗi vào form, không gửi). Đã xóa `.dev_state.json`
+- [x] Đối soát số: local PXHĐCKK-00001 — đơn giá vốn từ log FIFO (350,014−275,011)/3 = 25,001; 39,295.67; (750,000−600,000)/1 = 150,000 khớp phiếu; SL xuất = tổng phân bổ; phiếu xuất kho PXKĐCKK-00016 = 4 Đã hạch toán; 0 bút toán. Dev PXHĐCKK-00073: SL xuất 4 = phân bổ LN01 4, PXKĐCKK-00090 Đã hạch toán
+- [x] `gen_srs.py` → `SRS - Phiếu xuất hàng điều chỉnh kiểm kê.docx`: 12 chức năng, 87 trang, selfcheck khớp bản mẫu; metrics ui 13.2 / ev 4.6 / evch 997 / intro 1913; Phần 5 bảng 4 cột 10 màn
+- [x] `gen_hdsd.py` → `HDSD_Phieu xuat hang dieu chinh kiem ke.docx`: 11 PHẦN, 19 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`, bỏ Xóa / Khóa / Gửi duyệt / Không duyệt / Hủy / Import): 231 TC, 12 nhóm, P0 40,7%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 234 có TC / 90 N/A (Xóa, Khóa, Import, Không duyệt); SRS 123 / 40 N/A
+- [x] Ghi nhận nghi lỗi / điểm lệch (không sửa code): Thành tiền vốn = SL × đơn giá vốn nhưng đơn giá vốn tính theo đơn vị quy đổi (lệch khi hệ số ĐVT ≠ 1); mẫu in 300 còn "Phiếu xuất kho (*)"; màn chi tiết còn dấu * ở Phiếu xuất kho / Nhân viên; dấu * ở Nhân viên / Đơn giá / Kho kế toán / Số lượng / File (màn Sửa) nhưng Lưu nháp không bắt buộc; Lưu và duyệt thiếu ô vẫn hiện hộp xác nhận rồi mới báo lỗi; ô Phiếu xuất kho liệt kê phiếu Chờ duyệt mọi công ty; Lưu nháp cũng ghi Người duyệt / Ngày duyệt cho phiếu xuất kho (y ERP); "SL được xuất" tính theo công ty người đăng nhập (y ERP)
+
+### Checkpoint — 2026-11-18 11:15
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu xuất hàng điều chỉnh kiểm kê
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết các điểm nghi lỗi (Thành tiền vốn × hệ số ĐVT, chữ "(*)" bản in, dấu * màn chi tiết / ô chỉ bắt buộc khi duyệt)
+Blocked:

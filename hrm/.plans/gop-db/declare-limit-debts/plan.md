@@ -84,3 +84,19 @@ Vừa hoàn thành: BE (quyền 1707/1708 trong seeder + đã chèn DB local, se
 Đang làm dở: —
 Bước tiếp theo: user mở trình duyệt kiểm `/finance/declare-limit-debts` (chưa bấm thật: sửa trong bảng + Lưu từng khách + cảnh báo chưa lưu, Lịch sử, Xuất Excel, Cấu hình cột). Xuất Excel không lọc = ~336 nghìn dòng (42 nghìn KH × 8 công ty) — nặng ở trình duyệt.
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (18/11/2026) @khoipv
+
+- [x] Đọc code hiện hành (DeclareLimitDebtService / Controller / Routes, Catalog finance.php 2 mã quyền, index.vue, menu finance.js, nơi đọc hạn mức: ReportLimitDebtService, ProductExportOverLimitService, BorrowSellRequestService) — không sửa code
+- [x] Chụp ảnh dev-hrm (DNS Admin, `kbhmcn_shots/_capture/capture.js`): chặn mọi yêu cầu ghi — 0 yêu cầu ghi, KHÔNG bấm Lưu; ảnh `10b_validate` lỗi dưới ô GIẢ LẬP trên trình duyệt; icon cắt + `trim_icon.py` (Cần cắt 0/27)
+- [x] `gen_srs.py` → `SRS - Khai báo hạn mức công nợ KH.docx`: 6 chức năng, 47 trang, selfcheck khớp mẫu; metrics ui=12.0 ev=4.7 evch=1095 intro=1959; Phần 5 bảng 4 cột (5 dòng); Mục lục trang riêng căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Khai bao han muc cong no KH.docx`: 5 phần, 9 trang
+- [x] `gen_testcase.py` → `testcase.xlsx`: loại `danh_muc`, 110 TC / 8 nhóm, P0 42.7%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 181 có TC / 143 N/A; SRS 111 có mục / 52 N/A
+- [x] Đối soát dev: 29TPHPNG-26 (Tân Phát: trống / 500,000,000) và 43TPHDKH (120,000 / 120,000) — khớp Báo cáo hạn mức công nợ khách hàng (trống = 0 ở báo cáo)
+
+### Checkpoint — 2026-11-18
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Khai báo hạn mức công nợ KH (ảnh dev, 0 yêu cầu ghi)
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết định có đẩy Drive không
+Blocked:

@@ -126,3 +126,17 @@ Blocked: API local chậm ~3s/request (máy thiếu RAM) — test chạy lâu, k
 ### 2026-11-17 — #12200 Đổi nút "Xóa lọc" → "Làm mới" (2 màn BC theo dõi LĐ-BG-SC-BD + chi tiết)
 - [x] Bỏ `reset-button-text="Xóa lọc"` ở `install-delivery-repair/index.vue` + `install-delivery-repair-detail/index.vue` → dùng mặc định `V2BaseSmartFilterPanel` ("Tìm kiếm" / "Làm mới"), hành vi giữ nguyên. Làm cùng màn BC bán hàng theo mặt hàng
 - Kiểm: compile template OK; chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-18 — Check: lọc 01/11–17/11/2026 ERP 10 bản ghi, HRM 11 (chỉ điều tra, không sửa code)
+- [x] So API dev 2 bên cùng kỳ: 10 nhóm trùng khớp; HRM thừa **firm:19648 `HĐ_TPE_HN_KD2_26_0653_MINHKHUE`** (hiện 1 dòng: YC `TPE.YCLDBG.2026001191` · GV `TPE.PGV.2026011933` · `PCT-14690` 12/11/2026 10:00–17:00, chưa NKQ/duyệt KQ)
+- Nguyên nhân = lệch ERP CÓ CHỦ Ý đã ghi ở design.md: ERP `getData()` `groupBy(contract_id)` rồi mới `filter()` ngày → so ngày trên 1 dòng ĐẠI DIỆN tuỳ ý của HĐ (ở đây dòng tiến độ 15572 `PCT-12502` 27/05–06/06/2026) → HĐ rơi khỏi kỳ tháng 11 dù có phiếu công tác 12/11. HRM lọc từng dòng con → HĐ hiện với đúng dòng PCT-14690
+- Hệ quả bên ERP: HĐ đã có công tác cũ thì công tác mới phát sinh không bao giờ lên báo cáo theo kỳ → HRM đúng hơn. Đề xuất giữ; nếu user muốn khớp số với ERP thì phải bắt chước lỗi (không khuyến nghị)
+
+### 2026-11-18 — Sửa ERP: lọc ngày công tác theo từng dòng (khớp HRM)
+- [x] ERP `ReportInstallDeliveryRepairService::getData()`: nhóm (HĐ / YC giao việc khác) hiện khi có ≥ 1 dòng Đã duyệt VÀ ≥ 1 dòng tiến độ có công tác trong kỳ (whereExists từng dòng) — bỏ lọc ngày trên dòng đại diện ở `filter()`
+- [x] ERP `assignProcess()` / `assignProcessOtherRequest()`: dòng con chỉ lấy dòng có công tác trong kỳ (y HRM)
+- [x] Kiểm: `php -l` OK; tinker local (ERP + HRM cùng `gop_db`) 3 kỳ 01–28/07, 01–30/06, 15/05–10/06/2026: ERP mới = HRM đúng từng khoá nhóm + số dòng con (542/560, 594/611, 534/559); ERP cũ 527/545, 580/605, 525/564. Helper mới `filterWorkDate()` + `whereHasWorkInRange()`, `filter()` bỏ phần ngày. Chưa mở trình duyệt, CHƯA commit, chưa deploy dev
+
+### 2026-11-18 — #12186 phản hồi lần 2 (Huyền Trang): phân trang POPUP về kiểu V2BasePagination
+- [x] P3-T9. Popup bấm số của 3 màn (`install-delivery-repair` ItemListModal, `install-delivery-repair-detail` DetailDrillModal, `sale/sale-by-product-report` SaleByProductDetailModal + SaleByProductAllItemsModal): bỏ slot `#pagination` (ReportPagination / ReportListPagination / SaleByProductPagination) → vỏ `V2BaseReportModal` tự dùng `V2BasePagination` mặc định (thanh xám `.paging`, nút tròn nhỏ) — y popup báo cáo chuyến xe (ảnh mẫu QA)
+- Kiểm: compile template + babel 4 file OK; chưa mở trình duyệt. Bảng CHÍNH của 3 màn vẫn dùng phân trang cũ (QA chỉ nêu popup) — chờ user chốt có đổi luôn không. CHƯA commit.

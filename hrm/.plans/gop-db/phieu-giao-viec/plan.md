@@ -268,3 +268,29 @@ P3Work/Merchandise/Assembly table, SummarySection + `fmt2` trong wrAssignTaskCal
 Đang làm dở:
 Bước tiếp theo: user mở trình duyệt kiểm tra sort + màn chi tiết PGV 18724
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase — Phiếu giao việc được giao (18/11/2026) @khoipv
+Màn = lối vào `?type=waiting_import_result` (CSKH sau bán › Giao việc › "Phiếu giao việc được giao"). Bộ "Phiếu giao việc" (`type=all`) CHƯA làm.
+- [x] Đọc code hiện hành (develop): `WrAssignTaskService` (applyScope / actionFlags / canImportResult / canDelete / canView / delete), controller,
+      print service, `WrImportResultStoreService::updateTaskStatus` (ghi lịch sử PGV), `AssignRequest` (người thực hiện chỉ ghi khi PCT ĐÃ DUYỆT),
+      Catalog quyền; FE `index.vue`, `_id/index.vue`, `WrAssignTaskForm.vue`, `wrAssignTaskLinks.js`, `filterStateMixin`
+- [x] Ảnh dev-hrm (DNS Admin, chỉ đọc, chặn mọi yêu cầu ghi — 0 yêu cầu ghi ở 4 lượt chạy): `pgvdg_shots/_capture/{capture,probe,fix,fix2}.js`;
+      DNS Admin là người thực hiện của 5 phiếu THẬT (1 có Nhập kết quả). Giả trạng thái duy nhất: `13_delete` + `icons/btn_xoa_row` (bật cờ Xóa
+      trên trình duyệt). Mở form Tạo phiếu nhập kết quả chỉ để chụp, không bấm Lưu. Đã xoá file lưu đăng nhập `.dev_state.json`
+- [x] Đối soát số (dev, chỉ GET): "được giao" DNS Admin = 5 = "Phiếu giao việc" lọc Người thực hiện = DNS Admin (id 13) = 5, cùng tập id
+      18712, 18713, 18718, 18724, 18725
+- [x] `gen_srs_duoc_giao.py` → `SRS - Phiếu giao việc được giao.docx`: 11 chức năng, 73 trang, selfcheck khớp mẫu; metrics ui 13.9 · ev 4.5 ·
+      evch 896 · intro 1717; Phần 5 bảng 4 cột 9 màn; Mục lục ngắt trang + căn giữa
+- [x] `gen_hdsd_duoc_giao.py` → `HDSD_Phieu giao viec duoc giao.docx`: 10 phần, 16 trang; trim_icon `Cần cắt 0/47`
+- [x] `gen_testcase_duoc_giao.py` → `testcase - Phiếu giao việc được giao.xlsx`: loại `phieu`, 119 TC, 10 nhóm, P0 52 (44%), check_tc 0 lỗi
+- [x] `gen_checklist_duoc_giao.py` → `Đối chiếu checklist - Phiếu giao việc được giao.xlsx`: Testcase 143 có TC / 181 N/A; SRS 110 có mục / 53 N/A
+- Lệch design / nghi lỗi (KHÔNG sửa, báo user): (1) quyền "Nhập kết quả thực hiện" code tra theo tên cũ guard api nhưng Catalog chỉ khai tên
+  guard web (platforms erp) ⇒ luôn false ở HRM; (2) docblock service ghi "Super admin = mọi quyền" — PermissionChecker không còn đặc cách;
+  (3) Xóa từ chi tiết luôn về `?type=all` dù đi vào từ "được giao"; (4) Tổng công định mức = 0 hiện ô trống (bản in ghi 0.00);
+  (5) Xuất Excel / In dùng chung tên file + tiêu đề với lối "Phiếu giao việc"
+
+### Checkpoint — 18/11/2026 15:13
+Vừa hoàn thành: bộ tài liệu SRS / HDSD / Testcase / Đối chiếu checklist màn Phiếu giao việc được giao
+Đang làm dở:
+Bước tiếp theo: user xem tài liệu; (nếu cần) làm bộ tài liệu lối vào "Phiếu giao việc" (`type=all`) dùng chung thư mục, tên file riêng
+Blocked:

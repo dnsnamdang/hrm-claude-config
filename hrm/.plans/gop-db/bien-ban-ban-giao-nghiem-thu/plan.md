@@ -194,3 +194,8 @@ Blocked:
 
 ## Check — yêu cầu "chuyển màn BB bàn giao nghiệm thu theo nhân viên" (2026-11-16, @khoipv)
 - [x] Đối chiếu ERP `topmenubar.blade.php:841` (`handoverAcceptanceRecord.index?type=for-business-staff`, nhóm Thông báo) với HRM → đã port từ 03/11 cùng màn chính: FE `pages/assign/handover-acceptance-records/index.vue` (lối `for-business-staff`, key riêng `handover_acceptance_records_business_staff`), BE `HandoverAcceptanceRecordService::TYPE_BUSINESS_STAFF`, menu `components/subsystem-menu/lookup.js:64`. Không sửa code, chờ user nói rõ cần làm thêm gì.
+
+## Fix #12216 — Nhãn trạng thái 1 lệch HRM / ERP (2026-11-18, @khoipv)
+Redmine http://quanly.dnsmedia.vn/issues/12216 — bản ghi 8279: HRM "Đang tạo", ERP "Đang cập nhật"
+- [x] Nguyên nhân: #12021 chỉ đổi nhãn HRM (`HandoverAcceptanceRecord::STATUSES`), ERP giữ nhãn cũ — dữ liệu 2 bên cùng status 1, chỉ lệch chữ
+- [x] User chốt 18/11: cả 2 bên "Đang tạo" → sửa ERP `app/Model/Customers/HandoverAcceptanceRecord.php` STATUSES (repo erp, nhánh gop_db). Màu ERP giữ `warning`. HRM không đổi

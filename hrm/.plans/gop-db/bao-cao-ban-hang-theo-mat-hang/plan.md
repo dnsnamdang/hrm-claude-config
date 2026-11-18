@@ -161,3 +161,23 @@ Blocked:
 - [x] Sửa ghi chú cũ "ai cũng vào" ở Catalog / Controller / Service / page index.vue. Mức phạm vi 4 mức giữ nguyên; nhánh `own` của `scopeLevel()` nay không còn tới được (giữ, vô hại)
 - Kiểm: `php -l` 4 file; HTTP kernel: user 13 (vai trò test 100224 có mã) 200 ở index / filter-options / export; user 658 (không vai trò) 403 cả 3. Chưa mở trình duyệt. CHƯA commit.
 - Lưu ý deploy: trên dev vai trò Super admin (DNS DÙNG) đang "Không xem" mã này (ảnh QA) → sau deploy ai cần xem phải được cấp mã ở `/admin/roles`
+
+### 2026-11-18 — #12175 phản hồi tester: số ở khối tổng hợp hơi to
+- [x] `components/sale-by-product-report/SaleByProductSummary.vue` `.sbp-card__value` font-size 20px → 16px (khuôn report-styles 15px). Áp cả màn "Báo cáo tổng hợp bán hàng" (dùng chung component)
+- Kiểm: chỉ đổi 1 dòng CSS; chưa mở trình duyệt. CHƯA commit.
+- [x] Bấm số ở khối tổng hợp mở popup "Chi tiết phát sinh bán hàng" → lỗi SQL 1222 (UNION lệch số cột). Nguyên nhân: commit 7db9fb3 (16/11, chế độ
+      Báo cáo tổng hợp bán hàng) thêm `export_price_amount` vào nhánh chi tiết xuất bán / bán mượn, còn nhánh chi tiết nhập trả (T29, 17/11) không có.
+      Sửa `SaleByProductReportService::branchReturn()` nhánh `$detail` thêm `0 as export_price_amount` (khớp nhánh gộp). Popup, In, Excel đều dùng chung câu này.
+- Kiểm: `php -l` OK; HTTP kernel `GET /api/v1/finance/sale-by-product-report/all-items` T6/2026 → 200, 6.149 dòng (khớp số đo 17/11), SL trả 2.063. CHƯA commit.
+- [x] User 18/11: bỏ dải TỔNG (SL bán / SL trả lại / SL bán thực tế / Thành tiền bán / Thành tiền net / Chênh lệch) ở đầu popup "Chi tiết phát sinh bán hàng"
+      — `SaleByProductAllItemsModal.vue` xoá khối `.sbp-all-total` + số "N dòng" (`.report-drill-count`) + CSS. BE vẫn trả `summary` (dùng cho chữ "Đang tải…"); bản In / Excel popup không đổi.
+- Kiểm: compile template + babel OK. Chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-18 — #12221 Bấm × ô Kỳ rồi click ra ngoài, nhãn "Kỳ" vẫn nổi trên viền, ô trống
+- [x] Nguyên nhân: watcher `filters` (T28 #12182) đặt lại `period = 'month'` ngay cùng nhịp với lúc × đặt `''` → prop `value` của V2BaseSelect
+      đứng yên 'month' (Vue gộp) → select2 không đồng bộ, ô hiện rỗng mà panel thấy `period` có giá trị nên giữ nhãn nổi
+- [x] User 18/11 đổi quyết định T28: bấm × → Kỳ để TRỐNG, bảng trống, PHẢI chọn Kỳ mới ra dữ liệu (không phải "toàn bộ thời gian").
+      `SaleByProductReportScreen.vue`: bỏ watcher reset "Tháng này" + bỏ ép Kỳ mặc định khi khôi phục bộ lọc lưu; thêm computed `periodMissing`
+      → `loadData` / `handleSearch` không gọi API (giống kỳ Tuỳ chọn thiếu ngày), bảng hiện "Chọn Kỳ để xem dữ liệu.", In / Xuất Excel báo toast.
+      Không sửa BE. Áp cả màn "Báo cáo tổng hợp bán hàng" (dùng chung component). "Làm mới" vẫn đưa Kỳ về Tháng này.
+- Kiểm: compile template + babel OK. Chưa mở trình duyệt. CHƯA commit.

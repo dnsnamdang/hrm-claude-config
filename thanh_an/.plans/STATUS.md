@@ -5,6 +5,15 @@
 
 ## Đang làm
 
+- **DS phiếu công tác (`/timesheet/business_trip_assigns`) — thêm cột Nội dung công tác, Vị trí chấm công** — @khoipv — Bắt đầu 18/11/2026 — Chỉ sửa FE (BE đã trả `description` + `timesheet_info`). Vị trí chấm công = gom `place` mọi lượt chấm của phiếu, bỏ trùng, mỗi vị trí 1 dòng. Thêm nút Xuất excel (ExcelJS phía FE như BC tổng hợp công tác, theo bộ lọc hiện tại, 1 dòng/phiếu). Xuất chậm (200 phiếu/12–28 s) → thêm API `GET timesheet/business_trip_assigns/export` (dùng chung query lọc + quyền với `index` qua `buildListQuery`, gom dữ liệu theo lô): 5500 phiếu local còn 18 query / ~4–5 s. Đã push `master` (API `b30bd226`, Client `fedb604b`); deploy API + client cùng lúc, không migration. Thêm cột **Phương tiện** (danh sách + Excel; cùng cách gom như ô "Phương tiện sử dụng" ở chi tiết phiếu) ; bảng có thanh cuộn ngang (cột độ rộng px, ghi đè overflow-x trong màn), viền ô, cố định cột STT + Mã phiếu — đã push `master` (API `8071f0ad`, Client `ac02839e`). Chờ user test UI + file xuất.
+  - Plan: [.plans/ds-phieu-cong-tac-them-cot/plan.md](ds-phieu-cong-tac-them-cot/plan.md)
+
+- **Fix: Xuất Excel BC tổng hợp đi giao việc/công tác (`/timesheet/report/business_trip_assign_report_`) rất chậm** — @khoipv — Bắt đầu 18/11/2026 — FE đã dùng ExcelJS; nghẽn ở BE: mỗi request lấy hết phiếu + toàn bộ chấm công mọi phiếu rồi mới cắt trang, FE gọi tuần tự từng trang. Sửa: phân trang ở DB, chỉ lấy chấm công của phiếu trong trang; FE gọi song song. Đã push: API `0f4198fa`, client `2370f6d3` (master). Còn: deploy + `php artisan migrate`, test tay.
+  - Plan: [.plans/fix-xuat-excel-bc-cong-tac-cham/plan.md](fix-xuat-excel-bc-cong-tac-cham/plan.md)
+
+- **Check: NV Ngô Thị Hoàng Yến (NV.00031) còn 0.5 phép, làm đơn 0.5 ngày 19/11 bị báo "Ngày nghỉ không được lớn hơn số ngày nghỉ còn lại"** — @khoipv — Bắt đầu 18/11/2026 — Nguyên nhân: đơn 1340 (nghỉ sáng 21/04, tạo trước bản sửa 28/08) lưu `total_days = 1` thay vì 0.5; bảng công tính 0.5 ⇒ báo cáo còn 0.5, validate còn 0. Chờ user chốt sửa dữ liệu.
+  - Plan: [.plans/check-phep-con-lai-ngo-thi-hoang-yen/plan.md](check-phep-con-lai-ngo-thi-hoang-yen/plan.md)
+
 - **Danh mục phương tiện — tách Phòng phụ trách (1 phòng) / Phòng sử dụng (nhiều phòng); app lọc xe theo Phòng phụ trách HOẶC Phòng sử dụng** — @khoipv — Bắt đầu 17/11/2026 — Chỉ sửa API + màn web, không sửa app mobile. Playwright 7/7 đạt. Đã push: API `8ac8ddca`, client `4d495c2c` (master). Còn: deploy cả 2 cùng lúc + `php artisan migrate`, test tay web + app.
   - Plan: [.plans/phuong-tien-phong-su-dung/plan.md](phuong-tien-phong-su-dung/plan.md)
 
