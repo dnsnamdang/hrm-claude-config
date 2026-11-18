@@ -205,3 +205,47 @@ Phiếu thử: manifest `wave3-e2e-approve.json` (`approval-center:seed-test --c
 - Đặt mật khẩu `Test@123` cho ~25 người duyệt thật + 1 nhân viên "người lạ" (`tuannd.kd1@tanphat.com`); KHÔNG đụng namdangit/id 13.
 - Duyệt thật các phiếu thử (TEST-APPROVAL-CENTER…) ⇒ trạng thái bảng gốc + bảng gom + lịch sử + thông báo của phiếu thử đã đổi; 3 phiếu bị người lạ duyệt (mục 3.1).
 - `menu_full_access_employees`: thêm tạm rồi gỡ (0 dòng).
+
+## 7. Đợt 2 (18/11/2026) — @cuong61n
+
+Mục tiêu: giảm số loại BỎ QUA. Cách làm: nâng `seedTest()`/`deleteTest()` của từng Definition cho phiếu thử đầy đủ như phiếu thật (dòng hàng, trường bắt buộc, người duyệt đăng nhập được đúng công ty), bỏ `skip` trong `config.ts`, chạy lại `approve.spec.ts`. Với "duyệt = lập chứng từ kế tiếp": spec riêng `create-next.spec.ts` (kho) và `create-next-e.spec.ts` (hạch toán/giao việc). Manifest mỗi nhóm riêng `wave4-seed-{a..e}.json`; spec nay đọc env `MANIFEST`. Toàn bộ chạy headless qua `bin/locked.py`. Test Definition của mọi loại đã sửa seed chạy OK (phpunit).
+
+Tổng sau đợt 2 (approve.spec): **~96 xanh · 10 đỏ · 22 bỏ qua** (trước: 71 / 4 / 53). 22 loại "lập chứng từ kế tiếp" nay được kiểm bằng spec riêng (bảng 7.2), không còn tính là bỏ qua vô điều kiện.
+
+### 7.1 Loại seed mỏng / không dựng được (29 loại + 2)
+| Loại | Trước | Sau |
+|---|---|---|
+| assign_job, assign_job_result, handover, solution, payment_profile, issue | bỏ qua | XANH |
+| wr_service_annex, wr_service_quotation, wr_import_result, employee_info_update_request, course, course_request, capacity_evaluate, meeting_room_service_request | bỏ qua | XANH |
+| course_student_attendance (bấm ô "Chờ duyệt" → Duyệt) | bỏ qua | XANH |
+| meeting_room_booking | đỏ | XANH (popup chi tiết che danh sách + phiếu ở trang 2, không phải lỗi FE) |
+| bill_income, delivery_cost_summary, delivery_request, inventory_audit_report, product_import_direct_transfer, prepick_extend_request, warehouse_transfer | bỏ qua | XANH |
+| borrow_extend_request | bỏ qua | XANH (seed chọn phòng không dính chốt chặn 423) |
+| request_solution, solution_adjustment_request | bỏ qua | ĐỎ nhẹ: duyệt xong thật (PUT 200, phiếu rời inbox) nhưng console có 404 tài nguyên nền chưa xác định URL |
+| bill_payment | bỏ qua | ĐỎ: API 200, phiếu sang "Chờ chi tiền" đúng cấp; lỗi FE màn gốc `[vee-validate] Validating a non-existent field "#1"` |
+| contract | bỏ qua | ĐỎ: POST approve 422 "Không tìm được quy chế phù hợp" (hợp đồng thiếu quy chế, `ContractSupportAccountingService::assertHthtValid`) |
+| assign_business_result | bỏ qua | ĐỎ: 422 `employees.N.details` — màn không gửi lộ trình khi công ty chưa có định mức đi lại (`moving_norms/getDetailByCompany` 400) |
+| assign_business | bỏ qua | còn bỏ qua: màn duyệt không hiện nút Duyệt (ra "Về trang chủ"), chưa rõ nguyên nhân |
+| exc_shortage_warehouse_import | bỏ qua | còn bỏ qua: nút "Xử lý" chỉ mở ERP (màn xử lý hàng thiếu chưa port) |
+| self_notification | bỏ qua | còn bỏ qua (hợp lệ): `canApprove()` kiểm tên quyền cũ "Duyệt thông báo nội bộ" không có trong Catalog |
+
+### 7.2 22 loại "duyệt = lập chứng từ kế tiếp"
+| Mức kiểm | Loại |
+|---|---|
+| Đủ: nút đúng → form → gửi 2xx → chứng từ mới/phiếu rời inbox | prepick_cancel_request, split_export_request, join_export_request (Lưu nháp; "Gửi thủ kho" chưa thử vì seed chưa có tồn kho), service_accounting_request, wr_accounting_service_request, addition_accounting_request, bill_income_request (nguồn sang cấp kế) |
+| Nút đúng + form mở + nạp dòng hàng; chưa gửi được | warehouse_import_request (cần người giao, vận chuyển, file, vị trí), warehouse_export_request (cần tồn theo vị trí/lô), borrow_export_request (thiếu phiếu mượn thật), warehouse_import (cần lô ERP), warehouse_inventory_import (cần phiếu kiểm kê), warehouse_export (cần tồn/lô), product_transfer_request, price_calculate_request (cần dòng hàng + chi phí) |
+| Đỏ (lỗi dữ liệu thử / form chưa điền đủ) | bill_adjust_dept_request ("Lưu và duyệt" không gọi API), buy_service_accounting_request (bắt buộc file VAT + dòng dịch vụ), warranty_repair_request, warranty_repair_handle_request (422 thiếu khách/thiết bị/người liên hệ), assign_other_request (422 thiếu khách), assign_request (nút "Lưu" gọi nhầm `assign_business/{id}/deny` — phiếu thử bị từ chối) |
+| Còn bỏ qua | delivery_trip: màn ERP mở tab mới, không có form HRM để bấm |
+
+### 7.3 Lỗi phát hiện (không sửa, ghi lại)
+- Không có lỗi của chính Trung tâm phê duyệt ở các loại mới kiểm.
+- `IssueService::saveRelatedData` (`IssueService.php:587`): `foreach (null)` khi `tags` NULL → PUT `assign/issues/{id}` 400 (seed đã đặt `tags='[]'`).
+- `GET training/courses/{id}` trả 200 body rỗng khi khoá có bài thi đã xoá khỏi danh mục (course 4/5; `CourseService.php` ~374, `$p->exam` null) và crash khi id không tồn tại (`->get()` rồi `empty()`).
+- `assign_business/{id}/approve_result` công ty 10: `moving_norms/getDetailByCompany` 400 → `Cannot read properties of undefined (reading 'map')`.
+- Nút "Tiếp nhận" `/assign/request-solution/{id}` không ổn định, thường phải bấm lại.
+- `bill_payment`: lỗi vee-validate FE nêu trên (duyệt cấp Kế toán trưởng).
+
+### 7.4 Việc còn lại
+Điền đầy đủ form + dòng/tồn kho cho các loại ở 7.2 mức "form mở"/đỏ (seed tồn theo vị trí/lô, người giao, vận chuyển, file VAT, khách + người liên hệ bảo hành); điều tra `assign_business` không có nút Duyệt; xác định URL 404 của `request_solution`/`solution_adjustment_request`.
+Dọn phiếu thử: `php artisan approval-center:clean-test --manifest=wave4-seed-{a,b,c,d,e}.json`.
+Chạy lại: `MANIFEST=wave4-seed-x.json ONLY=<loại> python3 bin/locked.py npx playwright test tests/approval-center/approve/approve.spec.ts --project=chromium --no-deps` (hoặc `create-next.spec.ts` / `create-next-e.spec.ts`).
