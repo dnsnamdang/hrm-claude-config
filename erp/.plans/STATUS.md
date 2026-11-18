@@ -2,7 +2,8 @@
 
 ## Hoàn thành
 
-- [Mua hàng: SL đặt / SL duyệt nhập số thập phân 2 chữ số (#12195)](12195-mua-hang-sl-thap-phan/plan.md) — @junfoke 2026-11-17. `d86dd651aa` nhánh `task_12195`, merge `develop_02`. Có migration (8 cột INT → decimal) — dev chạy `migrate`. Chưa lên gop_db.
+- [Mẫu in HĐ dịch vụ (loại 6): bổ sung biến bên A/B + bảng chi tiết theo HĐ bán](mau-in-hddv-bien-ben-a-b/plan.md) — @junfoke 2026-11-18. `7435ca2d91` nhánh `feat/mau-in-hddv-bien`, merge `develop_02` `83aa16c5f2`. Sau deploy mở `update-variables/6`. Chưa lên gop_db.
+- [Mua hàng: SL đặt / SL duyệt nhập số thập phân 2 chữ số (#12195)](12195-mua-hang-sl-thap-phan/plan.md) — @junfoke 2026-11-17. `d86dd651aa` nhánh `task_12195`, merge `develop_02`. Có migration (8 cột INT → decimal) — dev chạy `migrate`. Chưa lên gop_db. 18/11: ô SL theo chuẩn số `1,234.5` (directive `qty-input`) `51f610243b` → develop_02 `3281ecf9c6`; testcase 235 TC.
 - [YC lắp đặt bàn giao: màn sửa chọn phòng mọi công ty + "Chuyển phòng tiếp nhận" lưu phòng = 0](chan-phong-tiep-nhan-khac-cong-ty/plan.md) — @junfoke 2026-11-16. `c62ac47e77` + `92b35d3d9c` gop_db. Prod: phiếu 1619, 1996 đưa về Từ chối.
 - [PI trong nước: sửa được ngày giao hàng ở màn sửa](fix-pi-trong-nuoc-sua-ngay-giao/plan.md) — @junfoke 2026-11-16. `8d106db793` gop_db.
 - [#12072 Chặn duyệt báo giá/HĐ khi địa chỉ giao hàng thuộc tỉnh/phường đã khoá](12072-chan-duyet-dia-chi-giao-hang-khoa/plan.md) — @junfoke 2026-11-13. `ab40c62a70` → develop_02 `4bd5da4d67`, chờ QA; chưa vào gop_db.

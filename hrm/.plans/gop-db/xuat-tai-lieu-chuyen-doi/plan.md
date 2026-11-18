@@ -38,5 +38,15 @@ mẫu `mau/`. Nguyên nhân gốc: skill `testcase-documenter` đang quy định
 - [x] User chốt: KQ thực tế / DNS check để TRỐNG; sửa luôn skill. Thay 19 tab 44–62 trên Drive (-Replace, 0 ô đổi ở 43 tab cũ, Tổng hợp trỏ K16, ID giữ) — 03/11
 - [x] Sửa skill `testcase-documenter`: SKILL.md theo khuôn Quốc gia; assets `TC_MAU_QUOC_GIA.xlsx`, `CHECKLIST_TC_SRS.xlsx`, `tc_chuan.py`, `check_tc.py`; `tc_engine.py` ROMAN tới XX. `.plans` `_tc_chuan.py`/`check_tc.py` chỉ còn trỏ sang skill
 
+## Đợt 4 — 12 màn (18/11/2026)
+Brief: `BRIEF_DOT4.md` (khuôn báo cáo Đợt 2, phiếu Đợt 3, TC theo skill mới). 225 = cùng màn 167 → không làm lại, sheet ghi "Lặp màn 167".
+- [x] 9 agent: 97 DS đăng ký KH (26/10/99 TC) · 108 BC phân chia thị trường (36/12/109) · 181 DS cần hạch toán CPVC nhanh (39/14/126) ·
+      222 Sổ CT công nợ phải thu KH (31/11/108) · 229 Sổ CT công nợ NV (34/11/108) · 287 Phiếu NK điều chỉnh kiểm kê (54/18/182) ·
+      288 PNK chờ báo thừa thiếu (24/10/113) · 289 Phiếu báo hàng thừa thiếu NK (54/19/204) · 309/310 BC cẩu hàng NCC/NV (43/15/123 · 39/14/107) ·
+      319 BC hiệu quả gộp xe (43/15/122) · 321 BC chi tiết chuyến xe (47/16/125) — check_tc 0 lỗi cả 12
+- [x] Đẩy Drive 12 SRS + 12 HDSD + 12 tab TC **94–105** (người khác đã thêm tab 63–93 → đánh số tiếp, 0 ô cũ đổi, ID giữ) — 18/11
+- [ ] User điền Checklist dòng 85, 96, 145/168, 208, 211 (Lặp màn 167), 215, 268, 269, 270, 290, 291, 300, 302
+- [ ] Thư mục rác `D:\c` (43 ảnh agent tạo nhầm ngoài workspace) — chờ user cho xoá
+
 ## Sau cùng
 - [ ] Rà `NGHI_LOI.md` cùng user: kiểm lỗi thật hay không → sửa code

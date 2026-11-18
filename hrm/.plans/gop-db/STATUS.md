@@ -58,6 +58,23 @@ Tài liệu: `.plans/gop-db/bao-cao-theo-doi-lap-dat-ban-giao-sc-bd/` · spec `d
 ## #12198 Dự án TKT — link mở chi tiết giải pháp — ĐÃ MERGE develop (`904aa525c` / merge `33019e371`), CHƯA gop_db (2026-11-17, @junfoke)
 Chỉ FE (2 file), nhánh `task_12198`. Tài liệu: `.plans/gop-db/12198-link-giai-phap-du-an-tkt/plan.md`.
 
+## Danh sách HSNS lọc nhiều phòng ban / bộ phận + xuất Excel theo lọc — ĐÃ PUSH develop (api `4321f62c2`, client `65601f328`); cherry-pick gop_db local chưa push (2026-11-18, @junfoke)
+Tài liệu: `.plans/gop-db/hsns-loc-nhieu-phong-ban-bo-phan/plan.md`.
+
+## Hồ sơ tự khai: chặn gửi duyệt khi không có thay đổi — COMMIT develop (api `2ef1957a0`, client `d35213964`), CHƯA push (2026-11-18, @junfoke)
+Tài liệu: `.plans/gop-db/tu-khai-chan-gui-khong-thay-doi/plan.md`.
+
+## #12171 DM khách hàng (Quận/Huyện bắt buộc, cột xuất, import Nhóm KH, SĐT tổ chức) — ĐÃ PUSH develop (api `c71048b87`, client `ac05172af`) (2026-11-18, @junfoke)
+## #12215 BC số lượt SC-BD 1 khách hàng (phân cấp công ty, tùy chỉnh cột, bỏ làm tròn) — SỬA XONG, CHƯA commit (2026-11-18, @junfoke)
+Plan: `.plans/gop-db/customer-scope-list-page-standard/plan.md` · `.plans/gop-db/bc-so-luot-sc-bd-khach-hang/plan.md`.
+
+## Báo cáo so sánh số liệu bán hàng theo thời gian chi tiết theo khu vực (ERP → HRM) — ĐÃ MERGE develop (api 370229d99, client 56c226264), CHƯA gop_db (2026-11-18, @junfoke)
+
+Port `report.compareContractByProvince` → `/sale/compare-contract-by-province-report` (Bán hàng › Tổng hợp & so sánh). Nhánh
+`feat/bc-so-sanh-bh-thoi-gian-khu-vuc` (worktree `.worktrees/bc-so-sanh-thoi-gian`, 2 repo). Mã quyền MỚI → deploy
+`permission:catalog-sync` + cấp ở `/admin/roles`. Sửa 5 lỗi số liệu ERP (nhân doanh thu quyết toán, trùng id, phụ lục DV, UNION, hỗ trợ KT đôi).
+Tài liệu: `.plans/gop-db/bc-so-sanh-bh-thoi-gian-khu-vuc/` · spec `docs/superpowers/specs/gop-db/2026-11-18-bc-so-sanh-bh-thoi-gian-khu-vuc-design.md`.
+
 ## Báo cáo so sánh số liệu bán hàng theo khu vực chi tiết theo thời gian (ERP → HRM) — ĐÃ MERGE develop (api 44d2720bc, client 5ee6aa610), CHƯA gop_db (2026-11-17, @junfoke)
 
 Port `report.compareContractByTimes` → `/sale/compare-contract-by-time-report` (Bán hàng › Tổng hợp & so sánh). Nhánh

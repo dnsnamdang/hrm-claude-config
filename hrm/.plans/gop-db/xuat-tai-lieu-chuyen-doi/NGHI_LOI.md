@@ -112,3 +112,32 @@ Kiểm xong ghi kết luận: ✅ lỗi thật (đã sửa / task) · ❌ không
 | 88 | Nhiều màn (danh mục kho, báo cáo, phiếu) | GHI NHỚ BỘ LỌC: TC cũ ghi "rời màn quay lại trong 10 phút vẫn giữ bộ lọc"; agent đọc code thấy rời sang màn khác là xoá bộ lọc (chỉ giữ khi vào trang chi tiết riêng; báo cáo: tab mới trong 10 phút thì giữ) → TC mới viết theo code, CHƯA thử trình duyệt. Khai báo đầu kỳ: phần lưu bộ lọc nằm trong component con, nghi không chạy khi vào chi tiết rồi quay lại | nhóm TÌM KIẾM & LỌC mục "Lưu trạng thái" | ❓ |
 | 89 | 7 danh mục kho | "Mở khoá bản ghi đã bị người khác xoá" — nghi hiện câu tiếng Anh "Item Not Found!" | nhóm KHÓA / MỞ KHÓA | |
 | 90 | Khai báo đầu kỳ công nợ | Đang sửa thì phát sinh chứng từ: câu báo "Khai báo đã phát sinh chứng từ, không được sửa." dưới ô Tài khoản (TC cũ ghi nhầm câu của Xoá) | đã sửa TC | |
+
+## Đợt 4 — 12 màn (18/11/2026)
+
+| # | Màn | Nghi lỗi | TC / ghi chú | Kết luận |
+|---|---|---|---|---|
+| 91 | DS đăng ký KH toàn công ty | Ô tìm nhanh coi `%` `_` là ký tự đại diện — gõ `%` ra cả 2134 dòng | TC_02.010 | |
+| 92 | DS đăng ký KH toàn công ty | KH cá nhân (vd "Vũ Mạnh Hà") để trống tên khách, Excel cột Khách hàng đăng ký cũng trống | TC_01.007 | |
+| 93 | Nhiều màn (component dùng chung) | Chân bảng "Hiển thị 1–10 / 2134" thiếu dấu phẩy hàng nghìn | TC_01.016 | |
+| 94 | DS đăng ký KH toàn công ty | Design ghi nhớ bộ lọc 10 phút nhưng màn không có trang con → rời màn/F5/tab mới đều mất (cùng #88) | TC_02.026–029 | ❓ |
+| 95 | BC phân chia thị trường | Lọc Hãng xe làm sai 2 cột của dòng (Acura: mất "BMW, BYD" + mất X "Phụ trách tất cả hãng"); lọc "Có" + Hãng sót dòng — `DivisionMarketReportService::applyFilters` lọc trước khi gộp | TC_02 Lọc Hãng xe, BR-07 | |
+| 96 | BC phân chia thị trường | Câu vượt mức in 2.000 dòng nhắc "khoảng thời gian, trạng thái" trong khi màn không có 2 ô đó | TC_06 | nhỏ |
+| 97 | BC phân chia thị trường | Hiệu năng: không lọc 15–18s, lọc "Không" ~25s; chân bảng đếm theo phường/xã không theo dòng | TC_01 | |
+| 98 | DS cần hạch toán CPVC nhanh | Tạo phiếu kế toán từ danh sách → "Quay lại" về DS Phiếu kế toán, không về màn nguồn (thấy trên dev) | TC_03.013 | |
+| 99 | DS cần hạch toán CPVC nhanh | Dòng đã đánh dấu hạch toán nhưng phiếu đã xoá vẫn lọt lọc "Chưa hạch toán" mà ô tick bị khoá → không hạch toán lại được | TC_10.014 | |
+| 100 | DS cần hạch toán CPVC nhanh | Có quyền "Hạch toán…" thiếu "Kế toán thanh toán" vẫn thấy nút Tạo phiếu kế toán, lưu mới bị từ chối | TC_11.010 | |
+| 101 | Sổ CT công nợ phải thu KH | Mọi ô lọc kể cả tìm nhanh áp cả Số dư đầu kỳ (tìm "PXH": đầu kỳ 167,583,599 → 604,627,127) — docblock ghi đã chốt | TC_02.013 | ❓ |
+| 102 | Sổ CT công nợ phải thu KH | Lọc Phòng ban/Bộ phận theo bút toán nhưng cột Phòng ban hiện phòng hiện tại NVKD; Excel chỉ có ký "Người lập", bản in có thêm Kế toán trưởng | TC_02.028, TC_04.003, TC_05.003 | |
+| 103 | Sổ chi tiết công nợ NV | Đầu kỳ chỉ cộng bút toán gắn NV, phát sinh lấy mọi bút toán → không lọc NV thì cuối kỳ ≠ đầu kỳ kỳ sau; Loại chứng từ "Phiếu xuất hàng - …" ra mọi phiếu xuất (giữ y ERP) | TC_03.004, TC_02.017 | ❓ |
+| 104 | Phiếu NK điều chỉnh kiểm kê | Trang Thêm tự chọn kho đầu tiên kể cả kho không còn hàng thừa (dev TPE.KKK-01096 chọn CSKH, bảng trống) | TC_03.006, TC_03.014 | |
+| 105 | Phiếu NK điều chỉnh kiểm kê | DS kiểm quyền Phòng ban bằng TÊN quyền cũ "Xem phiếu nhập kho điều chỉnh kiểm kê - theo công ty" | TC_02.020, TC_13.002 | |
+| 106 | Phiếu NK điều chỉnh kiểm kê | Cột "Ngày kiểm kê" hiện ngày lập phiếu nhập; xoá được file đính kèm cuối cùng (BE ghi là không cho); nút ở Kiểm kê theo hàng hoá ghi "điều chuyển" thay "điều chỉnh"; chi tiết không đưa trạng thái lên tiêu đề | TC_01.005, TC_04.009/011, TC_03.002 | |
+| 107 | Phiếu báo hàng thừa thiếu NK | Người có quyền Duyệt cùng công ty mở thẳng đường dẫn xem được phiếu mọi trạng thái của người khác (DS chỉ cho thấy Chờ xử lý) | 289 nhóm PHÂN QUYỀN | |
+| 108 | Phiếu báo hàng thừa thiếu NK | Dev có 2 cặp phiếu báo trùng 1 PNK (TPE_BHNK-00018/19 ↔ PNK-06897, 00016/17 ↔ PNK-08919) | dữ liệu cũ? | |
+| 109 | 288 / 289 | Tên người hiển thị 2 kiểu ("Mã phòng - Họ tên" vs "Họ tên - Mã phòng"); Tạo từ 288 → Quay lại về DS phiếu báo không về hàng chờ; chi tiết không có trạng thái trên tiêu đề; phiếu Không duyệt bấm Lưu về Đang tạo nhưng ô Lý do không duyệt vẫn hiện | nhiều TC | |
+| 110 | BC cẩu hàng theo NCC | Lượt trỏ NCC không có trong danh mục → "Nhà cung cấp #<số>" (dev 5/7 NCC tháng 10/2026); FE nhận diện bằng "NCC #" nên kiểu nghiêng không bao giờ hiện | TC_01 | |
+| 111 | BC cẩu hàng NCC + NV | 1 mã loại bốc xếp nhiều tên theo công ty → ô lọc/khối tổng hợp lấy tên dòng đầu | TC_02, TC_03 | |
+| 112 | BC cẩu hàng theo NV | Lượt nhiều người: mỗi người tính đủ khối lượng → dòng TỔNG cộng lặp (10/2026: 1,403.1 tấn, 7 người cùng 180.2 tấn) — code ghi là thiết kế | TC_03 | ❓ |
+| 113 | BC chi tiết chuyến xe | Tooltip còn chữ "(như ERP)" 3 chỗ; In/Excel bảng tổng hợp ghi số vào cột "Số phiếu hạch toán" (có vẻ là số phiếu nhập/xuất); lọc Đối tượng/Phòng/Bộ phận/NVKD chọn chuyến nhưng 4 ô vẫn hiện mọi phiếu | TC_01.006, TC_07.008, TC_02.020 | |
+| 114 | BC hiệu quả gộp xe | Phạm vi mức Công ty lấy công ty trong hồ sơ NV, không phải công ty đang làm việc (người kiêm nhiệm lệch) | TC_09.009 | ❓ |

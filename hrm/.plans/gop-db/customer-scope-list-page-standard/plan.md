@@ -45,3 +45,11 @@ Blocked: không có.
 ## Ngày 17/11/2026 (@junfoke)
 - [x] 17/11/2026 — Lỗi #12192 (DM khách hàng): chọn Quốc gia thì dropdown Tỉnh/TP chỉ còn tỉnh của nước đó, tỉnh đang chọn thuộc nước khác tự bỏ (API tỉnh trả kèm `nation_id`; thử China còn 7 tỉnh, Việt Nam 34); icon Tùy chỉnh cột đổi sang kiểu nút như đa số màn, cùng cỡ hàng nút Xuất. Client `98b5646e9`, api `e4154e323` (develop, đã push).
 - [ ] Chờ user: tài liệu quy ước nút trong hrm-claude-config ghi "nút chỉ icon dùng kiểu cũ" và lấy DM khách hàng làm mẫu — sau #12192 tài liệu lệch code, cập nhật hay giữ.
+
+## Ngày 18/11/2026 (@junfoke)
+- [x] 18/11/2026 — Lỗi #12171 (DM khách hàng, 4 ý):
+  - Bỏ trống Quận/Huyện (KH nước ngoài) vẫn lưu được → rule `required_unless:nation_id,1` "Bắt buộc chọn quận/huyện" ở `SaveCustomerRequest` + `UpdateCustomerRequest`; import báo "Quận/Huyện là bắt buộc với địa chỉ nước ngoài".
+  - Popup chọn trường xuất: tên trường giống cột danh sách (Tên khách hàng, Loại, Nhóm KH, Người cập nhật), tách MST/SĐT thành 2 trường (FE `index.vue` + BE `CustomerExportColumns`); ô SĐT bị che để trống thay vì "-".
+  - Import bỏ bắt buộc Nhóm khách hàng (file mẫu bỏ dấu `*`, mẫu cũ vẫn nhận; có nhập thì tên nhóm phải tồn tại).
+  - SĐT bàn của tổ chức kiểm định dạng như SĐT cá nhân (bắt đầu 0, 10–12 số) ở FE (rule `phone_number`), BE và import.
+  - Api `c71048b87`, client `ac05172af` (develop, đã push).
