@@ -420,6 +420,20 @@ Trước đây có 4 kiểu lệch nhau (`.quick-add-btn` link chữ, `V2BaseBut
 - KHÔNG tự viết `<button class="quick-add-btn">`, KHÔNG dùng `V2BaseButton` cho vai trò này.
 - Không có quyền / chế độ Xem → ẩn bằng `v-if` (không disable) — như mọi nút khác.
 
+## 6e. Nút TRẠNG THÁI có menu chuyển / chip chọn nhanh / nút icon đầu panel (chốt 08/11/2026)
+
+Khuôn panel Nhiệm vụ v2 (`components/assign/task/panel/`) — KHÔNG tự dựng `<button>` cho các loại sau:
+
+| Thứ cần dựng | Dùng |
+| --- | --- |
+| Viên trạng thái (màu BE) bấm ra menu các bước chuyển | `V2BaseStatusMenu` (`:text` `:color` `:items=[{key,label,icon,danger}]`, `@select`) — menu gắn `<body>`, Esc đóng menu trước |
+| Chip chọn nhanh (Hôm nay · Ngày mai…, ngày trong tuần) | `V2BaseChip` (`:active`) |
+| "+ Checklist / + Tệp / + Ngày bắt đầu" (mở thêm 1 khối) | `V2BaseQuickAddButton` (`icon=`) |
+| Nút icon ở đầu panel (theo dõi, sao chép liên kết, đóng) | `V2BaseIconButton size="md"` — trạng thái đang bật tự thêm class ở màn (vd `is-on`) |
+| Menu ⋮ ở đầu panel | `V2BaseRowActions :max-inline="1"` (`actions=[{key,title,icon,danger}]`, `@action`) |
+| Tab trong panel | `V2BaseTabNavigation` (mỗi tab bắt buộc có `icon`) |
+| Chọn 1 trong 2–4 mức có màu (Mức độ ưu tiên) | `V2BaseSegmented` (option `color`) — skill `segmented-control` |
+
 ## 7. Checklist khi tạo/review button
 
 - [ ] Nút "Thêm nhanh" dùng `V2BaseQuickAddButton` (mục 6d), không tự dựng

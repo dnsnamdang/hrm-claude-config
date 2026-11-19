@@ -1,0 +1,40 @@
+nhom	guard	ten_quyen	ma_de_xuat	loai_ma	pham_vi_alias	ghi_chu
+A	api	Duyệt phiếu phân chia thị trường theo nhân viên	sale.phan_chia_thi_truong_nhan_vien.approve	co_san	null	cùng tên web
+A	api	Xem phiếu yêu cầu giao việc khác theo tổng công ty	customer_care.phieu_yeu_cau_giao_viec_khac.view	co_san	4	cùng tên web
+A	api	Xem phiếu yêu cầu giao việc khác theo công ty	customer_care.phieu_yeu_cau_giao_viec_khac.view	co_san	3	cùng tên web
+A	api	Xem phiếu yêu cầu giao việc khác theo phòng ban	customer_care.phieu_yeu_cau_giao_viec_khac.view	co_san	2	cùng tên web
+A	api	Xem sổ chi tiết công nợ nhân viên của tổng công ty	accounting.so_chi_tiet_cong_no_nhan_vien.view	co_san	4	cùng tên web
+A	api	Xem sổ chi tiết công nợ nhân viên của công ty	accounting.so_chi_tiet_cong_no_nhan_vien.view	co_san	3	cùng tên web
+A	api	Xem bảng cân đối phát sinh công nợ nhân viên của tổng công ty	accounting.bang_can_doi_phat_sinh_cong_no_nhan_vien.view	co_san	4	cùng tên web
+A	api	Xem bảng cân đối phát sinh công nợ nhân viên của công ty	accounting.bang_can_doi_phat_sinh_cong_no_nhan_vien.view	co_san	3	cùng tên web
+A	api	Tạo kết chuyển chi phí phải trả	accounting.ket_chuyen_chi_phi_phai_tra.create	co_san	null	cùng tên web
+A	api	Xem kết chuyển chi phí phải trả theo tổng công ty	accounting.ket_chuyen_chi_phi_phai_tra.view	co_san	4	cùng tên web
+A	api	Xem kết chuyển chi phí phải trả theo công ty	accounting.ket_chuyen_chi_phi_phai_tra.view	co_san	3	cùng tên web
+A	api	Xem sổ chi tiết công nợ phải trả nhà cung cấp theo tổng công ty	accounting.so_chi_tiet_cong_no_phai_tra_nha_cung_cap.view	co_san	4	cùng tên web
+A	api	Xem sổ chi tiết công nợ phải trả nhà cung cấp theo công ty	accounting.so_chi_tiet_cong_no_phai_tra_nha_cung_cap.view	co_san	3	cùng tên web
+B	api	Tạo phiếu phân chia thị trường theo phòng ban	sale.phan_chia_thi_truong_phong_ban.create	gop_vao_ma_co_san	null	khác tên web "Tạo thị trường theo phòng ban" — CẦN USER CHỐT
+B	api	Xem phiếu phân chia thị trường theo phòng ban của tổng công ty	sale.phan_chia_thi_truong_phong_ban.view	gop_vao_ma_co_san	4	CẦN USER CHỐT
+B	api	Xem phiếu phân chia thị trường theo phòng ban của công ty	sale.phan_chia_thi_truong_phong_ban.view	gop_vao_ma_co_san	3	CẦN USER CHỐT
+B	api	Tạo phiếu phân chia thị trường theo nhân viên	sale.phan_chia_thi_truong_nhan_vien.create	gop_vao_ma_co_san	null	khác tên web "Tạo thị trường theo nhân viên" — CẦN USER CHỐT
+B	api	Xem phiếu phân chia thị trường theo nhân viên của tổng công ty	sale.phan_chia_thi_truong_nhan_vien.view	gop_vao_ma_co_san	4	CẦN USER CHỐT
+B	api	Xem phiếu phân chia thị trường theo nhân viên của công ty	sale.phan_chia_thi_truong_nhan_vien.view	gop_vao_ma_co_san	3	CẦN USER CHỐT
+B	api	Xem phiếu phân chia thị trường theo nhân viên của phòng ban	sale.phan_chia_thi_truong_nhan_vien.view	gop_vao_ma_co_san	2	CẦN USER CHỐT
+B	api	Xem phiếu hạch toán dịch vụ HĐBH - theo tổng công ty	customer_care.hach_toan_dich_vu.view	gop_vao_ma_co_san	4	ERP Sale\ServiceAccounting kiểm "Xem hạch toán dịch vụ theo …"
+B	api	Xem phiếu hạch toán dịch vụ HĐBH - theo công ty	customer_care.hach_toan_dich_vu.view	gop_vao_ma_co_san	3	như trên
+B	api	Xem phiếu hạch toán dịch vụ HĐBH - theo phòng ban	customer_care.hach_toan_dich_vu.view	gop_vao_ma_co_san	2	như trên
+B	api	Xem tất cả hợp đồng bán đầu kỳ của tổng công ty	sale.hop_dong_ban_dau_ky.view	gop_vao_ma_co_san	4	khác tên web "Xem hợp đồng bán đầu kỳ theo …"
+B	api	Xem tất cả hợp đồng bán đầu kỳ của công ty	sale.hop_dong_ban_dau_ky.view	gop_vao_ma_co_san	3	như trên
+B	api	Xem tất cả hợp đồng bán đầu kỳ của phòng ban	sale.hop_dong_ban_dau_ky.view	gop_vao_ma_co_san	2	như trên
+B	api	Xem tất cả hợp đồng bán đầu kỳ của bộ phận	sale.hop_dong_ban_dau_ky.view	gop_vao_ma_co_san	1	như trên
+C	api	Duyệt phiếu phân chia thị trường theo phòng ban	sale.phan_chia_thi_truong_phong_ban.approve	ma_moi	null	
+C	api	Hạch toán dịch vụ HĐBH	customer_care.hach_toan_dich_vu_hdbh.manage	ma_moi	null	Thao tác; gộp Tạo/Sửa/Xoá + ghi sổ
+C	api	Tạo/Duyệt quyết toán thưởng năng suất quý	accounting.quyet_toan_thuong_nang_suat_quy.manage	ma_moi	null	
+C	api	Xem tất cả quyết toán thưởng năng suất quý của tổng công ty	accounting.quyet_toan_thuong_nang_suat_quy.view	ma_moi	4	phạm vi mã [2,3,4]
+C	api	Xem tất cả quyết toán thưởng năng suất quý của công ty	accounting.quyet_toan_thuong_nang_suat_quy.view	ma_moi	3	
+C	api	Xem tất cả quyết toán thưởng năng suất quý của phòng ban	accounting.quyet_toan_thuong_nang_suat_quy.view	ma_moi	2	
+C	api	Tạo quyết toán thưởng năm	accounting.quyet_toan_thuong_nam.create	ma_moi	null	
+C	api	BGĐ duyệt quyết toán thưởng năm	accounting.quyet_toan_thuong_nam.approve	ma_moi	null	
+C	api	Xem quyết toán thưởng năm theo tổng công ty	accounting.quyet_toan_thuong_nam.view	ma_moi	4	phạm vi mã [2,3,4]
+C	api	Xem quyết toán thưởng năm theo công ty	accounting.quyet_toan_thuong_nam.view	ma_moi	3	
+C	api	Xem quyết toán thưởng năm theo phòng ban	accounting.quyet_toan_thuong_nam.view	ma_moi	2	
+C	web	Xem báo cáo hàng tồn kho theo tổng công ty	accounting.bao_cao_hang_ton_kho_tong_cong_ty.view	ma_moi	4	mục 13 việc ngoài luồng; seeder ERP khai 06/11

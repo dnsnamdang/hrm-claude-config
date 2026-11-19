@@ -1,0 +1,229 @@
+/* 11/11 [U] Trợ lý ERP — mockup demo (xem chú thích đầu ai.js). Màu nhấn AI: teal app #1abc9c → chàm #6366f1. */
+.dm-av.s{width:32px;height:32px;flex-basis:32px;font-size:11.5px;align-self:center}
+.ai-av{width:40px;height:40px;flex:0 0 40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:19px;
+  background:radial-gradient(120% 120% at 20% 10%,#5eead4 0%,#1abc9c 38%,#6366f1 100%);box-shadow:0 4px 12px -4px rgba(99,102,241,.55),inset 0 1px 0 rgba(255,255,255,.45);align-self:flex-start;position:relative}
+.ai-av.l{width:44px;height:44px;flex-basis:44px;font-size:21px;align-self:center}
+.ai-row .ai-av{width:32px;height:32px;flex-basis:32px;font-size:15px}
+.ai-tag{display:inline-flex;align-items:center;height:16px;padding:0 6px;border-radius:999px;font:700 9.5px/16px Roboto,sans-serif;letter-spacing:.06em;color:#fff;background:linear-gradient(90deg,#1abc9c,#6366f1);margin-left:6px;vertical-align:2px}
+.dm-nm .ai-tag{margin-left:2px;flex:0 0 auto}
+.ai-it .dm-last span{color:#6b7280}
+
+/* đầu khung */
+.ai-hd .dm-hd-t small i{background:linear-gradient(90deg,#1abc9c,#6366f1)}
+.ai-hd .r{align-items:center;gap:8px}
+.ai-who{display:flex;align-items:center;gap:2px;padding:3px;border-radius:11px;background:linear-gradient(180deg,#fbfcfe,#f1f4f9);border:1px solid rgba(15,23,42,.08);box-shadow:inset 0 1px 0 #fff}
+.ai-who .lb{font:600 10.5px Roboto,sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;padding:0 6px 0 5px}
+.ai-who button{border:0;background:transparent;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 5px;border-radius:8px;font:500 12.5px Roboto,sans-serif;color:#475569;cursor:pointer;transition:background .18s,color .18s,box-shadow .18s}
+.ai-who button:hover{background:rgba(255,255,255,.8);color:#0f172a}
+.ai-who button.on{background:#fff;color:#0f172a;font-weight:600;box-shadow:0 1px 2px rgba(15,23,42,.10),0 3px 10px -4px rgba(99,102,241,.45)}
+.ai-who .dm-av.xs{width:20px;height:20px;flex-basis:20px;font-size:8.5px;margin:0;vertical-align:0;align-self:center}
+
+/* thân */
+.ai-body{background:linear-gradient(180deg,#f3f6fa 0%,#eef2f6 100%);gap:4px;padding:16px 20px 8px}
+.ai-in{animation:aiUp .32s cubic-bezier(.2,.8,.2,1) both}
+@keyframes aiUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ai-hello{margin:auto;max-width:640px;text-align:center;padding:24px 8px;animation:aiUp .4s cubic-bezier(.2,.8,.2,1) both}
+.ai-orb{width:72px;height:72px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px;
+  background:radial-gradient(120% 120% at 20% 10%,#5eead4 0%,#1abc9c 38%,#6366f1 100%);box-shadow:0 14px 34px -12px rgba(99,102,241,.6),inset 0 2px 0 rgba(255,255,255,.4);animation:aiGlow 3.2s ease-in-out infinite}
+@keyframes aiGlow{0%,100%{box-shadow:0 14px 34px -12px rgba(99,102,241,.6),inset 0 2px 0 rgba(255,255,255,.4)}50%{box-shadow:0 14px 40px -8px rgba(26,188,156,.65),inset 0 2px 0 rgba(255,255,255,.4)}}
+.ai-hello h3{font:600 20px Roboto,sans-serif;color:#0f172a;margin:0 0 6px}
+.ai-hello p{font-size:13.5px;color:#475569;margin:0 auto 18px;max-width:520px;line-height:1.6}
+.ai-sug{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left}
+.ai-sug button{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:12px;border:1px solid rgba(15,23,42,.07);background:rgba(255,255,255,.85);font:500 13px/1.35 Roboto,sans-serif;color:#1f2937;cursor:pointer;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);transition:transform .18s,box-shadow .18s,border-color .18s;animation:aiUp .36s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+.ai-sug button:hover{border-color:rgba(26,188,156,.45);box-shadow:0 6px 16px -8px rgba(15,23,42,.25)}
+.ai-sug button i{width:28px;height:28px;flex:0 0 28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:15px;color:#0d9488;background:color-mix(in srgb,#1abc9c 12%,#fff)}
+.ai-sug button:nth-child(5) i,.ai-sug button:nth-child(6) i{color:#4f46e5;background:color-mix(in srgb,#6366f1 12%,#fff)}
+.ai-sug button:nth-child(7) i{color:#64748b;background:#f1f5f9}
+
+.ai-row{display:flex;gap:10px;align-items:flex-start;margin:6px 0 10px;max-width:760px}
+.ai-card{flex:1;min-width:0;background:#fff;border-radius:14px;border:1px solid rgba(15,23,42,.06);box-shadow:0 1px 2px rgba(15,23,42,.05),0 8px 24px -16px rgba(15,23,42,.25);padding:10px 14px 12px}
+.ai-think{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#64748b;padding:4px 0 2px;background:linear-gradient(90deg,#64748b 0%,#64748b 40%,#c7d2fe 50%,#64748b 60%,#64748b 100%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:aiShim 1.4s linear infinite}
+.ai-think .dots{-webkit-text-fill-color:initial}
+.ai-think .dots i{background:#6366f1}
+@keyframes aiShim{from{background-position:100% 0}to{background-position:-100% 0}}
+
+/* các bước */
+.ai-steps{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
+.ai-st{display:grid;grid-template-columns:18px auto 1fr;gap:7px;align-items:center;font-size:12px;color:#64748b;padding:3px 0;animation:aiUp .26s cubic-bezier(.2,.8,.2,1) both}
+.ai-st i{font-size:15px;color:#16a34a}
+.ai-st.tool i{color:#6366f1}
+.ai-st.no i{color:#d97706}
+.ai-st.skip i{color:#94a3b8}
+.ai-st b{font-weight:600;color:#334155;white-space:nowrap}
+.ai-st.no b{color:#b45309}
+.ai-st span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-steps.done .ai-st{display:none;animation:none}
+.ai-steps.done.open .ai-st{display:grid;padding-left:10px;border-left:2px solid #e2e8f0;margin-left:7px}
+.ai-st-tg{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;border:0;background:#f1f5f9;color:#475569;font:500 11.5px Roboto,sans-serif;height:24px;padding:0 9px 0 8px;border-radius:999px;cursor:pointer;margin-bottom:4px;transition:background .15s}
+.ai-st-tg:hover{background:#e2e8f0}
+.ai-st-tg i:last-child{transition:transform .2s}
+.ai-steps.open .ai-st-tg i:last-child{transform:rotate(180deg)}
+.ai-out.deny .ai-st-tg,.ai-card:has(.ai-out.deny) .ai-st-tg{background:#fef3c7;color:#92400e}
+
+/* trả lời */
+.ai-tx{font-size:14px;line-height:1.6;color:#1f2937;margin:2px 0 8px}
+.ai-tx b{color:#0f172a;font-weight:600}
+.ai-caret{display:inline-block;width:7px;height:15px;margin-left:2px;vertical-align:-2px;border-radius:2px;background:linear-gradient(180deg,#1abc9c,#6366f1);animation:aiBlink .8s steps(2) infinite}
+@keyframes aiBlink{50%{opacity:0}}
+.ai-tasks,.ai-meets,.ai-rank,.ai-bars,.ai-pick{display:flex;flex-direction:column;border:1px solid #eef1f5;border-radius:12px;overflow:hidden;margin:4px 0 8px}
+.ai-task{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid #f1f4f8;cursor:pointer;text-decoration:none!important;color:inherit;transition:background .15s;animation:aiUp .3s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+.ai-task:first-child,.ai-mt:first-child,.ai-rk:first-child,.ai-bar:first-child,.ai-pick button:first-child{border-top:0}
+.ai-task:hover{background:#f8fafc}
+.ai-ti{font-size:16px;color:#94a3b8}
+.ai-tt{flex:1;min-width:0}
+.ai-tt b{display:block;font-weight:500;font-size:13.5px;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-tt small{display:block;font-size:11.5px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ai-go{color:#cbd5e1;font-size:18px;transition:transform .15s,color .15s}
+.ai-task:hover .ai-go{color:#1abc9c;transform:translateX(2px)}
+.ai-mt{display:flex;align-items:center;gap:12px;padding:9px 12px;border-top:1px solid #f1f4f8;animation:aiUp .3s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+.ai-mt .dt{width:64px;flex:0 0 64px;text-align:center;border-radius:10px;background:color-mix(in srgb,#6366f1 8%,#fff);padding:4px 0}
+.ai-mt .dt small{display:block;font-size:10.5px;color:#6366f1;font-weight:600}
+.ai-mt .dt b{display:block;font-size:15px;color:#312e81;font-weight:700}
+.ai-mt .tx b{display:block;font-weight:500;font-size:13.5px;color:#111827}
+.ai-mt .tx small{font-size:11.5px;color:#6b7280}
+.ai-mt .tx small i{margin-right:3px}
+.ai-bar{display:grid;grid-template-columns:190px 1fr 28px 30px;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid #f1f4f8;font-size:12.5px;color:#334155}
+.ai-bar .tr{height:8px;border-radius:999px;background:#f1f5f9;overflow:hidden}
+.ai-bar .tr i{display:block;height:100%;width:var(--w);border-radius:999px;background:linear-gradient(90deg,#fbbf24,#dc2626);transform-origin:left;animation:aiGrow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+@keyframes aiGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ai-bar b{text-align:right;color:#0f172a}
+.ai-bar small{color:#94a3b8;font-size:11px}
+.ai-rk{display:flex;align-items:center;gap:10px;padding:8px 12px;border-top:1px solid #f1f4f8;animation:aiUp .3s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+.ai-rk .no{width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font:700 11px Roboto,sans-serif;color:#64748b;background:#f1f5f9}
+.ai-rk .no.n1{background:linear-gradient(180deg,#fde68a,#f59e0b);color:#78350f}
+.ai-rk .no.n2{background:linear-gradient(180deg,#e5e7eb,#9ca3af);color:#1f2937}
+.ai-rk .no.n3{background:linear-gradient(180deg,#fed7aa,#ea580c);color:#7c2d12}
+.ai-rk .tx{flex:1;min-width:0}
+.ai-rk .tx b,.ai-rk .num b{display:block;font-weight:500;font-size:13.5px;color:#111827}
+.ai-rk .tx small,.ai-rk .num small{display:block;font-size:11.5px;color:#6b7280}
+.ai-rk .num{text-align:right}
+.ai-rk .num b{font-weight:700;color:#16a34a}
+.ai-pick{border:0;gap:6px;overflow:visible}
+.ai-pick button{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;text-align:left;transition:border-color .15s,box-shadow .15s;animation:aiUp .3s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+.ai-pick button:hover{border-color:#1abc9c;box-shadow:0 4px 12px -6px rgba(26,188,156,.5)}
+.ai-pick span{flex:1}
+.ai-pick b{display:block;font-weight:500;font-size:13.5px;color:#111827}
+.ai-pick small{display:block;font-size:11.5px;color:#6b7280}
+.ai-pick i{color:#94a3b8;font-size:18px}
+.ai-src{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#94a3b8;margin:2px 0 6px}
+.ai-fu{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.ai-fu button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;font:500 12px Roboto,sans-serif;color:#334155;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.ai-fu button:hover{border-color:#1abc9c;color:#0f766e;background:#f0fdfa}
+.ai-fu button i{font-size:13px;color:#1abc9c}
+.ai-fu button.pri{border-color:transparent;background:#1abc9c;color:#fff}
+.ai-fu button.pri i{color:#fff}
+.ai-fu button.pri:hover{background:#17a589}
+
+/* bị chặn — vàng hổ phách, không dùng đỏ */
+.ai-deny{display:flex;gap:12px;padding:12px 14px;border-radius:12px;background:linear-gradient(180deg,#fffbeb,#fff7e6);border:1px solid #fde68a;margin:2px 0 8px;animation:aiUp .3s cubic-bezier(.2,.8,.2,1) both}
+.ai-deny .ic{width:36px;height:36px;flex:0 0 36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:#b45309;background:#fef3c7;box-shadow:inset 0 0 0 1px #fde68a;animation:aiShake .5s .15s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes aiShake{20%,60%{transform:rotate(-10deg)}40%,80%{transform:rotate(10deg)}}
+.ai-deny b{display:block;font-size:14px;font-weight:600;color:#78350f}
+.ai-deny p{margin:2px 0 8px;font-size:13px;color:#57534e;line-height:1.5}
+.ai-need{display:flex;align-items:center;gap:8px;font-size:12px;color:#78716c;margin-bottom:6px}
+.ai-need code{font:600 12px Roboto,sans-serif;color:#92400e;background:#fff;border:1px solid #fde68a;padding:2px 8px;border-radius:6px}
+.ai-safe{display:flex;align-items:center;gap:6px;font-size:12px;color:#15803d}
+.ai-out.na .ai-tx{padding:10px 12px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155}
+
+.ai-swap{display:flex;justify-content:center;margin:10px 0}
+.ai-swap span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#475569;background:rgba(255,255,255,.9);border:1px solid #e2e8f0;border-radius:999px;padding:4px 12px 4px 6px;animation:aiUp .3s cubic-bezier(.2,.8,.2,1) both}
+.ai-swap .dm-av.xs{width:18px;height:18px;flex-basis:18px;font-size:8px;margin:0;vertical-align:0}
+
+/* thanh soạn */
+.ai-comp .dm-inrow textarea:focus{border-color:#1abc9c;box-shadow:0 0 0 3px color-mix(in srgb,#1abc9c 14%,transparent)}
+.ai-chips{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}
+.ai-chl{font:600 10.5px Roboto,sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;flex:0 0 auto}
+.ai-chips button{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;border:1px solid #e2e8f0;background:#fff;font:500 12px Roboto,sans-serif;color:#475569;cursor:pointer;white-space:nowrap;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;transition:border-color .15s,color .15s}
+.ai-chips button:hover{border-color:#1abc9c;color:#0f766e}
+.ai-chips button i{color:#1abc9c}
+
+/* cột phải: phân quyền */
+.ai-side{padding:12px 14px 16px;display:flex;flex-direction:column;gap:10px}
+.ai-me{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:linear-gradient(180deg,#f8fafc,#f1f5f9);border:1px solid #e2e8f0}
+.ai-me b{display:block;font-size:13.5px;color:#0f172a}
+.ai-me small{display:block;font-size:11.5px;color:#6b7280}
+.ai-me .dm-av{align-self:center}
+.ai-note{display:flex;gap:8px;font-size:12px;line-height:1.5;color:#334155;padding:9px 10px;border-radius:10px;background:color-mix(in srgb,#1abc9c 7%,#fff);border:1px solid color-mix(in srgb,#1abc9c 22%,#fff)}
+.ai-note i{color:#0d9488;font-size:16px}
+.ai-sec{font:600 11px Roboto,sans-serif;text-transform:uppercase;letter-spacing:.05em;color:#64748b;display:flex;align-items:center;gap:6px;margin-top:2px}
+.ai-sec small{font-size:11px;color:#94a3b8}
+.ai-perms{display:flex;flex-wrap:wrap;gap:5px}
+.ai-perms span{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:2px 8px;animation:aiUp .25s both}
+.ai-mx{width:100%;border-collapse:separate;border-spacing:0;font-size:11.5px;border:1px solid #eef1f5;border-radius:10px;overflow:hidden}
+.ai-mx th{font-weight:600;color:#64748b;font-size:10.5px;padding:6px 4px;background:#f8fafc;text-align:center;transition:background .2s,color .2s}
+.ai-mx th:first-child{text-align:left}
+.ai-mx td{padding:6px 4px;border-top:1px solid #f1f4f8;text-align:center;color:#334155;transition:background .2s}
+.ai-mx td:first-child{text-align:left;padding-left:8px;line-height:1.35}
+.ai-mx .cur{background:color-mix(in srgb,#1abc9c 9%,#fff)}
+.ai-mx th.cur{color:#0f766e}
+.ai-y{color:#16a34a;font-size:14px}.ai-n{color:#d97706;font-size:13px}.ai-x{color:#94a3b8;font-size:13px}
+.ai-p{font-size:9.5px;font-weight:600;color:#0369a1;background:#e0f2fe;border-radius:4px;padding:1px 4px}
+.ai-leg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:#6b7280}
+.ai-leg span{display:inline-flex;align-items:center;gap:3px}
+.ai-log{display:flex;flex-direction:column;gap:4px}
+.ai-lg{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;background:#f8fafc;animation:aiUp .3s both}
+.ai-lg i{font-size:14px;margin-top:1px;color:#16a34a}
+.ai-lg.deny i{color:#d97706}.ai-lg.na i{color:#94a3b8}.ai-lg.ask i{color:#0ea5e9}
+.ai-lg b{display:block;font-weight:500;font-size:12px;color:#1f2937;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}
+.ai-lg small{display:block;font-size:11px;color:#6b7280}
+.cx-wrap.ai-on .dm-info{width:320px;flex-basis:320px}
+
+@media (prefers-reduced-motion:reduce){.ai-in,.ai-hello,.ai-sug button,.ai-task,.ai-mt,.ai-rk,.ai-st,.ai-deny,.ai-deny .ic,.ai-orb,.ai-bar .tr i,.ai-pick button,.ai-swap span,.ai-lg,.ai-perms span{animation:none!important}}
+.ai-mx{table-layout:fixed}
+.ai-mx th,.ai-mx td{white-space:normal;min-width:0;width:auto}
+.ai-mx th:first-child,.ai-mx td:first-child{width:46%}
+.ai-mx th{line-height:1.2;letter-spacing:0}
+.ai-mx th,.ai-mx td{white-space:normal!important;overflow-wrap:break-word}
+.ai-who button,.ai-who .lb{white-space:nowrap}
+.ai-who button{padding:0 9px 0 4px}
+.ai-sug button{text-align:left}
+.ai-chips button{max-width:250px}
+.ai-chips button span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ai-mx th{overflow-wrap:normal;word-break:keep-all;padding:6px 2px}
+.ai-mx th:first-child,.ai-mx td:first-child{width:42%}
+/* 11/11 token theo lượt + hạn mức */
+.ai-use{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:11px;color:#94a3b8;margin-top:8px;padding-top:7px;border-top:1px dashed #e8edf3;font-variant-numeric:tabular-nums}
+.ai-use i{color:#a5b4fc;font-size:12px}
+.ai-use span{color:#cbd5e1}
+.ai-use b{font-weight:600;color:#64748b}
+.ai-lg small.tk{color:#94a3b8;font-variant-numeric:tabular-nums}
+.ai-quota{padding:10px 12px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;display:flex;flex-direction:column;gap:6px;font-size:12px;color:#64748b}
+.ai-quota .h,.ai-quota .f{display:flex;justify-content:space-between;align-items:baseline}
+.ai-quota b{color:#0f172a;font-weight:600;font-variant-numeric:tabular-nums}
+.ai-quota .bar{height:6px;border-radius:999px;background:#f1f5f9;overflow:hidden}
+.ai-quota .bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1abc9c,#6366f1);transition:width .4s cubic-bezier(.2,.8,.2,1)}
+.ai-stat{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;border:1px solid #e2e8f0;color:#334155!important;font-size:12.5px;font-weight:500;text-decoration:none!important;transition:border-color .15s,background .15s}
+.ai-stat:hover{border-color:#1abc9c;background:#f0fdfa}
+.ai-stat i:first-child{color:#6366f1;font-size:16px}
+.ai-stat small{font-size:10.5px;color:#94a3b8;margin-left:auto}
+.ai-stat i:last-child{color:#94a3b8}
+.ai-pick span.dm-av{flex:0 0 32px}
+/* 11/11 [U] TPE SMART AGENT — linh vật + màu thương hiệu Tân Phát ETEK (#2B59A7, lấy từ logo-etek.jpg) */
+.ai-av{background:radial-gradient(120% 120% at 30% 15%,#ffffff 0%,#e3ecfa 55%,#c4d6f3 100%);box-shadow:0 3px 10px -4px rgba(43,89,167,.55),inset 0 0 0 1px rgba(43,89,167,.18);overflow:hidden}
+.ai-av .tpa{width:86%;height:86%;margin-top:6%}
+.ai-tag{background:linear-gradient(90deg,#2B59A7,#4f86d9)}
+.ai-hd .dm-hd-t small i{background:#2B59A7}
+.ai-hd .dm-hd-t b{letter-spacing:.02em}
+.ai-it .dm-nm span:first-child{letter-spacing:.02em}
+.ai-orb{width:132px;height:140px;border-radius:0;background:none!important;box-shadow:none!important;animation:none;margin-bottom:6px}
+.ai-orb .tpa-full{width:100%;height:100%;overflow:visible;animation:tpaBob 3.2s ease-in-out infinite}
+@keyframes tpaBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.tpa-eyes{transform-box:fill-box;transform-origin:center;animation:tpaBlink 4.6s infinite}
+@keyframes tpaBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.tpa-bulb{animation:tpaBulb 2.4s ease-in-out infinite}
+@keyframes tpaBulb{0%,100%{fill:#FBBF24}50%{fill:#FDE68A}}
+.tpa-wave{transform-box:view-box;transform-origin:42px 75px;animation:tpaWave 2.4s ease-in-out infinite}
+@keyframes tpaWave{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(18deg)}80%{transform:rotate(-6deg)}90%{transform:rotate(14deg)}}
+.ai-name{color:#2B59A7;letter-spacing:.02em}
+.ai-slogan{font:italic 600 13px Roboto,sans-serif;color:#2B59A7;margin:-2px 0 10px}
+.ai-caret{background:#2B59A7}
+.ai-quota .bar i{background:linear-gradient(90deg,#2B59A7,#4f86d9)}
+.ai-quota .src{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#6b7280;border-top:1px dashed #e8edf3;padding-top:6px}
+.ai-quota .src b{font-weight:500;color:#374151}
+.ai-think .dots i{background:#2B59A7}
+.ai-use i{color:#7fa2d8}
+.ai-st.tool i{color:#2B59A7}
+@media (prefers-reduced-motion:reduce){.ai-orb .tpa-full,.tpa-eyes,.tpa-bulb,.tpa-wave{animation:none!important}}
+.ai-quota .src{display:block;line-height:1.5}
+.ai-quota .src i{margin-right:4px;vertical-align:-1px}

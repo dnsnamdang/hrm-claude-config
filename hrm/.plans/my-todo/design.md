@@ -426,3 +426,29 @@ Thiet ke chi tiet da duoc tao tren Pencil:
 5. **Nhieu vai tro** — neu user vua la assignee vua la watcher cua 1 task, chi hien 1 lan voi source uu tien: assigned > approver > watching
 6. **Performance** — su dung eager loading, chi SELECT cac truong can thiet, cache Redis 1-2 phut cho calendar_summary
 7. **Sub-task chi 1 cap** — khong cho tao sub-task cua sub-task
+
+## Thiết kế app mobile — vị trí file (cập nhật 07/11/2026)
+- Từ 07/11/2026 **mọi phân hệ mobile làm chung 1 file** `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` (user chốt).
+- Bản MyTodo cũ (`mytodo.pen`, 28/10 — style cam #E8972C) đã dán vào khu **VIỆC CỦA TÔI (APP)** x 22000, từ y 1200 (07/11 chỉ còn B1–B4, C2, C3, C5 — phần đã có bản thay đã xoá; chỉ tham khảo, sẽ vẽ lại theo style phân hệ Công việc + thanh dưới U26). Nhóm ⑮ Lịch công tác lãnh đạo dời về cùng khu (y 4050).
+- `mytodo.pen` giữ để lưu trữ, KHÔNG sửa tiếp. Backup trước khi gộp: `meeting-mobile.backup-20261107-truoc-gop-mytodo.pen`, `mytodo.backup-20261107-truoc-gop.pen`.
+
+## Vẽ lại app "Việc của tôi" theo style phân hệ Công việc (07/11/2026)
+Khu VIỆC CỦA TÔI (APP) trong `meeting-mobile.pen`, Nhóm ① (x 22000, y −1580): MT-01…MT-04. Bản cũ còn giữ từ y 1200 (B1–B4, C2, C3, C5 — 07/11 đã xoá A1–A4, C1, C4, C6, D1, Title, Ghi chú tư vấn), Nhóm ⑮ từ y 4050.
+- **Chốt 07/11 (user "làm"): nhóm "Đã kết thúc"** — việc Hoàn thành / Dừng-Huỷ không chia theo hạn, gom vào nhóm riêng CUỐI (sau Quá hạn); chỉ xuất hiện khi bảng lọc có chọn Hoàn thành hoặc Dừng/Huỷ; mặc định thu gọn, nếu chỉ lọc trạng thái kết thúc thì tự mở; tiêu đề ghi "30 ngày gần nhất"; trong nhóm vẫn xếp theo ⇅; thẻ xám, không nút hành động, không tính "trễ". ⇒ hết lỗi meeting đã họp nằm ở Quá hạn. **Chưa code** (app `my_todo_list_view.dart` `_group()` + web `TodoMainList.vue` nếu muốn đồng bộ) — cần xin phép riêng.
+- Claude tự chốt (khuôn UI): header xanh + nút gạt 2 tab dưới header (giữ tên "Công việc của tôi" / "Lịch làm việc"); thanh công cụ kiểu NV2-01 (tổng + quá hạn · 🔍 · ☰ · ⇅, chấm xanh khi khác mặc định); tiêu chí đang lọc thành chip ✕ + "Xoá lọc"; sheet Sắp xếp chạm là áp dụng, footer chỉ Đóng; bảng lọc footer Đặt lại · Áp dụng · Đóng.
+- Còn lại: Nhóm ② tab Lịch làm việc (dải tuần + agenda, lịch tháng, lọc lịch, việc nhiều ngày) + chi tiết C1–C6 + trạng thái rỗng — vẽ lại theo `my_todo_calendar_view.dart`.
+- ~~07/11 nút gạt "Loại việc"~~ — BỎ, thay bằng phương án dưới (user đổi thiết kế cùng ngày).
+- **Chốt 07/11 — "Loại nhắc việc" thay cho "Danh sách" (đồng bộ web + app)** — mockup MT-05 (form), MT-06 (sheet chọn), MT-07 (thêm nhanh); LCT-05/06/07/09 cũng đã đổi nhãn.
+  - Dữ liệu giữ nguyên bảng `personal_todo_lists` (theo từng user); chỉ đổi TÊN hiển thị: ô form "Danh sách" → "Loại nhắc việc"; web sidebar "DANH SÁCH CÁ NHÂN" → "LOẠI NHẮC VIỆC"; "Tạo/Sửa danh sách" → "Tạo/Sửa loại nhắc việc".
+  - Mỗi user luôn có **2 loại mặc định: "Việc cá nhân", "Việc công ty"** — KHÔNG sửa tên / xoá được (ẩn Sửa/Xoá ở web `TodoListDetail` + chặn ở BE `updateList`/`destroyList`). Cần cột đánh dấu (vd `system_key` = personal|company) → migration.
+  - Form Tạo chọn sẵn **"Việc cá nhân"**.
+  - Danh sách mặc định cũ (BE `getOrCreateDefaultList` tạo tên `'Mac dinh'`, `MyTodoService.php:40`) **chuyển thành "Việc cá nhân"** (đổi tên + gắn cờ), nhắc việc cũ giữ nguyên. Tạo thêm "Việc công ty" cho mọi user. Danh sách người dùng tự tạo giữ nguyên = loại tự tạo. `getOrCreateDefaultList` đổi thành đảm bảo đủ 2 loại mặc định (không lấy "first()" nữa).
+  - **Thêm nhanh**: app — dòng "+ Thêm loại nhắc việc" cuối sheet → ô nhập + [Thêm] ngay trong sheet; web — dòng tương tự cuối ô select. **(08/11 user chốt: web theo skill — nút `V2BaseQuickAddButton` "Thêm nhanh loại nhắc việc" cạnh nhãn, không làm dòng trong select.)** Thêm xong tự chọn loại mới. Tên trùng (kể cả 2 loại mặc định) báo lỗi.
+  - Claude tự chốt: app chỉ chọn + thêm nhanh; sửa tên / xoá loại tự tạo làm ở web. 2 loại mặc định đứng đầu, nhãn khoá "Mặc định"; loại tự tạo theo thứ tự kéo thả của web.
+  - Chưa code — cần migration (cột cờ + đổi tên 'Mac dinh' + tạo 'Việc công ty' cho mọi user) → liệt kê migration + xin phép riêng. Khi làm nhớ đếm trên DB: số user có 'Mac dinh', số user có danh sách tự tạo trùng tên "Việc cá nhân"/"Việc công ty".
+
+## Nhóm ③ tab Lịch làm việc — vẽ lại 07/11/2026 (mockup L-01…L-04, `meeting-mobile.pen` khu VIỆC CỦA TÔI y −200)
+- Bám app đang chạy (`my_todo_calendar_view.dart`): dải tuần mặc định ↔ lưới tháng (nút gạt Tuần/Tháng + thanh kéo + vuốt), chấm loại việc dưới ngày (≤ 2 + "+"), Bộ lọc dùng chung MT-03 (Loại + Trạng thái chọn nhiều), danh sách việc của NGÀY ĐANG CHỌN, việc nhiều ngày hiện ở mọi ngày.
+- Điểm mới / lệch app (chờ user kiểm trên máy): thẻ có dòng liên hệ (DB-10); việc nhiều ngày ghi "Ngày n/N của chuyến"; tiêu chí đang lọc thành chip ✕ + "Xoá lọc" (app hiện chỉ đếm số trên nút); ngày trống có câu "Ngày này chưa có việc" + nút ĐỀ XUẤT "Tạo nhắc việc ngày dd/MM" (form điền sẵn Ngày hạn); hôm nay viền xanh khi đang chọn ngày khác.
+- Đã xoá B1–B4 bản cũ (gốc còn trong mytodo.pen).
+- Checkpoint 07/11 (wrap up): nhóm ③ L-01…04 đã vẽ, chờ user so với app trên máy; chưa có lệnh code cho các điểm lệch (chip lọc, "Ngày n/N của chuyến", ngày trống + nút tạo nhắc việc, tab đặt dưới header).

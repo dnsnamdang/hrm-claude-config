@@ -1,5 +1,7 @@
 # Runbook go-live — Vai trò & Quyền giai đoạn 1
 
+> **01/11/2026:** bản chạy theo, rút gọn cho cửa sổ bảo trì: `cua-so-go-live-nhanh.md` (cùng folder). File này vẫn là nguồn chi tiết + mục C.
+
 > Nguồn: review cuối toàn nhánh `rbac` (26/10/2026, `wt-rbac/hrm-api/.superpowers/sdd/plan/final-review.md`) + các quyết định user trong ledger.
 > Mọi bước ghi DB / đụng source vẫn phải hỏi user và nhận "làm" theo CLAUDE.md gốc.
 
@@ -16,6 +18,10 @@
   - Tenant không có ERP: cờ `--erp-da-bao-tri` vẫn phải truyền (chỉ là xác nhận), bỏ bước B6/ERP.
   - Danh sách cấp lại quyền (bước A.3) làm riêng cho từng tenant từ báo cáo của DB đó.
 
+> **Quyết định user 30/10/2026: đợt go-live đầu CHỈ TPE — chưa cập nhật etek, toyota.** Hệ quả: sau khi `rbac` vào `gop_db`, etek/toyota
+> **không được deploy/kéo code `gop_db` mới** cho tới khi làm cửa sổ chuyển đổi riêng cho tenant đó (code mới + DB chưa chuyển đổi ⇒ khoá
+> toàn bộ người dùng). Trước giờ G: xác nhận etek/toyota không có cơ chế tự kéo `gop_db`.
+
 ## A. Trước cửa sổ bảo trì (vài ngày trước)
 
 1. **Đóng băng quyền:** không thêm/đổi tên quyền, không merge nhánh thêm quyền vào `gop_db`. Nhánh `rbac` chưa vào `gop_db`.
@@ -25,14 +31,19 @@
    3. `php artisan rbac:convert --dry-run --report-dir=… --scope-decisions=<scope-decisions.csv>` — cổng: mã thoát 0, `chenh-lech-khac.csv` chỉ có tiêu đề.
    4. Phát lại cho quản trị viên các danh sách từ **lần chạy này** (không dùng số 25/10): `mat-do-bit-ro`, `mat-do-cong-ty-qua-vai-tro` (cột "dùng được trên giao diện"), `thieu-quyen-xem`, `du-lieu-tro-role-id`, `vai-tro-khong-chuyen`.
    5. Chạy thật trên DB diễn tập ⇒ `permission:catalog-sync --dry-run` phải 0 thay đổi ⇒ trỏ 2 app vào DB diễn tập, chạy 2 bộ test Rbac ⇒ Playwright 3 tài khoản (1 công ty, 2 công ty, Super Admin), đếm menu/nút khớp CSV. Ghi thời gian chạy chuyển đổi và thời gian `mysqldump`.
-3. **Quản trị viên cấp lại quyền trong hệ thống CŨ** theo danh sách bước 2.4 (sau go-live không có màn sửa quyền tới giai đoạn 2). Báo trước người dùng Super Admin: đã bỏ mọi đặc quyền (quyết định 25–26/10) — gồm cả ô chọn mọi phòng ban, thủ kho/kế toán mọi kho, mọi hãng ở bộ lọc NCC PI, bỏ qua người mua/người duyệt/phân vùng, mở nháp người khác, bỏ qua hạn xử lý.
+3. ~~**Quản trị viên cấp lại quyền trong hệ thống CŨ** theo danh sách bước 2.4 (sau go-live không có màn sửa quyền tới giai đoạn 2).~~
+   **[Lỗi thời 01/11]** GĐ2/GĐ2b đã có màn sửa quyền (`/admin/roles`, `/admin/employee-roles`) đi cùng đợt ⇒ dời việc cấp lại sang SAU go-live, trên hệ thống mới. Phần báo trước Super Admin bên dưới vẫn giữ. Báo trước người dùng Super Admin: đã bỏ mọi đặc quyền (quyết định 25–26/10) — gồm cả ô chọn mọi phòng ban, thủ kho/kế toán mọi kho, mọi hãng ở bộ lọc NCC PI, bỏ qua người mua/người duyệt/phân vùng, mở nháp người khác, bỏ qua hạn xử lý.
 4. **Sửa script e2e + seeder** đang dựa vào vai trò 18 / tên "Super Admin" / `role_has_permissions.company_id` (chờ user cho phép).
 
 ## B. Trong cửa sổ bảo trì
 
 1. **Hạ 2 app:** hrm-api `php artisan down --secret=<token>`; ERP `php artisan down --allow=<IP quản trị>`. Tắt cron (`schedule:run` của `erp_tpe` và cron ERP).
 2. **Sao lưu:** `mysqldump` đầy đủ `hrm_erp_gop` trên 192.168.122.103. **Đây là điểm khôi phục chính.**
-3. **Deploy hrm-api** (capistrano: composer, `migrate`, restart worker). Cổng: `migrate:status` không còn bản chờ, 5 migration `2026_11_01_*` đã chạy, `permission_aliases` = 0 dòng.
+3. **Deploy hrm-api** (capistrano: composer, `migrate`, restart worker). Cổng: `migrate:status` không còn bản chờ, 7 migration đợt này đã chạy (`2026_11_01_000001..000005`, `2026_11_02_000001`, `2026_11_02_000010`), `permission_aliases` = 0 dòng.
+   - **GĐ2c (01/11):** trước deploy, thêm `RBAC_GROUP_SCOPE_ADMINS=13` vào `.env` HRM prod (`/var/www/tpe/hrm-api`), sau deploy `config:cache`.
+     Migration `2026_11_02_000010_add_allow_group_scope_to_companies` chạy cùng loạt này (chỉ thêm cột, mặc định 1 — hành vi không đổi;
+     trước hay sau `rbac:convert` đều được). Cổng: `SELECT COUNT(*) FROM companies WHERE allow_group_scope <> 1` = 0.
+     Code chịu được khi chưa có cột (coi như mọi công ty được phép), nên lệch thứ tự deploy/migrate không làm hỏng kiểm quyền.
 4. **Chuyển đổi** (user `erp_tpe`, `/var/www/tpe/hrm-api`):
    `php artisan rbac:convert --erp-da-bao-tri --report-dir=storage/app/rbac-convert/golive --scope-decisions=<csv>`
    (lệnh từ chối chạy thật nếu hrm-api chưa `down` hoặc thiếu cờ `--erp-da-bao-tri`). Ngay sau đó:
@@ -45,6 +56,7 @@
    | 1 trước commit | Dữ liệu chưa đổi | Xoá `bak_rbac_*` / `rbac_new_*` / `rbac_role_map` rỗng, huỷ hoặc chạy lại |
    | 1 kèm "DDL lỗi" | Dữ liệu đã commit, DDL chưa xong | Sửa nguyên nhân rồi `rbac:convert --resume-ddl --erp-da-bao-tri --report-dir=…/golive` (cũng cần hrm-api đang down) |
 5. **Kiểm bằng SQL** (sau B.4b): `role_has_permissions` không còn `company_id`; `roles.company_id` NOT NULL + unique `(company_id, base_name)`; `rbac_role_map` có dòng; số dòng khớp diễn tập. Rồi `permission:catalog-sync --dry-run` = 0 thay đổi.
+5b. **Cấp mã GĐ3b** (sau bước 5, trước khi tắt 6 công ty GĐ2c và trước deploy ERP): `rbac:grant-role-name-codes --dry-run` ⇒ chạy thật ⇒ `--verify` "Dòng lệch: 0" ⇒ xoá cache quyền như B.4b. Lệnh chỉ thêm `role_has_permissions` vào Vai trò mang tên Tổng giám đốc / Giám đốc / Ban giám đốc / Kế toán / Chăm sóc khách hàng / Quản lý / Quản lý đào tạo (bảng `RoleNameCodeMap`), chạy lại không nhân bản. Rehearsal 02/11: 18 Vai trò · thêm 85; verify 20 dòng lệch đều của 2 employee_id không tồn tại (mồ côi, B.4b dọn) ⇒ lệch thật 0. Chi tiết + lui: `cua-so-go-live-nhanh.md` khối 5b.
 6. **Deploy ERP:** merge/push `rbac` vào `gop_db` TanPhatDev lúc này (workflow: `git pull`, `composer install --optimize-autoloader`, `migrate`, `config:cache`, `route:cache`, `view:cache`, `queue:restart`, `optimize`). Rồi `sudo systemctl reload apache2`.
 7. **Cache:** HRM — chuyển đổi đã xoá cache spatie. ERP — cache spatie 0 giây. **Không** `cache:clear` trên Redis dùng chung.
 8. **Khởi động lại worker sau chuyển đổi:** HRM `sudo supervisorctl restart laravel-worker:*`; ERP `php artisan queue:restart`.
@@ -129,3 +141,6 @@ Chạy ngay sau B4 (cần `bak_rbac_*` còn nguyên), trước B5. Diễn tập 
 - 3 quyền mới "Xem … của tất cả công ty" (danh mục kho, tồn kho đầu kỳ, huỷ hàng giữ kế toán).
 - 2 phiếu kiểm kê (nhập kiểm kê, xử lý chênh lệch) trước nay không ai mở/sửa được do lỗi kiểm vai trò — nay người có quyền dùng được.
 - "BGĐ duyệt bảng chia thưởng" trước nay không ai duyệt được — nay người có quyền duyệt được.
+- **GĐ3b:** các chỗ trước kiểm theo TÊN Vai trò nay kiểm mã (design `gd3b-doi-vai-tro-sang-ma/design.md` 4.1, F1–F15). Đổi thấy được: Tổng giám đốc cũng thấy ô Phòng ban ở ô lọc (Q5 `>=`); Giám đốc qua các nhánh chỉ-Trưởng-phòng của chứng từ bán hàng (F7); danh sách chứng từ "theo phòng" người không đủ phạm vi nay chỉ thấy phiếu mình tạo (trước thấy hết — vá fail-open); duyệt vượt hạn mức HĐ dự án TKT và xoá liên hệ KH chỉ tính mã ở công ty đang làm (Q4); thông báo đề nghị thanh toán bảo hành gửi người giữ mã ở công ty của phiếu.
+- **GĐ2c:** màn Quản trị › "Cấu hình phạm vi Tổng công ty" chỉ hiện với tài khoản trong `RBAC_GROUP_SCOPE_ADMINS` (lúc lên = NV 13). Công ty bị
+  tắt: vai trò của công ty đó không chọn được "Tổng công ty"; quyền đang để Tổng công ty tính như Công ty (cả HRM lẫn ERP); bật lại có hiệu lực ngay.

@@ -153,8 +153,8 @@ Chọn `warehouse` [Claude chốt]: 58 mã, 20 có phạm vi, 12 mã chung 2 n�
 
 Mỗi phân hệ là **một task con** đi đủ các bước Task 7 (mốc trước → đổi → test → mốc sau → Playwright → scan 0). Thứ tự [Claude chốt] nhỏ → lớn, ERP-nặng xen HRM-nặng:
 
-- [x] 8.1 `lookup` · [x] 8.2 `admin` (gồm gate các màn GĐ2/2b đang gác tên cũ) · [x] 8.3 `meeting` · [x] 8.4 `rice` · [x] 8.5 `timesheet` · [x] 8.6 `human` · [x] 8.7 `decision` · [x] 8.8 `presale` · [x] 8.9 `accounting` · [x] 8.10 `payroll` · [x] 8.11 `training` · [x] 8.12 `assign` · [x] 8.13 `customer_care` · [ ] 8.14 `finance` · [ ] 8.15 `purchase` · [ ] 8.16 `sale` · [ ] 8.17 `master_data`
-- [ ] 8.18 Super Admin + `hasRole` còn lại (design 4.3): chỗ không tìm được mã ⇒ liệt kê `gd3-kiem-quyen-theo-ma/has-role-chua-co-ma.csv`, **dừng hỏi user**.
+- [x] 8.1 `lookup` · [x] 8.2 `admin` (gồm gate các màn GĐ2/2b đang gác tên cũ) · [x] 8.3 `meeting` · [x] 8.4 `rice` · [x] 8.5 `timesheet` · [x] 8.6 `human` · [x] 8.7 `decision` · [x] 8.8 `presale` · [x] 8.9 `accounting` · [x] 8.10 `payroll` · [x] 8.11 `training` · [x] 8.12 `assign` · [x] 8.13 `customer_care` · [x] 8.14 `finance` · [x] 8.15 `purchase` · [x] 8.16 `sale` · [x] 8.17 `master_data`
+- [x] 8.18 Super Admin + `hasRole` còn lại (design 4.3): chỗ không tìm được mã ⇒ liệt kê `gd3-kiem-quyen-theo-ma/has-role-chua-co-ma.csv`, **dừng hỏi user**.
 - [ ] 8.19 Gỡ `checkPermissionList*` (hrm-api `app/Helper/PermissionHelper.php:244-470`) khi không còn chỗ gọi.
 
 ## Phần E — TPE_APP, chốt chặt, tài liệu, merge cuối
@@ -219,3 +219,51 @@ Bước tiếp theo: dispatch lại 8.14 finance từ base `snap-8.13c.txt` (bri
 Cần hỏi user cuối đợt — tên quyền lạ (đang luôn false): kho 3 tên; 'Bảng chấm công chi tiết'; 'Duyệt thông báo nội bộ'; 'Quản lý thân nhân'; 4 tên RewardMode/RewardTitle; loại HĐLĐ (3); hạng mục dự án; 'Quản lý tài khoản'; hoa hồng (2); khảo sát "theo theo công ty", 'Duyệt đề xuất đào tạo', vị trí "phòng ban  "; 'Duyệt quyết toán hợp đồng'; 'Duyệt PL giảm HDDV'.
 Checklist deploy: đồng bộ Catalog trước khi lên (ERP topmenubar/partial Datatable/middleware kiểm thẳng mã accounting.*, customer_care.phieu.view…); `queue:restart`; JWT ERP ~145KB. API đổi giá trị `isShow` tên→mã: training dashboard getData, assign dashboard.
 Blocked: —
+
+### Checkpoint — 29/10/2026 (Task 8: xong 8.14 → 8.17, commit local CHƯA push, dừng ở 8.18)
+
+Commit local nhánh `rbac` (chưa push, chưa merge gop_db):
+- 8.14 finance: hrm-api dd62184a3 · ERP e62a1448fe · client db0899edf
+- 8.15 purchase: ERP e612efd1ce
+- 8.16 sale: hrm-api ad06197aa · ERP 330d923022 · client c2f15713d
+- 8.17 master_data: hrm-api 91eabc900 · ERP 83f96d0c69 · client 1fedbf942 — mốc `snap-8.17c.txt`
+
+Mỗi phân hệ đều khớp mốc HTTP trước/sau và đã qua review độc lập. Riêng 8.17 có 7 ô device_errors lệch, chỉ ở khoá debug `queries` của yajra. Rbac ERP full xanh: 103 test, 26 phút. Golden sale/purchase đã bỏ khoá thời gian khi tính băm `dong` vì test MasterData hrm-api làm trôi `companies#1`.
+Bước tiếp theo: 8.18 Super Admin + has_role — chờ user quyết. Đã thấy CustomerService.php:2504-2512. Cuối đợt cần hỏi user: danh sách tên lạ bị ép false (sổ cái + task-8.14..8.17-report), ngoại lệ Super admin ở `costPricePermission.js` (Task 12), checklist deploy (đồng bộ Catalog finance/purchase/sale/master_data, `queue:restart`, socket còn đọc claim tên cũ trong JWT).
+
+### Checkpoint — 29/10/2026 (ngoài luồng GĐ3: dựng lại UI màn Phân quyền theo mockup)
+Vừa hoàn thành: user báo `/admin/roles/:id/permissions` lệch mockup `.plans/demo-man-hinh-ke-toan/demo/phan-quyen.html`, cho "làm". Kết quả:
+- Dựng lại `hrm-client/pages/admin/roles/_id/permissions.vue` + `components/PermissionTree.vue` (wt-rbac, nhánh rbac): băng tiêu đề có ô Công ty + nút Danh sách; bộ lọc có nhãn + Xoá lọc; thẻ "Cây quyền"; mỗi phân hệ 1 thẻ xanh mang nhãn nhóm; bảng Loại · Tên quyền · Phạm vi.
+- Quyền có phạm vi chọn bằng ô cấp, option "— Không xem/duyệt —" có giá trị `'0'`; quyền không phạm vi dùng ô tick.
+- Tổng hợp theo chức năng, có nhãn cấp. Footer chỉ còn "Lưu phân quyền".
+- Giữ phần design thêm so với mockup: mã quyền, ERP/HRM, lọc Nền tảng, "Chỉ hiện quyền đã chọn", đếm theo loại, số thay đổi chưa lưu.
+- Đã kiểm bằng Playwright (Super admin id 18 + tài khoản không quyền id 24). Spec `HRM/e2e/tests/admin/admin-roles.spec.ts` đã cập nhật nhưng CHƯA chạy.
+Đang làm dở: —. CHƯA commit (để nguyên theo luật; khi commit 8.18 phải add theo path, KHÔNG kéo 2 file này vào).
+Bước tiếp theo: user xem lại màn; chạy e2e admin-roles khi user yêu cầu.
+
+
+### Checkpoint — 30/10/2026 (wrap up)
+Vừa hoàn thành:
+- 8.18: bỏ đặc quyền Super admin / Admin Role ở 11 chỗ; CSV `has-role-chua-co-ma.csv` 244 dòng (169 chưa có mã). Commit local ERP `a51bdd3def`, client `68c18bbbc`.
+- Màn Vai trò theo mockup + tối ưu, popup Quyền đang có / Người giữ, sửa đếm "Số người giữ". Commit local hrm-api `d9359428f`, client `449cbd4ec`.
+- Thêm 3 bộ lọc màn Vai trò; thẻ vai trò gọn ở Vai trò nhân viên (CHƯA commit). E2E admin-roles 14/14, admin-employee-roles 16/16, Rbac hrm-api 394 OK.
+- Video HDSD phần phân quyền (`../video/huong-dan-phan-quyen.mp4`, 8'27", 79 bước) + skill `.claude/skills/video-creator-docs`.
+
+Đang làm dở: thay đổi chưa commit — hrm-api `RoleController.php`, `RoleManagementService.php`, `routes/api.php`, `AdminRoleApiTest.php`; hrm-client `pages/admin/roles/index.vue`, `pages/admin/employee-roles/_id/index.vue`.
+Bước tiếp theo: user quyết các mục trong `van-de-ton.md` (169 has_role theo nhóm, tên quyền lạ, push 4 commit local) → commit đợt bộ lọc → 8.19 gỡ `checkPermissionList*`.
+Blocked: chờ user quyết has_role / push.
+
+### Checkpoint — 30/10/2026 tối (chốt lịch go-live)
+Vừa hoàn thành: chốt với user — go-live 31/10/2026 CHỈ TPE (etek/toyota để sau, đã ghi `../gd1-nen-du-lieu/runbook-go-live.md`). Việc tồn quyền/vai trò xử lý dần sau go-live.
+Đang làm dở: đợt bộ lọc màn Vai trò + thẻ vai trò gọn (chưa commit); 4 commit local chưa push.
+Bước tiếp theo: phiên mới — đo khối lượng (quyền mới trên `gop_db` từ 27/10 + thử merge worktree tạm) → xin "làm" merge `gop_db` → `rbac` 3 repo → khai mã/alias quyền mới + chạy Rbac → diễn tập dump prod mới (runbook A.2) → cửa sổ bảo trì (runbook B).
+Ước tính: merge 2–4h, rà quyền mới 2–4h, diễn tập 1,5–3h, cửa sổ bảo trì 1–2h.
+Blocked: cần user cho phép merge; cần người có quyền VPS cho cửa sổ bảo trì + dump prod mới.
+
+### Checkpoint — 31/10/2026 (đo khối lượng merge gop_db → rbac, chỉ đọc)
+Vừa hoàn thành: `git merge-tree` thử (không đụng worktree). rbac thiếu so với origin/gop_db: hrm-api 195 commit, client 122, ERP 49. File xung đột thật: hrm-api 25 (chủ yếu Timesheet/Assign/Finance controller + `PermissionsTableSeeder` + `AuthController`), client 4 (`V2BaseSmartFilterPanel`, `ProductFormQuickAdd`, `subsystem-menu/finance.js`, `manufacture-price-modes/index.vue`), ERP 8 (`routes/web.php`, `employees/create|edit.blade.php`, `ProductsController`…). File chưa commit của đợt bộ lọc KHÔNG trùng file gop_db sửa. Quyền mới trên gop_db chưa có trong Catalog: `quyen-moi-gop-db-31-10.txt` (vận chuyển, HDDV, BOM mẫu, nhắc hạn, điều chuyển kho, nhập/xuất lại…). Migration mới trên gop_db: hrm-api 18, ERP 5 (chỉ kéo code, chưa chạy).
+Bước tiếp theo: xin "làm" merge 3 repo.
+
+### Checkpoint — 31/10/2026 (merge rbac → gop_db LOCAL, CHƯA push)
+Vừa hoàn thành: user yêu cầu "pull gop_db mới nhất rồi merge rbac vào, chưa push". Checkout chính 3 repo: hrm-api `d7b032a59`, hrm-client `4b2d5dacb`, ERP `af8341de79` (ERP ff 23 commit origin/gop_db trước). Gỡ 37 file xung đột; khai Catalog 57 tên quyền HRM mới (21 gắn mã ERP sẵn có + 20 mã mới, validate 0 lỗi); bỏ Super Admin ở 21 file code mới gop_db; middleware tên→mã 25 chỗ; ProductPriceBoardService::canViewCost + TransferProductAllocation kiểm qua PermissionChecker (code cũ query role_has_permissions.company_id ⇒ 500 sau convert). Test: Rbac hrm-api 388/389 (1 đỏ = DB test thiếu bảng inherited_price_factors), ERP Rbac 109/110 (1 lỗi = vendor classmap cũ còn RolesController), ProductPriceBoardApiTest 24/24. Playwright (API 8012 + Nuxt 3012, DB rehearsal, NV13 + NV663): bảng giá bán, bộ lọc defaultHidden/isVisible, nút thêm nhanh, 403 khi không quyền.
+Còn lại: đợt bộ lọc màn Vai trò (wt-rbac) vẫn chưa commit nên KHÔNG có trong merge. Deploy: catalog-sync (20 mã mới), composer dump-autoload ERP, migration gop_db mới (hrm-api 18, ERP 5) chạy trước rbac:convert. Checkout chính :8000/:3000 đang chạy code rbac trên DB hrm_erp_21_10_prod CHƯA convert.

@@ -202,6 +202,7 @@ php artisan tinker
 
 - Luôn gợi ý và làm việc bằng tiếng Việt
 - Không xử lý commit hay đẩy code lên git
+- **KIỂM CODE TỚI TẬN GỐC TRƯỚC KHI KẾT LUẬN** (chốt 01/11/2026). Mọi kết luận về hành vi code ("lỗi", "sai", "lệch quyền", "luôn false"…) phải lần tới nơi giá trị được tính ra — accessor/mutator của cột (`get<Cột>Attribute`, `$casts`), method bị override (class con, trait), middleware, global scope, session/config — không dừng ở chỗ gọi. Có dữ liệu thì đối chiếu bằng dữ liệu hoặc chạy thử (tinker, gọi API, Playwright) và ghi rõ đã kiểm bằng gì. Chưa lần hết thì nói **"chưa kiểm xong"**, không phát biểu như sự thật. Kết luận của subagent/reviewer cũng phải tự kiểm lại. Bài học: báo nhầm "ERP kiểm quyền sai công ty" vì thấy `info->company_id`, bỏ sót `EmployeeInfo::getCompanyIdAttribute()` trả công ty đang chọn trong session. Đầy đủ: `CLAUDE.md` gốc workspace mục "Kiểm code tới tận gốc TRƯỚC KHI kết luận".
 - Không đọc file thư viện hệ thống (`vendor/`, `node_modules/`) — tốn token không cần thiết
 - Ưu tiên dùng helper có sẵn (`app/Helpers/`), tạo helper mới nếu logic dùng lại nhiều nơi
 - Khi cần sửa hàm dùng chung → hỏi ý kiến trước khi làm

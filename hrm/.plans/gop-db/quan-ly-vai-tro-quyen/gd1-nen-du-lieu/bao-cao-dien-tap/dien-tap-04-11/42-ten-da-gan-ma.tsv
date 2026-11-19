@@ -1,0 +1,42 @@
+accounting.hach_toan_yeu_cau_lam_dich_vu.create	null	Hạch toán yêu cầu làm dịch vụ	accounting.php
+accounting.phieu_hach_toan_dich_vu_hddv.view	2	Xem phiếu hạch toán dịch vụ HDDV - theo phòng ban	accounting.php
+accounting.phieu_hach_toan_dich_vu_hddv.view	3	Xem phiếu hạch toán dịch vụ HDDV - theo công ty	accounting.php
+accounting.phieu_hach_toan_dich_vu_hddv.view	4	Xem phiếu hạch toán dịch vụ HDDV - theo tổng công ty	accounting.php
+customer_care.bien_ban_ban_giao_nghiem_thu.create	null	Tạo biên bản bàn giao nghiệm thu	customer_care.php
+customer_care.bien_ban_ban_giao_nghiem_thu.view	2	Xem biên bản bàn giao nghiệm thu theo phòng ban	customer_care.php
+customer_care.bien_ban_ban_giao_nghiem_thu.view	3	Xem biên bản bàn giao nghiệm thu theo công ty	customer_care.php
+customer_care.bien_ban_ban_giao_nghiem_thu.view	4	Xem biên bản bàn giao nghiệm thu theo tổng công ty	customer_care.php
+customer_care.phieu_cho_giao_viec.view	4	Xem danh sách phiếu chờ giao việc theo tổng công ty	customer_care.php
+customer_care.phieu_giao_viec.create	null	Tạo phiếu giao việc	customer_care.php
+customer_care.phieu_giao_viec.view	2	Xem phiếu giao việc theo phòng ban	customer_care.php
+customer_care.phieu_giao_viec.view	3	Xem phiếu giao việc theo công ty	customer_care.php
+customer_care.phieu_giao_viec.view	4	Xem phiếu giao việc theo tổng công ty	customer_care.php
+customer_care.phieu_nhap_ket_qua.approve	null	Duyệt phiếu nhập kết quả	customer_care.php
+customer_care.phieu_nhap_ket_qua.view	2	Xem phiếu nhập kết quả theo phòng ban	customer_care.php
+customer_care.phieu_nhap_ket_qua.view	3	Xem phiếu nhập kết quả theo công ty	customer_care.php
+customer_care.phieu_nhap_ket_qua.view	4	Xem phiếu nhập kết quả theo tổng công ty	customer_care.php
+customer_care.yeu_cau_hach_toan_lam_dich_vu.view	1	Xem yêu cầu hạch toán dịch vụ HĐBH - theo bộ phận	customer_care.php
+customer_care.yeu_cau_hach_toan_lam_dich_vu.view	2	Xem yêu cầu hạch toán dịch vụ HĐBH - theo phòng ban	customer_care.php
+customer_care.yeu_cau_hach_toan_lam_dich_vu.view	3	Xem yêu cầu hạch toán dịch vụ HĐBH - theo công ty	customer_care.php
+customer_care.yeu_cau_hach_toan_lam_dich_vu.view	4	Xem yêu cầu hạch toán dịch vụ HĐBH - theo tổng công ty	customer_care.php
+purchase.chi_phi_van_chuyen_nhanh.update	null	Hạch toán chi phí vận chuyển nhanh	purchase.php
+purchase.chi_phi_van_chuyen_nhanh.view	1	Hạch toán chi phí vận chuyển nhanh - Xem theo bộ phận	purchase.php
+purchase.chi_phi_van_chuyen_nhanh.view	2	Hạch toán chi phí vận chuyển nhanh - Xem theo phòng ban	purchase.php
+purchase.chi_phi_van_chuyen_nhanh.view	3	Hạch toán chi phí vận chuyển nhanh - Xem theo công ty	purchase.php
+purchase.chi_phi_van_chuyen_nhanh.view	4	Hạch toán chi phí vận chuyển nhanh - Xem theo tổng công ty	purchase.php
+warehouse.bao_cao_ton_kho.view	3	Xem báo cáo tồn kho theo công ty	warehouse.php
+warehouse.bao_cao_ton_kho.view	4	Xem báo cáo tồn kho theo tổng công ty	warehouse.php
+warehouse.bao_cao_ton_kho_theo_kho.view	null	Xem báo cáo tồn kho theo kho	warehouse.php
+warehouse.bien_ban_xu_ly_hang_thua_thieu_sau_kiem_ke.approve	null	Duyệt biên bản xử lý hàng thừa, thiếu sau kiểm kê	warehouse.php
+warehouse.bien_ban_xu_ly_hang_thua_thieu_sau_kiem_ke.view	3	Xem biên bản xử lý hàng thừa, thiếu sau kiểm kê - theo công ty	warehouse.php
+warehouse.bien_ban_xu_ly_hang_thua_thieu_sau_kiem_ke.view	4	Xem biên bản xử lý hàng thừa, thiếu sau kiểm kê - theo tổng công ty	warehouse.php
+warehouse.hach_toan_chuyen_xe_cho_hang.create	null	Hạch toán chuyến xe chở hàng	warehouse.php
+warehouse.phieu_bao_hang_thua_thieu_nhap_kho.approve	null	Duyệt phiếu báo hàng thừa, thiếu nhập kho	warehouse.php
+warehouse.phieu_bao_hang_thua_thieu_nhap_kho.create	null	Tạo phiếu báo hàng thừa, thiếu nhập kho	warehouse.php
+warehouse.phieu_nhap_kho_dieu_chinh_kiem_ke.view	3	Xem phiếu nhập kho điều chỉnh kiểm kê - theo công ty	warehouse.php
+warehouse.phieu_nhap_kho_dieu_chinh_kiem_ke.view	4	Xem phiếu nhập kho điều chỉnh kiểm kê - theo tổng công ty	warehouse.php
+warehouse.phieu_xuat_hang_dieu_chinh_kiem_ke.view	3	Xem phiếu xuất hàng điều chỉnh kiểm kê - theo công ty	warehouse.php
+warehouse.phieu_xuat_hang_dieu_chinh_kiem_ke.view	4	Xem phiếu xuất hàng điều chỉnh kiểm kê - theo tổng công ty	warehouse.php
+warehouse.thu_kho.manage	null	Thủ kho	warehouse.php
+warehouse.xu_ly_thua_thieu_nhap_kho.view	3	Xem xử lý thừa thiếu nhập kho theo công ty	warehouse.php
+warehouse.xu_ly_thua_thieu_nhap_kho.view	4	Xem xử lý thừa thiếu nhập kho theo tổng công ty	warehouse.php

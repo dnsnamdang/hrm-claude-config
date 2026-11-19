@@ -1,0 +1,42 @@
+api	Duyệt biên bản xử lý hàng thừa, thiếu sau kiểm kê
+api	Duyệt phiếu báo hàng thừa, thiếu nhập kho
+api	Duyệt phiếu nhập kết quả
+api	Hạch toán chi phí vận chuyển nhanh
+api	Hạch toán chi phí vận chuyển nhanh - Xem theo bộ phận
+api	Hạch toán chi phí vận chuyển nhanh - Xem theo công ty
+api	Hạch toán chi phí vận chuyển nhanh - Xem theo phòng ban
+api	Hạch toán chi phí vận chuyển nhanh - Xem theo tổng công ty
+api	Hạch toán chuyến xe chở hàng
+api	Hạch toán yêu cầu làm dịch vụ
+api	Thủ kho
+api	Tạo biên bản bàn giao nghiệm thu
+api	Tạo phiếu báo hàng thừa, thiếu nhập kho
+api	Tạo phiếu giao việc
+api	Xem biên bản bàn giao nghiệm thu theo công ty
+api	Xem biên bản bàn giao nghiệm thu theo phòng ban
+api	Xem biên bản bàn giao nghiệm thu theo tổng công ty
+api	Xem biên bản xử lý hàng thừa, thiếu sau kiểm kê - theo công ty
+api	Xem biên bản xử lý hàng thừa, thiếu sau kiểm kê - theo tổng công ty
+api	Xem báo cáo tồn kho theo công ty
+api	Xem báo cáo tồn kho theo kho
+api	Xem báo cáo tồn kho theo tổng công ty
+api	Xem danh sách phiếu chờ giao việc theo tổng công ty
+api	Xem phiếu giao việc theo công ty
+api	Xem phiếu giao việc theo phòng ban
+api	Xem phiếu giao việc theo tổng công ty
+api	Xem phiếu hạch toán dịch vụ HDDV - theo công ty
+api	Xem phiếu hạch toán dịch vụ HDDV - theo phòng ban
+api	Xem phiếu hạch toán dịch vụ HDDV - theo tổng công ty
+api	Xem phiếu nhập kho điều chỉnh kiểm kê - theo công ty
+api	Xem phiếu nhập kho điều chỉnh kiểm kê - theo tổng công ty
+api	Xem phiếu nhập kết quả theo công ty
+api	Xem phiếu nhập kết quả theo phòng ban
+api	Xem phiếu nhập kết quả theo tổng công ty
+api	Xem phiếu xuất hàng điều chỉnh kiểm kê - theo công ty
+api	Xem phiếu xuất hàng điều chỉnh kiểm kê - theo tổng công ty
+api	Xem xử lý thừa thiếu nhập kho theo công ty
+api	Xem xử lý thừa thiếu nhập kho theo tổng công ty
+api	Xem yêu cầu hạch toán dịch vụ HĐBH - theo bộ phận
+api	Xem yêu cầu hạch toán dịch vụ HĐBH - theo công ty
+api	Xem yêu cầu hạch toán dịch vụ HĐBH - theo phòng ban
+api	Xem yêu cầu hạch toán dịch vụ HĐBH - theo tổng công ty

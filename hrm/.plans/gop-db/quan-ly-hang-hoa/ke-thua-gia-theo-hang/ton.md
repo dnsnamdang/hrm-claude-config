@@ -37,3 +37,19 @@ Bỏ nguyên tắc **không hỏi giá chéo giữa các công ty**, cho phép k
 
 - **Q13 giữ nguyên 2 chế độ.** Cách dùng thật: TPSG, TPHP, TPV kế thừa 100% ⇒ "Chọn hãng tự xây dựng" + danh sách rỗng (hãng mới tự kế thừa); các công ty khác "Chọn hãng kế thừa" + vài hãng.
 - **Q2 giữ nguyên:** nguồn giá = công ty tạo mã (công ty quản lý mã hàng), KHÔNG cố định TPE. Vd TPHP nhận giá TPSG cho 1.054 mã TPSG tạo, giá EG cho 1.967 mã EG tạo (số liệu dump prod 21/10).
+
+## Đợt 2 — 28/10/2026: Lưu chạy nền + đổi cách khai báo + hệ số kế thừa
+
+Spec user (28/10): (1) Lưu cài đặt khối lượng lớn bị 504 (sự cố prod 27/10). (2) Có hãng / mã hàng kế thừa phải nhân hệ số:
+**giá bán = giá công ty quản lý × hệ số**. (3) Cách khai báo hiện tại khó hiểu ⇒ đổi 2 lựa chọn + thêm khai báo hệ số khác 1.
+
+| # | Câu | Chốt |
+|---|---|---|
+| R1 | Sửa 504 | **Tăng `fastcgi_read_timeout` nginx bộ tpe ngay (gỡ tạm) ⇒ chuyển Lưu sang Job nền** (1 transaction trong job: chế độ + giá đổi cùng lúc commit; màn báo đang áp + chặn lưu lần 2) |
+| R2 | Đổi tên 2 lựa chọn | **"Tự xây dựng giá bán riêng theo công ty"** (= chế độ 1 cũ; danh sách = hãng ngoại lệ **kế thừa**) · **"Kế thừa giá bán theo công ty quản lý hàng"** (= chế độ 2 cũ; danh sách = hãng ngoại lệ **tự tính giá**). Chỉ đổi nhãn — luật, dữ liệu, mã `mode` giữ nguyên |
+| R3 | Kế thừa xét theo gì | **Vẫn theo hãng** (danh sách mã chỉ để khai hệ số, không có ngoại lệ kế thừa theo mã) |
+| R4 | Hệ số gắn theo | **Công ty kế thừa** (công ty đang làm) — khai rồi áp cho mọi nguồn hàng từ các công ty khác; không theo cặp nguồn → đích |
+| R5 | Mức khai | **Theo hãng hoặc theo mã hàng**; ưu tiên **mã > hãng > 1** |
+| R6 | Loại giá nhân | **1 hệ số chung** cho cả 6 loại giá (kể cả TMĐT) + giá hiệu lực. ĐMGG không nhân |
+| R7 | Làm tròn | **Theo cách làm tròn giá chung đang áp dụng**: `CompanyPriceBackfill::scalePrice` (hệ số ≠ 1 ⇒ `round(giá × k / 1000) × 1000`, như ERP). **Giá 1 đ giữ nguyên, không nhân** |
+| R8 | Ô hệ số | Số thập phân **tối đa 2 chữ số** sau dấu chấm (đổi từ 1 → 2 ngày 29/10), ~~cho nhập < 1~~ → **chỉ cho > 1** (29/10, T2: giữ luật sàn giá 21/10 — giá công ty lấy về không thấp hơn giá công ty tạo mã) |

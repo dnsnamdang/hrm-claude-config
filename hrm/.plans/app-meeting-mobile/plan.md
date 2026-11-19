@@ -205,3 +205,17 @@ Blocked: nút "Xem N kết quả" cần API đếm trước — chưa kiểm; kh
 ⚠️ Pen không tự lưu — user bấm Cmd+S
 Ghi chú TPE_APP (local, KHÔNG commit/push): app/ios/Podfile comment lại dòng EXCLUDED_ARCHS arm64 + project.pbxproj bỏ EXCLUDED_ARCHS — chỉ để build máy ảo chip Apple; flavor mới tpeDev. Cuối ngày 26/10 TPE_APP đã bị chuyển sang nhánh `feature/meeting-room-qr-scan` (không phải do phiên này), Podfile đã comment sẵn, pbxproj sạch — lần sau build lại kiểm EXCLUDED_ARCHS trước
 Hồ sơ đã commit + push hrm-claude-config `73f861d` (26/10)
+
+### Checkpoint — 2026-10-29 (Dashboard cho nhân viên kinh doanh — W12)
+Vừa hoàn thành: 00h-KD (Wrap H0e6I, x 14492) — thẻ họp KH thêm KH + chip thị trường (= tỉnh KH) + người liên hệ + nút gọi + 'Lịch sử họp với KH'; Lịch hôm nay đưa lên trên Cần xử lý gấp (user chốt). Màn mới 21-KD Lịch sử họp với KH (Wrap lp5FB): thẻ KH + 4 số + dòng thời gian có trích kết luận, chip 'Có nhu cầu đầu tư'. Backup: meeting-mobile.backup-20261029-truoc-dashboard-kd.pen.
+Đang làm dở: —
+Bước tiếp theo: user duyệt → thay 00h bằng 00h-KD, áp cho 00h' / TQ2; vẽ trạng thái rỗng 21-KD.
+Blocked:
+
+## Sắp xếp danh sách meeting (01/11/2026)
+User chốt: mặc định "Cập nhật gần nhất"; nút ⇅ cạnh ô tìm → bảng 4 kiểu (Cập nhật gần nhất · Ngày họp mới nhất · Ngày họp gần nhất · Ngày tạo mới nhất); nhớ trên máy, Lịch và Danh sách lưu riêng; chip "Sắp diễn ra" luôn xếp gần nhất trước; "cập nhật" giữ nghĩa updated_at hiện tại (xác nhận / đặt phòng / biên bản không đẩy lên).
+- [x] hrm-api (gop_db): `MeetingController::mine` nhận `sort_field`/`sort_dir` (lọc qua SORTABLE_COLUMNS, mặc định updated_at desc, khoá phụ id) — kiểm SQL bằng tinker
+- [x] App (develop): `model/meeting_sort.dart`, bloc/state/event + SharedPreferences, `meeting_api_service.dart` (fetchMine/fetchAll), `list_filter_bar.dart` thêm tham số tuỳ chọn `onSort`/`sortActive` (user cho phép sửa widget chung)
+- [x] Bấm thử simulator tpeDev: Danh sách đổi thứ tự đúng, nhớ sau hot restart, Lịch lưu riêng, ghi chú khi bật "Sắp diễn ra"
+- [ ] Deploy hrm-api lên dev rồi kiểm tab Lịch (dev hiện bỏ qua tham số → vẫn xếp ngày họp mới nhất)
+- Ghi chú: bảng meetings chưa có index updated_at / start_date (2.296 dòng, chưa cần)

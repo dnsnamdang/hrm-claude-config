@@ -148,3 +148,43 @@ không sửa giá ở công ty này" (G4 lưu, G5 duyệt, gửi duyệt, PTG). 
   không áp 2 lần · tách YCHG (lẫn hàng, nhiều nguồn, toàn kế thừa, nguồn chưa phân công XNK, nguồn khoá) · quyền mới có / không.
 - Playwright MCP đo DOM: màn cài đặt (2 chế độ, popup chọn hãng, xác nhận, lịch sử), G4 khoá dòng, nút Chuyển KD kế thừa, YCHG tách.
 - e2e: spec mới màn cài đặt + luồng kế thừa (có / không quyền); chạy khi user yêu cầu.
+
+## 9. Đợt 2 (28/10/2026) — Lưu chạy nền + đổi cách khai báo + hệ số kế thừa
+
+> Chốt R1–R8: `ton.md` mục "Đợt 2". Mockup: `mockup-he-so-ke-thua.html` — **user duyệt 29/10/2026** (bản tab + 2 số thập phân). Plan: `plan.md` mục "Đợt 2". ⛔ Chưa có lệnh code.
+
+- **Nhãn mới** (R2): radio 1 "Tự xây dựng giá bán riêng theo công ty" → khối "Ngoại lệ: hãng kế thừa giá từ công ty quản lý";
+  radio 2 "Kế thừa giá bán theo công ty quản lý hàng" → khối "Ngoại lệ: hãng tự xây dựng giá". `mode` 1/2 giữ nguyên ⇒ không migration dữ liệu.
+- **Hệ số** (R4–R8): khối riêng "Hệ số kế thừa (khác 1)" dùng cho cả 2 chế độ (ở chế độ Kế thừa hãng kế thừa là mặc định, không
+  nằm trong danh sách nào ⇒ không gắn được hệ số vào danh sách ngoại lệ). 2 bảng: Theo hãng · Theo mã hàng (popup chọn hàng có sẵn
+  `V2ProductPickerModal`). ~~Hệ số khai cho hãng/mã đang tự tính giá: lưu được, hiện "Không áp dụng"~~ — **thay bởi §9.y**: hãng nhân hệ số luôn là hãng kế thừa (loại trừ với tab 1); chỉ mã hàng còn trạng thái "Không áp dụng".
+  - Dự kiến CSDL: `inherited_price_factors(company_id, manufacture_id NULL, product_id NULL, factor decimal(4,2), audit)`, UNIQUE theo
+    (company_id, manufacture_id) và (company_id, product_id).
+  - Chép: `updatePrices` / `copyExpected` LEFT JOIN hệ số (mã > hãng > 1) ⇒ `price = IF(k = 1 OR s.price = 1, s.price, GREATEST(s.price, ROUND(s.price × k / 1000) × 1000))`.
+    `coefficient`, `sale_max_percent` chép nguyên. `propagate` tự nhân. `compare-inherited` so theo giá đã nhân.
+  - Lịch sử giá: "Kế thừa từ <mã> × <k>"; badge G4 "Kế thừa · <mã> × <k>".
+- **Lưu chạy nền** (R1): Lưu = kiểm + xem trước (nhanh) ⇒ xác nhận ⇒ đẩy Job; Job làm cả lô trong 1 transaction. Màn hiện dải
+  "Đang áp cài đặt…" + tiến độ, khoá Lưu tới khi xong; xong ⇒ thông báo. Cần kiểm queue worker prod (local `QUEUE_CONNECTION=sync`).
+
+### 9.x Sửa mockup 29/10 — danh sách dài
+- Hướng dẫn mặc định ẩn, bấm "Hướng dẫn" mới mở.
+- 3 danh sách (hãng ngoại lệ · hệ số theo hãng · hệ số theo mã) chuyển thành **3 tab** (V2BaseTabNavigation) thay vì 3 bảng xếp dọc — danh sách mã có thể hàng trăm/nghìn dòng, xếp dọc thì phải cuộn qua bảng trên mới tới bảng dưới.
+- Mỗi tab: ô tìm riêng + chip lọc (Tất cả / Đang áp / Không áp dụng / Chưa lưu / Lỗi), bảng có vùng cuộn riêng với tiêu đề dính, phân trang 10/20/50/100.
+- Thao tác hàng loạt: tick nhiều dòng → Đặt hệ số / Bỏ khỏi danh sách.
+- Tab mã hàng: Nhập Excel (V2BaseImportModal, 2 cột Mã hàng hoá · Hệ số), kết quả vào lưới ở trạng thái chưa lưu.
+- Lưu còn lỗi ở tab/trang khác → nhảy tới tab lỗi, lọc "Lỗi". Hộp xác nhận gom theo nhóm thay vì liệt kê từng dòng.
+- **BE kéo theo:** API danh sách phân trang + tìm/lọc phía server cho 3 danh sách; Lưu gửi phần THAY ĐỔI (thêm/sửa/bỏ), không gửi cả danh sách; thêm endpoint đọc file Excel (kiểm mã tồn tại, mã do công ty khác tạo, định dạng hệ số).
+- Ảnh: `anh-mockup/d2-m6-tab-ma-hang.png`, `d2-m7-nhap-excel.png` (ảnh d2-m1 là bố cục cũ).
+
+### 9.y Tên tab + tiêu đề "Khai báo ngoại lệ" (29/10)
+| Cách cài đặt | Tab 1 | Tab 2 | Tab 3 |
+|---|---|---|---|
+| Tự xây dựng giá bán riêng theo công ty | Hãng kế thừa nguyên giá | Hãng kế thừa nhân hệ số | Mã hàng kế thừa nhân hệ số |
+| Kế thừa giá bán theo công ty quản lý hàng | Hãng tự xây dựng giá | Hãng kế thừa nhân hệ số | Mã hàng kế thừa nhân hệ số |
+
+- "Nguyên giá" = hệ số 1; "nhân hệ số" = hệ số khác 1.
+- **Đổi luật kéo theo:** tab 1 và tab 2 loại trừ nhau. Ở cách "Tự xây dựng", hãng ở tab 2 cũng là hãng kế thừa ⇒ hãng kế thừa = tab 1 ∪ tab 2. Ở cách "Kế thừa", hãng ở tab 1 (tự xây dựng giá) không được khai ở tab 2. BE phải chặn trùng (validate khi Lưu) — thay cho trạng thái "Không áp dụng" của hệ số hãng trước đây.
+- Tab mã hàng: chỉ chọn mã thuộc hãng đang kế thừa; mã đã khai mà hãng sau đó thôi kế thừa thì hiện "Không áp dụng" (giữ R3: kế thừa xét theo hãng).
+
+- 29/10 T2: hệ số chỉ nhận **> 1** (giữ luật sàn giá 21/10); giá sau nhân không thấp hơn giá công ty tạo mã (GREATEST).
+- 29/10 T3: cột `coefficient` (hệ số giá theo loại giá) của hàng kế thừa = hệ số nguồn × k, làm tròn 2 số lẻ (thay "chép nguyên" ở §9).

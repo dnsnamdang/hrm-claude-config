@@ -1,0 +1,13 @@
+employee_id	role_id	company_id	model_type	position	role_name	company_code	con_tai_khoan
+1	100003	1	App\\Employee	0	TPE_Trợ lý kinh doanh	TPE	0
+7	100001	1	App\\Employee	0	TPE_111	TPE	0
+11	100003	1	App\\Employee	0	TPE_Trợ lý kinh doanh	TPE	0
+15	100003	1	App\\Employee	0	TPE_Trợ lý kinh doanh	TPE	0
+16	100002	1	App\\Employee	0	TPE_Super Admin	TPE	0
+17	100003	1	App\\Employee	0	TPE_Trợ lý kinh doanh	TPE	0
+19	100002	1	App\\Employee	0	TPE_Super Admin	TPE	0
+19	100320	1	App\\Employee	0	TPE_Kế toán bán hàng	TPE	0
+20	100009	1	App\\Employee	0	TPE_Trưởng phòng kinh doanh	TPE	0
+21	100343	1	App\\Employee	0	TPE_Giám đốc	TPE	0
+23	100343	1	App\\Employee	0	TPE_Giám đốc	TPE	0
+654	100002	1	App\\Employee	0	TPE_Super Admin	TPE	0

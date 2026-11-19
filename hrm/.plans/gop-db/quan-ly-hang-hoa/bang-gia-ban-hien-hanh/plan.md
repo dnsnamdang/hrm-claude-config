@@ -279,3 +279,21 @@ Vừa hoàn thành: Phase 4 (cột thông tin hiện đủ chữ) · Phase 5 (n�
 Đang làm dở: —
 Bước tiếp theo: user kiểm tay màn Bảng giá bán hiện hành; gỡ role tạm 108490 (hrm_erp_21_10_prod) + DROP DB hrm_erp_bang_gia_test khi user cho. Deploy: seeder quyền (2 quyền mới) + admin gán quyền.
 Blocked: chờ user kiểm tay
+
+## Bổ sung 04/11/2026 — Định mức đàm phán + Thuế VAT
+
+Làm trên worktree tách `origin/gop_db` (detached, không đụng `gop_db` local đang chứa rbac). Đã COMMIT + PUSH origin/gop_db 04/11: hrm-api `69bb71323`, hrm-client `43390a2b3`.
+Quyết định đã chốt (user 04/11): ĐMĐP = dòng phụ xám "ĐMĐP x%" trong TỪNG ô giá (`product_unit_prices.sale_max_percent`, lệch % giữa các loại giá ở 93,472/173,480 ĐVT); Thuế VAT (`products.vat_percent`) là cột ẩn mặc định.
+
+- [x] BE `ProductPriceBoardService`: `units()` trả `sale_max_percent` từng loại giá (chỉ khi có giá; 0% vẫn trả), dòng hàng trả `vat_percent`, sort `vat`, cột xuất/in `vat` + "<Loại> - ĐMĐP (%)" sau mỗi loại giá
+- [x] BE blade in: cột Thuế VAT (%) + dòng "ĐMĐP x%" dưới giá
+- [x] BE test `ProductPriceBoardApiTest`: sửa 3 ca heading Excel + thêm `test_vat_and_negotiation_percent` (CHƯA chạy phpunit — ghi DB .env)
+- [x] FE `pages/finance/product-price-board/index.vue`: dòng phụ `.neg-percent` #6b7280 11px, cột `vat` 110px ẩn mặc định
+- [x] E2E spec: U1/U6 thêm VAT + cột ĐMĐP Excel, thêm U11 (chưa chạy)
+- [x] Kiểm: API worktree :8011 đối chiếu DB (SUPE-SUPERMIG2209: 5/0/0/8%, VAT 10), export-rows, print, sort vat; Playwright MCP :3011 đo DOM
+
+### Checkpoint — 04/11/2026
+Vừa hoàn thành: code + kiểm tay ĐMĐP/VAT trên worktree `scratchpad/wt-bang-gia`
+Đang làm dở: —
+Bước tiếp theo: user kiểm tay. PHPUnit + e2e U1/U6/U11 không chạy (user: sửa nhỏ không cần). Worktree đã gỡ. `gop_db` local (chứa rbac) chậm origin 3 commit mỗi repo
+Blocked:

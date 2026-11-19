@@ -33,6 +33,8 @@ công thức HTHT) trừ khi user chốt khác.
 | Chế độ in | Popup In: hợp đồng (Tổng hợp / Chi tiết theo nhóm) · phụ lục hàng hoá mẫu 1 / mẫu 2 · biên bản giao nhận (chọn mẫu + người giao/nhận). Xem trước `ReportPrintPreviewModal`; letterhead theo `company_id` HĐ; gate phạm vi xem (KHÔNG công khai như ERP) | 20 |
 | QR | Status Có hiệu lực / Đang xuất hàng / Đang & Đã quyết toán; QR 12mm trỏ màn Chi tiết HĐ (cần đăng nhập), dựng ở FE (gói `qrcode`) | 20 |
 | Ẩn giá | Dùng CHUNG quyền có sẵn "Xem hợp đồng ẩn giá" (như ERP): xem mọi HĐ; HĐ ngoài phạm vi 4 cấp + người lập ⇒ mọi ô tiền `*****` (BE null), ẩn HTHT + Duyệt + In hợp đồng/phụ lục; biên bản in bản KHÔNG giá (vá lỗ ERP); Excel ghi `*****` | 20 |
+| Xuất hàng từ HĐ | Nút "Yêu cầu xuất hàng" ở danh sách + chi tiết: CHỈ người lập HĐ + HĐ đủ điều kiện xuất (Có hiệu lực + ngày hiệu lực + thời hạn thực hiện). BE chặn: API tạo YCXH từ HĐ (403), lưu YCXH 20/21 kể cả nháp (422), picker HĐ HRM chỉ HĐ mình lập. Bấm ⇒ màn Tạo YCXH đầy đủ loại 21 nạp sẵn HĐ (`?hrm_contract_id=`). Để sau: điều kiện "hàng chưa xuất hết" | 22 |
+| Bố cục YCXH 20/21 | Theo mockup `mockup-ycxh-xuat-ban-hd.html`: Loại (4) · Hợp đồng (8, "mã · Ngày ký · Hạn thực hiện") → KH (8) · MST (4) / Địa chỉ (8) · Người liên hệ "Tên • SĐT" (4) → Hình thức xuất · Kho · Vận chuyển(+km) · Lắp đặt (3×4; Xuất thẳng ⇒ chú thích 6 cột) → Ghi chú bút chì (Chi tiết chỉ hiện khi có). Khối thu gọn được. Bảng 1 hàng tiêu đề, Model · Thương hiệu dòng phụ, icon lùi dòng ở cột Mã, ghim TT sau VAT (bóng khi đang trượt), dòng TỔNG theo dòng tick. Đính kèm sau bảng. Tiêu đề khối giữ chữ thường (V2BaseFormCard). Nhãn 14px / cách ô 8px | 23 |
 
 ## 3. Bản đồ code (gop_db)
 - **BE `hrm-api/Modules/Assign/`**: `Entities/Contract/*` (Contract + 6 bảng con + Implement* + SupportAccounting*),
@@ -49,3 +51,14 @@ công thức HTHT) trừ khi user chốt khác.
 ## 4. Ngoài phạm vi / để sau
 Duyệt đa cấp, cảnh báo (mục 7 spec Logic HĐ), Chuyển duyệt BGD + notify, phụ lục (giảm / bổ sung), khối giao hàng
 + tiến độ TT #11252, quyết toán; HTHT cho sửa % phòng; đối chiếu số HTHT với 1 HĐ ERP thật.
+
+## 5. Phase 24 — Bộ 16 trạng thái + duyệt đa cấp (03/11/2026)
+Chi tiết: `design-phase24-trang-thai.md`. Trạng thái do code tự chuyển theo nghiệp vụ, user không tự chọn.
+- Bước 1: sửa mẫu in ⇒ cờ cần Pháp chế duyệt (+ so chữ "Xem thay đổi", khôi phục mẫu gốc).
+- Bước 2: TP (phòng được giao quản lý) → Pháp chế (nếu cờ) → BGĐ (Chuyển duyệt khi dính ĐK y ERP) → Chờ KH ký → Xác nhận KH đã ký (người lập, file + ngày) → Có hiệu lực (đủ ĐK hiệu lực + tới ngày, lệnh lịch). Quyền Duyệt KHÔNG có phạm vi: 3 mã riêng. Thông báo `[HDB]`.
+- Bước 3: lập YCXH khi Có hiệu lực / Đang thực hiện; PXK đầu tiên ⇒ Đang thực hiện; thu tiền từ KH đã ký.
+- 05/11 (24.7–24.9): Hết hiệu lực (lệnh 00:20 quá ngày kết thúc thực hiện) · Hủy duyệt / Đóng HĐ (Chờ KH ký, lý do bắt buộc) · Đang thực hiện khi thu tiền / mượn bán đã hạch toán sau hiệu lực.
+- Còn: Gia hạn, Quyết toán, Thanh lý theo luật tự chuyển; hộp "chờ tôi duyệt" để màn duyệt tập trung (user 05/11).
+
+## 6. Phase 25 — Hạch toán dịch vụ / chi phí / vận chuyển (05–06/11/2026)
+Chi tiết: `design-phase25-hach-toan-dich-vu.md` (D1–D7, C1–C4). HĐ HRM thay HĐ hãng ⇒ dùng chung 2 màn Yêu cầu / Phiếu hạch toán dịch vụ HĐBH (port gop_db), rẽ nhánh `contractable_type`; cờ `hrm_contract_service_items.exported` / `hrm_contracts.shipping_exported`; HTHT tách chi phí sang other_cost; giá vốn = estimated × qty (chụp tuyệt đối cost_price); phiếu ghi sổ ⇒ Đang thực hiện; 3 nút ở chi tiết + danh sách HĐ; ERP bỏ qua phiếu HĐ HRM (scope excludeHrmContract, không gỡ morphMap).

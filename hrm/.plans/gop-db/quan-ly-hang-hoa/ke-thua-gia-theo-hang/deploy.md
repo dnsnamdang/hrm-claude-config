@@ -130,3 +130,128 @@ Nên chạy lại định kỳ (vd sau mỗi đợt duyệt giá lớn ở công
   để nguyên vô hại (hoặc `migrate:rollback` đúng 2 bản bằng `--path`). Quyền mới để nguyên.
 - **Đã có công ty lưu:** giá đã bị ghi đè — đổi cài đặt về như cũ trên màn KHÔNG trả giá cũ (chỉ "giữ giá cuối"). Muốn trả giá cũ
   phải nạp lại bản sao lưu 6.1 cho đúng công ty đó ⇒ làm cùng dev, không tự nạp cả bảng.
+
+---
+
+# ĐỢT 2 (29/10/2026) — Lưu chạy nền + 3 tab + hệ số kế thừa
+
+> Soạn lại 30/10. Chỉ hrm-api + hrm-client (nhánh `gop_db`), ERP KHÔNG đổi. Không quyền mới, không cron mới, không sửa dữ liệu cũ.
+> Cài đặt đang có trên prod giữ nguyên nghĩa (mode 1/2 không đổi giá trị, chỉ đổi tên hiển thị) ⇒ deploy xong giá KHÔNG tự đổi.
+> **Đã push `gop_db` 30/10.** Bản gõ lệnh từng bước trên VPS: **`HUONG-DAN-VPS-DOT2.md`** (mục dưới là tham chiếu).
+
+| Repo | Commit | Nội dung |
+|---|---|---|
+| hrm-api | `27384672c` (30/10, đã push) | 2 bảng mới, Job `ApplyManufacturePriceModeJob` (queue `price-inherit`), hệ số kế thừa, API 3 tab |
+| hrm-client | `7e127ac53` (30/10, đã push) | Màn Giá bán theo hãng sx 3 tab + dải "Đang áp", badge "Kế thừa · CODE × k" |
+
+Commit ngay trước (đã có trên origin): api `e0f6e694f` · client `8a5304470`. Điểm lui THẬT = HEAD đang chạy trên prod, ghi lại ở bước 1.
+
+## 0. Biến (VPS `ssh -p 2225 erp_tpe@124.158.4.24`, 1 phiên shell)
+```bash
+export API=/var/www/tpe/hrm-api
+export CLI=/var/www/tpe/hrm-client
+alias M='mysql -h 192.168.122.103 -u hrm_tpe -p --table hrm_erp_gop'
+# artisan chạy bằng user erp_tpe (đang đăng nhập) ⇒ gọi thẳng php artisan, KHÔNG sudo -u www-data
+```
+
+## 1. Kiểm trước (chỉ đọc)
+```bash
+cd $API && git fetch origin && git status -sb | head -1 && git log --oneline -1    # ghi hash = điểm lui api
+cd $CLI && git status -sb | head -1 && git log --oneline -1                        # ghi hash = điểm lui client
+cd $API && php artisan migrate:status | grep "| No"          # danh sách chờ TRƯỚC khi pull (để biết bản nào KHÔNG thuộc đợt này)
+php artisan migrate:status | grep -E "create_jobs_table|create_failed_jobs_table"  # 2 dòng "Yes" (bảng queue có sẵn)
+M -e "SELECT COUNT(*) jobs_dang_cho FROM jobs; SELECT queue, COUNT(*) FROM jobs GROUP BY queue;"   # ghi lại, thường 0
+which supervisorctl; sudo supervisorctl status          # có supervisor chưa + đang chạy gì
+ps aux | grep "queue:work" | grep -v grep               # đã có worker nào của bộ tpe chưa
+```
+- Không có `supervisorctl` ⇒ dùng **phương án B** ở bước 4 (cron), không tự cài gói lên VPS khi chưa hỏi quản trị máy.
+
+## 2. Code
+```bash
+cd $API && git pull origin gop_db && git log --oneline -1      # = commit api đợt 2
+#   composer.lock đợt này KHÔNG đổi ⇒ không cần composer install
+cd $CLI && git pull origin gop_db && git log --oneline -1      # = commit client đợt 2
+```
+
+## 3. Migration — chạy LẺ đúng 2 bản
+```bash
+cd $API
+php artisan migrate:status | grep "| No"
+#   Kỳ vọng thêm đúng 2 bản của đợt này (ngoài danh sách đã ghi ở bước 1):
+#     2026_10_29_000001_create_manufacture_price_mode_runs_table — bảng RỖNG manufacture_price_mode_runs (lượt áp cài đặt)
+#     2026_10_29_000002_create_inherited_price_factors_table     — bảng RỖNG inherited_price_factors (hệ số theo hãng / mã)
+#   Chỉ CREATE TABLE, không ALTER/UPDATE/DELETE bảng cũ. Bản pending KHÁC ⇒ KHÔNG chạy kèm, báo lại.
+php artisan migrate --force --pretend --path=Modules/MasterData/Database/Migrations/2026_10_29_000001_create_manufacture_price_mode_runs_table.php
+php artisan migrate --force --path=Modules/MasterData/Database/Migrations/2026_10_29_000001_create_manufacture_price_mode_runs_table.php
+php artisan migrate --force --pretend --path=Modules/MasterData/Database/Migrations/2026_10_29_000002_create_inherited_price_factors_table.php
+php artisan migrate --force --path=Modules/MasterData/Database/Migrations/2026_10_29_000002_create_inherited_price_factors_table.php
+php artisan migrate:status | grep 2026_10_29                   # 2 dòng "Yes"
+```
+
+## 4. Queue worker — BẮT BUỘC (thiếu worker ⇒ bấm Lưu kẹt "Đang áp", 30 phút sau tự báo lỗi, giá không đổi)
+- `.env` **KHÔNG** đổi `QUEUE_CONNECTION` (giữ `sync` cho Job cũ). Job đợt này tự dùng connection `database`
+  (`config/queue.php` › `price_inherit_connection`, đổi được bằng env `PRICE_INHERIT_QUEUE_CONNECTION`), queue riêng `price-inherit`.
+- Chỉ **1 tiến trình** (Job tự chặn 2 lượt áp cùng công ty; 1 worker đủ, tránh 2 lượt nặng cùng lúc).
+
+**Phương án A — supervisor (khuyến nghị):** tạo `/etc/supervisor/conf.d/hrm-tpe-price-inherit.conf`
+```ini
+[program:hrm-tpe-price-inherit]
+command=php /var/www/tpe/hrm-api/artisan queue:work database --queue=price-inherit --timeout=900 --tries=1 --sleep=3
+directory=/var/www/tpe/hrm-api
+user=erp_tpe
+autostart=true
+autorestart=true
+stopwaitsecs=960
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/www/tpe/hrm-api/storage/logs/price-inherit-worker.log
+```
+```bash
+sudo supervisorctl reread && sudo supervisorctl update
+sudo supervisorctl status hrm-tpe-price-inherit          # RUNNING
+```
+- Tên program có tiền tố `hrm-tpe-` để không đụng 4 bộ HRM khác trên cùng máy.
+- `php` trong `command` phải là PHP 7.4 mà bộ tpe đang dùng (`php -v` dưới user erp_tpe); khác thì ghi đường dẫn đầy đủ.
+
+**Phương án B — chưa có supervisor:** crontab `erp_tpe` (`crontab -e`) thêm 1 dòng, mỗi phút vét queue rồi thoát, `flock` chặn chạy chồng:
+```cron
+* * * * * cd /var/www/tpe/hrm-api && flock -n /tmp/hrm-tpe-price-inherit.lock php artisan queue:work database --queue=price-inherit --stop-when-empty --timeout=900 --tries=1 >> storage/logs/price-inherit-worker.log 2>&1
+```
+  Bấm Lưu chờ tối đa ~1 phút mới bắt đầu áp (dải "Đang áp" vẫn hiện đúng). Có supervisor rồi thì xoá dòng này.
+
+## 5. Cache + khởi động lại
+```bash
+cd $API
+php artisan config:clear && php artisan route:clear       # key mới trong config/queue.php + 3 route mới
+sudo systemctl reload php*-fpm                            # nạp code mới (opcache)
+php artisan queue:restart                                 # worker đang chạy nạp code mới
+cd $CLI && npm ci && NODE_OPTIONS=--max-old-space-size=8192 npm run build      # node 12
+sudo /etc/init.d/hrm-client-tpe start                     # KHÔNG pm2 restart trần (socket ⇒ 502)
+```
+- **Mọi lần deploy hrm-api sau này** đều phải `php artisan queue:restart` (worker giữ code cũ trong bộ nhớ).
+
+## 6. Kiểm khói (10 phút, tài khoản có quyền "Cài đặt giá bán theo hãng")
+1. Màn Tài chính › Giá bán theo hãng sx: 2 lựa chọn tên mới ("Tự xây dựng giá bán riêng theo công ty" / "Kế thừa giá bán theo
+   công ty quản lý hàng"), Hướng dẫn ẩn, khối "Khai báo ngoại lệ" 3 tab. Công ty đã cài từ đợt 1 (vd TPHP) vẫn đúng cách cài + danh sách cũ.
+2. Ở 1 công ty ÍT hàng (hoặc thêm 1 hãng 0 mã rồi bỏ lại): Lưu ⇒ dải "Đang áp cài đặt…" ⇒ vài giây (B: ≤ 1 phút) tự tắt ⇒ chuông
+   "[GIA] Cập nhật: …". Kiểm DB:
+   ```bash
+   M -e "SELECT id, company_id, status, total, done, summary, error, started_at, finished_at FROM manufacture_price_mode_runs ORDER BY id DESC LIMIT 3;"
+   #   status 3 = Đã áp. Kẹt status 1 quá 1 phút ⇒ worker không chạy (bước 4) · status 4 ⇒ đọc cột error + storage/logs/price-inherit-worker.log
+   ```
+3. `cd $API && php artisan product-price:compare-inherited --company=TPSG,TPHP,TPV` ⇒ "0 lệch." (lệnh đã so theo giá × hệ số).
+4. (Khi nghiệp vụ khai hệ số đầu tiên) màn Cập nhật giá bán ở công ty đó: badge "Kế thừa · CODE × k", giá = giá nguồn × k làm tròn 1.000 đ.
+
+## 7. Khai hệ số / lưu lớn (khi nghiệp vụ sẵn sàng — không bắt buộc cùng lúc deploy)
+- Sao lưu giá trước lần lưu lớn đầu tiên — như **6.1 đợt 1** (`mysqldump … product_unit_prices product_expected_prices …`).
+- **Kiểm giá cũ / giá mới bằng Excel** (mỗi công ty 1 tab): chụp TRƯỚC khi Lưu, chụp SAU khi áp xong, ghép ra Excel — `kiem-gia/README.md`.
+- Lưu ~30.000 mã giờ chạy nền: đóng trang được, xong có thông báo. Trong lúc đang áp, Lưu lần nữa ở cùng công ty bị chặn
+  ("Đang áp cài đặt do … lưu lúc … — chờ áp xong rồi lưu lại.").
+- Hệ số phải > 1, tối đa 2 số thập phân; giá 1 đ giữ nguyên; giá sau nhân không thấp hơn giá nguồn.
+
+## LUI đợt 2
+1. Dừng worker: A `sudo supervisorctl stop hrm-tpe-price-inherit` · B xoá dòng cron.
+2. `cd $API && git checkout <hash api bước 1>` · `cd $CLI && git checkout <hash client bước 1>` + build + `init.d start`
+   + `config:clear` + reload php-fpm.
+3. 2 bảng mới để nguyên vô hại (hoặc `migrate:rollback` đúng 2 bản bằng `--path`). Code cũ lưu đồng bộ ⇒ lưu lớn lại có thể 504.
+4. Giá đã áp theo hệ số đã ghi đè — lui code KHÔNG trả giá cũ; muốn trả phải nạp lại bản sao lưu (mục 7) cùng dev.

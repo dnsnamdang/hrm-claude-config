@@ -1,0 +1,20 @@
+/*qsel 10/11 [U] chip lọc nhanh → 1 ô chọn có số + màu (gọn thanh công cụ)*/
+.mk-tb-chips.mk-qs-hide{display:none!important}
+.mk-qs{position:relative;flex:0 0 auto}
+.mk-qs-b{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 9px 0 11px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;font:500 13px Roboto,sans-serif;color:#374151;cursor:pointer;white-space:nowrap}
+.mk-qs-b:hover{border-color:#cbd5e1}
+.mk-qs-b.sel{border-color:var(--qc);background:color-mix(in srgb,var(--qc) 7%,#fff);color:#111827}
+.mk-qs-b.open{border-color:#1abc9c}
+.mk-qs-d{width:8px;height:8px;border-radius:50%;background:var(--qc);flex:0 0 8px}
+.mk-qs-n{min-width:20px;height:18px;padding:0 6px;border-radius:9px;font-size:11.5px;font-weight:700;line-height:18px;text-align:center;background:color-mix(in srgb,var(--qc) 14%,#fff);color:var(--qc)}
+.mk-qs-n.z{background:#f3f4f6;color:#9ca3af}
+.mk-qs-b>i{font-size:16px;color:#9ca3af;margin-left:1px;transition:transform .15s}
+.mk-qs-b.open>i{transform:rotate(180deg)}
+.mk-qs-m{position:absolute;top:calc(100% + 4px);left:0;z-index:1060;min-width:100%;width:max-content;background:#fff;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.12);padding:4px;display:none}
+.mk-qs-m.on{display:block}
+.mk-qs-o{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:6px;font-size:13px;color:#374151;cursor:pointer;white-space:nowrap}
+.mk-qs-o:hover{background:#f3f4f6}
+.mk-qs-o.on{background:#e8f8f5;color:#0f766e;font-weight:600}
+.mk-qs-o .mk-qs-n{margin-left:auto}
+.mk-qs-o .mk-qs-ck{width:16px;font-size:15px;color:#1abc9c;visibility:hidden;margin-left:2px}
+.mk-qs-o.on .mk-qs-ck{visibility:visible}

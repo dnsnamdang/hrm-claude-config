@@ -12,6 +12,7 @@
 
 - Luôn gợi ý và làm việc bằng tiếng Việt
 - Không xử lý commit hay đẩy code lên git
+- **KIỂM CODE TỚI TẬN GỐC TRƯỚC KHI KẾT LUẬN** (chốt 01/11/2026). Mọi kết luận về hành vi code ("lỗi", "sai", "lệch quyền", "luôn false"…) phải lần tới nơi giá trị được tính ra — accessor/mutator của cột (`get<Cột>Attribute`, `$casts`), method bị override (class con, trait), middleware, global scope, session/config — không dừng ở chỗ gọi. Có dữ liệu thì đối chiếu bằng dữ liệu hoặc chạy thử (tinker, gọi API, Playwright) và ghi rõ đã kiểm bằng gì. Chưa lần hết thì nói **"chưa kiểm xong"**, không phát biểu như sự thật. Kết luận của subagent/reviewer cũng phải tự kiểm lại. Bài học: báo nhầm "ERP kiểm quyền sai công ty" vì thấy `info->company_id`, bỏ sót `EmployeeInfo::getCompanyIdAttribute()` trả công ty đang chọn trong session. Đầy đủ: `CLAUDE.md` gốc workspace mục "Kiểm code tới tận gốc TRƯỚC KHI kết luận".
 - Không đọc file thư viện hệ thống — tốn token không cần thiết
 - Ưu tiên dùng helper có sẵn, tạo helper mới nếu logic dùng lại nhiều nơi
 - Khi cần sửa hàm dùng chung → hỏi ý kiến trước khi làm
@@ -183,13 +184,11 @@
   }
   ```
 - **Mã code tự sinh**: pattern `PREFIX-YYYY-NNNNN`, implement `getNextCode()` trên Entity (copy pattern `BomList::getNextCode()`).
-- **Permission**: Khi thêm/sửa/đổi tên/xóa permission → sửa trực tiếp trong file `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php`. KHÔNG tạo migration riêng cho permission, KHÔNG tạo seeder quyền riêng cho từng màn.
-  - **Seeder ĐỒNG BỘ theo TÊN quyền, không xoá đi tạo lại** (đổi 14/10/2026, áp cả seeder ERP `database/seeds/PermissionsTableSeeder.php` guard `web`): mỗi quyền là 1 dòng `$this->perm(['name' => …, 'display_name' => …, 'group' => …, 'type' => …])` — **KHÔNG khai `'id'`** (DB tự sinh, quyền đã có giữ nguyên id mãi mãi) và **KHÔNG khai `'guard_name'`**. Thứ tự dòng = thứ tự hiển thị trên màn Phân quyền.
-  - **Đổi tên** = sửa `name` ở dòng khai báo **VÀ** thêm `'tên cũ' => 'tên mới'` vào hằng `RENAMED` (giữ gán quyền) **VÀ** sửa mọi chỗ code dùng tên cũ (`checkPermission`, `isShow` menu FE) — quên sửa code là người có quyền bị 403. **Bỏ quyền** = xoá/comment dòng **VÀ** thêm tên vào `REMOVED`. Chỉ comment dòng thì quyền KHÔNG bị xoá, chỉ cảnh báo.
-  - **KHÔNG BAO GIỜ xoá mục cũ trong `RENAMED` / `REMOVED`, KHÔNG dùng lại tên quyền đã đổi/đã gỡ** — môi trường chưa chạy bản đổi tên sẽ trao nhầm quyền mới cho vai trò đang giữ quyền cũ (đã tái hiện khi test 15/10/2026). Mục cũ còn thì seeder tự chặn việc khai lại tên đó.
-  - Xem trước thay đổi: `php artisan permission:sync --dry-run` (có ở cả hrm-api lẫn ERP). Deploy vẫn chạy `db:seed --class=…PermissionsTableSeeder` như cũ. Engine: `app/Support/Permissions/PermissionSync.php` (bản giống hệt ở 2 repo). Chi tiết: `.claude/skills/permission-seeder/SKILL.md`
-  - **Màn chuyển đổi từ ERP: TẠO QUYỀN MỚI ở HRM** (guard `api`), không dùng lại quyền ERP (guard `web` + vai trò gán từ ERP lệch `model_type` → `checkPermission` bỏ sót, người có quyền vẫn 403). Cột `type` = `permissionType` của **phân hệ chính** của màn (tra `components/subsystems.js`) — phân hệ chính là phân hệ có mục menu trỏ danh sách với tham số `all`; phạm vi dữ liệu dựa vào quyền ở phân hệ đó. Không tự gán quyền mới cho vai trò cũ — admin tự phân lại. Chi tiết: `.claude/skills/erp-to-hrm-screen/SKILL.md` Bước 2.
-- **Middleware checkPermission**: Khi có quyền tương ứng trong `PermissionsTableSeeder`, các route thao tác dữ liệu (store, update, destroy, approve, toggle,...) phải gắn middleware `checkPermission:TênQuyền`. Route xem (index, show) chỉ gắn nếu có quyền xem riêng. Cú pháp: `->middleware('checkPermission:Tên quyền')`, nhiều quyền dùng `|`: `->middleware('checkPermission:Quyền A|Quyền B')`. Không gắn middleware nếu chưa có quyền tương ứng trong seeder.
+- **Permission**: Quyền khai trong `app/Support/Permissions/Catalog/<phan_he>.php` (dùng chung HRM + ERP), đồng bộ bằng `php artisan permission:catalog-sync`. `PermissionsTableSeeder` ở cả 2 repo đã gỡ từ 06/11/2026: KHÔNG khai seeder, KHÔNG tạo migration cho permission. Code mới kiểm theo **mã** (`phan_he.doi_tuong.hanh_dong`), không theo tên tiếng Việt, không theo tên Vai trò, không bypass Super Admin. Chi tiết: skill `permission-seeder` và `hrm-api/docs/huong-dan-phan-quyen.md`.
+  - Mã mới chưa ai có, kể cả Super Admin: phải cấp ở `/admin/roles`. Prod sync qua `~/build_tpe.sh` trên VPS HRM (script tự chạy `permission:catalog-sync`), chạy script trước khi push ERP nếu ERP dùng mã mới.
+  - Không đổi `code` của mã đã lên prod. Bỏ quyền thì gỡ khỏi Catalog, sync sẽ đặt `deprecated_at`, không xoá.
+  - **Màn chuyển đổi từ ERP**: dùng lại mã ERP có sẵn trong Catalog (thêm `hrm` vào `platforms`), chỉ tạo mã mới khi chức năng chưa có mã.
+- **Middleware checkPermission**: các route thao tác dữ liệu (store, update, destroy, approve, toggle,...) phải gắn middleware `checkPermission:<mã>`; nhiều mã nối bằng `|`, có 1 mã là qua. FE ẩn nút không thay được kiểm ở BE.
 
 **Skills tự động:** Trước khi thực hiện bất kỳ task nào, quét `.claude/skills/` → đọc tên thư mục → nếu task khớp với tên skill thì đọc `SKILL.md` tương ứng và follow hướng dẫn bên trong. Ví dụ: yêu cầu "tạo SRS" → đọc `.claude/skills/srs-documenter/SKILL.md`, yêu cầu "fix bug" → đọc `.claude/skills/bug-fixer/SKILL.md`.
 
@@ -372,7 +371,7 @@ Nếu có → đọc trước khi viết code.
 | Khi làm gì                                          | Đọc skill nào                                |
 | --------------------------------------------------- | -------------------------------------------- |
 | **Chuyển/port màn từ ERP sang HRM** (dựng lại màn theo mẫu ERP) | `.claude/skills/erp-to-hrm-screen/SKILL.md` |
-| **Thêm / sửa / đổi tên / bỏ QUYỀN** (PermissionsTableSeeder HRM + ERP, `RENAMED`/`REMOVED`, `permission:sync`) | `.claude/skills/permission-seeder/SKILL.md` |
+| **Thêm / sửa / đổi tên / bỏ QUYỀN** (Catalog `app/Support/Permissions/Catalog`, mã quyền, `permission:catalog-sync`) | `.claude/skills/permission-seeder/SKILL.md` |
 | Tạo/sửa button (nút bấm) trên FE hrm-client         | `.claude/skills/button-convention/SKILL.md`  |
 | Tạo/sửa modal, popup, dialog trên FE hrm-client     | `.claude/skills/modal-popup/SKILL.md`        |
 | Tạo màn danh sách mới ở hrm-client                  | `.claude/skills/list-page/SKILL.md` (nếu có) |

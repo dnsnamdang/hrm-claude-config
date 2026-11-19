@@ -458,3 +458,17 @@ User chốt: áp cả 3 màn · tab Thêm mới mở sẵn · tối đa 10 ảnh
 - [x] Gốc ở `components/shared/CompactReviewEditor.vue::destroyEditor`: gọi `removeAllListeners()` TRƯỚC `destroy(true)` ⇒ gỡ luôn listener nội bộ xoá khung `.cke`. Đo: thứ tự cũ còn 1 `.cke`, chỉ destroy còn 0. Bỏ `removeAllListeners()` (destroy tự gỡ). User chọn sửa component chung.
 - [x] Đo lại MCP: mở 1 → qua tab 0 → về 1 → dùng lại 3 lần vẫn 1, nội dung đúng dòng chọn, gõ vẫn cập nhật `product_attributes`.
 - [x] E2E: Y2 kiểm `.cke` = 1 sau khi qua lại tab, Y8 chọn lại lần 2 vẫn 1 khung. `price-asking-temp-product` 15/15 (trừ Y14 đỏ sẵn) · `temp-product-gallery-ui` 2/2.
+
+## 09/11/2026 — sửa dữ liệu PROD: hàng ERP `products.status` 2/5 mất trạng thái công ty (không đụng source)
+Báo lỗi: RAVA-RAV6401I:03 (TPE quản lý) không có trạng thái, công ty kế thừa không thấy, không có ở "Hàng đang nhập thông tin".
+- [x] Nguyên nhân (đọc DB prod qua SSH + code): ERP Duyệt giá gán `products.status` cho CẢ mã — gửi duyệt ⇒ 2 (`ProductsController:1831`, `Product:7155`), Không duyệt ⇒ 5 (`ProductApprovesController:299/388`), chỉ Duyệt mới về 1. Backfill chuyển đổi chỉ sinh `product_company_coefficients` cho status 1 (rủi ro R11 `2c-ghi/c2-plan.md` đã chấp nhận) ⇒ 8 mã prod không có trạng thái công ty. Hàm Không duyệt còn ghi đè hàng đã xoá (TDHFUJI: xoá 13:36:07, Không duyệt 13:36:43 ⇒ 5).
+- [x] Đợt 1 (user chốt): RAVA-RAV6401I:03, SUKE-BT-11410301-20A, TI-TR-06, ELTE-IR_1203C_230V_BA ⇒ Đang KD TPE; MNSG-GPO12CE ⇒ Đang KD Sài Gòn (owner vẫn TPE, không kế thừa giá) — `products.status=1`, pcc status 3 + info_entered_at, đủ 6 loại giá = 0, gỡ cờ chờ duyệt, giữ giá vốn, lịch sử "Thay đổi trạng thái" (changed_by 13). TDHFUJI-KETCAUTHEP (đã xoá) ⇒ status 0.
+- [x] Đợt 2: MNSG-MN-HB-CS0104 ("TPSG không dùng mã này") + HKH-KTY-6002012SY-P80 (BỎ) ⇒ status 0 + deleted_at; xoá `product_approves` id 1 (+6 pap) treo ở cty 8, gỡ cờ chờ duyệt.
+- [x] Cách chạy: script tinker (scratchpad phiên, `DRY=1` rollback ⇒ `DRY=0` commit), user chạy qua `!` (auto mode chặn tinker prod). Kiểm sau bằng SQL chỉ đọc: prod còn **0** mã status 2/5, 0 yêu cầu duyệt treo.
+- Ghi chú: HRM `ProductPriceApprovalService:547/759` vẫn ghi 2⇒1/5 nhưng không luồng HRM nào sinh mã 2 mới ⇒ không tái phát. Chưa xem UI prod. Công ty kế thừa phải tự "lấy về".
+
+### Checkpoint — 09/11/2026 16:10
+Vừa hoàn thành: sửa dữ liệu prod 8 mã ERP status 2/5 (5 ⇒ Đang KD giá 0, 3 ⇒ đã xoá), kiểm SQL đạt
+Đang làm dở: —
+Bước tiếp theo: user mở RAVA-RAV6401I:03 trên prod (TPE) xác nhận hiện Đang kinh doanh; công ty kế thừa cần thì "lấy về"
+Blocked: —

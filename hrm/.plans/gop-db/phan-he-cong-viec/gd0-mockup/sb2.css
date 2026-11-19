@@ -1,0 +1,198 @@
+/* Sidebar phương án đề xuất — chỉ áp khi <body class="sb2"> (sb2.js tự gắn).
+   04/11/2026 bản 2: KHÁCH CHỐT giữ nguyên nền navy của rail (màu nhận diện công ty).
+   - Rail: giữ nền/logo/ô tìm gốc; chỉ dọn cho gọn — icon 1 màu, Thiết lập ghim đáy, chip số trong mờ.
+   - Popover cấp 2/3 (đề xuất): thân TRẮNG để đọc danh sách dài cho rõ; màu nhấn lấy XANH DƯƠNG của
+     chính dải navbar (#1a5aa0 — mép phải gradient navbar) để popover "thuộc về" rail; teal #1abc9c của
+     app chỉ còn ở nút hành động (Tạo không gian làm việc…). */
+
+/* ---------- RAIL cấp 1 (nền gốc) ---------- */
+body.sb2 .sale-cats{display:flex!important;flex-direction:column}
+body.sb2 .sale-cats .cats-list{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+/* icon 1 màu (bỏ cầu vồng) — mục ghim giữ màu theo loại để phân biệt Phòng / Dự án nội bộ / Dự án KH */
+body.sb2 .sale-cats .cat:not(.mk-pin){--ic:rgba(226,236,250,.78)!important}
+body.sb2 .sale-cats .cat:not(.mk-pin) .cat-ic{color:rgba(226,236,250,.78)!important}
+body.sb2 .sale-cats .cat .cat-ic.star{fill:none!important}
+body.sb2 .sale-cats .cat.on:not(.mk-pin) .cat-ic{color:#fff!important}
+body.sb2 .sale-cats .cat.sb2-open,body.sb2 .sale-cats .mk-ws-cat.mk-ws-on{background:rgba(255,255,255,.12)!important;color:#fff!important}
+body.sb2 .sale-cats .cat.sb2-open .cat-ic,body.sb2 .sale-cats .mk-ws-cat.mk-ws-on .cat-ic{color:#fff!important}
+body.sb2 .sale-cats .sb2-car{margin-left:auto;font-size:16px;line-height:1!important;color:rgba(226,236,250,.45);opacity:0;transition:opacity .15s}
+body.sb2 .sale-cats:hover .sb2-car,body.sb2 .sale-cats.is-held .sb2-car{opacity:1}
+body.sb2 .sale-cats .cat.sb2-open .sb2-car{color:#fff}
+/* nhãn "Đã ghim": chữ thường */
+body.sb2 .sale-cats .mk-pin-h,body.sb2 .sale-cats .mk-pin-h span{text-transform:none!important;letter-spacing:0!important;font-size:11.5px!important;font-weight:600!important;color:rgba(226,236,250,.5)!important}
+/* số tin chưa đọc: chip trong mờ thay cho đỏ (đỏ dành cho quá hạn) */
+body.sb2 .sale-cats .mk-pin .mk-pin-c{background:rgba(255,255,255,.14)!important;color:#eaf1fb!important;font-weight:600!important;box-shadow:none!important}
+body.sb2 .sale-cats .mk-pin .mk-pin-n{background:#5eead4!important;color:transparent!important;width:7px!important;height:7px!important;min-width:0!important;padding:0!important;border:0!important;box-shadow:0 0 0 2px #0e2f5f!important;font-size:0!important}
+/* Thiết lập ghim đáy rail */
+body.sb2 .sale-cats .sb2-foot{flex:0 0 auto;border-top:1px solid rgba(255,255,255,.08);padding:6px 0 8px}
+
+/* ---------- POPOVER cấp 2 / cấp 3 ---------- */
+.sb2-bd{display:none;position:fixed;right:0;bottom:0;background:rgba(10,28,61,.12);z-index:1039}
+.sb2-pan{display:none;position:fixed;bottom:0;z-index:1040;background:#fff;box-shadow:16px 0 36px rgba(10,28,61,.18);flex-direction:column;font-size:13px;color:#334155}
+/* gờ xanh dương 3px mép trái: nối popover với rail */
+.sb2-pan::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#1a5aa0,#0e2f5f)}
+body.sb2-on .sb2-bd{display:block}
+body.sb2-on .sb2-pan{display:flex}
+.sb2-hd{display:flex;align-items:baseline;gap:8px;padding:16px 16px 12px 19px;border-bottom:1px solid #eef2f7}
+.sb2-hd b{font-size:15px;font-weight:700;color:#0e2f5f}
+.sb2-hd span{font-size:12px;color:#6b7f9e}
+.sb2-x{margin-left:auto;align-self:center;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;color:#6b7f9e;cursor:pointer;font-size:16px}
+.sb2-x:hover{background:#eef4fb;color:#0e2f5f}
+.sb2-rows{padding:8px 8px 12px 11px;overflow-y:auto;scrollbar-width:thin;display:grid;grid-template-columns:1fr;gap:1px;align-content:start}
+.sb2-rows.two{grid-template-columns:1fr 1fr;column-gap:8px}
+.sb2-row{display:flex;align-items:center;gap:8px;min-height:34px;padding:6px 8px 6px 10px;border-radius:7px;color:#334155;cursor:pointer;text-decoration:none!important}
+.sb2-row:hover{background:#eef4fb;color:#1a5aa0}
+.sb2-rn{flex:1 1 auto;min-width:0;line-height:1.35}
+.sb2-rn small{display:block;font-size:11px;color:#6b7f9e}
+.sb2-row.is-erp .sb2-rn{color:#94a3b8}
+.sb2-erp{font-style:normal;font-size:10.5px;font-weight:600;color:#64748b;background:#f1f5f9;border-radius:4px;padding:0 5px;line-height:17px}
+.sb2-star{flex:0 0 auto;font-size:15px;color:#c3cfdf;opacity:0;transition:opacity .12s}
+.sb2-row:hover .sb2-star,.sb2-star.on{opacity:1}
+.sb2-star.on,.sb2-star:hover{color:#f59e0b}
+.sb2-empty{padding:12px 19px 16px;color:#6b7f9e;font-size:12.5px}
+/* menu 3 cấp: cột nhóm cấp 2 (nền xanh rất nhạt) + danh sách cấp 3 */
+.sb2-nav{display:flex;flex:1 1 auto;min-height:0}
+.sb2-subs{flex:0 0 210px;padding:8px 8px 8px 11px;background:#f5f8fc;border-right:1px solid #eef2f7;overflow-y:auto}
+.sb2-sub{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border-radius:7px;color:#40536e;cursor:pointer;font-weight:500}
+.sb2-sub i{font-size:16px;color:#6b7f9e}
+.sb2-sub span{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb2-sub em{font-style:normal;font-size:11px;color:#6b7f9e}
+.sb2-sub:hover{background:#eaf1fa}
+.sb2-sub.on{background:#fff;color:#1a5aa0;box-shadow:0 1px 2px rgba(10,28,61,.08),inset 3px 0 0 #1a5aa0}
+.sb2-sub.on i{color:#1a5aa0}
+.sb2-nav .sb2-rows{flex:1 1 auto;padding-left:8px}
+
+/* ---------- Panel Không gian làm việc: cùng phương án (thân trắng, nhấn xanh dương) ---------- */
+body.sb2 .sale-theme .mk-ws{background:#fff!important;background-image:none!important;color:#334155!important;border-color:transparent!important;box-shadow:16px 0 36px rgba(10,28,61,.18)!important}
+body.sb2 .sale-theme .mk-ws::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#1a5aa0,#0e2f5f);z-index:2}
+body.sb2 .sale-theme .mk-ws .dtop{background:#fff!important;border-bottom:1px solid #eef2f7!important}
+body.sb2 .sale-theme .mk-ws .dhead{color:#0e2f5f!important}
+body.sb2 .sale-theme .mk-ws .dsub,body.sb2 .sale-theme .mk-ws .dclose{color:#6b7f9e!important}
+body.sb2 .sale-theme .mk-ws .dclose:hover{color:#0e2f5f!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-bar{border-bottom-color:#eef2f7!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-q{background:#f5f8fc!important;border-color:#e3eaf3!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-q:focus-within{border-color:#1a5aa0!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-q input{color:#334155!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-q input::placeholder{color:#94a3b8!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-q i{color:#6b7f9e!important}
+body.sb2 .sale-theme .mk-ws .mk-kbd{background:#fff!important;color:#64748b!important;border-color:#e2e8f0!important}
+body.sb2 .sale-theme .mk-ws .subcats{background:#f5f8fc!important;border-right-color:#eef2f7!important;color:#40536e!important}
+body.sb2 .sale-theme .mk-ws .scat{color:#40536e!important}
+body.sb2 .sale-theme .mk-ws .scat i,body.sb2 .sale-theme .mk-ws .scat svg{color:#6b7f9e!important}
+body.sb2 .sale-theme .mk-ws .scat:hover{background:#eaf1fa!important;color:#0e2f5f!important}
+body.sb2 .sale-theme .mk-ws .scat.on{background:#fff!important;color:#1a5aa0!important;box-shadow:0 1px 2px rgba(10,28,61,.08),inset 3px 0 0 #1a5aa0!important}
+body.sb2 .sale-theme .mk-ws .scat.on i,body.sb2 .sale-theme .mk-ws .scat.on svg{color:#1a5aa0!important}
+body.sb2 .sale-theme .mk-ws .subcats .scat .c,body.sb2 .sale-theme .mk-ws .subcats .scat:not(.on) .c,body.sb2 .sale-theme .mk-ws .sub__t .c,body.sb2 .sale-theme .mk-ws .mk-ws-cnt{background:transparent!important;color:#6b7f9e!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-foot{border-top-color:#eef2f7!important;color:#6b7f9e!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-foot span{color:#6b7f9e!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-foot a{color:#1a5aa0!important}
+body.sb2 .sale-theme .mk-ws .sub__t{color:#40536e!important;border-bottom-color:#eef2f7!important;text-transform:none!important;letter-spacing:0!important}
+body.sb2 .sale-theme .mk-ws .sub__t::before{display:none!important}
+body.sb2 .sale-theme .mk-ws .mk-sub-hint{color:#94a3b8!important}
+body.sb2 .sale-theme .mk-ws .mk-wr{color:#334155!important}
+body.sb2 .sale-theme .mk-ws .mk-wr:hover{background:#eef4fb!important}
+body.sb2 .sale-theme .mk-ws .mk-wr.on{background:#f2f7fd!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-nm{color:#0f172a!important}
+body.sb2 .sale-theme .mk-ws .mk-wr small{color:#6b7f9e!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-ic{background:color-mix(in srgb,var(--t,#94a3b8) 10%,#fff)!important;color:var(--t,#64748b)!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-cur{background:#e8f1fb!important;color:#1a5aa0!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-tag{background:#f1f5f9!important;color:#64748b!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-od{color:#dc2626!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-un{background:#eef2f6!important;color:#475569!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-pin{color:#c3cfdf!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-pin:hover{color:#64748b!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-pin.on{color:#1a5aa0!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-empty,body.sb2 .sale-theme .mk-ws .mk-ws-empty *{color:#6b7f9e!important}
+
+/* ---------- 04/11 bản 3: bỏ hiệu ứng sáng trên topbar ---------- */
+body.sb2 .sale-theme .navbar-custom{background-image:linear-gradient(100deg,#0a1c3d 0%,#0e2f5f 42%,#14417e 76%,#1a5aa0 100%)!important}
+body.sb2 .sale-theme .navbar-custom::after,body.sb2 .sale-theme .navbar-custom::before{display:none!important}
+body.sb2 .mk-ntb-id::after{display:none!important;animation:none!important}
+
+/* ---------- 04/11 ĐÃ CHỐT: popover NỀN NAVY giống sidebar (body.sb2-navy, sb2.js luôn bật) ----------
+   Các rule popover nền trắng phía trên giữ làm lớp nền, bị khối này đè.
+   Nền = đúng gradient gốc của rail (#123c74 → #0e2f5f → #0a1c3d), bỏ hoạ tiết; chữ trắng;
+   mục đang chọn dùng đúng kiểu .cat.on của rail (xanh nhạt trong mờ + vạch #6fb2ff). */
+body.sb2-navy .sb2-pan,body.sb2-navy.sb2 .sale-theme .mk-ws{background:linear-gradient(180deg,#123c74 0%,#0e2f5f 52%,#0a1c3d 100%)!important;color:#e6eefa!important;box-shadow:16px 0 36px rgba(4,12,30,.35)!important}
+body.sb2-navy .sb2-pan::before,body.sb2-navy.sb2 .sale-theme .mk-ws::before{width:1px;background:rgba(255,255,255,.10)}
+body.sb2-navy .sb2-hd{border-bottom-color:rgba(255,255,255,.08)}
+body.sb2-navy .sb2-hd b{color:#fff}
+body.sb2-navy .sb2-hd span,body.sb2-navy .sb2-x{color:rgba(226,236,250,.6)}
+body.sb2-navy .sb2-x:hover{background:rgba(255,255,255,.08);color:#fff}
+body.sb2-navy .sb2-row{color:#e6eefa}
+body.sb2-navy .sb2-row:hover{background:rgba(255,255,255,.08);color:#fff}
+body.sb2-navy .sb2-rn small{color:rgba(226,236,250,.55)}
+body.sb2-navy .sb2-row.is-erp .sb2-rn{color:rgba(226,236,250,.45)}
+body.sb2-navy .sb2-erp{background:rgba(255,255,255,.10);color:rgba(226,236,250,.7)}
+body.sb2-navy .sb2-star{color:rgba(226,236,250,.4)}
+body.sb2-navy .sb2-star.on,body.sb2-navy .sb2-star:hover{color:#f5b93b}
+body.sb2-navy .sb2-empty{color:rgba(226,236,250,.6)}
+body.sb2-navy .sb2-subs{background:rgba(3,12,30,.22);border-right-color:rgba(255,255,255,.08)}
+body.sb2-navy .sb2-sub{color:rgba(230,238,250,.85)}
+body.sb2-navy .sb2-sub i,body.sb2-navy .sb2-sub em{color:rgba(226,236,250,.55)}
+body.sb2-navy .sb2-sub:hover{background:rgba(255,255,255,.07)}
+body.sb2-navy .sb2-sub.on{background:rgba(111,178,255,.16);color:#fff;box-shadow:inset 3px 0 0 #6fb2ff}
+body.sb2-navy .sb2-sub.on i{color:#fff}
+/* panel Không gian làm việc theo cùng phương án */
+body.sb2-navy.sb2 .sale-theme .mk-ws .dtop{background:transparent!important;border-bottom-color:rgba(255,255,255,.08)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .dhead{color:#fff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .dsub,body.sb2-navy.sb2 .sale-theme .mk-ws .dclose{color:rgba(226,236,250,.6)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-bar{border-bottom-color:rgba(255,255,255,.08)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-q{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.14)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-q:focus-within{border-color:#6fb2ff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-q input{color:#fff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-q input::placeholder,body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-q i{color:rgba(226,236,250,.55)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-kbd{background:rgba(255,255,255,.10)!important;color:rgba(226,236,250,.7)!important;border-color:transparent!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .subcats{background:rgba(3,12,30,.22)!important;border-right-color:rgba(255,255,255,.08)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .scat{color:rgba(230,238,250,.85)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .scat i,body.sb2-navy.sb2 .sale-theme .mk-ws .scat svg{color:rgba(226,236,250,.55)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .scat:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .scat.on{background:rgba(111,178,255,.16)!important;color:#fff!important;box-shadow:inset 3px 0 0 #6fb2ff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .scat.on i,body.sb2-navy.sb2 .sale-theme .mk-ws .scat.on svg{color:#fff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .subcats .scat .c,body.sb2-navy.sb2 .sale-theme .mk-ws .subcats .scat:not(.on) .c,body.sb2-navy.sb2 .sale-theme .mk-ws .sub__t .c,body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-cnt{color:rgba(226,236,250,.6)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-foot{border-top-color:rgba(255,255,255,.08)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-foot span{color:rgba(226,236,250,.55)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-foot a{color:#8cc4ff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .sub__t{color:rgba(226,236,250,.7)!important;border-bottom-color:rgba(255,255,255,.08)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-sub-hint{color:rgba(226,236,250,.45)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr{color:#e6eefa!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr:hover{background:rgba(255,255,255,.07)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr.on{background:rgba(111,178,255,.14)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-nm{color:#fff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr small{color:rgba(226,236,250,.55)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-ic{background:color-mix(in srgb,var(--t,#94a3b8) 22%,transparent)!important;color:color-mix(in srgb,var(--t,#94a3b8) 55%,#fff)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-cur{background:rgba(111,178,255,.18)!important;color:#bfe0ff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-tag{background:rgba(255,255,255,.10)!important;color:rgba(226,236,250,.75)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-od{color:#fca5a5!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-un{background:rgba(255,255,255,.12)!important;color:#eaf1fb!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-pin{color:rgba(226,236,250,.4)!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-pin:hover{color:#fff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-wr-pin.on{color:#8cc4ff!important}
+body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-empty,body.sb2-navy.sb2 .sale-theme .mk-ws .mk-ws-empty *{color:rgba(226,236,250,.6)!important}
+
+
+/* ---------- 04/11 bản 4: Không gian làm việc gọn chữ (áp cả 2 nền) ----------
+   1 tiêu đề đậm vừa · tên không gian chữ thường, 1 dòng (mô tả vào tooltip) · bỏ chữ phụ lặp ý ·
+   "Kín" chỉ còn ổ khoá · bỏ "Đang mở" (dòng đã tô nền) · ghim chỉ hiện khi rê chuột */
+body.sb2 .sale-theme .mk-ws .dhead{font-size:15px!important;font-weight:600!important}
+body.sb2 .sale-theme .mk-ws .dsub{display:none!important}
+body.sb2 .sale-theme .mk-ws .mk-kbd{display:none!important}
+body.sb2 .sale-theme .mk-ws .scat,body.sb2 .sale-theme .mk-ws .scat *{font-weight:400!important}
+body.sb2 .sale-theme .mk-ws .scat.on,body.sb2 .sale-theme .mk-ws .scat.on *{font-weight:500!important}
+body.sb2 .sale-theme .mk-ws .sub__t{font-size:12px!important;font-weight:500!important}
+body.sb2 .sale-theme .mk-ws .mk-sub-hint{display:none!important}
+body.sb2 .sale-theme .mk-ws .mk-wr{min-height:0!important;padding-top:7px!important;padding-bottom:7px!important;align-items:center!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-nm{font-weight:400!important;font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex!important;align-items:center;gap:6px}
+body.sb2 .sale-theme .mk-ws .mk-wr small{display:none!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-cur{display:none!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-tag{font-size:0!important;background:transparent!important;padding:0!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-tag i{font-size:13px!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-ic{width:26px!important;height:26px!important;font-size:14px!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-un{font-weight:500!important}
+body.sb2 .sale-theme .mk-ws .mk-wr-pin,body.sb2 .sale-theme .mk-ws .mk-wr-pin.on{opacity:0!important;transition:opacity .12s}
+body.sb2 .sale-theme .mk-ws .mk-wr:hover .mk-wr-pin{opacity:1!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-foot span{display:none!important}
+body.sb2 .sale-theme .mk-ws .mk-ws-foot a{font-weight:500!important}
+/* popover menu: tiêu đề đậm vừa cho cùng nhịp */
+.sb2-hd b{font-weight:600}
+body.sb2 .sale-theme .mk-ws .sub__t .c,body.sb2 .sale-theme .mk-ws .scat .c,body.sb2 .sale-theme .mk-ws .mk-wr-od{font-weight:400!important}

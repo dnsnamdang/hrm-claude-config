@@ -8,6 +8,156 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- assign / **AGENT + CHAT — TPE SMART AGENT (trợ lý AI) + Chat (Nhóm trao đổi, 1–1)** → @namdangit → **.plans/agent-chat/README.md** (đọc đầu phiên: bản đồ tài liệu, môi trường, trạng thái) · Agent: `agent/plan.md` · Chat: `chat/gd*/plan.md` · spec Agent `docs/superpowers/specs/agent-chat/2026-11-11-tpe-smart-agent-design.md` · spec Chat `docs/superpowers/specs/gop-db/2026-11-02-phan-he-cong-viec-design.md` §11
+  App mobile (TPE_APP) 18/11/2026: Chat + Agent XONG, ĐÃ merge `develop` a46dcd4 (chưa phát hành store, 609 test); api `gop_db` 50c02c5d8 + client `gop_db` 128658916 ĐÃ DEPLOY prod TPE. Tổng kết: `.plans/agent-chat/app-mobile/tong-ket-app.md`.
+  Gộp 1 phiên từ 13/11/2026; tài liệu để ngoài `gop-db/` (gop-db chỉ cho chuyển ERP → HRM), code vẫn nhánh tách từ `origin/gop_db`.
+  ### Checkpoint — 15/11/2026 (wrap up) — GĐ12 + GĐ13 @all + GĐ14 popup thông tin cá nhân
+  Vừa hoàn thành: GĐ12 (Nhóm gắn Dự án KH) + GĐ13 (@all, tô nền @ trong ô soạn) ĐÃ DEPLOY TPE 15/11 (api 72f929f76 · client 9f5014f3b, migration 2026_11_20/21). GĐ14 popup thông tin cá nhân (bấm người trong chat ⇒ chức vụ/SĐT/email + Nhắn tin/Gọi/Email, dải bìa màu popup báo cáo) ĐÃ lên origin/gop_db (api a5290628e · client 85a2a590d), CHƯA deploy. Skill cá nhân `deploy-hrm` (~/.claude/skills) cho deploy prod/dev.
+  Đang làm dở: —
+  Bước tiếp theo: deploy TPE GĐ14 khi user báo (không migration) · e2e @all + popup hồ sơ khi user yêu cầu · GĐ12 còn 6 ruling chờ user soát · user tự thêm rule `/permissions` cho 2 lệnh ssh deploy.
+  Blocked: —
+
+  ### Checkpoint — 18/11/2026 tối — GĐ35 Tạo vấn đề từ tin nhắn ĐÃ MERGE (chưa deploy)
+  Vừa hoàn thành: web + app "Tạo vấn đề" từ tin, thẻ vấn đề + nhãn + realtime; chip lọc panel trái gọn hơn. api gop_db `e395dc12d` · client gop_db `623f7ece8` · app develop `98ec972`. Chi tiết `.plans/agent-chat/chat/gd35-tao-van-de-tu-tin/plan.md`.
+  Bước tiếp theo: deploy TPE khi user báo (migration 2026_11_25_000001). Ngoài luồng: WorkspaceTaskListTest đỏ do commit Thu hồi/Hủy của đồng nghiệp.
+  Blocked: —
+
+  ### Checkpoint — 18/11/2026 — Hạng mục phải thuộc đúng GP (Vấn đề + Nhiệm vụ) ĐÃ DEPLOY TPE
+  Vừa hoàn thành: trait ValidatesSolutionModule gắn 6 Request Issue/Task (422 ở ô hạng mục). PHPUnit Issue 67 · Task 34 · Workspace 290 OK. Commit `ecfbf119e`, gop_db `52b93ae17`, build_tpe EXIT 0, không migration, client không đổi, site 200.
+  Bước tiếp theo: việc treo còn chat-core.spec không dọn nhóm thử · skill form-validate lệch CLAUDE.md dòng 38.
+  Blocked: —
+
+  ### Checkpoint — 17/11/2026 khuya — Vấn đề v2 + GĐ34 ĐÃ DEPLOY TPE
+  Vừa hoàn thành: build_tpe EXIT 0 — prod api `5eba99ce1` · client `21a383016`; Migrated 2026_11_23_000001 + 2026_11_24_000001 + 2026_11_24_000002 (không còn migration chờ); queue restart; site 200. gop_db không còn gì chưa deploy.
+  Bước tiếp theo: user thử prod (/assign/issues panel mới, tab Vấn đề trong nhóm). Việc treo (bình luận vấn đề nhóm đã đóng: user chốt 18/11 không khoá): chat-core.spec không dọn nhóm thử · skill form-validate lệch CLAUDE.md dòng 38.
+  Blocked: —
+
+  ### Checkpoint — 17/11/2026 khuya — Vấn đề v2 + GĐ34 ĐÃ LÊN origin/gop_db
+  Vừa hoàn thành: merge origin/gop_db vào gop_db-van-de-v2 (không xung đột) rồi fast-forward push: origin/gop_db api `5eba99ce1` · client `21a383016`. Test sau merge: Issue 65, Workspace 290, Agent test_van_de 5. CHƯA deploy.
+  Deploy TPE cần: migration `2026_11_23_000001` (resolution text + issue_extension_requests) · `2026_11_24_000001` (issues.workspace_id) · `2026_11_24_000002` (index solution_id) + build client. gop_db còn mang migration của người khác (2026_11_17_000001/000002 — #12217) — kiểm khi deploy.
+  Local: 17/11 user cho chạy cả 5 migration chờ trên db_gop_6_11 (2026_11_14_000001 employee_plans · 2026_11_16_000001 account_details index · 2026_11_16_000001 assembly_requests · 2026_11_17_000001/000002 #12217) — chạy lẻ --path; migrate:status 0 pending; Lịch làm việc hết 400.
+  Bước tiếp theo: user báo deploy TPE.
+  Blocked: —
+
+  ### Checkpoint — 17/11/2026 khuya — GĐ34 tab Vấn đề trong nhóm xong
+  Vừa hoàn thành: GĐ34 (Phase 3 Vấn đề v2) — api tới `1492359b4` · client tới `1bc6899f6`, nhánh gop_db-van-de-v2, CHƯA push; migration 2026_11_24_000001 đã chạy db_gop_6_11. Chi tiết `.plans/agent-chat/chat/gd34-tab-van-de/plan.md`.
+  Bước tiếp theo: user thử :3080; user báo push/merge gop_db + deploy (Vấn đề v2 + GĐ34 đi cùng nhau, cả 2 repo).
+  Blocked: —
+
+  ### Checkpoint — 17/11/2026 — Vấn đề v2 Phase 2 web xong
+  Vừa hoàn thành: hrm-client nhánh `gop_db-van-de-v2` 8 commit `823561986..eaa10b8a2` + hrm-api cùng tên nhánh 17 commit tới `b6f2d6485`, CHƯA push. IssuePanel thay CreateIssueModal ở 13 màn. Chi tiết + việc chờ user: `.plans/gop-db/phan-he-cong-viec/van-de-v2/plan.md` checkpoint "Phase 2 web xong".
+  17/11 khuya: đã chốt đủ 5 câu (api 394e216e4 · client d13eabaa0, chưa push).
+  Bước tiếp theo: user thử :3080; Phase 3 tab Vấn đề trong nhóm (hỏi phạm vi riêng).
+  Blocked: —
+
+  ### Checkpoint — 17/11/2026 — Vấn đề v2 Phase 1 BE xong
+  Vừa hoàn thành: hrm-api nhánh `gop_db-van-de-v2` (wt-nhom-trao-doi) 17 commit `0dff9a0ce..b6f2d6485`, CHƯA push; migration 2026_11_23_000001 đã chạy db_gop_6_11; test Issue 62/62. Chi tiết + quyết định khi chạy: `.plans/gop-db/phan-he-cong-viec/van-de-v2/plan.md` checkpoint "Phase 1 BE xong".
+  Bước tiếp theo: hỏi phạm vi code Phase 2 (hrm-client panel + 13 màn + e2e). Nhánh không deploy trước Phase 2 (popup cũ sẽ hỏng).
+  Blocked: chưa có lệnh code Phase 2.
+
+  ### Checkpoint — 17/11/2026 — Tab Vấn đề trong nhóm ⇒ làm Vấn đề v2 trước
+  Vừa hoàn thành: user yêu cầu tab Vấn đề trong Nhóm trao đổi; kiểm thấy Vấn đề còn popup cũ ⇒ user chốt làm **Vấn đề v2** (IssuePanel theo khuôn TaskPanel) trước. Design (V1–V17, user duyệt) + plan 14 task 3 phase ở `.plans/gop-db/phan-he-cong-viec/van-de-v2/`. Tab nhóm = Phase 3 (hồ sơ sẽ ở `agent-chat/chat/gd34-tab-van-de/`).
+  Bước tiếp theo: user soát plan + chọn cách chạy; hỏi riêng phạm vi code Phase 1 (wt-nhom-trao-doi, nhánh gop_db-van-de-v2, migration 2026_11_23_000001 vào db_gop_6_11).
+  Blocked: chưa có lệnh code.
+
+  ### Checkpoint — 17/11/2026 — GĐ32 + GĐ33 ĐÃ DEPLOY TPE
+  Vừa hoàn thành: GĐ32 tin trạng thái nhiệm vụ gọn + mờ · GĐ33 tự rời nhóm (mọi vai trò, cả nhóm đóng; nhóm Dự án KH chưa). Prod api `b796c8f86` · client `7394e4c47`, Nothing to migrate, site 200.
+  Bước tiếp theo: user thử prod; còn treo: rời nhóm Dự án KH (+ chặn "Mời ra" chính mình ở nhóm KH); e2e chat-drawer N7 chập chờn.
+  Blocked:
+
+  ### Checkpoint — 17/11/2026 — GĐ31 mã công ty ĐÃ DEPLOY TPE
+  Vừa hoàn thành: GĐ31 người khác công ty hiện họ tên + nhãn mã công ty (dòng hội thoại + đầu cửa sổ chat). Prod api `f95e246e6` · client `04995de37` (Nothing to migrate, site 200). gop_db không còn gì chưa deploy.
+  Bước tiếp theo: user thử prod; ngoài luồng: e2e chat-drawer N7 chập chờn có sẵn.
+  Blocked:
+
+  ### Checkpoint — 17/11/2026 — GĐ29 + GĐ30 ĐÃ DEPLOY TPE
+  Vừa hoàn thành: prod api `53c72b441` · client `848e8d4eb` (build_tpe EXIT 0, Nothing to migrate, site 200). gop_db không còn gì chưa deploy.
+  Bước tiếp theo: user thử prod (Agent "1 dự án mới nhất / top 5", bộ đếm ký tự, tab Thành viên). Không còn việc chờ trong danh sách cũ (user bỏ mục 5, 6, K1).
+  Blocked:
+
+  ### Checkpoint — 17/11/2026 — GĐ29 + GĐ30
+  Vừa hoàn thành: GĐ29 (TaskPanel / popup Vấn đề 403·500 hết báo lặp) + GĐ30 (Agent so_luong 18 công cụ + luật 14 · bộ đếm 5,000 ký tự · 5 minor GĐ28). PHPUnit Workspace 259/259, Agent 282/285 (3 phòng họp có sẵn); e2e role-groups 6 · chat-core 8 · giao-dien 5 · bo-sung 6 · drawer 10 · task-panel-v2 ca 7. CHƯA commit: api `gop_db-chat-agent-viec-nho` · client `gop_db-fix-toast-lap` (wt-nhom-trao-doi).
+  Bước tiếp theo: user báo commit ⇒ push gop_db + deploy TPE.
+  Blocked:
+
+  ### Checkpoint — 16/11/2026 khuya (wrap up) — GĐ26–28 ĐÃ DEPLOY TPE
+  Vừa hoàn thành: GĐ26 + GĐ27 + GĐ28 lên origin/gop_db và ĐÃ DEPLOY TPE (prod api `a33a6963e` · client `12a065598`, build_tpe EXIT 0, Nothing to migrate, site 200).
+  Đang làm dở: —
+  Bước tiếp theo: user thử prod; chờ user chọn hướng mục 3 (TaskPanel 403 hiện 2 toast — tách bản sửa FE từ wt-quyen-xem-task hay chờ đợt vá quyền); việc chờ khác: tham số số lượng tool Agent, gán vai trò Agent, YC hỗ trợ Q7, bộ đếm 5.000 ký tự.
+  Blocked:
+
+  ### Checkpoint — 16/11/2026 khuya — GĐ28 chọn thành viên theo vai trò
+  Vừa hoàn thành: GĐ28 CODE XONG (RoleMemberPicker 3 dòng vai trò + Cả công ty; API role_groups, PUT members/roles, POST members/bulk-remove; tab Thành viên chọn nhiều). PHPUnit Workspace 259/259, e2e GĐ28 6/6. Nhánh api + client `gop_db-chat-vai-tro-hang-loat` (wt-nhom-trao-doi; client gồm GĐ26 commit + GĐ27 chưa commit), CHƯA commit.
+  Bước tiếp theo: user thử :3080 → báo commit → push gop_db + deploy TPE (không migration).
+  Blocked:
+
+  ### Checkpoint — 16/11/2026 tối — GĐ27 tab Nhiệm vụ nhóm realtime
+  Vừa hoàn thành: GĐ27 CODE XONG (client `WorkspaceView.vue`, nhánh `gop_db-chat-cot-lien-he-hep` cùng GĐ26), tái hiện + đo Playwright đạt, e2e workspace-tasks 12 · chat-task-status 3 · chat-drawer 10 xanh. CHƯA commit.
+  Bước tiếp theo: user check :3080 → user báo commit → push gop_db + deploy TPE (GĐ26 + GĐ27, chỉ client).
+  Blocked:
+
+  ### Checkpoint — 16/11/2026 cuối ngày (wrap up) — bàn giao sang phiên mới
+  Vừa hoàn thành: GĐ26 cột hội thoại 320px — commit client `067de626b` nhánh `gop_db-chat-cot-lien-he-hep` (wt-nhom-trao-doi), CHƯA push / merge / deploy. Prod: api `5db19c28b` · client `fe3ff8755` (GĐ22–25 + Agent đã lên).
+  Đang làm dở: —
+  Bước tiếp theo (phiên mới): hỏi user push + merge gop_db + deploy GĐ26; việc chờ: tab Nhiệm vụ nhóm tự nạp theo task.updated; TaskPanel 403 hiện 2 toast; tham số số lượng tool Agent; gán vai trò Agent cho NV đã cài hạn mức; YC hỗ trợ (Q7); bộ đếm 5.000 ký tự ô soạn.
+  Lưu ý môi trường: worktree wt-nhom-trao-doi — client :3080 / API :8080 (.env đã có ANTHROPIC_API_KEY ⇒ Agent gọi AI THẬT), socket :8895; DB local chưa chạy migration sort_order phòng họp (3 test Agent phòng họp đỏ).
+  Blocked:
+
+  ### Checkpoint — 16/11/2026 khuya (wrap up) — Chat GĐ22–25
+  Vừa hoàn thành: ĐÃ DEPLOY TPE api `5db19c28b` · client `fe3ff8755` — GĐ22 chọn được NV cộng tác viên ở Công việc; GĐ23 tin trạng thái nhiệm vụ vào nhóm; GĐ24 phân trang tab Thành viên; GĐ25 nhiệm vụ realtime trong chat. Chi tiết `agent-chat/README.md` §3b + `agent-chat/chat/gd22…gd25/plan.md`.
+  Đang làm dở: —
+  Bước tiếp theo: user thử prod; việc chờ: tab Nhiệm vụ nhóm tự nạp theo task.updated; TaskPanel 403 hiện 2 toast; tham số số lượng tool Agent; gán vai trò Agent cho NV đã cài hạn mức; YC hỗ trợ (Q7); bộ đếm 5.000 ký tự ô soạn.
+  Blocked:
+
+  ### Checkpoint — 16/11/2026 tối (wrap up) — Agent lấy đúng số liệu
+  Vừa hoàn thành: 5 đợt Agent ĐÃ DEPLOY TPE (api `76dbd1641` · client `09c8a4489`): thanh_phan_meeting + lọc; luật 12/13 + lọc 8 tool; nhớ đối tượng đã tra + ẩn thẻ trung gian; trả lời gạch đầu dòng / đậm / nổi bật; rà soát phạm vi + tool viec_cua_phong. Chi tiết `agent-chat/README.md` §3b + `agent-chat/agent/thanh-phan-meeting/plan.md`.
+  Đang làm dở: —
+  Bước tiếp theo: user thử prod (chuỗi câu meeting / việc phòng / hỏi nối tiếp) ⇒ Claude đọc lượt trên prod; việc chờ: tham số số lượng cho tool danh sách; gán vai trò Agent cho NV đã cài hạn mức; chạy đủ agent-chat.spec (cần API AGENT_FAKE); YC hỗ trợ (thêm thành viên / đổi luật Q7); bộ đếm 5.000 ký tự ô soạn chat.
+  Blocked:
+
+  ### Checkpoint — 16/11/2026 (wrap up) — Chat/Agent sau deploy
+  Vừa hoàn thành: GĐ21 (Esc xem ảnh không đóng ngăn) ĐÃ DEPLOY TPE client `ddbcb7343`; chép DEEPSEEK_API_KEY lên prod (vẫn dùng Haiku); file Word thông báo cập nhật Chat + Agent; kiểm "YC hỗ trợ không tự chọn nhóm" = đúng luật thành viên (Q7). Chi tiết: `agent-chat/README.md` §3b.
+  Đang làm dở: —
+  Bước tiếp theo: user chọn hướng YC hỗ trợ (thêm thành viên / đổi luật) · có thêm bộ đếm 5.000 ký tự ở ô soạn không · có gọi thử DeepSeek từ prod không.
+  Blocked:
+
+  ### Checkpoint — 15/11/2026 rạng sáng (wrap up) — GĐ12 "Nhóm trao đổi gắn Dự án KH"
+  Vừa hoàn thành: GĐ12 CODE XONG (10 task, e2e + PHPUnit xanh), CHƯA commit — nhánh `gop_db-chat-nhom-du-an-kh` (wt-nhom-trao-doi). Bước tiếp theo: user thử :3080, soát 6 ruling cuối `agent-chat/chat/gd12-nhom-du-an-kh/plan.md` → commit/push gop_db → deploy TPE (migration 2026_11_20_000001).
+
+  ### Checkpoint — 14/11/2026 khuya (wrap up) — GĐ11 "YC hỗ trợ" (báo lỗi màn hình)
+  Vừa hoàn thành: GĐ11 (tab "YC hỗ trợ") ĐÃ DEPLOY TPE 14/11 (api 86fcb16ba · client 814664a79). Bước tiếp theo: cấp quyền "Cài nhóm tiếp nhận yêu cầu hỗ trợ" ở /admin/roles + tạo nhóm hỗ trợ + cài nhóm mặc định từng công ty.
+  ### Checkpoint — 14/11/2026 ~13:00 (wrap up)
+  Vừa hoàn thành (14/11, ĐÃ push origin/gop_db + user báo ĐÃ deploy TPE): GĐ8 giao diện chat mới · GĐ9 tab Meeting trong nhóm (migration meetings.workspace_id) · GĐ10 ngăn trượt Chat/Agent trên trang đang làm (đủ tab như trang, sát sidebar thu gọn) + tin kiểu bong bóng + đổi tên "Không gian trao đổi công việc" + bỏ 2 mục menu Công việc · popup Tin nhắn mới lọc theo công ty hồ sơ · thanh thao tác cuối dòng tin. Plan: `agent-chat/chat/gd8-giao-dien/`, `gd9-tab-meeting/`, `gd10-ngan-truot/`.
+  Đang làm dở: —
+  Bước tiếp theo: user dùng thử prod, góp ý; việc chờ: gọi thoại/video (đề xuất `agent-chat/chat/goi-thoai-video/de-xuat.md`), tạo vấn đề từ tin (hoãn), "@Agent" trong nhóm (cần spec), Agent "đi muộn hôm nay" (chờ info prod).
+  Blocked:
+  ### Checkpoint — 14/11/2026 ~00:00
+  Vừa hoàn thành: Chat GĐ8 giao diện mới (tin dạng luồng, thanh lọc chip, đầu nhóm 1 dải tab + về chat, avatar nhóm vuông, ô soạn 1 khối, dải "Tin chưa đọc", Ctrl/⌘K; BE `sender_role`). Nhánh `gop_db-chat-giao-dien` (api + client), CHƯA commit. Plan + ledger: `agent-chat/chat/gd8-giao-dien/plan.md`. E2E 10 bộ đạt (chat-core chạy lại riêng 8/8).
+  Đang làm dở: —
+  Bước tiếp theo: user check app :3080 → user báo commit / merge gop_db.
+  Blocked:
+  ### Checkpoint — 13/11/2026 ~21:00
+  Vừa hoàn thành: Chat GĐ7 — nút đính kèm thẳng hàng, panel trái 360px, panel phải Ảnh · Tệp · Link · Nhiệm vụ (BE bảng chat_message_links + 2 API + lệnh backfill; FE ChatSidePanel). Nhánh `gop_db-chat-panel-phai` ĐÃ lên origin/gop_db (api 7d69641da · client 8be3a27dc), CHƯA deploy. E2E đạt hết (chat-panel-phai 6/6, chat-core 8/8 …). Plan: `agent-chat/chat/gd7-panel-phai/plan.md`.
+  Đang làm dở: —
+  Bước tiếp theo: deploy TPE — migration 2026_11_17_000001 + `php artisan assign:chat-backfill-links` 1 lần (hỏi user); gồm cả các việc 13/11 khác đang chờ deploy.
+  Blocked:
+  ### Checkpoint — 13/11/2026 ~20:30 (wrap up)
+  Vừa hoàn thành (13/11, tất cả ĐÃ lên origin/gop_db, CHƯA deploy prod):
+  - Agent: prompt cache 1 giờ (api dcd4a37f6) · cài hạn mức riêng cho NGƯỜI DÙNG + người hỏi tiếp khi hết ngân sách (api 3bdaa67e8, client 514bc3c67; migration 2026_11_16_000001/000002).
+  - Chat: chat bổ sung (migration 2026_11_15_000001) · GĐ4 thông báo tin nhắn web + push FCM trễ 20s + Emoji/Sticker + phím tắt emoji + xem ảnh (api 93c82d807, client d178b590c) · GĐ5 chụp màn hình + bộ chỉnh ảnh + nén ảnh (client 08fec9dd1) · GĐ6 bản nháp theo hội thoại (client a108b98e2).
+  - VPS: `~/build_tpe.sh` tự `queue:restart` + restart socket khi server_node đổi (bản cũ `.bak_20261113`).
+  Đang làm dở: — (Nuxt dev :3071 của worktree Agent vẫn chạy — tắt khi không cần)
+  Bước tiếp theo: user deploy TPE — kiểm migration chờ (2026_11_15_000001, 2026_11_16_000001, 2026_11_16_000002) rồi `~/build_tpe.sh`; sau đó test push FCM thật · đợt sau: 3 điểm quy mô của GĐ4 (chia lô push, cờ notify theo người, API sticker) · câu "đi muộn hôm nay" chờ thông tin prod.
+  Blocked:
+
+- app-video-huong-dan → @namdangit → .plans/app-video-huong-dan/plan.md (design.md cùng thư mục)
+  Video HDSD app mobile Meeting, 2 máy ảo cạnh nhau, **push thật** từ cổng dev (tpeDev). Kịch bản user duyệt 01/11.
+  ### Checkpoint — 01/11/2026 16:40 (wrap up)
+  Vừa hoàn thành: thông push thật lên máy ảo; tạo + cài app máy ảo 2 (thuydt)
+  Đang làm dở: kiểm kê màn Tạo meeting trên app
+  Bước tiếp theo: sau khởi động lại Mac → boot 2 máy, chạy app (lệnh trong plan.md), đăng nhập thuydt, kiểm kê, viết lời, quay
+  Blocked: chờ user khởi động lại Mac (swap cạn)
+
 - hsns-delete-attachment → @junfoke → .plans/hsns-delete-attachment/plan.md
   Trạng thái: **CODE XONG + VERIFY PLAYWRIGHT (23/09/2026)**, đã commit, CHƯA push.
   Commit `hrm-client`: `327c1a5fa` trên `tpe-develop-assign` · cherry-pick `3d23c724c` trên `tpe`.
@@ -197,12 +347,19 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   ⚠️ Switch-case chấm công nhân bản ở `CreateEmployeePayroll.php` + `SalaryService.php` — phải sửa CẢ HAI.
   Design: .plans/cong-tinh-luong-khong-vdm/design.md · Spec: docs/superpowers/specs/2026-09-22-cong-tinh-luong-khong-vdm-design.md
 
+- app-cong-viec-nhiem-vu-van-de (Thiết kế Nhiệm vụ / Vấn đề trên app — phân hệ Công việc, TPE_APP) → @dnsnamdang → .plans/app-cong-viec-nhiem-vu-van-de/plan.md
+  Trạng thái: **THIẾT KẾ XONG, CHỜ DUYỆT (29/10/2026)**. 33 khung trong `meeting-mobile.pen` khu x 15600–21196 (NV-01…16, VD-01…10, CV-00a/b, CV-PD1/2).
+  Quyết định U1–U12 + bảng so sánh 3 màn đã có + 17 việc cho dev: `design.md`. `TPE_APP/CLAUDE.md` thêm nguyên tắc nút có icon (chưa commit).
+  31/10: header 30 màn thêm hình nền như drawer (U13).
+  Bước tiếp: user Cmd+S + duyệt → rà theo skill app-ui-convention hoặc xuất bàn giao.
+
 - app-meeting-mobile (Thiết kế app Meeting trên di động — TPE_APP/Flutter) → @dnsnamdang → .plans/app-meeting-mobile/plan.md
   🟡 **22/10/2026 (wrap up)** — 00i' Tổng quan Chấm công: khối Ca làm trong ngày v2 (dải thời gian + 1 dòng/ca, bớt ~60% chữ), đặt cạnh 00i chờ user chọn bản. Cần Cmd+S trong Pen.
   🟡 **20/10/2026 (wrap up)** — thêm 00j Thông báo (chuông) dùng chung + 00b dùng nền màn đăng nhập app; đã xuất PNG @3x v12 (exports/Meeting-Mobile_Tung-man_v12_2026-10-20, 60 ảnh). Câu chốt tồn: xem checkpoint cuối plan.md.
   🟡 **19/10/2026 (wrap up 2)** — Mở rộng sang KHUNG PHÂN HỆ app: màn chọn phân hệ 00b, drawer 5 phân hệ (00c–00g), template C/BottomNav, Tổng quan Meeting 00h/00h', Tổng quan Chấm công 00i (khối Ca làm trong ngày theo logic allow_app/allow_conn), style xanh ngọc áp vào bộ màn meeting (backup meeting-mobile.backup-20261019-truoc-style-phan-he.pen). Chờ user duyệt + các câu chốt trong plan.md checkpoint cuối.
   🟡 **19/10/2026 (wrap up)** — Phase 7 đồng bộ web + W4 Kết luận nằm trong Biên bản (bỏ màn 40, Hub x/3) + W5 Thông tin chung gập/mở từng khối + W6 gộp khối như web (① Thông tin cuộc họp · ② Đối tác · ③ Thời gian). Bản đồ **50 artboard**, 0 chồng lấn. ⚠️ Pen KHÔNG tự lưu — user phải Cmd+S. Khảo sát app thật TPE_APP: `khao-sat-tpe-app.md` (93 màn, CHƯA có Meeting/MyTodo); Mobile MCP đã cài (cần restart Claude Code), máy ảo iPhone 18 Pro chạy flavor `erp`. Tiếp: dùng Mobile MCP đi từng màn → đề xuất sắp xếp lại màn; xuất v12 khi user duyệt.
   Trạng thái: 🟡 **Phase 6 đang làm (14/10/2026)** — 52 artboard. **Việc THIẾT KẾ, chưa đụng code `hrm-api` / `hrm-client`.**
+  🟡 **29/10/2026** — Dashboard cho NV kinh doanh 00h-KD + màn 21-KD Lịch sử họp với KH (design.md W12), chờ duyệt.
   File nguồn: `~/Documents/demo giao dien/pencil_design/meeting-mobile.pen` · Bàn giao gần nhất: v11 (16/09) ở `exports/`.
   14/10: khách chốt 9 câu (bảng trong design.md) — meeting chỉ chọn tới DỰ ÁN (bỏ Giải pháp / Hạng mục) · màn 42 địa chỉ HĐ chép sang cho sửa · liên hệ tạo từ app vào Thành phần KH · NGƯỜI 1 theo web · có đưa Phiếu tổng hợp kết quả #11130 · nút Xem chỉ PDF + ảnh · `customerMeetingHistory()` THAY `created_by` · task biên bản để sau.
   14/10: vẽ **Meeting theo đối tượng** (khảo sát `gop_db` 59537031f / 3ea829c51): ô Dự án TKT / Hợp đồng dưới Loại meeting ở 03 · 05 · 25 · 33 + màn mới **48 Chọn dự án TKT** · **49 Chọn hợp đồng** (bản đồ chèn hàng, phần dưới dịch +1150px).

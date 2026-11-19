@@ -77,23 +77,106 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
-- quan-ly-hang-hoa / **Bảng giá bán hàng hoá hiện hành** (báo cáo giá bán + giá vốn + giá hiệu lực theo công ty) → @dnsnamdang → .plans/gop-db/quan-ly-hang-hoa/bang-gia-ban-hien-hanh/design.md · spec: docs/superpowers/specs/gop-db/2026-10-28-bang-gia-ban-hien-hanh-design.md
-  ### Checkpoint — 28/10/2026 (wrap up 3)
-  Vừa hoàn thành: Phase 4 (cột thông tin hiện đủ chữ) · Phase 5 (nút Lịch sử giá cạnh Mã hàng + API lịch sử theo công ty xem) · Phase 6 (độ rộng cột). Đã PUSH origin/gop_db — hrm-api `36fb5d042` `3a14fac44`; hrm-client `0c3df9a58` `33d666104` `0b63506fb` `5370d6620`. PHPUnit 24/24, e2e 19/19 (spec ngoài git).
-  Đang làm dở: —
-  Bước tiếp theo: user kiểm tay màn Bảng giá bán hiện hành; gỡ role tạm 108490 (hrm_erp_21_10_prod) + DROP DB hrm_erp_bang_gia_test khi user cho. Deploy: seeder quyền (2 quyền mới) + admin gán quyền.
-  Blocked: chờ user kiểm tay
-- quan-ly-hang-hoa / **Kế thừa giá bán theo hãng — sự cố prod 504 khi Lưu cài đặt** → @namdangit → .plans/gop-db/quan-ly-hang-hoa/ke-thua-gia-theo-hang/plan.md (mục "Sự cố prod 27/10/2026")
-  ### Checkpoint — 28/10/2026
-  Vừa hoàn thành: TPHP chuyển kế thừa toàn bộ ⇒ Lưu chạy đồng bộ 30.272 mã ⇒ nginx 504 nhưng đã commit (lịch sử ghi đủ). compare-inherited prod: còn 1 mã lệch `CH-HG6030K:03` (ĐVT 48484, TPHP 1 đ / TPE 2.050.200) — nghi giá TPE ghi sau qua đường không propagate (ERP?).
-  Đang làm dở: — (chưa đụng code/DB)
-  Bước tiếp theo: user gửi kết quả SQL ĐVT 48484; user chọn hướng sửa 504: Job nền (hrm-api + hrm-client, không migration) hoặc tăng `fastcgi_read_timeout` nginx bộ tpe.
-  Blocked: chờ user
+- **Vá lỗ hổng quyền đọc Công việc · Chấm công · Lương · CSKH trước bán** — #1–#20 (→ .plans/gop-db/va-lo-hong-quyen-doc/ghi-chu.md). Đợt 1 #6 Task + #17 Issue BƯỚC 1 "chỉ ghi log" CODE XONG 12/11 (worktree websites/wt-quyen-xem-task nhánh gop_db-va-quyen-xem-task-issue, CHƯA commit) — plan.md cùng thư mục; bước 2 bật 403 hỏi lại sau ~1 tuần đọc log prod.
+- **TPE SMART AGENT + Chat (Nhóm trao đổi / 1–1)** — từ 13/11/2026 chuyển ra `.plans/agent-chat/` (README.md), theo dõi ở `.plans/STATUS.md`. `gop-db/` chỉ còn tính năng chuyển ERP → HRM.
 
-- hop-dong (Hợp đồng bán hàng HRM, `/assign/contracts`) → @dnsnamdang → .plans/hop-dong/{design.md,plan.md,design-phase11-firm-fields.md,design-phase18-danh-sach.md,design-phase20-mau-in.md}
-  Trạng thái: 🔄 **Đang làm — wrap up 28/10/2026 (tối).** Xong Phase 18 (danh sách: quyền 4 cấp + 17 ô lọc), 19 (form gọn 2 khối + 6 tab), 20 (mẫu in + 26 mẫu ERP, In HĐ / phụ lục / biên bản, QR, ẩn giá), 21 (kiểm HĐ thật, sửa bản in đợt thanh toán, gate quyền xem giống ERP, cảnh báo thoát chưa lưu) + đợt UI 28/10 tối: màn Chi tiết dựng lại theo UI màn Sửa (style chung `contract-form.scss`), bảng HĐ trượt ngang + ghim cột "TT sau VAT", Mã/Tên xuống dòng, nền nhãn ô chỉ đọc (gốc V2BaseFloatingField), nhãn NV chuẩn. E2E: hide-price.api 6/6 · detail-layout 6/6 · form-layout 11/11.
-  Code: nhánh `gop_db-hop-dong-ban` (cả 2 repo; ĐÃ push Phase 18–20: api `f43174d2e`, client `09a88e317` · Phase 21 commit CHƯA push: api `3537a0c80`, client `c42bda740` · đợt UI 28/10 tối CHƯA commit; chưa merge gop_db) · worktree `websites/wt-hop-dong-ban/{hrm-api,hrm-client}` · cổng API 8060 / client 3060. Đã chạy local: migration `2026_10_23_000001`, `2026_10_27_000001`, `2026_10_28_000001` + `SaleContractPrintTemplatesSeeder`.
-  Bước tiếp: commit đợt UI 28/10 tối (user báo) → push nhánh khi được cho phép → merge về gop_db (chờ user yêu cầu; deploy: 3 migration + seeder quyền + seeder mẫu in). Còn mở: biên bản serial trống, TK Bên A thiếu "VNĐ" ở màn Chi tiết, dọn role tạm 108470 + 108473 / menu_settings / BG-2026-00442 khi test xong.
+- meeting / **Biên bản: "Ghi nhận nội dung meeting" + ô tick "Giao người xử lý" + hỏi Hoàn thành sau Lưu (web + app)** → @namdangit → .plans/gop-db/meeting-bien-ban-ghi-nhan-noi-dung/plan.md (design.md cùng thư mục)
+  ### Checkpoint — 08/11/2026 (wrap up)
+  Vừa hoàn thành: BE (has_assignee, required_if, thiếu cờ = luật cũ) + web + app (vẽ lại 09'/10' theo mockup meeting-mobile.pen x2900 y12620 đã duyệt) + câu hỏi Hoàn thành luôn (về Danh sách / Việc của tôi). E2E meeting xanh hết; seed lại fixture e2e db_gop_6_11 (3 seed đọc TEST_EMAIL), utils/e2eMeetingFixture.ts.
+  Đang làm dở: — ĐÃ COMMIT + PUSH 08/11: hrm-api gop_db `87b8bc65d` (biên bản) + `643e0849f` (seed e2e) · hrm-client gop_db `dda38e17a` · TPE_APP develop `59641ca`. Không migration.
+  Bước tiếp theo: deploy (không migration, build app mới); tuỳ chọn chạy customer-demand-link.spec.ts (UI).
+  Blocked:
+
+- assign / **[08/11 wrap up 2: 4 việc Việc của tôi + góp ý máy thật ĐÃ PUSH (api 7ee51d6a5 · app 1ae3033) — chờ deploy prod, xem checkpoint lich-cong-tac-lanh-dao/plan-sua-0711.md]**
+- assign / **Nhóm "Đã kết thúc" Việc của tôi (web + app)** → @namdangit → .plans/gop-db/nhom-da-ket-thuc/plan.md
+  Trạng thái: CODE XONG 3 repo 08/11, ĐÃ COMMIT 08/11 (api cc12bd91d · client 2a4b888ff · app 73b82b4), ĐÃ PUSH 08/11 (gop_db / develop), không migration. Đã kiểm Playwright + máy ảo. Spec e2e mới chưa chạy. Đã sửa thêm web "Tất cả" gửi status=all (08/11).
+
+- assign / **Loại nhắc việc thay "Danh sách" (web + app)** → @namdangit → .plans/gop-db/loai-nhac-viec/plan.md (design: .plans/my-todo/design.md "Chốt 07/11")
+  Trạng thái: CODE XONG 3 repo 08/11, ĐÃ COMMIT 08/11 (api cc12bd91d · client 2a4b888ff · app 73b82b4), ĐÃ PUSH 08/11 (gop_db / develop). 2 migration `2026_11_09_000002/000003` ĐÃ CHẠY db_gop_6_11 (Mac dinh → Việc cá nhân + thêm Việc công ty cho 349 user). Đã kiểm Playwright (web) + máy ảo (app). E2E spec mới chưa chạy. Deploy: chạy 2 migration.
+
+- assign / **Lịch làm việc lãnh đạo — đợt sửa 07/11 (§7)** → @namdangit → .plans/gop-db/lich-cong-tac-lanh-dao/plan-sua-0711.md
+  Trạng thái: CODE XONG 3 repo, ĐÃ COMMIT 08/11 (api cc12bd91d · client 2a4b888ff · app 73b82b4), ĐÃ PUSH 08/11 (gop_db / develop). Migration `2026_11_09_000001_create_leader_schedule_settings_table` + catalog-sync đổi tên 2 quyền ĐÃ CHẠY db_gop_6_11. API lịch thêm `days` (buổi sáng/chiều theo bảng phân ca, T7 cả ngày, ca dự phòng T2–T7 08:30–12:00/13:00–17:30); Ca mặc định = bảng phân ca chọn ở màn Cấu hình web. Đã kiểm Playwright (web) + máy ảo (app).
+  09/11: API xem lịch lấy lãnh đạo theo công ty HỒ SƠ (employee_infos.company_id), meta/orders giữ công ty đang chọn — ĐÃ PUSH hrm-api gop_db `9403ff65b`. Còn: kiểm local web đổi công ty + app.
+  10/11: LỖI chưa sửa — sửa lịch bỏ tick "Gửi kèm tiêu đề" (ngày giờ giữ nguyên) không gửi gì, thông báo cũ vẫn lộ tiêu đề (announce() chỉ so khoảng vắng). Đã tái hiện; chờ user chốt hướng (sửa thông báo cũ tại chỗ / gửi thông báo thay đổi / cả hai). Chi tiết: plan-sua-0711.md mục "Lỗi 10/11".
+
+- assign / **Danh bạ cá nhân gắn vào Nhắc việc cá nhân** (web + app) → @namdangit → .plans/gop-db/danh-ba-ca-nhan/design.md
+  Trạng thái: **CODE XONG 9/9 TASK + FINAL REVIEW + SIMULATOR (07/11/2026), ĐÃ COMMIT 08/11 (api cc12bd91d · client 2a4b888ff · app 73b82b4), ĐÃ PUSH 08/11 (gop_db / develop).** hrm-api + hrm-client gop_db, TPE_APP develop (working tree). 2 migration đã chạy db_gop_6_11. Menu key web mới: `assign::Danh bạ cá nhân` (ẩn ở Cài đặt phân hệ prod tới khi bàn giao). Đã làm thêm §5.2 (liên hệ trên thẻ web + app, khối Liên hệ ở chi tiết nhắc việc app — Task 10–11). Info.plist đã thêm NSContactsUsageDescription (user cho phép 07/11). Chờ user: bấm thử tay bộ chọn danh bạ iOS + Android; CI Flutter 3.41. Nhật ký: execution-ledger.md.
+  Mockup app 9 màn DB-01…09 trong `meeting-mobile.pen` khu VIỆC CỦA TÔI, Nhóm ② (x 25400, y −1580). Web chưa có mockup.
+  Chốt: chỉ quản lý cá nhân · gắn 1 liên hệ / nhắc việc gốc · tra KH công ty CHỈ theo đúng SĐT (KH + người liên hệ) · dùng 1 lần là vào danh bạ · app chọn 1 người từ danh bạ máy + lưu ngược, không đồng bộ cả danh bạ · xoá liên hệ không xoá nhắc việc · web đầy đủ như app.
+  Checkpoint 07/11 (wrap up): 11/11 task + 2 bug simulator đã sửa (sheet co giữa khi danh bạ trống; bộ chọn danh bạ iOS → selectContact). User đã thêm liên hệ từ danh bạ máy thành công. Bước tiếp: kiểm máy thật (Gọi/Lưu vào danh bạ máy/Android), CI Flutter ≥3.41, user tự commit, deploy ẩn menu + 2 migration. Chi tiết: plan.md checkpoint cuối.
+
+- assign / **Nhiệm vụ v2 — panel web thay CreateTaskModal/ImportResultModal + app NV2 + đề nghị gia hạn** (08/11/2026 — Phase 1–3 xong, e2e 10 passed. Deploy nhớ chạy migration task_extension_requests; 08/11 tối: rà app theo Pen + nút toàn app + chặn đi tắt Từ chối triển khai — đã push hrm-api `d80c68dd8`, hrm-client `4b347f17b`, TPE_APP `17d29d7` + `9fa648e` (Công việc lên đầu chọn phân hệ); app 154/154, BE 31/31, e2e 9 passed. Tiếp: build app — chờ user chọn tpeDev/tpeProd; tpeProd cần deploy API trước) → @namdangit → .plans/gop-db/phan-he-cong-viec/nhiem-vu-v2/plan.md
+- assign / **Phân hệ Công việc — Không gian làm việc (Phòng làm việc / Dự án nội bộ / Dự án khách hàng) + Nhóm chat** → @namdangit → ⚠️ từ 13/11 phần CHAT (gd1-core-chat, gd3-chat-bo-sung, bàn giao) đã chuyển sang `.plans/agent-chat/chat/` — các dòng chat dưới đây là lịch sử, trạng thái mới xem `.plans/STATUS.md` mục Agent + Chat → .plans/gop-db/phan-he-cong-viec/design.md · spec `docs/superpowers/specs/gop-db/2026-11-02-phan-he-cong-viec-design.md` · **11/11 core chat (Nhóm trao đổi + chat 1–1 web) CODE XONG, ĐÃ COMMIT 11/11 (hrm-api `fd1c2f1e7`, hrm-client `d0644d95d`, ĐÃ PUSH nhánh lên origin)** — nhánh `gop_db-nhom-trao-doi` (worktree `websites/wt-nhom-trao-doi/`), 4 migration đã chạy db_gop_6_11, PHPUnit 24/24, e2e 7/7; spec §11; plan `.plans/agent-chat/chat/gd1-core-chat/plan.md`. Màn danh sách nhóm (01) user chốt chưa làm. Chờ: merge về gop_db khi user báo
+  - **11/11 GĐ2 (Nhiệm vụ trong nhóm + nối chat `#` / tạo từ tin, web) — CODE XONG 12/11 + review toàn nhánh đạt + Câu 9 (api 627cb889a, client ba84b2753), chưa merge, chưa push — Câu 9 = mở xem theo GP/TKT (đã code), Câu 10 = task-panel-v2 ca 1–6, 8 pass (queue database, push giữ lại rồi xoá); chờ user báo merge/push**: nhánh `gop_db-nhom-trao-doi` (worktree `websites/wt-nhom-trao-doi/`), hrm-api `ef87152cb` · hrm-client `b6b9e4c6f`; Task 1–11 xong, PHPUnit Workspace 69/69, e2e workspace-tasks 9/9 + chat-core 8/8 (task-panel-v2 ca 7 fail có sẵn, ca 1–5 chưa chạy lại vì push thật). Chờ user: duyệt tồn (chữ "Tạo mới", GP tab 403, MySQL 8 prod) → merge / push. Spec §11 · `.plans/gop-db/phan-he-cong-viec/gd2-nhiem-vu-trong-nhom/`.
+  - **12/11 tối — dọn tồn (B1–B9, F1–F5) + Đợt Z ĐÃ COMMIT + PUSH, đã merge gop_db (xem dòng ~19:00):** thanh thao tác tin kiểu Zalo (rê ⇒ Trả lời · Chia sẻ · Tạo nhiệm vụ · ⋯; 👍 góc bong bóng) + Chia sẻ tin sang nhiều hội thoại + tab Nhiệm vụ nhóm: "+ Thêm", ⇄ mờ + lý do, Tạm dừng hỏi lý do (cả TaskPanel), nhãn "Dự án". Đợt Z: hrm-api `4749f0165`, hrm-client `26cd19d42`. MySQL prod 8.0.46 (ROW_NUMBER ok). e2e 4 bộ 35/35. Màn danh sách nhóm (01) user BỎ; Tạo vấn đề từ tin HOÃN. Checkpoint cuối `gd2-nhiem-vu-trong-nhom/plan.md`.
+  - **12/11 ~19:00 — ĐÃ MERGE + PUSH `gop_db`** (api `174892532`, client `72b7a3bb3`; nhánh chat cũng đã push). Đã gộp vào nhánh agent local (api `e598c9a81`, client `3b1a2aa4c`, CHƯA push agent). Deploy: 5 migration Assign 2026_11_13_000001–4 + 2026_11_14_000001, restart node socket (server.js).
+  - **12/11 chiều — DỌN TỒN TRƯỚC MERGE XONG (wrap up 12/11 ~16:20, user khởi động lại máy):** BE B1–B9 hrm-api `6d5c9c17d`…`ad4447420` (8 commit; bàn giao việc nhóm ⇒ tự thêm/nâng Thành viên) · FE F1–F5 hrm-client `6716c13fe` + `7c586f6bc` (prettier). CHƯA push, chưa gộp lại vào nhánh agent. PHPUnit Workspace 92/92, Task 31/31; e2e mới `chat-gd2-polish` 7/7. Còn: chạy lại e2e `workspace-tasks` + `chat-core` khi máy nhàn (lượt trước chập chờn do máy quá tải — code cũ cũng hỏng); chờ user: Câu B MySQL prod ≥ 8 · mục 3 (4 điểm UI) · mục 1 (màn danh sách nhóm). Checkpoint cuối `gd2-nhiem-vu-trong-nhom/plan.md`.
+  ### Checkpoint — 05/11/2026 (wrap up — tuỳ chọn tab)
+  Vừa hoàn thành: mockup GĐ0 chốt 05/11 (30 màn) + đợt chỉnh 05/11 (form Nhiệm vụ / Vấn đề, chat chỉ xem / Xin tham gia / 24h, đóng / mở lại dự án & phòng, bỏ KPI, Ngày bắt đầu tuỳ chọn, **tuỳ chọn tab** — spec §3.11, §3.12). App `meeting-mobile.pen`: KG-01…25, NV2-01…37, VD2-01…16, sắp thành 14 nhóm thuyết trình.
+  Bước tiếp theo: user duyệt app → plan chi tiết GĐ1 → hỏi riêng phạm vi rồi mới code
+  Blocked: chưa có lệnh code
+
+- meeting / **Rút gọn đường đặt phòng khi tạo meeting (app + web)** → @namdangit → .plans/gop-db/meeting-rut-gon-dat-phong/plan.md
+  ### Checkpoint — 12/11/2026 (wrap up — 2 lỗi prod)
+  Vừa hoàn thành: (1) form Tạo meeting thiếu phòng (cắt 5) → bảng chọn đủ phòng + cảnh báo phiếu chờ duyệt trùng giờ: client `f424d46b1` đã push gop_db + ĐÃ build prod TPE. (2) Hoàn thành meeting có phòng báo "Không thể đặt phòng cho thời điểm đã qua" → bỏ `status` khỏi ROOM_FIELDS: api `e674367d1` đã push gop_db, CHƯA build prod
+  Bước tiếp theo: hỏi user chạy `~/build_tpe.sh` đưa e674367d1 lên prod; dọn API :8062 / Nuxt :3062 + 2 worktree `wt-fix-meeting-*`
+  Tồn: kéo dài giờ Kết thúc cuộc họp đang diễn ra vẫn bị chặn (chờ user quyết) · MeetingRoomBookingRaceTest hỏng sẵn · P4UI-1 đỏ 0 phòng chưa rõ nguyên nhân
+  ### Checkpoint — 01/11/2026 23:00
+  Vừa hoàn thành: A hỏi đặt phòng sau Lên lịch · B nút Đăng ký phòng ở Hub / màn Xem · C phòng trống + phòng dự kiến ở form tạo · gợi ý phòng như popup web trên app — TPE_APP develop + hrm-client gop_db, CHƯA commit; kiểm simulator tpeDev + Playwright (client local → API dev)
+  Bước tiếp theo: user xem / góp ý; e2e P4UI-5/6 chưa chạy (DB local thiếu bảng rbac permission_aliases)
+
+- meeting / **Xác nhận tham gia báo chủ trì + tab Điểm danh cập nhật ngay** → @namdangit → .plans/gop-db/meeting-xac-nhan-tham-gia-bao-chu-tri/plan.md
+  ### Checkpoint — 01/11/2026 16:40 (wrap up)
+  Vừa hoàn thành: BE + web + app code xong, kiểm curl / Playwright MCP (worktree `HRM/wt-rsvp`) / máy ảo tpeLocal
+  Đang làm dở: — CHƯA commit (hrm-api 2 · hrm-client 7 trên gop_db local; TPE_APP 7 trên develop; e2e 2 file chưa chạy)
+  Bước tiếp theo: user xem diff → bảo commit/push; dọn worktree `HRM/wt-rsvp`
+  Blocked: chờ user
+- quan-ly-hang-hoa / **Bảng giá bán hàng hoá hiện hành** (báo cáo giá bán + giá vốn + giá hiệu lực theo công ty) → @dnsnamdang → .plans/gop-db/quan-ly-hang-hoa/bang-gia-ban-hien-hanh/design.md · spec: docs/superpowers/specs/gop-db/2026-10-28-bang-gia-ban-hien-hanh-design.md
+  ### Checkpoint — 04/11/2026 (wrap up 4)
+  Vừa hoàn thành: bổ sung Định mức đàm phán (dòng phụ "ĐMĐP x%" trong từng ô giá) + cột Thuế VAT (ẩn mặc định) ở bảng, Excel, bản in. Làm trên worktree tách origin/gop_db (né rbac), đã PUSH origin/gop_db — hrm-api `69bb71323` · hrm-client `43390a2b3`; worktree đã gỡ. Kiểm: API đối chiếu DB + Playwright MCP đo DOM. PHPUnit + e2e U1/U6/U11 KHÔNG chạy (user: sửa nhỏ không cần).
+  Đang làm dở: —
+  Bước tiếp theo: user kiểm tay; gỡ role tạm 108490 (hrm_erp_21_10_prod). Deploy: seeder quyền (2 quyền mới) + admin gán quyền. `gop_db` local (chứa rbac) chậm origin 3 commit mỗi repo.
+  Blocked: chờ user kiểm tay
+- quan-ly-hang-hoa / **Kế thừa giá bán theo hãng — Đợt 2 (hệ số kế thừa + Lưu chạy Job nền)** → @namdangit → .plans/gop-db/quan-ly-hang-hoa/ke-thua-gia-theo-hang/plan.md (mục "Deploy Đợt 2 lên prod")
+  ### Checkpoint — 31/10/2026
+  Vừa hoàn thành: deploy Đợt 2 lên prod 30/10 (api `27384672c` · client `7e127ac53`, 2 migration, worker supervisor `tpe-price-inherit`); user cài TPHP/TPV/DTTDETEK chế độ 2 rỗng, TPSG chế độ 2 + 2 hãng, hệ số mã TPHP ×1.02 / TPV ×1.03. So giá Excel trước/sau 6 công ty: lệch duy nhất `CH-HG6030K:03` ở TPHP (giá 1 đ có từ trước, Lưu không chép lại hàng đã kế thừa).
+  Đang làm dở: —
+  Bước tiếp theo: theo dõi lượt áp thật; nếu còn mã lệch kiểu `CH-HG6030K:03` thì tìm đường ghi giá TPE không propagate (nghi ERP cũ).
+  Blocked:
+
+- hop-dong (Hợp đồng bán hàng HRM, `/assign/contracts`) → @dnsnamdang → .plans/hop-dong/{design.md,plan.md,design-phase24-trang-thai.md,design-phase25-hach-toan-dich-vu.md,design-phase11-firm-fields.md,design-phase18-danh-sach.md,design-phase20-mau-in.md,design-phase26-man-duyet.md,design-phase27-soan-theo-trang.md}
+  Trạng thái: 🔄 **Đang làm — wrap up 08/11/2026: Phase 26 (màn Duyệt HĐ) + Phase 27 (soạn mẫu in HĐ theo tờ A4 như Word, Task 1–8 + Xem bản in + Toàn màn hình + Task 7 kéo độ rộng cột bảng hàng hoá) XONG, review toàn nhánh đạt, đã MERGE + PUSH origin/gop_db.** Cùng đợt: vá 500 super admin có sẵn trên gop_db (Thị trường phân khu, Yêu cầu giao việc khác CSKH).
+  Code: origin/gop_db — api 7ee51d6a5..063399d9d (merge HĐ bán Phase 24–27) + a496f5e71 (fix super admin); client 2a4b888ff..a4352e863. Nhánh làm: gop_db-soan-theo-trang / gop_db-fix-super-admin-500 (worktree `websites/wt-hop-dong-ban`, API 8060 / client 3060, DB `hrm_erp_rbac_rehearsal`). E2E contracts-approval-flow 52/52 (trước merge); HĐ test 3443 + BG 546 giữ lại cho e2e. Checkpoint chi tiết: .plans/hop-dong/plan.md cuối file.
+  Bước tiếp: DEPLOY gop_db — chạy 7 migration HĐ bán TRƯỚC code hrm-api (danh sách ở checkpoint plan.md), permission:catalog-sync, lưu lại mẫu in 62/85/86 ở màn danh mục. Sau đó: Gia hạn – Quyết toán HĐ; push ERP 8e3f46c42c khi sẵn sàng. Ngoài luồng: tests/Feature/Rbac lỗi trên DB rehearsal (role_has_permissions thiếu company_id); ContractHthtStepFlowTest phụ thuộc role tạm.
+  **Wrap up 17/11/2026 — 3 fix lỗi TPE + 1 bổ sung, worktree `wt-hd-dieu-kien-duyet` (nhánh gop_db-hd-dieu-kien-duyet), CHƯA commit, KHÔNG migration:**
+  (1) Lịch sử HĐ theo khuôn entity-history (ContractHistoryService ghi cũ → mới vào meta, SystemLogService TYPE_CONTRACT, route system-logs/contract/{id} qua cổng xem HĐ, tab Lịch sử = SystemInfoSection, menu ⋮ Lịch sử ở danh sách);
+  (2) Ngày ký / hết hạn / cấp CCCD lùi 1 ngày mỗi lần Lưu (Resource trả Carbon ⇒ JSON UTC) — DetailContractResource trả Y-m-d + chặn ngày UTC ở update();
+  (3) menu "Xem hỗ trợ hạch toán" ở danh sách, mọi trạng thái, cờ BE is_can_view_support_accounting dùng chung với nút màn xem HĐ.
+  (4) form Sửa HĐ vừa mở đã "chưa lưu" + sửa kế hoạch giao hàng rồi thoát không hỏi — thêm delivery_batches vào unsavedSnapshotSource (e2e 76 passed).
+  Lỗi cha-con TPE báo 23/10: không tái hiện (HĐ cũ không còn, dữ liệu dev đúng) ⇒ user bỏ qua. PHPUnit 11 bộ HĐ xanh; e2e chỉ F42/F44 fail do lỗi có sẵn.
+  Khảo sát cờ "Sửa mẫu in" tự bật: do dữ liệu HĐ 3443 bị đặt cờ 0 ngoài app (chưa thấy lỗi code); luật dòng trống có style ≠ <p></p> trần — chờ user chọn 1/2/3 (plan.md).
+  Bước tiếp: user chọn hướng cờ mẫu in; user báo commit; rà dữ liệu cũ lùi ngày trên hrm_crm; rồi đợt 4 Phụ lục. Chi tiết: .plans/hop-dong/plan.md cuối file.
+  **Wrap up 11/11/2026 — Phase 31 (9 điều kiện chuyển BGĐ + bắt buộc khi gửi duyệt) + Phase 32 (bảo lãnh / ngày mốc nhập sau, YCXH khi HĐ thiếu mốc)** —
+  yêu cầu KH 10/11 đợt 1+2 (`yeu-cau-bo-sung-10-11-gap.md`, design-phase31-dieu-kien-duyet.md, design-phase32-moc-bao-lanh-xuat-hang.md).
+  Nhánh `gop_db-hd-dieu-kien-duyet` (worktree `websites/wt-hd-dieu-kien-duyet`, API 8061 / client 3061, DB rehearsal): api `c03184f1c`, client `b7dc4a69d`.
+  ĐÃ merge + push vào **nhánh môi trường tester hrm_crm `origin/gop_db-xuat-hang-cha-con`** (api `d74c27621`, client `fadb467ae`). CHƯA merge gop_db (user: chỉ khi yêu cầu).
+  E2E contracts-bgd-reasons + contracts-guarantee-execution-base 7/7. Bước tiếp: user deploy VPS hrm_crm + 3 migration 2026_11_11_000001..3; đợt 3 (tiến độ TT / kế hoạch giao / cảnh báo).
+  **Wrap up 11/11/2026 (chiều) — đính chính mục I theo ERP + đồng bộ số tab Quy chế khác** — kiểm ERP bằng chạy thật (ERP local gop_db cổng 8099 + tinker, chặn ghi):
+  ERP định mức vượt trội "0.00" VẪN xét (decimal truthy) ⇒ có vượt trội là chuyển BGĐ (76/76 HĐ hãng 2026). hrm-api `489bc4823`: migration `2026_11_11_000004` (phòng 0.00 ⇒ chế độ 1,
+  đã chạy rehearsal: 102 phòng) + `normalizeValues` tab khac ghi số theo chế độ (Không xét ⇒ NULL, Có vượt trội ⇒ 0; Không giới hạn ⇒ NULL). VI giữ phòng của HĐ (chốt).
+  Khớp ERP (chạy so): công nợ KH/NV, hạn mức KH/NV, VII, VIII, V. Chi tiết design-phase31 mục 7. ĐÃ push tester `origin/gop_db-xuat-hang-cha-con` = `8d55a41de` (worktree tạm đã xoá); nhánh feature cũng lên origin `489bc4823`.
+  Bước tiếp: user cho push → deploy hrm_crm chạy thêm migration 000004 → xoá worktree tạm. Tester báo "phòng chưa khai quy chế" (HĐ 1) = tester nhầm (phòng 36 có 8 dòng, HĐ khớp dòng 720).
+  **12/11/2026 — Phase 33 cảnh báo HĐ sắp hết hiệu lực** (design-phase33-canh-bao-het-hieu-luc.md): companies.contract_expiry_warning_days (mặc định 30, tab Báo giá – Hợp đồng),
+  lệnh assign:warn-expiring-contracts 08:00 nhắc người lập (còn N ngày + đúng ngày). api `29e313d03` / client `1b1f62b6c`; ĐÃ push tester (api `a2b3db1c1`, client `ec28358fc`) + deploy hrm_crm.
+  **12/11/2026 — Phase 34 kế hoạch giao hàng + cảnh báo giao hàng** (design-phase34-ke-hoach-giao-hang.md, mockup-ke-hoach-giao-hang.html): đợt giao theo hàng cha
+  ở tab Giao hàng (form + màn xem), bắt buộc khi gửi duyệt, đã giao = Biên bản giao nhận đã duyệt (FIFO theo hạn), cập nhật sau ký, lệnh assign:warn-delivery-batches 08:05.
+  api `434bbbce1` / client `be9c9a7d0`; ĐÃ push tester (api `8b5f8f18b`, client `092bdde54`) + deploy hrm_crm. e2e contracts-delivery-plan chưa chạy.
+  Bước tiếp: đợt 3 (b)+(c) kế hoạch + cảnh báo giao hàng, rồi (a) tiến độ thanh toán.
+  **Wrap up 12/11/2026 — Phase 35 tiến độ thanh toán chi tiết + cảnh báo thu tiền** (design-phase35-tien-do-thanh-toan.md, mockup-tien-do-thanh-toan.html):
+  hạn thu theo mốc (thực tế / dự kiến), mốc Giao hàng chọn đợt, đã thu Có−Nợ 131 đắp theo hạn, cập nhật mốc + biên bản (người lập), lệnh assign:warn-payment-schedule 08:10.
+  api `d77925d8e` / client `6c1f1901c`; ĐÃ push tester (api `dd48db00e`, client `c568a7e99`) + ĐÃ deploy hrm_crm 12/11 (migration 000004/000005 chạy lẻ; GIAO_HANG_1/2 0 dòng dùng; route:cache, queue:restart, build Node 14, pm2 reload).
+  Bước tiếp: e2e mới chưa chạy; đợt 4 phụ lục / đợt 5 mẫu in. Merge gop_db chỉ khi user yêu cầu.
+
 - mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
   Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.
   Scope: cho sửa %VAT dòng hàng (2 số lẻ) trên PI trong nước (theo hãng + tự do) và HĐ `inland_buy_contract_new`, tính lại VAT/tổng. Nhập khẩu chưa làm (chờ BA — không có %VAT theo dòng).
@@ -101,6 +184,25 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Spec: docs/superpowers/specs/gop-db/2026-10-22-mua-hang-sua-vat-pi-hd-design.md | Tóm tắt: .plans/gop-db/mua-hang-sua-vat-pi-hd/design.md
 
 - quan-ly-vai-tro-quyen / **Thiết kế lại quản lý Vai trò & Quyền (ERP + HRM): vai trò thuộc 1 công ty, kiểm theo mã, phạm vi tách khỏi quyền, 1 màn ở Quản trị** → @namdangit → .plans/gop-db/quan-ly-vai-tro-quyen/design.md
+  ### Checkpoint — 03/11/2026 (wrap up — GĐ3b XONG + commit, Task 11 merge gop_db LOCAL, đánh giá app mobile, danh sách cấp lại quyền)
+  Vừa hoàn thành: (1) GĐ3b Task 1–12 + final review xong; vá thêm 2 lỗi có sẵn ERP (báo cáo bảo hành 500 khi không mã; saleByYear lọc nhầm hợp đồng). **Commit nhánh `rbac` chưa push**: hrm-api `837696fb7`, client `d663e7ac9`, ERP `b4f666abe1`. (2) **Task 11: kéo origin/gop_db + merge `rbac` vào `gop_db` LOCAL 3 repo — CHƯA push**: hrm-api `7a466818b` (+39 so origin), client `e14f605c0` (+34), ERP `c649fd90c7` (+24); gỡ 2 xung đột (hrm-api Catalog/warehouse.php giữ cả 2; ERP BuyContract2 CHUC_VU_NGUOI_KY = printName #11932 + roleAtCurrentCompany). Test trên gop_db: hrm-api Rbac 448/1 đỏ (DB test thiếu bảng inherited_price_factors), ERP Rbac 159: Purchase golden ngày (có sẵn) + ErpGateSideEffectsTest (classmap vendor checkout chính cũ) — đều môi trường. SHA trong `cua-so-go-live-nhanh.md` đã cập nhật. (3) Đánh giá ảnh hưởng app mobile `app-mobile/danh-gia-anh-huong.md`: app KHÔNG cần sửa (server trả tên cũ); thử app thật trên rehearsal đạt (mật khẩu tạm đã trả lại); plan chuyển app sang `permission_codes` `app-mobile/plan-chuyen-sang-ma.md` (Q1–Q3 đã chốt: develop rồi đồng bộ tpe; gỡ tên cũ khi đo `fcm_tokens` đạt ngưỡng). (4) `viec-ngoai-luong.md` (15 mục, 3 đóng). (5) **Danh sách cấp lại quyền** `gd1-nen-du-lieu/danh-sach-cap-lai-quyen/danh-sach-cap-lai-quyen.xlsx` (8 sheet, từ diễn tập 26/10: 384 NV bịt rò, 14 NV mất truy cập công ty, 119 NV GĐ2c, NV 197 GĐ3b, 54 vai trò thiếu quyền Xem, 18 cấu hình trỏ vai trò) + `build_xlsx.py` để sinh lại lúc go-live.
+  Đang làm dở: —
+  Bước tiếp theo: (1) push `gop_db` 3 repo CHỈ khi user ra lệnh (hook chặn push rbac; ERP push = tự deploy prod); (2) chạy lại A3b trên rehearsal bằng code gop_db (ghi DB — xin phép); (3) code TPE_APP đọc `permission_codes` (xin "làm", pull develop trước); (4) lần 14 NV sheet 2 để gợi ý vai trò; thêm bước sinh lại Excel vào runbook go-live; (5) xử lý dần `viec-ngoai-luong.md`.
+  ### Checkpoint — 01/11/2026 (wrap up — GĐ2c xong, GĐ3b đổi Vai trò → mã: Task 1 xong)
+  Vừa hoàn thành: (1) sắp "cập nhật mới nhất lên đầu" 3 màn phân quyền + **GĐ2c cấu hình phạm vi Tổng công ty** — commit + push origin/rbac (hrm-api `f280a1294`, client `305e425f3`, ERP `85b41c7754`), merge LOCAL gop_db + kéo origin/gop_db (gop_db đi trước origin: hrm-api `14bae7c6d`, client `f80d568f5`, ERP `3bbffed301`), **gop_db CHƯA push**. (2) Cửa sổ go-live nhanh `gd1-nen-du-lieu/cua-so-go-live-nhanh.md` (+ 01/11 tối: tắt phạm vi Tổng công ty 6 công ty ≠ TPE trong cửa sổ). (3) **GĐ3b** `gd3b-doi-vai-tro-sang-ma/` — design (Q1–Q7 chốt) + plan; Task 1 (17 mã Catalog + RoleNameCodeMap + test) xong ở `wt-rbac/hrm-api` nhánh `rbac`, **CHƯA commit**, Rbac 422 OK. (4) Quy tắc "kiểm code tới tận gốc trước khi kết luận" ghi vào CLAUDE.md gốc + HRM + ERP (hrm-claude-config chưa commit).
+  Đang làm dở: —
+  Bước tiếp theo (phiên mới): đọc `gd3b-doi-vai-tro-sang-ma/plan.md` checkpoint + ledger `wt-rbac/hrm-api/.superpowers/sdd/plan-gd3b-doi-vai-tro-sang-ma/progress.md`; xin phép **Task 1b** (CHẶN go-live, 3 repo) rồi Task 2 → … → 12. Còn tồn khác trước go-live: golden ERP Purchase lệch ngày, `van-de-ton.md` A4 (tên quyền lạ ép false), dọn 4 dòng lịch sử test GĐ2c trên rehearsal.
+  ### Checkpoint — 31/10/2026 sáng (export DB cho cổng test)
+  Vừa hoàn thành: export `hrm_erp_rbac_rehearsal` (đã chuyển đổi phân quyền mới: 990 quyền, 1.764 alias, 283 vai trò; đủ 1.927 bảng, mọi migration hrm-api `rbac` đã chạy) → `hrm_erp_rbac_rehearsal_20261031.sql.gz` (998MB, nằm ở scratchpad session — user tự chép đi). Dump không kèm CREATE DATABASE; nạp xong phải `permission:cache-reset` + làm mới cache Redis ERP.
+  Lưu ý cổng test: code phải là nhánh `rbac` 3 repo (còn 3 commit chưa push + bộ lọc màn Vai trò / thẻ vai trò gọn chưa commit); ERP còn 3 migration chưa chạy trên DB này (tỷ giá bill_adjust_depts, header + cỡ chữ mẫu in phiếu kho — không liên quan quyền); DB còn 7 vai trò "E2E Assign Admin" + 12 dòng ehr mồ côi; dữ liệu là bản chụp prod.
+  Bước tiếp theo: user nạp DB lên cổng test; push khi user cho phép; rồi các bước go-live ở checkpoint 30/10 tối.
+  ### Checkpoint — 30/10/2026 tối (chốt lịch go-live)
+  Quyết định user: **go-live phân quyền mới lên prod ngày 31/10/2026, CHỈ TPE** (chưa etek/toyota — không được kéo `gop_db` mới về 2 tenant này tới khi chuyển đổi riêng; đã ghi runbook). Việc tồn quyền/vai trò (`van-de-ton.md`) xử lý dần sau.
+  Bước tiếp theo (phiên mới): (1) đo trước: đếm quyền mới `gop_db` thêm từ 27/10 + thử merge ở worktree tạm đếm xung đột; (2) merge `gop_db` → `rbac` 3 repo (hrm-api 194 commit / 109 file trùng, client 121/23, ERP 45/31) — CẦN user "làm"; (3) khai mã + alias cho quyền mới, chạy Rbac 2 repo; (4) diễn tập trên dump prod mới (runbook A.2) + danh sách cấp lại quyền; (5) cửa sổ bảo trì runbook B (người có quyền VPS chạy).
+  ### Checkpoint — 30/10/2026 (GĐ3 xong 8.18 + làm lại UI màn Vai trò + video HDSD)
+  Vừa hoàn thành: GĐ3 8.14→8.18 (8.14–8.17 đã push origin/rbac; 8.18 ERP `a51bdd3def` / client `68c18bbbc` commit local). Màn Vai trò theo mockup + tối ưu + popup Quyền đang có/Người giữ (hrm-api `d9359428f`, client `449cbd4ec`, commit local). Video HDSD phần phân quyền `quan-ly-vai-tro-quyen/video/` + skill `video-creator-docs`.
+  Đang làm dở: CHƯA commit — 3 bộ lọc màn Vai trò (`admin/roles/filter-options`) + thẻ vai trò gọn ở Vai trò nhân viên (hrm-api 4 file, hrm-client 2 file); 4 commit local chưa push.
+  Bước tiếp theo: user xem `gd3-kiem-quyen-theo-ma/van-de-ton.md` (169 chỗ has_role chưa có mã, tên quyền lạ, push); commit + push khi user yêu cầu; KHÔNG merge gop_db.
   ### Checkpoint — 28/10/2026 (GĐ3 Task 8 tạm dừng)
   Vừa hoàn thành: GĐ3 Task 8.1→8.13 (13 phân hệ kiểm quyền theo mã), commit nhánh `rbac` chưa push — cuối: hrm-api `26d1bc1f5`, ERP `17158a8c7d`, hrm-client `8a487f1a8`.
   Đang làm dở: 8.14 finance (chưa sửa code, cây sạch). Bước tiếp: 8.14→8.17 rồi dừng 8.18 hỏi user. Chi tiết: `quan-ly-vai-tro-quyen/gd3-kiem-quyen-theo-ma/plan.md` (checkpoint cuối) + sổ cái `wt-rbac/hrm-api/.superpowers/sdd/plan-gd3-kiem-quyen-theo-ma/progress.md`.
@@ -143,6 +245,11 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Blocked: —
 
 - quan-ly-hang-hoa / **Sau go-live 20/10 — làm thẳng trên `gop_db`** (bỏ worktree + nhánh chung) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/viec-con-lai.md (mục 21/10 + 22/10)
+  ### Checkpoint — 09/11/2026 (wrap up — sửa dữ liệu prod hàng ERP status 2/5)
+  Vừa hoàn thành: 8 mã prod `products.status` 2/5 (do ERP Duyệt giá đánh cả mã, backfill bỏ sót) ⇒ 5 mã Đang KD giá 0 (4 TPE + MNSG-GPO12CE Sài Gòn), 3 mã về đã xoá; xoá 1 yêu cầu duyệt treo cty 8. Không đụng source. Chi tiết: viec-con-lai.md mục 09/11
+  Đang làm dở: —
+  Bước tiếp theo: user xác nhận RAVA-RAV6401I:03 hiện Đang KD trên prod
+  Blocked: —
   ### Checkpoint — 24/10/2026 (wrap up — ảnh hàng hoá)
   Vừa hoàn thành: chi tiết hàng hoá hiện ảnh đại diện (hàng ERP cũ chỉ có `avatar`, 28.569 hàng ra ô trống) + bấm ảnh mở FilePreviewModal ở chi tiết và 6 màn danh sách — client `f3d7df2d8` (phần ProductListPage lọt vào `1ab0006b6`) — ĐÃ PUSH gop_db 24/10: client `0113bddb6`, api `2169b460e` (kèm Kế thừa giá + Chuyển KD không tính giá). e2e products-read-ui + filter-layout + image-preview 23/23 (sửa 3 ca cũ lệch code). Chi tiết: `quan-ly-hang-hoa/anh-hang-hoa/`
   Đang làm dở: —

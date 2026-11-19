@@ -152,7 +152,9 @@ Những điểm đáng chú ý:
   và quyền Duyệt có phạm vi. Không đụng vào ràng buộc ghi.
 - **"Tổng công ty" = xem dữ liệu gộp mọi công ty**, dù vai trò chỉ thuộc một công ty. Công ty của
   vai trò quyết định *ai được cấp, cấp ở đâu*. Phạm vi quyết định *thấy dữ liệu tới đâu*.
-- **Quản trị viên công ty nào cũng cấp được mọi phạm vi, kể cả "Tổng công ty"**, cho vai trò của công ty mình.
+- ~~**Quản trị viên công ty nào cũng cấp được mọi phạm vi, kể cả "Tổng công ty"**, cho vai trò của công ty mình.~~
+  **[Đổi 01/11/2026]** chỉ công ty được bật cấu hình mới cấp được phạm vi Tổng công ty; công ty bị tắt thì phạm vi
+  này tính như Công ty. Chi tiết: `gd2c-cau-hinh-pham-vi-tong-cong-ty/design.md`. Phần gạch ngang ở trên và 3 dòng tiếp theo là nguyên tắc cũ, giữ để đối chiếu.
   Không có quyền riêng để cấp cấp này, không giới hạn "chỉ cấp tới mức mình có". User chấp nhận việc công ty B
   có thể mở dữ liệu gộp cho người của B. Cô lập giữa các công ty ở đây là cô lập **vai trò và việc cấp vai trò**,
   không phải cô lập dữ liệu khi đã có phạm vi Tổng công ty.
@@ -212,6 +214,7 @@ Thứ tự trên là thứ tự làm. Cả 4 lên prod cùng lúc (mục 5.8).
 | 1 | `gd1-nen-du-lieu/` | code Task 0–12 xong + review cuối + diễn tập trên bản sao prod 26/10 (worktree `wt-rbac`, nhánh `rbac`, đã commit 26/10: hrm-api `b5eb3cb57`, ERP `5101a750a9`, push `origin/rbac` 27/10). Xem `gd1-nen-du-lieu/runbook-go-live.md`, `bao-cao-dien-tap/playwright.md` |
 | 2 | `gd2-man-quan-ly/` | Xong 27/10 trên `wt-rbac` nhánh `rbac` (3 repo: hrm-api `80de7580b`, hrm-client `25824b310`, TanPhatDev `f9b85744c5`), commit, push `origin/rbac` 27/10; kiểm Playwright trên `hrm_erp_rbac_rehearsal`. Spec e2e `HRM/e2e/tests/admin/admin-roles.spec.ts` 9/9 xanh. Màn người dùng **tách khỏi GĐ2**, làm lại sau GĐ2 nhưng phải xong trước khi lên prod (user chốt 26/10) |
 | 2b | `gd2b-tai-khoan-va-vai-tro-nhan-vien/` | **Code xong 27/10**, commit + push `origin/rbac` (hrm-api `a7fefc312`, hrm-client `8dbe831cc`, ERP `57aea84917`; nhánh `rbac` push lần đầu nên gồm cả GĐ1+GĐ2). KHÔNG merge `gop_db` khi user chưa yêu cầu. Còn: 3 việc chờ user quyết + chạy 2 spec e2e (xem `gd2b…/plan.md` checkpoint) |
+| 2c | `gd2c-cau-hinh-pham-vi-tong-cong-ty/` | Design + plan xong 01/11; code xong local `wt-rbac` (3 repo, chưa commit), kiểm Playwright trên rehearsal 01/11 |
 | 3+4 | `gd3-kiem-quyen-theo-ma/` | **User chốt 27/10 gộp GĐ3 + GĐ4**, làm theo từng phân hệ. Design xong 27/10 (U1–U9), chờ user duyệt rồi lên plan. Chưa code |
 
 ## 8. Chuyển đổi dữ liệu (yêu cầu kết quả, cách làm để builder quyết)
