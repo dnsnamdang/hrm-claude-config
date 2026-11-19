@@ -61,11 +61,22 @@ Chỉ FE (2 file), nhánh `task_12198`. Tài liệu: `.plans/gop-db/12198-link-g
 ## Danh sách HSNS lọc nhiều phòng ban / bộ phận + xuất Excel theo lọc — ĐÃ PUSH develop (api `4321f62c2`, client `65601f328`); cherry-pick gop_db local chưa push (2026-11-18, @junfoke)
 Tài liệu: `.plans/gop-db/hsns-loc-nhieu-phong-ban-bo-phan/plan.md`.
 
-## Hồ sơ tự khai: chặn gửi duyệt khi không có thay đổi — COMMIT develop (api `2ef1957a0`, client `d35213964`), CHƯA push (2026-11-18, @junfoke)
+## Phân chia thị trường PB/NV lọc theo công ty ĐANG THAO TÁC + helper chung `CurrentCompany::id()` (30 file) — ĐÃ PUSH gop_db (api `ad5dc5743`) (2026-11-19, @junfoke)
+Tài liệu: `.plans/gop-db/division-market-department/plan.md` · quy tắc mới ở `hrm/CLAUDE.md` mục Convention Database.
+
+## Nhiệm vụ đã triển khai không đổi được Người thực hiện — ĐÃ PUSH gop_db (api `3ce0c4401`, client `fb2d67208`) + merge develop (api `3d5922f97`, client `8247cc6d5`) (2026-11-19, @junfoke)
+## Mã chấm công 9 số (ETEK POWER) lưu được HSNS — gop_db api `729a7ced6` (2026-11-19, @junfoke)
+## Tổng quan: quyết toán công lọc Bộ phận lỗi `part_id` — gop_db api `774762f62` (2026-11-19, @junfoke)
+Tài liệu 3 mục trên: `.plans/gop-db/ho-tro-van-hanh/plan.md` (Ngày 19/11, kèm khảo sát #12091 chờ QA).
+
+## #12231 #12232 Giao chỉ tiêu KD + kế hoạch NV (bỏ Số phiếu, khe header dính, placeholder, về danh sách) — ĐÃ PUSH develop (client `700fb01a3`) (2026-11-19, @junfoke)
+Tài liệu: `.plans/gop-db/giao-chi-tieu-kinh-doanh/plan.md` (kèm testcase #11643 / #11651).
+
+## Hồ sơ tự khai: chặn gửi duyệt khi không có thay đổi — ĐÃ PUSH develop (api `55585ddb1`, client `57eb9a078`) (2026-11-18, push 19/11, @junfoke)
 Tài liệu: `.plans/gop-db/tu-khai-chan-gui-khong-thay-doi/plan.md`.
 
 ## #12171 DM khách hàng (Quận/Huyện bắt buộc, cột xuất, import Nhóm KH, SĐT tổ chức) — ĐÃ PUSH develop (api `c71048b87`, client `ac05172af`) (2026-11-18, @junfoke)
-## #12215 BC số lượt SC-BD 1 khách hàng (phân cấp công ty, tùy chỉnh cột, bỏ làm tròn) — SỬA XONG, CHƯA commit (2026-11-18, @junfoke)
+## #12215 BC số lượt SC-BD 1 khách hàng (phân cấp công ty, tùy chỉnh cột, bỏ làm tròn) — ĐÃ PUSH develop (api `0e7c6a3a1`, client `4074d86c5`) (2026-11-18, push 19/11, @junfoke)
 Plan: `.plans/gop-db/customer-scope-list-page-standard/plan.md` · `.plans/gop-db/bc-so-luot-sc-bd-khach-hang/plan.md`.
 
 ## Báo cáo so sánh số liệu bán hàng theo thời gian chi tiết theo khu vực (ERP → HRM) — ĐÃ MERGE develop (api 370229d99, client 56c226264), CHƯA gop_db (2026-11-18, @junfoke)

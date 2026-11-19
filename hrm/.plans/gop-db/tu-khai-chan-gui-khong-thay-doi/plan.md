@@ -8,5 +8,5 @@ Nguồn: người dùng báo màn Duyệt cập nhật hồ sơ nhân sự "khô
 - [x] 18/11/2026 — FE: 3 màn gửi hiện đúng câu BE trả (trước là câu lỗi cố định).
 - [x] 18/11/2026 — Kiểm local: 4 hồ sơ thật (6, 22, 49, 594) gửi không sửa → đều chặn; 9 kiểu sửa thật (SĐT, ngày sinh, tỉnh, sửa/xoá học vấn, thêm người thân, thêm TK ngân hàng, ảnh CCCD, đổi quan hệ) → gửi được; giao diện: không sửa hiện toast đỏ, sửa Email gửi thành công. Đã dọn yêu cầu thử.
 - [x] 18/11/2026 — Commit develop api `2ef1957a0`, client `d35213964`.
-- [ ] CHƯA push develop — chờ user.
+- [x] 19/11/2026 — Đã push develop cùng #12215 (rebase nên đổi mã: api `55585ddb1`, client `57eb9a078`).
 - [ ] Lỗi có sẵn chưa sửa: form tự khai luôn gửi chức vụ người quản lý trực tiếp rỗng → duyệt xong có thể xoá chức vụ này trên hồ sơ (lịch sử 384, 380, 379) — làm riêng nếu user muốn.

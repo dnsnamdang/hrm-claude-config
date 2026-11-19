@@ -2,6 +2,8 @@
 
 ## Hoàn thành
 
+- [BC tiến độ đặt hàng theo NV: sắp xếp A→Z / Z→A 4 cột Tên hàng, Model, Mã hàng, Phiếu đặt hàng](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-19. `1bd4d0c27c` gop_db (đã push).
+- [PĐH nhập khẩu: chi tiết xét phạm vi quyền Xem (Tổng công ty xem phiếu công ty khác)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-19. `afb901222b` gop_db. Đặt hàng trong nước chưa sửa.
 - [Mẫu in HĐ dịch vụ (loại 6): bổ sung biến bên A/B + bảng chi tiết theo HĐ bán](mau-in-hddv-bien-ben-a-b/plan.md) — @junfoke 2026-11-18. `7435ca2d91` nhánh `feat/mau-in-hddv-bien`, merge `develop_02` `83aa16c5f2`. Sau deploy mở `update-variables/6`. Chưa lên gop_db.
 - [Mua hàng: SL đặt / SL duyệt nhập số thập phân 2 chữ số (#12195)](12195-mua-hang-sl-thap-phan/plan.md) — @junfoke 2026-11-17. `d86dd651aa` nhánh `task_12195`, merge `develop_02`. Có migration (8 cột INT → decimal) — dev chạy `migrate`. Chưa lên gop_db. 18/11: ô SL theo chuẩn số `1,234.5` (directive `qty-input`) `51f610243b` → develop_02 `3281ecf9c6`; testcase 235 TC.
 - [YC lắp đặt bàn giao: màn sửa chọn phòng mọi công ty + "Chuyển phòng tiếp nhận" lưu phòng = 0](chan-phong-tiep-nhan-khac-cong-ty/plan.md) — @junfoke 2026-11-16. `c62ac47e77` + `92b35d3d9c` gop_db. Prod: phiếu 1619, 1996 đưa về Từ chối.

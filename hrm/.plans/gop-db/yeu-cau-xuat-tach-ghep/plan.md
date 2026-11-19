@@ -158,3 +158,6 @@ Blocked:
 
 ## Ngày 18/11/2026 — phản hồi QA (@junfoke)
 - [x] 18/11/2026 — Lỗi #12218 (Phiếu YC xuất tách): không sửa code — các hàng QA chọn (Tủ dụng cụ 8 ngăn, Tủ dụng cụ 7 ngăn 240 chi tiết…) đúng là chưa khai công thức tách nên form báo "không có công thức" là đúng nghiệp vụ (ERP cũng báo "Hàng không có công thức"). Đã kiểm DB, soạn câu trả lời QA để user dán Redmine; user chọn giữ nguyên, không lọc ô tìm hàng theo hàng có công thức.
+
+## Ngày 19/11/2026 (@junfoke)
+- [x] 19/11/2026 — Hỗ trợ #12185 QA báo "chưa thấy fix": bản sửa đã lên dev (`98b5646e9`, 17/11 15:38), mở dev-hrm xác nhận cột SL 150px + câu "Vượt tồn kho (cần X, còn Y)."; QA test khi dev đang lỗi build. Soạn câu nhắn QA F5 test lại. Không sửa code.

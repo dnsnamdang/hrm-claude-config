@@ -37,4 +37,4 @@ Blocked:
   - Ngày tạo trong popup danh sách lượt thêm giờ (dd/mm/yyyy hh:mm); thu hẹp cột Serial, SL, Giá trị; bỏ khoảng trắng dưới bảng; số dòng/trang 10/20/50/100 ở bảng chính + popup.
   - Cột NCC giữ nguyên theo user: HRM hiện "Tân Phát" là đúng (ERP so nhầm mã nên ghi "Khác") — đã soạn câu trả lời QA.
   - File: FE 4 file `pages/sale/warranty-repair-by-customer-report/`; BE `WarrantyRepairByCustomerReportService`, `...PrintService`, `WarrantyRepairByCustomerReportExport`. Kiểm local 2 khách hàng (1366px, In chọn cột, Excel).
-- [ ] #12215 CHƯA commit (đang sửa trên worktree `develop` 2 repo) — chờ user quyết commit/push; `develop` local còn commit chặn gửi tự khai chưa push sẽ đi kèm.
+- [x] 19/11/2026 — Commit + push #12215 lên `develop`: api `0e7c6a3a1`, client `4074d86c5` (đi kèm 2 commit chặn gửi tự khai `55585ddb1` / `57eb9a078`). Câu trả lời QA (#12215 cột NCC, #12218) đã soạn để user dán Redmine.
