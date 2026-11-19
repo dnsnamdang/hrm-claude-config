@@ -25,3 +25,11 @@
   - hrm-api `191ce8b78`
   - hrm-client `5760f8b0a`
 - Push bằng worktree tạm dựng từ `origin/tpe` để không đụng các thay đổi dở khác đang có trong `worktrees/tpe-*`; sau đó 2 worktree chính đã fast-forward lên bản mới.
+
+## Bổ sung 19/11/2026 — phiếu PYCLT-238 (#Redmine: chưa có) — @cuong61n
+- Bối cảnh: anh Nguyễn Đình Đông (phòng BGĐ CN Vinh, id 73) tạo phiếu 238 gửi phòng Kỹ thuật Vinh (76), đã duyệt, nhưng vào Phân công làm thêm không chọn được. Dữ liệu prod: phiếu `department_id=76`, status 2; anh Đông quản lý các phòng 73/77/74/76 (`employee_manage_departments`) nhưng modal chỉ lọc đúng phòng mình (73) → không thấy.
+- Chốt với anh Cường: phải lấy theo các phòng người dùng QUẢN LÝ.
+- [x] 19/11 BE `OvertimeRequirementService::filter()`: param mới `for_allocation=1` → `whereIn(department_id, manageDepartmentIdsOf(...) + phòng mình)`; không có param thì giữ hành vi cũ.
+- [x] 19/11 FE `AddOvertimeRequirement.vue`: gửi thêm `for_allocation=1`.
+- [x] 19/11 Kiểm: SQL trên prod với `department_id in (73,77,74,76)` trả ra PYCLT-238. `php -l` sạch. CHƯA test UI/API bằng account anh Đông.
+- Trạng thái: sửa local, chờ test + commit/deploy.
