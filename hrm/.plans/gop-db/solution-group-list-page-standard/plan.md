@@ -50,3 +50,5 @@ với hàm thật khai trong component modal — 7/7 khớp.
 
 - [x] Fix lịch sử: đổi Nhóm ngành không ghi log (sync pivot sau khi log + snapshot thiếu khoá ảo `scopes`) — 12/10/2026
 - [x] Rà lịch sử 8 danh mục QLDA (test API đầu-cuối từng trường): Ứng dụng thiếu log cặp Nhóm GP/Lĩnh vực KH → khoá dạng BẢNG; Nhóm GP đổi `scopes` sang dạng BẢNG; popup Xem Hạng mục đọc nhầm `system-logs` → `catalog-histories` — 12/10/2026
+
+- [x] Fix 24/10/2026 (prod): Sửa nhóm giải pháp "Khác" báo "Đã tồn tại" oan vì collation unicode_ci coi "Khác" = "Khắc" (NGP.0104) → unique name so thêm COLLATE utf8mb4_0900_as_ci (IndustriesRequest)

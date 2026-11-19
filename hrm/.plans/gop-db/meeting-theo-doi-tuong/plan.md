@@ -1071,3 +1071,5 @@ Vừa hoàn thành: sửa 4 lỗi Important của reviewer (I1 include_ids lộ 
 Bước tiếp theo: user chạy e2e `meeting-target*`; cập nhật thiết kế app mobile.
 Minor để lại: M2 ô dự án ẩn ngay khi bỏ dự án cuối (loại không target) · M3 so sánh trim/CRLF có thể 423 nhầm · M4 BE không kiểm HĐ cùng KH meeting · M5 thêm 1 exists()/dòng ở MeetingTypeResource · M6 has_prospective_project suy theo count(projects).
 Blocked:
+
+- [x] Fix 21/10/2026: payload lưu meeting chỉ gửi 6 khoá/dự án (PROJECT_PAYLOAD_KEYS trong MeetingForm.getFormData) — object dự án kèm cả liên hệ KH vượt max_input_vars 1000, BE mất company_members + projects.*.prospective_project_id (dự án 480 PROD)

@@ -190,3 +190,63 @@ Vừa hoàn thành: fix #11875
 Đang làm dở: —
 Bước tiếp theo: deploy hrm-crm (api + client) rồi QA test lại
 Blocked:
+
+## Fix #12036 — Danh sách: định dạng cột Người tạo + thêm Ngày cập nhật / Người cập nhật (2026-11-05)
+
+- [x] BE `PositionTransferService::listQuery/listRows`: thêm `updated_at_full` + `updater_label` (subquery tên NV + mã phòng, `employeeAuditLabel`)
+- [x] FE `position-transfers/index.vue`: cột Người tạo hiện `creator_label` ("Tên NV - Mã phòng", list-page §6); thêm cột Ngày cập nhật + Người cập nhật (hiện mặc định)
+- [x] FE `export-excel.js`: Người tạo → `creator_label`; thêm 2 cột Ngày cập nhật / Người cập nhật
+- [x] Verify: service danh sách (tinker) ra "DNS Admin - CTV_NV | 22/10/2026 10:04 | DNS Admin - CTV_NV"; 668 phiếu đều có updated_by hợp lệ; compile FE OK. Chưa mở trình duyệt.
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: fix #12036
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm danh sách + Xuất Excel; cấu hình cột đã lưu của user cũ có thể cần bật 2 cột mới trong "Cấu hình cột"
+Blocked:
+
+## Fix #12037 — Tạo mới: giao diện form + popup chọn vị trí/lô (2026-11-05)
+
+- [x] 1. Ô Ghi chú mặc định CAO bằng ô Kho (user đính chính: chiều cao, không phải chiều rộng) — độ rộng giữ `col-md`; textarea `rows=1`, scoped `.pt-note` height 32px, vẫn kéo giãn được
+- [x] 2. Popup Chọn vị trí xuất/nhập rộng hơn: CSS theo modal-id `#position-transfer-position-picker` (width 100vw-32px, max 1320px) — không đụng `RecordPickerModal` dùng chung
+- [x] 3. Popup Chọn lô xuất: bỏ `link` cột Lô (chữ thường, bấm dòng vẫn chọn) + cột Tồn `sortable` (key `unit_qty`); BE `PositionTransferService::lots()` sort theo `unit_qty` khi `sort_by=unit_qty`
+- [x] 4. Bảng chi tiết: ô Vị trí xuất / Lô xuất / Vị trí nhập (`.pt-picker`) 1 dòng, dài thì "...", rê chuột xem đủ (title sẵn có)
+- [x] 5. Sửa / Chi tiết: bỏ ô "Mã phiếu" ở Thông tin chung (mã đã nằm trên thanh tiêu đề)
+- [x] Verify: compile template/script/scss FE OK; tinker `lots()` không sort 4,6 · asc 4,6 · desc 6,4; php -l OK. Chưa mở trình duyệt.
+
+- [x] 6. (user bổ sung) Bộ lọc popup Chọn vị trí xuất/nhập theo khuôn popup đã sửa hôm nay (`WarehouseExportPickerModal` / `HandoverContractPickerModal`): `V2BaseModal` + `V2BaseSmartFilterPanel floating in-modal` (ô tìm nhanh Mã vị trí + Nhà/Dãy/Khoang, nút Tìm kiếm/Làm mới của panel) + `V2BaseDataTable`. Tách `PositionPickerModal.vue` riêng màn (logic lọc phân cấp chuyển vào), KHÔNG sửa `RecordPickerModal` dùng chung
+  - FE mới `position-transfers/components/PositionPickerModal.vue`: ô tìm nhanh "Tìm theo mã vị trí" + Nhà/Dãy/Khoang (≤ 3 ô → panel dàn ngang, chọn là tìm ngay, phân cấp như #11811), sort Tồn, phân trang chuẩn popup (10/20/50/100), dòng khoá mờ + rê chuột hiện lý do, dialog rộng 1320px (thay CSS theo id ở mục 2)
+  - Form: bỏ `positionFilter*`, `rowFilterOptions`, `spaceFilterOptions`, `onPositionFilterInput`, `resetPositionFilter`, `loadPositionFilterOptions`, `positionColumns`, import `V2BaseSelectInModal`; popup Lô vẫn dùng `RecordPickerModal`
+  - Verify: compile template/script/scss 2 file OK; tinker `positionsQuery` trả đủ code/house_name/row_name/space_name/unit_qty/qty_text/in_inventory. Chưa mở trình duyệt
+
+- [x] 7. (user phản hồi) Popup vị trí bỏ "Cài đặt bộ lọc" / "Tìm kiếm nâng cao" — panel đếm ô tìm nhanh + 3 ô = 4 > 3 nên tự sang chế độ nâng cao. Không khai `filter-fields`; Nhà / Dãy / Khoang dựng trong slot `quick-search-extra` (cùng hàng ô tìm nhanh, `V2BaseFloatingField` + `V2BaseFilterFieldControl` như panel), không sửa panel dùng chung. Verify compile OK, chưa mở trình duyệt
+
+- [x] 8. (user bổ sung) Popup Chọn lô xuất cùng khuôn popup vị trí: tách `LotPickerModal.vue` (V2BaseModal + panel chỉ ô tìm nhanh số lô + V2BaseDataTable, sort Tồn, bấm dòng chọn, lô hết hàng mờ); bỏ `RecordPickerModal` khỏi form
+  - BE `lots` trả hết lô không phân trang → phân trang ở FE (10/20/50/100); tìm số lô + sort Tồn vẫn BE. Form bỏ `lotColumns` + import `RecordPickerModal`. Verify compile OK, chưa mở trình duyệt
+
+### Checkpoint — 2026-11-05
+Vừa hoàn thành: fix #12037
+Đang làm dở: —
+Bước tiếp theo: user mở /warehouse/position-transfers/create kiểm 5 mục
+Blocked:
+
+### Checkpoint — 2026-11-05 (push)
+Vừa hoàn thành: ĐÃ PUSH `develop` (hrm-api tới `6b0b11b6e`, hrm-client tới `cf57d6f54`) theo yêu cầu user.
+Đang làm dở: —
+Bước tiếp theo: deploy dev → QA kiểm lại.
+Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (09/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter; khuôn chép `../phieu-xuat-kho-dieu-chinh-kiem-ke/` + `../kiem-ke-theo-vi-tri/` (tên gọi vị trí / Nhà / Dãy / Khoang / lô)
+- [x] Đọc code màn (FE `pages/warehouse/position-transfers/**`, PositionPickerModal, LotPickerModal, menu warehouse.js; BE `PositionTransfer` Entity / Controller / StoreRequest / Service / WriteService / PrintService, `WarehouseInventoryLockService`, `PhysicalStockWriter::transferLot`, StockCard / ChangeSummary / BeginningStock, chặn xóa MasterData). Quyền: nhánh develop chưa có Catalog + mã quyền → ghi theo tên quyền trong code: "Điều chuyển vị trí" + 3 quyền xem (tổng công ty / công ty / kho)
+- [x] Chụp ảnh dev-hrm (`pdcvt_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi): 0 yêu cầu ghi bị chặn / 0 lọt (6 lượt chạy); POST In dự kiến cho qua 1 lần (đọc code: chỉ dựng HTML mẫu 54, không ghi). Giả trên trình duyệt: danh sách Kho chọn được ở form Tạo (DNS Admin không là thủ kho kho nào → form-options trả 0 kho) cho ảnh 10_create / 10c / 10d / 10e / 10f / 10h / 11_* / 18b; lỗi máy chủ của Lưu nháp / Điều chuyển gán vào form (không bấm lưu) cho 10b_validate / 10d_validate_transfer. Hộp Xác nhận xóa / Xác nhận điều chuyển / Đổi kho / Thông tin chưa lưu chỉ mở rồi Hủy / Thoát. Dev không có phiếu Kiểm kê theo hàng hóa nào hiện nút Tạo phiếu điều chuyển vị trí → không có ảnh lối vào đó (mô tả bằng chữ, icon menu chép từ `kkhh_shots`)
+- [x] `gen_srs.py` → `SRS - Phiếu điều chuyển vị trí.docx`: 14 chức năng, 94 trang, selfcheck khớp bản mẫu; metrics ui 12.4 / ev 4.7 / evch 987 / intro 1841; Phần 5 bảng 4 cột 12 màn
+- [x] `gen_hdsd.py` → `HDSD_Phieu dieu chuyen vi tri.docx`: 12 PHẦN, 19 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`, Điều chuyển xếp vào nhóm "DUYỆT PHIẾU (ĐIỀU CHUYỂN)"): 253 TC, 13 nhóm, P0 41,9%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 247 có TC / 77 N/A (Khóa, Import, Không duyệt); SRS 132 / 31 N/A
+- [x] Ghi nhận điểm lệch / nghi lỗi (không sửa code): bản in + In dự kiến dùng mẫu 54 của hệ thống cũ nên tiêu đề "KIỂM KÊ KHO", dòng "Ngày kiểm kê"; Xuất Excel danh sách rỗng vẫn ra file + báo thành công; SL lưu nháp bị cắt phần thập phân (cột INT, giữ như hệ thống cũ); phiếu Đang tạo ai xem được cũng sửa / xóa (đã chốt); 2 dòng cùng hàng cùng vị trí / lô chỉ chặn khi Điều chuyển
+
+### Checkpoint — 2026-11-09 16:00
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Phiếu điều chuyển vị trí
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết có đổi tiêu đề mẫu in "KIỂM KÊ KHO" / chặn xuất Excel rỗng không
+Blocked:

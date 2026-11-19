@@ -74,3 +74,24 @@ Vừa hoàn thành: #11722 phản hồi — gắn chặn hàng quá hạn cho to
 Đang làm dở: không. Đã commit + push nhánh `feat/chuyen-doi-hang-hoa` (api afb74a09d, client bb913e1c8) — chưa vào develop/gop_db.
 Bước tiếp theo: user kiểm trình duyệt bằng tài khoản người còn hàng giữ quá hạn (vd Lại Văn Hiệp) → commit/đẩy dev → trả lời tester.
 Blocked:
+
+## Redmine #11722 — user báo "vẫn chưa được" (06/11)
+Tester trả Phản hồi 21/10 KHÔNG ghi chú. Kiểm lại, chưa sửa code:
+- [x] Dev đã có bản fix: `GET /api/v1/finance/product-import-requests/create-check` + `/due-configs/create-check` trên hrm-crm.eteksofts.com trả 200 (DNS Admin)
+- [x] Cấu hình dev: cty 4 (TÂN PHÁT SÀI GÒN) đã tích mục 10 "Hàng giữ quá hạn › Lập YC nhập hàng" (cty 1/2/3/8 cũng tích)
+- [x] Dữ liệu dev: Lại Văn Hiệp (cty 4) còn 111 dòng giữ hết hạn → đăng nhập Hiệp phải bị chặn; role Hiệp [100007, 42], không phải Super admin
+- [x] Tài khoản tester Trịnh Thị Lợi (emp 787, cty 1): 0 dòng hàng giữ quá hạn + có role 100002 (Super Admin bên ERP) → HRM/ERP đều KHÔNG chặn tài khoản này, đúng logic "chặn theo người lập"
+- [x] Lượt 2 (06/11, user nhắc "vẫn chưa được"): đối chiếu lại ERP `CheckDueConfigs` — chỉ chặn theo NGƯỜI LẬP (prepick_details.employee_id = user, borrow per.created_by = user, nhập thẳng employee_id = user) + bỏ qua `Super Admin`; KHÔNG có kiểm tra theo mặt hàng ở controller/form YCNH ERP. HRM: POST/PUT/create-check YCNH đều gắn `CheckProductImportRequestDueConfig`; 3 lối tự sinh YCNH (ProductExportService ×2, ProductImportService) là hệ thống sinh, ERP cũng không chặn. Commit fix (api afb74a09d, client bb913e1c8) đã nằm trong origin/develop. Ca của tester (Lợi lập YCNH với mặt hàng Hiệp giữ quá hạn) → ERP cũng không chặn → không phải lỗi; soạn phản hồi Redmine, không sửa code
+- [x] Test trình duyệt (có giao diện) trên dev-hrm.eteksofts.com bằng tài khoản tester `loitt.qttt@tanphat.com` (06/11): emp 787, cty 1, role "Super admin (DNS DÙNG)", 0 dòng hàng giữ hết hạn (toàn hệ thống 764 dòng hết hạn của người khác). `/admin/due-configs` → 404 (không có quyền); YC nhập hàng (danh sách + /create) → `/feature-unavailable?reason=hidden` (mục "sale::Yêu cầu::Hàng hóa::YC nhập hàng" + "finance::Nhập hàng" đang ẩn ở Cài đặt phân hệ); API create-check YCNH + báo giá → 200 (không chặn) — đúng logic. Ảnh: scratchpad pw/L*.png
+- [x] User yêu cầu "dùng tk admin cấp quyền" (06/11) — DNS Admin trên dev-hrm: (1) Cài đặt phân hệ › thêm Lợi (787) vào "Nhân sự xem đầy đủ"; (2) vai trò 18 "Super admin (DNS DÙNG)" thêm quyền 1706 ở cty 8 (cty 1 đã có sẵn; phiên Lợi đứng cty 8). Test lại trình duyệt có giao diện: Lợi vào được /admin/due-configs + danh sách/tạo YCNH; create-check 200, KHÔNG chặn — vì Lợi là role 18 (bỏ qua mọi chặn, ERP cũng bỏ qua "Super Admin") + 0 dòng giữ quá hạn. Muốn thấy chặn phải dùng tài khoản đang giữ hàng quá hạn, không phải Super admin (vd Lại Văn Hiệp)
+- [x] User "cấp quyền khác super admin cho Lợi" (06/11): dev — vai trò Lợi (787) [100002 Super Admin_ERP, 18 Super admin (DNS DÙNG)] → [100007 Nhân viên kinh doanh]. Bản sao lưu vai trò cũ: scratchpad pw/loi_roles_backup.json (departments [50,51], quản lý phòng ban cty 1)
+- [x] User "làm 1 cái hàng quá hạn" — chọn tạo trên dev hạn 07/11 (BE bắt hạn giữ phải là ngày tương lai ở cả YC lẫn phiếu): Lợi lập PYCXG-02743 (id 2743, Xuất giữ khác, KH 34, 1 Cái 2Q-INOX300 / product 38213) → admin duyệt (→ Chờ KT) → admin lập + duyệt PXG-02746 (id 2746) hạn giữ 2026-11-07 → lô hàng giữ 1 cái đứng tên Lợi
+- [ ] 08/11: đăng nhập Lợi → Tạo YC nhập hàng phải báo "Có hàng giữ quá hạn!" (cty 1 đã tích mục "Hàng giữ quá hạn › Lập YC nhập hàng")
+- [ ] Sau test: trả vai trò Lợi [100002, 18]; xử lý lô test (huỷ hàng giữ PXG-02746) — hỏi user trước
+- [ ] Chờ tester/user xác nhận: test bằng tài khoản nào, môi trường nào, màn/luồng nào còn lọt (nếu muốn chặn theo MẶT HÀNG thì là nghiệp vụ mới, khác ERP)
+
+### Checkpoint — 2026-11-06
+Vừa hoàn thành: kiểm lại #11722 trên dev — code đã deploy, cấu hình + dữ liệu đủ điều kiện chặn với tài khoản Hiệp.
+Đang làm dở: không.
+Bước tiếp theo: hỏi tester tài khoản/bước tái hiện cụ thể; không sửa code khi chưa có ca lọt thật.
+Blocked: thiếu thông tin tái hiện (tester không ghi chú 21/10).

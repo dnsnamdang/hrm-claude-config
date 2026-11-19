@@ -213,3 +213,17 @@ Nguyên nhân: FE gửi `sortBy` + `sortDesc=asc|desc`, BE (`BankService::getBan
 
 - [x] FE `pages/human/banks/index.vue`: `loadData()` + `runExport()` gửi `sort_by` / `sort_desc` ('true'|'false') khớp BE
 - [x] Verify: gọi API với tham số mới, thứ tự đổi theo cột + chiều
+
+## Fix SRS — Comment tester "Tách quản lý chi nhánh ngân hàng thành Thêm mới và Chỉnh sửa" (2026-11-09) @khoipv
+Bản chính: Google Docs 1LtI9ax76kEvgR81UfFcDgGgldPRRj_pc (có 8 comment Thuy Đào). User chốt: CHỈ sửa sơ đồ + danh sách FR,
+đánh số FR lại liên tục; mục 2.12 giữ 1 mục chung đổi tên "Thêm mới / Chỉnh sửa chi nhánh ngân hàng".
+- [x] Bảng Danh sách quyền: FR-12 → "Thêm mới chi nhánh ngân hàng", chèn dòng FR-13 "Chỉnh sửa chi nhánh ngân hàng";
+      Xóa / Khóa-Mở khóa / Lịch sử chi nhánh đẩy thành FR-14 / FR-15 / FR-16.
+- [x] "Quản lý chi nhánh ngân hàng" → "Thêm mới / Chỉnh sửa chi nhánh ngân hàng" (tiêu đề 2.12, Hình 25, Tên chức năng,
+      Phạm vi áp dụng BR-05, BR-08, mục lục).
+- [x] Vẽ lại + thay 4 hình (srs_uml_render): Hình 1 sơ đồ tổng quan (FR-12 Thêm mới + FR-13 Chỉnh sửa chi nhánh),
+      Hình 25 (2 use case), Hình 28 (FR-14), Hình 29 (FR-15). Ảnh đệm lề trắng đúng tỉ lệ khung cũ (Docs giữ khung khi thay).
+- [x] Kiểm .docx tải lại so bản gốc: chỉ khác đúng các chỗ trên, 8/8 comment giữ anchor, 4 hình đổi (vị trí 0/52/57/61).
+- [ ] Chưa đồng bộ `gen_srs.py` ở máy (đã lệch bản Docs từ trước: máy tới 2.10, Docs tới 2.15). Comment chưa trả lời.
+Sự cố trong lúc làm (đã khắc phục): Ctrl+A rơi vào thân tài liệu → toàn văn bị thay bằng "3.91" ~1 phút, đã Ctrl+Z
+khôi phục và đối chiếu lại toàn văn + comment. Nguyên nhân: toạ độ ảnh chụp ×1.25 so với CSS (Windows scale 125%).

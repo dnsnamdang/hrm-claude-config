@@ -67,40 +67,23 @@ Skill này khoá 3 thứ lại:
 - Màn thuộc phân hệ nào (theo sheet quy hoạch phân hệ — xem "Đặt mục menu" dưới) → route `/<phân-hệ>/<slug>`.
 - Có cần phân quyền theo cấp (công ty / phòng ban / bộ phận) không → **hỏi user**, đừng tự quyết.
 
-#### Quyền: TẠO QUYỀN MỚI ở HRM (user chốt 06/10/2026)
+#### Quyền: dùng mã trong Catalog (từ 06/11/2026)
 
-- **Không dùng lại quyền ERP.** Tạo quyền mới `guard_name = 'api'` rồi gắn middleware
-  `checkPermission:<Tên quyền>` bình thường như CLAUDE.md quy định. Lý do dùng lại quyền ERP bị hỏng
-  (docblock `Modules/Finance/Entities/Concerns/ChecksEmployeePermission.php`):
-  - quyền ERP mang `guard_name = web` → `hasPermissionTo($name)` (không truyền guard) ném `PermissionDoesNotExist`;
-  - vai trò gán từ thời ERP nằm trong `employee_has_roles` với `model_type = App\Employee`, mà
-    `checkPermission` đọc qua `getAllPermissions()` của spatie (lọc theo `model_type` của model HRM) →
-    **bỏ sót**, người có quyền thật vẫn 403;
-  - trùng TÊN quyền giữa bản ERP và bản HRM.
-
-  Quyền mới do admin gán lại trong HRM nên không dính 3 bẫy trên. Màn cũ đang tự gate bằng trait
-  `ChecksEmployeePermission` (không gắn middleware) là cách chữa cháy khi còn dùng quyền ERP — màn mới
-  không chép.
-- **Khai vào seeder chung** `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (lần build nào
-  cũng chạy lại seeder này). KHÔNG tạo seeder quyền riêng cho từng màn (kiểu
-  `BuyServiceRequestPermissionSeeder` — màn cũ, đừng chép).
-  Từ 14/10/2026 mỗi quyền là 1 dòng `$this->perm([...])` **không có `'id'`** — không còn phải dò/giữ chỗ
-  dải id với nhánh khác; seeder đồng bộ theo tên nên chạy lại không mất gán quyền. Đổi tên → thêm vào
-  `RENAMED`, bỏ quyền → thêm vào `REMOVED` — chi tiết skill `permission-seeder`. Kiểm trước bằng
-  `php artisan permission:sync --dry-run`.
-- **`type` của quyền = `permissionType` của PHÂN HỆ CHÍNH** của màn (tra trong
-  `hrm-client/components/subsystems.js`), không theo module chứa code — màn Bán hàng nằm ở
-  `Modules/Finance` vẫn là `type` của Bán hàng. Màn phân quyền (`components/setting/Permission.vue`) gom
-  quyền theo `type` → thiếu `type` là quyền **không hiện ở phân hệ nào**, admin không gán được; sai `type`
-  là quyền nằm nhầm phân hệ.
-- **Không tự gán quyền mới cho vai trò cũ** — admin tự phân quyền lại khi chuyển sang HRM.
+- **Tìm mã có sẵn trước.** Chức năng ERP đã có mã trong `hrm-api/app/Support/Permissions/Catalog/` thì dùng lại, thêm
+  `hrm` vào `platforms`. Chỉ tạo mã mới khi chức năng chưa có mã. Phân quyền mới đã bỏ các bẫy guard và `model_type`
+  cũ nên dùng lại mã ERP là an toàn.
+- Route gắn `checkPermission:<mã>`, FE dùng `hasAPermission('<mã>')`. Quyền Xem là một mã có `scopes`, đọc mức bằng
+  `CurrentPermission::scope('<mã>')`. Không tạo mã riêng cho từng mức "theo công ty / phòng ban".
+- **Không khai seeder**, seeder quyền đã gỡ. Nhóm hiển thị trên màn Phân quyền theo `subsystem_group`, `subsystem`,
+  `feature` của mã: giữ đúng chữ các quyền cùng nhóm. Cách khai và lệnh `permission:catalog-sync`: skill `permission-seeder`.
+- **Không tự cấp quyền cho vai trò.** Mã mới chưa ai có, admin cấp ở `/admin/roles`.
 
 #### Phân hệ chính & phạm vi dữ liệu
 
 Một màn có thể nằm ở nhiều phân hệ. Bên ERP, các lối vào khác nhau phân biệt bằng **tham số trên URL**
 (`?type=all`, `?permission=all`, `?type=waiting`…):
 - **Phân hệ chính** = phân hệ có mục menu trỏ màn danh sách với tham số **`all`**. Quyền của màn khai
-  `type` theo phân hệ này, và **phạm vi dữ liệu dựa vào quyền ở phân hệ chính**.
+  `subsystem` theo phân hệ này, và **phạm vi dữ liệu dựa vào quyền ở phân hệ chính**.
 - Các phân hệ khác là **lối vào phụ** với tham số riêng (vd `?type=waiting` = danh sách phiếu chờ mình
   duyệt). Giữ nguyên tham số khi khai menu HRM; chỉ thêm tham số khi trang thật sự đọc
   `$route.query.type` (đừng tự gắn `?type=all` cho trang không đọc nó).
@@ -165,9 +148,12 @@ Khi khai mục menu:
   Các phân hệ khác (`subsystem-menu/*.js`, `menu.js`…) dùng khuôn `{ label, icon, link, isShow, subItems }`;
   mục **không có `link`** render xám mờ. Cờ `external` / `erpGhost` trong `subsystems.js` là cờ cấp
   **PHÂN HỆ** (cả phân hệ nằm bên ERP), không dùng cho từng mục.
-- **Khai màn ở phân hệ thứ 2 thì bê nguyên `isShow`** (quyền) từ phân hệ chính — thiếu là lộ menu cho
-  người không có quyền. Cây Bán hàng đọc map `SALE_LINK_PERMISSIONS`; mục mới nên khai `isShow` ngay
-  trong mục.
+- **Quyền của mục menu khai bằng `codes: ['<mã>.view', …]`** (có ≥ 1 mã là hiện; vào thẳng URL khi thiếu mã
+  → 404). Menu xét `codes` **VÀ** `isShow` (`components/Topbar.vue::showMenuChild`), nên mục MỚI chỉ khai `codes`,
+  KHÔNG thêm `isShow` theo tên quyền tiếng Việt (tên cũ chỉ còn cho mục cũ). Cây Bán hàng: map `SALE_LINK_PERMISSIONS`
+  cũ chạy song song với `codes` (`subsystem-menu/sale.js`) — mục mới khai `codes`.
+- **Khai màn ở phân hệ thứ 2 thì bê nguyên `codes`** (và `isShow` nếu mục gốc còn dùng) từ phân hệ chính — thiếu
+  là lộ menu cho người không có quyền.
 - **KHÔNG đổi nhãn mục menu đã có** khi không được yêu cầu: nhãn là một phần của `menuKey`
   (`utils/menuVisibility.js`) — đổi nhãn là mất cấu hình bật/tắt đã lưu; nhãn menu cũng là **tiêu đề
   tab trình duyệt** (`screenTitleOf` trong `subsystems.js`). Giữ tên ngắn — nhãn dài tràn menu ngang.
@@ -327,6 +313,29 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       `height="32px"` + `minimumInputLength` + `initialOption`, KHÔNG tự chế autocomplete
 - [ ] Mọi ô trong khối lọc đo ra **bằng nhau, chuẩn hiện hành `32px`** (biến `--ff-h`; hạ từ 36px
       ngày 22/09/2026 — xem skill `list-page`). Lệch hàng là quên truyền `height`
+- [ ] Ô lọc **cùng BỀ RỘNG**: KHÔNG tự đặt `col: 2` / `col: 3` lẫn lộn trong `filterFields` — để mặc định của panel
+      (`col-md-3`, 4 ô / hàng). Trộn 2 với 3 là ra hàng "cái dài cái ngắn" (user bắt lỗi 14/11/2026, Báo cáo bán hàng theo
+      từng mặt hàng). Kiểm: đo `boundingBox().width` mọi `.ff` trong panel, chênh ≤ 2px
+- [ ] **Ô lọc danh mục có trạng thái khoá (#11736 — BẮT BUỘC mọi màn port, user nhắc lại 14/11/2026)** — lỗi hay gặp là tự
+      dựng ô tổ chức / lấy danh mục dùng chung chỉ có mục ĐANG HOẠT ĐỘNG, mất hẳn mục đã khoá:
+      - **Công ty / Phòng ban / Bộ phận / Nhân viên** → `V2BaseCompanyDepartmentFilter` (`:floating="true"`, `:permissions`
+        = cờ BE `is_all_company / is_company / is_department / is_part` theo phạm vi, field
+        `{ key: 'org', wrapperClass: 'd-contents', hideLabel: true, resetKeys: [4 khoá] }`). Component tự có **công tắc 🔒
+        trên nhãn** (hiện cả mục đã khoá) + tự xoá ô con khi đổi ô cha. KHÔNG tự dựng 4 select theo `scope` (khuôn đúng:
+        `pages/finance/import-direct-stocks`, `pages/sale/sale-by-product-report`)
+      - **Danh mục khác** (thương hiệu, hãng SX, nhóm hàng, kho, tỉnh…) → BE trả options riêng của màn bằng
+        `LockedCatalogOptions::activeOrUsed($query, $usages)` (đang hoạt động + đã khoá mà CHÍNH MÀN còn bản ghi dùng tới)
+        kèm `is_locked`; FE giữ `is_locked` khi map options + field khai `keepLockedOptions: true`. KHÔNG lấy từ endpoint
+        danh mục dùng chung (vd `customer-care/services/product-catalogs` chỉ có mục đang hoạt động)
+      - Công tắc 🔒 trên nhãn **chỉ có ở ô CHỌN 1** (`V2BaseSmartFilterPanel::hasLockToggle`); ô CHỌN NHIỀU luôn hiện mục
+        khoá kèm 🔒, không có công tắc — component cố ý (bật/tắt làm select2 dựng lại, mất mục đã tích). Ô hằng số / enum
+        (Tính chất, Loại hàng hóa, Trạng thái…) ngoài phạm vi — KHÔNG có trạng thái khoá trong DB (vd `PRODUCT_TYPE_NAMES`,
+        `PRODUCT_CATE_NAMES`), nên không có 🔒; giải thích cho user thay vì cố thêm
+      - ⚠️ Danh sách hằng số của `customer-care/services/product-catalogs` (`product_types`, `product_cates`) trả
+        **`{ value, name }`, KHÔNG có `id`** → map `id: x.value ?? x.id`. Map theo `x.id` thì option thiếu id, select2 lấy
+        nhãn làm giá trị, ô lọc chết im lặng (bắt được ở Báo cáo bán hàng theo từng mặt hàng 14/11/2026)
+      - Tự kiểm: grep `filterFields` không còn `key: 'company_id'` / `'department_id'` tự dựng; Playwright bấm công tắc 🔒
+        → dropdown có thêm mục mang 🔒
 - [ ] Nút **Làm mới** xóa hết điều kiện **và tải lại danh sách** — `handleReset` gọi thẳng `loadData()`
       (+ `resetLoadDedupe?.()`), đừng trông vào watcher (watcher bỏ qua khi chỉ `keyword` đổi)
 - [ ] Ô lọc nâng cao không lặp cột mà ô tìm nhanh đã quét; bỏ ô lọc thì dọn luôn giá trị cũ trong
@@ -349,7 +358,7 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 
 ### B. Nút & hành động
 - [ ] Mọi nút có **icon + text** (nút chỉ icon → dùng `V2BaseIconButton`)
-- [ ] Thứ tự toolbar danh sách: Thêm mới → Import → Xuất → Cấu hình cột
+- [ ] Thứ tự toolbar danh sách: Thêm mới → In → Xuất → Import → Cấu hình cột (theo màn Quốc gia, chốt 28/10/2026)
 - [ ] Thứ tự cột thao tác: Sửa → Xóa → menu "…"
 - [ ] > 3 hành động → chỉ hiện 2 nút chính + nút "Hành động khác"
 - [ ] **Bấm thật TỪNG nút trong cột Hành động** (kể cả nút trong menu "…") — `V2BaseRowActions`
@@ -450,6 +459,10 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Ô cố ý khoá trong form: `V2BaseInput`/`V2BaseCurrencyInput` `:disabled` (KHÔNG `.field-line` — đó là
       kiểu chữ trong bảng) + ⓘ qua prop `hint` của `V2BaseLabel`, câu nói **vì sao khoá + làm gì để đạt
       mục đích**. Màn Chi tiết (cả form readonly) không gắn ⓘ → `info-icon-tooltip`
+- [ ] Ô disabled ra **nền khoá `#f1f5f9`** ở cả 3 màn Thêm / Sửa / Chi tiết khi **mở thẳng link ở tab mới** (không đi từ danh
+      sách). Nền khoá đã là rule toàn cục (`assets/scss/default.scss`, 31/10/2026) — KHÔNG tự đặt nền riêng; nhưng form dùng
+      chung vẫn phải `@import '@/assets/scss/v2-styles.scss';` trong `<style scoped>` cho các rule khác (`.v2-linked-field`…).
+      Lỗi thật: Phiếu xuất hàng ĐCKK trên dev ô Kho / Thủ kho trắng, ô Phiếu kiểm kê mất khung → `select-and-input-state` §3
 - [ ] Có `unsavedChangesMixin` + gọi `markFormSaved()` sau khi lưu thành công. KHÔNG gọi `markFormSaved()`
       lúc mở màn (tắt cảnh báo vĩnh viễn); form không nằm ở `formSubmit` thì override
       `unsavedSnapshotSource()` → `unsaved-changes` §2b
@@ -508,6 +521,15 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       letter-spacing 0.24px, nền head `#f9fafb`, padding head `8px 14px`, thân `14px`, viền `1px #e5e7eb`,
       bo 8px, cách card dưới 24px, ô nhập cao 32px, nhãn 12px/600 `#0f172a`. Trạng thái trên topbar
       (`buildStatusTitle`) lấy CÙNG `status_color` BE trả — không tự map màu ở FE.
+- [ ] **Màn CHI TIẾT phiếu: KHÔNG đặt ô "Mã phiếu" / "Số phiếu" và ô "Trạng thái" trong khối Thông tin chung.**
+      Mã phiếu đã nằm trên tiêu đề topbar ("Chi tiết …: MÃ-PHIẾU"); trạng thái là **badge cạnh mã trên topbar**:
+      trang vỏ `_id/index.vue` (và các trang thao tác cùng form như `start.vue` / `finish.vue` / `edit.vue` nếu
+      tiêu đề có mã) dùng `buildStatusTitle(documentTitle, status_text, status_color || '#64748B')` từ
+      `utils/page-title-status.js` cho `pageTitle`, còn `head().title` dùng `documentTitle` (chuỗi thường, không
+      HTML). Form phát `@loaded` kèm `status_text` / `status_color`. Khuôn: `pages/assign/handover-acceptance-records/_id/index.vue`,
+      `pages/transport/delivery-trips/_id/index.vue`, `pages/finance/split-export-requests/_id/index.vue`.
+      QA đã bắt lỗi này nhiều lần (#12149, #12160, #12163, #12165 — 11/2026) — port màn nào cũng phải tự làm,
+      đừng chờ QA báo. Các ô phụ chỉ là thông tin người tạo (Phòng ban yêu cầu…) mà ERP show không có thì cũng bỏ.
 - [ ] Popup chọn hàng / bản ghi: hàng đã thêm loại ở **BE** (`exclude_*_ids` → `total` và "Hiển thị 1–N/N"
       đúng), không lọc ở FE; truyền `existingProducts` đúng khuôn `{key, groupId, parentRowId}`; màn không
       có cộng dồn dùng `duplicateMode="block"`; thứ tự ô lọc khớp thứ tự cột; `size="xl"` chỉ rộng hơn khi
@@ -653,7 +675,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
 - [ ] Mọi popup xác nhận dùng `base-confirm-modal` / `$confirm()`, không tự khai `b-modal`
 - [ ] Thông báo nghiệp vụ (chuông/push) theo template
       `[PREFIX] {Nhóm hành động}: {Tên đối tượng}. {Ghi chú}`, tên ≤ 50 ký tự và in đậm,
-      tổng ≤ 120 ký tự, deep-link kèm ID
+      tổng ≤ 180 ký tự, deep-link kèm ID
+- [ ] Prefix thông báo mới đã khai nhãn ở `NotificationMeta::OBJECT_LABELS` (skill notification-convention mục 3a)
+      — thiếu thì push màn khoá chỉ hiện "Từ chối" không rõ phiếu gì; tự kiểm bằng `check_prefix_labels.py`
 
 ### H. Bản ghi đã khóa
 - [ ] BE chặn `update`/`destroy` bằng **423 LOCKED** (middleware nếu controller nhận `FormRequest`)
@@ -699,6 +723,7 @@ phí, Chi phí, Gói BD) vì làm sai những điểm dưới — màn mới ph�
 | Bẫy | Hậu quả | Cách tránh |
 |---|---|---|
 | **Chép lại phép tính nghiệp vụ đã có ở màn khác** | 2 bản cùng 1 công thức, vài tháng sau lệch nhau, không ai biết bản nào đúng | Grep trước khi viết; hàm đã có mà `private` thì **tách ra service dùng chung** (hỏi user trước) — xem Bước 3b |
+| **Bê nguyên ô "Chức vụ" người ký / người duyệt của ERP** (`signer_role_id`, `approver_role_id`, `approver_role` = nhóm quyền `roles`) — #11932, user chốt 30/10/2026 | Sai nghiệp vụ: phải là **"Chức danh"** lấy theo HRM, ERP đã đổi xong ở mọi màn hợp đồng | Nhãn **"Chức danh"**, nguồn **`titles`** qua `employee_infos.employee_role_id` (KHÔNG `roles`, KHÔNG `working_positions`). 1 chức danh → tự chọn, nhiều → cho chọn. Lưu `{signer\|approver}_title_id` + `_title_name` (snapshot). BE dùng `App\Helper\SignerTitleHelper` (bản ERP `App\Helpers\SignerTitleHelper`), FE dùng `utils/signer-title.js` + API `human/titles/by-employee/{id}`. Bản in in chức danh (fallback chức vụ cũ). Mẫu đã làm: `wr-service-contracts`, `assign/contracts` |
 | **Copy màn HRM đã port trước đó làm khuôn** | Nhân bản y nguyên cái sai — 1 lỗi UI thành N màn lỗi | Khuôn chuẩn là **Danh mục khách hàng**, không phải màn gần nhất mình vừa làm. Muốn copy màn khác thì chạy checklist cho **màn nguồn** trước |
 | Dùng `V2BaseFilterPanel` + tự dựng `#advanced-filters` | Mất popup "Cài đặt bộ lọc", user không ẩn/sắp xếp được ô lọc | `V2BaseSmartFilterPanel` + schema `filterFields` cho MỌI màn > 3 ô lọc |
 | Bấm "Xuất Excel" là tải file luôn | Vi phạm quy tắc "user chọn trường xuất" | Mở `ExportFieldsModal` trước, truyền `selectedFields` xuống hàm dựng file |
@@ -753,7 +778,7 @@ grep -rn "actionOptions"                  <thư-mục-feature>   # dựng từ l
 grep -rn "<V2BaseIconButton[^>]*icon=\|<V2BaseButton[^>]* danger\b\|defaultHidden" <thư-mục-feature>   # prop không tồn tại
 grep -rn "Người lập\|Ngày lập"            <thư-mục-feature>   # nhãn phải là Người tạo / Ngày tạo
 grep -L "layout:"  <thư-mục-page>/*.vue <thư-mục-page>/_id/*.vue          # thiếu layout -> sai vỏ trang
-grep -L "v2-styles.scss" <thư-mục-page>/index.vue <file-Form>.vue        # thiếu import -> vỡ bộ lọc nâng cao
+grep -L "v2-styles.scss" <thư-mục-page>/index.vue <file-Form>.vue        # thiếu import -> vỡ bộ lọc nâng cao / form mở thẳng link mất khung ô link (grep CẢ form, không chỉ index)
 grep -rn "process.env.ERP_URL"            <thư-mục-feature>   # link ERP tự ghép -> utils/erp-link.js
 grep -rLE "pickerPagination" <thư-mục-feature>/components/*{Search,Picker}*Modal.vue   # popup CHỌN chưa dùng hằng số dòng chung
 grep -rn "text-muted"                     <thư-mục-feature>   # ra chữ ĐỎ -> dùng xám #6b7280

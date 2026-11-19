@@ -74,3 +74,18 @@ cùng tên** là màn hiện data. Chuẩn gop_db (erp-to-hrm-screen) dùng **b�
 ## Kết luận
 Không có thay đổi code. Sự cố thuần **triển khai + phân quyền** trên prod. Code HRM (searchByFilter,
 ChecksEmployeePermission, seeder) đã đúng.
+
+## Bổ sung 2026-10-10 — FE mặc định type rỗng → chỉ thấy phiếu mình tạo
+Gốc: menu trỏ `/finance/borrow-sell-requests` không có `?type=all`, FE gửi `type=''` → BE
+`searchByFilter` chỉ check quyền khi `type=all`, còn lại rơi về `created_by = tôi` → rỗng dù có quyền.
+- [x] FE `pages/finance/borrow-sell-requests/index.vue`: type lấy từ `$route.query.type` (mặc định `all`),
+      bỏ ô lọc "Danh sách", watcher route đổi type → tải lại; tiêu đề theo type (copy pattern `borrow-export-requests`)
+- [x] Menu `subsystem-menu/finance.js` + `sale-hub.js` → `?type=all`
+- [x] Playwright: URL trần gọi `type=all` (10 dòng); `?type=waiting_approve` đổi tiêu đề + gọi đúng type
+- [ ] Chờ user yêu cầu commit
+
+### Checkpoint — 2026-10-10
+Vừa hoàn thành: fix FE type mặc định + kiểm Playwright
+Đang làm dở: —
+Bước tiếp theo: chờ user review / commit; prod vẫn cần seed + gán quyền (Task 1-2)
+Blocked:

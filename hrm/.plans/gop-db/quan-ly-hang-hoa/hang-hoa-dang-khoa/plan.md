@@ -1402,3 +1402,24 @@ Vừa hoàn thành: Task 1–6 (native, user "Làm, native"); ledger `progress.m
 Đang làm dở: review cuối toàn nhánh.
 Bước tiếp theo: xử lý phát hiện Critical/Important của review; user tự commit/push (3 repo gop_db).
 Blocked: e2e không chạy được trên `hrm_erp_21_10_prod` (không có tài khoản e2e) — spec đã sửa, chờ môi trường.
+
+## Ngày 10/11/2026 (@junfoke)
+- [x] 10/11/2026 — Xử lý phản hồi QA (không issue): hàng BZAI-ABST-180A-2-07-04-PH còn gán máy BZAI-ABST-180B-2 đã khoá ⇒ giữ chốt C-d-2 (dòng đã gắn vẫn giữ); tab Nhóm máy (chi tiết + form sửa) thêm cột Nhóm máy (nhóm của chính máy) + cột Trạng thái theo công ty đang làm (ERP đã xoá / Ngừng kinh doanh / Hàng tạm…), icon khoá đỏ trước mã máy đang khoá kèm tooltip, xếp theo nhóm rồi mã. Helper BE mới `ProductMachineRows.php`, ô tìm `item-search` thêm tham số tuỳ chọn `with_status`; FE `ProductMachineCode.vue` mới. 3 test mới + 38 test cũ qua; chưa nghiệm thu bằng ảnh (DB local thiếu mã quyền Catalog). Lên `origin/gop_db`: api `0c3c67484`, client `fbccc6b08`.
+- [x] 10/11/2026 — Hỗ trợ tra nguồn gốc: BZAI-ABST-180B-2 bị xoá trên ERP 15/04/2026 bởi longtth.ptkd (hãng ngưng, thay bằng 180C-2); ERP xoá không gỡ `productables`. Xoá bên HRM bị `ProductUsageGuard` chặn nếu còn là máy của hàng khác ⇒ chỉ còn dữ liệu cũ từ ERP + hàng khoá Ngừng KD (chủ ý giữ).
+
+- [x] 10/11/2026 — Merge `gop_db` vào `develop` 2 repo (worktree riêng) + push: client `c1b048d26`; api `18c7d4aa1` có xung đột 2 file Resource hàng hoá với commit `6308e859d` của @nguyentrancu97 ("Nhóm máy lấy từ danh mục Loại SP") ⇒ giữ Nhóm máy theo develop (Loại SP), thêm commit chỉ trên develop `092e48d26`: cột Nhóm máy ở từng dòng máy lấy theo Loại SP của máy (không thì lệch ô Nhóm máy phía trên). Lint sạch, 38 test qua; DB local chưa có hàng gán Loại SP nên thử trong transaction rồi rollback.
+
+## Ngày 11/11/2026 (@junfoke)
+- [x] 11/11/2026 — Lỗi #12131 (In barcode ở Hàng đang kinh doanh): thêm "In barcode" vào menu dòng; API in barcode trước đòi quyền xem màn Dữ liệu hàng hoá công ty ⇒ bỏ, đăng nhập là in được (giống ERP "xem được màn là in được"), hàng đã xoá / chờ duyệt vẫn chặn; test barcode sửa theo luật mới.
+- [x] 11/11/2026 — Lỗi #12132 (Xuất Excel thiếu cột): các cột Công thức ghép bộ, Ghi chú, Phụ kiện mua thêm, Vật tư lắp đặt, Vật tư sửa chữa – bảo dưỡng chưa khai trong danh sách cột xuất — đã thêm ở `3cdc3cd00` (29/10) nhưng mất khi merge `196b0ccdd` (30/10) ⇒ khai lại cho 4 màn Kho dữ liệu, Dữ liệu công ty, Đang kinh doanh, Đang khoá. Còn 1 test xuất Excel lỗi có từ trước (cột "Hệ số giá cũ" bị coi là cột giá). Commit #12131 + #12132: api `828c9c12d`, client `c076d5ba8` (develop, đã push).
+- [ ] 11/11/2026 — Phản hồi QA (không issue): Nhóm máy (lấy từ DM Loại SP) bị khoá sau khi chọn trong hàng hoá ⇒ hiện icon khoá trong cột Nhóm máy, user muốn sửa ở gop_db. Mới kiểm `origin/gop_db` (chưa có thay đổi Nhóm máy = Loại SP) thì bị ngắt — CHƯA làm.
+
+## Ngày 12/11/2026 (@junfoke)
+- [ ] 12/11/2026 — Lỗi #12133 (Thêm nhanh danh mục ở form tạo hàng hoá): popup Hãng sản xuất bỏ nhãn "Có VAT", ô Vị trí đứng trước checkbox "Hãng có VAT" (dùng chung với màn DM Hãng sản xuất nên đổi theo); popup Loại sản phẩm báo đỏ "Bắt buộc phải chọn" khi trống Tính chất hàng hóa / Nhóm chức năng (BE kiểm bắt buộc, không lưu thêm cột); điền đủ placeholder popup Loại SP + NCC; popup thêm nhanh NCC: Người đại diện, Người liên hệ thành bảng nhiều dòng có nút "+", Ngân hàng nhiều dòng chỉ với loại Nước ngoài (như ERP). Kiểm bằng ảnh, chưa lưu thật NCC, chưa chạy PHPUnit. **Chưa commit** (worktree `.worktrees/develop`). Chờ user quyết: popup Nhóm sản phẩm cùng lỗi có sửa không; Ngân hàng nhiều dòng cho Tổ chức/Cá nhân (phải sửa BE); SĐT người liên hệ tách nhiều ô.
+
+## Ngày 13/11/2026 (@junfoke)
+- [x] 13/11/2026 — Commit #12133 (phần ghi 12/11 ở trên): api `ec0c8b35c` (Loại SP bắt buộc Tính chất hàng hóa + Nhóm chức năng), client `eda40e859` (develop, đã push). 3 câu hỏi chờ user vẫn còn.
+
+## Ngày 17/11/2026 (@junfoke)
+- [x] 17/11/2026 — Lỗi #12211 (Hàng hóa nhập thông tin): ô tìm Ghi chú trong Tìm kiếm nâng cao đã có từ #11996 cho cả 6 màn hàng hóa (QA không thấy có thể do dev chưa deploy); cột Ghi chú chỉ thiếu ở màn "Nhập thông tin" và "Hàng tạm" → thêm vào bảng, popup tùy chọn cột, file Excel (`product-list-screens.js`, `ExportColumnRegistry.php`), để ẩn sẵn như 4 màn kia. Client `98b5646e9`, api `e4154e323` (develop, đã push). Test lọc Ghi chú chưa chạy được local vì `ActsAsProductUser` còn cấp quyền kiểu cũ (ngoài phạm vi, chưa sửa).
+- [x] 17/11/2026 — Fix phản hồi #12133 (popup Thêm nhanh nhà cung cấp): đầu bảng Người đại diện / Người liên hệ / Ngân hàng đổi từ xám `thead-light` (#e9ecef) sang nền nhạt #f8fafc như bảng các form khác (không dùng xanh nhạt của bảng danh sách vì tối hơn, sai ý "sáng hơn"). Client `ecf4a74d1` (develop, đã push).

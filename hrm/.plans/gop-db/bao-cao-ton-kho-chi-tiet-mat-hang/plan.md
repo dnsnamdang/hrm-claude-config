@@ -29,8 +29,38 @@
 - [x] 23/10/2026: tách quyền / phạm vi / bộ lọc / `aggregate()` / `unitsOf()` sang `WarehouseStockReportService` (dùng chung với màn
       Báo cáo tồn kho tổng hợp theo mặt hàng — user chốt). Số liệu 3 kho × 2 ngày trước/sau khớp từng byte; options/print/export/422 vẫn chạy
 
+### Fix #11868 (tester 26/10/2026)
+- [x] SL tồn sau đổi ĐVT hiện SỐ NGUYÊN như ERP (`roundNumber(qty/hệ số, 2)` rồi `| number:0`) — `StockDetailTable.vue::q()`;
+      vd 13 Cái → Thùng x12: 1.08 → 1, 186.5 → 187
+
+### Fix #11869 (tester 26/10/2026)
+- [x] Ô Hàng hóa trông như chọn nhiều (chip) mà chỉ giữ 1 hàng → user chốt 27/10 giữ 1 hàng như ERP: ô hiện chữ thường + dấu x
+      xoá riêng (`.sd-product-clear`, `@click.stop`), không đổi BE
+
+### Fix #11872 — Bản in (tester 26/10/2026)
+- [x] Dòng "Ngày … tháng … năm …" lệch cột "Người lập báo cáo": sửa layout DÙNG CHUNG `finance::prints._layout` (user chốt 27/10: áp
+      mọi mẫu in) — dòng ngày nằm trong ô người ký CUỐI, ô khác chừa 1 dòng trống (`visibility: hidden`) cho tên ngang hàng; render
+      thử 1 / 2 người ký qua tinker OK
+
 ### Checkpoint — 22/10/2026
 Vừa hoàn thành: Phase 1 BE + FE, số liệu khớp ERP 100% ở 2 kho
 Đang làm dở: —
 Bước tiếp theo: user mở `/warehouse/stock-detail-by-product` kiểm giao diện; chạy `php artisan permission:sync`
+Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+
+- [x] Đọc brief + skill srs-documenter / hdsd-documenter / testcase-documenter; đọc code FE `pages/warehouse/stock-detail-by-product/**`, BE `StockDetailByProduct*` + `WarehouseStockReportService`
+- [x] Chụp ảnh dev-hrm (DNS Admin, `bctkct_shots/_capture/capture.js`, hồ sơ đăng nhập riêng, chặn mọi yêu cầu ghi — lọt 0; màn chỉ có API GET) — kho HP - Hải Phòng (96 mặt hàng); 40 icon (`trim_icon --dry` 0/40)
+- [x] Đối soát số dev (`_capture/doisoat.js`, chỉ GET): ENEO-700-V5231 kho HP / TPHP — tồn 31/12/2025 = 70; Thẻ kho 01/01–06/11/2026 nhập 496, xuất 546, tồn cuối 20 = SL tồn báo cáo (20) = Báo cáo tồn kho tổng hợp theo mặt hàng (20); tổng 4 lô = 20 — KHỚP
+- [x] `gen_srs.py` → `SRS - Báo cáo tồn kho chi tiết theo mặt hàng.docx` (68 trang, 7 chức năng, selfcheck khớp mẫu; metrics ui=14.3 ev=5.3 evch=1186 intro=1913; Phần 5 bảng 4 cột 15 dòng; Mục lục trang riêng căn giữa)
+- [x] `gen_hdsd.py` → `HDSD_Bao cao ton kho chi tiet theo mat hang.docx` (12 trang, 6 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (128 TC, 8 nhóm, P0 41,4%, check_tc `bao_cao` 0 lỗi)
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx` (Testcase 103 có TC / 221 N/A; SRS 79 có mục / 84 N/A)
+- [x] Ghi nhận nghi lỗi (chưa sửa): popup Chọn hàng hóa báo 403 khi Tồn theo công ty ≠ công ty đăng nhập (dev, CN Hải Phòng); ô Hợp đồng không thoát ký tự `%` `_`; link hợp đồng loại HRM (`to`) bị hiện chữ trơn vì bảng chỉ xử lý `href`; Cài đặt bộ lọc cho ẩn cả 3 ô bắt buộc
+
+### Checkpoint — 06/11/2026
+Vừa hoàn thành: bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Báo cáo tồn kho chi tiết theo mặt hàng
+Đang làm dở: —
+Bước tiếp theo: user xem tài liệu; quyết định có sửa 4 điểm nghi lỗi không; đẩy Drive khi user yêu cầu
 Blocked:

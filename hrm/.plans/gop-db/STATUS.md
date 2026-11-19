@@ -19,6 +19,311 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## #12180 Báo cáo tồn hàng nhập xuất thẳng theo nhân viên — đổi sang khuôn báo cáo (rsum) + khối thống kê + popup chi tiết — ĐANG LÀM (2026-11-17, @khoipv)
+- Chốt 17/11: thống kê chỉ ĐẾM (Phòng ban · Nhân viên · Mặt hàng + khối theo phòng ban); bấm SL tồn → popup DS hàng đang giữ; SL tồn ngay sau Tên hàng.
+- Plan: `.plans/gop-db/danh-sach-hang-xuat-nhap-thang/plan.md` (Phase 6)
+- **Checkpoint 17/11:** code BE + FE xong, smoke API khớp số, chưa test trình duyệt, chưa commit.
+
+## Đồng bộ sidebar 4 phân hệ cũ (Nhân sự, Chấm công, Cơm, Tính lương) về chuẩn hub — ĐANG LÀM (2026-11-16, @khoipv)
+- Chỉ đổi khung menu topbar → sidebar hub, giữ nguyên mục menu.
+- **Checkpoint 16/11 (wrap up):** CODE XONG + ĐÃ PUSH develop hrm-client `e876d0237` — sidebar hub 4 phân hệ (layout 'subsystem' 212 page), tên màn trên topbar + bỏ cụm tiêu đề/breadcrumb 201 page, fix `mixins` khai 2 lần ở 2 báo cáo Cơm. Verify parse 201+ file; chưa test trình duyệt.
+- Còn: user test trình duyệt; chốt đuôi "… chờ duyệt" + 9 màn human chép từ màn Công ty; nhóm Cấu hình Chấm công ẩn trên local do mã `timesheet.thong_so.configure` chưa gán vai trò.
+- Tài liệu: `.plans/gop-db/dong-bo-sidebar-phan-he-cu/` · spec `docs/superpowers/specs/gop-db/2026-11-16-dong-bo-sidebar-phan-he-cu-design.md`
+
+## #12173 Báo cáo tồn theo kho — cây Hàng hóa ▸ Kho, popup bấm số, thu cột, Excel nhanh + chọn cột (5 màn kho) — ĐÃ PUSH develop (hrm-api `7befc9ec6` merge `3b4140900`, hrm-client `6433484f2` merge `a89cce6c1`), chờ user test (2026-11-16, @khoipv)
+- Plan: `.plans/gop-db/bao-cao-ton-theo-kho/plan.md` (mục "Fix — Redmine #12173")
+- Checkpoint: code BE + FE xong, smoke API khớp số, Excel 129s → 19s; chờ user mở trình duyệt kiểm
+
+## #12172 Báo cáo tồn kho theo vị trí — Nhà kho trong ô vị trí, popup bấm số, thu cột, Excel chọn cột — ĐÃ PUSH develop (hrm-api `7befc9ec6` merge `3b4140900`, hrm-client `6433484f2` merge `a89cce6c1`), chờ user test (2026-11-16, @khoipv)
+- Plan: `.plans/gop-db/bao-cao-ton-kho-theo-vi-tri/plan.md` (mục "Fix — Redmine #12172")
+- Checkpoint: code BE + FE xong, smoke API khớp số; chờ user mở trình duyệt kiểm
+
+## #12170 Báo cáo - Tùy chỉnh cột (8 màn báo cáo rsum-tb) — ĐANG LÀM (2026-11-16, @khoipv)
+- Plan: `.plans/gop-db/12170-tuy-chinh-cot-bao-cao/plan.md`
+
+## Phiếu yêu cầu lắp đặt, bàn giao (ERP → HRM) — ĐANG LÀM (2026-11-16, @khoipv)
+
+Port ERP `assemblyRequest.index?type=all` (+ lối `?type=wait-approve`). Đang khảo sát + chốt yêu cầu.
+Tài liệu: `.plans/gop-db/yeu-cau-lap-dat-ban-giao/` · spec `docs/superpowers/specs/gop-db/2026-11-16-yeu-cau-lap-dat-ban-giao-design.md`.
+
+## Báo cáo theo dõi lắp đặt - bàn giao - SC - BD (ERP → HRM) — ĐANG LÀM (2026-11-14, @khoipv)
+
+Port ERP `customerCareReport.reportInstallDeliveryRepair` → `/customer-care/report/install-delivery-repair` (CSKH › Báo cáo).
+Chốt 14/11: không quyền (y ERP), Người yêu cầu chạy thật + bỏ ô Trạng thái, có In + Excel, khuôn báo cáo rsum (HĐ ▸ phiếu giao việc).
+**Checkpoint 14/11:** CODE XONG BE (`Modules/CustomerCare`, `/v1/customer-care/report/install-delivery-repair`) + FE + menu; compile + smoke HTTP đạt.
+Còn: user bấm trình duyệt. Code CHƯA commit.
+**Phase 2: XONG + ĐÃ PUSH develop** (14/11 hrm-api `6fa8d92b9` / client `44518bef6`; 16/11 phân trang kiểu màn danh sách + theo thiết bị, fix gọi API thừa: api `ce7fb5ce1` / client `9ef6d6e3f`). E2E 2 bộ: `e2e/tests/customer-care/install-delivery-repair-detail-{report,deep}.spec.ts` — màn CHI TIẾT `reportInstallDeliveryRepairDetail` → `/customer-care/report/install-delivery-repair-detail` (3 tab).
+Tài liệu: `.plans/gop-db/bao-cao-theo-doi-lap-dat-ban-giao-sc-bd/` · spec `docs/superpowers/specs/gop-db/2026-11-14-bao-cao-theo-doi-lap-dat-ban-giao-sc-bd-design.md`.
+
+## #12198 Dự án TKT — link mở chi tiết giải pháp — ĐÃ MERGE develop (`904aa525c` / merge `33019e371`), CHƯA gop_db (2026-11-17, @junfoke)
+Chỉ FE (2 file), nhánh `task_12198`. Tài liệu: `.plans/gop-db/12198-link-giai-phap-du-an-tkt/plan.md`.
+
+## Danh sách HSNS lọc nhiều phòng ban / bộ phận + xuất Excel theo lọc — ĐÃ PUSH develop (api `4321f62c2`, client `65601f328`); cherry-pick gop_db local chưa push (2026-11-18, @junfoke)
+Tài liệu: `.plans/gop-db/hsns-loc-nhieu-phong-ban-bo-phan/plan.md`.
+
+## Hồ sơ tự khai: chặn gửi duyệt khi không có thay đổi — COMMIT develop (api `2ef1957a0`, client `d35213964`), CHƯA push (2026-11-18, @junfoke)
+Tài liệu: `.plans/gop-db/tu-khai-chan-gui-khong-thay-doi/plan.md`.
+
+## #12171 DM khách hàng (Quận/Huyện bắt buộc, cột xuất, import Nhóm KH, SĐT tổ chức) — ĐÃ PUSH develop (api `c71048b87`, client `ac05172af`) (2026-11-18, @junfoke)
+## #12215 BC số lượt SC-BD 1 khách hàng (phân cấp công ty, tùy chỉnh cột, bỏ làm tròn) — SỬA XONG, CHƯA commit (2026-11-18, @junfoke)
+Plan: `.plans/gop-db/customer-scope-list-page-standard/plan.md` · `.plans/gop-db/bc-so-luot-sc-bd-khach-hang/plan.md`.
+
+## Báo cáo so sánh số liệu bán hàng theo thời gian chi tiết theo khu vực (ERP → HRM) — ĐÃ MERGE develop (api 370229d99, client 56c226264), CHƯA gop_db (2026-11-18, @junfoke)
+
+Port `report.compareContractByProvince` → `/sale/compare-contract-by-province-report` (Bán hàng › Tổng hợp & so sánh). Nhánh
+`feat/bc-so-sanh-bh-thoi-gian-khu-vuc` (worktree `.worktrees/bc-so-sanh-thoi-gian`, 2 repo). Mã quyền MỚI → deploy
+`permission:catalog-sync` + cấp ở `/admin/roles`. Sửa 5 lỗi số liệu ERP (nhân doanh thu quyết toán, trùng id, phụ lục DV, UNION, hỗ trợ KT đôi).
+Tài liệu: `.plans/gop-db/bc-so-sanh-bh-thoi-gian-khu-vuc/` · spec `docs/superpowers/specs/gop-db/2026-11-18-bc-so-sanh-bh-thoi-gian-khu-vuc-design.md`.
+
+## Báo cáo so sánh số liệu bán hàng theo khu vực chi tiết theo thời gian (ERP → HRM) — ĐÃ MERGE develop (api 44d2720bc, client 5ee6aa610), CHƯA gop_db (2026-11-17, @junfoke)
+
+Port `report.compareContractByTimes` → `/sale/compare-contract-by-time-report` (Bán hàng › Tổng hợp & so sánh). Nhánh
+`feat/bc-so-sanh-bh-khu-vuc-theo-thoi-gian` (worktree `.worktrees/bc-so-sanh-khu-vuc`, 2 repo). Mã quyền MỚI → deploy
+`permission:catalog-sync` + cấp ở `/admin/roles`. Sửa lỗi ERP lọc status 2 (Chờ duyệt / phiếu bảo hành).
+Tài liệu: `.plans/gop-db/bc-so-sanh-bh-khu-vuc-theo-thoi-gian/` · spec `docs/superpowers/specs/gop-db/2026-11-17-bc-so-sanh-bh-khu-vuc-theo-thoi-gian-design.md`.
+
+## Báo cáo số lượt sửa chữa - bảo dưỡng cho 1 khách hàng (ERP → HRM) — ĐÃ MERGE develop (2026-11-16, @junfoke)
+
+Port `report.warrantyRepairServiceByCustomer` → `/sale/warranty-repair-by-customer-report` (Bán hàng › Báo cáo › Tổng hợp & so sánh).
+Chốt: bắt buộc quyền; ẩn thiết bị chỉ bảo hành; sửa lỗi ERP (SL ghi đè, nhân đôi, bảo dưỡng thiếu dịch vụ, NCC, ngày cuối kỳ…).
+Xong + verify trình duyệt, push nhánh `feat/bc-so-luot-sc-bd-khach-hang` + merge develop (api `d51632a4c`, client `f9b8ced17`). Chưa lên gop_db. Deploy `permission:catalog-sync`.
+Tài liệu: `.plans/gop-db/bc-so-luot-sc-bd-khach-hang/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-16-bc-so-luot-sc-bd-khach-hang-design.md`.
+
+## Báo cáo phân công phòng phụ trách thương hiệu - hãng sản xuất (ERP → HRM) — ĐÃ MERGE develop (2026-11-16, @junfoke)
+
+Port `assign-department-brand.reportAssignDepartmentBrands`, trang `/purchase/reports/assign-department-brands`
+(Tra cứu `?type=all` ẩn In/Excel/Lịch sử · Mua hàng đủ), cả 2 kiểm quyền + phạm vi; sửa các lỗi ERP (lọc người mua, cặp có phiếu nháp bị mất…).
+Trạng thái: push `feat/bc-phan-cong-phong-thuong-hieu` + merge develop (api `77e6b4ffc`, client `1e78669a5`). Lối Mua hàng để nguyên
+(phân hệ Mua hàng còn ẩn, user 16/11: "sau kiểu gì cũng mở"). Chưa lên gop_db. Deploy `permission:catalog-sync`.
+Tài liệu: `.plans/gop-db/bc-phan-cong-phong-thuong-hieu/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-16-bc-phan-cong-phong-thuong-hieu-design.md`.
+
+## Báo cáo bán hàng theo từng mặt hàng (ERP → HRM) — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `6ce0a92ab`, hrm-client `fb38e3761`) (2026-11-13, @khoipv)
+
+Port ERP `report.summary_sale` → `/sale/sale-by-product-report` (Bán hàng › Báo cáo › Tổng hợp & so sánh). Chốt: CỘNG THÊM HĐ HRM vào nguồn cũ;
+bỏ cột Bảo hành + ĐMGG; quyền 4 cấp y ERP (+platform hrm); popup chi tiết thêm NVKD + lọc + In + Excel.
+**Checkpoint 13/11 (wrap up):** CODE XONG BE + FE + menu, test Playwright trình duyệt thật 16/16 đạt (spec `e2e/tests/sale/sale-by-product-report.spec.ts`), đã sửa lỗi chọn cột In của popup. ĐÃ PUSH develop 13/11. Deploy phải chạy `permission:catalog-sync`. Bộ e2e (`e2e/` không phải repo git) chỉ ở máy local.
+Tài liệu: `.plans/gop-db/bao-cao-ban-hang-theo-mat-hang/` · spec `docs/superpowers/specs/gop-db/2026-11-13-bao-cao-ban-hang-theo-mat-hang-design.md`.
+
+## #11736 Bộ lọc danh mục hiện cả danh mục đã khoá 🔒 (mọi màn port ERP→HRM) — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `288108f40`, hrm-client `2651bb4fd`) (2026-11-13, @khoipv)
+
+Ô lọc danh mục = đang hoạt động + đã khoá mà còn bản ghi CỦA MÀN dùng tới. Nền: `LockedCatalogOptions::activeOrUsed()` (BE) + `keepLockedOptions` trên field lọc (FE, sửa `V2BaseFilterFieldControl` — user đồng ý).
+**Checkpoint 13/11:** CODE XONG cả 7 lô (~120 ô lọc, 95 file PHP + 92 file FE). php -l + parse FE + HTTP kernel đạt. ĐÃ PUSH develop 13/11 (commit tách riêng với #11739).
+Tài liệu: `.plans/gop-db/11736-loc-danh-muc-khoa/`.
+
+## #11739 Tiêu đề màn chi tiết Tài chính kèm mã + badge trạng thái — HOÀN THÀNH 2026-11-13, ĐÃ PUSH develop (hrm-api `288108f40`, hrm-client `2651bb4fd`) (2026-11-13, @khoipv)
+
+35 màn chi tiết Tài chính có tiêu đề `Chi tiết <tên>: <mã>` + badge trạng thái qua `buildStatusTitle` (thêm `statusTypeHex` cho BE trả status_type bootstrap); user chốt gắn badge cả 5 màn có quyết định cũ trái quy tắc. Verify parse 42 file FE + php -l sạch. ĐÃ PUSH develop 13/11 (commit tách riêng với #11736).
+Tài liệu: `.plans/gop-db/11739-tieu-de-chi-tiet-trang-thai/`.
+
+## KH bán hàng + KH phát triển thị trường của nhân viên (ERP → HRM, #11884 + #11885) — ĐANG LÀM (2026-11-14, @junfoke)
+
+Port 2 phiếu kế hoạch nhân viên theo demo khách (bản chốt): bỏ tầng khách hàng, nhập ở dòng Tỉnh/TP (+SL khách, +DS xuất hàng),
+Tỉnh/TP theo chỉ tiêu được giao, duyệt TP → Gửi BGĐ, lấy dữ liệu chéo theo hệ số. BGĐ duyệt + sửa báo cáo ERP: đợt sau.
+Trạng thái: ĐÃ PUSH `feat/ke-hoach-nhan-vien` + MERGE dev (16/11): hrm-api develop `b542a7797`, hrm-client develop `6052f391b`, TanPhatDev develop_02 `1b7dbf7c12` (merge nguyên nhánh, kéo theo commit gop_db chat/agent/#12128 — user chọn). Chờ QA dev.
+Bước tiếp: dev/prod chạy migration `2026_11_14_000001_add_hrm_columns_to_employee_plans` + `permission:catalog-sync`; cấp mã duyệt NV cho TP; lên gop_db khi user bảo.
+⚠️ GOTCHA: `Collection->map('intval')` biến chuỗi thành 0 (khoá làm base) — dùng closure; popup in gộp các `<br>` liền nhau.
+Tài liệu: `.plans/gop-db/11884-11885-ke-hoach-nhan-vien/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-14-11884-11885-ke-hoach-nhan-vien-design.md`.
+
+## Danh sách hàng xuất nhập thẳng (ERP → HRM) — HOÀN THÀNH 2026-11-11, ĐÃ PUSH develop (hrm-api `0b472de60`, hrm-client `56d08069e`) (2026-11-11, @khoipv)
+
+Port màn ERP `warehouseInfo.productImportDirectDetails` → `/finance/import-direct-stocks` (menu Tài chính › Báo cáo hàng tồn kho + Tra cứu › Thông báo).
+Chốt: quyền theo cấp y ERP (mã accounting.bao_cao_ton_hang_nhap_xuat_thang_theo_nhan_vien.view + platform hrm), phân trang theo phòng ban, cây 3 tầng.
+**Checkpoint 11/11:** XONG. Smoke test BE đủ 4 mức phạm vi, Playwright 27/27 + không quyền PASS, user tự test trình duyệt xong. Đã push develop. Deploy phải chạy `permission:catalog-sync` (bật on_hrm cho mã quyền). Dữ liệu test local còn giữ (13 dòng id 15872–15884 + vai trò tạm 100216) — lệnh dọn ở plan.md T14/T15.
+Tài liệu: `.plans/gop-db/danh-sach-hang-xuat-nhap-thang/` · spec `docs/superpowers/specs/gop-db/2026-11-11-danh-sach-hang-xuat-nhap-thang-design.md`.
+
+## #12128 Xem trước file đính kèm trên mọi phiếu (ERP TanPhatDev) — ĐÃ MERGE gop_db, chờ QA (2026-11-12, @junfoke)
+
+Trạng thái: `task_12128` (4 commit, đến `fb17375071`) → `develop_02` `02b11a8a71` + `gop_db` `5d33749939`, đã push cả 2 (12/11).
+Kèm: thẻ file theo ảnh mẫu (icon màu, bấm = xem, chỉ icon tải mới tải) + sửa lỗi có sẵn gửi nhầm file khi xoá dòng ở 12 form (`track by $index`).
+Scope: 1 partial `partials/common-js/file-preview.blade.php` include ở `layouts/app` — popup xem trước giống HRM (ảnh `<img>`, PDF/txt Google Viewer, Office Online) + directive `a` tự gắn 👁 cho mọi link file S3/`/uploads` (~210 màn `document-item` + ~70 link lẻ), xem cả file chưa lưu.
+⚠️ GOTCHA: S3 CMC trả `octet-stream` + không CORS ⇒ không nhúng thẳng URL vào iframe / fetch. Lỗi `infdig` ở BBBGNT có sẵn từ trước.
+13/11: lỗi prod PDF không xem được (Google Viewer trả rỗng + IDM chặn) → route `admin/file-preview/stream` + blob, gop_db `12bcec5a53` → `f748b8dd03` (có lỡ revert/reapply), đã push; chờ build để kiểm lại ĐNTT EG.DNTT1126.00073.
+Bước tiếp: QA test trên dev; lỗi phát sinh sửa tiếp trên nhánh `task_12128`.
+Tài liệu: `.plans/gop-db/12128-xem-truoc-file-dinh-kem-erp/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-12-12128-xem-truoc-file-dinh-kem-erp-design.md`.
+
+## Xoá HĐ + QĐ tiếp nhận của 3 NV Phòng Dự án trọng điểm trên PROD — HOÀN THÀNH 2026-11-09 (@cuong61n)
+
+Xoá 6 HĐ (592–594, 598–600/2026/HĐLĐ-TPE) + 3 QĐ tiếp nhận 153–155/2026/QĐTN-TPE của Sầm Văn Linh, Nguyễn Thế Huấn, Nguyễn Quang Tuyến. Đã sao lưu ra `~/Desktop/dns/backup_prod_xoa_hd_20261109.sql`.
+Tài liệu: `.plans/gop-db/prod-xoa-hd-3-nhan-vien-dat-d/plan.md`.
+
+## Biên bản giao nhận hàng hóa (ERP → HRM) — ĐANG LÀM (2026-11-10, @khoipv)
+
+Port màn ERP `handoverAcceptanceProductRecord.index` (Kinh doanh › Đơn hàng - hợp đồng › Biên bản giao nhận hàng hóa `?type=all`).
+Tài liệu: `.plans/gop-db/bien-ban-giao-nhan-hang-hoa/` · spec `docs/superpowers/specs/gop-db/2026-11-10-bien-ban-giao-nhan-hang-hoa-design.md`.
+**Checkpoint 10/11:** CODE XONG BE (`Modules/Sale`, route `/v1/sale/handover-product-records`) + FE (`/sale/handover-product-records?type=all`,
+menu Bán hàng 2 mục). Smoke test BE đủ luồng (rollback sạch). Còn: user bấm trình duyệt; thử danh sách `type=all` trên DB đã `rbac:convert`;
+quyết vá ERP đọc biên bản HĐ HRM. Code CHƯA commit.
+
+## Nghỉ việc thì xoá mã trên máy chấm công khuôn mặt + máy cơm — ĐÃ PUSH gop_db `0214e192b`, deploy prod (2026-11-07, @cuong61n)
+
+Sự cố prod 07/11: 3 NV ETEK đầu tư → TPE, máy còn mã cũ nên chấm không lên công — đã xoá mã cũ trên 9 máy, chuyển 13 lượt chấm, chạy lại công.
+Code nhánh `feat/xoa-ma-may-khi-nghi-viec` (hrm-api, từ `origin/gop_db`, CHƯA commit): job khi status→0 + lệnh `timesheet:remove-left-from-machines` lịch 01:45.
+Tài liệu: `.plans/gop-db/xoa-ma-may-cham-cong-khi-nghi-viec/plan.md`.
+
+## #12074 Cập nhật giá bán: mặc định Giá bán lẻ, Show đủ bảng giá, cấu hình cột, bảng giá độc lập — ĐANG LÀM (2026-11-09, @junfoke)
+
+Trạng thái: ĐÃ lên origin/develop (`fda841d41`) và origin/gop_db (merge `52e795dfd`, 10/11). Fix QA 10/11 co giãn cột `5542a006c`: + `3cbebf632` (Tên 290 / Loại giá 176): ĐÃ lên gop_db `cc213ac89` (cổng chính đã duyệt), develop merge local `d6a6883cf` CHƯA push. hrm-api không đổi. Đã verify trình duyệt.
+Scope: `/finance/product-prices` popover "Cài đặt bảng giá" (loại giá hiển thị + giá chính đứng đầu, lưu theo tài khoản × công ty) + cột STT + cấu hình cột; bỏ lan Bán lẻ ⇒ Theo lô/ĐL1–3 ở cả G4 lẫn Phiếu tính giá (sửa `Calc` dùng chung).
+⚠️ GOTCHA: TMĐT VẪN = Bán lẻ × hệ số (issue ghi rõ "giữ nguyên logic cũ"); "Duyệt không cần tính giá" của YCHG giữ nguyên.
+Issue 10/11 "Cài đặt bảng giá" lên Phiếu tính giá + dùng chung mọi màn: develop `d194baa03` (CHƯA push) → ĐÃ lên origin/gop_db `881920825` (cherry-pick, 10/11, user duyệt).
+Bước tiếp: push develop (đi trước 5 commit); chưa thử nhánh Gửi duyệt.
+Tài liệu: `.plans/gop-db/12074-cap-nhat-gia-ban/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-09-12074-cap-nhat-gia-ban-design.md`.
+
+## Giao chỉ tiêu kinh doanh theo phòng ban + theo nhân viên (ERP → HRM, #11643 + #11651) — ĐANG LÀM (2026-11-06, @junfoke)
+
+Port 2 phiếu `business_target_*` sang HRM theo bản mẫu QA: bỏ popup chi tiết KH (8 ô nhập thẳng), bỏ "Nhân viên mới",
+thêm cấp Bộ phận (bảng mới `business_target_department_parts`). Phòng ban trước, nhân viên nạp chỉ tiêu từ phiếu phòng ban Đã duyệt.
+Chốt: sửa 2 báo cáo ERP đếm KH = SUM cột nhập; ẩn menu ERP; Hủy duyệt → Đang tạo (không thu hồi); phòng phiếu NV theo ERP.
+
+**Checkpoint 06/11 (cuối ngày):** CODE XONG 17/17 task trên nhánh `feat/giao-chi-tieu-kinh-doanh` (hrm-api, hrm-client,
+TanPhatDev — tách từ `origin/gop_db`, CHƯA commit). 37 test BE xanh, Playwright local trọn luồng 2 màn, đối chiếu code ERP khớp.
+Còn: review toàn nhánh + sửa; user commit; gán quyền dev/prod (8 quyền type 23 "…phiếu giao chỉ tiêu kinh doanh…"); migration
+`2026_11_06_000001_create_business_target_department_parts_table`.
+**Checkpoint 07/11:** review xong; đã merge phân quyền Catalog mới (`Catalog/sale.php`, bỏ seeder), sửa tên index migration quá 64 ký tự,
+39/39 test trên DB prod kéo về (`gop_db_rbac`). Đang kiểm người không có quyền + bấm client. Code CHƯA commit; file test chỉ để local.
+**Checkpoint 09/11:** kéo `gop_db` mới nhất (fast-forward 3 repo, không conflict) + 13 migration upstream + `catalog-sync` trên `gop_db_rbac`. 39/39 test; bấm thật trên dữ liệu prod (list/xem phiếu thật 187 phòng, tạo→gửi→duyệt→hủy duyệt phiếu 2099 có bộ phận, phiếu NV, chặn hủy duyệt khi có phiếu NV, In, Xuất Excel, menu chờ duyệt theo mã) — đạt, đã dọn dữ liệu. Người không có mã: list rỗng / show 404 / tạo 403. Bộ Finance đầy đủ còn lỗi ở test màn KHÁC chưa theo RBAC mới (cột `role_has_permissions.company_id`, `permissionCache`, `currentEmployeeIsSuperAdmin`) — không phải phần này. Còn: user commit 3 repo.
+⚠️ GOTCHA: prop bảng không đặt tên `errors` (vee-validate chiếm); 2 báo cáo ERP đã SUM cột SL khách nhập sẵn — không cần sửa.
+Tài liệu: `.plans/gop-db/giao-chi-tieu-kinh-doanh/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-06-giao-chi-tieu-kinh-doanh-design.md`.
+
+## Phiếu yêu cầu giao việc khác (ERP → HRM) — HOÀN THÀNH 2026-11-06 (2026-11-05, @khoipv)
+
+Port màn ERP `assignOtherRequest.index?type=all` (Bán hàng › Lắp đặt - BH - SC). Nguồn tạo Phiếu giao việc type 5 (PGV đã port).
+Chốt: theo cấp y ERP (3 quyền type 23), Xoá y ERP, HĐ 2 nguồn (thêm cột `hrm_contract_id`).
+
+**Checkpoint 05/11:** BE (`Modules/CustomerCare`) + FE (`pages/customer-care/assign-other-requests`) xong, menu Bán hàng › Lắp đặt - BH - SC, link PGV / PNKQ / Phiếu chờ giao việc đổi sang HRM. Verify: php -l, migration local, smoke API (rollback), compile FE. Còn: bấm thử trình duyệt, `permission:sync` thật, 2 việc chờ user quyết (plan T14, T15).
+**Checkpoint 06/11:** sửa Redmine #12045 (duyệt PNKQ xong về danh sách, bỏ sort cột Trạng thái) và #12049; deploy cần chạy migration `2026_11_06_000001`.
+Tài liệu: `.plans/gop-db/phieu-yeu-cau-giao-viec-khac/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-05-phieu-yeu-cau-giao-viec-khac-design.md`.
+
+## Biên bản bàn giao sơ bộ (ERP → HRM) — HOÀN THÀNH 2026-11-06, ĐÃ PUSH develop (hrm-api `4168dde79`, hrm-client `9c5e59719`) (2026-11-04, @khoipv)
+
+Port màn ERP `handoverRecords.index?type=all` (CSKH › Hồ sơ công việc + "Phiếu CSKH"). Chốt: không quyền (y ERP), sửa 3 lỗi ERP cả 2 bên, menu 2 chỗ, có In danh sách + In biên bản.
+
+**Checkpoint 04/11:** BE + FE đã push develop; Playwright local PASS toàn luồng, dữ liệu test đã dọn. Vá ERP (repo erp) CHƯA commit. Smoke test API (rollback) + compile FE pass. Còn: user bấm thử trình duyệt, upload S3 thật.
+**Checkpoint 06/11:** #12028 đổi nhãn Duyệt / Từ chối ở popup Lịch sử thay đổi thành "Thay đổi trạng thái" (giữ mã action, log cũ cũng ra nhãn mới).
+Tài liệu: `.plans/gop-db/bien-ban-ban-giao-so-bo/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-04-bien-ban-ban-giao-so-bo-design.md`.
+
+## Biên bản bàn giao nghiệm thu (ERP → HRM) — HOÀN THÀNH 2026-11-06 (2026-11-03, @khoipv)
+
+Port màn ERP `handoverAcceptanceRecord.index?type=all` (Giao việc › Kết quả công việc) + lối phụ `?type=for-business-staff` (Tra cứu › Thông báo). Chốt: 2 nguồn HĐ (hãng + HRM), theo cấp y ERP (4 quyền type 4), nghiệp vụ y ERP, In danh sách + In biên bản.
+
+**Checkpoint 03/11:** BE (`Modules/CustomerCare` — entity, 4 service, request, controller, route) + FE (`pages/assign/handover-acceptance-records`) xong; smoke test API (rollback) + compile FE pass. Còn: user bấm thử trình duyệt, `permission:sync` thật, quyết vá ERP đọc biên bản gắn HĐ HRM.
+**Checkpoint 06/11:** xử lý phản hồi QA #12021 (màu nút Lưu nháp, câu lỗi SL nghiệm thu, căn trái câu lỗi) và fix #12060 (popup Chọn hợp đồng chỉ hiện HĐ đã xuất hết hàng).
+Tài liệu: `.plans/gop-db/bien-ban-ban-giao-nghiem-thu/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-03-bien-ban-ban-giao-nghiem-thu-design.md`.
+
+## Phiếu nhập kết quả (ERP → HRM) — HOÀN THÀNH 2026-11-06 (2026-11-02, @khoipv)
+
+Port màn ERP `WrImportResults.index?type=all` (CSKH › Giao việc › Phiếu nhập kết quả). Trọn bộ 1 lần, nghiệp vụ y hệt ERP (kể cả lỗi), Duyệt KQ link ERP, ảnh S3. Code xong T0–T14 (02/11), chưa commit.
+
+**Checkpoint 02/11:** BE + FE trọn bộ (danh sách · chi tiết · tạo · sửa · xóa · không duyệt · in/xuất · lịch sử), nối nút Nhập KQ / Xem PNKQ ở PGV, menu CSKH sau bán › Giao việc. Verify: php -l, compile, API thật (ghi trong transaction rollback). Còn: test trình duyệt, upload S3 thật, `permission:sync` 4 quyền type 24.
+**Checkpoint 06/11:** #12045 duyệt xong về danh sách + bỏ sort Trạng thái; check T40 (PNKQ 9114 báo "Không tìm thấy dữ liệu" do KH id 978 không có trên dev — lỗi dữ liệu, không sửa code).
+Tài liệu: `.plans/gop-db/phieu-nhap-ket-qua/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-11-02-phieu-nhap-ket-qua-design.md`.
+
+## Phiếu giao việc (ERP → HRM) — HOÀN THÀNH, ĐÃ PUSH develop (hrm-api `4053ab27c`, hrm-client `50491b5bc`) (2026-11-02, @khoipv)
+
+**Checkpoint 02/11:** Playwright local PASS nhóm A–E (tạo từ 5 nguồn màn chờ, chi tiết 5 type, xóa, cảnh báo chưa lưu); dữ liệu test đã dọn, DB khớp snapshot. Bỏ ô Trạng thái ở khối Thông tin KH màn chi tiết (user chốt). Còn lại: `permission:sync` thật cho 3 quyền xem; repo ERP Phase 4 chưa commit.
+
+Port màn ERP `WrAssignTasks.index?type=all` (+ `?type=waiting_import_result`) trọn bộ: Danh sách · Chi tiết · Tạo · Sửa · Xóa(Hủy) · In/Xuất.
+Màn chưa port (Nhập KQ, Duyệt KQ, HĐ bán, YC lắp đặt…) link ERP. Menu CSKH sau bán › Giao việc. 3 quyền type 24 tên nguyên văn ERP.
+Tài liệu: `.plans/gop-db/phieu-giao-viec/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-10-31-phieu-giao-viec-design.md`.
+
+**Checkpoint 31/10 (wrap up):** spec/design xong (Sửa: KHÔNG có — y ERP; mã giữ format `{cty}.PGV.{YYYY}{id6}`; sửa lỗi ERP ở cả 2 bên).
+Phase 4 vá 10 lỗi ERP xong (repo erp, chưa commit, chưa bấm thử). Phase 1 BE DỪNG giữa chừng (code đã sinh, lint sạch, chưa smoke test xong — mai rà lại). Tiếp: Phase 2 BE tạo phiếu + Phase 3 FE.
+
+## Phiếu chờ giao việc (ERP → HRM) — XONG, ĐÃ PUSH develop (hrm-api `997a67f7f`, hrm-client `d2ddb8e27`) (2026-10-31, @khoipv)
+
+Port màn ERP `WrAssignTasks.wait` (5 tab: HĐ · PL bổ sung · Phiếu bảo hành · Lắp đặt bàn giao · Giao việc khác) → FE `/customer-care/waiting-assign-tasks`, menu CSKH sau bán › Giao việc.
+Tài liệu: `.plans/gop-db/phieu-cho-giao-viec/{design.md,plan.md}` · spec `docs/superpowers/specs/gop-db/2026-10-31-phieu-cho-giao-viec-design.md`.
+
+**Checkpoint 31/10:** user test OK. Local đã `permission:sync` + gán 2 quyền mới (2237/2238, type 24) cho role 18. Còn lại: chạy seeder
+quyền trên dev/prod + admin gán quyền; hiệu năng tab HĐ (~3,5 s/trang) chờ chốt; khuôn `ArrivedNotifyList.vue` dính cùng lỗi phân trang, chưa sửa.
+
+## Phiếu xuất hàng điều chỉnh kiểm kê (ERP → HRM) — ĐÃ PUSH `develop`, Playwright local PASS (2026-10-30, @khoipv)
+
+Push: hrm-api `caf2abf87` · hrm-client `7a2880d5f`. Còn chạy seeder quyền trên môi trường.
+
+Port màn ERP `inventoryExport` (bảng `inventory_exports`, mã `PXHĐCKK-`) sang `/finance/inventory-exports` — bước Kế toán kho
+sau Phiếu xuất kho ĐCKK, chép khuôn màn Phiếu nhập hàng ĐCKK. User chốt 30/10: KHÔNG bút toán (y ERP — ERP nhân cột không tồn
+tại ⇒ 0), còn lại y màn nhập. Tài liệu: `.plans/gop-db/phieu-xuat-hang-dieu-chinh-kiem-ke/{design.md,plan.md}` · spec
+`docs/superpowers/specs/gop-db/2026-10-30-phieu-xuat-hang-dieu-chinh-kiem-ke-design.md`.
+
+## Phiếu nhập hàng điều chỉnh kiểm kê (ERP → HRM) — XONG, ĐÃ PUSH develop (hrm-api `ef113e688`, hrm-client `f242fa9d6`) (2026-10-30, @khoipv)
+
+Port màn ERP `inventoryImport` (bảng `inventory_imports`, mã `PNHĐCKK-`) sang `/finance/inventory-imports` — bước Kế toán kho
+sau Phiếu nhập kho ĐCKK. User chốt 30/10: quyền y ERP, menu Tài chính › Nhập hàng + nút ở phiếu nhập kho mở màn HRM, màn Thêm
+có ô chọn phiếu, lỗi ERP giữ nguyên. Tài liệu: `.plans/gop-db/phieu-nhap-hang-dieu-chinh-kiem-ke/{design.md,plan.md}` · spec
+`docs/superpowers/specs/gop-db/2026-10-30-phieu-nhap-hang-dieu-chinh-kiem-ke-design.md`.
+
+**Checkpoint 30/10 (wrap up):** BE `Modules/Finance` (`InventoryImport*`, service chung mới `AccountingStockWriter` +
+`ProductImportPriceReader`, 2 quyền xem type 8 trong seeder chung) + FE `pages/finance/inventory-imports` + menu Tài chính; nút
+"Tạo phiếu nhập hàng" ở Phiếu nhập kho ĐCKK mở màn HRM. Đã test Playwright toàn luồng (dữ liệu test đã dọn) + user test OK.
+Tiếp theo: chạy seeder quyền; commit khi user yêu cầu. Việc treo xem `plan.md` checkpoint cuối.
+
+## Hạch toán dịch vụ HDDV (phía BÁN): YCHTDV + Phiếu hạch toán — XONG + COMMIT/PUSH develop 2026-10-31 (@dangquang)
+
+Port màn ERP `admin/customer-care/wr_accounting_service_requests?type=all` → HRM
+`/finance/wr-accounting-service-requests`. Phía BÁN dịch vụ (chuỗi "Bán Dịch vụ", 4 mục menu sẵn ở
+`finance.js:302-313`). Bản song sinh phía MUA đã port (`buy-service-accounting-request`) = khuôn chuẩn.
+- Bảng `wr_accounting_service_requests` + `wr_accounting_service_request_costs` (ERP sở hữu, CHƯA có
+  model HRM) → không migration. Phiếu tạo TỪ HĐ DV (`wr_service_contracts`, đã có model HRM), chi phí
+  tính sẵn từ HĐ (trừ phụ lục PL_GIAM), màn chỉ-đọc chi phí — KHÔNG có SL còn lại.
+- Chốt (call của tôi, user "làm đi"): 1 loại; 4 quyền mới guard api `type 23` group 'Yêu cầu hạch toán
+  dịch vụ HDDV' (3 cấp xem + Hạch toán dịch vụ HDDV); phân hệ chính Bán hàng; status 1/2/3 (Đang
+  tạo=xám); tạo chỉ từ HĐ qua `?wr_service_contract_id=`; **link màn chưa-port (Số hợp đồng, Hạch toán
+  chi phí→phiếu #2) để TRỐNG** (khác bản MUA mở ERP — chờ user chỉnh nếu muốn); không bản in; có Excel.
+- Trạng thái: **XONG CẢ 2 MÀN + đã commit/push `develop`**.
+  - **Màn 2 — Phiếu hạch toán dịch vụ HDDV** (`wr-accounting-services`, phía ghi sổ): BE entity+list+show+export
+    (Phase 1), posting + store + lật nguồn YCHTDV (Phase 2, feature test đối chiếu số ERP 3/3 pass), FE
+    list/chi tiết/hạch toán-preview (Phase 3, verify Playwright). **Nối link YCHTDV → create?wr_accounting_service_request_id=**.
+  - Commit 2026-10-31: hrm-api `06b01e074`, hrm-client `51f44677b` (fast-forward, stage chọn lọc đúng file feature;
+    KHÔNG đụng thay đổi lạc còn trong working tree hrm-client: bonus-component docs đã xóa + SupplierReturnSearchModal.vue).
+- Tài liệu: YCHTDV `.plans/gop-db/wr-accounting-service-request/{design.md,plan.md}` · Phiếu hạch toán
+  `.plans/phieu-hach-toan-dich-vu-hddv/{design.md,plan.md}` | Spec:
+  `docs/superpowers/specs/gop-db/2026-10-30-wr-accounting-service-request-design.md`.
+- TREO: 2 thay đổi lạc trong working tree hrm-client (bonus-component docs xóa, SupplierReturnSearchModal.vue) chờ user chốt xử lý.
+
+## Điều chuyển kho CHI NHÁNH (type 7) — Phase A (xuất) + Phase B (nhập đóng vòng) XONG (2026-10-23), LOCAL develop, chờ user chốt tích hợp
+
+Port loại **điều chuyển chi nhánh = 7** ERP→HRM (nối tiếp nhóm điều chuyển: type 5 cùng thủ kho → type 6 nội bộ → **type 7 chi nhánh**). Chuỗi: YCXH → ĐNXK → PXK (xuất, ×hệ số chi nhánh) → tự sinh YCNH cty ĐÍCH → ĐNNK → PNK → Phiếu nhập hàng (đóng vòng PYCCH) → [PPBHĐC = Phase C].
+
+**Phase A — export-side BE (2026-10-22, HEAD hrm-api `7c00ea709` LOCAL):** `finalizeBranchTransferExport()` (YCXH→5 + is_completed, PTR→7, tự sinh YCNH type 7 cty ĐÍCH × hệ số chi nhánh); final review opus bắt 1 lệch (org YCNH theo người lập YCXH/cty đích) → fix boot hook `ProductImportRequest` gate type 7; re-review APPROVED, test 3/3.
+
+**Phase B — import-side đóng vòng (2026-10-23, 5 commit LOCAL trên `develop` atop `ba65bbe44`):** `678d6b22c` B1 (ProductImportService: mở type 7 ở buildDetailsByType + resolveAccountingService=OtherProductImportAccountingService empty-success + editableTypes) · `9eccacd4f` B2 (WarehouseImportRequestService::createFromImportRequest: **PYCCH→8** khi duyệt YCNH, = ERP approve :1555-1559) · `08ddb6607` B3+B5 (ProductImport::updateWarehouse nhánh type 7: **PYCCH→11** khi lập Phiếu nhập hàng + nhập thẳng ghi `product_import_direct_details` theo `PYCCH[0].created_by`, = ERP :1795-1806) · `a940b0cce` B4 (**GỠ mốc PYCCH→9 lệch** ở `approveRequest` — ⚠️ HÀM DÙNG CHUNG, chỉ xoá nhánh `if type===7`, giữ `$per` + nhánh type 6 nguyên vẹn; ERP KHÔNG đụng PYCCH lúc duyệt ĐNNK) · `ef86ae82f` B6 (`Type7BranchTransferImportTest` 4 test PASS / 18 assertion).
+- SDD: mỗi task fresh implementer + task review (SPEC+QUALITY ✅). **Final whole-branch review (opus): APPROVED** — data GIỐNG ERP, 0 lệch-ERP làm sai; grep toàn repo chỉ còn 3 điểm ghi `product_transfer_requests.status` (→7 ở ProductExportService:1093, →8 ở WarehouseImportRequestService, →11 ở ProductImport), KHÔNG còn →9. Hạch toán type 7 = Other empty-success (ERP getDataCreateDept không case 7). Idempotency ghi kép khi gọi lại updateWarehouse = GIỐNG ERP (không guard ngoài status).
+- Chạy test: `vendor/bin/phpunit Modules/Finance/Tests/Feature/Type7BranchTransferImportTest.php` → OK (4 tests, 18 assertions). ⚠️ `php artisan test --filter` ra "No tests executed" (phpunit.xml chỉ quét ./tests).
+- **Phase C — PPBHĐC (phân bổ) ĐANG LÀM — plan xong, bắt đầu SDD (2026-10-23):** design `design-phaseC.md` xong + **user CHỐT A/A/A** (Q1 nút "Phân bổ hàng" trên chi tiết Phiếu nhập hàng · Q2 gate bằng method entity, KHÔNG quyền mới · Q3 làm trọn FE). Plan C1–C5 đã append vào `plan.md` (C1 Entities+ProductImport helpers · C2 validateDetails/syncDetails/approve · C3 Service/Controller/routes/FormRequest+is_can_allocate · C4 FE nút+màn phân bổ · C5 feature test). Bảng `transfer_product_allocations`(+details) có sẵn DB chung (KHÔNG migration), status 12 'Đã phân bổ' + `allocated_qty` fillable + FE render sẵn status 12. Điểm port chính: prepick ghi qua `PrepickStockService::addLot`, lô theo `WarehouseImportLot` (parent_id=warehouse_import_id), company_id prepick = **cty ĐÍCH** (product_import->company_id), status=12 cho MỌI PTR của PXK, notification HOÃN pass F2. **ĐANG chạy SDD, GIỮ LOCAL.**
+- **CÒN LẠI (phase sau):** Phase D (DeliveryTrip cost + in %VAT + biên bản), Phase E (FE rà), Phase A-prepick (cần spike). FE xuất/nhập type 7 + ghép/tách + đóng gói + in biên bản + legacy 1/2/11/13.
+
+Tài liệu: `.plans/gop-db/ycxh-dieu-chuyen-chi-nhanh-type7/{design.md,plan.md}` + ledger SDD. **LOCAL trên `develop`, CHƯA push/merge** (chờ user chốt — khuyến nghị GIỮ LOCAL như các phase trước). HEAD hrm-api: `ef86ae82f`.
+
+## Xuất điều chuyển kho NỘI BỘ (type 6) — BE + ĐIỂM NỐI + FE XONG (2026-10-22), LOCAL develop, chờ user chốt tích hợp
+
+Port loại **XUAT_DIEU_KHO_NOI_BO = 6** ERP→HRM (nhóm "điều chuyển": type 5 cùng thủ kho XONG → type 6 nội bộ → type 7 chi nhánh sau).
+Chuỗi: YCXH → ĐNXK → PXK (hạch toán xuất) → **tự sinh YCNH** → ĐNNK → PNK → hạch toán nhập → kết thúc (YCXH 14→15/16→17→18→19→5).
+4 quyết định đã xác minh từ ERP: D1 KHÔNG bút toán · D2 trừ tồn vật lý + hold/prepick theo người yêu cầu · D3 duyệt ĐNNK = thủ kho kho đích, canCancel loại type 6 · D4 YCNH không gán receiver_id.
+
+**ĐÃ XONG (BE + điểm nối, SDD 4 task + final review opus):** (1) hằng `XUAT_DIEU_KHO_NOI_BO=6` ở `ProductExportRequest`+`WarehouseExportRequest` (Assign); (2) posting type 6 trả empty-success `[true,[],'']` như loại 12/99 (D1 — không bút toán); (3) **điểm nối** `ProductExportService::finalizeInternalTransferExport()` dispatch từ 2 path (createFromWarehouseExport sau type-14, createFromProductExportRequest sau type-15): **(0) ghi ngược** `exported_qty += qty` / `base_exported_qty += export_qty` về `product_export_request_details` (bám ERP `ProductExport::updateWarehouse:1856-1874`, cộng dồn atomic — F1 final-review bắt, đã vá), **(1)** YCXH→14 CHO_DUYET_NHAP + is_completed + logStatusChanged, **(2)** tự sinh YCNH type 6 ở `import_warehouse_id` (kho đích) status 2 currency VNĐ (D4: không receiver_id), **(3)** chi tiết YCNH supplier_price = export_price × unit_coefficient.
+- **4 commit LOCAL trên `develop`** (HEAD `9e40d7c6f`): `5b5515ed6` (const) · `7ad0749f5` (posting + test) · `be60983f5` (điểm nối + test) · `9e40d7c6f` (F1 ghi ngược + test). Test `Type6InternalTransferExportTest` PASS 2 tests / 19 assertions trên LOCAL `erp_hrm_check`.
+- **F2 (notification)** = lệch CÓ CHỦ Ý: ERP bắn Notification+Redis, HRM chưa port — nhất quán với mọi finalize anh em; port chung một pass sau theo `notification-convention`.
+- **FE XONG (2026-10-22, commit hrm-client `56f5f492f`, +8 dòng `ProductExportRequestForm.vue`):** màn YCXH dùng chung — dropdown loại 6 + field "Kho nhập" (`import_warehouse_id`) đã có sẵn; THÊM validate submit-time kho nguồn≠đích báo **"Cần chọn khác kho xuất."** (bám ERP `different:warehouse_id`). Verify Playwright PASS 2 chiều (cùng kho→báo đỏ+không submit; khác kho→clear). KHÔNG màn/menu mới (ERP không có màn riêng type 6).
+- **CÒN LẠI (phase sau, chưa làm):** type 7 chi nhánh; notification pass chung (F2).
+Tài liệu: `.plans/gop-db/ycxh-dieu-chuyen-noi-bo-type6/{design.md,plan.md}` + ledger SDD. **Làm LOCAL trên `develop`, CHƯA push/merge** (chờ user chốt — khuyến nghị GIỮ LOCAL). HEAD: hrm-api `9e40d7c6f` · hrm-client `56f5f492f`.
+
+## Chặn lập HĐ khi hàng hoá chưa đủ điều kiện tính DSTC (2026-10-21) — CODE + TEST XONG, CHƯA COMMIT
+
+Tiếp nối feature "Hệ số DSTC chuyển enum→product_natures". Chặn **lập HĐ (mới + phụ lục)** trên CẢ
+ERP + HRM nếu dòng hàng hoá: chưa gắn tính chất / tính chất chưa khai hệ số / hệ số = 0; HĐ dịch vụ:
+dòng "Dịch vụ" (nature 0) phải > 0. **HƯỚNG 2** (chốt 2026-10-21): chặn cả HĐ MỚI lẫn phụ lục.
+
+- Worktree: ERP `.worktrees/erp-dstc`, HRM `.worktrees/hrm-api-dstc` — cùng nhánh `feat/chan-lap-hd-chua-he-so-dstc` (off `origin/gop_db`).
+- Kiến trúc: **BE-only**. ERP guard tầng controller TRƯỚC `DB::beginTransaction()` (`[bool,message]→responseErrors`, vì catch controller nuốt message exception) qua **trait** `ValidatesProductNatureDstc` (dùng chung `FirmContractService` + `ZTFirmContractService`; `Principle*` kế thừa). HRM guard đầu service ném `ValidationException::withMessages` (422).
+- Helper `ProductNatureDstcCoefficient` (2 repo): THÊM `validateProducts`/`validateService` phân biệt `no_nature`/`no_config`/`zero_coef`; GIỮ NGUYÊN `forProduct/forService/forNature` (ERP `forNature` refactor nội bộ dùng `cachedMap`+`array_key_exists`, byte-equivalent).
+- **HĐ DỊCH VỤ ĐÃ CĂN GIỐNG ERP (user chốt 2026-10-21 "sửa cho giống erp", Task 11 — ĐẢO LẠI quyết định "lệch cố ý" trước đó):** trước đây HRM `priceCoefficients()` định giá MỌI dòng bằng `forService(nature 0)`+pt99 → guard chỉ validate nature 0. GIỜ bám ERP theo từng loại dòng: dòng dịch vụ/công (`syncProducts` main, `choose_services`, `extend.services`) dùng `serviceCoefficients()` = `forService(nature 0)`+pt99; vật tư/hàng thật (`choose_product_items`, `extend.services.products`, `merchandises`) dùng `productCoefficients($product_id)` = `forProduct`+pt1 — khớp ERP `WrServiceContract.php` 1222/1270/1340/1433/1459/1524. Guard `assertServiceDstcConfigured(array $data)` GIỜ validate CẢ nature 0 LẪN từng product thật (gom id từ 3 path trên; HRM dùng key `choose_product_items`, khác ERP `products`), message khớp ERP `validateServiceContractDstc` (header + bullet `• Dòng "Dịch vụ"` + bullet từng hàng). 2 app giờ ĐỒNG NHẤT.
+- HRM Assign HĐ hàng hoá (`ContractService::createFromQuotation`) dùng `forProducts` per-product → guard `collectDstcProductErrors` validate từng product (hàng tạm `erp_product_id` NULL → `no_nature`, chặn).
+- ERP wiring (reconcile T10): `validateProductNatureDstc` ở **11 controller** hàng hoá (Firm/Principle/Ztec/addition+regular annex/CRM); `validateServiceContractDstc` ở **3 controller** HĐ dịch vụ (WarrantyRepairContracts + Annex + AdditionAnnex), store+update mỗi cái. Không sót.
+- Phát hiện: `FirmContractAnnexService` (phụ lục thường) KHÔNG tính lại DSTC → guard ở đó là no-op vô hại (vẫn thêm để honor HƯỚNG 2).
+- Tài liệu: `.plans/gop-db/chan-lap-hd-chua-he-so-dstc/{design.md,plan.md}`.
+- **Trạng thái: T1-T11 XONG.** ERP helper+trait+14 wiring + HRM helper+2 guard (goods ContractService, service WrServiceContractService store+update) đã code, `php -l` sạch. **Task 11 (căn pricing HĐ dịch vụ HRM giống ERP + mở rộng guard) XONG:** 4 method hệ số (`currentCompanyId`/`priceTypeCoefficient`/`serviceCoefficients`/`productCoefficients`) thay `priceCoefficients()`; 3 sync method wired per-line; guard nhận `$data` validate nature 0 + product thật. Test: ERP t6.php (service guard) + HRM t8.php (goods, 11 assert PASS) + t9b.php (pricing per-line 5 ca: service=forService+pt99 vs product=forProduct+pt1 PHÂN KỲ; guard 10 ca: merchandise/choose_product_items/extend products zero_coef + no_nature + nature0 thiếu + header + đa bullet — tất cả PASS). **ĐÃ COMMIT + PUSH 2026-10-21** (HRM `a21fe2215`, ERP `2c25ce9d3a`, nhánh `feat/chan-lap-hd-chua-he-so-dstc` push lên origin cả 2 repo). CHƯA runtime-verify UI (chờ lệnh user).
+
 ## Tài liệu TC + HDSD theo form mẫu của team (2026-08-13)
 
 Sinh lại **testcase** theo form mẫu chuẩn (17 cột, 2 khối summary DNS/TP) và **HDSD Word**
@@ -176,6 +481,30 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   hạn thu theo mốc (thực tế / dự kiến), mốc Giao hàng chọn đợt, đã thu Có−Nợ 131 đắp theo hạn, cập nhật mốc + biên bản (người lập), lệnh assign:warn-payment-schedule 08:10.
   api `d77925d8e` / client `6c1f1901c`; ĐÃ push tester (api `dd48db00e`, client `c568a7e99`) + ĐÃ deploy hrm_crm 12/11 (migration 000004/000005 chạy lẻ; GIAO_HANG_1/2 0 dòng dùng; route:cache, queue:restart, build Node 14, pm2 reload).
   Bước tiếp: e2e mới chưa chạy; đợt 4 phụ lục / đợt 5 mẫu in. Merge gop_db chỉ khi user yêu cầu.
+- 12135-import-dm-cong-di-lai — Redmine #12135 → @junfoke → .plans/gop-db/12135-import-dm-cong-di-lai/plan.md
+  Trạng thái: 🟡 Đã lên dev chờ QA (12/11/2026): HRM `develop`, ERP `develop_02`. Nhánh feat chỉ ở local, CHƯA lên gop_db.
+
+- 11950-loc-phong-ban-dinh-bien — Redmine #11950 → @cuong61n → .plans/gop-db/11950-loc-phong-ban-dinh-bien/plan.md
+  Trạng thái: 🟡 Code BE+FE xong, test BE đạt (30/10/2026), chờ test UI · chưa commit (worktree gop_db). Bộ lọc "Phòng ban định biên" chọn nhiều, QĐ phải chứa đủ mọi phòng đã chọn, phòng khoá 🔒.
+
+- quotation-gap-0308 → @cuong61n → .plans/gop-db/quotation-gap-0308/plan.md
+  Báo giá sửa theo file GAP tab bao_gia_QLDA_0308 (26/10/2026). Đã code: Nhu cầu KH, Địa chỉ giao hàng, File đính kèm, cột Ảnh/Bảo hành, nhãn doanh thu dịch vụ, cột Báo giá ở Hàng hóa dự án, Chọn báo giá đã có. Kết quả từng dòng ở GAP_baogia_qlda_erp_ghichu.xlsx. Chưa commit; còn nhóm mục chờ chốt nghiệp vụ.
+
+- dong-bo-vai-tro-erp-hrm → @cuong61n → .plans/gop-db/dong-bo-vai-tro-erp-hrm/plan.md
+  Trạng thái: 🟢 Đã deploy prod đến 24/10/2026 (api 175d967f3, client 29ad6646b, ERP 8f68946372): vai trò dùng chung 2 bên, gộp vai trò "- HRM", sửa ERP Lưu vai trò xoá quyền HRM, khôi phục 340 quyền, popup xác nhận bỏ công ty. Còn treo: (b) chặn Xoá vai trò ERP ở HRM, (c) vai trò 100077 lệch công ty 6.
+  Scope: 1 ô gán vai trò dùng chung ERP+HRM, gán/gỡ 2 chiều; mỗi hệ chỉ đếm quyền guard của mình.
+  Spec: docs/superpowers/specs/gop-db/2026-10-22-dong-bo-vai-tro-erp-hrm-design.md
+
+- phieu-theo-chuan-quoc-gia → @junfoke → .plans/gop-db/phieu-theo-chuan-quoc-gia/plan.md
+  Trạng thái: 🟢 **Sửa xong 17 màn + nghiệm thu Playwright (28/10/2026)**, commit LOCAL ở nhánh `feat/phieu-theo-chuan-quoc-gia` (client 77079b38e, api 4e6123d19), CHƯA push, worktree đã về develop. Bước tiếp: merge vào develop khi user cho; 7 điểm nhỏ chờ chốt (xem Checkpoint plan.md).
+  Scope: đưa 17 màn chứng từ (Tài chính – tiền, Giữ hàng, Kho, CSKH) về chuẩn màn Danh mục quốc gia đã PASS.
+  Spec: docs/superpowers/specs/gop-db/2026-10-28-phieu-theo-chuan-quoc-gia-design.md | Tóm tắt: .plans/gop-db/phieu-theo-chuan-quoc-gia/design.md
+
+- ycldbg-khao-sat-mat-bang (#11723) → @junfoke → .plans/gop-db/ycldbg-khao-sat-mat-bang/plan.md
+  Trạng thái: 🟢 **ERP đã merge + push `gop_db` (28/10/2026, `30aad08686`)**. Bước tiếp: migrate dev-erp / prod → QA.
+  Scope: YC lắp đặt bàn giao thêm "Cần khảo sát mặt bằng" Có/Không bắt buộc; Có ⇒ bắt buộc file đính kèm. HRM chưa có màn — checklist port ở spec mục 6.
+  ⚠️ GOTCHA: cột `assembly_requests.need_site_survey` migrate ở ERP, HRM KHÔNG tạo lại; phiếu cũ NULL.
+  Spec: docs/superpowers/specs/gop-db/2026-10-27-ycldbg-khao-sat-mat-bang-design.md | Tóm tắt: .plans/gop-db/ycldbg-khao-sat-mat-bang/design.md
 
 - mua-hang-sua-vat-pi-hd (#11833) → @junfoke → .plans/gop-db/mua-hang-sua-vat-pi-hd/plan.md
   Trạng thái: 🟢 **Xong luồng trong nước + test trọn luồng PI → duyệt → HĐ trên local (22/10/2026)**, ERP `TanPhatDev` nhánh `gop_db`, CHƯA commit. Còn: QA dev-erp.
@@ -305,7 +634,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Blocked:
 - nhap-kho-con-lai → @junfoke → .plans/gop-db/nhap-kho-con-lai/plan.md (design: .plans/gop-db/nhap-kho-con-lai/design.md)
   Port 4 màn ERP "Kho › Nhập kho" còn lại: chờ báo thừa thiếu, phiếu báo thừa thiếu, nhập kho điều chỉnh kiểm kê, nhập lại điều chỉnh sai số liệu. Bắt đầu 22/10/2026, nhánh `feat/kho-nhap-kho-con-lai` (cả 2 repo, từ develop).
-  Trạng thái: 🟡 Phase 1 (2 màn thừa thiếu) + Phase 2 (nhập kho điều chỉnh kiểm kê) XONG, đã commit 22/10 (chưa merge develop) — PHPUnit 12/12 + 9/9 + bấm thật. Kèm: chuyển màn ĐNNK sang `/warehouse/import-requests`. Phase 3 nhập lại TẠM DỪNG (23/10) — chờ BE Phiếu xuất kho của @nguyentrancu97.
+  Trạng thái: 🟡 Phase 1 (2 màn thừa thiếu) + Phase 2 (nhập kho điều chỉnh kiểm kê) XONG, đã commit 22/10 (chưa merge develop) — PHPUnit 12/12 + 9/9 + bấm thật. Kèm: chuyển màn ĐNNK sang `/warehouse/import-requests`. Phase 3 nhập lại BỎ — @nguyentrancu97 đã port (`/finance/warehouse-reimports`, develop 22/10); 09/11 gắn link menu Kho (client `b1121c720`).
 
 - danh-muc-kho → @junfoke → .plans/gop-db/danh-muc-kho/plan.md (design: .plans/gop-db/danh-muc-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-19-danh-muc-kho-design.md)
   Port 7 màn ERP "Danh mục → Kho" sang phân hệ Danh mục chung, nhóm "Kho" (bỏ Nhóm kho, bỏ đồng bộ CRM, 1 quyền "Quản lý kho"). Bắt đầu 19/10/2026; code nằm ở nhánh `feat/chuyen-doi-hang-hoa` (cả 2 repo, user chỉ định — chuyển từ `feat/warehouse-catalogs`, chưa commit).
@@ -361,15 +690,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Trạng thái: 🟢 **Xong cả 3 màn (Chi tiết / Theo NV / Đối chiếu 1 KH) BE + FE, khớp ERP + Playwright (07/10/2026)**, nhánh `develop`, CHƯA commit.
   Còn: chạy SQL quyền 1683-1694 trên server + gán vai trò.
   Spec: docs/superpowers/specs/gop-db/2026-10-06-sale-customer-debt-reports-design.md | Tóm tắt: .plans/gop-db/sale-customer-debt-reports/design.md
-
-- permission-seeder-sync → @namdangit → .plans/gop-db/permission-seeder-sync/plan.md
-  Seeder quyền HRM + ERP chuyển từ "xoá hết tạo lại theo id" sang upsert theo `(guard, name)`, khai rõ `RENAMED`/`REMOVED`, có `--dry-run`. Bắt đầu 14/10/2026.
-  Spec: docs/superpowers/specs/gop-db/2026-10-14-permission-seeder-sync-design.md
-  Trạng thái: 🟢 ĐÃ merge gop_db + deploy PROD 15/10/2026 (api 180147fab, ERP bd2a8d4c6a); quyền thực tế prod trước = sau. Đã cleanup prod. Còn: deploy dev, báo team cách khai quyền mới (skill permission-seeder), xoá permission_legacy_ids.php sau khi mọi môi trường đã sync.
-
-- quotation-no-project → @namdangit → .plans/gop-db/quotation-no-project/plan.md
-  Báo giá không gắn Dự án TKT (tester 13/10 + #11651): tạo → duyệt → chốt Trúng thầu → Lập hợp đồng. Bắt đầu 13/10/2026.
-  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6) + 14/10 phản hồi tester (api feb3e4cd6, client b98d50568). Deploy nhớ chạy migration 2026_10_13_000001.
 
 - quan-ly-hang-hoa / **Phase 7 Luồng tính giá** (4 chứng từ YCHG → YCTG → PTG → KQ) → @namdangit → .plans/gop-db/quan-ly-hang-hoa/luong-tinh-gia/design.md
   Trạng thái: chốt Q1–Q20 + D1–D13 + P1 (`luong-tinh-gia/ton.md`); mockup T0 + design 7 đợt T1–T7 **user DUYỆT 11/10/2026**.
@@ -540,7 +860,142 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Trạng thái: **ĐÃ PUSH gop_db 09/10/2026 (api 59537031f, client 3ea829c51)**. Spec e2e nằm ở HRM/e2e (ngoài git). PHPUnit MeetingTarget 26/26 + MeetingByProjects 28/28; e2e `meeting-target` 11/11 (chạy `--no-deps`).
   Đã sửa 5 lỗi nhỏ sau review (xem design.md). Đã chạy 2 migration vào DB local `hrm_erp` (`meeting_types.target_type`, `meetings.contract_id`). Còn: cập nhật thiết kế app mobile.
   Loại meeting thêm "Meeting theo đối tượng" (Dự án TKT / Hợp đồng) → bắt buộc chọn đối tượng; bỏ checkbox "Meeting theo dự án".
+- ycxh-xuat-ban-sc-bd-type17 (YCXH loại 17 — Xuất bán SC-BD / XUAT_BD_SC, trọn chuỗi) → @dangquang.tom → .plans/gop-db/ycxh-xuat-ban-sc-bd-type17/
+  Port loại xuất 17 (XUAT_BD_SC) từ ERP sang HRM, trọn chuỗi. Loại thứ 3/3 đợt này (15 → 4 → 17). Nguồn: HĐ dịch vụ SC-BH, wr_service_contract_items.type=1 (anh em loại 16 type=0); loại 17 CÓ delivery. Nguyên tắc tối thượng: "làm đúng ERP, không tự bổ sung gì cả".
+  **Trạng thái (19/10): THIẾT KẾ ĐÃ CHỐT ("1 đúng, 2 ok") + SPEC VIẾT XONG — chờ user review spec trước writing-plans. Điều tra ERP flow 17 + hiện trạng HRM XONG (scratchpad/sdd-type17/*). Spec: docs/superpowers/specs/gop-db/2026-10-19-ycxh-xuat-ban-sc-bd-type17-design.md · design.md tóm tắt đã fill. Phạm vi: create→chain→finalize→accounting(đầy đủ gồm HTHT)→screens IN; loại 16/sale-return-17/downstream reports OUT. Quyết định cần user duyệt: đổi type-hint SupportAccountingTrait Contract→interface SupportAccountable để tái dùng engine HTHT loại 21 (chạm hàm dùng chung). Loại 4 ĐÃ commit+push develop (hrm-api b17e77e6a, hrm-client 24a03e33e).**
 
+- ycxh-xuat-tra-ncc-type4 (YCXH loại 4 — Xuất trả nhà cung cấp, trọn chuỗi) → @dangquang.tom → .plans/gop-db/ycxh-xuat-tra-ncc-type4/
+  Port loại xuất 4 (XUAT_TRA_NCC) từ ERP sang HRM, trọn chuỗi. Loại thứ 2 trong 3 loại đợt này (15 → 4 → 17, làm từng loại).
+  Nguồn = YCNH (product_import_requests, type∈{1,2,12,13,15}, status 5 DA_HACH_TOAN, is_complete, created_by self). 2 chuỗi: PXH thẳng từ YCXH + YCXH→ĐNXK→PXK→PXH. Hạch toán Nợ 3311/Có 156/Có 33311; map HĐ 2→InlandBuyContract / 15→InlandBuyContractNew.
+  **Trạng thái (17/10 — HOÀN TẤT + ĐÃ COMMIT/PUSH develop: hrm-api b17e77e6a, hrm-client 24a03e33e): Task 1-8 + helper hiển thị (Task 7) XONG, subagent-driven. BE: canSupplierReturn/getDataForReturn (Finance ProductImportRequest), API data-for-supplier-return + search YCNH, createFromSupplierReturn (CREATABLE_TYPE_IDS+=4, giữ giá vốn ≠0), guard gửi duyệt + per-line SL≤remaining (self-exclude khi sửa, fix I-1), side-effect finalize cả 2 đường (returned_qty+=, type12 arrived+allocated-=, type13 allocated-=, exported_qty+=, YCXH status5), hạch toán nhánh type 4 + supplier resolve 2 path + VAT=0 bỏ 33311, helper resolveSupplierReturnInfo (NCC+contract_code 2/15). FE: form YCXH loại 4 + SupplierReturnSearchModal + field-relevance. Smoke UI PASS (form.type=4, isSupplierReturnType=true). Final whole-branch review OPUS **APPROVED spec + APPROVED quality** (0 Critical/0 Important/2 Minor): M1 applyAllScope → BÁC (ERP searchData cũng searchByFilter cùng scope :1233-1333, mirror 1:1); M2 trim NCC EP2 → FIX gỡ trim (ProductImportRequestController.php:112 raw fullname khớp ERP + Assign ctrl), php -l sạch. Dọn record test 39371+detail trên erp_hrm_check XONG. ĐÃ commit+push (rebase lên origin/develop, không conflict; file regulation-config feature khác giữ nguyên chưa commit). KẾ TIẾP: sang LOẠI 17 (XUAT_BD_SC/SC-BD), KHÔNG tự bắt đầu khi user chưa yêu cầu. Ledger: scratchpad/sdd-type4/progress.md. Nguyên tắc tối thượng cả đợt: "làm đúng ERP, không tự bổ sung gì cả".**
+
+- ycxh-xuat-khuyen-mai-type15 (YCXH loại 15 — Xuất khuyến mại HĐ hãng, trọn chuỗi) → @dangquang.tom → .plans/gop-db/ycxh-xuat-khuyen-mai-type15/
+  Port loại xuất 15 (XUAT_KM_HD_HANG) từ ERP sang HRM, trọn chuỗi YCXH→ĐNXK→PXK→PXH + hạch toán. Loại đầu trong 3 loại đợt này
+  (15 → 4 → 17, làm từng loại). Anh em của loại 14: cùng firm_contract_id/tab, khác 4 điểm: nguồn dòng = combo KM giá 0
+  (firm_contract_combo_group_option_products), kho KM promo_warehouse_id, hạch toán chỉ giá vốn, điều kiện canProductExportPromotion.
+  KHÔNG migration (cột đã đủ). Tái dùng quyền YCXH. Nhánh `develop` cả 2 repo.
+  Spec: docs/superpowers/specs/gop-db/2026-10-16-ycxh-xuat-khuyen-mai-type15-design.md · Plan: .plans/gop-db/ycxh-xuat-khuyen-mai-type15/plan.md
+  **Trạng thái (16/10 — HOÀN TẤT TRỌN loại 15, chờ user cho phép commit): Phase 1–6 XONG. Chuỗi: tạo YCXH loại 15, endpoint kho KM, ĐNXK pass-through + ghi ngược exported_qty, in-flight guard, hạch toán Nợ632/Có1561; màn tạo + màn chi tiết readonly. e2e Phase 6 ĐỦ 4 bước: (1) tạo YCXH loại 15 từ UI thật qua Playwright POST 200 → PYCXH-39353 verify DB; (2) validate gửi duyệt 7/7 guard PASS (reflection+rollback HĐ10627); (3) chuỗi ĐNXK→PXK→PXH verify tinker; (4) smoke show() 14/20/21/15/7/3 đều 200, nhánh dispatch đúng. Review: 2 task-review APPROVED_WITH_NITS + final whole-branch OPUS CHANGES_REQUESTED (0 Critical, 1 Important I-1 ĐÃ FIX+VERIFY, 3 Minor ruling) → re-review sonnet APPROVED 0 finding → vòng review ĐÓNG SẠCH. Dọn rác test local XONG (xóa PYCXH-39324 + 39353). Code CHƯA commit (hrm-api 8 file + modal đã commit 071da6eec, hrm-client 3 file). KẾ TIẾP: chờ user cho phép commit → sang LOẠI 4 (XUAT_TRA_NCC). Ledger: scratchpad/sdd-type15/progress.md.**
+
+- dieu-kien-thanh-toan (Điều kiện thanh toán cho Tiến độ thanh toán HĐ) → @dangquang.tom → .plans/gop-db/dieu-kien-thanh-toan/
+  Nền tảng dữ liệu: danh mục `payment_conditions` cố định (8 giá trị, global) + 2 cột mới
+  (`payment_condition_id`, `offset_days`) trên `hrm_contract_process_payments`, chọn/nhập ở TAB Điều khoản thanh toán
+  màn HĐ Assign (tạo + sửa). KHÔNG bắt buộc đợt này; NGOÀI phạm vi: cảnh báo quá hạn, ngày thực tế + biên bản.
+  Spec: docs/superpowers/specs/gop-db/2026-10-16-dieu-kien-thanh-toan-design.md
+  **HOÀN THÀNH CODE + VERIFY (16/10): 7 task Native execution (skill executing-plans) đã xong. BE: migration payment_conditions (8 giá trị, seed idempotent) + 2 cột payment_condition_id/offset_days trên hrm_contract_process_payments; model PaymentCondition + quan hệ paymentCondition(); route GET assign/contracts/payment-conditions; validate nullable|exists / nullable|integer|min:0 ở Store+Update; ContractService ghi 2 field (create+update replace-all) + eager-load processPayments.paymentCondition; DetailContractResource trả payment_condition_id/offset_days/payment_condition_name. FE: ContractPaymentTermsTable 2 cột mới (V2BaseSelect điều kiện + V2BaseInput số ngày) + computed effectiveConditionOptions (tự resolve id→tên ở MỌI nơi nhúng); edit.vue nạp danh mục + merge + buildPayload.
+  Verify (không PHPUnit/git): migrate + tinker (4 ca validate + ghi/đọc eager) + HTTP JWT route 200 + Playwright màn Sửa (render 9 header, select 8 option, buildPayload đúng) + Playwright màn Chi tiết (chèn tạm pp id=8 → render 'Bàn giao nghiệm thu' + offset 30 + 0 lỗi console → dọn sạch).
+  Final review = subagent opus (fresh, KHÔNG self-review): 5 findings → fix #1 Important (màn Chi tiết thiếu :condition-options → component tự chứa qua effectiveConditionOptions, verify node 5 ca + stack thật PASS); #2/#3/#4/#5 minor deferred. DB sạch (contract15=0 dòng, status giữ nguyên). **CHƯA git commit/push (chờ user).**
+
+- hop-dong (Phase 11 — bổ sung trường FirmContract màn HĐ HRM) → @dangquang.tom → .plans/hop-dong/plan.md (feature CÓ TRƯỚC gop_db → docs vẫn ở .plans/hop-dong/, code trên `develop` cả 2 repo)
+  Spec: .plans/hop-dong/design-phase11-firm-fields.md. Bổ sung Bên B tổ chức/cá nhân (người đại diện + liên hệ + MST/CCCD),
+  Bảng giá read-only, TK ngân hàng Bên B (dropdown + snapshot), địa chỉ giao hàng read-only, `need_install`. 4 cột mới
+  `hrm_contracts`: customer_type, customer_deputy_id, customer_account_id, need_install. ĐỂ LẠI mục 3 (giao hàng/tiến độ
+  TT Redmine #11252) + mục 4 (điều kiện thời gian — HRM đã có).
+  **HOÀN THÀNH (15/10): 13 task Native execution, Playwright 2 loại khách PASS. Final review 2 opus (api+client) →
+  fix 3 Important (api#1 IDOR scope exists theo customer_id; api#2 deputy null cho cá nhân; api#3+client#1 snapshot-first
+  customer_type khớp FE), verify curl PASS; 3 minor deferred. php -l clean.**
+  **ĐÃ commit + push `develop` cả 2 repo (15/10): hrm-api 81d3bdbf9 (8 file, migration 2026_10_14_000002),
+  hrm-client b7026e198 (edit.vue). Rebase lên remote sạch, không conflict. Ledger hop-dong-phase11 đã xoá.**
+
+- lich-su-trang-thai-tu-dong-luong-xuat-nhap → @dangquang.tom → .plans/gop-db/lich-su-trang-thai-tu-dong-luong-xuat-nhap/design.md
+  Spec: docs/superpowers/specs/gop-db/2026-10-14-lich-su-trang-thai-tu-dong-luong-xuat-nhap-design.md
+  Ghi lịch sử mọi lần status phiếu luồng xuất–nhập (8 phiếu) TỰ ĐỘNG chuyển do lập từ màn khác (kể cả chéo luồng)
+  + nhóm C thủ công (YCNH, YCXBHM). Cơ chế Hướng 1, dòng log `change_status` + ghi chú nguồn vào `note`.
+  3 cơ chế theo phiếu: Nhóm 1 catalog_histories có sẵn (chèn log tại điểm auto); YCNH hệ lịch sử riêng; YCXBHM phương án A
+  (dựng catalog_histories + popup lịch sử màn danh sách).
+  **HOÀN THÀNH (14/10): TOÀN BỘ 13 task thực thi subagent-driven trên `develop` cả 2 repo, mỗi task review clean 0 Critical/Important, commit LOCAL (CHƯA push).**
+  Commit: hrm-api T1 `f49d4c575` · T2 `968de4587` · T3 `de101c9f4` · T4 `139179acf` · T5 `96a25148c` · T6 `6d4d50edf` · T7 `ec5bf402a` · T8 `df9aec340` · T9 `18ae20c06` · T10 `9619eee1f` · T11 `66943b821`; hrm-client T12 `bfb6c56599`.
+  T13 tổng kiểm: 9 script test đều PASS (bọc transaction/rollback, 0 dòng sót DB); bộ lọc "Loại hành động" YCNH dựng động KHÔNG vỡ sau T7; hồi quy mốc "Tạo mới" OK. **Còn lại: final whole-branch review (opus) + finishing-a-development-branch; CHƯA push — chờ user.**
+
+- ycxh-popup-hop-dong-chi-phi-dong-bo-ui → @dangquang.tom → .plans/gop-db/ycxh-popup-hop-dong-chi-phi-dong-bo-ui/design.md
+  YCXH loại "Xuất khác" (99): đồng bộ popup "Chọn hợp đồng chi phí" (`ContractCostModal.vue`) theo khuôn popup HĐ hãng
+  (`FirmContractSearchModal.vue`). User chốt 14/10: **CHƯA sửa logic lấy HĐ** (phạm vi theo công ty/quyền — để Phase 5,
+  KHÔNG đụng `costContractScope()`), chỉ **đồng bộ khuôn tìm kiếm + cột**.
+  Làm: FE dựng lại `ContractCostModal.vue` trên `V2BaseDataTable` — hàng lọc [Loại HĐ (giữ, chọn bảng nguồn) + Số HĐ +
+  Khách hàng + Tìm kiếm + Làm mới], cột STT/Mã hợp đồng/Khách hàng/**Địa chỉ**, server-sort + phân trang nhúng, click cả dòng.
+  BE `ProductExportRequestPickerService::costContracts()` thêm filter `code`/`customer` tách + `sort_by`/`sort_desc` whitelist
+  + select `customer_address` (`opening_contracts` → `cu.address_text`); Controller validate + truyền thêm tham số.
+  **TẤT CẢ TASK XONG + VERIFY PLAYWRIGHT ĐẠT (14/10): render đúng khuôn, filter code/customer + sort code asc/desc + chọn dòng
+  + clear đều chạy end-to-end, cost-contracts 200 OK, không lỗi từ component mới.**
+  **Bổ sung 14/10 (user phản ánh ô trigger bị disable xám + lệch): ô "Hợp đồng chi phí" đổi từ `V2BaseInput disabled`
+  bọc `.cost-pick` sang DÙNG LẠI `SourcePicker` như ô HĐ hãng (nền trắng, bấm mở popup, canh thẳng các select).
+  Thêm prop `dataTest` vào `SourcePicker.vue`. Verify: ô trắng/thẳng hàng, chọn/điền/clear OK.**
+  **Bổ sung 14/10 lần 2 (user: "vẫn lệch dòng"): root cause = nhãn KHÔNG bắt buộc cao 14px còn nhãn có `*` cao 18px
+  → control ô HĐ chi phí nhích lên 4px so với select cùng hàng. FIX: `.fld ::v-deep .v2-label { min-height: 18px }`
+  trong `ProductExportRequestForm.vue` (KHÔNG đụng V2BaseLabel chung). Verify Playwright: 4 ô cùng hàng label_height=18 +
+  box_top=152 đồng loạt, popup vẫn mở OK. Ảnh `cost-field-aligned.png`.**
+  **CHƯA commit/push — chờ user. File chạm: 2 BE (Controller + PickerService) + 3 FE (ContractCostModal.vue, SourcePicker.vue, ProductExportRequestForm.vue).**
+
+- ycxh-detail-mirror-create-edit → @dangquang.tom → .plans/gop-db/ycxh-detail-mirror-create-edit/design.md
+  Màn CHI TIẾT Yêu cầu xuất hàng (nhánh readonly của `ProductExportRequestForm.vue`): đồng bộ "Thông tin chung" + box
+  "Chi tiết hàng hoá" với màn Tạo/Sửa nhưng CHỈ ĐỌC (hướng B — tái hiện đúng từng biến thể theo loại). User chốt 14/10:
+  bỏ cột-sống Tồn/Đang giữ/Còn lại + công cụ nhập; loại 20/21 bảng phẳng (không cây cha-con); loại 14 (Xuất bán HĐ hãng)
+  dựng b-tabs theo nhóm hàng hóa (BE trả `product_groups`). BE enrich `show()` thêm per-type field + product_groups.
+  **XONG IMPLEMENT + VERIFY (chưa commit).**
+  ### Checkpoint — 2026-10-14
+  Vừa hoàn thành: Task 1-10 đều [x]. BE `show()` (Controller): `$products` select thêm `firm_contract_tab_product_id`;
+  per-type field (loại 3 ngày mượn/trả d/m/Y · loại 6 import_warehouse_name · loại 14 firm_contract_id/code,
+  firm_tab_vat_percent, customer_unit/delivery_place qua `firmContractDisplaySnapshot`, `product_groups`); helper
+  private `buildShowProductGroups()`. FE nhánh readonly `ProductExportRequestForm.vue` (691-1140): card "Thông tin chung"
+  mirror create/edit (`.fld`, nhãn "Loại yêu cầu", ô HĐ nhãn động `detailContractLabel`, per-type gate check loại
+  tường minh), card "Chi tiết hàng hoá" (loại 14 b-tabs + pay-box; 21 phẳng sale + pay-box; 20/7/manual phẳng non-sale
+  + Tổng cộng; bỏ cột-sống + công cụ nhập).
+  Verify Playwright 6 phiếu (14=39254, 21=35676, 20=35675, 7=35665, 3=35685, 6=35607) — bố cục khớp create/sửa,
+  `rawEditableInTable=0`, không lỗi JS.
+  Đang làm dở: không.
+  Bước tiếp theo: chờ user yêu cầu commit/push (feature này + feature popup HĐ chi phí). File chạm FE 1
+  (`ProductExportRequestForm.vue`) + BE 1 (`ProductExportRequestController.php`), dùng chung với feature popup HĐ chi phí.
+  Blocked:
+  ### Checkpoint — 2026-10-14 (chỉnh theo phản hồi user)
+  Vừa hoàn thành Task 11-13 (chỉ FE `ProductExportRequestForm.vue` nhánh readonly): (11) "Cần lắp đặt" đổi sang
+  `V2BaseRadio disabled` (mirror create/sửa); (12) bỏ 3 ô "Người duyệt"/"Thời gian nhận"/"Thời gian duyệt" (giữ "Phòng ban");
+  (13) chi tiết loại 14 thêm tab "Hàng hóa (*)" chung ở đầu qua computed `detailFirmRenderTabs`.
+  Verify Playwright 39254 (14) + 35676 (21): radio disabled đúng, 3 ô metadata đã bỏ, tabs ["Hàng hóa (*)","Nhóm 1"].
+  **FIX tiếp (user: "có tab hàng hoá mà chẳng có dữ liệu, chỉ Nhóm 1 có"): đối chiếu màn Sửa thấy tab "Hàng hóa (*)"
+  create/sửa = `firmCommonLines` gộp TOÀN BỘ dòng mọi nhóm, không phải chỉ dòng chưa gán nhóm. Sửa `detailFirmRenderTabs`
+  cho tab chung `lines = detailProducts` (toàn bộ), guard `!detailProducts.length`. Verify 39254: tab "Hàng hóa (*)" 2 dòng
+  (ENEO-700-V5024) + "Nhóm 1" 2 dòng — khớp hẳn màn Sửa.** CHƯA commit.
+
+  ### Checkpoint — 2026-10-14 (fix 2 bug màn chi tiết — user kèm 2 screenshot)
+  Vừa hoàn thành Task 14-16 (chỉ BE, màn tham khảo user chỉ = customer-care/services):
+  (BUG 1) cột "Dung lượng" tệp đính kèm trống vì `attachmentSizes()` đọc `files.file_size` = null (URL lưu qua
+  `attachment_urls[]`, FE không gửi size). FIX inject `BillPaymentAttachmentService` → `sizes($urls)` HEAD S3 live
+  (`Http::pool`), lấy dung lượng thật, fix luôn phiếu cũ. (BUG 2) tên tệp trong lịch sử không bấm tải được vì
+  `attachmentRows()` set `__name = tên trần` → SiValue không linkify. FIX theo khuôn `ServiceService::attachmentRowsForLog()`:
+  `__name = URL đầy đủ` + `__brief => true`, bỏ field 'Tệp', dùng hằng `CatalogHistoryService::ROW_*`.
+  File chạm: `ProductExportRequestController.php` (+ use BillPaymentAttachmentService) · `ProductExportRequestService.php`
+  (+ use CatalogHistoryService). `php -l` cả 2 OK. Verify Playwright 39254: Dung lượng "238.4 KB"/"157.5 KB";
+  log mới render 2 `<a class="si-file-link">`, click mở modal xem trước ảnh S3 (log test đã xóa, audit sạch).
+  **LƯU Ý: BUG 2 chỉ áp cho log phát sinh SAU fix — log cũ là snapshot bất biến, muốn clickable phải backfill
+  `catalog_histories.new_value` (ghi đè audit) → CHỜ user quyết.** CHƯA commit (gom chung các feature YCXH chưa commit).
+
+- luong-nhap-xuat-field-display → @namdangit → .plans/gop-db/luong-nhap-xuat-field-display/design.md
+  Chuẩn hóa hiển thị trường cho 8 màn luồng nhập/xuất (Tạo/Sửa/Chi tiết): (a) "Xuất thẳng" luôn là checkbox cả 3 chế độ;
+  (b) chi tiết bỏ trường "Trạng thái" khỏi THÔNG TIN CHUNG (header đã có badge); (c) ẩn trường khi *vừa không liên quan
+  với loại phiếu (theo ERP gốc) vừa rỗng*. Cách 2 = helper `utils/flow-field-visibility.js` + ma trận `fieldRelevance`/màn.
+  Spec: `docs/superpowers/specs/gop-db/2026-10-12-luong-nhap-xuat-field-display-design.md`.
+  **12/10: brainstorming xong, khung đã duyệt → ĐANG VIẾT spec đầy đủ (trace ERP 8 màn lập ma trận), chờ user review spec.**
+
+- ycxh-port-erp-day-du → @namdangit → .plans/gop-db/ycxh-port-erp-day-du/design.md
+  YCXH port đủ các loại từ ERP (6 phase). Spec Phase 1 (nháp chỉ cần Loại, đổi nguồn khi sửa nháp, hoàn thiện 20/21,
+  bảng nhập tay Tồn/ĐVT/ảnh, loại 99 chi phí HĐ, loại 3 hạn mức mượn):
+  `docs/superpowers/specs/gop-db/2026-10-12-ycxh-port-erp-day-du-design.md`. **12/10: spec + plan Phase 1 đã duyệt (17 task); cách thực thi Subagent-driven; Q-ERP = A (model ERP `App\Model\Hrm\HrmContract`). ĐÃ commit+push gop_db 12/10 (api 8dd95bfef, client 102bb5714, ERP 9fb4cb18ca; e2e 5c84516 local, không có remote).** **Checkpoint 13/10: Lượt G XONG (user "làm theo ERP, 20/21 tự quyết, xoá code thừa"): kho theo cty người lập + loại 6 chặn kho khác cty, tồn cty loại 7 (StockService::getCompanyLineStocks), loại 19 lưu mã loại HĐ kiểu ERP, ERP hiển thị HĐ HRM cho 20/21, xoá 2 modal thừa. BE 110 pass, e2e YCXH 28 pass, ERP chỉ php -l. ĐÃ commit+push 13/10 (api 82e179d7b, client ed8f003fd, ERP 32e217df48; e2e 33feff1 local).**
+
+- borrow-sells-export-history → @namdangit → .plans/gop-db/borrow-sells-export-history/plan.md
+  PXBHM (`finance/borrow-sells`): Xuất Excel danh sách + Lịch sử (popup + `SystemInfoSection`) + mở rộng bộ lọc +
+  sửa cột danh sách/nhãn Loại phiếu + **Task C: đồng bộ màn Xem chi tiết với ERP**.
+  **TẤT CẢ PHASE XONG + VERIFY PLAYWRIGHT + ĐÃ COMMIT & PUSH gop_db (10/10).**
+  Task C (chi tiết `_id`): tách inner tab Hàng hoá/Nhóm, bảng Thông tin thanh toán hợp đồng (chỉ HĐ hãng),
+  thêm Người/Phòng yêu cầu, `type_name` suy từ `contractable_type`. Verify 2 ca: FIRM 4312 (2 tab + payment),
+  WR_SERVICE 4228 (ẩn tab Nhóm + ẩn payment). Commit: api `9177aa457`, client `12d2c1d44` (các phase trước:
+  api `c8cb68ff0`/`56b0d833c`/`1936a0b25`). `borrow_sells` chỉ có luồng tạo → lịch sử 1 dòng "Tạo mới".
+  Lưu ý: chi tiết chỉ mở qua điều hướng SPA (gõ thẳng URL rơi vào trang lỗi Nuxt do SSR không có token — đặc tính dev).
+  Bước tiếp: không — feature hoàn tất, đã push.
+
+- division-market-employee — Phiếu phân chia thị trường theo nhân viên: phân theo khu vực KD, mỗi phiếu 1 nhân viên (Redmine #11695, nhánh task_11695 tách từ task_11694) → @junfoke → .plans/gop-db/division-market-employee/plan.md
+- division-market-department — Phiếu phân chia thị trường theo phòng ban: port ERP + phân theo khu vực KD (Redmine #11694, phụ thuộc #11623) → @junfoke → .plans/gop-db/division-market-department/plan.md
+- business-areas — Danh mục khu vực kinh doanh MỚI (Redmine #11623: Tỉnh/TP → Khu vực KD → Phường/Xã, 1 phường/xã ≤ 1 khu vực) → @junfoke → .plans/gop-db/business-areas/plan.md
+  13/11: gắn quyền `master_data.khu_vuc_kinh_doanh.view/.manage` (gop_db api `de66565a7`, client `2157a4e6d` — phải cấp quyền ở /admin/roles) + sửa import so tên Unicode (api `e65188bb0`) + bổ sung 9 xã thiếu trên prod.
 - popup-chon-so-dong — popup CHỌN bản ghi: số dòng/trang 10/20/50/100 (34 popup, hằng `utils/pickerPagination.js`) → @junfoke → .plans/gop-db/popup-chon-so-dong/plan.md
 - report-meeting-drawer → @namdangit → .plans/gop-db/report-meeting-drawer/plan.md
   Báo cáo Thị trường – Dự án: nới Meeting::canView cho báo cáo meeting theo thị trường + kết quả CSKH tiềm năng; panel meeting
@@ -1601,26 +2056,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   **Phải khôi phục trước khi chạy harness đối chiếu quyền HRM vs ERP.**
   Tóm tắt: `.plans/gop-db/finance-borrow-stock-list/design.md`
 
-- task-11566-audit-name (#11566) → @namdangit → .plans/gop-db/task-11566-audit-name/plan.md
-  Trạng thái: code xong trên `gop_db`, CHƯA commit (03/10/2026) — 202 file BE + 13 FE. Chờ user review, chốt mã 255/50, test.
-
-- admin-tra-soat-theo-phieu (#11523) → @namdangit → .plans/gop-db/admin-tra-soat-theo-phieu/plan.md
-  Trạng thái: đã push nhánh `task_11523` + merge vào `develop` (30/09/2026). Chưa merge về gop_db; server cần chạy migration.
-
-- department-lead-employee-id → @namdangit → .plans/gop-db/department-lead-employee-id/plan.md
-  Trạng thái: ✅ **Đã deploy PROD + migrate (25/09/2026)** — commit `484ee95fd` + `32246d20c` trên `gop_db`. Còn: nghiệp vụ chốt 14 phòng ERP ghi khác HRM cũ.
-  PROD sau gộp DB: `departments.department_lead_id`/`parts.part_lead_id` là `employees.id` (nghĩa ERP) nhưng HRM đọc như
-  `employee_infos.id` → 75/84 phòng, 20/25 bộ phận hiện sai trưởng. Chốt: giữ nghĩa ERP, HRM quy đổi bằng custom cast.
-
-- vehicle-catalogs → @namdangit → .plans/gop-db/vehicle-catalogs/plan.md
-  Trạng thái: 🟢 **BE + FE xong, đã test API thật (22/09/2026). Chưa verify trình duyệt, chưa commit.**
-  Port 5 danh mục Xe từ ERP sang nhóm menu "Danh mục xe" của phân hệ Danh mục chung:
-  Hãng xe · Dòng xe · Phân loại xe · Model xe · Đời xe (dùng lại bảng ERP `vehicle_*` trên DB gộp).
-  Chốt: thêm cột `code` + sinh mã cho 1.730 bản ghi cũ; **giữ nguyên `status` 1/0 của ERP**, HRM
-  ánh xạ 0 ⇄ 2 ở Entity; xóa bị chặn khi còn danh mục con hoặc còn bản ghi nghiệp vụ tham chiếu
-  (`products.model_id` gần 39.000 dòng); đủ Xuất Excel + Import 5 màn; 10 quyền mới id 1590–1599.
-  Có sửa 1 file dùng chung (user duyệt): thêm hook `duplicateNameScopeColumns()` vào
-  `ImportsCatalogRows` để giữ luật trùng tên theo cấp cha của ERP.
 - product-import-form-rework → @namdangit → .plans/gop-db/product-import-form-rework/plan.md
   Trạng thái: 🟢 **Cụm 1 ĐÃ NGHIỆM THU — CỤM 2 (2,15,99) + CỤM 3 (11,3,9,14) ĐÃ VERIFY XONG, chờ user nghiệm thu (08/10/2026)**.
   → TOÀN BỘ 8 loại tạo tay (2,3,4,9,11,14,15,99) đã code + verify. Cụm 3 (08/10): BE loại 11 money
@@ -1656,10 +2091,31 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   `OtherProductImportAccountingService::build()`=[] (no-op tạo-tay). Loại 99 render-only (mọi nguồn đường-B là cty 4).
   Nhãn label 3 loại lấy đúng ERP, không bịa. CHƯA commit/push (chờ user yêu cầu).
   Bước tiếp: user nghiệm thu Cụm 2 → mở Cụm 3 (loại 11,3,9,14).
+  **②b — ghi hàng giữ + arrived/arriving khi HOÀN THÀNH phiếu nhập loại 2/15 (CODE XONG + dry-run PASS 09/10/2026):**
+  `ProductImport::updateWarehouse()` thêm khối loại 15 (giữ hàng cả 2 pool: đường A prepick guard type∈{1,3} /
+  đường B direct_detail + effect-2 arrived+=/arriving-=/osp qty-= + promo) và khối loại 2 (CHỈ giữ hàng, KHÔNG
+  effect-2 — y ERP comment out) + 7 helper raw-DB. Nới `PrepickStockService::addLot()` THÊM (objectableType/Id
+  optional, null = hành vi cũ). Polymorphic P2.1: objectable_type=`App\Model\Warehouse\ProductImportDetailCustomer`.
+  `php -l` sạch 2 file. **Dry-run live-code (transaction+ROLLBACK, 0 ghi prod)** trên phiếu 12254(đường A, 5 lô)/
+  12290(đường B)/12344(promo)/12238(loại 2): compiled `updateWarehouse()` chạy không exception, delta đúng ERP,
+  objectable khớp. Wiring: `handleCompleted()` (ProductImportService) → `updateWarehouse()` khi status=DA_HOAN_THANH.
+  NGUYÊN TẮC: "② ghi y ERP" = ghi `arriving_qty` giống hệt ERP; fix invariant-drift (GREATEST(0,Σprogress−arrived))
+  là TASK RIÊNG tương lai, KHÔNG thuộc ②b. KHÔNG backfill (phiếu đã hoàn thành là ERP tạo, đã có data). CHƯA commit/push.
+  Còn lại: user nghiệm thu UI + regression màn "Phiếu xuất giữ". ③ loại 11 foreign deferred.
 
 - ycxh-xuat-thuc-hien-hop-dong-type19 → @namdangit → .plans/gop-db/ycxh-xuat-thuc-hien-hop-dong-type19/plan.md
-  Trạng thái: 🟢 **XONG code Phase 1–4 + verify trình duyệt Phase 5 (06/10/2026). Chưa commit, chưa push.**
-  Verify end-to-end trên `erp_new`: nguồn **wr** phiếu 41534 → `WrServiceContract`; nguồn **firm** phiếu
+  Trạng thái: 🟢 **XONG code Phase 1–5 + Phase 6 nâng cấp popup chọn HĐ (13/10/2026). Chưa commit, chưa push.**
+  **Phase 6 (13/10/2026):** nâng cấp popup "Chọn hợp đồng / đơn hàng" cho giống ERP + sửa lỗi "chỉ 20 dòng".
+  BE `emplementContracts()` viết lại: validate contract_type/code/customer/page/per_page/sort_by/sort_desc,
+  join `employees`→`employee_infos` lấy tên người duyệt, whitelist sort, **phân trang server-side**
+  (`fromSub + count + forPage`), thêm `type_name`/`object_type`/`object_id` + helper `emplementTypeName`.
+  FE `EmplementContractSearchModal.vue` viết lại theo `V2BaseDataTable`: **8 cột** (STT, Ngày lập, Loại HĐ,
+  Số HĐ, Khách hàng, Tổng thanh toán, Ngày duyệt, Người duyệt), **link cột số HĐ** (firm→ERP tab mới,
+  wr→HRM nội bộ qua `contract-link.js`), **sort từng cột**, **phân trang** 10/20/50/100. Verify Playwright
+  (DNS Admin): total **19.720** (last_page 1972) — sửa xong lỗi 20-vs-16582; sort total tăng dần OK; lọc
+  firm-8 OK; link firm→:8001 / wr nội bộ OK; tiền en-US. Quyết định: 1a reuse contract-link.js, 2-text lọc
+  customer_name LIKE, 3-snapshot cột KH snapshot (user "ok" 13/10).
+  Verify Phase 5 end-to-end trên `erp_new`: nguồn **wr** phiếu 41534 → `WrServiceContract`; nguồn **firm** phiếu
   41535 → `FirmContract`, code snapshot + MST đúng; picker union firm+wr KHÔNG lọc công ty; round-trip
   sửa (wr) hiện đúng locked label + snapshot KH + dòng hàng. Chi tiết checkpoint trong plan.md.
   Màn HRM Tạo YCXH: loại 19 "Xuất thực hiện hợp đồng" hiện trong dropdown nhưng chưa có ô chọn HĐ,
@@ -1687,36 +2143,29 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   ở 5 file test MasterData). Bước tiếp: user test công ty 9 khai tồn đầu kỳ ra ngày 2026-10-01.
 
 - ycxh-xuat-ban-hang-type14 → @namdangit → .plans/gop-db/ycxh-xuat-ban-hang-type14/plan.md
-  Trạng thái: 🟡 **Đã viết design + spec, CHỜ user review spec** (05/10/2026), chưa code.
-  Màn HRM *Tạo yêu cầu xuất hàng* (Redmine "Validate khi lưu nháp"). 2 việc:
-  (1) chuẩn hoá **Lưu nháp = chỉ cần chọn "Loại yêu cầu"** cho mọi loại (nới cả 20/21);
-  (2) dựng luồng tạo thật cho **loại 14 "Xuất bán hàng"** (nguồn `firm_contracts`/HĐ hãng),
-  gửi duyệt chỉ 2 check thiết yếu (`canProductExport` + SL-còn-xuất trừ in-flight 3 nguồn +
-  quỹ cha-con); **skip 3 check phụ** (công nợ, lệch giá, support_accounting) + TODO; **không làm
-  loại 15 đợt này**. Spec: `docs/superpowers/specs/gop-db/2026-10-05-ycxh-xuat-ban-hang-type14-design.md`.
+  Trạng thái: 🟢 **XONG luồng tạo + Phase 4 bút toán loại 14 (21/10/2026). GIỮ LOCAL, chưa push.**
+  Màn HRM *Tạo yêu cầu xuất hàng* (Redmine "Validate khi lưu nháp"). 2 việc gốc đã xong:
+  (1) Lưu nháp = chỉ cần chọn "Loại yêu cầu" cho mọi loại; (2) luồng tạo thật loại 14 "Xuất bán hàng"
+  (nguồn `firm_contracts`/HĐ hãng) — đã code + Playwright-verify (session trước).
+  **Phase 4 — BÚT TOÁN + GHI NGƯỢC loại 14** (theo dõi ở `.plans/product-export-request-full-types/plan.md`
+  mục P4-ACCOUNTING; SDD ledger `hrm-api/.superpowers/sdd/2026-10-21-pxk-phase4-type14-posting/`):
+  port ĐỦ 8 cụm bút toán loại 14 (giá vốn Có **1561**) + ghi ngược exported_qty 3 tầng về HĐ hãng
+  (resolve theo ROW + rơi legacy khi id treo + bridge 1 dòng + need_repair 0/1, 2 wire path A/B) +
+  sửa bug ẩn contractMeta loại 15. SDD full cycle T1-T5 + final review opus (raise 1 load-bearing L1
+  ghi-ngược-theo-ID) + fix L1 bám ERP `ProductExport.php:1739-1761` + scoped re-review **APPROVED**.
+  Commit local `develop` (hrm-api): chain 7 commit, HEAD `56dc7cbdd`, GIỮ LOCAL chờ user push.
+  **Chờ user chốt**: (a) YCXH loại 15 có cần tự về status 5 không (hiện KHÔNG — lệch quan sát);
+  (b) phase kế: nhập/xuất lại, điều chuyển 5/6/7, ghép 9/tách 10, đóng gói, in biên bản, loại 15 Path B.
+  Spec: `docs/superpowers/specs/gop-db/2026-10-05-ycxh-xuat-ban-hang-type14-design.md` +
+  `docs/superpowers/specs/2026-10-21-pxk-phase4-type14-posting-design.md`.
 
-- user-profile-performance → @namdangit → .plans/gop-db/user-profile-performance/plan.md
+- user-profile-performance → @cuong61n → .plans/gop-db/user-profile-performance/plan.md
   Trạng thái: 🟡 **Mới lên plan (22/09/2026), chưa code.** Chờ user chốt phạm vi Phase 2–3.
   Giảm tải API `user-profile` (1,45 MB · 0,5–0,7 s CPU · 37 query, chạy ở mọi lần tải trang).
   Đã đo: departments 442 KB (86% là 2 quan hệ lồng) · permissions trả TRÙNG 2 lần 199 KB ·
   employees 258 KB. Không tách endpoint lazy vì `state.departments` dùng ở 119 file.
   Hạ tầng đã sửa cùng ngày (ngoài repo): bật `gzip_types` cho nginx server dev → payload −91%;
   `pm.max_children` 5 → 12. Chi tiết: `.plans/gop-db/user-profile-performance/design.md`.
-
-- smart-filter-panel-migration → @namdangit → .plans/gop-db/smart-filter-panel-migration/plan.md
-  Trạng thái: 🟢 **XONG Phase 0–6, đã verify trên trình duyệt** (21/09/2026). **Chưa commit, chưa push.**
-  Gom toàn bộ bộ lọc về **một** panel: 56 file chuyển `V2BaseFilterPanel` → `V2BaseSmartFilterPanel`,
-  51 file đã dùng Smart nhưng thiếu `floating` được bật + dọn placeholder trùng nhãn.
-  `components/V2BaseFilterPanel.vue` **đã xoá**.
-  4 component dùng chung được bổ sung (user duyệt từng cái): panel truyền `required`;
-  panel + `V2BaseFilterFieldControl` nhận `in-modal` (→ `V2BaseSelectInModal`);
-  control nhận `field.multiple`; `V2BaseFieldCategoryApplicationFilter` nhận `floating`.
-  Skill `list-page` đã chốt: panel duy nhất · `floating` bắt buộc · khoảng cách trên/dưới khối lọc `pb-2` (12px).
-  **Đã verify Playwright** (20 màn): sửa thêm 6 lỗi UI — nhãn float đè chip, viền đôi ô chọn nhiều,
-  ô chọn nhiều 42px, 62 ô ngày 32px, 9 ô tìm-từ-xa thiếu `height`, ô Tag 32px (gốc chung:
-  CSS `.ff` thua specificity CSS riêng của control). Gộp nốt 31 cặp "từ ngày – đến ngày" ở 30 màn.
-  Kết quả: 0 màn thiếu `floating`, 0 màn tách ô ngày, mọi ô lọc cao đúng 36px. Tổng 113 file.
-  Bước tiếp: user duyệt rồi commit/push.
 
 - quy-hoach-lai-menu-phan-he → @junfoke → .plans/gop-db/quy-hoach-lai-menu-phan-he/plan.md
   Trạng thái: **CODE DONE CẢ 5 NHÓM + VERIFY BROWSER khung menu** (16/09/2026).
@@ -1938,22 +2387,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   **[06/09 wrap up]** Mockup chốt ở **vòng 17**. Mở bằng `file://` (file tự chứa, 0 tham chiếu ngoài) hoặc HTTP **cổng cố định 8700**. Thư mục có thêm `QLHD_mockup.html` = bản sao user tự đặt tên.
   **CÒN:** (a) user duyệt UI mockup vòng 17; (a2) nối ngày đặt cọc thật từ phiếu thu ở tab Tài chính (đang hard-code) + chốt có bỏ ô *NV kinh doanh* trong nhóm HĐ không (đã có ở tiêu đề); (b) mockup nhóm A (trường + luồng 7 trạng thái trong form HĐ) và nhóm C (3 báo cáo) — user chốt làm sau; (c) màn danh sách HĐ đang thực hiện — làm sau.
 
-- **cai-dat-phan-he — Cài đặt phân hệ (ẩn/hiện phân hệ + từng mục menu)** → @namdangit →
-  `.plans/gop-db/cai-dat-phan-he/design.md` · `plan.md` ·
-  spec `docs/superpowers/specs/gop-db/2026-09-14-cai-dat-phan-he-design.md`
-  Trạng thái: **XONG TOÀN BỘ, ĐÃ TEST TAY** (2026-09-14) — chưa commit.
-  Màn mới `/timesheet/setting/subsystems` liệt kê đủ 24 phân hệ + ~600 mục menu để tick ẩn/hiện,
-  mặc định có tick. Bảng mới `menu_settings` chỉ lưu mục BỊ TẮT; key = đường dẫn nhãn
-  (`finance::Thu chi::Phiếu thu`) vì ~345 mục placeholder không có link.
-  Màn đọc thẳng registry `components/subsystems.js` → **menu thêm mới sau này tự có mặt**, không phải sửa gì.
-  Lọc cắm vào 6 bề mặt sẵn có (topbar · sidebar cây · sidebar hub · lưới Tổng quan hub · màn chọn phân hệ ·
-  dropdown chuyển phân hệ) + middleware FE chặn gõ thẳng URL → `/feature-unavailable`.
-  3 checkbox ERP/Quyết định/Cơm rời khỏi màn Cài đặt (vẫn ghi song song key cũ `use_erp`/`use_decision`/`use_rice`);
-  **"Sử dụng CRM" ở lại** vì `use_crm` là cờ đồng bộ CRM Mate, không phải phân hệ.
-  ⚠️ **Trùng mục đích với `prod-cutover` Phần B** (allowlist fail-closed cho PROD, chưa code) —
-  cut-over PROD phải seed sẵn danh sách ẩn, không dựng cơ chế thứ hai. Xem mục 6 của spec.
-
-- **prod-cutover — Đưa `gop_db` lên PROD (1 nhánh, 2 môi trường)** → @namdangit →
+- **prod-cutover — Đưa `gop_db` lên PROD (1 nhánh, 2 môi trường)** → @cuong61n →
   `.plans/gop-db/prod-cutover/design.md` · `plan.md` ·
   spec `docs/superpowers/specs/gop-db/2026-09-04-prod-cutover-design.md`
   Trạng thái: **SPEC XONG (Phase 0), CHƯA CODE** (2026-09-04).
@@ -2144,63 +2578,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   ⚠️ Môi trường phiên làm là Node 12 → chưa chạy Nuxt dev để test end-to-end.
   Spec: docs/superpowers/specs/gop-db/2026-08-03-redesign-man-chon-phan-he-design.md | Tóm tắt: .plans/gop-db/redesign-man-chon-phan-he/design.md
 
-- wr-service-quotation (chứng từ 3) → @namdangit → .plans/gop-db/wr-service-quotation/plan.md
-  📌 24/09/2026 — user chốt 4 việc treo: **bỏ** khối "Người duyệt" ở phiếu bảo hành · **không sửa**
-  phạm vi Super Admin · **chưa làm** testcase/mô tả nghiệp vụ bản HRM · **giữ** phiếu thử id 10370.
-  Luồng dịch vụ hết việc nhỏ treo; còn Phụ lục bổ sung/giảm + 4 mảng hợp đồng phụ thuộc phân hệ khác.
-  Trạng thái: **HOÀN THÀNH CODE + ĐÃ TEST BE VÀ GIAO DIỆN** (2026-08-21). Chưa sinh testcase /
-  mô tả nghiệp vụ. Cột "Giá vốn" khoá sau quyền `Xem giá vốn hàng hoá` (user chốt) — đã cấp quyền
-  đó cho vai trò Super admin trên DB local để test.
-  Port màn ERP "Phiếu cung cấp thông tin làm báo giá" — chứng từ THỨ 3 của dây chuyền dịch vụ.
-  Phạm vi user chốt 2026-08-21: **chỉ chứng từ 3** (chứng từ 4 Báo giá dịch vụ để đợt sau), tiền
-  **tính ở giao diện như ERP**, khối Phiếu bảo hành **giữ dữ liệu nhưng chưa dựng màn**.
-  BE: 11 entity + service + notifier + print service + request + controller + 2 resource,
-  13 route, 3 quyền mới (id 1515–1517), **KHÔNG migration** (12 bảng ERP đã có trên DB gộp).
-  FE: 11 file `pages/customer-care/wr-information-requests/` + `utils/wrServiceQuotationMoney.js`
-  + 1 mục menu; nút "Tạo phiếu cung cấp thông tin" ở chứng từ 2 đã nối sang màn này.
-  ⚠️ Bảng dữ liệu **dùng chung với Báo giá dịch vụ** qua cột `type` — mọi truy vấn phải kèm `type`.
-  Verify: toàn luồng chạy thật trên DB gộp (danh sách/lọc/xuất/in · prefill · lưu nháp · gửi đi kèm
-  thông báo đúng người · từ chối · xoá trả trạng thái 2 chứng từ trước); module tính tiền FE đối
-  chiếu **39 phiếu thật** khớp tuyệt đối với bản tính ở máy chủ; 11 file `.vue` compile sạch.
-  Test GIAO DIỆN trên cổng 3002: lập phiếu · sửa số lượng · thêm dịch vụ · thêm thiết bị bảo dưỡng
-  + gói · chuyển Sửa chữa ↔ Bảo hành · lưu · in · xoá · cảnh báo chưa lưu — **tìm và sửa 2 lỗi**:
-  thiếu cờ quyền giá vốn ở màn lập mới, và **Lưu nháp luôn thất bại** vì cột `quotation_term`
-  NOT NULL nhận `null` (đã thêm `fillDefaults()`).
-  ⚠️ Nút "Tạo báo giá dịch vụ" chưa điều hướng được (chứng từ 4 chưa port) — tạm báo toast.
-
-- warranty-repair-handle-request → @namdangit → .plans/gop-db/warranty-repair-handle-request/plan.md
-  Trạng thái: **HOÀN THÀNH CODE + ĐÃ TEST + ĐÃ GIAO TÀI LIỆU** (2026-08-21).
-  Tài liệu kèm theo: `testcase.xlsx` (87 TC), `Mô tả nghiệp vụ - Phiếu xử lý yêu cầu.docx`,
-  testcase bản ERP ở `erp/.plans/warranty-repair-handle-request-erp/` (57 TC).
-  Nút "Tạo phiếu cung cấp thông tin" nay đã nối sang chứng từ 3 (không còn báo toast).
-  Port màn ERP "Phiếu xử lý yêu cầu" (`/admin/customer-care/warranty_repair_handle_requests`) —
-  chứng từ THỨ 2 của dây chuyền dịch vụ, lập từ Phiếu yêu cầu kiểm tra sửa chữa – bảo hành.
-  Đã khảo sát: 6 trạng thái · 4 quyền · 3 bảng (`warranty_repair_handle_requests` 5.259 dòng) ·
-  mỗi dòng thiết bị chọn LỖI THIẾT BỊ (nhiều) + HÀNH ĐỘNG (Tư vấn điện thoại / CCTT làm báo giá).
-  Mọi dòng đều "Tư vấn điện thoại" → phiếu và phiếu yêu cầu gốc đều thành "Đã tư vấn điện thoại";
-  ngược lại → "Chờ CCTT", báo cho người có QUYỀN "Tạo phiếu cung cấp thông tin", phiếu yêu cầu gốc
-  thành "Đã xử lý".
-
-- warranty-repair-request → @namdangit → .plans/gop-db/warranty-repair-request/plan.md
-  Trạng thái: **HOÀN THÀNH CODE + ĐÃ TEST + ĐÃ GIAO TÀI LIỆU** (2026-08-20).
-  Code đã chuyển về đúng phân hệ CSKH (`Modules/CustomerCare`, `/customer-care/warranty-repair-requests`,
-  menu CSKH → Kiểm tra bảo hành sửa chữa). Tài liệu kèm theo: `testcase.xlsx` (97 TC),
-  `Mô tả nghiệp vụ - …docx` (11 chương), testcase bản ERP ở `erp/.plans/warranty-repair-request-erp/`.
-  Port màn ERP "Yêu cầu kiểm tra sửa chữa – bảo hành" (`/admin/customer-care/warranty_repair_requests`)
-  — chứng từ ĐẦU TIÊN của dây chuyền 9 chứng từ phân hệ Dịch vụ.
-  Scope user chốt: **full như ERP** (3 tab · CRUD · Chuyển phòng tiếp nhận · Từ chối · In phiếu ·
-  In danh sách · Xuất Excel), giữ đủ **9 trạng thái**, bảng thiết bị đủ **3 nguồn** tp/tpc/ncck,
-  **copy nguyên tên quyền ERP**.
-  BE: 8 file `Modules/CustomerCare` + 12 route + 4 quyền (id 1177–1180). **KHÔNG có migration** —
-  2 bảng `warranty_repair_requests` (5.625 dòng) / `warranty_repair_request_products` đã có sẵn.
-  FE: 9 file `pages/customer-care/warranty-repair-requests/` + 1 mục menu.
-  Dùng lại đồ có sẵn: popup KH `ChooseErpCustomerModal`, thiết bị KH
-  `assign/customers/{id}/equipment`, 2 mẫu in ERP `report_templates` 277/278.
-  Verify: 3 tab + Resource + 2 mẫu in chạy thật trên DB gộp; 9 file `.vue` compile sạch.
-  ⚠️ Nút "Tạo phiếu xử lý yêu cầu" chưa điều hướng được (màn đó chưa port) — tạm báo toast.
-  📌 Session này còn sửa **tài sản chung**: bổ sung quy tắc "BE trả `status_color`" + bảng 9 mã màu
-  chuẩn vào `.claude/skills/list-page/SKILL.md` (mục 3c-1, 3c-2) và `CLAUDE.md` → cần PR riêng.
-
 - customer-export-file (Phase 7) → @khoipv → .plans/gop-db/customer-export-file/plan.md
   Trạng thái: **XONG CODE, CHỜ USER TEST TRÌNH DUYỆT** (2026-08-17). Chuyển việc dựng file
   CSV/Excel/PDF của `/assign/customers` từ BE sang **build ở FE** theo yêu cầu user.
@@ -2210,22 +2587,6 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   ⚠️ Team phải `npm install` sau khi kéo nhánh (thêm `jspdf` + `jspdf-autotable`).
   ⚠️ Chưa đo được thời gian DỰNG file ở trình duyệt với 17.5k dòng — nhất là PDF (~600 trang).
   3 endpoint export cũ của BE vẫn giữ nguyên, chưa xoá.
-
-- history-action-groups → @dnsnamdang → .plans/gop-db/history-action-groups/plan.md
-  Trạng thái: **CODE DONE + ĐÃ TEST (2026-08-15)**. Chuẩn hoá bộ lọc "Loại hoạt động" của khối/popup
-  Lịch sử về **đúng 3 nhóm cố định dùng chung cho cả 10 màn**: `create` Tạo mới · `update` Thay đổi
-  thông tin · `status` Thay đổi trạng thái. Trước đây mỗi entity tự khai danh mục riêng (KH 5 loại,
-  task 3, phiếu bàn giao 8) + nhãn gắn tên đối tượng nên mỗi màn một dropdown.
-  Mấu chốt: **nhóm chỉ dùng để LỌC, nhãn chi tiết từng dòng vẫn giữ trên timeline** → không màn nào
-  mất khả năng lọc (7 hành động của Phiếu bàn giao đều là chuyển trạng thái → gom vào `status`).
-  BE: `SystemLogService` thêm `ACTION_GROUP_LABELS`/`ACTION_GROUP_MAP`/`groupOfAction()`, `finalize()`
-  gắn `action_group` cho mọi log, `getFilterOptions()` trả 3 nhóm cho mọi type.
-  ⚠️ Bẫy đã tránh: mở cố định cả `performers` thì `performerOptions()` không lọc được công ty cho 9 loại
-  còn lại → liệt kê **toàn bộ 783 nhân viên**; nên `performers` vẫn chỉ trả cho `customer`.
-  FE: `SystemInfoSection.vue` + `CustomerHistoryModal.vue` lọc theo `action_group`, options hard-code 3 nhóm.
-  Đã ghi vào tài sản chung: skill `entity-history` §0a + `CLAUDE.md` (nguyên tắc **bản ghi đã khoá thì
-  không cho sửa/xoá — chặn ở BE bằng 423, FE chỉ ẩn nút**).
-  Bước tiếp: user review. **Chưa port sang `tpe-develop-assign`** (nhánh đó cũng có khối Lịch sử) — chờ chốt.
 
 - filter-customization → .plans/gop-db/filter-customization/plan.md
   Trạng thái: **CODE DONE Phase 1–3 — chờ chạy migration + user test** (2026-08-12, nhánh `gop_db`, cả 2 repo).
@@ -2354,6 +2715,18 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   **#13 Quy chế thưởng năm (port ERP "Cấu hình thưởng cuối năm công ty") — ✅ HOÀN THÀNH + ĐÃ COMMIT/PUSH gop_db**
   (24/09/2026): slice độc lập ĐÃ XONG và ĐÃ đẩy remote (khác phần còn lại của feature cha còn chờ QA/commit).
   Chi tiết đầy đủ chuyển xuống mục **## Hoàn thành** — hrm-api `bd3366c07` / hrm-client `4fbe1fc1f`
+- dong-bo-form-xuat-nhap → @namdangit → .plans/gop-db/dong-bo-form-xuat-nhap/plan.md
+  Đồng bộ màn Tạo/Sửa/Chi tiết 8 luồng xuất nhập (YCXH, ĐNXK, PXH, YCNH, ĐNNK, PNK, PXBHM, YCXBHM) về khuôn chi tiết
+  PXG-02188 bằng component mới `V2BaseFormCard`; BE 5 resource trả `status_color`. Spec:
+  `docs/superpowers/specs/gop-db/2026-10-10-dong-bo-form-xuat-nhap-design.md`.
+  XONG + merge: gop_db client `358a6ead2` / api `61179896c` → develop client `df1d74307` / api `df767f197`;
+  CLAUDE.md + skill `erp-to-hrm-screen` (config `887b9d5`).
+  ### Checkpoint — 2026-10-12
+  Vừa hoàn thành: danh sách ĐNNK lọc Ngày tạo gộp 1 ô + mặc định 10 dòng (gop_db client `164b2461c` → develop `88fd54695`)
+  Đang làm dở:
+  Bước tiếp theo: (tuỳ user) minor đã hoãn — xem plan.md mục "Việc còn lại"
+  Blocked:
+
   (đều rebase sạch lên origin/gop_db, đã push, HEAD = origin/gop_db).
   --- (lịch sử) ---
   **UI mock XONG · MAPPING ERP XONG · đang brainstorm cơ chế "hẹn ngày áp dụng"** (2026-09-09).
@@ -2536,11 +2909,285 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Hoàn thành
 
+- decision-transfer-part-mismatch — chưa có số Redmine → @cuong61n → .plans/gop-db/decision-transfer-part-mismatch/plan.md
+  Trạng thái: 🟢 Đã push gop_db + deploy PROD (31/10/2026). QĐ điều chuyển: đổi phòng ban tự bỏ bộ phận phòng cũ, BE chặn bộ phận không thuộc phòng; đã sửa dữ liệu prod (14 QĐ, 14 PLHĐ, 8 hồ sơ NV → bộ phận để trống).
+
+- 11945-dinh-bien-het-hieu-luc — Redmine #11945 → @cuong61n → .plans/gop-db/11945-dinh-bien-het-hieu-luc/plan.md
+  Trạng thái: 🟢 Code + test xong (30/10/2026), chưa commit (worktree gop_db). QĐ định biên có trạng thái tính động Hết hiệu lực 1 phần / Hết hiệu lực; tab phòng đã bị thay tô đỏ + tooltip.
+
+- sidebar-hub-hien-du-chu — phản hồi nhóm chat 30/10 → @cuong61n → .plans/gop-db/sidebar-hub-hien-du-chu/plan.md
+  Trạng thái: 🟢 Code + test xong (30/10/2026), chưa commit (worktree gop_db). Menu hub (rail + panel nhóm con) hiện đủ chữ, xuống dòng thay vì cắt "…".
+
+- 11937-popup-chon-hang-sl-km-lap-rap (#11937) → @junfoke → .plans/gop-db/11937-popup-chon-hang-sl-km-lap-rap/plan.md
+  Chuyển Hoàn thành: 2026-10-30. Trạng thái: 🟢 Đã push — hrm-api `task_11937` → `develop` (`c224f04cc`), ERP → `develop_02` (`f67c7f0304`); merge `develop` → `gop_db` hrm-api + client. 13/11: TPE test đạt → ERP `task_11937` vào `gop_db` (`0bbafa8ba7`), xong cả 3 repo.
+
+- 11932 chức danh người ký — phía HRM (#11932) → @junfoke → erp/.plans/chuc-danh-nguoi-ky-hop-dong/plan.md
+  Chuyển Hoàn thành: 2026-10-30. Trạng thái: 🟢 HĐ SC-BH + HĐ bán HRM đã lên `develop` (api `d8bce2a3c`, client `9395a6bbc`). Rule mới: người ký/duyệt lấy Chức danh HRM, không lấy Chức vụ (`hrm/CLAUDE.md`).
+
+- Đợt QA 30/10 (#11916 #11910 #11925 #11929 #11923 #11930 #11836; #11865 không sửa) → @junfoke → van-chuyen-bao-cao / finance-product-import-direct-transfer / finance-product-import-request / ton-kho-dau-ky / product-import-form-rework (plan.md mục 30/10)
+  Chuyển Hoàn thành: 2026-10-30. Trạng thái: 🟢 client `137f82d43` đã lên origin/develop, API không đổi. #11865: cần cấp quyền "Xem giá vốn hàng hoá" cho TK test dev.
+
+- quan-ly-hang-hoa #11906 (thêm nhanh NCC + Hình ảnh bắt buộc) → @junfoke → .plans/gop-db/quan-ly-hang-hoa/viec-con-lai.md
+  Chuyển Hoàn thành: 2026-10-30. Trạng thái: 🟢 api `49e6fdf42`, client `5172d8dc3` đã lên gop_db + develop.
+
+- fix-loc-pct-theo-hop-dong (không Redmine) → @junfoke → .plans/gop-db/fix-loc-pct-theo-hop-dong/plan.md
+  Chuyển Hoàn thành: 2026-10-30. Trạng thái: 🟢 api `c2d9376dc` đã lên gop_db + develop.
+
+- finance-bill-income-request — Redmine #11918 (Phase 17) → @khoipv → .plans/gop-db/finance-bill-income-request/plan.md (mục "Phase 17")
+  Trạng thái: 🟢 **Đã push `develop` (29/10/2026)** — api `423116a46`, client `9e93e61be`. Bước tiếp: deploy dev → QA test lại #11918.
+  Scope: form (Lý do thu → textarea full ngang, hàng đầu phủ kín, cột +/xóa sticky phải) · bản in (cột cố định `colgroup`, chừa chỗ ký 15px) · popup hợp đồng Thu bán hàng lọc theo người lập như ERP `create_bill_income` (`usage=bill_income_request`, opt-in).
+  ⚠️ GOTCHA: CSS chung popup in ép `padding !important` cho ô `.no-border` → giãn vùng ký phải chèn div `signature-space` + inline `!important`, padding inline vô tác dụng. 3 file, không migration.
+  Chuyển Hoàn thành: 2026-10-29.
+
+- xuat-tai-lieu-chuyen-doi → @junfoke → .plans/gop-db/xuat-tai-lieu-chuyen-doi/plan.md
+  Trạng thái: 🟢 **Đợt 1–3 xong, đã đẩy Drive (02/11/2026)**: 7 danh mục kho + 5 báo cáo + 7 phiếu (SRS + HDSD + tab TC 44–62). Còn: user điền sheet Checklist; rà `NGHI_LOI.md` cùng user.
+
+- so-chi-tiet-cong-no-ncc → @junfoke → .plans/gop-db/so-chi-tiet-cong-no-ncc/plan.md
+  Trạng thái: 🟢 **Xong + đối chiếu ERP khớp 7 ca + review (04/11/2026)**, nhánh `feat/so-chi-tiet-cong-no-ncc`, đã commit (api `e8773a469` + `eaf6fc507`, client `21a7df575` + `e05d27860`), ĐÃ merge develop + push 04/11 (merge api `5465d9946`, client `5e2fb0997` — gộp xung đột seeder với quyền Quyết toán thưởng NS quý; dev cần `permission:sync` + gán 2 quyền NCC vào vai trò). Test 37/37. Seeder +2 quyền. Tách khung sổ chi tiết `AccountLedgerService` + trait `AccountDebtCommon` dùng chung với 2 màn NV; sửa kèm 2 màn NV (chuyển trang / In / Excel theo bộ lọc đã áp).
+  Scope: màn Sổ chi tiết công nợ phải trả NCC + In (ERP không có) + Excel; màn 4/4 nhóm công nợ.
+  Spec: docs/superpowers/specs/gop-db/2026-11-04-so-chi-tiet-cong-no-ncc-design.md | Tóm tắt: .plans/gop-db/so-chi-tiet-cong-no-ncc/design.md
+
+- cong-no-khach-hang → @junfoke → .plans/gop-db/cong-no-khach-hang/plan.md
+  2 màn ERP Kế toán công nợ › Khách hàng, làm từng màn. Nhánh `feat/cong-no-khach-hang` (2 repo, từ `gop_db` 10/11/2026).
+  Trạng thái: ✅ 2 màn KH (`/finance/customer-ledger-details`, `/finance/customer-debt-balances`) + chuyển 3 màn NV/NCC sang
+  kiểm quyền theo mã — đã merge + push develop 10/11 (api `df407199e`, client `39c427075`), đã chạy trên dev-hrm. Chưa lên gop_db.
+  Deploy: `permission:catalog-sync` (mã KH thêm `hrm`). Spec: docs/superpowers/specs/gop-db/2026-11-10-so-chi-tiet-cong-no-kh-design.md
+- yeu-cau-xuat-tach-ghep → @junfoke → .plans/gop-db/yeu-cau-xuat-tach-ghep/plan.md
+  Port 2 màn ERP Phiếu yêu cầu xuất tách + xuất ghép (1 khung chung) + nối chuỗi ĐNXK/PXK/PXH/Phiếu nhập (5 phase).
+  Trạng thái: 🟢 Code xong toàn bộ chuỗi (Phase 1-5 + 4b) 13/11/2026, đã push nhánh + merge vào `develop` để test (api `7a10f899d`, client `d488578fd`), CHƯA lên gop_db. Deploy: permission:catalog-sync. Nhánh `feat/yc-xuat-tach-ghep` (thư mục chính 2 repo), cuối: api `067bf9445`, client `f86e7c9fc` (13/11 chiều: rà toàn chuỗi + bù phần thiếu so với ERP — trừ hàng nhập thẳng & chặn vượt SL ở hàm PXH dùng chung, loại 19 TK Có).
+  14/11: fix QA #12160 #12161 #12163 #12165 → develop (client `27d347314`, api `6266c272c`); chờ user: bỏ Người duyệt/Ngày duyệt ở chi tiết?
+  Spec: docs/superpowers/specs/gop-db/2026-11-12-yeu-cau-xuat-tach-ghep-design.md | Tóm tắt: .plans/gop-db/yeu-cau-xuat-tach-ghep/design.md
+- tuyen-duong-xa-moi-sau-sap-nhap → @junfoke → .plans/gop-db/tuyen-duong-xa-moi-sau-sap-nhap/plan.md
+  Trạng thái: 🟡 **Đã xuất Excel đề xuất (05/11/2026)**: `D:\CompanyProject\DB\tuyen_duong\tuyen_duong_moi_de_xuat.xlsx` — Lớp 1 1.826 tuyến (301 cần khảo sát) + Lớp 2 1.847 tuyến (102 cần khảo sát), km gợi ý Goong. Chờ nghiệp vụ duyệt km → viết lệnh nhập → khoá tuyến cũ.
+
+- loc-nhan-vien-theo-quyen-company-department-filter → @junfoke → .plans/gop-db/loc-nhan-vien-theo-quyen-company-department-filter/plan.md
+  Trạng thái: ✅ **Đã push gop_db + develop (05/11/2026)** — client `50ea799f7`. `CompanyDepartmentFilter.vue` ô Nhân viên lọc theo quyền xem của màn. Chưa thử Đơn xin nghỉ / quyền phòng ban, bộ phận.
+
+- Ghi nhanh 07/11/2026 (@junfoke), chi tiết ở plan từng màn: fix phản hồi #12063 bản in công nợ NV + #12066 tab Bốc xếp phiếu nhập hàng (api `18e72f6b9`, client `1af092419`) · #12068 Bảng cân đối công nợ NV (api `ebaa18a76`, client `72ff17b3a`), đã lên develop · #12069 đang làm (ô NV đã nghỉ, sửa `V2BaseCompanyDepartmentFilter` được user đồng ý).
+
+- Ghi nhanh 06/11/2026 (@junfoke), chi tiết ở plan từng màn: fix phản hồi #12042/#12040 Phiếu phân chia thị trường + #12020 YC nhập hàng (api `fb890c98d`, client `8b6321dbc`) · #12056/#12057/#12051 (client `4269cf7cc`, đã lên develop) · popup chọn hàng ERP thêm cột Thời gian bảo hành (api `36269786a` + ERP `5e6cb6bdf4`) · testcase Sổ chi tiết công nợ NCC (111 TC) + Bảng cân đối công nợ NV (106 TC).
+
+- Ghi nhanh 05/11/2026 (@junfoke), chi tiết ở plan từng màn: #12013 Sổ chi tiết công nợ NV + #12014/#12016 Công nợ đầu kỳ KH-HĐ (api `280c343e6`, client `fcde078c1`, chờ user xác nhận 2 chỗ đổi quyết định cũ) · #11996 lọc Ghi chú 6 màn hàng hoá (`viec-con-lai.md`) · giảm RAM build FE 6,1 → 2,2 GB `e212d0cfb` (`fe-build-toi-uu`) · merge task_11694/11695 vào develop (`division-market-employee`).
+
+- bang-can-doi-cong-no-nv → @junfoke → .plans/gop-db/bang-can-doi-cong-no-nv/plan.md
+  Trạng thái: ✅ **Xong, đã merge develop + push (03/11/2026)** — api `9b12040ae`, client `f2831eb45` (nhánh `feat/bang-can-doi-cong-no-nv`, kéo theo cả Sổ chi tiết `d1d77cadd` / `3e6581b38` + ô số chuyến xe `d59dec8d8`); merge develop api `66ce147dd`, client `66a3d7d47`. Test 16 (+15 Sổ chi tiết). Làm mới hết gọi tải 2 lần (cả 2 màn). Seeder +2 quyền — dev cần `permission:sync`. Tách phần chung 2 màn ra trait `EmployeeDebtCommon`.
+  Scope: màn Bảng cân đối phát sinh công nợ nhân viên + In + Excel (ERP không có) + drill-down sang Sổ chi tiết; màn 3/4 nhóm công nợ NV.
+  Spec: docs/superpowers/specs/gop-db/2026-11-03-bang-can-doi-cong-no-nhan-vien-design.md | Tóm tắt: .plans/gop-db/bang-can-doi-cong-no-nv/design.md
+
+- so-chi-tiet-cong-no-nv → @junfoke → .plans/gop-db/so-chi-tiet-cong-no-nv/plan.md
+  Trạng thái: ✅ **Xong, đã lên origin/develop 03/11/2026** (đi cùng merge Bảng cân đối), nhánh `feat/so-chi-tiet-cong-no-nv`, commit api `d1d77cadd`, client `3e6581b38`; kèm client `d59dec8d8` sửa ô số chuyến xe. Seeder +2 quyền. Chờ user: index `account_details` (TK lớn 6 tháng 6s → 2,7s).
+  Scope: màn Sổ chi tiết công nợ nhân viên (Tài chính › Kế toán công nợ › Nhân viên) + In + Excel; màn 2/4 nhóm công nợ NV.
+  Spec: docs/superpowers/specs/gop-db/2026-11-02-so-chi-tiet-cong-no-nhan-vien-design.md | Tóm tắt: .plans/gop-db/so-chi-tiet-cong-no-nv/design.md
+
+- hach-toan-cpvc-nhanh → @junfoke → .plans/gop-db/hach-toan-cpvc-nhanh/plan.md
+  Trạng thái: 🟢 **BE + FE xong, test 18/18 + bấm thử local + review toàn nhánh (02/11/2026)**, nhánh `feat/hach-toan-cpvc-nhanh` (2 repo, từ origin/develop), đã commit (api `1afcdb68c`, client `bb317da69`), **đã lên origin/develop 02/11** (client merge `48477d3e8`). Seeder +5 quyền — lên dev/prod chạy `permission:sync` rồi gán quyền kế toán.
+  Scope: màn Danh sách cần hạch toán chi phí vận chuyển nhanh (Tài chính › Nhập hàng) + sửa nguồn giao nhanh của phiếu KT giống ERP (loại tiền, NV, popup HĐ).
+  Spec: docs/superpowers/specs/gop-db/2026-11-02-hach-toan-cpvc-nhanh-design.md | Tóm tắt: .plans/gop-db/hach-toan-cpvc-nhanh/design.md
+
+- chuyen-xe-cho-hang → @junfoke → .plans/gop-db/chuyen-xe-cho-hang/plan.md
+  13/11: fix #12149 #12150 → develop (api `7109ca401`, client `2e11a108a`).
+  Trạng thái: 🟢 **BE + FE xong, test + bấm thử local (31/10/2026)**, nhánh `feat/chuyen-xe-cho-hang` (2 repo), đã commit + vào origin/develop (api `e009c9b7f`, client `d833b045b`); sửa ô số đồng nhất (cả Chuyến xe khác + khối chuyến xe phiếu kho) chuyển sang nhánh `feat/so-chi-tiet-cong-no-nv` — client `d59dec8d8` (user chốt 03/11: không sửa nhánh cũ đã merge). Còn: thử lưu PXK gắn chuyến trên dev (ĐNXK local lỗi dữ liệu lô có sẵn).
+  Scope: màn Chuyến xe chở hàng trọn luồng (trừ phiếu hạch toán — giữ ERP) + PXK HRM gắn chuyến + popup tạo nhanh chuyến ở PXK/PNK. Giữ nguyên cách tính ERP (kể cả CXK về lại không ×2 cước).
+  Spec: docs/superpowers/specs/gop-db/2026-10-31-chuyen-xe-cho-hang-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-cho-hang/design.md
+
+- chuyen-xe-khac → @junfoke → .plans/gop-db/chuyen-xe-khac/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã lên origin/develop (api `4fcd3b774` + merge `8ef8d7842`, client `015d86f34`), có Excel 1 phiếu. Còn: test tuyến cố định với bảng giá hiệu lực thật; xem ảnh nút Xuất Excel.
+  Scope: màn Chuyến xe khác trọn luồng (DS, thêm/sửa/chi tiết 3 kiểu, xuất phát → kết thúc → duyệt, không duyệt, in, Excel) ở phân hệ Vận chuyển; phiếu hạch toán giữ ERP.
+  ⚠️ GOTCHA: ERP không kiểm quyền ở BE (chỉ ẩn nút) — HRM chặn đúng điều kiện nút; `is_bulky` = "Nhân viên chịu phí"; `activity_has_other_delivery_trip_accounting.employee_id` TINYINT.
+  Spec: docs/superpowers/specs/gop-db/2026-10-27-chuyen-xe-khac-design.md | Tóm tắt: .plans/gop-db/chuyen-xe-khac/design.md
+
+- phieu-theo-form-quoc-gia → @junfoke → .plans/gop-db/phieu-theo-form-quoc-gia/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 SRS + HDSD 16 màn "DNS đang fix" theo form Danh mục quốc gia đã đẩy lên Drive (32 file, giữ ID). Lần sau đẩy bằng `push_drive.py`. Còn: đổi trạng thái 16 dòng trên sheet theo dõi.
+
+- nhap-khac-ghi-chu-dong-hang (#11908) → @junfoke → .plans/gop-db/nhap-khac-ghi-chu-dong-hang/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Xong ERP + HRM. ERP đã merge + push `develop_02`; HRM đã lên origin/develop (api `52a17fa86`, client `b489fb882`). 30/10: đã merge `task_11908` vào `gop_db` ERP (+ migration cột note đặt ở cả 2 repo).
+  Scope: cột Ghi chú từng dòng hàng loại Nhập khác — YCNH sửa được + chặn trùng trên cả phiếu; ĐNNK / dự kiến / PNK / PNH chỉ xem.
+
+- fix-don-nghi-14505-doi-loai-nghi (không Redmine) → @cuong61n → .plans/gop-db/fix-don-nghi-14505-doi-loai-nghi/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã sửa dữ liệu PROD 29/10/2026 (đổi loại nghỉ BHXH → Nghỉ phép, tính lại công 28–29/10), không đổi code.
+
+- fix-rice-trung-nhan-vien-bao-cao (không Redmine) → @cuong61n → .plans/gop-db/fix-rice-trung-nhan-vien-bao-cao/plan.md
+  Chuyển Hoàn thành: 2026-10-29. Trạng thái: 🟢 Đã dọn dữ liệu PROD 29/10/2026 (36 dòng cơm trùng ở hrm_erp_gop + hrm_toyota), không đổi code; Toyota để nguyên theo quyết định user.
+  Scope: Báo cáo cơm chi tiết hiện trùng nhân viên do dòng rice_employee_infos mồ côi (lưu hồ sơ lỗi trước fix 08/09/2026).
+
+- 11567-duyet-tai-ql-don (#11567 web + #11568 app) → @cuong61n → .plans/gop-db/11567-duyet-tai-ql-don/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: 🟢 Đã push GitHub 19/10/2026 nhánh `develop` cả 3 repo (hrm-api bd3d9866a, hrm-client 73c591228, TPE_APP 68d2b71); CHƯA kéo về server. Test: BE 61/61, web 44/44, app iOS+Android đạt.
+  Scope: Duyệt/Từ chối ở 6 màn QL đơn chấm công (mở màn duyệt sẵn có, như màn Phê duyệt) + siết quyền API duyệt theo phạm vi phòng quản lý.
+
+- 11741-chuc-vu-sua-cap-bac (#11741) → @cuong61n → .plans/gop-db/11741-chuc-vu-sua-cap-bac/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: 🟢 Đã push (16/10/2026) nhánh `fix-11741-chuc-vu-sua-cap-bac` cả 2 repo, chờ PR về `gop_db`; worktree đã xoá.
+  Scope: sửa cấp bậc chức vụ → cảnh báo QĐ định biên (hết hiệu lực) / QĐ quy chế lương (chỉ cảnh báo) / phòng đã định biên. Tóm tắt: .plans/gop-db/11741-chuc-vu-sua-cap-bac/design.md
+
+- permission-seeder-sync → @cuong61n → .plans/gop-db/permission-seeder-sync/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Seeder quyền HRM + ERP chuyển từ "xoá hết tạo lại theo id" sang upsert theo `(guard, name)`, khai rõ `RENAMED`/`REMOVED`, có `--dry-run`. Bắt đầu 14/10/2026.
+  Spec: docs/superpowers/specs/gop-db/2026-10-14-permission-seeder-sync-design.md
+  Trạng thái: 🟢 ĐÃ merge gop_db + deploy PROD 15/10/2026 (api 180147fab, ERP bd2a8d4c6a); quyền thực tế prod trước = sau. Đã cleanup prod. Còn: deploy dev, báo team cách khai quyền mới (skill permission-seeder), xoá permission_legacy_ids.php sau khi mọi môi trường đã sync.
+
+- quotation-no-project → @cuong61n → .plans/gop-db/quotation-no-project/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Báo giá không gắn Dự án TKT (tester 13/10 + #11651): tạo → duyệt → chốt Trúng thầu → Lập hợp đồng. Bắt đầu 13/10/2026.
+  Trạng thái: 🟢 Đã push gop_db 13/10 (api b61be531f, client fc94827b6) + 14/10 phản hồi tester (api feb3e4cd6, client b98d50568). Deploy nhớ chạy migration 2026_10_13_000001.
+
+- task-11566-audit-name (#11566) → @cuong61n → .plans/gop-db/task-11566-audit-name/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: code xong trên `gop_db`, CHƯA commit (03/10/2026) — 202 file BE + 13 FE. Chờ user review, chốt mã 255/50, test.
+
+- admin-tra-soat-theo-phieu (#11523) → @cuong61n → .plans/gop-db/admin-tra-soat-theo-phieu/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: đã push nhánh `task_11523` + merge vào `develop` (30/09/2026). Chưa merge về gop_db; server cần chạy migration.
+
+- department-lead-employee-id → @cuong61n → .plans/gop-db/department-lead-employee-id/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: ✅ **Đã deploy PROD + migrate (25/09/2026)** — commit `484ee95fd` + `32246d20c` trên `gop_db`. Còn: nghiệp vụ chốt 14 phòng ERP ghi khác HRM cũ.
+  PROD sau gộp DB: `departments.department_lead_id`/`parts.part_lead_id` là `employees.id` (nghĩa ERP) nhưng HRM đọc như
+  `employee_infos.id` → 75/84 phòng, 20/25 bộ phận hiện sai trưởng. Chốt: giữ nghĩa ERP, HRM quy đổi bằng custom cast.
+
+- vehicle-catalogs → @cuong61n → .plans/gop-db/vehicle-catalogs/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: 🟢 **BE + FE xong, đã test API thật (22/09/2026). Chưa verify trình duyệt, chưa commit.**
+  Port 5 danh mục Xe từ ERP sang nhóm menu "Danh mục xe" của phân hệ Danh mục chung:
+  Hãng xe · Dòng xe · Phân loại xe · Model xe · Đời xe (dùng lại bảng ERP `vehicle_*` trên DB gộp).
+  Chốt: thêm cột `code` + sinh mã cho 1.730 bản ghi cũ; **giữ nguyên `status` 1/0 của ERP**, HRM
+  ánh xạ 0 ⇄ 2 ở Entity; xóa bị chặn khi còn danh mục con hoặc còn bản ghi nghiệp vụ tham chiếu
+  (`products.model_id` gần 39.000 dòng); đủ Xuất Excel + Import 5 màn; 10 quyền mới id 1590–1599.
+  Có sửa 1 file dùng chung (user duyệt): thêm hook `duplicateNameScopeColumns()` vào
+  `ImportsCatalogRows` để giữ luật trùng tên theo cấp cha của ERP.
+
+- smart-filter-panel-migration → @cuong61n → .plans/gop-db/smart-filter-panel-migration/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: 🟢 **XONG Phase 0–6, đã verify trên trình duyệt** (21/09/2026). **Chưa commit, chưa push.**
+  Gom toàn bộ bộ lọc về **một** panel: 56 file chuyển `V2BaseFilterPanel` → `V2BaseSmartFilterPanel`,
+  51 file đã dùng Smart nhưng thiếu `floating` được bật + dọn placeholder trùng nhãn.
+  `components/V2BaseFilterPanel.vue` **đã xoá**.
+  4 component dùng chung được bổ sung (user duyệt từng cái): panel truyền `required`;
+  panel + `V2BaseFilterFieldControl` nhận `in-modal` (→ `V2BaseSelectInModal`);
+  control nhận `field.multiple`; `V2BaseFieldCategoryApplicationFilter` nhận `floating`.
+  Skill `list-page` đã chốt: panel duy nhất · `floating` bắt buộc · khoảng cách trên/dưới khối lọc `pb-2` (12px).
+  **Đã verify Playwright** (20 màn): sửa thêm 6 lỗi UI — nhãn float đè chip, viền đôi ô chọn nhiều,
+  ô chọn nhiều 42px, 62 ô ngày 32px, 9 ô tìm-từ-xa thiếu `height`, ô Tag 32px (gốc chung:
+  CSS `.ff` thua specificity CSS riêng của control). Gộp nốt 31 cặp "từ ngày – đến ngày" ở 30 màn.
+  Kết quả: 0 màn thiếu `floating`, 0 màn tách ô ngày, mọi ô lọc cao đúng 36px. Tổng 113 file.
+  Bước tiếp: user duyệt rồi commit/push.
+
+- **cai-dat-phan-he — Cài đặt phân hệ (ẩn/hiện phân hệ + từng mục menu)** → @cuong61n →
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  `.plans/gop-db/cai-dat-phan-he/design.md` · `plan.md` ·
+  spec `docs/superpowers/specs/gop-db/2026-09-14-cai-dat-phan-he-design.md`
+  Trạng thái: **XONG TOÀN BỘ, ĐÃ TEST TAY** (2026-09-14) — chưa commit.
+  Màn mới `/timesheet/setting/subsystems` liệt kê đủ 24 phân hệ + ~600 mục menu để tick ẩn/hiện,
+  mặc định có tick. Bảng mới `menu_settings` chỉ lưu mục BỊ TẮT; key = đường dẫn nhãn
+  (`finance::Thu chi::Phiếu thu`) vì ~345 mục placeholder không có link.
+  Màn đọc thẳng registry `components/subsystems.js` → **menu thêm mới sau này tự có mặt**, không phải sửa gì.
+  Lọc cắm vào 6 bề mặt sẵn có (topbar · sidebar cây · sidebar hub · lưới Tổng quan hub · màn chọn phân hệ ·
+  dropdown chuyển phân hệ) + middleware FE chặn gõ thẳng URL → `/feature-unavailable`.
+  3 checkbox ERP/Quyết định/Cơm rời khỏi màn Cài đặt (vẫn ghi song song key cũ `use_erp`/`use_decision`/`use_rice`);
+  **"Sử dụng CRM" ở lại** vì `use_crm` là cờ đồng bộ CRM Mate, không phải phân hệ.
+  ⚠️ **Trùng mục đích với `prod-cutover` Phần B** (allowlist fail-closed cho PROD, chưa code) —
+  cut-over PROD phải seed sẵn danh sách ẩn, không dựng cơ chế thứ hai. Xem mục 6 của spec.
+
+- wr-service-quotation (chứng từ 3) → @cuong61n → .plans/gop-db/wr-service-quotation/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  📌 24/09/2026 — user chốt 4 việc treo: **bỏ** khối "Người duyệt" ở phiếu bảo hành · **không sửa**
+  phạm vi Super Admin · **chưa làm** testcase/mô tả nghiệp vụ bản HRM · **giữ** phiếu thử id 10370.
+  Luồng dịch vụ hết việc nhỏ treo; còn Phụ lục bổ sung/giảm + 4 mảng hợp đồng phụ thuộc phân hệ khác.
+  Trạng thái: **HOÀN THÀNH CODE + ĐÃ TEST BE VÀ GIAO DIỆN** (2026-08-21). Chưa sinh testcase /
+  mô tả nghiệp vụ. Cột "Giá vốn" khoá sau quyền `Xem giá vốn hàng hoá` (user chốt) — đã cấp quyền
+  đó cho vai trò Super admin trên DB local để test.
+  Port màn ERP "Phiếu cung cấp thông tin làm báo giá" — chứng từ THỨ 3 của dây chuyền dịch vụ.
+  Phạm vi user chốt 2026-08-21: **chỉ chứng từ 3** (chứng từ 4 Báo giá dịch vụ để đợt sau), tiền
+  **tính ở giao diện như ERP**, khối Phiếu bảo hành **giữ dữ liệu nhưng chưa dựng màn**.
+  BE: 11 entity + service + notifier + print service + request + controller + 2 resource,
+  13 route, 3 quyền mới (id 1515–1517), **KHÔNG migration** (12 bảng ERP đã có trên DB gộp).
+  FE: 11 file `pages/customer-care/wr-information-requests/` + `utils/wrServiceQuotationMoney.js`
+  + 1 mục menu; nút "Tạo phiếu cung cấp thông tin" ở chứng từ 2 đã nối sang màn này.
+  ⚠️ Bảng dữ liệu **dùng chung với Báo giá dịch vụ** qua cột `type` — mọi truy vấn phải kèm `type`.
+  Verify: toàn luồng chạy thật trên DB gộp (danh sách/lọc/xuất/in · prefill · lưu nháp · gửi đi kèm
+  thông báo đúng người · từ chối · xoá trả trạng thái 2 chứng từ trước); module tính tiền FE đối
+  chiếu **39 phiếu thật** khớp tuyệt đối với bản tính ở máy chủ; 11 file `.vue` compile sạch.
+  Test GIAO DIỆN trên cổng 3002: lập phiếu · sửa số lượng · thêm dịch vụ · thêm thiết bị bảo dưỡng
+  + gói · chuyển Sửa chữa ↔ Bảo hành · lưu · in · xoá · cảnh báo chưa lưu — **tìm và sửa 2 lỗi**:
+  thiếu cờ quyền giá vốn ở màn lập mới, và **Lưu nháp luôn thất bại** vì cột `quotation_term`
+  NOT NULL nhận `null` (đã thêm `fillDefaults()`).
+  ⚠️ Nút "Tạo báo giá dịch vụ" chưa điều hướng được (chứng từ 4 chưa port) — tạm báo toast.
+
+- warranty-repair-handle-request → @cuong61n → .plans/gop-db/warranty-repair-handle-request/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: **HOÀN THÀNH CODE + ĐÃ TEST + ĐÃ GIAO TÀI LIỆU** (2026-08-21).
+  Tài liệu kèm theo: `testcase.xlsx` (87 TC), `Mô tả nghiệp vụ - Phiếu xử lý yêu cầu.docx`,
+  testcase bản ERP ở `erp/.plans/warranty-repair-handle-request-erp/` (57 TC).
+  Nút "Tạo phiếu cung cấp thông tin" nay đã nối sang chứng từ 3 (không còn báo toast).
+  Port màn ERP "Phiếu xử lý yêu cầu" (`/admin/customer-care/warranty_repair_handle_requests`) —
+  chứng từ THỨ 2 của dây chuyền dịch vụ, lập từ Phiếu yêu cầu kiểm tra sửa chữa – bảo hành.
+  Đã khảo sát: 6 trạng thái · 4 quyền · 3 bảng (`warranty_repair_handle_requests` 5.259 dòng) ·
+  mỗi dòng thiết bị chọn LỖI THIẾT BỊ (nhiều) + HÀNH ĐỘNG (Tư vấn điện thoại / CCTT làm báo giá).
+  Mọi dòng đều "Tư vấn điện thoại" → phiếu và phiếu yêu cầu gốc đều thành "Đã tư vấn điện thoại";
+  ngược lại → "Chờ CCTT", báo cho người có QUYỀN "Tạo phiếu cung cấp thông tin", phiếu yêu cầu gốc
+  thành "Đã xử lý".
+
+- warranty-repair-request → @cuong61n → .plans/gop-db/warranty-repair-request/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: **HOÀN THÀNH CODE + ĐÃ TEST + ĐÃ GIAO TÀI LIỆU** (2026-08-20).
+  Code đã chuyển về đúng phân hệ CSKH (`Modules/CustomerCare`, `/customer-care/warranty-repair-requests`,
+  menu CSKH → Kiểm tra bảo hành sửa chữa). Tài liệu kèm theo: `testcase.xlsx` (97 TC),
+  `Mô tả nghiệp vụ - …docx` (11 chương), testcase bản ERP ở `erp/.plans/warranty-repair-request-erp/`.
+  Port màn ERP "Yêu cầu kiểm tra sửa chữa – bảo hành" (`/admin/customer-care/warranty_repair_requests`)
+  — chứng từ ĐẦU TIÊN của dây chuyền 9 chứng từ phân hệ Dịch vụ.
+  Scope user chốt: **full như ERP** (3 tab · CRUD · Chuyển phòng tiếp nhận · Từ chối · In phiếu ·
+  In danh sách · Xuất Excel), giữ đủ **9 trạng thái**, bảng thiết bị đủ **3 nguồn** tp/tpc/ncck,
+  **copy nguyên tên quyền ERP**.
+  BE: 8 file `Modules/CustomerCare` + 12 route + 4 quyền (id 1177–1180). **KHÔNG có migration** —
+  2 bảng `warranty_repair_requests` (5.625 dòng) / `warranty_repair_request_products` đã có sẵn.
+  FE: 9 file `pages/customer-care/warranty-repair-requests/` + 1 mục menu.
+  Dùng lại đồ có sẵn: popup KH `ChooseErpCustomerModal`, thiết bị KH
+  `assign/customers/{id}/equipment`, 2 mẫu in ERP `report_templates` 277/278.
+  Verify: 3 tab + Resource + 2 mẫu in chạy thật trên DB gộp; 9 file `.vue` compile sạch.
+  ⚠️ Nút "Tạo phiếu xử lý yêu cầu" chưa điều hướng được (màn đó chưa port) — tạm báo toast.
+  📌 Session này còn sửa **tài sản chung**: bổ sung quy tắc "BE trả `status_color`" + bảng 9 mã màu
+  chuẩn vào `.claude/skills/list-page/SKILL.md` (mục 3c-1, 3c-2) và `CLAUDE.md` → cần PR riêng.
+
+- history-action-groups → @cuong61n → .plans/gop-db/history-action-groups/plan.md
+  Chuyển Hoàn thành: 2026-10-28 (code xong/đã test/đã push từ trước, trước đó quên chuyển mục).
+  Trạng thái: **CODE DONE + ĐÃ TEST (2026-08-15)**. Chuẩn hoá bộ lọc "Loại hoạt động" của khối/popup
+  Lịch sử về **đúng 3 nhóm cố định dùng chung cho cả 10 màn**: `create` Tạo mới · `update` Thay đổi
+  thông tin · `status` Thay đổi trạng thái. Trước đây mỗi entity tự khai danh mục riêng (KH 5 loại,
+  task 3, phiếu bàn giao 8) + nhãn gắn tên đối tượng nên mỗi màn một dropdown.
+  Mấu chốt: **nhóm chỉ dùng để LỌC, nhãn chi tiết từng dòng vẫn giữ trên timeline** → không màn nào
+  mất khả năng lọc (7 hành động của Phiếu bàn giao đều là chuyển trạng thái → gom vào `status`).
+  BE: `SystemLogService` thêm `ACTION_GROUP_LABELS`/`ACTION_GROUP_MAP`/`groupOfAction()`, `finalize()`
+  gắn `action_group` cho mọi log, `getFilterOptions()` trả 3 nhóm cho mọi type.
+  ⚠️ Bẫy đã tránh: mở cố định cả `performers` thì `performerOptions()` không lọc được công ty cho 9 loại
+  còn lại → liệt kê **toàn bộ 783 nhân viên**; nên `performers` vẫn chỉ trả cho `customer`.
+  FE: `SystemInfoSection.vue` + `CustomerHistoryModal.vue` lọc theo `action_group`, options hard-code 3 nhóm.
+  Đã ghi vào tài sản chung: skill `entity-history` §0a + `CLAUDE.md` (nguyên tắc **bản ghi đã khoá thì
+  không cho sửa/xoá — chặn ở BE bằng 423, FE chỉ ẩn nút**).
+  Bước tiếp: user review. **Chưa port sang `tpe-develop-assign`** (nhánh đó cũng có khối Lịch sử) — chờ chốt.
+
+- theo-doi-theo-kho → @khoipv → .plans/gop-db/theo-doi-theo-kho/plan.md (design: .plans/gop-db/theo-doi-theo-kho/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-theo-doi-theo-kho-design.md)
+  Port màn ERP "Kho › Theo dõi theo kho" (`warehouse.forActivities` → `warehouse.{id}.activities`): danh sách kho → bảng hoạt động nhập/xuất của 1 kho. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+  Trạng thái: 🟢 ĐÃ PUSH `develop` 28/10 (api `1731d3a4c`, client `6f0ece1ba`). CHƯA bấm thử trình duyệt. Tiếp: user bấm thật; deploy cần quyền "Quản lý kho" trong seeder + gán role.
+  Chuyển Hoàn thành: 2026-10-28.
+
+- phieu-xuat-kho-dieu-chinh-kiem-ke → @khoipv → .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/plan.md (design: .plans/gop-db/phieu-xuat-kho-dieu-chinh-kiem-ke/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-kho-dieu-chinh-kiem-ke-design.md)
+  Port màn ERP "Kho › Xuất kho › Phiếu xuất kho điều chỉnh kiểm kê" (`warehouse_inventory_exports`, mã PXKĐCKK) — đối xứng màn Phiếu nhập kho điều chỉnh kiểm kê. Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+  28/10: fix #11893 (Lưu nháp chỉ bắt Phiếu kiểm kê · Lưu và tiếp tục · link phiếu kiểm kê) ĐÃ PUSH `develop` (api `ddd23d04c`, client `f8f362a51`). Store đầu-cuối chưa test (DB local không còn phiếu kiểm kê lập được).
+  Chuyển Hoàn thành: 2026-10-28.
+
+- phieu-xuat-dieu-chinh-sai-so-lieu → @khoipv → .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/plan.md (design: .plans/gop-db/phieu-xuat-dieu-chinh-sai-so-lieu/design.md · spec: docs/superpowers/specs/gop-db/2026-10-27-phieu-xuat-dieu-chinh-sai-so-lieu-design.md)
+  Port màn ERP "Kho › Xuất kho › Phiếu xuất điều chỉnh sai số liệu" (`warehouse_reexports`). Bắt đầu 27/10/2026, nhánh `develop` (cả 2 repo).
+  Trạng thái: 🟢 ĐÃ PUSH `develop` 27/10 (api `1c1f73892`, client `ce0107575`) — smoke test API 2 góc nhìn OK; CHƯA bấm thử trình duyệt. Tiếp: deploy chạy `PermissionsTableSeeder` → admin gán 4 quyền xem.
+  28/10: fix #11890 (8/9 mục) ĐÃ PUSH `develop` (api `ddd23d04c`, client `f8f362a51`). Còn treo: "Bốc xếp chọn NCC xong vỡ font/lệch ô" — cần mở trình duyệt tái hiện.
+  Chuyển Hoàn thành: 2026-10-28.
+
 - hoat-dong-kho → @khoipv → .plans/gop-db/hoat-dong-kho/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-26-hoat-dong-kho-design.md)
+  28/10: fix #11894 (vạch màu mép trái thay tô cả dòng) · #11895 (Excel giãn dòng) · #11904 (width cột khi sort) ĐÃ PUSH `develop` (client `6f0ece1ba`).
   Port ERP `warehouseInfo.activities` (Kho › Hoạt động kho). Bắt đầu 26/10/2026.
   Chuyển Hoàn thành: 2026-10-27.
 
 - bao-cao-hang-thua-thieu-sau-tong-kiem-ke → @khoipv → .plans/gop-db/bao-cao-hang-thua-thieu-sau-tong-kiem-ke/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-25-bao-cao-hang-thua-thieu-sau-tong-kiem-ke-design.md)
+  28/10: fix #11886 (ô Kỳ, ô chọn chữ thường, công ty thuê hiện tên) ĐÃ PUSH `develop`.
   Port ERP `warehouseReport.selfInventoryReport` (Kho › Báo cáo kho) → `/warehouse/self-inventory-report`. Bắt đầu 25/10/2026; không quyền + phạm vi y ERP (user chốt).
   Chuyển Hoàn thành: 2026-10-27.
 
@@ -2576,6 +3223,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Chuyển Hoàn thành: 2026-10-22.
 
 - kiem-ke-theo-hang-hoa — Port màn PHIẾU Kiểm kê theo hàng hóa ERP (`self_inventories`, Kho › Kiểm kho) sang HRM — màn con của Kế hoạch kiểm kê theo hàng hóa, bám màn anh em Kiểm kê theo vị trí. Bắt đầu 20/10/2026 → @khoipv → .plans/gop-db/kiem-ke-theo-hang-hoa/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-20-kiem-ke-theo-hang-hoa-design.md)
+  28/10: fix #11887 (popup kế hoạch: KH tổng theo điều kiện ngày của nút Lập phiếu) ĐÃ PUSH `develop` (api `ddd23d04c`).
   Chuyển Hoàn thành: 2026-10-22.
 
 - ke-hoach-tong-kiem-ke-hang-hoa — Port màn Kế hoạch tổng kiểm kê hàng hóa ERP (`self_inventory_request_alls`) sang Tài chính › Kiểm kê — bám màn anh em Kế hoạch kiểm kê theo hàng hóa. Bắt đầu 20/10/2026 → @khoipv → .plans/gop-db/ke-hoach-tong-kiem-ke-hang-hoa/plan.md (spec: docs/superpowers/specs/gop-db/2026-10-20-ke-hoach-tong-kiem-ke-hang-hoa-design.md)
@@ -2903,13 +3551,13 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Bước tiếp: ~147 form trang + ~180 modal của các phân hệ cũ (đợt 2/3).
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-08-12-filter-customization-design.md
 
-- list-page-action-column → @junfoke → .plans/gop-db/list-page-action-column/plan.md
+- list-page-action-column → @cuong61n → .plans/gop-db/list-page-action-column/plan.md
   Chuyển Hoàn thành: 2026-10-02 (dọn mục Đang làm) — code đã vào nhánh chung; mục [ ] lẻ còn lại xem plan.md.
   Trạng thái: **CODE DONE — CHỜ USER VERIFY UI** (2026-08-12). Chuẩn hoá cột "Hành động" màn danh sách
   (mẫu `/assign/customers`) + component dùng chung `V2BaseRowActions.vue`.
   Chi tiết + gotcha: plan.md
 
-- fix-employee-fk-remap → @junfoke → .plans/gop-db/fix-employee-fk-remap/plan.md
+- fix-employee-fk-remap → @cuong61n → .plans/gop-db/fix-employee-fk-remap/plan.md
   Chuyển Hoàn thành: 2026-10-02 (dọn mục Đang làm) — code đã vào nhánh chung; mục [ ] lẻ còn lại xem plan.md.
   Trạng thái: **CODE DONE, DRY PASS — CHƯA CHẠY THẬT** (2026-08-04). Vá 42 cột / 20.231 dòng FK
   `employees` bị `ReconcileEmployeesSeeder` bỏ sót khi gộp DB (trỏ SAI NGƯỜI, hỏng im lặng).
@@ -3466,7 +4114,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
   Bước tiếp: Phase 7 đối chiếu 2 cổng (cần bật ERP local) + tạo 2 file mẫu Excel trong `hrm-client/static/`.
   Chi tiết + gotcha: plan.md | Spec: docs/superpowers/specs/gop-db/2026-07-30-finance-account-catalog-design.md | Tóm tắt: .plans/gop-db/finance-account-catalog/design.md
 
-- tach-phan-he-erp-hrm → @junfoke → .plans/gop-db/tach-phan-he-erp-hrm/plan.md
+- tach-phan-he-erp-hrm → @cuong61n → .plans/gop-db/tach-phan-he-erp-hrm/plan.md
   Trạng thái: **XONG GIAI ĐOẠN 1 (khung phân hệ + menu)** (2026-07-30), đã test thật 9 màn trên dev.
   Quy hoạch lại 24 phân hệ / 5 nhóm theo Sơ đồ tổng thể v1.6; dựng base 17 phân hệ mới.
   Bước tiếp: user test 17 màn edit/detail. Giai đoạn 2 = `chuyen-code-phan-he`.

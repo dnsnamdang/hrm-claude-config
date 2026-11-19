@@ -503,3 +503,10 @@ Từ khoá đúng của Word for Mac: `update field` (cho field), `update` + `up
 Ca **`CC.LE` — "Ca ghi nhận chấm công ngày lễ"** (id 119) · phân cho **Bùi Thị Thịnh (1466)** và
 **Trần Anh Tuấn (1599)** ngày 29/08/2026 · 2 lượt chấm công của Bùi Thị Thịnh.
 Xoá khi không cần: `DELETE` theo `working_shifts.code = 'CC.LE'` và bản ghi phân ca / chấm công liên quan.
+
+## Fix: bấm Lưu ca "Ca trực lễ" (id 59) trên prod không phản hồi — 04/11/2026 · @cuong61n
+- [x] 04/11/2026 — Điều tra: prod trả decimal dạng chuỗi `"0.00"` (giờ công, 3 hệ số); `isNumberPositive` = `number && number <= 0` coi chuỗi `"0.00"` là "không dương" → `validatePositive()` false → `save()` `return` im lặng (không API, không toast, không ô đỏ). Đo trực tiếp trên form prod (chỉ đọc, không bấm Lưu): `$v.$invalid=false`, `validatePositive()=false`. Local không lỗi vì API local trả số `0`.
+- [x] 04/11/2026 — Nghiệp vụ user chốt: ca "chỉ ghi nhận lịch sử chấm công" giờ công = 0 là hợp lệ.
+- [x] 04/11/2026 — FE `hrm-client/pages/timesheet/timeworking/add-working-shift/_id/index.vue`: `isNumberPositive` ép `Number()`, 0 hợp lệ, chỉ chặn số âm. Đã thử logic bằng node (`"0.00"`, 0, `"-1"`, -2, `"8.00"`, null, `""`).
+- [x] 04/11/2026 — Đã commit `48f80791c` vào nhánh gop_db (hrm-client), push origin và deploy PROD bằng ~/build_tpe.sh (prod đã có commit, FE build xong, pm2 restart). Chờ user bấm Lưu ca 59 xác nhận.
+- Chưa làm: toast khi `save()` bị chặn mà không ô nào đỏ.

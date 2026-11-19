@@ -65,6 +65,16 @@ Vừa hoàn thành: 6 bug #11829 (FE `InventoryAuditReportForm.vue`, `index.vue`
 Bước tiếp theo: user mở trình duyệt kiểm lại 6 điểm; commit khi user yêu cầu.
 Blocked:
 
+### Phản hồi #11829 (QA 26/10/2026) — "Thêm sort vào các trường Ngày"
+- [x] Phiếu kiểm kê theo hàng hoá (`/warehouse/self-inventories`): sort Ngày tạo / Ngày duyệt / Ngày cập nhật — FE `sortable`, BE `SelfInventoryService::SORT_MAP` thêm `created_at`, `approve_time`, `updated_at_full`→`updated_at` (đảo phần bỏ sort ngày của #11823)
+- [x] Biên bản xử lý thừa thiếu: Ngày tạo sort lại cho đồng bộ (BE `SORT_MAP` đã có `created_at`; Ngày duyệt vốn đã sort)
+
+### Checkpoint — 2026-10-27 (phản hồi #11829)
+Vừa hoàn thành: sort cột Ngày 2 màn danh sách; `php -l` + compile FE OK; smoke test API sort asc/desc 3 cột self-inventories trả 200, thứ tự đúng.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm (Ctrl+Shift+R); commit khi user yêu cầu.
+Blocked:
+
 ## Phase 5 — Redmine #11831 (QA 22/10/2026)
 - [x] Validate tại ô, không sót trường: Giá xử lý xoá (x) giờ về trống → viền đỏ + câu lỗi (đi cùng bug 5 #11829); % Chi phí công ty thêm `*` + lỗi riêng `details.{i}.company_cost_percent` (chỉ FE — BE tự tính 100 − %NV)
 - [x] Chi phí lệch ERP (999,999.99 × 50% → ERP 499,999.995, HRM 500,000): bỏ `round2` ở thành tiền / chi phí, format tối đa 3 số lẻ như filter `number` Angular. BE lưu vẫn round 2 (cột double(8,2) — y ERP), bản in / Excel in giá trị đã lưu
@@ -84,4 +94,24 @@ Blocked:
 Vừa hoàn thành: 3 điểm #11832 (`index.vue`, `export-excel.js`, `InventoryAuditReportPrintService`); compile FE + `php -l` OK.
 Đang làm dở: —
 Bước tiếp theo: user kiểm trình duyệt #11829 + #11831 + #11832; commit khi user yêu cầu.
+Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+- [x] Đọc brief + skill srs / hdsd / testcase hiện hành, khuôn `ke-hoach-tong-kiem-ke-hang-hoa` (05/11), code FE/BE màn + Phần 5 (grep màn đọc ngược)
+- [x] Chụp ảnh dev-hrm (`bbxltt_shots/_capture/capture.js`, DNS Admin): 25 ảnh + 66 icon (trim_icon 0/66); chặn mọi yêu cầu ghi — 0 yêu cầu ghi
+      phát sinh / 0 lọt. Giả trạng thái trên trình duyệt: `12_edit`, `03_rowmenu`, icon Sửa / nhãn Đang tạo (giả BBXLKKHH-00003 Đang tạo).
+      Ảnh lỗi `10e_row_validate`, `14b_approve_validate`: gọi hàm kiểm của form, không bấm Lưu / Duyệt
+- [x] `gen_srs.py` → `SRS - Biên bản xử lý hàng thừa, thiếu sau kiểm kê.docx`: 13 chức năng, 111 trang, selfcheck khớp bản mẫu;
+      metrics ui 15.3 · ev 4.8 · evch 1295 · intro 2065; Phần 5 bảng 4 cột (4 dòng), Mục lục trang riêng căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Bien ban xu ly hang thua thieu sau kiem ke.docx`: 13 phần, 22 trang
+- [x] `gen_testcase.py` → `testcase.xlsx`: loại `phieu` (số tự sinh BBXLKKHH, vòng đời Đang tạo > Chờ duyệt > Đã duyệt, Duyệt riêng),
+      207 TC, 13 nhóm, P0 44,4%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 232 có TC / 92 N/A (Xóa, Khóa, Import, Không duyệt); SRS 122 / 41 N/A
+- [x] Nghi lỗi ghi nhận (không sửa): Xuất Excel danh sách chỉ tích sẵn 5/9 trường dù bảng hiện đủ cột (khoá cột ≠ khoá trường xuất);
+      ô lọc Loại hành động ở Lịch sử không có "Duyệt"
+
+### Checkpoint — 2026-11-06
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Biên bản xử lý hàng thừa, thiếu sau kiểm kê
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; quyết 2 nghi lỗi (trường xuất Excel mặc định, lọc "Duyệt" ở Lịch sử); đẩy Drive khi user yêu cầu
 Blocked:

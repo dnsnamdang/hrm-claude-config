@@ -377,3 +377,6 @@ Vừa hoàn thành: toàn bộ Phase 1-4. BE (quyền 4 cấp id 1543-1546 + see
 Đang làm dở: (trống — chờ test trên UI)
 Bước tiếp theo: user kiểm thử màn Phiếu nhập hàng (bộ lọc theo cấp tổ chức, tuỳ chỉnh cột, cột Người lập). Nếu cần gán quyền cho role khác 18 → gán qua màn phân quyền (nay đã hiện nhóm "Phiếu nhập hàng").
 Blocked: (trống)
+
+## Ngày 03/11/2026 (@junfoke)
+- [x] 03/11/2026 — Lỗi #11960: danh sách Phiếu nhập hàng vỡ giao diện khi sắp xếp (cột co giãn theo dữ liệu) → đặt bề rộng cố định mọi cột (đo 4 lần sắp xếp liên tiếp không đổi); BE thêm khoá phụ cho thứ tự ổn định khi trùng giá trị (`ProductImportService`). Commit api `de4cfded3`, client `ee75050e6` (develop).

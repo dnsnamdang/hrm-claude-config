@@ -1497,3 +1497,28 @@ Blocked: không.
 ## Fix — Từ khoá dài đè nút ✕ ở ô tìm nhanh (2026-10-10) @khoipv
 - [x] `components/V2BaseSmartFilterPanel.vue`: input `.quick-search` thêm `padding-right: 28px` chừa chỗ cho nút xoá
       từ khoá (absolute right 10px). Component dùng chung → áp cho mọi màn danh sách dùng ô tìm nhanh.
+
+## Fix — Phản hồi SRS BR-01 "phạm vi theo công ty của vai trò, kiêm nhiệm tính sao" (2026-11-09) @khoipv
+- [x] Đối chiếu code: `CompanyAccountService::currentCompanyId()` đọc `auth()->user()->info->company_id` (công ty
+      trong HỒ SƠ nhân sự). Hệ thống phân quyền lại theo `current_company_role` (= `employee_infos.company_role`
+      — công ty user đang chọn theo vai trò, fallback `company_id`), JWT cũng mang claim `current_company` này.
+      → Phản hồi ĐÚNG: user kiêm nhiệm chuyển sang công ty B vẫn thấy/ghi TK của công ty A trong hồ sơ, trong khi
+      quyền lại xét ở công ty B (lệch nguồn quyền vs nguồn dữ liệu).
+- [x] User chốt hướng A. `CompanyAccountService::currentCompanyId()` đổi `info->company_id` → `current_company_role`
+      (1 hàm, dùng chung cho danh sách / show / sửa / khoá / tạo / import). FE không đổi.
+      Verify tinker: user 787 (hồ sơ cty 1, vai trò cty 8) → currentCompanyId=8, danh sách 2 dòng = đúng số TK cty 8
+      (trước sửa ra 22 TK của cty 1).
+- [x] Sửa nội dung SRS trong `gen_srs.py` (Thuật ngữ "Công ty của người dùng", Phạm vi dữ liệu mục Phân quyền,
+      Điều kiện Thêm mới, BR-01). KHÔNG sinh lại .docx: gen_srs.py còn gọi `overview_figure()` (form cũ, lib đã chặn).
+      Bản chính là Google Docs (có comment tester) → sửa trực tiếp ở task dưới.
+- [x] Sửa SRS trên Google Docs (bản có comment tester) bằng Tìm và thay thế — 5 chỗ: "công ty ghi trong hồ sơ nhân sự
+      của mình" ×2, "…của người đăng nhập" ×1, "gắn công ty của người tạo" ×2 → "công ty đang làm việc theo vai trò…".
+      Kiểm bản .docx tải lại: còn 1 comment (Thuy Đào, anchor "Phạm vi dữ liệu theo công ty"), 0 chỗ "hồ sơ nhân sự".
+      Chưa trả lời comment — để user trả lời.
+
+### Checkpoint — 2026-11-09
+Vừa hoàn thành: BE `currentCompanyId()` theo `current_company_role` (hướng A) + sửa SRS Google Docs, giữ nguyên comment.
+Đang làm dở: không.
+Bước tiếp theo: test trên trình duyệt bằng tài khoản kiêm nhiệm (chuyển công ty → danh sách / tạo / Import theo công ty mới);
+user trả lời comment của Thuy Đào. Cân nhắc rà các màn Finance khác còn dùng `info->company_id`.
+Blocked:

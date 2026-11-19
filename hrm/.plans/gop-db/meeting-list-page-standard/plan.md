@@ -78,3 +78,6 @@ Bước tiếp theo: user mở trình duyệt kiểm tra `/assign/meeting` (task
 Blocked: không.
 
 - [x] Fix: popup Chọn người đề xuất (PopupStaff) vỡ 3 ô Công ty/Phòng ban/Bộ phận ~7px — V2BaseCompanyDepartmentFilter tự khai `.odf-root { display: contents }` + V2BaseSmartFilterPanel tự khai `.form-row > .d-contents { display: contents }` (03/10/2026)
+
+## Ngày 11/11/2026 (@junfoke)
+- [x] 11/11/2026 — Lỗi #12114 ([Meeting] Danh sách meeting): bộ lọc thêm ô Tỉnh/TP (lọc theo tỉnh trong địa chỉ khách hàng của meeting) + bảng thêm cột Tỉnh/TP sau cột Khách hàng (có trong Cấu hình cột và Xuất Excel). Popup "Chọn khách hàng" — chỉ bật ở Meeting, Báo giá, Dự án TKT (các màn khác giữ nguyên): thêm 2 ô lọc Tỉnh/TP + Khu vực kinh doanh (chọn tỉnh thì chỉ hiện khu vực đang hoạt động của tỉnh đó), cột Khu vực kinh doanh (xác định theo phường/xã trong địa chỉ), nút Xem toàn màn hình cạnh nút X. Hợp đồng bán đầu kỳ không sửa (chọn khách bằng ô gõ tìm, không có popup) — báo lại QA. Nhánh `feat/12114-meeting-tinh-tp-khu-vuc` (tách `origin/gop_db`): api `e22d25631`, client `dc919bb48` → merge develop api `dd79efdc0`, client `cea0352ca` (đã push). Nhánh feat chưa push, chưa lên gop_db.

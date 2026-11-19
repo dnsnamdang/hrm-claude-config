@@ -173,8 +173,92 @@ Blocked:
 - [x] R31. "Đặt sort về mặc định": ảnh QA chụp 15:53 23/10, TRƯỚC commit #11823 R26 (16:13) → sort Ngày tạo / Ngày duyệt đã bỏ. Vá nốt: sort cũ (created_at / approve_time…) còn lưu localStorage → khi khôi phục chỉ giữ `code` / `inventory_date`
 - [x] R32. (*) tại khối Hàng hóa / Hàng thừa khác / Hội đồng kiểm kê lúc nhập kết quả → đã có từ #11821 (`4c14fd4bf`, 09:23 23/10, đã lên origin/develop); ảnh QA chụp trên hrm-crm (bản build cũ). Không sửa code
 
+- [x] R33. (phản hồi 27/10) "Thêm sort vào các trường NGÀY": Ngày tạo / Ngày duyệt / Ngày cập nhật sort được — FE `sortable`, BE `SelfInventoryService::SORT_MAP` (`created_at`, `approve_time`, `updated_at_full`→`updated_at`). Làm chung với phản hồi #11829 (đảo R26 #11823). Sort ngày đã lưu localStorage nay được giữ vì cột đã sortable lại
+
+### Checkpoint — 2026-10-27 (#11857 phản hồi)
+Vừa hoàn thành: R33; compile FE + `php -l` OK; smoke test API sort asc/desc 3 cột trả 200, thứ tự đúng
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt; commit khi user yêu cầu
+Blocked:
+
 ### Checkpoint — 2026-10-26 (#11857)
 Vừa hoàn thành: R31 (FE `index.vue` `restoreAndLoad`), R32 xác minh
 Đang làm dở: —
 Bước tiếp theo: deploy → QA kiểm lại trên bản mới
+Blocked:
+
+## Fix #11887 — popup chọn kế hoạch không thấy Kế hoạch tổng đã duyệt (28/10/2026)
+
+- [x] BE `SelfInventoryService::plansQuery()`: điều kiện ngày KH tổng đổi theo `SelfInventoryRequestAll::canSelfInventory()` (nút Lập phiếu màn Kế hoạch) — `inventory_date_from >= hôm nay AND inventory_date_to >= hôm nay`; ERP gốc `from >= hôm nay AND to <= hôm nay` chỉ khớp kỳ 1 ngày (user chốt 28/10)
+- [x] Verify: gọi `/self-inventories/plans` qua HTTP kernel, đối chiếu với `canSelfInventory()` của từng KH tổng Đã duyệt
+
+### Checkpoint — 28/10/2026 10:30
+Vừa hoàn thành: #11887 — `plansQuery()` đổi `inventory_date_to <= hôm nay` → `>= hôm nay` (khớp `canSelfInventory()`). Test 5 KH tổng mẫu trong transaction (rollback, còn 0 dòng): quá hạn / đang chạy giữa kỳ → ẩn; bắt đầu hôm nay / kỳ 1 ngày hôm nay / sắp tới → hiện — khớp nút Lập phiếu cả 5.
+Đang làm dở: —
+Bước tiếp theo: user kiểm trên dev → commit.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: fix #11887 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d04c`, hrm-client tới `f8f362a51`).
+Đang làm dở: —
+Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
+Blocked:
+
+## Fix Redmine #12039 (QA 05/11, form + chi tiết + lịch sử)
+- [x] R34. Ghi chú ở trạng thái mặc định cao bằng các ô còn lại (form tạo/sửa)
+- [x] R35. Thêm hàng hóa → xoá ĐVT (× select2) → không cuộn được bảng
+- [x] R36. Nút Duyệt + Không duyệt đứng cạnh nhau, In / Xuất Excel dời về sau
+- [x] R37. Chi tiết: thu nhỏ cột dữ liệu ngắn (SL tồn kho, ĐVT kiểm kê…); Chênh lệch ≠ 0 bôi đỏ như ERP
+- [x] R38. Lịch sử: tiêu đề "Duyệt" đổi thành "Thay đổi trạng thái"
+
+### Checkpoint — 2026-11-05 (#12039)
+Vừa hoàn thành: R34–R38. FE `SelfInventoryForm.vue`: Ghi chú `rows` 2→1; `unitOptionsOf()` cache theo `product.units` (WeakMap ngoài data) — gốc lỗi R35: mảng options mới mỗi lần vẽ → v-select2-component dựng lại select2 đúng lúc × vừa tự mở dropdown → handler ghim cuộn `attachBody` mồ côi trên vùng cuộn bảng; nút Không duyệt ngay sau Duyệt kết quả, In / Xuất Excel cuối; Chi tiết: cột ĐVT / SL tồn kho / Công ty / Tồn theo lô / ĐVT kiểm kê / Thực kiểm (không nhập) / Chênh lệch `si-col-fit` (width 1%, nowrap); Chênh lệch ≠ 0 màu đỏ (ERP `text-danger` khi diff_qty != 0). BE `CatalogHistoryService` TABLES `self_inventories.action_labels` approved → "Thay đổi trạng thái" (áp cả log cũ).
+Verify: template + script parse OK, `php -l` OK, `getLogs(876)` approved → "Thay đổi trạng thái". Chưa mở trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt (đặc biệt R35: thêm hàng → × ĐVT → cuộn bảng); commit khi user yêu cầu.
+Blocked:
+- [x] R34b. (user báo Ghi chú vẫn cao) `rows=1` KHÔNG ăn: `b-form-textarea` ép tối thiểu 2 dòng (DOM vẫn `rows="2"`, đo 53px vs ô khác 32px). Sửa theo khuôn #12037: wrapper `.si-note` + `::v-deep .v2-textarea { height/min-height 32px; line-height 18px }`, trả `rows` về 2
+
+### Checkpoint — 2026-11-05 (#12039 lượt 2)
+Vừa hoàn thành: R34b; compile template/script OK. Test Playwright đo được lỗi Ghi chú (53px) trước khi sửa; user dừng test giữa chừng → R34b, R35 (× ĐVT → cuộn), R36, R37 CHƯA kiểm trên trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user tự kiểm trình duyệt (Ctrl+Shift+R nếu HMR giữ bản cũ); commit khi user yêu cầu.
+Blocked:
+
+## Fix Redmine #12039 lượt 2 (QA phản hồi 06/11)
+- [x] R35b. Bug 2 vẫn còn: Thêm hàng hóa → × ĐVT → bảng không cuộn. Cache options ở màn CHƯA đủ: `V2BaseSelect.visibleOptions` đọc `currentValue` → mỗi lần giá trị đổi `select2Options` map ra mảng mới → v-select2 dựng lại select2 lúc × vừa mở dropdown → `scroll.select2` mồ côi. Sửa tại màn `SelfInventoryForm.vue`: `releaseTableScrollLock()` (khuôn `V2BaseSelectInModal.releaseScrollLock`) gọi sau × ở ĐVT kiểm kê + ĐVT hàng thừa khác — đóng dropdown còn mở trong form, gỡ `scroll.select2` trên `.v2-table-scroll__body` + mọi cha
+- [x] R38b. Bug 5 sai màu: dòng Duyệt kết quả (`approved`) đã đổi tên "Thay đổi trạng thái" nhưng vẫn xanh lá, dòng `change_status` cam. `SelfInventoryController::histories()` đè `action_color` của `approved` = `ACTION_COLORS['change_status']` (#d97706), không sửa hằng dùng chung
+
+### Checkpoint — 2026-11-06 (#12039 lượt 2)
+Vừa hoàn thành: R35b, R38b. Verify: template + script parse OK, `php -l` OK, `getLogs(876)`: approved + change_status cùng "Thay đổi trạng thái" / #d97706. CHƯA mở trình duyệt (R35b cần user bấm thử).
+Đang làm dở: —
+Bước tiếp theo: user kiểm trình duyệt (Ctrl+Shift+R); gốc rễ chung nằm ở `V2BaseSelect` (mảng options mới mỗi lần đổi giá trị) — chờ user quyết có sửa hàm dùng chung không; commit khi user yêu cầu.
+Blocked:
+- [x] R35c. (user đồng ý sửa hàm dùng chung) `components/V2BaseSelect.vue`: `select2Options` qua `stableOptions()` — trả lại ĐÚNG mảng cũ khi id/text/cờ khoá không đổi → đổi giá trị không còn dựng lại select2 (gốc lỗi R35, áp mọi màn dùng V2BaseSelect). `SelfInventoryForm.releaseTableScrollLock()` hạ xuống lớp dự phòng: KHÔNG đóng dropdown, chỉ gỡ `scroll.select2` khi không còn dropdown nào mở
+
+### Checkpoint — 2026-11-06 (#12039 lượt 2, sửa V2BaseSelect)
+Vừa hoàn thành: R35c. Verify: parse template/script 2 file OK. CHƯA mở trình duyệt.
+Đang làm dở: —
+Bước tiếp theo: user kiểm (1) × ĐVT ở Tạo phiếu kiểm kê → cuộn bảng; (2) regression vài màn khác có V2BaseSelect: chọn / × / options nạp lại theo ô cha; commit khi user yêu cầu.
+Blocked:
+
+### Checkpoint — 2026-11-05 (#12039 push)
+Vừa hoàn thành: ĐÃ PUSH `develop` — hrm-api `14705dc36` (merge `06220838c`), hrm-client `a9954fed8` (merge `bd29ec032`). Chỉ commit 2 file của #12039; WIP màn khác giữ nguyên chưa commit.
+Bước tiếp theo: deploy dev → QA kiểm lại, đóng issue Redmine.
+Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+- [x] Đọc chuẩn: BRIEF_PBHV / BRIEF_PKT (Phần 5 bảng 4 cột, Mục lục ngắt trang + căn giữa, dòng checklist 161) / BRIEF_PXHM (testcase chuẩn mới) + SKILL srs / hdsd / testcase-documenter; khuôn chép `../kiem-ke-theo-vi-tri/`
+- [x] Đọc code màn (FE `pages/warehouse/self-inventories/**`, BE `SelfInventory*`, FormRequest, quyền seeder) + màn đọc / ghi ngược (2 màn Kế hoạch, Phiếu điều chuyển vị trí, Phiếu nhập / xuất kho điều chỉnh kiểm kê, Phiếu nhập / xuất hàng điều chỉnh kiểm kê, Phiếu nhập kho, Phiếu điều chuyển hàng, Báo cáo hàng thừa thiếu sau tổng kiểm kê, Biên bản xử lý hàng thừa thiếu, danh mục Kho vật lý / Vị trí)
+- [x] Chụp ảnh dev-hrm (`kkhh_shots/_capture/capture.js`, DNS Admin, chặn mọi yêu cầu ghi): 1 yêu cầu ghi bị chặn (POST lưu phiếu — trả lỗi kiểm tra giả tại trình duyệt để chụp ảnh lỗi), 0 lọt máy chủ; 2 POST chỉ đọc (product-data, lot-stocks — đã đọc code); giả trạng thái Đang tạo cho phiếu 1090 (ảnh Sửa / Xóa). Icon menu Tài chính › Kiểm kê cắt từ ảnh màn Kế hoạch
+- [x] `gen_srs.py` → `SRS - Kiểm kê theo hàng hóa.docx`: 18 chức năng, selfcheck khớp bản mẫu; metrics ui 14.2 / ev 4.8 / evch 1336 / intro 1848; Phần 5 bảng 4 cột 13 màn
+- [x] `gen_hdsd.py` → `HDSD_Kiem ke theo hang hoa.docx`: 19 PHẦN, 29 trang
+- [x] `gen_testcase.py` → `testcase.xlsx` (loại `phieu`): 294 TC, 15 nhóm, P0 47,3%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 259 có TC / 65 N/A (Khóa, Import); SRS 132 / 31 N/A
+- [x] Kiểm "xóa phiếu không trả kế hoạch về Đang kiểm" (bộ Kế hoạch theo hàng hóa nghi lỗi): đúng code hiện hành — `SelfInventoryWriteService::destroy()` cố ý không trả (y ERP, user chốt 20/10); ghi vào SRS BR-05 + testcase TC_05.006, không sửa code
+
+### Checkpoint — 2026-11-06 15:30
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Kiểm kê theo hàng hóa
+Đang làm dở: —
+Bước tiếp theo: user soát tài liệu; báo user nghi lỗi xuất Excel (trường Người duyệt không tích sẵn, 10/11) và quyết định giữ / đổi hành vi xóa phiếu không trả kế hoạch
 Blocked:

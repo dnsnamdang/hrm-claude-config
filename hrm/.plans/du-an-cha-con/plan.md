@@ -841,3 +841,6 @@ CHƯA test: build production FE (chỉ chạy dev server), bảng "Dự án con"
 - [x] `promoteParentToInProgress()` giữ lại làm lưới an toàn cho dữ liệu cũ, đã ghi chú lý do
 - Cơ sở: cha ở "Đang tạo" ⇔ mới Lưu nháp ⇔ `customer_id` chưa bắt buộc; con kế thừa cứng khối KH từ cha nên trước đây luôn 422 mà không rõ lý do
 - [x] Verify (API :8005 + UI :3005, nhánh `tpe`, tài khoản namdangit@gmail.com): dropdown loại cha nháp (4 option còn lại đều status ≥ 2) · POST con dưới cha nháp → 422 đúng message tại `parent_id` cho CẢ lưu nháp lẫn lưu chính thức · con dưới cha "Đang thực hiện" lưu được, kế thừa `customer_id` · hồi quy cha đã đóng vẫn báo "Dự án cha đã đóng" · sửa con đã có không bị chặn oan · tab Dự án con: cha nháp = 0 nút + 1 dòng ghi chú `rgb(107,114,128)`, cha chính thức = 1 nút + 0 ghi chú. Đã xoá dữ liệu test #361/#362.
+
+### Tài liệu
+- [x] 27/10/2026: Bổ sung 88 testcase (TC-ROLE-517 → 604) cho #10882 vào tab "12.Dự án TKT" của Google Sheet Testcase_Quản lý dự án (dòng 642–730, nhóm "UPDATE testcase 27/10/2026"), cột DNS check để trống

@@ -132,6 +132,9 @@ Blocked: không có
 - [x] FE: thêm lại checkbox "Sử dụng quyết định" ở `setting-master/index.vue` (đọc/ghi `use_decision`)
 - [x] FE: bỏ `isShowKey: 'is_use_decision'` của phân hệ `operation` (ẩn/hiện phân hệ chỉ do màn Cài đặt phân hệ)
 
+## Phase 7 — Cây cấu hình khớp menu hub (21/10/2026)
+- [x] FE: gom mục cấp 1 cùng `hubGroup` thành 1 nút nhóm như sidebar hub (CSKH trước bán › Báo cáo, Công việc › Phê duyệt, Tài chính, Bảo hiểm, Kho) — khoá ẩn/hiện giữ nguyên
+
 ### Checkpoint — 2026-09-14 (XONG Phase 1-5, đã test thật)
 Vừa hoàn thành: **toàn bộ chức năng + test tay bằng Playwright trên cổng 3002/8003.**
 

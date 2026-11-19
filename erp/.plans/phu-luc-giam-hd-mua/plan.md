@@ -48,3 +48,7 @@ Vừa hoàn thành: **Phần A** (BE-validate sàn nhập khẩu) code xong, php
 Đang làm dở: Phần B chưa bắt đầu (mới có khung task, cần B0 khảo sát trước khi code).
 Bước tiếp: User (1) test browser Phần A; (2) chốt có build Phần B ngay không + nhánh. Nếu build → chạy B0 khảo sát rồi subagent-driven theo B1–B7.
 Blocked: (trống)
+
+## Ngày 29/10/2026 (@junfoke)
+- [x] 29/10/2026 — Lỗi 500 khi in phụ lục giảm HĐ mua ngoài (`Invalid argument supplied for foreach()` ở FormatHelper.php:1056): model `InlandBuyContractAnnex2` chưa có phần dữ liệu cho mẫu in nên `fillReport()` nhận rỗng. Bổ sung: NCC + công ty lấy từ HĐ gốc; số phụ lục, người duyệt + chức vụ, giá trị phụ lục + bằng chữ lấy từ phụ lục; bảng hàng in SL giảm, Thành tiền giảm + dòng tổng giảm chưa thuế / VAT / tổng giảm có thuế. Cả 2 nút in của màn chạy được. Thử trên local `HDMN-00689-00729_PLG_00001`. Commit `9230f4029b` (gop_db).
+- [ ] Xem bản in thật trên trình duyệt / server.

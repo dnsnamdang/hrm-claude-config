@@ -67,3 +67,6 @@ cùng ngày) sau khi tôi đọc skill lần đầu → lần chỉnh bề rộn
 - [x] Bật prop `fixed-layout` trên `V2BaseDataTable`
 - [x] Khai `width` + `minWidth` cho **đủ mọi cột** theo 4 bậc S (130-150) · M (170-190) · L (220-260) · XL (300)
 - [x] Cột chữ dài dùng `cellClass: 'text-wrap clamp-2'` + `:title` trên thẻ trong slot (kẹp 2 dòng, hover xem đủ)
+
+- [x] Fix 24/10/2026: Lưu ứng dụng báo lỗi cặp Nhóm ngành – Nhóm giải pháp chi tiết (gom mọi cặp hỏng vào errors.industry_pairs: "Nhóm ngành X - Nhóm giải pháp Y không còn liên kết") — ApplicationsRequest
+- [x] Fix 24/10/2026 (FE): lỗi cặp chỉ hiện 1 lần dưới ô con (bỏ parentError), toast 422 đổi thành "Vui lòng kiểm tra lại thông tin đã nhập" — application-modal.vue

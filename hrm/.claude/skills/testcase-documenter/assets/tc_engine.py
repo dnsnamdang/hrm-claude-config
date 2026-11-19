@@ -79,9 +79,9 @@ SUMMARY = [
 ]
 
 # Danh so section La Ma. Man co nhieu nhom (vd them "Lich su thay doi") vuot qua X thi
-# engine se nem ValueError o `ROMAN.index()` -> khai san toi XV.
+# engine se nem ValueError o `ROMAN.index()` -> khai san toi XX (man phieu co toi 18 nhom chuan).
 ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
-         "XI", "XII", "XIII", "XIV", "XV"]
+         "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX"]
 
 # Chan thuat ngu ky thuat lot vao tai lieu danh cho QA / nghiep vu.
 BANNED = [

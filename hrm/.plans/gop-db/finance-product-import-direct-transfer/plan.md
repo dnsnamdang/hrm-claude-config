@@ -636,3 +636,6 @@ Vừa hoàn thành: bộ tài liệu bàn giao (157 TC + HDSD 29 trang).
 Đang làm dở: không.
 Bước tiếp theo: user đọc lại 2 file, xác nhận 2 quan sát ở trên có cần sửa code không.
 Blocked: không.
+
+## Ngày 30/10/2026 (@junfoke)
+- [x] 30/10/2026 — Lỗi #11923: màn chi tiết phiếu chuyển hàng nhập thẳng bỏ ô Trạng thái; tiêu đề các khối viết thường ("Thông tin chung", "Chi tiết", "Lịch sử thay đổi"). `ProductImportDirectTransferForm.vue`, client `137f82d43` — đã lên origin/develop.

@@ -1,0 +1,255 @@
+# Review package — Task 2 (hrm-api, BASE e359041b0 .. HEAD f31463e13)
+
+## git log
+f31463e13 feat(ychg): TempNoPriceResolver classifies TH1/TH2 + VND conversion
+
+## git diff --stat
+ Modules/Assign/Services/QuotationService.php       |   2 +-
+ .../PriceCalculation/TempNoPriceResolver.php       |  84 +++++++++++++++
+ .../Feature/PriceAskingNoPriceApproveTest.php      | 120 +++++++++++++++++++++
+ 3 files changed, 205 insertions(+), 1 deletion(-)
+
+## git diff -U10
+diff --git a/Modules/Assign/Services/QuotationService.php b/Modules/Assign/Services/QuotationService.php
+index 67cd32090..86e9de724 100644
+--- a/Modules/Assign/Services/QuotationService.php
++++ b/Modules/Assign/Services/QuotationService.php
+@@ -1418,21 +1418,21 @@ class QuotationService
+      * KHÔNG đọc `quotations.exchange_rate` — cột đó là tỷ giá ĐÓNG BĂNG lúc lập báo giá:
+      * update() chỉ set khi `!$quotation->exchange_rate`, mà create() luôn set sẵn (>= 1, truthy)
+      * ⇒ không bao giờ refresh.
+      *
+      * ⚠️ RÀNG BUỘC — copy-preview và copy() BẮT BUỘC gọi CHUNG method này.
+      * Spec §5.3: bản sao lấy tỷ giá ERP hiện tại, KHÔNG copy tỷ giá V1. Nếu preview đọc tỷ giá V1 còn
+      * copy() lấy tỷ giá mới thì: giá ERP không đổi + tỷ giá đổi ⇒ preview báo "không có thay đổi"
+      * (FE bỏ popup, copy thẳng) nhưng bản sao đổi số TOÀN BỘ dòng giá ⇒ preview nói dối user.
+      * Sửa 1 trong 2 đường mà quên đường kia là tái hiện đúng bug này.
+      */
+-    private function resolveCurrentExchangeRate(Quotation $quotation): float
++    public function resolveCurrentExchangeRate(Quotation $quotation): float
+     {
+         if (!$quotation->currency_id) {
+             return 1.0;
+         }
+         $currency = TpCurrency::find($quotation->currency_id);
+         if (!$currency || strtoupper($currency->code) === 'VND') {
+             return 1.0;
+         }
+         return (float) ($currency->exchange_rate ?: 1);
+     }
+diff --git a/Modules/MasterData/Services/PriceCalculation/TempNoPriceResolver.php b/Modules/MasterData/Services/PriceCalculation/TempNoPriceResolver.php
+new file mode 100644
+index 000000000..5b9b423e4
+--- /dev/null
++++ b/Modules/MasterData/Services/PriceCalculation/TempNoPriceResolver.php
+@@ -0,0 +1,84 @@
++<?php
++
++namespace Modules\MasterData\Services\PriceCalculation;
++
++use Illuminate\Support\Facades\DB;
++use Modules\Assign\Entities\Quotation;
++use Modules\Assign\Services\QuotationService;
++
++/**
++ * YCHG "Duyệt không cần tính giá" — phân loại hàng tạm + resolve giá để ghi (KHÔNG ghi giá, KHÔNG đổi trạng thái).
++ *
++ * TH2 (won_bid): hàng có dòng báo giá của báo giá TRÚNG THẦU → giá nhập/bán từ dòng báo giá × tỷ giá HIỆN TẠI
++ *                (QuotationService::resolveCurrentExchangeRate, không dùng tỷ giá đóng băng trên báo giá).
++ * TH1 (zero):    giá nhập (product_company_units.cost_price) = 0 VÀ giá bán lẻ loại 1 (product_unit_prices) = 0
++ *                TƯỜNG MINH ở ĐVT gốc tại công ty. Thiếu dòng = KHÔNG đủ điều kiện.
++ */
++class TempNoPriceResolver
++{
++    private const RETAIL_PRICE_TYPE_ID = 1;
++
++    /**
++     * @return array|null null = không đủ điều kiện; ['case'=>'won_bid'|'zero','cost'=>float,'sale'=>float,'unit_id'=>int]
++     */
++    public function resolve(int $productId, int $companyId): ?array
++    {
++        $won = $this->resolveWonBid($productId);
++        if ($won !== null) {
++            return $won;
++        }
++        return $this->resolveZero($productId, $companyId);
++    }
++
++    private function resolveWonBid(int $productId): ?array
++    {
++        $row = DB::table('quotation_product_prices as qpp')
++            ->join('quotations as q', 'q.id', '=', 'qpp.quotation_id')
++            ->where('qpp.erp_product_id', $productId)
++            ->where('q.status', Quotation::STATUS_TRUNG_THAU)
++            ->whereNotNull('qpp.estimated_price')
++            ->whereNotNull('qpp.quoted_price')
++            ->orderByDesc('q.id')
++            ->orderByDesc('qpp.id')
++            ->first(['q.id as quotation_id', 'qpp.estimated_price', 'qpp.quoted_price', 'qpp.unit_id']);
++        if (!$row) {
++            return null;
++        }
++        $unitId = (int) $row->unit_id;
++        if ($unitId <= 0) {
++            $base = $this->baseUnit($productId);
++            $unitId = $base ? (int) $base->unit_id : 0;
++        }
++        $quotation = Quotation::find($row->quotation_id);
++        $rate = app(QuotationService::class)->resolveCurrentExchangeRate($quotation);
++
++        return [
++            'case' => 'won_bid',
++            'cost' => (float) $row->estimated_price * $rate,
++            'sale' => (float) $row->quoted_price * $rate,
++            'unit_id' => $unitId,
++        ];
++    }
++
++    private function resolveZero(int $productId, int $companyId): ?array
++    {
++        $base = $this->baseUnit($productId);
++        if (!$base) {
++            return null;
++        }
++        $cost = DB::table('product_company_units')
++            ->where('product_unit_id', $base->id)->where('company_id', $companyId)->value('cost_price');
++        $sale = DB::table('product_unit_prices')
++            ->where('product_unit_id', $base->id)->where('company_id', $companyId)
++            ->where('price_type_id', self::RETAIL_PRICE_TYPE_ID)->value('price');
++        if ($cost === null || $sale === null || (float) $cost != 0.0 || (float) $sale != 0.0) {
++            return null;
++        }
++        return ['case' => 'zero', 'cost' => 0.0, 'sale' => 0.0, 'unit_id' => (int) $base->unit_id];
++    }
++
++    private function baseUnit(int $productId): ?object
++    {
++        return DB::table('product_units')->where('product_id', $productId)->where('is_base', 1)->first(['id', 'unit_id']);
++    }
++}
+diff --git a/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+new file mode 100644
+index 000000000..a08cc86cf
+--- /dev/null
++++ b/Modules/MasterData/Tests/Feature/PriceAskingNoPriceApproveTest.php
+@@ -0,0 +1,120 @@
++<?php
++
++namespace Modules\MasterData\Tests\Feature;
++
++use Illuminate\Foundation\Testing\DatabaseTransactions;
++use Illuminate\Support\Facades\DB;
++use Modules\MasterData\Services\PriceCalculation\TempNoPriceResolver;
++use Tests\TestCase;
++
++/**
++ * YCHG "Duyệt không cần tính giá" — Task 2: TempNoPriceResolver (TH1 giá 0 tường minh / TH2 kế thừa báo giá trúng thầu).
++ */
++class PriceAskingNoPriceApproveTest extends TestCase
++{
++    use DatabaseTransactions;
++
++    private const CO = 1;
++
++    private function mkProduct(): array
++    {
++        $t = 'NP' . substr(uniqid(), -7);
++        $pid = (int) DB::table('products')->insertGetId([
++            'code' => $t, 'name' => "Hàng $t", 'created_at' => now(), 'updated_at' => now(),
++        ]);
++        $unitId = (int) DB::table('units')->insertGetId([
++            'code' => $t . 'U', 'name' => "ĐVT $t", 'created_at' => now(), 'updated_at' => now(),
++        ]);
++        $puId = (int) DB::table('product_units')->insertGetId([
++            'unit_id' => $unitId, 'product_id' => $pid, 'is_base' => 1, 'unit_coefficient' => 1, 'cost_price' => 0,
++            'created_at' => now(), 'updated_at' => now(),
++        ]);
++        return [$pid, $unitId, $puId];
++    }
++
++    private function mkQuote(int $pid, int $status, ?int $currencyId, float $est, float $quo, int $unitId): int
++    {
++        $t = 'Q' . substr(uniqid(), -8) . mt_rand(10, 99);
++        $qid = (int) DB::table('quotations')->insertGetId([
++            'code' => $t, 'customer_id' => 1, 'customer_name' => 'KH', 'status' => $status,
++            'currency_id' => $currencyId, 'created_at' => now(), 'updated_at' => now(),
++        ]);
++        DB::table('quotation_product_prices')->insert([
++            'quotation_id' => $qid, 'erp_product_id' => $pid, 'unit_id' => $unitId,
++            'estimated_price' => $est, 'quoted_price' => $quo, 'created_at' => now(), 'updated_at' => now(),
++        ]);
++        return $qid;
++    }
++
++    private function setPrices(int $puId, int $pid, ?float $cost, ?float $retail): void
++    {
++        if ($cost !== null) {
++            DB::table('product_company_units')->insert([
++                'product_unit_id' => $puId, 'company_id' => self::CO, 'product_id' => $pid, 'cost_price' => $cost,
++                'created_at' => now(), 'updated_at' => now(),
++            ]);
++        }
++        if ($retail !== null) {
++            DB::table('product_unit_prices')->insert([
++                'price_type_id' => 1, 'product_unit_id' => $puId, 'company_id' => self::CO, 'price' => $retail,
++                'coefficient' => 1, 'created_at' => now(), 'updated_at' => now(),
++            ]);
++        }
++    }
++
++    private function resolve(int $pid): ?array
++    {
++        return app(TempNoPriceResolver::class)->resolve($pid, self::CO);
++    }
++
++    public function test_resolve_won_bid_vnd(): void
++    {
++        [$pid, $unitId] = $this->mkProduct();
++        $this->mkQuote($pid, 7, null, 100, 150, $unitId);
++        $this->assertSame(['case' => 'won_bid', 'cost' => 100.0, 'sale' => 150.0, 'unit_id' => $unitId], $this->resolve($pid));
++    }
++
++    public function test_resolve_won_bid_foreign_currency_multiplies_rate(): void
++    {
++        [$pid, $unitId] = $this->mkProduct();
++        $cid = (int) DB::table('currencies')->insertGetId([
++            'code' => 'XX' . mt_rand(100, 999), 'name' => 'Test', 'status' => 1, 'exchange_rate' => 25000,
++            'created_at' => now(), 'updated_at' => now(),
++        ]);
++        $this->mkQuote($pid, 7, $cid, 2, 3, $unitId);
++        $this->assertSame(['case' => 'won_bid', 'cost' => 50000.0, 'sale' => 75000.0, 'unit_id' => $unitId], $this->resolve($pid));
++    }
++
++    public function test_resolve_won_bid_picks_latest_quotation(): void
++    {
++        [$pid, $unitId] = $this->mkProduct();
++        $this->mkQuote($pid, 7, null, 10, 20, $unitId);
++        $this->mkQuote($pid, 7, null, 11, 22, $unitId);
++        $r = $this->resolve($pid);
++        $this->assertSame(11.0, $r['cost']);
++        $this->assertSame(22.0, $r['sale']);
++    }
++
++    public function test_resolve_zero_when_explicit_zero_prices(): void
++    {
++        [$pid, $unitId, $puId] = $this->mkProduct();
++        $this->setPrices($puId, $pid, 0, 0);
++        $this->assertSame(['case' => 'zero', 'cost' => 0.0, 'sale' => 0.0, 'unit_id' => $unitId], $this->resolve($pid));
++    }
++
++    public function test_resolve_null_when_price_missing(): void
++    {
++        [$pid, , $puId] = $this->mkProduct();
++        $this->assertNull($this->resolve($pid));                 // không dòng giá nào
++        $this->setPrices($puId, $pid, 0, null);                   // chỉ có cost=0, thiếu giá bán
++        $this->assertNull($this->resolve($pid));
++    }
++
++    public function test_resolve_null_when_no_won_bid_and_nonzero(): void
++    {
++        [$pid, $unitId, $puId] = $this->mkProduct();
++        $this->mkQuote($pid, 3, null, 100, 150, $unitId);         // chưa trúng thầu
++        $this->setPrices($puId, $pid, 100, 0);                    // cost != 0
++        $this->assertNull($this->resolve($pid));
++    }
++}

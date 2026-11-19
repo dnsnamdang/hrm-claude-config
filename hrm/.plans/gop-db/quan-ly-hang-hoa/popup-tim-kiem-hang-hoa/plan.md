@@ -1878,3 +1878,19 @@ Vừa hoàn thành: Phần H (H1–H5) — ĐÃ PUSH 4 repo.
 Bước tiếp theo: N141 (gán 4 quyền 2c cho tài khoản e2e) + N142 (spec Mẫu in tem chờ đúng mốc) nếu user cho; N130; N137 trước prod.
 Blocked: N100 chờ mapping; N128 chờ chốt HP.
 Lưu ý nghiệp vụ đã trả lời user: cây catalog sắp theo `name` từng cấp (unicode_ci), số thứ tự tính theo vị trí; 🔒 = nút status 0 — popup Xây dựng catalog chặn THÊM vào nhánh khoá (FE ẩn tab + BE 422), picker chỉ hiển thị (vẫn chọn được hàng).
+
+## Phần I — Redmine #11917 (29/10/2026): header bảng popup chọn hàng hở, lộ dòng phía sau khi cuộn
+- [x] I1 `ProductPickerPanel.vue`: bảng `border-collapse: separate` + viền header vẽ bằng `box-shadow inset` (viền collapse của th sticky không dính ⇒ dải trong suốt lộ chữ dòng dưới); bỏ khe 4px giữa thanh cuộn ngang trên và header (chỉ trong picker, không sửa V2BaseTableScroll dùng chung)
+  - Verify: tiêm đúng CSS mới lên dev-hrm (headless, bản chép profile MCP), cuộn 0/7/60/333px → header phủ kín, top-scroll.bottom = body.top = th.top (184px). Chưa build lại dev.
+
+### Checkpoint — 2026-10-29
+Vừa hoàn thành: I1 (#11917) — chưa commit.
+Đang làm dở: không.
+Bước tiếp theo: user mở popup trên local/dev sau deploy kiểm lại; commit khi user yêu cầu.
+Blocked:
+
+## Phần J — 05/11/2026: popup chọn hàng bên ERP (@junfoke)
+- [x] 05/11/2026 — Hỗ trợ check "chọn catalog mà vẫn hiện hàng ngoài" (BGDV mục C): lọc đúng — dev-erp lĩnh vực "II. Dịch vụ ô tô" 767 hàng khớp cây; prod TPE chương "3. Sửa chữa, bảo dưỡng xe máy" 139 hàng đều có catalog thuộc chương, bật/tắt "Gồm hàng ngoài catalog" cùng kết quả (công tắc chỉ mở rộng phần "Tất cả"). Người dùng nhầm vì đọc cột **"Phân loại" = loại sản phẩm, không phải catalog** (vd tủ BETA ở Đồ nghề sửa xe máy › Tủ đồ nghề dụng cụ). Không sửa code. Yêu cầu sửa popup chọn hàng hồi trưa để sau — chưa chốt yêu cầu.
+- [x] 05/11/2026 — Popup chọn hàng (`TanPhatDev` `productPicker.blade.php`, `productPickerJs.blade.php`, dùng chung mọi màn có chọn hàng): ảnh 24×24 → **40×40px** co vừa khung, cột Ảnh 44 → 56px; bỏ `max-width: 360px` của chữ tên hàng (cột giãn mà chữ vẫn 2 dòng). Giải thích ảnh người dùng gửi cột tên rộng vì popup phóng to toàn màn + ẩn cây catalog + cột tên là cột duy nhất không có độ rộng cố định. Commit `51ce2e883a` (gop_db, đã push).
+
+- [x] 06/11/2026 — Popup chọn hàng ERP (dùng chung báo giá, hợp đồng, phiếu kho…) thêm cột **"Thời gian bảo hành"** trong tùy chọn cột ⚙, mặc định ẩn, nhớ lựa chọn: số bảo hành theo công ty đang lập chứng từ (có khai riêng công ty thì lấy, không thì lấy số chung của mã hàng), hiện "12 tháng" / "2 năm"…, chưa khai thì trống; chỉ tính khi cột đang bật. hrm-api `ProductPickerService` `36269786a` + ERP `5e6cb6bdf4` (gop_db, đã push). Deploy phải lên cả hrm-api lẫn ERP, thiếu api thì bật cột báo lỗi dữ liệu.

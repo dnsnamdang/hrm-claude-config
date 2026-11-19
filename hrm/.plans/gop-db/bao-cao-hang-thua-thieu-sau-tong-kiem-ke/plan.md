@@ -43,3 +43,75 @@ Blocked: DB local không có Kế hoạch tổng kiểm kê nào (`self_inventor
 - [x] Menu Kho › Báo cáo kho dẫn đúng trang
 - [x] Hồi quy: popup kế hoạch ở màn Thêm phiếu kiểm kê vẫn gọi `self-inventories/plans`, tiêu đề cũ
 - [x] Sửa sau test: thu hẹp cột (tổng 1150px) để cột Phiếu kiểm kê không bị đẩy ra ngoài ở 1440px; câu ghi chú popup In nói "trên popup" → truyền `note` riêng
+
+## Fix #11886 — đồng bộ UI bộ lọc (28/10/2026)
+
+- [x] BE: `context()` lọc theo `period` (trait `ResolvesReportPeriod`: week | month | last_month | year | custom from/to) thay cho `date_from`/`date_to`; meta vẫn trả `date_from`/`date_to` (in / Excel không đổi)
+- [x] FE: ô Kỳ (select) + ô Thời gian (date-range khi Tuỳ chọn) như `transport/arrange-reports/by-supplier`, mặc định Tháng này
+- [x] FE: ô Kế hoạch tổng kiểm kê + Hàng hóa hiện chữ thường + dấu x riêng (khuôn Tồn kho tổng hợp #11874), bỏ chip
+- [x] FE: Công ty thuê kho hiện TÊN công ty; bỏ tooltip (hint) của ô
+- [x] Verify: compile FE + gọi API qua HTTP kernel
+
+### Checkpoint — 28/10/2026 10:10
+Vừa hoàn thành: #11886 — BE `context()` dùng trait `ResolvesReportPeriod`; FE ô Kỳ + Thời gian (Tuỳ chọn), ô Kế hoạch / Hàng hóa chữ thường + dấu x, Công ty thuê hiện tên, bỏ tooltip. HTTP kernel: month/year 200, custom 2020–2026 ra 4 dòng (khớp số cũ), custom thiếu `to` / ngược → 422, export xlsx 200, print 200. FE template + script compile sạch.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm UI (chưa test Playwright) → commit.
+Blocked:
+
+### Checkpoint — 28/10/2026 (wrap up)
+Vừa hoàn thành: fix #11886 ĐÃ PUSH `develop` 28/10 (hrm-api tới `ddd23d04c`, hrm-client tới `f8f362a51`).
+Đang làm dở: —
+Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
+Blocked:
+
+## Fix #12095 — sắp xếp lại bộ lọc / khối tổng hợp / bảng cây (10/11/2026)
+
+User chốt: làm cả cây nhóm Công ty thuê kho → Kho → Hàng (mục 3).
+
+- [x] (1) Bộ lọc: 5 ô cùng 1 hàng (Kỳ 2 · Kế hoạch 2 · Hàng hóa 3 · Kho 2 · Công ty thuê 3)
+- [x] (2) Icon ⓘ lệch tiêu đề ở khối tổng hợp → căn giữa theo dòng chữ
+- [x] (3a) BE: nhóm theo công ty thuê (lô `self_inventory_product_position_details.company_id`) + kho (vị trí `self_inventory_product_positions.warehouse_id`); lọc Kho / Công ty thuê theo dòng; `groups` phân trang theo công ty; `summary.products`
+- [x] (3b) BE: `GET item-list?metric=surplus|shortage` (popup danh sách hàng thừa / thiếu)
+- [x] (3c) BE: In + Excel ra cây (dòng công ty, dòng kho, dòng hàng — STT 1 / 1.1 / 1.1.1)
+- [x] (3d) FE: khối tổng hợp 3 thẻ (Tổng số mặt hàng · Tổng SL thừa · Tổng SL thiếu), bấm SL thừa / thiếu mở popup
+- [x] (3e) FE: bảng cây 3 cấp + ô chọn cấp bung, phân trang theo công ty
+- [x] (4) Popup chọn kế hoạch: bỏ dòng mô tả dưới tiêu đề, bộ lọc theo UI mới (V2BaseSmartFilterPanel in-modal + ô tìm nhanh), cột Người tạo "Tên - Mã phòng"
+- [x] Verify: HTTP kernel BE + compile FE
+
+Ghi chú thực hiện:
+- (3a) Khác ERP có chủ đích: 1 hàng +2 ở công ty A, −2 ở công ty B nay ra 2 dòng (ERP cộng thành 0 rồi bỏ). Số local không đổi (1 thừa SL 1 · 3 thiếu SL 5).
+- (3c) Dòng nhóm của bản in: tên gộp vào các cột chữ trước cột số; bỏ hết cột chữ thì tên đi kèm STT.
+- (3d) Popup thừa / thiếu chỉ có nút Đóng (chưa làm In / Excel riêng của popup — báo cáo chính đã có).
+- (3e) STT theo mẫu tester 1 / 1.1 / 1.1.1 (không La Mã), mặc định bung hết 3 cấp.
+- (4) Sửa ở popup dùng chung → màn Thêm phiếu kiểm kê cũng đổi theo (bỏ dòng mô tả, bộ lọc mới).
+
+### Checkpoint — 10/11/2026 17:00
+Vừa hoàn thành: #12095 cả 4 mục. BE qua HTTP kernel: index 200 (groups 1 công ty → 1 kho → 4 dòng), item-list surplus/shortage 200, metric lạ 422, print 200 (cây, chọn cột), export 200, plans 200. FE 5 file compile sạch, trang dev 200.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm (bộ lọc 1 hàng, icon ⓘ, 3 thẻ + popup, bảng cây + ô chọn cấp, popup chọn kế hoạch ở cả 2 màn) → commit.
+Blocked: DB local không có Kế hoạch tổng kiểm kê → popup chọn kế hoạch chỉ thấy bảng rỗng; local chỉ 1 công ty / 1 kho có chênh lệch.
+
+### Checkpoint — 10/11/2026 (push)
+Vừa hoàn thành: #12095 ĐÃ PUSH `develop` (hrm-api `1f74d44df`, hrm-client `2585cec12`; cùng lượt push kèm commit Biên bản giao nhận hàng hoá theo yêu cầu user).
+Bước tiếp theo: QA kiểm lại trên dev, đóng issue Redmine.
+
+## Fix #12095 phản hồi 13/11 — thêm link mở popup ở bảng chi tiết (17/11/2026)
+
+Tester (ảnh 13/11) khoanh ô "Tổng số mặt hàng" + số SL thừa / SL thiếu ở dòng công ty: "cho t thêm link mở popup chi tiết ở bảng chi tiết nữa".
+
+- [x] BE: `item-list` nhận thêm `metric=all` (mọi dòng chênh lệch) cho thẻ Tổng số mặt hàng
+- [x] FE: thẻ "Tổng số mặt hàng" bấm được → popup danh sách mặt hàng chênh lệch (cột SL thừa + SL thiếu)
+- [x] FE: bảng cây — số SL thừa / SL thiếu ở dòng TỔNG, dòng Công ty (d0), dòng Kho (d1) bấm được (khuôn DrillNum, 0 không bấm)
+- [x] FE: popup mở từ dòng Công ty / Kho tự đặt sẵn ô lọc Công ty thuê kho / Kho (user bỏ lọc được)
+- [x] Verify: HTTP kernel BE + compile FE
+
+Ghi chú thực hiện:
+- Popup "Tổng số mặt hàng" liệt kê theo DÒNG chênh lệch (1 mặt hàng có thể nhiều dòng ở nhiều phiếu / kho), có cả 2 cột SL thừa + SL thiếu.
+- Lọc đặt sẵn áp khi dữ liệu về (select2 cần option trước). Kho luôn đi kèm công ty cha vì 1 kho có thể nằm dưới nhiều công ty thuê.
+- Dòng hàng (d2) không bấm — popup chỉ ra lại đúng dòng đó.
+
+### Checkpoint — 17/11/2026
+Vừa hoàn thành: phản hồi #12095 (13/11). BE `item-list` thêm `metric=all`; HTTP kernel: surplus 200/1 dòng, shortage 200/3, all 200/4 (= 1 + 3), metric lạ 422. FE 4 file compile sạch (Summary, Table, ItemListModal, index).
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt bấm thử (thẻ Tổng số mặt hàng, số ở dòng TỔNG / Công ty / Kho → popup đặt sẵn lọc) → commit.
+Blocked:

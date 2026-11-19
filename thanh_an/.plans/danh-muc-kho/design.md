@@ -21,3 +21,13 @@ Bổ sung 2 loại kho vào module Category (menu nằm giữa hàng hóa và kh
 - Form tạo/sửa dùng modal (không dùng trang riêng)
 - `num_houses` chỉ hiển thị khi tạo mới kho vật lý, ẩn khi sửa
 - `warehouse_id` bắt buộc khi `is_import_export_direct = 0`, ẩn khi = 1
+
+## Cập nhật 09/11/2026 — chuyển V2 (@khoipv)
+
+- Màn hiện nằm ở phân hệ Kho: `pages/warehouse/warehouses`, `pages/warehouse/accounting_warehouses` (API `warehouse/warehouses`, `warehouse/accounting_warehouses`)
+- List V2: `V2BaseSmartFilterPanel` (lọc mọi cột) + `V2BaseDataTable` + `V2BaseRowActions` (Sửa · Khóa/Mở khóa · Xóa) + Xuất Excel + Cấu hình cột (`column_customizations.warehouse_warehouses` / `warehouse_accounting_warehouses`)
+- Không phân quyền theo cấp
+- `is_can_delete`: Kho vật lý chỉ xóa khi chưa có kho kế toán nào trỏ tới; Kho kế toán luôn xóa được
+- Cột Người tạo / Ngày tạo hiện; Người cập nhật / Ngày cập nhật ẩn mặc định
+- Popup tạo/sửa: `WarehouseFormModal.vue`, `AccountingWarehouseFormModal.vue` (V2BaseModal + formValidateMixin); BE bắt buộc `stocker_ids` / `accountant_ids`
+- Chuẩn popup danh mục: skill `.claude/skills/catalog-popup/SKILL.md` (2 popup kho chưa áp — chờ user)

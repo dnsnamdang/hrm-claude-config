@@ -1094,3 +1094,50 @@ chặn trần chiều cao -> ô nở vô hạn theo số chip.
 - [x] Sửa docblock `WarrantyRepairRequestRequest` (còn ghi "FE chỉ gắn required cho Khách hàng")
 - [x] Skill `form-validate`: nói rõ lỗi BE phải hiện dưới đúng ô — toast chỉ là câu nhắc chung, không truyền nội dung lỗi của một trường; khoá là trường ẩn thì gắn dòng lỗi dưới ô chỉ đọc đang hiện mã phiếu
 - [ ] User kiểm lại trên dev sau khi deploy
+
+### Check (29/10/2026) — ô chọn Khách hàng màn Tạo đang dùng component gì (chỉ điều tra, không sửa code)
+- [x] Ô hiển thị: `V2BaseInput` `readonly` + class `picker-input`, `@click.native="openCustomerModal"` (`WarrantyRepairRequestForm.vue` dòng 27-38) — không phải select
+- [x] Popup chọn: `components/modals/ChooseErpCustomerModal.vue` (id `choose-erp-customer`), gọi `GET assign/customers` (`all_business=1`, `status=1`), emit `event` `{ type: 'choiceCustomer', data }` → `onCustomerSelected()` điền mã/tên/loại KH rồi nạp liên hệ, địa chỉ, thiết bị
+### Check (29/10/2026) — ô "Số phiếu đề nghị" màn Phiếu thu có dùng chung ô chọn với ô Khách hàng (Yêu cầu KT SC-BH) không — chỉ điều tra
+- [x] Dùng chung KIỂU ô: `V2BaseInput` readonly + class `picker-input`, bấm vào ô mở popup (`BillIncomeForm.vue` dòng 25-35)
+- [x] KHÁC popup: Phiếu thu dùng `IncomeRequestSearchModal.vue` riêng (GET `finance/bill-incomes/search-income-requests`, emit `choose`), không dùng `ChooseErpCustomerModal`
+
+### Check (29/10/2026) — kiểm kê toàn hrm-client: ô "bấm vào hiện popup để chọn" đang dùng component gì (chỉ điều tra)
+- [x] Quét mọi thẻ `readonly` + `@click` trong `pages/` + `components/` (script tạm, không lưu vào repo)
+- [x] `V2BaseInput readonly` + class `picker-input`: 43 ô / 27 file (Tài chính, Kho, Chăm sóc KH, EquipmentTab) — CSS `.picker-input` KHÔNG có ở file chung, mỗi file tự copy (22 file tự khai), chỗ `@click`, chỗ `@click.native`
+- [x] Bọc sẵn thành component: chỉ `pages/finance/product-export-requests/components/SourcePicker.vue` (cục bộ)
+- [x] `<input class="form-control" :readonly="true" @click>` thường: 2 ô chọn KH (CustomerBlock Dự án TKT, GeneralInfo Cuộc họp) + 25 ô mở Google Map (Giao việc, Chấm công)
+- [x] Không có component dùng chung toàn hệ thống cho kiểu ô này
+- [x] (bổ sung cùng ngày) Hỏi lại "đã có màn nào dùng V2BasePickerInput chưa": KHÔNG có component tên đó. NHƯNG có sẵn `components/V2BasePickerField.vue` (Redmine #11044) — ô dạng div, bấm mở popup qua `@open`, hỗ trợ chọn đơn/chọn nhiều (chip). 13 chỗ / 9 file: Cuộc họp (MeetingReport) + 8 màn Kho (position-transfers, các báo cáo tồn kho/thẻ kho). → Kết luận "không có component dùng chung" ở mục trên là SAI (script chỉ quét thẻ readonly nên bỏ sót)
+- [x] (bổ sung cùng ngày) Ô "Phiếu đề nghị nhập kho" màn `finance/warehouse-imports/create`: KHÔNG dùng `V2BaseInput`/`V2BasePickerField` mà là KIỂU THỨ 3 — `<div class="source-select">` tự dựng (Redmine #11762, khuôn màn Phiếu nhập hàng): bấm cả ô mở popup, có nút x bỏ chọn + icon kính lúp; style ở `wi-shared.scss`. Popup: `RecordPickerModal.vue` (id `wi-source-picker`, GET `finance/warehouse-imports/create-sources`, emit `choose` → `loadSource`). Màn Sửa hiện link sang đề nghị, không cho đổi. Kiểu `.source-select` còn dùng ở các màn nhập/xuất kho khác (Phiếu nhập hàng, ĐN nhập hàng, xuất hàng, tồn đầu kỳ, nhập thừa thiếu, ĐN nhập kho) → bản kiểm kê ở trên sót kiểu này
+
+### Thử nghiệm (29/10/2026) — thêm icon kính lúp vào ô `picker-input` giống ô "Phiếu đề nghị nhập kho" (`.source-select`)
+- [x] Làm thử CHỈ trên ô Khách hàng của `WarrantyRepairRequestForm.vue` (không sửa `V2BaseInput` dùng chung): icon `ri-search-line` qua slot `suffix`, đặt nổi trong ô bằng CSS scoped, ẩn ở chế độ xem
+  - Template compile 0 lỗi, SCSS biên dịch OK; CHƯA mở trình duyệt kiểm hình
+  - [x] User yêu cầu icon nhỏ + mờ như placeholder: 14px #6b7280 → 12px #adb5bd (màu placeholder của V2BaseInput), padding-right 30 → 28px
+  - [x] User bảo to thêm 1 xíu: icon 12px → 13px (bằng cỡ chữ ô)
+- [ ] User xem rồi quyết định có nhân ra 43 ô `picker-input` không (và có thêm nút x bỏ chọn như `.source-select` không)
+
+### Component dùng chung `V2BasePickerInput` (29/10/2026) — gom ô "bấm vào mở popup để chọn"
+User chốt: thay 43 ô `picker-input` + 9 ô `.source-select` + 2 ô `<input readonly>` chọn KH; GIỮ NGUYÊN `V2BasePickerField` (chọn nhiều dạng chip) và 25 ô Google Map; nút × bỏ chọn BẬT CHO MỌI Ô.
+- [x] Tạo `components/V2BasePickerInput.vue` (bọc V2BaseInput readonly; icon kính lúp 13px #adb5bd; nút × hover đỏ; `disabled` dùng màu khoá chung; emit `open`/`clear`)
+- [x] Nhóm A — CSKH + Kho + màn cũ: WarrantyRepairRequestForm (gỡ bản thử), WrQuotationForm, AddExternalEquipmentModal, AddOldEquipmentModal, EquipmentTab, CustomerBlock, GeneralInfo, position-inventory-results, self-inventories
+- [x] Nhóm B — Tài chính thu/điều chỉnh: addition-accounting-requests (Form + DetailTable), bill-adjust-dept-requests/AdjustDetailTable, bill-adjust-depts (AccountingDetailTable + Form), bill-income-reports, bill-income-requests, bill-incomes
+- [x] Nhóm C — Tài chính chi/khác: bill-payment-authorizations, bill-payment-requests (Form + DetailTable), bill-payments, borrow-exports, borrow-sell-requests, buy-service-accounting-requests, buy-service-accountings, delivery-requests, product-export-requests/SourcePicker
+- [x] Nhóm D — `.source-select`: product-exports/create, product-import-requests, product-imports, warehouse-imports (Form + LotEditor + wi-shared.scss), beginning-stocks, exc-shortage-imports, import-requests
+- [x] Mỗi ô: handler `clear` dọn đúng dữ liệu mà handler chọn đã điền (kể cả dòng chi tiết kéo theo, ô phụ thuộc); xoá CSS `.picker-input`/`.source-select` thừa
+- [x] Verify: compile template + SCSS từng file; grep còn sót `picker-input` / `source-select`
+- [x] Bổ sung skill `select-and-input-state` mục 2d (ô chọn qua popup → V2BasePickerInput), mô tả skill + checklist tự kiểm
+- [x] Thêm prop `disabledPlaceholder` (câu giải thích khi ô khoá + trống): dùng ở CustomerBlock (lockPicker), ProductImportRequestForm ("Chọn loại yêu cầu trước"), ô Hợp đồng theo dòng khi chưa chọn đối tượng
+- [x] Kết quả: 54 ô / 35 file, template compile 0 lỗi, không còn `picker-input` / `source-select` / `mf-picker`. File cha sửa thêm: CustomerInfoSection, BillAdjustDeptRequestForm, AdditionAccountingRequestForm, BillAdjustDeptForm, BillPaymentRequestForm, ProductExportRequestForm. SourcePicker giữ wrapper (có hỏi xác nhận đổi/bỏ nguồn)
+- [ ] User chốt các hành vi × tự quyết: Báo giá bỏ "Số phiếu CCTT" → xoá cả form; Phiếu chi/UNC bỏ phiếu đề nghị → giữ "Loại chi"; BillIncomeReport bỏ KH → mất "Khách không rõ"; bỏ HĐ/đối tượng → reset tick dư nợ đầu kỳ; Đề nghị thanh toán bỏ đối tượng → xoá bảng chi tiết; Đề nghị giao hàng bỏ HĐ → mất YCXH + dòng hàng
+- [ ] User kiểm trên trình duyệt: ô hẹp trong bảng (AccountingDetailTable, AdjustDetailTable, LotEditor, BeginningStockForm) chữ có bị icon đè; ô khoá ở Dự án TKT chuyển nền xám
+
+### Checkpoint — 2026-10-29
+Vừa hoàn thành: component V2BasePickerInput + đổi 54 ô + skill select-and-input-state mục 2d
+Đang làm dở: —
+Bước tiếp theo: user kiểm trên trình duyệt + chốt 6 hành vi nút × ở trên
+Blocked: 
+- [x] User thấy icon vẫn nhỏ: kính lúp + nút × 13/14px → 15px, padding-right 28/46 → 30/50px; sửa số trong skill mục 2d
+- [x] User chốt cỡ icon 14px (kính lúp + ×), padding-right 28/48px
+- [x] Commit `8910ead19` + push hrm-client nhánh `develop` (40 file) theo yêu cầu user

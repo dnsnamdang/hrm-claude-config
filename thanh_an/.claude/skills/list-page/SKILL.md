@@ -235,7 +235,7 @@ getRowActions(item) {
 </template>
 ```
 
-- Màn danh mục mở bằng modal (không có route chi tiết) → `<button type="button" class="v2-cell-link field-line" @click="openView(item)">`. Bảng không có mã hoặc có bản ghi trống mã → cột định danh là Tên.
+- Màn danh mục mở bằng modal (không có route chi tiết) → `<button type="button" class="v2-cell-link field-line" @click="openView(item)">`. Bảng không có mã hoặc có bản ghi trống mã → cột định danh là Tên. Popup Tạo mới / Sửa / Xem của danh mục làm theo skill `catalog-popup`.
 - **Cấm** `<a href="javascript:void(0)" @click="$router.push(...)">`.
 - Ô tham chiếu sang bảng khác (Nhà cung cấp, Dự án…) hiện `MÃ - Tên` trong MỘT ô; tiêu đề cột nói đủ ("Nhà cung cấp"). Sort ô ghép phải theo đúng chuỗi hiển thị (mã rồi tên) — không làm được thì bỏ `sortable`.
 
@@ -264,7 +264,35 @@ Thứ tự: `STT → Mã → Tên → [cột nghiệp vụ] → Người tạo �
 
 - Màn **≥ 10 cột**: bật `fixed-layout` trên `V2BaseDataTable`, khai `width` + `minWidth` cho MỌI cột theo bậc S 130–150 · M 170–190 · L 220–260 · XL 300. Cột chữ dài: `cellClass: 'text-wrap clamp-2'` + `:title` đầy đủ.
 - Màn danh mục ít cột: STT 60/60 · Tên 220/180 · Mô tả 300/240 · Người tạo 150/140 · còn lại 120/110.
-- Bảng tràn ngang: `V2BaseDataTable` đã có thanh cuộn trên (đồng bộ 2 chiều). Bảng viết tay trong form/modal bọc `V2BaseTableScroll` — không tự chép cặp `topScroll`.
+- Bảng tràn ngang: `V2BaseDataTable` đã có thanh cuộn trên (đồng bộ 2 chiều).
+- Bảng **không phải danh sách chính** (bảng trong form / modal / màn chi tiết, bảng con) → **CHỈ dùng
+  `V2BaseFormTable`** (skill `form-validate` mục 1e). Không viết `<table>` tay, không tự bọc
+  `V2BaseTableScroll`, không chép cặp `topScroll`.
+
+### A8b. Màu bảng — mẫu MISA (đồng bộ hrm 09/11/2026)
+
+`V2BaseDataTable` đã port nguyên bản hrm (style MISA từ 15/10/2026) — màn **không** đè màu `.data-table`.
+Bộ biến DUY NHẤT cho mọi bảng (danh sách, form, popup, chi tiết): `assets/scss/_misa-grid.scss`
+
+| Biến | Màu | Dùng cho |
+| --- | --- | --- |
+| `$misa-head-bg` | `#d8e7e1` | nền header (+ dòng tổng / foot-row) |
+| `$misa-head-fg` | `#10141b` | chữ header (đậm 700) + chữ ô |
+| `$misa-head-line` | `#7cc7ae` | gạch dưới header 1px |
+| `$misa-grid-line` | `#ced1d6` | kẻ ngang / kẻ dọc / khung ngoài |
+| `$misa-row-bg` | `#fbfbfc` | nền dòng — KHÔNG sọc xen kẽ |
+| `$misa-row-hover` | `#e6f5ef` | rê chuột tô CẢ dòng (gồm cột ghim) |
+| `$misa-row-ticked` | `#ddf1e9` | dòng đã tick / đang chọn |
+
+- Bảng còn CSS riêng (bảng cũ chưa lên `V2BaseFormTable`, `.dd-table` ở `assets/scss/v2-detail-modal.scss`):
+  `@import '~/assets/scss/misa-grid';` trong `<style lang="scss">` rồi dùng biến — **cấm gõ hex màu bảng khác**
+  (`#f8fafc`, `#eef4f3`, `#e5e7eb`… là màu cũ).
+- Màu NGỮ NGHĨA (dòng cảnh báo đỏ, đổi hàng vàng, thiếu hàng, header nhóm cột tham chiếu…) được giữ riêng;
+  rule hover phải `:not()` các dòng đó hoặc đặt trước để màu ngữ nghĩa vẫn thắng.
+- Prop opt-in mới của `V2BaseDataTable` (port từ hrm): `hide-header` (ẩn khung tiêu đề — bảng trong khối đã có
+  tiêu đề), `:cell-span="(item, column, index) => n"` (gộp ô dọc: >1 rowspan, 0 = ô bị phủ), `column.tip =
+  { head, lines }` (icon ⓘ chú thích đầu cột — `components/report/ReportInfoTip.vue`), `item-label=""` (không in
+  dòng "Không có … nào.").
 
 ## A9. Màu chữ, ô trống, badge
 

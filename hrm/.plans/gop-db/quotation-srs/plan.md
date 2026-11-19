@@ -14,3 +14,5 @@ Vừa hoàn thành: SRS - Báo giá.docx (selfcheck đạt; 24 mục giao diện
 Bước tiếp theo: user duyệt nội dung; chốt các điểm code lệch nêu khi bàn giao; đẩy Drive nếu user yêu cầu
 Blocked:
 Ghi chú: ảnh `quotation_shots/` từng bị xoá khi tạm dừng (phiên khác dọn file) → đã chụp lại; sinh lại: `python3 gen_srs.py` (hoặc `SRS_SHOTS=<thư mục ảnh> python3 gen_srs.py`)
+
+- [x] FE: dòng "Tỷ giá" hiện TÊN loại tiền (thay mã) + bảng giá theo lựa chọn hiện tại (thay chữ cứng "bán lẻ") — màn Sửa, Chi tiết, bản In (tester 16/10/2026)

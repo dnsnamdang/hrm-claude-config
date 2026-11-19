@@ -1,0 +1,150 @@
+# Review package — Task 1 (hrm-api, BASE 8f23401b7 .. HEAD e359041b0)
+
+## git log
+e359041b0 test(ychg): TEMP_STATUSES now includes 9
+f5c07c588 feat(ychg): add product status 9 (approved-no-price) + badge maps
+
+## git diff --stat
+ Modules/MasterData/Entities/Product/ProductCompany.php           | 5 ++++-
+ .../Services/PriceCalculation/PriceAskingProductReader.php       | 2 +-
+ .../MasterData/Tests/Feature/ProductCompanyFoundationTest.php    | 9 +++++++++
+ Modules/MasterData/Tests/Feature/TempProductVisibilityTest.php   | 2 +-
+ 4 files changed, 15 insertions(+), 3 deletions(-)
+
+## git diff -U10
+diff --git a/Modules/MasterData/Entities/Product/ProductCompany.php b/Modules/MasterData/Entities/Product/ProductCompany.php
+index d8745d36a..0c43f80c4 100644
+--- a/Modules/MasterData/Entities/Product/ProductCompany.php
++++ b/Modules/MasterData/Entities/Product/ProductCompany.php
+@@ -21,48 +21,51 @@ use Modules\Timesheet\Entities\Company;
+ class ProductCompany extends BaseModel
+ {
+     const STATUS_ENTERING_INFO = 1;   // Đang nhập thông tin
+     const STATUS_WAITING_PRICE = 2;   // Chờ tính giá
+     const STATUS_TRADING = 3;         // Đang kinh doanh
+     const STATUS_STOPPED = 4;         // Ngừng kinh doanh — khoá THEO CÔNG TY (G6, thao tác khoá làm ở 2-C4)
+     const STATUS_PRICING = 5;         // Đang tính giá — đã có PTG lưu (Phase 7 D4); mọi chỗ đọc xử như mã 2
+     const STATUS_TEMP = 6;            // Hàng tạm — sale tạo trong YCHG, chờ PTKD duyệt (Phase 6)
+     const STATUS_TEMP_APPROVED = 7;   // Hàng tạm đã duyệt — PTKD Đồng ý, chờ duyệt phiếu
+     const STATUS_TEMP_REJECTED = 8;   // Hàng tạm không duyệt — nằm lại phiếu, không đi tiếp
++    const STATUS_TEMP_APPROVED_NO_PRICE = 9; // Duyệt không cần tính giá — PTKD chốt dùng giá nhập/đã có, chờ duyệt phiếu rồi lên 3
+ 
+     /** Nhóm hàng tạm: ẩn khỏi Kho dữ liệu / Dữ liệu công ty / Nhập thông tin / Đang KD / catalog / picker (Phase 6 T1) */
+-    const TEMP_STATUSES = [self::STATUS_TEMP, self::STATUS_TEMP_APPROVED, self::STATUS_TEMP_REJECTED];
++    const TEMP_STATUSES = [self::STATUS_TEMP, self::STATUS_TEMP_APPROVED, self::STATUS_TEMP_REJECTED, self::STATUS_TEMP_APPROVED_NO_PRICE];
+ 
+     /** Hàng mới đang trong luồng tính giá (đã gửi YCHG, chưa có giá) — vẫn hiện ở màn Nhập thông tin (T2-Q2) */
+     const PRICING_FLOW_STATUSES = [self::STATUS_WAITING_PRICE, self::STATUS_PRICING];
+ 
+     /** Nhãn + màu badge (9 mã màu chuẩn HRM) — BE quyết, FE chỉ hiển thị */
+     const STATUS_TEXT = [
+         self::STATUS_ENTERING_INFO => 'Đang nhập thông tin',
+         self::STATUS_WAITING_PRICE => 'Chờ tính giá bán',
+         self::STATUS_TRADING => 'Đang kinh doanh',
+         self::STATUS_STOPPED => 'Ngừng kinh doanh',
+         self::STATUS_PRICING => 'Đang tính giá',
+         self::STATUS_TEMP => 'Hàng tạm',
+         self::STATUS_TEMP_APPROVED => 'Hàng tạm đã duyệt',
+         self::STATUS_TEMP_REJECTED => 'Hàng tạm không duyệt',
++        self::STATUS_TEMP_APPROVED_NO_PRICE => 'Duyệt không cần tính giá',
+     ];
+ 
+     const STATUS_COLOR = [
+         self::STATUS_ENTERING_INFO => '#64748B',
+         self::STATUS_WAITING_PRICE => '#D97706',
+         self::STATUS_TRADING => '#16A34A',
+         self::STATUS_STOPPED => '#DC2626',
+         self::STATUS_PRICING => '#2563EB',
+         self::STATUS_TEMP => '#6D5A9E',
+         self::STATUS_TEMP_APPROVED => '#7C3AED',
+         self::STATUS_TEMP_REJECTED => '#DC2626',
++        self::STATUS_TEMP_APPROVED_NO_PRICE => '#7C3AED',
+     ];
+ 
+     /**
+      * Tình trạng nhập thông tin theo cột `info_entered_at` (mốc lần đầu công ty lưu form hàng hoá) — màn Hàng hoá nhập
+      * thông tin phân biệt hàng lấy về CHƯA nhập với hàng ĐÃ lưu thông tin (cùng trạng thái 1). Key `entered|pending`
+      * cũng là giá trị ô lọc `info_status`.
+      */
+     const INFO_ENTERED = 'entered';
+     const INFO_PENDING = 'pending';
+ 
+diff --git a/Modules/MasterData/Services/PriceCalculation/PriceAskingProductReader.php b/Modules/MasterData/Services/PriceCalculation/PriceAskingProductReader.php
+index 9e211653c..00a50bf18 100644
+--- a/Modules/MasterData/Services/PriceCalculation/PriceAskingProductReader.php
++++ b/Modules/MasterData/Services/PriceCalculation/PriceAskingProductReader.php
+@@ -107,21 +107,21 @@ class PriceAskingProductReader
+      * @param string[] $tempOpenIn mã YCHG khác đang mở (kể cả Nháp) có chứa hàng — chỉ xét cho hàng tạm
+      */
+     public static function blockReason(?int $status, array $askingIn, array $tempOpenIn = []): ?string
+     {
+         if (in_array($status, self::SELECTABLE_STATUSES, true)) {
+             return null;
+         }
+         if (in_array($status, self::TEMP_SELECTABLE_STATUSES, true)) {
+             return $tempOpenIn ? 'Hàng tạm đang nằm trong yêu cầu hỏi giá ' . implode(', ', $tempOpenIn) : null;
+         }
+-        if ($status === ProductCompany::STATUS_TEMP_APPROVED) {
++        if ($status === ProductCompany::STATUS_TEMP_APPROVED || $status === ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE) {
+             return 'Hàng tạm đã được duyệt, đang chờ duyệt phiếu yêu cầu hỏi giá';
+         }
+         if (in_array($status, ProductCompany::PRICING_FLOW_STATUSES, true)) {
+             return 'Hàng đang được hỏi giá' . ($askingIn ? ' ở ' . implode(', ', $askingIn) : '');
+         }
+         if ($status === ProductCompany::STATUS_STOPPED) {
+             return 'Hàng ngừng kinh doanh tại công ty';
+         }
+ 
+         return 'Hàng chưa dùng ở công ty';
+diff --git a/Modules/MasterData/Tests/Feature/ProductCompanyFoundationTest.php b/Modules/MasterData/Tests/Feature/ProductCompanyFoundationTest.php
+index 387e5a2b9..448955d33 100644
+--- a/Modules/MasterData/Tests/Feature/ProductCompanyFoundationTest.php
++++ b/Modules/MasterData/Tests/Feature/ProductCompanyFoundationTest.php
+@@ -113,11 +113,20 @@ class ProductCompanyFoundationTest extends TestCase
+         $this->assertSame('product_company_coefficients', (new ProductCompany())->getTable());
+         $this->assertSame(
+             DB::table('product_company_coefficients')->count(),
+             ProductCompany::count()
+         );
+         $this->assertSame(
+             [ProductCompany::STATUS_ENTERING_INFO, ProductCompany::STATUS_WAITING_PRICE, ProductCompany::STATUS_TRADING],
+             [1, 2, 3]
+         );
+     }
++
++    public function test_no_price_status_is_temp_and_has_badge(): void
++    {
++        $this->assertSame(9, ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE);
++        $this->assertTrue(ProductCompany::isTemp(ProductCompany::STATUS_TEMP_APPROVED_NO_PRICE));
++        $this->assertArrayHasKey(9, ProductCompany::STATUS_TEXT);
++        $this->assertArrayHasKey(9, ProductCompany::STATUS_COLOR);
++        $this->assertNotSame('', trim((string) ProductCompany::STATUS_TEXT[9]));
++    }
+ }
+diff --git a/Modules/MasterData/Tests/Feature/TempProductVisibilityTest.php b/Modules/MasterData/Tests/Feature/TempProductVisibilityTest.php
+index f318d7e0b..c036061f3 100644
+--- a/Modules/MasterData/Tests/Feature/TempProductVisibilityTest.php
++++ b/Modules/MasterData/Tests/Feature/TempProductVisibilityTest.php
+@@ -60,21 +60,21 @@ class TempProductVisibilityTest extends TestCase
+ 
+     private function listIds(string $url, string $code): array
+     {
+         return array_column($this->getJson($url . (strpos($url, '?') === false ? '?' : '&') . 'per_page=100&keyword=' . urlencode($code))
+             ->assertOk()->json('data'), 'id');
+     }
+ 
+     /** @test */
+     public function hang_so_dinh_nghia_6_7_8_va_helper()
+     {
+-        $this->assertSame([6, 7, 8], ProductCompany::TEMP_STATUSES);
++        $this->assertSame([6, 7, 8, 9], ProductCompany::TEMP_STATUSES);
+         $this->assertSame('Hàng tạm', ProductCompany::STATUS_TEXT[6]);
+         $this->assertSame('Hàng tạm đã duyệt', ProductCompany::STATUS_TEXT[7]);
+         $this->assertSame('Hàng tạm không duyệt', ProductCompany::STATUS_TEXT[8]);
+         $this->assertSame('#6D5A9E', ProductCompany::STATUS_COLOR[6]);
+         $this->assertSame('#7C3AED', ProductCompany::STATUS_COLOR[7]);
+         $this->assertSame('#DC2626', ProductCompany::STATUS_COLOR[8]);
+         $this->assertTrue(ProductCompany::isTemp(7));
+         $this->assertFalse(ProductCompany::isTemp(3));
+         $this->assertFalse(ProductCompany::isTemp(null));
+     }

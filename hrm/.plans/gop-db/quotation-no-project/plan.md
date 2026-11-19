@@ -55,3 +55,9 @@ Blocked:
 - [x] FE: dấu * ở "Người liên hệ" + lỗi inline "Vui lòng chọn người liên hệ" trong validateForm (strict = Gửi duyệt)
 - [x] Test API 7/7 (nháp qua, gửi duyệt chặn, có liên hệ qua, KH cá nhân qua, có dự án như cũ) + UI lỗi inline cùng lúc với ô khác; dọn dữ liệu
 - [ ] Commit + push (chờ user)
+
+## Phase 6 — Thêm nhanh KH / liên hệ trong báo giá độc lập (task Redmine, 03/11/2026) — @cuong61n
+- [x] 03/11 Rà gop_db: popup Dịch vụ đã có cột "Tính doanh thu" (CostCatalogPanel, GAP 0308) → không làm lại; "Thêm nhanh" chưa có → làm
+- [x] 03/11 FE popup chọn KH (`ChooseErpCustomerModal`): prop `quickAdd` → nút "Thêm nhanh khách hàng" (V2BaseQuickAddButton); bấm → đóng popup, mở `QuickAddCustomerModal`, tạo xong tự chọn KH vừa tạo. Chỉ hiện khi có quyền tạo KH (`assign/customers/my-permissions`). Copy pattern từ `prospective-projects/components/CustomerBlock.vue` + `CustomerInfoSection.vue`
+- [x] 03/11 FE ô Người liên hệ (`quotations/_id/edit.vue`): nút "Thêm nhanh liên hệ" + khối nhập Họ tên/Chức vụ/SĐT → "Lưu & chọn" (POST `assign/customers/{id}/contacts`), chỉ khi báo giá không dự án + KH doanh nghiệp (cùng `canPickContact`)
+- [ ] Chưa kiểm trên giao diện (chờ user quyết có cần test); chưa commit/push, chưa deploy

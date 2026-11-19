@@ -115,7 +115,8 @@ d.table(['Thuật ngữ', 'Mô tả'], [
     ('Trạng thái Khóa',
      'Tài khoản ngừng sử dụng nhưng KHÔNG bị xoá; khi đang khóa thì không sửa được.'),
     ('Công ty của người dùng',
-     'Công ty ghi trong hồ sơ nhân sự của người đăng nhập — quyết định phạm vi dữ liệu của màn.'),
+     'Công ty người đăng nhập đang làm việc theo vai trò (công ty đang chọn khi đăng nhập / chuyển '
+     'công ty); chưa đặt thì lấy công ty trong hồ sơ nhân sự — quyết định phạm vi dữ liệu của màn.'),
     ('Lịch sử thay đổi',
      'Nhật ký thao tác của một bản ghi: ai tạo, sửa, khóa, mở khóa và giá trị trước - sau.'),
     ('SRS', 'Software Requirements Specification.'),
@@ -137,7 +138,9 @@ d.p('Màn hình dùng đúng MỘT quyền, thuộc nhóm quyền Danh mục tà
 
 d.p('Phạm vi dữ liệu (không phải quyền, luôn áp dụng cho mọi người dùng):')
 d.bullets([
-    'Người dùng chỉ thấy tài khoản ngân hàng thuộc công ty ghi trong hồ sơ nhân sự của mình.',
+    'Người dùng chỉ thấy tài khoản ngân hàng thuộc công ty đang làm việc theo vai trò (công ty '
+    'đang chọn khi đăng nhập / chuyển công ty). Người kiêm nhiệm chuyển sang công ty nào thì thấy '
+    'tài khoản của công ty đó.',
     'Bản ghi của công ty khác: không hiển thị, tìm kiếm không ra, mở trực tiếp thì hệ thống báo '
     'không tìm thấy.',
     'Người dùng chưa được gắn công ty: danh sách trống hoàn toàn và không tạo mới được.',
@@ -393,8 +396,8 @@ d.intro_table(
     ten='Tạo mới tài khoản ngân hàng',
     mota='Thêm một tài khoản ngân hàng mới cho công ty của người đăng nhập.',
     tacnhan=ACTOR,
-    dieukien='Người dùng có quyền Quản lý danh mục tài khoản ngân hàng và hồ sơ nhân sự đã gắn '
-             'công ty.',
+    dieukien='Người dùng có quyền Quản lý danh mục tài khoản ngân hàng và đã được gắn công ty '
+             '(công ty theo vai trò hoặc công ty trong hồ sơ nhân sự).',
     chinh='1. Người dùng bấm nút Tạo mới.\n'
           '2. Hệ thống mở cửa sổ “Tạo tài khoản ngân hàng”, ô Trạng thái điền sẵn Hoạt động.\n'
           '3. Người dùng nhập Số tài khoản, chọn Loại tiền tệ, nhập Chủ tài khoản.\n'
@@ -725,13 +728,17 @@ d.h1('Phần 4. Quy tắc nghiệp vụ')
 
 sub('BR-01 — Phạm vi dữ liệu theo công ty')
 d.bullets([
-    'Người dùng chỉ thấy và chỉ thao tác được trên tài khoản ngân hàng thuộc công ty ghi trong hồ '
-    'sơ nhân sự của mình.',
+    'Người dùng chỉ thấy và chỉ thao tác được trên tài khoản ngân hàng thuộc công ty đang làm '
+    'việc theo vai trò (công ty đang chọn khi đăng nhập / chuyển công ty); chưa đặt công ty theo '
+    'vai trò thì lấy công ty trong hồ sơ nhân sự.',
+    'Người kiêm nhiệm nhiều công ty: chuyển sang công ty nào thì thấy và thao tác tài khoản ngân '
+    'hàng của công ty đó — cùng công ty mà hệ thống dùng để xét quyền.',
     'Bản ghi của công ty khác được xử lý như không tồn tại: không hiển thị, không tìm ra, mở trực '
     'tiếp thì báo không tìm thấy.',
     'Người dùng chưa được gắn công ty thì danh sách trống hoàn toàn và không tạo mới được — hệ '
     'thống báo “Tài khoản đăng nhập chưa gắn công ty, không thể thao tác”.',
-    'Bản ghi mới luôn được gán công ty của người tạo, người dùng không tự chọn công ty.',
+    'Bản ghi mới (kể cả Import) luôn được gán công ty đang làm việc theo vai trò của người tạo, '
+    'người dùng không tự chọn công ty.',
 ])
 
 sub('BR-02 — Định danh tài khoản')

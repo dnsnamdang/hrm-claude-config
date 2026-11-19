@@ -1,0 +1,213 @@
+pages/human/allowance/index.vue	/human/allowance		Danh mục phụ cấp	Danh mục phụ cấp	
+pages/human/assignment_missions/index.vue	/human/assignment_missions		Quản lý phân công nhiệm vụ		
+pages/human/assignment_mission_reports/index.vue	/human/assignment_mission_reports		Báo cáo nhiệm vụ theo PB/NV		
+pages/human/company/add.vue	/human/company/add			Danh mục công ty	
+pages/human/company/index.vue	/human/company		Danh mục công ty	Danh mục công ty	Quản lý hồ sơ nhân viên
+pages/human/company/_id/config_settlement_period.vue	/human/company/_id/config_settlement_period			Danh mục công ty	
+pages/human/company/_id/index.vue	/human/company/_id			Danh mục công ty	
+pages/human/company-struct/index.vue	/human/company-struct		Sơ đồ cơ cấu tổ chức	Sơ đồ cơ cấu tổ chức	
+pages/human/competencies/add.vue	/human/competencies/add			Danh mục năng lực	
+pages/human/competencies/index.vue	/human/competencies		Danh mục năng lực	Danh mục năng lực	Quản lý hồ sơ nhân viên
+pages/human/competencies/_id/edit.vue	/human/competencies/_id/edit			Danh mục năng lực	
+pages/human/competencies/_id/index.vue	/human/competencies/_id			Danh mục năng lực	
+pages/human/competency_groups/index.vue	/human/competency_groups				Quản lý hồ sơ nhân viên
+pages/human/dashboard/index.vue	/human/dashboard		Tổng quan	Tổng quan - Thông tin nhân sự	
+pages/human/department/add.vue	/human/department/add			Danh mục phòng ban	Thêm công ty
+pages/human/department/index.vue	/human/department		Danh mục phòng ban	Danh mục phòng ban	
+pages/human/department/_id/index.vue	/human/department/_id			Danh mục phòng ban	Sửa công ty
+pages/human/department-manpower/index.vue	/human/department-manpower		Định biên theo quy mô	Định biên theo quy mô	
+pages/human/employee/add.vue	/human/employee/add				
+pages/human/employee/index.vue	/human/employee				
+pages/human/employee/_id/index.vue	/human/employee/_id				
+pages/human/employee-relationships/index.vue	/human/employee-relationships		Báo cáo thân nhân và người phụ thuộc	Báo cáo thân nhân và người phụ thuộc	Quản lý hồ sơ nhân viên
+pages/human/employee-resigned/index.vue	/human/employee-resigned		Quản lý nhân viên nghỉ việc	Quản lý nhân viên nghỉ việc	Danh sách nhân sự nghỉ việc
+pages/human/employee_info/add.vue	/human/employee_info/add				
+pages/human/employee_info/index.vue	/human/employee_info		Quản lý hồ sơ nhân sự		Quản lý hồ sơ nhân viên
+pages/human/employee_info/my-info-request/_id/index.vue	/human/employee_info/my-info-request/_id				
+pages/human/employee_info/my-info-request/_id/reason_deny_approver.vue	/human/employee_info/my-info-request/_id/reason_deny_approver				
+pages/human/employee_info/my_info/index.vue	/human/employee_info/my_info				
+pages/human/employee_info/request-update/index.vue	/human/employee_info/request-update		Quản lý hồ sơ tự khai		Quản lý hồ sơ nhân viên
+pages/human/employee_info/request-update/_id/index.vue	/human/employee_info/request-update/_id				
+pages/human/employee_info/_id/history_positions.vue	/human/employee_info/_id/history_positions				
+pages/human/employee_info/_id/history_statuses.vue	/human/employee_info/_id/history_statuses				
+pages/human/employee_info/_id/index.vue	/human/employee_info/_id				
+pages/human/employee_info/_id/my-info-request.vue	/human/employee_info/_id/my-info-request				Quản lý hồ sơ nhân viên
+pages/human/employee_info/_id/update_request.vue	/human/employee_info/_id/update_request				
+pages/human/groups/index.vue	/human/groups		Danh mục khối	Danh mục khối	Quản lý hồ sơ nhân viên
+pages/human/labor-contract/index.vue	/human/labor-contract		Danh mục loại hợp đồng lao động	Danh mục loại hợp đồng lao động	Quản lý hồ sơ nhân viên
+pages/human/major/add.vue	/human/major/add				Thêm công ty
+pages/human/major/index.vue	/human/major				Quản lý công ty
+pages/human/major/_id/index.vue	/human/major/_id				Sửa công ty
+pages/human/mission/index.vue	/human/mission		Danh mục nhiệm vụ	Danh mục nhiệm vụ	
+pages/human/part/add.vue	/human/part/add			Danh mục bộ phận	Thêm công ty
+pages/human/part/index.vue	/human/part		Danh mục bộ phận	Danh mục bộ phận	
+pages/human/part/_id/index.vue	/human/part/_id			Danh mục bộ phận	Sửa công ty
+pages/human/personnel/index.vue	/human/personnel		Cập nhật tình hình nhân sự	Cập nhật tình hình nhân sự	Quản lý hồ sơ nhân viên
+pages/human/rank-competencies/add.vue	/human/rank-competencies/add				
+pages/human/rank-competencies/index.vue	/human/rank-competencies				
+pages/human/rank-competencies/_id/index.vue	/human/rank-competencies/_id				
+pages/human/ranks/add.vue	/human/ranks/add			Danh mục ngạch lương/nhóm cấp bậc	
+pages/human/ranks/index.vue	/human/ranks		Danh mục ngạch lương/nhóm cấp bậc	Danh mục ngạch lương/nhóm cấp bậc	Quản lý hồ sơ nhân viên
+pages/human/ranks/_id/edit.vue	/human/ranks/_id/edit			Danh mục ngạch lương/nhóm cấp bậc	
+pages/human/ranks/_id/index.vue	/human/ranks/_id			Danh mục ngạch lương/nhóm cấp bậc	
+pages/human/report/departments.vue	/human/report/departments		Báo cáo tổng hợp phòng ban	Báo cáo tổng hợp phòng ban	Quản lý hồ sơ nhân viên
+pages/human/report/employee_salary_report.vue	/human/report/employee_salary_report		Bảng nhân sự và quỹ thu nhập định mức		
+pages/human/report/income_report_month.vue	/human/report/income_report_month				
+pages/human/report/income_report_year.vue	/human/report/income_report_year				
+pages/human/report/insurance_report_month.vue	/human/report/insurance_report_month		Báo cáo định mức đóng bảo hiểm theo tháng		
+pages/human/report/insurance_report_year.vue	/human/report/insurance_report_year		Báo cáo định mức đóng bảo hiểm theo năm		
+pages/human/report/manpower_report.vue	/human/report/manpower_report		Bảng nhân sự theo định biên		Quản lý hồ sơ nhân viên
+pages/human/roles/add/_id.vue	/human/roles/add/_id				
+pages/human/roles/index.vue	/human/roles				
+pages/human/settings/index.vue	/human/settings				
+pages/human/team/add.vue	/human/team/add				Thêm công ty
+pages/human/team/index.vue	/human/team				Quản lý tổ
+pages/human/team/_id/index.vue	/human/team/_id				Sửa công ty
+pages/human/title/index.vue	/human/title		Danh mục chức danh	Danh mục chức danh	Quản lý hồ sơ nhân viên
+pages/human/working_position/index.vue	/human/working_position		Danh mục chức vụ		Quản lý hồ sơ nhân viên
+pages/human/working_position_groups/index.vue	/human/working_position_groups				Quản lý hồ sơ nhân viên
+pages/timesheet/admin-request-update-workings/index.vue	/timesheet/admin-request-update-workings		Đề nghị tra soát công admin	Đề nghị tra soát công admin	Đề nghị tra soát công admin
+pages/timesheet/admin-request-update-workings/new.vue	/timesheet/admin-request-update-workings/new			Đề nghị tra soát công admin	Thêm tra soát công admin
+pages/timesheet/admin-request-update-workings/_id/index.vue	/timesheet/admin-request-update-workings/_id			Đề nghị tra soát công admin	Xem tra soát công admin
+pages/timesheet/attendance/add.vue	/timesheet/attendance/add			Đơn xin nghỉ	Giấy báo vắng mặt
+pages/timesheet/attendance/approve.vue	/timesheet/attendance/approve		Đơn xin nghỉ	Đơn xin nghỉ	Danh sách đơn xin nghỉ cần duyệt
+pages/timesheet/attendance/attendances-extend-request.vue	/timesheet/attendance/attendances-extend-request		Đơn kết thúc nghỉ phép	Đơn kết thúc nghỉ phép	Duyệt dự kiến kết thúc nghỉ phép
+pages/timesheet/attendance/index.vue	/timesheet/attendance		Đơn xin nghỉ	Đơn xin nghỉ	Đơn xin nghỉ
+pages/timesheet/attendance/_id/approve.vue	/timesheet/attendance/_id/approve			Đơn xin nghỉ	Giấy báo vắng mặt
+pages/timesheet/attendance/_id/index.vue	/timesheet/attendance/_id			Đơn xin nghỉ	Giấy báo vắng mặt
+pages/timesheet/business_trip_assigns/add/_id.vue	/timesheet/business_trip_assigns/add/_id				
+pages/timesheet/business_trip_assigns/approve.vue	/timesheet/business_trip_assigns/approve				Phiếu công tác
+pages/timesheet/business_trip_assigns/finish-extend.vue	/timesheet/business_trip_assigns/finish-extend		Gia hạn/kết thúc phiếu công tác		
+pages/timesheet/business_trip_assigns/index.vue	/timesheet/business_trip_assigns		Phiếu đi công tác		Phiếu công tác
+pages/timesheet/business_trip_assigns/self-list.vue	/timesheet/business_trip_assigns/self-list				Phiếu công tác
+pages/timesheet/business_trip_assigns/_id/approve.vue	/timesheet/business_trip_assigns/_id/approve				
+pages/timesheet/conn-info/faces/index.vue	/timesheet/conn-info/faces		Dữ liệu máy chấm công khuôn mặt	Dữ liệu máy chấm công khuôn mặt	
+pages/timesheet/conn-info/index.vue	/timesheet/conn-info		Danh mục máy chấm công	Danh mục máy chấm công	Quản lý máy chấm công
+pages/timesheet/conn-info/users/index.vue	/timesheet/conn-info/users		Dữ liệu máy chấm công (vân tay)	Dữ liệu máy chấm công (vân tay)	Dữ liệu máy chấm công
+pages/timesheet/dashboard/index.vue	/timesheet/dashboard		Tổng quan	Tổng quan - Chấm công	
+pages/timesheet/dashboard/index1.vue	/timesheet/dashboard/index1			Tổng quan - Chấm công	Tổng quan
+pages/timesheet/dashboard/index2.vue	/timesheet/dashboard/index2			Tổng quan - Chấm công	Tổng quan
+pages/timesheet/dashboard/index3.vue	/timesheet/dashboard/index3			Tổng quan - Chấm công	Tổng quan
+pages/timesheet/devices/index.vue	/timesheet/devices		Thiết bị chấm công	Thiết bị chấm công	Phê duyệt thiết bị chấm công
+pages/timesheet/jobassignment/add.vue	/timesheet/jobassignment/add			Phiếu giao việc trong ngày	Tạo phiếu giao việc
+pages/timesheet/jobassignment/approve.vue	/timesheet/jobassignment/approve			Phiếu giao việc trong ngày	Phiếu Giao Việc
+pages/timesheet/jobassignment/index.vue	/timesheet/jobassignment		Phiếu giao việc trong ngày	Phiếu giao việc trong ngày	Phiếu Giao Việc
+pages/timesheet/jobassignment/_id/approve.vue	/timesheet/jobassignment/_id/approve			Phiếu giao việc trong ngày	Phiếu giao việc
+pages/timesheet/jobassignment/_id/index.vue	/timesheet/jobassignment/_id			Phiếu giao việc trong ngày	Sửa phiếu giao việc
+pages/timesheet/late-in-early-out/add.vue	/timesheet/late-in-early-out/add			Đăng ký đi muộn về sớm	Phiếu đi muộn, về sớm
+pages/timesheet/late-in-early-out/approve.vue	/timesheet/late-in-early-out/approve		Đăng ký đi muộn về sớm	Đăng ký đi muộn về sớm	Đăng ký đi muộn, về sớm cần duyệt
+pages/timesheet/late-in-early-out/change-end-request.vue	/timesheet/late-in-early-out/change-end-request		Đơn kết thúc đăng ký đi muộn về sớm	Đơn kết thúc đăng ký đi muộn về sớm	
+pages/timesheet/late-in-early-out/index.vue	/timesheet/late-in-early-out		Đăng ký đi muộn về sớm	Đăng ký đi muộn về sớm	Đi muộn, về sớm
+pages/timesheet/late-in-early-out/_id/approve.vue	/timesheet/late-in-early-out/_id/approve			Đăng ký đi muộn về sớm	Phiếu đi muộn, về sớm
+pages/timesheet/late-in-early-out/_id/index.vue	/timesheet/late-in-early-out/_id			Đăng ký đi muộn về sớm	Phiếu đi muộn, về sớm
+pages/timesheet/location-conn-info/index.vue	/timesheet/location-conn-info		Danh mục địa điểm máy chấm công	Danh mục địa điểm máy chấm công	
+pages/timesheet/notifications/index.vue	/timesheet/notifications				Thông báo
+pages/timesheet/overtime-allocation/add.vue	/timesheet/overtime-allocation/add			Phân công làm thêm	Phân công làm thêm
+pages/timesheet/overtime-allocation/index.vue	/timesheet/overtime-allocation		Phân công làm thêm	Phân công làm thêm	Phân công làm thêm
+pages/timesheet/overtime-allocation/_id/index.vue	/timesheet/overtime-allocation/_id			Phân công làm thêm	Phân công làm thêm
+pages/timesheet/overtime-assignment/add.vue	/timesheet/overtime-assignment/add			Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-assignment/approve.vue	/timesheet/overtime-assignment/approve		Đăng ký làm thêm	Đăng ký làm thêm	Đăng ký làm thêm cần duyệt
+pages/timesheet/overtime-assignment/index.vue	/timesheet/overtime-assignment		Đăng ký làm thêm	Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-assignment/_id/approve.vue	/timesheet/overtime-assignment/_id/approve			Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-assignment/_id/index.vue	/timesheet/overtime-assignment/_id			Đăng ký làm thêm	Đăng ký làm thêm
+pages/timesheet/overtime-requirement/add.vue	/timesheet/overtime-requirement/add			Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm
+pages/timesheet/overtime-requirement/approve.vue	/timesheet/overtime-requirement/approve		Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm	Yêu cầu làm thêm cần duyệt
+pages/timesheet/overtime-requirement/index.vue	/timesheet/overtime-requirement		Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm	Yêu cầu làm thêm
+pages/timesheet/overtime-requirement/_id/approve.vue	/timesheet/overtime-requirement/_id/approve			Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm
+pages/timesheet/overtime-requirement/_id/index.vue	/timesheet/overtime-requirement/_id			Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm
+pages/timesheet/report/attendance_report.vue	/timesheet/report/attendance_report		Báo cáo phép		
+pages/timesheet/report/business_trip_assign_report.vue	/timesheet/report/business_trip_assign_report				
+pages/timesheet/report/business_trip_assign_report_.vue	/timesheet/report/business_trip_assign_report_		Báo cáo tổng hợp công tác		
+pages/timesheet/report/overtime_report.vue	/timesheet/report/overtime_report		Báo cáo làm thêm giờ		
+pages/timesheet/report/overtime_report_detail.vue	/timesheet/report/overtime_report_detail		Báo cáo làm thêm giờ chi tiết		
+pages/timesheet/report/timekeeper_report.vue	/timesheet/report/timekeeper_report		Báo cáo tổng hợp chấm công		
+pages/timesheet/request-update-working/approve.vue	/timesheet/request-update-working/approve		Đề nghị tra soát công	Đề nghị tra soát công	Đề nghị tra soát công cần duyệt
+pages/timesheet/request-update-working/create.vue	/timesheet/request-update-working/create			Đề nghị tra soát công	
+pages/timesheet/request-update-working/form.vue	/timesheet/request-update-working/form			Đề nghị tra soát công	Thông tin
+pages/timesheet/request-update-working/index.vue	/timesheet/request-update-working		Đề nghị tra soát công	Đề nghị tra soát công	Đề nghị tra soát công
+pages/timesheet/request-update-working/_id/approve.vue	/timesheet/request-update-working/_id/approve			Đề nghị tra soát công	Đơn đề nghị tra soát công
+pages/timesheet/request-update-working/_id/edit.vue	/timesheet/request-update-working/_id/edit			Đề nghị tra soát công	
+pages/timesheet/request-update-working/_id/index.vue	/timesheet/request-update-working/_id			Đề nghị tra soát công	Đơn đề nghị tra soát công
+pages/timesheet/request-update-working/_id/show.vue	/timesheet/request-update-working/_id/show			Đề nghị tra soát công	
+pages/timesheet/self-jobassignment/index.vue	/timesheet/self-jobassignment				Phiếu Giao Việc Được Giao
+pages/timesheet/self-jobassignment/_id/index.vue	/timesheet/self-jobassignment/_id				Phiếu giao việc
+pages/timesheet/setting/employee-info/index.vue	/timesheet/setting/employee-info				
+pages/timesheet/setting/employees/index.vue	/timesheet/setting/employees				
+pages/timesheet/setting/employees/_id/index.vue	/timesheet/setting/employees/_id				
+pages/timesheet/setting/general/index.vue	/timesheet/setting/general		Quy định chung	Quy định chung	
+pages/timesheet/setting/holiday/index.vue	/timesheet/setting/holiday		Quy định nghỉ	Quy định nghỉ	
+pages/timesheet/setting/overtime/index.vue	/timesheet/setting/overtime		Quy định làm thêm	Quy định làm thêm	
+pages/timesheet/setting/roles/add/_id.vue	/timesheet/setting/roles/add/_id				
+pages/timesheet/setting/roles/index.vue	/timesheet/setting/roles				
+pages/timesheet/setting/setting-master/index.vue	/timesheet/setting/setting-master		Cài đặt	Cài đặt	
+pages/timesheet/setting/subsystems/index.vue	/timesheet/setting/subsystems		Cài đặt phân hệ	Cài đặt phân hệ	Nhân sự xem đầy đủ
+pages/timesheet/timekeeping/history/index.vue	/timesheet/timekeeping/history				
+pages/timesheet/timekeeping/timekeeper/index.vue	/timesheet/timekeeping/timekeeper		Dữ liệu chấm công	Dữ liệu chấm công	
+pages/timesheet/timesheet_details/index.vue	/timesheet/timesheet_details		Bảng chấm công chi tiết trong tháng		Bảng công chi tiết trong tháng
+pages/timesheet/timesheet_details/tmp/index.vue	/timesheet/timesheet_details/tmp				Bảng công chi tiết trong tháng
+pages/timesheet/timesheet_summaries/index.vue	/timesheet/timesheet_summaries		Bảng chấm công tổng hợp		Bảng chấm công tổng hợp
+pages/timesheet/timesheet_summaries/_id/index.vue	/timesheet/timesheet_summaries/_id				
+pages/timesheet/timeworking/add-working-shift/_id/index.vue	/timesheet/timeworking/add-working-shift/_id				Tính công
+pages/timesheet/timeworking/index.vue	/timesheet/timeworking				Phân ca tổng hợp
+pages/timesheet/timeworking/shift-detail/add-shift/_id/index.vue	/timesheet/timeworking/shift-detail/add-shift/_id			Bảng phân ca chi tiết	Phân ca làm việc
+pages/timesheet/timeworking/shift-detail/add-shift-new/_id/index.vue	/timesheet/timeworking/shift-detail/add-shift-new/_id			Bảng phân ca chi tiết	Phân ca làm việc
+pages/timesheet/timeworking/shift-detail/add.vue	/timesheet/timeworking/shift-detail/add			Bảng phân ca chi tiết	
+pages/timesheet/timeworking/shift-detail/general.vue	/timesheet/timeworking/shift-detail/general		Bảng phân ca tổng hợp	Bảng phân ca tổng hợp	
+pages/timesheet/timeworking/shift-detail/index.vue	/timesheet/timeworking/shift-detail		Bảng phân ca chi tiết	Bảng phân ca chi tiết	Phân ca làm việc
+pages/timesheet/timeworking/shift-detail/_id/edit.vue	/timesheet/timeworking/shift-detail/_id/edit			Bảng phân ca chi tiết	
+pages/timesheet/timeworking/working-shift/index.vue	/timesheet/timeworking/working-shift		Danh mục ca làm việc	Danh mục ca làm việc	Danh mục ca làm việc
+pages/payroll/bonus-component/index.vue	/payroll/bonus-component		Thành phần tính thưởng	Thành phần tính thưởng	Thành phần tính thưởng
+pages/payroll/bonus-distribution/index.vue	/payroll/bonus-distribution		Bảng chia thưởng	Bảng chia thưởng	Bảng chia thưởng cuối năm
+pages/payroll/bonus-distribution/_id/index.vue	/payroll/bonus-distribution/_id			Bảng chia thưởng	
+pages/payroll/dashboard/index.vue	/payroll/dashboard		Tổng quan	Tổng quan - Tính lương	
+pages/payroll/manpower-allocations/index.vue	/payroll/manpower-allocations				
+pages/payroll/manpower-allocations/_id/index.vue	/payroll/manpower-allocations/_id				
+pages/payroll/payment/index.vue	/payroll/payment		Bảng chi trả	Bảng chi trả	Chi trả lương
+pages/payroll/payment/_id/index.vue	/payroll/payment/_id			Bảng chi trả	
+pages/payroll/policy/salary/edit/_id.vue	/payroll/policy/salary/edit/_id			Mẫu bảng tính thu nhập	Thêm mẫu bảng lương
+pages/payroll/policy/salary/index.vue	/payroll/policy/salary		Mẫu bảng tính thu nhập	Mẫu bảng tính thu nhập	Mẫu bảng lương
+pages/payroll/reports/payroll_info.vue	/payroll/reports/payroll_info		Bảng chi trả		
+pages/payroll/salary/distribution/index.vue	/payroll/salary/distribution		Phân công lương	Phân công lương	Phân bổ lương
+pages/payroll/salary/distribution/rule/index.vue	/payroll/salary/distribution/rule			Phân công lương	Quy tắc phân bổ lương
+pages/payroll/salary/distribution/_id/index.vue	/payroll/salary/distribution/_id			Phân công lương	Chi tiết phân bổ lương
+pages/payroll/salary/index.vue	/payroll/salary		Bảng tính thu nhập	Bảng tính thu nhập	Bảng lương
+pages/payroll/salary/manpower_report/index.vue	/payroll/salary/manpower_report			Bảng tính thu nhập	
+pages/payroll/salary/report/index.vue	/payroll/salary/report			Bảng tính thu nhập	
+pages/payroll/salary/salary-advance/index.vue	/payroll/salary/salary-advance		Tạm ứng	Tạm ứng	Tạm ứng lương
+pages/payroll/salary/salary-advance/_id/index.vue	/payroll/salary/salary-advance/_id			Tạm ứng	
+pages/payroll/salary/salary-summary/index.vue	/payroll/salary/salary-summary		Tổng hợp lương	Tổng hợp lương	Bảng tổng hợp lương
+pages/payroll/salary/salary-summary/_id/index.vue	/payroll/salary/salary-summary/_id			Tổng hợp lương	
+pages/payroll/salary/_id/index.vue	/payroll/salary/_id			Bảng tính thu nhập	
+pages/payroll/salary-data/other-allowance/index.vue	/payroll/salary-data/other-allowance		Các thành phần khác	Các thành phần khác	Các thành phần khác
+pages/payroll/salary-data/other-allowance/_id/index.vue	/payroll/salary-data/other-allowance/_id			Các thành phần khác	
+pages/payroll/salary-data/other-deduction/index.vue	/payroll/salary-data/other-deduction		Khấu trừ khác	Khấu trừ khác	Khấu trừ khác
+pages/payroll/salary-data/other-deduction/_id/index.vue	/payroll/salary-data/other-deduction/_id			Khấu trừ khác	
+pages/payroll/salary-data/other-income/index.vue	/payroll/salary-data/other-income		Thu nhập khác	Thu nhập khác	Thu nhập khác
+pages/payroll/salary-data/other-income/_id/index.vue	/payroll/salary-data/other-income/_id			Thu nhập khác	
+pages/payroll/salary-data/p3-salary/approve.vue	/payroll/salary-data/p3-salary/approve			Thu nhập P3	Duyệt đề xuất định mức thưởng P3
+pages/payroll/salary-data/p3-salary/index.vue	/payroll/salary-data/p3-salary		Thu nhập P3	Thu nhập P3	Định mức thưởng P3 (Hoa hồng/lương khoán)
+pages/payroll/salary-data/p3-salary/_id/approve.vue	/payroll/salary-data/p3-salary/_id/approve			Thu nhập P3	
+pages/payroll/salary-data/p3-salary/_id/index.vue	/payroll/salary-data/p3-salary/_id			Thu nhập P3	
+pages/payroll/salarycomposition/index.vue	/payroll/salarycomposition		Thành phần thu nhập	Thành phần thu nhập	Thành phần lương
+pages/payroll/salarycomposition/system-category/index.vue	/payroll/salarycomposition/system-category			Thành phần thu nhập	Danh mục thành phần lương của hệ thống
+pages/payroll/salarycomposition/_id/index.vue	/payroll/salarycomposition/_id			Thành phần thu nhập	Thành phần lương
+pages/payroll/setting/default-param/index.vue	/payroll/setting/default-param				
+pages/payroll/setting/employees/index.vue	/payroll/setting/employees				
+pages/payroll/setting/employees/_id/index.vue	/payroll/setting/employees/_id				
+pages/payroll/setting/job-position/index.vue	/payroll/setting/job-position				
+pages/payroll/setting/roles/index.vue	/payroll/setting/roles				
+pages/payroll/setting/salary-config/index.vue	/payroll/setting/salary-config		Cấu hình tiền lương	Cấu hình tiền lương	
+pages/payroll/timesheet_summaries/index.vue	/payroll/timesheet_summaries		Bảng chấm công tổng hợp		Bảng chấm công tổng hợp
+pages/payroll/timesheet_summaries/_id/index.vue	/payroll/timesheet_summaries/_id				
+pages/rice/category/conn-info/index.vue	/rice/category/conn-info		Máy check-in cơm	Máy check-in cơm	
+pages/rice/category/faces/index.vue	/rice/category/faces		Dữ liệu máy chấm cơm khuôn mặt	Dữ liệu máy chấm cơm khuôn mặt	
+pages/rice/category/menu/index.vue	/rice/category/menu		Thực đơn	Thực đơn	
+pages/rice/dashboard/index.vue	/rice/dashboard				
+pages/rice/menu-board/index.vue	/rice/menu-board		Bảng thực đơn	Bảng thực đơn	
+pages/rice/notification/index.vue	/rice/notification		Thông báo	Thông báo	
+pages/rice/personal-registration/index.vue	/rice/personal-registration		Bảng đăng ký cơm	Bảng đăng ký cơm	
+pages/rice/report/general/index.vue	/rice/report/general		Báo cáo tổng hợp đăng ký	Báo cáo tổng hợp đăng ký	
+pages/rice/report/report-detail/index.vue	/rice/report/report-detail		Báo cáo cơm chi tiết	Báo cáo cơm chi tiết	
+pages/rice/setting/index.vue	/rice/setting		Thiết lập báo cơm thường	Thiết lập báo cơm thường	
+pages/rice/sheet-registration/index.vue	/rice/sheet-registration		Phiếu đăng ký suất ăn	Phiếu đăng ký suất ăn	
+pages/rice/sheet-registration-admin/index.vue	/rice/sheet-registration-admin		Đăng ký suất ăn admin	Đăng ký suất ăn admin	

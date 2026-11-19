@@ -996,3 +996,46 @@ Vừa hoàn thành: Card DSTC nature chuyển preset → subtable editable (user
 Đang làm dở: (không)
 Bước tiếp theo: ĐÃ commit+push code (hrm-api `aab55cf9c`, hrm-client `ace548139`) + tài liệu. Phase 2 (đọc hệ số HRM 2 điểm) + Phase 3 (ERP 16 điểm) vẫn chờ.
 Blocked: (không)
+
+---
+
+## Task #28 — Card DSTC nature: 2 bug sau nghiệm thu (hệ số nhập số âm + Lịch sử chưa cụ thể) (2026-10-20)
+
+> Màn `/sale/regulation-config` tab "Báo giá – Hợp đồng", card "Hệ số quy đổi theo tính chất hàng hóa tính DSTC". Worktree `wt-chuyen-doi-hang-hoa` (hrm-api + hrm-client), nhánh `feat/chuyen-doi-hang-hoa`.
+
+**Bug 1 — hệ số nhập được số âm.** User chốt **Hướng B**: hệ số phải **> 0** (chặn cả số âm LẪN 0), max giữ 99.99. Validate ở CẢ FE lẫn BE (skill `form-validate`).
+- Root cause: FE `validateTabValues` bỏ qua subtable (không validate ô hệ số) + BE rule `min:0` cho qua 0.
+
+**Bug 2 — Lịch sử chỉ hiện "N dòng → M dòng", không nêu tính chất nào / hệ số nào đổi.**
+- Root cause (3 lớp): (a) `product_nature_id` là `input=select` không phải `hidden` → `buildSubtableLines`/`formatSubtableChange` có `idCols` rỗng → rơi nhánh tóm tắt; (b) không có nhánh xử lý dòng BỊ XOÁ; (c) `product_natures` thiếu trong `optionLabelMap` → id không resolve ra tên lúc đọc log.
+
+**BE (hrm-api) — `Modules/MasterData/Support/RegulationTabRegistry.php`:**
+- [x] L118: rule `coefficient` `required|numeric|min:0|max:99.99` → `required|numeric|gt:0|max:99.99` (chặn cả 0). (câu lỗi dùng lang `gt.numeric` = "Phải lớn hơn 0." — KHÔNG khai messages())
+
+**BE (hrm-api) — `Modules/MasterData/Services/RegulationConfigService.php`:**
+- [x] `buildSubtableLines` (L2066) + `formatSubtableChange` (L1986): `idCols` lọc `in_array(input, ['hidden','select']) && key !== 'name'` (gộp select cho nature, KHÔNG gộp multiselect → không vỡ card "Bảng tính công khoán").
+- [x] Thêm nhánh xử lý dòng BỊ XOÁ (oldRows không còn trong newRows → old=hệ số, new="—") ở cả 2 hàm (dùng `$newByKey`).
+- [x] `optionLabelMap` (L2198): thêm `'product_natures' => 'product_natures'` + inject `$map['0'] = 'Dịch vụ'` (sentinel).
+- [x] `subtableRowLabel` (L2168): khi 1 idCol → trả thẳng tên (bỏ tiền tố); nhiều idCol (rule_commissions) giữ "Nhãn: giá trị".
+- [x] `php -l` 2 file: no syntax errors.
+
+**FE (hrm-client) — `components/regulation-config/RegulationConfigScreen.vue`:**
+- [x] Cột số bảng con dùng `@input="onSubNumberInput(f, ri, c)"`: dọn lỗi + (chỉ card nature, cột coefficient, bỏ dòng ghim) kiểm `coefErrMsg` ≤ 0 realtime → `tabErrors['<field>.<ri>.coefficient']`. KHÔNG tự sửa giá trị gõ.
+- [x] `coefErrMsg(v)`: '' cho trống/sai-kiểu (để BE trả required/numeric), chặn `n <= 0`.
+- [x] `natureCoefErrors(tabKey)` gom lỗi ≤0 của mọi card nature; `onSave` `Object.assign` vào `errs` trước khi gọi API.
+- [x] Câu lỗi nghiệp vụ: "Hệ số quy đổi – Phải lớn hơn 0".
+
+**Test + Verify:**
+- [ ] ⛔ BLOCKER runtime-verify: worktree KHÔNG có node_modules/vendor/.env → không tự host server; server đang chạy (:8000 API, :3000 client) phục vụ **main checkout `develop`** kèm WIP chưa commit của đồng nghiệp (product-exports) → KHÔNG được stash/switch. Cần user quyết cách verify (xem chat).
+- [ ] BE: test lưu nature coef = 0 và < 0 → 422 tại `values.company_product_natures.*.coefficient`; coef > 0 OK.
+- [ ] BE: test Lịch sử — thêm/sửa/xoá nature → diff lines nêu đúng tên tính chất + hệ số cũ→mới; card "Bảng tính công khoán" + rule_commissions + price_types KHÔNG đổi hành vi.
+- [ ] Verify Playwright MCP (http://127.0.0.1:3000): nhập hệ số âm/0 → đỏ dưới ô, giữ số gõ, không lưu; sửa hệ số + thêm/xoá tính chất → Lịch sử hiện cụ thể.
+
+### Checkpoint — 2026-10-20 (commit + push)
+Vừa hoàn thành: toàn bộ code 2 bug (BE 5 điểm + FE 4 điểm), `php -l` sạch; **ĐÃ commit + push nhánh `feat/chuyen-doi-hang-hoa`** (user yêu cầu commit/push trước, verify sau):
+- hrm-api `5c4ca792e` (rebase lên remote tip `c49e5f95c`, không xung đột — 2 commit regulation-config của team là field khác: Hãng cần duyệt / Ngày khai báo đầu kỳ).
+- hrm-client `0dc619f95` (rebase lên remote tip `3e6e8c3a9`, không xung đột — 3 commit regulation-config của team: khoá Ngày khai báo đầu kỳ / 422 tiếng Việt).
+- Nhánh remote đang rất "nóng" (API +62, client +60 commit kể từ điểm Phase 1) — luôn fetch+rebase trước khi push lại.
+Đang làm dở: runtime-verify (Playwright + test BE) — vẫn CHƯA chạy.
+Bước tiếp theo: khi có môi trường (user checkout nhánh ở main dev checkout có vendor/node_modules/.env), verify Playwright 127.0.0.1:3000 + test 422.
+Blocked: server dùng chung đang chạy `develop` + WIP đồng nghiệp; worktree thiếu deps → chưa tự host để verify.

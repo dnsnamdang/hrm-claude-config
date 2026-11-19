@@ -645,3 +645,110 @@ nạp (không có ở build production / vào thẳng màn).
 - [x] FE `BorrowExportRequestForm.vue` (màn Thêm) — mã phiếu bấm được, mở `/finance/product-export-requests/{id}`
       ở TAB MỚI (đang nhập form, mở cùng tab là mất dữ liệu); khuôn link như `borrow-sell-requests/_id/index.vue`
 - [x] FE `_id/index.vue` (màn chi tiết) — cùng cột, làm đồng bộ
+
+## Tài liệu SRS + HDSD + Testcase theo form Danh mục quốc gia (2026-10-30) @khoipv
+
+Cấu trúc phẳng như `bank-account-catalog/` (gen_*.py + tài liệu ngay thư mục feature, ảnh ở `pycxhm_shots/`) — chép khuôn `phieu-theo-form-quoc-gia` (CHECKLIST.md, formqg_lib, hdsd_phieu_lib).
+Màn chưa có bản Drive nên SRS dựng mới bằng `SrsDoc` (không vá file Drive như 16 màn kia).
+
+- [x] Chụp ảnh `pycxhm_shots/_capture/capture.js` (dev-hrm, tài khoản DNS Admin) + `_capture/capture_local.js` (local) — dev không có phiếu Chờ duyệt,
+      phiếu có lịch sử và phiếu mượn của DNS Admin nên 6 ảnh lấy ở local (PYCXHM-00337, 00340, PYCXH-TEST-023).
+      Chỉ mở / đóng, không ghi dữ liệu. Icon đã chạy trim_icon (`--dry` 0/N)
+- [x] `gen_srs.py` → `SRS - Yêu cầu xuất hàng mượn.docx` (53 trang, 12 chức năng, Phần 5 màn tham chiếu,
+      selfcheck khớp bản mẫu)
+- [x] `gen_hdsd.py` → `HDSD_Yeu cau xuat hang muon.docx` (21 trang, 11 phần, không trang trắng)
+- [x] `gen_testcase.py` → `testcase.xlsx` (87 TC, P0 43%, kiểm thuật ngữ / emoji sạch)
+- [ ] User soát → đẩy Drive
+
+Lỗi app nghi ngờ (chỉ báo, chưa sửa): màn Thêm mới bấm "Quay lại" khi đã nhập dữ liệu KHÔNG hỏi xác nhận rời trang —
+`BorrowExportRequestForm.vue` (component con của `create.vue`) dùng `unsavedChangesMixin`, mà `beforeRouteLeave` chỉ
+chạy ở component trang (skill unsaved-changes mục 2b: form con phải dùng `unsavedChildFormMixin`).
+
+### Checkpoint — 2026-10-30 11:10
+Vừa hoàn thành: 3 tài liệu SRS / HDSD / testcase màn Yêu cầu xuất hàng mượn, ngay trong thư mục feature (cấu trúc như bank-account-catalog)
+Đang làm dở: không
+Bước tiếp theo: user soát tài liệu; quyết định có sửa lỗi cảnh báo rời trang ở màn Thêm mới không
+Blocked:
+
+## Check — testcase đối chiếu skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Đạt: khung 9 mục mô tả, Test Summary 2 khối, header 17 cột, dropdown check, font/độ rộng cột, không freeze, không emoji,
+      không thuật ngữ code, ô nhiều ý xuống dòng, P0 ≥ 40%
+- [x] Lệch (chưa sửa, chờ user): tiêu đề thiếu "- Cập nhật ngày dd/mm/yyyy"; thiếu case theo góp ý tester ý 1 (Lưu và tiếp
+      tục khi dữ liệu lỗi), ý 3 (Expected mở màn đủ số dòng/trang + lựa chọn + thứ tự + khuôn dòng tổng), ý 4 (bước "Bấm Tìm
+      kiếm nâng cao" ở case lọc ô nâng cao), ý 5 (nhớ bộ lọc trước/sau 10 phút, đổi tài khoản, tab mới), ý 6 (kết hợp tiêu chí
+      + độ dài ô tìm nhanh); nhiều case tiền điều kiện "—" (skill bắt có số liệu); thiếu case tham số lạ trên thanh địa chỉ
+
+## Fix — testcase theo chuẩn skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Bộ hàm dùng chung `../phieu-theo-form-quoc-gia/tc_phieu_bosung.py` (case mở màn, nhớ bộ lọc, kết hợp tiêu chí, ô cha–con,
+      tham số lạ, chèn bước "Bấm Tìm kiếm nâng cao", điền tiền điều kiện) — hành vi đọc từ code chung (V2BaseDataTable,
+      filterStateMixin, V2BaseCompanyDepartmentFilter)
+- [x] `gen_testcase.py`: tiêu đề "- Cập nhật ngày 30/10/2026"; đủ 6 ý tester áp dụng được (1, 2, 3, 4, 5, 6); tiền điều kiện
+      không còn "—"; số TC 87 → 100; P0 ≥ 40%; kiểm thuật ngữ / emoji / xuống dòng sạch
+
+## Fix — SRS: bảng "Mô tả chi tiết giao diện" mỗi đối tượng 1 hàng (2026-10-30) @khoipv
+User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Người tạo / Phòng ban / Người duyệt / Người cập nhật" phải tách.
+- [x] Hàm dùng chung `../phieu-theo-form-quoc-gia/srs_split_rows.py` (`split_ui_rows`): tách theo " / ", phần sau tự nhận
+      tiền tố Cột/Nút/Ô; mô tả mặc định cho nút chung; chặn còn dòng gộp (assert)
+- [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
+      sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
+- [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu
+
+### Nâng chi tiết SRS theo SRS_MAU (31/10/2026) @khoipv
+- [x] Đọc skill srs-documenter (5 mục con, 3 bảng, 7 quy tắc BA) + CHECKLIST mẫu Quốc gia + khuôn finance-bill-income-request
+- [x] Đối chiếu lại code develop cả 2 repo (index / _id / create / BorrowExportRequestForm / ExportRequestPickerModal /
+      RejectModal / export-excel + modal dùng chung; Controller, StoreRequest, RejectRequest, Service, NotifyService,
+      HistoryService, Entity) — mọi thông báo / toast / điều kiện hiện nút chép nguyên văn từ code
+- [x] 12 chức năng: Giới thiệu đủ ý (tác nhân ghi quyền, điều kiện đánh số, bước ghi lịch sử + gửi thông báo, nhánh phụ
+      rỗng / lỗi / đóng popup); bảng giao diện mỗi đối tượng 1 dòng, đủ nút (x) / Đóng / Làm mới, trạng thái rỗng, toast,
+      hộp xác nhận nguyên văn; event đủ Before–During–After cho thao tác, Before–After cho thao tác chỉ đọc
+- [x] Sửa câu sai so với code: bấm lại phiếu "Đã chọn" trong popup không báo gì (chỉ tooltip); cột Phòng ban danh sách là
+      phòng ban HIỆN TẠI của người tạo; mã phiếu mượn trong bảng chi tiết mở cùng tab (thẻ mã ở Thông tin chung mới mở tab mới)
+- [x] Thêm 8 ảnh có sẵn trong pycxhm_shots (lối vào Kế toán kho, lỗi validate, popup Thêm hàng hoá, sau khi chọn phiếu,
+      phiếu Không duyệt, khối Lịch sử màn chi tiết, lỗi lý do từ chối, xem trước danh sách) — không chụp mới
+- [x] Phần 4: thêm BR-09 (Đơn giá + công ty của phiếu), BR-10 (File đính kèm, in, xuất); BR-03/07/08 bổ sung ý
+- [x] Sinh lại `SRS - Yêu cầu xuất hàng mượn.docx`: selfcheck OK, khớp bản mẫu, 86 trang
+- Số liệu metrics: trước fn=12 ui=9.0 ev=2.8 evch=459 intro=860 (33 event, thiếu Before 25, thiếu During 25) →
+  sau fn=12 ui=14.6 ev=4.8 evch=1158 intro=1422 (58 event, thiếu Before 0, thiếu During 33 — đều là event chỉ đọc)
+
+### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
+- [x] HDSD PHẦN 4 Duyệt: viết lại bước lập phiếu xuất hàng mượn (Ghi chú, số Xuất > 0 và ≤ Đang mượn theo BorrowExportForm.vue, nút Lưu và duyệt / Lưu và tiếp tục / Quay lại có ảnh) — sinh lại 22 trang
+
+### Xuất lại theo checklist Mẫu tài liệu.xlsx (02/11/2026) @khoipv
+Checklist tester: `../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json` (324 dòng Testcase, 163 dòng SRS).
+- [x] Đọc lại code develop cả 2 repo để expected / câu thông báo khớp code (danh sách, bộ lọc + ghi nhớ bộ lọc, form Thêm
+      mới + cảnh báo chưa lưu, ô Xuất, popup chọn phiếu, chi tiết, Từ chối, màn Phiếu xuất hàng mượn, lịch sử dùng chung,
+      xuất Excel, xử lý hết phiên)
+- [x] `gen_testcase.py` viết lại: section theo đúng thứ tự + tên nhóm checklist (I Hiển thị danh sách và truy cập … XIII
+      Không duyệt phiếu) + XIV In phiếu và in danh sách, XV Cài đặt bộ lọc; khối TC-ROLE giữ đầu file (+ROLE-09/10 gọi thẳng
+      chức năng khi thiếu quyền); mỗi TC có khóa, mã TC tự đánh, bảng `ID[khóa]` cho file đối chiếu. Số TC 100 → 220,
+      P0 102 (46%), tc_engine sạch (thuật ngữ / emoji / xuống dòng), tiêu đề "- Cập nhật ngày 02/11/2026"
+- [x] `gen_srs.py` bổ sung: Phần 1 (phạm vi chức năng, mục đích sử dụng dữ liệu, ràng buộc quan trọng; thuật ngữ tách từng
+      trạng thái + Đang tạo, trường đặc thù, cấu trúc phân cấp); Phần 2 (dòng Sửa/Xóa/Khóa/Import trong ma trận, trường hợp
+      không có quyền, bảng điều kiện hiển thị); 2.1 (hết phiên, cột hiện/ẩn/bắt buộc, chu kỳ sắp xếp); 2.2 (trường tìm,
+      khớp một phần, không phân biệt hoa thường / dấu, không giới hạn ký tự, cơ chế ghi nhớ bộ lọc); 2.4 (ghi nhớ cấu hình
+      cột theo người dùng); 2.5 (quy tắc trùng, trang không có Đóng/X, chuẩn hóa Ghi chú); 2.7 (quay lại giữ bộ lọc, về
+      trang 1); 2.9 (không có hộp xác nhận duyệt, duyệt lại bị chặn); 2.12 (3 loại mốc, 1 thao tác 1 mốc, 3 nhóm lọc, giữ
+      trạng thái danh sách); Phần 4 BR-11..BR-15 + ý xóa ở BR-05; Phần 5 thêm Kho dữ liệu hàng hoá + bảng chi tiết tham chiếu
+- [x] Sửa SRS lệch code: mốc lịch sử khi từ chối tên là "Từ chối" (không phải "Không duyệt"); ô tìm nhanh không giới hạn
+      ký tự (trước ghi 0–255)
+- [x] `gen_checklist.py` (mới) → `Đối chiếu checklist.xlsx`: Testcase 206 có TC / 118 N/A (Lưu nháp, Chỉnh sửa, Xóa,
+      Khóa/Mở khóa, Import Excel, đổi mã); SRS 111 có mục / 52 N/A (FR-04 Sửa, FR-05 Xóa, FR-06 Khóa, FR-08 Import, trùng
+      bản ghi khóa, ảnh hưởng khóa). Soát ngẫu nhiên 30 dòng: TC ghi đúng ý
+- [x] Chạy sạch cả 3: SRS selfcheck khớp bản mẫu (93 trang), tc_engine không lỗi, đối chiếu không thiếu dòng
+- Lệch code ↔ checklist ghi ở cột Ghi chú: F5 không giữ bộ lọc; quay lại từ chi tiết về trang 1 (chỉ giữ bộ lọc); bộ lọc
+  lưu theo trình duyệt không theo tài khoản; duyệt không có hộp xác nhận riêng; ký tự % và _ trong ô tìm là ký tự đại diện;
+  đổi tên hàng ở danh mục không đồng bộ vào phiếu đã lập (thiết kế chứng từ)
+
+### Checkpoint — 02/11/2026
+Vừa hoàn thành: xuất lại testcase + SRS theo checklist Mẫu tài liệu.xlsx, thêm file đối chiếu
+Đang làm dở: —
+Bước tiếp theo: user xem `Đối chiếu checklist.xlsx` + các lệch ở cột Ghi chú; HDSD chưa đổi (ngoài phạm vi lượt này)
+Blocked:
+
+### Sửa testcase theo góp ý user (02/11/2026) @khoipv
+- [x] Bỏ trùng 2 phần phân quyền + Cài đặt bộ lọc ghép vào nhóm Tìm kiếm và lọc (cùng cách đã duyệt ở màn hạch toán bổ sung): 11 case khối phân quyền đầu file → XI. PHÂN QUYỀN (TC_11.001–011, khóa r00..r10); 4 case Cài đặt bộ lọc từ XV → II (TC_02.034–037); bỏ phần XV, còn 14 nhóm
+- [x] Sinh lại testcase.xlsx + Đối chiếu checklist.xlsx (số dòng có TC không đổi); 220 TC, P0 46%, không trùng mã
+
+### Sửa Phần 5 SRS theo mẫu YC kiểm tra sửa chữa – bảo hành (04/11/2026) @khoipv
+- [x] Phần 5 về khuôn: 1 câu dẫn + 1 bảng 4 cột STT | Nhóm (phân hệ) | Màn hình (giải thích trong ngoặc) | Đường dẫn "Phân hệ -> nhóm menu"; bỏ bảng chi tiết / bảng 7 cột / bảng 2. gen_srs thêm ngắt trang trước Mục lục + căn giữa; gen_checklist dòng 161 → N/A (không có Khóa / Mở khóa); sinh lại SRS (selfcheck khớp) + Đối chiếu checklist
+- [x] Drive (bản người dùng tải lên 02/11, 0 nhận xét): sửa TRỰC TIẾP trên Google Docs — thay nội dung dưới tiêu đề Phần 5, thêm ngắt trang trước Mục lục + căn giữa (file nào chưa có), file đang khổ ngang chuyển khổ đứng. Tải về kiểm: Phần 1–4 không đổi chữ, số ảnh không đổi

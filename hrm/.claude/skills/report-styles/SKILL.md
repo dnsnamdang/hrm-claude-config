@@ -53,7 +53,8 @@ Phụ trợ copy kèm: `DrillNum.vue` (số 0 không bấm được), `InfoTip.v
 - Đang tải lại thì làm mờ (`.pct-body--loading` opacity .6), không xoá trắng. Lỗi thì GIỮ báo cáo cũ.
 - `reportParams` = params của lần tải thành công gần nhất. In / Excel / drill dùng `drillBaseParams()` (bỏ `page`/`per_page`).
 - `keepSelectedOptions()`: danh mục đổi theo phạm vi thì vẫn giữ mục đang chọn, nếu không sẽ lọc ngầm.
-- Quyền đổi công ty lấy từ BE `can_change_company === true` (fail-closed, không bypass super admin).
+- Quyền đổi công ty lấy từ BE `can_change_company === true` / cờ `permissions.is_all_company` (fail-closed, không bypass super
+  admin). Ô tổ chức dùng `V2BaseCompanyDepartmentFilter` để có công tắc 🔒 — xem mục 5b "Ô lọc Công ty / Phòng ban…".
 - Nhóm "Chưa xác định" gửi `0` khi drill, đừng bỏ trống (bỏ trống thì popup liệt kê mọi dòng).
 - Excel tải bằng LINK trực tiếp `?token=`, không dùng blob (Safari hỏng).
 - Mảng gửi dạng chuỗi `"7,8"` (link Excel không giữ được `[]`).
@@ -78,7 +79,8 @@ Mọi báo cáo dùng **1 component** `components/report/V2BaseReportPrintModal.
 |---|---|---|
 | **In báo cáo** (`#header-actions`) | Truyền `:modes`. Radio chọn bản in (`summary` bảng tổng hợp / `detail` danh sách) + khối **"Chọn cột in"**. Danh sách cột **đổi theo bản in đang chọn** (mỗi mode tự khai `columns`); đổi bản in = tick lại hết | `mode` + `cols` |
 | **In danh sách** (footer popup drill) | KHÔNG truyền `modes` → chỉ "Chọn cột in", danh sách = **đúng các cột đang hiện trên popup** (popup emit kèm `columns: [{ key, label }]`) | `mode=detail` + `cols` + tham số popup (`key`, `metric`, `p_*`, `q`, `sort`, `dir`) |
-| Xuất Excel / Xuất Excel danh sách | **KHÔNG** qua popup chọn cột — luôn đủ cột đang hiện | — |
+| Xuất Excel / Xuất Excel danh sách | Mặc định đủ cột (không qua bước chọn cột) | — |
+| Xuất Excel CÓ CHỌN CỘT (khi được yêu cầu — #12172) | Popup kiểu xuất dùng chung `pages/warehouse/stock-card/components/ExportModeModal.vue` + prop **`pick-columns`**: khối "Chọn cột xuất" lấy cột từ `modes[].columns` (khai CHUNG với popup In), hành vi như "Chọn cột in"; emit `export(mode, columns)`. Không bật prop = emit `export(mode)` như cũ. Đã bật ở 6 báo cáo Kho (Thẻ kho, Tồn chi tiết / tổng hợp theo mặt hàng, Tồn theo vị trí, Tồn theo kho, Tổng hợp XNT). Mẫu: `pages/warehouse/stock-location-product` | `mode` + `cols` |
 
 Hành vi (component đã làm sẵn, đừng viết lại): mở = tick hết · "Chọn tất cả" bán chọn khi tick 1 phần · bỏ hết rồi bấm In
 → đỏ "Vui lòng chọn ít nhất 1 cột để in", KHÔNG đóng, KHÔNG gọi BE · mở lại = về mặc định · nút **In** trước **Hủy**
@@ -95,7 +97,8 @@ BE (`{Report}PrintService`):
 - `cols` rỗng / toàn khoá lạ → đủ cột (tương thích lời gọi cũ). Bỏ khoá lạ. Bản tổng hợp lặp cột theo **thứ tự khai báo
   của bảng**; bản danh sách theo **thứ tự `cols`** (= thứ tự cột popup).
 - Blade dựng `<th>`/`<td>` bằng `@foreach ($columns …)`, `colspan` ô "Không có dữ liệu" = `count($columns) + cột cố định`.
-- Excel KHÔNG nhận `cols` từ bước chọn (đủ cột) — chỉ bản in.
+- Excel mặc định đủ cột. Màn bật chọn cột xuất (`pick-columns`) thì `/export` đọc `cols` qua CÙNG whitelist với bản in
+  (`columnsOf($mode, $cols)`; rỗng = đủ cột) — mẫu `StockLocationProductController::export`.
 
 ## 5. Áp cho báo cáo CŨ — trình tự
 
@@ -114,7 +117,9 @@ BE (`{Report}PrintService`):
 | Cột số không phải "đếm" (phút, tiền) | Ô dòng cha/TỔNG = tổng cộng, căn phải `.rsum-tb__num`, không bấm được; chỉ số ĐẾM bản ghi mới là `DrillNum` |
 | Drill ra danh sách khác loại (vd người tham gia thay vì meeting) | Mỗi loại 1 popup `V2BaseReportModal` riêng với bộ cột riêng. Không nhồi 2 loại dòng vào 1 popup |
 | Màn cũ có `print.vue` / mở tab in / popup `b-modal` / drill POST / `PrintOptionsModal` riêng của màn | Thay bằng `V2BaseReportPrintModal` (mục 4b) + `print-list-data` và `item-list` GET. Xoá `PrintOptionsModal.vue` riêng của màn khi chuyển. Xoá route `print.vue` + component cũ khi KHÔNG còn chỗ nào import (grep trước). Báo user trong spec |
-| Màn cũ dùng `V2BaseCompanyDepartmentFilter` + `permissions` | Chuyển sang ô Công ty tự vẽ trong slot `#field-company_id` + `can_change_company` từ `filter-options` (như mẫu). BE phải trả cờ này |
+| Ô lọc Công ty / Phòng ban / Bộ phận / Nhân viên | **Cập nhật 14/11/2026 (user chốt, #11736):** dùng `V2BaseCompanyDepartmentFilter` (`:floating="true"` + `:permissions` = cờ BE `is_all_company / is_company / is_department / is_part`) vì nó có **công tắc 🔒 trên nhãn** hiện cả mục đã khoá. KHÔNG tự vẽ ô Công ty trong slot `#field-company_id` / tự dựng 4 select theo phạm vi — mất 🔒, user bắt lỗi ở Báo cáo bán hàng theo từng mặt hàng. Mẫu cũ (`template/`) còn ô Công ty tự vẽ: KHÔNG chép phần này. Khuôn đúng: `pages/finance/import-direct-stocks`, `pages/sale/sale-by-product-report` |
+| Ô lọc danh mục có khoá (thương hiệu, hãng SX, nhóm hàng, kho…) | BE `filter-options` trả danh mục RIÊNG của báo cáo qua `LockedCatalogOptions::activeOrUsed` (đang hoạt động + đã khoá mà báo cáo còn bản ghi dùng tới) kèm `is_locked`; FE giữ `is_locked` khi map options + `keepLockedOptions: true`. Không dùng endpoint danh mục dùng chung (chỉ có mục đang hoạt động). Ô chọn 1 có công tắc 🔒 trên nhãn, ô chọn nhiều luôn hiện mục khoá kèm 🔒 — chi tiết `erp-to-hrm-screen` checklist A |
+| Bề rộng ô lọc | Để mặc định của panel (`col-md-3`, 4 ô / hàng) — KHÔNG trộn `col: 2` / `col: 3` (ra hàng "cái dài cái ngắn") |
 | Cỡ trang | Theo mẫu: 20, chọn `[10, 20, 50, 100]`, đếm theo nhóm cấp 0 (`item-label` = tên cấp 0) |
 | Màn cũ có biểu đồ | Khuôn không có biểu đồ. Bỏ hay giữ là câu hỏi NGHIỆP VỤ cho user; giữ thì đặt giữa `.rsum` và bảng |
 
@@ -144,5 +149,5 @@ BE (`{Report}PrintService`):
 | `InfoTip` trong tiêu đề đậm thì icon dày | `font-weight: normal` ở `.ptr-info` |
 | Copy `PrintOptionsModal.vue` về màn mới / tự dựng popup chọn cột | Dùng `components/report/V2BaseReportPrintModal.vue`, chỉ khai `printModes` |
 | Nút In danh sách của popup in thẳng | Mở popup chọn cột (`columns` = cột popup) rồi mới in |
-| Cho Xuất Excel đi qua bước chọn cột | Excel luôn đủ cột |
+| Tự dựng popup chọn cột riêng cho Xuất Excel | Dùng `ExportModeModal` + `pick-columns` (khai cột 1 lần ở `modes`, dùng chung với In) |
 | BE in cố định cột | Whitelist `SUMMARY_COLUMNS` / `DETAIL_COLUMNS` + đọc `cols` |

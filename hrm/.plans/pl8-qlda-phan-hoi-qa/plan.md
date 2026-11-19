@@ -79,3 +79,32 @@ BG-2026-00341 và BG-2026-00342, dự án 465).
       Đang giữ "Cập nhật giá" / "Giữ giá cũ" vì nói đúng việc sẽ xảy ra.
 - [ ] Ngoài phạm vi (KHÔNG tự sửa đại trà): còn ~8 chỗ khác trong phân hệ Giao việc format số kiểu VN
       (settings history, MeetingsTab, meeting/index, children tab, parent quotations tab, 2 file report…)
+
+## #10814 — phản hồi #12–#14 (lần 2, 17/10/2026, nhánh develop)
+- [x] Issue: popup Xem chi tiết thêm Sửa · Xử lý · Xóa (cờ `can_edit/can_delete/can_handle` của API chi tiết — cùng nguồn danh sách); footer theo skill (Lưu, Đóng tertiary + `fas fa-arrow-left` đứng cuối)
+- [x] Kiểm lại trên UI: Lịch sử ở chi tiết BOM · Hạng mục dự án · Báo giá · Task
+- [x] Kiểm lại trên UI: số nút danh sách = chi tiết ở Meeting · Issue · Dự án · Giải pháp · YCGP · BOM
+- [x] Dự án TKT: chi tiết thiếu "Quản lý dự án" (danh sách có, điều kiện dự án có mã) → thêm vào footer `prospective-projects/_id/index.vue`
+- [x] Giải pháp: chi tiết thiếu "Quản lý giải pháp" → BE `DetailSolutionResource` trả `is_can_manage`, FE thêm nút cùng cờ
+- [x] YCGP: chi tiết thiếu "Làm giải pháp" (người tiếp nhận + Đã tiếp nhận) → thêm; Sửa/Xóa chi tiết trước tự suy theo trạng thái [1,9] (người khác vẫn thấy, phiếu Yêu cầu bổ sung hiện Xóa) → BE `DetailRequestSolutionResource` trả `is_can_edit`/`is_can_delete`, FE dùng cờ
+- [x] Kết quả test 17/10 (Playwright, so từng bản ghi danh sách ↔ chi tiết theo id):
+  - Lịch sử ở chi tiết: BOM 18 ✅ · Báo giá 93 ✅ (3 dòng log) · Hạng mục dự án ✅ · Task ✅
+  - Issue 8/8 khớp; issue test: Sửa → chuyển chế độ sửa, Xử lý → chế độ xử lý, Xóa → hỏi xác nhận → xoá → danh sách tải lại (đã dọn issue 20 + history + org_units + thông báo)
+  - Meeting 5/5 ✅ (Hủy/Hoàn thành/Chốt lịch/Nháp) · Dự án 5/5 ✅ · Giải pháp 6/6 ✅ · YCGP 4/5 ✅ + 1 khác chữ · BOM khớp điều kiện
+  - Còn khác chữ, không thiếu nút: YCGP "Hủy yêu cầu" (DS) vs "Hủy yêu cầu làm giải pháp" (CT, theo spec #10841); BOM "In BOM List" (DS) vs "In" (CT) + CT có thêm "Xuất Excel"; Tiếp nhận nằm ở màn Chờ duyệt, Từ chối chỉ ở chi tiết (đúng skill)
+
+## #10814 — Rà lịch sử theo skill entity-history, sửa NHÓM 1 (17/10/2026)
+Kết quả rà (test từng trường §7a, 4 agent, rollback sạch): Hạng mục dự án 21/21 đạt; BOM 4 lỗi; Báo giá 3 lỗi hiển thị; Task 5 lỗi. User chốt làm nhóm 1 (lỗi nhỏ, rõ):
+- [x] BOM: đổi Hạng mục log `null → null` (resolver đọc cột `name` không tồn tại ở `solution_modules`)
+- [x] BOM: đổi Loại BOM sinh "xoá + thêm" giả cho hàng tạm (ảnh trước/sau khác chế độ khoá ghép cặp)
+- [x] Task: task chưa có rule lặp lại/báo cáo, lưu không sửa vẫn sinh log rác (rule null ≠ rule tắt)
+- [x] Task: nhiệm vụ con thành nhiệm vụ thật không có dòng "Tạo mới" (`createChildrenAsTasks` thiếu `logCreate`)
+- [x] Task: số giờ in `7.50` thay vì `7.5`
+User chốt "sửa cho hết lỗi, không ảnh hưởng logic" — nhóm 2 + 3:
+- [x] Dùng chung `MeetingHistoryService::recordListChange` trả DTO §4b (nhãn nhóm, added_rows/removed_rows, changed.detail, `__brief`, `__ref`, bỏ khoá `__*`, ngăn `;`)
+- [x] Báo giá: `__brief` các bảng con (§6b) + `__ref` để đổi tên nhóm không đẻ "sửa: Nhóm" cho mọi hàng
+- [x] Task/Issue: tệp đính kèm/kết quả thành bảng ghép theo đường dẫn (`fileRecords`) → đổi tên tệp ra 1 dòng sửa
+- [x] BOM: hàng tạm BOM thành phần ghép theo mã cũ (`tempCodeOrigin`) → đổi tên không còn xoá+thêm
+- [x] BOM: ghi lịch sử bảng "Nhóm hàng hoá" (`groupIdOrigin`), `__ref` Nhóm/Thuộc hàng
+- [x] Test lại BOM / Task / Báo giá / hồi quy Meeting + log cũ (rollback sạch)
+- [x] Phát sinh khi test: dòng sửa không lặp cột vừa đổi ở phụ chú; báo giá bỏ dòng "Thay đổi thông tin" trống với người không có quyền xem giá vốn

@@ -81,3 +81,33 @@ Vừa hoàn thành: port BE + FE + test Playwright màn Hạch toán mua dịch 
 Đang làm dở: không.
 Bước tiếp theo: khởi động lại dev server rồi kiểm 4 sửa ở màn Yêu cầu; gán quyền 1703-1705 cho vai trò; chạy 3 dòng seeder trên dev/prod.
 Blocked: dev server 3000 không nhận thay đổi file cũ (watcher).
+
+## Tài liệu SRS / HDSD / Testcase (03/11/2026) @khoipv
+Bộ tài liệu theo chuẩn form Danh mục quốc gia + checklist tester "Mẫu tài liệu.xlsx"; khuôn cấu trúc `../buy-service-accounting-request/`.
+- [x] Đọc code FE (`pages/finance/buy-service-accountings/**`, SourcePickerModal, AttachmentSection, menu sale-hub / finance) + BE
+  (Entity, Service, Controller, FormRequest, ListResource, ExportColumnRegistry, CatalogHistoryService, quyền 1702–1705).
+- [x] Chụp ảnh dev-hrm (DNS Admin, chỉ đọc) — `htmdv_shots/_capture/capture.js`: 25 ảnh màn + 71 icon (đã trim_icon, `--dry` 0/71).
+  Mọi yêu cầu ghi tới API màn bị chặn ở trình duyệt (log 0 yêu cầu ghi). Nút Sửa / Xóa / "…", màn Sửa, 2 hộp Xác nhận xóa chụp trên phiếu
+  TPE.HTMDV.2026000060 (Đã duyệt) với cờ is_can_edit / is_can_delete bật tạm trên trình duyệt. Hộp Xác nhận duyệt: điền form từ phiếu yêu cầu
+  069 rồi bấm Hủy. Ảnh menu chép từ bộ ảnh màn Yêu cầu chụp cùng ngày (thanh bên dev thu gọn). Không có ảnh form loại Công nợ bảo hiểm
+  (dev không có phiếu yêu cầu loại này Chờ duyệt).
+- [x] `gen_srs.py` → `SRS - Hạch toán mua dịch vụ.docx`: 13 chức năng, 125 trang, selfcheck khớp mẫu.
+  Metrics: ui=15.0, ev=5.7, evch=1726, intro=1964, noBefore=0, noDuring=0.
+- [x] `gen_hdsd.py` → `HDSD_Hach toan mua dich vu.docx`: 11 PHẦN, 20 trang.
+- [x] `gen_testcase.py` → `testcase.xlsx`: 280 TC, P0 116 (41%), 14 section (I–XII theo checklist, bỏ Khóa / Import / Không duyệt;
+  XII = Lưu và duyệt; XIII In, XIV Chọn phiếu yêu cầu), 1 nhóm Phân quyền, Cài đặt bộ lọc trong nhóm II.
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 246 có TC / 78 N/A (Khóa / Mở khóa, Import, Không duyệt); SRS 133 có mục / 30 N/A.
+- Ghi nhận lệch code ↔ checklist (không sửa code): không có Không duyệt / Lưu và gửi duyệt (Lưu và duyệt là duyệt); duyệt xong không gửi
+  thông báo; Super admin không có quyền 1702 thì không thấy Tạo mới; cửa sổ chọn chỉ liệt kê phiếu yêu cầu do chính mình tạo.
+
+### Checkpoint — 2026-11-03
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Hạch toán mua dịch vụ.
+Đang làm dở: không.
+Bước tiếp theo: user xem lại tài liệu, đẩy Drive khi duyệt.
+Blocked:
+
+### Sửa Phần 5 SRS theo khuôn Drive (03/11/2026) @khoipv
+- [x] Phần 5 đổi về khuôn SRS "Khai báo tồn kho đầu kỳ" trên Drive (user chỉ định 04/11): tiêu đề "Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu", câu dẫn có dẫn chiếu BR, 1 bảng 4 cột STT | Nhóm | Màn hình | Đường dẫn (giải thích ngắn trong ngoặc, đường dẫn "Phân hệ => … => Tên màn"); bỏ bảng 7 cột + bảng 2
+- [x] gen_checklist: dòng 161 → N/A (màn không có Khóa / Mở khóa), dòng 163 ghi chú lại; sinh lại SRS (selfcheck khớp bản mẫu) + Đối chiếu checklist
+- [x] (04/11) Sửa Phần 5 trên bản SRS ở Drive (folder SRS chuyển đổi), giữ nguyên phần người khác đã sửa + nhận xét: 4 file sửa TRỰC TIẾP trong Google Docs (xoá nội dung cũ sau tiêu đề Phần 5, dán câu dẫn + bảng 4 cột); riêng Báo cáo hạn mức công nợ KH đã tải phiên bản mới lên (dựng từ bản Drive 09:07 có sửa "Tùy chỉnh cột" của người khác; file không có nhận xét nào). Tải về kiểm: Phần 1–4 không đổi, số ảnh không đổi, tiêu đề Heading 1, dòng tiêu đề bảng in đậm
+- [x] (04/11) Theo file mẫu SRS "Yêu cầu kiểm tra sửa chữa – bảo hành" (user chỉ định): đường dẫn Phần 5 đổi sang "Phân hệ -> Nhóm menu" (không ghi tên màn); gen_srs thêm ngắt trang trước Mục lục + căn giữa chữ "Mục lục"; sinh lại SRS (selfcheck khớp). Drive: 4 file sửa đường dẫn bằng Tìm & thay thế trên Google Docs; Báo cáo hạn mức KH (0 nhận xét, bản Drive thiếu chữ 21 ô) tải phiên bản mới từ bản đầy đủ, giữ sửa "Tùy chỉnh cột" của người khác; 2 file khổ ngang (Báo cáo hạn mức KH, YC hạch toán MDV) chuyển khổ đứng trên Docs. Giữ các mục riêng của màn báo cáo (skill bắt buộc, user chốt)

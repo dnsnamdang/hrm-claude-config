@@ -1514,3 +1514,129 @@ User báo popup "Chọn phiếu xác nhận bảo hành" hơi dài. Nguyên nhâ
 
 - [x] FE `components/RecordSearchModal.vue`: giới hạn `.table-wrapper` trong popup `max-height: 50vh`, cuộn trong bảng (tiêu đề bảng dính sẵn). Áp dụng cho cả 3 popup dùng chung component (bảo hành / hàng thiếu / nhân viên)
 - [ ] User mở trình duyệt kiểm tra (Ctrl+Shift+R)
+
+## Tài liệu SRS + HDSD + Testcase theo form Danh mục quốc gia (2026-10-30) @khoipv
+
+Cấu trúc phẳng như `bank-account-catalog/`; nội dung theo skill + `../phieu-theo-form-quoc-gia/CHECKLIST.md`.
+
+- [x] Chụp ảnh trên dev-hrm (DNS Admin) bằng `htbs_shots/_capture/capture.js` — phiếu Chờ duyệt 002289 (loại 2), 002284
+      (loại 6), 002286 (loại 4), 002285 (loại 7). Dev không có phiếu Đang tạo → ảnh Sửa / Xóa / Gửi duyệt bật tạm cờ hiển thị
+      trên trình duyệt (không ghi dữ liệu). Chỉ mở / Hủy
+- [x] `gen_srs.py` → `SRS - Phiếu yêu cầu hạch toán bổ sung.docx` (55 trang, 15 chức năng, 3 lối vào, Phần 5; selfcheck khớp mẫu)
+- [x] `gen_hdsd.py` → `HDSD_Phieu yeu cau hach toan bo sung.docx` (23 trang)
+- [x] `gen_testcase.py` → `testcase.xlsx` (58 TC, P0 50%, kiểm thuật ngữ / emoji / xuống dòng sạch)
+- [ ] User soát → đẩy Drive
+
+Ghi nhận: lịch sử trên dev trống ở mọi phiếu (phiếu tạo trước khi bật lịch sử) → ảnh Lịch sử là trạng thái "Chưa có lịch sử".
+
+### Checkpoint — 2026-10-30 15:10
+Vừa hoàn thành: 3 tài liệu SRS / HDSD / testcase màn Phiếu yêu cầu hạch toán bổ sung
+Đang làm dở: không
+Bước tiếp theo: user soát tài liệu, đẩy Drive
+Blocked:
+
+## Check — testcase đối chiếu skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Đạt: khung 9 mục mô tả, Test Summary 2 khối, header 17 cột, dropdown check, font/độ rộng cột, không freeze, không emoji,
+      không thuật ngữ code, ô nhiều ý xuống dòng, P0 ≥ 40%
+- [x] Lệch (chưa sửa, chờ user): tiêu đề thiếu "- Cập nhật ngày dd/mm/yyyy"; thiếu case theo góp ý tester ý 1 (Lưu và tiếp
+      tục khi dữ liệu lỗi), ý 3 (Expected mở màn đủ số dòng/trang + lựa chọn + thứ tự + khuôn dòng tổng), ý 4 (bước "Bấm Tìm
+      kiếm nâng cao" ở case lọc ô nâng cao), ý 5 (nhớ bộ lọc trước/sau 10 phút, đổi tài khoản, tab mới), ý 6 (kết hợp tiêu chí
+      + độ dài ô tìm nhanh); nhiều case tiền điều kiện "—" (skill bắt có số liệu); thiếu case tham số lạ trên thanh địa chỉ
+
+## Fix — testcase theo chuẩn skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Bộ hàm dùng chung `../phieu-theo-form-quoc-gia/tc_phieu_bosung.py` (case mở màn, nhớ bộ lọc, kết hợp tiêu chí, ô cha–con,
+      tham số lạ, chèn bước "Bấm Tìm kiếm nâng cao", điền tiền điều kiện) — hành vi đọc từ code chung (V2BaseDataTable,
+      filterStateMixin, V2BaseCompanyDepartmentFilter)
+- [x] `gen_testcase.py`: tiêu đề "- Cập nhật ngày 30/10/2026"; đủ 6 ý tester áp dụng được (1, 2, 3, 4, 5, 6); tiền điều kiện
+      không còn "—"; số TC 58 → 75; P0 ≥ 40%; kiểm thuật ngữ / emoji / xuống dòng sạch
+
+## Fix — SRS: bảng "Mô tả chi tiết giao diện" mỗi đối tượng 1 hàng (2026-10-30) @khoipv
+User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Người tạo / Phòng ban / Người duyệt / Người cập nhật" phải tách.
+- [x] Hàm dùng chung `../phieu-theo-form-quoc-gia/srs_split_rows.py` (`split_ui_rows`): tách theo " / ", phần sau tự nhận
+      tiền tố Cột/Nút/Ô; mô tả mặc định cho nút chung; chặn còn dòng gộp (assert)
+- [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
+      sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
+- [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu
+
+## Fix #11958 — Popup Từ chối: icon nút Hủy + thu nhỏ popup (2026-10-31) @khoipv
+- [x] `RejectModal.vue`: nút Hủy thêm icon `fas fa-arrow-left` (skill button-convention, khớp nút Đóng mặc định V2BaseModal)
+- [x] `RejectModal.vue`: `size="md"` (mặc định V2BaseModal là `lg`, quá rộng cho 1 ô lý do)
+- [x] Push #11958 (2026-10-31, user yêu cầu): hrm-client `870660725` lên `develop`
+
+### Nâng chi tiết SRS theo SRS_MAU (31/10/2026) @khoipv
+User báo SRS chưa chi tiết bằng skill / mẫu quốc gia mới nhất. Chuẩn bám: `../finance-bill-income-request/gen_srs.py` + CHECKLIST.
+- [x] Đối chiếu lại code FE (index, _id/index, create, edit, Form, DetailTable, AttachmentSection, các popup chọn, RejectModal,
+      CoordinationDetail, mixin unsaved / saveAndContinue / printPreview) + BE (Store/Update/ChangeStatus Request, WriteService,
+      NotifyService, PrintService, BillAdjustDeptSourceService) — mọi thông báo / toast / điều kiện hiện nút lấy nguyên văn
+- [x] Bảng Giới thiệu 15 chức năng: Tác nhân ghi quyền thật (bỏ "người dùng đã đăng nhập"), Điều kiện đánh số, Dòng sự kiện
+      chính có bước ghi lịch sử + thông báo + toast, sự kiện phụ đủ nhánh (rỗng, sai quyền, sai trạng thái, đóng popup / click ngoài)
+- [x] Bảng giao diện: mỗi đối tượng 1 hàng, mỗi cột lưới 1 dòng (ghi cột sắp xếp được / cột khóa), dropdown ghi "Mặc định" +
+      lựa chọn, lỗi dưới ô + toast + hộp xác nhận nguyên văn; bỏ loại cấm (Number/Loading/Modal/Text); gọi tên loại yêu cầu
+      thay cho số loại
+- [x] Bảng event: đủ Before / During / After cho 84 event (mở màn, từng nút, đổi ô, sắp xếp, đổi trang, đóng / click ngoài, kéo thả)
+- [x] Sửa chỗ lệch code của bản cũ: Gửi duyệt ở màn chi tiết CÓ hộp xác nhận; Gửi duyệt / Từ chối ở màn chi tiết ở lại màn
+      (không về danh sách); ô hợp đồng không khóa mà báo "Vui lòng chọn đối tượng trước"; Người duyệt gồm cả người duyệt phiếu
+      kế toán; xóa phiếu kế toán trả phiếu yêu cầu về Chờ duyệt; nút trong "…" theo số nút (tối đa 3)
+- [x] Phần 4: thêm BR-08 (không trùng dòng chi tiết), BR-09 (file đính kèm), BR-10 (chứng từ nguồn chọn được); sửa BR-03, BR-06, BR-07
+- [x] Sinh lại docx, selfcheck khớp bản mẫu (120 trang)
+- Số liệu (metrics.py): trước fn=15 ui=7.5 ev=1.7 evch=308 intro=624 · 26 event, thiếu Before 16, thiếu During 21, dòng quyền 4
+  → sau fn=15 ui=14.4 ev=5.6 evch=1706 intro=1594 · 84 event, thiếu Before 0, thiếu During 0, dòng quyền 9
+
+### Rà HDSD theo skill hdsd-documenter (31/10/2026) @khoipv
+- [x] HDSD PHẦN 6 Lập phiếu kế toán: thêm trường bắt buộc + luật nợ = có, 4 nút có ảnh (btn_pkt_*) — sinh lại 24 trang
+
+### Xuất lại theo checklist Mẫu tài liệu.xlsx (02/11/2026) @khoipv
+Checklist tester `../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json` (Testcase 324 dòng, SRS 163 dòng). Đọc lại code FE + BE để
+mọi expected / thông báo đúng code (không sửa code ứng dụng).
+- [x] `gen_testcase.py` viết lại: section theo đúng thứ tự + tên nhóm checklist I–XIII (XII Duyệt = Lập phiếu kế toán, XIII Không
+      duyệt = Từ chối), rồi XIV Gửi duyệt từ chi tiết + In phiếu, XV Chọn đối tượng / chứng từ + Cài đặt bộ lọc; khối TC-ROLE giữ
+      đầu file (thêm TC-ROLE-11 Kế toán kho nhận thông báo). 75 → 325 TC, P0 42%, tc_engine sạch (thuật ngữ / emoji / xuống dòng)
+- [x] `gen_srs.py` bổ sung: Phần 1 (phạm vi chức năng, mục đích dữ liệu, ràng buộc quan trọng, từng trạng thái, trường đặc thù,
+      cấu trúc phân cấp); Phần 2 (không có Khóa / Import, trường hợp không có quyền, bảng điều kiện hiện nút); 2.1 cột mặc định
+      hiện / ẩn / bắt buộc; 2.2 kiểu khớp + sửa "0–255 ký tự" thành "Không giới hạn ký tự" (code không giới hạn); 2.4 ghi nhớ theo
+      tài khoản; 2.5 quy tắc trùng, màn là trang (không (x)), bấm lưu liên tục; 2.7 trường được / không được sửa, trùng, bị xóa
+      khi đang sửa, 2 tab; 2.9 ràng buộc cấp con / đang dùng; 2.10 quay lại giữ lọc về trang 1; 2.11 lý do > 1.000 ký tự; 2.12 hộp
+      "Xác nhận duyệt phiếu kế toán", chặn 1 phiếu kế toán, thông báo [PKT]; 2.14 cấu trúc file, rỗng, tên file; 2.15 thứ tự, rỗng
+      theo lọc, giữ trạng thái danh sách; Phần 4 BR-11..BR-15; Phần 5 hai bảng 7 / 6 cột. Selfcheck khớp mẫu (129 trang)
+- [x] `gen_checklist.py` mới → `Đối chiếu checklist.xlsx`
+- Số liệu: Testcase 255 dòng có TC / 69 N/A (Khóa / Mở khóa 30, Import Excel 39); SRS 132 dòng có mục / 31 N/A (Khóa 13, Import 18)
+- Lệch code so với checklist (ghi ở cột Ghi chú file đối chiếu): % và _ là ký tự đại diện khi tìm; ô tìm / Diễn giải không giới hạn
+  ký tự; bộ lọc nhớ theo trình duyệt (không theo tài khoản); quay lại từ chi tiết về trang 1; phiếu đã bị xóa báo "Item Not Found!"
+  (tiếng Anh), xóa không tự nạp lại bảng; Lập phiếu kế toán không có hộp xác nhận (hộp ở bước Lưu và duyệt); lịch sử phiếu yêu cầu
+  không ghi mốc Đang duyệt / Đã duyệt; từ chối lý do > 1.000 ký tự thì cửa sổ tự đóng mất nội dung; không chặn dùng lại chứng từ nguồn
+- [ ] User soát → đẩy Drive
+
+### Checkpoint — 2026-11-02
+Vừa hoàn thành: xuất lại SRS + testcase + file đối chiếu theo checklist Mẫu tài liệu.xlsx
+Đang làm dở: không
+Bước tiếp theo: user soát 3 file, quyết các điểm lệch (sửa code hay giữ), đẩy Drive
+Blocked:
+
+### Sửa testcase theo góp ý user (02/11/2026) @khoipv
+- [x] Bỏ trùng 2 phần phân quyền: 12 case khối "Phân quyền & truy cập" (TC-ROLE-00..11) gộp vào XI. PHÂN QUYỀN → TC_11.001–012; case cũ của XI → TC_11.013–023; build với role_tcs=[]
+- [x] 4 case Cài đặt bộ lọc chuyển từ XV sang II. TÌM KIẾM VÀ LỌC → TC_02.036–039; XV đổi tên "CHỌN ĐỐI TƯỢNG VÀ CHỨNG TỪ"
+- [x] Cập nhật mã TC trong gen_checklist.py → Đối chiếu checklist.xlsx (255 có TC / 69 N/A, không đổi); tổng 325 TC, P0 42%
+- [x] User duyệt; đã áp cùng cách cho borrow-export / delivery / adjust-dept. Thêm tiền tố "Cài đặt bộ lọc:" cho 4 case ở II
+
+
+### Fix Redmine #11989 — phiếu đã bị xóa ở phiên khác báo "Item Not Found!" (03/11/2026) @khoipv
+Nguyên nhân: mọi `findOrFail` hụt rơi vào Handler chung → JSON 404 "Item Not Found!"; FE màn này in thẳng `data.message`
+(xóa / gửi duyệt / từ chối / lưu sửa / gỡ file / in), còn chỗ nạp phiếu + xuất Excel in câu "Không tìm thấy dữ liệu" / "Lỗi khi xuất Excel".
+- [x] BE: `AdditionAccountingRequestService::findOrDeleted()` — hụt id ném 404 "Phiếu đã bị xóa"; thay 6 chỗ `findOrFail` (controller + `findForShow`)
+- [x] FE chi tiết `_id/index.vue`: nạp phiếu 404 → hiện câu BE; gửi duyệt / từ chối / xóa 404 → về danh sách; xuất Excel 404 → "Phiếu đã bị xóa"
+- [x] FE form (màn Sửa): nạp 404 → câu BE; lưu 404 → về danh sách
+- [x] FE danh sách: xóa 404 → nạp lại bảng; xuất Excel 1 phiếu 404 → "Phiếu đã bị xóa" + nạp lại
+- [x] Verify: php -l + smoke API id không tồn tại; compile FE
+- Kết quả smoke (HTTP kernel, id không tồn tại): GET show / DELETE / POST change-status / GET print-data / GET export đều 404
+  "Phiếu đã bị xóa"; phiếu còn tồn tại vẫn 200. 3 file Vue compile sạch. Chưa mở trình duyệt.
+- Lưu ý: PUT sửa chạy FormRequest trước controller -> payload sai thì vẫn ra 422 trước 404 (payload đủ thì ra 404).
+
+### Checkpoint — 2026-11-03
+Vừa hoàn thành: fix #11989 (BE findOrDeleted + FE chi tiết / form sửa / danh sách)
+Đang làm dở: không
+Bước tiếp theo: user mở 2 tab test thực tế (tab A xóa, tab B bấm Gửi duyệt / Xóa / Lưu / Xuất Excel)
+Blocked:
+
+### Sửa Phần 5 SRS theo mẫu YC kiểm tra sửa chữa – bảo hành (04/11/2026) @khoipv
+- [x] Phần 5 về khuôn: 1 câu dẫn + 1 bảng 4 cột STT | Nhóm (phân hệ) | Màn hình (giải thích trong ngoặc) | Đường dẫn "Phân hệ -> nhóm menu"; bỏ bảng chi tiết / bảng 7 cột / bảng 2. gen_srs thêm ngắt trang trước Mục lục + căn giữa; gen_checklist dòng 161 → N/A (không có Khóa / Mở khóa); sinh lại SRS (selfcheck khớp) + Đối chiếu checklist
+- [x] Drive (bản người dùng tải lên 02/11, 0 nhận xét): sửa TRỰC TIẾP trên Google Docs — thay nội dung dưới tiêu đề Phần 5, thêm ngắt trang trước Mục lục + căn giữa (file nào chưa có), file đang khổ ngang chuyển khổ đứng. Tải về kiểm: Phần 1–4 không đổi chữ, số ảnh không đổi

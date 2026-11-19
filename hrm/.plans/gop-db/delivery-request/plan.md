@@ -65,6 +65,8 @@ FE `bill-adjust-dept-requests` (form/chi tiết/footer) + `borrow-extend-request
 - [x] (Redmine #11852) ERP 501 phiếu vs HRM 101: do bỏ trạng thái "Đang tạo" (3) hôm 14/10 → user chốt 26/10 trả lại giống ERP, `EXPORT_REQUEST_STATUSES = [1, 2, 3, 10, 11]` (popup, nạp dữ liệu, lưu, duyệt). Verify local: popup 141 → 467; YCXH Đang tạo 33680 nạp được
 - [x] (Redmine #11852) Phiếu YCXH chưa gắn khách hàng: chặn NGAY lúc chọn (`exportRequestData` 422) → báo dưới ô Phiếu YCXH + toast, không điền form. Verify: YCXH 410 bị chặn, 35546 vẫn nạp được
 - [x] (Redmine #11852) Khối Bốc xếp màn Sửa 4 ô 1 hàng như màn Tạo (`carryColClass` theo `readonly`); màn Chi tiết giữ 1/3
+- [x] (Redmine #11852 phản hồi 26/10) Popup chọn phiếu YCXH ẩn luôn phiếu chưa gắn khách hàng (`searchExportRequests` thêm `customer_id > 0`); chặn ở `exportRequestData` giữ làm lưới an toàn. Verify local: 467 → 249 (218 phiếu không KH), YCXH 410 không còn trong popup
+- [x] (Redmine #11852 phản hồi 27/10) "Gắn link tất cả các phiếu": user chốt 29/10 link hết + nới quyền xem màn chi tiết YCXH theo ERP `ProductExportRequest::canView()` (Kế toán kho cùng `company_id` / người tạo / quyền TP hoặc BGĐ duyệt vượt hạn mức công nợ), cộng dồn với 4 quyền theo cấp. Áp cho show + in + xuất DS hàng + biên bản bàn giao. FE popup/danh sách/form luôn là link; bỏ `viewableExportRequestIds`/`can_view`/`objectable_can_view`. Helper `ProductExportRequestController::findViewable()` + `ProductExportRequest::canViewLikeErp()` (bỏ nhánh "TP duyệt hàng mượn" — chưa có trong seeder). Verify local (giả lập quyền qua RequestCache): 0 quyền → 404; Kế toán kho cùng cty 200 / khác cty 404; BGĐ vượt HM 200 cả 2; compile FE OK
 
 - [x] (Redmine #11854, 26/10) Tiêu đề màn Chi tiết + Sửa có tag trạng thái (`buildStatusTitle`, khuôn `product-export-requests/_id`); BE `STATUSES` thêm `color` (hex theo `statusBadgeVariant.js`), detail trả `status_color`. Verify: phiếu Chờ duyệt → `#D97706`
 - [x] (Redmine #11854) Tên chuẩn "Chi tiết/Sửa phiếu yêu cầu vận chuyển, bốc xếp: {mã}" — top-menu + tab trình duyệt (`plainTitle`, tab không dính HTML badge)
@@ -75,3 +77,95 @@ Vừa hoàn thành: BE + FE màn Phiếu yêu cầu vận chuyển, bốc xếp 
 Đang làm dở: không.
 Bước tiếp theo: test UI bằng tài khoản thủ kho thường ; chạy seeder quyền 1695-1698 ; review code.
 Blocked:
+
+## Tài liệu SRS + HDSD + Testcase theo form Danh mục quốc gia (2026-10-30) @khoipv
+
+Cấu trúc phẳng như `bank-account-catalog/`; nội dung theo skill + `../phieu-theo-form-quoc-gia/CHECKLIST.md`.
+
+- [x] Chụp ảnh trên dev-hrm (DNS Admin) bằng `ycvc_shots/_capture/capture.js` — dev có đủ phiếu 4 trạng thái
+      (00006 Đang tạo, 00004 Chờ duyệt, 00003 Đã duyệt 8 mốc lịch sử, 00001 Từ chối). Chỉ mở / Hủy, không ghi dữ liệu
+- [x] `gen_srs.py` → `SRS - Phiếu yêu cầu vận chuyển, bốc xếp.docx` (56 trang, 14 chức năng, Phần 5; selfcheck khớp mẫu)
+- [x] `gen_hdsd.py` → `HDSD_Phieu yeu cau van chuyen boc xep.docx` (21 trang, 11 phần)
+- [x] `gen_testcase.py` → `testcase.xlsx` (69 TC, P0 46%, kiểm thuật ngữ / emoji sạch)
+- [ ] User soát → đẩy Drive
+
+### Checkpoint — 2026-10-30 12:00
+Vừa hoàn thành: 3 tài liệu SRS / HDSD / testcase màn Phiếu yêu cầu vận chuyển, bốc xếp
+Đang làm dở: không
+Bước tiếp theo: user soát tài liệu, đẩy Drive
+Blocked:
+
+## Check — testcase đối chiếu skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Đạt: khung 9 mục mô tả, Test Summary 2 khối, header 17 cột, dropdown check, font/độ rộng cột, không freeze, không emoji,
+      không thuật ngữ code, ô nhiều ý xuống dòng, P0 ≥ 40%
+- [x] Lệch (chưa sửa, chờ user): tiêu đề thiếu "- Cập nhật ngày dd/mm/yyyy"; thiếu case theo góp ý tester ý 1 (Lưu và tiếp
+      tục khi dữ liệu lỗi), ý 3 (Expected mở màn đủ số dòng/trang + lựa chọn + thứ tự + khuôn dòng tổng), ý 4 (bước "Bấm Tìm
+      kiếm nâng cao" ở case lọc ô nâng cao), ý 5 (nhớ bộ lọc trước/sau 10 phút, đổi tài khoản, tab mới), ý 6 (kết hợp tiêu chí
+      + độ dài ô tìm nhanh); nhiều case tiền điều kiện "—" (skill bắt có số liệu); thiếu case tham số lạ trên thanh địa chỉ
+
+## Fix — testcase theo chuẩn skill + mẫu Danh mục quốc gia + góp ý tester 07/10 (2026-10-30) @khoipv
+- [x] Bộ hàm dùng chung `../phieu-theo-form-quoc-gia/tc_phieu_bosung.py` (case mở màn, nhớ bộ lọc, kết hợp tiêu chí, ô cha–con,
+      tham số lạ, chèn bước "Bấm Tìm kiếm nâng cao", điền tiền điều kiện) — hành vi đọc từ code chung (V2BaseDataTable,
+      filterStateMixin, V2BaseCompanyDepartmentFilter)
+- [x] `gen_testcase.py`: tiêu đề "- Cập nhật ngày 30/10/2026"; đủ 6 ý tester áp dụng được (1, 2, 3, 4, 5, 6); tiền điều kiện
+      không còn "—"; số TC 69 → 82; P0 ≥ 40%; kiểm thuật ngữ / emoji / xuống dòng sạch
+
+## Fix — SRS: bảng "Mô tả chi tiết giao diện" mỗi đối tượng 1 hàng (2026-10-30) @khoipv
+User báo (ảnh SRS Hạch toán bổ sung): các dòng gộp kiểu "Cột Người tạo / Phòng ban / Người duyệt / Người cập nhật" phải tách.
+- [x] Hàm dùng chung `../phieu-theo-form-quoc-gia/srs_split_rows.py` (`split_ui_rows`): tách theo " / ", phần sau tự nhận
+      tiền tố Cột/Nút/Ô; mô tả mặc định cho nút chung; chặn còn dòng gộp (assert)
+- [x] `gen_srs.py`: gọi `split_ui_rows` trong `fr()` + khai `UI_OVER` (mô tả / phạm vi / giá trị ban đầu riêng cho từng hàng
+      sau tách) và `UI_EXPLICIT` (dòng gộp không theo dấu "/")
+- [x] Kiểm trên .docx: 0 hàng gộp, 0 hàng trùng, STT liên tục; selfcheck khớp bản mẫu
+
+### Nâng chi tiết SRS theo SRS_MAU (31/10/2026) @khoipv
+- [x] Đối chiếu lại code nhánh develop (FE `pages/finance/delivery-requests/**` + component chung: V2BaseDataTable,
+      V2BaseSmartFilterPanel, filter/column/export modal, CatalogHistoryModal, AttachmentSection, unsavedChangesMixin;
+      BE Controller, StoreRequest/RejectRequest, Service, WriteService, NotifyService, Entity, Resource)
+- [x] `gen_srs.py`: viết lại 14 chức năng — Giới thiệu (Mô tả 2–3 câu, Điều kiện ban đầu đánh số, bước "Ghi nhận …
+      trong lịch sử của phiếu", thông báo gửi ai, toast nguyên văn, sự kiện phụ Đóng / (x) / click ngoài); bảng giao diện
+      mỗi đối tượng 1 hàng (tiêu đề, nút, từng cột + sắp xếp / khóa, ô nhập + phạm vi + lỗi nguyên văn, trạng thái rỗng,
+      toast, hộp xác nhận); event Before / During / After (quyền người lập / thủ kho, 409 trạng thái đổi, lỗi 422 nguyên văn)
+- [x] Sửa sai lệch bản cũ: Người tạo / Người cập nhật dạng "Họ tên - Mã phòng ban", Người duyệt chỉ họ tên; Xuất Excel
+      tích sẵn theo cột đang hiện (không phải tích tất cả); chi tiết ngoài phạm vi → trang không tìm thấy (không toast);
+      sắp xếp tăng → giảm; trạng thái YCXH ghi tên (Đã đề nghị, Chờ duyệt, Đang tạo, Đợi TP duyệt, Đợi BGD duyệt)
+- [x] Thêm ảnh có sẵn: 10_create, 10b_validate (2.5), 17b_detail_rej (2.10), 15b_reject_err (2.12)
+- [x] Phần 4: 9 → 13 BR (thêm nguồn hợp đồng, trường bắt buộc, phiếu đổi trạng thái giữa chừng, lịch sử)
+- [x] Sinh lại docx, selfcheck khớp bản mẫu, 115 trang
+- Số liệu (metrics.py): trước fn=14 ui=9.6 ev=1.8 evch=429 intro=720, 25 event / 15 thiếu Before / 19 thiếu During /
+  0 dòng quyền → sau fn=14 ui=15.6 ev=6.9 evch=2105 intro=1439, 96 event / 0 thiếu Before / 66 thiếu During (đều là
+  event chỉ đọc / thao tác giao diện; mọi event ghi dữ liệu đủ 3 cụm) / 6 dòng quyền
+
+### Xuất lại theo checklist Mẫu tài liệu.xlsx (02/11/2026) @khoipv
+Checklist tester: `../phieu-theo-form-quoc-gia/checklist_mau_tai_lieu.json` (Testcase 324 dòng, SRS 163 dòng).
+- [x] Đối chiếu lại code nhánh develop cho các điểm checklist hỏi (tìm kiếm: hoa/thường, Đ ≠ D, ký tự % _ hiểu đúng
+      nghĩa đen, bỏ khoảng trắng; bộ lọc chỉ nhớ khi mở Chi tiết / Sửa, không nhớ số trang, không tách tài khoản; cột
+      Hành động kéo được nhưng không ẩn; cấu hình cột lưu máy chủ theo tài khoản; lưu không đổi gì không ghi lịch sử;
+      không có trường duy nhất; ô số bỏ ký tự lạ khi gõ; phiếu đã bị xóa → câu lỗi tiếng Anh "Item Not Found!")
+- [x] `gen_testcase.py` viết lại: section theo đúng thứ tự + tên nhóm checklist (I Hiển thị … XIII Không duyệt phiếu
+      (Từ chối)), rồi XIV Cài đặt bộ lọc, XV Chọn đơn hàng/hợp đồng và phiếu YCXH; khối TC-ROLE giữ đầu file. Mỗi TC khai
+      stt checklist nó kiểm (COVER). Sửa TC-ROLE-09 theo code (ngoài phạm vi → trang không tìm thấy, không phải toast),
+      Số kiện "1.5" → ô thành "15", câu lỗi file đính kèm nguyên văn. Feature "- Cập nhật ngày 02/11/2026"
+- [x] `gen_srs.py` bổ sung: Phần 1 (phạm vi chức năng, mục đích sử dụng dữ liệu, ràng buộc quan trọng; thuật ngữ từng
+      trạng thái, trường đặc thù, cấu trúc phân cấp); Phần 2 (cột Tác dụng, dòng Khóa/Import "màn không có", điều kiện
+      hiển thị và thao tác); 2.1 (cột mặc định / bắt buộc, sắp xếp, phân trang), 2.2 (kiểu khớp, giới hạn ký tự, ghi nhớ
+      bộ lọc), 2.4 (Hành động là cột bắt buộc kéo được, lưu theo tài khoản / trình duyệt khác), 2.5 (trùng dữ liệu, chuẩn
+      hóa, Lưu và tiếp tục, đóng màn), 2.8 (trường được / không được sửa, không kiểm trùng, lịch sử), 2.9 (ràng buộc con /
+      đang dùng), 2.10 (giữ bộ lọc về trang 1), 2.13 (mọi trang, rỗng không ra file), 2.14 (chưa có lịch sử, giữ trạng
+      thái danh sách); Phần 4 thêm BR-14 (duy nhất + chuẩn hóa), BR-15 (cha / con); Phần 5 thêm bảng chi tiết tham chiếu
+      6 cột. Sửa lệch code: bộ lọc KHÔNG nhớ khi rời sang màn Tạo mới (bản cũ ghi có)
+- [x] `gen_checklist.py` mới → `Đối chiếu checklist.xlsx` (TC_MAP dựng từ COVER + N/A + ghi chú lệch; SRS_MAP khai tay)
+- [x] Chạy sạch: SRS selfcheck khớp bản mẫu (121 trang); tc_engine sạch thuật ngữ / emoji / xuống dòng; đối chiếu đủ dòng
+- Số liệu: TC 82 → 272 (P0 115 = 42%). Checklist Testcase: 254 dòng có TC / 70 N/A (Khóa/Mở khóa 20 + 10 dòng lẻ,
+  Import 37 + 2 dòng lẻ, 1 dòng "bộ lọc màn liên quan"). SRS: 133 dòng có mục / 30 N/A (FR Khóa/Mở khóa 10, FR Import 18,
+  xem bản ghi khóa, điều kiện khóa).
+- Lệch checklist (ghi theo code): xuất Excel rỗng không ra file; bộ lọc nhớ theo trình duyệt (tài khoản khác thấy lại);
+  quay lại từ Chi tiết giữ bộ lọc nhưng về trang 1; phiếu đã bị xóa ở tab khác báo câu tiếng Anh "Item Not Found!"
+
+### Sửa testcase theo góp ý user (02/11/2026) @khoipv
+- [x] Bỏ trùng 2 phần phân quyền + Cài đặt bộ lọc ghép vào nhóm Tìm kiếm và lọc (cùng cách đã duyệt ở màn hạch toán bổ sung): 10 case khối phân quyền đầu file → XI (TC_11.001–010, giữ stt checklist từ ROLE_COVER, P0_UP XI dời +10); 6 case Cài đặt bộ lọc từ XIV → II (thêm tiền tố "Cài đặt bộ lọc:"); XV Chọn đơn hàng/hợp đồng thành XIV
+- [x] Sinh lại testcase.xlsx + Đối chiếu checklist.xlsx (số dòng có TC không đổi); 272 TC, P0 42%, không trùng mã
+
+### Sửa Phần 5 SRS theo mẫu YC kiểm tra sửa chữa – bảo hành (04/11/2026) @khoipv
+- [x] Phần 5 về khuôn: 1 câu dẫn + 1 bảng 4 cột STT | Nhóm (phân hệ) | Màn hình (giải thích trong ngoặc) | Đường dẫn "Phân hệ -> nhóm menu"; bỏ bảng chi tiết / bảng 7 cột / bảng 2. gen_srs thêm ngắt trang trước Mục lục + căn giữa; gen_checklist dòng 161 → N/A (không có Khóa / Mở khóa); sinh lại SRS (selfcheck khớp) + Đối chiếu checklist
+- [x] Drive (bản người dùng tải lên 02/11, 0 nhận xét): sửa TRỰC TIẾP trên Google Docs — thay nội dung dưới tiêu đề Phần 5, thêm ngắt trang trước Mục lục + căn giữa (file nào chưa có), file đang khổ ngang chuyển khổ đứng. Tải về kiểm: Phần 1–4 không đổi chữ, số ảnh không đổi

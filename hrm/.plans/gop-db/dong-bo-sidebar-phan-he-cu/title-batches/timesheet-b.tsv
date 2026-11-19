@@ -1,0 +1,45 @@
+pages/timesheet/overtime-requirement/_id/index.vue	/timesheet/overtime-requirement/_id			Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm
+pages/timesheet/overtime-requirement/add.vue	/timesheet/overtime-requirement/add			Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm
+pages/timesheet/overtime-requirement/approve.vue	/timesheet/overtime-requirement/approve		Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm	Yêu cầu làm thêm cần duyệt
+pages/timesheet/overtime-requirement/index.vue	/timesheet/overtime-requirement		Phiếu yêu cầu làm thêm	Phiếu yêu cầu làm thêm	Yêu cầu làm thêm
+pages/timesheet/report/attendance_report.vue	/timesheet/report/attendance_report		Báo cáo phép		
+pages/timesheet/report/business_trip_assign_report.vue	/timesheet/report/business_trip_assign_report				
+pages/timesheet/report/business_trip_assign_report_.vue	/timesheet/report/business_trip_assign_report_		Báo cáo tổng hợp công tác		
+pages/timesheet/report/overtime_report.vue	/timesheet/report/overtime_report		Báo cáo làm thêm giờ		
+pages/timesheet/report/overtime_report_detail.vue	/timesheet/report/overtime_report_detail		Báo cáo làm thêm giờ chi tiết		
+pages/timesheet/report/timekeeper_report.vue	/timesheet/report/timekeeper_report		Báo cáo tổng hợp chấm công		
+pages/timesheet/request-update-working/_id/approve.vue	/timesheet/request-update-working/_id/approve			Đề nghị tra soát công	Đơn đề nghị tra soát công
+pages/timesheet/request-update-working/_id/edit.vue	/timesheet/request-update-working/_id/edit			Đề nghị tra soát công	
+pages/timesheet/request-update-working/_id/index.vue	/timesheet/request-update-working/_id			Đề nghị tra soát công	Đơn đề nghị tra soát công
+pages/timesheet/request-update-working/_id/show.vue	/timesheet/request-update-working/_id/show			Đề nghị tra soát công	
+pages/timesheet/request-update-working/approve.vue	/timesheet/request-update-working/approve		Đề nghị tra soát công	Đề nghị tra soát công	Đề nghị tra soát công cần duyệt
+pages/timesheet/request-update-working/create.vue	/timesheet/request-update-working/create			Đề nghị tra soát công	
+pages/timesheet/request-update-working/form.vue	/timesheet/request-update-working/form			Đề nghị tra soát công	Thông tin
+pages/timesheet/request-update-working/index.vue	/timesheet/request-update-working		Đề nghị tra soát công	Đề nghị tra soát công	Đề nghị tra soát công
+pages/timesheet/self-jobassignment/_id/index.vue	/timesheet/self-jobassignment/_id				Phiếu giao việc
+pages/timesheet/self-jobassignment/index.vue	/timesheet/self-jobassignment				Phiếu Giao Việc Được Giao
+pages/timesheet/setting/employee-info/index.vue	/timesheet/setting/employee-info				
+pages/timesheet/setting/employees/_id/index.vue	/timesheet/setting/employees/_id				
+pages/timesheet/setting/employees/index.vue	/timesheet/setting/employees				
+pages/timesheet/setting/general/index.vue	/timesheet/setting/general		Quy định chung	Quy định chung	
+pages/timesheet/setting/holiday/index.vue	/timesheet/setting/holiday		Quy định nghỉ	Quy định nghỉ	
+pages/timesheet/setting/overtime/index.vue	/timesheet/setting/overtime		Quy định làm thêm	Quy định làm thêm	
+pages/timesheet/setting/roles/add/_id.vue	/timesheet/setting/roles/add/_id				
+pages/timesheet/setting/roles/index.vue	/timesheet/setting/roles				
+pages/timesheet/setting/setting-master/index.vue	/timesheet/setting/setting-master		Cài đặt	Cài đặt	
+pages/timesheet/setting/subsystems/index.vue	/timesheet/setting/subsystems		Cài đặt phân hệ	Cài đặt phân hệ	Nhân sự xem đầy đủ
+pages/timesheet/timekeeping/history/index.vue	/timesheet/timekeeping/history				
+pages/timesheet/timekeeping/timekeeper/index.vue	/timesheet/timekeeping/timekeeper		Dữ liệu chấm công	Dữ liệu chấm công	
+pages/timesheet/timesheet_details/index.vue	/timesheet/timesheet_details		Bảng chấm công chi tiết trong tháng		Bảng công chi tiết trong tháng
+pages/timesheet/timesheet_details/tmp/index.vue	/timesheet/timesheet_details/tmp				Bảng công chi tiết trong tháng
+pages/timesheet/timesheet_summaries/_id/index.vue	/timesheet/timesheet_summaries/_id				
+pages/timesheet/timesheet_summaries/index.vue	/timesheet/timesheet_summaries		Bảng chấm công tổng hợp		Bảng chấm công tổng hợp
+pages/timesheet/timeworking/add-working-shift/_id/index.vue	/timesheet/timeworking/add-working-shift/_id				Tính công
+pages/timesheet/timeworking/index.vue	/timesheet/timeworking				Phân ca tổng hợp
+pages/timesheet/timeworking/shift-detail/_id/edit.vue	/timesheet/timeworking/shift-detail/_id/edit			Bảng phân ca chi tiết	
+pages/timesheet/timeworking/shift-detail/add.vue	/timesheet/timeworking/shift-detail/add			Bảng phân ca chi tiết	
+pages/timesheet/timeworking/shift-detail/add-shift/_id/index.vue	/timesheet/timeworking/shift-detail/add-shift/_id			Bảng phân ca chi tiết	Phân ca làm việc
+pages/timesheet/timeworking/shift-detail/add-shift-new/_id/index.vue	/timesheet/timeworking/shift-detail/add-shift-new/_id			Bảng phân ca chi tiết	Phân ca làm việc
+pages/timesheet/timeworking/shift-detail/general.vue	/timesheet/timeworking/shift-detail/general		Bảng phân ca tổng hợp	Bảng phân ca tổng hợp	
+pages/timesheet/timeworking/shift-detail/index.vue	/timesheet/timeworking/shift-detail		Bảng phân ca chi tiết	Bảng phân ca chi tiết	Phân ca làm việc
+pages/timesheet/timeworking/working-shift/index.vue	/timesheet/timeworking/working-shift		Danh mục ca làm việc	Danh mục ca làm việc	Danh mục ca làm việc

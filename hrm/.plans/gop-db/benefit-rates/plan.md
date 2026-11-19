@@ -42,3 +42,18 @@ Blocked:
 ## Dời menu sang Bán hàng (15/10)
 - [x] Gỡ mục khỏi `components/subsystem-menu/admin.js`, thêm vào `sale-hub.js` › Quy chế - Thiết lập › Thiết lập (route giữ `/admin/...`)
 - [ ] User mở trình duyệt kiểm sidebar Bán hàng
+
+## Tài liệu SRS / HDSD / Testcase (06/11/2026) @khoipv
+- [x] Đọc code FE (`pages/admin/benefit-rates/**`) + BE (`Modules/CustomerCare` BenefitRate*), xác nhận: màn DANH MỤC, KHÔNG gắn quyền, phạm vi theo công ty; không có Khóa / Import / In
+- [x] Grep màn đọc ngược hệ số: chỉ form Duyệt kết quả của Phiếu nhập kết quả (`WrApproveResultSourceService::productCoefficient`, dòng lắp đặt); Phiếu giao việc HRM lấy `tech_coefficient` của hàng (không đọc bảng này); `chan-lap-hd-chua-he-so-dstc` là hệ số DSTC (bảng khác) — không liên quan
+- [x] Chụp ảnh dev-hrm (`hscn_shots/_capture/capture.js`): 18 ảnh + 43 icon, đã trim_icon (Cần cắt 0). Dev chưa có hệ số cho công ty DNS Admin → danh sách / Sửa / Xem / Lịch sử là DỮ LIỆU GIẢ trên trình duyệt (12 hệ số); ảnh lỗi trùng `10e_duplicate`: yêu cầu Lưu bị chặn, lỗi trả giả trên trình duyệt. Yêu cầu ghi tới máy chủ: 0 (1 POST bị chặn tại trình duyệt)
+- [x] `gen_srs.py` → SRS 10 chức năng, 65 trang, selfcheck khớp mẫu; metrics ui=12.3 ev=4.6 evch=968 intro=1597
+- [x] `gen_hdsd.py` → HDSD 9 phần, 15 trang
+- [x] `gen_testcase.py` (loai=danh_muc) → 187 TC, 11 nhóm, P0 42.8%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → Testcase 215 có TC / 109 N/A (Lưu nháp-gửi duyệt, Khóa, Import, Duyệt); SRS 131 / 32 N/A (Khóa, Import)
+
+### Checkpoint — 2026-11-06
+Vừa hoàn thành: đủ bộ SRS + HDSD + Testcase + Đối chiếu checklist màn Hệ số công nghệ theo nhóm hàng hóa.
+Đang làm dở: không.
+Bước tiếp theo: user xem tài liệu; quyết định có báo các điểm nghi lỗi (câu lỗi bắt buộc lệch dấu chấm, popup Xem hiện "1.5", xóa dòng cuối trang cuối) không.
+Blocked:

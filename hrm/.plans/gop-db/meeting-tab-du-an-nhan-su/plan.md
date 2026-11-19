@@ -152,3 +152,17 @@ Vừa hoàn thành: toàn bộ việc user cho phép trong 2 ngày 14–15/10 (�
 Bước tiếp theo: user review + quyết commit (hrm-api, hrm-client nhánh gop_db) → Phase 3 gỡ `getForMeeting` (feature meeting-chon-du-an-tkt)
       → đồng bộ `meeting-mobile.pen` (màn 06 chỉ xem, gộp Thành phần + Điểm danh) → đề xuất gộp ~25 API lúc mở màn Sửa meeting.
 Blocked: chờ user review / cho phép từng việc tiếp theo.
+
+## Fix 30/10/2026 — Người liên hệ / KH có nhiều SĐT báo "Không hợp lệ" ở tab Nhân sự tham gia — @cuong61n
+- [x] (30/10/2026) Nghiệp vụ: chọn người liên hệ (hoặc KH cá nhân) có nhiều SĐT ("0888970890, 0974159266") → dòng Phía Khách hàng
+      nhận nguyên chuỗi, Lưu bị BE trả "Không hợp lệ" (rule `^(0)[0-9]{9,11}$`, cả `customer_contact_phone` ở tab Thông tin).
+      Nay: mặc định lấy số đầu, ô SĐT của dòng đó thành select cho chọn 1 trong các số; chọn số khác thì SĐT người liên hệ của meeting đi theo.
+      Kỹ thuật: helper mới `utils/splitPhones.js` (tách `, ; / |` xuống dòng, bỏ trùng); `GeneralInfo.updateOrReplaceCustomerMember()` gán
+      `phone` = số đầu + `phone_options`; `MeetingParticipants.vue` hiện `V2BaseSelect` khi `phone_options` > 1 (`selectCustomerMemberPhone`).
+      BE không đổi (MeetingEmployee `fill` bỏ qua `phone_options`). Ô chọn tắt ô tìm (`minimumResultsForSearch: Infinity`).
+      Nhánh gop_db (worktree gop_db-client), CHƯA commit.
+- [x] (30/10/2026) Test Playwright :3002 (TK namdangit): KH 47TDAPTA-31 (liên hệ 3 số) → mặc định số đầu, chọn số 2 → payload
+      `customer_members[0].phone` + `customer_contact_phone` = 0905272828 → "Lưu và Lên lịch" thành công (meeting id 86, DB đúng);
+      màn Sửa id 86 hiện ô nhập số đã lưu; KH 15TPHPTA (liên hệ 1 số) vẫn là ô nhập; không lỗi console mới (chỉ warn `hasCustomer` có sẵn).
+- [x] (30/10/2026) Commit `56d488304` (hrm-client, 3 file) → push `gop_db` (làm qua worktree tạm từ origin/gop_db vì worktree chung
+      chậm 22 commit + có file sửa dở của phiên khác). Đã deploy PROD 30/10/2026 (`~/build_tpe.sh`, last_deployed_client_commit = 56d488304, site trả 200).

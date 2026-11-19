@@ -82,3 +82,12 @@ công ty 1 — dùng dữ liệu local có sẵn 2 phiếu lệch (YCLDBG 24, Wr
   response curl luôn trượt, phải `json.loads` rồi mới so.
 - Màn `edit` / `choiceReceptionDepartment` hay trả "Không có quyền truy cập" tuỳ trạng thái phiếu —
   đừng kết luận "thiếu biến / chưa deploy" khi chưa xem `<title>`.
+
+## Ngày 02/11/2026 (@junfoke)
+- [x] 02/11/2026 — Hỗ trợ check prod: HĐDV 330 (`HDDV_TPE_HN_KD3_25_0011_1908`) trống Phòng tiếp nhận xử lý — không phải lỗi: phòng HN_KTCN (user 364) đã bấm "trả lại hợp đồng" (`backContract` xoá `department_reception_id`, ghi `comment_deny`) ngày 25/08/2026; người lập (user 67) phải chọn lại qua `/{id}/choiceReceptionDepartment`. Gửi SQL kiểm + SQL điền thẳng phòng 51 (không gửi thông báo).
+- [x] 02/11/2026 — Xử lý lỗi đổi phòng tiếp nhận báo thất bại: `choiceReceptionDepartment` lưu lại validate TOÀN BỘ HĐ như form tạo/sửa → HĐ cũ kẹt rule mới (khách hàng, thanh toán 100%, nội dung thanh toán). Thêm `WrServiceContractReceptionRequest` chỉ kiểm ô phòng (bắt buộc, tồn tại, cùng công ty người lập), áp cho `WarrantyRepairContractsController` + `WarrantyRepairContractAdditionAnnexController`. Kiểm local HĐ 330: 3 ca đạt. Commit `08e42d7bce` (gop_db, đã lên origin).
+
+## Ngày 16/11/2026 (@junfoke)
+- [x] 16/11/2026 — Xử lý YC lắp đặt bàn giao bị từ chối không chọn lại được phòng tiếp nhận ngoài công ty người tạo (QA báo lại, phiếu prod 1996): lần sửa 28/09 (`1a35824096`) còn sót chặn ở màn sửa. Bỏ thu hẹp danh sách phòng ở `edit.blade.php` + bỏ kiểm cùng công ty ở `AssemblyRequestStoreRequest`; HĐDV và PLBS HĐDV vẫn chặn như cũ. Thử local phiếu từ chối 1929 lưu được phòng Hải Phòng. `c62ac47e77` (gop_db, đã push).
+- [x] 16/11/2026 — Xử lý "Chuyển phòng tiếp nhận" lưu phòng = 0 làm phiếu kẹt ở Chờ giao việc (không ai thao tác được): ô chọn trong popup gửi chữ "MÃ - Tên phòng" thay vì id. Sửa `form.blade.php` gửi đúng id; `AssemblyRequestController` bắt buộc id phòng có thật ("Phòng tiếp nhận xử lý không hợp lệ."). `92b35d3d9c` (gop_db, đã push).
+- [x] 16/11/2026 — Hỗ trợ SQL prod gỡ kẹt 2 phiếu 1619 + 1996 (chưa có phiếu giao việc): đưa về Từ chối (status 4, `assign_task_progress` = 2, ghi lý do) để người tạo sửa và chọn lại phòng. Sao lưu `bk_20261116_assembly_requests_kep`, `bk_20261116_assign_task_progress_kep` — xoá khi user gửi lại xong.

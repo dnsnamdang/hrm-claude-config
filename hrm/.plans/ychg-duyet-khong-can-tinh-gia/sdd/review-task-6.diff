@@ -1,0 +1,75 @@
+diff --git a/components/sale/price-asking/PriceAskingRequestForm.vue b/components/sale/price-asking/PriceAskingRequestForm.vue
+index 832ff465b..ce8e69d9e 100644
+--- a/components/sale/price-asking/PriceAskingRequestForm.vue
++++ b/components/sale/price-asking/PriceAskingRequestForm.vue
+@@ -246,32 +246,32 @@
+                                             @click="removeProduct(row.product_id)"
+                                         >
+                                             <i class="ri-delete-bin-line"></i>
+                                         </V2BaseIconButton>
+                                     </span>
+                                 </td>
+                                 <td v-else-if="ptkdTempActions" class="text-center">
+                                     <span v-if="row.can_temp_approve" class="row-actions">
+-                                        <!-- 6 ⇒ "Duyệt" (chỉ điều hướng, không hỏi); 7/8 ⇒ "Sửa" mở lại form duyệt -->
++                                        <!-- 6 ⇒ "Duyệt" (chỉ điều hướng, không hỏi); 7/8/9 ⇒ "Sửa" mở lại form duyệt -->
+                                         <V2BaseButton v-if="Number(row.company_status) === 6" primary size="sm" @click="openTempApprove(row)">
+                                             <template #prefix><i class="ri-check-line"></i></template>
+                                             Duyệt
+                                         </V2BaseButton>
+                                         <V2BaseButton v-else secondary size="sm" @click="openTempApprove(row)">
+                                             <template #prefix><i class="ri-edit-line"></i></template>
+                                             Sửa
+                                         </V2BaseButton>
+                                         <span :id="'temp-row-info-' + row.product_id" class="ml-1 no-print" style="cursor: pointer; color: #94a3b8">
+                                             <i class="ri-information-line" style="font-size: 14px"></i>
+                                         </span>
+                                         <b-popover :target="'temp-row-info-' + row.product_id" triggers="hover focus" placement="bottom" custom-class="info-popover">
+                                             {{ Number(row.company_status) === 6
+                                                 ? 'Mở form kiểm tra, bổ sung thông tin hàng tạm. Chọn Đồng ý hoặc Không duyệt cho từng hàng trước khi duyệt phiếu.'
+-                                                : 'Mở lại form để đổi quyết định Đồng ý ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
++                                                : 'Mở lại form để đổi quyết định: Đồng ý ↔ Duyệt không cần tính giá ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
+                                         </b-popover>
+                                     </span>
+                                 </td>
+                             </tr>
+                             <!-- Hàng con theo công thức ghép bộ (recipe_products) — CHỈ XEM, không sửa/xoá -->
+                             <tr
+                                 v-for="child in (row.recipe_children || [])"
+                                 :key="`${group.key}-${row.product_id}-rc${child.id}`"
+@@ -301,33 +301,33 @@
+                                 <td></td>
+                                 <td></td>
+                                 <td v-if="!readonly" class="text-center">
+                                     <V2BaseIconButton v-if="child.editable" size="sm" title="Sửa hàng tạm con" @click="openTempEdit(child.product_id)">
+                                         <i class="ri-edit-line"></i>
+                                     </V2BaseIconButton>
+                                 </td>
+                                 <td v-else-if="ptkdTempActions" class="text-center">
+-                                    <!-- P3: PTKD duyệt từng con tạm — 6 ⇒ "Duyệt"; 7/8 ⇒ "Sửa" mở lại form đổi quyết định (mirror dòng cha) -->
++                                    <!-- P3: PTKD duyệt từng con tạm — 6 ⇒ "Duyệt"; 7/8/9 ⇒ "Sửa" mở lại form đổi quyết định (mirror dòng cha) -->
+                                     <span v-if="child.can_temp_approve" class="row-actions">
+                                         <V2BaseButton v-if="Number(child.company_status) === 6" primary size="sm" @click="openTempApprove(child)">
+                                             <template #prefix><i class="ri-check-line"></i></template>
+                                             Duyệt
+                                         </V2BaseButton>
+                                         <V2BaseButton v-else secondary size="sm" @click="openTempApprove(child)">
+                                             <template #prefix><i class="ri-edit-line"></i></template>
+                                             Sửa
+                                         </V2BaseButton>
+                                         <span :id="'temp-child-info-' + child.product_id" class="ml-1 no-print" style="cursor: pointer; color: #94a3b8">
+                                             <i class="ri-information-line" style="font-size: 14px"></i>
+                                         </span>
+                                         <b-popover :target="'temp-child-info-' + child.product_id" triggers="hover focus" placement="bottom" custom-class="info-popover">
+                                             {{ Number(child.company_status) === 6
+                                                 ? 'Mở form kiểm tra, bổ sung thông tin hàng tạm con. Chọn Đồng ý hoặc Không duyệt cho từng hàng con trước khi duyệt phiếu.'
+-                                                : 'Mở lại form để đổi quyết định Đồng ý ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
++                                                : 'Mở lại form để đổi quyết định: Đồng ý ↔ Duyệt không cần tính giá ↔ Không duyệt. Đổi được tới khi bấm Duyệt phiếu.' }}
+                                         </b-popover>
+                                     </span>
+                                 </td>
+                             </tr>
+                             <tr
+                                 v-if="showResult && hasRowResult(row) && !hiddenResults[row.product_id]"
+                                 :key="`${group.key}-${row.product_id}-result`"
+                                 class="result-row"

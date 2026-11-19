@@ -116,6 +116,53 @@ Blocked: không
 
 ---
 
+## Phase 3 — 3 chỉnh nhỏ UI màn chi tiết theo yêu cầu user (2026-10-19)
+
+Yêu cầu user (verbatim): "Màn chi tiết đề nghị xuất kho E thấy chuyển gần giống hết UI chung r,
+a ẩn Trạng thái, Thêm link vào số hợp đồng với đồng bộ lại nền + bo góc cái tiêu đề giống màn
+`finance/product-export-requests/create`."
+
+Diễn giải 3 việc:
+1. **Ẩn Trạng thái**: gỡ badge trạng thái (pill "Đã hạch toán"/"Đã hủy") đang gắn trong tiêu đề
+   top-menu của màn chi tiết. Màn create tiêu đề plain "Tạo yêu cầu xuất hàng" không badge.
+2. **Thêm link vào số hợp đồng**: ô số HĐ loại HRM (type 20/21) ĐÃ là link `/assign/contracts/{id}`;
+   loại non-HRM (14/15 hãng, 17 dịch vụ, 19 đơn hàng) đang render plain `V2BaseInput disabled`.
+   → tái dùng helper chung `utils/contract-link.js` (chuẩn cụm Tài chính, user chốt 2026-09-29:
+   HĐ có màn HRM mở nuxt-link, HĐ chỉ có ở ERP mở tab mới). ĐNXK không có cột `contractable_type`
+   thống nhất → suy morph-class từ `type` + cột id riêng mỗi loại.
+3. **Đồng bộ nền + bo góc tiêu đề giống create**: cùng gốc với (1) — buildStatusTitle trả HTML pill
+   có nền + bo góc 999px; bỏ pill → tiêu đề thành plain string y như create. 1 sửa giải quyết cả (1)+(3).
+
+### FE — `_id/index.vue`
+- [x] `pageTitle` trả plain string (bỏ `buildStatusTitle`), gỡ import + data `statusName/statusColor`
+      không còn dùng (giữ `code` cho tiêu đề). → ẩn Trạng thái + tiêu đề plain giống create.
+
+### FE — `ProductExportRequestForm.vue` nhánh readonly (#2)
+- [x] Import `contractLink` từ `@/utils/contract-link`.
+- [x] Computed `detailContractMorphType` (suy morph-class từ type: 20/21→Contract HRM · 14/15→FirmContract ERP ·
+      17→WrServiceContract HRM · 19→firm/wr theo `emplement_contract_type`), `detailContractMorphId`
+      (14/15→firm_contract_id · 17→wr_service_contract_id · 19/20/21→emplement_contract_id),
+      `detailContractLink` = `contractLink(type, id)`.
+- [x] Template ô Hợp đồng: `{to}`→nuxt-link · `{href}`→`<a target="_blank">` · null→`V2BaseInput disabled`
+      (chữ trơn). Thay nhánh cũ chỉ link HRM `emplement_contract_id`.
+
+### Verify
+- [x] Playwright 127.0.0.1:3000: 39254 (type 14) → `<a>` ERP `/admin/sale/firm-contracts/10627` mở tab mới ✓;
+      35676 (type 21) → nuxt-link `/assign/contracts/13` ✓; tiêu đề plain `Chi tiết yêu cầu xuất hàng:
+      PYCXH-35676`, 0 pill badge, 0 lỗi console ✓.
+- [x] LF (Edit tool giữ LF). CHƯA commit/push (chờ user).
+
+### Checkpoint — Phase 3 hoàn thành (2026-10-19)
+Vừa hoàn thành: cả 3 mục. #1+#3 = `_id/index.vue` pageTitle plain (bỏ pill badge → đồng bộ nền+bo góc
+create). #2 = `ProductExportRequestForm.vue` readonly dựng link số HĐ đa loại qua helper chung
+`contractLink()` (suy morph-class từ type vì ĐNXK không có cột `contractable_type`). Verify Playwright
+2 loại (14 ERP href, 21 HRM to) + tiêu đề plain, 0 lỗi.
+Đang làm dở: không.
+Bước tiếp theo: chờ user review; chưa commit/push.
+Blocked: không.
+
+---
+
 ## Phase 2 — Đồng bộ thêm field nghiệp vụ màn chi tiết cho loại KHÁC 20/21 (2026-10-06)
 
 Bối cảnh: user gửi 2 screenshot (ERP PYCXH-40340 vs HRM PYCXH-35634, đều loại 99 "Xuất khác").

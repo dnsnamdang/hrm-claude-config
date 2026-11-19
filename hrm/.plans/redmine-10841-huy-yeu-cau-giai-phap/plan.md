@@ -63,3 +63,21 @@ Blocked:
 
 ## Ghi chú để mở rộng sau
 Nếu TPE muốn "người được phân quyền hủy" (không chỉ người tạo): thêm quyền `Hủy yêu cầu làm giải pháp` (id 1011 đang trống) và gate = `là người tạo OR (có quyền AND phiếu nằm trong phạm vi xem theo cấp)` — tái dùng `checkPermissionListWithColumn`, KHÔNG để quyền hủy phẳng toàn hệ thống.
+
+## Phản hồi #17 (2026-10-16, nhánh develop) — hủy yêu cầu xong không tạo lại được
+Quyết định đã chốt (user 16/10): sửa thẳng quan hệ `ProspectiveProject::requestSolution()` = yêu cầu MỚI NHẤT CHƯA HỦY; trạng thái Từ chối tạm chưa giải phóng dự án.
+- [x] `ProspectiveProject::requestSolution()`: bỏ phiếu Đã hủy + lấy phiếu mới nhất → nút "Tạo yêu cầu" (danh sách + chi tiết dự án) và danh sách dự án ở form Tạo yêu cầu tự đúng
+- [x] `ProspectiveProjectService::syncStatusFromSolution`: bỏ `RequestSolution::where(project_key)->first()` (lấy nhầm phiếu cũ) → dùng quan hệ
+- [x] `RequestSolutionRequest`: `unique project_key` bỏ qua phiếu Đã hủy
+- [x] Test: hủy → nút hiện lại → tạo phiếu mới → chi tiết dự án trỏ phiếu mới; phiếu chưa hủy vẫn chặn tạo trùng
+  - Kết quả 16/10 (local, DA 155 có phiếu 36 Đã hủy): nút "Tạo yêu cầu làm giải pháp" hiện lại (menu Hành động khác + chi tiết); form Tạo yêu cầu chọn được DA 155 (điền sẵn); Lưu nháp tạo phiếu 38 OK → chi tiết DA trỏ phiếu 38, nút ẩn lại, tạo phiếu thứ 3 bị chặn "đã tồn tại"; DA 153 (phiếu đang hiệu lực) vẫn bị chặn; phiếu cũ 36 vẫn xem được (200). Đã xoá phiếu test 38
+  - Dev + prod không có dự án nào mang >1 phiếu → đổi quan hệ không xáo trộn dữ liệu thật (local có 10 dự án trùng là dữ liệu test)
+- Ghi nhận (chưa sửa): `ProspectiveProject::isLockedImplementationType()` vẫn tính cả phiếu Đã hủy → hủy yêu cầu xong vẫn không đổi được "Cách triển khai"; Từ chối chưa giải phóng dự án (user chốt tạm chưa làm)
+- [x] Test kỹ luồng liên quan (16/10, API + tinker + Playwright, DA 155) — 32/33 kiểm tra đạt, 1 do giả định test sai:
+  - Tạo+gửi → DA "Chờ tiếp nhận", chi tiết trỏ phiếu mới, nút ẩn, tạo trùng 422 · Hủy → DA về "Thu thập", không trỏ phiếu hủy, nút hiện lại, có lại trong form, lịch sử ghi lý do
+  - Tạo lại (DA đã có 2 phiếu hủy) OK · Từ chối → DA về "Thu thập" nhưng vẫn giữ (đúng chốt), tạo mới 422 · (Xóa phiếu Từ chối → 403: quy tắc có sẵn, không phải lỗi)
+  - Tiếp nhận OK, chi tiết trỏ đúng phiếu · `syncStatusBySolution` không lỗi · eager = lazy ở 11 DA nhiều phiếu (đều phiếu mới nhất chưa hủy)
+  - Sửa phiếu: giữ DA không báo trùng chính nó; đổi sang DA có phiếu hiệu lực → chặn; đổi sang DA trống → không báo trùng
+  - 30 API (danh sách/chi tiết DA, getAll, YCGP list/pending/chi tiết, giải pháp, my-job, 7 báo cáo) đều 200, laravel.log không thêm lỗi
+  - UI: tab Yêu cầu ở Quản lý dự án hiện đúng phiếu đang hiệu lực
+  - Đã dọn: phiếu 39/40/41 + lịch sử + 11 thông báo test, DA 155 về status 2 / GĐ3

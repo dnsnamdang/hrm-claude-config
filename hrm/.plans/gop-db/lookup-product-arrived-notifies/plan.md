@@ -75,3 +75,27 @@ Blocked:
 - [x] BUG 4: màn chi tiết Nhập khẩu — dấu (*) cho Số Invoice / Kho nhận / Dự kiến về kho
 - [x] Verify: php -l, compile template 2 màn + parse tabConfigs; created_at DB có giờ (PBHV-02689 17:38). CHƯA mở trình duyệt.
 - [x] Rà kỹ (17/10): nhãn (*) khớp ERP `product_arrived_notifies/show` + `product_arrived_notify2/show` (Trong nước ERP không có *); API 3 tab + sort asc/desc + Excel danh sách ra `d/m/Y H:i`, Excel tự giãn cột; độ rộng cột lấy từ mặc định (user chỉ lưu ẩn/hiện); `<b>` toàn cục bị ép 500 (`_reboot.scss`) → rule mới 700 đậm hơn thật, SCSS compile OK. Playwright bị khoá → CHƯA mở trình duyệt.
+
+## Tài liệu SRS / HDSD / Testcase (03/11/2026) @khoipv
+
+Khuôn: `../finance-addition-accounting-request/` (gen_srs / gen_hdsd / gen_testcase / gen_checklist) + checklist "Mẫu tài liệu.xlsx".
+
+- [x] Đọc code FE (`pages/lookup/product-arrived-notifies/**`, V2Base dùng chung) + BE (`ProductArrivedNotifySummaryService`, controller, print service, export) + design/spec
+- [x] Chụp ảnh dev-hrm (DNS Admin) — `pbhv_shots/_capture/capture.js`: 3 tab, 3 bộ lọc, Cài đặt bộ lọc, Tùy chỉnh cột, Xuất Excel, In, chi tiết Nhập khẩu / Mua ngoài, màn Thêm YCNH; 57 icon (trim_icon `--dry` 0/57). Nút Xóa / Tạo phân bổ chi phí bật tạm cờ trên trình duyệt (DNS Admin không có phiếu nhập khẩu tự tạo); chi tiết Trong nước là bố cục rỗng (DB chưa có phiếu trong nước). Không bấm Xóa / Lưu.
+- [x] `gen_srs.py` → `SRS - Phiếu báo hàng về.docx`: 15 chức năng (3 tab danh sách, lọc, cài đặt bộ lọc, tùy chỉnh cột, xuất Excel, 3 màn chi tiết, xóa, in, xuất Excel 1 phiếu, tạo phân bổ chi phí, tạo phiếu YCNH), Phần 4 BR-01..BR-15, Phần 5 (2 bảng). Selfcheck khớp mẫu, 99 trang. Metrics: ui=12.9 ev=4.8 evch=1067 intro=1747, noBefore/noDuring=0.
+- [x] `gen_hdsd.py` → `HDSD_Phieu bao hang ve.docx`: 9 PHẦN, 19 trang, không trang trắng.
+- [x] `gen_testcase.py` → `testcase.xlsx`: 174 TC, P0 75 (43%), 10 nhóm (I Hiển thị · II Tìm kiếm và lọc + Cài đặt bộ lọc · III Xóa · IV Xem chi tiết · V Tùy chỉnh cột · VI Xuất Excel · VII Ảnh hưởng màn khác · VIII Phân quyền (duy nhất) · IX In phiếu · X Tạo phân bổ chi phí / YCNH); tc_engine sạch.
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 123 có TC / 201 N/A (Thêm mới, Chỉnh sửa, Khóa/Mở khóa, Lịch sử, Import, Duyệt, Không duyệt + vài dòng ràng buộc); SRS 99 có mục / 64 N/A.
+- Lệch checklist / nghi lỗi ghi nhận (không sửa code): hộp xác nhận xóa không ghi mã phiếu; ký tự % _ là ký tự đại diện; bộ lọc nhớ theo trình duyệt không theo tài khoản; quay lại từ chi tiết về trang 1; Excel danh sách dùng logo cố định (không theo công ty); lọc Hợp đồng tab Mua ngoài chỉ khớp mã hợp đồng gốc (cột hiện mã phụ lục); dev: cột Nhà cung cấp tab Nhập khẩu trống ở mọi phiếu.
+
+### Checkpoint — 2026-11-03 09:50
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + testcase + đối chiếu checklist màn Phiếu báo hàng về (chạy sạch 4 script).
+Đang làm dở: không.
+Bước tiếp theo: user xem lại tài liệu, quyết định có đẩy Drive không; chuẩn bị dữ liệu phiếu Trong nước để chụp lại ảnh chi tiết thật.
+Blocked:
+
+### Sửa Phần 5 SRS theo khuôn Drive (03/11/2026) @khoipv
+- [x] Phần 5 đổi về khuôn SRS "Khai báo tồn kho đầu kỳ" trên Drive (user chỉ định 04/11): tiêu đề "Phần 5. Bảng danh sách các màn hình tham chiếu dữ liệu", câu dẫn có dẫn chiếu BR, 1 bảng 4 cột STT | Nhóm | Màn hình | Đường dẫn (giải thích ngắn trong ngoặc, đường dẫn "Phân hệ => … => Tên màn"); bỏ bảng 7 cột + bảng 2
+- [x] gen_checklist: dòng 161 → N/A (màn không có Khóa / Mở khóa), dòng 163 ghi chú lại; sinh lại SRS (selfcheck khớp bản mẫu) + Đối chiếu checklist
+- [x] (04/11) Sửa Phần 5 trên bản SRS ở Drive (folder SRS chuyển đổi), giữ nguyên phần người khác đã sửa + nhận xét: 4 file sửa TRỰC TIẾP trong Google Docs (xoá nội dung cũ sau tiêu đề Phần 5, dán câu dẫn + bảng 4 cột); riêng Báo cáo hạn mức công nợ KH đã tải phiên bản mới lên (dựng từ bản Drive 09:07 có sửa "Tùy chỉnh cột" của người khác; file không có nhận xét nào). Tải về kiểm: Phần 1–4 không đổi, số ảnh không đổi, tiêu đề Heading 1, dòng tiêu đề bảng in đậm
+- [x] (04/11) Theo file mẫu SRS "Yêu cầu kiểm tra sửa chữa – bảo hành" (user chỉ định): đường dẫn Phần 5 đổi sang "Phân hệ -> Nhóm menu" (không ghi tên màn); gen_srs thêm ngắt trang trước Mục lục + căn giữa chữ "Mục lục"; sinh lại SRS (selfcheck khớp). Drive: 4 file sửa đường dẫn bằng Tìm & thay thế trên Google Docs; Báo cáo hạn mức KH (0 nhận xét, bản Drive thiếu chữ 21 ô) tải phiên bản mới từ bản đầy đủ, giữ sửa "Tùy chỉnh cột" của người khác; 2 file khổ ngang (Báo cáo hạn mức KH, YC hạch toán MDV) chuyển khổ đứng trên Docs. Giữ các mục riêng của màn báo cáo (skill bắt buộc, user chốt)

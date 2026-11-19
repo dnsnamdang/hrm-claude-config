@@ -5,47 +5,131 @@
 
 ## Đang làm
 
-- **Trả lại / thu hồi HĐ đã kết xuất sang cung ứng** — @khoipv — Bắt đầu 26/10/2026 — Xong BE + FE, chờ user test. HĐ đã kết xuất (status 9) mà chưa có phiếu đề xuất sống → Cung ứng trả lại (bắt buộc lý do) hoặc người lập HĐ thu hồi, về Đã duyệt; popup Lịch sử kết xuất ở màn HĐ đã kết xuất + danh sách HĐ. Checkpoint: Phase 1–5 xong, bước tiếp: user test UI → commit.
-  - Plan: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/plan.md](tra-lai-thu-hoi-hd-da-ket-xuat/plan.md) · Design: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/design.md](tra-lai-thu-hoi-hd-da-ket-xuat/design.md) · Spec: [docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md](../docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md)
+- **DS phiếu công tác (`/timesheet/business_trip_assigns`) — thêm cột Nội dung công tác, Vị trí chấm công** — @khoipv — Bắt đầu 18/11/2026 — Chỉ sửa FE (BE đã trả `description` + `timesheet_info`). Vị trí chấm công = gom `place` mọi lượt chấm của phiếu, bỏ trùng, mỗi vị trí 1 dòng. Thêm nút Xuất excel (ExcelJS phía FE như BC tổng hợp công tác, theo bộ lọc hiện tại, 1 dòng/phiếu). Xuất chậm (200 phiếu/12–28 s) → thêm API `GET timesheet/business_trip_assigns/export` (dùng chung query lọc + quyền với `index` qua `buildListQuery`, gom dữ liệu theo lô): 5500 phiếu local còn 18 query / ~4–5 s. Đã push `master` (API `b30bd226`, Client `fedb604b`); deploy API + client cùng lúc, không migration. Thêm cột **Phương tiện** (danh sách + Excel; cùng cách gom như ô "Phương tiện sử dụng" ở chi tiết phiếu) ; bảng có thanh cuộn ngang (cột độ rộng px, ghi đè overflow-x trong màn), viền ô, cố định cột STT + Mã phiếu — đã push `master` (API `8071f0ad`, Client `ac02839e`). Chờ user test UI + file xuất.
+  - Plan: [.plans/ds-phieu-cong-tac-them-cot/plan.md](ds-phieu-cong-tac-them-cot/plan.md)
 
-- **Duyệt HĐ kết xuất cung ứng theo nhóm nghiệp vụ** — @khoipv — Bắt đầu 26/10/2026 — Đang sửa BE. Quyền 525 đang duyệt toàn hệ thống → đổi sang xét nhóm nghiệp vụ giống "Duyệt hợp đồng" (người lập thuộc nhóm mình quản lý hoặc chính mình), thông báo gửi duyệt chỉ tới quản lý nhóm có quyền.
-  - Plan: [.plans/duyet-ket-xuat-theo-nhom-nghiep-vu/plan.md](duyet-ket-xuat-theo-nhom-nghiep-vu/plan.md)
+- **Fix: Xuất Excel BC tổng hợp đi giao việc/công tác (`/timesheet/report/business_trip_assign_report_`) rất chậm** — @khoipv — Bắt đầu 18/11/2026 — FE đã dùng ExcelJS; nghẽn ở BE: mỗi request lấy hết phiếu + toàn bộ chấm công mọi phiếu rồi mới cắt trang, FE gọi tuần tự từng trang. Sửa: phân trang ở DB, chỉ lấy chấm công của phiếu trong trang; FE gọi song song. Đã push: API `0f4198fa`, client `2370f6d3` (master). Còn: deploy + `php artisan migrate`, test tay.
+  - Plan: [.plans/fix-xuat-excel-bc-cong-tac-cham/plan.md](fix-xuat-excel-bc-cong-tac-cham/plan.md)
 
-- **Giá bán HĐ trước — lọc theo nhóm khách hàng** — @khoipv — Bắt đầu 26/10/2026 — Đang sửa BE. KH khối bệnh viện (BV công lập + tư nhân) → đúng KH, fallback BV khác cùng tỉnh; KH Công ty TM / Khách lẻ, HKD / không nhóm → chỉ lấy giá của đúng KH đó.
-  - Plan: [.plans/gia-hd-truoc-theo-nhom-kh/plan.md](gia-hd-truoc-theo-nhom-kh/plan.md) · Spec: [docs/superpowers/specs/2026-10-26-gia-hd-truoc-theo-nhom-kh-design.md](../docs/superpowers/specs/2026-10-26-gia-hd-truoc-theo-nhom-kh-design.md)
+- **Check: NV Ngô Thị Hoàng Yến (NV.00031) còn 0.5 phép, làm đơn 0.5 ngày 19/11 bị báo "Ngày nghỉ không được lớn hơn số ngày nghỉ còn lại"** — @khoipv — Bắt đầu 18/11/2026 — Nguyên nhân: đơn 1340 (nghỉ sáng 21/04, tạo trước bản sửa 28/08) lưu `total_days = 1` thay vì 0.5; bảng công tính 0.5 ⇒ báo cáo còn 0.5, validate còn 0. Chờ user chốt sửa dữ liệu.
+  - Plan: [.plans/check-phep-con-lai-ngo-thi-hoang-yen/plan.md](check-phep-con-lai-ngo-thi-hoang-yen/plan.md)
 
-- **PXL — bảng Xử lý cung ứng hàng theo ma trận Nguồn × Phương án (code thật theo demo)** — @khoipv — Bắt đầu 23/10/2026 — Đang brainstorming. Làm code thật theo `demo-pxl-tach-nguon-hang.html` bản 23/10: mỗi hàng 3 dòng nguồn (Hàng tồn kho · Khách đang vay · Chốt mua thêm) × 5 phương án (Xuất bán · Xuất khách gửi · Xuất trả gửi cho KH · Xuất cho KH vay · Trừ hàng KH vay), cột "SL đã xử lý" xanh/đỏ (thiếu/thừa).
-  - Plan: [.plans/pxl-ma-tran-nguon-phuong-an/plan.md](pxl-ma-tran-nguon-phuong-an/plan.md) · Spec: [docs/superpowers/specs/2026-10-23-pxl-ma-tran-nguon-phuong-an-design.md](../docs/superpowers/specs/2026-10-23-pxl-ma-tran-nguon-phuong-an-design.md)
+- **Danh mục phương tiện — tách Phòng phụ trách (1 phòng) / Phòng sử dụng (nhiều phòng); app lọc xe theo Phòng phụ trách HOẶC Phòng sử dụng** — @khoipv — Bắt đầu 17/11/2026 — Chỉ sửa API + màn web, không sửa app mobile. Playwright 7/7 đạt. Đã push: API `8ac8ddca`, client `4d495c2c` (master). Còn: deploy cả 2 cùng lúc + `php artisan migrate`, test tay web + app.
+  - Plan: [.plans/phuong-tien-phong-su-dung/plan.md](phuong-tien-phong-su-dung/plan.md)
 
-- **HĐ mua — cho nhập tay VAT (%) ở bảng hàng hóa** — @khoipv — Bắt đầu 23/10/2026 — Code BE + FE xong, chờ build client + test UI. Cột VAT thành ô nhập (gợi ý theo danh mục hàng hóa, đã có % thì giữ), BE nhận % FE gửi, trống mới lấy `products.tax`.
-  - Plan: [.plans/hop-dong-mua-vat-nhap-tay/plan.md](hop-dong-mua-vat-nhap-tay/plan.md)
+- **Check: NV Trần Văn Chót (NV.00046) làm đơn phép 21/11 bị báo "Ngày nghỉ không được lớn hơn số ngày nghỉ còn lại"** — @khoipv — Bắt đầu 17/11/2026 — Đã ra nguyên nhân: đơn phép 10/10 (T7 chẵn) đã duyệt 1 ngày nhưng bảng công 10/10 bị tính lại 06/11 theo quy định mới (nghỉ T7 chẵn) → phép 0 ⇒ báo cáo còn 1, validate (theo đơn) còn 0. User chọn sửa code: `sumDate()` thêm tham số tùy chọn `$workingDates`, `calcTimesheetEmployee()` bỏ qua check cuối tuần với ngày đã chốt `type_day = 1`. Test local OK. Commit `60931eac` đã push `origin/master`. Sau deploy chạy `php artisan calc:timesheet 2026-10-10` + `2026-10-24`.
+  - Plan: [.plans/check-phep-con-lai-tran-van-chot/plan.md](check-phep-con-lai-tran-van-chot/plan.md)
 
-- **Đơn mua hàng — sửa logic theo demo `demo-lap-don-mua-hang.html`** — @khoipv — Bắt đầu 21/10/2026 — Đang brainstorming. Màn `supply/purchase_orders` làm theo demo: HĐ mua không bắt buộc (đơn mua lẻ lấy hàng từ BC nhu cầu mua), Thông tin chung 2 khối Đơn mua / NCC, bảng hàng theo HĐ mua + hàng HĐ bán chưa đề xuất, tab Giao nhận & vận chuyển (mới), tab Điều khoản thanh toán.
-  - Plan: [.plans/don-mua-hang-theo-demo/plan.md](don-mua-hang-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md)
-
-- **Báo cáo tổng hợp nhu cầu mua — sửa theo demo (bỏ tab Đã có HĐ mua)** — @khoipv — Bắt đầu 21/10/2026 — Đang code. Màn `supply/reports/purchase-demand` làm theo `demos/demo-bc-tong-hop-nhu-cau-mua.html` tab Cần đi mua (KPI, cột Cần mua thêm / Đã mua / Còn cần mua, bộ lọc NCC / HĐ mua theo dòng); không có thanh tab; Đã mua vẫn tính cả HĐ mua + đơn mua.
-  - Plan: [.plans/bc-nhu-cau-mua-theo-demo/plan.md](bc-nhu-cau-mua-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md)
-
-- **Dữ liệu chấm công — bộ lọc Nhân viên + Ca/Phiếu, xuất Excel** — @khoipv — Bắt đầu 19/10/2026 — Code BE + FE xong, chờ user test. Ô "Nhân viên" luôn hiện (kể cả không có quyền), danh sách NV theo cấp quyền. Thêm lọc Ca/Phiếu (Ca hành chính · Phiếu công tác · Phiếu giao việc · Tăng ca). Nút Xuất excel theo bộ lọc.
-  - Plan: [.plans/timekeeper-loc-nhan-vien/plan.md](timekeeper-loc-nhan-vien/plan.md)
-
-- **HĐ đã kết xuất — cảnh báo HĐ phát sinh phụ lục sau khi kết xuất** — @khoipv — Bắt đầu 15/10/2026 — Code xong, chờ user test dev. HĐ có PL (7 loại) đã duyệt sau khi kết xuất → icon cạnh Mã HĐ, bấm mở popup danh sách PL; lọc `has_annex`; Excel trường "Phụ lục phát sinh".
-  - Plan: [.plans/hd-ket-xuat-canh-bao-phu-luc/plan.md](hd-ket-xuat-canh-bao-phu-luc/plan.md) · Spec: [docs/superpowers/specs/2026-10-15-hd-ket-xuat-canh-bao-phu-luc-design.md](../docs/superpowers/specs/2026-10-15-hd-ket-xuat-canh-bao-phu-luc-design.md)
-
-- **HĐ đã kết xuất — ký hiệu "Ngày kết thúc" theo phụ lục gia hạn** — @khoipv — Bắt đầu 15/10/2026 — Đang sửa BE + FE. Ngày KT lấy `contracts.contract_end_time` (đã ghi đè khi duyệt PL gia hạn) → thêm icon + tooltip (mã PL, ngày duyệt, ngày gốc) để biết ngày đang tính theo phụ lục.
-  - Plan: [.plans/hd-ket-xuat-ngay-kt-theo-phu-luc/plan.md](hd-ket-xuat-ngay-kt-theo-phu-luc/plan.md)
-
-- **Phiếu đề xuất lập từ HĐ đã kết xuất — giữ HĐ nguồn khi chưa chọn hàng** — @khoipv — Bắt đầu 10/10/2026 — Đang sửa BE + FE. Phiếu gửi khi chưa chọn hàng bị suy khách lẻ → mất `contract_id` → cột "Phiếu đề xuất" ở màn HĐ đã kết xuất trống (HĐ-182/2026 trên dev).
-  - Plan: [.plans/de-xuat-tu-hd-giu-hd-nguon/plan.md](de-xuat-tu-hd-giu-hd-nguon/plan.md) · Spec: [docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md](../docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md)
-
-- **Demo PXL — tách "Mua hàng" thành khối Nguồn hàng** — @khoipv — Bắt đầu 08/10/2026 — Đang làm demo HTML. Bảng hàng hóa phiếu xử lý: SL đặt đơn = Lấy tồn kho + Mua hàng (khối Nguồn hàng), tách khỏi khối Xuất phục vụ HĐ (Bán · Xuất gửi · Trả gửi · Xuất vay · Trả vay · Xuất đổi). Chưa sửa code thật.
-  - Plan: [.plans/demo-pxl-tach-nguon-hang/plan.md](demo-pxl-tach-nguon-hang/plan.md) · Spec: [docs/superpowers/specs/2026-10-08-demo-pxl-tach-nguon-hang-design.md](../docs/superpowers/specs/2026-10-08-demo-pxl-tach-nguon-hang-design.md)
+- **Fix: In HĐLĐ 145 — tên công ty xuống dòng, khối chữ ký không căn giữa** — @khoipv — Bắt đầu 16/11/2026 — Lỗi do nội dung mẫu in (cột cố định 300px + chữ 20px; chữ ký căn bằng dấu cách), không phải code. Đã soạn HTML thay thế, chờ user dán vào mẫu in + HĐ 145 trên demo.
+  - Plan: [.plans/fix-in-hdld-can-giua-chu-ky/plan.md](fix-in-hdld-can-giua-chu-ky/plan.md)
 
 ## Tạm dừng
 
 _(chưa có)_
 
 ## Hoàn thành (3 entry gần nhất)
+- **Fix: Tạo/Sửa HĐLĐ — lỗi 422 chỉ hiện ở vài trường** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 13/11/2026 — FE chỉ đọc lỗi server của `contract_number`; watcher deep `form` xoá sạch lỗi khi đổi bất kỳ ô nào; lỗi tab "Mẫu in" bị khuất. Đã sửa `EmploymentContract.vue` (đủ 10 trường, xoá lỗi theo từng ô, tự nhảy tab + tô đỏ tab có lỗi) + `_id/edit.vue`. Commit `982bfffd` đã push `origin/master`.
+  - Plan: [.plans/fix-hdld-422-khong-hien-du-loi/plan.md](fix-hdld-422-khong-hien-du-loi/plan.md)
+
+- **Fix: Sửa HĐLĐ chọn lại mẫu in nhưng lưu vẫn giữ nội dung cũ (HĐ 145)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 13/11/2026 — Nguyên nhân: `EmploymentContractService::update()` không có `print_template` trong danh sách cột được lưu, còn in thì ưu tiên bản chụp HTML trong HĐ → giữ mãi bản lúc tạo. Đã thêm `print_template` vào whitelist, commit `3299db91` đã push `origin/master`.
+  - Plan: [.plans/fix-hdld-sua-khong-luu-mau-in/plan.md](fix-hdld-sua-khong-luu-mau-in/plan.md)
+
+- **Fix App: Chấm công — chọn ca/phiếu lần đầu không hiện ca** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 13/11/2026 — Nguyên nhân: sheet đọc DS ca 1 lần lúc mở, bấm trước khi `checkTimesheet` + `listTimesheetTypes` tải xong thì trống, không tự cập nhật. Đã sửa (sheet lắng nghe bloc, hiện loading khi chưa tải), commit `dd69132` đã push `origin/thanhan`. Chờ user test với tài khoản có ca hôm nay. Kèm: BE local chuyển sang nginx + 4 php-cgi để hết "Lỗi kết nối" khi chạy local.
+  - Plan: [.plans/fix-app-cham-cong-chon-ca-lan-dau/plan.md](fix-app-cham-cong-chon-ca-lan-dau/plan.md)
+
+- **Chấm công theo phiếu công tác — chọn phương tiện (BE + App mobile)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 12/11/2026 — Lượt chấm vào theo phiếu công tác bắt buộc chọn xe của phòng ban hoặc "Không đi xe công ty"; lưu `timesheets.vehicle_id` / `no_company_vehicle`; chi tiết phiếu hiện "Phương tiện sử dụng". Đã dựng môi trường code app (máy ảo + BE local :8001 + hot reload, xem Phase 0). Code BE + App (`TPE_APP` nhánh `thanhan`) xong, chưa commit; chờ test.
+  - Plan: [.plans/cham-cong-chon-phuong-tien/plan.md](cham-cong-chon-phuong-tien/plan.md)
+
+- **Check: BC tổng hợp nhu cầu mua chỉ gồm hàng "Chốt mua thêm" từ PXL?** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 12/11/2026 — Đúng: chỉ lấy dòng PXL Đã duyệt có `alloc_mua > 0`, `alloc_mua` = Σ ô dòng Chốt mua thêm (normalizeMatrix ở Tạo/Sửa); DB 0 dòng lệch.
+  - Plan: [.plans/check-bc-nhu-cau-mua-chi-chot-mua-them/plan.md](check-bc-nhu-cau-mua-chi-chot-mua-them/plan.md)
+
+- **Check: Dừng 2 mã hàng hóa kê khai trùng — ảnh hưởng báo giá đã làm?** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 12/11/2026 — Đã soát xong: Dừng chỉ đổi `products.status` = 3, báo giá cũ giữ nguyên (dòng hàng lưu sẵn), chỉ chặn chọn mã đó khi thêm mới; báo giá dở vẫn lưu/duyệt được, giá HĐ trước bị tách theo mã. Chờ user gửi 2 mã để tra chứng từ đang dùng.
+  - Plan: [.plans/check-dung-ma-hang-ke-khai-trung/plan.md](check-dung-ma-hang-ke-khai-trung/plan.md)
+
+- **Danh mục phương tiện (phân hệ Chấm công)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 11/11/2026 — Đã code xong BE + FE; Tạo mới đã test OK. Checkpoint 11/11/2026: chờ user test Sửa/Xem/Khóa/Xóa/lọc.
+  - Plan: [.plans/danh-muc-phuong-tien/plan.md](danh-muc-phuong-tien/plan.md) · Design: [.plans/danh-muc-phuong-tien/design.md](danh-muc-phuong-tien/design.md) · Spec: [docs/superpowers/specs/2026-11-11-danh-muc-phuong-tien-design.md](../docs/superpowers/specs/2026-11-11-danh-muc-phuong-tien-design.md)
+
+- **Check: Đơn xin nghỉ 1779 số ngày nghỉ dự kiến = 0** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 09/11/2026 — Đã ra nguyên nhân, không phải bug code: đơn tạo 02/11 cho 07/11 (thứ 7 lẻ) khi quy định còn "nghỉ thứ 7 lẻ" (5) → 0 đúng lúc đó; 03/11 quy định đổi sang "nghỉ thứ 7 chẵn" (4), đơn cũ không tính lại. Chờ user: có sửa tay `total_days` → 1 không.
+  - Plan: [.plans/check-don-nghi-1779-so-ngay-0/plan.md](check-don-nghi-1779-so-ngay-0/plan.md)
+
+- **Phiếu nhập kho + Phiếu giao hàng chờ nhập kho (bản thật theo `demo-phieu-nhap-kho.html`)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 07/11/2026 — Phase 7 (09/11): đã gỡ toàn bộ Phiếu nhập kho + quản lý lô/HSD/seri, chỉ giữ màn `/warehouse/receipt_queue` (PGH chờ nhập kho, `ReceiptQueueService`). PGH về kho → Chờ nhập kho (7); giao thẳng KH → Hoàn thành (5). Checkpoint 09/11/2026 (wrap up): sau khi gỡ PNK không còn đường Chờ nhập kho → Hoàn thành — chờ user chốt có thêm cơ chế xác nhận nhập kho không (17c); môi trường khác chạy `module:migrate Supply` (000003).
+  - Plan: [.plans/phieu-nhap-kho/plan.md](phieu-nhap-kho/plan.md) · Design: [.plans/phieu-nhap-kho/design.md](phieu-nhap-kho/design.md) · Spec: [docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md](../docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md)
+
+- **Danh mục kho — chuyển Kho vật lý / Kho kế toán sang V2 + skill `catalog-popup`** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu lại 09/11/2026 (bản gốc @namdangit 13/05/2026) — BE + FE xong: list V2 lọc mọi cột, `is_can_delete` (kho vật lý chỉ xóa khi chưa có kho kế toán trỏ tới), cột Người tạo/Ngày tạo, popup V2BaseModal; skill `catalog-popup` đã tạo. Checkpoint 09/11/2026: chờ user test tay + trả lời (a) xóa 2 modal cũ, (b) áp `catalog-popup` cho 2 popup kho; môi trường khác chạy migration `2026_11_09_000001_add_warehouse_catalog_lists_to_column_customizations_table`.
+  - Plan: [.plans/danh-muc-kho/plan.md](danh-muc-kho/plan.md) · Design: [.plans/danh-muc-kho/design.md](danh-muc-kho/design.md)
+
+- **HĐ — Tab Kết quả: bỏ bắt buộc Tên file** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 05/11/2026 — Đã sửa: cột `contract_results.title` NOT NULL → migration cho nullable (đã chạy). FE không cần sửa. Chờ user test.
+  - Plan: [.plans/contract-result-title-nullable/plan.md](contract-result-title-nullable/plan.md)
+
+- **Check: SL hàng hóa Báo giá / Gói thầu / HĐ không lưu được số < 1** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 04/11/2026 — Chỉ BE chặn (`min:1`); FE `CurrencyInput` vẫn gõ được thập phân (đã chạy thử). **Đã sửa 04/11**: BE `numeric|gt:0` cho 3 request, FE giữ nguyên. Chờ user test; phụ lục HĐ / BB thương thảo chưa làm.
+  - Plan: [.plans/check-bao-gia-sl-nho-hon-1/plan.md](check-bao-gia-sl-nho-hon-1/plan.md)
+
+- **Check: NV nghỉ 12/10 quên làm đơn, còn phép — cách trừ phép** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 02/11/2026 — Đã ra cách: HR tạo "Đề nghị tra soát công admin" lý do "Nghỉ phép quên làm phiếu" + Trừ số ngày phép (đơn nghỉ không tạo lùi ngày được, NV tự tra soát quá hạn 72h), sau đó chạy `calc:employee_timesheet` ngày 12/10.
+  - Plan: [.plans/check-tru-phep-nghi-quen-lam-don/plan.md](check-tru-phep-nghi-quen-lam-don/plan.md)
+
+- **Check: Đã tra soát công 22/10 mà vẫn 0.5 công (Nguyễn Thị Phương NV.00032)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 30/10/2026 — Đã ra nguyên nhân, không phải bug logic: phiếu tra soát ĐNTSC-3294 duyệt 30/10 09:59, công 22/10 tính lần cuối 28/10 → chưa tính lại (duyệt tra soát không tự tính công, dòng gọi calc đang comment). Chờ user: chạy `calc:employee_timesheet 32 2026-10-22 2026-10-22` hoặc chờ cron; có bật lại tính công khi duyệt không.
+  - Plan: [.plans/check-cong-tra-soat-nguyen-thi-phuong/plan.md](check-cong-tra-soat-nguyen-thi-phuong/plan.md)
+
+- **Check: Ô Tỉnh/Thành phố (màn HĐ) gõ "Lào cai" máy này ra, máy kia không ra** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 30/10/2026 — Đã ra nguyên nhân: máy kia gõ Unicode tổ hợp, matcher mặc định Select2 không bỏ được dấu tổ hợp. Chờ user: đổi bảng mã bộ gõ máy kia sang Unicode dựng sẵn, hoặc duyệt sửa matcher Select2 dùng chung.
+  - Plan: [.plans/check-select2-tim-tieng-viet-unicode-to-hop/plan.md](check-select2-tim-tieng-viet-unicode-to-hop/plan.md)
+
+- **Check: Tra soát công 08:00–17:00 chỉ được 0.5 công (Lê Đức Bình 16/10)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 30/10/2026 — Đã ra nguyên nhân, không phải bug code: ca #53 "Ca Kỹ thuật Hà Nội (NEW)" có khung chấm ra 17:30–21:00 → giờ ra 17:00 không được nhận, bị coi là quên chấm ra, trừ 0.5 công (KLD/2). Chờ user chọn: tra soát lại giờ ra ≥ 17:30 hoặc sửa khung chấm ra của ca.
+  - Plan: [.plans/check-cong-tra-soat-ve-som/plan.md](check-cong-tra-soat-ve-som/plan.md)
+
+- **Demo Phiếu giao hàng (Đơn mua hàng → Bộ phận giao hàng)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 27/10/2026 — **Bản 3 (30/10): viết lại theo UI `demo-lap-don-mua-hang.html` + logic code thật đang chạy** (popup gửi, danh sách không tab, chi tiết phiếu, canReturn / missingForComplete theo `PurchaseDeliveryNoteService`); đã chạy thử 4 phương thức bằng node, chờ user mở demo kiểm UI. Lịch sử: **Bản 2 (28/10)** đã làm lại theo phản hồi, chờ user xem + chốt câu hỏi mở. Đơn mua đã duyệt (**mọi hình thức vận chuyển** — bổ sung 28/10: NCC giao về kho / giao thẳng KH cũng gửi BP, không có bước lấy hàng, xác nhận SL thực nhận) → Cung ứng bấm Gửi bộ phận giao hàng → thành viên BP tự **Tiếp nhận** và thành người phụ trách (hoặc Trả lại / Chuyển người) → người phụ trách cập nhật tiến độ lấy / giao, **chi phí**, **chứng từ** → Hoàn thành, tự cập nhật điểm giao, đơn mua, chi phí VC thực tế.
+  - Demo: [demos/demo-phieu-giao-hang.html](../demos/demo-phieu-giao-hang.html) · Plan: [.plans/demo-phieu-giao-hang/plan.md](demo-phieu-giao-hang/plan.md) · Design: [.plans/demo-phieu-giao-hang/design.md](demo-phieu-giao-hang/design.md) · Spec: [docs/superpowers/specs/2026-10-27-demo-phieu-giao-hang-design.md](../docs/superpowers/specs/2026-10-27-demo-phieu-giao-hang-design.md)
+
+- **HĐ — sửa số HĐ / tên HĐ sau duyệt (đồng bộ version, không làm mất gia hạn PL thời gian)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 27/10/2026 — Code BE + FE xong, chờ user test. Lưu sau duyệt chỉ gửi trường thay đổi; HĐ có PL gia hạn đã duyệt → khoá ô Ngày KT, BE bỏ qua ngày KT/tiến độ (trước đây ghi đè về ngày gốc v0 vào `contracts` + mọi version). Thêm: cho sửa Tên HĐ sau duyệt, bắt buộc không trống.
+  - Plan: [.plans/hd-sua-so-hd-sau-duyet-giu-gia-han/plan.md](hd-sua-so-hd-sau-duyet-giu-gia-han/plan.md)
+
+- **HĐ đã kết xuất — lọc Loại dự toán, Mảng hàng hóa, Người thực hiện HĐ** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 27/10/2026 — Code BE + FE xong, chờ user test. 3 ô select chọn 1 trong bộ lọc V2 + 3 cột bảng (mặc định ẩn) + 3 trường Excel; Loại dự toán lấy theo dự toán (HĐ từ gói thầu → loại của gói thầu); Người thực hiện = người lập HĐ (`created_by`).
+  - Plan: [.plans/hd-ket-xuat-loc-loai-du-toan-mang-hang-nguoi-thuc-hien/plan.md](hd-ket-xuat-loc-loai-du-toan-mang-hang-nguoi-thuc-hien/plan.md)
+
+- **Trả lại / thu hồi HĐ đã kết xuất sang cung ứng** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 26/10/2026 — Xong BE + FE, chờ user test. HĐ đã kết xuất (status 9) mà chưa có phiếu đề xuất sống → Cung ứng trả lại (bắt buộc lý do) hoặc người lập HĐ thu hồi, về Đã duyệt; popup Lịch sử kết xuất ở màn HĐ đã kết xuất + danh sách HĐ. Checkpoint: Phase 1–5 xong, bước tiếp: user test UI → commit.
+  - Plan: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/plan.md](tra-lai-thu-hoi-hd-da-ket-xuat/plan.md) · Design: [.plans/tra-lai-thu-hoi-hd-da-ket-xuat/design.md](tra-lai-thu-hoi-hd-da-ket-xuat/design.md) · Spec: [docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md](../docs/superpowers/specs/2026-10-26-tra-lai-thu-hoi-hd-da-ket-xuat-design.md)
+
+- **Duyệt HĐ kết xuất cung ứng theo nhóm nghiệp vụ** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 26/10/2026 — Đang sửa BE. Quyền 525 đang duyệt toàn hệ thống → đổi sang xét nhóm nghiệp vụ giống "Duyệt hợp đồng" (người lập thuộc nhóm mình quản lý hoặc chính mình), thông báo gửi duyệt chỉ tới quản lý nhóm có quyền.
+  - Plan: [.plans/duyet-ket-xuat-theo-nhom-nghiep-vu/plan.md](duyet-ket-xuat-theo-nhom-nghiep-vu/plan.md)
+
+- **Giá bán HĐ trước — lọc theo nhóm khách hàng** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 26/10/2026 — Đang sửa BE. KH khối bệnh viện (BV công lập + tư nhân) → đúng KH, fallback BV khác cùng tỉnh; KH Công ty TM / Khách lẻ, HKD / không nhóm → chỉ lấy giá của đúng KH đó.
+  - Plan: [.plans/gia-hd-truoc-theo-nhom-kh/plan.md](gia-hd-truoc-theo-nhom-kh/plan.md) · Spec: [docs/superpowers/specs/2026-10-26-gia-hd-truoc-theo-nhom-kh-design.md](../docs/superpowers/specs/2026-10-26-gia-hd-truoc-theo-nhom-kh-design.md)
+
+- **PXL — bảng Xử lý cung ứng hàng theo ma trận Nguồn × Phương án (code thật theo demo)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 23/10/2026 — Đang brainstorming. Làm code thật theo `demo-pxl-tach-nguon-hang.html` bản 23/10: mỗi hàng 3 dòng nguồn (Hàng tồn kho · Khách đang vay · Chốt mua thêm) × 5 phương án (Xuất bán · Xuất khách gửi · Xuất trả gửi cho KH · Xuất cho KH vay · Trừ hàng KH vay), cột "SL đã xử lý" xanh/đỏ (thiếu/thừa).
+  - Plan: [.plans/pxl-ma-tran-nguon-phuong-an/plan.md](pxl-ma-tran-nguon-phuong-an/plan.md) · Spec: [docs/superpowers/specs/2026-10-23-pxl-ma-tran-nguon-phuong-an-design.md](../docs/superpowers/specs/2026-10-23-pxl-ma-tran-nguon-phuong-an-design.md)
+
+- **HĐ mua — cho nhập tay VAT (%) ở bảng hàng hóa** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 23/10/2026 — Code BE + FE xong, chờ build client + test UI. Cột VAT thành ô nhập (gợi ý theo danh mục hàng hóa, đã có % thì giữ), BE nhận % FE gửi, trống mới lấy `products.tax`.
+  - Plan: [.plans/hop-dong-mua-vat-nhap-tay/plan.md](hop-dong-mua-vat-nhap-tay/plan.md)
+
+- **Báo cáo tổng hợp nhu cầu mua — sửa theo demo (bỏ tab Đã có HĐ mua)** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 21/10/2026 — Đang code. Màn `supply/reports/purchase-demand` làm theo `demos/demo-bc-tong-hop-nhu-cau-mua.html` tab Cần đi mua (KPI, cột Cần mua thêm / Đã mua / Còn cần mua, bộ lọc NCC / HĐ mua theo dòng); không có thanh tab; Đã mua vẫn tính cả HĐ mua + đơn mua.
+  - Plan: [.plans/bc-nhu-cau-mua-theo-demo/plan.md](bc-nhu-cau-mua-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-bc-nhu-cau-mua-theo-demo-design.md)
+
+- **Dữ liệu chấm công — bộ lọc Nhân viên + Ca/Phiếu, xuất Excel** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 19/10/2026 — Code BE + FE xong, chờ user test. Ô "Nhân viên" luôn hiện (kể cả không có quyền), danh sách NV theo cấp quyền. Thêm lọc Ca/Phiếu (Ca hành chính · Phiếu công tác · Phiếu giao việc · Tăng ca). Nút Xuất excel theo bộ lọc.
+  - Plan: [.plans/timekeeper-loc-nhan-vien/plan.md](timekeeper-loc-nhan-vien/plan.md)
+
+- **HĐ đã kết xuất — cảnh báo HĐ phát sinh phụ lục sau khi kết xuất** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 15/10/2026 — Code xong, chờ user test dev. HĐ có PL (7 loại) đã duyệt sau khi kết xuất → icon cạnh Mã HĐ, bấm mở popup danh sách PL; lọc `has_annex`; Excel trường "Phụ lục phát sinh".
+  - Plan: [.plans/hd-ket-xuat-canh-bao-phu-luc/plan.md](hd-ket-xuat-canh-bao-phu-luc/plan.md) · Spec: [docs/superpowers/specs/2026-10-15-hd-ket-xuat-canh-bao-phu-luc-design.md](../docs/superpowers/specs/2026-10-15-hd-ket-xuat-canh-bao-phu-luc-design.md)
+
+- **HĐ đã kết xuất — ký hiệu "Ngày kết thúc" theo phụ lục gia hạn** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 15/10/2026 — Đang sửa BE + FE. Ngày KT lấy `contracts.contract_end_time` (đã ghi đè khi duyệt PL gia hạn) → thêm icon + tooltip (mã PL, ngày duyệt, ngày gốc) để biết ngày đang tính theo phụ lục.
+  - Plan: [.plans/hd-ket-xuat-ngay-kt-theo-phu-luc/plan.md](hd-ket-xuat-ngay-kt-theo-phu-luc/plan.md)
+
+- **Phiếu đề xuất lập từ HĐ đã kết xuất — giữ HĐ nguồn khi chưa chọn hàng** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 10/10/2026 — Đang sửa BE + FE. Phiếu gửi khi chưa chọn hàng bị suy khách lẻ → mất `contract_id` → cột "Phiếu đề xuất" ở màn HĐ đã kết xuất trống (HĐ-182/2026 trên dev).
+  - Plan: [.plans/de-xuat-tu-hd-giu-hd-nguon/plan.md](de-xuat-tu-hd-giu-hd-nguon/plan.md) · Spec: [docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md](../docs/superpowers/specs/2026-10-10-de-xuat-tu-hd-giu-hd-nguon-design.md)
+
+- **Demo PXL — tách "Mua hàng" thành khối Nguồn hàng** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 08/10/2026 — Đang làm demo HTML. Bảng hàng hóa phiếu xử lý: SL đặt đơn = Lấy tồn kho + Mua hàng (khối Nguồn hàng), tách khỏi khối Xuất phục vụ HĐ (Bán · Xuất gửi · Trả gửi · Xuất vay · Trả vay · Xuất đổi). Chưa sửa code thật.
+  - Plan: [.plans/demo-pxl-tach-nguon-hang/plan.md](demo-pxl-tach-nguon-hang/plan.md) · Spec: [docs/superpowers/specs/2026-10-08-demo-pxl-tach-nguon-hang-design.md](../docs/superpowers/specs/2026-10-08-demo-pxl-tach-nguon-hang-design.md)
+
+- **Đơn mua hàng — sửa logic theo demo `demo-lap-don-mua-hang.html`** — @khoipv — Hoàn thành 2026-11-06 — Bắt đầu 21/10/2026 — 06/11: popup thêm nhanh người liên hệ NCC bỏ ô Phòng ban, nút "Lưu và gửi duyệt" → "Gửi"; Phase 6 đơn toàn hàng cung ứng khách hàng bỏ qua duyệt (duyệt tự động + lập phiếu giao hàng trong 1 transaction), Playwright e2e PASS. Màn `supply/purchase_orders` làm theo demo: HĐ mua không bắt buộc (đơn mua lẻ lấy hàng từ BC nhu cầu mua), Thông tin chung 2 khối Đơn mua / NCC, bảng hàng theo HĐ mua + hàng HĐ bán chưa đề xuất, tab Giao nhận & vận chuyển (mới), tab Điều khoản thanh toán.
+  - Plan: [.plans/don-mua-hang-theo-demo/plan.md](don-mua-hang-theo-demo/plan.md) · Spec: [docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md](../docs/superpowers/specs/2026-10-21-don-mua-hang-theo-demo-design.md)
+
+- **Fix: HĐ đã duyệt — lưu Điều khoản thanh toán xong mở lại vẫn hiện dữ liệu cũ** — @khoipv — Hoàn thành 2026-10-30 — Bắt đầu 30/10/2026 — Nguyên nhân: lưu sau duyệt ghi bảng thật nhưng màn chi tiết đọc ĐKTT từ snapshot version 0. Sửa: lưu xong đồng bộ 5 trường ĐKTT vào mọi version; HĐ có PL thay đổi ĐKTT đã duyệt → khoá tab, BE chặn (cả luồng kết xuất); thêm loading nút Lưu. Đã commit + push `master` (API 366a5571, Client 8e13db52). Còn treo: HĐ đã lưu ĐKTT trước bản sửa vẫn hiện bản cũ tới khi lưu lại.
+  - Plan: [.plans/fix-hd-luu-dktt-sau-duyet/plan.md](fix-hd-luu-dktt-sau-duyet/plan.md)
+
+- **Phiếu giao hàng (bản thật, giai đoạn 1)** — @khoipv — Hoàn thành 2026-10-29 — Bắt đầu 28/10/2026 — **Code BE + FE xong, đã review + sửa C1/I1/I2/I3/M2; 28/10 gỡ quyền `Giao/nhận hàng hóa` theo yêu cầu (ai cũng vào được, chỉ nhóm Kho nhận thông báo). 28/10 chuyển màn sang **phân hệ Giao hàng** (`/delivery/delivery_notes`, menu `MenuDelivery.js`, ô Giao hàng ở trang chủ/Topbar mở Dashboard Giao hàng `/delivery/dashboard`; API vẫn `/v1/supply/...`). 28/10 bỏ tab màn danh sách (mặc định tất cả phiếu, mới nhất trước, lọc trạng thái bằng bộ lọc). 29/10 (Phase 12) đơn mua thêm trạng thái 7 "Đã gửi giao hàng": gửi phiếu thì đơn 3 → 7, hủy hết phiếu thì về 3, báo cáo/điều kiện coi 7 như Đã duyệt; migration dữ liệu `2026_10_29_000001` đã chạy local; test t7 13/13 + t1–t6 PASS. 29/10 (Phase 13) thêm nút Gửi bộ phận giao hàng ở cột Hành động danh sách đơn mua (cờ `is_can_send_delivery`); test t8 8/8 PASS. 29/10 (Phase 14) bỏ khối "Nhận tại kho công ty" (kho nhận, thủ kho, ngày giờ nhận) ở form đơn mua, BE thôi bắt buộc; test t9 4/4 PASS. 29/10 (Phase 15) bỏ "Đơn vị vận chuyển nhận tiền" + "Người đi nhận hàng" ở form đơn mua, bảng Các khoản chi không bắt buộc (Bên chịu phí vẫn bắt buộc); test t10 6/6 PASS. 29/10 (Phase 16–18) danh sách phiếu giao hàng bỏ cột Số dòng hàng; badge Phương thức giao hàng tách NCC giao về kho / NCC giao thẳng KH / Cty tự lấy; màn chi tiết phiếu dùng base chung V2 (V2BaseInput disabled, V2Footer, V2BaseTableScroll). 29/10 (Phase 24) Kho nhận chọn ở thẻ điểm kho khi xác nhận (bắt buộc), Thông tin chung có ô Kho nhận chỉ xem, Ngày tiếp nhận bỏ giờ; test t11 8/8 PASS. 29/10 (Phase 25) màn chi tiết phiếu chuyển sang 1 card có tab (Thông tin chung / Lộ trình–Tiến độ / Chi phí) + banner trên card, cùng khung chi tiết đơn mua. 29/10 (Phase 26–27) bỏ tab, các khối xếp dọc trong 1 card; bỏ khối "Còn thiếu để hoàn thành" (BE vẫn chặn, bấm Hoàn thành thì báo lỗi). 29/10 (Phase 28–30) thu gọn thanh tiêu đề khối (bỏ margin-top h6 trong màn, chưa sửa `V2BaseFormSection` chung); tên tệp đính kèm chi phí bấm được để xem trước (`FilePreviewModal`); Hoàn thành xong quay về danh sách. Đã commit + push `thanhan-dev` 29/10 (API 74bc1144, Client 70c6e001); cần chạy migration `2026_10_28_000001` + `2026_10_29_000001`, không seed quyền). 29/10 (Phase 31) bỏ hẳn khối "Chi phí vận chuyển" ở form đơn mua (cả Bên chịu phí), BE `cost_payer` nullable, đơn cũ giữ khoản chi; test t12 7/7 PASS. 29/10 (Phase 32) cột VAT (%) bảng hàng hóa đơn mua cho nhập tay giống HĐ mua (dòng theo HĐ khóa), BE ưu tiên VAT FE gửi; test t13 11/11 PASS. 29/10 (Phase 33) chọn HĐ mua ở đơn mua: `contract-pool` bỏ `extras` (13 s → 60 ms), popup nạp ngầm hàng HĐ bán chưa đề xuất, nút chọn hàng đổi ngay + khóa khi đang tải. Còn treo: DMH-2026-0001 thiếu `ship_method`; có tối ưu `unproposedActiveContractGoods()` (hàm dùng chung, ~5 s khi mở popup chọn hàng) không.** Checkpoint 29/10: Phase 31–33 đã commit + push `thanhan-dev` (API 26004c34, Client 9ec82dc2). Bước tiếp: user test UI đơn mua (bỏ chi phí vận chuyển, ô VAT, chọn / đổi HĐ mua + popup chọn hàng); sau đó giai đoạn 2 (Hoàn thành ghi về đơn mua). Làm thật luồng demo bước 1–3: đơn mua gửi BP giao hàng → ai cũng tự tiếp nhận / trả lại → cập nhật tiến độ + chi phí → Hoàn thành (chỉ đổi trạng thái phiếu, chưa ghi về đơn mua).
+  - Plan: [.plans/phieu-giao-hang/plan.md](phieu-giao-hang/plan.md) · Design: [.plans/phieu-giao-hang/design.md](phieu-giao-hang/design.md) · Spec: [docs/superpowers/specs/2026-10-28-phieu-giao-hang-design.md](../docs/superpowers/specs/2026-10-28-phieu-giao-hang-design.md)
+
+- **Xuất Excel — Danh mục tài khoản nhân viên (`/human/employee`)** — @khoipv — Hoàn thành 2026-10-29 — Bắt đầu 29/10/2026 — Code BE + FE xong, đã fix 403 (FE gắn Bearer token khi tải file), user test UI OK 29/10, đã commit + push `master` (API 7d1c7b29, Client 02ff6824). Nút Xuất excel mở popup chọn trường như màn HSNS (10 trường), xuất theo bộ lọc hiện tại, quyền như màn danh sách. Còn treo: API xuất HSNS `getEmployeeByField` không check quyền.
+  - Plan: [.plans/xuat-excel-tai-khoan-nhan-vien/plan.md](xuat-excel-tai-khoan-nhan-vien/plan.md) · Design: [.plans/xuat-excel-tai-khoan-nhan-vien/design.md](xuat-excel-tai-khoan-nhan-vien/design.md) · Spec: [docs/superpowers/specs/2026-10-29-xuat-excel-tai-khoan-nhan-vien-design.md](../docs/superpowers/specs/2026-10-29-xuat-excel-tai-khoan-nhan-vien-design.md)
+
 - **Demo "Tạo đơn giao hàng từ HĐ mua"** — @khoipv — Hoàn thành 2026-10-08 — Bắt đầu 06/10/2026 — Đang làm demo HTML (V2Base). Đơn giao hàng chọn từ 1 HĐ mua (hàng kèm phiếu đề xuất/KH), cho giao tới công ty khác Bên A, điều khoản TT (trả trước → đề nghị thanh toán / ghi công nợ có hạn + gối đầu), 3 phương thức giao (NCC giao kho · NCC giao thẳng KH · Cty tự lấy → về kho/giao KH) + chi phí vận chuyển.
   - Plan: [.plans/demo-don-giao-hang/plan.md](demo-don-giao-hang/plan.md) · Spec: [docs/superpowers/specs/2026-10-06-demo-don-giao-hang-design.md](../docs/superpowers/specs/2026-10-06-demo-don-giao-hang-design.md)
 
@@ -546,10 +630,6 @@ _(chưa có)_
 - **Thêm hàng hóa vào phụ lục thay đổi số lượng** — Cho phép thêm sản phẩm mới từ danh mục hệ thống vào phụ lục thay đổi số lượng, tạo nhóm mới/chọn nhóm cũ, nhân bản (@khoipv) — 2026-05-08
   - Spec: `docs/superpowers/specs/2026-05-08-annex-quantity-add-product-design.md`
   - Plan: `.plans/annex-quantity-add-product/plan.md`
-
-- **Danh mục kho** — FE + BE hoàn chỉnh: menu, danh sách, modal CRUD cho Kho Vật Lý + Kho Kế Toán, 4 migrations, full API (@namdangit) — 2026-05-13
-  - Spec: `docs/superpowers/specs/2026-05-13-danh-muc-kho-design.md`
-  - Plan: `.plans/danh-muc-kho/plan.md`
 
 - **Báo cáo chi tiết thầu** — Báo cáo chi tiết gói thầu (27 cột, 9 filters, phân quyền 3 cấp, export Excel, link HĐ) (@khoipv) — 2026-05-06
   - Spec: `docs/superpowers/specs/2026-05-06-detail-report-bid-package-design.md`

@@ -100,7 +100,7 @@ Form này bám theo bản QA gửi ("SRS - Danh mục quốc gia":
 https://docs.google.com/document/d/1tKvOQqJyK0bJC6BrZGM92974irpDAsFn/edit — đọc bằng MCP Google
 Drive `read_file_content`, **đừng** tải base64 về vì file 5MB), khác một điểm có chủ đích:
 bản QA để trống phân quyền vì màn đó chưa chốt quyền, còn form của team **giữ quyền thật**
-(Q1…Qn + V1…Vn + ma trận ✅/❌ theo `PermissionsTableSeeder`).
+(Q1…Qn + V1…Vn + ma trận ✅/❌ theo Catalog quyền).
 
 Trước khi sinh SRS, **luôn đọc lại file mẫu** để bám đúng khung và cách hành văn:
 
@@ -187,8 +187,10 @@ Phần 1. Giới thiệu                          [Heading 1]
 Phần 2. Phân quyền                          [Heading 1]
    1 Danh sách quyền
        "Nhóm quyền thao tác:"                 BẢNG (Ký hiệu | Tên quyền | Tác dụng trên màn hình)
-       "Nhóm quyền quyết định phạm vi dữ liệu:" BẢNG (Ký hiệu | Tên quyền | Phạm vi dữ liệu)
+       "Nhóm quyền quyết định phạm vi dữ liệu:" BẢNG (Ký hiệu | Quyền – mức phạm vi | Phạm vi dữ liệu)
                                               ← chỉ thêm bảng 2 khi màn CÓ phân quyền theo cấp
+                                              ← V1..Vn là các MỨC của MỘT mã `.view` (đọc `scopes` trong
+                                                Catalog), KHÔNG phải nhiều quyền; chỉ liệt kê mức có trong `scopes`
    2 Ma trận phân quyền      — BẢNG (Chức năng | Q1..Qn | Không có quyền nào), dùng ✅ / ❌
 
 Phần 3. Đặc tả chi tiết theo từng chức năng  [Heading 1]
@@ -763,7 +765,7 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)` = **13pt*
 5. Controller       → Request flow, response format
 6. Service          → Business logic, điều kiện, phép tính (nguồn của Phần 4)
 7. Transformer      → Response data structure
-8. PermissionsTableSeeder → Tên quyền + group (nguồn của bảng Danh sách quyền)
+8. Catalog `app/Support/Permissions/Catalog` → Tên quyền + chức năng (nguồn của bảng Danh sách quyền)
 9. Console Command  → Scheduled jobs, cron logic
 ```
 
@@ -782,7 +784,9 @@ Bảng dùng `style = 'Table Grid'`, chữ trong bảng `Pt(TABLE_PT)` = **13pt*
 ### Bước 2: Phân tích & tổng hợp
 
 - Liệt kê **chức năng FR-01…FR-0N** từ route + nút trên màn → đưa vào **ma trận phân quyền**
-- Ký hiệu quyền dùng **Q1…Qn** cho nhóm thao tác, **V1…Vn** cho nhóm phạm vi dữ liệu
+- Ký hiệu quyền dùng **Q1…Qn** cho nhóm thao tác, **V1…Vn** cho các **mức phạm vi của quyền Xem** (1 mã `.view` có
+  `scopes` trong Catalog — Tổng công ty / Công ty / Phòng ban / Bộ phận). Tên quyền lấy đúng `name` trong Catalog,
+  KHÔNG lấy tên cũ ở `legacy` (vd "Xem tất cả … của công ty")
 - Trích **business rules BR-01…** từ service layer (if/else, validate, calculate, điều kiện chặn)
 - Lấy **thông báo lỗi** đúng nguyên văn từ Request `messages()` để điền vào cột "Xử lý event"
 

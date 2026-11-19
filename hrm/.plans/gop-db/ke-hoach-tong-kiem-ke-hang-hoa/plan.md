@@ -76,3 +76,33 @@ Vừa hoàn thành: E1 (`components/export-excel.js`, bỏ `cell.fill` dòng ti�
 Đang làm dở: —
 Bước tiếp theo: user bấm Xuất Excel kiểm file (CHƯA mở file thật). Đã commit + push `develop` (api 5dbe9650b, client 0df13b4ef).
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase (05/11/2026) @khoipv
+- [x] Đọc code FE `pages/finance/self-inventory-request-alls/**` (index, create, _id/index, _id/edit, SelfInventoryRequestAllForm, row-actions.js, export-excel.js) + BE `Modules/Finance` SelfInventoryRequestAll* (Entity / Service / WriteService / Controller / StoreRequest / PrintService), SelfInventoryService + SelfInventoryWriteService (popup chọn kế hoạch, nạp kế hoạch tổng, chặn hàng trùng), SelfInventoryReportService (lọc theo kế hoạch tổng), PhysicalWarehouse (chặn xóa kho), NotificationMeta, quyền trong PermissionsTableSeeder. Xác nhận: bảng riêng, chỉ dùng chung 3 tên quyền với Kế hoạch kiểm kê theo hàng hóa (cùng hằng quyền)
+- [x] Chụp ảnh dev-hrm (DNS Admin) bằng `khtkkhh_shots/_capture/capture.js` — chặn mọi yêu cầu ghi (2 lượt: 0 bị chặn / 0 lọt, màn không có POST chỉ đọc). Giả trạng thái trên trình duyệt: 12_edit, 13_delete, 03_rowmenu, icon Sửa / Xóa / ba chấm (kế hoạch 00004 giả Đang tạo — dev 5/5 Đã duyệt); 10b_validate gán sẵn lỗi đúng câu máy chủ trả khi Lưu và duyệt form trống. Nút Lập phiếu + màn Tạo phiếu kiểm kê nạp kế hoạch: dữ liệu thật (TPE.KHTKK-00005)
+- [x] `gen_srs.py` → `SRS - Kế hoạch tổng kiểm kê hàng hóa.docx`: 13 chức năng, 88 trang, selfcheck khớp bản mẫu; metrics ui=12.2 ev=4.6 evch=998 intro=1680; Phần 5 bảng 4 cột 5 màn; Mục lục trang riêng căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Ke hoach tong kiem ke hang hoa.docx`: 13 phần, 20 trang; icon 63 file, trim_icon `Cần cắt 0/63`
+- [x] `gen_testcase.py` → `testcase.xlsx`: loai phieu (chứng từ số phiếu tự sinh, vòng đời Đang tạo > Đã duyệt), 235 TC, 13 nhóm, P0 45.1%, check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 247 có TC / 77 N/A (Khóa, Import, Không duyệt); SRS 132 có mục / 31 N/A
+
+### Checkpoint — 2026-11-05 (tài liệu)
+Vừa hoàn thành: bộ tài liệu SRS + HDSD + Testcase + Đối chiếu checklist màn Kế hoạch tổng kiểm kê hàng hóa.
+Đang làm dở: —
+Bước tiếp theo: user xem lại tài liệu; quyết các điểm nghi lỗi code (nút Lập phiếu mất ngay khi đợt kiểm bắt đầu vì điều kiện Ngày kiểm kê từ ≥ hôm nay; phiếu kiểm kê lập từ kế hoạch tự chọn HẾT công ty thuê theo kho, bỏ qua công ty thuê kho đã chọn trên kế hoạch).
+Blocked:
+
+## Phase 7 — Fix Redmine #12038 (05/11/2026) @khoipv
+- [x] L1. Form Tạo/Sửa/Xem: bỏ ô "Số phiếu" trong khối Thông tin chung (mã đã có trên thanh tiêu đề)
+- [x] L2. Dời ô Kho xuống đầu hàng 2, ngay trước Công ty thuê kho (hàng 1: 2 ô ngày; hàng 2: Kho · Công ty thuê kho · Thành phần tham gia)
+
+### Checkpoint — 2026-11-05 (#12038)
+Vừa hoàn thành: L1–L2 (`components/SelfInventoryRequestAllForm.vue`: bỏ khối Số phiếu `v-if="!isCreate"`, chèn `<div class="w-100">` sau Ngày kiểm kê đến để Kho xuống đầu hàng 2). Màn Chi tiết / Sửa vẫn có mã trên thanh tiêu đề. Biên dịch template OK.
+Đang làm dở: —
+Bước tiếp theo: user mở trình duyệt kiểm form Tạo / Sửa / Chi tiết (CHƯA mở thật). CHƯA commit.
+Blocked:
+
+### Checkpoint — 2026-11-05 (push)
+Vừa hoàn thành: ĐÃ PUSH `develop` (hrm-api tới `6b0b11b6e`, hrm-client tới `cf57d6f54`) theo yêu cầu user.
+Đang làm dở: —
+Bước tiếp theo: deploy dev → QA kiểm lại.
+Blocked:
