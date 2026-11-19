@@ -139,4 +139,5 @@ Blocked: API local chậm ~3s/request (máy thiếu RAM) — test chạy lâu, k
 
 ### 2026-11-18 — #12186 phản hồi lần 2 (Huyền Trang): phân trang POPUP về kiểu V2BasePagination
 - [x] P3-T9. Popup bấm số của 3 màn (`install-delivery-repair` ItemListModal, `install-delivery-repair-detail` DetailDrillModal, `sale/sale-by-product-report` SaleByProductDetailModal + SaleByProductAllItemsModal): bỏ slot `#pagination` (ReportPagination / ReportListPagination / SaleByProductPagination) → vỏ `V2BaseReportModal` tự dùng `V2BasePagination` mặc định (thanh xám `.paging`, nút tròn nhỏ) — y popup báo cáo chuyến xe (ảnh mẫu QA)
-- Kiểm: compile template + babel 4 file OK; chưa mở trình duyệt. Bảng CHÍNH của 3 màn vẫn dùng phân trang cũ (QA chỉ nêu popup) — chờ user chốt có đổi luôn không. CHƯA commit.
+- Kiểm: compile template + babel 4 file OK; chưa mở trình duyệt. Bảng CHÍNH của 3 màn vẫn dùng phân trang cũ (QA chỉ nêu popup) — chờ user chốt có đổi luôn không. Đã commit + push develop `27d24e8b1`.
+- [x] 19/11 check lại phản hồi #12186 (journal #3, 18/11 10:04): đúng nội dung P3-T9, code đã có trên origin/develop; Redmine chưa có ghi chú trả lời, trạng thái vẫn "Phản hồi" — không sửa thêm code

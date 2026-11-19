@@ -51,3 +51,6 @@ Vừa hoàn thành: BE B1–B11 (smoke HTTP rollback đạt), FE F1–F6 (compil
 Đang làm dở: không.
 Bước tiếp theo: user cấp 2 mã quyền ở /admin/roles rồi bấm trình duyệt; chốt 3 điểm chờ (thêm nhanh địa chỉ lưu vào KH? · mục 'YC Lắp đặt bàn giao' nhóm Tiếp nhận công việc trỏ đâu · 4 điểm BE lệch ERP); thử lại popup HĐ + Từ chối màn Giao việc khác.
 Blocked:
+
+## Fix Redmine #12234 — CSS popup Chọn hợp đồng (19/11/2026)
+- [x] Popup "Chọn hợp đồng" ở form tạo phiếu: câu rỗng dài (~870px) > khung popup lg, ô bảng `nowrap` → chữ tràn 2 bên, bảng cuộn ngang lệch, cắt tiêu đề cột. Sửa cục bộ `AssignOtherContractPickerModal.vue` (`::v-deep .dt-state-inner { white-space: normal }`), không đụng `V2BaseDataTable` dùng chung. Áp cho cả màn YC giao việc khác (cùng popup). Compile template + scss OK; chưa mở trình duyệt.

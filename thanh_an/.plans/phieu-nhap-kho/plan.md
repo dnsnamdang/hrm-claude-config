@@ -179,3 +179,36 @@ Vừa hoàn thành: 17a–17b — trả lời "PGH Hoàn thành khi nào": chỉ
 Đang làm dở: —
 Bước tiếp theo: user chốt 17c (có thêm cơ chế Chờ nhập kho → Hoàn thành, vd nút "Xác nhận đã nhập kho" ở màn hàng chờ, hay giữ nguyên); chạy `php artisan module:migrate Supply` (000003) trên môi trường khác
 Blocked: chờ quyết định 17c
+
+## Phase 9 — Làm lại Phiếu nhập kho, bỏ kiểu quản lý lô/seri của hàng hóa (user yêu cầu 19/11/2026)
+
+> Chốt 19/11/2026: (1) hàng hóa KHÔNG phân kiểu quản lý (bỏ Lô + HSD / Lô + HSD + Seri / Seri / Không quản lý) — mọi dòng PNK có cùng khung chi tiết: Số lô · NSX · HSD · SL · Mục đích · Seri, người nhập tự điền; (2) validate "tự do + vài quy tắc": lô / NSX / HSD / seri không bắt buộc; chỉ kiểm Σ SL chi tiết = SL nhập, HSD ≥ NSX, số seri ≤ SL dòng con, seri không trùng trong phiếu + không trùng seri đang có trong kho (vẫn giữ: SL nhập < SL thực nhận → lý do; > 1 mục đích → chọn mục đích; Σ theo mục đích ≤ SL mục đích; HSD hết hạn / cận date chỉ cảnh báo ở popup Duyệt); (3) duyệt ghi đủ sổ tồn + thẻ kho + seri trong kho, import seri Excel, in 01-VT, thông báo; (4) quyền tạm mở cho tất cả (công tắc config `warehouse.receipt_open_permission`, mặc định true); (5) PGH phương án A + C.
+> Code PNK cũ chưa từng commit → dựng lại theo spec, tham khảo bản ghi file trong transcript session cũ.
+
+- [x] 18a. Phục hồi code PNK cũ từ transcript (replay Write/Edit/Read + heredoc) làm bản tham khảo trong scratchpad — đủ BE (migration, entities, service, request, resource, controller) + FE (ReceiptForm, LinePanel, Serial*, rules, print, index, create/_id)
+- [x] 18b. BE migration 7 bảng (`Modules/Warehouse/Database/Migrations`, chỉ index) + config công tắc quyền + `column_customizations.warehouse_receipts` — quyền "Xem phiếu nhập kho" chèn theo tên (id 526 đã thuộc "Quản lý phương tiện")
+- [x] 18c. BE Entities + `WarehouseReceiptService` (prepare, list, show, save draft/approve, validate theo quy tắc mới, approve ghi tồn / thẻ kho / seri, delete, checkSerials, thông báo) — KHÔNG còn `StockManageType` / `manage_type`
+- [x] 18d. BE Request + Resource + Controller + routes `/v1/warehouse/receipts`
+- [x] 18e. BE hàng chờ: chỉ hiện điểm chưa có PNK chưa xóa + `is_can_create`; `PurchaseDeliveryNoteService` thông báo thủ kho khi hàng về kho; duyệt đủ → PGH 7 → 5; `DetailPurchaseDeliveryNoteResource` trả `receipt` từng điểm — điểm chỉ tính khi có SL thực nhận > 0; `receipt_state` waiting/draft/done
+- [x] 18f. Script kiểm BE trong transaction (rollback) — scratchpad `test_pnk.php`, 34/34 đạt trên PGH-2026-0005 (tạo nháp, bỏ dòng trống, seri chuẩn hóa, chặn PNK thứ 2, HSD<NSX, seri>SL, Σ≠SL, lý do thiếu, seri trùng kho, duyệt ghi tồn/thẻ kho/seri, PGH 7→5, receipt_state, xóa nháp quay lại hàng chờ)
+- [x] 18g. FE menu "Phiếu nhập kho" (`utils/MenuWarehouse.js`); `pages/warehouse/receipts/index.vue` (list V2, cột `warehouse_receipts`); hàng chờ: nút toolbar "Phiếu nhập kho" + cột Hành động "Tạo phiếu nhập kho" (`V2BaseRowActions` `to`, hiện khi `is_can_create`), `pathsToKeep` giữ bộ lọc khi sang PNK
+- [x] 18h. FE form `ReceiptForm` + panel chi tiết dòng (khung đồng nhất lô / NSX / HSD / SL / mục đích / seri), validate realtime, popup import seri Excel, xác nhận Duyệt / Xóa, rời trang chưa lưu, in 01-VT — bỏ hết `manageInfo` / `manage_type` / `isLot` (constants, LinePanel, SerialBlock, SerialImportModal, receiptRules, ReceiptForm, printReceipt); popup Duyệt đếm riêng dòng chi tiết quá HSD / cận date
+- [x] 18i. FE chi tiết PGH: `PointCard` badge Chờ / Đang / Đã nhập kho (theo `point.receipt_state`; "Chờ" chỉ khi PGH đang 7) + link mã PNK
+- [x] 18j. Compile check FE (vue-template-compiler + @babel/parser: OK toàn bộ file PNK / hàng chờ / PointCard / menu) + unit test `receiptRules` bằng Node (scratchpad `rules_test/run.mjs`, 21/21 đạt) + rà skill (không `<table>`/`text-muted`/`—` trong FE PNK, trừ bản in) + cập nhật spec §1 §2 §4 §5 §6 §8 §11 §12 và design.md theo chốt 19/11
+- [x] 18l. (user 19/11) Bảng "Hàng hóa nhập kho" ở form PNK màu khác bảng hàng màn `supply/purchase_orders/add` → đè style cục bộ (`body-class="rf-goods"`, không sửa V2BaseFormTable dùng chung) cho giống `.product-table`: kẻ dọc liền, chữ 12px / tiêu đề 11.5px, ô 4px 6px, ô nhập 28px, bỏ nền xanh dòng đang mở; xóa CSS `.rf-table` chết (màu cũ), thêm style `rf-sub` / `rf-pur` / `rf-qin` / `rf-panel`
+- [x] 18m. (user 19/11) Demo luôn có ô "Mục đích" ở khối chi tiết → LinePanel: mọi dòng chi tiết đều có ô Mục đích — 1 mục đích = ô khóa hiện "<mục đích> (đặt X)"; nhiều mục đích = select bắt buộc, option kèm "(đặt X)" (+ "còn Y" nếu giữ KH bị trần); bỏ hint "Nhập vào:" + biến thể lưới `no-pur` @khoipv
+  - Chốt 19/11 (user): giữ như vậy — 2+ mục đích mới cho chọn (chỉ trong mục đích của dòng trên ĐMH), 1 mục đích chỉ xem; không thêm ô gõ tự do, không cho đổi sang Tồn chung
+- [x] 18n. (user 19/11) Bộ E2E Playwright luồng PNK `e2e/tests/warehouse/phieu-nhap-kho.spec.js` (PGH-2026-0005 + 0004 trên stag, tạm tách mục đích dòng ĐMH 550 thành giữ KH 4 + tồn chung 6; afterAll trả nguyên trạng): hàng chờ → tạo → validate realtime (SL, lý do, HSD<NSX, cận/quá HSD, seri thừa/trùng, vượt trần giữ KH) → import seri CSV → Lưu nháp → sửa/rời trang → Duyệt (popup tóm tắt) → sổ tồn/thẻ kho/seri + PGH 7→5 → xem/in 01-VT/badge PointCard/danh sách → xóa nháp → duyệt ngay không nhập chi tiết @khoipv
+    - Kết quả 19/11: 16 bước + setup **17/17 pass, chạy 2 lần liên tiếp đều xanh** (~5 phút/lần); afterAll trả DB sạch (PGH 460/465 về 7, 0 phiếu / sổ tồn / thẻ kho / seri tồn, ĐMH 550 về giữ KH 10). Không phát hiện lỗi app. Sửa trong test: selector link hàng chờ (`title` nằm ở span bọc của V2BaseRowActions), so chuỗi tiếng Việt qua `HEX()` vì mysql client mặc định cp850 đọc ra `?` (DB lưu đúng UTF-8), badge dòng 2 = "1 lô" (dòng chi tiết không ghi số lô không tính lô), màn xem thu gọn chi tiết sẵn → bấm "Mở tất cả chi tiết". Chạy: `cd e2e; .\pw.cmd test tests/warehouse/phieu-nhap-kho.spec.js`
+    - Chạy có giao diện 19/11 (`$env:SLOW_MO=400; .\pw.cmd test tests/warehouse/phieu-nhap-kho.spec.js --headed`): **17/17 pass (5,1 phút)**, DB sạch. Đã sửa trong test cho bản headed:
+        - Bước In: chặn `win.print()` của tab in. Nếu không chặn, hộp thoại in thật làm treo trang.
+        - `beforeAll` ghi snapshot ra `e2e/.tmp/` (đã gitignore). Lượt sau tự trả DB nếu lượt trước bị ngắt giữa chừng.
+        - Nới thời gian chờ: 180s mỗi bước, chờ thông báo lưu / duyệt / xóa tối đa 60s. API local có lúc duyệt mất 18,7s, check-serials mất 13s.
+- [ ] 18k. Test tay trên trình duyệt (user tự test): hàng chờ → Tạo PNK → nhập chi tiết / seri / import Excel → Lưu nháp → Duyệt → kiểm PGH 7→5 + badge PointCard + in 01-VT
+
+### Checkpoint — 19/11/2026 12:09
+Vừa hoàn thành: 18g–18j — FE PNK bỏ kiểu quản lý, hàng chờ + menu + PointCard, compile + unit test rules, cập nhật spec / design
+Đang làm dở: không
+Bước tiếp theo: user test tay luồng 18k trên trình duyệt; lỗi phát sinh → sửa theo luật §8 spec
+Blocked:
+

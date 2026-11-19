@@ -5,7 +5,7 @@
 > Spec chi tiết: [docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md](../../docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md)
 
 ## Mục tiêu
-Sau khi phiếu giao hàng hoàn thành và kho đã nhận hàng, thủ kho của kho nhận lập **phiếu nhập kho**: kiểm đếm SL, nhập lô / HSD / seri, lưu nháp, duyệt → ghi sổ tồn + thẻ kho + thông báo.
+Sau khi phiếu giao hàng hoàn thành và kho đã nhận hàng, thủ kho của kho nhận lập **phiếu nhập kho**: kiểm đếm SL, tự nhập chi tiết (Số lô · NSX · HSD · SL · Mục đích · Seri), lưu nháp, duyệt → ghi sổ tồn + thẻ kho + thông báo.
 
 ## Scope
 - Màn **PGH chờ nhập kho** `/warehouse/receipt_queue`
@@ -14,9 +14,10 @@ Sau khi phiếu giao hàng hoàn thành và kho đã nhận hàng, thủ kho c�
 - Thông báo thủ kho khi PGH hoàn thành có điểm về kho; thông báo khi duyệt PNK
 
 ## Quyết định lớn
-- Kiểu quản lý lô/seri của hàng hóa (chốt 09/11/2026): cột `products.stock_manage_type`, chọn bắt buộc ở màn Quản lý hàng hóa (mặc định Không quản lý, chỉ hàng hóa thường), khóa đổi khi đã có PNK đã duyệt; danh sách hàng hóa có cột + lọc + Excel. `StockManageType::forProduct()` đọc cột này; dòng PNK snapshot `manage_type`.
-- Quyền tạm mở (09/11/2026): config `warehouse.receipt_open_permission` = true → ai cũng làm được mọi thao tác PNK.
-- Quyền mới `Xem phiếu nhập kho` (id 526) xem tất cả; thủ kho xem kho mình; Tạo / Sửa / Duyệt / Xóa nháp chỉ thủ kho của kho nhập. Không phân quyền theo cấp.
+- **Bỏ kiểu quản lý lô / seri (chốt 19/11/2026)**: hàng hóa không phân Lô+HSD / Lô+HSD+Seri / Seri nữa (không cột `stock_manage_type`, không snapshot `manage_type`). Mọi dòng cùng 1 khối chi tiết, người dùng tự nhập.
+- **Validate tự do + vài quy tắc (19/11/2026)**: Lô / NSX / HSD / Seri không bắt buộc; Σ SL chi tiết = SL nhập; HSD ≥ NSX; số seri ≤ SL dòng; seri không trùng trong phiếu / không đã có trong kho; SL nhập < SL thực nhận cần lý do (Khác cần mô tả); > 1 mục đích thì mỗi dòng chọn mục đích, Σ theo mục đích giữ KH ≤ SL còn được nhập; SL nguyên; ≥ 1 dòng SL > 0; ngày nhập ≤ hôm nay. HSD đã qua / cận date (90 ngày) chỉ cảnh báo ở popup Duyệt.
+- Quyền tạm mở (chốt lại 19/11/2026): config `warehouse.receipt_open_permission` = true → ai cũng làm được mọi thao tác PNK.
+- Quyền mới `Xem phiếu nhập kho` (id 527 trên DB dev) xem tất cả; thủ kho xem kho mình; Tạo / Sửa / Duyệt / Xóa nháp chỉ thủ kho của kho nhập. Không phân quyền theo cấp.
 - Xóa: chỉ phiếu nháp (status 2), thủ kho kho nhập; PGH quay về hàng chờ.
 - Duyệt: ghi sổ tồn theo kho / hàng / lô / HSD / mục đích giữ hàng; seri trong kho; thẻ kho. Không hủy duyệt.
 - Trạng thái PGH (Phase 3, phương án A + C): Hoàn thành giao hàng có điểm về kho → PGH **Chờ nhập kho** (7); mọi điểm về kho có PNK **đã duyệt** → PGH tự **Hoàn thành** (5). Chi tiết PGH hiện trạng thái nhập kho của từng điểm (Chờ / Đang / Đã nhập kho, suy ra từ PNK) + link PNK. Dữ liệu cũ: migration `Supply/2026_11_07_000003`.

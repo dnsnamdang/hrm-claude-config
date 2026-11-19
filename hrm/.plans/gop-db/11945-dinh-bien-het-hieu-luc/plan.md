@@ -23,4 +23,6 @@ Nhánh: `gop_db` (worktree `worktrees/gop_db-api` + `gop_db-client`), chưa comm
 - [ ] Chưa test: file Excel xuất ra, bản In danh sách.
 - [x] 02/11/2026 Đã commit + push `gop_db` (hrm-api `7974adf1c`, hrm-client `6228734f3`). Còn: `migrate` + `route:cache` khi deploy PROD.
 
+- [x] 19/11/2026 (@khoipv) Được nhờ "fix lại" — soát lại: commit `7974adf1c` / `6228734f3` đã có trên `gop_db` (khớp origin) ở cả 2 repo; Excel export gọi lại `index()` → có `expire_status`, blade in đủ 2 trạng thái; bản In danh sách `decision.js` có `getStatusText` theo `expire_status`. Không sửa thêm code. Redmine vẫn để "Mới" → lỗi trên hrm.eteksofts.com là do PROD chưa deploy bản này (+ `migrate` index).
+
 **Trạng thái (02/11/2026): CODE XONG, CHỜ TEST** — đã push `gop_db`; chưa test Excel/In.

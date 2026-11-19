@@ -5,6 +5,13 @@
 
 ## Đang làm
 
+- **Check: HĐ đã duyệt của Trần Thị Loan không có nút Kết xuất (`/contract/contract`)** — @khoipv — Bắt đầu 19/11/2026 — Nút hiện theo `Contract::canRenderSupply()`: status 3/11 + loại Hợp đồng + chưa từng kết xuất + **người đăng nhập là người lập (`created_by`)** + có ngày ký + **đã tới ngày ký**. Không xét quyền. Đã check demo: 22 HĐ của Loan có nút; HD-655/649/640 ký 23/11 nên chưa hiện; HĐ do người khác lập không có nút → không phải bug.
+  - Plan: [.plans/check-nut-ket-xuat-hd-tran-thi-loan/plan.md](check-nut-ket-xuat-hd-tran-thi-loan/plan.md)
+
+- **Phiếu nhập kho — làm lại (Phase 9, theo `demo-phieu-nhap-kho.html`, bỏ kiểu quản lý lô/seri của hàng hóa)** — @khoipv — Bắt đầu 19/11/2026 — Dựng lại PNK đã gỡ ở Phase 7. Chốt 19/11: hàng hóa KHÔNG còn kiểu quản lý; mọi dòng nhập tự điền Số lô / NSX / HSD / Seri (không bắt buộc) — chỉ kiểm Σ chi tiết = SL nhập, HSD ≥ NSX, số seri ≤ SL dòng con, seri không trùng phiếu / kho. Duyệt ghi đủ sổ tồn + thẻ kho + seri trong kho; quyền tạm mở cho tất cả (công tắc config); PGH phương án A + C (duyệt đủ PNK → Hoàn thành, thẻ điểm hiện trạng thái nhập kho + link PNK).
+  - Plan: [.plans/phieu-nhap-kho/plan.md](phieu-nhap-kho/plan.md) (Phase 9) · Spec: [docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md](../docs/superpowers/specs/2026-11-07-phieu-nhap-kho-design.md)
+  - Checkpoint 19/11/2026 12:09: BE + FE xong (18a–18j) — BE test rollback 34/34, FE compile OK, unit test `receiptRules` 21/21. Bước tiếp theo: user test tay luồng hàng chờ → tạo / duyệt PNK → PGH 7→5 (18k).
+
 - **DS phiếu công tác (`/timesheet/business_trip_assigns`) — thêm cột Nội dung công tác, Vị trí chấm công** — @khoipv — Bắt đầu 18/11/2026 — Chỉ sửa FE (BE đã trả `description` + `timesheet_info`). Vị trí chấm công = gom `place` mọi lượt chấm của phiếu, bỏ trùng, mỗi vị trí 1 dòng. Thêm nút Xuất excel (ExcelJS phía FE như BC tổng hợp công tác, theo bộ lọc hiện tại, 1 dòng/phiếu). Xuất chậm (200 phiếu/12–28 s) → thêm API `GET timesheet/business_trip_assigns/export` (dùng chung query lọc + quyền với `index` qua `buildListQuery`, gom dữ liệu theo lô): 5500 phiếu local còn 18 query / ~4–5 s. Đã push `master` (API `b30bd226`, Client `fedb604b`); deploy API + client cùng lúc, không migration. Thêm cột **Phương tiện** (danh sách + Excel; cùng cách gom như ô "Phương tiện sử dụng" ở chi tiết phiếu) ; bảng có thanh cuộn ngang (cột độ rộng px, ghi đè overflow-x trong màn), viền ô, cố định cột STT + Mã phiếu — đã push `master` (API `8071f0ad`, Client `ac02839e`). Chờ user test UI + file xuất.
   - Plan: [.plans/ds-phieu-cong-tac-them-cot/plan.md](ds-phieu-cong-tac-them-cot/plan.md)
 

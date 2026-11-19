@@ -294,3 +294,34 @@ Vừa hoàn thành: bộ tài liệu SRS / HDSD / Testcase / Đối chiếu chec
 Đang làm dở:
 Bước tiếp theo: user xem tài liệu; (nếu cần) làm bộ tài liệu lối vào "Phiếu giao việc" (`type=all`) dùng chung thư mục, tên file riêng
 Blocked:
+
+## Tài liệu SRS / HDSD / Testcase — Phiếu giao việc (19/11/2026) @khoipv
+Màn = lối vào `?type=all` (CSKH sau bán › Giao việc › "Phiếu giao việc") + màn Tạo phiếu giao việc (mở từ Phiếu chờ giao việc / YC lắp đặt / YC giao
+việc khác). Bộ "được giao" (18/11) giữ nguyên, không sửa / không chạy lại.
+- [x] Đọc code hiện hành (develop): `WrAssignTaskService` (applyScope nhánh all, filteredQuery, actionFlags, canDelete, canView, delete, totals),
+      `WrAssignTaskSourceService` (quyền theo loại nguồn), `WrAssignTaskStoreService` + `WrAssignTaskStoreRequest`, `WrAssignTaskRemainingService` (SL còn),
+      `CheckDueConfig` (chặn trưởng phòng có hàng quá hạn), Catalog quyền; FE `index.vue`, `create.vue`, `_id/index.vue`, `WrAssignTaskForm.vue` + 8 bảng con,
+      `wrAssignTaskCalc.js`, `unsavedChangesMixin`
+- [x] Ảnh dev-hrm (DNS Admin, chỉ đọc, chặn mọi yêu cầu ghi — 0 yêu cầu ghi ở 4 lượt chạy `pgv_shots/_capture/{probe,doisoat,capture}.js`); nút Xóa
+      (TPE.PGV.2026018709) và form Tạo từ phiếu bảo hành (TPE.PBH.2026.008226) là dữ liệu THẬT. GIẢ trên trình duyệt: form Tạo từ hợp đồng / YC lắp đặt /
+      YC giao việc khác (`41_create_hd`, `41b`, `41c` — DNS Admin không thuộc phòng tiếp nhận ⇒ dữ liệu nguồn giả bằng chi tiết phiếu thật 18712 / 18704 /
+      18717), ảnh lỗi `42_validate` (gán câu lỗi đúng code) và hộp `43_confirm_save` (gọi hộp xác nhận đúng câu code rồi Hủy). Không bấm Lưu và duyệt / Xóa /
+      Lưu cấu hình. Đã xoá file lưu đăng nhập `.dev_state.json`
+- [x] Đối soát (dev, chỉ GET): DNS Admin (Tổng công ty) 9.876 phiếu; lọc công ty 1 = 9.096, + phòng 51 = 3.026. SL còn giao phiếu bảo hành: 8226 / 8106
+      (0 PGV) SL còn 1 = SL kỹ thuật 1 ✔; 8197 / 8062 có 1 PGV "Đã duyệt kết quả" SL 1 mà SL còn vẫn 1 — công thức code (y ERP) KHÔNG phải "SL nguồn − Σ PGV
+      không Hủy" mà trừ theo tiến độ đã duyệt / phiếu hoàn thành 100% (ghi ở SRS BR-03)
+- [x] `gen_srs.py` → `SRS - Phiếu giao việc.docx`: 12 chức năng, 101 trang, selfcheck khớp mẫu; metrics ui 15.0 · ev 4.8 · evch 1083 · intro 2027; Phần 5
+      bảng 4 cột 10 màn; Mục lục ngắt trang + căn giữa
+- [x] `gen_hdsd.py` → `HDSD_Phieu giao viec.docx`: 11 phần, 18 trang; trim_icon `Cần cắt 0/61`
+- [x] `gen_testcase.py` → `testcase.xlsx`: loại `phieu`, 158 TC, 11 nhóm, P0 68 (43%), check_tc 0 lỗi
+- [x] `gen_checklist.py` → `Đối chiếu checklist.xlsx`: Testcase 200 có TC / 124 N/A; SRS 118 có mục / 45 N/A
+- Lệch design / nghi lỗi (KHÔNG sửa, báo user): (1) quyền "Nhập kết quả thực hiện" chỉ khai cho ERP ⇒ luôn false ở HRM (ảnh hưởng nhánh phạm vi
+  "không quyền Xem" và nút Nhập kết quả của người không thực hiện); (2) docblock service ghi "Super admin = mọi quyền" — không còn đặc cách;
+  (3) BH: phiếu giao việc đã duyệt kết quả nhưng không có tiến độ duyệt / không hoàn thành 100% vẫn để SL còn = SL kỹ thuật (8197, 8062 — y ERP);
+  (4) Tổng công định mức = 0 hiện ô trống (bản in 0.00); (5) design.md ghi "Màn chưa port (Nhập KQ, YC lắp đặt, YC GVK) → ERP" — nay đã HRM
+
+### Checkpoint — 19/11/2026 11:30
+Vừa hoàn thành: bộ tài liệu SRS / HDSD / Testcase / Đối chiếu checklist màn Phiếu giao việc (`?type=all` + Tạo phiếu giao việc)
+Đang làm dở:
+Bước tiếp theo: user xem tài liệu
+Blocked:
