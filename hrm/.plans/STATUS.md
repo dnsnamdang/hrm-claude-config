@@ -8,7 +8,6 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
-<<<<<<< HEAD
 - assign / **YCCH (Phiếu YC chuyển hàng) điều chuyển chi nhánh — trạng thái theo ĐNXK/PXK như ERP** → @nguyentrancu97 → `.plans/ycch-trang-thai-dieu-chuyen-cn/plan.md`
   20/11/2026: đợt 1 (YCCH 5 Đang xuất kho / 6 Đã xuất kho) ĐÃ push develop 5205e0758 + gop_db 24e2d357e. Đợt 2 thêm trạng thái 14 "Đã đề nghị" khi gửi ĐNXK: HRM ĐÃ push develop `3f3486f2d` + gop_db `6ff3be35c`; ERP ĐÃ push develop_02 `a5b327111d` (CHƯA gop_db ERP). Chờ user: có update dữ liệu lệch (18 hrm_erp_test / 13 hrm_erp_gop) lên 14 không.
 
@@ -27,9 +26,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 - finance / **Phiếu yêu cầu hãng bảo hành (ERP FirmWarrantyRequest) — port ERP → HRM** → @nguyentrancu97 → `.plans/yc-hang-bao-hanh/design.md`
   20/11/2026: BRAINSTORM xong, chốt D1 (DS chỉ phiếu của người lập, không gate quyền) · D2 (ERP create/edit giữ mở song song) · D3 (chuông ERP→HRM khi XNK Không duyệt). Chờ duyệt tài liệu thiết kế → lập plan. Chưa có code.
 
-=======
 - app / **Nhận chia sẻ từ app khác vào TPE_APP (như Zalo)** → @cuong61n → **.plans/app-share-extension/design.md** · spec `docs/superpowers/specs/2026-11-20-app-share-extension-design.md` · THIẾT KẾ chờ duyệt (20/11/2026), chưa code; iOS + Android, đợt 1 TpeProd
->>>>>>> db98b8f (Cập nhật công việc ngày 20/11/2026 — @cuong61n)
 - assign / **AGENT + CHAT — TPE SMART AGENT (trợ lý AI) + Chat (Nhóm trao đổi, 1–1)** → @namdangit → **.plans/agent-chat/README.md** (đọc đầu phiên: bản đồ tài liệu, môi trường, trạng thái) · Agent: `agent/plan.md` · Chat: `chat/gd*/plan.md` · spec Agent `docs/superpowers/specs/agent-chat/2026-11-11-tpe-smart-agent-design.md` · spec Chat `docs/superpowers/specs/gop-db/2026-11-02-phan-he-cong-viec-design.md` §11
   App mobile (TPE_APP) 18/11/2026: Chat + Agent XONG, ĐÃ merge `develop` a46dcd4 (chưa phát hành store, 609 test); api `gop_db` 50c02c5d8 + client `gop_db` 128658916 ĐÃ DEPLOY prod TPE. Tổng kết: `.plans/agent-chat/app-mobile/tong-ket-app.md`.
   Gộp 1 phiên từ 13/11/2026; tài liệu để ngoài `gop-db/` (gop-db chỉ cho chuyển ERP → HRM), code vẫn nhánh tách từ `origin/gop_db`.
