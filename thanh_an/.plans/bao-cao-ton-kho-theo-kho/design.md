@@ -17,7 +17,9 @@ Xem tồn **hiện tại** từng mã hàng trên từng kho → bung lô / HSD 
 | Dữ liệu | Hướng **A**: đọc thẳng `stock_balances`, không bảng tổng hợp | user |
 | Seri | Thêm `stock_serials.balance_id` (HSD trống so `NULL = NULL` không khớp, seri thiếu HĐ) + bù dữ liệu | user |
 | Quyền | Như Cung ứng: quyền "Xem báo cáo tồn kho" = mọi kho, không phân cấp; tạm mở bằng config như PNK | user / call |
-| Lỗi KH | Mục đích giữ KH thiếu `customer_id` → lấy từ `contracts.customer_id` (code + bù dữ liệu) | call |
+| Lỗi KH | Mục đích giữ KH thiếu `customer_id` → dò: HĐ bán → tên khớp đúng 1 KH → không ra thì chặn Duyệt PNK (code + bù dữ liệu) | call (user để AI chọn) |
+| ĐVT | Sổ tồn ghi theo **ĐVT cơ bản**, hệ số = `order_qty_base / order_qty` của đơn mua; báo cáo hiện ĐVT cơ bản | call (user để AI chọn) |
+| Lọc | Kho + KH cắt lô; các ô khác chỉ chọn mã, mã hiện thì đủ lô (như demo) | call (user để AI chọn) |
 | Bảng | `V2BaseDataTable` + `cellSpan` + `row-expand`, header 1 tầng, không sửa base | call |
 | Excel | 1 dòng / lô, seri nối chuỗi | call |
 | Cấu hình cột | Cột mới `column_customizations.warehouse_stock_report` | call — chờ user |
