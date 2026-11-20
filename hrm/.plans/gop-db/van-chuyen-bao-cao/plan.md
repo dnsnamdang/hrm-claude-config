@@ -125,3 +125,6 @@
 - [x] 17/11/2026 — Fix phản hồi #12169: nút cấu hình cột chuyển lên ĐẦU cụm nút (trước "In báo cáo", tách khỏi "Cài đặt bộ lọc") ở 3 khuôn báo cáo vận chuyển (bốc xếp, vận chuyển, chi phí lái xe). Báo cáo sale/assign có cụm nút riêng trên thẻ bảng, nút đã ngoài cùng nên giữ.
 - [x] 17/11/2026 — Fix phản hồi #12085 (BC chi tiết chuyến xe): các khối tổng hợp giãn lấp đầy hàng, mép phải thẳng nhau; khối "Đối tượng chịu phí" phủ kín phần còn lại. Kiểm 1366px kỳ năm 2026 (2 hàng kín bề ngang) và 1600px (3 khối 1 hàng).
 - [x] 17/11/2026 — Commit chung phản hồi #12169 #12149 #12133 #12111 #12085: client `ecf4a74d1` (develop, đã push; đợt này chỉ FE).
+
+## Ngày 20/11/2026 (@junfoke)
+- [x] 20/11/2026 — Lỗi #12237 (áp sang báo cáo vận chuyển): đổi STT số La Mã thành 1 / 1.1 / 1.1.1 + in đậm dòng nhóm (cấp 1: 700, cấp 2: 600) ở `ArrangeTable` (3 BC bốc xếp dùng chung), `TransportReportTable` (cây 3 cấp các BC chuyến xe), `DriverCostTable`; Excel chi tiết chuyến xe (`tripDetailExcel.js`) đổi STT khớp màn. Bản in / Excel BE không dùng La Mã nên không sửa. Client `6b01afddc` (develop, đã push, chung commit #12235–#12237).

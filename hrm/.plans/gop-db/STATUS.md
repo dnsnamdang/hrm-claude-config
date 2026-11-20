@@ -19,6 +19,27 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## #12091 + #11888 Báo cáo thị trường theo Khu vực kinh doanh (8 báo cáo CSKH trước bán) — ĐANG LÀM (2026-11-20, @junfoke)
+→ .plans/gop-db/bao-cao-thi-truong-theo-kvkd/plan.md (design.md + mockup #11888 cùng thư mục)
+Trạng thái: CODE XONG 8 báo cáo (20/11) ở repo chính nhánh `task_12091` (api + client), CHƯA commit; Playwright + PHPUnit đã kiểm. Còn: Excel/in KVKD cho Tổng hợp CSKH & Phát triển KH (chờ user), review, dọn dữ liệu thử local.
+⚠️ GOTCHA: tỉnh lấy theo KVKD khi KH thuộc KVKD (1.580 KH prod lệch); 2 service còn đọc DB ERP cũ (sửa trong task); deploy cần migrate + chạy BackfillMeetingProvinceSeeder.
+Spec: docs/superpowers/specs/gop-db/2026-11-20-bao-cao-thi-truong-theo-kvkd-design.md | Tóm tắt: .plans/gop-db/bao-cao-thi-truong-theo-kvkd/design.md
+
+## #12219 Phường/Xã thêm Khu vực kinh doanh (đồng bộ 2 chiều với màn KVKD) — CODE XONG, đã test giao diện, CHƯA commit (2026-11-20, @junfoke)
+Nhánh `task_12219` (worktree `.worktrees/gop_db` api + client). Tài liệu: `.plans/gop-db/business-areas/plan.md` (Ngày 20/11).
+
+## #12245 – #12249 Phản hồi QA 2 BC so sánh bán hàng (khu vực ↔ thời gian) — ĐANG LÀM (2026-11-20, @junfoke)
+Chốt giữ cách tính HRM (ERP tính sai), phản hồi QA; đang sửa giao diện / bộ lọc. Tài liệu: `.plans/gop-db/bc-so-sanh-bh-khu-vuc-theo-thoi-gian/plan.md`.
+
+## #12225 Dự án TKT — thanh Tiến trình nội bộ dự án — ĐÃ PUSH gop_db (api `2421c6b0a`, client `658aab752`) + develop (api `2ffb01127`, client `ccc9ffa71`) (2026-11-20, @junfoke)
+Tài liệu: `.plans/gop-db/12225-tien-trinh-du-an-tkt/plan.md`.
+## #12244 Xuất Excel 4 danh mục Phòng ban / Bộ phận / Chức vụ / Chức danh — ĐÃ PUSH gop_db (api `ff636b057`, client `332c30b8d`) (2026-11-20, @junfoke)
+Tài liệu: `.plans/gop-db/catalog-import-export/plan.md` (Ngày 20/11).
+## #12235 #12236 #12237 BC phân công phòng phụ trách thương hiệu + STT 1.1 báo cáo vận chuyển — ĐÃ PUSH develop (api `9b8766e05`, client `6b01afddc`, `0bee2c6ac`) (2026-11-20, @junfoke)
+Tài liệu: `.plans/gop-db/bc-phan-cong-phong-thuong-hieu/plan.md` · `.plans/gop-db/van-chuyen-bao-cao/plan.md`.
+## Làm thêm: chức vụ bị cấm vẫn lập được phiếu PHÂN CÔNG cho cấp dưới — gop_db api `f69567f4f` (2026-11-20, @junfoke)
+Tài liệu: `.plans/gop-db/ho-tro-van-hanh/plan.md` (Ngày 20/11).
+
 ## #12180 Báo cáo tồn hàng nhập xuất thẳng theo nhân viên — đổi sang khuôn báo cáo (rsum) + khối thống kê + popup chi tiết — ĐANG LÀM (2026-11-17, @khoipv)
 - Chốt 17/11: thống kê chỉ ĐẾM (Phòng ban · Nhân viên · Mặt hàng + khối theo phòng ban); bấm SL tồn → popup DS hàng đang giữ; SL tồn ngay sau Tên hàng.
 - Plan: `.plans/gop-db/danh-sach-hang-xuat-nhap-thang/plan.md` (Phase 6)

@@ -27,3 +27,6 @@ Vừa hoàn thành: push nhánh feat + merge `develop` (api `370229d99`, client 
 (worktree `develop` local có commit chưa push + file sửa dở của người khác, không đụng). Conflict `sale-hub.js` giữ cả 2 link.
 Bước tiếp theo: user check trên dev; deploy `permission:catalog-sync` + cấp mã ở `/admin/roles`.
 Blocked:
+
+## Ngày 20/11/2026 (@junfoke)
+- [ ] 20/11/2026 — Đang xử lý lỗi QA #12245 – #12249 (chung với plan `bc-so-sanh-bh-khu-vuc-theo-thoi-gian`). Riêng màn này: SL KH và SL HĐ đã khớp ERP, chỉ cột Giá trị lệch vì ERP join dòng quyết toán làm nhân doanh thu nhiều lần, UNION làm rơi dòng trùng và đảo biến phụ lục ⇒ user chốt giữ cách tính HRM, phản hồi QA kèm số đối chiếu. Phần giao diện / bộ lọc đang sửa, chưa commit.
