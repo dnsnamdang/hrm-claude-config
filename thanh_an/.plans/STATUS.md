@@ -5,6 +5,12 @@
 
 ## Đang làm
 
+- **Báo cáo tồn kho hàng hóa theo kho (theo `bc_ton_kho_theo_kho.html`)** — @khoipv — Bắt đầu 20/11/2026 — Đang brainstorming. Báo cáo đọc sổ tồn do PNK ghi khi duyệt: mỗi mã hàng 1 dòng tổng → tồn từng kho → chi tiết lô / seri (NSX, HSD, mục đích giữ KH), cảnh báo cận date / hết hạn, KPI, in, xuất Excel.
+  - Plan: [.plans/bao-cao-ton-kho-theo-kho/plan.md](bao-cao-ton-kho-theo-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-20-bao-cao-ton-kho-theo-kho-design.md](../docs/superpowers/specs/2026-11-20-bao-cao-ton-kho-theo-kho-design.md)
+
+- **Fix: Lập đơn mua hàng — đã nhập Đơn giá có VAT vẫn báo "Đơn giá phải lớn hơn 0."** — @khoipv — Bắt đầu 20/11/2026 — Dòng hàng HĐ bán chưa đề xuất (1 khách, `buyQty = 0`, SL mua gõ ở ô cấp dòng): `syncRowPrice` thoát sớm khi Σ buyQty = 0 nên `price` cấp dòng kẹt 0 → BE rule `gt:0`. Sửa FE: 1 khách → giá dòng = giá khách (khớp BE `lineTotals`). Bổ sung: Địa chỉ lấy hàng (Tự lấy tại NCC) bám theo ô Địa chỉ NCC kể cả khi gõ tay, sửa riêng thì giữ. Chờ user test tay.
+  - Plan: [.plans/don-mua-hang/plan.md](don-mua-hang/plan.md) — Phase 9, Task 41
+
 - **Check: HĐ đã duyệt của Trần Thị Loan không có nút Kết xuất (`/contract/contract`)** — @khoipv — Bắt đầu 19/11/2026 — Nút hiện theo `Contract::canRenderSupply()`: status 3/11 + loại Hợp đồng + chưa từng kết xuất + **người đăng nhập là người lập (`created_by`)** + có ngày ký + **đã tới ngày ký**. Không xét quyền. Đã check demo: 22 HĐ của Loan có nút; HD-655/649/640 ký 23/11 nên chưa hiện; HĐ do người khác lập không có nút → không phải bug.
   - Plan: [.plans/check-nut-ket-xuat-hd-tran-thi-loan/plan.md](check-nut-ket-xuat-hd-tran-thi-loan/plan.md)
 
@@ -32,7 +38,8 @@
 
 ## Tạm dừng
 
-_(chưa có)_
+- **Fix: Thêm ngày nghỉ lễ báo "Tạo loại nghỉ thất bại", gửi `group_permission_ids` toàn null** — @khoipv — Bắt đầu 20/11/2026 — Gốc: `HolidayService::save` đọc `$attributes['description']` khi bỏ trống Ghi chú → Undefined index, bị catch nuốt (không log). Kéo theo: `holiday-modal.vue:135` ghi đè v-model multiselect bằng mảng id → Lưu lần 2 gửi null. User tự sửa sau.
+  - Plan: [.plans/fix-them-ngay-nghi-le-loi/plan.md](fix-them-ngay-nghi-le-loi/plan.md)
 
 ## Hoàn thành (3 entry gần nhất)
 - **Fix: Tạo/Sửa HĐLĐ — lỗi 422 chỉ hiện ở vài trường** — @khoipv — Hoàn thành 2026-11-13 — Bắt đầu 13/11/2026 — FE chỉ đọc lỗi server của `contract_number`; watcher deep `form` xoá sạch lỗi khi đổi bất kỳ ô nào; lỗi tab "Mẫu in" bị khuất. Đã sửa `EmploymentContract.vue` (đủ 10 trường, xoá lỗi theo từng ô, tự nhảy tab + tô đỏ tab có lỗi) + `_id/edit.vue`. Commit `982bfffd` đã push `origin/master`.

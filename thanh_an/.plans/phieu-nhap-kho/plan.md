@@ -204,6 +204,13 @@ Blocked: chờ quyết định 17c
         - Bước In: chặn `win.print()` của tab in. Nếu không chặn, hộp thoại in thật làm treo trang.
         - `beforeAll` ghi snapshot ra `e2e/.tmp/` (đã gitignore). Lượt sau tự trả DB nếu lượt trước bị ngắt giữa chừng.
         - Nới thời gian chờ: 180s mỗi bước, chờ thông báo lưu / duyệt / xóa tối đa 60s. API local có lúc duyệt mất 18,7s, check-serials mất 13s.
+- [x] 18o. (user 20/11) Bỏ dải tóm tắt trên bảng hàng hóa form PNK ("Dòng hàng · Đủ thông tin · Tổng SL nhập kho · Số lô · Số seri") — xóa template + CSS `.sum-strip` + computed `okCount` / `totalLots` / `totalSeris` (giữ `totalQtyIn` cho popup Duyệt); bỏ 2 chỗ assert `.sum-strip` trong e2e @khoipv
+- [x] 18p. (user 20/11) Bỏ banner "Phiếu đang nhập dở — lưu nháp lần cuối … / Nhập tiếp phần còn thiếu…" ở màn SỬA phiếu nháp (`ReceiptForm.vue`, nhánh `editable` để rỗng giống nhánh tạo mới). Màn XEM phiếu nháp vẫn giữ banner "Bấm Sửa để nhập tiếp…"; e2e bước 9 đổi thành assert không có banner @khoipv
+- [x] 18q. (user 20/11) Lưu nháp xong (cả tạo mới lẫn sửa) → về danh sách `/warehouse/receipts` (trước: tạo mới sang /edit, sửa thì ở lại). Duyệt nhập kho vẫn sang màn xem phiếu. `ReceiptForm.vue` save(); e2e bước 8 / 9 / 15 đổi theo @khoipv
+- [x] 18r. (user 20/11) Tạm bỏ Import Excel seri: hằng `SERIAL_IMPORT_ENABLED = false` (`constants.js`) ẩn nút ở `SerialBlock.vue`; giữ nguyên `SerialImportModal` + `openImport` / `applyImport` để bật lại. e2e bước 7 đổi thành kiểm nút ẩn + nhập tay 4 seri @khoipv
+- [x] 18s. (user 20/11) Bỏ HẾT banner trạng thái đầu form PNK (Đã nhập kho lúc… / Bạn chỉ xem… / Phiếu đang nhập dở… ở màn xem) — `ReceiptForm.vue` chỉ còn banner lỗi "Không mở được phiếu nhập kho". e2e bước 11 / 12 / 16 đổi assert thành không có banner @khoipv
+- [x] 18t. (user 20/11) Tạm bỏ chức năng In PNK: hằng `PRINT_ENABLED = false` (`constants.js`) ẩn nút "In" ở `ReceiptForm.vue`; giữ nguyên `printReceipt.js` + method `print()` để bật lại. e2e bước 12 đổi thành kiểm nút In ẩn @khoipv
+- [x] 18u. (user 20/11) Fix "Ngày về kho" hiện "00:00": PGH chỉ nhập NGÀY giao/nhận (`delivered_at` lưu 00:00:00) nhưng BE format `d/m/Y H:i` → đổi `d/m/Y` ở `ReceiptQueueService` (hàng chờ + xuất Excel) và `WarehouseReceiptService` (ô Ngày về kho form PNK). `printReceipt.js` cắt theo dấu cách nên không ảnh hưởng @khoipv
 - [ ] 18k. Test tay trên trình duyệt (user tự test): hàng chờ → Tạo PNK → nhập chi tiết / seri / import Excel → Lưu nháp → Duyệt → kiểm PGH 7→5 + badge PointCard + in 01-VT
 
 ### Checkpoint — 19/11/2026 12:09

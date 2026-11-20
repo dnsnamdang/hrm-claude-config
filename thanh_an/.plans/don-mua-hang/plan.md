@@ -154,6 +154,58 @@
   - User revert Task 38 (soft badge), yêu cầu dùng đúng style pill pastel của danh sách HĐ bán.
   - FE `index.vue`: dùng component dùng chung `BaseStatusColor` (:status + :colorMap) thay `b-badge`. colorMap map 5 trạng thái sang class pill giống contract: 1 Nháp→pj-status-blue (giống "Đang tạo"), 2 Chờ duyệt→pj-status-yellow, 3 Đã duyệt→pj-status-green, 4 Từ chối→pj-status-red, 5 Hủy→pj-status-rose. Không đổi BE, không sửa component dùng chung.
 
+### Phase 9 — Fix sau go-live
+- [x] Task 41 — (user 20/11/2026) Lập đơn mua: đã nhập Đơn giá có VAT vẫn báo "Đơn giá phải lớn hơn 0." @khoipv
+  - Nguyên nhân: BE `StorePurchaseOrderRequest` rule `products.*.price` → `gt:0` (giá CẤP DÒNG). Dòng chọn từ popup thuộc nhóm **hàng HĐ bán chưa đề xuất** (`GoodsPickerModal::buildExtraCandidates`): `purposes = [{ customer, price: 0, buyQty: 0, qty: null }]`. Có 1 khách → ô giá theo khách → `onCustomerPriceInput` ghi `purposes[].price` rồi gọi `syncRowPrice(p)`; hàm này tính bình quân theo Σ `buyQty`, mà SL mua của dòng gõ ở ô cấp dòng (`order_qty`), `buyQty` vẫn 0 → `if (!sumQty) return` → `p.price` kẹt 0. Màn vẫn hiện đúng giá + thành tiền nhưng payload gửi `price = 0`. BE `CalculatesPurchaseLineTotals::lineTotals` (0–1 khách → giá dòng = giá khách đó) — FE chưa khớp.
+  - FE `ProductsTab.vue::syncRowPrice`: dòng đúng 1 khách → `p.price` = giá khách đó (+ `price_base` theo mốc của phiếu), khớp BE `lineTotals`. Dòng nhiều khách giữ bình quân như cũ.
+- [ ] Task 41b — User test tay: chọn hàng HĐ bán chưa đề xuất → nhập SL mua + đơn giá → Lưu không còn báo lỗi; dòng nhiều khách vẫn tính bình quân như cũ
+- [x] Task 42 — (user 20/11/2026) Cty tự lấy hàng tại NCC: ô "Địa chỉ lấy hàng" mặc định = địa chỉ NCC, sửa được @khoipv
+  - Đã có sẵn: chọn NCC (`GeneralTab::onSelectSupplier`) / đổi HĐ mua / chuyển sang Tự lấy khi ô trống → điền `supplier_address`. Thiếu: NCC import thiếu địa chỉ (`(blank)` → rỗng), người dùng GÕ TAY ô Địa chỉ ở tab Thông tin chung → ô lấy hàng vẫn trống.
+  - FE `PurchaseOrderForm.vue`: watcher `form.supplier_address` → cập nhật `pickup_address` khi ô lấy hàng còn trống hoặc vẫn bằng địa chỉ NCC cũ; người dùng đã sửa riêng thì giữ (bỏ qua chế độ Xem).
+- [ ] Task 42b — User test tay: chọn NCC / gõ địa chỉ NCC → tab Giao nhận chọn Tự lấy → ô Địa chỉ lấy hàng có sẵn địa chỉ NCC, sửa được; đã sửa tay rồi đổi địa chỉ NCC thì không bị ghi đè
+
+- [x] Task 43 — (user 20/11/2026, check Screenshot_53) Chọn hàng HĐ bán chưa đề xuất → 1 mã bung ra nhiều dòng "Mua ngoài phiếu đề xuất" ở cột Mục đích mua / Đơn giá @khoipv
+  - Nguyên nhân (đọc code, chưa chạy thử): popup `GoodsPickerModal::buildExtraCandidates` tạo mỗi cặp (mã × HĐ bán × khách) chưa đề xuất = 1 dòng popup, purpose có `proposal: ''`. Tick nhiều dòng cùng mã → `ProductsTab::mergeLine` gộp về 1 dòng hàng với N purposes.
+  - `ProductsTab::customersOf` (dòng ~1650) đếm MỌI purpose có khách → N khách → `rowGroupsOf` cắt N dòng con, mỗi dòng 1 ô Đơn giá.
+  - Nhưng `purposesOf` (dòng 1407) lọc bỏ purpose không có `proposal` → mỗi nhóm `purposes = []` → rơi vào nhánh `v-else` (dòng 319) "Mua ngoài phiếu đề xuất", không hiện khách / HĐ bán / ô "Mua" từng HĐ. Nhánh "Chưa đề xuất" (dòng 217) thành code chết.
+  - Hệ quả: SL mua chỉ nhập được 1 ô tổng (`order_qty`), `buyQty` từng HĐ = 0 → nhiều khách thì `syncRowPrice` tính bình quân theo Σ buyQty = 0 → giá dòng kẹt 0 → khả năng lại báo "Đơn giá phải lớn hơn 0." (Task 41 chỉ sửa ca 1 khách).
+  - Hướng sửa đề xuất (chờ user chốt): `purposesOf` giữ cả purpose `proposal` rỗng nhưng có HĐ bán/khách (ctr-only) để hiện "Chưa đề xuất / KH / HĐ" + ô Mua từng HĐ; `hasPurposes`/`propSum` vẫn chỉ tính phiếu có đề xuất.
+
+  - Tra dữ liệu (DB local `thanhan_stag_07052026`, qua `PurchaseContractService::unproposedActiveContractGoods`): mã 571 `204-130V (ghi chú: loại 100W)` nằm trong 14 HĐ bán còn hiệu lực chưa đề xuất (HD-012, 017, 024, 025, 031, 034, 045, 070, 082, 090, 104, 107, 118, 120/2026) của 13 khách (BV ĐK Vân Đình có 2 HĐ: HD-104 + HD-107) → 13 dòng con. Mã 2668 `204-130V` có 6 HĐ (HD-071, 073, 105, 131, 155, 156). Ảnh chụp cắt mất phần dưới nên chỉ thấy 11 dòng. Dữ liệu demo có thể khác local.
+
+- [x] Task 43a — (user chốt 20/11/2026, phương án (a)) Sửa FE hiển thị + nhập SL theo từng HĐ bán chưa đề xuất @khoipv
+  - `ProductsTab.vue`: thêm `shownPurposesOf` (= phiếu đề xuất + mục đích "chưa đề xuất" có KH/HĐ bán) dùng cho `rowGroupsOf`, dòng "Gộp N…", `canRemovePurpose`; `purposesOf` giữ nguyên cho khối đổi hàng
+  - Ô SL mua cấp dòng: dòng ≥ 2 mục đích có HĐ chưa đề xuất → khóa, = Σ ô "Mua"; dòng đúng 1 mục đích chưa đề xuất → gõ SL cấp dòng tự ghi xuống `buyQty` (để điểm giao KH + bỏ dòng Mua = 0 khi lưu không mất HĐ)
+  - Câu xác nhận ✕ dùng mã HĐ bán khi không có phiếu; chữ "Gộp N HĐ bán — nhập SL mua từng HĐ"
+  - `PurchaseOrderForm.vue::buildPayload` (+ approval-mode): bỏ mục đích chưa đề xuất có Mua = 0 (chỉ dòng không theo HĐ mua, không đổi hàng, còn ≥ 1 mục đích sau khi bỏ)
+  - Đã làm: `ProductsTab.vue` thêm `isProposalPurpose`, `isCtrOnlyPurpose`, `shownPurposesOf`, `sortedPurposes` (tách từ `purposesOf`, giữ nguyên kết quả), `mergeHint`, `lockOrderQty`, `singleCtrOnlyPurpose`, `syncSingleBuyQty`; `rowGroupsOf` + dòng "Gộp N…" + `canRemovePurpose` dùng `shownPurposesOf`; ô SL mua khóa khi `lockOrderQty`; `onOrderQtyInput` ghi xuống ô Mua khi dòng 1 HĐ chưa đề xuất; `mergeLine` chốt SL dòng 1 HĐ trước khi gộp + SL mua = Σ Mua khi khóa; câu xác nhận ✕ dùng mã HĐ bán / khách; tooltip ô Mua theo HĐ.
+  - `PurchaseOrderForm.vue`: thêm `isCtrOnlyPurpose` + `compactPurposes`, dùng trong `buildPayload` và payload `approval-mode`.
+  - User bổ sung 20/11: hàng mua ngoài phiếu đề xuất nhưng thuộc HĐ bán vẫn phải hiện khách / HĐ → đã đáp ứng (mọi dòng chưa đề xuất, kể cả 1 HĐ, hiện "Chưa đề xuất / KH / HĐ bán"). "Mua ngoài phiếu đề xuất" chỉ còn cho hàng không gắn HĐ bán.
+  - Kiểm tra: vue-template-compiler + babel parse 2 file OK. Chưa chạy trên trình duyệt.
+- [ ] Task 43b — Build/compile FE + user test tay: chọn nhiều HĐ cùng mã → nhập Mua từng HĐ + giá từng khách → Lưu; dòng 1 HĐ gõ SL cấp dòng; bỏ HĐ bằng ✕
+
+- [x] Task 44 — (user 20/11/2026) Cột Mã hàng bảng hàng hóa đơn mua bị đè mất chữ khi mã dài → cho xuống dòng @khoipv
+  - FE `ProductsTab.vue` style `.cell-code`: bỏ `white-space: nowrap` → `normal` + `overflow-wrap: anywhere` + `word-break: break-word`; giữ bề rộng 96px (cột đông cứng tính `left` theo `$w-code`). Áp cả dòng phụ "THAY CHO" của hàng đổi.
+- [x] Task 45 — (user 20/11/2026) Bảng hàng đơn mua: chọn xong không biết SL còn lại HĐ bán, phải mở popup mới thấy → hiện chip "HĐ bán còn X" ở từng mục đích có HĐ bán @khoipv
+  - BE: `SaleContractRemainService::remainFor()` + `boughtMap()` thêm tham số tuỳ chọn `$excludeOrderId` (mặc định null → caller cũ không đổi) để không trừ chính đơn đang sửa.
+  - BE: endpoint mới `POST supply/purchase-orders/sale-remain` (items [{product_id, contract_id, unit_id}], exclude_order_id) → map `pid_cid_uid` ⇒ {sale_qty, sale_bought}.
+  - FE `ProductsTab.vue`: `loadSaleRemain()` (chỉ gọi cặp chưa có trong map; gọi lại khi đổi ĐVT / thêm hàng / đổi hàng), chip `HĐ bán còn X` cạnh ô Mua — đỏ khi Mua > còn lại; tooltip SL HĐ bán − đã mua ở chứng từ khác. Bỏ qua dòng đã đổi hàng và dòng theo HĐ mua Thương mại (SL HĐ mua đã nằm trong "đã mua").
+  - Nạp qua computed `saleRemainSig` (chữ ký khoá) + watcher immediate → tự gọi khi thêm hàng / đổi ĐVT / đổi hàng / mở đơn cũ. Chip xanh = còn, đỏ = Mua > còn, xám = còn 0 chưa mua.
+  - Đã kiểm: `php -l` 3 file BE ok; tinker gọi `saleRemain` trên DB local trả đúng map (vd `571_28_2` ⇒ SL 7, đã mua 0); compile template + parse script ProductsTab ok.
+- [ ] Task 45b — User test tay: chọn hàng HĐ bán (đề xuất + chưa đề xuất) → mỗi dòng mục đích hiện "HĐ bán còn X"; gõ Mua > X → chip đỏ; đổi ĐVT → số quy đổi theo ĐVT mới; mở sửa đơn đã lưu → X không trừ chính đơn này
+
+### Checkpoint — 20/11/2026 (Task 43a)
+Vừa hoàn thành: FE hiển thị + nhập SL theo từng HĐ bán chưa đề xuất, bỏ HĐ Mua = 0 khi lưu (`ProductsTab.vue`, `PurchaseOrderForm.vue`)
+Đang làm dở:
+Bước tiếp theo: user test tay Task 43b (+ 41b, 42b)
+Blocked:
+
+### Checkpoint — 20/11/2026 (Task 41)
+Vừa hoàn thành: sửa `syncRowPrice` trong `hrm-thanhan-client/pages/supply/purchase_orders/components/ProductsTab.vue`
+Đang làm dở:
+Bước tiếp theo: user test tay màn Lập đơn mua hàng (Task 41b)
+Blocked:
+
 ### Checkpoint — 2026-08-03 (Task 38f — root cause dấu "—" lệch cao 4 cột tham chiếu)
 Vừa hoàn thành: Tìm ra và sửa root cause thật (sau 5 lần fix CSS hụt): newline template + `pre-line` tạo dòng trống trong 3 cột ghi chú → dấu "—" cột Đơn giá báo giá cao hơn. Fix: span.ref-val bao sát giá trị (pre-line chỉ ở value), td ghi chú về white-space normal. Repro Playwright đo pixel xác nhận trước/sau.
 Đang làm dở: (không)
