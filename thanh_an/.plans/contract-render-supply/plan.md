@@ -381,3 +381,37 @@ Vừa hoàn thành: Phase 16 — bỏ ràng buộc bảo lãnh với HĐ ngoài 
 Đang làm dở: không.
 Bước tiếp theo: @khoipv test tay — mở 1 HĐ ngoài thầu chưa nhập bảo lãnh (vd HD-088/2026) → bấm Kết xuất → phải đi qua.
 Blocked:
+
+---
+
+### Check — 20/11/2026 — Kết xuất HĐ sang cung ứng: Điều khoản thanh toán có bắt buộc không? (@khoipv)
+- [x] Trace validate API `PUT category/contracts/{contract}/render-supply`
+- **Kết luận: CÓ bắt buộc**, chặn ở BE `hrm-thanhan-api/Modules/Category/Http/Requests/RenderSupplyContractRequest.php`:
+  - `payment_mode_main` required (`don`/`dot`) — dòng 25
+  - Khối **Hợp đồng chính** phải có ≥ 1 điều khoản (theo đơn: đếm dòng `enabled = true`; theo đợt: đếm dòng `payment_installments` block `main`) — `assertBlockHasTerms()` dòng 49, 101–121
+  - Khối **Hàng KPI** chỉ bắt buộc khi `has_kpi = 1` — dòng 55–57
+  - Lỗi: "Vui lòng nhập điều khoản thanh toán cho Hợp đồng chính/Hàng KPI trước khi kết xuất." (key `payment_terms` / `payment_terms_kpi`)
+- FE `pages/contract/contract/_id/render.vue:186-194` chỉ gửi payload, không tự chặn → dựa vào lỗi 422 từ BE.
+- Không sửa code.
+
+### Check — 20/11/2026 — ĐKTT bắt buộc với những loại HĐ nào khi kết xuất? (@khoipv)
+- [x] Trace `RenderSupplyContractRequest` + `Contract::canRenderSupply()` + tab ĐKTT ở `GeneralComponent.vue`
+- **Kết luận: bắt buộc với CẢ 5 loại** (Trong thầu, Ngoài thầu, Cho/Tặng, Đặt/Mượn, Nguyên tắc) — `assertBlockHasTerms('main')` gọi vô điều kiện, không xét `type` (khác Bảo lãnh chỉ xét `type = 1`).
+- `canRenderSupply()` (`Contract.php:363`) chỉ lọc `record_type = HOP_DONG`, không lọc `type` → loại nào cũng kết xuất được.
+- Khối KPI chỉ bắt buộc khi `has_kpi = 1`, không phụ thuộc loại.
+- FE: tab "Điều khoản thanh toán" (`GeneralComponent.vue` ~1277) không có `v-if` theo loại → loại nào cũng nhập được, không có loại bị kẹt.
+
+### Phase 17 — 20/11/2026 — Bỏ bắt buộc ĐKTT khi kết xuất với HĐ Cho/Tặng, Đặt/Mượn (@khoipv)
+- [x] BE `RenderSupplyContractRequest::withValidator()` — bỏ qua `assertBlockHasTerms()` (cả khối chính + KPI) khi `type ∈ {CHO_TANG (3), DAT_MUON (4)}`; Trong thầu / Ngoài thầu / Nguyên tắc giữ nguyên bắt buộc
+- [x] Cập nhật docblock class
+- [x] `php -l` + kiểm chứng tinker
+- FE không cần sửa (tab ĐKTT không có dấu bắt buộc, FE luôn gửi `payment_mode_main || 'don'` nên rule `required` vẫn qua)
+- Kiểm chứng (script bootstrap Laravel, DB `thanhan_stag_07052026`, không ghi DB): Trong thầu / Ngoài thầu / Nguyên tắc ĐKTT rỗng → vẫn chặn, có ĐKTT → qua; Cho/Tặng, Đặt/Mượn ĐKTT rỗng (kể cả has_kpi = 1) → qua. Stag không có HĐ type 3/4 nên đổi type trong bộ nhớ, không save.
+- [x] Sửa trên nhánh **master** theo yêu cầu: stash WIP `WarehouseReceiptService.php` của thanhan-dev → checkout master → commit **3fe1ff8c** → push `origin/master` → checkout lại thanhan-dev + stash pop (WIP còn nguyên).
+- ⚠️ Nhánh `thanhan-dev` CHƯA có bản sửa này (cần merge/cherry-pick nếu muốn).
+
+### Checkpoint — 2026-11-20
+Vừa hoàn thành: Phase 17 — bỏ bắt buộc ĐKTT khi kết xuất với HĐ Cho/Tặng, Đặt/Mượn (master 3fe1ff8c, đã push).
+Đang làm dở: không.
+Bước tiếp theo: @khoipv test tay trên môi trường chạy master; quyết định có cherry-pick 3fe1ff8c sang thanhan-dev không.
+Blocked:

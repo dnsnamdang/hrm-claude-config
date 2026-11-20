@@ -211,6 +211,16 @@ Blocked: chờ quyết định 17c
 - [x] 18s. (user 20/11) Bỏ HẾT banner trạng thái đầu form PNK (Đã nhập kho lúc… / Bạn chỉ xem… / Phiếu đang nhập dở… ở màn xem) — `ReceiptForm.vue` chỉ còn banner lỗi "Không mở được phiếu nhập kho". e2e bước 11 / 12 / 16 đổi assert thành không có banner @khoipv
 - [x] 18t. (user 20/11) Tạm bỏ chức năng In PNK: hằng `PRINT_ENABLED = false` (`constants.js`) ẩn nút "In" ở `ReceiptForm.vue`; giữ nguyên `printReceipt.js` + method `print()` để bật lại. e2e bước 12 đổi thành kiểm nút In ẩn @khoipv
 - [x] 18u. (user 20/11) Fix "Ngày về kho" hiện "00:00": PGH chỉ nhập NGÀY giao/nhận (`delivered_at` lưu 00:00:00) nhưng BE format `d/m/Y H:i` → đổi `d/m/Y` ở `ReceiptQueueService` (hàng chờ + xuất Excel) và `WarehouseReceiptService` (ô Ngày về kho form PNK). `printReceipt.js` cắt theo dấu cách nên không ảnh hưởng @khoipv
+- [x] 18v. (user hỏi 20/11) Mục đích giữ KH còn 22 mà nhập 25 được không? → KHÔNG: FE `receiptRules.js:169` báo đỏ ngay "…nhập 25 vượt SL còn được nhập 22", BE `validateReceipt` (dòng 883–886) chặn cả Lưu nháp lẫn Duyệt. Trần `qty_max` = SL mua cho KH ở đơn mua − SL đã nhập cho KH đó ở PNK khác chưa xóa. Phần dư (3) phải chọn mục đích Tồn chung (không trần, chỉ cần tổng dòng ≤ SL thực nhận). Không sửa code @khoipv
+- [x] 18w. (user hỏi 20/11) Chọn mục đích Tồn chung cho cả dòng thì sao? → Được, Tồn chung không có trần (`qty_max = null`), chỉ cần tổng dòng ≤ SL thực nhận. Duyệt ghi sổ tồn `hold_customer_id = 0` (không giữ cho ai). Phần giữ KH chưa nhập vẫn còn nguyên (`purposesWithCap` chỉ trừ theo đúng `purpose_key`) → phiếu sau vẫn nhập giữ KH được. Không sửa code @khoipv
+- [x] 18x. (user hỏi 20/11, ảnh chi tiết #3 SL 5 để trống Mục đích) Không chọn mục đích thì hàng vào kho là gì? → Không vào kho: dòng có > 1 mục đích thì Mục đích bắt buộc; Lưu nháp vẫn được (không validate), Duyệt bị chặn "…chi tiết #3: chọn mục đích nhập" (`validateForApprove` dòng 863, FE `receiptRules.js:142`). Chỉ khi dòng có 1 mục đích mới tự gán mục đích đó. Không sửa code @khoipv
+- [x] 18y. (user 20/11) Mục đích để trống = **Tồn chung** (dòng có > 1 mục đích) @khoipv
+  - [x] BE `applyItems`: chi tiết để trống mục đích lưu `purpose_key = 'common'`
+  - [x] BE `validateForApprove` + `isItemComplete`: `common` luôn hợp lệ (kể cả khi đơn mua đã giữ hết cho KH — phần dư vào tồn chung); bỏ lỗi "chọn mục đích nhập" với ô trống
+  - [x] FE `receiptRules.js`: bỏ luật bắt buộc mục đích; `normalizeLine` đổi `common` không có trong danh sách thành ô trống
+  - [x] FE `LinePanel.vue`: nhãn Mục đích bỏ dấu *, placeholder "Tồn chung", bảng xem chi tiết hiện "Tồn chung" khi trống
+  - [x] FE `printReceipt.js`: mục đích trống in "Tồn chung"
+  - [x] Kiểm cú pháp (php -l, vuecheck) + thử BE trong transaction rollback trên DB stag → FE luật mục đích 5/5 OK + bộ cũ ALL PASS (đổi test "thiếu mục đích = lỗi mềm" thành "= Tồn chung"); BE giả lập dòng 2 mục đích (giữ KH 1 + trống 9) và dòng giữ hết cho KH: lưu `common`, duyệt được, sổ tồn 9 vào `hold_customer_id = 0`; test PNK cũ 32/32 (đều rollback, DB thanhan_stag_07052026)
 - [ ] 18k. Test tay trên trình duyệt (user tự test): hàng chờ → Tạo PNK → nhập chi tiết / seri / import Excel → Lưu nháp → Duyệt → kiểm PGH 7→5 + badge PointCard + in 01-VT
 
 ### Checkpoint — 19/11/2026 12:09
