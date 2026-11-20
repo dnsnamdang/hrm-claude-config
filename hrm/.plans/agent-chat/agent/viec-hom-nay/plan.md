@@ -10,4 +10,4 @@ Chốt: thứ tự nhóm CỐ ĐỊNH (Nhiệm vụ → Vấn đề → Meeting 
 - [x] Playwright :3070, NV 13: 4 nhóm Nhiệm vụ 7 · Vấn đề 1 · Meeting 6 · Nhắc việc 12, 15 dòng, không chồng lấn / tràn ngang; câu trả lời 4 gạch đầu dòng đúng thứ tự thẻ
 - [x] 18/11 user chọn: trong nhóm việc hạn TRONG khoảng hỏi (hôm nay) lên trước, rồi quá hạn cũ (trước đó quá hạn trước ⇒ việc hôm nay bị đẩy vào "Còn N"); hỏi không theo khoảng ⇒ vẫn quá hạn trước. Kiểm thật NV 13: TPE.TASK.NB.26.0045 hạn 18/11 lên đầu nhóm Nhiệm vụ, câu trả lời cũng nêu nó đầu tiên
 - [x] 18/11 ĐÃ merge + push gop_db (api 9600a92f0 · client b86b18b95), commit tính năng api 73ac0da2a · client 01420aae6
-- [ ] deploy TPE — chờ user
+- [x] deploy TPE — 19/11 đã lên prod theo đợt GĐ35 (api e395dc12d · client a58679286 chứa bản này)

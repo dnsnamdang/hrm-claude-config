@@ -1727,3 +1727,12 @@ Vừa hoàn thành: cờ "Sửa mẫu in" HĐ 3443 rehearsal 0 → 1 (phương �
 Bước tiếp theo: nghe user mô tả ⇒ đưa 2–3 phương án (văn bản thuần như ERP / phụ lục sửa số liệu HĐ / kết hợp) ⇒ design-phase36 + mockup.
 Việc khác còn treo: user báo commit 4 fix 17/11 (wt-hd-dieu-kien-duyet); rà dữ liệu cũ lùi ngày hrm_crm (chỉ đọc); đợt 5 mẫu in (bàn với a Nam).
 Blocked: —
+
+## Đợt giảm giá trên HĐ — dữ liệu test (20/11)
+- Rehearsal `hrm_erp_rbac_rehearsal` (worktree wt-hd-dieu-kien-duyet, API :8061 / client :3061), tài khoản namdangit, tạo qua UI:
+  - BG-2026-00550 (id 551, GG mặt hàng 10/5/0/3% = 6.375.000) → HĐ **10502** `HĐ_TPE_CTV_NV_26_0001_TEST-GG-DONG-550` (Đang tạo).
+  - BG-2026-00552 (id 553, GG tổng 10.000.000 phân bổ tự động) → HĐ **10503** `HĐ_TPE_CTV_NV_26_0002_TEST-GG-TONG-552` (Đang tạo).
+  - Rác: BG 547/549 (hàng BENY trụ sạc Toyota chưa gắn tính chất ⇒ không lập được HĐ), đang Trúng thầu.
+- Đã chạy 1 migration vào rehearsal (user cho phép): `2026_10_26_000001_add_demand_delivery_address_to_quotations_table`. Rehearsal còn 36 migration chờ khác.
+- Ghi nhận: `allocated_discount_amount` GG tổng lưu số lẻ (3.729.784,57…), tổng vẫn đúng 10.000.000.
+- Ghi nhận: sao chép báo giá không giữ Người liên hệ (phải chọn lại khi gửi duyệt) — lỗi màn báo giá, chưa sửa.

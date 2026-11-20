@@ -27,6 +27,13 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   20/11/2026: BRAINSTORM xong, chốt D1 (DS chỉ phiếu của người lập, không gate quyền) · D2 (ERP create/edit giữ mở song song) · D3 (chuông ERP→HRM khi XNK Không duyệt). Chờ duyệt tài liệu thiết kế → lập plan. Chưa có code.
 
 - app / **Nhận chia sẻ từ app khác vào TPE_APP (như Zalo)** → @cuong61n → **.plans/app-share-extension/design.md** · spec `docs/superpowers/specs/2026-11-20-app-share-extension-design.md` · THIẾT KẾ chờ duyệt (20/11/2026), chưa code; iOS + Android, đợt 1 TpeProd
+
+- assign / **Meeting — AI tạo biên bản từ ghi âm (Whisper trên VPS + Claude)** → @namdangit → .plans/meeting-bien-ban-tu-dong/{design.md,plan.md}
+  20/11/2026: ĐÃ DEPLOY dev-hrm (develop api `4b5913836` · client `1f2d4f8d2`), thử thật meeting 2335: file gốc 28,6 MB tốt hơn bản nén 32k (bản nén mất 46 s đầu), ≈ 0,28 USD / họp 30'. Còn: sửa prompt Kết luận tự mâu thuẫn + mức nén + thuật ngữ (hỏi trước khi code); chưa lên prod (cài Whisper prod, gop_db). ⚠️ "Số giờ không bắt buộc" (luật chung Nhiệm vụ) nằm trong nhánh `meeting-ai-bien-ban`.
+
+- timesheet / **Chấm công qua WiFi công ty (tự chấm giờ vào)** → @namdangit → .plans/cham-cong-wifi/plan.md · spec `docs/superpowers/specs/2026-11-19-cham-cong-wifi-design.md`
+  Trạng thái: **BRAINSTORM (19/11/2026)** — chốt: geofence + WiFi (BSSID), chỉ giờ vào (giờ ra nhắc), bật theo nơi chấm. Chờ user chọn nơi cấu hình (danh mục văn phòng / trong từng ca). Chưa code, chưa chọn nhánh. Đụng màn app của @cuong61n (`app-cham-cong`).
+
 - assign / **AGENT + CHAT — TPE SMART AGENT (trợ lý AI) + Chat (Nhóm trao đổi, 1–1)** → @namdangit → **.plans/agent-chat/README.md** (đọc đầu phiên: bản đồ tài liệu, môi trường, trạng thái) · Agent: `agent/plan.md` · Chat: `chat/gd*/plan.md` · spec Agent `docs/superpowers/specs/agent-chat/2026-11-11-tpe-smart-agent-design.md` · spec Chat `docs/superpowers/specs/gop-db/2026-11-02-phan-he-cong-viec-design.md` §11
   App mobile (TPE_APP) 18/11/2026: Chat + Agent XONG, ĐÃ merge `develop` a46dcd4 (chưa phát hành store, 609 test); api `gop_db` 50c02c5d8 + client `gop_db` 128658916 ĐÃ DEPLOY prod TPE. Tổng kết: `.plans/agent-chat/app-mobile/tong-ket-app.md`.
   Gộp 1 phiên từ 13/11/2026; tài liệu để ngoài `gop-db/` (gop-db chỉ cho chuyển ERP → HRM), code vẫn nhánh tách từ `origin/gop_db`.

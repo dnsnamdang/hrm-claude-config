@@ -27,4 +27,4 @@ phòng của người hỏi.
 - [x] Hỏi thật qua Agent 18/11 (8 câu + 3 câu danh sách, haiku): đúng tool + đúng số; câu danh sách chấm công từng chép tên người ⇒ bỏ tên khỏi data.danh_sach (chỉ còn trong thẻ) + note "trả lời 1 câu"; quy tắc 18/19 siết "CHỈ 1 câu, không kể tên phòng / người"
 - [x] hrm-client nhánh `gop_db-agent-thong-ke-nghi` (tách tại 883eaed3c): AgentMarketTree hiện `sub` BE gửi + tooltip, dòng phụ tối đa 2 dòng; BE thống kê nghỉ đưa ngày nghỉ lên đầu dòng phụ, cả danh sách 1 loại thì bỏ tên loại. Kiểm Playwright :3070 (đo DOM: không dòng nào bị cắt, chặn 2 dòng 33px, không cuộn ngang)
 - [x] 18/11 ĐÃ merge + push gop_db (api 9600a92f0 · client b86b18b95), commit tính năng api 73ac0da2a · client 01420aae6
-- [ ] deploy TPE — chờ user
+- [x] deploy TPE — 19/11 đã lên prod theo đợt GĐ35 (api e395dc12d · client a58679286 chứa bản này)
