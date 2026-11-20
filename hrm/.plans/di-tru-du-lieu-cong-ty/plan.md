@@ -599,6 +599,22 @@ Blocked: 9 file của việc department/part lead_id cần session phụ trách 
 - [ ] **TẮT LẠI** `DEVICE_AUTO_APPROVE` (đổi false trong `/var/www/tpe/hrm-api/.env`) khi NV POWER đăng ký xong — chờ user báo
 - [ ] Còn lại: NV POWER chuyển sang app/web TPE (app ETEK POWER nay bị chặn 403; F.12); Phong đăng ký khuôn mặt máy cơm (đã nghỉ — bỏ qua nếu không quay lại); NV POWER vào làm sau này phải đăng ký khuôn mặt trên máy TPE như NV TPE; 7 quyền cũ không có mã (lương P3, KH) cấp lại ở /admin/roles nếu cần; rà 7.422 thông báo cơm mồ côi (vô hại)
 
+## Phase — Đưa mã ETEK POWER về 8 số trên PROD (20/11/2026) — @cuong61n
+
+User báo mã 9 số (10YYsssss) nhiều máy chấm công không nhận, muốn về 8 số. Kiểm: độ dài mã chỉ do `companies.branch_order` (mã = branch_order + YY + seq 5 số), KHÔNG do id công ty. User chốt (20/11): giữ id 10, POWER lấy branch_order 7 (công ty 7 "ETEK GREEN (cũ)" đã ngừng, không ai dùng mã 8 số đầu 7); công ty 7 giữ nguyên, chỉ khoá 3 tài khoản; làm ngay trong giờ.
+
+- [x] 20/11 Sao lưu các bảng bị đổi → `~/backup/power_8so/*.sql` trên hrm-prod (companies, employee_infos/employees cty 7+10, rice_employee_infos, timesheets cty 10, employee_code_mappings cty 10). Dry-run: 85 mã mới 72011213…77011212, 0 trùng mã/ssn/rice_ssn
+- [x] 20/11 ~09:25 (chạy attendance:fetch trước để không sót lượt quẹt) DB (1 transaction): cty 7 branch_order → NULL, cty 10 → 7; 85 NV: employee_infos.code/ssn, employees.rice_ssn, rice_employee_infos.code/rice_ssn = '7' + bỏ '10' đầu (giữ năm + seq); timesheets.employee_info_id cty 10 (15.033 dòng); employee_code_mappings: new_* về 8 số + thêm 85 dòng 9 số → 8 số (để attendance:fetch / cơm dịch lượt quẹt còn mang mã 9 số)
+- [x] 20/11 Máy: đổi mã 9 → 8 số (giữ khuôn mặt, xoá mã cũ) trên 6 máy khuôn mặt TPE (#24,30,31,32,33,34) + máy cơm; lấy bù lượt quẹt
+- [x] 20/11 Khoá 3 tài khoản công ty 7 (NV.00451 Ngô Cao Vinh, NV.00464 Nguyễn Thị Thu Hương, NV.00498 Nguyễn Thị Hằng)
+- [x] 20/11 Kiểm: mã 8 số khớp ở mọi bảng, NV mới POWER sinh mã 8 số, quẹt thử ra đúng người
+
+  - Kết quả DB: employee_infos 85, employees.rice_ssn 85, rice_employee_infos 85, timesheets 15.033 (0 dòng mồ côi sau đổi), employee_code_mappings sửa 85 + thêm 85 (9 số → 8 số). Còn 0 mã 9 số. API đăng nhập hienlt trả mã 72611292
+  - Kết quả máy: 6 máy khuôn mặt mỗi máy 39/39 NV đang làm, 0 lỗi (46 người còn lại không có trên máy). Máy cơm: lượt 1 (script m8.php) treo ~20 phút ở Phạm Mộng Long → dừng, chạy lại riêng máy cơm (rice8.php): 75 mã mới, 0 mã cũ, 10 người không có trên máy (đều đã nghỉ, status 0). `rice:fetch-checkin` bù 09:20→10:20
+  - Khoá tài khoản cty 7 bằng `EmployeeService::changeStatus` (auth = DNS Admin id 13 nên lịch sử ghi người khoá DNS Admin)
+  - Chưa làm / báo user: máy riêng POWER #38/#39 (ZK, không nối TPE) không đẩy được mã — phải khai tay trên máy; cty 8 DTTDETEK branch_order NULL nên NV mới vẫn sinh mã 9 số 10YY… (lỗi có sẵn, chờ user quyết)
+  - Bài học: `pkill -f <mẫu>` trong `ssh '…'` giết luôn phiên ssh vì dòng lệnh bash -c chứa mẫu (dính 2 lần) — dùng `pgrep` lấy PID rồi `kill`
+
 ### Checkpoint — 16/11/2026 (tối) — đã gộp ETEK POWER lên PROD
 Vừa hoàn thành: đóng cổng etekpower, gộp vào hrm_erp_gop (cty 10), hậu kỳ, đổi mã máy cơm, bật lại TPE, verify.
 Đang làm dở: không.

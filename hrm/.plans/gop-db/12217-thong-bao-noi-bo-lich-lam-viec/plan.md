@@ -72,3 +72,9 @@ Vừa hoàn thành: Phase 4 (18/11) thiết kế lại "Nhắc cho" — BE + web
 Đang làm dở: chưa có
 Bước tiếp theo: user xem lại; nếu duyệt thì commit riêng file #12217 → merge/deploy dev + bump build app (166) lên TestFlight; chốt có làm báo cáo tiến độ / sửa-huỷ cả nhóm nhắc việc (assign_group) không
 Blocked: không
+
+## Xử lý dữ liệu prod — TB #19 (20/11/2026) — @cuong61n
+- [x] (20/11) Sếp yêu cầu đưa TB #19 "Nghỉ Ngày Văn hóa Việt Nam 24/11" (mã `008/2026/TB-TPE`, người tạo Nguyễn Thị Duyên) về "Đang tạo" để gửi lại, vì #19 chưa có apply_from/apply_to nên không lên lịch nhắc việc. Đã kiểm prod `hrm_erp_gop` (chỉ đọc): status 2, 403 người nhận không trùng, apply_from/apply_to NULL.
+- [x] (20/11) Prod: `self_notifications.id=19` status 2 → 1 (1 dòng; mã, người tạo, 403 recipient giữ nguyên). Người gửi lại: Duyên (người tạo, canEdit chỉ cho người tạo + status 1).
+- Hệ quả đã báo user và user CHẤP NHẬN: Duyên gửi lại ở `SelfNotificationService::update()` thì thêm 403 recipient mới mà không xoá cũ → danh sách "Thông báo của tôi" hiện #19 2 dòng, `index?employee_id=` cũng trùng; mã sinh lại (008→009); chuông/push gửi lần 2 cho 403 người. Chưa vá code.
+- [ ] Việc còn lại: Duyên điền "Thời gian áp dụng" rồi gửi lại; sau đó (nếu cần) dọn recipient trùng của #19 và vá `update()` (xoá recipient cũ + giữ mã cũ) — chờ user duyệt.

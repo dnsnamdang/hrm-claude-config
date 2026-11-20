@@ -20,3 +20,7 @@
 
 ## Lưu ý
 - Sau thay đổi, "có trừ lương" trở nên khoan dung hơn "không trừ lương" (loại sau chỉ tha trong cửa sổ, phần vượt vẫn tính). Đã báo user.
+
+## Phase 2 — Về sớm có đơn duyệt không hiện (20/11/2026) — @cuong61n
+- [x] 20/11/2026 Điều tra: NV có đơn đi muộn/về sớm "có trừ lương" duyệt (vd emp 23, đơn id 242, ngày 18/11/2026, chấm ra 15:53 < 17:30) → bảng công không hiện "(VS)", `minutes_early=0`, đủ công. Nguyên nhân: khối "tha hoàn toàn" của Phase 1 (`TimesheetSummaryService` ~dòng 770-784) xoá `minutes_early`. Kiểm bằng DB prod (chỉ đọc) + đọc code; chưa sửa.
+- [ ] Chờ user chốt: đảo quyết định "tha hoàn toàn" → có đơn thì vẫn hiện (VS) + số phút, không cộng số lần; không đơn thì tính cả lần + phút.

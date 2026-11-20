@@ -257,6 +257,16 @@ Phân biệt rõ 2 quyền, đừng nhầm:
 - **Upload build** → cần quyền trên App Store Connect (Admin/App Manager/Developer đều được) → tài khoản thường của dev là đủ
 - **Ký app** → cần Developer Program membership → chỉ chủ tài khoản Individual
 
+### 6b. TpeProd có thêm Share Extension (từ 20/11/2026)
+
+Flavor **TpeProd** nhúng thêm `ShareExtension.appex` (bundle ID `com.tanphat.soft.app.ShareExtension`, App Group
+`group.com.tanphat.soft.app`, Siri). 13 flavor còn lại KHÔNG nhúng và build như cũ.
+- Trước khi export TpeProd phải có trên Apple Developer: App ID của extension, App Group, bật **App Groups + Siri** cho cả hai
+  App ID, và profile `TPE_ShareExtension_2026` (đã khai trong `ios/exportOptions.plist`). Thiếu ⇒ export báo thiếu profile.
+- IPA đúng phải chứa `Payload/Runner.app/PlugIns/ShareExtension.appex`; kiểm: `unzip -l <ipa> | grep appex`.
+- Thêm / dựng lại target: `cd app/ios && ruby scripts/add_share_extension.rb` (chạy lại không nhân đôi).
+- Android: activity chia sẻ chỉ có trong `src/tpeProd/AndroidManifest.xml`.
+
 ## 7. Bẫy đã gặp
 
 | Bẫy | Xử lý |
