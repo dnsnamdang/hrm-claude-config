@@ -40,6 +40,11 @@ Tài liệu: `.plans/gop-db/bc-phan-cong-phong-thuong-hieu/plan.md` · `.plans/g
 ## Làm thêm: chức vụ bị cấm vẫn lập được phiếu PHÂN CÔNG cho cấp dưới — gop_db api `f69567f4f` (2026-11-20, @junfoke)
 Tài liệu: `.plans/gop-db/ho-tro-van-hanh/plan.md` (Ngày 20/11).
 
+## Quy chế (regulation-config) dòng Dịch vụ lưu Loại giá 1 như ERP — ĐÃ PUSH develop + gop_db (2026-11-20, @nguyentrancu97)
+- Lỗi: báo giá chỉ-dịch-vụ "Không tìm được quy chế phù hợp" do màn HRM lưu condition_sale_type=0 cho dòng Dịch vụ (ERP cũ ngầm lưu 1).
+- Fix: hrm-api develop c5ee6418b, gop_db af52888fe; data hrm_erp_gop regulations 702, 703 sửa 0→1.
+- Plan: `.plans/gop-db/regulation-config-dich-vu-loai-gia/plan.md` · Bước tiếp: deploy, user thử lại BG 65547.
+
 ## #12180 Báo cáo tồn hàng nhập xuất thẳng theo nhân viên — đổi sang khuôn báo cáo (rsum) + khối thống kê + popup chi tiết — ĐANG LÀM (2026-11-17, @khoipv)
 - Chốt 17/11: thống kê chỉ ĐẾM (Phòng ban · Nhân viên · Mặt hàng + khối theo phòng ban); bấm SL tồn → popup DS hàng đang giữ; SL tồn ngay sau Tên hàng.
 - Plan: `.plans/gop-db/danh-sach-hang-xuat-nhap-thang/plan.md` (Phase 6)

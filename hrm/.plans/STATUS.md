@@ -8,6 +8,21 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- assign / **YCCH (Phiếu YC chuyển hàng) điều chuyển chi nhánh — trạng thái theo ĐNXK/PXK như ERP** → @nguyentrancu97 → `.plans/ycch-trang-thai-dieu-chuyen-cn/plan.md`
+  20/11/2026: đợt 1 (YCCH 5 Đang xuất kho / 6 Đã xuất kho) ĐÃ push develop 5205e0758 + gop_db 24e2d357e. Đợt 2 thêm trạng thái 14 "Đã đề nghị" khi gửi ĐNXK: HRM `ccda9676b` (nhánh fix/ycch-da-de-nghi) CHƯA push; ERP develop_02 `a5b327111d` đã lên origin. Chờ user: push HRM + gop_db; có update dữ liệu lệch (18 hrm_erp_test / 13 hrm_erp_gop) lên 14 không.
+
+- sale / **#12174 Import hàng hoá 10 sheet — phản hồi QA 18/11** → @nguyentrancu97 → `.plans/import-hang-hoa-12174/plan.md`
+  20/11/2026: sửa 2 lỗi (câu lỗi hàng tham chiếu; dòng Sheet 1 rỗng tính vào Tổng/Lỗi) — ĐÃ push develop api 281a5a950 / client 76c775082; vé chuyển "Code xong chờ test". Chưa gop_db; e2e spec chưa commit.
+
+- finance / **Phiếu YC hỏi giá vận chuyển — port ERP → HRM (chỉ phần lập phiếu)** → @nguyentrancu97 → `.plans/yc-hoi-gia-van-chuyen/` · spec `docs/superpowers/specs/2026-11-20-yc-hoi-gia-van-chuyen-design.md`
+  20/11/2026: ĐÃ push develop (api 4f3848615 / client ab6e5feae, cherry-pick riêng — develop local còn bản gốc xen YCĐHMN) + ERP develop_02 3adf898dd3. Chưa gop_db.
+
+- sale / **YC đặt hàng mua ngoài — port ERP → HRM (phía KD khởi tạo)** → @nguyentrancu97 → `.plans/yc-dat-hang-mua-ngoai/` · spec `docs/superpowers/specs/2026-11-20-yc-dat-hang-mua-ngoai-design.md`
+  20/11/2026: ĐÃ push develop — api 671fac58e / client dd3000b15 (cherry-pick riêng; develop local còn bản gốc xen việc khác) + ERP develop_02 c97b5a30f7. E2E local OK (phiếu test 1576/1577 trong erp_hrm_check). Bước tiếp theo: gộp gop_db khi user báo.
+
+- sale / **YC đặt hàng (PDH, ERP rootOrderRequest) — port ERP → HRM (phía KD khởi tạo)** → @nguyentrancu97 → `.plans/yc-dat-hang/` · spec `docs/superpowers/specs/2026-11-20-yc-dat-hang-design.md`
+  20/11/2026: ĐÃ push develop — api 8c6b2fb70 / client ab58b07f8 + ERP develop_02 0280648943. E2E local OK (PDH-06917 → PDHTN-04132, erp_hrm_check). Bước tiếp theo: gộp gop_db khi user báo.
+
 - assign / **AGENT + CHAT — TPE SMART AGENT (trợ lý AI) + Chat (Nhóm trao đổi, 1–1)** → @namdangit → **.plans/agent-chat/README.md** (đọc đầu phiên: bản đồ tài liệu, môi trường, trạng thái) · Agent: `agent/plan.md` · Chat: `chat/gd*/plan.md` · spec Agent `docs/superpowers/specs/agent-chat/2026-11-11-tpe-smart-agent-design.md` · spec Chat `docs/superpowers/specs/gop-db/2026-11-02-phan-he-cong-viec-design.md` §11
   App mobile (TPE_APP) 18/11/2026: Chat + Agent XONG, ĐÃ merge `develop` a46dcd4 (chưa phát hành store, 609 test); api `gop_db` 50c02c5d8 + client `gop_db` 128658916 ĐÃ DEPLOY prod TPE. Tổng kết: `.plans/agent-chat/app-mobile/tong-ket-app.md`.
   Gộp 1 phiên từ 13/11/2026; tài liệu để ngoài `gop-db/` (gop-db chỉ cho chuyển ERP → HRM), code vẫn nhánh tách từ `origin/gop_db`.

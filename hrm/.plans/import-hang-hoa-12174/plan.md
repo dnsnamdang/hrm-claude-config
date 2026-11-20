@@ -291,3 +291,9 @@ Test BE mới ở `Modules/MasterData/Tests/Feature/`: `ProductImportBundleTest`
 - [ ] **Step 1: Viết spec** các ca: tải mẫu (tên file `Mau_import_hang_hoa.xlsx`, có 10 sheet); upload `old-79-cols.xlsx` ⇒ toast `File không đúng mẫu`; upload `bad-mixed.xlsx` ⇒ tab có badge, bấm lỗi nhảy đúng tab/ô, sửa ô ⇒ Validate lại hết lỗi; mồ côi ẩn nút Import; xoá dòng tab 1 hỏi xoá dòng con; tải file lỗi ⇒ upload lại load được; `ok-add.xlsx` import ⇒ danh sách có hàng mới.
 - [ ] **Step 2: Chạy** `cd HRM/e2e && PATH="$HOME/.nvm/versions/node/v20.20.1/bin:$PATH" npx playwright test product-import-10-sheet` ⇒ PASS.
 - [ ] **Step 3:** Chạy lại toàn bộ test BE import ⇒ PASS; `git -C hrm-api status`, `git -C hrm-client status` liệt kê để user duyệt commit.
+
+### Checkpoint — 2026-11-20 17:20 (wrap up tự động)
+Vừa hoàn thành: sửa 2 lỗi QA phản hồi (tester Nguyễn Minh Hằng 18/11, chỉ ảnh): Bug A câu lỗi hàng tham chiếu dễ hiểu nhầm → đổi câu "Tham chiếu tới hàng…" (hrm-api `281a5a950`, ProductImportReferencesTest 19/19); Bug B dòng Sheet 1 rỗng (thêm bằng "Thêm dòng") bị tính vào Tổng/Lỗi và payload → helper `isBlankProductRow` (hrm-client `76c775082`, kiểm live trên trình duyệt). ĐÃ PUSH develop (rebase lên commit người khác). Redmine #12174 chuyển "Code xong chờ test" kèm ghi chú.
+Đang dở: e2e spec `product-import-10-sheet.spec.ts` chưa commit; ca import thật trong e2e vẫn skip do tài khoản test vướng guard "hàng mượn quá hạn" (423).
+Bước tiếp theo: chờ QA test lại; gop_db khi user báo.
+Blocked: —
