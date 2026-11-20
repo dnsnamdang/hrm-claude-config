@@ -8,7 +8,7 @@
 
 **Tech Stack:** hrm-api Laravel 8 (nwidart, JWT `auth:api`, PHPUnit `DatabaseTransactions` trên DB chung `erp_hrm_check`) · hrm-client Nuxt 2 + `V2Base*` · ERP Laravel 6 (Blade + AngularJS).
 
-**Spec:** `HRM/docs/superpowers/specs/2026-11-20-yc-dat-hang-design.md` (mục "Hiện trạng ERP" + "Đã kiểm" là nguồn mọi rule).
+**Spec (bản track git): `.plans/yc-dat-hang/design.md`** · gốc `HRM/docs/superpowers/specs/2026-11-20-yc-dat-hang-design.md` (mục "Hiện trạng ERP" + "Đã kiểm" là nguồn mọi rule).
 
 **Khuôn mẫu chép theo (đọc trước):** port YC đặt hàng mua ngoài cùng ngày — hrm-api `Modules/Sale/{Entities,Services,Http/Controllers/V1,Http/Requests,Transformers}/InlandOrderRequest*`, test `Modules/Sale/Tests/Feature/InlandOrderRequestApiTest.php`, route nhóm `/inland-order-requests` trong `Modules/Sale/Routes/api.php`; hrm-client `pages/sale/inland-order-requests/*`; ERP (develop_02) commit `91e79e4068`, `c13449ef3e`, `c97b5a30f7` (`ProductMovedToHrm` TARGETS, `HrmBell`).
 

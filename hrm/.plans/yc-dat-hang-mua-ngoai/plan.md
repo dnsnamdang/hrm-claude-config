@@ -8,7 +8,7 @@
 
 **Tech Stack:** hrm-api Laravel (nwidart modules, JWT `auth:api`, PHPUnit `DatabaseTransactions` trên DB chung) · hrm-client Nuxt 2 + bộ component `V2Base*` · ERP Laravel 6 (Blade + AngularJS 1.3.9).
 
-**Spec:** `HRM/docs/superpowers/specs/2026-11-20-yc-dat-hang-mua-ngoai-design.md` (đọc kèm; mục "Hiện trạng ERP" là nguồn mọi rule validate/quyền).
+**Spec (bản track git): `.plans/yc-dat-hang-mua-ngoai/design.md`** · gốc `HRM/docs/superpowers/specs/2026-11-20-yc-dat-hang-mua-ngoai-design.md` (đọc kèm; mục "Hiện trạng ERP" là nguồn mọi rule validate/quyền).
 
 **Khuôn mẫu chép theo (đọc trước khi làm):** hrm-api commit `f0ec354ae` (đọc) + `fb60ea508` (ghi) — `Modules/Finance/{Entities/DeliveryCostAskingRequest/*, Http/Controllers/V1/DeliveryCostAskingRequestController.php, Http/Requests/DeliveryCostAskingRequest/*, Services/DeliveryCostAsking*.php, Tests/Feature/DeliveryCostAskingRequestApiTest.php, Transformers/DeliveryCostAskingRequestResource/*}`. FE: `pages/finance/delivery-requests/*` (list/form/detail V2).
 

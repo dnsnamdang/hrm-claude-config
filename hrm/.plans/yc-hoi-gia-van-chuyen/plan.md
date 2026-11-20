@@ -8,7 +8,7 @@
 
 **Tech Stack:** HRM Laravel (hrm-api, module Finance) + Nuxt 2/Vue 2 (hrm-client); ERP Laravel 6 (TanPhatDev); PHPUnit với `DatabaseTransactions` trên DB local chung `erp_hrm_check` (HRM) / `hrm_erp_test` (ERP).
 
-**Spec:** `HRM/docs/superpowers/specs/2026-11-20-yc-hoi-gia-van-chuyen-design.md`
+**Spec (bản track git): `.plans/yc-hoi-gia-van-chuyen/design.md`** · gốc `HRM/docs/superpowers/specs/2026-11-20-yc-hoi-gia-van-chuyen-design.md`
 
 ## Global Constraints
 - Nhánh: HRM `develop` (hrm-api + hrm-client), ERP `develop_02`. KHÔNG đụng `gop_db` tới khi user bảo.
