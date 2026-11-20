@@ -23,7 +23,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 - sale / **YC đặt hàng (PDH, ERP rootOrderRequest) — port ERP → HRM (phía KD khởi tạo)** → @nguyentrancu97 → `.plans/yc-dat-hang/{design.md,plan.md}`
   20/11/2026: ĐÃ push develop — api 8c6b2fb70 / client ab58b07f8 + ERP develop_02 0280648943. E2E local OK (PDH-06917 → PDHTN-04132, erp_hrm_check). Bước tiếp theo: gộp gop_db khi user báo.
 
-- finance / **Phiếu yêu cầu hãng bảo hành (ERP FirmWarrantyRequest) — port ERP → HRM** → @namdangit → `.plans/yc-hang-bao-hanh/design.md`
+- finance / **Phiếu yêu cầu hãng bảo hành (ERP FirmWarrantyRequest) — port ERP → HRM** → @nguyentrancu97 → `.plans/yc-hang-bao-hanh/design.md`
   20/11/2026: BRAINSTORM xong, chốt D1 (DS chỉ phiếu của người lập, không gate quyền) · D2 (ERP create/edit giữ mở song song) · D3 (chuông ERP→HRM khi XNK Không duyệt). Chờ duyệt tài liệu thiết kế → lập plan. Chưa có code.
 
 - assign / **AGENT + CHAT — TPE SMART AGENT (trợ lý AI) + Chat (Nhóm trao đổi, 1–1)** → @namdangit → **.plans/agent-chat/README.md** (đọc đầu phiên: bản đồ tài liệu, môi trường, trạng thái) · Agent: `agent/plan.md` · Chat: `chat/gd*/plan.md` · spec Agent `docs/superpowers/specs/agent-chat/2026-11-11-tpe-smart-agent-design.md` · spec Chat `docs/superpowers/specs/gop-db/2026-11-02-phan-he-cong-viec-design.md` §11
