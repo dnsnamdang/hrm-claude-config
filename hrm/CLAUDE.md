@@ -199,7 +199,16 @@
 
 ## Quy luật tổ chức tài liệu feature
 
-Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/`. KHÔNG tạo file trong `docs/superpowers/specs/`.
+Tất cả tài liệu của 1 feature nằm trong `.plans/[feature]/` (spec chi tiết ở `docs/superpowers/specs/` — xem các mục dưới).
+
+### ⚠️ Vị trí ghi tài liệu — LUÔN ở gốc `HRM/`, KHÔNG BAO GIỜ trong `hrm-api/`, `hrm-client/`
+
+- Thư mục tài liệu = các thư mục ở `HRM/` là **symlink sang `hrm-claude-config/hrm/`**: `HRM/.plans/`, `HRM/docs/`, `HRM/.claude/`, `HRM/.superpowers/`. Mọi tài liệu (design, plan, spec, SRS, testcase, HDSD, ghi chú, file mẫu…) chỉ ghi vào đây.
+- Mọi đường dẫn tài liệu trong file này (`.plans/...`, `docs/superpowers/specs/...`, `docs/superpowers/plans/...`) tính từ **`HRM/`**, KHÔNG tính từ cwd. Khi cwd là `HRM/hrm-api/` hoặc `HRM/hrm-client/` → dùng đường dẫn tuyệt đối `/Users/nguyentrancu/DEV/code/ERP-HRM/HRM/.plans/...` (hoặc `../.plans/...`). Đường dẫn tương đối từ repo code sẽ tạo thư mục THẬT lạc chỗ trong repo.
+- Skill superpowers: `brainstorming` (spec) → `HRM/docs/superpowers/specs/`; `writing-plans` → `HRM/.plans/[feature]/plan.md` (KHÔNG dùng mặc định `docs/superpowers/plans/` của repo code); `brainstorming` visual companion → `--project-dir /Users/nguyentrancu/DEV/code/ERP-HRM/HRM`.
+- `subagent-driven-development` ghi workspace vào `<git-root>/.superpowers/sdd/` — trong `hrm-api/` và `hrm-client/`, `.superpowers` đã là **symlink sang `hrm-claude-config/hrm/.superpowers`** (git bỏ qua qua `.git/info/exclude`), nên cứ để skill tự ghi. **KHÔNG xoá/thay symlink này bằng thư mục thật.** Nếu dùng git worktree mới → tạo lại symlink `.superpowers` trong worktree trước khi chạy SDD: `ln -s /Users/nguyentrancu/DEV/code/hrm-claude-config/hrm/.superpowers <worktree>/.superpowers`.
+- Ảnh chụp màn hình / file tạm khi test (Playwright…) → scratchpad của session, KHÔNG để ở `ERP-HRM/`, `HRM/` hay trong repo code.
+- KHÔNG commit `.plans/`, `docs/superpowers/`, `.superpowers/` vào repo `hrm-api`/`hrm-client`.
 
 **Feature nhỏ (1-2 phase):**
 

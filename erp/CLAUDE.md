@@ -217,6 +217,9 @@ Bản HRM tương ứng: `hrm-api/app/Helper/SignerTitleHelper.php`.
 - Mọi form có validate: BE phải rethrow `ValidationException` (không catch chung `Exception`), FE phải hiện lỗi inline tại từng input required (viền đỏ `is-invalid` + text lỗi `invalid-feedback`)
 - `.claude`, `.plans`, `docs`, `CLAUDE.md` là symlink sang `hrm-claude-config/` — ghi file vào các path này bình thường, KHÔNG cần hỏi xác nhận
 - ⚠️ **Tài liệu (`.plans/`, `docs/`) LUÔN ghi qua symlink ở GỐC project `ERP/`, KHÔNG BAO GIỜ tạo bên trong repo code `ERP/TanPhatDev/`.** Khi đang làm code, cwd = `ERP/TanPhatDev/` → đường dẫn tương đối `.plans/[feature]/...` sẽ rơi vào repo code và tạo thư mục THẬT lạc chỗ (đã dính nhiều lần, từng phải band-aid bằng `.gitignore`), tài liệu KHÔNG về `hrm-claude-config`. Luôn dùng đường dẫn tới gốc project: `ERP/.plans/[feature]/...` (hoặc `../.plans/...` nếu đang ở trong `TanPhatDev/`).
+- Thư mục tài liệu = các thư mục ở `ERP/` là **symlink sang `hrm-claude-config/erp/`**: `ERP/.plans/`, `ERP/docs/`, `ERP/.claude/`, `ERP/.superpowers/`. Mọi tài liệu (design, plan, spec, HDSD, SRS, file Excel/Word tham chiếu…) chỉ ghi vào đây, KHÔNG để file rời ở gốc `ERP/` hay `ERP-HRM/`.
+- Skill superpowers: `brainstorming` (spec) → `ERP/docs/superpowers/specs/`; `writing-plans` → `ERP/.plans/[feature]/plan.md`; visual companion → `--project-dir /Users/nguyentrancu/DEV/code/ERP-HRM/ERP`. `subagent-driven-development` ghi vào `<git-root>/.superpowers/sdd/` — trong `TanPhatDev/` `.superpowers` đã là **symlink sang `hrm-claude-config/erp/.superpowers`** (git bỏ qua qua `.git/info/exclude`), KHÔNG thay bằng thư mục thật; worktree mới → tạo lại symlink: `ln -s /Users/nguyentrancu/DEV/code/hrm-claude-config/erp/.superpowers <worktree>/.superpowers`.
+- Ảnh chụp màn hình / file tạm khi test → scratchpad của session.
 
 ---
 
