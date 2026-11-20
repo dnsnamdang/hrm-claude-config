@@ -221,6 +221,9 @@ Blocked: chờ quyết định 17c
   - [x] FE `LinePanel.vue`: nhãn Mục đích bỏ dấu *, placeholder "Tồn chung", bảng xem chi tiết hiện "Tồn chung" khi trống
   - [x] FE `printReceipt.js`: mục đích trống in "Tồn chung"
   - [x] Kiểm cú pháp (php -l, vuecheck) + thử BE trong transaction rollback trên DB stag → FE luật mục đích 5/5 OK + bộ cũ ALL PASS (đổi test "thiếu mục đích = lỗi mềm" thành "= Tồn chung"); BE giả lập dòng 2 mục đích (giữ KH 1 + trống 9) và dòng giữ hết cho KH: lưu `common`, duyệt được, sổ tồn 9 vào `hold_customer_id = 0`; test PNK cũ 32/32 (đều rollback, DB thanhan_stag_07052026)
+- [x] 19. (user 20/11) Bỏ cột **Tiến độ** ở màn danh sách phiếu nhập kho @khoipv
+  - [x] FE `pages/warehouse/receipts/index.vue`: bỏ cột `progress` (allColumns + slot `#cell-progress`), bỏ trường xuất Excel "Tiến độ", bỏ hàm `progressPercent` / `isProgressDone` + CSS `.rc-progress` / `.rc-sub`
+  - BE `WarehouseReceiptResource` vẫn trả `lines_total` / `lines_ok` (không sửa — không ảnh hưởng)
 - [ ] 18k. Test tay trên trình duyệt (user tự test): hàng chờ → Tạo PNK → nhập chi tiết / seri / import Excel → Lưu nháp → Duyệt → kiểm PGH 7→5 + badge PointCard + in 01-VT
 
 ### Checkpoint — 19/11/2026 12:09

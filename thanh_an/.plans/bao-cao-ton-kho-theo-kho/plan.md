@@ -13,6 +13,8 @@
   - 20/11: **user chốt A + phân quyền như Cung ứng** (có quyền xem = mọi kho, không phân cấp). User hỏi "sai khi HSD trống" → giải thích: SQL `NULL = NULL` không khớp → seri không HSD rơi khỏi lô (DB stag: 8/10 dòng tồn, 3/3 seri không HSD); thêm cả lỗi thiếu `hold_contract_id` ở seri → chốt dùng `balance_id`
 - [ ] 5. Viết spec chi tiết + design tóm tắt @khoipv
   - 20/11: đã viết spec (DB `balance_id` + index + sửa KH thiếu `customer_id`, quyền, 4 API, luật date, UI V2, Excel, In, edge case) + design tóm tắt; đang chạy reviewer đọc thử spec → gom câu hỏi còn lại cho user
+  - 20/11: user bảo push → đã commit + push API (c6ad4ec0), client (f3f568b6), config (af6074f). Spec nằm trong `docs/superpowers/` bị `.gitignore` của config → không lên git
+  - 20/11: reviewer hỏi 3 câu, trình user: (1) ĐVT sổ tồn — stag 2/6 dòng PNK nhập khác ĐVT gốc (vd "Chiếc" vs "Hộp"), `writeStock` ghi qty theo ĐVT dòng, không quy đổi → cộng tổng sai; (2) lọc cảnh báo date / tìm nhanh theo mã hay theo lô; (3) mục giữ KH chỉ có tên (không customer_id, không contract_id)
 
 ### Ghi chú khảo sát 20/11/2026
 - Demo: mỗi mã hàng 1 khối (gộp ô) → mỗi dòng con = 1 kho → bung chi tiết lô / seri (NSX, HSD, cảnh báo, mục đích, SL). Bộ lọc: Kho (chọn nhiều), Nhóm hàng, Hãng SX, Nước SX, Khách hàng (tồn chung / giữ KH), Hàng hóa (tên/mã/lô/seri/KH), Chỉ mã có cảnh báo date. KPI: số mã, tổng tồn, giữ KH, số lô cận date / hết hạn. In 2 chế độ (bảng tồn / chi tiết lô-seri), Xuất Excel từng lô/seri.
