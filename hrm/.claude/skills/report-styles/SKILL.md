@@ -1,6 +1,6 @@
 ---
 name: report-styles
-description: Use when làm MỚI hoặc UPDATE STYLE một màn báo cáo trong hrm-client (pages/assign/report/*, pages/sale/*-tracking…) — "chuyển báo cáo cũ sang style mới", "đổi giao diện báo cáo", khối tổng hợp .rsum, bảng cây rsum-tb, dòng TỔNG, ô chọn "cấp muốn bung", con số bấm mở popup drill, nút In / Xuất Excel trên header bộ lọc, tiêu đề bảng báo cáo không dính khi cuộn.
+description: Use when làm MỚI hoặc UPDATE STYLE một màn báo cáo trong hrm-client (pages/assign/report/*, pages/sale/*-tracking…) — "chuyển báo cáo cũ sang style mới", "đổi giao diện báo cáo", khối tổng hợp .rsum, bảng cây rsum-tb, dòng TỔNG, ô chọn "cấp muốn bung", con số bấm mở popup drill, popup chi tiết thiếu nút In / Xuất Excel danh sách, nút In / Xuất Excel trên header bộ lọc, tiêu đề bảng báo cáo không dính khi cuộn.
 ---
 
 # Skill: Style báo cáo (khuôn rsum)
@@ -27,7 +27,7 @@ nhánh ở repo chính (nhiều session dùng chung).
 | 1 | `V2BaseSmartFilterPanel floating` | `index.vue` | `reset-button-text="Xóa lọc"` · `#title-suffix` = `InfoTip` "MỤC ĐÍCH BÁO CÁO" · `#header-actions` = **In danh sách** (`secondary`) + **Xuất Excel** (`secondary status="success"`), cả 2 `size="sm" class="btn-compact"`, KHÔNG `mr-2/ml-2`. Ô chọn đổi là tìm luôn |
 | 2 | Khối tổng hợp `.rsum` | `components/TrackingSummary.vue` | Dòng `.rsum-goal` (tiêu đề · meta · nút Thu gọn) + 2 khối `.rsum-blk` cùng hàng. Mọi số là `DrillNum`. **Chỉ tiêu = 0 thì ẩn**, trừ ô tổng của khối. Số tính trên TOÀN BỘ dữ liệu đã lọc (`summary` của BE), không theo trang |
 | 3 | Bảng cây `table.rsum-tb` | `components/TrackingTable.vue` | `.ptr-table > .market-table-wrap > V2BaseTableScroll max-height="calc(100vh - 200px)"` · 1 hàng tiêu đề dính (`position: sticky; top: 0`) · dòng **TỔNG** (`.rsum-tb__sec`) đầu bảng · ô chọn cấp bung trong tiêu đề cột Nội dung · phân trang `V2BasePagination` theo nhóm CẤP 0 |
-| 4 | Popup drill | `components/ItemListModal.vue` | `components/report/V2BaseReportModal.vue` + `reportDrillListMixin` (tên state `filters`/`keyword` cố định) · footer: In danh sách · Xuất Excel danh sách · Đóng |
+| 4 | Popup drill | `components/ItemListModal.vue` | `components/report/V2BaseReportModal.vue` + `reportDrillListMixin` (tên state `filters`/`keyword` cố định) · footer **BẮT BUỘC đủ 3 nút**: In danh sách · Xuất Excel danh sách · Đóng — xem **mục 4c** |
 | 5 | In | `components/report/V2BaseReportPrintModal.vue` (DÙNG CHUNG — KHÔNG copy về từng màn) + `ReportPrintPreviewModal` + `reportPrintPreviewMixin.openPrintList(API, params)` | Theo **mục 4b**: chọn bản in + "Chọn cột in"; nút In danh sách của popup drill cũng qua popup này (chỉ chọn cột) |
 | 6 | Chi tiết bản ghi | `MeetingDetailDrawer` (`WorkItemDetailDrawer`) | `header-gradient="linear-gradient(135deg, #0a1c3d, #06b6d4)"`, `:above-modal="drill.visible"` |
 
@@ -100,6 +100,27 @@ BE (`{Report}PrintService`):
 - Excel mặc định đủ cột. Màn bật chọn cột xuất (`pick-columns`) thì `/export` đọc `cols` qua CÙNG whitelist với bản in
   (`columnsOf($mode, $cols)`; rỗng = đủ cột) — mẫu `StockLocationProductController::export`.
 
+## 4c. Popup drill PHẢI có In + Xuất Excel danh sách (user chốt 20/11/2026, Redmine #12172)
+
+QA trả #12172 vì popup bấm số chỉ có nút Đóng ("Trong popup chi tiết bị thiếu 2 chức năng là in và xuất excel"). Popup
+drill mới / sửa **không được** để footer chỉ có Đóng — kể cả khi báo cáo chính đã có In / Excel. Ngoại lệ chỉ khi user
+chốt riêng bằng văn bản (đang có: popup "Nhân viên tham gia" + "Meeting theo loại" của meeting-by-employees, B4) — ghi rõ
+trong comment đầu file popup.
+
+Popup tải TRỌN tập `item-list` rồi tìm / sắp tại chỗ (khuôn các báo cáo Kho) → dùng bộ dùng chung, KHÔNG tự viết lại:
+
+| Tầng | Dùng gì | Màn khai gì |
+|---|---|---|
+| BE controller | trait `Modules\Finance\Http\Controllers\Concerns\ServesDrillListPrint` → `GET {API}/item-list/print-list-data` + `GET {API}/item-list/export` | `use LimitsPrintListRows; use ServesDrillListPrint;` · có `private function run()` · `drillListData($request)` trả `[$doc, $columns, $rows]` · `drillListFileName()` · khai 2 route |
+| BE dữ liệu | `Modules\Finance\Services\DrillListPrinter` (`filterSort` khớp FE `fold` + `localeCompare('vi')`, `pick` theo thứ tự `cols`, bản in `finance::prints._layout`, Excel `DrillListExport` + `finance::exports.drill_list`) | Bộ cột `key => [label, field, type text/num, width, value?, html?]` **cùng khoá với `columns` của popup**; `$doc` = title · `company_id` (hoặc `header` dựng sẵn như bản in chính) · info · signers. `item-list` trả thêm `context` để lấy letterhead → controller `itemList` phải `unset` trước khi trả FE |
+| FE popup | footer 3 nút (`secondary` In · `secondary status="success"` Excel có loading · `tertiary` Đóng); prop `exporting` | `ownParams()` = `title` + `q` + ô lọc riêng của popup (`f_*`) + `sort`/`dir`; In emit kèm `columns: [{ key, label }]` đang hiện |
+| FE trang | `utils/mixins/reportDrillListPrintMixin.js` (data `printOptions` / `drillPrint` / `drillExporting`; `printItemList` · `exportItemList` · `onPrintChosen` · `closePrintOptions` · `openMainPrint` · `downloadReportFile`) | `drillListApi()` · `drillListParams(own)` (= params đã tải popup lưu ở `drill.params` + `own`) · `drillListFileName` · `onPrintMain()` (nhánh In báo cáo chính). `V2BaseReportPrintModal :modes="drillPrint ? [] : printModes" :columns="drillPrint ? drillPrint.columns : …"` |
+
+Mẫu chạy thật: `pages/warehouse/stock-location-product` (4 loại danh sách + ĐVT quy đổi `d_unit_coef`), `self-inventory-report`
+(ô lọc riêng `f_company_id`/`f_warehouse_id`), `stock-warehouse-product` (cột tuỳ quyền), `finance/import-direct-stocks`.
+Popup lọc / phân trang ở BE (gọi API mỗi lần) → BE tự nhận cùng tham số lọc của popup, khuôn `sale-by-product-report`
+(`itemListPrintData` / `itemListExport`).
+
 ## 5. Áp cho báo cáo CŨ — trình tự
 
 1. Liệt kê cái báo cáo cũ đang có: bộ lọc, biểu đồ, cột, chip/popup, In/Excel, cách phân trang của BE (nhiều màn cũ cắt trang theo dòng con nên nhóm bị tách giữa 2 trang).
@@ -149,5 +170,7 @@ BE (`{Report}PrintService`):
 | `InfoTip` trong tiêu đề đậm thì icon dày | `font-weight: normal` ở `.ptr-info` |
 | Copy `PrintOptionsModal.vue` về màn mới / tự dựng popup chọn cột | Dùng `components/report/V2BaseReportPrintModal.vue`, chỉ khai `printModes` |
 | Nút In danh sách của popup in thẳng | Mở popup chọn cột (`columns` = cột popup) rồi mới in |
+| Popup drill footer chỉ có Đóng ("In / Excel đã có ở báo cáo chính") — QA trả #12172 | Đủ 3 nút (mục 4c); bộ dùng chung `ServesDrillListPrint` + `DrillListPrinter` + `reportDrillListPrintMixin` |
+| In / Excel danh sách popup ra cả tập trong khi popup đang tìm / lọc / sắp | Popup emit `q` + `f_*` + `sort`/`dir`; BE `DrillListPrinter::filterSort` cắt + sắp y FE |
 | Tự dựng popup chọn cột riêng cho Xuất Excel | Dùng `ExportModeModal` + `pick-columns` (khai cột 1 lần ở `modes`, dùng chung với In) |
 | BE in cố định cột | Whitelist `SUMMARY_COLUMNS` / `DETAIL_COLUMNS` + đọc `cols` |

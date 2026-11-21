@@ -181,3 +181,20 @@ Blocked:
       → `loadData` / `handleSearch` không gọi API (giống kỳ Tuỳ chọn thiếu ngày), bảng hiện "Chọn Kỳ để xem dữ liệu.", In / Xuất Excel báo toast.
       Không sửa BE. Áp cả màn "Báo cáo tổng hợp bán hàng" (dùng chung component). "Làm mới" vẫn đưa Kỳ về Tháng này.
 - Kiểm: compile template + babel OK. Chưa mở trình duyệt. CHƯA commit.
+
+### 2026-11-21 — Note 20/11: đổi ô lọc phân loại hàng
+- [x] Màn "Báo cáo bán hàng theo từng mặt hàng" (mode `product`): bỏ ô **Nhóm hàng hóa** + **Loại hàng hóa**, thay bằng 3 ô dây chuyền
+      **Nhóm chức năng › Nhóm sản phẩm › Loại sản phẩm** (chọn nhiều, ô dưới thu theo ô trên). Màn "Báo cáo tổng hợp bán hàng" (mode `summary`) giữ nguyên
+- [x] BE `SaleByProductReportService`: `filter-options` trả `product_classes` (loại SP đang hoạt động + đã khoá mà hàng đã bán còn dùng, kèm path); nhận
+      `product_function_group_ids` / `product_family_ids` / `product_type_ids` → lọc `products.product_type_id` (không sửa hàm chung `applyProductFilters`)
+- [x] FE `SaleByProductReportScreen.vue`: 3 ô mới, đổi ô cha thì bỏ giá trị con không còn thuộc; mode product xoá `group_ids`/`product_cates` lưu cũ
+- Kiểm: `php -l` OK; compile template + babel OK. HTTP kernel (transaction tạo tạm 1 nhánh phân loại + gán 1 hàng đã bán, ROLLBACK sau test):
+  `filter-options` trả `product_classes` đúng path; lọc từng cấp / kết hợp cấp ra đúng 1 hàng, id lạ ra 0; popup `all-items` lọc theo. Chưa mở trình duyệt. CHƯA commit.
+- ⚠️ Local 3 bảng `product_function_groups` / `product_families` / `product_types` đều 0 dòng, `products.product_type_id` toàn NULL → 3 ô trống,
+  chọn vào lọc ra 0 hàng. Trên dev/prod hàng nào chưa gắn Loại sản phẩm sẽ không lọt khi chọn các ô này.
+
+### Checkpoint — 2026-11-21
+Vừa hoàn thành: Note 20/11 — đổi ô lọc phân loại màn mặt hàng
+Đang làm dở: — (CHƯA commit: hrm-api `SaleByProductReportService.php`; hrm-client `SaleByProductReportScreen.vue`)
+Bước tiếp theo: user mở màn kiểm trên môi trường có dữ liệu phân loại → commit
+Blocked:

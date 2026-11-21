@@ -5,6 +5,9 @@
 
 ## Đang làm
 
+- **Demo: Phiếu đề nghị xuất kho (tham khảo màn Yêu cầu xuất hàng hrm, có đổi hàng)** — @khoipv — Bắt đầu 21/11/2026 — Checkpoint 21/11/2026: đã xong demo `demos/demo-phieu-de-nghi-xuat-kho.html` theo chuẩn V2Base + skill (danh sách / tạo-sửa / chi tiết / popup xuất kho lô-serial-FEFO, đổi hàng THAY CHO, công nợ 3 kịch bản, đủ 7 trạng thái theo vai trò). Chờ user test + chốt Q1–Q6.
+  - Plan: [.plans/demo-phieu-yeu-cau-xuat-hang/plan.md](demo-phieu-yeu-cau-xuat-hang/plan.md) · Spec: [docs/superpowers/specs/2026-11-21-demo-phieu-yeu-cau-xuat-hang-design.md](../docs/superpowers/specs/2026-11-21-demo-phieu-yeu-cau-xuat-hang-design.md)
+
 - **Báo cáo tồn kho hàng hóa theo kho (theo `bc_ton_kho_theo_kho.html`)** — @khoipv — Bắt đầu 20/11/2026 — Đang brainstorming. Báo cáo đọc sổ tồn do PNK ghi khi duyệt: mỗi mã hàng 1 dòng tổng → tồn từng kho → chi tiết lô / seri (NSX, HSD, mục đích giữ KH), cảnh báo cận date / hết hạn, KPI, in, xuất Excel.
   - Plan: [.plans/bao-cao-ton-kho-theo-kho/plan.md](bao-cao-ton-kho-theo-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-20-bao-cao-ton-kho-theo-kho-design.md](../docs/superpowers/specs/2026-11-20-bao-cao-ton-kho-theo-kho-design.md)
 

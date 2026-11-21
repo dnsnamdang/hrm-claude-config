@@ -84,3 +84,36 @@ Vừa hoàn thành: #12172 đủ 4 mục — BE `item-list` + `/export` nhận `
 Đang làm dở: —
 Bước tiếp theo: user mở `/warehouse/stock-location-product` kiểm 4 mục + popup Xuất Excel của 1 màn khác (vd Thẻ kho) vẫn như cũ
 Blocked:
+
+## Phản hồi #12172 (20/11/2026) — popup chi tiết thiếu In + Xuất Excel @khoipv
+
+User: "Trong popup chi tiết bị thiếu 2 chức năng là in và xuất excel => Thêm đủ chức năng + Thêm vào skill chung, rà các màn
+giúp t xem còn thiếu trong màn báo cáo nào thì thêm nha".
+
+- [x] BE helper dùng chung `DrillListPrinter` (lọc `q` + sắp `sort/dir` y FE, chọn cột `cols`, bản in `_layout`, Excel) + `DrillListExport`
+      + blade `exports/drill_list` + trait controller `ServesDrillListPrint` (2 endpoint `item-list/print-list-data` · `item-list/export`)
+- [x] BE Tồn theo vị trí: cột khớp `StockLocationDrillModal`, ĐVT quy đổi `d_unit_coef`/`d_unit_name`; `item-list` trả `context` (controller unset)
+- [x] FE `StockLocationDrillModal`: footer In danh sách · Xuất Excel danh sách · Đóng; trang cha qua mixin mới `utils/mixins/reportDrillListPrintMixin.js`
+- [x] Rà popup báo cáo (grep `V2BaseReportModal` + `*report*/components/*Modal*`): áp cùng khuôn cho Tồn theo kho (#12173), Hàng thừa thiếu
+      (#12095, kèm ô lọc riêng `f_company_id`/`f_warehouse_id`), Tồn hàng nhập xuất thẳng (#12180, thêm `V2BaseReportPrintModal` cho bước chọn cột)
+- [x] Skill report-styles: mục 4c (footer BẮT BUỘC 3 nút + bộ dùng chung) + 2 dòng "Lỗi thường gặp"
+- [x] Kiểm: php -l 13 file + smoke HTTP kernel 4 màn × mọi metric (print 200 đúng thead theo `cols`, Excel 200 mở được, `q`/`sort`/ô lọc cắt
+      đúng, `context` không lộ ra `item-list`); compile template + babel 8 file Vue + mixin
+- [ ] Mở trình duyệt kiểm thật (user tự test)
+
+Kết quả smoke (21/11/2026, công ty 1): Tồn theo vị trí kho CSKH 29/417/1/460 dòng = bản in = Excel; `q=cam&sort=qty desc&cols=qty,name` → 23
+dòng, 2 cột đúng thứ tự; lô drill từ dòng hàng ĐVT hệ số 2: SL 6 → 3 "Hộp". Tồn theo kho 7 kho / 6.256 mặt hàng (vượt trần in → báo vượt trần
+như In danh sách, Excel vẫn ra). Hàng thừa thiếu 1/3/4 dòng. Nhập xuất thẳng 11/17/84/85 dòng.
+
+Còn thiếu In/Excel nhưng CHƯA làm (chờ user chốt — báo cáo kiểu CŨ, popup chưa lên khuôn `V2BaseReportModal`, muốn có phải làm thêm BE từng màn):
+training/report (3 popup); assign/report: customer-development, meeting-by-market (2), performance-by-solutions (2), prospective-projects (2),
+solution-requests-by-department, solutions-work-summary-by-department (2), solution-versions, task-manager-by-employees; finance
+report-limit-debts / report-limit-debt-employees; sale/bonus-quarter-report (có Excel, thiếu In). Không tính: popup phụ cấp 2 (lịch sử gia hạn,
+chứng từ thanh toán, lịch sử meeting KH, chi tiết HĐ quyết toán NS) và 2 popup B4 meeting-by-employees (user đã chốt chỉ nút Đóng).
+
+### Checkpoint — 21/11/2026
+Vừa hoàn thành: phản hồi #12172 — In + Xuất Excel danh sách cho popup bấm số ở 4 báo cáo (Tồn theo vị trí, Tồn theo kho, Hàng thừa thiếu,
+Nhập xuất thẳng) qua bộ dùng chung BE `DrillListPrinter`/`ServesDrillListPrint` + FE `reportDrillListPrintMixin`; skill report-styles §4c
+Đang làm dở: —
+Bước tiếp theo: user mở 4 màn, bấm số → In danh sách (chọn cột) / Xuất Excel danh sách; chốt có làm tiếp nhóm báo cáo kiểu cũ không
+Blocked:

@@ -54,3 +54,17 @@ Blocked:
 
 ## Fix Redmine #12234 — CSS popup Chọn hợp đồng (19/11/2026)
 - [x] Popup "Chọn hợp đồng" ở form tạo phiếu: câu rỗng dài (~870px) > khung popup lg, ô bảng `nowrap` → chữ tràn 2 bên, bảng cuộn ngang lệch, cắt tiêu đề cột. Sửa cục bộ `AssignOtherContractPickerModal.vue` (`::v-deep .dt-state-inner { white-space: normal }`), không đụng `V2BaseDataTable` dùng chung. Áp cho cả màn YC giao việc khác (cùng popup). Compile template + scss OK; chưa mở trình duyệt.
+- [x] 21/11/2026 — user giao lại #12234: kiểm tra thấy fix đã có ở commit `2abab7b51` (hrm-client, đã lên `origin/develop`), issue chưa được chuyển trạng thái sau khi fix. Không sửa thêm code; chờ dev build lại để tester kiểm.
+
+## Fix Redmine #12242 — 5 điểm QA màn Phiếu YC lắp đặt, bàn giao (21/11/2026)
+- [x] 1. Popup "Chọn khách hàng" nhỏ lại + bỏ khoảng trắng dưới bảng — `ChooseErpCustomerModal` dùng chung 25 màn, user chốt SỬA CHUNG: cao theo nội dung (max 94vh, bảng cuộn), rộng 95vw trần 1640px (vừa tổng cột ~1580px); bỏ media query 1350px chết (bị `95vw !important` đè). Fullscreen giữ 100vh. node-sass không nhận `min()` → dùng width + max-width.
+- [x] 2. Popup Thêm nhanh người liên hệ: nút × xoá nhanh trong 3 ô (khuôn `picker-text-field__clear` của PlanPickerModal)
+- [x] 3. File đính kèm mất dung lượng khi Sửa/Xem: BE thêm `GET assembly-requests/{id}/attachment-sizes` (khuôn HandoverRecord), FE truyền `sizes-url`
+- [x] 4. Bộ lọc thiếu so với ERP: thêm ô Số phiếu yêu cầu · Số hợp đồng · Tên/Mã hàng hóa (BE đã nhận `code`/`contract_code`/`product_keyword`)
+- [x] 5. Cột "Người tạo" → "Người yêu cầu" y ERP (bảng + xuất Excel)
+
+### Checkpoint — 21/11/2026
+Vừa hoàn thành: 5 mục #12242 (FE: ChooseErpCustomerModal, AssignOtherContactQuickAddModal, AssemblyRequestForm sizes-url, index.vue 3 ô lọc + cột "Người yêu cầu"; BE: route/controller/service `attachment-sizes`, ExportColumnRegistry). Compile template + babel + node-sass OK; smoke HTTP: attachment-sizes 200 / id lạ 404, lọc `code` 200.
+Đang làm dở: không.
+Bước tiếp theo: user mở trình duyệt kiểm popup Chọn KH (ít/nhiều dòng, fullscreen ở Meeting) + nút × + dung lượng file (local không có phiếu nào có file).
+Blocked:
