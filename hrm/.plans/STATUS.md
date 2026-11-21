@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- sale / **Redmine đào tạo-đánh giá 21/11 — YCHG #12238-#12241, BC #12203 #12201 #12164, popup HĐ #12243** → @nguyentrancu97 → `.plans/redmine-dt-2111/plan.md`
+  21/11/2026: sửa xong + kiểm Playwright; commit develop CHƯA push — api b77925565 c0b60f247 · client 7d35201d4 6d71d0673 d3237afd5 928b4b40b 2ce8b7b51. Chờ user duyệt push + sửa chung SidebarMenu (ⓘ lệch).
+
 - assign / **YCCH (Phiếu YC chuyển hàng) điều chuyển chi nhánh — trạng thái theo ĐNXK/PXK như ERP** → @nguyentrancu97 → `.plans/ycch-trang-thai-dieu-chuyen-cn/plan.md`
   20/11/2026: đợt 1 (YCCH 5 Đang xuất kho / 6 Đã xuất kho) ĐÃ push develop 5205e0758 + gop_db 24e2d357e. Đợt 2 thêm trạng thái 14 "Đã đề nghị" khi gửi ĐNXK: HRM ĐÃ push develop `3f3486f2d` + gop_db `6ff3be35c`; ERP ĐÃ push develop_02 `a5b327111d` (CHƯA gop_db ERP). Chờ user: có update dữ liệu lệch (18 hrm_erp_test / 13 hrm_erp_gop) lên 14 không.
 
