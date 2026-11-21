@@ -15,6 +15,7 @@
 | **D1** | Phạm vi danh sách trên HRM | **Chỉ hiện phiếu của chính người lập** (`created_by = mình`) | KHÔNG gate quyền, KHÔNG `checkPermission`, KHÔNG `columnCustomizationMixin`, KHÔNG đụng Catalog quyền. BE Service lọc `created_by = auth()->id()`. Menu HRM khai KHÔNG `codes`. (KD cấp trên muốn xem phiếu nhân viên thì vào ERP.) |
 | **D2** | Khóa màn Tạo/Sửa bên ERP | **Giữ ERP mở song song** | KHÔNG sửa ERP create/edit, KHÔNG redirect. Màn ERP vẫn lập được trong giai đoạn chuyển. |
 | **D3** | Chuông kết quả ERP→HRM | **CÓ — báo khi XNK "Không duyệt" (status 5)** | +1 đoạn Guzzle bên ERP tại `unApprove`, gọi `POST {hrm_url_BE}/api/v1/finance/firm-warranty-requests/{id}/notify-result` (khuôn `WrApproveResultsController::notifyHrmImportResult`). HRM thêm route `notify-result` + giao chuông cho người lập. |
+| **D4** (21/11/2026) | Validate Lưu nháp | **Validate ĐẦY ĐỦ, KHÔNG nới nháp** (đảo lại ý ban đầu ở §7) — khớp ERP + sibling `DeliveryCostAskingRequestStoreRequest` | Store/Update cùng 1 bộ rule cho status 1 và 2; chỉ guard "Chưa phân công người phụ trách…" áp khi status = 2. |
 
 ---
 
@@ -89,7 +90,7 @@ Giữ nguyên tên bảng/cột ERP. Model HRM `extends BaseModel`, `$table` tr�
   - `items.*.qty` numeric|min:1; `costs.*.amount` numeric|min:1, `costs.*.cost_name` required.
   - Chặn trùng `product_id + serial` trong cùng phiếu.
   - Khi `status=2`: bắt buộc đã có `AssignHistory.buy_employee_id` cho (send_company+brand+manufacture); chưa có → "Chưa phân công người phụ trách thương hiệu, hãng sản xuất".
-  - **Lưu nháp (status 1) nới `required`** theo chuẩn HRM (giữ rule định dạng), ví dụ chỉ bắt `brand_id`. ⚠️ **Chủ ý lệch ERP:** ERP chạy ĐỦ rule kể cả status 1 (không nới); HRM nới theo convention `form-validate` + 2 bản sibling tuần này — ghi vào design để QA khỏi báo nhầm.
+  - ~~**Lưu nháp (status 1) nới `required`** theo chuẩn HRM (giữ rule định dạng), ví dụ chỉ bắt `brand_id`. ⚠️ **Chủ ý lệch ERP:** ERP chạy ĐỦ rule kể cả status 1 (không nới); HRM nới theo convention `form-validate` + 2 bản sibling tuần này — ghi vào design để QA khỏi báo nhầm.~~ → **ĐÃ ĐẢO 21/11 (D4): không nới nháp, validate đầy đủ như ERP.**
 - **Lookups cần port (BE):**
   - **Công ty gửi** (`send_company_id`): đổ **toàn bộ công ty** qua khuôn `Company::getForSelect()` (ERP `formJs` dòng 8) — **KHÔNG bó theo công ty người lập**, chỉ `required`. (Ai *xem* được phiếu do D1 quyết, không liên quan ô này.)
   - `getDeputy(manufacture_id)` → gọi `manufactures/{id}/getDeputy`, chỉ để **hiển thị** ô readonly "Người nhận đơn/Người mua" (thông tin phụ trách của hãng). **Đây KHÔNG phải đích chuông.**

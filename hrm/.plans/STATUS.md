@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- sale / **Port Cảnh báo thu nợ đến hạn (xét theo quy chế)** → @nguyentrancu97 → `.plans/canh-bao-thu-no-den-han/plan.md`
+  21/11/2026: ĐÃ push develop — api c062514ed fe9a93966 · client b8b24733a; e2e `customer-debt-due-warning.spec.ts` pass; đối chiếu ERP 2,204 HĐ / 594,653,332,564 khớp. Chưa gop_db. Chỉ tiêu "Xét theo HĐ" anh Nam làm sau.
+
 - sale / **Redmine đào tạo-đánh giá 21/11 — YCHG #12238-#12241, BC #12203 #12201 #12164, popup HĐ #12243** → @nguyentrancu97 → `.plans/redmine-dt-2111/plan.md`
   21/11/2026: ĐÃ push develop — api 5b6f19bc2 c2f34b301 · client 435e4b2af b96a90a8a 49866fc09 fe2e8ebe8 691ec5450 ddf9cea1b; 8 vé "Code xong chờ test". Chưa gop_db.
 
@@ -26,8 +29,8 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 - sale / **YC đặt hàng (PDH, ERP rootOrderRequest) — port ERP → HRM (phía KD khởi tạo)** → @nguyentrancu97 → `.plans/yc-dat-hang/{design.md,plan.md}`
   20/11/2026: ĐÃ push develop — api 8c6b2fb70 / client ab58b07f8 + ERP develop_02 0280648943. E2E local OK (PDH-06917 → PDHTN-04132, erp_hrm_check). Bước tiếp theo: gộp gop_db khi user báo.
 
-- finance / **Phiếu yêu cầu hãng bảo hành (ERP FirmWarrantyRequest) — port ERP → HRM** → @nguyentrancu97 → `.plans/yc-hang-bao-hanh/design.md`
-  20/11/2026: BRAINSTORM xong, chốt D1 (DS chỉ phiếu của người lập, không gate quyền) · D2 (ERP create/edit giữ mở song song) · D3 (chuông ERP→HRM khi XNK Không duyệt). Chờ duyệt tài liệu thiết kế → lập plan. Chưa có code.
+- finance / **Phiếu yêu cầu hãng bảo hành (ERP FirmWarrantyRequest) — port ERP → HRM** → @nguyentrancu97 → `.plans/yc-hang-bao-hanh/design.md` · plan `.plans/firm-warranty-request-port/plan.md`
+  21/11/2026: CODE XONG 12 task + 10b (Excel DS) + final review opus (Ready to merge) + fix wave; e2e 7/7 PASS. CHƯA COMMIT cả 3 repo (hrm-api develop, hrm-client develop, ERP develop_02 callback "Không duyệt"). Chốt: validate đầy đủ không nới nháp. Bước tiếp: user cho phép commit; verify tay chuông D3.
 
 - app / **Nhận chia sẻ từ app khác vào TPE_APP (như Zalo)** → @cuong61n → **.plans/app-share-extension/design.md** · spec `docs/superpowers/specs/2026-11-20-app-share-extension-design.md` · THIẾT KẾ chờ duyệt (20/11/2026), chưa code; iOS + Android, đợt 1 TpeProd
 

@@ -29,3 +29,9 @@ Người làm: @nguyentrancu97 · Nhánh: hrm-api / hrm-client `develop` · Bả
 - 21/11: ĐÃ push develop (hash sau rebase): api `5b6f19bc2` (YCHG) `c2f34b301` (#12203 export flat) · client `435e4b2af` (YCHG) `b96a90a8a` (#12203) `49866fc09` (#12201) `fe2e8ebe8` (#12164) `691ec5450` (#12243) `ddf9cea1b` (gỡ vá ⓘ cục bộ).
 - Icon ⓘ lệch: user duyệt sửa layout chung; Tri Lee đã sửa tận gốc ở client `3b79eb4f0` (bỏ lề 10px của h5 tiêu đề + bỏ `mt-2` icon) → mình bỏ phần sửa SidebarMenu, chỉ gỡ 2 bản vá cục bộ. Đo Playwright: tâm icon = tâm chữ tiêu đề.
 - 21/11: 8 vé chuyển "Code xong chờ test" kèm hash. Chưa gop_db.
+
+### Checkpoint — 2026-11-21 17:15 (wrap up tự động)
+Vừa hoàn thành: 8 vé (#12238 #12239 #12240 #12241 #12203 #12201 #12164 #12243) sửa + kiểm Playwright local + ĐÃ push origin/develop (api `5b6f19bc2` `c2f34b301` · client `435e4b2af` `b96a90a8a` `49866fc09` `fe2e8ebe8` `691ec5450` `ddf9cea1b`); Redmine chuyển "Code xong chờ test".
+Đang làm dở: không.
+Bước tiếp theo: chờ QA test; đưa sang gop_db khi user báo. Điểm mở chưa chốt: bản in YCHG dòng nhóm còn "· trạng thái nhóm" + giá bán lẻ trống in `—` (hỏi QA có bỏ không); khối `.rsum` vẫn hiện ô giá trị 0; `drill-list.js` đang là 3 bản copy (gom về `utils/` nếu được phép); `exportBonusQuarterDetail` không còn nơi gọi.
+Blocked:
