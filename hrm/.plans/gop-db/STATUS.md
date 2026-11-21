@@ -21,15 +21,19 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 
 ## #12091 + #11888 Báo cáo thị trường theo Khu vực kinh doanh (8 báo cáo CSKH trước bán) — ĐANG LÀM (2026-11-20, @junfoke)
 → .plans/gop-db/bao-cao-thi-truong-theo-kvkd/plan.md (design.md + mockup #11888 cùng thư mục)
-Trạng thái: CODE XONG 8 báo cáo (20/11) ở repo chính nhánh `task_12091` (api + client), CHƯA commit; Playwright + PHPUnit đã kiểm. Còn: Excel/in KVKD cho Tổng hợp CSKH & Phát triển KH (chờ user), review, dọn dữ liệu thử local.
-⚠️ GOTCHA: tỉnh lấy theo KVKD khi KH thuộc KVKD (1.580 KH prod lệch); 2 service còn đọc DB ERP cũ (sửa trong task); deploy cần migrate + chạy BackfillMeetingProvinceSeeder.
+Trạng thái: CODE XONG 8 báo cáo + Excel/in KVKD (21/11) ở repo chính nhánh `task_12091` (api + client), CHƯA commit; Playwright + PHPUnit đã kiểm. Còn: review, dọn dữ liệu thử local, user commit.
+⚠️ DEPLOY PROD (bắt buộc, theo thứ tự): (1) `php artisan migrate` (thêm cột KVKD vào `meetings`) → (2) chạy 1 lần `php artisan db:seed --class="Modules\Assign\Database\Seeders\BackfillMeetingProvinceSeeder"` (ghi KVKD meeting cũ + vá 535 meeting thiếu tỉnh) → (3) SQL kiểm. Chi tiết: plan.md mục "TRIỂN KHAI PROD".
+⚠️ GOTCHA: tỉnh lấy theo KVKD khi KH thuộc KVKD (1.580 KH prod lệch); 2 service từng đọc DB ERP cũ (đã sửa trong task).
 Spec: docs/superpowers/specs/gop-db/2026-11-20-bao-cao-thi-truong-theo-kvkd-design.md | Tóm tắt: .plans/gop-db/bao-cao-thi-truong-theo-kvkd/design.md
 
-## #12219 Phường/Xã thêm Khu vực kinh doanh (đồng bộ 2 chiều với màn KVKD) — CODE XONG, đã test giao diện, CHƯA commit (2026-11-20, @junfoke)
-Nhánh `task_12219` (worktree `.worktrees/gop_db` api + client). Tài liệu: `.plans/gop-db/business-areas/plan.md` (Ngày 20/11).
+## #12258 #12262 #12265 #12266 #12267 + #12271 QA Phiếu phân chia thị trường theo NV — ĐÃ PUSH develop (client `c749f5942`, `552c58221`; api `135fef68f`, `b6ecfbd1f`) (2026-11-21, @junfoke)
+Kèm sửa CSS dùng chung `V2BaseSelect.vue` (nút x đè mũi tên ô chọn nhiều). 6 NV đang có 2 phiếu Đã duyệt — chờ user báo QA/BA dọn. Tài liệu: `.plans/gop-db/division-market-employee/plan.md` (Ngày 21/11).
 
-## #12245 – #12249 Phản hồi QA 2 BC so sánh bán hàng (khu vực ↔ thời gian) — ĐANG LÀM (2026-11-20, @junfoke)
-Chốt giữ cách tính HRM (ERP tính sai), phản hồi QA; đang sửa giao diện / bộ lọc. Tài liệu: `.plans/gop-db/bc-so-sanh-bh-khu-vuc-theo-thoi-gian/plan.md`.
+## #12219 Phường/Xã thêm Khu vực kinh doanh (đồng bộ 2 chiều với màn KVKD) — ĐÃ MERGE develop (api `4348f763a`, client `20c3f19ca`), CHƯA gop_db (2026-11-21, @junfoke)
+Nhánh `task_12219` (api `35abd2784`, client `bf1c99c1f`, đã push). Dev cần `migrate` (migration my-todo kéo theo từ gop_db). Tài liệu: `.plans/gop-db/business-areas/plan.md` (Ngày 20–21/11).
+
+## #12245 – #12249 Phản hồi QA 2 BC so sánh bán hàng (khu vực ↔ thời gian) — ĐÃ PUSH develop (client `3b79eb4f0`, api `375bc2142`) (2026-11-21, @junfoke)
+Giữ cách tính HRM (ERP tính sai), phản hồi QA. Kèm sửa thanh tiêu đề dùng chung `SidebarMenu.vue`. Tài liệu: `.plans/gop-db/bc-so-sanh-bh-khu-vuc-theo-thoi-gian/plan.md`.
 
 ## #12225 Dự án TKT — thanh Tiến trình nội bộ dự án — ĐÃ PUSH gop_db (api `2421c6b0a`, client `658aab752`) + develop (api `2ffb01127`, client `ccc9ffa71`) (2026-11-20, @junfoke)
 Tài liệu: `.plans/gop-db/12225-tien-trinh-du-an-tkt/plan.md`.

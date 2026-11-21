@@ -116,6 +116,34 @@ Pattern copy: `components/modals/ChooseErpCustomerModal.vue:206-281` (ô Tỉnh 
 - [ ] Xoá dữ liệu thử local; viết SQL kiểm prod sau deploy (dán trong chat).
 - [ ] Cập nhật STATUS + checkpoint; báo user danh sách file để commit.
 
+## ⚠️ TRIỂN KHAI PROD — BẮT BUỘC (user dặn ghi rõ 21/11 để hỏi lại còn nhớ)
+Thứ tự, chạy trên server **hrm-api** SAU khi pull code nhánh này:
+1. `php artisan migrate` — chạy migration `2026_11_20_000001_add_business_area_columns_to_meetings_table`
+   (thêm `meetings.business_area_id` + index `meetings_business_area_id_index` + `meetings.business_area_name`; viết idempotent, chạy lại không lỗi).
+2. `php artisan db:seed --class="Modules\Assign\Database\Seeders\BackfillMeetingProvinceSeeder"` — chạy **1 lần**:
+   ghi KVKD (id + tên) cho meeting cũ theo KH, và vá luôn **535 meeting prod đang thiếu tỉnh** (số liệu prod 20/11).
+   Chạy lại vẫn an toàn: chỉ đụng meeting còn trống `business_area_id` / `province_id`.
+3. Kiểm sau deploy (dán SQL trong chat, user chạy prod):
+   ```sql
+   SELECT COUNT(*) tong, SUM(province_id IS NULL) chua_tinh, SUM(business_area_id IS NOT NULL) co_kvkd FROM meetings;
+   ```
+   Kỳ vọng: `chua_tinh` ≈ 0 (chỉ còn meeting không có KH / KH không có tỉnh), `co_kvkd` ≈ 3.197 (số đo prod 20/11).
+- Không cần sync quyền, không đổi `.env`, không cần build lại gì ngoài FE như mọi lần.
+- **Nếu quên bước 2:** Báo cáo Phát triển thị trường – KH (chiều Khu vực KD) dồn meeting cũ vào "Chưa xác định khu vực";
+  meeting mới / sửa sau deploy thì tự ghi đúng (hook `Meeting::booted`). Chạy seeder muộn vẫn sửa được.
+
+### Checkpoint — 2026-11-21 (Excel/in KVKD cho 2 báo cáo còn lại)
+Vừa hoàn thành: user chốt (1) thêm KVKD vào Excel/in cho đồng bộ, (2) Phát triển KH theo NVKD test tay là đủ, (3) ghi rõ bước deploy (mục trên).
+- Tổng hợp CSKH tiềm năng: bản in danh sách thêm cột "Khu vực kinh doanh" (KVKD · Tỉnh; khoá `area` trong `DETAIL_COLUMNS` + FE
+  `DETAIL_PRINT_COLUMNS`, popup drill in được luôn cột này); Excel danh sách thêm 2 cột Tỉnh/TP + Khu vực kinh doanh (12 cột, dòng TỔNG gộp 8);
+  bản in + Excel cây: dòng khách hàng ghi "Mã - Tên · KVKD · Tỉnh" như trên màn. Test `ExportPrintTest` cập nhật tiêu đề cột, 4/4 xanh.
+- Phát triển KH theo NVKD: Excel/in chỉ đếm theo nhân viên (không có dòng KH) ⇒ KVKD thể hiện ở DÒNG ĐIỀU KIỆN dưới tiêu đề
+  ("Tỉnh/TP: … · Khu vực kinh doanh: …", chỉ hiện khi có lọc) — `CustomerDevelopmentReportService::regionText()` trả qua `summary.region_text`.
+- Đã chạy thử thật (script PHP): bản in, Excel đọc lại bằng PhpSpreadsheet đúng cột. Test PotentialCustomerTracking còn 15 fail CÓ SẴN (FK roles, thiếu bảng workspace_members local).
+Đang làm dở: —
+Bước tiếp theo: review toàn nhánh; dọn dữ liệu thử local (`scratchpad/cleanup12091.php`) khi user xem xong; user commit; deploy theo mục TRIỂN KHAI PROD.
+Blocked:
+
 ### Checkpoint — 2026-11-20 (chiều, xong code 8 báo cáo)
 Vừa hoàn thành: Task 1–11 (BE + FE), Playwright có ảnh cả 8 màn. Test mới 26 bài xanh (helper 5 · snapshot 6 · Phát triển TT 4 ·
 CSKH 2 · Meeting TT 3 · Nhu cầu DV 1 · Phân chia TT 2 · DS đăng ký 1) + test cũ Phát triển TT/CSKH 39 xanh, ServiceDemand/ReportApiTest

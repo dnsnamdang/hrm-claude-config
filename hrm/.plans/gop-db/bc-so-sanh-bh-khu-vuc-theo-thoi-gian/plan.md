@@ -32,3 +32,10 @@ Blocked:
 
 ## Ngày 20/11/2026 (@junfoke)
 - [ ] 20/11/2026 — Đang xử lý lỗi QA #12245 – #12249 (2 báo cáo so sánh bán hàng: màn này + `bc-so-sanh-bh-thoi-gian-khu-vuc`). Đã đọc 5 issue + ảnh, đối chiếu code ERP. Số liệu lệch ERP (#12246, #12247, #12249) là do lúc port cố ý không theo lỗi tính của ERP: màn này ERP lọc HĐ bằng mã trạng thái của BÁO GIÁ (`status=2` → trúng phiếu bảo hành ở HĐ dịch vụ, HĐ "Chờ duyệt" ở HĐ hàng hoá; năm 2025 ERP ra đúng 500,000đ toàn phiếu bảo hành). User chốt **giữ cách tính HRM, soạn phản hồi QA** kèm số đối chiếu; vẫn sửa vế "ERP để 0 thì HRM cũng hiện 0" của #12249. Đang làm phần giao diện / bộ lọc / css bảng (so khuôn màn ADB); local phải sync quyền + gán 2 quyền cho tài khoản test mới vào được màn. #12245 / #12248 (icon ⓘ lệch chữ cạnh tiêu đề trang) nằm ở thanh tiêu đề dùng chung `SidebarMenu.vue` — đã hỏi user. Chưa commit.
+
+## Ngày 21/11/2026 (@junfoke)
+- [x] 21/11/2026 — Lỗi #12245 – #12249 (QA 2 báo cáo so sánh số liệu bán hàng, chung với plan `bc-so-sanh-bh-thoi-gian-khu-vuc`) — xong, đã lên `develop` (client `3b79eb4f0`, api `375bc2142`):
+  - **Tiêu đề trang lệch nút 3 gạch (mọi màn)**: user bảo kiểm kỹ vì màn khác không báo ⇒ nguyên nhân thật là CSS chung đặt lề trên 10px cho mọi thẻ tiêu đề, `mb-0` chỉ bỏ lề dưới ⇒ chữ thấp hơn nút 3 gạch 5px. Sửa ở thanh tiêu đề dùng chung `SidebarMenu.vue` (user đồng ý), nút 3 gạch – tiêu đề – icon ⓘ cùng đường.
+  - **"Text và icon lệch" riêng 2 màn**: lỗi thật ở dòng tóm tắt "Năm 2025 → Năm 2026 · Tổng hợp · 38 tỉnh/TP ⓘ" (chữ xám tụt thấp hơn chữ đậm) ⇒ căn thẳng hàng.
+  - Cả 2 màn: "Xóa lọc" → "Làm mới" (xoá trắng mọi ô kể cả ô bắt buộc, như ERP); mọi ô chọn có nút x; ô Năm đủ 1970 → năm nay + 25 như ERP (trước cắt từ 2020); thêm nút tùy chỉnh cột (ẩn/hiện, kéo đổi thứ tự 12 cột con, tiêu đề 2 tầng tự ghép); bấm số ở khối tóm tắt mở popup danh sách KH / HĐ (số dòng khớp con số); CSS bảng: cuộn thì hàng tiêu đề 2 đè hàng 1 làm viền lệch bậc với ô "Tỉnh/TP" ⇒ sửa cả 2 bảng.
+  - Lệch số liệu #12246 / #12247 / #12249: giữ cách tính HRM như user chốt, soạn sẵn nội dung giải thích cho user dán Redmine.

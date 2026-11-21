@@ -30,3 +30,6 @@ Blocked:
 
 ## Ngày 20/11/2026 (@junfoke)
 - [ ] 20/11/2026 — Đang xử lý lỗi QA #12245 – #12249 (chung với plan `bc-so-sanh-bh-khu-vuc-theo-thoi-gian`). Riêng màn này: SL KH và SL HĐ đã khớp ERP, chỉ cột Giá trị lệch vì ERP join dòng quyết toán làm nhân doanh thu nhiều lần, UNION làm rơi dòng trùng và đảo biến phụ lục ⇒ user chốt giữ cách tính HRM, phản hồi QA kèm số đối chiếu. Phần giao diện / bộ lọc đang sửa, chưa commit.
+
+## Ngày 21/11/2026 (@junfoke)
+- [x] 21/11/2026 — Lỗi #12245 – #12249 xong, lên `develop` (client `3b79eb4f0`, api `375bc2142`) — phần chung 2 màn ghi ở plan `bc-so-sanh-bh-khu-vuc-theo-thoi-gian`. Riêng màn này (#12248, #12249): thêm phân trang; số 0 hiện "0", tỷ lệ hiện "0%" như ERP, đồng bộ cả bản in + Excel; popup bấm số ở khối tóm tắt chạy ~5s ở local (bằng thời gian chạy chính báo cáo).
