@@ -1,6 +1,6 @@
 # Phản hồi note Tân Phát trên bảng "Danh mục quyền theo chức năng" (db_gop_3_11) — @cuong61n
 
-Nhánh: `gop_db` (worktree `worktrees/gop_db-api`). Chưa commit.
+Nhánh code: `gop_db-phan-quyen-tan-phat-note` (tách từ `gop_db`, chưa push). hrm-api commit `70cffc095`; ERP (TanPhatDev) commit `7fd95c41e7`.
 
 ## Phase 1 — Phản hồi cột "DNS phản hồi" (19/11/2026)
 - [x] 19/11 Đọc 95 dòng có "Tân Phát note" (sheet Danh sách quyền), đối chiếu Catalog `app/Support/Permissions/Catalog` + code gop_db + menu FE (cổng 3002)
