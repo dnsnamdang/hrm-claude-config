@@ -26,5 +26,6 @@ Người làm: @nguyentrancu97 · Nhánh: hrm-api / hrm-client `develop` · Bả
 ## Tiến độ
 - 21/11: chuyển 8 vé sang "Đang tiến hành", bắt đầu sửa.
 - 21/11: sửa xong cả 3 nhóm, kiểm Playwright local (YCHG: danh sách/lịch sử/in/form + ghim cột Mã hàng; 3 BC: popup tổng khớp thẻ thống kê — quý K2/2026 27,235,295 · NS tháng 06/2026 2,349,277 · theo dõi HĐ Q2 thực thu 1,417,725,837; ⓘ thẳng tiêu đề; popup #12243 1 hàng + 🔒).
-- Commit develop, CHƯA push: api `b77925565` (YCHG) `c0b60f247` (#12203 export flat) · client `7d35201d4` (YCHG) `6d71d0673` (#12203) `d3237afd5` (#12201) `928b4b40b` (#12164) `2ce8b7b51` (#12243).
-- Icon ⓘ lệch: gốc ở `components/training-components/SidebarMenu.vue:18` (`mt-2` trên `#page-title-info-icon`, ~56 màn). Hiện vá cục bộ 2 màn BC thưởng; chờ user duyệt sửa layout chung.
+- 21/11: ĐÃ push develop (hash sau rebase): api `5b6f19bc2` (YCHG) `c2f34b301` (#12203 export flat) · client `435e4b2af` (YCHG) `b96a90a8a` (#12203) `49866fc09` (#12201) `fe2e8ebe8` (#12164) `691ec5450` (#12243) `ddf9cea1b` (gỡ vá ⓘ cục bộ).
+- Icon ⓘ lệch: user duyệt sửa layout chung; Tri Lee đã sửa tận gốc ở client `3b79eb4f0` (bỏ lề 10px của h5 tiêu đề + bỏ `mt-2` icon) → mình bỏ phần sửa SidebarMenu, chỉ gỡ 2 bản vá cục bộ. Đo Playwright: tâm icon = tâm chữ tiêu đề.
+- 21/11: 8 vé chuyển "Code xong chờ test" kèm hash. Chưa gop_db.
