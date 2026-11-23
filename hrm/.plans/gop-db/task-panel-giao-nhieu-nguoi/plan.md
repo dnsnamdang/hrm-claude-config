@@ -10,3 +10,6 @@ Nhánh `gop_db` · phản hồi từ chị Nguyễn Thị Thu Huyền (TPE).
   cụ thể chọn 1 người → 1 nhiệm vụ (id 1058, `task_type=2`, `batch_id` NULL); bỏ trống bấm Giao việc → báo "Bắt buộc phải nhập" ở các ô bắt buộc (BE 422).
 - [x] 12/11/2026 — Cột Tag ở `/assign/tasks` hiện `[]` khi không có tag: slot `#cell-tags` chỉ ra comment nên `V2BaseDataTable` quay về render mặc định `{{ [] }}`. Sửa: thêm `<span v-else></span>` trong `pages/assign/tasks/index.vue`. Đã kiểm: 9/10 dòng không tag để trống, dòng có tag vẫn hiện chip.
 - Trạng thái: đã sửa trên worktree gop_db-client (TaskForm.vue, pages/assign/tasks/index.vue), chưa commit. Chờ user xem.
+- [x] 23/11/2026 — Form nhiệm vụ: khối "Thiết lập" (Người duyệt kết quả · Người theo dõi · Thẻ · Báo cáo tiến độ · Lặp lại · Liên kết) mặc định MỞ sẵn, cả Thêm mới lẫn Sửa.
+  Lý do: user không thấy ô "Người duyệt kết quả" vì khối đóng sẵn ở cuối form (khác Vấn đề đặt ô thẳng trên form). Sửa `components/assign/task/panel/TaskForm.vue`: `setOpen: true` + `applyDefaults` bỏ điều kiện `intent === 'assign'`. Đã kiểm bằng Playwright trên :3002 trước khi sửa (khối đóng, bấm mở mới thấy ô). Chưa chạy lại sau sửa.
+  Còn mở: chọn đích danh "Người duyệt triển khai" khi tick "Cần duyệt triển khai" (cần cột BE) — chờ user chốt.

@@ -49,3 +49,12 @@ chỉ chọn phòng ban → `assignee_id` NULL, `issue_org_units` có hàng phò
 Bước tiếp theo: user kiểm thử trên giao diện (:3005) — tạo Vấn đề phòng ban, lọc theo Bộ phận xử lý,
 xem cột mới ở danh sách. Sau đó làm Phase 2 (nút "Giao nhiệm vụ").
 Blocked: không có.
+
+- [x] 23/11/2026 — (chưa có số Redmine) — @cuong61n — Vấn đề có Người duyệt đóng mà màn người phụ trách vẫn hiện nút "Đóng vấn đề".
+  Nghiệp vụ: đã chọn người duyệt thì người phụ trách không được tự đóng (bỏ qua bước duyệt). Người tạo vẫn đóng được; người duyệt không đổi.
+  Kỹ thuật: `hrm-api` `Modules/Assign/Entities/Issue.php::nextStatusTransitions()` — `$canClose = $isCreator || ($isAssignee && !$this->hasApprover())`. BE chặn luôn cả API (`transitionTo`); FE web và app TPE_APP chỉ đọc `allowed_next_statuses` nên không phải sửa.
+  Đã kiểm: thêm test `test_co_nguoi_duyet_thi_nguoi_phu_trach_khong_dong_duoc_nguoi_tao_van_dong` (IssueUnitAssignTest) đạt; sửa 3 test cũ trong IssueV2ApiTest đang mã hoá luật cũ (requires_cho_tung_buoc, dong_va_mo_lai_bao…, dong_van_de_tu_huy_de_nghi_cho) sang người tạo đóng. Chạy cả thư mục Tests/Feature/Issue: danh sách lỗi y hệt bản chưa sửa (~30 test lỗi có sẵn từ trước, không liên quan).
+  Trạng thái: đã sửa trên worktree gop_db-api, chưa commit, chưa test trên giao diện.
+- [x] 23/11/2026 — Bổ sung luật đóng: người duyệt cũng đóng được (lý do bắt buộc). Luật cuối: người tạo + người duyệt đóng được; người phụ trách chỉ đóng khi vấn đề KHÔNG có người duyệt.
+  `Issue.php::nextStatusTransitions()`: `$canClose = $isCreator || $this->isApprover() || ($isAssignee && !$this->hasApprover())`. Test `test_co_nguoi_duyet_thi_nguoi_phu_trach_khong_dong_duoc_nguoi_tao_van_dong` mở rộng: người duyệt đóng được ở Đã phân công / Đang xử lý / Từ chối, thiếu lý do → 422; vấn đề không có người duyệt thì người phụ trách đóng được, người lạ không. Đạt; cả thư mục Tests/Feature/Issue giữ nguyên danh sách lỗi có sẵn. Chưa commit, chưa test giao diện.
+- [x] 23/11/2026 — Đã đẩy `gop_db` (API `8e46b012d`, client `7de588616`) và deploy PROD bằng `~/build_tpe.sh`: exit 0, "Nothing to migrate", FE build xong, pm2 online, trang đăng nhập trả 200. Chưa test giao diện trên prod.
