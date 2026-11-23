@@ -78,3 +78,18 @@ Excel chọn cột ở 5 màn kho (+ Tồn theo vị trí đã có từ #12172)
 Đang làm dở: —
 Bước tiếp theo: user mở trình duyệt kiểm `/warehouse/stock-warehouse-product` + popup Xuất Excel của Thẻ kho / Tồn chi tiết / Tồn tổng hợp / Tổng hợp XNT
 Blocked:
+
+## Phản hồi #12173 (QA 21/11/2026) — popup chi tiết thiếu nút In / Xuất Excel @khoipv
+
+- [x] Kiểm 23/11: đã làm chung trong #12172 (api `5eb3802a5`, client `3b7c4c370`, đã lên `origin/develop` sáng 23/11) — popup drill
+      `StockWarehouseDrillModal` có đủ 3 nút In danh sách · Xuất Excel danh sách · Đóng; BE `item-list/print-list-data` + `item-list/export`
+      (trait `ServesDrillListPrint`). Không sửa code thêm.
+- [x] Smoke HTTP kernel (Super admin, kho KTCN, đến ngày 23/11): `item-list` 200 / 5 dòng; `print-list-data` cols=name,code,qty + q="vít"
+      + sort qty desc → 3 dòng, đúng thứ tự cột + thứ tự SL giảm dần; `item-list/export` 200 xlsx
+- [ ] User mở trình duyệt kiểm lại popup trên dev sau khi deploy, rồi trả lời QA trên Redmine
+
+### Checkpoint — 23/11/2026
+Vừa hoàn thành: xác nhận phản hồi #12173 đã được xử lý trong commit #12172 sáng 23/11, smoke test BE đạt
+Đang làm dở: —
+Bước tiếp theo: deploy dev → QA test lại popup chi tiết Báo cáo tồn theo kho
+Blocked:

@@ -19,6 +19,9 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Báo cáo bán hàng theo hàng hóa (port ERP `report.saleProduct` + cây phân loại mới) — ĐANG LÀM (2026-11-23, @khoipv)
+→ .plans/gop-db/bao-cao-ban-hang-theo-hang-hoa/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-23-bao-cao-ban-hang-theo-hang-hoa-design.md
+
 ## #12091 + #11888 Báo cáo thị trường theo Khu vực kinh doanh (8 báo cáo CSKH trước bán) — ĐANG LÀM (2026-11-20, @junfoke)
 → .plans/gop-db/bao-cao-thi-truong-theo-kvkd/plan.md (design.md + mockup #11888 cùng thư mục)
 Trạng thái: CODE XONG 8 báo cáo + Excel/in KVKD (21/11) ở repo chính nhánh `task_12091` (api + client), CHƯA commit; Playwright + PHPUnit đã kiểm. Còn: review, dọn dữ liệu thử local, user commit.

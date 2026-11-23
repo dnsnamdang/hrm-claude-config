@@ -198,3 +198,33 @@ Vừa hoàn thành: Note 20/11 — đổi ô lọc phân loại màn mặt hàng
 Đang làm dở: — (CHƯA commit: hrm-api `SaleByProductReportService.php`; hrm-client `SaleByProductReportScreen.vue`)
 Bước tiếp theo: user mở màn kiểm trên môi trường có dữ liệu phân loại → commit
 Blocked:
+
+### 2026-11-23 — #12175 phản hồi 21/11 (Huyền Trang): ô "Số dòng/trang" ở popup vẫn nhỏ
+- Nguyên nhân: từ #12186 (18/11), 2 popup dùng `V2BasePagination` mặc định của vỏ `V2BaseReportModal`. CSS cỡ chữ ở đó là
+  `::v-deep .pagination-page-size-select .custom-select`, selector con không khớp (class nằm ngay trên `<select>`), nên chữ ra theo theme (~10px)
+- [x] User chốt 23/11: popup dùng phân trang kiểu bảng ngoài → `SaleByProductAllItemsModal` + `SaleByProductDetailModal` đặt
+      `SaleByProductPagination` vào slot `#pagination` (chữ 13px / cao 32px). Ngược với P3-T9 #12186 — user đã biết và vẫn chốt
+- Cách làm: đảo ngược phần popup của commit `27d24e8b1` cho 2 file trên (khôi phục slot + import), sửa lại comment. Thanh phân trang của
+  `V2BasePagination` (đang dùng ở 71 file) không đổi
+- Kiểm: compile template + babel 2 file OK. Chưa mở trình duyệt. CHƯA commit
+
+### Checkpoint — 2026-11-23
+Vừa hoàn thành: #12175 phản hồi 21/11 — 2 popup dùng `SaleByProductPagination` (ô Số dòng/trang 13px / cao 32px)
+Đang làm dở: — (CHƯA commit: hrm-client `SaleByProductAllItemsModal.vue`, `SaleByProductDetailModal.vue`)
+Bước tiếp theo: user mở popup kiểm → commit → báo QA (nhắc QA: phân trang popup quay về kiểu bảng ngoài, khác #12186)
+Blocked:
+
+### 2026-11-23 — #12274 (Huyền Trang 21/11) popup "Chi tiết phát sinh bán hàng"
+- [x] Ý 1: ô "Số dòng/trang" bé → đã xử lý ở mục #12175 ngày 23/11 (popup dùng `SaleByProductPagination` 13px)
+- [x] Ý 2: cột Ngày mặc định hiện mũi tên sắp giảm dần → `SaleByProductAllItemsModal.vue` mặc định `sort = { key: '', dir: 'asc' }`
+      (data + lúc mở lại), giống popup Mã hàng. BE không có `sort` vẫn xếp ngày mới nhất trước → thứ tự dòng không đổi, chỉ cột Ngày về ⇅
+- Kiểm: compile template + babel OK; BE `allItems()` với `sort` rỗng rơi vào `orderByDesc('x.doc_date')` (đọc code). In / Excel popup không gửi
+  `sort` → không đổi. Chưa mở trình duyệt. CHƯA commit
+
+### Checkpoint — 2026-11-23
+Vừa hoàn thành: #12274 (ý 1 trùng #12175, ý 2 bỏ sắp mặc định cột Ngày)
+Đang làm dở: — (CHƯA commit hrm-client: SaleByProductAllItemsModal.vue, SaleByProductDetailModal.vue + 2 popup màn Lắp đặt của #12186)
+Bước tiếp theo: user mở popup kiểm → commit → trả lời QA #12175, #12186, #12274
+Blocked:
+
+ĐÃ PUSH 23/11/2026 lên `develop`: client `2cc88e7bc` (merge `15ad09b9a`) — #12175, #12186, #12274. hrm-api không đổi.

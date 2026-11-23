@@ -5,6 +5,12 @@
 
 ## Đang làm
 
+- **Check: NV Phan Thị Hồng Ngạn (NV.00150) bắt đầu tính phép 23/11 nhưng hôm nay chưa dùng được phép** — @khoipv — Bắt đầu 23/11/2026 — Demo: được dùng = 0. Phép chỉ cập nhật khi chạy `update:attendance`; NV vào phép từ T11 nên chỉ có phần ứng (1 ngày), mà đúng ngày bắt đầu thì `getUsableLeaveDays()` so mốc có giờ hiện tại với `$now` → không ứng. User chọn sửa: `getUsableLeaveDays()` lấy `startOfDay()` cho mốc ngày bắt đầu → đúng ngày bắt đầu đã được ứng; test local đạt (hôm nay → 1). Đã push `master` (API `d7346d7a`). Sau deploy chạy `php artisan update:attendance`.
+  - Plan: [.plans/check-phep-phan-thi-hong-ngan/plan.md](check-phep-phan-thi-hong-ngan/plan.md)
+
+- **Demo: Phiếu xuất kho (tiếp luồng từ Phiếu đề nghị xuất kho, tham khảo hrm)** — @khoipv — Bắt đầu 23/11/2026 — Checkpoint 23/11/2026: đã xong demo `demos/demo-phieu-xuat-kho.html` (danh sách PXK — đã bỏ tab hàng chờ, tạo/sửa chọn lô FEFO-serial, duyệt trừ tồn + thẻ kho, chi tiết, in 02-VT) + spec; đã sửa cuộn danh sách giật + chọn ĐNXK ngay trong form Tạo mới. Chờ user test + chốt Q1–Q7, sau đó đồng bộ demo ĐNXK.
+  - Plan: [.plans/demo-phieu-xuat-kho/plan.md](demo-phieu-xuat-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-23-demo-phieu-xuat-kho-design.md](../docs/superpowers/specs/2026-11-23-demo-phieu-xuat-kho-design.md)
+
 - **Demo: Phiếu đề nghị xuất kho (tham khảo màn Yêu cầu xuất hàng hrm, có đổi hàng)** — @khoipv — Bắt đầu 21/11/2026 — Checkpoint 21/11/2026: đã xong demo `demos/demo-phieu-de-nghi-xuat-kho.html` theo chuẩn V2Base + skill (danh sách / tạo-sửa / chi tiết / popup xuất kho lô-serial-FEFO, đổi hàng THAY CHO, công nợ 3 kịch bản, đủ 7 trạng thái theo vai trò). Chờ user test + chốt Q1–Q6.
   - Plan: [.plans/demo-phieu-yeu-cau-xuat-hang/plan.md](demo-phieu-yeu-cau-xuat-hang/plan.md) · Spec: [docs/superpowers/specs/2026-11-21-demo-phieu-yeu-cau-xuat-hang-design.md](../docs/superpowers/specs/2026-11-21-demo-phieu-yeu-cau-xuat-hang-design.md)
 

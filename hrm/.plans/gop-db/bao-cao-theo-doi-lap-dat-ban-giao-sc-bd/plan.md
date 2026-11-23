@@ -141,3 +141,21 @@ Blocked: API local chậm ~3s/request (máy thiếu RAM) — test chạy lâu, k
 - [x] P3-T9. Popup bấm số của 3 màn (`install-delivery-repair` ItemListModal, `install-delivery-repair-detail` DetailDrillModal, `sale/sale-by-product-report` SaleByProductDetailModal + SaleByProductAllItemsModal): bỏ slot `#pagination` (ReportPagination / ReportListPagination / SaleByProductPagination) → vỏ `V2BaseReportModal` tự dùng `V2BasePagination` mặc định (thanh xám `.paging`, nút tròn nhỏ) — y popup báo cáo chuyến xe (ảnh mẫu QA)
 - Kiểm: compile template + babel 4 file OK; chưa mở trình duyệt. Bảng CHÍNH của 3 màn vẫn dùng phân trang cũ (QA chỉ nêu popup) — chờ user chốt có đổi luôn không. Đã commit + push develop `27d24e8b1`.
 - [x] 19/11 check lại phản hồi #12186 (journal #3, 18/11 10:04): đúng nội dung P3-T9, code đã có trên origin/develop; Redmine chưa có ghi chú trả lời, trạng thái vẫn "Phản hồi" — không sửa thêm code
+
+### 2026-11-23 — #12186 phản hồi lần 3 (Huyền Trang, 21/11 11:39): ô "Số dòng/trang" ở popup bé quá, cả 3 màn
+- Nguyên nhân: sau P3-T9, popup dùng `V2BasePagination`. CSS cỡ chữ ở đó (`::v-deep .pagination-page-size-select .custom-select`) không khớp
+  phần tử nào → chữ theo theme ~10px. Popup chuyến xe trông to hơn vì tự ghi đè 12px (`DriverCostItemModal.vue` `.drv-drill-dialog`)
+- [x] P3-T10. User chốt 23/11: phân trang popup GIỐNG BẢNG NGOÀI màn báo cáo → đảo ngược P3-T9 (`27d24e8b1`) cho cả 4 popup:
+  - `install-delivery-repair` ItemListModal → `ReportPagination` (như ReportTable)
+  - `install-delivery-repair-detail` DetailDrillModal → `ReportListPagination` (như DetailTreeTable)
+  - `sale/sale-by-product-report` SaleByProductDetailModal + SaleByProductAllItemsModal → `SaleByProductPagination` (làm cùng #12175, xem plan bao-cao-ban-hang-theo-mat-hang)
+  - Không đụng `V2BasePagination` (component chung)
+- Kiểm: compile template + babel 4 file OK. Chưa mở trình duyệt. CHƯA commit
+
+### Checkpoint — 2026-11-23
+Vừa hoàn thành: P3-T10 (#12186 phản hồi lần 3) — 4 popup của 3 màn dùng phân trang giống bảng ngoài
+Đang làm dở: — (CHƯA commit hrm-client: ItemListModal.vue, DetailDrillModal.vue, SaleByProductDetailModal.vue, SaleByProductAllItemsModal.vue)
+Bước tiếp theo: user mở 3 màn kiểm popup → commit → trả lời QA #12186 + #12175
+Blocked:
+
+ĐÃ PUSH 23/11/2026 lên `develop`: client `2cc88e7bc` (merge `15ad09b9a`) — #12175, #12186, #12274. hrm-api không đổi.
