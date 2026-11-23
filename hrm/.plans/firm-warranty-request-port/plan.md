@@ -89,7 +89,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 - [x] **Step 2:** Viết 4 model HRM theo Interfaces trên. `STATUSES` lấy đúng chữ tiếng Việt từ hằng/`status_text` model ERP.
 - [x] **Step 3 (verify):** `php artisan tinker` →
   `Modules\Finance\Entities\FirmWarrantyRequest\FirmWarrantyRequest::with('products.items','products.costs')->first()` trả object không lỗi quan hệ; `->statusMeta(5)` ra `['name'=>'Không duyệt','color'=>'#DC2626']`.
-- [ ] **Step 4:** Commit (khi user cho phép): `feat(finance): entities phiếu YC hãng bảo hành trỏ bảng ERP`.
+- [x] **Step 4:** Commit (khi user cho phép): `feat(finance): entities phiếu YC hãng bảo hành trỏ bảng ERP`.
 
 ---
 
@@ -117,7 +117,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
   - `findForResultNotify(<id không tồn tại>)` với user thường → **403**, không 404.
   - `findForResultNotify(<id status 2>)` với approver → **422**.
   - `paginate` với 2 user khác nhau → mỗi user chỉ thấy phiếu của mình (đếm khác nhau).
-- [ ] **Step 4:** Commit: `feat(finance): read service phiếu YC hãng bảo hành own-only + guards`.
+- [x] **Step 4:** Commit: `feat(finance): read service phiếu YC hãng bảo hành own-only + guards`.
 
 ---
 
@@ -137,7 +137,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 - [x] **Step 1:** Đọc ERP `store/update/syncProducts` để port chính xác snapshot + thứ tự xóa/tạo + xử lý `attachment`.
 - [x] **Step 2:** Viết write service. ⚠️ **R5: 4 bảng KHÔNG có `updated_by` — TUYỆT ĐỐI không gán** (gán sẽ lỗi cột không tồn tại). Header set `created_by` + `company_id/department_id/part_id` do BaseModel `creating` hook tự gán từ Auth người lập (xác nhận hook chạy; set `created_by` tường minh cho chắc). Items/costs ghi phải set CẢ `firm_warranty_request_id` LẪN `firm_warranty_request_product_id`.
 - [x] **Step 3 (verify):** tinker `store($payloadHợpLệ status 1)` → trả model `code` khớp `PYCHBH-00001`-style, con tạo đủ; `store(status 2)` với đã có AssignHistory → gọi notifyPurchasing (kiểm bảng `notifications` có 1 dòng mới cho đúng buy_employee); `destroy` xóa sạch con.
-- [ ] **Step 4:** Commit: `feat(finance): write service phiếu YC hãng bảo hành`.
+- [x] **Step 4:** Commit: `feat(finance): write service phiếu YC hãng bảo hành`.
 
 ---
 
@@ -155,7 +155,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 - [x] **Step 1:** Đọc ERP AssignHistory query (controller:~186-190) + sibling Notifier. Xác nhận cột `manufactures_id`/`send_company_id`/`brand_id` trên `assign_histories`.
 - [x] **Step 2:** Viết Notifier. Prefix/nhóm hành động thông báo theo `.claude/skills/notification-convention`.
 - [x] **Step 3 (verify Review Focus #1):** tinker `resolveBuyEmployeeId` với data có/không AssignHistory → ra id / null đúng; `notifyPurchasing` ghi đúng 1 dòng `notifications` cho đúng người; `notifyCreatorResult` gọi `sendNotification` (stub/log) đúng employee_info người lập.
-- [ ] **Step 4:** Commit: `feat(finance): notifier phiếu YC hãng bảo hành (1 người phụ trách + result)`.
+- [x] **Step 4:** Commit: `feat(finance): notifier phiếu YC hãng bảo hành (1 người phụ trách + result)`.
 
 ---
 
@@ -187,7 +187,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
   - `contractable_type=FirmContract` nhưng id thuộc WrServiceContract → 422.
   - 2 dòng trùng `product_id+serial` → 422 distinct.
   - **status 1 (nháp) thiếu `content`/`send_company_id`** → vẫn 422 (xác nhận KHÔNG nới nháp).
-- [ ] **Step 4:** Commit: `feat(finance): form requests phiếu YC hãng bảo hành (full validate)`.
+- [x] **Step 4:** Commit: `feat(finance): form requests phiếu YC hãng bảo hành (full validate)`.
 
 ---
 
@@ -203,7 +203,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 
 - [x] **Step 1:** Viết 2 resource. Eager-load đã ở Task 2 `lookups`/`paginate` — KHÔNG query trong map (chặn N+1).
 - [x] **Step 2 (verify):** curl `index` + `show` → JSON có `status_color` hex đúng, `can_edit/can_delete` khớp chủ+trạng thái, `attachment` là mảng.
-- [ ] **Step 3:** Commit: `feat(finance): resources phiếu YC hãng bảo hành`.
+- [x] **Step 3:** Commit: `feat(finance): resources phiếu YC hãng bảo hành`.
 
 ---
 
@@ -215,7 +215,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 
 - [x] **Step 1:** Port layout bảng hàng + items/costs từ ERP print blade sang HTML template.
 - [x] **Step 2 (verify):** curl `/{id}/print-data` → `template` HTML hợp lệ, số định dạng `1,234.56`, logo đúng công ty phiếu.
-- [ ] **Step 3:** Commit: `feat(finance): print service phiếu YC hãng bảo hành`.
+- [x] **Step 3:** Commit: `feat(finance): print service phiếu YC hãng bảo hành`.
 
 ---
 
@@ -238,7 +238,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 
 - [x] **Step 1:** Viết controller + routes (thứ tự route static trước param).
 - [x] **Step 2 (verify Review Focus #4):** curl toàn bộ endpoint với token thường: `notify-result` bởi người lạ → 403; routes static không bị nuốt bởi `/{id}`.
-- [ ] **Step 3:** Commit: `feat(finance): controller + routes phiếu YC hãng bảo hành`.
+- [x] **Step 3:** Commit: `feat(finance): controller + routes phiếu YC hãng bảo hành`.
 
 ---
 
@@ -250,7 +250,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 
 - [x] **Step 1:** Tìm đúng method ERP đổi status→5 (grep `KHONG_DUYET`/`= 5` trong controller). Chèn Guzzle sau commit DB.
 - [x] **Step 2 (verify Review Focus #4 + D3):** trên môi trường local: tạo phiếu HRM→gửi→ERP "Không duyệt" → kiểm HRM người lập nhận chuông deep-link `/finance/firm-warranty-requests/{id}`.
-- [ ] **Step 3:** Commit **ERP** (nhánh `develop_02`, khi user cho phép): `feat(order): báo HRM khi không duyệt YC hãng bảo hành`.
+- [x] **Step 3:** Commit **ERP** (nhánh `develop_02`, khi user cho phép): `feat(order): báo HRM khi không duyệt YC hãng bảo hành`.
 
 ---
 
@@ -265,7 +265,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 - [x] **Step 1 (rà component dùng chung — bắt buộc trước khi tự dựng):** grep `V2ProductPickerModal`, `ChooseErpCustomerModal`, `DeclareDebtContractPicker`, `V2BaseFile` — xác nhận khớp nhu cầu (đa hình HĐ + checkData). Lệch thì **hỏi user trước** khi sửa component đang chạy (CLAUDE.md). Ghi "copy pattern từ `<file:dòng>`".
 - [x] **Step 2:** Viết `api.js` + `Form.vue`. `onBrandSelect`: đã chọn hàng → `$confirm` xóa hàng hãng cũ (Review Focus #5). Số `toLocaleString('en-US')`.
 - [x] **Step 3 (verify):** render Tạo/Sửa/Chi tiết; `grep -rn '<input \|<textarea\|<select \|<button \|<label ' pages/finance/firm-warranty-requests/ | grep -v V2Base` phải RỖNG.
-- [ ] **Step 4:** Commit: `feat(finance): client form phiếu YC hãng bảo hành`.
+- [x] **Step 4:** Commit: `feat(finance): client form phiếu YC hãng bảo hành`.
 
 ---
 
@@ -280,7 +280,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 
 - [x] **Step 1:** Viết 4 trang + đổi menu.
 - [x] **Step 2 (verify):** Playwright mở `http://127.0.0.1:3000/finance/firm-warranty-requests` → danh sách render có sidebar, badge màu BE, lọc ăn (chờ ≥3s), menu Bán hàng có mục link (không xám).
-- [ ] **Step 3:** Commit: `feat(finance): client list + detail + menu phiếu YC hãng bảo hành`.
+- [x] **Step 3:** Commit: `feat(finance): client list + detail + menu phiếu YC hãng bảo hành`.
 
 ---
 
@@ -291,7 +291,7 @@ Năm lớp input/thất bại spec ngụ ý mà dễ cắn người dùng, mỗi
 - [x] **Step 1:** Viết e2e: lập nháp (status 1) → mở lại sửa → Gửi duyệt (status 2, kiểm chuông XNK) → (data có AssignHistory) → sửa lại phiếu status 5 → xóa nháp → in. Chạy `cd e2e && PATH="$HOME/.nvm/.../v20.20.1/bin:$PATH" npx playwright test finance-firm-warranty-request`.
 - [x] **Step 2 (Bước 5 + 5b skill erp-to-hrm-screen):** đối chiếu ngược ERP `develop_02` (đủ cột/lọc/hành động + điều kiện ẩn) và ngang 2-3 màn HRM đã QA (sibling delivery-cost/inland-order). Ghi "đã bám màn X ở khối Y".
 - [x] **Step 3:** Chụp ảnh danh sách/form/chi tiết đặt cạnh màn chuẩn; chạy checklist tự kiểm skill.
-- [ ] **Step 4:** Commit: `test(finance): e2e phiếu YC hãng bảo hành`.
+- [x] **Step 4:** Commit: `test(finance): e2e phiếu YC hãng bảo hành`.
 
 ---
 
@@ -309,3 +309,9 @@ Ruling khi chạy: R2 không commit; R5 4 bảng không có `updated_by`, items/
 Đang làm dở: TOÀN BỘ CHƯA COMMIT (working tree): hrm-api `develop` — 14 file mới `Modules/Finance/{Entities/FirmWarrantyRequest/, Http/Controllers/V1/FirmWarrantyRequestController.php, Http/Requests/FirmWarrantyRequest/, Services/FirmWarranty*.php, Transformers/FirmWarrantyRequestResource/}` + sửa `Routes/api.php`, `Entities/ErpReportTemplate.php`; hrm-client `develop` — `pages/finance/firm-warranty-requests/` + sửa `components/subsystem-menu/sale-hub.js:188`; ERP `develop_02` — sửa `app/Http/Controllers/Order/FirmWarrantyRequestController.php` (callback D3 báo HRM khi "Không duyệt"). Workspace SDD (brief/report/review) còn ở `sdd/` cạnh plan.md — chưa dọn (lệch quy tắc .plans chỉ design+plan; không đưa vào commit config).
 Bước tiếp theo: user xác nhận commit từng repo (hrm-api develop / hrm-client develop / ERP develop_02), chưa push, chưa gop_db. Verify tay 3 việc e2e không tự động được: chuông D3 "Không duyệt" ERP→HRM, sửa phiếu status 5, guard chưa phân công. Gap so ERP (thấp, chờ user chốt): thiếu cột "Phòng yêu cầu", 4 ô lọc (Người nhận, Phòng ban, Model, Code đặt hàng), Xuất Excel từng phiếu, ô lọc Người duyệt, In danh sách. Dọn `sdd/` sau khi commit.
 Blocked: chờ user cho phép commit.
+
+### Checkpoint — 2026-11-23 17:15 (wrap up tự động)
+Vừa hoàn thành: user cho phép push (09:15) → commit + rebase lên remote (không conflict) + push cả 3 repo: hrm-api `develop` `0ebcf2685` (cũ `2a4761f2f`), hrm-client `develop` `e81c2c222` (cũ `0c5204079`), ERP `develop_02` `1d045fdedf` (cũ `c0b5e9d131`, callback chuông "Không duyệt" về HRM). Link màn đã điền vào sheet Checklist chuyển đổi (dòng 51).
+Đang làm dở: không. `sdd/` còn cạnh plan.md — chưa dọn, không đưa vào commit config.
+Bước tiếp theo: gop_db khi user báo; verify tay chuông D3 "Không duyệt", sửa phiếu status 5, guard chưa phân công; gap so ERP (cột Phòng yêu cầu, 4 ô lọc, Excel từng phiếu, lọc Người duyệt) chờ user chốt.
+Blocked:
