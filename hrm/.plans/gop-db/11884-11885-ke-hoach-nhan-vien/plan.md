@@ -79,3 +79,13 @@ Blocked:
 
 ## Ngày 20/11/2026 (@junfoke)
 - [x] 20/11/2026 — Xuất tài liệu Mô tả nghiệp vụ (skill business-flow-documenter, 12 chương) cho #11884 + #11885 để gửi người dùng: `Mô tả nghiệp vụ - Kế hoạch bán hàng của nhân viên.docx` + `… Kế hoạch phát triển thị trường của nhân viên.docx` (17 trang mỗi file), sinh từ `gen_mo_ta_nghiep_vu.py` (hàm `build(kind)` chung). Đọc code develop xác nhận 8 điểm lệch thiết kế ngày 18/11 vẫn còn, ghi vào chương 12. Phát hiện thêm: số phiếu 5 số cuối là id nội bộ (không đếm theo công ty + năm như spec), sửa đổi Năm thì phần năm trong số phiếu đổi theo; công ty/phòng ban trên phiếu lấy theo hồ sơ gốc người lập; Gửi BGĐ chỉ báo người lập, BGĐ chưa nhận; Hủy không báo ai; TP tự lập rồi gửi thì lên thẳng Chờ BGĐ duyệt mà không ai nhận thông báo. Chưa sửa code. Gửi user đường dẫn 4 file, gợi ý thứ tự đọc: phòng ban → nhân viên → 2 kế hoạch.
+
+## Ngày 23/11/2026 (@junfoke)
+- [x] 23/11/2026 — Lỗi #12277 #12278 #12279 #12280 #12281 (QA Kế hoạch bán hàng + Kế hoạch phát triển thị trường của NV, dùng chung `components/employee-plan/` nên sửa 1 lần áp cả 2) — đã lên `develop` (api `b5f3468dc`, client `e4a74f49e`, không có migration):
+  - Danh sách: nút Xuất Excel không chạy (mixin mở popup id mặc định, khai `exportFieldsModalId`); sort "chưa ổn định" là 2 lỗi BE — cột Nhân viên bị bỏ qua + sort theo tên lưu trên phiếu ERP, cột SL khách của phiếu ERP sort theo cột gốc (= 0) ⇒ sửa, tối ưu từ 8–16s xuống 0,2–0,4s (bảng chi tiết khách 132 nghìn dòng); "Ngày lập" → "Ngày tạo" kèm giờ (cả Excel), Ngày duyệt kèm giờ; bỏ nút Xem, đổi thứ tự hiện ngoài In + Xuất Excel, "In theo thị trường / theo tháng" vào menu ⋮; bỏ khoảng cách thừa hàng nút.
+  - Hủy phiếu bắt buộc lý do (khuôn hộp Từ chối), ghi vào lịch sử.
+  - Form: bỏ badge trạng thái; "Lưu" → "Lưu nháp", màn Tạo thêm "Lưu và tiếp tục"; ô Năm có x (chặn dropdown đè hộp "Đổi năm" như #12258); ô chọn cấp có x (về mức đầy đủ); chữ bảng 12px; popup "Lấy dữ liệu" ô hệ số có placeholder + x.
+  - #12280 validate SL khách: nhập 0 báo "Bắt buộc phải lớn hơn 0", cặp SL/Giá trị báo "Bắt buộc lớn hơn 0 khi đã nhập SL". Chưa thêm dấu * cột Giá trị (chỉ bắt buộc khi ô cặp có số).
+  - In tách Năm / Nhân viên / Phòng ban / Trạng thái mỗi thứ 1 dòng; Excel 1 phiếu có ảnh tiêu đề công ty ở cả 3 sheet.
+  - Nghiệm thu local: danh sách, Xuất Excel, sort, hộp Hủy, chi tiết, in, Excel; form Tạo test bằng tài khoản Nguyễn Huy Tú (id 943, đã có chỉ tiêu 2026; đổi tạm mật khẩu local + thêm tạm vào `menu_full_access_employees`, xong trả lại) — phiếu thử TPE_KHTTNV_2026.01027 đã hủy.
+- [ ] Chờ user quyết: bảng danh sách co cột rồi bung ra lúc đang tải (có thể là "vỡ font" QA nói) — nằm ở `V2BaseDataTable` dùng chung, mọi danh sách đều bị.

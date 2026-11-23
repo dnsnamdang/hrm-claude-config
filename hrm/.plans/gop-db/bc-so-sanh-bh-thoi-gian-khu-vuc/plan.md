@@ -33,3 +33,12 @@ Blocked:
 
 ## Ngày 21/11/2026 (@junfoke)
 - [x] 21/11/2026 — Lỗi #12245 – #12249 xong, lên `develop` (client `3b79eb4f0`, api `375bc2142`) — phần chung 2 màn ghi ở plan `bc-so-sanh-bh-khu-vuc-theo-thoi-gian`. Riêng màn này (#12248, #12249): thêm phân trang; số 0 hiện "0", tỷ lệ hiện "0%" như ERP, đồng bộ cả bản in + Excel; popup bấm số ở khối tóm tắt chạy ~5s ở local (bằng thời gian chạy chính báo cáo).
+
+## Phase 4 — Phản hồi QA 23/11 (popup chi tiết + giá trị gồm phụ lục) — nhánh `fix/bc-so-sanh-popup-chi-tiet`
+- [x] BE: phụ lục gộp vào HĐ gốc (+ bổ sung / − giảm, mọi loại, từ Có hiệu lực) — trait `ComparesContractAnnexes`
+- [x] BE: item-list nhận ô (tỉnh / tháng) + trả NVKD, Phòng ban
+- [x] FE: ô số 2 nhóm bấm mở popup danh sách hợp đồng; popup thêm cột NVKD + Phòng ban; cập nhật chú thích ⓘ
+- [x] Đối chiếu SQL độc lập (spec mục 7)
+- [x] Verify trình duyệt 1366px (ô Hà Nội BC1 = 3.105 HĐ; ô Tháng 8 BC2 = 594 HĐ; popup vừa khung) + commit api `3208dfc10`, client `73eb621ce`
+- [x] Verify giao diện bằng ảnh 1366px (sửa popup dòng TỔNG tràn ngang, client `fc7402553`)
+- [x] Lên develop 23/11 (api `f466a38c8`, client `d9e13c2b2`)

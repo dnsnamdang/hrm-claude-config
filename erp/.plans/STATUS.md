@@ -2,6 +2,7 @@
 
 ## Hoàn thành
 
+- [BC hàng hóa theo hãng SX: hàng bán mượn quy đổi ĐVT (thiếu 207 chai ENEO-408)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-21. `44bda98cfa` gop_db (đã push).
 - [BC hàng hóa theo hãng SX: thêm cột Đơn vị tính (combobox ĐVT, quy đổi SL + giá theo ĐVT)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-21. `0a1fae7eb3` gop_db → develop_02 `ecf592f75c`.
 - [ĐNTT: lỗi 500 xem chi tiết khi hợp đồng của dòng chi tiết không còn tồn tại (Undefined offset: 3)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-20. `cd66882917` gop_db.
 - [BC tiến độ đặt hàng theo NV: sắp xếp A→Z / Z→A 4 cột Tên hàng, Model, Mã hàng, Phiếu đặt hàng](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-19. `1bd4d0c27c` gop_db (đã push).

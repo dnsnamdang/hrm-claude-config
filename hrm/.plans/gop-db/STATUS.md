@@ -22,12 +22,27 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 ## Báo cáo bán hàng theo hàng hóa (port ERP `report.saleProduct` + cây phân loại mới) — ĐANG LÀM (2026-11-23, @khoipv)
 → .plans/gop-db/bao-cao-ban-hang-theo-hang-hoa/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-23-bao-cao-ban-hang-theo-hang-hoa-design.md
 
-## #12091 + #11888 Báo cáo thị trường theo Khu vực kinh doanh (8 báo cáo CSKH trước bán) — ĐANG LÀM (2026-11-20, @junfoke)
+## #12091 + #11888 Báo cáo thị trường theo Khu vực kinh doanh (8 báo cáo CSKH trước bán) — ĐÃ PUSH develop (api `d5499259d`, client `c4fcfdda0`), nhánh `task_12091` (api `6a624de3e`, client `f16bff706`), CHƯA gop_db (2026-11-23, @junfoke)
 → .plans/gop-db/bao-cao-thi-truong-theo-kvkd/plan.md (design.md + mockup #11888 cùng thư mục)
-Trạng thái: CODE XONG 8 báo cáo + Excel/in KVKD (21/11) ở repo chính nhánh `task_12091` (api + client), CHƯA commit; Playwright + PHPUnit đã kiểm. Còn: review, dọn dữ liệu thử local, user commit.
+Trạng thái: 23/11 commit + push `task_12091`, merge develop. Còn: deploy dev nhớ chạy migrate + seeder (dưới); dọn dữ liệu thử local `[TEST12091]`.
 ⚠️ DEPLOY PROD (bắt buộc, theo thứ tự): (1) `php artisan migrate` (thêm cột KVKD vào `meetings`) → (2) chạy 1 lần `php artisan db:seed --class="Modules\Assign\Database\Seeders\BackfillMeetingProvinceSeeder"` (ghi KVKD meeting cũ + vá 535 meeting thiếu tỉnh) → (3) SQL kiểm. Chi tiết: plan.md mục "TRIỂN KHAI PROD".
 ⚠️ GOTCHA: tỉnh lấy theo KVKD khi KH thuộc KVKD (1.580 KH prod lệch); 2 service từng đọc DB ERP cũ (đã sửa trong task).
 Spec: docs/superpowers/specs/gop-db/2026-11-20-bao-cao-thi-truong-theo-kvkd-design.md | Tóm tắt: .plans/gop-db/bao-cao-thi-truong-theo-kvkd/design.md
+
+## #12256–#12275 QA Phân chia thị trường PB (+ NV #12268) + Giao chỉ tiêu KD #12272/#12273/#12275 — ĐÃ PUSH develop (api `af4bf7223`, client `b6bcd51f4`), CHƯA gop_db (2026-11-23, @junfoke)
+⚠️ Deploy dev/prod: `php artisan migrate` (`2026_11_23_000001_add_updated_by_to_business_target_tickets`, thiếu thì danh sách giao chỉ tiêu lỗi). #12251 chỉ trả lời QA. Tài liệu: `.plans/gop-db/division-market-department/plan.md` · `giao-chi-tieu-kinh-doanh/plan.md` (Ngày 23/11).
+
+## #12277–#12281 QA KH bán hàng + KH phát triển thị trường của NV — ĐÃ PUSH develop (api `b5f3468dc`, client `e4a74f49e`), CHƯA gop_db (2026-11-23, @junfoke)
+Kèm sửa nút Xuất Excel danh sách Phiếu giao chỉ tiêu KD. Chờ user: bảng `V2BaseDataTable` co/bung cột lúc tải. Tài liệu: `.plans/gop-db/11884-11885-ke-hoach-nhan-vien/plan.md` (Ngày 23/11).
+
+## #12258 phản hồi (popup đếm vừa cột, x ô Phòng ban/NV không bật dropdown) — ĐÃ PUSH develop (client `669cc33f9`) (2026-11-23, @junfoke)
+Tài liệu: `.plans/gop-db/division-market-employee/plan.md` (Ngày 23/11).
+
+## Bảng phân ca tổng hợp: ô lọc Ca làm việc có nút x — ĐÃ PUSH gop_db (client `c83826e27`) (2026-11-23, @junfoke)
+Chưa kiểm giao diện thật (dev local lỗi `quill`). Tài liệu: `.plans/gop-db/ho-tro-van-hanh/plan.md` (Ngày 23/11).
+
+## Danh sách đăng ký KH toàn công ty — bổ sung luồng đăng ký / gia hạn / duyệt / thông báo (phản hồi 23/11) — ĐANG THIẾT KẾ (2026-11-23, @junfoke)
+Chốt Cách A (ERP giữ nguyên, bảng phụ HRM cho phiếu yêu cầu). Chờ chốt phạm vi xem. Tài liệu: `.plans/gop-db/presale-customer-registers/plan.md`.
 
 ## #12258 #12262 #12265 #12266 #12267 + #12271 QA Phiếu phân chia thị trường theo NV — ĐÃ PUSH develop (client `c749f5942`, `552c58221`; api `135fef68f`, `b6ecfbd1f`) (2026-11-21, @junfoke)
 Kèm sửa CSS dùng chung `V2BaseSelect.vue` (nút x đè mũi tên ô chọn nhiều). 6 NV đang có 2 phiếu Đã duyệt — chờ user báo QA/BA dọn. Tài liệu: `.plans/gop-db/division-market-employee/plan.md` (Ngày 21/11).
@@ -111,6 +126,10 @@ Tài liệu: `.plans/gop-db/tu-khai-chan-gui-khong-thay-doi/plan.md`.
 ## #12171 DM khách hàng (Quận/Huyện bắt buộc, cột xuất, import Nhóm KH, SĐT tổ chức) — ĐÃ PUSH develop (api `c71048b87`, client `ac05172af`) (2026-11-18, @junfoke)
 ## #12215 BC số lượt SC-BD 1 khách hàng (phân cấp công ty, tùy chỉnh cột, bỏ làm tròn) — ĐÃ PUSH develop (api `0e7c6a3a1`, client `4074d86c5`) (2026-11-18, push 19/11, @junfoke)
 Plan: `.plans/gop-db/customer-scope-list-page-standard/plan.md` · `.plans/gop-db/bc-so-luot-sc-bd-khach-hang/plan.md`.
+
+## Phản hồi QA 23/11 — 2 báo cáo so sánh số liệu BH: popup chi tiết ô số + giá trị gồm phụ lục — ĐÃ MERGE develop (api f466a38c8, client d9e13c2b2), CHƯA gop_db (2026-11-23, @junfoke)
+Nhánh `fix/bc-so-sanh-popup-chi-tiet` (từ `origin/develop`, worktree `.worktrees/bc-so-sanh-popup` 2 repo), api `3208dfc10`, client `73eb621ce` + `fc7402553` (ngắt dòng số HĐ dài — popup dòng TỔNG hết tràn ngang 1366px, verify bằng ảnh).
+Phụ lục gộp vào HĐ gốc (+ bổ sung − giảm, mọi loại, từ Có hiệu lực). Chi tiết: mục 7 spec 2 báo cáo. Còn: màn Danh sách đăng ký KH (khảo sát).
 
 ## Báo cáo so sánh số liệu bán hàng theo thời gian chi tiết theo khu vực (ERP → HRM) — ĐÃ MERGE develop (api 370229d99, client 56c226264), CHƯA gop_db (2026-11-18, @junfoke)
 
