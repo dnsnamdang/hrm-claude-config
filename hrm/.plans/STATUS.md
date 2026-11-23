@@ -11,6 +11,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 - sale / **Port Cảnh báo thu nợ đến hạn (xét theo quy chế)** → @nguyentrancu97 → `.plans/canh-bao-thu-no-den-han/plan.md`
   21/11/2026: ĐÃ push develop — api c062514ed fe9a93966 · client b8b24733a; e2e `customer-debt-due-warning.spec.ts` pass; đối chiếu ERP 2,204 HĐ / 594,653,332,564 khớp. Chưa gop_db. Chỉ tiêu "Xét theo HĐ" anh Nam làm sau.
 
+- sale / **BC thưởng theo quý #12203 #12205 — phản hồi QA 23/11 tiêu đề bảng tràn/che ⓘ** → @nguyentrancu97 → `.plans/bc-thuong-quy-12203-12205/plan.md`
+  23/11/2026: ĐÃ push develop client 35e6f94b0 (cột tiền rộng theo tiêu đề); #12205 "Code xong chờ test". Chưa gop_db.
+
 - sale / **Redmine đào tạo-đánh giá 21/11 — YCHG #12238-#12241, BC #12203 #12201 #12164, popup HĐ #12243** → @nguyentrancu97 → `.plans/redmine-dt-2111/plan.md`
   21/11/2026: ĐÃ push develop — api 5b6f19bc2 c2f34b301 · client 435e4b2af b96a90a8a 49866fc09 fe2e8ebe8 691ec5450 ddf9cea1b; 8 vé "Code xong chờ test". Chưa gop_db.
 
