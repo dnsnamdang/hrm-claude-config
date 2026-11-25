@@ -23,6 +23,14 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 Đang khảo sát ERP + chốt yêu cầu. Note: bỏ ô Nhóm hàng hóa, thêm Loại sản phẩm, xếp lại ô lọc; bấm số → popup Số chứng từ (HĐ / phiếu BH), Khách hàng, SL, Giá trị.
 → .plans/gop-db/bao-cao-lam-dich-vu-bh-sc-bd/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-25-bao-cao-lam-dich-vu-bh-sc-bd-design.md
 
+## Giao việc theo đơn vị — điều tra "chưa có người tiếp nhận" + lỗi 422 dev (FE/BE lệch) · merge gop_db→develop api `17e6df081` + deploy dev + cấp 2 mã giao_viec_nhan_su_* (local + dev) — HOÀN THÀNH 2026-11-25 (@cuong61n)
+
+- Chỉ dữ liệu local, không sửa code. Chi tiết: `.plans/gop-db/giao-viec-theo-don-vi-nguoi-tiep-nhan-local/plan.md`
+
+## App desktop HRM (Electron) thay cài PWA — badge Windows như Mac — TẠM DỪNG (user bảo dừng 25/11/2026, @cuong61n)
+→ .plans/gop-db/hrm-desktop-app/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-25-hrm-desktop-app-design.md
+Chỉ mới điều tra + viết design/spec; chưa sửa code nào (thư mục hrm-desktop vừa khởi tạo đã xoá).
+
 ## Báo cáo bán hàng theo hàng hóa (port ERP `report.saleProduct` + cây phân loại mới) — ĐÃ PUSH develop (api `fbc5b047f`, client `91c629d70`) (2026-11-23, @khoipv)
 Còn: E2E ca 13–15 chưa chạy xong (máy hết RAM); admin cấp mã `sale.bao_cao_ban_hang_theo_hang_hoa.view` cho vai trò; chưa merge gop_db.
 → .plans/gop-db/bao-cao-ban-hang-theo-hang-hoa/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-23-bao-cao-ban-hang-theo-hang-hoa-design.md

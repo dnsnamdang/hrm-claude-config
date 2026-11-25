@@ -216,6 +216,10 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Hoàn thành
 
+- assign / **Chat GĐ43 — Đổi ảnh nhóm (thẻ 6:7) + ảnh đại diện chat cá nhân (tròn)** → @cuong61n → `.plans/agent-chat/chat/gd43-doi-anh-dai-dien/plan.md`
+  25/11/2026: BE + web (worktree gop_db, nhánh `gop_db-chat-doi-anh`) + app (TPE_APP nhánh `chat-doi-anh`) CODE XONG, test Playwright
+  + e2e 6/6 + simulator iPhone 15; biệt danh user bảo để sau (đã gỡ). CHƯA commit/push, chưa deploy (2 migration mới).
+
 - bao-cao-thuong-nang-suat-thang → @nguyentrancu97 → .plans/bao-cao-thuong-nang-suat-thang/plan.md
   Trạng thái: **ĐÃ PUSH develop (16/11/2026)** — api 4b69a64ea, client 8244a6c92, ERP develop_02 ca185e425e; chưa gop_db. 12 task SDD + final review; e2e 983c012 (repo e2e local). Đối số HRM↔ERP đã vá 0 lệch (05/2026, 2025, 2026 — doi-chieu.md); ERP sau vá đổi số (05/2026 thưởng 394,2tr→341,1tr). Phạm vi cấp công ty/phòng theo công ty HỒ SƠ như ERP (user chốt). Mở: test golden RBAC ERP (AccountingScopeConversionTest service.commission_month) cần chụp lại trên DB hrm_erp_rbac_test. Deploy: permission:catalog-sync → cấp quyền accounting.bao_cao_thuong_nang_suat_thang.view ở /admin/roles.
 

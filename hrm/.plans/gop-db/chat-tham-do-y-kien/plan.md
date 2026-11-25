@@ -73,3 +73,17 @@ Yêu cầu: người tạo sửa được thăm dò khi CHƯA ai bình chọn (l
 - [x] BE: thêm test hạn đóng (lưu / bỏ hạn / quá khứ 422) ⇒ 15 test đạt.
 - [x] App iOS simulator: người không tạo không thấy Chỉnh sửa · người tạo: tạo → Chỉnh sửa (form nạp sẵn) → Lưu ⇒ thẻ đổi · bầu ⇒ ẩn Chỉnh sửa · rút phiếu ⇒ hiện lại.
 - Chưa test: Android, socket realtime nhiều máy.
+- [x] 24/11 Chân thẻ: ẩn dòng "0 lượt bầu · Xem người bầu" khi 0 lượt; không còn nút nào (người thường / đã đóng) thì bỏ cả chân thẻ; app đổi 2 nút Chỉnh sửa / Đóng thăm dò thành nút viền có icon chia đều. Web + app đều sửa, kiểm: người tạo 0 lượt (chỉ 2 nút) · có lượt (hiện lại "N lượt bầu · Xem người bầu") · người thường 0 lượt (không chân thẻ) · đã đóng 0 lượt (không chân thẻ) · ẩn kết quả ("Chưa bình chọn" giữ nguyên). Test app 38 đạt, analyze sạch.
+
+## 24/11/2026 — Bình chọn ẩn danh + hoàn thiện, đẩy code, deploy prod — @cuong61n
+- [x] BE: cột `chat_polls.anonymous` (migration 2026_11_24_000001); ẩn danh ⇒ BE không trả `voter_ids`/`voters`, `GET poll/voters` 422 cho mọi người (kể cả người tạo); số phiếu vẫn hiện theo luật ẩn kết quả; `my_option_ids` vẫn trả để mỗi người thấy lựa chọn của mình. Test 18 đạt (ẩn danh, ẩn danh + ẩn kết quả + chọn nhiều, sửa đổi cờ).
+- [x] Web: nhóm "Bình chọn ẩn danh" trong form (Ẩn kết quả khi chưa bình chọn · Ẩn người bình chọn); thẻ ẩn danh: nhãn "Ẩn danh", không avatar / không "Xem người bầu", mỗi lựa chọn "N phiếu · P%"; thêm % từng lựa chọn cho thăm dò thường (trước chỉ app có). Export Excel không áp dụng cho ẩn danh (không có popup người bầu).
+- [x] App: công tắc "Ẩn người bình chọn", thẻ ẩn danh như web, "N phiếu · P%".
+- [x] Web: rê chuột vào biểu cảm tin nhắn hiện danh sách người thả ngay (13ms, tooltip BootstrapVue thay title trình duyệt trễ ~1s).
+- [x] Đẩy code: BE gop_db `da198de1b`; web gop_db `1dd2530b3` → `55845e13f` → `0c0046f65`; app develop `ba2088b` → `855ac01` (chưa build). Deploy prod `build_tpe.sh` 3 lần (web + BE + migrate), xong 24/11.
+
+## 25/11/2026 — Merge develop → tpe, build + phát hành HRM TPE (iOS + Android) — @cuong61n
+- [x] Merge `origin/develop` (`bd71541`) vào `tpe` sạch, không conflict; bump HRM TPE build 114 → 115, GIỮ version 2.4.0 (iOS `TpeProd.xcconfig`, Android `versionCode` 115). Đã push `tpe` (`d9ee3b4`).
+- [x] iOS: IPA ký chuẩn App Store (profile `com.tanphat.soft.app`, có ShareExtension), 2.4.0 (115) → upload TestFlight; gán nhóm external "Tân Phát" + gửi duyệt qua API khóa ASC ⇒ `IN_BETA_TESTING`.
+- [x] Android: AAB tpeProd ký đúng keystore (SHA-1 khớp) → Play API gửi xét duyệt kênh production 100%, versionCode 115 (chờ Google duyệt).
+- Bản này gồm thăm dò ý kiến chat (sửa khi chưa ai bầu, ẩn danh, % từng lựa chọn) của app.
