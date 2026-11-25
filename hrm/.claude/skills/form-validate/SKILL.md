@@ -187,6 +187,25 @@ có/không `font-weight-bold` — và sửa 1 chỗ không lan sang chỗ khác.
 
 ⚠️ Màn cũ đang tự dựng thì **sửa dần khi có dịp đụng vào**, KHÔNG sửa đại trà.
 
+### CHUẨN ĐẦU KHỐI — mọi màn Thêm / Sửa / Chi tiết (Redmine #12294, chốt 25/11/2026)
+
+Lấy đầu khối màn **`customer-care/device-errors/create`** làm chuẩn (thay dải nền slate bản 19/10):
+
+| Thành phần | Giá trị |
+|---|---|
+| Khung khối | viền `1px solid #e5e7eb`, bo `8px` |
+| Đầu khối | **nền trắng** `#fff`, gạch dưới `1px solid #e5e7eb`, `min-height: 36px`, flex + `align-items: center` |
+| Tiêu đề | `h6` 14px đậm (700) `#1f2937`, `line-height: 20px`, **`margin: 0`** |
+| Góc phải | cụm người tạo bằng `components/CreatorInfoLine.vue` (13px `#6b7280` + icon `ri-user-3-line`) |
+
+- Chuẩn nằm ở **`assets/scss/default.scss`** (`body .card .card-header.section-header` + `body .card.v2-form-section`
+  / `body .card:has(> .card-header.section-header)`) → dùng `V2BaseFormSection` hoặc `.card > .card-header.section-header`
+  là tự đúng. **KHÔNG khai lại** nền / viền / cỡ chữ header trong `<style>` của màn.
+- **Căn giữa dọc**: theme bản build (dev-hrm) cho `h6` `margin-top: 10px`; `mb-0` chỉ xoá margin dưới → tiêu đề lệch
+  xuống so với cụm người tạo (ảnh #12294, local không thấy). Màn tự dựng header bằng class riêng (`.form-card-head`…)
+  BẮT BUỘC đặt `h6 { margin: 0 }` + `min-height: 36px` (khuôn `.form-card-head` ở `DeviceErrorFormComponent.vue`).
+- Màn có màu khối riêng có chủ đích (form meeting) thì đè `background` tại màn đó; còn lại không tự chế màu.
+
 ### ⚠️ Màn hình hẹp: tiêu đề khối và cụm nút chen nhau
 
 Hàng tiêu đề của `V2BaseFormSection` là flex `justify-content: between`, **không cho xuống dòng**.

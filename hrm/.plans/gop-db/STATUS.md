@@ -19,7 +19,12 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
-## Báo cáo bán hàng theo hàng hóa (port ERP `report.saleProduct` + cây phân loại mới) — ĐANG LÀM (2026-11-23, @khoipv)
+## Báo cáo làm dịch vụ BH - SC - BD (port ERP `report.warrantyRepairService`) — ĐANG LÀM (2026-11-25, @khoipv)
+Đang khảo sát ERP + chốt yêu cầu. Note: bỏ ô Nhóm hàng hóa, thêm Loại sản phẩm, xếp lại ô lọc; bấm số → popup Số chứng từ (HĐ / phiếu BH), Khách hàng, SL, Giá trị.
+→ .plans/gop-db/bao-cao-lam-dich-vu-bh-sc-bd/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-25-bao-cao-lam-dich-vu-bh-sc-bd-design.md
+
+## Báo cáo bán hàng theo hàng hóa (port ERP `report.saleProduct` + cây phân loại mới) — ĐÃ PUSH develop (api `fbc5b047f`, client `91c629d70`) (2026-11-23, @khoipv)
+Còn: E2E ca 13–15 chưa chạy xong (máy hết RAM); admin cấp mã `sale.bao_cao_ban_hang_theo_hang_hoa.view` cho vai trò; chưa merge gop_db.
 → .plans/gop-db/bao-cao-ban-hang-theo-hang-hoa/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-23-bao-cao-ban-hang-theo-hang-hoa-design.md
 
 ## #12091 + #11888 Báo cáo thị trường theo Khu vực kinh doanh (8 báo cáo CSKH trước bán) — ĐÃ PUSH develop (api `d5499259d`, client `c4fcfdda0`), nhánh `task_12091` (api `6a624de3e`, client `f16bff706`), CHƯA gop_db (2026-11-23, @junfoke)
@@ -450,6 +455,7 @@ VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là t
 
 ## Đang làm
 
+- ui / **#12294 Đồng bộ UI tiêu đề khối (nền trắng, bo 8px, căn giữa dọc, CreatorInfoLine)** → @khoipv → .plans/gop-db/12294-dong-bo-tieu-de-khoi/plan.md — CODE XONG 25/11 (hrm-client 36 file, chưa commit), chờ kiểm trình duyệt
 - **Vá lỗ hổng quyền đọc Công việc · Chấm công · Lương · CSKH trước bán** — #1–#20 (→ .plans/gop-db/va-lo-hong-quyen-doc/ghi-chu.md). Đợt 1 #6 Task + #17 Issue BƯỚC 1 "chỉ ghi log" CODE XONG 12/11 (worktree websites/wt-quyen-xem-task nhánh gop_db-va-quyen-xem-task-issue, CHƯA commit) — plan.md cùng thư mục; bước 2 bật 403 hỏi lại sau ~1 tuần đọc log prod.
 - **TPE SMART AGENT + Chat (Nhóm trao đổi / 1–1)** — từ 13/11/2026 chuyển ra `.plans/agent-chat/` (README.md), theo dõi ở `.plans/STATUS.md`. `gop-db/` chỉ còn tính năng chuyển ERP → HRM.
 

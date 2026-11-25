@@ -5436,3 +5436,15 @@ Vừa hoàn thành: #11920 vòng 3 — R10 (port popup HĐ loại chi 2 theo ERP
 Đang làm dở: không.
 Bước tiếp theo: mở trình duyệt chọn loại chi 2 + KH Etek Green → popup ra đủ HĐ, chọn 1 HĐ mua rồi Lưu nháp.
 Blocked:
+
+### #12292 — Bảng Chi tiết màn xem (2026-11-25, tester)
+
+Phiếu dev 3738: cột "Số tiền chi" chưa có chứng từ chi đang in `_` → yêu cầu ĐỂ TRỐNG; dưới bảng Chi tiết có
+khoảng trắng thừa ~50vh.
+
+- [x] **R1** Cột "Số tiền chi" (dòng + Tổng cộng) chưa có số thì để trống thay cho `_` (`formatMoneyOrDash` trả `''`).
+- [x] **R2** Khoảng trắng dưới bảng: rule huỷ `min-height: 50vh` (global `.table-responsive`, `default.scss:85`)
+      nằm trong `<style scoped>` nhưng class được truyền qua `body-class` vào div bên trong `V2BaseTableScroll`
+      (không phải root của con) → không mang `data-v` của form cha → rule chết từ khi đổi sang V2BaseTableScroll
+      (08-22). Sửa: bọc `::v-deep`.
+- File: FE `pages/finance/bill-payment-requests/components/BillPaymentRequestDetailTable.vue`.

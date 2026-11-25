@@ -5,6 +5,12 @@
 
 ## Đang làm
 
+- **Phiếu đề nghị xuất kho — bản thật BE + FE (theo `demo-phieu-de-nghi-xuat-kho.html`)** — @khoipv — Bắt đầu 25/11/2026 — Code BE + FE xong, chờ user test trình duyệt. BE `Modules/Warehouse` (3 bảng, quyền "Quản lý phiếu đề nghị xuất kho", 3 cấp, test API 49/49 pass); FE `pages/warehouse/export_requests` (danh sách V2, form tạo/sửa + popup chọn HĐ Đã duyệt/Đã kết xuất còn hạn, chi tiết + Lịch sử, Thu hồi / Trả lại có lý do), menu Kho → Xuất kho. Luồng dừng ở Chờ xuất kho.
+  - Plan: [.plans/phieu-de-nghi-xuat-kho/plan.md](phieu-de-nghi-xuat-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-25-phieu-de-nghi-xuat-kho-design.md](../docs/superpowers/specs/2026-11-25-phieu-de-nghi-xuat-kho-design.md)
+
+- **Check: Đã xin nghỉ chiều, sáng về trước 30' có bị trừ công? Làm đơn về sớm giữa ca 30' được không?** — @khoipv — Bắt đầu 25/11/2026 — Không bị trừ: đơn nghỉ chiều phủ giờ ra chuẩn → nghỉ có lương thì checkout gán = giờ ra chuẩn (đủ 1 công, về sớm 0); nghỉ không lương thì công 0,5 đúng phần sáng. Giờ ra 11:30 chỉ lưu `checkin_out_center`, không tính. Trường "Về sớm giữa ca" (`early_leaving_middle_shift`) không được dùng khi tính công → làm đơn chỉ mang tính thủ tục.
+  - Plan: [.plans/check-ve-som-sang-khi-nghi-chieu/plan.md](check-ve-som-sang-khi-nghi-chieu/plan.md)
+
 - **Check: NV Phan Thị Hồng Ngạn (NV.00150) bắt đầu tính phép 23/11 nhưng hôm nay chưa dùng được phép** — @khoipv — Bắt đầu 23/11/2026 — Demo: được dùng = 0. Phép chỉ cập nhật khi chạy `update:attendance`; NV vào phép từ T11 nên chỉ có phần ứng (1 ngày), mà đúng ngày bắt đầu thì `getUsableLeaveDays()` so mốc có giờ hiện tại với `$now` → không ứng. User chọn sửa: `getUsableLeaveDays()` lấy `startOfDay()` cho mốc ngày bắt đầu → đúng ngày bắt đầu đã được ứng; test local đạt (hôm nay → 1). Đã push `master` (API `d7346d7a`). Sau deploy chạy `php artisan update:attendance`.
   - Plan: [.plans/check-phep-phan-thi-hong-ngan/plan.md](check-phep-phan-thi-hong-ngan/plan.md)
 

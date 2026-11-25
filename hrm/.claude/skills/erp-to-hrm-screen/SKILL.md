@@ -544,6 +544,9 @@ Chạy hết checklist bên dưới, rồi mở trình duyệt bấm thật. **K
       (khuôn `bindEmployeeClearNoOpen` ở `AccountingPrepickCancelForm.vue`) → `select-and-input-state`
 - [ ] Bảng con trong form khi rỗng **vẫn vẽ bảng**, dòng "Không có dữ liệu" nằm trong bảng (`colspan`),
       chữ xám `#6b7280` — không thay bằng `<div>` ngoài bảng, không `.text-muted` (ra đỏ)
+- [ ] **Đầu khối đúng chuẩn #12294**: nền trắng + gạch dưới `#e5e7eb`, khung bo 8px, tiêu đề 14px đậm `#1f2937`
+      căn giữa dọc (`h6` margin 0) — dùng `V2BaseFormSection` / `.card-header.section-header`, không tự khai style
+      header (chi tiết: `form-validate` mục 1c "CHUẨN ĐẦU KHỐI")
 - [ ] **Góc phải header khối đầu tiên** có dòng `Tên người tạo - dd/mm/yyyy HH:mm` ở CẢ Thêm / Sửa /
       Chi tiết — dùng component `components/CreatorInfoLine.vue` (`name`, `created-at`, `is-create`),
       KHÔNG tự viết span/computed riêng (Redmine #11575: ~40 màn mỗi màn một kiểu "·", "—",
