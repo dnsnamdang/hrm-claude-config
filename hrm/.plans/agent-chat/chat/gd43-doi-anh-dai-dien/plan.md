@@ -121,4 +121,8 @@
 ## Đẩy code + deploy (user bảo 25/11: "đẩy build prod TPE web đi, app đẩy lên nhánh develop github")
 - [x] 25/11 — API: commit `ce975a34f` trên `gop_db-chat-doi-anh` → merge `gop_db` → push origin gop_db. Client: `f6b7c01f0` → gop_db → push.
   App TPE_APP: `3b9d77f` (chỉ 11 file GĐ43, để nguyên 4 file sửa dở của phiên khác) → merge `develop` → push origin develop.
-- [ ] 25/11 — Prod TPE: `~/build_tpe.sh` (log `~/build_tpe_20261125.log`) — kết quả ghi bên dưới.
+- [x] 25/11 — User sửa thêm dòng Ảnh nhóm: nút thẳng cạnh dưới thẻ (mb-2 của V2BaseButton = 12px), thẻ 60×70 to quá ⇒ 48×56 bo 12.
+  Commit client `fbeada980` → gop_db → push.
+- [x] 25/11 — ĐÃ DEPLOY PROD TPE 2 lượt `~/build_tpe.sh`: lượt 1 (log `~/build_tpe_20261125.log`) api `ce975a34f` + client `f6b7c01f0`,
+  Migrated 2026_11_29_000001 + 000002, route cache mới 17:43, exit 0; lượt 2 (`_2.log`) client `fbeada980`, Nothing to migrate, exit 0.
+  Kiểm: site 200, `POST chat/me/avatar` / `GET chat/image-source` không token ⇒ 401 (route có). App đã lên origin/develop `3b9d77f`, chưa build.
