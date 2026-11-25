@@ -12,3 +12,4 @@ Báo lỗi 25/11/2026: BC chi tiết công nợ NCC, NCC CÔNG TY CỔ PHẦN LI
 - [x] BE: `update` dùng `lockForUpdate()`; chặn request lặp lại khi phiếu đã duyệt/đã hủy.
 - [x] FE `show.blade.php`: `submit()` bỏ qua khi `loading.submit` đang bật.
 - [x] ĐÃ push develop_02 `edab7ec8fd` (25/11).
+- [x] ĐÃ cherry-pick + push gop_db `bc79d8bb39` (25/11).
