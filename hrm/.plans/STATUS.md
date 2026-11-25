@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- masterdata / **#11924 Chặn khoá hàng khi còn phiếu mua/nhập/xuất hoặc HĐ chưa xuất hết** → @nguyentrancu97 → `.plans/khoa-hang-chan-tien-trinh/{design.md,plan.md}`
+  25/11/2026: ĐÃ push develop — api `5621f7503` (`ProductInProgressService` + guard `lock()` → 422 theo luồng); final review + fix YCXH status 8/12. Chưa gop_db; vé Redmine chưa chuyển trạng thái; QA kiểm toast trên dev-hrm.
+
 - sale / **Port Cảnh báo thu nợ đến hạn (xét theo quy chế)** → @nguyentrancu97 → `.plans/canh-bao-thu-no-den-han/plan.md`
   21/11/2026: ĐÃ push develop — api c062514ed fe9a93966 · client b8b24733a; e2e `customer-debt-due-warning.spec.ts` pass; đối chiếu ERP 2,204 HĐ / 594,653,332,564 khớp. Chưa gop_db. Chỉ tiêu "Xét theo HĐ" anh Nam làm sau.
 
@@ -28,9 +31,11 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 - finance / **Phiếu YC hỏi giá vận chuyển — port ERP → HRM (chỉ phần lập phiếu)** → @nguyentrancu97 → `.plans/yc-hoi-gia-van-chuyen/{design.md,plan.md}`
   20/11/2026: ĐÃ push develop (api 4f3848615 / client ab6e5feae, cherry-pick riêng — develop local còn bản gốc xen YCĐHMN) + ERP develop_02 3adf898dd3. Chưa gop_db.
+  25/11/2026: QA #12282 #12283 #12284 (16 mục: sort/cấu hình cột/cột cập nhật/lịch sử/in logo+nhãn/nháp chỉ bắt buộc Hãng SX) ĐÃ push develop — api `f669f65c3` · client `b9a989b05`; 3 vé "Code xong chờ test". Chưa gop_db.
 
 - sale / **YC đặt hàng mua ngoài — port ERP → HRM (phía KD khởi tạo)** → @nguyentrancu97 → `.plans/yc-dat-hang-mua-ngoai/{design.md,plan.md}`
   20/11/2026: ĐÃ push develop — api 671fac58e / client dd3000b15 (cherry-pick riêng; develop local còn bản gốc xen việc khác) + ERP develop_02 c97b5a30f7. E2E local OK (phiếu test 1576/1577 trong erp_hrm_check). Bước tiếp theo: gộp gop_db khi user báo.
+  25/11/2026: QA #12285 #12286 ĐÃ push develop — api `5c2db2e96` · client `1468ab567` (sort, "Tên - Mã phòng", link HĐ mua, tệp đính kèm chuẩn, sửa Lưu nháp luôn 422 do `min:1`); phạm vi 951 vs 2 user chốt giữ nguyên HRM. 2 vé "Code xong chờ test". Chưa gop_db.
 
 - sale / **YC đặt hàng (PDH, ERP rootOrderRequest) — port ERP → HRM (phía KD khởi tạo)** → @nguyentrancu97 → `.plans/yc-dat-hang/{design.md,plan.md}`
   20/11/2026: ĐÃ push develop — api 8c6b2fb70 / client ab58b07f8 + ERP develop_02 0280648943. E2E local OK (PDH-06917 → PDHTN-04132, erp_hrm_check). Bước tiếp theo: gộp gop_db khi user báo.

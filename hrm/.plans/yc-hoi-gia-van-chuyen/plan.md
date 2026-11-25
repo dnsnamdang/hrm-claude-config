@@ -186,3 +186,38 @@ Vừa hoàn thành: đủ 7 task + review cuối (sửa giả mạo `notify-resu
 Đang dở: — (test Finance có 3 file đỏ sẵn từ trước, không do việc này; golden route ERP lệch price_asking có sẵn).
 Bước tiếp theo: gộp gop_db khi user báo.
 Blocked: —
+
+---
+
+## Bug-fix QA đợt #12282–#12284 (2026-11-25) — YC hỏi giá vận chuyển
+
+Nguồn: Redmine `fix-bug-dao-tao-danh-gia`. BE `Modules/Finance`, FE `pages/finance/delivery-cost-asking-requests`.
+
+### #12282 — Danh sách
+- [x] A1. FE: đổi nhãn cột/ô lọc "Người lập"→"Người tạo", "Ngày lập"→"Ngày tạo" (cột, filterFields label, export).
+- [x] A2. FE: thêm `columnCustomizationMixin` + `<ColumnCustomizationModal v-if="columnFieldsLoaded">` + nút Cấu hình cột (icon `ri-layout-column-line`, `btn-compact`) + `loadColumnFields()` ở mounted. `columnScreenKey='finance_delivery_cost_asking_requests'`.
+- [x] A3. BE Resource(List): thêm `updated_at` (d/m/Y H:i), `updater_name`, `department_code`; FE thêm 2 cột Ngày cập nhật + Người cập nhật (mặc định hiện).
+- [x] A4. Người tạo/duyệt/cập nhật hiển thị "Tên - Mã phòng" (QA ghi "Tên - mã phòng") → BE build chuỗi `fullname - department_code`.
+- [x] A5. Sort mọi cột trừ STT + Hành động: BE `SORTABLE_COLUMNS` whitelist + áp orderBy từ `sort_by`/`sort_direction` (bỏ hard-code L57); FE wire `:sortBy/:sortDirection/@sort`, key khớp BE.
+- [x] A6. FE: bỏ option 5 dòng/trang (giữ 10/20/50/100).
+
+### #12283 — Tạo mới
+- [x] A7. FE Form: thêm placeholder đủ các ô (chỉ khi thêm thông tin ngoài nhãn).
+- [x] A8. FE Form: đưa Ghi chú ngang hàng Hãng sản xuất (col-md-4, cùng row, rộng bằng ô hãng SX).
+- [x] A9. FE Form: đổi tiêu đề khối "Khách hàng và hàng hóa"→"Chi tiết".
+- [x] A10. FE Form: nút "Xóa khách hàng" đúng màu đỏ (danger) + icon `ri-delete-bin-6-line`.
+- [x] A11. FE Form: ô SL chặn nhập chữ (chỉ số/thập phân).
+- [x] A12. FE Form: khoảng cách nút footer `mr-2 mb-2` (nút cuối `mb-2`).
+- [x] A13. BE+FE: Lưu nháp (status=3) chỉ bắt buộc Hãng sản xuất → StoreRequest dùng `required_if:status,2` cho customers/products…; FE nới required khi Lưu nháp.
+
+### #12284 — Chi tiết
+- [x] A14. BE+FE: ghi lịch sử (entity-history) — skill `entity-history`: endpoint `/histories` + ghi khi tạo/sửa/xóa/đổi trạng thái; FE nhúng mục Lịch sử ở chi tiết + hiện ở danh sách (nút/mục Lịch sử).
+- [x] A15. FE Chi tiết: ẩn khối Trạng thái thừa trong body (trùng badge header).
+- [x] A16. BE PrintService (KHÔNG sửa template ERP 101 dùng chung): logo lấy `companies.header` theo `company_id` chứng từ (khuôn `BillIncomePrintService::headerUrl()`); hậu xử lý HTML render đổi nhãn "Người lập"→"Người tạo", "Ngày lập"→"Ngày tạo" chỉ phía HRM.
+
+### Checkpoint — 2026-11-25 11:41 (wrap up tự động)
+Vừa hoàn thành: đủ 16 mục A1–A16 (#12282 DS · #12283 Tạo mới · #12284 Chi tiết). BE: `SORTABLE_COLUMNS` + `applySort()` (11 cột, 4 cột tên qua subquery — đã chạy thử cả 2 chiều, cột lạ fallback created_at); ListResource thêm `updated_at`/`updater_name`/`department_code`, người = "Tên - Mã phòng"; StoreRequest `required_if:status,2` (nháp chỉ bắt buộc Hãng SX); lịch sử qua `LogsCatalogHistory` + entry `CatalogHistoryService::TABLES` (route `catalog-histories` dùng chung); PrintService lấy logo `companies.header` theo công ty chứng từ + `str_replace` nhãn Người/Ngày lập→tạo (KHÔNG sửa mẫu in ERP id 101). FE: cấu hình cột, sort, bỏ 5 dòng/trang, form placeholder/Ghi chú cạnh Hãng SX/tiêu đề "Chi tiết"/SL `sanitizeNumberEvent`, ẩn badge trạng thái trùng, `SystemInfoSection` + `CatalogHistoryModal`.
+Commit: hrm-api `f669f65c3` · hrm-client `b9a989b05` — nhánh `develop`, ĐÃ push origin/develop. 3 vé chuyển "Code xong chờ test" (25/11).
+Đang làm dở: —
+Bước tiếp theo: chờ QA; gộp gop_db khi user báo. Nghi ngờ còn: lịch sử chuẩn hoá qty `(string)(0+$qty)` mất phần `.000` — format lại nếu QA cần.
+Blocked: —

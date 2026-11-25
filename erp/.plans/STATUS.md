@@ -2,6 +2,8 @@
 
 ## Hoàn thành
 
+- [Điều chỉnh công nợ NCC: cho chọn trùng HĐ mua khi khác NCC (1 TH chi phí NK nhiều NCC)](dccn-ncc-trung-hd-nhieu-ncc/plan.md) — @nguyentrancu97 2026-11-25. develop_02 `5e9a228a93` + gop_db `67a2947007` (đã push). Chưa thử trên màn thật.
+- [Phiếu chi TPE.PC1125.00043 (id 312) hạch toán trùng — `lockForUpdate` chặn duyệt/hủy lặp](pc312-hach-toan-trung/plan.md) — @nguyentrancu97 2026-11-25. Đã sửa dữ liệu hrm_erp_gop; develop_02 `edab7ec8fd` + gop_db `bc79d8bb39` (đã push). Chặn duyệt trùng chưa thử bằng thao tác thật.
 - [BC hàng hóa theo hãng SX: hàng bán mượn quy đổi ĐVT (thiếu 207 chai ENEO-408)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-21. `44bda98cfa` gop_db (đã push).
 - [BC hàng hóa theo hãng SX: thêm cột Đơn vị tính (combobox ĐVT, quy đổi SL + giá theo ĐVT)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-21. `0a1fae7eb3` gop_db → develop_02 `ecf592f75c`.
 - [ĐNTT: lỗi 500 xem chi tiết khi hợp đồng của dòng chi tiết không còn tồn tại (Undefined offset: 3)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-20. `cd66882917` gop_db.

@@ -200,3 +200,31 @@ Vừa hoàn thành: đủ 10 task SDD + review cuối. Chốt với user: ranh g
 Đang dở: —
 Bước tiếp theo: gộp gop_db khi user báo. Minor để sau: thứ tự nút trang chi tiết (Sửa→In→Mở trên ERP→Xóa) giữ nguyên theo quy ước.
 Blocked: —
+
+---
+
+## Bug-fix QA đợt #12285–#12286 (2026-11-25) — YC đặt hàng mua ngoài
+
+Nguồn: Redmine `fix-bug-dao-tao-danh-gia`. BE `Modules/Sale`, FE `pages/sale/inland-order-requests`.
+
+### #12285 — Danh sách
+- [x] B1. FE: đổi "Người lập"→"Người tạo", "Ngày lập"→"Ngày tạo" (allColumns + exportFields).
+- [x] B2. FE: Người tạo/cập nhật/duyệt dạng "Tên - Mã phòng" → BE Resource trả `department_code` cho creator/approver (updater nếu thêm cột).
+- [x] B3. FE: cột ngày (ngày tạo/yêu cầu/duyệt) dạng Ngày giờ (BE đã trả d/m/Y H:i cho created_at/approved_at; received_time H:i; date_needed_min để date — kiểm QA ý "cột ngày" nào).
+- [x] B4. FE: icon Cấu hình cột theo mẫu chung (`ri-layout-column-line`, `btn-compact`) — đã có mixin, kiểm icon.
+- [x] B5. FE: sửa tên cột tiếng Việt: "Buyer"→"Người mua (Buyer)"/tên Việt phù hợp; rà các cột khác.
+- [x] B6. FE: thêm sort cho số phiếu/ngày tạo/ngày yêu cầu/ngày duyệt giá/người yêu cầu → BE `SORTABLE_COLUMNS` + FE wire `:sortBy/:sortDirection/@sort`.
+- [x] B7. FE: cột Hợp đồng mua thêm link (nuxt-link tới HĐ mua tương ứng).
+- [x] B8. FE: đổi nút "Thêm mới"→"Tạo mới".
+- [x] B9. ⚠️ SCOPE (951 HRM vs 2 ERP): where-chain GIỐNG HỆT ERP↔HRM; chỉ khác công ty giải scope `.view` (ERP `session('current_company')` vs HRM `current_company_role` = cột `employee_infos.company_role`, quy ước HRM cố ý). Admin test có `company_role=1` (Tổng công ty) → thấy hết cty 1. ERP admin session ở cty khác không có scope → 2. **QUYẾT (user 2026-11-25): GIỮ NGUYÊN HRM — 951 đúng-theo-thiết-kế vì admin có quyền Tổng công ty; không sửa code scope.** Nếu muốn số khớp ERP thì chỉnh ngữ cảnh/quyền admin, không đụng code. Chi phí nếu sai: 0 (reversible, chỉ là quyết định).
+
+### #12286 — Tạo mới
+- [x] B10. FE Form: đồng bộ UI chuẩn Tệp đính kèm — dùng `V2BaseFile`/`FileAttachmentTable` đúng khuôn (bỏ div file-line tự chế).
+- [x] B11. BE+FE: Lưu nháp (status=3) chỉ yêu cầu 1 trường bắt buộc (nới required).
+
+### Checkpoint — 2026-11-25 11:41 (wrap up tự động)
+Vừa hoàn thành: B1–B11 (#12285 DS · #12286 Tạo mới). Quyết định đã chốt (user 25/11): #12285 phạm vi 951 vs 2 — GIỮ NGUYÊN HRM, không sửa `applyScope()`. BE: `SORTABLE_COLUMNS` + sort, ListResource "Tên - Mã phòng" + link HĐ mua sang ERP (`config('app.erp_url')`), tệp đính kèm upload rời `POST /upload-files` + lưu JSON (WriteService SET `attachments`), mimes "pg"→"jpg", max 15360. Lỗi tìm thêm khi verify: Lưu nháp luôn 422 vì rule `nullable|required_if:status,6|array|min:1` — FE gửi `[]` (không phải null) nên `min:1` vẫn bắn → bỏ `|min:1` (UpdateRequest kế thừa). Verify: nháp chỉ Ghi chú → 201; gửi rỗng hàng+tệp → 422 "Bắt buộc phải nhập". FE: nhãn, cột ngày giờ, icon cấu hình cột, "Người mua", sort, link HĐ, "Tạo mới", `V2BaseAttachmentSection`.
+Commit: hrm-api `5c2db2e96` · hrm-client `1468ab567` — nhánh `develop`, ĐÃ push origin/develop. 2 vé chuyển "Code xong chờ test" (25/11).
+Đang làm dở: —
+Bước tiếp theo: chờ QA; gộp gop_db khi user báo. Dọn sau: route cũ `DELETE /{id}/attachments` không còn dùng; `date_needed_min` chỉ d/m/Y (muốn có giờ phải đổi kiểu cột).
+Blocked: —
