@@ -8,6 +8,18 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- finance / **#10642 BBBG: chặn Ngày bàn giao < ngày xuất kho/xuất hàng + ngày tương lai** → @nguyentrancu97 → `.plans/10642-bbbg-ngay-ban-giao-validate/{design.md,plan.md}`
+  26/11/2026: Fix cả ERP + HRM. HRM entity `exportDateFloors()` + `applyHandoverDateValidation()` (chỉ nguồn firm), `withExportFloor()` bơm `export_date_floor`, `HandoverProductTable.vue` `disabledDateFor`. Verify BE tinker 5 ca + FE Playwright (HĐ 9816). ✓push api `df7be0839c`, client `684050fc97` (ERP `533499f2b7`). Chưa gop_db.
+
+- rbac / **Tách quyền Kế toán kho (`accounting.ke_toan_kho.manage` → 36 quyền theo loại phiếu)** → @nguyentrancu97 → `.plans/tach-quyen-ke-toan-kho/{design.md,plan.md}`
+  26/11/2026: Plan 1 xong (Native): `4772aff58` 36 entry Catalog + `KeToanKhoSplitMap`; `78093712c` lệnh `rbac:grant-ke-toan-kho-split` (9 test pass); chạy DB test: 2 role holder, cấp 72 dòng, verify 0 lệch, idempotent. Review cuối: Ready to merge. **CHƯA push** (2 commit local hrm-api develop), chưa gop_db, chưa deprecate mã cũ. Tiếp: Plan 2 (re-point ERP) + Plan 3 (HRM) — chờ user.
+
+- finance / **#10651 Quyết toán thưởng năm DSTC: "DSTC phòng thực đạt trong năm" lấy sai nguồn** → @nguyentrancu97 → `.plans/quyet-toan-thuong-nam-dstc-thuc-dat/{design.md,plan.md}`
+  26/11/2026: Fix cả 2 bên (port 1:1 ERP). `BonusEndYearSettlementService::getActualRevenue` đang lấy PS TK 511/521 thô (`AccountDetail`) → sửa thành `SUM(scd.commission_sale)` HĐ Firm đã quyết toán (fscd.type=2), `scd.department_id = phòng`, lọc `sc.date_accounting ∈ [từ,đến]`. ✓dev cả 2 bên — tinker `erp_hrm_check` dept=55 2025 = 9,163,656,207.80 (d/m/Y = Y-m-d, khớp ERP); gỡ const+2 import chết, giữ `normalizeToIso`. ✓push develop `9977f2f63` (ERP develop_02 `7c5a91532f`); Redmine → Code xong chờ test. Chưa gop_db. Còn: UI check Playwright nếu cần.
+
+- finance / **#10783 YC chuyển hàng: hiện tồn kho công ty khác (cross-company)** → @nguyentrancu97 → `.plans/yc-chuyen-hang-ton-cross-company/{design.md,plan.md}`
+  26/11/2026: Fix cả 2 bên (ERP + HRM). HRM `ProductTransferRequestService::stockOfProducts()` suy `companyId` từ công ty sở hữu kho được chọn (bỏ ép `CurrentCompany::id()`). Verify Playwright: kho SG-CSKH (cty4) hiện in_stock=1 đúng, kho cùng cty không đổi. ERP dùng cờ opt-in `stock_by_selected_warehouse` trong `getStockQty`. KHÔNG sửa hàm tồn dùng chung/detail(). ✓push develop `2adbbe4e8` (ERP develop_02 `78eb05d8f1`); Redmine → Code xong chờ test. Chưa gop_db.
+
 - masterdata / **#11924 Chặn khoá hàng khi còn phiếu mua/nhập/xuất hoặc HĐ chưa xuất hết** → @nguyentrancu97 → `.plans/khoa-hang-chan-tien-trinh/{design.md,plan.md}`
   25/11/2026: ĐÃ push develop — api `5621f7503` (`ProductInProgressService` + guard `lock()` → 422 theo luồng); final review + fix YCXH status 8/12. Chưa gop_db; vé Redmine chưa chuyển trạng thái; QA kiểm toast trên dev-hrm.
 
