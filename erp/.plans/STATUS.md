@@ -13,6 +13,9 @@
 
 ## Hoàn thành
 
+- [Phiếu kiểm kê theo mặt hàng: In / Excel hiện Model dưới tên hàng, Excel tự giãn dòng, hết N+1 (47s → <1s)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-26. gop_db `7d16e22d07`, `d011cf47b9`, `22b778c41d` (đã push).
+- [#12195 phản hồi: HĐ nhập khẩu khu Hàng bảo hành / Hàng thừa thiếu nhận SL thập phân](12195-mua-hang-sl-thap-phan/plan.md) — @junfoke 2026-11-26. `69afee89a3` (`task_12195`) → develop_02 `4f290a421a`. Chưa xem màn thật.
+- [Hỗ trợ prod: PYCXG-02936 người duyệt trống (PXG mới Lưu); TP không thấy phiếu YC xuất giữ của NV kiêm nhiệm TPE (phiếu ghi phòng chính, không phòng kiêm nhiệm) — người khác xử lý tiếp](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-26. Không sửa code.
 - [Điều chỉnh công nợ NCC: cho chọn trùng HĐ mua khi khác NCC (1 TH chi phí NK nhiều NCC)](dccn-ncc-trung-hd-nhieu-ncc/plan.md) — @nguyentrancu97 2026-11-25. develop_02 `5e9a228a93` + gop_db `67a2947007` (đã push). Chưa thử trên màn thật.
 - [Phiếu chi TPE.PC1125.00043 (id 312) hạch toán trùng — `lockForUpdate` chặn duyệt/hủy lặp](pc312-hach-toan-trung/plan.md) — @nguyentrancu97 2026-11-25. Đã sửa dữ liệu hrm_erp_gop; develop_02 `edab7ec8fd` + gop_db `bc79d8bb39` (đã push). Chặn duyệt trùng chưa thử bằng thao tác thật.
 - [BC hàng hóa theo hãng SX: hàng bán mượn quy đổi ĐVT (thiếu 207 chai ENEO-408)](ho-tro-sql-du-lieu-prod/plan.md) — @junfoke 2026-11-21. `44bda98cfa` gop_db (đã push).

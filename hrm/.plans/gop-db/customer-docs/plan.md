@@ -99,3 +99,6 @@ không truyền thì hành xử y như trước.
   có hàng trăm option, snapshot phình rất to. Dùng `browser_evaluate` trả về đúng thứ cần kiểm.
 - Trang load chậm: sau `navigate` phải chờ (kiểm `document.querySelectorAll('input').length` hoặc
   chờ chữ đặc trưng) rồi mới chụp, nếu không ảnh ra spinner.
+
+## Ngày 25/11/2026 (@junfoke)
+- [x] 25/11/2026 — Sửa "SRS - Danh mục khách hàng" trên Drive theo nhận xét c Lệ: chị Hằng đã xử lý 2/11 (tên cột Excel, SĐT tổ chức) ⇒ chỉ làm 9 nhận xét còn mở, sửa THẲNG trên Google Docs (không tải phiên bản mới lên — tránh mất comment + ghi đè người khác), tra code thật bằng 3 agent: 4 quyền "Xem tất cả KH / công ty / phòng ban / bộ phận" thực chất cùng 1 quyền Xem (thấy toàn bộ KH tổ chức); định nghĩa KH "của mình", quy tắc KH cá nhân, popup chọn KH ở Meeting / Dự án TKT / Báo giá / HĐ bán đầu kỳ; mục 2.4 quyền cập nhật thông tin đại lý = Sửa khách hàng, thêm 3 dòng đại lý vào bảng giao diện 2.3 (đánh lại STT 26, 27); Import: file mẫu 3 sheet, Nhóm KH không bắt buộc, Quận/Huyện bắt buộc khi địa chỉ nước ngoài, sửa câu báo Validate, luồng Import ghi một phần (bỏ dòng lỗi); thêm BR-09, BR-10. Ban đầu ở chế độ Đề xuất, user bảo sửa thẳng ⇒ chấp nhận 45 đề xuất (đều của Trí Lee). Còn đủ 9 nhận xét.

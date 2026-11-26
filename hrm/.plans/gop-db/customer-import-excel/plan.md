@@ -133,3 +133,6 @@ hover giống nhãn ở bộ lọc màn danh sách (`V2BaseFieldHint`).
 Đang làm dở: không có.
 Bước tiếp theo: user build FE + hover thử trên trình duyệt.
 Blocked: không có.
+
+## Ngày 25/11/2026 (@junfoke)
+- [x] 25/11/2026 — Theo yêu cầu QA (dev `/assign/customers`): file mẫu import khách hàng đổi chữ "Đối tượng" → "Loại hình tổ chức" cho khớp form + danh sách (tiêu đề cột B, thông báo chọn sai trong ô chọn, sheet "Hướng dẫn" mục 3–4, thông báo lỗi import; FE tên cột + câu lỗi, giữ alias "Đối tượng" để file mẫu cũ vẫn import được). Dựng thử file mẫu từ code develop: không còn "Đối tượng". Api `604de028b`, client `ae2886746` (develop, đã push). `gop_db` chưa có.

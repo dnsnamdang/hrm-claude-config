@@ -1029,3 +1029,6 @@ Bước tiếp theo:
    phân bổ (popup TKT đặt tên class khác, CSS không tái dùng được).
 
 Blocked: (không)
+
+## Ngày 26/11/2026 (@junfoke)
+- [x] 26/11/2026 — Lỗi #12310: đồng bộ phân trang popup chi tiết (bấm số) ở các báo cáo port từ ERP về khuôn màn mẫu BC nhu cầu dịch vụ — thanh phân trang của vỏ chung ("Hiển thị 1–20 / N", Số dòng/trang, nút tròn), mặc định 20 dòng, chọn 20/50/100. 13 file: BC bán hàng theo mặt hàng (2 popup), theo hàng hóa, dịch vụ BH-SC-BD, lượt SC-BD theo KH, lắp đặt – bàn giao (tổng hợp + chi tiết) bỏ thanh riêng 5/10/20/50/100; 3 BC Vận chuyển về mặc định (bỏ 10 dòng theo #11879); BC tổng hợp doanh thu, BC thưởng tháng 10 → 20 dòng; BC phát triển KH theo NVKD (trước không phân trang) viết lại trên vỏ chung, giữ cột + tìm phía máy chủ. Mở thử 4 popup (chuyển trang, tìm kiếm). Client `044fe5be5` (develop, đã push).

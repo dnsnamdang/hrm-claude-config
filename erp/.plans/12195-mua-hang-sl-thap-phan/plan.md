@@ -24,3 +24,6 @@ Phạm vi (user chốt): chỉ cột **SL đặt / SL duyệt**, cho nhập cả
 - [x] 18/11/2026 — Commit `51f610243b` (`task_12195`, đã push) + merge `develop_02` `3281ecf9c6` (đã push, chỉ 1 commit đi kèm).
 - [x] 18/11/2026 — Hỗ trợ giải thích dev báo "Nothing to migrate": migration ở commit đầu `d86dd651aa` đã chạy từ lần deploy trước; gửi lệnh `migrate:status` + câu kiểm kiểu cột `decimal(12,2)` để user tự xác nhận.
 - [ ] Còn có thể sót (đọc code lúc soạn TC, chưa sửa): ô SL phiếu báo hàng về mua ngoài; form lập trực tiếp YC đặt hàng trong nước (bước 1, không min); bản in PI nhập khẩu; màn chi tiết YC nhập khẩu hiện "1.00" — chờ user quyết.
+
+## Ngày 26/11/2026 (@junfoke)
+- [x] 26/11/2026 — Fix phản hồi #12195: HĐ nhập khẩu khu "3. Hàng bảo hành" và "4. Hàng thừa thiếu" chưa nhập được số lẻ (ô đổi giá trị thành số mỗi lần gõ ⇒ mất dấu "."; BE `min:1`) ⇒ ô SL dùng directive `qty-input`, setter làm tròn 2 số lẻ + chặn trần (`BuyContract2ProductGuarantee`, `BuyContract2ProductDiscrepancy`), BE `min:0.01` cả tạo lẫn sửa (`BuyContract2Controller`); cột "Chưa lập HĐ" cả 3 khu hiện đủ phần lẻ (trước `number:0`). DB đã decimal(…,2), không migration. Kiểm bằng script (browser bị khoá), chưa xem màn thật. `69afee89a3` (`task_12195`) → merge `develop_02` `4f290a421a` (đã push).

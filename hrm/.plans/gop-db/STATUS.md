@@ -19,6 +19,21 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## #12288 #12290 #12291 #12317 #12318 QA Giao chỉ tiêu KD theo PB + #12295 #12296 Phân chia thị trường (+ phản hồi #12291, #12288) — ĐÃ PUSH develop (client `3aae0bd06`, `67535911b`, `15e311194`; api `cfe51f524`, `30a96fc30`, `63aabe212`), CHƯA gop_db (2026-11-26, @junfoke)
+Plan: `.plans/gop-db/giao-chi-tieu-kinh-doanh/plan.md` · `.plans/gop-db/division-market-employee/plan.md` (kèm testcase #11695 tab "25. PPTT theo nhân viên"). Không migration.
+
+## #12310 Popup chi tiết báo cáo port ERP: phân trang 20 dòng, chọn 20/50/100 (13 file) — ĐÃ PUSH develop (client `044fe5be5`) (2026-11-26, @junfoke)
+Plan: `.plans/gop-db/base-popup-bao-cao/plan.md`.
+
+## #11297 Chú thích ký hiệu bảng công / BC cơm (lên đầu file Excel) + ghi chú dưới ô tích PCT/PGV — ĐÃ PUSH develop + gop_db (api `2dadd1c19`, client `f2695a6b7`) (2026-11-25 → 26, @junfoke)
+Plan: `.plans/gop-db/11297-chu-thich-ky-hieu-bang-cong-com/plan.md`. Server phải trỏ `DB_DATABASE_TPE` tới DB có bảng `rice_*`.
+
+## Danh mục ngân hàng gắn quyền mới Xem / Quản lý + sửa SRS — ĐÃ PUSH develop (api `43c6b979f`, client `3ffcbcb85`) (2026-11-25, @junfoke)
+Deploy: `permission:catalog-sync` + cấp 2 mã `master_data.danh_muc_ngan_hang.view|manage` ở `/admin/roles`. Plan: `.plans/gop-db/banks-cut-mysql2/plan.md`.
+
+## Lặt vặt 25/11 (@junfoke) — import KH "Loại hình tổ chức" (develop api `604de028b`, client `ae2886746`); #10899 #10908 #10909 ô Khách hàng BC meeting / Dự án TKT (client `6264232f9`), #10901 #10902 #10905 #10910 không cần sửa; #12258 phản hồi x ô Phòng ban (client `e9aa82f32`, 26/11)
+Plan: `customer-import-excel` · `ho-tro-van-hanh` · `division-market-employee`. SRS Danh mục KH + 3 SRS Dự án / YC làm giải pháp / Quản lý giải pháp đã sửa thẳng trên Drive (`customer-docs`, `srs-man-docs`).
+
 ## Báo cáo làm dịch vụ BH - SC - BD (port ERP `report.warrantyRepairService`) — ĐANG LÀM (2026-11-25, @khoipv)
 Đang khảo sát ERP + chốt yêu cầu. Note: bỏ ô Nhóm hàng hóa, thêm Loại sản phẩm, xếp lại ô lọc; bấm số → popup Số chứng từ (HĐ / phiếu BH), Khách hàng, SL, Giá trị.
 → .plans/gop-db/bao-cao-lam-dich-vu-bh-sc-bd/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-25-bao-cao-lam-dich-vu-bh-sc-bd-design.md
@@ -139,6 +154,10 @@ Tài liệu: `.plans/gop-db/tu-khai-chan-gui-khong-thay-doi/plan.md`.
 ## #12171 DM khách hàng (Quận/Huyện bắt buộc, cột xuất, import Nhóm KH, SĐT tổ chức) — ĐÃ PUSH develop (api `c71048b87`, client `ac05172af`) (2026-11-18, @junfoke)
 ## #12215 BC số lượt SC-BD 1 khách hàng (phân cấp công ty, tùy chỉnh cột, bỏ làm tròn) — ĐÃ PUSH develop (api `0e7c6a3a1`, client `4074d86c5`) (2026-11-18, push 19/11, @junfoke)
 Plan: `.plans/gop-db/customer-scope-list-page-standard/plan.md` · `.plans/gop-db/bc-so-luot-sc-bd-khach-hang/plan.md`.
+
+## Đăng ký khách hàng — bổ sung luồng đăng ký / gia hạn / duyệt TP→BGĐ — ĐANG LÀM (spec + plan DUYỆT 26/11; Task 1/8 code xong, chờ hỏi chạy migration) (2026-11-26, @junfoke)
+Phản hồi QA 23/11 (không task). Spec: `docs/superpowers/specs/gop-db/2026-11-26-dang-ky-khach-hang-bo-sung-design.md`.
+Tóm tắt: `.plans/gop-db/presale-customer-registers/design.md` mục "Giai đoạn 2"; plan 8 task cùng thư mục. Worktree `dang-ky-khach-hang` (từ develop), chưa commit.
 
 ## Phản hồi QA 23/11 — 2 báo cáo so sánh số liệu BH: popup chi tiết ô số + giá trị gồm phụ lục — ĐÃ MERGE develop (api f466a38c8, client d9e13c2b2), CHƯA gop_db (2026-11-23, @junfoke)
 Nhánh `fix/bc-so-sanh-popup-chi-tiet` (từ `origin/develop`, worktree `.worktrees/bc-so-sanh-popup` 2 repo), api `3208dfc10`, client `73eb621ce` + `fc7402553` (ngắt dòng số HĐ dài — popup dòng TỔNG hết tràn ngang 1366px, verify bằng ảnh).
@@ -462,6 +481,11 @@ customer-cut-mysql2, banks-cut-mysql2) — không phải màn nghiệp vụ.
 VD PYCXH-40338 293.126.007) ⇒ người xem phiếu (kho) xem mã nguồn là thấy. User 13/10: làm SAU, việc riêng (thu gọn dữ liệu HĐ nhúng trang, rà các màn kho tương tự).
 
 ## Đang làm
+
+- assign / **#10972 Gia hạn/kết thúc sớm PCT theo Đối tượng (Tất cả nhân viên / Chỉ mình tôi) + ngày kết thúc riêng từng nhân viên** → @junfoke → .plans/gop-db/10972-gia-han-ket-thuc-som-theo-doi-tuong/plan.md
+  Trạng thái: ĐÃ PUSH 26/11 — nhánh `task_10972` (api `164db9d4d`, client `b32866181`); develop chỉ cherry-pick commit task (api `8adbbf6d5`, client `4cfead048`), CHƯA gop_db. Test BE + Playwright 3 màn ĐẠT. Deploy dev: chạy migration `2026_11_26_000001`.
+  ⚠️ GOTCHA: `syncEmployee()` xoá-tạo lại nhân viên ⇒ cột mới ở assign_request_employees phải mang sang tay. Nuxt bật từ cwd ổ `d:` chữ thường ⇒ build lỗi quill.
+  Spec: docs/superpowers/specs/gop-db/2026-11-26-10972-gia-han-ket-thuc-som-theo-doi-tuong-design.md | Tóm tắt: design.md cùng thư mục
 
 - ui / **#12294 Đồng bộ UI tiêu đề khối (nền trắng, bo 8px, căn giữa dọc, CreatorInfoLine)** → @khoipv → .plans/gop-db/12294-dong-bo-tieu-de-khoi/plan.md — CODE XONG 25/11 (hrm-client 36 file, chưa commit), chờ kiểm trình duyệt
 - **Vá lỗ hổng quyền đọc Công việc · Chấm công · Lương · CSKH trước bán** — #1–#20 (→ .plans/gop-db/va-lo-hong-quyen-doc/ghi-chu.md). Đợt 1 #6 Task + #17 Issue BƯỚC 1 "chỉ ghi log" CODE XONG 12/11 (worktree websites/wt-quyen-xem-task nhánh gop_db-va-quyen-xem-task-issue, CHƯA commit) — plan.md cùng thư mục; bước 2 bật 403 hỏi lại sau ~1 tuần đọc log prod.
