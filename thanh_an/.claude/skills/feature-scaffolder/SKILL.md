@@ -40,6 +40,36 @@ Trước khi scaffold, cần xác nhận:
 
 ## Pattern bắt buộc
 
+### BE — Thêm quyền (permission) mới — CHỈ sửa seeder, KHÔNG viết migration
+
+Mọi quyền khai tập trung ở **một file duy nhất**:
+`hrm-thanhan-api/Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php`
+
+- Thêm 1 dòng `Permission::create([...])` **cuối hàm `run()`**, **id cố định = id lớn nhất hiện có + 1**
+  (grep `'id' => 5` trong file để lấy id cuối). Không để auto-increment.
+- Model là `App\Models\Permission` (không phải `Spatie\Permission\Models\Permission`).
+- Đủ 6 trường, `name` = `display_name`:
+  ```php
+  // 26/11/2026 — Phân hệ Kho (type 16) - Nhập kho: <quyền dùng để làm gì> (<Class::HANG_SO dùng nó>)
+  Permission::create(['id' => 533, 'guard_name' => 'api', 'name' => 'Nhập thông tin phiếu nhập kho', 'display_name' => 'Nhập thông tin phiếu nhập kho', 'group' => 'Nhập kho', 'type' => 16]);
+  ```
+- `group` = nhóm hiển thị trên màn phân quyền; `type` = phân hệ — lấy theo các dòng cùng phân hệ đã có
+  (vd Chấm công 1 · Cung ứng 7 · Hợp đồng 8 · Kho 16). Không rõ thì hỏi user.
+- Comment phía trên: ngày + phân hệ + quyền dùng để làm gì.
+- Đổi tên quyền → sửa thẳng dòng trong seeder (giữ nguyên `id`), đồng thời sửa hằng tên quyền trong code BE.
+
+**KHÔNG làm:**
+- ❌ Migration `DB::table('permissions')->insert(...)` / `Permission::create` / đổi tên quyền trong migration
+  (đã từng phải xoá ở `de-xuat-cung-ung-khach-le`, `duyet-ket-xuat-hop-dong-cung-ung`, `phieu-nhap-kho`).
+- ❌ Seeder riêng cho từng module (`XxxPermissionSeeder`) — chỉ một nguồn là `PermissionsTableSeeder`.
+- ❌ Tự gán quyền cho vai trò trong code — user tự gán trên màn phân quyền.
+
+**Áp dụng lên DB** (seeder `truncate` bảng `permissions` rồi tạo lại theo id cố định, nên quyền đã gán cho vai trò vẫn giữ):
+```bash
+php artisan db:seed --class="Modules\Timesheet\Database\Seeders\PermissionsTableSeeder"
+```
+→ Ghi lệnh này vào checkpoint `plan.md` ("Bước tiếp theo") + nhắc user gán quyền mới cho vai trò.
+
 ### BE — Controller
 ```php
 class EntityController extends BaseApiController

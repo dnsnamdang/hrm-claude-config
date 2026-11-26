@@ -1,6 +1,6 @@
 ---
 name: form-validate
-description: Use when làm form nhập liệu hoặc BẢNG trong form / modal / màn chi tiết (bắt buộc V2BaseFormTable) ở màn đã/đang lên chuẩn V2 của hrm-thanhan-client (trang add/edit, modal form, nhất là phân hệ Cung ứng) — validate realtime bằng vee-validate trên component V2Base*, gộp lỗi FE + lỗi BE 422 bằng formValidateMixin, dọn lỗi bảng nhiều dòng, cuộn tới ô lỗi đầu tiên. Đọc cả khi: ô báo đỏ mà bấm Lưu vẫn đi, lỗi nhảy sai dòng sau khi xoá dòng, hoặc cần chốt rule nào chặn ở FE / rule nào chặn ở BE
+description: Use when làm form nhập liệu hoặc BẢNG trong form / modal / màn chi tiết (bắt buộc V2BaseFormTable) ở màn đã/đang lên chuẩn V2 của hrm-thanhan-client (trang add/edit, modal form, nhất là phân hệ Cung ứng) — validate realtime bằng vee-validate trên component V2Base*, gộp lỗi FE + lỗi BE 422 bằng formValidateMixin, dọn lỗi bảng nhiều dòng, cuộn tới ô lỗi đầu tiên, thêm mục File đính kèm / upload tệp cho phiếu (bắt buộc V2BaseAttachmentSection). Đọc cả khi: ô báo đỏ mà bấm Lưu vẫn đi, lỗi nhảy sai dòng sau khi xoá dòng, hoặc cần chốt rule nào chặn ở FE / rule nào chặn ở BE
 ---
 
 # Skill: Validate form ở màn V2 (vee-validate + V2Base*)
@@ -21,7 +21,8 @@ sang V2** (bắt đầu từ phân hệ Cung ứng). Màn cũ chạy ổn thì k
 | Tên biến lỗi BE | `formErrors` (mixin) / `formError` (màn cũ) | Như hrm. Màn cũ Cung ứng dùng `formError` — khi chuyển sang mixin thì đổi hết sang `formErrors`, đừng để 2 biến song song |
 | Cuộn tới lỗi | `scrollToFirstError` | Đã port `utils/scrollToFirstError.js`. **Đừng dùng `scrollToInputError` của `utils/helpers.js`** — nó chỉ bắt `span.text-danger`, không thấy `.v2-error` |
 | Dọn lỗi theo dòng | `utils/rowFieldErrors.js` | Đã port, cùng API |
-| `FileAttachmentTable.vue` | Có | **Không có** — cần bảng tài liệu thì ghép `V2BaseFile` theo dòng hoặc hỏi trước khi port |
+| `FileAttachmentTable.vue` | Có | **Không có** — khối "File đính kèm" của phiếu dùng `V2BaseAttachmentSection` (mục 1d), KHÔNG port `FileAttachmentTable` |
+| `V2BaseAttachmentSection.vue` | Có (bản mới) | **Có — bản port cũ hơn hrm**: không có prop `localFiles` / `maxFiles` / `sizesUrl`; tệp đã lưu (chỉ có URL) cột Dung lượng hiện `—`. Cần các prop đó → **hỏi trước** khi đồng bộ (component dùng chung) |
 | `.table-responsive { min-height: 50vh }` global | Có → phải ghi đè | dns **không có** rule này; chỉ thêm `.v2-form-table-wrap` nếu đo thấy thừa khoảng trắng |
 | Dấu `*` bắt buộc | `V2BaseLabel required` | Form V2: `<V2BaseLabel required>`; form cũ: `<Required />` — **không** viết `*` trần |
 
@@ -233,7 +234,79 @@ Tự kiểm: `grep -n "<table" <file>.vue` → rỗng (trừ bản in / template
 
 ---
 
-## 1d. Chọn file — `V2BaseFile`
+## 1d. Chọn file
+
+### ⚠️ Thêm mục "File đính kèm" cho phiếu → BẮT BUỘC dùng `V2BaseAttachmentSection`
+
+Phiếu / chứng từ có mục **File đính kèm** (nhiều tệp, đứng thành một khối riêng) thì dùng thẳng
+**`components/V2BaseAttachmentSection.vue`** (khuôn của hrm). **KHÔNG** tự ghép `V2BaseFile` + card,
+**KHÔNG** dùng `BaseUploadFile*` của màn cũ, **KHÔNG** chép thêm một bản lưới tệp riêng trong màn.
+Khối này lo trọn: tải lên S3 ngay khi chọn, lưới STT · Upload/File · Dung lượng · Xóa, nút
+*Thêm tài liệu* ở tiêu đề khối, Xem trước / Tải xuống / Thay đổi từng dòng, chặn sai đuôi / quá nặng.
+`v-model` là **mảng URL** — lưu phiếu chỉ việc gửi mảng đó.
+
+Mẫu đang chạy: Phiếu nhập kho `pages/warehouse/receipts/components/ReceiptForm.vue`.
+
+```vue
+<V2BaseAttachmentSection
+    v-if="editable || form.attachments.length"   <!-- màn Xem: không có tệp thì ẩn cả khối -->
+    v-model="form.attachments"
+    class="mb-2"
+    title="File đính kèm"
+    upload-url="files/upload"                    <!-- endpoint dùng chung của dns (Human FileController) -->
+    upload-field="attachments[]"                 <!-- endpoint nhận MẢNG nên phải có [] -->
+    :readonly="!editable"
+    :error-message="fieldError('attachments')"   <!-- nếu màn dùng formValidateMixin -->
+    @input="dirty = true"                        <!-- màn có cảnh báo rời trang chưa lưu -->
+/>
+```
+
+```js
+import V2BaseAttachmentSection from '@/components/V2BaseAttachmentSection.vue'
+// data: form.attachments: []
+// nạp phiếu: attachments: Array.isArray(data.attachments) ? data.attachments.slice() : []
+// payload lưu: attachments: (form.attachments || []).filter(Boolean)
+```
+
+- Upload: dùng **`files/upload`** + `upload-field="attachments[]"` (trả `{ data: [url] }`, component đọc
+  được). Chỉ tạo endpoint upload riêng của màn khi cần thư mục S3 / rule `mimes` riêng — hỏi trước.
+- ⚠️ Prop lỗi tên là **`errorMessage`**, KHÔNG phải `errors` (vee-validate đã chiếm tên `errors`).
+- `extensions` (mặc định pdf, png, jpg, jpeg, doc, docx, xls, xlsx) + `maxSizeMb` (mặc định 20) phải khớp
+  rule của endpoint nếu endpoint có kiểm đuôi / dung lượng.
+- `required` chỉ in dấu (*) ở tiêu đề — chặn "phải có tệp" vẫn do BE. Trước khi bật bắt buộc → **hỏi user**.
+- Phiếu đã duyệt / khóa sửa → `readonly` (chỉ Xem trước / Tải xuống).
+- Không gọi API xóa tệp: bỏ dòng = bỏ khỏi mảng. Chọn tệp rồi bỏ phiếu thì object vẫn nằm trên S3 (giống hrm).
+
+**BE đi kèm** (mẫu `Modules/Warehouse`, PNK 26/11/2026):
+
+1. Migration thêm cột `$table->json('attachments')->nullable()` (không khóa ngoại, có `hasColumn` để chạy lại an toàn).
+2. Entity `$casts['attachments'] = 'array'`.
+3. FormRequest: `'attachments' => ['nullable', 'array']`, `'attachments.*' => ['nullable', 'string', 'max:1000']` + message tiếng Việt.
+4. Service lưu: bỏ phần tử rỗng / trùng, mảng rỗng → `null`; API chi tiết trả `attachments` là mảng (`[]` khi trống), API "prepare" của màn tạo mới trả `[]`.
+
+**Phiếu đã có bảng file riêng ở BE** (vd Đề xuất cung ứng lưu `files: [{ ten_tai_lieu, link, ten_file, ghi_chu }]`)
+→ KHÔNG đổi BE, dùng computed get/set đổi object ↔ URL (mẫu `pages/supply/supply_proposals/add.vue`):
+
+```js
+attachmentUrls: {
+    get() { return (this.formSubmit.files || []).map((f) => f && f.link).filter(Boolean) },
+    set(urls) {
+        const byLink = {}
+        ;(this.formSubmit.files || []).forEach((f) => { if (f && f.link) byLink[f.link] = f })
+        // file cũ giữ nguyên object (tên tài liệu / ghi chú cũ); file mới lấy tên file từ URL
+        this.formSubmit.files = (urls || []).filter(Boolean).map((url) => byLink[url]
+            || { ten_tai_lieu: fileNameFromUrl(url), link: url, ten_file: fileNameFromUrl(url), ghi_chu: '' })
+    },
+},
+// <V2BaseAttachmentSection v-model="attachmentUrls" ... />
+```
+
+Màn khác chỉ hiển thị file của phiếu nguồn (vd Xử lý cung ứng xem file của đề xuất) → khối riêng
+`<V2BaseAttachmentSection :value="urls" readonly />` đặt NGOÀI card thông tin (component tự là 1 card), không tự vẽ chip file + `FilePreviewModal`.
+
+### Một ô chọn file lẻ → `V2BaseFile`
+
+Ô chọn **một** file lẻ (một ô trong dòng bảng, một trường trong form):
 
 ```vue
 <V2BaseFile
@@ -422,3 +495,4 @@ dòng ~1,5s và focus ô. **Đừng tự viết đoạn cuộn tay** bằng sele
 - [ ] Có lỗi → cuộn tới ô lỗi đầu tiên (`scrollToFirstError(this.$el)`)
 - [ ] Mở lại modal/reset form → `resetValidation()`
 - [ ] Loading: `$nuxt.$loading.start/finish` trong `try/finally`
+- [ ] Phiếu có File đính kèm: dùng `V2BaseAttachmentSection` (mục 1d) — `files/upload` + `attachments[]`, màn Xem không tệp thì ẩn khối; BE có cột JSON + cast `array` + rule `attachments.*`

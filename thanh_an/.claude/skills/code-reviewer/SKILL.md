@@ -26,6 +26,7 @@ HEAD_SHA: [commit hiện tại]
 - [ ] Permission dùng spatie/laravel-permission — không tự tạo middleware auth riêng
 - [ ] Query có N+1 không? Đã dùng `with()` eager load chưa?
 - [ ] Migration có rollback (`down()`) không?
+- [ ] Không có migration thao tác bảng `permissions` — quyền mới chỉ thêm ở `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (id cố định, xem skill `feature-scaffolder`)
 - [ ] Route đặt trong `Modules/[Module]/Routes/api.php`, không đặt trong `routes/api.php` chung
 - [ ] Không sửa hàm dùng chung khi chưa được confirm
 - [ ] Không tự thêm permission theo cấp khi chưa được confirm

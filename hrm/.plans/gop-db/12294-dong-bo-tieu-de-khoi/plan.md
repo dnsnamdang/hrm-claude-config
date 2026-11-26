@@ -30,6 +30,12 @@ về màu tiêu đề, bo góc, cụm "người tạo - thời gian tạo"; căn
       Grep nền khác trắng của `.section-header`: còn SectionBuilder (form builder), meeting GeneralInfo (màu khối có chủ đích),
       bill-income-reports 2 file (rule scoped yếu hơn chuẩn chung → chuẩn thắng)
 - [x] Cập nhật skill: `form-validate` mục 1c "CHUẨN ĐẦU KHỐI" + checklist `erp-to-hrm-screen`
+- [x] Kiểm tra theo yêu cầu (26/11): "bug này xem kỹ chưa" — đối chiếu lại task + ảnh (tiêu đề lệch xuống so với cụm
+      người tạo trên dev) với diff 36 file: đủ 4 ý (màu, bo góc, cụm người tạo, căn giữa dọc) + đã ghi skill. Rà sót:
+      không còn `.card-header` ngoài chuẩn ở màn form/chi tiết (chỉ còn báo cáo insurance-register); không còn cụm
+      người tạo tự chế ở màn form/chi tiết (còn lại là báo cáo/danh sách/picker). Lệch nhỏ: pricing-requests/_id dòng 92
+      đầu khối "Báo giá" dùng `<strong>` thay `<h6>`. Lưu ý: rule `:has()` mới thêm viền+bo cho MỌI card có section-header
+      (cả popup/danh sách). Chưa kiểm trình duyệt.
 - [ ] User kiểm trên trình duyệt (chưa mở Playwright) — ưu tiên: device-errors/create, prospective-projects/_id (khung lồng khung?),
       solutions/_id các tab, quotations/_id, 1 màn V2BaseFormCard (vd warehouse-prepick-requests)
 

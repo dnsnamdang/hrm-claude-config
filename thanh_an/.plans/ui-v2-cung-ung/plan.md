@@ -155,6 +155,17 @@ Blocked: sửa V2BaseCurrencyInput là component chung → cần user xác nhậ
 - [x] Form: Đề xuất cung ứng, Phiếu xử lý (gộp vào 5.3)
 - [x] Báo cáo nhu cầu mua, Dashboard (gộp vào 5.3)
 
+## Phase 6 — File đính kèm dùng `V2BaseAttachmentSection` (user 26/11/2026) @khoipv
+
+> Rà màn V2 Cung ứng / Kho / Giao hàng: PNK đã dùng (task 20 plan phieu-nhap-kho); Đề xuất cung ứng dùng `FileTable` riêng; Xử lý cung ứng hiện chip file của đề xuất; PGH bảng Chi phí có ô `V2BaseFile` theo dòng; Hộp thư đề xuất chỉ có cột/bộ lọc/Excel.
+> Chốt 26/11 (user): Đề xuất cung ứng thay thẳng, **bỏ ô Tên tài liệu + Ghi chú**; PGH bảng Chi phí **giữ nguyên** (ô file trong dòng bảng → `V2BaseFile` đúng skill). Không đổi BE (`files: [{ ten_tai_lieu, link, ten_file, ghi_chu }]` giữ nguyên).
+
+- [x] 6a. `supply_proposals/add.vue`: thay `FileTable` bằng `V2BaseAttachmentSection` (khối riêng dưới "Nội dung đề xuất"); computed get/set đổi mảng object ↔ mảng URL — file cũ giữ nguyên `ten_tai_lieu` / `ghi_chu`, file mới `ten_tai_lieu` = `ten_file` = tên file; màn Xem không có file thì ẩn khối
+- [x] 6b. Xóa `supply_proposals/components/FileTable.vue` nếu không còn chỗ nào import (đã xóa; sửa comment nhắc tên ở `delivery_notes/components/CostTable.vue`)
+- [x] 6c. `supply_handlings/add.vue`: bỏ chip file trong khối "Thông tin phiếu xử lý" → khối riêng `V2BaseAttachmentSection` readonly "File đính kèm đề xuất" ngay dưới; `hasProposalExtra` chỉ còn theo nội dung; dọn `previewFile` / `FilePreviewModal` / CSS `.file-chip` nếu thừa
+- [x] 6d. Compile check các file đã sửa (2 file add.vue OK)
+- [x] 6e. Skill `form-validate` §1d: ghi thêm mẫu chuyển đổi object ↔ URL khi BE lưu bảng file có cột phụ
+
 ## Cần user xác nhận (hàm dùng chung)
 - [ ] (Q1) Cập nhật plugin `select2-custom.js` / `select2-focus.js` theo bản hrm (id duy nhất cho select2, focus ô tìm kiếm, bấm × không mở dropdown) — ảnh hưởng mọi màn
 - [ ] (Q2) Đổi `ColumnCustomizationService` sang bảng key-value `user_column_settings` như hrm (hiện mỗi màn phải thêm 1 cột vào `column_customizations`)

@@ -33,7 +33,7 @@
 - [x] 16. Tự kiểm: compile template + script toàn bộ file .vue OK, compile SCSS OK, test logic rules bằng node (ALL PASS)
 - [x] 16b. (25/11) Thêm 4 quyền vào `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (id 529–532, khớp id DB local)
 - [x] 16c. (25/11) Màn phân quyền không thấy quyền Kho (type 7 nằm lẫn trong Phân hệ cung ứng) → user chọn tách **Phân hệ kho** riêng:
-  - Type 16 cho nhóm "Kho": seeder (527–532), migration ĐNXK, migration mới `2026_11_25_000002_move_warehouse_permissions_to_own_module` (đổi type cả quyền PNK đã chạy), đã migrate local
+  - Type 16 cho nhóm "Kho": seeder (527–532), migration ĐNXK, migration mới `2026_11_25_000002_move_warehouse_permissions_to_own_module` (đổi type cả quyền PNK đã chạy), đã migrate local — **26/11/2026: migration `..._000002_move_warehouse_permissions_to_own_module` đã xóa, nhóm/type quyền kho chỉ khai ở `PermissionsTableSeeder`** (xem phieu-nhap-kho 22p)
   - `components/setting/Permission.vue` (component dùng chung, user đã đồng ý) thêm mục "Phân hệ kho" → `filterPermission(16)`
   - Sự cố: chạy seeder làm mất 527/528 (PNK chưa có trong seeder) → đã thêm vào seeder + insert lại DB local
 - [x] 16d. (25/11) Chia Phân hệ kho thành 3 nhóm: **Nhập kho** (527) / **Xuất kho** (529–532) / **Báo cáo kho** (528) — seeder + migration ĐNXK + migration 000002 (rollback, sửa, migrate lại local). Không dùng tên "Báo cáo" vì type 3 đã có nhóm trùng tên (FE gộp nhóm theo tên)

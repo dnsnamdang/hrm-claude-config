@@ -22,8 +22,8 @@ chi tiết thật (`pages/.../_id/index.vue`) thì mã là `nuxt-link` như `lis
 
 | hrm | dns | Làm gì ở dns |
 | --- | --- | --- |
-| Khối `SystemInfoSection` (Lịch sử) cuối popup Xem, bảng `catalog_histories` | **Không có** | Popup Xem chỉ có các trường nghiệp vụ. **Không** dựng dòng `Người tạo / Ngày tạo` ở đáy body thay thế — cột Người tạo/Ngày tạo đã có ở danh sách |
-| Hành động "Lịch sử" ở menu ⋮ (`CatalogHistoryModal`) | **Không có** | Bỏ, không dựng nút chết |
+| Khối `SystemInfoSection` (Lịch sử) cuối popup Xem, bảng `catalog_histories` | **Có từ 26/11/2026** (`components/history/SystemInfoSection.vue`) | Danh mục đã ghi log vào `catalog_histories` → khối Lịch sử cuối body popup Xem: `<SystemInfoSection v-if="isView && recordId" entity-type="<type>" :entity-id="recordId" class="mt-2" />` (skill `entity-history`). **Không** dựng dòng `Người tạo / Ngày tạo` ở đáy body |
+| Hành động "Lịch sử" ở menu ⋮ (`CatalogHistoryModal`) | `EntityHistoryModal` | Danh mục đã ghi log → thêm ⋮ Lịch sử, tiêu đề chỉ tên bản ghi (skill `entity-history` §5). Chưa ghi log → bỏ, không dựng nút chết |
 | `ApiErrorHandler` + `formError` + `firstError()` tự viết | `formValidateMixin` | `validateForm` · `fieldError` · `hasFieldError` · `clearFieldError` · `resetValidation` · `applyServerErrors` + `<V2BaseError>` |
 | `$nuxt.$loading.start()` gọi trần | `$nuxt?.$loading?.start?.()` | `finish?.()` đặt trong `finally` |
 | Màn cha giữ `isShow` + `editItem`, truyền prop rồi gọi `loadItemData()` qua `ref` | Popup tự có method **`open({ id, view })`** | Một lệnh duy nhất từ màn cha, không đua prop với `$nextTick` (mục 2) |
@@ -235,7 +235,7 @@ async submit(keepOpen = false) {
   mở popup **Xem**. Cấm `<a href="javascript:void(0)">`. Bảng không có mã / có bản ghi trống mã → cột định
   danh là **Tên** (`list-page` A6).
 - Cột Hành động (`V2BaseRowActions`): **Sửa → Xóa / Khóa / Mở khóa**, **không có "Xem"** (mã đã mở Xem),
-  không có "Lịch sử" (dns chưa có nguồn). Nút không dùng được → `visible: false`.
+  "Lịch sử" cuối ⋮ khi danh mục đã ghi log (skill `entity-history`). Nút không dùng được → `visible: false`.
 - Toolbar: **Tạo mới** → `openCreate()`.
 - Đặt popup một lần, có `ref`:
 
@@ -257,7 +257,7 @@ async submit(keepOpen = false) {
 - [ ] Ô Trạng thái khoá theo đúng cờ `can_lock`/`can_unlock` của danh sách
 - [ ] Nút footer khoá bằng `:interactable="!submitting"`, lớp tải `$nuxt?.$loading` có `finish` trong `finally`
 - [ ] 422 → lỗi dưới từng ô (`applyServerErrors`), không chỉ toast
-- [ ] Không có dòng Người tạo / Ngày tạo ở đáy body, không khối Lịch sử
+- [ ] Không có dòng Người tạo / Ngày tạo ở đáy body; danh mục đã ghi log thì có khối Lịch sử cuối popup Xem
 - [ ] Danh sách: Mã là `button.v2-cell-link` mở Xem, không có hành động "Xem"
 
 Tự kiểm (chạy ở `hrm-thanhan-client`) — popup danh mục nào chưa có chế độ Xem:

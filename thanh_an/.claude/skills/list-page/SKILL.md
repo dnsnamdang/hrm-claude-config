@@ -25,7 +25,7 @@ trong bộ lọc), `modal-popup` (bộ lọc/bảng nằm trong popup).
 | `this.$safeLoadingStart()` / `$safeLoadingFinish()` | **Không có** | `this.$nuxt?.$loading?.start?.()` / `finish?.()` — `finish` đặt trong `finally` |
 | `this.$confirm()` | **Không có** | Thẻ `<BaseConfirmModal id="<id-riêng>">` (xem `button-convention` A6c) |
 | `ExportColumnRegistry` + `DynamicExport` (BE) | **Không có** | Màn tự xuất theo `fields` (mục A12) |
-| `CatalogHistoryModal` / `SystemInfoSection` / audit log | **Không có** | Không bắt buộc hành động "Lịch sử" (mục A5) |
+| `CatalogHistoryModal` / `SystemInfoSection` / audit log | **Có từ 26/11/2026**: `components/history/EntityHistoryModal.vue` + `SystemInfoSection.vue`, engine BE `EntityHistoryService` | Màn đã ghi log → ⋮ "Lịch sử" (skill `entity-history`, mục A5) |
 | `V2BaseCompanyDepartmentFilter` | **Không port** | Cần lọc Công ty/Phòng ban → khai 2 field select thường trong `filterFields` + cascade ở watcher |
 | `V2BaseFilterPanel` (panel cũ) | **Không có** | Chỉ dùng `V2BaseSmartFilterPanel` |
 | Bảng `user_column_settings` | Cấu hình cột lưu ở `column_customizations` (mỗi màn 1 cột) | Màn mới cần cột mới trong bảng đó → hỏi user trước (đang treo Q2 của `.plans/ui-v2-cung-ung`) |
@@ -222,7 +222,7 @@ getRowActions(item) {
 - **Không có** "Xem" (Mã là link vào chi tiết), "Hủy phiếu", "Không duyệt" ở danh sách. "Duyệt" nếu giữ thì là `to` sang chi tiết.
 - Không dùng được → **ẨN** (`visible: false`), không hiện rồi disable. Cờ quyền fail-closed.
 - Điều kiện `is_can_delete` / `is_can_edit` → **HỎI user** (CLAUDE.md), không tự quyết.
-- Hành động "Lịch sử": hrm bắt buộc, **dns chưa có audit log chung** → chỉ thêm khi màn đã có nguồn lịch sử (vd `HistoryApproveModal`). Không bịa nút rỗng.
+- Hành động "Lịch sử": cuối ⋮, dùng `EntityHistoryModal` khi màn đã ghi log (skill `entity-history`; đã có: PNK, ĐNXK, Kho, Kho kế toán). Màn chưa ghi log → làm theo `entity-history` trước, không bịa nút rỗng.
 - Cột Hành động khai `locked: true`, luôn cuối; không cho ẩn/kéo.
 
 ## A6. Cột định danh (Mã) + Tên

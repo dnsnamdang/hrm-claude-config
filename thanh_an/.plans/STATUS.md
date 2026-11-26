@@ -5,6 +5,15 @@
 
 ## Đang làm
 
+- **Lịch sử thay đổi — phân hệ Kho (PNK, ĐNXK, danh mục Kho, Kho kế toán; port entity-history từ hrm)** — @khoipv — Bắt đầu 26/11/2026 — Đã chốt phạm vi 4 màn, port component dùng chung, ghi đủ mọi trường + bảng con, không thêm quyền. Đang khảo sát mẫu hrm + luồng lưu dns.
+  - Plan: [.plans/lich-su-thay-doi-kho/plan.md](lich-su-thay-doi-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-26-lich-su-thay-doi-kho-design.md](../docs/superpowers/specs/2026-11-26-lich-su-thay-doi-kho-design.md)
+
+- **Phiếu xuất kho — bản thật BE + FE (theo `demo-phieu-xuat-kho.html`, nối tiếp ĐNXK thật)** — @khoipv — Bắt đầu 26/11/2026 — Đang brainstorming: chốt phạm vi + câu hỏi mở Q1–Q8 của demo.
+  - Plan: [.plans/phieu-xuat-kho/plan.md](phieu-xuat-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-26-phieu-xuat-kho-design.md](../docs/superpowers/specs/2026-11-26-phieu-xuat-kho-design.md)
+
+- **Check: Kết xuất báo giá sang Thầu/HĐ — clear Tài liệu đính kèm, Hình ảnh, Thông tin bổ sung có ảnh hưởng logic?** — @khoipv — Bắt đầu 26/11/2026 — Không ảnh hưởng: render + tạo gói thầu không dùng 3 trường; HĐ Ngoài thầu/phụ lục giá chỉ hiển thị nhầm Tài liệu đính kèm của BG ở tab "Kết quả thầu" (không lưu). `note` báo giá không có cột DB → chưa bao giờ được lưu. Không xoá file S3 (dùng chung với dự toán). User chốt clear khi kết xuất → đã sửa BE `QuotationService::render`, test local đạt, đã push `master` (API `6407dca7`). Thêm seeder `ClearQuotationAttachmentsAfterRenderSeeder` dọn dữ liệu BG đã kết xuất (test local 87 BG, đã push `master` API `798a622b`). Còn: deploy API (không migration), chạy seeder, test tay.
+  - Plan: [.plans/check-clear-tai-lieu-bao-gia-khi-ket-xuat/plan.md](check-clear-tai-lieu-bao-gia-khi-ket-xuat/plan.md)
+
 - **Phiếu đề nghị xuất kho — bản thật BE + FE (theo `demo-phieu-de-nghi-xuat-kho.html`)** — @khoipv — Bắt đầu 25/11/2026 — Code BE + FE xong, chờ user test trình duyệt. BE `Modules/Warehouse` (3 bảng, quyền "Quản lý phiếu đề nghị xuất kho", 3 cấp, test API 49/49 pass); FE `pages/warehouse/export_requests` (danh sách V2, form tạo/sửa + popup chọn HĐ Đã duyệt/Đã kết xuất còn hạn, chi tiết + Lịch sử, Thu hồi / Trả lại có lý do), menu Kho → Xuất kho. Luồng dừng ở Chờ xuất kho.
   - Plan: [.plans/phieu-de-nghi-xuat-kho/plan.md](phieu-de-nghi-xuat-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-25-phieu-de-nghi-xuat-kho-design.md](../docs/superpowers/specs/2026-11-25-phieu-de-nghi-xuat-kho-design.md)
 

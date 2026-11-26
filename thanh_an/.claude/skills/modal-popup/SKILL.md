@@ -14,7 +14,7 @@ description: Use when tạo/sửa MODAL / POPUP trên hrm-thanhan-client (dns) �
 | hrm | dns |
 | --- | --- |
 | `this.$confirm({...})` trả Promise | **Không có** — chỉ dùng thẻ `<BaseConfirmModal>` trong template (mục 3) |
-| `SystemInfoSection` (khối Lịch sử cuối popup Xem) + `CatalogHistoryModal` | **Không có** — popup Xem không bắt buộc khối Lịch sử; KHÔNG dựng lại dòng `Người tạo / Ngày tạo` ở đáy body |
+| `SystemInfoSection` (khối Lịch sử cuối popup Xem) + `CatalogHistoryModal` | **Có từ 26/11/2026** — `components/history/SystemInfoSection.vue` + `EntityHistoryModal.vue` (thay `CatalogHistoryModal`). Popup Xem có nguồn lịch sử → khối Lịch sử cuối body (skill `entity-history` §5). KHÔNG dựng dòng `Người tạo / Ngày tạo` ở đáy body |
 | `V2BaseFilterPanel` (slot `#header-actions`, `inlineSearchButtons`) | **Không có** — bộ lọc trong popup dùng `V2BaseSmartFilterPanel` + prop `in-modal` |
 | `$safeLoadingStart()` | `this.$nuxt?.$loading?.start?.()` / `finish?.()` trong `finally` |
 | `ProductSearchModal` dùng chung | dns có popup chọn hàng riêng từng phân hệ — áp nguyên tắc mục 5 khi sửa |

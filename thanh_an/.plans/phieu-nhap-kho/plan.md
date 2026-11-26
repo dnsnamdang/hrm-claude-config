@@ -224,6 +224,45 @@ Blocked: chờ quyết định 17c
 - [x] 19. (user 20/11) Bỏ cột **Tiến độ** ở màn danh sách phiếu nhập kho @khoipv
   - [x] FE `pages/warehouse/receipts/index.vue`: bỏ cột `progress` (allColumns + slot `#cell-progress`), bỏ trường xuất Excel "Tiến độ", bỏ hàm `progressPercent` / `isProgressDone` + CSS `.rc-progress` / `.rc-sub`
   - BE `WarehouseReceiptResource` vẫn trả `lines_total` / `lines_ok` (không sửa — không ảnh hưởng)
+- [x] 20. (user 26/11) Thêm **File đính kèm** cho phiếu nhập kho — dùng `V2BaseAttachmentSection` (bản port từ hrm đã có sẵn ở dns, không sửa component), upload qua endpoint chung `files/upload` (`attachments[]`), lưu mảng URL @khoipv
+  - [x] BE migration `2026_11_26_000001_add_attachments_to_warehouse_receipts` — cột JSON `attachments` nullable (không khóa ngoại)
+  - [x] BE entity cast `attachments` → array; `SaveWarehouseReceiptRequest` rule `attachments` nullable array, mỗi phần tử string ≤ 1000
+  - [x] BE `WarehouseReceiptService`: prepare trả `[]`, show trả `attachments`, save ghi `attachments` (bỏ phần tử rỗng, bỏ trùng)
+  - [x] FE `ReceiptForm.vue`: khối "File đính kèm" dưới khối thông tin chung — sửa được khi `editable`, màn xem chỉ hiện khi có file; `form.attachments` + đánh dấu dirty; `buildPayload` gửi `attachments`
+  - [x] Kiểm cú pháp (php -l, vuecheck) + chạy migration local — OK; thử BE trong transaction rollback: lọc rỗng/trùng đúng, mảng rỗng lưu null, cast array đọc lại đúng
+  - Mặc định đã chọn: không bắt buộc; định dạng pdf/png/jpg/jpeg/doc/docx/xls/xlsx, ≤ 20MB/file (mặc định component); phiếu Đã nhập kho chỉ xem, không thêm/xóa file
+- [x] 21. (user 26/11) Bổ sung skill `form-validate`: quy tắc thêm File đính kèm → dùng `V2BaseAttachmentSection` (FE + BE mẫu theo PNK, khác biệt bản dns so với hrm, checklist, description để skill tự kích hoạt) @khoipv
+- [ ] 22. (user hỏi 26/11) Thủ kho có lúc chỉ đính kèm file rồi chuyển bộ phận khác nhập Số lô / NSX / HSD / Seri → nên sửa theo hướng nào? @khoipv
+  - Hiện trạng: Duyệt = ghi sổ tồn + seri + thẻ kho ngay, phiếu khóa, không hủy duyệt; lô/seri không bắt buộc → duyệt khi chưa có lô thì tồn ghi `lot_no = ''` vĩnh viễn, không bổ sung được. Còn giữ nháp chờ bộ phận khác thì: chỉ thủ kho sửa được, tồn chưa lên, PGH kẹt ở 7.
+  - Đã đề xuất 3 hướng (A: giữ nháp + giao người bổ sung; B: duyệt SL trước, bổ sung lô/seri sau duyệt; C: thêm bước "Chờ bổ sung thông tin" trước khi duyệt). Khuyên dùng C. Chờ user chốt hướng + Q1–Q4
+  - (user chốt 26/11) Nghiệp vụ: NV kho tự nhập + duyệt, HOẶC gửi sang bộ phận khác nhập + duyệt. **Ai nhập thì người đó duyệt luôn** (không trả về thủ kho duyệt) → theo hướng C biến thể "chuyển người xử lý". Đang hỏi tiếp: gửi cho ai (người/nhóm), người nhận sửa được gì, trả lại/thu hồi, bắt buộc file + hiển thị trạng thái
+  - (user chốt 26/11) Gửi cho **cả bộ phận/nhóm** (ai trong nhóm cũng nhận làm) · người nhận **sửa toàn bộ phiếu** · NV kho **được thu hồi**, người nhận **được trả lại** (kèm lý do); không chuyển tiếp · Gửi **bắt buộc ≥ 1 file đính kèm** · **trạng thái riêng** "Chờ nhập thông tin" + cột/lọc Người xử lý. Đang hỏi: "bộ phận" xác định theo gì (kế toán kho của kho nhập / phòng ban / quyền mới)
+  - (user chốt 26/11) Bộ phận nhận = người có **quyền mới "Nhập thông tin phiếu nhập kho"**, áp dụng mọi kho
+  - Đề xuất thiết kế (chờ user duyệt): status mới 4 "Chờ nhập thông tin"; cột `sent_by/sent_at/send_note`, `returned_*`; bảng `warehouse_receipt_logs` (Lịch sử); thao tác Gửi (status 2→4, ≥1 file, báo người có quyền) / Thu hồi (NV kho, 4→2) / Trả lại (người nhận, lý do bắt buộc, 4→2, báo người gửi) / Lưu + Duyệt ở 4 (người có quyền); chặn ghi đè đồng thời bằng `updated_at`; popup Duyệt cảnh báo dòng chưa có lô/HSD. Sau khi duyệt → bổ sung spec §3/§5/§7/§12 rồi mới code
+  - (user duyệt 26/11 "đồng ý, cập nhật spec rồi code luôn") — Gửi dùng chung API lưu (`action = send`, dùng được từ màn Tạo mới); mở quyền chỉ bỏ kiểm "ai", không bỏ kiểm trạng thái; thông báo Gửi chỉ tới người có quyền mới
+  - [x] 22a. Spec §2 #5, §3, §5, §7 + §14 mới; design.md thêm quyết định
+  - [x] 22b. BE migration `2026_11_26_000002`: cột sent_*/returned_* + bảng `warehouse_receipt_logs` + quyền `Nhập thông tin phiếu nhập kho`
+  - [x] 22c. BE entity: `STATUS_WAITING_INFO = 4`, `WarehouseReceiptLog`, quan hệ logs / sender / returner
+  - [x] 22d. BE service: `canInput`, `permissionFlags` mới, phạm vi list + lọc `handler`, `save()` nhận status 4 + `action=send` + `version`, `recall`, `returnBack`, log, thông báo, `detail` trả logs / sent / returned / version
+  - [x] 22e. BE request / controller / routes `recall`, `return`; resource `handler_name`
+  - [x] 22f. BE test trong transaction rollback (gửi → sửa → duyệt; thu hồi; trả lại; version lệch)
+  - [x] 22g. FE constants + ReceiptForm: nút Gửi nhập thông tin / Thu hồi / Trả lại, banner, Lịch sử, cảnh báo lô/HSD ở popup Duyệt, payload `version`
+  - [x] 22h. FE danh sách: cột + lọc Người xử lý
+  - [x] 22i. Compile FE + php -l
+  - [x] 22j. (user 26/11 "làm gửi thông báo đầy đủ") Thông báo đủ 4 sự kiện: Gửi → bộ phận nhập; Thu hồi → bộ phận nhập + người đã sửa sau lần gửi; Trả lại → người gửi + người lập; Duyệt → như §9 + người gửi + người lập. Spec §14.4 cập nhật
+  - [x] 22k. Vá lỗ hổng cũ của task 0a: BE `list()` trước nay bỏ qua các ô lọc `code`, `invoice_no`, `approved_by`, `created_from/to`, `approved_from/to`; `filter-options` thiếu `keepers` → đã bổ sung
+  - [x] 22l. Chạy migration `2026_11_26_000002` trên DB local `thanhan_stag_07052026`
+  - [x] 22n. Test trình duyệt tự động (@khoipv nhờ, 26/11/2026): `e2e/scripts/pnk-gui-nhap-thong-tin.js`, 2 phiên thủ kho (15) + người nhập (13, gán quyền tạm) trên điểm 505 → **28/28 OK**: chặn Gửi khi chưa có file · Gửi kèm ghi chú · danh sách status 4 + cột Người xử lý · banner + Lịch sử · Thu hồi · Trả lại bắt buộc lý do + banner lý do · gửi lại xoá lý do cũ · người nhập Lưu/Duyệt, popup cảnh báo thiếu lô/HSD · approved_by = người nhập · đủ 4 thông báo đúng người nhận. Script tự dọn dữ liệu. Ảnh: `e2e/screenshots/pnk-gui-nhap-thong-tin/`
+    - Ghi nhận: ở khổ 1440px cột Trạng thái của danh sách bị đẩy ra vùng cuộn ngang (bảng rộng 1680px / khung 1366px) — chờ user quyết có thu hẹp cột không
+    - Chưa test: 2 người mở cùng lúc (version lệch) trên UI — đã test ở BE; thông báo trên chuông header chưa mở bằng UI (kiểm qua bảng `notifications`)
+  - [x] 22o. Chuyển quyền 533 "Nhập thông tin phiếu nhập kho" sang `Modules/Timesheet/Database/Seeders/PermissionsTableSeeder.php` (id cố định 533, group Nhập kho, type 16); bỏ phần insert/xóa quyền khỏi migration `2026_11_26_000002_add_send_for_input_to_warehouse_receipts.php` (quy ước: quyền chỉ sửa ở seeder). DB stag khớp seeder 223/223. Cập nhật skill `feature-scaffolder` (mục Thêm quyền) + checklist `code-reviewer`. Môi trường khác: `php artisan db:seed --class="Modules\Timesheet\Database\Seeders\PermissionsTableSeeder"`
+  - [x] 22p. Gỡ phần quyền khỏi migration cũ (quyền 526–532 đã có sẵn trong seeder): xóa hẳn 2 file chỉ chứa thao tác quyền `Timesheet/.../2026_11_11_100001_add_manage_vehicle_permission.php` + `Warehouse/.../2026_11_25_000002_move_warehouse_permissions_to_own_module.php`; bỏ đoạn insert/xóa quyền trong `2026_11_19_000001`, `2026_11_20_000001`, `2026_11_25_000001` (giữ nguyên tạo bảng/cột/bù dữ liệu). Bỏ tham chiếu migration trong comment seeder. `php -l` OK, soát `Modules/*/Database/Migrations` không còn migration nào chèn quyền
+  - [x] 22q. Điều tra "Gửi PNK-2026-0005 (#43, kho 24) không nhận thông báo": người gửi = emp 13 (DNS Admin). Quyền 533 chỉ gán qua vai trò Admin (role 3) → người có quyền duy nhất cũng là emp 13. `notifyReceipt()` loại người đang thao tác → không còn người nhận, log `[warehouse-receipt] không có người nhận thông báo` 14:52:53. Không phải lỗi gán quyền — tự gửi cho chính mình. User chốt: GIỮ luật không báo người thao tác, tự test bằng tài khoản khác
+  - [x] 22r. Bỏ banner "Đang chờ bộ phận nhập thông tin lô / seri" (người gửi, giờ, hướng dẫn, ghi chú) ở `ReceiptForm.vue` — người gửi + ghi chú vẫn xem ở Lịch sử thao tác; giữ banner lý do bị trả lại. Spec dòng 276 + script e2e bước 4 cập nhật theo
+  - [x] 22s. Bỏ banner "Bộ phận nhập thông tin đã trả lại phiếu" (người trả lại, giờ, lý do) ở `ReceiptForm.vue` + dọn CSS `.dn-banner__note/--warn/--info/--ok` không còn dùng — lý do xem ở Lịch sử thao tác. Spec dòng 277 + script e2e bước 7 (kiểm không banner, lý do có trong `.rc-timeline`) cập nhật theo
+  - [x] 22t. Duyệt nhập kho xong → về danh sách `/warehouse/receipts` (không ở lại màn chi tiết) — `ReceiptForm.vue` `save()`; e2e `phieu-nhap-kho.spec.js` test 15/16 đổi chờ URL danh sách (user 26/11/2026)
+  - [x] 22u. User hỏi cột "Người xử lý" ở danh sách PNK rỗng: kiểm DB stag — cả 5 phiếu đều status 3 (Đã nhập kho), BE `handlerName()` trả rỗng cho status 3 đúng spec §14 (dòng 286). Không phải lỗi dữ liệu. User chốt: **tạm bỏ cột** khỏi bảng + file xuất Excel (`pages/warehouse/receipts/index.vue`); BE vẫn trả `handler_name`, giữ ô lọc Người xử lý — muốn bật lại chỉ cần thêm lại `col('handler_name', …)`
+  - [ ] 22m. User test tay: thủ kho đính file → Gửi → NV có quyền nhận thông báo, sửa + Duyệt; thử Thu hồi / Trả lại / 2 người mở cùng lúc. Cần gán quyền "Nhập thông tin phiếu nhập kho" cho vai trò bộ phận nhập
 - [ ] 18k. Test tay trên trình duyệt (user tự test): hàng chờ → Tạo PNK → nhập chi tiết / seri / import Excel → Lưu nháp → Duyệt → kiểm PGH 7→5 + badge PointCard + in 01-VT
 
 ### Checkpoint — 19/11/2026 12:09
@@ -232,3 +271,20 @@ Vừa hoàn thành: 18g–18j — FE PNK bỏ kiểu quản lý, hàng chờ + m
 Bước tiếp theo: user test tay luồng 18k trên trình duyệt; lỗi phát sinh → sửa theo luật §8 spec
 Blocked:
 
+### Checkpoint — 26/11/2026
+Vừa hoàn thành: 20 — File đính kèm PNK (BE cột `attachments` + validate + lưu/trả; FE khối `V2BaseAttachmentSection` ở `ReceiptForm.vue`)
+Đang làm dở: không
+Bước tiếp theo: user test tay (tạo / sửa nháp thêm-đổi-xóa file → Lưu nháp → mở lại; duyệt xong chỉ xem/tải); môi trường khác chạy `php artisan module:migrate Warehouse`
+Blocked:
+
+### Checkpoint — 26/11/2026 (Gửi nhập thông tin)
+Vừa hoàn thành: 22b–22l — BE migration / entity / service / controller / routes / request + thông báo 4 sự kiện; FE ReceiptForm (Gửi / Thu hồi / Trả lại, banner, Lịch sử, cảnh báo thiếu lô/HSD khi duyệt, gửi `version`) + danh sách cột / lọc Người xử lý; test BE rollback pass toàn bộ
+Đang làm dở: không
+Bước tiếp theo: user test tay 22m; môi trường khác chạy `php artisan module:migrate Warehouse` rồi gán quyền cho vai trò
+Blocked:
+
+### Checkpoint — 26/11/2026 (test trình duyệt)
+Vừa hoàn thành: 22n — chạy Playwright 2 lần (ẩn + hiện cửa sổ `HEADED=1`, chậm `SLOWMO` mặc định 700ms, giữ cửa sổ 8s cuối) → 28/28 OK cả 2 lần, dữ liệu đã dọn
+Đang làm dở: không
+Bước tiếp theo: user test tay phần còn lại của 22m (2 người mở cùng lúc); quyết có thu hẹp cột danh sách ở khổ 1440px không
+Blocked:

@@ -24,7 +24,7 @@ Màn cũ đang chạy ổn thì chỉ sửa theo Phần B, không tự "nâng" s
 | `this.$safeLoadingStart()` / `$safeLoadingFinish()` (plugin `safe-loading.js`) | **CHƯA có** → dùng `this.$nuxt?.$loading?.start?.()` / `finish?.()` (xem A6b) |
 | `await this.$confirm({...})` (plugin `confirm-dialog.js`) | **CHƯA có** → đặt thẻ `<BaseConfirmModal :id="...">` trong template (xem A6c) |
 | Remixicon bản mới | **Remixicon 2.4.0** — icon ra đời sau bản 2.4 sẽ hiện **ô trống**; icon lạ thì grep `.ri-<tên>:before` trong `assets/scss/custom/plugins/icons/_remixicon.scss` trước khi dùng (mọi icon trong bảng A3 đã kiểm có đủ) |
-| Danh mục có `CatalogHistoryModal` / `catalog_histories` | **Không có** → nút "Lịch sử" chỉ thêm khi màn đã có nguồn lịch sử (log duyệt, `HistoryApproveModal`…) — không có thì bỏ, đừng dựng nút chết |
+| Danh mục có `CatalogHistoryModal` / `catalog_histories` | **Có từ 26/11/2026**: bảng `catalog_histories` + popup `components/history/EntityHistoryModal.vue` (skill `entity-history`). Nút "Lịch sử" chỉ thêm khi màn đã ghi log (đã làm: PNK, ĐNXK, Kho, Kho kế toán) — màn chưa ghi log thì làm theo `entity-history` trước, đừng dựng nút chết |
 
 ---
 

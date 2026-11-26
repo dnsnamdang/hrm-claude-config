@@ -150,6 +150,15 @@ Chỗ dễ sai cần soi kỹ khi review:
   - Ruling: nới cột "Chi tiết" khi có dòng mở thay vì cho dòng chi tiết trải hết bề ngang bảng — cột thông tin hàng đang gộp dọc (rowspan) phủ cả dòng chi tiết, trải ngang phải bỏ gộp; demo cũng giãn đúng nhóm cột kho — nếu sai: đổi rowspan dừng trước dòng chi tiết.
   - Ruling: không sửa `V2BaseFormTable`/`V2BaseDataTable` (dùng chung) — chỉ tính bề rộng ở màn — nếu sai: thêm prop tắt cuộn trong cho V2BaseFormTable (phải hỏi).
   - Ruling: Số seri vẫn để cột cuối của bảng lô (demo chế độ lô+seri gộp rowspan theo lô; dữ liệu BE đã gom seri theo dòng tồn nên giữ dạng chip) — nếu sai: tách 1 dòng / seri như demo.
+- [x] 26/11/2026 — User hỏi toast đỏ "Chỉ mở chi tiết 20 dòng kho mỗi lần… 16 dòng còn lại" (Screenshot_69): đúng thiết kế — trang có 36 dòng kho (mã hàng × kho), `EXPAND_ALL_LIMIT = 20` (stockReport.js:22) vì mỗi dòng mở = 1 request `/lots`; `toggleExpandAll` (index.vue:598) mở 20, báo phần dư. Chỉ giải thích, chưa sửa — chờ user chọn (đổi toast sang info / nâng ngưỡng / gộp 1 request lots hàng loạt).
+
+### Mở tất cả chi tiết = 1 request, bỏ giới hạn 20 dòng 26/11/2026 (@khoipv) — user chọn phương án 3
+- [x] BE: `GET /warehouse/stock-report/lots-batch?product_ids=1,2,…&<bộ lọc>` → `{ data: { "pid|wid": [lô…] } }`; phạm vi = `filtered($r)` (có warehouse_ids + hold, khớp `warehouseBreakdown`) ∩ product_ids; chặn ≤ 2000 mã (`BATCH_PRODUCTS_CAP`) + `ROWS_CAP` dòng lô (422); `lotRows()` thêm cờ `$withIds` để gom theo cặp
+- [x] FE `stockReport.js`: bỏ `EXPAND_ALL_LIMIT`, `pickExpandAll` trả mảng key mọi dòng kho chưa mở
+- [x] FE `index.vue`: `toggleExpandAll` mở hết + gọi 1 lần `fetchLotsBatch(keys)` (dòng đã có cache lô thì bỏ qua), bỏ toast đỏ; lỗi → gán lỗi từng dòng (nút "Thử lại" cũ vẫn gọi `/lots` lẻ)
+- [x] E2E spec test 4: bỏ `Math.min(…, 20)`, chờ response `/lots-batch` — đã sửa, CHƯA chạy (chỉ chạy khi user bảo)
+- [x] Kiểm tra: php -l OK, route có; API local (DB thanhan_stag_07052026, JWT TpEmployee đầu tiên): trang 32 mã / 52 dòng kho → `/lots-batch` 52 key, khớp 100% với 52 lần `/lots` lẻ (2,8s vs 133s local); lọc 1 kho chỉ trả key kho đó; hold=common không lẫn lô giữ KH; product_ids rỗng/sai → 422; mã không tồn → `{}`. Node test `pickExpandAll` OK; biên dịch template + parse script `index.vue` OK
+- [x] Cập nhật spec §5.3b + mục UX "Mở tất cả", design.md danh sách API
 
 ### Test E2E Playwright 20/11/2026 (@khoipv) — user yêu cầu
 - [x] Viết `e2e/tests/warehouse/bao-cao-ton-kho-theo-kho.spec.js` (chỉ đọc, không ghi DB; số liệu so với API thật): tải màn + khối tổng hợp khớp `kpi`, tooltip phạm vi, mở chi tiết 1 dòng (bảng lô đủ 7 cột, không cuộn ngang bên trong, cột Chi tiết nới/thu), Mở tất cả / Thu gọn chi tiết, drill Lô cận date, tìm nhanh + Enter, Xuất Excel, In

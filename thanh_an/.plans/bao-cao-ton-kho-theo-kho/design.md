@@ -25,7 +25,7 @@ Xem tồn **hiện tại** từng mã hàng trên từng kho → bung lô / HSD 
 | Cấu hình cột | Cột mới `column_customizations.warehouse_stock_report` | call — chờ user |
 
 ## API
-`/v1/warehouse/stock-report`: `GET /` (phân trang theo mã + KPI) · `GET /lots` (chi tiết khi bung) · `GET /rows` (Excel / in) · `GET /filter-options`.
+`/v1/warehouse/stock-report`: `GET /` (phân trang theo mã + KPI) · `GET /lots` (chi tiết khi bung) · `GET /lots-batch` (Mở tất cả chi tiết — 1 request cho cả trang) · `GET /rows` (Excel / in) · `GET /filter-options`.
 
 ## FE
 `pages/warehouse/reports/stock-by-warehouse/index.vue` (V2) · menu Kho → "Báo cáo" → "Tồn kho theo kho".
