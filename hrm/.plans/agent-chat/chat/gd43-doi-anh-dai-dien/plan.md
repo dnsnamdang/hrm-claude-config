@@ -103,6 +103,20 @@
   ảnh); tab Cá nhân đổi ảnh tròn (POST me/avatar 200) rồi Dùng lại ảnh hồ sơ (DELETE 200). Thành viên thường (monnv.kd2, id 50,
   đã đặt mật khẩu local Test@123): BE `abilities.can_manage=false` + POST image ⇒ 403 — app ẩn máy ảnh theo đúng cờ này (chưa
   đăng nhập lại trên app để chụp).
+- [x] 26/11 — Ảnh mờ sau khi đổi (user báo trên web): app nâng cỡ xuất tròn 256→512, thẻ 360×420→600×700, `FilterQuality.high`
+  khi vẽ canvas + ô Kết quả, JPEG q92, image_picker không ép nhỏ (trần 4000). Analyze chat sạch. ĐÃ commit + push `origin/develop`
+  `33cec94` (GĐ43 gốc `3b9d77f`).
+- [x] 26/11 — Xem ảnh toàn màn hình (user: "web đã preview được avatar mà app chưa"): `openChatAvatarViewer` (chat_image_flow.dart) dùng
+  `ChatImageViewerPage` có sẵn (phóng / xoay / tải) — gắn ở Hồ sơ của tôi (tab Cá nhân), sheet hồ sơ người khác (`profile_sheet.dart`),
+  Thông tin nhóm (ảnh nhóm 72); chỉ mở khi URL http, chữ tắt không mở; huy hiệu máy ảnh là vùng chạm riêng vẫn mở sheet đổi ảnh.
+- [x] 26/11 — Ảnh người ở phần Công việc (BE trả ảnh chat ưu tiên): `WorkAvatar` nhận `image` (CachedNetworkImage, lỗi ⇒ chữ tắt,
+  "Bạn" giữ màu accent); `WorkTask.assigneeImage / approverImage / creatorImage` (object `.image` hoặc cột `*_image`); dòng việc
+  danh sách + Việc của nhóm (`groupTaskToWorkTask` giữ `assignee.image / creator.image / approver.image`), đầu nhóm gom theo Người làm
+  (`groups[].employee.image` ⇒ `GroupTaskEmployee`, `WorkTaskGroupSection.leading`), chi tiết nhiệm vụ (Người làm / Người giao / Người
+  duyệt KQ, lịch sử `actor_image` nếu BE có). Màn Vấn đề app chỉ hiện chữ (WorkInfoRow / WorkMeta), không có avatar ⇒ không sửa.
+  Test simulator iPhone 15: Việc của nhóm 71 hiện ảnh tròn 2 người làm (API `workspaces/71/tasks` có `assignee.image`), sheet hồ sơ
+  chạm ảnh ⇒ viewer 1/1 mở đúng. `dart analyze lib/ui/chat lib/ui/task lib/ui/work`: 0 lỗi (1 info có sẵn ở task_list_page).
+  ĐÃ commit + push `origin/develop` `3d16c7c`.
 - [ ] Chưa làm: bấm máy ảnh ở hồ sơ của mình từ sheet hồ sơ (CH-16) — chỉ có ở tab Cá nhân; Android chưa chạy thử; chưa commit.
 - Ghi chú: `make gen` không cần (không route / DI mới — màn Căn ảnh đẩy bằng `MaterialPageRoute`). Nhánh `chat-doi-anh` đang chứa thêm
   file sửa dở của phiên khác (`common_view/scaled_to_width.dart`, `internal_notification_detail/*`) — không thuộc GĐ43.
@@ -126,3 +140,43 @@
 - [x] 25/11 — ĐÃ DEPLOY PROD TPE 2 lượt `~/build_tpe.sh`: lượt 1 (log `~/build_tpe_20261125.log`) api `ce975a34f` + client `f6b7c01f0`,
   Migrated 2026_11_29_000001 + 000002, route cache mới 17:43, exit 0; lượt 2 (`_2.log`) client `fbeada980`, Nothing to migrate, exit 0.
   Kiểm: site 200, `POST chat/me/avatar` / `GET chat/image-source` không token ⇒ 401 (route có). App đã lên origin/develop `3b9d77f`, chưa build.
+
+## 26/11 — Phản hồi user sau khi dùng prod
+- [x] 26/11 — "Đổi avatar xong ảnh bị mờ": nguyên nhân cỡ xuất 256×256 / 360×420 + `drawImage` thu thẳng từ ảnh lớn (lấy mẫu thưa).
+  Web: xuất 512×512 / 600×700, `imageSmoothingQuality=high`, thu nhỏ theo từng bước ½ khi vùng gốc > 2× cỡ xuất, JPEG 0.92; nhắc
+  (chữ cam, không đỏ) khi vùng chọn < 60% cỡ xuất. Kiểm: blob 512×512; phóng 4× ⇒ nhắc hiện. App (agent): commit `33cec94` develop —
+  512/600×700, FilterQuality.high, JPEG 92, image_picker maxWidth 4000.
+- [x] 26/11 — "Chưa preview xem được ảnh": bấm ảnh ⇒ `ChatImageViewer` (popup hồ sơ, đầu nhóm, thẻ dòng Ảnh nhóm); đổi ảnh chuyển sang
+  HUY HIỆU máy ảnh góc dưới phải (hồ sơ của mình 28px, đầu nhóm 20px) thay lớp phủ rê chuột.
+- [x] 26/11 — "Menu nên là 'Cá nhân', bấm hiện hồ sơ trước": mục ⋮ đổi thành "Hồ sơ cá nhân" (ri-user-3-line), mở popup hồ sơ của mình,
+  đổi ảnh bằng huy hiệu trong popup.
+- [x] 26/11 — e2e `chat-avatar.spec.ts` cập nhật theo lối vào mới (huy hiệu, xem lớn kiểm `chat-image-tools` vì vỏ `.civ` không có
+  kích thước) ⇒ 6/6 pass. Commit client `9a3aaa5b8` + merge origin (`39beaea4a` của đồng nghiệp: HĐ bán HRM, đồng nhất BG↔HĐ) =
+  `73bf4bae7` → push gop_db. ĐÃ DEPLOY PROD lượt 3 26/11 (`~/build_tpe_20261126.log`): client `73bf4bae7`, exit 0, site 200.
+
+## Phase 5 — Ảnh chat ở ngoài chat (user 26/11: "thẻ nhiệm vụ, vấn đề, bình luận — sửa trước")
+- [x] 26/11 — BE helper dùng chung `EmployeeProfiles::imagesOf(ids)` / `imageOf(id)`: COALESCE(chat_profiles.image, employee_infos.image),
+  1 query cả lô + cache theo request (bẫy: `pluck(DB::raw(COALESCE…))` Laravel lấy chữ sau dấu chấm làm tên cột ⇒ "image)" ⇒ phải select alias).
+  KHÔNG dùng cho màn nhân sự / chứng từ (giữ ảnh thẻ hồ sơ).
+- [x] 26/11 — Bình luận: 4 controller (Task / Issue / SolutionReviewProfile / SolutionModuleReviewProfile) `commentator.avatar` = ảnh chat ưu
+  tiên; trait `CommentModeration::commentIndex` + 2 controller Solution nạp lô `authorIds($roots)` (gốc + trả lời) trước khi format.
+- [x] 26/11 — Nhiệm vụ: `DetailTaskResource` thêm `image` cho `assignee` / `approver` / `watchers[]`. Vấn đề: `DetailIssueResource` thêm
+  `assignee_image` / `creator_image` / `approver_image` / `detected_by_image` (1 query).
+- [x] 26/11 — Web: component mới `components/assign/task/panel/TaskPersonAvatar.vue` (22px: có ảnh ⇒ ảnh, không ⇒ chữ tắt + màu như cũ)
+  thay 8 chỗ `<i class="tkp-av">` ở TaskDetailTab (người làm, người duyệt, người theo dõi), TaskResultTab (người gửi), IssueDetailTab
+  (phụ trách, người báo, người duyệt), IssueResultTab (người báo xong). Việc con trong panel (subRows) vẫn chữ tắt (TaskResource gọn chưa có ảnh).
+- [x] 26/11 — Kiểm curl :8003: tasks/1944 assignee.image, issues/522 4 trường *_image, comments 2 loại có avatar; đặt ảnh chat cho admin ⇒
+  avatar bình luận đổi theo ngay, xoá ⇒ về ảnh hồ sơ. Panel web: ghi dưới.
+- [x] 26/11 — Panel web (Playwright :3002): nhiệm vụ 1944 người làm / người duyệt hiện ảnh; tab Bình luận 3 avatar ảnh; vấn đề 522 phụ trách /
+  người báo / người duyệt / người báo xong hiện ảnh đúng người. Console 0 lỗi. Chưa commit / deploy — chờ user.
+- [x] 26/11 — User: "ảnh nào hiện trên không gian làm việc (nhóm) cũng phải là avatar mới" + "thử tab nhiệm vụ trong nhóm": tab Thành viên
+  đã đúng sẵn (EmployeeProfiles). Tab Nhiệm vụ / Vấn đề trong nhóm trước chỉ chữ tắt ⇒ BE `WorkspaceTaskItemResource` /
+  `WorkspaceIssueItemResource::person()` thêm `image`; `WorkspaceTaskListService` / `WorkspaceIssueListService` gắn `employee.image` cho
+  đầu nhóm "theo người làm / người xử lý" (1 query). Web: `TaskGroupRow` / `IssueGroupRow` (dòng) + `TaskGroupBlock` / `IssueGroupBlock`
+  (đầu nhóm) dùng `TaskPersonAvatar`. Tạo 2 việc thử `[TEST-GD43] Việc thử avatar 13/50` trong nhóm 71 (id 3504, 3505) để có dữ liệu.
+  Kiểm Playwright: thành viên, dòng + đầu nhóm nhiệm vụ, dòng + đầu nhóm vấn đề đều ảnh chat của admin / ảnh hồ sơ của Mởn.
+- [x] 26/11 — e2e `e2e/tests/chat/chat-avatar-outside.spec.ts` (4 ca: chưa đặt ảnh ⇒ ảnh hồ sơ ở panel + bình luận; đặt ảnh ⇒ panel nhiệm vụ,
+  bình luận, vấn đề 4 trường, tab nhóm 71 thành viên / nhiệm vụ theo người làm / vấn đề; dùng lại ảnh hồ sơ ⇒ về ảnh hồ sơ); helper PNG tách
+  ra `tests/chat/helpers.ts` dùng chung với `chat-avatar.spec.ts`.
+- [x] 26/11 — Phase 5 ĐÃ ĐẨY + DEPLOY PROD: api `6c3a64a36` · client `0367d036c` → gop_db → `~/build_tpe.sh` (log `~/build_tpe_20261126_2.log`)
+  exit 0, Nothing to migrate, site 200. App: agent đang làm xem ảnh lớn + ảnh ở Việc của nhóm (dòng app còn chữ tắt — user 26/11).

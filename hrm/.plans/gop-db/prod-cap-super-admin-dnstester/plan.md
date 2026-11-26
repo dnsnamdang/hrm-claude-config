@@ -1,0 +1,7 @@
+# Cấp Super Admin mọi công ty đang hoạt động cho tài khoản test dnstester@gmail.com trên PROD — @cuong61n
+
+- [x] 26/11/2026 — Cấp vai trò Super Admin ở 7 công ty đang hoạt động (TPE, TPHP, TPV, TPSG, DTTDETEK, EG, EP) cho `dnstester@gmail.com` (employees.id 1441, employee_infos.id 1876) trên DB prod `hrm_erp_gop`.
+  - Nghiệp vụ: tài khoản dùng để test toàn hệ thống, cần vào được mọi công ty với đủ quyền. Trước đó chỉ làm việc ở TPE/TPV/TPSG/EG và là Super Admin ở TPE/TPV/TPSG.
+  - Kỹ thuật (làm bằng SQL trực tiếp, cùng khuôn `EmployeeRoleService::save()` + `Employee::grantRoles()`): thêm `company_employees` cho công ty 2, 8, 10; thêm `employee_has_roles` (model_type `App\Employee`) với `TPHP_Super Admin` 100312, `DTTDETEK_Super Admin` 100313, `EG_Super Admin` 100125; công ty EP (id 10) chưa có vai trò Super Admin nào → tạo mới vai trò **`EP_Super Admin` id 100467** (base_name `Super Admin`, guard `api`, company_id 10) chép nguyên 940 dòng `role_has_permissions` từ `TPE_Super Admin` 100002 rồi gán. Xoá cache `spatie.permission.cache` trên `/var/www/tpe/hrm-api` (site duy nhất dùng DB `hrm_erp_gop`). Không ghi `employee_permission_history` (thao tác tay, không qua màn Quản lý vai trò nhân viên).
+  - Đã kiểm: đăng nhập API prod → `company_roles` ra đủ 7 công ty; gọi `update-company-role` lần lượt sang 10/2/8/9 rồi `user-profile` → mỗi công ty trả 839–841 quyền, roles có đủ 7 vai trò Super Admin; đã trả `company_role` về TPE (1) như cũ.
+  - Trạng thái: **đã làm trên prod 26/11/2026**, không có code thay đổi.

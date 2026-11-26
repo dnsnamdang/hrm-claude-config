@@ -1,0 +1,22 @@
+# HRM issue #44 (ISS-202611-0044) Loại nghỉ ETEK POWER mất "Nhóm" + tính lại phép NV nghỉ thai sản — @cuong61n
+
+Nguồn: https://hrm.eteksofts.com/assign/issues?open_issue=44 (người tạo Nguyễn Thị Thu Huyền QTTT, giao @cuong61n, hạn 25/11/2026).
+Yêu cầu: (1) cập nhật lại Nhóm của loại nghỉ công ty EP (id 10) theo file `EP_DS cần cập nhật nhóm nghỉ.xlsx`;
+(2) tính lại phép cho Lê Thị Thanh Huyền (employee_infos 1841) theo đơn nghỉ thai sản `attendances` 14833 (01/05–31/10/2026, loại 65).
+
+## Điều tra 26/11/2026 (PROD hrm_erp_gop + DB gốc hrm_power, chỉ đọc)
+
+- [x] 26/11 Hiện trạng EP: 5 loại mặc định `leave_types` 65 Nghỉ thai sản · 66 Nghỉ kết hôn · 67 Nghỉ phép · 68 Nghỉ ma chay · 69 Nghỉ không lương đều `group_id = 0` (FE `lt_groups` không có id 0 → cột Nhóm trống = ảnh prnt.sc trong issue). 3 loại EP tự thêm (70 CKH, 72 Nghỉ bù, 73 Nam nghỉ vợ sinh) chị Lưu Thu Hiền (1435) đã sửa tay 21/11 16:10 — `leave_type_history` ghi giá trị CŨ là 21 / 22 / 19.
+- [x] 26/11 Nguyên nhân A (không phải lỗi di trú): DB gốc `hrm_power.leave_types` 5 loại mặc định cũng `group_id = 0` từ trước 27/10/2026 (history hrm_power ngày 27/10 ghi old = 0). ETEK GREEN (cty 9) cũng y hệt (58–62 = 0, 63–64 = 16). Trên TPE chỉ "Nghỉ phép" được phép group 0 vì `is_nghi_phep = 1` (rule `required_unless:is_nghi_phep,1`); EP/EG cả Nghỉ phép cũng `is_nghi_phep = 0`.
+- [x] 26/11 Nguyên nhân B (BUG di trú): `config/company_migration.php` khai `leave_types.group_id => OWNED:groups` nên 1/3/4 của hrm_power bị đổi thành 19/21/22 theo `migration_id_map` (groups 1→19, 3→21, 4→22). `group_id` là hằng `LeaveType::LT_GROUP` (1 thai sản · 2 không lương · 3 BHXH · 4 chế độ hưởng lương), không phải FK sang bảng Khối.
+- [x] 26/11 Hệ quả với phép năm: `EmployeeAttendanceService::calcUsableLeaveDays` nhận diện tháng thai sản qua `leave_type.group_id = NGHI_THAI_SAN`; group 0 → đơn 14833 không được coi là thai sản → `employee_attendances` 2884 (năm 2026) tháng 5–10 = 0 dù EP cấu hình "Tính phép cho thời gian nghỉ thai sản = tất cả thời gian" (`additional_for_maternity_time_type = 1`). Hiện: 1/1/1/1/0/0/0/0/0/0/1 · usable 6 (4 + T11 + 1 ứng) · đã dùng 6 (2 phép + 4 cắt) · còn 0. Dự kiến sau sửa: T5–T10 = 1 · usable 12 (11 + 1 ứng, `allow_to_advance_leave_max = 2`, còn 1 tháng) · còn 6. `TimesheetSummaryService` cũng dùng group này để không tính công ngày lễ cho người đang nghỉ thai sản.
+- [x] 26/11 Cách tính lại: cron PROD tpe `0 12 * * * php artisan update:attendance` chạy `updateDataAll` cho TOÀN BỘ nhân viên mỗi ngày (giữ `remaining_last_year` cho cty 9/10 theo `leave_recompute_skip`) → chỉ cần sửa `group_id` xong là 12:00 hôm sau tự tính lại; muốn có ngay thì chạy tay lệnh đó trên hrm-prod (`/var/www/tpe/hrm-api`).
+
+## Sửa
+
+- [x] 26/11 Code (local `gop_db-main`, CHƯA push): `config/company_migration.php` `leave_types.group_id` → `'KEEP'` + chú thích. `php -l` OK, `phpunit tests/Unit/CompanyMigrationServiceTest.php` 75/75 xanh. Chống tái diễn cho lần di trú sau (etekgreen/etekpower đã chạy rồi, không chạy lại).
+- [ ] Dữ liệu PROD `hrm_erp_gop.leave_types` cty 10 theo file đính kèm (CHỜ USER XÁC NHẬN trước khi UPDATE):
+      65 Nghỉ thai sản → 1 · 69 Nghỉ không lương → 2 · 66 Nghỉ kết hôn → 4 · 67 Nghỉ phép → 4 · 68 Nghỉ ma chay, hiếu hỉ → 4.
+      Đề xuất thêm (ngoài file, chờ chốt): 67 Nghỉ phép `is_nghi_phep = 1` cho giống TPE (Agent thống kê nghỉ + chặn xoá dùng cờ này); ghi `leave_type_history` action update cho từng dòng để màn Lịch sử có vết. Cty 9 ETEK GREEN cùng lỗi — hỏi có sửa luôn không.
+- [ ] Tính lại phép 2026 cho Huyền (1841): backup dòng `employee_attendances` 2884 ra `/tmp/backup_phep_<ts>_issue44.json` trên hrm-prod rồi chạy `php artisan update:attendance` (hoặc đợi cron 12:00 27/11). Đối chiếu kết quả T5–T10 = 1, usable 12, còn 6.
+- [ ] Cập nhật issue #44 trên HRM (bình luận kết quả + chuyển trạng thái) sau khi user xác nhận.

@@ -31,3 +31,18 @@ Vừa hoàn thành: chặn việc phiên cũ tự đẩy plan liên tục
 Đang làm dở: —
 Bước tiếp theo: theo dõi `~/Library/Logs/push-plans.log` hôm nay, chỉ nên có 1 lần đẩy lúc 17:30
 Blocked:
+
+## Phase 4 — Lịch 17:30 tự gỡ conflict bằng Claude Code (25/11)
+- [x] 17:30 25/11 lịch kẹt exit 2: conflict `hrm/.plans/gop-db/STATUS.md` (@khoipv chèn mục BH-SC-BD + đổi trạng thái "Báo cáo bán hàng theo hàng hóa" sang ĐÃ PUSH; tôi chèn 2 mục Giao việc theo đơn vị + App desktop). Gỡ tay giữ cả hai, lấy dòng trạng thái mới hơn của @khoipv, đẩy lại 19:11 (commit `8572bc1`) (25/11)
+- [x] Thử `merge=union` cho STATUS.md: gộp được nhưng tạo mục TRÙNG khi 2 bên sửa cùng feature (máy không biết dòng nào mới hơn) → bỏ, không dùng (25/11)
+- [x] Sửa `~/bin/push-plans.sh` (yêu cầu Cường 25/11: "đến lịch thì fix rồi đẩy"): khi rebase conflict KHÔNG abort nữa mà gọi `claude -p --dangerously-skip-permissions` (timeout 15') với prompt giữ cả hai phía, cùng feature thì giữ bản mới hơn, `rebase --continue`; sau đó kiểm (không còn rebase dở, không marker trong đúng file conflict) rồi đẩy. Không xong mới abort + báo. Thêm biến `PUSH_PLANS_REPO` / `CLAUDE_BIN` để test (25/11)
+- [x] Test luồng trên clone tạm (origin giả + claude giả): 2 bên cùng chèn mục STATUS.md → gỡ → đẩy OK. Bẫy đã sửa: grep marker `=======` toàn `.plans` dính dòng `====` của mockup.css / txt cũ → chỉ kiểm file conflict, regex `^=======$` (25/11)
+- [x] Đăng nhập cho lịch: không cần `claude auth login` — máy có sẵn 2 token dài hạn `claude-token-A` / `claude-token-B` trong Keychain (alias `claude-a`/`claude-b` ở `~/.zshrc`). Script đọc Keychain lúc chạy qua `CLAUDE_CODE_OAUTH_TOKEN`, không ghi token vào file (25/11)
+- [x] Prompt gỡ conflict lần 1 chọn sai bản (giữ "HOÀN THÀNH" cũ thay vì "ĐÃ PUSH" mới của người khác) → sửa quy tắc: so với bản gốc `git show :1:<file>`, bên nào sửa thì lấy bên đó, cả hai sửa thì lấy HEAD (người khác), không đoán theo chữ trạng thái. Test lại 3 tình huống (chỉ 1 bên có / cùng mục khác trạng thái / cả hai chèn mới) đều đúng, ~30–50s (25/11)
+- [x] Dùng cả 2 token (yêu cầu Cường 25/11): thử A, nếu hết hạn mức / lỗi xác thực / chưa gỡ xong thì `git checkout --conflict=merge` khôi phục marker rồi thử B; cả 2 không xong mới abort + báo. Test giả lập A trả "usage limit" → tự sang B, gỡ + đẩy OK (25/11)
+
+### Checkpoint — 25/11/2026 19:25
+Vừa hoàn thành: lịch 17:30 tự gỡ conflict bằng Claude Code với 2 token dự phòng
+Đang làm dở: —
+Bước tiếp theo: theo dõi `~/Library/Logs/push-plans.log` lần conflict thật tiếp theo (dòng "--- claude-token-A rc=…")
+Blocked:

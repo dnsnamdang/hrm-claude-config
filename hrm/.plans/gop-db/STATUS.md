@@ -34,9 +34,21 @@ Deploy: `permission:catalog-sync` + cấp 2 mã `master_data.danh_muc_ngan_hang.
 ## Lặt vặt 25/11 (@junfoke) — import KH "Loại hình tổ chức" (develop api `604de028b`, client `ae2886746`); #10899 #10908 #10909 ô Khách hàng BC meeting / Dự án TKT (client `6264232f9`), #10901 #10902 #10905 #10910 không cần sửa; #12258 phản hồi x ô Phòng ban (client `e9aa82f32`, 26/11)
 Plan: `customer-import-excel` · `ho-tro-van-hanh` · `division-market-employee`. SRS Danh mục KH + 3 SRS Dự án / YC làm giải pháp / Quản lý giải pháp đã sửa thẳng trên Drive (`customer-docs`, `srs-man-docs`).
 
+## HRM issue #44 (ISS-202611-0044) Loại nghỉ ETEK POWER mất "Nhóm" + tính lại phép NV nghỉ thai sản — ĐANG LÀM (2026-11-26, @cuong61n)
+Điều tra xong: 5 loại mặc định cty 10 `group_id = 0` từ DB gốc hrm_power; config di trú map nhầm `group_id → OWNED:groups` (đã sửa local, chưa push). Chờ user xác nhận UPDATE prod theo file đính kèm + chạy `update:attendance`.
+→ .plans/gop-db/hrm-issue-44-ep-loai-nghi-mat-nhom/plan.md
+
+## HRM issue #47 (ISS-202611-0047) Tab Vấn đề trong Nhóm trao đổi: bổ sung Lọc nâng cao (7 ô) — ĐÃ PUSH gop_db (api `c83b2f0ef`, client `fb15260f1`) + deploy PROD tpe 26/11 (2026-11-26, @cuong61n)
+Copy khuôn tab Nhiệm vụ (nút Lọc (n) + popover + chip điều kiện). BE thêm tham số lọc vào `GET workspaces/{id}/issues`, test pass.
+→ .plans/gop-db/hrm-issue-47-loc-van-de-nhom-trao-doi/plan.md
+
 ## Báo cáo làm dịch vụ BH - SC - BD (port ERP `report.warrantyRepairService`) — ĐANG LÀM (2026-11-25, @khoipv)
 Đang khảo sát ERP + chốt yêu cầu. Note: bỏ ô Nhóm hàng hóa, thêm Loại sản phẩm, xếp lại ô lọc; bấm số → popup Số chứng từ (HĐ / phiếu BH), Khách hàng, SL, Giá trị.
 → .plans/gop-db/bao-cao-lam-dich-vu-bh-sc-bd/plan.md · Spec: docs/superpowers/specs/gop-db/2026-11-25-bao-cao-lam-dich-vu-bh-sc-bd-design.md
+
+## Cấp Super Admin 7 công ty cho TK test dnstester@gmail.com trên PROD (tạo vai trò `EP_Super Admin` 100467) — HOÀN THÀNH 2026-11-26 (@cuong61n)
+
+- Plan: `.plans/gop-db/prod-cap-super-admin-dnstester/plan.md`. Thao tác SQL trực tiếp trên `hrm_erp_gop`, đã kiểm bằng login API + đổi công ty.
 
 ## Giao việc theo đơn vị — điều tra "chưa có người tiếp nhận" + lỗi 422 dev (FE/BE lệch) · merge gop_db→develop api `17e6df081` + deploy dev + cấp 2 mã giao_viec_nhan_su_* (local + dev) — HOÀN THÀNH 2026-11-25 (@cuong61n)
 
