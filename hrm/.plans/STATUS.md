@@ -64,6 +64,7 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
   Trạng thái: **BRAINSTORM (19/11/2026)** — chốt: geofence + WiFi (BSSID), chỉ giờ vào (giờ ra nhắc), bật theo nơi chấm. Chờ user chọn nơi cấu hình (danh mục văn phòng / trong từng ca). Chưa code, chưa chọn nhánh. Đụng màn app của @cuong61n (`app-cham-cong`).
 
 - assign / **AGENT + CHAT — TPE SMART AGENT (trợ lý AI) + Chat (Nhóm trao đổi, 1–1)** → @namdangit → **.plans/agent-chat/README.md** (đọc đầu phiên: bản đồ tài liệu, môi trường, trạng thái) · Agent: `agent/plan.md` · Chat: `chat/gd*/plan.md` · spec Agent `docs/superpowers/specs/agent-chat/2026-11-11-tpe-smart-agent-design.md` · spec Chat `docs/superpowers/specs/gop-db/2026-11-02-phan-he-cong-viec-design.md` §11
+  **GĐ44 (26/11/2026, @cuong61n) — Thanh định dạng văn bản khi soạn tin chat + bình luận (web + app): code xong + test xong (PHPUnit 20, e2e 10, flutter 688), CHƯA commit, trên gop_db + develop. Hồ sơ `.plans/agent-chat/chat/gd44-dinh-dang-tin/` (design + plan + Pencil 13 khung).**
   App mobile (TPE_APP) 18/11/2026: Chat + Agent XONG, ĐÃ merge `develop` a46dcd4 (chưa phát hành store, 609 test); api `gop_db` 50c02c5d8 + client `gop_db` 128658916 ĐÃ DEPLOY prod TPE. Tổng kết: `.plans/agent-chat/app-mobile/tong-ket-app.md`.
   Gộp 1 phiên từ 13/11/2026; tài liệu để ngoài `gop-db/` (gop-db chỉ cho chuyển ERP → HRM), code vẫn nhánh tách từ `origin/gop_db`.
   ### Checkpoint — 15/11/2026 (wrap up) — GĐ12 + GĐ13 @all + GĐ14 popup thông tin cá nhân

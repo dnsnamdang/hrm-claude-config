@@ -41,3 +41,16 @@
 (b) **Cỡ chữ 4 mức cố định** 12 / 14 / 18 / 22 — không nhập số.
 (c) Sửa tin / bình luận: **chỉ tự mở thanh định dạng khi nội dung đang sửa CÓ định dạng** (body chứa thẻ); tin thuần giữ trạng thái bật/tắt người dùng đã chọn.
 (d) **Chưa áp** cho ô Mô tả nhiệm vụ / vấn đề.
+
+## Trạng thái (26/11/2026)
+- **Code xong + test xong cả 3 nền, CHƯA commit** (làm thẳng trên `gop_db` ở `worktrees/gop_db-api` / `gop_db-client`, app `develop`).
+- BE: `App\Support\RichText` (sanitize/toText/isRich), migration `chat_messages.body_text`, `ChatMessage::plainBody()`, Message/Comment
+  controller chuẩn hoá HTML + 5.000 chữ thuần; PHPUnit RichTextTest 10 · ChatRichTextTest 7 · CommentRichTextTest 3 PASS.
+- Web: Quill 2 (`build.transpile: ['quill']`), `ChatRichEditor` + `ChatFormatToolbar` + 2 popover dùng chung ChatComposer & CommentEditor;
+  e2e `rich-text.spec` 7/7 + `comment-rich-text.spec` 3/3 PASS trên :3002.
+- App: `lib/ui/chat/rich/*` (controller đồng bộ 2 chiều, field, bar, sheet màu/cỡ, màn mở rộng), composer/room/bubble/comments nối xong;
+  `flutter test test/ui/chat test/ui/work` 688 PASS (4 fail có sẵn); simulator iPhone 15 bấm thử đủ luồng chat + bình luận.
+- ⚠️ Khi deploy: chạy migration + phát hành app cùng lúc (app cũ nhận tin HTML sẽ hiện thẻ thô). Nhánh gop_db-client cần `nuxt build` lại (đổi nuxt.config).
+- Bẫy đã trả giá (để lần sau): Quill 2 dist có class field ⇒ webpack 4 phải transpile; `.ql-container` bị scss chung ép min-height 250;
+  Quill Tab chỉ thụt lề khi con trỏ đầu dòng (đè binding indent/outdent); Shift+Enter Quill tự xuống dòng; setHtml phải $nextTick sau khi bật formatOn;
+  flutter_quill: đổi `controller.document` phải đăng ký lại `document.changes`; `replaceText` cần selection hợp lệ; placeholder Quill xuống dòng làm ô rỗng cao hơn.

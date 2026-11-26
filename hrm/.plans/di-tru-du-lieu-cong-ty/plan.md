@@ -671,9 +671,19 @@ User yêu cầu 26/11: đẩy dữ liệu cổng ETEK (`hrm_etek`, "Công ty CP 
 - [x] 26/11 FIX engine #7 — dry-run lần 1 chạy 45 phút chưa qua bước HR: `stepInsertTable` đọc bảng có id bằng `chunk(500)` trên `whereIntegerInRaw('id', <toàn bộ old_id>)` ⇒ mỗi lô gửi lại cả danh sách (ETEK timesheets 2026 = 614.337 dòng ≈ 6MB SQL/lô) + OFFSET ⇒ O(n²), đập vào MySQL prod. Đã dừng (kill PID), đổi sang đọc theo lô 500 id đã sắp. Dry-run lần 2: 866.913 dòng, ~10 phút
 - [x] 26/11 Chạy thật lần 1 → LỖI 1136 ở `company_roles`, rollback sạch (companies vẫn 10, migration_id_map run etek 0). Gốc: 3 dòng company_roles trỏ vai trò 11/12/13 đã xoá ở nguồn → role_id dịch NULL → coerceNullToNotNull bỏ cột (DB default 1 = vai trò TPE!) → lô lệch cột
 - [x] 26/11 FIX engine #8 — bảng có id: cột OWNED NOT NULL trỏ bản ghi đã xoá ở nguồn (nguồn ≠ 0) ⇒ bỏ dòng (`rowHasDanglingNotNullOwnedFk`); FIX #9 — chèn gom theo bộ cột (chống 1136)
-- [ ] Dry-run lần 3 (so với 866.913) → chạy thật `--branch-order=6`
-- [ ] Hậu kỳ: trưởng phòng/bộ phận, tiền tố mã phòng trùng TPE, phân ca, allow_group_scope=0, phụ cấp
-- [ ] Verify (F.14) + API bằng TK ETEK
+- [x] 26/11 Dry-run lần 3: 866.944 dòng (+31 chấm công mới phát sinh so với lần 2) → chạy thật `--branch-order=6`: **ETEK = company_id 11 trên hrm_crm**, HR 866.967 dòng, quyền 7 vai trò / 634 → 377 lượt gán mã (7 tên quyền thiếu trong danh mục: lương P3 ×4, khách hàng ×3), configs dòng 11. Cơm: nối 557 NV + 23 phòng, rice_companies 4 → parent 1 / company 11. Recode 692 NV `6YYsssss` (seq từ 11277), timesheets đổi mã 614.374 dòng
+- [x] 26/11 Bước enroll cơm LỖI 1062 trùng `rice_ssn 12508930` (các bước khác vẫn chạy xong). Gốc: 4 bản ghi cơm nguồn trỏ `employee_info_id` hồ sơ cũ đã xoá (6/536/571/630) ⇒ relink ngắt liên kết ⇒ recode không đổi mã cơm của họ, enroll lại tạo bản thứ 2 cho cùng người. Sửa tay: #1626 Nguyễn Đức Bình, #1739 Nguyễn Hữu Điệp gắn lại hồ sơ theo `employee_id` + mã mới; #1585 Vũ Ngọc Sơn là bản cũ trùng (người đã có #2021) và #637 Admin DNS01 để nguyên ngắt liên kết. Chạy lại `company:enroll-rice --company=11 --rice-parent=1`: +137 bản ghi; 12 NV chưa có tài khoản → điền `rice_ssn = ssn`. Prod: engine nên gắn lại theo `employee_id` khi `employee_info_id` không dịch được (chưa sửa code)
+- [x] 26/11 Kiểm mã: 692/692 mã khớp `^6[0-9]{7}$`, code = ssn = rice_ssn (0 lệch), UPS (cty 6) branch_order NULL, ETEK branch_order 6. Chấm công: 614.386 dòng, chỉ 12 dòng mã 1325 không khớp người nào (nguồn cũng không có người mã đó — để nguyên)
+- [x] 26/11 Hậu kỳ: trưởng phòng 21 + bộ phận 51 đổi employee_infos.id → employees.id (dải id chồng nhau 5109 < 5351 nên kiểm trước: 21/21, 51/51 trỏ đúng hồ sơ cty 11; sau đổi khớp tên 21/21, 51/51); tiền tố mã phòng KHÔNG cần (0/24 mã trùng công ty khác; nội bộ ETEK có sẵn 2 cặp trùng P00, P37 từ nguồn); phụ cấp 0 dòng sai (415/415 là số); backfill phân ca `--from=2026-01-01 --to=2026-12-31` +93.438 dòng (102.935 nguồn, 9.497 đã có); allow_group_scope cty 11 = 0 qua `GroupScopeCompanyService` (có lịch sử), vai trò cty 11 không có quyền phạm vi Tổng công ty
+- [x] 26/11 Config `leave_recompute_skip` thêm `11 => 2026` (worktree, chưa commit)
+- [x] 26/11 API bằng TK ETEK ha.lt@etek.com.vn (ETEK_Admin, mật khẩu test `Test@123` chỉ trên hrm_crm): login 200, current_company 11; hồ sơ cơm code = rice_ssn 61711321; danh sách nhân sự 692; chấm công tháng 10: 4.510 dòng; tổng hợp công tháng chưa có (0, nguồn chưa chốt)
+- [ ] Chờ user: test trên hrm-crm; duyệt commit/push 3 file engine + config; chốt lịch chạy PROD (đóng cổng ETEK, 13 máy chấm công, máy cơm parent 4, UPS branch_order NULL trên prod)
+
+### Checkpoint — 26/11/2026 (tối) — đã đẩy ETEK vào hrm-crm
+Vừa hoàn thành: gộp ETEK vào hrm_crm (cty 11, mã 8 số số 6) + sửa enroll cơm + hậu kỳ + kiểm API.
+Đang làm dở: không.
+Bước tiếp theo: user/tester test trên hrm-crm; duyệt commit 3 fix engine (#7–#9) + `--branch-order`; lên lịch PROD.
+Blocked: (không). Rollback hrm-crm: restore `hrm-db:~/backup/hrm_crm_truoc_etek_20261126.sql.gz`.
 
 ### Checkpoint — 16/11/2026 (tối) — đã gộp ETEK POWER lên PROD
 Vừa hoàn thành: đóng cổng etekpower, gộp vào hrm_erp_gop (cty 10), hậu kỳ, đổi mã máy cơm, bật lại TPE, verify.
