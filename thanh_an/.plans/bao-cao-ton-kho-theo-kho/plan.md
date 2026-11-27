@@ -163,3 +163,10 @@ Chỗ dễ sai cần soi kỹ khi review:
 ### Test E2E Playwright 20/11/2026 (@khoipv) — user yêu cầu
 - [x] Viết `e2e/tests/warehouse/bao-cao-ton-kho-theo-kho.spec.js` (chỉ đọc, không ghi DB; số liệu so với API thật): tải màn + khối tổng hợp khớp `kpi`, tooltip phạm vi, mở chi tiết 1 dòng (bảng lô đủ 7 cột, không cuộn ngang bên trong, cột Chi tiết nới/thu), Mở tất cả / Thu gọn chi tiết, drill Lô cận date, tìm nhanh + Enter, Xuất Excel, In
 - [x] Chạy test: 9/9 pass (gồm setup) trên stag 6 mã hàng — lần đầu 8/9, test In fail do selector (tên nút có ký tự icon remixicon ở đầu, `^In$` không khớp) → đổi sang `getByTitle('In báo cáo')`, không phải lỗi màn
+
+### Check 27/11/2026 (@khoipv) — PNK 46 (PNK-2026-0006): HC-NT-018 sang báo cáo khác tên + "không thấy có tồn"
+- [x] Tra DB local `thanhan_stag_07052026` + gọi API `GET /warehouse/stock-report`
+  - Tên khác nhau là do 2 nguồn: PNK lưu tên **theo HĐ bán** (`contract_products` id 785 của HĐ id 24 "Hoá chất rửa dùng cho máy phân tích nước tiểu tự động" → PXL → đơn mua `purchase_order_products` 758 → `warehouse_receipt_items` 266, đều là bản lưu cố định); báo cáo đọc tên **danh mục hàng hóa** `products` id 20 ("Hóa chất dùng cho máy phân tích nước tiểu", TM "Urine detergent"). RO-SH-2294 cùng hiện tượng.
+  - Tồn có ghi đủ: `stock_balances` 601 (LOT-9100, 8.000) + 602 (LOT-9300, 1.000) kho 24 "Kho Hà Nội (test)", giữ cho KH 1564 / HĐ 24 → API trả HC-NT-018 tồn 9.000 **mL** (ĐVT cơ bản; 18 Chai × 500 mL), nằm dòng 17 trang 1 (không lọc).
+  - Không thấy khi lọc Tên hàng theo tên trên PNK ("rửa", "tự động") vì báo cáo chỉ tìm trên `products.product_name/trade_name`.
+- [ ] Chờ user chọn: giữ nguyên (tên danh mục) / cho ô tìm khớp cả tên theo HĐ trên PNK / hiện thêm tên theo HĐ
