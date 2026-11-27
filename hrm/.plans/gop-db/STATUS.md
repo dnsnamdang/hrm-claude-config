@@ -34,8 +34,8 @@ Deploy: `permission:catalog-sync` + cấp 2 mã `master_data.danh_muc_ngan_hang.
 ## Lặt vặt 25/11 (@junfoke) — import KH "Loại hình tổ chức" (develop api `604de028b`, client `ae2886746`); #10899 #10908 #10909 ô Khách hàng BC meeting / Dự án TKT (client `6264232f9`), #10901 #10902 #10905 #10910 không cần sửa; #12258 phản hồi x ô Phòng ban (client `e9aa82f32`, 26/11)
 Plan: `customer-import-excel` · `ho-tro-van-hanh` · `division-market-employee`. SRS Danh mục KH + 3 SRS Dự án / YC làm giải pháp / Quản lý giải pháp đã sửa thẳng trên Drive (`customer-docs`, `srs-man-docs`).
 
-## HRM issue #44 (ISS-202611-0044) Loại nghỉ ETEK POWER mất "Nhóm" + tính lại phép NV nghỉ thai sản — ĐANG LÀM (2026-11-26, @cuong61n)
-Điều tra xong: 5 loại mặc định cty 10 `group_id = 0` từ DB gốc hrm_power; config di trú map nhầm `group_id → OWNED:groups` (đã sửa local, chưa push). Chờ user xác nhận UPDATE prod theo file đính kèm + chạy `update:attendance`.
+## HRM issue #44 (ISS-202611-0044) Loại nghỉ ETEK POWER mất "Nhóm" + tính lại phép NV nghỉ thai sản — ĐÃ XỬ LÝ DỮ LIỆU PROD 27/11 (2026-11-27, @cuong61n)
+5 loại mặc định cty 10 `group_id = 0` từ DB gốc hrm_power; config di trú map nhầm `group_id → OWNED:groups` (sửa local `KEEP`, CHƯA push). 27/11: UPDATE 5 dòng theo file + history, chạy `update:attendance` → Huyền T5–T10 = 1, còn 6 phép. Chiều 27/11: bảng công vẫn hiện KL vì JSON `timesheet_summaries.data_attendance` còn id đơn CŨ (bug di trú 2, EP 323 + EG 521 dòng) → `calc:employee_timesheet` cho Huyền xong (TS). Còn: remap 844 dòng (chờ duyệt), fix engine JSON, bình luận/đóng issue #44, push config.
 → .plans/gop-db/hrm-issue-44-ep-loai-nghi-mat-nhom/plan.md
 
 ## HRM issue #47 (ISS-202611-0047) Tab Vấn đề trong Nhóm trao đổi: bổ sung Lọc nâng cao (7 ô) — ĐÃ PUSH gop_db (api `c83b2f0ef`, client `fb15260f1`) + deploy PROD tpe 26/11 (2026-11-26, @cuong61n)
