@@ -5,6 +5,9 @@
 
 ## Đang làm
 
+- **Fix: Lưu báo giá lỗi "Column 'product_trade_name' cannot be null" (dự án 959, hàng TB-SH-1107)** — @khoipv — Bắt đầu 27/11/2026 — Hàng hóa import Excel trước 22/12/2025 thiếu Tên thương mại → cột NOT NULL ở báo giá / gói thầu / HĐ / KPI HĐ báo lỗi. User chọn A + B trên `master`: migration cho `product_trade_name` nullable ở 4 bảng + `ProductImportV2` bắt buộc Tên thương mại.
+  - Plan: [.plans/fix-bao-gia-ten-thuong-mai-null/plan.md](fix-bao-gia-ten-thuong-mai-null/plan.md)
+
 - **Lịch sử thay đổi — phân hệ Kho (PNK, ĐNXK, danh mục Kho, Kho kế toán; port entity-history từ hrm)** — @khoipv — Bắt đầu 26/11/2026 — Đã chốt phạm vi 4 màn, port component dùng chung, ghi đủ mọi trường + bảng con, không thêm quyền. Đang khảo sát mẫu hrm + luồng lưu dns.
   - Plan: [.plans/lich-su-thay-doi-kho/plan.md](lich-su-thay-doi-kho/plan.md) · Spec: [docs/superpowers/specs/2026-11-26-lich-su-thay-doi-kho-design.md](../docs/superpowers/specs/2026-11-26-lich-su-thay-doi-kho-design.md)
 

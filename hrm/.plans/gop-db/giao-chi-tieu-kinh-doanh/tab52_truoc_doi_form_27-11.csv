@@ -1,0 +1,487 @@
+Testcase _ 11643 Phiếu giao chỉ tiêu kinh doanh theo phòng ban,,,,,TEST SUMMARY,,,Số trường hợp DNS kiểm thử đạt (P):,,19,,Số trường hợp TP kiểm thử đạt (P):,,,0,
+,,,,,,,,Số trường hợp DNS kiểm thử không đạt (F),,0,,Số trường hợp TP kiểm thử không đạt (F),,,0,
+,,,,,,,,Số trường hợp DNS kiểm thử đang xem xét (PE),,0,,Số trường hợp TP kiểm thử đang xem xét (PE),,,0,
+,,,,,,,,Số trường hợp DNS kiểm thử chưa thực hiện,,0,,Số trường hợp TP kiểm thử chưa thực hiện,,,56,
+,,,,,,,,Tổng số trường hợp DNS kiểm thử,,19,,Tổng số trường hợp TP đã kiểm thử,,,0,
+,,,,,,,,Tổng số testcase,,56,,,,,,
+Module,Nhóm chức năng,TC ID,Chức năng,Priority,Tiền điều kiện,Bước thực hiện,Test Data,Expected Result (chi tiết),Actual Result,Status check lần 1,Status check lần2,Ghi chú,TPE TEST 1,TPE TEST2,TPE TEST 1,Kết quả hiện tại
+,,I. THÊM MỚI,,,,,,,,,,,,,,
+Phiếu giao chi tiêu KD theo phòng ban,Thêm mới,TC_03.001,Tiêu đề bảng 12 cột 3 tầng,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn khối Kinh doanh, vùng Đồng bằng sông Hồng.",—,"- Cột trái: STT, ""Tỉnh/TP / Phòng ban / Bộ phận"" kèm ô chọn cấp hiển thị
+ - Tầng 1: Khách hãng, Khách khác, Tổng cộng (mỗi nhóm 4 cột)
+ - Tầng 2: mỗi nhóm có Hàng hóa, Dịch vụ
+ - Tầng 3: mỗi cặp có ""SL khách"" và ""Doanh số (VNĐ)"", mỗi tiêu đề có biểu tượng ⓘ
+ - Nhóm Tổng cộng chỉ hiển thị (không có ô nhập)
+ - KHÔNG có cột / nút khách hàng chi tiết","- Cột trái: STT, ""Tỉnh/TP / Phòng ban / Bộ phận"" kèm ô chọn cấp hiển thị
+ - Tầng 1: Khách hãng, Khách khác, Tổng cộng (mỗi nhóm 4 cột)
+ - Tầng 2: mỗi nhóm có Hàng hóa, Dịch vụ
+ - Tầng 3: mỗi cặp có SL khách, Doanh số
+ - Nhóm Tổng cộng chỉ hiển thị (không có ô nhập)
+ - KHÔNG có cột / nút khách hàng chi tiết",Passed,,,,,,
+,,TC_03.002,"Nhập số và cộng tổng tỉnh, tổng khối",P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).
+ Phiếu TPE_CTKD_2026.00009 (năm 2026, Đã duyệt) khối Kinh doanh, Hà Nội: Khách hãng Hàng hóa 8 / 2,500,000,000, Dịch vụ 2 / 450,000,000; Khách khác Hàng hóa 4 / 950,000,000, Dịch vụ 1 / 150,000,000.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn Năm 2027, khối Kinh doanh, vùng Đồng bằng sông Hồng.
+ 4. Nhập 3 dòng phòng theo Test Data (chưa lưu).","Hà Nội, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: SL khách 5, Doanh số 1,500,000,000
+ Khách hãng Dịch vụ: SL khách 2, Doanh số 300,000,000
+ Khách khác Hàng hóa: SL khách 3, Doanh số 600,000,000
+ Khách khác Dịch vụ: SL khách 1, Doanh số 150,000,000
+ Hà Nội, phòng Kinh doanh 2:
+ Khách hãng Hàng hóa: 4 / 1,200,000,000
+ Khách hãng Dịch vụ: 1 / 200,000,000
+ Khách khác Hàng hóa: 2 / 500,000,000
+ Hải Phòng, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: 2 / 750,000,000
+ Khách khác Hàng hóa: 1 / 250,000,000","- Nhóm Tổng cộng dòng Kinh doanh 1 Hà Nội tự hiện: Hàng hóa 8 / 2,100,000,000, Dịch vụ 3 / 450,000,000
+ - Dòng Hà Nội: ""Hà Nội (2 phòng)"", Khách hãng Hàng hóa 9 / 2,700,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 5 / 1,100,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 14 / 3,800,000,000, Dịch vụ 4 / 650,000,000
+ - Dòng Hải Phòng: Khách hãng Hàng hóa 2 / 750,000,000, Khách khác Hàng hóa 1 / 250,000,000, Tổng cộng Hàng hóa 3 / 1,000,000,000
+ - Dòng TỔNG ""3 Tỉnh/TP · 3 phòng · 0 bộ phận"": Khách hãng Hàng hóa 11 / 3,450,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 6 / 1,350,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 17 / 4,800,000,000, Dịch vụ 4 / 650,000,000","- Nhóm Tổng cộng dòng Kinh doanh 1 Hà Nội tự hiện: Hàng hóa 8 / 2,100,000,000, Dịch vụ 3 / 450,000,000
+ - Dòng Hà Nội: ""Hà Nội (2 phòng)"", Khách hãng Hàng hóa 9 / 2,700,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 5 / 1,100,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 14 / 3,800,000,000, Dịch vụ 4 / 650,000,000
+ - Dòng Hải Phòng: Khách hãng Hàng hóa 2 / 750,000,000, Khách khác Hàng hóa 1 / 250,000,000, Tổng cộng Hàng hóa 3 / 1,000,000,000
+ - Dòng TỔNG ""3 Tỉnh/TP · 3 phòng · 0 bộ phận"": Khách hãng Hàng hóa 11 / 3,450,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 6 / 1,350,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 17 / 4,800,000,000, Dịch vụ 4 / 650,000,000",Passed,,,,,,
+,,TC_03.003,Lưu phiếu đầy đủ hợp lệ,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn Năm 2027, khối Kinh doanh, vùng Đồng bằng sông Hồng, nhập theo Test Data.
+ 4. Bấm Lưu.","Hà Nội, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: SL khách 5, Doanh số 1,500,000,000
+ Khách hãng Dịch vụ: SL khách 2, Doanh số 300,000,000
+ Khách khác Hàng hóa: SL khách 3, Doanh số 600,000,000
+ Khách khác Dịch vụ: SL khách 1, Doanh số 150,000,000
+ Hà Nội, phòng Kinh doanh 2:
+ Khách hãng Hàng hóa: 4 / 1,200,000,000
+ Khách hãng Dịch vụ: 1 / 200,000,000
+ Khách khác Hàng hóa: 2 / 500,000,000
+ Hải Phòng, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: 2 / 750,000,000
+ Khách khác Hàng hóa: 1 / 250,000,000","- Báo ""Đã lưu TPE_CTKD_2027.xxxxx"", quay về danh sách
+ - Phiếu mới ở đầu danh sách, trạng thái Đang tạo, Năm 2027, Người tạo Nguyễn Văn A
+ - Số phiếu dạng <mã công ty>_CTKD_<năm>.<số thứ tự 5 chữ số>","- Báo ""Đã lưu TPE_CTKD_2027.xxxxx"", quay về danh sách
+ - Phiếu mới ở đầu danh sách, trạng thái Đang tạo, Năm 2027, Người tạo Nguyễn Văn A
+ - Số phiếu dạng <mã công ty>_CTKD_<năm>.<số thứ tự 5 chữ số>",Passed,,,,,,
+,,TC_03.004,Dữ liệu sau lưu khớp số đã nhập,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Vừa lưu phiếu ở ca trên.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm số phiếu vừa lưu.",—,"- Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng với đúng số đã nhập, dòng TỔNG như lúc nhập
+ - Bắc Ninh còn trong bảng với ""(0 phòng)""
+ - Năm trước Hà Nội như phiếu 2026","- Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng với đúng số đã nhập, dòng TỔNG như lúc nhập
+ - Bắc Ninh còn trong bảng với ""(0 phòng)""
+ - Năm trước Hà Nội như phiếu 2026",Passed,,,,,,
+,,TC_03.005,Lưu không kiểm cặp SL khách / Doanh số,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1, chỉ nhập Khách hãng Hàng hóa SL khách 5 (bỏ trống Doanh số).
+ 4. Bấm Lưu.",SL khách: 5,"- Lưu được (Đang tạo)
+ - Cặp SL khách / Doanh số chỉ kiểm khi gửi duyệt","- Lưu được (Đang tạo)
+ - Cặp SL khách / Doanh số chỉ kiểm khi gửi duyệt",Passed,,,,,,
+,,TC_03.006,Ô số không nhận số âm và chữ,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1, gõ lần lượt vào ô SL khách: -5, abc.",-5; abc,"- Gõ -5: dấu trừ không nhận, ô hiện 5
+ - Gõ abc: ô không nhận chữ","- Gõ -5: dấu trừ không nhận, ô hiện 5
+ - Gõ abc: ô không nhận chữ",Passed,,,,,,
+,,TC_03.007,"SL khách không có phần thập phân, Doanh số tối đa 2 số lẻ",P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Gõ 2.5 vào ô SL khách.
+4. Gõ 1500000000.255 vào ô Doanh số (VNĐ).","2.5
+1500000000.255","- Ô SL khách không nhận phần thập phân, chỉ chứa số nguyên
+- Ô Doanh số (VNĐ) nhận tối đa 2 chữ số thập phân: hiện 1,500,000,000.25, không gõ được chữ số thập phân thứ 3","- Dấu chấm không được nhận làm phần thập phân, ô chỉ chứa số nguyên
+ - Lưu ý: ghi rõ ô hiện gì (25 hay 2) vào KQ thực tế để đối chiếu",Passed,,,,,,
+,,TC_03.008,Hiển thị và dán số có dấu ngăn nghìn,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Gõ 1500000000 vào ô Doanh số.
+ 4. Dán ""1,234"" vào ô SL khách khác.
+ 5. Dán ""1.234"" vào ô SL khách khác nữa.","1500000000
+ 1,234
+ 1.234","- Ô hiện 1,500,000,000
+ - Dán ""1,234"" và ""1.234"" đều thành 1,234
+ - Dòng tỉnh, dòng TỔNG cũng hiện dạng 1,234,567","- Ô hiện 1,500,000,000
+ - Dán ""1,234"" và ""1.234"" đều thành 1,234
+ - Dòng tỉnh, dòng TỔNG cũng hiện dạng 1,234,567",Passed,,,,,,
+,,TC_03.009,Ô số vượt 13 chữ số,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1; ô Khách hãng Hàng hóa SL khách 1, Doanh số gõ 14 chữ số.
+ 4. Bấm Lưu.
+ 5. Sửa Doanh số thành 13 chữ số 9999999999999, bấm Lưu.","12345678901234
+ 9999999999999","- Lần 1: ô Doanh số đỏ ""Giá trị vượt quá giới hạn cho phép"" ngay dưới ô, không lưu, số đã gõ giữ nguyên
+ - Lần 2: lưu được, ô hiện 9,999,999,999,999","- Lần 1: ô Doanh số đỏ ""Giá trị vượt quá giới hạn cho phép"" ngay dưới ô, không lưu, số đã gõ giữ nguyên
+ - Lần 2: lưu được, ô hiện 9,999,999,999,999",Passed,,,,,,
+,,TC_03.010,Ô số 0 và ô trống,P2,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1, gõ 0 vào Khách hãng Hàng hóa SL khách, các ô khác để trống.",0,"- Ở dòng phòng, ô bằng 0 / trống hiển thị trống (không in 0, không in dấu gạch)
+ - Dòng tỉnh và dòng TỔNG hiện 0 ở cột không có số","- Ở dòng phòng, ô bằng 0 / trống hiển thị trống (không in 0, không in dấu gạch)
+ - Dòng tỉnh và dòng TỔNG hiện 0 ở cột không có số",Passed,,,,,,
+,,TC_03.011,Lỗi đỏ biến mất khi sửa đúng,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Tạo lỗi có số mà chưa chọn phòng, bấm Lưu.
+ 4. Chọn phòng Kinh doanh 1 cho dòng đó.",—,"- Chữ đỏ dưới ô phòng mất ngay khi chọn
+ - Bấm Lưu lại thì lưu được","- Chữ đỏ dưới ô phòng mất ngay khi chọn
+ - Bấm Lưu lại thì lưu được",Passed,,,,,,
+,,TC_03.012,Lỗi ở tab khác và nhánh đang thu gọn,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn 2 khối; ở tab Nghiệp vụ dòng Hà Nội nhập số nhưng không chọn phòng.
+ 4. Thu gọn Hà Nội ở tab Nghiệp vụ, chuyển sang tab Tổng hợp.
+ 5. Bấm Lưu.",—,"- Tab Nghiệp vụ có chấm đỏ
+ - Tự chuyển về tab Nghiệp vụ, Hà Nội tự mở ra, cuộn tới ô lỗi đầu tiên","- Tab Nghiệp vụ có chấm đỏ
+ - Tự chuyển về tab Nghiệp vụ, Hà Nội tự mở ra, cuộn tới ô lỗi đầu tiên",Passed,,,,,,
+,,TC_03.013,Ô Năm chỉ có năm chưa có phiếu còn hiệu lực,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Công ty TPE có: phiếu năm 2026 Đã duyệt, phiếu năm 2028 Chờ duyệt, phiếu năm 2029 Đang tạo, phiếu năm 2030 đã Hủy.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Mở ô Năm.",,"- Danh sách năm từ 2025 đến 2036, KHÔNG có Năm 2026, Năm 2028, Năm 2029 (đang có phiếu Đã duyệt / Chờ duyệt / Đang tạo)
+- CÓ Năm 2030 (phiếu năm 2030 đã Hủy không tính là còn hiệu lực)",,,,,,,,
+,,TC_03.014,Năm mặc định khi năm hiện tại đã có phiếu,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Công ty TPE đã có phiếu năm 2026 (Đã duyệt), chưa có phiếu năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.",,"- Ô Năm tự chọn sẵn Năm 2027 (năm trống gần nhất tính từ năm hiện tại), không để Năm 2026",,,,,,,,
+,,TC_03.015,Bấm x ô Khối kinh doanh có số liệu — dropdown không đè hộp xác nhận,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở dòng phiếu P1 bấm Sửa (biểu tượng bút chì).
+3. Bấm dấu x ở chip Kinh doanh trong ô Khối kinh doanh.",,"- Hiện hộp ""Bỏ khối kinh doanh"": ""Bỏ khối Kinh doanh? Số liệu đã nhập của khối sẽ mất."", 2 nút Hủy / Bỏ khối
+- Danh sách thả xuống của ô Khối kinh doanh KHÔNG bung ra đè lên hộp xác nhận
+- Trong lúc hộp đang hỏi, ô Khối kinh doanh vẫn hiện chip Kinh doanh (chưa mất giá trị)",,,,,,,,
+,,TC_03.016,"Bỏ khối: bấm Hủy thì giữ nguyên, bấm Bỏ khối thì xoá",P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở dòng phiếu P1 bấm Sửa (biểu tượng bút chì).
+3. Bấm x ở chip Kinh doanh, bấm Hủy.
+4. Bấm x lần nữa, bấm Bỏ khối.",,"- Bước 2: ô vẫn có khối Kinh doanh, bảng và số liệu giữ nguyên
+- Bước 3: khối Kinh doanh bị bỏ, tab Kinh doanh và số liệu biến mất",,,,,,,,
+,,TC_03.017,Bấm x ô Khu vực có số liệu — dropdown không đè hộp xác nhận,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở dòng phiếu P1 bấm Sửa (biểu tượng bút chì).
+3. Ở tab Kinh doanh, bấm x ở chip Đồng bằng sông Hồng trong ô Khu vực.
+4. Bấm Hủy.",,"- Hiện hộp ""Bỏ khu vực"": ""Bỏ vùng Đồng bằng sông Hồng? 1 Tỉnh/TP có số liệu sẽ bị xoá."", 2 nút Hủy / Bỏ vùng
+- Danh sách thả xuống của ô Khu vực KHÔNG bung ra đè lên hộp; trong lúc hỏi ô vẫn hiện chip Đồng bằng sông Hồng
+- Bấm Hủy: khu vực và số liệu Hà Nội giữ nguyên",,,,,,,,
+,,TC_03.018,Tiêu đề cột có đơn vị và biểu tượng thông tin,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Quan sát hàng tiêu đề bảng.
+5. Rê chuột vào biểu tượng ⓘ của cột Doanh số nhóm Khách hãng › Hàng hóa.",,"- Cột doanh số ghi ""Doanh số (VNĐ)"" ở cả 6 cặp cột; cột số khách ghi ""SL khách""
+- Mỗi tiêu đề SL khách / Doanh số (VNĐ) có biểu tượng ⓘ
+- Rê chuột: tiêu đề ""Doanh số — Khách hãng · Hàng hóa"", giải thích Khách hãng = khách được tích ""Là khách hãng"" trong danh mục Khách hàng, Hàng hóa = chỉ tiêu bán hàng hóa, Doanh số đơn vị VNĐ",,,,,,,,
+,,TC_03.019,Phòng đã chia bộ phận thì số của phòng = tổng bộ phận,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.
+PHÒNG KINH DOANH 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1, bấm ""+ Chia Bộ Phận"", chọn Nhóm KD1-1, nhập Khách hãng Hàng hóa 2 / 400,000,000.
+5. Bấm ""+ Thêm Bộ Phận"", chọn Nhóm KD1-2, nhập 3 / 600,000,000.",,"- Dòng PHÒNG KINH DOANH 1 chỉ đọc, Khách hãng Hàng hóa = 5 / 1,000,000,000
+- Dòng Hà Nội cộng đúng 5 / 1,000,000,000",,,,,,,,
+,,II. THÊM MỚI — CHỌN PHÒNG BAN / BỘ PHẬN THEO THỊ TRƯỜNG ĐÃ CHIA,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,CHỌN PHÒNG BAN / BỘ PHẬN,TC_03.020,Ô Phòng ban chỉ có phòng được chia thị trường tại Tỉnh/TP,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Ở Thành phố Hà Nội mở ô Chọn phòng ban.
+5. Ở Thành phố Hải Phòng mở ô Chọn phòng ban.",,"- Hà Nội: chỉ có PHÒNG KINH DOANH 1, PHÒNG KINH DOANH 2
+- Hải Phòng: chỉ có PHÒNG KINH DOANH 1
+- KHÔNG có PHÒNG QUẢN TRỊ THÔNG TIN ở cả 2 tỉnh (phòng này không được chia thị trường tại tỉnh)",,,,,,,,
+,,TC_03.021,Tỉnh/TP chưa chia thị trường cho phòng nào,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Ở Tỉnh Bắc Ninh mở ô Chọn phòng ban.",,"- Ô Chọn phòng ban không có phòng nào để chọn
+- Dòng Tỉnh Bắc Ninh hiện ""0 phòng được chia"" và ""Đã phân 0/0 phòng"" màu cam; không có link ""+ Thêm Phòng Ban""",,,,,,,,
+,,TC_03.022,Phòng đã chọn không còn hiện ở dòng khác cùng Tỉnh/TP,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội dòng 1 chọn PHÒNG KINH DOANH 1.
+5. Bấm ""+ Thêm Phòng Ban"", mở ô Chọn phòng ban ở dòng 2.",,- Dòng 2 chỉ còn PHÒNG KINH DOANH 2,,,,,,,,
+,,TC_03.023,"Hết phòng được chia thì ẩn ""+ Thêm Phòng Ban""",P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội dòng 1 chọn PHÒNG KINH DOANH 1.
+5. Bấm ""+ Thêm Phòng Ban"", dòng 2 chọn PHÒNG KINH DOANH 2.
+6. Xoá dòng 2 (thùng rác), bấm Xoá.",,"- Sau bước 3: Hà Nội có 2 dòng = 2 phòng được chia, KHÔNG còn link ""+ Thêm Phòng Ban""
+- Sau bước 4: link ""+ Thêm Phòng Ban"" hiện lại dưới dòng cuối",,,,,,,,
+,,TC_03.024,Link Chia Bộ Phận nằm cùng hàng nút Xoá,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Quan sát dòng phòng ở Hà Nội (chưa chọn phòng), rồi chọn PHÒNG KINH DOANH 1.",,"- Link ""+ Chia Bộ Phận"" nằm cùng hàng với ô Chọn phòng ban và nút thùng rác (không xuống dòng riêng), dòng thấp hơn trước
+- Chưa chọn phòng: link mờ, rê chuột hiện ""Chọn phòng trước"", bấm không có tác dụng
+- Chọn phòng xong: link bấm được; ""+ Thêm Phòng Ban"" vẫn nằm dưới dòng phòng cuối của tỉnh",,,,,,,,
+,,TC_03.025,Phòng chỉ được chia theo bộ phận thì chỉ chọn được bộ phận đó,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 2, bấm ""+ Chia Bộ Phận"".
+5. Mở ô Chọn bộ phận.",,"- Ô Chọn bộ phận chỉ có Nhóm KD2-1, KHÔNG có Nhóm KD2-2 (Nhóm KD2-2 không được chia thị trường tại Hà Nội)
+- Chọn Nhóm KD2-1 xong thì link ""+ Thêm Bộ Phận"" mờ, rê chuột hiện ""Đã chia hết bộ phận của phòng""",,,,,,,,
+,,TC_03.026,Phòng được chia cả phòng thì chọn được mọi bộ phận,P2,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.
+PHÒNG KINH DOANH 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1, bấm ""+ Chia Bộ Phận"", mở ô Chọn bộ phận.",,"- Ô Chọn bộ phận có đủ Nhóm KD1-1, Nhóm KD1-2",,,,,,,,
+,,TC_03.027,Phòng không còn được chia thị trường thì báo lỗi khi lưu,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.
+Sau khi P1 lưu, phiếu phân chia thị trường giao Hà Nội cho PHÒNG KINH DOANH 1 bị Hủy duyệt.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở dòng phiếu P1 bấm Sửa (biểu tượng bút chì).
+3. Không sửa gì, bấm Lưu.",,"- Ô phòng vẫn hiện đúng tên PHÒNG KINH DOANH 1
+- Báo đỏ ngay dưới ô phòng: ""Phòng chưa được phân chia thị trường tại Tỉnh/TP này"", phiếu không được lưu
+- Chọn lại phòng hợp lệ thì lỗi đỏ mất, Lưu được",,,,,,,,
+,,III. THÊM MỚI — THỐNG KÊ DÒNG TỈNH/TP & TOÀN PHIẾU,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,THỐNG KÊ DÒNG TỈNH/TP & TOÀN PHIẾU,TC_03.028,Chỉ số trên dòng Tỉnh/TP,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Quan sát dòng Thành phố Hà Nội trước khi chọn phòng.",,"- Sau tên tỉnh có 3 nhãn: ""3 KVKD"", ""2 phòng được chia"", ""Đã phân 0/2 phòng""
+- Nhãn ""Đã phân 0/2 phòng"" màu cam (chưa giao đủ)",,,,,,,,
+,,TC_03.029,Giao đủ phòng thì nhãn chuyển xanh,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội dòng 1 chọn PHÒNG KINH DOANH 1.
+5. Bấm ""+ Thêm Phòng Ban"", chọn PHÒNG KINH DOANH 2.
+6. Xoá dòng PHÒNG KINH DOANH 2.",,"- Bước 1: ""Đã phân 1/2 phòng"" màu cam, còn link ""+ Thêm Phòng Ban""
+- Bước 2: ""Đã phân 2/2 phòng"" màu xanh, KHÔNG còn link ""+ Thêm Phòng Ban""
+- Bước 3: về ""Đã phân 1/2 phòng"" màu cam, link ""+ Thêm Phòng Ban"" hiện lại",,,,,,,,
+,,TC_03.030,Bấm nhãn KVKD xem danh sách khu vực kinh doanh,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.
+KV HN 1 có 12 phường/xã, đang chia cho PHÒNG KINH DOANH 1.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Bấm nhãn ""3 KVKD"" ở dòng Hà Nội.
+5. Gõ ""hn 1"" (không dấu) vào ô tìm.
+6. Bấm tiêu đề cột Số phường/xã.
+7. Bấm Đóng.",,"- Popup ""Danh sách khu vực kinh doanh"", dòng phụ ""Kinh doanh · Thành phố Hà Nội · 3 khu vực""
+- Cột: Khu vực kinh doanh, Số phường/xã, Phòng ban / bộ phận đang được chia; 3 dòng; KV HN 1: 12, PHÒNG KINH DOANH 1
+- Tìm không dấu ra đúng KV HN 1, góc phải hiện ""1 / 3 dòng""; sắp xếp số phường/xã theo giá trị số
+- Đóng popup thì bảng nhập liệu giữ nguyên",,,,,,,,
+,,TC_03.031,Bấm nhãn phòng được chia xem danh sách phòng,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1.
+5. Bấm nhãn ""2 phòng được chia"".",,"- Popup ""Danh sách phòng ban được chia thị trường"", dòng phụ ""Kinh doanh · Thành phố Hà Nội · 2 phòng""
+- Cột: Phòng ban, Phạm vi được chia, Phiếu phân chia thị trường, Giao chỉ tiêu trên phiếu này
+- PHÒNG KINH DOANH 1: ""Cả phòng"", số phiếu phân chia, ""Đã giao"" màu xanh
+- PHÒNG KINH DOANH 2: ""Bộ phận: Nhóm KD2-1"", ""Chưa giao"" màu cam",,,,,,,,
+,,TC_03.032,Khối thống kê toàn phiếu,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1 nhập Khách hãng Hàng hóa 5 / 1,500,000,000 và Khách khác Dịch vụ 1 / 200,000,000.
+5. Hải Phòng chọn PHÒNG KINH DOANH 1 nhập Khách hãng Dịch vụ 2 / 300,000,000.",,"- Trên thanh tab có khối thống kê 3 ô:
+- ""Phòng ban được chia thị trường"": Tổng 3 · Đã được phân 2 · Chưa được phân 1 (màu cam)
+- ""Tổng SL khách hàng đã giao"": 8, Hàng hóa 5 · Dịch vụ 3
+- ""Tổng Doanh số đã giao (VNĐ)"": 2,000,000,000, Hàng hóa 1,500,000,000 · Dịch vụ 500,000,000
+- Số tự cập nhật ngay khi gõ / chọn phòng, không cần lưu",,,,,,,,
+,,TC_03.033,Cách đếm phòng ở khối thống kê,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Rê chuột vào ⓘ của ô ""Phòng ban được chia thị trường"".
+5. Chọn đủ 2 phòng ở Hà Nội và PHÒNG KINH DOANH 1 ở Hải Phòng.",,"- Tooltip: đếm theo từng Tỉnh/TP — 1 phòng được chia ở 3 tỉnh tính 3; Chưa được phân = Tổng − Đã được phân
+- Sau bước 2: Tổng 3 · Đã được phân 3 · Chưa được phân 0 (màu xanh)",,,,,,,,
+,,TC_03.034,Thống kê cộng mọi khối kinh doanh,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.
+Khối Nghiệp vụ: Hà Nội chia cho PHÒNG DỰ ÁN 1.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Nghiệp vụ; mỗi khối chọn khu vực Đồng bằng sông Hồng.
+4. Tab Kinh doanh: Hà Nội PHÒNG KINH DOANH 1 nhập 5 / 1,500,000,000.
+5. Tab Nghiệp vụ: Hà Nội PHÒNG DỰ ÁN 1 nhập 1 / 100,000,000.",,"- Khối thống kê: Tổng 4 phòng được chia (3 của Kinh doanh + 1 của Nghiệp vụ), Đã được phân 2
+- Tổng SL khách 6, Tổng Doanh số 1,600,000,000 (cộng cả 2 khối)",,,,,,,,
+,,IV. CHỈNH SỬA,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,CHỈNH SỬA,TC_04.001,"Mở Sửa từ danh sách, dữ liệu điền đúng",P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm biểu tượng Sửa (bút chì) ở dòng TPE_CTKD_2027.00015.",—,"- Tiêu đề ""Sửa phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015""
+ - Số phiếu TPE_CTKD_2027.00015 (khoá), Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng đúng số đã lưu; Bắc Ninh có 1 dòng phòng trống
+ - Chân trang: Lưu, Lưu và gửi, Quay lại","- Tiêu đề ""Sửa phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015""
+ - Số phiếu TPE_CTKD_2027.00015 (khoá), Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng đúng số đã lưu; Bắc Ninh có 1 dòng phòng trống
+ - Chân trang: Lưu, Lưu và gửi, Quay lại",Passed,,,,,,
+,,TC_04.002,Sửa số một dòng,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm biểu tượng Sửa (bút chì) ở dòng TPE_CTKD_2027.00015.
+ 3. Đổi Khách hãng Hàng hóa Doanh số dòng Kinh doanh 1 Hà Nội từ 1,500,000,000 thành 1,800,000,000.
+ 4. Bấm Lưu.",—,"- Báo ""Đã lưu TPE_CTKD_2027.00015"", về danh sách
+ - Mở Xem: dòng Hà Nội Khách hãng Hàng hóa thành 3,000,000,000, dòng TỔNG 3,750,000,000
+ - Trạng thái vẫn Đang tạo","- Báo ""Đã lưu TPE_CTKD_2027.00015"", về danh sách
+ - Mở Xem: dòng Hà Nội Khách hãng Hàng hóa thành 3,000,000,000, dòng TỔNG 3,750,000,000
+ - Trạng thái vẫn Đang tạo",Passed,,,,,,
+,,TC_04.003,Ô Năm ở màn Sửa giữ năm của chính phiếu,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.
+TPE còn phiếu năm 2028 Chờ duyệt.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở dòng phiếu P1 bấm Sửa (biểu tượng bút chì).
+3. Mở ô Năm.",,"- Ô Năm hiện Năm 2027 (năm của chính phiếu P1)
+- Danh sách năm không có Năm 2028",,,,,,,,
+,,V. GỬI DUYỆT,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,GỬI DUYỆT,TC_05.001,Lưu và gửi: có Doanh số mà thiếu SL khách,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1, chỉ nhập Doanh số 1,500,000,000.
+5. Bấm Lưu và gửi.",,"- Báo đỏ dưới ô SL khách: ""Bắt buộc nhập SL Khách vì đã có doanh số""
+- Phiếu không được gửi duyệt",,,,,,,,
+,,TC_05.002,Lưu và gửi: có SL khách mà thiếu Doanh số,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1, chỉ nhập SL khách 5.
+5. Bấm Lưu và gửi.",,"- Báo đỏ dưới ô Doanh số: ""Bắt buộc nhập doanh số vì đã có SL Khách""",,,,,,,,
+,,TC_05.003,Lưu và gửi phiếu không có doanh số,P1,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1, không nhập số nào.
+5. Bấm Lưu và gửi.",,"- Báo ""Phiếu chưa có chỉ tiêu doanh số — không gửi được"", phiếu không được gửi",,,,,,,,
+,,TC_05.004,Lưu và gửi thành công,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Công ty TPE chưa có phiếu giao chỉ tiêu nào cho năm 2027.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm Tạo mới.
+3. Chọn Năm 2027, Khối kinh doanh = Kinh doanh, Khu vực = Đồng bằng sông Hồng.
+4. Hà Nội chọn PHÒNG KINH DOANH 1, nhập Khách hãng Hàng hóa 5 / 1,500,000,000.
+5. Bấm Lưu và gửi.",,"- Phiếu được lưu và chuyển Chờ duyệt
+- Phiếu hiện ở lối vào ""Giao chỉ tiêu chờ duyệt"" của người có quyền Duyệt",,,,,,,,
+,,VI. DUYỆT / TỪ CHỐI / HỦY DUYỆT / HỦY PHIẾU,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,DUYỆT / TỪ CHỐI / HỦY DUYỆT / HỦY PHIẾU,TC_06.001,Hủy duyệt bắt buộc nhập lý do,P0,"Tài khoản D có quyền ""Duyệt chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đã duyệt (D đã duyệt): Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở phiếu P1 bấm ⋮ > Hủy duyệt.
+3. Để trống Lý do, bấm Hủy duyệt.
+4. Nhập lý do ""Điều chỉnh chỉ tiêu"", bấm Hủy duyệt.",Lý do: Điều chỉnh chỉ tiêu,"- Hộp ""Hủy duyệt phiếu"" có ô Lý do bắt buộc, 2 nút Đóng / Hủy duyệt
+- Bước 2: báo ""Bắt buộc phải nhập"", không hủy duyệt
+- Bước 3: phiếu về Đang tạo; người lập nhận thông báo kèm lý do",,,,,,,,
+,,TC_06.002,Lý do quá dài,P2,"Tài khoản D có quyền ""Duyệt chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đã duyệt (D đã duyệt): Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở phiếu P1 bấm ⋮ > Hủy duyệt, nhập lý do 256 ký tự, bấm Hủy duyệt.",Lý do 256 ký tự,"- Báo ""Vui lòng nhập tối đa 255 ký tự."", không hủy duyệt (Từ chối cho tối đa 1000 ký tự)",,,,,,,,
+,,TC_07.001,Từ chối ngay ở danh sách,P0,"Tài khoản D có quyền ""Duyệt chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Chờ duyệt (A đã gửi duyệt): Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Phê Duyệt > Kế hoạch & chỉ tiêu > Giao chỉ tiêu chờ duyệt.
+2. Ở dòng phiếu P1 mở menu ⋮.
+3. Bấm Từ chối, nhập lý do ""Sai số liệu"", bấm Từ chối.",Lý do: Sai số liệu,"- Menu ⋮ của phiếu Chờ duyệt có nút ""Từ chối"" (trước đây chỉ có ở màn Chi tiết)
+- Hộp ""Từ chối phiếu"" có ô Lý do bắt buộc, 2 nút Hủy / Từ chối
+- Từ chối xong phiếu về Đang tạo",,,,,,,,
+,,TC_07.002,Từ chối bỏ trống lý do,P1,"Tài khoản D có quyền ""Duyệt chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Chờ duyệt (A đã gửi duyệt): Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Phê Duyệt > Kế hoạch & chỉ tiêu > Giao chỉ tiêu chờ duyệt.
+2. Ở phiếu P1 bấm ⋮ > Từ chối, để trống Lý do, bấm Từ chối.",,"- Báo đỏ dưới ô Lý do ""Bắt buộc phải nhập"" và thông báo ""Bạn chưa nhập đầy đủ thông tin""
+- Hộp không đóng, phiếu vẫn Chờ duyệt",,,,,,,,
+,,TC_08.001,Hủy phiếu bắt buộc nhập lý do,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở phiếu P1 bấm ⋮ > Hủy phiếu.
+3. Để trống Lý do, bấm Hủy phiếu.
+4. Nhập lý do ""Lập nhầm"", bấm Hủy phiếu.",Lý do: Lập nhầm,"- Hộp ""Hủy phiếu"" có ô Lý do bắt buộc, 2 nút Đóng / Hủy phiếu
+- Bước 2: báo ""Bắt buộc phải nhập"", phiếu không bị hủy
+- Bước 3: phiếu chuyển Hủy; năm 2027 xuất hiện lại trong ô Năm khi tạo phiếu mới",,,,,,,,
+,,VII. LỊCH SỬ THAY ĐỔI,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,LỊCH SỬ THAY ĐỔI,TC_09.001,Lịch sử ghi rõ lý do từng thao tác,P0,"Tài khoản D có quyền ""Duyệt chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu P1 đã lần lượt: Gửi duyệt, Từ chối (lý do ""Sai số liệu""), Gửi duyệt, Duyệt, Hủy duyệt (lý do ""Điều chỉnh""), Hủy phiếu (lý do ""Lập nhầm"").","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở phiếu P1 bấm ⋮ > Lịch sử.",,"- Mỗi lần chuyển trạng thái là 1 dòng tiêu đề ""Thay đổi trạng thái"" màu cam, kèm dòng Trạng thái ghi trạng thái cũ và trạng thái mới
+- Dòng Từ chối ghi ""Lý do từ chối: Sai số liệu""; dòng Hủy duyệt ghi ""Lý do hủy duyệt: Điều chỉnh""; dòng Hủy ghi ""Lý do hủy: Lập nhầm""",,,,,,,,
+,,TC_09.002,Lưu mà không sửa gì thì không ghi lịch sử,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở dòng phiếu P1 bấm Sửa (biểu tượng bút chì).
+3. Không đổi gì, bấm Lưu.
+4. Mở ⋮ > Lịch sử của P1.",,- Không phát sinh dòng lịch sử Sửa mới; KHÔNG còn dòng ghi đổi Số phiếu và Năm,,,,,,,,
+,,TC_09.003,Lịch sử Sửa chỉ ghi phần đổi,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Ở dòng phiếu P1 bấm Sửa (biểu tượng bút chì).
+3. Đổi Doanh số Khách hãng Hàng hóa PHÒNG KINH DOANH 1 từ 1,500,000,000 thành 1,800,000,000, bấm Lưu.
+4. Mở ⋮ > Lịch sử.",,"- Có 1 dòng Sửa, mục ""Danh sách chỉ tiêu"", dòng ""Kinh doanh · Thành phố Hà Nội · PHÒNG KINH DOANH 1"": ""Khách hãng - Hàng hóa - Doanh số"" giá trị cũ 1,500,000,000, giá trị mới 1,800,000,000
+- Không có dòng Số phiếu / Năm",,,,,,,,
+,,VIII. XEM CHI TIẾT PHIẾU,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,XEM CHI TIẾT PHIẾU,TC_10.001,Giao diện màn Xem,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm số phiếu TPE_CTKD_2027.00015.",—,"- Tiêu đề ""Chi tiết phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015"" kèm nhãn Đang tạo
+- Khối ""Thông tin phiếu"" KHÔNG còn nhãn trạng thái riêng, KHÔNG còn dòng ""Lý do từ chối"" (lý do xem ở Lịch sử thay đổi)
+- Năm, Khối kinh doanh, Khu vực hiện dạng chữ trong KHUNG viền nền xám như ô bị khoá, không sửa được
+- Bảng không có ô nhập, không có thùng rác, liên kết Thêm / Chia
+- Thu / mở cây và ô Hiển thị đến cấp vẫn dùng được
+- Không có nút Lưu","- Tiêu đề ""Chi tiết phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015"" kèm nhãn Đang tạo
+ - Năm, Khối kinh doanh, Khu vực hiện dạng chữ, không sửa được; bảng không có ô nhập, không có thùng rác, liên kết Thêm / Chia
+ - Thu / mở cây và ô Hiển thị đến cấp vẫn dùng được
+ - Không có nút Lưu",Passed,,Cập nhật 27/11 theo task sửa lại (#12317) — cần test lại,,,,
+,,TC_10.002,Số liệu màn Xem khớp danh sách và lúc lập,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Mở Xem TPE_CTKD_2027.00015.",—,"- Dòng TỔNG khối Kinh doanh: Khách hãng Hàng hóa 11 / 3,450,000,000, Tổng cộng Hàng hóa 17 / 4,800,000,000
+ - Ô 0 ở dòng phòng để trống, dòng tỉnh / dòng TỔNG hiện 0
+ - Năm, trạng thái khớp cột ở danh sách","- Dòng TỔNG khối Kinh doanh: Khách hãng Hàng hóa 11 / 3,450,000,000, Tổng cộng Hàng hóa 17 / 4,800,000,000
+ - Ô 0 ở dòng phòng để trống, dòng tỉnh / dòng TỔNG hiện 0
+ - Năm, trạng thái khớp cột ở danh sách",Passed,,,,,,
+,,TC_10.010,Phiếu lập trên hệ thống cũ,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu TPE_CTKD_2025.00004 lập trên hệ thống cũ (Đã duyệt), dòng phòng Hà Nội có nhập chi tiết khách hàng: 2 khách hãng Hàng hóa, doanh số 1,100,000,000.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Mở Xem TPE_CTKD_2025.00004.",—,"- Hiện đủ khối, tỉnh, phòng và 8 số như hệ thống cũ (Khách hãng Hàng hóa 2 / 1,100,000,000)
+ - Không có nút / popup ""Thêm / Xem Khách Hàng""
+ - Nút: Xuất Excel, In, Quay lại","- Hiện đủ khối, tỉnh, phòng và 8 số như hệ thống cũ (Khách hãng Hàng hóa 2 / 1,100,000,000)
+ - Không có nút / popup ""Thêm / Xem Khách Hàng""
+ - Nút: Xuất Excel, In, Quay lại",Passed,,,,,,
+,,TC_10.011,Màn Chi tiết hiện thống kê,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu phân chia thị trường theo phòng ban ĐÃ DUYỆT của TPE (khối Kinh doanh): Thành phố Hà Nội chia cho PHÒNG KINH DOANH 1 (cả phòng) và PHÒNG KINH DOANH 2 (chỉ bộ phận Nhóm KD2-1); Thành phố Hải Phòng chia cho PHÒNG KINH DOANH 1; Tỉnh Bắc Ninh chưa chia cho phòng nào. Khối Kinh doanh còn PHÒNG QUẢN TRỊ THÔNG TIN (không được chia ở tỉnh nào). Hà Nội có 3 khu vực kinh doanh đang hoạt động (KV HN 1, KV HN 2, KV HN 3).
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Đang tạo: Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+2. Bấm số phiếu P1.
+3. Bấm nhãn ""3 KVKD"" và ""2 phòng được chia"" ở dòng Hà Nội.",,"- Màn Chi tiết có khối thống kê toàn phiếu và các nhãn KVKD / phòng được chia / Đã phân X/Y phòng ở dòng Tỉnh/TP như màn Sửa
+- Bấm nhãn mở đúng popup danh sách khu vực / danh sách phòng như ở màn Tạo / Sửa
+- Chữ trong khối thống kê: nhãn nhỏ, số to đậm, cùng cỡ với khối thống kê ở các màn báo cáo",,,,,,,,
+,,IX. IN PHIẾU,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,IN PHIẾU,TC_11.003,Bảng số trên bản in,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.
+ Kinh doanh 1 Hà Nội có 2 bộ phận.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Mở In TPE_CTKD_2027.00015.",—,"- Mỗi khối 1 bảng ""Khối Kinh doanh"": cột STT, Tỉnh/TP, Phòng phụ trách + 12 cột 3 tầng (Khách hãng / Khách khác / Tổng cộng; Hàng hóa / Dịch vụ; SL / Doanh số)
+ - Dòng TỔNG CỘNG; mỗi tỉnh có dòng Năm trước, Tổng cộng, các dòng phòng, dòng bộ phận thụt lề
+ - Mục ""Tổng hợp"" cuối với cột Khối thay cho Phòng phụ trách
+ - Số có dấu phẩy ngăn nghìn, khớp màn Xem","- Mỗi khối 1 bảng ""Khối Kinh doanh"": cột STT, Tỉnh/TP, Phòng phụ trách + 12 cột 3 tầng (Khách hãng / Khách khác / Tổng cộng; Hàng hóa / Dịch vụ; SL / Doanh số)
+ - Dòng TỔNG CỘNG; mỗi tỉnh có dòng Năm trước, Tổng cộng, các dòng phòng, dòng bộ phận thụt lề
+ - Mục ""Tổng hợp"" cuối với cột Khối thay cho Phòng phụ trách
+ - Số có dấu phẩy ngăn nghìn, khớp màn Xem",Passed,,,,,,
+,,X. RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC,TC_14.001,Yêu cầu issue: bỏ chọn chi tiết khách hàng,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn khối Kinh doanh, vùng Đồng bằng sông Hồng, chọn phòng ở Hà Nội.",—,"- Dòng phòng có đủ 8 ô nhập thẳng: Khách hãng (Hàng hóa, Dịch vụ) và Khách khác (Hàng hóa, Dịch vụ), mỗi nhóm có SL khách và Doanh số
+ - KHÔNG có nút / popup ""Thêm / Xem Khách Hàng"", không có ô tick ""Khách hàng mới""
+ - Nhóm Tổng cộng tự tính = Khách hãng + Khách khác","- Dòng phòng có đủ 8 ô nhập thẳng: Khách hãng (Hàng hóa, Dịch vụ) và Khách khác (Hàng hóa, Dịch vụ), mỗi nhóm có SL khách và Doanh số
+ - KHÔNG có nút / popup ""Thêm / Xem Khách Hàng"", không có ô tick ""Khách hàng mới""
+ - Nhóm Tổng cộng tự tính = Khách hãng + Khách khác",Passed,,,,,,
+,,XI. PHÂN QUYỀN,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,PHÂN QUYỀN,TC_15.001,Từ chối / Hủy duyệt chỉ hiện với người có quyền Duyệt,P0,"Tài khoản A có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"", đang làm việc ở công ty TPE.
+Phiếu P1 = TPE_CTKD_2027.000NN do A lập, Chờ duyệt (A đã gửi duyệt): Năm 2027, khối Kinh doanh, khu vực Đồng bằng sông Hồng; Hà Nội: PHÒNG KINH DOANH 1 Khách hãng / Hàng hóa SL khách 5, Doanh số 1,500,000,000.","1. Đăng nhập A (chỉ có quyền Tạo).
+2. Vào phân hệ Bán hàng > Kế hoạch > Giao chỉ tiêu kinh doanh > Theo phòng ban.
+3. Mở ⋮ của phiếu P1.",,"- Không có nút Duyệt, Từ chối; phiếu Đã duyệt không có nút Hủy duyệt",,,,,,,,

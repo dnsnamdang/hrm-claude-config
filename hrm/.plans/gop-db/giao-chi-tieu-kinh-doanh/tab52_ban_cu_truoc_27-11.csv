@@ -1,0 +1,203 @@
+Testcase _ 11643 Phiếu giao chỉ tiêu kinh doanh theo phòng ban,,,,,TEST SUMARY,,,Số trường hợp kiểm thử đạt (P):,19,,,,,,Số trường hợp TP kiểm thử đạt (P):,,,0
+,,,,,,,,Số trường hợp kiểm thử không đạt (F),0,,,,,,Số trường hợp TP kiểm thử không đạt (F),,,0
+,,,,,,,,Số trường hợp kiểm thử đang xem xét (PE),0,,,,,,Số trường hợp TP kiểm thử đang xem xét (PE),,,0
+,,,,,,,,Số trường hợp kiểm thử chưa thực hiện,0,,,,,,Số trường hợp TP kiểm thử chưa thực hiện,,,0
+,,,,,,,,Tổng số trường hợp kiểm thử,19,,,,,,Tổng số trường hợp TP kiểm thử,,,0
+Module,Nhóm chức năng,TC ID,Chức năng,Priority,Tiền điều kiện,Bước thực hiện,Test Data,Expected Result (chi tiết),Actual Result,Status check lần 1,Status check lần2,Ghi chú,TPE TEST 1,TPE TEST2,TPE TEST 1,Kết quả hiện tại,Ghi chú TPE,
+,,I. THÊM MỚI,,,,,,,,,,,,,,,,
+Phiếu giao chi tiêu KD theo phòng ban,Thêm mới,TC_03.001,Tiêu đề bảng 12 cột 3 tầng,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn khối Kinh doanh, vùng Đồng bằng sông Hồng.",—,"- Cột trái: STT, ""Tỉnh/TP / Phòng ban / Bộ phận"" kèm ô chọn cấp hiển thị
+ - Tầng 1: Khách hãng, Khách khác, Tổng cộng (mỗi nhóm 4 cột)
+ - Tầng 2: mỗi nhóm có Hàng hóa, Dịch vụ
+ - Tầng 3: mỗi cặp có SL khách, Doanh số
+ - Nhóm Tổng cộng chỉ hiển thị (không có ô nhập)
+ - KHÔNG có cột / nút khách hàng chi tiết","- Cột trái: STT, ""Tỉnh/TP / Phòng ban / Bộ phận"" kèm ô chọn cấp hiển thị
+ - Tầng 1: Khách hãng, Khách khác, Tổng cộng (mỗi nhóm 4 cột)
+ - Tầng 2: mỗi nhóm có Hàng hóa, Dịch vụ
+ - Tầng 3: mỗi cặp có SL khách, Doanh số
+ - Nhóm Tổng cộng chỉ hiển thị (không có ô nhập)
+ - KHÔNG có cột / nút khách hàng chi tiết",Passed,,,,,,,,
+,,TC_03.002,"Nhập số và cộng tổng tỉnh, tổng khối",P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).
+ Phiếu TPE_CTKD_2026.00009 (năm 2026, Đã duyệt) khối Kinh doanh, Hà Nội: Khách hãng Hàng hóa 8 / 2,500,000,000, Dịch vụ 2 / 450,000,000; Khách khác Hàng hóa 4 / 950,000,000, Dịch vụ 1 / 150,000,000.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn Năm 2027, khối Kinh doanh, vùng Đồng bằng sông Hồng.
+ 4. Nhập 3 dòng phòng theo Test Data (chưa lưu).","Hà Nội, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: SL khách 5, Doanh số 1,500,000,000
+ Khách hãng Dịch vụ: SL khách 2, Doanh số 300,000,000
+ Khách khác Hàng hóa: SL khách 3, Doanh số 600,000,000
+ Khách khác Dịch vụ: SL khách 1, Doanh số 150,000,000
+ Hà Nội, phòng Kinh doanh 2:
+ Khách hãng Hàng hóa: 4 / 1,200,000,000
+ Khách hãng Dịch vụ: 1 / 200,000,000
+ Khách khác Hàng hóa: 2 / 500,000,000
+ Hải Phòng, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: 2 / 750,000,000
+ Khách khác Hàng hóa: 1 / 250,000,000","- Nhóm Tổng cộng dòng Kinh doanh 1 Hà Nội tự hiện: Hàng hóa 8 / 2,100,000,000, Dịch vụ 3 / 450,000,000
+ - Dòng Hà Nội: ""Hà Nội (2 phòng)"", Khách hãng Hàng hóa 9 / 2,700,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 5 / 1,100,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 14 / 3,800,000,000, Dịch vụ 4 / 650,000,000
+ - Dòng Hải Phòng: Khách hãng Hàng hóa 2 / 750,000,000, Khách khác Hàng hóa 1 / 250,000,000, Tổng cộng Hàng hóa 3 / 1,000,000,000
+ - Dòng TỔNG ""3 Tỉnh/TP · 3 phòng · 0 bộ phận"": Khách hãng Hàng hóa 11 / 3,450,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 6 / 1,350,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 17 / 4,800,000,000, Dịch vụ 4 / 650,000,000","- Nhóm Tổng cộng dòng Kinh doanh 1 Hà Nội tự hiện: Hàng hóa 8 / 2,100,000,000, Dịch vụ 3 / 450,000,000
+ - Dòng Hà Nội: ""Hà Nội (2 phòng)"", Khách hãng Hàng hóa 9 / 2,700,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 5 / 1,100,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 14 / 3,800,000,000, Dịch vụ 4 / 650,000,000
+ - Dòng Hải Phòng: Khách hãng Hàng hóa 2 / 750,000,000, Khách khác Hàng hóa 1 / 250,000,000, Tổng cộng Hàng hóa 3 / 1,000,000,000
+ - Dòng TỔNG ""3 Tỉnh/TP · 3 phòng · 0 bộ phận"": Khách hãng Hàng hóa 11 / 3,450,000,000, Dịch vụ 3 / 500,000,000; Khách khác Hàng hóa 6 / 1,350,000,000, Dịch vụ 1 / 150,000,000; Tổng cộng Hàng hóa 17 / 4,800,000,000, Dịch vụ 4 / 650,000,000",Passed,,,,,,,,
+,,TC_03.003,Lưu phiếu đầy đủ hợp lệ,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn Năm 2027, khối Kinh doanh, vùng Đồng bằng sông Hồng, nhập theo Test Data.
+ 4. Bấm Lưu.","Hà Nội, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: SL khách 5, Doanh số 1,500,000,000
+ Khách hãng Dịch vụ: SL khách 2, Doanh số 300,000,000
+ Khách khác Hàng hóa: SL khách 3, Doanh số 600,000,000
+ Khách khác Dịch vụ: SL khách 1, Doanh số 150,000,000
+ Hà Nội, phòng Kinh doanh 2:
+ Khách hãng Hàng hóa: 4 / 1,200,000,000
+ Khách hãng Dịch vụ: 1 / 200,000,000
+ Khách khác Hàng hóa: 2 / 500,000,000
+ Hải Phòng, phòng Kinh doanh 1:
+ Khách hãng Hàng hóa: 2 / 750,000,000
+ Khách khác Hàng hóa: 1 / 250,000,000","- Báo ""Đã lưu TPE_CTKD_2027.xxxxx"", quay về danh sách
+ - Phiếu mới ở đầu danh sách, trạng thái Đang tạo, Năm 2027, Người tạo Nguyễn Văn A
+ - Số phiếu dạng <mã công ty>_CTKD_<năm>.<số thứ tự 5 chữ số>","- Báo ""Đã lưu TPE_CTKD_2027.xxxxx"", quay về danh sách
+ - Phiếu mới ở đầu danh sách, trạng thái Đang tạo, Năm 2027, Người tạo Nguyễn Văn A
+ - Số phiếu dạng <mã công ty>_CTKD_<năm>.<số thứ tự 5 chữ số>",Passed,,,,,,,,
+,,TC_03.004,Dữ liệu sau lưu khớp số đã nhập,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Vừa lưu phiếu ở ca trên.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm số phiếu vừa lưu.",—,"- Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng với đúng số đã nhập, dòng TỔNG như lúc nhập
+ - Bắc Ninh còn trong bảng với ""(0 phòng)""
+ - Năm trước Hà Nội như phiếu 2026","- Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng với đúng số đã nhập, dòng TỔNG như lúc nhập
+ - Bắc Ninh còn trong bảng với ""(0 phòng)""
+ - Năm trước Hà Nội như phiếu 2026",Passed,,,,,,,,
+,,TC_03.005,Lưu không kiểm cặp SL khách / Doanh số,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1, chỉ nhập Khách hãng Hàng hóa SL khách 5 (bỏ trống Doanh số).
+ 4. Bấm Lưu.",SL khách: 5,"- Lưu được (Đang tạo)
+ - Cặp SL khách / Doanh số chỉ kiểm khi gửi duyệt","- Lưu được (Đang tạo)
+ - Cặp SL khách / Doanh số chỉ kiểm khi gửi duyệt",Passed,,,,,,,,
+,,TC_03.006,Ô số không nhận số âm và chữ,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1, gõ lần lượt vào ô SL khách: -5, abc.",-5; abc,"- Gõ -5: dấu trừ không nhận, ô hiện 5
+ - Gõ abc: ô không nhận chữ","- Gõ -5: dấu trừ không nhận, ô hiện 5
+ - Gõ abc: ô không nhận chữ",Passed,,,,,,,,
+,,TC_03.007,Ô số không có phần thập phân,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Gõ 2.5 vào ô Doanh số.",2.5,"- Dấu chấm không được nhận làm phần thập phân, ô chỉ chứa số nguyên
+ - Lưu ý: ghi rõ ô hiện gì (25 hay 2) vào KQ thực tế để đối chiếu","- Dấu chấm không được nhận làm phần thập phân, ô chỉ chứa số nguyên
+ - Lưu ý: ghi rõ ô hiện gì (25 hay 2) vào KQ thực tế để đối chiếu",Passed,,,,,,,,
+,,TC_03.008,Hiển thị và dán số có dấu ngăn nghìn,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Gõ 1500000000 vào ô Doanh số.
+ 4. Dán ""1,234"" vào ô SL khách khác.
+ 5. Dán ""1.234"" vào ô SL khách khác nữa.","1500000000
+ 1,234
+ 1.234","- Ô hiện 1,500,000,000
+ - Dán ""1,234"" và ""1.234"" đều thành 1,234
+ - Dòng tỉnh, dòng TỔNG cũng hiện dạng 1,234,567","- Ô hiện 1,500,000,000
+ - Dán ""1,234"" và ""1.234"" đều thành 1,234
+ - Dòng tỉnh, dòng TỔNG cũng hiện dạng 1,234,567",Passed,,,,,,,,
+,,TC_03.009,Ô số vượt 13 chữ số,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1; ô Khách hãng Hàng hóa SL khách 1, Doanh số gõ 14 chữ số.
+ 4. Bấm Lưu.
+ 5. Sửa Doanh số thành 13 chữ số 9999999999999, bấm Lưu.","12345678901234
+ 9999999999999","- Lần 1: ô Doanh số đỏ ""Giá trị vượt quá giới hạn cho phép"" ngay dưới ô, không lưu, số đã gõ giữ nguyên
+ - Lần 2: lưu được, ô hiện 9,999,999,999,999","- Lần 1: ô Doanh số đỏ ""Giá trị vượt quá giới hạn cho phép"" ngay dưới ô, không lưu, số đã gõ giữ nguyên
+ - Lần 2: lưu được, ô hiện 9,999,999,999,999",Passed,,,,,,,,
+,,TC_03.010,Ô số 0 và ô trống,P2,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Hà Nội chọn Kinh doanh 1, gõ 0 vào Khách hãng Hàng hóa SL khách, các ô khác để trống.",0,"- Ở dòng phòng, ô bằng 0 / trống hiển thị trống (không in 0, không in dấu gạch)
+ - Dòng tỉnh và dòng TỔNG hiện 0 ở cột không có số","- Ở dòng phòng, ô bằng 0 / trống hiển thị trống (không in 0, không in dấu gạch)
+ - Dòng tỉnh và dòng TỔNG hiện 0 ở cột không có số",Passed,,,,,,,,
+,,TC_03.011,Lỗi đỏ biến mất khi sửa đúng,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Tạo lỗi có số mà chưa chọn phòng, bấm Lưu.
+ 4. Chọn phòng Kinh doanh 1 cho dòng đó.",—,"- Chữ đỏ dưới ô phòng mất ngay khi chọn
+ - Bấm Lưu lại thì lưu được","- Chữ đỏ dưới ô phòng mất ngay khi chọn
+ - Bấm Lưu lại thì lưu được",Passed,,,,,,,,
+,,TC_03.012,Lỗi ở tab khác và nhánh đang thu gọn,P1,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.
+ Công ty TPE chưa có phiếu năm 2027 còn hiệu lực (chỉ có TPE_CTKD_2027.00012 đã Hủy).","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn 2 khối; ở tab Nghiệp vụ dòng Hà Nội nhập số nhưng không chọn phòng.
+ 4. Thu gọn Hà Nội ở tab Nghiệp vụ, chuyển sang tab Tổng hợp.
+ 5. Bấm Lưu.",—,"- Tab Nghiệp vụ có chấm đỏ
+ - Tự chuyển về tab Nghiệp vụ, Hà Nội tự mở ra, cuộn tới ô lỗi đầu tiên","- Tab Nghiệp vụ có chấm đỏ
+ - Tự chuyển về tab Nghiệp vụ, Hà Nội tự mở ra, cuộn tới ô lỗi đầu tiên",Passed,,,,,,,,
+,,II. CHỈNH SỬA,,,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,CHỈNH SỬA,TC_04.001,"Mở Sửa từ danh sách, dữ liệu điền đúng",P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm biểu tượng Sửa (bút chì) ở dòng TPE_CTKD_2027.00015.",—,"- Tiêu đề ""Sửa phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015""
+ - Số phiếu TPE_CTKD_2027.00015 (khoá), Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng đúng số đã lưu; Bắc Ninh có 1 dòng phòng trống
+ - Chân trang: Lưu, Lưu và gửi, Quay lại","- Tiêu đề ""Sửa phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015""
+ - Số phiếu TPE_CTKD_2027.00015 (khoá), Năm 2027, Khối Kinh doanh, Khu vực Đồng bằng sông Hồng
+ - Đủ 3 dòng phòng đúng số đã lưu; Bắc Ninh có 1 dòng phòng trống
+ - Chân trang: Lưu, Lưu và gửi, Quay lại",Passed,,,,,,,,
+,,TC_04.002,Sửa số một dòng,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm biểu tượng Sửa (bút chì) ở dòng TPE_CTKD_2027.00015.
+ 3. Đổi Khách hãng Hàng hóa Doanh số dòng Kinh doanh 1 Hà Nội từ 1,500,000,000 thành 1,800,000,000.
+ 4. Bấm Lưu.",—,"- Báo ""Đã lưu TPE_CTKD_2027.00015"", về danh sách
+ - Mở Xem: dòng Hà Nội Khách hãng Hàng hóa thành 3,000,000,000, dòng TỔNG 3,750,000,000
+ - Trạng thái vẫn Đang tạo","- Báo ""Đã lưu TPE_CTKD_2027.00015"", về danh sách
+ - Mở Xem: dòng Hà Nội Khách hãng Hàng hóa thành 3,000,000,000, dòng TỔNG 3,750,000,000
+ - Trạng thái vẫn Đang tạo",Passed,,,,,,,,
+,,III. XEM CHI TIẾT PHIẾU,,,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,XEM CHI TIẾT PHIẾU,TC_10.001,Giao diện màn Xem,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm số phiếu TPE_CTKD_2027.00015.",—,"- Tiêu đề ""Chi tiết phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015"" kèm nhãn Đang tạo
+ - Năm, Khối kinh doanh, Khu vực hiện dạng chữ, không sửa được; bảng không có ô nhập, không có thùng rác, liên kết Thêm / Chia
+ - Thu / mở cây và ô Hiển thị đến cấp vẫn dùng được
+ - Không có nút Lưu","- Tiêu đề ""Chi tiết phiếu giao chỉ tiêu kinh doanh theo phòng ban: TPE_CTKD_2027.00015"" kèm nhãn Đang tạo
+ - Năm, Khối kinh doanh, Khu vực hiện dạng chữ, không sửa được; bảng không có ô nhập, không có thùng rác, liên kết Thêm / Chia
+ - Thu / mở cây và ô Hiển thị đến cấp vẫn dùng được
+ - Không có nút Lưu",Passed,,,,,,,,
+,,TC_10.002,Số liệu màn Xem khớp danh sách và lúc lập,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Mở Xem TPE_CTKD_2027.00015.",—,"- Dòng TỔNG khối Kinh doanh: Khách hãng Hàng hóa 11 / 3,450,000,000, Tổng cộng Hàng hóa 17 / 4,800,000,000
+ - Ô 0 ở dòng phòng để trống, dòng tỉnh / dòng TỔNG hiện 0
+ - Năm, trạng thái khớp cột ở danh sách","- Dòng TỔNG khối Kinh doanh: Khách hãng Hàng hóa 11 / 3,450,000,000, Tổng cộng Hàng hóa 17 / 4,800,000,000
+ - Ô 0 ở dòng phòng để trống, dòng tỉnh / dòng TỔNG hiện 0
+ - Năm, trạng thái khớp cột ở danh sách",Passed,,,,,,,,
+,,TC_10.010,Phiếu lập trên hệ thống cũ,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu TPE_CTKD_2025.00004 lập trên hệ thống cũ (Đã duyệt), dòng phòng Hà Nội có nhập chi tiết khách hàng: 2 khách hãng Hàng hóa, doanh số 1,100,000,000.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Mở Xem TPE_CTKD_2025.00004.",—,"- Hiện đủ khối, tỉnh, phòng và 8 số như hệ thống cũ (Khách hãng Hàng hóa 2 / 1,100,000,000)
+ - Không có nút / popup ""Thêm / Xem Khách Hàng""
+ - Nút: Xuất Excel, In, Quay lại","- Hiện đủ khối, tỉnh, phòng và 8 số như hệ thống cũ (Khách hãng Hàng hóa 2 / 1,100,000,000)
+ - Không có nút / popup ""Thêm / Xem Khách Hàng""
+ - Nút: Xuất Excel, In, Quay lại",Passed,,,,,,,,
+,,IV. IN PHIẾU,,,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,IN PHIẾU,TC_11.003,Bảng số trên bản in,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Phiếu M TPE_CTKD_2027.00015 của A (năm 2027, Đang tạo, lập 12/11/2026), khối Kinh doanh, vùng Đồng bằng sông Hồng: Hà Nội có phòng Kinh doanh 1 (Khách hãng Hàng hóa 5 / 1,500,000,000, Dịch vụ 2 / 300,000,000; Khách khác Hàng hóa 3 / 600,000,000, Dịch vụ 1 / 150,000,000) và phòng Kinh doanh 2 (4 / 1,200,000,000; 1 / 200,000,000; 2 / 500,000,000); Hải Phòng có phòng Kinh doanh 1 (2 / 750,000,000; Khách khác Hàng hóa 1 / 250,000,000); Bắc Ninh chưa có phòng.
+ Kinh doanh 1 Hà Nội có 2 bộ phận.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Mở In TPE_CTKD_2027.00015.",—,"- Mỗi khối 1 bảng ""Khối Kinh doanh"": cột STT, Tỉnh/TP, Phòng phụ trách + 12 cột 3 tầng (Khách hãng / Khách khác / Tổng cộng; Hàng hóa / Dịch vụ; SL / Doanh số)
+ - Dòng TỔNG CỘNG; mỗi tỉnh có dòng Năm trước, Tổng cộng, các dòng phòng, dòng bộ phận thụt lề
+ - Mục ""Tổng hợp"" cuối với cột Khối thay cho Phòng phụ trách
+ - Số có dấu phẩy ngăn nghìn, khớp màn Xem","- Mỗi khối 1 bảng ""Khối Kinh doanh"": cột STT, Tỉnh/TP, Phòng phụ trách + 12 cột 3 tầng (Khách hãng / Khách khác / Tổng cộng; Hàng hóa / Dịch vụ; SL / Doanh số)
+ - Dòng TỔNG CỘNG; mỗi tỉnh có dòng Năm trước, Tổng cộng, các dòng phòng, dòng bộ phận thụt lề
+ - Mục ""Tổng hợp"" cuối với cột Khối thay cho Phòng phụ trách
+ - Số có dấu phẩy ngăn nghìn, khớp màn Xem",Passed,,,,,,,,
+,,V. RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC,,,,,,,,,,,,,,,,
+Giao chỉ tiêu KD theo phòng ban,RÀNG BUỘC VỚI CÁC CHỨC NĂNG KHÁC,TC_14.001,Yêu cầu issue: bỏ chọn chi tiết khách hàng,P0,"Tài khoản A (Nguyễn Văn A, phòng Kế hoạch kinh doanh, công ty TPE): chỉ có quyền ""Tạo chỉ tiêu kinh doanh theo phòng ban"".
+ Danh mục công ty TPE: khối kinh doanh ""Kinh doanh"" (phòng Kinh doanh 1, Kinh doanh 2, Kinh doanh 3) và ""Nghiệp vụ"" (phòng Dự án 1); vùng ""Đồng bằng sông Hồng"" gồm Hà Nội, Hải Phòng, Bắc Ninh; vùng ""Duyên hải miền Trung"" gồm Đà Nẵng, Quảng Nam; phòng Kinh doanh 1 có 2 bộ phận Nhóm KD1-1, Nhóm KD1-2.","1. Vào phân hệ Bán hàng > nhóm ""Kế hoạch"" > mục ""Giao chỉ tiêu kinh doanh"" > bấm ""Theo phòng ban"".
+ 2. Bấm Tạo mới.
+ 3. Chọn khối Kinh doanh, vùng Đồng bằng sông Hồng, chọn phòng ở Hà Nội.",—,"- Dòng phòng có đủ 8 ô nhập thẳng: Khách hãng (Hàng hóa, Dịch vụ) và Khách khác (Hàng hóa, Dịch vụ), mỗi nhóm có SL khách và Doanh số
+ - KHÔNG có nút / popup ""Thêm / Xem Khách Hàng"", không có ô tick ""Khách hàng mới""
+ - Nhóm Tổng cộng tự tính = Khách hãng + Khách khác","- Dòng phòng có đủ 8 ô nhập thẳng: Khách hãng (Hàng hóa, Dịch vụ) và Khách khác (Hàng hóa, Dịch vụ), mỗi nhóm có SL khách và Doanh số
+ - KHÔNG có nút / popup ""Thêm / Xem Khách Hàng"", không có ô tick ""Khách hàng mới""
+ - Nhóm Tổng cộng tự tính = Khách hãng + Khách khác",Passed,,,,,,,,

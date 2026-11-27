@@ -70,3 +70,11 @@ cùng ngày) sau khi tôi đọc skill lần đầu → lần chỉnh bề rộn
 
 - [x] Fix 24/10/2026: Lưu ứng dụng báo lỗi cặp Nhóm ngành – Nhóm giải pháp chi tiết (gom mọi cặp hỏng vào errors.industry_pairs: "Nhóm ngành X - Nhóm giải pháp Y không còn liên kết") — ApplicationsRequest
 - [x] Fix 24/10/2026 (FE): lỗi cặp chỉ hiện 1 lần dưới ô con (bỏ parentError), toast 422 đổi thành "Vui lòng kiểm tra lại thông tin đã nhập" — application-modal.vue
+
+## Fix #12328 (27/11/2026) — Import bắt buộc Lĩnh vực kinh doanh khách hàng (giống form tạo thủ công)
+
+Form Thêm/Sửa đã bắt buộc (`ApplicationsRequest`: `customer_scope_pairs required|min:1`) nhưng import vẫn để "Không bắt buộc".
+- [x] BE `ApplicationService::validateImportData()` + `importApplications()`: trống / không ra cặp nào → "Lĩnh vực kinh doanh khách hàng là bắt buộc"
+- [x] FE `pages/assign/application/index.vue`: nhãn cột preview có `*`, `importValidationRules` báo thiếu
+- [x] File mẫu `static/Mau_Import_UngDung_FN.xlsx`: tiêu đề `*`, dòng mô tả "Bắt buộc…", dòng ví dụ 2 có giá trị, sheet Note
+- [x] Verify: tinker gọi `validateImportData()` — ô trống / chỉ có dấu phẩy → báo "Lĩnh vực kinh doanh khách hàng là bắt buộc"; dòng đủ cặp hợp lệ (LHHDKH.0001:LVKDKH.0001) → valid. FE: compile template + parse script OK. Chưa mở trình duyệt.
