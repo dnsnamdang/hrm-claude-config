@@ -8,11 +8,23 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- rbac / **Tách quyền Kế toán (`accounting.ke_toan.manage` → 3 mã: phiếu thưởng KD / phiếu lợi nhuận / YC hạch toán bổ sung)** → @nguyentrancu97 → `.plans/tach-quyen-ke-toan/{design.md,plan.md}`
+  27/11/2026: SDD 8 task xong, final review Opus (1 Critical fixture MAP đã fix); suite KeToanSplit 23/45 xanh. ✓push api develop `866054ddc`, ERP develop_02 `52b7fdcdeb`. Chưa gop_db; rollout prod (catalog-sync → `rbac:grant-ke-toan-split` → verify → deprecate) chưa chạy.
+
+- rbac / **Tách quyền Kế toán MUA HÀNG (`accounting.ke_toan_mua_hang.manage` → 3 mã theo màn, ERP-only)** → @nguyentrancu97 → `.plans/tach-quyen-ke-toan-mua-hang/{design.md,plan.md}`
+  27/11/2026: 6 task xong, test 12/12 (35 assertions), final review Opus sạch. ✓push ERP develop_02 `4ca08a73bc`, api develop `b0c879811` (lệnh `rbac:grant-ke-toan-mua-hang-split`). Chưa catalog-sync/grant/gop_db; minor hoãn `PriceCalculateResult::canView()` return true.
+
+- rbac / **Import quyền vai trò: hạ phạm vi theo công ty** → @nguyentrancu97 → `.plans/import-quyen-ha-pham-vi-cong-ty/plan.md`
+  27/11/2026: ✓push client develop `6cfc04cba` + gop_db `a7d7217ac`. Kiểm logic bằng Node; chưa kiểm trên màn (tài khoản e2e thiếu quyền màn vai trò).
+
+- sale / **Redmine 27/11 — 13 vé (#12209 #12213 #12297-#12304 #12313 #12316 #12325 #12327)** → @nguyentrancu97 → `.plans/redmine-2711/plan.md`
+  27/11/2026: ĐÃ push develop — api `4867f5b8c` `d65aee2e9` `62791821c` `27cf07590` `a92d4a153` · client `91902f838` `45b8e3b2b` `adc7b70b0` `8af89114f` `45fb31572` `c3cd55df3` `1dedf1ef6`. KHÔNG gop_db (gop_db chưa có các màn này). Vé chờ QA test.
+
 - finance / **#10642 BBBG: chặn Ngày bàn giao < ngày xuất kho/xuất hàng + ngày tương lai** → @nguyentrancu97 → `.plans/10642-bbbg-ngay-ban-giao-validate/{design.md,plan.md}`
   26/11/2026: Fix cả ERP + HRM. HRM entity `exportDateFloors()` + `applyHandoverDateValidation()` (chỉ nguồn firm), `withExportFloor()` bơm `export_date_floor`, `HandoverProductTable.vue` `disabledDateFor`. Verify BE tinker 5 ca + FE Playwright (HĐ 9816). ✓push api `df7be0839c`, client `684050fc97` (ERP `533499f2b7`). Chưa gop_db.
 
 - rbac / **Tách quyền Kế toán kho (`accounting.ke_toan_kho.manage` → 36 quyền theo loại phiếu)** → @nguyentrancu97 → `.plans/tach-quyen-ke-toan-kho/{design.md,plan.md}`
-  26/11/2026: Plan 1 xong (Native): `4772aff58` 36 entry Catalog + `KeToanKhoSplitMap`; `78093712c` lệnh `rbac:grant-ke-toan-kho-split` (9 test pass); chạy DB test: 2 role holder, cấp 72 dòng, verify 0 lệch, idempotent. Review cuối: Ready to merge. **CHƯA push** (2 commit local hrm-api develop), chưa gop_db, chưa deprecate mã cũ. Tiếp: Plan 2 (re-point ERP) + Plan 3 (HRM) — chờ user.
+  27/11/2026: Plan 1 + Plan 3 (re-point HRM) + Plan 2 (re-point ERP) XONG + ĐÃ push — api develop `..fda2058c3` (gồm `4772aff58` `78093712c`), client `b19141357` `d975d816f`, ERP develop_02 12 commit `d21f108380..5a9345f0b3`. Review cuối sạch; Permission 30/30, ErpKeToanKhoGateTest 11/325. Dev: user chạy grant 2a → 31 role × 36 = 1116 dòng. Chưa: Playwright Plan 3, full Rbac suite ERP (không có DB test), rollout prod (catalog-sync → grant → verify → deprecate), chưa gop_db.
 
 - finance / **#10651 Quyết toán thưởng năm DSTC: "DSTC phòng thực đạt trong năm" lấy sai nguồn** → @nguyentrancu97 → `.plans/quyet-toan-thuong-nam-dstc-thuc-dat/{design.md,plan.md}`
   26/11/2026: Fix cả 2 bên (port 1:1 ERP). `BonusEndYearSettlementService::getActualRevenue` đang lấy PS TK 511/521 thô (`AccountDetail`) → sửa thành `SUM(scd.commission_sale)` HĐ Firm đã quyết toán (fscd.type=2), `scd.department_id = phòng`, lọc `sc.date_accounting ∈ [từ,đến]`. ✓dev cả 2 bên — tinker `erp_hrm_check` dept=55 2025 = 9,163,656,207.80 (d/m/Y = Y-m-d, khớp ERP); gỡ const+2 import chết, giữ `normalizeToIso`. ✓push develop `9977f2f63` (ERP develop_02 `7c5a91532f`); Redmine → Code xong chờ test. Chưa gop_db. Còn: UI check Playwright nếu cần.

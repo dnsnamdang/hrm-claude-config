@@ -162,3 +162,9 @@ Vừa hoàn thành: Plan 1 đủ 3 task — Task 1 `4772aff58` (36 entry Catalog
 Đang làm dở: (không)
 Bước tiếp theo: user chọn viết Plan 2 (re-point ERP) hay dừng để review Plan 1; sau Plan 2+3 mới deprecate mã cũ (§8.6).
 Blocked: 2 commit `4772aff58`, `78093712c` **CHƯA PUSH** (local develop đi trước origin 2) — chờ user cho phép; CHƯA gop_db. Ghi chú: 3 test CatalogContentTest fail có sẵn từ trước, không do thay đổi này.
+
+### Checkpoint — 2026-11-27 17:18 (wrap up cuối ngày)
+Vừa hoàn thành: Plan 1 (2 commit `4772aff58`, `78093712c`) đã lên origin develop cùng đợt push Plan 3. User chạy 2a trên dev: "Vai trò nguồn: 31 · NV cấp thẳng: 0 · thêm: 1116 · bỏ qua: 0" (1116 = 31×36, khớp). Plan 2 ERP (12 commit re-point, `erp/.plans/tach-quyen-ke-toan-kho/plan.md`) + Plan 3 HRM (`plan-3-repoint-hrm.md`) xong + push.
+Đang làm dở: Rollout prod chưa làm.
+Bước tiếp theo: Prod: catalog-sync → `rbac:grant-ke-toan-kho-split` dry-run → chạy thật → verify → deprecate mã cũ sau cùng. Chưa gop_db.
+Blocked: Không

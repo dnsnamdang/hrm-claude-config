@@ -49,6 +49,19 @@ Phụ trợ copy kèm: `DrillNum.vue` (số 0 không bấm được), `InfoTip.v
 
 ## 3. Logic trang (copy từ `template/index.vue`, đừng viết lại)
 
+- **Ô CHỌN đổi là lọc luôn, ô GÕ TAY chờ Enter / Tìm kiếm** (user chốt lại 26/11/2026, Redmine #12313 — QA bắt lỗi
+  "bấm chọn giá trị lọc phải bấm Tìm kiếm mới ra"). Ô chọn = select, ngày, khoảng ngày, Năm/Tháng/Kỳ, khối Công ty /
+  Phòng ban / Bộ phận / Nhân viên, Khách hàng (`V2BaseSelectRemote`)…; ô gõ tay = `type: 'text' | 'number'` + ô tìm nhanh.
+  Màn kiểu `handleSearch()` / `runSearch()` dùng mixin chung **`utils/mixins/reportAutoSearchMixin.js`** (deep-watch
+  `filters` — bắt được cả ô ghi thẳng vào `filters` như `V2BaseCompanyDepartmentFilter :form`, gom nhịp 300ms, ô bắt
+  buộc còn trống thì chờ, không hiện chữ đỏ): `mixins: [..., reportAutoSearchMixin]` · cuối `mounted` (sau khôi phục
+  bộ lọc / đặt mặc định / `loadMeta`) gọi `this.armAutoSearch()` · `handleReset` gán `filters` xong gọi
+  `this.syncAutoSearch()` · khoá màn tự tải riêng (vd `bucket` của ô thống kê) đè `autoSearchIgnoredKeys()` · kỳ có
+  điều kiện riêng đè `canAutoSearch()`. KHÔNG tự viết watcher riêng ở từng màn. Đang dùng: bonus-month / bonus-quarter /
+  bonus-business-employee / bonus-contract / monitor-contract-implement / by-sales-staff / sales-income-summary /
+  customer-debt-due-warning. Màn tự có watcher sẵn (`template/index.vue` `onFilterChange`, `SaleByProductReportScreen`
+  `TYPING_KEYS`, `TransportReportPage` `TEXT_KEYS`) giữ nguyên. Tự kiểm: chọn 1 ô chọn → 1 request; gõ ô chữ → 0 request
+  tới khi Enter.
 - `reportSeq` / `optionsSeq` / `drillSeq`: response về trễ không được đè response mới.
 - Đang tải lại thì làm mờ (`.pct-body--loading` opacity .6), không xoá trắng. Lỗi thì GIỮ báo cáo cũ.
 - `reportParams` = params của lần tải thành công gần nhất. In / Excel / drill dùng `drillBaseParams()` (bỏ `page`/`per_page`).
@@ -174,3 +187,4 @@ Popup lọc / phân trang ở BE (gọi API mỗi lần) → BE tự nhận cùn
 | In / Excel danh sách popup ra cả tập trong khi popup đang tìm / lọc / sắp | Popup emit `q` + `f_*` + `sort`/`dir`; BE `DrillListPrinter::filterSort` cắt + sắp y FE |
 | Tự dựng popup chọn cột riêng cho Xuất Excel | Dùng `ExportModeModal` + `pick-columns` (khai cột 1 lần ở `modes`, dùng chung với In) |
 | BE in cố định cột | Whitelist `SUMMARY_COLUMNS` / `DETAIL_COLUMNS` + đọc `cols` |
+| Chọn giá trị ở ô lọc xong phải bấm Tìm kiếm mới ra (QA trả #12313) | Ô chọn lọc luôn — `reportAutoSearchMixin` (mục 3); ô gõ tay mới chờ Enter |
