@@ -34,6 +34,13 @@ Deploy: `permission:catalog-sync` + cấp 2 mã `master_data.danh_muc_ngan_hang.
 ## Lặt vặt 25/11 (@junfoke) — import KH "Loại hình tổ chức" (develop api `604de028b`, client `ae2886746`); #10899 #10908 #10909 ô Khách hàng BC meeting / Dự án TKT (client `6264232f9`), #10901 #10902 #10905 #10910 không cần sửa; #12258 phản hồi x ô Phòng ban (client `e9aa82f32`, 26/11)
 Plan: `customer-import-excel` · `ho-tro-van-hanh` · `division-market-employee`. SRS Danh mục KH + 3 SRS Dự án / YC làm giải pháp / Quản lý giải pháp đã sửa thẳng trên Drive (`customer-docs`, `srs-man-docs`).
 
+## Điều tra lỗi gọi thoại/video chat trên PROD (chưa có số Redmine) — ĐANG LÀM, chỉ điều tra chưa sửa (2026-11-27, @cuong61n)
+- Plan: `.plans/gop-db/goi-thoai-video-dieu-tra-loi/plan.md`. Ca user tả (huỷ → gọi lại → Nghe không được) = cuộc 173→174 lúc 18:49: BE đúng, app iOS không sinh request accept. Chờ user chốt hướng sửa + log máy.
+
+## HRM issue #45 (ISS-202611-0045) Cảnh báo lệch định biên ở popup quy chế lương + chưa phân nhiệm vụ ở QĐ định biên — ĐÃ PUSH gop_db (api `f93623bde`, client `e6bb8afe6`) + ĐÃ DEPLOY PROD tpe 27/11 (2026-11-27, @cuong61n)
+- Plan: `.plans/gop-db/hrm-issue-45-canh-bao-dinh-bien-quy-che-luong/plan.md`. BE 3 file (RegulationSalaryService/Resource, ManpowerPlanningRequest) + FE 3 file + component mới `components/V2BaseWarningList.vue`.
+- Chốt với user 27/11: điểm 1 chỉ báo chức vụ trong quy chế không còn trong định biên hiện hành (không báo chức vụ mới), điểm 2 cảnh báo ngay khi vào màn + chặn Lưu.
+
 ## HRM issue #44 (ISS-202611-0044) Loại nghỉ ETEK POWER mất "Nhóm" + tính lại phép NV nghỉ thai sản — ĐÃ XỬ LÝ DỮ LIỆU PROD 27/11 (2026-11-27, @cuong61n)
 5 loại mặc định cty 10 `group_id = 0` từ DB gốc hrm_power; config di trú map nhầm `group_id → OWNED:groups` (sửa local `KEEP`, CHƯA push). 27/11: UPDATE 5 dòng theo file + history, chạy `update:attendance` → Huyền T5–T10 = 1, còn 6 phép. Chiều 27/11: bảng công vẫn hiện KL vì JSON `timesheet_summaries.data_attendance` còn id đơn CŨ (bug di trú 2, EP 323 + EG 521 dòng) → `calc:employee_timesheet` cho Huyền xong (TS). Còn: remap 844 dòng (chờ duyệt), fix engine JSON, bình luận/đóng issue #44, push config.
 → .plans/gop-db/hrm-issue-44-ep-loai-nghi-mat-nhom/plan.md
