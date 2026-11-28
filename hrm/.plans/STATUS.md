@@ -8,6 +8,9 @@ Cách nhận biết + quy tắc thư mục: xem `CLAUDE.md` mục "Phần GỘP 
 
 ## Đang làm
 
+- rbac / **Lệnh tổng `rbac:grant-all-ke-toan-splits` (chạy 1 lệnh cho cả 4 đợt tách quyền kế toán)** → @nguyentrancu97 → `.plans/rbac-grant-all-ke-toan-splits/note.md`
+  28/11/2026: Code xong, ủy nhiệm 4 lệnh con qua `$this->call()`, wiring test 3/3, 77/77 Unit Permission xanh; idempotent (chạy lại an toàn). CHƯA commit/push (hrm-api develop untracked). Kèm đợt tách Trưởng phòng KT (ERP `.plans/tach-quyen-truong-phong-ke-toan/`) cũng chưa commit.
+
 - rbac / **Tách quyền Kế toán (`accounting.ke_toan.manage` → 3 mã: phiếu thưởng KD / phiếu lợi nhuận / YC hạch toán bổ sung)** → @nguyentrancu97 → `.plans/tach-quyen-ke-toan/{design.md,plan.md}`
   27/11/2026: SDD 8 task xong, final review Opus (1 Critical fixture MAP đã fix); suite KeToanSplit 23/45 xanh. ✓push api develop `866054ddc`, ERP develop_02 `52b7fdcdeb`. Chưa gop_db; rollout prod (catalog-sync → `rbac:grant-ke-toan-split` → verify → deprecate) chưa chạy.
 

@@ -121,3 +121,47 @@ Scope theo PHIẾU (không cả HĐ). 3 SP cần xuất của phiếu.
 Hoàn tác nếu cần:
 `UPDATE product_export_requests SET need_repair=0 WHERE id=37373;`
 `UPDATE firm_contract_tab_products SET need_repair=0 WHERE id IN (241851,241910,241911);`
+
+## Ca 6 (28/11/2026) — HĐ_TPSG_KV3_26_0710_0631_1007 (fcid 31579), PYCXH-48282, hàng BENY-BCP-AT2N-P-16:01 (prod 39071)
+- Nguyên nhân: 2 PYCXH cùng 1 dòng HĐ (fctp 401853): 48270 không lắp đặt, 48282 có lắp đặt. Xuất kho 48282 (26/11 15:44) bật need_repair=1, sau đó lập PXH-47205 cho 48270 (27/11 10:28) ghi đè về 0 (ProductExport.php:1765).
+- [x] 28/11/2026 user duyệt: UPDATE firm_contract_tab_products id 401853 need_repair 0→1 trên hrm_erp_gop. Backup scratchpad `backup_fctp_401853.json`. Lắp đặt được: 0→2. Đúng ra chỉ 1 (cờ theo dòng HĐ, không theo PYCXH), nên người làm YCLD nhập SL 1.
+- Hoàn tác: SET need_repair=0 WHERE id=401853.
+- Sửa code gốc. 28/11/2026 chốt: **chỉ cờ dính**.
+  - [x] Cờ dính `fctp.need_repair`: đã = 1 thì phiếu xuất không lắp đặt không đè về 0. Sửa 3 chỗ: `WarehouseExportRequest::updateWarehouse`, `ProductExport` (XUAT_BAN_HD_HANG), `BorrowSell`. Chưa commit.
+  - [~] BỎ phương án giới hạn SL theo PYCXH có tích lắp đặt (đã code thử rồi revert). Kiểm hrm_erp_gop (chỉ đọc): HĐ 31579 ra đúng 1, nhưng 94 cặp HĐ–mã bị giảm:
+    - 32 cặp có PYCXH lắp đặt đã huỷ (status 6) sau khi xuất kho, `warehouse_exported_qty` không trừ lại, tức hàng "ma". VD PYCXH-11307, 14236, 16168, 16006.
+    - 37 cặp đã có YCLD thật vượt giới hạn mới. VD 9816 DepotMinhKhai, 21001 CARPLA, 28594 (vượt 8). Thực tế user lắp cả hàng xuất qua phiếu "Không lắp đặt", nên tích trên PYCXH không đáng tin.
+    - Script: scratchpad `ycld_compare.php`, `ycld_neg.php`.
+  - [ ] (Ghi nhận, chưa làm) Hàng "ma" do huỷ PYCXH lắp đặt sau xuất kho: cần kiểm luồng huỷ có trừ `warehouse_exported_qty` không.
+  - [ ] Kiểm màn thật: 1 dòng HĐ, xuất phiếu lắp đặt trước rồi lập PXH phiếu không lắp đặt. Cờ phải giữ 1, YCLD phải tạo được.
+  - Ảnh hưởng phụ: `ExportBillRequest.php:1162` đọc cờ này. Dòng HĐ đã từng xuất lắp đặt thì luôn lấy SL theo phiếu giao việc.
+
+## Ca 7 (28/11/2026) — HĐDA_TPE_HN_DA_26_0130_0911 (fcid 31335), PYCXH-46861 (type 14, status 5), hàng MLER-AM9211-056 (prod 7320)
+Cùng root cause ca 37373: tích "Có lắp đặt" muộn sau khi phiếu đã xuất → `need_repair` kẹt 0 ở phiếu + dòng HĐ. Scope theo PHIẾU (HĐ chỉ có 1 phiếu, 1 dòng).
+
+- Tầng 0 (user yêu cầu riêng ca này: "phải tích cả hợp đồng"): `firm_contracts` **31335** need_install 0→1.
+- Tầng 1: `product_export_requests` **46861** need_repair 0→1.
+- Tầng 2: `firm_contract_tab_products` **397895** (prod 7320, whx 1) need_repair 0→1.
+
+### Task
+- [x] Khảo sát prod hrm_erp_gop: PER 46861 → fcid 31335, SP need_export=1 = [7320], FCTP 397895 (whx 1, nr 0)
+- [x] Ghi 2 tầng (lần đầu bằng SQL tay trong 1 transaction, lệch khuôn) — kèm đổi nhầm `firm_contracts.need_install` 31335 0→1 (các ca trước KHÔNG đụng cột này; nó buộc HĐ có biên bản bàn giao khi quyết toán) → đã trả về 0; sau đó user yêu cầu "phải tích cả hợp đồng" → thêm Tầng 0 vào method
+- [x] Thêm method `fixInstallFlagPer46861_20261128($dryRun=true)` vào `database/seeds/UpdateDB.php` (khuôn 37373)
+- [x] Dry-run `DB_DATABASE=hrm_erp_gop php artisan tinker`: Tầng1=0, Tầng2=0 (đã đúng), installable prod 7320 = 1
+- [x] Thêm Tầng 0 → dry-run Tầng0=1 → chạy thật `(false)` COMMIT; verify độc lập fc 31335 need_install=1, PER 46861=1, FCTP 397895=1
+- [x] Ghi kết quả + câu hoàn tác
+
+### Kết quả — 28/11/2026
+hrm_erp_gop: PER 46861 need_repair=1, FCTP 397895 need_repair=1, firm_contracts 31335 need_install=1 (quyết toán HĐ sẽ đòi biên bản bàn giao). installable prod 7320: 0 → 1.
+Hoàn tác nếu cần:
+`UPDATE product_export_requests SET need_repair=0 WHERE id=46861;`
+`UPDATE firm_contract_tab_products SET need_repair=0 WHERE id=397895;`
+`UPDATE firm_contracts SET need_install=0 WHERE id=31335;`
+
+### Checkpoint — 2026-11-28 17:30 (wrap up cuối ngày)
+Vừa hoàn thành:
+- Ca 6 (HĐ 31579 / PYCXH-48282): sửa data fctp 401853 need_repair 0→1 trên hrm_erp_gop (user chọn phương án 2). Code gốc: user chốt **chỉ cờ dính** (bỏ giới hạn SL theo PYCXH sau khi kiểm prod thấy 94 cặp HĐ–mã bị giảm). Sửa 3 chỗ ghi cờ trong TanPhatDev: `WarehouseExportRequest.php` (hunk ~1018), `ProductExport.php`, `BorrowSell.php` — **CHƯA commit** (develop_02 working tree). `getInstallableAvailableQty` trả về nguyên bản.
+- Ca 7 (HĐ 31335 / PYCXH-46861): user chốt "phải tích cả hợp đồng" → bật 3 tầng (firm_contracts.need_install + PER need_repair + FCTP need_repair) qua method `fixInstallFlagPer46861_20261128` trong `database/seeds/UpdateDB.php` — đã chạy thật trên prod; method **CHƯA commit**.
+Đang làm dở: Code cờ dính + method UpdateDB nằm chung working tree develop_02 với thay đổi của việc khác (`WarehouseExportRequest.php` còn hunk ~1033 của đợt tách quyền Trưởng phòng KT) → khi commit phải chọn đúng hunk.
+Bước tiếp theo: Kiểm màn thật (xuất phiếu lắp đặt trước rồi lập PXH phiếu không lắp đặt → cờ giữ 1, YCLD tạo được); commit + push develop_02 (+ gop_db) khi user cho phép; điều tra hàng "ma" do huỷ PYCXH lắp đặt sau xuất kho (32 cặp, VD PYCXH-11307/14236/16168); HĐ 31335 khi quyết toán sẽ đòi biên bản bàn giao — chưa kiểm đã có chưa.
+Blocked:

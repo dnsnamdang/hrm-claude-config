@@ -35,6 +35,21 @@ Báo 27/11/2026: TPV_HTCXK_00447 (`/admin/warehouse/other_delivery_trip_accounti
   - 2 phiếu có thêm dòng công lái xe (249, 380), cần xem tay.
   - Tổng Có 3311: tăng 110,790,000, giảm 55,704,000.
 - 447: dòng 1339969 45k→200k, 1339971 310k→45k, Có 3311 1339974 758k→648k.
+- [x] 28/11/2026 ĐÃ SỬA phiếu 447 trên hrm_erp_gop (user duyệt "chỉ sửa 447"): 1 transaction, kiểm giá trị cũ trước khi update. Kết quả Nợ 200/45/45/310 + 1331 48k = Có 3311 648k. Backup: scratchpad `backup_447_account_details.json`.
+- [x] 28/11/2026 ĐÃ SỬA 69 phiếu còn lại (user duyệt): 1 transaction, kiểm giá trị cũ + Nợ=Có từng phiếu. 240 dòng 6427 + 69 dòng Có 3311. Backup `backup_69_account_details.json` (412 dòng), danh sách `danh_sach_phieu_da_sua.csv` (scratchpad).
+- [ ] 249, 380 (có dòng công lái xe): xem tay.
+- [x] 28/11/2026 push: develop_02 a5615c740f, gop_db 0b21160845 (cherry-pick). Chưa kiểm màn thật.
+
+### Checkpoint — 2026-11-28 17:30 (wrap up cuối ngày)
+Vừa hoàn thành:
+- Commit + push fix `mergeRequestActivities()` (chỉ 1 file `OtherDeliveryTripAccountingController.php`): develop_02 `a5615c740f` ✓push origin; gop_db `0b21160845` (cherry-pick qua worktree tạm, đã xoá) ✓push origin.
+- Sửa dữ liệu hrm_erp_gop: phiếu 447 (08:41) + 69 phiếu còn lại (08:57) = 70 phiếu, đều Nợ = Có. Đọc lại prod: cả 70 phiếu khớp số mới.
+- Xuất Excel `danh-sach-phieu-da-sua.xlsx` (thư mục này; 2 sheet: tổng hợp theo phiếu + 315 dòng chi tiết).
+- Đánh giá ảnh hưởng sửa thẳng: không đổi 1331/33481/dữ liệu chuyến xe/BC HRM; đổi chi phí 6427 tháng 09/2025→11/2026 và công nợ 3311 của 2 nhà xe (233460: dư Nợ 7,100,000 → 0; 14059: 333,173,666 → 285,187,666, phần còn lại không do lỗi này).
+- Xác nhận lỗi phát sinh ở bước sinh bút toán của phiếu hạch toán (chuyến xe + bảng chi tiết lưu đúng). 70 phiếu sai đều do Cao Thị Thùy Linh lập (TPV), lỗi do code nên ai ghép nhiều phiếu kho/NV cũng bị.
+Đang làm dở: TPHP_HTCXK_00249, 00380 (có dòng công lái xe) chưa sửa — xem tay.
+Bước tiếp theo: Xem tay 249/380; kiểm màn thật tạo/sửa phiếu nhiều PNK cùng NV khác cước; báo kế toán chi phí 6427 các tháng cũ đã đổi + đối chiếu dư Nợ nhà xe 14059.
+Blocked:
 
 ### Checkpoint — 2026-11-27 17:18 (wrap up cuối ngày)
 Vừa hoàn thành: Fix `mergeRequestActivities()` + mô phỏng đúng — CHƯA commit (` M app/Http/Controllers/Warehouse/OtherDeliveryTripAccountingController.php` trên develop_02).
