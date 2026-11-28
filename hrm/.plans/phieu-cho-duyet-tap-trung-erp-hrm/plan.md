@@ -155,3 +155,6 @@ Mặc định tạm cho 2 câu user chưa trả lời: (a) dùng bảng assignee
 ### Đẩy & build dev 27/11/2026 (@cuong61n)
 - [x] 27/11 Commit sửa #12287 #12293 #12309: gop_db `2ae39093d` (api) / `4feb64aae` (client); develop `2342bdd6e` / `8fdbb8202` trên nhánh feature/approval-center-develop; develop có thêm commit người khác nên đã merge origin/develop (không conflict) rồi đẩy develop (api `9356474c3`, client `c86833365`).
 - [x] 27/11 Chạy ~/build_tpe.sh trên dev (lịch hệ thống `assign:*`, `human:*` chạy lại sau deploy; phiếu HĐVC-00092 tồn đọng được quét đóng).
+
+### Chip lọc nhanh theo LOẠI PHIẾU 28/11/2026 (@cuong61n)
+- [x] 28/11 Hàng chip trên danh sách Phiếu chờ duyệt đổi từ phân hệ nguồn sang loại phiếu (số đếm theo loại, xếp giảm dần, loại thừa gom vào "Khác"); chip bấm = lọc `doc_type`; ô lọc "Phân hệ" trong Tìm kiếm nâng cao vẫn còn, chọn phân hệ thì chip chỉ còn loại của phân hệ đó. Kiểm Playwright local: chip hiện đủ loại, bấm "Đề nghị thanh toán công tác phí 814" → danh sách chỉ còn loại đó. Chưa commit (worktree gop_db `pages/approval-center/inbox/index.vue`).

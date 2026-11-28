@@ -293,3 +293,28 @@ Blocked: —
 - [x] 14:05 — iOS 118 VALID → ghi chú + gán nhóm external "Tân Phát" (204) + gửi Beta Review (201). Android 118 đang Google xem xét.
 - [x] 16:50 — Google TỪ CHỐI bản 118 (gửi 73, 13:47): "Thông tin đăng nhập không chính xác" — mục Nội dung ứng dụng → Thông tin đăng nhập đang khai `namdangit@gmail.com/2025Dns@1`, đăng nhập prod trả 422. Đổi sang tài khoản công khai `dnstester@gmail.com` (đã kiểm login prod 200) + hướng dẫn tiếng Anh, Lưu, bấm "Gửi 1 nội dung thay đổi để được xem xét" → trang Tổng quan hiện "Các thay đổi đang được xem xét". Đồng thời đổi tài khoản demo Beta App Review TestFlight (betaAppReviewDetail app 6446807087) sang `dnstester@gmail.com` theo yêu cầu user.
 - [x] 17:10 — Google duyệt lại (gửi 74, 16:39): **Đã xuất bản**, production Đang hoạt động 2.4.0 (118). Phát hành 118 hoàn tất cả iOS lẫn Android.
+
+## Phase 13 — Phát hành lại 2.4.0 (119) kèm code develop mới (27/11/2026) — @cuong61n
+- [x] 17:40 — `git merge origin/develop` vào `tpe` (merge commit `2a7b92c`, nhận `85386b8`: fix gọi iOS bấm Nghe bị ngắt + màn gọi kẹt sau cuộc bị huỷ — `flutter_callkit_incoming` 3.1.6 chuyển sang bản chép trong `app/packages/` dùng chung CXProvider, sửa AppDelegate). Bump xcconfig + build.gradle tpeProd → 119 (2.4.0), commit `0a4e418`, push `origin tpe`. `pub get` + `pod install` xong (Podfile.lock đổi source path).
+- [x] 22:36 — Build song song IPA + AAB 119 (~12 phút). Đối chiếu tài liệu "Lưu ý build HRM TPE 2.4.0 (119)" của user: không có cờ `CALL_APNS_SANDBOX` trong makes/tools (đã grep), plugin iOS `.symlinks/plugins/flutter_callkit_incoming` trỏ đúng `app/packages/` (không phải pub cache), Podfile.lock không đổi (trỏ qua .symlinks). IPA: Info.plist 119/2.4.0, UIBackgroundModes = remote-notification + voip + audio, entitlement `aps-environment = production`, ShareExtension.appex có, profile App Store, framework flutter_callkit_incoming chứa hàm sửa `reportEndedIncoming`, App.framework có code chat/livekit (118 dòng). AAB: versionCode 119 / 2.4.0, SHA-1 65:1B…FA:F8, libapp.so có code mới.
+- [x] 22:40 — Upload IPA 119 (altool, chỉ cảnh báo SDK 26.2). `play_release.py release` production 100% + ghi chú vi → Google nhận xét duyệt (versionCode 119).
+- [x] 22:45 — iOS 119 VALID (build d6c4e8bf) → ghi chú (200) + gán nhóm external "Tân Phát" (204) + Beta Review (201) → **APPROVED**, externalBuildState IN_BETA_TESTING. Android: `play_release.py status` production `completed` 2.4.0 codes=[119] rollout 100% (Console sẽ hiện "Đã xuất bản" sau khi Google duyệt xong lượt gửi mới, như lần 118).
+
+### Checkpoint — 27/11/2026 22:50
+Vừa hoàn thành: Phát hành HRM TPE 2.4.0 (119) cả iOS (TestFlight external APPROVED) lẫn Android (production 100%, chờ Google duyệt). Code: tpe = merge develop `85386b8` + bump `0a4e418`, đã push.
+Đang làm dở: —
+Bước tiếp theo: User/tester cài TestFlight 119 lên iPhone thật, thử 3 ca gọi theo tài liệu "Lưu ý build HRM TPE 2.4.0 (119)"; có lỗi ghi giờ:phút + 2 tài khoản để tra log, không tự sửa plugin.
+Blocked: —
+- [ ] Mục "thử trên iPhone thật 3 ca gọi" trong tài liệu: cần người cài TestFlight 119 thử, agent không làm được.
+
+## Phase 14 — Phát hành lại 2.4.0 (120) kèm code develop mới (28/11/2026) — @cuong61n
+- [x] Merge `origin/develop` vào `tpe` (merge `9c42e50`, nhận `86c6031` fix gọi đi iOS tiếng nhỏ/mất tiếng/nhảy Bluetooth + `0fecd05` gọi đi thiếu tút chờ — chỉ đổi AppDelegate.swift + call_controller/call_ringer.dart + test, không đổi pubspec/Podfile.lock nên không cần pub get/pod install). Bump xcconfig + build.gradle tpeProd → 120 (2.4.0), commit `ec09f93`, push `origin tpe`.
+- [x] 08:36 — Build IPA + AAB 120 xong. IPA: 120/2.4.0, UIBackgroundModes remote-notification+voip+audio, aps-environment production, ShareExtension.appex, profile App Store, framework callkit có `reportEndedIncoming`, App.framework có code chat/livekit. AAB: versionCode 120 / 2.4.0, SHA-1 65:1B…FA:F8, libapp.so có code mới.
+- [x] 08:40 — Upload IPA 120 (altool UPLOAD SUCCEEDED, cảnh báo SDK 26.2). `play_release.py release` production 100% + ghi chú vi → Google nhận xét duyệt versionCode 120.
+- [x] 08:50 — iOS 120 VALID (build c790fc66) → ghi chú + gán external "Tân Phát" (204) + Beta Review (201) → **APPROVED**, IN_BETA_TESTING. Android: production codes=[120] rollout 100%, chờ Google duyệt lượt gửi.
+
+### Checkpoint — 28/11/2026 08:50
+Vừa hoàn thành: Phát hành HRM TPE 2.4.0 (120): iOS TestFlight external APPROVED, Android production 100% chờ Google duyệt. tpe = develop `0fecd05` + bump `ec09f93`, đã push.
+Đang làm dở: —
+Bước tiếp theo: Tester thử 3 ca gọi iPhone thật trên bản 120 (theo tài liệu "Lưu ý build 119") + ca gọi đi nghe tiếng rõ, có tút chờ.
+Blocked: —

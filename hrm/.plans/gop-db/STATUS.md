@@ -19,6 +19,9 @@ Việc gộp DB **không có migration trong repo** → không tái tạo đư�
 - Code: chỉ làm **trên nhánh `gop_db`** hoặc nhánh **checkout ra từ `gop_db`**, merge trả về `gop_db`
 - KHÔNG dùng `mysql2` / `DB_CONNECTION_SECOND` cho tính năng mới
 
+## Báo cáo BHXH theo năm: sửa tiền hiện trước tháng tick BHXH + lọc vượt phạm vi + dựng lại UI khuôn report-styles (cây PB ▸ NV, popup, cột Mã NV, Excel mã NV dạng số, 6s→0,55s) (chưa có số Redmine) — HOÀN THÀNH, ĐÃ PUSH gop_db (api `65ab12ae6`, client `8db056ee5`) + ĐÃ DEPLOY PROD tpe 28/11 ~15:00 (2026-11-28, @cuong61n)
+- Plan: `.plans/gop-db/bao-cao-bhxh-nam-sai-thang-bat-dau/plan.md`. BE service/controller mới `InsuranceReportYearService` + 4 route, Excel FromArray; FE trang + 6 file `insurance-report-year/`. Không làm In (user chốt). Chờ user quyết sửa util Excel FE dùng chung (mã NV dạng chữ ở 97 màn).
+
 ## #12288 #12290 #12291 #12317 #12318 QA Giao chỉ tiêu KD theo PB + #12295 #12296 Phân chia thị trường (+ phản hồi #12291, #12288) — ĐÃ PUSH develop (client `3aae0bd06`, `67535911b`, `15e311194`; api `cfe51f524`, `30a96fc30`, `63aabe212`), CHƯA gop_db (2026-11-26, @junfoke)
 Plan: `.plans/gop-db/giao-chi-tieu-kinh-doanh/plan.md` · `.plans/gop-db/division-market-employee/plan.md` (kèm testcase #11695 tab "25. PPTT theo nhân viên"). Không migration.
 
